@@ -83,9 +83,9 @@ export const userTokens = sqliteTable("user_tokens", {
   token: text("token").notNull(), // Encrypted
   createdAt: integer("createdAt", { mode: "timestamp" }).notNull(),
   updatedAt: integer("updatedAt", { mode: "timestamp" }).notNull(),
-}, (table) => ({
-  userRegionUnique: unique().on(table.userId, table.region),
-}));
+}, (table) => [
+  unique().on(table.userId, table.region),
+]);
 
 export const fetchSessions = sqliteTable("fetch_sessions", {
   id: text("id").primaryKey(),
@@ -97,9 +97,9 @@ export const fetchSessions = sqliteTable("fetch_sessions", {
   errorMessage: text("errorMessage"),
   statusStates: text("statusStates"), // Comma-separated list of completed states
   extraData: text("extraData"), // JSON string
-}, (table) => ({
-  userIdRegionStartedAtIndex: index("fetch_sessions_userid_region_startedat_idx").on(table.userId, table.region, table.startedAt),
-}));
+}, (table) => [
+  index("fetch_sessions_userid_region_startedat_idx").on(table.userId, table.region, table.startedAt),
+]);
 
 export const userSnapshots = sqliteTable("user_snapshots", {
   id: text("id").primaryKey(),
@@ -116,10 +116,10 @@ export const userSnapshots = sqliteTable("user_snapshots", {
   iconUrl: text("iconUrl").notNull(),
   displayName: text("displayName").notNull(),
   title: text("title").notNull(),
-}, (table) => ({
-  userIdRegionIndex: index("user_snapshots_userid_region_idx").on(table.userId, table.region),
-  userIdRegionFetchedAtIndex: index("user_snapshots_userid_region_fetchedat_idx").on(table.userId, table.region, table.fetchedAt),
-}));
+}, (table) => [
+  index("user_snapshots_userid_region_idx").on(table.userId, table.region),
+  index("user_snapshots_userid_region_fetchedat_idx").on(table.userId, table.region, table.fetchedAt),
+]);
 
 export const songs = sqliteTable("songs", {
   id: text("id").primaryKey(),
@@ -136,11 +136,11 @@ export const songs = sqliteTable("songs", {
   region: text("region", { enum: ["intl", "jp"] }).notNull(),
   gameVersion: integer("gameVersion").notNull(),
   addedVersion: integer("addedVersion").notNull(), // -1 for legacy versions, or actual version number for newer versions
-}, (table) => ({
-  songNameDifficultyTypeRegionVersionUnique: unique("song_name_difficulty_type_region_version_unique").on(table.songName, table.difficulty, table.type, table.region, table.gameVersion),
-  regionGameVersionIndex: index("songs_region_gameversion_idx").on(table.region, table.gameVersion),
-  songNameDifficultyIndex: index("songs_songname_difficulty_idx").on(table.songName, table.difficulty),
-}));
+}, (table) => [
+  unique("song_name_difficulty_type_region_version_unique").on(table.songName, table.difficulty, table.type, table.region, table.gameVersion),
+  index("songs_region_gameversion_idx").on(table.region, table.gameVersion),
+  index("songs_songname_difficulty_idx").on(table.songName, table.difficulty),
+]);
 
 export const userScores = sqliteTable("user_scores", {
   id: text("id").primaryKey(),
@@ -150,11 +150,11 @@ export const userScores = sqliteTable("user_scores", {
   dxScore: integer("dxScore").notNull(),
   fc: text("fc", { enum: ["none", "fc", "fc+", "ap", "ap+"] }).notNull(),
   fs: text("fs", { enum: ["none", "sync", "fs", "fs+", "fdx", "fdx+"] }).notNull(),
-}, (table) => ({
-  snapshotIdIndex: index("user_scores_snapshotid_idx").on(table.snapshotId),
-  snapshotIdSongIdIndex: index("user_scores_snapshotid_songid_idx").on(table.snapshotId, table.songId),
-  songIdIndex: index("user_scores_songid_idx").on(table.songId),
-}));
+}, (table) => [
+  index("user_scores_snapshotid_idx").on(table.snapshotId),
+  index("user_scores_snapshotid_songid_idx").on(table.snapshotId, table.songId),
+  index("user_scores_songid_idx").on(table.songId),
+]);
 
 export const detailedScores = sqliteTable("detailed_scores", {
   id: text("id").primaryKey(),
@@ -190,6 +190,6 @@ export const detailedScores = sqliteTable("detailed_scores", {
   breakGood: integer("breakGood").notNull(),
   breakMiss: integer("breakMiss").notNull(),
   venue: text("venue"),
-}, (table) => ({
-  songIdIndex: index("detailed_scores_songid_idx").on(table.songId),
-})); 
+}, (table) => [
+  index("detailed_scores_songid_idx").on(table.songId)
+]); 
