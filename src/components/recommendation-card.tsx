@@ -24,6 +24,7 @@ interface RecommendationData {
   isInBest: boolean;
   category: "new" | "old";
   efficiency: number;
+  order: number;
 }
 
 const ACCURACY_VALUES = [
@@ -195,8 +196,11 @@ function generateRecommendations(songsWithRating: SongWithRating[], version: num
       if (maxPossibleRating <= minRequiredRating) return;
     }
 
+    let order = 0;
+
     for (const accuracy of ACCURACY_VALUES) {
       if (accuracy <= currentAccuracy) continue;
+      if (version < 12 && accuracy === 101.0) continue;
 
       const factor = getRatingFactor(accuracy);
       const extra = version >= 12 && accuracy === 101.0 ? 1 : 0;
@@ -224,14 +228,20 @@ function generateRecommendations(songsWithRating: SongWithRating[], version: num
         ratingGain,
         isInBest,
         category: isNew ? "new" : "old",
-        efficiency,
+        efficiency: efficiency,
+        order,
       });
-      break
+
+      order++;
     }
   });
 
   // Sort by weighting: prioritize small accuracy diff and high rating gain
   return recommendations.sort((a, b) => {
+    if (a.order !== b.order) {
+      return a.order - b.order;
+    }
+
     // Weighted score: prioritize efficiency (rating gain per accuracy diff)
     if (Math.abs(a.efficiency - b.efficiency) < 0.1) {
       // If efficiency is similar, prefer higher rating gain
@@ -575,7 +585,13 @@ export function RecommendationCard({ selectedSnapshotData, flags }: { selectedSn
     });
   }
   
-  filteredRecommendations = filteredRecommendations.slice(0, 100);
+  // Deduplicate recommendations by songId and difficulty
+  filteredRecommendations = filteredRecommendations.filter((rec, index, self) =>
+    index === self.findIndex((t) => t.song.songId === rec.song.songId && t.song.difficulty === rec.song.difficulty)
+  );
+  
+  // Limit the number of recommendations to 200
+  filteredRecommendations = filteredRecommendations.slice(0, 200);
 
   if (recommendations.length === 0) {
     return (
