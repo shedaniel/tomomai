@@ -26,7 +26,7 @@ export interface FetchStatusResult {
 }
 
 // Extract startFetch logic from tRPC procedure
-export async function startFetchServer(userId: string, region: Region, token?: string): Promise<StartFetchResult> {
+export async function startFetchServer(userId: string, region: Region, token?: string, flags: string[] = []): Promise<StartFetchResult> {
   let tokenToUse = token;
 
   // If no token provided, try to use saved token
@@ -171,7 +171,7 @@ export async function startFetchServer(userId: string, region: Region, token?: s
 
       // Race between the actual fetch and the timeout
       await Promise.race([
-        fetchMaimaiData(userId, region, fetchSessionId),
+        fetchMaimaiData(userId, region, fetchSessionId, flags),
         timeoutPromise
       ]);
 

@@ -10,10 +10,9 @@ import { useRef, useState } from "react";
 
 interface ExportImageCardProps {
   selectedSnapshotData: SnapshotWithSongs;
-  visitableProfileAt: string | null;
 }
 
-export function ExportImageCard({ selectedSnapshotData, visitableProfileAt }: ExportImageCardProps) {
+export function ExportImageCard({ selectedSnapshotData }: ExportImageCardProps) {
   const t = useTranslations();
   const [imageUrl, setImageUrl] = useState<string>(`/api/export-image?snapshotId=${selectedSnapshotData.snapshot.id}`);
   const [imageKey, setImageKey] = useState(0);

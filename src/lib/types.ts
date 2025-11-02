@@ -42,6 +42,20 @@ export interface SongWithScore {
   fs: "none" | "sync" | "fs" | "fs+" | "fdx" | "fdx+";
 }
 
+// Event data for area and event area events
+export interface EventData {
+  id: string;
+  snapshotId: string;
+  eventType: "area" | "eventArea";
+  name: string;
+  currentDistance: number;
+  nextRewardDistance: number | null;
+  state: "not_started" | "in_progress" | "completed";
+  imageUrl: string;
+  eventPeriodStart: Date | null;
+  eventPeriodEnd: Date | null;
+}
+
 // Complete snapshot data including songs
 export interface SnapshotWithSongs {
   snapshot: Snapshot & {
@@ -49,6 +63,7 @@ export interface SnapshotWithSongs {
     iconUrl: string;
   };
   songs: SongWithScore[];
+  events?: EventData[];
 }
 
 export interface FetchSession {

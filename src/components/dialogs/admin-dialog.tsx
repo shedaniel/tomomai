@@ -59,7 +59,7 @@ export function AdminDialog({ open, onOpenChange }: AdminDialogProps) {
 
   function handleNormalizeDatabase(region: "intl" | "jp") {
     appendConsoleLog("Normalizing database for region " + region + "...");
-    fetch(`/api/admin/normalize_db?region=${region}`, {
+    fetch(`/api/admin/db?type=normalize&region=${region}`, {
       method: "GET",
       headers: { "Authorization": "Bearer " + adminToken }
     }).then(async data => {
@@ -68,7 +68,26 @@ export function AdminDialog({ open, onOpenChange }: AdminDialogProps) {
       try {
         const json = JSON.parse(text);
         appendConsoleLog(JSON.stringify(json, null, 2));
-      } catch (error) {
+      } catch (_) {
+        appendConsoleLog(text);
+      }
+    }).catch(error => {
+      appendConsoleLog("Error: " + error.message);
+    });
+  }
+
+  function handleUpdateB50Database(region: "intl" | "jp") {
+    appendConsoleLog("Updating B50 database for region " + region + "...");
+    fetch(`/api/admin/db?type=update_b50&region=${region}`, {
+      method: "GET",
+      headers: { "Authorization": "Bearer " + adminToken }
+    }).then(async data => {
+      appendConsoleLog(`Response ${data.status} ${data.statusText}:`);
+      const text = await data.text();
+      try { 
+        const json = JSON.parse(text);
+        appendConsoleLog(JSON.stringify(json, null, 2));
+      } catch (_) {
         appendConsoleLog(text);
       }
     }).catch(error => {
@@ -93,7 +112,7 @@ export function AdminDialog({ open, onOpenChange }: AdminDialogProps) {
         } else {
           appendConsoleLog(JSON.stringify(json, null, 2));
         }
-      } catch (error) {
+      } catch (_) {
         appendConsoleLog(text);
       }
     }).catch(error => {
@@ -113,7 +132,7 @@ export function AdminDialog({ open, onOpenChange }: AdminDialogProps) {
       try {
         const json = JSON.parse(text);
         appendConsoleLog(JSON.stringify(json, null, 2));
-      } catch (error) {
+      } catch (_) {
         appendConsoleLog(text);
       }
     }).catch(error => {
@@ -132,7 +151,7 @@ export function AdminDialog({ open, onOpenChange }: AdminDialogProps) {
       try {
         const json = JSON.parse(text);
         appendConsoleLog(JSON.stringify(json, null, 2));
-      } catch (error) {
+      } catch (_) {
         appendConsoleLog(text);
       }
     }).catch(error => {
@@ -176,6 +195,26 @@ export function AdminDialog({ open, onOpenChange }: AdminDialogProps) {
                 onClick={() => handleNormalizeDatabase("jp")}
               >
                 Japan (v{jpVersion})
+              </Button>
+            </div>
+          </div>
+
+          <div className="grid gap-2">
+            <Label>Update B50 Database</Label>
+            <div className="grid gap-2 grid-cols-2">
+              <Button
+                id="updateB50IntlDatabase"
+                variant="outline"
+                onClick={() => handleUpdateB50Database("intl")}
+              >
+                International
+              </Button>
+              <Button
+                id="updateB50JpDatabase"
+                variant="outline"
+                onClick={() => handleUpdateB50Database("jp")}
+              >
+                Japan
               </Button>
             </div>
           </div>

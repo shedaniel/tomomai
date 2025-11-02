@@ -62,7 +62,7 @@ export const flagDefinitions: Record<keyof Flags, FlagDefinition> = {
   historyCard: {
     key: "historyCard",
     defaultValue: false,
-    userSelectable: false,
+    userSelectable: true,
     decide: async () => false,
   },
   recommendationFilters: {
@@ -74,13 +74,13 @@ export const flagDefinitions: Record<keyof Flags, FlagDefinition> = {
   statsCard: {
     key: "statsCard",
     defaultValue: false,
-    userSelectable: true,
+    userSelectable: false,
     decide: async () => false,
   },
   platesCard: {
     key: "platesCard",
     defaultValue: false,
-    userSelectable: true,
+    userSelectable: false,
     decide: async () => false,
   },
   eventsCard: {

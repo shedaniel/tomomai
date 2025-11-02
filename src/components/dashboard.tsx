@@ -59,7 +59,6 @@ export function Dashboard({ user, initialUserData, initialHasToken, initialTimez
     copySnapshot,
     isCopying,
     isLoading: isLoadingSnapshots,
-    resetSnapshots,
     refreshSnapshots,
   } = useSnapshots(selectedRegion, true, {
     initialSnapshots,
@@ -71,10 +70,9 @@ export function Dashboard({ user, initialUserData, initialHasToken, initialTimez
     currentSession,
     startDataFetch,
     startAutomaticFetch,
-    resetFetchSession,
     startSessionPolling,
     stopSessionPolling,
-  } = useFetchSession(refreshSnapshots);
+  } = useFetchSession(refreshSnapshots, flags);
 
   // Check if user has a saved token for the current region (with initial server data)
   const { data: tokenData, isLoading: isLoadingToken } = trpc.user.hasToken.useQuery(

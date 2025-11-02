@@ -47,7 +47,7 @@ interface PasswordSubDialogProps {
 
 type Step = 1 | 2 | 3;
 
-function CopyableCodeBlock({ code, label, t }: { code: string; label?: string; t: any }) {
+function CopyableCodeBlock({ code, t }: { code: string; t: any }) {
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(code);
@@ -88,7 +88,6 @@ function StepBasedTokenDialog({
 
   const {
     data: loginOtpData,
-    isLoading: loginOtpLoading,
     refetch: refetchLoginOtp,
   } = trpc.user.getLoginOtp.useQuery(undefined, {
     enabled: isOpen && !showManualInput,

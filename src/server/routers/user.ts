@@ -4,12 +4,12 @@ import { resolveBaseUrl } from '@/lib/base-url';
 import { getFetchStatusServer, Region, startFetchServer } from '@/lib/maimai-server-actions';
 import { getAvailableVersions } from '@/lib/metadata';
 import { splitSongs } from '@/lib/rating-calculator';
-import { invites, songs, user, userScores, userSnapshots, userTokens } from '@/lib/schema';
+import { invites, songs, user, userScores, userSnapshots, userTokens, userEvents } from '@/lib/schema';
 import { protectedProcedure, publicProcedure, router } from '@/lib/trpc';
 import { SongWithScore } from '@/lib/types';
 import { TRPCError } from '@trpc/server';
 import { randomUUID } from 'crypto';
-import { and, count, desc, eq, inArray, isNull, lt, or } from 'drizzle-orm';
+import { and, count, desc, eq, inArray, isNull, lt, or, sql } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
 import { z } from 'zod';
 import { flagDefinitions } from '@/lib/flags';
@@ -285,7 +285,7 @@ export const userRouter = router({
       const startTime = Date.now();
       console.log(`[getRatingHistory] Starting for user ${ctx.session.user.id}, region ${input.region}`);
       
-      // Fetch all snapshots for this user/region
+      // Fetch all snapshots for this user/region (lightweight - just metadata)
       const snapshotsStart = Date.now();
       const snapshots = await db
         .select({
@@ -315,10 +315,49 @@ export const userRouter = router({
         };
       }
 
-      // Fetch all songs for all snapshots in a single query
-      // Only fetch B50 songs to optimize performance
+      // Group snapshots by date (YYYY-MM-DD) to identify which snapshots we need scores for
+      const dateGroupingStart = Date.now();
+      const snapshotsByDate = new Map<string, typeof snapshots>();
+      for (const snapshot of snapshots) {
+        const dateKey = snapshot.fetchedAt.toISOString().split('T')[0];
+        if (!snapshotsByDate.has(dateKey)) {
+          snapshotsByDate.set(dateKey, []);
+        }
+        snapshotsByDate.get(dateKey)!.push(snapshot);
+      }
+
+      // Get the last snapshot of each date group in chronological order
+      const dateGroups = Array.from(snapshotsByDate.entries())
+        .sort(([dateA], [dateB]) => dateA.localeCompare(dateB))
+        .map(([date, snapshots]) => ({
+          date,
+          lastSnapshot: snapshots[snapshots.length - 1],
+          allSnapshots: snapshots,
+        }));
+      console.log(`[getRatingHistory] Grouped ${snapshots.length} snapshots into ${dateGroups.length} date groups in ${Date.now() - dateGroupingStart}ms`);
+
+      // Identify which snapshots we need scores for (only when rating actually changed)
+      const snapshotsNeedingScores = new Set<string>();
+      for (let i = 0; i < dateGroups.length; i++) {
+        const currentGroup = dateGroups[i];
+        
+        // Always need scores for first snapshot (baseline) and when rating increased
+        if (i === 0) {
+          snapshotsNeedingScores.add(currentGroup.lastSnapshot.id);
+        } else {
+          const prevGroup = dateGroups[i - 1];
+          if (currentGroup.lastSnapshot.rating > prevGroup.lastSnapshot.rating) {
+            // Need both current and previous to compare
+            snapshotsNeedingScores.add(currentGroup.lastSnapshot.id);
+            snapshotsNeedingScores.add(prevGroup.lastSnapshot.id);
+          }
+        }
+      }
+      console.log(`[getRatingHistory] Need scores for ${snapshotsNeedingScores.size} snapshots (out of ${snapshots.length} total)`);
+
+      // Fetch B50 songs only for snapshots we need for comparisons
       const scoresStart = Date.now();
-      const allSnapshotIds = snapshots.map(s => s.id);
+      const relevantSnapshotIds = Array.from(snapshotsNeedingScores);
       const allScores = await db
         .select({
           snapshotId: userScores.snapshotId,
@@ -336,14 +375,17 @@ export const userRouter = router({
           dxScore: userScores.dxScore,
           fc: userScores.fc,
           fs: userScores.fs,
+          rank: userScores.rank,
         })
         .from(userScores)
         .innerJoin(songs, eq(userScores.songId, songs.id))
         .where(
           and(
             eq(songs.region, input.region),
-            // Use inArray to get all scores for all snapshots at once
-            inArray(userScores.snapshotId, allSnapshotIds)
+            // Only fetch B50 songs (rank 0-49) for efficiency. NULL values are automatically excluded.
+            lt(userScores.rank, 50),
+            // Only fetch scores for snapshots we actually need
+            inArray(userScores.snapshotId, relevantSnapshotIds)
           )
         );
       console.log(`[getRatingHistory] Fetched ${allScores.length} B50 scores in ${Date.now() - scoresStart}ms`);
@@ -373,27 +415,6 @@ export const userRouter = router({
         });
       }
       console.log(`[getRatingHistory] Grouped scores in ${Date.now() - groupingStart}ms`);
-
-      // Group snapshots by date (YYYY-MM-DD) to optimize comparisons
-      const dateGroupingStart = Date.now();
-      const snapshotsByDate = new Map<string, typeof snapshots>();
-      for (const snapshot of snapshots) {
-        const dateKey = snapshot.fetchedAt.toISOString().split('T')[0];
-        if (!snapshotsByDate.has(dateKey)) {
-          snapshotsByDate.set(dateKey, []);
-        }
-        snapshotsByDate.get(dateKey)!.push(snapshot);
-      }
-
-      // Get the last snapshot of each date group in chronological order
-      const dateGroups = Array.from(snapshotsByDate.entries())
-        .sort(([dateA], [dateB]) => dateA.localeCompare(dateB))
-        .map(([date, snapshots]) => ({
-          date,
-          lastSnapshot: snapshots[snapshots.length - 1],
-          allSnapshots: snapshots,
-        }));
-      console.log(`[getRatingHistory] Grouped ${snapshots.length} snapshots into ${dateGroups.length} date groups in ${Date.now() - dateGroupingStart}ms`);
 
       // Build history with changes (only for last snapshot of each date group)
       const comparisonStart = Date.now();
@@ -534,9 +555,27 @@ export const userRouter = router({
         .where(eq(userScores.snapshotId, input.snapshotId))
         .orderBy(songs.songName, songs.difficulty);
 
+      // Get events for this snapshot
+      const events = await db
+        .select({
+          id: userEvents.id,
+          snapshotId: userEvents.snapshotId,
+          eventType: userEvents.eventType,
+          name: userEvents.name,
+          currentDistance: userEvents.currentDistance,
+          nextRewardDistance: userEvents.nextRewardDistance,
+          state: userEvents.state,
+          imageUrl: userEvents.imageUrl,
+          eventPeriodStart: userEvents.eventPeriodStart,
+          eventPeriodEnd: userEvents.eventPeriodEnd,
+        })
+        .from(userEvents)
+        .where(eq(userEvents.snapshotId, input.snapshotId));
+
       return {
         snapshot: snapshot[0],
         songs: songsWithScores,
+        events: events,
       };
     }),
 
@@ -603,10 +642,11 @@ export const userRouter = router({
     .input(z.object({
       region: regionSchema,
       token: z.string().optional(), // Token is now optional - we'll use saved token if not provided
+      flags: z.string().array().default([]), // Add flags parameter
     }))
     .mutation(async ({ ctx, input }) => {
       try {
-        return await startFetchServer(ctx.session.user.id, input.region as Region, input.token);
+        return await startFetchServer(ctx.session.user.id, input.region as Region, input.token, input.flags);
       } catch (error) {
         if (error instanceof Error) {
           if (error.message.includes('No token provided')) {
@@ -1555,13 +1595,14 @@ export const userRouter = router({
         await db.insert(userScores).values(newScores);
       }
 
-      // Recalculate rating for the new snapshot
+      // Recalculate rating and ranks for the new snapshot
       let newRating = originalSnapshot.rating; // Default fallback
       
       if (newScores.length > 0) {
         // Get all scores with song info for rating calculation
         const scoresWithSongs = await db
           .select({
+            scoreId: userScores.id,
             songId: songs.id,
             songName: songs.songName,
             artist: songs.artist,
@@ -1600,11 +1641,66 @@ export const userRouter = router({
         }));
 
         // Calculate ratings for all songs and sort by rating 
-        const { newSongsB15, oldSongsB35 } = splitSongs(songsForCalculation, input.targetVersion);
+        const { newSongsB15, oldSongsB35, newSongsRemaining, oldSongsRemaining } = splitSongs(songsForCalculation, input.targetVersion);
 
         // Calculate total rating (sum of all rating contributing songs)
         const ratingContributingSongs = [...newSongsB15, ...oldSongsB35];
         newRating = ratingContributingSongs.reduce((sum, song) => sum + song.rating, 0);
+        
+        // Calculate and assign ranks
+        const rankUpdates: Array<{ id: string; rank: number }> = [];
+        
+        // New B15: ranks 0-14
+        for (let i = 0; i < newSongsB15.length; i++) {
+          const song = newSongsB15[i];
+          const scoreRecord = scoresWithSongs.find(s => 
+            s.songId === song.songId && 
+            s.difficulty === song.difficulty
+          );
+          if (scoreRecord) {
+            rankUpdates.push({ id: scoreRecord.scoreId, rank: i });
+          }
+        }
+        
+        // Old B35: ranks 15-49
+        for (let i = 0; i < oldSongsB35.length; i++) {
+          const song = oldSongsB35[i];
+          const scoreRecord = scoresWithSongs.find(s => 
+            s.songId === song.songId && 
+            s.difficulty === song.difficulty
+          );
+          if (scoreRecord) {
+            rankUpdates.push({ id: scoreRecord.scoreId, rank: 15 + i });
+          }
+        }
+        
+        // Remaining songs: merge and sort by rating desc, start from rank 50
+        const remainingSongs = [...newSongsRemaining, ...oldSongsRemaining].sort((a, b) => b.rating - a.rating);
+        for (let i = 0; i < remainingSongs.length; i++) {
+          const song = remainingSongs[i];
+          const scoreRecord = scoresWithSongs.find(s => 
+            s.songId === song.songId && 
+            s.difficulty === song.difficulty
+          );
+          if (scoreRecord) {
+            rankUpdates.push({ id: scoreRecord.scoreId, rank: 50 + i });
+          }
+        }
+        
+        // Batch update ranks using CASE statement
+        if (rankUpdates.length > 0) {
+          const caseStatements = rankUpdates.map(
+            update => sql`WHEN ${userScores.id} = ${update.id} THEN ${update.rank}`
+          );
+          const ids = rankUpdates.map(update => update.id);
+          
+          await db
+            .update(userScores)
+            .set({
+              rank: sql`CASE ${sql.join(caseStatements, sql.raw(' '))} END`
+            })
+            .where(inArray(userScores.id, ids));
+        }
       }
 
       // Update the snapshot with the recalculated rating

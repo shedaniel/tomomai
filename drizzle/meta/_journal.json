@@ -176,6 +176,20 @@
       "when": 1762017417119,
       "tag": "0024_famous_sprite",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "6",
+      "when": 1762017813896,
+      "tag": "0025_wealthy_black_bolt",
+      "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "6",
+      "when": 1762017850589,
+      "tag": "0026_green_wendell_vaughn",
+      "breakpoints": true
     }
   ]
 }

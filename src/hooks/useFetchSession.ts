@@ -2,8 +2,9 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { trpc, trpcClient } from "@/lib/trpc-client";
 import { toast } from "sonner";
 import { Region, FetchSession } from "@/lib/types";
+import { Flags } from "@/lib/flags";
 
-export function useFetchSession(onFetchComplete?: () => void) {
+export function useFetchSession(onFetchComplete?: () => void, flags?: Flags) {
   const [currentSession, setCurrentSession] = useState<FetchSession | null>(null);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [lastFetchTime, setLastFetchTime] = useState<Date | null>(null);
@@ -97,8 +98,15 @@ export function useFetchSession(onFetchComplete?: () => void) {
   // Start data fetch with optional token (if no token, uses saved token)
   const startDataFetch = async (region: Region, token?: string): Promise<void> => {
     setFetchError(null);
+    
+    // Build flags array for fetch
+    const fetchFlags: string[] = [];
+    if (flags?.eventsCard) {
+      fetchFlags.push("eventsCard");
+    }
+    
     // Let the mutation error bubble up to the caller
-    await startFetchMutation.mutateAsync({ region, token });
+    await startFetchMutation.mutateAsync({ region, token, flags: fetchFlags });
   };
 
   // Start automatic fetch using saved token

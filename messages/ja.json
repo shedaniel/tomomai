@@ -106,8 +106,8 @@
           "description": "maimaiのプレイ回数を表示します。"
         },
         "showEvents": {
-          "label": "イベントを表示",
-          "description": "イベントの達成進捗を表示します。"
+          "label": "ちほーを表示",
+          "description": "ちほーの達成進捗を表示します。"
         },
         "showInSearch": {
           "label": "検索で表示",
@@ -152,7 +152,7 @@
       "songs": "楽曲",
       "recommendations": "おすすめ楽曲",
       "plates": "ネームプレート",
-      "map": "イベント",
+      "map": "ちほー",
       "exportImage": "エクスポート",
       "history": "履歴"
     },
@@ -214,6 +214,20 @@
       "achievement": "達成率",
       "version": "バージョン"
     }
+  },
+  "events": {
+    "title": "ちほー",
+    "areaEvents": "ちほー",
+    "eventAreaEvents": "イベントちほー",
+    "noEventsAvailable": "ちほーがありません",
+    "noAreaEvents": "ちほーがありません",
+    "noEventAreaEvents": "イベントちほーがありません",
+    "currentDistance": "累計距離",
+    "nextReward": "次の報酬まで",
+    "eventCompleted": "コンプリート",
+    "notStarted": "未開始",
+    "inProgress": "進行中",
+    "completed": "コンプリート"
   },
   "tokenDialog": {
     "title": "maimai 認証情報を更新",

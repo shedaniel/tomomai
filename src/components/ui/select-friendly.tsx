@@ -162,7 +162,7 @@ interface SelectContentProps {
 }
 
 function SelectContent({ children, label, className }: SelectContentProps) {
-  const { isMobile, sheetOpen } = useSelectContext()
+  const { isMobile } = useSelectContext()
 
   if (isMobile) {
     return (<>

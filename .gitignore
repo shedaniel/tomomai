@@ -45,3 +45,4 @@ next-env.d.ts
 # resources
 /imgs/**/*.**
 !/imgs/**/*.afphoto
+/public/res/preloaded/*.gz

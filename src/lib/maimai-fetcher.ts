@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { userTokens, userSnapshots, songs, userScores, fetchSessions } from "./schema";
+import { userTokens, userSnapshots, songs, userScores, fetchSessions, userEvents } from "./schema";
 import { eq, and } from "drizzle-orm";
 import { load } from "cheerio";
 import { randomUUID } from "crypto";
@@ -8,6 +8,8 @@ import { Agent } from "undici";
 import { FETCH_STATES, getStateForDifficulty } from "./fetch-states";
 import { appendFetchState } from "./fetch-states-server";
 import { normalizeName } from "./name-utils";
+import { splitSongs } from "./rating-calculator";
+import { SongWithScore } from "./types";
 
 export const JP_AGENT = new Agent({
   connect: {
@@ -1010,6 +1012,244 @@ interface ScoreData {
   fs: "none" | "sync" | "fs" | "fs+" | "fdx" | "fdx+";
 }
 
+async function fetchEventsData(cookies: string, region: "intl" | "jp", sessionId: string): Promise<{ areaEvents: EventData[], eventAreaEvents: EventAreaData[] }> {
+  const baseUrl = region === "intl" ? "https://maimaidx-eng.com" : "https://maimaidx.jp";
+  
+  console.log(`Starting events data fetch for ${region} region...`);
+
+  try {
+    // Fetch both area and event area concurrently
+    const [areaResponse, eventAreaResponse] = await Promise.all([
+      fetch(`${baseUrl}/maimai-mobile/map/`, {
+        method: "GET",
+        headers: {
+          "Cookie": cookies,
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+          "Referer": `${baseUrl}/maimai-mobile/`,
+        },
+        ...(region === "jp" ? { dispatcher: JP_AGENT } : {}),
+      }),
+      fetch(`${baseUrl}/maimai-mobile/map/eventMap/`, {
+        method: "GET",
+        headers: {
+          "Cookie": cookies,
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+          "Referer": `${baseUrl}/maimai-mobile/`,
+        },
+        ...(region === "jp" ? { dispatcher: JP_AGENT } : {}),
+      })
+    ]);
+
+    if (areaResponse.status !== 200 || eventAreaResponse.status !== 200) {
+      throw new Error(`Failed to fetch events data: area ${areaResponse.status}, event area ${eventAreaResponse.status}`);
+    }
+
+    const [areaHtml, eventAreaHtml] = await Promise.all([
+      areaResponse.text(),
+      eventAreaResponse.text()
+    ]);
+
+    // Parse area events
+    const areaEvents = parseAreaEvents(areaHtml);
+    console.log(`Parsed ${areaEvents.length} area events:`, areaEvents);
+
+    // Parse event area events
+    const eventAreaEvents = parseEventAreaEvents(eventAreaHtml, region);
+    console.log(`Parsed ${eventAreaEvents.length} event area events:`, eventAreaEvents);
+
+    return { areaEvents, eventAreaEvents };
+  } catch (error) {
+    console.error("Error fetching events data:", error);
+    throw error;
+  }
+}
+
+interface EventData {
+  name: string;
+  currentDistance: number;
+  nextRewardDistance: number | null;
+  state: "not_started" | "in_progress" | "completed";
+  imageUrl: string;
+}
+
+interface EventAreaData extends EventData {
+  eventPeriod: [number, number] | null; // [startTimestamp, endTimestamp]
+}
+
+// Parse event period string and extract start/end timestamps
+function parseEventPeriod(periodStr: string | null): [number, number] | null {
+  if (!periodStr) return null;
+  
+  // Match pattern: "Event period：YYYY/MM/DD HH:mm～YYYY/MM/DD HH:mm"
+  const match = periodStr.match(/Event period：(\d{4})\/(\d{2})\/(\d{2})\s+(\d{2}):(\d{2})～(\d{4})\/(\d{2})\/(\d{2})\s+(\d{2}):(\d{2})/);
+  
+  if (!match) {
+    console.warn(`Could not parse event period: ${periodStr}`);
+    return null;
+  }
+  
+  const [
+    ,
+    startYear, startMonth, startDay, startHour, startMin,
+    endYear, endMonth, endDay, endHour, endMin
+  ] = match;
+  
+  try {
+    const startDate = new Date(`${startYear}-${startMonth}-${startDay}T${startHour}:${startMin}:00+09:00`);
+    const endDate = new Date(`${endYear}-${endMonth}-${endDay}T${endHour}:${endMin}:00+09:00`);
+    
+    const startTimestamp = startDate.getTime();
+    const endTimestamp = endDate.getTime();
+    
+    return [startTimestamp, endTimestamp];
+  } catch (error) {
+    console.warn(`Failed to parse event period dates: ${error}`);
+    return null;
+  }
+}
+
+function parseAreaEvents(html: string): EventData[] {
+  const $ = load(html);
+  const events: EventData[] = [];
+
+  const elements = $(".m_10.m_t_0.f_0");
+  console.log(`Found ${elements.length} area elements`);
+
+  elements.each((index, element) => {
+    try {
+      const $element = $(element);
+
+      // Extract event name
+      const nameElement = $element.find(".map_name_block_inner");
+      const eventName = nameElement.text().trim();
+
+      // Extract current distance and parse as number
+      const basicBlock = $element.find(".basic_block");
+      const currentDistanceStr = basicBlock.text().trim();
+      const currentDistance = parseInt(currentDistanceStr.replace(/[^\d]/g, ''), 10) || 0;
+
+      // Extract image URL
+      const imageElement = $element.find("img.w_180");
+      let imageUrl = "";
+      if (imageElement.length > 0) {
+        const imageSrc = imageElement.attr("src");
+        if (imageSrc) {
+          imageUrl = imageSrc.startsWith("http") ? imageSrc : `https://maimaidx-eng.com${imageSrc}`;
+        }
+      }
+
+      // Extract next reward distance and state
+      let nextRewardDistance: number | null = null;
+      let state: "not_started" | "in_progress" | "completed" = "in_progress";
+
+      const f11Element = $element.find(".f_11");
+      if (f11Element.length > 0) {
+        const f14Element = f11Element.find(".f_14");
+        
+        if (f14Element.length === 0) {
+          // f_11 exists but f_14 doesn't - event not started by player
+          state = "not_started";
+        } else {
+          const rewardText = f14Element.text().trim();
+          
+          if (rewardText === "--") {
+            state = "completed";
+            nextRewardDistance = null;
+          } else {
+            nextRewardDistance = parseInt(rewardText, 10) || null;
+          }
+        }
+      }
+
+      events.push({
+        name: eventName,
+        currentDistance,
+        nextRewardDistance,
+        state,
+        imageUrl
+      });
+    } catch (error) {
+      console.error(`Error parsing area event ${index}:`, error);
+    }
+  });
+
+  return events;
+}
+
+function parseEventAreaEvents(html: string, region: "intl" | "jp" = "intl"): EventAreaData[] {
+  const $ = load(html);
+  const events: EventAreaData[] = [];
+  const baseUrl = region === "intl" ? "https://maimaidx-eng.com" : "https://maimaidx.jp";
+
+  const elements = $(".eventmap_container");
+  console.log(`Found ${elements.length} event area elements`);
+
+  elements.each((index, element) => {
+    try {
+      const $element = $(element);
+
+      // Extract event name
+      const nameElement = $element.find(".map_name_block_inner");
+      const eventName = nameElement.text().trim();
+
+      // Extract event period
+      const periodElement = $element.find(".t_r.f_11.white");
+      const eventPeriod = periodElement.text().trim() || null;
+
+      // Extract current distance and parse as number
+      const basicBlock = $element.find(".basic_block");
+      const currentDistanceStr = basicBlock.text().trim();
+      const currentDistance = parseInt(currentDistanceStr.replace(/[^\d]/g, ''), 10) || 0;
+
+      // Extract image URL
+      const imageElement = $element.find("img.w_180");
+      let imageUrl = "";
+      if (imageElement.length > 0) {
+        const imageSrc = imageElement.attr("src");
+        if (imageSrc) {
+          imageUrl = imageSrc.startsWith("http") ? imageSrc : `${baseUrl}${imageSrc}`;
+        }
+      }
+
+      // Extract next reward distance and state
+      let nextRewardDistance: number | null = null;
+      let state: "not_started" | "in_progress" | "completed" = "in_progress";
+
+      const f11Element = $element.find(".f_11");
+      if (f11Element.length > 0) {
+        const f14Element = f11Element.find(".f_14");
+        
+        if (f14Element.length === 0) {
+          // f_11 exists but f_14 doesn't - event not started by player
+          state = "not_started";
+        } else {
+          const rewardText = f14Element.text().trim();
+          
+          if (rewardText === "--") {
+            state = "completed";
+            nextRewardDistance = null;
+          } else {
+            nextRewardDistance = parseInt(rewardText, 10) || null;
+          }
+        }
+      }
+
+      events.push({
+        name: eventName,
+        currentDistance,
+        nextRewardDistance,
+        state,
+        imageUrl,
+        eventPeriod: parseEventPeriod(eventPeriod)
+      });
+    } catch (error) {
+      console.error(`Error parsing event area event ${index}:`, error);
+    }
+  });
+
+  return events;
+}
+
 async function extractPlayerData(region: "intl" | "jp", html: string, cookies: string): Promise<PlayerData> {
   const $ = load(html);
   const block = $('.see_through_block');
@@ -1195,6 +1435,94 @@ async function createUserSnapshot(
   return snapshotId;
 }
 
+/**
+ * Adds rank field to user score inserts based on rating calculation.
+ * Ranks are assigned as: 0-14 (new B15), 15-49 (old B35), 50+ (remaining)
+ */
+async function withRank(
+  scoreInserts: typeof userScores.$inferInsert[],
+  region: "intl" | "jp",
+  gameVersion: number
+): Promise<typeof userScores.$inferInsert[]> {
+  if (scoreInserts.length === 0) {
+    return scoreInserts;
+  }
+
+  console.log(`Calculating ranks for ${scoreInserts.length} scores...`);
+
+  // Get full song data for all songs
+  const fullSongs = await db.query.songs.findMany({
+    where: and(
+      eq(songs.region, region),
+      eq(songs.gameVersion, gameVersion)
+    ),
+  });
+
+  const fullSongMap = new Map(fullSongs.map(s => [s.id, s]));
+
+  // Convert score inserts to SongWithScore format for rating calculation
+  const songsForRanking: SongWithScore[] = [];
+  for (const scoreInsert of scoreInserts) {
+    const fullSong = fullSongMap.get(scoreInsert.songId);
+    if (!fullSong) continue;
+
+    songsForRanking.push({
+      songId: fullSong.id,
+      songName: fullSong.songName,
+      artist: fullSong.artist,
+      cover: fullSong.cover,
+      difficulty: fullSong.difficulty as any,
+      level: fullSong.level,
+      levelPrecise: fullSong.levelPrecise,
+      type: fullSong.type as any,
+      genre: fullSong.genre,
+      addedVersion: fullSong.addedVersion,
+      achievement: scoreInsert.achievement,
+      dxScore: scoreInsert.dxScore,
+      fc: scoreInsert.fc as any,
+      fs: scoreInsert.fs as any,
+    });
+  }
+
+  // Calculate rankings using splitSongs
+  const { newSongsB15, oldSongsB35, newSongsRemaining, oldSongsRemaining } = splitSongs(songsForRanking, gameVersion);
+
+  // Create a map of songId+difficulty -> rank
+  const rankMap = new Map<string, number>();
+
+  // New B15: ranks 0-14
+  for (let i = 0; i < newSongsB15.length; i++) {
+    const song = newSongsB15[i];
+    rankMap.set(`${song.songId}-${song.difficulty}`, i);
+  }
+
+  // Old B35: ranks 15-49
+  for (let i = 0; i < oldSongsB35.length; i++) {
+    const song = oldSongsB35[i];
+    rankMap.set(`${song.songId}-${song.difficulty}`, 15 + i);
+  }
+
+  // Remaining: merge and sort by rating desc, start from rank 50
+  const remainingSongs = [...newSongsRemaining, ...oldSongsRemaining].sort((a, b) => b.rating - a.rating);
+  for (let i = 0; i < remainingSongs.length; i++) {
+    const song = remainingSongs[i];
+    rankMap.set(`${song.songId}-${song.difficulty}`, 50 + i);
+  }
+
+  // Assign ranks to score inserts
+  for (const scoreInsert of scoreInserts) {
+    const fullSong = fullSongMap.get(scoreInsert.songId);
+    if (fullSong) {
+      const rank = rankMap.get(`${fullSong.id}-${fullSong.difficulty}`);
+      scoreInsert.rank = rank ?? null;
+    }
+  }
+
+  console.log(`Ranks calculated. B15: ${newSongsB15.length}, B35: ${oldSongsB35.length}, Remaining: ${remainingSongs.length}`);
+
+  return scoreInserts;
+}
+
 async function insertUserScores(
   snapshotId: string,
   region: "intl" | "jp",
@@ -1285,7 +1613,7 @@ async function insertUserScores(
   
   if (scoreInserts.length > 0) {
     console.log(`Batch inserting ${scoreInserts.length} user scores`);
-    await db.insert(userScores).values(scoreInserts);
+    await db.insert(userScores).values(await withRank(scoreInserts, region, gameVersion));
     console.log(`Successfully inserted ${scoreInserts.length} user scores`);
   } else {
     console.warn("No valid scores to insert");
@@ -1311,10 +1639,65 @@ async function insertUserScores(
   }
 }
 
+async function insertUserEvents(
+  snapshotId: string,
+  areaEvents: EventData[],
+  eventAreaEvents: EventAreaData[]
+): Promise<void> {
+  console.log(`Starting user events insertion for snapshot ${snapshotId}`);
+  
+  const eventInserts: typeof userEvents.$inferInsert[] = [];
+  
+  // Add area events
+  for (const event of areaEvents) {
+    eventInserts.push({
+      id: randomUUID(),
+      snapshotId: snapshotId,
+      eventType: "area",
+      name: event.name,
+      currentDistance: event.currentDistance,
+      nextRewardDistance: event.nextRewardDistance,
+      state: event.state,
+      imageUrl: event.imageUrl,
+      eventPeriodStart: null,
+      eventPeriodEnd: null,
+    });
+  }
+  
+  // Add event area events
+  for (const event of eventAreaEvents) {
+    eventInserts.push({
+      id: randomUUID(),
+      snapshotId: snapshotId,
+      eventType: "eventArea",
+      name: event.name,
+      currentDistance: event.currentDistance,
+      nextRewardDistance: event.nextRewardDistance,
+      state: event.state,
+      imageUrl: event.imageUrl,
+      eventPeriodStart: event.eventPeriod ? new Date(event.eventPeriod[0]) : null,
+      eventPeriodEnd: event.eventPeriod ? new Date(event.eventPeriod[1]) : null,
+    });
+  }
+  
+  console.log(`Total events to insert: ${eventInserts.length}`);
+  
+  if (eventInserts.length === 0) {
+    console.warn("No events to insert");
+    return;
+  }
+  
+  // Batch insert all events
+  console.log(`Batch inserting ${eventInserts.length} user events`);
+  await db.insert(userEvents).values(eventInserts);
+  console.log(`Successfully inserted ${eventInserts.length} user events`);
+}
+
 export async function fetchMaimaiData(
   userId: string,
   region: "intl" | "jp",
-  sessionId: string
+  sessionId: string,
+  flags: string[] = []
 ): Promise<void> {
   // Get the user's token from database
   const tokenRecord = await db.query.userTokens.findFirst({
@@ -1391,7 +1774,22 @@ export async function fetchMaimaiData(
     }
 
     // Fetch events data
+    let areaEvents: EventData[] = [];
+    let eventAreaEvents: EventAreaData[] = [];
     
+    if (flags.includes("eventsCard")) {
+      try {
+        console.log("Fetching events data...");
+        const events = await fetchEventsData(cookies, region, sessionId);
+        areaEvents = events.areaEvents;
+        eventAreaEvents = events.eventAreaEvents;
+        console.log("Events data fetched successfully");
+      } catch (error) {
+        console.error("Failed to fetch events data, continuing without events:", error);
+        // Don't throw error - continue without events
+      }
+    }
+
     // Create user snapshot with real player data
     const snapshotId = await createUserSnapshot(userId, region, playerData);
     
@@ -1399,6 +1797,13 @@ export async function fetchMaimaiData(
     console.log("Starting user scores insertion...");
     await insertUserScores(snapshotId, region, sessionId, allSongsData);
     console.log("User scores insertion completed");
+
+    // Insert user events into database if we have events
+    if (areaEvents.length > 0 || eventAreaEvents.length > 0) {
+      console.log("Starting user events insertion...");
+      await insertUserEvents(snapshotId, areaEvents, eventAreaEvents);
+      console.log("User events insertion completed");
+    }
     
     console.log("Player data processed and snapshot created successfully");
     console.log(`Session ID: ${sessionId}`);

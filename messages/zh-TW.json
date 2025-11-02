@@ -215,6 +215,20 @@
       "version": "版本"
     }
   },
+  "events": {
+    "title": "活動",
+    "areaEvents": "地圖",
+    "eventAreaEvents": "活動地圖",
+    "noEventsAvailable": "無可用活動",
+    "noAreaEvents": "無地圖",
+    "noEventAreaEvents": "無活動地圖",
+    "currentDistance": "目前距離",
+    "nextReward": "下個獎勵",
+    "eventCompleted": "活動完成",
+    "notStarted": "未開始",
+    "inProgress": "進行中",
+    "completed": "已完成"
+  },
   "tokenDialog": {
     "title": "更新 maimai 驗證",
     "japanDescription": "輸入你的 SEGA 帳戶憑證。",

@@ -2,16 +2,16 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { Region } from "@/lib/types";
+import { Slider } from "@/components/ui/slider";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { trpc } from "@/lib/trpc-client";
+import { Region } from "@/lib/types";
 import { cn, createSafeMaimaiImageUrl } from "@/lib/utils";
 import { TrendingUp } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
-import { useMemo, useRef, useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Slider } from "@/components/ui/slider";
 
 interface HistoryCardProps {
   region: Region;

@@ -215,6 +215,20 @@
       "version": "Version"
     }
   },
+  "events": {
+    "title": "Events",
+    "areaEvents": "Area Events",
+    "eventAreaEvents": "Event Area Events",
+    "noEventsAvailable": "No events available",
+    "noAreaEvents": "No area events available",
+    "noEventAreaEvents": "No event area events available",
+    "currentDistance": "Current Distance",
+    "nextReward": "Next Reward in",
+    "eventCompleted": "Event Completed",
+    "notStarted": "Not Started",
+    "inProgress": "In Progress",
+    "completed": "Completed"
+  },
   "tokenDialog": {
     "title": "Update maimai authentication",
     "japanDescription": "Enter your SEGA account credentials for the Japan region.",

@@ -150,10 +150,26 @@ export const userScores = sqliteTable("user_scores", {
   dxScore: integer("dxScore").notNull(),
   fc: text("fc", { enum: ["none", "fc", "fc+", "ap", "ap+"] }).notNull(),
   fs: text("fs", { enum: ["none", "sync", "fs", "fs+", "fdx", "fdx+"] }).notNull(),
+  rank: integer("rank"), // Rank of the song in the snapshot (0-based). null = uncalculated, 0-49 = B50, 50+ = not in B50
 }, (table) => [
-  index("user_scores_snapshotid_idx").on(table.snapshotId),
+  index("user_scores_snapshotid_rank_idx").on(table.snapshotId, table.rank),
   index("user_scores_snapshotid_songid_idx").on(table.snapshotId, table.songId),
   index("user_scores_songid_idx").on(table.songId),
+]);
+
+export const userEvents = sqliteTable("user_events", {
+  id: text("id").primaryKey(),
+  snapshotId: text("snapshotId").notNull().references(() => userSnapshots.id, { onDelete: "cascade" }),
+  eventType: text("eventType", { enum: ["area", "eventArea"] }).notNull(), // area or eventArea
+  name: text("name").notNull(),
+  currentDistance: integer("currentDistance").notNull(),
+  nextRewardDistance: integer("nextRewardDistance"), // nullable
+  state: text("state", { enum: ["not_started", "in_progress", "completed"] }).notNull(),
+  imageUrl: text("imageUrl").notNull(),
+  eventPeriodStart: integer("eventPeriodStart", { mode: "timestamp" }), // nullable for area events
+  eventPeriodEnd: integer("eventPeriodEnd", { mode: "timestamp" }), // nullable for area events
+}, (table) => [
+  index("user_events_snapshotid_idx").on(table.snapshotId),
 ]);
 
 export const detailedScores = sqliteTable("detailed_scores", {

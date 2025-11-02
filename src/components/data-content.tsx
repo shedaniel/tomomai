@@ -11,6 +11,7 @@ import { SongsCard } from "./songs-card";
 import { RecommendationCard } from "./recommendation-card";
 import { ExportImageCard } from "./export-image-card";
 import { HistoryCard } from "./history-card";
+import { EventsCard } from "./events-card";
 import { Flags } from "@/lib/flags";
 
 interface DataContentProps {
@@ -213,15 +214,11 @@ export function DataContent({
         )}
         {privacySettings.showEvents && (
           <TabsContent value="map" className="mt-0 flex-1 min-w-0">
-            <div className="p-8 text-center w-full h-[calc(100vh-20rem)] flex flex-col items-center justify-center">
-              <Map className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-              <h3 className="text-lg font-medium mb-2">{t('dataContent.tabs.map')}</h3>
-              <p className="text-muted-foreground">Coming soon...</p>
-            </div>
+            <EventsCard selectedSnapshotData={selectedSnapshotData} />
           </TabsContent>
         )}
         <TabsContent value="exportImage" className="mt-0 flex-1 min-w-0">
-          <ExportImageCard selectedSnapshotData={selectedSnapshotData} visitableProfileAt={visitableProfileAt} />
+          <ExportImageCard selectedSnapshotData={selectedSnapshotData} />
         </TabsContent>
       </Tabs>
     )
