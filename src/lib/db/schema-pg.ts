@@ -100,8 +100,8 @@ export const invites = pgTable("invites", {
   createdBy: text("createdBy").notNull().references(() => user.id, { onDelete: "cascade" }),
   claimedBy: text("claimedBy").references(() => user.id, { onDelete: "cascade" }),
   createdAt: timestamp("createdAt", { precision: 0 }).notNull(),
-  claimedAt: timestamp("claimedAt"),
-  expiresAt: timestamp("expiresAt").notNull(),
+  claimedAt: timestamp("claimedAt", { precision: 0 }),
+  expiresAt: timestamp("expiresAt", { precision: 0 }).notNull(),
   revoked: boolean("revoked").notNull().default(false),
 });
 
@@ -123,8 +123,8 @@ export const fetchSessions = pgTable("fetch_sessions", {
   userId: text("userId").notNull().references(() => user.id, { onDelete: "cascade" }),
   region: regionEnum("region").notNull(),
   status: fetchStatusEnum("status").notNull(),
-  startedAt: timestamp("startedAt").notNull(),
-  completedAt: timestamp("completedAt"),
+  startedAt: timestamp("startedAt", { precision: 0 }).notNull(),
+  completedAt: timestamp("completedAt", { precision: 0 }),
   errorMessage: text("errorMessage"),
   statusStates: text("statusStates"), // Comma-separated list of completed states
   extraData: jsonb("extraData"),
@@ -138,7 +138,7 @@ export const userSnapshots = pgTable("user_snapshots", {
   publicId: varchar("publicId", { length: 21 }).notNull().unique(), // Public-facing nanoid
   userId: text("userId").notNull().references(() => user.id, { onDelete: "cascade" }),
   region: regionEnum("region").notNull(),
-  fetchedAt: timestamp("fetchedAt").notNull(),
+  fetchedAt: timestamp("fetchedAt", { precision: 0 }).notNull(),
   gameVersion: smallint("gameVersion").notNull(),
   rating: smallint("rating").notNull(), // 0-20000
   courseRankUrl: text("courseRankUrl").notNull(),
@@ -200,8 +200,8 @@ export const userEvents = pgTable("user_events", {
   nextRewardDistance: integer("nextRewardDistance"), // nullable, 4 bytes
   state: eventStateEnum("state").notNull(),
   imageUrl: text("imageUrl").notNull(),
-  eventPeriodStart: timestamp("eventPeriodStart"), // nullable for area events
-  eventPeriodEnd: timestamp("eventPeriodEnd"), // nullable for area events
+  eventPeriodStart: timestamp("eventPeriodStart", { precision: 0 }), // nullable for area events
+  eventPeriodEnd: timestamp("eventPeriodEnd", { precision: 0 }), // nullable for area events
 }, (table) => [
   index("user_events_snapshotid_idx").on(table.snapshotId),
 ]);

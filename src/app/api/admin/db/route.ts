@@ -135,8 +135,9 @@ async function normalize(searchParams: URLSearchParams) {
             const userScoresUpdateResult = await tx
               .update(userScores)
               .set({ songId: masterSong.id })
-              .where(inArray(userScores.songId, duplicateIdsToCleanUp));
-            console.log(`    Updated ${userScoresUpdateResult.rowCount} userScores records.`);
+              .where(inArray(userScores.songId, duplicateIdsToCleanUp))
+              .returning({ id: userScores.id });
+            console.log(`    Updated ${userScoresUpdateResult.length} userScores records.`);
           } else {
             console.log(`    [DRY RUN] Would update userScores referencing duplicates.`);
           }
@@ -146,8 +147,9 @@ async function normalize(searchParams: URLSearchParams) {
           if (MODIFY_DATABASE) {
             const deleteSongsResult = await tx
               .delete(songs)
-              .where(inArray(songs.id, duplicateIdsToCleanUp));
-            console.log(`    Deleted ${deleteSongsResult.rowCount} duplicate song records.`);
+              .where(inArray(songs.id, duplicateIdsToCleanUp))
+              .returning({ id: songs.id });
+            console.log(`    Deleted ${deleteSongsResult.length} duplicate song records.`);
           } else {
             console.log(`    [DRY RUN] Would delete ${duplicateIdsToCleanUp.length} duplicate song records.`);
           }
@@ -162,8 +164,9 @@ async function normalize(searchParams: URLSearchParams) {
             const masterNameUpdateResult = await tx
               .update(songs)
               .set({ songName: normalizedSongName })
-              .where(eq(songs.id, masterSong.id));
-            console.log(`    Updated ${masterNameUpdateResult.rowCount} master song name record.`);
+              .where(eq(songs.id, masterSong.id))
+              .returning({ id: songs.id });
+            console.log(`    Updated ${masterNameUpdateResult.length} master song name record.`);
           } else {
             console.log(`    [DRY RUN] Would update master song name.`);
           }
@@ -375,7 +378,7 @@ async function updateB50(searchParams: URLSearchParams) {
 
           // Build CASE statement for batch update
           const caseStatements = batch.map(
-            update => sql`WHEN ${userScores.id} = ${update.id} THEN ${update.rank}`
+            update => sql`WHEN ${update.id} THEN ${update.rank}`
           );
           
           const ids = batch.map(update => update.id);
@@ -384,7 +387,7 @@ async function updateB50(searchParams: URLSearchParams) {
           await tx
             .update(userScores)
             .set({
-              rank: sql`CASE ${sql.join(caseStatements, sql.raw(' '))} END`
+              rank: sql`(CASE ${userScores.id} ${sql.join(caseStatements, sql.raw(' '))} END)::smallint`
             })
             .where(inArray(userScores.id, ids));
 

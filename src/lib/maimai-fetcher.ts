@@ -1516,10 +1516,16 @@ async function withRank(
   // Assign ranks to score inserts
   for (const scoreInsert of scoreInserts) {
     const fullSong = fullSongMap.get(scoreInsert.songId);
-    if (fullSong) {
-      const rank = rankMap.get(`${fullSong.id}-${fullSong.difficulty}`);
-      scoreInsert.rank = rank ?? null;
+    if (!fullSong) {
+      throw new Error(`Full song data not found for songId: ${scoreInsert.songId}`);
     }
+    
+    const rank = rankMap.get(`${fullSong.id}-${fullSong.difficulty}`);
+    if (rank === undefined) {
+      throw new Error(`Rank not calculated for song: ${fullSong.songName} (${fullSong.difficulty})`);
+    }
+    
+    scoreInsert.rank = rank;
   }
 
   console.log(`Ranks calculated. B15: ${newSongsB15.length}, B35: ${oldSongsB35.length}, Remaining: ${remainingSongs.length}`);

@@ -35,10 +35,9 @@
 import { config as dotenvConfig } from "dotenv";
 import { readFileSync, writeFileSync, appendFileSync } from "fs";
 import { join } from "path";
-import pkg from "pg";
+import postgres from "postgres";
 import { nanoid } from "nanoid";
 import crypto from "crypto";
-const { Pool } = pkg;
 
 dotenvConfig({ path: ".env.local" });
 
@@ -252,8 +251,8 @@ async function uploadToPostgres() {
   console.log("~...............................................~");
   console.log("Connecting to PostgreSQL...");
   
-  const pool = new Pool({
-    connectionString,
+  const sql = postgres(connectionString, {
+    prepare: false,
   });
   
   try {
@@ -280,7 +279,7 @@ async function uploadToPostgres() {
     const truncateOrder = [...importOrder].reverse();
     for (const tableName of truncateOrder) {
       try {
-        await pool.query(`TRUNCATE TABLE "${tableName}" CASCADE`);
+        await sql.unsafe(`TRUNCATE TABLE "${tableName}" CASCADE`);
         console.log(`  ✓ Truncated ${tableName}`);
       } catch (err) {
         console.log(`  ⚠ Could not truncate ${tableName}: ${err.message}`);
@@ -303,325 +302,372 @@ async function uploadToPostgres() {
       
       console.log(`Importing ${tableName}: ${rows.length} rows...`);
       
-      // Special handling for user table - track imported user IDs
+      // Special handling for user table - track imported user IDs (batched)
       if (tableName === 'user') {
-        for (let i = 0; i < rows.length; i++) {
-          const row = rows[i];
-          const transformedRow = transformRow(row, tableData, tableName);
+        const batchSize = 500;
+        for (let i = 0; i < rows.length; i += batchSize) {
+          const batch = rows.slice(i, i + batchSize);
+          const batchData = [];
+          const batchOriginalIds = [];
           
-          if (!transformedRow || transformedRow._skip) {
-            if (transformedRow?._skip) {
-              logError(`User ${row.id} skipped during transform`, {
-                userId: row.id,
-                reason: transformedRow._reason,
-                table: 'user'
-              });
+          for (const row of batch) {
+            const transformedRow = transformRow(row, tableData, tableName);
+            
+            if (!transformedRow || transformedRow._skip) {
+              if (transformedRow?._skip) {
+                logError(`User ${row.id} skipped during transform`, {
+                  userId: row.id,
+                  reason: transformedRow._reason,
+                  table: 'user'
+                });
+              }
+              totalSkipped++;
+              continue;
             }
-            totalSkipped++;
-            continue;
+            
+            batchData.push(transformedRow);
+            batchOriginalIds.push(row.id);
           }
           
-          const columns = Object.keys(transformedRow).filter(k => !k.startsWith('_'));
-          const columnNames = columns.map(col => `"${col}"`).join(', ');
-          const placeholders = columns.map((_, idx) => `$${idx + 1}`).join(', ');
-          const values = columns.map(col => transformedRow[col]);
+          if (batchData.length > 0) {
+            const columns = Object.keys(batchData[0]).filter(k => !k.startsWith('_'));
+            const columnNames = columns.map(col => `"${col}"`).join(', ');
+            
+            // Build multi-row VALUES
+            const valueSets = [];
+            const allValues = [];
+            let paramIndex = 1;
+            
+            for (const row of batchData) {
+              const rowPlaceholders = columns.map(() => `$${paramIndex++}`).join(', ');
+              valueSets.push(`(${rowPlaceholders})`);
+              allValues.push(...columns.map(col => row[col]));
+            }
+            
+            const query = `INSERT INTO "${tableName}" (${columnNames}) VALUES ${valueSets.join(', ')}`;
+            
+            try {
+              await sql.unsafe(query, allValues);
+              batchOriginalIds.forEach(id => importedUserIds.add(id));
+              totalInserted += batchData.length;
+            } catch (err) {
+              logError(`Error inserting user batch (batch size: ${batchData.length})`, {
+                error: err.message,
+                sqlState: err.code,
+                detail: err.detail,
+                constraint: err.constraint,
+                batchSize: batchData.length
+              });
+              totalSkipped += batchData.length;
+              skipReasons.other += batchData.length;
+            }
+          }
           
-          const query = `INSERT INTO "${tableName}" (${columnNames}) VALUES (${placeholders})`;
-          
-           try {
-             await pool.query(query, values);
-             importedUserIds.add(row.id); // Track the user ID
-             totalInserted++;
-             
-             if ((i + 1) % 100 === 0 || i === rows.length - 1) {
-               process.stdout.write(`\r  Progress: ${i + 1}/${rows.length}`);
-             }
-           } catch (err) {
-             logError(`Error inserting user ${row.id}`, {
-               userId: row.id,
-               error: err.message,
-               sqlState: err.code,
-               detail: err.detail,
-               constraint: err.constraint,
-               rowData: transformedRow
-             });
-             totalSkipped++;
-             skipReasons.other++;
-             // Don't throw - continue with other users but log clearly
-           }
+          process.stdout.write(`\r  Progress: ${Math.min(i + batchSize, rows.length)}/${rows.length}`);
         }
         
         console.log(`\r  ✓ ${tableName}: ${totalInserted} rows imported, ${totalSkipped} skipped`);
         continue;
       }
       
-      // Special handling for songs table - dual ID system (bigint + publicId)
+      // Special handling for songs table - dual ID system (bigint + publicId) - batched
       if (tableName === 'songs') {
-        for (let i = 0; i < rows.length; i++) {
-          const row = rows[i];
-          const oldId = row.id; // Store the old text ID
+        const batchSize = 500;
+        for (let i = 0; i < rows.length; i += batchSize) {
+          const batch = rows.slice(i, i + batchSize);
+          const batchData = [];
+          const batchOldIds = [];
           
-          // Transform the row (excluding the old ID)
-          const transformedRow = transformRow(row, tableData, tableName);
-          
-          if (!transformedRow || transformedRow._skip) {
-            logError(`Song ${oldId} skipped during transform`, {
-              songId: oldId,
-              songName: row.songName,
-              difficulty: row.difficulty,
-              reason: transformedRow?._reason || 'Unknown reason'
-            });
-            totalSkipped++;
-            continue;
-          }
-          
-          // Generate a new publicId
-          transformedRow.publicId = nanoid();
-          
-          // Build INSERT query with RETURNING to get the new auto-generated ID
-          const columns = Object.keys(transformedRow).filter(k => !k.startsWith('_'));
-          const columnNames = columns.map(col => `"${col}"`).join(', ');
-          const placeholders = columns.map((_, idx) => `$${idx + 1}`).join(', ');
-          const values = columns.map(col => transformedRow[col]);
-          
-          const query = `INSERT INTO "${tableName}" (${columnNames}) VALUES (${placeholders}) RETURNING id`;
-          
-           try {
-             const result = await pool.query(query, values);
-             const newId = result.rows[0].id;
-             
-             // Store the mapping from old ID to new ID
-             songIdMap.set(oldId, newId);
-             importedSongIds.add(oldId); // Track the old ID for validation
-             totalInserted++;
-             
-             if ((i + 1) % 100 === 0 || i === rows.length - 1) {
-               process.stdout.write(`\r  Progress: ${i + 1}/${rows.length}`);
-             }
-           } catch (err) {
-             logError(`Error inserting song (old ID: ${oldId})`, {
-               songId: oldId,
-               songName: row.songName,
-               difficulty: row.difficulty,
-               error: err.message,
-               sqlState: err.code,
-               detail: err.detail,
-               constraint: err.constraint,
-               columns: Object.keys(transformedRow),
-               sampleData: Object.entries(transformedRow).slice(0, 5).reduce((obj, [k, v]) => ({ ...obj, [k]: v }), {})
-             });
-             totalSkipped++;
-             skipReasons.other++;
-           }
-        }
-        
-        console.log(`\r  ✓ ${tableName}: ${totalInserted} rows imported (ID mapping created), ${totalSkipped} skipped`);
-        continue;
-      }
-      
-      // Special handling for user_snapshots - need to map old IDs to new IDs
-      if (tableName === 'user_snapshots') {
-        for (let i = 0; i < rows.length; i++) {
-          const row = rows[i];
-          const oldId = row.id; // Store the old text ID
-          
-          // Transform the row (excluding the old ID)
-          const transformedRow = transformRow(row, tableData, tableName);
-          
-          if (!transformedRow || transformedRow._skip) {
-            logError(`Snapshot ${oldId} skipped during transform`, {
-              snapshotId: oldId,
-              userId: row.userId,
-              region: row.region,
-              reason: transformedRow?._reason || 'Unknown reason'
-            });
-            totalSkipped++;
-            continue;
-          }
-          
-          // Generate a new publicId
-          transformedRow.publicId = nanoid();
-          
-          // Build INSERT query with RETURNING to get the new auto-generated ID
-          const columns = Object.keys(transformedRow).filter(k => !k.startsWith('_'));
-          const columnNames = columns.map(col => `"${col}"`).join(', ');
-          const placeholders = columns.map((_, idx) => `$${idx + 1}`).join(', ');
-          const values = columns.map(col => transformedRow[col]);
-          
-          const query = `INSERT INTO "${tableName}" (${columnNames}) VALUES (${placeholders}) RETURNING id`;
-          
-          try {
-            const result = await pool.query(query, values);
-            const newId = result.rows[0].id;
+          for (const row of batch) {
+            const oldId = row.id;
+            const transformedRow = transformRow(row, tableData, tableName);
             
-            // Store the mapping from old ID to new ID
-            snapshotIdMap.set(oldId, newId);
-            totalInserted++;
-            
-            if ((i + 1) % 100 === 0 || i === rows.length - 1) {
-              process.stdout.write(`\r  Progress: ${i + 1}/${rows.length}`);
-            }
-          } catch (err) {
-            logError(`Error inserting snapshot (old ID: ${oldId})`, {
-              snapshotId: oldId,
-              userId: transformedRow.userId,
-              region: transformedRow.region,
-              error: err.message,
-              sqlState: err.code,
-              detail: err.detail,
-              constraint: err.constraint,
-              columns: Object.keys(transformedRow),
-              sampleData: Object.entries(transformedRow).slice(0, 5).reduce((obj, [k, v]) => ({ ...obj, [k]: v }), {})
-            });
-            totalSkipped++;
-            skipReasons.other++;
-          }
-        }
-        
-        console.log(`\r  ✓ ${tableName}: ${totalInserted} rows imported (ID mapping created), ${totalSkipped} skipped`);
-        continue;
-      }
-      
-      // Special handling for fetch_sessions - dual ID system (bigint + publicId)
-      if (tableName === 'fetch_sessions') {
-        for (let i = 0; i < rows.length; i++) {
-          const row = rows[i];
-          const oldId = row.id; // Store the old text ID
-          
-          // Transform the row (excluding the old ID)
-          const transformedRow = transformRow(row, tableData, tableName);
-          
-          if (!transformedRow || transformedRow._skip) {
-            logError(`Fetch session ${oldId} skipped during transform`, {
-              sessionId: oldId,
-              userId: row.userId,
-              region: row.region,
-              reason: transformedRow?._reason || 'Unknown reason'
-            });
-            totalSkipped++;
-            continue;
-          }
-          
-          // Generate a new publicId
-          transformedRow.publicId = nanoid();
-          
-          // Build INSERT query with RETURNING to get the new auto-generated ID
-          const columns = Object.keys(transformedRow).filter(k => !k.startsWith('_'));
-          const columnNames = columns.map(col => `"${col}"`).join(', ');
-          const placeholders = columns.map((_, idx) => `$${idx + 1}`).join(', ');
-          const values = columns.map(col => transformedRow[col]);
-          
-          const query = `INSERT INTO "${tableName}" (${columnNames}) VALUES (${placeholders}) RETURNING id`;
-          
-          try {
-            const result = await pool.query(query, values);
-            const newId = result.rows[0].id;
-            
-            // Store the mapping from old ID to new ID
-            fetchSessionIdMap.set(oldId, newId);
-            totalInserted++;
-            
-            if ((i + 1) % 100 === 0 || i === rows.length - 1) {
-              process.stdout.write(`\r  Progress: ${i + 1}/${rows.length}`);
-            }
-          } catch (err) {
-            logError(`Error inserting fetch session (old ID: ${oldId})`, {
-              sessionId: oldId,
-              userId: transformedRow.userId,
-              region: transformedRow.region,
-              error: err.message,
-              sqlState: err.code,
-              detail: err.detail,
-              constraint: err.constraint,
-              columns: Object.keys(transformedRow),
-              sampleData: Object.entries(transformedRow).slice(0, 5).reduce((obj, [k, v]) => ({ ...obj, [k]: v }), {})
-            });
-            totalSkipped++;
-            skipReasons.other++;
-          }
-        }
-        
-        console.log(`\r  ✓ ${tableName}: ${totalInserted} rows imported (ID mapping created), ${totalSkipped} skipped`);
-        continue;
-      }
-      
-      // Special handling for user_tokens - encrypt tokens before insertion
-      if (tableName === 'user_tokens') {
-        for (let i = 0; i < rows.length; i++) {
-          const row = rows[i];
-          
-          // Transform the row (excluding the old ID)
-          const transformedRow = transformRow(row, tableData, tableName);
-          
-          if (!transformedRow || transformedRow._skip) {
-            logError(`User token skipped during transform`, {
-              userId: row.userId,
-              region: row.region,
-              reason: transformedRow?._reason || 'Unknown reason'
-            });
-            totalSkipped++;
-            continue;
-          }
-          
-          // Encrypt the token before inserting
-          if (transformedRow.token) {
-            try {
-              transformedRow.token = encryptToken(transformedRow.token);
-            } catch (err) {
-              logError(`Failed to encrypt token`, {
-                userId: row.userId,
-                region: row.region,
-                error: err.message
+            if (!transformedRow || transformedRow._skip) {
+              logError(`Song ${oldId} skipped during transform`, {
+                songId: oldId,
+                songName: row.songName,
+                difficulty: row.difficulty,
+                reason: transformedRow?._reason || 'Unknown reason'
               });
               totalSkipped++;
-              skipReasons.other++;
               continue;
             }
-          }
-          
-          // Build INSERT query
-          const columns = Object.keys(transformedRow).filter(k => !k.startsWith('_'));
-          const columnNames = columns.map(col => `"${col}"`).join(', ');
-          const placeholders = columns.map((_, idx) => `$${idx + 1}`).join(', ');
-          const values = columns.map(col => transformedRow[col]);
-          
-          const query = `INSERT INTO "${tableName}" (${columnNames}) VALUES (${placeholders})`;
-          
-          try {
-            await pool.query(query, values);
-            totalInserted++;
             
-            if ((i + 1) % 100 === 0 || i === rows.length - 1) {
-              process.stdout.write(`\r  Progress: ${i + 1}/${rows.length}`);
-            }
-          } catch (err) {
-            logError(`Error inserting user token`, {
-              userId: transformedRow.userId,
-              region: transformedRow.region,
-              error: err.message,
-              sqlState: err.code,
-              detail: err.detail,
-              constraint: err.constraint
-            });
-            totalSkipped++;
-            skipReasons.other++;
+            transformedRow.publicId = nanoid();
+            batchData.push(transformedRow);
+            batchOldIds.push(oldId);
           }
+          
+          if (batchData.length > 0) {
+            const columns = Object.keys(batchData[0]).filter(k => !k.startsWith('_'));
+            const columnNames = columns.map(col => `"${col}"`).join(', ');
+            
+            const valueSets = [];
+            const allValues = [];
+            let paramIndex = 1;
+            
+            for (const row of batchData) {
+              const rowPlaceholders = columns.map(() => `$${paramIndex++}`).join(', ');
+              valueSets.push(`(${rowPlaceholders})`);
+              allValues.push(...columns.map(col => row[col]));
+            }
+            
+            const query = `INSERT INTO "${tableName}" (${columnNames}) VALUES ${valueSets.join(', ')} RETURNING id`;
+            
+            try {
+              const result = await sql.unsafe(query, allValues);
+              result.forEach((row, idx) => {
+                songIdMap.set(batchOldIds[idx], row.id);
+                importedSongIds.add(batchOldIds[idx]);
+              });
+              totalInserted += batchData.length;
+            } catch (err) {
+              logError(`Error inserting song batch (batch size: ${batchData.length})`, {
+                error: err.message,
+                sqlState: err.code,
+                detail: err.detail,
+                constraint: err.constraint,
+                batchSize: batchData.length
+              });
+              totalSkipped += batchData.length;
+              skipReasons.other += batchData.length;
+            }
+          }
+          
+          process.stdout.write(`\r  Progress: ${Math.min(i + batchSize, rows.length)}/${rows.length}`);
+        }
+        
+        console.log(`\r  ✓ ${tableName}: ${totalInserted} rows imported (ID mapping created), ${totalSkipped} skipped`);
+        continue;
+      }
+      
+      // Special handling for user_snapshots - need to map old IDs to new IDs (batched)
+      if (tableName === 'user_snapshots') {
+        const batchSize = 500;
+        for (let i = 0; i < rows.length; i += batchSize) {
+          const batch = rows.slice(i, i + batchSize);
+          const batchData = [];
+          const batchOldIds = [];
+          
+          for (const row of batch) {
+            const oldId = row.id;
+            const transformedRow = transformRow(row, tableData, tableName);
+            
+            if (!transformedRow || transformedRow._skip) {
+              logError(`Snapshot ${oldId} skipped during transform`, {
+                snapshotId: oldId,
+                userId: row.userId,
+                region: row.region,
+                reason: transformedRow?._reason || 'Unknown reason'
+              });
+              totalSkipped++;
+              continue;
+            }
+            
+            transformedRow.publicId = nanoid();
+            batchData.push(transformedRow);
+            batchOldIds.push(oldId);
+          }
+          
+          if (batchData.length > 0) {
+            const columns = Object.keys(batchData[0]).filter(k => !k.startsWith('_'));
+            const columnNames = columns.map(col => `"${col}"`).join(', ');
+            
+            const valueSets = [];
+            const allValues = [];
+            let paramIndex = 1;
+            
+            for (const row of batchData) {
+              const rowPlaceholders = columns.map(() => `$${paramIndex++}`).join(', ');
+              valueSets.push(`(${rowPlaceholders})`);
+              allValues.push(...columns.map(col => row[col]));
+            }
+            
+            const query = `INSERT INTO "${tableName}" (${columnNames}) VALUES ${valueSets.join(', ')} RETURNING id`;
+            
+            try {
+              const result = await sql.unsafe(query, allValues);
+              result.forEach((row, idx) => {
+                snapshotIdMap.set(batchOldIds[idx], row.id);
+              });
+              totalInserted += batchData.length;
+            } catch (err) {
+              logError(`Error inserting snapshot batch (batch size: ${batchData.length})`, {
+                error: err.message,
+                sqlState: err.code,
+                detail: err.detail,
+                constraint: err.constraint,
+                batchSize: batchData.length
+              });
+              totalSkipped += batchData.length;
+              skipReasons.other += batchData.length;
+            }
+          }
+          
+          process.stdout.write(`\r  Progress: ${Math.min(i + batchSize, rows.length)}/${rows.length}`);
+        }
+        
+        console.log(`\r  ✓ ${tableName}: ${totalInserted} rows imported (ID mapping created), ${totalSkipped} skipped`);
+        continue;
+      }
+      
+      // Special handling for fetch_sessions - dual ID system (bigint + publicId) - batched
+      if (tableName === 'fetch_sessions') {
+        const batchSize = 500;
+        for (let i = 0; i < rows.length; i += batchSize) {
+          const batch = rows.slice(i, i + batchSize);
+          const batchData = [];
+          const batchOldIds = [];
+          
+          for (const row of batch) {
+            const oldId = row.id;
+            const transformedRow = transformRow(row, tableData, tableName);
+            
+            if (!transformedRow || transformedRow._skip) {
+              logError(`Fetch session ${oldId} skipped during transform`, {
+                sessionId: oldId,
+                userId: row.userId,
+                region: row.region,
+                reason: transformedRow?._reason || 'Unknown reason'
+              });
+              totalSkipped++;
+              continue;
+            }
+            
+            transformedRow.publicId = nanoid();
+            batchData.push(transformedRow);
+            batchOldIds.push(oldId);
+          }
+          
+          if (batchData.length > 0) {
+            const columns = Object.keys(batchData[0]).filter(k => !k.startsWith('_'));
+            const columnNames = columns.map(col => `"${col}"`).join(', ');
+            
+            const valueSets = [];
+            const allValues = [];
+            let paramIndex = 1;
+            
+            for (const row of batchData) {
+              const rowPlaceholders = columns.map(() => `$${paramIndex++}`).join(', ');
+              valueSets.push(`(${rowPlaceholders})`);
+              allValues.push(...columns.map(col => row[col]));
+            }
+            
+            const query = `INSERT INTO "${tableName}" (${columnNames}) VALUES ${valueSets.join(', ')} RETURNING id`;
+            
+            try {
+              const result = await sql.unsafe(query, allValues);
+              result.forEach((row, idx) => {
+                fetchSessionIdMap.set(batchOldIds[idx], row.id);
+              });
+              totalInserted += batchData.length;
+            } catch (err) {
+              logError(`Error inserting fetch session batch (batch size: ${batchData.length})`, {
+                error: err.message,
+                sqlState: err.code,
+                detail: err.detail,
+                constraint: err.constraint,
+                batchSize: batchData.length
+              });
+              totalSkipped += batchData.length;
+              skipReasons.other += batchData.length;
+            }
+          }
+          
+          process.stdout.write(`\r  Progress: ${Math.min(i + batchSize, rows.length)}/${rows.length}`);
+        }
+        
+        console.log(`\r  ✓ ${tableName}: ${totalInserted} rows imported (ID mapping created), ${totalSkipped} skipped`);
+        continue;
+      }
+      
+      // Special handling for user_tokens - encrypt tokens before insertion (batched)
+      if (tableName === 'user_tokens') {
+        const batchSize = 500;
+        for (let i = 0; i < rows.length; i += batchSize) {
+          const batch = rows.slice(i, i + batchSize);
+          const batchData = [];
+          
+          for (const row of batch) {
+            const transformedRow = transformRow(row, tableData, tableName);
+            
+            if (!transformedRow || transformedRow._skip) {
+              logError(`User token skipped during transform`, {
+                userId: row.userId,
+                region: row.region,
+                reason: transformedRow?._reason || 'Unknown reason'
+              });
+              totalSkipped++;
+              continue;
+            }
+            
+            // Encrypt the token before inserting
+            if (transformedRow.token) {
+              try {
+                transformedRow.token = encryptToken(transformedRow.token);
+              } catch (err) {
+                logError(`Failed to encrypt token`, {
+                  userId: row.userId,
+                  region: row.region,
+                  error: err.message
+                });
+                totalSkipped++;
+                skipReasons.other++;
+                continue;
+              }
+            }
+            
+            batchData.push(transformedRow);
+          }
+          
+          if (batchData.length > 0) {
+            const columns = Object.keys(batchData[0]).filter(k => !k.startsWith('_'));
+            const columnNames = columns.map(col => `"${col}"`).join(', ');
+            
+            const valueSets = [];
+            const allValues = [];
+            let paramIndex = 1;
+            
+            for (const row of batchData) {
+              const rowPlaceholders = columns.map(() => `$${paramIndex++}`).join(', ');
+              valueSets.push(`(${rowPlaceholders})`);
+              allValues.push(...columns.map(col => row[col]));
+            }
+            
+            const query = `INSERT INTO "${tableName}" (${columnNames}) VALUES ${valueSets.join(', ')}`;
+            
+            try {
+              await sql.unsafe(query, allValues);
+              totalInserted += batchData.length;
+            } catch (err) {
+              logError(`Error inserting user token batch (batch size: ${batchData.length})`, {
+                error: err.message,
+                sqlState: err.code,
+                detail: err.detail,
+                constraint: err.constraint,
+                batchSize: batchData.length
+              });
+              totalSkipped += batchData.length;
+              skipReasons.other += batchData.length;
+            }
+          }
+          
+          process.stdout.write(`\r  Progress: ${Math.min(i + batchSize, rows.length)}/${rows.length}`);
         }
         
         console.log(`\r  ✓ ${tableName}: ${totalInserted} rows imported (tokens encrypted), ${totalSkipped} skipped`);
         continue;
       }
       
-      // Regular handling for other tables
-      const batchSize = 100;
+      // Regular handling for other tables (batched)
+      const batchSize = 500;
       for (let i = 0; i < rows.length; i += batchSize) {
         const batch = rows.slice(i, i + batchSize);
+        const batchData = [];
         
         for (const row of batch) {
-          // Transform the row
           const transformedRow = transformRow(row, tableData, tableName);
           
-          // Skip if transformRow returned null (e.g., missing foreign key mapping)
           if (!transformedRow || transformedRow._skip) {
             if (transformedRow?._skip) {
               const reason = transformedRow._reason || 'Unknown';
@@ -643,39 +689,43 @@ async function uploadToPostgres() {
             continue;
           }
           
-          // Build INSERT query (filter out internal fields starting with _)
-          const columns = Object.keys(transformedRow).filter(k => !k.startsWith('_'));
+          batchData.push(transformedRow);
+        }
+        
+        if (batchData.length > 0) {
+          const columns = Object.keys(batchData[0]).filter(k => !k.startsWith('_'));
           const columnNames = columns.map(col => `"${col}"`).join(', ');
-          const placeholders = columns.map((_, idx) => `$${idx + 1}`).join(', ');
-          const values = columns.map(col => transformedRow[col]);
           
-          const query = `INSERT INTO "${tableName}" (${columnNames}) VALUES (${placeholders})`;
+          const valueSets = [];
+          const allValues = [];
+          let paramIndex = 1;
+          
+          for (const row of batchData) {
+            const rowPlaceholders = columns.map(() => `$${paramIndex++}`).join(', ');
+            valueSets.push(`(${rowPlaceholders})`);
+            allValues.push(...columns.map(col => row[col]));
+          }
+          
+          const query = `INSERT INTO "${tableName}" (${columnNames}) VALUES ${valueSets.join(', ')}`;
           
           try {
-            await pool.query(query, values);
-            totalInserted++;
+            await sql.unsafe(query, allValues);
+            totalInserted += batchData.length;
           } catch (err) {
-            logError(`Error inserting row into ${tableName}`, {
+            logError(`Error inserting batch into ${tableName} (batch size: ${batchData.length})`, {
               table: tableName,
-              rowId: row.id || 'N/A',
               error: err.message,
               sqlState: err.code,
               detail: err.detail,
               constraint: err.constraint,
-              sampleData: Object.keys(transformedRow).slice(0, 5).reduce((obj, key) => {
-                obj[key] = transformedRow[key];
-                return obj;
-              }, {})
+              batchSize: batchData.length
             });
-            totalSkipped++;
-            skipReasons.other++;
-            // Continue with other rows instead of throwing
+            totalSkipped += batchData.length;
+            skipReasons.other += batchData.length;
           }
         }
         
-        if (i + batchSize < rows.length) {
-          process.stdout.write(`\r  Progress: ${Math.min(i + batchSize, rows.length)}/${rows.length}`);
-        }
+        process.stdout.write(`\r  Progress: ${Math.min(i + batchSize, rows.length)}/${rows.length}`);
       }
       
       console.log(`\r  ✓ ${tableName}: ${totalInserted} rows imported${totalSkipped > 0 ? `, ${totalSkipped} skipped` : ''}`);
@@ -722,7 +772,7 @@ async function uploadToPostgres() {
     console.error("Error importing database:", error);
     process.exit(1);
   } finally {
-    await pool.end();
+    await sql.end();
   }
 }
 

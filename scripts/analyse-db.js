@@ -1,6 +1,5 @@
 import { config as dotenvConfig } from "dotenv";
-import pkg from "pg";
-const { Pool } = pkg;
+import postgres from "postgres";
 
 dotenvConfig({ path: ".env.local" });
 
@@ -65,10 +64,10 @@ function formatBytes(bytes) {
 /**
  * Analyze a table
  */
-async function analyzeTable(pool, tableName) {
+async function analyzeTable(sql, tableName) {
   // Get total row count
-  const countResult = await pool.query(`SELECT COUNT(*) as count FROM "${tableName}";`);
-  const totalRows = parseInt(countResult.rows[0].count);
+  const countResult = await sql.unsafe(`SELECT COUNT(*) as count FROM "${tableName}";`);
+  const totalRows = parseInt(countResult[0].count);
   
   if (totalRows === 0) {
     return {
@@ -83,24 +82,24 @@ async function analyzeTable(pool, tableName) {
   
   // Get sample data (first 2500 rows)
   const sampleSize = Math.min(2500, totalRows);
-  const sampleResult = await pool.query(`SELECT * FROM "${tableName}" LIMIT ${sampleSize};`);
-  const sampleRows = sampleResult.rows;
+  const sampleResult = await sql.unsafe(`SELECT * FROM "${tableName}" LIMIT ${sampleSize};`);
+  const sampleRows = sampleResult;
   
   // Get column info
-  const columnsResult = await pool.query(`
+  const columnsResult = await sql`
     SELECT 
       column_name,
       data_type,
       character_maximum_length
     FROM information_schema.columns 
     WHERE table_schema = 'public' 
-    AND table_name = $1
+    AND table_name = ${tableName}
     ORDER BY ordinal_position;
-  `, [tableName]);
+  `;
   
   // Initialize column stats
   const columnStats = {};
-  for (const col of columnsResult.rows) {
+  for (const col of columnsResult) {
     columnStats[col.column_name] = {
       dataType: col.data_type,
       maxLength: col.character_maximum_length,
@@ -156,19 +155,21 @@ async function analyzeDatabase() {
   console.log("~...............................................~");
   console.log("Connecting to PostgreSQL database...");
   
-  const pool = new Pool({ connectionString });
+  const sql = postgres(connectionString, {
+    prepare: false,
+  });
   
   try {
     // Get all table names
-    const tablesResult = await pool.query(`
+    const tablesResult = await sql`
       SELECT table_name 
       FROM information_schema.tables 
       WHERE table_schema = 'public' 
       AND table_type = 'BASE TABLE'
       ORDER BY table_name;
-    `);
+    `;
     
-    const tableNames = tablesResult.rows.map(row => row.table_name);
+    const tableNames = tablesResult.map(row => row.table_name);
     console.log(`Found ${tableNames.length} tables\n`);
     
     const allResults = [];
@@ -177,7 +178,7 @@ async function analyzeDatabase() {
     // Analyze each table
     for (const tableName of tableNames) {
       console.log(`Analyzing table: ${tableName}...`);
-      const result = await analyzeTable(pool, tableName);
+      const result = await analyzeTable(sql, tableName);
       allResults.push(result);
       grandTotalSize += result.estimatedTotalSize;
       
@@ -250,7 +251,7 @@ async function analyzeDatabase() {
     console.error("Error analyzing database:", error);
     process.exit(1);
   } finally {
-    await pool.end();
+    await sql.end();
   }
 }
 

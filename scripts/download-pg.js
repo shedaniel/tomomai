@@ -1,8 +1,7 @@
 import { config as dotenvConfig } from "dotenv";
 import { writeFileSync } from "fs";
 import { join } from "path";
-import pkg from "pg";
-const { Pool } = pkg;
+import postgres from "postgres";
 
 dotenvConfig({ path: ".env.local" });
 
@@ -19,19 +18,21 @@ async function downloadDatabase() {
   console.log("~...............................................~");
   console.log("Connecting to PostgreSQL database...");
   
-  const pool = new Pool({ connectionString });
+  const sql = postgres(connectionString, {
+    prepare: false,
+  });
   
   try {
     // Get all table names (excluding system tables)
-    const tablesResult = await pool.query(`
+    const tablesResult = await sql`
       SELECT table_name 
       FROM information_schema.tables 
       WHERE table_schema = 'public' 
       AND table_type = 'BASE TABLE'
       ORDER BY table_name;
-    `);
+    `;
     
-    const tableNames = tablesResult.rows.map(row => row.table_name);
+    const tableNames = tablesResult.map(row => row.table_name);
     console.log(`Found ${tableNames.length} tables:`, tableNames);
     
     const exportData = {
@@ -52,7 +53,7 @@ async function downloadDatabase() {
       console.log(`Exporting table: ${tableName}`);
       
       // Get column info
-      const columnsResult = await pool.query(`
+      const columnsResult = await sql`
         SELECT 
           column_name,
           data_type,
@@ -63,11 +64,11 @@ async function downloadDatabase() {
           numeric_scale
         FROM information_schema.columns 
         WHERE table_schema = 'public' 
-        AND table_name = $1
+        AND table_name = ${tableName}
         ORDER BY ordinal_position;
-      `, [tableName]);
+      `;
       
-      const columns = columnsResult.rows.map(col => ({
+      const columns = columnsResult.map(col => ({
         name: col.column_name,
         type: col.data_type,
         notNull: col.is_nullable === 'NO',
@@ -78,18 +79,18 @@ async function downloadDatabase() {
       }));
       
       // Get primary key info
-      const pkResult = await pool.query(`
+      const pkResult = await sql`
         SELECT a.attname
         FROM pg_index i
         JOIN pg_attribute a ON a.attrelid = i.indrelid AND a.attnum = ANY(i.indkey)
-        WHERE i.indrelid = $1::regclass AND i.indisprimary;
-      `, [tableName]);
+        WHERE i.indrelid = ${tableName}::regclass AND i.indisprimary;
+      `;
       
-      const primaryKeys = pkResult.rows.map(row => row.attname);
+      const primaryKeys = pkResult.map(row => row.attname);
       
       // Get table data
-      const dataResult = await pool.query(`SELECT * FROM "${tableName}";`);
-      const rows = dataResult.rows.map(row => {
+      const dataResult = await sql.unsafe(`SELECT * FROM "${tableName}";`);
+      const rows = dataResult.map(row => {
         // Convert row to plain object, handling special PostgreSQL types
         const obj = {};
         for (const [key, value] of Object.entries(row)) {
@@ -121,7 +122,7 @@ async function downloadDatabase() {
     
     // Export indexes
     console.log("Exporting indexes...");
-    const indexesResult = await pool.query(`
+    const indexesResult = await sql`
       SELECT
         i.relname as index_name,
         t.relname as table_name,
@@ -134,9 +135,9 @@ async function downloadDatabase() {
       AND t.relkind = 'r'
       AND i.relkind = 'i'
       ORDER BY t.relname, i.relname;
-    `);
+    `;
     
-    exportData.indexes = indexesResult.rows.map(row => ({
+    exportData.indexes = indexesResult.map(row => ({
       name: row.index_name,
       table: row.table_name,
       definition: row.index_definition,
@@ -146,7 +147,7 @@ async function downloadDatabase() {
     
     // Export enum types
     console.log("Exporting enum types...");
-    const enumsResult = await pool.query(`
+    const enumsResult = await sql`
       SELECT
         t.typname as enum_name,
         array_agg(e.enumlabel ORDER BY e.enumsortorder) as enum_values
@@ -156,9 +157,9 @@ async function downloadDatabase() {
       WHERE n.nspname = 'public'
       GROUP BY t.typname
       ORDER BY t.typname;
-    `);
+    `;
     
-    exportData.enums = enumsResult.rows.map(row => ({
+    exportData.enums = enumsResult.map(row => ({
       name: row.enum_name,
       values: row.enum_values,
     }));
@@ -187,7 +188,7 @@ async function downloadDatabase() {
     console.error("Error exporting database:", error);
     process.exit(1);
   } finally {
-    await pool.end();
+    await sql.end();
   }
 }
 

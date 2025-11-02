@@ -490,8 +490,42 @@ export async function POST(request: NextRequest) {
         const batch = allRecords.slice(i, i + batchSize);
         console.log(`Upserting batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(allRecords.length / batchSize)} (${batch.length} records)`);
 
+        // Convert batch to song records
+        const songRecords = batch.map(record => convertToSong(record, region, currentVersionForRegion));
+        
+        // Check for duplicates within the batch based on unique constraint
+        const uniqueKeys = new Set<string>();
+        const deduplicatedRecords: typeof songRecords = [];
+        const duplicates: { key: string; difficulty: string }[] = [];
+        
+        for (const song of songRecords) {
+          const key = `${song.songName}|${song.difficulty}|${song.type}|${song.region}|${song.gameVersion}`;
+          if (uniqueKeys.has(key)) {
+            duplicates.push({ key, difficulty: song.difficulty });
+            // Skip this duplicate (don't add to deduplicatedRecords)
+          } else {
+            uniqueKeys.add(key);
+            deduplicatedRecords.push(song);
+          }
+        }
+        
+        if (duplicates.length > 0) {
+          const nonUtageDuplicates = duplicates.filter(d => d.difficulty !== 'utage');
+          
+          if (nonUtageDuplicates.length > 0) {
+            console.error(`Found ${nonUtageDuplicates.length} non-utage duplicate(s) in batch ${Math.floor(i / batchSize) + 1}:`);
+            nonUtageDuplicates.forEach(dup => console.error(`  - ${dup.key}`));
+            throw new Error(`Batch contains duplicate records. Please fix the source data. Found duplicates: ${nonUtageDuplicates.slice(0, 5).map(d => d.key).join(', ')}${nonUtageDuplicates.length > 5 ? ` (and ${nonUtageDuplicates.length - 5} more)` : ''}`);
+          }
+          
+          const utageDuplicates = duplicates.filter(d => d.difficulty === 'utage');
+          if (utageDuplicates.length > 0) {
+            console.log(`Skipped ${utageDuplicates.length} utage duplicate(s) in batch ${Math.floor(i / batchSize) + 1}`);
+          }
+        }
+
         if (MODIFY_DATABASE) await db.insert(songs)
-          .values(batch.map(record => convertToSong(record, region, currentVersionForRegion)))
+          .values(deduplicatedRecords)
           .onConflictDoUpdate({
             target: [
               songs.songName,
@@ -504,9 +538,9 @@ export async function POST(request: NextRequest) {
               artist: sql`excluded.artist`,
               cover: sql`excluded.cover`,
               level: sql`excluded.level`,
-              levelPrecise: sql`excluded.levelPrecise`,
+              levelPrecise: sql`excluded."levelPrecise"`,
               genre: sql`excluded.genre`,
-              addedVersion: sql`excluded.addedVersion`,
+              addedVersion: sql`excluded."addedVersion"`,
             },
           });
 

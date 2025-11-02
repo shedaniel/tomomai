@@ -265,9 +265,9 @@ export async function GET(request: NextRequest) {
               artist: sql`excluded.artist`,
               cover: sql`excluded.cover`,
               level: sql`excluded.level`,
-              levelPrecise: sql`excluded.levelPrecise`,
+              levelPrecise: sql`excluded."levelPrecise"`,
               genre: sql`excluded.genre`,
-              addedVersion: sql`excluded.addedVersion`,
+              addedVersion: sql`excluded."addedVersion"`,
             },
           });
           
