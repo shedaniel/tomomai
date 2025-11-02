@@ -6,7 +6,7 @@ import {
 } from './responses';
 
 export interface SnapshotData {
-  id: string;
+  publicId: string;
   rating: number;
   stars: number;
   totalPlayCount: number;
@@ -106,7 +106,7 @@ export async function generateAndSendProfileImage({
 
   try {
     // Generate the image
-    const imageResponse = await fetch(`${baseUrl}/api/export-image?snapshotId=${snapshot.id}`, {
+    const imageResponse = await fetch(`${baseUrl}/api/export-image?snapshotId=${snapshot.publicId}`, {
       method: 'GET',
     });
 

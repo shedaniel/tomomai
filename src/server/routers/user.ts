@@ -3,16 +3,16 @@ import { createOpaqueUserId, generateUserOtp, getOtpExpiryTimestamp } from '@/li
 import { resolveBaseUrl } from '@/lib/base-url';
 import { getFetchStatusServer, Region, startFetchServer } from '@/lib/maimai-server-actions';
 import { getAvailableVersions } from '@/lib/metadata';
-import { splitSongs } from '@/lib/rating-calculator';
-import { invites, songs, user, userScores, userSnapshots, userTokens, userEvents } from '@/lib/schema';
+import { RatingCalculationInput, splitSongs } from '@/lib/rating-calculator';
+import { invites, songs, user, userScores, userSnapshots, userTokens, userEvents } from '@/lib/db/schema-pg';
 import { protectedProcedure, publicProcedure, router } from '@/lib/trpc';
 import { SongWithScore } from '@/lib/types';
 import { TRPCError } from '@trpc/server';
-import { randomUUID } from 'crypto';
-import { and, count, desc, eq, inArray, isNull, lt, or, sql } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
+import { and, count, desc, eq, inArray, isNull, lt, or, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { flagDefinitions } from '@/lib/flags';
+import { REGION_ENUM, TIMEZONE_ENUM } from '@/lib/db/types';
 
 const SIGNUP_REQUIRED_AMOUNT = 256;
 
@@ -255,7 +255,7 @@ export const userRouter = router({
     .query(async ({ ctx, input }) => {
       const snapshots = await db
         .select({
-          id: userSnapshots.id,
+          id: userSnapshots.publicId,
           fetchedAt: userSnapshots.fetchedAt,
           rating: userSnapshots.rating,
           displayName: userSnapshots.displayName,
@@ -289,7 +289,7 @@ export const userRouter = router({
       const snapshotsStart = Date.now();
       const snapshots = await db
         .select({
-          id: userSnapshots.id,
+          internalId: userSnapshots.id,
           fetchedAt: userSnapshots.fetchedAt,
           rating: userSnapshots.rating,
           gameVersion: userSnapshots.gameVersion,
@@ -337,19 +337,19 @@ export const userRouter = router({
       console.log(`[getRatingHistory] Grouped ${snapshots.length} snapshots into ${dateGroups.length} date groups in ${Date.now() - dateGroupingStart}ms`);
 
       // Identify which snapshots we need scores for (only when rating actually changed)
-      const snapshotsNeedingScores = new Set<string>();
+      const snapshotsNeedingScores = new Set<bigint>();
       for (let i = 0; i < dateGroups.length; i++) {
         const currentGroup = dateGroups[i];
         
         // Always need scores for first snapshot (baseline) and when rating increased
         if (i === 0) {
-          snapshotsNeedingScores.add(currentGroup.lastSnapshot.id);
+          snapshotsNeedingScores.add(currentGroup.lastSnapshot.internalId);
         } else {
           const prevGroup = dateGroups[i - 1];
           if (currentGroup.lastSnapshot.rating > prevGroup.lastSnapshot.rating) {
             // Need both current and previous to compare
-            snapshotsNeedingScores.add(currentGroup.lastSnapshot.id);
-            snapshotsNeedingScores.add(prevGroup.lastSnapshot.id);
+            snapshotsNeedingScores.add(currentGroup.lastSnapshot.internalId);
+            snapshotsNeedingScores.add(prevGroup.lastSnapshot.internalId);
           }
         }
       }
@@ -363,19 +363,12 @@ export const userRouter = router({
           snapshotId: userScores.snapshotId,
           songId: songs.id,
           songName: songs.songName,
-          artist: songs.artist,
           cover: songs.cover,
           difficulty: songs.difficulty,
-          level: songs.level,
           levelPrecise: songs.levelPrecise,
-          type: songs.type,
-          genre: songs.genre,
           addedVersion: songs.addedVersion,
           achievement: userScores.achievement,
-          dxScore: userScores.dxScore,
           fc: userScores.fc,
-          fs: userScores.fs,
-          rank: userScores.rank,
         })
         .from(userScores)
         .innerJoin(songs, eq(userScores.songId, songs.id))
@@ -392,7 +385,16 @@ export const userRouter = router({
 
       // Group scores by snapshot
       const groupingStart = Date.now();
-      const scoresBySnapshot = new Map<string, SongWithScore[]>();
+      const scoresBySnapshot = new Map<bigint, Array<{
+        songId: bigint;
+        songName: string;
+        cover: string;
+        difficulty: string;
+        levelPrecise: number;
+        addedVersion: number;
+        achievement: number;
+        fc: RatingCalculationInput["fc"];
+      }>>();
       for (const score of allScores) {
         if (!scoresBySnapshot.has(score.snapshotId)) {
           scoresBySnapshot.set(score.snapshotId, []);
@@ -400,18 +402,12 @@ export const userRouter = router({
         scoresBySnapshot.get(score.snapshotId)!.push({
           songId: score.songId,
           songName: score.songName,
-          artist: score.artist,
           cover: score.cover,
-          difficulty: score.difficulty as any,
-          level: score.level,
+          difficulty: score.difficulty,
           levelPrecise: score.levelPrecise,
-          type: score.type as any,
-          genre: score.genre,
           addedVersion: score.addedVersion,
           achievement: score.achievement,
-          dxScore: score.dxScore,
-          fc: score.fc as any,
-          fs: score.fs as any,
+          fc: score.fc,
         });
       }
       console.log(`[getRatingHistory] Grouped scores in ${Date.now() - groupingStart}ms`);
@@ -425,10 +421,9 @@ export const userRouter = router({
         const snapshot = snapshots[i];
         const dateKey = snapshot.fetchedAt.toISOString().split('T')[0];
         const dateGroupIndex = dateGroups.findIndex(g => g.date === dateKey);
-        const isLastOfGroup = dateGroups[dateGroupIndex]?.lastSnapshot.id === snapshot.id;
+        const isLastOfGroup = dateGroups[dateGroupIndex]?.lastSnapshot.internalId === snapshot.internalId;
 
         const changes: Array<{
-          songId: string;
           songName: string;
           cover: string;
           difficulty: string;
@@ -444,12 +439,12 @@ export const userRouter = router({
 
           // Only proceed if rating increased
           if (snapshot.rating > prevSnapshot.rating) {
-            const currentSongs = scoresBySnapshot.get(snapshot.id) || [];
-            const prevSongs = scoresBySnapshot.get(prevSnapshot.id) || [];
+            const currentSongs = scoresBySnapshot.get(snapshot.internalId) || [];
+            const prevSongs = scoresBySnapshot.get(prevSnapshot.internalId) || [];
 
             if (currentSongs.length > 0 && prevSongs.length > 0) {
               comparisonsPerformed++;
-              // Calculate top 50 for both snapshots
+              // Calculate top 50 for both snapshots (cast to any for splitSongs compatibility)
               const currentTop50 = splitSongs(currentSongs, snapshot.gameVersion);
               const prevTop50 = splitSongs(prevSongs, prevSnapshot.gameVersion);
 
@@ -469,7 +464,6 @@ export const userRouter = router({
                 if (prevRating === undefined) {
                   // New song in B50
                   changes.push({
-                    songId: song.songId,
                     songName: song.songName,
                     cover: song.cover,
                     difficulty: song.difficulty,
@@ -479,7 +473,6 @@ export const userRouter = router({
                 } else if (song.rating > prevRating) {
                   // Improved rating
                   changes.push({
-                    songId: song.songId,
                     songName: song.songName,
                     cover: song.cover,
                     difficulty: song.difficulty,
@@ -518,7 +511,7 @@ export const userRouter = router({
         .from(userSnapshots)
         .where(
           and(
-            eq(userSnapshots.id, input.snapshotId),
+            eq(userSnapshots.publicId, input.snapshotId),
             eq(userSnapshots.userId, ctx.session.user.id),
             eq(userSnapshots.region, input.region)
           )
@@ -535,7 +528,7 @@ export const userRouter = router({
       // Get songs with scores for this snapshot
       const songsWithScores = await db
         .select({
-          songId: songs.id,
+          songId: songs.publicId,
           songName: songs.songName,
           artist: songs.artist,
           cover: songs.cover,
@@ -552,14 +545,12 @@ export const userRouter = router({
         })
         .from(userScores)
         .innerJoin(songs, eq(userScores.songId, songs.id))
-        .where(eq(userScores.snapshotId, input.snapshotId))
+        .where(eq(userScores.snapshotId, snapshot[0].id))
         .orderBy(songs.songName, songs.difficulty);
 
       // Get events for this snapshot
       const events = await db
         .select({
-          id: userEvents.id,
-          snapshotId: userEvents.snapshotId,
           eventType: userEvents.eventType,
           name: userEvents.name,
           currentDistance: userEvents.currentDistance,
@@ -570,10 +561,14 @@ export const userRouter = router({
           eventPeriodEnd: userEvents.eventPeriodEnd,
         })
         .from(userEvents)
-        .where(eq(userEvents.snapshotId, input.snapshotId));
+        .where(eq(userEvents.snapshotId, snapshot[0].id));
 
       return {
-        snapshot: snapshot[0],
+        snapshot: {
+          ...snapshot[0],
+          publicId: undefined,
+          id: snapshot[0].publicId,
+        },
         songs: songsWithScores,
         events: events,
       };
@@ -592,7 +587,7 @@ export const userRouter = router({
         .from(userSnapshots)
         .where(
           and(
-            eq(userSnapshots.id, input.snapshotId),
+            eq(userSnapshots.publicId, input.snapshotId),
             eq(userSnapshots.userId, ctx.session.user.id),
             eq(userSnapshots.region, input.region)
           )
@@ -606,15 +601,10 @@ export const userRouter = router({
         });
       }
 
-      // Delete user scores associated with this snapshot
-      await db
-        .delete(userScores)
-        .where(eq(userScores.snapshotId, input.snapshotId));
-
       // Delete the snapshot itself
       await db
         .delete(userSnapshots)
-        .where(eq(userSnapshots.id, input.snapshotId));
+        .where(eq(userSnapshots.id, snapshot[0].id));
 
       return { success: true };
     }),
@@ -689,22 +679,21 @@ export const userRouter = router({
       region: regionSchema,
     }))
     .query(async ({ ctx, input }) => {
-      const { db } = await import('@/lib/db');
-      const { fetchSessions } = await import('@/lib/schema');
+      const { fetchSessions: fs } = await import('@/lib/db/schema-pg');
       
       const session = await db
-        .select({ id: fetchSessions.id, startedAt: fetchSessions.startedAt })
-        .from(fetchSessions)
+        .select({ publicId: fs.publicId, startedAt: fs.startedAt })
+        .from(fs)
         .where(
           and(
-            eq(fetchSessions.userId, ctx.session.user.id),
-            eq(fetchSessions.region, input.region)
+            eq(fs.userId, ctx.session.user.id),
+            eq(fs.region, input.region)
           )
         )
-        .orderBy(desc(fetchSessions.startedAt))
+        .orderBy(desc(fs.startedAt))
         .limit(1);
       
-      return session.length > 0 ? { id: session[0].id, startedAt: session[0].startedAt } : null;
+      return session.length > 0 ? { id: session[0].publicId, startedAt: session[0].startedAt } : null;
     }),
 
   // Get user timezone
@@ -729,7 +718,7 @@ export const userRouter = router({
   // Update user timezone
   updateTimezone: protectedProcedure
     .input(z.object({
-      timezone: z.string().nullable(), // null = Asia/Tokyo (JP default)
+      timezone: z.enum(TIMEZONE_ENUM).nullable(),
     }))
     .mutation(async ({ ctx, input }) => {
       await db
@@ -746,7 +735,7 @@ export const userRouter = router({
   // Update user region
   updateRegion: protectedProcedure
     .input(z.object({
-      region: z.enum(["intl", "jp"]).nullable(), // null = intl (default)
+      region: z.enum(REGION_ENUM).nullable(),
     }))
     .mutation(async ({ ctx, input }) => {
       await db
@@ -929,7 +918,7 @@ export const userRouter = router({
 
       const snapshots = await db
         .select({
-          id: userSnapshots.id,
+          id: userSnapshots.publicId,
           fetchedAt: userSnapshots.fetchedAt,
           rating: userSnapshots.rating,
           displayName: userSnapshots.displayName,
@@ -1015,7 +1004,7 @@ export const userRouter = router({
       // Get songs with scores for this snapshot
       const songsWithScores = await db
         .select({
-          songId: songs.id,
+          songId: songs.publicId,
           songName: songs.songName,
           artist: songs.artist,
           cover: songs.cover,
@@ -1041,16 +1030,16 @@ export const userRouter = router({
         songName: song.songName,
         artist: song.artist,
         cover: song.cover,
-        difficulty: song.difficulty as any, // Cast to match enum
+        difficulty: song.difficulty,
         level: song.level,
         levelPrecise: song.levelPrecise,
-        type: song.type as any, // Cast to match enum
+        type: song.type,
         genre: song.genre,
         addedVersion: song.addedVersion,
         achievement: song.achievement,
         dxScore: song.dxScore,
-        fc: song.fc as any, // Cast to match enum
-        fs: song.fs as any, // Cast to match enum
+        fc: song.fc,
+        fs: song.fs,
       }));
 
       // Filter songs based on user privacy settings
@@ -1067,7 +1056,11 @@ export const userRouter = router({
       }
 
       return {
-        snapshot: snapshot[0],
+        snapshot: {
+          ...snapshot[0],
+          publicId: undefined,
+          id: snapshot[0].publicId, // Use publicId as the external-facing id
+        },
         songs: filteredSongs,
         privacySettings: {
           showPlayCounts: userData.profileShowPlayCounts,
@@ -1271,7 +1264,6 @@ export const userRouter = router({
       const [newInvite] = await db
         .insert(invites)
         .values({
-          id: nanoid(),
           code,
           createdBy: ctx.session.user.id,
           createdAt: now,
@@ -1496,7 +1488,7 @@ export const userRouter = router({
         .from(userSnapshots)
         .where(
           and(
-            eq(userSnapshots.id, input.snapshotId),
+            eq(userSnapshots.publicId, input.snapshotId),
             eq(userSnapshots.userId, ctx.session.user.id),
             eq(userSnapshots.region, input.region)
           )
@@ -1513,11 +1505,11 @@ export const userRouter = router({
       const originalSnapshot = sourceSnapshot[0];
 
       // Create new snapshot with modified data
-      const newSnapshotId = randomUUID();
+      const newSnapshotPublicId = nanoid();
       const newFetchedAt = new Date(originalSnapshot.fetchedAt.getTime() + 1000); // 1 second later
 
-      await db.insert(userSnapshots).values({
-        id: newSnapshotId,
+      const [newSnapshot] = await db.insert(userSnapshots).values({
+        publicId: newSnapshotPublicId,
         userId: ctx.session.user.id,
         region: input.region,
         fetchedAt: newFetchedAt,
@@ -1531,7 +1523,9 @@ export const userRouter = router({
         iconUrl: originalSnapshot.iconUrl,
         displayName: originalSnapshot.displayName,
         title: originalSnapshot.title,
-      });
+      }).returning({ id: userSnapshots.id });
+
+      const newSnapshotInternalId = newSnapshot.id;
 
       // Get original scores with song info
       const originalScores = await db
@@ -1546,7 +1540,7 @@ export const userRouter = router({
         })
         .from(userScores)
         .innerJoin(songs, eq(userScores.songId, songs.id))
-        .where(eq(userScores.snapshotId, input.snapshotId));
+        .where(eq(userScores.snapshotId, originalSnapshot.id));
 
       // Get target version songs for mapping
       const targetVersionSongs = await db
@@ -1565,7 +1559,7 @@ export const userRouter = router({
         );
 
       // Create lookup map for target version songs
-      const targetSongLookup = new Map<string, string>(); // key: "songName|type|difficulty", value: songId
+      const targetSongLookup = new Map<string, bigint>(); // key: "songName|type|difficulty", value: internal songId
       for (const song of targetVersionSongs) {
         const key = `${song.songName}|${song.type}|${song.difficulty}`;
         targetSongLookup.set(key, song.id);
@@ -1579,8 +1573,7 @@ export const userRouter = router({
 
         if (targetSongId) {
           newScores.push({
-            id: randomUUID(),
-            snapshotId: newSnapshotId,
+            snapshotId: newSnapshotInternalId,
             songId: targetSongId,
             achievement: originalScore.achievement,
             dxScore: originalScore.dxScore,
@@ -1602,8 +1595,8 @@ export const userRouter = router({
         // Get all scores with song info for rating calculation
         const scoresWithSongs = await db
           .select({
-            scoreId: userScores.id,
-            songId: songs.id,
+            scoreId: userScores.id, // Internal ID
+            songId: songs.id, // Internal ID
             songName: songs.songName,
             artist: songs.artist,
             cover: songs.cover,
@@ -1620,24 +1613,24 @@ export const userRouter = router({
           })
           .from(userScores)
           .innerJoin(songs, eq(userScores.songId, songs.id))
-          .where(eq(userScores.snapshotId, newSnapshotId));
+          .where(eq(userScores.snapshotId, newSnapshotInternalId));
 
         // Convert to SongWithScore format for rating calculation
-        const songsForCalculation: SongWithScore[] = scoresWithSongs.map(song => ({
+        const songsForCalculation: (Omit<SongWithScore, 'songId'> & { songId: bigint })[] = scoresWithSongs.map(song => ({
           songId: song.songId,
           songName: song.songName,
           artist: song.artist,
           cover: song.cover,
-          difficulty: song.difficulty as any, // Cast to match enum
+          difficulty: song.difficulty,
           level: song.level,
           levelPrecise: song.levelPrecise,
-          type: song.type as any, // Cast to match enum
+          type: song.type,
           genre: song.genre,
           addedVersion: song.addedVersion,
           achievement: song.achievement,
           dxScore: song.dxScore,
-          fc: song.fc as any, // Cast to match enum
-          fs: song.fs as any, // Cast to match enum
+          fc: song.fc,
+          fs: song.fs,
         }));
 
         // Calculate ratings for all songs and sort by rating 
@@ -1648,7 +1641,7 @@ export const userRouter = router({
         newRating = ratingContributingSongs.reduce((sum, song) => sum + song.rating, 0);
         
         // Calculate and assign ranks
-        const rankUpdates: Array<{ id: string; rank: number }> = [];
+        const rankUpdates: Array<{ id: bigint; rank: number }> = [];
         
         // New B15: ranks 0-14
         for (let i = 0; i < newSongsB15.length; i++) {
@@ -1707,11 +1700,11 @@ export const userRouter = router({
       await db
         .update(userSnapshots)
         .set({ rating: newRating })
-        .where(eq(userSnapshots.id, newSnapshotId));
+        .where(eq(userSnapshots.id, newSnapshotInternalId));
 
       return {
         success: true,
-        newSnapshotId,
+        newSnapshotId: newSnapshotPublicId,
         copiedScores: newScores.length,
         totalOriginalScores: originalScores.length,
         originalRating: originalSnapshot.rating,

@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { cacheImage } from "@/lib/image_cacher";
-import { songs } from "@/lib/schema";
+import { songs } from "@/lib/db/schema-pg";
 import { NextRequest, NextResponse } from "next/server";
 
 // Helper function to check if URL is a data URL

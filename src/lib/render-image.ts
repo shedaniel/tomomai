@@ -1,8 +1,16 @@
 import type { CanvasRenderingContext2D as SkiaContext } from 'skia-canvas';
 import { Canvas, Image, loadImage } from 'skia-canvas';
 import { CANVAS_HEIGHT, CANVAS_WIDTH } from './image-spec';
-import { getRatingImageUrl, SongWithRating, splitSongs } from "./rating-calculator";
+import { getRatingImageUrl, RatingCalculationInput, splitSongs } from "./rating-calculator";
+import type { Difficulty } from "./types";
 import { SnapshotWithSongs } from "./types";
+
+export interface SongForRender extends RatingCalculationInput {
+  songName: string;
+  cover: string;
+  difficulty: Difficulty;
+  type: "std" | "dx";
+}
 
 const TARGET_HEIGHT = 204;
 const PADDING = 36;
@@ -103,7 +111,7 @@ async function loadImageWithCache(cache: ImageCache, url: string): Promise<Image
   return img;
 }
 
-export async function renderImage(data: SnapshotWithSongs, cache: ImageCache, visitableProfileAt: string | null): Promise<Canvas> {
+export async function renderImage(data: SnapshotWithSongs<SongForRender>, cache: ImageCache, visitableProfileAt: string | null): Promise<Canvas> {
   const canvas = new Canvas(CANVAS_WIDTH, CANVAS_HEIGHT);
   const ctx = canvas.getContext('2d') as SkiaContext;
 
@@ -115,10 +123,10 @@ export async function renderImage(data: SnapshotWithSongs, cache: ImageCache, vi
   return canvas;
 }
 
-async function renderBackground(ctx: SkiaContext, data: SnapshotWithSongs, cache: ImageCache) {
+async function renderBackground<S>(ctx: SkiaContext, data: SnapshotWithSongs<S>, cache: ImageCache) {
   const gradientStops = VERSION_SETTINGS[data.snapshot.gameVersion as keyof typeof VERSION_SETTINGS]?.backgroundGradient || [];
   const gradient = ctx.createLinearGradient(0, CANVAS_HEIGHT, 0, 0);
-  
+
   for (const stop of gradientStops) {
     gradient.addColorStop(stop.offset, stop.color);
   }
@@ -128,13 +136,13 @@ async function renderBackground(ctx: SkiaContext, data: SnapshotWithSongs, cache
 
   if (VERSION_SETTINGS[data.snapshot.gameVersion as keyof typeof VERSION_SETTINGS]?.premadeDecoration) {
     const backgroundImg = await loadImageWithCache(cache, `/res/bg/${data.snapshot.gameVersion}.png`);
-    ctx.drawImage(backgroundImg as any, 0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+    ctx.drawImage(backgroundImg, 0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
   }
 }
 
-async function renderHeaderBackground(
+async function renderHeaderBackground<S>(
   ctx: SkiaContext, 
-  data: SnapshotWithSongs, 
+  data: SnapshotWithSongs<S>, 
   cache: ImageCache, 
 ) {
   const INNER_PADDING = 30;
@@ -145,7 +153,7 @@ async function renderHeaderBackground(
     const shineScale = CANVAS_WIDTH / shineImg.width;
     ctx.save();
     ctx.globalAlpha = 0.3;
-    ctx.drawImage(shineImg as any, 0, 0, CANVAS_WIDTH, shineImg.height * shineScale);
+    ctx.drawImage(shineImg, 0, 0, CANVAS_WIDTH, shineImg.height * shineScale);
     ctx.restore();
 
     // Render cloud image
@@ -154,7 +162,7 @@ async function renderHeaderBackground(
     const cloudHeight = cloudImg.height * cloudScale;
     ctx.save();
     ctx.globalAlpha = 0.4;
-    ctx.drawImage(cloudImg as any, 0, CANVAS_HEIGHT - cloudHeight, CANVAS_WIDTH, cloudHeight);
+    ctx.drawImage(cloudImg, 0, CANVAS_HEIGHT - cloudHeight, CANVAS_WIDTH, cloudHeight);
     ctx.restore();
   }
 
@@ -167,14 +175,14 @@ async function renderHeaderBackground(
     opacity: 0.9,
   };
   const characterImg = await loadImageWithCache(cache, `/res/character/${data.snapshot.gameVersion}.png`);
-  
+
   ctx.save();
   ctx.globalAlpha = characterSettings.opacity;
   ctx.beginPath();
   ctx.rect(0, 0, CANVAS_WIDTH, TARGET_HEIGHT + PADDING * 2);
   ctx.clip();
   ctx.drawImage(
-    characterImg as any,
+    characterImg,
     characterSettings.left,
     characterSettings.top,
     characterImg.width * characterSettings.scaleX,
@@ -191,11 +199,11 @@ async function renderHeaderBackground(
   const characterWidth = characterImg.width * characterSettings.scaleX;
   const logoLeft = characterLeft + characterWidth / 2 - logoWidth / 2;
   const logoTop = TARGET_HEIGHT - logoHeight / 2;
-  
+
   ctx.save();
   ctx.shadowColor = '#FFFFFF50';
   ctx.shadowBlur = 32;
-  ctx.drawImage(logoImg as any, logoLeft, logoTop, logoWidth, logoHeight);
+  ctx.drawImage(logoImg, logoLeft, logoTop, logoWidth, logoHeight);
   ctx.restore();
 }
 
@@ -226,7 +234,7 @@ type OverlayRect = {
   height: number;
 };
 
-async function renderHeader(ctx: SkiaContext, data: SnapshotWithSongs, cache: ImageCache): Promise<OverlayRect> {
+async function renderHeader<S>(ctx: SkiaContext, data: SnapshotWithSongs<S>, cache: ImageCache): Promise<OverlayRect> {
   const TROPHY_FONT_SIZE = 18, NAME_FONT_SIZE = 28;
   const PROFILE_IMG_RIGHT_MARGIN = 28;
   const TROPHY_BOTTOM_MARGIN = 20;
@@ -238,7 +246,7 @@ async function renderHeader(ctx: SkiaContext, data: SnapshotWithSongs, cache: Im
   const profileImg = await loadImageWithCache(cache, data.snapshot.iconUrl);
   const profileScale = TARGET_HEIGHT / profileImg.height;
   const profileWidth = profileImg.width * profileScale;
-  ctx.drawImage(profileImg as any, PADDING, PADDING, profileWidth, TARGET_HEIGHT);
+  ctx.drawImage(profileImg, PADDING, PADDING, profileWidth, TARGET_HEIGHT);
 
   // Render trophy background
   const trophyBackground = await loadImageWithCache(cache, '/res/trophy/normal.png');
@@ -247,14 +255,14 @@ async function renderHeader(ctx: SkiaContext, data: SnapshotWithSongs, cache: Im
   const trophyHeight = trophyBackground.height * trophyScale;
   const trophyLeft = PADDING + PROFILE_IMG_RIGHT_MARGIN + profileWidth;
   const trophyTop = PADDING;
-  ctx.drawImage(trophyBackground as any, trophyLeft, trophyTop, trophyWidth, trophyHeight);
+  ctx.drawImage(trophyBackground, trophyLeft, trophyTop, trophyWidth, trophyHeight);
 
   // Render trophy text with stroke
   ctx.font = `450 ${TROPHY_FONT_SIZE}px ${FONT_FAMILY}`;
   const trophyTextWidth = measureTextWidth(ctx, data.snapshot.title);
   const trophyTextLeft = trophyLeft + trophyWidth / 2 - trophyTextWidth / 2;
   const trophyTextTop = trophyTop + trophyHeight / 2 - TROPHY_FONT_SIZE / 2 - 2;
-  
+
   ctx.strokeStyle = '#111111';
   ctx.lineWidth = 4;
   ctx.strokeText(data.snapshot.title, trophyTextLeft, trophyTextTop + TROPHY_FONT_SIZE);
@@ -266,7 +274,7 @@ async function renderHeader(ctx: SkiaContext, data: SnapshotWithSongs, cache: Im
   const nameRectHeight = trophyHeight + NAME_FONT_SIZE;
   const nameRectLeft = trophyLeft;
   const nameRectTop = trophyTop + trophyHeight + TROPHY_BOTTOM_MARGIN;
-  
+
   ctx.save();
   ctx.globalAlpha = 0.2;
   ctx.fillStyle = 'black';
@@ -279,7 +287,7 @@ async function renderHeader(ctx: SkiaContext, data: SnapshotWithSongs, cache: Im
   const nameTextWidth = measureTextWidth(ctx, data.snapshot.displayName);
   const nameTextLeft = nameRectLeft + trophyWidth / 2 - nameTextWidth / 2;
   const nameTextTop = nameRectTop + nameRectHeight / 2 - NAME_FONT_SIZE / 2;
-  
+
   ctx.fillStyle = '#f9f0f4';
   ctx.fillText(data.snapshot.displayName, nameTextLeft, nameTextTop + NAME_FONT_SIZE / 2 + 10);
 
@@ -290,7 +298,7 @@ async function renderHeader(ctx: SkiaContext, data: SnapshotWithSongs, cache: Im
   const ratingHeight = ratingFrame.height * ratingScale;
   const ratingLeft = nameRectLeft - 2;
   const ratingTop = nameRectTop + nameRectHeight + TROPHY_BOTTOM_MARGIN - 2;
-  ctx.drawImage(ratingFrame as any, ratingLeft, ratingTop, ratingWidth, ratingHeight);
+  ctx.drawImage(ratingFrame, ratingLeft, ratingTop, ratingWidth, ratingHeight);
 
   // Render rating digits
   ctx.font = `600 ${ratingHeight * 0.53}px ${FONT_FAMILY_MONO}`;
@@ -308,7 +316,7 @@ async function renderHeader(ctx: SkiaContext, data: SnapshotWithSongs, cache: Im
   const classRankHeight = classRankImg.height * classRankScale;
   const classRankLeft = ratingLeft + ratingWidth + 10;
   const classRankTop = ratingTop + ratingHeight / 2 - classRankHeight / 2;
-  ctx.drawImage(classRankImg as any, classRankLeft, classRankTop, classRankWidth, classRankHeight);
+  ctx.drawImage(classRankImg, classRankLeft, classRankTop, classRankWidth, classRankHeight);
 
   // Render course rank
   const courseRankImg = await loadImageWithCache(cache, data.snapshot.courseRankUrl);
@@ -317,7 +325,7 @@ async function renderHeader(ctx: SkiaContext, data: SnapshotWithSongs, cache: Im
   const courseRankHeight = courseRankImg.height * courseRankScale;
   const courseRankLeft = classRankLeft + classRankWidth + 10;
   const courseRankTop = ratingTop + ratingHeight / 2 - courseRankHeight / 2;
-  ctx.drawImage(courseRankImg as any, courseRankLeft, courseRankTop, courseRankWidth, courseRankHeight);
+  ctx.drawImage(courseRankImg, courseRankLeft, courseRankTop, courseRankWidth, courseRankHeight);
 
   // Render dark overlay
   const overlayTop = TARGET_HEIGHT + PADDING * 2;
@@ -325,7 +333,7 @@ async function renderHeader(ctx: SkiaContext, data: SnapshotWithSongs, cache: Im
   const contentBackgroundColor = VERSION_SETTINGS[data.snapshot.gameVersion as keyof typeof VERSION_SETTINGS]?.contentBackgroundColor || '#00000010';
   gradient.addColorStop(1, contentBackgroundColor);
   gradient.addColorStop(0, contentBackgroundColor);
-  
+
   ctx.fillStyle = gradient;
   ctx.fillRect(0, overlayTop, CANVAS_WIDTH, CANVAS_HEIGHT - overlayTop);
 
@@ -340,11 +348,11 @@ async function renderHeader(ctx: SkiaContext, data: SnapshotWithSongs, cache: Im
 const SONG_OUTER_PADDING = 0
 const SONG_PADDING = 16
 
-async function renderSong(
+async function renderSong<S extends SongForRender>(
   ctx: SkiaContext, 
   cache: ImageCache, 
   overlayRect: OverlayRect, 
-  song: SongWithRating, 
+  song: S & { rating: number }, 
   index: number, 
   yOffset: number
 ) {
@@ -379,7 +387,7 @@ async function renderSong(
   ctx.save();
   roundRect(ctx, imgLeft, imgTop, imgWidth, requiredHeight, 10);
   ctx.clip();
-  ctx.drawImage(img as any, imgLeft - 4, imgDrawTop - 4, imgWidth + 8, imgHeight + 8);
+  ctx.drawImage(img, imgLeft - 4, imgDrawTop - 4, imgWidth + 8, imgHeight + 8);
   ctx.restore();
 
   // Draw cover gradient with stroke and shadow
@@ -487,7 +495,7 @@ async function renderSong(
   const songTypeBadge = await loadImageWithCache(cache, songTypeBadgeUrl);
   const badgeScale = 0.4;
   ctx.drawImage(
-    songTypeBadge as any, 
+    songTypeBadge, 
     realBounds.left + 14, 
     realBounds.top + 14, 
     songTypeBadge.width * badgeScale, 
@@ -495,9 +503,9 @@ async function renderSong(
   );
 }
 
-async function renderContent(
+async function renderContent<S extends SongForRender>(
   ctx: SkiaContext, 
-  data: SnapshotWithSongs, 
+  data: SnapshotWithSongs<S>, 
   cache: ImageCache, 
   overlayRect: OverlayRect
 ) {
@@ -534,11 +542,11 @@ async function renderSongsLabel(
   ctx.globalAlpha = 0.98;
   ctx.shadowColor = '#00000010';
   ctx.shadowBlur = 30;
-  ctx.drawImage(label as any, overlayRect.left + 2, overlayRect.top + yOffset, labelWidth, labelHeight);
+  ctx.drawImage(label, overlayRect.left + 2, overlayRect.top + yOffset, labelWidth, labelHeight);
   ctx.restore();
 }
 
-async function renderFooter(ctx: SkiaContext, data: SnapshotWithSongs, visitableProfileAt: string | null) {
+async function renderFooter<S>(ctx: SkiaContext, data: SnapshotWithSongs<S>, visitableProfileAt: string | null) {
   const footerHeight = 50;
   const footerTop = CANVAS_HEIGHT - footerHeight;
   

@@ -1,5 +1,5 @@
 import { db } from '@/lib/db';
-import { account, user, userSnapshots } from '@/lib/schema';
+import { account, user, userSnapshots } from '@/lib/db/schema-pg';
 import { waitUntil } from '@vercel/functions';
 import { and, desc, eq } from 'drizzle-orm';
 import { generateAndSendProfileImage } from '../image-utils';
@@ -56,7 +56,7 @@ export async function handleProfileCommand({
     // Get latest snapshot for the region
     const [latestSnapshot] = await db
       .select({
-        id: userSnapshots.id,
+        publicId: userSnapshots.publicId,
         rating: userSnapshots.rating,
         stars: userSnapshots.stars,
         totalPlayCount: userSnapshots.totalPlayCount,

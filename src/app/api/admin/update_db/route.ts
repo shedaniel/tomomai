@@ -1,13 +1,13 @@
 import { db } from "@/lib/db";
 import { getCurrentVersion, getVersionFromDate } from "@/lib/metadata";
 import { normalizeName } from "@/lib/name-utils";
-import { songs } from "@/lib/schema";
-import { randomUUID } from "crypto";
+import { songs } from "@/lib/db/schema-pg";
 import { and, eq, inArray, sql } from "drizzle-orm";
 import { promises as fs } from "fs";
 import { NextRequest, NextResponse } from "next/server";
 import { join } from "path";
 import { resolveBaseUrl } from "@/lib/base-url";
+import { nanoid } from "nanoid";
 
 const MAIMAI_SONGS_JSON_URL = "https://github.com/zvuc/otoge-db/raw/refs/heads/master/maimai/data/music-ex.json";
 const MAIMAI_SONGS_JSON_URL_INTL = "https://github.com/zvuc/otoge-db/raw/refs/heads/master/maimai/data/music-ex-intl.json";
@@ -227,7 +227,7 @@ async function fetchRecordsWithUrl(region: "intl" | "jp", url: string): Promise<
 
 function convertToSong(record: Song, region: "intl" | "jp", gameVersion: number): typeof songs.$inferInsert {
   return {
-    id: randomUUID(),
+    publicId: nanoid(),
     songName: record.songName,
     artist: record.artist,
     cover: record.cover,
@@ -260,10 +260,12 @@ function formatLevelPrecise(levelPrecise: number): string {
   return (levelPrecise / 10).toFixed(1);
 }
 
+type SongForWebhook = Omit<typeof songs.$inferSelect, 'id'>;
+
 // Helper function to send Discord webhook
 async function sendDiscordWebhook(
   region: "intl" | "jp",
-  added: typeof songs.$inferSelect[],
+  added: SongForWebhook[],
   deleted: typeof songs.$inferSelect[],
   modified: Array<{ old: typeof songs.$inferSelect; new: typeof songs.$inferSelect }>,
 ) {
@@ -467,9 +469,13 @@ export async function POST(request: NextRequest) {
 
       // Write new records to file
       const newFilePath = join(process.cwd(), "data", `${region}-${currentVersionForRegion}-new.json`);
-      const newRecords = allRecords.map(record => convertToSong(record, region, currentVersionForRegion))
-        .map(song => ({...song, id: prevRecords.find(prev => prev.songName === song.songName && prev.difficulty === song.difficulty && prev.type === song.type)?.id ?? song.id}))
-        .sort((a, b) => a.songName.localeCompare(b.songName) * 1000000 + a.difficulty.localeCompare(b.difficulty) * 1000 + a.type.localeCompare(b.type));
+      const newRecords = allRecords.map(record => {
+        const converted = convertToSong(record, region, currentVersionForRegion);
+        const existingRecord = prevRecords.find(prev => prev.songName === converted.songName && prev.difficulty === converted.difficulty && prev.type === converted.type);
+        // If the record exists in prevRecords, use its ID; otherwise, ID will be auto-generated on insert
+        return existingRecord ? { ...converted, id: existingRecord.id } : converted;
+      })
+      .sort((a, b) => a.songName.localeCompare(b.songName) * 1000000 + a.difficulty.localeCompare(b.difficulty) * 1000 + a.type.localeCompare(b.type));
       await fs.writeFile(newFilePath, JSON.stringify(newRecords, null, 2));
       console.log(`Saved ${newRecords.length} records to ${newFilePath}`);
     }
@@ -531,7 +537,7 @@ export async function POST(request: NextRequest) {
         and(eq(songs.region, region), eq(songs.gameVersion, currentVersionForRegion)),
       );
 
-    const idsToDelete: string[] = [];
+    const idsToDelete: bigint[] = [];
     console.log(`Found ${recordsToDeleteCandidate.length} records to delete for region ${region} and game version ${currentVersionForRegion}:`);
     for (const record of recordsToDeleteCandidate) {
       const existingCompositeKey = `${record.songName}-${record.difficulty}-${record.type}`;
@@ -550,7 +556,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Calculate changes for Discord webhook
-    const addedSongs: typeof songs.$inferSelect[] = [];
+    const addedSongs: SongForWebhook[] = [];
     const deletedSongs: typeof songs.$inferSelect[] = [];
     const modifiedSongs: Array<{ old: typeof songs.$inferSelect; new: typeof songs.$inferSelect }> = [];
 
@@ -560,11 +566,7 @@ export async function POST(request: NextRequest) {
       if (!existingSongsMap.has(key)) {
         // This is a new song, convert it to the format expected
         const newSongData = convertToSong(record, region, currentVersionForRegion);
-        addedSongs.push({
-          ...newSongData,
-          // We need to fill in the other fields that are part of $inferSelect
-          id: newSongData.id,
-        } as typeof songs.$inferSelect);
+        addedSongs.push(newSongData);
       } else {
         // Check if it was modified (levelPrecise changed)
         const existingSong = existingSongsMap.get(key)!;

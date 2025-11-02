@@ -44,8 +44,6 @@ export interface SongWithScore {
 
 // Event data for area and event area events
 export interface EventData {
-  id: string;
-  snapshotId: string;
   eventType: "area" | "eventArea";
   name: string;
   currentDistance: number;
@@ -57,12 +55,12 @@ export interface EventData {
 }
 
 // Complete snapshot data including songs
-export interface SnapshotWithSongs {
+export interface SnapshotWithSongs<S = SongWithScore> {
   snapshot: Snapshot & {
     title: string;
     iconUrl: string;
   };
-  songs: SongWithScore[];
+  songs: S[];
   events?: EventData[];
 }
 

@@ -136,7 +136,7 @@ function EventsList({ events }: { events: EventData[] }) {
       {/* Single column on small/medium screens */}
       <div className="lg:hidden divide-y divide-dashed -mx-4">
         {events.map((event) => (
-          <EventCard key={event.id} event={event} />
+          <EventCard key={`${event.eventType}-${event.name}`} event={event} />
         ))}
       </div>
       
@@ -144,12 +144,12 @@ function EventsList({ events }: { events: EventData[] }) {
       <div className="hidden lg:grid grid-cols-2 divide-x divide-dashed -mx-4">
         <div className="divide-y divide-dashed">
           {events.filter((_, i) => i % 2 === 0).map((event) => (
-            <EventCard key={event.id} event={event} />
+            <EventCard key={`${event.eventType}-${event.name}`} event={event} />
           ))}
         </div>
         <div className="divide-y divide-dashed">
           {events.filter((_, i) => i % 2 === 1).map((event) => (
-            <EventCard key={event.id} event={event} />
+            <EventCard key={`${event.eventType}-${event.name}`} event={event} />
           ))}
         </div>
       </div>
