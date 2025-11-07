@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { fetchSessions } from "./schema";
+import { fetchSessions } from "./db/schema-pg";
 import { eq } from "drizzle-orm";
 import { 
   FetchState, 
@@ -12,9 +12,10 @@ import {
 const sessionLocks = new Map<string, Promise<void>>();
 
 // Helper function to append a state to statusStates (non-blocking)
-export async function appendFetchState(sessionId: string, state: FetchState): Promise<void> {
+export async function appendFetchState(sessionId: bigint, state: FetchState): Promise<void> {
   // Serialize updates per sessionId to prevent race conditions
-  const lockPromise = sessionLocks.get(sessionId) || Promise.resolve();
+  const lockKey = sessionId.toString();
+  const lockPromise = sessionLocks.get(lockKey) || Promise.resolve();
   
   const newLockPromise = lockPromise.then(async () => {
     try {
@@ -50,11 +51,11 @@ export async function appendFetchState(sessionId: string, state: FetchState): Pr
     }
   }).finally(() => {
     // Clean up the lock if it's the current one
-    if (sessionLocks.get(sessionId) === newLockPromise) {
-      sessionLocks.delete(sessionId);
+    if (sessionLocks.get(lockKey) === newLockPromise) {
+      sessionLocks.delete(lockKey);
     }
   });
   
-  sessionLocks.set(sessionId, newLockPromise);
+  sessionLocks.set(lockKey, newLockPromise);
   return newLockPromise;
 } 

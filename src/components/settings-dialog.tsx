@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/select-friendly";
 import { Switch } from "@/components/ui/switch";
 import { Locale, setLocaleCookie } from "@/i18n/locale";
+import { TIMEZONE_ENUM, TIMEZONES } from "@/lib/db/types";
 import { trpc } from "@/lib/trpc-client";
 import { ProfilePrivacySettings, ProfileSettings } from "@/lib/types";
 import { getLanguages } from "@/lib/utils";
@@ -30,44 +31,13 @@ import { toast } from "sonner";
 interface SettingsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  currentTimezone?: string | null;
+  currentTimezone?: typeof TIMEZONE_ENUM[number] | null;
   username?: string;
   initialProfileSettings?: ProfileSettings;
-  onTimezoneUpdate: (timezone: string | null) => Promise<void>;
+  onTimezoneUpdate: (timezone: typeof TIMEZONE_ENUM[number] | null) => Promise<void>;
   onOpenTokenDialog: () => void;
   onSaveSuccess: () => void;
 }
-
-// Common timezones
-const TIMEZONES = [
-  { value: null, label: "Japan Standard Time", region: "JP" },
-  { value: "Asia/Seoul", label: "Korea Standard Time", region: "KR" },
-  { value: "Asia/Hong_Kong", label: "Hong Kong Standard Time", region: "HK" },
-  { value: "Asia/Shanghai", label: "China Standard Time", region: "CN" },
-  { value: "Asia/Taipei", label: "Taiwan Standard Time", region: "TW" },
-  { value: "Asia/Singapore", label: "Singapore Standard Time", region: "SG" },
-  { value: "Asia/Kuala_Lumpur", label: "Malaysia Standard Time", region: "MY" },
-  { value: "Asia/Bangkok", label: "Thailand Standard Time", region: "TH" },
-  { value: "Asia/Jakarta", label: "Indonesia Western Time (Jakarta)", region: "ID" },
-  { value: "Asia/Makassar", label: "Indonesia Central Time (Makassar)", region: "ID" },
-  { value: "Asia/Jayapura", label: "Indonesia Eastern Time (Jayapura)", region: "ID" },
-  { value: "Asia/Manila", label: "Philippines Standard Time", region: "PH" },
-  { value: "Asia/Ho_Chi_Minh", label: "Vietnam Standard Time", region: "VN" },
-  { value: "Asia/Yangon", label: "Myanmar Standard Time", region: "MM" },
-  { value: "Australia/Adelaide", label: "Australian Central Time (Adelaide)", region: "AU" },
-  { value: "Australia/Eucla", label: "Australian Central Western Time (Eucla)", region: "AU" },
-  { value: "Australia/Perth", label: "Australian Western Time (Perth)", region: "AU" },
-  { value: "Australia/Sydney", label: "Australian Eastern Time (Sydney)", region: "AU" },
-  { value: "Australia/Lord_Howe", label: "Australian Lord Howe Time", region: "AU" },
-  { value: "America/New_York", label: "Eastern Standard Time (New York)", region: "US" },
-  { value: "America/Chicago", label: "Central Standard Time (Chicago)", region: "US" },
-  { value: "America/Denver", label: "Mountain Standard Time (Denver)", region: "US" },
-  { value: "America/Los_Angeles", label: "Pacific Standard Time (Los Angeles)", region: "US" },
-  { value: "Europe/London", label: "Greenwich Mean Time (London)", region: "EU" },
-  { value: "Europe/Paris", label: "Central European Time (Paris)", region: "EU" },
-  { value: "Europe/Berlin", label: "Central European Time (Berlin)", region: "EU" },
-  { value: "UTC", label: "Coordinated Universal Time (UTC)", region: "UTC" },
-];
 
 export function SettingsDialog({ 
   open, 
@@ -81,7 +51,7 @@ export function SettingsDialog({
 }: SettingsDialogProps) {
   const t = useTranslations();
   const { locale, setLocale } = useLocale();
-  const [selectedTimezone, setSelectedTimezone] = useState<string | null>(currentTimezone ?? null);
+  const [selectedTimezone, setSelectedTimezone] = useState<typeof TIMEZONE_ENUM[number] | null>(currentTimezone ?? null);
   const [selectedLanguage, setSelectedLanguage] = useState<string | null>(locale || null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -206,11 +176,7 @@ export function SettingsDialog({
   };
 
   const getCurrentTimezoneDisplay = () => {
-    const timezone = TIMEZONES.find(tz => 
-      (tz.value === null && selectedTimezone === null) || 
-      tz.value === selectedTimezone
-    );
-    return timezone?.value || "jp"; // Use "jp" as the key for null timezone
+    return selectedTimezone || "jp"; // Use "jp" as the key for null timezone
   };
 
   const getProfileUrl = () => {
@@ -291,7 +257,7 @@ export function SettingsDialog({
             <Select 
               value={getCurrentTimezoneDisplay()}
               onValueChange={(value) => {
-                setSelectedTimezone(value === "jp" ? null : value);
+                setSelectedTimezone(value === "jp" ? null : value as typeof TIMEZONE_ENUM[number]);
               }}
             >
               <SelectTrigger id="timezone">

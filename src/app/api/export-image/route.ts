@@ -1,8 +1,8 @@
 import { db } from '@/lib/db';
 import { getRatingImageUrl, splitSongs } from '@/lib/rating-calculator';
-import { ImageCache, renderImage } from '@/lib/render-image';
+import { ImageCache, renderImage, SongForRender } from '@/lib/render-image';
 import { fetchImageForServer } from '@/lib/render-image-server';
-import { songs, user, userScores, userSnapshots } from '@/lib/schema';
+import { songs, user, userScores, userSnapshots } from '@/lib/db/schema-pg';
 import type { SnapshotWithSongs } from '@/lib/types';
 import { eq } from 'drizzle-orm';
 import { NextRequest, NextResponse } from 'next/server';
@@ -27,21 +27,21 @@ const fontsLoaded = (async () => {
   }
 })();
 
-async function prepareData(snapshotId: string): Promise<{
+async function prepareData(snapshotPublicId: string): Promise<{
   type: "success",
-  data: SnapshotWithSongs,
+  data: SnapshotWithSongs<SongForRender>,
   visitableProfileAt: string | null,
 } | {
   type: "error",
   error: string,
 }> {
-  // Fetch snapshot data from database
+  // Fetch snapshot data from database using publicId
   console.log('🔍 Fetching snapshot from database...');
   let startTime = Date.now();
   const snapshot = await db
     .select()
     .from(userSnapshots)
-    .where(eq(userSnapshots.id, snapshotId))
+    .where(eq(userSnapshots.publicId, snapshotPublicId))
     .limit(1);
 
   if (snapshot.length === 0) {
@@ -63,26 +63,20 @@ async function prepareData(snapshotId: string): Promise<{
     .limit(1);
   const songsWithScoresPromise = db
     .select({
-      songId: songs.id,
       songName: songs.songName,
-      artist: songs.artist,
       cover: songs.cover,
       difficulty: songs.difficulty,
-      level: songs.level,
       levelPrecise: songs.levelPrecise,
       type: songs.type,
-      genre: songs.genre,
       addedVersion: songs.addedVersion,
       achievement: userScores.achievement,
-      dxScore: userScores.dxScore,
       fc: userScores.fc,
-      fs: userScores.fs,
     })
     .from(userScores)
     .innerJoin(songs, eq(userScores.songId, songs.id))
-    .where(eq(userScores.snapshotId, snapshotId))
+    .where(eq(userScores.snapshotId, snapshot[0].id))
     .orderBy(songs.songName, songs.difficulty);
-  
+
   const [publishProfile, songsWithScores] = await Promise.all([publishProfilePromise, songsWithScoresPromise]);
 
   if (publishProfile.length === 0) {
@@ -99,8 +93,11 @@ async function prepareData(snapshotId: string): Promise<{
     ? publishProfile[0].username
     : null;
 
-  const data: SnapshotWithSongs = {
-    snapshot: snapshot[0],
+  const data: SnapshotWithSongs<SongForRender> = {
+    snapshot: {
+      ...snapshot[0],
+      id: snapshot[0].publicId, // Use publicId as the external-facing id
+    },
     songs: songsWithScores,
   };
 
@@ -135,7 +132,7 @@ export async function GET(request: NextRequest) {
     console.log('🖼️ Pre-caching images...');
     let startTime = Date.now();
     const { newSongsB15, oldSongsB35 } = splitSongs(data.songs, data.snapshot.gameVersion);
-    
+
     const imagesToCache = [
       "https://maimaidx.jp/maimai-mobile/img/music_dx.png",
       "https://maimaidx.jp/maimai-mobile/img/music_standard.png",

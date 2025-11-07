@@ -20,7 +20,7 @@ import { InvitesDialog } from "@/components/invites-dialog";
 import { DiscordIcon } from "@/components/ui/discord-icon";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { toast } from "sonner";
-import { user } from "@/lib/schema";
+import { user } from "@/lib/db/schema-pg";
 import { AdminDialog } from "./dialogs/admin-dialog";
 import { LocaleSwitcher } from "./locale-switcher";
 import { ExperimentsDialog } from "./experiments-dialog";

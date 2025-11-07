@@ -9,6 +9,7 @@ import { UsernameSetupDialog } from "@/components/username-setup-dialog";
 import { useFetchSession } from "@/hooks/useFetchSession";
 import { useSnapshots } from "@/hooks/useSnapshots";
 import { signOut } from "@/lib/auth-client";
+import { TIMEZONE_ENUM } from "@/lib/db/types";
 import { Flags } from "@/lib/flags";
 import { trpc } from "@/lib/trpc-client";
 import { Region, User, UserData, ProfileSettings, Snapshot, SnapshotWithSongs } from "@/lib/types";
@@ -19,7 +20,7 @@ interface DashboardProps {
   user: User;
   initialUserData: UserData;
   initialHasToken: boolean;
-  initialTimezone: string | null;
+  initialTimezone: typeof TIMEZONE_ENUM[number] | null;
   initialProfileSettings: ProfileSettings;
   initialSnapshots: Snapshot[];
   initialSnapshotData?: SnapshotWithSongs;
@@ -189,7 +190,7 @@ export function Dashboard({ user, initialUserData, initialHasToken, initialTimez
     setIsTokenDialogOpen(true); // Open token dialog
   };
 
-  const handleTimezoneUpdate = async (timezone: string | null) => {
+  const handleTimezoneUpdate = async (timezone: typeof TIMEZONE_ENUM[number] | null) => {
     await updateTimezoneMutation.mutateAsync({ timezone });
   };
 

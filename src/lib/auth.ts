@@ -4,8 +4,7 @@ import { nextCookies } from "better-auth/next-js";
 import { admin } from "better-auth/plugins";
 import { and, count, eq, isNull, lt, or } from "drizzle-orm";
 import { db } from "./db";
-import * as schema from "./schema";
-import { invites } from "./schema";
+import * as schema from "./db/schema-pg";
 
 const SIGNUP_TYPE = process.env.NEXT_PUBLIC_ACCOUNT_SIGNUP_TYPE || 'disabled'; // disabled, invite-only, enabled
 const SIGNUP_REQUIRED_AMOUNT = 128;
@@ -30,13 +29,13 @@ async function validateAndClaimInvite(inviteCode: string, userId: string) {
   // Auto-cleanup old/revoked/expired invites
   try {
     await db
-      .delete(invites)
+      .delete(schema.invites)
       .where(
         or(
-          eq(invites.revoked, true),
+          eq(schema.invites.revoked, true),
           and(
-            lt(invites.expiresAt, now),
-            isNull(invites.claimedBy)
+            lt(schema.invites.expiresAt, now),
+            isNull(schema.invites.claimedBy)
           )
         )
       );
@@ -47,16 +46,16 @@ async function validateAndClaimInvite(inviteCode: string, userId: string) {
   // Find the invitation
   const [invite] = await db
     .select({
-      id: invites.id,
-      code: invites.code,
-      createdBy: invites.createdBy,
-      claimedBy: invites.claimedBy,
-      createdAt: invites.createdAt,
-      expiresAt: invites.expiresAt,
-      revoked: invites.revoked,
+      id: schema.invites.id,
+      code: schema.invites.code,
+      createdBy: schema.invites.createdBy,
+      claimedBy: schema.invites.claimedBy,
+      createdAt: schema.invites.createdAt,
+      expiresAt: schema.invites.expiresAt,
+      revoked: schema.invites.revoked,
     })
-    .from(invites)
-    .where(eq(invites.code, inviteCode))
+    .from(schema.invites)
+    .where(eq(schema.invites.code, inviteCode))
     .limit(1);
 
   if (!invite) {
@@ -83,19 +82,19 @@ async function validateAndClaimInvite(inviteCode: string, userId: string) {
 
   // Claim the invitation
   await db
-    .update(invites)
+    .update(schema.invites)
     .set({
       claimedBy: userId,
       claimedAt: now,
     })
-    .where(eq(invites.id, invite.id));
+    .where(eq(schema.invites.id, invite.id));
 
   return invite;
 }
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
-    provider: "sqlite",
+    provider: "pg",
     schema,
   }),
   secret: process.env.BETTER_AUTH_SECRET || "development-secret-change-in-production",
@@ -148,14 +147,14 @@ export const auth = betterAuth({
             const now = new Date();
             const [invite] = await db
               .select({
-                id: invites.id,
-                createdBy: invites.createdBy,
-                claimedBy: invites.claimedBy,
-                expiresAt: invites.expiresAt,
-                revoked: invites.revoked,
+                id: schema.invites.id,
+                createdBy: schema.invites.createdBy,
+                claimedBy: schema.invites.claimedBy,
+                expiresAt: schema.invites.expiresAt,
+                revoked: schema.invites.revoked,
               })
-              .from(invites)
-              .where(eq(invites.code, inviteCode))
+              .from(schema.invites)
+              .where(eq(schema.invites.code, inviteCode))
               .limit(1);
 
             if (!invite) {

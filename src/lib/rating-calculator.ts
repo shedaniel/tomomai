@@ -1,5 +1,16 @@
 import { SongWithScore } from "./types";
 
+// Minimal interface for rating calculation - only requires the fields actually used
+export interface RatingCalculationInput {
+  achievement: number;
+  fc: "none" | "fc" | "fc+" | "ap" | "ap+";
+  levelPrecise: number;
+  addedVersion: number;
+}
+
+// Type alias for backward compatibility - SongWithScore with rating added
+export type SongWithRating = SongWithScore & { rating: number };
+
 // Calculate rating factor based on accuracy
 export function getRatingFactor(accuracy: number): number {
   if (accuracy >= 100.5) return 0.224;
@@ -15,7 +26,7 @@ export function getRatingFactor(accuracy: number): number {
 }
 
 // Calculate song rating using the formula: rating = floor(factor * accuracy * levelPrecise / 10)
-export function calculateSongRating(song: SongWithScore, version: number): number {
+export function calculateSongRating<T extends RatingCalculationInput>(song: T, version: number): number {
   const accuracy = song.achievement / 10000;
   const factor = getRatingFactor(accuracy);
   // Since version 12, AP/AP+ songs get an extra 1 rating
@@ -23,13 +34,8 @@ export function calculateSongRating(song: SongWithScore, version: number): numbe
   return factor * Math.min(accuracy, 100.5) * song.levelPrecise / 10 + extra;
 }
 
-// Extended song type with calculated rating
-export interface SongWithRating extends SongWithScore {
-  rating: number;
-}
-
 // Helper function to add ratings to songs and sort by rating
-export function addRatingsAndSort(songs: SongWithScore[], version: number): SongWithRating[] {
+export function addRatingsAndSort<T extends RatingCalculationInput>(songs: T[], version: number): (T & { rating: number })[] {
   return songs
     .map(song => ({
       ...song,
@@ -43,7 +49,7 @@ export function addRatingsAndSort(songs: SongWithScore[], version: number): Song
     }));
 }
 
-export function splitSongs(withScore: SongWithScore[], version: number) {
+export function splitSongs<T extends RatingCalculationInput>(withScore: T[], version: number) {
   const songs = addRatingsAndSort(withScore, version);
   // Since version 12, we incorporate songs from the previous version into the new version
   const versionAboveIsNew = version >= 12 ? version - 1 : version;

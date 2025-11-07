@@ -2,10 +2,14 @@ import { db } from "@/lib/db";
 import { getCurrentVersion } from "@/lib/metadata";
 import { normalizeName } from "@/lib/name-utils";
 import { splitSongs } from "@/lib/rating-calculator";
-import { detailedScores, songs, userScores, userSnapshots } from "@/lib/schema";
+import { songs, userScores, userSnapshots } from "@/lib/db/schema-pg";
 import { SongWithScore } from "@/lib/types";
 import { and, eq, inArray, sql } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
+
+interface SongWithScoreInternal extends Omit<SongWithScore, 'songId'> {
+  songId: bigint;
+}
 
 const MODIFY_DATABASE = true;
 const BATCH_SIZE = 10000;
@@ -126,21 +130,16 @@ async function normalize(searchParams: URLSearchParams) {
         // --- Phase 1: Relink children and delete actual duplicate song records ---
         if (duplicateIdsToCleanUp.length > 0) {
           // Update userScores
-          console.log(`  Updating userScores and detailedScores referencing ${duplicateIdsToCleanUp.join(", ")} to ${masterSong.id}...`);
+          console.log(`  Updating userScores referencing ${duplicateIdsToCleanUp.join(", ")} to ${masterSong.id}...`);
           if (MODIFY_DATABASE) {
-            const [userScoresUpdateResult, detailedScoresUpdateResult] = await Promise.all([
-              tx
-                .update(userScores)
-                .set({ songId: masterSong.id })
-                .where(inArray(userScores.songId, duplicateIdsToCleanUp)),
-              tx
-                .update(detailedScores)
-                .set({ songId: masterSong.id })
-                .where(inArray(detailedScores.songId, duplicateIdsToCleanUp))
-            ]);
-            console.log(`    Updated ${userScoresUpdateResult.rowsAffected} userScores and ${detailedScoresUpdateResult.rowsAffected} detailedScores records.`);
+            const userScoresUpdateResult = await tx
+              .update(userScores)
+              .set({ songId: masterSong.id })
+              .where(inArray(userScores.songId, duplicateIdsToCleanUp))
+              .returning({ id: userScores.id });
+            console.log(`    Updated ${userScoresUpdateResult.length} userScores records.`);
           } else {
-            console.log(`    [DRY RUN] Would update userScores and detailedScores referencing duplicates.`);
+            console.log(`    [DRY RUN] Would update userScores referencing duplicates.`);
           }
 
           // Delete the duplicate songs records
@@ -148,8 +147,9 @@ async function normalize(searchParams: URLSearchParams) {
           if (MODIFY_DATABASE) {
             const deleteSongsResult = await tx
               .delete(songs)
-              .where(inArray(songs.id, duplicateIdsToCleanUp));
-            console.log(`    Deleted ${deleteSongsResult.rowsAffected} duplicate song records.`);
+              .where(inArray(songs.id, duplicateIdsToCleanUp))
+              .returning({ id: songs.id });
+            console.log(`    Deleted ${deleteSongsResult.length} duplicate song records.`);
           } else {
             console.log(`    [DRY RUN] Would delete ${duplicateIdsToCleanUp.length} duplicate song records.`);
           }
@@ -164,8 +164,9 @@ async function normalize(searchParams: URLSearchParams) {
             const masterNameUpdateResult = await tx
               .update(songs)
               .set({ songName: normalizedSongName })
-              .where(eq(songs.id, masterSong.id));
-            console.log(`    Updated ${masterNameUpdateResult.rowsAffected} master song name record.`);
+              .where(eq(songs.id, masterSong.id))
+              .returning({ id: songs.id });
+            console.log(`    Updated ${masterNameUpdateResult.length} master song name record.`);
           } else {
             console.log(`    [DRY RUN] Would update master song name.`);
           }
@@ -259,7 +260,7 @@ async function updateB50(searchParams: URLSearchParams) {
   });
 
   // Group by snapshotId
-  const scoresBySnapshot = new Map<string, typeof allScoresWithData>();
+  const scoresBySnapshot = new Map<bigint, typeof allScoresWithData>();
   for (const score of allScoresWithData) {
     if (!scoresBySnapshot.has(score.snapshotId)) {
       scoresBySnapshot.set(score.snapshotId, []);
@@ -270,7 +271,7 @@ async function updateB50(searchParams: URLSearchParams) {
   console.log(`Grouped scores into ${scoresBySnapshot.size} snapshots`);
 
   // Find snapshots that need recalculation (have any null ranks)
-  const snapshotsToRecalculate: string[] = [];
+  const snapshotsToRecalculate: bigint[] = [];
   for (const [snapshotId, scores] of scoresBySnapshot.entries()) {
     if (scores.some(s => s.currentRank === null)) {
       snapshotsToRecalculate.push(snapshotId);
@@ -293,28 +294,28 @@ async function updateB50(searchParams: URLSearchParams) {
   }
 
   // Calculate ranks for snapshots that need it
-  const updates: Array<{ id: string; rank: number }> = [];
+  const updates: Array<{ id: bigint; rank: number }> = [];
 
   for (const snapshotId of snapshotsToRecalculate) {
     const scores = scoresBySnapshot.get(snapshotId)!;
     const gameVersion = scores[0].gameVersion; // All scores in a snapshot have the same gameVersion
 
     // Convert to SongWithScore format for rating calculation
-    const songsForCalculation: SongWithScore[] = scores.map(score => ({
+    const songsForCalculation: SongWithScoreInternal[] = scores.map(score => ({
       songId: score.songId,
       songName: score.songName,
       artist: score.artist,
       cover: score.cover,
-      difficulty: score.difficulty as any,
+      difficulty: score.difficulty,
       level: score.level,
       levelPrecise: score.levelPrecise,
-      type: score.type as any,
+      type: score.type,
       genre: score.genre,
       addedVersion: score.addedVersion,
       achievement: score.achievement,
       dxScore: score.dxScore,
-      fc: score.fc as any,
-      fs: score.fs as any,
+      fc: score.fc,
+      fs: score.fs,
     }));
 
     // Use splitSongs to get B15 and B35
@@ -377,7 +378,7 @@ async function updateB50(searchParams: URLSearchParams) {
 
           // Build CASE statement for batch update
           const caseStatements = batch.map(
-            update => sql`WHEN ${userScores.id} = ${update.id} THEN ${update.rank}`
+            update => sql`WHEN ${update.id} THEN ${update.rank}`
           );
           
           const ids = batch.map(update => update.id);
@@ -386,7 +387,7 @@ async function updateB50(searchParams: URLSearchParams) {
           await tx
             .update(userScores)
             .set({
-              rank: sql`CASE ${sql.join(caseStatements, sql.raw(' '))} END`
+              rank: sql`(CASE ${userScores.id} ${sql.join(caseStatements, sql.raw(' '))} END)::smallint`
             })
             .where(inArray(userScores.id, ids));
 

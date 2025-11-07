@@ -1,8 +1,8 @@
 import { db } from "./db";
-import { userTokens, userSnapshots, songs, userScores, fetchSessions, userEvents } from "./schema";
+import { userTokens, userSnapshots, songs, userScores, fetchSessions, userEvents } from "./db/schema-pg";
 import { eq, and } from "drizzle-orm";
 import { load } from "cheerio";
-import { randomUUID } from "crypto";
+import { nanoid } from "nanoid";
 import { getCurrentVersion } from "./metadata";
 import { Agent } from "undici";
 import { FETCH_STATES, getStateForDifficulty } from "./fetch-states";
@@ -10,6 +10,7 @@ import { appendFetchState } from "./fetch-states-server";
 import { normalizeName } from "./name-utils";
 import { splitSongs } from "./rating-calculator";
 import { SongWithScore } from "./types";
+import { decryptToken, encryptToken } from "./token-crypto";
 
 export const JP_AGENT = new Agent({
   connect: {
@@ -388,10 +389,13 @@ async function performInternationalAccountLogin(
           const newToken = `account://${clalValue}:://${username}:://${password}`;
           
           if (userId) {
+            // Encrypt the token before storing
+            const encryptedToken = encryptToken(newToken);
+            
             await db
               .update(userTokens)
               .set({
-                token: newToken,
+                token: encryptedToken,
                 updatedAt: new Date()
               })
               .where(
@@ -823,7 +827,7 @@ async function fetchSongsData(cookies: string, difficulty: number, region: "intl
 }
 
 // Fetch all songs data for all difficulties (0-4)
-async function fetchAllSongsData(cookies: string, region: "intl" | "jp", sessionId?: string): Promise<{ [difficulty: number]: ScoreData[] }> {
+async function fetchAllSongsData(cookies: string, region: "intl" | "jp", sessionId?: bigint): Promise<{ [difficulty: number]: ScoreData[] }> {
   console.log(`Fetching songs data for all difficulties (0-4)${sessionId ? ' with tracking' : ''}`);
   
   // Create promises for all difficulties to fetch concurrently
@@ -1012,7 +1016,7 @@ interface ScoreData {
   fs: "none" | "sync" | "fs" | "fs+" | "fdx" | "fdx+";
 }
 
-async function fetchEventsData(cookies: string, region: "intl" | "jp", sessionId: string): Promise<{ areaEvents: EventData[], eventAreaEvents: EventAreaData[] }> {
+async function fetchEventsData(cookies: string, region: "intl" | "jp", sessionId: bigint): Promise<{ areaEvents: EventData[], eventAreaEvents: EventAreaData[] }> {
   const baseUrl = region === "intl" ? "https://maimaidx-eng.com" : "https://maimaidx.jp";
   
   console.log(`Starting events data fetch for ${region} region...`);
@@ -1409,13 +1413,13 @@ async function createUserSnapshot(
   userId: string,
   region: "intl" | "jp",
   playerData: PlayerData,
-): Promise<string> {
-  const snapshotId = randomUUID();
+): Promise<bigint> {
+  const publicId = nanoid();
   
-  console.log(`Creating user snapshot with ID: ${snapshotId}`);
+  console.log(`Creating user snapshot with publicId: ${publicId}`);
   
-  await db.insert(userSnapshots).values({
-    id: snapshotId,
+  const [inserted] = await db.insert(userSnapshots).values({
+    publicId: publicId,
     userId: userId,
     region: region,
     fetchedAt: new Date(),
@@ -1429,10 +1433,10 @@ async function createUserSnapshot(
     iconUrl: playerData.iconBase64,
     displayName: playerData.displayName,
     title: playerData.title,
-  });
+  }).returning({ id: userSnapshots.id });
   
-  console.log(`User snapshot created successfully`);
-  return snapshotId;
+  console.log(`User snapshot created successfully with internal ID: ${inserted.id}`);
+  return inserted.id;
 }
 
 /**
@@ -1461,7 +1465,7 @@ async function withRank(
   const fullSongMap = new Map(fullSongs.map(s => [s.id, s]));
 
   // Convert score inserts to SongWithScore format for rating calculation
-  const songsForRanking: SongWithScore[] = [];
+  const songsForRanking: (Omit<SongWithScore, 'songId'> & { songId: bigint })[] = [];
   for (const scoreInsert of scoreInserts) {
     const fullSong = fullSongMap.get(scoreInsert.songId);
     if (!fullSong) continue;
@@ -1471,16 +1475,16 @@ async function withRank(
       songName: fullSong.songName,
       artist: fullSong.artist,
       cover: fullSong.cover,
-      difficulty: fullSong.difficulty as any,
+      difficulty: fullSong.difficulty,
       level: fullSong.level,
       levelPrecise: fullSong.levelPrecise,
-      type: fullSong.type as any,
+      type: fullSong.type,
       genre: fullSong.genre,
       addedVersion: fullSong.addedVersion,
       achievement: scoreInsert.achievement,
       dxScore: scoreInsert.dxScore,
-      fc: scoreInsert.fc as any,
-      fs: scoreInsert.fs as any,
+      fc: scoreInsert.fc,
+      fs: scoreInsert.fs,
     });
   }
 
@@ -1512,10 +1516,16 @@ async function withRank(
   // Assign ranks to score inserts
   for (const scoreInsert of scoreInserts) {
     const fullSong = fullSongMap.get(scoreInsert.songId);
-    if (fullSong) {
-      const rank = rankMap.get(`${fullSong.id}-${fullSong.difficulty}`);
-      scoreInsert.rank = rank ?? null;
+    if (!fullSong) {
+      throw new Error(`Full song data not found for songId: ${scoreInsert.songId}`);
     }
+    
+    const rank = rankMap.get(`${fullSong.id}-${fullSong.difficulty}`);
+    if (rank === undefined) {
+      throw new Error(`Rank not calculated for song: ${fullSong.songName} (${fullSong.difficulty})`);
+    }
+    
+    scoreInsert.rank = rank;
   }
 
   console.log(`Ranks calculated. B15: ${newSongsB15.length}, B35: ${oldSongsB35.length}, Remaining: ${remainingSongs.length}`);
@@ -1524,9 +1534,9 @@ async function withRank(
 }
 
 async function insertUserScores(
-  snapshotId: string,
+  snapshotId: bigint,
   region: "intl" | "jp",
-  sessionId: string,
+  sessionId: bigint,
   allScoreData: { [difficulty: number]: ScoreData[] }
 ): Promise<void> {
   const gameVersion = getCurrentVersion(region);
@@ -1564,7 +1574,7 @@ async function insertUserScores(
   console.log(`Found ${allSongs.length} songs in database for this region/version`);
   
   // Create lookup map for fast song finding
-  const songLookup = new Map<string, string>(); // key: "songName|difficulty|type", value: songId
+  const songLookup = new Map<string, bigint>(); // key: "songName|difficulty|type", value: songId
   for (const song of allSongs) {
     const key = `${song.songName}|${song.difficulty}|${song.type}`;
     songLookup.set(key, song.id);
@@ -1591,9 +1601,7 @@ async function insertUserScores(
       }
 
       // Create user score record
-      const userScoreId = randomUUID();
       scoreInserts.push({
-        id: userScoreId,
         snapshotId: snapshotId,
         songId: songId,
         achievement: scoreData.achievement,
@@ -1640,7 +1648,7 @@ async function insertUserScores(
 }
 
 async function insertUserEvents(
-  snapshotId: string,
+  snapshotId: bigint,
   areaEvents: EventData[],
   eventAreaEvents: EventAreaData[]
 ): Promise<void> {
@@ -1651,7 +1659,6 @@ async function insertUserEvents(
   // Add area events
   for (const event of areaEvents) {
     eventInserts.push({
-      id: randomUUID(),
       snapshotId: snapshotId,
       eventType: "area",
       name: event.name,
@@ -1667,7 +1674,6 @@ async function insertUserEvents(
   // Add event area events
   for (const event of eventAreaEvents) {
     eventInserts.push({
-      id: randomUUID(),
       snapshotId: snapshotId,
       eventType: "eventArea",
       name: event.name,
@@ -1696,7 +1702,7 @@ async function insertUserEvents(
 export async function fetchMaimaiData(
   userId: string,
   region: "intl" | "jp",
-  sessionId: string,
+  sessionId: bigint,
   flags: string[] = []
 ): Promise<void> {
   // Get the user's token from database
@@ -1719,7 +1725,7 @@ export async function fetchMaimaiData(
   }
 
   // Validate the token first
-  const validation = await processMaimaiToken(userId, region, tokenRecord.token);
+  const validation = await processMaimaiToken(userId, region, decryptToken(tokenRecord.token));
   
   if (!validation.isValid) {
     throw new Error(validation.error || "Token validation failed");

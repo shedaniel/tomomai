@@ -1,8 +1,9 @@
 import { db } from '@/lib/db';
 import { fetchMaimaiData } from '@/lib/maimai-fetcher';
-import { fetchSessions, userTokens } from '@/lib/schema';
-import { randomUUID } from 'crypto';
+import { fetchSessions, userTokens } from '@/lib/db/schema-pg';
+import { nanoid } from 'nanoid';
 import { and, desc, eq } from 'drizzle-orm';
+import { encryptToken, decryptToken } from './token-crypto';
 
 export type Region = 'intl' | 'jp';
 
@@ -46,7 +47,13 @@ export async function startFetchServer(userId: string, region: Region, token?: s
       throw new Error('No user token found! (Maybe it has expired?) Please add your authentication tokens on the website first!');
     }
 
-    tokenToUse = savedToken[0].token;
+    // Decrypt the stored token
+    try {
+      tokenToUse = decryptToken(savedToken[0].token);
+    } catch (error) {
+      console.error('Failed to decrypt token:', error);
+      throw new Error('Failed to decrypt stored token. Please re-add your authentication tokens.');
+    }
   }
 
   // Check for existing pending fetch
@@ -121,14 +128,16 @@ export async function startFetchServer(userId: string, region: Region, token?: s
 
   // Store/update token if a new one was provided
   if (token) {
+    // Encrypt the token before storing
+    const encryptedToken = encryptToken(tokenToUse);
+    
     try {
       await db
         .insert(userTokens)
         .values({
-          id: randomUUID(),
           userId: userId,
           region: region,
-          token: tokenToUse, // TODO: Encrypt this in production
+          token: encryptedToken,
           createdAt: new Date(),
           updatedAt: new Date(),
         });
@@ -137,7 +146,7 @@ export async function startFetchServer(userId: string, region: Region, token?: s
       await db
         .update(userTokens)
         .set({
-          token: tokenToUse,
+          token: encryptedToken,
           updatedAt: new Date(),
         })
         .where(
@@ -149,15 +158,17 @@ export async function startFetchServer(userId: string, region: Region, token?: s
     }
   }
 
-  // Create fetch session
-  const fetchSessionId = randomUUID();
-  await db.insert(fetchSessions).values({
-    id: fetchSessionId,
+  // Create fetch session with dual ID system
+  const fetchSessionPublicId = nanoid();
+  const [insertedSession] = await db.insert(fetchSessions).values({
+    publicId: fetchSessionPublicId,
     userId: userId,
     region: region,
     status: "pending",
     startedAt: new Date(),
-  });
+  }).returning({ id: fetchSessions.id });
+
+  const fetchSessionInternalId = insertedSession.id;
 
   // Start the actual data fetch in the background
   (async () => {
@@ -171,7 +182,7 @@ export async function startFetchServer(userId: string, region: Region, token?: s
 
       // Race between the actual fetch and the timeout
       await Promise.race([
-        fetchMaimaiData(userId, region, fetchSessionId, flags),
+        fetchMaimaiData(userId, region, fetchSessionInternalId, flags),
         timeoutPromise
       ]);
 
@@ -182,7 +193,7 @@ export async function startFetchServer(userId: string, region: Region, token?: s
           status: "completed",
           completedAt: new Date(),
         })
-        .where(eq(fetchSessions.id, fetchSessionId));
+        .where(eq(fetchSessions.id, fetchSessionInternalId));
     } catch (error) {
       console.error("Error during maimai data fetch:", error);
 
@@ -194,12 +205,12 @@ export async function startFetchServer(userId: string, region: Region, token?: s
           completedAt: new Date(),
           errorMessage: error instanceof Error ? error.message : "Unknown error occurred",
         })
-        .where(eq(fetchSessions.id, fetchSessionId));
+        .where(eq(fetchSessions.id, fetchSessionInternalId));
     }
   })();
 
   return {
-    sessionId: fetchSessionId,
+    sessionId: fetchSessionPublicId,
     status: "pending" as const,
   };
 }
@@ -208,7 +219,7 @@ export async function startFetchServer(userId: string, region: Region, token?: s
 export async function getFetchStatusServer(userId: string, region: Region): Promise<FetchStatusResult | null> {
   const fetchSession = await db
     .select({
-      id: fetchSessions.id,
+      id: fetchSessions.publicId, // Return publicId as id for external-facing API
       status: fetchSessions.status,
       startedAt: fetchSessions.startedAt,
       completedAt: fetchSessions.completedAt,
@@ -232,12 +243,12 @@ export async function getFetchStatusServer(userId: string, region: Region): Prom
 
   const session = fetchSession[0];
   return {
-    id: session.id,
+    id: session.id, // publicId
     status: session.status as 'pending' | 'completed' | 'failed',
     startedAt: session.startedAt,
     completedAt: session.completedAt,
     errorMessage: session.errorMessage,
     statusStates: session.statusStates,
-    notFoundScores: session.extraData ? JSON.parse(session.extraData).notFoundScores : null,
+    notFoundScores: session.extraData ? (session.extraData as any).notFoundScores : null,
   };
 } 
