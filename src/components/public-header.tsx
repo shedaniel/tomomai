@@ -18,12 +18,7 @@ interface PublicHeaderProps {
 export function PublicHeader({}: PublicHeaderProps) {
   const t = useTranslations();
   const [aboutOpen, setAboutOpen] = useState(false);
-  const [showBanner, setShowBanner] = useState(false);
-  
-  useEffect(() => {
-    const dismissed = localStorage.getItem('discord-banner-dismissed');
-    setShowBanner(!dismissed);
-  }, []);
+  const [showBanner, setShowBanner] = useState(true);
   
   const handleLogin = () => {
     // Redirect to login page
@@ -38,11 +33,6 @@ export function PublicHeader({}: PublicHeaderProps) {
       console.error('Failed to open invite link:', error);
       toast.error("Failed to open invite link");
     }
-  };
-  
-  const handleDismissBanner = () => {
-    localStorage.setItem('discord-banner-dismissed', 'true');
-    setShowBanner(false);
   };
   
   return (
@@ -84,7 +74,7 @@ export function PublicHeader({}: PublicHeaderProps) {
       {showBanner && (
         <div className="mb-6 relative bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-3 sm:p-4">
           <button
-            onClick={handleDismissBanner}
+            onClick={() => setShowBanner(false)}
             className="absolute top-2 right-2 p-1 rounded-md hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
             aria-label="Dismiss"
           >
