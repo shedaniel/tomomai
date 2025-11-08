@@ -36,16 +36,6 @@ export const useFlags = async (): Promise<Flags> => {
   };
 }
 
-export const defaultFlags: Flags = {
-  enableChinaRegion: false,
-  newTokenDialog: true,
-  historyCard: false,
-  recommendationFilters: false,
-  statsCard: false,
-  platesCard: false,
-  eventsCard: false,
-};
-
 export const flagDefinitions: Record<keyof Flags, FlagDefinition> = {
   enableChinaRegion: {
     key: "enableChinaRegion",
@@ -90,6 +80,8 @@ export const flagDefinitions: Record<keyof Flags, FlagDefinition> = {
     decide: async () => false,
   },
 };
+
+export const defaultFlags: Flags = Object.fromEntries(Object.entries(flagDefinitions).map(([key, value]) => [key, value.defaultValue])) as unknown as Flags;
 
 export const useEnableChinaRegion = flag<boolean>({
   key: "enableChinaRegion",
