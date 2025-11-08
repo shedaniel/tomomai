@@ -150,6 +150,7 @@
     "tabs": {
       "playerInfo": "玩家資料",
       "songs": "歌曲",
+      "recentPlays": "遊玩紀錄",
       "recommendations": "推薦歌曲",
       "plates": "名牌板",
       "map": "活動地圖",
@@ -213,6 +214,21 @@
       "targetRating": "目標分數",
       "achievement": "達成率",
       "version": "版本"
+    }
+  },
+  "recentPlays": {
+    "title": "遊玩紀錄",
+    "noPlays": "找不到最近遊玩紀錄",
+    "labels": {
+      "dx": "DX",
+      "combo": "連擊",
+      "fast": "FAST",
+      "late": "LATE"
+    },
+    "notesBreakdown": {
+      "type": "類型",
+      "total": "總計",
+      "totalLoss": "失分"
     }
   },
   "events": {

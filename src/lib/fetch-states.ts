@@ -7,6 +7,8 @@ export const FETCH_STATES = {
   SONG_DATA_EXPERT: "song_data:expert",
   SONG_DATA_MASTER: "song_data:master",
   SONG_DATA_REMASTER: "song_data:remaster",
+  RECENT_SONGS: "recent_songs",
+  HIDDEN_SONGS: "hidden_songs",
 } as const;
 
 export type FetchState = typeof FETCH_STATES[keyof typeof FETCH_STATES];
@@ -43,6 +45,8 @@ export function getAllStates(): FetchState[] {
     FETCH_STATES.SONG_DATA_EXPERT,
     FETCH_STATES.SONG_DATA_MASTER,
     FETCH_STATES.SONG_DATA_REMASTER,
+    FETCH_STATES.RECENT_SONGS,
+    FETCH_STATES.HIDDEN_SONGS,
   ];
 }
 

@@ -5,7 +5,7 @@ import { withVercelToolbar as withVercelToolbarPlugin } from "@vercel/toolbar/pl
 const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 
 const nextConfig: NextConfig = {
-  serverExternalPackages: ["skia-canvas"],
+  serverExternalPackages: ["skia-canvas", "pino", "pino-pretty"],
   images: {
     minimumCacheTTL: 2678400, // 31 days
     remotePatterns: [
@@ -56,6 +56,7 @@ const nextConfig: NextConfig = {
     '/api/admin/cache_images': ['./public/res/**/*'],
   },
   devIndicators: false,
+  instrumentationHook: true,
 };
 
 const withVercelToolbar = withVercelToolbarPlugin();

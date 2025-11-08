@@ -205,3 +205,64 @@ export const userEvents = pgTable("user_events", {
 }, (table) => [
   index("user_events_snapshotid_idx").on(table.snapshotId),
 ]);
+
+export const userRecentSongs = pgTable("user_recent_songs", {
+  id: bigint("id", { mode: "bigint" }).primaryKey().generatedAlwaysAsIdentity(), // Internal only, never exposed
+  userId: text("userId").notNull().references(() => user.id, { onDelete: "cascade" }),
+  songId: bigint("songId", { mode: "bigint" }).notNull().references(() => songs.id, { onDelete: "cascade" }),
+  playedAt: timestamp("playedAt", { precision: 0 }).notNull(),
+  archievement: integer("archievement").notNull(), // stored as 10000x, e.g., 99.1234% = 991234 (max 1010000)
+  dxScore: smallint("dxScore").notNull(),
+  maxDxScore: smallint("maxDxScore").notNull(),
+  fc: fcEnum("fc").notNull(),
+  fs: fsEnum("fs").notNull(),
+  track: smallint("track").notNull(),
+}, (table) => [
+  // Unique constraint to prevent duplicate entries at DB level
+  unique("user_recent_songs_userid_songid_playedat_unique").on(table.userId, table.songId, table.playedAt),
+  // Primary query pattern: get recent plays for a user (ordered by playedAt DESC)
+  index("user_recent_songs_userid_playedat_idx").on(table.userId, table.playedAt.desc()),
+  // For duplicate checking and getting play history of a specific song for a user
+  index("user_recent_songs_userid_songid_idx").on(table.userId, table.songId),
+  // For queries related to specific songs across all users (analytics/admin)
+  index("user_recent_songs_songid_idx").on(table.songId),
+]);
+
+export const userRecentSongsDetailed = pgTable("user_recent_songs_detailed", {
+  recentSongId: bigint("recentSongId", { mode: "bigint" }).primaryKey().references(() => userRecentSongs.id, { onDelete: "cascade" }),
+  fastCount: smallint("fastCount").notNull(),
+  lateCount: smallint("lateCount").notNull(),
+  combo: smallint("combo").notNull(),
+  maxCombo: smallint("maxCombo").notNull(),
+  syncScore: smallint("syncScore"),
+  maxSyncScore: smallint("maxSyncScore"),
+  tapCPerfect: smallint("tapCPerfect").notNull(),
+  tapPerfect: smallint("tapPerfect").notNull(),
+  tapGreat: smallint("tapGreat").notNull(),
+  tapGood: smallint("tapGood").notNull(),
+  tapMiss: smallint("tapMiss").notNull(),
+  holdCPerfect: smallint("holdCPerfect").notNull(),
+  holdPerfect: smallint("holdPerfect").notNull(),
+  holdGreat: smallint("holdGreat").notNull(),
+  holdGood: smallint("holdGood").notNull(),
+  holdMiss: smallint("holdMiss").notNull(),
+  slideCPerfect: smallint("slideCPerfect").notNull(),
+  slidePerfect: smallint("slidePerfect").notNull(),
+  slideGreat: smallint("slideGreat").notNull(),
+  slideGood: smallint("slideGood").notNull(),
+  slideMiss: smallint("slideMiss").notNull(),
+  touchCPerfect: smallint("touchCPerfect").notNull(),
+  touchPerfect: smallint("touchPerfect").notNull(),
+  touchGreat: smallint("touchGreat").notNull(),
+  touchGood: smallint("touchGood").notNull(),
+  touchMiss: smallint("touchMiss").notNull(),
+  breakCPerfect: smallint("breakCPerfect").notNull(),
+  breakPerfect: smallint("breakPerfect").notNull(),
+  breakGreat: smallint("breakGreat").notNull(),
+  breakGood: smallint("breakGood").notNull(),
+  breakMiss: smallint("breakMiss").notNull(),
+  venue: text("venue"),
+  rating: smallint("rating").notNull(),
+  ratingChange: smallint("ratingChange").notNull(),
+}, (table) => [
+]);

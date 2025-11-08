@@ -15,6 +15,13 @@
       "when": 1762104176696,
       "tag": "0001_wealthy_colleen_wing",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1762610330967,
+      "tag": "0002_abnormal_earthquake",
+      "breakpoints": true
     }
   ]
 }

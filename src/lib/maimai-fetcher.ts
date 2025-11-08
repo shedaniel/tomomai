@@ -1,6 +1,6 @@
 import { db } from "./db";
-import { userTokens, userSnapshots, songs, userScores, fetchSessions, userEvents } from "./db/schema-pg";
-import { eq, and } from "drizzle-orm";
+import { userTokens, userSnapshots, songs, userScores, fetchSessions, userEvents, userRecentSongs, userRecentSongsDetailed } from "./db/schema-pg";
+import { eq, and, or } from "drizzle-orm";
 import { load } from "cheerio";
 import { nanoid } from "nanoid";
 import { getCurrentVersion } from "./metadata";
@@ -11,6 +11,7 @@ import { normalizeName } from "./name-utils";
 import { splitSongs } from "./rating-calculator";
 import { SongWithScore } from "./types";
 import { decryptToken, encryptToken } from "./token-crypto";
+import { logger } from "./logger";
 
 export const JP_AGENT = new Agent({
   connect: {
@@ -72,7 +73,7 @@ export async function processMaimaiToken(
       username = parts[1];
       password = parts[2];
     } else {
-      console.log("Invalid account token format, removing from database");
+      logger.info("Invalid account token format, removing from database");
       if (userId) {
         await deleteToken(userId, region);
       }
@@ -84,7 +85,7 @@ export async function processMaimaiToken(
 
     // Validate that we have all required parts
     if (!username || !password) {
-      console.log("Invalid account token format, missing username or password");
+      logger.info("Invalid account token format, missing username or password");
       if (userId) {
         await deleteToken(userId, region);
       }
@@ -96,12 +97,12 @@ export async function processMaimaiToken(
 
     // If we have a cookie, try to validate it first
     if (cookieValue && region === "intl") {
-      console.log(`Trying to validate existing cookie for user ${userId}`);
+      logger.info(`Trying to validate existing cookie for user ${userId}`);
       const cookieResult = await validateInternationalMaimaiToken(userId, cookieValue);
       if (cookieResult.isValid) {
         return cookieResult;
       }
-      console.log("Existing cookie failed validation, proceeding with login");
+      logger.info("Existing cookie failed validation, proceeding with login");
     }
 
     // Proceed with login flow
@@ -109,7 +110,7 @@ export async function processMaimaiToken(
   }
 
   // Invalid token format
-  console.log("Invalid token format, removing from database");
+  logger.info("Invalid token format, removing from database");
   if (userId) {
     await deleteToken(userId, region);
   }
@@ -147,11 +148,11 @@ async function performJapanAccountLogin(
   const maimaiMobileUrl = "https://maimaidx.jp/maimai-mobile/";
   const submitUrl = "https://maimaidx.jp/maimai-mobile/submit/";
 
-  console.log(`Attempting Japan account login for user ${userId} with username ${username}`);
+  logger.info(`Attempting Japan account login for user ${userId} with username ${username}`);
 
   try {
     // Step 1: Get the maimai mobile page to obtain _t token and cookies
-    console.log("Step 1: Fetching maimai mobile page to get _t token and cookies");
+    logger.info("Step 1: Fetching maimai mobile page to get _t token and cookies");
     const maimaiPageResponse = await fetch(maimaiMobileUrl, {
       method: "GET",
       headers: {
@@ -161,7 +162,7 @@ async function performJapanAccountLogin(
       ...{ dispatcher: JP_AGENT },
     });
 
-    console.log(`Maimai mobile page response status: ${maimaiPageResponse.status}`);
+    logger.debug(`Maimai mobile page response status: ${maimaiPageResponse.status}`);
 
     // Extract cookies from Set-Cookie headers
     let setCookieHeaders: string[] = [];
@@ -176,7 +177,7 @@ async function performJapanAccountLogin(
     }
     
     if (setCookieHeaders.length === 0) {
-      console.log("No Set-Cookie headers in maimai mobile page response");
+      logger.warn("No Set-Cookie headers in maimai mobile page response");
       if (userId) {
         await deleteToken(userId, "jp");
       }
@@ -195,14 +196,14 @@ async function performJapanAccountLogin(
       // Check if this is the _t token
       if (cookiePart.startsWith('_t=')) {
         tToken = cookiePart.substring(3); // Remove '_t=' prefix
-        console.log(`Extracted _t token: ${tToken.substring(0, 10)}...`);
+        logger.debug(`Extracted _t token: ${tToken.substring(0, 10)}...`);
       }
       
       return cookiePart;
     }).join('; ');
 
     if (!tToken) {
-      console.log("Could not extract _t token from Set-Cookie headers");
+      logger.warn("Could not extract _t token from Set-Cookie headers");
       if (userId) {
         await deleteToken(userId, "jp");
       }
@@ -212,10 +213,10 @@ async function performJapanAccountLogin(
       };
     }
 
-    console.log(`Parsed cookies for login request: ${cookies.substring(0, 50)}...`);
+    logger.debug(`Parsed cookies for login request: ${cookies.substring(0, 50)}...`);
 
     // Step 2: POST credentials with all cookies and _t token
-    console.log("Step 2: Posting credentials with cookies and _t token");
+    logger.info("Step 2: Posting credentials with cookies and _t token");
     const formData = new URLSearchParams({
       segaId: username,
       password: password,
@@ -235,16 +236,16 @@ async function performJapanAccountLogin(
       ...{ dispatcher: JP_AGENT },
     });
 
-    console.log(`Japan account login response status: ${response.status}`);
+    logger.debug(`Japan account login response status: ${response.status}`);
 
     if (response.status === 302) {
       // Check redirect URL
       const redirectUrl = response.headers.get("Location");
-      console.log(`Login redirect URL: ${redirectUrl}`);
+      logger.debug(`Login redirect URL: ${redirectUrl}`);
 
       if (!redirectUrl) {
         // 302 without redirect URL means login failed
-        console.log("Login failed: 302 response without redirect URL");
+        logger.warn("Login failed: 302 response without redirect URL");
         if (userId) {
           await deleteToken(userId, "jp");
         }
@@ -256,11 +257,11 @@ async function performJapanAccountLogin(
 
       if (redirectUrl.includes("https://maimaidx.jp/maimai-mobile/aimeList/")) {
         // Login successful
-        console.log("Login successful, redirecting to aimeList");
+        logger.debug("Login successful, redirecting to aimeList");
 
         // Return success with the aimeList submit URL and cookies
         const aimeListSubmitUrl = "https://maimaidx.jp/maimai-mobile/aimeList/submit/?idx=0";
-        console.log(`Login successful. Using aimeList submit URL: ${aimeListSubmitUrl}`);
+        logger.debug(`Login successful. Using aimeList submit URL: ${aimeListSubmitUrl}`);
 
         return {
           isValid: true,
@@ -269,7 +270,7 @@ async function performJapanAccountLogin(
         };
       } else {
         // Unexpected redirect URL
-        console.log(`Unexpected redirect URL: ${redirectUrl}`);
+        logger.warn(`Unexpected redirect URL: ${redirectUrl}`);
         if (userId) {
           await deleteToken(userId, "jp");
         }
@@ -280,7 +281,7 @@ async function performJapanAccountLogin(
       }
     } else {
       // Login failed with non-302 status
-      console.log(`Japan account login failed with status: ${response.status}`);
+      logger.warn(`Japan account login failed with status: ${response.status}`);
       if (userId) {
         await deleteToken(userId, "jp");
       }
@@ -290,7 +291,7 @@ async function performJapanAccountLogin(
       };
     }
   } catch (error) {
-    console.error("Error during Japan account login:", error);
+    logger.error(error, "Error during Japan account login");
     if (userId) {
       await deleteToken(userId, "jp");
     }
@@ -309,11 +310,11 @@ async function performInternationalAccountLogin(
   const loginPageUrl = "https://lng-tgk-aime-gw.am-all.net/common_auth/login?site_id=maimaidxex&redirect_url=https://maimaidx-eng.com/maimai-mobile/&back_url=https://maimai.sega.com/";
   const loginUrl = "https://lng-tgk-aime-gw.am-all.net/common_auth/login/sid/";
 
-  console.log(`Attempting account login for user ${userId} with username ${username}`);
+  logger.info(`Attempting account login for user ${userId} with username ${username}`);
 
   try {
     // Step 1: Get the login page to obtain JSESSIONID
-    console.log("Step 1: Fetching login page to get JSESSIONID");
+    logger.info("Step 1: Fetching login page to get JSESSIONID");
     const loginPageResponse = await fetch(loginPageUrl, {
       method: "GET",
       headers: {
@@ -322,7 +323,7 @@ async function performInternationalAccountLogin(
       redirect: "manual", // Don't follow redirects
     });
 
-    console.log(`Login page response status: ${loginPageResponse.status}`);
+    logger.debug(`Login page response status: ${loginPageResponse.status}`);
 
     // Extract JSESSIONID from Set-Cookie header
     const setCookieHeader = loginPageResponse.headers.get("Set-Cookie");
@@ -332,9 +333,9 @@ async function performInternationalAccountLogin(
       const jsessionMatch = setCookieHeader.match(/JSESSIONID=([^;]+)/);
       if (jsessionMatch) {
         jsessionId = jsessionMatch[1];
-        console.log(`Extracted JSESSIONID: ${jsessionId.substring(0, 10)}...`);
+        logger.debug(`Extracted JSESSIONID: ${jsessionId.substring(0, 10)}...`);
       } else {
-        console.log("Could not extract JSESSIONID from Set-Cookie header");
+        logger.warn("Could not extract JSESSIONID from Set-Cookie header");
         if (userId) {
           await deleteToken(userId, "intl");
         }
@@ -344,7 +345,7 @@ async function performInternationalAccountLogin(
         };
       }
     } else {
-      console.log("No Set-Cookie header in login page response");
+      logger.warn("No Set-Cookie header in login page response");
       if (userId) {
         await deleteToken(userId, "intl");
       }
@@ -355,7 +356,7 @@ async function performInternationalAccountLogin(
     }
 
     // Step 2: POST credentials with JSESSIONID cookie
-    console.log("Step 2: Posting credentials with JSESSIONID");
+    logger.debug("Step 2: Posting credentials with JSESSIONID");
     const params = new URLSearchParams({
       retention: '1',
       sid: username,
@@ -371,19 +372,19 @@ async function performInternationalAccountLogin(
       redirect: "manual", // Don't follow redirects
     });
 
-    console.log(`Account login response status: ${response.status}`);
+    logger.debug(`Account login response status: ${response.status}`);
 
     if (response.status === 302) {
       // Login successful, extract clal cookie from Set-Cookie header
       const loginSetCookieHeader = response.headers.get("Set-Cookie");
-      console.log(`Login Set-Cookie header: ${loginSetCookieHeader}`);
+      logger.debug(`Login Set-Cookie header: ${loginSetCookieHeader}`);
 
       if (loginSetCookieHeader) {
         // Extract clal cookie value
         const clalMatch = loginSetCookieHeader.match(/clal=([^;]+)/);
         if (clalMatch) {
           const clalValue = clalMatch[1];
-          console.log(`Extracted clal cookie: ${clalValue.substring(0, 10)}...`);
+          logger.debug(`Extracted clal cookie: ${clalValue.substring(0, 10)}...`);
 
           // Update token in database with new format including cookie
           const newToken = `account://${clalValue}:://${username}:://${password}`;
@@ -406,18 +407,18 @@ async function performInternationalAccountLogin(
               );
           }
 
-          console.log("Token updated in database with extracted cookie");
+          logger.debug("Token updated in database with extracted cookie");
 
           // Get redirect URL for validation result
           const redirectUrl = response.headers.get("Location");
-          console.log(`Login successful. Redirect URL: ${redirectUrl}`);
+          logger.debug(`Login successful. Redirect URL: ${redirectUrl}`);
 
           return {
             isValid: true,
             redirectUrl: redirectUrl || undefined,
           };
         } else {
-          console.log("Could not extract clal cookie from Set-Cookie header");
+          logger.warn("Could not extract clal cookie from Set-Cookie header");
           if (userId) {
             await deleteToken(userId, "intl");
           }
@@ -427,7 +428,7 @@ async function performInternationalAccountLogin(
           };
         }
       } else {
-        console.log("No Set-Cookie header in login response");
+        logger.warn("No Set-Cookie header in login response");
         if (userId) {
           await deleteToken(userId, "intl");
         }
@@ -438,7 +439,7 @@ async function performInternationalAccountLogin(
       }
     } else {
       // Login failed
-      console.log(`Account login failed with status: ${response.status}`);
+      logger.warn(`Account login failed with status: ${response.status}`);
       if (userId) {
         await deleteToken(userId, "intl");
       }
@@ -448,7 +449,7 @@ async function performInternationalAccountLogin(
       };
     }
   } catch (error) {
-    console.error("Error during account login:", error);
+    logger.error(error, "Error during account login");
     if (userId) {
       await deleteToken(userId, "intl");
     }
@@ -470,7 +471,7 @@ export async function validateInternationalMaimaiToken(
   
   // Check if token contains only ASCII characters
   if (!/^[\x00-\x7F]*$/.test(sanitizedToken)) {
-    console.log("Token contains non-ASCII characters, removing from database");
+    logger.warn("Token contains non-ASCII characters, removing from database");
     
     // Remove invalid token from database
     if (userId) {
@@ -485,7 +486,7 @@ export async function validateInternationalMaimaiToken(
 
   // Check if token is not empty
   if (!sanitizedToken) {
-    console.log("Empty token provided, removing from database");
+    logger.warn("Empty token provided, removing from database");
     
     // Remove empty token from database
     if (userId) {
@@ -498,7 +499,7 @@ export async function validateInternationalMaimaiToken(
     };
   }
 
-  console.log(`Validating token for user ${userId} in intl region (token length: ${sanitizedToken.length})`);
+  logger.debug(`Validating token for user ${userId} in intl region (token length: ${sanitizedToken.length})`);
 
   try {
     const response = await fetch(loginUrl, {
@@ -510,12 +511,12 @@ export async function validateInternationalMaimaiToken(
       redirect: "manual", // Don't follow redirects
     });
 
-    console.log(`Token validation response status: ${response.status}`);
+    logger.debug(`Token validation response status: ${response.status}`);
 
     if (response.status === 302) {
       // Token is valid, get redirect URL
       const redirectUrl = response.headers.get("Location");
-      console.log(`Token validation successful. Redirect URL: ${redirectUrl}`);
+      logger.debug(`Token validation successful. Redirect URL: ${redirectUrl}`);
       
       return {
         isValid: true,
@@ -523,7 +524,7 @@ export async function validateInternationalMaimaiToken(
       };
     } else if (response.status === 200) {
       // Token expired, clear from database
-      console.log("Token expired, clearing from database");
+      logger.warn("Token expired, clearing from database");
       
       if (userId) {
         await deleteToken(userId, "intl");
@@ -535,14 +536,14 @@ export async function validateInternationalMaimaiToken(
       };
     } else {
       // Unexpected status code
-      console.log(`Unexpected response status: ${response.status}`);
+      logger.warn(`Unexpected response status: ${response.status}`);
       return {
         isValid: false,
         error: `Unexpected response from SEGA servers (${response.status})`,
       };
     }
   } catch (error) {
-    console.error("Error validating token:", error);
+    logger.error(error, "Error validating token");
     return {
       isValid: false,
       error: "Failed to validate token. Please try again later.",
@@ -552,7 +553,7 @@ export async function validateInternationalMaimaiToken(
 
 async function fetchPlayerDataWithLogin(region: "intl" | "jp", redirectUrl: string, redirectCookies: string | null): Promise<{ html: string; cookies: string }> {
   // Step 1: Follow the redirect URL to get login cookies
-  console.log(`Fetching redirect URL to get login cookies: ${redirectUrl}`);
+  logger.debug(`Fetching redirect URL to get login cookies: ${redirectUrl}`);
   
   const loginResponse = await fetch(redirectUrl, {
     method: "GET",
@@ -564,7 +565,7 @@ async function fetchPlayerDataWithLogin(region: "intl" | "jp", redirectUrl: stri
     ...(region === "jp" ? { dispatcher: JP_AGENT } : {}),
   });
 
-  console.log(`Login response status: ${loginResponse.status}`);
+  logger.debug(`Login response status: ${loginResponse.status}`);
 
   // Extract Set-Cookie headers
   let setCookieHeaders: string[] = [];
@@ -582,7 +583,7 @@ async function fetchPlayerDataWithLogin(region: "intl" | "jp", redirectUrl: stri
     throw new Error("No cookies received from login redirect");
   }
 
-  console.log(`Received ${setCookieHeaders.length} cookies from login`);
+  logger.debug(`Received ${setCookieHeaders.length} cookies from login`);
 
   // Parse cookies into a single Cookie header value
   const cookies = setCookieHeaders.map(header => {
@@ -591,13 +592,13 @@ async function fetchPlayerDataWithLogin(region: "intl" | "jp", redirectUrl: stri
     return cookiePart;
   }).join('; ');
 
-  console.log(`Parsed cookies for player data request`);
+  logger.debug(`Parsed cookies for player data request`);
 
   // Step 2: Fetch player data using the login cookies
   const playerDataUrl = region === "jp"
     ? "https://maimaidx.jp/maimai-mobile/playerData/"
     : "https://maimaidx-eng.com/maimai-mobile/playerData/";
-  console.log(`Fetching player data from: ${playerDataUrl}`);
+  logger.debug(`Fetching player data from: ${playerDataUrl}`);
 
   const playerDataResponse = await fetch(playerDataUrl, {
     method: "GET",
@@ -609,14 +610,14 @@ async function fetchPlayerDataWithLogin(region: "intl" | "jp", redirectUrl: stri
     ...(region === "jp" ? { dispatcher: JP_AGENT } : {}),
   });
 
-  console.log(`Player data response status: ${playerDataResponse.status}`);
+  logger.debug(`Player data response status: ${playerDataResponse.status}`);
 
   if (playerDataResponse.status !== 200) {
     throw new Error(`Failed to fetch player data: HTTP ${playerDataResponse.status}`);
   }
 
   const playerDataHtml = await playerDataResponse.text();
-  console.log(`Player data HTML length: ${playerDataHtml.length} characters`);
+  logger.debug(`Player data HTML length: ${playerDataHtml.length} characters`);
 
   // Check for error in response
   if (playerDataHtml.includes("ERROR CODE：100001") || playerDataHtml.includes("Please login again")) {
@@ -641,14 +642,14 @@ function parseScoreData(html: string, difficulty: number): ScoreData[] {
   
   const selector = difficultySelectors[difficulty];
   if (!selector) {
-    console.error(`Invalid difficulty: ${difficulty}`);
+    logger.error(`Invalid difficulty: ${difficulty}`);
     return [];
   }
   
   const blocks = $(selector);
   const scores: ScoreData[] = [];
 
-  console.log(`Found ${blocks.length} score blocks for difficulty ${difficulty} using selector ${selector}`);
+  logger.debug(`Found ${blocks.length} score blocks for difficulty ${difficulty} using selector ${selector}`);
 
   blocks.each((index, element) => {
     try {
@@ -665,13 +666,13 @@ function parseScoreData(html: string, difficulty: number): ScoreData[] {
       // Extract music type (dx/std) from icon image
       const iconElement = parent.find('img.music_kind_icon');
       if (iconElement.length === 0) {
-        console.warn(`No music kind icon found for score block ${index}`);
+        logger.warn(`No music kind icon found for score block ${index}`);
         return;
       }
 
       const iconSrc = iconElement.attr('src');
       if (!iconSrc) {
-        console.warn(`No src attribute found for music kind icon in score block ${index}`);
+        logger.warn(`No src attribute found for music kind icon in score block ${index}`);
         return;
       }
 
@@ -681,14 +682,14 @@ function parseScoreData(html: string, difficulty: number): ScoreData[] {
       } else if (iconSrc.includes('music_standard.png')) {
         musicType = "std";
       } else {
-        console.warn(`Unknown music type icon: ${iconSrc} in score block ${index}`);
+        logger.warn(`Unknown music type icon: ${iconSrc} in score block ${index}`);
         return;
       }
 
       // Extract song name
       const nameElement = block.find('.music_name_block');
       if (nameElement.length === 0) {
-        console.warn(`No music name block found for score block ${index}`);
+        logger.warn(`No music name block found for score block ${index}`);
         return;
       }
       const songName = normalizeName(nameElement.text().trim());
@@ -696,14 +697,14 @@ function parseScoreData(html: string, difficulty: number): ScoreData[] {
       // Extract level
       const levelElement = block.find('.music_lv_block');
       if (levelElement.length === 0) {
-        console.warn(`No music level block found for score block ${index}`);
+        logger.warn(`No music level block found for score block ${index}`);
         return;
       }
       const level = levelElement.text().trim();
 
       // Extract achievement and dx score from the two .music_score_block elements
       if (scoreBlocks.length < 2) {
-        console.warn(`Expected 2 score blocks, found ${scoreBlocks.length} for song ${songName}`);
+        logger.warn(`Expected 2 score blocks, found ${scoreBlocks.length} for song ${songName}`);
         return;
       }
 
@@ -711,7 +712,7 @@ function parseScoreData(html: string, difficulty: number): ScoreData[] {
       const achievementText = scoreBlocks.eq(0).text().trim();
       const achievementMatch = achievementText.match(/(\d+\.?\d*)%/);
       if (!achievementMatch) {
-        console.warn(`Could not parse achievement: ${achievementText} for song ${songName}`);
+        logger.warn(`Could not parse achievement: ${achievementText} for song ${songName}`);
         return;
       }
       const achievementFloat = parseFloat(achievementMatch[1]);
@@ -721,7 +722,7 @@ function parseScoreData(html: string, difficulty: number): ScoreData[] {
       const dxScoreText = scoreBlocks.eq(1).text().trim();
       const dxScoreMatch = dxScoreText.match(/(\d+)\s*\/\s*\d+/);
       if (!dxScoreMatch) {
-        console.warn(`Could not parse dx score: ${dxScoreText} for song ${songName}`);
+        logger.warn(`Could not parse dx score: ${dxScoreText} for song ${songName}`);
         return;
       }
       const dxScore = parseInt(dxScoreMatch[1], 10);
@@ -729,7 +730,7 @@ function parseScoreData(html: string, difficulty: number): ScoreData[] {
       // Extract fs and fc from the three .h_30 elements
       const h30Elements = block.find('.h_30');
       if (h30Elements.length < 2) {
-        console.warn(`Expected at least 2 h_30 elements, found ${h30Elements.length} for song ${songName}`);
+        logger.warn(`Expected at least 2 h_30 elements, found ${h30Elements.length} for song ${songName}`);
         return;
       }
 
@@ -785,13 +786,13 @@ function parseScoreData(html: string, difficulty: number): ScoreData[] {
 
       scores.push(scoreData);
 
-      console.log(`Extracted score ${index}: ${songName} (${level}, ${musicType}, ${difficultyName}) - ${achievementFloat}%, ${dxScore} dx, ${fc}/${fs}`);
+      logger.debug(`Extracted score ${index}: ${songName} (${level}, ${musicType}, ${difficultyName}) - ${achievementFloat}%, ${dxScore} dx, ${fc}/${fs}`);
     } catch (error) {
-      console.error(`Error processing score block ${index}:`, error);
+      logger.error(error, `Error processing score block ${index}`);
     }
   });
 
-  console.log(`Successfully extracted ${scores.length} scores for difficulty ${difficulty}`);
+  logger.info(`Successfully extracted ${scores.length} scores for difficulty ${difficulty}`);
   return scores;
 }
 
@@ -799,7 +800,7 @@ function parseScoreData(html: string, difficulty: number): ScoreData[] {
 async function fetchSongsData(cookies: string, difficulty: number, region: "intl" | "jp"): Promise<ScoreData[]> {
   const baseUrl = region === "jp" ? "https://maimaidx.jp" : "https://maimaidx-eng.com";
   const songsUrl = `${baseUrl}/maimai-mobile/record/musicGenre/search/?genre=99&diff=${difficulty}`;
-  console.log(`Fetching songs data for difficulty ${difficulty} from: ${songsUrl}`);
+  logger.info(`Fetching songs data for difficulty ${difficulty} from: ${songsUrl}`);
 
   const songsResponse = await fetch(songsUrl, {
     method: "GET",
@@ -811,14 +812,14 @@ async function fetchSongsData(cookies: string, difficulty: number, region: "intl
     ...(region === "jp" ? { dispatcher: JP_AGENT } : {}),
   });
 
-  console.log(`Songs data response status for difficulty ${difficulty}: ${songsResponse.status}`);
+  logger.debug(`Songs data response status for difficulty ${difficulty}: ${songsResponse.status}`);
 
   if (songsResponse.status !== 200) {
     throw new Error(`Failed to fetch songs data for difficulty ${difficulty}: HTTP ${songsResponse.status}`);
   }
 
   const songsHtml = await songsResponse.text();
-  console.log(`Songs data for difficulty ${difficulty} fetched successfully, length: ${songsHtml.length} characters`);
+  logger.debug(`Songs data for difficulty ${difficulty} fetched successfully, length: ${songsHtml.length} characters`);
   
   // Parse the HTML to extract score data
   const scoreData = parseScoreData(songsHtml, difficulty);
@@ -828,12 +829,12 @@ async function fetchSongsData(cookies: string, difficulty: number, region: "intl
 
 // Fetch all songs data for all difficulties (0-4)
 async function fetchAllSongsData(cookies: string, region: "intl" | "jp", sessionId?: bigint): Promise<{ [difficulty: number]: ScoreData[] }> {
-  console.log(`Fetching songs data for all difficulties (0-4)${sessionId ? ' with tracking' : ''}`);
+  logger.info(`Fetching songs data for all difficulties (0-4)${sessionId ? ' with tracking' : ''}`);
   
   // Create promises for all difficulties to fetch concurrently
   const difficultyPromises = Array.from({ length: 5 }, (_, difficulty) => {
     return fetchSongsData(cookies, difficulty, region).then((scoreData) => {
-      console.log(`Successfully fetched ${scoreData.length} scores for difficulty ${difficulty}`);
+      logger.info(`Successfully fetched ${scoreData.length} scores for difficulty ${difficulty}`);
       
       // Track progress if sessionId is provided
       if (sessionId) {
@@ -845,7 +846,7 @@ async function fetchAllSongsData(cookies: string, region: "intl" | "jp", session
       
       return { difficulty, scoreData };
     }).catch((error) => {
-      console.error(`Failed to fetch songs for difficulty ${difficulty}:`, error);
+      logger.error(error, `Failed to fetch songs for difficulty ${difficulty}`);
       throw new Error(`Failed to fetch songs for difficulty ${difficulty}: ${error instanceof Error ? error.message : "Unknown error"}`);
     });
   });
@@ -859,13 +860,216 @@ async function fetchAllSongsData(cookies: string, region: "intl" | "jp", session
     songsData[difficulty] = scoreData;
   }
   
-  console.log(`Successfully fetched songs data for all difficulties`);
+  logger.info(`Successfully fetched songs data for all difficulties`);
   return songsData;
+}
+
+async function fetchRecentSongsData(cookies: string, region: "intl" | "jp", sessionId: bigint): Promise<RecentSongData[]> {
+  const baseUrl = region === "jp" ? "https://maimaidx.jp" : "https://maimaidx-eng.com";
+  const recentSongsUrl = `${baseUrl}/maimai-mobile/record/`;
+  logger.info(`Fetching recent songs data from: ${recentSongsUrl}`);
+
+  const recentSongsResponse = await fetch(recentSongsUrl, {
+    method: "GET",
+    headers: {
+      "Cookie": cookies,
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+      "Referer": `${baseUrl}/maimai-mobile/`,
+    },
+    ...(region === "jp" ? { dispatcher: JP_AGENT } : {}),
+  });
+
+  logger.debug(`Recent songs data response status: ${recentSongsResponse.status}`);
+
+  if (recentSongsResponse.status !== 200) {
+    throw new Error(`Failed to fetch recent songs data: HTTP ${recentSongsResponse.status}`);
+  }
+
+  const recentSongsHtml = await recentSongsResponse.text();
+  logger.debug(`Recent songs data fetched successfully, length: ${recentSongsHtml.length} characters`);
+
+  const $ = load(recentSongsHtml);
+  const recentSongs: RecentSongData[] = [];
+
+  // Parse each recent play record
+  const records = $(".p_10.t_l.f_0.v_b");
+  logger.debug(`Found ${records.length} recent play records`);
+
+  records.each((index, element) => {
+    try {
+      const record = $(element);
+
+      // Extract track number (e.g., "TRACK 01" -> 1)
+      const trackText = record.find(".sub_title > .red").text().trim();
+      const trackMatch = trackText.match(/TRACK\s+(\d+)/i);
+      if (!trackMatch) {
+        logger.warn(`Could not parse track number from: ${trackText}`);
+        return;
+      }
+      const track = parseInt(trackMatch[1], 10);
+
+      // Extract play time (JST format: "2025/11/02 19:23")
+      const playTimeText = record.find(".sub_title > .v_b:not(.red)").text().trim();
+      const playTimeMatch = playTimeText.match(/(\d{4})\/(\d{2})\/(\d{2})\s+(\d{2}):(\d{2})/);
+      if (!playTimeMatch) {
+        logger.warn(`Could not parse play time from: ${playTimeText}`);
+        return;
+      }
+      const [, year, month, day, hour, minute] = playTimeMatch;
+      // Parse as JST (UTC+9)
+      const playedAt = new Date(`${year}-${month}-${day}T${hour}:${minute}:00+09:00`);
+
+      // Extract level string (e.g., "13+")
+      const level = record.find(".music_lv_back").text().trim();
+
+      // Extract difficulty from playlog_diff image
+      const diffImg = record.find("img.playlog_diff");
+      const diffImgSrc = diffImg.attr("src") || "";
+      let difficultyNumber = 0;
+      let difficulty = "basic";
+      
+      if (diffImgSrc.includes("remaster")) {
+        difficultyNumber = 4;
+        difficulty = "remaster";
+      } else if (diffImgSrc.includes("master")) {
+        difficultyNumber = 3;
+        difficulty = "master";
+      } else if (diffImgSrc.includes("expert")) {
+        difficultyNumber = 2;
+        difficulty = "expert";
+      } else if (diffImgSrc.includes("advanced")) {
+        difficultyNumber = 1;
+        difficulty = "advanced";
+      } else if (diffImgSrc.includes("basic")) {
+        difficultyNumber = 0;
+        difficulty = "basic";
+      }
+
+      // Extract song name - text in .basic_block
+      const basicBlock = record.find(".basic_block");
+      let songName = "";
+      basicBlock.contents().each((i, node) => {
+        if (node.type === "text") {
+          const text = $(node).text().trim();
+          if (text) {
+            songName = text;
+          }
+        }
+      });
+      songName = normalizeName(songName);
+
+      if (!songName) {
+        logger.warn(`Could not extract song name for record ${index}`);
+        return;
+      }
+
+      // Extract achievement percentage (e.g., "99.2384%")
+      const achievementText = record.find(".playlog_achievement_txt").text().trim();
+      const achievementMatch = achievementText.match(/(\d+\.?\d*)%/);
+      if (!achievementMatch) {
+        logger.warn(`Could not parse achievement from: ${achievementText}`);
+        return;
+      }
+      const achievementFloat = parseFloat(achievementMatch[1]);
+      const achievement = Math.round(achievementFloat * 10000); // Convert to 10000x format
+
+      // Extract DX score (e.g., "1,483 / 1,722")
+      const dxScoreText = record.find(".playlog_score_block > .f_15").text().trim();
+      const dxScoreMatch = dxScoreText.match(/(\d+(?:,\d+)?)\s*\/\s*(\d+(?:,\d+)?)/);
+      if (!dxScoreMatch) {
+        logger.warn(`Could not parse DX score from: ${dxScoreText}`);
+        return;
+      }
+      const dxScore = parseInt(dxScoreMatch[1].replace(/,/g, ''), 10);
+      const maxDxScore = parseInt(dxScoreMatch[2].replace(/,/g, ''), 10);
+
+      // Extract FC and FS status from result images
+      const resultImages = record.find(".playlog_result_innerblock > img");
+      
+      let fc: "none" | "fc" | "fc+" | "ap" | "ap+" = "none";
+      let fs: "none" | "sync" | "fs" | "fs+" | "fdx" | "fdx+" = "none";
+
+      // First image is FC status
+      if (resultImages.length > 0) {
+        const fcSrc = $(resultImages[0]).attr("src") || "";
+        if (fcSrc.includes("applus.png") || fcSrc.includes("app.png")) {
+          fc = "ap+";
+        } else if (fcSrc.includes("ap.png")) {
+          fc = "ap";
+        } else if (fcSrc.includes("fcplus.png") || fcSrc.includes("fcp.png")) {
+          fc = "fc+";
+        } else if (fcSrc.includes("fc.png")) {
+          fc = "fc";
+        }
+      }
+
+      // Second image is FS status
+      if (resultImages.length > 1) {
+        const fsSrc = $(resultImages[1]).attr("src") || "";
+        if (fsSrc.includes("fsdplus.png")) {
+          fs = "fdx+";
+        } else if (fsSrc.includes("fsd.png")) {
+          fs = "fdx";
+        } else if (fsSrc.includes("fsplus.png") || fsSrc.includes("fsp.png")) {
+          fs = "fs+";
+        } else if (fsSrc.includes("fs.png")) {
+          fs = "fs";
+        } else if (fsSrc.includes("sync.png")) {
+          fs = "sync";
+        }
+      }
+
+      // Determine music type (dx/std) from playlog_music_kind_icon
+      const musicKindIcon = record.find("img.playlog_music_kind_icon");
+      let musicType: "dx" | "std" = "std";
+      if (musicKindIcon.length > 0) {
+        const iconSrc = musicKindIcon.attr("src") || "";
+        if (iconSrc.includes("music_dx.png")) {
+          musicType = "dx";
+        } else if (iconSrc.includes("music_standard.png")) {
+          musicType = "std";
+        }
+      }
+
+      // Extract idx value for playlog detail page
+      const idxInput = record.find("input[name='idx']");
+      const idx = idxInput.attr("value") || "";
+      if (!idx) {
+        logger.warn(`Could not extract idx value for record ${index}`);
+        return;
+      }
+
+      const recentSong: RecentSongData = {
+        songName,
+        level,
+        musicType,
+        difficulty,
+        difficultyNumber,
+        achievement,
+        dxScore,
+        maxDxScore,
+        fc,
+        fs,
+        track,
+        playedAt,
+        idx,
+      };
+
+      recentSongs.push(recentSong);
+      logger.debug(`Extracted recent play ${index}: ${songName} (Track ${track}, ${level}, ${difficulty}) - ${achievementFloat}%, ${dxScore}/${maxDxScore}`);
+
+    } catch (error) {
+      logger.error(error, `Error processing recent play record ${index}`);
+    }
+  });
+
+  logger.info(`Successfully extracted ${recentSongs.length} recent plays`);
+  return recentSongs;
 }
 
 // Fetch hidden songs data from rating target music page (intl only)
 async function fetchHiddenSongsData(cookies: string, allSongsData: { [difficulty: number]: ScoreData[] }): Promise<ScoreData[]> {
-  console.log("Fetching hidden songs data from rating target music page...");
+  logger.info("Fetching hidden songs data from rating target music page...");
   
   const hiddenSongsUrl = "https://maimaidx-eng.com/maimai-mobile/home/ratingTargetMusic/";
   
@@ -878,14 +1082,14 @@ async function fetchHiddenSongsData(cookies: string, allSongsData: { [difficulty
     },
   });
 
-  console.log(`Hidden songs data response status: ${response.status}`);
+  logger.debug(`Hidden songs data response status: ${response.status}`);
 
   if (response.status !== 200) {
     throw new Error(`Failed to fetch hidden songs data: HTTP ${response.status}`);
   }
 
   const html = await response.text();
-  console.log(`Hidden songs data fetched successfully, length: ${html.length} characters`);
+  logger.debug(`Hidden songs data fetched successfully, length: ${html.length} characters`);
   
   const $ = load(html);
   const hiddenSongs: ScoreData[] = [];
@@ -902,7 +1106,7 @@ async function fetchHiddenSongsData(cookies: string, allSongsData: { [difficulty
   // Process each difficulty
   for (const { selector, difficulty, difficultyNumber } of difficultyInfo) {
     const blocks = $(selector);
-    console.log(`Found ${blocks.length} score blocks for ${difficulty} difficulty`);
+    logger.debug(`Found ${blocks.length} score blocks for ${difficulty} difficulty`);
 
     blocks.each((index, element) => {
       try {
@@ -911,7 +1115,7 @@ async function fetchHiddenSongsData(cookies: string, allSongsData: { [difficulty
         // Extract song name
         const nameElement = block.find('.music_name_block');
         if (nameElement.length === 0) {
-          console.warn(`No music name block found for ${difficulty} score block ${index}`);
+          logger.warn(`No music name block found for ${difficulty} score block ${index}`);
           return;
         }
         const songName = normalizeName(nameElement.text().trim());
@@ -919,13 +1123,13 @@ async function fetchHiddenSongsData(cookies: string, allSongsData: { [difficulty
         // Extract music type (dx/std) from icon image
         const iconElement = block.find('img.music_kind_icon');
         if (iconElement.length === 0) {
-          console.warn(`No music kind icon found for ${difficulty} score block ${index}: ${songName}`);
+          logger.warn(`No music kind icon found for ${difficulty} score block ${index}: ${songName}`);
           return;
         }
 
         const iconSrc = iconElement.attr('src');
         if (!iconSrc) {
-          console.warn(`No src attribute found for music kind icon in ${difficulty} score block ${index}: ${songName}`);
+          logger.warn(`No src attribute found for music kind icon in ${difficulty} score block ${index}: ${songName}`);
           return;
         }
 
@@ -935,7 +1139,7 @@ async function fetchHiddenSongsData(cookies: string, allSongsData: { [difficulty
         } else if (iconSrc.includes('music_standard.png')) {
           musicType = "std";
         } else {
-          console.warn(`Unknown music type icon: ${iconSrc} for ${difficulty} score block ${index}: ${songName}`);
+          logger.warn(`Unknown music type icon: ${iconSrc} for ${difficulty} score block ${index}: ${songName}`);
           return;
         }
 
@@ -977,15 +1181,15 @@ async function fetchHiddenSongsData(cookies: string, allSongsData: { [difficulty
         };
 
         hiddenSongs.push(hiddenSongData);
-        console.log(`Found hidden song: ${songName} (${musicType}, ${difficulty}) - ${achievement / 10000}%`);
+        logger.debug(`Found hidden song: ${songName} (${musicType}, ${difficulty}) - ${achievement / 10000}%`);
 
       } catch (error) {
-        console.error(`Error processing hidden song ${difficulty} score block ${index}:`, error);
+        logger.error(error, `Error processing hidden song ${difficulty} score block ${index}`);
       }
     });
   }
 
-  console.log(`Successfully found ${hiddenSongs.length} hidden songs`);
+  logger.info(`Successfully found ${hiddenSongs.length} hidden songs`);
   return hiddenSongs;
 }
 
@@ -1016,10 +1220,26 @@ interface ScoreData {
   fs: "none" | "sync" | "fs" | "fs+" | "fdx" | "fdx+";
 }
 
+interface RecentSongData {
+  songName: string;
+  level: string;
+  musicType: "dx" | "std";
+  difficulty: string;
+  difficultyNumber: number;
+  achievement: number; // stored as 10000x
+  dxScore: number;
+  maxDxScore: number;
+  fc: "none" | "fc" | "fc+" | "ap" | "ap+";
+  fs: "none" | "sync" | "fs" | "fs+" | "fdx" | "fdx+";
+  track: number;
+  playedAt: Date;
+  idx: string; // Form data for playlog detail page
+}
+
 async function fetchEventsData(cookies: string, region: "intl" | "jp", sessionId: bigint): Promise<{ areaEvents: EventData[], eventAreaEvents: EventAreaData[] }> {
   const baseUrl = region === "intl" ? "https://maimaidx-eng.com" : "https://maimaidx.jp";
   
-  console.log(`Starting events data fetch for ${region} region...`);
+  logger.info(`Starting events data fetch for ${region} region...`);
 
   try {
     // Fetch both area and event area concurrently
@@ -1055,15 +1275,15 @@ async function fetchEventsData(cookies: string, region: "intl" | "jp", sessionId
 
     // Parse area events
     const areaEvents = parseAreaEvents(areaHtml);
-    console.log(`Parsed ${areaEvents.length} area events:`, areaEvents);
+    logger.debug({ areaEvents }, `Parsed ${areaEvents.length} area events`);
 
     // Parse event area events
     const eventAreaEvents = parseEventAreaEvents(eventAreaHtml, region);
-    console.log(`Parsed ${eventAreaEvents.length} event area events:`, eventAreaEvents);
+    logger.debug({ eventAreaEvents }, `Parsed ${eventAreaEvents.length} event area events`);
 
     return { areaEvents, eventAreaEvents };
   } catch (error) {
-    console.error("Error fetching events data:", error);
+    logger.error(error, "Error fetching events data");
     throw error;
   }
 }
@@ -1088,7 +1308,7 @@ function parseEventPeriod(periodStr: string | null): [number, number] | null {
   const match = periodStr.match(/Event period：(\d{4})\/(\d{2})\/(\d{2})\s+(\d{2}):(\d{2})～(\d{4})\/(\d{2})\/(\d{2})\s+(\d{2}):(\d{2})/);
   
   if (!match) {
-    console.warn(`Could not parse event period: ${periodStr}`);
+    logger.warn(`Could not parse event period: ${periodStr}`);
     return null;
   }
   
@@ -1107,7 +1327,7 @@ function parseEventPeriod(periodStr: string | null): [number, number] | null {
     
     return [startTimestamp, endTimestamp];
   } catch (error) {
-    console.warn(`Failed to parse event period dates: ${error}`);
+    logger.warn(`Failed to parse event period dates: ${error}`);
     return null;
   }
 }
@@ -1117,7 +1337,7 @@ function parseAreaEvents(html: string): EventData[] {
   const events: EventData[] = [];
 
   const elements = $(".m_10.m_t_0.f_0");
-  console.log(`Found ${elements.length} area elements`);
+  logger.debug(`Found ${elements.length} area elements`);
 
   elements.each((index, element) => {
     try {
@@ -1173,7 +1393,7 @@ function parseAreaEvents(html: string): EventData[] {
         imageUrl
       });
     } catch (error) {
-      console.error(`Error parsing area event ${index}:`, error);
+      logger.error(error, `Error parsing area event ${index}`);
     }
   });
 
@@ -1186,7 +1406,7 @@ function parseEventAreaEvents(html: string, region: "intl" | "jp" = "intl"): Eve
   const baseUrl = region === "intl" ? "https://maimaidx-eng.com" : "https://maimaidx.jp";
 
   const elements = $(".eventmap_container");
-  console.log(`Found ${elements.length} event area elements`);
+  logger.debug(`Found ${elements.length} event area elements`);
 
   elements.each((index, element) => {
     try {
@@ -1247,7 +1467,7 @@ function parseEventAreaEvents(html: string, region: "intl" | "jp" = "intl"): Eve
         eventPeriod: parseEventPeriod(eventPeriod)
       });
     } catch (error) {
-      console.error(`Error parsing event area event ${index}:`, error);
+      logger.error(error, `Error parsing event area event ${index}`);
     }
   });
 
@@ -1274,7 +1494,7 @@ async function extractPlayerData(region: "intl" | "jp", html: string, cookies: s
   }
   
   const iconUrl = iconSrc.startsWith('http') ? iconSrc : `https://maimaidx-eng.com${iconSrc}`;
-  console.log(`Extracted icon URL: ${iconUrl}`);
+  logger.debug(`Extracted icon URL: ${iconUrl}`);
   
   // Extract display name
   const nameElement = block.find('.name_block');
@@ -1282,7 +1502,7 @@ async function extractPlayerData(region: "intl" | "jp", html: string, cookies: s
     throw new Error("Could not find .name_block in player data");
   }
   const displayName = nameElement.text().trim();
-  console.log(`Extracted display name: ${displayName}`);
+  logger.debug(`Extracted display name: ${displayName}`);
   
   // Extract rating
   const ratingElement = block.find('.rating_block');
@@ -1294,7 +1514,7 @@ async function extractPlayerData(region: "intl" | "jp", html: string, cookies: s
   if (isNaN(rating)) {
     throw new Error(`Invalid rating format: ${ratingText}`);
   }
-  console.log(`Extracted rating: ${rating}`);
+  logger.debug(`Extracted rating: ${rating}`);
   
   // Extract title
   const titleElement = block.find('.trophy_block');
@@ -1302,7 +1522,7 @@ async function extractPlayerData(region: "intl" | "jp", html: string, cookies: s
     throw new Error("Could not find .trophy_block in player data");
   }
   const title = titleElement.text().trim();
-  console.log(`Extracted title: ${title}`);
+  logger.debug(`Extracted title: ${title}`);
   
   // Extract stars
   const starsElement = block.find('.p_l_10.f_l.f_14');
@@ -1316,7 +1536,7 @@ async function extractPlayerData(region: "intl" | "jp", html: string, cookies: s
     throw new Error(`Invalid stars format: ${starsText}`);
   }
   const stars = parseInt(starsMatch[1], 10);
-  console.log(`Extracted stars: ${stars} (from text: ${starsText})`);
+  logger.debug(`Extracted stars: ${stars} (from text: ${starsText})`);
   
   // Extract play counts
   const playCountElement = block.find('.t_r.f_12');
@@ -1324,7 +1544,7 @@ async function extractPlayerData(region: "intl" | "jp", html: string, cookies: s
     throw new Error("Could not find play count element in player data");
   }
   const playCountText = playCountElement.text().trim();
-  console.log(`Play count text: ${playCountText}`);
+  logger.debug(`Play count text: ${playCountText}`);
 
   const playCountRegex = region === "jp" ? /現バージョンプレイ回数[：:]\s*([\d,]+)/ : /play count of current version[：:]\s*([\d,]+)/;
   const totalPlayCountRegex = region === "jp" ? /累計プレイ回数[：:]\s*([\d,]+)/ : /maimaiDX total play count[：:]\s*([\d,]+)/;
@@ -1343,8 +1563,8 @@ async function extractPlayerData(region: "intl" | "jp", html: string, cookies: s
   }
   const totalPlayCount = parseInt(totalPlayCountMatch[1].replace(/,/g, ''), 10);
   
-  console.log(`Extracted version play count: ${versionPlayCount}`);
-  console.log(`Extracted total play count: ${totalPlayCount}`);
+  logger.debug(`Extracted version play count: ${versionPlayCount}`);
+  logger.debug(`Extracted total play count: ${totalPlayCount}`);
   
   // Extract course rank and class rank images
   const rankElements = block.find('.h_35.f_l');
@@ -1358,7 +1578,7 @@ async function extractPlayerData(region: "intl" | "jp", html: string, cookies: s
     throw new Error("Course rank image src attribute is missing");
   }
   const courseRankUrl = courseRankSrc.startsWith('http') ? courseRankSrc : `https://maimaidx-eng.com${courseRankSrc}`;
-  console.log(`Extracted course rank URL: ${courseRankUrl}`);
+  logger.debug(`Extracted course rank URL: ${courseRankUrl}`);
   
   // Class rank (second element) - the element itself is an img
   const classRankSrc = rankElements.eq(1).attr('src');
@@ -1366,7 +1586,7 @@ async function extractPlayerData(region: "intl" | "jp", html: string, cookies: s
     throw new Error("Class rank image src attribute is missing");
   }
   const classRankUrl = classRankSrc.startsWith('http') ? classRankSrc : `https://maimaidx-eng.com${classRankSrc}`;
-  console.log(`Extracted class rank URL: ${classRankUrl}`);
+  logger.debug(`Extracted class rank URL: ${classRankUrl}`);
   
   return {
     iconUrl,
@@ -1383,7 +1603,7 @@ async function extractPlayerData(region: "intl" | "jp", html: string, cookies: s
 }
 
 async function fetchImageAsBase64(region: "intl" | "jp", imageUrl: string, cookies: string): Promise<string> {
-  console.log(`Fetching image for base64 encoding: ${imageUrl}`);
+  logger.info(`Fetching image for base64 encoding: ${imageUrl}`);
   
   const response = await fetch(imageUrl, {
     headers: {
@@ -1405,7 +1625,7 @@ async function fetchImageAsBase64(region: "intl" | "jp", imageUrl: string, cooki
   const contentType = response.headers.get('content-type') || 'image/png';
   const dataUrl = `data:${contentType};base64,${base64}`;
   
-  console.log(`Image encoded as base64 (${base64.length} characters)`);
+  logger.debug(`Image encoded as base64 (${base64.length} characters)`);
   return dataUrl;
 }
 
@@ -1416,7 +1636,7 @@ async function createUserSnapshot(
 ): Promise<bigint> {
   const publicId = nanoid();
   
-  console.log(`Creating user snapshot with publicId: ${publicId}`);
+  logger.info(`Creating user snapshot with publicId: ${publicId}`);
   
   const [inserted] = await db.insert(userSnapshots).values({
     publicId: publicId,
@@ -1435,8 +1655,46 @@ async function createUserSnapshot(
     title: playerData.title,
   }).returning({ id: userSnapshots.id });
   
-  console.log(`User snapshot created successfully with internal ID: ${inserted.id}`);
+  logger.info(`User snapshot created successfully with internal ID: ${inserted.id}`);
   return inserted.id;
+}
+
+/**
+ * Builds song lookup maps for efficient song matching during insertion.
+ * Queries all songs for the specified region and game version once.
+ * 
+ * @returns Object containing:
+ *   - songLookup: Map from "songName|difficulty|type" to songId
+ *   - fullSongMap: Map from songId to full song data
+ */
+async function buildSongLookupMaps(
+  region: "intl" | "jp",
+  gameVersion: number
+): Promise<{
+  songLookup: Map<string, bigint>;
+  fullSongMap: Map<bigint, typeof songs.$inferSelect>;
+}> {
+  logger.info(`Batch querying songs for region ${region}, game version ${gameVersion}`);
+  const allSongs = await db.query.songs.findMany({
+    where: and(
+      eq(songs.region, region),
+      eq(songs.gameVersion, gameVersion)
+    ),
+  });
+  logger.info(`Found ${allSongs.length} songs in database for this region/version`);
+  
+  // Create lookup maps for efficient song matching
+  const songLookup = new Map<string, bigint>(); // key: "songName|difficulty|type", value: songId
+  const fullSongMap = new Map<bigint, typeof songs.$inferSelect>(); // key: songId, value: full song data
+  
+  for (const song of allSongs) {
+    const key = `${song.songName}|${song.difficulty}|${song.type}`;
+    songLookup.set(key, song.id);
+    fullSongMap.set(song.id, song);
+  }
+  logger.info(`Created song lookup maps with ${songLookup.size} entries`);
+  
+  return { songLookup, fullSongMap };
 }
 
 /**
@@ -1445,24 +1703,14 @@ async function createUserSnapshot(
  */
 async function withRank(
   scoreInserts: typeof userScores.$inferInsert[],
-  region: "intl" | "jp",
+  fullSongMap: Map<bigint, typeof songs.$inferSelect>,
   gameVersion: number
 ): Promise<typeof userScores.$inferInsert[]> {
   if (scoreInserts.length === 0) {
     return scoreInserts;
   }
 
-  console.log(`Calculating ranks for ${scoreInserts.length} scores...`);
-
-  // Get full song data for all songs
-  const fullSongs = await db.query.songs.findMany({
-    where: and(
-      eq(songs.region, region),
-      eq(songs.gameVersion, gameVersion)
-    ),
-  });
-
-  const fullSongMap = new Map(fullSongs.map(s => [s.id, s]));
+  logger.debug(`Calculating ranks for ${scoreInserts.length} scores...`);
 
   // Convert score inserts to SongWithScore format for rating calculation
   const songsForRanking: (Omit<SongWithScore, 'songId'> & { songId: bigint })[] = [];
@@ -1528,7 +1776,7 @@ async function withRank(
     scoreInsert.rank = rank;
   }
 
-  console.log(`Ranks calculated. B15: ${newSongsB15.length}, B35: ${oldSongsB35.length}, Remaining: ${remainingSongs.length}`);
+  logger.info(`Ranks calculated. B15: ${newSongsB15.length}, B35: ${oldSongsB35.length}, Remaining: ${remainingSongs.length}`);
 
   return scoreInserts;
 }
@@ -1537,11 +1785,13 @@ async function insertUserScores(
   snapshotId: bigint,
   region: "intl" | "jp",
   sessionId: bigint,
-  allScoreData: { [difficulty: number]: ScoreData[] }
+  allScoreData: { [difficulty: number]: ScoreData[] },
+  songLookup: Map<string, bigint>,
+  fullSongMap: Map<bigint, typeof songs.$inferSelect>
 ): Promise<void> {
   const gameVersion = getCurrentVersion(region);
   
-  console.log(`Starting user scores insertion for snapshot ${snapshotId}`);
+  logger.info(`Starting user scores insertion for snapshot ${snapshotId}`);
   
   // Flatten all score data from all difficulties
   const allScores: ScoreData[] = [];
@@ -1549,38 +1799,12 @@ async function insertUserScores(
     allScores.push(...allScoreData[parseInt(difficulty)]);
   }
   
-  console.log(`Total scores to insert: ${allScores.length}`);
+  logger.info(`Total scores to insert: ${allScores.length}`);
   
   if (allScores.length === 0) {
-    console.warn("No scores to insert");
+    logger.warn("No scores to insert");
     return;
   }
-  
-  // Batch query all songs for this region and game version
-  console.log(`Batch querying songs for region ${region}, game version ${gameVersion}`);
-  const allSongs = await db.query.songs.findMany({
-    where: and(
-      eq(songs.region, region),
-      eq(songs.gameVersion, gameVersion)
-    ),
-    columns: {
-      id: true,
-      songName: true,
-      difficulty: true,
-      type: true,
-    }
-  });
-  
-  console.log(`Found ${allSongs.length} songs in database for this region/version`);
-  
-  // Create lookup map for fast song finding
-  const songLookup = new Map<string, bigint>(); // key: "songName|difficulty|type", value: songId
-  for (const song of allSongs) {
-    const key = `${song.songName}|${song.difficulty}|${song.type}`;
-    songLookup.set(key, song.id);
-  }
-  
-  console.log(`Created song lookup map with ${songLookup.size} entries`);
   
   // Process all scores using the lookup map
   const scoreInserts: typeof userScores.$inferInsert[] = [];
@@ -1594,7 +1818,7 @@ async function insertUserScores(
       const songId = songLookup.get(lookupKey);
 
       if (!songId) {
-        console.warn(`Could not find song in database: ${scoreData.songName} (${scoreData.difficulty}, ${scoreData.musicType})`);
+        logger.warn(`Could not find song in database: ${scoreData.songName} (${scoreData.difficulty}, ${scoreData.musicType})`);
         notFoundScores.push(scoreData);
         notFoundCount++;
         continue;
@@ -1612,25 +1836,25 @@ async function insertUserScores(
 
       foundCount++;
     } catch (error) {
-      console.error(`Error processing score for ${scoreData.songName}:`, error);
+      logger.error(error, `Error processing score for ${scoreData.songName}`);
       notFoundCount++;
     }
   }
   
-  console.log(`Prepared ${foundCount} score inserts, ${notFoundCount} songs not found in database`);
+  logger.info(`Prepared ${foundCount} score inserts, ${notFoundCount} songs not found in database`);
   
   if (scoreInserts.length > 0) {
-    console.log(`Batch inserting ${scoreInserts.length} user scores`);
-    await db.insert(userScores).values(await withRank(scoreInserts, region, gameVersion));
-    console.log(`Successfully inserted ${scoreInserts.length} user scores`);
+    logger.info(`Batch inserting ${scoreInserts.length} user scores`);
+    await db.insert(userScores).values(await withRank(scoreInserts, fullSongMap, gameVersion));
+    logger.info(`Successfully inserted ${scoreInserts.length} user scores`);
   } else {
-    console.warn("No valid scores to insert");
+    logger.warn("No valid scores to insert");
   }
 
   if (notFoundScores.length > 0) {
-    console.warn(`Found ${notFoundScores.length} scores not found in database:`);
+    logger.warn(`Found ${notFoundScores.length} scores not found in database:`);
     for (const score of notFoundScores) {
-      console.warn(` - ${score.songName} (${score.difficulty}, ${score.musicType})`);
+      logger.warn(` - ${score.songName} (${score.difficulty}, ${score.musicType})`);
     }
     await db
       .update(fetchSessions)
@@ -1647,12 +1871,295 @@ async function insertUserScores(
   }
 }
 
+async function insertUserRecentSongs(
+  userId: string,
+  recentSongsData: RecentSongData[],
+  songLookup: Map<string, bigint>
+): Promise<void> {
+  logger.info(`Starting user recent songs insertion for user ${userId}, ${recentSongsData.length} records`);
+  
+  if (recentSongsData.length === 0) {
+    logger.debug("No recent songs to insert");
+    return;
+  }
+  
+  // Process recent songs and create inserts
+  const recentSongInserts: (typeof userRecentSongs.$inferInsert)[] = [];
+  const notFoundSongs: RecentSongData[] = [];
+  
+  for (const recentSong of recentSongsData) {
+    try {
+      const lookupKey = `${recentSong.songName}|${recentSong.difficulty}|${recentSong.musicType}`;
+      const songId = songLookup.get(lookupKey);
+
+      if (!songId) {
+        logger.warn(`Could not find song in database: ${recentSong.songName} (${recentSong.difficulty}, ${recentSong.musicType})`);
+        notFoundSongs.push(recentSong);
+        continue;
+      }
+
+      // Create recent song record
+      recentSongInserts.push({
+        userId: userId,
+        songId: songId,
+        playedAt: recentSong.playedAt,
+        archievement: recentSong.achievement, // Note: typo in schema "archievement"
+        dxScore: recentSong.dxScore,
+        maxDxScore: recentSong.maxDxScore,
+        fc: recentSong.fc,
+        fs: recentSong.fs,
+        track: recentSong.track,
+      });
+    } catch (error) {
+      logger.error(error, `Error processing recent song: ${recentSong.songName}`);
+    }
+  }
+  
+  logger.debug(`Prepared ${recentSongInserts.length} recent song inserts, ${notFoundSongs.length} songs not found`);
+  
+  if (recentSongInserts.length === 0) {
+    logger.warn("No valid recent songs to insert");
+    return;
+  }
+  
+  // Use ON CONFLICT DO NOTHING to handle duplicates efficiently at the database level
+  // This leverages the unique constraint on (userId, songId, playedAt)
+  await db
+    .insert(userRecentSongs)
+    .values(recentSongInserts)
+    .onConflictDoNothing();
+  
+  logger.info(`Processed ${recentSongInserts.length} recent song records (duplicates automatically skipped)`);
+}
+
+async function fetchAndInsertRecentSongsData(
+  userId: string,
+  region: "intl" | "jp",
+  cookies: string,
+  recentSongsData: RecentSongData[]
+): Promise<void> {
+  logger.info(`Starting detailed recent songs data fetch for user ${userId}, ${recentSongsData.length} records`);
+  
+  if (recentSongsData.length === 0) {
+    logger.debug("No recent songs to fetch details for");
+    return;
+  }
+  
+  const baseUrl = region === "jp" ? "https://maimaidx.jp" : "https://maimaidx-eng.com";
+  const playlogDetailUrl = `${baseUrl}/maimai-mobile/record/playlogDetail/`;
+  
+  // Process in batches of 6
+  const BATCH_SIZE = 6;
+  for (let batchStart = 0; batchStart < recentSongsData.length; batchStart += BATCH_SIZE) {
+    const batch = recentSongsData.slice(batchStart, batchStart + BATCH_SIZE);
+    logger.debug(`Processing batch ${Math.floor(batchStart / BATCH_SIZE) + 1}: ${batch.length} records`);
+    
+    // Fetch detailed data for each song in the batch concurrently
+    const detailPromises = batch.map(async (recentSong) => {
+      try {
+        // GET playlog detail page with idx query parameter
+        const detailUrl = `${playlogDetailUrl}?idx=${encodeURIComponent(recentSong.idx)}`;
+        
+        const response = await fetch(detailUrl, {
+          method: "GET",
+          headers: {
+            "Cookie": cookies,
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+            "Referer": `${baseUrl}/maimai-mobile/record/`,
+          },
+          ...(region === "jp" ? { dispatcher: JP_AGENT } : {}),
+        });
+        
+        if (response.status !== 200) {
+          logger.warn(`Failed to fetch playlog detail for idx ${recentSong.idx}: HTTP ${response.status}`);
+          return null;
+        }
+        
+        const html = await response.text();
+        const $ = load(html);
+        
+        // Parse fast and late counts
+        const flBlocks = $(".playlog_fl_block > * .p_t_5");
+        const fastCount = flBlocks.length > 0 ? parseInt(flBlocks.eq(0).text().trim().replace(/,/g, ''), 10) || 0 : 0;
+        const lateCount = flBlocks.length > 1 ? parseInt(flBlocks.eq(1).text().trim().replace(/,/g, ''), 10) || 0 : 0;
+        
+        // Parse combo
+        const scoreBlocks = $(".playlog_score_block > div.white");
+        const comboText = scoreBlocks.length > 1 ? scoreBlocks.eq(1).text().trim() : "";
+        const comboMatch = comboText.match(/(\d+(?:,\d+)?)\s*\/\s*(\d+(?:,\d+)?)/);
+        const combo = comboMatch ? parseInt(comboMatch[1].replace(/,/g, ''), 10) : 0;
+        const maxCombo = comboMatch ? parseInt(comboMatch[2].replace(/,/g, ''), 10) : 0;
+        
+        // Parse sync score (optional)
+        const syncScoreText = scoreBlocks.length > 2 ? scoreBlocks.eq(2).text().trim() : "";
+        let syncScore: number | null = null;
+        let maxSyncScore: number | null = null;
+        if (syncScoreText.includes('/')) {
+          const syncMatch = syncScoreText.match(/(\d+(?:,\d+)?)\s*\/\s*(\d+(?:,\d+)?)/);
+          if (syncMatch) {
+            syncScore = parseInt(syncMatch[1].replace(/,/g, ''), 10);
+            maxSyncScore = parseInt(syncMatch[2].replace(/,/g, ''), 10);
+          }
+        }
+        
+        // Parse rating
+        const ratingText = $(".rating_block").text().trim();
+        const rating = parseInt(ratingText, 10) || 0;
+        
+        // Parse rating change
+        const ratingChangeText = $(".playlog_rating_detail_block > * span").text().trim();
+        const ratingChangeMatch = ratingChangeText.match(/([+-])(\d+)/);
+        const ratingChange = ratingChangeMatch ? parseInt(`${ratingChangeMatch[1]}${ratingChangeMatch[2]}`, 10) : 0;
+        
+        // Parse venue (JP only, optional)
+        let venue: string | null = null;
+        if (region === "jp") {
+          const venueElement = $("#placeName");
+          if (venueElement.length > 0) {
+            venue = venueElement.text().trim() || null;
+          }
+        }
+        
+        // Parse note details (tap, hold, slide, touch, break)
+        const noteRows = $(".playlog_notes_detail > * tr:not(:first-child)");
+        const noteTypes = ['tap', 'hold', 'slide', 'touch', 'break'];
+        const noteData: { [key: string]: { [key: string]: number } } = {};
+        
+        noteRows.each((index, row) => {
+          if (index >= 5) return; // Only process first 5 rows
+          
+          const cells = $(row).find("td");
+          const noteType = noteTypes[index];
+          
+          noteData[noteType] = {
+            cperfect: cells.length > 0 ? parseInt(cells.eq(0).text().trim(), 10) || 0 : 0,
+            perfect: cells.length > 1 ? parseInt(cells.eq(1).text().trim(), 10) || 0 : 0,
+            great: cells.length > 2 ? parseInt(cells.eq(2).text().trim(), 10) || 0 : 0,
+            good: cells.length > 3 ? parseInt(cells.eq(3).text().trim(), 10) || 0 : 0,
+            miss: cells.length > 4 ? parseInt(cells.eq(4).text().trim(), 10) || 0 : 0,
+          };
+        });
+        
+        return {
+          recentSong,
+          fastCount,
+          lateCount,
+          combo,
+          maxCombo,
+          syncScore,
+          maxSyncScore,
+          rating,
+          ratingChange,
+          venue,
+          noteData,
+        };
+      } catch (error) {
+        logger.error(error, `Error fetching playlog detail for idx ${recentSong.idx}`);
+        return null;
+      }
+    });
+    
+    const detailResults = await Promise.all(detailPromises);
+    
+    // Query for the recentSongIds for this batch
+    const validResults = detailResults.filter(r => r !== null);
+    if (validResults.length === 0) {
+      logger.warn(`No valid detail results in batch ${Math.floor(batchStart / BATCH_SIZE) + 1}`);
+      continue;
+    }
+    
+    // Query recent song IDs from database
+    const recentSongRecords = await db.query.userRecentSongs.findMany({
+      where: and(
+        eq(userRecentSongs.userId, userId),
+        or(
+          ...validResults.map(r => 
+            and(
+              eq(userRecentSongs.playedAt, r!.recentSong.playedAt)
+            )
+          )
+        )
+      ),
+      columns: {
+        id: true,
+        playedAt: true,
+      }
+    });
+    
+    // Create map of playedAt timestamp to recentSongId
+    const recentSongIdMap = new Map<number, bigint>();
+    for (const record of recentSongRecords) {
+      recentSongIdMap.set(record.playedAt.getTime(), record.id);
+    }
+    
+    // Prepare detailed inserts
+    const detailedInserts: typeof userRecentSongsDetailed.$inferInsert[] = [];
+    for (const result of validResults) {
+      const recentSongId = recentSongIdMap.get(result.recentSong.playedAt.getTime());
+      if (!recentSongId) {
+        logger.warn(`Could not find recentSongId for playedAt ${result.recentSong.playedAt.toISOString()}`);
+        continue;
+      }
+      
+      detailedInserts.push({
+        recentSongId,
+        fastCount: result.fastCount,
+        lateCount: result.lateCount,
+        combo: result.combo,
+        maxCombo: result.maxCombo,
+        syncScore: result.syncScore,
+        maxSyncScore: result.maxSyncScore,
+        tapCPerfect: result.noteData.tap?.cperfect || 0,
+        tapPerfect: result.noteData.tap?.perfect || 0,
+        tapGreat: result.noteData.tap?.great || 0,
+        tapGood: result.noteData.tap?.good || 0,
+        tapMiss: result.noteData.tap?.miss || 0,
+        holdCPerfect: result.noteData.hold?.cperfect || 0,
+        holdPerfect: result.noteData.hold?.perfect || 0,
+        holdGreat: result.noteData.hold?.great || 0,
+        holdGood: result.noteData.hold?.good || 0,
+        holdMiss: result.noteData.hold?.miss || 0,
+        slideCPerfect: result.noteData.slide?.cperfect || 0,
+        slidePerfect: result.noteData.slide?.perfect || 0,
+        slideGreat: result.noteData.slide?.great || 0,
+        slideGood: result.noteData.slide?.good || 0,
+        slideMiss: result.noteData.slide?.miss || 0,
+        touchCPerfect: result.noteData.touch?.cperfect || 0,
+        touchPerfect: result.noteData.touch?.perfect || 0,
+        touchGreat: result.noteData.touch?.great || 0,
+        touchGood: result.noteData.touch?.good || 0,
+        touchMiss: result.noteData.touch?.miss || 0,
+        breakCPerfect: result.noteData.break?.cperfect || 0,
+        breakPerfect: result.noteData.break?.perfect || 0,
+        breakGreat: result.noteData.break?.great || 0,
+        breakGood: result.noteData.break?.good || 0,
+        breakMiss: result.noteData.break?.miss || 0,
+        venue: result.venue,
+        rating: result.rating,
+        ratingChange: result.ratingChange,
+      });
+    }
+    
+    // Insert detailed data with conflict handling
+    if (detailedInserts.length > 0) {
+      await db
+        .insert(userRecentSongsDetailed)
+        .values(detailedInserts)
+        .onConflictDoNothing();
+      
+      logger.debug(`Inserted ${detailedInserts.length} detailed records for batch ${Math.floor(batchStart / BATCH_SIZE) + 1}`);
+    }
+  }
+  
+  logger.info(`Completed detailed recent songs data fetch for user ${userId}`);
+}
+
 async function insertUserEvents(
   snapshotId: bigint,
   areaEvents: EventData[],
   eventAreaEvents: EventAreaData[]
 ): Promise<void> {
-  console.log(`Starting user events insertion for snapshot ${snapshotId}`);
+  logger.info(`Starting user events insertion for snapshot ${snapshotId}`);
   
   const eventInserts: typeof userEvents.$inferInsert[] = [];
   
@@ -1686,17 +2193,17 @@ async function insertUserEvents(
     });
   }
   
-  console.log(`Total events to insert: ${eventInserts.length}`);
+  logger.info(`Total events to insert: ${eventInserts.length}`);
   
   if (eventInserts.length === 0) {
-    console.warn("No events to insert");
+    logger.warn("No events to insert");
     return;
   }
   
   // Batch insert all events
-  console.log(`Batch inserting ${eventInserts.length} user events`);
+  logger.info(`Batch inserting ${eventInserts.length} user events`);
   await db.insert(userEvents).values(eventInserts);
-  console.log(`Successfully inserted ${eventInserts.length} user events`);
+  logger.info(`Successfully inserted ${eventInserts.length} user events`);
 }
 
 export async function fetchMaimaiData(
@@ -1731,7 +2238,7 @@ export async function fetchMaimaiData(
     throw new Error(validation.error || "Token validation failed");
   }
 
-  console.log("Token validation passed, proceeding with data fetch...");
+  logger.info("Token validation passed, proceeding with data fetch...");
   
   if (!validation.redirectUrl) {
     throw new Error("No redirect URL received from token validation");
@@ -1745,53 +2252,59 @@ export async function fetchMaimaiData(
     const { html: playerDataHtml, cookies } = await fetchPlayerDataWithLogin(region, validation.redirectUrl, validation.cookies || null);
     
     // Extract player data and fetch songs data concurrently
-    console.log("Starting player data extraction and songs data fetch...");
-    const [playerData, allSongsData] = await Promise.all([
+    logger.info("Starting player data extraction and songs data fetch...");
+    const [playerData, allSongsData, recentSongsData] = await Promise.all([
       // Extract player data from HTML and track progress
       extractPlayerData(region, playerDataHtml, cookies).then((data) => {
         appendFetchState(sessionId, FETCH_STATES.PLAYER_DATA); // Fire and forget
         return data;
       }),
       // Fetch all songs data using the same cookies
-      fetchAllSongsData(cookies, region, sessionId)
+      fetchAllSongsData(cookies, region, sessionId),
+      // Fetch recent songs data
+      fetchRecentSongsData(cookies, region, sessionId).then((data) => {
+        appendFetchState(sessionId, FETCH_STATES.RECENT_SONGS); // Fire and forget
+        return data;
+      })
     ]);
-    console.log("Player data extraction and songs data fetch completed");
+    logger.info("Player data extraction and songs data fetch completed");
 
     // Fetch hidden songs data for intl region only
-    if (region === "intl") {
-      try {
-        console.log("Fetching hidden songs data for intl region...");
-        const hiddenSongs = await fetchHiddenSongsData(cookies, allSongsData);
-        
-        // Add hidden songs to allSongsData
-        for (const hiddenSong of hiddenSongs) {
-          const difficulty = hiddenSong.difficultyNumber;
-          if (!allSongsData[difficulty]) {
-            allSongsData[difficulty] = [];
+    try {
+      if (region === "intl") {
+        try {
+          logger.info("Fetching hidden songs data for intl region...");
+          const hiddenSongs = await fetchHiddenSongsData(cookies, allSongsData);
+          
+          // Add hidden songs to allSongsData
+          for (const hiddenSong of hiddenSongs) {
+            const difficulty = hiddenSong.difficultyNumber;
+            if (!allSongsData[difficulty]) {
+              allSongsData[difficulty] = [];
+            }
+            allSongsData[difficulty].push(hiddenSong);
           }
-          allSongsData[difficulty].push(hiddenSong);
+          
+          logger.info(`Added ${hiddenSongs.length} hidden songs to songs data`);
+        } catch (error) {
+          logger.error(error, "Failed to fetch hidden songs data, continuing without hidden songs");
+          // Don't throw error - continue without hidden songs
         }
-        
-        console.log(`Added ${hiddenSongs.length} hidden songs to songs data`);
-      } catch (error) {
-        console.error("Failed to fetch hidden songs data, continuing without hidden songs:", error);
-        // Don't throw error - continue without hidden songs
       }
+    } finally {
+      appendFetchState(sessionId, FETCH_STATES.HIDDEN_SONGS); // Fire and forget
     }
 
     // Fetch events data
-    let areaEvents: EventData[] = [];
-    let eventAreaEvents: EventAreaData[] = [];
+    let eventsData: Awaited<ReturnType<typeof fetchEventsData>> | null = null;
     
     if (flags.includes("eventsCard")) {
       try {
-        console.log("Fetching events data...");
-        const events = await fetchEventsData(cookies, region, sessionId);
-        areaEvents = events.areaEvents;
-        eventAreaEvents = events.eventAreaEvents;
-        console.log("Events data fetched successfully");
+        logger.info("Fetching events data...");
+        eventsData = await fetchEventsData(cookies, region, sessionId);
+        logger.info("Events data fetched successfully");
       } catch (error) {
-        console.error("Failed to fetch events data, continuing without events:", error);
+        logger.error(error, "Failed to fetch events data, continuing without events");
         // Don't throw error - continue without events
       }
     }
@@ -1799,23 +2312,42 @@ export async function fetchMaimaiData(
     // Create user snapshot with real player data
     const snapshotId = await createUserSnapshot(userId, region, playerData);
     
+    // Build song lookup maps once for this region and game version
+    const gameVersion = getCurrentVersion(region);
+    const { songLookup, fullSongMap } = await buildSongLookupMaps(region, gameVersion);
+    
     // Insert user scores into database
-    console.log("Starting user scores insertion...");
-    await insertUserScores(snapshotId, region, sessionId, allSongsData);
-    console.log("User scores insertion completed");
+    logger.info("Starting user scores insertion...");
+    await insertUserScores(snapshotId, region, sessionId, allSongsData, songLookup, fullSongMap);
+    logger.info("User scores insertion completed");
+
+    // Insert user recent songs into database
+    if (recentSongsData.length > 0) {
+      logger.info("Starting user recent songs insertion...");
+      await insertUserRecentSongs(userId, recentSongsData, songLookup);
+      logger.info("User recent songs insertion completed");
+    }
 
     // Insert user events into database if we have events
-    if (areaEvents.length > 0 || eventAreaEvents.length > 0) {
-      console.log("Starting user events insertion...");
-      await insertUserEvents(snapshotId, areaEvents, eventAreaEvents);
-      console.log("User events insertion completed");
+    if (eventsData) {
+      logger.info("Starting user events insertion...");
+      await insertUserEvents(snapshotId, eventsData.areaEvents, eventsData.eventAreaEvents);
+      logger.info("User events insertion completed");
     }
     
-    console.log("Player data processed and snapshot created successfully");
-    console.log(`Session ID: ${sessionId}`);
+    logger.info("Player data processed and snapshot created successfully");
+    logger.info(`Session ID: ${sessionId}`);
+    
+    // Fire and forget: Fetch detailed recent songs data in background
+    if (recentSongsData.length > 0) {
+      logger.info("Starting detailed recent songs data fetch in background...");
+      fetchAndInsertRecentSongsData(userId, region, cookies, recentSongsData).catch((error) => {
+        logger.error(error, "Failed to fetch detailed recent songs data");
+      });
+    }
     
   } catch (error) {
-    console.error("Error during maimai data fetch:", error);
+    logger.error(error, "Error during maimai data fetch");
     throw error;
   }
 } 
