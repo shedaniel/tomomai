@@ -714,23 +714,18 @@ export function RecentSongsCard({ region, beforeDate }: RecentSongsCardProps) {
                               <div className="text-center py-1 px-2 font-medium text-muted-foreground bg-accent/50 border-b border-r flex items-center justify-center">{t('notesBreakdown.total')}</div>
                               <div className="text-center py-1 px-2 font-medium text-muted-foreground bg-accent/50 border-b border-r flex items-center justify-center gap-1">
                                 Critical Perfect
-                                <div className="w-3.5 h-3.5 bg-amber-500 rounded-full shrink-0" />
                               </div>
                               <div className="text-center py-1 px-2 font-medium text-muted-foreground bg-accent/50 border-b border-r flex items-center justify-center gap-1">
                                 Perfect
-                                <div className="w-3.5 h-3.5 bg-amber-400 rounded-full shrink-0" />
                               </div>
                               <div className="text-center py-1 px-2 font-medium text-muted-foreground bg-accent/50 border-b border-r flex items-center justify-center gap-1">
                                 Great
-                                <div className="w-3.5 h-3.5 bg-pink-400 rounded-full shrink-0" />
                               </div>
                               <div className="text-center py-1 px-2 font-medium text-muted-foreground bg-accent/50 border-b border-r flex items-center justify-center gap-1">
                                 Good
-                                <div className="w-3.5 h-3.5 bg-green-500 rounded-full shrink-0" />
                               </div>
                               <div className="text-center py-1 px-2 font-medium text-muted-foreground bg-accent/50 border-b border-r flex items-center justify-center gap-1">
                                 Miss
-                                <div className="w-3.5 h-3.5 bg-neutral-500 rounded-full shrink-0" />
                               </div>
                               <div className="text-center py-1 px-2 font-medium text-muted-foreground bg-accent/50 border-b flex items-center justify-center">
                                 {t('notesBreakdown.totalLoss')}
@@ -741,23 +736,23 @@ export function RecentSongsCard({ region, beforeDate }: RecentSongsCardProps) {
                               <div className="text-center py-1 px-2 border-b border-r">
                                 {(play.tapCPerfect ?? 0) + (play.tapPerfect ?? 0) + (play.tapGreat ?? 0) + (play.tapGood ?? 0) + (play.tapMiss ?? 0)}
                               </div>
-                              <div className="text-center py-1 px-2 border-b border-r">
+                              <div className="text-center bg-yellow-50 text-yellow-600 py-1 px-2 border-b border-r">
                                 {play.tapCPerfect ?? 0}
                               </div>
-                              <div className="text-center py-1 px-2 border-b border-r">
+                              <div className="text-center bg-orange-50 text-orange-600 py-1 px-2 border-b border-r">
                                 {play.tapPerfect ?? 0}
                               </div>
-                              <div className="text-center py-1 px-2 border-b border-r flex flex-col items-center">
+                              <div className="text-center bg-pink-50 text-pink-600 py-1 px-2 border-b border-r flex flex-col items-center">
                                 <div>{play.tapGreat ?? 0}</div>
-                                <div className="text-xs text-muted-foreground">(-{losses.tap.great.toFixed(4)}%)</div>
+                                <div className="text-xs text-pink-500">(-{losses.tap.great.toFixed(4)}%)</div>
                               </div>
-                              <div className="text-center py-1 px-2 border-b border-r flex flex-col items-center">
+                              <div className="text-center bg-green-50 text-green-600 py-1 px-2 border-b border-r flex flex-col items-center">
                                 <div>{play.tapGood ?? 0}</div>
-                                <div className="text-xs text-muted-foreground">(-{losses.tap.good.toFixed(4)}%)</div>
+                                <div className="text-xs text-green-500">(-{losses.tap.good.toFixed(4)}%)</div>
                               </div>
-                              <div className="text-center py-1 px-2 border-b border-r flex flex-col items-center">
+                              <div className="text-center bg-neutral-50 text-neutral-600 py-1 px-2 border-b border-r flex flex-col items-center">
                                 <div>{play.tapMiss ?? 0}</div>
-                                <div className="text-xs text-muted-foreground">(-{losses.tap.miss.toFixed(4)}%)</div>
+                                <div className="text-xs text-neutral-500">(-{losses.tap.miss.toFixed(4)}%)</div>
                               </div>
                               <div className="text-center py-1 px-2 border-b font-medium text-muted-foreground flex items-center justify-center">
                                 -{(losses.tap.great + losses.tap.good + losses.tap.miss).toFixed(4)}%
@@ -768,23 +763,23 @@ export function RecentSongsCard({ region, beforeDate }: RecentSongsCardProps) {
                               <div className="text-center py-1 px-2 border-b border-r">
                                 {(play.holdCPerfect ?? 0) + (play.holdPerfect ?? 0) + (play.holdGreat ?? 0) + (play.holdGood ?? 0) + (play.holdMiss ?? 0)}
                               </div>
-                              <div className="text-center py-1 px-2 border-b border-r">
+                              <div className="text-center bg-yellow-50 text-yellow-600 py-1 px-2 border-b border-r">
                                 {play.holdCPerfect ?? 0}
                               </div>
-                              <div className="text-center py-1 px-2 border-b border-r">
+                              <div className="text-center bg-orange-50 text-orange-600 py-1 px-2 border-b border-r">
                                 {play.holdPerfect ?? 0}
                               </div>
-                              <div className="text-center py-1 px-2 border-b border-r flex flex-col items-center">
+                              <div className="text-center bg-pink-50 text-pink-600 py-1 px-2 border-b border-r flex flex-col items-center">
                                 <div>{play.holdGreat ?? 0}</div>
-                                <div className="text-xs text-muted-foreground">(-{losses.hold.great.toFixed(4)}%)</div>
+                                <div className="text-xs text-pink-500">(-{losses.hold.great.toFixed(4)}%)</div>
                               </div>
-                              <div className="text-center py-1 px-2 border-b border-r flex flex-col items-center">
+                              <div className="text-center bg-green-50 text-green-600 py-1 px-2 border-b border-r flex flex-col items-center">
                                 <div>{play.holdGood ?? 0}</div>
-                                <div className="text-xs text-muted-foreground">(-{losses.hold.good.toFixed(4)}%)</div>
+                                <div className="text-xs text-green-500">(-{losses.hold.good.toFixed(4)}%)</div>
                               </div>
-                              <div className="text-center py-1 px-2 border-b border-r flex flex-col items-center">
+                              <div className="text-center bg-neutral-50 text-neutral-600 py-1 px-2 border-b border-r flex flex-col items-center">
                                 <div>{play.holdMiss ?? 0}</div>
-                                <div className="text-xs text-muted-foreground">(-{losses.hold.miss.toFixed(4)}%)</div>
+                                <div className="text-xs text-neutral-500">(-{losses.hold.miss.toFixed(4)}%)</div>
                               </div>
                               <div className="text-center py-1 px-2 border-b font-medium text-muted-foreground flex items-center justify-center">
                                 -{(losses.hold.great + losses.hold.good + losses.hold.miss).toFixed(4)}%
@@ -795,23 +790,23 @@ export function RecentSongsCard({ region, beforeDate }: RecentSongsCardProps) {
                               <div className="text-center py-1 px-2 border-b border-r">
                                 {(play.slideCPerfect ?? 0) + (play.slidePerfect ?? 0) + (play.slideGreat ?? 0) + (play.slideGood ?? 0) + (play.slideMiss ?? 0)}
                               </div>
-                              <div className="text-center py-1 px-2 border-b border-r">
+                              <div className="text-center bg-yellow-50 text-yellow-600 py-1 px-2 border-b border-r">
                                 {play.slideCPerfect ?? 0}
                               </div>
-                              <div className="text-center py-1 px-2 border-b border-r">
+                              <div className="text-center bg-orange-50 text-orange-600 py-1 px-2 border-b border-r">
                                 {play.slidePerfect ?? 0}
                               </div>
-                              <div className="text-center py-1 px-2 border-b border-r flex flex-col items-center">
+                              <div className="text-center bg-pink-50 text-pink-600 py-1 px-2 border-b border-r flex flex-col items-center">
                                 <div>{play.slideGreat ?? 0}</div>
-                                <div className="text-xs text-muted-foreground">(-{losses.slide.great.toFixed(4)}%)</div>
+                                <div className="text-xs text-pink-500">(-{losses.slide.great.toFixed(4)}%)</div>
                               </div>
-                              <div className="text-center py-1 px-2 border-b border-r flex flex-col items-center">
+                              <div className="text-center bg-green-50 text-green-600 py-1 px-2 border-b border-r flex flex-col items-center">
                                 <div>{play.slideGood ?? 0}</div>
-                                <div className="text-xs text-muted-foreground">(-{losses.slide.good.toFixed(4)}%)</div>
+                                <div className="text-xs text-green-500">(-{losses.slide.good.toFixed(4)}%)</div>
                               </div>
-                              <div className="text-center py-1 px-2 border-b border-r flex flex-col items-center">
+                              <div className="text-center bg-neutral-50 text-neutral-600 py-1 px-2 border-b border-r flex flex-col items-center">
                                 <div>{play.slideMiss ?? 0}</div>
-                                <div className="text-xs text-muted-foreground">(-{losses.slide.miss.toFixed(4)}%)</div>
+                                <div className="text-xs text-neutral-500">(-{losses.slide.miss.toFixed(4)}%)</div>
                               </div>
                               <div className="text-center py-1 px-2 border-b font-medium text-muted-foreground flex items-center justify-center">
                                 -{(losses.slide.great + losses.slide.good + losses.slide.miss).toFixed(4)}%
@@ -822,23 +817,23 @@ export function RecentSongsCard({ region, beforeDate }: RecentSongsCardProps) {
                               <div className="text-center py-1 px-2 border-b border-r">
                                 {(play.touchCPerfect ?? 0) + (play.touchPerfect ?? 0) + (play.touchGreat ?? 0) + (play.touchGood ?? 0) + (play.touchMiss ?? 0)}
                               </div>
-                              <div className="text-center py-1 px-2 border-b border-r">
+                              <div className="text-center bg-yellow-50 text-yellow-600 py-1 px-2 border-b border-r">
                                 {play.touchCPerfect ?? 0}
                               </div>
-                              <div className="text-center py-1 px-2 border-b border-r">
+                              <div className="text-center bg-orange-50 text-orange-600 py-1 px-2 border-b border-r">
                                 {play.touchPerfect ?? 0}
                               </div>
-                              <div className="text-center py-1 px-2 border-b border-r flex flex-col items-center">
+                              <div className="text-center bg-pink-50 text-pink-600 py-1 px-2 border-b border-r flex flex-col items-center">
                                 <div>{play.touchGreat ?? 0}</div>
-                                <div className="text-xs text-muted-foreground">(-{losses.touch.great.toFixed(4)}%)</div>
+                                <div className="text-xs text-pink-500">(-{losses.touch.great.toFixed(4)}%)</div>
                               </div>
-                              <div className="text-center py-1 px-2 border-b border-r flex flex-col items-center">
+                              <div className="text-center bg-green-50 text-green-600 py-1 px-2 border-b border-r flex flex-col items-center">
                                 <div>{play.touchGood ?? 0}</div>
-                                <div className="text-xs text-muted-foreground">(-{losses.touch.good.toFixed(4)}%)</div>
+                                <div className="text-xs text-green-500">(-{losses.touch.good.toFixed(4)}%)</div>
                               </div>
-                              <div className="text-center py-1 px-2 border-b border-r flex flex-col items-center">
+                              <div className="text-center bg-neutral-50 text-neutral-600 py-1 px-2 border-b border-r flex flex-col items-center">
                                 <div>{play.touchMiss ?? 0}</div>
-                                <div className="text-xs text-muted-foreground">(-{losses.touch.miss.toFixed(4)}%)</div>
+                                <div className="text-xs text-neutral-500">(-{losses.touch.miss.toFixed(4)}%)</div>
                               </div>
                               <div className="text-center py-1 px-2 border-b font-medium text-muted-foreground flex items-center justify-center">
                                 -{(losses.touch.great + losses.touch.good + losses.touch.miss).toFixed(4)}%
@@ -849,24 +844,24 @@ export function RecentSongsCard({ region, beforeDate }: RecentSongsCardProps) {
                               <div className="text-center py-1 px-2 border-r">
                                 {(play.breakCPerfect ?? 0) + (play.breakPerfect ?? 0) + (play.breakGreat ?? 0) + (play.breakGood ?? 0) + (play.breakMiss ?? 0)}
                               </div>
-                              <div className="text-center py-1 px-2 border-r">
+                              <div className="text-center bg-yellow-50 text-yellow-600 py-1 px-2 border-r">
                                 {play.breakCPerfect ?? 0}
                               </div>
-                              <div className="text-center py-1 px-2 border-r flex flex-col items-center">
+                              <div className="text-center bg-orange-50 text-orange-600 py-1 px-2 border-r flex flex-col items-center">
                                 <div>{breakDist.perfect2550}-{breakDist.perfect2500}</div>
-                                <div className="text-xs text-muted-foreground">(-{losses.break.perfect.toFixed(4)}%)</div>
+                                <div className="text-xs text-orange-500">(-{losses.break.perfect.toFixed(4)}%)</div>
                               </div>
-                              <div className="text-center py-1 px-2 border-r flex flex-col items-center">
+                              <div className="text-center bg-pink-50 text-pink-600 py-1 px-2 border-r flex flex-col items-center">
                                 <div>{breakDist.great2000}-{breakDist.great1500}-{breakDist.great1250}</div>
-                                <div className="text-xs text-muted-foreground">(-{losses.break.great.toFixed(4)}%)</div>
+                                <div className="text-xs text-pink-500">(-{losses.break.great.toFixed(4)}%)</div>
                               </div>
-                              <div className="text-center py-1 px-2 border-r flex flex-col items-center">
+                              <div className="text-center bg-green-50 text-green-600 py-1 px-2 border-r flex flex-col items-center">
                                 <div>{play.breakGood ?? 0}</div>
-                                <div className="text-xs text-muted-foreground">(-{losses.break.good.toFixed(4)}%)</div>
+                                <div className="text-xs text-green-500">(-{losses.break.good.toFixed(4)}%)</div>
                               </div>
-                              <div className="text-center py-1 px-2 border-r flex flex-col items-center">
+                              <div className="text-center bg-neutral-50 text-neutral-600 py-1 px-2 border-r flex flex-col items-center">
                                 <div>{play.breakMiss ?? 0}</div>
-                                <div className="text-xs text-muted-foreground">(-{losses.break.miss.toFixed(4)}%)</div>
+                                <div className="text-xs text-neutral-500">(-{losses.break.miss.toFixed(4)}%)</div>
                               </div>
                               <div className="text-center py-1 px-2 font-medium text-muted-foreground flex items-center justify-center">
                                 -{(losses.break.perfect + losses.break.great + losses.break.good + losses.break.miss).toFixed(4)}%
