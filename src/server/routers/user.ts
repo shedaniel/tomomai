@@ -4,7 +4,7 @@ import { resolveBaseUrl } from '@/lib/base-url';
 import { getFetchStatusServer, Region, startFetchServer } from '@/lib/maimai-server-actions';
 import { getAvailableVersions } from '@/lib/metadata';
 import { RatingCalculationInput, splitSongs } from '@/lib/rating-calculator';
-import { invites, songs, user, userScores, userSnapshots, userTokens, userEvents } from '@/lib/db/schema-pg';
+import { invites, songs, user, userScores, userSnapshots, userTokens, userEvents, userRecentSongs, userRecentSongsDetailed } from '@/lib/db/schema-pg';
 import { protectedProcedure, publicProcedure, router } from '@/lib/trpc';
 import { SongWithScore } from '@/lib/types';
 import { TRPCError } from '@trpc/server';
@@ -13,6 +13,7 @@ import { and, count, desc, eq, inArray, isNull, lt, or, sql } from 'drizzle-orm'
 import { z } from 'zod';
 import { flagDefinitions } from '@/lib/flags';
 import { REGION_ENUM, TIMEZONE_ENUM } from '@/lib/db/types';
+import { logger } from '@/lib/logger';
 
 const SIGNUP_REQUIRED_AMOUNT = 256;
 
@@ -283,7 +284,7 @@ export const userRouter = router({
     .input(z.object({ region: regionSchema }))
     .query(async ({ ctx, input }) => {
       const startTime = Date.now();
-      console.log(`[getRatingHistory] Starting for user ${ctx.session.user.id}, region ${input.region}`);
+      logger.info(`Starting getRatingHistory for user ${ctx.session.user.id}, region ${input.region}`);
       
       // Fetch all snapshots for this user/region (lightweight - just metadata)
       const snapshotsStart = Date.now();
@@ -302,10 +303,10 @@ export const userRouter = router({
           )
         )
         .orderBy(userSnapshots.fetchedAt);
-      console.log(`[getRatingHistory] Fetched ${snapshots.length} snapshots in ${Date.now() - snapshotsStart}ms`);
+      logger.info(`Fetched ${snapshots.length} snapshots in ${Date.now() - snapshotsStart}ms`);
 
       if (snapshots.length < 2) {
-        console.log(`[getRatingHistory] Completed in ${Date.now() - startTime}ms (insufficient data)`);
+        logger.info(`Completed in ${Date.now() - startTime}ms (insufficient data)`);
         return { 
           history: snapshots.map(s => ({
             date: s.fetchedAt,
@@ -334,7 +335,7 @@ export const userRouter = router({
           lastSnapshot: snapshots[snapshots.length - 1],
           allSnapshots: snapshots,
         }));
-      console.log(`[getRatingHistory] Grouped ${snapshots.length} snapshots into ${dateGroups.length} date groups in ${Date.now() - dateGroupingStart}ms`);
+      logger.info(`Grouped ${snapshots.length} snapshots into ${dateGroups.length} date groups in ${Date.now() - dateGroupingStart}ms`);
 
       // Identify which snapshots we need scores for (only when rating actually changed)
       const snapshotsNeedingScores = new Set<bigint>();
@@ -353,7 +354,7 @@ export const userRouter = router({
           }
         }
       }
-      console.log(`[getRatingHistory] Need scores for ${snapshotsNeedingScores.size} snapshots (out of ${snapshots.length} total)`);
+      logger.info(`Need scores for ${snapshotsNeedingScores.size} snapshots (out of ${snapshots.length} total)`);
 
       // Fetch B50 songs only for snapshots we need for comparisons
       const scoresStart = Date.now();
@@ -381,7 +382,7 @@ export const userRouter = router({
             inArray(userScores.snapshotId, relevantSnapshotIds)
           )
         );
-      console.log(`[getRatingHistory] Fetched ${allScores.length} B50 scores in ${Date.now() - scoresStart}ms`);
+      logger.info(`Fetched ${allScores.length} B50 scores in ${Date.now() - scoresStart}ms`);
 
       // Group scores by snapshot
       const groupingStart = Date.now();
@@ -410,7 +411,7 @@ export const userRouter = router({
           fc: score.fc,
         });
       }
-      console.log(`[getRatingHistory] Grouped scores in ${Date.now() - groupingStart}ms`);
+      logger.info(`Grouped scores in ${Date.now() - groupingStart}ms`);
 
       // Build history with changes (only for last snapshot of each date group)
       const comparisonStart = Date.now();
@@ -492,8 +493,8 @@ export const userRouter = router({
           changes,
         });
       }
-      console.log(`[getRatingHistory] Performed ${comparisonsPerformed} comparisons in ${Date.now() - comparisonStart}ms`);
-      console.log(`[getRatingHistory] Total completed in ${Date.now() - startTime}ms`);
+      logger.info(`Performed ${comparisonsPerformed} comparisons in ${Date.now() - comparisonStart}ms`);
+      logger.info(`Total completed in ${Date.now() - startTime}ms`);
 
       return { history: historyWithChanges };
     }),
@@ -1722,6 +1723,111 @@ export const userRouter = router({
         }
       }
       return { flags: selectableFlags };
+    }),
+
+  // Get recent songs for a user
+  getRecentSongs: protectedProcedure
+    .input(z.object({
+      region: regionSchema,
+      limit: z.number().min(1).max(100).default(50),
+      offset: z.number().min(0).default(0),
+      beforeDate: z.date().optional(),
+    }))
+    .query(async ({ ctx, input }) => {
+      const userId = ctx.session.user.id;
+      const { region, limit, offset, beforeDate } = input;
+
+      // Query recent songs with song data and optional detailed data
+      const recentPlays = await db
+        .select({
+          // Recent song data
+          recentSongId: userRecentSongs.id,
+          playedAt: userRecentSongs.playedAt,
+          achievement: userRecentSongs.archievement,
+          dxScore: userRecentSongs.dxScore,
+          maxDxScore: userRecentSongs.maxDxScore,
+          fc: userRecentSongs.fc,
+          fs: userRecentSongs.fs,
+          track: userRecentSongs.track,
+          // Song data
+          songId: songs.id,
+          songName: songs.songName,
+          artist: songs.artist,
+          cover: songs.cover,
+          difficulty: songs.difficulty,
+          level: songs.level,
+          levelPrecise: songs.levelPrecise,
+          type: songs.type,
+          genre: songs.genre,
+          // Detailed data (may be null)
+          fastCount: userRecentSongsDetailed.fastCount,
+          lateCount: userRecentSongsDetailed.lateCount,
+          combo: userRecentSongsDetailed.combo,
+          maxCombo: userRecentSongsDetailed.maxCombo,
+          syncScore: userRecentSongsDetailed.syncScore,
+          maxSyncScore: userRecentSongsDetailed.maxSyncScore,
+          rating: userRecentSongsDetailed.rating,
+          ratingChange: userRecentSongsDetailed.ratingChange,
+          venue: userRecentSongsDetailed.venue,
+          // Note data
+          tapCPerfect: userRecentSongsDetailed.tapCPerfect,
+          tapPerfect: userRecentSongsDetailed.tapPerfect,
+          tapGreat: userRecentSongsDetailed.tapGreat,
+          tapGood: userRecentSongsDetailed.tapGood,
+          tapMiss: userRecentSongsDetailed.tapMiss,
+          holdCPerfect: userRecentSongsDetailed.holdCPerfect,
+          holdPerfect: userRecentSongsDetailed.holdPerfect,
+          holdGreat: userRecentSongsDetailed.holdGreat,
+          holdGood: userRecentSongsDetailed.holdGood,
+          holdMiss: userRecentSongsDetailed.holdMiss,
+          slideCPerfect: userRecentSongsDetailed.slideCPerfect,
+          slidePerfect: userRecentSongsDetailed.slidePerfect,
+          slideGreat: userRecentSongsDetailed.slideGreat,
+          slideGood: userRecentSongsDetailed.slideGood,
+          slideMiss: userRecentSongsDetailed.slideMiss,
+          touchCPerfect: userRecentSongsDetailed.touchCPerfect,
+          touchPerfect: userRecentSongsDetailed.touchPerfect,
+          touchGreat: userRecentSongsDetailed.touchGreat,
+          touchGood: userRecentSongsDetailed.touchGood,
+          touchMiss: userRecentSongsDetailed.touchMiss,
+          breakCPerfect: userRecentSongsDetailed.breakCPerfect,
+          breakPerfect: userRecentSongsDetailed.breakPerfect,
+          breakGreat: userRecentSongsDetailed.breakGreat,
+          breakGood: userRecentSongsDetailed.breakGood,
+          breakMiss: userRecentSongsDetailed.breakMiss,
+        })
+        .from(userRecentSongs)
+        .innerJoin(songs, eq(userRecentSongs.songId, songs.id))
+        .leftJoin(userRecentSongsDetailed, eq(userRecentSongs.id, userRecentSongsDetailed.recentSongId))
+        .where(
+          and(
+            eq(userRecentSongs.userId, userId),
+            eq(songs.region, region),
+            beforeDate ? lt(userRecentSongs.playedAt, beforeDate) : undefined
+          )
+        )
+        .orderBy(desc(userRecentSongs.playedAt))
+        .limit(limit)
+        .offset(offset);
+
+      // Get total count
+      const [{ totalCount }] = await db
+        .select({ totalCount: count() })
+        .from(userRecentSongs)
+        .innerJoin(songs, eq(userRecentSongs.songId, songs.id))
+        .where(
+          and(
+            eq(userRecentSongs.userId, userId),
+            eq(songs.region, region),
+            beforeDate ? lt(userRecentSongs.playedAt, beforeDate) : undefined
+          )
+        );
+
+      return {
+        recentPlays,
+        totalCount,
+        hasMore: offset + limit < totalCount,
+      };
     }),
 
 

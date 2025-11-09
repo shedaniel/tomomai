@@ -153,7 +153,7 @@ async function pollForUpdates(
           return;
         } else {
           // Still pending, update with progress
-          await updateFetchProgress(status.statusStates || '', regionName, discordUserId, applicationId, interactionToken);
+          await updateFetchProgress(status.statusStates || '', region, regionName, discordUserId, applicationId, interactionToken);
         }
       }
 
@@ -241,6 +241,7 @@ async function handleFetchCompleted(
 
 async function updateFetchProgress(
   statusStates: string,
+  region: 'intl' | 'jp',
   regionName: string,
   discordUserId: string,
   applicationId: string,

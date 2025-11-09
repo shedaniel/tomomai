@@ -149,7 +149,9 @@
     "snapshotFrom": "{date} のスナップショット • {name} • {count}曲",
     "tabs": {
       "playerInfo": "プレイヤー情報",
+      "stats": "統計",
       "songs": "楽曲",
+      "recentPlays": "プレイレコード",
       "recommendations": "おすすめ楽曲",
       "plates": "ネームプレート",
       "map": "ちほー",
@@ -213,6 +215,21 @@
       "targetRating": "目標レート",
       "achievement": "達成率",
       "version": "バージョン"
+    }
+  },
+  "recentPlays": {
+    "title": "プレイレコード",
+    "noPlays": "プレイレコードがありません",
+    "labels": {
+      "dx": "DX",
+      "combo": "コンボ",
+      "fast": "FAST",
+      "late": "LATE"
+    },
+    "notesBreakdown": {
+      "type": "種類",
+      "total": "合計",
+      "totalLoss": "ロス"
     }
   },
   "events": {

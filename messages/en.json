@@ -149,7 +149,9 @@
     "snapshotFrom": "Snapshot from {date} • {name} • {count} songs",
     "tabs": {
       "playerInfo": "Player Info",
+      "stats": "Stats",
       "songs": "Songs",
+      "recentPlays": "Recent Plays",
       "recommendations": "Recommended",
       "plates": "Plates",
       "map": "Events",
@@ -213,6 +215,21 @@
       "targetRating": "Target Rating",
       "achievement": "Achievement",
       "version": "Version"
+    }
+  },
+  "recentPlays": {
+    "title": "Recent Plays",
+    "noPlays": "No recent plays found",
+    "labels": {
+      "dx": "DX",
+      "combo": "Combo",
+      "fast": "Fast",
+      "late": "Late"
+    },
+    "notesBreakdown": {
+      "type": "Type",
+      "total": "Total",
+      "totalLoss": "Loss"
     }
   },
   "events": {

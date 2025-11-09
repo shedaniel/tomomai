@@ -40,3 +40,36 @@ export function createSafeMaimaiImageUrl(originalUrl: string): string {
 export function sortKeys<T>(obj: T): T {
   return Object.fromEntries(Object.entries(obj as Record<string, unknown>).sort(([a], [b]) => a.localeCompare(b))) as unknown as T;
 }
+
+function isObject(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
+/**
+ * Deeply merges two objects. Properties in `source` will overwrite properties in `target`.
+ * If a property is an object in both, it will be merged recursively.
+ *
+ * @param target The object to merge into.
+ * @param source The object to merge from.
+ * @returns A new object with the merged properties.
+ */
+export function deepMerge<T extends Record<string, any>>(
+  target: T,
+  source: Partial<T>
+): T {
+  const output = { ...target };
+
+  if (isObject(target) && isObject(source)) {
+    Object.keys(source).forEach((key) => {
+      if (isObject(source[key]) && isObject(output[key])) {
+        // If both target and source have an object for this key, merge recursively
+        output[key as keyof T] = deepMerge(output[key] as Record<string, unknown>, source[key] as Record<string, unknown>) as T[keyof T];
+      } else {
+        // Otherwise, simply assign the source value (overwriting if it exists)
+        Object.assign(output, { [key]: source[key] });
+      }
+    });
+  }
+
+  return output;
+}

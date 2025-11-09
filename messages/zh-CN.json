@@ -149,7 +149,9 @@
     "snapshotFrom": "记录自 {date} • {name} • {count} 首歌曲",
     "tabs": {
       "playerInfo": "玩家信息",
+      "stats": "统计",
       "songs": "歌曲",
+      "recentPlays": "最近游玩",
       "recommendations": "推荐歌曲",
       "plates": "名牌板",
       "map": "活动地图",
@@ -213,6 +215,21 @@
       "targetRating": "目标分数",
       "achievement": "达成率",
       "version": "版本"
+    }
+  },
+  "recentPlays": {
+    "title": "最近游玩",
+    "noPlays": "未找到最近游玩记录",
+    "labels": {
+      "dx": "DX",
+      "combo": "连击",
+      "fast": "FAST",
+      "late": "LATE"
+    },
+    "notesBreakdown": {
+      "type": "类型",
+      "total": "总计",
+      "totalLoss": "失分"
     }
   },
   "events": {

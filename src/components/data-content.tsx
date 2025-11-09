@@ -2,7 +2,7 @@
 
 import { Region, SnapshotWithSongs } from "@/lib/types";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BarChart, Database, Disc, Heart, Image as ImageIcon, Loader2, Map, Music, TrendingUp, User } from "lucide-react";
+import { BarChart, Clock, Database, Disc, Heart, Image as ImageIcon, Loader2, Map, Music, TrendingUp, User } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState, useEffect } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
@@ -12,6 +12,7 @@ import { RecommendationCard } from "./recommendation-card";
 import { ExportImageCard } from "./export-image-card";
 import { HistoryCard } from "./history-card";
 import { EventsCard } from "./events-card";
+import { RecentSongsCard } from "./recent-songs-card";
 import { Flags } from "@/lib/flags";
 
 interface DataContentProps {
@@ -49,7 +50,7 @@ export function DataContent({
   const searchParams = useSearchParams();
   
   // Valid tab values
-  const allPossibleTabs = ["info", "songs", "recommendations", "plates", "map", "exportImage", "history"];
+  const allPossibleTabs = ["info", "stats", "songs", "recent", "recommendations", "plates", "map", "exportImage", "history"];
   
   // Get initial tab from props (SSR) or search params (client)
   const getInitialTab = () => {
@@ -112,6 +113,12 @@ export function DataContent({
       value: "songs",
       icon: Music,
       show: true,
+    },
+    {
+      name: t('dataContent.tabs.recentPlays'),
+      value: "recent",
+      icon: Clock,
+      show: visitedBySelf,
     },
     {
       name: t('dataContent.tabs.recommendations'),
@@ -192,9 +199,26 @@ export function DataContent({
             visitableProfileAt={visitableProfileAt}
           />
         </TabsContent>
+        {flags.statsCard && (
+          <TabsContent value="stats" className="mt-0 flex-1 min-w-0">
+            <div className="p-8 text-center w-full h-[calc(100vh-20rem)] flex flex-col items-center justify-center">
+              <BarChart className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+              <h3 className="text-lg font-medium mb-2">{t('dataContent.tabs.stats')}</h3>
+              <p className="text-muted-foreground">Coming soon...</p>
+            </div>
+          </TabsContent>
+        )}
         <TabsContent value="songs" className="mt-0 flex-1 min-w-0">
           <SongsCard selectedSnapshotData={selectedSnapshotData} />
         </TabsContent>
+        {visitedBySelf && (
+          <TabsContent value="recent" className="mt-0 flex-1 min-w-0">
+            <RecentSongsCard 
+              region={region}
+              beforeDate={selectedSnapshotData?.snapshot.fetchedAt}
+            />
+          </TabsContent>
+        )}
         <TabsContent value="recommendations" className="mt-0 flex-1 min-w-0">
           <RecommendationCard selectedSnapshotData={selectedSnapshotData} flags={flags} />
         </TabsContent>
