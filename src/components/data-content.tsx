@@ -50,7 +50,7 @@ export function DataContent({
   const searchParams = useSearchParams();
   
   // Valid tab values
-  const allPossibleTabs = ["info", "songs", "recent", "recommendations", "plates", "map", "exportImage", "history"];
+  const allPossibleTabs = ["info", "stats", "songs", "recent", "recommendations", "plates", "map", "exportImage", "history"];
   
   // Get initial tab from props (SSR) or search params (client)
   const getInitialTab = () => {
@@ -199,6 +199,15 @@ export function DataContent({
             visitableProfileAt={visitableProfileAt}
           />
         </TabsContent>
+        {flags.statsCard && (
+          <TabsContent value="stats" className="mt-0 flex-1 min-w-0">
+            <div className="p-8 text-center w-full h-[calc(100vh-20rem)] flex flex-col items-center justify-center">
+              <BarChart className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+              <h3 className="text-lg font-medium mb-2">{t('dataContent.tabs.stats')}</h3>
+              <p className="text-muted-foreground">Coming soon...</p>
+            </div>
+          </TabsContent>
+        )}
         <TabsContent value="songs" className="mt-0 flex-1 min-w-0">
           <SongsCard selectedSnapshotData={selectedSnapshotData} />
         </TabsContent>

@@ -149,6 +149,7 @@
     "snapshotFrom": "{date} のスナップショット • {name} • {count}曲",
     "tabs": {
       "playerInfo": "プレイヤー情報",
+      "stats": "統計",
       "songs": "楽曲",
       "recentPlays": "プレイレコード",
       "recommendations": "おすすめ楽曲",

@@ -149,6 +149,7 @@
     "snapshotFrom": "Snapshot from {date} • {name} • {count} songs",
     "tabs": {
       "playerInfo": "Player Info",
+      "stats": "Stats",
       "songs": "Songs",
       "recentPlays": "Recent Plays",
       "recommendations": "Recommended",

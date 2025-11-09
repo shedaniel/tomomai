@@ -395,6 +395,13 @@ export function RecentSongsCard({ region, beforeDate }: RecentSongsCardProps) {
     beforeDate,
   });
 
+  // Reset pagination state when region or beforeDate changes
+  useEffect(() => {
+    setOffset(0);
+    setAllPlays([]);
+    setHasMore(true);
+  }, [region, beforeDate]);
+
   // Update allPlays when new data arrives
   useEffect(() => {
     if (data) {

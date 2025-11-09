@@ -149,6 +149,7 @@
     "snapshotFrom": "紀錄自 {date} • {name} • {count} 首歌曲",
     "tabs": {
       "playerInfo": "玩家資料",
+      "stats": "統計",
       "songs": "歌曲",
       "recentPlays": "遊玩紀錄",
       "recommendations": "推薦歌曲",
