@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { join } from "path";
 import { resolveBaseUrl } from "@/lib/base-url";
 import { nanoid } from "nanoid";
+import { sortKeys } from "@/lib/utils";
 
 const MAIMAI_SONGS_JSON_URL = "https://github.com/zvuc/otoge-db/raw/refs/heads/master/maimai/data/music-ex.json";
 const MAIMAI_SONGS_JSON_URL_INTL = "https://github.com/zvuc/otoge-db/raw/refs/heads/master/maimai/data/music-ex-intl.json";
@@ -464,7 +465,10 @@ export async function POST(request: NextRequest) {
         .where(and(eq(songs.region, region), eq(songs.gameVersion, currentVersionForRegion)))
         .orderBy(songs.songName, songs.difficulty, songs.type))
         .sort((a, b) => a.songName.localeCompare(b.songName) * 1000000 + a.difficulty.localeCompare(b.difficulty) * 1000 + a.type.localeCompare(b.type));
-      await fs.writeFile(filePath, JSON.stringify(prevRecords, null, 2));
+        await fs.writeFile(filePath, JSON.stringify(prevRecords.map(record => sortKeys({
+          ...record,
+          id: record.id.toString(),
+        })), null, 2));
       console.log(`Saved ${prevRecords.length} records to ${filePath}`);
 
       // Write new records to file
@@ -473,10 +477,13 @@ export async function POST(request: NextRequest) {
         const converted = convertToSong(record, region, currentVersionForRegion);
         const existingRecord = prevRecords.find(prev => prev.songName === converted.songName && prev.difficulty === converted.difficulty && prev.type === converted.type);
         // If the record exists in prevRecords, use its ID; otherwise, ID will be auto-generated on insert
-        return existingRecord ? { ...converted, id: existingRecord.id } : converted;
+        return existingRecord ? { ...converted, id: existingRecord.id, publicId: existingRecord.publicId } : converted;
       })
       .sort((a, b) => a.songName.localeCompare(b.songName) * 1000000 + a.difficulty.localeCompare(b.difficulty) * 1000 + a.type.localeCompare(b.type));
-      await fs.writeFile(newFilePath, JSON.stringify(newRecords, null, 2));
+      await fs.writeFile(newFilePath, JSON.stringify(newRecords.map(record => sortKeys({
+        ...record,
+        id: "id" in record ? record.id.toString() : null,
+      })), null, 2));
       console.log(`Saved ${newRecords.length} records to ${newFilePath}`);
     }
 
@@ -572,7 +579,7 @@ export async function POST(request: NextRequest) {
       );
 
     const idsToDelete: bigint[] = [];
-    console.log(`Found ${recordsToDeleteCandidate.length} records to delete for region ${region} and game version ${currentVersionForRegion}:`);
+    console.log(`Records to delete for region ${region} and game version ${currentVersionForRegion}:`);
     for (const record of recordsToDeleteCandidate) {
       const existingCompositeKey = `${record.songName}-${record.difficulty}-${record.type}`;
       if (!newRecordCompositeKeys.has(existingCompositeKey)) {
@@ -594,6 +601,8 @@ export async function POST(request: NextRequest) {
     const deletedSongs: typeof songs.$inferSelect[] = [];
     const modifiedSongs: Array<{ old: typeof songs.$inferSelect; new: typeof songs.$inferSelect }> = [];
 
+    console.log("Finding modified songs:");
+
     // Find added songs (in new but not in existing)
     for (const record of allRecords) {
       const key = `${record.songName}-${record.difficulty}-${record.type}`;
@@ -601,6 +610,7 @@ export async function POST(request: NextRequest) {
         // This is a new song, convert it to the format expected
         const newSongData = convertToSong(record, region, currentVersionForRegion);
         addedSongs.push(newSongData);
+        console.log(`  ADDED: ${record.songName} (${record.difficulty} ${record.type})`);
       } else {
         // Check if it was modified (levelPrecise changed)
         const existingSong = existingSongsMap.get(key)!;
@@ -630,6 +640,7 @@ export async function POST(request: NextRequest) {
               id: existingSong.id, // Keep the same ID
             } as typeof songs.$inferSelect,
           });
+          console.log(`  MODIFIED: ${record.songName} (${record.difficulty} ${record.type})`);
         }
       }
     }
@@ -639,6 +650,7 @@ export async function POST(request: NextRequest) {
       const key = `${existingSong.songName}-${existingSong.difficulty}-${existingSong.type}`;
       if (!newSongsMap.has(key)) {
         deletedSongs.push(existingSong);
+        console.log(`  DELETED: ${existingSong.songName} (${existingSong.difficulty} ${existingSong.type})`);
       }
     }
 

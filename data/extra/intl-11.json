@@ -154,5 +154,139 @@
                 "levelPrecise": 148
             }
         }
+    },
+    {
+        "title": "プリズム△▽リズム",
+        "artist": "Shoichiro Hirata feat.Sana",
+        "genre": "maimai",
+        "type": "std",
+        "addedVersion": 11,
+        "cover": "https://maimaidx.jp/maimai-mobile/img/Music/0357191a14ae5114.png",
+        "levels": {
+            "easy": {
+                "level": "4",
+                "levelPrecise": 40
+            },
+            "advanced": {
+                "level": "6",
+                "levelPrecise": 60
+            },
+            "expert": {
+                "level": "9",
+                "levelPrecise": 90
+            },
+            "master": {
+                "level": "13",
+                "levelPrecise": 130
+            }
+        }
+    },
+    {
+        "title": "Believe the Rainbow",
+        "artist": "Shoichiro Hirata feat.Sana",
+        "genre": "maimai",
+        "type": "dx",
+        "addedVersion": 11,
+        "cover": "https://maimai.sega.jp/storage/jacket/190701_img3.jpg",
+        "levels": {
+            "easy": {
+                "level": "2",
+                "levelPrecise": 20
+            },
+            "advanced": {
+                "level": "6",
+                "levelPrecise": 60
+            },
+            "expert": {
+                "level": "9+",
+                "levelPrecise": 96
+            },
+            "master": {
+                "level": "13",
+                "levelPrecise": 130
+            }
+        }
+    },
+    {
+        "title": "AFTER PANDORA",
+        "artist": "削除",
+        "genre": "maimai",
+        "type": "std",
+        "addedVersion": 11,
+        "cover": "https://maimaidx.jp/maimai-mobile/img/Music/337975e1e775a059.png",
+        "levels": {
+            "easy": {
+                "level": "3",
+                "levelPrecise": 30
+            },
+            "advanced": {
+                "level": "7+",
+                "levelPrecise": 7
+            },
+            "expert": {
+                "level": "12",
+                "levelPrecise": 125
+            },
+            "master": {
+                "level": "14",
+                "levelPrecise": 142
+            }
+        }
+    },
+    {
+        "title": "Xaleid◆scopiX",
+        "artist": "xi",
+        "genre": "maimai",
+        "type": "dx",
+        "addedVersion": 11,
+        "cover": "https://maimaidx.jp/maimai-mobile/img/Music/7bf12d9c7382a32c.png",
+        "levels": {
+            "easy": {
+                "level": "7+",
+                "levelPrecise": 79
+            },
+            "advanced": {
+                "level": "11",
+                "levelPrecise": 110
+            },
+            "expert": {
+                "level": "13+",
+                "levelPrecise": 137
+            },
+            "master": {
+                "level": "14+",
+                "levelPrecise": 149
+            },
+            "remaster": {
+                "level": "15",
+                "levelPrecise": 150
+            }
+        }
+    },
+    {
+        "title": "Ref:rain (for 7th Heaven)",
+        "artist": "カモメサノエレクトリックオーケストラ include Limonène",
+        "genre": "maimai",
+        "type": "dx",
+        "addedVersion": 11,
+        "cover": "https://maimaidx.jp/maimai-mobile/img/Music/3012b0903feb6e15.png",
+        "levels": {
+            "easy": {
+                "level": "4",
+                "levelPrecise": 40
+            },
+            "advanced": {
+                "level": "8",
+                "levelPrecise": 80
+            },
+            "expert": {
+                "level": "12",
+                "levelPrecise": 125
+            },
+            "master": {
+                "level": "14",
+                "levelPrecise": 140
+            }
+        }
     }
 ]
