@@ -29,6 +29,14 @@ const commands = [
     name: 'fetchjp',
     description: 'Refetch and update your latest maimai scores (Japan region)',
   },
+  {
+    name: 'recents',
+    description: 'Show your most recent play (International region)',
+  },
+  {
+    name: 'recentsjp',
+    description: 'Show your most recent play (Japan region)',
+  },
 ];
 
 async function registerCommands() {

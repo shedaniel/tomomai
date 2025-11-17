@@ -13,6 +13,18 @@ export interface DiscordEmbed {
     text: string;
   };
   timestamp?: string;
+  image?: {
+    url: string;
+    proxy_url?: string;
+    height?: number;
+    width?: number;
+  };
+  thumbnail?: {
+    url: string;
+    proxy_url?: string;
+    height?: number;
+    width?: number;
+  };
 }
 
 export interface DiscordResponse {
@@ -21,6 +33,7 @@ export interface DiscordResponse {
     content?: string;
     embeds?: DiscordEmbed[];
     flags?: InteractionResponseFlags;
+    components?: any[];
   };
 }
 

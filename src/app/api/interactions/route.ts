@@ -2,8 +2,9 @@ import { NextRequest } from 'next/server';
 import { 
   InteractionType, 
   verifyKey,
+  InteractionResponseType,
 } from 'discord-interactions';
-import { handleCommand, createPongResponse } from '@/lib/discord';
+import { handleCommand, handleComponents, createPongResponse } from '@/lib/discord';
 
 // Discord bot configuration
 const DISCORD_PUBLIC_KEY = process.env.DISCORD_PUBLIC_KEY!;
@@ -49,6 +50,29 @@ export async function POST(request: NextRequest) {
       });
 
       return Response.json(response);
+    }
+
+    // Handle message component interactions (buttons)
+    if (interaction.type === InteractionType.MESSAGE_COMPONENT) {
+      const { data, member } = interaction;
+      const discordUserId = member?.user?.id;
+
+      const response = await handleComponents({
+        customId: data.custom_id,
+        discordUserId,
+        applicationId: APPLICATION_ID,
+        interactionToken: interaction.token,
+      });
+
+      if (!response) {
+        return new Response('Unknown component interaction', { status: 400 });
+      }
+
+      // Return deferred update response
+      return Response.json({
+        type: InteractionResponseType.UPDATE_MESSAGE,
+        data: response.data,
+      });
     }
 
     return new Response('Unknown interaction type', { status: 400 });

@@ -1,6 +1,6 @@
 // Main exports for Discord functionality
-export { COMMANDS, handleCommand } from './commands';
-export type { CommandContext } from './commands';
+export { COMMANDS, handleCommand, handleComponents } from './commands';
+export type { CommandContext, ComponentContext } from './commands';
 
 // Response utilities
 export {
@@ -18,6 +18,8 @@ export { handleInviteCommand } from './commands/invite';
 export type { InviteCommandOptions } from './commands/invite';
 export { handleProfileCommand } from './commands/profile';
 export type { ProfileCommandOptions } from './commands/profile';
+export { handleRecentsCommand } from './commands/recents';
+export type { RecentsCommandOptions } from './commands/recents';
 
 // Image generation utilities
 export { generateAndSendProfileImage } from './image-utils';

@@ -1,6 +1,7 @@
 import { handleFetchCommand } from './commands/fetch';
 import { handleInviteCommand } from './commands/invite';
 import { handleProfileCommand } from './commands/profile';
+import { handleRecentsCommand } from './commands/recents';
 import { createUnknownCommandResponse, DiscordResponse } from './responses';
 
 // Command definitions
@@ -25,10 +26,25 @@ export const COMMANDS = {
     name: 'fetchjp', 
     description: 'Refetch and update your latest maimai scores (Japan region)',
   },
+  RECENTS: {
+    name: 'recents',
+    description: 'Show your most recent play (International region)',
+  },
+  RECENTSJP: {
+    name: 'recentsjp',
+    description: 'Show your most recent play (Japan region)',
+  },
 } as const;
 
 export interface CommandContext {
   commandName: string;
+  discordUserId?: string;
+  applicationId: string;
+  interactionToken: string;
+}
+
+export interface ComponentContext {
+  customId: string;
   discordUserId?: string;
   applicationId: string;
   interactionToken: string;
@@ -64,10 +80,50 @@ export async function handleCommand(context: CommandContext): Promise<DiscordRes
         interactionToken 
       });
 
+    case COMMANDS.RECENTS.name.toLowerCase():
+    case COMMANDS.RECENTSJP.name.toLowerCase():
+      if (!discordUserId) {
+        return createUnknownCommandResponse();
+      }
+      const recentsRegion = commandName.toLowerCase() === 'recentsjp' ? 'jp' : 'intl';
+      return handleRecentsCommand({ 
+        discordUserId, 
+        region: recentsRegion, 
+        applicationId, 
+        interactionToken 
+      });
+
     case COMMANDS.INVITE.name.toLowerCase():
       return handleInviteCommand({ applicationId });
 
     default:
       return createUnknownCommandResponse();
   }
+}
+
+export async function handleComponents(context: ComponentContext): Promise<DiscordResponse | null> {
+  const { customId, discordUserId, applicationId, interactionToken } = context;
+
+  // Parse the custom_id: recents_<region>_<skip>
+  if (customId.startsWith('recents_')) {
+    const parts = customId.split('_');
+    if (parts.length === 3) {
+      const region = parts[1] as 'intl' | 'jp';
+      const skip = parseInt(parts[2], 10);
+
+      if (!discordUserId) {
+        return createUnknownCommandResponse();
+      }
+
+      return handleRecentsCommand({
+        discordUserId,
+        region,
+        applicationId,
+        interactionToken,
+        skip,
+      });
+    }
+  }
+
+  return null;
 }
