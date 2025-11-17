@@ -104,15 +104,17 @@ export async function handleCommand(context: CommandContext): Promise<DiscordRes
 export async function handleComponents(context: ComponentContext): Promise<DiscordResponse | null> {
   const { customId, discordUserId, applicationId, interactionToken } = context;
 
-  // Parse the custom_id: recents_<region>_<skip>
+  // Parse the custom_id: recents_<userId>_<region>_<skip>
   if (customId.startsWith('recents_')) {
     const parts = customId.split('_');
-    if (parts.length === 3) {
-      const region = parts[1] as 'intl' | 'jp';
-      const skip = parseInt(parts[2], 10);
+    if (parts.length === 4) {
+      const buttonUserId = parts[1];
+      const region = parts[2] as 'intl' | 'jp';
+      const skip = parseInt(parts[3], 10);
 
-      if (!discordUserId) {
-        return createUnknownCommandResponse();
+      // verify the user clicking is the same as the user who initiated the command
+      if (!discordUserId || discordUserId !== buttonUserId) {
+        return null;
       }
 
       return handleRecentsCommand({

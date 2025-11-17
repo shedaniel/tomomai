@@ -65,10 +65,17 @@ export async function POST(request: NextRequest) {
       });
 
       if (!response) {
-        return new Response('Unknown component interaction', { status: 400 });
+        // Either unknown component or unauthorized user
+        return Response.json({
+          type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+          data: {
+            content: '❌ This button is not available to you.',
+            flags: 64, // EPHEMERAL
+          },
+        });
       }
 
-      // Return deferred update response
+      // Return update message response
       return Response.json({
         type: InteractionResponseType.UPDATE_MESSAGE,
         data: response.data,

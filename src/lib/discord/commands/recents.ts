@@ -203,14 +203,14 @@ function createPlayEmbeds(tracks: any[], region: 'intl' | 'jp') {
 }
 
 // Helper function to create navigation buttons
-function createNavigationButtons(region: 'intl' | 'jp', skip: number, hasNextPlay: boolean, hasPreviousPlay: boolean) {
+function createNavigationButtons(discordUserId: string, region: 'intl' | 'jp', skip: number, hasNextPlay: boolean, hasPreviousPlay: boolean) {
   return [
     {
       type: 1, // ACTION_ROW
       components: [
         {
           type: 2, // BUTTON
-          custom_id: `recents_${region}_${skip - 1}`,
+          custom_id: `recents_${discordUserId}_${region}_${skip - 1}`,
           label: 'Next Play',
           style: 2, // SECONDARY
           emoji: {
@@ -220,7 +220,7 @@ function createNavigationButtons(region: 'intl' | 'jp', skip: number, hasNextPla
         },
         {
           type: 2, // BUTTON
-          custom_id: `recents_${region}_${skip + 1}`,
+          custom_id: `recents_${discordUserId}_${region}_${skip + 1}`,
           label: 'Previous Play',
           style: 2, // SECONDARY
           emoji: {
@@ -291,7 +291,7 @@ export async function handleRecentsCommand({
     const embeds = createPlayEmbeds(playData.tracks, region);
 
     // Create navigation buttons
-    const components = createNavigationButtons(region, skip, playData.hasNextPlay, playData.hasPreviousPlay);
+    const components = createNavigationButtons(discordUserId, region, skip, playData.hasNextPlay, playData.hasPreviousPlay);
 
     return {
       type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
