@@ -73,3 +73,16 @@ export function deepMerge<T extends Record<string, any>>(
 
   return output;
 }
+
+// Helper function to detect if we're on the server
+export function isServer(): boolean {
+  return typeof window === 'undefined';
+}
+
+// Helper function to detect serverless environment
+export function isServerless(): boolean {
+  return process.env.VERCEL === '1' || 
+         process.env.AWS_LAMBDA_FUNCTION_NAME !== undefined ||
+         process.env.NETLIFY === 'true' ||
+         process.cwd() === '/var/task';
+}

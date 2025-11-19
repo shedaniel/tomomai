@@ -535,12 +535,23 @@ export function RecentSongsCard({ region, beforeDate }: RecentSongsCardProps) {
                       loading="lazy"
                     />
                     {/* Difficulty Badge */}
+                    <div className="absolute top-8 -right-0.5 w-2 h-4 bg-transparent rounded-br-full"
+                      style={{
+                        boxShadow: "0 8px 0 0 var(--difficulty-color)",
+                        // @ts-ignore
+                        "--difficulty-color": play.difficulty === "basic" ? "var(--color-green-400)"
+                          : play.difficulty === "advanced" ? "var(--color-yellow-400)"
+                            : play.difficulty === "expert" ? "var(--color-red-400)"
+                              : play.difficulty === "master" ? "var(--color-purple-500)"
+                                : play.difficulty === "remaster" ? "var(--color-purple-200)"
+                                  : "var(--color-white)",
+                      }} />
                     <div
                       className={cn(
-                        "absolute top-12 -right-1 px-1.5 py-0.5 rounded text-xs font-semibold text-white",
-                        play.difficulty === "basic" && "bg-green-500",
-                        play.difficulty === "advanced" && "bg-yellow-500",
-                        play.difficulty === "expert" && "bg-red-500",
+                        "absolute top-12 -right-1 px-1.5 py-0.5 rounded rounded-tr-none rounded-br-md text-xs font-semibold text-white",
+                        play.difficulty === "basic" && "bg-green-400",
+                        play.difficulty === "advanced" && "bg-yellow-400",
+                        play.difficulty === "expert" && "bg-red-400",
                         play.difficulty === "master" && "bg-purple-500",
                         play.difficulty === "remaster" && "bg-purple-200 text-purple-900",
                       )}

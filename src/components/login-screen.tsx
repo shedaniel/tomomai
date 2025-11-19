@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import Image from "next/image";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Database } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -36,7 +37,8 @@ export function LoginScreen({ signupRequirements }: LoginScreenProps) {
 
   return (
     <div className="container mx-auto max-w-md px-4">
-      <div className="flex justify-center py-4 [&>*]:w-fit">
+      <div className="flex justify-between py-4 [&>*]:w-fit items-center">
+        <Image src="/icon.webp" alt="tomomai" width={4320} height={1080} className="h-10 w-auto" style={{ aspectRatio: '4320 / 1080' }}/>
         <LocaleSwitcher forceVisible />
       </div>
       <Card>

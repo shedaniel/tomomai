@@ -11,13 +11,13 @@ import { useTranslations } from "next-intl";
 
 interface TokenDialogIntlProps {
   isOpen: boolean;
-  onClose: () => void;
+  onOpenChange: (open: boolean) => void;
   onTokenUpdate: (token: string) => Promise<void>;
 }
 
 export function TokenDialogIntl({
   isOpen,
-  onClose,
+  onOpenChange,
   onTokenUpdate,
 }: TokenDialogIntlProps) {
   const t = useTranslations();
@@ -53,7 +53,7 @@ export function TokenDialogIntl({
       setToken("");
       setUsername("");
       setPassword("");
-      onClose();
+      onOpenChange(false);
     } catch (error) {
       console.error("Token update error:", error);
     } finally {
@@ -66,7 +66,7 @@ export function TokenDialogIntl({
     : username.trim().length > 0 && password.trim().length > 0 && !isSubmitting;
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center space-x-2">

@@ -8,7 +8,7 @@ import { TokenDialogIntlNew } from "./token-dialog-intl-new";
 interface TokenDialogProps {
   region: Region;
   isOpen: boolean;
-  onClose: () => void;
+  onOpenChange: (open: boolean) => void;
   onTokenUpdate: (token: string) => Promise<void>;
   newTokenDialog: boolean;
   startSessionPolling?: (region: "intl" | "jp", onSessionDetected?: () => void) => void;
@@ -18,7 +18,7 @@ interface TokenDialogProps {
 export function TokenDialog({
   region,
   isOpen,
-  onClose,
+  onOpenChange,
   onTokenUpdate,
   newTokenDialog,
   startSessionPolling,
@@ -28,7 +28,7 @@ export function TokenDialog({
     return (
       <TokenDialogJapan
         isOpen={isOpen}
-        onClose={onClose}
+        onOpenChange={onOpenChange}
         onTokenUpdate={onTokenUpdate}
       />
     );
@@ -38,7 +38,7 @@ export function TokenDialog({
     return (
       <TokenDialogIntlNew
         isOpen={isOpen}
-        onClose={onClose}
+        onOpenChange={onOpenChange}
         onTokenUpdate={onTokenUpdate}
         startSessionPolling={startSessionPolling}
         stopSessionPolling={stopSessionPolling}
@@ -49,7 +49,7 @@ export function TokenDialog({
   return (
     <TokenDialogIntl
       isOpen={isOpen}
-      onClose={onClose}
+      onOpenChange={onOpenChange}
       onTokenUpdate={onTokenUpdate}
     />
   );
