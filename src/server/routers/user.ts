@@ -4,7 +4,7 @@ import { resolveBaseUrl } from '@/lib/base-url';
 import { getFetchStatusServer, Region, startFetchServer } from '@/lib/maimai-server-actions';
 import { getAvailableVersions } from '@/lib/metadata';
 import { RatingCalculationInput, splitSongs } from '@/lib/rating-calculator';
-import { invites, songs, user, userScores, userSnapshots, userTokens, userEvents, userRecentSongs, userRecentSongsDetailed } from '@/lib/db/schema-pg';
+import { invites, songs, user, userScores, userSnapshots, userTokens, userEvents, userRecentSongs, userRecentSongsDetailed, stores, storeEdits, storeEditVotes } from '@/lib/db/schema-pg';
 import { protectedProcedure, publicProcedure, router } from '@/lib/trpc';
 import { SongWithScore } from '@/lib/types';
 import { TRPCError } from '@trpc/server';
@@ -25,7 +25,7 @@ const isValidUsername = (username: string): boolean => {
   if (username.length < 1 || username.length > 32) {
     return false;
   }
-  
+
   // Check format: only alphanumeric, dash, and underscore
   const validPattern = /^[a-zA-Z0-9_-]+$/;
   return validPattern.test(username);
@@ -40,48 +40,99 @@ const generateDefaultUsername = (displayName: string): string => {
     .substring(0, 32); // Limit to 32 characters
 };
 
+// Helper to update chosen edit for a store
+const updateStoreChosenEdit = async (storeId: bigint) => {
+  // Get all edits for this store
+  const edits = await db
+    .select({
+      id: storeEdits.id,
+      createdAt: storeEdits.createdAt,
+    })
+    .from(storeEdits)
+    .where(eq(storeEdits.storeId, storeId));
+
+  if (edits.length === 0) {
+    await db
+      .update(stores)
+      .set({ chosenEditId: null })
+      .where(eq(stores.id, storeId));
+    return;
+  }
+
+  // Get vote counts
+  const editIds = edits.map(e => e.id);
+  const votes = await db
+    .select({
+      editId: storeEditVotes.editId,
+      voteSum: sql<number>`SUM(${storeEditVotes.vote})`.mapWith(Number),
+    })
+    .from(storeEditVotes)
+    .where(inArray(storeEditVotes.editId, editIds))
+    .groupBy(storeEditVotes.editId);
+
+  const votesMap = new Map(votes.map(v => [v.editId, v.voteSum]));
+
+  // Sort edits: highest votes first, then latest created
+  const sortedEdits = edits.sort((a, b) => {
+    const votesA = votesMap.get(a.id) || 0;
+    const votesB = votesMap.get(b.id) || 0;
+
+    if (votesA !== votesB) {
+      return votesB - votesA;
+    }
+    return b.createdAt.getTime() - a.createdAt.getTime();
+  });
+
+  const bestEdit = sortedEdits[0];
+
+  await db
+    .update(stores)
+    .set({ chosenEditId: bestEdit.id })
+    .where(eq(stores.id, storeId));
+};
+
 export const userRouter = router({
   // Check if invites are required for signup
   getSignupRequirements: publicProcedure
     .query(async () => {
       const SIGNUP_TYPE = process.env.NEXT_PUBLIC_ACCOUNT_SIGNUP_TYPE || 'disabled';
-      
+
       // If explicitly disabled or enabled, respect that setting
       if (SIGNUP_TYPE === 'disabled') {
-        return { 
-          signupEnabled: false, 
+        return {
+          signupEnabled: false,
           inviteRequired: false,
           reason: 'disabled'
         };
       }
-      
+
       if (SIGNUP_TYPE === 'enabled') {
-        return { 
-          signupEnabled: true, 
+        return {
+          signupEnabled: true,
           inviteRequired: false,
           reason: 'enabled'
         };
       }
-      
+
       // For invite-only mode, check user count
       if (SIGNUP_TYPE === 'invite-only') {
         const [userCount] = await db
           .select({ count: count() })
           .from(user);
-          
+
         const totalUsers = userCount.count;
         const inviteRequired = totalUsers >= SIGNUP_REQUIRED_AMOUNT;
-        
+
         return {
           signupEnabled: true,
           inviteRequired,
           reason: inviteRequired ? 'invite-only' : 'open'
         };
       }
-      
+
       // Default fallback
-      return { 
-        signupEnabled: false, 
+      return {
+        signupEnabled: false,
         inviteRequired: false,
         reason: 'disabled'
       };
@@ -121,7 +172,7 @@ export const userRouter = router({
         });
       }
 
-      return { 
+      return {
         hasUsername: !!userRecord[0].username,
         username: userRecord[0].username,
         publishProfile: userRecord[0].publishProfile,
@@ -218,11 +269,11 @@ export const userRouter = router({
       }
 
       const suggestedUsername = generateDefaultUsername(userRecord[0].name);
-      
+
       // If the suggested username is taken, try variations
       let counter = 1;
       let finalSuggestion = suggestedUsername;
-      
+
       while (true) {
         const existingUser = await db
           .select({ id: user.id })
@@ -285,7 +336,7 @@ export const userRouter = router({
     .query(async ({ ctx, input }) => {
       const startTime = Date.now();
       logger.info(`Starting getRatingHistory for user ${ctx.session.user.id}, region ${input.region}`);
-      
+
       // Fetch all snapshots for this user/region (lightweight - just metadata)
       const snapshotsStart = Date.now();
       const snapshots = await db
@@ -307,7 +358,7 @@ export const userRouter = router({
 
       if (snapshots.length < 2) {
         logger.info(`Completed in ${Date.now() - startTime}ms (insufficient data)`);
-        return { 
+        return {
           history: snapshots.map(s => ({
             date: s.fetchedAt,
             rating: s.rating,
@@ -341,7 +392,7 @@ export const userRouter = router({
       const snapshotsNeedingScores = new Set<bigint>();
       for (let i = 0; i < dateGroups.length; i++) {
         const currentGroup = dateGroups[i];
-        
+
         // Always need scores for first snapshot (baseline) and when rating increased
         if (i === 0) {
           snapshotsNeedingScores.add(currentGroup.lastSnapshot.internalId);
@@ -417,7 +468,7 @@ export const userRouter = router({
       const comparisonStart = Date.now();
       const historyWithChanges = [];
       let comparisonsPerformed = 0;
-      
+
       for (let i = 0; i < snapshots.length; i++) {
         const snapshot = snapshots[i];
         const dateKey = snapshot.fetchedAt.toISOString().split('T')[0];
@@ -681,7 +732,7 @@ export const userRouter = router({
     }))
     .query(async ({ ctx, input }) => {
       const { fetchSessions: fs } = await import('@/lib/db/schema-pg');
-      
+
       const session = await db
         .select({ publicId: fs.publicId, startedAt: fs.startedAt })
         .from(fs)
@@ -693,7 +744,7 @@ export const userRouter = router({
         )
         .orderBy(desc(fs.startedAt))
         .limit(1);
-      
+
       return session.length > 0 ? { id: session[0].publicId, startedAt: session[0].startedAt } : null;
     }),
 
@@ -1075,7 +1126,7 @@ export const userRouter = router({
   getInvites: protectedProcedure
     .query(async ({ ctx }) => {
       const SIGNUP_TYPE = process.env.NEXT_PUBLIC_ACCOUNT_SIGNUP_TYPE || 'disabled';
-      
+
       if (SIGNUP_TYPE !== 'invite-only') {
         throw new TRPCError({
           code: 'BAD_REQUEST',
@@ -1101,7 +1152,7 @@ export const userRouter = router({
       const now = new Date();
       const threeDaysAfterCreation = new Date(userRecord[0].createdAt.getTime() + 3 * 24 * 60 * 60 * 1000);
       const isNewUser = now < threeDaysAfterCreation;
-      
+
       try {
         await db
           .delete(invites)
@@ -1139,21 +1190,21 @@ export const userRouter = router({
       const threeDaysAgo = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000);
 
       const activeInvites = userInvites.filter(
-        (invite) => 
-          !invite.revoked && 
-          !invite.claimedBy && 
+        (invite) =>
+          !invite.revoked &&
+          !invite.claimedBy &&
           new Date(invite.expiresAt) > now
       );
 
       const recentlyClaimed = userInvites.filter(
-        (invite) => 
-          invite.claimedAt && 
+        (invite) =>
+          invite.claimedAt &&
           new Date(invite.claimedAt) >= threeDaysAgo
       );
 
       const usedQuota = activeInvites.length + recentlyClaimed.length;
       const quotaCanCreateNew = usedQuota < 3;
-      
+
       // New users cannot create invites for 3 days
       const canCreateNew = !isNewUser && quotaCanCreateNew;
 
@@ -1177,7 +1228,7 @@ export const userRouter = router({
   createInvite: protectedProcedure
     .mutation(async ({ ctx }) => {
       const SIGNUP_TYPE = process.env.NEXT_PUBLIC_ACCOUNT_SIGNUP_TYPE || 'disabled';
-      
+
       if (SIGNUP_TYPE !== 'invite-only') {
         throw new TRPCError({
           code: 'BAD_REQUEST',
@@ -1237,15 +1288,15 @@ export const userRouter = router({
         .where(eq(invites.createdBy, ctx.session.user.id));
 
       const activeInvites = existingInvites.filter(
-        (invite) => 
-          !invite.revoked && 
-          !invite.claimedBy && 
+        (invite) =>
+          !invite.revoked &&
+          !invite.claimedBy &&
           new Date(invite.expiresAt) > now
       );
 
       const recentlyClaimed = existingInvites.filter(
-        (invite) => 
-          invite.claimedAt && 
+        (invite) =>
+          invite.claimedAt &&
           new Date(invite.claimedAt) >= threeDaysAgo
       );
 
@@ -1285,7 +1336,7 @@ export const userRouter = router({
     }))
     .mutation(async ({ ctx, input }) => {
       const SIGNUP_TYPE = process.env.NEXT_PUBLIC_ACCOUNT_SIGNUP_TYPE || 'disabled';
-      
+
       if (SIGNUP_TYPE !== 'invite-only') {
         throw new TRPCError({
           code: 'BAD_REQUEST',
@@ -1341,7 +1392,7 @@ export const userRouter = router({
     }))
     .query(async ({ input }) => {
       const SIGNUP_TYPE = process.env.NEXT_PUBLIC_ACCOUNT_SIGNUP_TYPE || 'disabled';
-      
+
       if (SIGNUP_TYPE !== 'invite-only') {
         throw new TRPCError({
           code: 'BAD_REQUEST',
@@ -1351,7 +1402,7 @@ export const userRouter = router({
 
       // Auto-cleanup before validating
       const now = new Date();
-      
+
       try {
         await db
           .delete(invites)
@@ -1386,9 +1437,9 @@ export const userRouter = router({
         .limit(1);
 
       if (invite.length === 0) {
-        return { 
-          valid: false, 
-          error: "Invalid invitation code" 
+        return {
+          valid: false,
+          error: "Invalid invitation code"
         };
       }
 
@@ -1404,23 +1455,23 @@ export const userRouter = router({
 
       // Check if invite is valid
       if (inviteData.revoked) {
-        return { 
-          valid: false, 
-          error: "This invitation has been revoked" 
+        return {
+          valid: false,
+          error: "This invitation has been revoked"
         };
       }
 
       if (inviteData.claimedBy) {
-        return { 
-          valid: false, 
-          error: "This invitation has already been used" 
+        return {
+          valid: false,
+          error: "This invitation has already been used"
         };
       }
 
       if (new Date(inviteData.expiresAt) <= now) {
-        return { 
-          valid: false, 
-          error: "This invitation has expired" 
+        return {
+          valid: false,
+          error: "This invitation has expired"
         };
       }
 
@@ -1444,10 +1495,10 @@ export const userRouter = router({
     }))
     .query(async ({ input }) => {
       const availableVersions = getAvailableVersions(input.region);
-      
+
       // Filter out the current version
       const otherVersions = availableVersions.filter(v => v.id !== input.currentVersion);
-      
+
       // Get all versions that have songs in a single query
       const versionsWithSongs = await db
         .select({
@@ -1591,7 +1642,7 @@ export const userRouter = router({
 
       // Recalculate rating and ranks for the new snapshot
       let newRating = originalSnapshot.rating; // Default fallback
-      
+
       if (newScores.length > 0) {
         // Get all scores with song info for rating calculation
         const scoresWithSongs = await db
@@ -1640,54 +1691,54 @@ export const userRouter = router({
         // Calculate total rating (sum of all rating contributing songs)
         const ratingContributingSongs = [...newSongsB15, ...oldSongsB35];
         newRating = ratingContributingSongs.reduce((sum, song) => sum + song.rating, 0);
-        
+
         // Calculate and assign ranks
         const rankUpdates: Array<{ id: bigint; rank: number }> = [];
-        
+
         // New B15: ranks 0-14
         for (let i = 0; i < newSongsB15.length; i++) {
           const song = newSongsB15[i];
-          const scoreRecord = scoresWithSongs.find(s => 
-            s.songId === song.songId && 
+          const scoreRecord = scoresWithSongs.find(s =>
+            s.songId === song.songId &&
             s.difficulty === song.difficulty
           );
           if (scoreRecord) {
             rankUpdates.push({ id: scoreRecord.scoreId, rank: i });
           }
         }
-        
+
         // Old B35: ranks 15-49
         for (let i = 0; i < oldSongsB35.length; i++) {
           const song = oldSongsB35[i];
-          const scoreRecord = scoresWithSongs.find(s => 
-            s.songId === song.songId && 
+          const scoreRecord = scoresWithSongs.find(s =>
+            s.songId === song.songId &&
             s.difficulty === song.difficulty
           );
           if (scoreRecord) {
             rankUpdates.push({ id: scoreRecord.scoreId, rank: 15 + i });
           }
         }
-        
+
         // Remaining songs: merge and sort by rating desc, start from rank 50
         const remainingSongs = [...newSongsRemaining, ...oldSongsRemaining].sort((a, b) => b.rating - a.rating);
         for (let i = 0; i < remainingSongs.length; i++) {
           const song = remainingSongs[i];
-          const scoreRecord = scoresWithSongs.find(s => 
-            s.songId === song.songId && 
+          const scoreRecord = scoresWithSongs.find(s =>
+            s.songId === song.songId &&
             s.difficulty === song.difficulty
           );
           if (scoreRecord) {
             rankUpdates.push({ id: scoreRecord.scoreId, rank: 50 + i });
           }
         }
-        
+
         // Batch update ranks using CASE statement
         if (rankUpdates.length > 0) {
           const caseStatements = rankUpdates.map(
             update => sql`WHEN ${userScores.id} = ${update.id} THEN ${update.rank}`
           );
           const ids = rankUpdates.map(update => update.id);
-          
+
           await db
             .update(userScores)
             .set({
@@ -1830,5 +1881,484 @@ export const userRouter = router({
       };
     }),
 
+  // Get all stores with their chosen edits (public)
+  getStores: publicProcedure
+    .query(async () => {
+      // Fetch all stores with their chosen edits
+      const allStores = await db
+        .select({
+          id: stores.id,
+          country: stores.country,
+          area: stores.area,
+          name: stores.name,
+          address: stores.address,
+          location: stores.location,
+          chosenEditId: stores.chosenEditId,
+        })
+        .from(stores);
+
+      // Fetch all chosen edits
+      const chosenEditIds = allStores
+        .map(s => s.chosenEditId)
+        .filter((id): id is bigint => id !== null);
+
+      const edits = chosenEditIds.length > 0
+        ? await db
+          .select()
+          .from(storeEdits)
+          .where(inArray(storeEdits.id, chosenEditIds))
+        : [];
+
+      // Build a map of edits by ID
+      const editsMap = new Map(edits.map(edit => [edit.id, edit]));
+
+      // Format response - convert location point to coords
+      const storesWithEdits = allStores.map(store => {
+        const chosenEdit = store.chosenEditId ? editsMap.get(store.chosenEditId) : null;
+
+        return {
+          id: store.id,
+          country: store.country,
+          area: store.area,
+          name: store.name,
+          address: store.address,
+          location: store.location,
+          chosenEdit: chosenEdit ? {
+            name: chosenEdit.name,
+            address: chosenEdit.address,
+            openingHours: chosenEdit.openingHours,
+            toilet: chosenEdit.toilet,
+            smoke: chosenEdit.smoke,
+            access: chosenEdit.access,
+            status: chosenEdit.status,
+            currency: chosenEdit.currency,
+            games: chosenEdit.games,
+            additionalInfo: chosenEdit.additionalInfo,
+          } : null,
+        };
+      });
+
+      return {
+        stores: storesWithEdits,
+      };
+    }),
+
+  // Get all edits for a specific store (public)
+  getStoreEdits: publicProcedure
+    .input(z.object({
+      storeId: z.bigint(),
+    }))
+    .query(async ({ input }) => {
+      // Get store's chosen edit ID
+      const store = await db
+        .select({ chosenEditId: stores.chosenEditId })
+        .from(stores)
+        .where(eq(stores.id, input.storeId))
+        .limit(1);
+
+      const chosenEditId = store[0]?.chosenEditId;
+
+      // Get all edits for this store
+      const edits = await db
+        .select({
+          id: storeEdits.id,
+          userId: storeEdits.userId,
+          userName: user.name,
+          name: storeEdits.name,
+          address: storeEdits.address,
+          openingHours: storeEdits.openingHours,
+          toilet: storeEdits.toilet,
+          smoke: storeEdits.smoke,
+          access: storeEdits.access,
+          status: storeEdits.status,
+          currency: storeEdits.currency,
+          games: storeEdits.games,
+          additionalInfo: storeEdits.additionalInfo,
+          createdAt: storeEdits.createdAt,
+          updatedAt: storeEdits.updatedAt,
+        })
+        .from(storeEdits)
+        .innerJoin(user, eq(storeEdits.userId, user.id))
+        .where(eq(storeEdits.storeId, input.storeId))
+        .orderBy(desc(storeEdits.createdAt));
+
+      // Get vote counts for each edit
+      const editIds = edits.map(e => e.id);
+      const votes = editIds.length > 0 ? await db
+        .select({
+          editId: storeEditVotes.editId,
+          voteSum: sql<number>`SUM(${storeEditVotes.vote})`.mapWith(Number),
+        })
+        .from(storeEditVotes)
+        .where(inArray(storeEditVotes.editId, editIds))
+        .groupBy(storeEditVotes.editId)
+        : [];
+
+      const votesMap = new Map(votes.map(v => [v.editId, v.voteSum]));
+
+      return {
+        edits: edits.map(edit => ({
+          ...edit,
+          voteCount: votesMap.get(edit.id) || 0,
+          isChosen: edit.id === chosenEditId,
+        })),
+      };
+    }),
+
+  // Get user's vote status for store edits
+  getUserStoreEditVotes: protectedProcedure
+    .input(z.object({
+      storeId: z.bigint(),
+    }))
+    .query(async ({ ctx, input }) => {
+      // Get all edit IDs for this store
+      const edits = await db
+        .select({ id: storeEdits.id })
+        .from(storeEdits)
+        .where(eq(storeEdits.storeId, input.storeId));
+
+      const editIds = edits.map(e => e.id);
+
+      if (editIds.length === 0) {
+        return { votes: [] };
+      }
+
+      // Get user's votes for these edits
+      const userVotes = await db
+        .select({
+          editId: storeEditVotes.editId,
+          vote: storeEditVotes.vote,
+        })
+        .from(storeEditVotes)
+        .where(
+          and(
+            inArray(storeEditVotes.editId, editIds),
+            eq(storeEditVotes.userId, ctx.session.user.id)
+          )
+        );
+
+      return {
+        votes: userVotes.map(v => ({ ...v, editId: v.editId })),
+      };
+    }),
+
+  // Vote on a store edit
+  voteOnStoreEdit: protectedProcedure
+    .input(z.object({
+      editId: z.bigint(),
+      vote: z.enum(['upvote', 'downvote', 'remove']),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      // Get storeId to update chosen edit later
+      const edit = await db
+        .select({ storeId: storeEdits.storeId })
+        .from(storeEdits)
+        .where(eq(storeEdits.id, input.editId))
+        .limit(1);
+
+      if (edit.length === 0) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Edit not found',
+        });
+      }
+      const storeId = edit[0].storeId;
+
+      const voteValue = input.vote === 'upvote' ? 1 : input.vote === 'downvote' ? -1 : 0;
+
+      if (input.vote === 'remove') {
+        // Remove vote
+        await db
+          .delete(storeEditVotes)
+          .where(
+            and(
+              eq(storeEditVotes.editId, input.editId),
+              eq(storeEditVotes.userId, ctx.session.user.id)
+            )
+          );
+      } else {
+        // Upsert vote
+        await db
+          .insert(storeEditVotes)
+          .values({
+            editId: input.editId,
+            userId: ctx.session.user.id,
+            vote: voteValue,
+          })
+          .onConflictDoUpdate({
+            target: [storeEditVotes.userId, storeEditVotes.editId],
+            set: {
+              vote: voteValue,
+            },
+          });
+      }
+
+      // Update chosen edit
+      await updateStoreChosenEdit(storeId);
+
+      return { success: true };
+    }),
+
+  // Get user's edit for a store
+  getUserStoreEdit: protectedProcedure
+    .input(z.object({
+      storeId: z.bigint(),
+    }))
+    .query(async ({ ctx, input }) => {
+      const userEdit = await db
+        .select()
+        .from(storeEdits)
+        .where(
+          and(
+            eq(storeEdits.storeId, input.storeId),
+            eq(storeEdits.userId, ctx.session.user.id)
+          )
+        )
+        .limit(1);
+
+      return {
+        edit: userEdit[0] ? { ...userEdit[0], id: userEdit[0].id } : null,
+      };
+    }),
+
+  // Create a new store edit
+  createStoreEdit: protectedProcedure
+    .input(z.object({
+      storeId: z.bigint(),
+      name: z.string().min(1).max(32).nullable(),
+      address: z.string().min(10).max(256).nullable(),
+      openingHours: z.string().nullable(),
+      toilet: z.boolean().nullable(),
+      smoke: z.boolean().nullable(),
+      access: z.string().nullable(),
+      status: z.enum(["open", "closed", "temporarily_closed"]).nullable(),
+      currency: z.string(),
+      games: z.record(z.string(), z.object({
+        amount: z.number().int().min(0).optional(),
+        price: z.number().optional(),
+      })).nullable(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      // Check if user already has an edit for this store
+      const existingEdit = await db
+        .select()
+        .from(storeEdits)
+        .where(
+          and(
+            eq(storeEdits.storeId, input.storeId),
+            eq(storeEdits.userId, ctx.session.user.id)
+          )
+        )
+        .limit(1);
+
+      if (existingEdit.length > 0) {
+        // Check if the existing edit is the chosen one
+        const store = await db
+          .select({ chosenEditId: stores.chosenEditId })
+          .from(stores)
+          .where(eq(stores.id, input.storeId))
+          .limit(1);
+
+        if (!store.length || store[0].chosenEditId !== existingEdit[0].id) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'You already have an edit for this store. Please edit or delete your existing edit.',
+          });
+        }
+        // If existing edit is chosen, allow creating another
+      }
+
+      // Create the edit
+      const [newEdit] = await db
+        .insert(storeEdits)
+        .values({
+          storeId: input.storeId,
+          userId: ctx.session.user.id,
+          name: input.name,
+          address: input.address,
+          openingHours: input.openingHours,
+          toilet: input.toilet,
+          smoke: input.smoke,
+          access: input.access,
+          status: input.status,
+          currency: input.currency,
+          games: input.games as any,
+        })
+        .returning();
+
+      // Auto-upvote the creator's own edit
+      await db.insert(storeEditVotes).values({
+        editId: newEdit.id,
+        userId: ctx.session.user.id,
+        vote: 1,
+      });
+
+      // Update chosen edit
+      await updateStoreChosenEdit(input.storeId);
+
+      return { success: true, editId: newEdit.id };
+    }),
+
+  // Update an existing store edit
+  updateStoreEdit: protectedProcedure
+    .input(z.object({
+      editId: z.bigint(),
+      storeId: z.bigint(),
+      name: z.string().min(1).max(32).nullable(),
+      address: z.string().min(10).max(256).nullable(),
+      openingHours: z.string().nullable(),
+      toilet: z.boolean().nullable(),
+      smoke: z.boolean().nullable(),
+      access: z.string().nullable(),
+      status: z.enum(["open", "closed", "temporarily_closed"]).nullable(),
+      currency: z.string(),
+      games: z.record(z.string(), z.object({
+        amount: z.number().int().min(0).optional(),
+        price: z.number().optional(),
+      })).nullable(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      // Verify ownership
+      const edit = await db
+        .select()
+        .from(storeEdits)
+        .where(
+          and(
+            eq(storeEdits.id, input.editId),
+            eq(storeEdits.storeId, input.storeId)
+          )
+        )
+        .limit(1);
+
+      if (edit.length === 0) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Edit not found',
+        });
+      }
+
+      if (edit[0].userId !== ctx.session.user.id) {
+        throw new TRPCError({
+          code: 'FORBIDDEN',
+          message: 'You can only edit your own submissions',
+        });
+      }
+
+      // Check if this is the chosen edit
+      const store = await db
+        .select({ chosenEditId: stores.chosenEditId })
+        .from(stores)
+        .where(eq(stores.id, input.storeId))
+        .limit(1);
+
+      if (store.length > 0 && store[0].chosenEditId === input.editId) {
+        // Check if there are any edits by other users
+        const otherUserEdits = await db
+          .select({ id: storeEdits.id })
+          .from(storeEdits)
+          .where(
+            and(
+              eq(storeEdits.storeId, input.storeId),
+              sql`${storeEdits.userId} != ${ctx.session.user.id}`
+            )
+          );
+
+        if (otherUserEdits.length > 0) {
+          throw new TRPCError({
+            code: 'FORBIDDEN',
+            message: 'Cannot edit the chosen edit when other users have contributed',
+          });
+        }
+      }
+
+      // Update the edit
+      await db
+        .update(storeEdits)
+        .set({
+          name: input.name,
+          address: input.address,
+          openingHours: input.openingHours,
+          toilet: input.toilet,
+          smoke: input.smoke,
+          access: input.access,
+          status: input.status,
+          currency: input.currency,
+          games: input.games as any,
+          updatedAt: new Date(),
+        })
+        .where(
+          and(
+            eq(storeEdits.id, input.editId),
+            eq(storeEdits.storeId, input.storeId)
+          )
+        );
+
+      return { success: true };
+    }),
+
+  // Delete a store edit
+  deleteStoreEdit: protectedProcedure
+    .input(z.object({
+      editId: z.bigint(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      // Verify ownership
+      const edit = await db
+        .select()
+        .from(storeEdits)
+        .where(eq(storeEdits.id, input.editId))
+        .limit(1);
+
+      if (edit.length === 0) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Edit not found',
+        });
+      }
+
+      if (edit[0].userId !== ctx.session.user.id) {
+        throw new TRPCError({
+          code: 'FORBIDDEN',
+          message: 'You can only delete your own submissions',
+        });
+      }
+
+      // Check if this is the chosen edit
+      const store = await db
+        .select({ chosenEditId: stores.chosenEditId })
+        .from(stores)
+        .where(eq(stores.id, edit[0].storeId))
+        .limit(1);
+
+      if (store.length > 0 && store[0].chosenEditId === input.editId) {
+        // Check if there are any edits by other users
+        const otherUserEdits = await db
+          .select({ id: storeEdits.id })
+          .from(storeEdits)
+          .where(
+            and(
+              eq(storeEdits.storeId, edit[0].storeId),
+              sql`${storeEdits.userId} != ${ctx.session.user.id}`
+            )
+          );
+
+        if (otherUserEdits.length > 0) {
+          throw new TRPCError({
+            code: 'FORBIDDEN',
+            message: 'Cannot delete the chosen edit when other users have contributed',
+          });
+        }
+      }
+
+      // Delete the edit (votes will cascade delete)
+      await db
+        .delete(storeEdits)
+        .where(eq(storeEdits.id, input.editId));
+
+      // Update chosen edit
+      await updateStoreChosenEdit(edit[0].storeId);
+
+      return { success: true };
+    }),
 
 }); 

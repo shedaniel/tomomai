@@ -1,4 +1,4 @@
-import { pgTable, text, integer, smallint, bigint, bigserial, boolean, timestamp, unique, index, pgEnum, jsonb, varchar, check, uuid } from "drizzle-orm/pg-core";
+import { pgTable, text, integer, smallint, bigint, bigserial, boolean, timestamp, unique, index, pgEnum, jsonb, varchar, check, uuid, point } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import {
   TIMEZONE_ENUM,
@@ -12,6 +12,7 @@ import {
   FETCH_STATUS_ENUM,
   EVENT_TYPE_ENUM,
   EVENT_STATE_ENUM,
+  STORE_STATUS_ENUM,
 } from "./types";
 
 // PostgreSQL enum types
@@ -27,6 +28,7 @@ export const fsEnum = pgEnum("fs", FS_ENUM);
 export const fetchStatusEnum = pgEnum("fetch_status", FETCH_STATUS_ENUM);
 export const eventTypeEnum = pgEnum("event_type", EVENT_TYPE_ENUM);
 export const eventStateEnum = pgEnum("event_state", EVENT_STATE_ENUM);
+export const storeStatusEnum = pgEnum("store_status", STORE_STATUS_ENUM);
 
 // Existing auth tables
 export const user = pgTable("user", {
@@ -266,3 +268,51 @@ export const userRecentSongsDetailed = pgTable("user_recent_songs_detailed", {
   ratingChange: smallint("ratingChange").notNull(),
 }, (table) => [
 ]);
+    
+    export const stores = pgTable("stores", {
+      id: bigint("id", { mode: "bigint" }).primaryKey().generatedAlwaysAsIdentity(),
+      country: text("country").notNull(),
+      area: text("area"), // Nullable, used for JP prefectures
+      name: text("name").notNull(),
+      address: text("address").notNull(),
+      location: point("location", { mode: "xy" }),
+      chosenEditId: bigint("chosenEditId", { mode: "bigint" }), // References store_edits.id
+      createdAt: timestamp("createdAt", { precision: 0 }).notNull().defaultNow(),
+      updatedAt: timestamp("updatedAt", { precision: 0 }).notNull().defaultNow(),
+    }, (table) => [
+      index("stores_country_area_idx").on(table.country, table.area),
+      unique("stores_name_address_unique").on(table.name, table.address),
+    ]);
+    
+    export const storeEdits = pgTable("store_edits", {
+      id: bigint("id", { mode: "bigint" }).primaryKey().generatedAlwaysAsIdentity(),
+      storeId: bigint("storeId", { mode: "bigint" }).notNull().references(() => stores.id, { onDelete: "cascade" }),
+      userId: text("userId").notNull().references(() => user.id, { onDelete: "cascade" }),
+      name: varchar("name", { length: 32 }),
+      address: text("address"), // 10-256 chars validation in app
+      openingHours: text("openingHours"),
+      toilet: boolean("toilet"),
+      smoke: boolean("smoke"),
+      access: text("access"),
+      status: storeStatusEnum("status"),
+      currency: text("currency"),
+      games: jsonb("games"), // { [game: string]: { amount: number, price: number } }
+      additionalInfo: jsonb("additionalInfo"),
+      createdAt: timestamp("createdAt", { precision: 0 }).notNull().defaultNow(),
+      updatedAt: timestamp("updatedAt", { precision: 0 }).notNull().defaultNow(),
+    }, (table) => [
+      index("store_edits_storeid_idx").on(table.storeId),
+      index("store_edits_userid_idx").on(table.userId),
+    ]);
+    
+    export const storeEditVotes = pgTable("store_edit_votes", {
+      id: bigint("id", { mode: "bigint" }).primaryKey().generatedAlwaysAsIdentity(),
+      editId: bigint("editId", { mode: "bigint" }).notNull().references(() => storeEdits.id, { onDelete: "cascade" }),
+      userId: text("userId").notNull().references(() => user.id, { onDelete: "cascade" }),
+      vote: smallint("vote").notNull(), // 1 or -1
+      createdAt: timestamp("createdAt", { precision: 0 }).notNull().defaultNow(),
+    }, (table) => [
+      unique("store_edit_votes_userid_editid_unique").on(table.userId, table.editId),
+      index("store_edit_votes_editid_idx").on(table.editId),
+    ]);
+    

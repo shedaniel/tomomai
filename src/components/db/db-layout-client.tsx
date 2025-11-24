@@ -3,6 +3,7 @@
 import { Header } from "@/components/header";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { User } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "motion/react";
 import Link from "next/link";
@@ -40,9 +41,11 @@ function TypeSelector({
 }
 
 export function DbLayoutClient({
+  user,
   children,
   types,
 }: {
+  user: User | null;
   children: ReactNode;
   types: string[];
 }) {
@@ -51,7 +54,12 @@ export function DbLayoutClient({
 
   return (
     <div className="container mx-auto max-w-[1300px] px-4 pt-8">
-      <Header iconPath="/icon-db.webp" showDiscordBanner={false} />
+      <Header iconPath="/icon-db.webp" showDiscordBanner={false}
+        user={ user ? {
+          user,
+          menu: null,
+        } : undefined}
+      />
 
       <TypeSelector currentType={currentType} types={types} />
 

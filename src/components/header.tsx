@@ -24,14 +24,16 @@ interface HeaderProps {
   showDiscordBanner?: boolean;
   user?: {
     user: User;
-    userRole: typeof user.$inferSelect.role;
-    selectedRegion: Region;
-    onRegionChange: (region: Region) => void;
-    onInvites: () => void;
-    onAdmin: () => void;
-    onExperiments: () => void;
-    onSettings: () => void;
-    onLogout: () => void;
+    menu: {
+      userRole: typeof user.$inferSelect.role;
+      selectedRegion: Region;
+      onRegionChange: (region: Region) => void;
+      onInvites: () => void;
+      onAdmin: () => void;
+      onExperiments: () => void;
+      onSettings: () => void;
+      onLogout: () => void;
+    } | null;
   }
 }
 
@@ -130,12 +132,26 @@ function DiscordBanner({ onDismiss }: { onDismiss: () => void }) {
   )
 }
 
-function UserIcon({ user, userRole, onInvites, onAdmin, onExperiments, onSettings, onLogout, onAbout, onDiscordInvite }: NonNullable<HeaderProps['user']> & {
+function UserIcon({ user, menu, onAbout, onDiscordInvite }: NonNullable<HeaderProps['user']> & {
   onAbout: () => void;
   onDiscordInvite: () => void;
 }) {
   const t = useTranslations();
   const isMobile = useMediaQuery('(max-width: 640px)');
+
+  if (!menu) return user.image ? (
+    <Image
+      src={user.image}
+      alt="Profile"
+      width={40}
+      height={40}
+      className="w-10 h-10 rounded-full"
+    />
+  ) : (
+    <LucideUserIcon className="h-5 w-5" />
+  );
+
+  const { userRole, onInvites, onAdmin, onExperiments, onSettings, onLogout } = menu;
 
   return (
     <DropdownMenu modal={false}>
@@ -256,7 +272,7 @@ export function Header({ iconPath, showDiscordBanner = true, user }: HeaderProps
         <div className="flex items-center space-x-4">
           <LocaleSwitcher />
           {user ? (<>
-            <RegionSwitcher value={user.selectedRegion} onChange={user.onRegionChange} />
+            {user.menu && <RegionSwitcher value={user.menu.selectedRegion} onChange={user.menu.onRegionChange} />}
             <UserIcon {...user} onAbout={() => setAboutOpen(true)} onDiscordInvite={handleDiscordInvite} />
           </>) : (
             <Button variant="default" asChild>

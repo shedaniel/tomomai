@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Navigation, X } from "lucide-react";
+import { Navigation, X, DoorOpen, Cigarette, MapPin, Clock, CircleDollarSign, Edit } from "lucide-react";
 import Script from "next/script";
 import "maplibre-gl/dist/maplibre-gl.css";
 import {
@@ -20,64 +20,50 @@ import {
   CardContent,
 } from "@/components/ui/card";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import { trpc } from "@/lib/trpc-client";
+import { StoreEditDrawer } from "@/components/db/store-edit-drawer";
 
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
+import { getGameName } from "@/lib/game-utils";
+import { useTranslations } from "next-intl";
 
 const DEBUG = true;
 
 interface Store {
+  id: bigint;
+  country: string;
+  area: string | null;
   name: string;
   address: string;
-  coords: [number, number]; // [lat, lng]
+  location: { x: number; y: number } | null;
+  chosenEdit?: {
+    name?: string | null;
+    address?: string | null;
+    openingHours?: string | null;
+    toilet?: boolean | null;
+    smoke?: boolean | null;
+    access?: string | null;
+    status?: "open" | "closed" | "temporarily_closed" | null;
+    currency?: string | null;
+    games?: any;
+    additionalInfo?: any;
+  } | null;
 }
 
 interface StoreData {
   [region: string]: Store[];
 }
 
-let storesCache: StoreData | null = null;
-let storesFetchPromise: Promise<StoreData> | null = null;
-
-async function fetchAllStoresOnce(): Promise<StoreData> {
-  if (storesCache) {
-    return storesCache;
+function groupStoresByRegion(stores: Store[]): StoreData {
+  const combined: StoreData = {};
+  for (const store of stores) {
+    const regionKey = store.area ? store.area : store.country;
+    if (!combined[regionKey]) {
+      combined[regionKey] = [];
+    }
+    combined[regionKey].push(store);
   }
-
-  if (!storesFetchPromise) {
-    storesFetchPromise = (async () => {
-      const [intlRes, jpRes] = await Promise.all([
-        fetch("/stores/intl.json"),
-        fetch("/stores/jp.json"),
-      ]);
-
-      const combined: StoreData = {};
-
-      if (intlRes.ok) {
-        const intlData = (await intlRes.json()) as StoreData;
-        Object.assign(combined, intlData);
-      }
-
-      if (jpRes.ok) {
-        const jpData = (await jpRes.json()) as StoreData;
-        Object.assign(combined, jpData);
-      }
-
-      const total = Object.values(combined).reduce(
-        (acc, arr) => acc + arr.length,
-        0,
-      );
-      if (DEBUG) console.log("[ArcadesMap] stores fetched (combined), count =", total);
-
-      storesCache = combined;
-      return combined;
-    })().catch((error) => {
-      // Reset promise so a future attempt can retry
-      storesFetchPromise = null;
-      throw error;
-    });
-  }
-
-  return storesFetchPromise;
+  return combined;
 }
 
 function toTitleCase(str: string) {
@@ -93,18 +79,21 @@ function toTitleCase(str: string) {
 
 function getGeoJSONFeatures(data: StoreData) {
   return Object.entries(data).flatMap(([regionName, stores]) =>
-    stores.map((store) => ({
-      type: "Feature" as const,
-      properties: {
-        name: toTitleCase(store.name),
-        address: store.address,
-        regionName,
-      },
-      geometry: {
-        type: "Point" as const,
-        coordinates: [store.coords[1], store.coords[0]], // [lng, lat]
-      },
-    }))
+    stores
+      .filter((store) => store.location)
+      .map((store) => ({
+        type: "Feature" as const,
+        properties: {
+          id: store.id.toString(),
+          name: store.chosenEdit?.name || toTitleCase(store.name),
+          address: store.address,
+          regionName,
+        },
+        geometry: {
+          type: "Point" as const,
+          coordinates: [store.location!.y, store.location!.x],
+        },
+      }))
   );
 }
 
@@ -210,50 +199,162 @@ declare global {
 }
 
 
-function ArcadeDetailsContent({ store }: { store: Store | null }) {
+function ArcadeDetailsContent({ store, onEditClick }: { store: Store | null; onEditClick: () => void }) {
   if (!store) return null;
+
+  const t = useTranslations();
+
+  const displayName = store.chosenEdit?.name || toTitleCase(store.name);
+  const displayAddress = store.chosenEdit?.address || store.address;
+  const hasChosenEdit = !!store.chosenEdit;
+
   return (
     <>
       <div className="mb-4">
-        <h3 className="font-semibold leading-none tracking-tight">{store.name}</h3>
-        <p className="text-sm text-muted-foreground mt-1.5">{store.address}</p>
+        <h3 className="font-semibold leading-none tracking-tight">{displayName}</h3>
+        <p className="text-sm text-muted-foreground mt-1.5">{displayAddress}</p>
       </div>
-      <div className="h-64 bg-muted rounded-md flex items-center justify-center text-muted-foreground text-sm">
-        Placeholder
-      </div>
+
+      {!hasChosenEdit ? (
+        <div className="h-64 bg-muted rounded-lg flex flex-col items-center justify-center text-muted-foreground text-sm p-6 text-center">
+          <p className="text-lg mb-2">:( No Data</p>
+          <p>Add arcade data and contribute now!</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {store.chosenEdit?.status && (
+            <div className="flex items-center gap-2 text-sm">
+              <DoorOpen className="h-4 w-4 text-muted-foreground" />
+              <span className="capitalize">
+                {store.chosenEdit.status === "temporarily_closed"
+                  ? "Temporarily Closed"
+                  : store.chosenEdit.status}
+              </span>
+            </div>
+          )}
+
+          {store.chosenEdit?.openingHours && (
+            <div className="flex items-start gap-2 text-sm">
+              <Clock className="h-4 w-4 text-muted-foreground mt-0.5" />
+              <span className="whitespace-pre-wrap">{store.chosenEdit.openingHours}</span>
+            </div>
+          )}
+
+          {store.chosenEdit?.toilet !== null && store.chosenEdit?.toilet !== undefined && (
+            <div className="flex items-center gap-2 text-sm">
+              <DoorOpen className="h-4 w-4 text-muted-foreground" />
+              <span>Toilet: {store.chosenEdit.toilet ? "Available" : "Not Available"}</span>
+            </div>
+          )}
+
+          {store.chosenEdit?.smoke !== null && store.chosenEdit?.smoke !== undefined && (
+            <div className="flex items-center gap-2 text-sm">
+              <Cigarette className="h-4 w-4 text-muted-foreground" />
+              <span>Smoking: {store.chosenEdit.smoke ? "Allowed" : "Not Allowed"}</span>
+            </div>
+          )}
+
+          {store.chosenEdit?.access && (
+            <div className="flex items-start gap-2 text-sm">
+              <MapPin className="h-4 w-4 text-muted-foreground mt-0.5" />
+              <span className="whitespace-pre-wrap">{store.chosenEdit.access}</span>
+            </div>
+          )}
+
+          {store.chosenEdit?.currency && (
+            <div className="flex items-center gap-2 text-sm">
+              <CircleDollarSign className="h-4 w-4 text-muted-foreground" />
+              <span>{store.chosenEdit.currency}</span>
+            </div>
+          )}
+
+          {store.chosenEdit?.games && Object.keys(store.chosenEdit.games).length > 0 && (
+            <div className="mt-4">
+              <h4 className="text-sm font-medium mb-2">Available Games</h4>
+              <div className="space-y-1 text-sm">
+                {Object.entries(store.chosenEdit.games).map(([game, data]: [string, any]) => (
+                  <div key={game} className="flex justify-between">
+                    <span>{getGameName((k: string) => t.has(k) ? t(k) : k, game)}</span>
+                    {data.amount && <span>{data.amount} cabs</span>}
+                    {data.price && <span>{data.price}</span>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      <Button
+        onClick={onEditClick}
+        className="w-full mt-4"
+        variant="outline"
+      >
+        <Edit className="h-4 w-4 mr-2" />
+        Edit
+      </Button>
     </>
   );
 }
 
 export function ArcadesMap() {
   const map = useRef<any>(null);
-  const [storeData, setStoreData] = useState<StoreData | null>(null);
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
   const [isMapLibreReady, setIsMapLibreReady] = useState(false);
   const [selectedStore, setSelectedStore] = useState<Store | null>(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [showEditDrawer, setShowEditDrawer] = useState(false);
 
   const isMobile = useMediaQuery("(max-width: 768px)", {
     defaultValue: false,
     initializeWithValue: false,
   });
 
-  // Fetch store data for both regions (intl + jp)
+  // Fetch stores using tRPC
+  const { data: storesResponse, isLoading: isLoadingStores } = trpc.user.getStores.useQuery(undefined, {
+    refetchOnWindowFocus: false,
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+  });
+
+  // Process stores data for the map
+  const storeData = storesResponse?.stores ? groupStoresByRegion(storesResponse.stores) : null;
+
+  // Keep a ref to storeData for event handlers
+  const storeDataRef = useRef(storeData);
   useEffect(() => {
-    let cancelled = false;
+    storeDataRef.current = storeData;
+  }, [storeData]);
 
-    fetchAllStoresOnce()
-      .then((combined) => {
-        if (cancelled) return;
-        setStoreData(combined);
+  // Update selectedStore when storeData changes (to reflect updated chosen edits)
+  useEffect(() => {
+    if (!selectedStore || !storeData) return;
+
+    // Find the updated version of the selected store
+    let updatedStore: Store | null = null;
+    for (const stores of Object.values(storeData)) {
+      const found = stores.find(s => s.id === selectedStore.id);
+      if (found) {
+        updatedStore = found;
+        break;
+      }
+    }
+
+    if (updatedStore) {
+      if (DEBUG) console.log("[ArcadesMap] Updating selectedStore with fresh data");
+      setSelectedStore(updatedStore);
+    }
+  }, [storeData]);
+
+  // Check if user is logged in
+  useEffect(() => {
+    fetch("/api/auth/get-session")
+      .then(res => res.json())
+      .then(data => {
+        setIsLoggedIn(!!data.user);
       })
-      .catch((error) => {
-        if (cancelled) return;
-        console.error("Error fetching store data:", error);
+      .catch(() => {
+        setIsLoggedIn(false);
       });
-
-    return () => {
-      cancelled = true;
-    };
   }, []);
 
   // If the script was already loaded in a previous mount, mark MapLibre as ready
@@ -454,14 +555,49 @@ export function ArcadesMap() {
       mapInstance.on("click", "arcade-unclustered", (e: any) => {
         const feature = e.features[0];
         const coordinates = feature.geometry.coordinates.slice();
-        const { name, address } = feature.properties;
+        const properties = feature.properties;
+
+        // Find the full store object from storeData to get all details
+        let fullStore: Store | null = null;
+        const currentStoreData = storeDataRef.current;
+
+        if (currentStoreData) {
+          // First try to find by ID if available
+          if (properties.id) {
+            const searchId = BigInt(properties.id);
+            for (const stores of Object.values(currentStoreData)) {
+              const found = stores.find(s => s.id === searchId);
+              if (found) {
+                fullStore = found;
+                break;
+              }
+            }
+          }
+
+          // Fallback to name/address matching if ID lookup failed
+          if (!fullStore) {
+            for (const stores of Object.values(currentStoreData)) {
+              const found = stores.find(s =>
+                s.name === properties.name && s.address === properties.address
+              );
+              if (found) {
+                fullStore = found;
+                break;
+              }
+            }
+          }
+        } else {
+          if (DEBUG) console.log(`[ArcadesMap] No store data available`);
+        }
+
+        // Fallback if not found
+        if (!fullStore) {
+          console.log(`[ArcadesMap] No store found for name: ${properties.name}, id: ${properties.id}`);
+          return;
+        }
 
         // Set selected store
-        setSelectedStore({
-          name,
-          address,
-          coords: [coordinates[1], coordinates[0]],
-        });
+        setSelectedStore(fullStore);
 
         // Determine offset based on screen width (using window matchMedia to be fresh)
         const isSmallScreen = window.matchMedia("(max-width: 768px)").matches;
@@ -518,12 +654,11 @@ export function ArcadesMap() {
       });
 
       // If we already have store data at this point, populate the source immediately
-      const dataForInit = storesCache ?? storeData;
-      if (dataForInit) {
+      if (storeData) {
         if (DEBUG) console.log(
           "[ArcadesMap] setting initial cluster data from handleLoad, store data present"
         );
-        const features = getGeoJSONFeatures(dataForInit);
+        const features = getGeoJSONFeatures(storeData);
 
         const geojson = {
           type: "FeatureCollection" as const,
@@ -637,15 +772,24 @@ export function ArcadesMap() {
   const closeSelection = () => {
     if (selectedStore && map.current) {
       // Recenter map on the selected store (without offset) when closing
-      // Note: store.coords is [lat, lng], but flyTo takes [lng, lat]
-      const [lat, lng] = selectedStore.coords;
-      map.current.flyTo({
-        center: [lng, lat],
-        offset: [0, 0],
-        essential: true,
-      });
+      if (selectedStore.location) {
+        const [lat, lng] = [selectedStore.location.y, selectedStore.location.x];
+        map.current.flyTo({
+          center: [lat, lng],
+          offset: [0, 0],
+          essential: true,
+        });
+      }
     }
     setSelectedStore(null);
+  };
+
+  const handleEditClick = () => {
+    if (!isLoggedIn) {
+      alert("Please log in to edit arcade data.");
+      return;
+    }
+    setShowEditDrawer(true);
   };
 
   return (
@@ -666,10 +810,10 @@ export function ArcadesMap() {
         <Button
           onClick={handleGeolocate}
           disabled={isLoadingLocation}
-          className="absolute bottom-4 right-4 shadow-lg z-10"
+          className="absolute bottom-4 right-4 shadow-lg z-10 max-md:size-12"
           size="icon"
         >
-          <Navigation className={`h-4 w-4 ${isLoadingLocation ? "animate-spin" : ""}`} />
+          <Navigation className={`h-4 w-4 max-md:scale-130 ${isLoadingLocation ? "animate-spin" : ""}`} />
         </Button>
 
         {/* Desktop Card */}
@@ -681,7 +825,7 @@ export function ArcadesMap() {
               </Button>
             </div>
             <CardContent>
-              <ArcadeDetailsContent store={selectedStore} />
+              <ArcadeDetailsContent store={selectedStore} onEditClick={handleEditClick} />
             </CardContent>
           </Card>
         )}
@@ -699,17 +843,25 @@ export function ArcadesMap() {
               <DrawerTitle>{selectedStore?.name || "Arcade Details"}</DrawerTitle>
               <DrawerDescription>{selectedStore?.address || "Address of the arcade"}</DrawerDescription>
             </VisuallyHidden>
-            <div className="relative px-4 pt-4 pb-8 h-[-webkit-fill-available]"> {/* Adjusted padding to account for hidden header */}
+            <div className="relative px-4 pt-4 pb-8"> {/* Adjusted padding to account for hidden header */}
               <div className="absolute -top-2 right-3 z-20">
                 <Button variant="secondary" size="icon" className="h-8 w-8 rounded-full" onClick={closeSelection}>
                   <X className="h-4 w-4 text-neutral-400 stroke-3" />
                 </Button>
               </div>
-              <ArcadeDetailsContent store={selectedStore} />
+              <ArcadeDetailsContent store={selectedStore} onEditClick={handleEditClick} />
             </div>
           </DrawerContent>
         </Drawer>
       )}
+
+      {/* Edit Drawer */}
+      <StoreEditDrawer
+        open={showEditDrawer}
+        onOpenChange={setShowEditDrawer}
+        store={selectedStore}
+        isLoggedIn={isLoggedIn}
+      />
     </>
   );
 }

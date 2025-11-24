@@ -1367,19 +1367,19 @@
       ]
     },
     {
-      "name": "FUN SCAPE@TESCO IPOH KINTA CITY",
-      "address": "2 Jalan Lambu Taman Teh Teng Seng 31400 Ipoh Perak",
-      "coords": [
-        4.6167149,
-        101.1187446
-      ]
-    },
-    {
       "name": "AEON IPOH STATION 18",
       "address": "S32, AEON Ipoh 18 Shopping Centre, No2, Jalan Susuran Stesen 18",
       "coords": [
         4.5472687,
         101.0687007
+      ]
+    },
+    {
+      "name": "FUN SCAPE@TESCO IPOH KINTA CITY",
+      "address": "2 Jalan Lambu Taman Teh Teng Seng 31400 Ipoh Perak",
+      "coords": [
+        4.6167149,
+        101.1187446
       ]
     },
     {
@@ -3043,6 +3043,14 @@
       ]
     },
     {
+      "name": "QUANTUM SM GRAND CENTRAL",
+      "address": "5TH Fl., Sm Grand Central, Rizal Ave., Caloocan City",
+      "coords": [
+        14.6143876,
+        120.9826056
+      ]
+    },
+    {
       "name": "QUANTUM GREENHILLS",
       "address": "L547 & L549 5F Greenhills Shopping Center, San Juan City,1502",
       "coords": [
@@ -3373,11 +3381,11 @@
       ]
     },
     {
-      "name": "AEON MALL TAN PHU",
-      "address": "2F, 30 Bo Bao Tan Thang Street,Son Ky Ward, Tan Phu District",
+      "name": "TIMEZONE(ESTELLA)",
+      "address": "Estella Place, 88 Song Hanh Street, An Phu Ward, 2 District",
       "coords": [
-        10.8070945,
-        106.6216373
+        10.8020658,
+        106.7484709
       ]
     },
     {
@@ -3394,6 +3402,14 @@
       "coords": [
         10.7285352,
         106.7187468
+      ]
+    },
+    {
+      "name": "AEON MALL TAN PHU",
+      "address": "2F, 30 Bo Bao Tan Thang Street,Son Ky Ward, Tan Phu District",
+      "coords": [
+        10.8070945,
+        106.6216373
       ]
     },
     {

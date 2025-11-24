@@ -221,14 +221,16 @@ export function Dashboard({ user, initialUserData, initialHasToken, initialTimez
         showDiscordBanner={false}
         user={{
           user,
-          userRole: userData?.role ?? "user",
-          selectedRegion: selectedRegion,
-          onRegionChange: handleRegionChange,
-          onInvites: () => setDialogType("invites"),
-          onAdmin: () => setDialogType("admin"),
-          onExperiments: () => setDialogType("experiments"),
-          onSettings: () => setDialogType("settings"),
-          onLogout: handleLogout,
+          menu: {
+            userRole: userData?.role ?? "user",
+            selectedRegion: selectedRegion,
+            onRegionChange: handleRegionChange,
+            onInvites: () => setDialogType("invites"),
+            onAdmin: () => setDialogType("admin"),
+            onExperiments: () => setDialogType("experiments"),
+            onSettings: () => setDialogType("settings"),
+            onLogout: handleLogout,
+          },
         }}
       />
 

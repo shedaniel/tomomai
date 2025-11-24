@@ -3,6 +3,9 @@ import { load } from "cheerio";
 import { isServerless } from "@/lib/utils";
 import path from "path";
 import fs from "fs/promises";
+import { db } from "@/lib/db";
+import { stores } from "@/lib/db/schema-pg";
+import { sql } from "drizzle-orm";
 
 export async function GET(request: NextRequest) {
   try {
@@ -35,25 +38,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Get query parameters
-    const { searchParams } = new URL(request.url);
-    const type = searchParams.get('type');
-
-    if (!type) {
-      return NextResponse.json(
-        { error: "Missing 'type' query parameter" },
-        { status: 400 }
-      );
-    }
-
-    if (type === "locations") {
-      return fetchLocations(searchParams);
-    } else {
-      return NextResponse.json(
-        { error: `Invalid 'type' parameter. Currently supported: 'locations'` },
-        { status: 400 }
-      );
-    }
+    return await fetchLocations();
   } catch (error) {
     console.error("Error in admin fetch route:", error);
     return NextResponse.json(
@@ -81,192 +66,233 @@ interface LocationData {
   [countryOrPrefecture: string]: LocationEntry[];
 }
 
-async function fetchLocations(searchParams: URLSearchParams) {
-  const region = searchParams.get('region') as "intl" | "jp";
+async function fetchLocations() {
+  const regions = ["intl", "jp"] as const;
+  const allLocationData: Record<string, LocationData> = {};
+  let totalStores = 0;
 
-  if (!region || (region !== "intl" && region !== "jp")) {
-    return NextResponse.json(
-      { error: "Missing or invalid 'region' query parameter. Must be 'intl' or 'jp'" },
-      { status: 400 }
-    );
+  for (const region of regions) {
+    console.log(`Admin fetch locations requested for region: ${region}`);
+
+    try {
+      // Determine base URL based on region
+      const gm = region === "intl" ? "98" : "96";
+      const baseUrl = `https://location.am-all.net/alm/location?gm=${gm}`;
+      
+      console.log(`Fetching initial page: ${baseUrl}`);
+      
+      // Fetch the initial page to get the list of countries/prefectures
+      const initialResponse = await fetch(baseUrl, {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+        },
+      });
+
+      if (initialResponse.status !== 200) {
+        throw new Error(`Failed to fetch initial page: HTTP ${initialResponse.status}`);
+      }
+
+      const initialHtml = await initialResponse.text();
+      const $ = load(initialHtml);
+
+      // Parse select options based on region
+      const locationData: LocationData = {};
+      const BATCH_SIZE = 8;
+      
+      if (region === "intl") {
+        // For intl: find .country > select and parse options
+        const countrySelect = $(".country > select[name='ct']");
+        const options = countrySelect.find("option");
+        
+        console.log(`Found ${options.length} country options`);
+        
+        // Collect valid options
+        const validOptions: Array<{ value: string; text: string }> = [];
+        for (let i = 0; i < options.length; i++) {
+          const option = options.eq(i);
+          const value = option.attr("value");
+          const text = option.text().trim();
+          const isDisabled = option.attr("disabled") !== undefined;
+          
+          // Skip disabled options or Japan (no stores)
+          if (isDisabled || !value) {
+            console.log(`Skipping disabled/invalid option: ${text}`);
+            continue;
+          }
+          
+          validOptions.push({ value, text });
+        }
+        
+        console.log(`Processing ${validOptions.length} valid countries in batches of ${BATCH_SIZE}`);
+        
+        // Process in batches
+        for (let i = 0; i < validOptions.length; i += BATCH_SIZE) {
+          const batch = validOptions.slice(i, i + BATCH_SIZE);
+          console.log(`Processing batch ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(validOptions.length / BATCH_SIZE)} (${batch.length} countries)`);
+          
+          const batchPromises = batch.map(async ({ value, text }) => {
+            console.log(`  Fetching stores for country: ${text} (ct=${value})`);
+            try {
+              const stores = await fetchStoresForLocation(gm, value, undefined);
+              if (stores.length > 0) {
+                console.log(`    Found ${stores.length} stores for ${text}`);
+                return { text, stores };
+              } else {
+                console.log(`    No stores found for ${text}`);
+                return null;
+              }
+            } catch (error) {
+              console.error(`    Error fetching stores for ${text}:`, error);
+              return null;
+            }
+          });
+          
+          const batchResults = await Promise.all(batchPromises);
+          
+          // Add results to locationData
+          for (const result of batchResults) {
+            if (result) {
+              locationData[result.text] = result.stores;
+            }
+          }
+        }
+      } else {
+        // For jp: find .pref > select and parse options
+        const prefSelect = $(".pref > select[name='at']");
+        const options = prefSelect.find("option");
+        
+        console.log(`Found ${options.length} prefecture options`);
+        
+        // Collect valid options
+        const validOptions: Array<{ value: string; text: string }> = [];
+        for (let i = 0; i < options.length; i++) {
+          const option = options.eq(i);
+          const value = option.attr("value");
+          const text = option.text().trim();
+          const isDisabled = option.attr("disabled") !== undefined;
+          
+          // Skip disabled options
+          if (isDisabled || !value) {
+            console.log(`Skipping disabled/invalid option: ${text}`);
+            continue;
+          }
+          
+          validOptions.push({ value, text });
+        }
+        
+        console.log(`Processing ${validOptions.length} valid prefectures in batches of ${BATCH_SIZE}`);
+        
+        // Process in batches
+        for (let i = 0; i < validOptions.length; i += BATCH_SIZE) {
+          const batch = validOptions.slice(i, i + BATCH_SIZE);
+          console.log(`Processing batch ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(validOptions.length / BATCH_SIZE)} (${batch.length} prefectures)`);
+          
+          const batchPromises = batch.map(async ({ value, text }) => {
+            console.log(`  Fetching stores for prefecture: ${text} (at=${value})`);
+            try {
+              const stores = await fetchStoresForLocation(gm, "1000", value);
+              if (stores.length > 0) {
+                console.log(`    Found ${stores.length} stores for ${text}`);
+                return { text, stores };
+              } else {
+                console.log(`    No stores found for ${text}`);
+                return null;
+              }
+            } catch (error) {
+              console.error(`    Error fetching stores for ${text}:`, error);
+              return null;
+            }
+          });
+          
+          const batchResults = await Promise.all(batchPromises);
+          
+          // Add results to locationData
+          for (const result of batchResults) {
+            if (result) {
+              locationData[result.text] = result.stores;
+            }
+          }
+        }
+      }
+
+      allLocationData[region] = locationData;
+      totalStores += Object.values(locationData).reduce((acc, curr) => acc + curr.length, 0);
+
+      console.log(`Successfully fetched locations for region ${region}: ${Object.keys(locationData).length} areas`);
+      
+      // Save to JSON file if not in serverless environment
+      if (!isServerless()) {
+        try {
+          const storesDir = path.join(process.cwd(), 'public', 'stores');
+          await fs.mkdir(storesDir, { recursive: true });
+          
+          const filename = region === "intl" ? "intl.json" : "jp.json";
+          const filePath = path.join(storesDir, filename);
+          
+          await fs.writeFile(filePath, JSON.stringify(locationData, null, 2), 'utf-8');
+          console.log(`Successfully saved location data to ${filePath}`);
+        } catch (error) {
+          console.error("Error saving location data to file:", error);
+          // Don't fail the request if file save fails
+        }
+      } else {
+        console.log("Skipping file save in serverless environment");
+      }
+    } catch (error) {
+      console.error(`Error fetching locations for region ${region}:`, error);
+      // Continue to next region even if one fails
+    }
   }
-
-  console.log(`Admin fetch locations requested for region: ${region}`);
-
+  
+  // Update database
+  console.log("Updating database with fetched stores...");
   try {
-    // Determine base URL based on region
-    const gm = region === "intl" ? "98" : "96";
-    const baseUrl = `https://location.am-all.net/alm/location?gm=${gm}`;
-    
-    console.log(`Fetching initial page: ${baseUrl}`);
-    
-    // Fetch the initial page to get the list of countries/prefectures
-    const initialResponse = await fetch(baseUrl, {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-      },
-    });
+    let upsertCount = 0;
 
-    if (initialResponse.status !== 200) {
-      throw new Error(`Failed to fetch initial page: HTTP ${initialResponse.status}`);
-    }
+    for (const [region, locationData] of Object.entries(allLocationData)) {
+      for (const [areaName, storesList] of Object.entries(locationData)) {
+        const country = region === 'intl' ? areaName : 'Japan';
+        const area = region === 'jp' ? areaName : null;
 
-    const initialHtml = await initialResponse.text();
-    const $ = load(initialHtml);
+        for (const store of storesList) {
+          const location = (store.coords[0] === 0 && store.coords[1] === 0) 
+            ? null 
+            : { x: store.coords[0], y: store.coords[1] };
 
-    // Parse select options based on region
-    const locationData: LocationData = {};
-    const BATCH_SIZE = 8;
-    
-    if (region === "intl") {
-      // For intl: find .country > select and parse options
-      const countrySelect = $(".country > select[name='ct']");
-      const options = countrySelect.find("option");
-      
-      console.log(`Found ${options.length} country options`);
-      
-      // Collect valid options
-      const validOptions: Array<{ value: string; text: string }> = [];
-      for (let i = 0; i < options.length; i++) {
-        const option = options.eq(i);
-        const value = option.attr("value");
-        const text = option.text().trim();
-        const isDisabled = option.attr("disabled") !== undefined;
-        
-        // Skip disabled options or Japan (no stores)
-        if (isDisabled || !value) {
-          console.log(`Skipping disabled/invalid option: ${text}`);
-          continue;
-        }
-        
-        validOptions.push({ value, text });
-      }
-      
-      console.log(`Processing ${validOptions.length} valid countries in batches of ${BATCH_SIZE}`);
-      
-      // Process in batches
-      for (let i = 0; i < validOptions.length; i += BATCH_SIZE) {
-        const batch = validOptions.slice(i, i + BATCH_SIZE);
-        console.log(`Processing batch ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(validOptions.length / BATCH_SIZE)} (${batch.length} countries)`);
-        
-        const batchPromises = batch.map(async ({ value, text }) => {
-          console.log(`  Fetching stores for country: ${text} (ct=${value})`);
-          try {
-            const stores = await fetchStoresForLocation(gm, value, undefined);
-            if (stores.length > 0) {
-              console.log(`    Found ${stores.length} stores for ${text}`);
-              return { text, stores };
-            } else {
-              console.log(`    No stores found for ${text}`);
-              return null;
+          // Upsert store
+          await db.insert(stores).values({
+            country,
+            area,
+            name: store.name,
+            address: store.address,
+            location: location,
+          }).onConflictDoUpdate({
+            target: [stores.name, stores.address],
+            set: {
+              country: country,
+              area: area,
+              location: location,
+              updatedAt: new Date(),
             }
-          } catch (error) {
-            console.error(`    Error fetching stores for ${text}:`, error);
-            return null;
-          }
-        });
-        
-        const batchResults = await Promise.all(batchPromises);
-        
-        // Add results to locationData
-        for (const result of batchResults) {
-          if (result) {
-            locationData[result.text] = result.stores;
-          }
-        }
-      }
-    } else {
-      // For jp: find .pref > select and parse options
-      const prefSelect = $(".pref > select[name='at']");
-      const options = prefSelect.find("option");
-      
-      console.log(`Found ${options.length} prefecture options`);
-      
-      // Collect valid options
-      const validOptions: Array<{ value: string; text: string }> = [];
-      for (let i = 0; i < options.length; i++) {
-        const option = options.eq(i);
-        const value = option.attr("value");
-        const text = option.text().trim();
-        const isDisabled = option.attr("disabled") !== undefined;
-        
-        // Skip disabled options
-        if (isDisabled || !value) {
-          console.log(`Skipping disabled/invalid option: ${text}`);
-          continue;
-        }
-        
-        validOptions.push({ value, text });
-      }
-      
-      console.log(`Processing ${validOptions.length} valid prefectures in batches of ${BATCH_SIZE}`);
-      
-      // Process in batches
-      for (let i = 0; i < validOptions.length; i += BATCH_SIZE) {
-        const batch = validOptions.slice(i, i + BATCH_SIZE);
-        console.log(`Processing batch ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(validOptions.length / BATCH_SIZE)} (${batch.length} prefectures)`);
-        
-        const batchPromises = batch.map(async ({ value, text }) => {
-          console.log(`  Fetching stores for prefecture: ${text} (at=${value})`);
-          try {
-            const stores = await fetchStoresForLocation(gm, "1000", value);
-            if (stores.length > 0) {
-              console.log(`    Found ${stores.length} stores for ${text}`);
-              return { text, stores };
-            } else {
-              console.log(`    No stores found for ${text}`);
-              return null;
-            }
-          } catch (error) {
-            console.error(`    Error fetching stores for ${text}:`, error);
-            return null;
-          }
-        });
-        
-        const batchResults = await Promise.all(batchPromises);
-        
-        // Add results to locationData
-        for (const result of batchResults) {
-          if (result) {
-            locationData[result.text] = result.stores;
-          }
+          });
+          upsertCount++;
         }
       }
     }
-
-    console.log(`Successfully fetched locations for ${Object.keys(locationData).length} regions`);
-    
-    // Save to JSON file if not in serverless environment
-    if (!isServerless()) {
-      try {
-        const storesDir = path.join(process.cwd(), 'public', 'stores');
-        await fs.mkdir(storesDir, { recursive: true });
-        
-        const filename = region === "intl" ? "intl.json" : "jp.json";
-        const filePath = path.join(storesDir, filename);
-        
-        await fs.writeFile(filePath, JSON.stringify(locationData, null, 2), 'utf-8');
-        console.log(`Successfully saved location data to ${filePath}`);
-      } catch (error) {
-        console.error("Error saving location data to file:", error);
-        // Don't fail the request if file save fails
-      }
-    } else {
-      console.log("Skipping file save in serverless environment");
-    }
-    
-    return NextResponse.json({
-      success: true,
-      region,
-      data: locationData,
-    });
+    console.log(`Successfully upserted ${upsertCount} stores to database`);
   } catch (error) {
-    console.error("Error fetching locations:", error);
+    console.error("Error updating database:", error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to fetch locations" },
+      { error: "Failed to update database", details: error instanceof Error ? error.message : String(error) },
       { status: 500 }
     );
   }
+
+  return NextResponse.json({
+    success: true,
+    data: allLocationData,
+    totalStores,
+  });
 }
 
 async function fetchStoresForLocation(
@@ -331,4 +357,3 @@ async function fetchStoresForLocation(
 
   return stores;
 }
-
