@@ -13,7 +13,7 @@ import { SongWithScore } from "./types";
 import { decryptToken, encryptToken } from "./token-crypto";
 import { logger } from "./logger";
 
-export const JP_AGENT = new Agent({
+export const AGENT = new Agent({
   connect: {
     rejectUnauthorized: false
   }
@@ -159,7 +159,7 @@ async function performJapanAccountLogin(
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
       },
       redirect: "manual", // Don't follow redirects
-      ...{ dispatcher: JP_AGENT },
+      ...{ dispatcher: AGENT },
     });
 
     logger.debug(`Maimai mobile page response status: ${maimaiPageResponse.status}`);
@@ -233,7 +233,7 @@ async function performJapanAccountLogin(
       },
       body: formData.toString(),
       redirect: "manual", // Don't follow redirects
-      ...{ dispatcher: JP_AGENT },
+      ...{ ...{ dispatcher: AGENT }, },
     });
 
     logger.debug(`Japan account login response status: ${response.status}`);
@@ -562,7 +562,7 @@ async function fetchPlayerDataWithLogin(region: "intl" | "jp", redirectUrl: stri
       ...(redirectCookies ? { "Cookie": redirectCookies } : {}),
     },
     redirect: "manual", // Don't follow redirects
-    ...(region === "jp" ? { dispatcher: JP_AGENT } : {}),
+    ...{ dispatcher: AGENT },
   });
 
   logger.debug(`Login response status: ${loginResponse.status}`);
@@ -607,7 +607,7 @@ async function fetchPlayerDataWithLogin(region: "intl" | "jp", redirectUrl: stri
       "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
       "Referer": redirectUrl,
     },
-    ...(region === "jp" ? { dispatcher: JP_AGENT } : {}),
+    ...{ dispatcher: AGENT },
   });
 
   logger.debug(`Player data response status: ${playerDataResponse.status}`);
@@ -809,7 +809,7 @@ async function fetchSongsData(cookies: string, difficulty: number, region: "intl
       "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
       "Referer": `${baseUrl}/maimai-mobile/`,
     },
-    ...(region === "jp" ? { dispatcher: JP_AGENT } : {}),
+    ...{ dispatcher: AGENT },
   });
 
   logger.debug(`Songs data response status for difficulty ${difficulty}: ${songsResponse.status}`);
@@ -876,7 +876,7 @@ async function fetchRecentSongsData(cookies: string, region: "intl" | "jp", sess
       "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
       "Referer": `${baseUrl}/maimai-mobile/`,
     },
-    ...(region === "jp" ? { dispatcher: JP_AGENT } : {}),
+    ...{ dispatcher: AGENT },
   });
 
   logger.debug(`Recent songs data response status: ${recentSongsResponse.status}`);
@@ -1251,7 +1251,7 @@ async function fetchEventsData(cookies: string, region: "intl" | "jp", sessionId
           "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
           "Referer": `${baseUrl}/maimai-mobile/`,
         },
-        ...(region === "jp" ? { dispatcher: JP_AGENT } : {}),
+        ...{ dispatcher: AGENT },
       }),
       fetch(`${baseUrl}/maimai-mobile/map/eventMap/`, {
         method: "GET",
@@ -1260,7 +1260,7 @@ async function fetchEventsData(cookies: string, region: "intl" | "jp", sessionId
           "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
           "Referer": `${baseUrl}/maimai-mobile/`,
         },
-        ...(region === "jp" ? { dispatcher: JP_AGENT } : {}),
+        ...{ dispatcher: AGENT },
       })
     ]);
 
@@ -1610,7 +1610,7 @@ async function fetchImageAsBase64(region: "intl" | "jp", imageUrl: string, cooki
       "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
       "Cookie": cookies || "",
     },
-    ...(region === "jp" ? { dispatcher: JP_AGENT } : {}),
+    ...{ dispatcher: AGENT },
   });
   
   if (!response.ok) {
@@ -1967,7 +1967,7 @@ async function fetchAndInsertRecentSongsData(
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
             "Referer": `${baseUrl}/maimai-mobile/record/`,
           },
-          ...(region === "jp" ? { dispatcher: JP_AGENT } : {}),
+          ...{ dispatcher: AGENT },
         });
         
         if (response.status !== 200) {
