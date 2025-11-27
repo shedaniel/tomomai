@@ -4,10 +4,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { trpc } from "@/lib/trpc-client";
 import { Region } from "@/lib/types";
 import { cn, createSafeMaimaiImageUrl } from "@/lib/utils";
-import { Clock, Loader2, AlertCircle, TrendingUp, TrendingDown, Trophy, FastForward, Rewind, ArrowBigUpDash, ArrowBigDownDash, Grip, Sparkle, MapPin, SeparatorVertical, Slash } from "lucide-react";
+import { Clock, Loader2, AlertCircle, TrendingUp, TrendingDown, Trophy, FastForward, Rewind, ArrowBigUpDash, ArrowBigDownDash, Grip, Sparkle, MapPin, SeparatorVertical, Slash, Star } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
-import { useCallback, useState, useEffect } from "react";
+import { useCallback, useState, useEffect, useRef } from "react";
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 import { Badge } from "./ui/badge";
 import { AutoHeight } from "@/components/animate-ui/primitives/effects/auto-height";
@@ -220,7 +220,7 @@ function distributeBreaks(
           bestDist = dist;
         }
 
-        logger.debug(`Trying distribution ${p2550}-${p2500} ${g2000}-${g1500}-${g1250}, diff: ${diff}, calculatedAchievement: ${calculatedAchievement}, actualAchievement: ${actualAchievement}`);
+        // logger.debug(`Trying distribution ${p2550}-${p2500} ${g2000}-${g1500}-${g1250}, diff: ${diff}, calculatedAchievement: ${calculatedAchievement}, actualAchievement: ${actualAchievement}`);
 
         // Early exit if we found an exact match
         if (diff < 0.00001) {
@@ -375,6 +375,17 @@ function calculateNoteLosses(notes: CalculateAchievementParams, breakDist: Break
   };
 }
 
+function calculateDXStars(dxScore: number, maxDxScore: number) {
+  const percentage = dxScore / maxDxScore;
+  if (percentage >= 0.99) return 6;
+  if (percentage >= 0.97) return 5;
+  if (percentage >= 0.95) return 4;
+  if (percentage >= 0.93) return 3;
+  if (percentage >= 0.90) return 2;
+  if (percentage >= 0.85) return 1;
+  return 0;
+}
+
 interface RecentSongsCardProps {
   region: Region;
   beforeDate?: Date;
@@ -386,9 +397,12 @@ export function RecentSongsCard({ region, beforeDate }: RecentSongsCardProps) {
   const [offset, setOffset] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
-  const limit = 20;
+  const limit = 25;
 
-  const { data, isLoading, error } = trpc.user.getRecentSongs.useQuery({
+  // Track which offsets have been processed to prevent duplicates
+  const processedOffsetsRef = useRef<Set<number>>(new Set());
+
+  const { data, isLoading, isFetching, error } = trpc.user.getRecentSongs.useQuery({
     region,
     limit,
     offset,
@@ -400,11 +414,15 @@ export function RecentSongsCard({ region, beforeDate }: RecentSongsCardProps) {
     setOffset(0);
     setAllPlays([]);
     setHasMore(true);
+    processedOffsetsRef.current = new Set();
   }, [region, beforeDate]);
 
   // Update allPlays when new data arrives
+  // Use isFetching (not isLoading) to prevent processing stale data during query transitions
+  // isFetching is true whenever a query is in flight, even if there's cached data
   useEffect(() => {
-    if (data) {
+    if (data && !isFetching && !processedOffsetsRef.current.has(offset)) {
+      processedOffsetsRef.current.add(offset);
       if (offset === 0) {
         setAllPlays(data.recentPlays);
       } else {
@@ -412,13 +430,14 @@ export function RecentSongsCard({ region, beforeDate }: RecentSongsCardProps) {
       }
       setHasMore(data.hasMore);
     }
-  }, [data, offset]);
+  }, [data, offset, isFetching]);
 
   const loadMore = useCallback(() => {
-    if (hasMore && !isLoading) {
+    console.log('loadMore', hasMore, isFetching);
+    if (hasMore && !isFetching) {
       setOffset(prev => prev + limit);
     }
-  }, [hasMore, isLoading]);
+  }, [hasMore, isFetching]);
 
   const toggleExpand = useCallback((id: string) => {
     setExpandedIds(prev => {
@@ -432,7 +451,7 @@ export function RecentSongsCard({ region, beforeDate }: RecentSongsCardProps) {
     });
   }, []);
 
-  const sentinelRef = useInfiniteScroll(loadMore, hasMore && !isLoading);
+  const sentinelRef = useInfiniteScroll(loadMore, hasMore && !isFetching);
 
   if (isLoading && offset === 0) {
     return (
@@ -471,9 +490,10 @@ export function RecentSongsCard({ region, beforeDate }: RecentSongsCardProps) {
     );
   }
 
-  const totalCount = data?.totalCount ?? 0;
-
-  if (allPlays.length === 0 && !isLoading) {
+  // Only show "no plays" after we've actually processed the initial data
+  // This prevents returning early before the data effect runs,
+  // which would prevent the sentinel from being rendered
+  if (allPlays.length === 0 && !isLoading && processedOffsetsRef.current.has(0)) {
     return (
       <Card>
         <CardHeader>
@@ -513,7 +533,7 @@ export function RecentSongsCard({ region, beforeDate }: RecentSongsCardProps) {
                 key={play.recentSongId}
                 onClick={() => toggleExpand(play.recentSongId.toString())}
                 className={cn("flex flex-col transition-colors cursor-pointer",
-                  i === 0 ? "pb-4" : "py-4",
+                  i === 0 ? "pb-4" : i === allPlays.length - 1 ? "pt-4" : "py-4",
                 )}
               >
                 <div className="flex gap-4">
@@ -613,6 +633,11 @@ export function RecentSongsCard({ region, beforeDate }: RecentSongsCardProps) {
                           <span>{play.dxScore}</span>
                           <Slash className="h-3 w-3 text-border" />
                           <span>{play.maxDxScore}</span>
+                          <div className="h-3 w-px bg-border mx-1" />
+                          <span>{calculateDXStars(play.dxScore, play.maxDxScore)}</span>
+                          <Star className="h-3 w-3" fill={calculateDXStars(play.dxScore, play.maxDxScore) > 0 ? "currentColor" : "none"} />
+                          <div className="h-3 w-px bg-border mx-1" />
+                          <span>{(play.dxScore / play.maxDxScore * 100).toFixed(2)}%</span>
                         </Badge>
 
                         {/* Rating */}
@@ -719,10 +744,10 @@ export function RecentSongsCard({ region, beforeDate }: RecentSongsCardProps) {
 
                         return (
                           <div className="mt-3 overflow-x-auto">
-                            <div className="grid grid-cols-[auto_1fr_1fr_1fr_1fr_1fr_1fr_1fr] text-sm min-w-fit border rounded-md">
+                            <div className="grid grid-cols-[auto_1fr_1fr_1fr_1fr_1fr_1fr_1fr] max-sm:grid-cols-[auto_1fr_1fr_1fr_1fr_1fr_1fr] text-sm max-sm:text-2xs max-md:text-xs min-w-fit border rounded-md">
                               {/* Header Row */}
                               <div className="text-center py-1 pl-4 pr-2 font-medium text-muted-foreground bg-accent/50 border-b border-r flex items-center justify-end">{t('notesBreakdown.type')}</div>
-                              <div className="text-center py-1 px-2 font-medium text-muted-foreground bg-accent/50 border-b border-r flex items-center justify-center">{t('notesBreakdown.total')}</div>
+                              <div className="text-center py-1 px-2 font-medium text-muted-foreground bg-accent/50 border-b border-r flex items-center justify-center max-sm:hidden">{t('notesBreakdown.total')}</div>
                               <div className="text-center py-1 px-2 font-medium text-muted-foreground bg-accent/50 border-b border-r flex items-center justify-center gap-1">
                                 Critical Perfect
                               </div>
@@ -744,7 +769,7 @@ export function RecentSongsCard({ region, beforeDate }: RecentSongsCardProps) {
 
                               {/* Tap Row */}
                               <div className="text-right py-1 pl-4 pr-2 font-medium border-b border-r">Tap</div>
-                              <div className="text-center py-1 px-2 border-b border-r">
+                              <div className="text-center py-1 px-2 border-b border-r max-sm:hidden">
                                 {(play.tapCPerfect ?? 0) + (play.tapPerfect ?? 0) + (play.tapGreat ?? 0) + (play.tapGood ?? 0) + (play.tapMiss ?? 0)}
                               </div>
                               <div className="text-center bg-yellow-50 text-yellow-600 py-1 px-2 border-b border-r">
@@ -755,23 +780,23 @@ export function RecentSongsCard({ region, beforeDate }: RecentSongsCardProps) {
                               </div>
                               <div className="text-center bg-pink-50 text-pink-600 py-1 px-2 border-b border-r flex flex-col items-center">
                                 <div>{play.tapGreat ?? 0}</div>
-                                <div className="text-xs text-pink-500">(-{losses.tap.great.toFixed(4)}%)</div>
+                                <div className="text-xs max-sm:text-[8px] text-pink-500">(-{losses.tap.great.toFixed(4)}%)</div>
                               </div>
                               <div className="text-center bg-green-50 text-green-600 py-1 px-2 border-b border-r flex flex-col items-center">
                                 <div>{play.tapGood ?? 0}</div>
-                                <div className="text-xs text-green-500">(-{losses.tap.good.toFixed(4)}%)</div>
+                                <div className="text-xs max-sm:text-[8px] text-green-500">(-{losses.tap.good.toFixed(4)}%)</div>
                               </div>
                               <div className="text-center bg-neutral-50 text-neutral-600 py-1 px-2 border-b border-r flex flex-col items-center">
                                 <div>{play.tapMiss ?? 0}</div>
-                                <div className="text-xs text-neutral-500">(-{losses.tap.miss.toFixed(4)}%)</div>
+                                <div className="text-xs max-sm:text-[8px] text-neutral-500">(-{losses.tap.miss.toFixed(4)}%)</div>
                               </div>
-                              <div className="text-center py-1 px-2 border-b font-medium text-muted-foreground flex items-center justify-center">
+                              <div className="text-center py-1 px-2 border-b font-medium text-muted-foreground flex items-center justify-center max-sm:text-2xs">
                                 -{(losses.tap.great + losses.tap.good + losses.tap.miss).toFixed(4)}%
                               </div>
 
                               {/* Hold Row */}
                               <div className="text-right py-1 pl-4 pr-2 font-medium border-b border-r">Hold</div>
-                              <div className="text-center py-1 px-2 border-b border-r">
+                              <div className="text-center py-1 px-2 border-b border-r max-sm:hidden">
                                 {(play.holdCPerfect ?? 0) + (play.holdPerfect ?? 0) + (play.holdGreat ?? 0) + (play.holdGood ?? 0) + (play.holdMiss ?? 0)}
                               </div>
                               <div className="text-center bg-yellow-50 text-yellow-600 py-1 px-2 border-b border-r">
@@ -782,23 +807,23 @@ export function RecentSongsCard({ region, beforeDate }: RecentSongsCardProps) {
                               </div>
                               <div className="text-center bg-pink-50 text-pink-600 py-1 px-2 border-b border-r flex flex-col items-center">
                                 <div>{play.holdGreat ?? 0}</div>
-                                <div className="text-xs text-pink-500">(-{losses.hold.great.toFixed(4)}%)</div>
+                                <div className="text-xs max-sm:text-[8px] text-pink-500">(-{losses.hold.great.toFixed(4)}%)</div>
                               </div>
                               <div className="text-center bg-green-50 text-green-600 py-1 px-2 border-b border-r flex flex-col items-center">
                                 <div>{play.holdGood ?? 0}</div>
-                                <div className="text-xs text-green-500">(-{losses.hold.good.toFixed(4)}%)</div>
+                                <div className="text-xs max-sm:text-[8px] text-green-500">(-{losses.hold.good.toFixed(4)}%)</div>
                               </div>
                               <div className="text-center bg-neutral-50 text-neutral-600 py-1 px-2 border-b border-r flex flex-col items-center">
                                 <div>{play.holdMiss ?? 0}</div>
-                                <div className="text-xs text-neutral-500">(-{losses.hold.miss.toFixed(4)}%)</div>
+                                <div className="text-xs max-sm:text-[8px] text-neutral-500">(-{losses.hold.miss.toFixed(4)}%)</div>
                               </div>
-                              <div className="text-center py-1 px-2 border-b font-medium text-muted-foreground flex items-center justify-center">
+                              <div className="text-center py-1 px-2 border-b font-medium text-muted-foreground flex items-center justify-center max-sm:text-2xs">
                                 -{(losses.hold.great + losses.hold.good + losses.hold.miss).toFixed(4)}%
                               </div>
 
                               {/* Slide Row */}
                               <div className="text-right py-1 pl-4 pr-2 font-medium border-b border-r">Slide</div>
-                              <div className="text-center py-1 px-2 border-b border-r">
+                              <div className="text-center py-1 px-2 border-b border-r max-sm:hidden">
                                 {(play.slideCPerfect ?? 0) + (play.slidePerfect ?? 0) + (play.slideGreat ?? 0) + (play.slideGood ?? 0) + (play.slideMiss ?? 0)}
                               </div>
                               <div className="text-center bg-yellow-50 text-yellow-600 py-1 px-2 border-b border-r">
@@ -809,23 +834,23 @@ export function RecentSongsCard({ region, beforeDate }: RecentSongsCardProps) {
                               </div>
                               <div className="text-center bg-pink-50 text-pink-600 py-1 px-2 border-b border-r flex flex-col items-center">
                                 <div>{play.slideGreat ?? 0}</div>
-                                <div className="text-xs text-pink-500">(-{losses.slide.great.toFixed(4)}%)</div>
+                                <div className="text-xs max-sm:text-[8px] text-pink-500">(-{losses.slide.great.toFixed(4)}%)</div>
                               </div>
                               <div className="text-center bg-green-50 text-green-600 py-1 px-2 border-b border-r flex flex-col items-center">
                                 <div>{play.slideGood ?? 0}</div>
-                                <div className="text-xs text-green-500">(-{losses.slide.good.toFixed(4)}%)</div>
+                                <div className="text-xs max-sm:text-[8px] text-green-500">(-{losses.slide.good.toFixed(4)}%)</div>
                               </div>
                               <div className="text-center bg-neutral-50 text-neutral-600 py-1 px-2 border-b border-r flex flex-col items-center">
                                 <div>{play.slideMiss ?? 0}</div>
-                                <div className="text-xs text-neutral-500">(-{losses.slide.miss.toFixed(4)}%)</div>
+                                <div className="text-xs max-sm:text-[8px] text-neutral-500">(-{losses.slide.miss.toFixed(4)}%)</div>
                               </div>
-                              <div className="text-center py-1 px-2 border-b font-medium text-muted-foreground flex items-center justify-center">
+                              <div className="text-center py-1 px-2 border-b font-medium text-muted-foreground flex items-center justify-center max-sm:text-2xs">
                                 -{(losses.slide.great + losses.slide.good + losses.slide.miss).toFixed(4)}%
                               </div>
 
                               {/* Touch Row */}
                               <div className="text-right py-1 pl-4 pr-2 font-medium border-b border-r">Touch</div>
-                              <div className="text-center py-1 px-2 border-b border-r">
+                              <div className="text-center py-1 px-2 border-b border-r max-sm:hidden">
                                 {(play.touchCPerfect ?? 0) + (play.touchPerfect ?? 0) + (play.touchGreat ?? 0) + (play.touchGood ?? 0) + (play.touchMiss ?? 0)}
                               </div>
                               <div className="text-center bg-yellow-50 text-yellow-600 py-1 px-2 border-b border-r">
@@ -836,23 +861,23 @@ export function RecentSongsCard({ region, beforeDate }: RecentSongsCardProps) {
                               </div>
                               <div className="text-center bg-pink-50 text-pink-600 py-1 px-2 border-b border-r flex flex-col items-center">
                                 <div>{play.touchGreat ?? 0}</div>
-                                <div className="text-xs text-pink-500">(-{losses.touch.great.toFixed(4)}%)</div>
+                                <div className="text-xs max-sm:text-[8px] text-pink-500">(-{losses.touch.great.toFixed(4)}%)</div>
                               </div>
                               <div className="text-center bg-green-50 text-green-600 py-1 px-2 border-b border-r flex flex-col items-center">
                                 <div>{play.touchGood ?? 0}</div>
-                                <div className="text-xs text-green-500">(-{losses.touch.good.toFixed(4)}%)</div>
+                                <div className="text-xs max-sm:text-[8px] text-green-500">(-{losses.touch.good.toFixed(4)}%)</div>
                               </div>
                               <div className="text-center bg-neutral-50 text-neutral-600 py-1 px-2 border-b border-r flex flex-col items-center">
                                 <div>{play.touchMiss ?? 0}</div>
-                                <div className="text-xs text-neutral-500">(-{losses.touch.miss.toFixed(4)}%)</div>
+                                <div className="text-xs max-sm:text-[8px] text-neutral-500">(-{losses.touch.miss.toFixed(4)}%)</div>
                               </div>
-                              <div className="text-center py-1 px-2 border-b font-medium text-muted-foreground flex items-center justify-center">
+                              <div className="text-center py-1 px-2 border-b font-medium text-muted-foreground flex items-center justify-center max-sm:text-2xs">
                                 -{(losses.touch.great + losses.touch.good + losses.touch.miss).toFixed(4)}%
                               </div>
 
                               {/* Break Row */}
                               <div className="text-right py-1 pl-4 pr-2 font-medium border-r">Break</div>
-                              <div className="text-center py-1 px-2 border-r">
+                              <div className="text-center py-1 px-2 border-r max-sm:hidden">
                                 {(play.breakCPerfect ?? 0) + (play.breakPerfect ?? 0) + (play.breakGreat ?? 0) + (play.breakGood ?? 0) + (play.breakMiss ?? 0)}
                               </div>
                               <div className="text-center bg-yellow-50 text-yellow-600 py-1 px-2 border-r">
@@ -860,21 +885,21 @@ export function RecentSongsCard({ region, beforeDate }: RecentSongsCardProps) {
                               </div>
                               <div className="text-center bg-orange-50 text-orange-600 py-1 px-2 border-r flex flex-col items-center">
                                 <div>{breakDist.perfect2550}-{breakDist.perfect2500}</div>
-                                <div className="text-xs text-orange-500">(-{losses.break.perfect.toFixed(4)}%)</div>
+                                <div className="text-xs max-sm:text-[8px] text-orange-500">(-{losses.break.perfect.toFixed(4)}%)</div>
                               </div>
                               <div className="text-center bg-pink-50 text-pink-600 py-1 px-2 border-r flex flex-col items-center">
                                 <div>{breakDist.great2000}-{breakDist.great1500}-{breakDist.great1250}</div>
-                                <div className="text-xs text-pink-500">(-{losses.break.great.toFixed(4)}%)</div>
+                                <div className="text-xs max-sm:text-[8px] text-pink-500">(-{losses.break.great.toFixed(4)}%)</div>
                               </div>
                               <div className="text-center bg-green-50 text-green-600 py-1 px-2 border-r flex flex-col items-center">
                                 <div>{play.breakGood ?? 0}</div>
-                                <div className="text-xs text-green-500">(-{losses.break.good.toFixed(4)}%)</div>
+                                <div className="text-xs max-sm:text-[8px] text-green-500">(-{losses.break.good.toFixed(4)}%)</div>
                               </div>
                               <div className="text-center bg-neutral-50 text-neutral-600 py-1 px-2 border-r flex flex-col items-center">
                                 <div>{play.breakMiss ?? 0}</div>
-                                <div className="text-xs text-neutral-500">(-{losses.break.miss.toFixed(4)}%)</div>
+                                <div className="text-xs max-sm:text-[8px] text-neutral-500">(-{losses.break.miss.toFixed(4)}%)</div>
                               </div>
-                              <div className="text-center py-1 px-2 font-medium text-muted-foreground flex items-center justify-center">
+                              <div className="text-center py-1 px-2 font-medium text-muted-foreground flex items-center justify-center max-sm:text-2xs">
                                 -{(losses.break.perfect + losses.break.great + losses.break.good + losses.break.miss).toFixed(4)}%
                               </div>
                             </div>

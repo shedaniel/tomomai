@@ -274,7 +274,7 @@ function ArcadeDetailsContent({ store, onEditClick }: { store: Store | null; onE
               <div className="space-y-1 text-sm">
                 {Object.entries(store.chosenEdit.games).map(([game, data]: [string, any]) => (
                   <div key={game} className="flex justify-between">
-                    <span>{getGameName((k: string) => t.has(k) ? t(k) : k, game)}</span>
+                    <span>{getGameName((k: string) => t.has(k) ? t(k) : k, game as any)}</span>
                     {data.amount && <span>{data.amount} cabs</span>}
                     {data.price && <span>{data.price}</span>}
                   </div>

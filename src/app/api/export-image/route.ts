@@ -71,6 +71,7 @@ async function prepareData(snapshotPublicId: string): Promise<{
       addedVersion: songs.addedVersion,
       achievement: userScores.achievement,
       fc: userScores.fc,
+      fs: userScores.fs,
     })
     .from(userScores)
     .innerJoin(songs, eq(userScores.songId, songs.id))
@@ -146,6 +147,14 @@ export async function GET(request: NextRequest) {
       `/res/character/${data.snapshot.gameVersion}.png`,
       `/res/logo/${data.snapshot.gameVersion}.png`,
       `/res/bg/${data.snapshot.gameVersion}.png`,
+      `/res/badge/${data.snapshot.gameVersion}/none.png`,
+      `/res/badge/${data.snapshot.gameVersion}/sync.png`,
+      `/res/badge/${data.snapshot.gameVersion}/fc.png`,
+      `/res/badge/${data.snapshot.gameVersion}/fc+.png`,
+      `/res/badge/${data.snapshot.gameVersion}/fs.png`,
+      `/res/badge/${data.snapshot.gameVersion}/fs+.png`,
+      `/res/badge/${data.snapshot.gameVersion}/fdx.png`,
+      `/res/badge/${data.snapshot.gameVersion}/fdx+.png`,
       `/res/label/new.png`,
       `/res/label/old.png`,
       ...newSongsB15.map(s => s.cover),

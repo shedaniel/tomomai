@@ -1,4 +1,4 @@
-import { JP_AGENT, processMaimaiToken } from "@/lib/maimai-fetcher";
+import { AGENT, processMaimaiToken } from "@/lib/maimai-fetcher";
 import { getCurrentVersion, getVersionInfo } from "@/lib/metadata";
 import { normalizeName } from "@/lib/name-utils";
 import { sortKeys } from "@/lib/utils";
@@ -143,7 +143,7 @@ async function getCookiesFromRedirect(region: "intl" | "jp", redirectUrl: string
       ...(redirectCookies ? { "Cookie": redirectCookies } : {}),
     },
     redirect: "manual", // Don't follow redirects,
-    ...(region === "jp" ? { dispatcher: JP_AGENT } : {}),
+    ...{ dispatcher: AGENT },
   });
 
   console.log(`Login response status: ${loginResponse.status}`);
@@ -189,7 +189,7 @@ async function fetchSongDataForDifficulty(region: "intl" | "jp", cookies: string
       "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
       "Referer": `https://${region === "intl" ? "maimaidx-eng.com" : "maimaidx.jp"}/maimai-mobile/`,
     },
-    ...(region === "jp" ? { dispatcher: JP_AGENT } : {}),
+    ...{ dispatcher: AGENT },
   });
 
   console.log(`Songs data response status for version ${version}, difficulty ${difficulty}: ${songsResponse.status}`);
@@ -329,7 +329,7 @@ async function fetchSongDetail(region: "intl" | "jp", cookies: string, inputName
       "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
       "Referer": `https://${region === "intl" ? "maimaidx-eng.com" : "maimaidx.jp"}/maimai-mobile/`,
     },
-    ...(region === "jp" ? { dispatcher: JP_AGENT } : {}),
+    ...{ dispatcher: AGENT },
   });
 
   console.log(`Song detail response status: ${detailResponse.status}`);

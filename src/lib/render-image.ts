@@ -10,6 +10,7 @@ export interface SongForRender extends RatingCalculationInput {
   cover: string;
   difficulty: Difficulty;
   type: "std" | "dx";
+  fs: "none" | "sync" | "fs" | "fs+" | "fdx" | "fdx+";
 }
 
 const TARGET_HEIGHT = 204;
@@ -351,6 +352,7 @@ const SONG_PADDING = 16
 async function renderSong<S extends SongForRender>(
   ctx: SkiaContext, 
   cache: ImageCache, 
+  gameVersion: number,
   overlayRect: OverlayRect, 
   song: S & { rating: number }, 
   index: number, 
@@ -424,17 +426,22 @@ async function renderSong<S extends SongForRender>(
   ctx.fillRect(realBounds.left, realBounds.top + realBounds.height - infoHeight, realBounds.width, infoHeight);
   ctx.restore();
 
-  // Draw rating text with shadow
+  // Draw song name with shadow and clipping
   ctx.save();
   ctx.shadowColor = '#000000';
   ctx.shadowBlur = 16;
-  ctx.shadowOffsetX = 2;
-  ctx.shadowOffsetY = 2;
-  ctx.font = `600 20px ${FONT_FAMILY_MONO}`;
+  ctx.shadowOffsetX = 4;
+  ctx.shadowOffsetY = 4;
+  ctx.font = `700 18px ${FONT_FAMILY}`;
   ctx.fillStyle = '#f5f5f5';
-  ctx.textAlign = 'right';
+  ctx.textAlign = 'left';
   ctx.textBaseline = 'bottom';
-  ctx.fillText(song.rating.toString(), realBounds.left + realBounds.width - 8, realBounds.top + realBounds.height - 10);
+  roundRect(ctx, realBounds.left + 2, realBounds.top + 2, realBounds.width - 14, realBounds.height - 14, 0);
+  ctx.clip();
+  ctx.fillText(song.songName, realBounds.left + 12, realBounds.top + realBounds.height - 16 - 12 - 11);
+  // more shadow
+  ctx.shadowColor = '#00000030';
+  ctx.fillText(song.songName, realBounds.left + 12, realBounds.top + realBounds.height - 16 - 12 - 11);
   ctx.restore();
 
   // Draw achievement text with shadow
@@ -443,27 +450,28 @@ async function renderSong<S extends SongForRender>(
   ctx.shadowBlur = 16;
   ctx.shadowOffsetX = 2;
   ctx.shadowOffsetY = 2;
-  ctx.font = `400 12px ${FONT_FAMILY_MONO}`;
+  ctx.font = `550 16px ${FONT_FAMILY_MONO}`;
   ctx.fillStyle = '#f5f5f5';
   ctx.textAlign = 'left';
   ctx.textBaseline = 'bottom';
   const achievementText = (song.achievement / 10000).toFixed(4) + '%';
-  ctx.fillText(achievementText, realBounds.left + 14, realBounds.top + realBounds.height - 14);
+  ctx.fillText(achievementText, realBounds.left + 12, realBounds.top + realBounds.height - 14);
+  // more shadow
+  ctx.shadowColor = '#00000030';
+  ctx.fillText(achievementText, realBounds.left + 12, realBounds.top + realBounds.height - 14);
   ctx.restore();
 
-  // Draw song name with shadow and clipping
+  // Draw rating text with shadow
   ctx.save();
   ctx.shadowColor = '#000000';
   ctx.shadowBlur = 16;
   ctx.shadowOffsetX = 2;
   ctx.shadowOffsetY = 2;
-  ctx.font = `600 16px ${FONT_FAMILY}`;
+  ctx.font = `600 26px ${FONT_FAMILY_MONO}`;
   ctx.fillStyle = '#f5f5f5';
-  ctx.textAlign = 'left';
+  ctx.textAlign = 'right';
   ctx.textBaseline = 'bottom';
-  roundRect(ctx, realBounds.left + 14, realBounds.top + 14, realBounds.width - 28, realBounds.height - 28, 0);
-  ctx.clip();
-  ctx.fillText(song.songName, realBounds.left + 14, realBounds.top + realBounds.height - 14 - 16 - 8);
+  ctx.fillText(song.rating.toString(), realBounds.left + realBounds.width - 10, realBounds.top + realBounds.height - 8);
   ctx.restore();
 
   // Draw difficulty badge background
@@ -493,13 +501,36 @@ async function renderSong<S extends SongForRender>(
     ? "https://maimaidx.jp/maimai-mobile/img/music_dx.png"
     : "https://maimaidx.jp/maimai-mobile/img/music_standard.png";
   const songTypeBadge = await loadImageWithCache(cache, songTypeBadgeUrl);
-  const badgeScale = 0.4;
+  const badgeScale = 0.45;
   ctx.drawImage(
     songTypeBadge, 
-    realBounds.left + 14, 
-    realBounds.top + 14, 
+    realBounds.left + 12, 
+    realBounds.top + 12, 
     songTypeBadge.width * badgeScale, 
     songTypeBadge.height * badgeScale
+  );
+
+  // Draw FC and FS badges
+  const fcBadgeUrl = `/res/badge/${gameVersion}/${song.fc}.png`;
+  const fsBadgeUrl = `/res/badge/${gameVersion}/${song.fs}.png`;
+  const fcBadge = await loadImageWithCache(cache, fcBadgeUrl);
+  const fsBadge = await loadImageWithCache(cache, fsBadgeUrl);
+  const fcfsBadgeScale = 0.6;
+  const fcfsStartX = realBounds.left + 10; // realBounds.left + realBounds.width - fcBadge.width * fcfsBadgeScale - fsBadge.width * fcfsBadgeScale - 3 - 1;
+  const fcfsStartY = realBounds.top + 52;
+  ctx.drawImage(
+    fcBadge,
+    fcfsStartX,
+    fcfsStartY,
+    fcBadge.width * fcfsBadgeScale,
+    fcBadge.height * fcfsBadgeScale
+  );
+  ctx.drawImage(
+    fsBadge,
+    fcfsStartX + fcBadge.width * fcfsBadgeScale - 1,
+    fcfsStartY,
+    fsBadge.width * fcfsBadgeScale,
+    fsBadge.height * fcfsBadgeScale
   );
 }
 
@@ -513,12 +544,12 @@ async function renderContent<S extends SongForRender>(
 
   // Render new songs (B15)
   for (let i = 0; i < newSongsB15.length; i++) {
-    await renderSong(ctx, cache, overlayRect, newSongsB15[i], i, 60);
+    await renderSong(ctx, cache, data.snapshot.gameVersion, overlayRect, newSongsB15[i], i, 60);
   }
 
   // Render old songs (B35)
   for (let i = 0; i < oldSongsB35.length; i++) {
-    await renderSong(ctx, cache, overlayRect, oldSongsB35[i], i + 15, 110);
+    await renderSong(ctx, cache, data.snapshot.gameVersion, overlayRect, oldSongsB35[i], i + 15, 110);
   }
 
   await renderSongsLabel(ctx, cache, overlayRect, true, 24);
