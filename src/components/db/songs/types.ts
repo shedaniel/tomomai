@@ -10,6 +10,12 @@ export interface UniqueSong {
   slug: string;
 }
 
+export interface UserScore {
+  achievement: number;
+  fc: string;
+  fs: string;
+}
+
 export interface SongDetails {
   songName: string;
   artist: string;
@@ -18,6 +24,7 @@ export interface SongDetails {
   genre: string;
   bpm: number | null;
   addedVersion: number;
+  userScores?: Record<string, Record<string, UserScore>>;
   regions: {
     region: string;
     versions: {

@@ -2453,10 +2453,10 @@ export const userRouter = router({
       songName: z.string(),
       type: z.enum(['std', 'dx']),
     }))
-    .query(async ({ input }) => {
-      // Get all charts for this song across all regions and versions
-      const charts = await db
+    .query(async ({ input, ctx }) => {
+      const chartsQuery = db
         .select({
+          internalId: songs.id,
           id: songs.publicId,
           songName: songs.songName,
           artist: songs.artist,
@@ -2486,11 +2486,59 @@ export const userRouter = router({
         )
         .orderBy(songs.region, desc(songs.gameVersion), songs.difficulty);
 
+      // Fetch user scores if logged in (parallel query)
+      let scoresQuery: Promise<{ region: string; difficulty: string; achievement: number; fc: string; fs: string }[]> = Promise.resolve([]);
+
+      if (ctx.session?.user?.id) {
+        const userId = ctx.session.user.id;
+        
+        scoresQuery = db
+          .select({
+            region: songs.region,
+            difficulty: songs.difficulty,
+            achievement: userScores.achievement,
+            fc: userScores.fc,
+            fs: userScores.fs,
+          })
+          .from(userScores)
+          .innerJoin(songs, eq(userScores.songId, songs.id))
+          .where(
+            and(
+              eq(songs.songName, input.songName),
+              eq(songs.type, input.type),
+              inArray(
+                userScores.snapshotId,
+                db.selectDistinctOn([userSnapshots.region], { id: userSnapshots.id })
+                  .from(userSnapshots)
+                  .where(eq(userSnapshots.userId, userId))
+                  .orderBy(userSnapshots.region, desc(userSnapshots.fetchedAt))
+              )
+            )
+          );
+      }
+
+      const [charts, scores] = await Promise.all([chartsQuery, scoresQuery]);
+
       if (charts.length === 0) {
         throw new TRPCError({
           code: 'NOT_FOUND',
           message: 'Song not found',
         });
+      }
+
+      let userScoresMap: Record<string, Record<string, { achievement: number; fc: string; fs: string }>> | undefined;
+      if (scores.length > 0) {
+        userScoresMap = {};
+        for (const score of scores) {
+          if (!userScoresMap[score.region]) {
+            userScoresMap[score.region] = {};
+          }
+          userScoresMap[score.region][score.difficulty] = {
+            achievement: score.achievement,
+            fc: score.fc,
+            fs: score.fs
+          };
+        }
       }
 
       // Group charts by region -> gameVersion -> difficulty
@@ -2532,6 +2580,7 @@ export const userRouter = router({
         genre: firstChart.genre,
         bpm: chartWithBpm?.bpm ?? null,
         addedVersion: earliestAddedVersion,
+        userScores: userScoresMap,
         regions,
       };
     }),

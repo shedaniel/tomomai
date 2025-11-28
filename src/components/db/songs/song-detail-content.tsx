@@ -5,13 +5,89 @@ import Image from "next/image";
 import { trpc } from "@/lib/trpc-client";
 import { cn, createSafeMaimaiImageUrl } from "@/lib/utils";
 import { getVersionInfo } from "@/lib/metadata";
-import { SongDetails } from "./types";
+import { SongDetails, UserScore } from "./types";
+import { REGION_ENUM } from "@/lib/db/types";
+
+function getRate(achievement: number) {
+  if (achievement >= 1005000) return "SSS+";
+  if (achievement >= 1000000) return "SSS";
+  if (achievement >= 995000) return "SS+";
+  if (achievement >= 990000) return "SS";
+  if (achievement >= 980000) return "S+";
+  if (achievement >= 970000) return "S";
+  if (achievement >= 940000) return "AAA";
+  if (achievement >= 900000) return "AA";
+  if (achievement >= 800000) return "A";
+  if (achievement >= 750000) return "BBB";
+  if (achievement >= 700000) return "BB";
+  if (achievement >= 600000) return "B";
+  if (achievement >= 500000) return "C";
+  return "D";
+}
 
 interface SongDetailContentProps {
   songName: string;
   type: "std" | "dx";
   onClose: () => void;
   initialData?: SongDetails | null;
+}
+
+function ScoreRow({ score, region }: { score: UserScore; region: string }) {
+  return (
+    <div className={cn(
+      "col-span-full px-3 pb-2 pt-0 flex items-center gap-2 text-xs"
+    )}>
+      <div className="flex items-center gap-1.5 text-muted-foreground mr-1">
+        <Globe className="w-3 h-3" />
+        <span className="font-medium">Your Score ({region === 'intl' ? 'International' : 'Japan'})</span>
+      </div>
+      <div className="font-semibold tabular-nums text-sm">
+        {(score.achievement / 10000).toFixed(4)}%
+      </div>
+      <div className="font-medium text-primary">
+        {getRate(score.achievement)}
+      </div>
+      <div className="flex gap-1">
+        {['ap', 'ap+'].includes(score.fc) && (
+          <span className={cn(
+            "px-1 rounded-[2px] text-[9px] font-bold text-white uppercase",
+            score.fc === 'ap+' ? "bg-gradient-to-r from-orange-400 to-pink-500" : "bg-pink-500"
+          )}>
+            {score.fc}
+          </span>
+        )}
+        {['fc', 'fc+'].includes(score.fc) && (
+          <span className={cn(
+            "px-1 rounded-[2px] text-[9px] font-bold text-white uppercase",
+            score.fc === 'fc+' ? "bg-gradient-to-r from-emerald-400 to-teal-500" : "bg-emerald-500"
+          )}>
+            {score.fc}
+          </span>
+        )}
+        {['fdx', 'fdx+'].includes(score.fs) && (
+          <span className={cn(
+            "px-1 rounded-[2px] text-[9px] font-bold text-white uppercase",
+            score.fs === 'fdx+' ? "bg-gradient-to-r from-orange-400 to-amber-500" : "bg-orange-500"
+          )}>
+            {score.fs}
+          </span>
+        )}
+        {['fs', 'fs+'].includes(score.fs) && (
+          <span className={cn(
+            "px-1 rounded-[2px] text-[9px] font-bold text-white uppercase",
+            score.fs === 'fs+' ? "bg-gradient-to-r from-blue-400 to-indigo-500" : "bg-blue-500"
+          )}>
+            {score.fs}
+          </span>
+        )}
+        {score.fs === 'sync' && (
+           <span className="px-1 rounded-[2px] text-[9px] font-bold text-white bg-slate-500">
+            SYNC
+          </span>
+        )}
+      </div>
+    </div>
+  )
 }
 
 export function SongDetailContent({ songName, type, onClose, initialData }: SongDetailContentProps) {
@@ -72,6 +148,8 @@ export function SongDetailContent({ songName, type, onClose, initialData }: Song
   );
 
   const addedVersionInfo = getVersionInfo(data.addedVersion);
+  const hasTouch = sortedCharts.some(chart => chart.touchCount !== null);
+  const hasScore = !!data.userScores;
 
   return (
     <div className="space-y-6">
@@ -128,7 +206,9 @@ export function SongDetailContent({ songName, type, onClose, initialData }: Song
             Charts
           </h3>
 
-          <div className="border rounded-md overflow-x-auto grid grid-cols-[minmax(100px,1fr)_auto_1fr_1fr_1fr_1fr_1fr]">
+          <div className={
+            cn("border rounded-md overflow-x-auto grid",
+              hasTouch ? "grid-cols-[minmax(100px,1fr)_auto_1fr_1fr_1fr_1fr_1fr_1fr]" : "grid-cols-[minmax(100px,1fr)_auto_1fr_1fr_1fr_1fr_1fr]")}>
             {/* Header Row */}
             <div className="contents text-xs bg-accent/50 font-medium text-muted-foreground">
               <div className="py-2 px-3 border-b">Difficulty</div>
@@ -137,6 +217,7 @@ export function SongDetailContent({ songName, type, onClose, initialData }: Song
               <div className="py-2 px-3 text-center border-b">Tap</div>
               <div className="py-2 px-3 text-center border-b">Hold</div>
               <div className="py-2 px-3 text-center border-b">Slide</div>
+              {hasTouch && <div className="py-2 px-3 text-center border-b">Touch</div>}
               <div className="py-2 px-3 text-center border-b">Break</div>
             </div>
 
@@ -147,15 +228,15 @@ export function SongDetailContent({ songName, type, onClose, initialData }: Song
               const totalNotes = hasNoteData
                 ? (chart.tapCount ?? 0) + (chart.holdCount ?? 0) + (chart.slideCount ?? 0) + (chart.touchCount ?? 0) + (chart.breakCount ?? 0)
                 : null;
-              const isLast = index === sortedCharts.length - 1;
-              const hasDesigner = !!chart.noteDesigner;
+              const isFirst = index === 0;
+              const scores: (UserScore & { region: string })[] = Object.values(REGION_ENUM).map((region) => {
+                const score = data.userScores?.[region]?.[chart.difficulty];
+                return score ? { ...score, region } : undefined;
+              }).filter(score => !!score);
 
               // Show border on data row only if there is no designer row following it
               // (and it's not the last row of the table)
-              const dataBorderClass = hasDesigner ? "" : (isLast ? "" : "border-b");
-
-              // Show border on designer row unless it's the last row of the table
-              const designerBorderClass = isLast ? "" : "border-b";
+              const dataBorderClass = isFirst ? "" : "border-t";
 
               return (
                 <div key={chart.difficulty} className="contents text-sm">
@@ -166,9 +247,9 @@ export function SongDetailContent({ songName, type, onClose, initialData }: Song
                     </span>
                   </div>
                   {/* Level */}
-                  <div className={cn("py-2.5 px-3 flex items-baseline justify-center gap-1", dataBorderClass)}>
+                  <div className={cn("py-2.5 px-3 flex items-baseline justify-center", dataBorderClass)}>
                     <span className="text-lg font-bold tabular-nums">{chart.level}</span>
-                    <span className="text-xs text-muted-foreground">({(chart.levelPrecise / 10).toFixed(1)})</span>
+                    <span className="text-xs">.{chart.levelPrecise % 10}</span>
                   </div>
                   {/* Notes */}
                   <div className={cn("py-2.5 px-3 flex items-center justify-center tabular-nums", dataBorderClass)}>
@@ -186,18 +267,25 @@ export function SongDetailContent({ songName, type, onClose, initialData }: Song
                   <div className={cn("py-2.5 px-3 flex items-center justify-center tabular-nums", dataBorderClass)}>
                     {hasNoteData ? chart.slideCount : "-"}
                   </div>
+                  {/* Touch */}
+                  {hasTouch && <div className={cn("py-2.5 px-3 flex items-center justify-center tabular-nums", dataBorderClass)}>
+                    {hasNoteData ? chart.touchCount : "-"}
+                  </div>}
                   {/* Break */}
                   <div className={cn("py-2.5 px-3 flex items-center justify-center tabular-nums", dataBorderClass)}>
                     {hasNoteData ? chart.breakCount : "-"}
                   </div>
 
+                  {/* Score Row */}
+                  {scores.map((score) => (
+                    <ScoreRow key={score.region} score={score} region={score.region} />
+                  ))}
+
                   {/* Designer row (spans all columns) */}
                   {chart.noteDesigner && (
-                    <div className={cn(
-                      "col-span-full px-3 pb-2 pt-0 flex items-center gap-1.5 text-xs text-muted-foreground",
-                      designerBorderClass
-                    )}>
+                    <div className="col-span-full px-3 pb-2 pt-0 h-7 flex items-center gap-1.5 text-xs text-muted-foreground">
                       <Pencil className="w-3 h-3" />
+                      <span className="font-medium">Chart Designer</span>
                       <span>{chart.noteDesigner}</span>
                     </div>
                   )}

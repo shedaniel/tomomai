@@ -16,7 +16,6 @@ import { Search, Music, LayoutGrid, LayoutList, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
-import { AutoHeight } from "../animate-ui/primitives/effects/auto-height";
 
 import { UniqueSong, SongDetails, UniqueSongFilter, UniqueSongFilterType } from "./songs/types";
 import { createUniqueSongFilterCategories, applyUniqueSongFilters } from "./songs/filter-utils";
@@ -90,10 +89,12 @@ export function SongsDatabase({ selectedSlug: initialSlug, initialSongs, initial
 
   // Keep track of the last selected song to display during close animation
   const [displayedSong, setDisplayedSong] = useState<UniqueSong | null>(null);
+  const [snap, setSnap] = useState<number | string | null>(0.6);
 
   useEffect(() => {
     if (selectedSong) {
       setDisplayedSong(selectedSong);
+      setSnap(0.6);
     }
   }, [selectedSong]);
 
@@ -268,32 +269,48 @@ export function SongsDatabase({ selectedSlug: initialSlug, initialSongs, initial
       )}
 
       {/* Song Detail Drawer */}
-      <Drawer defaultOpen={!!selectedSong && currentSlug === initialSlug && currentSlug === selectedSong?.slug} open={!!selectedSong} onOpenChange={(open) => !open && handleCloseDetail()}>
-        <DrawerOverlay className="bg-transparent" />
-        <DrawerContent className="bg-card mx-auto w-[calc(min(100dvw-1rem,_42rem))]">
+      <Drawer
+        snapPoints={[0.6, 1]}
+        activeSnapPoint={snap}
+        setActiveSnapPoint={setSnap}
+        fadeFromIndex={1}
+        defaultOpen={!!selectedSong && currentSlug === initialSlug && currentSlug === selectedSong?.slug}
+        open={!!selectedSong}
+        onOpenChange={(open) => !open && handleCloseDetail()}
+      >
+        <DrawerOverlay />
+        <DrawerContent className="bg-card mx-auto w-[calc(min(100dvw-1rem,_42rem))] max-h-[97%]">
           <VisuallyHidden>
             <DrawerTitle>{displayedSong?.songName || "Song Details"}</DrawerTitle>
             <DrawerDescription>{displayedSong?.artist || "Song artist"}</DrawerDescription>
           </VisuallyHidden>
-          <AutoHeight>
-            <div className="relative max-h-[60vh] overflow-y-auto px-6 pt-4 pb-8">
-              <div className="absolute top-2 right-3 z-20">
-                <Button variant="secondary" size="icon" className="h-8 w-8 rounded-full" onClick={handleCloseDetail}>
-                  <X className="h-4 w-4 text-neutral-400 stroke-3" />
-                </Button>
-              </div>
-                {displayedSong && (
-                  <article aria-label={`Details for ${displayedSong.songName}`}>
-                    <SongDetailContent
-                      songName={displayedSong.songName}
-                      type={displayedSong.type}
-                      onClose={handleCloseDetail}
-                      initialData={displayedSong.slug === initialSlug ? initialSongDetails : null}
-                    />
-                  </article>
-                )}
+          <div
+            className={cn("relative px-6 pt-4 -mt-4", snap === 1 ? "overflow-y-auto" : "overflow-hidden")}
+            style={{ scrollbarGutter: "stable" }}
+            onWheel={(e) => {
+              if (snap !== 1 && e.deltaY > 0) {
+                setSnap(1);
+                e.preventDefault();
+              }
+            }}
+          >
+            <div className="absolute top-2 right-3 z-20">
+              <Button variant="secondary" size="icon" className="h-8 w-8 rounded-full" onClick={handleCloseDetail}>
+                <X className="h-4 w-4 text-neutral-400 stroke-3" />
+              </Button>
             </div>
-          </AutoHeight>
+              {displayedSong && (
+                <article aria-label={`Details for ${displayedSong.songName}`}>
+                  <SongDetailContent
+                    songName={displayedSong.songName}
+                    type={displayedSong.type}
+                    onClose={handleCloseDetail}
+                    initialData={displayedSong.slug === initialSlug ? initialSongDetails : null}
+                  />
+                </article>
+              )}
+              <div className="h-8" />
+          </div>
         </DrawerContent>
       </Drawer>
     </main>
