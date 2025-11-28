@@ -1,0 +1,6 @@
+__pycache__/
+.venv/
+difficulty_model.pkl
+*.png
+.env
+*.csv
