@@ -2,12 +2,11 @@ import { LocaleProvider } from '@/components/providers/locale-provider';
 import { TRPCProvider } from "@/components/providers/trpc-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { getLocale } from '@/i18n/locale-server';
+import { VercelToolbar } from "@vercel/toolbar/next";
 import type { Metadata } from "next";
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 import localFont from "next/font/local";
-import { Noto_Sans_SC, Noto_Sans_TC } from "next/font/google";
-import { VercelToolbar } from "@vercel/toolbar/next";
 import "./globals.css";
 
 // Local fonts
@@ -36,15 +35,15 @@ const murecho = localFont({
 });
 
 // Google Fonts for Chinese variants
-const notoSansTC = Noto_Sans_TC({
-  variable: "--font-noto-sans-tc", 
-  subsets: ["latin"],
+const notoSansTC = localFont({
+  src: "../../public/res/fonts/NotoSansTC-VariableFont_wght.woff2",
+  variable: "--font-noto-sans-tc",
   display: "swap",
 });
 
-const notoSansSC = Noto_Sans_SC({
+const notoSansSC = localFont({
+  src: "../../public/res/fonts/NotoSansSC-VariableFont_wght.woff2",
   variable: "--font-noto-sans-sc",
-  subsets: ["latin"], 
   display: "swap",
 });
 

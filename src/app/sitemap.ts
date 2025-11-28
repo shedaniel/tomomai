@@ -1,15 +1,17 @@
 import type { MetadataRoute } from 'next'
 import { resolveBaseUrl } from '@/lib/base-url';
 import { TYPES as DB_TYPES } from './db/layout';
-import { user, userSnapshots } from '@/lib/db/schema-pg';
+import { user, userSnapshots, songs } from '@/lib/db/schema-pg';
 import { and, eq, sql } from 'drizzle-orm';
 import { db } from '@/lib/db';
+import { getSongSlug } from '@/lib/song-slug';
 
 type SitemapItem = MetadataRoute.Sitemap[number];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = resolveBaseUrl();
 
+  // Get public profiles
   const profiles = await db
     .select({
       username: user.username,
@@ -24,6 +26,53 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       ),
     )
     .groupBy(user.id, user.username);
+
+  // Get unique songs for sitemap
+  type Song = { songName: string; artist: string; type: "std" | "dx" }
+  const uniqueSongs: Song[] = await db
+    .select({
+      songName: songs.songName,
+      artist: songs.artist,
+      type: songs.type,
+    })
+    .from(songs)
+    .groupBy(songs.songName, songs.artist, songs.type);
+
+  // Deduplicate songs by songName + type
+  const songSet = new Map<string, Song>();
+  for (const song of uniqueSongs) {
+    const key = `${song.songName}||${song.type}`;
+    if (!songSet.has(key)) {
+      songSet.set(key, song as Song);
+    }
+  }
+
+  // Generate slugs for all songs in parallel
+  const songsArray = Array.from(songSet.values());
+  const slugs = await Promise.all(songsArray.map(song => getSongSlug(song)));
+
+  // Detect same slugs and print as errors
+  const counter = new Map<string, Song[]>();
+  for (const song of songsArray) {
+    const slug = await getSongSlug(song);
+    if (!counter.has(slug)) {
+      counter.set(slug, [song]);
+    } else {
+      counter.get(slug)!.push(song);
+    }
+  }
+  
+  for (const [slug, songs] of counter.entries()) {
+    if (songs.length > 1) {
+      console.error(`Same slug found: ${slug} for ${songs.map(s => `'${s.songName}' by '${s.artist}'`).join(', ')}`);
+    }
+  }
+
+  const songSitemapItems = counter.keys().map((slug) => ({
+    url: `${baseUrl}/db/songs/${encodeURIComponent(slug)}`,
+    changeFrequency: 'monthly',
+    priority: 0.6,
+  } satisfies SitemapItem));
 
   return [
     {
@@ -50,5 +99,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'weekly',
       priority: 0.5,
     }) satisfies SitemapItem),
+    ...songSitemapItems,
   ]
 }

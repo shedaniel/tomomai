@@ -36,6 +36,13 @@
       "when": 1763556195709,
       "tag": "0004_magical_shadowcat",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1764334133227,
+      "tag": "0005_eager_stature",
+      "breakpoints": true
     }
   ]
 }

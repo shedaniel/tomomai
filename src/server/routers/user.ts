@@ -14,10 +14,13 @@ import { z } from 'zod';
 import { flagDefinitions } from '@/lib/flags';
 import { REGION_ENUM, TIMEZONE_ENUM } from '@/lib/db/types';
 import { logger } from '@/lib/logger';
+import { normalizeName } from '@/lib/name-utils';
+import { getSongSlugs } from '@/lib/song-slug';
 
 const SIGNUP_REQUIRED_AMOUNT = 256;
 
 const regionSchema = z.enum(['intl', 'jp']);
+const gameVersionSchema = z.number().int().min(-13).max(20);
 
 // Username validation helper
 const isValidUsername = (username: string): boolean => {
@@ -2359,6 +2362,178 @@ export const userRouter = router({
       await updateStoreChosenEdit(edit[0].storeId);
 
       return { success: true };
+    }),
+
+  // Get all songs for a region and version (public, for database page)
+  getSongs: publicProcedure
+    .input(z.object({
+      region: regionSchema,
+      gameVersion: gameVersionSchema,
+    }))
+    .query(async ({ input }) => {
+      const allSongs = await db
+        .select({
+          id: songs.publicId,
+          songName: songs.songName,
+          artist: songs.artist,
+          cover: songs.cover,
+          difficulty: songs.difficulty,
+          level: songs.level,
+          levelPrecise: songs.levelPrecise,
+          type: songs.type,
+          genre: songs.genre,
+          addedVersion: songs.addedVersion,
+        })
+        .from(songs)
+        .where(
+          and(
+            eq(songs.region, input.region),
+            eq(songs.gameVersion, input.gameVersion)
+          )
+        )
+        .orderBy(songs.songName, songs.difficulty);
+
+      return { songs: allSongs };
+    }),
+
+  // Get available game versions for a region (public)
+  getAvailableGameVersions: publicProcedure
+    .input(z.object({
+      region: regionSchema,
+    }))
+    .query(async ({ input }) => {
+      const versions = await db
+        .select({
+          gameVersion: songs.gameVersion,
+        })
+        .from(songs)
+        .where(eq(songs.region, input.region))
+        .groupBy(songs.gameVersion)
+        .orderBy(desc(songs.gameVersion));
+
+      return { versions: versions.map(v => v.gameVersion) };
+    }),
+
+  // Get all unique songs across all regions and versions (for database page)
+  getAllUniqueSongs: publicProcedure
+    .query(async () => {
+      // Get all songs grouped by name and type (unique songs)
+      // We pick the latest version's data for cover/artist, and the earliest addedVersion
+      const allSongs = await db
+        .select({
+          songName: songs.songName,
+          artist: songs.artist,
+          cover: songs.cover,
+          type: songs.type,
+          genre: songs.genre,
+          addedVersion: sql<number>`MIN(${songs.addedVersion})`.as('addedVersion'),
+        })
+        .from(songs)
+        .groupBy(songs.songName, songs.type, songs.artist, songs.cover, songs.genre)
+        .orderBy(songs.songName);
+
+      // Deduplicate by songName + type (same song can have std and dx versions)
+      const uniqueSongs = new Map<string, typeof allSongs[0]>();
+      for (const song of allSongs) {
+        // if (normalizeName(song.songName) !== song.songName) continue;
+        const key = `${song.songName}||${song.type}`;
+        if (!uniqueSongs.has(key)) {
+          uniqueSongs.set(key, song);
+        }
+      }
+
+      // Add pre-computed slugs for URL routing
+      const songsWithSlugs = await getSongSlugs(Array.from(uniqueSongs.values()));
+      return { songs: songsWithSlugs };
+    }),
+
+  // Get detailed info for a specific song (by name and type) across all regions/versions
+  getSongDetails: publicProcedure
+    .input(z.object({
+      songName: z.string(),
+      type: z.enum(['std', 'dx']),
+    }))
+    .query(async ({ input }) => {
+      // Get all charts for this song across all regions and versions
+      const charts = await db
+        .select({
+          id: songs.publicId,
+          songName: songs.songName,
+          artist: songs.artist,
+          cover: songs.cover,
+          difficulty: songs.difficulty,
+          level: songs.level,
+          levelPrecise: songs.levelPrecise,
+          type: songs.type,
+          genre: songs.genre,
+          region: songs.region,
+          gameVersion: songs.gameVersion,
+          addedVersion: songs.addedVersion,
+          bpm: songs.bpm,
+          noteDesigner: songs.noteDesigner,
+          tapCount: songs.tapCount,
+          holdCount: songs.holdCount,
+          slideCount: songs.slideCount,
+          touchCount: songs.touchCount,
+          breakCount: songs.breakCount,
+        })
+        .from(songs)
+        .where(
+          and(
+            eq(songs.songName, input.songName),
+            eq(songs.type, input.type)
+          )
+        )
+        .orderBy(songs.region, desc(songs.gameVersion), songs.difficulty);
+
+      if (charts.length === 0) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Song not found',
+        });
+      }
+
+      // Group charts by region -> gameVersion -> difficulty
+      const byRegion = new Map<string, Map<number, typeof charts>>();
+      for (const chart of charts) {
+        if (!byRegion.has(chart.region)) {
+          byRegion.set(chart.region, new Map());
+        }
+        const regionMap = byRegion.get(chart.region)!;
+        if (!regionMap.has(chart.gameVersion)) {
+          regionMap.set(chart.gameVersion, []);
+        }
+        regionMap.get(chart.gameVersion)!.push(chart);
+      }
+
+      // Convert to serializable format
+      const regions = Array.from(byRegion.entries()).map(([region, versionMap]) => ({
+        region,
+        versions: Array.from(versionMap.entries()).map(([version, vCharts]) => ({
+          gameVersion: version,
+          charts: vCharts,
+        })).sort((a, b) => b.gameVersion - a.gameVersion),
+      }));
+
+      // Get the basic info from the first chart
+      const firstChart = charts[0];
+      
+      // Find the first chart with BPM data
+      const chartWithBpm = charts.find(c => c.bpm !== null);
+      
+      // Find the earliest added version
+      const earliestAddedVersion = Math.min(...charts.map(c => c.addedVersion));
+
+      return {
+        songName: firstChart.songName,
+        artist: firstChart.artist,
+        cover: firstChart.cover,
+        type: firstChart.type,
+        genre: firstChart.genre,
+        bpm: chartWithBpm?.bpm ?? null,
+        addedVersion: earliestAddedVersion,
+        regions,
+      };
     }),
 
 }); 

@@ -42,6 +42,14 @@ export interface SongWithScore {
   fs: "none" | "sync" | "fs" | "fs+" | "fdx" | "fdx+";
 }
 
+export interface NoteCounts {
+  tap: number;
+  hold: number;
+  slide: number;
+  touch: number;
+  break: number;
+}
+
 // Event data for area and event area events
 export interface EventData {
   eventType: "area" | "eventArea";

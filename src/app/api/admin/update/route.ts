@@ -1,6 +1,9 @@
 import { AGENT, processMaimaiToken } from "@/lib/maimai-fetcher";
 import { getCurrentVersion, getVersionInfo } from "@/lib/metadata";
-import { normalizeName } from "@/lib/name-utils";
+import { normalizeGenre, normalizeName } from "@/lib/name-utils";
+import { Difficulty, Level, NoteCounts, Region, SongType } from "@/lib/types";
+import { DxRatingResponse } from "@/lib/types/dxrating";
+import { OfficialSong, ParsedSong, UpdateSong } from "@/lib/types/update";
 import { sortKeys } from "@/lib/utils";
 import { load } from "cheerio";
 import { promises as fs } from "fs";
@@ -10,18 +13,6 @@ import { join } from "path";
 const DXDATA_URL = "https://raw.githubusercontent.com/gekichumai/dxrating/refs/heads/main/packages/dxdata/dxdata.json";
 const MAIMAI_SONGS_JSON_URL = "https://maimai.sega.jp/data/maimai_songs.json";
 const MAIMAI_SONGS_JSON_URL_INTL = "https://maimai.sega.com/assets/data/maimai_songs.json";
-
-type Song = {
-  songName: string;
-  artist: string;
-  cover: string;
-  difficulty: "basic" | "advanced" | "expert" | "master" | "remaster" | "utage";
-  level: "1" | "1+" | "2" | "2+" | "3" | "3+" | "4" | "4+" | "5" | "5+" | "6" | "6+" | "7" | "7+" | "8" | "8+" | "9" | "9+" | "10" | "10+" | "11" | "11+" | "12" | "12+" | "13" | "13+" | "14" | "14+" | "15" | "15+" | "16" | "16+";
-  levelPrecise: number;
-  type: "std" | "dx";
-  genre: string;
-  addedVersion: number;
-}
 
 // Helper function to convert level string to precise value (stored as 10x)
 function levelToPrecise(level: string): number {
@@ -47,7 +38,7 @@ function levelToPrecise(level: string): number {
 }
 
 // Helper function to fetch dxdata.json
-async function fetchDxDataJson(): Promise<any> {
+async function fetchDxDataJson(): Promise<DxRatingResponse> {
   console.log("Fetching dxdata.json...");
   const dxDataResponse = await fetch(DXDATA_URL, {
     headers: {
@@ -70,16 +61,16 @@ function getInternalLevelFromDxData(
   type: "dx" | "std", 
   difficulty: string, 
   region: "intl" | "jp",
-  dxData: any
+  dxData: DxRatingResponse
 ): number | null {
   // Find the song by title
-  const song = dxData.songs.find((s: any) => normalizeName(s.title) === songTitle);
+  const song = dxData.songs.find(s => normalizeName(s.title) === songTitle);
   if (!song) {
     return null;
   }
 
   // Find the sheet by type and difficulty
-  const sheet = song.sheets.find((s: any) => s.type === type && s.difficulty === difficulty);
+  const sheet = song.sheets.find(s => s.type === type && s.difficulty === difficulty);
   if (!sheet) {
     return null;
   }
@@ -118,7 +109,7 @@ function getPreciseLevelValue(
   type: "dx" | "std",
   difficulty: string,
   region: "intl" | "jp",
-  dxData: any
+  dxData: DxRatingResponse
 ): number {
   // Try to get from dxdata.json first
   const dxDataLevel = getInternalLevelFromDxData(songTitle, type, difficulty, region, dxData);
@@ -132,8 +123,44 @@ function getPreciseLevelValue(
   return levelToPrecise(level);
 }
 
+function getExtraDataFromDxData(
+  songTitle: string,
+  type: "dx" | "std",
+  difficulty: string,
+  dxData: DxRatingResponse
+): {
+  bpm: number | null;
+  noteDesigner: string | null;
+  noteCounts: NoteCounts | null;
+} {
+  let bpm: number | null = null;
+  let noteDesigner: string | null = null;
+  let noteCounts: NoteCounts | null = null;
+
+  const song = dxData.songs.find(s => normalizeName(s.title) === songTitle);
+  if (song) {
+    bpm = song.bpm;
+
+    const sheet = song.sheets.find(s => s.type === type && s.difficulty === difficulty);
+    if (sheet) {
+      if (sheet.noteDesigner !== "-") {
+        noteDesigner = sheet.noteDesigner;
+      }
+      if (sheet.noteCounts) {
+        noteCounts = sheet.noteCounts;
+      }
+    }
+  }
+  
+  return {
+    bpm: bpm ?? null,
+    noteDesigner: noteDesigner ?? null,
+    noteCounts: noteCounts ?? null,
+  }
+}
+
 // Helper function to get cookies from redirect URL
-async function getCookiesFromRedirect(region: "intl" | "jp", redirectUrl: string, redirectCookies: string | null): Promise<string> {
+async function getCookiesFromRedirect(redirectUrl: string, redirectCookies: string | null): Promise<string> {
   console.log(`Fetching redirect URL to get login cookies: ${redirectUrl}`);
   
   const loginResponse = await fetch(redirectUrl, {
@@ -178,7 +205,7 @@ async function getCookiesFromRedirect(region: "intl" | "jp", redirectUrl: string
 }
 
 // Helper function to fetch and parse song data for a specific difficulty and version
-async function fetchSongDataForDifficulty(region: "intl" | "jp", cookies: string, difficulty: number, version: number): Promise<any[]> {
+async function fetchSongDataForDifficulty(region: "intl" | "jp", cookies: string, difficulty: number, version: number): Promise<ParsedSong[]> {
   const songsUrl = `https://${region === "intl" ? "maimaidx-eng.com" : "maimaidx.jp"}/maimai-mobile/record/musicVersion/search/?version=${version}&diff=${difficulty}`;
   console.log(`Fetching songs data for version ${version}, difficulty ${difficulty} from: ${songsUrl}`);
 
@@ -205,7 +232,7 @@ async function fetchSongDataForDifficulty(region: "intl" | "jp", cookies: string
 }
 
 // Helper function to parse song data from HTML
-function parseSongData(html: string, difficulty: number, version: number): any[] {
+function parseSongData(html: string, difficulty: number, version: number): ParsedSong[] {
   const $ = load(html);
   
   // Use correct selector based on difficulty
@@ -224,7 +251,7 @@ function parseSongData(html: string, difficulty: number, version: number): any[]
   }
   
   const blocks = $(selector);
-  const songs: any[] = [];
+  const songs: ParsedSong[] = [];
 
   console.log(`Found ${blocks.length} song blocks for difficulty ${difficulty} using selector ${selector}`);
 
@@ -246,7 +273,7 @@ function parseSongData(html: string, difficulty: number, version: number): any[]
         return; // Skip this block
       }
 
-      let musicType: "dx" | "std";
+      let musicType: SongType;
       if (iconSrc.includes('music_dx.png')) {
         musicType = "dx";
       } else if (iconSrc.includes('music_standard.png')) {
@@ -292,12 +319,11 @@ function parseSongData(html: string, difficulty: number, version: number): any[]
 
       const songData = {
         songName,
-        level,
+        level: level as Level,
         musicType,
         difficulty: difficultyName,
         inputValue,
         inputName,
-        // Additional metadata
         difficultyNumber: difficulty,
         version,
         index,
@@ -316,7 +342,7 @@ function parseSongData(html: string, difficulty: number, version: number): any[]
 }
 
 // Helper function to fetch detailed song information
-async function fetchSongDetail(region: "intl" | "jp", cookies: string, inputName: string, inputValue: string): Promise<any> {
+async function fetchSongDetail(region: "intl" | "jp", cookies: string, inputName: string, inputValue: string): Promise<ReturnType<typeof parseSongDetail>> {
   const params = new URLSearchParams();
   params.append(inputName, inputValue);
   const detailUrl = `https://${region === "intl" ? "maimaidx-eng.com" : "maimaidx.jp"}/maimai-mobile/record/musicDetail/?${params.toString()}`;
@@ -345,7 +371,11 @@ async function fetchSongDetail(region: "intl" | "jp", cookies: string, inputName
 }
 
 // Helper function to parse detailed song information from HTML
-function parseSongDetail(html: string, region: "intl" | "jp"): any {
+function parseSongDetail(html: string, region: "intl" | "jp"): {
+  coverUrl: string;
+  genre: string;
+  artist: string;
+} {
   const $ = load(html);
   
   // Extract cover image URL
@@ -364,7 +394,7 @@ function parseSongDetail(html: string, region: "intl" | "jp"): any {
   if (genreElement.length === 0) {
     throw new Error("Could not find genre element in song detail");
   }
-  const genre = genreElement.text().trim();
+  const genre = normalizeGenre(genreElement.text().trim());
 
   // Extract artist
   const artistElement = $('.basic_block .f_12.break');
@@ -383,9 +413,9 @@ function parseSongDetail(html: string, region: "intl" | "jp"): any {
 }
 
 // Helper function to prepare song entries from scraped difficulty data
-function prepareSongEntriesFromScrapedData(difficulties: any[], jsonSong: any | undefined, region: "intl" | "jp", dxData: any): Song[] {
+function prepareSongEntriesFromScrapedData(difficulties: ParsedSong[], jsonSong: OfficialSong | undefined, region: Region, dxData: DxRatingResponse): UpdateSong[] {
   const difficultyNames = ["basic", "advanced", "expert", "master", "remaster"];
-  const records: Song[] = [];
+  const records: UpdateSong[] = [];
 
   // Get common song info from first difficulty
   const songInfo = difficulties[0];
@@ -396,7 +426,7 @@ function prepareSongEntriesFromScrapedData(difficulties: any[], jsonSong: any | 
   const cover = jsonSong?.image_url
     ? (region === "intl" ? `https://maimaidx-eng.com/maimai-mobile/img/Music/${jsonSong.image_url}` : `https://maimaidx.jp/maimai-mobile/img/Music/${jsonSong.image_url}`)
     : "https://maimaidx.jp/maimai-mobile/img/Music/default.png";
-  const genre = jsonSong?.catcode || "Unknown";
+  const genre = normalizeGenre(jsonSong?.catcode || "Unknown");
   
   // Prepare each difficulty as a separate record
   for (const difficulty of difficulties) {
@@ -405,16 +435,21 @@ function prepareSongEntriesFromScrapedData(difficulties: any[], jsonSong: any | 
     // Calculate addedVersion: -1 for versions 0-12, version-13 for versions 13+
     const addedVersion = difficulty.version <= 12 ? -1 : difficulty.version - 13;
     
+    const { bpm, noteDesigner, noteCounts } = getExtraDataFromDxData(songName, musicType, difficultyName, dxData);
+    
     records.push({
       songName,
       artist,
       cover,
-      difficulty: difficultyName as "basic" | "advanced" | "expert" | "master" | "remaster",
+      difficulty: difficultyName as Difficulty,
       level: difficulty.level,
       levelPrecise: getPreciseLevelValue(songName, difficulty.level, musicType, difficultyName, region, dxData),
-      type: musicType as "std" | "dx",
+      type: musicType as SongType,
       genre,
       addedVersion,
+      bpm,
+      noteDesigner,
+      noteCounts,
     });
   }
 
@@ -423,9 +458,9 @@ function prepareSongEntriesFromScrapedData(difficulties: any[], jsonSong: any | 
 }
 
 // Helper function to prepare song entries using fetched metadata
-function prepareSongEntriesWithFetchedData(difficulties: any[], songDetail: any, region: "intl" | "jp", dxData: any): Song[] {
+function prepareSongEntriesWithFetchedData(difficulties: ParsedSong[], songDetail: ReturnType<typeof parseSongDetail>, region: Region, dxData: DxRatingResponse): UpdateSong[] {
   const difficultyNames = ["basic", "advanced", "expert", "master", "remaster"];
-  const records: Song[] = [];
+  const records: UpdateSong[] = [];
 
   // Get common song info from first difficulty
   const songInfo = difficulties[0];
@@ -445,12 +480,15 @@ function prepareSongEntriesWithFetchedData(difficulties: any[], songDetail: any,
       songName,
       artist,
       cover: coverUrl,
-      difficulty: difficultyName as "basic" | "advanced" | "expert" | "master" | "remaster",
+      difficulty: difficultyName as Difficulty,
       level: difficulty.level,
       levelPrecise: getPreciseLevelValue(songName, difficulty.level, musicType, difficultyName, region, dxData),
-      type: musicType as "std" | "dx",
+      type: musicType,
       genre,
       addedVersion,
+      bpm: null,
+      noteDesigner: null,
+      noteCounts: null,
     });
   }
 
@@ -459,7 +497,7 @@ function prepareSongEntriesWithFetchedData(difficulties: any[], songDetail: any,
 }
 
 // Helper function to load fallback JSON data
-async function loadFallbackJsonData(region: "intl" | "jp", version: number): Promise<any[] | null> {
+async function loadFallbackJsonData(region: Region, version: number): Promise<any[] | null> {
   try {
     const filePath = join(process.cwd(), "data", "extra", `${region}-${version}.json`);
     console.log(`Checking for fallback JSON file: ${filePath}`);
@@ -476,7 +514,7 @@ async function loadFallbackJsonData(region: "intl" | "jp", version: number): Pro
 }
 
 // Helper function to load exclusion JSON data
-async function loadExclusionJsonData(region: "intl" | "jp", version: number): Promise<string[] | null> {
+async function loadExclusionJsonData(region: Region, version: number): Promise<string[] | null> {
   try {
     const filePath = join(process.cwd(), "data", "exclusion", `${region}-${version}.json`);
     console.log(`Checking for exclusion JSON file: ${filePath}`);
@@ -498,9 +536,9 @@ async function loadExclusionJsonData(region: "intl" | "jp", version: number): Pr
 }
 
 // Helper function to convert fallback JSON songs to database records
-function convertFallbackJsonToRecords(fallbackSongs: any[]): Song[] {
-  const records: Song[] = [];
-  const difficultyMap = {
+function convertFallbackJsonToRecords(fallbackSongs: any[]): UpdateSong[] {
+  const records: UpdateSong[] = [];
+  const difficultyMap = { 
     "easy": "basic",
     "advanced": "advanced", 
     "expert": "expert",
@@ -509,25 +547,28 @@ function convertFallbackJsonToRecords(fallbackSongs: any[]): Song[] {
   };
 
   for (const song of fallbackSongs) {
-    const { title, artist, genre, type, addedVersion, cover, levels } = song;
+    const { title, artist, genre, type, addedVersion, cover, levels, bpm, noteDesigner, noteCounts } = song;
     
     // Process each difficulty level in the song
     for (const [difficultyKey, difficultyData] of Object.entries(levels)) {
       const mappedDifficulty = difficultyMap[difficultyKey as keyof typeof difficultyMap];
       if (!mappedDifficulty || !difficultyData) continue;
       
-      const levelData = difficultyData as { level: string; levelPrecise: number };
+      const levelData = difficultyData as { level: Level; levelPrecise: number };
       
       records.push({
         songName: title,
         artist,
         cover,
-        difficulty: mappedDifficulty as "basic" | "advanced" | "expert" | "master" | "remaster",
-        level: levelData.level as Song["level"],
+        difficulty: mappedDifficulty as Difficulty,
+        level: levelData.level,
         levelPrecise: levelData.levelPrecise,
-        type: type as "std" | "dx",
+        type: type as SongType,
         genre,
         addedVersion,
+        bpm,
+        noteDesigner,
+        noteCounts,
       });
     }
   }
@@ -537,7 +578,7 @@ function convertFallbackJsonToRecords(fallbackSongs: any[]): Song[] {
 }
 
 // Helper function to check if a song record already exists in the list
-function songRecordExists(records: Song[], songName: string, difficulty: string, type: string): boolean {
+function songRecordExists(records: UpdateSong[], songName: string, difficulty: Difficulty, type: SongType): boolean {
   return records.some(record => 
     record.songName === songName && 
     record.difficulty === difficulty && 
@@ -546,7 +587,7 @@ function songRecordExists(records: Song[], songName: string, difficulty: string,
 }
 
 // Helper function to add fallback songs that don't already exist
-function addFallbackSongs(allRecords: Song[], fallbackRecords: Song[]): number {
+function addFallbackSongs(allRecords: UpdateSong[], fallbackRecords: UpdateSong[]): number {
   let addedCount = 0;
   
   for (const fallbackRecord of fallbackRecords) {
@@ -638,11 +679,11 @@ export async function GET(request: NextRequest) {
 
     // Step 2: Get cookies from redirect URL
     console.log("Step 2: Getting cookies from redirect URL...");
-    const cookies = await getCookiesFromRedirect(region, validation.redirectUrl, validation.cookies || null);
+    const cookies = await getCookiesFromRedirect(validation.redirectUrl, validation.cookies || null);
 
     // Step 3: Fetch and parse song data for all difficulties (0-4) and versions
     console.log("Step 3: Fetching and parsing song data for all difficulties and versions...");
-    const allSongData: any[] = [];
+    const allSongData: ParsedSong[] = [];
     
     // Get available versions for the region
     const currentVersion = getCurrentVersion(region);
@@ -659,7 +700,7 @@ export async function GET(request: NextRequest) {
       console.log(`Fetching ${range.description} (versions ${range.start}-${range.end})...`);
       
       for (let version = range.start; version <= range.end; version++) {
-        const promises: Promise<any[]>[] = [];
+        const promises: Promise<ParsedSong[]>[] = [];
         for (let difficulty = 0; difficulty <= 4; difficulty++) {
           console.log(`Fetching songs for version ${version}, difficulty ${difficulty}...`);
           try {
@@ -689,7 +730,7 @@ export async function GET(request: NextRequest) {
       throw new Error(`Failed to fetch maimai songs JSON: HTTP ${songsJsonResponse.status}`);
     }
 
-    const songsJsonData = await songsJsonResponse.json();
+    const songsJsonData: OfficialSong[] = await songsJsonResponse.json();
     console.log(`Loaded ${songsJsonData.length} songs from JSON data`);
 
     // Step 4.5: Fetch dxdata.json for accurate internal level values
@@ -697,17 +738,17 @@ export async function GET(request: NextRequest) {
     const dxData = await fetchDxDataJson();
 
     // Step 5: Create a map of songs by title for quick lookup
-    const songsJsonMap = new Map<string, any>();
-    songsJsonData.forEach((song: any) => {
+    const songsJsonMap = new Map<string, OfficialSong>();
+    songsJsonData.forEach((song: OfficialSong) => {
       songsJsonMap.set(normalizeName(song.title), song);
     });
 
     // Step 6: Process songs using scraped data and JSON metadata
     console.log("Step 6: Processing songs with scraped data and JSON metadata...");
-    const songsNeedingFetch: any[] = [];
+    const songsNeedingFetch: ParsedSong[] = [];
 
     // Group songs by song name and type to combine all difficulties
-    const songsGrouped = new Map<string, any[]>();
+    const songsGrouped = new Map<string, ParsedSong[]>();
     allSongData.forEach(song => {
       const songKey = `${song.songName}@${song.musicType}`;
       if (!songsGrouped.has(songKey)) {
@@ -720,7 +761,7 @@ export async function GET(request: NextRequest) {
 
     let processedFromJson = 0;
     let processedFromFetch = 0;
-    const allRecordsToInsert: Song[] = [];
+    const allRecordsToInsert: UpdateSong[] = [];
 
     // Process each unique song
     for (const [songKey, difficulties] of songsGrouped) {

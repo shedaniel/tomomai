@@ -105,7 +105,9 @@ export const invites = pgTable("invites", {
   claimedAt: timestamp("claimedAt", { precision: 0 }),
   expiresAt: timestamp("expiresAt", { precision: 0 }).notNull(),
   revoked: boolean("revoked").notNull().default(false),
-});
+}, (table) => [
+  index("invites_createdby_idx").on(table.createdBy),
+]);
 
 // Maimai-specific tables
 export const userTokens = pgTable("user_tokens", {
@@ -171,11 +173,19 @@ export const songs = pgTable("songs", {
   region: regionEnum("region").notNull(),
   gameVersion: smallint("gameVersion").notNull(),
   addedVersion: smallint("addedVersion").notNull(), // -1 for legacy versions, or actual version number for newer versions
+  bpm: smallint("bpm"),
+  noteDesigner: text("noteDesigner"),
+  tapCount: smallint("tapCount"),
+  holdCount: smallint("holdCount"),
+  slideCount: smallint("slideCount"),
+  touchCount: smallint("touchCount"),
+  breakCount: smallint("breakCount"),
 }, (table) => [
   unique("song_name_difficulty_type_region_version_unique").on(table.songName, table.difficulty, table.type, table.region, table.gameVersion),
   index("songs_publicid_idx").on(table.publicId),
   index("songs_region_gameversion_idx").on(table.region, table.gameVersion),
   index("songs_songname_difficulty_idx").on(table.songName, table.difficulty),
+  index("songs_songname_type_idx").on(table.songName, table.type),
 ]);
 
 export const userScores = pgTable("user_scores", {
@@ -268,51 +278,52 @@ export const userRecentSongsDetailed = pgTable("user_recent_songs_detailed", {
   ratingChange: smallint("ratingChange").notNull(),
 }, (table) => [
 ]);
-    
-    export const stores = pgTable("stores", {
-      id: bigint("id", { mode: "bigint" }).primaryKey().generatedAlwaysAsIdentity(),
-      country: text("country").notNull(),
-      area: text("area"), // Nullable, used for JP prefectures
-      name: text("name").notNull(),
-      address: text("address").notNull(),
-      location: point("location", { mode: "xy" }),
-      chosenEditId: bigint("chosenEditId", { mode: "bigint" }), // References store_edits.id
-      createdAt: timestamp("createdAt", { precision: 0 }).notNull().defaultNow(),
-      updatedAt: timestamp("updatedAt", { precision: 0 }).notNull().defaultNow(),
-    }, (table) => [
-      index("stores_country_area_idx").on(table.country, table.area),
-      unique("stores_name_address_unique").on(table.name, table.address),
-    ]);
-    
-    export const storeEdits = pgTable("store_edits", {
-      id: bigint("id", { mode: "bigint" }).primaryKey().generatedAlwaysAsIdentity(),
-      storeId: bigint("storeId", { mode: "bigint" }).notNull().references(() => stores.id, { onDelete: "cascade" }),
-      userId: text("userId").notNull().references(() => user.id, { onDelete: "cascade" }),
-      name: varchar("name", { length: 32 }),
-      address: text("address"), // 10-256 chars validation in app
-      openingHours: text("openingHours"),
-      toilet: boolean("toilet"),
-      smoke: boolean("smoke"),
-      access: text("access"),
-      status: storeStatusEnum("status"),
-      currency: text("currency"),
-      games: jsonb("games"), // { [game: string]: { amount: number, price: number } }
-      additionalInfo: jsonb("additionalInfo"),
-      createdAt: timestamp("createdAt", { precision: 0 }).notNull().defaultNow(),
-      updatedAt: timestamp("updatedAt", { precision: 0 }).notNull().defaultNow(),
-    }, (table) => [
-      index("store_edits_storeid_idx").on(table.storeId),
-      index("store_edits_userid_idx").on(table.userId),
-    ]);
-    
-    export const storeEditVotes = pgTable("store_edit_votes", {
-      id: bigint("id", { mode: "bigint" }).primaryKey().generatedAlwaysAsIdentity(),
-      editId: bigint("editId", { mode: "bigint" }).notNull().references(() => storeEdits.id, { onDelete: "cascade" }),
-      userId: text("userId").notNull().references(() => user.id, { onDelete: "cascade" }),
-      vote: smallint("vote").notNull(), // 1 or -1
-      createdAt: timestamp("createdAt", { precision: 0 }).notNull().defaultNow(),
-    }, (table) => [
-      unique("store_edit_votes_userid_editid_unique").on(table.userId, table.editId),
-      index("store_edit_votes_editid_idx").on(table.editId),
-    ]);
-    
+
+export const stores = pgTable("stores", {
+  id: bigint("id", { mode: "bigint" }).primaryKey().generatedAlwaysAsIdentity(),
+  country: text("country").notNull(),
+  area: text("area"), // Nullable, used for JP prefectures
+  name: text("name").notNull(),
+  address: text("address").notNull(),
+  location: point("location", { mode: "xy" }),
+  chosenEditId: bigint("chosenEditId", { mode: "bigint" }), // References store_edits.id
+  createdAt: timestamp("createdAt", { precision: 0 }).notNull().defaultNow(),
+  updatedAt: timestamp("updatedAt", { precision: 0 }).notNull().defaultNow(),
+}, (table) => [
+  index("stores_country_area_idx").on(table.country, table.area),
+  unique("stores_name_address_unique").on(table.name, table.address),
+]);
+
+export const storeEdits = pgTable("store_edits", {
+  id: bigint("id", { mode: "bigint" }).primaryKey().generatedAlwaysAsIdentity(),
+  storeId: bigint("storeId", { mode: "bigint" }).notNull().references(() => stores.id, { onDelete: "cascade" }),
+  userId: text("userId").notNull().references(() => user.id, { onDelete: "cascade" }),
+  name: varchar("name", { length: 32 }),
+  address: text("address"), // 10-256 chars validation in app
+  openingHours: text("openingHours"),
+  toilet: boolean("toilet"),
+  smoke: boolean("smoke"),
+  access: text("access"),
+  status: storeStatusEnum("status"),
+  currency: text("currency"),
+  games: jsonb("games"), // { [game: string]: { amount: number, price: number } }
+  additionalInfo: jsonb("additionalInfo"),
+  createdAt: timestamp("createdAt", { precision: 0 }).notNull().defaultNow(),
+  updatedAt: timestamp("updatedAt", { precision: 0 }).notNull().defaultNow(),
+}, (table) => [
+  index("store_edits_storeid_idx").on(table.storeId),
+  index("store_edits_userid_idx").on(table.userId),
+  index("store_edits_storeid_userid_idx").on(table.storeId, table.userId),
+]);
+
+export const storeEditVotes = pgTable("store_edit_votes", {
+  id: bigint("id", { mode: "bigint" }).primaryKey().generatedAlwaysAsIdentity(),
+  editId: bigint("editId", { mode: "bigint" }).notNull().references(() => storeEdits.id, { onDelete: "cascade" }),
+  userId: text("userId").notNull().references(() => user.id, { onDelete: "cascade" }),
+  vote: smallint("vote").notNull(), // 1 or -1
+  createdAt: timestamp("createdAt", { precision: 0 }).notNull().defaultNow(),
+}, (table) => [
+  unique("store_edit_votes_userid_editid_unique").on(table.userId, table.editId),
+  index("store_edit_votes_editid_idx").on(table.editId),
+]);
+
