@@ -25,7 +25,7 @@ export interface Snapshot {
 }
 
 // Song data with score information
-export interface SongWithScore {
+export type SongBase = {
   songId: string;
   songName: string;
   artist: string;
@@ -33,14 +33,27 @@ export interface SongWithScore {
   difficulty: Difficulty;
   level: string;
   levelPrecise: number;
-  type: "std" | "dx";
+  type: SongType;
   genre: string;
   addedVersion: number;
+}
+
+export type SongWithScore = SongBase & {
   achievement: number;
   dxScore: number;
-  fc: "none" | "fc" | "fc+" | "ap" | "ap+";
-  fs: "none" | "sync" | "fs" | "fs+" | "fdx" | "fdx+";
+  fc: FullCombo;
+  fs: FullSync;
 }
+
+export type SongExtended = SongBase & {
+  bpm: number | null;
+  noteDesigner: string | null;
+  tapCount: number | null;
+  holdCount: number | null;
+  slideCount: number | null;
+  touchCount: number | null;
+  breakCount: number | null;
+};
 
 export interface NoteCounts {
   tap: number;

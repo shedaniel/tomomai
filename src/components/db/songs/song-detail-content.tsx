@@ -8,7 +8,25 @@ import { getCurrentVersion, getVersionInfo } from "@/lib/metadata";
 import { calculateSongRating } from "@/lib/rating-calculator";
 import { SongDetails, UserScore } from "./types";
 import { REGION_ENUM } from "@/lib/db/types";
-import { Region } from "@/lib/types";
+import { Difficulty, Region, SongExtended } from "@/lib/types";
+
+const DIFFICULTY_COLORS: Record<Difficulty, { bg: string; text: string; border: string }> = {
+  basic: { bg: "bg-emerald-500", text: "text-emerald-600", border: "border-emerald-500" },
+  advanced: { bg: "bg-amber-500", text: "text-amber-600", border: "border-amber-500" },
+  expert: { bg: "bg-rose-500", text: "text-rose-600", border: "border-rose-500" },
+  master: { bg: "bg-violet-500", text: "text-violet-600", border: "border-violet-500" },
+  remaster: { bg: "bg-violet-300", text: "text-violet-500", border: "border-violet-300" },
+  utage: { bg: "bg-pink-500", text: "text-pink-600", border: "border-pink-500" },
+};
+
+const DIFFICULTY_LABELS: Record<Difficulty, string> = {
+  basic: "BASIC",
+  advanced: "ADVANCED",
+  expert: "EXPERT",
+  master: "MASTER",
+  remaster: "Re:MASTER",
+  utage: "UTAGE",
+};
 
 function getRate(achievement: number, version: number, fc: string) {
   if (version >= 12 && (fc === "ap" || fc === "ap+")) return "SSS+ AP";
@@ -69,7 +87,7 @@ function ScoreGrid({
   availableRegions: string[],
   levelPrecise: number
 }) {
-  const validRegions: Region[] = ['jp', 'intl'].filter(r => availableRegions.includes(r));
+  const validRegions: Region[] = Object.values(REGION_ENUM).filter(r => availableRegions.includes(r));
 
   if (validRegions.length === 0) return null;
 
@@ -136,7 +154,84 @@ function ScoreGrid({
   );
 }
 
-export function SongDetailContent({ songName, type, onClose, initialData }: SongDetailContentProps) {
+export function SongChartRow({ chart, index, data, hasTouch }: { chart: SongExtended; index: number; data: SongDetails; hasTouch: boolean }) {
+  const colors = DIFFICULTY_COLORS[chart.difficulty] || { bg: "bg-gray-500", text: "text-gray-600", border: "border-gray-500" };
+  const hasNoteData = chart.tapCount !== null;
+  const totalNotes = hasNoteData
+    ? (chart.tapCount ?? 0) + (chart.holdCount ?? 0) + (chart.slideCount ?? 0) + (chart.touchCount ?? 0) + (chart.breakCount ?? 0)
+    : null;
+  const isFirst = index === 0;
+  const chartScores: Record<string, UserScore | undefined> = {};
+  const availableRegions = data.regions.map(r => r.region);
+  availableRegions.forEach(region => {
+    chartScores[region] = data.userScores?.[region]?.[chart.difficulty];
+  });
+  const hasAnyScore = Object.values(chartScores).some(s => !!s);
+
+  // Show border on data row only if there is no designer row following it
+  // (and it's not the last row of the table)
+  const dataBorderClass = isFirst ? "" : "border-t";
+
+  return (
+    <div key={chart.difficulty} className="contents text-sm">
+      {/* Difficulty */}
+      <div className={cn("py-2.5 px-3 flex items-center gap-2", dataBorderClass)}>
+        <span className={cn("font-bold", colors.text)}>
+          {DIFFICULTY_LABELS[chart.difficulty] || chart.difficulty.toUpperCase()}
+        </span>
+      </div>
+      {/* Level */}
+      <div className={cn("py-2.5 px-3 flex items-baseline justify-center", dataBorderClass)}>
+        <span className="text-lg font-bold tabular-nums">{chart.level}</span>
+        <span className="text-xs">.{chart.levelPrecise % 10}</span>
+      </div>
+      {/* Notes */}
+      <div className={cn("py-2.5 px-3 flex items-center justify-center tabular-nums", dataBorderClass)}>
+        {hasNoteData ? totalNotes : "-"}
+      </div>
+      {/* Tap */}
+      <div className={cn("py-2.5 px-3 flex items-center justify-center tabular-nums", dataBorderClass)}>
+        {hasNoteData ? chart.tapCount : "-"}
+      </div>
+      {/* Hold */}
+      <div className={cn("py-2.5 px-3 flex items-center justify-center tabular-nums", dataBorderClass)}>
+        {hasNoteData ? chart.holdCount : "-"}
+      </div>
+      {/* Slide */}
+      <div className={cn("py-2.5 px-3 flex items-center justify-center tabular-nums", dataBorderClass)}>
+        {hasNoteData ? chart.slideCount : "-"}
+      </div>
+      {/* Touch */}
+      {hasTouch && <div className={cn("py-2.5 px-3 flex items-center justify-center tabular-nums", dataBorderClass)}>
+        {hasNoteData ? chart.touchCount : "-"}
+      </div>}
+      {/* Break */}
+      <div className={cn("py-2.5 px-3 flex items-center justify-center tabular-nums", dataBorderClass)}>
+        {hasNoteData ? chart.breakCount : "-"}
+      </div>
+
+      {/* Designer row (spans all columns) */}
+      {chart.noteDesigner && (
+        <div className="col-span-full px-3 pb-2 pt-0 h-7 flex items-center gap-1.5 text-xs text-muted-foreground">
+          <Pencil className="w-3 h-3" />
+          <span className="font-medium">Chart Designer</span>
+          <span>{chart.noteDesigner}</span>
+        </div>
+      )}
+
+      {/* Score Grid */}
+      {hasAnyScore && (
+        <ScoreGrid
+          scores={chartScores}
+          availableRegions={availableRegions}
+          levelPrecise={chart.levelPrecise}
+        />
+      )}
+    </div>
+  );
+}
+
+export function SongDetailContent({ songName, type, initialData }: SongDetailContentProps) {
   const { data: fetchedData, isLoading, error } = trpc.user.getSongDetails.useQuery(
     { songName, type },
     {
@@ -163,24 +258,6 @@ export function SongDetailContent({ songName, type, onClose, initialData }: Song
     );
   }
 
-  const difficultyColors: Record<string, { bg: string; text: string; border: string }> = {
-    basic: { bg: "bg-emerald-500", text: "text-emerald-600", border: "border-emerald-500" },
-    advanced: { bg: "bg-amber-500", text: "text-amber-600", border: "border-amber-500" },
-    expert: { bg: "bg-rose-500", text: "text-rose-600", border: "border-rose-500" },
-    master: { bg: "bg-violet-500", text: "text-violet-600", border: "border-violet-500" },
-    remaster: { bg: "bg-violet-300", text: "text-violet-500", border: "border-violet-300" },
-    utage: { bg: "bg-pink-500", text: "text-pink-600", border: "border-pink-500" },
-  };
-
-  const difficultyLabels: Record<string, string> = {
-    basic: "BASIC",
-    advanced: "ADVANCED",
-    expert: "EXPERT",
-    master: "MASTER",
-    remaster: "Re:MASTER",
-    utage: "UTAGE",
-  };
-
   const difficultyOrder = ["basic", "advanced", "expert", "master", "remaster", "utage"];
 
   // Get the latest version's charts for display (prefer intl, then jp)
@@ -195,7 +272,6 @@ export function SongDetailContent({ songName, type, onClose, initialData }: Song
 
   const addedVersionInfo = getVersionInfo(data.addedVersion);
   const hasTouch = sortedCharts.some(chart => chart.touchCount !== null);
-  const hasScore = !!data.userScores;
 
   return (
     <div className="space-y-6">
@@ -268,82 +344,15 @@ export function SongDetailContent({ songName, type, onClose, initialData }: Song
             </div>
 
             {/* Chart Rows */}
-            {sortedCharts.map((chart, index) => {
-              const colors = difficultyColors[chart.difficulty] || { bg: "bg-gray-500", text: "text-gray-600", border: "border-gray-500" };
-              const hasNoteData = chart.tapCount !== null;
-              const totalNotes = hasNoteData
-                ? (chart.tapCount ?? 0) + (chart.holdCount ?? 0) + (chart.slideCount ?? 0) + (chart.touchCount ?? 0) + (chart.breakCount ?? 0)
-                : null;
-              const isFirst = index === 0;
-              const chartScores: Record<string, UserScore | undefined> = {};
-              const availableRegions = data.regions.map(r => r.region);
-              availableRegions.forEach(region => {
-                chartScores[region] = data.userScores?.[region]?.[chart.difficulty];
-              });
-              const hasAnyScore = Object.values(chartScores).some(s => !!s);
-
-              // Show border on data row only if there is no designer row following it
-              // (and it's not the last row of the table)
-              const dataBorderClass = isFirst ? "" : "border-t";
-
-              return (
-                <div key={chart.difficulty} className="contents text-sm">
-                  {/* Difficulty */}
-                  <div className={cn("py-2.5 px-3 flex items-center gap-2", dataBorderClass)}>
-                    <span className={cn("font-bold", colors.text)}>
-                      {difficultyLabels[chart.difficulty] || chart.difficulty.toUpperCase()}
-                    </span>
-                  </div>
-                  {/* Level */}
-                  <div className={cn("py-2.5 px-3 flex items-baseline justify-center", dataBorderClass)}>
-                    <span className="text-lg font-bold tabular-nums">{chart.level}</span>
-                    <span className="text-xs">.{chart.levelPrecise % 10}</span>
-                  </div>
-                  {/* Notes */}
-                  <div className={cn("py-2.5 px-3 flex items-center justify-center tabular-nums", dataBorderClass)}>
-                    {hasNoteData ? totalNotes : "-"}
-                  </div>
-                  {/* Tap */}
-                  <div className={cn("py-2.5 px-3 flex items-center justify-center tabular-nums", dataBorderClass)}>
-                    {hasNoteData ? chart.tapCount : "-"}
-                  </div>
-                  {/* Hold */}
-                  <div className={cn("py-2.5 px-3 flex items-center justify-center tabular-nums", dataBorderClass)}>
-                    {hasNoteData ? chart.holdCount : "-"}
-                  </div>
-                  {/* Slide */}
-                  <div className={cn("py-2.5 px-3 flex items-center justify-center tabular-nums", dataBorderClass)}>
-                    {hasNoteData ? chart.slideCount : "-"}
-                  </div>
-                  {/* Touch */}
-                  {hasTouch && <div className={cn("py-2.5 px-3 flex items-center justify-center tabular-nums", dataBorderClass)}>
-                    {hasNoteData ? chart.touchCount : "-"}
-                  </div>}
-                  {/* Break */}
-                  <div className={cn("py-2.5 px-3 flex items-center justify-center tabular-nums", dataBorderClass)}>
-                    {hasNoteData ? chart.breakCount : "-"}
-                  </div>
-
-                  {/* Designer row (spans all columns) */}
-                  {chart.noteDesigner && (
-                    <div className="col-span-full px-3 pb-2 pt-0 h-7 flex items-center gap-1.5 text-xs text-muted-foreground">
-                      <Pencil className="w-3 h-3" />
-                      <span className="font-medium">Chart Designer</span>
-                      <span>{chart.noteDesigner}</span>
-                    </div>
-                  )}
-
-                  {/* Score Grid */}
-                  {hasAnyScore && (
-                    <ScoreGrid
-                      scores={chartScores}
-                      availableRegions={availableRegions}
-                      levelPrecise={chart.levelPrecise}
-                    />
-                  )}
-                </div>
-              );
-            })}
+            {sortedCharts.map((chart, index) => (
+              <SongChartRow
+                key={`${chart.difficulty}-${index}`}
+                chart={chart}
+                index={index}
+                data={data}
+                hasTouch={hasTouch}
+              />
+            ))}
           </div>
         </div>
       )}
@@ -368,7 +377,7 @@ export function SongDetailContent({ songName, type, onClose, initialData }: Song
                 const versionInfo = getVersionInfo(gameVersion);
 
                 // Group charts by difficulty to show level changes
-                const byDifficulty = new Map<string, typeof charts[0][]>();
+                const byDifficulty = new Map<Difficulty, SongExtended[]>();
                 charts.forEach(chart => {
                   if (!byDifficulty.has(chart.difficulty)) {
                     byDifficulty.set(chart.difficulty, []);
@@ -390,7 +399,7 @@ export function SongDetailContent({ songName, type, onClose, initialData }: Song
                     <div className="flex flex-wrap gap-1.5 pl-5">
                       {sortedDifficulties.map(([difficulty, diffCharts]) => {
                         const chart = diffCharts[0];
-                        const colors = difficultyColors[difficulty] || { bg: "bg-gray-500", text: "text-gray-600", border: "border-gray-500" };
+                        const colors = DIFFICULTY_COLORS[difficulty] || { bg: "bg-gray-500", text: "text-gray-600", border: "border-gray-500" };
                         return (
                           <div
                             key={difficulty}
@@ -399,7 +408,7 @@ export function SongDetailContent({ songName, type, onClose, initialData }: Song
                               colors.bg
                             )}
                           >
-                            {difficultyLabels[difficulty] || difficulty.toUpperCase()} {(chart.levelPrecise / 10).toFixed(1)}
+                            {DIFFICULTY_LABELS[difficulty] || difficulty.toUpperCase()} {(chart.levelPrecise / 10).toFixed(1)}
                           </div>
                         );
                       })}

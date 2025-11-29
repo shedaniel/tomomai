@@ -6,7 +6,7 @@ import { getAvailableVersions } from '@/lib/metadata';
 import { RatingCalculationInput, splitSongs } from '@/lib/rating-calculator';
 import { invites, songs, user, userScores, userSnapshots, userTokens, userEvents, userRecentSongs, userRecentSongsDetailed, stores, storeEdits, storeEditVotes } from '@/lib/db/schema-pg';
 import { protectedProcedure, publicProcedure, router } from '@/lib/trpc';
-import { SongWithScore } from '@/lib/types';
+import { SongExtended, SongWithScore } from '@/lib/types';
 import { TRPCError } from '@trpc/server';
 import { nanoid } from 'nanoid';
 import { and, count, desc, eq, inArray, isNull, lt, or, sql } from 'drizzle-orm';
@@ -16,6 +16,7 @@ import { REGION_ENUM, TIMEZONE_ENUM } from '@/lib/db/types';
 import { logger } from '@/lib/logger';
 import { normalizeName } from '@/lib/name-utils';
 import { getSongSlugs } from '@/lib/song-slug';
+import { SongDetails, UniqueSong } from '@/components/db/songs/types';
 
 const SIGNUP_REQUIRED_AMOUNT = 256;
 
@@ -2444,7 +2445,7 @@ export const userRouter = router({
 
       // Add pre-computed slugs for URL routing
       const songsWithSlugs = await getSongSlugs(Array.from(uniqueSongs.values()));
-      return { songs: songsWithSlugs };
+      return { songs: songsWithSlugs satisfies UniqueSong[] };
     }),
 
   // Get detailed info for a specific song (by name and type) across all regions/versions
@@ -2456,8 +2457,7 @@ export const userRouter = router({
     .query(async ({ input, ctx }) => {
       const chartsQuery = db
         .select({
-          internalId: songs.id,
-          id: songs.publicId,
+          songId: songs.publicId,
           songName: songs.songName,
           artist: songs.artist,
           cover: songs.cover,
@@ -2542,7 +2542,7 @@ export const userRouter = router({
       }
 
       // Group charts by region -> gameVersion -> difficulty
-      const byRegion = new Map<string, Map<number, typeof charts>>();
+      const byRegion = new Map<Region, Map<number, SongExtended[]>>();
       for (const chart of charts) {
         if (!byRegion.has(chart.region)) {
           byRegion.set(chart.region, new Map());
@@ -2582,7 +2582,7 @@ export const userRouter = router({
         addedVersion: earliestAddedVersion,
         userScores: userScoresMap,
         regions,
-      };
+      } satisfies SongDetails;
     }),
 
 }); 

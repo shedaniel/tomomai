@@ -1,31 +1,27 @@
 "use client";
 
+import { FilterPanel, GenericFilter, getFilterKey } from "@/components/filter-panel";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Drawer,
   DrawerContent,
-  DrawerTitle,
   DrawerDescription,
   DrawerOverlay,
+  DrawerTitle,
 } from "@/components/ui/drawer";
-import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
-import { FilterPanel, GenericFilter, getFilterKey } from "@/components/filter-panel";
-import { cn } from "@/lib/utils";
-import { Search, Music, LayoutGrid, LayoutList, X } from "lucide-react";
-import { useTranslations } from "next-intl";
-import { useState, useMemo, useCallback, useEffect, useRef } from "react";
+import { Input } from "@/components/ui/input";
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
+import { cn } from "@/lib/utils";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
+import { LayoutGrid, LayoutList, Music, Search, X } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { UniqueSong, SongDetails, UniqueSongFilter, UniqueSongFilterType } from "./songs/types";
-import { createUniqueSongFilterCategories, applyUniqueSongFilters } from "./songs/filter-utils";
+import { applyUniqueSongFilters, createUniqueSongFilterCategories } from "./songs/filter-utils";
 import { SongCard } from "./songs/song-card";
-import { SongRow } from "./songs/song-row";
 import { SongDetailContent } from "./songs/song-detail-content";
-import { AutoHeight } from "../animate-ui/primitives/effects/auto-height";
-
-// Re-export UniqueSong and SongDetails for backward compatibility
-export type { UniqueSong, SongDetails };
+import { SongRow } from "./songs/song-row";
+import { SongDetails, UniqueSong, UniqueSongFilter, UniqueSongFilterType } from "./songs/types";
 
 interface SongsDatabaseProps {
   selectedSlug: string | null;
