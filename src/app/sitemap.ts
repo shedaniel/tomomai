@@ -8,6 +8,8 @@ import { getSongSlug } from '@/lib/song-slug';
 
 type SitemapItem = MetadataRoute.Sitemap[number];
 
+export const revalidate = 21600; // Revalidate once every 6 hours
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = resolveBaseUrl();
 

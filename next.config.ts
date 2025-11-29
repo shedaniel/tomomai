@@ -5,7 +5,7 @@ import { withVercelToolbar as withVercelToolbarPlugin } from "@vercel/toolbar/pl
 const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 
 const nextConfig: NextConfig = {
-  serverExternalPackages: ["skia-canvas", "pino", "pino-pretty"],
+  serverExternalPackages: ["skia-canvas", "pino", "pino-pretty", "kuromoji", "kuroshiro", "kuroshiro-analyzer-kuromoji"],
   images: {
     minimumCacheTTL: 2678400, // 31 days
     remotePatterns: [
@@ -54,6 +54,7 @@ const nextConfig: NextConfig = {
     '/api/image-proxy': ['./public/res/**/*'],
     '/api/export-image': ['./public/res/**/*'],
     '/api/admin/cache_images': ['./public/res/**/*'],
+    '/**/*': ['./node_modules/kuromoji/dict/**/*'],
   },
   devIndicators: false,
   instrumentationHook: true,
