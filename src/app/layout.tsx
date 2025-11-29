@@ -58,6 +58,7 @@ function getLocaleFontClass(locale: string) {
     case 'zh-CN':
       return `${baseClasses} ${notoSansSC.variable} ${notoSansJP.variable}`;
     case 'ja':
+    case 'ko':
     default:
       return `${baseClasses} ${notoSansJP.variable}`;
   }

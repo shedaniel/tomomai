@@ -17,6 +17,7 @@ export const getLanguages = (t: (key: string) => string) => [
   { value: "zh-TW", label: t('settings.language.zh-TW'), code: "TW" },
   { value: "zh-HK", label: t('settings.language.zh-HK'), code: "HK" },
   { value: "zh-CN", label: t('settings.language.zh-CN'), code: "CN" },
+  { value: "ko", label: t('settings.language.ko'), code: "KO" },
 ];
 
 export function cn(...inputs: ClassValue[]) {

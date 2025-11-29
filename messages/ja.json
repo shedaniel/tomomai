@@ -79,7 +79,8 @@
       "ja": "日本語",
       "zh-TW": "繁體中文 (台灣)",
       "zh-HK": "繁體中文 (香港)",
-      "zh-CN": "简体中文"
+      "zh-CN": "简体中文",
+      "ko": "한국어 (AI 번역)"
     },
     "timezone": {
       "label": "タイムゾーン",
@@ -348,6 +349,17 @@
   "publicHeader": {
     "discordBanner": "ご質問やご提案は、ぜひDiscordコミュニティでお聞かせください！"
   },
+  "header": {
+    "tabs": {
+      "dashboard": "ホーム",
+      "db": "データベース"
+    },
+    "addDiscordBot": "Discordボットとして追加",
+    "admin": "管理者",
+    "errors": {
+      "inviteLink": "招待リンクを開けませんでした"
+    }
+  },
   "usernameSetup": {
     "title": "ユーザー名を選択",
     "description": "このサイトを利用するには、ユーザー名を設定する必要があります。これは公開プロフィールのURLに使用され、一意である必要があります。",
@@ -439,8 +451,12 @@
   "db": {
     "callout": {
       "title": "データベースを利用したいですか？",
-      "subtitle": "ログインせずに楽曲データベースを閲覧するには、こちらをクリックしてください！",
-      "description": "ともマイ DB は、maimaiの譜面やゲーセンなどの情報を集めた公開データベースです"
+      "subtitle": "ログイン不要で楽曲データをチェック！",
+      "description": "ともマイ DB は、maimaiの楽曲、譜面情報、各種データを集めた公開データベースです"
+    },
+    "beta": {
+      "title": "ベータ機能",
+      "description": "データベース機能は現在ベータ版です。一部のデータは不完全または不正確な場合があります。"
     },
     "types": {
       "songs": "楽曲",
@@ -476,6 +492,14 @@
         "std": "STD",
         "dx": "DX"
       }
+    },
+    "common": {
+      "difficulty": "難易度",
+      "level": "レベル",
+      "notes": "ノーツ数",
+      "chartDesigner": "譜面製作者",
+      "bpm": "BPM",
+      "added": "追加日"
     }
   }
 }

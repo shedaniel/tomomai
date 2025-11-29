@@ -61,6 +61,22 @@ const variants = {
   exit: { opacity: 0.5, filter: "blur(4px)" },
 };
 
+import { Info } from "lucide-react";
+
+function BetaBanner() {
+  const t = useTranslations("db.beta");
+  
+  return (
+    <div className="bg-stone-200/50 text-stone-800 border border-stone-500 px-4 py-3 rounded-lg mb-12 flex items-start gap-3">
+      <Info className="w-5 h-5 shrink-0 mt-0.5" />
+      <div>
+        <h3 className="font-semibold text-sm">{t("title")}</h3>
+        <p className="text-sm opacity-90">{t("description")}</p>
+      </div>
+    </div>
+  );
+}
+
 export function DbLayoutClient({
   user,
   children,
@@ -95,6 +111,8 @@ export function DbLayoutClient({
           menu: null,
         } : undefined}
       />
+
+      <BetaBanner />
 
       <TypeSelector 
         currentType={currentType} 

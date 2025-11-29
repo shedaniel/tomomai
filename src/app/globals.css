@@ -61,6 +61,8 @@ html[lang="zh-CN"] body {
 
 body:has([lang="ja"]),
 html[lang="ja"] body,
+body:has([lang="ko"]),
+html[lang="ko"] body,
 body:has([lang="en"]),
 html[lang="en"] body,
 body:has([lang="en-GB"]),

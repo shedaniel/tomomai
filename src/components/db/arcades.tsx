@@ -68,7 +68,7 @@ function groupStoresByRegion(stores: Store[]): StoreData {
 
 function toTitleCase(str: string) {
   // Add space before opening bracket if it follows a non-space character
-  let formatted = str.replace(/([^\s])\(/g, "$1 (");
+  const formatted = str.replace(/([^\s])\(/g, "$1 (");
 
   // Capitalize words
   return formatted.replace(
@@ -200,9 +200,8 @@ declare global {
 
 
 function ArcadeDetailsContent({ store, onEditClick }: { store: Store | null; onEditClick: () => void }) {
-  if (!store) return null;
-
   const t = useTranslations();
+  if (!store) return null;
 
   const displayName = store.chosenEdit?.name || toTitleCase(store.name);
   const displayAddress = store.chosenEdit?.address || store.address;

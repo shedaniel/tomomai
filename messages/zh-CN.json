@@ -30,7 +30,7 @@
     "difficulty": "难度",
     "level": "等级",
     "notes": "物量",
-    "chartDesigner": "谱面设计",
+    "chartDesigner": "谱面设计者",
     "bpm": "BPM",
     "added": "追加日期",
     "difficulties": {
@@ -79,7 +79,8 @@
       "ja": "日本語",
       "zh-TW": "繁体中文 (台灣)",
       "zh-HK": "繁体中文 (香港)",
-      "zh-CN": "简体中文"
+      "zh-CN": "简体中文",
+      "ko": "한국어 (AI 번역)"
     },
     "timezone": {
       "label": "时区",
@@ -348,6 +349,17 @@
   "publicHeader": {
     "discordBanner": "有任何问题或建议吗？欢迎加入我们的 Discord 社群！"
   },
+  "header": {
+    "tabs": {
+      "dashboard": "首页",
+      "db": "数据库"
+    },
+    "addDiscordBot": "添加为 Discord 机器人",
+    "admin": "管理员",
+    "errors": {
+      "inviteLink": "无法打开邀请链接"
+    }
+  },
   "usernameSetup": {
     "title": "选择你的用户名",
     "description": "你需要设置用户名才能使用此网站。这将用于你的公开个人资料网址，且必须是唯一的。",
@@ -442,6 +454,10 @@
       "subtitle": "无需登录即可查看歌曲数据库！",
       "description": "tomomai ともマイ DB 是一个公开的 maimai 谱面、机厅及更多maimai信息的数据库"
     },
+    "beta": {
+      "title": "测试功能",
+      "description": "数据库功能目前处于测试阶段。部分数据可能不完整或不准确。"
+    },
     "types": {
       "songs": "歌曲",
       "calculator": "计算",
@@ -464,7 +480,7 @@
         "availability": "区域",
         "yourScore": "你的成绩",
         "achievement": "达成率",
-        "rating": "Rating",
+        "rating": "R 值",
         "chartDesigner": "谱面设计者",
         "bpm": "BPM",
         "added": "添加日期"
@@ -476,6 +492,14 @@
         "std": "STD",
         "dx": "DX"
       }
+    },
+    "common": {
+      "difficulty": "难度",
+      "level": "等级",
+      "notes": "物量",
+      "chartDesigner": "谱面设计",
+      "bpm": "BPM",
+      "added": "追加日期"
     }
   }
 }

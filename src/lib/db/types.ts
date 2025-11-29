@@ -59,7 +59,7 @@ export const TIMEZONE_ENUM = [
   "UTC",
 ] as const;
 
-export const LANGUAGE_ENUM = ["en", "en-GB", "ja", "zh-TW", "zh-HK", "zh-CN"] as const;
+export const LANGUAGE_ENUM = ["en", "en-GB", "ja", "zh-TW", "zh-HK", "zh-CN", "ko"] as const;
 
 export const REGION_ENUM = ["intl", "jp"] as const;
 

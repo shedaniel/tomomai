@@ -23,11 +23,6 @@ const SIGNUP_TYPE = process.env.NEXT_PUBLIC_ACCOUNT_SIGNUP_TYPE || 'disabled';
 type CurrentTab = "dashboard" | "db";
 const ALL_TABS: CurrentTab[] = ["dashboard", "db"];
 
-const TAB_LABELS: Record<CurrentTab, string> = {
-  dashboard: "Dashboard",
-  db: "Database",
-};
-
 const TAB_ICONS: Record<CurrentTab, React.ReactNode> = {
   dashboard: <Home className="h-4 w-4" />,
   db: <Database className="h-4 w-4" />,
@@ -62,6 +57,8 @@ interface HeaderProps {
 }
 
 function NavbarButtons({ currentTab, onAbout, onDiscordInvite }: { currentTab: CurrentTab; onAbout: () => void; onDiscordInvite: () => void }) {
+  const t = useTranslations();
+
   return (<>
     {ALL_TABS.filter(tab => tab !== currentTab).map(tab => (
       <Fragment key={tab}>
@@ -76,7 +73,7 @@ function NavbarButtons({ currentTab, onAbout, onDiscordInvite }: { currentTab: C
         >
           <Link href={TAB_LINKS[tab]} className="md:hidden">
             {TAB_ICONS[tab]}
-            <span className="max-xs:hidden">{TAB_LABELS[tab]}</span>
+            <span className="max-xs:hidden">{t(`header.tabs.${tab}`)}</span>
           </Link>
         </Button>
         <Button
@@ -89,7 +86,7 @@ function NavbarButtons({ currentTab, onAbout, onDiscordInvite }: { currentTab: C
           asChild
         >
           <Link href={TAB_LINKS[tab]}>
-            {TAB_LABELS[tab]}
+            {t(`header.tabs.${tab}`)}
           </Link>
         </Button>
       </Fragment>
@@ -108,7 +105,7 @@ function NavbarButtons({ currentTab, onAbout, onDiscordInvite }: { currentTab: C
       size="sm"
       className="h-8 px-2 py-0 hover:bg-gray-200 max-md:hidden"
     >
-      About
+      {t('common.about')}
     </Button>
 
     <Button
@@ -125,7 +122,7 @@ function NavbarButtons({ currentTab, onAbout, onDiscordInvite }: { currentTab: C
       size="sm"
       className="h-8 px-2 py-0 hover:bg-gray-200 max-md:hidden"
     >
-      Add as Discord Bot
+      {t('header.addDiscordBot')}
     </Button>
   </>)
 }
@@ -242,7 +239,7 @@ function UserIcon({ user, menu, onAbout, onDiscordInvite }: NonNullable<HeaderPr
           <>
             <DropdownMenuItem onClick={onAdmin}>
               <Users className="mr-2 h-4 w-4" />
-              <span>Admin</span>
+              <span>{t('header.admin')}</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
           </>
@@ -288,7 +285,7 @@ export function Header({ currentTab, showDiscordBanner = true, user }: HeaderPro
       window.open(inviteUrl, '_blank');
     } catch (error) {
       console.error('Failed to open invite link:', error);
-      toast.error("Failed to open invite link");
+      toast.error(t('header.errors.inviteLink'));
     }
   };
 

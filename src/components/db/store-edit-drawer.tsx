@@ -60,9 +60,8 @@ interface StoreEditDetailsProps {
 }
 
 function StoreEditDetails({ edit, storeName, storeAddress }: StoreEditDetailsProps) {
-  if (!edit) return null;
-
   const t = useTranslations();
+  if (!edit) return null;
 
   const displayName = edit.name || storeName;
   const displayAddress = edit.address || storeAddress;
