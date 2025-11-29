@@ -126,7 +126,8 @@ export function SongsDatabase({ selectedSlug: initialSlug, initialSongs, initial
       result = result.filter(song =>
         song.songName.toLowerCase().includes(query) ||
         song.artist.toLowerCase().includes(query) ||
-        song.genre.toLowerCase().includes(query)
+        song.genre.toLowerCase().includes(query) ||
+        song.aliases?.some(alias => alias.toLowerCase().includes(query))
       );
     }
 

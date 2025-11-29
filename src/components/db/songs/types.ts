@@ -8,6 +8,7 @@ export interface UniqueSong {
   genre: string;
   addedVersion: number;
   slug: string;
+  aliases: string[];
 }
 
 export interface UserScore {
@@ -59,4 +60,3 @@ export type UniqueSongFilterType = "type" | "genre" | "addedVersion";
 export interface UniqueSongFilter extends GenericFilter {
   type: UniqueSongFilterType;
 }
-

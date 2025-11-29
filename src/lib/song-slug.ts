@@ -1,4 +1,4 @@
-import { toRomaji } from "./kuroshiro";
+import { toEverything, toRomaji } from "./kuroshiro";
 import slug from "slug";
 
 /**
@@ -71,6 +71,7 @@ export interface SongForSlug {
  */
 export interface SongWithSlug extends SongForSlug {
   slug: string;
+  aliases?: string[];
 }
 
 /**
@@ -82,11 +83,52 @@ export async function getSongSlug(song: SongForSlug): Promise<string> {
 }
 
 /**
- * Generate slugs for multiple songs in parallel
+ * Generate slugs and aliases for multiple songs in parallel
  */
-export async function getSongSlugs<T extends SongForSlug>(songs: T[]): Promise<(T & { slug: string })[]> {
-  const slugs = await Promise.all(songs.map(song => getSongSlug(song)));
-  return songs.map((song, i) => ({ ...song, slug: slugs[i] }));
+export async function getSongSlugs<T extends SongForSlug>(songs: T[]): Promise<(T & { slug: string; aliases: string[] })[]> {
+  const results = await Promise.all(songs.map(async (song) => {
+    // Romanize Japanese text
+    const processedName = await toRomaji(song.songName);
+    const processedArtist = await toRomaji(song.artist);
+
+    const nameEverything = await toEverything(song.songName);
+    const artistEverything = await toEverything(song.artist);
+
+    // Generate slug logic duplicated to avoid re-running toRomaji
+    const cleanedName = slug(processedName);
+    const cleanedArtist = slug(processedArtist.replace(/\s+/g, ''));
+    
+    let baseSlug;
+    if (!cleanedName && cleanedArtist) {
+      baseSlug = `_-${cleanedArtist}`;
+    } else if (cleanedName && !cleanedArtist) {
+      baseSlug = cleanedName;
+    } else if (!cleanedName && !cleanedArtist) {
+      baseSlug = `song-${simpleHash(song.songName + song.artist)}`;
+    } else {
+      baseSlug = `${cleanedName}-${cleanedArtist}`;
+    }
+
+    const fullSlug = `${baseSlug}-${song.type}`;
+    const aliases = [
+      processedName,
+      processedArtist,
+      nameEverything.romaji,
+      nameEverything.katakana,
+      nameEverything.hiragana,
+      artistEverything.romaji,
+      artistEverything.katakana,
+      artistEverything.hiragana,
+    ].filter(Boolean);
+
+    return {
+      ...song,
+      slug: fullSlug,
+      aliases
+    };
+  }));
+
+  return results;
 }
 
 /**
