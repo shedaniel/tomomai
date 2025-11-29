@@ -8,12 +8,17 @@ import { calculateSongRating } from "@/lib/rating-calculator";
 import { trpc } from "@/lib/trpc-client";
 import { Difficulty, Region, SongExtended } from "@/lib/types";
 import { cn, createSafeMaimaiImageUrl } from "@/lib/utils";
-import { Activity, Calendar, Globe, Loader2, Music, Pencil } from "lucide-react";
+import { Activity, Calendar, Globe, Loader2, Music, Pencil, Share, Youtube } from "lucide-react";
 import Image from "next/image";
 import { Fragment, useMemo, useState } from "react";
 import { SongDetails, UserScore } from "./types";
 
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 import { useTranslations } from "next-intl";
+import Link from "next/link";
+import { toast } from "sonner";
+import { resolveBaseUrl } from "@/lib/base-url";
 
 type SongExtendedIdentified = SongExtended & { region: Region; gameVersion: number };
 
@@ -33,6 +38,7 @@ function getRate(achievement: number, version: number, fc: string) {
 
 interface SongDetailContentProps {
   songName: string;
+  slug: string;
   type: "std" | "dx";
   onClose: () => void;
   initialData?: SongDetails | null;
@@ -317,7 +323,7 @@ export function SongChartDialogContent({ charts, scores }: { charts: SongExtende
   </>;
 }
 
-export function SongDetailContent({ songName, type, initialData }: SongDetailContentProps) {
+export function SongDetailContent({ songName, slug, type, initialData }: SongDetailContentProps) {
   const t = useTranslations();
   const { data: fetchedData, isLoading, error } = trpc.user.getSongDetails.useQuery(
     { songName, type },
@@ -350,6 +356,12 @@ export function SongDetailContent({ songName, type, initialData }: SongDetailCon
     return Array.from(chartsByDifficulty.values()).flat();
   }, [chartsByDifficulty]);
   const hasTouch = allCharts.some(chart => chart.touchCount !== null);
+
+  const youtubeSearchURL = useMemo(() => {
+    if (!data) return null;
+    const searchQuery = encodeURIComponent(`maimai ${data.songName} ${data.artist}`);
+    return `https://www.youtube.com/results?search_query=${searchQuery}`;
+  }, [data]);
 
   if (!initialData && isLoading) {
     return (
@@ -400,21 +412,45 @@ export function SongDetailContent({ songName, type, initialData }: SongDetailCon
         </div>
       </div>
 
-      {/* Song Info */}
-      <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
-        {data.bpm && (
+      <section className="flex flex-wrap justify-between gap-y-3">
+        {/* Song Info */}
+        <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
+          {data.bpm && (
+            <div className="flex items-center gap-2">
+              <Activity className="w-4 h-4" />
+              <h3 className="font-medium">{t('db.songs.detail.bpm')}</h3>
+              <span>{data.bpm}</span>
+            </div>
+          )}
           <div className="flex items-center gap-2">
-            <Activity className="w-4 h-4" />
-            <h3 className="font-medium">{t('db.songs.detail.bpm')}</h3>
-            <span>{data.bpm}</span>
+            <Calendar className="w-4 h-4" />
+            <h3 className="font-medium">{t('db.songs.detail.added')}</h3>
+            <span>{addedVersionInfo?.name ?? `Ver. ${data.addedVersion}`}</span>
           </div>
-        )}
-        <div className="flex items-center gap-2">
-          <Calendar className="w-4 h-4" />
-          <h3 className="font-medium">{t('db.songs.detail.added')}</h3>
-          <span>{addedVersionInfo?.name ?? `Ver. ${data.addedVersion}`}</span>
         </div>
-      </div>
+
+        {/* Buttons or Links */}
+        <div className="flex gap-2">
+          <Link href={`/db/songs/${slug}`} onClick={async (e) => {
+            const baseUrl = await resolveBaseUrl();
+            navigator.clipboard.writeText(`${baseUrl}/db/songs/${slug}`);
+            e.preventDefault();
+            toast.success("Share link copied to clipboard");
+          }}>
+            <Button variant="outline">
+              <Share className="w-4 h-4" />
+              {t('db.songs.detail.share')}
+            </Button>
+          </Link>
+          <Link href={youtubeSearchURL ?? ""} target="_blank">
+            <Button variant="outline">
+              <svg role="img" className="w-4 h-4" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><title>YouTube</title><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+              {t('db.songs.detail.youtube')}
+            </Button>
+          </Link>
+        </div>
+        <Separator className="mt-2" />
+      </section>
 
       {/* Charts Grid */}
       {chartsByDifficulty.size > 0 && (

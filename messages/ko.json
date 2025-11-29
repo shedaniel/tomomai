@@ -482,7 +482,9 @@
         "rating": "레이팅",
         "chartDesigner": "채보 제작자",
         "bpm": "BPM",
-        "added": "추가일"
+        "added": "추가일",
+        "share": "링크 공유",
+        "youtube": "YouTube 검색"
       },
       "filter": {
         "type": "타입",
@@ -499,6 +501,36 @@
       "chartDesigner": "채보 제작자",
       "bpm": "BPM",
       "added": "추가일"
+    },
+    "stats": {
+      "title": "전체 통계",
+      "ratingDistribution": "레이팅 분포",
+      "playCountDistribution": "플레이 횟수 분포",
+      "topTitles": "인기 칭호",
+      "topSongs": "인기 곡",
+      "averageAchievementByLevel": "레벨별 평균 달성률",
+      "ratingVsPlayCount": "레이팅 vs 플레이 횟수 히트맵",
+      "xAxis": {
+        "rating": "레이팅",
+        "playCount": "플레이 횟수",
+        "level": "레벨"
+      },
+      "yAxis": {
+        "percentage": "비율",
+        "achievement": "달성률",
+        "count": "유저 수"
+      },
+      "table": {
+        "rank": "순위",
+        "title": "칭호",
+        "song": "곡명",
+        "percentage": "사용률",
+        "count": "수"
+      },
+      "region": {
+        "intl": "인터내셔널",
+        "jp": "일본"
+      }
     }
   }
 }

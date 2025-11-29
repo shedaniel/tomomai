@@ -197,8 +197,8 @@ export function SongsDatabase({ selectedSlug: initialSlug, initialSongs, initial
                 variant="ghost"
                 size="sm"
                 className={cn(
-                  "rounded-none h-9 px-3",
-                  displayMode === "grid" && "bg-muted"
+                  "rounded-none h-9 px-3 transition-colors",
+                  displayMode === "grid" && "bg-primary hover:bg-primary/80 text-primary-foreground hover:text-primary-foreground"
                 )}
                 onClick={() => setDisplayMode("grid")}
                 aria-pressed={displayMode === "grid"}
@@ -210,8 +210,8 @@ export function SongsDatabase({ selectedSlug: initialSlug, initialSongs, initial
                 variant="ghost"
                 size="sm"
                 className={cn(
-                  "rounded-none h-9 px-3",
-                  displayMode === "list" && "bg-muted"
+                  "rounded-none h-9 px-3 transition-colors",
+                  displayMode === "list" && "bg-primary hover:bg-primary/80 text-primary-foreground hover:text-primary-foreground"
                 )}
                 onClick={() => setDisplayMode("list")}
                 aria-pressed={displayMode === "list"}
@@ -320,6 +320,7 @@ export function SongsDatabase({ selectedSlug: initialSlug, initialSongs, initial
               <article aria-label={`Details for ${lastValidSong.songName}`}>
                 <SongDetailContent
                   songName={lastValidSong.songName}
+                  slug={lastValidSong.slug}
                   type={lastValidSong.type}
                   onClose={handleCloseDetail}
                   initialData={lastValidSong.slug === initialSlug ? initialSongDetails : null}
@@ -336,6 +337,7 @@ export function SongsDatabase({ selectedSlug: initialSlug, initialSongs, initial
         <div className="absolute left-[-9999px] opacity-0" aria-hidden="true">
           <SongDetailContent
             songName={lastValidSong.songName}
+            slug={lastValidSong.slug}
             type={lastValidSong.type}
             onClose={() => {}}
             initialData={initialSongDetails}

@@ -32,7 +32,7 @@
     "notes": "物量",
     "chartDesigner": "谱面设计者",
     "bpm": "BPM",
-    "added": "追加日期",
+    "added": "追加版本",
     "difficulties": {
       "basic": "Basic",
       "advanced": "Advanced",
@@ -483,7 +483,9 @@
         "rating": "R 值",
         "chartDesigner": "谱面设计者",
         "bpm": "BPM",
-        "added": "添加日期"
+        "added": "添加版本",
+        "share": "分享",
+        "youtube": "YouTube 搜索"
       },
       "filter": {
         "type": "类型",
@@ -499,7 +501,37 @@
       "notes": "物量",
       "chartDesigner": "谱面设计",
       "bpm": "BPM",
-      "added": "追加日期"
+      "added": "追加版本"
+    },
+    "stats": {
+      "title": "全局统计",
+      "ratingDistribution": "R 值分布",
+      "playCountDistribution": "游玩次数分布",
+      "topTitles": "热门称号",
+      "topSongs": "热门歌曲",
+      "averageAchievementByLevel": "等级平均达成率",
+      "ratingVsPlayCount": "R 值 vs 游玩次数热力图",
+      "xAxis": {
+        "rating": "R 值",
+        "playCount": "游玩次数",
+        "level": "等级"
+      },
+      "yAxis": {
+        "percentage": "占比",
+        "achievement": "达成率",
+        "count": "用户数"
+      },
+      "table": {
+        "rank": "排名",
+        "title": "称号",
+        "song": "歌曲",
+        "percentage": "使用率",
+        "count": "数"
+      },
+      "region": {
+        "intl": "国际服",
+        "jp": "日本服"
+      }
     }
   }
 }

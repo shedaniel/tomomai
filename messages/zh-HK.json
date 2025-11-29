@@ -32,7 +32,7 @@
     "notes": "物量",
     "chartDesigner": "譜面設計者",
     "bpm": "BPM",
-    "added": "追加日期",
+    "added": "追加版本",
     "difficulties": {
       "basic": "Basic",
       "advanced": "Advanced",
@@ -483,7 +483,9 @@
         "rating": "Rating",
         "chartDesigner": "譜面設計者",
         "bpm": "BPM",
-        "added": "追加日期"
+        "added": "追加版本",
+        "share": "分享",
+        "youtube": "YouTube 搜尋"
       },
       "filter": {
         "type": "類型",
@@ -499,7 +501,37 @@
       "notes": "物量",
       "chartDesigner": "譜面設計",
       "bpm": "BPM",
-      "added": "追加日期"
+      "added": "追加版本"
+    },
+    "stats": {
+      "title": "整體統計",
+      "ratingDistribution": "Rating 分佈",
+      "playCountDistribution": "遊玩次數分佈",
+      "topTitles": "熱門稱號",
+      "topSongs": "熱門歌曲",
+      "averageAchievementByLevel": "等級平均達成率",
+      "ratingVsPlayCount": "Rating vs 遊玩次數熱力圖",
+      "xAxis": {
+        "rating": "Rating",
+        "playCount": "遊玩次數",
+        "level": "等級"
+      },
+      "yAxis": {
+        "percentage": "百分比",
+        "achievement": "達成率",
+        "count": "用戶數"
+      },
+      "table": {
+        "rank": "排名",
+        "title": "稱號",
+        "song": "歌曲",
+        "percentage": "使用率",
+        "count": "數"
+      },
+      "region": {
+        "intl": "國際區",
+        "jp": "日本區"
+      }
     }
   }
 }

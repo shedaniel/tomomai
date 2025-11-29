@@ -246,7 +246,9 @@ async function fetchRecordsWithUrl(region: Region, url: string): Promise<Song[]>
   });
 }
 
-function convertToSong(record: Song, region: "intl" | "jp", gameVersion: number): typeof songs.$inferInsert {
+type SongForWebhook = Omit<typeof songs.$inferSelect, 'id'>;
+
+function convertToSong(record: Song, region: "intl" | "jp", gameVersion: number): SongForWebhook {
   return {
     publicId: nanoid(),
     songName: record.songName,
@@ -262,11 +264,11 @@ function convertToSong(record: Song, region: "intl" | "jp", gameVersion: number)
     addedVersion: record.addedVersion,
     bpm: record.bpm,
     noteDesigner: record.noteDesigner,
-    tapCount: record.noteCounts?.tap,
-    holdCount: record.noteCounts?.hold,
-    slideCount: record.noteCounts?.slide,
-    touchCount: record.noteCounts?.touch,
-    breakCount: record.noteCounts?.break,
+    tapCount: record.noteCounts?.tap ?? null,
+    holdCount: record.noteCounts?.hold ?? null,
+    slideCount: record.noteCounts?.slide ?? null,
+    touchCount: record.noteCounts?.touch ?? null,
+    breakCount: record.noteCounts?.break ?? null,
   };
 }
 
@@ -287,8 +289,6 @@ function formatDifficulty(difficulty: string): string {
 function formatLevelPrecise(levelPrecise: number): string {
   return (levelPrecise / 10).toFixed(1);
 }
-
-type SongForWebhook = Omit<typeof songs.$inferSelect, 'id'>;
 
 // Helper function to send Discord webhook
 async function sendDiscordWebhook(

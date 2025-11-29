@@ -1,5 +1,5 @@
 // Common timezones
-const TIMEZONES = [
+export const TIMEZONES = [
     { value: null, label: "Japan Standard Time", region: "JP" },
     { value: "Asia/Seoul", label: "Korea Standard Time", region: "KR" },
     { value: "Asia/Hong_Kong", label: "Hong Kong Standard Time", region: "HK" },
@@ -85,6 +85,4 @@ export const EVENT_STATE_ENUM = ["not_started", "in_progress", "completed"] as c
 
 export const STORE_STATUS_ENUM = ["closed", "open", "temporarily_closed"] as const;
 
-export {
-  TIMEZONES,
-}
+export const DB_TYPES = ["songs", "stats"] as const;

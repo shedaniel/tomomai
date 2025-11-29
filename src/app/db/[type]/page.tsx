@@ -1,6 +1,7 @@
 import { ArcadesMap } from "@/components/db/arcades";
-import { TYPES } from "@/app/db/layout";
+import { DB_TYPES } from "@/lib/db/types";
 import { SongsDatabase } from "@/components/db/songs-database";
+import { StatsDatabase } from "@/components/db/stats-database";
 import { createServerSideTRPC } from "@/lib/trpc-server";
 import { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
@@ -23,6 +24,14 @@ export async function generateMetadata({ params }: DbTypePageProps): Promise<Met
         title: t("title"),
         description: t("description"),
       },
+    };
+  }
+
+  if (type === "stats") {
+    const t = await getTranslations("db.stats");
+    return {
+      title: t("title"),
+      description: t("title"),
     };
   }
 
@@ -70,6 +79,10 @@ export default async function DbTypePage({ params }: DbTypePageProps) {
     );
   }
 
+  if (type === "stats") {
+    return <StatsDatabase />;
+  }
+
   return (
     <>
       {type === "arcades" && (
@@ -79,7 +92,7 @@ export default async function DbTypePage({ params }: DbTypePageProps) {
       )}
 
       {/* Songs is handled by the if block above */}
-      {!["home", "arcades", "songs"].includes(type) && (
+      {!["home", "arcades", "songs", "stats"].includes(type) && (
         <div className="mt-8">
           <div className="bg-muted/50 rounded-lg p-8 text-center">
             <p className="text-muted-foreground">
@@ -93,5 +106,5 @@ export default async function DbTypePage({ params }: DbTypePageProps) {
 }
 
 export async function generateStaticParams(): Promise<{ type: string }[]> {
-  return TYPES.map((type) => ({ type }));
+  return DB_TYPES.map((type) => ({ type }));
 }

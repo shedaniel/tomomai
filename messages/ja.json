@@ -32,7 +32,7 @@
     "notes": "ノーツ数",
     "chartDesigner": "譜面製作者",
     "bpm": "BPM",
-    "added": "追加日",
+    "added": "追加バージョン",
     "difficulties": {
       "basic": "Basic",
       "advanced": "Advanced",
@@ -483,7 +483,9 @@
         "rating": "レート値",
         "chartDesigner": "譜面製作者",
         "bpm": "BPM",
-        "added": "追加日"
+        "added": "追加バージョン",
+        "share": "共有",
+        "youtube": "YouTubeで検索"
       },
       "filter": {
         "type": "タイプ",
@@ -499,7 +501,37 @@
       "notes": "ノーツ数",
       "chartDesigner": "譜面製作者",
       "bpm": "BPM",
-      "added": "追加日"
+      "added": "追加バージョン"
+    },
+    "stats": {
+      "title": "全体統計",
+      "ratingDistribution": "レート分布",
+      "playCountDistribution": "プレイ回数分布",
+      "topTitles": "人気称号",
+      "topSongs": "人気楽曲",
+      "averageAchievementByLevel": "レベル別平均達成率",
+      "ratingVsPlayCount": "レート vs プレイ回数 ヒートマップ",
+      "xAxis": {
+        "rating": "レート",
+        "playCount": "プレイ回数",
+        "level": "レベル"
+      },
+      "yAxis": {
+        "percentage": "割合",
+        "achievement": "達成率",
+        "count": "ユーザー数"
+      },
+      "table": {
+        "rank": "順位",
+        "title": "称号",
+        "song": "楽曲",
+        "percentage": "使用率",
+        "count": "数"
+      },
+      "region": {
+        "intl": "インターナショナル",
+        "jp": "日本"
+      }
     }
   }
 }

@@ -23,7 +23,7 @@ import { StoreEditForm } from "./store-edit-form";
 import { useSession } from "@/lib/auth-client";
 import { motion, AnimatePresence } from "motion/react";
 import { useTranslations } from "next-intl";
-import { getGameName } from "@/lib/game-utils";
+import { getGameName, GameId } from "@/lib/game-utils";
 
 interface StoreEdit {
   id: bigint;
@@ -130,7 +130,7 @@ function StoreEditDetails({ edit, storeName, storeAddress }: StoreEditDetailsPro
           <div className="space-y-1 text-sm">
             {Object.entries(edit.games).map(([game, data]: [string, any]) => (
               <div key={game} className="flex justify-between">
-                <span>{getGameName((k: string) => t.has(k) ? t(k) : k, game)}</span>
+                <span>{getGameName((k: string) => t.has(k) ? t(k) : k, game as GameId)}</span>
                 <span>
                   {data.amount && data.price && " • "}
                   {data.price}

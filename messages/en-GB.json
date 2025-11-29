@@ -469,7 +469,9 @@
         "rating": "Rating",
         "chartDesigner": "Chart Designer",
         "bpm": "BPM",
-        "added": "Added"
+        "added": "Added",
+        "share": "Share Link",
+        "youtube": "YouTube"
       },
       "filter": {
         "type": "Type",

@@ -19,7 +19,7 @@ function TypeSelector({
   onPrefetch,
 }: {
   currentType: string;
-  types: string[];
+  types: readonly string[];
   onStartTransition: (href: string) => void;
   onPrefetch: (href: string) => void;
 }) {
@@ -67,7 +67,7 @@ function BetaBanner() {
   const t = useTranslations("db.beta");
   
   return (
-    <div className="bg-stone-200/50 text-stone-800 border border-stone-500 px-4 py-3 rounded-lg mb-12 flex items-start gap-3">
+    <div className="bg-stone-200/50 text-stone-800 border border-stone-500 px-4 py-3 rounded-lg mb-8 flex items-start gap-3">
       <Info className="w-5 h-5 shrink-0 mt-0.5" />
       <div>
         <h3 className="font-semibold text-sm">{t("title")}</h3>
@@ -84,7 +84,7 @@ export function DbLayoutClient({
 }: {
   user: User | null;
   children: ReactNode;
-  types: string[];
+  types: readonly string[];
 }) {
   const segments = useSelectedLayoutSegments();
   const currentType = (segments[0] as string | undefined) ?? "home";

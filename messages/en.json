@@ -477,7 +477,9 @@
         "rating": "Rating",
         "chartDesigner": "Chart Designer",
         "bpm": "BPM",
-        "added": "Added"
+        "added": "Added",
+        "share": "Share Link",
+        "youtube": "YouTube"
       },
       "filter": {
         "type": "Type",
@@ -494,6 +496,36 @@
       "chartDesigner": "Chart Designer",
       "bpm": "BPM",
       "added": "Added"
+    },
+    "stats": {
+      "title": "Global Statistics",
+      "ratingDistribution": "Player Rating Distribution",
+      "playCountDistribution": "Player Play Count Distribution",
+      "topTitles": "Top Player Titles",
+      "topSongs": "Most Played Songs",
+      "averageAchievementByLevel": "Average Achievement by Level",
+      "ratingVsPlayCount": "Rating vs Play Count Heatmap",
+      "xAxis": {
+        "rating": "Rating",
+        "playCount": "Play Count",
+        "level": "Level"
+      },
+      "yAxis": {
+        "percentage": "Percentage",
+        "achievement": "Achievement",
+        "count": "Users"
+      },
+      "table": {
+        "rank": "Rank",
+        "title": "Title",
+        "song": "Song",
+        "percentage": "Usage",
+        "count": "Count"
+      },
+      "region": {
+        "intl": "International",
+        "jp": "Japan"
+      }
     }
   }
 }
