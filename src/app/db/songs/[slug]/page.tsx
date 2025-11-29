@@ -1,6 +1,7 @@
 import { SongsDatabase } from "@/components/db/songs-database";
 import { createServerSideTRPC } from "@/lib/trpc-server";
 import { Metadata } from "next";
+import { getServerSession } from "@/lib/auth-server";
 
 type SongDetailPageProps = {
   params: Promise<{
@@ -36,7 +37,8 @@ export async function generateMetadata({ params }: SongDetailPageProps): Promise
 export default async function SongDetailPage({ params }: SongDetailPageProps) {
   const { slug } = await params;
   const decodedSlug = decodeURIComponent(slug);
-  const trpc = await createServerSideTRPC();
+  const session = await getServerSession();
+  const trpc = await createServerSideTRPC(session);
   const { songs } = await trpc.user.getAllUniqueSongs();
   
   const song = songs.find(s => s.slug === decodedSlug);

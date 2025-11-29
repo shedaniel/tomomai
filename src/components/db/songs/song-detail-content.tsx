@@ -4,11 +4,14 @@ import { Loader2, Globe, Calendar, Activity, Pencil, Music } from "lucide-react"
 import Image from "next/image";
 import { trpc } from "@/lib/trpc-client";
 import { cn, createSafeMaimaiImageUrl } from "@/lib/utils";
-import { getVersionInfo } from "@/lib/metadata";
+import { getCurrentVersion, getVersionInfo } from "@/lib/metadata";
+import { calculateSongRating } from "@/lib/rating-calculator";
 import { SongDetails, UserScore } from "./types";
 import { REGION_ENUM } from "@/lib/db/types";
+import { Region } from "@/lib/types";
 
-function getRate(achievement: number) {
+function getRate(achievement: number, version: number, fc: string) {
+  if (version >= 12 && (fc === "ap" || fc === "ap+")) return "SSS+ AP";
   if (achievement >= 1005000) return "SSS+";
   if (achievement >= 1000000) return "SSS";
   if (achievement >= 995000) return "SS+";
@@ -32,62 +35,105 @@ interface SongDetailContentProps {
   initialData?: SongDetails | null;
 }
 
-function ScoreRow({ score, region }: { score: UserScore; region: string }) {
+function SongBadges({ fc, fs }: { fc: string; fs: string }) {
   return (
-    <div className={cn(
-      "col-span-full px-3 pb-2 pt-0 flex items-center gap-2 text-xs"
-    )}>
-      <div className="flex items-center gap-1.5 text-muted-foreground mr-1">
-        <Globe className="w-3 h-3" />
-        <span className="font-medium">Your Score ({region === 'intl' ? 'International' : 'Japan'})</span>
-      </div>
-      <div className="font-semibold tabular-nums text-sm">
-        {(score.achievement / 10000).toFixed(4)}%
-      </div>
-      <div className="font-medium text-primary">
-        {getRate(score.achievement)}
-      </div>
-      <div className="flex gap-1">
-        {['ap', 'ap+'].includes(score.fc) && (
-          <span className={cn(
-            "px-1 rounded-[2px] text-[9px] font-bold text-white uppercase",
-            score.fc === 'ap+' ? "bg-gradient-to-r from-orange-400 to-pink-500" : "bg-pink-500"
-          )}>
-            {score.fc}
-          </span>
-        )}
-        {['fc', 'fc+'].includes(score.fc) && (
-          <span className={cn(
-            "px-1 rounded-[2px] text-[9px] font-bold text-white uppercase",
-            score.fc === 'fc+' ? "bg-gradient-to-r from-emerald-400 to-teal-500" : "bg-emerald-500"
-          )}>
-            {score.fc}
-          </span>
-        )}
-        {['fdx', 'fdx+'].includes(score.fs) && (
-          <span className={cn(
-            "px-1 rounded-[2px] text-[9px] font-bold text-white uppercase",
-            score.fs === 'fdx+' ? "bg-gradient-to-r from-orange-400 to-amber-500" : "bg-orange-500"
-          )}>
-            {score.fs}
-          </span>
-        )}
-        {['fs', 'fs+'].includes(score.fs) && (
-          <span className={cn(
-            "px-1 rounded-[2px] text-[9px] font-bold text-white uppercase",
-            score.fs === 'fs+' ? "bg-gradient-to-r from-blue-400 to-indigo-500" : "bg-blue-500"
-          )}>
-            {score.fs}
-          </span>
-        )}
-        {score.fs === 'sync' && (
-           <span className="px-1 rounded-[2px] text-[9px] font-bold text-white bg-slate-500">
-            SYNC
-          </span>
-        )}
-      </div>
+    <div className="flex gap-1">
+      <span className={cn(
+        "px-1 rounded-[2px] text-[9px] font-bold text-white uppercase flex items-center",
+        fc === "ap+" && "bg-gradient-to-r from-orange-400 to-pink-500",
+        fc === "ap" && "bg-pink-500",
+        fc === "fc+" && "bg-gradient-to-r from-emerald-400 to-teal-500",
+        fc === "fc" && "bg-emerald-500",
+        fc === "none" && "hidden",
+      )}>{fc}</span>
+
+      <span className={cn(
+        "px-1 rounded-[2px] text-[9px] font-bold text-white uppercase flex items-center",
+        fs === "fdx+" && "bg-gradient-to-r from-orange-400 to-amber-500",
+        fs === "fdx" && "bg-orange-500",
+        fs === "fs+" && "bg-gradient-to-r from-blue-400 to-indigo-500",
+        fs === "fs" && "bg-blue-500",
+        fs === "sync" && "bg-slate-500",
+        fs === "none" && "hidden",
+      )}>{fs}</span>
     </div>
   )
+}
+
+function ScoreGrid({
+  scores,
+  availableRegions,
+  levelPrecise
+}: {
+  scores: Record<string, UserScore | undefined>,
+  availableRegions: string[],
+  levelPrecise: number
+}) {
+  const validRegions: Region[] = ['jp', 'intl'].filter(r => availableRegions.includes(r));
+
+  if (validRegions.length === 0) return null;
+
+  return (
+    <div className={cn(
+      "col-span-full grid gap-4 px-4 py-3 bg-muted border-t border-dashed",
+      validRegions.length === 2 ? "grid-cols-4" : "grid-cols-2"
+    )}>
+      {validRegions.map(region => {
+        const version = getCurrentVersion(region);
+        const score = scores[region];
+        const rating = score ? calculateSongRating({
+          achievement: score.achievement,
+          fc: score.fc as any,
+          levelPrecise,
+          addedVersion: 0
+        }, version) : 0;
+
+        const label = region === 'intl' ? 'INTL' : 'JP';
+
+        return (
+          <div key={region} className="contents">
+            <div className="flex flex-col min-w-0">
+              <div className="text-[10px] text-muted-foreground font-semibold uppercase mb-0.5 truncate">
+                {`${label} Achievement`}
+              </div>
+              <div className="flex items-start gap-y-0.5 flex-col">
+                {score ? (
+                  <>
+                    <span className="text-sm font-semibold tabular-nums truncate">
+                      {(score.achievement / 10000).toFixed(4)}%
+                    </span>
+                    <SongBadges fc={score.fc} fs={score.fs} />
+                  </>
+                ) : (
+                  <span className="text-sm text-muted-foreground">-</span>
+                )}
+              </div>
+            </div>
+
+            <div className="flex flex-col min-w-0">
+              <div className="text-[10px] text-muted-foreground font-semibold uppercase mb-0.5 truncate">
+                {`${label} Rating`}
+              </div>
+              <div className="flex items-baseline gap-2">
+                {score ? (
+                  <>
+                    <span className="text-sm font-bold tabular-nums text-primary">
+                      {Math.floor(rating)}
+                    </span>
+                    <span className="text-xs text-muted-foreground font-medium">
+                      ({getRate(score.achievement, version, score.fc)})
+                    </span>
+                  </>
+                ) : (
+                  <span className="text-sm text-muted-foreground">-</span>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
 }
 
 export function SongDetailContent({ songName, type, onClose, initialData }: SongDetailContentProps) {
@@ -229,10 +275,12 @@ export function SongDetailContent({ songName, type, onClose, initialData }: Song
                 ? (chart.tapCount ?? 0) + (chart.holdCount ?? 0) + (chart.slideCount ?? 0) + (chart.touchCount ?? 0) + (chart.breakCount ?? 0)
                 : null;
               const isFirst = index === 0;
-              const scores: (UserScore & { region: string })[] = Object.values(REGION_ENUM).map((region) => {
-                const score = data.userScores?.[region]?.[chart.difficulty];
-                return score ? { ...score, region } : undefined;
-              }).filter(score => !!score);
+              const chartScores: Record<string, UserScore | undefined> = {};
+              const availableRegions = data.regions.map(r => r.region);
+              availableRegions.forEach(region => {
+                chartScores[region] = data.userScores?.[region]?.[chart.difficulty];
+              });
+              const hasAnyScore = Object.values(chartScores).some(s => !!s);
 
               // Show border on data row only if there is no designer row following it
               // (and it's not the last row of the table)
@@ -276,11 +324,6 @@ export function SongDetailContent({ songName, type, onClose, initialData }: Song
                     {hasNoteData ? chart.breakCount : "-"}
                   </div>
 
-                  {/* Score Row */}
-                  {scores.map((score) => (
-                    <ScoreRow key={score.region} score={score} region={score.region} />
-                  ))}
-
                   {/* Designer row (spans all columns) */}
                   {chart.noteDesigner && (
                     <div className="col-span-full px-3 pb-2 pt-0 h-7 flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -288,6 +331,15 @@ export function SongDetailContent({ songName, type, onClose, initialData }: Song
                       <span className="font-medium">Chart Designer</span>
                       <span>{chart.noteDesigner}</span>
                     </div>
+                  )}
+
+                  {/* Score Grid */}
+                  {hasAnyScore && (
+                    <ScoreGrid
+                      scores={chartScores}
+                      availableRegions={availableRegions}
+                      levelPrecise={chart.levelPrecise}
+                    />
                   )}
                 </div>
               );

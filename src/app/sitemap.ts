@@ -2,7 +2,7 @@ import type { MetadataRoute } from 'next'
 import { resolveBaseUrl } from '@/lib/base-url';
 import { TYPES as DB_TYPES } from './db/layout';
 import { user, userSnapshots, songs } from '@/lib/db/schema-pg';
-import { and, eq, sql } from 'drizzle-orm';
+import { and, eq, ne, sql } from 'drizzle-orm';
 import { db } from '@/lib/db';
 import { getSongSlug } from '@/lib/song-slug';
 
@@ -36,6 +36,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       type: songs.type,
     })
     .from(songs)
+    .where(ne(songs.difficulty, "utage"))
     .groupBy(songs.songName, songs.artist, songs.type);
 
   // Deduplicate songs by songName + type
@@ -49,7 +50,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // Generate slugs for all songs in parallel
   const songsArray = Array.from(songSet.values());
-  const slugs = await Promise.all(songsArray.map(song => getSongSlug(song)));
 
   // Detect same slugs and print as errors
   const counter = new Map<string, Song[]>();

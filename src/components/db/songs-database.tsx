@@ -14,7 +14,7 @@ import { FilterPanel, GenericFilter, getFilterKey } from "@/components/filter-pa
 import { cn } from "@/lib/utils";
 import { Search, Music, LayoutGrid, LayoutList, X } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 
 import { UniqueSong, SongDetails, UniqueSongFilter, UniqueSongFilterType } from "./songs/types";
@@ -22,6 +22,7 @@ import { createUniqueSongFilterCategories, applyUniqueSongFilters } from "./song
 import { SongCard } from "./songs/song-card";
 import { SongRow } from "./songs/song-row";
 import { SongDetailContent } from "./songs/song-detail-content";
+import { AutoHeight } from "../animate-ui/primitives/effects/auto-height";
 
 // Re-export UniqueSong and SongDetails for backward compatibility
 export type { UniqueSong, SongDetails };
@@ -50,6 +51,7 @@ export function SongsDatabase({ selectedSlug: initialSlug, initialSongs, initial
       } else if (path.startsWith('/db/songs/')) {
         const slug = decodeURIComponent(path.slice('/db/songs/'.length));
         setCurrentSlug(slug);
+        setSnap(0.6);
       }
     };
 
@@ -91,12 +93,25 @@ export function SongsDatabase({ selectedSlug: initialSlug, initialSongs, initial
   const [displayedSong, setDisplayedSong] = useState<UniqueSong | null>(null);
   const [snap, setSnap] = useState<number | string | null>(0.6);
 
+  const lastValidSong = selectedSong ?? displayedSong;
+
+  // Update document title when selected song changes
   useEffect(() => {
     if (selectedSong) {
       setDisplayedSong(selectedSong);
       setSnap(0.6);
+      document.title = `${selectedSong.songName} - ${selectedSong.artist} | maimai DX`;
+    } else {
+      document.title = "Songs Database | maimai DX";
     }
   }, [selectedSong]);
+
+  const handleSnapChange = useCallback((snap: number | string | null) => {
+    if (snap === 0) {
+      handleCloseDetail();
+    }
+    setSnap(snap);
+  }, []);
 
   // Filter songs by search and filters
   const filteredSongs = useMemo(() => {
@@ -142,6 +157,7 @@ export function SongsDatabase({ selectedSlug: initialSlug, initialSongs, initial
     const url = `/db/songs/${encodeURIComponent(song.slug)}`;
     window.history.pushState({ slug: song.slug }, '', url);
     setCurrentSlug(song.slug);
+    setSnap(0.6);
   }, []);
 
   // Handle closing the detail sheet
@@ -270,19 +286,20 @@ export function SongsDatabase({ selectedSlug: initialSlug, initialSongs, initial
 
       {/* Song Detail Drawer */}
       <Drawer
-        snapPoints={[0.6, 1]}
+        snapPoints={[0, 0.6, 1]}
         activeSnapPoint={snap}
-        setActiveSnapPoint={setSnap}
-        fadeFromIndex={1}
+        setActiveSnapPoint={handleSnapChange}
+        fadeFromIndex={2}
         defaultOpen={!!selectedSong && currentSlug === initialSlug && currentSlug === selectedSong?.slug}
         open={!!selectedSong}
-        onOpenChange={(open) => !open && handleCloseDetail()}
+        onOpenChange={(open: boolean) => !open && handleCloseDetail()}
+        dismissible
       >
         <DrawerOverlay />
-        <DrawerContent className="bg-card mx-auto w-[calc(min(100dvw-1rem,_42rem))] max-h-[97%]">
+        <DrawerContent className="bg-card mx-auto w-[calc(min(100dvw-1rem,_42rem))] max-h-[90%] h-full shadow-2xl">
           <VisuallyHidden>
-            <DrawerTitle>{displayedSong?.songName || "Song Details"}</DrawerTitle>
-            <DrawerDescription>{displayedSong?.artist || "Song artist"}</DrawerDescription>
+            <DrawerTitle>{lastValidSong?.songName || "Song Details"}</DrawerTitle>
+            <DrawerDescription>{lastValidSong?.artist || "Song artist"}</DrawerDescription>
           </VisuallyHidden>
           <div
             className={cn("relative px-6 pt-4 -mt-4", snap === 1 ? "overflow-y-auto" : "overflow-hidden")}
@@ -299,17 +316,17 @@ export function SongsDatabase({ selectedSlug: initialSlug, initialSongs, initial
                 <X className="h-4 w-4 text-neutral-400 stroke-3" />
               </Button>
             </div>
-              {displayedSong && (
-                <article aria-label={`Details for ${displayedSong.songName}`}>
-                  <SongDetailContent
-                    songName={displayedSong.songName}
-                    type={displayedSong.type}
-                    onClose={handleCloseDetail}
-                    initialData={displayedSong.slug === initialSlug ? initialSongDetails : null}
-                  />
-                </article>
-              )}
-              <div className="h-8" />
+            {lastValidSong && (
+              <article aria-label={`Details for ${lastValidSong.songName}`}>
+                <SongDetailContent
+                  songName={lastValidSong.songName}
+                  type={lastValidSong.type}
+                  onClose={handleCloseDetail}
+                  initialData={lastValidSong.slug === initialSlug ? initialSongDetails : null}
+                />
+              </article>
+            )}
+            <div className="h-8" />
           </div>
         </DrawerContent>
       </Drawer>
