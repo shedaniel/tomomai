@@ -6,6 +6,7 @@ import { Separator } from "@/components/ui/separator";
 import { User } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "motion/react";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useSelectedLayoutSegments } from "next/navigation";
 import { Fragment, type ReactNode } from "react";
@@ -17,6 +18,8 @@ function TypeSelector({
   currentType: string;
   types: string[];
 }) {
+  const t = useTranslations();
+
   return (
     <div className="flex items-center space-x-2 -mt-4 overflow-x-auto">
       {types.map((type) => (
@@ -31,7 +34,7 @@ function TypeSelector({
             )}
           >
             <Link href={`/db/${type}`} scroll={false}>
-              {type}
+              {t(`db.types.${type}`)}
             </Link>
           </Button>
         </Fragment>

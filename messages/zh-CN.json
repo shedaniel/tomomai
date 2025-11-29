@@ -26,7 +26,21 @@
     "discord": "Discord",
     "about": "关于",
     "experiments": "实验",
-    "comingSoon": "敬请期待..."
+    "comingSoon": "敬请期待...",
+    "difficulty": "难度",
+    "level": "等级",
+    "notes": "物量",
+    "chartDesigner": "谱面设计",
+    "bpm": "BPM",
+    "added": "追加日期",
+    "difficulties": {
+      "basic": "Basic",
+      "advanced": "Advanced",
+      "expert": "Expert",
+      "master": "Master",
+      "remaster": "Re:Master",
+      "utage": "Utage"
+    }
   },
   "auth": {
     "loginWithDiscord": "以 Discord 继续",
@@ -420,6 +434,48 @@
       "expired": "此邀请已过期",
       "ownCode": "你不能使用自己的邀请代码",
       "validationFailed": "邀请验证失败"
+    }
+  },
+  "db": {
+    "callout": {
+      "title": "想查询数据库吗？",
+      "subtitle": "无需登录即可查看歌曲数据库！",
+      "description": "tomomai ともマイ DB 是一个公开的 maimai 谱面、机厅及更多maimai信息的数据库"
+    },
+    "types": {
+      "songs": "歌曲",
+      "calculator": "计算",
+      "stats": "统计"
+    },
+    "songs": {
+      "metadata": {
+        "title": "歌曲数据库 | maimai DX",
+        "description": "浏览和搜索所有 maimai DX 歌曲。按类型、分类和版本筛选。查看歌曲详情、难度等级和区域开放情况。"
+      },
+      "title": "歌曲数据库 | maimai DX",
+      "searchPlaceholder": "搜索歌曲、艺术家、分类...",
+      "noSongsFound": "未找到歌曲",
+      "tryAdjustingSearch": "尝试调整搜索条件",
+      "noSongsAvailable": "无可用歌曲",
+      "detail": {
+        "title": "歌曲详情",
+        "artist": "艺术家",
+        "charts": "谱面",
+        "availability": "区域",
+        "yourScore": "你的成绩",
+        "achievement": "达成率",
+        "rating": "Rating",
+        "chartDesigner": "谱面设计者",
+        "bpm": "BPM",
+        "added": "添加日期"
+      },
+      "filter": {
+        "type": "类型",
+        "genre": "分类",
+        "addedVersion": "添加版本",
+        "std": "STD",
+        "dx": "DX"
+      }
     }
   }
 }

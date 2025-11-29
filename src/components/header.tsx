@@ -10,11 +10,12 @@ import { Beaker, Database, Home, Info, LogIn, LogOut, User as LucideUserIcon, Se
 import { useTranslations } from "next-intl";
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { toast } from "sonner";
 import { LocaleSwitcher } from "./locale-switcher";
 import { RegionSwitcher } from "./region-switcher";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "./ui/dropdown-menu";
+import { cn } from "@/lib/utils";
 
 const APPLICATION_ID = process.env.NEXT_PUBLIC_DISCORD_APPLICATION_ID;
 const SIGNUP_TYPE = process.env.NEXT_PUBLIC_ACCOUNT_SIGNUP_TYPE || 'disabled';
@@ -63,11 +64,14 @@ interface HeaderProps {
 function NavbarButtons({ currentTab, onAbout, onDiscordInvite }: { currentTab: CurrentTab; onAbout: () => void; onDiscordInvite: () => void }) {
   return (<>
     {ALL_TABS.filter(tab => tab !== currentTab).map(tab => (
-      <>
+      <Fragment key={tab}>
         <Button
           variant="outline"
           size="sm"
-          className="h-8 hover:bg-gray-200 md:hidden max-xs:w-8"
+          className={cn("h-8 hover:bg-gray-200 md:hidden max-xs:w-8",
+            tab === "db" ? "bg-orange-200 text-amber-700 hover:bg-orange-200/75 hover:text-amber-700" : "",
+            tab === "dashboard" ? "bg-primary text-primary-foreground" : "",
+          )}
           asChild
         >
           <Link href={TAB_LINKS[tab]} className="md:hidden">
@@ -78,14 +82,17 @@ function NavbarButtons({ currentTab, onAbout, onDiscordInvite }: { currentTab: C
         <Button
           variant="ghost"
           size="sm"
-          className="h-8 px-2 py-0 hover:bg-gray-200 max-md:hidden"
+          className={cn("h-8 px-3 py-0 hover:bg-gray-200 max-md:hidden",
+            tab === "db" ? "bg-orange-200 text-amber-700 hover:bg-orange-200/75 hover:text-amber-700" : "",
+            tab === "dashboard" ? "bg-primary text-primary-foreground hover:bg-primary/75 hover:text-primary-foreground" : "",
+          )}
           asChild
         >
           <Link href={TAB_LINKS[tab]}>
             {TAB_LABELS[tab]}
           </Link>
         </Button>
-      </>
+      </Fragment>
     ))}
     <Button
       onClick={onAbout}

@@ -21,20 +21,22 @@ interface LoginScreenProps {
 }
 
 function DatabaseCard() {
+  const t = useTranslations();
+
   return (
-    <Link href="/db" className="block mb-4 group">
+    <Link href="/db" className="block mb-4 group cursor-pointer">
       <div className="relative bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800 rounded-lg p-3 sm:p-4 transition-all hover:bg-orange-100/50 dark:hover:bg-orange-900/40">
         <div className="flex items-center gap-3">
           <Database className="h-5 w-5 text-orange-600 dark:text-orange-400 flex-shrink-0" />
           <div className="flex-1 min-w-0">
             <p className="text-sm text-orange-700 dark:text-orange-100 font-medium">
-              Accessing the database instead?
+              {t('db.callout.title')}
             </p>
             <p className="text-xs text-orange-700 dark:text-orange-300 mt-0.5">
-              Click here to view the song database without logging in.
+              {t('db.callout.subtitle')}
             </p>
             <p className="text-xs text-orange-700 dark:text-orange-300 mt-0.5">
-              tomomai ともマイ Db is a public database of maimai charts, arcades, and more.
+              {t('db.callout.description')}
             </p>
           </div>
           <ArrowRight className="h-4 w-4 text-orange-400 group-hover:text-orange-600 dark:text-orange-500 dark:group-hover:text-orange-300 transition-colors" />

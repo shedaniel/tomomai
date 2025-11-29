@@ -26,7 +26,15 @@
     "discord": "Discord",
     "about": "About",
     "experiments": "Experiments",
-    "comingSoon": "Coming soon..."
+    "comingSoon": "Coming soon...",
+    "difficulties": {
+      "basic": "Basic",
+      "advanced": "Advanced",
+      "expert": "Expert",
+      "master": "Master",
+      "remaster": "Re:Master",
+      "utage": "Utage"
+    }
   },
   "auth": {
     "loginWithDiscord": "Continue with Discord",
@@ -420,6 +428,56 @@
       "expired": "This invitation has expired",
       "ownCode": "You cannot use your own invitation code",
       "validationFailed": "Failed to validate invitation"
+    }
+  },
+  "db": {
+    "callout": {
+      "title": "Accessing the database instead?",
+      "subtitle": "Click here to view the song database without logging in.",
+      "description": "tomomai ともマイ DB is a public database of maimai charts, arcades, and more."
+    },
+    "types": {
+      "songs": "Songs",
+      "calculator": "Calculator",
+      "stats": "Stats"
+    },
+    "songs": {
+      "metadata": {
+        "title": "Songs Database | maimai DX",
+        "description": "Browse and search all maimai DX songs. Filter by type, genre, and version. View song details, difficulty levels, and regional availability."
+      },
+      "title": "Songs Database | maimai DX",
+      "searchPlaceholder": "Search songs, artists, genres...",
+      "noSongsFound": "No songs found",
+      "tryAdjustingSearch": "Try adjusting your search",
+      "noSongsAvailable": "No songs available",
+      "detail": {
+        "title": "Song Details",
+        "artist": "Song artist",
+        "charts": "Charts",
+        "availability": "Availability",
+        "yourScore": "Your Score",
+        "achievement": "Achievement",
+        "rating": "Rating",
+        "chartDesigner": "Chart Designer",
+        "bpm": "BPM",
+        "added": "Added"
+      },
+      "filter": {
+        "type": "Type",
+        "genre": "Genre",
+        "addedVersion": "Added Version",
+        "std": "STD",
+        "dx": "DX"
+      }
+    },
+    "common": {
+      "difficulty": "Difficulty",
+      "level": "Level",
+      "notes": "Notes",
+      "chartDesigner": "Chart Designer",
+      "bpm": "BPM",
+      "added": "Added"
     }
   }
 }

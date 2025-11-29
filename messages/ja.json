@@ -26,7 +26,21 @@
     "discord": "Discord",
     "about": "ともマイについて",
     "experiments": "実験",
-    "comingSoon": "準備中..."
+    "comingSoon": "準備中...",
+    "difficulty": "難易度",
+    "level": "レベル",
+    "notes": "ノーツ数",
+    "chartDesigner": "譜面製作者",
+    "bpm": "BPM",
+    "added": "追加日",
+    "difficulties": {
+      "basic": "Basic",
+      "advanced": "Advanced",
+      "expert": "Expert",
+      "master": "Master",
+      "remaster": "Re:Master",
+      "utage": "Utage"
+    }
   },
   "auth": {
     "loginWithDiscord": "Discordで続行",
@@ -420,6 +434,48 @@
       "expired": "この招待は期限切れです",
       "ownCode": "自分の招待コードは使用できません",
       "validationFailed": "招待の検証に失敗しました"
+    }
+  },
+  "db": {
+    "callout": {
+      "title": "データベースを利用したいですか？",
+      "subtitle": "ログインせずに楽曲データベースを閲覧するには、こちらをクリックしてください！",
+      "description": "ともマイ DB は、maimaiの譜面やゲーセンなどの情報を集めた公開データベースです"
+    },
+    "types": {
+      "songs": "楽曲",
+      "calculator": "計算",
+      "stats": "統計"
+    },
+    "songs": {
+      "metadata": {
+        "title": "楽曲データベース | maimai DX",
+        "description": "maimai DX の楽曲を検索・閲覧できます。タイプ、ジャンル、バージョンでフィルタリング可能。楽曲詳細、難易度、収録地域も確認できます。"
+      },
+      "title": "楽曲データベース | maimai DX",
+      "searchPlaceholder": "楽曲名、アーティスト、ジャンルなどで検索...",
+      "noSongsFound": "楽曲が見つかりません",
+      "tryAdjustingSearch": "検索条件を変更してください",
+      "noSongsAvailable": "楽曲がありません",
+      "detail": {
+        "title": "楽曲詳細",
+        "artist": "アーティスト",
+        "charts": "譜面",
+        "availability": "収録地域",
+        "yourScore": "あなたのスコア",
+        "achievement": "達成率",
+        "rating": "レート値",
+        "chartDesigner": "譜面製作者",
+        "bpm": "BPM",
+        "added": "追加日"
+      },
+      "filter": {
+        "type": "タイプ",
+        "genre": "ジャンル",
+        "addedVersion": "追加バージョン",
+        "std": "STD",
+        "dx": "DX"
+      }
     }
   }
 }

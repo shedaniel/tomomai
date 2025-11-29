@@ -4,7 +4,13 @@ import { Disc3, Folder, Calendar } from "lucide-react";
 import { UniqueSong, UniqueSongFilter } from "./types";
 
 // Create filter categories for unique songs
-export function createUniqueSongFilterCategories(songs: UniqueSong[]): FilterCategory[] {
+export function createUniqueSongFilterCategories(
+  songs: UniqueSong[],
+  t?: (key: string) => string
+): FilterCategory[] {
+  // Helper to get translation or fallback
+  const getLabel = (key: string, fallback: string) => t ? t(key) : fallback;
+
   // Get unique genres from songs
   const genres = [...new Set(songs.map(s => s.genre))].sort();
 
@@ -14,22 +20,22 @@ export function createUniqueSongFilterCategories(songs: UniqueSong[]): FilterCat
   return [
     {
       type: "type",
-      label: "Type",
+      label: getLabel("type", "Type"),
       icon: Disc3,
       options: [
-        { value: "std", label: "Standard" },
-        { value: "dx", label: "DX" },
+        { value: "std", label: getLabel("std", "Standard") },
+        { value: "dx", label: getLabel("dx", "DX") },
       ],
     },
     {
       type: "genre",
-      label: "Genre",
+      label: getLabel("genre", "Genre"),
       icon: Folder,
       options: genres.map(g => ({ value: g, label: g })),
     },
     {
       type: "addedVersion",
-      label: "Added Version",
+      label: getLabel("addedVersion", "Added Version"),
       icon: Calendar,
       options: addedVersions.map(v => {
         const versionInfo = getVersionInfo(v);

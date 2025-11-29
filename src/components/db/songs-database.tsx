@@ -31,6 +31,9 @@ interface SongsDatabaseProps {
 
 export function SongsDatabase({ selectedSlug: initialSlug, initialSongs, initialSongDetails }: SongsDatabaseProps) {
   const t = useTranslations();
+  
+  // Helper for filter translations
+  const tFilter = useMemo(() => (key: string) => t(`db.songs.filter.${key}`), [t]);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [displayMode, setDisplayMode] = useState<"grid" | "list">("grid");
@@ -60,8 +63,8 @@ export function SongsDatabase({ selectedSlug: initialSlug, initialSongs, initial
 
   // Create filter categories based on available data
   const filterCategories = useMemo(() => {
-    return createUniqueSongFilterCategories(allSongs);
-  }, [allSongs]);
+    return createUniqueSongFilterCategories(allSongs, tFilter);
+  }, [allSongs, tFilter]);
 
   // Filter handlers
   const handleAddFilter = useCallback((filter: GenericFilter) => {
@@ -98,9 +101,9 @@ export function SongsDatabase({ selectedSlug: initialSlug, initialSongs, initial
       setSnap(0.6);
       document.title = `${selectedSong.songName} - ${selectedSong.artist} | maimai DX`;
     } else {
-      document.title = "Songs Database | maimai DX";
+      document.title = t("db.songs.title");
     }
-  }, [selectedSong]);
+  }, [selectedSong, t]);
 
   const handleSnapChange = useCallback((snap: number | string | null) => {
     if (snap === 0) {
@@ -179,11 +182,11 @@ export function SongsDatabase({ selectedSlug: initialSlug, initialSongs, initial
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
             <Input
               type="search"
-              placeholder="Search songs, artists, genres..."
+              placeholder={t("db.songs.searchPlaceholder")}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10 h-10"
-              aria-label="Search songs"
+              aria-label={t("db.songs.searchPlaceholder")}
             />
           </div>
 
@@ -242,9 +245,9 @@ export function SongsDatabase({ selectedSlug: initialSlug, initialSongs, initial
           <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mb-4" aria-hidden="true">
             <Music className="w-8 h-8 text-muted-foreground" />
           </div>
-          <h2 className="text-lg font-medium mb-2">No songs found</h2>
+          <h2 className="text-lg font-medium mb-2">{t("db.songs.noSongsFound")}</h2>
           <p className="text-muted-foreground max-w-sm">
-            {searchQuery ? "Try adjusting your search" : "No songs available"}
+            {searchQuery ? t("db.songs.tryAdjustingSearch") : t("db.songs.noSongsAvailable")}
           </p>
         </div>
       )}
@@ -295,8 +298,8 @@ export function SongsDatabase({ selectedSlug: initialSlug, initialSongs, initial
         <DrawerOverlay />
         <DrawerContent className="bg-card mx-auto w-[calc(min(100dvw-1rem,_42rem))] max-h-[90%] h-full shadow-2xl">
           <VisuallyHidden>
-            <DrawerTitle>{lastValidSong?.songName || "Song Details"}</DrawerTitle>
-            <DrawerDescription>{lastValidSong?.artist || "Song artist"}</DrawerDescription>
+            <DrawerTitle>{lastValidSong?.songName || t("db.songs.detail.title")}</DrawerTitle>
+            <DrawerDescription>{lastValidSong?.artist || t("db.songs.detail.artist")}</DrawerDescription>
           </VisuallyHidden>
           <div
             className={cn("relative px-6 pt-4 -mt-4", snap === 1 ? "overflow-y-auto" : "overflow-hidden")}

@@ -1,18 +1,19 @@
 "use client";
 
-import { Loader2, Globe, Calendar, Activity, Pencil, Music } from "lucide-react";
-import Image from "next/image";
-import { trpc } from "@/lib/trpc-client";
-import { cn, createSafeMaimaiImageUrl } from "@/lib/utils";
-import { getCurrentVersion, getVersionInfo } from "@/lib/metadata";
-import { calculateSongRating } from "@/lib/rating-calculator";
-import { SongDetails, UserScore } from "./types";
-import { REGION_ENUM } from "@/lib/db/types";
-import { Difficulty, Region, SongExtended } from "@/lib/types";
-import { Dialog, DialogContent, DialogDescription, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Tabs, TabsList, TabsPanel, TabsPanels, TabsTab } from "@/components/animate-ui/components/base/tabs";
+import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { ACHIEVEMENTS, getAchievementRate } from "@/lib/difficulty";
-import { useMemo, useState } from "react";
-import { Tabs, TabsPanels, TabsPanel, TabsTab, TabsList } from "@/components/animate-ui/components/base/tabs";
+import { getVersionInfo } from "@/lib/metadata";
+import { calculateSongRating } from "@/lib/rating-calculator";
+import { trpc } from "@/lib/trpc-client";
+import { Difficulty, Region, SongExtended } from "@/lib/types";
+import { cn, createSafeMaimaiImageUrl } from "@/lib/utils";
+import { Activity, Calendar, Globe, Loader2, Music, Pencil } from "lucide-react";
+import Image from "next/image";
+import { Fragment, useMemo, useState } from "react";
+import { SongDetails, UserScore } from "./types";
+
+import { useTranslations } from "next-intl";
 
 type SongExtendedIdentified = SongExtended & { region: Region; gameVersion: number };
 
@@ -23,15 +24,6 @@ const DIFFICULTY_COLORS: Record<Difficulty, { bg: string; text: string; border: 
   master: { bg: "bg-violet-500", text: "text-violet-600", border: "border-violet-500" },
   remaster: { bg: "bg-violet-300", text: "text-violet-500", border: "border-violet-300" },
   utage: { bg: "bg-pink-500", text: "text-pink-600", border: "border-pink-500" },
-};
-
-const DIFFICULTY_LABELS: Record<Difficulty, string> = {
-  basic: "BASIC",
-  advanced: "ADVANCED",
-  expert: "EXPERT",
-  master: "MASTER",
-  remaster: "Re:MASTER",
-  utage: "UTAGE",
 };
 
 function getRate(achievement: number, version: number, fc: string) {
@@ -78,6 +70,8 @@ function ScoreGrid({
   charts: SongExtendedIdentified[];
   scores: Record<Region, UserScore>,
 }) {
+  const t = useTranslations();
+
   return (
     <div className={cn(
       "col-span-full grid gap-4 px-4 py-3 bg-muted group-hover:!bg-primary/10 border-t border-dashed",
@@ -92,13 +86,13 @@ function ScoreGrid({
           addedVersion: chart.addedVersion
         }, chart.gameVersion) : 0;
 
-        const label = region === 'intl' ? 'INTL' : 'JP';
+        const label = region === 'intl' ? t('regions.intl') : t('regions.jp');
 
         return (
           <div key={region} className="contents">
             <div className="flex flex-col min-w-0">
               <div className="text-[10px] text-muted-foreground font-semibold uppercase mb-0.5 truncate">
-                {`${label} Achievement`}
+                {`${label} ${t('db.songs.detail.achievement')}`}
               </div>
               <div className="flex items-start gap-y-0.5 flex-col">
                 {score ? (
@@ -116,7 +110,7 @@ function ScoreGrid({
 
             <div className="flex flex-col min-w-0">
               <div className="text-[10px] text-muted-foreground font-semibold uppercase mb-0.5 truncate">
-                {`${label} Rating`}
+                {`${label} ${t('db.songs.detail.rating')}`}
               </div>
               <div className="flex items-baseline gap-2">
                 {score ? (
@@ -147,6 +141,7 @@ export function SongChartRow({ difficulty, charts, index, data, hasTouch }: {
   data: SongDetails;
   hasTouch: boolean;
 }) {
+  const t = useTranslations();
   const latestChart: SongExtendedIdentified = charts.find(c => c.gameVersion === Math.max(...charts.map(c => c.gameVersion)))!;
 
   const colors = DIFFICULTY_COLORS[difficulty] || { bg: "bg-gray-500", text: "text-gray-600", border: "border-gray-500" };
@@ -173,7 +168,7 @@ export function SongChartRow({ difficulty, charts, index, data, hasTouch }: {
           {/* Difficulty */}
           <div className={cn("py-2.5 px-3 flex items-center gap-2", dataBorderClass)}>
             <span className={cn("font-bold", colors.text)}>
-              {DIFFICULTY_LABELS[difficulty] || difficulty.toUpperCase()}
+              {t(`common.difficulties.${difficulty}`)}
             </span>
           </div>
           {/* Level */}
@@ -210,7 +205,7 @@ export function SongChartRow({ difficulty, charts, index, data, hasTouch }: {
           {latestChart.noteDesigner && (
             <div className="col-span-full px-3 pb-2 pt-0 h-7 flex items-center gap-1.5 text-xs text-muted-foreground">
               <Pencil className="w-3 h-3" />
-              <span className="font-medium">Chart Designer</span>
+              <span className="font-medium">{t('db.songs.detail.chartDesigner')}</span>
               <span>{latestChart.noteDesigner}</span>
             </div>
           )}
@@ -232,11 +227,13 @@ export function SongChartRow({ difficulty, charts, index, data, hasTouch }: {
 }
 
 function SongChartDialogGrid({ chart, score }: { chart: SongExtendedIdentified; score: UserScore }) {
+  const t = useTranslations();
+
   return (
     <div className="grid grid-cols-[minmax(100px,5fr)_minmax(100px,1fr)] rounded-md overflow-hidden border">
       <div className="contents text-xs bg-accent/50 font-medium text-muted-foreground">
-        <div className="py-2 px-3 border-b border-r">Achievement</div>
-        <div className="py-2 px-3 border-b">Rating</div>
+        <div className="py-2 px-3 border-b border-r">{t('db.songs.detail.achievement')}</div>
+        <div className="py-2 px-3 border-b">{t('db.songs.detail.rating')}</div>
       </div>
       {chart.gameVersion >= 12 && (<>
         <div className="contents">
@@ -252,12 +249,12 @@ function SongChartDialogGrid({ chart, score }: { chart: SongExtendedIdentified; 
           }, chart.gameVersion))}</span>
         </div>
       </>)}
-      {ACHIEVEMENTS.map((achievement, index) => (<>
-        {score && score.achievement > achievement.achievement && (index === 0 || ACHIEVEMENTS[index - 1].achievement >= score.achievement) && (<>
-          <div key={achievement.achievement} className="contents *:bg-primary/80 text-primary-foreground">
-            <span className="py-2 px-3 text-xs border-r border-b font-semibold">
-              Your Score
-              <span className="ml-1.5 text-xs">({(score.achievement / 10000).toFixed(4)}%)</span>
+      {ACHIEVEMENTS.map((achievement, index) => (<Fragment key={index}>
+        {score && score.achievement > achievement.achievement && (index === 0 || ACHIEVEMENTS[index - 1].achievement >= score.achievement) && (<Fragment key={`score-${score.achievement}`}>
+          <div className="contents *:bg-primary/80 text-primary-foreground">
+            <span className="py-2 px-3 text-xs border-r border-b font-semibold flex gap-1.5 flex-wrap">
+              <span className="whitespace-nowrap">{t('db.songs.detail.yourScore')}</span>
+              <span className="text-xs whitespace-nowrap">({(score.achievement / 10000).toFixed(4)}%)</span>
             </span>
             <span className="py-2 px-3 text-xs border-b font-medium">{Math.floor(calculateSongRating({
               achievement: score.achievement,
@@ -267,7 +264,7 @@ function SongChartDialogGrid({ chart, score }: { chart: SongExtendedIdentified; 
               addedVersion: chart.addedVersion
             }, chart.gameVersion))}</span>
           </div>
-        </>)}
+        </Fragment>)}
         <div key={achievement.achievement} className="contents">
           <span className="py-2 px-3 text-xs border-r border-b">
             {achievement.rate}
@@ -281,13 +278,14 @@ function SongChartDialogGrid({ chart, score }: { chart: SongExtendedIdentified; 
             addedVersion: chart.addedVersion
           }, chart.gameVersion))}</span>
         </div>
-      </>
+      </Fragment>
       ))}
     </div>
   )
 }
 
 export function SongChartDialogContent({ charts, scores }: { charts: SongExtendedIdentified[]; scores: Record<Region, UserScore> }) {
+  const t = useTranslations();
   const regionsWithScores = Object.keys(scores).filter(region => scores[region as Region] !== undefined);
   const [region, setRegion] = useState<Region>((regionsWithScores[0] ?? charts[0].region) as Region);
 
@@ -295,14 +293,16 @@ export function SongChartDialogContent({ charts, scores }: { charts: SongExtende
 
   return <>
     <DialogTitle>
-      <span className={cn("font-bold mr-2", DIFFICULTY_COLORS[chart.difficulty]?.text ?? "text-gray-600")}>{DIFFICULTY_LABELS[chart.difficulty] || chart.difficulty.toUpperCase()}</span>
+      <span className={cn("font-bold mr-2", DIFFICULTY_COLORS[chart.difficulty]?.text ?? "text-gray-600")}>
+        {t(`common.difficulties.${chart.difficulty}`)}
+      </span>
       <span className="text-lg font-bold tabular-nums">{chart.level}</span>
       <span className="text-xs">.{chart.levelPrecise % 10}</span>
     </DialogTitle>
     <Tabs value={region} onValueChange={(value) => setRegion(value as Region)}>
       <TabsList className={cn("bg-gray-200 grid w-full grid-cols-2", regionsWithScores.length <= 1 && "hidden")}>
         {charts.map(c => (
-          <TabsTab key={c.region} value={c.region}>{c.region}</TabsTab>
+          <TabsTab key={c.region} value={c.region}>{t(`regions.${c.region}`)}</TabsTab>
         ))}
       </TabsList>
 
@@ -318,6 +318,7 @@ export function SongChartDialogContent({ charts, scores }: { charts: SongExtende
 }
 
 export function SongDetailContent({ songName, type, initialData }: SongDetailContentProps) {
+  const t = useTranslations();
   const { data: fetchedData, isLoading, error } = trpc.user.getSongDetails.useQuery(
     { songName, type },
     {
@@ -372,7 +373,7 @@ export function SongDetailContent({ songName, type, initialData }: SongDetailCon
     <div className="space-y-6">
       {/* Cover and basic info */}
       <div className="flex gap-4">
-        <div className="relative w-24 h-24 shrink-0 rounded-lg overflow-hidden ring-2 ring-offset-2 ring-offset-background ring-slate-200">
+        <div className="relative w-24 h-24 max-md:w-20 max-md:h-20 shrink-0 rounded-lg overflow-hidden ring-2 ring-offset-2 ring-offset-background ring-slate-200">
           <Image
             src={createSafeMaimaiImageUrl(data.cover)}
             alt={data.songName}
@@ -381,8 +382,8 @@ export function SongDetailContent({ songName, type, initialData }: SongDetailCon
           />
         </div>
         <div className="flex-1 min-w-0 my-auto">
-          <h2 className="text-xl font-bold truncate">{data.songName}</h2>
-          <p className="text-muted-foreground truncate">{data.artist}</p>
+          <h2 className="text-xl max-md:text-md font-bold truncate">{data.songName}</h2>
+          <p className="text-muted-foreground max-md:text-sm truncate">{data.artist}</p>
           <div className="flex items-center gap-2 mt-2">
             <Image
               src={createSafeMaimaiImageUrl(data.type === "dx"
@@ -404,13 +405,13 @@ export function SongDetailContent({ songName, type, initialData }: SongDetailCon
         {data.bpm && (
           <div className="flex items-center gap-2">
             <Activity className="w-4 h-4" />
-            <span className="font-medium">BPM</span>
+            <span className="font-medium">{t('db.songs.detail.bpm')}</span>
             <span>{data.bpm}</span>
           </div>
         )}
         <div className="flex items-center gap-2">
           <Calendar className="w-4 h-4" />
-          <span className="font-medium">Added</span>
+          <span className="font-medium">{t('db.songs.detail.added')}</span>
           <span>{addedVersionInfo?.name ?? `Ver. ${data.addedVersion}`}</span>
         </div>
       </div>
@@ -420,7 +421,7 @@ export function SongDetailContent({ songName, type, initialData }: SongDetailCon
         <div className="space-y-3">
           <h3 className="text-sm font-semibold flex items-center gap-2">
             <Music className="w-4 h-4" />
-            Charts
+            {t('db.songs.detail.charts')}
           </h3>
 
           <div className={
@@ -428,9 +429,9 @@ export function SongDetailContent({ songName, type, initialData }: SongDetailCon
               hasTouch ? "grid-cols-[minmax(100px,1fr)_auto_1fr_1fr_1fr_1fr_1fr_1fr]" : "grid-cols-[minmax(100px,1fr)_auto_1fr_1fr_1fr_1fr_1fr]")}>
             {/* Header Row */}
             <div className="contents text-xs bg-accent/50 font-medium text-muted-foreground">
-              <div className="py-2 px-3 border-b">Difficulty</div>
-              <div className="py-2 px-3 text-center border-b">Level</div>
-              <div className="py-2 px-3 text-center border-b">Notes</div>
+              <div className="py-2 px-3 border-b">{t('db.common.difficulty')}</div>
+              <div className="py-2 px-3 text-center border-b">{t('db.common.level')}</div>
+              <div className="py-2 px-3 text-center border-b">{t('db.common.notes')}</div>
               <div className="py-2 px-3 text-center border-b">Tap</div>
               <div className="py-2 px-3 text-center border-b">Hold</div>
               <div className="py-2 px-3 text-center border-b">Slide</div>
@@ -457,14 +458,14 @@ export function SongDetailContent({ songName, type, initialData }: SongDetailCon
       <div className="space-y-4">
         <h3 className="text-sm font-semibold flex items-center gap-2">
           <Globe className="w-4 h-4" />
-          Availability
+          {t('db.songs.detail.availability')}
         </h3>
 
         {data.regions.map(({ region, versions }) => (
           <div key={region} className="space-y-2">
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium">
-                {region === "intl" ? "International" : "Japan"}
+                {region === "intl" ? t('regions.intl') : t('regions.jp')}
               </span>
             </div>
 
@@ -504,7 +505,7 @@ export function SongDetailContent({ songName, type, initialData }: SongDetailCon
                               colors.bg
                             )}
                           >
-                            {DIFFICULTY_LABELS[difficulty] || difficulty.toUpperCase()} {(chart.levelPrecise / 10).toFixed(1)}
+                            {t(`common.difficulties.${difficulty}`)} {(chart.levelPrecise / 10).toFixed(1)}
                           </div>
                         );
                       })}
