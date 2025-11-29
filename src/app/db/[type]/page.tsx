@@ -1,5 +1,9 @@
 import { ArcadesMap } from "@/components/db/arcades";
 import { TYPES } from "@/app/db/layout";
+import { SongsDatabase } from "@/components/db/songs-database";
+import { createServerSideTRPC } from "@/lib/trpc-server";
+import { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 
 type DbTypePageProps = {
   params: Promise<{
@@ -7,8 +11,64 @@ type DbTypePageProps = {
   }>;
 };
 
+export async function generateMetadata({ params }: DbTypePageProps): Promise<Metadata> {
+  const { type } = await params;
+  
+  if (type === "songs") {
+    const t = await getTranslations("db.songs.metadata");
+    return {
+      title: t("title"),
+      description: t("description"),
+      openGraph: {
+        title: t("title"),
+        description: t("description"),
+      },
+    };
+  }
+
+  return {};
+}
+
 export default async function DbTypePage({ params }: DbTypePageProps) {
-  const {type} = await params;
+  const { type } = await params;
+
+  if (type === "songs") {
+    const trpc = await createServerSideTRPC();
+    const { songs } = await trpc.user.getAllUniqueSongs();
+    const t = await getTranslations("db.songs.metadata");
+
+    // JSON-LD structured data for SEO
+    const jsonLd = {
+      "@context": "https://schema.org",
+      "@type": "CollectionPage",
+      name: t("title"),
+      description: t("description"),
+      numberOfItems: songs.length,
+      itemListElement: songs.slice(0, 100).map((song, index) => ({
+        "@type": "ListItem",
+        position: index + 1,
+        item: {
+          "@type": "MusicRecording",
+          name: song.songName,
+          byArtist: {
+            "@type": "MusicGroup",
+            name: song.artist,
+          },
+          genre: song.genre,
+        },
+      })),
+    };
+
+    return (
+      <>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+        <SongsDatabase selectedSlug={null} initialSongs={songs} />
+      </>
+    );
+  }
 
   return (
     <>
@@ -18,7 +78,7 @@ export default async function DbTypePage({ params }: DbTypePageProps) {
         </div>
       )}
 
-      {/* Songs is handled by /db/songs route */}
+      {/* Songs is handled by the if block above */}
       {!["home", "arcades", "songs"].includes(type) && (
         <div className="mt-8">
           <div className="bg-muted/50 rounded-lg p-8 text-center">
@@ -35,4 +95,3 @@ export default async function DbTypePage({ params }: DbTypePageProps) {
 export async function generateStaticParams(): Promise<{ type: string }[]> {
   return TYPES.map((type) => ({ type }));
 }
-

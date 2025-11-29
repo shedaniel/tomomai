@@ -330,6 +330,18 @@ export function SongsDatabase({ selectedSlug: initialSlug, initialSongs, initial
           </div>
         </DrawerContent>
       </Drawer>
+
+      {/* SEO Content: Render hidden content for crawlers when accessing a specific song URL */}
+      {initialSlug && lastValidSong && lastValidSong.slug === initialSlug && (
+        <div className="absolute left-[-9999px] opacity-0" aria-hidden="true">
+          <SongDetailContent
+            songName={lastValidSong.songName}
+            type={lastValidSong.type}
+            onClose={() => {}}
+            initialData={initialSongDetails}
+          />
+        </div>
+      )}
     </main>
   );
 }

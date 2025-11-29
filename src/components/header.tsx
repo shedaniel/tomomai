@@ -69,7 +69,7 @@ function NavbarButtons({ currentTab, onAbout, onDiscordInvite }: { currentTab: C
           variant="outline"
           size="sm"
           className={cn("h-8 hover:bg-gray-200 md:hidden max-xs:w-8",
-            tab === "db" ? "bg-orange-200 text-amber-700 hover:bg-orange-200/75 hover:text-amber-700" : "",
+            tab === "db" ? "bg-orange-200 text-amber-700 hover:bg-orange-200/75 hover:text-amber-700 border border-orange-400" : "",
             tab === "dashboard" ? "bg-primary text-primary-foreground" : "",
           )}
           asChild
@@ -83,7 +83,7 @@ function NavbarButtons({ currentTab, onAbout, onDiscordInvite }: { currentTab: C
           variant="ghost"
           size="sm"
           className={cn("h-8 px-3 py-0 hover:bg-gray-200 max-md:hidden",
-            tab === "db" ? "bg-orange-200 text-amber-700 hover:bg-orange-200/75 hover:text-amber-700" : "",
+            tab === "db" ? "bg-orange-200 text-amber-700 hover:bg-orange-200/75 hover:text-amber-700 border border-orange-400" : "",
             tab === "dashboard" ? "bg-primary text-primary-foreground hover:bg-primary/75 hover:text-primary-foreground" : "",
           )}
           asChild

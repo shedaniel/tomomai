@@ -5,43 +5,61 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { User } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { Loader2 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
-import { useSelectedLayoutSegments } from "next/navigation";
-import { Fragment, type ReactNode } from "react";
+import { useRouter, useSelectedLayoutSegments } from "next/navigation";
+import { Fragment, type ReactNode, useEffect, useRef, useTransition } from "react";
 
 function TypeSelector({
   currentType,
   types,
+  onStartTransition,
+  onPrefetch,
 }: {
   currentType: string;
   types: string[];
+  onStartTransition: (href: string) => void;
+  onPrefetch: (href: string) => void;
 }) {
   const t = useTranslations();
 
   return (
     <div className="flex items-center space-x-2 -mt-4 overflow-x-auto">
-      {types.map((type) => (
-        <Fragment key={type}>
-          <Button
-            variant="ghost"
-            size="sm"
-            asChild
-            className={cn(
-              "hover:bg-gray-200",
-              currentType === type ? "bg-gray-200" : "",
-            )}
-          >
-            <Link href={`/db/${type}`} scroll={false}>
-              {t(`db.types.${type}`)}
-            </Link>
-          </Button>
-        </Fragment>
-      ))}
+      {types.map((type) => {
+        const href = `/db/${type}`;
+        const isActive = currentType === type;
+
+        return (
+          <Fragment key={type}>
+            <Button
+              variant="ghost"
+              size="sm"
+              className={cn(
+                "hover:bg-gray-200",
+                isActive ? "bg-gray-200" : "",
+              )}
+              onClick={() => !isActive && onStartTransition(href)}
+              onMouseEnter={() => onPrefetch(href)}
+              asChild
+            >
+              <Link href={href} scroll={false}>
+                {t(`db.types.${type}`)}
+              </Link>
+            </Button>
+          </Fragment>
+        );
+      })}
     </div>
   );
 }
+
+const variants = {
+  initial: { opacity: 0.5, filter: "blur(4px)" },
+  animate: { opacity: 1, filter: "blur(0px)" },
+  exit: { opacity: 0.5, filter: "blur(4px)" },
+};
 
 export function DbLayoutClient({
   user,
@@ -54,33 +72,60 @@ export function DbLayoutClient({
 }) {
   const segments = useSelectedLayoutSegments();
   const currentType = (segments[0] as string | undefined) ?? "home";
+  
+  const [isPending, startTransition] = useTransition();
+  const router = useRouter();
+  const isFirstRender = useRef(true);
+
+  useEffect(() => {
+    isFirstRender.current = false;
+  }, []);
+
+  const handleNavigate = (href: string) => {
+    startTransition(() => {
+      router.push(href, { scroll: false });
+    });
+  };
 
   return (
     <div className="container mx-auto max-w-[1300px] px-4 pt-8">
       <Header currentTab="db" showDiscordBanner={false}
-        user={ user ? {
+        user={user ? {
           user,
           menu: null,
         } : undefined}
       />
 
-      <TypeSelector currentType={currentType} types={types} />
+      <TypeSelector 
+        currentType={currentType} 
+        types={types} 
+        onStartTransition={(href) => handleNavigate(href)}
+        onPrefetch={(href) => router.prefetch(href)}
+      />
 
       <Separator className="mt-4 mb-2" />
 
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={currentType}
-          initial={{ opacity: 0.5, filter: "blur(4px)" }}
-          animate={{ opacity: 1, filter: "blur(0px)" }}
-          exit={{ opacity: 0.5, filter: "blur(4px)" }}
-          transition={{ duration: 0.25, ease: "easeOut" }}
-        >
-          {children}
-        </motion.div>
-      </AnimatePresence>
+      <div className="relative min-h-[50vh]">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={currentType}
+            variants={!isFirstRender.current ? variants : undefined}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            transition={{ duration: 0.25, ease: "easeOut" }}
+            className="min-h-[50vh]"
+          >
+            {isPending ? (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <Loader2 className="h-12 w-12 animate-spin text-muted-foreground/50" />
+              </div>
+            ) : (
+              children
+            )}
+          </motion.div>
+        </AnimatePresence>
+      </div>
     </div>
   );
 }
-
-

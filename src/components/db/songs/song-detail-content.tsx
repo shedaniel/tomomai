@@ -382,7 +382,7 @@ export function SongDetailContent({ songName, type, initialData }: SongDetailCon
           />
         </div>
         <div className="flex-1 min-w-0 my-auto">
-          <h2 className="text-xl max-md:text-md font-bold truncate">{data.songName}</h2>
+          <h1 className="text-xl max-md:text-md font-bold truncate">{data.songName}</h1>
           <p className="text-muted-foreground max-md:text-sm truncate">{data.artist}</p>
           <div className="flex items-center gap-2 mt-2">
             <Image
@@ -405,13 +405,13 @@ export function SongDetailContent({ songName, type, initialData }: SongDetailCon
         {data.bpm && (
           <div className="flex items-center gap-2">
             <Activity className="w-4 h-4" />
-            <span className="font-medium">{t('db.songs.detail.bpm')}</span>
+            <h3 className="font-medium">{t('db.songs.detail.bpm')}</h3>
             <span>{data.bpm}</span>
           </div>
         )}
         <div className="flex items-center gap-2">
           <Calendar className="w-4 h-4" />
-          <span className="font-medium">{t('db.songs.detail.added')}</span>
+          <h3 className="font-medium">{t('db.songs.detail.added')}</h3>
           <span>{addedVersionInfo?.name ?? `Ver. ${data.addedVersion}`}</span>
         </div>
       </div>
@@ -419,10 +419,10 @@ export function SongDetailContent({ songName, type, initialData }: SongDetailCon
       {/* Charts Grid */}
       {chartsByDifficulty.size > 0 && (
         <div className="space-y-3">
-          <h3 className="text-sm font-semibold flex items-center gap-2">
+          <h2 className="text-sm font-semibold flex items-center gap-2">
             <Music className="w-4 h-4" />
             {t('db.songs.detail.charts')}
-          </h3>
+          </h2>
 
           <div className={
             cn("border rounded-md overflow-x-auto grid",
@@ -440,7 +440,7 @@ export function SongDetailContent({ songName, type, initialData }: SongDetailCon
             </div>
 
             {/* Chart Rows */}
-            {chartsByDifficulty.entries().map(([difficulty, charts], index) => (
+            {Array.from(chartsByDifficulty.entries()).map(([difficulty, charts], index) => (
               <SongChartRow
                 key={`${difficulty}-${index}`}
                 difficulty={difficulty}
@@ -456,17 +456,17 @@ export function SongDetailContent({ songName, type, initialData }: SongDetailCon
 
       {/* Availability by region */}
       <div className="space-y-4">
-        <h3 className="text-sm font-semibold flex items-center gap-2">
+        <h2 className="text-sm font-semibold flex items-center gap-2">
           <Globe className="w-4 h-4" />
           {t('db.songs.detail.availability')}
-        </h3>
+        </h2>
 
         {data.regions.map(({ region, versions }) => (
           <div key={region} className="space-y-2">
             <div className="flex items-center gap-2">
-              <span className="text-sm font-medium">
+              <h3 className="text-sm font-medium">
                 {region === "intl" ? t('regions.intl') : t('regions.jp')}
-              </span>
+              </h3>
             </div>
 
             <div className="space-y-3 pl-4 border-l-2 border-muted">

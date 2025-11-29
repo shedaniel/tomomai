@@ -2,15 +2,22 @@ import { SongsDatabase } from "@/components/db/songs-database";
 import { createServerSideTRPC } from "@/lib/trpc-server";
 import { Metadata } from "next";
 import { getServerSession } from "@/lib/auth-server";
+import { notFound } from "next/navigation";
 
-type SongDetailPageProps = {
+type DbSlugPageProps = {
   params: Promise<{
+    type: string;
     slug: string;
   }>;
 };
 
-export async function generateMetadata({ params }: SongDetailPageProps): Promise<Metadata> {
-  const { slug } = await params;
+export async function generateMetadata({ params }: DbSlugPageProps): Promise<Metadata> {
+  const { type, slug } = await params;
+  
+  if (type !== "songs") {
+    return {};
+  }
+
   const decodedSlug = decodeURIComponent(slug);
   const trpc = await createServerSideTRPC();
   const { songs } = await trpc.user.getAllUniqueSongs();
@@ -34,8 +41,13 @@ export async function generateMetadata({ params }: SongDetailPageProps): Promise
   };
 }
 
-export default async function SongDetailPage({ params }: SongDetailPageProps) {
-  const { slug } = await params;
+export default async function DbSlugPage({ params }: DbSlugPageProps) {
+  const { type, slug } = await params;
+  
+  if (type !== "songs") {
+    notFound();
+  }
+
   const decodedSlug = decodeURIComponent(slug);
   const session = await getServerSession();
   const trpc = await createServerSideTRPC(session);
@@ -78,3 +90,4 @@ export default async function SongDetailPage({ params }: SongDetailPageProps) {
     </>
   );
 }
+
