@@ -54,7 +54,7 @@ export function DbLayoutClient({
 
   return (
     <div className="container mx-auto max-w-[1300px] px-4 pt-8">
-      <Header iconPath="/icon-db.webp" showDiscordBanner={false}
+      <Header currentTab="db" showDiscordBanner={false}
         user={ user ? {
           user,
           menu: null,

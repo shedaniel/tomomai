@@ -18,17 +18,6 @@ export default async function DbTypePage({ params }: DbTypePageProps) {
         </div>
       )}
 
-      {type === "home" && (
-        <div className="mt-8">
-          <div className="bg-muted/50 rounded-lg p-8 text-center">
-            <p className="text-muted-foreground">
-              Welcome to the database section. Select a category above to
-              explore.
-            </p>
-          </div>
-        </div>
-      )}
-
       {/* Songs is handled by /db/songs route */}
       {!["home", "arcades", "songs"].includes(type) && (
         <div className="mt-8">

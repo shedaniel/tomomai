@@ -6,7 +6,7 @@ import { DiscordIcon } from "@/components/ui/discord-icon";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { user } from "@/lib/db/schema-pg";
 import { Region, User } from "@/lib/types";
-import { Beaker, Database, Info, LogIn, LogOut, User as LucideUserIcon, Settings, Users, X } from "lucide-react";
+import { Beaker, Database, Home, Info, LogIn, LogOut, User as LucideUserIcon, Settings, Users, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
 import Link from "next/link";
@@ -19,8 +19,31 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 const APPLICATION_ID = process.env.NEXT_PUBLIC_DISCORD_APPLICATION_ID;
 const SIGNUP_TYPE = process.env.NEXT_PUBLIC_ACCOUNT_SIGNUP_TYPE || 'disabled';
 
+type CurrentTab = "dashboard" | "db";
+const ALL_TABS: CurrentTab[] = ["dashboard", "db"];
+
+const TAB_LABELS: Record<CurrentTab, string> = {
+  dashboard: "Dashboard",
+  db: "Database",
+};
+
+const TAB_ICONS: Record<CurrentTab, React.ReactNode> = {
+  dashboard: <Home className="h-4 w-4" />,
+  db: <Database className="h-4 w-4" />,
+};
+
+const TAB_LINKS: Record<CurrentTab, string> = {
+  dashboard: "/",
+  db: "/db",
+};
+
+const TAB_ICONS_PATHS: Record<CurrentTab, string> = {
+  dashboard: "/icon.webp",
+  db: "/icon-db.webp",
+};
+
 interface HeaderProps {
-  iconPath: string;
+  currentTab: CurrentTab;
   showDiscordBanner?: boolean;
   user?: {
     user: User;
@@ -37,30 +60,33 @@ interface HeaderProps {
   }
 }
 
-function NavbarButtons({ onAbout, onDiscordInvite }: { onAbout: () => void; onDiscordInvite: () => void }) {
+function NavbarButtons({ currentTab, onAbout, onDiscordInvite }: { currentTab: CurrentTab; onAbout: () => void; onDiscordInvite: () => void }) {
   return (<>
-    <Button
-      variant="outline"
-      size="sm"
-      className="h-8 hover:bg-gray-200 md:hidden max-xs:w-8"
-      asChild
-    >
-      <Link href="/db" className="md:hidden">
-        <Database className="h-4 w-4" />
-        <span className="max-xs:hidden">Database</span>
-      </Link>
-    </Button>
-    <Button
-      variant="ghost"
-      size="sm"
-      className="h-8 px-2 py-0 hover:bg-gray-200 max-md:hidden"
-      asChild
-    >
-      <Link href="/db">
-        Database
-      </Link>
-    </Button>
-
+    {ALL_TABS.filter(tab => tab !== currentTab).map(tab => (
+      <>
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-8 hover:bg-gray-200 md:hidden max-xs:w-8"
+          asChild
+        >
+          <Link href={TAB_LINKS[tab]} className="md:hidden">
+            {TAB_ICONS[tab]}
+            <span className="max-xs:hidden">{TAB_LABELS[tab]}</span>
+          </Link>
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-8 px-2 py-0 hover:bg-gray-200 max-md:hidden"
+          asChild
+        >
+          <Link href={TAB_LINKS[tab]}>
+            {TAB_LABELS[tab]}
+          </Link>
+        </Button>
+      </>
+    ))}
     <Button
       onClick={onAbout}
       variant="outline"
@@ -244,7 +270,7 @@ function UserIcon({ user, menu, onAbout, onDiscordInvite }: NonNullable<HeaderPr
   )
 }
 
-export function Header({ iconPath, showDiscordBanner = true, user }: HeaderProps) {
+export function Header({ currentTab, showDiscordBanner = true, user }: HeaderProps) {
   const t = useTranslations();
   const [aboutOpen, setAboutOpen] = useState(false);
   const [showBanner, setShowBanner] = useState(showDiscordBanner);
@@ -264,9 +290,9 @@ export function Header({ iconPath, showDiscordBanner = true, user }: HeaderProps
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center space-x-1 max-md:space-x-2">
           <Link href="/">
-            <Image src={iconPath} alt="tomomai" width={4320} height={1080} priority className="h-11 w-auto" style={{ aspectRatio: '4320 / 1080' }} />
+            <Image src={TAB_ICONS_PATHS[currentTab]} alt="tomomai" width={4320} height={1080} priority className="h-11 w-auto" style={{ aspectRatio: '4320 / 1080' }} />
           </Link>
-          <NavbarButtons onAbout={() => setAboutOpen(true)} onDiscordInvite={handleDiscordInvite} />
+          <NavbarButtons currentTab={currentTab} onAbout={() => setAboutOpen(true)} onDiscordInvite={handleDiscordInvite} />
         </div>
 
         <div className="flex items-center space-x-4">

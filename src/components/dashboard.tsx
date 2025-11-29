@@ -217,7 +217,7 @@ export function Dashboard({ user, initialUserData, initialHasToken, initialTimez
   return (
     <div className="container mx-auto max-w-[1300px] px-4 py-8">
       <Header
-        iconPath="/icon.webp"
+        currentTab="dashboard"
         showDiscordBanner={false}
         user={{
           user,

@@ -73,7 +73,7 @@ export function ProfilePage({
   return (
     <div className="container mx-auto max-w-[1300px] px-4 py-8">
       <Header
-        iconPath="/icon.webp"
+        currentTab="dashboard"
       />
 
       <div className="space-y-6">
