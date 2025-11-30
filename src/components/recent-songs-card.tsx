@@ -16,6 +16,8 @@ import { Separator } from "@/components/ui/separator";
 import { AutoHeight } from "@/components/animate-ui/primitives/effects/auto-height";
 import { logger } from "@/lib/logger";
 import { getVersionInfo } from "@/lib/metadata";
+import { inferRouterOutputs } from "@trpc/server";
+import { AppRouter } from "@/server/routers/_app";
 
 // Constants for achievement calculation
 const BASE_SCORE_PER_TYPE = {
@@ -397,7 +399,7 @@ interface RecentSongsCardProps {
 
 export function RecentSongsCard({ region, beforeDate }: RecentSongsCardProps) {
   const t = useTranslations('recentPlays');
-  const [allPlays, setAllPlays] = useState<any[]>([]);
+  const [allPlays, setAllPlays] = useState<inferRouterOutputs<AppRouter>['user']['getRecentSongs']['recentPlays']>([]);
   const [offset, setOffset] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
@@ -611,7 +613,7 @@ export function RecentSongsCard({ region, beforeDate }: RecentSongsCardProps) {
                   <div className="text-right flex-shrink-0 space-y-0.5 flex flex-col items-end justify-between">
                     {/* Track and Date at the very top */}
                     <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground">
-                      <span>{playDate.toLocaleDateString()} {playDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                      <span className="hidden sm:block">{playDate.toLocaleDateString()} {playDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                       <Badge variant="secondary" className="text-xs">
                         Track {play.track}
                       </Badge>
