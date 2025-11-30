@@ -1,5 +1,4 @@
 import { ArcadesMap } from "@/components/db/arcades";
-import { DB_TYPES } from "@/lib/db/types";
 import { SongsDatabase } from "@/components/db/songs-database";
 import { StatsDatabase } from "@/components/db/stats-database";
 import { createServerSideTRPC } from "@/lib/trpc-server";
@@ -105,6 +104,3 @@ export default async function DbTypePage({ params }: DbTypePageProps) {
   );
 }
 
-export async function generateStaticParams(): Promise<{ type: string }[]> {
-  return DB_TYPES.map((type) => ({ type }));
-}
