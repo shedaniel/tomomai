@@ -22,7 +22,11 @@ export function getRatingFactor(accuracy: number): number {
   if (accuracy >= 94) return 0.168;
   if (accuracy >= 90) return 0.152;
   if (accuracy >= 80) return 0.136;
-  return 0; // Below 80% gets no rating
+  if (accuracy >= 75) return 0.12;
+  if (accuracy >= 70) return 0.112;
+  if (accuracy >= 60) return 0.096;
+  if (accuracy >= 50) return 0.08;
+  return 0.05;
 }
 
 // Calculate song rating using the formula: rating = floor(factor * accuracy * levelPrecise / 10)

@@ -22,6 +22,27 @@
       "when": 1762610330967,
       "tag": "0002_abnormal_earthquake",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1763552599904,
+      "tag": "0003_tense_night_thrasher",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1763556195709,
+      "tag": "0004_magical_shadowcat",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1764334133227,
+      "tag": "0005_eager_stature",
+      "breakpoints": true
     }
   ]
 }

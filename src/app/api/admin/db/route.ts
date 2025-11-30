@@ -85,21 +85,25 @@ async function normalize(searchParams: URLSearchParams) {
     );
   }
 
-  console.log(`Admin update requested: updating database for region ${region}`);
-
   // We should get all songs, then try to normalize their names, then compare to the database
   // If there are duplicates, we must first merge the data to prevent data loss
   // Then we should update the database with the new data
-  const currentVersion = getCurrentVersion(region);
+  const version = searchParams.get('version') as string | null;
+  const currentVersion = version ? parseInt(version) : getCurrentVersion(region);
+
+  console.log(`Admin update requested: updating database for region ${region} version ${currentVersion}`);
+
   const allSongs = await db.select().from(songs).where(and(eq(songs.region, region), eq(songs.gameVersion, currentVersion)));
   const songsGrouped: Record<string, typeof allSongs | undefined> = Object.groupBy(allSongs, song => `${normalizeName(song.songName)}@${song.difficulty}@${song.type}` as string);
-  const filteredSongsGrouped: Record<string, typeof allSongs> = Object.fromEntries(Object.entries(songsGrouped).filter(([_, value]) => value && value.length > 1).map(([key, value]) => [key, value!]));
+  const filteredSongsGrouped: Record<string, typeof allSongs> = Object.fromEntries(Object.entries(songsGrouped).filter(([_, value]) => value && (value.length > 1 || normalizeName(value[0].songName) !== value[0].songName)).map(([key, value]) => [key, value!]));
   
   console.log("--- Starting Duplicate Song Merge Process ---");
 
   let index = 0;
   let totalDuplicatesMerged = 0;
   let totalMasterNamesNormalized = 0;
+
+  const promises: Promise<void>[] = [];
 
   for (const [groupKey, duplicateSongRecords] of Object.entries(filteredSongsGrouped)) {
     console.log(`\nFound duplicates for key: "${groupKey}" (${index + 1}/${Object.entries(filteredSongsGrouped).length})`);
@@ -125,7 +129,7 @@ async function normalize(searchParams: URLSearchParams) {
       console.log(`  Duplicate Song IDs to merge/delete: ${duplicateIdsToCleanUp.join(", ")}`);
     }
 
-    await db.transaction(async (tx) => {
+    promises.push(db.transaction(async (tx) => {
       try {
         // --- Phase 1: Relink children and delete actual duplicate song records ---
         if (duplicateIdsToCleanUp.length > 0) {
@@ -178,8 +182,10 @@ async function normalize(searchParams: URLSearchParams) {
         console.error(`  Error processing group "${groupKey}":`, error);
         throw error; // Re-throw to ensure transaction is rolled back
       }
-    });
+    }));
   }
+
+  await Promise.all(promises);
 
   console.log(`\n--- Duplicate Song Merge Process Complete ---`);
   console.log(`Total duplicate song records merged/deleted: ${totalDuplicatesMerged}`);

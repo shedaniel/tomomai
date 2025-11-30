@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { getCurrentVersion, getVersionFromDate } from "@/lib/metadata";
-import { normalizeName } from "@/lib/name-utils";
+import { normalizeGenre, normalizeName } from "@/lib/name-utils";
 import { songs } from "@/lib/db/schema-pg";
 import { and, eq, inArray, sql } from "drizzle-orm";
 import { promises as fs } from "fs";
@@ -9,6 +9,7 @@ import { join } from "path";
 import { resolveBaseUrl } from "@/lib/base-url";
 import { nanoid } from "nanoid";
 import { sortKeys } from "@/lib/utils";
+import { Difficulty, Level, NoteCounts, Region, SongType } from "@/lib/types";
 
 const MAIMAI_SONGS_JSON_URL = "https://github.com/zvuc/otoge-db/raw/refs/heads/master/maimai/data/music-ex.json";
 const MAIMAI_SONGS_JSON_URL_INTL = "https://github.com/zvuc/otoge-db/raw/refs/heads/master/maimai/data/music-ex-intl.json";
@@ -20,12 +21,15 @@ type Song = {
   songName: string;
   artist: string;
   cover: string;
-  difficulty: "basic" | "advanced" | "expert" | "master" | "remaster" | "utage";
-  level: "1" | "1+" | "2" | "2+" | "3" | "3+" | "4" | "4+" | "5" | "5+" | "6" | "6+" | "7" | "7+" | "8" | "8+" | "9" | "9+" | "10" | "10+" | "11" | "11+" | "12" | "12+" | "13" | "13+" | "14" | "14+" | "15" | "15+" | "16" | "16+";
+  difficulty: Difficulty;
+  level: Level;
   levelPrecise: number;
-  type: "std" | "dx";
+  type: SongType;
   genre: string;
   addedVersion: number;
+  bpm: number | null;
+  noteDesigner: string | null;
+  noteCounts: NoteCounts | null;
 }
 
 type SongsJsonRecord = {
@@ -166,12 +170,12 @@ function levelToPrecise(level: string): number {
   }
 }
 
-async function fetchRecords(region: "intl" | "jp"): Promise<Song[]> {
+async function fetchRecords(region: Region): Promise<Song[]> {
   const url = region === "intl" ? MAIMAI_SONGS_JSON_URL_INTL : MAIMAI_SONGS_JSON_URL;
   return fetchRecordsWithUrl(region, url);
 }
 
-async function fetchRecordsWithUrl(region: "intl" | "jp", url: string): Promise<Song[]> {
+async function fetchRecordsWithUrl(region: Region, url: string): Promise<Song[]> {
   const response = await fetch(url);
   const data = await response.json();
   const prefixes = [
@@ -187,6 +191,7 @@ async function fetchRecordsWithUrl(region: "intl" | "jp", url: string): Promise<
     ["dx_lev_remas", "dx", "remaster"],
     ["lev_utage", "dx", "utage"],
   ];
+  const noteTypes = ["tap", "hold", "slide", "touch", "break"];
   function parseDate(date: string): Date | null {
     // format of YYYYMMDD
     const match = date.match(/(\d{4})(\d{2})(\d{2})/);
@@ -208,6 +213,18 @@ async function fetchRecordsWithUrl(region: "intl" | "jp", url: string): Promise<
     const addedVersion = addedDate ? getVersionFromDate(addedDate, region) : null;
     for (const [prefix, type, difficulty] of prefixes) {
       if (prefix in song) {
+        // Check if all note types are present
+        let noteCounts: NoteCounts | null = null;
+        if (noteTypes.every(noteType => !!song[prefix + "_notes_" + noteType as keyof SongsJsonRecord] || (type === "std" && noteType === "touch"))) {
+          noteCounts = {
+            tap: !!song[prefix + "_notes_tap" as keyof SongsJsonRecord] ? parseInt(song[prefix + "_notes_tap" as keyof SongsJsonRecord] as string) : 0,
+            hold: !!song[prefix + "_notes_hold" as keyof SongsJsonRecord] ? parseInt(song[prefix + "_notes_hold" as keyof SongsJsonRecord] as string) : 0,
+            slide: !!song[prefix + "_notes_slide" as keyof SongsJsonRecord] ? parseInt(song[prefix + "_notes_slide" as keyof SongsJsonRecord] as string) : 0,
+            touch: !!song[prefix + "_notes_touch" as keyof SongsJsonRecord] ? parseInt(song[prefix + "_notes_touch" as keyof SongsJsonRecord] as string) : 0,
+            break: !!song[prefix + "_notes_break" as keyof SongsJsonRecord] ? parseInt(song[prefix + "_notes_break" as keyof SongsJsonRecord] as string) : 0,
+          };
+        }
+
         records.push({
           songName: normalizeName(song.title),
           artist: song.artist,
@@ -217,8 +234,11 @@ async function fetchRecordsWithUrl(region: "intl" | "jp", url: string): Promise<
           levelPrecise: !!song[prefix + "_i" as keyof SongsJsonRecord] ? Math.round(parseFloat(song[prefix + "_i" as keyof SongsJsonRecord] as string) * 10)
             : levelToPrecise(song[prefix as keyof SongsJsonRecord]!.replace("?", "") as string),
           type: type as Song["type"],
-          genre: song.catcode,
+          genre: normalizeGenre(song.catcode),
           addedVersion: addedVersion ?? 0,
+          bpm: !!song.bpm ? parseInt(song.bpm) : null,
+          noteDesigner: song[prefix + "_designer" as keyof SongsJsonRecord] ?? null,
+          noteCounts,
         });
       }
     }
@@ -226,7 +246,9 @@ async function fetchRecordsWithUrl(region: "intl" | "jp", url: string): Promise<
   });
 }
 
-function convertToSong(record: Song, region: "intl" | "jp", gameVersion: number): typeof songs.$inferInsert {
+type SongForWebhook = Omit<typeof songs.$inferSelect, 'id'>;
+
+function convertToSong(record: Song, region: "intl" | "jp", gameVersion: number): SongForWebhook {
   return {
     publicId: nanoid(),
     songName: record.songName,
@@ -240,6 +262,13 @@ function convertToSong(record: Song, region: "intl" | "jp", gameVersion: number)
     region: region,
     gameVersion: gameVersion,
     addedVersion: record.addedVersion,
+    bpm: record.bpm,
+    noteDesigner: record.noteDesigner,
+    tapCount: record.noteCounts?.tap ?? null,
+    holdCount: record.noteCounts?.hold ?? null,
+    slideCount: record.noteCounts?.slide ?? null,
+    touchCount: record.noteCounts?.touch ?? null,
+    breakCount: record.noteCounts?.break ?? null,
   };
 }
 
@@ -260,8 +289,6 @@ function formatDifficulty(difficulty: string): string {
 function formatLevelPrecise(levelPrecise: number): string {
   return (levelPrecise / 10).toFixed(1);
 }
-
-type SongForWebhook = Omit<typeof songs.$inferSelect, 'id'>;
 
 // Helper function to send Discord webhook
 async function sendDiscordWebhook(
@@ -548,6 +575,13 @@ export async function POST(request: NextRequest) {
               levelPrecise: sql`excluded."levelPrecise"`,
               genre: sql`excluded.genre`,
               addedVersion: sql`excluded."addedVersion"`,
+              bpm: sql`excluded.bpm`,
+              noteDesigner: sql`excluded."noteDesigner"`,
+              tapCount: sql`excluded."tapCount"`,
+              holdCount: sql`excluded."holdCount"`,
+              slideCount: sql`excluded."slideCount"`,
+              touchCount: sql`excluded."touchCount"`,
+              breakCount: sql`excluded."breakCount"`,
             },
           });
 

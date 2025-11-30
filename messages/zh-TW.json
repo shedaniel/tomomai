@@ -26,7 +26,21 @@
     "discord": "Discord",
     "about": "關於",
     "experiments": "實驗功能",
-    "comingSoon": "敬請期待..."
+    "comingSoon": "敬請期待...",
+    "difficulty": "難度",
+    "level": "等級",
+    "notes": "物量",
+    "chartDesigner": "譜面設計者",
+    "bpm": "BPM",
+    "added": "追加版本",
+    "difficulties": {
+      "basic": "Basic",
+      "advanced": "Advanced",
+      "expert": "Expert",
+      "master": "Master",
+      "remaster": "Re:Master",
+      "utage": "Utage"
+    }
   },
   "auth": {
     "loginWithDiscord": "以 Discord 繼續",
@@ -65,11 +79,12 @@
       "ja": "日本語",
       "zh-TW": "繁體中文 (台灣)",
       "zh-HK": "繁體中文 (香港)",
-      "zh-CN": "簡體中文"
+      "zh-CN": "簡體中文",
+      "ko": "한국어 (AI 번역)"
     },
     "timezone": {
       "label": "時區",
-      "description": "這會影響日期和時間的顯示方式。預設設定為日本時區，與 maimai 伺服器時間相符。",
+      "description": "這會影響日期和時間的顯示方式。預設為日本時區，以配合 maimai 伺服器時間。",
       "placeholder": "選擇時區"
     },
     "account": {
@@ -79,13 +94,13 @@
     },
     "profile": {
       "publishProfile": "公開個人檔案",
-      "publishDescription": "公開你的 maimai 個人檔案，讓他人可以查看你的分數和進度。",
+      "publishDescription": "公開你的 maimai 個人檔案，讓其他玩家可以查看你的分數和進度。",
       "mainRegion": {
         "label": "主要地區",
         "description": "選擇用於公開個人檔案的主要地區。",
         "intl": "國際區",
         "jp": "日本區",
-        "cn": "中國區"
+        "cn": "內地區"
       },
       "privacy": {
         "label": "隱私設定",
@@ -334,6 +349,17 @@
   "publicHeader": {
     "discordBanner": "有任何問題或建議嗎？歡迎加入我們的 Discord 社群！"
   },
+  "header": {
+    "tabs": {
+      "dashboard": "首頁",
+      "db": "資料庫"
+    },
+    "addDiscordBot": "新增為 Discord 機器人",
+    "admin": "管理員",
+    "errors": {
+      "inviteLink": "無法開啟邀請連結"
+    }
+  },
   "usernameSetup": {
     "title": "選擇你的使用者名稱",
     "description": "你需要設定使用者名稱才能使用此網站。這將用於你的公開個人檔案網址，且必須是唯一的。",
@@ -420,6 +446,94 @@
       "expired": "此邀請已過期",
       "ownCode": "你不能使用自己的邀請代碼",
       "validationFailed": "邀請驗證失敗"
+    }
+  },
+  "db": {
+    "callout": {
+      "title": "想查詢資料庫嗎？",
+      "subtitle": "無需登入即可查看歌曲資料庫！",
+      "description": "tomomai ともマイ DB 是一個公開的 maimai 譜面、機廳及更多maimai資訊的資料庫"
+    },
+    "beta": {
+      "title": "測試功能",
+      "description": "資料庫功能目前處於測試階段。部分資料可能不完整或不準確。"
+    },
+    "types": {
+      "songs": "歌曲",
+      "calculator": "計算",
+      "stats": "統計"
+    },
+    "songs": {
+      "metadata": {
+        "title": "歌曲資料庫 | maimai DX",
+        "description": "瀏覽和搜尋所有 maimai DX 歌曲。依類型、分類和版本篩選。查看歌曲詳情、難度等級和區域開放情形。"
+      },
+      "title": "歌曲資料庫 | maimai DX",
+      "searchPlaceholder": "搜尋歌曲、藝人、分類...",
+      "noSongsFound": "找不到歌曲",
+      "tryAdjustingSearch": "嘗試調整搜尋條件",
+      "noSongsAvailable": "無可用歌曲",
+      "detail": {
+        "title": "歌曲詳情",
+        "artist": "藝人",
+        "charts": "譜面",
+        "availability": "區域",
+        "yourScore": "你的成績",
+        "achievement": "達成率",
+        "rating": "R 值",
+        "chartDesigner": "譜面設計者",
+        "bpm": "BPM",
+        "added": "追加版本",
+        "share": "分享",
+        "youtube": "YouTube 搜尋",
+        "viewCharts": "查看譜面",
+        "viewDetails": "在 tomomai DB 查看詳細資訊"
+      },
+      "filter": {
+        "type": "類型",
+        "genre": "分類",
+        "addedVersion": "追加版本",
+        "std": "STD",
+        "dx": "DX"
+      }
+    },
+    "common": {
+      "difficulty": "難度",
+      "level": "等級",
+      "notes": "物量",
+      "chartDesigner": "譜面設計",
+      "bpm": "BPM",
+      "added": "追加版本"
+    },
+    "stats": {
+      "title": "整體統計",
+      "ratingDistribution": "R 值分布",
+      "playCountDistribution": "遊玩次數分布",
+      "topTitles": "熱門稱號",
+      "topSongs": "熱門歌曲",
+      "averageAchievementByLevel": "等級平均達成率",
+      "ratingVsPlayCount": "R 值 vs 遊玩次數熱力圖",
+      "xAxis": {
+        "rating": "R 值",
+        "playCount": "遊玩次數",
+        "level": "等級"
+      },
+      "yAxis": {
+        "percentage": "百分比",
+        "achievement": "達成率",
+        "count": "使用者數"
+      },
+      "table": {
+        "rank": "排名",
+        "title": "稱號",
+        "song": "歌曲",
+        "percentage": "使用率",
+        "count": "數"
+      },
+      "region": {
+        "intl": "國際區",
+        "jp": "日本區"
+      }
     }
   }
 }

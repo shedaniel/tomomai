@@ -26,7 +26,21 @@
     "discord": "Discord",
     "about": "ともマイについて",
     "experiments": "実験",
-    "comingSoon": "準備中..."
+    "comingSoon": "準備中...",
+    "difficulty": "難易度",
+    "level": "レベル",
+    "notes": "ノーツ数",
+    "chartDesigner": "譜面製作者",
+    "bpm": "BPM",
+    "added": "追加バージョン",
+    "difficulties": {
+      "basic": "Basic",
+      "advanced": "Advanced",
+      "expert": "Expert",
+      "master": "Master",
+      "remaster": "Re:Master",
+      "utage": "Utage"
+    }
   },
   "auth": {
     "loginWithDiscord": "Discordで続行",
@@ -65,7 +79,8 @@
       "ja": "日本語",
       "zh-TW": "繁體中文 (台灣)",
       "zh-HK": "繁體中文 (香港)",
-      "zh-CN": "简体中文"
+      "zh-CN": "简体中文",
+      "ko": "한국어 (AI 번역)"
     },
     "timezone": {
       "label": "タイムゾーン",
@@ -334,6 +349,17 @@
   "publicHeader": {
     "discordBanner": "ご質問やご提案は、ぜひDiscordコミュニティでお聞かせください！"
   },
+  "header": {
+    "tabs": {
+      "dashboard": "ホーム",
+      "db": "データベース"
+    },
+    "addDiscordBot": "Discordボットとして追加",
+    "admin": "管理者",
+    "errors": {
+      "inviteLink": "招待リンクを開けませんでした"
+    }
+  },
   "usernameSetup": {
     "title": "ユーザー名を選択",
     "description": "このサイトを利用するには、ユーザー名を設定する必要があります。これは公開プロフィールのURLに使用され、一意である必要があります。",
@@ -420,6 +446,94 @@
       "expired": "この招待は期限切れです",
       "ownCode": "自分の招待コードは使用できません",
       "validationFailed": "招待の検証に失敗しました"
+    }
+  },
+  "db": {
+    "callout": {
+      "title": "データベースを利用したいですか？",
+      "subtitle": "ログイン不要で楽曲データをチェック！",
+      "description": "ともマイ DB は、maimaiの楽曲、譜面情報、各種データを集めた公開データベースです"
+    },
+    "beta": {
+      "title": "ベータ機能",
+      "description": "データベース機能は現在ベータ版です。一部のデータは不完全または不正確な場合があります。"
+    },
+    "types": {
+      "songs": "楽曲",
+      "calculator": "計算",
+      "stats": "統計"
+    },
+    "songs": {
+      "metadata": {
+        "title": "楽曲データベース | maimai でらっくす",
+        "description": "maimai でらっくすの楽曲を検索・閲覧できます。タイプ、ジャンル、バージョンでフィルタリング可能。楽曲詳細、難易度、収録地域も確認できます。"
+      },
+      "title": "楽曲データベース | maimai でらっくす",
+      "searchPlaceholder": "楽曲名、アーティスト、ジャンルなどで検索...",
+      "noSongsFound": "楽曲が見つかりません",
+      "tryAdjustingSearch": "検索条件を変更してください",
+      "noSongsAvailable": "楽曲がありません",
+      "detail": {
+        "title": "楽曲詳細",
+        "artist": "アーティスト",
+        "charts": "譜面",
+        "availability": "収録地域",
+        "yourScore": "あなたのスコア",
+        "achievement": "達成率",
+        "rating": "レート値",
+        "chartDesigner": "譜面製作者",
+        "bpm": "BPM",
+        "added": "追加バージョン",
+        "share": "共有",
+        "youtube": "YouTubeで検索",
+        "viewCharts": "譜面を見る",
+        "viewDetails": "ともマイ DB で詳細を見る"
+      },
+      "filter": {
+        "type": "タイプ",
+        "genre": "ジャンル",
+        "addedVersion": "追加バージョン",
+        "std": "STD",
+        "dx": "DX"
+      }
+    },
+    "common": {
+      "difficulty": "難易度",
+      "level": "レベル",
+      "notes": "ノーツ数",
+      "chartDesigner": "譜面製作者",
+      "bpm": "BPM",
+      "added": "追加バージョン"
+    },
+    "stats": {
+      "title": "全体統計",
+      "ratingDistribution": "レート分布",
+      "playCountDistribution": "プレイ回数分布",
+      "topTitles": "人気称号",
+      "topSongs": "人気楽曲",
+      "averageAchievementByLevel": "レベル別平均達成率",
+      "ratingVsPlayCount": "レート vs プレイ回数 ヒートマップ",
+      "xAxis": {
+        "rating": "レート",
+        "playCount": "プレイ回数",
+        "level": "レベル"
+      },
+      "yAxis": {
+        "percentage": "割合",
+        "achievement": "達成率",
+        "count": "ユーザー数"
+      },
+      "table": {
+        "rank": "順位",
+        "title": "称号",
+        "song": "楽曲",
+        "percentage": "使用率",
+        "count": "数"
+      },
+      "region": {
+        "intl": "インターナショナル",
+        "jp": "日本"
+      }
     }
   }
 }

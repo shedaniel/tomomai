@@ -4,7 +4,6 @@ import { DataBanner } from "@/components/data-banner";
 import { DataContent } from "@/components/data-content";
 import { SettingsDialog } from "@/components/settings-dialog";
 import { TokenDialog } from "@/components/token-dialog";
-import { UserHeader } from "@/components/user-header";
 import { UsernameSetupDialog } from "@/components/username-setup-dialog";
 import { useFetchSession } from "@/hooks/useFetchSession";
 import { useSnapshots } from "@/hooks/useSnapshots";
@@ -12,9 +11,16 @@ import { signOut } from "@/lib/auth-client";
 import { TIMEZONE_ENUM } from "@/lib/db/types";
 import { Flags } from "@/lib/flags";
 import { trpc } from "@/lib/trpc-client";
-import { Region, User, UserData, ProfileSettings, Snapshot, SnapshotWithSongs } from "@/lib/types";
+import { ProfileSettings, Region, Snapshot, SnapshotWithSongs, User, UserData } from "@/lib/types";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { AboutDialog } from "./about-dialog";
+import { AdminDialog } from "./dialogs/admin-dialog";
+import { ExperimentsDialog } from "./experiments-dialog";
+import { InvitesDialog } from "./invites-dialog";
+import { Header } from "./header";
+
+type DialogType = null | "token" | "settings" | "username" | "about" | "admin" | "invites" | "experiments";
 
 interface DashboardProps {
   user: User;
@@ -28,14 +34,12 @@ interface DashboardProps {
 }
 
 export function Dashboard({ user, initialUserData, initialHasToken, initialTimezone, initialProfileSettings, initialSnapshots, initialSnapshotData, flags }: DashboardProps) {
-  const [isTokenDialogOpen, setIsTokenDialogOpen] = useState(false);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [isUsernameSetupOpen, setIsUsernameSetupOpen] = useState(false);
+  const [dialogType, setDialogType] = useState<DialogType>(null);
 
   // Check if user has username
   const { data: userData, refetch: refetchUserData } = trpc.user.getUserData.useQuery(
     undefined,
-    { 
+    {
       refetchOnWindowFocus: false,
       initialData: initialUserData,
     }
@@ -47,7 +51,7 @@ export function Dashboard({ user, initialUserData, initialHasToken, initialTimez
   // Show username setup dialog if user doesn't have username
   useEffect(() => {
     if (userData && !userData.hasUsername) {
-      setIsUsernameSetupOpen(true);
+      setDialogType("username");
     }
   }, [userData]);
 
@@ -78,7 +82,7 @@ export function Dashboard({ user, initialUserData, initialHasToken, initialTimez
   // Check if user has a saved token for the current region (with initial server data)
   const { data: tokenData, isLoading: isLoadingToken } = trpc.user.hasToken.useQuery(
     { region: selectedRegion },
-    { 
+    {
       refetchOnWindowFocus: false,
       initialData: { hasToken: initialHasToken },
     }
@@ -87,7 +91,7 @@ export function Dashboard({ user, initialUserData, initialHasToken, initialTimez
   // Get user timezone (with initial server data)
   const { data: timezoneData, refetch: refetchTimezone } = trpc.user.getTimezone.useQuery(
     undefined,
-    { 
+    {
       refetchOnWindowFocus: false,
       initialData: { timezone: initialTimezone },
     }
@@ -141,28 +145,24 @@ export function Dashboard({ user, initialUserData, initialHasToken, initialTimez
         await startAutomaticFetch(selectedRegion);
       } catch (error) {
         console.error("Auto fetch failed:", error);
-        
+
         // Show toast error and open token dialog for rate limiting or other errors
         if (error instanceof Error) {
           toast.error(error.message);
-          
+
           // If it's not a rate limit error, open the token dialog
           if (!error.message.includes("Rate limited")) {
-            setIsTokenDialogOpen(true);
+            setDialogType("token");
           }
         } else {
           toast.error("Failed to start data fetch");
-          setIsTokenDialogOpen(true);
+          setDialogType("token");
         }
       }
     } else {
       // Show token input dialog (either no token, or still loading token state)
-      setIsTokenDialogOpen(true);
+      setDialogType("token");
     }
-  };
-
-  const closeTokenDialog = () => {
-    setIsTokenDialogOpen(false);
   };
 
   const handleTokenUpdate = async (token: string) => {
@@ -181,22 +181,13 @@ export function Dashboard({ user, initialUserData, initialHasToken, initialTimez
     }
   };
 
-  const handleSettings = () => {
-    setIsSettingsOpen(true);
-  };
-
-  const handleOpenTokenDialog = () => {
-    setIsSettingsOpen(false); // Close settings dialog
-    setIsTokenDialogOpen(true); // Open token dialog
-  };
-
   const handleTimezoneUpdate = async (timezone: typeof TIMEZONE_ENUM[number] | null) => {
     await updateTimezoneMutation.mutateAsync({ timezone });
   };
 
   const handleUsernameSetupComplete = () => {
-    setIsUsernameSetupOpen(false);
-    refetchUserData(); // Refresh to update the state
+    setDialogType(null);
+    refetchUserData();
   };
 
   const handleDeleteSnapshot = async (snapshotId: string) => {
@@ -225,14 +216,22 @@ export function Dashboard({ user, initialUserData, initialHasToken, initialTimez
 
   return (
     <div className="container mx-auto max-w-[1300px] px-4 py-8">
-      <UserHeader 
-        user={user}
-        userRole={userData?.role ?? "user"}
-        selectedRegion={selectedRegion}
-        onRegionChange={handleRegionChange}
-        onLogout={handleLogout}
-        onSettings={handleSettings}
-        flags={flags}
+      <Header
+        currentTab="dashboard"
+        showDiscordBanner={false}
+        user={{
+          user,
+          menu: {
+            userRole: userData?.role ?? "user",
+            selectedRegion: selectedRegion,
+            onRegionChange: handleRegionChange,
+            onInvites: () => setDialogType("invites"),
+            onAdmin: () => setDialogType("admin"),
+            onExperiments: () => setDialogType("experiments"),
+            onSettings: () => setDialogType("settings"),
+            onLogout: handleLogout,
+          },
+        }}
       />
 
       <div className="space-y-6">
@@ -262,8 +261,8 @@ export function Dashboard({ user, initialUserData, initialHasToken, initialTimez
 
       <TokenDialog
         region={selectedRegion}
-        isOpen={isTokenDialogOpen}
-        onClose={closeTokenDialog}
+        isOpen={dialogType === "token"}
+        onOpenChange={open => setDialogType(open ? "token" : null)}
         onTokenUpdate={handleTokenUpdate}
         newTokenDialog={flags.newTokenDialog}
         startSessionPolling={startSessionPolling}
@@ -271,20 +270,25 @@ export function Dashboard({ user, initialUserData, initialHasToken, initialTimez
       />
 
       <SettingsDialog
-        open={isSettingsOpen}
-        onOpenChange={setIsSettingsOpen}
+        open={dialogType === "settings"}
+        onOpenChange={open => setDialogType(open ? "settings" : null)}
         currentTimezone={timezoneData?.timezone ?? null}
         username={userData?.username ?? undefined}
         initialProfileSettings={initialProfileSettings}
         onTimezoneUpdate={handleTimezoneUpdate}
-        onOpenTokenDialog={handleOpenTokenDialog}
+        onOpenTokenDialog={() => setDialogType("token")}
         onSaveSuccess={refetchUserData}
       />
 
       <UsernameSetupDialog
-        open={isUsernameSetupOpen}
+        open={dialogType === "username"}
         onComplete={handleUsernameSetupComplete}
       />
+
+      <AboutDialog open={dialogType === "about"} onOpenChange={open => setDialogType(open ? "about" : null)} />
+      <InvitesDialog isOpen={dialogType === "invites"} onOpenChange={open => setDialogType(open ? "invites" : null)} />
+      <AdminDialog open={dialogType === "admin"} onOpenChange={open => setDialogType(open ? "admin" : null)} />
+      <ExperimentsDialog open={dialogType === "experiments"} onOpenChange={open => setDialogType(open ? "experiments" : null)} initialFlags={flags} />
     </div>
   );
 } 

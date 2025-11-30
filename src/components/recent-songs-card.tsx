@@ -4,14 +4,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { trpc } from "@/lib/trpc-client";
 import { Region } from "@/lib/types";
 import { cn, createSafeMaimaiImageUrl } from "@/lib/utils";
-import { Clock, Loader2, AlertCircle, TrendingUp, TrendingDown, Trophy, FastForward, Rewind, ArrowBigUpDash, ArrowBigDownDash, Grip, Sparkle, MapPin, SeparatorVertical, Slash, Star } from "lucide-react";
+import { Activity, Calendar, ChevronRight, Clock, Loader2, AlertCircle, TrendingUp, TrendingDown, Trophy, FastForward, Rewind, ArrowBigUpDash, ArrowBigDownDash, Grip, Sparkle, MapPin, SeparatorVertical, Slash, Star, Music } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
+import Link from "next/link";
 import { useCallback, useState, useEffect, useRef } from "react";
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 import { Badge } from "./ui/badge";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 import { AutoHeight } from "@/components/animate-ui/primitives/effects/auto-height";
 import { logger } from "@/lib/logger";
+import { getVersionInfo } from "@/lib/metadata";
 
 // Constants for achievement calculation
 const BASE_SCORE_PER_TYPE = {
@@ -555,12 +559,23 @@ export function RecentSongsCard({ region, beforeDate }: RecentSongsCardProps) {
                       loading="lazy"
                     />
                     {/* Difficulty Badge */}
+                    <div className="absolute top-8 -right-0.5 w-2 h-4 bg-transparent rounded-br-full"
+                      style={{
+                        boxShadow: "0 8px 0 0 var(--difficulty-color)",
+                        // @ts-ignore
+                        "--difficulty-color": play.difficulty === "basic" ? "var(--color-green-400)"
+                          : play.difficulty === "advanced" ? "var(--color-yellow-400)"
+                            : play.difficulty === "expert" ? "var(--color-red-400)"
+                              : play.difficulty === "master" ? "var(--color-purple-500)"
+                                : play.difficulty === "remaster" ? "var(--color-purple-200)"
+                                  : "var(--color-white)",
+                      }} />
                     <div
                       className={cn(
-                        "absolute top-12 -right-1 px-1.5 py-0.5 rounded text-xs font-semibold text-white",
-                        play.difficulty === "basic" && "bg-green-500",
-                        play.difficulty === "advanced" && "bg-yellow-500",
-                        play.difficulty === "expert" && "bg-red-500",
+                        "absolute top-12 -right-1 px-1.5 py-0.5 rounded rounded-tr-none rounded-br-md text-xs font-semibold text-white",
+                        play.difficulty === "basic" && "bg-green-400",
+                        play.difficulty === "advanced" && "bg-yellow-400",
+                        play.difficulty === "expert" && "bg-red-400",
                         play.difficulty === "master" && "bg-purple-500",
                         play.difficulty === "remaster" && "bg-purple-200 text-purple-900",
                       )}
@@ -575,6 +590,23 @@ export function RecentSongsCard({ region, beforeDate }: RecentSongsCardProps) {
                     <p className="text-xs text-muted-foreground truncate">
                       {play.artist}
                     </p>
+                    <div className="flex items-center gap-1.5 mt-1.5">
+                      <Image
+                        src={createSafeMaimaiImageUrl(play.type === "dx"
+                          ? "https://maimaidx.jp/maimai-mobile/img/music_dx.png"
+                          : "https://maimaidx.jp/maimai-mobile/img/music_standard.png"
+                        )}
+                        alt={play.type.toUpperCase()}
+                        width={32}
+                        height={10}
+                        className="h-2.5 w-auto"
+                      />
+                      {play.genre && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-secondary text-secondary-foreground font-medium truncate max-w-[120px]">
+                          {play.genre}
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <div className="text-right flex-shrink-0 space-y-0.5 flex flex-col items-end justify-between">
                     {/* Track and Date at the very top */}
@@ -895,6 +927,8 @@ export function RecentSongsCard({ region, beforeDate }: RecentSongsCardProps) {
                           </div>
                         );
                       })()}
+
+                      <ExpandedSongDetails publicId={play.songPublicId} />
                     </>
                   )}
                 </AutoHeight>
@@ -914,3 +948,67 @@ export function RecentSongsCard({ region, beforeDate }: RecentSongsCardProps) {
   );
 }
 
+function ExpandedSongDetails({ publicId }: { publicId: string }) {
+  const t = useTranslations();
+  const { data: songDetails, isLoading } = trpc.user.getSimpleSongDetails.useQuery(
+    { publicId },
+    {
+      staleTime: 1000 * 60 * 60, // 1 hour
+    }
+  );
+
+  const addedVersionInfo = songDetails ? getVersionInfo(songDetails.addedVersion) : null;
+
+  return (
+    <div className="mt-4 flex flex-col gap-3">
+      <Separator />
+      <div className="grid grid-cols-[auto_1fr] gap-4 text-xs">
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <Activity className="w-4 h-4" />
+          <span>{t('db.songs.detail.bpm')}</span>
+        </div>
+        <div className="font-medium text-right">
+          {isLoading ? (
+            <div className="h-4 w-8 bg-muted animate-pulse rounded ml-auto" />
+          ) : (
+            songDetails?.bpm ?? "-"
+          )}
+        </div>
+
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <Calendar className="w-4 h-4" />
+          <span>{t('db.songs.detail.added')}</span>
+        </div>
+        <div className="font-medium text-right truncate">
+          {isLoading ? (
+            <div className="h-4 w-16 bg-muted animate-pulse rounded ml-auto" />
+          ) : (
+            addedVersionInfo?.name ?? (songDetails?.addedVersion ? `Ver. ${songDetails.addedVersion}` : "-")
+          )}
+        </div>
+      </div>
+
+      <Button
+        className="w-full h-9 text-xs"
+        variant="secondary"
+        disabled={isLoading || !songDetails?.slug}
+        asChild={!isLoading && !!songDetails?.slug}
+      >
+        {isLoading ? (
+          <>
+            <Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" />
+            {t('common.loading')}
+          </>
+        ) : songDetails?.slug ? (
+          <Link href={`/db/songs/${songDetails.slug}`} target="_blank" className="relative">
+            <Music className="w-3.5 h-3.5 mr-2" />
+            {t('db.songs.detail.viewDetails')}
+            <ChevronRight className="w-3.5 absolute top-0 bottom-0 right-2 my-auto" />
+          </Link>
+        ) : (
+          <span className="text-destructive">Error</span>
+        )}
+      </Button>
+    </div>
+  );
+}

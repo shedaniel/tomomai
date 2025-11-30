@@ -26,7 +26,21 @@
     "discord": "Discord",
     "about": "关于",
     "experiments": "实验",
-    "comingSoon": "敬请期待..."
+    "comingSoon": "敬请期待...",
+    "difficulty": "难度",
+    "level": "等级",
+    "notes": "物量",
+    "chartDesigner": "谱面设计者",
+    "bpm": "BPM",
+    "added": "追加版本",
+    "difficulties": {
+      "basic": "Basic",
+      "advanced": "Advanced",
+      "expert": "Expert",
+      "master": "Master",
+      "remaster": "Re:Master",
+      "utage": "Utage"
+    }
   },
   "auth": {
     "loginWithDiscord": "以 Discord 继续",
@@ -65,7 +79,8 @@
       "ja": "日本語",
       "zh-TW": "繁体中文 (台灣)",
       "zh-HK": "繁体中文 (香港)",
-      "zh-CN": "简体中文"
+      "zh-CN": "简体中文",
+      "ko": "한국어 (AI 번역)"
     },
     "timezone": {
       "label": "时区",
@@ -334,6 +349,17 @@
   "publicHeader": {
     "discordBanner": "有任何问题或建议吗？欢迎加入我们的 Discord 社群！"
   },
+  "header": {
+    "tabs": {
+      "dashboard": "首页",
+      "db": "数据库"
+    },
+    "addDiscordBot": "添加为 Discord 机器人",
+    "admin": "管理员",
+    "errors": {
+      "inviteLink": "无法打开邀请链接"
+    }
+  },
   "usernameSetup": {
     "title": "选择你的用户名",
     "description": "你需要设置用户名才能使用此网站。这将用于你的公开个人资料网址，且必须是唯一的。",
@@ -420,6 +446,94 @@
       "expired": "此邀请已过期",
       "ownCode": "你不能使用自己的邀请代码",
       "validationFailed": "邀请验证失败"
+    }
+  },
+  "db": {
+    "callout": {
+      "title": "想查询数据库吗？",
+      "subtitle": "无需登录即可查看歌曲数据库！",
+      "description": "tomomai ともマイ DB 是一个公开的 maimai 谱面、机厅及更多maimai信息的数据库"
+    },
+    "beta": {
+      "title": "测试功能",
+      "description": "数据库功能目前处于测试阶段。部分数据可能不完整或不准确。"
+    },
+    "types": {
+      "songs": "歌曲",
+      "calculator": "计算",
+      "stats": "统计"
+    },
+    "songs": {
+      "metadata": {
+        "title": "歌曲数据库 | maimai DX",
+        "description": "浏览和搜索所有 maimai DX 歌曲。按类型、分类和版本筛选。查看歌曲详情、难度等级和区域开放情况。"
+      },
+      "title": "歌曲数据库 | maimai DX",
+      "searchPlaceholder": "搜索歌曲、艺术家、分类...",
+      "noSongsFound": "未找到歌曲",
+      "tryAdjustingSearch": "尝试调整搜索条件",
+      "noSongsAvailable": "无可用歌曲",
+      "detail": {
+        "title": "歌曲详情",
+        "artist": "艺术家",
+        "charts": "谱面",
+        "availability": "区域",
+        "yourScore": "你的成绩",
+        "achievement": "达成率",
+        "rating": "R 值",
+        "chartDesigner": "谱面设计者",
+        "bpm": "BPM",
+        "added": "添加版本",
+        "share": "分享",
+        "youtube": "YouTube 搜索",
+        "viewCharts": "查看谱面",
+        "viewDetails": "在 tomomai DB 查看详情"
+      },
+      "filter": {
+        "type": "类型",
+        "genre": "分类",
+        "addedVersion": "添加版本",
+        "std": "STD",
+        "dx": "DX"
+      }
+    },
+    "common": {
+      "difficulty": "难度",
+      "level": "等级",
+      "notes": "物量",
+      "chartDesigner": "谱面设计",
+      "bpm": "BPM",
+      "added": "追加版本"
+    },
+    "stats": {
+      "title": "全局统计",
+      "ratingDistribution": "R 值分布",
+      "playCountDistribution": "游玩次数分布",
+      "topTitles": "热门称号",
+      "topSongs": "热门歌曲",
+      "averageAchievementByLevel": "等级平均达成率",
+      "ratingVsPlayCount": "R 值 vs 游玩次数热力图",
+      "xAxis": {
+        "rating": "R 值",
+        "playCount": "游玩次数",
+        "level": "等级"
+      },
+      "yAxis": {
+        "percentage": "占比",
+        "achievement": "达成率",
+        "count": "用户数"
+      },
+      "table": {
+        "rank": "排名",
+        "title": "称号",
+        "song": "歌曲",
+        "percentage": "使用率",
+        "count": "数"
+      },
+      "region": {
+        "intl": "国际服",
+        "jp": "日本服"
+      }
     }
   }
 }

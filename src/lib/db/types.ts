@@ -1,5 +1,5 @@
 // Common timezones
-const TIMEZONES = [
+export const TIMEZONES = [
     { value: null, label: "Japan Standard Time", region: "JP" },
     { value: "Asia/Seoul", label: "Korea Standard Time", region: "KR" },
     { value: "Asia/Hong_Kong", label: "Hong Kong Standard Time", region: "HK" },
@@ -59,7 +59,7 @@ export const TIMEZONE_ENUM = [
   "UTC",
 ] as const;
 
-export const LANGUAGE_ENUM = ["en", "en-GB", "ja", "zh-TW", "zh-HK", "zh-CN"] as const;
+export const LANGUAGE_ENUM = ["en", "en-GB", "ja", "zh-TW", "zh-HK", "zh-CN", "ko"] as const;
 
 export const REGION_ENUM = ["intl", "jp"] as const;
 
@@ -83,6 +83,6 @@ export const EVENT_TYPE_ENUM = ["area", "eventArea"] as const;
 
 export const EVENT_STATE_ENUM = ["not_started", "in_progress", "completed"] as const;
 
-export {
-  TIMEZONES,
-}
+export const STORE_STATUS_ENUM = ["closed", "open", "temporarily_closed"] as const;
+
+export const DB_TYPES = ["songs", "stats"] as const;

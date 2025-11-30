@@ -10,13 +10,13 @@ import { useTranslations } from "next-intl";
 
 interface TokenDialogJapanProps {
   isOpen: boolean;
-  onClose: () => void;
+  onOpenChange: (open: boolean) => void;
   onTokenUpdate: (token: string) => Promise<void>;
 }
 
 export function TokenDialogJapan({
   isOpen,
-  onClose,
+  onOpenChange,
   onTokenUpdate,
 }: TokenDialogJapanProps) {
   const t = useTranslations();
@@ -38,7 +38,7 @@ export function TokenDialogJapan({
       // Clear form after successful update
       setUsername("");
       setPassword("");
-      onClose();
+      onOpenChange(false);
     } catch (error) {
       console.error("Token update error:", error);
     } finally {
@@ -49,7 +49,7 @@ export function TokenDialogJapan({
   const canSubmit = username.trim().length > 0 && password.trim().length > 0 && !isSubmitting;
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center space-x-2">

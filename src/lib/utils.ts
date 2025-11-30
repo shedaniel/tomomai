@@ -17,6 +17,7 @@ export const getLanguages = (t: (key: string) => string) => [
   { value: "zh-TW", label: t('settings.language.zh-TW'), code: "TW" },
   { value: "zh-HK", label: t('settings.language.zh-HK'), code: "HK" },
   { value: "zh-CN", label: t('settings.language.zh-CN'), code: "CN" },
+  { value: "ko", label: t('settings.language.ko'), code: "KO" },
 ];
 
 export function cn(...inputs: ClassValue[]) {
@@ -72,4 +73,17 @@ export function deepMerge<T extends Record<string, any>>(
   }
 
   return output;
+}
+
+// Helper function to detect if we're on the server
+export function isServer(): boolean {
+  return typeof window === 'undefined';
+}
+
+// Helper function to detect serverless environment
+export function isServerless(): boolean {
+  return process.env.VERCEL === '1' || 
+         process.env.AWS_LAMBDA_FUNCTION_NAME !== undefined ||
+         process.env.NETLIFY === 'true' ||
+         process.cwd() === '/var/task';
 }

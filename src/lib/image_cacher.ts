@@ -1,5 +1,5 @@
 import { createHash } from 'crypto';
-import { SAFE_MAIMAI_IMAGE_URLS } from './utils';
+import { SAFE_MAIMAI_IMAGE_URLS, isServer, isServerless } from './utils';
 import { gzip, gunzip } from 'zlib';
 import { promisify } from 'util';
 import path from 'path';
@@ -7,11 +7,6 @@ import fs from 'fs/promises';
 
 const gzipAsync = promisify(gzip);
 const gunzipAsync = promisify(gunzip);
-
-// Helper function to detect if we're on the server
-function isServer() {
-  return typeof window === 'undefined';
-}
 
 // Generate a hash for the URL to use as filename
 function generateUrlHash(url: string): string {
@@ -26,14 +21,6 @@ function isMaimaidxDomain(url: string): boolean {
   } catch {
     return false;
   }
-}
-
-// Helper function to detect serverless environment
-function isServerless(): boolean {
-  return process.env.VERCEL === '1' || 
-         process.env.AWS_LAMBDA_FUNCTION_NAME !== undefined ||
-         process.env.NETLIFY === 'true' ||
-         process.cwd() === '/var/task';
 }
 
 // Cache and return local path for maimaidx images

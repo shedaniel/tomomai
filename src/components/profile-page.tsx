@@ -1,6 +1,6 @@
 import { DataContent } from "@/components/data-content";
 import { PublicDataBanner } from "@/components/public-data-banner";
-import { PublicHeader } from "@/components/public-header";
+import { Header } from "@/components/header";
 import { defaultFlags } from "@/lib/flags";
 import { Difficulty, ProfileData, Region, SnapshotWithSongs, SongWithScore } from "@/lib/types";
 
@@ -72,8 +72,8 @@ export function ProfilePage({
 
   return (
     <div className="container mx-auto max-w-[1300px] px-4 py-8">
-      <PublicHeader
-        profileUsername={username}
+      <Header
+        currentTab="dashboard"
       />
 
       <div className="space-y-6">

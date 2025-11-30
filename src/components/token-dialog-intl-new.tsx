@@ -15,7 +15,7 @@ import { toast } from "sonner";
 
 interface TokenDialogIntlNewProps {
   isOpen: boolean;
-  onClose: () => void;
+  onOpenChange: (open: boolean) => void;
   onTokenUpdate: (token: string) => Promise<void>;
   // Session polling functions from parent
   startSessionPolling?: (region: "intl" | "jp", onSessionDetected?: () => void) => void;
@@ -481,7 +481,7 @@ function PasswordSubDialog({
 
 export function TokenDialogIntlNew({
   isOpen,
-  onClose,
+  onOpenChange,
   onTokenUpdate,
   startSessionPolling,
   stopSessionPolling,
@@ -508,7 +508,7 @@ export function TokenDialogIntlNew({
     setShowPassword(false);
     setIsTokenDialogOpen(false);
     setIsPasswordDialogOpen(false);
-    onClose();
+    onOpenChange(false);
   };
 
   const handleClose = () => {
