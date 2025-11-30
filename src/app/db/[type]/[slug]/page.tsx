@@ -3,6 +3,8 @@ import { createServerSideTRPC } from "@/lib/trpc-server";
 import { Metadata } from "next";
 import { getServerSession } from "@/lib/auth-server";
 import { notFound } from "next/navigation";
+import { createSafeMaimaiImageUrl } from "@/lib/utils";
+import { resolveBaseUrl } from "@/lib/base-url";
 
 type DbSlugPageProps = {
   params: Promise<{
@@ -25,12 +27,18 @@ export async function generateMetadata({ params }: DbSlugPageProps): Promise<Met
   const song = songs.find(s => s.slug === decodedSlug);
   
   if (song) {
+    const relativeUrl = createSafeMaimaiImageUrl(song.cover);
+    const absoluteUrl = relativeUrl.startsWith("/") 
+      ? `${resolveBaseUrl()}${relativeUrl}` 
+      : relativeUrl;
+
     return {
       title: `${song.songName} - ${song.artist} | maimai DX`,
       description: `View detailed information about "${song.songName}" by ${song.artist}. ${song.type === 'dx' ? 'DX' : 'Standard'} chart • ${song.genre}`,
       openGraph: {
         title: `${song.songName} - ${song.artist} | maimai DX`,
         description: `View detailed information about "${song.songName}" by ${song.artist}.`,
+        images: [absoluteUrl],
       },
     };
   }

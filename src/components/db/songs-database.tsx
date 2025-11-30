@@ -174,6 +174,11 @@ export function SongsDatabase({ selectedSlug: initialSlug, initialSongs, initial
 
   return (
     <main className="space-y-6 pb-16" role="main">
+      {!selectedSong && (
+        <VisuallyHidden asChild>
+          <h1>{t("db.songs.title")}</h1>
+        </VisuallyHidden>
+      )}
       {/* Header */}
       <header className="flex flex-col gap-4">
         {/* Search */}
