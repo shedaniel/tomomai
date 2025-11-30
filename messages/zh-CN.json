@@ -485,7 +485,9 @@
         "bpm": "BPM",
         "added": "添加版本",
         "share": "分享",
-        "youtube": "YouTube 搜索"
+        "youtube": "YouTube 搜索",
+        "viewCharts": "查看谱面",
+        "viewDetails": "在 tomomai DB 查看详情"
       },
       "filter": {
         "type": "类型",

@@ -8,11 +8,12 @@ import { cn, createSafeMaimaiImageUrl } from "@/lib/utils";
 import { LayoutGrid, LayoutList, Menu, Plus, Search, TrendingUp } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
-import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useState, forwardRef } from "react";
 import { Bar, BarChart, XAxis, YAxis } from "recharts";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select-friendly";
 import { Input } from "./ui/input";
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
+import { SongHoverCard } from "@/components/song-hover-card";
 
 // Helper function to group songs by individual rating values and difficulty
 function groupSongsByRating(songs: SongWithRating[]) {
@@ -143,10 +144,11 @@ function RatingChart({ songs, title }: { songs: SongWithRating[]; title: string 
 }
 
 // Component for rendering individual song rows
-function SongRow({ song }: { song: SongWithRating }) {
+const SongRow = forwardRef<HTMLDivElement, { song: SongWithRating } & React.HTMLAttributes<HTMLDivElement>>(({ song, ...props }, ref) => {
   return (
-    <div className="flex justify-between items-center text-sm border-b border-dashed border-gray-200 pb-1.5 h-12">
-      <Image src={createSafeMaimaiImageUrl(song.cover)}
+    <SongHoverCard song={song}>
+      <div ref={ref} {...props} className={cn("flex justify-between items-center text-sm border-b border-dashed border-gray-200 pb-1.5 h-12 hover:bg-muted/50 transition-colors px-2 -mx-2 rounded-md cursor-pointer", props.className)}>
+        <Image src={createSafeMaimaiImageUrl(song.cover)}
         alt={song.songName}
         className={cn(
           "w-8 h-8 ml-1 mr-3 rounded ring-2 ring-offset-2 ring-offset-card",
@@ -173,9 +175,11 @@ function SongRow({ song }: { song: SongWithRating }) {
       <div className="text-right ml-4 mr-2">
         <div className="font-mono text-md font-semibold">{song.rating}</div>
       </div>
-    </div>
+      </div>
+    </SongHoverCard>
   );
-}
+});
+SongRow.displayName = "SongRow";
 
 // Component for rendering compact song section as a single grid
 function CompactSongSection({ title, songs, count, t, sum, average, visibleCount, onLoadMore }: {
@@ -289,7 +293,7 @@ function CompactSongSection({ title, songs, count, t, sum, average, visibleCount
 }
 
 // Component for rendering individual song cards in grid view
-function SongGridCard({ song }: { song: SongWithRating }) {
+const SongGridCard = forwardRef<HTMLDivElement, { song: SongWithRating } & React.HTMLAttributes<HTMLDivElement>>(({ song, ...props }, ref) => {
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const card = e.currentTarget;
     const rect = card.getBoundingClientRect();
@@ -343,20 +347,24 @@ function SongGridCard({ song }: { song: SongWithRating }) {
   };
 
   return (
-    <div
-      className={cn("relative bg-white rounded-md shadow-md transition-all duration-300 ease-out cursor-pointer ring-2",
-        song.difficulty === "basic" && "ring-green-400",
-        song.difficulty === "advanced" && "ring-yellow-400",
-        song.difficulty === "expert" && "ring-red-400",
-        song.difficulty === "master" && "ring-purple-500",
-        song.difficulty === "remaster" && "ring-purple-200",
-        song.difficulty === "utage" && "ring-pink-400",
-      )}
-      style={{ aspectRatio: '16/10', transformStyle: 'preserve-3d', transform: 'perspective(1000px)' }}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-    >
-      {/* Song Cover Background */}
+    <SongHoverCard song={song} side="right">
+      <div
+        ref={ref}
+        {...props}
+        className={cn("relative bg-white rounded-md shadow-md transition-all duration-300 ease-out cursor-pointer ring-2",
+          song.difficulty === "basic" && "ring-green-400",
+          song.difficulty === "advanced" && "ring-yellow-400",
+          song.difficulty === "expert" && "ring-red-400",
+          song.difficulty === "master" && "ring-purple-500",
+          song.difficulty === "remaster" && "ring-purple-200",
+          song.difficulty === "utage" && "ring-pink-400",
+          props.className
+        )}
+        style={{ ...props.style, aspectRatio: '16/10', transformStyle: 'preserve-3d', transform: 'perspective(1000px)' }}
+        onMouseMove={(e) => { handleMouseMove(e); props.onMouseMove?.(e); }}
+        onMouseLeave={(e) => { handleMouseLeave(e); props.onMouseLeave?.(e); }}
+      >
+        {/* Song Cover Background */}
       <Image
         src={createSafeMaimaiImageUrl(song.cover)}
         alt={song.songName}
@@ -423,9 +431,11 @@ function SongGridCard({ song }: { song: SongWithRating }) {
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </SongHoverCard>
   );
-}
+});
+SongGridCard.displayName = "SongGridCard";
 
 // Component for rendering song sections
 function SongSection({ title, songs, count, displayMode, t, sum, average, visibleCount, onLoadMore }: {

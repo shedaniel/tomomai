@@ -15,7 +15,7 @@ import { flagDefinitions } from '@/lib/flags';
 import { REGION_ENUM, TIMEZONE_ENUM } from '@/lib/db/types';
 import { logger } from '@/lib/logger';
 import { normalizeName } from '@/lib/name-utils';
-import { getSongSlugs } from '@/lib/song-slug';
+import { getSongSlug, getSongSlugs } from '@/lib/song-slug';
 import { SongDetails, UniqueSong } from '@/components/db/songs/types';
 import { unstable_cache } from 'next/cache';
 
@@ -1807,6 +1807,7 @@ export const userRouter = router({
           track: userRecentSongs.track,
           // Song data
           songId: songs.id,
+          songPublicId: songs.publicId,
           songName: songs.songName,
           artist: songs.artist,
           cover: songs.cover,
@@ -2545,6 +2546,52 @@ export const userRouter = router({
         userScores: userScoresMap,
         regions,
       } satisfies SongDetails;
+    }),
+
+  // Get simple song details for hover card (minimized payload)
+  getSimpleSongDetails: publicProcedure
+    .input(z.object({
+      publicId: z.string(),
+    }))
+    .query(async ({ input }) => {
+      const charts = await db
+        .select({
+          songName: songs.songName,
+          artist: songs.artist,
+          type: songs.type,
+          genre: songs.genre,
+          bpm: songs.bpm,
+          addedVersion: songs.addedVersion,
+        })
+        .from(songs)
+        .where(eq(songs.publicId, input.publicId));
+
+      if (charts.length === 0) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Song not found',
+        });
+      }
+
+      const firstChart = charts[0];
+      const chartWithBpm = charts.find(c => c.bpm !== null);
+      const earliestAddedVersion = Math.min(...charts.map(c => c.addedVersion));
+
+      const slug = await getSongSlug({
+        songName: firstChart.songName,
+        artist: firstChart.artist,
+        type: firstChart.type as "std" | "dx",
+      });
+
+      return {
+        songName: firstChart.songName,
+        artist: firstChart.artist,
+        type: firstChart.type,
+        genre: firstChart.genre,
+        bpm: chartWithBpm?.bpm ?? null,
+        addedVersion: earliestAddedVersion,
+        slug,
+      };
     }),
 
 }); 

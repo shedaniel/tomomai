@@ -484,7 +484,9 @@
         "bpm": "BPM",
         "added": "추가일",
         "share": "링크 공유",
-        "youtube": "YouTube 검색"
+        "youtube": "YouTube 검색",
+        "viewCharts": "채보 보기",
+        "viewDetails": "tomomai DB에서 상세 보기"
       },
       "filter": {
         "type": "타입",

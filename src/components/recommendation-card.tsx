@@ -20,6 +20,7 @@ import {
   createRecommendationFilterLabel,
   applyRecommendationFilters,
 } from "@/components/filter-panel";
+import { SongHoverCard } from "@/components/song-hover-card";
 
 interface RecommendationData {
   song: SongWithRating;
@@ -134,83 +135,85 @@ function RecommendationRow({ recommendation }: { recommendation: RecommendationD
   const { song, currentAccuracy, targetAccuracy, currentRating, targetRating, accuracyDiff, ratingGain, isInBest, category } = recommendation;
 
   return (
-    <div className="flex xs:justify-between xs:items-center text-sm h-16 max-xs:h-30 max-xs:flex-col max-xs:justify-start max-xs:gap-y-2">
-      <div className="flex items-center xs:flex-1 min-w-0 h-12 max-xs:mt-1.5">
-        <Image
-          src={createSafeMaimaiImageUrl(song.cover)}
-          alt={song.songName}
-          className={cn(
-            "w-8 h-8 ml-1 mr-3 rounded ring-2 ring-offset-2 ring-offset-card",
-            song.difficulty === "basic" && "ring-green-400",
-            song.difficulty === "advanced" && "ring-yellow-400",
-            song.difficulty === "expert" && "ring-red-400",
-            song.difficulty === "master" && "ring-purple-500",
-            song.difficulty === "remaster" && "ring-purple-200",
-            song.difficulty === "utage" && "ring-pink-400",
-          )}
-          width={36}
-          height={36}
-          loading="lazy"
-          quality={1}
-        />
+    <SongHoverCard song={song}>
+      <div className="flex xs:justify-between xs:items-center text-sm h-16 max-xs:h-30 max-xs:flex-col max-xs:justify-start max-xs:gap-y-2 hover:bg-muted/50 transition-colors px-2 -mx-2 rounded-md cursor-pointer">
+        <div className="flex items-center xs:flex-1 min-w-0 h-12 max-xs:mt-1.5">
+          <Image
+            src={createSafeMaimaiImageUrl(song.cover)}
+            alt={song.songName}
+            className={cn(
+              "w-8 h-8 ml-1 mr-3 rounded ring-2 ring-offset-2 ring-offset-card",
+              song.difficulty === "basic" && "ring-green-400",
+              song.difficulty === "advanced" && "ring-yellow-400",
+              song.difficulty === "expert" && "ring-red-400",
+              song.difficulty === "master" && "ring-purple-500",
+              song.difficulty === "remaster" && "ring-purple-200",
+              song.difficulty === "utage" && "ring-pink-400",
+            )}
+            width={36}
+            height={36}
+            loading="lazy"
+            quality={1}
+          />
 
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1">
-            <div className="truncate font-medium">{song.songName}</div>
-            <div className={cn(
-              "px-1.5 py-0.5 rounded text-xs font-medium whitespace-nowrap",
-              category === "new" ? "bg-lime-100 text-lime-800" : "bg-orange-100 text-orange-800"
-            )}>
-              {category === "new" ? "New" : "Old"}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1">
+              <div className="truncate font-medium">{song.songName}</div>
+              <div className={cn(
+                "px-1.5 py-0.5 rounded text-xs font-medium whitespace-nowrap",
+                category === "new" ? "bg-lime-100 text-lime-800" : "bg-orange-100 text-orange-800"
+              )}>
+                {category === "new" ? "New" : "Old"}
+              </div>
+              {category === "new" && isInBest && (
+                <div className="px-1.5 py-0.5 rounded text-xs font-medium whitespace-nowrap bg-green-100 text-green-800">
+                  B15
+                </div>
+              )}
+              {category === "old" && isInBest && (
+                <div className="px-1.5 py-0.5 rounded text-xs font-medium whitespace-nowrap bg-red-100 text-red-800">
+                  B35
+                </div>
+              )}
             </div>
-            {category === "new" && isInBest && (
-              <div className="px-1.5 py-0.5 rounded text-xs font-medium whitespace-nowrap bg-green-100 text-green-800">
-                B15
-              </div>
-            )}
-            {category === "old" && isInBest && (
-              <div className="px-1.5 py-0.5 rounded text-xs font-medium whitespace-nowrap bg-red-100 text-red-800">
-                B35
-              </div>
-            )}
-          </div>
-          <div className="text-muted-foreground text-xs truncate">
-            {song.type.toUpperCase()} • {song.difficulty.slice(0, 3).toUpperCase()} {(song.levelPrecise / 10).toFixed(1)} • {song.artist}
-          </div>
-        </div>
-      </div>
-
-      <div className="flex items-center justify-between">
-        <div className="xs:text-right xs:ml-2">
-          <div className="text-xs text-muted-foreground">Current → Target</div>
-          <div className="font-mono text-xs">
-            {currentAccuracy.toFixed(2)}% → {targetAccuracy === 101.0 ? (
-              <span className="text-green-600">AP</span>
-            ) : (
-              <span className="text-green-600">{targetAccuracy.toFixed(2)}%</span>
-            )}
-          </div>
-          <div className="font-mono text-xs">
-            {currentRating} → <span className="text-green-600">{targetRating}</span>
+            <div className="text-muted-foreground text-xs truncate">
+              {song.type.toUpperCase()} • {song.difficulty.slice(0, 3).toUpperCase()} {(song.levelPrecise / 10).toFixed(1)} • {song.artist}
+            </div>
           </div>
         </div>
 
-        <div className="text-right ml-4 mr-2 space-y-0.5 w-16">
-          <div className="text-xs text-muted-foreground flex items-center gap-1">
-            <Target className="h-3 w-3 text-amber-500" />
-            {targetAccuracy === 101.0 ? (
-              <span className="text-orange-400 font-semibold">AP</span>
-            ) : (
-              <span>+{accuracyDiff.toFixed(2)}%</span>
-            )}
+        <div className="flex items-center justify-between">
+          <div className="xs:text-right xs:ml-2">
+            <div className="text-xs text-muted-foreground">Current → Target</div>
+            <div className="font-mono text-xs">
+              {currentAccuracy.toFixed(2)}% → {targetAccuracy === 101.0 ? (
+                <span className="text-green-600">AP</span>
+              ) : (
+                <span className="text-green-600">{targetAccuracy.toFixed(2)}%</span>
+              )}
+            </div>
+            <div className="font-mono text-xs">
+              {currentRating} → <span className="text-green-600">{targetRating}</span>
+            </div>
           </div>
-          <div className="text-xs flex items-center gap-1">
-            <Zap className="h-3 w-3 text-green-500" />
-            <span className="font-mono font-semibold">+{ratingGain}</span>
+
+          <div className="text-right ml-4 mr-2 space-y-0.5 w-16">
+            <div className="text-xs text-muted-foreground flex items-center gap-1">
+              <Target className="h-3 w-3 text-amber-500" />
+              {targetAccuracy === 101.0 ? (
+                <span className="text-orange-400 font-semibold">AP</span>
+              ) : (
+                <span>+{accuracyDiff.toFixed(2)}%</span>
+              )}
+            </div>
+            <div className="text-xs flex items-center gap-1">
+              <Zap className="h-3 w-3 text-green-500" />
+              <span className="font-mono font-semibold">+{ratingGain}</span>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </SongHoverCard>
   );
 }
 

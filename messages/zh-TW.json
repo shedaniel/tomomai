@@ -452,7 +452,7 @@
     "callout": {
       "title": "想查詢資料庫嗎？",
       "subtitle": "無需登入即可查看歌曲資料庫！",
-      "description": "tomomai ともマイ DB 是一個公開的 maimai 譜面、機舖及更多maimai資訊的資料庫"
+      "description": "tomomai ともマイ DB 是一個公開的 maimai 譜面、機廳及更多maimai資訊的資料庫"
     },
     "beta": {
       "title": "測試功能",
@@ -485,7 +485,9 @@
         "bpm": "BPM",
         "added": "追加版本",
         "share": "分享",
-        "youtube": "YouTube 搜尋"
+        "youtube": "YouTube 搜尋",
+        "viewCharts": "查看譜面",
+        "viewDetails": "在 tomomai DB 查看詳細資訊"
       },
       "filter": {
         "type": "類型",

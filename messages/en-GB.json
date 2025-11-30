@@ -471,7 +471,9 @@
         "bpm": "BPM",
         "added": "Added",
         "share": "Share Link",
-        "youtube": "YouTube"
+        "youtube": "YouTube",
+        "viewCharts": "View Charts",
+        "viewDetails": "View Details on tomomai DB"
       },
       "filter": {
         "type": "Type",
