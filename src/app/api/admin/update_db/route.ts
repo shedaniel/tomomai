@@ -14,8 +14,8 @@ import { Difficulty, Level, NoteCounts, Region, SongType } from "@/lib/types";
 const MAIMAI_SONGS_JSON_URL = "https://github.com/zvuc/otoge-db/raw/refs/heads/master/maimai/data/music-ex.json";
 const MAIMAI_SONGS_JSON_URL_INTL = "https://github.com/zvuc/otoge-db/raw/refs/heads/master/maimai/data/music-ex-intl.json";
 
-const MODIFY_DATABASE = false;
-const SAVE_TO_FILE = true;
+const MODIFY_DATABASE = true;
+const SAVE_TO_FILE = false;
 
 type Song = {
   songName: string;
