@@ -14,8 +14,8 @@ import { Difficulty, Level, NoteCounts, Region, SongType } from "@/lib/types";
 const MAIMAI_SONGS_JSON_URL = "https://github.com/zvuc/otoge-db/raw/refs/heads/master/maimai/data/music-ex.json";
 const MAIMAI_SONGS_JSON_URL_INTL = "https://github.com/zvuc/otoge-db/raw/refs/heads/master/maimai/data/music-ex-intl.json";
 
-const MODIFY_DATABASE = true;
-const SAVE_TO_FILE = false;
+const MODIFY_DATABASE = false;
+const SAVE_TO_FILE = true;
 
 type Song = {
   songName: string;
@@ -312,7 +312,9 @@ async function sendDiscordWebhook(
   // Added charts
   if (added.length > 0) {
     description += `**${added.length} Chart${added.length > 1 ? 's' : ''} Added**\n`;
-    for (const song of added) {
+    for (const song of added.toSorted(
+      (a, b) => a.songName.localeCompare(b.songName) * 1000000 + a.type.localeCompare(b.type) * 1000 + a.difficulty.localeCompare(b.difficulty)
+    )) {
       description += `- ${song.songName}: ${formatDifficulty(song.difficulty)} ${song.level} (${formatLevelPrecise(song.levelPrecise)})\n`;
     }
     description += "\n";
@@ -321,14 +323,18 @@ async function sendDiscordWebhook(
   // Deleted charts
   if (deleted.length > 0) {
     description += `**${deleted.length} Chart${deleted.length > 1 ? 's' : ''} Deleted**\n`;
-    for (const song of deleted) {
+    for (const song of deleted.toSorted(
+      (a, b) => a.songName.localeCompare(b.songName) * 1000000 + a.type.localeCompare(b.type) * 1000 + a.difficulty.localeCompare(b.difficulty)
+    )) {
       description += `- ${song.songName}: ${formatDifficulty(song.difficulty)} ${song.level} (${formatLevelPrecise(song.levelPrecise)})\n`;
     }
     description += "\n";
   }
 
   // Modified charts (only show if level or levelPrecise changed)
-  const levelChanges = modified.filter(
+  const levelChanges = modified.toSorted(
+    (a, b) => a.new.songName.localeCompare(b.new.songName) * 1000000 + a.new.type.localeCompare(b.new.type) * 1000 + a.new.difficulty.localeCompare(b.new.difficulty)
+  ).filter(
     m => m.old.level !== m.new.level || m.old.levelPrecise !== m.new.levelPrecise
   );
   if (levelChanges.length > 0) {
@@ -438,25 +444,45 @@ export async function POST(request: NextRequest) {
     let allRecords: Song[];
     if (region === "jp") {
       allRecords = await fetchRecords(region);
+
+      for (const record of fallbackRecords) {
+        if (!allRecords.some(r => r.songName === record.songName && r.difficulty === record.difficulty && r.type === record.type)) {
+          allRecords.push(record);
+          console.log(`Added fallback song: ${record.songName} (${record.difficulty}, ${record.type})`);
+        }
+      }
     } else {
       const [jpRecords, intlRecords] = await Promise.all([
         fetchRecordsWithUrl("jp", "https://github.com/zvuc/otoge-db/raw/refs/heads/master/maimai/data/music-ex-prismplus-final.json"),
         fetchRecords("intl"),
       ]);
-      // set of both, with intl records taking precedence, the unique key should be songName-difficulty-type
-      allRecords = intlRecords;
-      const uniqueKeys = new Set<string>(intlRecords.map(record => `${record.songName}-${record.difficulty}-${record.type}`));
-      allRecords.push(...jpRecords
-        .filter(record => !uniqueKeys.has(`${record.songName}-${record.difficulty}-${record.type}`))
-        .filter(record => record.addedVersion === currentVersionForRegion)
-      );
-    } 
 
-    for (const record of fallbackRecords) {
-      if (!allRecords.some(r => r.songName === record.songName && r.difficulty === record.difficulty && r.type === record.type)) {
-        allRecords.push(record);
-        console.log(`Added fallback song: ${record.songName} (${record.difficulty}, ${record.type})`);
+      const applyJpFallback = (record: Song) => {
+        const jpRecord = jpRecords.find(r => r.songName === record.songName && r.difficulty === record.difficulty && r.type === record.type);
+        if (!jpRecord) {
+          return record;
+        }
+        return {
+          ...record,
+          ...jpRecord,
+          ...Object.fromEntries(Object.entries(jpRecord).filter(([key]) => record[key as keyof Song] === null)),
+        } as Song;
+      };
+
+      // set of both, with intl records taking precedence, the unique key should be songName-difficulty-type
+      allRecords = intlRecords.map(record => applyJpFallback(record));
+
+      for (const record of fallbackRecords) {
+        if (!allRecords.some(r => r.songName === record.songName && r.difficulty === record.difficulty && r.type === record.type)) {
+          allRecords.push(applyJpFallback(record));
+          console.log(`Added fallback song: ${record.songName} (${record.difficulty}, ${record.type})`);
+        }
       }
+      // const uniqueKeys = new Set<string>(intlRecords.map(record => `${record.songName}-${record.difficulty}-${record.type}`));
+      // allRecords.push(...jpRecords
+      //   .filter(record => !uniqueKeys.has(`${record.songName}-${record.difficulty}-${record.type}`))
+      //   .filter(record => record.addedVersion === currentVersionForRegion)
+      // );
     }
 
     // Fetch existing songs from database before modifications

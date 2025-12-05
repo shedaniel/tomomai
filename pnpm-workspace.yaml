@@ -1,0 +1,6 @@
+onlyBuiltDependencies:
+  - '@swc/core'
+  - esbuild
+  - sharp
+  - skia-canvas
+  - unrs-resolver

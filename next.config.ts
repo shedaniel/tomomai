@@ -8,6 +8,19 @@ const nextConfig: NextConfig = {
   serverExternalPackages: ["skia-canvas", "pino", "pino-pretty", "kuromoji", "kuroshiro", "kuroshiro-analyzer-kuromoji"],
   images: {
     minimumCacheTTL: 2678400, // 31 days
+    localPatterns: [
+      {
+        pathname: '/api/image-proxy',
+      },
+      {
+        pathname: '/*.webp',
+        search: '',
+      },
+      {
+        pathname: '/*.png',
+        search: '',
+      }
+    ],
     remotePatterns: [
       {
         protocol: 'https',
@@ -57,7 +70,6 @@ const nextConfig: NextConfig = {
     '/**/*': ['./node_modules/kuromoji/dict/**/*'],
   },
   devIndicators: false,
-  instrumentationHook: true,
 };
 
 const withVercelToolbar = withVercelToolbarPlugin();

@@ -60,7 +60,7 @@ function CopyableCodeBlock({ code, t }: { code: string; t: any }) {
   return (
     <div
       onClick={handleCopy}
-      className="cursor-pointer p-3 bg-gray-200/70 dark:bg-gray-700/50 rounded-md text-sm font-mono text-muted-foreground break-all hover:bg-gray-300/70 dark:hover:bg-gray-600/50 transition-colors flex items-start gap-2 group"
+      className="cursor-pointer p-3 bg-muted rounded-md text-sm font-mono text-muted-foreground break-all hover:bg-accent/90 transition-all flex items-start gap-2 group"
     >
       <div className="flex-1 pt-0.5">{code}</div>
       <Copy className="h-4 w-4 mt-0.75 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -342,7 +342,7 @@ function StepBasedTokenDialog({
                   {/* Desktop Section */}
                   <div className="flex items-center gap-2">
                     <span className="font-semibold text-md">{t('tokenDialog.step3.desktop')}</span>
-                    <Monitor className="h-6 w-6 text-primary" />
+                    <Monitor className="h-6 w-6" />
                   </div>
                   <p className="text-sm text-muted-foreground">
                     {t('tokenDialog.step3.desktopInstructions')}
@@ -350,7 +350,7 @@ function StepBasedTokenDialog({
                   {/* Mobile Section */}
                   <div className="flex items-center gap-2">
                     <span className="font-semibold text-md">{t('tokenDialog.step3.mobile')}</span>
-                    <Smartphone className="h-6 w-6 text-primary" />
+                    <Smartphone className="h-6 w-6" />
                   </div>
                   <div className="text-sm text-muted-foreground space-y-1">
                     <p>{t('tokenDialog.step3.mobileStep1')}</p>

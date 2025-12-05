@@ -153,7 +153,6 @@ function RecommendationRow({ recommendation }: { recommendation: RecommendationD
             width={36}
             height={36}
             loading="lazy"
-            quality={1}
           />
 
           <div className="flex-1 min-w-0">

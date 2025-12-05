@@ -112,7 +112,7 @@ function SelectTrigger({ className, children, variant, size, ...props }: SelectT
           aria-haspopup="dialog"
           aria-expanded="false"
           className={cn(
-            "flex items-center justify-between rounded-md border border-input bg-background",
+            "flex items-center justify-between rounded-md border border-input bg-card",
             className
           )}
           {...props}

@@ -40,6 +40,7 @@ interface FilterPanelProps<T> {
   applyFilters: ApplyFiltersFn<T>;
   getFilterLabel: GetFilterLabelFn;
   className?: string;
+  triggerClassName?: string;
 }
 
 export function FilterPanel<T>({
@@ -51,6 +52,7 @@ export function FilterPanel<T>({
   applyFilters,
   getFilterLabel,
   className,
+  triggerClassName,
 }: FilterPanelProps<T>) {
   const wouldYieldResults = (testFilter: GenericFilter): boolean => {
     // First check if the filter alone yields any results (remove useless filters)
@@ -148,7 +150,7 @@ export function FilterPanel<T>({
                     value=""
                     onValueChange={(value) => handleSelectValue(category.type, value)}
                   >
-                    <SelectTrigger className="w-auto h-8 min-w-[100px] whitespace-nowrap gap-1">
+                    <SelectTrigger className={cn("w-auto h-8 min-w-[100px] whitespace-nowrap gap-1", triggerClassName)}>
                       <Icon className="h-4 w-4" />
                       <SelectValue placeholder={category.label} />
                     </SelectTrigger>

@@ -574,7 +574,7 @@ export function RecentSongsCard({ region, beforeDate }: RecentSongsCardProps) {
                       }} />
                     <div
                       className={cn(
-                        "absolute top-12 -right-1 px-1.5 py-0.5 rounded rounded-tr-none rounded-br-md text-xs font-semibold text-white",
+                        "absolute top-12 -right-1 px-1.5 py-0.5 rounded rounded-tr-none rounded-br-[8px] text-xs font-semibold text-white",
                         play.difficulty === "basic" && "bg-green-400",
                         play.difficulty === "advanced" && "bg-yellow-400",
                         play.difficulty === "expert" && "bg-red-400",

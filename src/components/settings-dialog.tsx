@@ -227,7 +227,7 @@ export function SettingsDialog({
                 setSelectedLanguage(value === "auto" ? null : value);
               }}
             >
-              <SelectTrigger id="language">
+              <SelectTrigger id="language" className="bg-background">
                 <SelectValue placeholder={t('settings.language.label')} />
               </SelectTrigger>
               <SelectContent>
@@ -260,7 +260,7 @@ export function SettingsDialog({
                 setSelectedTimezone(value === "jp" ? null : value as typeof TIMEZONE_ENUM[number]);
               }}
             >
-              <SelectTrigger id="timezone">
+              <SelectTrigger id="timezone" className="bg-background">
                 <SelectValue placeholder={t('settings.timezone.placeholder')} />
               </SelectTrigger>
               <SelectContent>
@@ -289,7 +289,7 @@ export function SettingsDialog({
             <Button 
               variant="outline" 
               onClick={onOpenTokenDialog}
-              className="justify-start"
+              className="justify-start bg-background"
             >
               <Key className="h-4 w-4 mr-2" />
               {t('settings.account.updateToken')}
@@ -329,7 +329,7 @@ export function SettingsDialog({
                     onValueChange={(value: 'intl' | 'jp') => setSelectedMainRegion(value)}
                     disabled={isLoadingSettings}
                   >
-                    <SelectTrigger id="main-region">
+                    <SelectTrigger id="main-region" className="bg-background">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -448,7 +448,7 @@ export function SettingsDialog({
                   <div className="grid gap-2">
                     <Label>{t('settings.profile.url.label')}</Label>
                     <div className="flex items-center gap-2">
-                      <div className="flex-1 p-2 bg-gray-200/70 rounded-md text-sm font-mono text-muted-foreground break-all">
+                      <div className="flex-1 p-2 bg-muted rounded-md text-sm font-mono text-muted-foreground break-all">
                         {getProfileUrl()}
                       </div>
                       <Button

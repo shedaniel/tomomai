@@ -31,15 +31,15 @@ export function InfoCard({
     <Card>
       <CardContent>
         {/* Profile Visibility Banner */}
-        <div className="mb-6 p-4 rounded-md bg-muted ring-2 ring-offset-2 ring-offset-card ring-primary/20">
+        <div className="mb-6 p-4 rounded-md bg-muted ring-2 ring-offset-2 ring-offset-card ring-foreground/20">
           {visitableProfileAt ? (
             <div>
-              <h3 className="font-medium mb-1 text-primary">{t('profileVisibility.public')}</h3>
+              <h3 className="font-medium mb-1 text-foreground">{t('profileVisibility.public')}</h3>
               <p className="text-sm text-muted-foreground">
                 {t('profileVisibility.accessibleBy')}
                 <Link 
                   href={`/profile/${visitableProfileAt}`} 
-                  className="text-primary hover:text-primary/80 underline"
+                  className="text-foreground hover:text-foreground/80 underline"
                 >
                   https://tomomai.lol/profile/{visitableProfileAt}
                 </Link>
@@ -59,7 +59,7 @@ export function InfoCard({
         <div className="flex items-center gap-2 mb-4">
           <Image src={createSafeMaimaiImageUrl(snapshot.iconUrl)} alt={snapshot.title} width={80} height={80} />
           <div className="flex flex-col min-w-0 self-stretch my-1 space-y-0.5 items-stretch">
-            <span className="text-sm text-muted-foreground bg-gray-100 rounded-full px-6 py-1 text-center inset-shadow-sm truncate">{snapshot.title}</span>
+            <span className="text-sm text-secondary-foreground bg-secondary rounded-full px-6 py-1 text-center inset-shadow-sm truncate">{snapshot.title}</span>
             <span className="text-lg font-medium flex items-center self-center max-xs:flex-col">
               <span className="mx-4 flex-1 whitespace-nowrap max-xs:text-md max-2xs:text-sm">{snapshot.displayName}</span>
               <div className="shrink-0 grow-0 min-w-fit w-[120px] h-[35px] relative">

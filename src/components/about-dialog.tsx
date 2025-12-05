@@ -50,12 +50,12 @@ export function AboutDialog({ open, onOpenChange }: AboutDialogProps) {
               </p>
               <p>Source code is available on GitHub:</p>
               <a 
-                href="https://github.com/shedaniel/maimai-friends" 
+                href="https://github.com/shedaniel/tomomai" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="inline-block hover:underline font-mono text-xs bg-gray-200 px-3 py-2 rounded"
+                className="inline-block hover:underline font-mono text-xs bg-muted px-3 py-2 rounded"
               >
-                https://github.com/shedaniel/maimai-friends
+                https://github.com/shedaniel/tomomai
               </a>
             </div>
           </div>

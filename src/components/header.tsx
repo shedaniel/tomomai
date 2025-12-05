@@ -65,9 +65,8 @@ function NavbarButtons({ currentTab, onAbout, onDiscordInvite }: { currentTab: C
         <Button
           variant="outline"
           size="sm"
-          className={cn("h-8 hover:bg-gray-200 md:hidden max-xs:w-8",
-            tab === "db" ? "bg-orange-200 text-amber-700 hover:bg-orange-200/75 hover:text-amber-700 border border-orange-400" : "",
-            tab === "dashboard" ? "bg-primary text-primary-foreground" : "",
+          className={cn("h-8 hover:bg-muted md:hidden max-xs:w-8",
+            "bg-primary text-primary-foreground",
           )}
           asChild
         >
@@ -79,9 +78,8 @@ function NavbarButtons({ currentTab, onAbout, onDiscordInvite }: { currentTab: C
         <Button
           variant="ghost"
           size="sm"
-          className={cn("h-8 px-3 py-0 hover:bg-gray-200 max-md:hidden",
-            tab === "db" ? "bg-orange-200 text-amber-700 hover:bg-orange-200/75 hover:text-amber-700 border border-orange-400" : "",
-            tab === "dashboard" ? "bg-primary text-primary-foreground hover:bg-primary/75 hover:text-primary-foreground" : "",
+          className={cn("h-8 px-3 py-0 hover:bg-muted max-md:hidden",
+            "bg-primary text-primary-foreground hover:bg-primary/75 hover:text-primary-foreground",
           )}
           asChild
         >
@@ -95,7 +93,7 @@ function NavbarButtons({ currentTab, onAbout, onDiscordInvite }: { currentTab: C
       onClick={onAbout}
       variant="outline"
       size="sm"
-      className="h-8 w-8 p-0 hover:bg-gray-200 md:hidden max-sm:hidden"
+      className="h-8 w-8 p-0 hover:bg-muted md:hidden max-sm:hidden"
     >
       <Info className="h-4 w-4" />
     </Button>
@@ -103,7 +101,7 @@ function NavbarButtons({ currentTab, onAbout, onDiscordInvite }: { currentTab: C
       onClick={onAbout}
       variant="ghost"
       size="sm"
-      className="h-8 px-2 py-0 hover:bg-gray-200 max-md:hidden"
+      className="h-8 px-2 py-0 hover:bg-muted max-md:hidden"
     >
       {t('common.about')}
     </Button>
@@ -112,7 +110,7 @@ function NavbarButtons({ currentTab, onAbout, onDiscordInvite }: { currentTab: C
       onClick={onDiscordInvite}
       variant="outline"
       size="sm"
-      className="h-8 w-8 p-0 hover:bg-gray-200 md:hidden max-sm:hidden"
+      className="h-8 w-8 p-0 hover:bg-muted md:hidden max-sm:hidden"
     >
       <DiscordIcon className="h-4 w-4" />
     </Button>
@@ -120,7 +118,7 @@ function NavbarButtons({ currentTab, onAbout, onDiscordInvite }: { currentTab: C
       onClick={onDiscordInvite}
       variant="ghost"
       size="sm"
-      className="h-8 px-2 py-0 hover:bg-gray-200 max-md:hidden"
+      className="h-8 px-2 py-0 hover:bg-muted max-md:hidden"
     >
       {t('header.addDiscordBot')}
     </Button>
@@ -302,7 +300,7 @@ export function Header({ currentTab, showDiscordBanner = true, user }: HeaderPro
         <div className="flex items-center space-x-4">
           <LocaleSwitcher />
           {user ? (<>
-            {user.menu && <RegionSwitcher value={user.menu.selectedRegion} onChange={user.menu.onRegionChange} />}
+            {user.menu && <RegionSwitcher header={true} value={user.menu.selectedRegion} onChange={user.menu.onRegionChange} />}
             <UserIcon {...user} onAbout={() => setAboutOpen(true)} onDiscordInvite={handleDiscordInvite} />
           </>) : (
             <Button variant="default" asChild>

@@ -182,27 +182,27 @@ export function SongsDatabase({ selectedSlug: initialSlug, initialSongs, initial
       {/* Header */}
       <header className="flex flex-col gap-4">
         {/* Search */}
-        <div className="flex items-center gap-2">
-          <div className="relative flex-1">
+        <div className="flex gap-2">
+          <div className="relative flex-1 h-10">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
             <Input
               type="search"
               placeholder={t("db.songs.searchPlaceholder")}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 h-10"
+              className="pl-10 h-full"
               aria-label={t("db.songs.searchPlaceholder")}
             />
           </div>
 
-          <div className="flex items-center gap-2" role="group" aria-label="Display options">
+          <div className="flex items-stretch gap-2 h-10" role="group" aria-label="Display options">
             {/* Display Mode */}
-            <div className="flex items-center border rounded-lg overflow-hidden h-10" role="radiogroup" aria-label="View mode">
+            <div className="flex items-center rounded-md border border-border p-px" role="radiogroup" aria-label="View mode">
               <Button
                 variant="ghost"
                 size="sm"
                 className={cn(
-                  "rounded-none h-9 px-3 transition-colors",
+                  "rounded-none rounded-l-md h-full px-3 transition-colors",
                   displayMode === "grid" && "bg-primary hover:bg-primary/80 text-primary-foreground hover:text-primary-foreground"
                 )}
                 onClick={() => setDisplayMode("grid")}
@@ -215,7 +215,7 @@ export function SongsDatabase({ selectedSlug: initialSlug, initialSongs, initial
                 variant="ghost"
                 size="sm"
                 className={cn(
-                  "rounded-none h-9 px-3 transition-colors",
+                  "rounded-none rounded-r-md h-full px-3 transition-colors",
                   displayMode === "list" && "bg-primary hover:bg-primary/80 text-primary-foreground hover:text-primary-foreground"
                 )}
                 onClick={() => setDisplayMode("list")}
@@ -241,6 +241,7 @@ export function SongsDatabase({ selectedSlug: initialSlug, initialSongs, initial
             const option = category?.options.find(o => o.value === filter.value);
             return option?.label ?? filter.value;
           }}
+          triggerClassName="bg-background"
         />
       </header>
 

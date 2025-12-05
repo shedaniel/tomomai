@@ -33,7 +33,7 @@ export function LocaleSwitcher({ forceVisible }: LocaleSwitcherProps  ) {
 
   return (
     <Select value={locale} onValueChange={handleNewLocale}>
-      <SelectTrigger variant="secondary" size="sm">
+      <SelectTrigger variant="secondary" size="sm" className="bg-background">
         <SelectValue>
           <div className="flex items-center gap-2">
             <Languages className="h-4 w-4" />

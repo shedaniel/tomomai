@@ -162,7 +162,6 @@ const SongRow = forwardRef<HTMLDivElement, { song: SongWithRating } & React.HTML
         width={36}
         height={36}
         loading="lazy"
-        quality={1}
       />
       <div className="flex-1 min-w-0">
         <div className="truncate font-medium">{song.songName}&#8203;</div>
@@ -351,7 +350,7 @@ const SongGridCard = forwardRef<HTMLDivElement, { song: SongWithRating } & React
       <div
         ref={ref}
         {...props}
-        className={cn("relative bg-white rounded-md shadow-md transition-all duration-300 ease-out cursor-pointer ring-2",
+        className={cn("relative bg-white rounded-[8px] shadow-md transition-all duration-300 ease-out cursor-pointer ring-2",
           song.difficulty === "basic" && "ring-green-400",
           song.difficulty === "advanced" && "ring-yellow-400",
           song.difficulty === "expert" && "ring-red-400",
@@ -369,16 +368,16 @@ const SongGridCard = forwardRef<HTMLDivElement, { song: SongWithRating } & React
         src={createSafeMaimaiImageUrl(song.cover)}
         alt={song.songName}
         fill
-        className="object-cover rounded-md overflow-hidden"
+        className="object-cover rounded-[8px] overflow-hidden"
         loading="lazy"
       />
 
       {/* Dark overlay for text readability */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/60 to-black/30 rounded-md overflow-hidden" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/60 to-black/30 rounded-[8px] overflow-hidden" />
 
       {/* Difficulty Badge */}
       <div className={cn(
-        "absolute top-[-0.5px] right-[-0.5px] px-1.5 py-0.5 rounded-tr-md rounded-bl-md overflow-hidden text-[10px] font-semibold text-white",
+        "absolute top-[-0.5px] right-[-0.5px] px-1.5 py-0.5 rounded-tr-[8px] rounded-bl-[8px] overflow-hidden text-[10px] font-semibold text-white",
         song.difficulty === "basic" && "bg-green-500",
         song.difficulty === "advanced" && "bg-yellow-500",
         song.difficulty === "expert" && "bg-red-500",

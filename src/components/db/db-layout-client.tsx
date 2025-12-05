@@ -37,8 +37,8 @@ function TypeSelector({
               variant="ghost"
               size="sm"
               className={cn(
-                "hover:bg-gray-200",
-                isActive ? "bg-gray-200" : "",
+                "hover:bg-primary hover:text-primary-foreground",
+                isActive ? "bg-muted border" : "",
               )}
               onClick={() => !isActive && onStartTransition(href)}
               onMouseEnter={() => onPrefetch(href)}
@@ -67,7 +67,7 @@ function BetaBanner() {
   const t = useTranslations("db.beta");
   
   return (
-    <div className="bg-stone-200/50 text-stone-800 border border-stone-500 px-4 py-3 rounded-lg mb-8 flex items-start gap-3">
+    <div className="bg-muted/50 text-muted-foreground border border-foreground px-4 py-3 rounded-lg mb-8 flex items-start gap-3">
       <Info className="w-5 h-5 shrink-0 mt-0.5" />
       <div>
         <h3 className="font-semibold text-sm">{t("title")}</h3>

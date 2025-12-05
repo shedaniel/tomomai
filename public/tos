@@ -1,0 +1,80 @@
+Final Revised Terms of Service for tomomai
+
+Last Updated: December 2, 2025
+
+1. Acceptance of Terms
+
+Welcome to tomomai (the "Service"). The Service is provided by shedaniel (the "Developer," "I," or "we") as an independent project, resident in Hong Kong.
+
+By accessing or using the tomomai website and any services provided through it, you agree to be bound by these Terms of Service ("TOS") and our Privacy Policy. If you do not agree to these TOS, you must not access or use the Service.
+
+2. Description of Service
+
+tomomai is a data aggregation and display tool. The core function of the Service is to allow users who log in via their Discord accounts to provide their maimai DX NET (SEGA) login details or cookies. We use this information to scrape and display their personal maimai DX NET score, performance, and related game data for their personal, non-commercial use.
+
+tomomai is not affiliated with, endorsed by, or officially connected to SEGA.
+
+3. User Accounts and Access
+
+3.1 Eligibility
+To use tomomai, you must be the minimum age required by SEGA's maimai DX NET policy for accessing their services and data. By using the Service, you confirm you meet this eligibility requirement.
+
+3.2 Account Creation
+Access to the Service requires a Discord account. When you log in via Discord, you authorize us to collect and use the data specified in Section 4.
+
+3.3 Third-Party Account Access (maimai DX NET)
+- You acknowledge and agree that providing your maimai DX NET login details or cookies to tomomai allows us to access your personal data hosted by SEGA on your behalf.
+- You must ensure that providing this information to tomomai does not violate the terms of service of maimai DX NET or SEGA.
+- You assume all risks and liabilities associated with sharing your maimai DX NET login details/cookies with the Service. We are not responsible for any actions taken by SEGA (including, but not limited to, account suspension or termination) as a result of your use of tomomai.
+
+4. Data Collection and Privacy
+
+Your privacy is governed by our Privacy Policy. By using the Service, you authorize us to collect and store the following data:
+
+- Discord Data: Your Discord username, profile picture, and email address (as provided by Discord).
+- maimai DX NET Data: All scores, performance records, achievements, user IDs, and other game-related data scraped from the maimai DX NET website.
+
+Data Deletion and Takeout Requests
+You have the right to request deletion or takeout of the personal data we hold. All such requests must be sent via email to the following designated legal contact: daniel@shedaniel.me. We will process these requests in accordance with applicable Hong Kong laws and international data protection standards.
+
+5. Intellectual Property and Licensing
+
+5.1 Service Source Code
+The source code for tomomai is an open-source project and is licensed under the GNU Affero General Public License (AGPL).
+
+- You may view, download, use, copy, modify, and distribute the source code in accordance with the terms of the AGPL.
+- The full text of the license can be found here: https://github.com/shedaniel/tomomai/blob/main/LICENSE
+
+5.2 Self-Hosting and Branding
+While the AGPL license permits redistribution, if you choose to self-host a modified or unmodified version of the tomomai source code, you are strongly encouraged to avoid using the name "tomomai" or any similar branding to prevent confusion with the official service maintained by the Developer. Your self-hosted version must comply with all terms of the AGPL license.
+
+5.3 User Data (Scraped Content)
+The maimai DX NET game data displayed by tomomai remains the intellectual property of SEGA, and access to it is governed by your agreement with SEGA. You are only authorized to view and use this data within tomomai for your personal, non-commercial review.
+
+6. Acceptable Use Policy
+
+You agree not to use the Service to:
+- Violate any applicable local, national, or international law, including the laws of Hong Kong.
+- Attempt to hack, disrupt, damage, or gain unauthorized access to our underlying infrastructure, servers, databases, or hosting environment, regardless of the open-source nature of the software.
+- Interfere with or disrupt the integrity or performance of the Service as hosted by the Developer.
+
+7. Disclaimers and Limitation of Liability
+
+7.1 No Warranty
+The Service is provided on an "AS IS" and "AS AVAILABLE" basis, without warranties of any kind, either express or implied. We do not warrant that the Service will be uninterrupted, error-free, or free of viruses or other harmful components. We make no warranty regarding the accuracy, reliability, or completeness of the scraped maimai DX NET data, as it depends on the third-party source.
+
+7.2 Limitation of Liability
+To the maximum extent permitted by applicable law, in no event shall the Developer be liable for any indirect, incidental, special, consequential, or punitive damages, or any loss of profits or revenues, whether incurred directly or indirectly, or any loss of data, use, goodwill, or other intangible losses, resulting from (a) your use of or inability to use the Service; (b) any unauthorized access to or use of your maimai DX NET login details or data; or (c) any action or non-action taken by SEGA as a result of your use of the Service.
+
+Our total liability to you for any damages, losses, and causes of action shall not exceed the amount you have paid me, if any, in the last six (6) months. Since tomomai is not a paid service, this limit is zero (0) Hong Kong Dollars.
+
+8. Termination
+We may terminate or suspend your access to the Service immediately, without prior notice or liability, for any reason whatsoever, including without limitation if you breach these Terms. Upon termination, your right to use the Service will cease immediately.
+
+9. Governing Law and Jurisdiction
+
+These Terms shall be governed by the laws of the Hong Kong Special Administrative Region (HKSAR), without regard to its conflict of law principles. You agree to submit to the exclusive jurisdiction of the courts located in Hong Kong to resolve any legal matter arising from these Terms.
+
+10. Changes to Terms
+
+We reserve the right to modify or replace these TOS at any time. We will provide notice of material changes by updating the "Last Updated" date at the top of these TOS. Your continued use of the Service after any changes constitutes your acceptance of the new TOS.

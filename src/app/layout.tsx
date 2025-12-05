@@ -7,9 +7,16 @@ import type { Metadata } from "next";
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 import localFont from "next/font/local";
+import { M_PLUS_1 } from 'next/font/google'
 import "./globals.css";
 
-// Local fonts
+// from google fonts
+const mPlus = M_PLUS_1({
+  subsets: ['latin'],
+  variable: '--font-m-plus-1',
+  display: 'swap',
+})
+
 const inter = localFont({
   src: "../../public/res/fonts/Inter-VariableFont_opsz,wght.woff2",
   variable: "--font-inter",
@@ -82,7 +89,7 @@ export default async function RootLayout({
   return (
     <html lang={locale}>
       <body
-        className={`${getLocaleFontClass(locale)} antialiased bg-background min-h-[100dvh]`}
+        className={`${getLocaleFontClass(locale)} antialiased bg-background min-h-dvh`}
       >
         <NextIntlClientProvider messages={messages}>
           <LocaleProvider initialLocale={locale}>
