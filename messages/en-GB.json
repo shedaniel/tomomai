@@ -22,11 +22,20 @@
     "stars": "Stars",
     "plays": "Plays",
     "total": "Total",
+    "theme": "Theme",
     "invitations": "Invitations",
     "discord": "Discord",
     "about": "About",
     "experiments": "Experiments",
-    "comingSoon": "Coming soon..."
+    "comingSoon": "Coming soon...",
+    "difficulties": {
+      "basic": "Basic",
+      "advanced": "Advanced",
+      "expert": "Expert",
+      "master": "Master",
+      "remaster": "Re:Master",
+      "utage": "Utage"
+    }
   },
   "auth": {
     "loginWithDiscord": "Continue with Discord",
@@ -54,7 +63,7 @@
   },
   "settings": {
     "title": "Settings",
-    "description": "Customise your tomomai ともマイ experience.",
+    "description": "Customize your tomomai ともマイ experience.",
     "language": {
       "label": "Language",
       "description": "Select your preferred interface language.",
@@ -283,7 +292,7 @@
     },
     "loading": {
       "scriptLink": "Generating script link...",
-      "loginLink": "Generating personalised link..."
+      "loginLink": "Generating personalized link..."
     },
     "tokenDialogDescription": "Enter your browser token to authenticate",
     "segaAccountDescription": "Enter your SEGA account credentials",
@@ -480,7 +489,24 @@
         "genre": "Genre",
         "addedVersion": "Added Version",
         "std": "STD",
-        "dx": "DX"
+        "dx": "DX",
+        "sort": "Sort",
+        "sortVersionDesc": "Version (Latest)",
+        "sortVersionAsc": "Version (Oldest)",
+        "sortLevelAsc": "Level (Low -> High)",
+        "sortLevelDesc": "Level (High -> Low)",
+        "level": "Level",
+        "groupBy": "Group By",
+        "groups": {
+          "none": "None",
+          "noteDesigner": "Chart Designer",
+          "levelAsc": "Level (Low -> High)",
+          "levelDesc": "Level (High -> Low)",
+          "versionAsc": "Version (Oldest)",
+          "versionDesc": "Version (Latest)",
+          "genre": "Genre",
+          "artist": "Artist"
+        }
       }
     },
     "common": {
@@ -490,6 +516,93 @@
       "chartDesigner": "Chart Designer",
       "bpm": "BPM",
       "added": "Added"
+    },
+    "stats": {
+      "title": "Global Statistics",
+      "ratingDistribution": "Player Rating Distribution",
+      "playCountDistribution": "Player Play Count Distribution",
+      "topTitles": "Top Player Titles",
+      "topSongs": "Most Played Songs",
+      "averageAchievementByLevel": "Average Achievement by Level",
+      "ratingVsPlayCount": "Rating vs Play Count Heatmap",
+      "xAxis": {
+        "rating": "Rating",
+        "playCount": "Play Count",
+        "level": "Level"
+      },
+      "yAxis": {
+        "percentage": "Percentage",
+        "achievement": "Achievement",
+        "count": "Users"
+      },
+      "table": {
+        "rank": "Rank",
+        "title": "Title",
+        "song": "Song",
+        "percentage": "Percentage",
+        "count": "Count"
+      },
+      "region": {
+        "intl": "International",
+        "jp": "Japan"
+      }
     }
+  },
+  "theme": {
+    "description": "Choose a colour theme for the interface.",
+    "groups": {
+      "simple": "Simple",
+      "amaranth": "Amaranth",
+      "blue": "Blue",
+      "brown": "Brown",
+      "emerald": "Emerald",
+      "grass": "Grass",
+      "purple": "Purple",
+      "rose": "Rose",
+      "gold": "Gold",
+      "pink": "Pink"
+    },
+    "themes": {
+      "simple": "Simple",
+      "dark-simple": "Dark Simple",
+      "gray-simple": "Gray Simple",
+      "burnt-amaranth": "Burnt Amaranth",
+      "burnt-blue": "Burnt Blue",
+      "burnt-brown": "Burnt Brown",
+      "burnt-emerald": "Burnt Emerald",
+      "burnt-grass": "Burnt Grass",
+      "burnt-purple": "Burnt Purple",
+      "burnt-rose": "Burnt Rose",
+      "burnt-gold": "Burnt Gold",
+      "burnt-pink": "Burnt Pink",
+      "dark-amaranth": "Dark Amaranth",
+      "dark-blue": "Dark Blue",
+      "dark-brown": "Dark Brown",
+      "dark-emerald": "Dark Emerald",
+      "dark-grass": "Dark Grass",
+      "dark-purple": "Dark Purple",
+      "dark-rose": "Dark Rose",
+      "dark-gold": "Dark Gold",
+      "dark-pink": "Dark Pink",
+      "light-amaranth": "Light Amaranth",
+      "light-blue": "Light Blue",
+      "light-brown": "Light Brown",
+      "light-emerald": "Light Emerald",
+      "light-grass": "Light Grass",
+      "light-purple": "Light Purple",
+      "light-rose": "Light Rose",
+      "light-gold": "Light Gold",
+      "light-pink": "Light Pink",
+      "gray-amaranth": "Gray Amaranth",
+      "gray-blue": "Gray Blue",
+      "gray-brown": "Gray Brown",
+      "gray-emerald": "Gray Emerald",
+      "gray-grass": "Gray Grass",
+      "gray-purple": "Gray Purple",
+      "gray-rose": "Gray Rose",
+      "gray-gold": "Gray Gold",
+      "gray-pink": "Gray Pink"
+    },
+    "title": "Theme"
   }
 }
