@@ -1,0 +1,608 @@
+{
+  "common": {
+    "title": "tomomai ともマイ",
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "close": "Close",
+    "settings": "Settings",
+    "language": "Language",
+    "timezone": "Timezone",
+    "update": "Update",
+    "login": "Login",
+    "join": "Join",
+    "logout": "Logout",
+    "username": "Username",
+    "password": "Password",
+    "token": "Token",
+    "cookies": "Cookies",
+    "authentication": "Authentication",
+    "playerInfo": "Player Info",
+    "rating": "Rating",
+    "stars": "Stars",
+    "plays": "Plays",
+    "total": "Total",
+    "theme": "Theme",
+    "invitations": "Invitations",
+    "discord": "Discord",
+    "about": "About",
+    "experiments": "Experiments",
+    "comingSoon": "Coming soon...",
+    "difficulties": {
+      "basic": "Basic",
+      "advanced": "Advanced",
+      "expert": "Expert",
+      "master": "Master",
+      "remaster": "Re:Master",
+      "utage": "Utage"
+    }
+  },
+  "auth": {
+    "loginWithDiscord": "Continue with Discord",
+    "loginDescription": "Sign in with Discord to start tracking your maimai scores",
+    "noAccount": "Don't have an account?",
+    "signupWithDiscord": "Sign up with Discord",
+    "signupDisabled": "Sign up Currently Disabled",
+    "signupDisabledMessage": "We are not accepting new registrations at this time. Please check back later.",
+    "features": {
+      "title": "Features:",
+      "trackScores": "Track scores across International and Japan regions",
+      "viewHistory": "View historical data snapshots",
+      "importData": "Import data directly from maimai DX NET",
+      "analyzeProgress": "Analyze your progress over time"
+    }
+  },
+  "dashboard": {
+    "title": "tomomai ともマイ",
+    "description": "Track and analyze your maimai scores with friends",
+    "timezoneUpdateSuccess": "Timezone updated successfully!",
+    "timezoneUpdateError": "Failed to update timezone: {error}",
+    "languageUpdateSuccess": "Language updated successfully!",
+    "languageUpdateError": "Failed to update language: {error}",
+    "tokenUpdateSuccess": "Token saved successfully!"
+  },
+  "settings": {
+    "title": "Settings",
+    "description": "Customize your tomomai ともマイ experience.",
+    "language": {
+      "label": "Language",
+      "description": "Select your preferred interface language.",
+      "placeholder": "Select language",
+      "auto": "Auto-detect",
+      "en": "English (US)",
+      "en-GB": "English (UK)",
+      "ja": "日本語",
+      "zh-TW": "繁體中文 (台灣)",
+      "zh-HK": "繁體中文 (香港)",
+      "zh-CN": "简体中文",
+      "ko": "한국어 (AI 번역)"
+    },
+    "timezone": {
+      "label": "Timezone",
+      "description": "This affects how dates and times are displayed throughout the app. Japan timezone is the default as it matches maimai's server time.",
+      "placeholder": "Select timezone"
+    },
+    "account": {
+      "label": "Account Authentication",
+      "updateToken": "Update Token",
+      "description": "Update your maimai token for data fetching. This is required to sync your player data."
+    },
+    "profile": {
+      "publishProfile": "Publish Profile",
+      "publishDescription": "Make your maimai profile publicly accessible for others to view your scores and progress.",
+      "mainRegion": {
+        "label": "Main Region",
+        "description": "Choose your primary region for the published profile.",
+        "intl": "International",
+        "jp": "Japan",
+        "cn": "China"
+      },
+      "privacy": {
+        "label": "Privacy Settings",
+        "showAllScores": {
+          "label": "Show All Scores",
+          "description": "Display all your scores instead of only your best 50 songs."
+        },
+        "showScoreDetails": {
+          "label": "Show Score Details",
+          "description": "Show detailed score information including play counts and timing statistics."
+        },
+        "showPlates": {
+          "label": "Show Plates",
+          "description": "Display your plate collection and completion progress."
+        },
+        "showPlayCounts": {
+          "label": "Show Play Counts",
+          "description": "Display your maimai play counts."
+        },
+        "showEvents": {
+          "label": "Show Events",
+          "description": "Display your event completion progress."
+        },
+        "showInSearch": {
+          "label": "Show in Search",
+          "description": "Allow others to find your profile by searching for your username."
+        }
+      },
+      "url": {
+        "label": "Profile URL",
+        "description": "Your public profile link that you can share with others.",
+        "copied": "Profile URL copied to clipboard!",
+        "copyFailed": "Failed to copy URL to clipboard"
+      }
+    },
+    "saveChanges": "Save Changes",
+    "saving": "Saving...",
+    "saved": "Settings saved successfully!",
+    "errorSaving": "Failed to save settings"
+  },
+  "dataBanner": {
+    "dataSnapshot": "Data Snapshot:",
+    "noDataAvailable": "No data available",
+    "selectSnapshot": "Select a snapshot",
+    "fetchNewData": "Fetch New Data",
+    "fetchingData": "Fetching data...",
+    "lastUpdate": "Last updated",
+    "noDataInstructions": "No data found for this region. Click \"Fetch New Data\" to import your maimai scores. You'll need your maimai token for this process."
+  },
+  "profileVisibility": {
+    "public": "Public Profile",
+    "private": "Private Profile",
+    "accessibleBy": "Accessible by ",
+    "accessibleByEnd": "!",
+    "youMayChangePrivacySettings": "You may change your privacy settings in top right Icon → Settings → Publish Profile.",
+    "onlyAccessibleByYou": "Only accessible by you! You may change your privacy settings in top right Icon → Settings → Publish Profile."
+  },
+  "dataContent": {
+    "loading": "Loading data...",
+    "snapshotData": "Snapshot Data",
+    "snapshotFrom": "Snapshot from {date} • {name} • {count} songs",
+    "tabs": {
+      "playerInfo": "Player Info",
+      "stats": "Stats",
+      "songs": "Songs",
+      "recentPlays": "Recent Plays",
+      "recommendations": "Recommended",
+      "plates": "Plates",
+      "map": "Events",
+      "exportImage": "Export Image",
+      "history": "History"
+    },
+    "playerInfo": "Player Info",
+    "rating": "Rating: {rating}",
+    "stars": "Stars: {stars}",
+    "versionPlays": "Version Plays: {count}",
+    "totalPlays": "Total Plays: {count}",
+    "songs": "Songs ({count} total)",
+    "searchPlaceholder": "Search songs by name, artist, difficulty, or type...",
+    "newSongsB15": "New Songs B15",
+    "oldSongsB35": "Old Songs B35",
+    "newSongs": "New Songs",
+    "oldSongs": "Old Songs",
+    "displayModes": {
+      "list": "List",
+      "grid": "Grid",
+      "compact": "Table"
+    },
+    "tableHeaders": {
+      "song": "Song",
+      "artist": "Artist",
+      "level": "Level",
+      "achievement": "Achievement",
+      "fc": "FC",
+      "fs": "FS",
+      "rating": "Rating"
+    },
+    "statistics": {
+      "sum": "Sum",
+      "average": "Avg"
+    },
+    "switchToListForAllSongs": "Switch to List or Table view for all songs",
+    "noDataAvailable": "No Data Available",
+    "getStartedInstructions": "Get started by fetching your maimai data using the fetch button above.",
+    "history": {
+      "title": "Rating History",
+      "ratingOverTime": "Rating Over Time",
+      "noHistory": "No rating history available",
+      "needMoreData": "Fetch data at least twice to see your rating history"
+    }
+  },
+  "recommendations": {
+    "noRecommendations": "No Recommendations Available",
+    "allOptimal": "All your scores are already optimal! Keep up the great work.",
+    "description": "Songs recommended to improve your rating based on your current B15/B35 scores.",
+    "filterButton": "Filter",
+    "filters": {
+      "all": "All",
+      "best": "In B15/B35",
+      "new": "New Songs",
+      "old": "Old Songs"
+    },
+    "filterCategories": {
+      "difficulty": "Difficulty",
+      "level": "Level",
+      "type": "Type",
+      "targetRating": "Target Rating",
+      "achievement": "Achievement",
+      "version": "Version"
+    }
+  },
+  "recentPlays": {
+    "title": "Recent Plays",
+    "noPlays": "No recent plays found",
+    "labels": {
+      "dx": "DX",
+      "combo": "Combo",
+      "fast": "Fast",
+      "late": "Late"
+    },
+    "notesBreakdown": {
+      "type": "Type",
+      "total": "Total",
+      "totalLoss": "Loss"
+    }
+  },
+  "events": {
+    "title": "Events",
+    "areaEvents": "Area Events",
+    "eventAreaEvents": "Event Area Events",
+    "noEventsAvailable": "No events available",
+    "noAreaEvents": "No area events available",
+    "noEventAreaEvents": "No event area events available",
+    "currentDistance": "Current Distance",
+    "nextReward": "Next Reward in",
+    "eventCompleted": "Event Completed",
+    "notStarted": "Not Started",
+    "inProgress": "In Progress",
+    "completed": "Completed"
+  },
+  "tokenDialog": {
+    "title": "Update maimai authentication",
+    "japanDescription": "Enter your SEGA account credentials for the Japan region.",
+    "intlDescription": "Choose your authentication method for the International region.",
+    "credentialsStored": "Your credentials will be saved for future use.",
+    "username": "Username",
+    "usernamePlaceholder": "Enter your SEGA account username",
+    "password": "Password",
+    "passwordPlaceholder": "Enter your SEGA account password",
+    "cookies": "Cookies",
+    "tokenPlaceholder": "clal=your_token_here",
+    "tokenValidationError": "Token must start with \"clal=\" followed by letters and numbers only",
+    "authenticationNote": "Authentication:",
+    "segaCredentialsNote": "Use your SEGA account credentials to authenticate with maimai DX NET.",
+    "credentialsSecureNote": "Your credentials will be stored for future fetches.",
+    "savingCredentials": "Saving Credentials...",
+    "saveCredentials": "Save Credentials",
+    "tokenTab": "Token",
+    "passwordTab": "Password",
+    "tokenInstructions": {
+      "description": "Cookie value starting with \"clal=\" from maimai DX NET.",
+      "expiration": "The token may get invalidated after a certain period of time, so you may need to update it in the future."
+    },
+    "passwordInstructions": "Use your SEGA account username and password directly",
+    "secureStorage": "Your credentials will be stored for future fetches.",
+    "steps": {
+      "step1Title": "Login to maimai DX NET",
+      "step2Title": "Go to Not Found page",
+      "step3Title": "Execute Code"
+    },
+    "clipboard": {
+      "copied": "Copied to clipboard!",
+      "failed": "Failed to copy to clipboard"
+    },
+    "loading": {
+      "scriptLink": "Generating script link...",
+      "loginLink": "Generating personalized link..."
+    },
+    "tokenDialogDescription": "Enter your browser token to authenticate",
+    "segaAccountDescription": "Enter your SEGA account credentials",
+    "backToSteps": "Back to Steps",
+    "step1": {
+      "description": "Login to maimai DX NET in an <strong>incognito / private window</strong>.",
+      "clickToCopy": "Click the link below to copy to clipboard:",
+      "haveCookies": "Have your own cookies already?",
+      "enterDirectly": "Enter it directly"
+    },
+    "step2": {
+      "description": "Visit this link below, in the same incognito / private tab.",
+      "otpLabel": "OTP:",
+      "otpExpires": "Expires ~ {time}",
+      "refreshing": "Refreshing...",
+      "refreshOtp": "Refresh OTP"
+    },
+    "step3": {
+      "desktop": "Desktop",
+      "desktopInstructions": "Copy the JavaScript code below and paste it in your browser's developer console (Ctrl + Shift + I or F12).",
+      "mobile": "Mobile",
+      "mobileStep1": "1. Tap the code below to copy to clipboard.",
+      "mobileStep2": "2. Create a bookmark in your browser and paste the copied text in the URL field.",
+      "mobileStep3": "3. Run the bookmark."
+    },
+    "navigation": {
+      "previousStep": "Previous Step",
+      "nextStep": "Next Step"
+    },
+    "recommended": "Recommended",
+    "tokenOptionDescription": "Login to your maimai DX NET account with your browser tokens. Token may expire from time to time. No password required and supports social logins.",
+    "passwordOptionDescription": "Login to your maimai DX NET account with your SEGA account credentials. Never expire. Not recommended."
+  },
+  "regions": {
+    "intl": "International",
+    "jp": "Japan",
+    "cn": "China",
+    "short": {
+      "intl": "Asia",
+      "jp": "Japan",
+      "cn": "China"
+    }
+  },
+  "userHeader": {
+    "memberLabel": "ともマイ member",
+    "discordPrompt": "Facing issues? Or have features or ideas to add to tomomai ともマイ?",
+    "joinDiscord": "Join our Community Discord!"
+  },
+  "publicHeader": {
+    "discordBanner": "Have questions or suggestions? Join our Discord community!"
+  },
+  "header": {
+    "tabs": {
+      "dashboard": "Dashboard",
+      "db": "Database"
+    },
+    "addDiscordBot": "Add as Discord Bot",
+    "admin": "Admin",
+    "errors": {
+      "inviteLink": "Failed to open invite link"
+    }
+  },
+  "usernameSetup": {
+    "title": "Choose Your Username",
+    "description": "You need to set a username to use this app. This will be used for your public profile URL and must be unique.",
+    "usernameLabel": "Username",
+    "placeholder": "Enter your username",
+    "checking": "Checking availability...",
+    "available": "Username is available!",
+    "rules": {
+      "length": "1-32 characters long",
+      "characters": "Letters, numbers, dashes (-), and underscores (_) only",
+      "profileUrl": "Will be used in your profile URL: /profile/{username}"
+    },
+    "setUsername": "Set Username",
+    "settingUsername": "Setting Username...",
+    "success": "Username set successfully!",
+    "enterUsername": "Please enter a username",
+    "chooseAvailable": "Please choose an available username",
+    "validation": {
+      "format": "Username must be 1-32 characters long and contain only letters, numbers, dashes, and underscores",
+      "taken": "This username is already taken"
+    }
+  },
+  "invites": {
+    "title": "Manage Invitations",
+    "description": "Create and manage invitation links for new users.\nYou can invite 3 users per 3 days. Invitation links expire after 7 days.\nOnly invite people you trust or personally know, you may be responsible for their actions.",
+    "quota": "Quota:",
+    "quotaExplanation": {
+      "available": "Dashed circle = Available slot",
+      "active": "Normal border = Active invitation",
+      "claimed": "Filled circle = Recently claimed"
+    },
+    "yourInvitations": "Your Invitations",
+    "createInvite": "Create Invite",
+    "creating": "Creating...",
+    "loading": "Loading invitations...",
+    "noInvitations": "No invitations created yet.",
+    "status": {
+      "activeCode": "Active Code",
+      "claimedCode": "Claimed Code",
+      "expiredCode": "Expired Code",
+      "revokedCode": "Revoked Code"
+    },
+    "statusDetails": {
+      "activeUntil": "Active until {date}",
+      "claimedBy": "Claimed by {name} on {date}",
+      "expiredOn": "Expired on {date}",
+      "revoked": "Revoked",
+      "unknownStatus": "Unknown status"
+    },
+    "actions": {
+      "copyLink": "Copy Link",
+      "revoke": "Revoke",
+      "revoking": "Revoking..."
+    },
+    "messages": {
+      "created": "Invitation created successfully!",
+      "linkCopied": "Invitation link copied to clipboard!",
+      "createFailed": "Failed to create invitation",
+      "revoked": "Invitation revoked successfully!",
+      "revokeFailed": "Failed to revoke invitation",
+      "copyFailed": "Failed to copy to clipboard",
+      "clipboardNotSupported": "Clipboard not supported",
+      "quotaExceeded": "You can only have 3 active invites per 3 days",
+      "newUserRestriction": "New users must wait 3 days before creating invites",
+      "newUserRestrictionDetails": "You can create invites after {date}"
+    }
+  },
+  "acceptInvitation": {
+    "title": "tomomai ともマイ",
+    "subtitle": "You've been invited to join the tomomai ともマイ community",
+    "validating": "Validating invitation...",
+    "redirecting": "Redirecting to home page...",
+    "invited": "You've been invited!",
+    "invitedBy": "{name} has invited you to join tomomai ともマイ",
+    "expiresOn": "Invitation expires on {date}",
+    "acceptAndSignUp": "Accept Invitation & Sign Up",
+    "backToHome": "Back to Home",
+    "alreadyLoggedIn": "Welcome! You are already logged in.",
+    "authError": "An error occurred during authentication. Please try again.",
+    "errors": {
+      "invalidCode": "Invalid invitation code",
+      "revoked": "This invitation has been revoked",
+      "alreadyUsed": "This invitation has already been used",
+      "expired": "This invitation has expired",
+      "ownCode": "You cannot use your own invitation code",
+      "validationFailed": "Failed to validate invitation"
+    }
+  },
+  "db": {
+    "callout": {
+      "title": "Accessing the database instead?",
+      "subtitle": "Click here to view the song database without logging in.",
+      "description": "tomomai ともマイ DB is a public database of maimai charts, arcades, and more."
+    },
+    "beta": {
+      "title": "Beta Feature",
+      "description": "The database feature is currently in beta. Some data may be incomplete or inaccurate."
+    },
+    "types": {
+      "songs": "Songs",
+      "calculator": "Calculator",
+      "stats": "Stats"
+    },
+    "songs": {
+      "metadata": {
+        "title": "Songs Database | maimai DX",
+        "description": "Browse and search all maimai DX songs. Filter by type, genre, and version. View song details, difficulty levels, and regional availability."
+      },
+      "title": "Songs Database | maimai DX",
+      "searchPlaceholder": "Search songs, artists, genres...",
+      "noSongsFound": "No songs found",
+      "tryAdjustingSearch": "Try adjusting your search",
+      "noSongsAvailable": "No songs available",
+      "detail": {
+        "title": "Song Details",
+        "artist": "Song artist",
+        "charts": "Charts",
+        "availability": "Availability",
+        "yourScore": "Your Score",
+        "achievement": "Achievement",
+        "rating": "Rating",
+        "chartDesigner": "Chart Designer",
+        "bpm": "BPM",
+        "added": "Added",
+        "share": "Share Link",
+        "youtube": "YouTube",
+        "viewCharts": "View Charts",
+        "viewDetails": "View Details on tomomai DB"
+      },
+      "filter": {
+        "type": "Type",
+        "genre": "Genre",
+        "addedVersion": "Added Version",
+        "std": "STD",
+        "dx": "DX",
+        "sort": "Sort",
+        "sortVersionDesc": "Version (Latest)",
+        "sortVersionAsc": "Version (Oldest)",
+        "sortLevelAsc": "Level (Low -> High)",
+        "sortLevelDesc": "Level (High -> Low)",
+        "level": "Level",
+        "groupBy": "Group By",
+        "groups": {
+          "none": "None",
+          "noteDesigner": "Chart Designer",
+          "levelAsc": "Level (Low -> High)",
+          "levelDesc": "Level (High -> Low)",
+          "versionAsc": "Version (Oldest)",
+          "versionDesc": "Version (Latest)",
+          "genre": "Genre",
+          "artist": "Artist"
+        }
+      }
+    },
+    "common": {
+      "difficulty": "Difficulty",
+      "level": "Level",
+      "notes": "Notes",
+      "chartDesigner": "Chart Designer",
+      "bpm": "BPM",
+      "added": "Added"
+    },
+    "stats": {
+      "title": "Global Statistics",
+      "ratingDistribution": "Player Rating Distribution",
+      "playCountDistribution": "Player Play Count Distribution",
+      "topTitles": "Top Player Titles",
+      "topSongs": "Most Played Songs",
+      "averageAchievementByLevel": "Average Achievement by Level",
+      "ratingVsPlayCount": "Rating vs Play Count Heatmap",
+      "xAxis": {
+        "rating": "Rating",
+        "playCount": "Play Count",
+        "level": "Level"
+      },
+      "yAxis": {
+        "percentage": "Percentage",
+        "achievement": "Achievement",
+        "count": "Users"
+      },
+      "table": {
+        "rank": "Rank",
+        "title": "Title",
+        "song": "Song",
+        "percentage": "Percentage",
+        "count": "Count"
+      },
+      "region": {
+        "intl": "International",
+        "jp": "Japan"
+      }
+    }
+  },
+  "theme": {
+    "description": "Choose a colour theme for the interface.",
+    "groups": {
+      "simple": "Simple",
+      "amaranth": "Amaranth",
+      "blue": "Blue",
+      "brown": "Brown",
+      "emerald": "Emerald",
+      "grass": "Grass",
+      "purple": "Purple",
+      "rose": "Rose",
+      "gold": "Gold",
+      "pink": "Pink"
+    },
+    "themes": {
+      "simple": "Simple",
+      "dark-simple": "Dark Simple",
+      "gray-simple": "Gray Simple",
+      "burnt-amaranth": "Burnt Amaranth",
+      "burnt-blue": "Burnt Blue",
+      "burnt-brown": "Burnt Brown",
+      "burnt-emerald": "Burnt Emerald",
+      "burnt-grass": "Burnt Grass",
+      "burnt-purple": "Burnt Purple",
+      "burnt-rose": "Burnt Rose",
+      "burnt-gold": "Burnt Gold",
+      "burnt-pink": "Burnt Pink",
+      "dark-amaranth": "Dark Amaranth",
+      "dark-blue": "Dark Blue",
+      "dark-brown": "Dark Brown",
+      "dark-emerald": "Dark Emerald",
+      "dark-grass": "Dark Grass",
+      "dark-purple": "Dark Purple",
+      "dark-rose": "Dark Rose",
+      "dark-gold": "Dark Gold",
+      "dark-pink": "Dark Pink",
+      "light-amaranth": "Light Amaranth",
+      "light-blue": "Light Blue",
+      "light-brown": "Light Brown",
+      "light-emerald": "Light Emerald",
+      "light-grass": "Light Grass",
+      "light-purple": "Light Purple",
+      "light-rose": "Light Rose",
+      "light-gold": "Light Gold",
+      "light-pink": "Light Pink",
+      "gray-amaranth": "Gray Amaranth",
+      "gray-blue": "Gray Blue",
+      "gray-brown": "Gray Brown",
+      "gray-emerald": "Gray Emerald",
+      "gray-grass": "Gray Grass",
+      "gray-purple": "Gray Purple",
+      "gray-rose": "Gray Rose",
+      "gray-gold": "Gray Gold",
+      "gray-pink": "Gray Pink"
+    },
+    "title": "Theme"
+  }
+}
