@@ -18,6 +18,7 @@ import { logger } from "@/lib/logger";
 import { getVersionInfo } from "@/lib/metadata";
 import { inferRouterOutputs } from "@trpc/server";
 import { AppRouter } from "@/server/routers/_app";
+import { renderLevelPrecise } from "@/lib/name-utils";
 
 // Constants for achievement calculation
 const BASE_SCORE_PER_TYPE = {
@@ -544,7 +545,7 @@ export function RecentSongsCard({ region, beforeDate }: RecentSongsCardProps) {
               >
                 <div className="flex gap-4">
                   {/* Song Cover */}
-                  <div className="relative flex-shrink-0">
+                  <div className="relative shrink-0">
                     <Image
                       src={createSafeMaimaiImageUrl(play.cover)}
                       alt={play.songName}
@@ -555,6 +556,7 @@ export function RecentSongsCard({ region, beforeDate }: RecentSongsCardProps) {
                         play.difficulty === "expert" && "ring-red-400",
                         play.difficulty === "master" && "ring-purple-500",
                         play.difficulty === "remaster" && "ring-purple-200",
+                        play.difficulty === "utage" && "ring-pink-400",
                       )}
                       width={56}
                       height={56}
@@ -570,7 +572,8 @@ export function RecentSongsCard({ region, beforeDate }: RecentSongsCardProps) {
                             : play.difficulty === "expert" ? "var(--color-red-400)"
                               : play.difficulty === "master" ? "var(--color-purple-500)"
                                 : play.difficulty === "remaster" ? "var(--color-purple-200)"
-                                  : "var(--color-white)",
+                                  : play.difficulty === "utage" ? "var(--color-pink-400)"
+                                    : "var(--color-white)",
                       }} />
                     <div
                       className={cn(
@@ -580,9 +583,10 @@ export function RecentSongsCard({ region, beforeDate }: RecentSongsCardProps) {
                         play.difficulty === "expert" && "bg-red-400",
                         play.difficulty === "master" && "bg-purple-500",
                         play.difficulty === "remaster" && "bg-purple-200 text-purple-900",
+                        play.difficulty === "utage" && "bg-pink-400",
                       )}
                     >
-                      {(play.levelPrecise / 10).toFixed(1)}
+                      {renderLevelPrecise(play.levelPrecise, play.difficulty)}
                     </div>
                   </div>
 
@@ -610,7 +614,7 @@ export function RecentSongsCard({ region, beforeDate }: RecentSongsCardProps) {
                       )}
                     </div>
                   </div>
-                  <div className="text-right flex-shrink-0 space-y-0.5 flex flex-col items-end justify-between">
+                  <div className="text-right shrink-0 space-y-0.5 flex flex-col items-end justify-between">
                     {/* Track and Date at the very top */}
                     <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground">
                       <span className="hidden sm:block">{playDate.toLocaleDateString()} {playDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>

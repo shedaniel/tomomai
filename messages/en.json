@@ -495,7 +495,18 @@
         "sortVersionAsc": "Version (Oldest)",
         "sortLevelAsc": "Level (Low -> High)",
         "sortLevelDesc": "Level (High -> Low)",
-        "level": "Level"
+        "level": "Level",
+        "groupBy": "Group By",
+        "groups": {
+          "none": "None",
+          "noteDesigner": "Chart Designer",
+          "levelAsc": "Level (Low -> High)",
+          "levelDesc": "Level (High -> Low)",
+          "versionAsc": "Version (Oldest)",
+          "versionDesc": "Version (Latest)",
+          "genre": "Genre",
+          "artist": "Artist"
+        }
       }
     },
     "common": {

@@ -1,5 +1,6 @@
 import { toEverything, toRomaji } from "./kuroshiro";
 import slug from "slug";
+import { SongType } from "./types";
 
 /**
  * Generate a URL-safe slug from a song name and artist
@@ -63,7 +64,7 @@ export function normalizeForSearch(str: string): string {
 export interface SongForSlug {
   songName: string;
   artist: string;
-  type: "std" | "dx";
+  type: SongType;
 }
 
 /**

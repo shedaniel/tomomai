@@ -2,15 +2,15 @@ import type { CanvasRenderingContext2D as SkiaContext } from 'skia-canvas';
 import { Canvas, Image, loadImage } from 'skia-canvas';
 import { CANVAS_HEIGHT, CANVAS_WIDTH } from './image-spec';
 import { getRatingImageUrl, RatingCalculationInput, splitSongs } from "./rating-calculator";
-import type { Difficulty } from "./types";
+import type { Difficulty, FullSync, SongType } from "./types";
 import { SnapshotWithSongs } from "./types";
 
 export interface SongForRender extends RatingCalculationInput {
   songName: string;
   cover: string;
   difficulty: Difficulty;
-  type: "std" | "dx";
-  fs: "none" | "sync" | "fs" | "fs+" | "fdx" | "fdx+";
+  type: SongType;
+  fs: FullSync;
 }
 
 const TARGET_HEIGHT = 204;

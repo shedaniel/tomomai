@@ -11,17 +11,19 @@ import {
 } from "@/components/ui/drawer";
 import { Input } from "@/components/ui/input";
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
+import { getVersionInfo } from "@/lib/metadata";
 import { cn } from "@/lib/utils";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { LayoutGrid, LayoutList, Music, Search, X } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select-friendly";
 
 import { applyUniqueSongFilters, createUniqueSongFilterCategories } from "./songs/filter-utils";
 import { SongCard } from "./songs/song-card";
 import { SongDetailContent } from "./songs/song-detail-content";
 import { SongRow } from "./songs/song-row";
-import { SongDetails, UniqueSong, UniqueSongFilter, UniqueSongFilterType } from "./songs/types";
+import { GroupMode, SongDetails, UniqueSong, UniqueSongFilter, UniqueSongFilterType } from "./songs/types";
 
 interface SongsDatabaseProps {
   selectedSlug: string | null;
@@ -34,9 +36,12 @@ export function SongsDatabase({ selectedSlug: initialSlug, initialSongs, initial
   
   // Helper for filter translations
   const tFilter = useMemo(() => (key: string) => t(`db.songs.filter.${key}`), [t]);
+  const tGroups = useMemo(() => (key: string) => t(`db.songs.filter.groups.${key}`), [t]);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
+  const [searchBoxFocused, setSearchBoxFocused] = useState<boolean>(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   // Debounce search query
   useEffect(() => {
@@ -48,6 +53,7 @@ export function SongsDatabase({ selectedSlug: initialSlug, initialSongs, initial
   }, [searchQuery]);
 
   const [displayMode, setDisplayMode] = useState<"grid" | "list">("grid");
+  const [groupMode, setGroupMode] = useState<GroupMode>("none");
   const [visibleCount, setVisibleCount] = useState(initialSlug ? 0 : 200);
   const [filters, setFilters] = useState<UniqueSongFilter[]>([]);
   const [currentSlug, setCurrentSlug] = useState<string | null>(initialSlug);
@@ -136,7 +142,7 @@ export function SongsDatabase({ selectedSlug: initialSlug, initialSongs, initial
     let result = allSongs;
 
     // Apply filters
-    result = applyUniqueSongFilters(result, filters);
+    result = applyUniqueSongFilters(result, filters, groupMode);
 
     // Apply search
     if (debouncedSearchQuery.trim()) {
@@ -150,7 +156,7 @@ export function SongsDatabase({ selectedSlug: initialSlug, initialSongs, initial
     }
 
     return result;
-  }, [allSongs, filters, debouncedSearchQuery]);
+  }, [allSongs, filters, debouncedSearchQuery, groupMode]);
 
   // Visible songs for infinite scroll
   const visibleSongs = useMemo(() => {
@@ -160,7 +166,7 @@ export function SongsDatabase({ selectedSlug: initialSlug, initialSongs, initial
   // Reset visible count when search or filters change
   useEffect(() => {
     setVisibleCount(60);
-  }, [debouncedSearchQuery, filters]);
+  }, [debouncedSearchQuery, filters, groupMode]);
 
   const hasMore = visibleCount < filteredSongs.length;
   const loadMore = useCallback(() => {
@@ -191,6 +197,37 @@ export function SongsDatabase({ selectedSlug: initialSlug, initialSongs, initial
     return song.songName === selectedSong.songName && song.type === selectedSong.type;
   }, [selectedSong]);
 
+  // Helper to get group key
+  const getGroupKey = useCallback((song: UniqueSong) => {
+    switch (groupMode) {
+      case "noteDesigner":
+        return song.noteDesigner || "Unknown";
+      case "level_asc":
+      case "level_desc": {
+        const level = (song.difficulties[0]?.levelPrecise ?? 0) / 10;
+        const isPlus = level % 1 >= 0.6;
+        const baseLevel = Math.floor(level);
+        return isPlus ? `${baseLevel}+` : `${baseLevel}`;
+      }
+      case "version_asc":
+      case "version_desc":
+        const version = getVersionInfo(song.addedVersion);
+        return version?.name ?? `Ver. ${song.addedVersion}`;
+      case "genre":
+        return song.genre;
+      case "artist":
+        return song.artist;
+      default:
+        return null;
+    }
+  }, [groupMode]);
+
+  const renderGroupHeader = (key: string) => (
+    <div className="col-span-full mt-4 pb-2 first:pt-0">
+      <h3 className="font-semibold text-lg text-foreground/90 border-b border-border/50 pb-1">{key}</h3>
+    </div>
+  );
+
   return (
     <main className="space-y-6 pb-16" role="main">
       {!selectedSong && (
@@ -202,7 +239,7 @@ export function SongsDatabase({ selectedSlug: initialSlug, initialSongs, initial
       <header className="flex flex-col gap-4">
         {/* Search */}
         <div className="flex gap-2">
-          <div className="relative flex-1 h-10">
+          <div className="relative flex-1 h-10" onClick={() => searchInputRef.current?.focus()}>
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
             <Input
               type="search"
@@ -211,10 +248,30 @@ export function SongsDatabase({ selectedSlug: initialSlug, initialSongs, initial
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10 h-full"
               aria-label={t("db.songs.searchPlaceholder")}
+              onFocus={() => setSearchBoxFocused(true)}
+              onBlur={() => setSearchBoxFocused(false)}
+              ref={searchInputRef}
             />
           </div>
 
           <div className="flex items-stretch gap-2 h-10" role="group" aria-label="Display options">
+            {/* Group By */}
+            <Select value={groupMode} onValueChange={(v) => setGroupMode(v as GroupMode)}>
+              <SelectTrigger className={cn("w-[200px] max-xs:w-[100px] h-full transition-all duration-200 truncate", searchBoxFocused && "max-sm:w-10")} aria-label={t("db.songs.filter.groupBy")}>
+                <SelectValue placeholder={t("db.songs.filter.groupBy")}/>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">{tGroups("none")}</SelectItem>
+                <SelectItem value="noteDesigner">{tGroups("noteDesigner")}</SelectItem>
+                <SelectItem value="level_asc">{tGroups("levelAsc")}</SelectItem>
+                <SelectItem value="level_desc">{tGroups("levelDesc")}</SelectItem>
+                <SelectItem value="version_asc">{tGroups("versionAsc")}</SelectItem>
+                <SelectItem value="version_desc">{tGroups("versionDesc")}</SelectItem>
+                <SelectItem value="genre">{tGroups("genre")}</SelectItem>
+                <SelectItem value="artist">{tGroups("artist")}</SelectItem>
+              </SelectContent>
+            </Select>
+
             {/* Display Mode */}
             <div className="flex items-center rounded-md border border-border p-px" role="radiogroup" aria-label="View mode">
               <Button
@@ -280,15 +337,23 @@ export function SongsDatabase({ selectedSlug: initialSlug, initialSongs, initial
       {/* Songs Grid */}
       {filteredSongs.length > 0 && displayMode === "grid" && (
         <section aria-label="Songs grid" className="grid grid-cols-3 xs:grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-8 gap-3">
-          {visibleSongs.map((song, index) => (
-            <SongCard
-              key={`${song.slug}-${song.difficulties.length === 1 ? song.difficulties[0].difficulty : ''}`}
-              song={song}
-              index={index}
-              isSelected={isSongSelected(song)}
-              onSelect={handleSelectSong}
-            />
-          ))}
+          {visibleSongs.map((song, index) => {
+            const currentGroup = getGroupKey(song);
+            const prevGroup = index > 0 ? getGroupKey(visibleSongs[index - 1]) : null;
+            const showHeader = groupMode !== "none" && currentGroup !== null && currentGroup !== prevGroup;
+
+            return (
+              <div key={`${song.slug}-${song.difficulties.length === 1 ? song.difficulties[0].difficulty : ''}-${index}`} className="contents">
+                {showHeader && renderGroupHeader(currentGroup!)}
+                <SongCard
+                  song={song}
+                  index={index}
+                  isSelected={isSongSelected(song)}
+                  onSelect={handleSelectSong}
+                />
+              </div>
+            );
+          })}
           {hasMore && <div ref={sentinelRef} className="col-span-full h-4" aria-hidden="true" />}
         </section>
       )}
@@ -296,15 +361,23 @@ export function SongsDatabase({ selectedSlug: initialSlug, initialSongs, initial
       {/* Songs List */}
       {filteredSongs.length > 0 && displayMode === "list" && (
         <section aria-label="Songs list" className="space-y-1">
-          {visibleSongs.map((song, index) => (
-            <SongRow
-              key={`${song.slug}-${song.difficulties.length === 1 ? song.difficulties[0].difficulty : ''}`}
-              song={song}
-              index={index}
-              isSelected={isSongSelected(song)}
-              onSelect={handleSelectSong}
-            />
-          ))}
+          {visibleSongs.map((song, index) => {
+            const currentGroup = getGroupKey(song);
+            const prevGroup = index > 0 ? getGroupKey(visibleSongs[index - 1]) : null;
+            const showHeader = groupMode !== "none" && currentGroup !== null && currentGroup !== prevGroup;
+
+            return (
+              <div key={`${song.slug}-${song.difficulties.length === 1 ? song.difficulties[0].difficulty : ''}-${index}`} className="contents">
+                {showHeader && renderGroupHeader(currentGroup!)}
+                <SongRow
+                  song={song}
+                  index={index}
+                  isSelected={isSongSelected(song)}
+                  onSelect={handleSelectSong}
+                />
+              </div>
+            );
+          })}
           {hasMore && <div ref={sentinelRef} className="h-4" aria-hidden="true" />}
         </section>
       )}

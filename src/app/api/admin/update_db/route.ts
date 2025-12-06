@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { getCurrentVersion, getVersionFromDate } from "@/lib/metadata";
-import { normalizeGenre, normalizeName } from "@/lib/name-utils";
+import { normalizeGenre, normalizeName, renderLevelPrecise } from "@/lib/name-utils";
 import { songs } from "@/lib/db/schema-pg";
 import { and, eq, inArray, sql } from "drizzle-orm";
 import { promises as fs } from "fs";
@@ -285,11 +285,6 @@ function formatDifficulty(difficulty: string): string {
   return diffMap[difficulty] || difficulty.toUpperCase();
 }
 
-// Helper function to format level precise as decimal
-function formatLevelPrecise(levelPrecise: number): string {
-  return (levelPrecise / 10).toFixed(1);
-}
-
 // Helper function to send Discord webhook
 async function sendDiscordWebhook(
   region: "intl" | "jp",
@@ -315,7 +310,7 @@ async function sendDiscordWebhook(
     for (const song of added.toSorted(
       (a, b) => a.songName.localeCompare(b.songName) * 1000000 + a.type.localeCompare(b.type) * 1000 + a.difficulty.localeCompare(b.difficulty)
     )) {
-      description += `- ${song.songName}: ${formatDifficulty(song.difficulty)} ${song.level} (${formatLevelPrecise(song.levelPrecise)})\n`;
+      description += `- ${song.songName}: ${formatDifficulty(song.difficulty)} ${song.level} (${renderLevelPrecise(song.levelPrecise, song.difficulty)})\n`;
     }
     description += "\n";
   }
@@ -326,7 +321,7 @@ async function sendDiscordWebhook(
     for (const song of deleted.toSorted(
       (a, b) => a.songName.localeCompare(b.songName) * 1000000 + a.type.localeCompare(b.type) * 1000 + a.difficulty.localeCompare(b.difficulty)
     )) {
-      description += `- ${song.songName}: ${formatDifficulty(song.difficulty)} ${song.level} (${formatLevelPrecise(song.levelPrecise)})\n`;
+      description += `- ${song.songName}: ${formatDifficulty(song.difficulty)} ${song.level} (${renderLevelPrecise(song.levelPrecise, song.difficulty)})\n`;
     }
     description += "\n";
   }
@@ -340,7 +335,7 @@ async function sendDiscordWebhook(
   if (levelChanges.length > 0) {
     description += `**${levelChanges.length} Chart${levelChanges.length > 1 ? 's' : ''} Updated**\n`;
     for (const { old, new: newSong } of levelChanges) {
-      description += `- ${newSong.songName}: ${formatDifficulty(newSong.difficulty)} ${old.level} (${formatLevelPrecise(old.levelPrecise)}) -> ${newSong.level} (${formatLevelPrecise(newSong.levelPrecise)})\n`;
+      description += `- ${newSong.songName}: ${formatDifficulty(newSong.difficulty)} ${old.level} (${renderLevelPrecise(old.levelPrecise, old.difficulty)}) -> ${newSong.level} (${renderLevelPrecise(newSong.levelPrecise, newSong.difficulty)})\n`;
     }
     description += "\n";
   }

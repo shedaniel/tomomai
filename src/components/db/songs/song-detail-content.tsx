@@ -19,6 +19,7 @@ import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { toast } from "sonner";
 import { SongChartDialogContent } from "./song-detail-dialog";
+import { renderLevelPrecise } from "@/lib/name-utils";
 
 type SongExtendedIdentified = SongExtended & { region: Region; gameVersion: number };
 
@@ -190,7 +191,7 @@ export function SongChartRow({ difficulty, charts, index, data, hasTouch }: {
           {/* Level */}
           <div className={cn("py-2.5 px-3 flex items-baseline justify-center", dataBorderClass)}>
             <span className="text-lg font-bold tabular-nums">{latestChart.level}</span>
-            <span className="text-xs">.{latestChart.levelPrecise % 10}</span>
+            <span className="text-xs">.{latestChart.difficulty === "utage" ? '?' : latestChart.levelPrecise % 10}</span>
           </div>
           {/* Notes */}
           <div className={cn("py-2.5 px-3 flex items-center justify-center tabular-nums", dataBorderClass)}>
@@ -456,7 +457,7 @@ export function SongDetailContent({ songName, slug, type, initialData }: SongDet
                               colors.bg
                             )}
                           >
-                            {t(`common.difficulties.${difficulty}`)} {(chart.levelPrecise / 10).toFixed(1)}
+                            {t(`common.difficulties.${difficulty}`)} {renderLevelPrecise(chart.levelPrecise, difficulty)}
                           </div>
                         );
                       })}

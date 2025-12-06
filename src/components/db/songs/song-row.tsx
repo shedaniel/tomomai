@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { cn, createSafeMaimaiImageUrl } from "@/lib/utils";
 import { UniqueSong } from "./types";
+import { renderLevelPrecise } from "@/lib/name-utils";
 
 interface SongRowProps {
   song: UniqueSong;
@@ -79,7 +80,7 @@ export function SongRow({ song, index, isSelected, onSelect }: SongRowProps) {
                 singleDiff.difficulty === "remaster" && "bg-purple-50 text-purple-900",
                 singleDiff.difficulty === "utage" && "bg-pink-100 text-pink-700",
               )}>
-                {singleDiff.difficulty.slice(0, 3).toUpperCase()} {(singleDiff.levelPrecise / 10).toFixed(1)}
+                {singleDiff.difficulty.slice(0, 3).toUpperCase()} {renderLevelPrecise(singleDiff.levelPrecise, singleDiff.difficulty)}
               </span>
             )}
           </div>

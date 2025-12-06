@@ -58,9 +58,9 @@ async function fetchDxDataJson(): Promise<DxRatingResponse> {
 // Helper function to get internal level value from dxdata.json
 function getInternalLevelFromDxData(
   songTitle: string, 
-  type: "dx" | "std", 
-  difficulty: string, 
-  region: "intl" | "jp",
+  type: SongType, 
+  difficulty: Difficulty, 
+  region: Region,
   dxData: DxRatingResponse
 ): number | null {
   // Find the song by title
@@ -106,9 +106,9 @@ function getInternalLevelFromDxData(
 function getPreciseLevelValue(
   songTitle: string,
   level: string,
-  type: "dx" | "std",
-  difficulty: string,
-  region: "intl" | "jp",
+  type: SongType,
+  difficulty: Difficulty,
+  region: Region,
   dxData: DxRatingResponse
 ): number {
   // Try to get from dxdata.json first
@@ -125,8 +125,8 @@ function getPreciseLevelValue(
 
 function getExtraDataFromDxData(
   songTitle: string,
-  type: "dx" | "std",
-  difficulty: string,
+  type: SongType,
+  difficulty: Difficulty,
   dxData: DxRatingResponse
 ): {
   bpm: number | null;
@@ -205,7 +205,7 @@ async function getCookiesFromRedirect(redirectUrl: string, redirectCookies: stri
 }
 
 // Helper function to fetch and parse song data for a specific difficulty and version
-async function fetchSongDataForDifficulty(region: "intl" | "jp", cookies: string, difficulty: number, version: number): Promise<ParsedSong[]> {
+async function fetchSongDataForDifficulty(region: Region, cookies: string, difficulty: number, version: number): Promise<ParsedSong[]> {
   const songsUrl = `https://${region === "intl" ? "maimaidx-eng.com" : "maimaidx.jp"}/maimai-mobile/record/musicVersion/search/?version=${version}&diff=${difficulty}`;
   console.log(`Fetching songs data for version ${version}, difficulty ${difficulty} from: ${songsUrl}`);
 
@@ -342,7 +342,7 @@ function parseSongData(html: string, difficulty: number, version: number): Parse
 }
 
 // Helper function to fetch detailed song information
-async function fetchSongDetail(region: "intl" | "jp", cookies: string, inputName: string, inputValue: string): Promise<ReturnType<typeof parseSongDetail>> {
+async function fetchSongDetail(region: Region, cookies: string, inputName: string, inputValue: string): Promise<ReturnType<typeof parseSongDetail>> {
   const params = new URLSearchParams();
   params.append(inputName, inputValue);
   const detailUrl = `https://${region === "intl" ? "maimaidx-eng.com" : "maimaidx.jp"}/maimai-mobile/record/musicDetail/?${params.toString()}`;
@@ -371,7 +371,7 @@ async function fetchSongDetail(region: "intl" | "jp", cookies: string, inputName
 }
 
 // Helper function to parse detailed song information from HTML
-function parseSongDetail(html: string, region: "intl" | "jp"): {
+function parseSongDetail(html: string, region: Region): {
   coverUrl: string;
   genre: string;
   artist: string;
@@ -430,7 +430,7 @@ function prepareSongEntriesFromScrapedData(difficulties: ParsedSong[], jsonSong:
   
   // Prepare each difficulty as a separate record
   for (const difficulty of difficulties) {
-    const difficultyName = difficultyNames[difficulty.difficultyNumber] || `difficulty_${difficulty.difficultyNumber}`;
+    const difficultyName = difficultyNames[difficulty.difficultyNumber] as Difficulty;
     
     // Calculate addedVersion: -1 for versions 0-12, version-13 for versions 13+
     const addedVersion = difficulty.version <= 12 ? -1 : difficulty.version - 13;
@@ -471,7 +471,7 @@ function prepareSongEntriesWithFetchedData(difficulties: ParsedSong[], songDetai
   
   // Prepare each difficulty as a separate record
   for (const difficulty of difficulties) {
-    const difficultyName = difficultyNames[difficulty.difficultyNumber] || `difficulty_${difficulty.difficultyNumber}`;
+    const difficultyName = difficultyNames[difficulty.difficultyNumber] as Difficulty;
     
     // Calculate addedVersion: -1 for versions 0-12, version-13 for versions 13+
     const addedVersion = difficulty.version <= 12 ? -1 : difficulty.version - 13;
@@ -480,7 +480,7 @@ function prepareSongEntriesWithFetchedData(difficulties: ParsedSong[], songDetai
       songName,
       artist,
       cover: coverUrl,
-      difficulty: difficultyName as Difficulty,
+      difficulty: difficultyName,
       level: difficulty.level,
       levelPrecise: getPreciseLevelValue(songName, difficulty.level, musicType, difficultyName, region, dxData),
       type: musicType,

@@ -2382,6 +2382,7 @@ export const userRouter = router({
               genre: songs.genre,
               difficulty: songs.difficulty,
               levelPrecise: songs.levelPrecise,
+              noteDesigner: songs.noteDesigner,
               addedVersion: songs.addedVersion,
               region: songs.region,
               gameVersion: songs.gameVersion,
@@ -2408,6 +2409,12 @@ export const userRouter = router({
               uniqueSongs.set(key, {
                 ...song,
                 difficulties: [],
+              });
+            } else {
+              uniqueSongs.set(key, {
+                ...uniqueSongs.get(key)!,
+                difficulties: [...uniqueSongs.get(key)!.difficulties],
+                ...song,
               });
             }
             const existingDifficulty = uniqueSongs.get(key)!.difficulties.find(d => d.difficulty === song.difficulty);
@@ -2442,7 +2449,8 @@ export const userRouter = router({
               }) satisfies UniqueSongDifficulty),
               slug: song.slug,
               aliases: song.aliases,
-            };
+              noteDesigner: song.noteDesigner,
+            } satisfies UniqueSong;
           });
           return { songs: songsStripped };
         },
@@ -2625,7 +2633,7 @@ export const userRouter = router({
       const slug = await getSongSlug({
         songName: firstChart.songName,
         artist: firstChart.artist,
-        type: firstChart.type as "std" | "dx",
+        type: firstChart.type,
       });
 
       return {

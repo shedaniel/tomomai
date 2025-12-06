@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { cn, createSafeMaimaiImageUrl } from "@/lib/utils";
 import { UniqueSong } from "./types";
+import { renderLevelPrecise } from "@/lib/name-utils";
 
 interface SongCardProps {
   song: UniqueSong;
@@ -128,7 +129,7 @@ export function SongCard({ song, index, isSelected, onSelect }: SongCardProps) {
             singleDiff.difficulty === "remaster" && "bg-purple-200 text-purple-900 dark:bg-purple-400 dark:text-purple-900",
             singleDiff.difficulty === "utage" && "bg-pink-500 dark:bg-pink-600",
           )}>
-            {(singleDiff.levelPrecise / 10).toFixed(1)}
+            {renderLevelPrecise(singleDiff.levelPrecise, singleDiff.difficulty)}
           </div>
         )}
 

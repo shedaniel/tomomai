@@ -1,7 +1,7 @@
 import { FilterCategory } from "@/components/filter-panel";
 import { getVersionInfo } from "@/lib/metadata";
 import { Disc3, Folder, Calendar, ArrowUpDown, BarChart } from "lucide-react";
-import { UniqueSong, UniqueSongFilter } from "./types";
+import { GroupMode, UniqueSong, UniqueSongFilter } from "./types";
 import { LEVEL_ENUM } from "@/lib/db/types";
 
 // Create filter categories for unique songs
@@ -65,15 +65,17 @@ export function createUniqueSongFilterCategories(
 }
 
 // Apply filters to unique songs
-export function applyUniqueSongFilters(songs: UniqueSong[], filters: UniqueSongFilter[]): UniqueSong[] {
+export function applyUniqueSongFilters(songs: UniqueSong[], filters: UniqueSongFilter[], groupMode: GroupMode = "none"): UniqueSong[] {
   // Check if we need to flatten songs (if level sort or level filter is active)
   const levelSortActive = filters.some(f => f.type === "sort" && (f.value === "level_asc" || f.value === "level_desc"));
   const levelFilterActive = filters.some(f => f.type === "level");
+  // Group by level implies distinct by difficulty mode
+  const levelGroupActive = groupMode === "level_asc" || groupMode === "level_desc";
   
   let processedSongs = songs;
 
   // Flatten if needed
-  if (levelSortActive || levelFilterActive) {
+  if (levelSortActive || levelFilterActive || levelGroupActive) {
     processedSongs = songs.flatMap(song => 
       song.difficulties.map(diff => ({
         ...song,
@@ -136,7 +138,81 @@ export function applyUniqueSongFilters(songs: UniqueSong[], filters: UniqueSongF
 
   // Apply sorting
   const sortFilter = filters.find(f => f.type === "sort");
-  if (sortFilter) {
+  
+  // Apply Group sorting first, then Filter sorting
+  // Actually, if Grouping is active, it dictates the primary sort order.
+  // The user might expect the "Sort" filter to apply within the group?
+  // Let's sort by Group criteria first.
+  
+  if (groupMode !== "none") {
+    result.sort((a, b) => {
+      let comparison = 0;
+      switch (groupMode) {
+        case "noteDesigner":
+          // Empty/Null designers go last
+          comparison = (a.noteDesigner || "").localeCompare(b.noteDesigner || "");
+          if (!a.noteDesigner && b.noteDesigner) comparison = 1;
+          if (a.noteDesigner && !b.noteDesigner) comparison = -1;
+          break;
+        case "level_asc": {
+          const levelA = a.difficulties[0]?.levelPrecise ?? 0;
+          const levelB = b.difficulties[0]?.levelPrecise ?? 0;
+          comparison = levelA - levelB;
+          break;
+        }
+        case "level_desc": {
+          const levelA = a.difficulties[0]?.levelPrecise ?? 0;
+          const levelB = b.difficulties[0]?.levelPrecise ?? 0;
+          comparison = levelB - levelA;
+          break;
+        }
+        case "version_asc":
+          comparison = a.addedVersion - b.addedVersion;
+          break;
+        case "version_desc":
+          comparison = b.addedVersion - a.addedVersion;
+          break;
+        case "genre":
+          comparison = a.genre.localeCompare(b.genre);
+          break;
+        case "artist":
+          comparison = a.artist.localeCompare(b.artist);
+          break;
+      }
+      
+      // If group is same, use secondary sort (from filter or default index)
+      if (comparison !== 0) return comparison;
+      
+      // Secondary sort logic (copying from below)
+      if (sortFilter) {
+        if (sortFilter.value === "version_desc") {
+          if (a.addedVersion !== b.addedVersion) {
+            return b.addedVersion - a.addedVersion;
+          }
+          return b.index - a.index;
+        } else if (sortFilter.value === "version_asc") {
+          if (a.addedVersion !== b.addedVersion) {
+            return a.addedVersion - b.addedVersion;
+          }
+          return a.index - b.index;
+        } else if (sortFilter.value === "level_asc") {
+          const levelA = a.difficulties[0]?.levelPrecise ?? 0;
+          const levelB = b.difficulties[0]?.levelPrecise ?? 0;
+          if (levelA !== levelB) return levelA - levelB;
+          return a.index - b.index;
+        } else if (sortFilter.value === "level_desc") {
+          const levelA = a.difficulties[0]?.levelPrecise ?? 0;
+          const levelB = b.difficulties[0]?.levelPrecise ?? 0;
+          if (levelA !== levelB) return levelB - levelA;
+          return a.index - b.index;
+        }
+      }
+      
+      // Default fallback
+      return a.index - b.index;
+    });
+  } else if (sortFilter) {
+    // Standard sorting if no group mode
     result.sort((a, b) => {
       if (sortFilter.value === "version_desc") {
         if (a.addedVersion !== b.addedVersion) {
@@ -149,9 +225,6 @@ export function applyUniqueSongFilters(songs: UniqueSong[], filters: UniqueSongF
         }
         return a.index - b.index;
       } else if (sortFilter.value === "level_asc") {
-        // Use the first difficulty (since flattened or default logic)
-        // If not flattened (should not happen if sort is active), use max or min? 
-        // Ideally flattened.
         const levelA = a.difficulties[0]?.levelPrecise ?? 0;
         const levelB = b.difficulties[0]?.levelPrecise ?? 0;
         if (levelA !== levelB) {

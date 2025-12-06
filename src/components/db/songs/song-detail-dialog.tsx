@@ -82,7 +82,7 @@ function SongChartDialogGrid({ chart, score }: { chart: SongExtendedIdentified; 
           {t(`common.difficulties.${chart.difficulty}`)}
         </span>
         <span className="text-lg font-bold tabular-nums">{chart.level}</span>
-        <span className="text-xs">.{chart.levelPrecise % 10}</span>
+        <span className="text-xs">.{chart.difficulty === "utage" ? '?' : chart.levelPrecise % 10}</span>
       </DialogTitle>
       <Tabs value={region} onValueChange={(value) => setRegion(value as Region)}>
         <TabsList className={cn("grid w-full grid-cols-2", charts.length <= 1 && "hidden")}>

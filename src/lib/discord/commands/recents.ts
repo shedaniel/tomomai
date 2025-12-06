@@ -14,6 +14,7 @@ import {
     DiscordEmbed,
     DiscordResponse,
 } from '../responses';
+import { renderLevelPrecise } from '@/lib/name-utils';
 
 export interface RecentsCommandOptions {
   discordUserId: string;
@@ -175,7 +176,7 @@ function createPlayEmbeds(tracks: any[], region: 'intl' | 'jp') {
         },
         {
           name: 'Level',
-          value: `${play.level} (${play.levelPrecise / 10})`,
+          value: `${play.level} (${renderLevelPrecise(play.levelPrecise, play.difficulty)})`,
           inline: true,
         },
         {

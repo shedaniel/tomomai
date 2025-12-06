@@ -21,6 +21,7 @@ import {
   applyRecommendationFilters,
 } from "@/components/filter-panel";
 import { SongHoverCard } from "@/components/song-hover-card";
+import { renderLevelPrecise } from "@/lib/name-utils";
 
 interface RecommendationData {
   song: SongWithRating;
@@ -176,7 +177,7 @@ function RecommendationRow({ recommendation }: { recommendation: RecommendationD
               )}
             </div>
             <div className="text-muted-foreground text-xs truncate">
-              {song.type.toUpperCase()} • {song.difficulty.slice(0, 3).toUpperCase()} {(song.levelPrecise / 10).toFixed(1)} • {song.artist}
+              {song.type.toUpperCase()} • {song.difficulty.slice(0, 3).toUpperCase()} {renderLevelPrecise(song.levelPrecise, song.difficulty)} • {song.artist}
             </div>
           </div>
         </div>

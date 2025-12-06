@@ -9,7 +9,7 @@ import { FETCH_STATES, getStateForDifficulty } from "./fetch-states";
 import { appendFetchState } from "./fetch-states-server";
 import { normalizeName } from "./name-utils";
 import { splitSongs } from "./rating-calculator";
-import { SongWithScore } from "./types";
+import { Region, SongType, SongWithScore } from "./types";
 import { decryptToken, encryptToken } from "./token-crypto";
 import { logger } from "./logger";
 
@@ -676,7 +676,7 @@ function parseScoreData(html: string, difficulty: number): ScoreData[] {
         return;
       }
 
-      let musicType: "dx" | "std";
+      let musicType: SongType;
       if (iconSrc.includes('music_dx.png')) {
         musicType = "dx";
       } else if (iconSrc.includes('music_standard.png')) {
@@ -797,7 +797,7 @@ function parseScoreData(html: string, difficulty: number): ScoreData[] {
 }
 
 // Fetch songs data for a specific difficulty using existing cookies
-async function fetchSongsData(cookies: string, difficulty: number, region: "intl" | "jp"): Promise<ScoreData[]> {
+async function fetchSongsData(cookies: string, difficulty: number, region: Region): Promise<ScoreData[]> {
   const baseUrl = region === "jp" ? "https://maimaidx.jp" : "https://maimaidx-eng.com";
   const songsUrl = `${baseUrl}/maimai-mobile/record/musicGenre/search/?genre=99&diff=${difficulty}`;
   logger.info(`Fetching songs data for difficulty ${difficulty} from: ${songsUrl}`);
@@ -864,7 +864,7 @@ async function fetchAllSongsData(cookies: string, region: "intl" | "jp", session
   return songsData;
 }
 
-async function fetchRecentSongsData(cookies: string, region: "intl" | "jp", sessionId: bigint): Promise<RecentSongData[]> {
+async function fetchRecentSongsData(cookies: string, region: Region, sessionId: bigint): Promise<RecentSongData[]> {
   const baseUrl = region === "jp" ? "https://maimaidx.jp" : "https://maimaidx-eng.com";
   const recentSongsUrl = `${baseUrl}/maimai-mobile/record/`;
   logger.info(`Fetching recent songs data from: ${recentSongsUrl}`);
@@ -1021,7 +1021,7 @@ async function fetchRecentSongsData(cookies: string, region: "intl" | "jp", sess
 
       // Determine music type (dx/std) from playlog_music_kind_icon
       const musicKindIcon = record.find("img.playlog_music_kind_icon");
-      let musicType: "dx" | "std" = "std";
+      let musicType: SongType = "std";
       if (musicKindIcon.length > 0) {
         const iconSrc = musicKindIcon.attr("src") || "";
         if (iconSrc.includes("music_dx.png")) {
@@ -1133,7 +1133,7 @@ async function fetchHiddenSongsData(cookies: string, allSongsData: { [difficulty
           return;
         }
 
-        let musicType: "dx" | "std";
+        let musicType: SongType;
         if (iconSrc.includes('music_dx.png')) {
           musicType = "dx";
         } else if (iconSrc.includes('music_standard.png')) {
@@ -1211,7 +1211,7 @@ interface PlayerData {
 interface ScoreData {
   songName: string;
   level: string;
-  musicType: "dx" | "std";
+  musicType: SongType;
   difficulty: string;
   difficultyNumber: number;
   achievement: number; // stored as 10000x
@@ -1223,7 +1223,7 @@ interface ScoreData {
 interface RecentSongData {
   songName: string;
   level: string;
-  musicType: "dx" | "std";
+  musicType: SongType;
   difficulty: string;
   difficultyNumber: number;
   achievement: number; // stored as 10000x
@@ -1236,7 +1236,7 @@ interface RecentSongData {
   idx: string; // Form data for playlog detail page
 }
 
-async function fetchEventsData(cookies: string, region: "intl" | "jp", sessionId: bigint): Promise<{ areaEvents: EventData[], eventAreaEvents: EventAreaData[] }> {
+async function fetchEventsData(cookies: string, region: Region, sessionId: bigint): Promise<{ areaEvents: EventData[], eventAreaEvents: EventAreaData[] }> {
   const baseUrl = region === "intl" ? "https://maimaidx-eng.com" : "https://maimaidx.jp";
   
   logger.info(`Starting events data fetch for ${region} region...`);
@@ -1474,7 +1474,7 @@ function parseEventAreaEvents(html: string, region: "intl" | "jp" = "intl"): Eve
   return events;
 }
 
-async function extractPlayerData(region: "intl" | "jp", html: string, cookies: string): Promise<PlayerData> {
+async function extractPlayerData(region: Region, html: string, cookies: string): Promise<PlayerData> {
   const $ = load(html);
   const block = $('.see_through_block');
   
@@ -1602,7 +1602,7 @@ async function extractPlayerData(region: "intl" | "jp", html: string, cookies: s
   };
 }
 
-async function fetchImageAsBase64(region: "intl" | "jp", imageUrl: string, cookies: string): Promise<string> {
+async function fetchImageAsBase64(region: Region, imageUrl: string, cookies: string): Promise<string> {
   logger.info(`Fetching image for base64 encoding: ${imageUrl}`);
   
   const response = await fetch(imageUrl, {
@@ -1668,7 +1668,7 @@ async function createUserSnapshot(
  *   - fullSongMap: Map from songId to full song data
  */
 async function buildSongLookupMaps(
-  region: "intl" | "jp",
+  region: Region,
   gameVersion: number
 ): Promise<{
   songLookup: Map<string, bigint>;
@@ -1783,7 +1783,7 @@ async function withRank(
 
 async function insertUserScores(
   snapshotId: bigint,
-  region: "intl" | "jp",
+  region: Region,
   sessionId: bigint,
   allScoreData: { [difficulty: number]: ScoreData[] },
   songLookup: Map<string, bigint>,
@@ -1934,7 +1934,7 @@ async function insertUserRecentSongs(
 
 async function fetchAndInsertRecentSongsData(
   userId: string,
-  region: "intl" | "jp",
+  region: Region,
   cookies: string,
   recentSongsData: RecentSongData[]
 ): Promise<void> {
@@ -2208,7 +2208,7 @@ async function insertUserEvents(
 
 export async function fetchMaimaiData(
   userId: string,
-  region: "intl" | "jp",
+  region: Region,
   sessionId: bigint,
   flags: string[] = []
 ): Promise<void> {

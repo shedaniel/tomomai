@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Input } from "./ui/input";
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 import { SongHoverCard } from "@/components/song-hover-card";
+import { renderLevelPrecise } from "@/lib/name-utils";
 
 // Helper function to group songs by individual rating values and difficulty
 function groupSongsByRating(songs: SongWithRating[]) {
@@ -165,7 +166,7 @@ const SongRow = forwardRef<HTMLDivElement, { song: SongWithRating } & React.HTML
       />
       <div className="flex-1 min-w-0">
         <div className="truncate font-medium">{song.songName}&#8203;</div>
-        <div className="text-muted-foreground text-xs truncate">{song.type.toUpperCase()} • {song.difficulty.slice(0, 3).toUpperCase()} {(song.levelPrecise / 10).toFixed(1)} • {song.artist}</div>
+        <div className="text-muted-foreground text-xs truncate">{song.type.toUpperCase()} • {song.difficulty.slice(0, 3).toUpperCase()} {renderLevelPrecise(song.levelPrecise, song.difficulty)} • {song.artist}</div>
       </div>
       <div className="text-right ml-2">
         <div className="font-mono">{(song.achievement / 10000).toFixed(4)}%</div>
@@ -265,7 +266,7 @@ function CompactSongSection({ title, songs, count, t, sum, average, visibleCount
               song.difficulty === "remaster" && "bg-purple-50 text-purple-800 border-purple-200",
               song.difficulty === "utage" && "bg-pink-100 text-pink-800 border-pink-200",
             )}>
-              {(song.levelPrecise / 10).toFixed(1)}
+              {renderLevelPrecise(song.levelPrecise, song.difficulty)}
             </div>
             <div className="text-right font-mono py-1 px-2 border-b border-dashed border-gray-200">
               {(song.achievement / 10000).toFixed(4)}%
@@ -385,7 +386,7 @@ const SongGridCard = forwardRef<HTMLDivElement, { song: SongWithRating } & React
         song.difficulty === "remaster" && "bg-purple-200 text-purple-900",
         song.difficulty === "utage" && "bg-pink-500",
       )}>
-        {(song.levelPrecise / 10).toFixed(1)}
+        {renderLevelPrecise(song.levelPrecise, song.difficulty)}
       </div>
 
       {/* Glow Effect */}
