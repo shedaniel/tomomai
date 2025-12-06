@@ -18,7 +18,7 @@
     "cookies": "クッキー",
     "authentication": "認証",
     "playerInfo": "プレイヤー情報",
-    "rating": "レーティング",
+    "rating": "レート値",
     "stars": "スター数",
     "plays": "プレイ数",
     "total": "合計",
@@ -148,7 +148,7 @@
   "profileVisibility": {
     "public": "公開プロフィール",
     "private": "非公開プロフィール",
-    "accessibleBy": "Accessible by ",
+    "accessibleBy": "",
     "accessibleByEnd": " から閲覧できます！",
     "youMayChangePrivacySettings": "右上のアイコン → 設定 → プロフィールを公開 からプライバシー設定を変更できます。",
     "onlyAccessibleByYou": "自分だけが閲覧できます！右上のアイコン → 設定 → プロフィールを公開 からプライバシー設定を変更できます。"
@@ -191,7 +191,7 @@
       "achievement": "達成率",
       "fc": "FC",
       "fs": "FS",
-      "rating": "レーティング"
+      "rating": "レート値"
     },
     "statistics": {
       "sum": "合計",
@@ -475,7 +475,7 @@
         "availability": "収録地域",
         "yourScore": "あなたのスコア",
         "achievement": "達成率",
-        "rating": "レーティング",
+        "rating": "レート値",
         "chartDesigner": "譜面製作者",
         "bpm": "BPM",
         "added": "追加バージョン",
@@ -497,6 +497,7 @@
         "sortLevelDesc": "Level (High -> Low)",
         "level": "レベル",
         "groupBy": "Group By",
+        "noteDesigner": "Note Designer",
         "groups": {
           "none": "None",
           "noteDesigner": "譜面製作者",
@@ -526,7 +527,7 @@
       "averageAchievementByLevel": "レベル別平均達成率",
       "ratingVsPlayCount": "レート vs プレイ回数 ヒートマップ",
       "xAxis": {
-        "rating": "レーティング",
+        "rating": "レート値",
         "playCount": "プレイ回数",
         "level": "レベル"
       },
