@@ -63,7 +63,7 @@
   },
   "settings": {
     "title": "Settings",
-    "description": "Customize your tomomai ともマイ experience.",
+    "description": "Customise your tomomai ともマイ experience.",
     "language": {
       "label": "Language",
       "description": "Select your preferred interface language.",
@@ -292,7 +292,7 @@
     },
     "loading": {
       "scriptLink": "Generating script link...",
-      "loginLink": "Generating personalized link..."
+      "loginLink": "Generating personalised link..."
     },
     "tokenDialogDescription": "Enter your browser token to authenticate",
     "segaAccountDescription": "Enter your SEGA account credentials",
