@@ -10,6 +10,8 @@ import { getMessages } from 'next-intl/server';
 import localFont from "next/font/local";
 import { M_PLUS_1 } from 'next/font/google'
 import "./globals.css";
+import { getServerThemeId } from '@/lib/themes-server';
+import { getThemeOrDefault, getThemeStyleProperties } from '@/lib/themes';
 
 // from google fonts
 const mPlus = M_PLUS_1({
@@ -84,11 +86,13 @@ export default async function RootLayout({
 }>) {
   // Get messages for the current locale
   const locale = await getLocale();
+  const themeId = await getServerThemeId();
+  const theme = getThemeOrDefault(themeId);
   const messages = await getMessages();
   const shouldInjectToolbar = process.env.NODE_ENV === "development";
 
   return (
-    <html lang={locale}>
+    <html lang={locale} className={theme.dark ? "dark" : ""} style={getThemeStyleProperties(theme)}>
       <body
         className={`${getLocaleFontClass(locale)} antialiased bg-background min-h-dvh`}
       >

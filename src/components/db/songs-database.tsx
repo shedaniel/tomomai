@@ -166,6 +166,9 @@ export function SongsDatabase({ selectedSlug: initialSlug, initialSongs, initial
   // Reset visible count when search or filters change
   useEffect(() => {
     setVisibleCount(60);
+  }, []); // Initial load
+  useEffect(() => {
+    setVisibleCount(60);
   }, [debouncedSearchQuery, filters, groupMode]);
 
   const hasMore = visibleCount < filteredSongs.length;

@@ -62,6 +62,7 @@ export const themes: Theme[] = [
 ];
 
 export const DEFAULT_THEME_ID = "burnt-brown";
+export const THEME_STORAGE_KEY = "tomomai-theme";
 
 export function getThemeById(id: string): Theme | undefined {
   return themes.find((theme) => theme.id === id);
@@ -72,16 +73,28 @@ export function getThemeOrDefault(id: string | null | undefined): Theme {
   return getThemeById(id) ?? getThemeById(DEFAULT_THEME_ID)!;
 }
 
-const THEME_STORAGE_KEY = "tomomai-theme";
-
 export function getSavedThemeId(): string | null {
   if (typeof window === "undefined") return null;
+  // Try cookie first
+  const match = document.cookie.match(new RegExp(`(^| )${THEME_STORAGE_KEY}=([^;]+)`));
+  if (match) return match[2];
   return localStorage.getItem(THEME_STORAGE_KEY);
 }
 
 export function saveThemeId(id: string): void {
   if (typeof window === "undefined") return;
   localStorage.setItem(THEME_STORAGE_KEY, id);
+  document.cookie = `${THEME_STORAGE_KEY}=${id}; path=/; max-age=31536000`;
+}
+
+export function getThemeStyleProperties(theme: Theme): React.CSSProperties {
+  return {
+    "--hue": String(theme.hue),
+    "--contrast": String(theme.contrast),
+    "--darkness": String(theme.darkness),
+    "--lightness": String(theme.lightness ?? 1.0),
+    "--saturation": String(theme.saturation ?? 1.0),
+  } as React.CSSProperties;
 }
 
 export function applyTheme(theme: Theme): void {
@@ -102,6 +115,9 @@ export function applyTheme(theme: Theme): void {
 
 export function initializeTheme(): void {
   const savedId = getSavedThemeId();
+  if (savedId) {
+    saveThemeId(savedId);
+  }
   const theme = getThemeOrDefault(savedId);
   applyTheme(theme);
 }
