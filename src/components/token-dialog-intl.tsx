@@ -81,7 +81,7 @@ export function TokenDialogIntl({
         <div className="space-y-4">
           <form onSubmit={handleSubmit} className="space-y-4">
             <Tabs className="w-full" value={authMethod} onValueChange={(value) => setAuthMethod(value as "token" | "password")}>
-              <TabsList className="bg-gray-200 grid w-full grid-cols-2">
+              <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="token">{t('tokenDialog.tokenTab')}</TabsTrigger>
                 <TabsTrigger value="password">{t('tokenDialog.passwordTab')}</TabsTrigger>
               </TabsList>

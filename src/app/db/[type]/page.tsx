@@ -31,6 +31,10 @@ export async function generateMetadata({ params }: DbTypePageProps): Promise<Met
     return {
       title: t("title"),
       description: t("title"),
+      openGraph: {
+        title: t("title"),
+        description: t("title"),
+      },
     };
   }
 
@@ -52,7 +56,7 @@ export default async function DbTypePage({ params }: DbTypePageProps) {
       name: t("title"),
       description: t("description"),
       numberOfItems: songs.length,
-      itemListElement: songs.slice(0, 100).map((song, index) => ({
+      itemListElement: songs.slice(0, 200).map((song, index) => ({
         "@type": "ListItem",
         position: index + 1,
         item: {

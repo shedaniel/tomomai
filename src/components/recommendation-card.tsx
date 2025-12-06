@@ -398,7 +398,7 @@ export function RecommendationCard({ selectedSnapshotData, flags }: { selectedSn
         )}
       </CardHeader>
       <CardContent>
-        <div className="divide-y divide-dashed divide-gray-200">
+        <div className="divide-y divide-dashed divide-border">
           <AnimatePresence mode="popLayout">
             {filteredRecommendations.map((rec) => (
               <motion.div

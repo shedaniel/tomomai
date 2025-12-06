@@ -14,9 +14,9 @@ import { z } from 'zod';
 import { flagDefinitions } from '@/lib/flags';
 import { REGION_ENUM, TIMEZONE_ENUM } from '@/lib/db/types';
 import { logger } from '@/lib/logger';
-import { normalizeName } from '@/lib/name-utils';
+import { Optional } from 'utility-types';
 import { getSongSlug, getSongSlugs } from '@/lib/song-slug';
-import { SongDetails, UniqueSong } from '@/components/db/songs/types';
+import { SongDetails, UniqueSong, UniqueSongDifficulty } from '@/components/db/songs/types';
 import { unstable_cache } from 'next/cache';
 
 const SIGNUP_REQUIRED_AMOUNT = 256;
@@ -2372,34 +2372,79 @@ export const userRouter = router({
     .query(async () => {
       const getCachedUniqueSongs = unstable_cache(
         async () => {
-          // Get all songs grouped by name and type (unique songs)
-          // We pick the latest version's data for cover/artist, and the earliest addedVersion
           const allSongs = await db
             .select({
+              id: songs.id,
               songName: songs.songName,
               artist: songs.artist,
               cover: songs.cover,
               type: songs.type,
               genre: songs.genre,
-              addedVersion: sql<number>`MIN(${songs.addedVersion})`.as('addedVersion'),
+              difficulty: songs.difficulty,
+              levelPrecise: songs.levelPrecise,
+              addedVersion: songs.addedVersion,
+              region: songs.region,
+              gameVersion: songs.gameVersion,
             })
             .from(songs)
-            .groupBy(songs.songName, songs.type, songs.artist, songs.cover, songs.genre)
             .orderBy(songs.songName);
 
+          const allSongsSortedById = [...allSongs].sort((a, b) => Number(a.id) - Number(b.id));
+          const allSongsToSortedIndex = Object.fromEntries(allSongsSortedById.map((song, index) => [String(song.id), index]));
+          const allSongsWithIndex = allSongs.map((song) => (
+            { ...song, index: allSongsToSortedIndex[String(song.id)]! } satisfies Optional<typeof song, 'id'> & { index: number }
+          ));
+
           // Deduplicate by songName + type (same song can have std and dx versions)
-          const uniqueSongs = new Map<string, typeof allSongs[0]>();
-          for (const song of allSongs) {
-            // if (normalizeName(song.songName) !== song.songName) continue;
+          const uniqueSongs: Map<string, typeof allSongsWithIndex[0] & {
+            difficulties: (UniqueSongDifficulty & {
+              region: Region;
+              gameVersion: number;
+            })[];
+          }> = new Map();
+          for (const song of allSongsWithIndex) {
             const key = `${song.songName}||${song.type}`;
             if (!uniqueSongs.has(key)) {
-              uniqueSongs.set(key, song);
+              uniqueSongs.set(key, {
+                ...song,
+                difficulties: [],
+              });
             }
+            const existingDifficulty = uniqueSongs.get(key)!.difficulties.find(d => d.difficulty === song.difficulty);
+            if (existingDifficulty) {
+              if (existingDifficulty.gameVersion < song.gameVersion || (existingDifficulty.gameVersion === song.gameVersion && song.region === "jp" && existingDifficulty.region === "intl")) {
+                uniqueSongs.get(key)!.difficulties.splice(uniqueSongs.get(key)!.difficulties.indexOf(existingDifficulty), 1);
+              } else continue;
+            }
+            
+            uniqueSongs.get(key)!.difficulties.push({
+              difficulty: song.difficulty,
+              levelPrecise: song.levelPrecise,
+              region: song.region,
+              gameVersion: song.gameVersion,
+            });
           }
 
           // Add pre-computed slugs for URL routing
           const songsWithSlugs = await getSongSlugs(Array.from(uniqueSongs.values()));
-          return { songs: songsWithSlugs satisfies UniqueSong[] };
+          const songsStripped: UniqueSong[] = songsWithSlugs.map((song) => {
+            return {
+              index: song.index,
+              songName: song.songName,
+              artist: song.artist,
+              cover: song.cover,
+              type: song.type,
+              genre: song.genre,
+              addedVersion: song.addedVersion,
+              difficulties: song.difficulties.map(d => ({
+                difficulty: d.difficulty,
+                levelPrecise: d.levelPrecise,
+              }) satisfies UniqueSongDifficulty),
+              slug: song.slug,
+              aliases: song.aliases,
+            };
+          });
+          return { songs: songsStripped };
         },
         ['all-unique-songs'],
         {

@@ -82,7 +82,7 @@ function RatingChart({ songs, title }: { songs: SongWithRating[]; title: string 
   if (songs.length === 0) return null;
 
   return (
-    <div className="space-y-2 flex flex-col border border-gray-200 py-4 rounded-md shadow-sm">
+    <div className="space-y-2 flex flex-col border border-border py-4 rounded-md shadow-sm">
       <span className="text-sm text-center font-semibold">{title}</span>
       <ChartContainer config={chartConfig} className="h-[200px] w-full pr-10">
         <BarChart data={chartData}>
@@ -373,7 +373,7 @@ const SongGridCard = forwardRef<HTMLDivElement, { song: SongWithRating } & React
       />
 
       {/* Dark overlay for text readability */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/60 to-black/30 rounded-[8px] overflow-hidden" />
+      <div className="absolute inset-0 bg-linear-to-t from-black/90 via-black/40 to-transparent rounded-[8px] overflow-hidden" />
 
       {/* Difficulty Badge */}
       <div className={cn(
@@ -389,7 +389,7 @@ const SongGridCard = forwardRef<HTMLDivElement, { song: SongWithRating } & React
       </div>
 
       {/* Glow Effect */}
-      <div className="song-card-glow absolute -inset-2 opacity-0 transition-opacity duration-300 pointer-events-none" />
+      <div className="song-card-glow absolute inset-[-2px] opacity-0 transition-opacity duration-300 pointer-events-none rounded-[8px] overflow-hidden" />
 
       <div className="song-card-content relative w-full h-full transition-transform duration-300"
         style={{ transform: 'translateZ(30px)' }}>

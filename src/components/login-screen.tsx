@@ -64,7 +64,7 @@ export function LoginScreen({ signupRequirements }: LoginScreenProps) {
 
   return (
     <div className="container mx-auto max-w-md px-4">
-      <div className="flex justify-between py-4 [&>*]:w-fit items-center">
+      <div className="flex justify-between py-4 *:w-fit items-center">
         <Image src="/icon.webp" alt="tomomai" width={4320} height={1080} className="h-10 w-auto" style={{ aspectRatio: '4320 / 1080' }} />
         <LocaleSwitcher forceVisible />
       </div>
@@ -73,7 +73,7 @@ export function LoginScreen({ signupRequirements }: LoginScreenProps) {
         <CardHeader className="text-center">
           <CardTitle className="flex items-center justify-center space-x-2">
             <Database className="h-6 w-6" />
-            <span>{t('dashboard.title')}</span>
+            <h1>{t('dashboard.title')}</h1>
           </CardTitle>
           <CardDescription>
             {t('dashboard.description')}

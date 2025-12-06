@@ -19,6 +19,7 @@ export interface FilterCategory {
   label: string;
   icon: LucideIcon;
   options: Array<{ value: string; label: string }>;
+  limit_one?: boolean;
 }
 
 // Props for getting label for a filter (custom per use-case)

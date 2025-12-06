@@ -37,7 +37,7 @@ function TypeSelector({
               variant="ghost"
               size="sm"
               className={cn(
-                "hover:bg-primary hover:text-primary-foreground",
+                "hover:bg-primary! hover:text-primary-foreground!",
                 isActive ? "bg-muted border" : "",
               )}
               onClick={() => !isActive && onStartTransition(href)}
@@ -67,10 +67,10 @@ function BetaBanner() {
   const t = useTranslations("db.beta");
   
   return (
-    <div className="bg-muted/50 text-muted-foreground border border-foreground px-4 py-3 rounded-lg mb-8 flex items-start gap-3">
+    <div className="bg-muted/50 text-muted-foreground border border-foreground dark:border-border px-4 py-3 rounded-lg mb-8 flex items-start gap-3">
       <Info className="w-5 h-5 shrink-0 mt-0.5" />
       <div>
-        <h3 className="font-semibold text-sm">{t("title")}</h3>
+        <span className="font-semibold text-sm block">{t("title")}</span>
         <p className="text-sm opacity-90">{t("description")}</p>
       </div>
     </div>
@@ -121,7 +121,7 @@ export function DbLayoutClient({
         onPrefetch={(href) => router.prefetch(href)}
       />
 
-      <Separator className="mt-4 mb-2" />
+      <Separator className="my-4" />
 
       <div className="relative min-h-[50vh]">
         <AnimatePresence mode="wait">

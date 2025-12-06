@@ -1,12 +1,13 @@
 "use client";
 
 import { AboutDialog } from "@/components/about-dialog";
+import { ThemeDialog } from "@/components/theme-dialog";
 import { Button } from "@/components/ui/button";
 import { DiscordIcon } from "@/components/ui/discord-icon";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { user } from "@/lib/db/schema-pg";
 import { Region, User } from "@/lib/types";
-import { Beaker, Database, Home, Info, LogIn, LogOut, User as LucideUserIcon, Settings, Users, X } from "lucide-react";
+import { Beaker, Database, Home, Info, LogIn, LogOut, Palette, User as LucideUserIcon, Settings, Users, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
 import Link from "next/link";
@@ -38,6 +39,11 @@ const TAB_ICONS_PATHS: Record<CurrentTab, string> = {
   db: "/icon-db.webp",
 };
 
+const TAB_ICONS_PATHS_DARK: Record<CurrentTab, string> = {
+  dashboard: "/icon-dark.webp",
+  db: "/icon-db-dark.webp",
+};
+
 interface HeaderProps {
   currentTab: CurrentTab;
   showDiscordBanner?: boolean;
@@ -56,18 +62,15 @@ interface HeaderProps {
   }
 }
 
-function NavbarButtons({ currentTab, onAbout, onDiscordInvite }: { currentTab: CurrentTab; onAbout: () => void; onDiscordInvite: () => void }) {
+function NavbarButtons({ currentTab, onAbout, onTheme, onDiscordInvite }: { currentTab: CurrentTab; onAbout: () => void; onTheme: () => void; onDiscordInvite: () => void }) {
   const t = useTranslations();
 
   return (<>
     {ALL_TABS.filter(tab => tab !== currentTab).map(tab => (
       <Fragment key={tab}>
         <Button
-          variant="outline"
           size="sm"
-          className={cn("h-8 hover:bg-muted md:hidden max-xs:w-8",
-            "bg-primary text-primary-foreground",
-          )}
+          className="h-8 md:hidden max-xs:w-8"
           asChild
         >
           <Link href={TAB_LINKS[tab]} className="md:hidden">
@@ -76,11 +79,8 @@ function NavbarButtons({ currentTab, onAbout, onDiscordInvite }: { currentTab: C
           </Link>
         </Button>
         <Button
-          variant="ghost"
           size="sm"
-          className={cn("h-8 px-3 py-0 hover:bg-muted max-md:hidden",
-            "bg-primary text-primary-foreground hover:bg-primary/75 hover:text-primary-foreground",
-          )}
+          className="h-8 px-3 py-0 max-md:hidden"
           asChild
         >
           <Link href={TAB_LINKS[tab]}>
@@ -104,6 +104,23 @@ function NavbarButtons({ currentTab, onAbout, onDiscordInvite }: { currentTab: C
       className="h-8 px-2 py-0 hover:bg-muted max-md:hidden"
     >
       {t('common.about')}
+    </Button>
+
+    <Button
+      onClick={onTheme}
+      variant="outline"
+      size="sm"
+      className="h-8 w-8 p-0 hover:bg-muted md:hidden max-sm:hidden"
+    >
+      <Palette className="h-4 w-4" />
+    </Button>
+    <Button
+      onClick={onTheme}
+      variant="ghost"
+      size="sm"
+      className="h-8 px-2 py-0 hover:bg-muted max-md:hidden"
+    >
+      {t('common.theme')}
     </Button>
 
     <Button
@@ -138,7 +155,7 @@ function DiscordBanner({ onDismiss }: { onDismiss: () => void }) {
         <X className="h-4 w-4 text-blue-600 dark:text-blue-400" />
       </button>
       <div className="flex items-start gap-3 pr-8">
-        <DiscordIcon className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+        <DiscordIcon className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5 shrink-0" />
         <div className="flex-1 min-w-0">
           <p className="text-sm text-blue-900 dark:text-blue-100 leading-relaxed">
             {t('publicHeader.discordBanner')}
@@ -160,8 +177,9 @@ function DiscordBanner({ onDismiss }: { onDismiss: () => void }) {
   )
 }
 
-function UserIcon({ user, menu, onAbout, onDiscordInvite }: NonNullable<HeaderProps['user']> & {
+function UserIcon({ user, menu, onAbout, onTheme, onDiscordInvite }: NonNullable<HeaderProps['user']> & {
   onAbout: () => void;
+  onTheme: () => void;
   onDiscordInvite: () => void;
 }) {
   const t = useTranslations();
@@ -248,6 +266,10 @@ function UserIcon({ user, menu, onAbout, onDiscordInvite }: NonNullable<HeaderPr
               <Info className="mr-2 h-4 w-4" />
               <span>{t('common.about')}</span>
             </DropdownMenuItem>
+            <DropdownMenuItem onClick={onTheme}>
+              <Palette className="mr-2 h-4 w-4" />
+              <span>{t('common.theme')}</span>
+            </DropdownMenuItem>
             <DropdownMenuItem onClick={onDiscordInvite}>
               <DiscordIcon className="mr-2 h-4 w-4" />
               <span>{t('common.discord')}</span>
@@ -275,6 +297,7 @@ function UserIcon({ user, menu, onAbout, onDiscordInvite }: NonNullable<HeaderPr
 export function Header({ currentTab, showDiscordBanner = true, user }: HeaderProps) {
   const t = useTranslations();
   const [aboutOpen, setAboutOpen] = useState(false);
+  const [themeOpen, setThemeOpen] = useState(false);
   const [showBanner, setShowBanner] = useState(showDiscordBanner);
 
   const handleDiscordInvite = async () => {
@@ -292,16 +315,17 @@ export function Header({ currentTab, showDiscordBanner = true, user }: HeaderPro
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center space-x-1 max-md:space-x-2">
           <Link href="/">
-            <Image src={TAB_ICONS_PATHS[currentTab]} alt="tomomai" width={4320} height={1080} priority className="h-11 w-auto" style={{ aspectRatio: '4320 / 1080' }} />
+            <Image src={TAB_ICONS_PATHS[currentTab]} alt="tomomai" width={4320} height={1080} priority className="h-11 w-auto dark:hidden" style={{ aspectRatio: '4320 / 1080' }} />
+            <Image src={TAB_ICONS_PATHS_DARK[currentTab]} alt="tomomai" width={4320} height={1080} priority className="h-11 w-auto hidden dark:block" style={{ aspectRatio: '4320 / 1080' }} />
           </Link>
-          <NavbarButtons currentTab={currentTab} onAbout={() => setAboutOpen(true)} onDiscordInvite={handleDiscordInvite} />
+          <NavbarButtons currentTab={currentTab} onAbout={() => setAboutOpen(true)} onTheme={() => setThemeOpen(true)} onDiscordInvite={handleDiscordInvite} />
         </div>
 
         <div className="flex items-center space-x-4">
           <LocaleSwitcher />
           {user ? (<>
             {user.menu && <RegionSwitcher header={true} value={user.menu.selectedRegion} onChange={user.menu.onRegionChange} />}
-            <UserIcon {...user} onAbout={() => setAboutOpen(true)} onDiscordInvite={handleDiscordInvite} />
+            <UserIcon {...user} onAbout={() => setAboutOpen(true)} onTheme={() => setThemeOpen(true)} onDiscordInvite={handleDiscordInvite} />
           </>) : (
             <Button variant="default" asChild>
               <Link href="/">
@@ -316,6 +340,7 @@ export function Header({ currentTab, showDiscordBanner = true, user }: HeaderPro
       {showBanner && <DiscordBanner onDismiss={() => setShowBanner(false)} />}
 
       <AboutDialog open={aboutOpen} onOpenChange={setAboutOpen} />
+      <ThemeDialog open={themeOpen} onOpenChange={setThemeOpen} />
     </>
   );
 } 

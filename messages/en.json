@@ -22,6 +22,7 @@
     "stars": "Stars",
     "plays": "Plays",
     "total": "Total",
+    "theme": "Theme",
     "invitations": "Invitations",
     "discord": "Discord",
     "about": "About",
@@ -488,7 +489,13 @@
         "genre": "Genre",
         "addedVersion": "Added Version",
         "std": "STD",
-        "dx": "DX"
+        "dx": "DX",
+        "sort": "Sort",
+        "sortVersionDesc": "Version (Latest)",
+        "sortVersionAsc": "Version (Oldest)",
+        "sortLevelAsc": "Level (Low -> High)",
+        "sortLevelDesc": "Level (High -> Low)",
+        "level": "Level"
       }
     },
     "common": {
@@ -529,5 +536,62 @@
         "jp": "Japan"
       }
     }
+  },
+  "theme": {
+    "description": "Choose a colour theme for the interface.",
+    "groups": {
+      "simple": "Simple",
+      "amaranth": "Amaranth",
+      "blue": "Blue",
+      "brown": "Brown",
+      "emerald": "Emerald",
+      "grass": "Grass",
+      "purple": "Purple",
+      "rose": "Rose",
+      "gold": "Gold",
+      "pink": "Pink"
+    },
+    "themes": {
+      "simple": "Simple",
+      "dark-simple": "Dark Simple",
+      "gray-simple": "Gray Simple",
+      "burnt-amaranth": "Burnt Amaranth",
+      "burnt-blue": "Burnt Blue",
+      "burnt-brown": "Burnt Brown",
+      "burnt-emerald": "Burnt Emerald",
+      "burnt-grass": "Burnt Grass",
+      "burnt-purple": "Burnt Purple",
+      "burnt-rose": "Burnt Rose",
+      "burnt-gold": "Burnt Gold",
+      "burnt-pink": "Burnt Pink",
+      "dark-amaranth": "Dark Amaranth",
+      "dark-blue": "Dark Blue",
+      "dark-brown": "Dark Brown",
+      "dark-emerald": "Dark Emerald",
+      "dark-grass": "Dark Grass",
+      "dark-purple": "Dark Purple",
+      "dark-rose": "Dark Rose",
+      "dark-gold": "Dark Gold",
+      "dark-pink": "Dark Pink",
+      "light-amaranth": "Light Amaranth",
+      "light-blue": "Light Blue",
+      "light-brown": "Light Brown",
+      "light-emerald": "Light Emerald",
+      "light-grass": "Light Grass",
+      "light-purple": "Light Purple",
+      "light-rose": "Light Rose",
+      "light-gold": "Light Gold",
+      "light-pink": "Light Pink",
+      "gray-amaranth": "Gray Amaranth",
+      "gray-blue": "Gray Blue",
+      "gray-brown": "Gray Brown",
+      "gray-emerald": "Gray Emerald",
+      "gray-grass": "Gray Grass",
+      "gray-purple": "Gray Purple",
+      "gray-rose": "Gray Rose",
+      "gray-gold": "Gray Gold",
+      "gray-pink": "Gray Pink"
+    },
+    "title": "Theme"
   }
 }

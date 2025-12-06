@@ -13,6 +13,7 @@ import { SongRankingTable } from "./stats/song-ranking-table";
 import { AverageAchievementChart } from "./stats/average-achievement-chart";
 import { RatingVsPlayCountHeatmap } from "./stats/rating-vs-play-count-heatmap";
 import { Tabs, TabsList, TabsTab } from "../animate-ui/components/base/tabs";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
 export function StatsDatabase() {
   const t = useTranslations("db.stats");
@@ -22,9 +23,12 @@ export function StatsDatabase() {
 
   return (
     <div className="space-y-6">
+      <VisuallyHidden asChild>
+        <h1>{t("title")}</h1>
+      </VisuallyHidden>
       <div className="flex justify-between items-center">
         <Tabs value={region} onValueChange={(v) => setRegion(v as Region)}>
-          <TabsList className="grid grid-cols-[1fr_1fr] gap-2 bg-primary/10">
+          <TabsList className="grid grid-cols-[1fr_1fr] gap-2">
             <TabsTab value="intl">{t("region.intl")}</TabsTab>
             <TabsTab value="jp">{t("region.jp")}</TabsTab>
           </TabsList>

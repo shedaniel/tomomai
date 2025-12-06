@@ -36,8 +36,19 @@ export function SongsDatabase({ selectedSlug: initialSlug, initialSongs, initial
   const tFilter = useMemo(() => (key: string) => t(`db.songs.filter.${key}`), [t]);
 
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
+
+  // Debounce search query
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
   const [displayMode, setDisplayMode] = useState<"grid" | "list">("grid");
-  const [visibleCount, setVisibleCount] = useState(60);
+  const [visibleCount, setVisibleCount] = useState(initialSlug ? 0 : 200);
   const [filters, setFilters] = useState<UniqueSongFilter[]>([]);
   const [currentSlug, setCurrentSlug] = useState<string | null>(initialSlug);
 
@@ -69,12 +80,20 @@ export function SongsDatabase({ selectedSlug: initialSlug, initialSongs, initial
   // Filter handlers
   const handleAddFilter = useCallback((filter: GenericFilter) => {
     setFilters(prev => {
+      // Check if category has limit_one constraint
+      const category = filterCategories.find(c => c.type === filter.type);
+      let newFilters = prev;
+      
+      if (category?.limit_one) {
+        newFilters = prev.filter(f => f.type !== filter.type);
+      }
+
       const newFilter = { type: filter.type as UniqueSongFilterType, value: filter.value };
       const key = getFilterKey(newFilter);
-      if (prev.some(f => getFilterKey(f) === key)) return prev;
-      return [...prev, newFilter];
+      if (newFilters.some(f => getFilterKey(f) === key)) return newFilters;
+      return [...newFilters, newFilter];
     });
-  }, []);
+  }, [filterCategories]);
 
   const handleRemoveFilter = useCallback((filter: GenericFilter) => {
     setFilters(prev => prev.filter(f => !(f.type === filter.type && f.value === filter.value)));
@@ -120,8 +139,8 @@ export function SongsDatabase({ selectedSlug: initialSlug, initialSongs, initial
     result = applyUniqueSongFilters(result, filters);
 
     // Apply search
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase().trim();
+    if (debouncedSearchQuery.trim()) {
+      const query = debouncedSearchQuery.toLowerCase().trim();
       result = result.filter(song =>
         song.songName.toLowerCase().includes(query) ||
         song.artist.toLowerCase().includes(query) ||
@@ -131,7 +150,7 @@ export function SongsDatabase({ selectedSlug: initialSlug, initialSongs, initial
     }
 
     return result;
-  }, [allSongs, filters, searchQuery]);
+  }, [allSongs, filters, debouncedSearchQuery]);
 
   // Visible songs for infinite scroll
   const visibleSongs = useMemo(() => {
@@ -141,7 +160,7 @@ export function SongsDatabase({ selectedSlug: initialSlug, initialSongs, initial
   // Reset visible count when search or filters change
   useEffect(() => {
     setVisibleCount(60);
-  }, [searchQuery, filters]);
+  }, [debouncedSearchQuery, filters]);
 
   const hasMore = visibleCount < filteredSongs.length;
   const loadMore = useCallback(() => {
@@ -253,17 +272,17 @@ export function SongsDatabase({ selectedSlug: initialSlug, initialSongs, initial
           </div>
           <h2 className="text-lg font-medium mb-2">{t("db.songs.noSongsFound")}</h2>
           <p className="text-muted-foreground max-w-sm">
-            {searchQuery ? t("db.songs.tryAdjustingSearch") : t("db.songs.noSongsAvailable")}
+            {debouncedSearchQuery ? t("db.songs.tryAdjustingSearch") : t("db.songs.noSongsAvailable")}
           </p>
         </div>
       )}
 
       {/* Songs Grid */}
       {filteredSongs.length > 0 && displayMode === "grid" && (
-        <section aria-label="Songs grid" className="grid grid-cols-3 xs:grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-8 gap-2">
+        <section aria-label="Songs grid" className="grid grid-cols-3 xs:grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-8 gap-3">
           {visibleSongs.map((song, index) => (
             <SongCard
-              key={`${song.songName}-${song.type}`}
+              key={`${song.slug}-${song.difficulties.length === 1 ? song.difficulties[0].difficulty : ''}`}
               song={song}
               index={index}
               isSelected={isSongSelected(song)}
@@ -279,7 +298,7 @@ export function SongsDatabase({ selectedSlug: initialSlug, initialSongs, initial
         <section aria-label="Songs list" className="space-y-1">
           {visibleSongs.map((song, index) => (
             <SongRow
-              key={`${song.songName}-${song.type}`}
+              key={`${song.slug}-${song.difficulties.length === 1 ? song.difficulties[0].difficulty : ''}`}
               song={song}
               index={index}
               isSelected={isSongSelected(song)}
@@ -302,7 +321,7 @@ export function SongsDatabase({ selectedSlug: initialSlug, initialSongs, initial
         dismissible
       >
         <DrawerOverlay />
-        <DrawerContent className="bg-card mx-auto w-[calc(min(100dvw-1rem,_42rem))] max-h-[90%] h-full shadow-2xl">
+        <DrawerContent className="bg-background mx-auto w-[calc(min(100dvw-1rem,42rem))] max-h-[90%] h-full shadow-2xl">
           <VisuallyHidden>
             <DrawerTitle>{lastValidSong?.songName || t("db.songs.detail.title")}</DrawerTitle>
             <DrawerDescription>{lastValidSong?.artist || t("db.songs.detail.artist")}</DrawerDescription>
@@ -340,15 +359,17 @@ export function SongsDatabase({ selectedSlug: initialSlug, initialSongs, initial
 
       {/* SEO Content: Render hidden content for crawlers when accessing a specific song URL */}
       {initialSlug && lastValidSong && lastValidSong.slug === initialSlug && (
-        <div className="absolute left-[-9999px] opacity-0" aria-hidden="true">
-          <SongDetailContent
-            songName={lastValidSong.songName}
-            slug={lastValidSong.slug}
-            type={lastValidSong.type}
-            onClose={() => {}}
-            initialData={initialSongDetails}
-          />
-        </div>
+        <VisuallyHidden asChild>
+          <div>
+            <SongDetailContent
+              songName={lastValidSong.songName}
+              slug={lastValidSong.slug}
+              type={lastValidSong.type}
+              onClose={() => {}}
+              initialData={initialSongDetails}
+            />
+          </div>
+        </VisuallyHidden>
       )}
     </main>
   );

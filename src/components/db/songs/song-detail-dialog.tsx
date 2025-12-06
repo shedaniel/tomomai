@@ -85,7 +85,7 @@ function SongChartDialogGrid({ chart, score }: { chart: SongExtendedIdentified; 
         <span className="text-xs">.{chart.levelPrecise % 10}</span>
       </DialogTitle>
       <Tabs value={region} onValueChange={(value) => setRegion(value as Region)}>
-        <TabsList className={cn("bg-primary/10 grid w-full grid-cols-2", charts.length <= 1 && "hidden")}>
+        <TabsList className={cn("grid w-full grid-cols-2", charts.length <= 1 && "hidden")}>
           {charts.map(c => (
             <TabsTab key={c.region} value={c.region}>{t(`regions.${c.region}`)}</TabsTab>
           ))}

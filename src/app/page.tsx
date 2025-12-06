@@ -6,9 +6,23 @@ import { applyFlagOverrides, useFlags } from "@/lib/flags";
 import { createServerSideTRPC } from "@/lib/trpc-server";
 import { cookies } from "next/headers";
 import { Suspense } from "react";
+import { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 
 // Force dynamic rendering since we need to check authentication
 export const dynamic = 'force-dynamic';
+
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("dashboard");
+  return {
+    title: t("title"),
+    description: t("description"),
+    openGraph: {
+      title: t("title"),
+      description: t("description"),
+    },
+  };
+}
 
 export default async function Home() {
   const session = await getServerSession();

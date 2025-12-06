@@ -332,13 +332,13 @@ export function SongDetailContent({ songName, slug, type, initialData }: SongDet
           {data.bpm && (
             <div className="flex items-center gap-2">
               <Activity className="w-4 h-4" />
-              <h3 className="font-medium">{t('db.songs.detail.bpm')}</h3>
+              <h2 className="font-medium text-sm">{t('db.songs.detail.bpm')}</h2>
               <span>{data.bpm}</span>
             </div>
           )}
           <div className="flex items-center gap-2">
             <Calendar className="w-4 h-4" />
-            <h3 className="font-medium">{t('db.songs.detail.added')}</h3>
+            <h2 className="font-medium text-sm">{t('db.songs.detail.added')}</h2>
             <span>{addedVersionInfo?.name ?? `Ver. ${data.addedVersion}`}</span>
           </div>
         </div>
@@ -350,14 +350,14 @@ export function SongDetailContent({ songName, slug, type, initialData }: SongDet
             navigator.clipboard.writeText(`${baseUrl}/db/songs/${slug}`);
             e.preventDefault();
             toast.success("Share link copied to clipboard");
-          }}>
-            <Button variant="outline">
+          }} aria-label={t('db.songs.detail.share')}>
+            <Button variant="outline" className="bg-background">
               <Share className="w-4 h-4" />
               {t('db.songs.detail.share')}
             </Button>
           </Link>
-          <Link href={youtubeSearchURL ?? ""} target="_blank">
-            <Button variant="outline">
+          <Link href={youtubeSearchURL ?? ""} target="_blank" aria-label={t('db.songs.detail.youtube')}>
+            <Button variant="outline" className="bg-background">
               <svg role="img" className="w-4 h-4" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><title>YouTube</title><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
               {t('db.songs.detail.youtube')}
             </Button>

@@ -448,7 +448,7 @@ function PasswordSubDialog({
             </div>
           </div>
 
-          <div className="bg-muted/50 rounded-md text-xs text-muted-foreground space-y-2">
+          <div className="rounded-md text-xs text-muted-foreground space-y-2">
             <p className="font-medium">
               {t('tokenDialog.authenticationNote')}
             </p>

@@ -1,7 +1,8 @@
 import { GenericFilter } from "@/components/filter-panel";
-import { Region, SongExtended, SongType } from "@/lib/types";
+import { Difficulty, Region, SongExtended, SongType } from "@/lib/types";
 
 export interface UniqueSong {
+  index: number;
   songName: string;
   artist: string;
   cover: string;
@@ -10,6 +11,12 @@ export interface UniqueSong {
   addedVersion: number;
   slug: string;
   aliases: string[];
+  difficulties: UniqueSongDifficulty[];
+}
+
+export interface UniqueSongDifficulty {
+  difficulty: Difficulty;
+  levelPrecise: number;
 }
 
 export interface UserScore {
@@ -36,7 +43,7 @@ export interface SongDetails {
   }[];
 }
 
-export type UniqueSongFilterType = "type" | "genre" | "addedVersion";
+export type UniqueSongFilterType = "type" | "genre" | "addedVersion" | "sort" | "level";
 
 export interface UniqueSongFilter extends GenericFilter {
   type: UniqueSongFilterType;

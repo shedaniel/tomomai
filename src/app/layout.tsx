@@ -1,4 +1,5 @@
 import { LocaleProvider } from '@/components/providers/locale-provider';
+import { ThemeProvider } from '@/components/providers/theme-provider';
 import { TRPCProvider } from "@/components/providers/trpc-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { getLocale } from '@/i18n/locale-server';
@@ -93,11 +94,13 @@ export default async function RootLayout({
       >
         <NextIntlClientProvider messages={messages}>
           <LocaleProvider initialLocale={locale}>
-            <TRPCProvider>
-              {children}
-              {shouldInjectToolbar && <VercelToolbar />}
-              <Toaster />
-            </TRPCProvider>
+            <ThemeProvider>
+              <TRPCProvider>
+                {children}
+                {shouldInjectToolbar && <VercelToolbar />}
+                <Toaster />
+              </TRPCProvider>
+            </ThemeProvider>
           </LocaleProvider>
         </NextIntlClientProvider>
       </body>

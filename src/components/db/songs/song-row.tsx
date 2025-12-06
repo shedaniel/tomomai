@@ -15,6 +15,8 @@ interface SongRowProps {
 
 export function SongRow({ song, index, isSelected, onSelect }: SongRowProps) {
   const href = `/db/songs/${encodeURIComponent(song.slug)}`;
+  const isSingleDifficulty = song.difficulties.length === 1;
+  const singleDiff = isSingleDifficulty ? song.difficulties[0] : null;
 
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -30,7 +32,7 @@ export function SongRow({ song, index, isSelected, onSelect }: SongRowProps) {
         delay: Math.min(index * 0.008, 0.15),
         ease: [0.4, 0, 0.2, 1]
       }}
-      layoutId={`song-row-${song.slug}`}
+      layoutId={`song-row-${song.slug}${singleDiff ? `-${singleDiff.difficulty}` : ''}`}
     >
       <Link
         href={href}
@@ -45,7 +47,13 @@ export function SongRow({ song, index, isSelected, onSelect }: SongRowProps) {
           alt={song.songName}
           className={cn(
             "w-10 h-10 rounded ring-2 ring-offset-2 ring-offset-background",
-            song.type === "dx" ? "ring-amber-400" : "ring-slate-300",
+            !singleDiff && (song.type === "dx" ? "ring-amber-400" : "ring-slate-300"),
+            singleDiff?.difficulty === "basic" && "ring-green-400",
+            singleDiff?.difficulty === "advanced" && "ring-yellow-400",
+            singleDiff?.difficulty === "expert" && "ring-red-400",
+            singleDiff?.difficulty === "master" && "ring-purple-500",
+            singleDiff?.difficulty === "remaster" && "ring-purple-200",
+            singleDiff?.difficulty === "utage" && "ring-pink-400",
           )}
           width={40}
           height={40}
@@ -54,13 +62,26 @@ export function SongRow({ song, index, isSelected, onSelect }: SongRowProps) {
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <h3 className="font-medium truncate">{song.songName}</h3>
+            <h2 className="font-medium truncate">{song.songName}</h2>
             <span className={cn(
               "text-[10px] px-1.5 py-0.5 rounded font-medium shrink-0",
               song.type === "dx" ? "bg-amber-100 text-amber-700" : "bg-slate-100 text-slate-600"
             )}>
               {song.type.toUpperCase()}
             </span>
+            {singleDiff && (
+              <span className={cn(
+                "text-[10px] px-1.5 py-0.5 rounded font-medium shrink-0",
+                singleDiff.difficulty === "basic" && "bg-green-100 text-green-700",
+                singleDiff.difficulty === "advanced" && "bg-yellow-100 text-yellow-700",
+                singleDiff.difficulty === "expert" && "bg-red-100 text-red-700",
+                singleDiff.difficulty === "master" && "bg-purple-100 text-purple-700",
+                singleDiff.difficulty === "remaster" && "bg-purple-50 text-purple-900",
+                singleDiff.difficulty === "utage" && "bg-pink-100 text-pink-700",
+              )}>
+                {singleDiff.difficulty.slice(0, 3).toUpperCase()} {(singleDiff.levelPrecise / 10).toFixed(1)}
+              </span>
+            )}
           </div>
           <p className="text-xs text-muted-foreground truncate">
             {song.artist}

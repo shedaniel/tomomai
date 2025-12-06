@@ -151,7 +151,7 @@ export function UsernameSetupDialog({ open, onComplete }: UsernameSetupDialogPro
               </div>
             </div>
             <div className="mb-2">{getAvailabilityMessage()}</div>
-            <div className="text-xs text-gray-500 space-y-1">
+            <div className="text-xs text-muted-foreground space-y-1">
               <p>• {t('usernameSetup.rules.length')}</p>
               <p>• {t('usernameSetup.rules.characters')}</p>
               <p>• {t('usernameSetup.rules.profileUrl', { username })}</p>
