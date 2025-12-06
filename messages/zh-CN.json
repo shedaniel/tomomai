@@ -497,6 +497,7 @@
         "sortLevelDesc": "Level (High -> Low)",
         "level": "等级",
         "groupBy": "Group By",
+        "noteDesigner": "Note Designer",
         "groups": {
           "none": "None",
           "noteDesigner": "谱面设计者",
