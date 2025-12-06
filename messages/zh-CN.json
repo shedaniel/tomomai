@@ -1,33 +1,33 @@
 {
   "common": {
     "title": "tomomai ともマイ",
-    "loading": "Loading...",
-    "save": "Save",
-    "cancel": "Cancel",
-    "close": "Close",
-    "settings": "Settings",
-    "language": "Language",
-    "timezone": "Timezone",
-    "update": "Update",
-    "login": "Login",
-    "join": "Join",
-    "logout": "Logout",
-    "username": "Username",
-    "password": "Password",
-    "token": "Token",
+    "loading": "加载中...",
+    "save": "保存",
+    "cancel": "取消",
+    "close": "关闭",
+    "settings": "设置",
+    "language": "语言",
+    "timezone": "时区",
+    "update": "更新",
+    "login": "登录",
+    "join": "加入",
+    "logout": "登出",
+    "username": "用户名",
+    "password": "密码",
+    "token": "令牌",
     "cookies": "Cookies",
-    "authentication": "Authentication",
-    "playerInfo": "Player Info",
-    "rating": "Rating",
-    "stars": "Stars",
-    "plays": "Plays",
-    "total": "Total",
+    "authentication": "验证",
+    "playerInfo": "玩家信息",
+    "rating": "R 值",
+    "stars": "星星数",
+    "plays": "游玩次数",
+    "total": "总计",
     "theme": "Theme",
-    "invitations": "Invitations",
+    "invitations": "邀请",
     "discord": "Discord",
-    "about": "About",
-    "experiments": "Experiments",
-    "comingSoon": "Coming soon...",
+    "about": "关于",
+    "experiments": "实验",
+    "comingSoon": "敬请期待...",
     "difficulties": {
       "basic": "Basic",
       "advanced": "Advanced",
@@ -38,456 +38,456 @@
     }
   },
   "auth": {
-    "loginWithDiscord": "Continue with Discord",
-    "loginDescription": "Sign in with Discord to start tracking your maimai scores",
-    "noAccount": "Don't have an account?",
-    "signupWithDiscord": "Sign up with Discord",
-    "signupDisabled": "Sign up Currently Disabled",
-    "signupDisabledMessage": "We are not accepting new registrations at this time. Please check back later.",
+    "loginWithDiscord": "以 Discord 继续",
+    "loginDescription": "登录以开始追踪你的 maimai 成绩",
+    "noAccount": "没有账户？",
+    "signupWithDiscord": "用 Discord 注册",
+    "signupDisabled": "注册功能已关闭",
+    "signupDisabledMessage": "目前暂不开放新用户注册，请稍后再试。",
     "features": {
-      "title": "Features:",
-      "trackScores": "Track scores across International and Japan regions",
-      "viewHistory": "View historical data snapshots",
-      "importData": "Import data directly from maimai DX NET",
-      "analyzeProgress": "Analyze your progress over time"
+      "title": "功能：",
+      "trackScores": "追踪国际服和日本服的成绩",
+      "viewHistory": "查看你的历史游玩资料",
+      "importData": "从 maimai DX NET 导入数据",
+      "analyzeProgress": "分析你的游玩记录"
     }
   },
   "dashboard": {
     "title": "tomomai ともマイ",
-    "description": "Track and analyze your maimai scores with friends",
-    "timezoneUpdateSuccess": "Timezone updated successfully!",
-    "timezoneUpdateError": "Failed to update timezone: {error}",
-    "languageUpdateSuccess": "Language updated successfully!",
-    "languageUpdateError": "Failed to update language: {error}",
-    "tokenUpdateSuccess": "Token saved successfully!"
+    "description": "与好友一起分享 maimai 游玩成绩",
+    "timezoneUpdateSuccess": "时区更新成功！",
+    "timezoneUpdateError": "时区更新失败：{error}",
+    "languageUpdateSuccess": "语言更新成功！",
+    "languageUpdateError": "语言更新失败：{error}",
+    "tokenUpdateSuccess": "验证方式保存成功！"
   },
   "settings": {
-    "title": "Settings",
-    "description": "Customize your tomomai ともマイ experience.",
+    "title": "设置",
+    "description": "自定义你的 tomomai ともマイ 体验。",
     "language": {
-      "label": "Language",
-      "description": "Select your preferred interface language.",
-      "placeholder": "Select language",
-      "auto": "Auto-detect",
+      "label": "语言",
+      "description": "选择你偏好的界面语言。",
+      "placeholder": "选择语言",
+      "auto": "自动检测",
       "en": "English (US)",
       "en-GB": "English (UK)",
       "ja": "日本語",
-      "zh-TW": "繁體中文 (台灣)",
-      "zh-HK": "繁體中文 (香港)",
+      "zh-TW": "繁体中文 (台灣)",
+      "zh-HK": "繁体中文 (香港)",
       "zh-CN": "简体中文",
       "ko": "한국어 (AI 번역)"
     },
     "timezone": {
-      "label": "Timezone",
-      "description": "This affects how dates and times are displayed throughout the app. Japan timezone is the default as it matches maimai's server time.",
-      "placeholder": "Select timezone"
+      "label": "时区",
+      "description": "这会影响日期和时间的显示方式。默认设置为日本时区，与 maimai 服务器时间相符。",
+      "placeholder": "选择时区"
     },
     "account": {
-      "label": "Account Authentication",
-      "updateToken": "Update Token",
-      "description": "Update your maimai token for data fetching. This is required to sync your player data."
+      "label": "账户验证",
+      "updateToken": "更新验证方式",
+      "description": "更新你的 maimai 验证方式以进行数据导入及同步玩家资料。"
     },
     "profile": {
-      "publishProfile": "Publish Profile",
-      "publishDescription": "Make your maimai profile publicly accessible for others to view your scores and progress.",
+      "publishProfile": "公开档案",
+      "publishDescription": "公开你的 maimai 档案，让他人可以查看你的分数和进度。",
       "mainRegion": {
-        "label": "Main Region",
-        "description": "Choose your primary region for the published profile.",
-        "intl": "International",
-        "jp": "Japan",
-        "cn": "China"
+        "label": "主要地区",
+        "description": "选择用于公开档案的主要地区。",
+        "intl": "国际服",
+        "jp": "日本服",
+        "cn": "国服"
       },
       "privacy": {
-        "label": "Privacy Settings",
+        "label": "隐私设置",
         "showAllScores": {
-          "label": "Show All Scores",
-          "description": "Display all your scores instead of only your best 50 songs."
+          "label": "显示所有分数",
+          "description": "显示所有分数，而不仅仅是最佳 50 首歌曲。"
         },
         "showScoreDetails": {
-          "label": "Show Score Details",
-          "description": "Show detailed score information including play counts and timing statistics."
+          "label": "显示分数详情",
+          "description": "显示详细的分数信息，包括游玩次数和详细统计。"
         },
         "showPlates": {
-          "label": "Show Plates",
-          "description": "Display your plate collection and completion progress."
+          "label": "显示称号",
+          "description": "显示你的称号收集和完成进度。"
         },
         "showPlayCounts": {
-          "label": "Show Play Counts",
-          "description": "Display your maimai play counts."
+          "label": "显示游玩次数",
+          "description": "显示你的 maimai 游玩次数。"
         },
         "showEvents": {
-          "label": "Show Events",
-          "description": "Display your event completion progress."
+          "label": "显示活动",
+          "description": "显示你的活动完成进度。"
         },
         "showInSearch": {
-          "label": "Show in Search",
-          "description": "Allow others to find your profile by searching for your username."
+          "label": "允许搜索",
+          "description": "允许他人通过用户名搜索到你的档案。"
         }
       },
       "url": {
-        "label": "Profile URL",
-        "description": "Your public profile link that you can share with others.",
-        "copied": "Profile URL copied to clipboard!",
-        "copyFailed": "Failed to copy URL to clipboard"
+        "label": "档案链接",
+        "description": "你可以与他人分享的公开档案链接。",
+        "copied": "档案链接已复制到剪贴板！",
+        "copyFailed": "复制链接到剪贴板失败"
       }
     },
-    "saveChanges": "Save Changes",
-    "saving": "Saving...",
-    "saved": "Settings saved successfully!",
-    "errorSaving": "Failed to save settings"
+    "saveChanges": "保存变更",
+    "saving": "保存中...",
+    "saved": "设置保存成功！",
+    "errorSaving": "设置保存失败"
   },
   "dataBanner": {
-    "dataSnapshot": "Data Snapshot:",
-    "noDataAvailable": "No data available",
-    "selectSnapshot": "Select a snapshot",
-    "fetchNewData": "Fetch New Data",
-    "fetchingData": "Fetching data...",
-    "lastUpdate": "Last updated",
-    "noDataInstructions": "No data found for this region. Click \"Fetch New Data\" to import your maimai scores. You'll need your maimai token for this process."
+    "dataSnapshot": "数据记录：",
+    "noDataAvailable": "无可用数据",
+    "selectSnapshot": "选择记录",
+    "fetchNewData": "导入新数据",
+    "fetchingData": "导入数据中...",
+    "lastUpdate": "最后更新",
+    "noDataInstructions": "此区域没有任何数据。点击“导入新数据”来导入你的 maimai 成绩。"
   },
   "profileVisibility": {
-    "public": "Public Profile",
-    "private": "Private Profile",
-    "accessibleBy": "Accessible by ",
-    "accessibleByEnd": "!",
-    "youMayChangePrivacySettings": "You may change your privacy settings in top right Icon → Settings → Publish Profile.",
-    "onlyAccessibleByYou": "Only accessible by you! You may change your privacy settings in top right Icon → Settings → Publish Profile."
+    "public": "公开档案",
+    "private": "私人档案",
+    "accessibleBy": "可通过 ",
+    "accessibleByEnd": " 访问！",
+    "youMayChangePrivacySettings": "你可以在右上角图标 → 设置 → 公开档案 中更改隐私设置。",
+    "onlyAccessibleByYou": "只有你可以访问！你可以在右上角图标 → 设置 → 公开档案 中更改隐私设置。"
   },
   "dataContent": {
-    "loading": "Loading data...",
-    "snapshotData": "Snapshot Data",
-    "snapshotFrom": "Snapshot from {date} • {name} • {count} songs",
+    "loading": "加载数据中...",
+    "snapshotData": "数据记录",
+    "snapshotFrom": "记录自 {date} • {name} • {count} 首歌曲",
     "tabs": {
-      "playerInfo": "Player Info",
-      "stats": "Stats",
-      "songs": "Songs",
-      "recentPlays": "Recent Plays",
-      "recommendations": "Recommended",
-      "plates": "Plates",
-      "map": "Events",
-      "exportImage": "Export Image",
-      "history": "History"
+      "playerInfo": "玩家信息",
+      "stats": "统计",
+      "songs": "歌曲",
+      "recentPlays": "最近游玩",
+      "recommendations": "推荐歌曲",
+      "plates": "名牌板",
+      "map": "活动地图",
+      "exportImage": "导出图片",
+      "history": "历史记录"
     },
-    "playerInfo": "Player Info",
-    "rating": "Rating: {rating}",
-    "stars": "Stars: {stars}",
-    "versionPlays": "Version Plays: {count}",
-    "totalPlays": "Total Plays: {count}",
-    "songs": "Songs ({count} total)",
-    "searchPlaceholder": "Search songs by name, artist, difficulty, or type...",
-    "newSongsB15": "New Songs B15",
-    "oldSongsB35": "Old Songs B35",
-    "newSongs": "New Songs",
-    "oldSongs": "Old Songs",
+    "playerInfo": "玩家信息",
+    "rating": "R 值：{rating}",
+    "stars": "星星数：{stars}",
+    "versionPlays": "本版本游玩次数：{count}",
+    "totalPlays": "总游玩次数：{count}",
+    "songs": "歌曲（共 {count} 首）",
+    "searchPlaceholder": "以歌曲名称、艺术家、难度或类型搜索歌曲...",
+    "newSongsB15": "新曲 B15",
+    "oldSongsB35": "旧曲 B35",
+    "newSongs": "新曲",
+    "oldSongs": "旧曲",
     "displayModes": {
-      "list": "List",
-      "grid": "Grid",
-      "compact": "Table"
+      "list": "列表",
+      "grid": "网格",
+      "compact": "表格"
     },
     "tableHeaders": {
-      "song": "Song",
-      "artist": "Artist",
-      "level": "Level",
-      "achievement": "Achievement",
+      "song": "歌曲",
+      "artist": "艺术家",
+      "level": "等级",
+      "achievement": "达成率",
       "fc": "FC",
       "fs": "FS",
-      "rating": "Rating"
+      "rating": "R 值"
     },
     "statistics": {
-      "sum": "Sum",
-      "average": "Avg"
+      "sum": "总和",
+      "average": "平均"
     },
-    "switchToListForAllSongs": "Switch to List or Table view for all songs",
-    "noDataAvailable": "No Data Available",
-    "getStartedInstructions": "Get started by fetching your maimai data using the fetch button above.",
+    "switchToListForAllSongs": "切换到列表或表格视图查看所有歌曲",
+    "noDataAvailable": "无可用数据",
+    "getStartedInstructions": "点击上方的导入按钮来导入你的 maimai 数据。",
     "history": {
-      "title": "Rating History",
-      "ratingOverTime": "Rating Over Time",
-      "noHistory": "No rating history available",
-      "needMoreData": "Fetch data at least twice to see your rating history"
+      "title": "R 值历史记录",
+      "ratingOverTime": "R 值变化趋势",
+      "noHistory": "暂无历史记录",
+      "needMoreData": "至少导入两次数据才能查看历史记录"
     }
   },
   "recommendations": {
-    "noRecommendations": "No Recommendations Available",
-    "allOptimal": "All your scores are already optimal! Keep up the great work.",
-    "description": "Songs recommended to improve your rating based on your current B15/B35 scores.",
-    "filterButton": "Filter",
+    "noRecommendations": "无推荐歌曲",
+    "allOptimal": "没有其他能提升 R 值的歌曲了。做得很好！",
+    "description": "根据你当前的成绩计算出可提升 R 值的歌曲。",
+    "filterButton": "筛选",
     "filters": {
-      "all": "All",
-      "best": "In B15/B35",
-      "new": "New Songs",
-      "old": "Old Songs"
+      "all": "全部",
+      "best": "B15/B35 内",
+      "new": "新曲",
+      "old": "旧曲"
     },
     "filterCategories": {
-      "difficulty": "Difficulty",
-      "level": "Level",
-      "type": "Type",
-      "targetRating": "Target Rating",
-      "achievement": "Achievement",
-      "version": "Version"
+      "difficulty": "难度",
+      "level": "等级",
+      "type": "类型",
+      "targetRating": "目标分数",
+      "achievement": "达成率",
+      "version": "版本"
     }
   },
   "recentPlays": {
-    "title": "Recent Plays",
-    "noPlays": "No recent plays found",
+    "title": "最近游玩",
+    "noPlays": "未找到最近游玩记录",
     "labels": {
       "dx": "DX",
-      "combo": "Combo",
-      "fast": "Fast",
-      "late": "Late"
+      "combo": "连击",
+      "fast": "FAST",
+      "late": "LATE"
     },
     "notesBreakdown": {
-      "type": "Type",
-      "total": "Total",
-      "totalLoss": "Loss"
+      "type": "类型",
+      "total": "总计",
+      "totalLoss": "失分"
     }
   },
   "events": {
-    "title": "Events",
-    "areaEvents": "Area Events",
-    "eventAreaEvents": "Event Area Events",
-    "noEventsAvailable": "No events available",
-    "noAreaEvents": "No area events available",
-    "noEventAreaEvents": "No event area events available",
-    "currentDistance": "Current Distance",
-    "nextReward": "Next Reward in",
-    "eventCompleted": "Event Completed",
-    "notStarted": "Not Started",
-    "inProgress": "In Progress",
-    "completed": "Completed"
+    "title": "活动地图",
+    "areaEvents": "地图",
+    "eventAreaEvents": "活动地图",
+    "noEventsAvailable": "无可用活动",
+    "noAreaEvents": "无地图",
+    "noEventAreaEvents": "无活动地图",
+    "currentDistance": "当前距离",
+    "nextReward": "下一个奖励",
+    "eventCompleted": "活动完成",
+    "notStarted": "未开始",
+    "inProgress": "进行中",
+    "completed": "已完成"
   },
   "tokenDialog": {
-    "title": "Update maimai authentication",
-    "japanDescription": "Enter your SEGA account credentials for the Japan region.",
-    "intlDescription": "Choose your authentication method for the International region.",
-    "credentialsStored": "Your credentials will be saved for future use.",
-    "username": "Username",
-    "usernamePlaceholder": "Enter your SEGA account username",
-    "password": "Password",
-    "passwordPlaceholder": "Enter your SEGA account password",
+    "title": "更新 maimai 验证",
+    "japanDescription": "输入你的 SEGA 账户凭证。",
+    "intlDescription": "选择你的 maimai 登录验证方式。",
+    "credentialsStored": "你的验证方式将被保存以供将来使用。",
+    "username": "用户名",
+    "usernamePlaceholder": "输入你的 SEGA 账户用户名",
+    "password": "密码",
+    "passwordPlaceholder": "输入你的 SEGA 账户密码",
     "cookies": "Cookies",
-    "tokenPlaceholder": "clal=your_token_here",
-    "tokenValidationError": "Token must start with \"clal=\" followed by letters and numbers only",
-    "authenticationNote": "Authentication:",
-    "segaCredentialsNote": "Use your SEGA account credentials to authenticate with maimai DX NET.",
-    "credentialsSecureNote": "Your credentials will be stored for future fetches.",
-    "savingCredentials": "Saving Credentials...",
-    "saveCredentials": "Save Credentials",
-    "tokenTab": "Token",
-    "passwordTab": "Password",
+    "tokenPlaceholder": "clal=在此输入你的 Cookies",
+    "tokenValidationError": "Cookies 必须以 \"clal=\" 开头，后面跟着字母和数字",
+    "authenticationNote": "验证：",
+    "segaCredentialsNote": "使用你的 SEGA 账户凭证来验证 maimai DX NET。",
+    "credentialsSecureNote": "你的验证方式将被保存以供将来使用。",
+    "savingCredentials": "保存验证方式中...",
+    "saveCredentials": "保存验证方式",
+    "tokenTab": "令牌",
+    "passwordTab": "密码",
     "tokenInstructions": {
-      "description": "Cookie value starting with \"clal=\" from maimai DX NET.",
-      "expiration": "The token may get invalidated after a certain period of time, so you may need to update it in the future."
+      "description": "来自 maimai DX NET 的以 \"clal=\" 开头的 Cookie 值。",
+      "expiration": "Cookies 可能会在一段时间后失效，你可能需要重新登录。"
     },
-    "passwordInstructions": "Use your SEGA account username and password directly",
-    "secureStorage": "Your credentials will be stored for future fetches.",
+    "passwordInstructions": "直接使用你的 SEGA 账户用户名和密码",
+    "secureStorage": "你的验证方式将被保存以供将来使用。",
     "steps": {
-      "step1Title": "Login to maimai DX NET",
-      "step2Title": "Go to Not Found page",
-      "step3Title": "Execute Code"
+      "step1Title": "登录 maimai DX NET",
+      "step2Title": "访问 \"Not Found\" 页面",
+      "step3Title": "执行代码"
     },
     "clipboard": {
-      "copied": "Copied to clipboard!",
-      "failed": "Failed to copy to clipboard"
+      "copied": "已复制到剪贴板！",
+      "failed": "复制到剪贴板失败"
     },
     "loading": {
-      "scriptLink": "Generating script link...",
-      "loginLink": "Generating personalized link..."
+      "scriptLink": "正在生成脚本链接...",
+      "loginLink": "正在生成个性化链接..."
     },
-    "tokenDialogDescription": "Enter your browser token to authenticate",
-    "segaAccountDescription": "Enter your SEGA account credentials",
-    "backToSteps": "Back to Steps",
+    "tokenDialogDescription": "输入您的浏览器令牌以进行验证",
+    "segaAccountDescription": "输入您的 SEGA 帐户凭证",
+    "backToSteps": "返回步骤",
     "step1": {
-      "description": "Login to maimai DX NET in an <strong>incognito / private window</strong>.",
-      "clickToCopy": "Click the link below to copy to clipboard:",
-      "haveCookies": "Have your own cookies already?",
-      "enterDirectly": "Enter it directly"
+      "description": "在<strong>无痕 / 隐私窗口</strong>中登录 maimai DX NET。",
+      "clickToCopy": "点击下方的链接以复制到剪贴板：",
+      "haveCookies": "已经有自己的 Cookies 了吗？",
+      "enterDirectly": "直接输入"
     },
     "step2": {
-      "description": "Visit this link below, in the same incognito / private tab.",
+      "description": "在同一个无痕 / 隐私标签页中，访问下方的链接。",
       "otpLabel": "OTP:",
-      "otpExpires": "Expires ~ {time}",
-      "refreshing": "Refreshing...",
-      "refreshOtp": "Refresh OTP"
+      "otpExpires": "过期时间 ~ {time}",
+      "refreshing": "刷新中...",
+      "refreshOtp": "刷新 OTP"
     },
     "step3": {
-      "desktop": "Desktop",
-      "desktopInstructions": "Copy the JavaScript code below and paste it in your browser's developer console (Ctrl + Shift + I or F12).",
-      "mobile": "Mobile",
-      "mobileStep1": "1. Tap the code below to copy to clipboard.",
-      "mobileStep2": "2. Create a bookmark in your browser and paste the copied text in the URL field.",
-      "mobileStep3": "3. Run the bookmark."
+      "desktop": "桌面版",
+      "desktopInstructions": "复制下方的 JavaScript 代码，并将其粘贴到浏览器的开发者控制台（Ctrl + Shift + I 或 F12）中。",
+      "mobile": "移动版",
+      "mobileStep1": "1. 点击下方的代码以复制到剪贴板。",
+      "mobileStep2": "2. 在您的浏览器中创建一个书签，并将复制的文本粘贴到 URL 字段中。",
+      "mobileStep3": "3. 运行该书签。"
     },
     "navigation": {
-      "previousStep": "Previous Step",
-      "nextStep": "Next Step"
+      "previousStep": "上一步",
+      "nextStep": "下一步"
     },
-    "recommended": "Recommended",
-    "tokenOptionDescription": "Login to your maimai DX NET account with your browser tokens. Token may expire from time to time. No password required and supports social logins.",
-    "passwordOptionDescription": "Login to your maimai DX NET account with your SEGA account credentials. Never expire. Not recommended."
+    "recommended": "推荐歌曲",
+    "tokenOptionDescription": "使用您的浏览器令牌登录您的 maimai DX NET 帐户。令牌可能会不时过期。无需密码，并支持社交登录。",
+    "passwordOptionDescription": "使用您的 SEGA 帐户凭证登录您的 maimai DX NET 帐户。永久有效。不推荐。"
   },
   "regions": {
-    "intl": "International",
-    "jp": "Japan",
-    "cn": "China",
+    "intl": "国际服",
+    "jp": "日本服",
+    "cn": "国服",
     "short": {
-      "intl": "Asia",
-      "jp": "Japan",
-      "cn": "China"
+      "intl": "亚",
+      "jp": "日本服",
+      "cn": "国服"
     }
   },
   "userHeader": {
-    "memberLabel": "ともマイ member",
-    "discordPrompt": "Facing issues? Or have features or ideas to add to tomomai ともマイ?",
-    "joinDiscord": "Join our Community Discord!"
+    "memberLabel": "ともマイ 成员",
+    "discordPrompt": "遇到问题了吗？或想对 tomomai ともマイ 提出功能或建议？",
+    "joinDiscord": "加入我们的社群 Discord！"
   },
   "publicHeader": {
-    "discordBanner": "Have questions or suggestions? Join our Discord community!"
+    "discordBanner": "有任何问题或建议吗？欢迎加入我们的 Discord 社群！"
   },
   "header": {
     "tabs": {
-      "dashboard": "Dashboard",
-      "db": "Database"
+      "dashboard": "首页",
+      "db": "数据库"
     },
-    "addDiscordBot": "Add as Discord Bot",
-    "admin": "Admin",
+    "addDiscordBot": "添加为 Discord 机器人",
+    "admin": "管理员",
     "errors": {
-      "inviteLink": "Failed to open invite link"
+      "inviteLink": "无法打开邀请链接"
     }
   },
   "usernameSetup": {
-    "title": "Choose Your Username",
-    "description": "You need to set a username to use this app. This will be used for your public profile URL and must be unique.",
-    "usernameLabel": "Username",
-    "placeholder": "Enter your username",
-    "checking": "Checking availability...",
-    "available": "Username is available!",
+    "title": "选择你的用户名",
+    "description": "你需要设置用户名才能使用此网站。这将用于你的公开个人资料网址，且必须是唯一的。",
+    "usernameLabel": "用户名",
+    "placeholder": "输入你的用户名",
+    "checking": "检查可用性中...",
+    "available": "用户名可用！",
     "rules": {
-      "length": "1-32 characters long",
-      "characters": "Letters, numbers, dashes (-), and underscores (_) only",
-      "profileUrl": "Will be used in your profile URL: /profile/{username}"
+      "length": "1-32 个字符",
+      "characters": "仅限英数字、破折号 (-) 和下划线 (_)",
+      "profileUrl": "将用于你的个人资料网址：/profile/{username}"
     },
-    "setUsername": "Set Username",
-    "settingUsername": "Setting Username...",
-    "success": "Username set successfully!",
-    "enterUsername": "Please enter a username",
-    "chooseAvailable": "Please choose an available username",
+    "setUsername": "设置用户名",
+    "settingUsername": "设置用户名中...",
+    "success": "用户名设置成功！",
+    "enterUsername": "请输入用户名",
+    "chooseAvailable": "请选择可用的用户名",
     "validation": {
-      "format": "Username must be 1-32 characters long and contain only letters, numbers, dashes, and underscores",
-      "taken": "This username is already taken"
+      "format": "用户名必须是 1-32 个字符，仅包含英数字、破折号和下划线",
+      "taken": "此用户名已被使用"
     }
   },
   "invites": {
-    "title": "Manage Invitations",
-    "description": "Create and manage invitation links for new users.\nYou can invite 3 users per 3 days. Invitation links expire after 7 days.\nOnly invite people you trust or personally know, you may be responsible for their actions.",
-    "quota": "Quota:",
+    "title": "管理邀请",
+    "description": "为新用户创建和管理邀请链接。\n你可以在 3 天内邀请 3 位用户。邀请链接在 7 天后过期。\n请只邀请你信任或熟悉的玩家，你可能需要为他们的行为负责。",
+    "quota": "配额：",
     "quotaExplanation": {
-      "available": "Dashed circle = Available slot",
-      "active": "Normal border = Active invitation",
-      "claimed": "Filled circle = Recently claimed"
+      "available": "虚线圆圈 = 可用名额",
+      "active": "实线边框 = 有效邀请",
+      "claimed": "实心圆圈 = 最近使用的邀请"
     },
-    "yourInvitations": "Your Invitations",
-    "createInvite": "Create Invite",
-    "creating": "Creating...",
-    "loading": "Loading invitations...",
-    "noInvitations": "No invitations created yet.",
+    "yourInvitations": "你的邀请",
+    "createInvite": "创建邀请",
+    "creating": "创建中...",
+    "loading": "加载邀请中...",
+    "noInvitations": "尚未创建任何邀请。",
     "status": {
-      "activeCode": "Active Code",
-      "claimedCode": "Claimed Code",
-      "expiredCode": "Expired Code",
-      "revokedCode": "Revoked Code"
+      "activeCode": "有效代码",
+      "claimedCode": "已使用代码",
+      "expiredCode": "过期代码",
+      "revokedCode": "已撤销代码"
     },
     "statusDetails": {
-      "activeUntil": "Active until {date}",
-      "claimedBy": "Claimed by {name} on {date}",
-      "expiredOn": "Expired on {date}",
-      "revoked": "Revoked",
-      "unknownStatus": "Unknown status"
+      "activeUntil": "有效至 {date}",
+      "claimedBy": "由 {name} 于 {date} 使用",
+      "expiredOn": "于 {date} 过期",
+      "revoked": "已撤销",
+      "unknownStatus": "未知状态"
     },
     "actions": {
-      "copyLink": "Copy Link",
-      "revoke": "Revoke",
-      "revoking": "Revoking..."
+      "copyLink": "复制链接",
+      "revoke": "撤销",
+      "revoking": "撤销中..."
     },
     "messages": {
-      "created": "Invitation created successfully!",
-      "linkCopied": "Invitation link copied to clipboard!",
-      "createFailed": "Failed to create invitation",
-      "revoked": "Invitation revoked successfully!",
-      "revokeFailed": "Failed to revoke invitation",
-      "copyFailed": "Failed to copy to clipboard",
-      "clipboardNotSupported": "Clipboard not supported",
-      "quotaExceeded": "You can only have 3 active invites per 3 days",
-      "newUserRestriction": "New users must wait 3 days before creating invites",
-      "newUserRestrictionDetails": "You can create invites after {date}"
+      "created": "邀请创建成功！",
+      "linkCopied": "邀请链接已复制到剪贴板！",
+      "createFailed": "创建邀请失败",
+      "revoked": "邀请撤销成功！",
+      "revokeFailed": "撤销邀请失败",
+      "copyFailed": "复制到剪贴板失败",
+      "clipboardNotSupported": "不支持剪贴板",
+      "quotaExceeded": "你在 3 天内只能创建 3 个有效邀请",
+      "newUserRestriction": "新用户必须等待 3 天才能创建邀请",
+      "newUserRestrictionDetails": "你可以在 {date} 之后创建邀请"
     }
   },
   "acceptInvitation": {
     "title": "tomomai ともマイ",
-    "subtitle": "You've been invited to join the tomomai ともマイ community",
-    "validating": "Validating invitation...",
-    "redirecting": "Redirecting to home page...",
-    "invited": "You've been invited!",
-    "invitedBy": "{name} has invited you to join tomomai ともマイ",
-    "expiresOn": "Invitation expires on {date}",
-    "acceptAndSignUp": "Accept Invitation & Sign Up",
-    "backToHome": "Back to Home",
-    "alreadyLoggedIn": "Welcome! You are already logged in.",
-    "authError": "An error occurred during authentication. Please try again.",
+    "subtitle": "你已被邀请加入 tomomai ともマイ 社群",
+    "validating": "验证邀请中...",
+    "redirecting": "重新导向至首页...",
+    "invited": "你已被邀请！",
+    "invitedBy": "{name} 邀请你加入 tomomai ともマイ",
+    "expiresOn": "邀请于 {date} 过期",
+    "acceptAndSignUp": "接受邀请并注册",
+    "backToHome": "返回首页",
+    "alreadyLoggedIn": "欢迎！你已经登录了。",
+    "authError": "验证过程中发生错误。请再试一次。",
     "errors": {
-      "invalidCode": "Invalid invitation code",
-      "revoked": "This invitation has been revoked",
-      "alreadyUsed": "This invitation has already been used",
-      "expired": "This invitation has expired",
-      "ownCode": "You cannot use your own invitation code",
-      "validationFailed": "Failed to validate invitation"
+      "invalidCode": "无效的邀请代码",
+      "revoked": "此邀请已被撤销",
+      "alreadyUsed": "此邀请已被使用",
+      "expired": "此邀请已过期",
+      "ownCode": "你不能使用自己的邀请代码",
+      "validationFailed": "邀请验证失败"
     }
   },
   "db": {
     "callout": {
-      "title": "Accessing the database instead?",
-      "subtitle": "Click here to view the song database without logging in.",
-      "description": "tomomai ともマイ DB is a public database of maimai charts, arcades, and more."
+      "title": "想查询数据库吗？",
+      "subtitle": "无需登录即可查看歌曲数据库！",
+      "description": "tomomai ともマイ DB 是一个公开的 maimai 谱面、机厅及更多maimai信息的数据库"
     },
     "beta": {
-      "title": "Beta Feature",
-      "description": "The database feature is currently in beta. Some data may be incomplete or inaccurate."
+      "title": "测试功能",
+      "description": "数据库功能目前处于测试阶段。部分数据可能不完整或不准确。"
     },
     "types": {
-      "songs": "Songs",
-      "calculator": "Calculator",
-      "stats": "Stats"
+      "songs": "歌曲",
+      "calculator": "计算",
+      "stats": "统计"
     },
     "songs": {
       "metadata": {
-        "title": "Songs Database | maimai DX",
-        "description": "Browse and search all maimai DX songs. Filter by type, genre, and version. View song details, difficulty levels, and regional availability."
+        "title": "歌曲数据库 | maimai DX",
+        "description": "浏览和搜索所有 maimai DX 歌曲。按类型、分类和版本筛选。查看歌曲详情、难度等级和区域开放情况。"
       },
-      "title": "Songs Database | maimai DX",
-      "searchPlaceholder": "Search songs, artists, genres...",
-      "noSongsFound": "No songs found",
-      "tryAdjustingSearch": "Try adjusting your search",
-      "noSongsAvailable": "No songs available",
+      "title": "歌曲数据库 | maimai DX",
+      "searchPlaceholder": "搜索歌曲、艺术家、分类...",
+      "noSongsFound": "未找到歌曲",
+      "tryAdjustingSearch": "尝试调整搜索条件",
+      "noSongsAvailable": "无可用歌曲",
       "detail": {
-        "title": "Song Details",
-        "artist": "Song artist",
-        "charts": "Charts",
-        "availability": "Availability",
-        "yourScore": "Your Score",
-        "achievement": "Achievement",
-        "rating": "Rating",
-        "chartDesigner": "Chart Designer",
+        "title": "歌曲详情",
+        "artist": "艺术家",
+        "charts": "谱面",
+        "availability": "区域",
+        "yourScore": "你的成绩",
+        "achievement": "达成率",
+        "rating": "R 值",
+        "chartDesigner": "谱面设计者",
         "bpm": "BPM",
-        "added": "Added",
-        "share": "Share Link",
-        "youtube": "YouTube",
-        "viewCharts": "View Charts",
-        "viewDetails": "View Details on tomomai DB"
+        "added": "添加版本",
+        "share": "分享",
+        "youtube": "YouTube 搜索",
+        "viewCharts": "查看谱面",
+        "viewDetails": "在 tomomai DB 查看详情"
       },
       "filter": {
-        "type": "Type",
-        "genre": "Genre",
-        "addedVersion": "Added Version",
+        "type": "类型",
+        "genre": "分类",
+        "addedVersion": "添加版本",
         "std": "STD",
         "dx": "DX",
         "sort": "Sort",
@@ -495,56 +495,56 @@
         "sortVersionAsc": "Version (Oldest)",
         "sortLevelAsc": "Level (Low -> High)",
         "sortLevelDesc": "Level (High -> Low)",
-        "level": "Level",
+        "level": "等级",
         "groupBy": "Group By",
         "groups": {
           "none": "None",
-          "noteDesigner": "Chart Designer",
+          "noteDesigner": "谱面设计者",
           "levelAsc": "Level (Low -> High)",
           "levelDesc": "Level (High -> Low)",
           "versionAsc": "Version (Oldest)",
           "versionDesc": "Version (Latest)",
-          "genre": "Genre",
-          "artist": "Artist"
+          "genre": "分类",
+          "artist": "艺术家"
         }
       }
     },
     "common": {
-      "difficulty": "Difficulty",
-      "level": "Level",
-      "notes": "Notes",
-      "chartDesigner": "Chart Designer",
+      "difficulty": "难度",
+      "level": "等级",
+      "notes": "物量",
+      "chartDesigner": "谱面设计者",
       "bpm": "BPM",
-      "added": "Added"
+      "added": "添加版本"
     },
     "stats": {
-      "title": "Global Statistics",
-      "ratingDistribution": "Player Rating Distribution",
-      "playCountDistribution": "Player Play Count Distribution",
-      "topTitles": "Top Player Titles",
-      "topSongs": "Most Played Songs",
-      "averageAchievementByLevel": "Average Achievement by Level",
-      "ratingVsPlayCount": "Rating vs Play Count Heatmap",
+      "title": "全局统计",
+      "ratingDistribution": "R 值分布",
+      "playCountDistribution": "游玩次数分布",
+      "topTitles": "热门称号",
+      "topSongs": "热门歌曲",
+      "averageAchievementByLevel": "等级平均达成率",
+      "ratingVsPlayCount": "R 值 vs 游玩次数热力图",
       "xAxis": {
-        "rating": "Rating",
-        "playCount": "Play Count",
-        "level": "Level"
+        "rating": "R 值",
+        "playCount": "游玩次数",
+        "level": "等级"
       },
       "yAxis": {
-        "percentage": "Percentage",
-        "achievement": "Achievement",
-        "count": "Users"
+        "percentage": "占比",
+        "achievement": "达成率",
+        "count": "用户数"
       },
       "table": {
-        "rank": "Rank",
-        "title": "Title",
-        "song": "Song",
-        "percentage": "Percentage",
-        "count": "Count"
+        "rank": "排名",
+        "title": "称号",
+        "song": "歌曲",
+        "percentage": "占比",
+        "count": "数"
       },
       "region": {
-        "intl": "International",
-        "jp": "Japan"
+        "intl": "国际服",
+        "jp": "日本服"
       }
     }
   },
