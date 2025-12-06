@@ -1,33 +1,33 @@
 {
   "common": {
-    "title": "tomomai ともマイ",
-    "loading": "Loading...",
-    "save": "Save",
-    "cancel": "Cancel",
-    "close": "Close",
-    "settings": "Settings",
-    "language": "Language",
-    "timezone": "Timezone",
-    "update": "Update",
-    "login": "Login",
-    "join": "Join",
-    "logout": "Logout",
-    "username": "Username",
-    "password": "Password",
-    "token": "Token",
-    "cookies": "Cookies",
-    "authentication": "Authentication",
-    "playerInfo": "Player Info",
-    "rating": "Rating",
-    "stars": "Stars",
-    "plays": "Plays",
-    "total": "Total",
+    "title": "ともマイ",
+    "loading": "読み込み中...",
+    "save": "保存",
+    "cancel": "キャンセル",
+    "close": "閉じる",
+    "settings": "設定",
+    "language": "言語",
+    "timezone": "タイムゾーン",
+    "update": "更新",
+    "login": "ログイン",
+    "join": "登録",
+    "logout": "ログアウト",
+    "username": "ユーザー名",
+    "password": "パスワード",
+    "token": "トークン",
+    "cookies": "クッキー",
+    "authentication": "認証",
+    "playerInfo": "プレイヤー情報",
+    "rating": "レーティング",
+    "stars": "スター数",
+    "plays": "プレイ数",
+    "total": "合計",
     "theme": "Theme",
-    "invitations": "Invitations",
+    "invitations": "招待",
     "discord": "Discord",
-    "about": "About",
-    "experiments": "Experiments",
-    "comingSoon": "Coming soon...",
+    "about": "ともマイについて",
+    "experiments": "実験",
+    "comingSoon": "準備中...",
     "difficulties": {
       "basic": "Basic",
       "advanced": "Advanced",
@@ -38,37 +38,37 @@
     }
   },
   "auth": {
-    "loginWithDiscord": "Continue with Discord",
-    "loginDescription": "Sign in with Discord to start tracking your maimai scores",
-    "noAccount": "Don't have an account?",
-    "signupWithDiscord": "Sign up with Discord",
-    "signupDisabled": "Sign up Currently Disabled",
-    "signupDisabledMessage": "We are not accepting new registrations at this time. Please check back later.",
+    "loginWithDiscord": "Discordで続行",
+    "loginDescription": "Discordでログインして、maimaiのスコアを記録・管理しよう！",
+    "noAccount": "アカウントをお持ちでないですか？",
+    "signupWithDiscord": "Discordでサインアップ",
+    "signupDisabled": "サインアップは現在無効です",
+    "signupDisabledMessage": "現在、新規登録は一時停止中です。後でもう一度お試しください。",
     "features": {
-      "title": "Features:",
-      "trackScores": "Track scores across International and Japan regions",
-      "viewHistory": "View historical data snapshots",
-      "importData": "Import data directly from maimai DX NET",
-      "analyzeProgress": "Analyze your progress over time"
+      "title": "主な機能：",
+      "trackScores": "インターナショナル／日本どちらのスコアも追跡",
+      "viewHistory": "過去のスナップショットの閲覧",
+      "importData": "maimai DX NETからデータ取り込み",
+      "analyzeProgress": "プレイ進捗の分析"
     }
   },
   "dashboard": {
-    "title": "tomomai ともマイ",
-    "description": "Track and analyze your maimai scores with friends",
-    "timezoneUpdateSuccess": "Timezone updated successfully!",
-    "timezoneUpdateError": "Failed to update timezone: {error}",
-    "languageUpdateSuccess": "Language updated successfully!",
-    "languageUpdateError": "Failed to update language: {error}",
-    "tokenUpdateSuccess": "Token saved successfully!"
+    "title": "ともマイ",
+    "description": "フレンドと一緒にmaimaiのスコアを共有・分析しよう！",
+    "timezoneUpdateSuccess": "タイムゾーンの更新に成功しました！",
+    "timezoneUpdateError": "タイムゾーンの更新に失敗しました: {error}",
+    "languageUpdateSuccess": "言語の更新に成功しました！",
+    "languageUpdateError": "言語の更新に失敗しました: {error}",
+    "tokenUpdateSuccess": "認証情報を保存しました！"
   },
   "settings": {
-    "title": "Settings",
-    "description": "Customize your tomomai ともマイ experience.",
+    "title": "設定",
+    "description": "ともマイを自分好みにカスタマイズしよう。",
     "language": {
-      "label": "Language",
-      "description": "Select your preferred interface language.",
-      "placeholder": "Select language",
-      "auto": "Auto-detect",
+      "label": "言語",
+      "description": "希望する言語を選んでください。",
+      "placeholder": "言語を選択",
+      "auto": "自動検出",
       "en": "English (US)",
       "en-GB": "English (UK)",
       "ja": "日本語",
@@ -78,416 +78,416 @@
       "ko": "한국어 (AI 번역)"
     },
     "timezone": {
-      "label": "Timezone",
-      "description": "This affects how dates and times are displayed throughout the app. Japan timezone is the default as it matches maimai's server time.",
-      "placeholder": "Select timezone"
+      "label": "タイムゾーン",
+      "description": "サイト上の日付や時刻の表示に影響します。デフォルトはmaimaiサーバーと同じ日本時間です。",
+      "placeholder": "タイムゾーンを選択"
     },
     "account": {
-      "label": "Account Authentication",
-      "updateToken": "Update Token",
-      "description": "Update your maimai token for data fetching. This is required to sync your player data."
+      "label": "アカウント認証",
+      "updateToken": "認証情報を更新",
+      "description": "データ取得とプレイヤー同期のために、認証情報（トークン）を更新します。"
     },
     "profile": {
-      "publishProfile": "Publish Profile",
-      "publishDescription": "Make your maimai profile publicly accessible for others to view your scores and progress.",
+      "publishProfile": "プロフィールを公開",
+      "publishDescription": "maimaiプロフィールを公開して、他のプレイヤーにスコアや進捗を共有しよう。",
       "mainRegion": {
-        "label": "Main Region",
-        "description": "Choose your primary region for the published profile.",
-        "intl": "International",
-        "jp": "Japan",
-        "cn": "China"
+        "label": "メイン地域",
+        "description": "公開するプロフィールの主要地域を選択してください。",
+        "intl": "インターナショナル",
+        "jp": "日本",
+        "cn": "中国"
       },
       "privacy": {
-        "label": "Privacy Settings",
+        "label": "プライバシー設定",
         "showAllScores": {
-          "label": "Show All Scores",
-          "description": "Display all your scores instead of only your best 50 songs."
+          "label": "すべてのスコアを表示",
+          "description": "ベスト50曲のみではなく、すべてのスコアを表示します。"
         },
         "showScoreDetails": {
-          "label": "Show Score Details",
-          "description": "Show detailed score information including play counts and timing statistics."
+          "label": "スコアの詳細を表示",
+          "description": "プレイ回数や判定タイミングなどの詳細データを表示します。"
         },
         "showPlates": {
-          "label": "Show Plates",
-          "description": "Display your plate collection and completion progress."
+          "label": "ネームプレートを表示",
+          "description": "ネームプレートコレクションを表示します。"
         },
         "showPlayCounts": {
-          "label": "Show Play Counts",
-          "description": "Display your maimai play counts."
+          "label": "プレイ回数を表示",
+          "description": "maimaiのプレイ回数を表示します。"
         },
         "showEvents": {
-          "label": "Show Events",
-          "description": "Display your event completion progress."
+          "label": "ちほーを表示",
+          "description": "ちほーの達成進捗を表示します。"
         },
         "showInSearch": {
-          "label": "Show in Search",
-          "description": "Allow others to find your profile by searching for your username."
+          "label": "検索で表示",
+          "description": "他の人があなたのユーザー名でプロフィールを検索できるようにします。"
         }
       },
       "url": {
-        "label": "Profile URL",
-        "description": "Your public profile link that you can share with others.",
-        "copied": "Profile URL copied to clipboard!",
-        "copyFailed": "Failed to copy URL to clipboard"
+        "label": "プロフィールURL",
+        "description": "プロフィールの共有リンクです。",
+        "copied": "プロフィールURLをクリップボードにコピーしました！",
+        "copyFailed": "URLのクリップボードへのコピーに失敗しました"
       }
     },
-    "saveChanges": "Save Changes",
-    "saving": "Saving...",
-    "saved": "Settings saved successfully!",
-    "errorSaving": "Failed to save settings"
+    "saveChanges": "変更を保存",
+    "saving": "保存中...",
+    "saved": "設定が正常に保存されました！",
+    "errorSaving": "設定の保存に失敗しました"
   },
   "dataBanner": {
-    "dataSnapshot": "Data Snapshot:",
-    "noDataAvailable": "No data available",
-    "selectSnapshot": "Select a snapshot",
-    "fetchNewData": "Fetch New Data",
-    "fetchingData": "Fetching data...",
-    "lastUpdate": "Last updated",
-    "noDataInstructions": "No data found for this region. Click \"Fetch New Data\" to import your maimai scores. You'll need your maimai token for this process."
+    "dataSnapshot": "データスナップショット：",
+    "noDataAvailable": "データがありません",
+    "selectSnapshot": "スナップショットを選択",
+    "fetchNewData": "データ取得",
+    "fetchingData": "データ取得中...",
+    "lastUpdate": "最終更新",
+    "noDataInstructions": "この地域のデータがまだありません。「新しいデータを取得」からmaimaiスコアを取り込みましょう（ログイン／トークンが必要です）。"
   },
   "profileVisibility": {
-    "public": "Public Profile",
-    "private": "Private Profile",
+    "public": "公開プロフィール",
+    "private": "非公開プロフィール",
     "accessibleBy": "Accessible by ",
-    "accessibleByEnd": "!",
-    "youMayChangePrivacySettings": "You may change your privacy settings in top right Icon → Settings → Publish Profile.",
-    "onlyAccessibleByYou": "Only accessible by you! You may change your privacy settings in top right Icon → Settings → Publish Profile."
+    "accessibleByEnd": " から閲覧できます！",
+    "youMayChangePrivacySettings": "右上のアイコン → 設定 → プロフィールを公開 からプライバシー設定を変更できます。",
+    "onlyAccessibleByYou": "自分だけが閲覧できます！右上のアイコン → 設定 → プロフィールを公開 からプライバシー設定を変更できます。"
   },
   "dataContent": {
-    "loading": "Loading data...",
-    "snapshotData": "Snapshot Data",
-    "snapshotFrom": "Snapshot from {date} • {name} • {count} songs",
+    "loading": "データの読み込み中...",
+    "snapshotData": "スナップショットデータ",
+    "snapshotFrom": "{date} のスナップショット • {name} • {count}曲",
     "tabs": {
-      "playerInfo": "Player Info",
-      "stats": "Stats",
-      "songs": "Songs",
-      "recentPlays": "Recent Plays",
-      "recommendations": "Recommended",
-      "plates": "Plates",
-      "map": "Events",
-      "exportImage": "Export Image",
-      "history": "History"
+      "playerInfo": "プレイヤー情報",
+      "stats": "統計",
+      "songs": "楽曲",
+      "recentPlays": "プレイレコード",
+      "recommendations": "おすすめ楽曲",
+      "plates": "ネームプレート",
+      "map": "ちほー",
+      "exportImage": "エクスポート",
+      "history": "履歴"
     },
-    "playerInfo": "Player Info",
-    "rating": "Rating: {rating}",
-    "stars": "Stars: {stars}",
-    "versionPlays": "Version Plays: {count}",
-    "totalPlays": "Total Plays: {count}",
-    "songs": "Songs ({count} total)",
-    "searchPlaceholder": "Search songs by name, artist, difficulty, or type...",
-    "newSongsB15": "New Songs B15",
-    "oldSongsB35": "Old Songs B35",
-    "newSongs": "New Songs",
-    "oldSongs": "Old Songs",
+    "playerInfo": "プレイヤー情報",
+    "rating": "レート値：{rating}",
+    "stars": "スター数：{stars}",
+    "versionPlays": "現バージョンプレイ回数：{count}",
+    "totalPlays": "累計プレイ回数：{count}",
+    "songs": "楽曲（合計 {count} 曲）",
+    "searchPlaceholder": "楽曲名、アーティスト、難易度、タイプなどで検索...",
+    "newSongsB15": "新規曲 B15",
+    "oldSongsB35": "過去曲 B35",
+    "newSongs": "新規曲",
+    "oldSongs": "過去曲",
     "displayModes": {
-      "list": "List",
-      "grid": "Grid",
-      "compact": "Table"
+      "list": "リスト",
+      "grid": "グリッド",
+      "compact": "コンパクト表"
     },
     "tableHeaders": {
-      "song": "Song",
-      "artist": "Artist",
-      "level": "Level",
-      "achievement": "Achievement",
+      "song": "楽曲",
+      "artist": "アーティスト",
+      "level": "レベル",
+      "achievement": "達成率",
       "fc": "FC",
       "fs": "FS",
-      "rating": "Rating"
+      "rating": "レーティング"
     },
     "statistics": {
-      "sum": "Sum",
-      "average": "Avg"
+      "sum": "合計",
+      "average": "平均"
     },
-    "switchToListForAllSongs": "Switch to List or Table view for all songs",
-    "noDataAvailable": "No Data Available",
-    "getStartedInstructions": "Get started by fetching your maimai data using the fetch button above.",
+    "switchToListForAllSongs": "すべての楽曲を見るには、リストまたは表表示に切り替えてください。",
+    "noDataAvailable": "データがありません",
+    "getStartedInstructions": "上の取得ボタンからmaimaiデータを取得して使い始めましょう。",
     "history": {
-      "title": "Rating History",
-      "ratingOverTime": "Rating Over Time",
-      "noHistory": "No rating history available",
-      "needMoreData": "Fetch data at least twice to see your rating history"
+      "title": "レート値の履歴",
+      "ratingOverTime": "レート値の推移",
+      "noHistory": "レート値の履歴がありません",
+      "needMoreData": "履歴を表示するには、少なくとも2回データを取得してください"
     }
   },
   "recommendations": {
-    "noRecommendations": "No Recommendations Available",
-    "allOptimal": "All your scores are already optimal! Keep up the great work.",
-    "description": "Songs recommended to improve your rating based on your current B15/B35 scores.",
-    "filterButton": "Filter",
+    "noRecommendations": "おすすめがありません",
+    "allOptimal": "レート値を伸ばせる曲はもうありません！",
+    "description": "現在のB15/B35スコアに基づき、レート値を伸ばしやすい楽曲をおすすめします。",
+    "filterButton": "フィルター",
     "filters": {
-      "all": "All",
-      "best": "In B15/B35",
-      "new": "New Songs",
-      "old": "Old Songs"
+      "all": "すべて",
+      "best": "ベスト50内",
+      "new": "新規曲",
+      "old": "過去曲"
     },
     "filterCategories": {
-      "difficulty": "Difficulty",
-      "level": "Level",
-      "type": "Type",
-      "targetRating": "Target Rating",
-      "achievement": "Achievement",
-      "version": "Version"
+      "difficulty": "難易度",
+      "level": "レベル",
+      "type": "タイプ",
+      "targetRating": "目標レート",
+      "achievement": "達成率",
+      "version": "バージョン"
     }
   },
   "recentPlays": {
-    "title": "Recent Plays",
-    "noPlays": "No recent plays found",
+    "title": "プレイレコード",
+    "noPlays": "プレイレコードがありません",
     "labels": {
       "dx": "DX",
-      "combo": "Combo",
-      "fast": "Fast",
-      "late": "Late"
+      "combo": "コンボ",
+      "fast": "FAST",
+      "late": "LATE"
     },
     "notesBreakdown": {
-      "type": "Type",
-      "total": "Total",
-      "totalLoss": "Loss"
+      "type": "タイプ",
+      "total": "合計",
+      "totalLoss": "ロス"
     }
   },
   "events": {
-    "title": "Events",
-    "areaEvents": "Area Events",
-    "eventAreaEvents": "Event Area Events",
-    "noEventsAvailable": "No events available",
-    "noAreaEvents": "No area events available",
-    "noEventAreaEvents": "No event area events available",
-    "currentDistance": "Current Distance",
-    "nextReward": "Next Reward in",
-    "eventCompleted": "Event Completed",
-    "notStarted": "Not Started",
-    "inProgress": "In Progress",
-    "completed": "Completed"
+    "title": "ちほー",
+    "areaEvents": "ちほー",
+    "eventAreaEvents": "イベントちほー",
+    "noEventsAvailable": "ちほーがありません",
+    "noAreaEvents": "ちほーがありません",
+    "noEventAreaEvents": "イベントちほーがありません",
+    "currentDistance": "累計距離",
+    "nextReward": "次の報酬まで",
+    "eventCompleted": "コンプリート",
+    "notStarted": "未開始",
+    "inProgress": "進行中",
+    "completed": "コンプリート"
   },
   "tokenDialog": {
-    "title": "Update maimai authentication",
-    "japanDescription": "Enter your SEGA account credentials for the Japan region.",
-    "intlDescription": "Choose your authentication method for the International region.",
-    "credentialsStored": "Your credentials will be saved for future use.",
-    "username": "Username",
-    "usernamePlaceholder": "Enter your SEGA account username",
-    "password": "Password",
-    "passwordPlaceholder": "Enter your SEGA account password",
-    "cookies": "Cookies",
-    "tokenPlaceholder": "clal=your_token_here",
-    "tokenValidationError": "Token must start with \"clal=\" followed by letters and numbers only",
-    "authenticationNote": "Authentication:",
-    "segaCredentialsNote": "Use your SEGA account credentials to authenticate with maimai DX NET.",
-    "credentialsSecureNote": "Your credentials will be stored for future fetches.",
-    "savingCredentials": "Saving Credentials...",
-    "saveCredentials": "Save Credentials",
-    "tokenTab": "Token",
-    "passwordTab": "Password",
+    "title": "maimai 認証情報を更新",
+    "japanDescription": "SEGAアカウントでログインします。",
+    "intlDescription": "認証方法を選択してください。",
+    "credentialsStored": "認証情報は今後の取得で使用されます。",
+    "username": "ユーザー名",
+    "usernamePlaceholder": "SEGAアカウントのユーザー名を入力",
+    "password": "パスワード",
+    "passwordPlaceholder": "SEGAアカウントのパスワードを入力",
+    "cookies": "クッキー",
+    "tokenPlaceholder": "clal=ここにCookie値を入力",
+    "tokenValidationError": "Cookieは「clal=」で始まり、英数字のみを含む必要があります。",
+    "authenticationNote": "認証：",
+    "segaCredentialsNote": "SEGAアカウントのユーザー名とパスワードで直接認証します。",
+    "credentialsSecureNote": "認証情報は保存され、今後の同期時に使用されます。",
+    "savingCredentials": "認証情報保存中...",
+    "saveCredentials": "認証情報を保存",
+    "tokenTab": "トークン",
+    "passwordTab": "パスワード",
     "tokenInstructions": {
-      "description": "Cookie value starting with \"clal=\" from maimai DX NET.",
-      "expiration": "The token may get invalidated after a certain period of time, so you may need to update it in the future."
+      "description": "maimai DX NETから取得した「clal=」で始まるクッキー値を入力してください。",
+      "expiration": "トークンは一定期間で無効になる場合がありますので、その際は再度更新してください。"
     },
-    "passwordInstructions": "Use your SEGA account username and password directly",
-    "secureStorage": "Your credentials will be stored for future fetches.",
+    "passwordInstructions": "SEGAアカウントのユーザー名とパスワードで直接ログイン",
+    "secureStorage": "認証情報は保存され、今後の同期時に使用されます。",
     "steps": {
-      "step1Title": "Login to maimai DX NET",
-      "step2Title": "Go to Not Found page",
-      "step3Title": "Execute Code"
+      "step1Title": "maimai DX NETにログイン",
+      "step2Title": "「Not Found」ページに移動",
+      "step3Title": "コードを実行"
     },
     "clipboard": {
-      "copied": "Copied to clipboard!",
-      "failed": "Failed to copy to clipboard"
+      "copied": "クリップボードにコピーしました！",
+      "failed": "クリップボードへのコピーに失敗しました"
     },
     "loading": {
-      "scriptLink": "Generating script link...",
-      "loginLink": "Generating personalized link..."
+      "scriptLink": "スクリプトリンクを生成中...",
+      "loginLink": "専用リンクを生成中..."
     },
-    "tokenDialogDescription": "Enter your browser token to authenticate",
-    "segaAccountDescription": "Enter your SEGA account credentials",
-    "backToSteps": "Back to Steps",
+    "tokenDialogDescription": "ブラウザのトークンを入力して認証します",
+    "segaAccountDescription": "SEGAアカウントの認証情報を入力します",
+    "backToSteps": "手順に戻る",
     "step1": {
-      "description": "Login to maimai DX NET in an <strong>incognito / private window</strong>.",
-      "clickToCopy": "Click the link below to copy to clipboard:",
-      "haveCookies": "Have your own cookies already?",
-      "enterDirectly": "Enter it directly"
+      "description": "<strong>シークレット / プライベートウィンドウ</strong>で maimai DX NET にログインします。",
+      "clickToCopy": "下のリンクをクリックしてクリップボードにコピー：",
+      "haveCookies": "すでに Cookie をお持ちですか？",
+      "enterDirectly": "直接入力する"
     },
     "step2": {
-      "description": "Visit this link below, in the same incognito / private tab.",
-      "otpLabel": "OTP:",
-      "otpExpires": "Expires ~ {time}",
-      "refreshing": "Refreshing...",
-      "refreshOtp": "Refresh OTP"
+      "description": "同じシークレット / プライベートタブで、下のリンクにアクセスします。",
+      "otpLabel": "OTP：",
+      "otpExpires": "有効期限 ~ {time}",
+      "refreshing": "更新中...",
+      "refreshOtp": "OTPを更新"
     },
     "step3": {
-      "desktop": "Desktop",
-      "desktopInstructions": "Copy the JavaScript code below and paste it in your browser's developer console (Ctrl + Shift + I or F12).",
-      "mobile": "Mobile",
-      "mobileStep1": "1. Tap the code below to copy to clipboard.",
-      "mobileStep2": "2. Create a bookmark in your browser and paste the copied text in the URL field.",
-      "mobileStep3": "3. Run the bookmark."
+      "desktop": "デスクトップ",
+      "desktopInstructions": "下の JavaScript コードをコピーし、ブラウザの開発者コンソール（Ctrl + Shift + I または F12）に貼り付けます。",
+      "mobile": "モバイル",
+      "mobileStep1": "1. 下のコードをタップしてクリップボードにコピーします。",
+      "mobileStep2": "2. ブラウザでブックマークを作成し、コピーしたテキストを URL 欄に貼り付けます。",
+      "mobileStep3": "3. ブックマークを実行します。"
     },
     "navigation": {
-      "previousStep": "Previous Step",
-      "nextStep": "Next Step"
+      "previousStep": "戻る",
+      "nextStep": "次へ"
     },
-    "recommended": "Recommended",
-    "tokenOptionDescription": "Login to your maimai DX NET account with your browser tokens. Token may expire from time to time. No password required and supports social logins.",
-    "passwordOptionDescription": "Login to your maimai DX NET account with your SEGA account credentials. Never expire. Not recommended."
+    "recommended": "おすすめ楽曲",
+    "tokenOptionDescription": "ブラウザのトークンを使用して maimai DX NET アカウントにログインします。トークンは一定期間で無効になることがありますので、その際は再度更新してください。パスワードは不要で、ソーシャルログインもサポートしています。",
+    "passwordOptionDescription": "SEGA アカウントの認証情報を使用して maimai DX NET アカウントにログインします。期限切れはありません。非推奨です。"
   },
   "regions": {
-    "intl": "International",
-    "jp": "Japan",
-    "cn": "China",
+    "intl": "インターナショナル",
+    "jp": "日本",
+    "cn": "中国",
     "short": {
-      "intl": "Asia",
-      "jp": "Japan",
-      "cn": "China"
+      "intl": "海外",
+      "jp": "日本",
+      "cn": "中国"
     }
   },
   "userHeader": {
-    "memberLabel": "ともマイ member",
-    "discordPrompt": "Facing issues? Or have features or ideas to add to tomomai ともマイ?",
-    "joinDiscord": "Join our Community Discord!"
+    "memberLabel": "ともマイのメンバー",
+    "discordPrompt": "何かお困りのことはありますか？ともマイへのご意見・アイデアをぜひお聞かせください！",
+    "joinDiscord": "Discordコミュニティに参加する"
   },
   "publicHeader": {
-    "discordBanner": "Have questions or suggestions? Join our Discord community!"
+    "discordBanner": "ご質問やご提案は、ぜひDiscordコミュニティでお聞かせください！"
   },
   "header": {
     "tabs": {
-      "dashboard": "Dashboard",
-      "db": "Database"
+      "dashboard": "ホーム",
+      "db": "データベース"
     },
-    "addDiscordBot": "Add as Discord Bot",
-    "admin": "Admin",
+    "addDiscordBot": "Discordボットとして追加",
+    "admin": "管理者",
     "errors": {
-      "inviteLink": "Failed to open invite link"
+      "inviteLink": "招待リンクを開けませんでした"
     }
   },
   "usernameSetup": {
-    "title": "Choose Your Username",
-    "description": "You need to set a username to use this app. This will be used for your public profile URL and must be unique.",
-    "usernameLabel": "Username",
-    "placeholder": "Enter your username",
-    "checking": "Checking availability...",
-    "available": "Username is available!",
+    "title": "ユーザー名を選択",
+    "description": "このサイトを利用するには、ユーザー名を設定する必要があります。これは公開プロフィールのURLに使用され、一意である必要があります。",
+    "usernameLabel": "ユーザー名",
+    "placeholder": "ユーザー名を入力",
+    "checking": "利用可能性を確認中...",
+    "available": "ユーザー名は利用可能です！",
     "rules": {
-      "length": "1-32 characters long",
-      "characters": "Letters, numbers, dashes (-), and underscores (_) only",
-      "profileUrl": "Will be used in your profile URL: /profile/{username}"
+      "length": "1-32文字",
+      "characters": "英数字、ダッシュ（-）、アンダースコア（_）のみ",
+      "profileUrl": "プロフィールURLに使用されます：/profile/{username}"
     },
-    "setUsername": "Set Username",
-    "settingUsername": "Setting Username...",
-    "success": "Username set successfully!",
-    "enterUsername": "Please enter a username",
-    "chooseAvailable": "Please choose an available username",
+    "setUsername": "ユーザー名を設定",
+    "settingUsername": "ユーザー名を設定中...",
+    "success": "ユーザー名が正常に設定されました！",
+    "enterUsername": "ユーザー名を入力してください",
+    "chooseAvailable": "利用可能なユーザー名を選択してください",
     "validation": {
-      "format": "Username must be 1-32 characters long and contain only letters, numbers, dashes, and underscores",
-      "taken": "This username is already taken"
+      "format": "ユーザー名は1-32文字で、英数字、ダッシュ、アンダースコアのみ使用できます",
+      "taken": "このユーザー名は既に使用されています"
     }
   },
   "invites": {
-    "title": "Manage Invitations",
-    "description": "Create and manage invitation links for new users.\nYou can invite 3 users per 3 days. Invitation links expire after 7 days.\nOnly invite people you trust or personally know, you may be responsible for their actions.",
-    "quota": "Quota:",
+    "title": "招待管理",
+    "description": "新規ユーザー用の招待リンクを作成・管理します。\n3日間で3人まで招待でき、リンクは7日後に期限切れになります。\n信頼できる仲間だけを招待してください。",
+    "quota": "残り枠:",
     "quotaExplanation": {
-      "available": "Dashed circle = Available slot",
-      "active": "Normal border = Active invitation",
-      "claimed": "Filled circle = Recently claimed"
+      "available": "点線の丸 = 利用可能な枠",
+      "active": "通常の枠線 = 有効な招待",
+      "claimed": "塗りつぶし = 最近使用された招待"
     },
-    "yourInvitations": "Your Invitations",
-    "createInvite": "Create Invite",
-    "creating": "Creating...",
-    "loading": "Loading invitations...",
-    "noInvitations": "No invitations created yet.",
+    "yourInvitations": "あなたの招待",
+    "createInvite": "招待を作成",
+    "creating": "作成中...",
+    "loading": "招待を読み込み中...",
+    "noInvitations": "まだ招待が作成されていません。",
     "status": {
-      "activeCode": "Active Code",
-      "claimedCode": "Claimed Code",
-      "expiredCode": "Expired Code",
-      "revokedCode": "Revoked Code"
+      "activeCode": "有効なコード",
+      "claimedCode": "使用済みコード",
+      "expiredCode": "期限切れコード",
+      "revokedCode": "取り消されたコード"
     },
     "statusDetails": {
-      "activeUntil": "Active until {date}",
-      "claimedBy": "Claimed by {name} on {date}",
-      "expiredOn": "Expired on {date}",
-      "revoked": "Revoked",
-      "unknownStatus": "Unknown status"
+      "activeUntil": "{date}まで有効",
+      "claimedBy": "{name}が{date}に使用しました",
+      "expiredOn": "{date}に期限切れ",
+      "revoked": "取り消し済み",
+      "unknownStatus": "不明なステータス"
     },
     "actions": {
-      "copyLink": "Copy Link",
-      "revoke": "Revoke",
-      "revoking": "Revoking..."
+      "copyLink": "リンクをコピー",
+      "revoke": "取り消し",
+      "revoking": "取り消し中..."
     },
     "messages": {
-      "created": "Invitation created successfully!",
-      "linkCopied": "Invitation link copied to clipboard!",
-      "createFailed": "Failed to create invitation",
-      "revoked": "Invitation revoked successfully!",
-      "revokeFailed": "Failed to revoke invitation",
-      "copyFailed": "Failed to copy to clipboard",
-      "clipboardNotSupported": "Clipboard not supported",
-      "quotaExceeded": "You can only have 3 active invites per 3 days",
-      "newUserRestriction": "New users must wait 3 days before creating invites",
-      "newUserRestrictionDetails": "You can create invites after {date}"
+      "created": "招待が正常に作成されました！",
+      "linkCopied": "招待リンクがクリップボードにコピーされました！",
+      "createFailed": "招待の作成に失敗しました",
+      "revoked": "招待が正常に取り消されました！",
+      "revokeFailed": "招待の取り消しに失敗しました",
+      "copyFailed": "クリップボードへのコピーに失敗しました",
+      "clipboardNotSupported": "クリップボードはサポートされていません",
+      "quotaExceeded": "3日間で3つの有効な招待しか作成できません",
+      "newUserRestriction": "新規ユーザーは招待を作成する前に3日間待つ必要があります",
+      "newUserRestrictionDetails": "{date}以降に招待を作成できます"
     }
   },
   "acceptInvitation": {
-    "title": "tomomai ともマイ",
-    "subtitle": "You've been invited to join the tomomai ともマイ community",
-    "validating": "Validating invitation...",
-    "redirecting": "Redirecting to home page...",
-    "invited": "You've been invited!",
-    "invitedBy": "{name} has invited you to join tomomai ともマイ",
-    "expiresOn": "Invitation expires on {date}",
-    "acceptAndSignUp": "Accept Invitation & Sign Up",
-    "backToHome": "Back to Home",
-    "alreadyLoggedIn": "Welcome! You are already logged in.",
-    "authError": "An error occurred during authentication. Please try again.",
+    "title": "ともマイ",
+    "subtitle": "ともマイコミュニティに招待されました！",
+    "validating": "招待を検証中...",
+    "redirecting": "ホームページにリダイレクト中...",
+    "invited": "招待されました！",
+    "invitedBy": "{name}があなたをともマイに招待しました",
+    "expiresOn": "この招待は{date}まで有効です。",
+    "acceptAndSignUp": "招待を受けてサインアップ",
+    "backToHome": "ホームに戻る",
+    "alreadyLoggedIn": "ようこそ！既にログインしています。",
+    "authError": "認証中にエラーが発生しました。もう一度お試しください。",
     "errors": {
-      "invalidCode": "Invalid invitation code",
-      "revoked": "This invitation has been revoked",
-      "alreadyUsed": "This invitation has already been used",
-      "expired": "This invitation has expired",
-      "ownCode": "You cannot use your own invitation code",
-      "validationFailed": "Failed to validate invitation"
+      "invalidCode": "無効な招待コード",
+      "revoked": "この招待は取り消されています",
+      "alreadyUsed": "この招待は既に使用されています",
+      "expired": "この招待は期限切れです",
+      "ownCode": "自分の招待コードは使用できません",
+      "validationFailed": "招待の検証に失敗しました"
     }
   },
   "db": {
     "callout": {
-      "title": "Accessing the database instead?",
-      "subtitle": "Click here to view the song database without logging in.",
-      "description": "tomomai ともマイ DB is a public database of maimai charts, arcades, and more."
+      "title": "データベースを利用したいですか？",
+      "subtitle": "ログイン不要で楽曲データをチェック！",
+      "description": "ともマイ DB は、maimaiの楽曲、譜面情報、各種データを集めた公開データベースです"
     },
     "beta": {
-      "title": "Beta Feature",
-      "description": "The database feature is currently in beta. Some data may be incomplete or inaccurate."
+      "title": "ベータ機能",
+      "description": "データベース機能は現在ベータ版です。一部のデータは不完全または不正確な場合があります。"
     },
     "types": {
-      "songs": "Songs",
-      "calculator": "Calculator",
-      "stats": "Stats"
+      "songs": "楽曲",
+      "calculator": "計算",
+      "stats": "統計"
     },
     "songs": {
       "metadata": {
-        "title": "Songs Database | maimai DX",
-        "description": "Browse and search all maimai DX songs. Filter by type, genre, and version. View song details, difficulty levels, and regional availability."
+        "title": "楽曲データベース | maimai でらっくす",
+        "description": "maimai でらっくすの楽曲を検索・閲覧できます。タイプ、ジャンル、バージョンでフィルタリング可能。楽曲詳細、難易度、収録地域も確認できます。"
       },
-      "title": "Songs Database | maimai DX",
-      "searchPlaceholder": "Search songs, artists, genres...",
-      "noSongsFound": "No songs found",
-      "tryAdjustingSearch": "Try adjusting your search",
-      "noSongsAvailable": "No songs available",
+      "title": "楽曲データベース | maimai でらっくす",
+      "searchPlaceholder": "楽曲名、アーティスト、ジャンルなどで検索...",
+      "noSongsFound": "楽曲が見つかりません",
+      "tryAdjustingSearch": "検索条件を変更してください",
+      "noSongsAvailable": "楽曲がありません",
       "detail": {
-        "title": "Song Details",
-        "artist": "Song artist",
-        "charts": "Charts",
-        "availability": "Availability",
-        "yourScore": "Your Score",
-        "achievement": "Achievement",
-        "rating": "Rating",
-        "chartDesigner": "Chart Designer",
+        "title": "楽曲詳細",
+        "artist": "アーティスト",
+        "charts": "譜面",
+        "availability": "収録地域",
+        "yourScore": "あなたのスコア",
+        "achievement": "達成率",
+        "rating": "レーティング",
+        "chartDesigner": "譜面製作者",
         "bpm": "BPM",
-        "added": "Added",
-        "share": "Share Link",
-        "youtube": "YouTube",
-        "viewCharts": "View Charts",
-        "viewDetails": "View Details on tomomai DB"
+        "added": "追加バージョン",
+        "share": "共有",
+        "youtube": "YouTubeで検索",
+        "viewCharts": "譜面を見る",
+        "viewDetails": "ともマイ DB で詳細を見る"
       },
       "filter": {
-        "type": "Type",
-        "genre": "Genre",
-        "addedVersion": "Added Version",
+        "type": "タイプ",
+        "genre": "ジャンル",
+        "addedVersion": "追加バージョン",
         "std": "STD",
         "dx": "DX",
         "sort": "Sort",
@@ -495,56 +495,56 @@
         "sortVersionAsc": "Version (Oldest)",
         "sortLevelAsc": "Level (Low -> High)",
         "sortLevelDesc": "Level (High -> Low)",
-        "level": "Level",
+        "level": "レベル",
         "groupBy": "Group By",
         "groups": {
           "none": "None",
-          "noteDesigner": "Chart Designer",
+          "noteDesigner": "譜面製作者",
           "levelAsc": "Level (Low -> High)",
           "levelDesc": "Level (High -> Low)",
           "versionAsc": "Version (Oldest)",
           "versionDesc": "Version (Latest)",
-          "genre": "Genre",
-          "artist": "Artist"
+          "genre": "ジャンル",
+          "artist": "アーティスト"
         }
       }
     },
     "common": {
-      "difficulty": "Difficulty",
-      "level": "Level",
-      "notes": "Notes",
-      "chartDesigner": "Chart Designer",
+      "difficulty": "難易度",
+      "level": "レベル",
+      "notes": "ノーツ数",
+      "chartDesigner": "譜面製作者",
       "bpm": "BPM",
-      "added": "Added"
+      "added": "追加バージョン"
     },
     "stats": {
-      "title": "Global Statistics",
-      "ratingDistribution": "Player Rating Distribution",
-      "playCountDistribution": "Player Play Count Distribution",
-      "topTitles": "Top Player Titles",
-      "topSongs": "Most Played Songs",
-      "averageAchievementByLevel": "Average Achievement by Level",
-      "ratingVsPlayCount": "Rating vs Play Count Heatmap",
+      "title": "全体統計",
+      "ratingDistribution": "レート分布",
+      "playCountDistribution": "プレイ回数分布",
+      "topTitles": "人気称号",
+      "topSongs": "人気楽曲",
+      "averageAchievementByLevel": "レベル別平均達成率",
+      "ratingVsPlayCount": "レート vs プレイ回数 ヒートマップ",
       "xAxis": {
-        "rating": "Rating",
-        "playCount": "Play Count",
-        "level": "Level"
+        "rating": "レーティング",
+        "playCount": "プレイ回数",
+        "level": "レベル"
       },
       "yAxis": {
-        "percentage": "Percentage",
-        "achievement": "Achievement",
-        "count": "Users"
+        "percentage": "割合",
+        "achievement": "達成率",
+        "count": "ユーザー数"
       },
       "table": {
-        "rank": "Rank",
-        "title": "Title",
-        "song": "Song",
-        "percentage": "Percentage",
-        "count": "Count"
+        "rank": "順位",
+        "title": "称号",
+        "song": "楽曲",
+        "percentage": "割合",
+        "count": "数"
       },
       "region": {
-        "intl": "International",
-        "jp": "Japan"
+        "intl": "インターナショナル",
+        "jp": "日本"
       }
     }
   },
