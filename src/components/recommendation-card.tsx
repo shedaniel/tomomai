@@ -268,8 +268,8 @@ export function RecommendationCard({ selectedSnapshotData, flags }: { selectedSn
     });
   }, [t]);
 
-  const applyFilters = useCallback((items: RecommendationData[], filters: GenericFilter[]) => {
-    return applyRecommendationFilters(items, filters);
+  const applyFilters = useCallback((filters: GenericFilter[]) => {
+    return applyRecommendationFilters(recommendations, filters);
   }, []);
 
   const handleAddFilter = useCallback((filter: GenericFilter) => {
@@ -284,7 +284,7 @@ export function RecommendationCard({ selectedSnapshotData, flags }: { selectedSn
   let filteredRecommendations = recommendations;
   
   if (flags.recommendationFilters) {
-    filteredRecommendations = applyFilters(recommendations, advancedFilters);
+    filteredRecommendations = applyFilters(advancedFilters);
   } else {
     filteredRecommendations = recommendations.filter(rec => {
       switch (filterCategory) {
@@ -389,7 +389,6 @@ export function RecommendationCard({ selectedSnapshotData, flags }: { selectedSn
                 onAddFilter={handleAddFilter}
                 onRemoveFilter={handleRemoveFilter}
                 categories={filterCategories}
-                allItems={recommendations}
                 applyFilters={applyFilters}
                 getFilterLabel={getFilterLabel}
                 className="pt-4"

@@ -19,7 +19,7 @@ import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select-friendly";
 
-import { applyUniqueSongFilters, createUniqueSongFilterCategories } from "./songs/filter-utils";
+import { applyUniqueSongFilters, createUniqueSongFilterCategories, hashString } from "./songs/filter-utils";
 import { SongCard } from "./songs/song-card";
 import { SongDetailContent } from "./songs/song-detail-content";
 import { SongRow } from "./songs/song-row";
@@ -46,6 +46,7 @@ export function SongsDatabase({ selectedSlug: initialSlug, initialSongs, initial
   // Debounce search query
   useEffect(() => {
     const timer = setTimeout(() => {
+      if (searchQuery === debouncedSearchQuery) return;
       setDebouncedSearchQuery(searchQuery);
     }, 300);
 
@@ -77,6 +78,17 @@ export function SongsDatabase({ selectedSlug: initialSlug, initialSongs, initial
 
   // Use initialSongs directly - data is SSR'd from the server
   const allSongs = initialSongs;
+
+  // Flatten songs by difficulty
+  const flattenedSongs = useMemo(() => {
+    return allSongs.flatMap(song => song.difficulties.map(difficulty => ({
+      ...song,
+      difficulties: [{
+        ...difficulty,
+        noteDesignerNumber: hashString(difficulty.noteDesigner ?? ""),
+      }],
+    })));
+  }, [allSongs]);
 
   // Create filter categories based on available data
   const filterCategories = useMemo(() => {
@@ -137,17 +149,26 @@ export function SongsDatabase({ selectedSlug: initialSlug, initialSongs, initial
     setSnap(snap);
   }, []);
 
+  const applyFilters = useCallback((f: GenericFilter[]) => {
+    return applyUniqueSongFilters(allSongs, flattenedSongs, f as UniqueSongFilter[]);
+  }, [allSongs, flattenedSongs]);
+
+  const getFilterLabel = useCallback((filter: GenericFilter) => {
+    const category = filterCategories.find(c => c.type === filter.type);
+    const option = category?.options.find(o => o.value === filter.value);
+    return option?.label ?? filter.value;
+  }, [filterCategories]);
+
+  const allFilteredSongs = useMemo(() => {
+    return applyUniqueSongFilters(allSongs, flattenedSongs, filters, groupMode);
+  }, [allSongs, flattenedSongs, filters, groupMode]);
+
   // Filter songs by search and filters
   const filteredSongs = useMemo(() => {
-    let result = allSongs;
-
-    // Apply filters
-    result = applyUniqueSongFilters(result, filters, groupMode);
-
     // Apply search
     if (debouncedSearchQuery.trim()) {
       const query = debouncedSearchQuery.toLowerCase().trim();
-      result = result.filter(song =>
+      return allFilteredSongs.filter(song =>
         song.songName.toLowerCase().includes(query) ||
         song.artist.toLowerCase().includes(query) ||
         song.genre.toLowerCase().includes(query) ||
@@ -155,8 +176,8 @@ export function SongsDatabase({ selectedSlug: initialSlug, initialSongs, initial
       );
     }
 
-    return result;
-  }, [allSongs, filters, debouncedSearchQuery, groupMode]);
+    return allFilteredSongs;
+  }, [allFilteredSongs, debouncedSearchQuery]);
 
   // Visible songs for infinite scroll
   const visibleSongs = useMemo(() => {
@@ -204,7 +225,7 @@ export function SongsDatabase({ selectedSlug: initialSlug, initialSongs, initial
   const getGroupKey = useCallback((song: UniqueSong) => {
     switch (groupMode) {
       case "noteDesigner":
-        return song.noteDesigner || "Unknown";
+        return song.difficulties[0]?.noteDesigner ?? "Unknown";
       case "level_asc":
       case "level_desc": {
         const level = (song.difficulties[0]?.levelPrecise ?? 0) / 10;
@@ -312,14 +333,9 @@ export function SongsDatabase({ selectedSlug: initialSlug, initialSongs, initial
           filters={filters}
           onAddFilter={handleAddFilter}
           onRemoveFilter={handleRemoveFilter}
-          allItems={allSongs}
           categories={filterCategories}
-          applyFilters={(data, f) => applyUniqueSongFilters(data as UniqueSong[], f as UniqueSongFilter[])}
-          getFilterLabel={(filter) => {
-            const category = filterCategories.find(c => c.type === filter.type);
-            const option = category?.options.find(o => o.value === filter.value);
-            return option?.label ?? filter.value;
-          }}
+          applyFilters={applyFilters}
+          getFilterLabel={getFilterLabel}
           triggerClassName="bg-background"
         />
       </header>

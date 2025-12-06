@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select-friendly";
 import { X } from "lucide-react";
@@ -26,7 +27,7 @@ export interface FilterCategory {
 export type GetFilterLabelFn = (filter: GenericFilter) => string;
 
 // Props for applying filters to data (custom per use-case)
-export type ApplyFiltersFn<T> = (items: T[], filters: GenericFilter[]) => T[];
+export type ApplyFiltersFn<T> = (filters: GenericFilter[]) => T[];
 
 export function getFilterKey(filter: GenericFilter): string {
   return `${filter.type}-${filter.value}`;
@@ -37,19 +38,17 @@ interface FilterPanelProps<T> {
   onAddFilter: (filter: GenericFilter) => void;
   onRemoveFilter: (filter: GenericFilter) => void;
   categories: FilterCategory[];
-  allItems: T[];
   applyFilters: ApplyFiltersFn<T>;
   getFilterLabel: GetFilterLabelFn;
   className?: string;
   triggerClassName?: string;
 }
 
-export function FilterPanel<T>({
+function FilterPanelInner<T>({
   filters,
   onAddFilter,
   onRemoveFilter,
   categories,
-  allItems,
   applyFilters,
   getFilterLabel,
   className,
@@ -57,12 +56,12 @@ export function FilterPanel<T>({
 }: FilterPanelProps<T>) {
   const wouldYieldResults = (testFilter: GenericFilter): boolean => {
     // First check if the filter alone yields any results (remove useless filters)
-    const aloneResults = applyFilters(allItems, [testFilter]).length > 0;
+    const aloneResults = applyFilters([testFilter]).length > 0;
     if (!aloneResults) return false;
 
     // Then check if it yields results with existing filters
     const testFilters = [...filters, testFilter];
-    return applyFilters(allItems, testFilters).length > 0;
+    return applyFilters(testFilters).length > 0;
   };
 
   const getAvailableOptions = (category: FilterCategory) => {
@@ -172,6 +171,8 @@ export function FilterPanel<T>({
     </motion.div>
   );
 }
+
+export const FilterPanel = memo(FilterPanelInner) as typeof FilterPanelInner;
 
 // ============================================
 // Song-specific filter utilities

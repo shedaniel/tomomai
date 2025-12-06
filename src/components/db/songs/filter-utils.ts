@@ -1,8 +1,24 @@
 import { FilterCategory } from "@/components/filter-panel";
 import { getVersionInfo } from "@/lib/metadata";
-import { Disc3, Folder, Calendar, ArrowUpDown, BarChart } from "lucide-react";
-import { GroupMode, UniqueSong, UniqueSongFilter } from "./types";
+import { Disc3, Folder, Calendar, ArrowUpDown, BarChart, Pencil } from "lucide-react";
+import { GroupMode, UniqueSong, UniqueSongDifficulty, UniqueSongFilter } from "./types";
 import { LEVEL_ENUM } from "@/lib/db/types";
+
+export type UniqueSongFlattened = Omit<UniqueSong, "difficulties"> & {
+  difficulties: (UniqueSongDifficulty & { noteDesignerNumber: number })[];
+}
+
+export function hashString(str: string | null): number {
+  if (!str) return 0;
+  // Simple hash function for compacting filter strings
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32-bit integer
+  }
+  return Math.abs(hash);
+}
 
 // Create filter categories for unique songs
 export function createUniqueSongFilterCategories(
@@ -17,6 +33,17 @@ export function createUniqueSongFilterCategories(
 
   // Get unique addedVersions from songs
   const addedVersions = [...new Set(songs.map(s => s.addedVersion))].sort((a, b) => b - a);
+
+  // Get unique note designers from songs, sorted by amount of songs using them
+  const noteDesignersToAmount: Record<string, number> = {};
+  for (const song of songs) {
+    for (const difficulty of song.difficulties) {
+      if (difficulty.noteDesigner) {
+        noteDesignersToAmount[difficulty.noteDesigner] = (noteDesignersToAmount[difficulty.noteDesigner] ?? 0) + 1;
+      }
+    }
+  }
+  const noteDesigners = Object.entries(noteDesignersToAmount).sort((a, b) => b[1] - a[1]).map(([designer]) => designer);
 
   return [
     {
@@ -61,30 +88,36 @@ export function createUniqueSongFilterCategories(
         return { value: String(v), label: versionInfo?.name ?? `v${v}` };
       }),
     },
+    {
+      type: "noteDesigner",
+      label: getLabel("noteDesigner", "Note Designer"),
+      icon: Pencil,
+      options: noteDesigners.map(d => ({ value: hashString(d).toString(), label: d })),
+    },
   ];
 }
 
 // Apply filters to unique songs
-export function applyUniqueSongFilters(songs: UniqueSong[], filters: UniqueSongFilter[], groupMode: GroupMode = "none"): UniqueSong[] {
+export function applyUniqueSongFilters(allSongs: UniqueSong[], flattenedSongs: UniqueSongFlattened[], filters: UniqueSongFilter[], groupMode: GroupMode = "none"): UniqueSong[] {
   // Check if we need to flatten songs (if level sort or level filter is active)
   const levelSortActive = filters.some(f => f.type === "sort" && (f.value === "level_asc" || f.value === "level_desc"));
   const levelFilterActive = filters.some(f => f.type === "level");
+  const noteDesignerFilterActive = filters.some(f => f.type === "noteDesigner");
   // Group by level implies distinct by difficulty mode
   const levelGroupActive = groupMode === "level_asc" || groupMode === "level_desc";
-  
-  let processedSongs = songs;
+  const chartDesignerGroupActive = groupMode === "noteDesigner";
+  // Group filters by type
+  const typeFilters = filters.filter(f => f.type === "type");
+  const genreFilters = filters.filter(f => f.type === "genre");
+  const versionFilters = filters.filter(f => f.type === "addedVersion");
+  const levelFilters = filters.filter(f => f.type === "level").map(f => ({ ...f, value: f.value.endsWith("+") ? Number(f.value.replace("+", "6")) : Number(f.value + "0") }));
+  const noteDesignerFilters = filters.filter(f => f.type === "noteDesigner").map(f => ({ ...f, value: Number(f.value) }));
+
+  let processedSongs = allSongs;
 
   // Flatten if needed
-  if (levelSortActive || levelFilterActive || levelGroupActive) {
-    processedSongs = songs.flatMap(song => 
-      song.difficulties.map(diff => ({
-        ...song,
-        // Keep only this difficulty
-        difficulties: [diff], 
-        // Override index to maintain stable sort if needed, though usually we sort by level then index
-        // We might want a compound key or just rely on the object identity
-      }))
-    );
+  if (levelSortActive || levelFilterActive || noteDesignerFilterActive || levelGroupActive || chartDesignerGroupActive) {
+    processedSongs = flattenedSongs;
   }
 
   let result = [...processedSongs];
@@ -92,12 +125,6 @@ export function applyUniqueSongFilters(songs: UniqueSong[], filters: UniqueSongF
   // Apply filters
   if (filters.length > 0) {
     result = result.filter(song => {
-      // Group filters by type
-      const typeFilters = filters.filter(f => f.type === "type");
-      const genreFilters = filters.filter(f => f.type === "genre");
-      const versionFilters = filters.filter(f => f.type === "addedVersion");
-      const levelFilters = filters.filter(f => f.type === "level");
-
       // Type filter (OR within group)
       if (typeFilters.length > 0) {
         const matchesType = typeFilters.some(f => song.type === f.value);
@@ -125,11 +152,17 @@ export function applyUniqueSongFilters(songs: UniqueSong[], filters: UniqueSongF
             const level = d.levelPrecise / 10;
             const isPlus = level % 1 >= 0.6;
             const baseLevel = Math.floor(level);
-            const levelStr = isPlus ? `${baseLevel}+` : `${baseLevel}`;
+            const levelStr = isPlus ? baseLevel * 10 + 6 : baseLevel * 10;
             return levelStr === f.value;
           });
         });
         if (!matchesLevel) return false;
+      }
+
+      // Note designer filter (OR within group)
+      if (noteDesignerFilters.length > 0) {
+        const matchesNoteDesigner = noteDesignerFilters.some(f => (song.difficulties[0] as UniqueSongDifficulty & { noteDesignerNumber: number }).noteDesignerNumber === f.value);
+        if (!matchesNoteDesigner) return false;
       }
 
       return true;
@@ -150,9 +183,9 @@ export function applyUniqueSongFilters(songs: UniqueSong[], filters: UniqueSongF
       switch (groupMode) {
         case "noteDesigner":
           // Empty/Null designers go last
-          comparison = (a.noteDesigner || "").localeCompare(b.noteDesigner || "");
-          if (!a.noteDesigner && b.noteDesigner) comparison = 1;
-          if (a.noteDesigner && !b.noteDesigner) comparison = -1;
+          comparison = (a.difficulties[0]?.noteDesigner ?? "").localeCompare(b.difficulties[0]?.noteDesigner ?? "");
+          if (!a.difficulties[0]?.noteDesigner && b.difficulties[0]?.noteDesigner) comparison = 1;
+          if (a.difficulties[0]?.noteDesigner && !b.difficulties[0]?.noteDesigner) comparison = -1;
           break;
         case "level_asc": {
           const levelA = a.difficulties[0]?.levelPrecise ?? 0;

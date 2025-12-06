@@ -497,6 +497,7 @@
         "sortLevelDesc": "Level (High -> Low)",
         "level": "Level",
         "groupBy": "Group By",
+        "noteDesigner": "Note Designer",
         "groups": {
           "none": "None",
           "noteDesigner": "Chart Designer",

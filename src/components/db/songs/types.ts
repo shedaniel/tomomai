@@ -12,12 +12,12 @@ export interface UniqueSong {
   slug: string;
   aliases: string[];
   difficulties: UniqueSongDifficulty[];
-  noteDesigner: string | null;
 }
 
 export interface UniqueSongDifficulty {
   difficulty: Difficulty;
   levelPrecise: number;
+  noteDesigner: string | null;
 }
 
 export interface UserScore {
@@ -44,7 +44,7 @@ export interface SongDetails {
   }[];
 }
 
-export type UniqueSongFilterType = "type" | "genre" | "addedVersion" | "sort" | "level";
+export type UniqueSongFilterType = "type" | "genre" | "addedVersion" | "sort" | "level" | "noteDesigner";
 
 export interface UniqueSongFilter extends GenericFilter {
   type: UniqueSongFilterType;

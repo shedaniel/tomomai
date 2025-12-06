@@ -2429,6 +2429,7 @@ export const userRouter = router({
               levelPrecise: song.levelPrecise,
               region: song.region,
               gameVersion: song.gameVersion,
+              noteDesigner: song.noteDesigner,
             });
           }
 
@@ -2446,10 +2447,10 @@ export const userRouter = router({
               difficulties: song.difficulties.map(d => ({
                 difficulty: d.difficulty,
                 levelPrecise: d.levelPrecise,
+                noteDesigner: d.noteDesigner,
               }) satisfies UniqueSongDifficulty),
               slug: song.slug,
               aliases: song.aliases,
-              noteDesigner: song.noteDesigner,
             } satisfies UniqueSong;
           });
           return { songs: songsStripped };
