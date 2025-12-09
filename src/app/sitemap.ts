@@ -73,7 +73,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const songSitemapItems = counter.keys().map((slug) => ({
     url: `${baseUrl}/db/songs/${encodeURIComponent(slug)}`,
     changeFrequency: 'monthly',
-    priority: 0.6,
+    priority: 0.55,
   } satisfies SitemapItem));
 
   return [
@@ -99,7 +99,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       url: `${baseUrl}/profile/${profile.username}`,
       lastModified: profile.latestSnapshotAt ?? new Date(),
       changeFrequency: 'weekly',
-      priority: 0.5,
+      priority: 0.6,
     }) satisfies SitemapItem),
     ...songSitemapItems,
   ]
