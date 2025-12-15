@@ -10,8 +10,8 @@ export const trpcClient = trpc.createClient({
     httpBatchLink({
       url: '/api/trpc',
       transformer: superjson,
-      // You can pass any HTTP headers you wish here
-      async headers() {
+      // You can pass HTTP headers you wish here (typed as Record<string, string>)
+      async headers(): Promise<Record<string, string>> {
         return {};
       },
     }),

@@ -9,6 +9,7 @@ import { load } from "cheerio";
 import { promises as fs } from "fs";
 import { NextRequest, NextResponse } from "next/server";
 import { join } from "path";
+import { logger } from "@/lib/logger";
 
 const DXDATA_URL = "https://raw.githubusercontent.com/gekichumai/dxrating/refs/heads/main/packages/dxdata/dxdata.json";
 const MAIMAI_SONGS_JSON_URL = "https://maimai.sega.jp/data/maimai_songs.json";
@@ -246,7 +247,7 @@ function parseSongData(html: string, difficulty: number, version: number): Parse
   
   const selector = difficultySelectors[difficulty];
   if (!selector) {
-    console.error(`Invalid difficulty: ${difficulty}`);
+    logger.error({ difficulty }, "Invalid difficulty in parseSongData");
     return [];
   }
   
@@ -333,7 +334,7 @@ function parseSongData(html: string, difficulty: number, version: number): Parse
 
       console.log(`Extracted song ${index}: ${songName} (${level}, ${musicType}, ${difficultyName})`);
     } catch (error) {
-      console.error(`Error processing song block ${index}:`, error);
+      logger.error({ error, index }, "Error processing song block");
     }
   });
 
@@ -880,7 +881,7 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error("Error in admin update route:", error);
+    logger.error({ error, context: "admin-update" }, "Error in admin update route");
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }

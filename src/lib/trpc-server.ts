@@ -1,8 +1,9 @@
 import { appRouter } from '@/server/routers/_app';
 import { NextRequest } from 'next/server';
+import { Context } from './trpc';
 
 // Create a server-side tRPC caller
-export async function createServerSideTRPC(session?: any) {
+export async function createServerSideTRPC(session?: Context['session']) {
   // Create a minimal mock request for server-side calls
   const mockRequest = new NextRequest(
     new URL('http://localhost'),

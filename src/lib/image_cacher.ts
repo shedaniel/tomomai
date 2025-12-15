@@ -4,6 +4,7 @@ import { gzip, gunzip } from 'zlib';
 import { promisify } from 'util';
 import path from 'path';
 import fs from 'fs/promises';
+import { logger } from "@/lib/logger";
 
 const gzipAsync = promisify(gzip);
 const gunzipAsync = promisify(gunzip);
@@ -75,7 +76,7 @@ export async function cacheImage(url: string): Promise<void> {
 
     await fs.writeFile(cachedFilePath, compressedBuffer);
   } catch (error) {
-    console.error('Error caching image:', error);
+    logger.error({ error, url }, "Error caching image");
   }
 }
 
@@ -121,7 +122,7 @@ export async function getCachedImageBuffer(url: string): Promise<{ buffer: Buffe
     return null;
     
   } catch (error) {
-    console.error('Error reading cached image:', error);
+    logger.error({ error, url }, "Error reading cached image");
     return null;
   }
 } 

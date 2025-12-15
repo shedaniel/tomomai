@@ -249,6 +249,6 @@ export async function getFetchStatusServer(userId: string, region: Region): Prom
     completedAt: session.completedAt,
     errorMessage: session.errorMessage,
     statusStates: session.statusStates,
-    notFoundScores: session.extraData ? (session.extraData as any).notFoundScores : null,
+    notFoundScores: typeof session.extraData === "object" && session.extraData !== null && "notFoundScores" in session.extraData ? (session.extraData as { notFoundScores?: { songName: string; difficulty: string; musicType: string }[] }).notFoundScores ?? null : null,
   };
-} 
+}

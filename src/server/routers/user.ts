@@ -2453,7 +2453,7 @@ export const userRouter = router({
               aliases: song.aliases,
             } satisfies UniqueSong;
           });
-          return { songs: songsStripped };
+          return songsStripped;
         },
         ['all-unique-songs'],
         {

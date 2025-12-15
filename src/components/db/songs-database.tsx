@@ -24,14 +24,16 @@ import { SongCard } from "./songs/song-card";
 import { SongDetailContent } from "./songs/song-detail-content";
 import { SongRow } from "./songs/song-row";
 import { GroupMode, SongDetails, UniqueSong, UniqueSongFilter, UniqueSongFilterType } from "./songs/types";
+import { trpc } from "@/lib/trpc-client";
 
 interface SongsDatabaseProps {
   selectedSlug: string | null;
-  initialSongs: UniqueSong[];
+  initialSongs: UniqueSong[] | null;
+  currentSong: UniqueSong | null;
   initialSongDetails?: SongDetails | null;
 }
 
-export function SongsDatabase({ selectedSlug: initialSlug, initialSongs, initialSongDetails }: SongsDatabaseProps) {
+export function SongsDatabase({ selectedSlug: initialSlug, initialSongs, currentSong, initialSongDetails }: SongsDatabaseProps) {
   const t = useTranslations();
   
   // Helper for filter translations
@@ -75,13 +77,25 @@ export function SongsDatabase({ selectedSlug: initialSlug, initialSongs, initial
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
+  
+  const [shouldFetch, setShouldFetch] = useState(!!initialSongs);
 
-  // Use initialSongs directly - data is SSR'd from the server
-  const allSongs = initialSongs;
+  useEffect(() => {
+    if (!initialSongs) {
+      setShouldFetch(true);
+    }
+  }, [initialSongs]);
+
+  const { data: allSongs } = trpc.user.getAllUniqueSongs.useQuery(undefined, {
+    staleTime: 3600000, // 1 hour
+    refetchOnWindowFocus: false,
+    enabled: shouldFetch,
+    ...(initialSongs && { initialData: initialSongs }),
+  });
 
   // Flatten songs by difficulty
   const flattenedSongs = useMemo(() => {
-    return allSongs.flatMap(song => song.difficulties.map(difficulty => ({
+    return allSongs?.flatMap(song => song.difficulties.map(difficulty => ({
       ...song,
       difficulties: [{
         ...difficulty,
@@ -92,14 +106,14 @@ export function SongsDatabase({ selectedSlug: initialSlug, initialSongs, initial
 
   // Create filter categories based on available data
   const filterCategories = useMemo(() => {
-    return createUniqueSongFilterCategories(allSongs, tFilter);
+    return allSongs ? createUniqueSongFilterCategories(allSongs, tFilter) : null;
   }, [allSongs, tFilter]);
 
   // Filter handlers
   const handleAddFilter = useCallback((filter: GenericFilter) => {
     setFilters(prev => {
       // Check if category has limit_one constraint
-      const category = filterCategories.find(c => c.type === filter.type);
+      const category = filterCategories?.find(c => c.type === filter.type);
       let newFilters = prev;
       
       if (category?.limit_one) {
@@ -119,7 +133,8 @@ export function SongsDatabase({ selectedSlug: initialSlug, initialSongs, initial
 
   // Find selected song from current slug
   const selectedSong = useMemo(() => {
-    if (!currentSlug || allSongs.length === 0) return null;
+    if (currentSlug === initialSlug && currentSlug === currentSong?.slug && currentSong) return currentSong;
+    if (!currentSlug || !allSongs || allSongs.length === 0) return null;
 
     // Find song by matching slug
     return allSongs.find(song => song.slug === currentSlug) || null;
@@ -150,17 +165,17 @@ export function SongsDatabase({ selectedSlug: initialSlug, initialSongs, initial
   }, []);
 
   const applyFilters = useCallback((f: GenericFilter[]) => {
-    return applyUniqueSongFilters(allSongs, flattenedSongs, f as UniqueSongFilter[]);
+    return applyUniqueSongFilters(allSongs!, flattenedSongs!, f as UniqueSongFilter[]);
   }, [allSongs, flattenedSongs]);
 
   const getFilterLabel = useCallback((filter: GenericFilter) => {
-    const category = filterCategories.find(c => c.type === filter.type);
+    const category = filterCategories?.find(c => c.type === filter.type);
     const option = category?.options.find(o => o.value === filter.value);
     return option?.label ?? filter.value;
   }, [filterCategories]);
 
   const allFilteredSongs = useMemo(() => {
-    return applyUniqueSongFilters(allSongs, flattenedSongs, filters, groupMode);
+    return allSongs && flattenedSongs ? applyUniqueSongFilters(allSongs, flattenedSongs, filters, groupMode) : null;
   }, [allSongs, flattenedSongs, filters, groupMode]);
 
   // Filter songs by search and filters
@@ -168,12 +183,12 @@ export function SongsDatabase({ selectedSlug: initialSlug, initialSongs, initial
     // Apply search
     if (debouncedSearchQuery.trim()) {
       const query = debouncedSearchQuery.toLowerCase().trim();
-      return allFilteredSongs.filter(song =>
+      return allFilteredSongs?.filter(song =>
         song.songName.toLowerCase().includes(query) ||
         song.artist.toLowerCase().includes(query) ||
         song.genre.toLowerCase().includes(query) ||
         song.aliases?.some(alias => alias.toLowerCase().includes(query))
-      );
+      ) ?? null;
     }
 
     return allFilteredSongs;
@@ -181,7 +196,7 @@ export function SongsDatabase({ selectedSlug: initialSlug, initialSongs, initial
 
   // Visible songs for infinite scroll
   const visibleSongs = useMemo(() => {
-    return filteredSongs.slice(0, visibleCount);
+    return filteredSongs?.slice(0, visibleCount) ?? null;
   }, [filteredSongs, visibleCount]);
 
   // Reset visible count when search or filters change
@@ -192,12 +207,12 @@ export function SongsDatabase({ selectedSlug: initialSlug, initialSongs, initial
     setVisibleCount(60);
   }, [debouncedSearchQuery, filters, groupMode]);
 
-  const hasMore = visibleCount < filteredSongs.length;
+  const hasMore = !!filteredSongs && visibleCount < filteredSongs.length;
   const loadMore = useCallback(() => {
     if (hasMore) {
-      setVisibleCount(prev => Math.min(prev + 60, filteredSongs.length));
+      setVisibleCount(prev => Math.min(prev + 60, filteredSongs!.length));
     }
-  }, [hasMore, filteredSongs.length]);
+  }, [hasMore, filteredSongs]);
 
   const sentinelRef = useInfiniteScroll(loadMore, hasMore);
 
@@ -329,19 +344,21 @@ export function SongsDatabase({ selectedSlug: initialSlug, initialSongs, initial
         </div>
 
         {/* Filters */}
-        <FilterPanel
-          filters={filters}
-          onAddFilter={handleAddFilter}
-          onRemoveFilter={handleRemoveFilter}
-          categories={filterCategories}
-          applyFilters={applyFilters}
-          getFilterLabel={getFilterLabel}
-          triggerClassName="bg-background"
-        />
+        {filterCategories && (
+          <FilterPanel
+            filters={filters}
+            onAddFilter={handleAddFilter}
+            onRemoveFilter={handleRemoveFilter}
+            categories={filterCategories}
+            applyFilters={applyFilters}
+            getFilterLabel={getFilterLabel}
+            triggerClassName="bg-background"
+          />
+        )}
       </header>
 
       {/* Empty State */}
-      {filteredSongs.length === 0 && (
+      {filteredSongs && filteredSongs.length === 0 && (
         <div className="flex flex-col items-center justify-center py-20 text-center" role="status">
           <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mb-4" aria-hidden="true">
             <Music className="w-8 h-8 text-muted-foreground" />
@@ -354,11 +371,11 @@ export function SongsDatabase({ selectedSlug: initialSlug, initialSongs, initial
       )}
 
       {/* Songs Grid */}
-      {filteredSongs.length > 0 && displayMode === "grid" && (
+      {filteredSongs && filteredSongs.length > 0 && displayMode === "grid" && (
         <section aria-label="Songs grid" className="grid grid-cols-3 xs:grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-8 gap-3">
-          {visibleSongs.map((song, index) => {
+          {visibleSongs?.map((song, index) => {
             const currentGroup = getGroupKey(song);
-            const prevGroup = index > 0 ? getGroupKey(visibleSongs[index - 1]) : null;
+            const prevGroup = index > 0 ? getGroupKey(visibleSongs![index - 1]) : null;
             const showHeader = groupMode !== "none" && currentGroup !== null && currentGroup !== prevGroup;
 
             return (
@@ -378,11 +395,11 @@ export function SongsDatabase({ selectedSlug: initialSlug, initialSongs, initial
       )}
 
       {/* Songs List */}
-      {filteredSongs.length > 0 && displayMode === "list" && (
+      {filteredSongs && filteredSongs.length > 0 && displayMode === "list" && (
         <section aria-label="Songs list" className="space-y-1">
-          {visibleSongs.map((song, index) => {
+          {visibleSongs?.map((song, index) => {
             const currentGroup = getGroupKey(song);
-            const prevGroup = index > 0 ? getGroupKey(visibleSongs[index - 1]) : null;
+            const prevGroup = index > 0 ? getGroupKey(visibleSongs![index - 1]) : null;
             const showHeader = groupMode !== "none" && currentGroup !== null && currentGroup !== prevGroup;
 
             return (

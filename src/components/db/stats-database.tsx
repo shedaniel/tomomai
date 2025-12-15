@@ -12,6 +12,7 @@ import { TitleRankingTable } from "./stats/title-ranking-table";
 import { SongRankingTable } from "./stats/song-ranking-table";
 import { AverageAchievementChart } from "./stats/average-achievement-chart";
 import { RatingVsPlayCountHeatmap } from "./stats/rating-vs-play-count-heatmap";
+import { ActiveUsersChart } from "./stats/active-users-chart";
 import { Tabs, TabsList, TabsTab } from "../animate-ui/components/base/tabs";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
@@ -92,6 +93,15 @@ export function StatsDatabase() {
             </CardHeader>
             <CardContent>
               <RatingVsPlayCountHeatmap data={data.ratingVsPlayCount} />
+            </CardContent>
+          </Card>
+
+          <Card className="break-inside-avoid">
+            <CardHeader>
+              <CardTitle>{t("activeUsersOverTime")}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ActiveUsersChart data={data.activeUsersOverTime} />
             </CardContent>
           </Card>
         </div>

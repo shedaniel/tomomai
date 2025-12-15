@@ -1,6 +1,8 @@
 import { decodeOpaqueUserId, verifyUserOtp } from "@/lib/otp";
 import { startFetchServer, Region } from "@/lib/maimai-server-actions";
 import { NextRequest, NextResponse } from "next/server";
+import { logger } from "@/lib/logger";
+import { securityMiddleware, validateContentType, csrfProtection } from "@/lib/security/middleware";
 
 export const dynamic = "force-dynamic";
 
@@ -43,6 +45,18 @@ export async function OPTIONS() {
 }
 
 export async function POST(request: NextRequest) {
+  // Apply security middleware
+  const securityResponse = await securityMiddleware(request);
+  if (securityResponse.status !== 200) {
+    return securityResponse;
+  }
+
+  // Validate content type
+  const contentTypeResponse = validateContentType(request);
+  if (contentTypeResponse) {
+    return contentTypeResponse;
+  }
+
   try {
     const formData = await request.formData();
     const opaqueUserId = formData.get("user");
@@ -70,7 +84,7 @@ export async function POST(request: NextRequest) {
 
     return jsonResponse({ success: true, sessionId: result.sessionId, status: result.status });
   } catch (error) {
-    console.error("/api/login error:", error);
+    logger.error({ error, context: "/api/login" }, "Login error");
 
     if (error instanceof Error) {
       if (error.message.includes("already in progress")) {

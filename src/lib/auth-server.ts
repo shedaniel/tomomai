@@ -1,5 +1,6 @@
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
+import { logger } from "@/lib/logger";
 
 export async function getServerSession() {
   try {
@@ -7,7 +8,7 @@ export async function getServerSession() {
     const session = await auth.api.getSession({ headers: headersList });
     return session;
   } catch (error) {
-    console.error("Failed to get server session:", error);
+    logger.error({ error, context: "auth-server" }, "Failed to get server session");
     return null;
   }
 }

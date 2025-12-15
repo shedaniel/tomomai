@@ -299,7 +299,17 @@ async function sendDiscordWebhook(
   }
 
   const now = new Date();
-  const dateStr = `${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, '0')}/${String(now.getDate()).padStart(2, '0')}`;
+  
+  // Format date in JST (Japan Standard Time)
+  const jstDate = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Tokyo',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(now);
+  
+  const [month, day, year] = jstDate.split('/');
+  const dateStr = `${year}/${month}/${day}`;
   const regionName = region === "jp" ? "Japan" : "International";
 
   let description = "";

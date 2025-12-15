@@ -5,6 +5,7 @@ import { admin } from "better-auth/plugins";
 import { and, count, eq, isNull, lt, or } from "drizzle-orm";
 import { db } from "./db";
 import * as schema from "./db/schema-pg";
+import { logger } from "@/lib/logger";
 
 const SIGNUP_TYPE = process.env.NEXT_PUBLIC_ACCOUNT_SIGNUP_TYPE || 'disabled'; // disabled, invite-only, enabled
 const SIGNUP_REQUIRED_AMOUNT = 128;
@@ -40,7 +41,7 @@ async function validateAndClaimInvite(inviteCode: string, userId: string) {
         )
       );
   } catch (error) {
-    console.error("Auto-cleanup failed:", error);
+    logger.error({ error, context: "auto-cleanup" }, "Auto-cleanup failed");
   }
 
   // Find the invitation
@@ -203,7 +204,7 @@ export const auth = betterAuth({
                 await validateAndClaimInvite(inviteCode, user.id);
                 console.log(`Successfully claimed invitation ${inviteCode} for user ${user.id}`);
               } catch (error) {
-                console.error(`Failed to claim invitation ${inviteCode} for user ${user.id}:`, error);
+                logger.error({ error, context: "invite-claim", userId: user.id, inviteCode }, "Failed to claim invitation");
                 // Note: At this point the user is already created, so we can't easily roll back
                 // In a production system, you might want to implement compensation logic
               }

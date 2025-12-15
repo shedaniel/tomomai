@@ -54,7 +54,7 @@ function isObject(value: unknown): value is Record<string, unknown> {
  * @param source The object to merge from.
  * @returns A new object with the merged properties.
  */
-export function deepMerge<T extends Record<string, any>>(
+export function deepMerge<T extends Record<string, unknown>>(
   target: T,
   source: Partial<T>
 ): T {

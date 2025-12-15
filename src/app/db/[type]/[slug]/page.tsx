@@ -22,7 +22,7 @@ export async function generateMetadata({ params }: DbSlugPageProps): Promise<Met
 
   const decodedSlug = decodeURIComponent(slug);
   const trpc = await createServerSideTRPC();
-  const { songs } = await trpc.user.getAllUniqueSongs();
+  const songs = await trpc.user.getAllUniqueSongs();
   
   const song = songs.find(s => s.slug === decodedSlug);
   
@@ -59,7 +59,7 @@ export default async function DbSlugPage({ params }: DbSlugPageProps) {
   const decodedSlug = decodeURIComponent(slug);
   const session = await getServerSession();
   const trpc = await createServerSideTRPC(session);
-  const { songs } = await trpc.user.getAllUniqueSongs();
+  const songs = await trpc.user.getAllUniqueSongs();
   
   const song = songs.find(s => s.slug === decodedSlug);
 
@@ -94,7 +94,7 @@ export default async function DbSlugPage({ params }: DbSlugPageProps) {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       )}
-      <SongsDatabase selectedSlug={decodedSlug} initialSongs={songs} initialSongDetails={songDetails} />
+      <SongsDatabase selectedSlug={decodedSlug} initialSongs={null} currentSong={song ?? null} initialSongDetails={songDetails} />
     </>
   );
 }

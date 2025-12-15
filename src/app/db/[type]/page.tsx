@@ -46,7 +46,7 @@ export default async function DbTypePage({ params }: DbTypePageProps) {
 
   if (type === "songs") {
     const trpc = await createServerSideTRPC();
-    const { songs } = await trpc.user.getAllUniqueSongs();
+    const songs = await trpc.user.getAllUniqueSongs();
     const t = await getTranslations("db.songs.metadata");
 
     // JSON-LD structured data for SEO
@@ -77,7 +77,7 @@ export default async function DbTypePage({ params }: DbTypePageProps) {
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
-        <SongsDatabase selectedSlug={null} initialSongs={songs} />
+         <SongsDatabase selectedSlug={null} initialSongs={songs} currentSong={null} />
       </>
     );
   }

@@ -1,7 +1,7 @@
 import { db } from '@/lib/db';
 import { songs, userScores, userSnapshots } from '@/lib/db/schema-pg';
 import { publicProcedure, router } from '@/lib/trpc';
-import { desc, eq, gt, inArray, sql } from 'drizzle-orm';
+import { and, desc, eq, gt, gte, inArray, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { unstable_cache } from 'next/cache';
 
@@ -153,6 +153,70 @@ export const dbRouter = router({
             count: item.count,
           }));
 
+          // 7. Active Users Over Time (cumulative by days)
+          // Get all user activity in the last 30 days with a single query
+          const thirtyDaysAgo = new Date();
+          thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+          
+          const userActivityQuery = await db
+            .select({
+              userId: userSnapshots.userId,
+              fetchedAt: userSnapshots.fetchedAt,
+            })
+            .from(userSnapshots)
+            .where(
+              and(
+                eq(userSnapshots.region, region),
+                gte(userSnapshots.fetchedAt, thirtyDaysAgo)
+              )
+            );
+          
+          // Process the data to calculate cumulative active users
+          const activeUsersOverTime = [];
+          const today = new Date();
+          
+          // 1. Find the most recent activity for each user
+          const lastActivityByUser = new Map<string, number>();
+          userActivityQuery.forEach(activity => {
+            const time = new Date(activity.fetchedAt).getTime();
+            const current = lastActivityByUser.get(activity.userId) || 0;
+            if (time > current) {
+              lastActivityByUser.set(activity.userId, time);
+            }
+          });
+
+          // 2. Bucket users by how many days ago they were last active
+          // index 1 = active within last 24h (1 day)
+          // index 30 = active within last 30 days (but not 29)
+          const userCountsByDaysAgo = new Array(31).fill(0);
+          
+          lastActivityByUser.forEach((lastTime) => {
+            const diffTime = today.getTime() - lastTime;
+            // ceil to treat any activity within last 24h as 1 day ago, etc.
+            // If diffTime is negative (future), treat as 1
+            const diffDays = Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+            
+            if (diffDays <= 30) {
+              userCountsByDaysAgo[diffDays]++;
+            }
+          });
+
+          // 3. Calculate cumulative counts
+          // users active in last N days = users active in last 1 day + ... + users active in last N days
+          // Wait, logic check:
+          // If I was active 1 day ago, I am active in "Last 1 day", "Last 2 days", etc.
+          // If I was active 5 days ago, I am NOT active in "Last 1 day", but AM active in "Last 5 days".
+          // So for "Last N days", we want sum(userCountsByDaysAgo[1...N]).
+          
+          let runningTotal = 0;
+          for (let days = 1; days <= 30; days++) {
+            runningTotal += userCountsByDaysAgo[days];
+            activeUsersOverTime.push({
+              days: days,
+              count: runningTotal,
+            });
+          }
+
           return {
             ratingDistribution,
             playCountDistribution,
@@ -160,6 +224,7 @@ export const dbRouter = router({
             mostPlayedSongs,
             averageAchievementByLevel,
             ratingVsPlayCount,
+            activeUsersOverTime,
             totalUsers: 0, // Hide actual count
           };
         },
