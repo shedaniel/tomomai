@@ -526,15 +526,22 @@
       "topSongs": "Most Played Songs",
       "averageAchievementByLevel": "Average Achievement by Level",
       "ratingVsPlayCount": "Rating vs Play Count Heatmap",
+      "activeUsersOverTime": "Active Users Over Time",
       "xAxis": {
         "rating": "Rating",
         "playCount": "Play Count",
-        "level": "Level"
+        "level": "Level",
+        "date": "Date",
+        "days": "Days",
+        "timePeriod": "Time Period",
+        "lastDay": "Last 1 day",
+        "lastDays": "Last {days} days"
       },
       "yAxis": {
         "percentage": "Percentage",
         "achievement": "Achievement",
-        "count": "Users"
+        "count": "Users",
+        "activeUsers": "Active Users"
       },
       "table": {
         "rank": "Rank",
