@@ -526,15 +526,22 @@
       "topSongs": "热门歌曲",
       "averageAchievementByLevel": "等级平均达成率",
       "ratingVsPlayCount": "R 值 vs 游玩次数热力图",
+      "activeUsersOverTime": "Active Users Over Time",
       "xAxis": {
         "rating": "R 值",
         "playCount": "游玩次数",
-        "level": "等级"
+        "level": "等级",
+        "date": "Date",
+        "days": "Days",
+        "timePeriod": "Time Period",
+        "lastDay": "Last 1 day",
+        "lastDays": "Last {days} days"
       },
       "yAxis": {
         "percentage": "占比",
         "achievement": "达成率",
-        "count": "用户数"
+        "count": "用户数",
+        "activeUsers": "Active Users"
       },
       "table": {
         "rank": "排名",
