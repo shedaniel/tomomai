@@ -526,15 +526,22 @@
       "topSongs": "인기 곡",
       "averageAchievementByLevel": "레벨별 평균 달성률",
       "ratingVsPlayCount": "레이팅 vs 플레이 횟수 히트맵",
+      "activeUsersOverTime": "Active Users Over Time",
       "xAxis": {
         "rating": "레이팅",
         "playCount": "플레이 횟수",
-        "level": "레벨"
+        "level": "레벨",
+        "date": "Date",
+        "days": "Days",
+        "timePeriod": "Time Period",
+        "lastDay": "Last 1 day",
+        "lastDays": "Last {days} days"
       },
       "yAxis": {
         "percentage": "비율",
         "achievement": "달성률",
-        "count": "유저 수"
+        "count": "유저 수",
+        "activeUsers": "Active Users"
       },
       "table": {
         "rank": "순위",
