@@ -526,15 +526,22 @@
       "topSongs": "人気楽曲",
       "averageAchievementByLevel": "レベル別平均達成率",
       "ratingVsPlayCount": "レート vs プレイ回数 ヒートマップ",
+      "activeUsersOverTime": "Active Users Over Time",
       "xAxis": {
         "rating": "レート値",
         "playCount": "プレイ回数",
-        "level": "レベル"
+        "level": "レベル",
+        "date": "Date",
+        "days": "Days",
+        "timePeriod": "Time Period",
+        "lastDay": "Last 1 day",
+        "lastDays": "Last {days} days"
       },
       "yAxis": {
         "percentage": "割合",
         "achievement": "達成率",
-        "count": "ユーザー数"
+        "count": "ユーザー数",
+        "activeUsers": "Active Users"
       },
       "table": {
         "rank": "順位",
