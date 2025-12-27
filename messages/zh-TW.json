@@ -22,7 +22,7 @@
     "stars": "星星數",
     "plays": "遊玩次數",
     "total": "總計",
-    "theme": "Theme",
+    "theme": "主題",
     "invitations": "邀請",
     "discord": "Discord",
     "about": "關於",
@@ -526,15 +526,22 @@
       "topSongs": "熱門歌曲",
       "averageAchievementByLevel": "等級平均達成率",
       "ratingVsPlayCount": "R 值 vs 遊玩次數熱力圖",
+      "activeUsersOverTime": "Active Users Over Time",
       "xAxis": {
         "rating": "R 值",
         "playCount": "遊玩次數",
-        "level": "等級"
+        "level": "等級",
+        "date": "Date",
+        "days": "Days",
+        "timePeriod": "Time Period",
+        "lastDay": "Last 1 day",
+        "lastDays": "Last {days} days"
       },
       "yAxis": {
         "percentage": "百分比",
         "achievement": "達成率",
-        "count": "使用者數"
+        "count": "使用者數",
+        "activeUsers": "Active Users"
       },
       "table": {
         "rank": "排名",
@@ -604,6 +611,6 @@
       "gray-gold": "Gray Gold",
       "gray-pink": "Gray Pink"
     },
-    "title": "Theme"
+    "title": "主題"
   }
 }
