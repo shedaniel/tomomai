@@ -221,6 +221,10 @@
   "recentPlays": {
     "title": "Recent Plays",
     "noPlays": "No recent plays found",
+    "notFetched": "Not fetched",
+    "fetching": "Fetching...",
+    "detailsNotFetched": "Detailed play data hasn't been fetched yet. Sync your data again to get detailed breakdown.",
+    "detailsFetching": "Detailed play data is still being fetched. Please wait a moment and refresh the page.",
     "labels": {
       "dx": "DX",
       "combo": "Combo",
