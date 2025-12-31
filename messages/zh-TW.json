@@ -230,6 +230,10 @@
   "recentPlays": {
     "title": "遊玩紀錄",
     "noPlays": "找不到最近遊玩紀錄",
+    "notFetched": "Not fetched",
+    "fetching": "Fetching...",
+    "detailsNotFetched": "Detailed play data hasn't been fetched yet. Sync your data again to get detailed breakdown.",
+    "detailsFetching": "Detailed play data is still being fetched. Please wait a moment and refresh the page.",
     "labels": {
       "dx": "DX",
       "combo": "連擊",
