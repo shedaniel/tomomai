@@ -230,6 +230,10 @@
   "recentPlays": {
     "title": "최근 기록",
     "noPlays": "최근 플레이 기록이 없습니다",
+    "notFetched": "Not fetched",
+    "fetching": "Fetching...",
+    "detailsNotFetched": "Detailed play data hasn't been fetched yet. Sync your data again to get detailed breakdown.",
+    "detailsFetching": "Detailed play data is still being fetched. Please wait a moment and refresh the page.",
     "labels": {
       "dx": "DX",
       "combo": "콤보",
