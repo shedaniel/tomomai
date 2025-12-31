@@ -261,7 +261,7 @@ function FetchDataButton({
       {/* Progress background */}
       {isFetching && (
         <div
-          className="absolute inset-0 bg-black transition-all duration-300 ease-out z-5"
+          className="absolute inset-0 bg-primary transition-all duration-300 ease-out z-5"
           style={{ width: `${progress}%` }}
         />
       )}
