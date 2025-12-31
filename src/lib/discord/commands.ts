@@ -15,7 +15,7 @@ export const COMMANDS = {
     description: 'Show your latest maimai rating (International region)',
   },
   PROFILEJP: {
-    name: 'profilejp', 
+    name: 'profilejp',
     description: 'Show your latest maimai rating (Japan region)',
   },
   FETCH: {
@@ -23,7 +23,7 @@ export const COMMANDS = {
     description: 'Refetch and update your latest maimai scores (International region)',
   },
   FETCHJP: {
-    name: 'fetchjp', 
+    name: 'fetchjp',
     description: 'Refetch and update your latest maimai scores (Japan region)',
   },
   RECENTS: {
@@ -60,11 +60,11 @@ export async function handleCommand(context: CommandContext): Promise<DiscordRes
         return createUnknownCommandResponse();
       }
       const region = commandName.toLowerCase() === 'profilejp' ? 'jp' : 'intl';
-      return handleProfileCommand({ 
-        discordUserId, 
-        region, 
-        applicationId, 
-        interactionToken 
+      return handleProfileCommand({
+        discordUserId,
+        region,
+        applicationId,
+        interactionToken
       });
 
     case COMMANDS.FETCH.name.toLowerCase():
@@ -73,11 +73,11 @@ export async function handleCommand(context: CommandContext): Promise<DiscordRes
         return createUnknownCommandResponse();
       }
       const fetchRegion = commandName.toLowerCase() === 'fetchjp' ? 'jp' : 'intl';
-      return handleFetchCommand({ 
-        discordUserId, 
-        region: fetchRegion, 
-        applicationId, 
-        interactionToken 
+      return handleFetchCommand({
+        discordUserId,
+        region: fetchRegion,
+        applicationId,
+        interactionToken
       });
 
     case COMMANDS.RECENTS.name.toLowerCase():
@@ -86,11 +86,11 @@ export async function handleCommand(context: CommandContext): Promise<DiscordRes
         return createUnknownCommandResponse();
       }
       const recentsRegion = commandName.toLowerCase() === 'recentsjp' ? 'jp' : 'intl';
-      return handleRecentsCommand({ 
-        discordUserId, 
-        region: recentsRegion, 
-        applicationId, 
-        interactionToken 
+      return handleRecentsCommand({
+        discordUserId,
+        region: recentsRegion,
+        applicationId,
+        interactionToken
       });
 
     case COMMANDS.INVITE.name.toLowerCase():

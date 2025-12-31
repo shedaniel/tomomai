@@ -1,11 +1,11 @@
 import { db } from "./db";
 import { fetchSessions } from "./db/schema-pg";
 import { eq } from "drizzle-orm";
-import { 
-  FetchState, 
-  parseStatusStates, 
-  serializeStatusStates, 
-  calculateProgress 
+import {
+  FetchState,
+  parseStatusStates,
+  serializeStatusStates,
+  calculateProgress
 } from "./fetch-states";
 
 // Lock mechanism to prevent race conditions when updating session states
@@ -16,7 +16,7 @@ export async function appendFetchState(sessionId: bigint, state: FetchState): Pr
   // Serialize updates per sessionId to prevent race conditions
   const lockKey = sessionId.toString();
   const lockPromise = sessionLocks.get(lockKey) || Promise.resolve();
-  
+
   const newLockPromise = lockPromise.then(async () => {
     try {
       // First get the current statusStates
@@ -32,7 +32,7 @@ export async function appendFetchState(sessionId: bigint, state: FetchState): Pr
       }
 
       const currentStates = parseStatusStates(currentSession[0].statusStates);
-      
+
       // Only add if not already present
       if (!currentStates.includes(state)) {
         const newStates = [...currentStates, state];
@@ -55,7 +55,7 @@ export async function appendFetchState(sessionId: bigint, state: FetchState): Pr
       sessionLocks.delete(lockKey);
     }
   });
-  
+
   sessionLocks.set(lockKey, newLockPromise);
   return newLockPromise;
-} 
+}

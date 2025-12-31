@@ -35,8 +35,8 @@ export class MemoryRateLimiter {
     // Default key generator: use IP address
     this.keyGenerator = options.keyGenerator || ((req: NextRequest) => {
       const ip = req.headers.get('x-forwarded-for') ||
-                 req.headers.get('x-real-ip') ||
-                 'unknown';
+        req.headers.get('x-real-ip') ||
+        'unknown';
       return ip.split(',')[0].trim();
     });
   }

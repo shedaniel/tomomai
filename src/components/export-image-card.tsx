@@ -33,17 +33,17 @@ export function ExportImageCard({ selectedSnapshotData }: ExportImageCardProps) 
       // Get the image blob and trigger download
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
-      
+
       const link = document.createElement('a');
       link.href = url;
       link.download = `maimai-profile-${selectedSnapshotData.snapshot.displayName || 'export'}.png`;
       document.body.appendChild(link);
       link.click();
-      
+
       // Cleanup
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
-      
+
     } catch (error) {
       console.error('Failed to download image:', error);
       alert('Failed to download image. Please try again.');
@@ -96,11 +96,11 @@ export function ExportImageCard({ selectedSnapshotData }: ExportImageCardProps) 
           >
             {isLoading && (
               <div className="absolute inset-0 bg-muted animate-pulse">
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-muted-foreground/30 to-transparent animate-shimmer" 
-                     style={{
-                       backgroundSize: '200% 100%',
-                       animation: 'shimmer 5s infinite',
-                     }} 
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-muted-foreground/30 to-transparent animate-shimmer"
+                  style={{
+                    backgroundSize: '200% 100%',
+                    animation: 'shimmer 5s infinite',
+                  }}
                 />
               </div>
             )}
@@ -120,4 +120,4 @@ export function ExportImageCard({ selectedSnapshotData }: ExportImageCardProps) 
       </CardContent>
     </Card>
   );
-} 
+}

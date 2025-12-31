@@ -13,7 +13,7 @@ type DbTypePageProps = {
 
 export async function generateMetadata({ params }: DbTypePageProps): Promise<Metadata> {
   const { type } = await params;
-  
+
   if (type === "songs") {
     const t = await getTranslations("db.songs.metadata");
     return {
@@ -77,7 +77,7 @@ export default async function DbTypePage({ params }: DbTypePageProps) {
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
-         <SongsDatabase selectedSlug={null} initialSongs={songs} currentSong={null} />
+        <SongsDatabase selectedSlug={null} initialSongs={songs} currentSong={null} />
       </>
     );
   }
@@ -107,4 +107,3 @@ export default async function DbTypePage({ params }: DbTypePageProps) {
     </>
   );
 }
-

@@ -15,7 +15,7 @@ type DbSlugPageProps = {
 
 export async function generateMetadata({ params }: DbSlugPageProps): Promise<Metadata> {
   const { type, slug } = await params;
-  
+
   if (type !== "songs") {
     return {};
   }
@@ -23,13 +23,13 @@ export async function generateMetadata({ params }: DbSlugPageProps): Promise<Met
   const decodedSlug = decodeURIComponent(slug);
   const trpc = await createServerSideTRPC();
   const songs = await trpc.user.getAllUniqueSongs();
-  
+
   const song = songs.find(s => s.slug === decodedSlug);
-  
+
   if (song) {
     const relativeUrl = createSafeMaimaiImageUrl(song.cover);
-    const absoluteUrl = relativeUrl.startsWith("/") 
-      ? `${resolveBaseUrl()}${relativeUrl}` 
+    const absoluteUrl = relativeUrl.startsWith("/")
+      ? `${resolveBaseUrl()}${relativeUrl}`
       : relativeUrl;
 
     return {
@@ -42,7 +42,7 @@ export async function generateMetadata({ params }: DbSlugPageProps): Promise<Met
       },
     };
   }
-  
+
   return {
     title: `Song Details | maimai DX`,
     description: `View detailed information about this maimai DX song including difficulty levels and regional availability.`,
@@ -51,7 +51,7 @@ export async function generateMetadata({ params }: DbSlugPageProps): Promise<Met
 
 export default async function DbSlugPage({ params }: DbSlugPageProps) {
   const { type, slug } = await params;
-  
+
   if (type !== "songs") {
     notFound();
   }
@@ -60,7 +60,7 @@ export default async function DbSlugPage({ params }: DbSlugPageProps) {
   const session = await getServerSession();
   const trpc = await createServerSideTRPC(session);
   const songs = await trpc.user.getAllUniqueSongs();
-  
+
   const song = songs.find(s => s.slug === decodedSlug);
 
   // Fetch song details server-side if song exists
@@ -98,4 +98,3 @@ export default async function DbSlugPage({ params }: DbSlugPageProps) {
     </>
   );
 }
-

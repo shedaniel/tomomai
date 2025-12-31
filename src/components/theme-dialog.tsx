@@ -20,21 +20,21 @@ interface ThemeDialogProps {
 
 function ThemePreview({ theme, selected, onClick }: { theme: Theme; selected: boolean; onClick: () => void }) {
   const t = useTranslations();
-  
+
   // Calculate preview colors based on theme values
   const isDark = theme.dark;
-  
+
   // For light themes
   const lightPrimaryColor = `oklch(${1 - theme.darkness} ${theme.contrast * 0.169} ${theme.hue})`;
   const lightBgColor = `oklch(${1 - (theme.lightness ?? 1.0) * 0.019} ${theme.contrast * 0.008 * (theme.saturation ?? 1.0)} ${theme.hue})`;
-  
+
   // For dark themes
   const darkPrimaryColor = `oklch(${0.75 + theme.darkness * 0.2} ${theme.contrast * 0.15} ${theme.hue})`;
   const darkBgColor = `oklch(${0.1 + (theme.lightness ?? 1.0) * 0.045} ${theme.contrast * 0.015 * (theme.saturation ?? 1.0)} ${theme.hue})`;
-  
+
   const primaryColor = isDark ? darkPrimaryColor : lightPrimaryColor;
   const bgColor = isDark ? darkBgColor : lightBgColor;
-  
+
   return (
     <button
       onClick={onClick}

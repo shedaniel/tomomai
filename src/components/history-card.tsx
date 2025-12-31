@@ -29,7 +29,7 @@ export function HistoryCard({ region }: HistoryCardProps) {
   const t = useTranslations();
   const [chartAreaBounds, setChartAreaBounds] = useState<{ left: number; width: number } | null>(null);
   const [dateRange, setDateRange] = useState<[number, number]>([0, 100]);
-  
+
   // Fetch rating history from tRPC
   const { data, isLoading } = trpc.user.getRatingHistory.useQuery({ region });
 
@@ -77,18 +77,18 @@ export function HistoryCard({ region }: HistoryCardProps) {
   // Calculate min and max for Y-axis domain
   const { minRating, maxRating, minTime, maxTime } = useMemo(() => {
     if (chartData.length === 0) return { minRating: 0, maxRating: 15000, minTime: 0, maxTime: 0 };
-    
+
     const ratings = chartData.map((d) => d.rating);
     const min = Math.min(...ratings);
     const max = Math.max(...ratings);
-    
+
     // Add padding to make the chart more readable
     const padding = Math.max(50, (max - min) * 0.1); // 10% padding or 500 if no variation
-    
+
     const timestamps = chartData.map((d) => d.timestamp);
     const minTime = Math.min(...timestamps);
     const maxTime = Math.max(...timestamps);
-    
+
     return {
       minRating: Math.max(0, Math.floor((min - padding) / 100) * 100),
       maxRating: Math.ceil((max + padding) / 100) * 100,
@@ -205,21 +205,21 @@ export function HistoryCard({ region }: HistoryCardProps) {
                   />
                 </AreaChart>
               </ChartContainer>
-              
+
               {/* Song change indicators */}
               {chartAreaBounds && (
                 <div className="absolute bottom-8 left-0 right-0 h-12 pointer-events-none">
                   <TooltipProvider delayDuration={100}>
                     {chartData.map((point, idx) => {
                       if (!point.changes || point.changes.length === 0) return null;
-                      
+
                       // Calculate position based on actual timestamp ratio within the chart area
-                      const timeRatio = chartData.length === 1 
-                        ? 0.5 
+                      const timeRatio = chartData.length === 1
+                        ? 0.5
                         : (point.timestamp - minTime) / (maxTime - minTime);
                       const leftPosition = chartAreaBounds.left + (timeRatio * chartAreaBounds.width);
                       const showMultiple = point.changes.length > 2;
-                      
+
                       return (
                         <div
                           key={idx}
@@ -296,8 +296,8 @@ export function HistoryCard({ region }: HistoryCardProps) {
                                         {change.difficulty.toUpperCase()}
                                       </div>
                                       <div className="text-xs">
-                                        {change.changeType === 'new' 
-                                          ? `New in B50: ${change.newRating}` 
+                                        {change.changeType === 'new'
+                                          ? `New in B50: ${change.newRating}`
                                           : `${change.oldRating} → ${change.newRating}`
                                         }
                                       </div>
@@ -341,4 +341,3 @@ export function HistoryCard({ region }: HistoryCardProps) {
     </Card>
   );
 }
-

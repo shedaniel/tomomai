@@ -11,7 +11,7 @@ function isDataUrl(url: string): boolean {
 // Helper function to process images in batches
 async function processBatch(urls: string[], batchNumber: number, totalBatches: number): Promise<{ url: string; error?: string }[]> {
   console.log(`Processing batch ${batchNumber}/${totalBatches} with ${urls.length} images...`);
-  
+
   const results = await Promise.allSettled(
     urls.map(async (url) => {
       try {
@@ -19,8 +19,8 @@ async function processBatch(urls: string[], batchNumber: number, totalBatches: n
         return { url };
       } catch (error) {
         console.error(`Failed to cache image ${url}:`, error);
-        return { 
-          url, 
+        return {
+          url,
           error: error instanceof Error ? error.message : "Unknown error"
         };
       }
@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
     // Check for admin token authentication
     const authHeader = request.headers.get("authorization");
     const token = authHeader?.replace("Bearer ", "");
-    
+
     if (!token) {
       return NextResponse.json(
         { error: "Missing authorization token" },
@@ -74,7 +74,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const batchSizeParam = searchParams.get('batch_size');
     const batchSize = batchSizeParam ? parseInt(batchSizeParam, 10) : 20; // Default batch size of 20
-    
+
     if (isNaN(batchSize) || batchSize < 1 || batchSize > 100) {
       return NextResponse.json(
         { error: "Invalid batch_size parameter. Must be between 1 and 100" },
@@ -86,7 +86,7 @@ export async function GET(request: NextRequest) {
 
     // Step 1: Get all distinct cover URLs from songs table
     console.log("Step 1: Fetching all distinct cover URLs from songs table...");
-    
+
     const distinctCovers = await db
       .select({ cover: songs.cover })
       .from(songs)
@@ -96,7 +96,7 @@ export async function GET(request: NextRequest) {
 
     // Step 2: Filter out data URLs
     console.log("Step 2: Filtering out data URLs...");
-    
+
     const httpUrls = distinctCovers
       .map(row => row.cover)
       .filter(url => !isDataUrl(url))
@@ -122,7 +122,7 @@ export async function GET(request: NextRequest) {
 
     // Step 3: Process URLs in parallel batches
     console.log(`Step 3: Processing ${httpUrls.length} URLs in batches of ${batchSize}...`);
-    
+
     const batches: string[][] = [];
     for (let i = 0; i < httpUrls.length; i += batchSize) {
       batches.push(httpUrls.slice(i, i + batchSize));
@@ -138,15 +138,15 @@ export async function GET(request: NextRequest) {
     for (let i = 0; i < batches.length; i++) {
       const batch = batches[i];
       const batchResult = await processBatch(batch, i + 1, batches.length);
-      
+
       allResults.push(...batchResult);
-      
+
       const batchCached = batchResult.filter(r => !r.error).length;
       const batchErrors = batchResult.filter(r => r.error).length;
-      
+
       totalCached += batchCached;
       totalErrors += batchErrors;
-      
+
       console.log(`Batch ${i + 1}/${batches.length} completed: ${batchCached} cached, ${batchErrors} errors`);
     }
 

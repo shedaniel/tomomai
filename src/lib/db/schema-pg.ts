@@ -326,4 +326,3 @@ export const storeEditVotes = pgTable("store_edit_votes", {
   unique("store_edit_votes_userid_editid_unique").on(table.userId, table.editId),
   index("store_edit_votes_editid_idx").on(table.editId),
 ]);
-

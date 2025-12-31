@@ -12,13 +12,13 @@ function parseFromParameter(from: string): {
 } {
   // Expected format: "version<=10@intl-10" or "version=11@jp-11" or "version>=5@intl-10"
   const match = from.match(/^version(<=|>=|=)(\d+)@(intl|jp)-(\d+)$/);
-  
+
   if (!match) {
     throw new Error(`Invalid 'from' parameter format. Expected format: version[<=|>=|=]NUMBER@[intl|jp]-NUMBER`);
   }
 
   const [, operator, versionValue, region, gameVersion] = match;
-  
+
   if (region !== "intl" && region !== "jp") {
     throw new Error(`Invalid region in 'from' parameter: ${region}. Must be 'intl' or 'jp'`);
   }
@@ -40,13 +40,13 @@ function parseToParameter(to: string): {
 } {
   // Expected format: "intl-11" or "jp-12"
   const match = to.match(/^(intl|jp)-(\d+)$/);
-  
+
   if (!match) {
     throw new Error(`Invalid 'to' parameter format. Expected format: [intl|jp]-NUMBER`);
   }
 
   const [, region, gameVersion] = match;
-  
+
   if (region !== "intl" && region !== "jp") {
     throw new Error(`Invalid region in 'to' parameter: ${region}. Must be 'intl' or 'jp'`);
   }
@@ -76,7 +76,7 @@ export async function GET(request: NextRequest) {
     // Check for admin token authentication
     const authHeader = request.headers.get("authorization");
     const token = authHeader?.replace("Bearer ", "");
-    
+
     if (!token) {
       return NextResponse.json(
         { error: "Missing authorization token" },
@@ -133,7 +133,7 @@ export async function GET(request: NextRequest) {
 
     // Parse parameters
     let sourceConfig, targetConfig;
-    
+
     try {
       sourceConfig = parseFromParameter(fromParam);
       targetConfig = parseToParameter(toParam);
@@ -149,9 +149,9 @@ export async function GET(request: NextRequest) {
 
     // Step 1: Query source songs based on criteria
     console.log("Step 1: Querying source songs...");
-    
+
     const versionCondition = buildVersionFilter(sourceConfig.versionFilter, sourceConfig.versionValue);
-    
+
     const sourceSongs = await db
       .select()
       .from(songs)
@@ -184,7 +184,7 @@ export async function GET(request: NextRequest) {
 
     // Step 2: Check existing songs in target if mode is "only-upsert"
     let existingTargetSongs: any[] = [];
-    
+
     if (mode === "only-upsert") {
       console.log("Step 2: Querying existing target songs for upsert mode...");
       existingTargetSongs = await db
@@ -196,13 +196,13 @@ export async function GET(request: NextRequest) {
             eq(songs.gameVersion, targetConfig.gameVersion)
           )
         );
-      
+
       console.log(`Found ${existingTargetSongs.length} existing songs in target`);
     }
 
     // Step 3: Prepare target songs with new IDs and target region/version
     console.log("Step 3: Preparing target songs...");
-    
+
     const targetSongs: any[] = [];
     let importedCount = 0;
     let updatedCount = 0;
@@ -219,7 +219,7 @@ export async function GET(request: NextRequest) {
 
     for (const sourceSong of sourceSongs) {
       const songKey = `${sourceSong.songName}|${sourceSong.difficulty}|${sourceSong.type}`;
-      
+
       if (mode === "only-upsert") {
         // Only include songs that already exist in target
         if (!existingTargetMap.has(songKey)) {
@@ -249,16 +249,16 @@ export async function GET(request: NextRequest) {
     // Step 4: Perform batch upsert
     if (targetSongs.length > 0) {
       console.log(`Step 4: Performing batch upsert of ${targetSongs.length} songs...`);
-      
+
       try {
         // Split into batches of 1000 records to avoid SQL limits
         const batchSize = 1000;
         let totalProcessed = 0;
-        
+
         for (let i = 0; i < targetSongs.length; i += batchSize) {
           const batch = targetSongs.slice(i, i + batchSize);
           console.log(`Upserting batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(targetSongs.length / batchSize)} (${batch.length} songs)`);
-          
+
           await db.insert(songs).values(batch).onConflictDoUpdate({
             target: [songs.songName, songs.difficulty, songs.type, songs.region, songs.gameVersion],
             set: {
@@ -270,10 +270,10 @@ export async function GET(request: NextRequest) {
               addedVersion: sql`excluded."addedVersion"`,
             },
           });
-          
+
           totalProcessed += batch.length;
         }
-        
+
         console.log(`Successfully upserted ${totalProcessed} songs to target`);
       } catch (error) {
         console.error("Error during batch upsert:", error);
@@ -317,4 +317,4 @@ export async function POST() {
     { error: "Method not allowed" },
     { status: 405 }
   );
-} 
+}

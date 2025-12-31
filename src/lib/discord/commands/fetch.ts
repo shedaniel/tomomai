@@ -66,7 +66,7 @@ export async function handleFetchCommand({
 
     // Start the fetch process in the background using waitUntil to prevent termination
     const backgroundTask = (async () => {
-      try {                
+      try {
         // Start the fetch
         const startResult = await startFetchServer(dbUser.id, region as Region);
 
@@ -104,13 +104,13 @@ export async function handleFetchCommand({
             timestamp: new Date().toISOString(),
           }],
         });
-       }
-     })();
+      }
+    })();
 
-     // Use waitUntil to ensure the background task continues after response
-     waitUntil(backgroundTask);
+    // Use waitUntil to ensure the background task continues after response
+    waitUntil(backgroundTask);
 
-     return deferredResponse;
+    return deferredResponse;
   } catch (error) {
     console.error('Error starting fetch:', error);
     return createErrorResponse('An error occurred while starting the fetch. Please try again later.');
@@ -249,21 +249,21 @@ async function updateFetchProgress(
 ): Promise<void> {
   const allStates = getAllStates();
   const completedStates = parseStatusStates(statusStates);
-  
+
   // Format all states with appropriate emojis
   const formattedStates = allStates.map(state => {
     const friendlyName = getStateFriendlyName(state);
     let emoji;
-    
+
     if (completedStates.includes(state)) {
       emoji = '✅';
     } else {
       emoji = '⏳';
     }
-    
+
     return `${emoji} ${friendlyName}`;
   });
-  
+
   const statusText = formattedStates.join('\n');
 
   await editDiscordMessage(applicationId, interactionToken, {

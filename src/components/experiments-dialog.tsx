@@ -53,7 +53,7 @@ export function ExperimentsDialog({ open, onOpenChange, initialFlags }: Experime
       document.cookie = `flagOverrides=${encodeURIComponent(cookieValue)}; path=/; expires=${expiresAt.toUTCString()}; SameSite=Lax`;
 
       toast.success(t('common.save'));
-      
+
       // Reload page to apply changes
       setTimeout(() => {
         window.location.reload();

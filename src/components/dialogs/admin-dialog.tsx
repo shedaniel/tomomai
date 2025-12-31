@@ -84,7 +84,7 @@ export function AdminDialog({ open, onOpenChange }: AdminDialogProps) {
     }).then(async data => {
       appendConsoleLog(`Response ${data.status} ${data.statusText}:`);
       const text = await data.text();
-      try { 
+      try {
         const json = JSON.parse(text);
         appendConsoleLog(JSON.stringify(json, null, 2));
       } catch (_) {
@@ -94,7 +94,7 @@ export function AdminDialog({ open, onOpenChange }: AdminDialogProps) {
       appendConsoleLog("Error: " + error.message);
     });
   }
-  
+
   function handleFetchFallbackSongs(region: "intl" | "jp") {
     appendConsoleLog("Fetching fallback songs for region " + region + "...");
     const maimaiTokenEncoded = encodeURIComponent(maimaiToken);
@@ -158,7 +158,7 @@ export function AdminDialog({ open, onOpenChange }: AdminDialogProps) {
       appendConsoleLog("Error: " + error.message);
     });
   }
-  
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
@@ -168,7 +168,7 @@ export function AdminDialog({ open, onOpenChange }: AdminDialogProps) {
             Modifying the database and other admin-only features.
           </DialogDescription>
         </DialogHeader>
-        
+
         <div className="space-y-6">
           <div className="grid gap-2">
             <Label htmlFor="adminToken">Admin Token</Label>
@@ -292,7 +292,7 @@ export function AdminDialog({ open, onOpenChange }: AdminDialogProps) {
           <div className="p-2 bg-gray-200/70 rounded-md text-sm font-mono text-muted-foreground break-all h-[200px] w-full whitespace-pre overflow-y-auto">
             {consoleLog}
           </div>
-          
+
           <div className="pt-4 border-t">
             <p className="text-center text-sm text-muted-foreground">
               Built with ❤️ for the maimai community
@@ -302,4 +302,4 @@ export function AdminDialog({ open, onOpenChange }: AdminDialogProps) {
       </DialogContent>
     </Dialog>
   );
-} 
+}

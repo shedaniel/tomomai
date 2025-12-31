@@ -10,4 +10,4 @@ export default defineConfig({
   dbCredentials: {
     url: process.env.POSTGRES_URL!,
   },
-}); 
+});

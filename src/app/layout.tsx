@@ -60,7 +60,7 @@ const notoSansSC = localFont({
 // Function to get locale-specific font variables
 function getLocaleFontClass(locale: string) {
   const baseClasses = `${inter.variable} ${geistMono.variable} ${murecho.variable}`;
-  
+
   switch (locale) {
     case 'zh-TW':
     case 'zh-HK':

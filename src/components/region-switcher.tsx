@@ -62,9 +62,9 @@ export function RegionSwitcherClient({ value, username }: RegionSwitcherClientPr
   };
 
   return (
-    <RegionSwitcher 
-      value={value} 
+    <RegionSwitcher
+      value={value}
       onChange={handleRegionChange}
     />
   );
-} 
+}

@@ -28,4 +28,4 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
     // Re-throw other errors
     throw error;
   }
-} 
+}

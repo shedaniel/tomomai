@@ -21,14 +21,14 @@ export interface ProfileCommandOptions {
   interactionToken: string;
 }
 
-export async function handleProfileCommand({ 
-  discordUserId, 
+export async function handleProfileCommand({
+  discordUserId,
   region,
   applicationId,
   interactionToken
 }: ProfileCommandOptions): Promise<DiscordResponse> {
   const regionName = region === 'jp' ? 'Japan' : 'International';
-  
+
   try {
     if (!discordUserId) {
       return createErrorResponse('Unable to identify Discord user. Please try again.');
@@ -114,7 +114,7 @@ export async function handleProfileCommand({
         // Fallback to text-only response
         const rating = latestSnapshot.rating;
         const comment = getRatingComment(rating);
-        
+
         await editDiscordMessage(applicationId, interactionToken, {
           embeds: [{
             title: `🎯 ${regionName} Region Rating`,

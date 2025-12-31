@@ -6,7 +6,7 @@ import type { NextRequest } from 'next/server';
 // Create context for tRPC
 export async function createTRPCContext(req: NextRequest) {
   const session = await auth.api.getSession({ headers: req.headers });
-  
+
   return {
     session,
     req,
@@ -38,4 +38,4 @@ export const protectedProcedure = t.procedure.use(({ ctx, next }) => {
       session: ctx.session,
     },
   });
-}); 
+});

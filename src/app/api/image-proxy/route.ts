@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
 
     // If not cached, cache it first (this will save to filesystem)
     await cacheImage(imageUrl);
-    
+
     // Try to get the cached buffer again
     const newCachedResult = await getCachedImageBuffer(imageUrl);
     if (newCachedResult) {
@@ -75,4 +75,4 @@ export async function GET(request: NextRequest) {
     console.error('Error proxying image:', error);
     return new NextResponse('Internal server error', { status: 500 });
   }
-} 
+}

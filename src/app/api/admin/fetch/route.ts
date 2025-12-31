@@ -78,9 +78,9 @@ async function fetchLocations() {
       // Determine base URL based on region
       const gm = region === "intl" ? "98" : "96";
       const baseUrl = `https://location.am-all.net/alm/location?gm=${gm}`;
-      
+
       console.log(`Fetching initial page: ${baseUrl}`);
-      
+
       // Fetch the initial page to get the list of countries/prefectures
       const initialResponse = await fetch(baseUrl, {
         headers: {
@@ -98,14 +98,14 @@ async function fetchLocations() {
       // Parse select options based on region
       const locationData: LocationData = {};
       const BATCH_SIZE = 8;
-      
+
       if (region === "intl") {
         // For intl: find .country > select and parse options
         const countrySelect = $(".country > select[name='ct']");
         const options = countrySelect.find("option");
-        
+
         console.log(`Found ${options.length} country options`);
-        
+
         // Collect valid options
         const validOptions: Array<{ value: string; text: string }> = [];
         for (let i = 0; i < options.length; i++) {
@@ -113,23 +113,23 @@ async function fetchLocations() {
           const value = option.attr("value");
           const text = option.text().trim();
           const isDisabled = option.attr("disabled") !== undefined;
-          
+
           // Skip disabled options or Japan (no stores)
           if (isDisabled || !value) {
             console.log(`Skipping disabled/invalid option: ${text}`);
             continue;
           }
-          
+
           validOptions.push({ value, text });
         }
-        
+
         console.log(`Processing ${validOptions.length} valid countries in batches of ${BATCH_SIZE}`);
-        
+
         // Process in batches
         for (let i = 0; i < validOptions.length; i += BATCH_SIZE) {
           const batch = validOptions.slice(i, i + BATCH_SIZE);
           console.log(`Processing batch ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(validOptions.length / BATCH_SIZE)} (${batch.length} countries)`);
-          
+
           const batchPromises = batch.map(async ({ value, text }) => {
             console.log(`  Fetching stores for country: ${text} (ct=${value})`);
             try {
@@ -146,9 +146,9 @@ async function fetchLocations() {
               return null;
             }
           });
-          
+
           const batchResults = await Promise.all(batchPromises);
-          
+
           // Add results to locationData
           for (const result of batchResults) {
             if (result) {
@@ -160,9 +160,9 @@ async function fetchLocations() {
         // For jp: find .pref > select and parse options
         const prefSelect = $(".pref > select[name='at']");
         const options = prefSelect.find("option");
-        
+
         console.log(`Found ${options.length} prefecture options`);
-        
+
         // Collect valid options
         const validOptions: Array<{ value: string; text: string }> = [];
         for (let i = 0; i < options.length; i++) {
@@ -170,23 +170,23 @@ async function fetchLocations() {
           const value = option.attr("value");
           const text = option.text().trim();
           const isDisabled = option.attr("disabled") !== undefined;
-          
+
           // Skip disabled options
           if (isDisabled || !value) {
             console.log(`Skipping disabled/invalid option: ${text}`);
             continue;
           }
-          
+
           validOptions.push({ value, text });
         }
-        
+
         console.log(`Processing ${validOptions.length} valid prefectures in batches of ${BATCH_SIZE}`);
-        
+
         // Process in batches
         for (let i = 0; i < validOptions.length; i += BATCH_SIZE) {
           const batch = validOptions.slice(i, i + BATCH_SIZE);
           console.log(`Processing batch ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(validOptions.length / BATCH_SIZE)} (${batch.length} prefectures)`);
-          
+
           const batchPromises = batch.map(async ({ value, text }) => {
             console.log(`  Fetching stores for prefecture: ${text} (at=${value})`);
             try {
@@ -203,9 +203,9 @@ async function fetchLocations() {
               return null;
             }
           });
-          
+
           const batchResults = await Promise.all(batchPromises);
-          
+
           // Add results to locationData
           for (const result of batchResults) {
             if (result) {
@@ -219,16 +219,16 @@ async function fetchLocations() {
       totalStores += Object.values(locationData).reduce((acc, curr) => acc + curr.length, 0);
 
       console.log(`Successfully fetched locations for region ${region}: ${Object.keys(locationData).length} areas`);
-      
+
       // Save to JSON file if not in serverless environment
       if (!isServerless()) {
         try {
           const storesDir = path.join(process.cwd(), 'public', 'stores');
           await fs.mkdir(storesDir, { recursive: true });
-          
+
           const filename = region === "intl" ? "intl.json" : "jp.json";
           const filePath = path.join(storesDir, filename);
-          
+
           await fs.writeFile(filePath, JSON.stringify(locationData, null, 2), 'utf-8');
           console.log(`Successfully saved location data to ${filePath}`);
         } catch (error) {
@@ -243,7 +243,7 @@ async function fetchLocations() {
       // Continue to next region even if one fails
     }
   }
-  
+
   // Update database
   console.log("Updating database with fetched stores...");
   try {
@@ -255,8 +255,8 @@ async function fetchLocations() {
         const area = region === 'jp' ? areaName : null;
 
         for (const store of storesList) {
-          const location = (store.coords[0] === 0 && store.coords[1] === 0) 
-            ? null 
+          const location = (store.coords[0] === 0 && store.coords[1] === 0)
+            ? null
             : { x: store.coords[0], y: store.coords[1] };
 
           // Upsert store
@@ -305,7 +305,7 @@ async function fetchStoresForLocation(
   if (at) {
     url += `&at=${at}`;
   }
-  
+
   const response = await fetch(url, {
     headers: {
       "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
@@ -322,29 +322,29 @@ async function fetchStoresForLocation(
   // Parse store list
   const stores: LocationEntry[] = [];
   const storeElements = $(".store_list > li");
-  
+
   storeElements.each((index, element) => {
     try {
       const $store = $(element);
-      
+
       // Extract name
       const name = $store.find(".store_name").text().trim();
       if (!name) return;
-      
+
       // Extract address
       const address = $store.find(".store_address").text().trim();
-      
+
       // Extract coordinates from onclick attribute
       const onclickAttr = $store.find(".store_bt_google_map").attr("onclick");
       if (!onclickAttr) return;
-      
+
       // Parse coordinates from: window.open('//maps.google.com/maps?q=NAME@LAT,LNG&zoom=16','_blank')
       const coordMatch = onclickAttr.match(/@([-\d.]+),([-\d.]+)/);
       if (!coordMatch) return;
-      
+
       const lat = parseFloat(coordMatch[1]);
       const lng = parseFloat(coordMatch[2]);
-      
+
       stores.push({
         name,
         address,

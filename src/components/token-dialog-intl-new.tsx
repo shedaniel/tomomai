@@ -516,7 +516,7 @@ export function TokenDialogIntlNew({
     if (isTokenDialogOpen || isPasswordDialogOpen) {
       return;
     }
-    
+
     handleClose0();
   };
 
@@ -542,7 +542,7 @@ export function TokenDialogIntlNew({
 
   const handleTokenSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!token.trim() || !isValidToken(token.trim())) return;
     const finalToken = `cookie://${token.trim()}`;
 
@@ -560,7 +560,7 @@ export function TokenDialogIntlNew({
 
   const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!username.trim() || !password.trim()) return;
     const finalToken = `account://${username.trim()}:://${password.trim()}`;
 
@@ -591,7 +591,7 @@ export function TokenDialogIntlNew({
               {t('tokenDialog.intlDescription')} {t('tokenDialog.credentialsStored')}
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="space-y-3">
             {/* Token Option - Recommended */}
             <button

@@ -18,7 +18,7 @@ const MAIMAI_SONGS_JSON_URL_INTL = "https://maimai.sega.com/assets/data/maimai_s
 // Helper function to convert level string to precise value (stored as 10x)
 function levelToPrecise(level: string): number {
   const trimmedLevel = level.trim();
-  
+
   if (trimmedLevel.endsWith('+')) {
     // Plus level: extract base number and add 6
     const baseLevel = parseInt(trimmedLevel.slice(0, -1), 10);
@@ -58,9 +58,9 @@ async function fetchDxDataJson(): Promise<DxRatingResponse> {
 
 // Helper function to get internal level value from dxdata.json
 function getInternalLevelFromDxData(
-  songTitle: string, 
-  type: SongType, 
-  difficulty: Difficulty, 
+  songTitle: string,
+  type: SongType,
+  difficulty: Difficulty,
   region: Region,
   dxData: DxRatingResponse
 ): number | null {
@@ -152,7 +152,7 @@ function getExtraDataFromDxData(
       }
     }
   }
-  
+
   return {
     bpm: bpm ?? null,
     noteDesigner: noteDesigner ?? null,
@@ -163,7 +163,7 @@ function getExtraDataFromDxData(
 // Helper function to get cookies from redirect URL
 async function getCookiesFromRedirect(redirectUrl: string, redirectCookies: string | null): Promise<string> {
   console.log(`Fetching redirect URL to get login cookies: ${redirectUrl}`);
-  
+
   const loginResponse = await fetch(redirectUrl, {
     method: "GET",
     headers: {
@@ -187,7 +187,7 @@ async function getCookiesFromRedirect(redirectUrl: string, redirectCookies: stri
       setCookieHeaders = [cookieHeader];
     }
   }
-  
+
   if (setCookieHeaders.length === 0) {
     throw new Error("No cookies received from login redirect");
   }
@@ -228,14 +228,14 @@ async function fetchSongDataForDifficulty(region: Region, cookies: string, diffi
 
   const songsHtml = await songsResponse.text();
   console.log(`Songs data for version ${version}, difficulty ${difficulty} fetched successfully, length: ${songsHtml.length} characters`);
-  
+
   return parseSongData(songsHtml, difficulty, version);
 }
 
 // Helper function to parse song data from HTML
 function parseSongData(html: string, difficulty: number, version: number): ParsedSong[] {
   const $ = load(html);
-  
+
   // Use correct selector based on difficulty
   const difficultySelectors = [
     ".music_basic_score_back",      // difficulty 0
@@ -244,13 +244,13 @@ function parseSongData(html: string, difficulty: number, version: number): Parse
     ".music_master_score_back",     // difficulty 3
     ".music_remaster_score_back"    // difficulty 4
   ];
-  
+
   const selector = difficultySelectors[difficulty];
   if (!selector) {
     logger.error({ difficulty }, "Invalid difficulty in parseSongData");
     return [];
   }
-  
+
   const blocks = $(selector);
   const songs: ParsedSong[] = [];
 
@@ -367,7 +367,7 @@ async function fetchSongDetail(region: Region, cookies: string, inputName: strin
 
   const detailHtml = await detailResponse.text();
   console.log(`Song detail fetched successfully, length: ${detailHtml.length} characters`);
-  
+
   return parseSongDetail(detailHtml, region);
 }
 
@@ -378,7 +378,7 @@ function parseSongDetail(html: string, region: Region): {
   artist: string;
 } {
   const $ = load(html);
-  
+
   // Extract cover image URL
   const coverElement = $('.basic_block > img');
   if (coverElement.length === 0) {
@@ -428,16 +428,16 @@ function prepareSongEntriesFromScrapedData(difficulties: ParsedSong[], jsonSong:
     ? (region === "intl" ? `https://maimaidx-eng.com/maimai-mobile/img/Music/${jsonSong.image_url}` : `https://maimaidx.jp/maimai-mobile/img/Music/${jsonSong.image_url}`)
     : "https://maimaidx.jp/maimai-mobile/img/Music/default.png";
   const genre = normalizeGenre(jsonSong?.catcode || "Unknown");
-  
+
   // Prepare each difficulty as a separate record
   for (const difficulty of difficulties) {
     const difficultyName = difficultyNames[difficulty.difficultyNumber] as Difficulty;
-    
+
     // Calculate addedVersion: -1 for versions 0-12, version-13 for versions 13+
     const addedVersion = difficulty.version <= 12 ? -1 : difficulty.version - 13;
-    
+
     const { bpm, noteDesigner, noteCounts } = getExtraDataFromDxData(songName, musicType, difficultyName, dxData);
-    
+
     records.push({
       songName,
       artist,
@@ -469,14 +469,14 @@ function prepareSongEntriesWithFetchedData(difficulties: ParsedSong[], songDetai
 
   // Use fetched metadata
   const { artist, coverUrl, genre } = songDetail;
-  
+
   // Prepare each difficulty as a separate record
   for (const difficulty of difficulties) {
     const difficultyName = difficultyNames[difficulty.difficultyNumber] as Difficulty;
-    
+
     // Calculate addedVersion: -1 for versions 0-12, version-13 for versions 13+
     const addedVersion = difficulty.version <= 12 ? -1 : difficulty.version - 13;
-    
+
     records.push({
       songName,
       artist,
@@ -502,10 +502,10 @@ async function loadFallbackJsonData(region: Region, version: number): Promise<an
   try {
     const filePath = join(process.cwd(), "data", "extra", `${region}-${version}.json`);
     console.log(`Checking for fallback JSON file: ${filePath}`);
-    
+
     const fileContent = await fs.readFile(filePath, "utf-8");
     const jsonData = JSON.parse(fileContent);
-    
+
     console.log(`Loaded ${jsonData.length} fallback songs from ${region}-${version}.json`);
     return jsonData;
   } catch (error) {
@@ -539,9 +539,9 @@ async function loadExclusionJsonData(region: Region, version: number): Promise<s
 // Helper function to convert fallback JSON songs to database records
 function convertFallbackJsonToRecords(fallbackSongs: any[]): UpdateSong[] {
   const records: UpdateSong[] = [];
-  const difficultyMap = { 
+  const difficultyMap = {
     "easy": "basic",
-    "advanced": "advanced", 
+    "advanced": "advanced",
     "expert": "expert",
     "master": "master",
     "remaster": "remaster"
@@ -549,14 +549,14 @@ function convertFallbackJsonToRecords(fallbackSongs: any[]): UpdateSong[] {
 
   for (const song of fallbackSongs) {
     const { title, artist, genre, type, addedVersion, cover, levels, bpm, noteDesigner, noteCounts } = song;
-    
+
     // Process each difficulty level in the song
     for (const [difficultyKey, difficultyData] of Object.entries(levels)) {
       const mappedDifficulty = difficultyMap[difficultyKey as keyof typeof difficultyMap];
       if (!mappedDifficulty || !difficultyData) continue;
-      
+
       const levelData = difficultyData as { level: Level; levelPrecise: number };
-      
+
       records.push({
         songName: title,
         artist,
@@ -580,9 +580,9 @@ function convertFallbackJsonToRecords(fallbackSongs: any[]): UpdateSong[] {
 
 // Helper function to check if a song record already exists in the list
 function songRecordExists(records: UpdateSong[], songName: string, difficulty: Difficulty, type: SongType): boolean {
-  return records.some(record => 
-    record.songName === songName && 
-    record.difficulty === difficulty && 
+  return records.some(record =>
+    record.songName === songName &&
+    record.difficulty === difficulty &&
     record.type === type
   );
 }
@@ -590,7 +590,7 @@ function songRecordExists(records: UpdateSong[], songName: string, difficulty: D
 // Helper function to add fallback songs that don't already exist
 function addFallbackSongs(allRecords: UpdateSong[], fallbackRecords: UpdateSong[]): number {
   let addedCount = 0;
-  
+
   for (const fallbackRecord of fallbackRecords) {
     const fallbackSongName = normalizeName(fallbackRecord.songName);
     if (!songRecordExists(allRecords, fallbackSongName, fallbackRecord.difficulty, fallbackRecord.type)) {
@@ -601,7 +601,7 @@ function addFallbackSongs(allRecords: UpdateSong[], fallbackRecords: UpdateSong[
       console.log(`Skipped duplicate fallback song: ${fallbackSongName} (${fallbackRecord.difficulty}, ${fallbackRecord.type})`);
     }
   }
-  
+
   console.log(`Added ${addedCount} fallback songs out of ${fallbackRecords.length} candidates`);
   return addedCount;
 }
@@ -611,7 +611,7 @@ export async function GET(request: NextRequest) {
     // Check for admin token authentication
     const authHeader = request.headers.get("authorization");
     const token = authHeader?.replace("Bearer ", "");
-    
+
     if (!token) {
       return NextResponse.json(
         { error: "Missing authorization token" },
@@ -661,7 +661,7 @@ export async function GET(request: NextRequest) {
     // Step 1: Validate the maimai token
     console.log("Step 1: Validating maimai token...");
     const validation = await processMaimaiToken(null, region, maimaiToken);
-    
+
     if (!validation.isValid) {
       return NextResponse.json(
         { error: validation.error || "Token validation failed" },
@@ -685,21 +685,21 @@ export async function GET(request: NextRequest) {
     // Step 3: Fetch and parse song data for all difficulties (0-4) and versions
     console.log("Step 3: Fetching and parsing song data for all difficulties and versions...");
     const allSongData: ParsedSong[] = [];
-    
+
     // Get available versions for the region
     const currentVersion = getCurrentVersion(region);
-    
+
     console.log(`Current version for region ${region}: ${currentVersion}`);
-    
+
     // Fetch data for legacy versions (0-12) and current versions (13 to 13 + versionsCount - 1)
     const versionRanges = [
       { start: 0, end: 12, description: "legacy versions" },
       { start: 13, end: 13 + currentVersion, description: "current versions" }
     ];
-    
+
     for (const range of versionRanges) {
       console.log(`Fetching ${range.description} (versions ${range.start}-${range.end})...`);
-      
+
       for (let version = range.start; version <= range.end; version++) {
         const promises: Promise<ParsedSong[]>[] = [];
         for (let difficulty = 0; difficulty <= 4; difficulty++) {
@@ -770,7 +770,7 @@ export async function GET(request: NextRequest) {
         // Get the first song to extract common info
         const songInfo = difficulties[0];
         const jsonSong = songsJsonMap.get(songInfo.songName);
-        
+
         if (jsonSong) {
           // Prepare song entries from scraped difficulty data with JSON metadata
           const records = prepareSongEntriesFromScrapedData(difficulties, jsonSong, region, dxData);
@@ -782,7 +782,7 @@ export async function GET(request: NextRequest) {
           console.log(`${songKey} not found in JSON, will fetch individually`);
           songsNeedingFetch.push(songInfo);
         }
-        
+
       } catch (error) {
         console.error(`Error processing song ${songKey}:`, error);
         // Add to fetch queue as fallback
@@ -820,28 +820,28 @@ export async function GET(request: NextRequest) {
       for (let i = 0; i < songsNeedingFetch.length; i++) {
         const song = songsNeedingFetch[i];
         const songKey = `${song.songName}@${song.musicType}`;
-        
+
         try {
           console.log(`Fetching details for song ${i + 1}/${songsNeedingFetch.length}: ${songKey}`);
-          
+
           // Fetch detailed song information
           const songDetail = await fetchSongDetail(region, cookies, song.inputName, song.inputValue);
-          
+
           // Get all difficulties for this song from the grouped data
           const difficulties = songsGrouped.get(songKey) || [];
-          
+
           // Prepare song entries using fetched metadata
           const records = prepareSongEntriesWithFetchedData(difficulties, songDetail, region, dxData);
           allRecordsToInsert.push(...records);
-          
+
           console.log(`Successfully processed ${songKey} (with fetched data) - ${difficulties.length} difficulties`);
           processedFromFetch++;
-          
+
           // Add 500ms delay between requests (except for the last one)
           if (i < songsNeedingFetch.length - 1) {
             await new Promise(resolve => setTimeout(resolve, 500));
           }
-          
+
         } catch (error) {
           console.error(`Error processing song ${songKey}:`, error);
           // Continue with other songs even if one fails
@@ -852,17 +852,17 @@ export async function GET(request: NextRequest) {
     // Step 9: Load and add fallback songs from JSON files if they exist
     console.log("Step 9: Loading fallback songs from JSON files...");
     const fallbackJsonData = await loadFallbackJsonData(region, currentVersionForRegion);
-    
+
     let fallbackSongsAdded = 0;
     if (fallbackJsonData && fallbackJsonData.length > 0) {
       console.log(`Found fallback JSON data with ${fallbackJsonData.length} songs`);
-      
+
       // Convert fallback JSON to database records format
       const fallbackRecords = convertFallbackJsonToRecords(fallbackJsonData);
-      
+
       // Add fallback songs that don't already exist
       fallbackSongsAdded = addFallbackSongs(allRecordsToInsert, fallbackRecords);
-      
+
       console.log(`Added ${fallbackSongsAdded} fallback songs from ${region}-${currentVersionForRegion}.json`);
     } else {
       console.log(`No fallback songs found for ${region}-${currentVersionForRegion}.json`);
@@ -895,4 +895,4 @@ export async function POST() {
     { error: "Method not allowed" },
     { status: 405 }
   );
-} 
+}

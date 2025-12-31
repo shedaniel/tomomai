@@ -96,12 +96,12 @@ export interface FetchSession {
 
 // ===== DATABASE TYPES =====
 
-export type CourseRank = 
+export type CourseRank =
   | "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" | "10"
-  | "R1" | "R2" | "R3" | "R4" | "R5" | "R6" | "R7" | "R8" | "R9" | "R10" 
+  | "R1" | "R2" | "R3" | "R4" | "R5" | "R6" | "R7" | "R8" | "R9" | "R10"
   | "R" | "U";
 
-export type ClassRank = 
+export type ClassRank =
   | "B5" | "B4" | "B3" | "B2" | "B1"
   | "A5" | "A4" | "A3" | "A2" | "A1"
   | "S5" | "S4" | "S3" | "S2" | "S1"
@@ -111,7 +111,7 @@ export type ClassRank =
 
 export type Difficulty = "basic" | "advanced" | "expert" | "master" | "remaster" | "utage";
 
-export type Level = 
+export type Level =
   | "1" | "1+" | "2" | "2+" | "3" | "3+" | "4" | "4+" | "5" | "5+"
   | "6" | "6+" | "7" | "7+" | "8" | "8+" | "9" | "9+" | "10" | "10+"
   | "11" | "11+" | "12" | "12+" | "13" | "13+" | "14" | "14+" | "15" | "15+"
@@ -189,4 +189,4 @@ export interface ProfilePrivacySettings {
   profileShowPlayCounts: boolean;
   profileShowEvents: boolean;
   profileShowInSearch: boolean;
-} 
+}

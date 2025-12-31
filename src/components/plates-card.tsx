@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Region, SnapshotWithSongs } from "@/lib/types";
 import { useTranslations } from "next-intl";
 
-export function PlatesCard({}: { selectedSnapshotData: SnapshotWithSongs; region: Region }) {
+export function PlatesCard({ }: { selectedSnapshotData: SnapshotWithSongs; region: Region }) {
   const t = useTranslations();
 
   return (

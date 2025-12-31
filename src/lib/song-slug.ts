@@ -98,7 +98,7 @@ export async function getSongSlugs<T extends SongForSlug>(songs: T[]): Promise<(
     // Generate slug logic duplicated to avoid re-running toRomaji
     const cleanedName = slug(processedName);
     const cleanedArtist = slug(processedArtist.replace(/\s+/g, ''));
-    
+
     let baseSlug;
     if (!cleanedName && cleanedArtist) {
       baseSlug = `_-${cleanedArtist}`;

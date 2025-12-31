@@ -19,10 +19,10 @@ export const dbRouter = router({
           // We use distinctOn to get the latest snapshot per user
           const latestSnapshots = db
             .selectDistinctOn([userSnapshots.userId], {
-                id: userSnapshots.id,
-                rating: userSnapshots.rating,
-                totalPlayCount: userSnapshots.totalPlayCount,
-                title: userSnapshots.title,
+              id: userSnapshots.id,
+              rating: userSnapshots.rating,
+              totalPlayCount: userSnapshots.totalPlayCount,
+              title: userSnapshots.title,
             })
             .from(userSnapshots)
             .where(eq(userSnapshots.region, region))
@@ -100,12 +100,12 @@ export const dbRouter = router({
             .from(userScores)
             .innerJoin(songs, eq(userScores.songId, songs.id))
             .where(
-                inArray(userScores.snapshotId, latestSnapshotIds)
+              inArray(userScores.snapshotId, latestSnapshotIds)
             )
             .groupBy(songs.songName, songs.type, songs.difficulty)
             .orderBy(desc(sql`COUNT(*)`))
             .limit(20);
-            
+
           // We calculate percentage based on total snapshots (users)
           const mostPlayedSongs = mostPlayedSongsQuery.map(item => ({
             ...item,
@@ -122,7 +122,7 @@ export const dbRouter = router({
             .from(userScores)
             .innerJoin(songs, eq(userScores.songId, songs.id))
             .where(
-                inArray(userScores.snapshotId, latestSnapshotIds)
+              inArray(userScores.snapshotId, latestSnapshotIds)
             )
             .groupBy(songs.level)
             .orderBy(songs.level);
@@ -157,7 +157,7 @@ export const dbRouter = router({
           // Get all user activity in the last 30 days with a single query
           const thirtyDaysAgo = new Date();
           thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-          
+
           const userActivityQuery = await db
             .select({
               userId: userSnapshots.userId,
@@ -170,11 +170,11 @@ export const dbRouter = router({
                 gte(userSnapshots.fetchedAt, thirtyDaysAgo)
               )
             );
-          
+
           // Process the data to calculate cumulative active users
           const activeUsersOverTime = [];
           const today = new Date();
-          
+
           // 1. Find the most recent activity for each user
           const lastActivityByUser = new Map<string, number>();
           userActivityQuery.forEach(activity => {
@@ -189,13 +189,13 @@ export const dbRouter = router({
           // index 1 = active within last 24h (1 day)
           // index 30 = active within last 30 days (but not 29)
           const userCountsByDaysAgo = new Array(31).fill(0);
-          
+
           lastActivityByUser.forEach((lastTime) => {
             const diffTime = today.getTime() - lastTime;
             // ceil to treat any activity within last 24h as 1 day ago, etc.
             // If diffTime is negative (future), treat as 1
             const diffDays = Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
-            
+
             if (diffDays <= 30) {
               userCountsByDaysAgo[diffDays]++;
             }
@@ -207,7 +207,7 @@ export const dbRouter = router({
           // If I was active 1 day ago, I am active in "Last 1 day", "Last 2 days", etc.
           // If I was active 5 days ago, I am NOT active in "Last 1 day", but AM active in "Last 5 days".
           // So for "Last N days", we want sum(userCountsByDaysAgo[1...N]).
-          
+
           let runningTotal = 0;
           for (let days = 1; days <= 30; days++) {
             runningTotal += userCountsByDaysAgo[days];

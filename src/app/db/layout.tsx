@@ -7,11 +7,10 @@ export const dynamic = "force-dynamic";
 
 export default async function DbLayout({ children }: { children: ReactNode }) {
   const session = await getServerSession();
-  
+
   return (
     <DbLayoutClient types={DB_TYPES} user={session?.user || null}>
       {children}
     </DbLayoutClient>
   );
 }
-

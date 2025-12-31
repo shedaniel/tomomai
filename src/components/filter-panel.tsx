@@ -66,10 +66,10 @@ function FilterPanelInner<T>({
 
   const getAvailableOptions = (category: FilterCategory) => {
     const activeFilters = filters.filter(f => f.type === category.type).map(f => f.value);
-    
+
     // Get options not already selected
     const availableOptions = category.options.filter(opt => !activeFilters.includes(opt.value));
-    
+
     // Filter to only show options that would yield results
     return availableOptions.filter(opt =>
       wouldYieldResults({ type: category.type, value: opt.value })
@@ -527,4 +527,3 @@ export function applyRecommendationFilters<T extends FilterableRecommendation>(
     });
   });
 }
-

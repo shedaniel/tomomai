@@ -92,4 +92,3 @@ export function SongRow({ song, index, isSelected, onSelect }: SongRowProps) {
     </motion.div>
   );
 }
-

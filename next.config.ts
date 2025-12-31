@@ -58,7 +58,7 @@ const nextConfig: NextConfig = {
     } else {
       config.externals = [
         ...config.externals,
-        {'skia-canvas': 'commonjs skia-canvas'},
+        { 'skia-canvas': 'commonjs skia-canvas' },
       ]
     }
     return config;

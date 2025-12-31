@@ -29,7 +29,7 @@ export function PublicDataBanner({
   const formatDate = (date: Date) => {
     // Use user's timezone preference, default to Asia/Tokyo if null
     const timezone = userTimezone || "Asia/Tokyo";
-    
+
     return new Intl.DateTimeFormat("en-US", {
       year: "numeric",
       month: "short",
@@ -64,8 +64,8 @@ export function PublicDataBanner({
               <User className="h-4 w-4" />
               <span>{profileUsername}</span>
             </div>
-            <RegionSwitcherClient 
-              value={region} 
+            <RegionSwitcherClient
+              value={region}
               username={profileUsername}
             />
           </div>
@@ -73,4 +73,4 @@ export function PublicDataBanner({
       </CardContent>
     </Card>
   );
-} 
+}

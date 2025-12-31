@@ -343,4 +343,4 @@ export function Header({ currentTab, showDiscordBanner = true, user }: HeaderPro
       <ThemeDialog open={themeOpen} onOpenChange={setThemeOpen} />
     </>
   );
-} 
+}

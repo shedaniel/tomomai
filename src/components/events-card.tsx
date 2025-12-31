@@ -6,7 +6,7 @@ import { cn, createSafeMaimaiImageUrl } from "@/lib/utils";
 import { Map, Zap, CheckCircle2, Gift, Calendar } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
-import { Tabs, TabsList, TabsPanels, TabsTab,TabsPanel } from "@/components/animate-ui/components/base/tabs";
+import { Tabs, TabsList, TabsPanels, TabsTab, TabsPanel } from "@/components/animate-ui/components/base/tabs";
 import { EventData } from "@/lib/types";
 
 function EventCard({ event }: { event: EventData }) {
@@ -139,7 +139,7 @@ function EventsList({ events }: { events: EventData[] }) {
           <EventCard key={`${event.eventType}-${event.name}`} event={event} />
         ))}
       </div>
-      
+
       {/* Two columns on large screens */}
       <div className="hidden lg:grid grid-cols-2 divide-x divide-dashed -mx-4">
         <div className="divide-y divide-dashed">
@@ -188,21 +188,21 @@ export function EventsCard({ selectedSnapshotData }: { selectedSnapshotData: Sna
             </TabsList>
 
             <TabsPanels>
-            <TabsPanel value="area">
-              {areaEvents.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground text-sm">{t("events.noAreaEvents")}</div>
-              ) : (
-                <EventsList events={areaEvents} />
-              )}
-            </TabsPanel>
+              <TabsPanel value="area">
+                {areaEvents.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground text-sm">{t("events.noAreaEvents")}</div>
+                ) : (
+                  <EventsList events={areaEvents} />
+                )}
+              </TabsPanel>
 
-            <TabsPanel value="eventArea">
-              {eventAreaEvents.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground text-sm">{t("events.noEventAreaEvents")}</div>
-              ) : (
-                <EventsList events={eventAreaEvents} />
-              )}
-            </TabsPanel>
+              <TabsPanel value="eventArea">
+                {eventAreaEvents.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground text-sm">{t("events.noEventAreaEvents")}</div>
+                ) : (
+                  <EventsList events={eventAreaEvents} />
+                )}
+              </TabsPanel>
             </TabsPanels>
           </Tabs>
         )}

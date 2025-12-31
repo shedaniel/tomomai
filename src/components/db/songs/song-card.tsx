@@ -149,4 +149,3 @@ export function SongCard({ song, index, isSelected, onSelect }: SongCardProps) {
     </motion.div>
   );
 }
-

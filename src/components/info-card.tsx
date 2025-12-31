@@ -14,12 +14,12 @@ function RatingImage({ rating }: { rating: number }) {
   );
 }
 
-export function InfoCard({ 
-  selectedSnapshotData, 
+export function InfoCard({
+  selectedSnapshotData,
   showPlayCounts = true,
   visitableProfileAt,
-}: { 
-  selectedSnapshotData: SnapshotWithSongs; 
+}: {
+  selectedSnapshotData: SnapshotWithSongs;
   showPlayCounts?: boolean;
   visitableProfileAt: string | null;
 }) {
@@ -37,8 +37,8 @@ export function InfoCard({
               <h3 className="font-medium mb-1 text-foreground">{t('profileVisibility.public')}</h3>
               <p className="text-sm text-muted-foreground">
                 {t('profileVisibility.accessibleBy')}
-                <Link 
-                  href={`/profile/${visitableProfileAt}`} 
+                <Link
+                  href={`/profile/${visitableProfileAt}`}
                   className="text-foreground hover:text-foreground/80 underline"
                 >
                   https://tomomai.lol/profile/{visitableProfileAt}
@@ -55,7 +55,7 @@ export function InfoCard({
             </div>
           )}
         </div>
-        
+
         <div className="flex items-center gap-2 mb-4">
           <Image src={createSafeMaimaiImageUrl(snapshot.iconUrl)} alt={snapshot.title} width={80} height={80} />
           <div className="flex flex-col min-w-0 self-stretch my-1 space-y-0.5 items-stretch">
@@ -85,4 +85,4 @@ export function InfoCard({
       </CardContent>
     </Card>
   );
-} 
+}

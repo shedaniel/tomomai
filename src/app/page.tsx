@@ -28,12 +28,12 @@ export default async function Home() {
   const session = await getServerSession();
   // eslint-disable-next-line react-hooks/rules-of-hooks
   let flags = await useFlags();
-  
+
   // Apply flag overrides from cookies
   const cookieStore = await cookies();
   const flagOverridesCookie = cookieStore.get("flagOverrides")?.value;
   flags = applyFlagOverrides(flags, flagOverridesCookie);
-  
+
   if (!session) {
     // Fetch signup requirements on the server
     const trpc = await createServerSideTRPC();
@@ -55,7 +55,7 @@ export default async function Home() {
 
   // Fetch initial dashboard data on the server with authenticated context
   const trpc = await createServerSideTRPC(session);
-  
+
   // First, get user data to determine their region preference
   const userData = await trpc.user.getUserData().catch(() => ({
     hasUsername: false,
@@ -88,14 +88,14 @@ export default async function Home() {
   // This is the slowest query (potentially hundreds of songs), so we do it last
   const latestSnapshotId = snapshotsData.snapshots[0]?.id;
   const initialSnapshotData = latestSnapshotId
-    ? await trpc.user.getSnapshotData({ 
-        snapshotId: latestSnapshotId, 
-        region: userRegion 
-      }).catch(() => undefined)
+    ? await trpc.user.getSnapshotData({
+      snapshotId: latestSnapshotId,
+      region: userRegion
+    }).catch(() => undefined)
     : undefined;
 
   return (
-    <Dashboard 
+    <Dashboard
       user={session.user}
       initialUserData={userData}
       initialHasToken={tokenData?.hasToken ?? false}

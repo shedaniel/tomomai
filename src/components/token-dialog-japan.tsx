@@ -27,9 +27,9 @@ export function TokenDialogJapan({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!username.trim() || !password.trim()) return;
-    
+
     const finalToken = `account://${username.trim()}:://${password.trim()}`;
 
     setIsSubmitting(true);
@@ -60,7 +60,7 @@ export function TokenDialogJapan({
             {t('tokenDialog.japanDescription')} {t('tokenDialog.credentialsStored')}
           </DialogDescription>
         </DialogHeader>
-        
+
         <div className="space-y-4">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-4">
@@ -129,4 +129,3 @@ export function TokenDialogJapan({
     </Dialog>
   );
 }
-

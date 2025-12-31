@@ -81,7 +81,7 @@ export function UsernameSetupDialog({ open, onComplete }: UsernameSetupDialogPro
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!username.trim()) {
       toast.error(t('usernameSetup.enterUsername'));
       return;
@@ -118,9 +118,9 @@ export function UsernameSetupDialog({ open, onComplete }: UsernameSetupDialogPro
   };
 
   return (
-    <Dialog open={open} onOpenChange={() => {}}>
-      <DialogContent 
-        className="sm:max-w-md" 
+    <Dialog open={open} onOpenChange={() => { }}>
+      <DialogContent
+        className="sm:max-w-md"
         onPointerDownOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => e.preventDefault()}
         showCloseButton={false}
@@ -182,4 +182,4 @@ export function UsernameSetupDialog({ open, onComplete }: UsernameSetupDialogPro
       </DialogContent>
     </Dialog>
   );
-} 
+}

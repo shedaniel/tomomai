@@ -39,15 +39,15 @@ interface SettingsDialogProps {
   onSaveSuccess: () => void;
 }
 
-export function SettingsDialog({ 
-  open, 
-  onOpenChange, 
-  currentTimezone, 
+export function SettingsDialog({
+  open,
+  onOpenChange,
+  currentTimezone,
   username,
   initialProfileSettings,
   onTimezoneUpdate,
   onOpenTokenDialog,
-  onSaveSuccess, 
+  onSaveSuccess,
 }: SettingsDialogProps) {
   const t = useTranslations();
   const { locale, setLocale } = useLocale();
@@ -105,15 +105,15 @@ export function SettingsDialog({
       // Update profile settings
       if (profileSettings) {
         if (selectedPublishProfile !== profileSettings.publishProfile) {
-          promises.push(updatePublishProfile.mutateAsync({ publishProfile: selectedPublishProfile }).then(() => {}));
+          promises.push(updatePublishProfile.mutateAsync({ publishProfile: selectedPublishProfile }).then(() => { }));
         }
 
         if (selectedMainRegion !== profileSettings.profileMainRegion) {
-          promises.push(updateProfileMainRegion.mutateAsync({ profileMainRegion: selectedMainRegion }).then(() => {}));
+          promises.push(updateProfileMainRegion.mutateAsync({ profileMainRegion: selectedMainRegion }).then(() => { }));
         }
 
         // Check if privacy settings changed
-        const privacyChanged = 
+        const privacyChanged =
           selectedPrivacySettings.profileShowAllScores !== profileSettings.profileShowAllScores ||
           selectedPrivacySettings.profileShowScoreDetails !== profileSettings.profileShowScoreDetails ||
           selectedPrivacySettings.profileShowPlates !== profileSettings.profileShowPlates ||
@@ -122,12 +122,12 @@ export function SettingsDialog({
           selectedPrivacySettings.profileShowInSearch !== profileSettings.profileShowInSearch;
 
         if (privacyChanged) {
-          promises.push(updateProfilePrivacySettings.mutateAsync(selectedPrivacySettings).then(() => {}));
+          promises.push(updateProfilePrivacySettings.mutateAsync(selectedPrivacySettings).then(() => { }));
         }
       }
 
       await Promise.all(promises);
-      
+
       // Update the locale immediately if language changed (using cookies only)
       if (selectedLanguage !== locale) {
         if (selectedLanguage) {
@@ -142,7 +142,7 @@ export function SettingsDialog({
           window.location.reload();
         }
       }
-      
+
       toast.success(t('settings.saved'));
       onSaveSuccess();
       onOpenChange(false);
@@ -157,7 +157,7 @@ export function SettingsDialog({
   const handleCancel = () => {
     setSelectedTimezone(currentTimezone ?? null);
     setSelectedLanguage(locale || null);
-    
+
     // Reset profile settings to original values
     if (profileSettings) {
       setSelectedPublishProfile(profileSettings.publishProfile);
@@ -171,7 +171,7 @@ export function SettingsDialog({
         profileShowInSearch: profileSettings.profileShowInSearch,
       });
     }
-    
+
     onOpenChange(false);
   };
 
@@ -217,11 +217,11 @@ export function SettingsDialog({
             {t('settings.description')}
           </DialogDescription>
         </DialogHeader>
-        
+
         <div className="grid gap-6 py-4">
           <div className="grid gap-2">
             <Label htmlFor="language">{t('settings.language.label')}</Label>
-            <Select 
+            <Select
               value={selectedLanguage || "auto"}
               onValueChange={(value) => {
                 setSelectedLanguage(value === "auto" ? null : value);
@@ -232,8 +232,8 @@ export function SettingsDialog({
               </SelectTrigger>
               <SelectContent>
                 {LANGUAGES.map((language) => (
-                  <SelectItem 
-                    key={language.value || "auto"} 
+                  <SelectItem
+                    key={language.value || "auto"}
                     value={language.value || "auto"}
                   >
                     <div className="flex items-center space-x-2">
@@ -254,7 +254,7 @@ export function SettingsDialog({
 
           <div className="grid gap-2">
             <Label htmlFor="timezone">{t('settings.timezone.label')}</Label>
-            <Select 
+            <Select
               value={getCurrentTimezoneDisplay()}
               onValueChange={(value) => {
                 setSelectedTimezone(value === "jp" ? null : value as typeof TIMEZONE_ENUM[number]);
@@ -265,8 +265,8 @@ export function SettingsDialog({
               </SelectTrigger>
               <SelectContent>
                 {TIMEZONES.map((timezone) => (
-                  <SelectItem 
-                    key={timezone.value || "jp"} 
+                  <SelectItem
+                    key={timezone.value || "jp"}
                     value={timezone.value || "jp"}
                   >
                     <div className="flex items-center space-x-2">
@@ -286,8 +286,8 @@ export function SettingsDialog({
 
           <div className="grid gap-2">
             <Label>{t('settings.account.label')}</Label>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={onOpenTokenDialog}
               className="justify-start bg-background"
             >
@@ -324,7 +324,7 @@ export function SettingsDialog({
                 {/* Main Region Selection */}
                 <div className="grid gap-2">
                   <Label htmlFor="main-region">{t('settings.profile.mainRegion.label')}</Label>
-                  <Select 
+                  <Select
                     value={selectedMainRegion}
                     onValueChange={(value: 'intl' | 'jp') => setSelectedMainRegion(value)}
                     disabled={isLoadingSettings}
@@ -355,7 +355,7 @@ export function SettingsDialog({
                 {/* Privacy Settings */}
                 <div className="grid gap-3">
                   <Label>{t('settings.profile.privacy.label')}</Label>
-                  
+
                   <div className="grid gap-3">
                     <div className="flex items-center justify-between">
                       <div className="grid gap-1">
@@ -489,4 +489,4 @@ export function SettingsDialog({
       </DialogContent>
     </Dialog>
   );
-} 
+}

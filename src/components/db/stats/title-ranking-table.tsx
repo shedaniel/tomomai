@@ -38,12 +38,11 @@ export function TitleRankingTable({ data }: TitleRankingTableProps) {
         ))}
 
         {data.length === 0 && (
-            <div className="p-8 text-center text-muted-foreground">
-                {t("noDataAvailable")}
-            </div>
+          <div className="p-8 text-center text-muted-foreground">
+            {t("noDataAvailable")}
+          </div>
         )}
       </div>
     </div>
   );
 }
-

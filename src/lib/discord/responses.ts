@@ -192,20 +192,20 @@ export async function editDiscordMessageWithImage(
   components?: any[]
 ): Promise<void> {
   const formData = new FormData();
-  
+
   // Add the image file
   const blob = new Blob([new Uint8Array(imageBuffer)], { type: 'image/png' });
   formData.append('files[0]', blob, 'maimai-profile.png');
-  
+
   // Add the payload without embedding the image
   const payload: any = {
     embeds: [embedData]
   };
-  
+
   if (components) {
     payload.components = components;
   }
-  
+
   formData.append('payload_json', JSON.stringify(payload));
 
   await fetch(

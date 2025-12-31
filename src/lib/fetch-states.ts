@@ -3,7 +3,7 @@ export const FETCH_STATES = {
   LOGIN: "login",
   PLAYER_DATA: "player_data",
   SONG_DATA_EASY: "song_data:easy",
-  SONG_DATA_ADVANCED: "song_data:advanced", 
+  SONG_DATA_ADVANCED: "song_data:advanced",
   SONG_DATA_EXPERT: "song_data:expert",
   SONG_DATA_MASTER: "song_data:master",
   SONG_DATA_REMASTER: "song_data:remaster",
@@ -67,4 +67,4 @@ export function getStateForDifficulty(difficulty: number): FetchState | null {
 export function isAllStatesCompleted(completedStates: FetchState[]): boolean {
   const allStates = getAllStates();
   return allStates.every(state => completedStates.includes(state));
-} 
+}

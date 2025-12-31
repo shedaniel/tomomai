@@ -5,8 +5,8 @@ export interface InviteCommandOptions {
   applicationId: string;
 }
 
-export async function handleInviteCommand({ 
-  applicationId 
+export async function handleInviteCommand({
+  applicationId
 }: InviteCommandOptions): Promise<DiscordResponse> {
   const botInviteUrl = `https://discord.com/oauth2/authorize?client_id=${applicationId}&scope=applications.commands`;
 

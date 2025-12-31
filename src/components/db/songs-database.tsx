@@ -35,7 +35,7 @@ interface SongsDatabaseProps {
 
 export function SongsDatabase({ selectedSlug: initialSlug, initialSongs, currentSong, initialSongDetails }: SongsDatabaseProps) {
   const t = useTranslations();
-  
+
   // Helper for filter translations
   const tFilter = useMemo(() => (key: string) => t(`db.songs.filter.${key}`), [t]);
   const tGroups = useMemo(() => (key: string) => t(`db.songs.filter.groups.${key}`), [t]);
@@ -77,7 +77,7 @@ export function SongsDatabase({ selectedSlug: initialSlug, initialSongs, current
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
-  
+
   const [shouldFetch, setShouldFetch] = useState(!!initialSongs);
 
   useEffect(() => {
@@ -115,7 +115,7 @@ export function SongsDatabase({ selectedSlug: initialSlug, initialSongs, current
       // Check if category has limit_one constraint
       const category = filterCategories?.find(c => c.type === filter.type);
       let newFilters = prev;
-      
+
       if (category?.limit_one) {
         newFilters = prev.filter(f => f.type !== filter.type);
       }
@@ -297,7 +297,7 @@ export function SongsDatabase({ selectedSlug: initialSlug, initialSongs, current
             {/* Group By */}
             <Select value={groupMode} onValueChange={(v) => setGroupMode(v as GroupMode)}>
               <SelectTrigger className={cn("w-[200px] max-xs:w-[100px] h-full transition-all duration-200 truncate", searchBoxFocused && "max-sm:w-10")} aria-label={t("db.songs.filter.groupBy")}>
-                <SelectValue placeholder={t("db.songs.filter.groupBy")}/>
+                <SelectValue placeholder={t("db.songs.filter.groupBy")} />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="none">{tGroups("none")}</SelectItem>
@@ -474,7 +474,7 @@ export function SongsDatabase({ selectedSlug: initialSlug, initialSongs, current
               songName={lastValidSong.songName}
               slug={lastValidSong.slug}
               type={lastValidSong.type}
-              onClose={() => {}}
+              onClose={() => { }}
               initialData={initialSongDetails}
             />
           </div>

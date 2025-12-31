@@ -57,7 +57,7 @@ export async function GET() {
         try {
             // Get all cookies and split them
             const cookies = document.cookie.split(';');
-            
+
             // Filter for cookies starting with 'clal='
             const clalCookies = cookies
                 .map(cookie => cookie.trim())
@@ -66,7 +66,7 @@ export async function GET() {
             let result;
             if (clalCookies.length > 0) {
                 result = clalCookies[0];
-                
+
                 // Copy to clipboard
                 navigator.clipboard.writeText(result).then(() => {
                     // Success notification
@@ -80,11 +80,11 @@ export async function GET() {
                     textArea.select();
                     document.execCommand('copy');
                     document.body.removeChild(textArea);
-                    
+
                     showNotification('✅ Cookie copied to clipboard!', '#4CAF50');
                     console.log('Copied cookie (fallback):', result);
                 });
-                
+
                 // Also show the cookie in alert for verification
                 alert(\`Cookie found and copied:\\n\\n\${result}\`);
             } else {
@@ -158,4 +158,4 @@ export async function GET() {
       'Cache-Control': 'public, max-age=3600', // Cache for 1 hour
     },
   });
-} 
+}

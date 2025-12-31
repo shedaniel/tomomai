@@ -1690,7 +1690,7 @@ export const userRouter = router({
           fs: song.fs,
         }));
 
-        // Calculate ratings for all songs and sort by rating 
+        // Calculate ratings for all songs and sort by rating
         const { newSongsB15, oldSongsB35, newSongsRemaining, oldSongsRemaining } = splitSongs(songsForCalculation, input.targetVersion);
 
         // Calculate total rating (sum of all rating contributing songs)
@@ -2423,7 +2423,7 @@ export const userRouter = router({
                 uniqueSongs.get(key)!.difficulties.splice(uniqueSongs.get(key)!.difficulties.indexOf(existingDifficulty), 1);
               } else continue;
             }
-            
+
             uniqueSongs.get(key)!.difficulties.push({
               difficulty: song.difficulty,
               levelPrecise: song.levelPrecise,
@@ -2508,7 +2508,7 @@ export const userRouter = router({
 
       if (ctx.session?.user?.id) {
         const userId = ctx.session.user.id;
-        
+
         scoresQuery = db
           .select({
             region: songs.region,
@@ -2582,10 +2582,10 @@ export const userRouter = router({
 
       // Get the basic info from the first chart
       const firstChart = charts[0];
-      
+
       // Find the first chart with BPM data
       const chartWithBpm = charts.find(c => c.bpm !== null);
-      
+
       // Find the earliest added version
       const earliestAddedVersion = Math.min(...charts.map(c => c.addedVersion));
 
@@ -2648,4 +2648,4 @@ export const userRouter = router({
       };
     }),
 
-}); 
+});

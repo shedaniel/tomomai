@@ -96,7 +96,7 @@ async function normalize(searchParams: URLSearchParams) {
   const allSongs = await db.select().from(songs).where(and(eq(songs.region, region), eq(songs.gameVersion, currentVersion)));
   const songsGrouped: Record<string, typeof allSongs | undefined> = Object.groupBy(allSongs, song => `${normalizeName(song.songName)}@${song.difficulty}@${song.type}` as string);
   const filteredSongsGrouped: Record<string, typeof allSongs> = Object.fromEntries(Object.entries(songsGrouped).filter(([_, value]) => value && (value.length > 1 || normalizeName(value[0].songName) !== value[0].songName)).map(([key, value]) => [key, value!]));
-  
+
   console.log("--- Starting Duplicate Song Merge Process ---");
 
   let index = 0;
@@ -219,7 +219,7 @@ async function updateB50(searchParams: URLSearchParams) {
     .select()
     .from(songs)
     .where(eq(songs.region, region));
-  
+
   console.log(`Fetched ${allSongs.length} songs`);
 
   // Create a lookup map by songId (primary key)
@@ -331,8 +331,8 @@ async function updateB50(searchParams: URLSearchParams) {
     // New B15: ranks 0-14
     for (let i = 0; i < newSongsB15.length; i++) {
       const song = newSongsB15[i];
-      const scoreRecord = scores.find(s => 
-        s.songId === song.songId && 
+      const scoreRecord = scores.find(s =>
+        s.songId === song.songId &&
         s.difficulty === song.difficulty
       );
       if (scoreRecord) {
@@ -343,8 +343,8 @@ async function updateB50(searchParams: URLSearchParams) {
     // Old B35: ranks 15-49
     for (let i = 0; i < oldSongsB35.length; i++) {
       const song = oldSongsB35[i];
-      const scoreRecord = scores.find(s => 
-        s.songId === song.songId && 
+      const scoreRecord = scores.find(s =>
+        s.songId === song.songId &&
         s.difficulty === song.difficulty
       );
       if (scoreRecord) {
@@ -356,8 +356,8 @@ async function updateB50(searchParams: URLSearchParams) {
     const remainingSongs = [...newSongsRemaining, ...oldSongsRemaining].sort((a, b) => b.rating - a.rating);
     for (let i = 0; i < remainingSongs.length; i++) {
       const song = remainingSongs[i];
-      const scoreRecord = scores.find(s => 
-        s.songId === song.songId && 
+      const scoreRecord = scores.find(s =>
+        s.songId === song.songId &&
         s.difficulty === song.difficulty
       );
       if (scoreRecord) {
@@ -375,20 +375,20 @@ async function updateB50(searchParams: URLSearchParams) {
     if (MODIFY_DATABASE) {
       await db.transaction(async (tx) => {
         let batchIndex = 0;
-        
+
         for (let i = 0; i < updates.length; i += BATCH_SIZE) {
           const batch = updates.slice(i, i + BATCH_SIZE);
           batchIndex++;
-          
+
           console.log(`Processing batch ${batchIndex}/${Math.ceil(updates.length / BATCH_SIZE)} (${batch.length} updates)...`);
 
           // Build CASE statement for batch update
           const caseStatements = batch.map(
             update => sql`WHEN ${update.id} THEN ${update.rank}`
           );
-          
+
           const ids = batch.map(update => update.id);
-          
+
           // Single UPDATE with CASE for the entire batch
           await tx
             .update(userScores)
@@ -408,7 +408,7 @@ async function updateB50(searchParams: URLSearchParams) {
   } catch (error) {
     console.error(`Error during batch update:`, error);
     return NextResponse.json(
-      { 
+      {
         error: `Failed to update ranks: ${error instanceof Error ? error.message : "Unknown error"}`,
         statistics: {
           totalSnapshots: scoresBySnapshot.size,

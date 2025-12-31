@@ -23,7 +23,7 @@ export function AboutDialog({ open, onOpenChange }: AboutDialogProps) {
             A modern web application for tracking and analyzing your maimai DX scores with friends.
           </DialogDescription>
         </DialogHeader>
-        
+
         <div className="space-y-6">
           <div>
             <h3 className="text-lg font-semibold mb-2">Disclaimer</h3>
@@ -39,7 +39,7 @@ export function AboutDialog({ open, onOpenChange }: AboutDialogProps) {
               <p><strong><a href="https://github.com/zvuc/otoge-db" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">otoge-db</a></strong> for providing level data</p>
             </div>
           </div>
-          
+
           <div>
             <h3 className="text-lg font-semibold mb-3">License & Source Code</h3>
             <div className="space-y-2 text-sm">
@@ -49,9 +49,9 @@ export function AboutDialog({ open, onOpenChange }: AboutDialogProps) {
                 TL;DR: You are free to use, modify, and distribute the code, but you must provide the source code for any modifications.
               </p>
               <p>Source code is available on GitHub:</p>
-              <a 
-                href="https://github.com/shedaniel/tomomai" 
-                target="_blank" 
+              <a
+                href="https://github.com/shedaniel/tomomai"
+                target="_blank"
                 rel="noopener noreferrer"
                 className="inline-block hover:underline font-mono text-xs bg-muted px-3 py-2 rounded"
               >
@@ -59,7 +59,7 @@ export function AboutDialog({ open, onOpenChange }: AboutDialogProps) {
               </a>
             </div>
           </div>
-          
+
           <div className="pt-4 border-t">
             <p className="text-center text-sm text-muted-foreground">
               Built with ❤️ for the maimai community
@@ -69,4 +69,4 @@ export function AboutDialog({ open, onOpenChange }: AboutDialogProps) {
       </DialogContent>
     </Dialog>
   );
-} 
+}

@@ -5,7 +5,7 @@ export async function GET(request: NextRequest) {
     // Check for admin token authentication
     const authHeader = request.headers.get("authorization");
     const token = authHeader?.replace("Bearer ", "");
-    
+
     if (!token) {
       return NextResponse.json(
         { error: "Missing authorization token" },
@@ -187,4 +187,3 @@ export async function POST() {
     { status: 405 }
   );
 }
-

@@ -50,7 +50,7 @@ const ACCURACY_VALUES = [
 
 function generateRecommendations(songsWithRating: SongWithRating[], version: number): RecommendationData[] {
   const { newSongsB15, oldSongsB35, newSongsRemaining, oldSongsRemaining } = splitSongs(songsWithRating, version);
-  
+
   const minNewRating = newSongsB15.length > 0 ? Math.min(...newSongsB15.map(s => s.rating)) : 0;
   const minOldRating = oldSongsB35.length > 0 ? Math.min(...oldSongsB35.map(s => s.rating)) : 0;
 
@@ -230,7 +230,7 @@ export function RecommendationCard({ selectedSnapshotData, flags }: { selectedSn
 
   const { songs, snapshot } = selectedSnapshotData;
   const songsWithRating: SongWithRating[] = addRatingsAndSort(songs, snapshot.gameVersion);
-  
+
   const recommendations = useMemo(
     () => generateRecommendations(songsWithRating, snapshot.gameVersion),
     [songsWithRating, snapshot.gameVersion]
@@ -279,10 +279,10 @@ export function RecommendationCard({ selectedSnapshotData, flags }: { selectedSn
   const handleRemoveFilter = useCallback((filter: GenericFilter) => {
     setAdvancedFilters(prev => prev.filter(f => getFilterKey(f) !== getFilterKey(filter)));
   }, []);
-  
+
   // Filter recommendations based on selected category or advanced filters
   let filteredRecommendations = recommendations;
-  
+
   if (flags.recommendationFilters) {
     filteredRecommendations = applyFilters(advancedFilters);
   } else {
@@ -299,12 +299,12 @@ export function RecommendationCard({ selectedSnapshotData, flags }: { selectedSn
       }
     });
   }
-  
+
   // Deduplicate recommendations by songId and difficulty
   filteredRecommendations = filteredRecommendations.filter((rec, index, self) =>
     index === self.findIndex((t) => t.song.songId === rec.song.songId && t.song.difficulty === rec.song.difficulty)
   );
-  
+
   // Limit the number of recommendations to 200
   filteredRecommendations = filteredRecommendations.slice(0, 200);
 
@@ -379,7 +379,7 @@ export function RecommendationCard({ selectedSnapshotData, flags }: { selectedSn
         <div className="text-sm text-muted-foreground">
           {t('recommendations.description')}
         </div>
-        
+
         {/* Advanced Filter Panel */}
         {flags.recommendationFilters && (
           <AnimatePresence>

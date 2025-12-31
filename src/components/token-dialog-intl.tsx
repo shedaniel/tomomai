@@ -36,7 +36,7 @@ export function TokenDialogIntl({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     let finalToken = "";
     if (authMethod === "token") {
       if (!token.trim() || !isValidToken(token.trim())) return;
@@ -61,7 +61,7 @@ export function TokenDialogIntl({
     }
   };
 
-  const canSubmit = authMethod === "token" 
+  const canSubmit = authMethod === "token"
     ? token.trim().length > 0 && isValidToken(token.trim()) && !isSubmitting
     : username.trim().length > 0 && password.trim().length > 0 && !isSubmitting;
 
@@ -77,7 +77,7 @@ export function TokenDialogIntl({
             {t('tokenDialog.intlDescription')} {t('tokenDialog.credentialsStored')}
           </DialogDescription>
         </DialogHeader>
-        
+
         <div className="space-y-4">
           <form onSubmit={handleSubmit} className="space-y-4">
             <Tabs className="w-full" value={authMethod} onValueChange={(value) => setAuthMethod(value as "token" | "password")}>
@@ -187,4 +187,3 @@ export function TokenDialogIntl({
     </Dialog>
   );
 }
-

@@ -33,7 +33,7 @@ export function createSafeMaimaiImageUrl(originalUrl: string): string {
     const encodedUrl = encodeURIComponent(originalUrl);
     return `/api/image-proxy?url=${encodedUrl}`;
   }
-  
+
   // Return original URL for other domains
   return originalUrl;
 }
@@ -82,8 +82,8 @@ export function isServer(): boolean {
 
 // Helper function to detect serverless environment
 export function isServerless(): boolean {
-  return process.env.VERCEL === '1' || 
-         process.env.AWS_LAMBDA_FUNCTION_NAME !== undefined ||
-         process.env.NETLIFY === 'true' ||
-         process.cwd() === '/var/task';
+  return process.env.VERCEL === '1' ||
+    process.env.AWS_LAMBDA_FUNCTION_NAME !== undefined ||
+    process.env.NETLIFY === 'true' ||
+    process.cwd() === '/var/task';
 }

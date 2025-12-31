@@ -104,7 +104,7 @@ export function applyTheme(theme: Theme): void {
   document.documentElement.style.setProperty("--darkness", String(theme.darkness));
   document.documentElement.style.setProperty("--lightness", String(theme.lightness ?? 1.0));
   document.documentElement.style.setProperty("--saturation", String(theme.saturation ?? 1.0));
-  
+
   // Toggle dark class
   if (theme.dark) {
     document.documentElement.classList.add("dark");

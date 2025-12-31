@@ -62,4 +62,3 @@ export function AverageAchievementChart({ data }: AverageAchievementChartProps) 
     </ChartContainer>
   );
 }
-

@@ -52,7 +52,7 @@ interface DataBannerProps {
 function formatDate(date: Date, userTimezone?: string | null) {
   // Use user's timezone preference, default to Asia/Tokyo if null
   const timezone = userTimezone || "Asia/Tokyo";
-  
+
   return new Intl.DateTimeFormat("en-US", {
     year: "numeric",
     month: "short",
@@ -248,7 +248,7 @@ function FetchDataButton({
   t: any;
 }) {
   // Calculate progress based on statusStates
-  const progress = currentSession?.statusStates 
+  const progress = currentSession?.statusStates
     ? calculateProgress(parseStatusStates(currentSession.statusStates))
     : 0;
 
@@ -321,23 +321,23 @@ export function DataBanner({
   const t = useTranslations();
   const hasSnapshots = snapshots.length > 0;
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  
+
   // Get current game version from selected snapshot
   const selectedSnapshotObj = snapshots.find(s => s.id === selectedSnapshot);
   const currentGameVersion = selectedSnapshotObj?.gameVersion;
 
   const handleCopyToVersion = async (targetVersion: number) => {
     if (!selectedSnapshot) return;
-    
+
     try {
       const result = await onCopySnapshot(selectedSnapshot, targetVersion);
       const versionInfo = getVersionInfo(targetVersion);
-      
+
       // Show rating change if available
       const ratingChangeText = result.originalRating !== undefined && result.newRating !== undefined
         ? ` Rating: ${result.originalRating} → ${result.newRating}`
         : '';
-      
+
       toast.success(
         `Snapshot copied to ${versionInfo?.shortName || 'Unknown version'}! ${result.copiedScores}/${result.totalOriginalScores} scores copied.${ratingChangeText}`
       );
@@ -409,4 +409,4 @@ export function DataBanner({
       </CardContent>
     </Card>
   );
-} 
+}

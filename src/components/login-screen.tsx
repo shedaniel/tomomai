@@ -138,4 +138,4 @@ export function LoginScreen({ signupRequirements }: LoginScreenProps) {
       </Card>
     </div>
   );
-} 
+}

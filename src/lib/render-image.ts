@@ -89,8 +89,8 @@ function toAbsoluteUrl(url: string): string {
   const baseUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL
     ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
     : process.env.VERCEL_URL
-    ? `https://${process.env.VERCEL_URL}`
-    : 'http://localhost:3000';
+      ? `https://${process.env.VERCEL_URL}`
+      : 'http://localhost:3000';
   return `${baseUrl}${url}`;
 }
 
@@ -105,7 +105,7 @@ async function loadImageWithCache(cache: ImageCache, url: string): Promise<Image
   }
 
   console.log("🔍 Loading image from URL:", url);
-  
+
   const absoluteUrl = toAbsoluteUrl(url);
   const img = await loadImage(absoluteUrl);
   cache[url] = () => Promise.resolve(img);
@@ -142,9 +142,9 @@ async function renderBackground<S>(ctx: SkiaContext, data: SnapshotWithSongs<S>,
 }
 
 async function renderHeaderBackground<S>(
-  ctx: SkiaContext, 
-  data: SnapshotWithSongs<S>, 
-  cache: ImageCache, 
+  ctx: SkiaContext,
+  data: SnapshotWithSongs<S>,
+  cache: ImageCache,
 ) {
   const INNER_PADDING = 30;
 
@@ -350,22 +350,22 @@ const SONG_OUTER_PADDING = 0
 const SONG_PADDING = 16
 
 async function renderSong<S extends SongForRender>(
-  ctx: SkiaContext, 
-  cache: ImageCache, 
+  ctx: SkiaContext,
+  cache: ImageCache,
   gameVersion: number,
-  overlayRect: OverlayRect, 
-  song: S & { rating: number }, 
-  index: number, 
+  overlayRect: OverlayRect,
+  song: S & { rating: number },
+  index: number,
   yOffset: number
 ) {
   const difficultyColor = song.difficulty === "basic" ? "green" :
-  song.difficulty === "advanced" ? "yellow" :
-    song.difficulty === "expert" ? "#ed5e65" :
-      song.difficulty === "master" ? "#af5eed" :
-        song.difficulty === "remaster" ? "#E8D4FF" :
-          song.difficulty === "utage" ? "pink" :
+    song.difficulty === "advanced" ? "yellow" :
+      song.difficulty === "expert" ? "#ed5e65" :
+        song.difficulty === "master" ? "#af5eed" :
+          song.difficulty === "remaster" ? "#E8D4FF" :
+            song.difficulty === "utage" ? "pink" :
               "white";
-  
+
   const img = await loadImageWithCache(cache, song.cover);
 
   const imgWidth = (overlayRect.width - SONG_OUTER_PADDING * 2 - SONG_PADDING * 4) / 5;
@@ -374,7 +374,7 @@ async function renderSong<S extends SongForRender>(
 
   const imgTop = overlayRect.top + SONG_OUTER_PADDING + yOffset + Math.floor(index / 5) * (requiredHeight + 2 + SONG_PADDING);
   const imgLeft = overlayRect.left + SONG_OUTER_PADDING + (index % 5) * (imgWidth + SONG_PADDING);
-  
+
   const realBounds = {
     top: imgTop,
     left: imgLeft,
@@ -398,12 +398,12 @@ async function renderSong<S extends SongForRender>(
   ctx.shadowBlur = 10;
   ctx.shadowOffsetX = 2;
   ctx.shadowOffsetY = 2;
-  
+
   const coverGradient = ctx.createLinearGradient(0, realBounds.top + realBounds.height, 0, realBounds.top);
   coverGradient.addColorStop(0, '#0000003C');
   coverGradient.addColorStop(0.5, '#00000029');
   coverGradient.addColorStop(1, '#0000001C');
-  
+
   ctx.fillStyle = coverGradient;
   ctx.strokeStyle = difficultyColor;
   ctx.lineWidth = 4;
@@ -417,7 +417,7 @@ async function renderSong<S extends SongForRender>(
   const infoGradient = ctx.createLinearGradient(0, realBounds.top + realBounds.height, 0, realBounds.top + realBounds.height - infoHeight);
   infoGradient.addColorStop(0, '#00000060');
   infoGradient.addColorStop(1, '#00000000');
-  
+
   ctx.save();
   ctx.globalAlpha = 0.3;
   roundRect(ctx, realBounds.left, realBounds.top, realBounds.width, realBounds.height, 10);
@@ -479,7 +479,7 @@ async function renderSong<S extends SongForRender>(
   ctx.font = `500 14px ${FONT_FAMILY_MONO}`;
   const diffText = (song.levelPrecise / 10).toFixed(1);
   const diffTextWidth = ctx.measureText(diffText).width;
-  
+
   ctx.fillStyle = difficultyColor;
   roundRect(ctx, realBounds.left, realBounds.top, realBounds.width, realBounds.height, 10);
   ctx.clip();
@@ -503,10 +503,10 @@ async function renderSong<S extends SongForRender>(
   const songTypeBadge = await loadImageWithCache(cache, songTypeBadgeUrl);
   const badgeScale = 0.45;
   ctx.drawImage(
-    songTypeBadge, 
-    realBounds.left + 12, 
-    realBounds.top + 12, 
-    songTypeBadge.width * badgeScale, 
+    songTypeBadge,
+    realBounds.left + 12,
+    realBounds.top + 12,
+    songTypeBadge.width * badgeScale,
     songTypeBadge.height * badgeScale
   );
 
@@ -535,9 +535,9 @@ async function renderSong<S extends SongForRender>(
 }
 
 async function renderContent<S extends SongForRender>(
-  ctx: SkiaContext, 
-  data: SnapshotWithSongs<S>, 
-  cache: ImageCache, 
+  ctx: SkiaContext,
+  data: SnapshotWithSongs<S>,
+  cache: ImageCache,
   overlayRect: OverlayRect
 ) {
   const { newSongsB15, oldSongsB35 } = splitSongs(data.songs, data.snapshot.gameVersion);
@@ -557,10 +557,10 @@ async function renderContent<S extends SongForRender>(
 }
 
 async function renderSongsLabel(
-  ctx: SkiaContext, 
-  cache: ImageCache, 
-  overlayRect: OverlayRect, 
-  newSongs: boolean, 
+  ctx: SkiaContext,
+  cache: ImageCache,
+  overlayRect: OverlayRect,
+  newSongs: boolean,
   yOffset: number
 ) {
   const labelUrl = newSongs ? "/res/label/new.png" : "/res/label/old.png";
@@ -568,7 +568,7 @@ async function renderSongsLabel(
   const labelScale = 0.26;
   const labelWidth = label.width * labelScale;
   const labelHeight = label.height * labelScale;
-  
+
   ctx.save();
   ctx.globalAlpha = 0.98;
   ctx.shadowColor = '#00000010';
@@ -580,16 +580,16 @@ async function renderSongsLabel(
 async function renderFooter<S>(ctx: SkiaContext, data: SnapshotWithSongs<S>, visitableProfileAt: string | null) {
   const footerHeight = 50;
   const footerTop = CANVAS_HEIGHT - footerHeight;
-  
+
   // Draw footer background
   ctx.fillStyle = VERSION_SETTINGS[data.snapshot.gameVersion as keyof typeof VERSION_SETTINGS]?.footerBackgroundColor || '#00000020';
   ctx.fillRect(0, footerTop, CANVAS_WIDTH, footerHeight);
 
   // Draw footer text
-  const footerText = visitableProfileAt 
-    ? `Visit my profile at https://tomomai.lol/profile/${visitableProfileAt}/` 
+  const footerText = visitableProfileAt
+    ? `Visit my profile at https://tomomai.lol/profile/${visitableProfileAt}/`
     : "Generated with https://tomomai.lol/";
-  
+
   ctx.save();
   ctx.globalAlpha = 0.86;
   ctx.font = `500 16px ${FONT_FAMILY}`;
@@ -601,7 +601,7 @@ async function renderFooter<S>(ctx: SkiaContext, data: SnapshotWithSongs<S>, vis
 
   // Draw date text
   const dateText = "at " + new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-  
+
   ctx.save();
   ctx.globalAlpha = 0.86;
   ctx.font = `400 16px ${FONT_FAMILY}`;

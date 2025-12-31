@@ -34,11 +34,11 @@ export async function cacheImage(url: string): Promise<void> {
   try {
     // Generate hash for filename
     const urlHash = generateUrlHash(url);
-    
+
     // Use different cache directory based on environment
     const cacheDir: string = path.join(process.cwd(), 'public', 'res', 'preloaded');
     await fs.mkdir(cacheDir, { recursive: true });
-    
+
     // Check if file already exists
     const filePath = path.join(cacheDir, `${urlHash}.gz`);
     try {
@@ -46,14 +46,14 @@ export async function cacheImage(url: string): Promise<void> {
       return;
     } catch {
     }
-    
+
     const { Agent } = await import('undici');
     const httpsAgent = new Agent({
       connect: {
         rejectUnauthorized: false
       }
     });
-    
+
     const response = await fetch(url, {
       // @ts-ignore - dispatcher property exists but TypeScript doesn't recognize it
       dispatcher: httpsAgent,
@@ -68,7 +68,7 @@ export async function cacheImage(url: string): Promise<void> {
 
     const arrayBuffer = await response.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
-    
+
     // Save to cache
     const cachedFilePath = path.join(cacheDir, `${urlHash}.gz`);
 
@@ -94,13 +94,13 @@ export async function getCachedImageBuffer(url: string): Promise<{ buffer: Buffe
   try {
     const urlHash = generateUrlHash(url);
     const cacheDir = path.join(process.cwd(), 'public', 'res', 'preloaded');
-    
+
     // Check if gzipped cached file exists
     const cachedFilePath = path.join(cacheDir, `${urlHash}.gz`);
     try {
       const compressedBuffer = await fs.readFile(cachedFilePath);
       const buffer = await gunzipAsync(compressedBuffer);
-      
+
       // Check magic bytes for image type
       let contentType = 'image/png';
       if (buffer[0] === 0xFF && buffer[1] === 0xD8) {
@@ -114,15 +114,15 @@ export async function getCachedImageBuffer(url: string): Promise<{ buffer: Buffe
       } else if (buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4E && buffer[3] === 0x47) {
         contentType = 'image/png';
       }
-      
+
       return { buffer, contentType };
     } catch {
     }
-    
+
     return null;
-    
+
   } catch (error) {
     logger.error({ error, url }, "Error reading cached image");
     return null;
   }
-} 
+}

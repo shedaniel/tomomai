@@ -150,31 +150,31 @@ const SongRow = forwardRef<HTMLDivElement, { song: SongWithRating } & React.HTML
     <SongHoverCard song={song}>
       <div ref={ref} {...props} className={cn("flex justify-between items-center text-sm border-b border-dashed border-gray-200 pb-1.5 h-12 hover:bg-muted/50 transition-colors px-2 -mx-2 rounded-md cursor-pointer", props.className)}>
         <Image src={createSafeMaimaiImageUrl(song.cover)}
-        alt={song.songName}
-        className={cn(
-          "w-8 h-8 ml-1 mr-3 rounded ring-2 ring-offset-2 ring-offset-card",
-          song.difficulty === "basic" && "ring-green-400",
-          song.difficulty === "advanced" && "ring-yellow-400",
-          song.difficulty === "expert" && "ring-red-400",
-          song.difficulty === "master" && "ring-purple-500",
-          song.difficulty === "remaster" && "ring-purple-200",
-          song.difficulty === "utage" && "ring-pink-400",
-        )}
-        width={36}
-        height={36}
-        loading="lazy"
-      />
-      <div className="flex-1 min-w-0">
-        <div className="truncate font-medium">{song.songName}&#8203;</div>
-        <div className="text-muted-foreground text-xs truncate">{song.type.toUpperCase()} • {song.difficulty.slice(0, 3).toUpperCase()} {renderLevelPrecise(song.levelPrecise, song.difficulty)} • {song.artist}</div>
-      </div>
-      <div className="text-right ml-2">
-        <div className="font-mono">{(song.achievement / 10000).toFixed(4)}%</div>
-        <div className="text-xs text-muted-foreground">{song.fc !== 'none' ? song.fc.toUpperCase() : ''} {song.fs !== 'none' ? song.fs.toUpperCase() : ''}&#8203;</div>
-      </div>
-      <div className="text-right ml-4 mr-2">
-        <div className="font-mono text-md font-semibold">{song.rating}</div>
-      </div>
+          alt={song.songName}
+          className={cn(
+            "w-8 h-8 ml-1 mr-3 rounded ring-2 ring-offset-2 ring-offset-card",
+            song.difficulty === "basic" && "ring-green-400",
+            song.difficulty === "advanced" && "ring-yellow-400",
+            song.difficulty === "expert" && "ring-red-400",
+            song.difficulty === "master" && "ring-purple-500",
+            song.difficulty === "remaster" && "ring-purple-200",
+            song.difficulty === "utage" && "ring-pink-400",
+          )}
+          width={36}
+          height={36}
+          loading="lazy"
+        />
+        <div className="flex-1 min-w-0">
+          <div className="truncate font-medium">{song.songName}&#8203;</div>
+          <div className="text-muted-foreground text-xs truncate">{song.type.toUpperCase()} • {song.difficulty.slice(0, 3).toUpperCase()} {renderLevelPrecise(song.levelPrecise, song.difficulty)} • {song.artist}</div>
+        </div>
+        <div className="text-right ml-2">
+          <div className="font-mono">{(song.achievement / 10000).toFixed(4)}%</div>
+          <div className="text-xs text-muted-foreground">{song.fc !== 'none' ? song.fc.toUpperCase() : ''} {song.fs !== 'none' ? song.fs.toUpperCase() : ''}&#8203;</div>
+        </div>
+        <div className="text-right ml-4 mr-2">
+          <div className="font-mono text-md font-semibold">{song.rating}</div>
+        </div>
       </div>
     </SongHoverCard>
   );
@@ -315,8 +315,8 @@ const SongGridCard = forwardRef<HTMLDivElement, { song: SongWithRating } & React
       glow.style.opacity = '1';
       glow.style.background = `
         radial-gradient(
-          circle at 
-          ${x}px ${y}px, 
+          circle at
+          ${x}px ${y}px,
           rgba(255, 255, 255, 0.2),
           rgba(255, 255, 255, 0.15),
           rgba(255, 255, 255, 0.05),
@@ -365,72 +365,72 @@ const SongGridCard = forwardRef<HTMLDivElement, { song: SongWithRating } & React
         onMouseLeave={(e) => { handleMouseLeave(e); props.onMouseLeave?.(e); }}
       >
         {/* Song Cover Background */}
-      <Image
-        src={createSafeMaimaiImageUrl(song.cover)}
-        alt={song.songName}
-        fill
-        className="object-cover rounded-[8px] overflow-hidden"
-        loading="lazy"
-      />
+        <Image
+          src={createSafeMaimaiImageUrl(song.cover)}
+          alt={song.songName}
+          fill
+          className="object-cover rounded-[8px] overflow-hidden"
+          loading="lazy"
+        />
 
-      {/* Dark overlay for text readability */}
-      <div className="absolute inset-0 bg-linear-to-t from-black/90 via-black/40 to-transparent rounded-[8px] overflow-hidden" />
+        {/* Dark overlay for text readability */}
+        <div className="absolute inset-0 bg-linear-to-t from-black/90 via-black/40 to-transparent rounded-[8px] overflow-hidden" />
 
-      {/* Difficulty Badge */}
-      <div className={cn(
-        "absolute top-[-0.5px] right-[-0.5px] px-1.5 py-0.5 rounded-tr-[8px] rounded-bl-[8px] overflow-hidden text-[10px] font-semibold text-white",
-        song.difficulty === "basic" && "bg-green-500",
-        song.difficulty === "advanced" && "bg-yellow-500",
-        song.difficulty === "expert" && "bg-red-500",
-        song.difficulty === "master" && "bg-purple-500",
-        song.difficulty === "remaster" && "bg-purple-200 text-purple-900",
-        song.difficulty === "utage" && "bg-pink-500",
-      )}>
-        {renderLevelPrecise(song.levelPrecise, song.difficulty)}
-      </div>
-
-      {/* Glow Effect */}
-      <div className="song-card-glow absolute inset-[-2px] opacity-0 transition-opacity duration-300 pointer-events-none rounded-[8px] overflow-hidden" />
-
-      <div className="song-card-content relative w-full h-full transition-transform duration-300"
-        style={{ transform: 'translateZ(30px)' }}>
-        {/* Song Type Badge */}
-        <div className="absolute top-2.5 left-2.5 2xs:max-xs:left-2 2xs:max-xs:top-2 2xs:max-xs:scale-75 origin-top-left z-30">
-          <Image
-            src={createSafeMaimaiImageUrl(song.type === "dx"
-              ? "https://maimaidx.jp/maimai-mobile/img/music_dx.png"
-              : "https://maimaidx.jp/maimai-mobile/img/music_standard.png"
-            )}
-            alt={song.type.toUpperCase()}
-            width={37}
-            height={11}
-            className="drop-shadow-md"
-            loading="lazy"
-          />
+        {/* Difficulty Badge */}
+        <div className={cn(
+          "absolute top-[-0.5px] right-[-0.5px] px-1.5 py-0.5 rounded-tr-[8px] rounded-bl-[8px] overflow-hidden text-[10px] font-semibold text-white",
+          song.difficulty === "basic" && "bg-green-500",
+          song.difficulty === "advanced" && "bg-yellow-500",
+          song.difficulty === "expert" && "bg-red-500",
+          song.difficulty === "master" && "bg-purple-500",
+          song.difficulty === "remaster" && "bg-purple-200 text-purple-900",
+          song.difficulty === "utage" && "bg-pink-500",
+        )}>
+          {renderLevelPrecise(song.levelPrecise, song.difficulty)}
         </div>
 
-        {/* Song Info */}
-        <div className="absolute bottom-0 left-0 right-0 p-2.5 text-white z-30">
-          <div className="2xs:max-xs:text-xs text-sm font-[600] truncate mb-0.5 drop-shadow-md">
-            {song.songName}
+        {/* Glow Effect */}
+        <div className="song-card-glow absolute inset-[-2px] opacity-0 transition-opacity duration-300 pointer-events-none rounded-[8px] overflow-hidden" />
+
+        <div className="song-card-content relative w-full h-full transition-transform duration-300"
+          style={{ transform: 'translateZ(30px)' }}>
+          {/* Song Type Badge */}
+          <div className="absolute top-2.5 left-2.5 2xs:max-xs:left-2 2xs:max-xs:top-2 2xs:max-xs:scale-75 origin-top-left z-30">
+            <Image
+              src={createSafeMaimaiImageUrl(song.type === "dx"
+                ? "https://maimaidx.jp/maimai-mobile/img/music_dx.png"
+                : "https://maimaidx.jp/maimai-mobile/img/music_standard.png"
+              )}
+              alt={song.type.toUpperCase()}
+              width={37}
+              height={11}
+              className="drop-shadow-md"
+              loading="lazy"
+            />
           </div>
 
-          {/* Achievement and Rating */}
-          <div className="flex justify-between items-end">
-            <div className="2xs:max-xs:text-2xs text-xs space-x-1 2xs:max-xs:space-x-0.5">
-              <span className="2xs:max-xs:text-[9px] font-mono font-medium drop-shadow-md">
-                {(song.achievement / 10000).toFixed(4)}%
-              </span>
-              <span className="2xs:max-xs:text-[7px] text-[10px] opacity-75 drop-shadow-md whitespace-nowrap">
-                {song.fc !== 'none' ? song.fc.toUpperCase() : ''}{song.fc !== 'none' && song.fs !== 'none' ? ' ' : ''}{song.fs !== 'none' ? song.fs.toUpperCase() : ''}
+          {/* Song Info */}
+          <div className="absolute bottom-0 left-0 right-0 p-2.5 text-white z-30">
+            <div className="2xs:max-xs:text-xs text-sm font-[600] truncate mb-0.5 drop-shadow-md">
+              {song.songName}
+            </div>
+
+            {/* Achievement and Rating */}
+            <div className="flex justify-between items-end">
+              <div className="2xs:max-xs:text-2xs text-xs space-x-1 2xs:max-xs:space-x-0.5">
+                <span className="2xs:max-xs:text-[9px] font-mono font-medium drop-shadow-md">
+                  {(song.achievement / 10000).toFixed(4)}%
+                </span>
+                <span className="2xs:max-xs:text-[7px] text-[10px] opacity-75 drop-shadow-md whitespace-nowrap">
+                  {song.fc !== 'none' ? song.fc.toUpperCase() : ''}{song.fc !== 'none' && song.fs !== 'none' ? ' ' : ''}{song.fs !== 'none' ? song.fs.toUpperCase() : ''}
+                </span>
+              </div>
+              <span className="2xs:max-xs:text-sm text-right text-lg font-bold font-mono drop-shadow-md leading-none align-bottom">
+                {song.rating}
               </span>
             </div>
-            <span className="2xs:max-xs:text-sm text-right text-lg font-bold font-mono drop-shadow-md leading-none align-bottom">
-              {song.rating}
-            </span>
           </div>
         </div>
-      </div>
       </div>
     </SongHoverCard>
   );
@@ -770,4 +770,4 @@ export function SongsCard({ selectedSnapshotData }: { selectedSnapshotData: Snap
       </CardContent>
     </Card>
   );
-} 
+}

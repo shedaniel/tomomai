@@ -35,17 +35,17 @@ interface InvitesDialogProps {
 
 export function InvitesDialog({ isOpen, onOpenChange }: InvitesDialogProps) {
   const t = useTranslations();
-  
+
   // Only show dialog if invite system is enabled
   if (SIGNUP_TYPE !== 'invite-only') {
     return null;
   }
 
   // tRPC hooks
-  const { 
-    data: inviteData, 
-    isLoading, 
-    refetch: refetchInvites 
+  const {
+    data: inviteData,
+    isLoading,
+    refetch: refetchInvites
   } = trpc.user.getInvites.useQuery(undefined, {
     enabled: isOpen, // Only fetch when dialog is open
     refetchOnWindowFocus: false,
@@ -54,13 +54,13 @@ export function InvitesDialog({ isOpen, onOpenChange }: InvitesDialogProps) {
   const createInviteMutation = trpc.user.createInvite.useMutation({
     onSuccess: async (data) => {
       toast.success(t('invites.messages.created'));
-      
+
       // Copy invite URL to clipboard
       if (navigator.clipboard) {
         await navigator.clipboard.writeText(data.inviteUrl);
         toast.success(t('invites.messages.linkCopied'));
       }
-      
+
       // Refresh invites list
       refetchInvites();
     },
@@ -128,7 +128,7 @@ export function InvitesDialog({ isOpen, onOpenChange }: InvitesDialogProps) {
       case 'active':
         return t('invites.statusDetails.activeUntil', { date: format(new Date(invite.expiresAt), 'MMM dd, yyyy') });
       case 'claimed':
-        return t('invites.statusDetails.claimedBy', { 
+        return t('invites.statusDetails.claimedBy', {
           name: invite.claimedByName || 'Unknown',
           date: invite.claimedAt ? format(new Date(invite.claimedAt), 'MMM dd, yyyy') : 'Unknown'
         });
@@ -143,7 +143,7 @@ export function InvitesDialog({ isOpen, onOpenChange }: InvitesDialogProps) {
 
   const renderQuotaCircles = () => {
     if (!inviteData) return null;
-    
+
     const circles = [];
     for (let i = 0; i < inviteData.quota.total; i++) {
       if (i < inviteData.quota.activeCount) {
@@ -213,7 +213,7 @@ export function InvitesDialog({ isOpen, onOpenChange }: InvitesDialogProps) {
                 {createInviteMutation.isPending ? t('invites.creating') : t('invites.createInvite')}
               </Button>
             </div>
-            
+
             {/* Show age restriction message for new users */}
             {inviteData?.userAge.isNewUser && (
               <div className="text-sm text-muted-foreground bg-gray-200/50 p-3 rounded-md">
@@ -222,7 +222,7 @@ export function InvitesDialog({ isOpen, onOpenChange }: InvitesDialogProps) {
                   <span className="font-medium">{t('invites.messages.newUserRestriction')}</span>
                 </div>
                 <div className="text-xs">
-                  {t('invites.messages.newUserRestrictionDetails', { 
+                  {t('invites.messages.newUserRestrictionDetails', {
                     date: format(new Date(inviteData.userAge.canCreateAfter), 'MMM dd, yyyy')
                   })}
                 </div>
@@ -251,16 +251,16 @@ export function InvitesDialog({ isOpen, onOpenChange }: InvitesDialogProps) {
                         {getStatusIcon(status)}
                         <div>
                           <div className="text-sm font-medium">
-                            {status === 'active' ? t('invites.status.activeCode') : 
-                             status === 'claimed' ? t('invites.status.claimedCode') : 
-                             status === 'expired' ? t('invites.status.expiredCode') : t('invites.status.revokedCode')}
+                            {status === 'active' ? t('invites.status.activeCode') :
+                              status === 'claimed' ? t('invites.status.claimedCode') :
+                                status === 'expired' ? t('invites.status.expiredCode') : t('invites.status.revokedCode')}
                           </div>
                           <div className="text-xs text-muted-foreground">
                             {getStatusText(status, invite)}
                           </div>
                         </div>
                       </div>
-                      
+
                       <div className="flex items-center space-x-2">
                         {status === 'active' && (
                           <>
@@ -294,4 +294,4 @@ export function InvitesDialog({ isOpen, onOpenChange }: InvitesDialogProps) {
       </DialogContent>
     </Dialog>
   );
-} 
+}

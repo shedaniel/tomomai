@@ -12,4 +12,4 @@ export default getRequestConfig(async () => {
       (await import(`../../messages/${locale}.json`)).default,
     ),
   };
-}); 
+});

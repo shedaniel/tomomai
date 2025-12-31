@@ -17,6 +17,6 @@ export async function createServerSideTRPC(session?: Context['session']) {
     session: session || null,
     req: mockRequest,
   };
-  
+
   return appRouter.createCaller(context);
 }

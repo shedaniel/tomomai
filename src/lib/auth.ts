@@ -14,19 +14,19 @@ async function checkInviteRequirement(): Promise<boolean> {
   if (SIGNUP_TYPE !== 'invite-only') {
     return SIGNUP_TYPE === 'disabled'; // Always require invite if disabled, never if enabled
   }
-  
+
   // For invite-only mode, check user count
   const [userCount] = await db
     .select({ count: count() })
     .from(schema.user);
-    
+
   return userCount.count >= SIGNUP_REQUIRED_AMOUNT;
 }
 
 // Helper function to validate and claim invitations
 async function validateAndClaimInvite(inviteCode: string, userId: string) {
   const now = new Date();
-  
+
   // Auto-cleanup old/revoked/expired invites
   try {
     await db
@@ -114,15 +114,15 @@ export const auth = betterAuth({
       create: {
         before: async (user, context) => {
           const inviteRequired = await checkInviteRequirement();
-          
+
           if (SIGNUP_TYPE === 'disabled') {
             throw new Error("unable_to_create_user");
           }
-          
+
           // Check if invitation is required based on dynamic logic
           if (inviteRequired) {
             let inviteCode: string | null = null;
-            
+
             // Try to extract invitation code from cookies
             if (context?.request) {
               const cookieHeader = context.request.headers.get('cookie');
@@ -132,18 +132,18 @@ export const auth = betterAuth({
                   acc[key] = value;
                   return acc;
                 }, {} as Record<string, string>);
-                
+
                 inviteCode = cookies.pendingInviteCode || null;
               }
             }
-            
+
             if (!inviteCode) {
               console.log("No invitation code found in cookies during signup");
               throw new Error("Invitation required for signup");
             }
-            
+
             console.log(`Found invitation code during signup: ${inviteCode}`);
-            
+
             // Validate invitation (we'll claim it in the after hook)
             const now = new Date();
             const [invite] = await db
@@ -174,16 +174,16 @@ export const auth = betterAuth({
               throw new Error("This invitation has expired");
             }
           }
-          
+
           return { data: user };
         },
         after: async (user, context) => {
           // Check if invitation was used (and claim it if so)
           const inviteRequired = await checkInviteRequirement();
-          
+
           if (inviteRequired) {
             let inviteCode: string | null = null;
-            
+
             // Read the invitation code from cookies again
             if (context?.request) {
               const cookieHeader = context.request.headers.get('cookie');
@@ -193,11 +193,11 @@ export const auth = betterAuth({
                   acc[key] = value;
                   return acc;
                 }, {} as Record<string, string>);
-                
+
                 inviteCode = cookies.pendingInviteCode || null;
               }
             }
-            
+
             if (inviteCode) {
               console.log(`Attempting to claim invitation ${inviteCode} for user ${user.id}`);
               try {
@@ -216,4 +216,4 @@ export const auth = betterAuth({
       },
     },
   },
-}); 
+});

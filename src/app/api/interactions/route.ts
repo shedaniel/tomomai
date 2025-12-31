@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
-import { 
-  InteractionType, 
+import {
+  InteractionType,
   verifyKey,
   InteractionResponseType,
 } from 'discord-interactions';
@@ -87,4 +87,4 @@ export async function POST(request: NextRequest) {
     console.error('Error handling Discord interaction:', error);
     return new Response('Internal server error', { status: 500 });
   }
-} 
+}

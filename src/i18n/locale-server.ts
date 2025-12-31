@@ -6,7 +6,7 @@ export async function getLocale(): Promise<Locale> {
     // Try to get from cookie first (for immediate language switching)
     const cookieStore = await cookies();
     const localeCookie = cookieStore.get('NEXT_LOCALE')?.value as Locale;
-    
+
     if (localeCookie && locales.includes(localeCookie)) {
       return localeCookie;
     }
@@ -19,20 +19,20 @@ export async function getLocale(): Promise<Locale> {
   try {
     const headersList = await headers();
     const acceptLanguage = headersList.get('accept-language');
-    
+
     if (acceptLanguage) {
       // Parse Accept-Language header (format: "en-US,en;q=0.9,ja;q=0.8")
       const languages = acceptLanguage
         .split(',')
         .map(lang => lang.split(';')[0].trim());
-      
+
       // Try to find exact match first
       for (const lang of languages) {
         if (locales.includes(lang as Locale)) {
           return lang as Locale;
         }
       }
-      
+
       // Try to find partial match (e.g., "en-US" -> "en")
       for (const lang of languages) {
         const shortLang = lang.split('-')[0];
@@ -48,4 +48,4 @@ export async function getLocale(): Promise<Locale> {
 
   // Default to English
   return defaultLocale;
-} 
+}

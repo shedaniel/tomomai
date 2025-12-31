@@ -7,4 +7,4 @@ export const appRouter = router({
   db: dbRouter,
 });
 
-export type AppRouter = typeof appRouter; 
+export type AppRouter = typeof appRouter;

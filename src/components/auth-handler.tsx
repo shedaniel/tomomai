@@ -12,7 +12,7 @@ export function AuthHandler() {
     const error = searchParams.get('error');
     const isSignupError = error === 'unable_to_create_user';
     const isAuthError = error === 'auth_error';
-    
+
     if (isSignupError) {
       toast.error("Sign up is currently disabled. Only existing users can log in.");
       // Clean up the URL
@@ -28,7 +28,7 @@ export function AuthHandler() {
         acc[key] = value;
         return acc;
       }, {} as Record<string, string>);
-      
+
       if (cookies.pendingInviteCode) {
         // Clear the pending invitation cookie
         document.cookie = 'pendingInviteCode=; path=/; max-age=0';

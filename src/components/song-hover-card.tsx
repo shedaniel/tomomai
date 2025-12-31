@@ -86,18 +86,18 @@ function SongDetailDialog({ songName, type, difficulty }: {
   )
 }
 
-function SongCardContent({ 
-  song, 
-  songDetails, 
-  isLoading, 
-  addedVersionInfo, 
-  t 
-}: { 
-  song: SongHoverCardProps['song'], 
-  songDetails: any, 
-  isLoading: boolean, 
-  addedVersionInfo: any, 
-  t: any 
+function SongCardContent({
+  song,
+  songDetails,
+  isLoading,
+  addedVersionInfo,
+  t
+}: {
+  song: SongHoverCardProps['song'],
+  songDetails: any,
+  isLoading: boolean,
+  addedVersionInfo: any,
+  t: any
 }) {
   return (
     <div className="p-4 space-y-3">

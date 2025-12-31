@@ -48,23 +48,23 @@ export function DataContent({
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  
+
   // Valid tab values
   const allPossibleTabs = ["info", "stats", "songs", "recent", "recommendations", "plates", "map", "exportImage", "history"];
-  
+
   // Get initial tab from props (SSR) or search params (client)
   const getInitialTab = () => {
     // First priority: initialTab from SSR
     if (initialTab && allPossibleTabs.includes(initialTab)) {
       return initialTab;
     }
-    
+
     // Second priority: search params (client-side)
     const tabParam = searchParams.get('tab');
     if (tabParam && allPossibleTabs.includes(tabParam)) {
       return tabParam;
     }
-    
+
     // Default fallback
     return "songs";
   };
@@ -74,10 +74,10 @@ export function DataContent({
   // Update URL when tab changes
   const handleTabChange = (value: string) => {
     setSelectedTab(value);
-    
+
     // Create new search params
     const newSearchParams = new URLSearchParams(searchParams.toString());
-    
+
     if (value === "songs") {
       // Remove tab parameter for default tab
       newSearchParams.delete('tab');
@@ -85,11 +85,11 @@ export function DataContent({
       // Set tab parameter for non-default tabs
       newSearchParams.set('tab', value);
     }
-    
+
     // Build the URL with or without search params
     const searchString = newSearchParams.toString();
     const newUrl = searchString ? `${pathname}?${searchString}` : pathname;
-    
+
     // Update URL without triggering a full page reload
     router.replace(newUrl, { scroll: false });
   };
@@ -170,8 +170,8 @@ export function DataContent({
   if (isLoading) {
     return (
       <div className="p-8 text-center w-full h-[calc(100vh-20rem)] flex flex-col items-center justify-center">
-       <Loader2 className="h-12 w-12 mx-auto mb-4 text-muted-foreground animate-spin" />
-       <h3 className="text-lg font-medium mb-2">{t('dataContent.loading')}</h3>
+        <Loader2 className="h-12 w-12 mx-auto mb-4 text-muted-foreground animate-spin" />
+        <h3 className="text-lg font-medium mb-2">{t('dataContent.loading')}</h3>
       </div>
     );
   }
@@ -193,8 +193,8 @@ export function DataContent({
         </TabsList>
 
         <TabsContent value="info" className="mt-0 flex-1 min-w-0">
-          <InfoCard 
-            selectedSnapshotData={selectedSnapshotData} 
+          <InfoCard
+            selectedSnapshotData={selectedSnapshotData}
             showPlayCounts={privacySettings.showPlayCounts}
             visitableProfileAt={visitableProfileAt}
           />
@@ -213,7 +213,7 @@ export function DataContent({
         </TabsContent>
         {visitedBySelf && (
           <TabsContent value="recent" className="mt-0 flex-1 min-w-0">
-            <RecentSongsCard 
+            <RecentSongsCard
               region={region}
               beforeDate={selectedSnapshotData?.snapshot.fetchedAt}
             />

@@ -31,4 +31,4 @@ export function TRPCProvider({ children }: TRPCProviderProps) {
       </QueryClientProvider>
     </trpc.Provider>
   );
-} 
+}

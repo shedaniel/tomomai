@@ -150,7 +150,7 @@ type SongsJsonRecord = {
 // Helper function to convert level string to precise value (stored as 10x)
 function levelToPrecise(level: string): number {
   const trimmedLevel = level.trim();
-  
+
   if (trimmedLevel.endsWith('+')) {
     // Plus level: extract base number and add 6
     const baseLevel = parseInt(trimmedLevel.slice(0, -1), 10);
@@ -299,7 +299,7 @@ async function sendDiscordWebhook(
   }
 
   const now = new Date();
-  
+
   // Format date in JST (Japan Standard Time)
   const jstDate = new Intl.DateTimeFormat('en-US', {
     timeZone: 'Asia/Tokyo',
@@ -307,7 +307,7 @@ async function sendDiscordWebhook(
     month: '2-digit',
     day: '2-digit',
   }).format(now);
-  
+
   const [month, day, year] = jstDate.split('/');
   const dateStr = `${year}/${month}/${day}`;
   const regionName = region === "jp" ? "Japan" : "International";
@@ -402,7 +402,7 @@ export async function POST(request: NextRequest) {
     // Check for admin token authentication
     const authHeader = request.headers.get("authorization");
     const token = authHeader?.replace("Bearer ", "");
-    
+
     if (!token) {
       return NextResponse.json(
         { error: "Missing authorization token" },
@@ -523,10 +523,10 @@ export async function POST(request: NextRequest) {
         .where(and(eq(songs.region, region), eq(songs.gameVersion, currentVersionForRegion)))
         .orderBy(songs.songName, songs.difficulty, songs.type))
         .sort((a, b) => a.songName.localeCompare(b.songName) * 1000000 + a.difficulty.localeCompare(b.difficulty) * 1000 + a.type.localeCompare(b.type));
-        await fs.writeFile(filePath, JSON.stringify(prevRecords.map(record => sortKeys({
-          ...record,
-          id: record.id.toString(),
-        })), null, 2));
+      await fs.writeFile(filePath, JSON.stringify(prevRecords.map(record => sortKeys({
+        ...record,
+        id: record.id.toString(),
+      })), null, 2));
       console.log(`Saved ${prevRecords.length} records to ${filePath}`);
 
       // Write new records to file
@@ -537,7 +537,7 @@ export async function POST(request: NextRequest) {
         // If the record exists in prevRecords, use its ID; otherwise, ID will be auto-generated on insert
         return existingRecord ? { ...converted, id: existingRecord.id, publicId: existingRecord.publicId } : converted;
       })
-      .sort((a, b) => a.songName.localeCompare(b.songName) * 1000000 + a.difficulty.localeCompare(b.difficulty) * 1000 + a.type.localeCompare(b.type));
+        .sort((a, b) => a.songName.localeCompare(b.songName) * 1000000 + a.difficulty.localeCompare(b.difficulty) * 1000 + a.type.localeCompare(b.type));
       await fs.writeFile(newFilePath, JSON.stringify(newRecords.map(record => sortKeys({
         ...record,
         id: "id" in record ? record.id.toString() : null,
@@ -550,19 +550,19 @@ export async function POST(request: NextRequest) {
       // Split into batches of 1000 records to avoid SQL limits
       const batchSize = 1000;
       let totalUpserted = 0;
-      
+
       for (let i = 0; i < allRecords.length; i += batchSize) {
         const batch = allRecords.slice(i, i + batchSize);
         console.log(`Upserting batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(allRecords.length / batchSize)} (${batch.length} records)`);
 
         // Convert batch to song records
         const songRecords = batch.map(record => convertToSong(record, region, currentVersionForRegion));
-        
+
         // Check for duplicates within the batch based on unique constraint
         const uniqueKeys = new Set<string>();
         const deduplicatedRecords: typeof songRecords = [];
         const duplicates: { key: string; difficulty: string }[] = [];
-        
+
         for (const song of songRecords) {
           const key = `${song.songName}|${song.difficulty}|${song.type}|${song.region}|${song.gameVersion}`;
           if (uniqueKeys.has(key)) {
@@ -573,16 +573,16 @@ export async function POST(request: NextRequest) {
             deduplicatedRecords.push(song);
           }
         }
-        
+
         if (duplicates.length > 0) {
           const nonUtageDuplicates = duplicates.filter(d => d.difficulty !== 'utage');
-          
+
           if (nonUtageDuplicates.length > 0) {
             console.error(`Found ${nonUtageDuplicates.length} non-utage duplicate(s) in batch ${Math.floor(i / batchSize) + 1}:`);
             nonUtageDuplicates.forEach(dup => console.error(`  - ${dup.key}`));
             throw new Error(`Batch contains duplicate records. Please fix the source data. Found duplicates: ${nonUtageDuplicates.slice(0, 5).map(d => d.key).join(', ')}${nonUtageDuplicates.length > 5 ? ` (and ${nonUtageDuplicates.length - 5} more)` : ''}`);
           }
-          
+
           const utageDuplicates = duplicates.filter(d => d.difficulty === 'utage');
           if (utageDuplicates.length > 0) {
             console.log(`Skipped ${utageDuplicates.length} utage duplicate(s) in batch ${Math.floor(i / batchSize) + 1}`);
@@ -618,7 +618,7 @@ export async function POST(request: NextRequest) {
 
         totalUpserted += batch.length;
       }
-      
+
       console.log(`Successfully upserted ${totalUpserted} records to database`);
     } catch (error) {
       console.error("Error during batch upsert:", error);
@@ -749,4 +749,4 @@ export async function GET() {
     { error: "Method not allowed" },
     { status: 405 }
   );
-} 
+}

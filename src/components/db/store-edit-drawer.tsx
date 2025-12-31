@@ -473,4 +473,3 @@ export function StoreEditDrawer({ open, onOpenChange, store, isLoggedIn }: Store
     </>
   );
 }
-

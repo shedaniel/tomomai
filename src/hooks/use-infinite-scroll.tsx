@@ -33,4 +33,3 @@ export function useInfiniteScroll(callback: () => void, enabled: boolean) {
 
   return sentinelRef;
 }
-

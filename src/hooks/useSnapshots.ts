@@ -8,12 +8,12 @@ interface UseSnapshotsOptions {
 }
 
 export function useSnapshots(
-  region: Region, 
+  region: Region,
   isAuthenticated: boolean,
   options?: UseSnapshotsOptions
 ) {
   const { initialSnapshots, initialSnapshotData } = options || {};
-  
+
   // Initialize selected snapshot with the first snapshot from initial data
   const [selectedSnapshot, setSelectedSnapshot] = useState<string | null>(
     initialSnapshots && initialSnapshots.length > 0 ? initialSnapshots[0].id : null
@@ -37,15 +37,15 @@ export function useSnapshots(
 
   // Fetch complete snapshot data only when a snapshot is selected (with initial data)
   const hasInitialDataForSelected = initialSnapshotData && selectedSnapshot === initialSnapshotData.snapshot.id;
-  
+
   const {
     data: selectedSnapshotData,
     isLoading: isLoadingSnapshotData,
     refetch: refreshSnapshotData,
   } = trpc.user.getSnapshotData.useQuery(
-    { 
-      snapshotId: selectedSnapshot!, 
-      region 
+    {
+      snapshotId: selectedSnapshot!,
+      region
     },
     {
       enabled: isAuthenticated && !!selectedSnapshot,
@@ -67,12 +67,12 @@ export function useSnapshots(
   useEffect(() => {
     const currentLength = snapshots.length;
     const previousLength = previousLengthRef.current;
-    
+
     // If length changed and we have snapshots, select the latest one
     if (currentLength !== previousLength && currentLength > 0) {
       setSelectedSnapshot(snapshots[0].id);
     }
-    
+
     // Update the ref with current length
     previousLengthRef.current = currentLength;
   }, [snapshots]);
@@ -122,7 +122,7 @@ export function useSnapshots(
     if (selectedSnapshot === snapshotId) {
       setSelectedSnapshot(null);
     }
-    
+
     // Delete the snapshot
     await deleteSnapshotMutation.mutateAsync({
       snapshotId,
@@ -137,7 +137,7 @@ export function useSnapshots(
       region,
       targetVersion,
     });
-    
+
     return result;
   };
 
@@ -153,4 +153,4 @@ export function useSnapshots(
     resetSnapshots,
     refreshSnapshots: refreshSnapshotsCallback,
   };
-} 
+}

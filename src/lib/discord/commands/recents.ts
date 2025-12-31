@@ -8,11 +8,11 @@ import { createSafeMaimaiImageUrl } from '@/lib/utils';
 import { InteractionResponseType } from 'discord-interactions';
 import { and, desc, eq } from 'drizzle-orm';
 import {
-    createErrorResponse,
-    createNotRegisteredResponse,
-    DISCORD_COLORS,
-    DiscordEmbed,
-    DiscordResponse,
+  createErrorResponse,
+  createNotRegisteredResponse,
+  DISCORD_COLORS,
+  DiscordEmbed,
+  DiscordResponse,
 } from '../responses';
 import { renderLevelPrecise } from '@/lib/name-utils';
 
@@ -52,7 +52,7 @@ async function fetchRecentPlaysData(userId: string, region: 'intl' | 'jp', skip:
   // Calculate offset: we need to skip entire plays, not individual tracks
   // Fetch extra tracks to check if there are more plays available
   const maxTracksToFetch = 4 * (skip + 2); // Fetch current play + 1 extra to check if more exist
-  
+
   const recentPlays = await db
     .select({
       id: userRecentSongs.id,
@@ -90,14 +90,14 @@ async function fetchRecentPlaysData(userId: string, region: 'intl' | 'jp', skip:
   type TrackData = typeof recentPlays[0];
   const plays: TrackData[][] = [];
   let currentPlayTracks: TrackData[] = [];
-  
+
   for (let i = 0; i < recentPlays.length; i++) {
     const track = recentPlays[i];
     currentPlayTracks.push(track);
-    
+
     // Check if this is the last track of a play (track number increases or we're at the end)
     const isLastTrack = i === recentPlays.length - 1 || recentPlays[i + 1].track > track.track;
-    
+
     if (isLastTrack) {
       plays.push([...currentPlayTracks]);
       currentPlayTracks = [];
@@ -138,7 +138,7 @@ function createPlayEmbeds(tracks: any[], region: 'intl' | 'jp') {
 
     // Proxy the cover image URL
     let coverUrl = createSafeMaimaiImageUrl(play.cover);
-    
+
     // If the URL is relative (starts with /), prefix with base URL for Discord
     if (coverUrl.startsWith('/')) {
       coverUrl = resolveBaseUrl() + coverUrl;
@@ -198,7 +198,7 @@ function createPlayEmbeds(tracks: any[], region: 'intl' | 'jp') {
       footer: index === tracks.length - 1 ? {
         text: `tomomai ともマイ • maimai DX score tracker`,
       } : undefined,
-      timestamp:  index === tracks.length - 1 ? playTime.toISOString() : undefined,
+      timestamp: index === tracks.length - 1 ? playTime.toISOString() : undefined,
     };
   });
 }
@@ -234,15 +234,15 @@ function createNavigationButtons(discordUserId: string, region: 'intl' | 'jp', s
   ];
 }
 
-export async function handleRecentsCommand({ 
-  discordUserId, 
+export async function handleRecentsCommand({
+  discordUserId,
   region,
   applicationId,
   interactionToken,
   skip = 0,
 }: RecentsCommandOptions): Promise<DiscordResponse> {
   const regionName = region === 'jp' ? 'Japan' : 'International';
-  
+
   try {
     if (!discordUserId) {
       return createErrorResponse('Unable to identify Discord user. Please try again.');
@@ -276,7 +276,7 @@ export async function handleRecentsCommand({
         data: {
           embeds: [{
             title: '📊 No Recent Plays Found',
-            description: skip === 0 
+            description: skip === 0
               ? `You don't have any recent ${regionName} region plays yet!`
               : `No more plays found.`,
             color: DISCORD_COLORS.YELLOW,
@@ -307,4 +307,3 @@ export async function handleRecentsCommand({
     return createErrorResponse('An error occurred while fetching your recent plays. Please try again later.');
   }
 }
-

@@ -18,4 +18,4 @@ export function getLocaleCookie(): Locale | null {
     return locale && locales.includes(locale) ? locale : null;
   }
   return null;
-} 
+}

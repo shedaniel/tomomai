@@ -219,7 +219,7 @@ export function getLatestAvailableVersion(region: Region): number {
   if (availableVersions.length === 0) {
     throw new Error(`No versions available for region ${region}`);
   }
-  
+
   // Sort by release date (descending) and return the latest
   const sortedVersions = availableVersions.sort((a, b) => {
     const dateA = parseDate(region === "intl" ? a.intlReleaseDate! : a.jpReleaseDate!);
@@ -235,7 +235,7 @@ export function getLatestAvailableVersion(region: Region): number {
  */
 export function getVersionFromDate(date: Date, region: Region): number {
   const availableVersions = getAvailableVersions(region);
-  
+
   // Sort versions by release date for the given region (descending)
   const sortedVersions = availableVersions.sort((a, b) => {
     const dateA = parseDate(region === "intl" ? a.intlReleaseDate! : a.jpReleaseDate!);
@@ -300,10 +300,10 @@ export function getVersionsSortedByDate(region: Region, ascending = true): Versi
 export function isVersionAvailable(versionId: number, region: Region, date: Date = new Date()): boolean {
   const version = getVersionInfo(versionId);
   if (!version) return false;
-  
+
   const dateString = region === "intl" ? version.intlReleaseDate : version.jpReleaseDate;
   if (!dateString) return false; // Not released yet
-  
+
   const releaseDate = parseDate(dateString);
   return date >= releaseDate;
 }

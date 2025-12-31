@@ -12,7 +12,7 @@ interface LocaleSwitcherProps {
   forceVisible?: boolean;
 }
 
-export function LocaleSwitcher({ forceVisible }: LocaleSwitcherProps  ) {
+export function LocaleSwitcher({ forceVisible }: LocaleSwitcherProps) {
   const t = useTranslations();
   const LANGUAGES = getLanguages(t);
   const { locale, setLocale } = useLocale();
@@ -53,4 +53,4 @@ export function LocaleSwitcher({ forceVisible }: LocaleSwitcherProps  ) {
       </SelectContent>
     </Select>
   )
-} 
+}

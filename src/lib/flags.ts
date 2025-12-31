@@ -150,7 +150,7 @@ export function applyFlagOverrides(flags: Flags, cookieValue?: string): Flags {
 
   try {
     const overrides = JSON.parse(cookieValue) as Partial<Flags>;
-    
+
     // Only apply overrides for user-selectable flags
     const result = { ...flags };
     for (const [key, value] of Object.entries(overrides)) {
@@ -159,7 +159,7 @@ export function applyFlagOverrides(flags: Flags, cookieValue?: string): Flags {
         result[flagKey] = value as boolean;
       }
     }
-    
+
     return result;
   } catch {
     // If cookie is malformed, just return original flags

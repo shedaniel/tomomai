@@ -291,4 +291,4 @@ export function Dashboard({ user, initialUserData, initialHasToken, initialTimez
       <ExperimentsDialog open={dialogType === "experiments"} onOpenChange={open => setDialogType(open ? "experiments" : null)} initialFlags={flags} />
     </div>
   );
-} 
+}

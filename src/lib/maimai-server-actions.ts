@@ -71,12 +71,12 @@ export async function startFetchServer(userId: string, region: Region, token?: s
   if (existingFetch.length > 0) {
     const threeMinutes = 3 * 60 * 1000; // 3 minutes in milliseconds
     const now = Date.now();
-    
+
     // Check if any pending fetches are older than 3 minutes
     const oldFetches = existingFetch.filter(
       fetch => now - fetch.startedAt.getTime() > threeMinutes
     );
-    
+
     if (oldFetches.length > 0) {
       // Mark old pending fetches as failed due to timeout
       for (const oldFetch of oldFetches) {
@@ -90,12 +90,12 @@ export async function startFetchServer(userId: string, region: Region, token?: s
           .where(eq(fetchSessions.id, oldFetch.id));
       }
     }
-    
+
     // Check if there are still any recent pending fetches
     const recentPendingFetches = existingFetch.filter(
       fetch => now - fetch.startedAt.getTime() <= threeMinutes
     );
-    
+
     if (recentPendingFetches.length > 0) {
       throw new Error('A fetch is already in progress for this region');
     }
@@ -130,7 +130,7 @@ export async function startFetchServer(userId: string, region: Region, token?: s
   if (token) {
     // Encrypt the token before storing
     const encryptedToken = encryptToken(tokenToUse);
-    
+
     try {
       await db
         .insert(userTokens)

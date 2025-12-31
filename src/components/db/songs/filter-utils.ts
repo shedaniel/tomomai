@@ -171,12 +171,12 @@ export function applyUniqueSongFilters(allSongs: UniqueSong[], flattenedSongs: U
 
   // Apply sorting
   const sortFilter = filters.find(f => f.type === "sort");
-  
+
   // Apply Group sorting first, then Filter sorting
   // Actually, if Grouping is active, it dictates the primary sort order.
   // The user might expect the "Sort" filter to apply within the group?
   // Let's sort by Group criteria first.
-  
+
   if (groupMode !== "none") {
     result.sort((a, b) => {
       let comparison = 0;
@@ -212,10 +212,10 @@ export function applyUniqueSongFilters(allSongs: UniqueSong[], flattenedSongs: U
           comparison = a.artist.localeCompare(b.artist);
           break;
       }
-      
+
       // If group is same, use secondary sort (from filter or default index)
       if (comparison !== 0) return comparison;
-      
+
       // Secondary sort logic (copying from below)
       if (sortFilter) {
         if (sortFilter.value === "version_desc") {
@@ -240,7 +240,7 @@ export function applyUniqueSongFilters(allSongs: UniqueSong[], flattenedSongs: U
           return a.index - b.index;
         }
       }
-      
+
       // Default fallback
       return a.index - b.index;
     });
@@ -278,4 +278,3 @@ export function applyUniqueSongFilters(allSongs: UniqueSong[], flattenedSongs: U
 
   return result;
 }
-

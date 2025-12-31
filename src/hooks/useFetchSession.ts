@@ -8,7 +8,7 @@ export function useFetchSession(onFetchComplete?: () => void, flags?: Flags) {
   const [currentSession, setCurrentSession] = useState<FetchSession | null>(null);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [lastFetchTime, setLastFetchTime] = useState<Date | null>(null);
-  
+
   // Session polling state
   const [sessionPollingEnabled, setSessionPollingEnabled] = useState(false);
   const [sessionPollingRegion, setSessionPollingRegion] = useState<Region | null>(null);
@@ -30,9 +30,9 @@ export function useFetchSession(onFetchComplete?: () => void, flags?: Flags) {
     if (!latestSessionData || !sessionPollingEnabled) return;
 
     const currentSessionId = latestSessionData.id;
-    
+
     console.log("[Session Polling] Current session ID:", currentSessionId, "Last known:", lastKnownSessionIdRef.current);
-    
+
     // Initialize the last known session ID on first poll
     if (lastKnownSessionIdRef.current === null) {
       console.log("[Session Polling] Initializing with session ID:", currentSessionId);
@@ -44,14 +44,14 @@ export function useFetchSession(onFetchComplete?: () => void, flags?: Flags) {
     if (currentSessionId !== lastKnownSessionIdRef.current) {
       console.log("[Session Polling] NEW SESSION DETECTED! Old:", lastKnownSessionIdRef.current, "New:", currentSessionId);
       lastKnownSessionIdRef.current = currentSessionId;
-      
+
       // Show success toast
       toast.success("Token submitted successfully");
       console.log("Token submitted successfully, on " + sessionPollingRegion + " region");
 
       // Stop session polling
       setSessionPollingEnabled(false);
-      
+
       // Start full fetch status polling for the new session
       if (sessionPollingRegion) {
         const session: FetchSession = {
@@ -85,7 +85,7 @@ export function useFetchSession(onFetchComplete?: () => void, flags?: Flags) {
       setCurrentSession(session);
       setLastFetchTime(new Date());
       setFetchError(null);
-      
+
       // Start polling immediately with the returned session ID
       pollFetchStatus(data.sessionId, variables.region);
     },
@@ -98,13 +98,13 @@ export function useFetchSession(onFetchComplete?: () => void, flags?: Flags) {
   // Start data fetch with optional token (if no token, uses saved token)
   const startDataFetch = async (region: Region, token?: string): Promise<void> => {
     setFetchError(null);
-    
+
     // Build flags array for fetch
     const fetchFlags: string[] = [];
     if (flags?.eventsCard) {
       fetchFlags.push("eventsCard");
     }
-    
+
     // Let the mutation error bubble up to the caller
     await startFetchMutation.mutateAsync({ region, token, flags: fetchFlags });
   };
@@ -124,7 +124,7 @@ export function useFetchSession(onFetchComplete?: () => void, flags?: Flags) {
         const result = await trpcClient.user.getFetchStatus.query({
           region,
         });
-        
+
         if (result && result.id === sessionId) {
           // Only update if this is the session we're tracking
           const updatedSession: FetchSession = {
@@ -212,4 +212,4 @@ export function useFetchSession(onFetchComplete?: () => void, flags?: Flags) {
     stopSessionPolling,
     isPollingForSession: sessionPollingEnabled,
   };
-} 
+}

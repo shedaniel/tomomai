@@ -31,14 +31,14 @@ export async function generateMetadata({ params }: RegionProfilePageProps): Prom
 
   try {
     const trpc = await createServerSideTRPC();
-    
+
     const snapshotData = await trpc.user.getPublicSnapshotData({
       username: decodeURIComponent(username),
       region,
     });
 
     const regionName = region === 'intl' ? 'International' : 'Japan';
-    
+
     const title = `${username} | tomomai ともマイ`;
     const description = `View ${username}'s maimai profile for ${regionName}. Track and analyze maimai scores with friends.`;
 
@@ -106,7 +106,7 @@ export default async function RegionProfilePage({ params, searchParams }: Region
 
   try {
     const trpc = await createServerSideTRPC();
-    
+
     // Get the user's profile data
     const profileData = await trpc.user.getPublicProfile({
       username: decodeURIComponent(username),
@@ -119,7 +119,7 @@ export default async function RegionProfilePage({ params, searchParams }: Region
     });
 
     return (
-      <ProfilePage 
+      <ProfilePage
         profileData={profileData}
         snapshotData={snapshotData}
         region={region}
@@ -135,4 +135,4 @@ export default async function RegionProfilePage({ params, searchParams }: Region
     // Re-throw other errors
     throw error;
   }
-} 
+}

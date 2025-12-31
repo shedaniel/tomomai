@@ -63,7 +63,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       counter.get(slug)!.push(song);
     }
   }
-  
+
   for (const [slug, songs] of counter.entries()) {
     if (songs.length > 1) {
       console.error(`Same slug found: ${slug} for ${songs.map(s => `'${s.songName}' by '${s.artist}'`).join(', ')}`);
