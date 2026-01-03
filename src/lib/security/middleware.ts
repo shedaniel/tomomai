@@ -69,7 +69,7 @@ async function checkRateLimiting(request: NextRequest, path: string): Promise<{
       // Auth endpoints - more restrictive
       const result = await authRateLimiter.check(request);
       if (result.limited) {
-        logger.warn(`Rate limit exceeded for auth endpoint: ${path}`);
+        logger.warn({ key: authRateLimiter.keyGenerator(request) }, `Rate limit exceeded for auth endpoint: ${path}`);
         const response = NextResponse.json(
           { error: 'Too many authentication attempts. Please try again later.' },
           { status: 429 }
@@ -82,7 +82,7 @@ async function checkRateLimiting(request: NextRequest, path: string): Promise<{
       // General API endpoints
       const result = await apiRateLimiter.check(request);
       if (result.limited) {
-        logger.warn(`Rate limit exceeded for API endpoint: ${path}`);
+        logger.warn({ key: apiRateLimiter.keyGenerator(request) }, `Rate limit exceeded for API endpoint: ${path}`);
         const response = NextResponse.json(
           { error: 'Too many requests. Please try again later.' },
           { status: 429 }

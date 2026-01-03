@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { logger } from '../logger';
 
 // Simple in-memory rate limiter using Map (Vercel-compatible)
 const rateLimitCache = new Map<string, { count: number, lastReset: number }>();
@@ -24,8 +25,8 @@ interface RateLimitOptions {
 export class MemoryRateLimiter {
   private windowMs: number;
   private maxRequests: number;
-  private keyGenerator: (req: NextRequest) => string;
   private headers: boolean;
+  keyGenerator: (req: NextRequest) => string;
 
   constructor(options: RateLimitOptions = {}) {
     this.windowMs = options.windowMs || 60 * 1000; // Default: 1 minute
@@ -95,6 +96,7 @@ export class MemoryRateLimiter {
     const result = await this.check(req);
 
     if (result.limited) {
+      logger.warn({ key: this.keyGenerator(req) }, 'Rate limit exceeded');
       const response = NextResponse.json(
         { error: 'Too many requests, please try again later.' },
         { status: 429 }
