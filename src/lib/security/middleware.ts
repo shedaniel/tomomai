@@ -153,11 +153,12 @@ export function validateContentType(request: NextRequest): NextResponse | null {
     const contentType = request.headers.get('content-type');
     const isFormData = contentType?.includes('multipart/form-data');
     const isJson = contentType?.includes('application/json');
+    const isUrlEncoded = contentType?.includes('application/x-www-form-urlencoded');
 
-    if (!isFormData && !isJson) {
+    if (!isFormData && !isJson && !isUrlEncoded) {
       logger.warn(`Invalid content type for ${path}: ${contentType}`);
       return NextResponse.json(
-        { error: 'Invalid Content-Type. Expected application/json or multipart/form-data.' },
+        { error: 'Invalid Content-Type. Expected application/json, multipart/form-data, or application/x-www-form-urlencoded.' },
         { status: 415 }
       );
     }

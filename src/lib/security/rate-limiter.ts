@@ -34,7 +34,8 @@ export class MemoryRateLimiter {
 
     // Default key generator: use IP address
     this.keyGenerator = options.keyGenerator || ((req: NextRequest) => {
-      const ip = req.headers.get('x-forwarded-for') ||
+      const ip = req.headers.get('cf-connecting-ip') ||
+        req.headers.get('x-forwarded-for') ||
         req.headers.get('x-real-ip') ||
         'unknown';
       return ip.split(',')[0].trim();
@@ -115,27 +116,30 @@ export class MemoryRateLimiter {
 
 // Singleton instance for general API rate limiting
 export const apiRateLimiter = new MemoryRateLimiter({
-  windowMs: 3 * 60 * 1000, // 3 minutes
-  maxRequests: 180, // 180 requests per 3 minutes
+  windowMs: 60 * 1000, // 1 minute
+  maxRequests: 100, // 100 requests per 1 minute
 });
 
 // Singleton instance for auth endpoints (more restrictive)
 export const authRateLimiter = new MemoryRateLimiter({
-  windowMs: 5 * 60 * 1000, // 5 minutes
-  maxRequests: 10, // 10 requests per 5 minutes
+  windowMs: 90 * 1000, // 90 seconds
+  maxRequests: 10, // 10 requests per 90 seconds
 });
 
 // Singleton instance for Discord commands
 export const discordRateLimiter = new MemoryRateLimiter({
   windowMs: 60 * 1000, // 1 minute
-  maxRequests: 5, // 5 commands per minute
+  maxRequests: 1, // 1 command per minute
   keyGenerator: (req: NextRequest) => {
     // For Discord, use user ID from headers if available
     const userId = req.headers.get('x-discord-user-id');
     if (userId) return `discord:${userId}`;
 
     // Fallback to IP
-    const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown';
+    const ip = req.headers.get('cf-connecting-ip') ||
+      req.headers.get('x-forwarded-for') ||
+      req.headers.get('x-real-ip') ||
+      'unknown';
     return `discord:${ip.split(',')[0].trim()}`;
   }
 });
