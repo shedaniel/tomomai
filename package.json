@@ -2,6 +2,7 @@
   "name": "maimai-friends",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "packageManager": "pnpm@10.24.0",
   "scripts": {
     "dev": "next dev --turbopack | pino-pretty",
@@ -17,7 +18,8 @@
     "db:download-pg": "node scripts/download-pg.js",
     "db:upload-pg": "node scripts/upload-to-pg.js",
     "db:analyse": "node scripts/analyse-db.js",
-    "discord:register": "node scripts/register-discord-commands.js"
+    "discord:register": "node scripts/register-discord-commands.js",
+    "token:cli": "node scripts/token-cli.js"
   },
   "dependencies": {
     "@base-ui-components/react": "1.0.0-beta.7",

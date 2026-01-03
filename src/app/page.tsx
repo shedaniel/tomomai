@@ -68,9 +68,8 @@ export default async function Home() {
   const userRegion = userData.region || "intl";
 
   // Then fetch all other data in parallel using the correct region
-  const [timezoneData, tokenData, profileSettings, snapshotsData] = await Promise.all([
+  const [timezoneData, profileSettings, snapshotsData] = await Promise.all([
     trpc.user.getTimezone().catch(() => ({ timezone: null })),
-    trpc.user.hasToken({ region: userRegion }).catch(() => ({ hasToken: false })),
     trpc.user.getProfileSettings().catch(() => ({
       publishProfile: false,
       profileMainRegion: 'intl' as const,
@@ -98,7 +97,6 @@ export default async function Home() {
     <Dashboard
       user={session.user}
       initialUserData={userData}
-      initialHasToken={tokenData?.hasToken ?? false}
       initialTimezone={timezoneData?.timezone ?? null}
       initialProfileSettings={profileSettings}
       initialSnapshots={snapshotsData.snapshots}

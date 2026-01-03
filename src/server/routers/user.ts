@@ -666,24 +666,6 @@ export const userRouter = router({
       return { success: true };
     }),
 
-  // Check if user has a saved token for a region
-  hasToken: protectedProcedure
-    .input(z.object({ region: regionSchema }))
-    .query(async ({ ctx, input }) => {
-      const existingToken = await db
-        .select({ id: userTokens.id })
-        .from(userTokens)
-        .where(
-          and(
-            eq(userTokens.userId, ctx.session.user.id),
-            eq(userTokens.region, input.region)
-          )
-        )
-        .limit(1);
-
-      return { hasToken: existingToken.length > 0 };
-    }),
-
   // Start a new data fetch
   startFetch: protectedProcedure
     .input(z.object({

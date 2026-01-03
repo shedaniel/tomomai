@@ -4,7 +4,25 @@ import { toast } from "sonner";
 import { Region, FetchSession } from "@/lib/types";
 import { Flags } from "@/lib/flags";
 
-export function useFetchSession(onFetchComplete?: () => void, flags?: Flags) {
+// Check if an error message indicates a token-related issue
+function isTokenError(message: string): boolean {
+  const tokenErrorPatterns = [
+    "Token has expired",
+    "Please provide a new token",
+    "Login failed",
+    "Invalid token",
+    "Session expired",
+    "NO_TOKEN_FOUND",
+    "No token found",
+    "authentication token",
+    "check your username and password",
+  ];
+  return tokenErrorPatterns.some(pattern =>
+    message.toLowerCase().includes(pattern.toLowerCase())
+  );
+}
+
+export function useFetchSession(onFetchComplete?: () => void, flags?: Flags, onTokenError?: () => void) {
   const [currentSession, setCurrentSession] = useState<FetchSession | null>(null);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [lastFetchTime, setLastFetchTime] = useState<Date | null>(null);
@@ -150,6 +168,12 @@ export function useFetchSession(onFetchComplete?: () => void, flags?: Flags) {
             const errorMessage = result.errorMessage || "Fetch failed";
             setFetchError(errorMessage);
             toast.error(`Data fetch failed: ${errorMessage}`);
+
+            // Check if this is a token-related error and trigger callback
+            if (isTokenError(errorMessage)) {
+              onTokenError?.();
+            }
+
             return "failed";
           }
         } else if (!result) {

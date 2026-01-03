@@ -44,7 +44,7 @@ export async function startFetchServer(userId: string, region: Region, token?: s
       .limit(1);
 
     if (savedToken.length === 0) {
-      throw new Error('No user token found! (Maybe it has expired?) Please add your authentication tokens on the website first!');
+      throw new Error('NO_TOKEN_FOUND: No authentication token found. Please add your authentication token first.');
     }
 
     // Decrypt the stored token

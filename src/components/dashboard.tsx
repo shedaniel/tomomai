@@ -25,7 +25,6 @@ type DialogType = null | "token" | "settings" | "username" | "about" | "admin" |
 interface DashboardProps {
   user: User;
   initialUserData: UserData;
-  initialHasToken: boolean;
   initialTimezone: typeof TIMEZONE_ENUM[number] | null;
   initialProfileSettings: ProfileSettings;
   initialSnapshots: Snapshot[];
@@ -33,7 +32,7 @@ interface DashboardProps {
   flags: Flags;
 }
 
-export function Dashboard({ user, initialUserData, initialHasToken, initialTimezone, initialProfileSettings, initialSnapshots, initialSnapshotData, flags }: DashboardProps) {
+export function Dashboard({ user, initialUserData, initialTimezone, initialProfileSettings, initialSnapshots, initialSnapshotData, flags }: DashboardProps) {
   const [dialogType, setDialogType] = useState<DialogType>(null);
 
   // Check if user has username
@@ -77,16 +76,10 @@ export function Dashboard({ user, initialUserData, initialHasToken, initialTimez
     startAutomaticFetch,
     startSessionPolling,
     stopSessionPolling,
-  } = useFetchSession(refreshSnapshots, flags);
-
-  // Check if user has a saved token for the current region (with initial server data)
-  const { data: tokenData, isLoading: isLoadingToken } = trpc.user.hasToken.useQuery(
-    { region: selectedRegion },
-    {
-      refetchOnWindowFocus: false,
-      initialData: { hasToken: initialHasToken },
-    }
-  );
+  } = useFetchSession(refreshSnapshots, flags, () => {
+    // Called when a token-related error is detected during fetch
+    setDialogType("token");
+  });
 
   // Get user timezone (with initial server data)
   const { data: timezoneData, refetch: refetchTimezone } = trpc.user.getTimezone.useQuery(
@@ -138,30 +131,23 @@ export function Dashboard({ user, initialUserData, initialHasToken, initialTimez
   };
 
   const handleFetchData = async () => {
-    // Only attempt auto-fetch if we're sure the user has a saved token
-    if (!isLoadingToken && tokenData?.hasToken === true) {
-      // Start automatic fetch with saved token
-      try {
-        await startAutomaticFetch(selectedRegion);
-      } catch (error) {
-        console.error("Auto fetch failed:", error);
+    try {
+      await startAutomaticFetch(selectedRegion);
+    } catch (error) {
+      console.error("Auto fetch failed:", error);
 
-        // Show toast error and open token dialog for rate limiting or other errors
-        if (error instanceof Error) {
-          toast.error(error.message);
+      if (error instanceof Error) {
+        toast.error(error.message);
 
-          // If it's not a rate limit error, open the token dialog
-          if (!error.message.includes("Rate limited")) {
-            setDialogType("token");
-          }
-        } else {
-          toast.error("Failed to start data fetch");
+        // Only show token dialog if the error is about missing token
+        if (error.message.includes("NO_TOKEN_FOUND")) {
           setDialogType("token");
         }
+        // For other errors (rate limiting, fetch in progress, etc.), just show the toast
+      } else {
+        toast.error("Failed to start data fetch");
+        setDialogType("token");
       }
-    } else {
-      // Show token input dialog (either no token, or still loading token state)
-      setDialogType("token");
     }
   };
 

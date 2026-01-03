@@ -139,10 +139,6 @@ export interface GetSnapshotsResponse {
   snapshots: Snapshot[];
 }
 
-export interface HasTokenResponse {
-  hasToken: boolean;
-}
-
 export interface GetTimezoneResponse {
   timezone: string | null;
 }
