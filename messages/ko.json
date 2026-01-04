@@ -616,5 +616,25 @@
       "gray-pink": "Gray Pink"
     },
     "title": "Theme"
+  },
+  "fetchToast": {
+    "header": {
+      "pending": "데이터 가져오는 중...",
+      "completed": "Fetch complete",
+      "failed": "Fetch failed"
+    },
+    "states": {
+      "connecting": "Connecting...",
+      "connected": "Connected",
+      "login": "Logged in",
+      "playerData": "Fetched player data",
+      "songDataBasic": "Fetched BASIC scores",
+      "songDataAdvanced": "Fetched ADVANCED scores",
+      "songDataExpert": "Fetched EXPERT scores",
+      "songDataMaster": "Fetched MASTER scores",
+      "songDataRemaster": "Fetched Re:MASTER scores",
+      "recentSongs": "Fetched recent songs",
+      "hiddenSongs": "Fetched hidden songs"
+    }
   }
 }
