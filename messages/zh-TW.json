@@ -167,7 +167,7 @@
       "map": "活動地圖",
       "exportImage": "匯出圖片",
       "history": "歷史紀錄",
-      "developer": "Developer"
+      "developer": "開發者"
     },
     "playerInfo": "玩家資訊",
     "rating": "R 值：{rating}",
@@ -208,9 +208,9 @@
       "needMoreData": "至少匯入兩次資料才能檢視歷史紀錄"
     },
     "developer": {
-      "title": "Developer",
-      "exportJson": "Export Snapshot as JSON",
-      "exporting": "Exporting..."
+      "title": "開發者",
+      "exportJson": "匯出紀錄為 JSON",
+      "exporting": "匯出中..."
     }
   },
   "recommendations": {
@@ -503,7 +503,7 @@
         "sort": "排序",
         "sortVersionDesc": "版本（由新到舊）",
         "sortVersionAsc": "版本（由新到舊）",
-        "sortLevelAsc": "版本（由新到舊）",
+        "sortLevelAsc": "等級（由低到高）",
         "sortLevelDesc": "等級（由高到低）",
         "level": "等級",
         "groupBy": "分類",
@@ -511,7 +511,7 @@
         "groups": {
           "none": "無",
           "noteDesigner": "譜面設計者",
-          "levelAsc": "版本（由新到舊）",
+          "levelAsc": "等級（由低到高）",
           "levelDesc": "等級（由高到低）",
           "versionAsc": "版本（由新到舊）",
           "versionDesc": "版本（由新到舊）",
@@ -571,7 +571,7 @@
     "groups": {
       "simple": "簡約",
       "amaranth": "莧紅",
-      "blue": "莧紅",
+      "blue": "藍色",
       "brown": "棕色",
       "emerald": "翠綠",
       "grass": "草綠",
@@ -626,21 +626,21 @@
   "fetchToast": {
     "header": {
       "pending": "匯入資料中...",
-      "completed": "Fetch complete",
-      "failed": "Fetch failed"
+      "completed": "匯入完成",
+      "failed": "匯入失敗"
     },
     "states": {
-      "connecting": "Connecting...",
-      "connected": "Connected",
-      "login": "Logged in",
-      "playerData": "Fetched player data",
-      "songDataBasic": "Fetched BASIC scores",
-      "songDataAdvanced": "Fetched ADVANCED scores",
-      "songDataExpert": "Fetched EXPERT scores",
-      "songDataMaster": "Fetched MASTER scores",
-      "songDataRemaster": "Fetched Re:MASTER scores",
-      "recentSongs": "Fetched recent songs",
-      "hiddenSongs": "Fetched hidden songs"
+      "connecting": "連線中...",
+      "connected": "已連線",
+      "login": "已登入",
+      "playerData": "已匯入玩家資料",
+      "songDataBasic": "已匯入 BASIC 成績",
+      "songDataAdvanced": "已匯入 ADVANCED 成績",
+      "songDataExpert": "已匯入 EXPERT 成績",
+      "songDataMaster": "已匯入 MASTER 成績",
+      "songDataRemaster": "已匯入 Re:MASTER 成績",
+      "recentSongs": "已匯入最近遊玩紀錄",
+      "hiddenSongs": "已匯入隱藏歌曲"
     }
   }
 }
