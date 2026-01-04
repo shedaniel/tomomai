@@ -502,7 +502,7 @@
         "dx": "DX",
         "sort": "排序",
         "sortVersionDesc": "版本（由新到舊）",
-        "sortVersionAsc": "版本（由新到舊）",
+        "sortVersionAsc": "版本（由舊到新）",
         "sortLevelAsc": "等級（由低到高）",
         "sortLevelDesc": "等級（由高到低）",
         "level": "等級",
@@ -513,7 +513,7 @@
           "noteDesigner": "譜面設計者",
           "levelAsc": "等級（由低到高）",
           "levelDesc": "等級（由高到低）",
-          "versionAsc": "版本（由新到舊）",
+          "versionAsc": "版本（由舊到新）",
           "versionDesc": "版本（由新到舊）",
           "genre": "分類",
           "artist": "藝人"
