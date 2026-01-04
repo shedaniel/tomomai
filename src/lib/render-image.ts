@@ -32,7 +32,7 @@ const VERSION_SETTINGS = {
       top: -100,
       opacity: 1.0,
     },
-    premadeDecoration: false,
+    premadeDecoration: true,
     contentBackgroundColor: '#00000010',
     footerBackgroundColor: '#00000020',
   },

@@ -2,7 +2,7 @@
 
 import { Region, SnapshotWithSongs } from "@/lib/types";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BarChart, Clock, Database, Disc, Heart, Image as ImageIcon, Loader2, Map, Music, TrendingUp, User } from "lucide-react";
+import { BarChart, Clock, Code, Database, Disc, Heart, Image as ImageIcon, Loader2, Map, Music, TrendingUp, User } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState, useEffect } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
@@ -13,6 +13,7 @@ import { ExportImageCard } from "./export-image-card";
 import { HistoryCard } from "./history-card";
 import { EventsCard } from "./events-card";
 import { RecentSongsCard } from "./recent-songs-card";
+import { DeveloperCard } from "./developer-card";
 import { Flags } from "@/lib/flags";
 
 interface DataContentProps {
@@ -50,7 +51,7 @@ export function DataContent({
   const searchParams = useSearchParams();
 
   // Valid tab values
-  const allPossibleTabs = ["info", "stats", "songs", "recent", "recommendations", "plates", "map", "exportImage", "history"];
+  const allPossibleTabs = ["info", "stats", "songs", "recent", "recommendations", "plates", "map", "exportImage", "history", "developer"];
 
   // Get initial tab from props (SSR) or search params (client)
   const getInitialTab = () => {
@@ -142,13 +143,19 @@ export function DataContent({
       name: t('dataContent.tabs.map'),
       value: "map",
       icon: Map,
-      show: privacySettings.showEvents,
+      show: privacySettings.showEvents && flags.eventsCard,
     },
     {
       name: t('dataContent.tabs.exportImage'),
       value: "exportImage",
       icon: ImageIcon,
       show: true,
+    },
+    {
+      name: t('dataContent.tabs.developer'),
+      value: "developer",
+      icon: Code,
+      show: visitedBySelf,
     }
   ];
 
@@ -244,6 +251,11 @@ export function DataContent({
         <TabsContent value="exportImage" className="mt-0 flex-1 min-w-0">
           <ExportImageCard selectedSnapshotData={selectedSnapshotData} />
         </TabsContent>
+        {visitedBySelf && (
+          <TabsContent value="developer" className="mt-0 flex-1 min-w-0">
+            <DeveloperCard selectedSnapshotData={selectedSnapshotData} />
+          </TabsContent>
+        )}
       </Tabs>
     )
   }

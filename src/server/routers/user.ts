@@ -2,7 +2,7 @@ import { db } from '@/lib/db';
 import { createOpaqueUserId, generateUserOtp, getOtpExpiryTimestamp } from '@/lib/otp';
 import { resolveBaseUrl } from '@/lib/base-url';
 import { getFetchStatusServer, startFetchServer } from '@/lib/maimai-server-actions';
-import { getAvailableVersions } from '@/lib/metadata';
+import { getAvailableVersions, getVersionInfo, VERSIONS } from '@/lib/metadata';
 import { RatingCalculationInput, splitSongs } from '@/lib/rating-calculator';
 import { invites, songs, user, userScores, userSnapshots, userEvents, userRecentSongs, userRecentSongsDetailed, stores, storeEdits, storeEditVotes } from '@/lib/db/schema-pg';
 import { protectedProcedure, publicProcedure, router } from '@/lib/trpc';
@@ -1449,7 +1449,7 @@ export const userRouter = router({
       currentVersion: z.number(),
     }))
     .query(async ({ input }) => {
-      const availableVersions = getAvailableVersions(input.region);
+      const availableVersions = VERSIONS;
 
       // Filter out the current version
       const otherVersions = availableVersions.filter(v => v.id !== input.currentVersion);
@@ -1690,14 +1690,14 @@ export const userRouter = router({
         // Batch update ranks using CASE statement
         if (rankUpdates.length > 0) {
           const caseStatements = rankUpdates.map(
-            update => sql`WHEN ${userScores.id} = ${update.id} THEN ${update.rank}`
+            update => sql`WHEN ${update.id} THEN ${update.rank}`
           );
           const ids = rankUpdates.map(update => update.id);
 
           await db
             .update(userScores)
             .set({
-              rank: sql`CASE ${sql.join(caseStatements, sql.raw(' '))} END`
+              rank: sql`(CASE ${userScores.id} ${sql.join(caseStatements, sql.raw(' '))} END)::smallint`
             })
             .where(inArray(userScores.id, ids));
         }
@@ -2595,6 +2595,71 @@ export const userRouter = router({
         bpm: chartWithBpm?.bpm ?? null,
         addedVersion: earliestAddedVersion,
         slug,
+      };
+    }),
+
+  // Export snapshot data as JSON
+  exportSnapshotData: protectedProcedure
+    .input(z.object({
+      snapshotId: z.string(),
+    }))
+    .query(async ({ ctx, input }) => {
+      // Verify the snapshot belongs to the user
+      const snapshot = await db
+        .select()
+        .from(userSnapshots)
+        .where(
+          and(
+            eq(userSnapshots.publicId, input.snapshotId),
+            eq(userSnapshots.userId, ctx.session.user.id)
+          )
+        )
+        .limit(1);
+
+      if (snapshot.length === 0) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Snapshot not found or access denied',
+        });
+      }
+
+      // Get songs with scores for this snapshot
+      const songsWithScores = await db
+        .select({
+          songName: songs.songName,
+          artist: songs.artist,
+          cover: songs.cover,
+          difficulty: songs.difficulty,
+          level: songs.level,
+          levelPrecise: songs.levelPrecise,
+          type: songs.type,
+          achievement: userScores.achievement,
+          dxScore: userScores.dxScore,
+          fc: userScores.fc,
+          fs: userScores.fs,
+        })
+        .from(userScores)
+        .innerJoin(songs, eq(userScores.songId, songs.id))
+        .where(eq(userScores.snapshotId, snapshot[0].id))
+        .orderBy(songs.songName, songs.difficulty);
+
+      return {
+        metadata: {
+          id: snapshot[0].publicId,
+          displayName: snapshot[0].displayName,
+          trophy: snapshot[0].title,
+          region: snapshot[0].region,
+          fetchedAt: snapshot[0].fetchedAt,
+          gameVersion: getVersionInfo(snapshot[0].gameVersion)!.name,
+          rating: snapshot[0].rating,
+          stars: snapshot[0].stars,
+          courseRankUrl: snapshot[0].courseRankUrl,
+          classRankUrl: snapshot[0].classRankUrl,
+          totalPlayCount: snapshot[0].totalPlayCount,
+          currentVersionPlayCount: snapshot[0].versionPlayCount,
+        },
+        songs: songsWithScores,
+        iconUrl: snapshot[0].iconUrl,
       };
     }),
 

@@ -166,7 +166,8 @@
       "plates": "Plates",
       "map": "Events",
       "exportImage": "Export Image",
-      "history": "History"
+      "history": "History",
+      "developer": "Developer"
     },
     "playerInfo": "Player Info",
     "rating": "Rating: {rating}",
@@ -205,6 +206,11 @@
       "ratingOverTime": "Rating Over Time",
       "noHistory": "No rating history available",
       "needMoreData": "Fetch data at least twice to see your rating history"
+    },
+    "developer": {
+      "title": "Developer",
+      "exportJson": "Export Snapshot as JSON",
+      "exporting": "Exporting..."
     }
   },
   "recommendations": {
