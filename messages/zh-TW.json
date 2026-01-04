@@ -616,5 +616,25 @@
       "gray-pink": "Gray Pink"
     },
     "title": "主題"
+  },
+  "fetchToast": {
+    "header": {
+      "pending": "匯入資料中...",
+      "completed": "Fetch complete",
+      "failed": "Fetch failed"
+    },
+    "states": {
+      "connecting": "Connecting...",
+      "connected": "Connected",
+      "login": "Logged in",
+      "playerData": "Fetched player data",
+      "songDataBasic": "Fetched BASIC scores",
+      "songDataAdvanced": "Fetched ADVANCED scores",
+      "songDataExpert": "Fetched EXPERT scores",
+      "songDataMaster": "Fetched MASTER scores",
+      "songDataRemaster": "Fetched Re:MASTER scores",
+      "recentSongs": "Fetched recent songs",
+      "hiddenSongs": "Fetched hidden songs"
+    }
   }
 }
