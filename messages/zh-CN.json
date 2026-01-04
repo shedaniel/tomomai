@@ -166,7 +166,8 @@
       "plates": "名牌板",
       "map": "活动地图",
       "exportImage": "导出图片",
-      "history": "历史记录"
+      "history": "历史记录",
+      "developer": "Developer"
     },
     "playerInfo": "玩家信息",
     "rating": "R 值：{rating}",
@@ -205,6 +206,11 @@
       "ratingOverTime": "R 值变化趋势",
       "noHistory": "暂无历史记录",
       "needMoreData": "至少导入两次数据才能查看历史记录"
+    },
+    "developer": {
+      "title": "Developer",
+      "exportJson": "Export Snapshot as JSON",
+      "exporting": "Exporting..."
     }
   },
   "recommendations": {
