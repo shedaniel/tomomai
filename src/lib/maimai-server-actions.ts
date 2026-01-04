@@ -5,6 +5,8 @@ import { nanoid } from 'nanoid';
 import { and, desc, eq } from 'drizzle-orm';
 import { encryptToken, decryptToken } from './token-crypto';
 import { Region } from './types';
+import { appendFetchState } from './fetch-states-server';
+import { getAllStates } from './fetch-states';
 
 export interface StartFetchResult {
   sessionId: string;
@@ -25,8 +27,64 @@ export interface FetchStatusResult {
   }[] | null;
 }
 
+// Demo fetch
+export async function demoFetch(userId: string, region: Region): Promise<StartFetchResult> {
+  const fetchSessionPublicId = nanoid();
+  const [insertedSession] = await db.insert(fetchSessions).values({
+    publicId: fetchSessionPublicId,
+    userId: userId,
+    region: region,
+    status: "pending",
+    startedAt: new Date(),
+  }).returning({ id: fetchSessions.id });
+
+  // Simulate the fetch process
+  (async () => {
+    try {
+      // Get all states in order from fetch-states utility
+      const allStates = getAllStates();
+
+      for (const state of allStates) {
+        await new Promise(resolve => setTimeout(resolve, 500));
+        await appendFetchState(insertedSession.id, state);
+      }
+
+      // Mark as completed after all states
+      await db
+        .update(fetchSessions)
+        .set({
+          status: "completed",
+          completedAt: new Date(),
+        })
+        .where(eq(fetchSessions.id, insertedSession.id));
+    } catch (error) {
+      console.error("Error during demo fetch:", error);
+
+      // Mark as failed if error occurs
+      await db
+        .update(fetchSessions)
+        .set({
+          status: "failed",
+          completedAt: new Date(),
+          errorMessage: error instanceof Error ? error.message : "Unknown error occurred",
+        })
+        .where(eq(fetchSessions.id, insertedSession.id));
+    }
+  })();
+
+  return {
+    sessionId: fetchSessionPublicId,
+    status: "pending" as const,
+  };
+}
+
 // Extract startFetch logic from tRPC procedure
 export async function startFetchServer(userId: string, region: Region, token?: string, flags: string[] = []): Promise<StartFetchResult> {
+  // Check if demo mode is enabled
+  if (process.env.DEMO_FETCH === 'true') {
+    return demoFetch(userId, region);
+  }
+
   let tokenToUse = token;
 
   // If no token provided, try to use saved token

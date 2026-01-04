@@ -1,9 +1,11 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { trpc, trpcClient } from "@/lib/trpc-client";
 import { toast } from "sonner";
 import { Region, FetchSession } from "@/lib/types";
 import { Flags } from "@/lib/flags";
 import { isTokenError } from "@/lib/token-errors";
+import { parseStatusStates } from "@/lib/fetch-states";
+import { FetchToastState } from "@/components/fetch-toast";
 
 export function useFetchSession(onFetchComplete?: () => void, flags?: Flags, onTokenError?: () => void) {
   const [currentSession, setCurrentSession] = useState<FetchSession | null>(null);
@@ -140,17 +142,17 @@ export function useFetchSession(onFetchComplete?: () => void, flags?: Flags, onT
           setCurrentSession(updatedSession);
 
           if (result.status === "completed") {
+            // Show warning toast for not found scores (separate from the custom toast)
             if (result.notFoundScores && result.notFoundScores.length > 0) {
-              toast.error(`Data fetch completed with ${result.notFoundScores.length} songs not found in database! ${result.notFoundScores.map(score => `- ${score.songName} (${score.difficulty}, ${score.musicType})`).join(", ")}`);
-            } else {
-              toast.success("Data fetch completed successfully!");
+              toast.warning(`${result.notFoundScores.length} songs not found in database`, {
+                description: result.notFoundScores.map(score => `${score.songName} (${score.difficulty})`).join(", "),
+              });
             }
             onFetchComplete?.();
             return "completed";
           } else if (result.status === "failed") {
             const errorMessage = result.errorMessage || "Fetch failed";
             setFetchError(errorMessage);
-            toast.error(`Data fetch failed: ${errorMessage}`);
 
             // Check if this is a token-related error and trigger callback
             if (isTokenError(errorMessage)) {
@@ -207,6 +209,19 @@ export function useFetchSession(onFetchComplete?: () => void, flags?: Flags, onT
 
   const isFetching = currentSession?.status === "pending" || startFetchMutation.isPending;
 
+  // Compute the fetch toast state from the current session
+  const fetchToastState: FetchToastState | null = useMemo(() => {
+    if (!currentSession) return null;
+    
+    return {
+      id: currentSession.id,
+      status: currentSession.status,
+      statusStates: parseStatusStates(currentSession.statusStates ?? null),
+      startedAt: currentSession.startedAt,
+      errorMessage: currentSession.errorMessage,
+    };
+  }, [currentSession]);
+
   return {
     currentSession,
     fetchError,
@@ -218,5 +233,6 @@ export function useFetchSession(onFetchComplete?: () => void, flags?: Flags, onT
     startSessionPolling,
     stopSessionPolling,
     isPollingForSession: sessionPollingEnabled,
+    fetchToastState,
   };
 }

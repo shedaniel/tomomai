@@ -2,6 +2,7 @@
 
 import { DataBanner } from "@/components/data-banner";
 import { DataContent } from "@/components/data-content";
+import { FetchToastContainer } from "@/components/fetch-toast";
 import { SettingsDialog } from "@/components/settings-dialog";
 import { TokenDialog } from "@/components/token-dialog";
 import { UsernameSetupDialog } from "@/components/username-setup-dialog";
@@ -76,6 +77,7 @@ export function Dashboard({ user, initialUserData, initialProfileSettings, initi
     startAutomaticFetch,
     startSessionPolling,
     stopSessionPolling,
+    fetchToastState,
   } = useFetchSession(refreshSnapshots, flags, () => {
     // Called when a token-related error is detected during fetch
     setDialogType("token");
@@ -248,6 +250,8 @@ export function Dashboard({ user, initialUserData, initialProfileSettings, initi
       <InvitesDialog isOpen={dialogType === "invites"} onOpenChange={open => setDialogType(open ? "invites" : null)} />
       <AdminDialog open={dialogType === "admin"} onOpenChange={open => setDialogType(open ? "admin" : null)} />
       <ExperimentsDialog open={dialogType === "experiments"} onOpenChange={open => setDialogType(open ? "experiments" : null)} initialFlags={flags} />
+
+      <FetchToastContainer state={fetchToastState} />
     </div>
   );
 }
