@@ -18,21 +18,16 @@
     "cookies": "クッキー",
     "authentication": "認証",
     "playerInfo": "プレイヤー情報",
-    "rating": "レーティング",
+    "rating": "レート値",
     "stars": "スター数",
     "plays": "プレイ数",
     "total": "合計",
+    "theme": "テーマ",
     "invitations": "招待",
     "discord": "Discord",
     "about": "ともマイについて",
     "experiments": "実験",
     "comingSoon": "準備中...",
-    "difficulty": "難易度",
-    "level": "レベル",
-    "notes": "ノーツ数",
-    "chartDesigner": "譜面製作者",
-    "bpm": "BPM",
-    "added": "追加バージョン",
     "difficulties": {
       "basic": "Basic",
       "advanced": "Advanced",
@@ -171,7 +166,8 @@
       "plates": "ネームプレート",
       "map": "ちほー",
       "exportImage": "エクスポート",
-      "history": "履歴"
+      "history": "履歴",
+      "developer": "開発者"
     },
     "playerInfo": "プレイヤー情報",
     "rating": "レート値：{rating}",
@@ -210,6 +206,11 @@
       "ratingOverTime": "レート値の推移",
       "noHistory": "レート値の履歴がありません",
       "needMoreData": "履歴を表示するには、少なくとも2回データを取得してください"
+    },
+    "developer": {
+      "title": "開発者",
+      "exportJson": "スナップショットをJSONでエクスポート",
+      "exporting": "エクスポート中..."
     }
   },
   "recommendations": {
@@ -220,8 +221,8 @@
     "filters": {
       "all": "すべて",
       "best": "ベスト50内",
-      "new": "新曲",
-      "old": "旧曲"
+      "new": "新規曲",
+      "old": "過去曲"
     },
     "filterCategories": {
       "difficulty": "難易度",
@@ -235,6 +236,10 @@
   "recentPlays": {
     "title": "プレイレコード",
     "noPlays": "プレイレコードがありません",
+    "notFetched": "未取得",
+    "fetching": "取得中...",
+    "detailsNotFetched": "プレイ詳細データがまだ取得されていません。詳細な内訳を見るには、データを再同期してください。",
+    "detailsFetching": "詳細なプレイデータを取得中です。しばらく待ってからページを更新してください。",
     "labels": {
       "dx": "DX",
       "combo": "コンボ",
@@ -242,7 +247,7 @@
       "late": "LATE"
     },
     "notesBreakdown": {
-      "type": "種類",
+      "type": "タイプ",
       "total": "合計",
       "totalLoss": "ロス"
     }
@@ -285,7 +290,7 @@
       "expiration": "トークンは一定期間で無効になる場合がありますので、その際は再度更新してください。"
     },
     "passwordInstructions": "SEGAアカウントのユーザー名とパスワードで直接ログイン",
-    "secureStorage": "認証情報は保管され、今後も利用できます。",
+    "secureStorage": "認証情報は保存され、今後の同期時に使用されます。",
     "steps": {
       "step1Title": "maimai DX NETにログイン",
       "step2Title": "「Not Found」ページに移動",
@@ -327,7 +332,7 @@
       "previousStep": "戻る",
       "nextStep": "次へ"
     },
-    "recommended": "おすすめ",
+    "recommended": "おすすめ楽曲",
     "tokenOptionDescription": "ブラウザのトークンを使用して maimai DX NET アカウントにログインします。トークンは一定期間で無効になることがありますので、その際は再度更新してください。パスワードは不要で、ソーシャルログインもサポートしています。",
     "passwordOptionDescription": "SEGA アカウントの認証情報を使用して maimai DX NET アカウントにログインします。期限切れはありません。非推奨です。"
   },
@@ -494,7 +499,25 @@
         "genre": "ジャンル",
         "addedVersion": "追加バージョン",
         "std": "STD",
-        "dx": "DX"
+        "dx": "DX",
+        "sort": "並び替え",
+        "sortVersionDesc": "バージョン（新しい順）",
+        "sortVersionAsc": "バージョン（古い順）",
+        "sortLevelAsc": "レベル（低い順）",
+        "sortLevelDesc": "レベル（高い順）",
+        "level": "レベル",
+        "groupBy": "グループ",
+        "noteDesigner": "譜面製作者",
+        "groups": {
+          "none": "なし",
+          "noteDesigner": "譜面製作者",
+          "levelAsc": "レベル（低い順）",
+          "levelDesc": "レベル（高い順）",
+          "versionAsc": "バージョン（古い順）",
+          "versionDesc": "バージョン（新しい順）",
+          "genre": "ジャンル",
+          "artist": "アーティスト"
+        }
       }
     },
     "common": {
@@ -513,27 +536,111 @@
       "topSongs": "人気楽曲",
       "averageAchievementByLevel": "レベル別平均達成率",
       "ratingVsPlayCount": "レート vs プレイ回数 ヒートマップ",
+      "activeUsersOverTime": "アクティブユーザー数の推移",
       "xAxis": {
-        "rating": "レート",
+        "rating": "レート値",
         "playCount": "プレイ回数",
-        "level": "レベル"
+        "level": "レベル",
+        "date": "日付",
+        "days": "日数",
+        "timePeriod": "期間",
+        "lastDay": "過去1日",
+        "lastDays": "過去{days}日間"
       },
       "yAxis": {
         "percentage": "割合",
         "achievement": "達成率",
-        "count": "ユーザー数"
+        "count": "ユーザー数",
+        "activeUsers": "アクティブユーザー"
       },
       "table": {
         "rank": "順位",
         "title": "称号",
         "song": "楽曲",
-        "percentage": "百分比",
+        "percentage": "割合",
         "count": "数"
       },
       "region": {
         "intl": "インターナショナル",
         "jp": "日本"
       }
+    }
+  },
+  "theme": {
+    "description": "インターフェースのカラーテーマを選択してください。",
+    "groups": {
+      "simple": "Simple",
+      "amaranth": "Amaranth",
+      "blue": "Blue",
+      "brown": "Brown",
+      "emerald": "Emerald",
+      "grass": "Grass",
+      "purple": "Purple",
+      "rose": "Rose",
+      "gold": "Gold",
+      "pink": "Pink"
+    },
+    "themes": {
+      "simple": "Simple",
+      "dark-simple": "Dark Simple",
+      "gray-simple": "Gray Simple",
+      "burnt-amaranth": "Burnt Amaranth",
+      "burnt-blue": "Burnt Blue",
+      "burnt-brown": "Burnt Brown",
+      "burnt-emerald": "Burnt Emerald",
+      "burnt-grass": "Burnt Grass",
+      "burnt-purple": "Burnt Purple",
+      "burnt-rose": "Burnt Rose",
+      "burnt-gold": "Burnt Gold",
+      "burnt-pink": "Burnt Pink",
+      "dark-amaranth": "Dark Amaranth",
+      "dark-blue": "Dark Blue",
+      "dark-brown": "Dark Brown",
+      "dark-emerald": "Dark Emerald",
+      "dark-grass": "Dark Grass",
+      "dark-purple": "Dark Purple",
+      "dark-rose": "Dark Rose",
+      "dark-gold": "Dark Gold",
+      "dark-pink": "Dark Pink",
+      "light-amaranth": "Light Amaranth",
+      "light-blue": "Light Blue",
+      "light-brown": "Light Brown",
+      "light-emerald": "Light Emerald",
+      "light-grass": "Light Grass",
+      "light-purple": "Light Purple",
+      "light-rose": "Light Rose",
+      "light-gold": "Light Gold",
+      "light-pink": "Light Pink",
+      "gray-amaranth": "Gray Amaranth",
+      "gray-blue": "Gray Blue",
+      "gray-brown": "Gray Brown",
+      "gray-emerald": "Gray Emerald",
+      "gray-grass": "Gray Grass",
+      "gray-purple": "Gray Purple",
+      "gray-rose": "Gray Rose",
+      "gray-gold": "Gray Gold",
+      "gray-pink": "Gray Pink"
+    },
+    "title": "テーマ"
+  },
+  "fetchToast": {
+    "header": {
+      "pending": "データ取得中...",
+      "completed": "取得完了",
+      "failed": "取得失敗"
+    },
+    "states": {
+      "connecting": "接続中...",
+      "connected": "接続しました",
+      "login": "ログインしました",
+      "playerData": "プレイヤーデータを取得しました",
+      "songDataBasic": "BASICスコアを取得しました",
+      "songDataAdvanced": "ADVANCEDスコアを取得しました",
+      "songDataExpert": "EXPERTスコアを取得しました",
+      "songDataMaster": "MASTERスコアを取得しました",
+      "songDataRemaster": "Re:MASTERスコアを取得しました",
+      "recentSongs": "最近のプレイ履歴を取得しました",
+      "hiddenSongs": "隠し楽曲を取得しました"
     }
   }
 }

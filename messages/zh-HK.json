@@ -22,17 +22,12 @@
     "stars": "星星數",
     "plays": "遊玩次數",
     "total": "總計",
+    "theme": "主題",
     "invitations": "邀請",
     "discord": "Discord",
     "about": "關於",
     "experiments": "實驗功能",
     "comingSoon": "敬請期待……",
-    "difficulty": "難度",
-    "level": "等級",
-    "notes": "物量",
-    "chartDesigner": "譜面設計者",
-    "bpm": "BPM",
-    "added": "追加版本",
     "difficulties": {
       "basic": "Basic",
       "advanced": "Advanced",
@@ -163,7 +158,7 @@
     "snapshotData": "資料紀錄",
     "snapshotFrom": "紀錄自 {date} • {name} • {count} 首歌曲",
     "tabs": {
-      "playerInfo": "玩家資料",
+      "playerInfo": "玩家資訊",
       "stats": "統計",
       "songs": "歌曲",
       "recentPlays": "最近遊玩",
@@ -171,9 +166,10 @@
       "plates": "名牌板",
       "map": "活動地圖",
       "exportImage": "匯出圖片",
-      "history": "歷史紀錄"
+      "history": "歷史紀錄",
+      "developer": "開發者"
     },
-    "playerInfo": "玩家資料",
+    "playerInfo": "玩家資訊",
     "rating": "Rating：{rating}",
     "stars": "星星數：{stars}",
     "versionPlays": "本版本遊玩次數：{count}",
@@ -210,6 +206,11 @@
       "ratingOverTime": "Rating 變化趨勢",
       "noHistory": "暫無歷史紀錄",
       "needMoreData": "至少匯入兩次資料才能檢視歷史紀錄"
+    },
+    "developer": {
+      "title": "開發者",
+      "exportJson": "匯出紀錄為 JSON",
+      "exporting": "匯出中..."
     }
   },
   "recommendations": {
@@ -220,8 +221,8 @@
     "filters": {
       "all": "全部",
       "best": "B15/B35 內",
-      "new": "新歌",
-      "old": "舊歌"
+      "new": "新曲",
+      "old": "舊曲"
     },
     "filterCategories": {
       "difficulty": "難度",
@@ -233,8 +234,12 @@
     }
   },
   "recentPlays": {
-    "title": "遊玩紀錄",
+    "title": "最近遊玩",
     "noPlays": "找不到最近遊玩紀錄",
+    "notFetched": "尚未擷取",
+    "fetching": "讀取中……",
+    "detailsNotFetched": "尚未擷取詳細遊玩資料。請重新同步資料以取得詳細分析。",
+    "detailsFetching": "正在讀取詳細遊玩資料，請稍候並重新整理頁面。",
     "labels": {
       "dx": "DX",
       "combo": "連擊",
@@ -248,7 +253,7 @@
     }
   },
   "events": {
-    "title": "活動",
+    "title": "活動地圖",
     "areaEvents": "地圖",
     "eventAreaEvents": "活動地圖",
     "noEventsAvailable": "無可用活動",
@@ -278,14 +283,14 @@
     "credentialsSecureNote": "你的憑證將被儲存，以供將來使用。",
     "savingCredentials": "儲存憑證中...",
     "saveCredentials": "儲存憑證",
-    "tokenTab": "Cookies",
+    "tokenTab": "權杖",
     "passwordTab": "密碼",
     "tokenInstructions": {
       "description": "來自 maimai DX NET 的以 \"clal=\" 為首的 Cookies 值。",
       "expiration": "Cookies 會在一段時間後失效，你或需要重新登入。"
     },
     "passwordInstructions": "直接使用你的 SEGA 帳戶使用者名稱和密碼",
-    "secureStorage": "你的憑證將被保存以供將來使用。",
+    "secureStorage": "你的憑證將被儲存，以供將來使用。",
     "steps": {
       "step1Title": "登入 maimai DX NET",
       "step2Title": "前往「Not Found」頁面",
@@ -327,7 +332,7 @@
       "previousStep": "上一步",
       "nextStep": "下一步"
     },
-    "recommended": "推薦",
+    "recommended": "推薦歌曲",
     "tokenOptionDescription": "使用你的瀏覽器權杖登入你的 maimai DX NET 帳戶。權杖可能會不時過期。無需密碼，並支援社交帳號登入。",
     "passwordOptionDescription": "使用你的 SEGA 帳戶憑證登入你的 maimai DX NET 帳戶。永久有效。不推薦。"
   },
@@ -337,8 +342,8 @@
     "cn": "內地區",
     "short": {
       "intl": "亞",
-      "jp": "日",
-      "cn": "中"
+      "jp": "日本區",
+      "cn": "內地區"
     }
   },
   "userHeader": {
@@ -494,14 +499,32 @@
         "genre": "分類",
         "addedVersion": "追加版本",
         "std": "STD",
-        "dx": "DX"
+        "dx": "DX",
+        "sort": "排序",
+        "sortVersionDesc": "版本（由新至舊）",
+        "sortVersionAsc": "版本（由舊至新）",
+        "sortLevelAsc": "等級（由低至高）",
+        "sortLevelDesc": "等級（由高至低）",
+        "level": "等級",
+        "groupBy": "分類",
+        "noteDesigner": "譜面設計者",
+        "groups": {
+          "none": "無",
+          "noteDesigner": "譜面設計者",
+          "levelAsc": "等級（由低至高）",
+          "levelDesc": "等級（由高至低）",
+          "versionAsc": "版本（由舊至新）",
+          "versionDesc": "版本（由新至舊）",
+          "genre": "分類",
+          "artist": "藝人"
+        }
       }
     },
     "common": {
       "difficulty": "難度",
       "level": "等級",
       "notes": "物量",
-      "chartDesigner": "譜面設計",
+      "chartDesigner": "譜面設計者",
       "bpm": "BPM",
       "added": "追加版本"
     },
@@ -513,15 +536,22 @@
       "topSongs": "熱門歌曲",
       "averageAchievementByLevel": "等級平均達成率",
       "ratingVsPlayCount": "Rating vs 遊玩次數熱力圖",
+      "activeUsersOverTime": "活躍用戶趨勢",
       "xAxis": {
         "rating": "Rating",
         "playCount": "遊玩次數",
-        "level": "等級"
+        "level": "等級",
+        "date": "日期",
+        "days": "天數",
+        "timePeriod": "時間範圍",
+        "lastDay": "過去 1 天",
+        "lastDays": "過去 {days} 天"
       },
       "yAxis": {
         "percentage": "百分比",
         "achievement": "達成率",
-        "count": "用戶數"
+        "count": "用戶數",
+        "activeUsers": "活躍用戶"
       },
       "table": {
         "rank": "排名",
@@ -534,6 +564,83 @@
         "intl": "國際區",
         "jp": "日本區"
       }
+    }
+  },
+  "theme": {
+    "description": "選擇介面的色彩主題。",
+    "groups": {
+      "simple": "Simple",
+      "amaranth": "Amaranth",
+      "blue": "Blue",
+      "brown": "Brown",
+      "emerald": "Emerald",
+      "grass": "Grass",
+      "purple": "Purple",
+      "rose": "Rose",
+      "gold": "Gold",
+      "pink": "Pink"
+    },
+    "themes": {
+      "simple": "Simple",
+      "dark-simple": "Dark Simple",
+      "gray-simple": "Gray Simple",
+      "burnt-amaranth": "Burnt Amaranth",
+      "burnt-blue": "Burnt Blue",
+      "burnt-brown": "Burnt Brown",
+      "burnt-emerald": "Burnt Emerald",
+      "burnt-grass": "Burnt Grass",
+      "burnt-purple": "Burnt Purple",
+      "burnt-rose": "Burnt Rose",
+      "burnt-gold": "Burnt Gold",
+      "burnt-pink": "Burnt Pink",
+      "dark-amaranth": "Dark Amaranth",
+      "dark-blue": "Dark Blue",
+      "dark-brown": "Dark Brown",
+      "dark-emerald": "Dark Emerald",
+      "dark-grass": "Dark Grass",
+      "dark-purple": "Dark Purple",
+      "dark-rose": "Dark Rose",
+      "dark-gold": "Dark Gold",
+      "dark-pink": "Dark Pink",
+      "light-amaranth": "Light Amaranth",
+      "light-blue": "Light Blue",
+      "light-brown": "Light Brown",
+      "light-emerald": "Light Emerald",
+      "light-grass": "Light Grass",
+      "light-purple": "Light Purple",
+      "light-rose": "Light Rose",
+      "light-gold": "Light Gold",
+      "light-pink": "Light Pink",
+      "gray-amaranth": "Gray Amaranth",
+      "gray-blue": "Gray Blue",
+      "gray-brown": "Gray Brown",
+      "gray-emerald": "Gray Emerald",
+      "gray-grass": "Gray Grass",
+      "gray-purple": "Gray Purple",
+      "gray-rose": "Gray Rose",
+      "gray-gold": "Gray Gold",
+      "gray-pink": "Gray Pink"
+    },
+    "title": "主題"
+  },
+  "fetchToast": {
+    "header": {
+      "pending": "匯入資料中...",
+      "completed": "匯入完成",
+      "failed": "匯入完成"
+    },
+    "states": {
+      "connecting": "連線中……",
+      "connected": "已連線",
+      "login": "已登入",
+      "playerData": "已匯入玩家資料",
+      "songDataBasic": "已匯入 BASIC 成績",
+      "songDataAdvanced": "已匯入 ADVANCED 成績",
+      "songDataExpert": "已匯入 EXPERT 成績",
+      "songDataMaster": "已匯入 MASTER 成績",
+      "songDataRemaster": "已匯入 Re:MASTER 成績",
+      "recentSongs": "已匯入最近遊玩紀錄",
+      "hiddenSongs": "已匯入隱藏歌曲"
     }
   }
 }

@@ -63,7 +63,7 @@
   },
   "settings": {
     "title": "Settings",
-    "description": "Customise your tomomai ともマイ experience.",
+    "description": "Customize your tomomai ともマイ experience.",
     "language": {
       "label": "Language",
       "description": "Select your preferred interface language.",
@@ -166,8 +166,7 @@
       "plates": "Plates",
       "map": "Events",
       "exportImage": "Export Image",
-      "history": "History",
-      "developer": "Developer"
+      "history": "History"
     },
     "playerInfo": "Player Info",
     "rating": "Rating: {rating}",
@@ -206,11 +205,6 @@
       "ratingOverTime": "Rating Over Time",
       "noHistory": "No rating history available",
       "needMoreData": "Fetch data at least twice to see your rating history"
-    },
-    "developer": {
-      "title": "Developer",
-      "exportJson": "Export Snapshot as JSON",
-      "exporting": "Exporting..."
     }
   },
   "recommendations": {
@@ -236,10 +230,6 @@
   "recentPlays": {
     "title": "Recent Plays",
     "noPlays": "No recent plays found",
-    "notFetched": "Not fetched",
-    "fetching": "Fetching...",
-    "detailsNotFetched": "Detailed play data hasn't been fetched yet. Sync your data again to get detailed breakdown.",
-    "detailsFetching": "Detailed play data is still being fetched. Please wait a moment and refresh the page.",
     "labels": {
       "dx": "DX",
       "combo": "Combo",
@@ -302,7 +292,7 @@
     },
     "loading": {
       "scriptLink": "Generating script link...",
-      "loginLink": "Generating personalised link..."
+      "loginLink": "Generating personalized link..."
     },
     "tokenDialogDescription": "Enter your browser token to authenticate",
     "segaAccountDescription": "Enter your SEGA account credentials",
@@ -536,22 +526,15 @@
       "topSongs": "Most Played Songs",
       "averageAchievementByLevel": "Average Achievement by Level",
       "ratingVsPlayCount": "Rating vs Play Count Heatmap",
-      "activeUsersOverTime": "Active Users Over Time",
       "xAxis": {
         "rating": "Rating",
         "playCount": "Play Count",
-        "level": "Level",
-        "date": "Date",
-        "days": "Days",
-        "timePeriod": "Time Period",
-        "lastDay": "Last 1 day",
-        "lastDays": "Last {days} days"
+        "level": "Level"
       },
       "yAxis": {
         "percentage": "Percentage",
         "achievement": "Achievement",
-        "count": "Users",
-        "activeUsers": "Active Users"
+        "count": "Users"
       },
       "table": {
         "rank": "Rank",
@@ -622,25 +605,5 @@
       "gray-pink": "Gray Pink"
     },
     "title": "Theme"
-  },
-  "fetchToast": {
-    "header": {
-      "pending": "Fetching data...",
-      "completed": "Fetch complete",
-      "failed": "Fetch failed"
-    },
-    "states": {
-      "connecting": "Connecting...",
-      "connected": "Connected",
-      "login": "Logged in",
-      "playerData": "Fetched player data",
-      "songDataBasic": "Fetched BASIC scores",
-      "songDataAdvanced": "Fetched ADVANCED scores",
-      "songDataExpert": "Fetched EXPERT scores",
-      "songDataMaster": "Fetched MASTER scores",
-      "songDataRemaster": "Fetched Re:MASTER scores",
-      "recentSongs": "Fetched recent songs",
-      "hiddenSongs": "Fetched hidden songs"
-    }
   }
 }
