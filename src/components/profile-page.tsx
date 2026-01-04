@@ -85,7 +85,6 @@ export function ProfilePage({
             rating: snapshotData.snapshot.rating,
             gameVersion: snapshotData.snapshot.gameVersion,
           }}
-          userTimezone={profileData.timezone}
           profileUsername={username}
         />
 

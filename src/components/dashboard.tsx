@@ -8,8 +8,8 @@ import { UsernameSetupDialog } from "@/components/username-setup-dialog";
 import { useFetchSession } from "@/hooks/useFetchSession";
 import { useSnapshots } from "@/hooks/useSnapshots";
 import { signOut } from "@/lib/auth-client";
-import { TIMEZONE_ENUM } from "@/lib/db/types";
 import { Flags } from "@/lib/flags";
+import { isTokenError } from "@/lib/token-errors";
 import { trpc } from "@/lib/trpc-client";
 import { ProfileSettings, Region, Snapshot, SnapshotWithSongs, User, UserData } from "@/lib/types";
 import { useEffect, useState } from "react";
@@ -19,20 +19,20 @@ import { AdminDialog } from "./dialogs/admin-dialog";
 import { ExperimentsDialog } from "./experiments-dialog";
 import { InvitesDialog } from "./invites-dialog";
 import { Header } from "./header";
+import { isChinaRegion } from "@/lib/enabled-regions";
 
 type DialogType = null | "token" | "settings" | "username" | "about" | "admin" | "invites" | "experiments";
 
 interface DashboardProps {
   user: User;
   initialUserData: UserData;
-  initialTimezone: typeof TIMEZONE_ENUM[number] | null;
   initialProfileSettings: ProfileSettings;
   initialSnapshots: Snapshot[];
   initialSnapshotData?: SnapshotWithSongs;
   flags: Flags;
 }
 
-export function Dashboard({ user, initialUserData, initialTimezone, initialProfileSettings, initialSnapshots, initialSnapshotData, flags }: DashboardProps) {
+export function Dashboard({ user, initialUserData, initialProfileSettings, initialSnapshots, initialSnapshotData, flags }: DashboardProps) {
   const [dialogType, setDialogType] = useState<DialogType>(null);
 
   // Check if user has username
@@ -44,8 +44,8 @@ export function Dashboard({ user, initialUserData, initialTimezone, initialProfi
     }
   );
 
-  // Use the stored region preference, fallback to "intl" if not set
-  const selectedRegion: Region = (userData?.region as Region) || "intl";
+  // Use the stored region preference, fallback to "intl" or "cn" if not set
+  const selectedRegion: Region = (userData?.region as Region) || (isChinaRegion() ? "cn" : "intl");
 
   // Show username setup dialog if user doesn't have username
   useEffect(() => {
@@ -81,15 +81,6 @@ export function Dashboard({ user, initialUserData, initialTimezone, initialProfi
     setDialogType("token");
   });
 
-  // Get user timezone (with initial server data)
-  const { data: timezoneData, refetch: refetchTimezone } = trpc.user.getTimezone.useQuery(
-    undefined,
-    {
-      refetchOnWindowFocus: false,
-      initialData: { timezone: initialTimezone },
-    }
-  );
-
   // Update region mutation
   const updateRegionMutation = trpc.user.updateRegion.useMutation({
     onSuccess: () => {
@@ -98,17 +89,6 @@ export function Dashboard({ user, initialUserData, initialTimezone, initialProfi
     },
     onError: (error) => {
       toast.error(`Failed to update region: ${error.message}`);
-    },
-  });
-
-  // Update timezone mutation
-  const updateTimezoneMutation = trpc.user.updateTimezone.useMutation({
-    onSuccess: () => {
-      toast.success("Timezone updated successfully!");
-      refetchTimezone();
-    },
-    onError: (error) => {
-      toast.error(`Failed to update timezone: ${error.message}`);
     },
   });
 
@@ -140,7 +120,7 @@ export function Dashboard({ user, initialUserData, initialTimezone, initialProfi
         toast.error(error.message);
 
         // Only show token dialog if the error is about missing token
-        if (error.message.includes("NO_TOKEN_FOUND")) {
+        if (isTokenError(error.message)) {
           setDialogType("token");
         }
         // For other errors (rate limiting, fetch in progress, etc.), just show the toast
@@ -165,10 +145,6 @@ export function Dashboard({ user, initialUserData, initialTimezone, initialProfi
       // Re-throw the error so TokenDialog doesn't close on failure
       throw error;
     }
-  };
-
-  const handleTimezoneUpdate = async (timezone: typeof TIMEZONE_ENUM[number] | null) => {
-    await updateTimezoneMutation.mutateAsync({ timezone });
   };
 
   const handleUsernameSetupComplete = () => {
@@ -230,7 +206,6 @@ export function Dashboard({ user, initialUserData, initialTimezone, initialProfi
           onFetchData={handleFetchData}
           isFetching={isFetching}
           currentSession={currentSession}
-          userTimezone={timezoneData?.timezone ?? null}
           onCopySnapshot={handleCopySnapshot}
           isCopying={isCopying}
         />
@@ -258,10 +233,8 @@ export function Dashboard({ user, initialUserData, initialTimezone, initialProfi
       <SettingsDialog
         open={dialogType === "settings"}
         onOpenChange={open => setDialogType(open ? "settings" : null)}
-        currentTimezone={timezoneData?.timezone ?? null}
         username={userData?.username ?? undefined}
         initialProfileSettings={initialProfileSettings}
-        onTimezoneUpdate={handleTimezoneUpdate}
         onOpenTokenDialog={() => setDialogType("token")}
         onSaveSuccess={refetchUserData}
       />

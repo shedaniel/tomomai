@@ -4,8 +4,9 @@ import { publicProcedure, router } from '@/lib/trpc';
 import { and, desc, eq, gt, gte, inArray, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { unstable_cache } from 'next/cache';
+import { getEnabledRegions } from '@/lib/enabled-regions';
 
-const regionSchema = z.enum(['intl', 'jp']);
+const regionSchema = z.enum(getEnabledRegions());
 
 export const dbRouter = router({
   getStats: publicProcedure

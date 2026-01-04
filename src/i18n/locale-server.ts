@@ -1,7 +1,13 @@
 import { cookies, headers } from 'next/headers';
 import { Locale, defaultLocale, locales } from './locale';
+import { isChinaRegion } from '@/lib/enabled-regions';
 
 export async function getLocale(): Promise<Locale> {
+  // If the region is China, return "zh-CN"
+  if (isChinaRegion()) {
+    return "zh-CN";
+  }
+
   try {
     // Try to get from cookie first (for immediate language switching)
     const cookieStore = await cookies();

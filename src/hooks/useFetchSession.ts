@@ -3,24 +3,7 @@ import { trpc, trpcClient } from "@/lib/trpc-client";
 import { toast } from "sonner";
 import { Region, FetchSession } from "@/lib/types";
 import { Flags } from "@/lib/flags";
-
-// Check if an error message indicates a token-related issue
-function isTokenError(message: string): boolean {
-  const tokenErrorPatterns = [
-    "Token has expired",
-    "Please provide a new token",
-    "Login failed",
-    "Invalid token",
-    "Session expired",
-    "NO_TOKEN_FOUND",
-    "No token found",
-    "authentication token",
-    "check your username and password",
-  ];
-  return tokenErrorPatterns.some(pattern =>
-    message.toLowerCase().includes(pattern.toLowerCase())
-  );
-}
+import { isTokenError } from "@/lib/token-errors";
 
 export function useFetchSession(onFetchComplete?: () => void, flags?: Flags, onTokenError?: () => void) {
   const [currentSession, setCurrentSession] = useState<FetchSession | null>(null);

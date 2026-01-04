@@ -52,6 +52,9 @@ A modern web application for tracking and analyzing your maimai DX scores with f
    NEXT_PUBLIC_DISCORD_APPLICATION_ID=your-discord-application-id
    DISCORD_BOT_TOKEN=your-discord-bot-token
    DISCORD_PUBLIC_KEY=your-discord-public-key
+   
+   # Optional: Comma-separated list of enabled regions (default: "intl,jp")
+   NEXT_PUBLIC_ENABLED_REGIONS=intl,jp
    ```
 
 4. **Set up database**
@@ -198,9 +201,12 @@ npm run db:studio       # Open Drizzle Studio (database browser)
     # Optional: Admin functionality for song database updates
     ADMIN_UPDATE_TOKEN=your-production-admin-token
     
-    # Optional: Webhook URL for announcing song updates to Discord
-    DISCORD_UPDATE_WEBHOOK=your-discord-webhook-url
-    ```
+     # Optional: Webhook URL for announcing song updates to Discord
+     DISCORD_UPDATE_WEBHOOK=your-discord-webhook-url
+     
+     # Optional: Comma-separated list of enabled regions (default: "intl,jp")
+     NEXT_PUBLIC_ENABLED_REGIONS=intl,jp
+     ```
 
 3. **Database Migrations**
    - Run `npm run db:migrate` to set up your production database

@@ -43,6 +43,13 @@
       "when": 1764334133227,
       "tag": "0005_eager_stature",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1767556169512,
+      "tag": "0006_lean_giant_man",
+      "breakpoints": true
     }
   ]
 }

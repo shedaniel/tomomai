@@ -1,7 +1,6 @@
 import { flag } from "flags/next";
 
 export interface Flags {
-  enableChinaRegion: boolean;
   newTokenDialog: boolean;
   historyCard: boolean;
   recommendationFilters: boolean;
@@ -20,8 +19,6 @@ export interface FlagDefinition {
 export const useFlags = async (): Promise<Flags> => {
   return {
     // eslint-disable-next-line react-hooks/rules-of-hooks
-    enableChinaRegion: await useEnableChinaRegion(),
-    // eslint-disable-next-line react-hooks/rules-of-hooks
     newTokenDialog: await useNewTokenDialog(),
     // eslint-disable-next-line react-hooks/rules-of-hooks
     historyCard: await useHistoryCard(),
@@ -37,12 +34,6 @@ export const useFlags = async (): Promise<Flags> => {
 }
 
 export const flagDefinitions: Record<keyof Flags, FlagDefinition> = {
-  enableChinaRegion: {
-    key: "enableChinaRegion",
-    defaultValue: false,
-    userSelectable: false,
-    decide: async () => false,
-  },
   newTokenDialog: {
     key: "newTokenDialog",
     defaultValue: true,
@@ -82,14 +73,6 @@ export const flagDefinitions: Record<keyof Flags, FlagDefinition> = {
 };
 
 export const defaultFlags: Flags = Object.fromEntries(Object.entries(flagDefinitions).map(([key, value]) => [key, value.defaultValue])) as unknown as Flags;
-
-export const useEnableChinaRegion = flag<boolean>({
-  key: "enableChinaRegion",
-  defaultValue: false,
-  async decide() {
-    return false;
-  },
-});
 
 export const useNewTokenDialog = flag<boolean>({
   key: "newTokenDialog",

@@ -28,7 +28,7 @@ export interface TokenValidationResult {
 
 export async function processMaimaiToken(
   userId: string | null,
-  region: "intl" | "jp",
+  region: Region,
   token: string
 ): Promise<TokenValidationResult> {
   const sanitizedToken = token.trim();
@@ -43,19 +43,19 @@ export async function processMaimaiToken(
     }
 
     let cookieValue = sanitizedToken.substring('cookie://'.length);
-    
+
     // Strip clal= prefix if present since validateMaimaiToken expects just the cookie value
     if (cookieValue.startsWith('clal=')) {
       cookieValue = cookieValue.substring('clal='.length);
     }
-    
+
     return await validateInternationalMaimaiToken(userId, cookieValue);
   }
 
   // Handle account:// format
   if (sanitizedToken.startsWith('account://')) {
     const accountData = sanitizedToken.substring('account://'.length);
-    
+
     let cookieValue: string | null = null;
     let username: string;
     let password: string;
@@ -120,7 +120,7 @@ export async function processMaimaiToken(
   };
 }
 
-async function deleteToken(userId: string, region: "intl" | "jp"): Promise<void> {
+async function deleteToken(userId: string, region: Region): Promise<void> {
   await db
     .delete(userTokens)
     .where(
@@ -133,7 +133,7 @@ async function deleteToken(userId: string, region: "intl" | "jp"): Promise<void>
 
 async function performAccountLogin(
   userId: string | null,
-  region: "intl" | "jp",
+  region: Region,
   username: string,
   password: string
 ): Promise<TokenValidationResult> {
@@ -175,7 +175,7 @@ async function performJapanAccountLogin(
         setCookieHeaders = [cookieHeader];
       }
     }
-    
+
     if (setCookieHeaders.length === 0) {
       logger.warn("No Set-Cookie headers in maimai mobile page response");
       if (userId) {
@@ -192,13 +192,13 @@ async function performJapanAccountLogin(
     const cookies = setCookieHeaders.map(header => {
       // Extract just the name=value part (before first semicolon)
       const cookiePart = header.split(';')[0];
-      
+
       // Check if this is the _t token
       if (cookiePart.startsWith('_t=')) {
         tToken = cookiePart.substring(3); // Remove '_t=' prefix
         logger.debug(`Extracted _t token: ${tToken.substring(0, 10)}...`);
       }
-      
+
       return cookiePart;
     }).join('; ');
 
@@ -328,7 +328,7 @@ async function performInternationalAccountLogin(
     // Extract JSESSIONID from Set-Cookie header
     const setCookieHeader = loginPageResponse.headers.get("Set-Cookie");
     let jsessionId = "";
-    
+
     if (setCookieHeader) {
       const jsessionMatch = setCookieHeader.match(/JSESSIONID=([^;]+)/);
       if (jsessionMatch) {
@@ -388,11 +388,11 @@ async function performInternationalAccountLogin(
 
           // Update token in database with new format including cookie
           const newToken = `account://${clalValue}:://${username}:://${password}`;
-          
+
           if (userId) {
             // Encrypt the token before storing
             const encryptedToken = encryptToken(newToken);
-            
+
             await db
               .update(userTokens)
               .set({
@@ -461,23 +461,23 @@ async function performInternationalAccountLogin(
 }
 
 export async function validateInternationalMaimaiToken(
-  userId: string | null, 
+  userId: string | null,
   token: string
 ): Promise<TokenValidationResult> {
   const loginUrl = "https://lng-tgk-aime-gw.am-all.net/common_auth/login?site_id=maimaidxex&redirect_url=https://maimaidx-eng.com/maimai-mobile/&back_url=https://maimai.sega.com/";
 
   // Validate and sanitize the token
   const sanitizedToken = token.trim();
-  
+
   // Check if token contains only ASCII characters
   if (!/^[\x00-\x7F]*$/.test(sanitizedToken)) {
     logger.warn("Token contains non-ASCII characters, removing from database");
-    
+
     // Remove invalid token from database
     if (userId) {
       await deleteToken(userId, "intl");
     }
-    
+
     return {
       isValid: false,
       error: "Invalid token format. Please ensure you copied the clal cookie correctly (ASCII characters only).",
@@ -487,12 +487,12 @@ export async function validateInternationalMaimaiToken(
   // Check if token is not empty
   if (!sanitizedToken) {
     logger.warn("Empty token provided, removing from database");
-    
+
     // Remove empty token from database
     if (userId) {
       await deleteToken(userId, "intl");
     }
-    
+
     return {
       isValid: false,
       error: "Token cannot be empty.",
@@ -517,7 +517,7 @@ export async function validateInternationalMaimaiToken(
       // Token is valid, get redirect URL
       const redirectUrl = response.headers.get("Location");
       logger.debug(`Token validation successful. Redirect URL: ${redirectUrl}`);
-      
+
       return {
         isValid: true,
         redirectUrl: redirectUrl || undefined,
@@ -525,7 +525,7 @@ export async function validateInternationalMaimaiToken(
     } else if (response.status === 200) {
       // Token expired, clear from database
       logger.warn("Token expired, clearing from database");
-      
+
       if (userId) {
         await deleteToken(userId, "intl");
       }
@@ -551,10 +551,10 @@ export async function validateInternationalMaimaiToken(
   }
 }
 
-async function fetchPlayerDataWithLogin(region: "intl" | "jp", redirectUrl: string, redirectCookies: string | null): Promise<{ html: string; cookies: string }> {
+async function fetchPlayerDataWithLogin(region: Region, redirectUrl: string, redirectCookies: string | null): Promise<{ html: string; cookies: string }> {
   // Step 1: Follow the redirect URL to get login cookies
   logger.debug(`Fetching redirect URL to get login cookies: ${redirectUrl}`);
-  
+
   const loginResponse = await fetch(redirectUrl, {
     method: "GET",
     headers: {
@@ -578,7 +578,7 @@ async function fetchPlayerDataWithLogin(region: "intl" | "jp", redirectUrl: stri
       setCookieHeaders = [cookieHeader];
     }
   }
-  
+
   if (setCookieHeaders.length === 0) {
     throw new Error("No cookies received from login redirect");
   }
@@ -630,7 +630,7 @@ async function fetchPlayerDataWithLogin(region: "intl" | "jp", redirectUrl: stri
 // Parse score data from HTML for a specific difficulty
 function parseScoreData(html: string, difficulty: number): ScoreData[] {
   const $ = load(html);
-  
+
   // Use correct selector based on difficulty
   const difficultySelectors = [
     ".music_basic_score_back",      // difficulty 0
@@ -639,13 +639,13 @@ function parseScoreData(html: string, difficulty: number): ScoreData[] {
     ".music_master_score_back",     // difficulty 3
     ".music_remaster_score_back"    // difficulty 4
   ];
-  
+
   const selector = difficultySelectors[difficulty];
   if (!selector) {
     logger.error(`Invalid difficulty: ${difficulty}`);
     return [];
   }
-  
+
   const blocks = $(selector);
   const scores: ScoreData[] = [];
 
@@ -654,13 +654,13 @@ function parseScoreData(html: string, difficulty: number): ScoreData[] {
   blocks.each((index, element) => {
     try {
       const block = $(element);
-      
+
       // Only consider blocks that contain .music_score_block (played songs)
       const scoreBlocks = block.find('.music_score_block');
       if (scoreBlocks.length === 0) {
         return; // Skip unplayed songs
       }
-      
+
       const parent = block.parent();
 
       // Extract music type (dx/std) from icon image
@@ -820,22 +820,22 @@ async function fetchSongsData(cookies: string, difficulty: number, region: Regio
 
   const songsHtml = await songsResponse.text();
   logger.debug(`Songs data for difficulty ${difficulty} fetched successfully, length: ${songsHtml.length} characters`);
-  
+
   // Parse the HTML to extract score data
   const scoreData = parseScoreData(songsHtml, difficulty);
-  
+
   return scoreData;
 }
 
 // Fetch all songs data for all difficulties (0-4)
-async function fetchAllSongsData(cookies: string, region: "intl" | "jp", sessionId?: bigint): Promise<{ [difficulty: number]: ScoreData[] }> {
+async function fetchAllSongsData(cookies: string, region: Region, sessionId?: bigint): Promise<{ [difficulty: number]: ScoreData[] }> {
   logger.info(`Fetching songs data for all difficulties (0-4)${sessionId ? ' with tracking' : ''}`);
-  
+
   // Create promises for all difficulties to fetch concurrently
   const difficultyPromises = Array.from({ length: 5 }, (_, difficulty) => {
     return fetchSongsData(cookies, difficulty, region).then((scoreData) => {
       logger.info(`Successfully fetched ${scoreData.length} scores for difficulty ${difficulty}`);
-      
+
       // Track progress if sessionId is provided
       if (sessionId) {
         const state = getStateForDifficulty(difficulty);
@@ -843,23 +843,23 @@ async function fetchAllSongsData(cookies: string, region: "intl" | "jp", session
           appendFetchState(sessionId, state); // Fire and forget
         }
       }
-      
+
       return { difficulty, scoreData };
     }).catch((error) => {
       logger.error(error, `Failed to fetch songs for difficulty ${difficulty}`);
       throw new Error(`Failed to fetch songs for difficulty ${difficulty}: ${error instanceof Error ? error.message : "Unknown error"}`);
     });
   });
-  
+
   // Wait for all difficulties to complete
   const results = await Promise.all(difficultyPromises);
-  
+
   // Convert results back to the expected format
   const songsData: { [difficulty: number]: ScoreData[] } = {};
   for (const { difficulty, scoreData } of results) {
     songsData[difficulty] = scoreData;
   }
-  
+
   logger.info(`Successfully fetched songs data for all difficulties`);
   return songsData;
 }
@@ -927,7 +927,7 @@ async function fetchRecentSongsData(cookies: string, region: Region, sessionId: 
       const diffImgSrc = diffImg.attr("src") || "";
       let difficultyNumber = 0;
       let difficulty = "basic";
-      
+
       if (diffImgSrc.includes("remaster")) {
         difficultyNumber = 4;
         difficulty = "remaster";
@@ -985,7 +985,7 @@ async function fetchRecentSongsData(cookies: string, region: Region, sessionId: 
 
       // Extract FC and FS status from result images
       const resultImages = record.find(".playlog_result_innerblock > img");
-      
+
       let fc: "none" | "fc" | "fc+" | "ap" | "ap+" = "none";
       let fs: "none" | "sync" | "fs" | "fs+" | "fdx" | "fdx+" = "none";
 
@@ -1070,9 +1070,9 @@ async function fetchRecentSongsData(cookies: string, region: Region, sessionId: 
 // Fetch hidden songs data from rating target music page (intl only)
 async function fetchHiddenSongsData(cookies: string, allSongsData: { [difficulty: number]: ScoreData[] }): Promise<ScoreData[]> {
   logger.info("Fetching hidden songs data from rating target music page...");
-  
+
   const hiddenSongsUrl = "https://maimaidx-eng.com/maimai-mobile/home/ratingTargetMusic/";
-  
+
   const response = await fetch(hiddenSongsUrl, {
     method: "GET",
     headers: {
@@ -1090,10 +1090,10 @@ async function fetchHiddenSongsData(cookies: string, allSongsData: { [difficulty
 
   const html = await response.text();
   logger.debug(`Hidden songs data fetched successfully, length: ${html.length} characters`);
-  
+
   const $ = load(html);
   const hiddenSongs: ScoreData[] = [];
-  
+
   // Define difficulty selectors and their corresponding numbers
   const difficultyInfo = [
     { selector: ".music_basic_score_back", difficulty: "basic", difficultyNumber: 0 },
@@ -1145,7 +1145,7 @@ async function fetchHiddenSongsData(cookies: string, allSongsData: { [difficulty
 
         // Check if this song already exists in allSongsData
         const existingSongs = allSongsData[difficultyNumber] || [];
-        const songExists = existingSongs.some(song => 
+        const songExists = existingSongs.some(song =>
           song.songName === songName && song.musicType === musicType
         );
 
@@ -1238,7 +1238,7 @@ interface RecentSongData {
 
 async function fetchEventsData(cookies: string, region: Region, sessionId: bigint): Promise<{ areaEvents: EventData[], eventAreaEvents: EventAreaData[] }> {
   const baseUrl = region === "intl" ? "https://maimaidx-eng.com" : "https://maimaidx.jp";
-  
+
   logger.info(`Starting events data fetch for ${region} region...`);
 
   try {
@@ -1303,28 +1303,28 @@ interface EventAreaData extends EventData {
 // Parse event period string and extract start/end timestamps
 function parseEventPeriod(periodStr: string | null): [number, number] | null {
   if (!periodStr) return null;
-  
+
   // Match pattern: "Event period：YYYY/MM/DD HH:mm～YYYY/MM/DD HH:mm"
   const match = periodStr.match(/Event period：(\d{4})\/(\d{2})\/(\d{2})\s+(\d{2}):(\d{2})～(\d{4})\/(\d{2})\/(\d{2})\s+(\d{2}):(\d{2})/);
-  
+
   if (!match) {
     logger.warn(`Could not parse event period: ${periodStr}`);
     return null;
   }
-  
+
   const [
     ,
     startYear, startMonth, startDay, startHour, startMin,
     endYear, endMonth, endDay, endHour, endMin
   ] = match;
-  
+
   try {
     const startDate = new Date(`${startYear}-${startMonth}-${startDay}T${startHour}:${startMin}:00+09:00`);
     const endDate = new Date(`${endYear}-${endMonth}-${endDay}T${endHour}:${endMin}:00+09:00`);
-    
+
     const startTimestamp = startDate.getTime();
     const endTimestamp = endDate.getTime();
-    
+
     return [startTimestamp, endTimestamp];
   } catch (error) {
     logger.warn(`Failed to parse event period dates: ${error}`);
@@ -1369,13 +1369,13 @@ function parseAreaEvents(html: string): EventData[] {
       const f11Element = $element.find(".f_11");
       if (f11Element.length > 0) {
         const f14Element = f11Element.find(".f_14");
-        
+
         if (f14Element.length === 0) {
           // f_11 exists but f_14 doesn't - event not started by player
           state = "not_started";
         } else {
           const rewardText = f14Element.text().trim();
-          
+
           if (rewardText === "--") {
             state = "completed";
             nextRewardDistance = null;
@@ -1400,7 +1400,7 @@ function parseAreaEvents(html: string): EventData[] {
   return events;
 }
 
-function parseEventAreaEvents(html: string, region: "intl" | "jp" = "intl"): EventAreaData[] {
+function parseEventAreaEvents(html: string, region: Region = "intl"): EventAreaData[] {
   const $ = load(html);
   const events: EventAreaData[] = [];
   const baseUrl = region === "intl" ? "https://maimaidx-eng.com" : "https://maimaidx.jp";
@@ -1442,13 +1442,13 @@ function parseEventAreaEvents(html: string, region: "intl" | "jp" = "intl"): Eve
       const f11Element = $element.find(".f_11");
       if (f11Element.length > 0) {
         const f14Element = f11Element.find(".f_14");
-        
+
         if (f14Element.length === 0) {
           // f_11 exists but f_14 doesn't - event not started by player
           state = "not_started";
         } else {
           const rewardText = f14Element.text().trim();
-          
+
           if (rewardText === "--") {
             state = "completed";
             nextRewardDistance = null;
@@ -1477,25 +1477,25 @@ function parseEventAreaEvents(html: string, region: "intl" | "jp" = "intl"): Eve
 async function extractPlayerData(region: Region, html: string, cookies: string): Promise<PlayerData> {
   const $ = load(html);
   const block = $('.see_through_block');
-  
+
   if (block.length === 0) {
     throw new Error("Could not find .see_through_block in player data");
   }
-  
+
   // Extract icon URL
   const iconElement = block.find('img.w_112');
   if (iconElement.length === 0) {
     throw new Error("Could not find user icon in player data");
   }
-  
+
   const iconSrc = iconElement.attr('src');
   if (!iconSrc) {
     throw new Error("User icon element found but src attribute is missing");
   }
-  
+
   const iconUrl = iconSrc.startsWith('http') ? iconSrc : `https://maimaidx-eng.com${iconSrc}`;
   logger.debug(`Extracted icon URL: ${iconUrl}`);
-  
+
   // Extract display name
   const nameElement = block.find('.name_block');
   if (nameElement.length === 0) {
@@ -1503,7 +1503,7 @@ async function extractPlayerData(region: Region, html: string, cookies: string):
   }
   const displayName = nameElement.text().trim();
   logger.debug(`Extracted display name: ${displayName}`);
-  
+
   // Extract rating
   const ratingElement = block.find('.rating_block');
   if (ratingElement.length === 0) {
@@ -1515,7 +1515,7 @@ async function extractPlayerData(region: Region, html: string, cookies: string):
     throw new Error(`Invalid rating format: ${ratingText}`);
   }
   logger.debug(`Extracted rating: ${rating}`);
-  
+
   // Extract title
   const titleElement = block.find('.trophy_block');
   if (titleElement.length === 0) {
@@ -1523,7 +1523,7 @@ async function extractPlayerData(region: Region, html: string, cookies: string):
   }
   const title = titleElement.text().trim();
   logger.debug(`Extracted title: ${title}`);
-  
+
   // Extract stars
   const starsElement = block.find('.p_l_10.f_l.f_14');
   if (starsElement.length === 0) {
@@ -1537,7 +1537,7 @@ async function extractPlayerData(region: Region, html: string, cookies: string):
   }
   const stars = parseInt(starsMatch[1], 10);
   logger.debug(`Extracted stars: ${stars} (from text: ${starsText})`);
-  
+
   // Extract play counts
   const playCountElement = block.find('.t_r.f_12');
   if (playCountElement.length === 0) {
@@ -1548,30 +1548,30 @@ async function extractPlayerData(region: Region, html: string, cookies: string):
 
   const playCountRegex = region === "jp" ? /現バージョンプレイ回数[：:]\s*([\d,]+)/ : /play count of current version[：:]\s*([\d,]+)/;
   const totalPlayCountRegex = region === "jp" ? /累計プレイ回数[：:]\s*([\d,]+)/ : /maimaiDX total play count[：:]\s*([\d,]+)/;
-  
+
   // Parse version play count: "play count of current version：195"
   const versionPlayCountMatch = playCountText.match(playCountRegex);
   if (!versionPlayCountMatch) {
     throw new Error(`Could not parse version play count from: ${playCountText}`);
   }
   const versionPlayCount = parseInt(versionPlayCountMatch[1].replace(/,/g, ''), 10);
-  
+
   // Parse total play count: "maimaiDX total play count：909"
   const totalPlayCountMatch = playCountText.match(totalPlayCountRegex);
   if (!totalPlayCountMatch) {
     throw new Error(`Could not parse total play count from: ${playCountText}`);
   }
   const totalPlayCount = parseInt(totalPlayCountMatch[1].replace(/,/g, ''), 10);
-  
+
   logger.debug(`Extracted version play count: ${versionPlayCount}`);
   logger.debug(`Extracted total play count: ${totalPlayCount}`);
-  
+
   // Extract course rank and class rank images
   const rankElements = block.find('.h_35.f_l');
   if (rankElements.length < 2) {
     throw new Error(`Expected 2 rank elements, found ${rankElements.length}`);
   }
-  
+
   // Course rank (first element) - the element itself is an img
   const courseRankSrc = rankElements.eq(0).attr('src');
   if (!courseRankSrc) {
@@ -1579,7 +1579,7 @@ async function extractPlayerData(region: Region, html: string, cookies: string):
   }
   const courseRankUrl = courseRankSrc.startsWith('http') ? courseRankSrc : `https://maimaidx-eng.com${courseRankSrc}`;
   logger.debug(`Extracted course rank URL: ${courseRankUrl}`);
-  
+
   // Class rank (second element) - the element itself is an img
   const classRankSrc = rankElements.eq(1).attr('src');
   if (!classRankSrc) {
@@ -1587,7 +1587,7 @@ async function extractPlayerData(region: Region, html: string, cookies: string):
   }
   const classRankUrl = classRankSrc.startsWith('http') ? classRankSrc : `https://maimaidx-eng.com${classRankSrc}`;
   logger.debug(`Extracted class rank URL: ${classRankUrl}`);
-  
+
   return {
     iconUrl,
     iconBase64: await fetchImageAsBase64(region, iconUrl, cookies),
@@ -1604,7 +1604,7 @@ async function extractPlayerData(region: Region, html: string, cookies: string):
 
 async function fetchImageAsBase64(region: Region, imageUrl: string, cookies: string): Promise<string> {
   logger.info(`Fetching image for base64 encoding: ${imageUrl}`);
-  
+
   const response = await fetch(imageUrl, {
     headers: {
       "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
@@ -1612,32 +1612,32 @@ async function fetchImageAsBase64(region: Region, imageUrl: string, cookies: str
     },
     ...{ dispatcher: AGENT },
   });
-  
+
   if (!response.ok) {
     throw new Error(`Failed to fetch icon image: HTTP ${response.status}`);
   }
-  
+
   const arrayBuffer = await response.arrayBuffer();
   const buffer = Buffer.from(arrayBuffer);
   const base64 = buffer.toString('base64');
-  
+
   // Get content type for data URL
   const contentType = response.headers.get('content-type') || 'image/png';
   const dataUrl = `data:${contentType};base64,${base64}`;
-  
+
   logger.debug(`Image encoded as base64 (${base64.length} characters)`);
   return dataUrl;
 }
 
 async function createUserSnapshot(
   userId: string,
-  region: "intl" | "jp",
+  region: Region,
   playerData: PlayerData,
 ): Promise<bigint> {
   const publicId = nanoid();
-  
+
   logger.info(`Creating user snapshot with publicId: ${publicId}`);
-  
+
   const [inserted] = await db.insert(userSnapshots).values({
     publicId: publicId,
     userId: userId,
@@ -1654,7 +1654,7 @@ async function createUserSnapshot(
     displayName: playerData.displayName,
     title: playerData.title,
   }).returning({ id: userSnapshots.id });
-  
+
   logger.info(`User snapshot created successfully with internal ID: ${inserted.id}`);
   return inserted.id;
 }
@@ -1662,7 +1662,7 @@ async function createUserSnapshot(
 /**
  * Builds song lookup maps for efficient song matching during insertion.
  * Queries all songs for the specified region and game version once.
- * 
+ *
  * @returns Object containing:
  *   - songLookup: Map from "songName|difficulty|type" to songId
  *   - fullSongMap: Map from songId to full song data
@@ -1682,18 +1682,18 @@ async function buildSongLookupMaps(
     ),
   });
   logger.info(`Found ${allSongs.length} songs in database for this region/version`);
-  
+
   // Create lookup maps for efficient song matching
   const songLookup = new Map<string, bigint>(); // key: "songName|difficulty|type", value: songId
   const fullSongMap = new Map<bigint, typeof songs.$inferSelect>(); // key: songId, value: full song data
-  
+
   for (const song of allSongs) {
     const key = `${song.songName}|${song.difficulty}|${song.type}`;
     songLookup.set(key, song.id);
     fullSongMap.set(song.id, song);
   }
   logger.info(`Created song lookup maps with ${songLookup.size} entries`);
-  
+
   return { songLookup, fullSongMap };
 }
 
@@ -1767,12 +1767,12 @@ async function withRank(
     if (!fullSong) {
       throw new Error(`Full song data not found for songId: ${scoreInsert.songId}`);
     }
-    
+
     const rank = rankMap.get(`${fullSong.id}-${fullSong.difficulty}`);
     if (rank === undefined) {
       throw new Error(`Rank not calculated for song: ${fullSong.songName} (${fullSong.difficulty})`);
     }
-    
+
     scoreInsert.rank = rank;
   }
 
@@ -1790,28 +1790,28 @@ async function insertUserScores(
   fullSongMap: Map<bigint, typeof songs.$inferSelect>
 ): Promise<void> {
   const gameVersion = getCurrentVersion(region);
-  
+
   logger.info(`Starting user scores insertion for snapshot ${snapshotId}`);
-  
+
   // Flatten all score data from all difficulties
   const allScores: ScoreData[] = [];
   for (const difficulty of Object.keys(allScoreData)) {
     allScores.push(...allScoreData[parseInt(difficulty)]);
   }
-  
+
   logger.info(`Total scores to insert: ${allScores.length}`);
-  
+
   if (allScores.length === 0) {
     logger.warn("No scores to insert");
     return;
   }
-  
+
   // Process all scores using the lookup map
   const scoreInserts: typeof userScores.$inferInsert[] = [];
   const notFoundScores: ScoreData[] = [];
   let foundCount = 0;
   let notFoundCount = 0;
-  
+
   for (const scoreData of allScores) {
     try {
       const lookupKey = `${scoreData.songName}|${scoreData.difficulty}|${scoreData.musicType}`;
@@ -1840,9 +1840,9 @@ async function insertUserScores(
       notFoundCount++;
     }
   }
-  
+
   logger.info(`Prepared ${foundCount} score inserts, ${notFoundCount} songs not found in database`);
-  
+
   if (scoreInserts.length > 0) {
     logger.info(`Batch inserting ${scoreInserts.length} user scores`);
     await db.insert(userScores).values(await withRank(scoreInserts, fullSongMap, gameVersion));
@@ -1877,16 +1877,16 @@ async function insertUserRecentSongs(
   songLookup: Map<string, bigint>
 ): Promise<void> {
   logger.info(`Starting user recent songs insertion for user ${userId}, ${recentSongsData.length} records`);
-  
+
   if (recentSongsData.length === 0) {
     logger.debug("No recent songs to insert");
     return;
   }
-  
+
   // Process recent songs and create inserts
   const recentSongInserts: (typeof userRecentSongs.$inferInsert)[] = [];
   const notFoundSongs: RecentSongData[] = [];
-  
+
   for (const recentSong of recentSongsData) {
     try {
       const lookupKey = `${recentSong.songName}|${recentSong.difficulty}|${recentSong.musicType}`;
@@ -1914,21 +1914,21 @@ async function insertUserRecentSongs(
       logger.error(error, `Error processing recent song: ${recentSong.songName}`);
     }
   }
-  
+
   logger.debug(`Prepared ${recentSongInserts.length} recent song inserts, ${notFoundSongs.length} songs not found`);
-  
+
   if (recentSongInserts.length === 0) {
     logger.warn("No valid recent songs to insert");
     return;
   }
-  
+
   // Use ON CONFLICT DO NOTHING to handle duplicates efficiently at the database level
   // This leverages the unique constraint on (userId, songId, playedAt)
   await db
     .insert(userRecentSongs)
     .values(recentSongInserts)
     .onConflictDoNothing();
-  
+
   logger.info(`Processed ${recentSongInserts.length} recent song records (duplicates automatically skipped)`);
 }
 
@@ -1939,27 +1939,27 @@ async function fetchAndInsertRecentSongsData(
   recentSongsData: RecentSongData[]
 ): Promise<void> {
   logger.info(`Starting detailed recent songs data fetch for user ${userId}, ${recentSongsData.length} records`);
-  
+
   if (recentSongsData.length === 0) {
     logger.debug("No recent songs to fetch details for");
     return;
   }
-  
+
   const baseUrl = region === "jp" ? "https://maimaidx.jp" : "https://maimaidx-eng.com";
   const playlogDetailUrl = `${baseUrl}/maimai-mobile/record/playlogDetail/`;
-  
+
   // Process in batches of 6
   const BATCH_SIZE = 6;
   for (let batchStart = 0; batchStart < recentSongsData.length; batchStart += BATCH_SIZE) {
     const batch = recentSongsData.slice(batchStart, batchStart + BATCH_SIZE);
     logger.debug(`Processing batch ${Math.floor(batchStart / BATCH_SIZE) + 1}: ${batch.length} records`);
-    
+
     // Fetch detailed data for each song in the batch concurrently
     const detailPromises = batch.map(async (recentSong) => {
       try {
         // GET playlog detail page with idx query parameter
         const detailUrl = `${playlogDetailUrl}?idx=${encodeURIComponent(recentSong.idx)}`;
-        
+
         const response = await fetch(detailUrl, {
           method: "GET",
           headers: {
@@ -1969,27 +1969,27 @@ async function fetchAndInsertRecentSongsData(
           },
           ...{ dispatcher: AGENT },
         });
-        
+
         if (response.status !== 200) {
           logger.warn(`Failed to fetch playlog detail for idx ${recentSong.idx}: HTTP ${response.status}`);
           return null;
         }
-        
+
         const html = await response.text();
         const $ = load(html);
-        
+
         // Parse fast and late counts
         const flBlocks = $(".playlog_fl_block > * .p_t_5");
         const fastCount = flBlocks.length > 0 ? parseInt(flBlocks.eq(0).text().trim().replace(/,/g, ''), 10) || 0 : 0;
         const lateCount = flBlocks.length > 1 ? parseInt(flBlocks.eq(1).text().trim().replace(/,/g, ''), 10) || 0 : 0;
-        
+
         // Parse combo
         const scoreBlocks = $(".playlog_score_block > div.white");
         const comboText = scoreBlocks.length > 1 ? scoreBlocks.eq(1).text().trim() : "";
         const comboMatch = comboText.match(/(\d+(?:,\d+)?)\s*\/\s*(\d+(?:,\d+)?)/);
         const combo = comboMatch ? parseInt(comboMatch[1].replace(/,/g, ''), 10) : 0;
         const maxCombo = comboMatch ? parseInt(comboMatch[2].replace(/,/g, ''), 10) : 0;
-        
+
         // Parse sync score (optional)
         const syncScoreText = scoreBlocks.length > 2 ? scoreBlocks.eq(2).text().trim() : "";
         let syncScore: number | null = null;
@@ -2001,16 +2001,16 @@ async function fetchAndInsertRecentSongsData(
             maxSyncScore = parseInt(syncMatch[2].replace(/,/g, ''), 10);
           }
         }
-        
+
         // Parse rating
         const ratingText = $(".rating_block").text().trim();
         const rating = parseInt(ratingText, 10) || 0;
-        
+
         // Parse rating change
         const ratingChangeText = $(".playlog_rating_detail_block > * span").text().trim();
         const ratingChangeMatch = ratingChangeText.match(/([+-])(\d+)/);
         const ratingChange = ratingChangeMatch ? parseInt(`${ratingChangeMatch[1]}${ratingChangeMatch[2]}`, 10) : 0;
-        
+
         // Parse venue (JP only, optional)
         let venue: string | null = null;
         if (region === "jp") {
@@ -2019,18 +2019,18 @@ async function fetchAndInsertRecentSongsData(
             venue = venueElement.text().trim() || null;
           }
         }
-        
+
         // Parse note details (tap, hold, slide, touch, break)
         const noteRows = $(".playlog_notes_detail > * tr:not(:first-child)");
         const noteTypes = ['tap', 'hold', 'slide', 'touch', 'break'];
         const noteData: { [key: string]: { [key: string]: number } } = {};
-        
+
         noteRows.each((index, row) => {
           if (index >= 5) return; // Only process first 5 rows
-          
+
           const cells = $(row).find("td");
           const noteType = noteTypes[index];
-          
+
           noteData[noteType] = {
             cperfect: cells.length > 0 ? parseInt(cells.eq(0).text().trim(), 10) || 0 : 0,
             perfect: cells.length > 1 ? parseInt(cells.eq(1).text().trim(), 10) || 0 : 0,
@@ -2039,7 +2039,7 @@ async function fetchAndInsertRecentSongsData(
             miss: cells.length > 4 ? parseInt(cells.eq(4).text().trim(), 10) || 0 : 0,
           };
         });
-        
+
         return {
           recentSong,
           fastCount,
@@ -2058,22 +2058,22 @@ async function fetchAndInsertRecentSongsData(
         return null;
       }
     });
-    
+
     const detailResults = await Promise.all(detailPromises);
-    
+
     // Query for the recentSongIds for this batch
     const validResults = detailResults.filter(r => r !== null);
     if (validResults.length === 0) {
       logger.warn(`No valid detail results in batch ${Math.floor(batchStart / BATCH_SIZE) + 1}`);
       continue;
     }
-    
+
     // Query recent song IDs from database
     const recentSongRecords = await db.query.userRecentSongs.findMany({
       where: and(
         eq(userRecentSongs.userId, userId),
         or(
-          ...validResults.map(r => 
+          ...validResults.map(r =>
             and(
               eq(userRecentSongs.playedAt, r!.recentSong.playedAt)
             )
@@ -2085,13 +2085,13 @@ async function fetchAndInsertRecentSongsData(
         playedAt: true,
       }
     });
-    
+
     // Create map of playedAt timestamp to recentSongId
     const recentSongIdMap = new Map<number, bigint>();
     for (const record of recentSongRecords) {
       recentSongIdMap.set(record.playedAt.getTime(), record.id);
     }
-    
+
     // Prepare detailed inserts
     const detailedInserts: typeof userRecentSongsDetailed.$inferInsert[] = [];
     for (const result of validResults) {
@@ -2100,7 +2100,7 @@ async function fetchAndInsertRecentSongsData(
         logger.warn(`Could not find recentSongId for playedAt ${result.recentSong.playedAt.toISOString()}`);
         continue;
       }
-      
+
       detailedInserts.push({
         recentSongId,
         fastCount: result.fastCount,
@@ -2139,18 +2139,18 @@ async function fetchAndInsertRecentSongsData(
         ratingChange: result.ratingChange,
       });
     }
-    
+
     // Insert detailed data with conflict handling
     if (detailedInserts.length > 0) {
       await db
         .insert(userRecentSongsDetailed)
         .values(detailedInserts)
         .onConflictDoNothing();
-      
+
       logger.debug(`Inserted ${detailedInserts.length} detailed records for batch ${Math.floor(batchStart / BATCH_SIZE) + 1}`);
     }
   }
-  
+
   logger.info(`Completed detailed recent songs data fetch for user ${userId}`);
 }
 
@@ -2160,9 +2160,9 @@ async function insertUserEvents(
   eventAreaEvents: EventAreaData[]
 ): Promise<void> {
   logger.info(`Starting user events insertion for snapshot ${snapshotId}`);
-  
+
   const eventInserts: typeof userEvents.$inferInsert[] = [];
-  
+
   // Add area events
   for (const event of areaEvents) {
     eventInserts.push({
@@ -2177,7 +2177,7 @@ async function insertUserEvents(
       eventPeriodEnd: null,
     });
   }
-  
+
   // Add event area events
   for (const event of eventAreaEvents) {
     eventInserts.push({
@@ -2192,14 +2192,14 @@ async function insertUserEvents(
       eventPeriodEnd: event.eventPeriod ? new Date(event.eventPeriod[1]) : null,
     });
   }
-  
+
   logger.info(`Total events to insert: ${eventInserts.length}`);
-  
+
   if (eventInserts.length === 0) {
     logger.warn("No events to insert");
     return;
   }
-  
+
   // Batch insert all events
   logger.info(`Batch inserting ${eventInserts.length} user events`);
   await db.insert(userEvents).values(eventInserts);
@@ -2233,13 +2233,13 @@ export async function fetchMaimaiData(
 
   // Validate the token first
   const validation = await processMaimaiToken(userId, region, decryptToken(tokenRecord.token));
-  
+
   if (!validation.isValid) {
     throw new Error(validation.error || "Token validation failed");
   }
 
   logger.info("Token validation passed, proceeding with data fetch...");
-  
+
   if (!validation.redirectUrl) {
     throw new Error("No redirect URL received from token validation");
   }
@@ -2247,10 +2247,10 @@ export async function fetchMaimaiData(
   try {
     // Mark login state as completed (after token validation)
     appendFetchState(sessionId, FETCH_STATES.LOGIN); // Fire and forget
-    
+
     // Fetch player data HTML using login flow
     const { html: playerDataHtml, cookies } = await fetchPlayerDataWithLogin(region, validation.redirectUrl, validation.cookies || null);
-    
+
     // Extract player data and fetch songs data concurrently
     logger.info("Starting player data extraction and songs data fetch...");
     const [playerData, allSongsData, recentSongsData] = await Promise.all([
@@ -2275,7 +2275,7 @@ export async function fetchMaimaiData(
         try {
           logger.info("Fetching hidden songs data for intl region...");
           const hiddenSongs = await fetchHiddenSongsData(cookies, allSongsData);
-          
+
           // Add hidden songs to allSongsData
           for (const hiddenSong of hiddenSongs) {
             const difficulty = hiddenSong.difficultyNumber;
@@ -2284,7 +2284,7 @@ export async function fetchMaimaiData(
             }
             allSongsData[difficulty].push(hiddenSong);
           }
-          
+
           logger.info(`Added ${hiddenSongs.length} hidden songs to songs data`);
         } catch (error) {
           logger.error(error, "Failed to fetch hidden songs data, continuing without hidden songs");
@@ -2297,7 +2297,7 @@ export async function fetchMaimaiData(
 
     // Fetch events data
     let eventsData: Awaited<ReturnType<typeof fetchEventsData>> | null = null;
-    
+
     if (flags.includes("eventsCard")) {
       try {
         logger.info("Fetching events data...");
@@ -2311,11 +2311,11 @@ export async function fetchMaimaiData(
 
     // Create user snapshot with real player data
     const snapshotId = await createUserSnapshot(userId, region, playerData);
-    
+
     // Build song lookup maps once for this region and game version
     const gameVersion = getCurrentVersion(region);
     const { songLookup, fullSongMap } = await buildSongLookupMaps(region, gameVersion);
-    
+
     // Insert user scores into database
     logger.info("Starting user scores insertion...");
     await insertUserScores(snapshotId, region, sessionId, allSongsData, songLookup, fullSongMap);
@@ -2334,10 +2334,10 @@ export async function fetchMaimaiData(
       await insertUserEvents(snapshotId, eventsData.areaEvents, eventsData.eventAreaEvents);
       logger.info("User events insertion completed");
     }
-    
+
     logger.info("Player data processed and snapshot created successfully");
     logger.info(`Session ID: ${sessionId}`);
-    
+
     // Fire and forget: Fetch detailed recent songs data in background
     if (recentSongsData.length > 0) {
       logger.info("Starting detailed recent songs data fetch in background...");
@@ -2345,9 +2345,9 @@ export async function fetchMaimaiData(
         logger.error(error, "Failed to fetch detailed recent songs data");
       });
     }
-    
+
   } catch (error) {
     logger.error(error, "Error during maimai data fetch");
     throw error;
   }
-} 
+}

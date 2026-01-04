@@ -42,24 +42,19 @@ interface DataBannerProps {
   onFetchData: () => void;
   isFetching: boolean;
   currentSession: FetchSession | null;
-  userTimezone?: string | null; // null = Asia/Tokyo (JP default)
   // Copy functionality
   onCopySnapshot: (snapshotId: string, targetVersion: number) => Promise<any>;
   isCopying: boolean;
 }
 
 // Helper function to format dates
-function formatDate(date: Date, userTimezone?: string | null) {
-  // Use user's timezone preference, default to Asia/Tokyo if null
-  const timezone = userTimezone || "Asia/Tokyo";
-
+function formatDate(date: Date) {
   return new Intl.DateTimeFormat("en-US", {
     year: "numeric",
     month: "short",
     day: "numeric",
     hour: "2-digit",
     minute: "2-digit",
-    timeZone: timezone,
   }).format(date);
 }
 
@@ -68,13 +63,11 @@ function SnapshotSelector({
   snapshots,
   selectedSnapshot,
   onSnapshotChange,
-  userTimezone,
   t
 }: {
   snapshots: Snapshot[];
   selectedSnapshot: string | null;
   onSnapshotChange: (snapshotId: string) => void;
-  userTimezone?: string | null;
   t: any;
 }) {
   const selectedSnapshotData = snapshots.find(snapshot => snapshot.id === selectedSnapshot);
@@ -85,7 +78,7 @@ function SnapshotSelector({
         <SelectValue placeholder={t('dataBanner.selectSnapshot')} className="overflow-hidden">
           {selectedSnapshotData ? (
             <div className="flex flex-col items-start min-w-0 truncate text-xs">
-              <span>{formatDate(selectedSnapshotData.fetchedAt, userTimezone)}</span>
+              <span>{formatDate(selectedSnapshotData.fetchedAt)}</span>
               <span className="text-2xs text-muted-foreground">
                 {selectedSnapshotData.displayName} • {selectedSnapshotData.rating} rating • {getVersionInfo(selectedSnapshotData.gameVersion)?.shortName || "Unknown"}
               </span>
@@ -99,7 +92,7 @@ function SnapshotSelector({
         {snapshots.map((snapshot) => (
           <SelectItem key={snapshot.id} value={snapshot.id}>
             <div className="flex flex-col items-start min-w-0 truncate">
-              <span>{formatDate(snapshot.fetchedAt, userTimezone)}</span>
+              <span>{formatDate(snapshot.fetchedAt)}</span>
               <span className="text-xs text-muted-foreground">
                 {snapshot.displayName} • {snapshot.rating} rating • {getVersionInfo(snapshot.gameVersion)?.shortName || "Unknown"}
               </span>
@@ -314,7 +307,6 @@ export function DataBanner({
   onFetchData,
   isFetching,
   currentSession,
-  userTimezone,
   onCopySnapshot,
   isCopying,
 }: DataBannerProps) {
@@ -364,7 +356,6 @@ export function DataBanner({
                 snapshots={snapshots}
                 selectedSnapshot={selectedSnapshot}
                 onSnapshotChange={onSnapshotChange}
-                userTimezone={userTimezone}
                 t={t}
               />
             ) : (

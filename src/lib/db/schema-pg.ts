@@ -1,7 +1,6 @@
 import { pgTable, text, integer, smallint, bigint, bigserial, boolean, timestamp, unique, index, pgEnum, jsonb, varchar, check, uuid, point } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import {
-  TIMEZONE_ENUM,
   LANGUAGE_ENUM,
   REGION_ENUM,
   DIFFICULTY_ENUM,
@@ -16,7 +15,6 @@ import {
 } from "./types";
 
 // PostgreSQL enum types
-export const timezoneEnum = pgEnum("timezone", TIMEZONE_ENUM);
 export const languageEnum = pgEnum("language", LANGUAGE_ENUM);
 export const regionEnum = pgEnum("region", REGION_ENUM);
 export const roleEnum = pgEnum("role", ["user", "admin"]);
@@ -40,7 +38,6 @@ export const user = pgTable("user", {
   createdAt: timestamp("createdAt", { precision: 0 }).notNull(),
   updatedAt: timestamp("updatedAt", { precision: 0 }).notNull(),
   username: varchar("username", { length: 32 }).unique(), // 1-32 characters, letters, numbers, dashes, underscores only
-  timezone: timezoneEnum("timezone"), // nullable, null = Asia/Tokyo (JP default)
   language: languageEnum("language"), // nullable, null = auto-detect
   role: roleEnum("role").notNull().default("user"),
   banned: boolean("banned").notNull().default(false),

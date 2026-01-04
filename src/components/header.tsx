@@ -16,7 +16,8 @@ import { toast } from "sonner";
 import { LocaleSwitcher } from "./locale-switcher";
 import { RegionSwitcher } from "./region-switcher";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "./ui/dropdown-menu";
-import { cn } from "@/lib/utils";
+
+import { getEnabledRegions, isChinaRegion } from "@/lib/enabled-regions";
 
 const APPLICATION_ID = process.env.NEXT_PUBLIC_DISCORD_APPLICATION_ID;
 const SIGNUP_TYPE = process.env.NEXT_PUBLIC_ACCOUNT_SIGNUP_TYPE || 'disabled';
@@ -322,9 +323,9 @@ export function Header({ currentTab, showDiscordBanner = true, user }: HeaderPro
         </div>
 
         <div className="flex items-center space-x-4">
-          <LocaleSwitcher />
+          {!isChinaRegion() && <LocaleSwitcher />}
           {user ? (<>
-            {user.menu && <RegionSwitcher header={true} value={user.menu.selectedRegion} onChange={user.menu.onRegionChange} />}
+            {user.menu && getEnabledRegions().length > 1 && <RegionSwitcher header={true} value={user.menu.selectedRegion} onChange={user.menu.onRegionChange} />}
             <UserIcon {...user} onAbout={() => setAboutOpen(true)} onTheme={() => setThemeOpen(true)} onDiscordInvite={handleDiscordInvite} />
           </>) : (
             <Button variant="default" asChild>

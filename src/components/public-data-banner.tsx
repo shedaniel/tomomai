@@ -14,29 +14,23 @@ interface PublicDataBannerProps {
     rating: number;
     gameVersion: number;
   } | null;
-  userTimezone?: string | null; // null = Asia/Tokyo (JP default)
   profileUsername: string;
 }
 
 export function PublicDataBanner({
   region,
   snapshotData,
-  userTimezone,
   profileUsername,
 }: PublicDataBannerProps) {
   const t = useTranslations();
 
   const formatDate = (date: Date) => {
-    // Use user's timezone preference, default to Asia/Tokyo if null
-    const timezone = userTimezone || "Asia/Tokyo";
-
     return new Intl.DateTimeFormat("en-US", {
       year: "numeric",
       month: "short",
       day: "numeric",
       hour: "2-digit",
       minute: "2-digit",
-      timeZone: timezone,
     }).format(date);
   };
 

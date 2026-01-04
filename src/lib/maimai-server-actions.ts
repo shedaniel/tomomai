@@ -4,8 +4,7 @@ import { fetchSessions, userTokens } from '@/lib/db/schema-pg';
 import { nanoid } from 'nanoid';
 import { and, desc, eq } from 'drizzle-orm';
 import { encryptToken, decryptToken } from './token-crypto';
-
-export type Region = 'intl' | 'jp';
+import { Region } from './types';
 
 export interface StartFetchResult {
   sessionId: string;

@@ -1,27 +1,28 @@
 import { db } from '@/lib/db';
 import { createOpaqueUserId, generateUserOtp, getOtpExpiryTimestamp } from '@/lib/otp';
 import { resolveBaseUrl } from '@/lib/base-url';
-import { getFetchStatusServer, Region, startFetchServer } from '@/lib/maimai-server-actions';
+import { getFetchStatusServer, startFetchServer } from '@/lib/maimai-server-actions';
 import { getAvailableVersions } from '@/lib/metadata';
 import { RatingCalculationInput, splitSongs } from '@/lib/rating-calculator';
-import { invites, songs, user, userScores, userSnapshots, userTokens, userEvents, userRecentSongs, userRecentSongsDetailed, stores, storeEdits, storeEditVotes } from '@/lib/db/schema-pg';
+import { invites, songs, user, userScores, userSnapshots, userEvents, userRecentSongs, userRecentSongsDetailed, stores, storeEdits, storeEditVotes } from '@/lib/db/schema-pg';
 import { protectedProcedure, publicProcedure, router } from '@/lib/trpc';
-import { SongExtended, SongWithScore } from '@/lib/types';
+import { Region, SongExtended, SongWithScore, UserData } from '@/lib/types';
 import { TRPCError } from '@trpc/server';
 import { nanoid } from 'nanoid';
+import { isTokenError } from '@/lib/token-errors';
 import { and, count, desc, eq, inArray, isNull, lt, or, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { flagDefinitions } from '@/lib/flags';
-import { REGION_ENUM, TIMEZONE_ENUM } from '@/lib/db/types';
 import { logger } from '@/lib/logger';
 import { Optional } from 'utility-types';
 import { getSongSlug, getSongSlugs } from '@/lib/song-slug';
 import { SongDetails, UniqueSong, UniqueSongDifficulty } from '@/components/db/songs/types';
 import { unstable_cache } from 'next/cache';
+import { getEnabledRegions, isChinaRegion } from '@/lib/enabled-regions';
 
 const SIGNUP_REQUIRED_AMOUNT = 256;
 
-const regionSchema = z.enum(['intl', 'jp']);
+const regionSchema = z.enum(getEnabledRegions());
 const gameVersionSchema = z.number().int().min(-13).max(20);
 
 // Username validation helper
@@ -165,7 +166,10 @@ export const userRouter = router({
   getUserData: protectedProcedure
     .query(async ({ ctx }) => {
       const userRecord = await db
-        .select({ username: user.username, publishProfile: user.publishProfile, region: user.region, role: user.role })
+        .select({
+          username: user.username, publishProfile: user.publishProfile, role: user.role,
+          ...(!isChinaRegion() ? { region: user.region } : {})
+        })
         .from(user)
         .where(eq(user.id, ctx.session.user.id))
         .limit(1);
@@ -181,9 +185,9 @@ export const userRouter = router({
         hasUsername: !!userRecord[0].username,
         username: userRecord[0].username,
         publishProfile: userRecord[0].publishProfile,
-        region: userRecord[0].region,
+        region: (!isChinaRegion() ? userRecord[0].region! : 'cn') as Region,
         role: userRecord[0].role,
-      };
+      } satisfies UserData;
     }),
 
   // Check if username is available
@@ -678,7 +682,7 @@ export const userRouter = router({
         return await startFetchServer(ctx.session.user.id, input.region as Region, input.token, input.flags);
       } catch (error) {
         if (error instanceof Error) {
-          if (error.message.includes('No token provided')) {
+          if (isTokenError(error.message)) {
             throw new TRPCError({
               code: 'BAD_REQUEST',
               message: error.message,
@@ -735,46 +739,10 @@ export const userRouter = router({
       return session.length > 0 ? { id: session[0].publicId, startedAt: session[0].startedAt } : null;
     }),
 
-  // Get user timezone
-  getTimezone: protectedProcedure
-    .query(async ({ ctx }) => {
-      const userRecord = await db
-        .select({ timezone: user.timezone })
-        .from(user)
-        .where(eq(user.id, ctx.session.user.id))
-        .limit(1);
-
-      if (userRecord.length === 0) {
-        throw new TRPCError({
-          code: 'NOT_FOUND',
-          message: 'User not found',
-        });
-      }
-
-      return { timezone: userRecord[0].timezone };
-    }),
-
-  // Update user timezone
-  updateTimezone: protectedProcedure
-    .input(z.object({
-      timezone: z.enum(TIMEZONE_ENUM).nullable(),
-    }))
-    .mutation(async ({ ctx, input }) => {
-      await db
-        .update(user)
-        .set({
-          timezone: input.timezone,
-          updatedAt: new Date(),
-        })
-        .where(eq(user.id, ctx.session.user.id));
-
-      return { success: true };
-    }),
-
   // Update user region
   updateRegion: protectedProcedure
     .input(z.object({
-      region: z.enum(REGION_ENUM).nullable(),
+      region: regionSchema.nullable(),
     }))
     .mutation(async ({ ctx, input }) => {
       await db
@@ -836,9 +804,10 @@ export const userRouter = router({
   // Update profile main region
   updateProfileMainRegion: protectedProcedure
     .input(z.object({
-      profileMainRegion: z.enum(['intl', 'jp']),
+      profileMainRegion: regionSchema,
     }))
     .mutation(async ({ ctx, input }) => {
+      if (isChinaRegion()) throw new TRPCError({ code: 'BAD_REQUEST', message: 'Cannot update profile main region in China region' });
       await db
         .update(user)
         .set({
@@ -887,7 +856,6 @@ export const userRouter = router({
         .select({
           id: user.id,
           name: user.name,
-          timezone: user.timezone,
           publishProfile: user.publishProfile,
           profileMainRegion: user.profileMainRegion,
           profileShowAllScores: user.profileShowAllScores,

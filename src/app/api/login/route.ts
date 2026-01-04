@@ -1,8 +1,9 @@
 import { decodeOpaqueUserId, verifyUserOtp } from "@/lib/otp";
-import { startFetchServer, Region } from "@/lib/maimai-server-actions";
+import { startFetchServer } from "@/lib/maimai-server-actions";
 import { NextRequest, NextResponse } from "next/server";
 import { logger } from "@/lib/logger";
 import { securityMiddleware, validateContentType, csrfProtection } from "@/lib/security/middleware";
+import { Region } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 

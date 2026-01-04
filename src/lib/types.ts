@@ -2,7 +2,7 @@
 
 // ===== CORE TYPES =====
 
-export type Region = "intl" | "jp";
+export type Region = "intl" | "jp" | "cn";
 
 export interface User {
   id: string;
@@ -133,29 +133,19 @@ export interface SnapshotData extends Snapshot {
   iconUrl?: string;
 }
 
-// ===== API RESPONSE TYPES =====
-
-export interface GetSnapshotsResponse {
-  snapshots: Snapshot[];
-}
-
-export interface GetTimezoneResponse {
-  timezone: string | null;
-}
-
 // ===== USER & PROFILE TYPES =====
 
 export interface UserData {
   hasUsername: boolean;
   username: string | null;
   publishProfile: boolean;
-  region: Region | null;
+  region: Region;
   role: "user" | "admin";
 }
 
 export interface ProfileSettings {
   publishProfile: boolean;
-  profileMainRegion: 'intl' | 'jp';
+  profileMainRegion: Region;
   profileShowAllScores: boolean;
   profileShowScoreDetails: boolean;
   profileShowPlates: boolean;
@@ -167,7 +157,6 @@ export interface ProfileSettings {
 export interface ProfileData {
   id: string;
   name: string;
-  timezone: string | null;
   publishProfile: boolean;
   profileMainRegion: Region;
   profileShowAllScores: boolean;

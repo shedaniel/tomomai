@@ -19,9 +19,9 @@ import {
 } from "@/components/ui/select-friendly";
 import { Switch } from "@/components/ui/switch";
 import { Locale, setLocaleCookie } from "@/i18n/locale";
-import { TIMEZONE_ENUM, TIMEZONES } from "@/lib/db/types";
+import { getEnabledRegions, isChinaRegion } from "@/lib/enabled-regions";
 import { trpc } from "@/lib/trpc-client";
-import { ProfilePrivacySettings, ProfileSettings } from "@/lib/types";
+import { ProfilePrivacySettings, ProfileSettings, Region } from "@/lib/types";
 import { getLanguages } from "@/lib/utils";
 import { Copy, ExternalLink, Globe, Key, Languages } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -31,10 +31,8 @@ import { toast } from "sonner";
 interface SettingsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  currentTimezone?: typeof TIMEZONE_ENUM[number] | null;
   username?: string;
   initialProfileSettings?: ProfileSettings;
-  onTimezoneUpdate: (timezone: typeof TIMEZONE_ENUM[number] | null) => Promise<void>;
   onOpenTokenDialog: () => void;
   onSaveSuccess: () => void;
 }
@@ -42,22 +40,19 @@ interface SettingsDialogProps {
 export function SettingsDialog({
   open,
   onOpenChange,
-  currentTimezone,
   username,
   initialProfileSettings,
-  onTimezoneUpdate,
   onOpenTokenDialog,
   onSaveSuccess,
 }: SettingsDialogProps) {
   const t = useTranslations();
   const { locale, setLocale } = useLocale();
-  const [selectedTimezone, setSelectedTimezone] = useState<typeof TIMEZONE_ENUM[number] | null>(currentTimezone ?? null);
   const [selectedLanguage, setSelectedLanguage] = useState<string | null>(locale || null);
   const [isLoading, setIsLoading] = useState(false);
 
   // Profile settings state
   const [selectedPublishProfile, setSelectedPublishProfile] = useState(initialProfileSettings?.publishProfile ?? false);
-  const [selectedMainRegion, setSelectedMainRegion] = useState<'intl' | 'jp'>(initialProfileSettings?.profileMainRegion ?? 'intl');
+  const [selectedMainRegion, setSelectedMainRegion] = useState<Region>(initialProfileSettings?.profileMainRegion ?? 'intl');
   const [selectedPrivacySettings, setSelectedPrivacySettings] = useState<ProfilePrivacySettings>({
     profileShowAllScores: initialProfileSettings?.profileShowAllScores ?? true,
     profileShowScoreDetails: initialProfileSettings?.profileShowScoreDetails ?? true,
@@ -98,9 +93,7 @@ export function SettingsDialog({
   const handleSave = async () => {
     setIsLoading(true);
     try {
-      const promises = [
-        onTimezoneUpdate(selectedTimezone)
-      ];
+      const promises: Promise<void>[] = [];
 
       // Update profile settings
       if (profileSettings) {
@@ -155,7 +148,6 @@ export function SettingsDialog({
   };
 
   const handleCancel = () => {
-    setSelectedTimezone(currentTimezone ?? null);
     setSelectedLanguage(locale || null);
 
     // Reset profile settings to original values
@@ -173,10 +165,6 @@ export function SettingsDialog({
     }
 
     onOpenChange(false);
-  };
-
-  const getCurrentTimezoneDisplay = () => {
-    return selectedTimezone || "jp"; // Use "jp" as the key for null timezone
   };
 
   const getProfileUrl = () => {
@@ -219,70 +207,39 @@ export function SettingsDialog({
         </DialogHeader>
 
         <div className="grid gap-6 py-4">
-          <div className="grid gap-2">
-            <Label htmlFor="language">{t('settings.language.label')}</Label>
-            <Select
-              value={selectedLanguage || "auto"}
-              onValueChange={(value) => {
-                setSelectedLanguage(value === "auto" ? null : value);
-              }}
-            >
-              <SelectTrigger id="language" className="bg-background">
-                <SelectValue placeholder={t('settings.language.label')} />
-              </SelectTrigger>
-              <SelectContent>
-                {LANGUAGES.map((language) => (
-                  <SelectItem
-                    key={language.value || "auto"}
-                    value={language.value || "auto"}
-                  >
-                    <div className="flex items-center space-x-2">
-                      <Languages className="h-4 w-4" />
-                      <span className="text-xs font-mono bg-muted px-1 py-0.5 rounded">
-                        {language.code}
-                      </span>
-                      <span>{language.label}</span>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <p className="text-xs text-muted-foreground">
-              {t('settings.language.description')}
-            </p>
-          </div>
-
-          <div className="grid gap-2">
-            <Label htmlFor="timezone">{t('settings.timezone.label')}</Label>
-            <Select
-              value={getCurrentTimezoneDisplay()}
-              onValueChange={(value) => {
-                setSelectedTimezone(value === "jp" ? null : value as typeof TIMEZONE_ENUM[number]);
-              }}
-            >
-              <SelectTrigger id="timezone" className="bg-background">
-                <SelectValue placeholder={t('settings.timezone.placeholder')} />
-              </SelectTrigger>
-              <SelectContent>
-                {TIMEZONES.map((timezone) => (
-                  <SelectItem
-                    key={timezone.value || "jp"}
-                    value={timezone.value || "jp"}
-                  >
-                    <div className="flex items-center space-x-2">
-                      <span className="text-xs font-mono bg-muted px-1 py-0.5 rounded">
-                        {timezone.region}
-                      </span>
-                      <span>{timezone.label}</span>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <p className="text-xs text-muted-foreground">
-              {t('settings.timezone.description')}
-            </p>
-          </div>
+          {!isChinaRegion() && (
+            <div className="grid gap-2">
+              <Label htmlFor="language">{t('settings.language.label')}</Label>
+              <Select
+                value={selectedLanguage || "auto"}
+                onValueChange={(value) => {
+                  setSelectedLanguage(value === "auto" ? null : value);
+                }}
+              >
+                <SelectTrigger id="language" className="bg-background">
+                  <SelectValue placeholder={t('settings.language.label')} />
+                </SelectTrigger>
+                <SelectContent>
+                  {LANGUAGES.map((language) => (
+                    <SelectItem
+                      key={language.value || "auto"}
+                      value={language.value || "auto"}
+                    >
+                      <div className="flex items-center space-x-2">
+                        <Languages className="h-4 w-4" />
+                        <span className="text-xs font-mono bg-muted px-1 py-0.5 rounded">
+                          {language.code}
+                        </span>
+                        <span>{language.label}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                {t('settings.language.description')}
+              </p>
+            </div>)}
 
           <div className="grid gap-2">
             <Label>{t('settings.account.label')}</Label>
@@ -322,35 +279,33 @@ export function SettingsDialog({
             {selectedPublishProfile && (
               <div className="grid gap-4 pl-4 border-l-2 border-muted">
                 {/* Main Region Selection */}
-                <div className="grid gap-2">
-                  <Label htmlFor="main-region">{t('settings.profile.mainRegion.label')}</Label>
-                  <Select
-                    value={selectedMainRegion}
-                    onValueChange={(value: 'intl' | 'jp') => setSelectedMainRegion(value)}
-                    disabled={isLoadingSettings}
-                  >
-                    <SelectTrigger id="main-region" className="bg-background">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="intl">
-                        <div className="flex items-center space-x-2">
-                          <span className="text-xs font-mono bg-muted px-1 py-0.5 rounded">INTL</span>
-                          <span>{t('settings.profile.mainRegion.intl')}</span>
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="jp">
-                        <div className="flex items-center space-x-2">
-                          <span className="text-xs font-mono bg-muted px-1 py-0.5 rounded">JP</span>
-                          <span>{t('settings.profile.mainRegion.jp')}</span>
-                        </div>
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-muted-foreground">
-                    {t('settings.profile.mainRegion.description')}
-                  </p>
-                </div>
+                {getEnabledRegions().length > 1 && (
+                  <div className="grid gap-2">
+                    <Label htmlFor="main-region">{t('settings.profile.mainRegion.label')}</Label>
+                    <Select
+                      value={selectedMainRegion}
+                      onValueChange={(value: Region) => setSelectedMainRegion(value)}
+                      disabled={isLoadingSettings}
+                    >
+                      <SelectTrigger id="main-region" className="bg-background">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {getEnabledRegions().map((region) => (
+                          <SelectItem key={region} value={region}>
+                            <div className="flex items-center space-x-2">
+                              <span className="text-xs font-mono bg-muted px-1 py-0.5 rounded">{region.toUpperCase()}</span>
+                              <span>{t(`settings.profile.mainRegion.${region}`)}</span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground">
+                      {t('settings.profile.mainRegion.description')}
+                    </p>
+                  </div>
+                )}
 
                 {/* Privacy Settings */}
                 <div className="grid gap-3">

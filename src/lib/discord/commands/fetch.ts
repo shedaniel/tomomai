@@ -1,6 +1,6 @@
 import { db } from '@/lib/db';
 import { getAllStates, parseStatusStates } from '@/lib/fetch-states';
-import { getFetchStatusServer, Region, startFetchServer } from '@/lib/maimai-server-actions';
+import { getFetchStatusServer, startFetchServer } from '@/lib/maimai-server-actions';
 import { account, user, userSnapshots } from '@/lib/db/schema-pg';
 import { waitUntil } from '@vercel/functions';
 import { and, desc, eq } from 'drizzle-orm';
@@ -14,6 +14,7 @@ import {
   editDiscordMessage,
   getStateFriendlyName
 } from '../responses';
+import { Region } from '@/lib/types';
 
 export interface FetchCommandOptions {
   discordUserId: string;
