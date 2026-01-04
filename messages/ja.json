@@ -22,7 +22,7 @@
     "stars": "スター数",
     "plays": "プレイ数",
     "total": "合計",
-    "theme": "Theme",
+    "theme": "テーマ",
     "invitations": "招待",
     "discord": "Discord",
     "about": "ともマイについて",
@@ -167,7 +167,7 @@
       "map": "ちほー",
       "exportImage": "エクスポート",
       "history": "履歴",
-      "developer": "Developer"
+      "developer": "開発者"
     },
     "playerInfo": "プレイヤー情報",
     "rating": "レート値：{rating}",
@@ -208,9 +208,9 @@
       "needMoreData": "履歴を表示するには、少なくとも2回データを取得してください"
     },
     "developer": {
-      "title": "Developer",
-      "exportJson": "Export Snapshot as JSON",
-      "exporting": "Exporting..."
+      "title": "開発者",
+      "exportJson": "スナップショットをJSONでエクスポート",
+      "exporting": "エクスポート中..."
     }
   },
   "recommendations": {
@@ -236,10 +236,10 @@
   "recentPlays": {
     "title": "プレイレコード",
     "noPlays": "プレイレコードがありません",
-    "notFetched": "Not fetched",
-    "fetching": "Fetching...",
-    "detailsNotFetched": "Detailed play data hasn't been fetched yet. Sync your data again to get detailed breakdown.",
-    "detailsFetching": "Detailed play data is still being fetched. Please wait a moment and refresh the page.",
+    "notFetched": "未取得",
+    "fetching": "取得中...",
+    "detailsNotFetched": "プレイ詳細データがまだ取得されていません。詳細な内訳を見るには、データを再同期してください。",
+    "detailsFetching": "詳細なプレイデータを取得中です。しばらく待ってからページを更新してください。",
     "labels": {
       "dx": "DX",
       "combo": "コンボ",
@@ -500,21 +500,21 @@
         "addedVersion": "追加バージョン",
         "std": "STD",
         "dx": "DX",
-        "sort": "Sort",
-        "sortVersionDesc": "Version (Latest)",
-        "sortVersionAsc": "Version (Oldest)",
-        "sortLevelAsc": "Level (Low -> High)",
-        "sortLevelDesc": "Level (High -> Low)",
+        "sort": "並び替え",
+        "sortVersionDesc": "バージョン（新しい順）",
+        "sortVersionAsc": "バージョン（古い順）",
+        "sortLevelAsc": "レベル（低い順）",
+        "sortLevelDesc": "レベル（高い順）",
         "level": "レベル",
-        "groupBy": "Group By",
-        "noteDesigner": "Note Designer",
+        "groupBy": "グループ",
+        "noteDesigner": "譜面製作者",
         "groups": {
-          "none": "None",
+          "none": "なし",
           "noteDesigner": "譜面製作者",
-          "levelAsc": "Level (Low -> High)",
-          "levelDesc": "Level (High -> Low)",
-          "versionAsc": "Version (Oldest)",
-          "versionDesc": "Version (Latest)",
+          "levelAsc": "レベル（低い順）",
+          "levelDesc": "レベル（高い順）",
+          "versionAsc": "バージョン（古い順）",
+          "versionDesc": "バージョン（新しい順）",
           "genre": "ジャンル",
           "artist": "アーティスト"
         }
@@ -536,22 +536,22 @@
       "topSongs": "人気楽曲",
       "averageAchievementByLevel": "レベル別平均達成率",
       "ratingVsPlayCount": "レート vs プレイ回数 ヒートマップ",
-      "activeUsersOverTime": "Active Users Over Time",
+      "activeUsersOverTime": "アクティブユーザー数の推移",
       "xAxis": {
         "rating": "レート値",
         "playCount": "プレイ回数",
         "level": "レベル",
-        "date": "Date",
-        "days": "Days",
-        "timePeriod": "Time Period",
-        "lastDay": "Last 1 day",
-        "lastDays": "Last {days} days"
+        "date": "日付",
+        "days": "日数",
+        "timePeriod": "期間",
+        "lastDay": "過去1日",
+        "lastDays": "過去{days}日間"
       },
       "yAxis": {
         "percentage": "割合",
         "achievement": "達成率",
         "count": "ユーザー数",
-        "activeUsers": "Active Users"
+        "activeUsers": "アクティブユーザー"
       },
       "table": {
         "rank": "順位",
@@ -567,7 +567,7 @@
     }
   },
   "theme": {
-    "description": "Choose a colour theme for the interface.",
+    "description": "インターフェースのカラーテーマを選択してください。",
     "groups": {
       "simple": "Simple",
       "amaranth": "Amaranth",
@@ -621,26 +621,26 @@
       "gray-gold": "Gray Gold",
       "gray-pink": "Gray Pink"
     },
-    "title": "Theme"
+    "title": "テーマ"
   },
   "fetchToast": {
     "header": {
       "pending": "データ取得中...",
-      "completed": "Fetch complete",
-      "failed": "Fetch failed"
+      "completed": "取得完了",
+      "failed": "取得失敗"
     },
     "states": {
-      "connecting": "Connecting...",
-      "connected": "Connected",
-      "login": "Logged in",
-      "playerData": "Fetched player data",
-      "songDataBasic": "Fetched BASIC scores",
-      "songDataAdvanced": "Fetched ADVANCED scores",
-      "songDataExpert": "Fetched EXPERT scores",
-      "songDataMaster": "Fetched MASTER scores",
-      "songDataRemaster": "Fetched Re:MASTER scores",
-      "recentSongs": "Fetched recent songs",
-      "hiddenSongs": "Fetched hidden songs"
+      "connecting": "接続中...",
+      "connected": "接続しました",
+      "login": "ログインしました",
+      "playerData": "プレイヤーデータを取得しました",
+      "songDataBasic": "BASICスコアを取得しました",
+      "songDataAdvanced": "ADVANCEDスコアを取得しました",
+      "songDataExpert": "EXPERTスコアを取得しました",
+      "songDataMaster": "MASTERスコアを取得しました",
+      "songDataRemaster": "Re:MASTERスコアを取得しました",
+      "recentSongs": "最近のプレイ履歴を取得しました",
+      "hiddenSongs": "隠し楽曲を取得しました"
     }
   }
 }
