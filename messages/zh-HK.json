@@ -14,7 +14,7 @@
     "logout": "登出",
     "username": "使用者名稱",
     "password": "密碼",
-    "token": "權杖",
+    "token": "Cookies",
     "cookies": "Cookies",
     "authentication": "驗證",
     "playerInfo": "玩家資訊",
@@ -283,7 +283,7 @@
     "credentialsSecureNote": "你的憑證將被儲存，以供將來使用。",
     "savingCredentials": "儲存憑證中...",
     "saveCredentials": "儲存憑證",
-    "tokenTab": "權杖",
+    "tokenTab": "Cookies",
     "passwordTab": "密碼",
     "tokenInstructions": {
       "description": "來自 maimai DX NET 的以 \"clal=\" 為首的 Cookies 值。",
@@ -627,7 +627,7 @@
     "header": {
       "pending": "匯入資料中...",
       "completed": "匯入完成",
-      "failed": "匯入完成"
+      "failed": "匯入失敗"
     },
     "states": {
       "connecting": "連線中……",
