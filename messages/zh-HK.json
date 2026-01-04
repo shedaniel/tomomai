@@ -167,7 +167,7 @@
       "map": "活動地圖",
       "exportImage": "匯出圖片",
       "history": "歷史紀錄",
-      "developer": "Developer"
+      "developer": "開發者"
     },
     "playerInfo": "玩家資訊",
     "rating": "Rating：{rating}",
@@ -208,9 +208,9 @@
       "needMoreData": "至少匯入兩次資料才能檢視歷史紀錄"
     },
     "developer": {
-      "title": "Developer",
-      "exportJson": "Export Snapshot as JSON",
-      "exporting": "Exporting..."
+      "title": "開發者",
+      "exportJson": "匯出紀錄為 JSON",
+      "exporting": "匯出中..."
     }
   },
   "recommendations": {
@@ -236,10 +236,10 @@
   "recentPlays": {
     "title": "最近遊玩",
     "noPlays": "找不到最近遊玩紀錄",
-    "notFetched": "Not fetched",
-    "fetching": "Fetching...",
-    "detailsNotFetched": "Detailed play data hasn't been fetched yet. Sync your data again to get detailed breakdown.",
-    "detailsFetching": "Detailed play data is still being fetched. Please wait a moment and refresh the page.",
+    "notFetched": "尚未擷取",
+    "fetching": "讀取中……",
+    "detailsNotFetched": "尚未擷取詳細遊玩資料。請重新同步資料以取得詳細分析。",
+    "detailsFetching": "正在讀取詳細遊玩資料，請稍候並重新整理頁面。",
     "labels": {
       "dx": "DX",
       "combo": "連擊",
@@ -500,21 +500,21 @@
         "addedVersion": "追加版本",
         "std": "STD",
         "dx": "DX",
-        "sort": "Sort",
-        "sortVersionDesc": "Version (Latest)",
-        "sortVersionAsc": "Version (Oldest)",
-        "sortLevelAsc": "Level (Low -> High)",
-        "sortLevelDesc": "Level (High -> Low)",
+        "sort": "排序",
+        "sortVersionDesc": "版本（由新至舊）",
+        "sortVersionAsc": "版本（由舊至新）",
+        "sortLevelAsc": "等級（由低至高）",
+        "sortLevelDesc": "等級（由高至低）",
         "level": "等級",
-        "groupBy": "Group By",
-        "noteDesigner": "Note Designer",
+        "groupBy": "分類",
+        "noteDesigner": "譜面設計者",
         "groups": {
-          "none": "None",
+          "none": "無",
           "noteDesigner": "譜面設計者",
-          "levelAsc": "Level (Low -> High)",
-          "levelDesc": "Level (High -> Low)",
-          "versionAsc": "Version (Oldest)",
-          "versionDesc": "Version (Latest)",
+          "levelAsc": "等級（由低至高）",
+          "levelDesc": "等級（由高至低）",
+          "versionAsc": "版本（由舊至新）",
+          "versionDesc": "版本（由新至舊）",
           "genre": "分類",
           "artist": "藝人"
         }
@@ -536,22 +536,22 @@
       "topSongs": "熱門歌曲",
       "averageAchievementByLevel": "等級平均達成率",
       "ratingVsPlayCount": "Rating vs 遊玩次數熱力圖",
-      "activeUsersOverTime": "Active Users Over Time",
+      "activeUsersOverTime": "活躍用戶趨勢",
       "xAxis": {
         "rating": "Rating",
         "playCount": "遊玩次數",
         "level": "等級",
-        "date": "Date",
-        "days": "Days",
-        "timePeriod": "Time Period",
-        "lastDay": "Last 1 day",
-        "lastDays": "Last {days} days"
+        "date": "日期",
+        "days": "天數",
+        "timePeriod": "時間範圍",
+        "lastDay": "過去 1 天",
+        "lastDays": "過去 {days} 天"
       },
       "yAxis": {
         "percentage": "百分比",
         "achievement": "達成率",
         "count": "用戶數",
-        "activeUsers": "Active Users"
+        "activeUsers": "活躍用戶"
       },
       "table": {
         "rank": "排名",
@@ -567,7 +567,7 @@
     }
   },
   "theme": {
-    "description": "Choose a colour theme for the interface.",
+    "description": "選擇介面的色彩主題。",
     "groups": {
       "simple": "Simple",
       "amaranth": "Amaranth",
@@ -626,21 +626,21 @@
   "fetchToast": {
     "header": {
       "pending": "匯入資料中...",
-      "completed": "Fetch complete",
-      "failed": "Fetch failed"
+      "completed": "匯入完成",
+      "failed": "匯入完成"
     },
     "states": {
-      "connecting": "Connecting...",
-      "connected": "Connected",
-      "login": "Logged in",
-      "playerData": "Fetched player data",
-      "songDataBasic": "Fetched BASIC scores",
-      "songDataAdvanced": "Fetched ADVANCED scores",
-      "songDataExpert": "Fetched EXPERT scores",
-      "songDataMaster": "Fetched MASTER scores",
-      "songDataRemaster": "Fetched Re:MASTER scores",
-      "recentSongs": "Fetched recent songs",
-      "hiddenSongs": "Fetched hidden songs"
+      "connecting": "連線中……",
+      "connected": "已連線",
+      "login": "已登入",
+      "playerData": "已匯入玩家資料",
+      "songDataBasic": "已匯入 BASIC 成績",
+      "songDataAdvanced": "已匯入 ADVANCED 成績",
+      "songDataExpert": "已匯入 EXPERT 成績",
+      "songDataMaster": "已匯入 MASTER 成績",
+      "songDataRemaster": "已匯入 Re:MASTER 成績",
+      "recentSongs": "已匯入最近遊玩紀錄",
+      "hiddenSongs": "已匯入隱藏歌曲"
     }
   }
 }
