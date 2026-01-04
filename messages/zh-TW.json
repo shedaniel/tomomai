@@ -166,7 +166,8 @@
       "plates": "名牌板",
       "map": "活動地圖",
       "exportImage": "匯出圖片",
-      "history": "歷史紀錄"
+      "history": "歷史紀錄",
+      "developer": "Developer"
     },
     "playerInfo": "玩家資訊",
     "rating": "R 值：{rating}",
@@ -205,6 +206,11 @@
       "ratingOverTime": "R 值變化趨勢",
       "noHistory": "暫無歷史紀錄",
       "needMoreData": "至少匯入兩次資料才能檢視歷史紀錄"
+    },
+    "developer": {
+      "title": "Developer",
+      "exportJson": "Export Snapshot as JSON",
+      "exporting": "Exporting..."
     }
   },
   "recommendations": {
@@ -230,10 +236,10 @@
   "recentPlays": {
     "title": "遊玩紀錄",
     "noPlays": "找不到最近遊玩紀錄",
-    "notFetched": "Not fetched",
-    "fetching": "Fetching...",
-    "detailsNotFetched": "Detailed play data hasn't been fetched yet. Sync your data again to get detailed breakdown.",
-    "detailsFetching": "Detailed play data is still being fetched. Please wait a moment and refresh the page.",
+    "notFetched": "尚未擷取",
+    "fetching": "讀取中...",
+    "detailsNotFetched": "尚未擷取詳細遊玩資料。請重新同步資料以取得詳細分析。",
+    "detailsFetching": "正在讀取詳細遊玩資料，請稍候並重新整理頁面。",
     "labels": {
       "dx": "DX",
       "combo": "連擊",
@@ -494,21 +500,21 @@
         "addedVersion": "追加版本",
         "std": "STD",
         "dx": "DX",
-        "sort": "Sort",
-        "sortVersionDesc": "Version (Latest)",
-        "sortVersionAsc": "Version (Oldest)",
-        "sortLevelAsc": "Level (Low -> High)",
-        "sortLevelDesc": "Level (High -> Low)",
+        "sort": "排序",
+        "sortVersionDesc": "版本（由新到舊）",
+        "sortVersionAsc": "版本（由新到舊）",
+        "sortLevelAsc": "版本（由新到舊）",
+        "sortLevelDesc": "等級（由高到低）",
         "level": "等級",
-        "groupBy": "Group By",
-        "noteDesigner": "Note Designer",
+        "groupBy": "分類",
+        "noteDesigner": "譜面設計者",
         "groups": {
-          "none": "None",
+          "none": "無",
           "noteDesigner": "譜面設計者",
-          "levelAsc": "Level (Low -> High)",
-          "levelDesc": "Level (High -> Low)",
-          "versionAsc": "Version (Oldest)",
-          "versionDesc": "Version (Latest)",
+          "levelAsc": "版本（由新到舊）",
+          "levelDesc": "等級（由高到低）",
+          "versionAsc": "版本（由新到舊）",
+          "versionDesc": "版本（由新到舊）",
           "genre": "分類",
           "artist": "藝人"
         }
@@ -530,22 +536,22 @@
       "topSongs": "熱門歌曲",
       "averageAchievementByLevel": "等級平均達成率",
       "ratingVsPlayCount": "R 值 vs 遊玩次數熱力圖",
-      "activeUsersOverTime": "Active Users Over Time",
+      "activeUsersOverTime": "活躍使用者趨勢",
       "xAxis": {
         "rating": "R 值",
         "playCount": "遊玩次數",
         "level": "等級",
-        "date": "Date",
-        "days": "Days",
-        "timePeriod": "Time Period",
-        "lastDay": "Last 1 day",
-        "lastDays": "Last {days} days"
+        "date": "日期",
+        "days": "天數",
+        "timePeriod": "時間範圍",
+        "lastDay": "過去 1 天",
+        "lastDays": "過去 {days} 天"
       },
       "yAxis": {
         "percentage": "百分比",
         "achievement": "達成率",
         "count": "使用者數",
-        "activeUsers": "Active Users"
+        "activeUsers": "活躍使用者"
       },
       "table": {
         "rank": "排名",
@@ -561,24 +567,24 @@
     }
   },
   "theme": {
-    "description": "Choose a colour theme for the interface.",
+    "description": "選擇介面的色彩主題。",
     "groups": {
-      "simple": "Simple",
-      "amaranth": "Amaranth",
-      "blue": "Blue",
-      "brown": "Brown",
-      "emerald": "Emerald",
-      "grass": "Grass",
-      "purple": "Purple",
-      "rose": "Rose",
-      "gold": "Gold",
-      "pink": "Pink"
+      "simple": "簡約",
+      "amaranth": "莧紅",
+      "blue": "莧紅",
+      "brown": "棕色",
+      "emerald": "翠綠",
+      "grass": "草綠",
+      "purple": "紫色",
+      "rose": "玫瑰紅",
+      "gold": "金色",
+      "pink": "粉紅"
     },
     "themes": {
-      "simple": "Simple",
-      "dark-simple": "Dark Simple",
-      "gray-simple": "Gray Simple",
-      "burnt-amaranth": "Burnt Amaranth",
+      "simple": "簡約",
+      "dark-simple": "深色簡約",
+      "gray-simple": "暗色簡約",
+      "burnt-amaranth": "焦莧紅",
       "burnt-blue": "Burnt Blue",
       "burnt-brown": "Burnt Brown",
       "burnt-emerald": "Burnt Emerald",
