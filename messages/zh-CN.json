@@ -22,7 +22,7 @@
     "stars": "星星数",
     "plays": "游玩次数",
     "total": "总计",
-    "theme": "Theme",
+    "theme": "主题",
     "invitations": "邀请",
     "discord": "Discord",
     "about": "关于",
@@ -167,7 +167,7 @@
       "map": "活动地图",
       "exportImage": "导出图片",
       "history": "历史记录",
-      "developer": "Developer"
+      "developer": "开发者"
     },
     "playerInfo": "玩家信息",
     "rating": "R 值：{rating}",
@@ -208,9 +208,9 @@
       "needMoreData": "至少导入两次数据才能查看历史记录"
     },
     "developer": {
-      "title": "Developer",
-      "exportJson": "Export Snapshot as JSON",
-      "exporting": "Exporting..."
+      "title": "开发者",
+      "exportJson": "导出记录为 JSON",
+      "exporting": "导出中..."
     }
   },
   "recommendations": {
@@ -236,10 +236,10 @@
   "recentPlays": {
     "title": "最近游玩",
     "noPlays": "未找到最近游玩记录",
-    "notFetched": "Not fetched",
-    "fetching": "Fetching...",
-    "detailsNotFetched": "Detailed play data hasn't been fetched yet. Sync your data again to get detailed breakdown.",
-    "detailsFetching": "Detailed play data is still being fetched. Please wait a moment and refresh the page.",
+    "notFetched": "尚未获取",
+    "fetching": "获取中...",
+    "detailsNotFetched": "尚未获取详细游玩数据。请重新同步数据以获取详细分析。",
+    "detailsFetching": "正在获取详细游玩数据，请稍候并刷新页面。",
     "labels": {
       "dx": "DX",
       "combo": "连击",
@@ -500,21 +500,21 @@
         "addedVersion": "添加版本",
         "std": "STD",
         "dx": "DX",
-        "sort": "Sort",
-        "sortVersionDesc": "Version (Latest)",
-        "sortVersionAsc": "Version (Oldest)",
-        "sortLevelAsc": "Level (Low -> High)",
-        "sortLevelDesc": "Level (High -> Low)",
+        "sort": "排序",
+        "sortVersionDesc": "版本 (从新到旧)",
+        "sortVersionAsc": "版本 (从新到旧)",
+        "sortLevelAsc": "等级 (从低到高)",
+        "sortLevelDesc": "等级 (从低到高)",
         "level": "等级",
-        "groupBy": "Group By",
-        "noteDesigner": "Note Designer",
+        "groupBy": "分组依据",
+        "noteDesigner": "谱面设计者",
         "groups": {
-          "none": "None",
+          "none": "无",
           "noteDesigner": "谱面设计者",
-          "levelAsc": "Level (Low -> High)",
-          "levelDesc": "Level (High -> Low)",
-          "versionAsc": "Version (Oldest)",
-          "versionDesc": "Version (Latest)",
+          "levelAsc": "等级 (从低到高)",
+          "levelDesc": "等级 (从低到高)",
+          "versionAsc": "版本 (从新到旧)",
+          "versionDesc": "版本 (从新到旧)",
           "genre": "分类",
           "artist": "艺术家"
         }
@@ -536,22 +536,22 @@
       "topSongs": "热门歌曲",
       "averageAchievementByLevel": "等级平均达成率",
       "ratingVsPlayCount": "R 值 vs 游玩次数热力图",
-      "activeUsersOverTime": "Active Users Over Time",
+      "activeUsersOverTime": "活跃用户趋势",
       "xAxis": {
         "rating": "R 值",
         "playCount": "游玩次数",
         "level": "等级",
-        "date": "Date",
-        "days": "Days",
-        "timePeriod": "Time Period",
-        "lastDay": "Last 1 day",
-        "lastDays": "Last {days} days"
+        "date": "日期",
+        "days": "天数",
+        "timePeriod": "时间范围",
+        "lastDay": "过去 1 天",
+        "lastDays": "过去 {days} 天"
       },
       "yAxis": {
         "percentage": "占比",
         "achievement": "达成率",
         "count": "用户数",
-        "activeUsers": "Active Users"
+        "activeUsers": "活跃用户"
       },
       "table": {
         "rank": "排名",
@@ -567,7 +567,7 @@
     }
   },
   "theme": {
-    "description": "Choose a colour theme for the interface.",
+    "description": "选择界面的色彩主题。",
     "groups": {
       "simple": "Simple",
       "amaranth": "Amaranth",
@@ -621,26 +621,26 @@
       "gray-gold": "Gray Gold",
       "gray-pink": "Gray Pink"
     },
-    "title": "Theme"
+    "title": "主题"
   },
   "fetchToast": {
     "header": {
       "pending": "导入数据中...",
-      "completed": "Fetch complete",
-      "failed": "Fetch failed"
+      "completed": "导入完成",
+      "failed": "导入失败"
     },
     "states": {
-      "connecting": "Connecting...",
-      "connected": "Connected",
-      "login": "Logged in",
-      "playerData": "Fetched player data",
-      "songDataBasic": "Fetched BASIC scores",
-      "songDataAdvanced": "Fetched ADVANCED scores",
-      "songDataExpert": "Fetched EXPERT scores",
-      "songDataMaster": "Fetched MASTER scores",
-      "songDataRemaster": "Fetched Re:MASTER scores",
-      "recentSongs": "Fetched recent songs",
-      "hiddenSongs": "Fetched hidden songs"
+      "connecting": "连接中...",
+      "connected": "已连接",
+      "login": "已登录",
+      "playerData": "已导入玩家数据",
+      "songDataBasic": "已导入 BASIC 成绩",
+      "songDataAdvanced": "已导入 ADVANCED 成绩",
+      "songDataExpert": "已导入 EXPERT 成绩",
+      "songDataMaster": "已导入 MASTER 成绩",
+      "songDataRemaster": "已导入 Re:MASTER 成绩",
+      "recentSongs": "已导入最近游玩记录",
+      "hiddenSongs": "已导入隐藏歌曲"
     }
   }
 }
