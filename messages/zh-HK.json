@@ -22,7 +22,7 @@
     "stars": "星星數",
     "plays": "遊玩次數",
     "total": "總計",
-    "theme": "Theme",
+    "theme": "主題",
     "invitations": "邀請",
     "discord": "Discord",
     "about": "關於",
@@ -166,7 +166,8 @@
       "plates": "名牌板",
       "map": "活動地圖",
       "exportImage": "匯出圖片",
-      "history": "歷史紀錄"
+      "history": "歷史紀錄",
+      "developer": "Developer"
     },
     "playerInfo": "玩家資訊",
     "rating": "Rating：{rating}",
@@ -205,6 +206,11 @@
       "ratingOverTime": "Rating 變化趨勢",
       "noHistory": "暫無歷史紀錄",
       "needMoreData": "至少匯入兩次資料才能檢視歷史紀錄"
+    },
+    "developer": {
+      "title": "Developer",
+      "exportJson": "Export Snapshot as JSON",
+      "exporting": "Exporting..."
     }
   },
   "recommendations": {
@@ -615,7 +621,7 @@
       "gray-gold": "Gray Gold",
       "gray-pink": "Gray Pink"
     },
-    "title": "Theme"
+    "title": "主題"
   },
   "fetchToast": {
     "header": {
