@@ -166,7 +166,8 @@
       "plates": "ネームプレート",
       "map": "ちほー",
       "exportImage": "エクスポート",
-      "history": "履歴"
+      "history": "履歴",
+      "developer": "Developer"
     },
     "playerInfo": "プレイヤー情報",
     "rating": "レート値：{rating}",
@@ -205,6 +206,11 @@
       "ratingOverTime": "レート値の推移",
       "noHistory": "レート値の履歴がありません",
       "needMoreData": "履歴を表示するには、少なくとも2回データを取得してください"
+    },
+    "developer": {
+      "title": "Developer",
+      "exportJson": "Export Snapshot as JSON",
+      "exporting": "Exporting..."
     }
   },
   "recommendations": {
