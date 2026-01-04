@@ -166,7 +166,8 @@
       "plates": "네임플레이트",
       "map": "지방(Chiho)",
       "exportImage": "이미지 내보내기",
-      "history": "기록"
+      "history": "기록",
+      "developer": "Developer"
     },
     "playerInfo": "플레이어 정보",
     "rating": "레이팅: {rating}",
@@ -205,6 +206,11 @@
       "ratingOverTime": "레이팅 추이",
       "noHistory": "레이팅 기록이 없습니다",
       "needMoreData": "기록을 보려면 데이터를 최소 2회 이상 가져와야 합니다"
+    },
+    "developer": {
+      "title": "Developer",
+      "exportJson": "Export Snapshot as JSON",
+      "exporting": "Exporting..."
     }
   },
   "recommendations": {
