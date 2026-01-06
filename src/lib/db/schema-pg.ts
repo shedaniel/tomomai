@@ -12,6 +12,7 @@ import {
   EVENT_TYPE_ENUM,
   EVENT_STATE_ENUM,
   STORE_STATUS_ENUM,
+  TITLE_TYPE_ENUM,
 } from "./types";
 
 // PostgreSQL enum types
@@ -27,6 +28,7 @@ export const fetchStatusEnum = pgEnum("fetch_status", FETCH_STATUS_ENUM);
 export const eventTypeEnum = pgEnum("event_type", EVENT_TYPE_ENUM);
 export const eventStateEnum = pgEnum("event_state", EVENT_STATE_ENUM);
 export const storeStatusEnum = pgEnum("store_status", STORE_STATUS_ENUM);
+export const titleTypeEnum = pgEnum("title_type", TITLE_TYPE_ENUM);
 
 // Existing auth tables
 export const user = pgTable("user", {
@@ -150,6 +152,7 @@ export const userSnapshots = pgTable("user_snapshots", {
   iconUrl: text("iconUrl").notNull(),
   displayName: varchar("displayName", { length: 16 }).notNull(),
   title: text("title").notNull(),
+  titleType: titleTypeEnum("titleType").notNull().default("normal"),
 }, (table) => [
   index("user_snapshots_publicid_idx").on(table.publicId),
   index("user_snapshots_userid_region_idx").on(table.userId, table.region),

@@ -1,4 +1,24 @@
 import { getCachedImageBuffer } from "./image_cacher";
+import { FontLibrary } from 'skia-canvas';
+import path from 'path';
+
+// Load fonts once at module initialization
+export const fontsLoaded = (async () => {
+  const startTime = Date.now();
+  try {
+    const fontsDir = path.join(process.cwd(), 'public', 'res', 'fonts');
+
+    FontLibrary.use('FOT-NewRodin Pro', [path.join(fontsDir, 'FOT-NewRodin Pro EB.woff2')]);
+    FontLibrary.use('Inter', [path.join(fontsDir, 'Inter-VariableFont_opsz,wght.woff2')]);
+    FontLibrary.use('Murecho', [path.join(fontsDir, 'Murecho-VariableFont_wght.woff2')]);
+    FontLibrary.use('Noto Sans JP', [path.join(fontsDir, 'NotoSansJP-VariableFont_wght.woff2')]);
+    FontLibrary.use('Geist Mono', [path.join(fontsDir, 'GeistMono-VariableFont_wght.woff2')]);
+
+    console.log(`✅ Fonts loaded successfully in ${Date.now() - startTime}ms`);
+  } catch (error) {
+    console.error('❌ Failed to load fonts:', error);
+  }
+})();
 
 // Server-only function for fetching images with Node.js modules
 export async function fetchImageForServer(url: string): Promise<string> {

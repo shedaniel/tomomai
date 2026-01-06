@@ -1,31 +1,14 @@
 import { db } from '@/lib/db';
 import { getRatingImageUrl, splitSongs } from '@/lib/rating-calculator';
 import { ImageCache, renderImage, SongForRender } from '@/lib/render-image';
-import { fetchImageForServer } from '@/lib/render-image-server';
+import { fetchImageForServer, fontsLoaded } from '@/lib/render-image-server';
 import { songs, user, userScores, userSnapshots } from '@/lib/db/schema-pg';
 import type { SnapshotWithSongs } from '@/lib/types';
 import { eq } from 'drizzle-orm';
 import { NextRequest, NextResponse } from 'next/server';
-import { FontLibrary, Image, loadImage } from 'skia-canvas';
-import path from 'path';
+import { Image, loadImage } from 'skia-canvas';
 
 export const dynamic = "force-dynamic";
-
-// Load fonts once at module initialization
-const fontsLoaded = (async () => {
-  try {
-    const fontsDir = path.join(process.cwd(), 'public', 'res', 'fonts');
-
-    FontLibrary.use('Inter', [path.join(fontsDir, 'Inter-VariableFont_opsz,wght.woff2')]);
-    FontLibrary.use('Murecho', [path.join(fontsDir, 'Murecho-VariableFont_wght.woff2')]);
-    FontLibrary.use('Noto Sans JP', [path.join(fontsDir, 'NotoSansJP-VariableFont_wght.woff2')]);
-    FontLibrary.use('Geist Mono', [path.join(fontsDir, 'GeistMono-VariableFont_wght.woff2')]);
-
-    console.log('✅ Fonts loaded successfully');
-  } catch (error) {
-    console.error('❌ Failed to load fonts:', error);
-  }
-})();
 
 async function prepareData(snapshotPublicId: string): Promise<{
   type: "success",
@@ -142,8 +125,10 @@ export async function GET(request: NextRequest) {
       data.snapshot.classRankUrl,
       data.snapshot.courseRankUrl,
       `/res/trophy/normal.png`,
-      `/res/shine/${data.snapshot.gameVersion}.png`,
-      `/res/down/${data.snapshot.gameVersion}.png`,
+      `/res/trophy/bronze.png`,
+      `/res/trophy/silver.png`,
+      `/res/trophy/gold.png`,
+      `/res/trophy/rainbow.png`,
       `/res/character/${data.snapshot.gameVersion}.png`,
       `/res/logo/${data.snapshot.gameVersion}.png`,
       `/res/bg/${data.snapshot.gameVersion}.png`,

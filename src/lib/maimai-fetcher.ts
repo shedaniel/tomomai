@@ -9,7 +9,7 @@ import { FETCH_STATES, getStateForDifficulty } from "./fetch-states";
 import { appendFetchState } from "./fetch-states-server";
 import { normalizeName } from "./name-utils";
 import { splitSongs } from "./rating-calculator";
-import { Region, SongType, SongWithScore } from "./types";
+import { Region, SongType, SongWithScore, TitleType } from "./types";
 import { decryptToken, encryptToken } from "./token-crypto";
 import { logger } from "./logger";
 
@@ -1193,14 +1193,13 @@ async function fetchHiddenSongsData(cookies: string, allSongsData: { [difficulty
   return hiddenSongs;
 }
 
-
-
 interface PlayerData {
   iconUrl: string;
   iconBase64: string;
   displayName: string;
   rating: number;
   title: string;
+  titleType: TitleType;
   stars: number;
   versionPlayCount: number;
   totalPlayCount: number;
@@ -1516,13 +1515,29 @@ async function extractPlayerData(region: Region, html: string, cookies: string):
   }
   logger.debug(`Extracted rating: ${rating}`);
 
-  // Extract title
+  // Extract title and trophy type
   const titleElement = block.find('.trophy_block');
   if (titleElement.length === 0) {
     throw new Error("Could not find .trophy_block in player data");
   }
   const title = titleElement.text().trim();
   logger.debug(`Extracted title: ${title}`);
+
+  // Extract trophy type from class (e.g., trophy_Gold -> gold)
+  const titleElementClass = titleElement.attr('class') || '';
+  let titleType: TitleType = "normal";
+  if (titleElementClass.includes('trophy_Rainbow')) {
+    titleType = "rainbow";
+  } else if (titleElementClass.includes('trophy_Gold')) {
+    titleType = "gold";
+  } else if (titleElementClass.includes('trophy_Silver')) {
+    titleType = "silver";
+  } else if (titleElementClass.includes('trophy_Bronze')) {
+    titleType = "bronze";
+  } else if (titleElementClass.includes('trophy_Normal')) {
+    titleType = "normal";
+  }
+  logger.debug(`Extracted trophy type: ${titleType}`);
 
   // Extract stars
   const starsElement = block.find('.p_l_10.f_l.f_14');
@@ -1594,6 +1609,7 @@ async function extractPlayerData(region: Region, html: string, cookies: string):
     displayName,
     rating,
     title,
+    titleType,
     stars,
     versionPlayCount,
     totalPlayCount,
@@ -1653,6 +1669,7 @@ async function createUserSnapshot(
     iconUrl: playerData.iconBase64,
     displayName: playerData.displayName,
     title: playerData.title,
+    titleType: playerData.titleType,
   }).returning({ id: userSnapshots.id });
 
   logger.info(`User snapshot created successfully with internal ID: ${inserted.id}`);

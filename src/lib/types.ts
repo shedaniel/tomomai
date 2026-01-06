@@ -79,6 +79,7 @@ export interface EventData {
 export interface SnapshotWithSongs<S = SongWithScore> {
   snapshot: Snapshot & {
     title: string;
+    titleType: TitleType;
     iconUrl: string;
   };
   songs: S[];
@@ -122,6 +123,8 @@ export type SongType = "std" | "dx";
 export type FullCombo = "none" | "fc" | "fc+" | "ap" | "ap+";
 
 export type FullSync = "none" | "sync" | "fs" | "fs+" | "fdx" | "fdx+";
+
+export type TitleType = "normal" | "bronze" | "silver" | "gold" | "rainbow";
 
 export type FetchSessionStatus = "pending" | "completed" | "failed";
 

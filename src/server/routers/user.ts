@@ -2,7 +2,7 @@ import { db } from '@/lib/db';
 import { createOpaqueUserId, generateUserOtp, getOtpExpiryTimestamp } from '@/lib/otp';
 import { resolveBaseUrl } from '@/lib/base-url';
 import { getFetchStatusServer, startFetchServer } from '@/lib/maimai-server-actions';
-import { getAvailableVersions, getVersionInfo, VERSIONS } from '@/lib/metadata';
+import { getVersionInfo, VERSIONS } from '@/lib/metadata';
 import { RatingCalculationInput, splitSongs } from '@/lib/rating-calculator';
 import { invites, songs, user, userScores, userSnapshots, userEvents, userRecentSongs, userRecentSongsDetailed, stores, storeEdits, storeEditVotes } from '@/lib/db/schema-pg';
 import { protectedProcedure, publicProcedure, router } from '@/lib/trpc';

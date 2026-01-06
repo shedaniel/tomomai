@@ -2,7 +2,7 @@ import { DataContent } from "@/components/data-content";
 import { PublicDataBanner } from "@/components/public-data-banner";
 import { Header } from "@/components/header";
 import { defaultFlags } from "@/lib/flags";
-import { Difficulty, ProfileData, Region, SnapshotWithSongs, SongWithScore } from "@/lib/types";
+import { Difficulty, ProfileData, Region, SnapshotWithSongs, SongWithScore, TitleType } from "@/lib/types";
 
 interface SnapshotData {
   snapshot: {
@@ -18,6 +18,7 @@ interface SnapshotData {
     totalPlayCount: number;
     iconUrl: string;
     title: string;
+    titleType: TitleType;
   };
   songs: Array<{
     songId: string;
