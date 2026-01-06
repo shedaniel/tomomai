@@ -277,6 +277,8 @@ export async function GET(request: NextRequest) {
     // Parse query parameters
     const region = request.nextUrl.searchParams.get('region') as 'intl' | 'jp' | null;
     const beforeDateStr = request.nextUrl.searchParams.get('beforeDate');
+    const scaleParam = request.nextUrl.searchParams.get('scale');
+    const scale = scaleParam === '1' ? 1 : 2; // Accept 1 or 2, default to 2
 
     if (!region || (region !== 'intl' && region !== 'jp')) {
       return NextResponse.json({ error: 'Valid region (intl or jp) is required' }, { status: 400 });
@@ -287,7 +289,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid beforeDate format' }, { status: 400 });
     }
 
-    console.log(`Region: ${region}, beforeDate: ${beforeDate?.toISOString() ?? 'none'}`);
+    console.log(`Region: ${region}, beforeDate: ${beforeDate?.toISOString() ?? 'none'}, scale: ${scale}`);
 
     const prepareDataResult = await prepareData(userId, region, beforeDate);
     if (prepareDataResult.type === "error") {
@@ -328,6 +330,7 @@ export async function GET(request: NextRequest) {
       `/res/numbers/score_big_blue.png`,
       `/res/numbers/score_big_red.png`,
       `/res/numbers/score_big_gold.png`,
+      `/res/songs/score_table.png`,
       ...Object.values(DIFFICULTY_ENUM).map(difficulty => `/res/songs/song_${difficulty}.png`),
       ...Object.values(DIFFICULTY_ENUM).map(difficulty => `/res/songs/music_jacket_${difficulty}.png`),
       ...credit.tracks.map(s => s.cover),
@@ -354,7 +357,7 @@ export async function GET(request: NextRequest) {
     const canvas = await renderLastCreditImage(credit, snapshot, cache);
 
     // Convert canvas to JPEG buffer and return
-    const buffer = await canvas.toBuffer('jpeg', { density: 2, quality: 0.7 });
+    const buffer = await canvas.toBuffer('jpeg', { density: scale, quality: 0.7 });
     return new Response(new Uint8Array(buffer), {
       status: 200,
       headers: {

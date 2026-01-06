@@ -4,8 +4,7 @@ import { CANVAS_HEIGHT, CANVAS_WIDTH } from './image-spec';
 import { getRatingImageUrl, RatingCalculationInput, splitSongs } from "./rating-calculator";
 import type { Difficulty, FullSync, SongType, TitleType } from "./types";
 import { SnapshotWithSongs } from "./types";
-import { CreditData, LastCreditPrepareResult, RecentSongData, SnapshotMetadata } from '@/app/api/last-credit/route';
-import { TrackedData } from '@trpc/server/unstable-core-do-not-import';
+import { CreditData, RecentSongData, SnapshotMetadata } from '@/app/api/last-credit/route';
 
 export interface SongForRender extends RatingCalculationInput {
   songName: string;
@@ -583,25 +582,28 @@ async function renderTrack(
   const jacketWidth = jacket.width * jacketScale;
   const jacketHeight = jacket.height * jacketScale;
 
-  const yPad = 80;
-  const xGap = 10, yGap = 60;
+  const yPad = 30;
+  const xGap = 10, yGap = 350;
   const totalWidth = jacketWidth + xGap + baseWidth;
 
-  ctx.drawImage(jacket, (overlayRect.left + overlayRect.width / 2 - totalWidth / 2), overlayRect.top + yPad + (baseHeight + yGap) * index, jacketWidth, jacketHeight);
-  ctx.drawImage(base, (overlayRect.left + overlayRect.width / 2 - totalWidth / 2 + jacketWidth + xGap), overlayRect.top + yPad + (baseHeight + yGap) * index, baseWidth, baseHeight);
+  const leftStart = overlayRect.left + overlayRect.width / 2 - totalWidth / 2;
+  const topStart = overlayRect.top + yPad + (baseHeight + yGap) * index;
+
+  ctx.drawImage(jacket, (leftStart), topStart, jacketWidth, jacketHeight);
+  ctx.drawImage(base, (leftStart + jacketWidth + xGap), topStart, baseWidth, baseHeight);
 
   // cover needs to scale to 214/288 of the size of the jacket
   const cover = await loadImageWithCache(cache, track.cover);
   const coverWidth = jacketWidth * 214 / jacket.width;
   const coverHeight = jacketHeight * 214 / jacket.height;
 
-  ctx.drawImage(cover, (overlayRect.left + overlayRect.width / 2 - totalWidth / 2 + jacketWidth * 35 / jacket.width), overlayRect.top + yPad + (baseHeight + yGap) * index + jacketHeight * 38 / jacket.height, coverWidth, coverHeight);
+  ctx.drawImage(cover, (leftStart + jacketWidth * 35 / jacket.width), topStart + jacketHeight * 38 / jacket.height, coverWidth, coverHeight);
 
   ctx.save();
   ctx.font = "600 24px \"FOT-NewRodin Pro\"";
   ctx.fillStyle = "#FFFFFF";
   const songNameWidth = ctx.measureText(track.songName).width;
-  ctx.fillText(track.songName, overlayRect.left + overlayRect.width / 2 - totalWidth / 2 + jacketWidth + xGap + baseWidth / 2 - songNameWidth / 2, overlayRect.top + yPad + (baseHeight + yGap) * index + baseHeight * 0.46);
+  ctx.fillText(track.songName, leftStart + jacketWidth + xGap + baseWidth / 2 - songNameWidth / 2, topStart + baseHeight * 0.46);
   ctx.restore();
 
   // Format achievement as xxx.xxxx
@@ -641,8 +643,8 @@ async function renderTrack(
     return width;
   })() + percentage.width * percentageScale;
 
-  let achievementX = overlayRect.left + overlayRect.width / 2 - totalWidth / 2 + jacketWidth + xGap + baseWidth / 2 - totalAchievementWidth / 2;
-  let achievementY = overlayRect.top + yPad + (baseHeight + yGap) * index + baseHeight * 0.62;
+  let achievementX = leftStart + jacketWidth + xGap + baseWidth / 2 - totalAchievementWidth / 2;
+  let achievementY = topStart + baseHeight * 0.62;
   let passedDot = false;
   for (const [i, char] of achievementText.split("").entries()) {
     passedDot = char === "." || passedDot;
@@ -660,7 +662,16 @@ async function renderTrack(
   // Draw type
   const type = await loadImageWithCache(cache, `https://maimaidx.jp/maimai-mobile/img/music_${track.type}.png`);
   const typeScale = 0.9;
-  ctx.drawImage(type, overlayRect.left + overlayRect.width / 2 - totalWidth / 2 + jacketWidth + xGap + baseWidth * 0.67, overlayRect.top + yPad + (baseHeight + yGap) * index + baseHeight * 0.22, type.width * typeScale, type.height * typeScale);
+  ctx.drawImage(type, leftStart + jacketWidth + xGap + baseWidth * 0.67, topStart + baseHeight * 0.22, type.width * typeScale, type.height * typeScale);
+
+  // Draw table
+  const table = await loadImageWithCache(cache, `/res/songs/score_table.png`);
+  const tableScale = 0.8;
+  ctx.save();
+  ctx.shadowColor = '#00000050';
+  ctx.shadowBlur = 10;
+  ctx.drawImage(table, leftStart + 10, topStart + baseHeight + 10, table.width * tableScale, table.height * tableScale);
+  ctx.restore();
 }
 
 async function getScoreTextSize(cache: ImageCache, color: string) {

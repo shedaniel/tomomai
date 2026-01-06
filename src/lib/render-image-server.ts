@@ -2,6 +2,35 @@ import { getCachedImageBuffer } from "./image_cacher";
 import { FontLibrary } from 'skia-canvas';
 import path from 'path';
 
+// In-memory cache for fetched images
+const imageCache = new Map<string, { data: string; timestamp: number }>();
+const MAX_CACHE_SIZE = 500; // Maximum number of cached images
+const CACHE_TTL = 1000 * 60 * 60; // 1 hour TTL
+
+// Clean up old cache entries
+function cleanupCache() {
+  if (imageCache.size <= MAX_CACHE_SIZE) return;
+  
+  const now = Date.now();
+  const entries = Array.from(imageCache.entries());
+  
+  // Remove expired entries first
+  for (const [key, value] of entries) {
+    if (now - value.timestamp > CACHE_TTL) {
+      imageCache.delete(key);
+    }
+  }
+  
+  // If still over limit, remove oldest entries
+  if (imageCache.size > MAX_CACHE_SIZE) {
+    const sorted = entries.sort((a, b) => a[1].timestamp - b[1].timestamp);
+    const toRemove = sorted.slice(0, imageCache.size - MAX_CACHE_SIZE);
+    for (const [key] of toRemove) {
+      imageCache.delete(key);
+    }
+  }
+}
+
 // Load fonts once at module initialization
 export const fontsLoaded = (async () => {
   const startTime = Date.now();
@@ -22,6 +51,12 @@ export const fontsLoaded = (async () => {
 
 // Server-only function for fetching images with Node.js modules
 export async function fetchImageForServer(url: string): Promise<string> {
+  // Check in-memory cache first
+  const cached = imageCache.get(url);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    return cached.data;
+  }
+
   try {
     let finalUrl = url;
 
@@ -74,7 +109,13 @@ export async function fetchImageForServer(url: string): Promise<string> {
       contentType = response.headers.get('content-type') || 'image/png';
     }
 
-    return `data:${contentType};base64,${buffer.toString('base64')}`;
+    const dataUrl = `data:${contentType};base64,${buffer.toString('base64')}`;
+    
+    // Store in cache
+    imageCache.set(url, { data: dataUrl, timestamp: Date.now() });
+    cleanupCache();
+    
+    return dataUrl;
   } catch (error) {
     console.error('Error loading image for server-side rendering:', error);
     throw error;

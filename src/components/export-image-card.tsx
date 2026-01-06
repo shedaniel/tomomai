@@ -6,7 +6,7 @@ import { CANVAS_HEIGHT, CANVAS_WIDTH } from "@/lib/image-spec";
 import { Region, SnapshotWithSongs } from "@/lib/types";
 import { Download, RefreshCw } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useRef, useState } from "react";
+import { useState } from "react";
 
 interface ImagePanelProps {
   imageUrl: string;
@@ -16,6 +16,7 @@ interface ImagePanelProps {
   title: string;
   fileName: string;
   onRefresh: () => void;
+  onRefreshFast?: () => void;
   onLoad: () => void;
 }
 
@@ -27,9 +28,11 @@ function ImagePanel({
   title,
   fileName,
   onRefresh,
+  onRefreshFast,
   onLoad,
 }: ImagePanelProps) {
   const [downloading, setDownloading] = useState(false);
+  const isDev = process.env.NODE_ENV === 'development';
 
   const handleDownload = async () => {
     try {
@@ -75,6 +78,12 @@ function ImagePanel({
           <RefreshCw className="h-4 w-4" />
           Refresh
         </Button>
+        {isDev && onRefreshFast && (
+          <Button onClick={onRefreshFast} variant="outline" size="sm" className="flex items-center gap-2">
+            <RefreshCw className="h-4 w-4" />
+            Refresh (Fast)
+          </Button>
+        )}
       </div>
       <div
         className="border rounded-xl overflow-hidden shadow-sm w-full relative"
@@ -137,10 +146,22 @@ export function ExportImageCard({ selectedSnapshotData, region }: ExportImageCar
     setExportImageUrl(`/api/export-image?snapshotId=${selectedSnapshotData.snapshot.id}&t=${Date.now()}`);
   };
 
+  const handleExportRefreshFast = () => {
+    setExportIsLoading(true);
+    setExportImageKey(prev => prev + 1);
+    setExportImageUrl(`/api/export-image?snapshotId=${selectedSnapshotData.snapshot.id}&scale=1&t=${Date.now()}`);
+  };
+
   const handleLastCreditRefresh = () => {
     setLastCreditIsLoading(true);
     setLastCreditImageKey(prev => prev + 1);
     setLastCreditImageUrl(`/api/last-credit?region=${region}&t=${Date.now()}`);
+  };
+
+  const handleLastCreditRefreshFast = () => {
+    setLastCreditIsLoading(true);
+    setLastCreditImageKey(prev => prev + 1);
+    setLastCreditImageUrl(`/api/last-credit?region=${region}&scale=1&t=${Date.now()}`);
   };
 
   return (
@@ -161,6 +182,7 @@ export function ExportImageCard({ selectedSnapshotData, region }: ExportImageCar
             title="Profile Image"
             fileName={`maimai-profile-${selectedSnapshotData.snapshot.displayName || 'export'}.png`}
             onRefresh={handleExportRefresh}
+            onRefreshFast={handleExportRefreshFast}
             onLoad={() => setExportIsLoading(false)}
           />
           <ImagePanel
@@ -171,6 +193,7 @@ export function ExportImageCard({ selectedSnapshotData, region }: ExportImageCar
             title="Last Credit"
             fileName={`maimai-last-credit-${selectedSnapshotData.snapshot.displayName || 'export'}.png`}
             onRefresh={handleLastCreditRefresh}
+            onRefreshFast={handleLastCreditRefreshFast}
             onLoad={() => setLastCreditIsLoading(false)}
           />
         </div>

@@ -4,7 +4,7 @@ import { ImageCache, renderImage, SongForRender } from '@/lib/render-image';
 import { fetchImageForServer, fontsLoaded } from '@/lib/render-image-server';
 import { songs, user, userScores, userSnapshots } from '@/lib/db/schema-pg';
 import type { SnapshotWithSongs } from '@/lib/types';
-import { eq } from 'drizzle-orm';
+import { and, eq, lt } from 'drizzle-orm';
 import { NextRequest, NextResponse } from 'next/server';
 import { Image, loadImage } from 'skia-canvas';
 
@@ -58,7 +58,10 @@ async function prepareData(snapshotPublicId: string): Promise<{
     })
     .from(userScores)
     .innerJoin(songs, eq(userScores.songId, songs.id))
-    .where(eq(userScores.snapshotId, snapshot[0].id))
+    .where(and(
+      eq(userScores.snapshotId, snapshot[0].id),
+      lt(userScores.rank, 50),
+    ))
     .orderBy(songs.songName, songs.difficulty);
 
   const [publishProfile, songsWithScores] = await Promise.all([publishProfilePromise, songsWithScoresPromise]);
@@ -98,7 +101,9 @@ export async function GET(request: NextRequest) {
     await fontsLoaded;
 
     const snapshotId = request.nextUrl.searchParams.get('snapshotId');
-    console.log('📋 Received snapshot ID:', snapshotId);
+    const scaleParam = request.nextUrl.searchParams.get('scale');
+    const scale = scaleParam === '1' ? 1 : 2; // Accept 1 or 2, default to 2
+    console.log('📋 Received snapshot ID:', snapshotId, 'scale:', scale);
 
     if (!snapshotId) {
       console.error('❌ No snapshot ID provided');
@@ -171,9 +176,8 @@ export async function GET(request: NextRequest) {
     // Convert canvas to JPEG buffer
     console.log('💾 Converting to JPEG buffer...');
     startTime = Date.now();
-    const buffer = await canvas.toBuffer('jpeg', {
-      density: 2,
-      quality: 0.7,
+    const buffer = await canvas.toBuffer('webp', {
+      density: scale,
     });
     console.log(`✅ Buffer created, size: ${buffer.length} bytes in ${Date.now() - startTime}ms`);
 
@@ -185,7 +189,7 @@ export async function GET(request: NextRequest) {
       status: 200,
       headers: {
         'Content-Type': 'image/jpeg',
-        'Content-Disposition': `attachment; filename="maimai-profile-${sanitizedName}.png"`,
+        'Content-Disposition': `attachment; filename="maimai-profile-${sanitizedName}.jpeg"`,
         'Content-Length': buffer.length.toString(),
       },
     });
