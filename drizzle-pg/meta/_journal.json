@@ -57,6 +57,20 @@
       "when": 1767567208397,
       "tag": "0007_useful_mister_sinister",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1768221373429,
+      "tag": "0008_nervous_siren",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1768231403224,
+      "tag": "0009_wooden_christian_walker",
+      "breakpoints": true
     }
   ]
 }

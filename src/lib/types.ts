@@ -155,6 +155,7 @@ export interface ProfileSettings {
   profileShowPlayCounts: boolean;
   profileShowEvents: boolean;
   profileShowInSearch: boolean;
+  fetchUseAlbums: boolean | null;
 }
 
 export interface ProfileData {

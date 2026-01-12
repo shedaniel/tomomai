@@ -6,6 +6,7 @@ import { FetchToastContainer } from "@/components/fetch-toast";
 import { SettingsDialog } from "@/components/settings-dialog";
 import { TokenDialog } from "@/components/token-dialog";
 import { UsernameSetupDialog } from "@/components/username-setup-dialog";
+import { AlbumPrivacyDialog } from "@/components/album-privacy-dialog";
 import { useFetchSession } from "@/hooks/useFetchSession";
 import { useSnapshots } from "@/hooks/useSnapshots";
 import { signOut } from "@/lib/auth-client";
@@ -22,7 +23,7 @@ import { InvitesDialog } from "./invites-dialog";
 import { Header } from "./header";
 import { isChinaRegion } from "@/lib/enabled-regions";
 
-type DialogType = null | "token" | "settings" | "username" | "about" | "admin" | "invites" | "experiments";
+type DialogType = null | "token" | "settings" | "username" | "about" | "admin" | "invites" | "experiments" | "albumPrivacy";
 
 interface DashboardProps {
   user: User;
@@ -81,6 +82,9 @@ export function Dashboard({ user, initialUserData, initialProfileSettings, initi
   } = useFetchSession(refreshSnapshots, flags, () => {
     // Called when a token-related error is detected during fetch
     setDialogType("token");
+  }, () => {
+    // Called when album preference not set
+    setDialogType("albumPrivacy");
   });
 
   // Update region mutation
@@ -92,6 +96,24 @@ export function Dashboard({ user, initialUserData, initialProfileSettings, initi
     onError: (error) => {
       toast.error(`Failed to update region: ${error.message}`);
     },
+  });
+
+  // Album preference mutation
+  const setAlbumPreferenceMutation = trpc.user.setAlbumPreference.useMutation({
+    onSuccess: async () => {
+      toast.success("Album preference saved successfully");
+      setDialogType(null);
+
+      // After setting preference, retry the fetch with current selectedRegion
+      try {
+        await startAutomaticFetch(selectedRegion);
+      } catch (error) {
+        // Error will be handled by useFetchSession
+      }
+    },
+    onError: (error) => {
+      toast.error("Failed to save album preference");
+    }
   });
 
   const handleLogout = async () => {
@@ -114,6 +136,7 @@ export function Dashboard({ user, initialUserData, initialProfileSettings, initi
 
   const handleFetchData = async () => {
     try {
+
       await startAutomaticFetch(selectedRegion);
     } catch (error) {
       console.error("Auto fetch failed:", error);
@@ -250,6 +273,15 @@ export function Dashboard({ user, initialUserData, initialProfileSettings, initi
       <InvitesDialog isOpen={dialogType === "invites"} onOpenChange={open => setDialogType(open ? "invites" : null)} />
       <AdminDialog open={dialogType === "admin"} onOpenChange={open => setDialogType(open ? "admin" : null)} />
       <ExperimentsDialog open={dialogType === "experiments"} onOpenChange={open => setDialogType(open ? "experiments" : null)} initialFlags={flags} />
+
+      <AlbumPrivacyDialog
+        open={dialogType === "albumPrivacy"}
+        onOpenChange={open => setDialogType(open ? "albumPrivacy" : null)}
+        onSelectPreference={(fetchUseAlbums) => {
+          setAlbumPreferenceMutation.mutate({ fetchUseAlbums });
+        }}
+        isPending={setAlbumPreferenceMutation.isPending}
+      />
 
       <FetchToastContainer state={fetchToastState} />
     </div>

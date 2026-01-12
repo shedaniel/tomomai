@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { userTokens, userSnapshots, songs, userScores, fetchSessions, userEvents, userRecentSongs, userRecentSongsDetailed } from "./db/schema-pg";
+import { userTokens, userSnapshots, songs, userScores, fetchSessions, userEvents, userRecentSongs, userRecentSongsDetailed, userAlbums } from "./db/schema-pg";
 import { eq, and, or } from "drizzle-orm";
 import { load } from "cheerio";
 import { nanoid } from "nanoid";
@@ -9,9 +9,12 @@ import { FETCH_STATES, getStateForDifficulty } from "./fetch-states";
 import { appendFetchState } from "./fetch-states-server";
 import { normalizeName } from "./name-utils";
 import { splitSongs } from "./rating-calculator";
-import { Region, SongType, SongWithScore, TitleType } from "./types";
+import { FullCombo, FullSync, Region, SongType, SongWithScore, TitleType } from "./types";
 import { decryptToken, encryptToken } from "./token-crypto";
 import { logger } from "./logger";
+import { Difficulty } from "./types";
+import { uploadToR2, deleteFromR2 } from "./r2";
+import { convertJpegToAvif, fetchImageBuffer } from "./image-converter";
 
 export const AGENT = new Agent({
   connect: {
@@ -769,8 +772,8 @@ function parseScoreData(html: string, difficulty: number): ScoreData[] {
       }
 
       // Map difficulty number to difficulty name
-      const difficultyNames = ["basic", "advanced", "expert", "master", "remaster"];
-      const difficultyName = difficultyNames[difficulty] || "unknown";
+      const difficultyNames: Difficulty[] = ["basic", "advanced", "expert", "master", "remaster"];
+      const difficultyName = difficultyNames[difficulty] || "basic";
 
       const scoreData: ScoreData = {
         songName,
@@ -1095,7 +1098,7 @@ async function fetchHiddenSongsData(cookies: string, allSongsData: { [difficulty
   const hiddenSongs: ScoreData[] = [];
 
   // Define difficulty selectors and their corresponding numbers
-  const difficultyInfo = [
+  const difficultyInfo: { selector: string, difficulty: Difficulty, difficultyNumber: number }[] = [
     { selector: ".music_basic_score_back", difficulty: "basic", difficultyNumber: 0 },
     { selector: ".music_advanced_score_back", difficulty: "advanced", difficultyNumber: 1 },
     { selector: ".music_expert_score_back", difficulty: "expert", difficultyNumber: 2 },
@@ -1211,12 +1214,12 @@ interface ScoreData {
   songName: string;
   level: string;
   musicType: SongType;
-  difficulty: string;
+  difficulty: Difficulty;
   difficultyNumber: number;
   achievement: number; // stored as 10000x
   dxScore: number;
-  fc: "none" | "fc" | "fc+" | "ap" | "ap+";
-  fs: "none" | "sync" | "fs" | "fs+" | "fdx" | "fdx+";
+  fc: FullCombo;
+  fs: FullSync;
 }
 
 interface RecentSongData {
@@ -1228,11 +1231,20 @@ interface RecentSongData {
   achievement: number; // stored as 10000x
   dxScore: number;
   maxDxScore: number;
-  fc: "none" | "fc" | "fc+" | "ap" | "ap+";
-  fs: "none" | "sync" | "fs" | "fs+" | "fdx" | "fdx+";
+  fc: FullCombo;
+  fs: FullSync;
   track: number;
   playedAt: Date;
   idx: string; // Form data for playlog detail page
+}
+
+interface AlbumData {
+  songName: string;
+  musicType: SongType;
+  difficulty: Difficulty;
+  takenAt: Date;
+  imageUrl: string;
+  venue: string | null;
 }
 
 async function fetchEventsData(cookies: string, region: Region, sessionId: bigint): Promise<{ areaEvents: EventData[], eventAreaEvents: EventAreaData[] }> {
@@ -2171,6 +2183,235 @@ async function fetchAndInsertRecentSongsData(
   logger.info(`Completed detailed recent songs data fetch for user ${userId}`);
 }
 
+const MAX_STORAGE_BYTES = 25 * 1024 * 1024; // 25 MB
+
+async function enforceStorageLimit(userId: string): Promise<void> {
+  const userAlbumsList = await db.query.userAlbums.findMany({
+    where: eq(userAlbums.userId, userId),
+    orderBy: [userAlbums.createdAt],
+    columns: { id: true, imageKey: true, imageSize: true },
+  });
+
+  let totalSize = userAlbumsList.reduce((sum, a) => sum + a.imageSize, 0);
+
+  if (totalSize <= MAX_STORAGE_BYTES) {
+    logger.debug(`User ${userId} storage: ${totalSize} bytes (within 25MB limit)`);
+    return;
+  }
+
+  logger.info(`User ${userId} storage: ${totalSize} bytes (exceeds 25MB limit), cleaning up...`);
+
+  for (const album of userAlbumsList) {
+    if (totalSize <= MAX_STORAGE_BYTES) {
+      break;
+    }
+
+    try {
+      await deleteFromR2(album.imageKey);
+      logger.debug(`Deleted R2 object: ${album.imageKey}`);
+    } catch (error) {
+      logger.error(error, `Failed to delete R2 object: ${album.imageKey}`);
+    }
+
+    await db.delete(userAlbums).where(eq(userAlbums.id, album.id));
+    totalSize -= album.imageSize;
+    logger.info(`Deleted album ${album.id}, freed ${album.imageSize} bytes`);
+  }
+
+  logger.info(`User ${userId} storage cleanup complete: ${totalSize} bytes remaining`);
+}
+
+async function fetchAndInsertAlbumData(
+  userId: string,
+  region: Region,
+  cookies: string,
+  albumData: AlbumData[]
+): Promise<void> {
+  if (albumData.length === 0) {
+    logger.debug("No album data to process");
+    return;
+  }
+
+  logger.info(`Processing ${albumData.length} albums for user ${userId}`);
+
+  const existingAlbums = await db.query.userAlbums.findMany({
+    where: eq(userAlbums.userId, userId),
+    columns: { takenAt: true },
+  });
+
+  const existingTakenAt = new Set(existingAlbums.map(a => a.takenAt.getTime()));
+
+  const gameVersion = getCurrentVersion(region);
+  const { songLookup } = await buildSongLookupMaps(region, gameVersion);
+
+  const albumInserts: typeof userAlbums.$inferInsert[] = [];
+  const albumsToUpload: Array<AlbumData & { songId: bigint }> = [];
+
+  for (const album of albumData) {
+    if (existingTakenAt.has(album.takenAt.getTime())) {
+      logger.debug(`Skipping duplicate album: ${album.songName} at ${album.takenAt.toISOString()}`);
+      continue;
+    }
+
+    const lookupKey = `${album.songName}|${album.difficulty}|${album.musicType}`;
+    const songId = songLookup.get(lookupKey);
+
+    if (!songId) {
+      logger.warn(`Could not find song: ${album.songName} (${album.difficulty}, ${album.musicType})`);
+      continue;
+    }
+
+    albumsToUpload.push({ ...album, songId });
+  }
+
+  logger.info(`${albumsToUpload.length} new albums to upload`);
+
+  for (const album of albumsToUpload) {
+    try {
+      const jpegBuffer = await fetchImageBuffer(album.imageUrl, cookies);
+      const avifBuffer = await convertJpegToAvif(jpegBuffer, 80);
+      const { key, size } = await uploadToR2(avifBuffer, "image/avif");
+
+      albumInserts.push({
+        userId,
+        songId: album.songId,
+        takenAt: album.takenAt,
+        venue: album.venue,
+        imageKey: key,
+        imageSize: size,
+      });
+
+      logger.debug(`Uploaded album: ${album.songName} -> ${key}`);
+    } catch (error) {
+      logger.error(error, `Failed to process album: ${album.songName}`);
+    }
+  }
+
+  if (albumInserts.length > 0) {
+    await db.insert(userAlbums).values(albumInserts);
+    logger.info(`Inserted ${albumInserts.length} album records`);
+  }
+
+  await enforceStorageLimit(userId);
+}
+
+async function fetchAlbumData(cookies: string, region: Region): Promise<AlbumData[]> {
+  const baseUrl = region === "jp" ? "https://maimaidx.jp" : "https://maimaidx-eng.com";
+  const albumUrl = `${baseUrl}/maimai-mobile/playerData/photo/`;
+  logger.info(`Fetching album data from: ${albumUrl}`);
+
+  const albumResponse = await fetch(albumUrl, {
+    method: "GET",
+    headers: {
+      "Cookie": cookies,
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+      "Referer": `${baseUrl}/maimai-mobile/`,
+    },
+    ...{ dispatcher: AGENT },
+  });
+
+  logger.debug(`Album data response status: ${albumResponse.status}`);
+
+  if (albumResponse.status !== 200) {
+    throw new Error(`Failed to fetch album data: HTTP ${albumResponse.status}`);
+  }
+
+  const albumHtml = await albumResponse.text();
+  logger.debug(`Album data fetched successfully, length: ${albumHtml.length} characters`);
+
+  const $ = load(albumHtml);
+  const albums: AlbumData[] = [];
+
+  const blocks = $(".m_10.p_5.f_0");
+  logger.debug(`Found ${blocks.length} album blocks`);
+
+  blocks.each((index, element) => {
+    try {
+      const block = $(element);
+
+      const songNameBlock = block.find(".black_block");
+      if (songNameBlock.length === 0) {
+        logger.warn(`No song name block found for album ${index}`);
+        return;
+      }
+      const songName = normalizeName(songNameBlock.text().trim());
+      if (!songName) {
+        logger.warn(`Could not extract song name for album ${index}`);
+        return;
+      }
+
+      const musicKindIcon = block.find(".music_kind_icon");
+      let musicType: SongType = "std";
+      if (musicKindIcon.length > 0) {
+        const iconSrc = musicKindIcon.attr("src") || "";
+        if (iconSrc.includes("music_dx.png")) {
+          musicType = "dx";
+        } else if (iconSrc.includes("music_standard.png")) {
+          musicType = "std";
+        }
+      }
+
+      const diffElement = block.find(".p_r");
+      const diffClassName = diffElement.attr("class") || "";
+      let difficulty: "basic" | "advanced" | "expert" | "master" | "remaster" = "basic";
+
+      if (diffClassName.includes("remaster")) {
+        difficulty = "remaster";
+      } else if (diffClassName.includes("master")) {
+        difficulty = "master";
+      } else if (diffClassName.includes("expert")) {
+        difficulty = "expert";
+      } else if (diffClassName.includes("advanced")) {
+        difficulty = "advanced";
+      } else if (diffClassName.includes("basic")) {
+        difficulty = "basic";
+      }
+
+      const blockInfo = block.find(".block_info");
+      const takenAtText = blockInfo.text().trim();
+      const takenAtMatch = takenAtText.match(/(\d{4})\/(\d{2})\/(\d{2})\s+(\d{2}):(\d{2})/);
+      if (!takenAtMatch) {
+        logger.warn(`Could not parse takenAt from: ${takenAtText} for album ${index}`);
+        return;
+      }
+      const [, year, month, day, hour, minute] = takenAtMatch;
+      const takenAt = new Date(`${year}-${month}-${day}T${hour}:${minute}:00+09:00`);
+
+      const imageElement = block.find("img.w_430");
+      let imageUrl = "";
+      if (imageElement.length > 0) {
+        const imageSrc = imageElement.attr("src");
+        if (imageSrc) {
+          imageUrl = imageSrc.startsWith("http") ? imageSrc : `${baseUrl}${imageSrc}`;
+        }
+      }
+      if (!imageUrl) {
+        logger.warn(`Could not extract image URL for album ${index}`);
+        return;
+      }
+
+      const venueBlock = block.find(".see_through_block");
+      const venue = venueBlock.length > 0 ? venueBlock.text().trim() || null : null;
+
+      albums.push({
+        songName,
+        musicType,
+        difficulty,
+        takenAt,
+        imageUrl,
+        venue,
+      });
+
+      logger.debug(`Extracted album ${index}: ${songName} (${difficulty}, ${musicType}) at ${takenAt.toISOString()}`);
+    } catch (error) {
+      logger.error(error, `Error processing album block ${index}`);
+    }
+  });
+
+  logger.info(`Successfully extracted ${albums.length} albums`);
+  return albums;
+}
+
 async function insertUserEvents(
   snapshotId: bigint,
   areaEvents: EventData[],
@@ -2227,7 +2468,8 @@ export async function fetchMaimaiData(
   userId: string,
   region: Region,
   sessionId: bigint,
-  flags: string[] = []
+  flags: string[] = [],
+  shouldFetchAlbums: boolean = false
 ): Promise<void> {
   // Get the user's token from database
   const tokenRecord = await db.query.userTokens.findFirst({
@@ -2270,7 +2512,7 @@ export async function fetchMaimaiData(
 
     // Extract player data and fetch songs data concurrently
     logger.info("Starting player data extraction and songs data fetch...");
-    const [playerData, allSongsData, recentSongsData] = await Promise.all([
+    const [playerData, allSongsData, recentSongsData, albumData] = await Promise.all([
       // Extract player data from HTML and track progress
       extractPlayerData(region, playerDataHtml, cookies).then((data) => {
         appendFetchState(sessionId, FETCH_STATES.PLAYER_DATA); // Fire and forget
@@ -2281,6 +2523,11 @@ export async function fetchMaimaiData(
       // Fetch recent songs data
       fetchRecentSongsData(cookies, region, sessionId).then((data) => {
         appendFetchState(sessionId, FETCH_STATES.RECENT_SONGS); // Fire and forget
+        return data;
+      }),
+      // Fetch album data
+      fetchAlbumData(cookies, region).then((data) => {
+        appendFetchState(sessionId, FETCH_STATES.ALBUM_DATA); // Fire and forget
         return data;
       })
     ]);
@@ -2361,6 +2608,16 @@ export async function fetchMaimaiData(
       fetchAndInsertRecentSongsData(userId, region, cookies, recentSongsData).catch((error) => {
         logger.error(error, "Failed to fetch detailed recent songs data");
       });
+    }
+
+    // Fire and forget: Fetch album data in background (only if user opted in)
+    if (shouldFetchAlbums && albumData.length > 0) {
+      logger.info("Starting album data fetch in background...");
+      fetchAndInsertAlbumData(userId, region, cookies, albumData).catch((error) => {
+        logger.error(error, "Failed to fetch album data");
+      });
+    } else if (!shouldFetchAlbums && albumData.length > 0) {
+      logger.info(`Skipping album fetch: user opted out (found ${albumData.length} albums)`);
     }
 
   } catch (error) {

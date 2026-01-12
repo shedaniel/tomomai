@@ -55,6 +55,8 @@ export const user = pgTable("user", {
   profileShowPlayCounts: boolean("profileShowPlayCounts").notNull().default(true),
   profileShowEvents: boolean("profileShowEvents").notNull().default(true),
   profileShowInSearch: boolean("profileShowInSearch").notNull().default(true),
+  // Fetch settings
+  fetchUseAlbums: boolean("fetchUseAlbums"),
 }, (table) => [
   check("username_pattern", sql`${table.username} IS NULL OR (length(${table.username}) >= 1 AND ${table.username} ~ '^[a-zA-Z0-9_-]+$')`),
 ]);
@@ -325,4 +327,18 @@ export const storeEditVotes = pgTable("store_edit_votes", {
 }, (table) => [
   unique("store_edit_votes_userid_editid_unique").on(table.userId, table.editId),
   index("store_edit_votes_editid_idx").on(table.editId),
+]);
+
+export const userAlbums = pgTable("user_albums", {
+  id: bigint("id", { mode: "bigint" }).primaryKey().generatedAlwaysAsIdentity(),
+  userId: text("userId").notNull().references(() => user.id, { onDelete: "cascade" }),
+  songId: bigint("songId", { mode: "bigint" }).notNull().references(() => songs.id),
+  takenAt: timestamp("takenAt", { precision: 0 }).notNull(),
+  venue: text("venue"),
+  imageKey: text("imageKey").notNull(),
+  imageSize: integer("imageSize").notNull(),
+  createdAt: timestamp("createdAt", { precision: 0 }).notNull().defaultNow(),
+}, (table) => [
+  index("user_albums_userid_takenat_idx").on(table.userId, table.takenAt.desc()),
+  index("user_albums_songid_idx").on(table.songId),
 ]);

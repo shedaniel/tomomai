@@ -7,6 +7,7 @@ export interface Flags {
   statsCard: boolean;
   platesCard: boolean;
   eventsCard: boolean;
+  albumsCard: boolean;
 }
 
 export interface FlagDefinition {
@@ -30,6 +31,8 @@ export const useFlags = async (): Promise<Flags> => {
     platesCard: await usePlatesCard(),
     // eslint-disable-next-line react-hooks/rules-of-hooks
     eventsCard: await useEventsCard(),
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    albumsCard: await useAlbumsCard(),
   };
 }
 
@@ -69,6 +72,12 @@ export const flagDefinitions: Record<keyof Flags, FlagDefinition> = {
     defaultValue: false,
     userSelectable: true,
     decide: async () => false,
+  },
+  albumsCard: {
+    key: "albumsCard",
+    defaultValue: true,
+    userSelectable: true,
+    decide: async () => true,
   },
 };
 
@@ -119,6 +128,14 @@ export const useEventsCard = flag<boolean>({
   defaultValue: false,
   async decide() {
     return false;
+  },
+});
+
+export const useAlbumsCard = flag<boolean>({
+  key: "albumsCard",
+  defaultValue: true,
+  async decide() {
+    return true;
   },
 });
 

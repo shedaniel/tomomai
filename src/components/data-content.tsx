@@ -2,7 +2,7 @@
 
 import { Region, SnapshotWithSongs } from "@/lib/types";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BarChart, Clock, Code, Database, Disc, Heart, Image as ImageIcon, Loader2, Map, Music, TrendingUp, User } from "lucide-react";
+import { BarChart, Clock, Code, Database, Disc, Heart, Image as ImageIcon, Loader2, Map, Music, TrendingUp, User, Images } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState, useEffect } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
@@ -14,6 +14,7 @@ import { HistoryCard } from "./history-card";
 import { EventsCard } from "./events-card";
 import { RecentSongsCard } from "./recent-songs-card";
 import { DeveloperCard } from "./developer-card";
+import { AlbumCard } from "./album-card";
 import { Flags } from "@/lib/flags";
 
 interface DataContentProps {
@@ -51,7 +52,7 @@ export function DataContent({
   const searchParams = useSearchParams();
 
   // Valid tab values
-  const allPossibleTabs = ["info", "stats", "songs", "recent", "recommendations", "plates", "map", "exportImage", "history", "developer"];
+  const allPossibleTabs = ["info", "stats", "songs", "recent", "recommendations", "plates", "map", "exportImage", "history", "developer", "albums"];
 
   // Get initial tab from props (SSR) or search params (client)
   const getInitialTab = () => {
@@ -138,6 +139,12 @@ export function DataContent({
       value: "plates",
       icon: Disc,
       show: privacySettings.showPlates,
+    },
+    {
+      name: t('dataContent.tabs.albums'),
+      value: "albums",
+      icon: Images,
+      show: visitedBySelf && flags.albumsCard,
     },
     {
       name: t('dataContent.tabs.map'),
@@ -254,6 +261,11 @@ export function DataContent({
         {visitedBySelf && (
           <TabsContent value="developer" className="mt-0 flex-1 min-w-0">
             <DeveloperCard selectedSnapshotData={selectedSnapshotData} />
+          </TabsContent>
+        )}
+        {visitedBySelf && flags.albumsCard && (
+          <TabsContent value="albums" className="mt-0 flex-1 min-w-0">
+            <AlbumCard region={region} />
           </TabsContent>
         )}
       </Tabs>
