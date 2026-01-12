@@ -5,6 +5,9 @@ import { getRatingImageUrl, RatingCalculationInput, splitSongs } from "./rating-
 import type { Difficulty, FullSync, SongType, TitleType } from "./types";
 import { SnapshotWithSongs } from "./types";
 import { CreditData, RecentSongData, SnapshotMetadata } from '@/app/api/last-credit/route';
+import { tr } from 'zod/v4/locales';
+import { calculateNoteLosses, distributeBreaks } from './score-details';
+import { Rock_3D } from 'next/font/google';
 
 export interface SongForRender extends RatingCalculationInput {
   songName: string;
@@ -562,7 +565,8 @@ async function renderLastCreditContent(
   overlayRect: OverlayRect
 ) {
   for (let i = 0; i < data.tracks.length; i++) {
-    await renderTrack(ctx, cache, overlayRect, data.tracks[i], i);
+    await renderTrack(ctx, cache, overlayRect, data.tracks[i], i,
+      data.tracks.length <= 2 ? 1.0 : data.tracks.length <= 3 ? 0.8 : 0.6);
   }
 }
 
@@ -571,19 +575,20 @@ async function renderTrack(
   cache: ImageCache,
   overlayRect: OverlayRect,
   track: RecentSongData,
-  index: number
+  index: number,
+  overallScale: number
 ) {
   const base = await loadImageWithCache(cache, `/res/songs/song_${track.difficulty}.png`);
   const jacket = await loadImageWithCache(cache, `/res/songs/music_jacket_${track.difficulty}.png`);
-  const baseScale = 1.0;
+  const baseScale = 1.0 * overallScale;
   const baseWidth = base.width * baseScale;
   const baseHeight = base.height * baseScale;
-  const jacketScale = 1.0;
+  const jacketScale = 1.0 * overallScale;
   const jacketWidth = jacket.width * jacketScale;
   const jacketHeight = jacket.height * jacketScale;
 
   const yPad = 30;
-  const xGap = 10, yGap = 350;
+  const xGap = 10, yGap = 440 * overallScale;
   const totalWidth = jacketWidth + xGap + baseWidth;
 
   const leftStart = overlayRect.left + overlayRect.width / 2 - totalWidth / 2;
@@ -600,7 +605,7 @@ async function renderTrack(
   ctx.drawImage(cover, (leftStart + jacketWidth * 35 / jacket.width), topStart + jacketHeight * 38 / jacket.height, coverWidth, coverHeight);
 
   ctx.save();
-  ctx.font = "600 24px \"FOT-NewRodin Pro\"";
+  ctx.font = `600 ${(jacketScale * 24).toFixed(0)}px "FOT-NewRodin Pro"`;
   ctx.fillStyle = "#FFFFFF";
   const songNameWidth = ctx.measureText(track.songName).width;
   ctx.fillText(track.songName, leftStart + jacketWidth + xGap + baseWidth / 2 - songNameWidth / 2, topStart + baseHeight * 0.46);
@@ -613,10 +618,10 @@ async function renderTrack(
   const { width: achievementBigWidth, height: achievementBigHeight } = await getScoreTextSize(cache, bigColor);
   const { width: achievementWidth, height: achievementHeight } = await getScoreTextSize(cache, color);
   const percentage = await loadImageWithCache(cache, `/res/numbers/percentage_${color}.png`);
-  const percentageScale = 0.7;
-  const bigAchievementScale = 0.7;
-  const nonNumberScale = 0.7;
-  const achievementDigitsScale = 0.7;
+  const percentageScale = 0.7 * baseScale;
+  const bigAchievementScale = 0.7 * baseScale;
+  const nonNumberScale = 0.7 * baseScale;
+  const achievementDigitsScale = 0.7 * baseScale;
   const bigAchievementXSpread = -6, achievementXSpread = -12;
   const specialX = {
     ".": -10,
@@ -661,17 +666,125 @@ async function renderTrack(
 
   // Draw type
   const type = await loadImageWithCache(cache, `https://maimaidx.jp/maimai-mobile/img/music_${track.type}.png`);
-  const typeScale = 0.9;
+  const typeScale = 0.9 * baseScale;
   ctx.drawImage(type, leftStart + jacketWidth + xGap + baseWidth * 0.67, topStart + baseHeight * 0.22, type.width * typeScale, type.height * typeScale);
 
   // Draw table
   const table = await loadImageWithCache(cache, `/res/songs/score_table.png`);
-  const tableScale = 0.8;
+  const tableScale = 1.0 * overallScale;
   ctx.save();
   ctx.shadowColor = '#00000050';
   ctx.shadowBlur = 10;
+  if (!track.details) {
+    ctx.globalAlpha = 0.7;
+  }
   ctx.drawImage(table, leftStart + 10, topStart + baseHeight + 10, table.width * tableScale, table.height * tableScale);
   ctx.restore();
+
+  // Draw stats
+  if (track.details) {
+    const notes = {
+      tap: {
+        criticalPerfect: track.details.tapCPerfect,
+        perfect: track.details.tapPerfect,
+        great: track.details.tapGreat,
+        good: track.details.tapGood,
+        miss: track.details.tapMiss,
+      },
+      hold: {
+        criticalPerfect: track.details.holdCPerfect,
+        perfect: track.details.holdPerfect,
+        great: track.details.holdGreat,
+        good: track.details.holdGood,
+        miss: track.details.holdMiss,
+      },
+      slide: {
+        criticalPerfect: track.details.slideCPerfect,
+        perfect: track.details.slidePerfect,
+        great: track.details.slideGreat,
+        good: track.details.slideGood,
+        miss: track.details.slideMiss,
+      },
+      touch: {
+        criticalPerfect: track.details.touchCPerfect,
+        perfect: track.details.touchPerfect,
+        great: track.details.touchGreat,
+        good: track.details.touchGood,
+        miss: track.details.touchMiss,
+      },
+      break: {
+        criticalPerfect: track.details.breakCPerfect,
+        perfect: track.details.breakPerfect,
+        great: track.details.breakGreat,
+        good: track.details.breakGood,
+        miss: track.details.breakMiss,
+      },
+    };
+    const breakDist = distributeBreaks(
+      notes,
+      track.achievement / 10000,
+      track.details.breakPerfect ?? 0,
+      track.details.breakGreat ?? 0
+    );
+    const losses = calculateNoteLosses(notes, breakDist);
+    const columnColor = [
+      "#FFA103",
+      "#FF7E24",
+      "#F74999",
+      "#34B939",
+      "#73746F"
+    ]
+    const matrix: { c: number | string, p?: number }[][] = [
+      [{ c: track.details.tapCPerfect }, { c: track.details.tapPerfect }, { c: track.details.tapGreat, p: losses.tap.great }, { c: track.details.tapGood, p: losses.tap.good }, { c: track.details.tapMiss, p: losses.tap.miss }],
+      [{ c: track.details.holdCPerfect }, { c: track.details.holdPerfect }, { c: track.details.holdGreat, p: losses.hold.great }, { c: track.details.holdGood, p: losses.hold.good }, { c: track.details.holdMiss, p: losses.hold.miss }],
+      [{ c: track.details.slideCPerfect }, { c: track.details.slidePerfect }, { c: track.details.slideGreat, p: losses.slide.great }, { c: track.details.slideGood, p: losses.slide.good }, { c: track.details.slideMiss, p: losses.slide.miss }],
+      [{ c: track.details.touchCPerfect }, { c: track.details.touchPerfect }, { c: track.details.touchGreat, p: losses.touch.great }, { c: track.details.touchGood, p: losses.touch.good }, { c: track.details.touchMiss, p: losses.touch.miss }],
+      [{ c: track.details.breakCPerfect }, { c: `${breakDist.perfect2550}-${breakDist.perfect2500}`, p: losses.break.perfect }, { c: `${breakDist.great2000}-${breakDist.great1500}-${breakDist.great1250}`, p: losses.break.great }, { c: track.details.breakGood, p: losses.break.good }, { c: track.details.breakMiss, p: losses.break.miss }],
+    ];
+    const cellX = leftStart + xGap + (124 / 701) * table.width * tableScale;
+    const cellY = topStart + baseHeight + 10 + (62 / 360) * table.height * tableScale;
+    const cellWidth = (113 / 701) * table.width * tableScale;
+    const cellHeight = (57 / 360) * table.height * tableScale;
+    ctx.save();
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    for (let i = 0; i < matrix.length; i++) {
+      for (let j = 0; j < matrix[i].length; j++) {
+        ctx.font = `500 ${24 * tableScale}px ${FONT_FAMILY_MONO}`;
+        const item = matrix[i][j];
+        ctx.fillStyle = columnColor[j];
+        const rowY = cellY + cellHeight * i + cellHeight * (item.p === undefined ? 0.5 : 0.35);
+        ctx.fillText(item.c.toString(), cellX + cellWidth * j + cellWidth * 0.9, rowY);
+        if (item.p !== undefined) {
+          ctx.font = `400 ${18 * tableScale}px ${FONT_FAMILY_MONO}`;
+          ctx.fillText(`-${item.p.toFixed(4)}%`, cellX + cellWidth * j + cellWidth * 0.9, rowY + 0.4 * cellHeight);
+        }
+      }
+    }
+    ctx.restore();
+  }
+
+  // Draw fast late
+  const fastLate = await loadImageWithCache(cache, `/res/songs/fast_late.png`);
+  const fastLateScale = 0.9 * overallScale;
+  const fastLateX = leftStart + xGap + table.width * tableScale + xGap + (totalWidth - xGap * 4 - table.width * tableScale) / 2 - fastLate.width * fastLateScale / 2;
+  const fastLateY = topStart + baseHeight + 10 + table.height * tableScale - fastLate.height * fastLateScale;
+  ctx.save();
+  if (!track.details) {
+    ctx.globalAlpha = 0.7;
+  }
+  ctx.drawImage(fastLate, fastLateX, fastLateY, fastLate.width * fastLateScale, fastLate.height * fastLateScale);
+  ctx.restore();
+  if (track.details) {
+    ctx.save();
+    ctx.font = `500 ${fastLateScale * 30}px ${FONT_FAMILY_MONO}`;
+    ctx.fillStyle = '#1368D4';
+    ctx.textAlign = 'right';
+    ctx.fillText(track.details.fastCount.toString(), fastLateX + fastLate.width * fastLateScale * 0.6, fastLateY + fastLate.height * fastLateScale * 0.39);
+    ctx.fillStyle = '#F8420B';
+    ctx.fillText(track.details.lateCount.toString(), fastLateX + fastLate.width * fastLateScale * 0.87, fastLateY + fastLate.height * fastLateScale * 0.82);
+    ctx.restore();
+  }
 }
 
 async function getScoreTextSize(cache: ImageCache, color: string) {

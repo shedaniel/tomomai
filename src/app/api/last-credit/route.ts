@@ -1,6 +1,6 @@
 import { db } from '@/lib/db';
 import { getServerSession } from '@/lib/auth-server';
-import { songs, user, userRecentSongs, userSnapshots } from '@/lib/db/schema-pg';
+import { songs, user, userRecentSongs, userRecentSongsDetailed, userSnapshots } from '@/lib/db/schema-pg';
 import { and, desc, eq, lte, lt } from 'drizzle-orm';
 import { NextRequest, NextResponse } from 'next/server';
 import { ImageCache, renderLastCreditImage } from '@/lib/render-image';
@@ -11,6 +11,45 @@ import { getRatingImageUrl } from '@/lib/rating-calculator';
 import { DIFFICULTY_ENUM } from '@/lib/db/types';
 
 export const dynamic = "force-dynamic";
+
+// Type for detailed song statistics
+export interface RecentSongDetails {
+  fastCount: number;
+  lateCount: number;
+  combo: number;
+  maxCombo: number;
+  syncScore: number | null;
+  maxSyncScore: number | null;
+  rating: number;
+  ratingChange: number;
+  venue: string | null;
+  // Note judgments
+  tapCPerfect: number;
+  tapPerfect: number;
+  tapGreat: number;
+  tapGood: number;
+  tapMiss: number;
+  holdCPerfect: number;
+  holdPerfect: number;
+  holdGreat: number;
+  holdGood: number;
+  holdMiss: number;
+  slideCPerfect: number;
+  slidePerfect: number;
+  slideGreat: number;
+  slideGood: number;
+  slideMiss: number;
+  touchCPerfect: number;
+  touchPerfect: number;
+  touchGreat: number;
+  touchGood: number;
+  touchMiss: number;
+  breakCPerfect: number;
+  breakPerfect: number;
+  breakGreat: number;
+  breakGood: number;
+  breakMiss: number;
+}
 
 // Type for a recent song with all needed data
 export interface RecentSongData {
@@ -30,6 +69,8 @@ export interface RecentSongData {
   levelPrecise: number;
   type: string;
   addedVersion: number;
+  // Detailed stats (null if not available for this play)
+  details: RecentSongDetails | null;
 }
 
 // Type for a credit (a group of tracks played together)
@@ -98,9 +139,46 @@ async function prepareData(
       levelPrecise: songs.levelPrecise,
       type: songs.type,
       addedVersion: songs.addedVersion,
+      // Detailed stats from separate table (may be null)
+      fastCount: userRecentSongsDetailed.fastCount,
+      lateCount: userRecentSongsDetailed.lateCount,
+      combo: userRecentSongsDetailed.combo,
+      maxCombo: userRecentSongsDetailed.maxCombo,
+      syncScore: userRecentSongsDetailed.syncScore,
+      maxSyncScore: userRecentSongsDetailed.maxSyncScore,
+      rating: userRecentSongsDetailed.rating,
+      ratingChange: userRecentSongsDetailed.ratingChange,
+      venue: userRecentSongsDetailed.venue,
+      // Note judgments from separate table (may be null)
+      tapCPerfect: userRecentSongsDetailed.tapCPerfect,
+      tapPerfect: userRecentSongsDetailed.tapPerfect,
+      tapGreat: userRecentSongsDetailed.tapGreat,
+      tapGood: userRecentSongsDetailed.tapGood,
+      tapMiss: userRecentSongsDetailed.tapMiss,
+      holdCPerfect: userRecentSongsDetailed.holdCPerfect,
+      holdPerfect: userRecentSongsDetailed.holdPerfect,
+      holdGreat: userRecentSongsDetailed.holdGreat,
+      holdGood: userRecentSongsDetailed.holdGood,
+      holdMiss: userRecentSongsDetailed.holdMiss,
+      slideCPerfect: userRecentSongsDetailed.slideCPerfect,
+      slidePerfect: userRecentSongsDetailed.slidePerfect,
+      slideGreat: userRecentSongsDetailed.slideGreat,
+      slideGood: userRecentSongsDetailed.slideGood,
+      slideMiss: userRecentSongsDetailed.slideMiss,
+      touchCPerfect: userRecentSongsDetailed.touchCPerfect,
+      touchPerfect: userRecentSongsDetailed.touchPerfect,
+      touchGreat: userRecentSongsDetailed.touchGreat,
+      touchGood: userRecentSongsDetailed.touchGood,
+      touchMiss: userRecentSongsDetailed.touchMiss,
+      breakCPerfect: userRecentSongsDetailed.breakCPerfect,
+      breakPerfect: userRecentSongsDetailed.breakPerfect,
+      breakGreat: userRecentSongsDetailed.breakGreat,
+      breakGood: userRecentSongsDetailed.breakGood,
+      breakMiss: userRecentSongsDetailed.breakMiss,
     })
     .from(userRecentSongs)
     .innerJoin(songs, eq(userRecentSongs.songId, songs.id))
+    .leftJoin(userRecentSongsDetailed, eq(userRecentSongs.id, userRecentSongsDetailed.recentSongId))
     .where(
       and(
         eq(userRecentSongs.userId, userId),
@@ -219,24 +297,95 @@ async function prepareData(
 
   const creditData: CreditData = {
     playedAt: creditPlayedAt,
-    tracks: targetCredit.map(track => ({
-      id: track.id,
-      playedAt: track.playedAt,
-      achievement: track.achievement,
-      dxScore: track.dxScore,
-      maxDxScore: track.maxDxScore,
-      fc: track.fc,
-      fs: track.fs,
-      track: track.track,
-      songName: track.songName,
-      artist: track.artist,
-      cover: track.cover,
-      difficulty: track.difficulty,
-      level: track.level,
-      levelPrecise: track.levelPrecise,
-      type: track.type,
-      addedVersion: track.addedVersion,
-    })),
+    tracks: targetCredit.map(track => {
+      // Check if detailed stats are available (all required fields are non-null)
+      const hasDetails = track.fastCount !== null &&
+        track.lateCount !== null &&
+        track.combo !== null &&
+        track.maxCombo !== null &&
+        track.rating !== null &&
+        track.ratingChange !== null &&
+        track.tapCPerfect !== null &&
+        track.tapPerfect !== null &&
+        track.tapGreat !== null &&
+        track.tapGood !== null &&
+        track.tapMiss !== null &&
+        track.holdCPerfect !== null &&
+        track.holdPerfect !== null &&
+        track.holdGreat !== null &&
+        track.holdGood !== null &&
+        track.holdMiss !== null &&
+        track.slideCPerfect !== null &&
+        track.slidePerfect !== null &&
+        track.slideGreat !== null &&
+        track.slideGood !== null &&
+        track.slideMiss !== null &&
+        track.touchCPerfect !== null &&
+        track.touchPerfect !== null &&
+        track.touchGreat !== null &&
+        track.touchGood !== null &&
+        track.touchMiss !== null &&
+        track.breakCPerfect !== null &&
+        track.breakPerfect !== null &&
+        track.breakGreat !== null &&
+        track.breakGood !== null &&
+        track.breakMiss !== null;
+
+      return {
+        id: track.id,
+        playedAt: track.playedAt,
+        achievement: track.achievement,
+        dxScore: track.dxScore,
+        maxDxScore: track.maxDxScore,
+        fc: track.fc,
+        fs: track.fs,
+        track: track.track,
+        songName: track.songName,
+        artist: track.artist,
+        cover: track.cover,
+        difficulty: track.difficulty,
+        level: track.level,
+        levelPrecise: track.levelPrecise,
+        type: track.type,
+        addedVersion: track.addedVersion,
+        details: hasDetails ? {
+          fastCount: track.fastCount!,
+          lateCount: track.lateCount!,
+          combo: track.combo!,
+          maxCombo: track.maxCombo!,
+          syncScore: track.syncScore,
+          maxSyncScore: track.maxSyncScore,
+          rating: track.rating!,
+          ratingChange: track.ratingChange!,
+          venue: track.venue,
+          tapCPerfect: track.tapCPerfect!,
+          tapPerfect: track.tapPerfect!,
+          tapGreat: track.tapGreat!,
+          tapGood: track.tapGood!,
+          tapMiss: track.tapMiss!,
+          holdCPerfect: track.holdCPerfect!,
+          holdPerfect: track.holdPerfect!,
+          holdGreat: track.holdGreat!,
+          holdGood: track.holdGood!,
+          holdMiss: track.holdMiss!,
+          slideCPerfect: track.slideCPerfect!,
+          slidePerfect: track.slidePerfect!,
+          slideGreat: track.slideGreat!,
+          slideGood: track.slideGood!,
+          slideMiss: track.slideMiss!,
+          touchCPerfect: track.touchCPerfect!,
+          touchPerfect: track.touchPerfect!,
+          touchGreat: track.touchGreat!,
+          touchGood: track.touchGood!,
+          touchMiss: track.touchMiss!,
+          breakCPerfect: track.breakCPerfect!,
+          breakPerfect: track.breakPerfect!,
+          breakGreat: track.breakGreat!,
+          breakGood: track.breakGood!,
+          breakMiss: track.breakMiss!,
+        } : null,
+      };
+    }),
   };
 
   const snapshotMetadata: SnapshotMetadata = {
@@ -331,6 +480,7 @@ export async function GET(request: NextRequest) {
       `/res/numbers/score_big_red.png`,
       `/res/numbers/score_big_gold.png`,
       `/res/songs/score_table.png`,
+      `/res/songs/fast_late.png`,
       ...Object.values(DIFFICULTY_ENUM).map(difficulty => `/res/songs/song_${difficulty}.png`),
       ...Object.values(DIFFICULTY_ENUM).map(difficulty => `/res/songs/music_jacket_${difficulty}.png`),
       ...credit.tracks.map(s => s.cover),
