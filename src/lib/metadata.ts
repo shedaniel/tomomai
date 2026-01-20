@@ -194,11 +194,20 @@ export const VERSIONS: VersionInfo[] = [
 ];
 
 /**
- * Parse date string in YYYY/MM/DD format to Date object
+ * Parse date string in YYYY/MM/DD format to Date object.
+ * Interprets the date as JST midnight (UTC+9) regardless of server timezone.
+ *
+ * @param dateString - Date string in YYYY/MM/DD format
+ * @returns Date object representing JST midnight of the given date
+ *
+ * @example
+ * parseDate('2025/01/16') // Returns 2025-01-16T00:00:00+09:00
  */
-function parseDate(dateString: string): Date {
+export function parseDate(dateString: string): Date {
   const [year, month, day] = dateString.split('/').map(Number);
-  return new Date(year, month - 1, day); // month is 0-indexed in Date constructor
+  // Create ISO 8601 string with JST timezone offset (+09:00)
+  // This ensures the date is interpreted as JST midnight regardless of server timezone
+  return new Date(`${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}T00:00:00+09:00`);
 }
 
 /**
@@ -231,7 +240,17 @@ export function getLatestAvailableVersion(region: Region): number {
 }
 
 /**
- * Get the version that was current on a specific date for a given region
+ * Get the version that was current on a specific date for a given region.
+ *
+ * @param date - Date object representing a point in time. Should be in JST
+ *              for correct results (use {@link parseDate} to create JST dates).
+ * @param region - Region to check
+ * @returns The version ID that was current at the given date
+ *
+ * @example
+ * // Get version for a specific JST date
+ * const date = parseDate('2025/01/16');
+ * getVersionFromDate(date, 'jp');
  */
 export function getVersionFromDate(date: Date, region: Region): number {
   const availableVersions = getAvailableVersions(region);
@@ -295,7 +314,13 @@ export function getVersionsSortedByDate(region: Region, ascending = true): Versi
 }
 
 /**
- * Check if a version is currently available in a region
+ * Check if a version is available at a given date in a region.
+ *
+ * @param versionId - Version ID to check
+ * @param region - Region to check
+ * @param date - Date object representing when to check availability.
+ *               Defaults to current time. For correct results, use JST dates.
+ * @returns Whether the version was available at the given date
  */
 export function isVersionAvailable(versionId: number, region: Region, date: Date = new Date()): boolean {
   const version = getVersionInfo(versionId);

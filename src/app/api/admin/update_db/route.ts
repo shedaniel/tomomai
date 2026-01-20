@@ -199,7 +199,9 @@ async function fetchRecordsWithUrl(region: Region, url: string): Promise<Song[]>
       return null;
     }
     const [, year, month, day] = match;
-    return new Date(parseInt(year, 10), parseInt(month, 10) - 1, parseInt(day, 10));
+    // Create ISO 8601 string with JST timezone offset (+09:00)
+    // This ensures the date is interpreted as JST midnight regardless of server timezone
+    return new Date(`${year}-${month}-${day}T00:00:00+09:00`);
   }
   return data.flatMap((song: SongsJsonRecord) => {
     const records: Song[] = [];
