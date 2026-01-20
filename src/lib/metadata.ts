@@ -188,7 +188,7 @@ export const VERSIONS: VersionInfo[] = [
     id: 12,
     name: "maimai DX CiRCLE",
     shortName: "CiRCLE",
-    intlReleaseDate: null,
+    intlReleaseDate: "2026/01/22",
     jpReleaseDate: "2025/09/18"
   }
 ];
