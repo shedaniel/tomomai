@@ -88,7 +88,7 @@ function ImagePanel({
       <div
         className="border rounded-xl overflow-hidden shadow-sm w-full relative"
         style={{
-          aspectRatio: `${CANVAS_WIDTH} / ${CANVAS_HEIGHT}`,
+          ...(isLoading && { aspectRatio: `${CANVAS_WIDTH} / ${CANVAS_HEIGHT}` })
         }}
       >
         {isLoading && (
@@ -135,7 +135,7 @@ export function ExportImageCard({ selectedSnapshotData, region }: ExportImageCar
 
   // Last credit image state
   const [lastCreditImageUrl, setLastCreditImageUrl] = useState<string>(
-    `/api/last-credit?region=${region}`
+    `/api/last-credit?region=${region}&beforeDate=${selectedSnapshotData.snapshot.fetchedAt}`
   );
   const [lastCreditImageKey, setLastCreditImageKey] = useState(0);
   const [lastCreditIsLoading, setLastCreditIsLoading] = useState(true);
@@ -155,13 +155,13 @@ export function ExportImageCard({ selectedSnapshotData, region }: ExportImageCar
   const handleLastCreditRefresh = () => {
     setLastCreditIsLoading(true);
     setLastCreditImageKey(prev => prev + 1);
-    setLastCreditImageUrl(`/api/last-credit?region=${region}&t=${Date.now()}`);
+    setLastCreditImageUrl(`/api/last-credit?region=${region}&beforeDate=${selectedSnapshotData.snapshot.fetchedAt}&t=${Date.now()}`);
   };
 
   const handleLastCreditRefreshFast = () => {
     setLastCreditIsLoading(true);
     setLastCreditImageKey(prev => prev + 1);
-    setLastCreditImageUrl(`/api/last-credit?region=${region}&scale=1&t=${Date.now()}`);
+    setLastCreditImageUrl(`/api/last-credit?region=${region}&beforeDate=${selectedSnapshotData.snapshot.fetchedAt}&scale=1&t=${Date.now()}`);
   };
 
   return (

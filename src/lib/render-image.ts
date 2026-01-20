@@ -1,13 +1,16 @@
+import { CreditData, RecentSongData, SnapshotMetadata } from '@/app/api/last-credit/route';
 import type { CanvasRenderingContext2D as SkiaContext } from 'skia-canvas';
 import { Canvas, Image, loadImage } from 'skia-canvas';
 import { CANVAS_HEIGHT, CANVAS_WIDTH } from './image-spec';
 import { getRatingImageUrl, RatingCalculationInput, splitSongs } from "./rating-calculator";
-import type { Difficulty, FullSync, SongType, TitleType } from "./types";
+import { calculateDXStars, calculateNoteLosses, distributeBreaks } from './score-details';
+import type { Difficulty, FullCombo, FullSync, SongType, TitleType } from "./types";
 import { SnapshotWithSongs } from "./types";
-import { CreditData, RecentSongData, SnapshotMetadata } from '@/app/api/last-credit/route';
-import { tr } from 'zod/v4/locales';
-import { calculateNoteLosses, distributeBreaks } from './score-details';
-import { Rock_3D } from 'next/font/google';
+
+type CanvasSize = {
+  width: number;
+  height: number;
+}
 
 export interface SongForRender extends RatingCalculationInput {
   songName: string;
@@ -114,41 +117,39 @@ async function loadImageWithCache(cache: ImageCache, url: string): Promise<Image
 }
 
 export async function renderImage(data: SnapshotWithSongs<SongForRender>, cache: ImageCache, visitableProfileAt: string | null): Promise<Canvas> {
-  const canvas = new Canvas(CANVAS_WIDTH, CANVAS_HEIGHT);
+  const canvasSize = { width: CANVAS_WIDTH, height: CANVAS_HEIGHT };
+  const canvas = new Canvas(canvasSize.width, canvasSize.height);
   const ctx = canvas.getContext('2d') as SkiaContext;
 
-  await renderBackground(ctx, data.snapshot.gameVersion, cache);
-  const overlayRect = await renderHeader(ctx, data.snapshot, cache);
+  await renderBackground(ctx, data.snapshot.gameVersion, false, cache, canvasSize);
+  const overlayRect = await renderHeader(ctx, data.snapshot, cache, canvasSize);
   await renderContent(ctx, data, cache, overlayRect);
-  await renderFooter(ctx, data, visitableProfileAt);
+  const footerText = visitableProfileAt
+    ? `Visit my profile at https://tomomai.lol/profile/${visitableProfileAt}/`
+    : "Generated with https://tomomai.lol/";
+  await renderFooter(ctx, data.snapshot.gameVersion, footerText, canvasSize);
 
   return canvas;
 }
 
 export async function renderLastCreditImage(data: CreditData, snapshot: SnapshotMetadata, cache: ImageCache): Promise<Canvas> {
-  const canvas = new Canvas(CANVAS_WIDTH, CANVAS_HEIGHT);
+  const long = data.tracks.length >= 4;
+  const canvasSize = { width: CANVAS_WIDTH, height: !long ? 2420 : 3100 };
+  const canvas = new Canvas(canvasSize.width, canvasSize.height);
   const ctx = canvas.getContext('2d') as SkiaContext;
 
-  await renderBackground(ctx, snapshot.gameVersion, cache);
-  const overlayRect = await renderHeader(ctx, snapshot, cache);
+  await renderBackground(ctx, snapshot.gameVersion, true, cache, canvasSize);
+  const overlayRect = await renderHeader(ctx, snapshot, cache, canvasSize);
   await renderLastCreditContent(ctx, data, cache, overlayRect);
+  const footerText = `Recent credit at ${data.playedAt.toLocaleString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tokyo' })}, generated with https://tomomai.lol/`;
+  await renderFooter(ctx, snapshot.gameVersion, footerText, canvasSize);
 
   return canvas;
 }
 
-async function renderBackground(ctx: SkiaContext, gameVersion: number, cache: ImageCache) {
-  const gradientStops = VERSION_SETTINGS[gameVersion as keyof typeof VERSION_SETTINGS]?.backgroundGradient || [];
-  const gradient = ctx.createLinearGradient(0, CANVAS_HEIGHT, 0, 0);
-
-  for (const stop of gradientStops) {
-    gradient.addColorStop(stop.offset, stop.color);
-  }
-
-  ctx.fillStyle = gradient;
-  ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-
-  const backgroundImg = await loadImageWithCache(cache, `/res/bg/${gameVersion}.png`);
-  ctx.drawImage(backgroundImg, 0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+async function renderBackground(ctx: SkiaContext, gameVersion: number, long: boolean, cache: ImageCache, canvas: CanvasSize) {
+  const backgroundImg = await loadImageWithCache(cache, `/res/bg/${gameVersion}${long ? '_long' : ''}.png`);
+  ctx.drawImage(backgroundImg, 0, 0, canvas.width * 2, canvas.height * 2, 0, 0, canvas.width, canvas.height);
 }
 
 async function renderHeaderBackground(
@@ -237,7 +238,7 @@ type HeaderData = {
   gameVersion: number;
 };
 
-async function renderHeader(ctx: SkiaContext, data: HeaderData, cache: ImageCache): Promise<OverlayRect> {
+async function renderHeader(ctx: SkiaContext, data: HeaderData, cache: ImageCache, canvas: CanvasSize): Promise<OverlayRect> {
   const TROPHY_FONT_SIZE = 18, NAME_FONT_SIZE = 28;
   const PROFILE_IMG_RIGHT_MARGIN = 28;
   const TROPHY_BOTTOM_MARGIN = 20;
@@ -332,19 +333,19 @@ async function renderHeader(ctx: SkiaContext, data: HeaderData, cache: ImageCach
 
   // Render dark overlay
   const overlayTop = TARGET_HEIGHT + PADDING * 2;
-  const gradient = ctx.createLinearGradient(0, CANVAS_HEIGHT, 0, 0);
+  const gradient = ctx.createLinearGradient(0, canvas.height, 0, 0);
   const contentBackgroundColor = VERSION_SETTINGS[data.gameVersion as keyof typeof VERSION_SETTINGS]?.contentBackgroundColor || '#00000010';
   gradient.addColorStop(1, contentBackgroundColor);
   gradient.addColorStop(0, contentBackgroundColor);
 
   ctx.fillStyle = gradient;
-  ctx.fillRect(0, overlayTop, CANVAS_WIDTH, CANVAS_HEIGHT - overlayTop);
+  ctx.fillRect(0, overlayTop, canvas.width, canvas.height - overlayTop);
 
   return {
     left: PADDING,
     top: overlayTop,
-    width: CANVAS_WIDTH - PADDING * 2,
-    height: CANVAS_HEIGHT - TARGET_HEIGHT - PADDING * 3,
+    width: canvas.width - PADDING * 2,
+    height: canvas.height - TARGET_HEIGHT - PADDING * 3,
   };
 }
 
@@ -566,7 +567,7 @@ async function renderLastCreditContent(
 ) {
   for (let i = 0; i < data.tracks.length; i++) {
     await renderTrack(ctx, cache, overlayRect, data.tracks[i], i,
-      data.tracks.length <= 2 ? 1.0 : data.tracks.length <= 3 ? 0.8 : 0.6);
+      data.tracks.length, data.tracks.length <= 2 ? 1.0 : 0.84);
   }
 }
 
@@ -576,8 +577,10 @@ async function renderTrack(
   overlayRect: OverlayRect,
   track: RecentSongData,
   index: number,
+  trackCount: number,
   overallScale: number
 ) {
+  const trackImage = await loadImageWithCache(cache, `/res/songs/track_${index == 0 ? '1' : index == trackCount - 1 ? '3' : '2'}.png`);
   const base = await loadImageWithCache(cache, `/res/songs/song_${track.difficulty}.png`);
   const jacket = await loadImageWithCache(cache, `/res/songs/music_jacket_${track.difficulty}.png`);
   const baseScale = 1.0 * overallScale;
@@ -586,145 +589,216 @@ async function renderTrack(
   const jacketScale = 1.0 * overallScale;
   const jacketWidth = jacket.width * jacketScale;
   const jacketHeight = jacket.height * jacketScale;
+  const trackImageScale = 1.25 * overallScale;
 
-  const yPad = 30;
-  const xGap = 10, yGap = 440 * overallScale;
+  const xOffset = 0, yOffset = 0;
+  const yPad = (trackCount === 4 ? 60 : 70) * overallScale;
+  const xGap = 10, yGap = 520 * overallScale;
   const totalWidth = jacketWidth + xGap + baseWidth;
 
-  const leftStart = overlayRect.left + overlayRect.width / 2 - totalWidth / 2;
-  const topStart = overlayRect.top + yPad + (baseHeight + yGap) * index;
+  const leftStart = overlayRect.left + overlayRect.width / 2 - totalWidth / 2 + xOffset;
+  let topStart = overlayRect.top + yPad + (baseHeight + yGap) * index + yOffset;
+  const baseLeftStart = leftStart + jacketWidth + xGap;
+  let bottomTopStart = topStart + baseHeight + 10;
 
-  ctx.drawImage(jacket, (leftStart), topStart, jacketWidth, jacketHeight);
-  ctx.drawImage(base, (leftStart + jacketWidth + xGap), topStart, baseWidth, baseHeight);
+  const renderTrack = async () => {
+    const trackImageXOffset = 16 * overallScale;
+    // track image
+    ctx.drawImage(trackImage, leftStart + trackImageXOffset + totalWidth - trackImage.width * trackImageScale, topStart, trackImage.width * trackImageScale, trackImage.height * trackImageScale);
+    ctx.drawImage(trackImage, trackImage.width * 0.8, 0, trackImage.width * 0.2, trackImage.height, leftStart + trackImageXOffset + totalWidth, topStart, 1000, trackImage.height * trackImageScale);
+    // render text on track image
+    renderScoreText(ctx, cache, "/res/numbers/score_num_count_big.png", (index + 1).toString(), leftStart + trackImageXOffset + totalWidth - trackImage.width * trackImageScale * 0.37, topStart + trackImage.height * trackImageScale * 0.08, 0.47 * trackImageScale,
+      index === 0 ? "#4691F7" : index === trackCount - 1 ? "#FE5134" : "#5EC724", "#FFFFFF", 2);
+    renderScoreText(ctx, cache, "/res/numbers/score_num_count.png", trackCount.toString(), leftStart + trackImageXOffset + totalWidth - trackImage.width * trackImageScale * 0.21, topStart + trackImage.height * trackImageScale * 0.2, 0.54 * trackImageScale,
+      index === 0 ? "#4691F7" : index === trackCount - 1 ? "#FE5134" : "#5EC724", "#FFFFFF", 2);
 
-  // cover needs to scale to 214/288 of the size of the jacket
-  const cover = await loadImageWithCache(cache, track.cover);
-  const coverWidth = jacketWidth * 214 / jacket.width;
-  const coverHeight = jacketHeight * 214 / jacket.height;
+    topStart += trackImage.height * trackImageScale + 10;
+    bottomTopStart += trackImage.height * trackImageScale + 10;
 
-  ctx.drawImage(cover, (leftStart + jacketWidth * 35 / jacket.width), topStart + jacketHeight * 38 / jacket.height, coverWidth, coverHeight);
+    ctx.drawImage(jacket, leftStart, topStart, jacketWidth, jacketHeight);
+    ctx.drawImage(base, baseLeftStart, topStart, baseWidth, baseHeight);
+  };
 
-  ctx.save();
-  ctx.font = `600 ${(jacketScale * 24).toFixed(0)}px "FOT-NewRodin Pro"`;
-  ctx.fillStyle = "#FFFFFF";
-  const songNameWidth = ctx.measureText(track.songName).width;
-  ctx.fillText(track.songName, leftStart + jacketWidth + xGap + baseWidth / 2 - songNameWidth / 2, topStart + baseHeight * 0.46);
-  ctx.restore();
+  const renderCover = async () => {
+    // cover needs to scale to 214/288 of the size of the jacket
+    const cover = await loadImageWithCache(cache, track.cover);
+    const coverWidth = jacketWidth * 214 / jacket.width;
+    const coverHeight = jacketHeight * 214 / jacket.height;
 
-  // Format achievement as xxx.xxxx
-  const achievementText = (track.achievement / 10000).toFixed(4).toString();
-  const bigColor = track.achievement >= 970000 ? "big_gold" : track.achievement >= 800000 ? "big_red" : "big_blue";
-  const color = track.achievement >= 970000 ? "gold" : track.achievement >= 800000 ? "red" : "blue";
-  const { width: achievementBigWidth, height: achievementBigHeight } = await getScoreTextSize(cache, bigColor);
-  const { width: achievementWidth, height: achievementHeight } = await getScoreTextSize(cache, color);
-  const percentage = await loadImageWithCache(cache, `/res/numbers/percentage_${color}.png`);
-  const percentageScale = 0.7 * baseScale;
-  const bigAchievementScale = 0.7 * baseScale;
-  const nonNumberScale = 0.7 * baseScale;
-  const achievementDigitsScale = 0.7 * baseScale;
-  const bigAchievementXSpread = -6, achievementXSpread = -12;
-  const specialX = {
-    ".": -10,
-    "1": -4,
-  }
-  const specialXSpread = {
-    ".": -37,
-    "1": -14,
-  }
+    ctx.drawImage(cover, (leftStart + jacketWidth * 35 / jacket.width), topStart + jacketHeight * 38 / jacket.height, coverWidth, coverHeight);
+  };
 
-  const totalAchievementWidth = (() => {
-    let width = 0;
-    let passedDot = false;
-    for (const char of achievementText) {
-      const scale = char === "." ? nonNumberScale : passedDot ? achievementDigitsScale : bigAchievementScale;
-      if (!isNaN(Number(char))) {
-        width += (!passedDot ? achievementBigWidth * scale + bigAchievementXSpread * scale : achievementWidth * scale + achievementXSpread * scale);
-      } else {
-        width += achievementWidth * scale;
-        passedDot = true;
-      }
-      width += (specialXSpread[char as keyof typeof specialXSpread] || 0) * scale;
+  const renderSongName = async () => {
+    ctx.save();
+    ctx.font = `600 ${(jacketScale * 24).toFixed(0)}px "FOT-NewRodin Pro"`;
+    ctx.fillStyle = "#FFFFFF";
+    const songNameWidth = ctx.measureText(track.songName).width;
+    ctx.fillText(track.songName, baseLeftStart + baseWidth / 2 - songNameWidth / 2, topStart + baseHeight * 0.46);
+    ctx.restore();
+  };
+
+  const renderAchievement = async () => {
+    // Format achievement as xxx.xxxx
+    const achievementText = (track.achievement / 10000).toFixed(4).toString();
+    const bigColor = track.achievement >= 970000 ? "big_gold" : track.achievement >= 800000 ? "big_red" : "big_blue";
+    const color = track.achievement >= 970000 ? "gold" : track.achievement >= 800000 ? "red" : "blue";
+    const { width: achievementBigWidth, height: achievementBigHeight } = await getScoreTextSize(cache, `/res/numbers/score_${bigColor}.png`);
+    const { width: achievementWidth, height: achievementHeight } = await getScoreTextSize(cache, `/res/numbers/score_${color}.png`);
+    const percentage = await loadImageWithCache(cache, `/res/numbers/percentage_${color}.png`);
+    const percentageScale = 0.7 * baseScale;
+    const bigAchievementScale = 0.7 * baseScale;
+    const nonNumberScale = 0.7 * baseScale;
+    const achievementDigitsScale = 0.7 * baseScale;
+    const bigAchievementXSpread = -6, achievementXSpread = -12;
+    const specialX = {
+      ".": -10,
+      "1": -4,
     }
-    return width;
-  })() + percentage.width * percentageScale;
+    const specialXSpread = {
+      ".": -37,
+      "1": -14,
+    }
 
-  let achievementX = leftStart + jacketWidth + xGap + baseWidth / 2 - totalAchievementWidth / 2;
-  let achievementY = topStart + baseHeight * 0.62;
-  let passedDot = false;
-  for (const [i, char] of achievementText.split("").entries()) {
-    passedDot = char === "." || passedDot;
-    const toDraw = passedDot ? color : bigColor;
-    const scale = char === "." ? nonNumberScale : passedDot ? achievementDigitsScale : bigAchievementScale;
-    const toDrawX = achievementX + (specialX[char as keyof typeof specialX] || 0);
-    const toDrawY = achievementY + achievementBigHeight * bigAchievementScale - (passedDot ? achievementHeight : achievementBigHeight) * scale - (passedDot && char !== "." ? 10 : 0) * scale;
-    renderScoreText(ctx, cache, toDraw, char, toDrawX, toDrawY, scale);
-    achievementX += char === "." ? achievementWidth * nonNumberScale : (!passedDot ? achievementBigWidth * bigAchievementScale + bigAchievementXSpread * scale : achievementWidth * achievementDigitsScale + achievementXSpread * scale);
-    achievementX += (specialXSpread[char as keyof typeof specialXSpread] || 0) * scale;
+    const totalAchievementWidth = (() => {
+      let width = 0;
+      let passedDot = false;
+      for (const char of achievementText) {
+        const scale = char === "." ? nonNumberScale : passedDot ? achievementDigitsScale : bigAchievementScale;
+        if (!isNaN(Number(char))) {
+          width += (!passedDot ? achievementBigWidth * scale + bigAchievementXSpread * scale : achievementWidth * scale + achievementXSpread * scale);
+        } else {
+          width += achievementWidth * scale;
+          passedDot = true;
+        }
+        width += (specialXSpread[char as keyof typeof specialXSpread] || 0) * scale;
+      }
+      return width;
+    })() + percentage.width * percentageScale;
+
+    let achievementX = baseLeftStart + baseWidth / 2 - totalAchievementWidth / 2;
+    let achievementY = topStart + baseHeight * 0.62;
+    let passedDot = false;
+    for (const [i, char] of achievementText.split("").entries()) {
+      passedDot = char === "." || passedDot;
+      const toDraw = passedDot ? color : bigColor;
+      const scale = char === "." ? nonNumberScale : passedDot ? achievementDigitsScale : bigAchievementScale;
+      const toDrawX = achievementX + (specialX[char as keyof typeof specialX] || 0);
+      const toDrawY = achievementY + achievementBigHeight * bigAchievementScale - (passedDot ? achievementHeight : achievementBigHeight) * scale - (passedDot && char !== "." ? 10 : 0) * scale;
+      renderScoreText(ctx, cache, `/res/numbers/score_${toDraw}.png`, char, toDrawX, toDrawY, scale);
+      achievementX += char === "." ? achievementWidth * nonNumberScale : (!passedDot ? achievementBigWidth * bigAchievementScale + bigAchievementXSpread * scale : achievementWidth * achievementDigitsScale + achievementXSpread * scale);
+      achievementX += (specialXSpread[char as keyof typeof specialXSpread] || 0) * scale;
+    }
+
+    ctx.drawImage(percentage, achievementX, achievementY + achievementBigHeight * bigAchievementScale - percentage.height * percentageScale * 1.45, percentage.width * percentageScale, percentage.height * percentageScale);
+  };
+
+  const renderType = async () => {
+    // Draw type
+    const type = await loadImageWithCache(cache, `https://maimaidx.jp/maimai-mobile/img/music_${track.type === "dx" ? "dx" : "standard"}.png`);
+    const typeScale = 0.9 * baseScale;
+    ctx.drawImage(type, baseLeftStart + baseWidth * 0.63, topStart + baseHeight * 0.22, type.width * typeScale, type.height * typeScale);
   }
 
-  ctx.drawImage(percentage, achievementX, achievementY + achievementBigHeight * bigAchievementScale - percentage.height * percentageScale * 1.45, percentage.width * percentageScale, percentage.height * percentageScale);
+  const renderLevel = async () => {
+    const color = `/res/numbers/level_${track.difficulty}.png`;
+    renderScoreText(ctx, cache, color, "lv",
+      baseLeftStart + baseWidth * 0.78, topStart + baseHeight * 0.15, 1.0 * baseScale);
 
-  // Draw type
-  const type = await loadImageWithCache(cache, `https://maimaidx.jp/maimai-mobile/img/music_${track.type}.png`);
-  const typeScale = 0.9 * baseScale;
-  ctx.drawImage(type, leftStart + jacketWidth + xGap + baseWidth * 0.67, topStart + baseHeight * 0.22, type.width * typeScale, type.height * typeScale);
+    const levelToRender = track.level;
+    let x = baseLeftStart + baseWidth * 0.83, y = topStart + baseHeight * 0.15;
+    if (levelToRender[0] !== "1") x += baseWidth * 0.008;
+    for (const char of levelToRender.split("")) {
+      renderScoreText(ctx, cache, color, char,
+        x - (char === "+" ? baseWidth * 0.01 : 0), y - (char === "+" ? baseHeight * 0.02 : 0), 1.0 * baseScale);
+      if (levelToRender.length > 1 && char !== "+") {
+        x += baseWidth * 0.041;
+        if (char !== "1") x += baseWidth * 0.008;
+      }
+    }
 
-  // Draw table
-  const table = await loadImageWithCache(cache, `/res/songs/score_table.png`);
-  const tableScale = 1.0 * overallScale;
-  ctx.save();
-  ctx.shadowColor = '#00000050';
-  ctx.shadowBlur = 10;
-  if (!track.details) {
-    ctx.globalAlpha = 0.7;
+    {
+      const char = ".";
+      renderScoreText(ctx, cache, color, char,
+        x - baseWidth * 0.02, y + baseHeight * 0.04, 1.0 * baseScale);
+    }
+    {
+      const char = (track.levelPrecise % 10).toString();
+      renderScoreText(ctx, cache, color, char,
+        x + baseWidth * (char === "1" ? 0.0155 - 0.005 : 0.0155), y + baseHeight * 0.055, 0.7 * baseScale);
+    }
+  };
+
+  const renderTable = async () => {
+    // Draw table
+    const bottomXOffset = xGap;
+    const table = await loadImageWithCache(cache, `/res/songs/score_table.png`);
+    const tableScale = 1.0 * overallScale;
+    ctx.save();
+    ctx.shadowColor = '#00000050';
+    ctx.shadowBlur = 10;
+    if (!track.details) {
+      ctx.globalAlpha = 0.7;
+    }
+    ctx.drawImage(table, leftStart + bottomXOffset, bottomTopStart, table.width * tableScale, table.height * tableScale);
+    ctx.restore();
+    return {
+      tableX: leftStart + bottomXOffset,
+      tableY: bottomTopStart,
+      tableWidth: table.width * tableScale,
+      tableHeight: table.height * tableScale,
+      tableScale,
+    }
   }
-  ctx.drawImage(table, leftStart + 10, topStart + baseHeight + 10, table.width * tableScale, table.height * tableScale);
-  ctx.restore();
 
-  // Draw stats
-  if (track.details) {
+  const renderTableDetails: (props: {
+    tableX: number;
+    tableY: number;
+    tableWidth: number;
+    tableHeight: number;
+    details: NonNullable<RecentSongData["details"]>;
+  }) => Promise<void> = async ({ tableX, tableY, tableWidth, tableHeight, details }) => {
     const notes = {
       tap: {
-        criticalPerfect: track.details.tapCPerfect,
-        perfect: track.details.tapPerfect,
-        great: track.details.tapGreat,
-        good: track.details.tapGood,
-        miss: track.details.tapMiss,
+        criticalPerfect: details.tapCPerfect,
+        perfect: details.tapPerfect,
+        great: details.tapGreat,
+        good: details.tapGood,
+        miss: details.tapMiss,
       },
       hold: {
-        criticalPerfect: track.details.holdCPerfect,
-        perfect: track.details.holdPerfect,
-        great: track.details.holdGreat,
-        good: track.details.holdGood,
-        miss: track.details.holdMiss,
+        criticalPerfect: details.holdCPerfect,
+        perfect: details.holdPerfect,
+        great: details.holdGreat,
+        good: details.holdGood,
+        miss: details.holdMiss,
       },
       slide: {
-        criticalPerfect: track.details.slideCPerfect,
-        perfect: track.details.slidePerfect,
-        great: track.details.slideGreat,
-        good: track.details.slideGood,
-        miss: track.details.slideMiss,
+        criticalPerfect: details.slideCPerfect,
+        perfect: details.slidePerfect,
+        great: details.slideGreat,
+        good: details.slideGood,
+        miss: details.slideMiss,
       },
       touch: {
-        criticalPerfect: track.details.touchCPerfect,
-        perfect: track.details.touchPerfect,
-        great: track.details.touchGreat,
-        good: track.details.touchGood,
-        miss: track.details.touchMiss,
+        criticalPerfect: details.touchCPerfect,
+        perfect: details.touchPerfect,
+        great: details.touchGreat,
+        good: details.touchGood,
+        miss: details.touchMiss,
       },
       break: {
-        criticalPerfect: track.details.breakCPerfect,
-        perfect: track.details.breakPerfect,
-        great: track.details.breakGreat,
-        good: track.details.breakGood,
-        miss: track.details.breakMiss,
+        criticalPerfect: details.breakCPerfect,
+        perfect: details.breakPerfect,
+        great: details.breakGreat,
+        good: details.breakGood,
+        miss: details.breakMiss,
       },
     };
     const breakDist = distributeBreaks(
       notes,
       track.achievement / 10000,
-      track.details.breakPerfect ?? 0,
-      track.details.breakGreat ?? 0
+      details.breakPerfect ?? 0,
+      details.breakGreat ?? 0
     );
     const losses = calculateNoteLosses(notes, breakDist);
     const columnColor = [
@@ -735,16 +809,16 @@ async function renderTrack(
       "#73746F"
     ]
     const matrix: { c: number | string, p?: number }[][] = [
-      [{ c: track.details.tapCPerfect }, { c: track.details.tapPerfect }, { c: track.details.tapGreat, p: losses.tap.great }, { c: track.details.tapGood, p: losses.tap.good }, { c: track.details.tapMiss, p: losses.tap.miss }],
-      [{ c: track.details.holdCPerfect }, { c: track.details.holdPerfect }, { c: track.details.holdGreat, p: losses.hold.great }, { c: track.details.holdGood, p: losses.hold.good }, { c: track.details.holdMiss, p: losses.hold.miss }],
-      [{ c: track.details.slideCPerfect }, { c: track.details.slidePerfect }, { c: track.details.slideGreat, p: losses.slide.great }, { c: track.details.slideGood, p: losses.slide.good }, { c: track.details.slideMiss, p: losses.slide.miss }],
-      [{ c: track.details.touchCPerfect }, { c: track.details.touchPerfect }, { c: track.details.touchGreat, p: losses.touch.great }, { c: track.details.touchGood, p: losses.touch.good }, { c: track.details.touchMiss, p: losses.touch.miss }],
-      [{ c: track.details.breakCPerfect }, { c: `${breakDist.perfect2550}-${breakDist.perfect2500}`, p: losses.break.perfect }, { c: `${breakDist.great2000}-${breakDist.great1500}-${breakDist.great1250}`, p: losses.break.great }, { c: track.details.breakGood, p: losses.break.good }, { c: track.details.breakMiss, p: losses.break.miss }],
+      [{ c: details.tapCPerfect }, { c: details.tapPerfect }, { c: details.tapGreat, p: losses.tap.great }, { c: details.tapGood, p: losses.tap.good }, { c: details.tapMiss, p: losses.tap.miss }],
+      [{ c: details.holdCPerfect }, { c: details.holdPerfect }, { c: details.holdGreat, p: losses.hold.great }, { c: details.holdGood, p: losses.hold.good }, { c: details.holdMiss, p: losses.hold.miss }],
+      [{ c: details.slideCPerfect }, { c: details.slidePerfect }, { c: details.slideGreat, p: losses.slide.great }, { c: details.slideGood, p: losses.slide.good }, { c: details.slideMiss, p: losses.slide.miss }],
+      [{ c: details.touchCPerfect }, { c: details.touchPerfect }, { c: details.touchGreat, p: losses.touch.great }, { c: details.touchGood, p: losses.touch.good }, { c: details.touchMiss, p: losses.touch.miss }],
+      [{ c: details.breakCPerfect }, { c: `${breakDist.perfect2550}-${breakDist.perfect2500}`, p: losses.break.perfect }, { c: `${breakDist.great2000}-${breakDist.great1500}-${breakDist.great1250}`, p: losses.break.great }, { c: details.breakGood, p: losses.break.good }, { c: details.breakMiss, p: losses.break.miss }],
     ];
-    const cellX = leftStart + xGap + (124 / 701) * table.width * tableScale;
-    const cellY = topStart + baseHeight + 10 + (62 / 360) * table.height * tableScale;
-    const cellWidth = (113 / 701) * table.width * tableScale;
-    const cellHeight = (57 / 360) * table.height * tableScale;
+    const cellX = tableX + (124 / 701) * tableWidth;
+    const cellY = tableY + (62 / 360) * tableHeight;
+    const cellWidth = (113 / 701) * tableWidth;
+    const cellHeight = (57 / 360) * tableHeight;
     ctx.save();
     ctx.textAlign = 'right';
     ctx.textBaseline = 'middle';
@@ -764,31 +838,199 @@ async function renderTrack(
     ctx.restore();
   }
 
-  // Draw fast late
-  const fastLate = await loadImageWithCache(cache, `/res/songs/fast_late.png`);
-  const fastLateScale = 0.9 * overallScale;
-  const fastLateX = leftStart + xGap + table.width * tableScale + xGap + (totalWidth - xGap * 4 - table.width * tableScale) / 2 - fastLate.width * fastLateScale / 2;
-  const fastLateY = topStart + baseHeight + 10 + table.height * tableScale - fastLate.height * fastLateScale;
-  ctx.save();
-  if (!track.details) {
-    ctx.globalAlpha = 0.7;
-  }
-  ctx.drawImage(fastLate, fastLateX, fastLateY, fastLate.width * fastLateScale, fastLate.height * fastLateScale);
-  ctx.restore();
-  if (track.details) {
+  const renderFastLate: (props: {
+    tableX: number;
+    tableY: number;
+    tableWidth: number;
+    tableHeight: number;
+  }) => Promise<{
+    fastLateY: number
+  }> = async ({ tableX, tableY, tableWidth, tableHeight }) => {
+    // Draw fast late
+    const fastLate = await loadImageWithCache(cache, `/res/songs/fast_late.png`);
+    const fastLateScale = 0.8 * overallScale;
+    const fastLateX = tableX + tableWidth + xGap + (totalWidth - xGap * 4 - tableWidth) / 2 - fastLate.width * fastLateScale / 2;
+    const fastLateY = tableY + tableHeight - fastLate.height * fastLateScale + 16 * overallScale;
     ctx.save();
-    ctx.font = `500 ${fastLateScale * 30}px ${FONT_FAMILY_MONO}`;
-    ctx.fillStyle = '#1368D4';
-    ctx.textAlign = 'right';
-    ctx.fillText(track.details.fastCount.toString(), fastLateX + fastLate.width * fastLateScale * 0.6, fastLateY + fastLate.height * fastLateScale * 0.39);
-    ctx.fillStyle = '#F8420B';
-    ctx.fillText(track.details.lateCount.toString(), fastLateX + fastLate.width * fastLateScale * 0.87, fastLateY + fastLate.height * fastLateScale * 0.82);
+    ctx.shadowBlur = 32 * fastLateScale;
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.2)';
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 0;
+    if (!track.details) {
+      ctx.globalAlpha = 0.7;
+    }
+    ctx.drawImage(fastLate, fastLateX, fastLateY, fastLate.width * fastLateScale, fastLate.height * fastLateScale);
     ctx.restore();
+    if (track.details) {
+      ctx.save();
+      ctx.font = `500 ${fastLateScale * 30}px ${FONT_FAMILY_MONO}`;
+      ctx.fillStyle = '#1368D4';
+      ctx.textAlign = 'right';
+      ctx.fillText(track.details.fastCount.toString(), fastLateX + fastLate.width * fastLateScale * 0.6, fastLateY + fastLate.height * fastLateScale * 0.39);
+      ctx.fillStyle = '#F8420B';
+      ctx.fillText(track.details.lateCount.toString(), fastLateX + fastLate.width * fastLateScale * 0.87, fastLateY + fastLate.height * fastLateScale * 0.82);
+      ctx.restore();
+    }
+
+    return { fastLateY }
   }
+
+  const renderFCFS: (props: {
+    tableX: number;
+    tableWidth: number;
+    fastLateY: number
+  }) => Promise<{
+    fcfsY: number;
+  }> = async ({ tableX, tableWidth, fastLateY }) => {
+    const baseImage = await loadImageWithCache(cache, `/res/icons/base.png`);
+    const baseImageScale = 0.8 * overallScale;
+    const x = tableX + tableWidth + xGap + (totalWidth - xGap * 4 - tableWidth) / 2 - baseImage.width * baseImageScale / 2;
+    const y = fastLateY - 2 * overallScale - baseImage.height * baseImageScale;
+    ctx.save();
+    ctx.drawImage(baseImage, x, y, baseImage.width * baseImageScale, baseImage.height * baseImageScale);
+    ctx.restore();
+
+    const fcConfig: Record<FullCombo, { base: string; text: string } | null> = {
+      'none': null,
+      'fc': { base: "fc_base", text: "fc" },
+      'fc+': { base: "fc_base", text: "fc+" },
+      'ap': { base: "ap_base", text: "ap" },
+      'ap+': { base: "ap_base", text: "ap+" },
+    }
+    const fsConfig: Record<FullSync, { base: string; text: string } | null> = {
+      'none': null,
+      'sync': { base: "sync_base", text: "sync" },
+      'fs': { base: "fs_base", text: "fs" },
+      'fs+': { base: "fs_base", text: "fs+" },
+      'fdx': { base: "fdx_base", text: "fdx" },
+      'fdx+': { base: "fdx_base", text: "fdx+" },
+    }
+
+    if (fcConfig[track.fc]) {
+      const fcImage = await loadImageWithCache(cache, `/res/icons/${fcConfig[track.fc]!.base}.png`);
+      const fcText = await loadImageWithCache(cache, `/res/icons/${fcConfig[track.fc]!.text}.png`);
+      const drawX = x - fcImage.width * baseImageScale / 2 + baseImage.width * baseImageScale * 0.28;
+      const drawY = y - fcImage.height * baseImageScale / 2 + baseImage.height * baseImageScale * 0.43;
+      ctx.drawImage(fcImage, drawX, drawY, fcImage.width * baseImageScale, fcImage.height * baseImageScale);
+      ctx.drawImage(fcText, drawX + fcImage.width * baseImageScale / 2 - fcText.width * baseImageScale / 2, drawY + fcImage.height * baseImageScale / 2 - fcText.height * baseImageScale / 2, fcText.width * baseImageScale, fcText.height * baseImageScale);
+    }
+
+    if (fsConfig[track.fs]) {
+      const fsImage = await loadImageWithCache(cache, `/res/icons/${fsConfig[track.fs]!.base}.png`);
+      const fsText = await loadImageWithCache(cache, `/res/icons/${fsConfig[track.fs]!.text}.png`);
+      const drawX = x - fsImage.width * baseImageScale / 2 + baseImage.width * baseImageScale * 0.69;
+      const drawY = y - fsImage.height * baseImageScale / 2 + baseImage.height * baseImageScale * 0.43;
+      ctx.drawImage(fsImage, drawX, drawY, fsImage.width * baseImageScale, fsImage.height * baseImageScale);
+      ctx.drawImage(fsText, drawX + fsImage.width * baseImageScale / 2 - fsText.width * baseImageScale / 2, drawY + fsImage.height * baseImageScale / 2 - fsText.height * baseImageScale / 2, fsText.width * baseImageScale, fsText.height * baseImageScale);
+    }
+
+    return {
+      fcfsY: y
+    }
+  }
+
+  const renderDXScore: (props: {
+    tableX: number;
+    tableY: number;
+    tableWidth: number;
+  }) => Promise<void> = async ({ tableX, tableWidth }) => {
+    const dxScoreImage = await loadImageWithCache(cache, `/res/songs/dxscore.png`);
+    const dxScoreScale = 1.2 * overallScale;
+    const x = tableX + tableWidth + xGap + (totalWidth - xGap * 4 - tableWidth) / 2 - dxScoreImage.width * dxScoreScale / 2;
+    const y = tableY;
+    ctx.drawImage(dxScoreImage, x, y, dxScoreImage.width * dxScoreScale, dxScoreImage.height * dxScoreScale);
+    const bigFontSize = dxScoreScale * 20, bigWeight = 500;
+    const smallFontSize = dxScoreScale * 16, smallWeight = 500;
+    const percentageFontSize = dxScoreScale * 16, percentageWeight = 500;
+
+    ctx.save();
+    ctx.font = `${percentageWeight} ${percentageFontSize}px ${FONT_FAMILY_MONO}`;
+    const percentageText = `${(track.dxScore / track.maxDxScore * 100).toFixed(2)}%`
+    const percentageWidth = ctx.measureText(percentageText).width;
+    const gapXBetweenPercentageAndScore = 8 * overallScale;
+
+    ctx.font = `${bigWeight} ${bigFontSize}px ${FONT_FAMILY_MONO}`;
+    ctx.fillStyle = '#1368D4';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'alphabetic';
+
+    const dxScoreText = track.dxScore.toString();
+    const maxDxScoreText = track.maxDxScore.toString();
+
+    const dxScoreWidth = ctx.measureText(dxScoreText).width;
+
+    ctx.font = `${smallWeight} ${smallFontSize}px ${FONT_FAMILY_MONO}`;
+    const slashWidth = ctx.measureText('/').width;
+    const maxDxScoreWidth = ctx.measureText(maxDxScoreText).width;
+
+    const textTotalWidth = dxScoreWidth + slashWidth + maxDxScoreWidth;
+    const centerX = x + (dxScoreImage.width * dxScoreScale - percentageWidth - gapXBetweenPercentageAndScore) / 2;
+    const baselineY = y + dxScoreImage.height * dxScoreScale * 0.84;
+
+    let currentX = centerX - textTotalWidth / 2;
+
+    ctx.font = `${percentageWeight} ${percentageFontSize}px ${FONT_FAMILY_MONO}`;
+    ctx.fillText(percentageText, x + dxScoreImage.width * dxScoreScale - percentageWidth, baselineY);
+
+    ctx.font = `${bigWeight} ${bigFontSize}px ${FONT_FAMILY_MONO}`;
+    ctx.fillText(dxScoreText, currentX + dxScoreWidth / 2, baselineY);
+    currentX += dxScoreWidth;
+
+    ctx.font = `${smallWeight} ${smallFontSize}px ${FONT_FAMILY_MONO}`;
+    ctx.fillText('/', currentX + slashWidth / 2, baselineY - 1);
+    currentX += slashWidth;
+
+    ctx.fillText(maxDxScoreText, currentX + maxDxScoreWidth / 2, baselineY);
+    ctx.restore();
+
+    const dxStars = calculateDXStars(track.dxScore, track.maxDxScore);
+    if (dxStars > 0) {
+      const starImage = dxStars >= 5 ? 3 : dxStars >= 3 ? 2 : 1;
+      const dxStarsImage = await loadImageWithCache(cache, `/res/songs/star_${starImage}.png`);
+      const dxStarsScale = 1.0 * overallScale;
+      const gapX = 6 * dxStarsScale;
+      const paddingX = 18 * dxStarsScale, paddingY = 5 * dxStarsScale, marginX = 4 * dxStarsScale, marginY = 8 * dxStarsScale;
+      const totalStarsWidth = dxStarsImage.width * dxStarsScale * dxStars + gapX * (dxStars - 1);
+      ctx.save();
+      ctx.globalAlpha = 1.0;
+      ctx.fillStyle = 'white';
+      ctx.shadowBlur = 6 * dxStarsScale;
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.15)';
+      const roundRectHeight = dxStarsImage.height * dxStarsScale + paddingY * 2;
+      roundRect(ctx, x + dxScoreImage.width * dxScoreScale / 2 - totalStarsWidth / 2 - paddingX, y + dxScoreImage.height * dxScoreScale + marginY, totalStarsWidth + paddingX * 2, roundRectHeight, roundRectHeight / 2);
+      ctx.fill();
+      ctx.restore();
+
+      ctx.save();
+      ctx.shadowBlur = 8 * dxStarsScale;
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.1)';
+      for (let i = 0; i < dxStars; i++) {
+        ctx.drawImage(dxStarsImage, x + dxScoreImage.width * dxScoreScale / 2 - totalStarsWidth / 2 + i * (dxStarsImage.width * dxStarsScale + gapX), y + dxScoreImage.height * dxScoreScale + paddingY + marginY, dxStarsImage.width * dxStarsScale, dxStarsImage.height * dxStarsScale);
+      }
+      ctx.restore();
+    }
+  }
+
+  await renderTrack();
+  await renderCover();
+  await renderSongName();
+  await renderType();
+  await renderLevel();
+  await renderAchievement();
+  const { tableX, tableY, tableWidth, tableHeight, tableScale } = await renderTable();
+
+  // Draw stats
+  if (track.details) {
+    await renderTableDetails({ tableX, tableY, tableWidth, tableHeight, details: track.details });
+  }
+
+  const { fastLateY } = await renderFastLate({ tableX, tableY, tableWidth, tableHeight });
+  const { fcfsY } = await renderFCFS({ tableX, tableWidth, fastLateY });
+  await renderDXScore({ tableX, tableY, tableWidth });
 }
 
 async function getScoreTextSize(cache: ImageCache, color: string) {
-  const numberImg = await loadImageWithCache(cache, `/res/numbers/score_${color}.png`);
+  const numberImg = await loadImageWithCache(cache, color);
   return { width: numberImg.width / 4, height: numberImg.height / 3 };
 }
 
@@ -800,8 +1042,11 @@ async function renderScoreText(
   x: number,
   y: number,
   scale: number,
+  tintColor?: string,
+  borderColor?: string,
+  borderWidth: number = 2,
 ) {
-  const numberImg = await loadImageWithCache(cache, `/res/numbers/score_${color}.png`);
+  const numberImg = await loadImageWithCache(cache, color);
   const textSlots = {
     "0": [0, 0],
     "1": [1, 0],
@@ -817,6 +1062,7 @@ async function renderScoreText(
     "-": [3, 2],
     ",": [0, 3],
     ".": [1, 3],
+    "lv": [2, 3],
   }
 
   // get the section
@@ -826,7 +1072,74 @@ async function renderScoreText(
   const [xSubsection, ySubsection] = section;
   const wSection = numberImg.width / 4;
   const hSection = numberImg.height / 4;
-  ctx.drawImage(numberImg, wSection * xSubsection, hSection * ySubsection, wSection, hSection, x, y, wSection * scale, hSection * scale);
+
+  if (tintColor || borderColor) {
+    // Create a temporary canvas for the tinting/border operation
+    const padding = borderColor ? borderWidth : 0;
+    const tempCanvas = new Canvas(wSection * scale + padding * 2, hSection * scale + padding * 2);
+    const tempCtx = tempCanvas.getContext('2d') as SkiaContext;
+
+    // Draw border if specified
+    if (borderColor) {
+      // Create a separate canvas for the border
+      const borderCanvas = new Canvas(wSection * scale + padding * 2, hSection * scale + padding * 2);
+      const borderCtx = borderCanvas.getContext('2d') as SkiaContext;
+
+      // Draw the border by drawing the image multiple times offset in different directions
+      const offsets = [];
+      for (let angle = 0; angle < Math.PI * 2; angle += Math.PI / 4) {
+        offsets.push({
+          x: Math.cos(angle) * borderWidth,
+          y: Math.sin(angle) * borderWidth
+        });
+      }
+
+      borderCtx.globalCompositeOperation = 'source-over';
+      for (const offset of offsets) {
+        borderCtx.drawImage(
+          numberImg,
+          wSection * xSubsection,
+          hSection * ySubsection,
+          wSection,
+          hSection,
+          padding + offset.x,
+          padding + offset.y,
+          wSection * scale,
+          hSection * scale
+        );
+      }
+
+      // Fill the border with the border color
+      borderCtx.globalCompositeOperation = 'source-in';
+      borderCtx.fillStyle = borderColor;
+      borderCtx.fillRect(0, 0, borderCanvas.width, borderCanvas.height);
+
+      // Draw the border to the main temp canvas
+      tempCtx.drawImage(borderCanvas, 0, 0);
+    }
+
+    // Create a separate canvas for the main text
+    const textCanvas = new Canvas(wSection * scale, hSection * scale);
+    const textCtx = textCanvas.getContext('2d') as SkiaContext;
+
+    // Draw the main image
+    textCtx.drawImage(numberImg, wSection * xSubsection, hSection * ySubsection, wSection, hSection, 0, 0, wSection * scale, hSection * scale);
+
+    // Apply color tint if specified
+    if (tintColor) {
+      textCtx.globalCompositeOperation = 'source-in';
+      textCtx.fillStyle = tintColor;
+      textCtx.fillRect(0, 0, wSection * scale, hSection * scale);
+    }
+
+    // Draw the main text on top of the border
+    tempCtx.drawImage(textCanvas, padding, padding);
+
+    // Draw the result to the main canvas
+    ctx.drawImage(tempCanvas, x - padding, y - padding);
+  } else {
+    ctx.drawImage(numberImg, wSection * xSubsection, hSection * ySubsection, wSection, hSection, x, y, wSection * scale, hSection * scale);
+  }
 }
 
 async function renderSongsLabel(
@@ -850,18 +1163,13 @@ async function renderSongsLabel(
   ctx.restore();
 }
 
-async function renderFooter<S>(ctx: SkiaContext, data: SnapshotWithSongs<S>, visitableProfileAt: string | null) {
+async function renderFooter<S>(ctx: SkiaContext, gameVersion: number, footerText: string, canvas: CanvasSize) {
   const footerHeight = 50;
-  const footerTop = CANVAS_HEIGHT - footerHeight;
+  const footerTop = canvas.height - footerHeight;
 
   // Draw footer background
-  ctx.fillStyle = VERSION_SETTINGS[data.snapshot.gameVersion as keyof typeof VERSION_SETTINGS]?.footerBackgroundColor || '#00000020';
-  ctx.fillRect(0, footerTop, CANVAS_WIDTH, footerHeight);
-
-  // Draw footer text
-  const footerText = visitableProfileAt
-    ? `Visit my profile at https://tomomai.lol/profile/${visitableProfileAt}/`
-    : "Generated with https://tomomai.lol/";
+  ctx.fillStyle = VERSION_SETTINGS[gameVersion as keyof typeof VERSION_SETTINGS]?.footerBackgroundColor || '#00000020';
+  ctx.fillRect(0, footerTop, canvas.width, footerHeight);
 
   ctx.save();
   ctx.globalAlpha = 0.86;

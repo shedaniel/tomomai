@@ -1,3 +1,4 @@
+import { Slabo_27px } from "next/font/google";
 import { logger } from "./logger";
 
 // Constants for achievement calculation
@@ -360,4 +361,16 @@ export function calculateNoteLosses(notes: CalculateAchievementParams, breakDist
       miss: calcBreakLoss(notes.break.miss, BREAK_JUDGMENT_MULTIPLIERS.miss, BREAK_BONUS_MULTIPLIER.miss),
     },
   };
+}
+
+export function calculateDXStars(dxScore: number, maxDxScore: number): 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 {
+  const percentage = dxScore / maxDxScore;
+  if (dxScore >= maxDxScore) return 7;
+  if (percentage >= 0.99) return 6;
+  if (percentage >= 0.97) return 5;
+  if (percentage >= 0.95) return 4;
+  if (percentage >= 0.93) return 3;
+  if (percentage >= 0.90) return 2;
+  if (percentage >= 0.85) return 1;
+  return 0;
 }

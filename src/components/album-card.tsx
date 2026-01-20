@@ -14,7 +14,6 @@ import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 import { renderLevelPrecise } from "@/lib/name-utils";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Progress } from "@/components/ui/progress";
 
 interface AlbumCardProps {
   region: Region;

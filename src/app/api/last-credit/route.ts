@@ -6,7 +6,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { ImageCache, renderLastCreditImage } from '@/lib/render-image';
 import { fetchImageForServer } from '@/lib/render-image-server';
 import { Image, loadImage } from 'skia-canvas';
-import { TitleType } from '@/lib/types';
+import { FullCombo, FullSync, TitleType } from '@/lib/types';
 import { getRatingImageUrl } from '@/lib/rating-calculator';
 import { DIFFICULTY_ENUM } from '@/lib/db/types';
 
@@ -58,8 +58,8 @@ export interface RecentSongData {
   achievement: number;
   dxScore: number;
   maxDxScore: number;
-  fc: string;
-  fs: string;
+  fc: FullCombo;
+  fs: FullSync;
   track: number;
   songName: string;
   artist: string;
@@ -462,6 +462,7 @@ export async function GET(request: NextRequest) {
       `/res/character/${snapshot.gameVersion}.png`,
       `/res/logo/${snapshot.gameVersion}.png`,
       `/res/bg/${snapshot.gameVersion}.png`,
+      `/res/bg/${snapshot.gameVersion}_long.png`,
       `/res/badge/${snapshot.gameVersion}/none.png`,
       `/res/badge/${snapshot.gameVersion}/sync.png`,
       `/res/badge/${snapshot.gameVersion}/fc.png`,
@@ -470,17 +471,17 @@ export async function GET(request: NextRequest) {
       `/res/badge/${snapshot.gameVersion}/fs+.png`,
       `/res/badge/${snapshot.gameVersion}/fdx.png`,
       `/res/badge/${snapshot.gameVersion}/fdx+.png`,
-      `/res/numbers/percentage_blue.png`,
-      `/res/numbers/percentage_red.png`,
-      `/res/numbers/percentage_gold.png`,
-      `/res/numbers/score_blue.png`,
-      `/res/numbers/score_red.png`,
-      `/res/numbers/score_gold.png`,
-      `/res/numbers/score_big_blue.png`,
-      `/res/numbers/score_big_red.png`,
-      `/res/numbers/score_big_gold.png`,
-      `/res/songs/score_table.png`,
-      `/res/songs/fast_late.png`,
+      ...['percentage_blue', 'percentage_red', 'percentage_gold',
+        'score_blue', 'score_red', 'score_gold', 'score_big_blue', 'score_big_red', 'score_big_gold',
+        'score_num_count', 'score_num_count_big',
+        'level_basic', 'level_advanced', 'level_expert', 'level_master', 'level_remaster']
+        .map(path => `/res/numbers/${path}.png`),
+      ...['score_table', 'fast_late', 'track_1', 'track_2', 'track_3',
+        'dxscore', 'star_1', 'star_2', 'star_3']
+        .map(path => `/res/songs/${path}.png`),
+      ...['base', 'sync_base', 'sync', 'fc_base', 'fc', 'fc+', 'ap_base', 'ap', 'ap+',
+        'fs_base', 'fs', 'fs+', 'fdx_base', 'fdx', 'fdx+']
+        .map(path => `/res/icons/${path}.png`),
       ...Object.values(DIFFICULTY_ENUM).map(difficulty => `/res/songs/song_${difficulty}.png`),
       ...Object.values(DIFFICULTY_ENUM).map(difficulty => `/res/songs/music_jacket_${difficulty}.png`),
       ...credit.tracks.map(s => s.cover),
@@ -504,10 +505,16 @@ export async function GET(request: NextRequest) {
     console.log(`✅ Cached ${Object.keys(cache).length} images in ${Date.now() - startTime}ms`);
 
     // Render the image using skia-canvas
-    const canvas = await renderLastCreditImage(credit, snapshot, cache);
+    const canvas = await renderLastCreditImage({
+      ...credit,
+      tracks: credit.tracks.map(track => ({
+        ...track,
+      }))
+      // tracks: [...credit.tracks, credit.tracks[credit.tracks.length - 1]]
+    }, snapshot, cache);
 
     // Convert canvas to JPEG buffer and return
-    const buffer = await canvas.toBuffer('jpeg', { density: scale, quality: 0.7 });
+    const buffer = await canvas.toBuffer('jpg', { density: scale, quality: 0.9 });
     return new Response(new Uint8Array(buffer), {
       status: 200,
       headers: {

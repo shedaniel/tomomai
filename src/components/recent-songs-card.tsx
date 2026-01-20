@@ -14,23 +14,11 @@ import { Badge } from "./ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { AutoHeight } from "@/components/animate-ui/primitives/effects/auto-height";
-import { logger } from "@/lib/logger";
 import { getVersionInfo } from "@/lib/metadata";
 import { inferRouterOutputs } from "@trpc/server";
 import { AppRouter } from "@/server/routers/_app";
 import { renderLevelPrecise } from "@/lib/name-utils";
-import { calculateNoteLosses, distributeBreaks } from "@/lib/score-details";
-
-function calculateDXStars(dxScore: number, maxDxScore: number) {
-  const percentage = dxScore / maxDxScore;
-  if (percentage >= 0.99) return 6;
-  if (percentage >= 0.97) return 5;
-  if (percentage >= 0.95) return 4;
-  if (percentage >= 0.93) return 3;
-  if (percentage >= 0.90) return 2;
-  if (percentage >= 0.85) return 1;
-  return 0;
-}
+import { calculateDXStars, calculateNoteLosses, distributeBreaks } from "@/lib/score-details";
 
 interface RecentSongsCardProps {
   region: Region;
