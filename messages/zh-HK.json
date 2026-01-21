@@ -87,6 +87,27 @@
       "updateToken": "更新驗證方式",
       "description": "更新你的 maimai 驗證方式以進行資料匯入及同步玩家資料。"
     },
+    "albumPrivacy": {
+      "title": "Album Photo Privacy Settings",
+      "description": "Would you like to fetch and save your album photos from maimai?",
+      "note": "Please note:",
+      "noteText": "Album photos may contain your face or other personal information. If you do NOT want to have this info saved on tomomai ともマイ, you may disable this feature here.",
+      "privacy": "Your images are:",
+      "stored": "Stored privately on our servers",
+      "notShared": "Never shared with third parties",
+      "onlyYou": "Only shown to you",
+      "limit": "Limited to 25MB total (~300 images)",
+      "autoDelete": "Automatically deleted oldest-first when limit is exceeded",
+      "changeLater": "You can change this setting later in your profile settings.",
+      "dontSave": "No, don't save photos",
+      "save": "Yes, save my album photos",
+      "example": "Example saved album picture",
+      "saved": "Album preference saved successfully",
+      "error": "Failed to save album preference",
+      "fetchAlbums": "Save Album Photos",
+      "fetchAlbumsDescription": "Automatically fetch and save your album photos when fetching scores. Photos may contain personal information.",
+      "notSet": "You haven't set this preference yet. You'll be prompted on your next fetch."
+    },
     "profile": {
       "publishProfile": "公開個人檔案",
       "publishDescription": "公開你的 maimai 個人檔案，讓其他玩家可以查看你的分數和進度。",
@@ -167,7 +188,8 @@
       "map": "活動地圖",
       "exportImage": "匯出圖片",
       "history": "歷史紀錄",
-      "developer": "開發者"
+      "developer": "開發者",
+      "albums": "Albums"
     },
     "playerInfo": "玩家資訊",
     "rating": "Rating：{rating}",
@@ -212,6 +234,24 @@
       "exportJson": "匯出紀錄為 JSON",
       "exporting": "匯出中..."
     }
+  },
+  "albums": {
+    "title": "Photo Albums",
+    "photos": "photos",
+    "noAlbums": "No photo albums yet",
+    "loadMore": "Load More",
+    "loading": "載入中...",
+    "error": "Failed to load albums",
+    "storage": "Storage",
+    "storageTitle": "Storage Usage",
+    "storageDescription": "Manage your photo album storage. Oldest photos are automatically deleted when exceeding 25MB. This should be enough for ~300 images.",
+    "used": "Used",
+    "totalUsed": "Total Used",
+    "limit": "Limit",
+    "usedOf": "of",
+    "byRegion": "By Region",
+    "storageWarning": "You're approaching the storage limit. Consider deleting old photos or older albums will be automatically removed.",
+    "uploadNotice": "If you just fetched a snapshot, new album photos may take a few moments to upload and appear here. Please refresh in a while."
   },
   "recommendations": {
     "noRecommendations": "無推薦歌曲",
