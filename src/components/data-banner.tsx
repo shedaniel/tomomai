@@ -13,7 +13,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MotionButton } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   DropdownMenu,
@@ -118,14 +117,14 @@ function DeleteSnapshotButton({
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <MotionButton
+        <Button
           variant="outline"
           size="sm"
           className="h-10 w-10 p-0"
           title="Delete selected snapshot"
         >
           <Trash2 className="h-4 w-4" />
-        </MotionButton>
+        </Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>

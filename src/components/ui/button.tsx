@@ -75,7 +75,7 @@ const MotionButton = React.forwardRef<
       asChild = false,
       whileHover = { scale: 1.02, y: -1 },
       whileTap = { scale: 0.98 },
-      transition = getTransition(SPRING_CONFIGS.snappy),
+      transition = { duration: 0.1, ease: "easeOut" },
       ...props
     },
     ref

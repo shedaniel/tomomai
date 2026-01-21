@@ -1,7 +1,6 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { MotionButton } from "@/components/ui/button";
 import Image from "next/image";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Database, ArrowRight } from "lucide-react";
@@ -100,7 +99,7 @@ export function LoginScreen({ signupRequirements }: LoginScreenProps) {
               </p>
 
               <div className="text-center space-y-2">
-                <MotionButton
+                <Button
                   onClick={handleAuth}
                   className="w-full"
                   size="lg"
@@ -115,7 +114,7 @@ export function LoginScreen({ signupRequirements }: LoginScreenProps) {
                     </svg>
                   )}
                   {!isChinaRegion() ? t('auth.loginWithDiscord') : '以 QQ 继续'}
-                </MotionButton>
+                </Button>
 
                 <p className="text-sm text-muted-foreground">
                   {t('auth.noAccount')}{" "}
