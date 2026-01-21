@@ -4,9 +4,10 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Eye, EyeOff, Key, Save } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { AnimatedDialogContent } from "./ui/animated-dialog";
 
 interface TokenDialogJapanProps {
   isOpen: boolean;
@@ -50,7 +51,7 @@ export function TokenDialogJapan({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <AnimatedDialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center space-x-2">
             <Key className="h-5 w-5" />
@@ -125,7 +126,7 @@ export function TokenDialogJapan({
             </Button>
           </form>
         </div>
-      </DialogContent>
+      </AnimatedDialogContent>
     </Dialog>
   );
 }

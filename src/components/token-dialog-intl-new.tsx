@@ -582,7 +582,7 @@ export function TokenDialogIntlNew({
     <>
       {/* Main Selection Dialog */}
       <Dialog open={isOpen} onOpenChange={handleClose}>
-        <AnimatedDialogContent className={cn("sm:max-w-md transition-[opacity,scale] duration-200", isTokenDialogOpen || isPasswordDialogOpen ? "opacity-70!" : "")}>
+        <AnimatedDialogContent className={cn("sm:max-w-md", isTokenDialogOpen || isPasswordDialogOpen ? "opacity-70!" : "")}>
           <DialogHeader>
             <DialogTitle className="flex items-center space-x-2">
               <Key className="h-5 w-5" />

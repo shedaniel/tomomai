@@ -113,6 +113,38 @@ export async function startFetchServer(userId: string, region: Region, token?: s
     }
   }
 
+  // Store/update token if a new one was provided (do this BEFORE other checks so token is always saved)
+  if (token) {
+    // Encrypt the token before storing
+    const encryptedToken = encryptToken(tokenToUse);
+
+    try {
+      await db
+        .insert(userTokens)
+        .values({
+          userId: userId,
+          region: region,
+          token: encryptedToken,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        });
+    } catch {
+      // If insert fails due to constraint, update the existing record
+      await db
+        .update(userTokens)
+        .set({
+          token: encryptedToken,
+          updatedAt: new Date(),
+        })
+        .where(
+          and(
+            eq(userTokens.userId, userId),
+            eq(userTokens.region, region)
+          )
+        );
+    }
+  }
+
   // Check if user has set their album preference
   const userPreference = await db
     .select({ fetchUseAlbums: user.fetchUseAlbums })
@@ -194,38 +226,6 @@ export async function startFetchServer(userId: string, region: Region, token?: s
     if (timeSinceOldestInWindow < fiveMinutes) {
       const remainingTime = Math.ceil((fiveMinutes - timeSinceOldestInWindow) / 1000);
       throw new Error(`Rate limited. You can make 5 requests per 5 minutes. Try again in ${remainingTime} seconds.`);
-    }
-  }
-
-  // Store/update token if a new one was provided
-  if (token) {
-    // Encrypt the token before storing
-    const encryptedToken = encryptToken(tokenToUse);
-
-    try {
-      await db
-        .insert(userTokens)
-        .values({
-          userId: userId,
-          region: region,
-          token: encryptedToken,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        });
-    } catch {
-      // If insert fails due to constraint, update the existing record
-      await db
-        .update(userTokens)
-        .set({
-          token: encryptedToken,
-          updatedAt: new Date(),
-        })
-        .where(
-          and(
-            eq(userTokens.userId, userId),
-            eq(userTokens.region, region)
-          )
-        );
     }
   }
 
