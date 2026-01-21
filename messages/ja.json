@@ -87,6 +87,27 @@
       "updateToken": "認証情報を更新",
       "description": "データ取得とプレイヤー同期のために、認証情報（トークン）を更新します。"
     },
+    "albumPrivacy": {
+      "title": "Album Photo Privacy Settings",
+      "description": "Would you like to fetch and save your album photos from maimai?",
+      "note": "Please note:",
+      "noteText": "Album photos may contain your face or other personal information. If you do NOT want to have this info saved on tomomai ともマイ, you may disable this feature here.",
+      "privacy": "Your images are:",
+      "stored": "Stored privately on our servers",
+      "notShared": "Never shared with third parties",
+      "onlyYou": "Only shown to you",
+      "limit": "Limited to 25MB total (~300 images)",
+      "autoDelete": "Automatically deleted oldest-first when limit is exceeded",
+      "changeLater": "You can change this setting later in your profile settings.",
+      "dontSave": "No, don't save photos",
+      "save": "Yes, save my album photos",
+      "example": "Example saved album picture",
+      "saved": "Album preference saved successfully",
+      "error": "Failed to save album preference",
+      "fetchAlbums": "Save Album Photos",
+      "fetchAlbumsDescription": "Automatically fetch and save your album photos when fetching scores. Photos may contain personal information.",
+      "notSet": "You haven't set this preference yet. You'll be prompted on your next fetch."
+    },
     "profile": {
       "publishProfile": "プロフィールを公開",
       "publishDescription": "maimaiプロフィールを公開して、他のプレイヤーにスコアや進捗を共有しよう。",
@@ -167,7 +188,8 @@
       "map": "ちほー",
       "exportImage": "エクスポート",
       "history": "履歴",
-      "developer": "開発者"
+      "developer": "開発者",
+      "albums": "Albums"
     },
     "playerInfo": "プレイヤー情報",
     "rating": "レート値：{rating}",
@@ -212,6 +234,24 @@
       "exportJson": "スナップショットをJSONでエクスポート",
       "exporting": "エクスポート中..."
     }
+  },
+  "albums": {
+    "title": "Photo Albums",
+    "photos": "photos",
+    "noAlbums": "No photo albums yet",
+    "loadMore": "Load More",
+    "loading": "読み込み中...",
+    "error": "Failed to load albums",
+    "storage": "Storage",
+    "storageTitle": "Storage Usage",
+    "storageDescription": "Manage your photo album storage. Oldest photos are automatically deleted when exceeding 25MB. This should be enough for ~300 images.",
+    "used": "Used",
+    "totalUsed": "Total Used",
+    "limit": "Limit",
+    "usedOf": "of",
+    "byRegion": "By Region",
+    "storageWarning": "You're approaching the storage limit. Consider deleting old photos or older albums will be automatically removed.",
+    "uploadNotice": "If you just fetched a snapshot, new album photos may take a few moments to upload and appear here. Please refresh in a while."
   },
   "recommendations": {
     "noRecommendations": "おすすめがありません",
