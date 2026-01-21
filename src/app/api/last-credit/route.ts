@@ -104,13 +104,13 @@ export async function GET(request: NextRequest) {
     // Render the image using skia-canvas
     const canvas = await renderLastCreditImage(credit, snapshot, cache);
 
-    // Convert canvas to JPEG buffer and return
-    const buffer = await canvas.toBuffer('jpg', { density: scale, quality: 0.9 });
+    // Convert canvas to WEBP buffer and return
+    const buffer = await canvas.toBuffer('webp', { density: scale });
     return new Response(new Uint8Array(buffer), {
       status: 200,
       headers: {
-        'Content-Type': 'image/jpeg',
-        'Content-Disposition': `attachment; filename="maimai-last-credit.jpg"`,
+        'Content-Type': 'image/webp',
+        'Content-Disposition': `attachment; filename="maimai-last-credit.webp"`,
         'Content-Length': buffer.length.toString(),
       },
     });

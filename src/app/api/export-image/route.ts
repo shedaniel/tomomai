@@ -173,8 +173,8 @@ export async function GET(request: NextRequest) {
     const canvas = await renderImage(data, cache, visitableProfileAt);
     console.log(`✅ Image rendered in ${Date.now() - startTime}ms`);
 
-    // Convert canvas to JPEG buffer
-    console.log('💾 Converting to JPEG buffer...');
+    // Convert canvas to WEBP buffer
+    console.log('💾 Converting to WEBP buffer...');
     startTime = Date.now();
     const buffer = await canvas.toBuffer('webp', {
       density: scale,
@@ -188,8 +188,8 @@ export async function GET(request: NextRequest) {
     return new Response(new Uint8Array(buffer), {
       status: 200,
       headers: {
-        'Content-Type': 'image/jpeg',
-        'Content-Disposition': `attachment; filename="maimai-profile-${sanitizedName}.jpeg"`,
+        'Content-Type': 'image/webp',
+        'Content-Disposition': `attachment; filename="maimai-profile-${sanitizedName}.webp"`,
         'Content-Length': buffer.length.toString(),
       },
     });
