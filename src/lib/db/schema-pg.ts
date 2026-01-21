@@ -332,7 +332,7 @@ export const storeEditVotes = pgTable("store_edit_votes", {
 export const userAlbums = pgTable("user_albums", {
   id: bigint("id", { mode: "bigint" }).primaryKey().generatedAlwaysAsIdentity(),
   userId: text("userId").notNull().references(() => user.id, { onDelete: "cascade" }),
-  songId: bigint("songId", { mode: "bigint" }).notNull().references(() => songs.id),
+  songId: bigint("songId", { mode: "bigint" }).notNull().references(() => songs.id, { onDelete: "cascade" }),
   takenAt: timestamp("takenAt", { precision: 0 }).notNull(),
   venue: text("venue"),
   imageKey: text("imageKey").notNull(),

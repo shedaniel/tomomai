@@ -71,6 +71,13 @@
       "when": 1768231403224,
       "tag": "0009_wooden_christian_walker",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1768988058692,
+      "tag": "0010_oval_steve_rogers",
+      "breakpoints": true
     }
   ]
 }
