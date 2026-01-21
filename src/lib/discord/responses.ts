@@ -1,4 +1,6 @@
 import { InteractionResponseType, InteractionResponseFlags } from 'discord-interactions';
+import { FETCH_STATUS_ENUM } from '../db/types';
+import { FETCH_STATES } from '../fetch-states';
 
 export interface DiscordEmbed {
   title?: string;
@@ -47,16 +49,6 @@ export const DISCORD_COLORS = {
 
 // Helper function to get user-friendly labels for fetch states
 export function getStateFriendlyName(state: string): string {
-  const FETCH_STATES = {
-    LOGIN: 'login',
-    PLAYER_DATA: 'player_data',
-    SONG_DATA_EASY: 'song_data_easy',
-    SONG_DATA_ADVANCED: 'song_data_advanced',
-    SONG_DATA_EXPERT: 'song_data_expert',
-    SONG_DATA_MASTER: 'song_data_master',
-    SONG_DATA_REMASTER: 'song_data_remaster',
-  };
-
   switch (state) {
     case FETCH_STATES.LOGIN:
       return 'Logging in to maimai DX NET';
@@ -72,6 +64,12 @@ export function getStateFriendlyName(state: string): string {
       return 'Loading Master scores';
     case FETCH_STATES.SONG_DATA_REMASTER:
       return 'Loading Re:MASTER scores';
+    case FETCH_STATES.ALBUM_DATA:
+      return 'Loading album data';
+    case FETCH_STATES.HIDDEN_SONGS:
+      return 'Loading hidden songs';
+    case FETCH_STATES.RECENT_SONGS:
+      return 'Loading recent plays';
     default:
       return state;
   }

@@ -1,0 +1,2 @@
+CREATE TYPE "public"."title_type" AS ENUM('normal', 'bronze', 'silver', 'gold', 'rainbow');--> statement-breakpoint
+ALTER TABLE "user_snapshots" ADD COLUMN "titleType" "title_type" DEFAULT 'normal' NOT NULL;

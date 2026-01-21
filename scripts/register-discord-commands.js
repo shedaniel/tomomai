@@ -1,5 +1,5 @@
-const fetch = require('undici').fetch;
-const { config } = require('dotenv');
+import { fetch } from 'undici';
+import { config } from 'dotenv';
 
 config({ path: ".env.local" });
 

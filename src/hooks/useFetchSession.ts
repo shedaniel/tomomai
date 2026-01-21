@@ -3,11 +3,11 @@ import { trpc, trpcClient } from "@/lib/trpc-client";
 import { toast } from "sonner";
 import { Region, FetchSession } from "@/lib/types";
 import { Flags } from "@/lib/flags";
-import { isTokenError } from "@/lib/token-errors";
+import { isTokenError, isAlbumSettingsError } from "@/lib/token-errors";
 import { parseStatusStates } from "@/lib/fetch-states";
 import { FetchToastState } from "@/components/fetch-toast";
 
-export function useFetchSession(onFetchComplete?: () => void, flags?: Flags, onTokenError?: () => void) {
+export function useFetchSession(onFetchComplete?: () => void, flags?: Flags, onTokenError?: () => void, onUseAlbumError?: () => void) {
   const [currentSession, setCurrentSession] = useState<FetchSession | null>(null);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [lastFetchTime, setLastFetchTime] = useState<Date | null>(null);
@@ -93,6 +93,11 @@ export function useFetchSession(onFetchComplete?: () => void, flags?: Flags, onT
       pollFetchStatus(data.sessionId, variables.region);
     },
     onError: (error) => {
+      if (isAlbumSettingsError(error.message) && !!onUseAlbumError) {
+        onUseAlbumError?.();
+        return;
+      }
+
       setFetchError(error.message);
       // Don't set error here - let it bubble up to be caught by the calling component
     },
@@ -159,6 +164,11 @@ export function useFetchSession(onFetchComplete?: () => void, flags?: Flags, onT
               onTokenError?.();
             }
 
+            // Check if this is an album settings error
+            if (isAlbumSettingsError(errorMessage)) {
+              onUseAlbumError?.();
+            }
+
             return "failed";
           }
         } else if (!result) {
@@ -212,7 +222,7 @@ export function useFetchSession(onFetchComplete?: () => void, flags?: Flags, onT
   // Compute the fetch toast state from the current session
   const fetchToastState: FetchToastState | null = useMemo(() => {
     if (!currentSession) return null;
-    
+
     return {
       id: currentSession.id,
       status: currentSession.status,

@@ -119,7 +119,7 @@ export class MemoryRateLimiter {
 // Singleton instance for general API rate limiting
 export const apiRateLimiter = new MemoryRateLimiter({
   windowMs: 60 * 1000, // 1 minute
-  maxRequests: 100, // 100 requests per 1 minute
+  maxRequests: 180, // 180 requests per 1 minute
 });
 
 // Singleton instance for auth endpoints (more restrictive)

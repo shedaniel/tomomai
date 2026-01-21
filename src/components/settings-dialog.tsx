@@ -4,11 +4,11 @@ import { useLocale } from "@/components/providers/locale-provider";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
-  DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { AnimatedDialogContent } from "@/components/ui/animated-dialog";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -23,7 +23,7 @@ import { getEnabledRegions, isChinaRegion } from "@/lib/enabled-regions";
 import { trpc } from "@/lib/trpc-client";
 import { ProfilePrivacySettings, ProfileSettings, Region } from "@/lib/types";
 import { getLanguages } from "@/lib/utils";
-import { Copy, ExternalLink, Globe, Key, Languages } from "lucide-react";
+import { Copy, ExternalLink, Globe, Key, Languages, Images, AlertCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -61,6 +61,9 @@ export function SettingsDialog({
     profileShowEvents: initialProfileSettings?.profileShowEvents ?? true,
     profileShowInSearch: initialProfileSettings?.profileShowInSearch ?? true,
   });
+  const [selectedFetchUseAlbums, setSelectedFetchUseAlbums] = useState<boolean | null>(
+    initialProfileSettings?.fetchUseAlbums ?? null
+  );
 
   // tRPC hooks with initial data
   const { data: profileSettings, isLoading: profileSettingsLoading } = trpc.user.getProfileSettings.useQuery(undefined, {
@@ -71,6 +74,7 @@ export function SettingsDialog({
   const updatePublishProfile = trpc.user.updatePublishProfile.useMutation();
   const updateProfileMainRegion = trpc.user.updateProfileMainRegion.useMutation();
   const updateProfilePrivacySettings = trpc.user.updateProfilePrivacySettings.useMutation();
+  const updateAlbumPreference = trpc.user.setAlbumPreference.useMutation();
 
   // Update local state when profile settings are loaded
   // useEffect(() => {
@@ -116,6 +120,11 @@ export function SettingsDialog({
 
         if (privacyChanged) {
           promises.push(updateProfilePrivacySettings.mutateAsync(selectedPrivacySettings).then(() => { }));
+        }
+
+        // Update album preference if changed
+        if (selectedFetchUseAlbums !== null && selectedFetchUseAlbums !== profileSettings.fetchUseAlbums) {
+          promises.push(updateAlbumPreference.mutateAsync({ fetchUseAlbums: selectedFetchUseAlbums }).then(() => { }));
         }
       }
 
@@ -198,7 +207,7 @@ export function SettingsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
+      <AnimatedDialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{t('settings.title')}</DialogTitle>
           <DialogDescription>
@@ -254,6 +263,35 @@ export function SettingsDialog({
             <p className="text-xs text-muted-foreground">
               {t('settings.account.description')}
             </p>
+          </div>
+
+          {/* Album Privacy Settings */}
+          <div className="grid gap-2 border-t pt-4">
+            <div className="flex items-center justify-between">
+              <div className="grid gap-1">
+                <Label htmlFor="fetch-albums" className="flex items-center gap-2">
+                  <Images className="h-4 w-4" />
+                  {t('settings.albumPrivacy.fetchAlbums')}
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  {t('settings.albumPrivacy.fetchAlbumsDescription')}
+                </p>
+              </div>
+              <Switch
+                id="fetch-albums"
+                checked={selectedFetchUseAlbums ?? false}
+                onCheckedChange={setSelectedFetchUseAlbums}
+                disabled={isLoadingSettings || selectedFetchUseAlbums === null}
+              />
+            </div>
+            {selectedFetchUseAlbums === null && (
+              <div className="flex gap-2 p-2 bg-muted border border-border rounded-sm">
+                <AlertCircle className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                <p className="text-xs text-muted-foreground">
+                  {t('settings.albumPrivacy.notSet')}
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Profile Publishing Section */}
@@ -441,7 +479,7 @@ export function SettingsDialog({
             {isLoadingSettings ? t('settings.saving') : t('settings.saveChanges')}
           </Button>
         </div>
-      </DialogContent>
+      </AnimatedDialogContent>
     </Dialog>
   );
 }

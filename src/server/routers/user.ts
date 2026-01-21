@@ -2,14 +2,14 @@ import { db } from '@/lib/db';
 import { createOpaqueUserId, generateUserOtp, getOtpExpiryTimestamp } from '@/lib/otp';
 import { resolveBaseUrl } from '@/lib/base-url';
 import { getFetchStatusServer, startFetchServer } from '@/lib/maimai-server-actions';
-import { getAvailableVersions, getVersionInfo, VERSIONS } from '@/lib/metadata';
+import { getVersionInfo, VERSIONS } from '@/lib/metadata';
 import { RatingCalculationInput, splitSongs } from '@/lib/rating-calculator';
-import { invites, songs, user, userScores, userSnapshots, userEvents, userRecentSongs, userRecentSongsDetailed, stores, storeEdits, storeEditVotes } from '@/lib/db/schema-pg';
+import { invites, songs, user, userScores, userSnapshots, userEvents, userRecentSongs, userRecentSongsDetailed, stores, storeEdits, storeEditVotes, userAlbums } from '@/lib/db/schema-pg';
 import { protectedProcedure, publicProcedure, router } from '@/lib/trpc';
 import { Region, SongExtended, SongWithScore, UserData } from '@/lib/types';
 import { TRPCError } from '@trpc/server';
 import { nanoid } from 'nanoid';
-import { isTokenError } from '@/lib/token-errors';
+import { isTokenError, isAlbumSettingsError } from '@/lib/token-errors';
 import { and, count, desc, eq, inArray, isNull, lt, or, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { flagDefinitions } from '@/lib/flags';
@@ -682,7 +682,12 @@ export const userRouter = router({
         return await startFetchServer(ctx.session.user.id, input.region as Region, input.token, input.flags);
       } catch (error) {
         if (error instanceof Error) {
-          if (isTokenError(error.message)) {
+          if (isAlbumSettingsError(error.message)) {
+            throw new TRPCError({
+              code: 'PRECONDITION_FAILED',
+              message: error.message,
+            });
+          } else if (isTokenError(error.message)) {
             throw new TRPCError({
               code: 'BAD_REQUEST',
               message: error.message,
@@ -769,6 +774,7 @@ export const userRouter = router({
           profileShowPlayCounts: user.profileShowPlayCounts,
           profileShowEvents: user.profileShowEvents,
           profileShowInSearch: user.profileShowInSearch,
+          fetchUseAlbums: user.fetchUseAlbums,
         })
         .from(user)
         .where(eq(user.id, ctx.session.user.id))
@@ -794,6 +800,23 @@ export const userRouter = router({
         .update(user)
         .set({
           publishProfile: input.publishProfile,
+          updatedAt: new Date(),
+        })
+        .where(eq(user.id, ctx.session.user.id));
+
+      return { success: true };
+    }),
+
+  // Set album preference
+  setAlbumPreference: protectedProcedure
+    .input(z.object({
+      fetchUseAlbums: z.boolean(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      await db
+        .update(user)
+        .set({
+          fetchUseAlbums: input.fetchUseAlbums,
           updatedAt: new Date(),
         })
         .where(eq(user.id, ctx.session.user.id));
@@ -2660,6 +2683,110 @@ export const userRouter = router({
         },
         songs: songsWithScores,
         iconUrl: snapshot[0].iconUrl,
+      };
+    }),
+
+  getUserAlbums: protectedProcedure
+    .input(z.object({
+      region: regionSchema,
+      limit: z.number().min(1).max(100).default(20),
+      offset: z.number().min(0).default(0),
+    }))
+    .query(async ({ ctx, input }) => {
+      const userId = ctx.session.user.id;
+      const { region, limit, offset } = input;
+
+      const userAlbumsList = await db
+        .select({
+          id: userAlbums.id,
+          songName: songs.songName,
+          artist: songs.artist,
+          cover: songs.cover,
+          difficulty: songs.difficulty,
+          level: songs.level,
+          levelPrecise: songs.levelPrecise,
+          type: songs.type,
+          takenAt: userAlbums.takenAt,
+          imageKey: userAlbums.imageKey,
+          imageSize: userAlbums.imageSize,
+          venue: userAlbums.venue,
+          createdAt: userAlbums.createdAt,
+        })
+        .from(userAlbums)
+        .innerJoin(songs, eq(userAlbums.songId, songs.id))
+        .where(and(
+          eq(userAlbums.userId, userId),
+          eq(songs.region, region)
+        ))
+        .orderBy(desc(userAlbums.takenAt))
+        .limit(limit + 1)
+        .offset(offset);
+
+      const hasMore = userAlbumsList.length > limit;
+      const albums = hasMore ? userAlbumsList.slice(0, limit) : userAlbumsList;
+
+      // Calculate total storage usage for this user (across all regions)
+      const storageResult = await db
+        .select({
+          totalSize: sql<number>`COALESCE(SUM(${userAlbums.imageSize}), 0)`,
+        })
+        .from(userAlbums)
+        .where(eq(userAlbums.userId, userId));
+
+      // Calculate storage per region
+      const intlStorageResult = await db
+        .select({
+          totalSize: sql<number>`COALESCE(SUM(${userAlbums.imageSize}), 0)`,
+        })
+        .from(userAlbums)
+        .innerJoin(songs, eq(userAlbums.songId, songs.id))
+        .where(and(
+          eq(userAlbums.userId, userId),
+          eq(songs.region, 'intl')
+        ));
+
+      const jpStorageResult = await db
+        .select({
+          totalSize: sql<number>`COALESCE(SUM(${userAlbums.imageSize}), 0)`,
+        })
+        .from(userAlbums)
+        .innerJoin(songs, eq(userAlbums.songId, songs.id))
+        .where(and(
+          eq(userAlbums.userId, userId),
+          eq(songs.region, 'jp')
+        ));
+
+      const totalStorageUsed = Number(storageResult[0]?.totalSize || 0);
+      const intlStorageUsed = Number(intlStorageResult[0]?.totalSize || 0);
+      const jpStorageUsed = Number(jpStorageResult[0]?.totalSize || 0);
+      const storageLimit = 25 * 1024 * 1024; // 25MB
+
+      return {
+        albums: albums.map(album => ({
+          id: album.id.toString(),
+          songName: album.songName,
+          artist: album.artist,
+          cover: album.cover,
+          difficulty: album.difficulty,
+          level: album.level,
+          levelPrecise: album.levelPrecise,
+          type: album.type,
+          takenAt: album.takenAt.toISOString(),
+          imageKey: album.imageKey,
+          imageSize: album.imageSize,
+          venue: album.venue,
+          createdAt: album.createdAt.toISOString(),
+        })),
+        hasMore,
+        storage: {
+          used: totalStorageUsed,
+          intlUsed: intlStorageUsed,
+          jpUsed: jpStorageUsed,
+          limit: storageLimit,
+          percentage: (totalStorageUsed / storageLimit) * 100,
+          intlPercentage: (intlStorageUsed / storageLimit) * 100,
+          jpPercentage: (jpStorageUsed / storageLimit) * 100,
+        },
       };
     }),
 

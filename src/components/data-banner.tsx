@@ -32,6 +32,8 @@ import { Calendar, Copy, Download, MoreHorizontal, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
+import { motion, AnimatePresence } from "motion/react";
+import { getTransition } from "@/lib/animation-constants";
 
 interface DataBannerProps {
   region: Region;
@@ -290,11 +292,16 @@ function NoDataInstructions({
   if (hasSnapshots || region !== "intl") return null;
 
   return (
-    <div className="mt-4 p-3 bg-muted/50 rounded-md">
+    <motion.div
+      className="mt-4 p-3 bg-muted/50 rounded-md"
+      initial={{ opacity: 0, y: -10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={getTransition({ duration: 0.3 })}
+    >
       <p className="text-sm text-muted-foreground">
         {t('dataBanner.noDataInstructions')}
       </p>
-    </div>
+    </motion.div>
   );
 }
 
@@ -359,7 +366,15 @@ export function DataBanner({
                 t={t}
               />
             ) : (
-              <Badge variant="secondary">{t('dataBanner.noDataAvailable')}</Badge>
+              <AnimatePresence>
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={getTransition({ duration: 0.3 })}
+                >
+                  <Badge variant="secondary">{t('dataBanner.noDataAvailable')}</Badge>
+                </motion.div>
+              </AnimatePresence>
             )}
           </div>
 

@@ -1,6 +1,6 @@
 import { db } from '@/lib/db';
 import { fetchMaimaiData } from '@/lib/maimai-fetcher';
-import { fetchSessions, userTokens } from '@/lib/db/schema-pg';
+import { fetchSessions, userTokens, user } from '@/lib/db/schema-pg';
 import { nanoid } from 'nanoid';
 import { and, desc, eq } from 'drizzle-orm';
 import { encryptToken, decryptToken } from './token-crypto';
@@ -112,6 +112,20 @@ export async function startFetchServer(userId: string, region: Region, token?: s
       throw new Error('Failed to decrypt stored token. Please re-add your authentication tokens.');
     }
   }
+
+  // Check if user has set their album preference
+  const userPreference = await db
+    .select({ fetchUseAlbums: user.fetchUseAlbums })
+    .from(user)
+    .where(eq(user.id, userId))
+    .limit(1);
+
+  if (userPreference.length === 0 || userPreference[0].fetchUseAlbums === null) {
+    throw new Error('NO_USE_ALBUMS_SETTINGS: No fetch albums settings preference set. Please set this option on the website by fetching once first.');
+  }
+
+  // Store the preference to pass to fetch logic later
+  const shouldFetchAlbums = userPreference[0].fetchUseAlbums;
 
   // Check for existing pending fetch
   const existingFetch = await db
@@ -239,7 +253,7 @@ export async function startFetchServer(userId: string, region: Region, token?: s
 
       // Race between the actual fetch and the timeout
       await Promise.race([
-        fetchMaimaiData(userId, region, fetchSessionInternalId, flags),
+        fetchMaimaiData(userId, region, fetchSessionInternalId, flags, shouldFetchAlbums),
         timeoutPromise
       ]);
 

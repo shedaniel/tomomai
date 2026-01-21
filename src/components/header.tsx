@@ -16,6 +16,8 @@ import { toast } from "sonner";
 import { LocaleSwitcher } from "./locale-switcher";
 import { RegionSwitcher } from "./region-switcher";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "./ui/dropdown-menu";
+import { motion, AnimatePresence } from "motion/react";
+import { SPRING_CONFIGS, STAGGER, getTransition } from "@/lib/animation-constants";
 
 import { getEnabledRegions, isChinaRegion } from "@/lib/enabled-regions";
 
@@ -147,7 +149,12 @@ function DiscordBanner({ onDismiss }: { onDismiss: () => void }) {
   const t = useTranslations();
 
   return (
-    <div className="mb-6 relative bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-3 sm:p-4">
+    <motion.div
+      className="mb-6 relative bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-3 sm:p-4"
+      initial={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: 20 }}
+      transition={getTransition({ duration: 0.3, ease: [0.4, 0, 0.2, 1] })}
+    >
       <button
         onClick={onDismiss}
         className="absolute top-2 right-2 p-1 rounded-md hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
@@ -174,7 +181,7 @@ function DiscordBanner({ onDismiss }: { onDismiss: () => void }) {
           </a>
         </div>
       </div>
-    </div>
+    </motion.div>
   )
 }
 
@@ -316,8 +323,13 @@ export function Header({ currentTab, showDiscordBanner = true, user }: HeaderPro
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center space-x-1 max-md:space-x-2">
           <Link href="/">
-            <Image src={TAB_ICONS_PATHS[currentTab]} alt="tomomai" width={4320} height={1080} priority className="h-11 w-auto dark:hidden" style={{ aspectRatio: '4320 / 1080' }} />
-            <Image src={TAB_ICONS_PATHS_DARK[currentTab]} alt="tomomai" width={4320} height={1080} priority className="h-11 w-auto hidden dark:block" style={{ aspectRatio: '4320 / 1080' }} />
+            <motion.div
+              whileHover={{ scale: 1.05 }}
+              transition={getTransition(SPRING_CONFIGS.snappy)}
+            >
+              <Image src={TAB_ICONS_PATHS[currentTab]} alt="tomomai" width={4320} height={1080} priority className="h-11 w-auto dark:hidden" style={{ aspectRatio: '4320 / 1080' }} />
+              <Image src={TAB_ICONS_PATHS_DARK[currentTab]} alt="tomomai" width={4320} height={1080} priority className="h-11 w-auto hidden dark:block" style={{ aspectRatio: '4320 / 1080' }} />
+            </motion.div>
           </Link>
           <NavbarButtons currentTab={currentTab} onAbout={() => setAboutOpen(true)} onTheme={() => setThemeOpen(true)} onDiscordInvite={handleDiscordInvite} />
         </div>
@@ -338,7 +350,9 @@ export function Header({ currentTab, showDiscordBanner = true, user }: HeaderPro
         </div>
       </div>
 
-      {showBanner && <DiscordBanner onDismiss={() => setShowBanner(false)} />}
+      <AnimatePresence>
+        {showBanner && <DiscordBanner onDismiss={() => setShowBanner(false)} />}
+      </AnimatePresence>
 
       <AboutDialog open={aboutOpen} onOpenChange={setAboutOpen} />
       <ThemeDialog open={themeOpen} onOpenChange={setThemeOpen} />

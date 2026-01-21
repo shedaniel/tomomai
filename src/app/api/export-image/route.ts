@@ -1,31 +1,14 @@
 import { db } from '@/lib/db';
 import { getRatingImageUrl, splitSongs } from '@/lib/rating-calculator';
 import { ImageCache, renderImage, SongForRender } from '@/lib/render-image';
-import { fetchImageForServer } from '@/lib/render-image-server';
+import { fetchImageForServer, fontsLoaded } from '@/lib/render-image-server';
 import { songs, user, userScores, userSnapshots } from '@/lib/db/schema-pg';
 import type { SnapshotWithSongs } from '@/lib/types';
-import { eq } from 'drizzle-orm';
+import { and, eq, lt } from 'drizzle-orm';
 import { NextRequest, NextResponse } from 'next/server';
-import { FontLibrary, Image, loadImage } from 'skia-canvas';
-import path from 'path';
+import { Image, loadImage } from 'skia-canvas';
 
 export const dynamic = "force-dynamic";
-
-// Load fonts once at module initialization
-const fontsLoaded = (async () => {
-  try {
-    const fontsDir = path.join(process.cwd(), 'public', 'res', 'fonts');
-
-    FontLibrary.use('Inter', [path.join(fontsDir, 'Inter-VariableFont_opsz,wght.woff2')]);
-    FontLibrary.use('Murecho', [path.join(fontsDir, 'Murecho-VariableFont_wght.woff2')]);
-    FontLibrary.use('Noto Sans JP', [path.join(fontsDir, 'NotoSansJP-VariableFont_wght.woff2')]);
-    FontLibrary.use('Geist Mono', [path.join(fontsDir, 'GeistMono-VariableFont_wght.woff2')]);
-
-    console.log('✅ Fonts loaded successfully');
-  } catch (error) {
-    console.error('❌ Failed to load fonts:', error);
-  }
-})();
 
 async function prepareData(snapshotPublicId: string): Promise<{
   type: "success",
@@ -75,7 +58,10 @@ async function prepareData(snapshotPublicId: string): Promise<{
     })
     .from(userScores)
     .innerJoin(songs, eq(userScores.songId, songs.id))
-    .where(eq(userScores.snapshotId, snapshot[0].id))
+    .where(and(
+      eq(userScores.snapshotId, snapshot[0].id),
+      lt(userScores.rank, 50),
+    ))
     .orderBy(songs.songName, songs.difficulty);
 
   const [publishProfile, songsWithScores] = await Promise.all([publishProfilePromise, songsWithScoresPromise]);
@@ -115,7 +101,9 @@ export async function GET(request: NextRequest) {
     await fontsLoaded;
 
     const snapshotId = request.nextUrl.searchParams.get('snapshotId');
-    console.log('📋 Received snapshot ID:', snapshotId);
+    const scaleParam = request.nextUrl.searchParams.get('scale');
+    const scale = scaleParam === '1' ? 1 : 2; // Accept 1 or 2, default to 2
+    console.log('📋 Received snapshot ID:', snapshotId, 'scale:', scale);
 
     if (!snapshotId) {
       console.error('❌ No snapshot ID provided');
@@ -142,8 +130,10 @@ export async function GET(request: NextRequest) {
       data.snapshot.classRankUrl,
       data.snapshot.courseRankUrl,
       `/res/trophy/normal.png`,
-      `/res/shine/${data.snapshot.gameVersion}.png`,
-      `/res/down/${data.snapshot.gameVersion}.png`,
+      `/res/trophy/bronze.png`,
+      `/res/trophy/silver.png`,
+      `/res/trophy/gold.png`,
+      `/res/trophy/rainbow.png`,
       `/res/character/${data.snapshot.gameVersion}.png`,
       `/res/logo/${data.snapshot.gameVersion}.png`,
       `/res/bg/${data.snapshot.gameVersion}.png`,
@@ -183,12 +173,11 @@ export async function GET(request: NextRequest) {
     const canvas = await renderImage(data, cache, visitableProfileAt);
     console.log(`✅ Image rendered in ${Date.now() - startTime}ms`);
 
-    // Convert canvas to JPEG buffer
-    console.log('💾 Converting to JPEG buffer...');
+    // Convert canvas to WEBP buffer
+    console.log('💾 Converting to WEBP buffer...');
     startTime = Date.now();
-    const buffer = await canvas.toBuffer('jpeg', {
-      density: 2,
-      quality: 0.7,
+    const buffer = await canvas.toBuffer('webp', {
+      density: scale,
     });
     console.log(`✅ Buffer created, size: ${buffer.length} bytes in ${Date.now() - startTime}ms`);
 
@@ -199,8 +188,8 @@ export async function GET(request: NextRequest) {
     return new Response(new Uint8Array(buffer), {
       status: 200,
       headers: {
-        'Content-Type': 'image/jpeg',
-        'Content-Disposition': `attachment; filename="maimai-profile-${sanitizedName}.png"`,
+        'Content-Type': 'image/webp',
+        'Content-Disposition': `attachment; filename="maimai-profile-${sanitizedName}.webp"`,
         'Content-Length': buffer.length.toString(),
       },
     });

@@ -20,3 +20,8 @@ export function isTokenError(message: string): boolean {
     message.toLowerCase().includes(pattern.toLowerCase())
   );
 }
+
+// Check if error is about missing album settings
+export function isAlbumSettingsError(message: string): boolean {
+  return message.includes('NO_USE_ALBUMS_SETTINGS');
+}

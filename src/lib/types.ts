@@ -79,6 +79,7 @@ export interface EventData {
 export interface SnapshotWithSongs<S = SongWithScore> {
   snapshot: Snapshot & {
     title: string;
+    titleType: TitleType;
     iconUrl: string;
   };
   songs: S[];
@@ -123,6 +124,8 @@ export type FullCombo = "none" | "fc" | "fc+" | "ap" | "ap+";
 
 export type FullSync = "none" | "sync" | "fs" | "fs+" | "fdx" | "fdx+";
 
+export type TitleType = "normal" | "bronze" | "silver" | "gold" | "rainbow";
+
 export type FetchSessionStatus = "pending" | "completed" | "failed";
 
 // ===== COMPONENT PROP TYPES =====
@@ -152,6 +155,7 @@ export interface ProfileSettings {
   profileShowPlayCounts: boolean;
   profileShowEvents: boolean;
   profileShowInSearch: boolean;
+  fetchUseAlbums: boolean | null;
 }
 
 export interface ProfileData {

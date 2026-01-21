@@ -78,6 +78,7 @@ export default async function Home() {
       profileShowPlayCounts: true,
       profileShowEvents: true,
       profileShowInSearch: true,
+      fetchUseAlbums: null,
     })),
     trpc.user.getSnapshots({ region: userRegion }).catch(() => ({ snapshots: [] })),
   ]);
