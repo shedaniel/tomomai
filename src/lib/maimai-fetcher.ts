@@ -27,6 +27,7 @@ export interface TokenValidationResult {
   redirectUrl?: string;
   error?: string;
   cookies?: string;
+  token?: string;
 }
 
 export async function processMaimaiToken(
@@ -101,11 +102,37 @@ export async function processMaimaiToken(
     // If we have a cookie, try to validate it first
     if (cookieValue && region === "intl") {
       logger.info(`Trying to validate existing cookie for user ${userId}`);
-      const cookieResult = await validateInternationalMaimaiToken(userId, cookieValue);
+      // Validate token without auto-deleting (we'll handle re-login here)
+      const cookieResult = await validateInternationalMaimaiToken(
+        userId,
+        cookieValue,
+        false  // Don't delete on failure - we'll try to refresh first
+      );
+
       if (cookieResult.isValid) {
         return cookieResult;
       }
-      logger.info("Existing cookie failed validation, proceeding with login");
+
+      // Token validation failed - attempt automatic re-login
+      logger.info("Token validation failed, attempting automatic re-login");
+      const refreshResult = await performInternationalAccountLogin(
+        userId,
+        username,
+        password
+      );
+
+      if (refreshResult.isValid && refreshResult.token && userId) {
+        logger.info("Token refresh successful, updating database");
+        await updateToken(userId, region, refreshResult.token, { username, password });
+        return refreshResult;
+      }
+
+      // Re-login also failed - delete token and return error
+      logger.warn("Token refresh failed, deleting token");
+      if (userId) {
+        await deleteToken(userId, region);
+      }
+      return refreshResult;
     }
 
     // Proceed with login flow
@@ -126,6 +153,29 @@ export async function processMaimaiToken(
 async function deleteToken(userId: string, region: Region): Promise<void> {
   await db
     .delete(userTokens)
+    .where(
+      and(
+        eq(userTokens.userId, userId),
+        eq(userTokens.region, region)
+      )
+    );
+}
+
+async function updateToken(
+  userId: string,
+  region: Region,
+  clalToken: string,
+  credentials: { username: string; password: string }
+): Promise<void> {
+  const newTokenFormat = `account://${clalToken}:://${credentials.username}:://${credentials.password}`;
+  const encryptedToken = encryptToken(newTokenFormat);
+
+  await db
+    .update(userTokens)
+    .set({
+      token: encryptedToken,
+      updatedAt: new Date()
+    })
     .where(
       and(
         eq(userTokens.userId, userId),
@@ -419,6 +469,7 @@ async function performInternationalAccountLogin(
           return {
             isValid: true,
             redirectUrl: redirectUrl || undefined,
+            token: clalValue,
           };
         } else {
           logger.warn("Could not extract clal cookie from Set-Cookie header");
@@ -465,7 +516,8 @@ async function performInternationalAccountLogin(
 
 export async function validateInternationalMaimaiToken(
   userId: string | null,
-  token: string
+  token: string,
+  deleteIfFailed: boolean = true
 ): Promise<TokenValidationResult> {
   const loginUrl = "https://lng-tgk-aime-gw.am-all.net/common_auth/login?site_id=maimaidxex&redirect_url=https://maimaidx-eng.com/maimai-mobile/&back_url=https://maimai.sega.com/";
 
@@ -526,10 +578,12 @@ export async function validateInternationalMaimaiToken(
         redirectUrl: redirectUrl || undefined,
       };
     } else if (response.status === 200) {
-      // Token expired, clear from database
-      logger.warn("Token expired, clearing from database");
+      // Token expired
+      logger.warn("Token expired");
 
-      if (userId) {
+      // Only delete if deleteIfFailed is true
+      if (deleteIfFailed && userId) {
+        logger.debug("Deleting expired token from database");
         await deleteToken(userId, "intl");
       }
 

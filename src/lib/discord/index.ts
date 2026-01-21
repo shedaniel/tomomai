@@ -20,6 +20,8 @@ export { handleProfileCommand } from './commands/profile';
 export type { ProfileCommandOptions } from './commands/profile';
 export { handleRecentsCommand } from './commands/recents';
 export type { RecentsCommandOptions } from './commands/recents';
+export { handleAlbumPreferenceSelection } from './commands/album-preference';
+export type { AlbumPreferenceOptions } from './commands/album-preference';
 
 // Image generation utilities
 export { generateAndSendProfileImage } from './image-utils';

@@ -26,6 +26,7 @@ const t = initTRPC.context<Context>().create({
 // Export reusable router and procedure helpers
 export const router = t.router;
 export const publicProcedure = t.procedure;
+export const middleware = t.middleware;
 
 // Protected procedure that requires authentication
 export const protectedProcedure = t.procedure.use(({ ctx, next }) => {

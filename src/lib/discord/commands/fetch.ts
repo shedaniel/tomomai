@@ -5,6 +5,7 @@ import { account, user, userSnapshots } from '@/lib/db/schema-pg';
 import { waitUntil } from '@vercel/functions';
 import { and, desc, eq } from 'drizzle-orm';
 import { generateAndSendProfileImage } from '../image-utils';
+import { isAlbumSettingsError } from '@/lib/token-errors';
 import {
   createDeferredResponse,
   createErrorResponse,
@@ -21,6 +22,46 @@ export interface FetchCommandOptions {
   region: 'intl' | 'jp';
   applicationId: string;
   interactionToken: string;
+}
+
+function createAlbumPreferenceMessage(discordUserId: string, region: 'intl' | 'jp') {
+  return {
+    embeds: [{
+      title: '⚙️ Album Privacy Settings Required',
+      description: `<@${discordUserId}> Before fetching data, you need to set your album privacy preference.`,
+      color: DISCORD_COLORS.YELLOW,
+      fields: [{
+        name: 'What is this?',
+        value: 'Albums are images stored with your profile data. You can choose whether to save them or not based on your privacy preferences.',
+        inline: false,
+      }, {
+        name: 'Privacy Assurance',
+        value: '✓ Albums are stored in your private profile\n✓ Not shared publicly unless you make them public\n✓ Only you can see them\n✓ Automatically deleted after 30 days\n✓ You can change this setting anytime',
+        inline: false,
+      }],
+      footer: {
+        text: 'tomomai ともマイ • maimai DX score tracker',
+      },
+      timestamp: new Date().toISOString(),
+    }],
+    components: [{
+      type: 1, // ACTION_ROW
+      components: [
+        {
+          type: 2, // BUTTON
+          custom_id: `album_preference_${discordUserId}_${region}_0`,
+          label: 'Don\'t Save Albums',
+          style: 2, // SECONDARY
+        },
+        {
+          type: 2, // BUTTON
+          custom_id: `album_preference_${discordUserId}_${region}_1`,
+          label: 'Save Albums',
+          style: 1, // PRIMARY
+        },
+      ],
+    }],
+  };
 }
 
 export async function handleFetchCommand({
@@ -93,18 +134,25 @@ export async function handleFetchCommand({
         await pollForUpdates(dbUser.id, dbUser.username ?? dbUser.name, region, regionName, discordUserId, startResult.sessionId, applicationId, interactionToken);
       } catch (error) {
         console.error('Error in fetch process:', error);
-        // Edit message with error
-        await editDiscordMessage(applicationId, interactionToken, {
-          embeds: [{
-            title: '❌ Fetch Error',
-            description: `<@${discordUserId}> An error occurred while fetching your data: ${error instanceof Error ? error.message : 'Unknown error'}`,
-            color: DISCORD_COLORS.RED,
-            footer: {
-              text: 'tomomai ともマイ • maimai DX score tracker',
-            },
-            timestamp: new Date().toISOString(),
-          }],
-        });
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+
+        // Check if this is an album settings error
+        if (isAlbumSettingsError(errorMessage)) {
+          await editDiscordMessage(applicationId, interactionToken, createAlbumPreferenceMessage(discordUserId, region));
+        } else {
+          // Edit message with error
+          await editDiscordMessage(applicationId, interactionToken, {
+            embeds: [{
+              title: '❌ Fetch Error',
+              description: `<@${discordUserId}> An error occurred while fetching your data: ${errorMessage}`,
+              color: DISCORD_COLORS.RED,
+              footer: {
+                text: 'tomomai ともマイ • maimai DX score tracker',
+              },
+              timestamp: new Date().toISOString(),
+            }],
+          });
+        }
       }
     })();
 
@@ -140,17 +188,24 @@ async function pollForUpdates(
           await handleFetchCompleted(userId, username, region, regionName, discordUserId, applicationId, interactionToken);
           return;
         } else if (status.status === "failed") {
-          await editDiscordMessage(applicationId, interactionToken, {
-            embeds: [{
-              title: '❌ Fetch Failed',
-              description: `<@${discordUserId}> Failed to fetch ${regionName} data: ${status.errorMessage || 'Unknown error'}`,
-              color: DISCORD_COLORS.RED,
-              footer: {
-                text: 'tomomai ともマイ • maimai DX score tracker',
-              },
-              timestamp: new Date().toISOString(),
-            }],
-          });
+          const failureReason = status.errorMessage || 'Unknown error';
+
+          // Check if this is an album settings error
+          if (isAlbumSettingsError(failureReason)) {
+            await editDiscordMessage(applicationId, interactionToken, createAlbumPreferenceMessage(discordUserId, region));
+          } else {
+            await editDiscordMessage(applicationId, interactionToken, {
+              embeds: [{
+                title: '❌ Fetch Failed',
+                description: `<@${discordUserId}> Failed to fetch ${regionName} data: ${failureReason}`,
+                color: DISCORD_COLORS.RED,
+                footer: {
+                  text: 'tomomai ともマイ • maimai DX score tracker',
+                },
+                timestamp: new Date().toISOString(),
+              }],
+            });
+          }
           return;
         } else {
           // Still pending, update with progress

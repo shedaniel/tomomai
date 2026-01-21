@@ -2,6 +2,7 @@ import { handleFetchCommand } from './commands/fetch';
 import { handleInviteCommand } from './commands/invite';
 import { handleProfileCommand } from './commands/profile';
 import { handleRecentsCommand } from './commands/recents';
+import { handleAlbumPreferenceSelection } from './commands/album-preference';
 import { createUnknownCommandResponse, DiscordResponse } from './responses';
 
 // Command definitions
@@ -123,6 +124,31 @@ export async function handleComponents(context: ComponentContext): Promise<Disco
         applicationId,
         interactionToken,
         skip,
+      });
+    }
+  }
+
+  // Parse the custom_id: album_preference_<userId>_<region>_<choice>
+  if (customId.startsWith('album_preference_')) {
+    const parts = customId.split('_');
+    if (parts.length === 5) {
+      const buttonUserId = parts[2];
+      const region = parts[3] as 'intl' | 'jp';
+      const choice = parts[4];
+
+      // verify the user clicking is the same as the user who initiated the command
+      if (!discordUserId || discordUserId !== buttonUserId) {
+        return null;
+      }
+
+      const fetchUseAlbums = choice === '1';
+
+      return handleAlbumPreferenceSelection({
+        discordUserId,
+        region,
+        fetchUseAlbums,
+        applicationId,
+        interactionToken,
       });
     }
   }
