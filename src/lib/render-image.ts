@@ -1,4 +1,4 @@
-import { CreditData, RecentSongData, SnapshotMetadata } from '@/app/api/last-credit/route';
+import { CreditData, RecentSongData, SnapshotMetadata } from '@/server/services/credit-data';
 import type { CanvasRenderingContext2D as SkiaContext } from 'skia-canvas';
 import { Canvas, Image, loadImage } from 'skia-canvas';
 import { CANVAS_HEIGHT, CANVAS_WIDTH } from './image-spec';

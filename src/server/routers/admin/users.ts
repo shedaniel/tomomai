@@ -68,7 +68,11 @@ export const usersRouter = router({
       const { limit, offset, search } = input;
 
       // Build query with optional search filter
-      let query = db
+      const whereConditions = search
+        ? sql`LOWER(${user.username}) LIKE LOWER(${`%${search}%`})`
+        : undefined;
+
+      const users = await db
         .select({
           id: user.id,
           name: user.name,
@@ -87,15 +91,8 @@ export const usersRouter = router({
           publishProfile: user.publishProfile,
           fetchUseAlbums: user.fetchUseAlbums,
         })
-        .from(user);
-
-      // Apply search filter if provided
-      if (search) {
-        query = query.where(sql`LOWER(${user.username}) LIKE LOWER(${`%${search}%`})`);
-      }
-
-      // Get paginated users
-      const users = await query
+        .from(user)
+        .where(whereConditions)
         .orderBy(desc(user.createdAt))
         .limit(limit)
         .offset(offset);
@@ -124,12 +121,10 @@ export const usersRouter = router({
       }));
 
       // Get total count with search filter applied
-      let totalQuery = db.select({ total: count() }).from(user);
-      if (search) {
-        totalQuery = totalQuery.where(sql`LOWER(${user.username}) LIKE LOWER(${`%${search}%`})`);
-      }
-
-      const totalResult = await totalQuery;
+      const totalResult = await db
+        .select({ total: count() })
+        .from(user)
+        .where(whereConditions);
 
       return {
         users: usersWithTokens,
