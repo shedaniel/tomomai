@@ -3,12 +3,12 @@
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
-  DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { AnimatedDialogContent } from "@/components/ui/animated-dialog";
 import { Info } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
@@ -30,7 +30,7 @@ export function AlbumPrivacyDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[550px]">
+      <AnimatedDialogContent className="sm:max-w-[550px]">
         <DialogHeader>
           <DialogTitle>{t('albumPrivacy.title')}</DialogTitle>
           <DialogDescription>
@@ -88,7 +88,7 @@ export function AlbumPrivacyDialog({
             {t('albumPrivacy.save')}
           </Button>
         </DialogFooter>
-      </DialogContent>
+      </AnimatedDialogContent>
     </Dialog>
   );
 }

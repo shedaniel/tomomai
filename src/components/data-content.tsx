@@ -16,6 +16,8 @@ import { RecentSongsCard } from "./recent-songs-card";
 import { DeveloperCard } from "./developer-card";
 import { AlbumCard } from "./album-card";
 import { Flags } from "@/lib/flags";
+import { motion } from "motion/react";
+import { getTransition } from "@/lib/animation-constants";
 
 interface DataContentProps {
   region: Region;
@@ -207,11 +209,17 @@ export function DataContent({
         </TabsList>
 
         <TabsContent value="info" className="mt-0 flex-1 min-w-0">
-          <InfoCard
-            selectedSnapshotData={selectedSnapshotData}
-            showPlayCounts={privacySettings.showPlayCounts}
-            visitableProfileAt={visitableProfileAt}
-          />
+          <motion.div
+            initial={{ opacity: 0, x: 10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={getTransition({ duration: 0.3, ease: [0.4, 0, 0.2, 1] })}
+          >
+            <InfoCard
+              selectedSnapshotData={selectedSnapshotData}
+              showPlayCounts={privacySettings.showPlayCounts}
+              visitableProfileAt={visitableProfileAt}
+            />
+          </motion.div>
         </TabsContent>
         {flags.statsCard && (
           <TabsContent value="stats" className="mt-0 flex-1 min-w-0">
@@ -223,7 +231,13 @@ export function DataContent({
           </TabsContent>
         )}
         <TabsContent value="songs" className="mt-0 flex-1 min-w-0">
-          <SongsCard selectedSnapshotData={selectedSnapshotData} />
+          <motion.div
+            initial={{ opacity: 0, x: 10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={getTransition({ duration: 0.3, ease: [0.4, 0, 0.2, 1] })}
+          >
+            <SongsCard selectedSnapshotData={selectedSnapshotData} />
+          </motion.div>
         </TabsContent>
         {visitedBySelf && (
           <TabsContent value="recent" className="mt-0 flex-1 min-w-0">
@@ -234,7 +248,13 @@ export function DataContent({
           </TabsContent>
         )}
         <TabsContent value="recommendations" className="mt-0 flex-1 min-w-0">
-          <RecommendationCard selectedSnapshotData={selectedSnapshotData} flags={flags} />
+          <motion.div
+            initial={{ opacity: 0, x: 10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={getTransition({ duration: 0.3, ease: [0.4, 0, 0.2, 1] })}
+          >
+            <RecommendationCard selectedSnapshotData={selectedSnapshotData} flags={flags} />
+          </motion.div>
         </TabsContent>
         {visitedBySelf && flags.historyCard && (
           <TabsContent value="history" className="mt-0 flex-1 min-w-0">

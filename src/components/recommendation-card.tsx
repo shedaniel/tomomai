@@ -22,6 +22,7 @@ import {
 } from "@/components/filter-panel";
 import { SongHoverCard } from "@/components/song-hover-card";
 import { renderLevelPrecise } from "@/lib/name-utils";
+import { STAGGER, getTransition } from "@/lib/animation-constants";
 
 interface RecommendationData {
   song: SongWithRating;
@@ -134,10 +135,11 @@ function generateRecommendations(songsWithRating: SongWithRating[], version: num
 
 function RecommendationRow({ recommendation }: { recommendation: RecommendationData }) {
   const { song, currentAccuracy, targetAccuracy, currentRating, targetRating, accuracyDiff, ratingGain, isInBest, category } = recommendation;
-
   return (
     <SongHoverCard song={song}>
-      <div className="flex xs:justify-between xs:items-center text-sm h-16 max-xs:h-30 max-xs:flex-col max-xs:justify-start max-xs:gap-y-2 hover:bg-muted/50 transition-colors px-2 -mx-2 rounded-md cursor-pointer">
+      <motion.div
+        className="flex xs:justify-between xs:items-center text-sm h-16 max-xs:h-30 max-xs:flex-col max-xs:justify-start max-xs:gap-y-2 px-2 -mx-2 rounded-md cursor-pointer group"
+      >
         <div className="flex items-center xs:flex-1 min-w-0 h-12 max-xs:mt-1.5">
           <Image
             src={createSafeMaimaiImageUrl(song.cover)}
@@ -212,7 +214,7 @@ function RecommendationRow({ recommendation }: { recommendation: RecommendationD
             </div>
           </div>
         </div>
-      </div>
+      </motion.div>
     </SongHoverCard>
   );
 }
@@ -400,22 +402,42 @@ export function RecommendationCard({ selectedSnapshotData, flags }: { selectedSn
       <CardContent>
         <div className="divide-y divide-dashed divide-border">
           <AnimatePresence mode="popLayout">
-            {filteredRecommendations.map((rec) => (
-              <motion.div
-                key={`${rec.song.songId}-${rec.song.difficulty}`}
-                initial={hasMountedRef.current ? { opacity: 0, height: 0 } : false}
-                animate={{ opacity: 1, height: "auto" }}
-                exit={{ opacity: 0, height: 0 }}
-                transition={{
-                  duration: 0.2,
-                  ease: [0.4, 0, 0.2, 1],
-                }}
-                layout
-                className="overflow-hidden"
-              >
-                <RecommendationRow recommendation={rec} />
-              </motion.div>
-            ))}
+            {filteredRecommendations.map((rec, index) => {
+              // High-value recommendations get a more prominent animation
+              const isHighValue = rec.ratingGain >= 50;
+              const delay = STAGGER.calculateDelay(index, 0.03, 0.2);
+
+              return (
+                <motion.div
+                  key={`${rec.song.songId}-${rec.song.difficulty}`}
+                  initial={{
+                    opacity: 0,
+                    x: rec.category === "new" ? -20 : 20,
+                    scale: isHighValue ? 0.9 : 0.95,
+                  }}
+                  animate={{
+                    opacity: 1,
+                    x: 0,
+                    scale: 1,
+                  }}
+                  exit={{
+                    opacity: 0,
+                    x: rec.category === "new" ? 10 : -10,
+                    scale: 0.95,
+                  }}
+                  transition={getTransition({
+                    type: 'spring',
+                    stiffness: isHighValue ? 350 : 400,
+                    damping: isHighValue ? 20 : 28,
+                    delay,
+                  })}
+                  layout
+                  className="overflow-hidden"
+                >
+                  <RecommendationRow recommendation={rec} />
+                </motion.div>
+              );
+            })}
           </AnimatePresence>
         </div>
       </CardContent>

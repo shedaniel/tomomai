@@ -4,11 +4,11 @@ import { useLocale } from "@/components/providers/locale-provider";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
-  DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { AnimatedDialogContent } from "@/components/ui/animated-dialog";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -207,7 +207,7 @@ export function SettingsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
+      <AnimatedDialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{t('settings.title')}</DialogTitle>
           <DialogDescription>
@@ -479,7 +479,7 @@ export function SettingsDialog({
             {isLoadingSettings ? t('settings.saving') : t('settings.saveChanges')}
           </Button>
         </div>
-      </DialogContent>
+      </AnimatedDialogContent>
     </Dialog>
   );
 }

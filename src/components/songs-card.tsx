@@ -15,6 +15,8 @@ import { Input } from "./ui/input";
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 import { SongHoverCard } from "@/components/song-hover-card";
 import { renderLevelPrecise } from "@/lib/name-utils";
+import { motion, AnimatePresence } from "motion/react";
+import { SPRING_CONFIGS, STAGGER, getTransition } from "@/lib/animation-constants";
 
 // Helper function to group songs by individual rating values and difficulty
 function groupSongsByRating(songs: SongWithRating[]) {
@@ -533,8 +535,20 @@ function SongGridSection({ title, songs, count, t, sum, average }: {
         )}
       </div>
       <div className="grid grid-cols-1 2xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-        {songs.map(song => (
-          <SongGridCard key={`${song.songId}-${song.difficulty}`} song={song} />
+        {songs.map((song, index) => (
+          <motion.div
+            key={`${song.songId}-${song.difficulty}`}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{
+              delay: STAGGER.calculateDelay(index, 0.03, 0.15),
+              duration: 0.3,
+              ease: [0.4, 0, 0.2, 1],
+              ...getTransition({}),
+            }}
+          >
+            <SongGridCard song={song} />
+          </motion.div>
         ))}
       </div>
     </div>
@@ -740,32 +754,50 @@ export function SongsCard({ selectedSnapshotData }: { selectedSnapshotData: Snap
             />
           </div>
 
-          {displayMode === "grid" ? (
-            <SongsGrid
-              newSongsB15={filteredData.newSongsB15}
-              oldSongsB35={filteredData.oldSongsB35}
-              remainingNewSongs={filteredData.newSongsRemaining}
-              remainingOldSongs={filteredData.oldSongsRemaining}
-              t={t}
-              b15Sum={b15Sum}
-              b15Average={b15Average}
-              b35Sum={b35Sum}
-              b35Average={b35Average}
-            />
-          ) : (
-            <SongsList
-              newSongsB15={filteredData.newSongsB15}
-              oldSongsB35={filteredData.oldSongsB35}
-              remainingNewSongs={filteredData.newSongsRemaining}
-              remainingOldSongs={filteredData.oldSongsRemaining}
-              t={t}
-              displayMode={displayMode}
-              b15Sum={b15Sum}
-              b15Average={b15Average}
-              b35Sum={b35Sum}
-              b35Average={b35Average}
-            />
-          )}
+          <AnimatePresence mode="wait">
+            {displayMode === "grid" ? (
+              <motion.div
+                key="grid"
+                initial={{ opacity: 0, x: 10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -10 }}
+                transition={getTransition({ duration: 0.3, ease: [0.4, 0, 0.2, 1] })}
+              >
+                <SongsGrid
+                  newSongsB15={filteredData.newSongsB15}
+                  oldSongsB35={filteredData.oldSongsB35}
+                  remainingNewSongs={filteredData.newSongsRemaining}
+                  remainingOldSongs={filteredData.oldSongsRemaining}
+                  t={t}
+                  b15Sum={b15Sum}
+                  b15Average={b15Average}
+                  b35Sum={b35Sum}
+                  b35Average={b35Average}
+                />
+              </motion.div>
+            ) : (
+              <motion.div
+                key="list"
+                initial={{ opacity: 0, x: 10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -10 }}
+                transition={getTransition({ duration: 0.3, ease: [0.4, 0, 0.2, 1] })}
+              >
+                <SongsList
+                  newSongsB15={filteredData.newSongsB15}
+                  oldSongsB35={filteredData.oldSongsB35}
+                  remainingNewSongs={filteredData.newSongsRemaining}
+                  remainingOldSongs={filteredData.oldSongsRemaining}
+                  t={t}
+                  displayMode={displayMode}
+                  b15Sum={b15Sum}
+                  b15Average={b15Average}
+                  b35Sum={b35Sum}
+                  b35Average={b35Average}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </CardContent>
     </Card>

@@ -7,6 +7,8 @@ import { createSafeMaimaiImageUrl } from "@/lib/utils";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
 import Link from "next/link";
+import { motion } from "motion/react";
+import { SPRING_CONFIGS, STAGGER, getTransition } from "@/lib/animation-constants";
 
 function RatingImage({ rating }: { rating: number }) {
   return (
@@ -57,7 +59,13 @@ export function InfoCard({
         </div>
 
         <div className="flex items-center gap-2 mb-4">
-          <Image src={createSafeMaimaiImageUrl(snapshot.iconUrl)} alt={snapshot.title} width={80} height={80} />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8, rotate: -5 }}
+            animate={{ opacity: 1, scale: 1, rotate: 0 }}
+            transition={getTransition(SPRING_CONFIGS.default)}
+          >
+            <Image src={createSafeMaimaiImageUrl(snapshot.iconUrl)} alt={snapshot.title} width={80} height={80} />
+          </motion.div>
           <div className="flex flex-col min-w-0 self-stretch my-1 space-y-0.5 items-stretch">
             <span className="text-sm text-secondary-foreground bg-secondary rounded-full px-6 py-1 text-center inset-shadow-sm truncate">{snapshot.title}</span>
             <span className="text-lg font-medium flex items-center self-center max-xs:flex-col">
@@ -72,12 +80,36 @@ export function InfoCard({
         <div className="bg-muted/50 rounded-md p-4">
           <h4 className="font-medium mb-2">{t('dataContent.playerInfo')}</h4>
           <div className={`grid gap-2 text-sm ${showPlayCounts ? 'grid-cols-2' : 'grid-cols-1'}`}>
-            <div>{t('dataContent.rating', { rating: snapshot.rating })}</div>
-            <div>{t('dataContent.stars', { stars: snapshot.stars })}</div>
+            <motion.div
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={getTransition({ delay: STAGGER.slow * 0 })}
+            >
+              {t('dataContent.rating', { rating: snapshot.rating })}
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={getTransition({ delay: STAGGER.slow * 1 })}
+            >
+              {t('dataContent.stars', { stars: snapshot.stars })}
+            </motion.div>
             {showPlayCounts && (
               <>
-                <div>{t('dataContent.versionPlays', { count: snapshot.versionPlayCount })}</div>
-                <div>{t('dataContent.totalPlays', { count: snapshot.totalPlayCount })}</div>
+                <motion.div
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={getTransition({ delay: STAGGER.slow * 2 })}
+                >
+                  {t('dataContent.versionPlays', { count: snapshot.versionPlayCount })}
+                </motion.div>
+                <motion.div
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={getTransition({ delay: STAGGER.slow * 3 })}
+                >
+                  {t('dataContent.totalPlays', { count: snapshot.totalPlayCount })}
+                </motion.div>
               </>
             )}
           </div>

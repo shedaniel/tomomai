@@ -13,7 +13,8 @@ import { AppRouter } from "@/server/routers/_app";
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 import { renderLevelPrecise } from "@/lib/name-utils";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AnimatedDialogContent } from "@/components/ui/animated-dialog";
 
 interface AlbumCardProps {
   region: Region;
@@ -142,7 +143,7 @@ export function AlbumCard({ region }: AlbumCardProps) {
                     <span className="hidden sm:inline">{t('storage')}</span>
                   </Button>
                 </DialogTrigger>
-                <DialogContent>
+                <AnimatedDialogContent>
                   <DialogHeader>
                     <DialogTitle>{t('storageTitle')}</DialogTitle>
                     <DialogDescription>
@@ -203,7 +204,7 @@ export function AlbumCard({ region }: AlbumCardProps) {
                       </div>
                     )}
                   </div>
-                </DialogContent>
+                </AnimatedDialogContent>
               </Dialog>
             )}
             {albums.length > 0 && (

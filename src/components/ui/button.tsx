@@ -1,8 +1,9 @@
 import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
 import { cva, type VariantProps } from "class-variance-authority"
-
+import { motion, HTMLMotionProps } from "motion/react"
 import { cn } from "@/lib/utils"
+import { SPRING_CONFIGS, getTransition } from "@/lib/animation-constants"
 
 const buttonVariants = cva(
   "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
@@ -56,4 +57,58 @@ function Button({
   )
 }
 
-export { Button, buttonVariants }
+/**
+ * Animated Button with Framer Motion hover and tap effects
+ */
+const MotionButton = React.forwardRef<
+  HTMLButtonElement,
+  Omit<HTMLMotionProps<"button">, "ref"> &
+  VariantProps<typeof buttonVariants> & {
+    asChild?: boolean
+  }
+>(
+  (
+    {
+      className,
+      variant,
+      size,
+      asChild = false,
+      whileHover = { scale: 1.02, y: -1 },
+      whileTap = { scale: 0.98 },
+      transition = getTransition(SPRING_CONFIGS.snappy),
+      ...props
+    },
+    ref
+  ) => {
+    // If asChild is true, we can't use motion directly
+    if (asChild) {
+      const { children: motionChildren, ...restProps } = props as any
+      return (
+        <Slot
+          data-slot="button"
+          className={cn(buttonVariants({ variant, size, className }))}
+          ref={ref}
+          {...restProps}
+        >
+          {motionChildren}
+        </Slot>
+      )
+    }
+
+    return (
+      <motion.button
+        data-slot="button"
+        className={cn(buttonVariants({ variant, size, className }))}
+        ref={ref}
+        whileHover={whileHover}
+        whileTap={whileTap}
+        transition={transition}
+        {...props}
+      />
+    )
+  }
+)
+
+MotionButton.displayName = "MotionButton"
+
+export { Button, MotionButton, buttonVariants }

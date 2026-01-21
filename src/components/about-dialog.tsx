@@ -2,11 +2,11 @@
 
 import {
   Dialog,
-  DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { AnimatedDialogContent } from "@/components/ui/animated-dialog";
 
 interface AboutDialogProps {
   open: boolean;
@@ -16,7 +16,7 @@ interface AboutDialogProps {
 export function AboutDialog({ open, onOpenChange }: AboutDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
+      <AnimatedDialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>About ともマイ</DialogTitle>
           <DialogDescription>
@@ -66,7 +66,7 @@ export function AboutDialog({ open, onOpenChange }: AboutDialogProps) {
             </p>
           </div>
         </div>
-      </DialogContent>
+      </AnimatedDialogContent>
     </Dialog>
   );
 }
