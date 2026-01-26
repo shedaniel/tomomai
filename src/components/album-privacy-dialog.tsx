@@ -30,7 +30,7 @@ export function AlbumPrivacyDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <AnimatedDialogContent className="sm:max-w-[550px]">
+      <AnimatedDialogContent className="sm:max-w-[550px] max-h-[95dvh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{t('albumPrivacy.title')}</DialogTitle>
           <DialogDescription>
