@@ -2086,7 +2086,7 @@ async function fetchAndInsertRecentSongsData(
         }
 
         // Parse rating
-        const ratingText = $(".rating_block").text().trim();
+        const ratingText = $(".playlog_rating_detail_block > * .rating_block").text().trim();
         const rating = parseInt(ratingText, 10) || 0;
 
         // Parse rating change
