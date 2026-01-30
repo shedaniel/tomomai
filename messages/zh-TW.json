@@ -189,7 +189,7 @@
       "exportImage": "匯出圖片",
       "history": "歷史紀錄",
       "developer": "開發者",
-      "albums": "Albums"
+      "albums": "相簿"
     },
     "playerInfo": "玩家資訊",
     "rating": "R 值：{rating}",
@@ -237,13 +237,13 @@
   },
   "albums": {
     "title": "Photo Albums",
-    "photos": "photos",
+    "photos": "張相片",
     "noAlbums": "No photo albums yet",
     "loadMore": "Load More",
     "loading": "載入中...",
     "error": "Failed to load albums",
-    "storage": "Storage",
-    "storageTitle": "Storage Usage",
+    "storage": "儲存空間",
+    "storageTitle": "儲存空間使用情形",
     "storageDescription": "Manage your photo album storage. Oldest photos are automatically deleted when exceeding 25MB. This should be enough for ~300 images.",
     "used": "Used",
     "totalUsed": "Total Used",
