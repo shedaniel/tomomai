@@ -88,8 +88,8 @@
       "description": "更新你的 maimai 驗證方式以進行資料匯入及同步玩家資料。"
     },
     "albumPrivacy": {
-      "title": "Album Photo Privacy Settings",
-      "description": "Would you like to fetch and save your album photos from maimai?",
+      "title": "相簿相片隱私設定",
+      "description": "你是否希望從 maimai 擷取並儲存你的相簿相片？",
       "note": "請注意：",
       "noteText": "Album photos may contain your face or other personal information. If you do NOT want to have this info saved on tomomai ともマイ, you may disable this feature here.",
       "privacy": "Your images are:",
