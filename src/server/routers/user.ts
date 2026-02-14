@@ -2,8 +2,8 @@ import { db } from '@/lib/db';
 import { createOpaqueUserId, generateUserOtp, getOtpExpiryTimestamp } from '@/lib/otp';
 import { resolveBaseUrl } from '@/lib/base-url';
 import { getFetchStatusServer, startFetchServer } from '@/lib/maimai-server-actions';
-import { getVersionInfo, VERSIONS } from '@/lib/metadata';
-import { RatingCalculationInput, splitSongs } from '@/lib/rating-calculator';
+import { getVersionInfo, VersionId, VERSIONS } from '@/lib/metadata';
+import { addRatingsAndSort, RatingCalculationInput, splitSongs } from '@/lib/rating-calculator';
 import { invites, songs, user, userScores, userSnapshots, userEvents, userRecentSongs, userRecentSongsDetailed, stores, storeEdits, storeEditVotes, userAlbums } from '@/lib/db/schema-pg';
 import { protectedProcedure, publicProcedure, router } from '@/lib/trpc';
 import { Region, SongExtended, SongWithScore, UserData } from '@/lib/types';
@@ -336,7 +336,12 @@ export const userRouter = router({
         )
         .orderBy(desc(userSnapshots.fetchedAt));
 
-      return { snapshots };
+      return {
+        snapshots: snapshots.map(snapshot => ({
+          ...snapshot,
+          gameVersion: snapshot.gameVersion as VersionId,
+        }))
+      };
     }),
 
   // Get rating history for a user by region with song changes
@@ -1065,7 +1070,7 @@ export const userRouter = router({
         levelPrecise: song.levelPrecise,
         type: song.type,
         genre: song.genre,
-        addedVersion: song.addedVersion,
+        addedVersion: song.addedVersion as VersionId,
         achievement: song.achievement,
         dxScore: song.dxScore,
         fc: song.fc,
@@ -1656,7 +1661,7 @@ export const userRouter = router({
           levelPrecise: song.levelPrecise,
           type: song.type,
           genre: song.genre,
-          addedVersion: song.addedVersion,
+          addedVersion: song.addedVersion as VersionId,
           achievement: song.achievement,
           dxScore: song.dxScore,
           fc: song.fc,
@@ -2541,7 +2546,10 @@ export const userRouter = router({
         if (!regionMap.has(chart.gameVersion)) {
           regionMap.set(chart.gameVersion, []);
         }
-        regionMap.get(chart.gameVersion)!.push(chart);
+        regionMap.get(chart.gameVersion)!.push({
+          ...chart,
+          addedVersion: chart.addedVersion as VersionId,
+        });
       }
 
       // Convert to serializable format
@@ -2656,6 +2664,7 @@ export const userRouter = router({
           level: songs.level,
           levelPrecise: songs.levelPrecise,
           type: songs.type,
+          gameVersion: songs.addedVersion,
           achievement: userScores.achievement,
           dxScore: userScores.dxScore,
           fc: userScores.fc,
@@ -2673,7 +2682,7 @@ export const userRouter = router({
           trophy: snapshot[0].title,
           region: snapshot[0].region,
           fetchedAt: snapshot[0].fetchedAt,
-          gameVersion: getVersionInfo(snapshot[0].gameVersion)!.name,
+          gameVersion: getVersionInfo(snapshot[0].gameVersion as VersionId)!.name,
           rating: snapshot[0].rating,
           stars: snapshot[0].stars,
           courseRankUrl: snapshot[0].courseRankUrl,
@@ -2681,7 +2690,10 @@ export const userRouter = router({
           totalPlayCount: snapshot[0].totalPlayCount,
           currentVersionPlayCount: snapshot[0].versionPlayCount,
         },
-        songs: songsWithScores,
+        songs: addRatingsAndSort(songsWithScores, snapshot[0].gameVersion as VersionId).map(song => ({
+          ...song,
+          gameVersion: getVersionInfo(song.gameVersion as VersionId)!.shortName,
+        })),
         iconUrl: snapshot[0].iconUrl,
       };
     }),

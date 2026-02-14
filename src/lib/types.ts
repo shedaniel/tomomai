@@ -1,4 +1,5 @@
 // Centralized type definitions for the maimai charts application
+import { VersionId } from "./metadata";
 
 // ===== CORE TYPES =====
 
@@ -16,7 +17,7 @@ export interface Snapshot {
   fetchedAt: Date;
   rating: number;
   displayName: string;
-  gameVersion: number;
+  gameVersion: VersionId;
   courseRankUrl: string;
   classRankUrl: string;
   stars: number;
@@ -35,7 +36,7 @@ export type SongBase = {
   levelPrecise: number;
   type: SongType;
   genre: string;
-  addedVersion: number;
+  addedVersion: VersionId;
 }
 
 export type SongWithScore = SongBase & {

@@ -11,7 +11,7 @@ import { toast } from "sonner";
 import Link from "next/link";
 import { isChinaRegion } from "@/lib/enabled-regions";
 import { motion } from "motion/react";
-import { SPRING_CONFIGS, STAGGER, getTransition } from "@/lib/animation-constants";
+import { STAGGER, getTransition } from "@/lib/animation-constants";
 
 interface SignupRequirements {
   signupEnabled: boolean;
@@ -56,12 +56,13 @@ function DatabaseCard() {
 export function LoginScreen({ signupRequirements }: LoginScreenProps) {
   const t = useTranslations();
 
-  const handleAuth = async () => {
+  const handleAuth = (signUp: boolean) => async () => {
     try {
       await signIn.social({
         provider: "discord",
         callbackURL: "/",
         errorCallbackURL: "/",
+        requestSignUp: signUp,
       });
     } catch (error) {
       console.error("Discord auth error:", error);
@@ -100,7 +101,7 @@ export function LoginScreen({ signupRequirements }: LoginScreenProps) {
 
               <div className="text-center space-y-2">
                 <Button
-                  onClick={handleAuth}
+                  onClick={handleAuth(false)}
                   className="w-full"
                   size="lg"
                 >
@@ -121,7 +122,7 @@ export function LoginScreen({ signupRequirements }: LoginScreenProps) {
                   <Button
                     variant="link"
                     size="sm"
-                    onClick={handleAuth}
+                    onClick={handleAuth(true)}
                     disabled={!signupRequirements.signupEnabled}
                   >
                     {!isChinaRegion() ? t('auth.signupWithDiscord') : '用 QQ 注册'}

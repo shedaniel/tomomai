@@ -35,10 +35,12 @@ const JSON_SCHEMA_DOCS = `{
     "level": string, // Level display (e.g., '13+')
     "levelPrecise": number, // Precise level value (scaled as 10x number, e.g., 135 means 13.5)
     "type": string, // Chart type ('std' or 'dx')
+    "gameVersion": string, // Game version short name (e.g., 'BUDDiES PLUS')
     "achievement": number, // Achievement (scaled as 10000x number, ranges from 0 to 1010000)
     "dxScore": number, // DX score
     "fc": string, // Full combo status ('none', 'fc', 'fc+', 'ap', 'ap+')
-    "fs": string, // Full sync status ('none', 'sync', 'fs', 'fs+', 'fdx', 'fdx+')
+    "fs": string, // Full sync status ('none', 'sync', 'fs', 'fs+', 'fdx', 'fdx+'),
+    "rating": number, // Rating calculated
   }[],
   "iconUrl": string | null, // URL to player's icon image, usually provided as Base64 encoded string
 }`;

@@ -1,197 +1,202 @@
 import { Region } from "@/lib/types";
 
-export interface VersionInfo {
-  id: number;
-  name: string;
-  shortName: string;
-  intlReleaseDate: string | null; // YYYY/MM/DD format, null if not released yet
-  jpReleaseDate: string | null; // YYYY/MM/DD format, null if not released yet
-}
-
-export const VERSIONS: VersionInfo[] = [
-  {
+export const Versions = {
+  MAIMAI: {
     id: -13,
     name: "maimai",
     shortName: "maimai",
     intlReleaseDate: "2012/07/11",
     jpReleaseDate: "2012/07/11"
   },
-  {
+  MAIMAI_PLUS: {
     id: -12,
     name: "maimai PLUS",
     shortName: "maimai PLUS",
     intlReleaseDate: "2012/12/13",
     jpReleaseDate: "2012/12/13"
   },
-  {
+  MAIMAI_GREEN: {
     id: -11,
     name: "maimai GreeN",
     shortName: "GreeN",
     intlReleaseDate: "2013/07/11",
     jpReleaseDate: "2013/07/11"
   },
-  {
+  MAIMAI_GREEN_PLUS: {
     id: -10,
     name: "maimai GreeN PLUS",
     shortName: "GreeN PLUS",
     intlReleaseDate: "2014/02/26",
     jpReleaseDate: "2014/02/26"
   },
-  {
+  MAIMAI_ORANGE: {
     id: -9,
     name: "maimai ORANGE",
     shortName: "ORANGE",
     intlReleaseDate: "2014/09/18",
     jpReleaseDate: "2014/09/18"
   },
-  {
+  MAIMAI_ORANGE_PLUS: {
     id: -8,
     name: "maimai ORANGE PLUS",
     shortName: "ORANGE PLUS",
     intlReleaseDate: "2015/03/19",
     jpReleaseDate: "2015/03/19"
   },
-  {
+  MAIMAI_PINK: {
     id: -7,
     name: "maimai PiNK",
     shortName: "PiNK",
     intlReleaseDate: "2015/12/09",
     jpReleaseDate: "2015/12/09"
   },
-  {
+  MAIMAI_PINK_PLUS: {
     id: -6,
     name: "maimai PiNK PLUS",
     shortName: "PiNK PLUS",
     intlReleaseDate: "2016/06/30",
     jpReleaseDate: "2016/06/30"
   },
-  {
+  MAIMAI_MURASAKI: {
     id: -5,
     name: "maimai MURASAKi",
     shortName: "MURASAKi",
     intlReleaseDate: "2016/12/15",
     jpReleaseDate: "2016/12/15"
   },
-  {
+  MAIMAI_MURASAKI_PLUS: {
     id: -4,
     name: "maimai MURASAKi PLUS",
     shortName: "MURASAKi PLUS",
     intlReleaseDate: "2017/06/22",
     jpReleaseDate: "2017/06/22"
   },
-  {
+  MAIMAI_MILK: {
     id: -3,
     name: "maimai MiLK",
     shortName: "MiLK",
     intlReleaseDate: "2017/12/14",
     jpReleaseDate: "2017/12/14"
   },
-  {
+  MAIMAI_MILK_PLUS: {
     id: -2,
     name: "maimai MiLK PLUS",
     shortName: "MiLK PLUS",
     intlReleaseDate: "2018/06/21",
     jpReleaseDate: "2018/06/21"
   },
-  {
+  MAIMAI_FINALE: {
     id: -1,
     name: "maimai FiNALE",
     shortName: "FiNALE",
     intlReleaseDate: "2018/12/13",
     jpReleaseDate: "2018/12/13"
   },
-  {
+  MAIMAI_DX: {
     id: 0,
     name: "maimai DX",
     shortName: "DX",
     intlReleaseDate: "2019/11/25",
     jpReleaseDate: "2019/07/11"
   },
-  {
+  MAIMAI_DX_PLUS: {
     id: 1,
     name: "maimai DX PLUS",
     shortName: "DX PLUS",
     intlReleaseDate: "2020/07/29",
     jpReleaseDate: "2020/01/23"
   },
-  {
+  MAIMAI_DX_SPLASH: {
     id: 2,
     name: "maimai DX スプラッシュ",
     shortName: "Splash",
     intlReleaseDate: "2021/01/29",
     jpReleaseDate: "2020/09/17"
   },
-  {
+  MAIMAI_DX_SPLASH_PLUS: {
     id: 3,
     name: "maimai DX スプラッシュ PLUS",
     shortName: "Splash PLUS",
     intlReleaseDate: "2021/07/30",
     jpReleaseDate: "2021/03/18"
   },
-  {
+  MAIMAI_DX_UNIVERSE: {
     id: 4,
     name: "maimai DX UNiVERSE",
     shortName: "UNiVERSE",
     intlReleaseDate: "2022/01/27",
     jpReleaseDate: "2021/09/16"
   },
-  {
+  MAIMAI_DX_UNIVERSE_PLUS: {
     id: 5,
     name: "maimai DX UNiVERSE PLUS",
     shortName: "UNiVERSE PLUS",
     intlReleaseDate: "2022/07/28",
     jpReleaseDate: "2022/03/24"
   },
-  {
+  MAIMAI_DX_FESTIVAL: {
     id: 6,
     name: "maimai DX FESTiVAL",
     shortName: "FESTiVAL",
     intlReleaseDate: "2023/01/19",
     jpReleaseDate: "2022/09/15"
   },
-  {
+  MAIMAI_DX_FESTIVAL_PLUS: {
     id: 7,
     name: "maimai DX FESTiVAL PLUS",
     shortName: "FESTiVAL PLUS",
     intlReleaseDate: "2023/07/27",
     jpReleaseDate: "2023/03/23"
   },
-  {
+  MAIMAI_DX_BUDDIES: {
     id: 8,
     name: "maimai DX BUDDiES",
     shortName: "BUDDiES",
     intlReleaseDate: "2024/01/18",
     jpReleaseDate: "2023/09/14"
   },
-  {
+  MAIMAI_DX_BUDDIES_PLUS: {
     id: 9,
     name: "maimai DX BUDDiES PLUS",
     shortName: "BUDDiES PLUS",
     intlReleaseDate: "2024/07/25",
     jpReleaseDate: "2024/03/21"
   },
-  {
+  MAIMAI_DX_PRISM: {
     id: 10,
     name: "maimai DX PRiSM",
     shortName: "PRiSM",
     intlReleaseDate: "2025/01/16",
     jpReleaseDate: "2024/09/12"
   },
-  {
+  MAIMAI_DX_PRISM_PLUS: {
     id: 11,
     name: "maimai DX PRiSM PLUS",
     shortName: "PRiSM PLUS",
     intlReleaseDate: "2025/07/24",
     jpReleaseDate: "2025/03/13"
   },
-  {
+  MAIMAI_DX_CIRCLE: {
     id: 12,
     name: "maimai DX CiRCLE",
     shortName: "CiRCLE",
     intlReleaseDate: "2026/01/22",
     jpReleaseDate: "2025/09/18"
   }
-];
+} as const;
+
+export type VersionSlug = keyof typeof Versions;
+export type VersionId = typeof Versions[keyof typeof Versions]['id'];
+
+export interface VersionInfo {
+  id: VersionId;
+  name: string;
+  shortName: string;
+  intlReleaseDate: string | null; // YYYY/MM/DD format, null if not released yet
+  jpReleaseDate: string | null; // YYYY/MM/DD format, null if not released yet
+}
+
+export const VERSIONS: VersionInfo[] = Object.values(Versions);
 
 /**
  * Parse date string in YYYY/MM/DD format to Date object.
@@ -223,7 +228,7 @@ export function getAvailableVersions(region: Region): VersionInfo[] {
 /**
  * Get the latest available version for a given region
  */
-export function getLatestAvailableVersion(region: Region): number {
+export function getLatestAvailableVersion(region: Region): VersionId {
   const availableVersions = getAvailableVersions(region);
   if (availableVersions.length === 0) {
     throw new Error(`No versions available for region ${region}`);
@@ -252,7 +257,7 @@ export function getLatestAvailableVersion(region: Region): number {
  * const date = parseDate('2025/01/16');
  * getVersionFromDate(date, 'jp');
  */
-export function getVersionFromDate(date: Date, region: Region): number {
+export function getVersionFromDate(date: Date, region: Region): VersionId {
   const availableVersions = getAvailableVersions(region);
 
   // Sort versions by release date for the given region (descending)
@@ -284,7 +289,7 @@ export function getVersionFromDate(date: Date, region: Region): number {
  * Get the current version for a given region based on today's date
  * Falls back to latest available version if current date is beyond all releases
  */
-export function getCurrentVersion(region: Region): number {
+export function getCurrentVersion(region: Region): VersionId {
   try {
     return getVersionFromDate(new Date(), region);
   } catch {
@@ -296,7 +301,7 @@ export function getCurrentVersion(region: Region): number {
 /**
  * Get version info by version ID
  */
-export function getVersionInfo(versionId: number): VersionInfo | null {
+export function getVersionInfo(versionId: VersionId): VersionInfo | null {
   return VERSIONS.find(v => v.id === versionId) || null;
 }
 
@@ -322,7 +327,7 @@ export function getVersionsSortedByDate(region: Region, ascending = true): Versi
  *               Defaults to current time. For correct results, use JST dates.
  * @returns Whether the version was available at the given date
  */
-export function isVersionAvailable(versionId: number, region: Region, date: Date = new Date()): boolean {
+export function isVersionAvailable(versionId: VersionId, region: Region, date: Date = new Date()): boolean {
   const version = getVersionInfo(versionId);
   if (!version) return false;
 

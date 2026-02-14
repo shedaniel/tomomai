@@ -1,9 +1,9 @@
-import { SongWithScore } from "./types";
+import { FullCombo, SongWithScore } from "./types";
 
 // Minimal interface for rating calculation - only requires the fields actually used
 export interface RatingCalculationInput {
   achievement: number;
-  fc: "none" | "fc" | "fc+" | "ap" | "ap+";
+  fc: FullCombo;
   levelPrecise: number;
   addedVersion: number;
 }
@@ -30,7 +30,7 @@ export function getRatingFactor(accuracy: number): number {
 }
 
 // Calculate song rating using the formula: rating = floor(factor * accuracy * levelPrecise / 10)
-export function calculateSongRating<T extends RatingCalculationInput>(song: T, version: number): number {
+export function calculateSongRating<T extends Omit<RatingCalculationInput, "addedVersion">>(song: T, version: number): number {
   const accuracy = song.achievement / 10000;
   const factor = getRatingFactor(accuracy);
   // Since version 12, AP/AP+ songs get an extra 1 rating
@@ -39,7 +39,7 @@ export function calculateSongRating<T extends RatingCalculationInput>(song: T, v
 }
 
 // Helper function to add ratings to songs and sort by rating
-export function addRatingsAndSort<T extends RatingCalculationInput>(songs: T[], version: number): (T & { rating: number })[] {
+export function addRatingsAndSort<T extends Omit<RatingCalculationInput, "addedVersion">>(songs: T[], version: number): (T & { rating: number })[] {
   return songs
     .map(song => ({
       ...song,

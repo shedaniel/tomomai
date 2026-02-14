@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select-friendly";
 import { calculateProgress, parseStatusStates } from "@/lib/fetch-states";
-import { getVersionInfo } from "@/lib/metadata";
+import { getVersionInfo, VersionId } from "@/lib/metadata";
 import { trpc } from "@/lib/trpc-client";
 import { FetchSession, Region, Snapshot } from "@/lib/types";
 import { Calendar, Copy, Download, MoreHorizontal, Trash2 } from "lucide-react";
@@ -45,7 +45,7 @@ interface DataBannerProps {
   isFetching: boolean;
   currentSession: FetchSession | null;
   // Copy functionality
-  onCopySnapshot: (snapshotId: string, targetVersion: number) => Promise<any>;
+  onCopySnapshot: (snapshotId: string, targetVersion: VersionId) => Promise<any>;
   isCopying: boolean;
 }
 
@@ -161,7 +161,7 @@ function CopySnapshotButton({
   isCopying: boolean;
   region: Region;
   currentGameVersion: number | undefined;
-  onCopyToVersion: (targetVersion: number) => void;
+  onCopyToVersion: (targetVersion: VersionId) => void;
 }) {
   // Only load versions when dropdown is opened
   const {
@@ -325,7 +325,7 @@ export function DataBanner({
   const selectedSnapshotObj = snapshots.find(s => s.id === selectedSnapshot);
   const currentGameVersion = selectedSnapshotObj?.gameVersion;
 
-  const handleCopyToVersion = async (targetVersion: number) => {
+  const handleCopyToVersion = async (targetVersion: VersionId) => {
     if (!selectedSnapshot) return;
 
     try {

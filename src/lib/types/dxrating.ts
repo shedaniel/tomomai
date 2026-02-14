@@ -9,7 +9,7 @@ type Song = {
   category: string;
   title: string;
   artist: string;
-  bpm: number;
+  bpm: number | null;
   imageName: string;
   isNew: boolean;
   isLocked: boolean;
@@ -17,12 +17,19 @@ type Song = {
 }
 
 type Sheet = {
-  type: SongType;
+  type: SongType | "utage";
   difficulty: Difficulty;
   level: string;
   internalLevelValue: number;
   noteDesigner: string | "-";
-  noteCounts: NoteCounts;
+  noteCounts: {
+    tap: number,
+    hold: number,
+    slide: number,
+    touch: number | null,
+    break: number,
+    total: number,
+  };
   isSpecial: boolean;
   version: string;
   releaseDate: string;

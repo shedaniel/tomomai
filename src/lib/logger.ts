@@ -1,41 +1,78 @@
-// Create a browser-compatible logger that matches pino's API
-const createBrowserLogger = () => {
-  const noop = () => {};
-  const consoleLogger = {
-    trace: console.debug.bind(console),
-    debug: console.debug.bind(console),
+import { type Logger } from "pino";
+
+const createBrowserLogger = (): Logger => {
+  const noop = () => { };
+  const mock = {
+    level: "info",
+    silent: noop,
     info: console.info.bind(console),
     warn: console.warn.bind(console),
     error: console.error.bind(console),
+    debug: console.debug.bind(console),
+    trace: console.debug.bind(console),
     fatal: console.error.bind(console),
-    // Child logger support (returns the same logger)
-    child: () => consoleLogger,
-    // Other pino methods as no-ops
-    level: "info",
-    silent: noop,
+    child: () => mock,
+    bindings: () => ({}),
+    flush: noop,
+    version: "browser",
+    setBindings: noop,
+    on: noop,
+    emit: noop,
   };
-  return consoleLogger;
+  return mock as unknown as Logger;
 };
 
-// Create server logger with dynamic import to avoid bundling pino in client code
-const createServerLogger = () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports -- Required to prevent pino from being bundled in client code
+const createServerLogger = (): Logger => {
   const pino = require("pino");
-  return pino({
-    level: process.env.LOG_LEVEL || "info",
-    transport: process.env.NODE_ENV === "development" ? {
+  const isEdge = process.env.NEXT_RUNTIME === "edge";
+  const baseLevel = process.env.LOG_LEVEL || "trace";
+
+  if (isEdge) {
+    return pino({ level: baseLevel }) as Logger;
+  }
+
+  const logtailToken = process.env.LOGTAIL_SOURCE_TOKEN;
+  const targets = [];
+
+  if (process.env.NODE_ENV === "development") {
+    targets.push({
       target: "pino-pretty",
+      level: "info",
       options: {
         colorize: true,
         translateTime: "SYS:standard",
         ignore: "pid,hostname",
-      }
-    } : undefined,
-  });
+      },
+    });
+  }
+
+  if (logtailToken) {
+    targets.push({
+      target: "@logtail/pino",
+      level: "trace",
+      options: {
+        sourceToken: logtailToken,
+        endpoint: process.env.INGESTING_HOST
+          ? `https://${process.env.INGESTING_HOST}`
+          : undefined,
+      },
+    });
+  }
+
+  if (targets.length > 0 && typeof pino.transport === "function") {
+    return pino(
+      {
+        level: baseLevel,
+      },
+      pino.transport({ targets })
+    ) as Logger;
+  }
+
+  return pino({ level: process.env.LOG_LEVEL || "info" }) as Logger;
 };
 
-// Check if we're in a browser environment
 const isBrowser = typeof window !== "undefined";
 
-export const logger = isBrowser ? createBrowserLogger() : createServerLogger();
-
+export const logger: Logger = isBrowser
+  ? createBrowserLogger()
+  : createServerLogger();

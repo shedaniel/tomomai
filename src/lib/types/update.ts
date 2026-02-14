@@ -35,7 +35,7 @@ type OfficialSong = {
   lev_bas?: Level;
   lev_adv?: Level;
   lev_exp?: Level;
-  lev_mas?: string;
+  lev_mas?: Level;
   lev_remas?: Level;
   lev_utage?: Level;
   dx_lev_bas?: Level;

@@ -1,21 +1,27 @@
+import { resolveBaseUrl } from "@/lib/base-url";
 import { db } from "@/lib/db";
-import { getCurrentVersion, getVersionFromDate } from "@/lib/metadata";
-import { normalizeGenre, normalizeName, renderLevelPrecise } from "@/lib/name-utils";
 import { songs } from "@/lib/db/schema-pg";
+import { getCurrentVersion, getVersionFromDate, VersionId, Versions } from "@/lib/metadata";
+import { normalizeGenre, normalizeName, renderLevelPrecise } from "@/lib/name-utils";
+import { Difficulty, Level, NoteCounts, Region, SongType } from "@/lib/types";
+import { sortKeys } from "@/lib/utils";
 import { and, eq, inArray, sql } from "drizzle-orm";
 import { promises as fs } from "fs";
+import { nanoid } from "nanoid";
 import { NextRequest, NextResponse } from "next/server";
 import { join } from "path";
-import { resolveBaseUrl } from "@/lib/base-url";
-import { nanoid } from "nanoid";
-import { sortKeys } from "@/lib/utils";
-import { Difficulty, Level, NoteCounts, Region, SongType } from "@/lib/types";
 
 const MAIMAI_SONGS_JSON_URL = "https://github.com/zvuc/otoge-db/raw/refs/heads/master/maimai/data/music-ex.json";
 const MAIMAI_SONGS_JSON_URL_INTL = "https://github.com/zvuc/otoge-db/raw/refs/heads/master/maimai/data/music-ex-intl.json";
 
 const MODIFY_DATABASE = true;
 const SAVE_TO_FILE = false;
+
+const JP_FALLBACK_FOR_INTL: Partial<Record<VersionId, string>> = {
+  [Versions.MAIMAI_DX_PRISM.id]: "https://github.com/zvuc/otoge-db/raw/refs/heads/master/maimai/data/music-ex-prism-final.json",
+  [Versions.MAIMAI_DX_PRISM_PLUS.id]: "https://github.com/zvuc/otoge-db/raw/refs/heads/master/maimai/data/music-ex-prismplus-final.json",
+  [Versions.MAIMAI_DX_CIRCLE.id]: MAIMAI_SONGS_JSON_URL,
+}
 
 type Song = {
   songName: string;
@@ -459,8 +465,9 @@ export async function POST(request: NextRequest) {
         }
       }
     } else {
+      const jpRecordsLink = JP_FALLBACK_FOR_INTL[currentVersionForRegion]
       const [jpRecords, intlRecords] = await Promise.all([
-        fetchRecordsWithUrl("jp", "https://github.com/zvuc/otoge-db/raw/refs/heads/master/maimai/data/music-ex-prismplus-final.json"),
+        jpRecordsLink ? fetchRecordsWithUrl("jp", jpRecordsLink) : Promise.resolve([]),
         fetchRecords("intl"),
       ]);
 
@@ -470,8 +477,8 @@ export async function POST(request: NextRequest) {
           return record;
         }
         return {
-          ...record,
           ...jpRecord,
+          ...record,
           ...Object.fromEntries(Object.entries(jpRecord).filter(([key]) => record[key as keyof Song] === null)),
         } as Song;
       };

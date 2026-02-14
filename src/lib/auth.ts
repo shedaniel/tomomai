@@ -1,7 +1,7 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
-import { admin } from "better-auth/plugins";
+import { admin, openAPI } from "better-auth/plugins";
 import { and, count, eq, isNull, lt, or } from "drizzle-orm";
 import { db } from "./db";
 import * as schema from "./db/schema-pg";
@@ -94,6 +94,9 @@ async function validateAndClaimInvite(inviteCode: string, userId: string) {
 }
 
 export const auth = betterAuth({
+  emailAndPassword: {
+    enabled: false,
+  },
   database: drizzleAdapter(db, {
     provider: "pg",
     schema,
@@ -108,6 +111,22 @@ export const auth = betterAuth({
   plugins: [
     nextCookies(),
     admin(),
+    ...(process.env.NODE_ENV === 'development' ? [openAPI()] : []),
+  ],
+  disabledPaths: [
+    "/reset-password",
+    "/reset-password/{token}",
+    "/change-password",
+    "/change-email",
+    "/verify-email",
+    "/send-verification-email",
+    "/request-password-reset",
+    "/sign-up/email",
+    "/sign-in/email",
+    "/delete-user",
+    "/delete-user/callback",
+    "/link-social",
+    "/unlink-account",
   ],
   databaseHooks: {
     user: {
