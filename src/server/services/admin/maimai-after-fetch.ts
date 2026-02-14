@@ -1,5 +1,4 @@
 import { Region } from "@/lib/types";
-import { SongFetcher } from "./level-fetcher";
 import { AGENT } from "@/lib/maimai-fetcher";
 import { load } from "cheerio";
 import { normalizeGenre } from "@/lib/name-utils";
@@ -7,7 +6,7 @@ import { type Logger } from "pino";
 import pLimit from "p-limit";
 import { levelToPrecise } from "@/server/utils/level";
 import { value } from "@/server/utils/admin/type";
-import { key } from "./fetcher-utils";
+import { key, SongFetcher } from "./fetcher-utils";
 
 export const MaimaiAfterFetcher: SongFetcher = async (context, songs) => {
   const limit = pLimit(5);

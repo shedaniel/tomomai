@@ -1,7 +1,7 @@
 import { value } from "@/server/utils/admin/type";
-import { SongFetcher } from "./level-fetcher";
 import { isNullish } from "utility-types";
 import { levelToPrecise } from "@/server/utils/level";
+import { SongFetcher } from "./fetcher-utils";
 
 export const FillLevelPreciseFetcher: SongFetcher = async (context, songs) => {
   return songs.map(song => {
