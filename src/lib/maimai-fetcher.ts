@@ -3,7 +3,7 @@ import { userTokens, userSnapshots, songs, userScores, fetchSessions, userEvents
 import { eq, and, or } from "drizzle-orm";
 import { load } from "cheerio";
 import { nanoid } from "nanoid";
-import { getCurrentVersion } from "./metadata";
+import { getCurrentVersion, VersionId } from "./metadata";
 import { Agent } from "undici";
 import { FETCH_STATES, getStateForDifficulty } from "./fetch-states";
 import { appendFetchState } from "./fetch-states-server";
@@ -1811,7 +1811,7 @@ async function withRank(
       levelPrecise: fullSong.levelPrecise,
       type: fullSong.type,
       genre: fullSong.genre,
-      addedVersion: fullSong.addedVersion,
+      addedVersion: fullSong.addedVersion as VersionId,
       achievement: scoreInsert.achievement,
       dxScore: scoreInsert.dxScore,
       fc: scoreInsert.fc,

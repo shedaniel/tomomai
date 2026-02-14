@@ -3,6 +3,7 @@ import { PublicDataBanner } from "@/components/public-data-banner";
 import { Header } from "@/components/header";
 import { defaultFlags } from "@/lib/flags";
 import { Difficulty, ProfileData, Region, SnapshotWithSongs, SongWithScore, TitleType } from "@/lib/types";
+import { VersionId } from "@/lib/metadata";
 
 interface SnapshotData {
   snapshot: {
@@ -10,7 +11,7 @@ interface SnapshotData {
     fetchedAt: Date;
     rating: number;
     displayName: string;
-    gameVersion: number;
+    gameVersion: VersionId;
     courseRankUrl: string;
     classRankUrl: string;
     stars: number;
@@ -30,7 +31,7 @@ interface SnapshotData {
     levelPrecise: number;
     type: string;
     genre: string;
-    addedVersion: number;
+    addedVersion: VersionId;
     achievement: number;
     dxScore: number;
     fc: string;

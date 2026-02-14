@@ -2,7 +2,8 @@ import { getVersionFromDate, VersionId, Versions } from "@/lib/metadata";
 import { normalizeGenre, normalizeName } from "@/lib/name-utils";
 import { Difficulty, Level, NoteCounts, Region, SongType } from "@/lib/types";
 import { PendingSong } from "@/server/utils/admin/type";
-import { asFetcher, key, SongWithMode } from "./level-fetcher";
+import { asFetcher } from "./fetcher-utils";
+import { key, SongWithMode } from "./fetcher-utils";
 import { Logger } from "pino";
 import { levelToPrecise } from "@/server/utils/level";
 

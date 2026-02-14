@@ -1,6 +1,6 @@
 import { Difficulty, Level, Region, SongType } from "@/lib/types";
 import { OfficialSong } from "@/lib/types/update";
-import { asFetcher } from "./level-fetcher";
+import { asFetcher } from "./fetcher-utils";
 import { normalizeGenre, normalizeName } from "@/lib/name-utils";
 import { important, PendingSong } from "@/server/utils/admin/type";
 

@@ -4,7 +4,7 @@ import { UpdateSong } from "@/lib/types/update";
 import { PendingSong } from "@/server/utils/admin/type";
 import { promises as fs } from "fs";
 import { join } from "path";
-import { asFetcher } from "./level-fetcher";
+import { asFetcher } from "./fetcher-utils";
 
 type FallbackLevel = {
   "level": Level,

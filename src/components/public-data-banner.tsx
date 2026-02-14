@@ -1,7 +1,7 @@
 import { RegionSwitcherClient } from "@/components/region-switcher";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { getVersionInfo } from "@/lib/metadata";
+import { getVersionInfo, VersionId } from "@/lib/metadata";
 import { Region } from "@/lib/types";
 import { User } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -12,7 +12,7 @@ interface PublicDataBannerProps {
     fetchedAt: Date;
     displayName: string;
     rating: number;
-    gameVersion: number;
+    gameVersion: VersionId;
   } | null;
   profileUsername: string;
 }

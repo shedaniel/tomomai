@@ -9,6 +9,7 @@ import { awaitWrapper, sortKeys } from "@/lib/utils";
 import { fetchDxDataJson } from "@/server/services/admin/dxrating";
 import { fetchBaseSongs } from "@/server/services/admin/maimai-base-songs";
 import { login } from "@/server/services/admin/maimai-login";
+import { prepareMaimaiScraper } from "@/server/services/admin/maimai-scraper";
 import { levelToPrecise } from "@/server/utils/level";
 import { load } from "cheerio";
 import { promises as fs } from "fs";
@@ -108,7 +109,10 @@ function getExtraDataFromDxData(
         noteDesigner = sheet.noteDesigner;
       }
       if (sheet.noteCounts) {
-        noteCounts = sheet.noteCounts;
+        noteCounts = {
+          ...sheet.noteCounts,
+          touch: sheet.noteCounts.touch ?? 0,
+        };
       }
     }
   }
@@ -282,10 +286,9 @@ function parseSongData(html: string, difficulty: number, version: number): Parse
         songName,
         level: level as Level,
         musicType,
-        difficulty: difficultyName,
+        difficulty: difficultyName as Difficulty,
         inputValue,
         inputName,
-        difficultyNumber: difficulty,
         version,
         index,
       };
@@ -391,7 +394,7 @@ function prepareSongEntriesFromScrapedData(difficulties: ParsedSong[], jsonSong:
 
   // Prepare each difficulty as a separate record
   for (const difficulty of difficulties) {
-    const difficultyName = difficultyNames[difficulty.difficultyNumber] as Difficulty;
+    const difficultyName = difficulty.difficulty;
 
     // Calculate addedVersion: -1 for versions 0-12, version-13 for versions 13+
     const addedVersion = difficulty.version <= 12 ? -1 : difficulty.version - 13;
@@ -402,7 +405,7 @@ function prepareSongEntriesFromScrapedData(difficulties: ParsedSong[], jsonSong:
       songName,
       artist,
       cover,
-      difficulty: difficultyName as Difficulty,
+      difficulty: difficultyName,
       level: difficulty.level,
       levelPrecise: getPreciseLevelValue(songName, difficulty.level, musicType, difficultyName, region, 12, dxData),
       type: musicType as SongType,
@@ -432,7 +435,7 @@ function prepareSongEntriesWithFetchedData(difficulties: ParsedSong[], songDetai
 
   // Prepare each difficulty as a separate record
   for (const difficulty of difficulties) {
-    const difficultyName = difficultyNames[difficulty.difficultyNumber] as Difficulty;
+    const difficultyName = difficulty.difficulty;
 
     // Calculate addedVersion: -1 for versions 0-12, version-13 for versions 13+
     const addedVersion = difficulty.version <= 12 ? -1 : difficulty.version - 13;
@@ -631,7 +634,7 @@ export async function GET(request: NextRequest) {
 
     // Step 3: Fetch and parse song data for all difficulties (0-4) and versions
     const currentVersion: VersionId = getCurrentVersion(region);
-    const allSongData: ParsedSong[] = await prepareMaimaiScraper(region, cookies!);
+    const allSongData: ParsedSong[] = await prepareMaimaiScraper(region, currentVersion, cookies!, logger);
 
     // Step 4: Fetch maimai songs JSON data and dxdata.json for accurate internal level values
     console.log("Fetching maimai songs JSON data and dxdata.json for internal level values...");

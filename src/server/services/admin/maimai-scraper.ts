@@ -6,7 +6,7 @@ import { Difficulty, Level, Region, SongType } from "@/lib/types";
 import { ParsedSong } from "@/lib/types/update";
 import { important, PendingSong } from "@/server/utils/admin/type";
 import { load } from "cheerio";
-import { asFetcher } from "./level-fetcher";
+import { asFetcher } from "./fetcher-utils";
 import { type Logger } from "pino";
 import { DIFFICULTY_ENUM } from "@/lib/db/types";
 
@@ -25,7 +25,7 @@ export const MaimaiScraperFetcher = asFetcher(async ({ region, version, cookies,
   } satisfies PendingSong));
 });
 
-async function prepareMaimaiScraper(region: Region, version: VersionId, cookies: string, log: Logger) {
+export async function prepareMaimaiScraper(region: Region, version: VersionId, cookies: string, log: Logger) {
   log.info("Fetching and parsing song data for all difficulties and versions...");
   const allSongData: ParsedSong[] = [];
 

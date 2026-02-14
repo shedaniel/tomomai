@@ -3,7 +3,7 @@ import { normalizeName } from "@/lib/name-utils";
 import { Level, NoteCounts } from "@/lib/types";
 import { DxRatingResponse } from "@/lib/types/dxrating";
 import { PendingSong } from "@/server/utils/admin/type";
-import { asFetcher } from "./level-fetcher";
+import { asFetcher } from "./fetcher-utils";
 
 const DXDATA_URL = "https://raw.githubusercontent.com/gekichumai/dxrating/refs/heads/main/packages/dxdata/dxdata.json";
 

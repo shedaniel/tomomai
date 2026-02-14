@@ -634,8 +634,11 @@ export const userRouter = router({
           ...snapshot[0],
           publicId: undefined,
           id: snapshot[0].publicId,
+          gameVersion: snapshot[0].gameVersion as VersionId,
         },
-        songs: songsWithScores,
+        songs: songsWithScores as (Omit<typeof songsWithScores[number], 'addedVersion'> & {
+          addedVersion: VersionId
+        })[],
         events: events,
       };
     }),
@@ -1095,8 +1098,9 @@ export const userRouter = router({
           ...snapshot[0],
           publicId: undefined,
           id: snapshot[0].publicId, // Use publicId as the external-facing id
+          gameVersion: snapshot[0].gameVersion as VersionId,
         },
-        songs: filteredSongs,
+        songs: filteredSongs as (Omit<typeof filteredSongs[number], "addedVersion"> & { addedVersion: VersionId })[],
         privacySettings: {
           showPlayCounts: userData.profileShowPlayCounts,
           showPlates: userData.profileShowPlates,
@@ -2421,7 +2425,7 @@ export const userRouter = router({
               cover: song.cover,
               type: song.type,
               genre: song.genre,
-              addedVersion: song.addedVersion,
+              addedVersion: song.addedVersion as VersionId,
               difficulties: song.difficulties.map(d => ({
                 difficulty: d.difficulty,
                 levelPrecise: d.levelPrecise,
@@ -2537,16 +2541,17 @@ export const userRouter = router({
       }
 
       // Group charts by region -> gameVersion -> difficulty
-      const byRegion = new Map<Region, Map<number, SongExtended[]>>();
+      const byRegion = new Map<Region, Map<VersionId, SongExtended[]>>();
       for (const chart of charts) {
         if (!byRegion.has(chart.region)) {
           byRegion.set(chart.region, new Map());
         }
+        const chartVersion = chart.gameVersion as VersionId;
         const regionMap = byRegion.get(chart.region)!;
-        if (!regionMap.has(chart.gameVersion)) {
-          regionMap.set(chart.gameVersion, []);
+        if (!regionMap.has(chartVersion)) {
+          regionMap.set(chartVersion, []);
         }
-        regionMap.get(chart.gameVersion)!.push({
+        regionMap.get(chartVersion)!.push({
           ...chart,
           addedVersion: chart.addedVersion as VersionId,
         });
@@ -2577,7 +2582,7 @@ export const userRouter = router({
         type: firstChart.type,
         genre: firstChart.genre,
         bpm: chartWithBpm?.bpm ?? null,
-        addedVersion: earliestAddedVersion,
+        addedVersion: earliestAddedVersion as VersionId,
         userScores: userScoresMap,
         regions,
       } satisfies SongDetails;
@@ -2610,7 +2615,7 @@ export const userRouter = router({
 
       const firstChart = charts[0];
       const chartWithBpm = charts.find(c => c.bpm !== null);
-      const earliestAddedVersion = Math.min(...charts.map(c => c.addedVersion));
+      const earliestAddedVersion = Math.min(...charts.map(c => c.addedVersion)) as VersionId;
 
       const slug = await getSongSlug({
         songName: firstChart.songName,

@@ -19,10 +19,9 @@ type ParsedSong = {
   songName: string;
   level: Level;
   musicType: SongType;
-  difficulty: string;
+  difficulty: Difficulty;
   inputValue: string;
   inputName: string;
-  difficultyNumber: number;
   version: number;
   index: number;
 }
