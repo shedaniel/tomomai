@@ -10,9 +10,9 @@ import { asFetcher } from "./fetcher-utils";
 import { type Logger } from "pino";
 import { DIFFICULTY_ENUM } from "@/lib/db/types";
 
-export const MaimaiScraperFetcher = asFetcher(async ({ region, version, cookies, log }) => {
-  const parsedSongs = await prepareMaimaiScraper(region, version, cookies, log);
-  return parsedSongs.map(song => ({
+// Convert ParsedSong to PendingSong
+export function parsedSongToPendingSong(song: ParsedSong): PendingSong {
+  return {
     songName: song.songName,
     type: song.musicType,
     difficulty: song.difficulty as Difficulty,
@@ -22,7 +22,12 @@ export const MaimaiScraperFetcher = asFetcher(async ({ region, version, cookies,
       "inputName": song.inputName,
       "inputValue": song.inputValue,
     },
-  } satisfies PendingSong));
+  } satisfies PendingSong;
+}
+
+export const MaimaiScraperFetcher = asFetcher(async ({ region, version, cookies, log }) => {
+  const parsedSongs = await prepareMaimaiScraper(region, version, cookies, log);
+  return parsedSongs.map(parsedSongToPendingSong);
 });
 
 export async function prepareMaimaiScraper(region: Region, version: VersionId, cookies: string, log: Logger) {
@@ -60,7 +65,7 @@ export async function prepareMaimaiScraper(region: Region, version: VersionId, c
 }
 
 // Helper function to fetch and parse song data for a specific difficulty and version
-async function fetchSongDataForDifficulty(region: Region, cookies: string, difficultyName: Difficulty, difficulty: number, version: number, log: Logger): Promise<ParsedSong[]> {
+export async function fetchSongDataForDifficulty(region: Region, cookies: string, difficultyName: Difficulty, difficulty: number, version: number, log: Logger): Promise<ParsedSong[]> {
   const songsUrl = `https://${region === "intl" ? "maimaidx-eng.com" : "maimaidx.jp"}/maimai-mobile/record/musicVersion/search/?version=${version}&diff=${difficulty}`;
   const childLog = log.child({ version, difficulty });
   childLog.debug(`Fetching songs data from: ${songsUrl}`);

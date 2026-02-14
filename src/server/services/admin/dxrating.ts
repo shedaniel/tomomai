@@ -1,4 +1,4 @@
-import { getVersionInfo, VersionId } from "@/lib/metadata";
+import { getVersionByShortName, getVersionFromDate, getVersionInfo, parseDate, VersionId } from "@/lib/metadata";
 import { normalizeName } from "@/lib/name-utils";
 import { Level, NoteCounts } from "@/lib/types";
 import { DxRatingResponse } from "@/lib/types/dxrating";
@@ -7,11 +7,12 @@ import { asFetcher } from "./fetcher-utils";
 
 const DXDATA_URL = "https://raw.githubusercontent.com/gekichumai/dxrating/refs/heads/main/packages/dxdata/dxdata.json";
 
-export const DxDataFetcher = asFetcher(async ({ version }) => {
+export const DxDataFetcher = asFetcher(async ({ version, region }) => {
   const res = await fetchDxDataJson();
 
   return res.songs.flatMap(song => song.sheets.map(sheet => ({
     songName: normalizeName(song.title),
+    artist: song.artist,
     level: sheet.level.replace("?", "") as Level,
     levelPrecise: getInternalLevelFromDxData(sheet, version) ?? undefined,
     type: sheet.type !== "utage" ? sheet.type : "dx",
@@ -19,6 +20,7 @@ export const DxDataFetcher = asFetcher(async ({ version }) => {
     bpm: !!song.bpm ? song.bpm : undefined,
     noteDesigner: !!sheet.noteDesigner && sheet.noteDesigner !== "-" ? sheet.noteDesigner : undefined,
     noteCounts: !!sheet.noteCounts ? fromDxRatingCounts(sheet.noteCounts) : undefined,
+    addedVersion: !!sheet.version ? getVersionByShortName(region === "intl" && "intl" in (sheet.regionOverrides ?? {}) ? sheet.regionOverrides!["intl"].version ?? sheet.version : sheet.version)?.id : undefined
   }) satisfies PendingSong));
 }, "only-modify");
 

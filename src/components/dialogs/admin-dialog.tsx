@@ -198,7 +198,16 @@ export function AdminDialog({ open, onOpenChange }: AdminDialogProps) {
           appendConsoleLog(`  Merged songs: ${json.statistics.mergedSongs}`);
           appendConsoleLog(`  Added: ${json.statistics.added}`);
           appendConsoleLog(`  Modified: ${json.statistics.modified}`);
+          appendConsoleLog(`  Deleted: ${json.statistics.deleted}`);
           appendConsoleLog(`  Unchanged: ${json.statistics.unchanged}`);
+
+          if (json.changes.deleted.length > 0) {
+            appendConsoleLog(`\nDeleted songs (${json.changes.deleted.length}):`);
+            json.changes.deleted.forEach((song: any) => {
+              const playCount = song.playRecordCount != null ? ` | ${song.playRecordCount} plays` : "";
+              appendConsoleLog(`  - ${song.songKey} | ${song.level} | ${song.artist} (dbId: ${song.dbId})${playCount}`);
+            });
+          }
 
           if (json.changes.added.length > 0) {
             appendConsoleLog(`\nAdded songs (${json.changes.added.length}):`);

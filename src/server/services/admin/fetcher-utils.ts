@@ -3,17 +3,20 @@ import { Difficulty, Region, SongType } from "@/lib/types";
 import { isImportant, Pending, PendingSong, unwrapUndefined, value } from "@/server/utils/admin/type";
 import { type Logger } from "pino";
 import { levenshtein } from "@/lib/utils";
+import { FetchingContextExtended } from "./level-fetcher";
 
-type SongKey = `${string}@${SongType}@${Difficulty}`;
-type FetcherMode = "default" | "only-modify" | "only-fallback";
+export type SongKey = `${string}@${SongType}@${Difficulty}`;
+export type FetcherMode = "default" | "only-modify" | "only-fallback";
 export type FetchingContext = {
   region: Region;
   version: VersionId;
   cookies: string;
   log: Logger;
+  forceMode?: FetcherMode
 };
-export type SongFetcher = (context: any, songs: any[]) => Promise<any[]>;
-export type SongWithMode = PendingSong & { mode: FetcherMode | undefined } | PendingSong;
+export type SongFetcher = (context: FetchingContextExtended, songs: PendingSong[]) => Promise<PendingSong[]>;
+export type SongWithOrigin = PendingSong & { addedFetcher: number; modifiedFetchers: number[] };
+export type SongWithMode = PendingSong & { mode: FetcherMode | undefined } | PendingSong
 
 type Taker<T> = (a: PendingSong, b: PendingSong, av: Pending<T>, bv: Pending<T>, fieldName: string) => Pending<T>;
 
@@ -32,7 +35,7 @@ export function asFetcher(promise: (context: FetchingContext) => Promise<SongWit
     const childLog = context.log.child({ mode });
     const fetched = await promise(context);
     const take = taker(childLog)
-    const merged = mergeSongs(songs, fetched, mode, childLog, merger(childLog, take), take);
+    const merged = mergeSongs(songs, fetched, context.forceMode || mode, childLog, merger(childLog, take), take);
     childLog.debug(`Merged ${songs.length} songs with ${fetched.length} songs into ${merged.length} songs`);
     return merged;
   };
@@ -106,35 +109,57 @@ export const merger = (log: Logger, taker: Taker<any>) => (a: PendingSong, b: Pe
   } satisfies PendingSong
 };
 
+export type MergeSink = {
+  onMerge?: (existing: PendingSong, incoming: PendingSong, result: PendingSong) => void;
+  onAdd?: (song: PendingSong, isFirst: boolean) => void;
+};
+
 export function mergeSongs(
   firstSongs: SongWithMode[],
   secondSongs: SongWithMode[],
   mode: FetcherMode,
   childLog: Logger,
   merger: (first: SongWithMode, second: SongWithMode) => SongWithMode,
-  take: Taker<any>
+  take: Taker<any>,
+  sink?: MergeSink
 ) {
-  type SongKeyWithExtra = `${SongKey}@${string}@${string}`;
-  type Entry = { key: SongKeyWithExtra; artist: string; addedVersion: string };
+  type Entry = { id: number; artist: string; addedVersion: string; first: boolean };
 
-  const added: Record<SongKeyWithExtra, SongWithMode> = {};
+  let nextId = 0;
+  const songById = new Map<number, SongWithMode>();
   const idToEntries: Record<SongKey, Entry[]> = {};
 
-  // Helper: Manage key updates in our lookup map
-  const updateKeyMap = (id: SongKey, oldKey: SongKeyWithExtra | null, newKey: SongKeyWithExtra, newArtist: string, newAddedVersion: string) => {
-    if (!idToEntries[id]) idToEntries[id] = [];
-    const entries = idToEntries[id];
+  const versionStr = (v: Pending<VersionId> | undefined): string => {
+    const val = value(v);
+    return val !== undefined && val !== null ? String(val) : "";
+  };
 
-    // Remove old key if it exists (crucial for re-keying after merge)
-    if (oldKey) {
-      const idx = entries.findIndex(e => e.key === oldKey);
-      if (idx !== -1) entries.splice(idx, 1);
-    }
+  const addEntry = (songKey: SongKey, artist: string, addedVersion: string, isFirst: boolean, song: SongWithMode): number => {
+    const id = nextId++;
+    songById.set(id, song);
+    if (!idToEntries[songKey]) idToEntries[songKey] = [];
+    idToEntries[songKey].push({ id, artist, addedVersion, first: isFirst });
+    return id;
+  };
 
-    // Add new key if not already present
-    if (!entries.find(e => e.key === newKey)) {
-      entries.push({ key: newKey, artist: newArtist, addedVersion: newAddedVersion });
-    }
+  const removeEntry = (songKey: SongKey, entryId: number) => {
+    const entries = idToEntries[songKey];
+    if (!entries) return;
+    const idx = entries.findIndex(e => e.id === entryId);
+    if (idx !== -1) entries.splice(idx, 1);
+    songById.delete(entryId);
+  };
+
+  const mergeEntry = (targetEntry: Entry, songKey: SongKey, song: SongWithMode, isFirst: boolean) => {
+    const existingSong = songById.get(targetEntry.id)!;
+    const mergedSong = merger(existingSong, song);
+
+    const newArtist = value(take(existingSong, song, existingSong.artist, song.artist, "artist")) || "";
+    const newAddedVersion = versionStr(take(existingSong, song, existingSong.addedVersion, song.addedVersion, "addedVersion"));
+
+    removeEntry(songKey, targetEntry.id);
+    addEntry(songKey, newArtist, newAddedVersion, isFirst, mergedSong);
+    sink?.onMerge?.(existingSong, song, mergedSong);
   };
 
   const allSongs = [
@@ -143,16 +168,15 @@ export function mergeSongs(
   ];
 
   for (const { song, first } of allSongs) {
-    const id: SongKey = key(song);
+    const songKey: SongKey = key(song);
     const currentArtist = value(song.artist) || "";
-    const addedVersionValue = value(song.addedVersion);
-    const currentAddedVersion = addedVersionValue !== undefined && addedVersionValue !== null ? String(addedVersionValue) : "";
+    const currentAddedVersion = versionStr(song.addedVersion);
     const songMode = "mode" in song && song.mode || mode;
 
-    let targetKey: SongKeyWithExtra | null = null;
-    const candidates = idToEntries[id] || [];
+    let target: Entry | null = null;
+    const candidates = idToEntries[songKey] || [];
 
-    // 1. Determine Target Key
+    // Phase 1: Find target entry
     if (first) {
       // Local Source: Strict Matching
       // Only merge if there is an EXACT artist AND addedVersion match (duplicate record in same source)
@@ -161,110 +185,77 @@ export function mergeSongs(
         c.artist === currentArtist &&
         (c.addedVersion === currentAddedVersion || !c.addedVersion || !currentAddedVersion)
       );
-      if (exactMatch) targetKey = exactMatch.key;
+      if (exactMatch) target = exactMatch;
     } else {
       // Fetched Source: Fuzzy Matching (No Threshold)
       // Find the "closest" match among existing entries
-      // undefined addedVersion acts as a wildcard that can match any version
-      let bestCandidate: Entry | null = null;
-      let minDistance = Infinity;
-
-      for (const candidate of candidates) {
-        // Check if addedVersion matches (undefined is wildcard)
-        const versionMatches =
-          candidate.addedVersion === currentAddedVersion ||
-          !candidate.addedVersion ||
-          !currentAddedVersion;
-
-        if (!versionMatches) {
-          continue;
+      // Strategy: prefer version-matching candidates, fall back to all candidates
+      const findBest = (pool: Entry[]): Entry | null => {
+        let best: Entry | null = null;
+        let minDist = Infinity;
+        for (const candidate of pool) {
+          if (candidate.artist === currentArtist) {
+            return candidate; // Exact artist match, distance 0
+          }
+          const dist = levenshtein(candidate.artist, currentArtist);
+          if (dist < minDist) {
+            minDist = dist;
+            best = candidate;
+          }
         }
+        return best;
+      };
 
-        // Optimization: Exact match is distance 0
-        if (candidate.artist === currentArtist) {
-          minDistance = 0;
-          bestCandidate = candidate;
-          break;
-        }
+      // Try candidates with matching addedVersion first (undefined is wildcard only when one side is defined)
+      const versionMatched = candidates.filter(c =>
+        (c.addedVersion === currentAddedVersion && (!!c.addedVersion || !!currentAddedVersion)) ||
+        (!c.addedVersion && !!currentAddedVersion) ||
+        (!!c.addedVersion && !currentAddedVersion)
+      );
+      let bestCandidate = findBest(versionMatched);
 
-        // Calculate distance for artist only (addedVersion already matched)
-        const dist = levenshtein(candidate.artist, currentArtist);
-
-        // Strictly closest (<). If equal distance, prefers the one found first.
-        if (dist < minDistance) {
-          minDistance = dist;
-          bestCandidate = candidate;
+      // If no version-matching candidate, fall back to candidates from firstSongs (closest sibling)
+      // Only cross-source matches are allowed when versions differ
+      if (!bestCandidate && candidates.length > 0) {
+        const firstSourceCandidates = candidates.filter(c => c.first);
+        if (firstSourceCandidates.length > 0) {
+          bestCandidate = findBest(firstSourceCandidates);
         }
       }
 
-      if (bestCandidate) {
-        targetKey = bestCandidate.key;
-      }
+      if (bestCandidate) target = bestCandidate;
     }
 
-    // 2. Execute Merge/Add Logic
-    const newKeyBase: SongKeyWithExtra = `${id}@${currentArtist}@${currentAddedVersion}`;
-
+    // Phase 2: Execute mode logic
     if (songMode === "default") {
-      if (!targetKey) {
-        // New Entry
-        added[newKeyBase] = song;
-        updateKeyMap(id, null, newKeyBase, currentArtist, currentAddedVersion);
+      if (!target) {
+        addEntry(songKey, currentArtist, currentAddedVersion, first, song);
+        sink?.onAdd?.(song, first);
       } else {
-        // Merge Entry
-        const existingSong = added[targetKey];
-        const mergedSong = merger(existingSong, song);
-
-        // Re-calculate Key based on `take` preference (artist and addedVersion might change)
-        const newArtistVal = value(take(existingSong, song, existingSong.artist, song.artist, "artist")) || "";
-        const takenAddedVersion = value(take(existingSong, song, existingSong.addedVersion, song.addedVersion, "addedVersion"));
-        const newAddedVersionVal = takenAddedVersion !== undefined && takenAddedVersion !== null ? String(takenAddedVersion) : "";
-        const mergedKey: SongKeyWithExtra = `${id}@${newArtistVal}@${newAddedVersionVal}`;
-
-        // If the key changed (artist or addedVersion renamed), move the record
-        if (mergedKey !== targetKey) {
-          delete added[targetKey];
-          updateKeyMap(id, targetKey, mergedKey, newArtistVal, newAddedVersionVal);
-        }
-        added[mergedKey] = mergedSong;
+        mergeEntry(target, songKey, song, first);
       }
     }
     else if (songMode === "only-fallback") {
       if (first) {
-        // Force add/overwrite local
-        added[newKeyBase] = song;
-        updateKeyMap(id, targetKey, newKeyBase, currentArtist, currentAddedVersion);
-      } else if (!targetKey) {
-        // Only add fetched if NO match found (fuzzy or exact)
-        added[newKeyBase] = song;
-        updateKeyMap(id, null, newKeyBase, currentArtist, currentAddedVersion);
+        if (target) removeEntry(songKey, target.id);
+        addEntry(songKey, currentArtist, currentAddedVersion, first, song);
+      } else if (!target) {
+        addEntry(songKey, currentArtist, currentAddedVersion, first, song);
+        sink?.onAdd?.(song, first);
       }
     }
     else if (songMode === "only-modify") {
       if (first) {
-        added[newKeyBase] = song;
-        updateKeyMap(id, targetKey, newKeyBase, currentArtist, currentAddedVersion);
-      } else if (targetKey) {
-        // Only merge fetched if match FOUND
-        const existingSong = added[targetKey];
-        const mergedSong = merger(existingSong, song);
-
-        const newArtistVal = value(take(existingSong, song, existingSong.artist, song.artist, "artist")) || "";
-        const takenAddedVersion2 = value(take(existingSong, song, existingSong.addedVersion, song.addedVersion, "addedVersion"));
-        const newAddedVersionVal = takenAddedVersion2 !== undefined && takenAddedVersion2 !== null ? String(takenAddedVersion2) : "";
-        const mergedKey: SongKeyWithExtra = `${id}@${newArtistVal}@${newAddedVersionVal}`;
-
-        if (mergedKey !== targetKey) {
-          delete added[targetKey];
-          updateKeyMap(id, targetKey, mergedKey, newArtistVal, newAddedVersionVal);
-        }
-        added[mergedKey] = mergedSong;
+        if (target) removeEntry(songKey, target.id);
+        addEntry(songKey, currentArtist, currentAddedVersion, first, song);
+      } else if (target) {
+        mergeEntry(target, songKey, song, first);
       }
     }
     else {
-      childLog.error(`Unknown mode ${songMode} for song ${id}`);
+      childLog.error(`Unknown mode ${songMode} for song ${songKey}`);
     }
   }
 
-  return Object.values(added);
+  return [...songById.values()];
 }

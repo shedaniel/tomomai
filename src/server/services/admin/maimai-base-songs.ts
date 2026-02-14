@@ -3,6 +3,7 @@ import { OfficialSong } from "@/lib/types/update";
 import { asFetcher } from "./fetcher-utils";
 import { normalizeGenre, normalizeName } from "@/lib/name-utils";
 import { important, PendingSong } from "@/server/utils/admin/type";
+import { getVersionByShortCode } from "@/lib/metadata";
 
 const MAIMAI_SONGS_JSON_URL = "https://maimai.sega.jp/data/maimai_songs.json";
 const MAIMAI_SONGS_JSON_URL_INTL = "https://maimai.sega.com/assets/data/maimai_songs.json";
@@ -40,12 +41,13 @@ export const MaimaiBaseFetcher = asFetcher(async ({ region, version, cookies }) 
           cover,
           genre: important(genre),
           artist: important(song.artist),
+          addedVersion: getVersionByShortCode(song.version)?.id,
         } satisfies PendingSong);
       }
     }
     return charts;
   });
-}, "only-modify");
+});
 
 export async function fetchBaseSongs(region: Region): Promise<OfficialSong[]> {
   const songsJsonResponse = await fetch(region === "intl" ? MAIMAI_SONGS_JSON_URL_INTL : MAIMAI_SONGS_JSON_URL, {

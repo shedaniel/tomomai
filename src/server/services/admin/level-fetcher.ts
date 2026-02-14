@@ -1,5 +1,3 @@
-import { VersionId } from "@/lib/metadata";
-import { Difficulty, Region, SongType } from "@/lib/types";
 import { UpdateSong } from "@/lib/types/update";
 import { PendingSong, value } from "@/server/utils/admin/type";
 import { type Logger } from "pino";
@@ -13,43 +11,32 @@ import deepEqual from "deep-equal";
 import { normalizeGenre, normalizeName } from "@/lib/name-utils";
 import { isNullOrUndefined } from "@/lib/utils";
 import { FillLevelPreciseFetcher } from "./fill-level";
-import { key } from "./fetcher-utils";
+import { FetchingContext, key, SongFetcher, SongWithOrigin } from "./fetcher-utils";
 
-type SongKey = `${string}@${SongType}@${Difficulty}`;
-type FetcherMode = "default" | "only-modify" | "only-fallback";
-export type FetchingContext = {
-  region: Region;
-  version: VersionId;
-  cookies: string;
-  log: Logger;
-};
-type FetchingContextExtended = FetchingContext & {
+export type FetchingContextExtended = FetchingContext & {
   previous: SongFetcher | null,
   current: SongFetcher,
   fetcherIndex: number,
 };
-export type SongWithOrigin = PendingSong & { addedFetcher: number; modifiedFetchers: number[] };
-export type SongWithMode = PendingSong & { mode: FetcherMode | undefined } | PendingSong
-export type SongFetcher = (context: FetchingContextExtended, songs: PendingSong[]) => Promise<PendingSong[]>;
 
 export const SorterFetcher: SongFetcher = async (context, songs) => {
   context.log.debug("Sorting songs...");
   return songs.sort((a, b) => a.songName.localeCompare(b.songName) * 10000000 + value(a.artist || "").localeCompare(value(b.artist || "")) * 100000 + a.difficulty.localeCompare(b.difficulty) * 1000 + a.type.localeCompare(b.type));
 }
 
-const FETCHERS: SongFetcher[] = [
+export const FETCHERS: SongFetcher[] = [
   // Scrapes official maimaidx net for songs
   MaimaiScraperFetcher,
   // Fetches official maimai songs json for cover, genre, artist
   MaimaiBaseFetcher,
   // Fetches dxdata songs for precise level, bpm, chart designer, notes
   DxDataFetcher,
-  // Fetches official maimaidx net details for missing cover, genre, artist
-  MaimaiAfterFetcher,
   // Fetches ./data/extra
   FallbackFetcher,
   // Fetches otoge-db
   OtogeDbFetcher,
+  // Fetches official maimaidx net details for missing cover, genre, artist
+  MaimaiAfterFetcher,
   // Fill level precise
   FillLevelPreciseFetcher,
   // Sorts the levels

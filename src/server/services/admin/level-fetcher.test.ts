@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { merger, mergeSongs, taker } from "./level-fetcher";
 import { PendingSong, value, important, Pending } from "@/server/utils/admin/type";
 import type { Logger } from "pino";
 import { Difficulty, SongType } from "@/lib/types";
 import { VersionId } from "@/lib/metadata";
+import { merger, mergeSongs, taker } from "./fetcher-utils";
 
 // Helper to create a basic song for testing
 function createSong(
@@ -283,6 +283,23 @@ describe("mergeSongs", () => {
       expect(result).toHaveLength(2);
       expect(result[0].songName).toBe("Song A");
       expect(result[1].songName).toBe("Song B");
+    });
+
+    it("should handle empty first set, with null version (only fetched songs)", () => {
+      const set1: PendingSong[] = [];
+      const set2 = [
+        createSong("Song A", "Artist A", "std", "basic", null),
+        createSong("Song A", "Artist B", "std", "basic", null),
+      ];
+
+      const take = taker(logger);
+      const result = mergeSongs(set1, set2, "default", logger, merger(logger, take), take);
+
+      expect(result).toHaveLength(2);
+      expect(result[0].songName).toBe("Song A");
+      expect(value(result[0].artist)).toBe("Artist A");
+      expect(result[1].songName).toBe("Song A");
+      expect(value(result[1].artist)).toBe("Artist B");
     });
 
     it("should handle empty second set (only local songs)", () => {
@@ -744,8 +761,9 @@ describe("mergeSongs", () => {
       expect(value(dxVersion!.addedVersion)).toBe(5);
     });
 
-    it("should not merge songs with different addedVersion values", () => {
-      // Same song, same everything, but different versions - should NOT merge
+    it("should merge songs with different addedVersion values", () => {
+      // Only one song per set with the same key — unambiguous cross-source match,
+      // so versions differ but merge should still happen
       const scraperSongs: PendingSong[] = [
         {
           songName: "Version Test",
@@ -763,7 +781,7 @@ describe("mergeSongs", () => {
           type: "dx",
           difficulty: "master",
           level: important("14"),
-          addedVersion: important(6), // Different version!
+          addedVersion: 6, // Different version!
           artist: important("New Artist"),
           genre: important("VARIETY"),
         },
@@ -772,12 +790,205 @@ describe("mergeSongs", () => {
       const take = taker(logger);
       const result = mergeSongs(scraperSongs, baseSongs, "only-modify", logger, merger(logger, take), take);
 
-      // Should remain separate (not merged)
+      // Should merge: single cross-source candidate despite version mismatch
       expect(result).toHaveLength(1);
       expect(value(result[0].addedVersion)).toBe(5);
-      expect(value(result[0].artist)).toBe("Old Artist");
-      // Genre should not be added because they didn't merge
-      expect(value(result[0].genre)).toBeUndefined();
+      expect(value(result[0].artist)).toBe("New Artist");
+      expect(value(result[0].genre)).toBe("VARIETY");
+    });
+
+    it("should merge songs with closest details", () => {
+      // Multiple candidates with same key but different versions — match by closest artist (sibling)
+      const scraperSongs: PendingSong[] = [
+        {
+          songName: "Version Test",
+          type: "dx",
+          difficulty: "master",
+          level: "14",
+          addedVersion: important(5),
+          artist: "Artist A",
+          genre: "Genre A"
+        },
+        {
+          songName: "Version Test",
+          type: "dx",
+          difficulty: "master",
+          level: "13",
+          addedVersion: important(4),
+          artist: "Artist B",
+          genre: "Genre B"
+        },
+      ];
+
+      const baseSongs: PendingSong[] = [
+        {
+          songName: "Version Test",
+          type: "dx",
+          difficulty: "master",
+          level: important("14+"),
+          addedVersion: 7,
+          artist: "Artist A",
+          genre: "Genre A"
+        },
+        {
+          songName: "Version Test",
+          type: "dx",
+          difficulty: "master",
+          level: important("13+"),
+          addedVersion: 6,
+          artist: "Artist B",
+          genre: "Genre B"
+        },
+      ];
+
+      const take = taker(logger);
+      const result = mergeSongs(scraperSongs, baseSongs, "only-modify", logger, merger(logger, take), take);
+
+      // Should merge each pair by closest artist, despite version mismatch
+      expect(result).toHaveLength(2);
+
+      const artistA = result.filter(song => song.artist === "Artist A")[0];
+      const artistB = result.filter(song => song.artist === "Artist B")[0];
+
+      expect(value(artistA.addedVersion)).toBe(5);
+      expect(value(artistA.level)).toBe("14+");
+      expect(value(artistA.genre)).toBe("Genre A");
+      expect(value(artistB.addedVersion)).toBe(4);
+      expect(value(artistB.level)).toBe("13+");
+      expect(value(artistB.genre)).toBe("Genre B");
+    });
+
+    it("should prefer exact version match over closer artist with wrong version", () => {
+      // Candidate A: version matches but artist is distant
+      // Candidate B: version differs but artist is exact
+      // Version match should take priority
+      const scraperSongs: PendingSong[] = [
+        {
+          songName: "Priority Test",
+          type: "dx",
+          difficulty: "master",
+          level: "13",
+          addedVersion: important(5),
+          artist: "Distant Artist Name",
+          genre: "Genre X"
+        },
+        {
+          songName: "Priority Test",
+          type: "dx",
+          difficulty: "master",
+          level: "12",
+          addedVersion: important(3),
+          artist: "Exact Match",
+          genre: "Genre Y"
+        },
+      ];
+
+      const baseSongs: PendingSong[] = [
+        {
+          songName: "Priority Test",
+          type: "dx",
+          difficulty: "master",
+          level: important("13+"),
+          addedVersion: 5, // Matches candidate A's version exactly
+          artist: "Exact Match", // Matches candidate B's artist exactly
+          genre: important("Genre Z"),
+        },
+      ];
+
+      const take = taker(logger);
+      const result = mergeSongs(scraperSongs, baseSongs, "only-modify", logger, merger(logger, take), take);
+
+      expect(result).toHaveLength(2);
+
+      // Should merge with candidate A (version 5 match), not candidate B (artist match)
+      const version5 = result.find(song => value(song.addedVersion) === 5)!;
+      const version3 = result.find(song => value(song.addedVersion) === 3)!;
+
+      expect(version5).toBeDefined();
+      expect(value(version5.level)).toBe("13+");
+      expect(value(version5.genre)).toBe("Genre Z");
+
+      // Candidate B should remain unmodified
+      expect(version3).toBeDefined();
+      expect(value(version3.level)).toBe("12");
+      expect(value(version3.genre)).toBe("Genre Y");
+    });
+
+    it("should merge with version fallback in default mode", () => {
+      // Version fallback should also work in "default" mode, not just "only-modify"
+      const firstSongs: PendingSong[] = [
+        {
+          songName: "Default Mode Test",
+          type: "dx",
+          difficulty: "master",
+          level: important("14"),
+          addedVersion: important(5),
+          artist: "Some Artist",
+        },
+      ];
+
+      const secondSongs: PendingSong[] = [
+        {
+          songName: "Default Mode Test",
+          type: "dx",
+          difficulty: "master",
+          level: important("14+"),
+          addedVersion: 8, // Different version
+          artist: "Some Artist",
+          genre: important("VARIETY"),
+        },
+      ];
+
+      const take = taker(logger);
+      const result = mergeSongs(firstSongs, secondSongs, "default", logger, merger(logger, take), take);
+
+      // Single cross-source candidate — should merge despite version mismatch
+      expect(result).toHaveLength(1);
+      expect(value(result[0].addedVersion)).toBe(5);
+      expect(value(result[0].level)).toBe("14+");
+      expect(value(result[0].genre)).toBe("VARIETY");
+    });
+
+    it("should not merge fetched songs with same key when firstSongs has unrelated songs", () => {
+      // firstSongs has a song with a different key, secondSongs has two songs with the same key
+      // The fallback should not apply because there are no firstSongs candidates for that key
+      const firstSongs: PendingSong[] = [
+        {
+          songName: "Unrelated Song",
+          type: "dx",
+          difficulty: "master",
+          level: "12",
+          addedVersion: important(1),
+          artist: "Other Artist",
+        },
+      ];
+
+      const secondSongs: PendingSong[] = [
+        {
+          songName: "Same Key Song",
+          type: "dx",
+          difficulty: "master",
+          level: "13",
+          addedVersion: 2,
+          artist: "Artist A",
+        },
+        {
+          songName: "Same Key Song",
+          type: "dx",
+          difficulty: "master",
+          level: "14",
+          addedVersion: 3,
+          artist: "Artist B",
+        },
+      ];
+
+      const take = taker(logger);
+      const result = mergeSongs(firstSongs, secondSongs, "default", logger, merger(logger, take), take);
+
+      // All three songs should remain separate — no cross-source candidates for "Same Key Song"
+      expect(result).toHaveLength(3);
+      const sameKeySongs = result.filter(song => song.songName === "Same Key Song");
+      expect(sameKeySongs).toHaveLength(2);
     });
 
     it("should preserve extras from scraper when merging with base data", () => {
@@ -821,5 +1032,33 @@ describe("mergeSongs", () => {
         officialField: "official",
       });
     });
+
+    it("should preserve original content", () => {
+      const scraperSongs: PendingSong[] = [
+        {
+          songName: "Test",
+          type: "dx",
+          difficulty: "master",
+          level: important("13"),
+          addedVersion: important(5),
+          artist: "Artist"
+        },
+      ];
+
+      const baseSongs: PendingSong[] = [
+        {
+          songName: "Test",
+          type: "dx",
+          difficulty: "master",
+          level: important("13"),
+        },
+      ];
+
+      const take = taker(logger);
+      const result = mergeSongs(scraperSongs, baseSongs, "only-modify", logger, merger(logger, take), take);
+
+      expect(result).toHaveLength(1);
+      expect(value(result[0].artist)).toBe("Artist")
+    })
   });
 });

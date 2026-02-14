@@ -34,6 +34,7 @@ type Sheet = {
   version: string;
   releaseDate: string;
   multiverInternalLevelValue?: Record<string, number>;
+  regionOverrides?: Record<string, Partial<Sheet>>;
 }
 
 export type {

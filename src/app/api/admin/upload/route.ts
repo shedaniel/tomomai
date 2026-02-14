@@ -1,12 +1,12 @@
 import { db } from "@/lib/db";
-import { songs } from "@/lib/db/schema-pg";
+import { songs, userScores } from "@/lib/db/schema-pg";
 import { logger } from "@/lib/logger";
 import { VersionId } from "@/lib/metadata";
 import { Difficulty, Region, SongType } from "@/lib/types";
 import { UpdateSong } from "@/lib/types/update";
-import { mergeSongs, taker, merger, key } from "@/server/services/admin/fetcher-utils";
+import { mergeSongs, taker, merger, key, MergeSink } from "@/server/services/admin/fetcher-utils";
 import { important, PendingSong, value, Pending } from "@/server/utils/admin/type";
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray, sql, count } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
 type FieldChange = {
@@ -32,13 +32,31 @@ type ModifiedChange = {
   fieldChanges: FieldChange[];
 };
 
+type DeletedChange = {
+  songKey: string;
+  songName: string;
+  difficulty: Difficulty;
+  type: SongType;
+  level: string;
+  artist: string;
+  dbId: string;
+  playRecordCount?: number;
+};
+
 type ChangeAnalysis = {
   added: AddedChange[];
   modified: ModifiedChange[];
+  deleted: DeletedChange[];
   unchanged: string[];
 };
 
 type DBSongType = typeof songs.$inferSelect;
+
+type MergeEvent = {
+  existing: PendingSong;
+  incoming: PendingSong;
+  result: PendingSong;
+};
 
 /**
  * Convert UpdateSong to PendingSong with all fields marked as important
@@ -106,22 +124,13 @@ function compareFields(dbSong: PendingSong, mergedSong: PendingSong): FieldChang
     const dbValue = value(dbSong[field] as Pending<any>);
     const mergedValue = value(mergedSong[field] as Pending<any>);
 
-    // Deep comparison for objects like noteCounts
     if (field === "noteCounts") {
       if (JSON.stringify(dbValue) !== JSON.stringify(mergedValue)) {
-        changes.push({
-          field,
-          oldValue: dbValue,
-          newValue: mergedValue
-        });
+        changes.push({ field, oldValue: dbValue, newValue: mergedValue });
       }
     } else {
       if (dbValue !== mergedValue) {
-        changes.push({
-          field,
-          oldValue: dbValue,
-          newValue: mergedValue
-        });
+        changes.push({ field, oldValue: dbValue, newValue: mergedValue });
       }
     }
   }
@@ -130,65 +139,62 @@ function compareFields(dbSong: PendingSong, mergedSong: PendingSong): FieldChang
 }
 
 /**
- * Create an AddedChange record from a PendingSong
+ * Analyze changes using merge events collected via sink callbacks.
  */
-function createAddedRecord(song: PendingSong): AddedChange {
-  return {
+function analyzeChanges(
+  dbPendingSongs: PendingSong[],
+  mergeEvents: MergeEvent[],
+  addedSongs: PendingSong[]
+): ChangeAnalysis {
+  const added: AddedChange[] = addedSongs.map(song => ({
     songKey: key(song),
     songName: song.songName,
     difficulty: song.difficulty,
     type: song.type,
     level: value(song.level),
     artist: value(song.artist) || ""
-  };
-}
+  }));
 
-/**
- * Create a ModifiedChange record from a PendingSong and field changes
- */
-function createModifiedRecord(song: PendingSong, fieldChanges: FieldChange[]): ModifiedChange {
-  return {
-    songKey: key(song),
-    songName: song.songName,
-    difficulty: song.difficulty,
-    type: song.type,
-    fieldChanges
-  };
-}
-
-/**
- * Analyze changes between DB songs and merged songs
- */
-function analyzeChanges(
-  dbSongs: PendingSong[],
-  mergedSongs: PendingSong[]
-): ChangeAnalysis {
-  const dbMap = new Map(dbSongs.map(s => [key(s), s]));
-  const mergedMap = new Map(mergedSongs.map(s => [key(s), s]));
-
-  const added: AddedChange[] = [];
   const modified: ModifiedChange[] = [];
   const unchanged: string[] = [];
+  const mergedDbIds = new Set<string>();
 
-  for (const [songKey, mergedSong] of mergedMap) {
-    const dbSong = dbMap.get(songKey);
+  for (const { existing, result } of mergeEvents) {
+    const dbId = existing.extras?.dbId;
+    if (dbId) mergedDbIds.add(String(dbId));
 
-    if (!dbSong) {
-      // New song
-      added.push(createAddedRecord(mergedSong));
+    const fieldChanges = compareFields(existing, result);
+    if (fieldChanges.length > 0) {
+      modified.push({
+        songKey: key(result),
+        songName: result.songName,
+        difficulty: result.difficulty,
+        type: result.type,
+        fieldChanges
+      });
     } else {
-      // Compare fields
-      const fieldChanges = compareFields(dbSong, mergedSong);
-
-      if (fieldChanges.length > 0) {
-        modified.push(createModifiedRecord(mergedSong, fieldChanges));
-      } else {
-        unchanged.push(songKey);
-      }
+      unchanged.push(key(result));
     }
   }
 
-  return { added, modified, unchanged };
+  const deleted: DeletedChange[] = [];
+  for (const dbSong of dbPendingSongs) {
+    const dbId = dbSong.extras?.dbId;
+    const dbIdStr = dbId ? String(dbId) : undefined;
+    if (dbIdStr && !mergedDbIds.has(dbIdStr)) {
+      deleted.push({
+        songKey: key(dbSong),
+        songName: dbSong.songName,
+        difficulty: dbSong.difficulty,
+        type: dbSong.type,
+        level: value(dbSong.level),
+        artist: value(dbSong.artist) || "",
+        dbId: dbIdStr
+      });
+    }
+  }
+
+  return { added, modified, deleted, unchanged };
 }
 
 export async function POST(request: NextRequest) {
@@ -305,21 +311,51 @@ export async function POST(request: NextRequest) {
     const take = taker(log);
     const merge = merger(log, take);
 
+    // Collect merge events via sink
+    const mergeEvents: MergeEvent[] = [];
+    const addedSongs: PendingSong[] = [];
+    const sink: MergeSink = {
+      onMerge: (existing, incoming, result) => {
+        mergeEvents.push({ existing, incoming, result });
+      },
+      onAdd: (song, isFirst) => {
+        if (!isFirst) {
+          addedSongs.push(song);
+        }
+      }
+    };
+
     const mergedSongs = mergeSongs(
       dbPendingSongs,        // First: existing DB songs
       uploadPendingSongs,    // Second: uploaded songs (will update existing)
       "default",             // Mode: full bidirectional merge
       log,
       merge,
-      take
+      take,
+      sink
     );
 
     log.info({
       mergedSongs: mergedSongs.length
     }, "Merge completed");
 
-    // Analyze changes
-    const changes = analyzeChanges(dbPendingSongs, mergedSongs);
+    // Analyze changes using sink events
+    const changes = analyzeChanges(dbPendingSongs, mergeEvents, addedSongs);
+
+    // Fetch play record counts for deleted songs (if manageable number)
+    if (changes.deleted.length > 0 && changes.deleted.length < 100) {
+      const deletedDbIds = changes.deleted.map(d => BigInt(d.dbId));
+      const scoreCounts = await db
+        .select({ songId: userScores.songId, count: count() })
+        .from(userScores)
+        .where(inArray(userScores.songId, deletedDbIds))
+        .groupBy(userScores.songId);
+
+      const countMap = new Map(scoreCounts.map(r => [r.songId.toString(), r.count]));
+      for (const deleted of changes.deleted) {
+        deleted.playRecordCount = countMap.get(deleted.dbId) ?? 0;
+      }
+    }
 
     // Log summary statistics
     log.info({
@@ -329,6 +365,7 @@ export async function POST(request: NextRequest) {
         mergedSongs: mergedSongs.length,
         added: changes.added.length,
         modified: changes.modified.length,
+        deleted: changes.deleted.length,
         unchanged: changes.unchanged.length
       }
     }, "Upload merge analysis complete");
@@ -351,6 +388,17 @@ export async function POST(request: NextRequest) {
       }, `MODIFIED: ${change.songKey}`);
     }
 
+    // Log each deleted song
+    for (const change of changes.deleted) {
+      log.info({
+        songKey: change.songKey,
+        dbId: change.dbId,
+        level: change.level,
+        artist: change.artist,
+        playRecordCount: change.playRecordCount
+      }, `DELETED: ${change.songKey}`);
+    }
+
     // Return response
     return NextResponse.json({
       success: true,
@@ -360,11 +408,13 @@ export async function POST(request: NextRequest) {
         mergedSongs: mergedSongs.length,
         added: changes.added.length,
         modified: changes.modified.length,
+        deleted: changes.deleted.length,
         unchanged: changes.unchanged.length
       },
       changes: {
         added: changes.added,
         modified: changes.modified,
+        deleted: changes.deleted,
         unchanged: changes.unchanged
       }
     });
