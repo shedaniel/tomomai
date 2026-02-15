@@ -26,4 +26,4 @@ export const STORE_STATUS_ENUM = ["closed", "open", "temporarily_closed"] as con
 
 export const TITLE_TYPE_ENUM = ["normal", "bronze", "silver", "gold", "rainbow"] as const;
 
-export const DB_TYPES = ["songs", "stats"] as const;
+export const DB_TYPES = ["songs", "stats", "posts"] as const;

@@ -513,7 +513,8 @@
     "types": {
       "songs": "Songs",
       "calculator": "Calculator",
-      "stats": "Stats"
+      "stats": "Stats",
+      "posts": "Changelog"
     },
     "songs": {
       "metadata": {

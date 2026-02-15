@@ -3,6 +3,7 @@ import { Dashboard } from "@/components/dashboard";
 import { LoginScreen } from "@/components/login-screen";
 import { getServerSession } from "@/lib/auth-server";
 import { applyFlagOverrides, useFlags } from "@/lib/flags";
+import { getLatestPost } from "@/lib/posts";
 import { createServerSideTRPC } from "@/lib/trpc-server";
 import { cookies } from "next/headers";
 import { Suspense } from "react";
@@ -93,6 +94,8 @@ export default async function Home() {
     }).catch(() => undefined)
     : undefined;
 
+  const latestPost = getLatestPost();
+
   return (
     <Dashboard
       user={session.user}
@@ -101,6 +104,7 @@ export default async function Home() {
       initialSnapshots={snapshotsData.snapshots}
       initialSnapshotData={initialSnapshotData}
       flags={flags}
+      latestPost={latestPost}
     />
   );
 }
