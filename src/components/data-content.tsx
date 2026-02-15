@@ -15,6 +15,7 @@ import { EventsCard } from "./events-card";
 import { RecentSongsCard } from "./recent-songs-card";
 import { DeveloperCard } from "./developer-card";
 import { AlbumCard } from "./album-card";
+import { StatsCard } from "./stats-card";
 import { Flags } from "@/lib/flags";
 import { motion } from "motion/react";
 import { getTransition } from "@/lib/animation-constants";
@@ -223,11 +224,16 @@ export function DataContent({
         </TabsContent>
         {flags.statsCard && (
           <TabsContent value="stats" className="mt-0 flex-1 min-w-0">
-            <div className="p-8 text-center w-full h-[calc(100vh-20rem)] flex flex-col items-center justify-center">
-              <BarChart className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-              <h3 className="text-lg font-medium mb-2">{t('dataContent.tabs.stats')}</h3>
-              <p className="text-muted-foreground">Coming soon...</p>
-            </div>
+            <motion.div
+              initial={{ opacity: 0, x: 10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={getTransition({ duration: 0.3, ease: [0.4, 0, 0.2, 1] })}
+            >
+              <StatsCard
+                region={region}
+                selectedSnapshotData={selectedSnapshotData}
+              />
+            </motion.div>
           </TabsContent>
         )}
         <TabsContent value="songs" className="mt-0 flex-1 min-w-0">

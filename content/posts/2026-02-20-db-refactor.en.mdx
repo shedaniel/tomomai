@@ -1,52 +1,58 @@
 ---
-title: "ToS, Changelogs, and Data Refactor"
+title: "Plates Progress, Stats Revamp, and ToS"
 date: "2026-02-20"
 version: "2026.2"
-summary: "February Update: New Terms of Service, a dedicated Changelog page, and a massive backend overhaul for better song data accuracy."
-locale: "en"
-canonicalSlug: "2026-02-20-db-refactor"
+summary: "February Update: Track your Plate (名牌) progress, explore revamped player stats, manage your album storage, and our new site policies."
 ---
 
-## The Monthly Beat Goes On
+## February Update: Visualizing Your Progress
 
-Welcome to the February update! As promised, we are sticking to our **monthly update commitment** to ensure tomomai keeps evolving. This month is a mix of "keeping things official" with new site policies and a massive "under the hood" refactor to make our song data more reliable than ever.
+We’re keeping our **monthly update commitment** going strong! This February, we’re moving beyond just tracking scores and moving into tracking your *achievements*. We've overhauled the Stats page and added a highly requested feature for plate hunters.
+
+## New Feature: Player Stats & Plates Progress
+
+If you're chasing those elusive **Plates** like 「極」, 「將」, or 「舞」, this update is for you.
+
+### Revamped Stats Page
+We’ve redesigned the **Statistics** page to give you a clearer bird's-eye view of your achievement distribution. You can now see a full breakdown of your grades (from D up to SSS+) for any specific version or difficulty.
+
+![Stats Page](/posts/2026-02-20-db-refactor/stats.png)
+
+### Track Your Plate Progress
+Click the new **"View Plates Progress"** button to see exactly how close you are to your next plate.
+- **Visual Progress**: See your completion count for categories like "All FC or above" (極).
+- **Missing Chart Finder**: tomomai will now list the specific songs you are missing to complete a plate requirement. No more manual checking against a spreadsheet!
+
+![Stats Page](/posts/2026-02-20-db-refactor/plates.png)
 
 ## New Feature: Dedicated Changelogs
 
 You're looking at it! We've introduced a proper **Changelog & News** section at `/db/posts`. From now on, all major updates, version notes, and community announcements will be archived here so you can keep track of what's changing in tomomai.
 
-## Privacy & Terms of Service
+## New Feature: Album Management
+Last month we introduced Album Storage, and this month we’re giving you more control over it. You can now **delete specific images** from your tomomai album. This makes it easier to stay within the 25MB limit by clearing out accidental shots or blurry photos while keeping your best memories.
 
-As tomomai grows, we want to make sure your data is handled responsibly. Starting today, new users will be asked to agree to our **Terms of Service** and **Privacy Policy** during registration.
+![Delete Album](/posts/2026-02-20-db-refactor/delete.png)
+
+## Privacy & Terms of Service
+As tomomai grows, we want to ensure transparency regarding your data. Starting today, all users will be asked to agree to our **Terms of Service** and **Privacy Policy**.
 
 **The TL;DR (Not Legal Advice):**
-- **You own your data**; we will never sell it to third parties.
-- Your data is encrypted and stored securely on servers in **Japan**.
-- Your data is processed in accordance with **Hong Kong SAR laws**.
-- tomomai is **Open Source (AGPL-3.0)**.
-- We are an independent tool and **not affiliated with SEGA**.
+- **You own your data**; it is never sold to third parties.
+- Data is encrypted and stored securely on servers in **Japan**.
+- Processing is done in accordance with **Hong Kong SAR laws**.
+- tomomai is **Open Source (AGPL-3.0)** and independent from SEGA.
 
-## Backend Overhaul: Better Data, Fewer Errors
-
-We spent a lot of time this month refactoring how tomomai handles song information. We moved away from a single, giant update script to a much smarter "service-based" pipeline.
-
-**What does this mean for you?**
-- **No more "Link" confusion**: We can now properly distinguish between different songs that share the same name (like the two different versions of *Link*).
-- **UTAGE (宴) Support**: Better internal management for UTAGE charts (full support is still cooking!).
-- **Region-Specific Accuracy**: Some songs are added in different versions depending on the region (e.g., *Supersonic Generation* is PRiSM PLUS in JP but PRiSM in Intl). tomomai now tracks this correctly for both.
-- **Improved Level Data**: We now use a "double fallback" system (pulling from dxrating and otoge-db) to ensure International level data and precise constants are as accurate as possible.
-
-## Level Adjustments (65 Changes)
-
-Based on the new data pipeline, we have updated the precise internal levels (constants) for 65 charts. Notable adjustments include:
-- **Dazzle hop (DX)**: Master precise level increased from 14.0 to 14.2.
-- **ニルヴの心臓 (DX)**: Master precise level increased from 14.0 to 14.3.
-- *...and 62 other minor tweaks to Advanced, Expert, and Master charts.*
+## Backend: Data Accuracy Refactor
+We’ve completely rebuilt our song data pipeline to be more accurate.
+- **Better Version Handling**: Songs like *Supersonic Generation* are now correctly tagged for their specific release versions in both Japan and International regions.
+- **Duplicate Handling**: We can now properly distinguish between different songs that have identical names (e.g., *Link*).
+- **Precise Constants**: We've updated internal levels for **65 charts** (including *Dazzle hop* and *ニルヴの心臓* Master charts) using a new double-fallback system for maximum accuracy.
 
 ---
 
 Join our Discord to discuss the changes: [https://discord.gg/jZqQHr3UDq](https://discord.gg/jZqQHr3UDq)
 
-Help us translate the new pages: [https://crowdin.com/project/tomomai](https://crowdin.com/project/tomomai)
+Help us translate tomomai: [https://crowdin.com/project/tomomai](https://crowdin.com/project/tomomai)
 
-Thanks for using tomomai!
+Happy grinding!

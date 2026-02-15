@@ -2862,5 +2862,229 @@ export const userRouter = router({
       };
     }),
 
+  // Get player statistics (grade distribution)
+  getPlayerStats: protectedProcedure
+    .input(z.object({
+      region: regionSchema,
+    }))
+    .query(async ({ ctx, input }) => {
+      // Get the latest snapshot for this region
+      const snapshot = await db
+        .select({ id: userSnapshots.id, gameVersion: userSnapshots.gameVersion })
+        .from(userSnapshots)
+        .where(
+          and(
+            eq(userSnapshots.userId, ctx.session.user.id),
+            eq(userSnapshots.region, input.region)
+          )
+        )
+        .orderBy(desc(userSnapshots.fetchedAt))
+        .limit(1);
+
+      if (snapshot.length === 0) {
+        return { stats: {}, totalSongs: {} };
+      }
+
+      const gameVersion = snapshot[0].gameVersion;
+
+      // Fetch all scores with song metadata for this snapshot
+      const scores = await db
+        .select({
+          achievement: userScores.achievement,
+          addedVersion: songs.addedVersion,
+          difficulty: songs.difficulty,
+          fc: userScores.fc,
+          fs: userScores.fs,
+        })
+        .from(userScores)
+        .innerJoin(songs, eq(userScores.songId, songs.id))
+        .where(eq(userScores.snapshotId, snapshot[0].id));
+
+      // Get total song counts from database by version and difficulty
+      const allSongs = await db
+        .select({
+          addedVersion: songs.addedVersion,
+          difficulty: songs.difficulty,
+          count: sql<number>`count(*)`.mapWith(Number),
+        })
+        .from(songs)
+        .where(
+          and(
+            eq(songs.region, input.region),
+            eq(songs.gameVersion, gameVersion)
+          )
+        )
+        .groupBy(songs.addedVersion, songs.difficulty);
+
+      // Build total songs map
+      const totalSongs: Record<string, Record<string, number>> = {};
+      for (const song of allSongs) {
+        const version = song.addedVersion.toString();
+        const difficulty = song.difficulty;
+
+        if (!totalSongs[version]) {
+          totalSongs[version] = {};
+        }
+        totalSongs[version][difficulty] = song.count;
+      }
+
+      // Group scores by version and difficulty
+      const stats: Record<string, Record<string, {
+        grades: Record<string, number>,
+        fc: Record<string, number>,
+        fs: Record<string, number>,
+        total: number
+      }>> = {};
+
+      for (const score of scores) {
+        const version = score.addedVersion.toString();
+        const difficulty = score.difficulty;
+
+        // Initialize nested structure if needed
+        if (!stats[version]) {
+          stats[version] = {};
+        }
+        if (!stats[version][difficulty]) {
+          stats[version][difficulty] = { grades: {}, fc: {}, fs: {}, total: 0 };
+        }
+
+        // Determine grade based on achievement (stored as 10000x)
+        const achievementPercent = score.achievement;
+        let grade = "D";
+
+        // Find the highest grade tier this achievement qualifies for
+        // ACHIEVEMENTS array is sorted from highest to lowest
+        if (achievementPercent >= 1005000) grade = "SSS+";
+        else if (achievementPercent >= 1000000) grade = "SSS";
+        else if (achievementPercent >= 995000) grade = "SS+";
+        else if (achievementPercent >= 990000) grade = "SS";
+        else if (achievementPercent >= 980000) grade = "S+";
+        else if (achievementPercent >= 970000) grade = "S";
+        else if (achievementPercent >= 940000) grade = "AAA";
+        else if (achievementPercent >= 900000) grade = "AA";
+        else if (achievementPercent >= 800000) grade = "A";
+        else if (achievementPercent >= 750000) grade = "BBB";
+        else if (achievementPercent >= 700000) grade = "BB";
+        else if (achievementPercent >= 600000) grade = "B";
+        else if (achievementPercent >= 500000) grade = "C";
+
+        // Increment count for this grade
+        if (!stats[version][difficulty].grades[grade]) {
+          stats[version][difficulty].grades[grade] = 0;
+        }
+        stats[version][difficulty].grades[grade]++;
+
+        // Count FC achievements
+        if (score.fc !== "none") {
+          if (!stats[version][difficulty].fc[score.fc]) {
+            stats[version][difficulty].fc[score.fc] = 0;
+          }
+          stats[version][difficulty].fc[score.fc]++;
+        }
+
+        // Count FS achievements
+        if (score.fs !== "none") {
+          if (!stats[version][difficulty].fs[score.fs]) {
+            stats[version][difficulty].fs[score.fs] = 0;
+          }
+          stats[version][difficulty].fs[score.fs]++;
+        }
+
+        stats[version][difficulty].total++;
+      }
+
+      return { stats, totalSongs };
+    }),
+
+  // Get songs not meeting plate requirements
+  getPlateSongs: protectedProcedure
+    .input(z.object({
+      region: regionSchema,
+      version: z.string(),
+      difficulty: z.enum(["basic", "advanced", "expert", "master"]),
+      plateType: z.enum(["kyoku", "shou", "shin", "maimai"]),
+    }))
+    .query(async ({ ctx, input }) => {
+      // Get the latest snapshot for this region
+      const snapshot = await db
+        .select({ id: userSnapshots.id, gameVersion: userSnapshots.gameVersion })
+        .from(userSnapshots)
+        .where(
+          and(
+            eq(userSnapshots.userId, ctx.session.user.id),
+            eq(userSnapshots.region, input.region)
+          )
+        )
+        .orderBy(desc(userSnapshots.fetchedAt))
+        .limit(1);
+
+      if (snapshot.length === 0) {
+        return [];
+      }
+
+      const gameVersion = snapshot[0].gameVersion;
+
+      // Fetch all songs for this version and difficulty (including unplayed ones)
+      const allSongs = await db
+        .select({
+          songId: songs.id,
+          songName: songs.songName,
+          artist: songs.artist,
+          cover: songs.cover,
+          difficulty: songs.difficulty,
+          levelPrecise: songs.levelPrecise,
+          type: songs.type,
+          achievement: userScores.achievement,
+          fc: userScores.fc,
+          fs: userScores.fs,
+          dxScore: userScores.dxScore,
+        })
+        .from(songs)
+        .leftJoin(
+          userScores,
+          and(
+            eq(userScores.songId, songs.id),
+            eq(userScores.snapshotId, snapshot[0].id)
+          )
+        )
+        .where(
+          and(
+            eq(songs.addedVersion, parseInt(input.version)),
+            eq(songs.difficulty, input.difficulty),
+            eq(songs.region, input.region),
+            eq(songs.gameVersion, gameVersion)
+          )
+        );
+
+      // Filter songs not meeting the plate requirement
+      const filteredSongs = allSongs.filter((song) => {
+        // If no score exists, treat as not meeting any requirement
+        const achievement = song.achievement || 0;
+        const fc = song.fc || "none";
+        const fs = song.fs || "none";
+
+        switch (input.plateType) {
+          case "kyoku": // FC or above
+            return !["fc", "fc+", "ap", "ap+"].includes(fc);
+          case "shou": // SSS or above
+            return achievement < 1000000; // Less than 100%
+          case "shin": // AP or above
+            return !["ap", "ap+"].includes(fc);
+          case "maimai": // FDX or above
+            return !["fdx", "fdx+"].includes(fs);
+          default:
+            return false;
+        }
+      });
+
+      // Map to ensure unplayed songs have default values
+      return filteredSongs.map((song) => ({
+        ...song,
+        achievement: song.achievement || 0,
+        fc: song.fc || "none",
+        fs: song.fs || "none",
+        dxScore: song.dxScore || 0,
+      }));
+    }),
 
 });

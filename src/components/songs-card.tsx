@@ -295,7 +295,7 @@ function CompactSongSection({ title, songs, count, t, sum, average, visibleCount
 }
 
 // Component for rendering individual song cards in grid view
-const SongGridCard = forwardRef<HTMLDivElement, { song: SongWithRating } & React.HTMLAttributes<HTMLDivElement>>(({ song, ...props }, ref) => {
+export const SongGridCard = forwardRef<HTMLDivElement, { song: SongWithRating } & React.HTMLAttributes<HTMLDivElement>>(({ song, ...props }, ref) => {
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const card = e.currentTarget;
     const rect = card.getBoundingClientRect();
