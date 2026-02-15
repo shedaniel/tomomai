@@ -3,6 +3,7 @@ import { getLocale } from "@/i18n/locale-server";
 import { MDXRemote } from "next-mdx-remote/rsc";
 import { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { ComponentPropsWithoutRef } from "react";
 import { PostLocaleSwitcher } from "@/components/post-locale-switcher";
@@ -84,6 +85,15 @@ const mdxComponents = {
     <strong className="font-semibold text-foreground" {...props} />
   ),
   hr: () => <hr className="my-8 border-border" />,
+  img: (props: ComponentPropsWithoutRef<"img">) => (
+    <Image
+      src={props.src as string || ""}
+      alt={props.alt || ""}
+      width={800}
+      height={600}
+      className="rounded-lg my-6 w-[70%] h-auto mx-auto"
+    />
+  ),
 };
 
 export default async function PostPage({ params }: PostPageProps) {
