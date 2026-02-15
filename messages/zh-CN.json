@@ -87,6 +87,27 @@
       "updateToken": "更新验证方式",
       "description": "更新你的 maimai 验证方式以进行数据导入及同步玩家资料。"
     },
+    "albumPrivacy": {
+      "title": "相册照片隐私设置",
+      "description": "你是否希望从 maimai 获取并保存你的相册照片？",
+      "note": "请注意：",
+      "noteText": "相册照片可能包含您的脸部或其他个人信息。 如果你不希望将这些信息保存在 tomomai ともマイ。您可以在这里禁用此功能。",
+      "privacy": "你的图片将会：",
+      "stored": "私密地存储在我们的服务器上",
+      "notShared": "绝从不与第三方共享",
+      "onlyYou": "仅对你显示",
+      "limit": "上限为 25 MB（约为 300 张图片）",
+      "autoDelete": "当存储空间不足时，自动删除最旧的照片",
+      "changeLater": "你随时可以通过设置界面再次编辑此设置。",
+      "dontSave": "不保存照片",
+      "save": "保存我的相册照片",
+      "example": "相册示例图片",
+      "saved": "相册偏好设置已保存成功",
+      "error": "保存相册偏好设置失败",
+      "fetchAlbums": "保存相册照片",
+      "fetchAlbumsDescription": "获取分数时自动获取和保存您的相册照片。请注意，照片中可能含有个人信息。",
+      "notSet": "你尚未设置此偏好。下次获取数据时系统将会询问你。"
+    },
     "profile": {
       "publishProfile": "公开档案",
       "publishDescription": "公开你的 maimai 档案，让他人可以查看你的分数和进度。",
@@ -167,7 +188,8 @@
       "map": "活动地图",
       "exportImage": "导出图片",
       "history": "历史记录",
-      "developer": "开发者"
+      "developer": "开发者",
+      "albums": "相册"
     },
     "playerInfo": "玩家信息",
     "rating": "R 值：{rating}",
@@ -212,6 +234,24 @@
       "exportJson": "导出记录为 JSON",
       "exporting": "导出中..."
     }
+  },
+  "albums": {
+    "title": "相册",
+    "photos": "张照片",
+    "noAlbums": "暂无相册照片",
+    "loadMore": "加载更多",
+    "loading": "加载中...",
+    "error": "加载相册失败",
+    "storage": "存储空间",
+    "storageTitle": "存储使用量",
+    "storageDescription": "管理你的相册存储空间。当超过 25 MB 时，系统会自动删除最旧的照片。这大约可存储 300 张图片。",
+    "used": "已使用",
+    "totalUsed": "总使用",
+    "limit": "上限",
+    "usedOf": "/",
+    "byRegion": "按地区",
+    "storageWarning": "存储空间即将达到上限。请考虑删除旧照片，否则系统将自动移除最旧的相册。",
+    "uploadNotice": "如果你刚导入了新数据，新相册照片可能需要一点时间才能显示。请稍后刷新页面。"
   },
   "recommendations": {
     "noRecommendations": "无推荐歌曲",
