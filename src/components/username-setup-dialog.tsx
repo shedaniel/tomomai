@@ -5,12 +5,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
-  Dialog,
-  DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { AnimatedDialog, AnimatedDialogContent } from '@/components/ui/animated-dialog';
 import { trpc } from '@/lib/trpc-client';
 import { toast } from 'sonner';
 import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
@@ -118,8 +117,8 @@ export function UsernameSetupDialog({ open, onComplete }: UsernameSetupDialogPro
   };
 
   return (
-    <Dialog open={open} onOpenChange={() => { }}>
-      <DialogContent
+    <AnimatedDialog open={open} onOpenChange={() => { }}>
+      <AnimatedDialogContent
         className="sm:max-w-md"
         onPointerDownOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => e.preventDefault()}
@@ -179,7 +178,7 @@ export function UsernameSetupDialog({ open, onComplete }: UsernameSetupDialogPro
             </Button>
           </div>
         </form>
-      </DialogContent>
-    </Dialog>
+      </AnimatedDialogContent>
+    </AnimatedDialog>
   );
 }

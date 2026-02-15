@@ -2,12 +2,11 @@
 
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { AnimatedDialog, AnimatedDialogContent } from "@/components/ui/animated-dialog";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Flags } from "@/lib/flags";
@@ -38,23 +37,33 @@ export function ExperimentsDialog({ open, onOpenChange, initialFlags }: Experime
   const { data: flagsData } = trpc.user.getUserSelectableFlags.useQuery();
   const flagDefinitions = flagsData?.flags;
 
-  const handleToggle = async (flagKey: keyof Flags, value: boolean) => {
+  const handleToggle = (flagKey: keyof Flags, value: boolean) => {
     setFlagToggles(prev => ({
       ...prev,
       [flagKey]: value,
     }));
+  };
 
-    // Set cookie directly on the client
+  const handleReset = (flagKey: keyof Flags) => {
+    const def = flagDefinitions?.[flagKey] as any;
+    if (!def) return;
+    handleToggle(flagKey, def.defaultValue);
+  };
+
+  const hasChanges = initialFlags
+    ? Object.keys(flagToggles).some(key => flagToggles[key as keyof Flags] !== initialFlags[key as keyof Flags])
+    : Object.keys(flagToggles).length > 0;
+
+  const handleApply = () => {
     try {
       const expiresAt = new Date();
       expiresAt.setFullYear(expiresAt.getFullYear() + 1);
 
-      const cookieValue = JSON.stringify({ ...flagToggles, [flagKey]: value });
+      const cookieValue = JSON.stringify(flagToggles);
       document.cookie = `flagOverrides=${encodeURIComponent(cookieValue)}; path=/; expires=${expiresAt.toUTCString()}; SameSite=Lax`;
 
       toast.success(t('common.save'));
 
-      // Reload page to apply changes
       setTimeout(() => {
         window.location.reload();
       }, 500);
@@ -64,21 +73,13 @@ export function ExperimentsDialog({ open, onOpenChange, initialFlags }: Experime
     }
   };
 
-  const handleReset = async (flagKey: keyof Flags) => {
-    const def = flagDefinitions?.[flagKey] as any;
-    if (!def) return;
-
-    // Reset to default value
-    await handleToggle(flagKey, def.defaultValue);
-  };
-
   if (!flagDefinitions) {
     return null;
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+    <AnimatedDialog open={open} onOpenChange={onOpenChange}>
+      <AnimatedDialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>{t('common.experiments')}</DialogTitle>
           <DialogDescription>
@@ -125,7 +126,11 @@ export function ExperimentsDialog({ open, onOpenChange, initialFlags }: Experime
             );
           })}
         </div>
-      </DialogContent>
-    </Dialog>
+
+        <div className="flex justify-end pt-2">
+          <Button onClick={handleApply} disabled={!hasChanges}>Apply</Button>
+        </div>
+      </AnimatedDialogContent>
+    </AnimatedDialog>
   );
 }

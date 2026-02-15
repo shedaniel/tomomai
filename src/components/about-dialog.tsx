@@ -1,12 +1,11 @@
 "use client";
 
 import {
-  Dialog,
   DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { AnimatedDialogContent } from "@/components/ui/animated-dialog";
+import { AnimatedDialog, AnimatedDialogContent } from "@/components/ui/animated-dialog";
 
 interface AboutDialogProps {
   open: boolean;
@@ -15,7 +14,7 @@ interface AboutDialogProps {
 
 export function AboutDialog({ open, onOpenChange }: AboutDialogProps) {
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <AnimatedDialog open={open} onOpenChange={onOpenChange}>
       <AnimatedDialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>About ともマイ</DialogTitle>
@@ -67,6 +66,6 @@ export function AboutDialog({ open, onOpenChange }: AboutDialogProps) {
           </div>
         </div>
       </AnimatedDialogContent>
-    </Dialog>
+    </AnimatedDialog>
   );
 }

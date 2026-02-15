@@ -3,12 +3,11 @@
 import { useLocale } from "@/components/providers/locale-provider";
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
   DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { AnimatedDialogContent } from "@/components/ui/animated-dialog";
+import { AnimatedDialog, AnimatedDialogContent } from "@/components/ui/animated-dialog";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -206,7 +205,7 @@ export function SettingsDialog({
   const isLoadingSettings = profileSettingsLoading || isLoading;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <AnimatedDialog open={open} onOpenChange={onOpenChange}>
       <AnimatedDialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{t('settings.title')}</DialogTitle>
@@ -480,6 +479,6 @@ export function SettingsDialog({
           </Button>
         </div>
       </AnimatedDialogContent>
-    </Dialog>
+    </AnimatedDialog>
   );
 }

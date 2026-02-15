@@ -1,12 +1,11 @@
 "use client";
 
 import {
-  Dialog,
-  DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { AnimatedDialog, AnimatedDialogContent } from "@/components/ui/animated-dialog";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
@@ -319,8 +318,8 @@ export function AdminDialog({ open, onOpenChange }: AdminDialogProps) {
 
   return (
     <>
-      <Dialog open={open} onOpenChange={handleAdminDialogChange}>
-        <DialogContent className={cn("max-w-2xl max-h-[80vh] overflow-y-auto transition-[opacity,scale] duration-200", usersBrowserOpen ? "opacity-70 scale-95" : "")}>
+      <AnimatedDialog open={open} onOpenChange={handleAdminDialogChange}>
+        <AnimatedDialogContent className={cn("max-w-2xl max-h-[80vh] overflow-y-auto transition-[opacity,scale] duration-200", usersBrowserOpen ? "opacity-70 scale-95" : "")}>
           <DialogHeader>
             <DialogTitle>ともマイ Admin Panel</DialogTitle>
             <DialogDescription>
@@ -519,8 +518,8 @@ export function AdminDialog({ open, onOpenChange }: AdminDialogProps) {
               </p>
             </div>
           </div>
-        </DialogContent>
-      </Dialog>
+        </AnimatedDialogContent>
+      </AnimatedDialog>
 
       <UsersBrowserDialog
         open={usersBrowserOpen}

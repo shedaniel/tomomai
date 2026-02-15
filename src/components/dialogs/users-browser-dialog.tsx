@@ -1,12 +1,11 @@
 "use client";
 
 import {
-  Dialog,
-  DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { AnimatedDialog, AnimatedDialogContent } from "@/components/ui/animated-dialog";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "../ui/button";
 import { createTRPCClient, httpBatchLink } from '@trpc/client';
@@ -140,8 +139,8 @@ export function UsersBrowserDialog({
 
   return (
     <>
-      <Dialog open={open} onOpenChange={onOpenChange} modal={false}>
-        <DialogContent className="max-w-[95vw]! max-h-[95vh]! sm:max-w-[95vw]! sm:max-h-[95vh]! w-[95vw] h-[95vh] shadow flex flex-col">
+      <AnimatedDialog open={open} onOpenChange={onOpenChange} modal={false}>
+        <AnimatedDialogContent className="max-w-[95vw]! max-h-[95vh]! sm:max-w-[95vw]! sm:max-h-[95vh]! w-[95vw] h-[95vh] shadow flex flex-col">
           <DialogHeader>
             <DialogTitle>Users Browser</DialogTitle>
             <DialogDescription>
@@ -310,8 +309,8 @@ export function UsersBrowserDialog({
               </div>
             </div>
           </div>
-        </DialogContent>
-      </Dialog>
+        </AnimatedDialogContent>
+      </AnimatedDialog>
 
       <TokenDetailsDialog
         open={tokenDetailsOpen}

@@ -13,8 +13,8 @@ import { AppRouter } from "@/server/routers/_app";
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 import { renderLevelPrecise } from "@/lib/name-utils";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { AnimatedDialogContent } from "@/components/ui/animated-dialog";
+import { DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AnimatedDialog, AnimatedDialogContent } from "@/components/ui/animated-dialog";
 
 interface AlbumCardProps {
   region: Region;
@@ -136,7 +136,7 @@ export function AlbumCard({ region }: AlbumCardProps) {
           </div>
           <div className="flex items-center gap-3">
             {data?.storage && (
-              <Dialog>
+              <AnimatedDialog>
                 <DialogTrigger asChild>
                   <Button variant="outline" size="sm" className="gap-2">
                     <HardDrive className="h-4 w-4" />
@@ -205,7 +205,7 @@ export function AlbumCard({ region }: AlbumCardProps) {
                     )}
                   </div>
                 </AnimatedDialogContent>
-              </Dialog>
+              </AnimatedDialog>
             )}
             {albums.length > 0 && (
               <span className="text-sm font-normal text-muted-foreground">

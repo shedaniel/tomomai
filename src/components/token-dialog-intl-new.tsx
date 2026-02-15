@@ -2,8 +2,8 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { AnimatedDialogContent } from "@/components/ui/animated-dialog";
+import { DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AnimatedDialog, AnimatedDialogContent } from "@/components/ui/animated-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { trpc } from "@/lib/trpc-client";
@@ -163,7 +163,7 @@ function StepBasedTokenDialog({
 
   if (showManualInput) {
     return (
-      <Dialog open={isOpen} onOpenChange={handleClose} modal={false}>
+      <AnimatedDialog open={isOpen} onOpenChange={handleClose} modal={false}>
         <AnimatedDialogContent className="sm:max-w-md shadow">
           <DialogHeader>
             <DialogTitle className="flex items-center space-x-2">
@@ -233,12 +233,12 @@ function StepBasedTokenDialog({
             </div>
           </form>
         </AnimatedDialogContent>
-      </Dialog>
+      </AnimatedDialog>
     );
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose} modal={false}>
+    <AnimatedDialog open={isOpen} onOpenChange={handleClose} modal={false}>
       <AnimatedDialogContent className="sm:max-w-md shadow">
         <DialogHeader>
           <DialogTitle className="flex items-center space-x-2">
@@ -381,7 +381,7 @@ function StepBasedTokenDialog({
           </Button>
         </div>
       </AnimatedDialogContent>
-    </Dialog>
+    </AnimatedDialog>
   );
 }
 
@@ -401,7 +401,7 @@ function PasswordSubDialog({
   const canSubmit = username.trim().length > 0 && password.trim().length > 0 && !isSubmitting;
 
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange} modal={false}>
+    <AnimatedDialog open={isOpen} onOpenChange={onOpenChange} modal={false}>
       <AnimatedDialogContent className="sm:max-w-md shadow">
         <DialogHeader>
           <DialogTitle className="flex items-center space-x-2">
@@ -476,7 +476,7 @@ function PasswordSubDialog({
           </Button>
         </form>
       </AnimatedDialogContent>
-    </Dialog>
+    </AnimatedDialog>
   );
 }
 
@@ -581,7 +581,7 @@ export function TokenDialogIntlNew({
   return (
     <>
       {/* Main Selection Dialog */}
-      <Dialog open={isOpen} onOpenChange={handleClose}>
+      <AnimatedDialog open={isOpen} onOpenChange={handleClose}>
         <AnimatedDialogContent className={cn("sm:max-w-md", isTokenDialogOpen || isPasswordDialogOpen ? "opacity-70!" : "")}>
           <DialogHeader>
             <DialogTitle className="flex items-center space-x-2">
@@ -640,7 +640,7 @@ export function TokenDialogIntlNew({
             </button>
           </div>
         </AnimatedDialogContent>
-      </Dialog>
+      </AnimatedDialog>
 
       {/* Token Dialog - Nested */}
       <StepBasedTokenDialog

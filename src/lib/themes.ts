@@ -61,7 +61,7 @@ export const themes: Theme[] = [
   { id: "gray-pink", hue: 0, contrast: 0.9, darkness: 0.7, lightness: 2.5, saturation: 0.7, dark: true, group: "pink" },
 ];
 
-export const DEFAULT_THEME_ID = "burnt-brown";
+export const DEFAULT_THEME_ID = "burnt-pink";
 export const THEME_STORAGE_KEY = "tomomai-theme";
 
 export function getThemeById(id: string): Theme | undefined {

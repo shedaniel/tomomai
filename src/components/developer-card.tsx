@@ -39,7 +39,7 @@ const JSON_SCHEMA_DOCS = `{
     "achievement": number, // Achievement (scaled as 10000x number, ranges from 0 to 1010000)
     "dxScore": number, // DX score
     "fc": string, // Full combo status ('none', 'fc', 'fc+', 'ap', 'ap+')
-    "fs": string, // Full sync status ('none', 'sync', 'fs', 'fs+', 'fdx', 'fdx+'),
+    "fs": string, // Full sync status ('none', 'sync', 'fs', 'fs+', 'fdx', 'fdx+')
     "rating": number, // Rating calculated
   }[],
   "iconUrl": string | null, // URL to player's icon image, usually provided as Base64 encoded string

@@ -1,12 +1,11 @@
 "use client";
 
 import {
-  Dialog,
   DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { AnimatedDialogContent } from "@/components/ui/animated-dialog";
+import { AnimatedDialog, AnimatedDialogContent } from "@/components/ui/animated-dialog";
 import { themes, getSavedThemeId, saveThemeId, applyTheme, Theme } from "@/lib/themes";
 import { cn } from "@/lib/utils";
 import { Check } from "lucide-react";
@@ -89,7 +88,7 @@ export function ThemeDialog({ open, onOpenChange }: ThemeDialogProps) {
   }, [themes]);
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <AnimatedDialog open={open} onOpenChange={onOpenChange}>
       <AnimatedDialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{t("theme.title")}</DialogTitle>
@@ -121,6 +120,6 @@ export function ThemeDialog({ open, onOpenChange }: ThemeDialogProps) {
           })}
         </div>
       </AnimatedDialogContent>
-    </Dialog>
+    </AnimatedDialog>
   );
 }

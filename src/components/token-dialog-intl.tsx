@@ -4,7 +4,8 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AnimatedDialog, AnimatedDialogContent } from "@/components/ui/animated-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Eye, EyeOff, Key, Save } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -66,8 +67,8 @@ export function TokenDialogIntl({
     : username.trim().length > 0 && password.trim().length > 0 && !isSubmitting;
 
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+    <AnimatedDialog open={isOpen} onOpenChange={onOpenChange}>
+      <AnimatedDialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center space-x-2">
             <Key className="h-5 w-5" />
@@ -183,7 +184,7 @@ export function TokenDialogIntl({
             </Button>
           </form>
         </div>
-      </DialogContent>
-    </Dialog>
+      </AnimatedDialogContent>
+    </AnimatedDialog>
   );
 }

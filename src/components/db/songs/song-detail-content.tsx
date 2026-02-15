@@ -1,6 +1,7 @@
 "use client";
 
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { DialogTrigger } from "@/components/ui/dialog";
+import { AnimatedDialog, AnimatedDialogContent } from "@/components/ui/animated-dialog";
 import { DIFFICULTY_COLORS, getAchievementRate } from "@/lib/difficulty";
 import { getVersionInfo } from "@/lib/metadata";
 import { calculateSongRating } from "@/lib/rating-calculator";
@@ -179,7 +180,7 @@ export function SongChartRow({ difficulty, charts, index, data, hasTouch }: {
   }, [charts, data?.userScores]);
 
   return (
-    <Dialog key={difficulty}>
+    <AnimatedDialog key={difficulty}>
       <DialogTrigger asChild>
         <div className="contents text-sm group *:group-hover:bg-accent *:transition-colors *:duration-200">
           {/* Difficulty */}
@@ -242,10 +243,10 @@ export function SongChartRow({ difficulty, charts, index, data, hasTouch }: {
           )}
         </div>
       </DialogTrigger>
-      <DialogContent>
+      <AnimatedDialogContent>
         <SongChartDialogContent charts={charts} scores={chartScores} />
-      </DialogContent>
-    </Dialog>
+      </AnimatedDialogContent>
+    </AnimatedDialog>
   );
 }
 
