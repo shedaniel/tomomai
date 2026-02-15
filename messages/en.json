@@ -52,6 +52,25 @@
       "analyzeProgress": "Analyze your progress over time"
     }
   },
+  "consent": {
+    "title": "Welcome to tomomai",
+    "description": "Before creating your account, please review and agree to our policies",
+    "tldr": {
+      "title": "TL;DR (Not Legal Advice)",
+      "points": [
+        "You own your data; it is never sold to third parties",
+        "Your data is encrypted and stored securely on servers in Japan",
+        "Your data is processed in accordance with Hong Kong SAR laws",
+        "This project is Open Source (AGPL-3.0)",
+        "We are an independent tool and not affiliated with SEGA"
+      ]
+    },
+    "agreeToTos": "I agree to the Terms of Service",
+    "agreeToPrivacy": "I agree to the Privacy Policy",
+    "viewFullText": "View Full Text",
+    "cancel": "Cancel",
+    "agree": "I Agree"
+  },
   "dashboard": {
     "title": "tomomai ともマイ",
     "description": "Track and analyze your maimai scores with friends",

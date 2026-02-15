@@ -21,12 +21,25 @@ export async function generateMetadata({ params }: PostPageProps): Promise<Metad
   const post = getPostBySlug(post_id);
   if (!post) return {};
 
+  const url = `/db/posts/${post.slug}`;
+
   return {
     title: `${post.title} | tomomai`,
     description: post.summary,
     openGraph: {
       title: post.title,
       description: post.summary,
+      type: "article",
+      url,
+      publishedTime: post.date,
+    },
+    twitter: {
+      card: "summary",
+      title: `${post.title} | tomomai`,
+      description: post.summary,
+    },
+    alternates: {
+      canonical: url,
     },
   };
 }
@@ -67,8 +80,29 @@ export default async function PostPage({ params }: PostPageProps) {
     notFound();
   }
 
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: post.title,
+    description: post.summary,
+    datePublished: post.date,
+    dateModified: post.date,
+    author: {
+      "@type": "Organization",
+      name: "tomomai",
+    },
+    publisher: {
+      "@type": "Organization",
+      name: "tomomai",
+    },
+  };
+
   return (
     <div className="container mx-auto max-w-3xl px-4 py-12">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+      />
       <Link
         href="/db/posts"
         className="text-sm text-muted-foreground hover:text-foreground mb-6 inline-flex items-center gap-1"

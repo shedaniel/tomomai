@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,6 +13,8 @@ import Link from "next/link";
 import { isChinaRegion } from "@/lib/enabled-regions";
 import { motion } from "motion/react";
 import { STAGGER, getTransition } from "@/lib/animation-constants";
+import { ConsentDialog } from "@/components/consent-dialog";
+import { trpc } from "@/lib/trpc-client";
 
 interface SignupRequirements {
   signupEnabled: boolean;
@@ -55,6 +58,8 @@ function DatabaseCard() {
 
 export function LoginScreen({ signupRequirements }: LoginScreenProps) {
   const t = useTranslations();
+  const [showConsentDialog, setShowConsentDialog] = useState(false);
+  const { data: policies } = trpc.user.getPolicies.useQuery();
 
   const handleAuth = (signUp: boolean) => async () => {
     try {
@@ -68,6 +73,22 @@ export function LoginScreen({ signupRequirements }: LoginScreenProps) {
       console.error("Discord auth error:", error);
       toast.error("An error occurred during authentication. Please try again.");
     }
+  };
+
+  const handleSignupClick = () => {
+    // Show consent dialog BEFORE OAuth
+    setShowConsentDialog(true);
+  };
+
+  const handleConsentGiven = async () => {
+    setShowConsentDialog(false);
+    // NOW trigger OAuth signup
+    await handleAuth(true)();
+  };
+
+  const handleConsentCancel = () => {
+    setShowConsentDialog(false);
+    // User remains on login screen
   };
 
   return (
@@ -122,7 +143,7 @@ export function LoginScreen({ signupRequirements }: LoginScreenProps) {
                   <Button
                     variant="link"
                     size="sm"
-                    onClick={handleAuth(true)}
+                    onClick={handleSignupClick}
                     disabled={!signupRequirements.signupEnabled}
                   >
                     {!isChinaRegion() ? t('auth.signupWithDiscord') : '用 QQ 注册'}
@@ -181,6 +202,17 @@ export function LoginScreen({ signupRequirements }: LoginScreenProps) {
           </CardContent>
         </Card>
       </motion.div>
+
+      {/* Consent dialog */}
+      {policies && (
+        <ConsentDialog
+          open={showConsentDialog}
+          tosContent={policies.tos.content}
+          privacyContent={policies.privacy.content}
+          onConsent={handleConsentGiven}
+          onCancel={handleConsentCancel}
+        />
+      )}
     </div>
   );
 }

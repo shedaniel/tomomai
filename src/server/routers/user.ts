@@ -20,6 +20,8 @@ import { getSongSlug, getSongSlugs } from '@/lib/song-slug';
 import { SongDetails, UniqueSong, UniqueSongDifficulty } from '@/components/db/songs/types';
 import { unstable_cache } from 'next/cache';
 import { getEnabledRegions, isChinaRegion } from '@/lib/enabled-regions';
+import { readFile } from 'fs/promises';
+import { join } from 'path';
 
 const SIGNUP_REQUIRED_AMOUNT = 256;
 
@@ -2838,5 +2840,27 @@ export const userRouter = router({
 
       return { success: true };
     }),
+
+  // Fetch policy documents (Terms of Service and Privacy Policy)
+  getPolicies: publicProcedure
+    .query(async () => {
+      const tosPath = join(process.cwd(), 'public', 'tos');
+      const privacyPath = join(process.cwd(), 'public', 'privacy');
+
+      const [tosContent, privacyContent] = await Promise.all([
+        readFile(tosPath, 'utf-8'),
+        readFile(privacyPath, 'utf-8'),
+      ]);
+
+      return {
+        tos: {
+          content: tosContent,
+        },
+        privacy: {
+          content: privacyContent,
+        },
+      };
+    }),
+
 
 });

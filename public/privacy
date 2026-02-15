@@ -1,12 +1,12 @@
 Privacy Policy for tomomai
 
-Effective Date: December 2, 2025
+Effective Date: February 20, 2026
 
-This Privacy Policy describes how shedaniel ("Developer," "I," or "we"), the operator of the open-source project tomomai, collects, uses, stores, and protects personal data from users in Hong Kong and internationally.
+This Privacy Policy describes how S.D. Studios ("Company," "we," or "us"), the operator of the open-source project tomomai, collects, uses, stores, and protects personal data from users in Hong Kong and internationally.
 
 1. Data Controller Contact Information
 
-- Data Controller: shedaniel
+- Data Controller: S.D. Studios
 - Location: Hong Kong Special Administrative Region
 - Legal Contact for Data Requests: daniel@shedaniel.me
 
@@ -40,7 +40,7 @@ Consent
 - Usage: Using your maimai DX NET credentials to scrape and display your game data. By logging in and providing these details, you explicitly consent to this processing.
 
 Legitimate Interest
-- Usage: Operational data (Vercel logs) is processed to maintain service security, stability, and troubleshoot issues.
+- Usage: Operational data (Vercel logs) is processed to maintain service security, stability, and troubleshoot issues necessary for the operation of our services.
 
 Specific Data Uses:
 
@@ -51,7 +51,7 @@ Specific Data Uses:
 4. Data Storage and Security
 
 4.1 Security Measures
-We take reasonable steps to protect the personal data we hold. Specifically, the sensitive maimai DX NET login details/cookies are protected using AES-256-GCM encryption. This is an industry-standard encryption protocol.
+We take reasonable steps to protect the personal data we hold. Specifically, the sensitive maimai DX NET login details/cookies are stored on secure servers located in Japan and protected using AES-256-GCM encryption.
 
 However, you acknowledge that no method of transmission over the Internet or method of electronic storage is 100% secure. You provide your data at your own risk.
 
@@ -66,15 +66,16 @@ We do not share identifiable personal data with third parties for marketing or o
 
 The only instances of data disclosure are:
 
-- Service Providers: We use Vercel for hosting, which processes operational data (logs).
+- Service Providers: We use compute and cloud database providers for hosting and storage. Your data is primarily processed and stored in Japan.
 - Public Profiles: If you opt-in to make your profile public, that data is shared with the public, including search engines.
+- Business Transfers: If S.D. Studios is involved in a merger, acquisition, or asset sale, your Personal Data may be transferred.
 - Legal Compliance: If required by law, court order, or governmental regulation in Hong Kong or another applicable jurisdiction.
 
 6. Your Rights (Data Access and Deletion)
 
-As a user, you have rights regarding your personal data under the PDPO. You have the right to:
+As a user, you have rights regarding your personal data under the PDPO and international standards. You have the right to:
 
-1. Request Access: Obtain a copy of your personal data we hold (Data Takeout).
+1. Request Access (Data Portability): Obtain a copy of your personal data we hold in a structured, machine-readable format (Data Takeout).
 2. Request Correction: Request the correction of any inaccurate data. (Note: Most data is scraped from SEGA, so primary corrections should be made there).
 3. Request Erasure (Deletion): Request the permanent deletion of your account and all associated data.
 
@@ -85,18 +86,16 @@ All requests for data access or deletion must be submitted via email to: daniel@
 If you are a resident of the EEA, you have additional rights under the General Data Protection Regulation (GDPR).
 
 Legal Basis for Processing
-We process your personal data based on the following legal grounds:
-- Consent: When you choose to log in and link your maimai DX NET account.
-- Legitimate Interests: For ensuring the security and operational integrity of our Service (e.g., server logs).
+We process your personal data based on the legal grounds of Consent (when you log in) and Legitimate Interests (for security and operations).
 
-Your GDPR Rights
-In addition to the rights listed in Section 6 (which include the right to access/port your data and withdraw consent via account deletion), you also have the right to:
+Your Additional Rights
+In addition to the rights listed in Section 6, you have the right to:
 - Restrict Processing: Request that we limit the processing of your personal data.
 - Object to Processing: Object to our processing of your data based on legitimate interests.
 - Lodge a Complaint: You have the right to lodge a complaint with a supervisory authority in your country of residence if you believe we have violated your data protection rights.
 
 International Transfers
-Your personal data is processed in Hong Kong and on servers controlled by our service providers (e.g., Vercel) which are primarily located in Japan or other jurisdictions. By using the Service, you acknowledge and consent to the transfer of your data outside the EEA to countries that may not offer the same level of data protection as your home country.
+Our Service infrastructure is located in Japan, a country recognized by the European Commission as providing an adequate level of data protection. However, the data controller (S.D. Studios) is located in Hong Kong. By using the Service, you acknowledge that your data will be processed in Japan and accessed from Hong Kong for administration purposes.
 
 8. Changes to This Privacy Policy
 

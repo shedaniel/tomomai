@@ -5,6 +5,20 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "Changelog | tomomai",
   description: "Latest updates and changes to tomomai.",
+  openGraph: {
+    title: "Changelog",
+    description: "Latest updates and changes to tomomai.",
+    type: "website",
+    url: "/db/posts",
+  },
+  twitter: {
+    card: "summary",
+    title: "Changelog | tomomai",
+    description: "Latest updates and changes to tomomai.",
+  },
+  alternates: {
+    canonical: "/db/posts",
+  },
 };
 
 export default function PostsPage() {
