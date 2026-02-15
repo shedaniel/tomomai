@@ -34,7 +34,7 @@ interface DashboardProps {
   initialSnapshots: Snapshot[];
   initialSnapshotData?: SnapshotWithSongs;
   flags: Flags;
-  latestPost?: PostMeta | null;
+  latestPost: PostMeta | null;
 }
 
 export function Dashboard({ user, initialUserData, initialProfileSettings, initialSnapshots, initialSnapshotData, flags, latestPost }: DashboardProps) {

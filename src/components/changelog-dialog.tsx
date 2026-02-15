@@ -25,14 +25,16 @@ export function ChangelogDialog({ latestPost }: ChangelogDialogProps) {
     if (!latestPost) return;
 
     const lastSeen = localStorage.getItem(CHANGELOG_STORAGE_KEY);
-    if (lastSeen !== latestPost.version) {
+    // Use slug (includes date) as unique identifier instead of version
+    if (lastSeen !== latestPost.slug) {
       setOpen(true);
     }
   }, [latestPost]);
 
   const handleDismiss = () => {
     if (latestPost) {
-      localStorage.setItem(CHANGELOG_STORAGE_KEY, latestPost.version);
+      // Store slug as the last seen post identifier
+      localStorage.setItem(CHANGELOG_STORAGE_KEY, latestPost.slug);
     }
     setOpen(false);
   };
@@ -48,9 +50,11 @@ export function ChangelogDialog({ latestPost }: ChangelogDialogProps) {
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             {latestPost.title}
-            <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
-              v{latestPost.version}
-            </span>
+            {latestPost.version && latestPost.version !== "N/A" && (
+              <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                v{latestPost.version}
+              </span>
+            )}
           </DialogTitle>
           <DialogDescription>
             {latestPost.summary}

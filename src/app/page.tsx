@@ -4,6 +4,7 @@ import { LoginScreen } from "@/components/login-screen";
 import { getServerSession } from "@/lib/auth-server";
 import { applyFlagOverrides, useFlags } from "@/lib/flags";
 import { getLatestPost } from "@/lib/posts";
+import { getLocale } from "@/i18n/locale-server";
 import { createServerSideTRPC } from "@/lib/trpc-server";
 import { cookies } from "next/headers";
 import { Suspense } from "react";
@@ -94,7 +95,8 @@ export default async function Home() {
     }).catch(() => undefined)
     : undefined;
 
-  const latestPost = getLatestPost();
+  const locale = await getLocale();
+  const latestPost = getLatestPost(locale);
 
   return (
     <Dashboard

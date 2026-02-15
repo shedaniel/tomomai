@@ -1,62 +1,218 @@
 import fs from "fs";
 import path from "path";
 import matter from "gray-matter";
+import type { Locale } from "@/i18n/locale";
+import { locales } from "@/i18n/locale";
+import * as OpenCC from "opencc-js";
 
 const postsDirectory = path.join(process.cwd(), "content/posts");
 
+// Initialize OpenCC converter (Traditional Chinese to Simplified Chinese)
+const converter = OpenCC.Converter({ from: "tw", to: "cn" });
+
+/**
+ * Convert Traditional Chinese text to Simplified Chinese using OpenCC
+ */
+function convertToSimplifiedChinese(text: string): string {
+  return converter(text);
+}
+
 export interface PostMeta {
-  slug: string;
+  slug: string;              // canonical slug (without locale suffix)
+  locale: string;            // current locale
   title: string;
   date: string;
   version: string;
   summary: string;
+  canonicalSlug: string;     // for cross-referencing translations
 }
 
 export interface Post extends PostMeta {
   content: string;
 }
 
-export function getAllPostsMeta(): PostMeta[] {
+/**
+ * Get the fallback chain for a given locale
+ * zh-HK and zh-CN falls back to zh-TW before English
+ * All other locales fall back directly to English
+ */
+function getLocaleFallbackChain(locale: Locale): string[] {
+  const chain: string[] = [locale];
+
+  // Special case: zh-HK and zh-CN falls back to zh-TW first
+  if (locale === "zh-HK" || locale === "zh-CN") {
+    chain.push("zh-TW");
+  }
+
+  // Always fall back to English at the end (if not already English)
+  if (locale !== "en") {
+    chain.push("en");
+  }
+
+  return chain;
+}
+
+/**
+ * Get all posts for a specific locale with fallback to English
+ */
+export function getAllPostsMeta(locale: Locale): PostMeta[] {
   if (!fs.existsSync(postsDirectory)) return [];
 
   const files = fs.readdirSync(postsDirectory).filter((f) => f.endsWith(".mdx"));
 
-  const posts = files.map((filename) => {
-    const slug = filename.replace(/\.mdx$/, "");
-    const filePath = path.join(postsDirectory, filename);
+  // Group files by canonical slug
+  const postsBySlug = new Map<string, Map<string, string>>();
+
+  for (const filename of files) {
+    // Extract canonical slug and locale from filename
+    // Format: YYYY-MM-DD-slug.locale.mdx
+    const match = filename.match(/^(.+)\.([a-z]{2}(?:-[A-Z]{2})?)\.mdx$/);
+    if (!match) continue;
+
+    const [, canonicalSlug, fileLocale] = match;
+
+    if (!postsBySlug.has(canonicalSlug)) {
+      postsBySlug.set(canonicalSlug, new Map());
+    }
+    postsBySlug.get(canonicalSlug)!.set(fileLocale, filename);
+  }
+
+  const posts: PostMeta[] = [];
+
+  // For each canonical post, try to load the requested locale with fallback chain
+  for (const [canonicalSlug, localeFiles] of postsBySlug.entries()) {
+    let selectedFile: string | undefined;
+    let selectedLocale: string | undefined;
+
+    // Try each locale in the fallback chain
+    const fallbackChain = getLocaleFallbackChain(locale);
+    for (const fallbackLocale of fallbackChain) {
+      if (localeFiles.has(fallbackLocale)) {
+        selectedFile = localeFiles.get(fallbackLocale);
+        selectedLocale = fallbackLocale;
+        break;
+      }
+    }
+
+    // Skip if no suitable locale found
+    if (!selectedFile || !selectedLocale) continue;
+
+    const filePath = path.join(postsDirectory, selectedFile);
     const fileContent = fs.readFileSync(filePath, "utf-8");
     const { data } = matter(fileContent);
 
-    return {
-      slug,
-      title: data.title as string,
+    // Check if we need to convert Traditional Chinese to Simplified Chinese
+    const needsConversion = locale === "zh-CN" && selectedLocale === "zh-TW";
+
+    posts.push({
+      slug: canonicalSlug,
+      locale: needsConversion ? "zh-CN" : selectedLocale,
+      title: needsConversion ? convertToSimplifiedChinese(data.title as string) : data.title as string,
       date: data.date as string,
       version: data.version as string,
-      summary: data.summary as string,
-    };
-  });
+      summary: needsConversion ? convertToSimplifiedChinese(data.summary as string) : data.summary as string,
+      canonicalSlug: data.canonicalSlug as string || canonicalSlug,
+    });
+  }
 
   return posts.sort((a, b) => (a.date > b.date ? -1 : 1));
 }
 
-export function getPostBySlug(slug: string): Post | null {
-  const filePath = path.join(postsDirectory, `${slug}.mdx`);
-  if (!fs.existsSync(filePath)) return null;
+/**
+ * Get a specific post by canonical slug and locale with fallback chain
+ * zh-HK and zh-CN fall back to zh-TW before English
+ * zh-CN content from zh-TW is automatically converted to Simplified Chinese
+ */
+export function getPostBySlug(slug: string, locale: Locale): Post | null {
+  // Try each locale in the fallback chain
+  const fallbackChain = getLocaleFallbackChain(locale);
+  let filePath: string | null = null;
+
+  for (const fallbackLocale of fallbackChain) {
+    const testPath = path.join(postsDirectory, `${slug}.${fallbackLocale}.mdx`);
+    if (fs.existsSync(testPath)) {
+      filePath = testPath;
+      break;
+    }
+  }
+
+  // No suitable file found in fallback chain
+  if (!filePath) {
+    return null;
+  }
 
   const fileContent = fs.readFileSync(filePath, "utf-8");
   const { data, content } = matter(fileContent);
 
+  // Extract locale from filename
+  const filename = path.basename(filePath);
+  const match = filename.match(/^(.+)\.([a-z]{2}(?:-[A-Z]{2})?)\.mdx$/);
+  const actualLocale = match ? match[2] : "en";
+
+  // Check if we need to convert Traditional Chinese to Simplified Chinese
+  const needsConversion = locale === "zh-CN" && actualLocale === "zh-TW";
+
   return {
     slug,
-    title: data.title as string,
+    locale: needsConversion ? "zh-CN" : actualLocale,
+    title: needsConversion ? convertToSimplifiedChinese(data.title as string) : data.title as string,
     date: data.date as string,
     version: data.version as string,
-    summary: data.summary as string,
-    content,
+    summary: needsConversion ? convertToSimplifiedChinese(data.summary as string) : data.summary as string,
+    canonicalSlug: data.canonicalSlug as string || slug,
+    content: needsConversion ? convertToSimplifiedChinese(content) : content,
   };
 }
 
-export function getLatestPost(): PostMeta | null {
-  const posts = getAllPostsMeta();
+/**
+ * Get available translations for a specific post
+ * Includes both physical files and virtual translations (auto-converted from zh-TW)
+ */
+export function getAvailableTranslations(canonicalSlug: string): Locale[] {
+  if (!fs.existsSync(postsDirectory)) return [];
+
+  const files = fs.readdirSync(postsDirectory).filter((f) => f.endsWith(".mdx"));
+  const translations: Locale[] = [];
+
+  for (const filename of files) {
+    // Check if file matches the canonical slug pattern
+    const match = filename.match(/^(.+)\.([a-z]{2}(?:-[A-Z]{2})?)\.mdx$/);
+    if (!match) continue;
+
+    const [, fileCanonicalSlug, locale] = match;
+
+    if (fileCanonicalSlug === canonicalSlug) {
+      translations.push(locale as Locale);
+    }
+  }
+
+  // Add virtual translations that can be generated from zh-TW
+  const hasZhTW = translations.includes("zh-TW");
+
+  if (hasZhTW) {
+    // zh-CN can be auto-converted from zh-TW
+    if (!translations.includes("zh-CN")) {
+      translations.push("zh-CN");
+    }
+  }
+
+  // Sort translations using the canonical locale order from @/i18n/locale
+  return translations.sort((a, b) => {
+    const orderA = locales.indexOf(a);
+    const orderB = locales.indexOf(b);
+
+    // If locale not found in canonical list, put it at the end
+    const finalOrderA = orderA === -1 ? 999 : orderA;
+    const finalOrderB = orderB === -1 ? 999 : orderB;
+
+    return finalOrderA - finalOrderB;
+  });
+}
+
+/**
+ * Get the latest post for a specific locale
+ */
+export function getLatestPost(locale: Locale): PostMeta | null {
+  const posts = getAllPostsMeta(locale);
   return posts[0] ?? null;
 }

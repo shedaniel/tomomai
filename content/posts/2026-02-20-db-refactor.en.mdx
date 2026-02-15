@@ -1,0 +1,52 @@
+---
+title: "ToS, Changelogs, and Data Refactor"
+date: "2026-02-20"
+version: "2026.2"
+summary: "February Update: New Terms of Service, a dedicated Changelog page, and a massive backend overhaul for better song data accuracy."
+locale: "en"
+canonicalSlug: "2026-02-20-db-refactor"
+---
+
+## The Monthly Beat Goes On
+
+Welcome to the February update! As promised, we are sticking to our **monthly update commitment** to ensure tomomai keeps evolving. This month is a mix of "keeping things official" with new site policies and a massive "under the hood" refactor to make our song data more reliable than ever.
+
+## New Feature: Dedicated Changelogs
+
+You're looking at it! We've introduced a proper **Changelog & News** section at `/db/posts`. From now on, all major updates, version notes, and community announcements will be archived here so you can keep track of what's changing in tomomai.
+
+## Privacy & Terms of Service
+
+As tomomai grows, we want to make sure your data is handled responsibly. Starting today, new users will be asked to agree to our **Terms of Service** and **Privacy Policy** during registration.
+
+**The TL;DR (Not Legal Advice):**
+- **You own your data**; we will never sell it to third parties.
+- Your data is encrypted and stored securely on servers in **Japan**.
+- Your data is processed in accordance with **Hong Kong SAR laws**.
+- tomomai is **Open Source (AGPL-3.0)**.
+- We are an independent tool and **not affiliated with SEGA**.
+
+## Backend Overhaul: Better Data, Fewer Errors
+
+We spent a lot of time this month refactoring how tomomai handles song information. We moved away from a single, giant update script to a much smarter "service-based" pipeline.
+
+**What does this mean for you?**
+- **No more "Link" confusion**: We can now properly distinguish between different songs that share the same name (like the two different versions of *Link*).
+- **UTAGE (宴) Support**: Better internal management for UTAGE charts (full support is still cooking!).
+- **Region-Specific Accuracy**: Some songs are added in different versions depending on the region (e.g., *Supersonic Generation* is PRiSM PLUS in JP but PRiSM in Intl). tomomai now tracks this correctly for both.
+- **Improved Level Data**: We now use a "double fallback" system (pulling from dxrating and otoge-db) to ensure International level data and precise constants are as accurate as possible.
+
+## Level Adjustments (65 Changes)
+
+Based on the new data pipeline, we have updated the precise internal levels (constants) for 65 charts. Notable adjustments include:
+- **Dazzle hop (DX)**: Master precise level increased from 14.0 to 14.2.
+- **ニルヴの心臓 (DX)**: Master precise level increased from 14.0 to 14.3.
+- *...and 62 other minor tweaks to Advanced, Expert, and Master charts.*
+
+---
+
+Join our Discord to discuss the changes: [https://discord.gg/jZqQHr3UDq](https://discord.gg/jZqQHr3UDq)
+
+Help us translate the new pages: [https://crowdin.com/project/tomomai](https://crowdin.com/project/tomomai)
+
+Thanks for using tomomai!

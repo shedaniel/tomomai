@@ -1,9 +1,11 @@
-import { getAllPostsMeta, getPostBySlug } from "@/lib/posts";
+import { getAllPostsMeta, getPostBySlug, getAvailableTranslations } from "@/lib/posts";
+import { getLocale } from "@/i18n/locale-server";
 import { MDXRemote } from "next-mdx-remote/rsc";
 import { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ComponentPropsWithoutRef } from "react";
+import { PostLocaleSwitcher } from "@/components/post-locale-switcher";
 
 type PostPageProps = {
   params: Promise<{
@@ -12,16 +14,26 @@ type PostPageProps = {
 };
 
 export async function generateStaticParams() {
-  const posts = getAllPostsMeta();
+  // Generate params for all posts (using English as base)
+  // The actual locale will be determined at runtime from cookie/header
+  const posts = getAllPostsMeta("en");
   return posts.map((post) => ({ post_id: post.slug }));
 }
 
 export async function generateMetadata({ params }: PostPageProps): Promise<Metadata> {
+  const locale = await getLocale();
   const { post_id } = await params;
-  const post = getPostBySlug(post_id);
+  const post = getPostBySlug(post_id, locale);
   if (!post) return {};
 
   const url = `/db/posts/${post.slug}`;
+  const translations = getAvailableTranslations(post.canonicalSlug);
+
+  // Build hreflang alternates
+  const languages = translations.reduce((acc, lang) => ({
+    ...acc,
+    [lang]: url,
+  }), {});
 
   return {
     title: `${post.title} | tomomai`,
@@ -32,6 +44,7 @@ export async function generateMetadata({ params }: PostPageProps): Promise<Metad
       type: "article",
       url,
       publishedTime: post.date,
+      locale: post.locale,
     },
     twitter: {
       card: "summary",
@@ -40,6 +53,7 @@ export async function generateMetadata({ params }: PostPageProps): Promise<Metad
     },
     alternates: {
       canonical: url,
+      languages,
     },
   };
 }
@@ -73,12 +87,15 @@ const mdxComponents = {
 };
 
 export default async function PostPage({ params }: PostPageProps) {
+  const locale = await getLocale();
   const { post_id } = await params;
-  const post = getPostBySlug(post_id);
+  const post = getPostBySlug(post_id, locale);
 
   if (!post) {
     notFound();
   }
+
+  const availableTranslations = getAvailableTranslations(post.canonicalSlug);
 
   const structuredData = {
     "@context": "https://schema.org",
@@ -103,25 +120,36 @@ export default async function PostPage({ params }: PostPageProps) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
       />
-      <Link
-        href="/db/posts"
-        className="text-sm text-muted-foreground hover:text-foreground mb-6 inline-flex items-center gap-1"
-      >
-        &larr; Back to Changelog
-      </Link>
+      {/* Header with back link and language switcher */}
+      <div className="mb-8 flex items-center justify-between">
+        <Link
+          href="/db/posts"
+          className="text-sm text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
+        >
+          &larr; Back to Changelog
+        </Link>
 
-      <div className="mb-8 mt-4">
+        {/* Language switcher (only shows if multiple translations exist) */}
+        <PostLocaleSwitcher
+          availableLocales={availableTranslations}
+          currentLocale={post.locale}
+        />
+      </div>
+
+      <div className="mb-8">
         <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
           <time dateTime={post.date}>
-            {new Date(post.date).toLocaleDateString("en-US", {
+            {new Date(post.date).toLocaleDateString(locale, {
               year: "numeric",
               month: "long",
               day: "numeric",
             })}
           </time>
-          <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
-            v{post.version}
-          </span>
+          {post.version && post.version !== "N/A" && (
+            <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+              v{post.version}
+            </span>
+          )}
         </div>
         <h1 className="text-3xl font-bold">{post.title}</h1>
         <p className="text-muted-foreground mt-2">{post.summary}</p>

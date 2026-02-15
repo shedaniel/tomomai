@@ -5,7 +5,7 @@ import { user, userSnapshots, songs } from '@/lib/db/schema-pg';
 import { and, eq, ne, sql } from 'drizzle-orm';
 import { db } from '@/lib/db';
 import { getSongSlug } from '@/lib/song-slug';
-import { getAllPostsMeta } from '@/lib/posts';
+import { getAllPostsMeta, getAvailableTranslations } from '@/lib/posts';
 
 type SitemapItem = MetadataRoute.Sitemap[number];
 
@@ -77,14 +77,24 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.55,
   } satisfies SitemapItem));
 
-  // Get all posts for sitemap
-  const posts = getAllPostsMeta();
-  const postSitemapItems = posts.map((post) => ({
-    url: `${baseUrl}/db/posts/${post.slug}`,
-    lastModified: new Date(post.date),
-    changeFrequency: 'monthly',
-    priority: 0.7,
-  } satisfies SitemapItem));
+  // Get all posts for sitemap (using English as base)
+  const posts = getAllPostsMeta('en');
+  const postSitemapItems = posts.map((post) => {
+    const translations = getAvailableTranslations(post.canonicalSlug);
+
+    return {
+      url: `${baseUrl}/db/posts/${post.slug}`,
+      lastModified: new Date(post.date),
+      changeFrequency: 'monthly',
+      priority: 0.7,
+      alternates: {
+        languages: translations.reduce((acc, lang) => ({
+          ...acc,
+          [lang]: `${baseUrl}/db/posts/${post.slug}`,
+        }), {}),
+      },
+    } satisfies SitemapItem;
+  });
 
   return [
     {
