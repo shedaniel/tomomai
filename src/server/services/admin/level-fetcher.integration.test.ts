@@ -5,8 +5,8 @@ import { getCurrentVersion, VersionId } from "@/lib/metadata";
 import { login } from "./maimai-login";
 import { MaimaiBaseFetcher } from "./maimai-base-songs";
 import { DxDataFetcher } from "./dxrating";
-import { FETCHERS, FetchingContext, FetchingContextExtended, SongFetcher } from "./level-fetcher";
-import { asFetcher, key, mergeSongs } from "./fetcher-utils";
+import { FETCHERS, FetchingContextExtended } from "./level-fetcher";
+import { asFetcher, FetchingContext, key, mergeSongs, SongFetcher } from "./fetcher-utils";
 import { fetchSongDataForDifficulty, parsedSongToPendingSong } from "./maimai-scraper";
 
 // Skip this test suite if TOKEN environment variable is not provided
@@ -291,7 +291,7 @@ describe.skipIf(shouldSkip)("Integration: LevelFetcher", () => {
     console.log("Running MaimaiBaseFetcher...");
     const baseContext = {
       ...context,
-      previous: ScaledMaimaiScraperFetcher as SongFetcher,
+      previous: ScaledMaimaiScraperFetcher(11) as SongFetcher,
       current: MaimaiBaseFetcher as SongFetcher,
       fetcherIndex: 1,
     };

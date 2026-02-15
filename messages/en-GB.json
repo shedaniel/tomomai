@@ -251,7 +251,14 @@
     "usedOf": "of",
     "byRegion": "By Region",
     "storageWarning": "You're approaching the storage limit. Consider deleting old photos or older albums will be automatically removed.",
-    "uploadNotice": "If you just fetched a snapshot, new album photos may take a few moments to upload and appear here. Please refresh in a while."
+    "uploadNotice": "If you just fetched a snapshot, new album photos may take a few moments to upload and appear here. Please refresh in a while.",
+    "deleteTitle": "Delete Photo",
+    "deleteDescription": "Are you sure you want to delete this photo? This action cannot be reversed.",
+    "deleteSuccess": "Photo deleted successfully",
+    "deleteFailed": "Failed to delete photo",
+    "dontAskAgain": "Don't ask again today",
+    "delete": "Delete",
+    "cancel": "Cancel"
   },
   "recommendations": {
     "noRecommendations": "No Recommendations Available",

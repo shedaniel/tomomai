@@ -251,7 +251,14 @@
     "usedOf": "of",
     "byRegion": "By Region",
     "storageWarning": "You're approaching the storage limit. Consider deleting old photos or older albums will be automatically removed.",
-    "uploadNotice": "If you just fetched a snapshot, new album photos may take a few moments to upload and appear here. Please refresh in a while."
+    "uploadNotice": "If you just fetched a snapshot, new album photos may take a few moments to upload and appear here. Please refresh in a while.",
+    "deleteTitle": "사진 삭제",
+    "deleteDescription": "이 사진을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.",
+    "deleteSuccess": "사진이 삭제되었습니다",
+    "deleteFailed": "사진 삭제에 실패했습니다",
+    "dontAskAgain": "오늘 다시 묻지 않기",
+    "delete": "삭제",
+    "cancel": "취소"
   },
   "recommendations": {
     "noRecommendations": "추천 곡 없음",

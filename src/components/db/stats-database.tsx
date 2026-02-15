@@ -13,6 +13,7 @@ import { SongRankingTable } from "./stats/song-ranking-table";
 import { AverageAchievementChart } from "./stats/average-achievement-chart";
 import { RatingVsPlayCountHeatmap } from "./stats/rating-vs-play-count-heatmap";
 import { ActiveUsersChart } from "./stats/active-users-chart";
+import { FetchesPerDayChart } from "./stats/fetches-per-day-chart";
 import { Tabs, TabsList, TabsTab } from "../animate-ui/components/base/tabs";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
@@ -102,6 +103,15 @@ export function StatsDatabase() {
             </CardHeader>
             <CardContent>
               <ActiveUsersChart data={data.activeUsersOverTime} />
+            </CardContent>
+          </Card>
+
+          <Card className="break-inside-avoid">
+            <CardHeader>
+              <CardTitle>{t("fetchesPerDay")}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <FetchesPerDayChart data={data.fetchesPerDay} />
             </CardContent>
           </Card>
         </div>

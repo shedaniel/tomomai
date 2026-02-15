@@ -251,7 +251,14 @@
     "usedOf": "/",
     "byRegion": "地域別",
     "storageWarning": "容量上限に近づいています。古い写真を削除しない場合、古いアルバムから自動的に削除されます。",
-    "uploadNotice": "直近のスナップショットを取得した場合、新しい写真が表示されるまで少し時間がかかることがあります。しばらくしてから更新してください。"
+    "uploadNotice": "直近のスナップショットを取得した場合、新しい写真が表示されるまで少し時間がかかることがあります。しばらくしてから更新してください。",
+    "deleteTitle": "写真を削除",
+    "deleteDescription": "この写真を削除してもよろしいですか？この操作は取り消せません。",
+    "deleteSuccess": "写真を削除しました",
+    "deleteFailed": "写真の削除に失敗しました",
+    "dontAskAgain": "今日はもう確認しない",
+    "delete": "削除",
+    "cancel": "キャンセル"
   },
   "recommendations": {
     "noRecommendations": "おすすめがありません",

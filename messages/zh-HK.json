@@ -251,7 +251,14 @@
     "usedOf": "/",
     "byRegion": "按地區分類",
     "storageWarning": "儲存空間即將爆滿。請考慮手動刪除舊相片，否則最舊的相簿將會被自動移除。",
-    "uploadNotice": "如果你剛匯入資料，新上傳的相片可能需要一點時間才會顯示。請稍後重新整理。"
+    "uploadNotice": "如果你剛匯入資料，新上傳的相片可能需要一點時間才會顯示。請稍後重新整理。",
+    "deleteTitle": "刪除相片",
+    "deleteDescription": "確定要刪除這張相片？這個操作無法還原。",
+    "deleteSuccess": "相片刪除成功",
+    "deleteFailed": "相片刪除失敗",
+    "dontAskAgain": "今日不再詢問",
+    "delete": "刪除",
+    "cancel": "取消"
   },
   "recommendations": {
     "noRecommendations": "無推薦歌曲",

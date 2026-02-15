@@ -251,7 +251,14 @@
     "usedOf": "/",
     "byRegion": "按地区",
     "storageWarning": "存储空间即将达到上限。请考虑删除旧照片，否则系统将自动移除最旧的相册。",
-    "uploadNotice": "如果你刚导入了新数据，新相册照片可能需要一点时间才能显示。请稍后刷新页面。"
+    "uploadNotice": "如果你刚导入了新数据，新相册照片可能需要一点时间才能显示。请稍后刷新页面。",
+    "deleteTitle": "删除照片",
+    "deleteDescription": "确定要删除这张照片吗？此操作无法撤销。",
+    "deleteSuccess": "照片删除成功",
+    "deleteFailed": "照片删除失败",
+    "dontAskAgain": "今天不再询问",
+    "delete": "删除",
+    "cancel": "取消"
   },
   "recommendations": {
     "noRecommendations": "无推荐歌曲",

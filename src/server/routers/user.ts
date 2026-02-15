@@ -1,4 +1,5 @@
 import { db } from '@/lib/db';
+import { deleteFromR2 } from '@/lib/r2';
 import { createOpaqueUserId, generateUserOtp, getOtpExpiryTimestamp } from '@/lib/otp';
 import { resolveBaseUrl } from '@/lib/base-url';
 import { getFetchStatusServer, startFetchServer } from '@/lib/maimai-server-actions';
@@ -2805,6 +2806,37 @@ export const userRouter = router({
           jpPercentage: (jpStorageUsed / storageLimit) * 100,
         },
       };
+    }),
+
+  deleteAlbum: protectedProcedure
+    .input(z.object({
+      albumId: z.string(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const album = await db
+        .select({ id: userAlbums.id, imageKey: userAlbums.imageKey })
+        .from(userAlbums)
+        .where(
+          and(
+            eq(userAlbums.id, BigInt(input.albumId)),
+            eq(userAlbums.userId, ctx.session.user.id)
+          )
+        )
+        .limit(1);
+
+      if (album.length === 0) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Album not found or access denied',
+        });
+      }
+
+      await deleteFromR2(album[0].imageKey);
+      await db
+        .delete(userAlbums)
+        .where(eq(userAlbums.id, album[0].id));
+
+      return { success: true };
     }),
 
 });
