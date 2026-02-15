@@ -31,7 +31,7 @@ const createServerLogger = (): Logger => {
     return pino({ level: baseLevel }) as Logger;
   }
 
-  const logtailToken = process.env.LOGTAIL_SOURCE_TOKEN;
+  const logtailToken = process.env.DEV_LOGTAIL_SOURCE_TOKEN;
   const targets = [];
 
   if (process.env.NODE_ENV === "development") {
