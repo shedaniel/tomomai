@@ -52,7 +52,6 @@
     "@trpc/next": "^11.10.0",
     "@trpc/react-query": "^11.10.0",
     "@trpc/server": "^11.10.0",
-    "@types/deep-equal": "^1.0.4",
     "@vercel/functions": "^3.4.2",
     "@vercel/toolbar": "^0.1.41",
     "better-auth": "^1.4.18",
@@ -105,6 +104,7 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.3",
     "@tailwindcss/postcss": "^4.1.18",
+    "@types/deep-equal": "^1.0.4",
     "@types/fabric": "^5.3.11",
     "@types/node": "^24.10.13",
     "@types/opencc-js": "^1.0.3",

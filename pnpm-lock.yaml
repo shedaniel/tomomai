@@ -83,9 +83,6 @@ importers:
       '@trpc/server':
         specifier: ^11.10.0
         version: 11.10.0(typescript@5.9.3)
-      '@types/deep-equal':
-        specifier: ^1.0.4
-        version: 1.0.4
       '@vercel/functions':
         specifier: ^3.4.2
         version: 3.4.2(@aws-sdk/credential-provider-web-identity@3.972.8)
@@ -237,6 +234,9 @@ importers:
       '@tailwindcss/postcss':
         specifier: ^4.1.18
         version: 4.1.18
+      '@types/deep-equal':
+        specifier: ^1.0.4
+        version: 1.0.4
       '@types/fabric':
         specifier: ^5.3.11
         version: 5.3.11
