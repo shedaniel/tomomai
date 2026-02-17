@@ -52,6 +52,25 @@
       "analyzeProgress": "分析你的遊玩紀錄"
     }
   },
+  "consent": {
+    "title": "Welcome to tomomai",
+    "description": "Before creating your account, please review and agree to our policies",
+    "tldr": {
+      "title": "TL;DR (Not Legal Advice)",
+      "points": [
+        "You own your data; it is never sold to third parties",
+        "Your data is encrypted and stored securely on servers in Japan",
+        "Your data is processed in accordance with Hong Kong SAR laws",
+        "This project is Open Source (AGPL-3.0)",
+        "We are an independent tool and not affiliated with SEGA"
+      ]
+    },
+    "agreeToTos": "I agree to the Terms of Service",
+    "agreeToPrivacy": "I agree to the Privacy Policy",
+    "viewFullText": "View Full Text",
+    "cancel": "取消",
+    "agree": "I Agree"
+  },
   "dashboard": {
     "title": "tomomai ともマイ",
     "description": "與好友一起分享 maimai 遊玩成績",
@@ -147,7 +166,7 @@
       },
       "url": {
         "label": "個人檔案網址",
-        "description": "你可以與他人分享的公開個人檔案鏈接。",
+        "description": "你可以與他人分享的公開個人檔案連結。",
         "copied": "個人檔案網址已複製到剪貼簿！",
         "copyFailed": "複製網址到剪貼簿失敗"
       }
@@ -313,6 +332,29 @@
     "inProgress": "進行中",
     "completed": "已完成"
   },
+  "playerStats": {
+    "title": "Player Statistics",
+    "selectVersion": "Select version",
+    "allVersions": "All Versions",
+    "selectDifficulty": "Select difficulty",
+    "allDifficulties": "All Difficulties",
+    "backToStats": "Back to Stats",
+    "viewPlatesProgress": "View Plates Progress",
+    "achievementGrades": "Achievement Grades",
+    "fullCombo": "Full Combo",
+    "fullSync": "Full Sync",
+    "noDataAvailable": "無可用資料",
+    "noMatchingScores": "No scores match the selected filters",
+    "selectVersionForPlates": "Please select a specific version to view plate progress",
+    "songsNotMeeting": "Songs not meeting {requirement}",
+    "noSongsToDisplay": "No songs to display",
+    "plates": {
+      "kyoku": "All FC or above",
+      "shou": "All SSS or above",
+      "shin": "All AP or above",
+      "maimai": "All FDX or above"
+    }
+  },
   "tokenDialog": {
     "title": "更新 maimai 驗證",
     "japanDescription": "輸入你的 SEGA 帳戶憑證。",
@@ -348,20 +390,20 @@
       "failed": "複製到剪貼簿失敗"
     },
     "loading": {
-      "scriptLink": "正在產生腳本鏈接……",
-      "loginLink": "正在產生個人化鏈接……"
+      "scriptLink": "正在產生腳本連結……",
+      "loginLink": "正在產生個人化連結……"
     },
     "tokenDialogDescription": "輸入你的瀏覽器權杖以進行驗證",
     "segaAccountDescription": "輸入你的 SEGA 帳戶憑證",
     "backToSteps": "回到步驟",
     "step1": {
       "description": "在<strong>無痕 / 私密視窗</strong>中登入 maimai DX NET。",
-      "clickToCopy": "點擊下方的鏈接以複製到剪貼簿：",
+      "clickToCopy": "點擊下方的連結以複製到剪貼簿：",
       "haveCookies": "已經有自己的 Cookies 了嗎？",
       "enterDirectly": "直接輸入"
     },
     "step2": {
-      "description": "在同一個無痕 / 私密分頁中，瀏覽下方的鏈接。",
+      "description": "在同一個無痕 / 私密分頁中，瀏覽下方的連結。",
       "otpLabel": "OTP：",
       "otpExpires": "到期時間 ~ {time}",
       "refreshing": "刷新中……",
@@ -436,7 +478,7 @@
   },
   "invites": {
     "title": "管理邀請",
-    "description": "為新使用者建立和管理邀請鏈接。\n你可以在 3 天內邀請 3 位使用者。邀請鏈接在 7 天後過期。\n請只邀請你信任或認識的玩家，你可能需要為他們的行為負責。",
+    "description": "為新使用者建立和管理邀請連結。\n你可以在 3 天內邀請 3 位使用者。邀請連結在 7 天後過期。\n請只邀請你信任或認識的玩家，你可能需要為他們的行為負責。",
     "quota": "配額：",
     "quotaExplanation": {
       "available": "虛線圓圈 = 可用名額",
@@ -462,13 +504,13 @@
       "unknownStatus": "未知狀態"
     },
     "actions": {
-      "copyLink": "複製鏈接",
+      "copyLink": "複製連結",
       "revoke": "撤銷",
       "revoking": "撤銷中..."
     },
     "messages": {
       "created": "邀請建立成功！",
-      "linkCopied": "邀請鏈接已複製到剪貼簿！",
+      "linkCopied": "邀請連結已複製到剪貼簿！",
       "createFailed": "建立邀請失敗",
       "revoked": "邀請撤銷成功！",
       "revokeFailed": "撤銷邀請失敗",
@@ -513,7 +555,8 @@
     "types": {
       "songs": "歌曲",
       "calculator": "計算",
-      "stats": "統計"
+      "stats": "統計",
+      "posts": "Changelog"
     },
     "songs": {
       "metadata": {
@@ -584,6 +627,7 @@
       "averageAchievementByLevel": "等級平均達成率",
       "ratingVsPlayCount": "Rating vs 遊玩次數熱力圖",
       "activeUsersOverTime": "活躍用戶趨勢",
+      "fetchesPerDay": "Users with Fetches per Day",
       "xAxis": {
         "rating": "Rating",
         "playCount": "遊玩次數",
@@ -598,7 +642,8 @@
         "percentage": "百分比",
         "achievement": "達成率",
         "count": "用戶數",
-        "activeUsers": "活躍用戶"
+        "activeUsers": "活躍用戶",
+        "usersWithFetches": "Users with Fetches"
       },
       "table": {
         "rank": "排名",
