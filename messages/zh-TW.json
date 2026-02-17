@@ -52,6 +52,25 @@
       "analyzeProgress": "分析你的遊玩紀錄"
     }
   },
+  "consent": {
+    "title": "Welcome to tomomai",
+    "description": "Before creating your account, please review and agree to our policies",
+    "tldr": {
+      "title": "TL;DR (Not Legal Advice)",
+      "points": [
+        "You own your data; it is never sold to third parties",
+        "Your data is encrypted and stored securely on servers in Japan",
+        "Your data is processed in accordance with Hong Kong SAR laws",
+        "This project is Open Source (AGPL-3.0)",
+        "We are an independent tool and not affiliated with SEGA"
+      ]
+    },
+    "agreeToTos": "I agree to the Terms of Service",
+    "agreeToPrivacy": "I agree to the Privacy Policy",
+    "viewFullText": "View Full Text",
+    "cancel": "取消",
+    "agree": "I Agree"
+  },
   "dashboard": {
     "title": "tomomai ともマイ",
     "description": "與好友一起分享 maimai 遊玩成績",
@@ -536,7 +555,8 @@
     "types": {
       "songs": "歌曲",
       "calculator": "計算",
-      "stats": "統計"
+      "stats": "統計",
+      "posts": "Changelog"
     },
     "songs": {
       "metadata": {
@@ -607,6 +627,7 @@
       "averageAchievementByLevel": "等級平均達成率",
       "ratingVsPlayCount": "R 值 vs 遊玩次數熱力圖",
       "activeUsersOverTime": "活躍使用者趨勢",
+      "fetchesPerDay": "Users with Fetches per Day",
       "xAxis": {
         "rating": "R 值",
         "playCount": "遊玩次數",
@@ -621,7 +642,8 @@
         "percentage": "百分比",
         "achievement": "達成率",
         "count": "使用者數",
-        "activeUsers": "活躍使用者"
+        "activeUsers": "活躍使用者",
+        "usersWithFetches": "Users with Fetches"
       },
       "table": {
         "rank": "排名",
