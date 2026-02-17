@@ -53,23 +53,23 @@
     }
   },
   "consent": {
-    "title": "Welcome to tomomai",
-    "description": "Before creating your account, please review and agree to our policies",
+    "title": "tomomai へようこそ",
+    "description": "アカウント作成にあたり、以下の規約およびポリシーをご確認の上、同意をお願いいたします。",
     "tldr": {
-      "title": "TL;DR (Not Legal Advice)",
+      "title": "本ポリシーの要点（法的効力を有しません）",
       "points": [
-        "You own your data; it is never sold to third parties",
-        "Your data is encrypted and stored securely on servers in Japan",
-        "Your data is processed in accordance with Hong Kong SAR laws",
-        "This project is Open Source (AGPL-3.0)",
-        "We are an independent tool and not affiliated with SEGA"
+        "データの所有権はユーザーに帰属し、第三者への販売は一切行いません",
+        "データは日本国内のサーバーにて安全に管理・保管されます",
+        "データの処理については、香港特別行政区の法令に準拠します",
+        "本プロジェクトはオープンソース（AGPL-3.0）として公開されています",
+        "本ツールは非公式の個人開発によるものであり、株式会社セガとは一切関係ありません"
       ]
     },
-    "agreeToTos": "I agree to the Terms of Service",
-    "agreeToPrivacy": "I agree to the Privacy Policy",
-    "viewFullText": "View Full Text",
+    "agreeToTos": "利用規約に同意する",
+    "agreeToPrivacy": "プライバシーポリシーに同意する",
+    "viewFullText": "全文を表示",
     "cancel": "キャンセル",
-    "agree": "I Agree"
+    "agree": "同意する"
   },
   "dashboard": {
     "title": "ともマイ",
@@ -556,7 +556,7 @@
       "songs": "楽曲",
       "calculator": "計算",
       "stats": "統計",
-      "posts": "Changelog"
+      "posts": "更新履歴"
     },
     "songs": {
       "metadata": {
@@ -618,6 +618,17 @@
       "bpm": "BPM",
       "added": "追加バージョン"
     },
+    "posts": {
+      "list": {
+        "title": "更新履歴",
+        "description": "tomomai の最新情報や変更点。",
+        "noPosts": "記事がありません。"
+      },
+      "aiTranslationHint": {
+        "title": "AI による翻訳",
+        "description": "この記事は AI を使用して翻訳されました。翻訳は完全ではない可能性があります。もし間違いを見つけた場合は、修正のご協力をお願いします！"
+      }
+    },
     "stats": {
       "title": "全体統計",
       "ratingDistribution": "レート分布",
@@ -671,47 +682,6 @@
       "rose": "Rose",
       "gold": "Gold",
       "pink": "Pink"
-    },
-    "themes": {
-      "simple": "Simple",
-      "dark-simple": "Dark Simple",
-      "gray-simple": "Gray Simple",
-      "burnt-amaranth": "Burnt Amaranth",
-      "burnt-blue": "Burnt Blue",
-      "burnt-brown": "Burnt Brown",
-      "burnt-emerald": "Burnt Emerald",
-      "burnt-grass": "Burnt Grass",
-      "burnt-purple": "Burnt Purple",
-      "burnt-rose": "Burnt Rose",
-      "burnt-gold": "Burnt Gold",
-      "burnt-pink": "Burnt Pink",
-      "dark-amaranth": "Dark Amaranth",
-      "dark-blue": "Dark Blue",
-      "dark-brown": "Dark Brown",
-      "dark-emerald": "Dark Emerald",
-      "dark-grass": "Dark Grass",
-      "dark-purple": "Dark Purple",
-      "dark-rose": "Dark Rose",
-      "dark-gold": "Dark Gold",
-      "dark-pink": "Dark Pink",
-      "light-amaranth": "Light Amaranth",
-      "light-blue": "Light Blue",
-      "light-brown": "Light Brown",
-      "light-emerald": "Light Emerald",
-      "light-grass": "Light Grass",
-      "light-purple": "Light Purple",
-      "light-rose": "Light Rose",
-      "light-gold": "Light Gold",
-      "light-pink": "Light Pink",
-      "gray-amaranth": "Gray Amaranth",
-      "gray-blue": "Gray Blue",
-      "gray-brown": "Gray Brown",
-      "gray-emerald": "Gray Emerald",
-      "gray-grass": "Gray Grass",
-      "gray-purple": "Gray Purple",
-      "gray-rose": "Gray Rose",
-      "gray-gold": "Gray Gold",
-      "gray-pink": "Gray Pink"
     },
     "title": "テーマ"
   },
