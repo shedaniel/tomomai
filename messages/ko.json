@@ -52,6 +52,25 @@
       "analyzeProgress": "플레이 성과 및 성장 분석"
     }
   },
+  "consent": {
+    "title": "Welcome to tomomai",
+    "description": "Before creating your account, please review and agree to our policies",
+    "tldr": {
+      "title": "TL;DR (Not Legal Advice)",
+      "points": [
+        "You own your data; it is never sold to third parties",
+        "Your data is encrypted and stored securely on servers in Japan",
+        "Your data is processed in accordance with Hong Kong SAR laws",
+        "This project is Open Source (AGPL-3.0)",
+        "We are an independent tool and not affiliated with SEGA"
+      ]
+    },
+    "agreeToTos": "I agree to the Terms of Service",
+    "agreeToPrivacy": "I agree to the Privacy Policy",
+    "viewFullText": "View Full Text",
+    "cancel": "취소",
+    "agree": "I Agree"
+  },
   "dashboard": {
     "title": "tomomai ともマイ",
     "description": "친구들과 함께 maimai 성과를 공유하고 분석해보세요!",
@@ -313,6 +332,29 @@
     "inProgress": "진행 중",
     "completed": "완주"
   },
+  "playerStats": {
+    "title": "Player Statistics",
+    "selectVersion": "Select version",
+    "allVersions": "All Versions",
+    "selectDifficulty": "Select difficulty",
+    "allDifficulties": "All Difficulties",
+    "backToStats": "Back to Stats",
+    "viewPlatesProgress": "View Plates Progress",
+    "achievementGrades": "Achievement Grades",
+    "fullCombo": "Full Combo",
+    "fullSync": "Full Sync",
+    "noDataAvailable": "데이터 없음",
+    "noMatchingScores": "No scores match the selected filters",
+    "selectVersionForPlates": "Please select a specific version to view plate progress",
+    "songsNotMeeting": "Songs not meeting {requirement}",
+    "noSongsToDisplay": "No songs to display",
+    "plates": {
+      "kyoku": "All FC or above",
+      "shou": "All SSS or above",
+      "shin": "All AP or above",
+      "maimai": "All FDX or above"
+    }
+  },
   "tokenDialog": {
     "title": "maimai 인증 갱신",
     "japanDescription": "일본판: SEGA 계정 정보를 입력하세요.",
@@ -513,7 +555,8 @@
     "types": {
       "songs": "악곡",
       "calculator": "계산기",
-      "stats": "통계"
+      "stats": "통계",
+      "posts": "Changelog"
     },
     "songs": {
       "metadata": {
@@ -584,6 +627,7 @@
       "averageAchievementByLevel": "레벨별 평균 달성률",
       "ratingVsPlayCount": "레이팅 vs 플레이 횟수 히트맵",
       "activeUsersOverTime": "Active Users Over Time",
+      "fetchesPerDay": "Users with Fetches per Day",
       "xAxis": {
         "rating": "레이팅",
         "playCount": "플레이 횟수",
@@ -598,7 +642,8 @@
         "percentage": "비율",
         "achievement": "달성률",
         "count": "유저 수",
-        "activeUsers": "Active Users"
+        "activeUsers": "Active Users",
+        "usersWithFetches": "Users with Fetches"
       },
       "table": {
         "rank": "순위",
