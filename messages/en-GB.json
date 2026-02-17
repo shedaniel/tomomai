@@ -52,6 +52,25 @@
       "analyzeProgress": "Analyze your progress over time"
     }
   },
+  "consent": {
+    "title": "Welcome to tomomai",
+    "description": "Before creating your account, please review and agree to our policies",
+    "tldr": {
+      "title": "TL;DR (Not Legal Advice)",
+      "points": [
+        "You own your data; it is never sold to third parties",
+        "Your data is encrypted and stored securely on servers in Japan",
+        "Your data is processed in accordance with Hong Kong SAR laws",
+        "This project is Open Source (AGPL-3.0)",
+        "We are an independent tool and not affiliated with SEGA"
+      ]
+    },
+    "agreeToTos": "I agree to the Terms of Service",
+    "agreeToPrivacy": "I agree to the Privacy Policy",
+    "viewFullText": "View Full Text",
+    "cancel": "Cancel",
+    "agree": "I Agree"
+  },
   "dashboard": {
     "title": "tomomai ともマイ",
     "description": "Track and analyze your maimai scores with friends",
@@ -313,6 +332,29 @@
     "inProgress": "In Progress",
     "completed": "Completed"
   },
+  "playerStats": {
+    "title": "Player Statistics",
+    "selectVersion": "Select version",
+    "allVersions": "All Versions",
+    "selectDifficulty": "Select difficulty",
+    "allDifficulties": "All Difficulties",
+    "backToStats": "Back to Stats",
+    "viewPlatesProgress": "View Plates Progress",
+    "achievementGrades": "Achievement Grades",
+    "fullCombo": "Full Combo",
+    "fullSync": "Full Sync",
+    "noDataAvailable": "No data available",
+    "noMatchingScores": "No scores match the selected filters",
+    "selectVersionForPlates": "Please select a specific version to view plate progress",
+    "songsNotMeeting": "Songs not meeting {requirement}",
+    "noSongsToDisplay": "No songs to display",
+    "plates": {
+      "kyoku": "All FC or above",
+      "shou": "All SSS or above",
+      "shin": "All AP or above",
+      "maimai": "All FDX or above"
+    }
+  },
   "tokenDialog": {
     "title": "Update maimai authentication",
     "japanDescription": "Enter your SEGA account credentials for the Japan region.",
@@ -513,7 +555,8 @@
     "types": {
       "songs": "Songs",
       "calculator": "Calculator",
-      "stats": "Stats"
+      "stats": "Stats",
+      "posts": "Changelog"
     },
     "songs": {
       "metadata": {
@@ -584,6 +627,7 @@
       "averageAchievementByLevel": "Average Achievement by Level",
       "ratingVsPlayCount": "Rating vs Play Count Heatmap",
       "activeUsersOverTime": "Active Users Over Time",
+      "fetchesPerDay": "Users with Fetches per Day",
       "xAxis": {
         "rating": "Rating",
         "playCount": "Play Count",
@@ -598,7 +642,8 @@
         "percentage": "Percentage",
         "achievement": "Achievement",
         "count": "Users",
-        "activeUsers": "Active Users"
+        "activeUsers": "Active Users",
+        "usersWithFetches": "Users with Fetches"
       },
       "table": {
         "rank": "Rank",
