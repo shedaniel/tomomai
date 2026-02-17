@@ -25,6 +25,7 @@ import { SPRING_CONFIGS, STAGGER, getTransition } from "@/lib/animation-constant
 interface RecentSongsCardProps {
   region: Region;
   beforeDate?: Date;
+  snapshotId?: string;
 }
 
 interface RecentSongRowProps {
@@ -526,7 +527,7 @@ function RecentSongRow({ play, index, isFirst, isLast, onToggleExpand, isExpande
   );
 }
 
-export function RecentSongsCard({ region, beforeDate }: RecentSongsCardProps) {
+export function RecentSongsCard({ region, beforeDate, snapshotId }: RecentSongsCardProps) {
   const t = useTranslations('recentPlays');
   const [allPlays, setAllPlays] = useState<inferRouterOutputs<AppRouter>['user']['getRecentSongs']['recentPlays']>([]);
   const [offset, setOffset] = useState(0);
@@ -537,12 +538,18 @@ export function RecentSongsCard({ region, beforeDate }: RecentSongsCardProps) {
   // Track which offsets have been processed to prevent duplicates
   const processedOffsetsRef = useRef<Set<number>>(new Set());
 
-  const { data, isLoading, isFetching, error } = trpc.user.getRecentSongs.useQuery({
-    region,
-    limit,
-    offset,
-    beforeDate,
-  });
+  const { data: ownData, isLoading: ownLoading, isFetching: ownFetching, error: ownError } = trpc.user.getRecentSongs.useQuery(
+    { region, limit, offset, beforeDate },
+    { enabled: !snapshotId }
+  );
+  const { data: publicData, isLoading: publicLoading, isFetching: publicFetching, error: publicError } = trpc.user.getPublicRecentSongs.useQuery(
+    { snapshotId: snapshotId!, region, limit, offset, beforeDate },
+    { enabled: !!snapshotId }
+  );
+  const data = snapshotId ? publicData : ownData;
+  const isLoading = snapshotId ? publicLoading : ownLoading;
+  const isFetching = snapshotId ? publicFetching : ownFetching;
+  const error = snapshotId ? publicError : ownError;
 
   // Reset pagination state when region or beforeDate changes
   useEffect(() => {

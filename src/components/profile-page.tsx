@@ -2,7 +2,7 @@ import { DataContent } from "@/components/data-content";
 import { PublicDataBanner } from "@/components/public-data-banner";
 import { Header } from "@/components/header";
 import { defaultFlags } from "@/lib/flags";
-import { Difficulty, ProfileData, Region, SnapshotWithSongs, SongWithScore, TitleType } from "@/lib/types";
+import { Difficulty, EventData, ProfileData, Region, SnapshotWithSongs, SongWithScore, TitleType } from "@/lib/types";
 import { VersionId } from "@/lib/metadata";
 
 interface SnapshotData {
@@ -41,7 +41,10 @@ interface SnapshotData {
     showPlayCounts: boolean;
     showPlates: boolean;
     showEvents: boolean;
+    showAllScores: boolean;
+    showScoreDetails: boolean;
   };
+  events?: EventData[];
 }
 
 interface ProfilePageProps {
@@ -70,6 +73,7 @@ export function ProfilePage({
       fc: song.fc as "none" | "fc" | "fc+" | "ap" | "ap+",
       fs: song.fs as "none" | "sync" | "fs" | "fs+" | "fdx" | "fdx+",
     })) as SongWithScore[],
+    ...(snapshotData.events && { events: snapshotData.events }),
   };
 
   return (

@@ -1096,6 +1096,23 @@ export const userRouter = router({
         filteredSongs = songsWithScores.filter(song => bestSongIds.has(song.songId));
       }
 
+      // Fetch events if privacy allows
+      const events = userData.profileShowEvents
+        ? await db
+          .select({
+            eventType: userEvents.eventType,
+            name: userEvents.name,
+            currentDistance: userEvents.currentDistance,
+            nextRewardDistance: userEvents.nextRewardDistance,
+            state: userEvents.state,
+            imageUrl: userEvents.imageUrl,
+            eventPeriodStart: userEvents.eventPeriodStart,
+            eventPeriodEnd: userEvents.eventPeriodEnd,
+          })
+          .from(userEvents)
+          .where(eq(userEvents.snapshotId, snapshot[0].id))
+        : undefined;
+
       return {
         snapshot: {
           ...snapshot[0],
@@ -1108,7 +1125,10 @@ export const userRouter = router({
           showPlayCounts: userData.profileShowPlayCounts,
           showPlates: userData.profileShowPlates,
           showEvents: userData.profileShowEvents,
+          showAllScores: userData.profileShowAllScores,
+          showScoreDetails: userData.profileShowScoreDetails,
         },
+        ...(events && { events }),
       };
     }),
 
@@ -1853,6 +1873,121 @@ export const userRouter = router({
         .offset(offset);
 
       // Get total count
+      const [{ totalCount }] = await db
+        .select({ totalCount: count() })
+        .from(userRecentSongs)
+        .innerJoin(songs, eq(userRecentSongs.songId, songs.id))
+        .where(
+          and(
+            eq(userRecentSongs.userId, userId),
+            eq(songs.region, region),
+            beforeDate ? lt(userRecentSongs.playedAt, beforeDate) : undefined
+          )
+        );
+
+      return {
+        recentPlays,
+        totalCount,
+        hasMore: offset + limit < totalCount,
+      };
+    }),
+
+  getPublicRecentSongs: publicProcedure
+    .input(z.object({
+      snapshotId: z.string(),
+      region: regionSchema,
+      limit: z.number().min(1).max(100).default(50),
+      offset: z.number().min(0).default(0),
+      beforeDate: z.date().optional(),
+    }))
+    .query(async ({ input }) => {
+      // Resolve userId from snapshotId (publicId), verify profile is published
+      const snapshotRecord = await db
+        .select({ userId: userSnapshots.userId })
+        .from(userSnapshots)
+        .innerJoin(user, eq(userSnapshots.userId, user.id))
+        .where(and(
+          eq(userSnapshots.publicId, input.snapshotId),
+          eq(user.publishProfile, true)
+        ))
+        .limit(1);
+
+      if (snapshotRecord.length === 0) {
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Snapshot not found or not public' });
+      }
+
+      const userId = snapshotRecord[0].userId;
+      const { region, limit, offset, beforeDate } = input;
+
+      const recentPlays = await db
+        .select({
+          recentSongId: userRecentSongs.id,
+          playedAt: userRecentSongs.playedAt,
+          achievement: userRecentSongs.archievement,
+          dxScore: userRecentSongs.dxScore,
+          maxDxScore: userRecentSongs.maxDxScore,
+          fc: userRecentSongs.fc,
+          fs: userRecentSongs.fs,
+          track: userRecentSongs.track,
+          songId: songs.id,
+          songPublicId: songs.publicId,
+          songName: songs.songName,
+          artist: songs.artist,
+          cover: songs.cover,
+          difficulty: songs.difficulty,
+          level: songs.level,
+          levelPrecise: songs.levelPrecise,
+          type: songs.type,
+          genre: songs.genre,
+          fastCount: userRecentSongsDetailed.fastCount,
+          lateCount: userRecentSongsDetailed.lateCount,
+          combo: userRecentSongsDetailed.combo,
+          maxCombo: userRecentSongsDetailed.maxCombo,
+          syncScore: userRecentSongsDetailed.syncScore,
+          maxSyncScore: userRecentSongsDetailed.maxSyncScore,
+          rating: userRecentSongsDetailed.rating,
+          ratingChange: userRecentSongsDetailed.ratingChange,
+          venue: userRecentSongsDetailed.venue,
+          tapCPerfect: userRecentSongsDetailed.tapCPerfect,
+          tapPerfect: userRecentSongsDetailed.tapPerfect,
+          tapGreat: userRecentSongsDetailed.tapGreat,
+          tapGood: userRecentSongsDetailed.tapGood,
+          tapMiss: userRecentSongsDetailed.tapMiss,
+          holdCPerfect: userRecentSongsDetailed.holdCPerfect,
+          holdPerfect: userRecentSongsDetailed.holdPerfect,
+          holdGreat: userRecentSongsDetailed.holdGreat,
+          holdGood: userRecentSongsDetailed.holdGood,
+          holdMiss: userRecentSongsDetailed.holdMiss,
+          slideCPerfect: userRecentSongsDetailed.slideCPerfect,
+          slidePerfect: userRecentSongsDetailed.slidePerfect,
+          slideGreat: userRecentSongsDetailed.slideGreat,
+          slideGood: userRecentSongsDetailed.slideGood,
+          slideMiss: userRecentSongsDetailed.slideMiss,
+          touchCPerfect: userRecentSongsDetailed.touchCPerfect,
+          touchPerfect: userRecentSongsDetailed.touchPerfect,
+          touchGreat: userRecentSongsDetailed.touchGreat,
+          touchGood: userRecentSongsDetailed.touchGood,
+          touchMiss: userRecentSongsDetailed.touchMiss,
+          breakCPerfect: userRecentSongsDetailed.breakCPerfect,
+          breakPerfect: userRecentSongsDetailed.breakPerfect,
+          breakGreat: userRecentSongsDetailed.breakGreat,
+          breakGood: userRecentSongsDetailed.breakGood,
+          breakMiss: userRecentSongsDetailed.breakMiss,
+        })
+        .from(userRecentSongs)
+        .innerJoin(songs, eq(userRecentSongs.songId, songs.id))
+        .leftJoin(userRecentSongsDetailed, eq(userRecentSongs.id, userRecentSongsDetailed.recentSongId))
+        .where(
+          and(
+            eq(userRecentSongs.userId, userId),
+            eq(songs.region, region),
+            beforeDate ? lt(userRecentSongs.playedAt, beforeDate) : undefined
+          )
+        )
+        .orderBy(desc(userRecentSongs.playedAt))
+        .limit(limit)
+        .offset(offset);
+
       const [{ totalCount }] = await db
         .select({ totalCount: count() })
         .from(userRecentSongs)
@@ -2983,6 +3118,131 @@ export const userRouter = router({
         }
 
         // Count FS achievements
+        if (score.fs !== "none") {
+          if (!stats[version][difficulty].fs[score.fs]) {
+            stats[version][difficulty].fs[score.fs] = 0;
+          }
+          stats[version][difficulty].fs[score.fs]++;
+        }
+
+        stats[version][difficulty].total++;
+      }
+
+      return { stats, totalSongs };
+    }),
+
+  getPublicPlayerStats: publicProcedure
+    .input(z.object({
+      snapshotId: z.string(),
+      region: regionSchema,
+    }))
+    .query(async ({ input }) => {
+      // Resolve snapshot from publicId, verify profile is published
+      const snapshot = await db
+        .select({ id: userSnapshots.id, gameVersion: userSnapshots.gameVersion })
+        .from(userSnapshots)
+        .innerJoin(user, eq(userSnapshots.userId, user.id))
+        .where(and(
+          eq(userSnapshots.publicId, input.snapshotId),
+          eq(user.publishProfile, true)
+        ))
+        .limit(1);
+
+      if (snapshot.length === 0) {
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Snapshot not found or not public' });
+      }
+
+      const gameVersion = snapshot[0].gameVersion;
+
+      // Fetch all scores with song metadata for this snapshot
+      const scores = await db
+        .select({
+          achievement: userScores.achievement,
+          addedVersion: songs.addedVersion,
+          difficulty: songs.difficulty,
+          fc: userScores.fc,
+          fs: userScores.fs,
+        })
+        .from(userScores)
+        .innerJoin(songs, eq(userScores.songId, songs.id))
+        .where(eq(userScores.snapshotId, snapshot[0].id));
+
+      // Get total song counts from database by version and difficulty
+      const allSongs = await db
+        .select({
+          addedVersion: songs.addedVersion,
+          difficulty: songs.difficulty,
+          count: sql<number>`count(*)`.mapWith(Number),
+        })
+        .from(songs)
+        .where(
+          and(
+            eq(songs.region, input.region),
+            eq(songs.gameVersion, gameVersion)
+          )
+        )
+        .groupBy(songs.addedVersion, songs.difficulty);
+
+      // Build total songs map
+      const totalSongs: Record<string, Record<string, number>> = {};
+      for (const song of allSongs) {
+        const version = song.addedVersion.toString();
+        const difficulty = song.difficulty;
+
+        if (!totalSongs[version]) {
+          totalSongs[version] = {};
+        }
+        totalSongs[version][difficulty] = song.count;
+      }
+
+      // Group scores by version and difficulty
+      const stats: Record<string, Record<string, {
+        grades: Record<string, number>,
+        fc: Record<string, number>,
+        fs: Record<string, number>,
+        total: number
+      }>> = {};
+
+      for (const score of scores) {
+        const version = score.addedVersion.toString();
+        const difficulty = score.difficulty;
+
+        if (!stats[version]) {
+          stats[version] = {};
+        }
+        if (!stats[version][difficulty]) {
+          stats[version][difficulty] = { grades: {}, fc: {}, fs: {}, total: 0 };
+        }
+
+        const achievementPercent = score.achievement;
+        let grade = "D";
+
+        if (achievementPercent >= 1005000) grade = "SSS+";
+        else if (achievementPercent >= 1000000) grade = "SSS";
+        else if (achievementPercent >= 995000) grade = "SS+";
+        else if (achievementPercent >= 990000) grade = "SS";
+        else if (achievementPercent >= 980000) grade = "S+";
+        else if (achievementPercent >= 970000) grade = "S";
+        else if (achievementPercent >= 940000) grade = "AAA";
+        else if (achievementPercent >= 900000) grade = "AA";
+        else if (achievementPercent >= 800000) grade = "A";
+        else if (achievementPercent >= 750000) grade = "BBB";
+        else if (achievementPercent >= 700000) grade = "BB";
+        else if (achievementPercent >= 600000) grade = "B";
+        else if (achievementPercent >= 500000) grade = "C";
+
+        if (!stats[version][difficulty].grades[grade]) {
+          stats[version][difficulty].grades[grade] = 0;
+        }
+        stats[version][difficulty].grades[grade]++;
+
+        if (score.fc !== "none") {
+          if (!stats[version][difficulty].fc[score.fc]) {
+            stats[version][difficulty].fc[score.fc] = 0;
+          }
+          stats[version][difficulty].fc[score.fc]++;
+        }
+
         if (score.fs !== "none") {
           if (!stats[version][difficulty].fs[score.fs]) {
             stats[version][difficulty].fs[score.fs] = 0;

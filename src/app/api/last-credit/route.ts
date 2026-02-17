@@ -6,28 +6,55 @@ import { Image, loadImage } from 'skia-canvas';
 import { getRatingImageUrl } from '@/lib/rating-calculator';
 import { DIFFICULTY_ENUM } from '@/lib/db/types';
 import { prepareCreditData } from '@/server/services/credit-data';
+import { db } from '@/lib/db';
+import { user, userSnapshots } from '@/lib/db/schema-pg';
+import { and, eq } from 'drizzle-orm';
 
 export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
   console.log('Starting last-credit image API request');
   try {
-    // Get user session
-    const session = await getServerSession();
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const userId = session.user.id;
-
     // Parse query parameters
     const region = request.nextUrl.searchParams.get('region') as 'intl' | 'jp' | null;
     const beforeDateStr = request.nextUrl.searchParams.get('beforeDate');
     const scaleParam = request.nextUrl.searchParams.get('scale');
+    const snapshotId = request.nextUrl.searchParams.get('snapshotId');
     const scale = scaleParam === '1' ? 1 : 2; // Accept 1 or 2, default to 2
 
     if (!region || (region !== 'intl' && region !== 'jp')) {
       return NextResponse.json({ error: 'Valid region (intl or jp) is required' }, { status: 400 });
+    }
+
+    // Determine userId based on mode
+    let userId: string;
+
+    if (snapshotId) {
+      // PUBLIC MODE: Resolve userId from snapshot publicId
+      const snapshot = await db
+        .select({ userId: userSnapshots.userId })
+        .from(userSnapshots)
+        .innerJoin(user, eq(userSnapshots.userId, user.id))
+        .where(and(
+          eq(userSnapshots.publicId, snapshotId),
+          eq(user.publishProfile, true)
+        ))
+        .limit(1);
+
+      if (snapshot.length === 0) {
+        return NextResponse.json({ error: 'Snapshot not found or not public' }, { status: 404 });
+      }
+
+      userId = snapshot[0].userId;
+      console.log(`Public mode: Rendering for userId ${userId} (snapshot ${snapshotId})`);
+    } else {
+      // AUTHENTICATED MODE: Use session (existing behavior)
+      const session = await getServerSession();
+      if (!session?.user?.id) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
+      userId = session.user.id;
+      console.log(`Authenticated mode: Rendering for logged-in user ${userId}`);
     }
 
     const beforeDate = beforeDateStr ? new Date(beforeDateStr) : undefined;

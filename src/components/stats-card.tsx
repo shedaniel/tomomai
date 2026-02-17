@@ -21,6 +21,7 @@ import { cn } from "@/lib/utils";
 interface StatsCardProps {
   region: Region;
   selectedSnapshotData: SnapshotWithSongs | null;
+  snapshotId?: string;
 }
 
 // Grade colors for display
@@ -305,9 +306,18 @@ function PlatesGrid({ data, selectedVersion, region }: PlatesGridProps) {
 }
 
 
-export function StatsCard({ region, selectedSnapshotData }: StatsCardProps) {
+export function StatsCard({ region, selectedSnapshotData, snapshotId }: StatsCardProps) {
   const t = useTranslations();
-  const { data, isLoading } = trpc.user.getPlayerStats.useQuery({ region });
+  const { data: ownData, isLoading: ownLoading } = trpc.user.getPlayerStats.useQuery(
+    { region },
+    { enabled: !snapshotId }
+  );
+  const { data: publicData, isLoading: publicLoading } = trpc.user.getPublicPlayerStats.useQuery(
+    { snapshotId: snapshotId!, region },
+    { enabled: !!snapshotId }
+  );
+  const data = snapshotId ? publicData : ownData;
+  const isLoading = snapshotId ? publicLoading : ownLoading;
 
   const [selectedVersion, setSelectedVersion] = useState<string>("all");
   const [selectedDifficulty, setSelectedDifficulty] = useState<string>("all");
