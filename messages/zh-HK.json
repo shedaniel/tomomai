@@ -53,23 +53,23 @@
     }
   },
   "consent": {
-    "title": "Welcome to tomomai",
-    "description": "Before creating your account, please review and agree to our policies",
+    "title": "歡迎來到 tomomai",
+    "description": "在建立帳戶前，請先閱讀並同意我們的政策。",
     "tldr": {
-      "title": "TL;DR (Not Legal Advice)",
+      "title": "重點摘要（非法律建議）",
       "points": [
-        "You own your data; it is never sold to third parties",
-        "Your data is encrypted and stored securely on servers in Japan",
-        "Your data is processed in accordance with Hong Kong SAR laws",
-        "This project is Open Source (AGPL-3.0)",
-        "We are an independent tool and not affiliated with SEGA"
+        "你擁有資料的擁有權，我們絕不會將其出售予第三方",
+        "你的資料將安全地儲存於日本的伺服器上",
+        "資料處理將遵循香港特別行政區法例",
+        "本項目為開源軟件（AGPL-3.0）",
+        "我們是獨立開發的工具，與 SEGA 並無任何關聯"
       ]
     },
-    "agreeToTos": "I agree to the Terms of Service",
-    "agreeToPrivacy": "I agree to the Privacy Policy",
-    "viewFullText": "View Full Text",
+    "agreeToTos": "我同意服務條款",
+    "agreeToPrivacy": "我同意私隱政策",
+    "viewFullText": "查看全文",
     "cancel": "取消",
-    "agree": "I Agree"
+    "agree": "同意"
   },
   "dashboard": {
     "title": "tomomai ともマイ",
@@ -333,26 +333,26 @@
     "completed": "已完成"
   },
   "playerStats": {
-    "title": "Player Statistics",
-    "selectVersion": "Select version",
-    "allVersions": "All Versions",
-    "selectDifficulty": "Select difficulty",
-    "allDifficulties": "All Difficulties",
-    "backToStats": "Back to Stats",
-    "viewPlatesProgress": "View Plates Progress",
-    "achievementGrades": "Achievement Grades",
+    "title": "玩家統計",
+    "selectVersion": "選擇版本",
+    "allVersions": "所有版本",
+    "selectDifficulty": "選擇難度",
+    "allDifficulties": "所有難度",
+    "backToStats": "返回統計",
+    "viewPlatesProgress": "查看稱號進度",
+    "achievementGrades": "達成等級",
     "fullCombo": "Full Combo",
     "fullSync": "Full Sync",
     "noDataAvailable": "無可用資料",
-    "noMatchingScores": "No scores match the selected filters",
-    "selectVersionForPlates": "Please select a specific version to view plate progress",
-    "songsNotMeeting": "Songs not meeting {requirement}",
-    "noSongsToDisplay": "No songs to display",
+    "noMatchingScores": "沒有符合篩選條件的成績",
+    "selectVersionForPlates": "請選擇特定版本以查看稱號進度",
+    "songsNotMeeting": "未達成 {requirement} 的樂曲",
+    "noSongsToDisplay": "沒有可顯示的樂曲",
     "plates": {
-      "kyoku": "All FC or above",
-      "shou": "All SSS or above",
-      "shin": "All AP or above",
-      "maimai": "All FDX or above"
+      "kyoku": "所有樂曲 FC 或以上",
+      "shou": "所有樂曲 SSS 或以上",
+      "shin": "所有樂曲 AP 或以上",
+      "maimai": "所有樂曲 FDX 或以上"
     }
   },
   "tokenDialog": {
@@ -556,7 +556,7 @@
       "songs": "歌曲",
       "calculator": "計算",
       "stats": "統計",
-      "posts": "Changelog"
+      "posts": "更新記錄"
     },
     "songs": {
       "metadata": {
@@ -618,6 +618,17 @@
       "bpm": "BPM",
       "added": "追加版本"
     },
+    "posts": {
+      "list": {
+        "title": "更新記錄",
+        "description": "tomomai 的最新更新與變更。",
+        "noPosts": "暫無文章。"
+      },
+      "aiTranslationHint": {
+        "title": "AI 輔助翻譯",
+        "description": "本文由 AI 協助翻譯，內容可能未必完美。如發現任何錯誤，歡迎協助修正！"
+      }
+    },
     "stats": {
       "title": "整體統計",
       "ratingDistribution": "Rating 分佈",
@@ -671,47 +682,6 @@
       "rose": "Rose",
       "gold": "Gold",
       "pink": "Pink"
-    },
-    "themes": {
-      "simple": "Simple",
-      "dark-simple": "Dark Simple",
-      "gray-simple": "Gray Simple",
-      "burnt-amaranth": "Burnt Amaranth",
-      "burnt-blue": "Burnt Blue",
-      "burnt-brown": "Burnt Brown",
-      "burnt-emerald": "Burnt Emerald",
-      "burnt-grass": "Burnt Grass",
-      "burnt-purple": "Burnt Purple",
-      "burnt-rose": "Burnt Rose",
-      "burnt-gold": "Burnt Gold",
-      "burnt-pink": "Burnt Pink",
-      "dark-amaranth": "Dark Amaranth",
-      "dark-blue": "Dark Blue",
-      "dark-brown": "Dark Brown",
-      "dark-emerald": "Dark Emerald",
-      "dark-grass": "Dark Grass",
-      "dark-purple": "Dark Purple",
-      "dark-rose": "Dark Rose",
-      "dark-gold": "Dark Gold",
-      "dark-pink": "Dark Pink",
-      "light-amaranth": "Light Amaranth",
-      "light-blue": "Light Blue",
-      "light-brown": "Light Brown",
-      "light-emerald": "Light Emerald",
-      "light-grass": "Light Grass",
-      "light-purple": "Light Purple",
-      "light-rose": "Light Rose",
-      "light-gold": "Light Gold",
-      "light-pink": "Light Pink",
-      "gray-amaranth": "Gray Amaranth",
-      "gray-blue": "Gray Blue",
-      "gray-brown": "Gray Brown",
-      "gray-emerald": "Gray Emerald",
-      "gray-grass": "Gray Grass",
-      "gray-purple": "Gray Purple",
-      "gray-rose": "Gray Rose",
-      "gray-gold": "Gray Gold",
-      "gray-pink": "Gray Pink"
     },
     "title": "主題"
   },
