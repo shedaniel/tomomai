@@ -53,23 +53,23 @@
     }
   },
   "consent": {
-    "title": "Welcome to tomomai",
-    "description": "Before creating your account, please review and agree to our policies",
+    "title": "歡迎來到 tomomai",
+    "description": "在建立帳戶前，請先閱讀並同意我們的政策。",
     "tldr": {
-      "title": "TL;DR (Not Legal Advice)",
+      "title": "重點摘要（非法律建議）",
       "points": [
-        "You own your data; it is never sold to third parties",
-        "Your data is encrypted and stored securely on servers in Japan",
-        "Your data is processed in accordance with Hong Kong SAR laws",
-        "This project is Open Source (AGPL-3.0)",
-        "We are an independent tool and not affiliated with SEGA"
+        "你擁有資料的所有權，我們絕不會將其販售給第三方",
+        "你的資料將安全地儲存在日本的伺服器上",
+        "資料處理將遵循香港特別行政區的法律",
+        "本專案為開源軟體（AGPL-3.0）",
+        "我們是獨立開發的工具，與 SEGA 無任何關聯"
       ]
     },
-    "agreeToTos": "I agree to the Terms of Service",
-    "agreeToPrivacy": "I agree to the Privacy Policy",
-    "viewFullText": "View Full Text",
+    "agreeToTos": "我同意服務條款",
+    "agreeToPrivacy": "我同意隱私權政策",
+    "viewFullText": "查看全文",
     "cancel": "取消",
-    "agree": "I Agree"
+    "agree": "同意"
   },
   "dashboard": {
     "title": "tomomai ともマイ",
@@ -556,7 +556,7 @@
       "songs": "歌曲",
       "calculator": "計算",
       "stats": "統計",
-      "posts": "Changelog"
+      "posts": "更新日誌"
     },
     "songs": {
       "metadata": {
@@ -618,6 +618,17 @@
       "bpm": "BPM",
       "added": "追加版本"
     },
+    "posts": {
+      "list": {
+        "title": "更新日誌",
+        "description": "tomomai 的最新更新與變更。",
+        "noPosts": "尚無文章。"
+      },
+      "aiTranslationHint": {
+        "title": "AI 輔助翻譯",
+        "description": "本文由 AI 協助翻譯，內容可能不盡完美。若發現任何錯誤，歡迎協助修正！"
+      }
+    },
     "stats": {
       "title": "整體統計",
       "ratingDistribution": "R 值分布",
@@ -671,47 +682,6 @@
       "rose": "玫瑰紅",
       "gold": "金色",
       "pink": "粉紅"
-    },
-    "themes": {
-      "simple": "簡約",
-      "dark-simple": "深色簡約",
-      "gray-simple": "暗色簡約",
-      "burnt-amaranth": "焦莧紅",
-      "burnt-blue": "Burnt Blue",
-      "burnt-brown": "Burnt Brown",
-      "burnt-emerald": "Burnt Emerald",
-      "burnt-grass": "Burnt Grass",
-      "burnt-purple": "Burnt Purple",
-      "burnt-rose": "Burnt Rose",
-      "burnt-gold": "Burnt Gold",
-      "burnt-pink": "Burnt Pink",
-      "dark-amaranth": "Dark Amaranth",
-      "dark-blue": "深藍",
-      "dark-brown": "深褐",
-      "dark-emerald": "Dark Emerald",
-      "dark-grass": "Dark Grass",
-      "dark-purple": "深紫",
-      "dark-rose": "深玫紅",
-      "dark-gold": "深金",
-      "dark-pink": "深粉",
-      "light-amaranth": "Light Amaranth",
-      "light-blue": "Light Blue",
-      "light-brown": "Light Brown",
-      "light-emerald": "Light Emerald",
-      "light-grass": "Light Grass",
-      "light-purple": "Light Purple",
-      "light-rose": "Light Rose",
-      "light-gold": "Light Gold",
-      "light-pink": "Light Pink",
-      "gray-amaranth": "Gray Amaranth",
-      "gray-blue": "灰藍",
-      "gray-brown": "灰褐",
-      "gray-emerald": "Gray Emerald",
-      "gray-grass": "Gray Grass",
-      "gray-purple": "灰紫",
-      "gray-rose": "灰玫紅",
-      "gray-gold": "灰金",
-      "gray-pink": "灰粉"
     },
     "title": "主題"
   },
