@@ -52,6 +52,25 @@
       "analyzeProgress": "プレイ進捗の分析"
     }
   },
+  "consent": {
+    "title": "Welcome to tomomai",
+    "description": "Before creating your account, please review and agree to our policies",
+    "tldr": {
+      "title": "TL;DR (Not Legal Advice)",
+      "points": [
+        "You own your data; it is never sold to third parties",
+        "Your data is encrypted and stored securely on servers in Japan",
+        "Your data is processed in accordance with Hong Kong SAR laws",
+        "This project is Open Source (AGPL-3.0)",
+        "We are an independent tool and not affiliated with SEGA"
+      ]
+    },
+    "agreeToTos": "I agree to the Terms of Service",
+    "agreeToPrivacy": "I agree to the Privacy Policy",
+    "viewFullText": "View Full Text",
+    "cancel": "キャンセル",
+    "agree": "I Agree"
+  },
   "dashboard": {
     "title": "ともマイ",
     "description": "フレンドと一緒にmaimaiのスコアを共有・分析しよう！",
@@ -536,7 +555,8 @@
     "types": {
       "songs": "楽曲",
       "calculator": "計算",
-      "stats": "統計"
+      "stats": "統計",
+      "posts": "Changelog"
     },
     "songs": {
       "metadata": {
@@ -607,6 +627,7 @@
       "averageAchievementByLevel": "レベル別平均達成率",
       "ratingVsPlayCount": "レート vs プレイ回数 ヒートマップ",
       "activeUsersOverTime": "アクティブユーザー数の推移",
+      "fetchesPerDay": "Users with Fetches per Day",
       "xAxis": {
         "rating": "レート値",
         "playCount": "プレイ回数",
@@ -621,7 +642,8 @@
         "percentage": "割合",
         "achievement": "達成率",
         "count": "ユーザー数",
-        "activeUsers": "アクティブユーザー"
+        "activeUsers": "アクティブユーザー",
+        "usersWithFetches": "Users with Fetches"
       },
       "table": {
         "rank": "順位",
