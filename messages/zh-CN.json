@@ -52,6 +52,25 @@
       "analyzeProgress": "分析你的游玩记录"
     }
   },
+  "consent": {
+    "title": "Welcome to tomomai",
+    "description": "Before creating your account, please review and agree to our policies",
+    "tldr": {
+      "title": "TL;DR (Not Legal Advice)",
+      "points": [
+        "You own your data; it is never sold to third parties",
+        "Your data is encrypted and stored securely on servers in Japan",
+        "Your data is processed in accordance with Hong Kong SAR laws",
+        "This project is Open Source (AGPL-3.0)",
+        "We are an independent tool and not affiliated with SEGA"
+      ]
+    },
+    "agreeToTos": "I agree to the Terms of Service",
+    "agreeToPrivacy": "I agree to the Privacy Policy",
+    "viewFullText": "View Full Text",
+    "cancel": "取消",
+    "agree": "I Agree"
+  },
   "dashboard": {
     "title": "tomomai ともマイ",
     "description": "与好友一起分享 maimai 游玩成绩",
@@ -313,6 +332,29 @@
     "inProgress": "进行中",
     "completed": "已完成"
   },
+  "playerStats": {
+    "title": "Player Statistics",
+    "selectVersion": "Select version",
+    "allVersions": "All Versions",
+    "selectDifficulty": "Select difficulty",
+    "allDifficulties": "All Difficulties",
+    "backToStats": "Back to Stats",
+    "viewPlatesProgress": "View Plates Progress",
+    "achievementGrades": "Achievement Grades",
+    "fullCombo": "Full Combo",
+    "fullSync": "Full Sync",
+    "noDataAvailable": "无可用数据",
+    "noMatchingScores": "No scores match the selected filters",
+    "selectVersionForPlates": "Please select a specific version to view plate progress",
+    "songsNotMeeting": "Songs not meeting {requirement}",
+    "noSongsToDisplay": "No songs to display",
+    "plates": {
+      "kyoku": "All FC or above",
+      "shou": "All SSS or above",
+      "shin": "All AP or above",
+      "maimai": "All FDX or above"
+    }
+  },
   "tokenDialog": {
     "title": "更新 maimai 验证",
     "japanDescription": "输入你的 SEGA 账户凭证。",
@@ -513,7 +555,8 @@
     "types": {
       "songs": "歌曲",
       "calculator": "计算",
-      "stats": "统计"
+      "stats": "统计",
+      "posts": "Changelog"
     },
     "songs": {
       "metadata": {
@@ -584,6 +627,7 @@
       "averageAchievementByLevel": "等级平均达成率",
       "ratingVsPlayCount": "R 值 vs 游玩次数热力图",
       "activeUsersOverTime": "活跃用户趋势",
+      "fetchesPerDay": "Users with Fetches per Day",
       "xAxis": {
         "rating": "R 值",
         "playCount": "游玩次数",
@@ -598,7 +642,8 @@
         "percentage": "占比",
         "achievement": "达成率",
         "count": "用户数",
-        "activeUsers": "活跃用户"
+        "activeUsers": "活跃用户",
+        "usersWithFetches": "Users with Fetches"
       },
       "table": {
         "rank": "排名",
