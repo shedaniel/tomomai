@@ -52,6 +52,25 @@
       "analyzeProgress": "分析你的遊玩紀錄"
     }
   },
+  "consent": {
+    "title": "歡迎來到 tomomai",
+    "description": "在建立帳戶前，請先閱讀並同意我們的政策。",
+    "tldr": {
+      "title": "重點摘要（非法律建議）",
+      "points": [
+        "你擁有資料的所有權，我們絕不會將其販售給第三方",
+        "你的資料將安全地儲存在日本的伺服器上",
+        "資料處理將遵循香港特別行政區的法律",
+        "本專案為開源軟體（AGPL-3.0）",
+        "我們是獨立開發的工具，與 SEGA 無任何關聯"
+      ]
+    },
+    "agreeToTos": "我同意服務條款",
+    "agreeToPrivacy": "我同意隱私權政策",
+    "viewFullText": "查看全文",
+    "cancel": "取消",
+    "agree": "同意"
+  },
   "dashboard": {
     "title": "tomomai ともマイ",
     "description": "與好友一起分享 maimai 遊玩成績",
@@ -536,7 +555,8 @@
     "types": {
       "songs": "歌曲",
       "calculator": "計算",
-      "stats": "統計"
+      "stats": "統計",
+      "posts": "更新日誌"
     },
     "songs": {
       "metadata": {
@@ -597,6 +617,17 @@
       "chartDesigner": "譜面設計者",
       "bpm": "BPM",
       "added": "追加版本"
+    },
+    "posts": {
+      "list": {
+        "title": "更新日誌",
+        "description": "tomomai 的最新更新與變更。",
+        "noPosts": "尚無文章。"
+      },
+      "aiTranslationHint": {
+        "title": "AI 輔助翻譯",
+        "description": "本文由 AI 協助翻譯，內容可能不盡完美。若發現任何錯誤，歡迎協助修正！"
+      }
     },
     "stats": {
       "title": "整體統計",

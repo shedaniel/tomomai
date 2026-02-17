@@ -2,39 +2,47 @@ import { getAllPostsMeta } from "@/lib/posts";
 import { getLocale } from "@/i18n/locale-server";
 import { Metadata } from "next";
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 
-export const metadata: Metadata = {
-  title: "Changelog | tomomai",
-  description: "Latest updates and changes to tomomai.",
-  openGraph: {
-    title: "Changelog",
-    description: "Latest updates and changes to tomomai.",
-    type: "website",
-    url: "/db/posts",
-  },
-  twitter: {
-    card: "summary",
-    title: "Changelog | tomomai",
-    description: "Latest updates and changes to tomomai.",
-  },
-  alternates: {
-    canonical: "/db/posts",
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("db.posts.list");
+  const title = `${t("title")} | tomomai`;
+  const description = t("description");
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title: t("title"),
+      description,
+      type: "website",
+      url: "/db/posts",
+    },
+    twitter: {
+      card: "summary",
+      title,
+      description,
+    },
+    alternates: {
+      canonical: "/db/posts",
+    },
+  };
+}
 
 export default async function PostsPage() {
   const locale = await getLocale();
   const posts = getAllPostsMeta(locale);
+  const t = await getTranslations("db.posts.list");
 
   return (
     <div className="container mx-auto max-w-3xl px-4 py-12">
-      <h1 className="text-3xl font-bold mb-2">Changelog</h1>
+      <h1 className="text-3xl font-bold mb-2">{t("title")}</h1>
       <p className="text-muted-foreground mb-10">
-        Latest updates and changes to tomomai.
+        {t("description")}
       </p>
 
       {posts.length === 0 ? (
-        <p className="text-muted-foreground">No posts yet.</p>
+        <p className="text-muted-foreground">{t("noPosts")}</p>
       ) : (
         <div className="relative border-l-2 border-border pl-8 space-y-10">
           {posts.map((post) => (

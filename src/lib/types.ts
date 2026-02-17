@@ -26,25 +26,31 @@ export interface Snapshot {
 }
 
 // Song data with score information
-export type SongBase = {
+export type MinimalSong = {
   songId: string;
   songName: string;
   artist: string;
   cover: string;
+  type: SongType;
   difficulty: Difficulty;
+}
+
+export type MinimalSongForDisplay = MinimalSong & {
+  levelPrecise: number;
+  achievement: number;
+  fc: FullCombo;
+  fs: FullSync;
+  dxScore: number;
+}
+
+export type SongBase = MinimalSong & {
   level: string;
   levelPrecise: number;
-  type: SongType;
   genre: string;
   addedVersion: VersionId;
 }
 
-export type SongWithScore = SongBase & {
-  achievement: number;
-  dxScore: number;
-  fc: FullCombo;
-  fs: FullSync;
-}
+export type SongWithScore = SongBase & MinimalSongForDisplay
 
 export type SongExtended = SongBase & {
   bpm: number | null;

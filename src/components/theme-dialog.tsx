@@ -18,8 +18,6 @@ interface ThemeDialogProps {
 }
 
 function ThemePreview({ theme, selected, onClick }: { theme: Theme; selected: boolean; onClick: () => void }) {
-  const t = useTranslations();
-
   // Calculate preview colors based on theme values
   const isDark = theme.dark;
 
@@ -57,7 +55,7 @@ function ThemePreview({ theme, selected, onClick }: { theme: Theme; selected: bo
         />
       </div>
       <span className="text-xs font-medium text-center">
-        {t(`theme.themes.${theme.id}`)}
+        {theme.name}
       </span>
     </button>
   );

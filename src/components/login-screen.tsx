@@ -107,7 +107,6 @@ export function LoginScreen({ signupRequirements }: LoginScreenProps) {
         <Card>
           <CardHeader className="text-center">
             <CardTitle className="flex items-center justify-center space-x-2">
-              <Database className="h-6 w-6" />
               <h1>{t('dashboard.title')}</h1>
             </CardTitle>
             <CardDescription>
@@ -174,7 +173,7 @@ export function LoginScreen({ signupRequirements }: LoginScreenProps) {
                   animate={{ opacity: 1, x: 0 }}
                   transition={getTransition({ delay: 0.1 + 0 * STAGGER.slow })}
                 >
-                  {!isChinaRegion() ? t('auth.features.trackScores') : '追踪華立国服的成绩'}
+                  {!isChinaRegion() ? t('auth.features.trackScores') : '追踪华立国服的成绩'}
                 </motion.li>
                 <motion.li
                   initial={{ opacity: 0, x: -10 }}

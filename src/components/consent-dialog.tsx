@@ -12,8 +12,10 @@ import {
 import { Checkbox } from "@/components/animate-ui/components/radix/checkbox";
 import { Button } from "@/components/ui/button";
 import { PolicyDialog } from "@/components/policy-dialog";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronUp, Dot } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { useLocale } from "./providers/locale-provider";
+import { isChinaRegion } from "@/lib/enabled-regions";
 
 interface ConsentDialogProps {
   open: boolean;
@@ -35,6 +37,7 @@ export function ConsentDialog({
   onConsent,
   onCancel,
 }: ConsentDialogProps) {
+  const { locale } = useLocale();
   const t = useTranslations("consent");
   const [tosChecked, setTosChecked] = useState(false);
   const [privacyChecked, setPrivacyChecked] = useState(false);
@@ -66,26 +69,38 @@ export function ConsentDialog({
             <div className="bg-muted/50 p-4 rounded-md">
               <h3 className="text-sm font-semibold mb-2">{t("tldr.title")}</h3>
               <ul className="space-y-1.5 text-xs text-muted-foreground">
-                <li className="flex items-start gap-2">
-                  <span className="text-primary mt-0.5">•</span>
+                <li className="flex items-start gap-1">
+                  <Dot className="text-primary" size={16} strokeWidth={3} fill="true" />
                   <span>{t("tldr.points.0")}</span>
                 </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-primary mt-0.5">•</span>
-                  <span>{t("tldr.points.1")}</span>
+                <li className="flex items-start gap-1">
+                  <Dot className="text-primary" size={16} strokeWidth={3} fill="true" />
+                  <span>{!isChinaRegion() ? t("tldr.points.1") : "你的数据将安全存储在中国大陆境内的服务器上"}</span>
                 </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-primary mt-0.5">•</span>
+                {!isChinaRegion() && (<li className="flex items-start gap-1">
+                  <Dot className="text-primary" size={16} strokeWidth={3} fill="true" />
                   <span>{t("tldr.points.2")}</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-primary mt-0.5">•</span>
+                </li>)}
+                <li className="flex items-start gap-1">
+                  <Dot className="text-primary" size={16} strokeWidth={3} fill="true" />
                   <span>{t("tldr.points.3")}</span>
                 </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-primary mt-0.5">•</span>
-                  <span>{t("tldr.points.4")}</span>
+                <li className="flex items-start gap-1">
+                  <Dot className="text-primary" size={16} strokeWidth={3} fill="true" />
+                  <span>{!isChinaRegion() ? t("tldr.points.4") : "我们是独立工具，与 SEGA 或 华立科技 没有任何关联"}</span>
                 </li>
+                {locale === "zh-CN" && (<li className="flex items-start gap-1">
+                  <Dot className="text-primary" size={16} strokeWidth={3} fill="true" />
+                  {isChinaRegion() ? (
+                    <span>支持华立科技舞萌之覆盖地区<br />原则上仅限中国大陆地区访问</span>
+                  ) : (
+                    <span>支持 maimai 日本版及国际版覆盖地区<br />原则上暂不支持中国大陆地区访问</span>
+                  )}
+                </li>)}
+                {isChinaRegion() && (<li className="flex items-start gap-1">
+                  <Dot className="text-primary" size={16} strokeWidth={3} fill="true" />
+                  <span>国内版 tomomai (同萌) 目前处于内测阶段，部分功能可能与国际版存在差异</span>
+                </li>)}
               </ul>
             </div>
             {/* Terms of Service */}
@@ -163,6 +178,12 @@ export function ConsentDialog({
                 </div>
               )}
             </div>
+
+            {isChinaRegion() && (
+              <div className="text-2xs mt-2">
+                国内版虽然也叫 tomomai，但你可以叫它「同萌」——取其「同我萌 (to-mo-mai)」之意
+              </div>
+            )}
           </div>
 
           <AnimatedDialogFooter className="gap-2">
