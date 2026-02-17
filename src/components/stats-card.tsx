@@ -64,28 +64,14 @@ const FC_ORDER = FC_ENUM.filter(fc => fc !== "none").reverse();
 const FS_ORDER = FS_ENUM.filter(fs => fs !== "none").reverse();
 
 // FC and FS labels
-const FC_LABELS: Record<string, string> = {
-  "fc": "FC",
-  "fc+": "FC+",
-  "ap": "AP",
-  "ap+": "AP+",
-};
-
-const FS_LABELS: Record<string, string> = {
-  "sync": "Sync",
-  "fs": "FS",
-  "fs+": "FS+",
-  "fdx": "FDX",
-  "fdx+": "FDX+",
-};
 
 // Plate types
 type PlateType = "kyoku" | "shou" | "shin" | "maimai";
-const PLATE_INFO: Record<PlateType, { label: string; description: string }> = {
-  kyoku: { label: "極", description: "All FC or above" },
-  shou: { label: "将", description: "All SSS or above" },
-  shin: { label: "神", description: "All AP or above" },
-  maimai: { label: "舞舞", description: "All FDX or above" },
+const PLATE_LABELS: Record<PlateType, string> = {
+  kyoku: "極",
+  shou: "将",
+  shin: "神",
+  maimai: "舞舞",
 };
 
 // Plates Grid Component
@@ -93,14 +79,17 @@ interface PlatesGridProps {
   data: any;
   selectedVersion: string;
   region: Region;
+  snapshotId?: string;
 }
 
-function PlatesGrid({ data, selectedVersion, region }: PlatesGridProps) {
+function PlatesGrid({ data, selectedVersion, region, snapshotId }: PlatesGridProps) {
   const t = useTranslations();
   const [expandedCell, setExpandedCell] = useState<{ plateType: PlateType; difficulty: string } | null>(null);
 
+  const isExpanded = expandedCell !== null && selectedVersion !== "all";
+
   // Fetch songs for expanded cell
-  const { data: plateSongs, isLoading: isSongsLoading } = trpc.user.getPlateSongs.useQuery(
+  const { data: ownPlateSongs, isLoading: ownSongsLoading } = trpc.user.getPlateSongs.useQuery(
     {
       region,
       version: selectedVersion,
@@ -108,9 +97,23 @@ function PlatesGrid({ data, selectedVersion, region }: PlatesGridProps) {
       plateType: expandedCell?.plateType as any,
     },
     {
-      enabled: expandedCell !== null && selectedVersion !== "all",
+      enabled: isExpanded && !snapshotId,
     }
   );
+  const { data: publicPlateSongs, isLoading: publicSongsLoading } = trpc.user.getPublicPlateSongs.useQuery(
+    {
+      snapshotId: snapshotId!,
+      region,
+      version: selectedVersion,
+      difficulty: expandedCell?.difficulty as any,
+      plateType: expandedCell?.plateType as any,
+    },
+    {
+      enabled: isExpanded && !!snapshotId,
+    }
+  );
+  const plateSongs = snapshotId ? publicPlateSongs : ownPlateSongs;
+  const isSongsLoading = snapshotId ? publicSongsLoading : ownSongsLoading;
 
   // Calculate plate progress for a specific version
   const plateProgress = useMemo(() => {
@@ -167,7 +170,7 @@ function PlatesGrid({ data, selectedVersion, region }: PlatesGridProps) {
   if (!plateProgress) {
     return (
       <div className="text-center text-muted-foreground py-8">
-        Please select a specific version to view plate progress
+        {t('playerStats.selectVersionForPlates')}
       </div>
     );
   }
@@ -177,8 +180,9 @@ function PlatesGrid({ data, selectedVersion, region }: PlatesGridProps) {
 
   return (
     <div className="space-y-6">
-      {(Object.keys(PLATE_INFO) as PlateType[]).map((plateType, plateIndex) => {
-        const plateInfo = PLATE_INFO[plateType];
+      {(Object.keys(PLATE_LABELS) as PlateType[]).map((plateType, plateIndex) => {
+        const plateLabel = PLATE_LABELS[plateType];
+        const plateDescription = t(`playerStats.plates.${plateType}`);
 
         return (
           <motion.div
@@ -195,12 +199,12 @@ function PlatesGrid({ data, selectedVersion, region }: PlatesGridProps) {
             <div className="flex items-center gap-2 sm:gap-3">
               <div className={cn(
                 "flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 text-xl sm:text-2xl font-bold bg-muted rounded-sm border-2 flex-shrink-0",
-                plateInfo.label.length === 2 && "text-base sm:text-lg"
+                plateLabel.length === 2 && "text-base sm:text-lg"
               )}>
-                {plateInfo.label}
+                {plateLabel}
               </div>
               <div className="min-w-0">
-                <h4 className="font-semibold text-sm sm:text-base truncate">{plateInfo.description}</h4>
+                <h4 className="font-semibold text-sm sm:text-base truncate">{plateDescription}</h4>
               </div>
             </div>
 
@@ -274,7 +278,7 @@ function PlatesGrid({ data, selectedVersion, region }: PlatesGridProps) {
                       <div className="bg-muted/30 rounded-lg border border-border">
                         <AutoHeight deps={[isSongsLoading, plateSongs]} className="p-3 sm:p-4">
                           <h5 className="text-xs sm:text-sm font-semibold mb-2 sm:mb-3">
-                            Songs not meeting {PLATE_INFO[plateType].description.toLowerCase()}
+                            {t('playerStats.songsNotMeeting', { requirement: t(`playerStats.plates.${plateType}`) })}
                           </h5>
                           {isSongsLoading ? (
                             <div className="flex justify-center py-8">
@@ -288,7 +292,7 @@ function PlatesGrid({ data, selectedVersion, region }: PlatesGridProps) {
                             </div>
                           ) : (
                             <p className="text-center text-muted-foreground py-4">
-                              No songs to display
+                              {t('playerStats.noSongsToDisplay')}
                             </p>
                           )}
                         </AutoHeight>
@@ -455,7 +459,7 @@ export function StatsCard({ region, selectedSnapshotData, snapshotId }: StatsCar
     return (
       <Card>
         <CardContent className="p-8 text-center w-full h-[calc(100vh-20rem)] flex flex-col items-center justify-center">
-          <p className="text-muted-foreground">No data available</p>
+          <p className="text-muted-foreground">{t('playerStats.noDataAvailable')}</p>
         </CardContent>
       </Card>
     );
@@ -464,14 +468,14 @@ export function StatsCard({ region, selectedSnapshotData, snapshotId }: StatsCar
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Player Statistics</CardTitle>
+        <CardTitle>{t('playerStats.title')}</CardTitle>
         <div className="flex flex-col sm:flex-row gap-2 mt-4">
           <Select value={selectedVersion} onValueChange={setSelectedVersion}>
             <SelectTrigger className="w-full sm:w-[200px]">
-              <SelectValue placeholder="Select version" />
+              <SelectValue placeholder={t('playerStats.selectVersion')} />
             </SelectTrigger>
-            <SelectContent label="Select version">
-              <SelectItem value="all">All Versions</SelectItem>
+            <SelectContent label={t('playerStats.selectVersion')}>
+              <SelectItem value="all">{t('playerStats.allVersions')}</SelectItem>
               {availableVersions.map(version => (
                 <SelectItem key={version.id} value={version.id}>
                   {version.name}
@@ -483,10 +487,10 @@ export function StatsCard({ region, selectedSnapshotData, snapshotId }: StatsCar
           {viewMode === "stats" && (
             <Select value={selectedDifficulty} onValueChange={setSelectedDifficulty}>
               <SelectTrigger className="w-full sm:w-[200px]">
-                <SelectValue placeholder="Select difficulty" />
+                <SelectValue placeholder={t('playerStats.selectDifficulty')} />
               </SelectTrigger>
-              <SelectContent label="Select difficulty">
-                <SelectItem value="all">All Difficulties</SelectItem>
+              <SelectContent label={t('playerStats.selectDifficulty')}>
+                <SelectItem value="all">{t('playerStats.allDifficulties')}</SelectItem>
                 {DIFFICULTY_ENUM.map(difficulty => (
                   <SelectItem key={difficulty} value={difficulty}>
                     {t(`common.difficulties.${difficulty}`)}
@@ -507,12 +511,12 @@ export function StatsCard({ region, selectedSnapshotData, snapshotId }: StatsCar
             {viewMode === "plates" ? (
               <>
                 <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Stats
+                {t('playerStats.backToStats')}
               </>
             ) : (
               <>
                 <Award className="h-4 w-4 mr-2" />
-                View Plates Progress
+                {t('playerStats.viewPlatesProgress')}
               </>
             )}
           </Button>
@@ -520,15 +524,15 @@ export function StatsCard({ region, selectedSnapshotData, snapshotId }: StatsCar
       </CardHeader>
       <CardContent className="space-y-8">
         {viewMode === "plates" ? (
-          <PlatesGrid data={data} selectedVersion={selectedVersion} region={region} />
+          <PlatesGrid data={data} selectedVersion={selectedVersion} region={region} snapshotId={snapshotId} />
         ) : (
           <>
             {/* Grades Section */}
             <div className="space-y-4">
-              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Achievement Grades</h3>
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">{t('playerStats.achievementGrades')}</h3>
               {sortedGrades.length === 0 ? (
                 <p className="text-center text-muted-foreground py-8">
-                  No scores match the selected filters
+                  {t('playerStats.noMatchingScores')}
                 </p>
               ) : (
                 sortedGrades.map(([grade, count], index) => {
@@ -570,13 +574,11 @@ export function StatsCard({ region, selectedSnapshotData, snapshotId }: StatsCar
 
             {/* Full Combo Section */}
             <div className="space-y-4">
-              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Full Combo</h3>
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">{t('playerStats.fullCombo')}</h3>
               {FC_ORDER.map((fc, index) => {
                 const count = filteredStats.fc[fc] || 0;
                 const percentage = filteredStats.dbTotal > 0 ? (count / filteredStats.dbTotal) * 100 : 0;
                 const fcColor = FC_COLORS[fc];
-
-                if (count === 0) return null;
 
                 return (
                   <motion.div
@@ -594,7 +596,7 @@ export function StatsCard({ region, selectedSnapshotData, snapshotId }: StatsCar
                         <span
                           className={`inline-flex items-center justify-center w-12 h-6 text-xs font-bold text-white rounded ${fcColor.bg}`}
                         >
-                          {FC_LABELS[fc]}
+                          {fc.toUpperCase()}
                         </span>
                         <span className="text-sm font-medium">
                           {count.toLocaleString()} / {filteredStats.dbTotal.toLocaleString()}
@@ -612,13 +614,11 @@ export function StatsCard({ region, selectedSnapshotData, snapshotId }: StatsCar
 
             {/* Full Sync Section */}
             <div className="space-y-4">
-              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Full Sync</h3>
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">{t('playerStats.fullSync')}</h3>
               {FS_ORDER.map((fs, index) => {
                 const count = filteredStats.fs[fs] || 0;
                 const percentage = filteredStats.dbTotal > 0 ? (count / filteredStats.dbTotal) * 100 : 0;
                 const fsColor = FS_COLORS[fs];
-
-                if (count === 0) return null;
 
                 return (
                   <motion.div
@@ -636,7 +636,7 @@ export function StatsCard({ region, selectedSnapshotData, snapshotId }: StatsCar
                         <span
                           className={`inline-flex items-center justify-center w-12 h-6 text-xs font-bold text-white rounded ${fsColor.bg}`}
                         >
-                          {FS_LABELS[fs]}
+                          {fs.toUpperCase()}
                         </span>
                         <span className="text-sm font-medium">
                           {count.toLocaleString()} / {filteredStats.dbTotal.toLocaleString()}

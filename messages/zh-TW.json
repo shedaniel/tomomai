@@ -313,6 +313,29 @@
     "inProgress": "進行中",
     "completed": "已完成"
   },
+  "playerStats": {
+    "title": "玩家統計",
+    "selectVersion": "選擇版本",
+    "allVersions": "所有版本",
+    "selectDifficulty": "選擇難度",
+    "allDifficulties": "所有難度",
+    "backToStats": "返回統計",
+    "viewPlatesProgress": "查看稱號進度",
+    "achievementGrades": "達成等級",
+    "fullCombo": "Full Combo",
+    "fullSync": "Full Sync",
+    "noDataAvailable": "無可用資料",
+    "noMatchingScores": "沒有符合篩選條件的成績",
+    "selectVersionForPlates": "請選擇特定版本以查看稱號進度",
+    "songsNotMeeting": "未達成 {requirement} 的樂曲",
+    "noSongsToDisplay": "沒有可顯示的樂曲",
+    "plates": {
+      "kyoku": "所有樂曲 FC 以上",
+      "shou": "所有樂曲 SSS 以上",
+      "shin": "所有樂曲 AP 以上",
+      "maimai": "所有樂曲 FDX 以上"
+    }
+  },
   "tokenDialog": {
     "title": "更新 maimai 驗證",
     "japanDescription": "輸入你的 SEGA 帳戶憑證。",

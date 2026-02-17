@@ -3347,4 +3347,89 @@ export const userRouter = router({
       }));
     }),
 
+  getPublicPlateSongs: publicProcedure
+    .input(z.object({
+      snapshotId: z.string(),
+      region: regionSchema,
+      version: z.string(),
+      difficulty: z.enum(["basic", "advanced", "expert", "master"]),
+      plateType: z.enum(["kyoku", "shou", "shin", "maimai"]),
+    }))
+    .query(async ({ input }) => {
+      // Resolve snapshot from publicId, verify profile is published
+      const snapshot = await db
+        .select({ id: userSnapshots.id, gameVersion: userSnapshots.gameVersion })
+        .from(userSnapshots)
+        .innerJoin(user, eq(userSnapshots.userId, user.id))
+        .where(and(
+          eq(userSnapshots.publicId, input.snapshotId),
+          eq(user.publishProfile, true)
+        ))
+        .limit(1);
+
+      if (snapshot.length === 0) {
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Snapshot not found or not public' });
+      }
+
+      const gameVersion = snapshot[0].gameVersion;
+
+      const allSongs = await db
+        .select({
+          songId: songs.id,
+          songName: songs.songName,
+          artist: songs.artist,
+          cover: songs.cover,
+          difficulty: songs.difficulty,
+          levelPrecise: songs.levelPrecise,
+          type: songs.type,
+          achievement: userScores.achievement,
+          fc: userScores.fc,
+          fs: userScores.fs,
+          dxScore: userScores.dxScore,
+        })
+        .from(songs)
+        .leftJoin(
+          userScores,
+          and(
+            eq(userScores.songId, songs.id),
+            eq(userScores.snapshotId, snapshot[0].id)
+          )
+        )
+        .where(
+          and(
+            eq(songs.addedVersion, parseInt(input.version)),
+            eq(songs.difficulty, input.difficulty),
+            eq(songs.region, input.region),
+            eq(songs.gameVersion, gameVersion)
+          )
+        );
+
+      const filteredSongs = allSongs.filter((song) => {
+        const achievement = song.achievement || 0;
+        const fc = song.fc || "none";
+        const fs = song.fs || "none";
+
+        switch (input.plateType) {
+          case "kyoku":
+            return !["fc", "fc+", "ap", "ap+"].includes(fc);
+          case "shou":
+            return achievement < 1000000;
+          case "shin":
+            return !["ap", "ap+"].includes(fc);
+          case "maimai":
+            return !["fdx", "fdx+"].includes(fs);
+          default:
+            return false;
+        }
+      });
+
+      return filteredSongs.map((song) => ({
+        ...song,
+        achievement: song.achievement || 0,
+        fc: song.fc || "none",
+        fs: song.fs || "none",
+        dxScore: song.dxScore || 0,
+      }));
+    }),
+
 });

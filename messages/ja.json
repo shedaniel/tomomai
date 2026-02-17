@@ -313,6 +313,29 @@
     "inProgress": "進行中",
     "completed": "コンプリート"
   },
+  "playerStats": {
+    "title": "プレイヤー統計",
+    "selectVersion": "バージョンを選択",
+    "allVersions": "全バージョン",
+    "selectDifficulty": "難易度を選択",
+    "allDifficulties": "全難易度",
+    "backToStats": "統計に戻る",
+    "viewPlatesProgress": "プレート進捗を表示",
+    "achievementGrades": "達成ランク",
+    "fullCombo": "フルコンボ",
+    "fullSync": "フルシンク",
+    "noDataAvailable": "データがありません",
+    "noMatchingScores": "条件に一致するスコアがありません",
+    "selectVersionForPlates": "プレートの進捗を確認するには、バージョンを指定してください",
+    "songsNotMeeting": "{requirement} 未達成の楽曲",
+    "noSongsToDisplay": "表示する楽曲がありません",
+    "plates": {
+      "kyoku": "全曲 FC 以上",
+      "shou": "全曲 SSS 以上",
+      "shin": "全曲 AP 以上",
+      "maimai": "全曲 FDX 以上"
+    }
+  },
   "tokenDialog": {
     "title": "maimai 認証情報を更新",
     "japanDescription": "SEGAアカウントでログインします。",
