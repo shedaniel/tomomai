@@ -4,6 +4,7 @@ import { isImportant, Pending, PendingSong, unwrapUndefined, value } from "@/ser
 import { type Logger } from "pino";
 import { levenshtein } from "@/lib/utils";
 import { FetchingContextExtended } from "./level-fetcher";
+import deepEqual from "deep-equal";
 
 export type SongKey = `${string}@${SongType}@${Difficulty}`;
 export type FetcherMode = "default" | "only-modify" | "only-fallback";
@@ -45,7 +46,7 @@ export const taker: <T>(log: Logger) => Taker<T> = (log: Logger) => <T>(a: Pendi
   const aImportant = isImportant(av), bImportant = isImportant(bv);
   const aValue = value(av), bValue = value(bv);
   if (aImportant && bImportant) {
-    if (aValue !== bValue) {
+    if (!deepEqual(aValue, bValue)) {
       log.warn(
         { fieldName, aValue, bValue, a, b, song: key(a) },
         `Data mismatch: important field '${fieldName}' has conflicting values`
@@ -54,8 +55,8 @@ export const taker: <T>(log: Logger) => Taker<T> = (log: Logger) => <T>(a: Pendi
 
     return bv;
   } else if (bImportant) {
-    if (aValue !== bValue && !!aValue) {
-      log.info(
+    if (!deepEqual(aValue, bValue) && !!aValue) {
+      log.debug(
         { fieldName, aValue, bValue, a, b, song: key(a) },
         `Data mismatch: important field from B '${fieldName}' has conflicting values`
       );
@@ -63,8 +64,8 @@ export const taker: <T>(log: Logger) => Taker<T> = (log: Logger) => <T>(a: Pendi
 
     return bv;
   } else if (aImportant) {
-    if (aValue !== bValue && !!bValue) {
-      log.info(
+    if (!deepEqual(aValue, bValue) && !!bValue) {
+      log.debug(
         { fieldName, aValue, bValue, a, b, song: key(a) },
         `Data mismatch: important field from A '${fieldName}' has conflicting values`
       );
@@ -162,12 +163,7 @@ export function mergeSongs(
     sink?.onMerge?.(existingSong, song, mergedSong);
   };
 
-  const allSongs = [
-    ...firstSongs.map(song => ({ song, first: true })),
-    ...secondSongs.map(song => ({ song, first: false }))
-  ];
-
-  for (const { song, first } of allSongs) {
+  const processSong = (song: SongWithMode, first: boolean) => {
     const songKey: SongKey = key(song);
     const currentArtist = value(song.artist) || "";
     const currentAddedVersion = versionStr(song.addedVersion);
@@ -255,7 +251,28 @@ export function mergeSongs(
     else {
       childLog.error(`Unknown mode ${songMode} for song ${songKey}`);
     }
-  }
+  };
+
+  // Pass 1: process firstSongs to populate idToEntries
+  for (const song of firstSongs) processSong(song, true);
+
+  // Sort secondSongs so that version-matching songs (matching an existing first-source entry)
+  // are processed before non-matching ones. This prevents a non-matching song from consuming
+  // a first-source entry via the fallback path before the matching song can claim it.
+  const sortedSecondSongs = [...secondSongs].sort((a, b) => {
+    const aKey = key(a);
+    const bKey = key(b);
+    const aVer = versionStr(a.addedVersion);
+    const bVer = versionStr(b.addedVersion);
+    const aCandidates = idToEntries[aKey] || [];
+    const bCandidates = idToEntries[bKey] || [];
+    const aMatches = aCandidates.some(c => c.addedVersion === aVer && (!!c.addedVersion || !!aVer)) ? 0 : 1;
+    const bMatches = bCandidates.some(c => c.addedVersion === bVer && (!!c.addedVersion || !!bVer)) ? 0 : 1;
+    return aMatches - bMatches;
+  });
+
+  // Pass 2: process secondSongs in sorted order
+  for (const song of sortedSecondSongs) processSong(song, false);
 
   return [...songById.values()];
 }

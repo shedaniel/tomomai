@@ -6,16 +6,18 @@ import { Difficulty, Region, SongType } from "@/lib/types";
 import { UpdateSong } from "@/lib/types/update";
 import { mergeSongs, taker, merger, key, MergeSink } from "@/server/services/admin/fetcher-utils";
 import { important, PendingSong, value, Pending } from "@/server/utils/admin/type";
-import { and, eq, inArray, sql, count } from "drizzle-orm";
+import { sendDiscordWebhook } from "@/server/services/admin/discord-webhooks";
+import { and, eq, inArray, count, sql } from "drizzle-orm";
+import { nanoid } from "nanoid";
 import { NextRequest, NextResponse } from "next/server";
 
-type FieldChange = {
+export type FieldChange = {
   field: string;
   oldValue: any;
   newValue: any;
 };
 
-type AddedChange = {
+export type AddedChange = {
   songKey: string;
   songName: string;
   difficulty: Difficulty;
@@ -24,15 +26,16 @@ type AddedChange = {
   artist: string;
 };
 
-type ModifiedChange = {
+export type ModifiedChange = {
   songKey: string;
   songName: string;
   difficulty: Difficulty;
   type: SongType;
   fieldChanges: FieldChange[];
+  dbId: string;
 };
 
-type DeletedChange = {
+export type DeletedChange = {
   songKey: string;
   songName: string;
   difficulty: Difficulty;
@@ -170,7 +173,8 @@ function analyzeChanges(
         songName: result.songName,
         difficulty: result.difficulty,
         type: result.type,
-        fieldChanges
+        fieldChanges,
+        dbId: String(existing.extras?.dbId ?? "")
       });
     } else {
       unchanged.push(key(result));
@@ -195,6 +199,124 @@ function analyzeChanges(
   }
 
   return { added, modified, deleted, unchanged };
+}
+
+type UpdateMode = "noop" | "alter" | "destructive";
+
+function pendingSongToDbValues(song: PendingSong, region: Region, gameVersion: VersionId) {
+  const noteCounts = value(song.noteCounts as Pending<any>);
+  return {
+    publicId: nanoid(),
+    songName: song.songName,
+    artist: value(song.artist as Pending<any>) ?? "",
+    cover: value(song.cover as Pending<any>) ?? "",
+    difficulty: song.difficulty,
+    level: value(song.level as Pending<any>),
+    levelPrecise: value(song.levelPrecise as Pending<any>),
+    type: song.type,
+    genre: value(song.genre as Pending<any>) ?? "",
+    region,
+    gameVersion,
+    addedVersion: value(song.addedVersion as Pending<any>),
+    bpm: value(song.bpm as Pending<any>) ?? null,
+    noteDesigner: value(song.noteDesigner as Pending<any>) ?? null,
+    tapCount: noteCounts?.tap ?? null,
+    holdCount: noteCounts?.hold ?? null,
+    slideCount: noteCounts?.slide ?? null,
+    touchCount: noteCounts?.touch ?? null,
+    breakCount: noteCounts?.break ?? null,
+  };
+}
+
+async function applyChanges(
+  changes: ChangeAnalysis,
+  addedSongs: PendingSong[],
+  mergeEvents: MergeEvent[],
+  region: Region,
+  version: VersionId,
+  mode: UpdateMode
+): Promise<{ added: number; modified: number; deleted: number }> {
+  if (mode === "noop") return { added: 0, modified: 0, deleted: 0 };
+
+  const deletedToApply = mode === "destructive"
+    ? changes.deleted
+    : changes.deleted.filter(d => (d.playRecordCount ?? 0) === 0);
+
+  let appliedAdded = 0;
+  let appliedModified = 0;
+  let appliedDeleted = 0;
+
+  // Update modified songs
+  if (mergeEvents.length > 0) {
+    const modifiedRows = mergeEvents
+      .filter(({ existing }) => existing.extras?.dbId)
+      .map(({ result }) => pendingSongToDbValues(result, region, version));
+
+    const batchSize = 1000;
+    for (let i = 0; i < modifiedRows.length; i += batchSize) {
+      const batch = modifiedRows.slice(i, i + batchSize);
+      await db.insert(songs).values(batch).onConflictDoUpdate({
+        target: [songs.songName, songs.difficulty, songs.type, songs.region, songs.gameVersion, songs.addedVersion],
+        set: {
+          artist: sql`excluded.artist`,
+          cover: sql`excluded.cover`,
+          level: sql`excluded.level`,
+          levelPrecise: sql`excluded."levelPrecise"`,
+          genre: sql`excluded.genre`,
+          addedVersion: sql`excluded."addedVersion"`,
+          bpm: sql`excluded.bpm`,
+          noteDesigner: sql`excluded."noteDesigner"`,
+          tapCount: sql`excluded."tapCount"`,
+          holdCount: sql`excluded."holdCount"`,
+          slideCount: sql`excluded."slideCount"`,
+          touchCount: sql`excluded."touchCount"`,
+          breakCount: sql`excluded."breakCount"`,
+        },
+      });
+      appliedModified += batch.length;
+    }
+  }
+
+  // Insert added songs
+  if (addedSongs.length > 0) {
+    const rows = addedSongs.map(song => pendingSongToDbValues(song, region, version));
+    const batchSize = 1000;
+    for (let i = 0; i < rows.length; i += batchSize) {
+      const batch = rows.slice(i, i + batchSize);
+      await db.insert(songs).values(batch).onConflictDoUpdate({
+        target: [songs.songName, songs.difficulty, songs.type, songs.region, songs.gameVersion, songs.addedVersion],
+        set: {
+          artist: sql`excluded.artist`,
+          cover: sql`excluded.cover`,
+          level: sql`excluded.level`,
+          levelPrecise: sql`excluded."levelPrecise"`,
+          genre: sql`excluded.genre`,
+          addedVersion: sql`excluded."addedVersion"`,
+          bpm: sql`excluded.bpm`,
+          noteDesigner: sql`excluded."noteDesigner"`,
+          tapCount: sql`excluded."tapCount"`,
+          holdCount: sql`excluded."holdCount"`,
+          slideCount: sql`excluded."slideCount"`,
+          touchCount: sql`excluded."touchCount"`,
+          breakCount: sql`excluded."breakCount"`,
+        },
+      });
+      appliedAdded += batch.length;
+    }
+  }
+
+  // Delete songs
+  if (deletedToApply.length > 0) {
+    const batchSize = 1000;
+    for (let i = 0; i < deletedToApply.length; i += batchSize) {
+      const batch = deletedToApply.slice(i, i + batchSize);
+      const batchIds = batch.map(d => BigInt(d.dbId));
+      await db.delete(songs).where(inArray(songs.id, batchIds));
+      appliedDeleted += batch.length;
+    }
+  }
+
+  return { added: appliedAdded, modified: appliedModified, deleted: appliedDeleted };
 }
 
 export async function POST(request: NextRequest) {
@@ -232,6 +354,10 @@ export async function POST(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const region = searchParams.get('region') as Region;
     const versionParam = searchParams.get('version');
+    const updateParam = searchParams.get('update');
+    const updateMode: UpdateMode = (updateParam === "alter" || updateParam === "destructive" || updateParam === "noop")
+      ? updateParam
+      : "noop";
 
     if (!region || (region !== "intl" && region !== "jp")) {
       return NextResponse.json(
@@ -372,7 +498,7 @@ export async function POST(request: NextRequest) {
 
     // Log each added song
     for (const change of changes.added) {
-      log.info({
+      log.trace({
         songKey: change.songKey,
         level: change.level,
         artist: change.artist
@@ -381,7 +507,7 @@ export async function POST(request: NextRequest) {
 
     // Log each modified song
     for (const change of changes.modified) {
-      log.info({
+      log.trace({
         songKey: change.songKey,
         changeCount: change.fieldChanges.length,
         changes: change.fieldChanges
@@ -390,7 +516,7 @@ export async function POST(request: NextRequest) {
 
     // Log each deleted song
     for (const change of changes.deleted) {
-      log.info({
+      log.trace({
         songKey: change.songKey,
         dbId: change.dbId,
         level: change.level,
@@ -399,9 +525,23 @@ export async function POST(request: NextRequest) {
       }, `DELETED: ${change.songKey}`);
     }
 
+    // Apply DB changes if requested
+    const applied = await applyChanges(changes, addedSongs, mergeEvents, region, version, updateMode);
+
+    log.info({ updateMode, applied }, "DB update complete");
+
+    // Send Discord webhook if changes were applied
+    if (updateMode !== "noop") {
+      sendDiscordWebhook(region, changes.added, changes.deleted.filter(d => (d.playRecordCount ?? 0) !== 0), changes.modified).catch(err => {
+        log.error(err, "Failed to send Discord webhook");
+      });
+    }
+
     // Return response
     return NextResponse.json({
       success: true,
+      updateMode,
+      applied,
       statistics: {
         inputSongs: uploadSongs.length,
         dbSongs: dbSongs.length,
