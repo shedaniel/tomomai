@@ -31,6 +31,7 @@
     "@base-ui-components/react": "1.0.0-beta.7",
     "@hookform/resolvers": "^5.2.2",
     "@libsql/client": "^0.15.15",
+    "@logtail/node": "^0.5.6",
     "@logtail/pino": "^0.5.7",
     "@radix-ui/react-alert-dialog": "^1.1.15",
     "@radix-ui/react-dialog": "^1.1.15",

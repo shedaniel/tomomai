@@ -5,11 +5,11 @@ import { withVercelToolbar as withVercelToolbarPlugin } from "@vercel/toolbar/pl
 const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 
 const nextConfig: NextConfig = {
-  serverExternalPackages: ["skia-canvas", "pino", "pino-pretty", "kuromoji", "kuroshiro", "kuroshiro-analyzer-kuromoji", "@logtail/pino"],
+  serverExternalPackages: ["skia-canvas", "pino", "pino-pretty", "kuromoji", "kuroshiro", "kuroshiro-analyzer-kuromoji", "@logtail/node"],
   turbopack: {
     resolveAlias: {
       "pino-pretty": { browser: "./src/lib/empty-module.js" },
-      "@logtail/pino": { browser: "./src/lib/empty-module.js" },
+      "@logtail/node": { browser: "./src/lib/empty-module.js" },
     },
   },
   images: {
@@ -61,7 +61,7 @@ const nextConfig: NextConfig = {
         ...config.resolve.alias,
         './render-image-server': false,
         'pino-pretty': false,
-        '@logtail/pino': false,
+        '@logtail/node': false,
       };
     } else {
       config.externals = [

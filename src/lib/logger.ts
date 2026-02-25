@@ -32,44 +32,56 @@ const createServerLogger = (): Logger => {
   }
 
   const logtailToken = process.env.DEV_LOGTAIL_SOURCE_TOKEN;
-  const targets = [];
+  const streams: { stream: { write: (chunk: string) => void } | NodeJS.WritableStream; level: string }[] = [];
 
   if (process.env.NODE_ENV === "development") {
-    targets.push({
-      target: "pino-pretty",
-      level: "info",
-      options: {
+    const pretty = require("pino-pretty");
+    streams.push({
+      stream: pretty({
         colorize: true,
         translateTime: "SYS:standard",
         ignore: "pid,hostname",
-      },
+      }),
+      level: "info",
     });
   }
 
   if (logtailToken) {
-    targets.push({
-      target: "@logtail/pino",
-      level: "trace",
-      options: {
-        sourceToken: logtailToken,
-        endpoint: process.env.INGESTING_HOST
-          ? `https://${process.env.INGESTING_HOST}`
-          : undefined,
+    const { Logtail } = require("@logtail/node");
+    const logtail = new Logtail(logtailToken, {
+      endpoint: process.env.INGESTING_HOST
+        ? `https://${process.env.INGESTING_HOST}`
+        : undefined,
+    });
+    streams.push({
+      stream: {
+        write(chunk: string) {
+          try {
+            const log = JSON.parse(chunk);
+            const { msg, level, time, ...rest } = log;
+            logtail.log(msg ?? "", levelToString(level), rest);
+          } catch {
+            logtail.log(chunk, "info");
+          }
+        },
       },
+      level: "trace",
     });
   }
 
-  if (targets.length > 0 && typeof pino.transport === "function") {
-    return pino(
-      {
-        level: baseLevel,
-      },
-      pino.transport({ targets })
-    ) as Logger;
+  if (streams.length > 0) {
+    return pino({ level: baseLevel }, pino.multistream(streams)) as Logger;
   }
 
   return pino({ level: process.env.LOG_LEVEL || "info" }) as Logger;
 };
+
+function levelToString(level: number): "debug" | "info" | "warn" | "error" {
+  if (level >= 50) return "error";
+  if (level >= 40) return "warn";
+  if (level >= 20) return "debug";
+  return "info";
+}
 
 const isBrowser = typeof window !== "undefined";
 

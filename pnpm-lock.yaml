@@ -20,6 +20,9 @@ importers:
       '@libsql/client':
         specifier: ^0.15.15
         version: 0.15.15
+      '@logtail/node':
+        specifier: ^0.5.6
+        version: 0.5.6
       '@logtail/pino':
         specifier: ^0.5.7
         version: 0.5.7(pino@10.3.1)
