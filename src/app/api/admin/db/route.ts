@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { getCurrentVersion } from "@/lib/metadata";
+import { getCurrentVersion, VersionId } from "@/lib/metadata";
 import { normalizeName } from "@/lib/name-utils";
 import { splitSongs } from "@/lib/rating-calculator";
 import { songs, userScores, userSnapshots } from "@/lib/db/schema-pg";
@@ -317,7 +317,7 @@ async function updateB50(searchParams: URLSearchParams) {
       levelPrecise: score.levelPrecise,
       type: score.type,
       genre: score.genre,
-      addedVersion: score.addedVersion,
+      addedVersion: score.addedVersion as VersionId,
       achievement: score.achievement,
       dxScore: score.dxScore,
       fc: score.fc,

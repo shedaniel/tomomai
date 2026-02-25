@@ -15,6 +15,7 @@ import { EventsCard } from "./events-card";
 import { RecentSongsCard } from "./recent-songs-card";
 import { DeveloperCard } from "./developer-card";
 import { AlbumCard } from "./album-card";
+import { StatsCard } from "./stats-card";
 import { Flags } from "@/lib/flags";
 import { motion } from "motion/react";
 import { getTransition } from "@/lib/animation-constants";
@@ -27,6 +28,8 @@ interface DataContentProps {
     showPlayCounts?: boolean;
     showPlates?: boolean;
     showEvents?: boolean;
+    showAllScores?: boolean;
+    showScoreDetails?: boolean;
   };
   visitableProfileAt: string | null;
   initialTab?: string;
@@ -41,6 +44,8 @@ export function DataContent({
     showPlayCounts: true,
     showPlates: true,
     showEvents: true,
+    showAllScores: true,
+    showScoreDetails: true,
   },
   visitableProfileAt,
   initialTab,
@@ -54,7 +59,7 @@ export function DataContent({
   const searchParams = useSearchParams();
 
   // Valid tab values
-  const allPossibleTabs = ["info", "stats", "songs", "recent", "recommendations", "plates", "map", "exportImage", "history", "developer", "albums"];
+  const allPossibleTabs = ["info", "stats", "songs", "recent", "recommendations", "map", "exportImage", "history", "developer", "albums"];
 
   // Get initial tab from props (SSR) or search params (client)
   const getInitialTab = () => {
@@ -110,7 +115,7 @@ export function DataContent({
       name: t('dataContent.tabs.stats'),
       value: "stats",
       icon: BarChart,
-      show: flags.statsCard,
+      show: flags.statsCard && (visitedBySelf || !!privacySettings.showAllScores),
     },
     {
       name: t('dataContent.tabs.songs'),
@@ -122,7 +127,7 @@ export function DataContent({
       name: t('dataContent.tabs.recentPlays'),
       value: "recent",
       icon: Clock,
-      show: visitedBySelf,
+      show: visitedBySelf || !!privacySettings.showScoreDetails,
     },
     {
       name: t('dataContent.tabs.recommendations'),
@@ -135,12 +140,6 @@ export function DataContent({
       value: "history",
       icon: TrendingUp,
       show: visitedBySelf && flags.historyCard,
-    },
-    {
-      name: t('dataContent.tabs.plates'),
-      value: "plates",
-      icon: Disc,
-      show: privacySettings.showPlates,
     },
     {
       name: t('dataContent.tabs.albums'),
@@ -221,13 +220,19 @@ export function DataContent({
             />
           </motion.div>
         </TabsContent>
-        {flags.statsCard && (
+        {flags.statsCard && (visitedBySelf || !!privacySettings.showAllScores) && (
           <TabsContent value="stats" className="mt-0 flex-1 min-w-0">
-            <div className="p-8 text-center w-full h-[calc(100vh-20rem)] flex flex-col items-center justify-center">
-              <BarChart className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-              <h3 className="text-lg font-medium mb-2">{t('dataContent.tabs.stats')}</h3>
-              <p className="text-muted-foreground">Coming soon...</p>
-            </div>
+            <motion.div
+              initial={{ opacity: 0, x: 10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={getTransition({ duration: 0.3, ease: [0.4, 0, 0.2, 1] })}
+            >
+              <StatsCard
+                region={region}
+                selectedSnapshotData={selectedSnapshotData}
+                snapshotId={visitedBySelf ? undefined : selectedSnapshotData?.snapshot.id}
+              />
+            </motion.div>
           </TabsContent>
         )}
         <TabsContent value="songs" className="mt-0 flex-1 min-w-0">
@@ -239,11 +244,12 @@ export function DataContent({
             <SongsCard selectedSnapshotData={selectedSnapshotData} />
           </motion.div>
         </TabsContent>
-        {visitedBySelf && (
+        {(visitedBySelf || !!privacySettings.showScoreDetails) && (
           <TabsContent value="recent" className="mt-0 flex-1 min-w-0">
             <RecentSongsCard
               region={region}
               beforeDate={selectedSnapshotData?.snapshot.fetchedAt}
+              snapshotId={visitedBySelf ? undefined : selectedSnapshotData?.snapshot.id}
             />
           </TabsContent>
         )}
@@ -261,22 +267,13 @@ export function DataContent({
             <HistoryCard region={region} />
           </TabsContent>
         )}
-        {privacySettings.showPlates && (
-          <TabsContent value="plates" className="mt-0 flex-1 min-w-0">
-            <div className="p-8 text-center w-full h-[calc(100vh-20rem)] flex flex-col items-center justify-center">
-              <Disc className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-              <h3 className="text-lg font-medium mb-2">{t('dataContent.tabs.plates')}</h3>
-              <p className="text-muted-foreground">Coming soon...</p>
-            </div>
-          </TabsContent>
-        )}
         {privacySettings.showEvents && (
           <TabsContent value="map" className="mt-0 flex-1 min-w-0">
             <EventsCard selectedSnapshotData={selectedSnapshotData} />
           </TabsContent>
         )}
         <TabsContent value="exportImage" className="mt-0 flex-1 min-w-0">
-          <ExportImageCard selectedSnapshotData={selectedSnapshotData} region={region} />
+          <ExportImageCard selectedSnapshotData={selectedSnapshotData} region={region} showLastCredit={visitedBySelf || !!privacySettings.showScoreDetails} />
         </TabsContent>
         {visitedBySelf && (
           <TabsContent value="developer" className="mt-0 flex-1 min-w-0">

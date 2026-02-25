@@ -1,12 +1,14 @@
 "use client";
 
+import { useState } from "react";
 import {
-  Dialog,
   DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { AnimatedDialogContent } from "@/components/ui/animated-dialog";
+import { AnimatedDialog, AnimatedDialogContent } from "@/components/ui/animated-dialog";
+import { PolicyDialog } from "@/components/policy-dialog";
+import { trpc } from "@/lib/trpc-client";
 
 interface AboutDialogProps {
   open: boolean;
@@ -14,8 +16,15 @@ interface AboutDialogProps {
 }
 
 export function AboutDialog({ open, onOpenChange }: AboutDialogProps) {
+  const [showTos, setShowTos] = useState(false);
+  const [showPrivacy, setShowPrivacy] = useState(false);
+
+  const { data: policies } = trpc.user.getPolicies.useQuery(undefined, {
+    enabled: open,
+  });
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <AnimatedDialog open={open} onOpenChange={onOpenChange}>
       <AnimatedDialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>About ともマイ</DialogTitle>
@@ -60,6 +69,27 @@ export function AboutDialog({ open, onOpenChange }: AboutDialogProps) {
             </div>
           </div>
 
+          <div>
+            <h3 className="text-lg font-semibold mb-3">Legal</h3>
+            <div className="space-y-2 text-sm">
+              <button
+                onClick={() => setShowTos(true)}
+                className="text-blue-600 hover:underline text-left"
+                disabled={!policies}
+              >
+                Terms of Service
+              </button>
+              <br />
+              <button
+                onClick={() => setShowPrivacy(true)}
+                className="text-blue-600 hover:underline text-left"
+                disabled={!policies}
+              >
+                Privacy Policy
+              </button>
+            </div>
+          </div>
+
           <div className="pt-4 border-t">
             <p className="text-center text-sm text-muted-foreground">
               Built with ❤️ for the maimai community
@@ -67,6 +97,24 @@ export function AboutDialog({ open, onOpenChange }: AboutDialogProps) {
           </div>
         </div>
       </AnimatedDialogContent>
-    </Dialog>
+
+      {/* Policy dialogs */}
+      {policies && (
+        <>
+          <PolicyDialog
+            open={showTos}
+            onOpenChange={setShowTos}
+            title="Terms of Service"
+            content={policies.tos.content}
+          />
+          <PolicyDialog
+            open={showPrivacy}
+            onOpenChange={setShowPrivacy}
+            title="Privacy Policy"
+            content={policies.privacy.content}
+          />
+        </>
+      )}
+    </AnimatedDialog>
   );
 }

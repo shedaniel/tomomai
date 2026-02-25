@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Locale, setLocaleCookie, getLocaleCookie } from '@/i18n/locale';
+import { isChinaRegion } from '@/lib/enabled-regions';
 
 interface LocaleContextType {
   locale: Locale;
@@ -43,6 +44,12 @@ export function LocaleProvider({ children, initialLocale }: LocaleProviderProps)
 }
 
 export function useLocale() {
+  if (isChinaRegion()) {
+    return {
+      locale: 'zh-CN',
+      setLocale: () => { }
+    }
+  }
   const context = useContext(LocaleContext);
   if (context === undefined) {
     throw new Error('useLocale must be used within a LocaleProvider');

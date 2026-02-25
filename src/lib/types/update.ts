@@ -19,10 +19,9 @@ type ParsedSong = {
   songName: string;
   level: Level;
   musicType: SongType;
-  difficulty: string;
+  difficulty: Difficulty;
   inputValue: string;
   inputName: string;
-  difficultyNumber: number;
   version: number;
   index: number;
 }
@@ -35,7 +34,7 @@ type OfficialSong = {
   lev_bas?: Level;
   lev_adv?: Level;
   lev_exp?: Level;
-  lev_mas?: string;
+  lev_mas?: Level;
   lev_remas?: Level;
   lev_utage?: Level;
   dx_lev_bas?: Level;

@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { trpc } from "@/lib/trpc-client";
 import { Region } from "@/lib/types";
 import { cn, createSafeMaimaiImageUrl } from "@/lib/utils";
-import { Images, Loader2, AlertCircle, Calendar, MapPin, Music, HardDrive, Info } from "lucide-react";
+import { Images, Loader2, AlertCircle, Calendar, MapPin, Music, HardDrive, Info, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { useState, useEffect, useRef, useCallback } from "react";
@@ -13,8 +13,20 @@ import { AppRouter } from "@/server/routers/_app";
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 import { renderLevelPrecise } from "@/lib/name-utils";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { AnimatedDialogContent } from "@/components/ui/animated-dialog";
+import { DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AnimatedDialog, AnimatedDialogContent } from "@/components/ui/animated-dialog";
+import {
+  AnimatedAlertDialog,
+  AnimatedAlertDialogAction,
+  AnimatedAlertDialogCancel,
+  AnimatedAlertDialogContent,
+  AnimatedAlertDialogDescription,
+  AnimatedAlertDialogFooter,
+  AnimatedAlertDialogHeader,
+  AnimatedAlertDialogTitle,
+} from "@/components/ui/animated-alert-dialog";
+import { Checkbox } from "@/components/animate-ui/components/radix/checkbox";
+import { toast } from "sonner";
 
 interface AlbumCardProps {
   region: Region;
@@ -62,6 +74,49 @@ export function AlbumCard({ region }: AlbumCardProps) {
   }, [hasMore, isFetching]);
 
   const sentinelRef = useInfiniteScroll(loadMore, hasMore && !isFetching);
+
+  const [albumToDelete, setAlbumToDelete] = useState<string | null>(null);
+  const [showDialog, setShowDialog] = useState(false);
+  const [dontAskAgain, setDontAskAgain] = useState(false);
+
+  const skipConfirmKey = "album-delete-skip-confirm";
+
+  const utils = trpc.useUtils();
+
+  const deleteAlbumMutation = trpc.user.deleteAlbum.useMutation({
+    onSuccess: (_data, variables) => {
+      setAlbums(prev => prev.filter(a => a.id !== variables.albumId));
+      utils.user.getUserAlbums.invalidate();
+      toast.success(t('deleteSuccess'));
+    },
+    onError: () => {
+      toast.error(t('deleteFailed'));
+    },
+  });
+
+  const handleDeleteClick = (albumId: string) => {
+    const skipDate = localStorage.getItem(skipConfirmKey);
+    const today = new Date().toISOString().split('T')[0];
+    if (skipDate === today) {
+      deleteAlbumMutation.mutate({ albumId });
+    } else {
+      setAlbumToDelete(albumId);
+      setDontAskAgain(false);
+      setShowDialog(true);
+    }
+  };
+
+  const handleConfirmDelete = () => {
+    if (dontAskAgain) {
+      const today = new Date().toISOString().split('T')[0];
+      localStorage.setItem(skipConfirmKey, today);
+    }
+    if (albumToDelete) {
+      deleteAlbumMutation.mutate({ albumId: albumToDelete });
+    }
+    setShowDialog(false);
+    setAlbumToDelete(null);
+  };
 
   if (isLoading && offset === 0) {
     return (
@@ -136,7 +191,7 @@ export function AlbumCard({ region }: AlbumCardProps) {
           </div>
           <div className="flex items-center gap-3">
             {data?.storage && (
-              <Dialog>
+              <AnimatedDialog>
                 <DialogTrigger asChild>
                   <Button variant="outline" size="sm" className="gap-2">
                     <HardDrive className="h-4 w-4" />
@@ -205,7 +260,7 @@ export function AlbumCard({ region }: AlbumCardProps) {
                     )}
                   </div>
                 </AnimatedDialogContent>
-              </Dialog>
+              </AnimatedDialog>
             )}
             {albums.length > 0 && (
               <span className="text-sm font-normal text-muted-foreground">
@@ -296,17 +351,28 @@ export function AlbumCard({ region }: AlbumCardProps) {
                 </div>
 
                 {/* Metadata */}
-                <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                  <div className="flex items-center gap-1">
-                    <Calendar className="h-3 w-3" />
-                    <span>{takenAt.toLocaleDateString()} {takenAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                  </div>
-                  {album.venue && (
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <div className="flex flex-wrap items-center gap-2 flex-1 min-w-0">
                     <div className="flex items-center gap-1">
-                      <MapPin className="h-3 w-3" />
-                      <span className="truncate max-w-[200px]">{album.venue}</span>
+                      <Calendar className="h-3 w-3" />
+                      <span>{takenAt.toLocaleDateString()} {takenAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                     </div>
-                  )}
+                    {album.venue && (
+                      <div className="flex items-center gap-1">
+                        <MapPin className="h-3 w-3" />
+                        <span className="truncate max-w-[200px]">{album.venue}</span>
+                      </div>
+                    )}
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0 shrink-0 text-muted-foreground hover:text-destructive"
+                    onClick={() => handleDeleteClick(album.id)}
+                    disabled={deleteAlbumMutation.isPending}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
                 </div>
               </div>
             );
@@ -320,6 +386,33 @@ export function AlbumCard({ region }: AlbumCardProps) {
           )}
         </div>
       </CardContent>
+
+      <AnimatedAlertDialog open={showDialog} onOpenChange={setShowDialog}>
+        <AnimatedAlertDialogContent>
+          <AnimatedAlertDialogHeader>
+            <AnimatedAlertDialogTitle>{t('deleteTitle')}</AnimatedAlertDialogTitle>
+            <AnimatedAlertDialogDescription>
+              {t('deleteDescription')}
+            </AnimatedAlertDialogDescription>
+          </AnimatedAlertDialogHeader>
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="dont-ask-again"
+              checked={dontAskAgain}
+              onCheckedChange={(checked) => setDontAskAgain(checked === true)}
+            />
+            <label htmlFor="dont-ask-again" className="text-sm cursor-pointer select-none">
+              {t('dontAskAgain')}
+            </label>
+          </div>
+          <AnimatedAlertDialogFooter>
+            <AnimatedAlertDialogCancel>{t('cancel')}</AnimatedAlertDialogCancel>
+            <AnimatedAlertDialogAction onClick={handleConfirmDelete}>
+              {t('delete')}
+            </AnimatedAlertDialogAction>
+          </AnimatedAlertDialogFooter>
+        </AnimatedAlertDialogContent>
+      </AnimatedAlertDialog>
     </Card>
   );
 }

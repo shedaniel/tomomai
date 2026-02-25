@@ -163,7 +163,6 @@
       "songs": "Songs",
       "recentPlays": "Recent Plays",
       "recommendations": "Recommended",
-      "plates": "Plates",
       "map": "Events",
       "exportImage": "Export Image",
       "history": "History"
@@ -546,6 +545,12 @@
       "region": {
         "intl": "International",
         "jp": "Japan"
+      }
+    },
+    "posts": {
+      "dialog": {
+        "dismiss": "Dismiss",
+        "readMore": "Read More"
       }
     }
   },

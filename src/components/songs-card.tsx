@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { SongWithRating, splitSongs } from "@/lib/rating-calculator";
-import { SnapshotWithSongs } from "@/lib/types";
+import { MinimalSong, MinimalSongForDisplay, SnapshotWithSongs } from "@/lib/types";
 import { cn, createSafeMaimaiImageUrl } from "@/lib/utils";
 import { LayoutGrid, LayoutList, Menu, Plus, Search, TrendingUp } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -295,7 +295,7 @@ function CompactSongSection({ title, songs, count, t, sum, average, visibleCount
 }
 
 // Component for rendering individual song cards in grid view
-const SongGridCard = forwardRef<HTMLDivElement, { song: SongWithRating } & React.HTMLAttributes<HTMLDivElement>>(({ song, ...props }, ref) => {
+export const SongGridCard = forwardRef<HTMLDivElement, { song: MinimalSongForDisplay } & React.HTMLAttributes<HTMLDivElement>>(({ song, ...props }, ref) => {
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const card = e.currentTarget;
     const rect = card.getBoundingClientRect();
@@ -428,7 +428,7 @@ const SongGridCard = forwardRef<HTMLDivElement, { song: SongWithRating } & React
                 </span>
               </div>
               <span className="2xs:max-xs:text-sm text-right text-lg font-bold font-mono drop-shadow-md leading-none align-bottom">
-                {song.rating}
+                {"rating" in song ? song.rating as number : ''}
               </span>
             </div>
           </div>

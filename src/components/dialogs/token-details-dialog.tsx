@@ -1,12 +1,11 @@
 "use client";
 
 import {
-  Dialog,
-  DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { AnimatedDialog, AnimatedDialogContent } from "@/components/ui/animated-dialog";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { createTRPCClient, httpBatchLink } from '@trpc/client';
 import type { AppRouter } from '@/server/routers/_app';
@@ -108,8 +107,8 @@ export function TokenDetailsDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl sm:max-w-4xl max-h-[80vh] flex flex-col">
+    <AnimatedDialog open={open} onOpenChange={onOpenChange}>
+      <AnimatedDialogContent className="max-w-4xl sm:max-w-4xl max-h-[80vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>Token Details</DialogTitle>
           <DialogDescription>
@@ -182,7 +181,7 @@ export function TokenDetailsDialog({
             </div>
           )}
         </div>
-      </DialogContent>
-    </Dialog>
+      </AnimatedDialogContent>
+    </AnimatedDialog>
   );
 }

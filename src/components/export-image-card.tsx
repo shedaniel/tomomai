@@ -121,9 +121,10 @@ function ImagePanel({
 interface ExportImageCardProps {
   selectedSnapshotData: SnapshotWithSongs;
   region: Region;
+  showLastCredit?: boolean;
 }
 
-export function ExportImageCard({ selectedSnapshotData, region }: ExportImageCardProps) {
+export function ExportImageCard({ selectedSnapshotData, region, showLastCredit = true }: ExportImageCardProps) {
   const t = useTranslations();
 
   // Export image state
@@ -135,7 +136,7 @@ export function ExportImageCard({ selectedSnapshotData, region }: ExportImageCar
 
   // Last credit image state
   const [lastCreditImageUrl, setLastCreditImageUrl] = useState<string>(
-    `/api/last-credit?region=${region}&beforeDate=${selectedSnapshotData.snapshot.fetchedAt}`
+    `/api/last-credit?region=${region}&beforeDate=${selectedSnapshotData.snapshot.fetchedAt}&snapshotId=${selectedSnapshotData.snapshot.id}`
   );
   const [lastCreditImageKey, setLastCreditImageKey] = useState(0);
   const [lastCreditIsLoading, setLastCreditIsLoading] = useState(true);
@@ -155,13 +156,13 @@ export function ExportImageCard({ selectedSnapshotData, region }: ExportImageCar
   const handleLastCreditRefresh = () => {
     setLastCreditIsLoading(true);
     setLastCreditImageKey(prev => prev + 1);
-    setLastCreditImageUrl(`/api/last-credit?region=${region}&beforeDate=${selectedSnapshotData.snapshot.fetchedAt}&t=${Date.now()}`);
+    setLastCreditImageUrl(`/api/last-credit?region=${region}&beforeDate=${selectedSnapshotData.snapshot.fetchedAt}&snapshotId=${selectedSnapshotData.snapshot.id}&t=${Date.now()}`);
   };
 
   const handleLastCreditRefreshFast = () => {
     setLastCreditIsLoading(true);
     setLastCreditImageKey(prev => prev + 1);
-    setLastCreditImageUrl(`/api/last-credit?region=${region}&beforeDate=${selectedSnapshotData.snapshot.fetchedAt}&scale=1&t=${Date.now()}`);
+    setLastCreditImageUrl(`/api/last-credit?region=${region}&beforeDate=${selectedSnapshotData.snapshot.fetchedAt}&snapshotId=${selectedSnapshotData.snapshot.id}&scale=1&t=${Date.now()}`);
   };
 
   return (
@@ -185,17 +186,19 @@ export function ExportImageCard({ selectedSnapshotData, region }: ExportImageCar
             onRefreshFast={handleExportRefreshFast}
             onLoad={() => setExportIsLoading(false)}
           />
-          <ImagePanel
-            imageUrl={lastCreditImageUrl}
-            imageKey={lastCreditImageKey}
-            isLoading={lastCreditIsLoading}
-            isDownloading={false}
-            title="Last Credit"
-            fileName={`maimai-last-credit-${selectedSnapshotData.snapshot.displayName || 'export'}.png`}
-            onRefresh={handleLastCreditRefresh}
-            onRefreshFast={handleLastCreditRefreshFast}
-            onLoad={() => setLastCreditIsLoading(false)}
-          />
+          {showLastCredit && (
+            <ImagePanel
+              imageUrl={lastCreditImageUrl}
+              imageKey={lastCreditImageKey}
+              isLoading={lastCreditIsLoading}
+              isDownloading={false}
+              title="Last Credit"
+              fileName={`maimai-last-credit-${selectedSnapshotData.snapshot.displayName || 'export'}.png`}
+              onRefresh={handleLastCreditRefresh}
+              onRefreshFast={handleLastCreditRefreshFast}
+              onLoad={() => setLastCreditIsLoading(false)}
+            />
+          )}
         </div>
       </CardContent>
     </Card>

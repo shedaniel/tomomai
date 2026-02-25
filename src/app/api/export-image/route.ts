@@ -7,6 +7,7 @@ import type { SnapshotWithSongs } from '@/lib/types';
 import { and, eq, lt } from 'drizzle-orm';
 import { NextRequest, NextResponse } from 'next/server';
 import { Image, loadImage } from 'skia-canvas';
+import { VersionId } from '@/lib/metadata';
 
 export const dynamic = "force-dynamic";
 
@@ -83,7 +84,8 @@ async function prepareData(snapshotPublicId: string): Promise<{
   const data: SnapshotWithSongs<SongForRender> = {
     snapshot: {
       ...snapshot[0],
-      id: snapshot[0].publicId, // Use publicId as the external-facing id
+      id: snapshot[0].publicId, // Use publicId as the external-facing id,
+      gameVersion: snapshot[0].gameVersion as VersionId,
     },
     songs: songsWithScores,
   };

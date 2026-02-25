@@ -10,17 +10,33 @@ export function AuthHandler() {
   // Handle Better Auth error redirects and invitation success
   useEffect(() => {
     const error = searchParams.get('error');
-    const isSignupError = error === 'unable_to_create_user';
-    const isAuthError = error === 'auth_error';
 
-    if (isSignupError) {
-      toast.error("Sign up is currently disabled. Only existing users can log in.");
-      // Clean up the URL
-      window.history.replaceState({}, '', '/');
-    } else if (isAuthError) {
-      toast.error("An error occurred during authentication. Please try again.");
-      // Clean up the URL
-      window.history.replaceState({}, '', '/');
+    if (error) {
+      let errorMessage: string | null = null;
+
+      switch (error) {
+        case 'unable_to_create_user':
+          errorMessage = "Sign up is currently disabled. Only existing users can log in.";
+          break;
+        case 'auth_error':
+          errorMessage = "An error occurred during authentication. Please try again.";
+          break;
+        case 'signup_disabled':
+          errorMessage = "Sign up disabled or no account found, please first sign up!";
+          break;
+        case 'unable_to_get_user_info':
+          errorMessage = "Failed to get your user info!";
+          break;
+        default:
+          errorMessage = error;
+          break;
+      }
+
+      if (errorMessage) {
+        toast.error(errorMessage);
+        // Clean up the URL
+        window.history.replaceState({}, '', '/');
+      }
     } else {
       // Check if there's a pending invitation that was just used
       const cookies = document.cookie.split(';').reduce((acc, cookie) => {

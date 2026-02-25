@@ -1,13 +1,12 @@
 "use client";
 
 import {
-  Dialog,
-  DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { AnimatedDialog, AnimatedDialogContent } from "@/components/ui/animated-dialog";
+import { useCallback, useEffect, useState } from "react";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Button } from "../ui/button";
@@ -24,6 +23,7 @@ export function AdminDialog({ open, onOpenChange }: AdminDialogProps) {
   const [adminToken, setAdminToken] = useState("");
   const [maimaiToken, setMaimaiToken] = useState("");
   const [fallbackSongs, setFallbackSongs] = useState<object[]>([]);
+  const [newSongs, setNewSongs] = useState<object[]>([]);
   const [consoleLog, setConsoleLog] = useState("Welcome to the admin panel!\n");
   const [usersBrowserOpen, setUsersBrowserOpen] = useState(false);
 
@@ -143,6 +143,155 @@ export function AdminDialog({ open, onOpenChange }: AdminDialogProps) {
     });
   }
 
+  function handleFetchNewSongs(region: "intl" | "jp") {
+    appendConsoleLog("Fetching new songs for region " + region + "...");
+    const maimaiTokenEncoded = encodeURIComponent(maimaiToken);
+    fetch(`/api/admin/update_new?region=${region}&token=${maimaiTokenEncoded}`, {
+      method: "GET",
+      headers: { "Authorization": "Bearer " + adminToken }
+    }).then(async data => {
+      appendConsoleLog(`Response ${data.status} ${data.statusText}:`);
+      const text = await data.text();
+      try {
+        const json = JSON.parse(text);
+        if (json.success) {
+          appendConsoleLog(`New songs fetched successfully: ${json.records.length} songs`);
+          setNewSongs(json.records);
+        } else {
+          appendConsoleLog(JSON.stringify(json, null, 2));
+        }
+      } catch (_) {
+        appendConsoleLog(text);
+      }
+    }).catch(error => {
+      appendConsoleLog("Error: " + error.message);
+    });
+  }
+
+  function handlePreviewChanges(region: "intl" | "jp") {
+    if (newSongs.length === 0) {
+      appendConsoleLog("Error: No new songs loaded. Please fetch songs first.");
+      return;
+    }
+
+    const version = region === "intl" ? intlVersion : jpVersion;
+    appendConsoleLog(`Previewing changes for ${region} v${version} (${newSongs.length} songs)...`);
+
+    fetch(`/api/admin/upload?region=${region}&version=${version}`, {
+      method: "POST",
+      headers: {
+        "Authorization": "Bearer " + adminToken,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ songs: newSongs }),
+    }).then(async data => {
+      appendConsoleLog(`Response ${data.status} ${data.statusText}:`);
+      const text = await data.text();
+      try {
+        const json = JSON.parse(text);
+        if (json.success) {
+          appendConsoleLog("=== PREVIEW RESULTS ===");
+          appendConsoleLog(`Statistics:`);
+          appendConsoleLog(`  Input songs: ${json.statistics.inputSongs}`);
+          appendConsoleLog(`  DB songs: ${json.statistics.dbSongs}`);
+          appendConsoleLog(`  Merged songs: ${json.statistics.mergedSongs}`);
+          appendConsoleLog(`  Added: ${json.statistics.added}`);
+          appendConsoleLog(`  Modified: ${json.statistics.modified}`);
+          appendConsoleLog(`  Deleted: ${json.statistics.deleted}`);
+          appendConsoleLog(`  Unchanged: ${json.statistics.unchanged}`);
+
+          if (json.changes.deleted.length > 0) {
+            appendConsoleLog(`\nDeleted songs (${json.changes.deleted.length}):`);
+            json.changes.deleted.forEach((song: any) => {
+              const playCount = song.playRecordCount != null ? ` | ${song.playRecordCount} plays` : "";
+              appendConsoleLog(`  - ${song.songKey} | ${song.level} | ${song.artist} (dbId: ${song.dbId})${playCount}`);
+            });
+          }
+
+          if (json.changes.added.length > 0) {
+            appendConsoleLog(`\nAdded songs (${json.changes.added.length}):`);
+            json.changes.added.forEach((song: any) => {
+              appendConsoleLog(`  + ${song.songKey} | ${song.level} | ${song.artist}`);
+            });
+          }
+
+          if (json.changes.modified.length > 0) {
+            // Group changes by field type
+            const changesByField: Record<string, Array<{ songKey: string; oldValue: any; newValue: any; levelPreciseOld?: any; levelPreciseNew?: any }>> = {};
+
+            json.changes.modified.forEach((song: any) => {
+              const levelChange = song.fieldChanges.find((c: any) => c.field === "level");
+              const levelPreciseChange = song.fieldChanges.find((c: any) => c.field === "levelPrecise");
+
+              // Handle level and levelPrecise together
+              if (levelChange || levelPreciseChange) {
+                if (!changesByField["level"]) changesByField["level"] = [];
+                changesByField["level"].push({
+                  songKey: song.songKey,
+                  oldValue: levelChange?.oldValue,
+                  newValue: levelChange?.newValue,
+                  levelPreciseOld: levelPreciseChange?.oldValue,
+                  levelPreciseNew: levelPreciseChange?.newValue
+                });
+              }
+
+              // Handle other fields separately
+              song.fieldChanges.forEach((change: any) => {
+                if (change.field !== "level" && change.field !== "levelPrecise") {
+                  if (!changesByField[change.field]) changesByField[change.field] = [];
+                  changesByField[change.field].push({
+                    songKey: song.songKey,
+                    oldValue: change.oldValue,
+                    newValue: change.newValue
+                  });
+                }
+              });
+            });
+
+            appendConsoleLog(`\nModified songs (${json.changes.modified.length}) grouped by field:\n`);
+
+            // Display level changes first (with levelPrecise)
+            if (changesByField["level"]) {
+              appendConsoleLog(`Level Changes (${changesByField["level"].length}):`);
+              changesByField["level"].forEach((change: any) => {
+                let msg = `  ${change.songKey}`;
+                if (change.oldValue !== undefined || change.newValue !== undefined) {
+                  msg += ` | Level: ${change.oldValue || "?"} → ${change.newValue || "?"}`;
+                }
+                if (change.levelPreciseOld !== undefined || change.levelPreciseNew !== undefined) {
+                  msg += ` | Precise: ${change.levelPreciseOld || "?"} → ${change.levelPreciseNew || "?"}`;
+                }
+                appendConsoleLog(msg);
+              });
+              appendConsoleLog("");
+            }
+
+            // Display other field changes
+            const otherFields = Object.keys(changesByField).filter(f => f !== "level").sort();
+            for (const field of otherFields) {
+              const changes = changesByField[field];
+              appendConsoleLog(`${field.charAt(0).toUpperCase() + field.slice(1)} Changes (${changes.length}):`);
+              changes.forEach((change: any) => {
+                const oldVal = typeof change.oldValue === "object" ? JSON.stringify(change.oldValue) : change.oldValue;
+                const newVal = typeof change.newValue === "object" ? JSON.stringify(change.newValue) : change.newValue;
+                appendConsoleLog(`  ${change.songKey} | ${oldVal} → ${newVal}`);
+              });
+              appendConsoleLog("");
+            }
+          }
+
+          appendConsoleLog("=== END PREVIEW ===");
+        } else {
+          appendConsoleLog(JSON.stringify(json, null, 2));
+        }
+      } catch (_) {
+        appendConsoleLog(text);
+      }
+    }).catch(error => {
+      appendConsoleLog("Error: " + error.message);
+    });
+  }
+
   function handleCacheImages() {
     appendConsoleLog("Caching images...");
     fetch(`/api/admin/cache_images`, {
@@ -169,8 +318,8 @@ export function AdminDialog({ open, onOpenChange }: AdminDialogProps) {
 
   return (
     <>
-      <Dialog open={open} onOpenChange={handleAdminDialogChange}>
-        <DialogContent className={cn("max-w-2xl max-h-[80vh] overflow-y-auto transition-[opacity,scale] duration-200", usersBrowserOpen ? "opacity-70 scale-95" : "")}>
+      <AnimatedDialog open={open} onOpenChange={handleAdminDialogChange}>
+        <AnimatedDialogContent className={cn("max-w-2xl max-h-[80vh] overflow-y-auto transition-[opacity,scale] duration-200", usersBrowserOpen ? "opacity-70 scale-95" : "")}>
           <DialogHeader>
             <DialogTitle>ともマイ Admin Panel</DialogTitle>
             <DialogDescription>
@@ -279,6 +428,56 @@ export function AdminDialog({ open, onOpenChange }: AdminDialogProps) {
             </div>
 
             <div className="grid gap-2">
+              <Label>Fetch New Songs from Pipeline</Label>
+              <span className="text-sm text-muted-foreground">
+                This will fetch songs using the full pipeline (scraper, dxdata, etc.).
+                <br />
+                Current new songs: {newSongs.length}
+              </span>
+              <div className="grid gap-2 grid-cols-2">
+                <Button
+                  id="fetchIntlNewSongs"
+                  variant="outline"
+                  onClick={() => handleFetchNewSongs("intl")}
+                >
+                  Fetch International (v{intlVersion})
+                </Button>
+                <Button
+                  id="fetchJpNewSongs"
+                  variant="outline"
+                  onClick={() => handleFetchNewSongs("jp")}
+                >
+                  Fetch Japan (v{jpVersion})
+                </Button>
+              </div>
+            </div>
+
+            <div className="grid gap-2">
+              <Label>Preview Changes</Label>
+              <span className="text-sm text-muted-foreground">
+                Preview what changes would be made to the database without actually updating it.
+              </span>
+              <div className="grid gap-2 grid-cols-2">
+                <Button
+                  id="previewIntlChanges"
+                  variant="outline"
+                  onClick={() => handlePreviewChanges("intl")}
+                  disabled={newSongs.length === 0}
+                >
+                  Preview International (v{intlVersion})
+                </Button>
+                <Button
+                  id="previewJpChanges"
+                  variant="outline"
+                  onClick={() => handlePreviewChanges("jp")}
+                  disabled={newSongs.length === 0}
+                >
+                  Preview Japan (v{jpVersion})
+                </Button>
+              </div>
+            </div>
+
+            <div className="grid gap-2">
               <Label>Update Database in addition with fallback songs</Label>
               <div className="grid gap-2 grid-cols-2">
                 <Button
@@ -319,8 +518,8 @@ export function AdminDialog({ open, onOpenChange }: AdminDialogProps) {
               </p>
             </div>
           </div>
-        </DialogContent>
-      </Dialog>
+        </AnimatedDialogContent>
+      </AnimatedDialog>
 
       <UsersBrowserDialog
         open={usersBrowserOpen}

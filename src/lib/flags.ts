@@ -57,9 +57,9 @@ export const flagDefinitions: Record<keyof Flags, FlagDefinition> = {
   },
   statsCard: {
     key: "statsCard",
-    defaultValue: false,
-    userSelectable: false,
-    decide: async () => false,
+    defaultValue: true,
+    userSelectable: true,
+    decide: async () => true,
   },
   platesCard: {
     key: "platesCard",

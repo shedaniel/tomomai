@@ -11,24 +11,18 @@ import { useTranslations } from "next-intl";
 import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { Dialog, DialogContent, DialogTrigger } from "./ui/dialog";
+import { DialogTrigger } from "./ui/dialog";
+import { AnimatedDialog, AnimatedDialogContent } from "./ui/animated-dialog";
 import { SongChartDialogContent } from "./db/songs/song-detail-dialog";
-import { Difficulty, Region, SongType } from "@/lib/types";
+import { Difficulty, MinimalSong, Region, SongType } from "@/lib/types";
 import { getChartsByDifficulty, getChartScores } from "./db/songs/song-detail-content";
 import { UserScore } from "./db/songs/types";
 import { useMediaQuery } from "@/hooks/use-media-query";
-import { Drawer, DrawerContent, DrawerTrigger, DrawerHeader, DrawerTitle, DrawerDescription, DrawerFooter, DrawerClose } from "@/components/ui/drawer";
+import { Drawer, DrawerContent, DrawerTrigger, DrawerHeader, DrawerTitle, DrawerDescription } from "@/components/ui/drawer";
 
 interface SongHoverCardProps {
   children: React.ReactNode;
-  song: {
-    songId: string;
-    songName: string;
-    artist: string;
-    cover: string;
-    type: SongType;
-    difficulty: Difficulty;
-  };
+  song: MinimalSong;
   side?: "top" | "bottom" | "left" | "right";
   className?: string;
 }
@@ -63,7 +57,7 @@ function SongDetailDialog({ songName, type, difficulty }: {
   }, [charts, songDetails?.userScores]);
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <AnimatedDialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button
           className="w-full h-8 text-xs"
@@ -73,7 +67,7 @@ function SongDetailDialog({ songName, type, difficulty }: {
           {t('db.songs.detail.viewCharts')}
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <AnimatedDialogContent>
         {isLoading ? (
           <div className="flex items-center justify-center py-20">
             <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
@@ -81,8 +75,8 @@ function SongDetailDialog({ songName, type, difficulty }: {
         ) : (
           <SongChartDialogContent charts={charts} scores={chartScores} />
         )}
-      </DialogContent>
-    </Dialog>
+      </AnimatedDialogContent>
+    </AnimatedDialog>
   )
 }
 

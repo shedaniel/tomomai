@@ -2,12 +2,11 @@
 
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { AnimatedDialog, AnimatedDialogContent } from "@/components/ui/animated-dialog";
 import { Card } from "@/components/ui/card";
 import { Plus, Copy, X, Users, Clock } from "lucide-react";
 import { toast } from "sonner";
@@ -175,8 +174,8 @@ export function InvitesDialog({ isOpen, onOpenChange }: InvitesDialogProps) {
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+    <AnimatedDialog open={isOpen} onOpenChange={onOpenChange}>
+      <AnimatedDialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Users className="h-5 w-5" />
@@ -291,7 +290,7 @@ export function InvitesDialog({ isOpen, onOpenChange }: InvitesDialogProps) {
             </div>
           )}
         </div>
-      </DialogContent>
-    </Dialog>
+      </AnimatedDialogContent>
+    </AnimatedDialog>
   );
 }

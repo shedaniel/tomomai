@@ -1,12 +1,13 @@
 import { db } from '@/lib/db';
+import { deleteFromR2 } from '@/lib/r2';
 import { createOpaqueUserId, generateUserOtp, getOtpExpiryTimestamp } from '@/lib/otp';
 import { resolveBaseUrl } from '@/lib/base-url';
 import { getFetchStatusServer, startFetchServer } from '@/lib/maimai-server-actions';
-import { getVersionInfo, VERSIONS } from '@/lib/metadata';
-import { RatingCalculationInput, splitSongs } from '@/lib/rating-calculator';
+import { getVersionInfo, VersionId, VERSIONS } from '@/lib/metadata';
+import { addRatingsAndSort, RatingCalculationInput, splitSongs } from '@/lib/rating-calculator';
 import { invites, songs, user, userScores, userSnapshots, userEvents, userRecentSongs, userRecentSongsDetailed, stores, storeEdits, storeEditVotes, userAlbums } from '@/lib/db/schema-pg';
 import { protectedProcedure, publicProcedure, router } from '@/lib/trpc';
-import { Region, SongExtended, SongWithScore, UserData } from '@/lib/types';
+import { MinimalSongForDisplay, Region, SongExtended, SongWithScore, UserData } from '@/lib/types';
 import { TRPCError } from '@trpc/server';
 import { nanoid } from 'nanoid';
 import { isTokenError, isAlbumSettingsError } from '@/lib/token-errors';
@@ -16,9 +17,12 @@ import { flagDefinitions } from '@/lib/flags';
 import { logger } from '@/lib/logger';
 import { Optional } from 'utility-types';
 import { getSongSlug, getSongSlugs } from '@/lib/song-slug';
+import { getAchievementRate } from '@/lib/difficulty';
 import { SongDetails, UniqueSong, UniqueSongDifficulty } from '@/components/db/songs/types';
 import { unstable_cache } from 'next/cache';
 import { getEnabledRegions, isChinaRegion } from '@/lib/enabled-regions';
+import { readFile } from 'fs/promises';
+import { join } from 'path';
 
 const SIGNUP_REQUIRED_AMOUNT = 256;
 
@@ -336,7 +340,12 @@ export const userRouter = router({
         )
         .orderBy(desc(userSnapshots.fetchedAt));
 
-      return { snapshots };
+      return {
+        snapshots: snapshots.map(snapshot => ({
+          ...snapshot,
+          gameVersion: snapshot.gameVersion as VersionId,
+        }))
+      };
     }),
 
   // Get rating history for a user by region with song changes
@@ -629,8 +638,11 @@ export const userRouter = router({
           ...snapshot[0],
           publicId: undefined,
           id: snapshot[0].publicId,
+          gameVersion: snapshot[0].gameVersion as VersionId,
         },
-        songs: songsWithScores,
+        songs: songsWithScores as (Omit<typeof songsWithScores[number], 'addedVersion'> & {
+          addedVersion: VersionId
+        })[],
         events: events,
       };
     }),
@@ -1065,7 +1077,7 @@ export const userRouter = router({
         levelPrecise: song.levelPrecise,
         type: song.type,
         genre: song.genre,
-        addedVersion: song.addedVersion,
+        addedVersion: song.addedVersion as VersionId,
         achievement: song.achievement,
         dxScore: song.dxScore,
         fc: song.fc,
@@ -1085,18 +1097,39 @@ export const userRouter = router({
         filteredSongs = songsWithScores.filter(song => bestSongIds.has(song.songId));
       }
 
+      // Fetch events if privacy allows
+      const events = userData.profileShowEvents
+        ? await db
+          .select({
+            eventType: userEvents.eventType,
+            name: userEvents.name,
+            currentDistance: userEvents.currentDistance,
+            nextRewardDistance: userEvents.nextRewardDistance,
+            state: userEvents.state,
+            imageUrl: userEvents.imageUrl,
+            eventPeriodStart: userEvents.eventPeriodStart,
+            eventPeriodEnd: userEvents.eventPeriodEnd,
+          })
+          .from(userEvents)
+          .where(eq(userEvents.snapshotId, snapshot[0].id))
+        : undefined;
+
       return {
         snapshot: {
           ...snapshot[0],
           publicId: undefined,
           id: snapshot[0].publicId, // Use publicId as the external-facing id
+          gameVersion: snapshot[0].gameVersion as VersionId,
         },
-        songs: filteredSongs,
+        songs: filteredSongs as (Omit<typeof filteredSongs[number], "addedVersion"> & { addedVersion: VersionId })[],
         privacySettings: {
           showPlayCounts: userData.profileShowPlayCounts,
           showPlates: userData.profileShowPlates,
           showEvents: userData.profileShowEvents,
+          showAllScores: userData.profileShowAllScores,
+          showScoreDetails: userData.profileShowScoreDetails,
         },
+        ...(events && { events }),
       };
     }),
 
@@ -1656,7 +1689,7 @@ export const userRouter = router({
           levelPrecise: song.levelPrecise,
           type: song.type,
           genre: song.genre,
-          addedVersion: song.addedVersion,
+          addedVersion: song.addedVersion as VersionId,
           achievement: song.achievement,
           dxScore: song.dxScore,
           fc: song.fc,
@@ -1841,6 +1874,121 @@ export const userRouter = router({
         .offset(offset);
 
       // Get total count
+      const [{ totalCount }] = await db
+        .select({ totalCount: count() })
+        .from(userRecentSongs)
+        .innerJoin(songs, eq(userRecentSongs.songId, songs.id))
+        .where(
+          and(
+            eq(userRecentSongs.userId, userId),
+            eq(songs.region, region),
+            beforeDate ? lt(userRecentSongs.playedAt, beforeDate) : undefined
+          )
+        );
+
+      return {
+        recentPlays,
+        totalCount,
+        hasMore: offset + limit < totalCount,
+      };
+    }),
+
+  getPublicRecentSongs: publicProcedure
+    .input(z.object({
+      snapshotId: z.string(),
+      region: regionSchema,
+      limit: z.number().min(1).max(100).default(50),
+      offset: z.number().min(0).default(0),
+      beforeDate: z.date().optional(),
+    }))
+    .query(async ({ input }) => {
+      // Resolve userId from snapshotId (publicId), verify profile is published
+      const snapshotRecord = await db
+        .select({ userId: userSnapshots.userId })
+        .from(userSnapshots)
+        .innerJoin(user, eq(userSnapshots.userId, user.id))
+        .where(and(
+          eq(userSnapshots.publicId, input.snapshotId),
+          eq(user.publishProfile, true)
+        ))
+        .limit(1);
+
+      if (snapshotRecord.length === 0) {
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Snapshot not found or not public' });
+      }
+
+      const userId = snapshotRecord[0].userId;
+      const { region, limit, offset, beforeDate } = input;
+
+      const recentPlays = await db
+        .select({
+          recentSongId: userRecentSongs.id,
+          playedAt: userRecentSongs.playedAt,
+          achievement: userRecentSongs.archievement,
+          dxScore: userRecentSongs.dxScore,
+          maxDxScore: userRecentSongs.maxDxScore,
+          fc: userRecentSongs.fc,
+          fs: userRecentSongs.fs,
+          track: userRecentSongs.track,
+          songId: songs.id,
+          songPublicId: songs.publicId,
+          songName: songs.songName,
+          artist: songs.artist,
+          cover: songs.cover,
+          difficulty: songs.difficulty,
+          level: songs.level,
+          levelPrecise: songs.levelPrecise,
+          type: songs.type,
+          genre: songs.genre,
+          fastCount: userRecentSongsDetailed.fastCount,
+          lateCount: userRecentSongsDetailed.lateCount,
+          combo: userRecentSongsDetailed.combo,
+          maxCombo: userRecentSongsDetailed.maxCombo,
+          syncScore: userRecentSongsDetailed.syncScore,
+          maxSyncScore: userRecentSongsDetailed.maxSyncScore,
+          rating: userRecentSongsDetailed.rating,
+          ratingChange: userRecentSongsDetailed.ratingChange,
+          venue: userRecentSongsDetailed.venue,
+          tapCPerfect: userRecentSongsDetailed.tapCPerfect,
+          tapPerfect: userRecentSongsDetailed.tapPerfect,
+          tapGreat: userRecentSongsDetailed.tapGreat,
+          tapGood: userRecentSongsDetailed.tapGood,
+          tapMiss: userRecentSongsDetailed.tapMiss,
+          holdCPerfect: userRecentSongsDetailed.holdCPerfect,
+          holdPerfect: userRecentSongsDetailed.holdPerfect,
+          holdGreat: userRecentSongsDetailed.holdGreat,
+          holdGood: userRecentSongsDetailed.holdGood,
+          holdMiss: userRecentSongsDetailed.holdMiss,
+          slideCPerfect: userRecentSongsDetailed.slideCPerfect,
+          slidePerfect: userRecentSongsDetailed.slidePerfect,
+          slideGreat: userRecentSongsDetailed.slideGreat,
+          slideGood: userRecentSongsDetailed.slideGood,
+          slideMiss: userRecentSongsDetailed.slideMiss,
+          touchCPerfect: userRecentSongsDetailed.touchCPerfect,
+          touchPerfect: userRecentSongsDetailed.touchPerfect,
+          touchGreat: userRecentSongsDetailed.touchGreat,
+          touchGood: userRecentSongsDetailed.touchGood,
+          touchMiss: userRecentSongsDetailed.touchMiss,
+          breakCPerfect: userRecentSongsDetailed.breakCPerfect,
+          breakPerfect: userRecentSongsDetailed.breakPerfect,
+          breakGreat: userRecentSongsDetailed.breakGreat,
+          breakGood: userRecentSongsDetailed.breakGood,
+          breakMiss: userRecentSongsDetailed.breakMiss,
+        })
+        .from(userRecentSongs)
+        .innerJoin(songs, eq(userRecentSongs.songId, songs.id))
+        .leftJoin(userRecentSongsDetailed, eq(userRecentSongs.id, userRecentSongsDetailed.recentSongId))
+        .where(
+          and(
+            eq(userRecentSongs.userId, userId),
+            eq(songs.region, region),
+            beforeDate ? lt(userRecentSongs.playedAt, beforeDate) : undefined
+          )
+        )
+        .orderBy(desc(userRecentSongs.playedAt))
+        .limit(limit)
+        .offset(offset);
+
       const [{ totalCount }] = await db
         .select({ totalCount: count() })
         .from(userRecentSongs)
@@ -2416,7 +2564,7 @@ export const userRouter = router({
               cover: song.cover,
               type: song.type,
               genre: song.genre,
-              addedVersion: song.addedVersion,
+              addedVersion: song.addedVersion as VersionId,
               difficulties: song.difficulties.map(d => ({
                 difficulty: d.difficulty,
                 levelPrecise: d.levelPrecise,
@@ -2532,16 +2680,20 @@ export const userRouter = router({
       }
 
       // Group charts by region -> gameVersion -> difficulty
-      const byRegion = new Map<Region, Map<number, SongExtended[]>>();
+      const byRegion = new Map<Region, Map<VersionId, SongExtended[]>>();
       for (const chart of charts) {
         if (!byRegion.has(chart.region)) {
           byRegion.set(chart.region, new Map());
         }
+        const chartVersion = chart.gameVersion as VersionId;
         const regionMap = byRegion.get(chart.region)!;
-        if (!regionMap.has(chart.gameVersion)) {
-          regionMap.set(chart.gameVersion, []);
+        if (!regionMap.has(chartVersion)) {
+          regionMap.set(chartVersion, []);
         }
-        regionMap.get(chart.gameVersion)!.push(chart);
+        regionMap.get(chartVersion)!.push({
+          ...chart,
+          addedVersion: chart.addedVersion as VersionId,
+        });
       }
 
       // Convert to serializable format
@@ -2569,7 +2721,7 @@ export const userRouter = router({
         type: firstChart.type,
         genre: firstChart.genre,
         bpm: chartWithBpm?.bpm ?? null,
-        addedVersion: earliestAddedVersion,
+        addedVersion: earliestAddedVersion as VersionId,
         userScores: userScoresMap,
         regions,
       } satisfies SongDetails;
@@ -2602,7 +2754,7 @@ export const userRouter = router({
 
       const firstChart = charts[0];
       const chartWithBpm = charts.find(c => c.bpm !== null);
-      const earliestAddedVersion = Math.min(...charts.map(c => c.addedVersion));
+      const earliestAddedVersion = Math.min(...charts.map(c => c.addedVersion)) as VersionId;
 
       const slug = await getSongSlug({
         songName: firstChart.songName,
@@ -2656,6 +2808,7 @@ export const userRouter = router({
           level: songs.level,
           levelPrecise: songs.levelPrecise,
           type: songs.type,
+          gameVersion: songs.addedVersion,
           achievement: userScores.achievement,
           dxScore: userScores.dxScore,
           fc: userScores.fc,
@@ -2673,7 +2826,7 @@ export const userRouter = router({
           trophy: snapshot[0].title,
           region: snapshot[0].region,
           fetchedAt: snapshot[0].fetchedAt,
-          gameVersion: getVersionInfo(snapshot[0].gameVersion)!.name,
+          gameVersion: getVersionInfo(snapshot[0].gameVersion as VersionId)!.name,
           rating: snapshot[0].rating,
           stars: snapshot[0].stars,
           courseRankUrl: snapshot[0].courseRankUrl,
@@ -2681,7 +2834,10 @@ export const userRouter = router({
           totalPlayCount: snapshot[0].totalPlayCount,
           currentVersionPlayCount: snapshot[0].versionPlayCount,
         },
-        songs: songsWithScores,
+        songs: addRatingsAndSort(songsWithScores, snapshot[0].gameVersion as VersionId).map(song => ({
+          ...song,
+          gameVersion: getVersionInfo(song.gameVersion as VersionId)!.shortName,
+        })),
         iconUrl: snapshot[0].iconUrl,
       };
     }),
@@ -2788,6 +2944,460 @@ export const userRouter = router({
           jpPercentage: (jpStorageUsed / storageLimit) * 100,
         },
       };
+    }),
+
+  deleteAlbum: protectedProcedure
+    .input(z.object({
+      albumId: z.string(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const album = await db
+        .select({ id: userAlbums.id, imageKey: userAlbums.imageKey })
+        .from(userAlbums)
+        .where(
+          and(
+            eq(userAlbums.id, BigInt(input.albumId)),
+            eq(userAlbums.userId, ctx.session.user.id)
+          )
+        )
+        .limit(1);
+
+      if (album.length === 0) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Album not found or access denied',
+        });
+      }
+
+      await deleteFromR2(album[0].imageKey);
+      await db
+        .delete(userAlbums)
+        .where(eq(userAlbums.id, album[0].id));
+
+      return { success: true };
+    }),
+
+  // Fetch policy documents (Terms of Service and Privacy Policy)
+  getPolicies: publicProcedure
+    .query(async () => {
+      const tosPath = join(process.cwd(), 'public', 'tos');
+      const privacyPath = join(process.cwd(), 'public', 'privacy');
+
+      const [tosContent, privacyContent] = await Promise.all([
+        readFile(tosPath, 'utf-8'),
+        readFile(privacyPath, 'utf-8'),
+      ]);
+
+      return {
+        tos: {
+          content: tosContent,
+        },
+        privacy: {
+          content: privacyContent,
+        },
+      };
+    }),
+
+  // Get player statistics (grade distribution)
+  getPlayerStats: protectedProcedure
+    .input(z.object({
+      region: regionSchema,
+    }))
+    .query(async ({ ctx, input }) => {
+      // Get the latest snapshot for this region
+      const snapshot = await db
+        .select({ id: userSnapshots.id, gameVersion: userSnapshots.gameVersion })
+        .from(userSnapshots)
+        .where(
+          and(
+            eq(userSnapshots.userId, ctx.session.user.id),
+            eq(userSnapshots.region, input.region)
+          )
+        )
+        .orderBy(desc(userSnapshots.fetchedAt))
+        .limit(1);
+
+      if (snapshot.length === 0) {
+        return { stats: {}, totalSongs: {} };
+      }
+
+      const gameVersion = snapshot[0].gameVersion;
+
+      // Fetch all scores with song metadata for this snapshot
+      const scores = await db
+        .select({
+          achievement: userScores.achievement,
+          addedVersion: songs.addedVersion,
+          difficulty: songs.difficulty,
+          fc: userScores.fc,
+          fs: userScores.fs,
+        })
+        .from(userScores)
+        .innerJoin(songs, eq(userScores.songId, songs.id))
+        .where(eq(userScores.snapshotId, snapshot[0].id));
+
+      // Get total song counts from database by version and difficulty
+      const allSongs = await db
+        .select({
+          addedVersion: songs.addedVersion,
+          difficulty: songs.difficulty,
+          count: sql<number>`count(*)`.mapWith(Number),
+        })
+        .from(songs)
+        .where(
+          and(
+            eq(songs.region, input.region),
+            eq(songs.gameVersion, gameVersion)
+          )
+        )
+        .groupBy(songs.addedVersion, songs.difficulty);
+
+      // Build total songs map
+      const totalSongs: Record<string, Record<string, number>> = {};
+      for (const song of allSongs) {
+        const version = song.addedVersion.toString();
+        const difficulty = song.difficulty;
+
+        if (!totalSongs[version]) {
+          totalSongs[version] = {};
+        }
+        totalSongs[version][difficulty] = song.count;
+      }
+
+      // Group scores by version and difficulty
+      const stats: Record<string, Record<string, {
+        grades: Record<string, number>,
+        fc: Record<string, number>,
+        fs: Record<string, number>,
+        total: number
+      }>> = {};
+
+      for (const score of scores) {
+        const version = score.addedVersion.toString();
+        const difficulty = score.difficulty;
+
+        // Initialize nested structure if needed
+        if (!stats[version]) {
+          stats[version] = {};
+        }
+        if (!stats[version][difficulty]) {
+          stats[version][difficulty] = { grades: {}, fc: {}, fs: {}, total: 0 };
+        }
+
+        const grade = getAchievementRate(score.achievement);
+
+        // Increment count for this grade
+        if (!stats[version][difficulty].grades[grade]) {
+          stats[version][difficulty].grades[grade] = 0;
+        }
+        stats[version][difficulty].grades[grade]++;
+
+        // Count FC achievements
+        if (score.fc !== "none") {
+          if (!stats[version][difficulty].fc[score.fc]) {
+            stats[version][difficulty].fc[score.fc] = 0;
+          }
+          stats[version][difficulty].fc[score.fc]++;
+        }
+
+        // Count FS achievements
+        if (score.fs !== "none") {
+          if (!stats[version][difficulty].fs[score.fs]) {
+            stats[version][difficulty].fs[score.fs] = 0;
+          }
+          stats[version][difficulty].fs[score.fs]++;
+        }
+
+        stats[version][difficulty].total++;
+      }
+
+      return { stats, totalSongs };
+    }),
+
+  getPublicPlayerStats: publicProcedure
+    .input(z.object({
+      snapshotId: z.string(),
+      region: regionSchema,
+    }))
+    .query(async ({ input }) => {
+      // Resolve snapshot from publicId, verify profile is published
+      const snapshot = await db
+        .select({ id: userSnapshots.id, gameVersion: userSnapshots.gameVersion })
+        .from(userSnapshots)
+        .innerJoin(user, eq(userSnapshots.userId, user.id))
+        .where(and(
+          eq(userSnapshots.publicId, input.snapshotId),
+          eq(user.publishProfile, true)
+        ))
+        .limit(1);
+
+      if (snapshot.length === 0) {
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Snapshot not found or not public' });
+      }
+
+      const gameVersion = snapshot[0].gameVersion;
+
+      // Fetch all scores with song metadata for this snapshot
+      const scores = await db
+        .select({
+          achievement: userScores.achievement,
+          addedVersion: songs.addedVersion,
+          difficulty: songs.difficulty,
+          fc: userScores.fc,
+          fs: userScores.fs,
+        })
+        .from(userScores)
+        .innerJoin(songs, eq(userScores.songId, songs.id))
+        .where(eq(userScores.snapshotId, snapshot[0].id));
+
+      // Get total song counts from database by version and difficulty
+      const allSongs = await db
+        .select({
+          addedVersion: songs.addedVersion,
+          difficulty: songs.difficulty,
+          count: sql<number>`count(*)`.mapWith(Number),
+        })
+        .from(songs)
+        .where(
+          and(
+            eq(songs.region, input.region),
+            eq(songs.gameVersion, gameVersion)
+          )
+        )
+        .groupBy(songs.addedVersion, songs.difficulty);
+
+      // Build total songs map
+      const totalSongs: Record<string, Record<string, number>> = {};
+      for (const song of allSongs) {
+        const version = song.addedVersion.toString();
+        const difficulty = song.difficulty;
+
+        if (!totalSongs[version]) {
+          totalSongs[version] = {};
+        }
+        totalSongs[version][difficulty] = song.count;
+      }
+
+      // Group scores by version and difficulty
+      const stats: Record<string, Record<string, {
+        grades: Record<string, number>,
+        fc: Record<string, number>,
+        fs: Record<string, number>,
+        total: number
+      }>> = {};
+
+      for (const score of scores) {
+        const version = score.addedVersion.toString();
+        const difficulty = score.difficulty;
+
+        if (!stats[version]) {
+          stats[version] = {};
+        }
+        if (!stats[version][difficulty]) {
+          stats[version][difficulty] = { grades: {}, fc: {}, fs: {}, total: 0 };
+        }
+
+        const grade = getAchievementRate(score.achievement);
+
+        if (!stats[version][difficulty].grades[grade]) {
+          stats[version][difficulty].grades[grade] = 0;
+        }
+        stats[version][difficulty].grades[grade]++;
+
+        if (score.fc !== "none") {
+          if (!stats[version][difficulty].fc[score.fc]) {
+            stats[version][difficulty].fc[score.fc] = 0;
+          }
+          stats[version][difficulty].fc[score.fc]++;
+        }
+
+        if (score.fs !== "none") {
+          if (!stats[version][difficulty].fs[score.fs]) {
+            stats[version][difficulty].fs[score.fs] = 0;
+          }
+          stats[version][difficulty].fs[score.fs]++;
+        }
+
+        stats[version][difficulty].total++;
+      }
+
+      return { stats, totalSongs };
+    }),
+
+  // Get songs not meeting plate requirements
+  getPlateSongs: protectedProcedure
+    .input(z.object({
+      region: regionSchema,
+      version: z.string(),
+      difficulty: z.enum(["basic", "advanced", "expert", "master"]),
+      plateType: z.enum(["kyoku", "shou", "shin", "maimai"]),
+    }))
+    .query(async ({ ctx, input }) => {
+      // Get the latest snapshot for this region
+      const snapshot = await db
+        .select({ id: userSnapshots.id, gameVersion: userSnapshots.gameVersion })
+        .from(userSnapshots)
+        .where(
+          and(
+            eq(userSnapshots.userId, ctx.session.user.id),
+            eq(userSnapshots.region, input.region)
+          )
+        )
+        .orderBy(desc(userSnapshots.fetchedAt))
+        .limit(1);
+
+      if (snapshot.length === 0) {
+        return [];
+      }
+
+      const gameVersion = snapshot[0].gameVersion;
+
+      // Fetch all songs for this version and difficulty (including unplayed ones)
+      const allSongs = await db
+        .select({
+          songId: songs.publicId,
+          songName: songs.songName,
+          artist: songs.artist,
+          cover: songs.cover,
+          difficulty: songs.difficulty,
+          levelPrecise: songs.levelPrecise,
+          type: songs.type,
+          achievement: userScores.achievement,
+          fc: userScores.fc,
+          fs: userScores.fs,
+          dxScore: userScores.dxScore,
+        })
+        .from(songs)
+        .leftJoin(
+          userScores,
+          and(
+            eq(userScores.songId, songs.id),
+            eq(userScores.snapshotId, snapshot[0].id)
+          )
+        )
+        .where(
+          and(
+            eq(songs.addedVersion, parseInt(input.version)),
+            eq(songs.difficulty, input.difficulty),
+            eq(songs.region, input.region),
+            eq(songs.gameVersion, gameVersion)
+          )
+        );
+
+      // Filter songs not meeting the plate requirement
+      const filteredSongs = allSongs.filter((song) => {
+        // If no score exists, treat as not meeting any requirement
+        const achievement = song.achievement || 0;
+        const fc = song.fc || "none";
+        const fs = song.fs || "none";
+
+        switch (input.plateType) {
+          case "kyoku": // FC or above
+            return !["fc", "fc+", "ap", "ap+"].includes(fc);
+          case "shou": // SSS or above
+            return achievement < 1000000; // Less than 100%
+          case "shin": // AP or above
+            return !["ap", "ap+"].includes(fc);
+          case "maimai": // FDX or above
+            return !["fdx", "fdx+"].includes(fs);
+          default:
+            return false;
+        }
+      });
+
+      // Map to ensure unplayed songs have default values
+      return filteredSongs.map((song) => ({
+        ...song,
+        achievement: song.achievement || 0,
+        fc: song.fc || "none",
+        fs: song.fs || "none",
+        dxScore: song.dxScore || 0,
+      } satisfies MinimalSongForDisplay));
+    }),
+
+  getPublicPlateSongs: publicProcedure
+    .input(z.object({
+      snapshotId: z.string(),
+      region: regionSchema,
+      version: z.string(),
+      difficulty: z.enum(["basic", "advanced", "expert", "master"]),
+      plateType: z.enum(["kyoku", "shou", "shin", "maimai"]),
+    }))
+    .query(async ({ input }) => {
+      // Resolve snapshot from publicId, verify profile is published
+      const snapshot = await db
+        .select({ id: userSnapshots.id, gameVersion: userSnapshots.gameVersion })
+        .from(userSnapshots)
+        .innerJoin(user, eq(userSnapshots.userId, user.id))
+        .where(and(
+          eq(userSnapshots.publicId, input.snapshotId),
+          eq(user.publishProfile, true)
+        ))
+        .limit(1);
+
+      if (snapshot.length === 0) {
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Snapshot not found or not public' });
+      }
+
+      const gameVersion = snapshot[0].gameVersion;
+
+      const allSongs = await db
+        .select({
+          songId: songs.publicId,
+          songName: songs.songName,
+          artist: songs.artist,
+          cover: songs.cover,
+          difficulty: songs.difficulty,
+          levelPrecise: songs.levelPrecise,
+          type: songs.type,
+          achievement: userScores.achievement,
+          fc: userScores.fc,
+          fs: userScores.fs,
+          dxScore: userScores.dxScore,
+        })
+        .from(songs)
+        .leftJoin(
+          userScores,
+          and(
+            eq(userScores.songId, songs.id),
+            eq(userScores.snapshotId, snapshot[0].id)
+          )
+        )
+        .where(
+          and(
+            eq(songs.addedVersion, parseInt(input.version)),
+            eq(songs.difficulty, input.difficulty),
+            eq(songs.region, input.region),
+            eq(songs.gameVersion, gameVersion)
+          )
+        );
+
+      const filteredSongs = allSongs.filter((song) => {
+        const achievement = song.achievement || 0;
+        const fc = song.fc || "none";
+        const fs = song.fs || "none";
+
+        switch (input.plateType) {
+          case "kyoku":
+            return !["fc", "fc+", "ap", "ap+"].includes(fc);
+          case "shou":
+            return achievement < 1000000;
+          case "shin":
+            return !["ap", "ap+"].includes(fc);
+          case "maimai":
+            return !["fdx", "fdx+"].includes(fs);
+          default:
+            return false;
+        }
+      });
+
+      return filteredSongs.map((song) => ({
+        ...song,
+        achievement: song.achievement || 0,
+        fc: song.fc || "none",
+        fs: song.fs || "none",
+        dxScore: song.dxScore || 0,
+      } satisfies MinimalSongForDisplay));
     }),
 
 });

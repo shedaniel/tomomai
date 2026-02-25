@@ -1,4 +1,5 @@
 // Centralized type definitions for the maimai charts application
+import { VersionId } from "./metadata";
 
 // ===== CORE TYPES =====
 
@@ -16,7 +17,7 @@ export interface Snapshot {
   fetchedAt: Date;
   rating: number;
   displayName: string;
-  gameVersion: number;
+  gameVersion: VersionId;
   courseRankUrl: string;
   classRankUrl: string;
   stars: number;
@@ -25,25 +26,31 @@ export interface Snapshot {
 }
 
 // Song data with score information
-export type SongBase = {
+export type MinimalSong = {
   songId: string;
   songName: string;
   artist: string;
   cover: string;
-  difficulty: Difficulty;
-  level: string;
-  levelPrecise: number;
   type: SongType;
-  genre: string;
-  addedVersion: number;
+  difficulty: Difficulty;
 }
 
-export type SongWithScore = SongBase & {
+export type MinimalSongForDisplay = MinimalSong & {
+  levelPrecise: number;
   achievement: number;
-  dxScore: number;
   fc: FullCombo;
   fs: FullSync;
+  dxScore: number;
 }
+
+export type SongBase = MinimalSong & {
+  level: string;
+  levelPrecise: number;
+  genre: string;
+  addedVersion: VersionId;
+}
+
+export type SongWithScore = SongBase & MinimalSongForDisplay
 
 export type SongExtended = SongBase & {
   bpm: number | null;

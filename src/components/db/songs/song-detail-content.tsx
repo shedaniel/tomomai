@@ -1,6 +1,7 @@
 "use client";
 
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { DialogTrigger } from "@/components/ui/dialog";
+import { AnimatedDialog, AnimatedDialogContent } from "@/components/ui/animated-dialog";
 import { DIFFICULTY_COLORS, getAchievementRate } from "@/lib/difficulty";
 import { getVersionInfo } from "@/lib/metadata";
 import { calculateSongRating } from "@/lib/rating-calculator";
@@ -20,6 +21,7 @@ import Link from "next/link";
 import { toast } from "sonner";
 import { SongChartDialogContent } from "./song-detail-dialog";
 import { renderLevelPrecise } from "@/lib/name-utils";
+import { isChinaRegion } from "@/lib/enabled-regions";
 
 type SongExtendedIdentified = SongExtended & { region: Region; gameVersion: number };
 
@@ -179,7 +181,7 @@ export function SongChartRow({ difficulty, charts, index, data, hasTouch }: {
   }, [charts, data?.userScores]);
 
   return (
-    <Dialog key={difficulty}>
+    <AnimatedDialog key={difficulty}>
       <DialogTrigger asChild>
         <div className="contents text-sm group *:group-hover:bg-accent *:transition-colors *:duration-200">
           {/* Difficulty */}
@@ -242,10 +244,10 @@ export function SongChartRow({ difficulty, charts, index, data, hasTouch }: {
           )}
         </div>
       </DialogTrigger>
-      <DialogContent>
+      <AnimatedDialogContent>
         <SongChartDialogContent charts={charts} scores={chartScores} />
-      </DialogContent>
-    </Dialog>
+      </AnimatedDialogContent>
+    </AnimatedDialog>
   );
 }
 
@@ -272,10 +274,14 @@ export function SongDetailContent({ songName, slug, type, initialData }: SongDet
   }, [chartsByDifficulty]);
   const hasTouch = allCharts.some(chart => chart.touchCount !== null);
 
-  const youtubeSearchURL = useMemo(() => {
+  const videoSearchURL = useMemo(() => {
     if (!data) return null;
     const searchQuery = encodeURIComponent(`maimai ${data.songName} ${data.artist}`);
-    return `https://www.youtube.com/results?search_query=${searchQuery}`;
+    if (isChinaRegion()) {
+      return `https://search.bilibili.com/all?keyword=${searchQuery}`;
+    } else {
+      return `https://www.youtube.com/results?search_query=${searchQuery}`;
+    }
   }, [data]);
 
   if (!initialData && isLoading) {
@@ -357,10 +363,20 @@ export function SongDetailContent({ songName, slug, type, initialData }: SongDet
               {t('db.songs.detail.share')}
             </Button>
           </Link>
-          <Link href={youtubeSearchURL ?? ""} target="_blank" aria-label={t('db.songs.detail.youtube')}>
+          <Link href={videoSearchURL ?? ""} target="_blank" aria-label={t('db.songs.detail.youtube')}>
             <Button variant="outline" className="bg-background">
-              <svg role="img" className="w-4 h-4" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><title>YouTube</title><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" /></svg>
-              {t('db.songs.detail.youtube')}
+              {isChinaRegion() ? (<>
+                <svg role="img" className="w-4 h-4" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
+                  <g>
+                    <path fill="none" d="M0 0h24v24H0z" />
+                    <path d="M18.223 3.086a1.25 1.25 0 0 1 0 1.768L17.08 5.996h1.17A3.75 3.75 0 0 1 22 9.747v7.5a3.75 3.75 0 0 1-3.75 3.75H5.75A3.75 3.75 0 0 1 2 17.247v-7.5a3.75 3.75 0 0 1 3.75-3.75h1.166L5.775 4.855a1.25 1.25 0 1 1 1.767-1.768l2.652 2.652c.079.079.145.165.198.257h3.213c.053-.092.12-.18.199-.258l2.651-2.652a1.25 1.25 0 0 1 1.768 0zm.027 5.42H5.75a1.25 1.25 0 0 0-1.247 1.157l-.003.094v7.5c0 .659.51 1.199 1.157 1.246l.093.004h12.5a1.25 1.25 0 0 0 1.247-1.157l.003-.093v-7.5c0-.69-.56-1.25-1.25-1.25zm-10 2.5c.69 0 1.25.56 1.25 1.25v1.25a1.25 1.25 0 1 1-2.5 0v-1.25c0-.69.56-1.25 1.25-1.25zm7.5 0c.69 0 1.25.56 1.25 1.25v1.25a1.25 1.25 0 1 1-2.5 0v-1.25c0-.69.56-1.25 1.25-1.25z" />
+                  </g>
+                </svg>
+                bilibili 搜索
+              </>) : (<>
+                <svg role="img" className="w-4 h-4" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor"><title>YouTube</title><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" /></svg>
+                {t('db.songs.detail.youtube')}
+              </>)}
             </Button>
           </Link>
         </div>

@@ -7,61 +7,62 @@ export interface Theme {
   saturation?: number;
   dark: boolean;
   group: string;
+  name: string;
 }
 
 export const themes: Theme[] = [
   // Simple
-  { id: "simple", hue: 0, contrast: 0.0, darkness: 1.0, dark: false, group: "simple" },
-  { id: "dark-simple", hue: 0, contrast: 0.0, darkness: 1.0, dark: true, group: "simple" },
-  { id: "gray-simple", hue: 0, contrast: 0.0, darkness: 1.0, lightness: 2.5, saturation: 0.7, dark: true, group: "simple" },
+  { id: "simple", hue: 0, contrast: 0.0, darkness: 1.0, dark: false, group: "simple", name: "Simple" },
+  { id: "dark-simple", hue: 0, contrast: 0.0, darkness: 1.0, dark: true, group: "simple", name: "Dark Simple" },
+  { id: "gray-simple", hue: 0, contrast: 0.0, darkness: 1.0, lightness: 2.5, saturation: 0.7, dark: true, group: "simple", name: "Gray Simple" },
   // Brown (hue 90)
-  { id: "burnt-brown", hue: 90, contrast: 0.9, darkness: 0.7, dark: false, group: "brown" },
-  { id: "light-brown", hue: 90, contrast: 1.3, darkness: 0.4, dark: false, group: "brown" },
-  { id: "dark-brown", hue: 90, contrast: 0.9, darkness: -0.1, dark: true, group: "brown" },
-  { id: "gray-brown", hue: 90, contrast: 0.9, darkness: -0.1, lightness: 2.5, saturation: 0.7, dark: true, group: "brown" },
+  { id: "burnt-brown", hue: 90, contrast: 0.9, darkness: 0.7, dark: false, group: "brown", name: "Burnt Brown" },
+  { id: "light-brown", hue: 90, contrast: 1.3, darkness: 0.4, dark: false, group: "brown", name: "Light Brown" },
+  { id: "dark-brown", hue: 90, contrast: 0.9, darkness: -0.1, dark: true, group: "brown", name: "Dark Brown" },
+  { id: "gray-brown", hue: 90, contrast: 0.9, darkness: -0.1, lightness: 2.5, saturation: 0.7, dark: true, group: "brown", name: "Gray Brown" },
   // Amaranth (hue 0)
-  { id: "burnt-amaranth", hue: 0, contrast: 0.9, darkness: 0.7, dark: false, group: "amaranth" },
-  { id: "light-amaranth", hue: 0, contrast: 1.3, darkness: 0.4, dark: false, group: "amaranth" },
-  { id: "dark-amaranth", hue: 0, contrast: 0.9, darkness: -0.4, dark: true, group: "amaranth" },
-  { id: "gray-amaranth", hue: 0, contrast: 0.9, darkness: -0.4, lightness: 2.5, saturation: 0.7, dark: true, group: "amaranth" },
+  { id: "burnt-amaranth", hue: 0, contrast: 0.9, darkness: 0.7, dark: false, group: "amaranth", name: "Burnt Amaranth" },
+  { id: "light-amaranth", hue: 0, contrast: 1.3, darkness: 0.4, dark: false, group: "amaranth", name: "Light Amaranth" },
+  { id: "dark-amaranth", hue: 0, contrast: 0.9, darkness: -0.4, dark: true, group: "amaranth", name: "Dark Amaranth" },
+  { id: "gray-amaranth", hue: 0, contrast: 0.9, darkness: -0.4, lightness: 2.5, saturation: 0.7, dark: true, group: "amaranth", name: "Gray Amaranth" },
   // Rose (hue 20)
-  { id: "burnt-rose", hue: 20, contrast: 0.9, darkness: 0.7, dark: false, group: "rose" },
-  { id: "light-rose", hue: 20, contrast: 1.3, darkness: 0.4, dark: false, group: "rose" },
-  { id: "dark-rose", hue: 20, contrast: 0.9, darkness: 0.7, dark: true, group: "rose" },
-  { id: "gray-rose", hue: 20, contrast: 0.9, darkness: 0.7, lightness: 2.5, saturation: 0.7, dark: true, group: "rose" },
+  { id: "burnt-rose", hue: 20, contrast: 0.9, darkness: 0.7, dark: false, group: "rose", name: "Burnt Rose" },
+  { id: "light-rose", hue: 20, contrast: 1.3, darkness: 0.4, dark: false, group: "rose", name: "Light Rose" },
+  { id: "dark-rose", hue: 20, contrast: 0.9, darkness: 0.7, dark: true, group: "rose", name: "Dark Rose" },
+  { id: "gray-rose", hue: 20, contrast: 0.9, darkness: 0.7, lightness: 2.5, saturation: 0.7, dark: true, group: "rose", name: "Gray Rose" },
   // Grass (hue 140)
-  { id: "burnt-grass", hue: 140, contrast: 0.9, darkness: 0.7, dark: false, group: "grass" },
-  { id: "light-grass", hue: 140, contrast: 1.3, darkness: 0.4, dark: false, group: "grass" },
-  { id: "dark-grass", hue: 140, contrast: 0.9, darkness: 0.7, dark: true, group: "grass" },
-  { id: "gray-grass", hue: 140, contrast: 0.9, darkness: 0.7, lightness: 2.5, saturation: 0.7, dark: true, group: "grass" },
+  { id: "burnt-grass", hue: 140, contrast: 0.9, darkness: 0.7, dark: false, group: "grass", name: "Burnt Grass" },
+  { id: "light-grass", hue: 140, contrast: 1.3, darkness: 0.4, dark: false, group: "grass", name: "Light Grass" },
+  { id: "dark-grass", hue: 140, contrast: 0.9, darkness: 0.7, dark: true, group: "grass", name: "Dark Grass" },
+  { id: "gray-grass", hue: 140, contrast: 0.9, darkness: 0.7, lightness: 2.5, saturation: 0.7, dark: true, group: "grass", name: "Gray Grass" },
   // Emerald (hue 180)
-  { id: "burnt-emerald", hue: 180, contrast: 0.9, darkness: 0.7, dark: false, group: "emerald" },
-  { id: "light-emerald", hue: 180, contrast: 1.3, darkness: 0.4, dark: false, group: "emerald" },
-  { id: "dark-emerald", hue: 180, contrast: 0.9, darkness: 0.7, dark: true, group: "emerald" },
-  { id: "gray-emerald", hue: 180, contrast: 0.9, darkness: 0.7, lightness: 2.5, saturation: 0.7, dark: true, group: "emerald" },
+  { id: "burnt-emerald", hue: 180, contrast: 0.9, darkness: 0.7, dark: false, group: "emerald", name: "Burnt Emerald" },
+  { id: "light-emerald", hue: 180, contrast: 1.3, darkness: 0.4, dark: false, group: "emerald", name: "Light Emerald" },
+  { id: "dark-emerald", hue: 180, contrast: 0.9, darkness: 0.7, dark: true, group: "emerald", name: "Dark Emerald" },
+  { id: "gray-emerald", hue: 180, contrast: 0.9, darkness: 0.7, lightness: 2.5, saturation: 0.7, dark: true, group: "emerald", name: "Gray Emerald" },
   // Blue (hue 240)
-  { id: "burnt-blue", hue: 240, contrast: 0.9, darkness: 0.7, dark: false, group: "blue" },
-  { id: "light-blue", hue: 240, contrast: 1.3, darkness: 0.4, dark: false, group: "blue" },
-  { id: "dark-blue", hue: 240, contrast: 0.9, darkness: 0.7, dark: true, group: "blue" },
-  { id: "gray-blue", hue: 240, contrast: 0.9, darkness: 0.7, lightness: 2.5, saturation: 0.7, dark: true, group: "blue" },
+  { id: "burnt-blue", hue: 240, contrast: 0.9, darkness: 0.7, dark: false, group: "blue", name: "Burnt Blue" },
+  { id: "light-blue", hue: 240, contrast: 1.3, darkness: 0.4, dark: false, group: "blue", name: "Light Blue" },
+  { id: "dark-blue", hue: 240, contrast: 0.9, darkness: 0.7, dark: true, group: "blue", name: "Dark Blue" },
+  { id: "gray-blue", hue: 240, contrast: 0.9, darkness: 0.7, lightness: 2.5, saturation: 0.7, dark: true, group: "blue", name: "Gray Blue" },
   // Purple (hue 300)
-  { id: "burnt-purple", hue: 300, contrast: 0.9, darkness: 0.7, dark: false, group: "purple" },
-  { id: "light-purple", hue: 300, contrast: 1.3, darkness: 0.4, dark: false, group: "purple" },
-  { id: "dark-purple", hue: 300, contrast: 0.9, darkness: 0.7, dark: true, group: "purple" },
-  { id: "gray-purple", hue: 300, contrast: 0.9, darkness: 0.7, lightness: 2.5, saturation: 0.7, dark: true, group: "purple" },
+  { id: "burnt-purple", hue: 300, contrast: 0.9, darkness: 0.7, dark: false, group: "purple", name: "Burnt Purple" },
+  { id: "light-purple", hue: 300, contrast: 1.3, darkness: 0.4, dark: false, group: "purple", name: "Light Purple" },
+  { id: "dark-purple", hue: 300, contrast: 0.9, darkness: 0.7, dark: true, group: "purple", name: "Dark Purple" },
+  { id: "gray-purple", hue: 300, contrast: 0.9, darkness: 0.7, lightness: 2.5, saturation: 0.7, dark: true, group: "purple", name: "Gray Purple" },
   // Gold (hue 60)
-  { id: "burnt-gold", hue: 80, contrast: 0.9, darkness: 0.5, dark: false, group: "gold" },
-  { id: "light-gold", hue: 80, contrast: 1.3, darkness: 0.2, dark: false, group: "gold" },
-  { id: "dark-gold", hue: 80, contrast: 0.9, darkness: 0.7, dark: true, group: "gold" },
-  { id: "gray-gold", hue: 80, contrast: 0.9, darkness: 0.7, lightness: 2.5, saturation: 0.7, dark: true, group: "gold" },
+  { id: "burnt-gold", hue: 80, contrast: 0.9, darkness: 0.5, dark: false, group: "gold", name: "Burnt Gold" },
+  { id: "light-gold", hue: 80, contrast: 1.3, darkness: 0.2, dark: false, group: "gold", name: "Light Gold" },
+  { id: "dark-gold", hue: 80, contrast: 0.9, darkness: 0.7, dark: true, group: "gold", name: "Dark Gold" },
+  { id: "gray-gold", hue: 80, contrast: 0.9, darkness: 0.7, lightness: 2.5, saturation: 0.7, dark: true, group: "gold", name: "Gray Gold" },
   // Pink (hue 330)
-  { id: "burnt-pink", hue: 0, contrast: 0.9, darkness: 0.5, dark: false, group: "pink" },
-  { id: "light-pink", hue: 0, contrast: 1.3, darkness: 0.1, dark: false, group: "pink" },
-  { id: "dark-pink", hue: 0, contrast: 0.9, darkness: 0.7, dark: true, group: "pink" },
-  { id: "gray-pink", hue: 0, contrast: 0.9, darkness: 0.7, lightness: 2.5, saturation: 0.7, dark: true, group: "pink" },
+  { id: "burnt-pink", hue: 0, contrast: 0.9, darkness: 0.5, dark: false, group: "pink", name: "Burnt Pink" },
+  { id: "light-pink", hue: 0, contrast: 1.3, darkness: 0.1, dark: false, group: "pink", name: "Light Pink" },
+  { id: "dark-pink", hue: 0, contrast: 0.9, darkness: 0.7, dark: true, group: "pink", name: "Dark Pink" },
+  { id: "gray-pink", hue: 0, contrast: 0.9, darkness: 0.7, lightness: 2.5, saturation: 0.7, dark: true, group: "pink", name: "Gray Pink" },
 ];
 
-export const DEFAULT_THEME_ID = "burnt-brown";
+export const DEFAULT_THEME_ID = "burnt-pink";
 export const THEME_STORAGE_KEY = "tomomai-theme";
 
 export function getThemeById(id: string): Theme | undefined {

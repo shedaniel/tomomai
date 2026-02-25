@@ -7,12 +7,14 @@ import { SnapshotWithSongs } from "@/lib/types";
 import { ChevronDown, ChevronRight, Code, Download } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
+import { AutoHeight } from "./animate-ui/primitives/effects/auto-height";
+import { cn } from "@/lib/utils";
 
 interface DeveloperCardProps {
   selectedSnapshotData: SnapshotWithSongs;
 }
 
-const JSON_SCHEMA_DOCS = `{
+const EXPORT_SNAPSHOTS_SCHEMA_DOCS = `{
   "metadata": {
     "id": string, // Unique snapshot identifier
     "displayName": string, // Player's display name
@@ -35,10 +37,12 @@ const JSON_SCHEMA_DOCS = `{
     "level": string, // Level display (e.g., '13+')
     "levelPrecise": number, // Precise level value (scaled as 10x number, e.g., 135 means 13.5)
     "type": string, // Chart type ('std' or 'dx')
+    "gameVersion": string, // Game version short name (e.g., 'BUDDiES PLUS')
     "achievement": number, // Achievement (scaled as 10000x number, ranges from 0 to 1010000)
     "dxScore": number, // DX score
     "fc": string, // Full combo status ('none', 'fc', 'fc+', 'ap', 'ap+')
     "fs": string, // Full sync status ('none', 'sync', 'fs', 'fs+', 'fdx', 'fdx+')
+    "rating": number, // Rating calculated
   }[],
   "iconUrl": string | null, // URL to player's icon image, usually provided as Base64 encoded string
 }`;
@@ -104,7 +108,7 @@ export function DeveloperCard({ selectedSnapshotData }: DeveloperCardProps) {
           </Button>
         </div>
 
-        <div className="border rounded-lg">
+        <div className="border rounded-lg overflow-clip">
           <button
             onClick={() => setIsSchemaExpanded(!isSchemaExpanded)}
             className="flex items-center gap-2 w-full p-3 text-left text-sm font-medium hover:bg-muted/50 transition-colors"
@@ -116,17 +120,18 @@ export function DeveloperCard({ selectedSnapshotData }: DeveloperCardProps) {
             )}
             JSON Schema Documentation
           </button>
-          {isSchemaExpanded && (
-            <div className="border-t p-4">
-              <p className="text-sm mb-4">
+          <AutoHeight deps={[isSchemaExpanded]}>
+            <div className={cn(!isSchemaExpanded && "max-h-0")}>
+              <p className="text-sm p-4 pb-0 border-t">
                 The JSON Schema documentation provides a detailed description of the structure and constraints of the JSON data used in the application. It serves as a reference for developers to understand the expected format.
                 <br />This does not serve as the definitive source of truth for the JSON data format. The format may change in the future without notice.
               </p>
-              <pre className="text-xs bg-muted p-4 rounded-md overflow-x-auto">
-                <code>{JSON_SCHEMA_DOCS}</code>
+
+              <pre className="text-xs bg-muted p-4 m-4 rounded-md overflow-x-auto">
+                <code>{EXPORT_SNAPSHOTS_SCHEMA_DOCS}</code>
               </pre>
             </div>
-          )}
+          </AutoHeight>
         </div>
       </CardContent>
     </Card>

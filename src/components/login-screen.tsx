@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,7 +12,9 @@ import { toast } from "sonner";
 import Link from "next/link";
 import { isChinaRegion } from "@/lib/enabled-regions";
 import { motion } from "motion/react";
-import { SPRING_CONFIGS, STAGGER, getTransition } from "@/lib/animation-constants";
+import { STAGGER, getTransition } from "@/lib/animation-constants";
+import { ConsentDialog } from "@/components/consent-dialog";
+import { trpc } from "@/lib/trpc-client";
 
 interface SignupRequirements {
   signupEnabled: boolean;
@@ -55,18 +58,37 @@ function DatabaseCard() {
 
 export function LoginScreen({ signupRequirements }: LoginScreenProps) {
   const t = useTranslations();
+  const [showConsentDialog, setShowConsentDialog] = useState(false);
+  const { data: policies } = trpc.user.getPolicies.useQuery();
 
-  const handleAuth = async () => {
+  const handleAuth = (signUp: boolean) => async () => {
     try {
       await signIn.social({
         provider: "discord",
         callbackURL: "/",
         errorCallbackURL: "/",
+        requestSignUp: signUp,
       });
     } catch (error) {
       console.error("Discord auth error:", error);
       toast.error("An error occurred during authentication. Please try again.");
     }
+  };
+
+  const handleSignupClick = () => {
+    // Show consent dialog BEFORE OAuth
+    setShowConsentDialog(true);
+  };
+
+  const handleConsentGiven = async () => {
+    setShowConsentDialog(false);
+    // NOW trigger OAuth signup
+    await handleAuth(true)();
+  };
+
+  const handleConsentCancel = () => {
+    setShowConsentDialog(false);
+    // User remains on login screen
   };
 
   return (
@@ -85,7 +107,6 @@ export function LoginScreen({ signupRequirements }: LoginScreenProps) {
         <Card>
           <CardHeader className="text-center">
             <CardTitle className="flex items-center justify-center space-x-2">
-              <Database className="h-6 w-6" />
               <h1>{t('dashboard.title')}</h1>
             </CardTitle>
             <CardDescription>
@@ -100,7 +121,7 @@ export function LoginScreen({ signupRequirements }: LoginScreenProps) {
 
               <div className="text-center space-y-2">
                 <Button
-                  onClick={handleAuth}
+                  onClick={handleAuth(false)}
                   className="w-full"
                   size="lg"
                 >
@@ -121,7 +142,7 @@ export function LoginScreen({ signupRequirements }: LoginScreenProps) {
                   <Button
                     variant="link"
                     size="sm"
-                    onClick={handleAuth}
+                    onClick={handleSignupClick}
                     disabled={!signupRequirements.signupEnabled}
                   >
                     {!isChinaRegion() ? t('auth.signupWithDiscord') : '用 QQ 注册'}
@@ -152,7 +173,7 @@ export function LoginScreen({ signupRequirements }: LoginScreenProps) {
                   animate={{ opacity: 1, x: 0 }}
                   transition={getTransition({ delay: 0.1 + 0 * STAGGER.slow })}
                 >
-                  {!isChinaRegion() ? t('auth.features.trackScores') : '追踪華立国服的成绩'}
+                  {!isChinaRegion() ? t('auth.features.trackScores') : '追踪华立国服的成绩'}
                 </motion.li>
                 <motion.li
                   initial={{ opacity: 0, x: -10 }}
@@ -180,6 +201,17 @@ export function LoginScreen({ signupRequirements }: LoginScreenProps) {
           </CardContent>
         </Card>
       </motion.div>
+
+      {/* Consent dialog */}
+      {policies && (
+        <ConsentDialog
+          open={showConsentDialog}
+          tosContent={policies.tos.content}
+          privacyContent={policies.privacy.content}
+          onConsent={handleConsentGiven}
+          onCancel={handleConsentCancel}
+        />
+      )}
     </div>
   );
 }

@@ -17,7 +17,8 @@ export function LocaleSwitcher({ forceVisible }: LocaleSwitcherProps) {
   const LANGUAGES = getLanguages(t);
   const { locale, setLocale } = useLocale();
 
-  const handleNewLocale = (newLocale: Locale | null) => {
+  const handleNewLocale = (value: string) => {
+    const newLocale = value === "auto" ? null : value as Locale;
     if (newLocale) {
       setLocale(newLocale);
       setLocaleCookie(newLocale);

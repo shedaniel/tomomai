@@ -218,6 +218,30 @@ export const dbRouter = router({
             });
           }
 
+          // 8. Users with Fetches per Day (last 90 days)
+          const sixtyDaysAgo = new Date();
+          sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 90);
+
+          const fetchesPerDayQuery = await db
+            .select({
+              date: sql<string>`DATE(${userSnapshots.fetchedAt})`.as('date'),
+              count: sql<number>`COUNT(DISTINCT ${userSnapshots.userId})`.mapWith(Number).as('count'),
+            })
+            .from(userSnapshots)
+            .where(
+              and(
+                eq(userSnapshots.region, region),
+                gte(userSnapshots.fetchedAt, sixtyDaysAgo)
+              )
+            )
+            .groupBy(sql`DATE(${userSnapshots.fetchedAt})`)
+            .orderBy(sql`DATE(${userSnapshots.fetchedAt})`);
+
+          const fetchesPerDay = fetchesPerDayQuery.map(item => ({
+            date: String(item.date),
+            count: item.count,
+          }));
+
           return {
             ratingDistribution,
             playCountDistribution,
@@ -226,6 +250,7 @@ export const dbRouter = router({
             averageAchievementByLevel,
             ratingVsPlayCount,
             activeUsersOverTime,
+            fetchesPerDay,
             totalUsers: 0, // Hide actual count
           };
         },

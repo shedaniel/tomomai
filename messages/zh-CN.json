@@ -52,6 +52,25 @@
       "analyzeProgress": "分析你的游玩记录"
     }
   },
+  "consent": {
+    "title": "欢迎来到 tomomai",
+    "description": "在创建账户前，请先阅读并同意我们的政策。",
+    "tldr": {
+      "title": "摘要（非法律建议）",
+      "points": [
+        "你拥有数据的所有权，我们绝不会将其出售给第三方",
+        "你的数据将安全存储在日本的服务器上",
+        "数据处理将遵循香港特别行政区的法律",
+        "本项目为开源软件（AGPL-3.0）",
+        "我们是独立工具，与 SEGA 没有任何关联"
+      ]
+    },
+    "agreeToTos": "我同意服务条款",
+    "agreeToPrivacy": "我同意隐私政策",
+    "viewFullText": "查看全文",
+    "cancel": "取消",
+    "agree": "同意"
+  },
   "dashboard": {
     "title": "tomomai ともマイ",
     "description": "与好友一起分享 maimai 游玩成绩",
@@ -251,7 +270,14 @@
     "usedOf": "/",
     "byRegion": "按地区",
     "storageWarning": "存储空间即将达到上限。请考虑删除旧照片，否则系统将自动移除最旧的相册。",
-    "uploadNotice": "如果你刚导入了新数据，新相册照片可能需要一点时间才能显示。请稍后刷新页面。"
+    "uploadNotice": "如果你刚导入了新数据，新相册照片可能需要一点时间才能显示。请稍后刷新页面。",
+    "deleteTitle": "删除照片",
+    "deleteDescription": "确定要删除这张照片吗？此操作无法撤销。",
+    "deleteSuccess": "照片删除成功",
+    "deleteFailed": "照片删除失败",
+    "dontAskAgain": "今天不再询问",
+    "delete": "删除",
+    "cancel": "取消"
   },
   "recommendations": {
     "noRecommendations": "无推荐歌曲",
@@ -305,6 +331,29 @@
     "notStarted": "未开始",
     "inProgress": "进行中",
     "completed": "已完成"
+  },
+  "playerStats": {
+    "title": "玩家统计",
+    "selectVersion": "选择版本",
+    "allVersions": "所有版本",
+    "selectDifficulty": "选择难度",
+    "allDifficulties": "所有难度",
+    "backToStats": "返回统计",
+    "viewPlatesProgress": "查看称号进度",
+    "achievementGrades": "达成等级",
+    "fullCombo": "Full Combo",
+    "fullSync": "Full Sync",
+    "noDataAvailable": "无可用数据",
+    "noMatchingScores": "没有符合筛选条件的成绩",
+    "selectVersionForPlates": "请选择特定版本以查看称号进度",
+    "songsNotMeeting": "未达成 {requirement} 的乐曲",
+    "noSongsToDisplay": "没有可显示的乐曲",
+    "plates": {
+      "kyoku": "所有乐曲 FC 及以上",
+      "shou": "所有乐曲 SSS 及以上",
+      "shin": "所有乐曲 AP 及以上",
+      "maimai": "所有乐曲 FDX 及以上"
+    }
   },
   "tokenDialog": {
     "title": "更新 maimai 验证",
@@ -506,7 +555,8 @@
     "types": {
       "songs": "歌曲",
       "calculator": "计算",
-      "stats": "统计"
+      "stats": "统计",
+      "posts": "更新日志"
     },
     "songs": {
       "metadata": {
@@ -568,6 +618,21 @@
       "bpm": "BPM",
       "added": "添加版本"
     },
+    "posts": {
+      "list": {
+        "title": "更新日志",
+        "description": "tomomai 的最新更新与变更。",
+        "noPosts": "暂无文章。"
+      },
+      "dialog": {
+        "dismiss": "关闭",
+        "readMore": "阅读更多"
+      },
+      "aiTranslationHint": {
+        "title": "AI 辅助翻译",
+        "description": "本文由 AI 辅助翻译，内容可能存在瑕疵。如发现任何问题，欢迎提交修正！"
+      }
+    },
     "stats": {
       "title": "全局统计",
       "ratingDistribution": "R 值分布",
@@ -577,6 +642,7 @@
       "averageAchievementByLevel": "等级平均达成率",
       "ratingVsPlayCount": "R 值 vs 游玩次数热力图",
       "activeUsersOverTime": "活跃用户趋势",
+      "fetchesPerDay": "Users with Fetches per Day",
       "xAxis": {
         "rating": "R 值",
         "playCount": "游玩次数",
@@ -591,7 +657,8 @@
         "percentage": "占比",
         "achievement": "达成率",
         "count": "用户数",
-        "activeUsers": "活跃用户"
+        "activeUsers": "活跃用户",
+        "usersWithFetches": "Users with Fetches"
       },
       "table": {
         "rank": "排名",
@@ -619,47 +686,6 @@
       "rose": "Rose",
       "gold": "Gold",
       "pink": "Pink"
-    },
-    "themes": {
-      "simple": "Simple",
-      "dark-simple": "Dark Simple",
-      "gray-simple": "Gray Simple",
-      "burnt-amaranth": "Burnt Amaranth",
-      "burnt-blue": "Burnt Blue",
-      "burnt-brown": "Burnt Brown",
-      "burnt-emerald": "Burnt Emerald",
-      "burnt-grass": "Burnt Grass",
-      "burnt-purple": "Burnt Purple",
-      "burnt-rose": "Burnt Rose",
-      "burnt-gold": "Burnt Gold",
-      "burnt-pink": "Burnt Pink",
-      "dark-amaranth": "Dark Amaranth",
-      "dark-blue": "Dark Blue",
-      "dark-brown": "Dark Brown",
-      "dark-emerald": "Dark Emerald",
-      "dark-grass": "Dark Grass",
-      "dark-purple": "Dark Purple",
-      "dark-rose": "Dark Rose",
-      "dark-gold": "Dark Gold",
-      "dark-pink": "Dark Pink",
-      "light-amaranth": "Light Amaranth",
-      "light-blue": "Light Blue",
-      "light-brown": "Light Brown",
-      "light-emerald": "Light Emerald",
-      "light-grass": "Light Grass",
-      "light-purple": "Light Purple",
-      "light-rose": "Light Rose",
-      "light-gold": "Light Gold",
-      "light-pink": "Light Pink",
-      "gray-amaranth": "Gray Amaranth",
-      "gray-blue": "Gray Blue",
-      "gray-brown": "Gray Brown",
-      "gray-emerald": "Gray Emerald",
-      "gray-grass": "Gray Grass",
-      "gray-purple": "Gray Purple",
-      "gray-rose": "Gray Rose",
-      "gray-gold": "Gray Gold",
-      "gray-pink": "Gray Pink"
     },
     "title": "主题"
   },

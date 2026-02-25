@@ -1,10 +1,10 @@
-Final Revised Terms of Service for tomomai
+Terms of Service for tomomai
 
-Last Updated: December 2, 2025
+Last Updated: February 20, 2026
 
 1. Acceptance of Terms
 
-Welcome to tomomai (the "Service"). The Service is provided by shedaniel (the "Developer," "I," or "we") as an independent project, resident in Hong Kong.
+Welcome to tomomai (the "Service"). The Service is provided by S.D. Studios ("Company," "we," or "us"), a proprietary entity registered in the Hong Kong Special Administrative Region.
 
 By accessing or using the tomomai website and any services provided through it, you agree to be bound by these Terms of Service ("TOS") and our Privacy Policy. If you do not agree to these TOS, you must not access or use the Service.
 
@@ -45,8 +45,12 @@ The source code for tomomai is an open-source project and is licensed under the 
 - You may view, download, use, copy, modify, and distribute the source code in accordance with the terms of the AGPL.
 - The full text of the license can be found here: https://github.com/shedaniel/tomomai/blob/main/LICENSE
 
-5.2 Self-Hosting and Branding
-While the AGPL license permits redistribution, if you choose to self-host a modified or unmodified version of the tomomai source code, you are strongly encouraged to avoid using the name "tomomai" or any similar branding to prevent confusion with the official service maintained by the Developer. Your self-hosted version must comply with all terms of the AGPL license.
+5.2 Self-Hosting and Distinctions
+The AGPL license permits you to run, modify, and redistribute the source code. However, if you choose to self-host a modified or unmodified version of the tomomai source code, you agree to:
+
+- Clearly distinguish your instance from the official Service hosted by S.D. Studios.
+- Not represent your instance as "official," "affiliated with," or endorsed by S.D. Studios.
+- Ensure that your use of the name "tomomai" does not cause confusion regarding the origin or maintenance of the service.
 
 5.3 User Data (Scraped Content)
 The maimai DX NET game data displayed by tomomai remains the intellectual property of SEGA, and access to it is governed by your agreement with SEGA. You are only authorized to view and use this data within tomomai for your personal, non-commercial review.
@@ -56,7 +60,7 @@ The maimai DX NET game data displayed by tomomai remains the intellectual proper
 You agree not to use the Service to:
 - Violate any applicable local, national, or international law, including the laws of Hong Kong.
 - Attempt to hack, disrupt, damage, or gain unauthorized access to our underlying infrastructure, servers, databases, or hosting environment, regardless of the open-source nature of the software.
-- Interfere with or disrupt the integrity or performance of the Service as hosted by the Developer.
+- Interfere with or disrupt the integrity or performance of the Service as hosted by S.D. Studios.
 
 7. Disclaimers and Limitation of Liability
 
@@ -64,9 +68,9 @@ You agree not to use the Service to:
 The Service is provided on an "AS IS" and "AS AVAILABLE" basis, without warranties of any kind, either express or implied. We do not warrant that the Service will be uninterrupted, error-free, or free of viruses or other harmful components. We make no warranty regarding the accuracy, reliability, or completeness of the scraped maimai DX NET data, as it depends on the third-party source.
 
 7.2 Limitation of Liability
-To the maximum extent permitted by applicable law, in no event shall the Developer be liable for any indirect, incidental, special, consequential, or punitive damages, or any loss of profits or revenues, whether incurred directly or indirectly, or any loss of data, use, goodwill, or other intangible losses, resulting from (a) your use of or inability to use the Service; (b) any unauthorized access to or use of your maimai DX NET login details or data; or (c) any action or non-action taken by SEGA as a result of your use of the Service.
+To the maximum extent permitted by applicable law, in no event shall S.D. Studios be liable for any indirect, incidental, special, consequential, or punitive damages, or any loss of profits or revenues, whether incurred directly or indirectly, or any loss of data, use, goodwill, or other intangible losses, resulting from (a) your use of or inability to use the Service; (b) any unauthorized access to or use of your maimai DX NET login details or data; or (c) any action or non-action taken by SEGA as a result of your use of the Service.
 
-Our total liability to you for any damages, losses, and causes of action shall not exceed the amount you have paid me, if any, in the last six (6) months. Since tomomai is not a paid service, this limit is zero (0) Hong Kong Dollars.
+Our total liability to you for any damages, losses, and causes of action shall not exceed the amount you have paid us, if any, in the last six (6) months. Since tomomai is not a paid service, this limit is zero (0) Hong Kong Dollars.
 
 8. Termination
 We may terminate or suspend your access to the Service immediately, without prior notice or liability, for any reason whatsoever, including without limitation if you breach these Terms. Upon termination, your right to use the Service will cease immediately.

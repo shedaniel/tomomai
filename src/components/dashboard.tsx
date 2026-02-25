@@ -22,6 +22,8 @@ import { ExperimentsDialog } from "./experiments-dialog";
 import { InvitesDialog } from "./invites-dialog";
 import { Header } from "./header";
 import { isChinaRegion } from "@/lib/enabled-regions";
+import { ChangelogDialog } from "./changelog-dialog";
+import { PostMeta } from "@/lib/posts";
 
 type DialogType = null | "token" | "settings" | "username" | "about" | "admin" | "invites" | "experiments" | "albumPrivacy";
 
@@ -32,9 +34,10 @@ interface DashboardProps {
   initialSnapshots: Snapshot[];
   initialSnapshotData?: SnapshotWithSongs;
   flags: Flags;
+  latestPost: PostMeta | null;
 }
 
-export function Dashboard({ user, initialUserData, initialProfileSettings, initialSnapshots, initialSnapshotData, flags }: DashboardProps) {
+export function Dashboard({ user, initialUserData, initialProfileSettings, initialSnapshots, initialSnapshotData, flags, latestPost }: DashboardProps) {
   const [dialogType, setDialogType] = useState<DialogType>(null);
 
   // Check if user has username
@@ -282,6 +285,8 @@ export function Dashboard({ user, initialUserData, initialProfileSettings, initi
         }}
         isPending={setAlbumPreferenceMutation.isPending}
       />
+
+      <ChangelogDialog latestPost={latestPost} />
 
       <FetchToastContainer state={fetchToastState} />
     </div>

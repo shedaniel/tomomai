@@ -1,4 +1,5 @@
 import { GenericFilter } from "@/components/filter-panel";
+import { VersionId } from "@/lib/metadata";
 import { Difficulty, Region, SongExtended, SongType } from "@/lib/types";
 
 export interface UniqueSong {
@@ -8,7 +9,7 @@ export interface UniqueSong {
   cover: string;
   type: SongType;
   genre: string;
-  addedVersion: number;
+  addedVersion: VersionId;
   slug: string;
   aliases: string[];
   difficulties: UniqueSongDifficulty[];
@@ -33,12 +34,12 @@ export interface SongDetails {
   type: SongType;
   genre: string;
   bpm: number | null;
-  addedVersion: number;
+  addedVersion: VersionId;
   userScores?: Record<string, Record<string, UserScore>>;
   regions: {
     region: Region;
     versions: {
-      gameVersion: number;
+      gameVersion: VersionId;
       charts: SongExtended[];
     }[];
   }[];
