@@ -13,18 +13,8 @@ import { AppRouter } from "@/server/routers/_app";
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 import { renderLevelPrecise } from "@/lib/name-utils";
 import { Button } from "@/components/ui/button";
-import { DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { AnimatedDialog, AnimatedDialogContent } from "@/components/ui/animated-dialog";
-import {
-  AnimatedAlertDialog,
-  AnimatedAlertDialogAction,
-  AnimatedAlertDialogCancel,
-  AnimatedAlertDialogContent,
-  AnimatedAlertDialogDescription,
-  AnimatedAlertDialogFooter,
-  AnimatedAlertDialogHeader,
-  AnimatedAlertDialogTitle,
-} from "@/components/ui/animated-alert-dialog";
+import { DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { AnimatedDialog, AnimatedDialogContent, AnimatedDialogClose } from "@/components/ui/animated-dialog";
 import { Checkbox } from "@/components/animate-ui/components/radix/checkbox";
 import { toast } from "sonner";
 
@@ -387,14 +377,14 @@ export function AlbumCard({ region }: AlbumCardProps) {
         </div>
       </CardContent>
 
-      <AnimatedAlertDialog open={showDialog} onOpenChange={setShowDialog}>
-        <AnimatedAlertDialogContent>
-          <AnimatedAlertDialogHeader>
-            <AnimatedAlertDialogTitle>{t('deleteTitle')}</AnimatedAlertDialogTitle>
-            <AnimatedAlertDialogDescription>
+      <AnimatedDialog open={showDialog} onOpenChange={setShowDialog}>
+        <AnimatedDialogContent showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle>{t('deleteTitle')}</DialogTitle>
+            <DialogDescription>
               {t('deleteDescription')}
-            </AnimatedAlertDialogDescription>
-          </AnimatedAlertDialogHeader>
+            </DialogDescription>
+          </DialogHeader>
           <div className="flex items-center gap-2">
             <Checkbox
               id="dont-ask-again"
@@ -405,14 +395,14 @@ export function AlbumCard({ region }: AlbumCardProps) {
               {t('dontAskAgain')}
             </label>
           </div>
-          <AnimatedAlertDialogFooter>
-            <AnimatedAlertDialogCancel>{t('cancel')}</AnimatedAlertDialogCancel>
-            <AnimatedAlertDialogAction onClick={handleConfirmDelete}>
-              {t('delete')}
-            </AnimatedAlertDialogAction>
-          </AnimatedAlertDialogFooter>
-        </AnimatedAlertDialogContent>
-      </AnimatedAlertDialog>
+          <DialogFooter>
+            <AnimatedDialogClose asChild>
+              <Button variant="outline">{t('cancel')}</Button>
+            </AnimatedDialogClose>
+            <Button onClick={handleConfirmDelete}>{t('delete')}</Button>
+          </DialogFooter>
+        </AnimatedDialogContent>
+      </AnimatedDialog>
     </Card>
   );
 }
