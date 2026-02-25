@@ -52,6 +52,25 @@
       "analyzeProgress": "プレイ進捗の分析"
     }
   },
+  "consent": {
+    "title": "tomomai へようこそ",
+    "description": "アカウント作成にあたり、以下の規約およびポリシーをご確認の上、同意をお願いいたします。",
+    "tldr": {
+      "title": "本ポリシーの要点（法的効力を有しません）",
+      "points": [
+        "データの所有権はユーザーに帰属し、第三者への販売は一切行いません",
+        "データは日本国内のサーバーにて安全に管理・保管されます",
+        "データの処理については、香港特別行政区の法令に準拠します",
+        "本プロジェクトはオープンソース（AGPL-3.0）として公開されています",
+        "本ツールは非公式の個人開発によるものであり、株式会社セガとは一切関係ありません"
+      ]
+    },
+    "agreeToTos": "利用規約に同意する",
+    "agreeToPrivacy": "プライバシーポリシーに同意する",
+    "viewFullText": "全文を表示",
+    "cancel": "キャンセル",
+    "agree": "同意する"
+  },
   "dashboard": {
     "title": "ともマイ",
     "description": "フレンドと一緒にmaimaiのスコアを共有・分析しよう！",
@@ -251,7 +270,14 @@
     "usedOf": "/",
     "byRegion": "地域別",
     "storageWarning": "容量上限に近づいています。古い写真を削除しない場合、古いアルバムから自動的に削除されます。",
-    "uploadNotice": "直近のスナップショットを取得した場合、新しい写真が表示されるまで少し時間がかかることがあります。しばらくしてから更新してください。"
+    "uploadNotice": "直近のスナップショットを取得した場合、新しい写真が表示されるまで少し時間がかかることがあります。しばらくしてから更新してください。",
+    "deleteTitle": "写真を削除",
+    "deleteDescription": "この写真を削除してもよろしいですか？この操作は取り消せません。",
+    "deleteSuccess": "写真を削除しました",
+    "deleteFailed": "写真の削除に失敗しました",
+    "dontAskAgain": "今日はもう確認しない",
+    "delete": "削除",
+    "cancel": "キャンセル"
   },
   "recommendations": {
     "noRecommendations": "おすすめがありません",
@@ -305,6 +331,29 @@
     "notStarted": "未開始",
     "inProgress": "進行中",
     "completed": "コンプリート"
+  },
+  "playerStats": {
+    "title": "プレイヤー統計",
+    "selectVersion": "バージョンを選択",
+    "allVersions": "全バージョン",
+    "selectDifficulty": "難易度を選択",
+    "allDifficulties": "全難易度",
+    "backToStats": "統計に戻る",
+    "viewPlatesProgress": "プレート進捗を表示",
+    "achievementGrades": "達成ランク",
+    "fullCombo": "フルコンボ",
+    "fullSync": "フルシンク",
+    "noDataAvailable": "データがありません",
+    "noMatchingScores": "条件に一致するスコアがありません",
+    "selectVersionForPlates": "プレートの進捗を確認するには、バージョンを指定してください",
+    "songsNotMeeting": "{requirement} 未達成の楽曲",
+    "noSongsToDisplay": "表示する楽曲がありません",
+    "plates": {
+      "kyoku": "全曲 FC 以上",
+      "shou": "全曲 SSS 以上",
+      "shin": "全曲 AP 以上",
+      "maimai": "全曲 FDX 以上"
+    }
   },
   "tokenDialog": {
     "title": "maimai 認証情報を更新",
@@ -506,7 +555,8 @@
     "types": {
       "songs": "楽曲",
       "calculator": "計算",
-      "stats": "統計"
+      "stats": "統計",
+      "posts": "更新履歴"
     },
     "songs": {
       "metadata": {
@@ -568,6 +618,21 @@
       "bpm": "BPM",
       "added": "追加バージョン"
     },
+    "posts": {
+      "list": {
+        "title": "更新履歴",
+        "description": "tomomai の最新情報や変更点。",
+        "noPosts": "記事がありません。"
+      },
+      "dialog": {
+        "dismiss": "閉じる",
+        "readMore": "詳細を見る"
+      },
+      "aiTranslationHint": {
+        "title": "AI による翻訳",
+        "description": "この記事は AI を使用して翻訳されました。翻訳は完全ではない可能性があります。もし間違いを見つけた場合は、修正のご協力をお願いします！"
+      }
+    },
     "stats": {
       "title": "全体統計",
       "ratingDistribution": "レート分布",
@@ -577,6 +642,7 @@
       "averageAchievementByLevel": "レベル別平均達成率",
       "ratingVsPlayCount": "レート vs プレイ回数 ヒートマップ",
       "activeUsersOverTime": "アクティブユーザー数の推移",
+      "fetchesPerDay": "Users with Fetches per Day",
       "xAxis": {
         "rating": "レート値",
         "playCount": "プレイ回数",
@@ -591,7 +657,8 @@
         "percentage": "割合",
         "achievement": "達成率",
         "count": "ユーザー数",
-        "activeUsers": "アクティブユーザー"
+        "activeUsers": "アクティブユーザー",
+        "usersWithFetches": "Users with Fetches"
       },
       "table": {
         "rank": "順位",
@@ -619,47 +686,6 @@
       "rose": "Rose",
       "gold": "Gold",
       "pink": "Pink"
-    },
-    "themes": {
-      "simple": "Simple",
-      "dark-simple": "Dark Simple",
-      "gray-simple": "Gray Simple",
-      "burnt-amaranth": "Burnt Amaranth",
-      "burnt-blue": "Burnt Blue",
-      "burnt-brown": "Burnt Brown",
-      "burnt-emerald": "Burnt Emerald",
-      "burnt-grass": "Burnt Grass",
-      "burnt-purple": "Burnt Purple",
-      "burnt-rose": "Burnt Rose",
-      "burnt-gold": "Burnt Gold",
-      "burnt-pink": "Burnt Pink",
-      "dark-amaranth": "Dark Amaranth",
-      "dark-blue": "Dark Blue",
-      "dark-brown": "Dark Brown",
-      "dark-emerald": "Dark Emerald",
-      "dark-grass": "Dark Grass",
-      "dark-purple": "Dark Purple",
-      "dark-rose": "Dark Rose",
-      "dark-gold": "Dark Gold",
-      "dark-pink": "Dark Pink",
-      "light-amaranth": "Light Amaranth",
-      "light-blue": "Light Blue",
-      "light-brown": "Light Brown",
-      "light-emerald": "Light Emerald",
-      "light-grass": "Light Grass",
-      "light-purple": "Light Purple",
-      "light-rose": "Light Rose",
-      "light-gold": "Light Gold",
-      "light-pink": "Light Pink",
-      "gray-amaranth": "Gray Amaranth",
-      "gray-blue": "Gray Blue",
-      "gray-brown": "Gray Brown",
-      "gray-emerald": "Gray Emerald",
-      "gray-grass": "Gray Grass",
-      "gray-purple": "Gray Purple",
-      "gray-rose": "Gray Rose",
-      "gray-gold": "Gray Gold",
-      "gray-pink": "Gray Pink"
     },
     "title": "テーマ"
   },
