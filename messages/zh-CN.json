@@ -624,6 +624,10 @@
         "description": "tomomai 的最新更新与变更。",
         "noPosts": "暂无文章。"
       },
+      "dialog": {
+        "dismiss": "关闭",
+        "readMore": "阅读更多"
+      },
       "aiTranslationHint": {
         "title": "AI 辅助翻译",
         "description": "本文由 AI 辅助翻译，内容可能存在瑕疵。如发现任何问题，欢迎提交修正！"
