@@ -59,7 +59,7 @@
       "title": "TL;DR (Not Legal Advice)",
       "points": [
         "You own your data; it is never sold to third parties",
-        "Your data is encrypted and stored securely on servers in Japan",
+        "Your data is stored securely on servers in Japan",
         "Your data is processed in accordance with Hong Kong SAR laws",
         "This project is Open Source (AGPL-3.0)",
         "We are an independent tool and not affiliated with SEGA"
@@ -618,6 +618,21 @@
       "bpm": "BPM",
       "added": "Added"
     },
+    "posts": {
+      "list": {
+        "title": "Changelog",
+        "description": "Latest updates and changes to tomomai.",
+        "noPosts": "No posts yet."
+      },
+      "dialog": {
+        "dismiss": "Dismiss",
+        "readMore": "Read More"
+      },
+      "aiTranslationHint": {
+        "title": "AI-Assisted Translation",
+        "description": "This article was translated with the help of AI. The translation may not be perfect. If you spot any issues, contributions are welcome!"
+      }
+    },
     "stats": {
       "title": "Global Statistics",
       "ratingDistribution": "Player Rating Distribution",
@@ -671,47 +686,6 @@
       "rose": "Rose",
       "gold": "Gold",
       "pink": "Pink"
-    },
-    "themes": {
-      "simple": "Simple",
-      "dark-simple": "Dark Simple",
-      "gray-simple": "Gray Simple",
-      "burnt-amaranth": "Burnt Amaranth",
-      "burnt-blue": "Burnt Blue",
-      "burnt-brown": "Burnt Brown",
-      "burnt-emerald": "Burnt Emerald",
-      "burnt-grass": "Burnt Grass",
-      "burnt-purple": "Burnt Purple",
-      "burnt-rose": "Burnt Rose",
-      "burnt-gold": "Burnt Gold",
-      "burnt-pink": "Burnt Pink",
-      "dark-amaranth": "Dark Amaranth",
-      "dark-blue": "Dark Blue",
-      "dark-brown": "Dark Brown",
-      "dark-emerald": "Dark Emerald",
-      "dark-grass": "Dark Grass",
-      "dark-purple": "Dark Purple",
-      "dark-rose": "Dark Rose",
-      "dark-gold": "Dark Gold",
-      "dark-pink": "Dark Pink",
-      "light-amaranth": "Light Amaranth",
-      "light-blue": "Light Blue",
-      "light-brown": "Light Brown",
-      "light-emerald": "Light Emerald",
-      "light-grass": "Light Grass",
-      "light-purple": "Light Purple",
-      "light-rose": "Light Rose",
-      "light-gold": "Light Gold",
-      "light-pink": "Light Pink",
-      "gray-amaranth": "Gray Amaranth",
-      "gray-blue": "Gray Blue",
-      "gray-brown": "Gray Brown",
-      "gray-emerald": "Gray Emerald",
-      "gray-grass": "Gray Grass",
-      "gray-purple": "Gray Purple",
-      "gray-rose": "Gray Rose",
-      "gray-gold": "Gray Gold",
-      "gray-pink": "Gray Pink"
     },
     "title": "Theme"
   },

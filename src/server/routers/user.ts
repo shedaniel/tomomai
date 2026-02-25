@@ -7,7 +7,7 @@ import { getVersionInfo, VersionId, VERSIONS } from '@/lib/metadata';
 import { addRatingsAndSort, RatingCalculationInput, splitSongs } from '@/lib/rating-calculator';
 import { invites, songs, user, userScores, userSnapshots, userEvents, userRecentSongs, userRecentSongsDetailed, stores, storeEdits, storeEditVotes, userAlbums } from '@/lib/db/schema-pg';
 import { protectedProcedure, publicProcedure, router } from '@/lib/trpc';
-import { Region, SongExtended, SongWithScore, UserData } from '@/lib/types';
+import { MinimalSongForDisplay, Region, SongExtended, SongWithScore, UserData } from '@/lib/types';
 import { TRPCError } from '@trpc/server';
 import { nanoid } from 'nanoid';
 import { isTokenError, isAlbumSettingsError } from '@/lib/token-errors';
@@ -17,6 +17,7 @@ import { flagDefinitions } from '@/lib/flags';
 import { logger } from '@/lib/logger';
 import { Optional } from 'utility-types';
 import { getSongSlug, getSongSlugs } from '@/lib/song-slug';
+import { getAchievementRate } from '@/lib/difficulty';
 import { SongDetails, UniqueSong, UniqueSongDifficulty } from '@/components/db/songs/types';
 import { unstable_cache } from 'next/cache';
 import { getEnabledRegions, isChinaRegion } from '@/lib/enabled-regions';
@@ -3083,25 +3084,7 @@ export const userRouter = router({
           stats[version][difficulty] = { grades: {}, fc: {}, fs: {}, total: 0 };
         }
 
-        // Determine grade based on achievement (stored as 10000x)
-        const achievementPercent = score.achievement;
-        let grade = "D";
-
-        // Find the highest grade tier this achievement qualifies for
-        // ACHIEVEMENTS array is sorted from highest to lowest
-        if (achievementPercent >= 1005000) grade = "SSS+";
-        else if (achievementPercent >= 1000000) grade = "SSS";
-        else if (achievementPercent >= 995000) grade = "SS+";
-        else if (achievementPercent >= 990000) grade = "SS";
-        else if (achievementPercent >= 980000) grade = "S+";
-        else if (achievementPercent >= 970000) grade = "S";
-        else if (achievementPercent >= 940000) grade = "AAA";
-        else if (achievementPercent >= 900000) grade = "AA";
-        else if (achievementPercent >= 800000) grade = "A";
-        else if (achievementPercent >= 750000) grade = "BBB";
-        else if (achievementPercent >= 700000) grade = "BB";
-        else if (achievementPercent >= 600000) grade = "B";
-        else if (achievementPercent >= 500000) grade = "C";
+        const grade = getAchievementRate(score.achievement);
 
         // Increment count for this grade
         if (!stats[version][difficulty].grades[grade]) {
@@ -3214,22 +3197,7 @@ export const userRouter = router({
           stats[version][difficulty] = { grades: {}, fc: {}, fs: {}, total: 0 };
         }
 
-        const achievementPercent = score.achievement;
-        let grade = "D";
-
-        if (achievementPercent >= 1005000) grade = "SSS+";
-        else if (achievementPercent >= 1000000) grade = "SSS";
-        else if (achievementPercent >= 995000) grade = "SS+";
-        else if (achievementPercent >= 990000) grade = "SS";
-        else if (achievementPercent >= 980000) grade = "S+";
-        else if (achievementPercent >= 970000) grade = "S";
-        else if (achievementPercent >= 940000) grade = "AAA";
-        else if (achievementPercent >= 900000) grade = "AA";
-        else if (achievementPercent >= 800000) grade = "A";
-        else if (achievementPercent >= 750000) grade = "BBB";
-        else if (achievementPercent >= 700000) grade = "BB";
-        else if (achievementPercent >= 600000) grade = "B";
-        else if (achievementPercent >= 500000) grade = "C";
+        const grade = getAchievementRate(score.achievement);
 
         if (!stats[version][difficulty].grades[grade]) {
           stats[version][difficulty].grades[grade] = 0;
@@ -3287,7 +3255,7 @@ export const userRouter = router({
       // Fetch all songs for this version and difficulty (including unplayed ones)
       const allSongs = await db
         .select({
-          songId: songs.id,
+          songId: songs.publicId,
           songName: songs.songName,
           artist: songs.artist,
           cover: songs.cover,
@@ -3344,7 +3312,7 @@ export const userRouter = router({
         fc: song.fc || "none",
         fs: song.fs || "none",
         dxScore: song.dxScore || 0,
-      }));
+      } satisfies MinimalSongForDisplay));
     }),
 
   getPublicPlateSongs: publicProcedure
@@ -3375,7 +3343,7 @@ export const userRouter = router({
 
       const allSongs = await db
         .select({
-          songId: songs.id,
+          songId: songs.publicId,
           songName: songs.songName,
           artist: songs.artist,
           cover: songs.cover,
@@ -3429,7 +3397,7 @@ export const userRouter = router({
         fc: song.fc || "none",
         fs: song.fs || "none",
         dxScore: song.dxScore || 0,
-      }));
+      } satisfies MinimalSongForDisplay));
     }),
 
 });

@@ -991,6 +991,68 @@ describe("mergeSongs", () => {
       expect(sameKeySongs).toHaveLength(2);
     });
 
+    it("should not steal firstSong when a version-matching secondSong exists for the same key", () => {
+      // Reproduces the "Link" bug: one DB song (version -12) and two uploaded songs sharing the same key:
+      // one with matching version -12 (should merge with DB) and one with different version -9 (should be added as new).
+      // If the -9 song is processed first via the fallback it would "steal" the DB entry, causing the -12 upload
+      // to be incorrectly treated as new.
+      const firstSongs: PendingSong[] = [
+        {
+          songName: "Link",
+          type: "std",
+          difficulty: "advanced",
+          level: important("7+"),
+          addedVersion: important(-12),
+          artist: "Clean Tears feat. Youna",
+          bpm: important(132),
+          extras: { dbId: "51830", source: "database" },
+        },
+      ];
+
+      const secondSongs: PendingSong[] = [
+        // This is the NEW song (different version/artist) — should be added as new
+        {
+          songName: "Link",
+          type: "std",
+          difficulty: "advanced",
+          level: important("8"),
+          addedVersion: important(-9),
+          artist: "Circle of friends",
+          bpm: important(198),
+          extras: { source: "upload" },
+        },
+        // This is the EXISTING song (same version/artist) — should merge with DB entry
+        {
+          songName: "Link",
+          type: "std",
+          difficulty: "advanced",
+          level: important("7+"),
+          addedVersion: important(-12),
+          artist: "Clean Tears feat. Youna",
+          bpm: important(132),
+          extras: { source: "upload" },
+        },
+      ];
+
+      const take = taker(logger);
+      const result = mergeSongs(firstSongs, secondSongs, "default", logger, merger(logger, take), take);
+
+      // Should have 2 entries: the merged -12 song and the new -9 song
+      expect(result).toHaveLength(2);
+
+      const v12 = result.find(s => value(s.addedVersion) === -12);
+      const v9 = result.find(s => value(s.addedVersion) === -9);
+
+      expect(v12).toBeDefined();
+      expect(v9).toBeDefined();
+      expect(v12!.artist).toBe("Clean Tears feat. Youna");
+      expect(v9!.artist).toBe("Circle of friends");
+      // The -12 song should carry the DB's dbId (it merged with the DB entry)
+      // The -9 song should NOT have a dbId (it's truly new)
+      expect(v12!.extras?.dbId).toBe("51830");
+      expect(v9!.extras?.dbId).toBeUndefined();
+    });
+
     it("should preserve extras from scraper when merging with base data", () => {
       const scraperSongs: PendingSong[] = [
         {

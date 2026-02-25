@@ -183,7 +183,7 @@ export const songs = pgTable("songs", {
   touchCount: smallint("touchCount"),
   breakCount: smallint("breakCount"),
 }, (table) => [
-  unique("song_name_difficulty_type_region_version_unique").on(table.songName, table.difficulty, table.type, table.region, table.gameVersion),
+  unique("song_name_difficulty_type_region_version_addedversion_unique").on(table.songName, table.difficulty, table.type, table.region, table.gameVersion, table.addedVersion),
   index("songs_publicid_idx").on(table.publicId),
   index("songs_region_gameversion_idx").on(table.region, table.gameVersion),
   index("songs_songname_difficulty_idx").on(table.songName, table.difficulty),

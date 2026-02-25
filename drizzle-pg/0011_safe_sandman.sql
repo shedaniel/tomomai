@@ -1,0 +1,2 @@
+ALTER TABLE "songs" DROP CONSTRAINT "song_name_difficulty_type_region_version_unique";--> statement-breakpoint
+ALTER TABLE "songs" ADD CONSTRAINT "song_name_difficulty_type_region_version_addedversion_unique" UNIQUE("songName","difficulty","type","region","gameVersion","addedVersion");

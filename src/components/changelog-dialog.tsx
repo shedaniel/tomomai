@@ -11,6 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 
 const CHANGELOG_STORAGE_KEY = "tomomai-changelog-last-seen";
 
@@ -19,6 +20,7 @@ interface ChangelogDialogProps {
 }
 
 export function ChangelogDialog({ latestPost }: ChangelogDialogProps) {
+  const t = useTranslations("db.posts.dialog");
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -46,28 +48,28 @@ export function ChangelogDialog({ latestPost }: ChangelogDialogProps) {
       if (!o) handleDismiss();
       else setOpen(true);
     }}>
-      <AnimatedDialogContent className="sm:max-w-[450px]">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+      <AnimatedDialogContent className="sm:max-w-[420px]">
+        <DialogHeader className="space-y-3 text-left">
+          {latestPost.version && latestPost.version !== "N/A" && (
+            <span className="inline-flex w-fit items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
+              v{latestPost.version}
+            </span>
+          )}
+          <DialogTitle className="text-xl leading-snug">
             {latestPost.title}
-            {latestPost.version && latestPost.version !== "N/A" && (
-              <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
-                v{latestPost.version}
-              </span>
-            )}
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-sm leading-relaxed">
             {latestPost.summary}
           </DialogDescription>
         </DialogHeader>
 
-        <DialogFooter className="flex-row gap-2 sm:justify-between">
-          <Button variant="outline" onClick={handleDismiss}>
-            Dismiss
+        <DialogFooter className="mt-2 flex-row gap-2 sm:justify-between">
+          <Button variant="ghost" size="sm" onClick={handleDismiss}>
+            {t("dismiss")}
           </Button>
-          <Button asChild onClick={handleDismiss}>
+          <Button size="sm" asChild onClick={handleDismiss}>
             <Link href={`/db/posts/${latestPost.slug}`}>
-              Read More
+              {t("readMore")}
             </Link>
           </Button>
         </DialogFooter>

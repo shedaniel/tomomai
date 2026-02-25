@@ -1,4 +1,65 @@
+import { getCurrentVersion } from "@/lib/metadata";
 import { NextRequest, NextResponse } from "next/server";
+
+async function updateRegion(
+  origin: string,
+  region: "intl" | "jp",
+  maimaiToken: string,
+  adminToken: string,
+): Promise<{ success: boolean; data?: any; error?: string; status?: number }> {
+  const version = getCurrentVersion(region);
+
+  // Step 1: Fetch records from /api/admin/update
+  console.log(`Fetching ${region.toUpperCase()} records from /api/admin/update...`);
+  const updateUrl = new URL(`${origin}/api/admin/update`);
+  updateUrl.searchParams.set('region', region);
+  updateUrl.searchParams.set('token', maimaiToken);
+
+  const updateResponse = await fetch(updateUrl.toString(), {
+    method: "GET",
+    headers: { "Authorization": `Bearer ${adminToken}` },
+  });
+
+  if (!updateResponse.ok) {
+    const errorText = await updateResponse.text();
+    console.error(`Failed to fetch ${region.toUpperCase()} records: ${updateResponse.status} ${updateResponse.statusText}`);
+    return { success: false, error: `Failed to fetch ${region.toUpperCase()} records: ${errorText}`, status: updateResponse.status };
+  }
+
+  const updateData = await updateResponse.json();
+  if (!updateData.success || !updateData.records) {
+    console.error(`${region.toUpperCase()} update response did not contain records`);
+    return { success: false, error: `${region.toUpperCase()} update response did not contain records`, status: 500 };
+  }
+
+  console.log(`Fetched ${updateData.records.length} ${region.toUpperCase()} records`);
+
+  // Step 2: Upload to /api/admin/upload with update=alter
+  console.log(`Uploading ${region.toUpperCase()} records to /api/admin/upload...`);
+  const uploadUrl = new URL(`${origin}/api/admin/upload`);
+  uploadUrl.searchParams.set('region', region);
+  uploadUrl.searchParams.set('version', String(version));
+  uploadUrl.searchParams.set('update', 'alter');
+
+  const uploadResponse = await fetch(uploadUrl.toString(), {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${adminToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ songs: updateData.records }),
+  });
+
+  if (!uploadResponse.ok) {
+    const errorText = await uploadResponse.text();
+    console.error(`Failed to upload ${region.toUpperCase()} records: ${uploadResponse.status} ${uploadResponse.statusText}`);
+    return { success: false, error: `Failed to upload ${region.toUpperCase()} records: ${errorText}`, status: uploadResponse.status };
+  }
+
+  const uploadData = await uploadResponse.json();
+  console.log(`${region.toUpperCase()} upload completed:`, uploadData.statistics);
+  return { success: true, data: uploadData };
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -44,131 +105,23 @@ export async function GET(request: NextRequest) {
 
     console.log("Admin update_all requested: processing JP then INTL");
 
-    // Step 1: Call /api/admin/update for JP
-    console.log("Step 1: Fetching JP records from /api/admin/update...");
-    const jpUpdateUrl = new URL(`${request.nextUrl.origin}/api/admin/update`);
-    jpUpdateUrl.searchParams.set('region', 'jp');
-    jpUpdateUrl.searchParams.set('token', maimaiToken);
+    const origin = request.nextUrl.origin;
 
-    const jpUpdateResponse = await fetch(jpUpdateUrl.toString(), {
-      method: "GET",
-      headers: {
-        "Authorization": `Bearer ${token}`,
-      },
-    });
-
-    if (!jpUpdateResponse.ok) {
-      const errorText = await jpUpdateResponse.text();
-      console.error(`Failed to fetch JP records: ${jpUpdateResponse.status} ${jpUpdateResponse.statusText}`);
-      return NextResponse.json(
-        { error: `Failed to fetch JP records: ${errorText}` },
-        { status: jpUpdateResponse.status }
-      );
+    const jpResult = await updateRegion(origin, "jp", maimaiToken, token);
+    if (!jpResult.success) {
+      return NextResponse.json({ error: jpResult.error }, { status: jpResult.status ?? 500 });
     }
 
-    const jpUpdateData = await jpUpdateResponse.json();
-    if (!jpUpdateData.success || !jpUpdateData.records) {
-      console.error("JP update response did not contain records");
-      return NextResponse.json(
-        { error: "JP update response did not contain records" },
-        { status: 500 }
-      );
+    const intlResult = await updateRegion(origin, "intl", maimaiToken, token);
+    if (!intlResult.success) {
+      return NextResponse.json({ error: intlResult.error }, { status: intlResult.status ?? 500 });
     }
-
-    const jpFallbackRecords = jpUpdateData.records;
-    console.log(`Fetched ${jpFallbackRecords.length} JP records`);
-
-    // Step 2: Call /api/admin/update_db for JP
-    console.log("Step 2: Updating JP database with fallback records...");
-    const jpUpdateDbUrl = new URL(`${request.nextUrl.origin}/api/admin/update_db`);
-    jpUpdateDbUrl.searchParams.set('region', 'jp');
-
-    const jpUpdateDbResponse = await fetch(jpUpdateDbUrl.toString(), {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ fallbackRecords: jpFallbackRecords }),
-    });
-
-    if (!jpUpdateDbResponse.ok) {
-      const errorText = await jpUpdateDbResponse.text();
-      console.error(`Failed to update JP database: ${jpUpdateDbResponse.status} ${jpUpdateDbResponse.statusText}`);
-      return NextResponse.json(
-        { error: `Failed to update JP database: ${errorText}` },
-        { status: jpUpdateDbResponse.status }
-      );
-    }
-
-    const jpUpdateDbData = await jpUpdateDbResponse.json();
-    console.log("JP database update completed:", jpUpdateDbData);
-
-    // Step 3: Call /api/admin/update for INTL
-    console.log("Step 3: Fetching INTL records from /api/admin/update...");
-    const intlUpdateUrl = new URL(`${request.nextUrl.origin}/api/admin/update`);
-    intlUpdateUrl.searchParams.set('region', 'intl');
-    intlUpdateUrl.searchParams.set('token', maimaiToken);
-
-    const intlUpdateResponse = await fetch(intlUpdateUrl.toString(), {
-      method: "GET",
-      headers: {
-        "Authorization": `Bearer ${token}`,
-      },
-    });
-
-    if (!intlUpdateResponse.ok) {
-      const errorText = await intlUpdateResponse.text();
-      console.error(`Failed to fetch INTL records: ${intlUpdateResponse.status} ${intlUpdateResponse.statusText}`);
-      return NextResponse.json(
-        { error: `Failed to fetch INTL records: ${errorText}` },
-        { status: intlUpdateResponse.status }
-      );
-    }
-
-    const intlUpdateData = await intlUpdateResponse.json();
-    if (!intlUpdateData.success || !intlUpdateData.records) {
-      console.error("INTL update response did not contain records");
-      return NextResponse.json(
-        { error: "INTL update response did not contain records" },
-        { status: 500 }
-      );
-    }
-
-    const intlFallbackRecords = intlUpdateData.records;
-    console.log(`Fetched ${intlFallbackRecords.length} INTL records`);
-
-    // Step 4: Call /api/admin/update_db for INTL
-    console.log("Step 4: Updating INTL database with fallback records...");
-    const intlUpdateDbUrl = new URL(`${request.nextUrl.origin}/api/admin/update_db`);
-    intlUpdateDbUrl.searchParams.set('region', 'intl');
-
-    const intlUpdateDbResponse = await fetch(intlUpdateDbUrl.toString(), {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ fallbackRecords: intlFallbackRecords }),
-    });
-
-    if (!intlUpdateDbResponse.ok) {
-      const errorText = await intlUpdateDbResponse.text();
-      console.error(`Failed to update INTL database: ${intlUpdateDbResponse.status} ${intlUpdateDbResponse.statusText}`);
-      return NextResponse.json(
-        { error: `Failed to update INTL database: ${errorText}` },
-        { status: intlUpdateDbResponse.status }
-      );
-    }
-
-    const intlUpdateDbData = await intlUpdateDbResponse.json();
-    console.log("INTL database update completed:", intlUpdateDbData);
 
     return NextResponse.json({
       success: true,
       message: "All regions updated successfully",
-      jp: jpUpdateDbData,
-      intl: intlUpdateDbData,
+      jp: jpResult.data,
+      intl: intlResult.data,
     });
 
   } catch (error) {

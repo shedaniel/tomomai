@@ -7,6 +7,9 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { ComponentPropsWithoutRef } from "react";
 import { PostLocaleSwitcher } from "@/components/post-locale-switcher";
+import { getTranslations } from "next-intl/server";
+import { Bot } from "lucide-react";
+import { isChinaRegion } from "@/lib/enabled-regions";
 
 type PostPageProps = {
   params: Promise<{
@@ -105,6 +108,17 @@ export default async function PostPage({ params }: PostPageProps) {
     notFound();
   }
 
+  const tPost = await getTranslations("db.posts");
+  const AITranslationHint = () => (
+    <div className="flex gap-3 rounded-lg border border-border bg-muted px-4 py-3 text-sm my-6">
+      <Bot className="mt-0.5 shrink-0" size={18} />
+      <div>
+        <p className="font-semibold">{tPost("aiTranslationHint.title")}</p>
+        <p className="mt-0.5">{tPost("aiTranslationHint.description")}</p>
+      </div>
+    </div>
+  );
+
   const availableTranslations = getAvailableTranslations(post.canonicalSlug);
 
   const structuredData = {
@@ -140,10 +154,10 @@ export default async function PostPage({ params }: PostPageProps) {
         </Link>
 
         {/* Language switcher (only shows if multiple translations exist) */}
-        <PostLocaleSwitcher
+        {!isChinaRegion() && <PostLocaleSwitcher
           availableLocales={availableTranslations}
           currentLocale={post.locale}
-        />
+        />}
       </div>
 
       <div className="mb-8">
@@ -168,7 +182,7 @@ export default async function PostPage({ params }: PostPageProps) {
       <hr className="border-border mb-8" />
 
       <article className="prose-custom">
-        <MDXRemote source={post.content} components={mdxComponents} />
+        <MDXRemote source={post.content} components={{ ...mdxComponents, AITranslationHint }} />
       </article>
     </div>
   );
