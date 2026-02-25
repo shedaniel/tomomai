@@ -624,13 +624,13 @@
         "description": "tomomai 的最新更新與變更。",
         "noPosts": "尚無文章。"
       },
-      "aiTranslationHint": {
-        "title": "AI 輔助翻譯",
-        "description": "本文由 AI 協助翻譯，內容可能不盡完美。若發現任何錯誤，歡迎協助修正！"
-      },
       "dialog": {
         "dismiss": "關閉",
         "readMore": "閱讀更多"
+      },
+      "aiTranslationHint": {
+        "title": "AI 輔助翻譯",
+        "description": "本文由 AI 協助翻譯，內容可能不盡完美。若發現任何錯誤，歡迎協助修正！"
       }
     },
     "stats": {
@@ -642,6 +642,7 @@
       "averageAchievementByLevel": "等級平均達成率",
       "ratingVsPlayCount": "R 值 vs 遊玩次數熱力圖",
       "activeUsersOverTime": "活躍使用者趨勢",
+      "fetchesPerDay": "Users with Fetches per Day",
       "xAxis": {
         "rating": "R 值",
         "playCount": "遊玩次數",
@@ -656,7 +657,8 @@
         "percentage": "百分比",
         "achievement": "達成率",
         "count": "使用者數",
-        "activeUsers": "活躍使用者"
+        "activeUsers": "活躍使用者",
+        "usersWithFetches": "Users with Fetches"
       },
       "table": {
         "rank": "排名",
@@ -684,47 +686,6 @@
       "rose": "玫瑰紅",
       "gold": "金色",
       "pink": "粉紅"
-    },
-    "themes": {
-      "simple": "簡約",
-      "dark-simple": "深色簡約",
-      "gray-simple": "暗色簡約",
-      "burnt-amaranth": "焦莧紅",
-      "burnt-blue": "Burnt Blue",
-      "burnt-brown": "Burnt Brown",
-      "burnt-emerald": "Burnt Emerald",
-      "burnt-grass": "Burnt Grass",
-      "burnt-purple": "Burnt Purple",
-      "burnt-rose": "Burnt Rose",
-      "burnt-gold": "Burnt Gold",
-      "burnt-pink": "Burnt Pink",
-      "dark-amaranth": "Dark Amaranth",
-      "dark-blue": "深藍",
-      "dark-brown": "深褐",
-      "dark-emerald": "Dark Emerald",
-      "dark-grass": "Dark Grass",
-      "dark-purple": "深紫",
-      "dark-rose": "深玫紅",
-      "dark-gold": "深金",
-      "dark-pink": "深粉",
-      "light-amaranth": "Light Amaranth",
-      "light-blue": "Light Blue",
-      "light-brown": "Light Brown",
-      "light-emerald": "Light Emerald",
-      "light-grass": "Light Grass",
-      "light-purple": "Light Purple",
-      "light-rose": "Light Rose",
-      "light-gold": "Light Gold",
-      "light-pink": "Light Pink",
-      "gray-amaranth": "Gray Amaranth",
-      "gray-blue": "灰藍",
-      "gray-brown": "灰褐",
-      "gray-emerald": "Gray Emerald",
-      "gray-grass": "Gray Grass",
-      "gray-purple": "灰紫",
-      "gray-rose": "灰玫紅",
-      "gray-gold": "灰金",
-      "gray-pink": "灰粉"
     },
     "title": "主題"
   },
