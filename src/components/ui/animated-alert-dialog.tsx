@@ -90,10 +90,9 @@ function AnimatedAlertDialogContent({
   return (
     <AnimatePresence>
       {open && (
-        <AlertDialogPortal forceMount data-slot="alert-dialog-portal">
+        <AlertDialogPortal key="alert-dialog-portal" data-slot="alert-dialog-portal">
           <AnimatedAlertDialogOverlay />
           <AlertDialogPrimitive.Content
-            forceMount
             asChild
             data-slot="alert-dialog-content"
             {...props}
