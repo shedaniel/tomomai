@@ -2523,7 +2523,8 @@ export async function fetchMaimaiData(
   region: Region,
   sessionId: bigint,
   flags: string[] = [],
-  shouldFetchAlbums: boolean = false
+  shouldFetchAlbums: boolean = false,
+  backgroundWorkRef?: { promise: Promise<void> }
 ): Promise<void> {
   // Get the user's token from database
   const tokenRecord = await db.query.userTokens.findFirst({
@@ -2656,22 +2657,32 @@ export async function fetchMaimaiData(
     logger.info("Player data processed and snapshot created successfully");
     logger.info(`Session ID: ${sessionId}`);
 
-    // Fire and forget: Fetch detailed recent songs data in background
+    // Run background fetches in parallel and await them so the caller's after() scope captures completion
+    const backgroundTasks: Promise<void>[] = [];
+
     if (recentSongsData.length > 0) {
       logger.info("Starting detailed recent songs data fetch in background...");
-      fetchAndInsertRecentSongsData(userId, region, cookies, recentSongsData).catch((error) => {
-        logger.error(error, "Failed to fetch detailed recent songs data");
-      });
+      backgroundTasks.push(
+        fetchAndInsertRecentSongsData(userId, region, cookies, recentSongsData).catch((error) => {
+          logger.error(error, "Failed to fetch detailed recent songs data");
+        })
+      );
     }
 
-    // Fire and forget: Fetch album data in background (only if user opted in)
     if (shouldFetchAlbums && albumData.length > 0) {
       logger.info("Starting album data fetch in background...");
-      fetchAndInsertAlbumData(userId, region, cookies, albumData).catch((error) => {
-        logger.error(error, "Failed to fetch album data");
-      });
+      backgroundTasks.push(
+        fetchAndInsertAlbumData(userId, region, cookies, albumData).catch((error) => {
+          logger.error(error, "Failed to fetch album data");
+        })
+      );
     } else if (!shouldFetchAlbums && albumData.length > 0) {
       logger.info(`Skipping album fetch: user opted out (found ${albumData.length} albums)`);
+    }
+
+    const bgWork = Promise.allSettled(backgroundTasks).then(() => {});
+    if (backgroundWorkRef) {
+      backgroundWorkRef.promise = bgWork;
     }
 
   } catch (error) {

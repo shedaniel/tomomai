@@ -22,6 +22,8 @@ const createBrowserLogger = (): Logger => {
   return mock as unknown as Logger;
 };
 
+let logtailInstance: { flush: () => Promise<void> } | null = null;
+
 const createServerLogger = (): Logger => {
   const pino = require("pino");
   const isEdge = process.env.NEXT_RUNTIME === "edge";
@@ -53,6 +55,7 @@ const createServerLogger = (): Logger => {
         ? `https://${process.env.INGESTING_HOST}`
         : undefined,
     });
+    logtailInstance = logtail;
     streams.push({
       stream: {
         write(chunk: string) {
@@ -88,3 +91,7 @@ const isBrowser = typeof window !== "undefined";
 export const logger: Logger = isBrowser
   ? createBrowserLogger()
   : createServerLogger();
+
+export async function flushLogger(): Promise<void> {
+  await logtailInstance?.flush();
+}

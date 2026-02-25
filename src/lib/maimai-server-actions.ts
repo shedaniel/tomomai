@@ -7,6 +7,8 @@ import { encryptToken, decryptToken } from './token-crypto';
 import { Region } from './types';
 import { appendFetchState } from './fetch-states-server';
 import { getAllStates } from './fetch-states';
+import { after } from 'next/server';
+import { flushLogger } from './logger';
 
 export interface StartFetchResult {
   sessionId: string;
@@ -241,8 +243,9 @@ export async function startFetchServer(userId: string, region: Region, token?: s
 
   const fetchSessionInternalId = insertedSession.id;
 
-  // Start the actual data fetch in the background
-  (async () => {
+  // Start the actual data fetch in the background, keeping the function alive via after()
+  after(async () => {
+    const backgroundWorkRef = { promise: Promise.resolve() };
     try {
       // Create a timeout promise (2 minutes)
       const timeoutPromise = new Promise<never>((_, reject) => {
@@ -251,13 +254,16 @@ export async function startFetchServer(userId: string, region: Region, token?: s
         }, 2 * 60 * 1000); // 2 minutes in milliseconds
       });
 
-      // Race between the actual fetch and the timeout
+      // Race between the actual fetch and the timeout.
+      // fetchMaimaiData populates backgroundWorkRef with the optional detail fetches
+      // (fetchAndInsertRecentSongsData / fetchAndInsertAlbumData) so the snapshot
+      // can be marked completed before those finish.
       await Promise.race([
-        fetchMaimaiData(userId, region, fetchSessionInternalId, flags, shouldFetchAlbums),
+        fetchMaimaiData(userId, region, fetchSessionInternalId, flags, shouldFetchAlbums, backgroundWorkRef),
         timeoutPromise
       ]);
 
-      // Mark fetch as completed
+      // Mark fetch as completed — snapshot is done, detail fetches may still be running
       await db
         .update(fetchSessions)
         .set({
@@ -277,8 +283,12 @@ export async function startFetchServer(userId: string, region: Region, token?: s
           errorMessage: error instanceof Error ? error.message : "Unknown error occurred",
         })
         .where(eq(fetchSessions.id, fetchSessionInternalId));
+    } finally {
+      // Await the optional background tasks and flush logs regardless of outcome
+      await backgroundWorkRef.promise;
+      await flushLogger();
     }
-  })();
+  });
 
   return {
     sessionId: fetchSessionPublicId,
