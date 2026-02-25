@@ -49,9 +49,10 @@ export async function generateMetadata({ params }: PostPageProps): Promise<Metad
       url,
       publishedTime: post.date,
       locale: post.locale,
+      images: [{ url: `/db/posts/${post.slug}/opengraph-image`, width: 1200, height: 630 }],
     },
     twitter: {
-      card: "summary",
+      card: "summary_large_image",
       title: `${post.title} | tomomai`,
       description: post.summary,
     },
