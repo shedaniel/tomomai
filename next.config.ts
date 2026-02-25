@@ -6,6 +6,12 @@ const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 
 const nextConfig: NextConfig = {
   serverExternalPackages: ["skia-canvas", "pino", "pino-pretty", "kuromoji", "kuroshiro", "kuroshiro-analyzer-kuromoji", "@logtail/pino"],
+  turbopack: {
+    resolveAlias: {
+      "pino-pretty": { browser: "./src/lib/empty-module.js" },
+      "@logtail/pino": { browser: "./src/lib/empty-module.js" },
+    },
+  },
   images: {
     minimumCacheTTL: 2678400, // 31 days
     localPatterns: [
@@ -54,6 +60,8 @@ const nextConfig: NextConfig = {
       config.resolve.alias = {
         ...config.resolve.alias,
         './render-image-server': false,
+        'pino-pretty': false,
+        '@logtail/pino': false,
       };
     } else {
       config.externals = [
