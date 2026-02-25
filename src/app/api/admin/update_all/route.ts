@@ -103,25 +103,32 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    console.log("Admin update_all requested: processing JP then INTL");
+    const regionParam = searchParams.get('region');
+    if (regionParam && regionParam !== "jp" && regionParam !== "intl") {
+      return NextResponse.json(
+        { error: "Invalid 'region' query parameter, must be 'jp' or 'intl'" },
+        { status: 400 }
+      );
+    }
+    const region = regionParam as "jp" | "intl" | null;
 
     const origin = request.nextUrl.origin;
+    const regions: ("jp" | "intl")[] = region ? [region] : ["jp", "intl"];
+    console.log(`Admin update_all requested: processing ${regions.map(r => r.toUpperCase()).join(" then ")}`);
 
-    const jpResult = await updateRegion(origin, "jp", maimaiToken, token);
-    if (!jpResult.success) {
-      return NextResponse.json({ error: jpResult.error }, { status: jpResult.status ?? 500 });
-    }
-
-    const intlResult = await updateRegion(origin, "intl", maimaiToken, token);
-    if (!intlResult.success) {
-      return NextResponse.json({ error: intlResult.error }, { status: intlResult.status ?? 500 });
+    const results: Record<string, any> = {};
+    for (const r of regions) {
+      const result = await updateRegion(origin, r, maimaiToken, token);
+      if (!result.success) {
+        return NextResponse.json({ error: result.error }, { status: result.status ?? 500 });
+      }
+      results[r] = result.data;
     }
 
     return NextResponse.json({
       success: true,
-      message: "All regions updated successfully",
-      jp: jpResult.data,
-      intl: intlResult.data,
+      message: `${regions.map(r => r.toUpperCase()).join(" and ")} updated successfully`,
+      ...results,
     });
 
   } catch (error) {
