@@ -624,6 +624,10 @@
         "description": "Latest updates and changes to tomomai.",
         "noPosts": "No posts yet."
       },
+      "dialog": {
+        "dismiss": "Dismiss",
+        "readMore": "Read More"
+      },
       "aiTranslationHint": {
         "title": "AI-Assisted Translation",
         "description": "This article was translated with the help of AI. The translation may not be perfect. If you spot any issues, contributions are welcome!"

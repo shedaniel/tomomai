@@ -611,6 +611,12 @@
         "intl": "國際版",
         "jp": "日版"
       }
+    },
+    "posts": {
+      "dialog": {
+        "dismiss": "關閉",
+        "readMore": "閱讀更多"
+      }
     }
   },
   "theme": {

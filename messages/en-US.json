@@ -546,6 +546,12 @@
         "intl": "International",
         "jp": "Japan"
       }
+    },
+    "posts": {
+      "dialog": {
+        "dismiss": "Dismiss",
+        "readMore": "Read More"
+      }
     }
   },
   "theme": {

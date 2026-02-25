@@ -611,6 +611,12 @@
         "intl": "인터내셔널",
         "jp": "일본"
       }
+    },
+    "posts": {
+      "dialog": {
+        "dismiss": "닫기",
+        "readMore": "더 보기"
+      }
     }
   },
   "theme": {
