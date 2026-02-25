@@ -624,6 +624,10 @@
         "description": "tomomai の最新情報や変更点。",
         "noPosts": "記事がありません。"
       },
+      "dialog": {
+        "dismiss": "閉じる",
+        "readMore": "詳細を見る"
+      },
       "aiTranslationHint": {
         "title": "AI による翻訳",
         "description": "この記事は AI を使用して翻訳されました。翻訳は完全ではない可能性があります。もし間違いを見つけた場合は、修正のご協力をお願いします！"
