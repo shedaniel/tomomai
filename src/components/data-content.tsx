@@ -115,7 +115,7 @@ export function DataContent({
       name: t('dataContent.tabs.stats'),
       value: "stats",
       icon: BarChart,
-      show: flags.statsCard && (visitedBySelf || !!privacySettings.showAllScores),
+      show: visitedBySelf || !!privacySettings.showAllScores,
     },
     {
       name: t('dataContent.tabs.songs'),
@@ -220,7 +220,7 @@ export function DataContent({
             />
           </motion.div>
         </TabsContent>
-        {flags.statsCard && (visitedBySelf || !!privacySettings.showAllScores) && (
+        {(visitedBySelf || !!privacySettings.showAllScores) && (
           <TabsContent value="stats" className="mt-0 flex-1 min-w-0">
             <motion.div
               initial={{ opacity: 0, x: 10 }}

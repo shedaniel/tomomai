@@ -4,7 +4,6 @@ export interface Flags {
   newTokenDialog: boolean;
   historyCard: boolean;
   recommendationFilters: boolean;
-  statsCard: boolean;
   platesCard: boolean;
   eventsCard: boolean;
   albumsCard: boolean;
@@ -25,8 +24,6 @@ export const useFlags = async (): Promise<Flags> => {
     historyCard: await useHistoryCard(),
     // eslint-disable-next-line react-hooks/rules-of-hooks
     recommendationFilters: await useRecommendationFilters(),
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    statsCard: await useStatsCard(),
     // eslint-disable-next-line react-hooks/rules-of-hooks
     platesCard: await usePlatesCard(),
     // eslint-disable-next-line react-hooks/rules-of-hooks
@@ -51,12 +48,6 @@ export const flagDefinitions: Record<keyof Flags, FlagDefinition> = {
   },
   recommendationFilters: {
     key: "recommendationFilters",
-    defaultValue: true,
-    userSelectable: true,
-    decide: async () => true,
-  },
-  statsCard: {
-    key: "statsCard",
     defaultValue: true,
     userSelectable: true,
     decide: async () => true,
