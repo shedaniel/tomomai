@@ -59,7 +59,6 @@ interface HeaderProps {
       onInvites: () => void;
       onAdmin: () => void;
       onExperiments: () => void;
-      onSettings: () => void;
       onLogout: () => void;
     } | null;
   }
@@ -205,7 +204,7 @@ function UserIcon({ user, menu, onAbout, onTheme, onDiscordInvite }: NonNullable
     <LucideUserIcon className="h-5 w-5" />
   );
 
-  const { userRole, onInvites, onAdmin, onExperiments, onSettings, onLogout } = menu;
+  const { userRole, onInvites, onAdmin, onExperiments, onLogout } = menu;
 
   return (
     <DropdownMenu modal={false}>
@@ -289,9 +288,11 @@ function UserIcon({ user, menu, onAbout, onTheme, onDiscordInvite }: NonNullable
           <Beaker className="mr-2 h-4 w-4" />
           <span>{t('common.experiments')}</span>
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={onSettings}>
-          <Settings className="mr-2 h-4 w-4" />
-          <span>{t('common.settings')}</span>
+        <DropdownMenuItem asChild>
+          <Link href="/settings">
+            <Settings className="mr-2 h-4 w-4" />
+            <span>{t('common.settings')}</span>
+          </Link>
         </DropdownMenuItem>
         <DropdownMenuItem onClick={onLogout}>
           <LogOut className="mr-2 h-4 w-4" />

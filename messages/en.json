@@ -35,7 +35,8 @@
       "master": "Master",
       "remaster": "Re:Master",
       "utage": "Utage"
-    }
+    },
+    "back": "Back"
   },
   "auth": {
     "loginWithDiscord": "Continue with Discord",
@@ -81,8 +82,24 @@
     "tokenUpdateSuccess": "Token saved successfully!"
   },
   "settings": {
-    "title": "Settings",
-    "description": "Customize your tomomai ともマイ experience.",
+    "pages": {
+      "account": {
+        "title": "Account",
+        "description": "Language and account preferences."
+      },
+      "fetch": {
+        "title": "Fetch",
+        "description": "Token and data fetching settings."
+      },
+      "privacy": {
+        "title": "Privacy",
+        "description": "Control who can see your profile and scores."
+      },
+      "developer": {
+        "title": "Developer",
+        "description": "Manage API keys and OAuth applications."
+      }
+    },
     "language": {
       "label": "Language",
       "description": "Select your preferred interface language.",
@@ -474,7 +491,15 @@
     "validation": {
       "format": "Username must be 1-32 characters long and contain only letters, numbers, dashes, and underscores",
       "taken": "This username is already taken"
-    }
+    },
+    "changeTitle": "Change Username",
+    "changeDescription": "Choose a new username. Your profile URL will change.",
+    "changeButton": "Change",
+    "sameAsCurrent": "Same as your current username.",
+    "newProfileUrl": "New profile URL: /profile/{username}",
+    "changeSuccess": "Username updated successfully.",
+    "changingUsername": "Saving…",
+    "newUsernameLabel": "New username"
   },
   "invites": {
     "title": "Manage Invitations",

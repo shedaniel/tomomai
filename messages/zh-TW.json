@@ -35,7 +35,8 @@
       "master": "Master",
       "remaster": "Re:Master",
       "utage": "Utage"
-    }
+    },
+    "back": "返回"
   },
   "auth": {
     "loginWithDiscord": "以 Discord 繼續",
@@ -81,8 +82,24 @@
     "tokenUpdateSuccess": "驗證方式儲存成功！"
   },
   "settings": {
-    "title": "設定",
-    "description": "自訂你的 tomomai ともマイ 體驗。",
+    "pages": {
+      "account": {
+        "title": "帳戶",
+        "description": "語言與帳戶偏好設定。"
+      },
+      "fetch": {
+        "title": "同步",
+        "description": "憑證與資料同步設定。"
+      },
+      "privacy": {
+        "title": "隱私",
+        "description": "分享你的 tomomai ともマイ 個人檔案與成績。"
+      },
+      "developer": {
+        "title": "開發者",
+        "description": "管理 API 金鑰與 OAuth 應用程式。"
+      }
+    },
     "language": {
       "label": "語言",
       "description": "選擇你偏好的介面語言。",
@@ -474,7 +491,15 @@
     "validation": {
       "format": "使用者名稱必須是 1-32 個字元，僅包含英數字、破折號和底線",
       "taken": "此使用者名稱已被使用"
-    }
+    },
+    "changeTitle": "更改用戶名",
+    "changeDescription": "選擇新的用戶名。你的個人檔案 URL 將會變更。",
+    "changeButton": "更改",
+    "sameAsCurrent": "與目前用戶名相同。",
+    "newProfileUrl": "新個人檔案 URL：/profile/{username}",
+    "changeSuccess": "用戶名更新成功。",
+    "changingUsername": "儲存中…",
+    "newUsernameLabel": "新用戶名"
   },
   "invites": {
     "title": "管理邀請",

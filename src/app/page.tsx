@@ -70,18 +70,7 @@ export default async function Home() {
   const userRegion = userData.region || "intl";
 
   // Then fetch all other data in parallel using the correct region
-  const [profileSettings, snapshotsData] = await Promise.all([
-    trpc.user.getProfileSettings().catch(() => ({
-      publishProfile: false,
-      profileMainRegion: 'intl' as const,
-      profileShowAllScores: true,
-      profileShowScoreDetails: true,
-      profileShowPlates: true,
-      profileShowPlayCounts: true,
-      profileShowEvents: true,
-      profileShowInSearch: true,
-      fetchUseAlbums: null,
-    })),
+  const [snapshotsData] = await Promise.all([
     trpc.user.getSnapshots({ region: userRegion }).catch(() => ({ snapshots: [] })),
   ]);
 
@@ -102,7 +91,6 @@ export default async function Home() {
     <Dashboard
       user={session.user}
       initialUserData={userData}
-      initialProfileSettings={profileSettings}
       initialSnapshots={snapshotsData.snapshots}
       initialSnapshotData={initialSnapshotData}
       flags={flags}

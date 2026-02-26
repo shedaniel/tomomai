@@ -3,7 +3,6 @@
 import { DataBanner } from "@/components/data-banner";
 import { DataContent } from "@/components/data-content";
 import { FetchToastContainer } from "@/components/fetch-toast";
-import { SettingsDialog } from "@/components/settings-dialog";
 import { TokenDialog } from "@/components/token-dialog";
 import { UsernameSetupDialog } from "@/components/username-setup-dialog";
 import { AlbumPrivacyDialog } from "@/components/album-privacy-dialog";
@@ -13,7 +12,7 @@ import { signOut } from "@/lib/auth-client";
 import { Flags } from "@/lib/flags";
 import { isTokenError } from "@/lib/token-errors";
 import { trpc } from "@/lib/trpc-client";
-import { ProfileSettings, Region, Snapshot, SnapshotWithSongs, User, UserData } from "@/lib/types";
+import { Region, Snapshot, SnapshotWithSongs, User, UserData } from "@/lib/types";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { AboutDialog } from "./about-dialog";
@@ -25,19 +24,18 @@ import { isChinaRegion } from "@/lib/enabled-regions";
 import { ChangelogDialog } from "./changelog-dialog";
 import { PostMeta } from "@/lib/posts";
 
-type DialogType = null | "token" | "settings" | "username" | "about" | "admin" | "invites" | "experiments" | "albumPrivacy";
+type DialogType = null | "token" | "username" | "about" | "admin" | "invites" | "experiments" | "albumPrivacy";
 
 interface DashboardProps {
   user: User;
   initialUserData: UserData;
-  initialProfileSettings: ProfileSettings;
   initialSnapshots: Snapshot[];
   initialSnapshotData?: SnapshotWithSongs;
   flags: Flags;
   latestPost: PostMeta | null;
 }
 
-export function Dashboard({ user, initialUserData, initialProfileSettings, initialSnapshots, initialSnapshotData, flags, latestPost }: DashboardProps) {
+export function Dashboard({ user, initialUserData, initialSnapshots, initialSnapshotData, flags, latestPost }: DashboardProps) {
   const [dialogType, setDialogType] = useState<DialogType>(null);
 
   // Check if user has username
@@ -218,7 +216,6 @@ export function Dashboard({ user, initialUserData, initialProfileSettings, initi
             onInvites: () => setDialogType("invites"),
             onAdmin: () => setDialogType("admin"),
             onExperiments: () => setDialogType("experiments"),
-            onSettings: () => setDialogType("settings"),
             onLogout: handleLogout,
           },
         }}
@@ -256,15 +253,6 @@ export function Dashboard({ user, initialUserData, initialProfileSettings, initi
         newTokenDialog={flags.newTokenDialog}
         startSessionPolling={startSessionPolling}
         stopSessionPolling={stopSessionPolling}
-      />
-
-      <SettingsDialog
-        open={dialogType === "settings"}
-        onOpenChange={open => setDialogType(open ? "settings" : null)}
-        username={userData?.username ?? undefined}
-        initialProfileSettings={initialProfileSettings}
-        onOpenTokenDialog={() => setDialogType("token")}
-        onSaveSuccess={refetchUserData}
       />
 
       <UsernameSetupDialog

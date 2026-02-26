@@ -35,7 +35,8 @@
       "master": "Master",
       "remaster": "Re:Master",
       "utage": "Utage"
-    }
+    },
+    "back": "戻る"
   },
   "auth": {
     "loginWithDiscord": "Discordで続行",
@@ -81,8 +82,24 @@
     "tokenUpdateSuccess": "認証情報を保存しました！"
   },
   "settings": {
-    "title": "設定",
-    "description": "ともマイを自分好みにカスタマイズしよう。",
+    "pages": {
+      "account": {
+        "title": "アカウント",
+        "description": "言語・アカウント設定。"
+      },
+      "fetch": {
+        "title": "データ取得",
+        "description": "トークンとデータ取得の設定。"
+      },
+      "privacy": {
+        "title": "プライバシー",
+        "description": "プロフィールとスコアの公開範囲を設定。"
+      },
+      "developer": {
+        "title": "開発者",
+        "description": "APIキーとOAuthアプリを管理。"
+      }
+    },
     "language": {
       "label": "言語",
       "description": "希望する言語を選んでください。",
@@ -474,7 +491,15 @@
     "validation": {
       "format": "ユーザー名は1-32文字で、英数字、ダッシュ、アンダースコアのみ使用できます",
       "taken": "このユーザー名は既に使用されています"
-    }
+    },
+    "changeTitle": "ユーザー名を変更",
+    "changeDescription": "新しいユーザー名を選んでください。プロフィールURLが変わります。",
+    "changeButton": "変更",
+    "sameAsCurrent": "現在のユーザー名と同じです。",
+    "newProfileUrl": "新しいプロフィールURL: /profile/{username}",
+    "changeSuccess": "ユーザー名を更新しました。",
+    "changingUsername": "保存中…",
+    "newUsernameLabel": "新しいユーザー名"
   },
   "invites": {
     "title": "招待管理",

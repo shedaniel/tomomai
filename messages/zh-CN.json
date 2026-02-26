@@ -35,7 +35,8 @@
       "master": "Master",
       "remaster": "Re:Master",
       "utage": "Utage"
-    }
+    },
+    "back": "返回"
   },
   "auth": {
     "loginWithDiscord": "以 Discord 继续",
@@ -81,8 +82,24 @@
     "tokenUpdateSuccess": "验证方式保存成功！"
   },
   "settings": {
-    "title": "设置",
-    "description": "自定义你的 tomomai ともマイ 体验。",
+    "pages": {
+      "account": {
+        "title": "账户",
+        "description": "语言与账户偏好设置。"
+      },
+      "fetch": {
+        "title": "同步",
+        "description": "验证方式与数据同步设置。"
+      },
+      "privacy": {
+        "title": "隐私",
+        "description": "控制谁可以查看你的个人资料和成绩。"
+      },
+      "developer": {
+        "title": "开发者",
+        "description": "管理 API 密钥和 OAuth 应用程序。"
+      }
+    },
     "language": {
       "label": "语言",
       "description": "选择你偏好的界面语言。",
@@ -474,7 +491,15 @@
     "validation": {
       "format": "用户名必须是 1-32 个字符，仅包含英数字、破折号和下划线",
       "taken": "此用户名已被使用"
-    }
+    },
+    "changeTitle": "更改用户名",
+    "changeDescription": "选择新用户名。你的个人资料 URL 将会变更。",
+    "changeButton": "更改",
+    "sameAsCurrent": "与当前用户名相同。",
+    "newProfileUrl": "新个人资料 URL：/profile/{username}",
+    "changeSuccess": "用户名更新成功。",
+    "changingUsername": "保存中…",
+    "newUsernameLabel": "新用户名"
   },
   "invites": {
     "title": "管理邀请",
