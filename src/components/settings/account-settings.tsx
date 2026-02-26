@@ -2,6 +2,7 @@
 
 import { useLocale } from "@/components/providers/locale-provider";
 import { ChangeUsernameDialog } from "@/components/settings/change-username-dialog";
+import { SessionsSection } from "@/components/settings/sessions-section";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
@@ -15,7 +16,7 @@ import { Locale, setLocaleCookie } from "@/i18n/locale";
 import { isChinaRegion } from "@/lib/enabled-regions";
 import { trpc } from "@/lib/trpc-client";
 import { getLanguages } from "@/lib/utils";
-import { Languages, Pencil } from "lucide-react";
+import { Languages, Pencil, User } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -77,7 +78,10 @@ export function AccountSettings() {
 
       <div className="grid gap-6">
         <div className="grid gap-2">
-          <Label>{t("usernameSetup.usernameLabel")}</Label>
+          <Label className="flex items-center gap-2">
+            <User className="h-4 w-4" />
+            {t("usernameSetup.usernameLabel")}
+          </Label>
           <div className="flex items-center gap-3">
             <span className="font-mono text-sm bg-muted px-3 py-2 rounded-md flex-1 text-foreground">
               {userData?.username ?? "—"}
@@ -95,7 +99,11 @@ export function AccountSettings() {
         </div>
 
         <div className="grid gap-2">
-          <Label htmlFor="language">{t("settings.language.label")}</Label>
+          <Label htmlFor="language" className="flex items-center gap-2">
+            <Languages className="h-4 w-4" />
+            {t("settings.language.label")}
+          </Label>
+          <p className="text-xs text-muted-foreground">{t("settings.language.description")}</p>
           <Select
             value={selectedLanguage || "auto"}
             onValueChange={(value) => setSelectedLanguage(value === "auto" ? null : value)}
@@ -115,8 +123,11 @@ export function AccountSettings() {
               ))}
             </SelectContent>
           </Select>
-          <p className="text-xs text-muted-foreground">{t("settings.language.description")}</p>
         </div>
+      </div>
+
+      <div className="mt-6 border-t pt-6">
+        <SessionsSection />
       </div>
 
       <div className="flex justify-end space-x-2 mt-10 border-t pt-6">

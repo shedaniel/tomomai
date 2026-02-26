@@ -30,13 +30,13 @@ export function UsernameSetupDialog({ open, onComplete }: UsernameSetupDialogPro
   }>({});
 
   // Get suggested username
-  const { data: suggestedData } = trpc.user.getSuggestedUsername.useQuery(
+  const { data: suggestedData } = trpc.username.getSuggestedUsername.useQuery(
     undefined,
     { enabled: open }
   );
 
   // Set/update username mutation
-  const setUsernameMutation = trpc.user.setUsername.useMutation({
+  const setUsernameMutation = trpc.username.setUsername.useMutation({
     onSuccess: () => {
       toast.success(t('usernameSetup.success'));
       onComplete();
@@ -47,7 +47,7 @@ export function UsernameSetupDialog({ open, onComplete }: UsernameSetupDialogPro
   });
 
   // Check username availability mutation
-  const checkAvailability = trpc.user.checkUsernameAvailability.useQuery(
+  const checkAvailability = trpc.username.checkUsernameAvailability.useQuery(
     { username },
     {
       enabled: username.length > 0,

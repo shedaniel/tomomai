@@ -25,7 +25,7 @@ export function ChangeUsernameDialog({ open, onOpenChange, currentUsername, onSu
   const [isChecking, setIsChecking] = useState(false);
   const [availability, setAvailability] = useState<{ available?: boolean; error?: string }>({});
 
-  const setUsernameMutation = trpc.user.setUsername.useMutation({
+  const setUsernameMutation = trpc.username.setUsername.useMutation({
     onSuccess: () => {
       toast.success(t("changeSuccess"));
       onSuccess();
@@ -36,7 +36,7 @@ export function ChangeUsernameDialog({ open, onOpenChange, currentUsername, onSu
     },
   });
 
-  const checkAvailability = trpc.user.checkUsernameAvailability.useQuery(
+  const checkAvailability = trpc.username.checkUsernameAvailability.useQuery(
     { username },
     { enabled: username.length > 0 && username !== currentUsername, refetchOnWindowFocus: false }
   );

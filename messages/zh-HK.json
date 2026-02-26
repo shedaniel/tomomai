@@ -191,7 +191,174 @@
     "saveChanges": "儲存變更",
     "saving": "儲存中...",
     "saved": "設定儲存成功！",
-    "errorSaving": "設定儲存失敗"
+    "errorSaving": "設定儲存失敗",
+    "sessions": {
+      "title": "工作階段",
+      "description": "管理您喺各裝置上嘅活躍工作階段。",
+      "currentSession": "目前",
+      "revoke": "撤銷",
+      "revokeAll": "撤銷所有其他工作階段",
+      "revokeAllDescription": "呢個會登出所有其他工作階段。只有目前嘅工作階段會保持活躍。",
+      "revokeDescription": "呢個工作階段會即刻被登出。",
+      "noOtherSessions": "搵唔到活躍工作階段。",
+      "ip": "IP",
+      "createdAt": "登入於",
+      "revokeConfirm": "撤銷呢個工作階段？",
+      "revokeAllConfirm": "撤銷所有其他工作階段？",
+      "revokeSuccess": "工作階段已撤銷。",
+      "revokeAllSuccess": "所有其他工作階段已撤銷。"
+    },
+    "developer": {
+      "apiKeys": {
+        "label": "API 金鑰",
+        "description": "使用這些金鑰驗證對 tomomai API 的請求。",
+        "createButton": "建立 API 金鑰",
+        "loading": "載入中……",
+        "emptyTitle": "尚未有 API 金鑰",
+        "emptyCreateLink": "建立你的第一個金鑰",
+        "emptySuffix": "以開始使用 tomomai API。",
+        "unnamed": "未命名金鑰",
+        "expired": "已過期",
+        "disabled": "已停用",
+        "never": "永不過期",
+        "createdAt": "於 {date} 建立",
+        "expiresAt": "於 {date} 到期",
+        "toggleAriaLabel": "切換金鑰狀態",
+        "regenerateAriaLabel": "重新生成密钥",
+        "regenerateError": "重新生成API密钥失败",
+        "regeneratedTitle": "密钥已重新生成",
+        "regeneratedDescription": "请立即复制您的新API密钥，之后将不再显示。",
+        "regeneratedSaveWarning": "请保存此密钥 — 关闭对话框后将不再显示。",
+        "regenerateDialog": {
+          "title": "重新生成API密钥？",
+          "description": "当前密钥将立即失效。使用该密钥的应用程序将无法访问，直到更新为新密钥。",
+          "confirm": "重新生成"
+        },
+        "deleteSuccess": "API 金鑰已刪除",
+        "deleteError": "刪除 API 金鑰失敗",
+        "updateError": "更新金鑰失敗",
+        "deleteDialog": {
+          "title": "刪除 API 金鑰？",
+          "description": "此動作無法撤銷。任何使用此金鑰的應用程式將立即失去存取權限。",
+          "confirm": "刪除"
+        }
+      },
+      "createDialog": {
+        "title": "建立 API 金鑰",
+        "description": "產生一組新的 API 金鑰以存取 tomomai API。",
+        "createdTitle": "API 金鑰已建立",
+        "createdDescription": "請立即複製你的 API 金鑰。它將不會再次顯示。",
+        "copyAriaLabel": "複製 API 金鑰",
+        "saveWarning": "請儲存此金鑰 — 關閉此對話框後將無法再次查看。",
+        "done": "完成",
+        "nameLabel": "名稱",
+        "namePlaceholder": "我的 API 金鑰",
+        "nameDescription": "一個用於辨識此金鑰的描述性名稱。",
+        "scopesLabel": "權限範圍",
+        "scopeDefaultBadge": "預設",
+        "scopeDestructiveBadge": "破壞性",
+        "scopeSensitiveBadge": "敏感",
+        "scopeIncludedBadge": "已包含",
+        "sensitiveWarning": "所選權限範圍包含敏感項，可能會洩露個人資料或私人識別碼。請僅授權給您信任的應用程式。",
+        "expirationLabel": "有效期限",
+        "expiration": {
+          "7d": "7 天",
+          "30d": "30 天",
+          "90d": "90 天",
+          "1y": "1 年",
+          "never": "永不過期"
+        },
+        "destructiveWarning": "此金鑰授予執行破壞性操作的權限。你是否了解相關風險？",
+        "confirmLabelPre": "請輸入",
+        "confirmPhrase": "是的，我明白",
+        "confirmLabelPost": "以進行確認",
+        "creating": "建立中……",
+        "createButton": "建立 API 金鑰",
+        "createError": "建立 API 金鑰失敗"
+      },
+      "scopes": {
+        "ready": {
+          "name": "Ready",
+          "description": "基礎存取權限。授予 GET /api/v1/ok。預設包含。"
+        },
+        "user:metadata:read": {
+          "name": "用戶元數據（唯讀）",
+          "description": "讀取用戶名、地區、個人資料可見性和角色。授予 GET /api/v1/me。"
+        },
+        "snapshot:latest:metadata:read": {
+          "name": "最新快照元數據（唯讀）",
+          "description": "讀取最新快照的元數據（評分、顯示名稱、遊玩次數等）。"
+        },
+        "snapshot:latest:songs:b50:read": {
+          "name": "最新快照 B50 歌曲（唯讀）",
+          "description": "讀取最新快照中的 B50 分數。"
+        },
+        "snapshot:latest:songs:read": {
+          "name": "最新快照全部歌曲（唯讀）",
+          "description": "讀取最新快照中的全部分數。"
+        },
+        "snapshot:latest:events:read": {
+          "name": "最新快照活動（唯讀）",
+          "description": "讀取最新快照中的活動進度資料。"
+        },
+        "snapshot:latest:icon:read": {
+          "name": "最新快照圖示（唯讀）",
+          "description": "讀取最新快照的頭像 URL（Discord 頭像）。敏感——可能洩露社交身份。"
+        },
+        "snapshot:all:metadata:read": {
+          "name": "全部快照元數據（唯讀）",
+          "description": "列出所有快照並讀取其元數據。授予 GET /api/v1/snapshots。"
+        },
+        "snapshot:all:songs:b50:read": {
+          "name": "全部快照 B50 歌曲（唯讀）",
+          "description": "讀取任意快照中的 B50 分數。"
+        },
+        "snapshot:all:songs:read": {
+          "name": "全部快照全部歌曲（唯讀）",
+          "description": "讀取任意快照中的全部分數。"
+        },
+        "snapshot:all:events:read": {
+          "name": "全部快照活動（唯讀）",
+          "description": "讀取任意快照中的活動進度資料。"
+        },
+        "snapshot:all:icon:read": {
+          "name": "全部快照圖示（唯讀）",
+          "description": "讀取任意快照的頭像 URL。敏感。"
+        },
+        "recent:read": {
+          "name": "最近遊玩記錄（唯讀）",
+          "description": "讀取包含歌曲資訊、成績和 FC/FS 狀態的最近遊玩歷史。"
+        },
+        "recent:detailed:read": {
+          "name": "最近遊玩記錄（詳細·唯讀）",
+          "description": "追加場地資訊和每種音符類型的詳細分類資料。"
+        },
+        "stats:read": {
+          "name": "統計資料（唯讀）",
+          "description": "讀取評級/FC/FS 分佈統計。授予 GET /api/v1/stats。"
+        },
+        "album:read": {
+          "name": "相冊（唯讀）",
+          "description": "讀取街機照片相冊條目（僅元數據，不含圖片 URL）。授予 GET /api/v1/albums。"
+        },
+        "album:images:read": {
+          "name": "相冊圖片（唯讀）",
+          "description": "在相冊回應中新增圖片 URL。敏感——照片可能包含人物圖像。"
+        },
+        "snapshot:latest:read": {
+          "name": "最新快照（唯讀）",
+          "description": "包含最新快照的元數據、全部歌曲和活動。排除圖示（出於私隱，需單獨授權）。"
+        },
+        "snapshot:all:read": {
+          "name": "全部快照（唯讀）",
+          "description": "包含全部快照的元數據、全部歌曲和活動。排除圖示（出於私隱，需單獨授權）。"
+        },
+        "read": {
+          "name": "唯讀（所有非敏感資料）",
+          "description": "廣泛的唯讀存取權限：用戶元數據、所有快照、最近遊玩、統計和相冊。不含圖示和相冊圖片 URL。因涉及廣泛個人資料，標記為敏感。"
+        }
+      }
+    }
   },
   "dataBanner": {
     "dataSnapshot": "資料紀錄：",
@@ -492,14 +659,14 @@
       "format": "使用者名稱必須是 1-32 個字元，僅包含英數字、破折號和底線",
       "taken": "此使用者名稱已被使用"
     },
-    "changeTitle": "更改用戶名",
-    "changeDescription": "揀一個新用戶名。你嘅個人檔案 URL 會變。",
+    "changeTitle": "更改使用者名稱",
+    "changeDescription": "選擇一個新的使用者名稱。你的個人檔案網址將會更改。",
     "changeButton": "更改",
-    "sameAsCurrent": "同你現有用戶名一樣。",
-    "newProfileUrl": "新個人檔案 URL：/profile/{username}",
-    "changeSuccess": "用戶名更新成功。",
-    "changingUsername": "儲存中…",
-    "newUsernameLabel": "新用戶名"
+    "sameAsCurrent": "與目前的使用者名稱相同。",
+    "newProfileUrl": "新個人檔案網址：/profile/{username}",
+    "changeSuccess": "使用者名稱已成功更新。",
+    "changingUsername": "儲存中……",
+    "newUsernameLabel": "新使用者名稱"
   },
   "invites": {
     "title": "管理邀請",

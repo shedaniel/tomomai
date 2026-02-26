@@ -70,6 +70,7 @@ export function FetchSettings({ newTokenDialog }: { newTokenDialog: boolean }) {
       <div className="grid gap-6">
         <div className="grid gap-2">
           <Label>{t("settings.account.label")}</Label>
+          <p className="text-xs text-muted-foreground">{t("settings.account.description")}</p>
           <Button
             variant="outline"
             onClick={() => setTokenDialogOpen(true)}
@@ -78,12 +79,11 @@ export function FetchSettings({ newTokenDialog }: { newTokenDialog: boolean }) {
             <Key className="h-4 w-4 mr-2" />
             {t("settings.account.updateToken")}
           </Button>
-          <p className="text-xs text-muted-foreground">{t("settings.account.description")}</p>
         </div>
 
         <div className="grid gap-2">
           <div className="flex items-center justify-between">
-            <div className="grid gap-1">
+            <div className="grid gap-2">
               <Label htmlFor="fetch-albums" className="flex items-center gap-2">
                 <Images className="h-4 w-4" />
                 {t("settings.albumPrivacy.fetchAlbums")}

@@ -329,6 +329,34 @@ export const storeEditVotes = pgTable("store_edit_votes", {
   index("store_edit_votes_editid_idx").on(table.editId),
 ]);
 
+// Better Auth apiKey plugin table
+export const apikey = pgTable("apikey", {
+  id: text("id").primaryKey(),
+  name: text("name"),
+  start: text("start"),
+  prefix: text("prefix"),
+  key: text("key").notNull(),
+  userId: text("userId").notNull().references(() => user.id, { onDelete: "cascade" }),
+  refillInterval: integer("refillInterval"),
+  refillAmount: integer("refillAmount"),
+  lastRefillAt: timestamp("lastRefillAt"),
+  enabled: boolean("enabled").notNull().default(true),
+  rateLimitEnabled: boolean("rateLimitEnabled"),
+  rateLimitTimeWindow: integer("rateLimitTimeWindow"),
+  rateLimitMax: integer("rateLimitMax"),
+  requestCount: integer("requestCount"),
+  remaining: integer("remaining"),
+  lastRequest: timestamp("lastRequest"),
+  expiresAt: timestamp("expiresAt"),
+  createdAt: timestamp("createdAt").notNull(),
+  updatedAt: timestamp("updatedAt").notNull(),
+  permissions: text("permissions"),
+  metadata: text("metadata"),
+}, (table) => [
+  index("apikey_key_idx").on(table.key),
+  index("apikey_userid_idx").on(table.userId),
+]);
+
 export const userAlbums = pgTable("user_albums", {
   id: bigint("id", { mode: "bigint" }).primaryKey().generatedAlwaysAsIdentity(),
   userId: text("userId").notNull().references(() => user.id, { onDelete: "cascade" }),

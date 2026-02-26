@@ -122,14 +122,14 @@ export function StoreEditForm({ open, onOpenChange, store, existingEdit }: Store
     }
   }, [existingEdit, store, open]);
 
-  const createEditMutation = trpc.user.createStoreEdit.useMutation({
+  const createEditMutation = trpc.store.createStoreEdit.useMutation({
     onSuccess: () => {
       toast.success("Edit submitted successfully!");
       onOpenChange(false);
       // Invalidate relevant queries
-      utils.user.getStoreEdits.invalidate({ storeId: store?.id || BigInt(0) });
-      utils.user.getUserStoreEdit.invalidate({ storeId: store?.id || BigInt(0) });
-      utils.user.getStores.invalidate();
+      utils.store.getStoreEdits.invalidate({ storeId: store?.id || BigInt(0) });
+      utils.store.getUserStoreEdit.invalidate({ storeId: store?.id || BigInt(0) });
+      utils.store.getStores.invalidate();
     },
     onError: (error) => {
       console.error(error);
@@ -137,13 +137,13 @@ export function StoreEditForm({ open, onOpenChange, store, existingEdit }: Store
     },
   });
 
-  const updateEditMutation = trpc.user.updateStoreEdit.useMutation({
+  const updateEditMutation = trpc.store.updateStoreEdit.useMutation({
     onSuccess: () => {
       toast.success("Edit updated successfully!");
       onOpenChange(false);
-      utils.user.getStoreEdits.invalidate({ storeId: store?.id || BigInt(0) });
-      utils.user.getUserStoreEdit.invalidate({ storeId: store?.id || BigInt(0) });
-      utils.user.getStores.invalidate();
+      utils.store.getStoreEdits.invalidate({ storeId: store?.id || BigInt(0) });
+      utils.store.getUserStoreEdit.invalidate({ storeId: store?.id || BigInt(0) });
+      utils.store.getStores.invalidate();
     },
     onError: (error) => {
       console.error(error);
@@ -151,13 +151,13 @@ export function StoreEditForm({ open, onOpenChange, store, existingEdit }: Store
     },
   });
 
-  const deleteEditMutation = trpc.user.deleteStoreEdit.useMutation({
+  const deleteEditMutation = trpc.store.deleteStoreEdit.useMutation({
     onSuccess: () => {
       toast.success("Edit deleted successfully!");
       onOpenChange(false);
-      utils.user.getStoreEdits.invalidate({ storeId: store?.id || BigInt(0) });
-      utils.user.getUserStoreEdit.invalidate({ storeId: store?.id || BigInt(0) });
-      utils.user.getStores.invalidate();
+      utils.store.getStoreEdits.invalidate({ storeId: store?.id || BigInt(0) });
+      utils.store.getUserStoreEdit.invalidate({ storeId: store?.id || BigInt(0) });
+      utils.store.getStores.invalidate();
     },
     onError: (error) => {
       console.error(error);

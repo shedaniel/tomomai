@@ -54,7 +54,7 @@
     }
   },
   "consent": {
-    "title": "tomomai へようこそ",
+    "title": "ともマイへようこそ",
     "description": "アカウント作成にあたり、以下の規約およびポリシーをご確認の上、同意をお願いいたします。",
     "tldr": {
       "title": "本ポリシーの要点（法的効力を有しません）",
@@ -85,7 +85,7 @@
     "pages": {
       "account": {
         "title": "アカウント",
-        "description": "言語・アカウント設定。"
+        "description": "言語とアカウントの環境設定。"
       },
       "fetch": {
         "title": "データ取得",
@@ -93,11 +93,11 @@
       },
       "privacy": {
         "title": "プライバシー",
-        "description": "プロフィールとスコアの公開範囲を設定。"
+        "description": "プロフィールと成績の公開範囲を設定します。"
       },
       "developer": {
         "title": "開発者",
-        "description": "APIキーとOAuthアプリを管理。"
+        "description": "API キーと OAuth アプリケーションを管理します。"
       }
     },
     "language": {
@@ -191,7 +191,174 @@
     "saveChanges": "変更を保存",
     "saving": "保存中...",
     "saved": "設定が正常に保存されました！",
-    "errorSaving": "設定の保存に失敗しました"
+    "errorSaving": "設定の保存に失敗しました",
+    "sessions": {
+      "title": "セッション",
+      "description": "デバイス間のアクティブなセッションを管理します。",
+      "currentSession": "現在",
+      "revoke": "取り消す",
+      "revokeAll": "他をすべて取り消す",
+      "revokeAllDescription": "他のすべてのセッションからサインアウトします。現在のセッションのみがアクティブのままになります。",
+      "revokeDescription": "このセッションは直ちにサインアウトされます。",
+      "noOtherSessions": "アクティブなセッションはありません。",
+      "ip": "IP",
+      "createdAt": "サインイン",
+      "revokeConfirm": "このセッションを取り消しますか？",
+      "revokeAllConfirm": "他のすべてのセッションを取り消しますか？",
+      "revokeSuccess": "セッションを取り消しました。",
+      "revokeAllSuccess": "他のすべてのセッションを取り消しました。"
+    },
+    "developer": {
+      "apiKeys": {
+        "label": "API キー",
+        "description": "これらのキーを使用して、ともマイ API へのリクエストを認証します。",
+        "createButton": "API キーを作成",
+        "loading": "読み込み中…",
+        "emptyTitle": "API キーがありません",
+        "emptyCreateLink": "最初のキーを作成",
+        "emptySuffix": "して ともマイ API を使い始めましょう。",
+        "unnamed": "名前のないキー",
+        "expired": "期限切れ",
+        "disabled": "無効",
+        "never": "無期限",
+        "createdAt": "作成日：{date}",
+        "expiresAt": "有効期限：{date}",
+        "toggleAriaLabel": "キーの有効/無効を切り替え",
+        "regenerateAriaLabel": "キーを再生成",
+        "regenerateError": "APIキーの再生成に失敗しました",
+        "regeneratedTitle": "キーが再生成されました",
+        "regeneratedDescription": "新しいAPIキーを今すぐコピーしてください。再表示されません。",
+        "regeneratedSaveWarning": "このキーを保存してください — ダイアログを閉じると再表示されません。",
+        "regenerateDialog": {
+          "title": "APIキーを再生成しますか？",
+          "description": "現在のキーは即座に無効になります。このキーを使用しているアプリは新しいキーに更新するまでアクセスできなくなります。",
+          "confirm": "再生成"
+        },
+        "deleteSuccess": "API キーを削除しました",
+        "deleteError": "API キーの削除に失敗しました",
+        "updateError": "キーの更新に失敗しました",
+        "deleteDialog": {
+          "title": "API キーを削除しますか？",
+          "description": "この操作は取り消せません。このキーを使用しているすべてのアプリケーションは、即座にアクセス権を失います。",
+          "confirm": "削除"
+        }
+      },
+      "createDialog": {
+        "title": "API キーを作成",
+        "description": "ともマイ API にアクセスするための新しい API キーを生成します。",
+        "createdTitle": "API キーを作成しました",
+        "createdDescription": "今すぐ API キーをコピーしてください。二度と表示されません。",
+        "copyAriaLabel": "API キーをコピー",
+        "saveWarning": "このキーを保存してください。このダイアログを閉じると再表示できません。",
+        "done": "完了",
+        "nameLabel": "名前",
+        "namePlaceholder": "マイアプリ",
+        "nameDescription": "このキーを識別するための名前。",
+        "scopesLabel": "スコープ",
+        "scopeDefaultBadge": "デフォルト",
+        "scopeDestructiveBadge": "破壊的",
+        "scopeSensitiveBadge": "機密",
+        "scopeIncludedBadge": "含まれる",
+        "sensitiveWarning": "選択したスコープの一部は、個人データやプライベートな識別子を公開するため機密とマークされています。信頼するアプリにのみ許可してください。",
+        "expirationLabel": "有効期限",
+        "expiration": {
+          "7d": "7 日間",
+          "30d": "30 日間",
+          "90d": "90 日間",
+          "1y": "1 年間",
+          "never": "無期限"
+        },
+        "destructiveWarning": "このキーは破壊的な操作へのアクセスを許可します。リスクを理解していますか？",
+        "confirmLabelPre": "確認のため、",
+        "confirmPhrase": "はい、理解しました",
+        "confirmLabelPost": "と入力してください",
+        "creating": "作成中…",
+        "createButton": "API キーを作成",
+        "createError": "API キーの作成に失敗しました"
+      },
+      "scopes": {
+        "ready": {
+          "name": "Ready",
+          "description": "基本アクセス。GET /api/v1/ok を許可します。デフォルトで含まれます。"
+        },
+        "user:metadata:read": {
+          "name": "ユーザーメタデータ（読み取り）",
+          "description": "ユーザー名、地域、プロフィール公開設定、ロールを読み取ります。GET /api/v1/me を許可します。"
+        },
+        "snapshot:latest:metadata:read": {
+          "name": "最新スナップショットのメタデータ（読み取り）",
+          "description": "最新スナップショットのメタデータ（レーティング、表示名、プレイ回数など）を読み取ります。"
+        },
+        "snapshot:latest:songs:b50:read": {
+          "name": "最新スナップショットのB50楽曲（読み取り）",
+          "description": "最新スナップショットのB50スコアを読み取ります。"
+        },
+        "snapshot:latest:songs:read": {
+          "name": "最新スナップショットの全楽曲（読み取り）",
+          "description": "最新スナップショットの全スコアを読み取ります。"
+        },
+        "snapshot:latest:events:read": {
+          "name": "最新スナップショットのイベント（読み取り）",
+          "description": "最新スナップショットのイベント進行状況を読み取ります。"
+        },
+        "snapshot:latest:icon:read": {
+          "name": "最新スナップショットのアイコン（読み取り）",
+          "description": "最新スナップショットのプロフィールアイコンURL（Discordアバター）を読み取ります。機密：ソーシャルIDが公開される可能性があります。"
+        },
+        "snapshot:all:metadata:read": {
+          "name": "全スナップショットのメタデータ（読み取り）",
+          "description": "全スナップショットを一覧表示し、メタデータを読み取ります。GET /api/v1/snapshots を許可します。"
+        },
+        "snapshot:all:songs:b50:read": {
+          "name": "全スナップショットのB50楽曲（読み取り）",
+          "description": "任意のスナップショットのB50スコアを読み取ります。"
+        },
+        "snapshot:all:songs:read": {
+          "name": "全スナップショットの全楽曲（読み取り）",
+          "description": "任意のスナップショットの全スコアを読み取ります。"
+        },
+        "snapshot:all:events:read": {
+          "name": "全スナップショットのイベント（読み取り）",
+          "description": "任意のスナップショットのイベント進行状況を読み取ります。"
+        },
+        "snapshot:all:icon:read": {
+          "name": "全スナップショットのアイコン（読み取り）",
+          "description": "任意のスナップショットのプロフィールアイコンURLを読み取ります。機密。"
+        },
+        "recent:read": {
+          "name": "最近のプレイ（読み取り）",
+          "description": "楽曲情報、達成度、コンボ/シンクを含む最近のプレイ履歴を読み取ります。"
+        },
+        "recent:detailed:read": {
+          "name": "最近のプレイ（詳細・読み取り）",
+          "description": "プレイ場所とノートタイプ別の詳細を追加します。"
+        },
+        "stats:read": {
+          "name": "統計（読み取り）",
+          "description": "グレード/FC/FS分布統計を読み取ります。GET /api/v1/stats を許可します。"
+        },
+        "album:read": {
+          "name": "アルバム（読み取り）",
+          "description": "アーケード写真アルバムのエントリ（メタデータのみ）を読み取ります。GET /api/v1/albums を許可します。"
+        },
+        "album:images:read": {
+          "name": "アルバム画像（読み取り）",
+          "description": "アルバムレスポンスに画像URLを追加します。機密：写真に人物が含まれる場合があります。"
+        },
+        "snapshot:latest:read": {
+          "name": "最新スナップショット（読み取り）",
+          "description": "最新スナップショットのメタデータ・全楽曲・イベントを含みます。アイコンは除外（プライバシー上のオプトイン）。"
+        },
+        "snapshot:all:read": {
+          "name": "全スナップショット（読み取り）",
+          "description": "全スナップショットのメタデータ・全楽曲・イベントを含みます。アイコンは除外（プライバシー上のオプトイン）。"
+        },
+        "read": {
+          "name": "読み取り（機密以外すべて）",
+          "description": "ユーザーメタデータ、全スナップショット、最近のプレイ、統計、アルバムへの広範な読み取りアクセス。アイコンとアルバム画像URLは除外。個人データへの広範なアクセスのため機密扱い。"
+        }
+      }
+    }
   },
   "dataBanner": {
     "dataSnapshot": "データスナップショット：",
@@ -493,10 +660,10 @@
       "taken": "このユーザー名は既に使用されています"
     },
     "changeTitle": "ユーザー名を変更",
-    "changeDescription": "新しいユーザー名を選んでください。プロフィールURLが変わります。",
+    "changeDescription": "新しいユーザー名を選択してください。プロフィール URL が変更されます。",
     "changeButton": "変更",
     "sameAsCurrent": "現在のユーザー名と同じです。",
-    "newProfileUrl": "新しいプロフィールURL: /profile/{username}",
+    "newProfileUrl": "新しいプロフィール URL：/profile/{username}",
     "changeSuccess": "ユーザー名を更新しました。",
     "changingUsername": "保存中…",
     "newUsernameLabel": "新しいユーザー名"
@@ -646,7 +813,7 @@
     "posts": {
       "list": {
         "title": "更新履歴",
-        "description": "tomomai の最新情報や変更点。",
+        "description": "ともマイの最新情報や変更点。",
         "noPosts": "記事がありません。"
       },
       "dialog": {
