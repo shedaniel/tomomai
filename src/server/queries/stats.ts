@@ -4,25 +4,21 @@ import { and, desc, eq, sql } from "drizzle-orm";
 import { getAchievementRate } from "@/lib/difficulty";
 import type { Region } from "@/lib/types";
 
-export async function fetchPlayerStats(userId: string, region: Region) {
-  const snapshot = await db
-    .select({ id: userSnapshots.id, gameVersion: userSnapshots.gameVersion })
-    .from(userSnapshots)
-    .where(
-      and(
-        eq(userSnapshots.userId, userId),
-        eq(userSnapshots.region, region)
-      )
-    )
-    .orderBy(desc(userSnapshots.fetchedAt))
-    .limit(1);
+export type StatsResult = {
+  stats: Record<string, Record<string, {
+    grades: Record<string, number>;
+    fc: Record<string, number>;
+    fs: Record<string, number>;
+    total: number;
+  }>>;
+  totalSongs: Record<string, Record<string, number>>;
+};
 
-  if (snapshot.length === 0) {
-    return { stats: {}, totalSongs: {} };
-  }
-
-  const gameVersion = snapshot[0].gameVersion;
-
+export async function computeStatsForSnapshot(
+  snapshotInternalId: bigint,
+  gameVersion: number,
+  region: Region
+): Promise<StatsResult> {
   const scores = await db
     .select({
       achievement: userScores.achievement,
@@ -33,7 +29,7 @@ export async function fetchPlayerStats(userId: string, region: Region) {
     })
     .from(userScores)
     .innerJoin(songs, eq(userScores.songId, songs.id))
-    .where(eq(userScores.snapshotId, snapshot[0].id));
+    .where(eq(userScores.snapshotId, snapshotInternalId));
 
   const allSongs = await db
     .select({
@@ -57,12 +53,7 @@ export async function fetchPlayerStats(userId: string, region: Region) {
     totalSongs[version][song.difficulty] = song.count;
   }
 
-  const stats: Record<string, Record<string, {
-    grades: Record<string, number>;
-    fc: Record<string, number>;
-    fs: Record<string, number>;
-    total: number;
-  }>> = {};
+  const stats: StatsResult["stats"] = {};
 
   for (const score of scores) {
     const version = score.addedVersion.toString();
@@ -86,4 +77,24 @@ export async function fetchPlayerStats(userId: string, region: Region) {
   }
 
   return { stats, totalSongs };
+}
+
+export async function fetchPlayerStats(userId: string, region: Region): Promise<StatsResult> {
+  const snapshot = await db
+    .select({ id: userSnapshots.id, gameVersion: userSnapshots.gameVersion })
+    .from(userSnapshots)
+    .where(
+      and(
+        eq(userSnapshots.userId, userId),
+        eq(userSnapshots.region, region)
+      )
+    )
+    .orderBy(desc(userSnapshots.fetchedAt))
+    .limit(1);
+
+  if (snapshot.length === 0) {
+    return { stats: {}, totalSongs: {} };
+  }
+
+  return computeStatsForSnapshot(snapshot[0].id, snapshot[0].gameVersion, region);
 }

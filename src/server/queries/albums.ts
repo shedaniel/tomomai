@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { songs, userAlbums } from "@/lib/db/schema-pg";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, sql } from "drizzle-orm";
 import type { Region } from "@/lib/types";
 
 export async function fetchUserAlbums(
@@ -22,6 +22,7 @@ export async function fetchUserAlbums(
       type: songs.type,
       takenAt: userAlbums.takenAt,
       imageKey: userAlbums.imageKey,
+      imageSize: userAlbums.imageSize,
       venue: userAlbums.venue,
       createdAt: userAlbums.createdAt,
     })
@@ -53,9 +54,47 @@ export async function fetchUserAlbums(
       type: album.type,
       takenAt: album.takenAt.toISOString(),
       imageKey: album.imageKey,
+      imageSize: album.imageSize,
       venue: album.venue,
       createdAt: album.createdAt.toISOString(),
     })),
     hasMore,
+  };
+}
+
+export async function fetchAlbumStorageUsage(userId: string) {
+  const [storageResult, intlStorageResult, jpStorageResult] = await Promise.all([
+    db
+      .select({
+        totalSize: sql<number>`COALESCE(SUM(${userAlbums.imageSize}), 0)`,
+      })
+      .from(userAlbums)
+      .where(eq(userAlbums.userId, userId)),
+    db
+      .select({
+        totalSize: sql<number>`COALESCE(SUM(${userAlbums.imageSize}), 0)`,
+      })
+      .from(userAlbums)
+      .innerJoin(songs, eq(userAlbums.songId, songs.id))
+      .where(and(
+        eq(userAlbums.userId, userId),
+        eq(songs.region, 'intl')
+      )),
+    db
+      .select({
+        totalSize: sql<number>`COALESCE(SUM(${userAlbums.imageSize}), 0)`,
+      })
+      .from(userAlbums)
+      .innerJoin(songs, eq(userAlbums.songId, songs.id))
+      .where(and(
+        eq(userAlbums.userId, userId),
+        eq(songs.region, 'jp')
+      )),
+  ]);
+
+  return {
+    totalUsed: Number(storageResult[0]?.totalSize || 0),
+    intlUsed: Number(intlStorageResult[0]?.totalSize || 0),
+    jpUsed: Number(jpStorageResult[0]?.totalSize || 0),
   };
 }

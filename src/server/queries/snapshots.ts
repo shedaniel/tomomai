@@ -4,8 +4,8 @@ import { and, desc, eq } from "drizzle-orm";
 import type { Region } from "@/lib/types";
 import type { VersionId } from "@/lib/metadata";
 
-export async function fetchUserSnapshots(userId: string, region: Region) {
-  const snapshots = await db
+export async function fetchUserSnapshots(userId: string, region: Region, options?: { limit?: number }) {
+  let query = db
     .select({
       id: userSnapshots.publicId,
       fetchedAt: userSnapshots.fetchedAt,
@@ -27,6 +27,11 @@ export async function fetchUserSnapshots(userId: string, region: Region) {
     )
     .orderBy(desc(userSnapshots.fetchedAt));
 
+  if (options?.limit) {
+    query = query.limit(options.limit) as typeof query;
+  }
+
+  const snapshots = await query;
   return snapshots.map((s) => ({ ...s, gameVersion: s.gameVersion as VersionId }));
 }
 
