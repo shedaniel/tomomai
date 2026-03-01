@@ -531,7 +531,7 @@ export function RecentSongsCard({ region, beforeDate, snapshotId }: RecentSongsC
   const t = useTranslations('recentPlays');
   const [allPlays, setAllPlays] = useState<inferRouterOutputs<AppRouter>['user']['getRecentSongs']['recentPlays']>([]);
   const [offset, setOffset] = useState(0);
-  const [hasMore, setHasMore] = useState(true);
+  const [hasMore, setHasMore] = useState(false);
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const limit = 25;
 
@@ -555,7 +555,7 @@ export function RecentSongsCard({ region, beforeDate, snapshotId }: RecentSongsC
   useEffect(() => {
     setOffset(0);
     setAllPlays([]);
-    setHasMore(true);
+    setHasMore(false);
     processedOffsetsRef.current = new Set();
   }, [region, beforeDate]);
 
