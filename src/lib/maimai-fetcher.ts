@@ -1,6 +1,6 @@
 import { db } from "./db";
-import { userTokens, userSnapshots, songs, userScores, fetchSessions, userEvents, userRecentSongs, userRecentSongsDetailed, userAlbums } from "./db/schema-pg";
-import { eq, and, or } from "drizzle-orm";
+import { userTokens, userSnapshots, songs, userScores, fetchSessions, userEvents, userRecentSongs, userRecentSongsDetailed, userAlbums, scoreData, snapshotScores, snapshotB50 } from "./db/schema-pg";
+import { eq, and, or, inArray } from "drizzle-orm";
 import { load } from "cheerio";
 import { nanoid } from "nanoid";
 import { getCurrentVersion, VersionId } from "./metadata";
@@ -1784,6 +1784,60 @@ async function buildSongLookupMaps(
  * Adds rank field to user score inserts based on rating calculation.
  * Ranks are assigned as: 0-14 (new B15), 15-49 (old B35), 50+ (remaining)
  */
+function scoreDataKey(songId: bigint, achievement: number, dxScore: number, fc: string, fs: string): string {
+  return `${songId}-${achievement}-${dxScore}-${fc}-${fs}`;
+}
+
+export async function upsertScoreData(
+  scores: { songId: bigint; achievement: number; dxScore: number; fc: string; fs: string }[]
+): Promise<Map<string, bigint>> {
+  if (scores.length === 0) return new Map();
+
+  // Deduplicate input scores by composite key
+  const uniqueScores = new Map<string, typeof scores[number]>();
+  for (const s of scores) {
+    const key = scoreDataKey(s.songId, s.achievement, s.dxScore, s.fc, s.fs);
+    uniqueScores.set(key, s);
+  }
+
+  // Batch insert with ON CONFLICT DO NOTHING
+  const insertValues = [...uniqueScores.values()].map(s => ({
+    songId: s.songId,
+    achievement: s.achievement,
+    dxScore: s.dxScore,
+    fc: s.fc as typeof scoreData.$inferInsert['fc'],
+    fs: s.fs as typeof scoreData.$inferInsert['fs'],
+  }));
+
+  // Insert in chunks to avoid parameter limits
+  const CHUNK_SIZE = 1000;
+  for (let i = 0; i < insertValues.length; i += CHUNK_SIZE) {
+    await db.insert(scoreData).values(insertValues.slice(i, i + CHUNK_SIZE)).onConflictDoNothing();
+  }
+
+  // Select back all matching IDs
+  const songIds = [...new Set(scores.map(s => s.songId))];
+  const existing = await db
+    .select({
+      id: scoreData.id,
+      songId: scoreData.songId,
+      achievement: scoreData.achievement,
+      dxScore: scoreData.dxScore,
+      fc: scoreData.fc,
+      fs: scoreData.fs,
+    })
+    .from(scoreData)
+    .where(inArray(scoreData.songId, songIds));
+
+  const result = new Map<string, bigint>();
+  for (const row of existing) {
+    const key = scoreDataKey(row.songId, row.achievement, row.dxScore, row.fc, row.fs);
+    result.set(key, row.id);
+  }
+
+  return result;
+}
+
 async function withRank(
   scoreInserts: typeof userScores.$inferInsert[],
   fullSongMap: Map<bigint, typeof songs.$inferSelect>,
@@ -1928,8 +1982,52 @@ async function insertUserScores(
 
   if (scoreInserts.length > 0) {
     logger.info(`Batch inserting ${scoreInserts.length} user scores`);
-    await db.insert(userScores).values(await withRank(scoreInserts, fullSongMap, gameVersion));
+    const rankedInserts = await withRank(scoreInserts, fullSongMap, gameVersion);
+    await db.insert(userScores).values(rankedInserts);
     logger.info(`Successfully inserted ${scoreInserts.length} user scores`);
+
+    // Dual-write to new tables
+    try {
+      const scoreDataLookup = await upsertScoreData(
+        rankedInserts.map(s => ({
+          songId: s.songId,
+          achievement: s.achievement,
+          dxScore: s.dxScore,
+          fc: s.fc,
+          fs: s.fs,
+        }))
+      );
+
+      // Insert snapshotScores junction rows
+      const junctionRows: { snapshotId: bigint; scoreId: bigint }[] = [];
+      const b50Rows: { snapshotId: bigint; rank: number; scoreId: bigint }[] = [];
+
+      for (const insert of rankedInserts) {
+        const key = scoreDataKey(insert.songId, insert.achievement, insert.dxScore, insert.fc, insert.fs);
+        const scoreDataId = scoreDataLookup.get(key);
+        if (!scoreDataId) {
+          logger.warn(`scoreData ID not found for key ${key}`);
+          continue;
+        }
+        junctionRows.push({ snapshotId: snapshotId, scoreId: scoreDataId });
+        if (insert.rank != null && insert.rank < 50) {
+          b50Rows.push({ snapshotId: snapshotId, rank: insert.rank, scoreId: scoreDataId });
+        }
+      }
+
+      if (junctionRows.length > 0) {
+        for (let i = 0; i < junctionRows.length; i += 1000) {
+          await db.insert(snapshotScores).values(junctionRows.slice(i, i + 1000)).onConflictDoNothing();
+        }
+      }
+      if (b50Rows.length > 0) {
+        await db.insert(snapshotB50).values(b50Rows).onConflictDoNothing();
+      }
+
+      logger.info(`Dual-write: ${junctionRows.length} snapshotScores, ${b50Rows.length} snapshotB50 rows`);
+    } catch (error) {
+      logger.error(error, "Dual-write to new tables failed (non-fatal)");
+    }
   } else {
     logger.warn("No valid scores to insert");
   }

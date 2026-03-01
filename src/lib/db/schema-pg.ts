@@ -1,4 +1,4 @@
-import { pgTable, text, integer, smallint, bigint, bigserial, boolean, timestamp, unique, index, pgEnum, jsonb, varchar, check, uuid, point } from "drizzle-orm/pg-core";
+import { pgTable, text, integer, smallint, bigint, bigserial, boolean, timestamp, unique, index, pgEnum, jsonb, varchar, check, uuid, point, primaryKey } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import {
   LANGUAGE_ENUM,
@@ -203,6 +203,33 @@ export const userScores = pgTable("user_scores", {
   index("user_scores_snapshotid_rank_idx").on(table.snapshotId, table.rank),
   index("user_scores_snapshotid_songid_idx").on(table.snapshotId, table.songId),
   index("user_scores_songid_idx").on(table.songId),
+]);
+
+export const scoreData = pgTable("score_data", {
+  id: bigint("id", { mode: "bigint" }).primaryKey().generatedAlwaysAsIdentity(),
+  songId: bigint("songId", { mode: "bigint" }).notNull().references(() => songs.id, { onDelete: "cascade" }),
+  achievement: integer("achievement").notNull(),
+  dxScore: smallint("dxScore").notNull(),
+  fc: fcEnum("fc").notNull(),
+  fs: fsEnum("fs").notNull(),
+}, (table) => [
+  unique("score_data_songid_achievement_dxscore_fc_fs_unique").on(table.songId, table.achievement, table.dxScore, table.fc, table.fs),
+  index("score_data_songid_idx").on(table.songId),
+]);
+
+export const snapshotScores = pgTable("snapshot_scores", {
+  snapshotId: bigint("snapshotId", { mode: "bigint" }).notNull().references(() => userSnapshots.id, { onDelete: "cascade" }),
+  scoreId: bigint("scoreId", { mode: "bigint" }).notNull().references(() => scoreData.id, { onDelete: "cascade" }),
+}, (table) => [
+  primaryKey({ columns: [table.snapshotId, table.scoreId] }),
+]);
+
+export const snapshotB50 = pgTable("snapshot_b50", {
+  snapshotId: bigint("snapshotId", { mode: "bigint" }).notNull().references(() => userSnapshots.id, { onDelete: "cascade" }),
+  rank: smallint("rank").notNull(),
+  scoreId: bigint("scoreId", { mode: "bigint" }).notNull().references(() => scoreData.id, { onDelete: "cascade" }),
+}, (table) => [
+  primaryKey({ columns: [table.snapshotId, table.rank] }),
 ]);
 
 export const userEvents = pgTable("user_events", {
