@@ -8,12 +8,26 @@ import deepEqual from "deep-equal";
 
 export type SongKey = `${string}@${SongType}@${Difficulty}`;
 export type FetcherMode = "default" | "only-modify" | "only-fallback";
+export type NoticeSink = {
+  addDetail(detail: string): void;
+  details: string[];
+};
+
+export function createNoticeSink(): NoticeSink {
+  const details: string[] = [];
+  return {
+    addDetail(detail: string) { details.push(detail); },
+    details,
+  };
+}
+
 export type FetchingContext = {
   region: Region;
   version: VersionId;
   cookies: string;
   log: Logger;
-  forceMode?: FetcherMode
+  forceMode?: FetcherMode;
+  notice: NoticeSink;
 };
 export type SongFetcher = (context: FetchingContextExtended, songs: PendingSong[]) => Promise<PendingSong[]>;
 export type SongWithOrigin = PendingSong & { addedFetcher: number; modifiedFetchers: number[] };

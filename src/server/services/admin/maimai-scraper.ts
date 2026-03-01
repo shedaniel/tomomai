@@ -6,7 +6,7 @@ import { Difficulty, Level, Region, SongType } from "@/lib/types";
 import { ParsedSong } from "@/lib/types/update";
 import { important, PendingSong } from "@/server/utils/admin/type";
 import { load } from "cheerio";
-import { asFetcher } from "./fetcher-utils";
+import { asFetcher, NoticeSink } from "./fetcher-utils";
 import { type Logger } from "pino";
 import { DIFFICULTY_ENUM } from "@/lib/db/types";
 
@@ -25,12 +25,12 @@ export function parsedSongToPendingSong(song: ParsedSong): PendingSong {
   } satisfies PendingSong;
 }
 
-export const MaimaiScraperFetcher = asFetcher(async ({ region, version, cookies, log }) => {
-  const parsedSongs = await prepareMaimaiScraper(region, version, cookies, log);
+export const MaimaiScraperFetcher = asFetcher(async ({ region, version, cookies, log, notice }) => {
+  const parsedSongs = await prepareMaimaiScraper(region, version, cookies, log, notice);
   return parsedSongs.map(parsedSongToPendingSong);
 });
 
-export async function prepareMaimaiScraper(region: Region, version: VersionId, cookies: string, log: Logger) {
+export async function prepareMaimaiScraper(region: Region, version: VersionId, cookies: string, log: Logger, notice: NoticeSink) {
   log.info("Fetching and parsing song data for all difficulties and versions...");
   const allSongData: ParsedSong[] = [];
 
@@ -39,6 +39,9 @@ export async function prepareMaimaiScraper(region: Region, version: VersionId, c
     { start: 0, end: 12, description: "legacy versions" },
     { start: 13, end: 13 + version, description: "current versions" }
   ];
+
+  const difficultyNames = ["bas", "adv", "exp", "mas", "remas", "utage"];
+  const versionSummaries: string[] = [];
 
   for (const range of versionRanges) {
     log.info(`Fetching ${range.description} (versions ${range.start}-${range.end})...`);
@@ -54,9 +57,38 @@ export async function prepareMaimaiScraper(region: Region, version: VersionId, c
         }
       }
       const difficultyData = await Promise.all(promises);
+
+      // Validate: if any non-utage difficulty returned songs, all non-utage difficulties must have songs.
+      // If a non-utage difficulty returns 0 songs while others have data, the scrape session is likely broken.
+      const nonUtageResults = difficultyData.slice(0, 5); // indices 0-4 are basic/advanced/expert/master/remaster
+      const hasAnySongs = nonUtageResults.some(songs => songs.length > 0);
+      if (hasAnySongs) {
+        const emptyDifficulties = nonUtageResults
+          .map((songs, i) => ({ difficulty: DIFFICULTY_ENUM[i], count: songs.length }))
+          .filter(d => d.count === 0);
+        if (emptyDifficulties.length > 0) {
+          const emptyNames = emptyDifficulties.map(d => d.difficulty).join(", ");
+          throw new Error(
+            `Scraper integrity check failed: version ${version} has songs but difficulties [${emptyNames}] returned 0 songs. The scrape session may be broken.`
+          );
+        }
+      }
+
+      const versionTotal = difficultyData.reduce((sum, d) => sum + d.length, 0);
+      if (versionTotal > 0) {
+        const diffBreakdown = difficultyData.map((d, i) => `${difficultyNames[i]}:${d.length}`).join(" ");
+        versionSummaries.push(`v${version}: ${versionTotal} (${diffBreakdown})`);
+      }
+
       allSongData.push(...difficultyData.flat());
       await new Promise(resolve => setTimeout(resolve, 500));
     }
+  }
+
+  const uniqueSongs = new Set(allSongData.map(s => s.songName));
+  notice.addDetail(`${uniqueSongs.size} unique songs, ${allSongData.length} charts`);
+  for (const summary of versionSummaries) {
+    notice.addDetail(summary);
   }
 
   log.info({ songs: allSongData }, `Total songs fetched from all difficulties and versions: ${allSongData.length}`);

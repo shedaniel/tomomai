@@ -6,7 +6,7 @@ import { Difficulty, Region, SongType } from "@/lib/types";
 import { UpdateSong } from "@/lib/types/update";
 import { mergeSongs, taker, merger, key, MergeSink } from "@/server/services/admin/fetcher-utils";
 import { important, PendingSong, value, Pending } from "@/server/utils/admin/type";
-import { sendDiscordWebhook } from "@/server/services/admin/discord-webhooks";
+import { sendDiscordNotice, sendDiscordWebhook } from "@/server/services/admin/discord-webhooks";
 import { and, eq, inArray, count, sql } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { NextRequest, NextResponse } from "next/server";
@@ -23,6 +23,7 @@ export type AddedChange = {
   difficulty: Difficulty;
   type: SongType;
   level: string;
+  levelPrecise: number | undefined;
   artist: string;
 };
 
@@ -41,6 +42,7 @@ export type DeletedChange = {
   difficulty: Difficulty;
   type: SongType;
   level: string;
+  levelPrecise: number | undefined;
   artist: string;
   dbId: string;
   playRecordCount?: number;
@@ -155,6 +157,7 @@ function analyzeChanges(
     difficulty: song.difficulty,
     type: song.type,
     level: value(song.level),
+    levelPrecise: value(song.levelPrecise),
     artist: value(song.artist) || ""
   }));
 
@@ -192,6 +195,7 @@ function analyzeChanges(
         difficulty: dbSong.difficulty,
         type: dbSong.type,
         level: value(dbSong.level),
+        levelPrecise: value(dbSong.levelPrecise),
         artist: value(dbSong.artist) || "",
         dbId: dbIdStr
       });
@@ -532,9 +536,29 @@ export async function POST(request: NextRequest) {
 
     // Send Discord webhook if changes were applied
     if (updateMode !== "noop") {
-      sendDiscordWebhook(region, changes.added, changes.deleted.filter(d => (d.playRecordCount ?? 0) !== 0), changes.modified).catch(err => {
+      const actuallyDeleted = changes.deleted.filter(d => (d.playRecordCount ?? 0) === 0);
+      sendDiscordWebhook(region, changes.added, actuallyDeleted, changes.modified).catch(err => {
         log.error(err, "Failed to send Discord webhook");
       });
+    }
+
+    // Send notice webhook with upload summary
+    {
+      const skippedDeletions = updateMode !== "destructive"
+        ? changes.deleted.filter(d => (d.playRecordCount ?? 0) > 0)
+        : [];
+      let desc = `**Mode:** ${updateMode}\n**Input:** ${uploadSongs.length} | **DB:** ${dbSongs.length} | **Merged:** ${mergedSongs.length}\n**Applied:** +${applied.added} ~${applied.modified} -${applied.deleted}`;
+      if (skippedDeletions.length > 0) {
+        desc += `\n\n**${skippedDeletions.length} deletion(s) skipped** (have play records):\n`;
+        desc += skippedDeletions.slice(0, 15).map(d => `- ${d.songKey} (${d.playRecordCount} plays)`).join("\n");
+        if (skippedDeletions.length > 15) desc += `\n... and ${skippedDeletions.length - 15} more`;
+      }
+      sendDiscordNotice(
+        region,
+        "Upload complete",
+        desc,
+        skippedDeletions.length > 0 ? 0xFFA500 : 0x00FF00,
+      ).catch(() => { });
     }
 
     // Return response
@@ -560,6 +584,12 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error("Error in admin upload route:", error);
+    sendDiscordNotice(
+      "intl",
+      "Upload error",
+      `**Error:** ${error instanceof Error ? error.message : String(error)}`,
+      0xFF0000,
+    ).catch(() => { });
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }

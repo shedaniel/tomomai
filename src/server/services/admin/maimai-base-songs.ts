@@ -8,7 +8,7 @@ import { getVersionByShortCode } from "@/lib/metadata";
 const MAIMAI_SONGS_JSON_URL = "https://maimai.sega.jp/data/maimai_songs.json";
 const MAIMAI_SONGS_JSON_URL_INTL = "https://maimai.sega.com/assets/data/maimai_songs.json";
 
-export const MaimaiBaseFetcher = asFetcher(async ({ region, version, cookies }) => {
+export const MaimaiBaseFetcher = asFetcher(async ({ region, version, cookies, notice }) => {
   const map = [
     ["lev_bas", "basic", "std"],
     ["lev_adv", "advanced", "std"],
@@ -24,6 +24,7 @@ export const MaimaiBaseFetcher = asFetcher(async ({ region, version, cookies }) 
     ["dx_lev_utage", "utage", "dx"],
   ]
   const parsedSongs = await fetchBaseSongs(region);
+  notice.addDetail(`Fetched ${parsedSongs.length} songs from official JSON`);
   return parsedSongs.flatMap(song => {
     const cover = song?.image_url
       ? (region === "intl" ? `https://maimaidx-eng.com/maimai-mobile/img/Music/${song.image_url}` : `https://maimaidx.jp/maimai-mobile/img/Music/${song.image_url}`)

@@ -20,12 +20,14 @@ export const OtogeDbFetcher = asFetcher(async (context) => {
   let allRecords: SongWithMode[] = []
   if (context.region === "jp") {
     allRecords = await fetchRecords(context.region, context.version, context.log);
+    context.notice.addDetail(`${allRecords.length} charts from JP otoge-db`);
   } else {
     const jpRecordsLink = JP_FALLBACK_FOR_INTL[context.version]
     const [jpRecords, intlRecords] = await Promise.all([
       jpRecordsLink ? fetchRecordsWithUrl("jp", context.version, jpRecordsLink, context.log) : Promise.resolve([]),
       fetchRecords("intl", context.version, context.log),
     ]);
+    context.notice.addDetail(`${intlRecords.length} INTL charts, ${jpRecords.length} JP fallback charts`);
 
     const applyJpFallback = (record: SongWithMode) => {
       const jpRecord = jpRecords.find(r => r.songName === record.songName && r.difficulty === record.difficulty && r.type === record.type);
