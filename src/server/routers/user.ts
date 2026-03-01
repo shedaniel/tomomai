@@ -3,9 +3,10 @@ import { deleteFromR2 } from '@/lib/r2';
 import { createOpaqueUserId, generateUserOtp, getOtpExpiryTimestamp } from '@/lib/otp';
 import { resolveBaseUrl } from '@/lib/base-url';
 import { getFetchStatusServer, startFetchServer } from '@/lib/maimai-server-actions';
+import { upsertScoreData } from '@/lib/maimai-fetcher';
 import { getVersionInfo, VersionId, VERSIONS } from '@/lib/metadata';
 import { addRatingsAndSort, RatingCalculationInput, splitSongs } from '@/lib/rating-calculator';
-import { invites, songs, user, userScores, userSnapshots, userEvents, userRecentSongs, userRecentSongsDetailed, userAlbums } from '@/lib/db/schema-pg';
+import { invites, songs, user, userScores, userSnapshots, userEvents, userRecentSongs, userRecentSongsDetailed, userAlbums, scoreData, snapshotScores, snapshotB50 } from '@/lib/db/schema-pg';
 import { protectedProcedure, publicProcedure, router } from '@/lib/trpc';
 import { MinimalSongForDisplay, Region, SongExtended, SongWithScore, UserData } from '@/lib/types';
 import { TRPCError } from '@trpc/server';
@@ -1564,6 +1565,56 @@ export const userRouter = router({
               rank: sql`(CASE ${userScores.id} ${sql.join(caseStatements, sql.raw(' '))} END)::smallint`
             })
             .where(inArray(userScores.id, ids));
+        }
+
+        // Dual-write to new tables
+        try {
+          const scoreDataLookup = await upsertScoreData(
+            scoresWithSongs.map(s => ({
+              songId: s.songId,
+              achievement: s.achievement,
+              dxScore: s.dxScore,
+              fc: s.fc,
+              fs: s.fs,
+            }))
+          );
+
+          const junctionRows: { snapshotId: bigint; scoreId: bigint }[] = [];
+          const b50Rows: { snapshotId: bigint; rank: number; scoreId: bigint }[] = [];
+
+          for (const update of rankUpdates) {
+            const scoreRecord = scoresWithSongs.find(s => s.scoreId === update.id);
+            if (!scoreRecord) continue;
+            const key = `${scoreRecord.songId}-${scoreRecord.achievement}-${scoreRecord.dxScore}-${scoreRecord.fc}-${scoreRecord.fs}`;
+            const scoreDataId = scoreDataLookup.get(key);
+            if (!scoreDataId) continue;
+            junctionRows.push({ snapshotId: newSnapshotInternalId, scoreId: scoreDataId });
+            if (update.rank < 50) {
+              b50Rows.push({ snapshotId: newSnapshotInternalId, rank: update.rank, scoreId: scoreDataId });
+            }
+          }
+
+          // Also add scores that didn't get rank updates (shouldn't happen, but be safe)
+          const rankedScoreIds = new Set(rankUpdates.map(u => u.id));
+          for (const s of scoresWithSongs) {
+            if (rankedScoreIds.has(s.scoreId)) continue;
+            const key = `${s.songId}-${s.achievement}-${s.dxScore}-${s.fc}-${s.fs}`;
+            const scoreDataId = scoreDataLookup.get(key);
+            if (scoreDataId) {
+              junctionRows.push({ snapshotId: newSnapshotInternalId, scoreId: scoreDataId });
+            }
+          }
+
+          if (junctionRows.length > 0) {
+            for (let i = 0; i < junctionRows.length; i += 1000) {
+              await db.insert(snapshotScores).values(junctionRows.slice(i, i + 1000)).onConflictDoNothing();
+            }
+          }
+          if (b50Rows.length > 0) {
+            await db.insert(snapshotB50).values(b50Rows).onConflictDoNothing();
+          }
+        } catch (error) {
+          logger.error(error, "copySnapshotToVersion: Dual-write to new tables failed (non-fatal)");
         }
       }
 
