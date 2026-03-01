@@ -42,7 +42,12 @@ export async function sendDiscordWebhook(
     return;
   }
 
-  if (added.length === 0 && deleted.length === 0 && modified.length === 0) {
+  // Filter out songs whose only changes are cover (noisy, not useful)
+  const filteredModified = modified.filter(
+    m => m.fieldChanges.some(c => c.field !== "cover")
+  );
+
+  if (added.length === 0 && deleted.length === 0 && filteredModified.length === 0) {
     console.log("No changes detected, skipping webhook notification");
     return;
   }
@@ -82,14 +87,14 @@ export async function sendDiscordWebhook(
   }
 
   // Modified charts grouped by field
-  if (modified.length > 0) {
+  if (filteredModified.length > 0) {
     type LevelEntry = { songKey: string; oldValue?: any; newValue?: any; levelPreciseOld?: any; levelPreciseNew?: any };
     type OtherEntry = { songKey: string; oldValue: any; newValue: any };
 
     const levelBucket: LevelEntry[] = [];
     const otherBuckets: Record<string, OtherEntry[]> = {};
 
-    for (const song of modified) {
+    for (const song of filteredModified) {
       const levelChange = song.fieldChanges.find(c => c.field === "level");
       const levelPreciseChange = song.fieldChanges.find(c => c.field === "levelPrecise");
 
@@ -104,7 +109,7 @@ export async function sendDiscordWebhook(
       }
 
       for (const change of song.fieldChanges) {
-        if (change.field === "level" || change.field === "levelPrecise") continue;
+        if (change.field === "level" || change.field === "levelPrecise" || change.field === "cover") continue;
         if (!otherBuckets[change.field]) otherBuckets[change.field] = [];
         otherBuckets[change.field].push({
           songKey: song.songKey,
@@ -167,7 +172,7 @@ export async function sendDiscordWebhook(
   }
 
   // Determine color based on changes
-  const hasLevelChanges = modified.some(m =>
+  const hasLevelChanges = filteredModified.some(m =>
     m.fieldChanges.some(c => c.field === "level" || c.field === "levelPrecise")
   );
 
