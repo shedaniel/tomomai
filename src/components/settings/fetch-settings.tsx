@@ -69,7 +69,10 @@ export function FetchSettings({ newTokenDialog }: { newTokenDialog: boolean }) {
 
       <div className="grid gap-6">
         <div className="grid gap-2">
-          <Label>{t("settings.account.label")}</Label>
+          <Label className="flex items-center gap-2">
+            <Key className="h-4 w-4" />
+            {t("settings.account.label")}
+          </Label>
           <p className="text-xs text-muted-foreground">{t("settings.account.description")}</p>
           <Button
             variant="outline"

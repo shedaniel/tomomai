@@ -18,27 +18,33 @@ export function withApiKey(
   requiredScopes: ScopeKey[],
   handler: (req: NextRequest, key: ApiKeyInfo) => Promise<Response>
 ) {
-  return async (req: NextRequest) => {
+  return async (req: NextRequest, context?: unknown) => {
+    const authHeader = req.headers.get("authorization");
     const rawKey =
       req.headers.get("x-api-key") ??
-      req.headers.get("authorization")?.replace("Bearer ", "");
+      (authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : undefined);
 
     if (!rawKey) {
       return Response.json({ error: "Missing API key" }, { status: 401 });
     }
 
-    const result = await auth.api.verifyApiKey({
-      body: { key: rawKey, permissions: scopesToPermissions(requiredScopes) },
-    });
+    try {
+      const result = await auth.api.verifyApiKey({
+        body: { key: rawKey, permissions: scopesToPermissions(requiredScopes) },
+      });
 
-    if (!result.valid) {
-      return Response.json(
-        { error: result.error?.message ?? "Forbidden" },
-        { status: 403 }
-      );
+      if (!result.valid || !result.key) {
+        return Response.json(
+          { error: result.error?.message ?? "Forbidden" },
+          { status: 403 }
+        );
+      }
+
+      const key = result.key as ApiKeyInfo;
+      return await handler(req, key);
+    } catch (err) {
+      console.error("API handler error:", err);
+      return Response.json({ error: "Internal server error" }, { status: 500 });
     }
-
-    const key = result.key! as ApiKeyInfo;
-    return handler(req, key);
   };
 }

@@ -1,23 +1,14 @@
 import { type NextRequest } from "next/server";
 import { withApiKey, keyHasScope } from "@/lib/api/protect";
+import { parseRegion, parsePagination } from "@/lib/api/params";
 import { fetchUserAlbums } from "@/server/queries/albums";
-import { getEnabledRegions } from "@/lib/enabled-regions";
-import type { Region } from "@/lib/types";
 
 export const GET = withApiKey(["album:read"], async (req: NextRequest, key) => {
   const { searchParams } = req.nextUrl;
-  const region = searchParams.get("region") as Region | null;
-  const enabledRegions = getEnabledRegions();
+  const region = parseRegion(searchParams);
+  if (region instanceof Response) return region;
 
-  if (!region || !enabledRegions.includes(region)) {
-    return Response.json(
-      { error: `Missing or invalid ?region= parameter. Valid values: ${enabledRegions.join(", ")}` },
-      { status: 400 }
-    );
-  }
-
-  const limit = Math.min(Math.max(parseInt(searchParams.get("limit") ?? "20", 10) || 20, 1), 100);
-  const offset = Math.max(parseInt(searchParams.get("offset") ?? "0", 10) || 0, 0);
+  const { limit, offset } = parsePagination(searchParams, 20, 100);
   const hasImages = keyHasScope(key, "album:images:read");
   const r2BaseUrl = process.env.NEXT_PUBLIC_R2_URL;
 

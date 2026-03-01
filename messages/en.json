@@ -36,7 +36,8 @@
       "remaster": "Re:Master",
       "utage": "Utage"
     },
-    "back": "Back"
+    "back": "Back",
+    "clipboardError": "Failed to copy to clipboard"
   },
   "auth": {
     "loginWithDiscord": "Continue with Discord",

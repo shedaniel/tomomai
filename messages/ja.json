@@ -36,7 +36,8 @@
       "remaster": "Re:Master",
       "utage": "Utage"
     },
-    "back": "戻る"
+    "back": "戻る",
+    "clipboardError": "クリップボードへのコピーに失敗しました"
   },
   "auth": {
     "loginWithDiscord": "Discordで続行",

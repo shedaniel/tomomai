@@ -3,8 +3,11 @@ import { db } from "@/lib/db";
 import { songs } from "@/lib/db/schema-pg";
 import { eq } from "drizzle-orm";
 
-export async function GET(req: NextRequest) {
-  const songId = req.nextUrl.pathname.split("/").at(-1)!;
+export async function GET(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id: songId } = await params;
 
   const charts = await db
     .select({

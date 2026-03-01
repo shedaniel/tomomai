@@ -36,7 +36,8 @@
       "remaster": "Re:Master",
       "utage": "Utage"
     },
-    "back": "返回"
+    "back": "返回",
+    "clipboardError": "复制到剪贴板失败"
   },
   "auth": {
     "loginWithDiscord": "以 Discord 继续",

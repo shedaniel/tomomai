@@ -10,22 +10,34 @@ export const developerRouter = router({
   rotateApiKey: protectedProcedure
     .input(z.object({ keyId: z.string() }))
     .mutation(async ({ ctx, input }) => {
-      // Verify the key belongs to the current user before rotating
+      // Verify the key belongs to the current user and get its config
       const keys = await auth.api.listApiKeys({
         query: { userId: ctx.session.user.id },
       });
-      if (!keys || !(keys as any[]).some((k) => k.id === input.keyId)) {
+      const oldKey = (keys as any[] | undefined)?.find((k: any) => k.id === input.keyId);
+      if (!oldKey) {
         throw new TRPCError({ code: "FORBIDDEN", message: "Key not found" });
       }
 
-      const result = await auth.api.rotateApiKey({
+      // Better Auth has no rotateApiKey — implement as delete + recreate
+      await auth.api.deleteApiKey({
         body: { keyId: input.keyId },
       });
-      if (!(result as any)?.key) {
+
+      const result = await auth.api.createApiKey({
+        body: {
+          userId: ctx.session.user.id,
+          name: oldKey.name ?? undefined,
+          permissions: oldKey.permissions ?? undefined,
+          expiresIn: null,
+        },
+      });
+
+      if (!result?.key) {
         throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to rotate API key" });
       }
 
-      return { key: (result as any).key as string };
+      return { key: result.key };
     }),
 
   createApiKey: protectedProcedure

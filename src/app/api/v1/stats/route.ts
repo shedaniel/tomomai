@@ -1,19 +1,11 @@
 import { type NextRequest } from "next/server";
 import { withApiKey } from "@/lib/api/protect";
+import { parseRegion } from "@/lib/api/params";
 import { fetchPlayerStats } from "@/server/queries/stats";
-import { getEnabledRegions } from "@/lib/enabled-regions";
-import type { Region } from "@/lib/types";
 
 export const GET = withApiKey(["stats:read"], async (req: NextRequest, key) => {
-  const region = req.nextUrl.searchParams.get("region") as Region | null;
-  const enabledRegions = getEnabledRegions();
-
-  if (!region || !enabledRegions.includes(region)) {
-    return Response.json(
-      { error: `Missing or invalid ?region= parameter. Valid values: ${enabledRegions.join(", ")}` },
-      { status: 400 }
-    );
-  }
+  const region = parseRegion(req.nextUrl.searchParams);
+  if (region instanceof Response) return region;
 
   const { stats, totalSongs } = await fetchPlayerStats(key.userId, region);
 

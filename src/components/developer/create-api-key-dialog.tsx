@@ -213,9 +213,13 @@ export function CreateApiKeyDialog({
 
   async function handleCopy() {
     if (!createdKey) return;
-    await navigator.clipboard.writeText(createdKey);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    try {
+      await navigator.clipboard.writeText(createdKey);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast.error(tc("clipboardError"));
+    }
   }
 
   function handleClose() {

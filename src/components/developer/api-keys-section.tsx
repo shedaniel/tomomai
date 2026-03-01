@@ -31,6 +31,7 @@ import { toast } from "sonner";
 import { Plus, Trash2, Key, Loader2, RefreshCw, Copy, Check, AlertTriangle } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
+import { useLocale } from "@/components/providers/locale-provider";
 
 type ApiKey = {
   id: string;
@@ -50,6 +51,7 @@ function getScopeKeys(permissions: Record<string, string[]> | null): ScopeKey[] 
 export function ApiKeysSection() {
   const t = useTranslations("settings.developer");
   const tc = useTranslations("common");
+  const { locale } = useLocale();
   const queryClient = useQueryClient();
   const [createOpen, setCreateOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -60,7 +62,7 @@ export function ApiKeysSection() {
 
   function formatDate(date: Date | null) {
     if (!date) return t("apiKeys.never");
-    return new Intl.DateTimeFormat("en", {
+    return new Intl.DateTimeFormat(locale, {
       year: "numeric",
       month: "short",
       day: "numeric",
@@ -279,9 +281,13 @@ export function ApiKeysSection() {
               <button
                 onClick={async () => {
                   if (!regeneratedKey) return;
-                  await navigator.clipboard.writeText(regeneratedKey);
-                  setCopiedRegen(true);
-                  setTimeout(() => setCopiedRegen(false), 2000);
+                  try {
+                    await navigator.clipboard.writeText(regeneratedKey);
+                    setCopiedRegen(true);
+                    setTimeout(() => setCopiedRegen(false), 2000);
+                  } catch {
+                    toast.error(tc("clipboardError"));
+                  }
                 }}
                 className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
               >
