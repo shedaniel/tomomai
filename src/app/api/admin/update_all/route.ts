@@ -6,6 +6,7 @@ async function updateRegion(
   region: "intl" | "jp",
   maimaiToken: string,
   adminToken: string,
+  imageUpload: boolean,
 ): Promise<{ success: boolean; data?: any; error?: string; status?: number }> {
   const version = getCurrentVersion(region);
 
@@ -34,7 +35,33 @@ async function updateRegion(
 
   console.log(`Fetched ${updateData.records.length} ${region.toUpperCase()} records`);
 
-  // Step 2: Upload to /api/admin/upload with update=alter
+  // Step 2: Process cover images via /api/admin/image
+  let songsForUpload = updateData.records;
+  if (imageUpload) {
+    console.log(`Processing ${region.toUpperCase()} cover images via /api/admin/image...`);
+    const imageUrl = new URL(`${origin}/api/admin/image`);
+
+    const imageResponse = await fetch(imageUrl.toString(), {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${adminToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ songs: songsForUpload }),
+    });
+
+    if (!imageResponse.ok) {
+      const errorText = await imageResponse.text();
+      console.error(`Failed to process ${region.toUpperCase()} cover images: ${imageResponse.status} ${imageResponse.statusText}`);
+      return { success: false, error: `Failed to process ${region.toUpperCase()} cover images: ${errorText}`, status: imageResponse.status };
+    }
+
+    const imageData = await imageResponse.json();
+    songsForUpload = imageData.songs;
+    console.log(`${region.toUpperCase()} cover images processed:`, imageData.stats);
+  }
+
+  // Step 3: Upload to /api/admin/upload with update=alter
   console.log(`Uploading ${region.toUpperCase()} records to /api/admin/upload...`);
   const uploadUrl = new URL(`${origin}/api/admin/upload`);
   uploadUrl.searchParams.set('region', region);
@@ -47,7 +74,7 @@ async function updateRegion(
       "Authorization": `Bearer ${adminToken}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ songs: updateData.records }),
+    body: JSON.stringify({ songs: songsForUpload }),
   });
 
   if (!uploadResponse.ok) {
@@ -112,13 +139,16 @@ export async function GET(request: NextRequest) {
     }
     const region = regionParam as "jp" | "intl" | null;
 
+    const imageUploadParam = searchParams.get('image_upload');
+    const imageUpload = imageUploadParam !== "false";
+
     const origin = request.nextUrl.origin;
     const regions: ("jp" | "intl")[] = region ? [region] : ["jp", "intl"];
-    console.log(`Admin update_all requested: processing ${regions.map(r => r.toUpperCase()).join(" then ")}`);
+    console.log(`Admin update_all requested: processing ${regions.map(r => r.toUpperCase()).join(" then ")} (image_upload=${imageUpload})`);
 
     const results: Record<string, any> = {};
     for (const r of regions) {
-      const result = await updateRegion(origin, r, maimaiToken, token);
+      const result = await updateRegion(origin, r, maimaiToken, token, imageUpload);
       if (!result.success) {
         return NextResponse.json({ error: result.error }, { status: result.status ?? 500 });
       }

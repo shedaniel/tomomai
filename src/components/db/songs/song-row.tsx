@@ -2,8 +2,8 @@
 
 import { motion } from "motion/react";
 import Link from "next/link";
-import Image from "next/image";
-import { cn, createSafeMaimaiImageUrl } from "@/lib/utils";
+import { cn } from "@/lib/utils";
+import { CoverImage } from "@/components/cover-image";
 import { UniqueSong } from "./types";
 import { renderLevelPrecise } from "@/lib/name-utils";
 
@@ -43,8 +43,8 @@ export function SongRow({ song, index, isSelected, onSelect }: SongRowProps) {
           isSelected && "bg-violet-100 hover:bg-violet-100"
         )}
       >
-        <Image
-          src={createSafeMaimaiImageUrl(song.cover)}
+        <CoverImage
+          coverUrl={song.cover}
           alt={song.songName}
           className={cn(
             "w-10 h-10 rounded ring-2 ring-offset-2 ring-offset-background",

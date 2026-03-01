@@ -110,7 +110,7 @@ export async function handleFetchCommand({
     const backgroundTask = (async () => {
       try {
         // Start the fetch
-        const startResult = await startFetchServer(dbUser.id, region as Region);
+        const startResult = await startFetchServer(dbUser.id, region as Region, undefined, undefined, { skipAfter: true });
 
         // Send initial message
         await editDiscordMessage(applicationId, interactionToken, {
@@ -132,6 +132,9 @@ export async function handleFetchCommand({
 
         // Poll for status updates
         await pollForUpdates(dbUser.id, dbUser.username ?? dbUser.name, region, regionName, discordUserId, startResult.sessionId, applicationId, interactionToken);
+
+        // Ensure background work (detail fetches for recents/albums) completes
+        await startResult.backgroundWork;
       } catch (error) {
         console.error('Error in fetch process:', error);
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';

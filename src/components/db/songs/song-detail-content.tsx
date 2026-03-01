@@ -7,9 +7,10 @@ import { getVersionInfo } from "@/lib/metadata";
 import { calculateSongRating } from "@/lib/rating-calculator";
 import { trpc } from "@/lib/trpc-client";
 import { Difficulty, Region, SongExtended } from "@/lib/types";
-import { cn, createSafeMaimaiImageUrl } from "@/lib/utils";
+import { cn, getTypeBadgeUrl } from "@/lib/utils";
 import { Activity, Calendar, ChevronRight, Globe, Loader2, Music, Pencil, Share } from "lucide-react";
-import Image from "next/image";
+
+import { CoverImage } from "@/components/cover-image";
 import { useMemo } from "react";
 import { SongDetails, UserScore } from "./types";
 
@@ -307,8 +308,8 @@ export function SongDetailContent({ songName, slug, type, initialData }: SongDet
       {/* Cover and basic info */}
       <div className="flex gap-4">
         <div className="relative w-24 h-24 max-md:w-20 max-md:h-20 shrink-0 rounded-lg overflow-hidden ring-2 ring-offset-2 ring-offset-background ring-slate-200">
-          <Image
-            src={createSafeMaimaiImageUrl(data.cover)}
+          <CoverImage
+            coverUrl={data.cover}
             alt={data.songName}
             fill
             className="object-cover"
@@ -318,11 +319,8 @@ export function SongDetailContent({ songName, slug, type, initialData }: SongDet
           <h1 className="text-xl max-md:text-md font-bold truncate">{data.songName}</h1>
           <p className="text-muted-foreground max-md:text-sm truncate">{data.artist}</p>
           <div className="flex items-center gap-2 mt-2">
-            <Image
-              src={createSafeMaimaiImageUrl(data.type === "dx"
-                ? "https://maimaidx.jp/maimai-mobile/img/music_dx.png"
-                : "https://maimaidx.jp/maimai-mobile/img/music_standard.png"
-              )}
+            <img
+              src={getTypeBadgeUrl(data.type)}
               alt={data.type.toUpperCase()}
               width={64}
               height={20}

@@ -3,10 +3,11 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { trpc } from "@/lib/trpc-client";
 import { Region } from "@/lib/types";
-import { cn, createSafeMaimaiImageUrl } from "@/lib/utils";
+import { cn, getTypeBadgeUrl } from "@/lib/utils";
 import { Images, Loader2, AlertCircle, Calendar, MapPin, Music, HardDrive, Info, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import Image from "next/image";
+
+import { CoverImage } from "@/components/cover-image";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { inferRouterOutputs } from "@trpc/server";
 import { AppRouter } from "@/server/routers/_app";
@@ -291,8 +292,8 @@ export function AlbumCard({ region }: AlbumCardProps) {
                 <div className="flex gap-3">
                   {/* Song Cover */}
                   <div className="relative shrink-0 m-1">
-                    <Image
-                      src={createSafeMaimaiImageUrl(album.cover)}
+                    <CoverImage
+                      coverUrl={album.cover}
                       alt={album.songName}
                       className={cn(
                         "w-14 h-14 rounded ring-2 ring-offset-2 ring-offset-card object-cover",
@@ -325,12 +326,8 @@ export function AlbumCard({ region }: AlbumCardProps) {
                     <h4 className="font-semibold truncate">{album.songName}</h4>
                     <p className="text-xs text-muted-foreground truncate">{album.artist}</p>
                     <div className="flex items-center gap-1.5 mt-1.5">
-                      <Image
-                        src={createSafeMaimaiImageUrl(
-                          album.type === "dx"
-                            ? "https://maimaidx.jp/maimai-mobile/img/music_dx.png"
-                            : "https://maimaidx.jp/maimai-mobile/img/music_standard.png"
-                        )}
+                      <img
+                        src={getTypeBadgeUrl(album.type)}
                         alt={album.type.toUpperCase()}
                         width={32}
                         height={10}

@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, DeleteObjectCommand, ListObjectsV2Command } from "@aws-sdk/client-s3";
 import { nanoid } from "nanoid";
 
 export const r2Client = new S3Client({
@@ -23,6 +23,48 @@ export async function uploadToR2(
     Key: key,
     Body: buffer,
     ContentType: contentType,
+    CacheControl: "public, max-age=31536000",
+  });
+
+  await r2Client.send(command);
+
+  return { key, size: buffer.length };
+}
+
+export async function listCoverKeys(): Promise<Set<string>> {
+  const keys = new Set<string>();
+  let continuationToken: string | undefined;
+
+  do {
+    const command = new ListObjectsV2Command({
+      Bucket: R2_BUCKET,
+      Prefix: "covers/",
+      ContinuationToken: continuationToken,
+    });
+
+    const response = await r2Client.send(command);
+    for (const obj of response.Contents ?? []) {
+      if (obj.Key) {
+        keys.add(obj.Key.replace(/^covers\//, ""));
+      }
+    }
+    continuationToken = response.IsTruncated ? response.NextContinuationToken : undefined;
+  } while (continuationToken);
+
+  return keys;
+}
+
+export async function uploadCoverToR2(
+  buffer: Buffer,
+  filename: string
+): Promise<{ key: string; size: number }> {
+  const key = `covers/${filename}.webp`;
+
+  const command = new PutObjectCommand({
+    Bucket: R2_BUCKET,
+    Key: key,
+    Body: buffer,
+    ContentType: "image/webp",
     CacheControl: "public, max-age=31536000",
   });
 

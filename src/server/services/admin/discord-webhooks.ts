@@ -1,6 +1,6 @@
 import { resolveBaseUrl } from "@/lib/base-url";
 import type { AddedChange, DeletedChange, ModifiedChange } from "@/app/api/admin/upload/route";
-import { Difficulty } from "@/lib/types";
+import { Difficulty, Region } from "@/lib/types";
 
 function formatSongLabel(song: { songName: string; type: string; difficulty: Difficulty }): string {
   return `${song.songName} ${song.type.toUpperCase()} ${song.difficulty.slice(0, 3).toUpperCase()}`;
@@ -42,7 +42,12 @@ export async function sendDiscordWebhook(
     return;
   }
 
-  if (added.length === 0 && deleted.length === 0 && modified.length === 0) {
+  // Filter out songs whose only changes are cover (noisy, not useful)
+  const filteredModified = modified.filter(
+    m => m.fieldChanges.some(c => c.field !== "cover")
+  );
+
+  if (added.length === 0 && deleted.length === 0 && filteredModified.length === 0) {
     console.log("No changes detected, skipping webhook notification");
     return;
   }
@@ -67,7 +72,7 @@ export async function sendDiscordWebhook(
   if (added.length > 0) {
     description += `**${added.length} Chart${added.length > 1 ? 's' : ''} Added**\n`;
     const lines = added.toSorted(songSortKey).map(
-      song => `- ${formatSongLabel(song)} ${song.level}`
+      song => `- ${formatSongLabel(song)} ${song.level} (${song.levelPrecise ? formatPrecise(song.levelPrecise) : 'unknown'})`
     );
     description += truncateLines(lines, LEVEL_TRUNCATE_LIMIT) + "\n\n";
   }
@@ -76,20 +81,20 @@ export async function sendDiscordWebhook(
   if (deleted.length > 0) {
     description += `**${deleted.length} Chart${deleted.length > 1 ? 's' : ''} Deleted**\n`;
     const lines = deleted.toSorted(songSortKey).map(
-      song => `- ${formatSongLabel(song)} ${song.level}`
+      song => `- ${formatSongLabel(song)} ${song.level} (${song.levelPrecise ? formatPrecise(song.levelPrecise) : 'unknown'})`
     );
     description += truncateLines(lines, LEVEL_TRUNCATE_LIMIT) + "\n\n";
   }
 
   // Modified charts grouped by field
-  if (modified.length > 0) {
+  if (filteredModified.length > 0) {
     type LevelEntry = { songKey: string; oldValue?: any; newValue?: any; levelPreciseOld?: any; levelPreciseNew?: any };
     type OtherEntry = { songKey: string; oldValue: any; newValue: any };
 
     const levelBucket: LevelEntry[] = [];
     const otherBuckets: Record<string, OtherEntry[]> = {};
 
-    for (const song of modified) {
+    for (const song of filteredModified) {
       const levelChange = song.fieldChanges.find(c => c.field === "level");
       const levelPreciseChange = song.fieldChanges.find(c => c.field === "levelPrecise");
 
@@ -104,7 +109,7 @@ export async function sendDiscordWebhook(
       }
 
       for (const change of song.fieldChanges) {
-        if (change.field === "level" || change.field === "levelPrecise") continue;
+        if (change.field === "level" || change.field === "levelPrecise" || change.field === "cover") continue;
         if (!otherBuckets[change.field]) otherBuckets[change.field] = [];
         otherBuckets[change.field].push({
           songKey: song.songKey,
@@ -167,7 +172,7 @@ export async function sendDiscordWebhook(
   }
 
   // Determine color based on changes
-  const hasLevelChanges = modified.some(m =>
+  const hasLevelChanges = filteredModified.some(m =>
     m.fieldChanges.some(c => c.field === "level" || c.field === "levelPrecise")
   );
 
@@ -214,5 +219,45 @@ export async function sendDiscordWebhook(
     }
   } catch (error) {
     console.error("Error sending Discord webhook:", error);
+  }
+}
+
+export async function sendDiscordNotice(
+  region: Region,
+  title: string,
+  description: string,
+  color: number = 0x5865F2,
+) {
+  const webhookUrl = process.env.DISCORD_UPDATE_WEBHOOK_NOTICE;
+  if (!webhookUrl) return;
+
+  const baseUrl = resolveBaseUrl();
+  const regionName = region === "jp" ? "Japan" : "International";
+
+  const payload = {
+    username: "ともマイ",
+    avatar_url: `${baseUrl}/icon.png`,
+    embeds: [
+      {
+        title: `[${regionName}] ${title}`,
+        description: description.trim().slice(0, 4000) || undefined,
+        color,
+        timestamp: new Date().toISOString(),
+      },
+    ],
+  };
+
+  try {
+    const response = await fetch(webhookUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      console.error(`Discord notice webhook failed: ${response.status} ${response.statusText}`);
+    }
+  } catch (error) {
+    console.error("Error sending Discord notice webhook:", error);
   }
 }

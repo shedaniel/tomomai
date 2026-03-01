@@ -76,6 +76,7 @@ describe.skipIf(shouldSkip)("Integration: LevelFetcher", () => {
       version,
       cookies,
       log: createTestLogger(),
+      notice: { addDetail() {}, details: [] },
     };
   }, 60000); // 60 second timeout for login
 

@@ -1,8 +1,8 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import Image from "next/image";
-import { cn, createSafeMaimaiImageUrl } from "@/lib/utils";
+import { cn } from "@/lib/utils";
+import { CoverImage } from "@/components/cover-image";
 
 interface SongRankingTableProps {
   data: {
@@ -41,8 +41,8 @@ export function SongRankingTable({ data }: SongRankingTableProps) {
 
             <div className="flex items-center gap-3 min-w-0">
               <div className="relative w-10 h-10 rounded overflow-hidden flex-shrink-0 border bg-muted">
-                <Image
-                  src={createSafeMaimaiImageUrl(item.cover)}
+                <CoverImage
+                  coverUrl={item.cover}
                   alt={item.songName}
                   fill
                   className="object-cover"

@@ -7,8 +7,12 @@ import { asFetcher } from "./fetcher-utils";
 
 const DXDATA_URL = "https://raw.githubusercontent.com/gekichumai/dxrating/refs/heads/main/packages/dxdata/dxdata.json";
 
-export const DxDataFetcher = asFetcher(async ({ version, region }) => {
+export const DxDataFetcher = asFetcher(async ({ version, region, notice }) => {
   const res = await fetchDxDataJson();
+  const sheetsWithBpm = res.songs.filter(s => !!s.bpm).length;
+  const sheetsWithDesigner = res.songs.flatMap(s => s.sheets).filter(s => !!s.noteDesigner && s.noteDesigner !== "-").length;
+  const sheetsWithNotes = res.songs.flatMap(s => s.sheets).filter(s => !!s.noteCounts).length;
+  notice.addDetail(`${res.songs.length} songs, ${sheetsWithBpm} with BPM, ${sheetsWithDesigner} with designer, ${sheetsWithNotes} with note counts`);
 
   return res.songs.flatMap(song => song.sheets.map(sheet => ({
     songName: normalizeName(song.title),

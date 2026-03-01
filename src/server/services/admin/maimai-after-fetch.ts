@@ -53,6 +53,7 @@ export const MaimaiAfterFetcher: SongFetcher = async (context, songs) => {
     { songs: requiresFetch.map(s => key(s.song)) },
     `${requiresFetch.length} songs required fetching officially.`
   );
+  context.notice.addDetail(`${requiresFetch.length} songs fetched from official site for missing cover/genre/artist`);
 
   if (requiresFetch.length >= 1000) {
     throw new Error("Too many songs to fetch officially");

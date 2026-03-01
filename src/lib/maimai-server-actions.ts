@@ -13,6 +13,7 @@ import { flushLogger } from './logger';
 export interface StartFetchResult {
   sessionId: string;
   status: 'pending';
+  backgroundWork?: Promise<void>;
 }
 
 export interface FetchStatusResult {
@@ -81,7 +82,7 @@ export async function demoFetch(userId: string, region: Region): Promise<StartFe
 }
 
 // Extract startFetch logic from tRPC procedure
-export async function startFetchServer(userId: string, region: Region, token?: string, flags: string[] = []): Promise<StartFetchResult> {
+export async function startFetchServer(userId: string, region: Region, token?: string, flags: string[] = [], options?: { skipAfter?: boolean }): Promise<StartFetchResult> {
   // Check if demo mode is enabled
   if (process.env.DEMO_FETCH === 'true') {
     return demoFetch(userId, region);
@@ -243,8 +244,8 @@ export async function startFetchServer(userId: string, region: Region, token?: s
 
   const fetchSessionInternalId = insertedSession.id;
 
-  // Start the actual data fetch in the background, keeping the function alive via after()
-  after(async () => {
+  // Background fetch logic
+  const fetchWork = async () => {
     const backgroundWorkRef = { promise: Promise.resolve() };
     try {
       // Create a timeout promise (2 minutes)
@@ -288,12 +289,22 @@ export async function startFetchServer(userId: string, region: Region, token?: s
       await backgroundWorkRef.promise;
       await flushLogger();
     }
-  });
+  };
 
-  return {
+  const result: StartFetchResult = {
     sessionId: fetchSessionPublicId,
     status: "pending" as const,
   };
+
+  if (options?.skipAfter) {
+    // Caller is responsible for keeping the promise alive (e.g. via waitUntil)
+    result.backgroundWork = fetchWork();
+  } else {
+    // Use after() to keep the serverless function alive after the response is sent
+    after(fetchWork);
+  }
+
+  return result;
 }
 
 // Extract getFetchStatus logic from tRPC procedure

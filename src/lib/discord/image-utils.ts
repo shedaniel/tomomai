@@ -9,6 +9,7 @@ import { ImageCache, renderLastCreditImage } from '@/lib/render-image';
 import { fetchImageForServer } from '@/lib/render-image-server';
 import { Image, loadImage } from 'skia-canvas';
 import { getRatingImageUrl } from '@/lib/rating-calculator';
+import { getTypeBadgeUrl } from '@/lib/utils';
 import { DIFFICULTY_ENUM } from '@/lib/db/types';
 
 export interface SnapshotData {
@@ -216,8 +217,8 @@ export async function generateAndSendCreditImage({
 
     // Cache all images needed for rendering
     const imagesToCache = [
-      "https://maimaidx.jp/maimai-mobile/img/music_dx.png",
-      "https://maimaidx.jp/maimai-mobile/img/music_standard.png",
+      getTypeBadgeUrl("dx"),
+      getTypeBadgeUrl("std"),
       getRatingImageUrl(snapshot.rating),
       snapshot.iconUrl,
       snapshot.classRankUrl,

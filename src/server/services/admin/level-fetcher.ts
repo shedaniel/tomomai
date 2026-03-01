@@ -11,7 +11,8 @@ import deepEqual from "deep-equal";
 import { normalizeGenre, normalizeName } from "@/lib/name-utils";
 import { isNullOrUndefined } from "@/lib/utils";
 import { FillLevelPreciseFetcher } from "./fill-level";
-import { FetchingContext, key, SongFetcher, SongWithOrigin } from "./fetcher-utils";
+import { createNoticeSink, FetchingContext, key, SongFetcher, SongWithOrigin } from "./fetcher-utils";
+import { sendDiscordNotice } from "./discord-webhooks";
 
 export type FetchingContextExtended = FetchingContext & {
   previous: SongFetcher | null,
@@ -41,6 +42,17 @@ export const FETCHERS: SongFetcher[] = [
   FillLevelPreciseFetcher,
   // Sorts the levels
   SorterFetcher,
+]
+
+export const FETCHER_NAMES: string[] = [
+  "Maimai Scraper",
+  "Maimai Base Songs",
+  "DxData",
+  "Fallback",
+  "OtogeDB",
+  "Maimai After Fetch",
+  "Fill Level Precise",
+  "Sorter",
 ]
 
 function validateSongs(songsInput: SongWithOrigin[], log: Logger): void {
@@ -85,6 +97,30 @@ function validateSongs(songsInput: SongWithOrigin[], log: Logger): void {
   }
 }
 
+function summarizeStage(songs: SongWithOrigin[], fetcherIndex: number, fetcherName: string, songsBefore: number, elapsed: number, notice: { details: string[] }): { summary: string; noticeBody: string } {
+  const addedSongs = songs.filter(s => s.addedFetcher === fetcherIndex);
+  const modifiedSongs = songs.filter(s => s.addedFetcher !== fetcherIndex && s.modifiedFetchers.includes(fetcherIndex));
+  const netChange = songs.length - songsBefore;
+
+  const header = `**${fetcherName}**: ${songs.length} songs (${netChange >= 0 ? "+" : ""}${netChange}) — ${elapsed}ms`;
+  const changeLine = `+${addedSongs.length} added, ~${modifiedSongs.length} modified`;
+
+  const lines: string[] = [changeLine];
+  if (addedSongs.length > 0 && addedSongs.length < 30) {
+    lines.push("Added: " + addedSongs.map(s => key(s)).join(", "));
+  }
+  if (modifiedSongs.length > 0 && modifiedSongs.length < 30) {
+    lines.push("Modified: " + modifiedSongs.map(s => key(s)).join(", "));
+  }
+  lines.push(...notice.details);
+
+  const detailBlock = lines.join("\n");
+  return {
+    summary: `${header}\n${changeLine}${notice.details.length > 0 ? "\n" + notice.details.join("\n") : ""}`,
+    noticeBody: `${header}\n${detailBlock}`,
+  };
+}
+
 function attributeSource(prevSongs: SongWithOrigin[], newSongs: PendingSong[], fetcherIndex: number): SongWithOrigin[] {
   // Compare the songs, if new song entry, set addedFetcher, otherwise compare if modified, if yes, set modifiedFetcher
   return newSongs.map(newSong => {
@@ -108,18 +144,35 @@ export async function fetchLevels(context: FetchingContext): Promise<UpdateSong[
   let songs: SongWithOrigin[] = []
   let previous: SongFetcher | null = null;
   let index = 0;
+  const stageResults: string[] = [];
   for (const fetcher of FETCHERS) {
+    const fetcherName = FETCHER_NAMES[index] ?? `Fetcher ${index}`;
     const logger = context.log.child({ fetcherIndex: index });
+    const notice = createNoticeSink();
     const extendedContext = {
       ...context,
       log: logger,
+      notice,
       previous: previous,
       current: fetcher,
       fetcherIndex: index,
     };
     extendedContext.log.info("Fetcher starting...");
+    const songsBefore = songs.length;
+    const startTime = Date.now();
     const newSongs = await fetcher(extendedContext, songs);
+    const elapsed = Date.now() - startTime;
     songs = attributeSource(songs, newSongs, index)
+    const stage = summarizeStage(songs, index, fetcherName, songsBefore, elapsed, notice);
+    stageResults.push(stage.summary);
+
+    sendDiscordNotice(
+      context.region,
+      `Stage ${index + 1}/${FETCHERS.length}: ${fetcherName}`,
+      stage.noticeBody,
+      0x5865F2,
+    ).catch(() => { });
+
     previous = fetcher;
     index++;
     validateSongs(songs, extendedContext.log);
@@ -129,6 +182,15 @@ export async function fetchLevels(context: FetchingContext): Promise<UpdateSong[
     { totalSongs: songs.length },
     "Fetch pipeline completed successfully"
   );
+
+  {
+    sendDiscordNotice(
+      context.region,
+      "Fetch pipeline completed",
+      `**Total songs: ${songs.length}** (${FETCHERS.length} stages)`,
+      0x00FF00,
+    ).catch(() => { });
+  }
 
   function nonnull<T>(value: T | null | undefined, fieldName: string, song: PendingSong): T {
     if (value === null || value === undefined) {

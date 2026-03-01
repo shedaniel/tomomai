@@ -6,6 +6,7 @@ import { getRatingImageUrl, RatingCalculationInput, splitSongs } from "./rating-
 import { calculateDXStars, calculateNoteLosses, distributeBreaks } from './score-details';
 import type { Difficulty, FullCombo, FullSync, SongType, TitleType } from "./types";
 import { SnapshotWithSongs } from "./types";
+import { getTypeBadgeUrl } from "./utils";
 
 type CanvasSize = {
   width: number;
@@ -500,10 +501,7 @@ async function renderSong<S extends SongForRender>(
   ctx.restore();
 
   // Draw song type badge
-  const songTypeBadgeUrl = song.type === "dx"
-    ? "https://maimaidx.jp/maimai-mobile/img/music_dx.png"
-    : "https://maimaidx.jp/maimai-mobile/img/music_standard.png";
-  const songTypeBadge = await loadImageWithCache(cache, songTypeBadgeUrl);
+  const songTypeBadge = await loadImageWithCache(cache, getTypeBadgeUrl(song.type));
   const badgeScale = 0.45;
   ctx.drawImage(
     songTypeBadge,
@@ -694,7 +692,7 @@ async function renderTrack(
 
   const renderType = async () => {
     // Draw type
-    const type = await loadImageWithCache(cache, `https://maimaidx.jp/maimai-mobile/img/music_${track.type === "dx" ? "dx" : "standard"}.png`);
+    const type = await loadImageWithCache(cache, getTypeBadgeUrl(track.type));
     const typeScale = 0.9 * baseScale;
     ctx.drawImage(type, baseLeftStart + baseWidth * 0.63, topStart + baseHeight * 0.22, type.width * typeScale, type.height * typeScale);
   }

@@ -30,7 +30,11 @@ type FallbackSong = {
 
 export const FallbackFetcher = asFetcher(async (context) => {
   const fallback = await loadFallbackJsonData(context.region, context.version)
-  if (!fallback) return []
+  if (!fallback) {
+    context.notice.addDetail("No fallback file found");
+    return [];
+  }
+  context.notice.addDetail(`Loaded ${fallback.length} fallback songs`);
   return fallback.flatMap(song => {
     const levels: PendingSong[] = []
     for (const diff of ["easy", "advanced", "expert", "master", "remaster", "utage"]) {

@@ -1,6 +1,8 @@
 import { logger } from "@/lib/logger";
 import { getCurrentVersion } from "@/lib/metadata";
 import { awaitWrapper, sortKeys } from "@/lib/utils";
+import { sendDiscordNotice } from "@/server/services/admin/discord-webhooks";
+import { createNoticeSink } from "@/server/services/admin/fetcher-utils";
 import { fetchLevels } from "@/server/services/admin/level-fetcher";
 import { login } from "@/server/services/admin/maimai-login";
 import { nanoid } from "nanoid";
@@ -9,9 +11,12 @@ import { NextRequest, NextResponse } from "next/server";
 export async function GET(request: NextRequest) {
   const requestId = nanoid(10);
   const log = logger.child({
-    route: "admin/update_new",
+    route: "admin/update",
     requestId,
   });
+
+  const { searchParams } = new URL(request.url);
+  const region = searchParams.get('region') as "intl" | "jp" | null;
 
   try {
     // Check for admin token authentication
@@ -44,9 +49,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Get query parameters
-    const { searchParams } = new URL(request.url);
     const maimaiToken = searchParams.get('token');
-    const region = searchParams.get('region') as "intl" | "jp";
 
     if (!maimaiToken) {
       return NextResponse.json(
@@ -82,6 +85,7 @@ export async function GET(request: NextRequest) {
       version: getCurrentVersion(region),
       cookies: cookies!,
       log,
+      notice: createNoticeSink(),
     });
 
     // Convert to json
@@ -99,6 +103,12 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     log.error(error, "Critical error in admin update route");
+    sendDiscordNotice(
+      region ?? "intl",
+      "Fetch pipeline error",
+      `**Error:** ${error instanceof Error ? error.message : String(error)}`,
+      0xFF0000,
+    ).catch(() => { });
     return NextResponse.json({
       error: "Internal Error",
       requestId
