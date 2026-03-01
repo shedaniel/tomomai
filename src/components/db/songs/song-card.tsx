@@ -2,8 +2,9 @@
 
 import { motion } from "motion/react";
 import Link from "next/link";
-import Image from "next/image";
-import { cn, createSafeMaimaiImageUrl } from "@/lib/utils";
+
+import { cn, getTypeBadgeUrl } from "@/lib/utils";
+import { CoverImage } from "@/components/cover-image";
 import { UniqueSong } from "./types";
 import { renderLevelPrecise } from "@/lib/name-utils";
 
@@ -92,8 +93,8 @@ export function SongCard({ song, index, isSelected, onSelect }: SongCardProps) {
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
       >
-        <Image
-          src={createSafeMaimaiImageUrl(song.cover)}
+        <CoverImage
+          coverUrl={song.cover}
           alt={song.songName}
           fill
           className="object-cover"
@@ -105,11 +106,8 @@ export function SongCard({ song, index, isSelected, onSelect }: SongCardProps) {
 
         {/* Type Badge */}
         <div className="absolute top-2 left-2 z-10">
-          <Image
-            src={createSafeMaimaiImageUrl(song.type === "dx"
-              ? "https://maimaidx.jp/maimai-mobile/img/music_dx.png"
-              : "https://maimaidx.jp/maimai-mobile/img/music_standard.png"
-            )}
+          <img
+            src={getTypeBadgeUrl(song.type)}
             alt={song.type.toUpperCase()}
             width={32}
             height={10}

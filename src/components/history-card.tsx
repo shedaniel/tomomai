@@ -6,10 +6,10 @@ import { Slider } from "@/components/ui/slider";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { trpc } from "@/lib/trpc-client";
 import { Region } from "@/lib/types";
-import { cn, createSafeMaimaiImageUrl } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { TrendingUp } from "lucide-react";
 import { useTranslations } from "next-intl";
-import Image from "next/image";
+import { CoverImage } from "@/components/cover-image";
 import { useEffect, useMemo, useState } from "react";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 
@@ -277,8 +277,8 @@ export function HistoryCard({ region }: HistoryCardProps) {
                                         change.difficulty === "utage" && "ring-pink-400",
                                       )}
                                     >
-                                      <Image
-                                        src={createSafeMaimaiImageUrl(change.cover)}
+                                      <CoverImage
+                                        coverUrl={change.cover}
                                         alt={change.songName}
                                         width={24}
                                         height={24}

@@ -3,10 +3,11 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { trpc } from "@/lib/trpc-client";
 import { Region } from "@/lib/types";
-import { cn, createSafeMaimaiImageUrl } from "@/lib/utils";
+import { cn, getTypeBadgeUrl } from "@/lib/utils";
 import { Activity, Calendar, ChevronRight, Clock, Loader2, AlertCircle, TrendingUp, TrendingDown, Trophy, FastForward, Rewind, ArrowBigUpDash, ArrowBigDownDash, Grip, Sparkle, MapPin, SeparatorVertical, Slash, Star, Music, CloudOff } from "lucide-react";
 import { useTranslations } from "next-intl";
-import Image from "next/image";
+
+import { CoverImage } from "@/components/cover-image";
 import Link from "next/link";
 import { useCallback, useState, useEffect, useRef, useMemo } from "react";
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
@@ -74,8 +75,8 @@ function RecentSongRow({ play, index, isFirst, isLast, onToggleExpand, isExpande
           }}
           transition={getTransition({ type: 'spring', stiffness: 400, damping: 15 })}
         >
-          <Image
-            src={createSafeMaimaiImageUrl(play.cover)}
+          <CoverImage
+            coverUrl={play.cover}
             alt={play.songName}
             className={cn(
               "w-14 h-14 rounded ring-2 ring-offset-2 ring-offset-card object-cover",
@@ -144,11 +145,8 @@ function RecentSongRow({ play, index, isFirst, isLast, onToggleExpand, isExpande
             {play.artist}
           </p>
           <div className="flex items-center gap-1.5 mt-1.5">
-            <Image
-              src={createSafeMaimaiImageUrl(play.type === "dx"
-                ? "https://maimaidx.jp/maimai-mobile/img/music_dx.png"
-                : "https://maimaidx.jp/maimai-mobile/img/music_standard.png"
-              )}
+            <img
+              src={getTypeBadgeUrl(play.type)}
               alt={play.type.toUpperCase()}
               width={32}
               height={10}

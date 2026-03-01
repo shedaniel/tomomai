@@ -8,6 +8,7 @@ import { and, eq, lt } from 'drizzle-orm';
 import { NextRequest, NextResponse } from 'next/server';
 import { Image, loadImage } from 'skia-canvas';
 import { VersionId } from '@/lib/metadata';
+import { getTypeBadgeUrl } from '@/lib/utils';
 
 export const dynamic = "force-dynamic";
 
@@ -125,8 +126,8 @@ export async function GET(request: NextRequest) {
     const { newSongsB15, oldSongsB35 } = splitSongs(data.songs, data.snapshot.gameVersion);
 
     const imagesToCache = [
-      "https://maimaidx.jp/maimai-mobile/img/music_dx.png",
-      "https://maimaidx.jp/maimai-mobile/img/music_standard.png",
+      getTypeBadgeUrl("dx"),
+      getTypeBadgeUrl("std"),
       getRatingImageUrl(data.snapshot.rating),
       data.snapshot.iconUrl,
       data.snapshot.classRankUrl,

@@ -404,8 +404,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Create logger for this request
+    const requestId = nanoid(10);
     const log = logger.child({
       route: "admin/upload",
+      requestId,
       region,
       version
     });

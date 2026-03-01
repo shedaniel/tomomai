@@ -10,6 +10,13 @@ export async function convertJpegToAvif(
     .toBuffer();
 }
 
+export async function convertToWebp(
+  buffer: Buffer,
+  quality: number = 80
+): Promise<Buffer> {
+  return sharp(buffer).webp({ quality }).toBuffer();
+}
+
 export async function fetchImageBuffer(url: string, cookies: any): Promise<Buffer> {
   const response = await fetch(url, {
     method: "GET",

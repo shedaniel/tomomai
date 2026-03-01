@@ -3,10 +3,10 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { addRatingsAndSort, getRatingFactor, SongWithRating, splitSongs } from "@/lib/rating-calculator";
 import { SnapshotWithSongs } from "@/lib/types";
-import { cn, createSafeMaimaiImageUrl } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { Award, Calendar, Disc3, Filter, Hash, Heart, Layers, Target, Zap } from "lucide-react";
 import { useTranslations } from "next-intl";
-import Image from "next/image";
+import { CoverImage } from "@/components/cover-image";
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Select, SelectContent, SelectTrigger, SelectItem, SelectValue } from "./ui/select-friendly";
 import { Flags } from "@/lib/flags";
@@ -141,8 +141,8 @@ function RecommendationRow({ recommendation }: { recommendation: RecommendationD
         className="flex xs:justify-between xs:items-center text-sm h-16 max-xs:h-30 max-xs:flex-col max-xs:justify-start max-xs:gap-y-2 px-2 -mx-2 rounded-md cursor-pointer group"
       >
         <div className="flex items-center xs:flex-1 min-w-0 h-12 max-xs:mt-1.5">
-          <Image
-            src={createSafeMaimaiImageUrl(song.cover)}
+          <CoverImage
+            coverUrl={song.cover}
             alt={song.songName}
             className={cn(
               "w-8 h-8 ml-1 mr-3 rounded ring-2 ring-offset-2 ring-offset-card",

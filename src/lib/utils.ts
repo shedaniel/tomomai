@@ -24,6 +24,17 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+// R2 CDN URLs are pre-optimized WebP — skip Next.js image optimization for them
+export function isR2Url(url: string): boolean {
+  const r2Base = process.env.NEXT_PUBLIC_R2_URL;
+  return !!r2Base && url.startsWith(r2Base);
+}
+
+export function getTypeBadgeUrl(type: "dx" | "std" | string): string {
+  const basename = type === "dx" ? "music_dx" : "music_standard";
+  return `${process.env.NEXT_PUBLIC_R2_URL}/covers/${basename}.webp`;
+}
+
 // Utility function to handle maimaidx image URLs with SSL issues
 // Sync version for client-side React components
 export function createSafeMaimaiImageUrl(originalUrl: string): string {

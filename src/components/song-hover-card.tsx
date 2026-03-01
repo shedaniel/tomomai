@@ -5,10 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { getVersionInfo } from "@/lib/metadata";
 import { trpc } from "@/lib/trpc-client";
-import { cn, createSafeMaimaiImageUrl } from "@/lib/utils";
+import { cn, getTypeBadgeUrl } from "@/lib/utils";
 import { Activity, Calendar, ChevronRight, ListPlus, Loader2, Music } from "lucide-react";
 import { useTranslations } from "next-intl";
-import Image from "next/image";
+
+import { CoverImage } from "@/components/cover-image";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { DialogTrigger } from "./ui/dialog";
@@ -98,8 +99,8 @@ function SongCardContent({
       {/* Header */}
       <div className="flex gap-3">
         <div className="relative w-16 h-16 shrink-0 rounded-md overflow-hidden ring-1 ring-border">
-          <Image
-            src={createSafeMaimaiImageUrl(song.cover)}
+          <CoverImage
+            coverUrl={song.cover}
             alt={song.songName}
             fill
             className="object-cover"
@@ -113,11 +114,8 @@ function SongCardContent({
             {song.artist}
           </p>
           <div className="flex items-center gap-1.5 mt-1.5 h-5">
-            <Image
-              src={createSafeMaimaiImageUrl(song.type === "dx"
-                ? "https://maimaidx.jp/maimai-mobile/img/music_dx.png"
-                : "https://maimaidx.jp/maimai-mobile/img/music_standard.png"
-              )}
+            <img
+              src={getTypeBadgeUrl(song.type)}
               alt={song.type.toUpperCase()}
               width={32}
               height={10}

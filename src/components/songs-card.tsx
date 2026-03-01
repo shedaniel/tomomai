@@ -4,10 +4,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { SongWithRating, splitSongs } from "@/lib/rating-calculator";
 import { MinimalSong, MinimalSongForDisplay, SnapshotWithSongs } from "@/lib/types";
-import { cn, createSafeMaimaiImageUrl } from "@/lib/utils";
+import { cn, getTypeBadgeUrl } from "@/lib/utils";
 import { LayoutGrid, LayoutList, Menu, Plus, Search, TrendingUp } from "lucide-react";
 import { useTranslations } from "next-intl";
-import Image from "next/image";
+
+import { CoverImage } from "@/components/cover-image";
 import { Fragment, useCallback, useEffect, useMemo, useState, forwardRef } from "react";
 import { Bar, BarChart, XAxis, YAxis } from "recharts";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select-friendly";
@@ -151,7 +152,7 @@ const SongRow = forwardRef<HTMLDivElement, { song: SongWithRating } & React.HTML
   return (
     <SongHoverCard song={song}>
       <div ref={ref} {...props} className={cn("flex justify-between items-center text-sm border-b border-dashed border-gray-200 pb-1.5 h-12 hover:bg-muted/50 transition-colors px-2 -mx-2 rounded-md cursor-pointer", props.className)}>
-        <Image src={createSafeMaimaiImageUrl(song.cover)}
+        <CoverImage coverUrl={song.cover}
           alt={song.songName}
           className={cn(
             "w-8 h-8 ml-1 mr-3 rounded ring-2 ring-offset-2 ring-offset-card",
@@ -367,8 +368,8 @@ export const SongGridCard = forwardRef<HTMLDivElement, { song: MinimalSongForDis
         onMouseLeave={(e) => { handleMouseLeave(e); props.onMouseLeave?.(e); }}
       >
         {/* Song Cover Background */}
-        <Image
-          src={createSafeMaimaiImageUrl(song.cover)}
+        <CoverImage
+          coverUrl={song.cover}
           alt={song.songName}
           fill
           className="object-cover rounded-[8px] overflow-hidden"
@@ -398,11 +399,8 @@ export const SongGridCard = forwardRef<HTMLDivElement, { song: MinimalSongForDis
           style={{ transform: 'translateZ(30px)' }}>
           {/* Song Type Badge */}
           <div className="absolute top-2.5 left-2.5 2xs:max-xs:left-2 2xs:max-xs:top-2 2xs:max-xs:scale-75 origin-top-left z-30">
-            <Image
-              src={createSafeMaimaiImageUrl(song.type === "dx"
-                ? "https://maimaidx.jp/maimai-mobile/img/music_dx.png"
-                : "https://maimaidx.jp/maimai-mobile/img/music_standard.png"
-              )}
+            <img
+              src={getTypeBadgeUrl(song.type)}
               alt={song.type.toUpperCase()}
               width={37}
               height={11}

@@ -4,6 +4,7 @@ import { ImageCache, renderLastCreditImage } from '@/lib/render-image';
 import { fetchImageForServer } from '@/lib/render-image-server';
 import { Image, loadImage } from 'skia-canvas';
 import { getRatingImageUrl } from '@/lib/rating-calculator';
+import { getTypeBadgeUrl } from '@/lib/utils';
 import { DIFFICULTY_ENUM } from '@/lib/db/types';
 import { prepareCreditData } from '@/server/services/credit-data';
 import { db } from '@/lib/db';
@@ -72,8 +73,8 @@ export async function GET(request: NextRequest) {
     const { credit, snapshot, visitableProfileAt, hasNextCredit, hasPreviousCredit } = prepareDataResult;
 
     const imagesToCache = [
-      "https://maimaidx.jp/maimai-mobile/img/music_dx.png",
-      "https://maimaidx.jp/maimai-mobile/img/music_standard.png",
+      getTypeBadgeUrl("dx"),
+      getTypeBadgeUrl("std"),
       getRatingImageUrl(snapshot.rating),
       snapshot.iconUrl,
       snapshot.classRankUrl,

@@ -51,6 +51,12 @@ const nextConfig: NextConfig = {
         hostname: 'info-maimai.sega.jp',
         port: '',
         pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'cdn.tomomai.lol',
+        port: '',
+        pathname: '/covers/**',
       }
     ],
   },

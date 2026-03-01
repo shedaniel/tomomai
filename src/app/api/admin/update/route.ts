@@ -11,7 +11,7 @@ import { NextRequest, NextResponse } from "next/server";
 export async function GET(request: NextRequest) {
   const requestId = nanoid(10);
   const log = logger.child({
-    route: "admin/update_new",
+    route: "admin/update",
     requestId,
   });
 
@@ -108,7 +108,7 @@ export async function GET(request: NextRequest) {
       "Fetch pipeline error",
       `**Error:** ${error instanceof Error ? error.message : String(error)}`,
       0xFF0000,
-    ).catch(() => {});
+    ).catch(() => { });
     return NextResponse.json({
       error: "Internal Error",
       requestId
