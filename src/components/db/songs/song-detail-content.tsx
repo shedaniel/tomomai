@@ -112,7 +112,8 @@ function ScoreGrid({
           achievement: score.achievement,
           fc: score.fc as any,
           levelPrecise: chart.levelPrecise,
-          addedVersion: chart.addedVersion
+          addedVersion: chart.addedVersion,
+          difficulty: chart.difficulty,
         }, chart.gameVersion) : 0;
 
         const label = region === 'intl' ? t('regions.intl') : t('regions.jp');

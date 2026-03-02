@@ -30,7 +30,8 @@ function SongChartDialogGrid({ chart, score }: { chart: SongExtendedIdentified; 
             fc: "ap",
             fs: "none",
             levelPrecise: chart.levelPrecise,
-            addedVersion: chart.addedVersion
+            addedVersion: chart.addedVersion,
+            difficulty: chart.difficulty,
           }, chart.gameVersion))}</span>
         </div>
       </>)}
@@ -46,7 +47,8 @@ function SongChartDialogGrid({ chart, score }: { chart: SongExtendedIdentified; 
               fc: "none",
               fs: "none",
               levelPrecise: chart.levelPrecise,
-              addedVersion: chart.addedVersion
+              addedVersion: chart.addedVersion,
+              difficulty: chart.difficulty,
             }, chart.gameVersion))}</span>
           </div>
         </Fragment>)}
@@ -60,7 +62,8 @@ function SongChartDialogGrid({ chart, score }: { chart: SongExtendedIdentified; 
             fc: "none",
             fs: "none",
             levelPrecise: chart.levelPrecise,
-            addedVersion: chart.addedVersion
+            addedVersion: chart.addedVersion,
+            difficulty: chart.difficulty,
           }, chart.gameVersion))}</span>
         </div>
       </Fragment>

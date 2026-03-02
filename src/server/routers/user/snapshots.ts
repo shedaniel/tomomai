@@ -6,7 +6,7 @@ import { upsertScoreData } from '@/lib/maimai-fetcher';
 import { getVersionInfo, VersionId, VERSIONS } from '@/lib/metadata';
 import { addRatingsAndSort, RatingCalculationInput, splitSongs } from '@/lib/rating-calculator';
 import { protectedProcedure, publicProcedure, router } from '@/lib/trpc';
-import { SongWithScore } from '@/lib/types';
+import { Difficulty, SongWithScore } from '@/lib/types';
 import { resolvePublicUserByUsername } from '@/server/queries/public-access';
 import { getReservedPublicUser, getReservedSnapshotData, getReservedSnapshots } from '@/server/queries/reserved';
 import { fetchLatestSnapshotData, fetchSnapshotData, fetchUserSnapshots } from '@/server/queries/snapshots';
@@ -125,9 +125,9 @@ export const snapshotsRouter = router({
         songId: bigint;
         songName: string;
         cover: string;
-        difficulty: string;
+        difficulty: Difficulty;
         levelPrecise: number;
-        addedVersion: number;
+        addedVersion: VersionId;
         achievement: number;
         fc: RatingCalculationInput["fc"];
       }>>();
@@ -141,7 +141,7 @@ export const snapshotsRouter = router({
           cover: score.cover,
           difficulty: score.difficulty,
           levelPrecise: score.levelPrecise,
-          addedVersion: score.addedVersion,
+          addedVersion: score.addedVersion as VersionId,
           achievement: score.achievement,
           fc: score.fc,
         });
