@@ -1,5 +1,5 @@
 {
-  "id": "0aba821e-8432-49f0-9237-18c23ed5b1aa",
+  "id": "d32fa763-3c48-4b06-a282-e0ffe7ad7d2a",
   "prevId": "a7e7a6d7-2ce5-4ea1-a2ae-926a486813b0",
   "version": "7",
   "dialect": "postgresql",
@@ -559,6 +559,110 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+    "public.score_data": {
+      "name": "score_data",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigint",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "score_data_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "9223372036854775807",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "songId": {
+          "name": "songId",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "achievement": {
+          "name": "achievement",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "dxScore": {
+          "name": "dxScore",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "fc": {
+          "name": "fc",
+          "type": "fc",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "fs": {
+          "name": "fs",
+          "type": "fs",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "score_data_songid_idx": {
+          "name": "score_data_songid_idx",
+          "columns": [
+            {
+              "expression": "songId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "score_data_songId_songs_id_fk": {
+          "name": "score_data_songId_songs_id_fk",
+          "tableFrom": "score_data",
+          "tableTo": "songs",
+          "columnsFrom": [
+            "songId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "score_data_songid_achievement_dxscore_fc_fs_unique": {
+          "name": "score_data_songid_achievement_dxscore_fc_fs_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "songId",
+            "achievement",
+            "dxScore",
+            "fc",
+            "fs"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "public.session": {
       "name": "session",
       "schema": "",
@@ -638,6 +742,132 @@
           ]
         }
       },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.snapshot_b50": {
+      "name": "snapshot_b50",
+      "schema": "",
+      "columns": {
+        "snapshotId": {
+          "name": "snapshotId",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "rank": {
+          "name": "rank",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "scoreId": {
+          "name": "scoreId",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "snapshot_b50_snapshotId_user_snapshots_id_fk": {
+          "name": "snapshot_b50_snapshotId_user_snapshots_id_fk",
+          "tableFrom": "snapshot_b50",
+          "tableTo": "user_snapshots",
+          "columnsFrom": [
+            "snapshotId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "snapshot_b50_scoreId_score_data_id_fk": {
+          "name": "snapshot_b50_scoreId_score_data_id_fk",
+          "tableFrom": "snapshot_b50",
+          "tableTo": "score_data",
+          "columnsFrom": [
+            "scoreId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "snapshot_b50_snapshotId_rank_pk": {
+          "name": "snapshot_b50_snapshotId_rank_pk",
+          "columns": [
+            "snapshotId",
+            "rank"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.snapshot_scores": {
+      "name": "snapshot_scores",
+      "schema": "",
+      "columns": {
+        "snapshotId": {
+          "name": "snapshotId",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "scoreId": {
+          "name": "scoreId",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "snapshot_scores_snapshotId_user_snapshots_id_fk": {
+          "name": "snapshot_scores_snapshotId_user_snapshots_id_fk",
+          "tableFrom": "snapshot_scores",
+          "tableTo": "user_snapshots",
+          "columnsFrom": [
+            "snapshotId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "snapshot_scores_scoreId_score_data_id_fk": {
+          "name": "snapshot_scores_scoreId_score_data_id_fk",
+          "tableFrom": "snapshot_scores",
+          "tableTo": "score_data",
+          "columnsFrom": [
+            "scoreId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "snapshot_scores_snapshotId_scoreId_pk": {
+          "name": "snapshot_scores_snapshotId_scoreId_pk",
+          "columns": [
+            "snapshotId",
+            "scoreId"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
