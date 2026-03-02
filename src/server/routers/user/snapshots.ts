@@ -78,7 +78,7 @@ export const snapshotsRouter = router({
         }));
       logger.info(`Grouped ${snapshots.length} snapshots into ${dateGroups.length} date groups in ${Date.now() - dateGroupingStart}ms`);
 
-      const snapshotsNeedingScores = new Set<bigint>();
+      const snapshotsNeedingScores = new Set<number>();
       for (let i = 0; i < dateGroups.length; i++) {
         const currentGroup = dateGroups[i];
 
@@ -120,7 +120,7 @@ export const snapshotsRouter = router({
       logger.info(`Fetched ${allScores.length} B50 scores in ${Date.now() - scoresStart}ms`);
 
       const groupingStart = Date.now();
-      const scoresBySnapshot = new Map<bigint, Array<{
+      const scoresBySnapshot = new Map<number, Array<{
         songId: bigint;
         songName: string;
         cover: string;
@@ -684,8 +684,8 @@ export const snapshotsRouter = router({
             }))
           );
 
-          const junctionRows: { snapshotId: bigint; scoreId: bigint }[] = [];
-          const b50Rows: { snapshotId: bigint; rank: number; scoreId: bigint }[] = [];
+          const junctionRows: { snapshotId: number; scoreId: number }[] = [];
+          const b50Rows: { snapshotId: number; rank: number; scoreId: number }[] = [];
 
           for (const update of rankUpdates) {
             const scoreRecord = scoresWithSongs.find(s => s.scoreId === update.id);

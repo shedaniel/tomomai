@@ -15,7 +15,7 @@ export type StatsResult = {
 };
 
 export async function computeStatsForSnapshot(
-  snapshotInternalId: bigint,
+  snapshotInternalId: number,
   gameVersion: number,
   region: Region
 ): Promise<StatsResult> {

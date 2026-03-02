@@ -899,7 +899,8 @@
       "songDataMaster": "Fetched MASTER scores",
       "songDataRemaster": "Fetched Re:MASTER scores",
       "recentSongs": "Fetched recent songs",
-      "hiddenSongs": "Fetched hidden songs"
+      "hiddenSongs": "Fetched hidden songs",
+      "albumData": "Fetched album data"
     }
   }
 }

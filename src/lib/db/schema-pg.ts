@@ -139,7 +139,7 @@ export const fetchSessions = pgTable("fetch_sessions", {
 ]);
 
 export const userSnapshots = pgTable("user_snapshots", {
-  id: bigint("id", { mode: "bigint" }).primaryKey().generatedAlwaysAsIdentity(), // Internal auto-increment ID for efficient indexing
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(), // Internal auto-increment ID for efficient indexing
   publicId: varchar("publicId", { length: 21 }).notNull().unique(), // Public-facing nanoid
   userId: text("userId").notNull().references(() => user.id, { onDelete: "cascade" }),
   region: regionEnum("region").notNull(),
@@ -192,7 +192,7 @@ export const songs = pgTable("songs", {
 
 export const userScores = pgTable("user_scores", {
   id: bigint("id", { mode: "bigint" }).primaryKey().generatedAlwaysAsIdentity(), // Internal only, never exposed
-  snapshotId: bigint("snapshotId", { mode: "bigint" }).notNull().references(() => userSnapshots.id, { onDelete: "cascade" }),
+  snapshotId: integer("snapshotId").notNull().references(() => userSnapshots.id, { onDelete: "cascade" }),
   songId: bigint("songId", { mode: "bigint" }).notNull().references(() => songs.id, { onDelete: "cascade" }),
   achievement: integer("achievement").notNull(), // stored as 10000x, e.g., 99.1234% = 991234 (max 1010000)
   dxScore: smallint("dxScore").notNull(),
@@ -206,7 +206,7 @@ export const userScores = pgTable("user_scores", {
 ]);
 
 export const scoreData = pgTable("score_data", {
-  id: bigint("id", { mode: "bigint" }).primaryKey().generatedAlwaysAsIdentity(),
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   songId: bigint("songId", { mode: "bigint" }).notNull().references(() => songs.id, { onDelete: "cascade" }),
   achievement: integer("achievement").notNull(),
   dxScore: smallint("dxScore").notNull(),
@@ -218,23 +218,23 @@ export const scoreData = pgTable("score_data", {
 ]);
 
 export const snapshotScores = pgTable("snapshot_scores", {
-  snapshotId: bigint("snapshotId", { mode: "bigint" }).notNull().references(() => userSnapshots.id, { onDelete: "cascade" }),
-  scoreId: bigint("scoreId", { mode: "bigint" }).notNull().references(() => scoreData.id, { onDelete: "cascade" }),
+  snapshotId: integer("snapshotId").notNull().references(() => userSnapshots.id, { onDelete: "cascade" }),
+  scoreId: integer("scoreId").notNull().references(() => scoreData.id, { onDelete: "cascade" }),
 }, (table) => [
   primaryKey({ columns: [table.snapshotId, table.scoreId] }),
 ]);
 
 export const snapshotB50 = pgTable("snapshot_b50", {
-  snapshotId: bigint("snapshotId", { mode: "bigint" }).notNull().references(() => userSnapshots.id, { onDelete: "cascade" }),
+  snapshotId: integer("snapshotId").notNull().references(() => userSnapshots.id, { onDelete: "cascade" }),
   rank: smallint("rank").notNull(),
-  scoreId: bigint("scoreId", { mode: "bigint" }).notNull().references(() => scoreData.id, { onDelete: "cascade" }),
+  scoreId: integer("scoreId").notNull().references(() => scoreData.id, { onDelete: "cascade" }),
 }, (table) => [
   primaryKey({ columns: [table.snapshotId, table.rank] }),
 ]);
 
 export const userEvents = pgTable("user_events", {
   id: bigint("id", { mode: "bigint" }).primaryKey().generatedAlwaysAsIdentity(), // Internal only, never exposed
-  snapshotId: bigint("snapshotId", { mode: "bigint" }).notNull().references(() => userSnapshots.id, { onDelete: "cascade" }),
+  snapshotId: integer("snapshotId").notNull().references(() => userSnapshots.id, { onDelete: "cascade" }),
   eventType: eventTypeEnum("eventType").notNull(), // area or eventArea
   name: text("name").notNull(),
   currentDistance: integer("currentDistance").notNull(), // 4 bytes

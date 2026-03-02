@@ -191,7 +191,7 @@ function SongCardContent({
 export function SongHoverCard({ children, song, side, className }: SongHoverCardProps) {
   const t = useTranslations();
   const [isOpen, setIsOpen] = useState(false);
-  const isDesktop = useMediaQuery("(min-width: 768px)");
+  const isDesktop = useMediaQuery("(min-width: 768px)", { initializeWithValue: false });
 
   const { data: songDetails, isLoading } = trpc.user.getSimpleSongDetails.useQuery(
     {

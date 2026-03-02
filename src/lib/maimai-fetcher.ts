@@ -1,6 +1,6 @@
 import { db } from "./db";
 import { userTokens, userSnapshots, songs, userScores, fetchSessions, userEvents, userRecentSongs, userRecentSongsDetailed, userAlbums, scoreData, snapshotScores, snapshotB50 } from "./db/schema-pg";
-import { eq, and, or, inArray } from "drizzle-orm";
+import { eq, and, or, inArray, sql as sqlDrizzle } from "drizzle-orm";
 import { load } from "cheerio";
 import { nanoid } from "nanoid";
 import { getCurrentVersion, VersionId } from "./metadata";
@@ -1715,7 +1715,7 @@ async function createUserSnapshot(
   userId: string,
   region: Region,
   playerData: PlayerData,
-): Promise<bigint> {
+): Promise<number> {
   const publicId = nanoid();
 
   logger.info(`Creating user snapshot with publicId: ${publicId}`);
@@ -1790,7 +1790,7 @@ function scoreDataKey(songId: bigint, achievement: number, dxScore: number, fc: 
 
 export async function upsertScoreData(
   scores: { songId: bigint; achievement: number; dxScore: number; fc: string; fs: string }[]
-): Promise<Map<string, bigint>> {
+): Promise<Map<string, number>> {
   if (scores.length === 0) return new Map();
 
   // Deduplicate input scores by composite key
@@ -1800,39 +1800,47 @@ export async function upsertScoreData(
     uniqueScores.set(key, s);
   }
 
-  // Batch insert with ON CONFLICT DO NOTHING
-  const insertValues = [...uniqueScores.values()].map(s => ({
-    songId: s.songId,
-    achievement: s.achievement,
-    dxScore: s.dxScore,
-    fc: s.fc as typeof scoreData.$inferInsert['fc'],
-    fs: s.fs as typeof scoreData.$inferInsert['fs'],
-  }));
+  // Sort by unique constraint columns for deterministic lock ordering (prevents deadlocks)
+  const insertValues = [...uniqueScores.values()]
+    .map(s => ({
+      songId: s.songId,
+      achievement: s.achievement,
+      dxScore: s.dxScore,
+      fc: s.fc as typeof scoreData.$inferInsert['fc'],
+      fs: s.fs as typeof scoreData.$inferInsert['fs'],
+    }))
+    .sort((a, b) =>
+      Number(a.songId - b.songId)
+      || a.achievement - b.achievement
+      || a.dxScore - b.dxScore
+      || a.fc.localeCompare(b.fc)
+      || a.fs.localeCompare(b.fs)
+    );
 
-  // Insert in chunks to avoid parameter limits
+  // Upsert in chunks sequentially (parallel chunks on the same table can deadlock)
   const CHUNK_SIZE = 1000;
+  const result = new Map<string, number>();
+
   for (let i = 0; i < insertValues.length; i += CHUNK_SIZE) {
-    await db.insert(scoreData).values(insertValues.slice(i, i + CHUNK_SIZE)).onConflictDoNothing();
-  }
+    const rows = await db.insert(scoreData)
+      .values(insertValues.slice(i, i + CHUNK_SIZE))
+      .onConflictDoUpdate({
+        target: [scoreData.songId, scoreData.achievement, scoreData.dxScore, scoreData.fc, scoreData.fs],
+        set: { songId: sqlDrizzle`excluded."songId"` },
+      })
+      .returning({
+        id: scoreData.id,
+        songId: scoreData.songId,
+        achievement: scoreData.achievement,
+        dxScore: scoreData.dxScore,
+        fc: scoreData.fc,
+        fs: scoreData.fs,
+      });
 
-  // Select back all matching IDs
-  const songIds = [...new Set(scores.map(s => s.songId))];
-  const existing = await db
-    .select({
-      id: scoreData.id,
-      songId: scoreData.songId,
-      achievement: scoreData.achievement,
-      dxScore: scoreData.dxScore,
-      fc: scoreData.fc,
-      fs: scoreData.fs,
-    })
-    .from(scoreData)
-    .where(inArray(scoreData.songId, songIds));
-
-  const result = new Map<string, bigint>();
-  for (const row of existing) {
-    const key = scoreDataKey(row.songId, row.achievement, row.dxScore, row.fc, row.fs);
-    result.set(key, row.id);
+    for (const row of rows) {
+      const key = scoreDataKey(row.songId, row.achievement, row.dxScore, row.fc, row.fs);
+      result.set(key, row.id);
+    }
   }
 
   return result;
@@ -1919,7 +1927,7 @@ async function withRank(
 }
 
 async function insertUserScores(
-  snapshotId: bigint,
+  snapshotId: number,
   region: Region,
   sessionId: bigint,
   allScoreData: { [difficulty: number]: ScoreData[] },
@@ -1999,8 +2007,8 @@ async function insertUserScores(
       );
 
       // Insert snapshotScores junction rows
-      const junctionRows: { snapshotId: bigint; scoreId: bigint }[] = [];
-      const b50Rows: { snapshotId: bigint; rank: number; scoreId: bigint }[] = [];
+      const junctionRows: { snapshotId: number; scoreId: number }[] = [];
+      const b50Rows: { snapshotId: number; rank: number; scoreId: number }[] = [];
 
       for (const insert of rankedInserts) {
         const key = scoreDataKey(insert.songId, insert.achievement, insert.dxScore, insert.fc, insert.fs);
@@ -2565,7 +2573,7 @@ async function fetchAlbumData(cookies: string, region: Region): Promise<AlbumDat
 }
 
 async function insertUserEvents(
-  snapshotId: bigint,
+  snapshotId: number,
   areaEvents: EventData[],
   eventAreaEvents: EventAreaData[]
 ): Promise<void> {

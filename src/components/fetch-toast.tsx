@@ -52,6 +52,8 @@ function getStatusLabelKey(state: FetchState): string {
       return "states.recentSongs";
     case FETCH_STATES.HIDDEN_SONGS:
       return "states.hiddenSongs";
+    case FETCH_STATES.ALBUM_DATA:
+      return "states.albumData";
     default:
       return state;
   }

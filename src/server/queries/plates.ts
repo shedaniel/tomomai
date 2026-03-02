@@ -4,7 +4,7 @@ import { and, eq } from "drizzle-orm";
 import type { Difficulty, Region, MinimalSongForDisplay } from "@/lib/types";
 
 export async function fetchPlateSongs(
-  snapshotInternalId: bigint,
+  snapshotInternalId: number,
   gameVersion: number,
   region: Region,
   version: string,
