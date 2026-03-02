@@ -2,8 +2,12 @@ import { db } from "@/lib/db";
 import { user, userSnapshots } from "@/lib/db/schema-pg";
 import { and, desc, eq } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
+import { getReservedPublicUser } from "./reserved";
 
 export async function resolvePublicUserByUsername(username: string) {
+  const reserved = getReservedPublicUser(username);
+  if (reserved) return reserved;
+
   const userRecord = await db
     .select({
       id: user.id,

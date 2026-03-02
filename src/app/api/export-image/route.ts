@@ -1,100 +1,13 @@
-import { db } from '@/lib/db';
 import { getRatingImageUrl, splitSongs } from '@/lib/rating-calculator';
 import { ImageCache, renderImage, SongForRender } from '@/lib/render-image';
 import { fetchImageForServer, fontsLoaded } from '@/lib/render-image-server';
-import { scoreData, snapshotB50, songs, user, userSnapshots } from '@/lib/db/schema-pg';
-import type { SnapshotWithSongs } from '@/lib/types';
-import { eq } from 'drizzle-orm';
+import type { Region } from '@/lib/types';
 import { NextRequest, NextResponse } from 'next/server';
 import { Image, loadImage } from 'skia-canvas';
-import { VersionId } from '@/lib/metadata';
 import { getTypeBadgeUrl } from '@/lib/utils';
+import { prepareExportImageData } from '@/server/queries/export-image';
 
 export const dynamic = "force-dynamic";
-
-async function prepareData(snapshotPublicId: string): Promise<{
-  type: "success",
-  data: SnapshotWithSongs<SongForRender>,
-  visitableProfileAt: string | null,
-} | {
-  type: "error",
-  error: string,
-}> {
-  // Fetch snapshot data from database using publicId
-  console.log('🔍 Fetching snapshot from database...');
-  let startTime = Date.now();
-  const snapshot = await db
-    .select()
-    .from(userSnapshots)
-    .where(eq(userSnapshots.publicId, snapshotPublicId))
-    .limit(1);
-
-  if (snapshot.length === 0) {
-    console.error('❌ Snapshot not found');
-    return {
-      type: "error",
-      error: 'Snapshot not found',
-    };
-  }
-  console.log(`✅ Snapshot fetched in ${Date.now() - startTime}ms`);
-
-  // Get user privacy settings
-  console.log('🔍 Fetching user privacy settings and songs with scores...');
-  startTime = Date.now();
-  const publishProfilePromise = db
-    .select({ username: user.username, publishProfile: user.publishProfile })
-    .from(user)
-    .where(eq(user.id, snapshot[0].userId))
-    .limit(1);
-  const songsWithScoresPromise = db
-    .select({
-      songName: songs.songName,
-      cover: songs.cover,
-      difficulty: songs.difficulty,
-      levelPrecise: songs.levelPrecise,
-      type: songs.type,
-      addedVersion: songs.addedVersion,
-      achievement: scoreData.achievement,
-      fc: scoreData.fc,
-      fs: scoreData.fs,
-    })
-    .from(snapshotB50)
-    .innerJoin(scoreData, eq(snapshotB50.scoreId, scoreData.id))
-    .innerJoin(songs, eq(scoreData.songId, songs.id))
-    .where(eq(snapshotB50.snapshotId, snapshot[0].id))
-    .orderBy(songs.songName, songs.difficulty);
-
-  const [publishProfile, songsWithScores] = await Promise.all([publishProfilePromise, songsWithScoresPromise]);
-
-  if (publishProfile.length === 0) {
-    console.error('❌ User not found');
-    return {
-      type: "error",
-      error: 'User not found',
-    };
-  }
-  console.log(`✅ User privacy settings and ${songsWithScores.length} songs with scores fetched in ${Date.now() - startTime}ms`);
-
-  // Determine visitable profile URL
-  const visitableProfileAt = publishProfile[0].publishProfile && publishProfile[0].username
-    ? publishProfile[0].username
-    : null;
-
-  const data: SnapshotWithSongs<SongForRender> = {
-    snapshot: {
-      ...snapshot[0],
-      id: snapshot[0].publicId, // Use publicId as the external-facing id,
-      gameVersion: snapshot[0].gameVersion as VersionId,
-    },
-    songs: songsWithScores,
-  };
-
-  return {
-    type: "success",
-    data,
-    visitableProfileAt,
-  };
-}
 
 export async function GET(request: NextRequest) {
   console.log('🚀 Starting skia-canvas export-image API request');
@@ -104,6 +17,8 @@ export async function GET(request: NextRequest) {
     const snapshotId = request.nextUrl.searchParams.get('snapshotId');
     const scaleParam = request.nextUrl.searchParams.get('scale');
     const scale = scaleParam === '1' ? 1 : 2; // Accept 1 or 2, default to 2
+    const username = request.nextUrl.searchParams.get('username') ?? undefined;
+    const region = (request.nextUrl.searchParams.get('region') ?? undefined) as Region | undefined;
     console.log('📋 Received snapshot ID:', snapshotId, 'scale:', scale);
 
     if (!snapshotId) {
@@ -111,7 +26,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Snapshot ID is required' }, { status: 400 });
     }
 
-    const prepareDataResult = await prepareData(snapshotId);
+    const prepareDataResult = await prepareExportImageData(snapshotId, username, region);
     if (prepareDataResult.type === "error") {
       return NextResponse.json({ error: prepareDataResult.error }, { status: 404 });
     }

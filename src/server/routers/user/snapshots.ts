@@ -8,6 +8,7 @@ import { addRatingsAndSort, RatingCalculationInput, splitSongs } from '@/lib/rat
 import { protectedProcedure, publicProcedure, router } from '@/lib/trpc';
 import { SongWithScore } from '@/lib/types';
 import { resolvePublicUserByUsername } from '@/server/queries/public-access';
+import { getReservedPublicUser, getReservedSnapshotData, getReservedSnapshots } from '@/server/queries/reserved';
 import { fetchLatestSnapshotData, fetchSnapshotData, fetchUserSnapshots } from '@/server/queries/snapshots';
 import { TRPCError } from '@trpc/server';
 import { and, count, desc, eq, inArray, sql } from 'drizzle-orm';
@@ -260,6 +261,9 @@ export const snapshotsRouter = router({
       region: regionSchema,
     }))
     .query(async ({ input }) => {
+      const reservedSnapshots = await getReservedSnapshots(input.username, input.region);
+      if (reservedSnapshots) return { snapshots: reservedSnapshots };
+
       const userData = await resolvePublicUserByUsername(input.username);
 
       const snapshots = await fetchUserSnapshots(userData.id, input.region, { limit: 1 });
@@ -279,6 +283,30 @@ export const snapshotsRouter = router({
       region: regionSchema,
     }))
     .query(async ({ input }) => {
+      const reservedData = await getReservedSnapshotData(input.username, input.region);
+      if (reservedData) {
+        const reservedUser = getReservedPublicUser(input.username)!;
+        return {
+          snapshot: {
+            ...reservedData.snapshot,
+            publicId: undefined,
+            id: reservedData.snapshot.publicId,
+            gameVersion: reservedData.snapshot.gameVersion as VersionId,
+          },
+          songs: reservedData.songs.map((s) => ({
+            ...s,
+            addedVersion: s.addedVersion as VersionId,
+          })),
+          privacySettings: {
+            showPlayCounts: reservedUser.profileShowPlayCounts,
+            showPlates: reservedUser.profileShowPlates,
+            showEvents: reservedUser.profileShowEvents,
+            showAllScores: reservedUser.profileShowAllScores,
+            showScoreDetails: reservedUser.profileShowScoreDetails,
+          },
+        };
+      }
+
       const userData = await resolvePublicUserByUsername(input.username);
 
       const result = await fetchLatestSnapshotData(userData.id, input.region);

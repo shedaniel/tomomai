@@ -1,6 +1,7 @@
 import { db } from '@/lib/db';
 import { user } from '@/lib/db/schema-pg';
 import { protectedProcedure, router } from '@/lib/trpc';
+import { RESERVED_USERNAMES } from '@/server/queries/reserved';
 import { TRPCError } from '@trpc/server';
 import { eq } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
@@ -42,6 +43,13 @@ export const usernameRouter = router({
         };
       }
 
+      if (RESERVED_USERNAMES.has(input.username.toLowerCase())) {
+        return {
+          available: false,
+          error: 'This username is reserved',
+        };
+      }
+
       // Check if already taken (but allow current user's username)
       const existingUser = await db
         .select({ id: user.id, username: user.username })
@@ -70,6 +78,13 @@ export const usernameRouter = router({
         throw new TRPCError({
           code: 'BAD_REQUEST',
           message: 'Username must be 1-32 characters long and contain only letters, numbers, dashes, and underscores',
+        });
+      }
+
+      if (RESERVED_USERNAMES.has(input.username.toLowerCase())) {
+        throw new TRPCError({
+          code: 'CONFLICT',
+          message: 'This username is reserved',
         });
       }
 

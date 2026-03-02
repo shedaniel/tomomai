@@ -273,7 +273,7 @@ export function DataContent({
           </TabsContent>
         )}
         <TabsContent value="exportImage" className="mt-0 flex-1 min-w-0">
-          <ExportImageCard selectedSnapshotData={selectedSnapshotData} region={region} showLastCredit={visitedBySelf || !!privacySettings.showScoreDetails} />
+          <ExportImageCard selectedSnapshotData={selectedSnapshotData} region={region} showLastCredit={visitedBySelf || !!privacySettings.showScoreDetails} username={visitableProfileAt ?? undefined} />
         </TabsContent>
         {visitedBySelf && (
           <TabsContent value="developer" className="mt-0 flex-1 min-w-0">

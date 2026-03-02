@@ -122,21 +122,35 @@ interface ExportImageCardProps {
   selectedSnapshotData: SnapshotWithSongs;
   region: Region;
   showLastCredit?: boolean;
+  username?: string;
 }
 
-export function ExportImageCard({ selectedSnapshotData, region, showLastCredit = true }: ExportImageCardProps) {
+function buildExportImageUrl(snapshotId: string, region: Region, username?: string, extra?: Record<string, string>) {
+  const params = new URLSearchParams({ snapshotId });
+  if (username) {
+    params.set('username', username);
+    params.set('region', region);
+  }
+  if (extra) {
+    for (const [k, v] of Object.entries(extra)) params.set(k, v);
+  }
+  return `/api/export-image?${params.toString()}`;
+}
+
+export function ExportImageCard({ selectedSnapshotData, region, showLastCredit = true, username }: ExportImageCardProps) {
   const t = useTranslations();
 
   // Export image state
+  const snapshotId = selectedSnapshotData.snapshot.id;
   const [exportImageUrl, setExportImageUrl] = useState<string>(
-    `/api/export-image?snapshotId=${selectedSnapshotData.snapshot.id}`
+    buildExportImageUrl(snapshotId, region, username)
   );
   const [exportImageKey, setExportImageKey] = useState(0);
   const [exportIsLoading, setExportIsLoading] = useState(true);
 
   // Last credit image state
   const [lastCreditImageUrl, setLastCreditImageUrl] = useState<string>(
-    `/api/last-credit?region=${region}&beforeDate=${selectedSnapshotData.snapshot.fetchedAt}&snapshotId=${selectedSnapshotData.snapshot.id}`
+    `/api/last-credit?region=${region}&beforeDate=${selectedSnapshotData.snapshot.fetchedAt}&snapshotId=${snapshotId}`
   );
   const [lastCreditImageKey, setLastCreditImageKey] = useState(0);
   const [lastCreditIsLoading, setLastCreditIsLoading] = useState(true);
@@ -144,13 +158,13 @@ export function ExportImageCard({ selectedSnapshotData, region, showLastCredit =
   const handleExportRefresh = () => {
     setExportIsLoading(true);
     setExportImageKey(prev => prev + 1);
-    setExportImageUrl(`/api/export-image?snapshotId=${selectedSnapshotData.snapshot.id}&t=${Date.now()}`);
+    setExportImageUrl(buildExportImageUrl(snapshotId, region, username, { t: Date.now().toString() }));
   };
 
   const handleExportRefreshFast = () => {
     setExportIsLoading(true);
     setExportImageKey(prev => prev + 1);
-    setExportImageUrl(`/api/export-image?snapshotId=${selectedSnapshotData.snapshot.id}&scale=1&t=${Date.now()}`);
+    setExportImageUrl(buildExportImageUrl(snapshotId, region, username, { scale: '1', t: Date.now().toString() }));
   };
 
   const handleLastCreditRefresh = () => {

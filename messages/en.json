@@ -11,6 +11,7 @@
     "update": "Update",
     "login": "Login",
     "join": "Join",
+    "guest": "Guest",
     "logout": "Logout",
     "username": "Username",
     "password": "Password",
@@ -634,6 +635,7 @@
       "db": "Database"
     },
     "addDiscordBot": "Add as Discord Bot",
+    "followTwitter": "Follow @shedaniel_",
     "admin": "Admin",
     "errors": {
       "inviteLink": "Failed to open invite link"

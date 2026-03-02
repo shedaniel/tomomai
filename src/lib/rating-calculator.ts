@@ -1,7 +1,8 @@
-import { FullCombo, SongWithScore } from "./types";
+import { Difficulty, FullCombo, SongWithScore } from "./types";
 
 // Minimal interface for rating calculation - only requires the fields actually used
 export interface RatingCalculationInput {
+  difficulty: Difficulty;
   achievement: number;
   fc: FullCombo;
   levelPrecise: number;
@@ -31,6 +32,7 @@ export function getRatingFactor(accuracy: number): number {
 
 // Calculate song rating using the formula: rating = floor(factor * accuracy * levelPrecise / 10)
 export function calculateSongRating<T extends Omit<RatingCalculationInput, "addedVersion">>(song: T, version: number): number {
+  if (song.difficulty === "utage") return 0;
   const accuracy = song.achievement / 10000;
   const factor = getRatingFactor(accuracy);
   // Since version 12, AP/AP+ songs get an extra 1 rating
@@ -83,8 +85,7 @@ export function getRatingImageUrl(rating: number) {
               : rating >= 7000 ? "red"
                 : rating >= 4000 ? "yellow"
                   : rating >= 2000 ? "green"
-                    : rating >= 1 ? "blue"
-                      : "white";
+                    : "blue";
 
   return `https://maimaidx.jp/maimai-mobile/img/rating_base_${variant}.png?ver=1.55`;
 }

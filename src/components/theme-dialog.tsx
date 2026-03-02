@@ -88,7 +88,7 @@ export function ThemeDialog({ open, onOpenChange }: ThemeDialogProps) {
 
   return (
     <ResponsiveDialog open={open} onOpenChange={onOpenChange}>
-      <ResponsiveDialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
+      <ResponsiveDialogContent className="sm:max-w-[calc(min(100vw,700px))] max-h-[90vh] overflow-y-auto">
         <ResponsiveDialogHeader>
           <ResponsiveDialogTitle>{t("theme.title")}</ResponsiveDialogTitle>
           <ResponsiveDialogDescription>
@@ -104,7 +104,7 @@ export function ThemeDialog({ open, onOpenChange }: ThemeDialogProps) {
                 <h3 className="text-sm font-medium text-muted-foreground mb-2">
                   {t(`theme.groups.${family.labelKey}`)}
                 </h3>
-                <div className="grid gap-2 overflow-x-auto" style={{ gridTemplateColumns: `repeat(${groupThemes.length}, 1fr)` }}>
+                <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${groupThemes.length}, 1fr)` }}>
                   {groupThemes.map((theme) => (
                     <ThemePreview
                       key={theme.id}

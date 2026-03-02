@@ -22,6 +22,15 @@ import { motion, AnimatePresence } from "motion/react";
 import { SPRING_CONFIGS, STAGGER, getTransition } from "@/lib/animation-constants";
 
 import { getEnabledRegions, isChinaRegion } from "@/lib/enabled-regions";
+import { cn } from "@/lib/utils";
+
+function XIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
+      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+    </svg>
+  );
+}
 
 const APPLICATION_ID = process.env.NEXT_PUBLIC_DISCORD_APPLICATION_ID;
 const SIGNUP_TYPE = process.env.NEXT_PUBLIC_ACCOUNT_SIGNUP_TYPE || 'disabled';
@@ -143,6 +152,7 @@ function NavbarButtons({ currentTab, onAbout, onTheme, onDiscordInvite }: { curr
     >
       {t('header.addDiscordBot')}
     </Button>
+
   </>)
 }
 
@@ -200,7 +210,7 @@ function UserAvatar({ user }: { user: User }) {
   );
 }
 
-function UserIcon({ user, menu, onAbout, onTheme, onDiscordInvite }: NonNullable<HeaderProps['user']> & {
+function UserIcon({ user, menu, onAbout, onTheme, onDiscordInvite }: Partial<NonNullable<HeaderProps['user']>> & {
   onAbout: () => void;
   onTheme: () => void;
   onDiscordInvite: () => void;
@@ -209,17 +219,13 @@ function UserIcon({ user, menu, onAbout, onTheme, onDiscordInvite }: NonNullable
   const isMobile = useMediaQuery('(max-width: 640px)');
   const [drawerOpen, setDrawerOpen] = useState(false);
 
-  if (!menu) return <UserAvatar user={user} />;
-
-  const { userRole, onInvites, onAdmin, onExperiments, onLogout } = menu;
-
   const avatarButton = (
-    <Button variant="ghost" className="relative h-10 w-10 rounded-full p-0 focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 focus:ring-offset-background data-[state=open]:ring-2 data-[state=open]:ring-gray-300 data-[state=open]:ring-offset-2 data-[state=open]:ring-offset-background">
-      <UserAvatar user={user} />
+    <Button variant="ghost" className="relative h-10 w-10 rounded-full p-0 focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 focus:ring-offset-background data-[state=open]:ring-2 data-[state=open]:ring-gray-300 data-[state=open]:ring-offset-2 data-[state=open]:ring-offset-background bg-border">
+      {user ? <UserAvatar user={user} /> : <LucideUserIcon className="h-5 w-5" />}
     </Button>
   );
 
-  const drawerItemClass = "flex items-center gap-3 w-full px-4 py-2 text-sm rounded-md hover:bg-muted transition-colors";
+  const drawerItemClass = "flex items-center gap-3 w-full px-2 py-2 text-sm rounded-md hover:bg-muted transition-colors";
 
   if (isMobile) {
     return (
@@ -228,30 +234,43 @@ function UserIcon({ user, menu, onAbout, onTheme, onDiscordInvite }: NonNullable
           {avatarButton}
         </DrawerTrigger>
         <DrawerContent className="!max-w-[70dvw] !w-fit">
-          <DrawerHeader className="flex flex-row items-center gap-3 border-b pb-4">
-            <UserAvatar user={user} />
+          <DrawerHeader className="flex flex-row items-center gap-3 border-b pb-4 mb-1">
+            {user ? <UserAvatar user={user} /> : <LucideUserIcon className="h-5 w-5" />}
             <div className="flex flex-col">
-              <DrawerTitle>{user.name}</DrawerTitle>
-              <p className="text-xs text-muted-foreground">{t('userHeader.memberLabel')}</p>
+              <DrawerTitle>{user ? user.name : t('common.guest')}</DrawerTitle>
+              {user && <p className="text-xs text-muted-foreground">{t('userHeader.memberLabel')}</p>}
             </div>
           </DrawerHeader>
-          <DrawerDescription className="sr-only">{t('userHeader.memberLabel')}</DrawerDescription>
-          <div className="border-b px-4 py-3 mb-1">
-            <p className="text-xs text-muted-foreground text-balance">{t('userHeader.discordPrompt')}</p>
-            <a
-              href="https://discord.gg/jZqQHr3UDq"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-xs font-medium leading-none text-primary hover:underline"
-            >
-              {t('userHeader.joinDiscord')}
-            </a>
-          </div>
-          <div className="flex flex-col overflow-y-auto">
-            {SIGNUP_TYPE === 'invite-only' && (
+          <DrawerDescription className="sr-only">{user ? t('userHeader.memberLabel') : t('common.guest')}</DrawerDescription>
+          {user && (
+            <div className="border-b px-4 py-3 mb-1">
+              <p className="text-xs text-muted-foreground text-balance">{t('userHeader.discordPrompt')}</p>
+              <a
+                href="https://discord.gg/jZqQHr3UDq"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs font-medium leading-none text-primary hover:underline"
+              >
+                {t('userHeader.joinDiscord')}
+              </a>
+            </div>
+          )}
+          <div className="flex flex-col overflow-y-auto flex-1 px-2">
+            {!user && (
               <>
                 <DrawerClose asChild>
-                  <button className={drawerItemClass} onClick={onInvites}>
+                  <Link href="/" className={drawerItemClass}>
+                    <LogIn className="h-4 w-4" />
+                    <span>{t('common.join')}</span>
+                  </Link>
+                </DrawerClose>
+                <Separator className="my-1" />
+              </>
+            )}
+            {menu && SIGNUP_TYPE === 'invite-only' && (
+              <>
+                <DrawerClose asChild>
+                  <button className={drawerItemClass} onClick={menu.onInvites}>
                     <Users className="h-4 w-4" />
                     <span>{t('common.invitations')}</span>
                   </button>
@@ -259,10 +278,10 @@ function UserIcon({ user, menu, onAbout, onTheme, onDiscordInvite }: NonNullable
                 <Separator className="my-1" />
               </>
             )}
-            {userRole === "admin" && (
+            {menu?.userRole === "admin" && (
               <>
                 <DrawerClose asChild>
-                  <button className={drawerItemClass} onClick={onAdmin}>
+                  <button className={drawerItemClass} onClick={menu.onAdmin}>
                     <Users className="h-4 w-4" />
                     <span>{t('header.admin')}</span>
                   </button>
@@ -288,25 +307,45 @@ function UserIcon({ user, menu, onAbout, onTheme, onDiscordInvite }: NonNullable
                 <span>{t('header.addDiscordBot')}</span>
               </button>
             </DrawerClose>
+            {(menu || user) && (
+              <Separator className="my-1" />
+            )}
+            {menu && (
+              <>
+                <DrawerClose asChild>
+                  <button className={drawerItemClass} onClick={menu.onExperiments}>
+                    <Beaker className="h-4 w-4" />
+                    <span>{t('common.experiments')}</span>
+                  </button>
+                </DrawerClose>
+              </>
+            )}
+            {user && (
+              <DrawerClose asChild>
+                <Link href="/settings" className={drawerItemClass}>
+                  <Settings className="h-4 w-4" />
+                  <span>{t('common.settings')}</span>
+                </Link>
+              </DrawerClose>
+            )}
+            {menu && (
+              <>
+                <Separator className="my-1" />
+                <DrawerClose asChild>
+                  <button className={drawerItemClass} onClick={menu.onLogout}>
+                    <LogOut className="h-4 w-4" />
+                    <span>{t('common.logout')}</span>
+                  </button>
+                </DrawerClose>
+              </>
+            )}
+            <div className="mt-auto" />
             <Separator className="my-1" />
             <DrawerClose asChild>
-              <button className={drawerItemClass} onClick={onExperiments}>
-                <Beaker className="h-4 w-4" />
-                <span>{t('common.experiments')}</span>
-              </button>
-            </DrawerClose>
-            <DrawerClose asChild>
-              <Link href="/settings" className={drawerItemClass}>
-                <Settings className="h-4 w-4" />
-                <span>{t('common.settings')}</span>
-              </Link>
-            </DrawerClose>
-            <Separator className="my-1" />
-            <DrawerClose asChild>
-              <button className={drawerItemClass} onClick={onLogout}>
-                <LogOut className="h-4 w-4" />
-                <span>{t('common.logout')}</span>
-              </button>
+              <a href="https://x.com/shedaniel_" target="_blank" rel="noopener noreferrer" className={cn(drawerItemClass, "mb-4")}>
+                <XIcon className="h-4 w-4" />
+                <span>{t('header.followTwitter')}</span>
+              </a>
             </DrawerClose>
           </div>
         </DrawerContent>
@@ -320,62 +359,88 @@ function UserIcon({ user, menu, onAbout, onTheme, onDiscordInvite }: NonNullable
         {avatarButton}
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56" align="end" forceMount>
-        <DropdownMenuLabel className="font-normal">
-          <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">{user.name}</p>
-            <p className="text-xs leading-none text-muted-foreground">
-              {t('userHeader.memberLabel')}
-            </p>
-          </div>
-        </DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <DropdownMenuLabel className="font-normal">
-          <div className="flex flex-col space-y-1">
-            <p className="text-xs text-muted-foreground">
-              {t('userHeader.discordPrompt')}
-            </p>
-            <a
-              href="https://discord.gg/jZqQHr3UDq"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-xs font-medium leading-none text-primary hover:underline text-center px-1 py-3"
-            >
-              {t('userHeader.joinDiscord')}
-            </a>
-          </div>
-        </DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        {SIGNUP_TYPE === 'invite-only' && (
+        {user ? (
           <>
-            <DropdownMenuItem onClick={onInvites}>
+            <DropdownMenuLabel className="font-normal">
+              <div className="flex flex-col space-y-1">
+                <p className="text-sm font-medium leading-none">{user.name}</p>
+                <p className="text-xs leading-none text-muted-foreground">
+                  {t('userHeader.memberLabel')}
+                </p>
+              </div>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel className="font-normal">
+              <div className="flex flex-col space-y-1">
+                <p className="text-xs text-muted-foreground">
+                  {t('userHeader.discordPrompt')}
+                </p>
+                <a
+                  href="https://discord.gg/jZqQHr3UDq"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs font-medium leading-none text-primary hover:underline text-center px-1 py-3"
+                >
+                  {t('userHeader.joinDiscord')}
+                </a>
+              </div>
+            </DropdownMenuLabel>
+          </>
+        ) : (
+          <>
+            <DropdownMenuItem asChild>
+              <Link href="/">
+                <LogIn className="mr-2 h-4 w-4" />
+                <span>{t('common.join')}</span>
+              </Link>
+            </DropdownMenuItem>
+          </>
+        )}
+        {menu && SIGNUP_TYPE === 'invite-only' && (
+          <>
+            <DropdownMenuItem onClick={menu.onInvites}>
               <Users className="mr-2 h-4 w-4" />
               <span>{t('common.invitations')}</span>
             </DropdownMenuItem>
-            <DropdownMenuSeparator />
           </>
         )}
-        {userRole === "admin" && (
+        {menu?.userRole === "admin" && (
           <>
-            <DropdownMenuItem onClick={onAdmin}>
+            <DropdownMenuItem onClick={menu.onAdmin}>
               <Users className="mr-2 h-4 w-4" />
               <span>{t('header.admin')}</span>
             </DropdownMenuItem>
-            <DropdownMenuSeparator />
           </>
         )}
-        <DropdownMenuItem onClick={onExperiments}>
-          <Beaker className="mr-2 h-4 w-4" />
-          <span>{t('common.experiments')}</span>
-        </DropdownMenuItem>
+        {(menu || user) && (
+          <DropdownMenuSeparator />
+        )}
+        {menu && (
+          <DropdownMenuItem onClick={menu.onExperiments}>
+            <Beaker className="mr-2 h-4 w-4" />
+            <span>{t('common.experiments')}</span>
+          </DropdownMenuItem>
+        )}
+        {user && (
+          <DropdownMenuItem asChild>
+            <Link href="/settings">
+              <Settings className="mr-2 h-4 w-4" />
+              <span>{t('common.settings')}</span>
+            </Link>
+          </DropdownMenuItem>
+        )}
+        {menu && (
+          <DropdownMenuItem onClick={menu.onLogout}>
+            <LogOut className="mr-2 h-4 w-4" />
+            <span>{t('common.logout')}</span>
+          </DropdownMenuItem>
+        )}
+        <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
-          <Link href="/settings">
-            <Settings className="mr-2 h-4 w-4" />
-            <span>{t('common.settings')}</span>
-          </Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={onLogout}>
-          <LogOut className="mr-2 h-4 w-4" />
-          <span>{t('common.logout')}</span>
+          <a href="https://x.com/shedaniel_" target="_blank" rel="noopener noreferrer">
+            <XIcon className="mr-2 h-3.5 w-3.5" />
+            <span>{t('header.followTwitter')}</span>
+          </a>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -416,17 +481,8 @@ export function Header({ currentTab, showDiscordBanner = true, user }: HeaderPro
 
         <div className="flex items-center space-x-4">
           {!isChinaRegion() && <LocaleSwitcher />}
-          {user ? (<>
-            {user.menu && getEnabledRegions().length > 1 && <RegionSwitcher header={true} value={user.menu.selectedRegion} onChange={user.menu.onRegionChange} />}
-            <UserIcon {...user} onAbout={() => setAboutOpen(true)} onTheme={() => setThemeOpen(true)} onDiscordInvite={handleDiscordInvite} />
-          </>) : (
-            <Button variant="default" asChild>
-              <Link href="/">
-                <LogIn className="mr-1 h-4 w-4" />
-                {t('common.join')}
-              </Link>
-            </Button>
-          )}
+          {user?.menu && getEnabledRegions().length > 1 && <RegionSwitcher header={true} value={user.menu.selectedRegion} onChange={user.menu.onRegionChange} />}
+          <UserIcon user={user?.user} menu={user?.menu} onAbout={() => setAboutOpen(true)} onTheme={() => setThemeOpen(true)} onDiscordInvite={handleDiscordInvite} />
         </div>
       </div>
 
