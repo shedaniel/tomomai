@@ -4,10 +4,15 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Eye, EyeOff, Key, Save } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { AnimatedDialog, AnimatedDialogContent } from "./ui/animated-dialog";
+import {
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogDescription,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from "./ui/dialog-friendly";
 
 interface TokenDialogJapanProps {
   isOpen: boolean;
@@ -50,17 +55,17 @@ export function TokenDialogJapan({
   const canSubmit = username.trim().length > 0 && password.trim().length > 0 && !isSubmitting;
 
   return (
-    <AnimatedDialog open={isOpen} onOpenChange={onOpenChange}>
-      <AnimatedDialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center space-x-2">
+    <ResponsiveDialog open={isOpen} onOpenChange={onOpenChange}>
+      <ResponsiveDialogContent className="sm:max-w-md">
+        <ResponsiveDialogHeader>
+          <ResponsiveDialogTitle className="flex items-center space-x-2">
             <Key className="h-5 w-5" />
             <span>{t('tokenDialog.title')}</span>
-          </DialogTitle>
-          <DialogDescription>
+          </ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>
             {t('tokenDialog.japanDescription')} {t('tokenDialog.credentialsStored')}
-          </DialogDescription>
-        </DialogHeader>
+          </ResponsiveDialogDescription>
+        </ResponsiveDialogHeader>
 
         <div className="space-y-4">
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -99,7 +104,7 @@ export function TokenDialogJapan({
               </div>
             </div>
 
-            <div className="bg-muted/50 rounded-md text-xs text-muted-foreground">
+            <div className="text-xs text-muted-foreground space-y-2">
               <p className="font-medium mb-1">
                 {t('tokenDialog.authenticationNote')}
               </p>
@@ -126,7 +131,7 @@ export function TokenDialogJapan({
             </Button>
           </form>
         </div>
-      </AnimatedDialogContent>
-    </AnimatedDialog>
+      </ResponsiveDialogContent>
+    </ResponsiveDialog>
   );
 }

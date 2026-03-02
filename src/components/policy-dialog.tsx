@@ -1,11 +1,11 @@
 "use client";
 
 import {
-  AnimatedDialog,
-  AnimatedDialogContent,
-  AnimatedDialogHeader,
-  AnimatedDialogTitle,
-} from "@/components/ui/animated-dialog";
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from "@/components/ui/dialog-friendly";
 
 interface PolicyDialogProps {
   open: boolean;
@@ -20,17 +20,17 @@ interface PolicyDialogProps {
  */
 export function PolicyDialog({ open, onOpenChange, title, content }: PolicyDialogProps) {
   return (
-    <AnimatedDialog open={open} onOpenChange={onOpenChange}>
-      <AnimatedDialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
-        <AnimatedDialogHeader>
-          <AnimatedDialogTitle>{title}</AnimatedDialogTitle>
-        </AnimatedDialogHeader>
+    <ResponsiveDialog open={open} onOpenChange={onOpenChange}>
+      <ResponsiveDialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
+        <ResponsiveDialogHeader>
+          <ResponsiveDialogTitle>{title}</ResponsiveDialogTitle>
+        </ResponsiveDialogHeader>
         <div className="flex-1 overflow-y-auto pr-2">
           <div className="whitespace-pre-wrap text-sm text-muted-foreground">
             {content}
           </div>
         </div>
-      </AnimatedDialogContent>
-    </AnimatedDialog>
+      </ResponsiveDialogContent>
+    </ResponsiveDialog>
   );
 }

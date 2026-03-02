@@ -6,14 +6,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  AnimatedDialog,
-  AnimatedDialogContent,
-} from "@/components/ui/animated-dialog";
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogDescription,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from "@/components/ui/dialog-friendly";
 import {
   Select,
   SelectContent,
@@ -347,16 +345,16 @@ export function CreateApiKeyDialog({
   }
 
   return (
-    <AnimatedDialog open={open} onOpenChange={handleClose}>
-      <AnimatedDialogContent className="sm:max-w-lg">
+    <ResponsiveDialog open={open} onOpenChange={handleClose}>
+      <ResponsiveDialogContent className="sm:max-w-lg">
         {createdKey ? (
           <>
-            <DialogHeader>
-              <DialogTitle>{t("createDialog.createdTitle")}</DialogTitle>
-              <DialogDescription>
+            <ResponsiveDialogHeader>
+              <ResponsiveDialogTitle>{t("createDialog.createdTitle")}</ResponsiveDialogTitle>
+              <ResponsiveDialogDescription>
                 {t("createDialog.createdDescription")}
-              </DialogDescription>
-            </DialogHeader>
+              </ResponsiveDialogDescription>
+            </ResponsiveDialogHeader>
             <div className="space-y-4">
               <div className="relative">
                 <Input
@@ -387,12 +385,12 @@ export function CreateApiKeyDialog({
           </>
         ) : (
           <>
-            <DialogHeader>
-              <DialogTitle>{t("createDialog.title")}</DialogTitle>
-              <DialogDescription>
+            <ResponsiveDialogHeader>
+              <ResponsiveDialogTitle>{t("createDialog.title")}</ResponsiveDialogTitle>
+              <ResponsiveDialogDescription>
                 {t("createDialog.description")}
-              </DialogDescription>
-            </DialogHeader>
+              </ResponsiveDialogDescription>
+            </ResponsiveDialogHeader>
             <div className="space-y-5">
               <div className="space-y-2">
                 <Label htmlFor="key-name">{t("createDialog.nameLabel")}</Label>
@@ -490,7 +488,7 @@ export function CreateApiKeyDialog({
             </div>
           </>
         )}
-      </AnimatedDialogContent>
-    </AnimatedDialog>
+      </ResponsiveDialogContent>
+    </ResponsiveDialog>
   );
 }

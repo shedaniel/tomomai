@@ -4,8 +4,13 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { AnimatedDialog, AnimatedDialogContent } from "@/components/ui/animated-dialog";
+import {
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogDescription,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from "@/components/ui/dialog-friendly";
 import { trpc } from "@/lib/trpc-client";
 import { toast } from "sonner";
 import { CheckCircle, XCircle, Loader2 } from "lucide-react";
@@ -94,12 +99,12 @@ export function ChangeUsernameDialog({ open, onOpenChange, currentUsername, onSu
   };
 
   return (
-    <AnimatedDialog open={open} onOpenChange={onOpenChange}>
-      <AnimatedDialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>{t("changeTitle")}</DialogTitle>
-          <DialogDescription>{t("changeDescription")}</DialogDescription>
-        </DialogHeader>
+    <ResponsiveDialog open={open} onOpenChange={onOpenChange}>
+      <ResponsiveDialogContent className="sm:max-w-md">
+        <ResponsiveDialogHeader>
+          <ResponsiveDialogTitle>{t("changeTitle")}</ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>{t("changeDescription")}</ResponsiveDialogDescription>
+        </ResponsiveDialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
@@ -145,7 +150,7 @@ export function ChangeUsernameDialog({ open, onOpenChange, currentUsername, onSu
             </Button>
           </div>
         </form>
-      </AnimatedDialogContent>
-    </AnimatedDialog>
+      </ResponsiveDialogContent>
+    </ResponsiveDialog>
   );
 }

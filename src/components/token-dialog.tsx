@@ -2,7 +2,6 @@
 
 import { Region } from "@/lib/types";
 import { TokenDialogJapan } from "./token-dialog-japan";
-import { TokenDialogIntl } from "./token-dialog-intl";
 import { TokenDialogIntlNew } from "./token-dialog-intl-new";
 
 interface TokenDialogProps {
@@ -10,7 +9,6 @@ interface TokenDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   onTokenUpdate: (token: string) => Promise<void>;
-  newTokenDialog: boolean;
   startSessionPolling?: (region: "intl" | "jp", onSessionDetected?: () => void) => void;
   stopSessionPolling?: () => void;
 }
@@ -20,7 +18,6 @@ export function TokenDialog({
   isOpen,
   onOpenChange,
   onTokenUpdate,
-  newTokenDialog,
   startSessionPolling,
   stopSessionPolling,
 }: TokenDialogProps) {
@@ -34,23 +31,13 @@ export function TokenDialog({
     );
   }
 
-  if (newTokenDialog) {
-    return (
-      <TokenDialogIntlNew
-        isOpen={isOpen}
-        onOpenChange={onOpenChange}
-        onTokenUpdate={onTokenUpdate}
-        startSessionPolling={startSessionPolling}
-        stopSessionPolling={stopSessionPolling}
-      />
-    );
-  }
-
   return (
-    <TokenDialogIntl
+    <TokenDialogIntlNew
       isOpen={isOpen}
       onOpenChange={onOpenChange}
       onTokenUpdate={onTokenUpdate}
+      startSessionPolling={startSessionPolling}
+      stopSessionPolling={stopSessionPolling}
     />
   );
 }

@@ -8,5 +8,5 @@ export default async function FetchSettingsPage() {
   const flagOverridesCookie = cookieStore.get("flagOverrides")?.value;
   flags = applyFlagOverrides(flags, flagOverridesCookie);
 
-  return <FetchSettings newTokenDialog={flags.newTokenDialog} />;
+  return <FetchSettings />;
 }

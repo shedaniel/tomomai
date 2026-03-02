@@ -2,13 +2,13 @@
 
 import { useState } from "react";
 import {
-  AnimatedDialog,
-  AnimatedDialogContent,
-  AnimatedDialogHeader,
-  AnimatedDialogTitle,
-  AnimatedDialogDescription,
-  AnimatedDialogFooter,
-} from "@/components/ui/animated-dialog";
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogDescription,
+  ResponsiveDialogFooter,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from "@/components/ui/dialog-friendly";
 import { Checkbox } from "@/components/animate-ui/components/radix/checkbox";
 import { Button } from "@/components/ui/button";
 import { PolicyDialog } from "@/components/policy-dialog";
@@ -50,19 +50,19 @@ export function ConsentDialog({
 
   return (
     <>
-      <AnimatedDialog open={open} onOpenChange={() => { }}>
-        <AnimatedDialogContent
+      <ResponsiveDialog open={open} onOpenChange={() => { }} dismissible={false}>
+        <ResponsiveDialogContent
           showCloseButton={false}
-          className="max-w-2xl"
+          className="max-w-2xl max-h-[90dvh]"
           onPointerDownOutside={(e) => e.preventDefault()}
           onEscapeKeyDown={(e) => e.preventDefault()}
         >
-          <AnimatedDialogHeader>
-            <AnimatedDialogTitle>{t("title")}</AnimatedDialogTitle>
-            <AnimatedDialogDescription>
+          <ResponsiveDialogHeader>
+            <ResponsiveDialogTitle>{t("title")}</ResponsiveDialogTitle>
+            <ResponsiveDialogDescription>
               {t("description")}
-            </AnimatedDialogDescription>
-          </AnimatedDialogHeader>
+            </ResponsiveDialogDescription>
+          </ResponsiveDialogHeader>
 
           <div className="space-y-4 py-4">
             {/* TL;DR Section */}
@@ -70,27 +70,27 @@ export function ConsentDialog({
               <h3 className="text-sm font-semibold mb-2">{t("tldr.title")}</h3>
               <ul className="space-y-1.5 text-xs text-muted-foreground">
                 <li className="flex items-start gap-1">
-                  <Dot className="text-primary" size={16} strokeWidth={3} fill="true" />
+                  <Dot className="text-primary shrink-0" size={16} strokeWidth={3} fill="true" />
                   <span>{t("tldr.points.0")}</span>
                 </li>
                 <li className="flex items-start gap-1">
-                  <Dot className="text-primary" size={16} strokeWidth={3} fill="true" />
+                  <Dot className="text-primary shrink-0" size={16} strokeWidth={3} fill="true" />
                   <span>{!isChinaRegion() ? t("tldr.points.1") : "你的数据将安全存储在中国大陆境内的服务器上"}</span>
                 </li>
                 {!isChinaRegion() && (<li className="flex items-start gap-1">
-                  <Dot className="text-primary" size={16} strokeWidth={3} fill="true" />
+                  <Dot className="text-primary shrink-0" size={16} strokeWidth={3} fill="true" />
                   <span>{t("tldr.points.2")}</span>
                 </li>)}
                 <li className="flex items-start gap-1">
-                  <Dot className="text-primary" size={16} strokeWidth={3} fill="true" />
+                  <Dot className="text-primary shrink-0" size={16} strokeWidth={3} fill="true" />
                   <span>{t("tldr.points.3")}</span>
                 </li>
                 <li className="flex items-start gap-1">
-                  <Dot className="text-primary" size={16} strokeWidth={3} fill="true" />
+                  <Dot className="text-primary shrink-0" size={16} strokeWidth={3} fill="true" />
                   <span>{!isChinaRegion() ? t("tldr.points.4") : "我们是独立工具，与 SEGA 或 华立科技 没有任何关联"}</span>
                 </li>
                 {locale === "zh-CN" && (<li className="flex items-start gap-1">
-                  <Dot className="text-primary" size={16} strokeWidth={3} fill="true" />
+                  <Dot className="text-primary shrink-0" size={16} strokeWidth={3} fill="true" />
                   {isChinaRegion() ? (
                     <span>支持华立科技舞萌之覆盖地区<br />原则上仅限中国大陆地区访问</span>
                   ) : (
@@ -98,7 +98,7 @@ export function ConsentDialog({
                   )}
                 </li>)}
                 {isChinaRegion() && (<li className="flex items-start gap-1">
-                  <Dot className="text-primary" size={16} strokeWidth={3} fill="true" />
+                  <Dot className="text-primary shrink-0" size={16} strokeWidth={3} fill="true" />
                   <span>国内版 tomomai (同萌) 目前处于内测阶段，部分功能可能与国际版存在差异</span>
                 </li>)}
               </ul>
@@ -186,7 +186,7 @@ export function ConsentDialog({
             )}
           </div>
 
-          <AnimatedDialogFooter className="gap-2">
+          <ResponsiveDialogFooter className="gap-2">
             <Button
               variant="outline"
               onClick={onCancel}
@@ -199,9 +199,9 @@ export function ConsentDialog({
             >
               {t("agree")}
             </Button>
-          </AnimatedDialogFooter>
-        </AnimatedDialogContent>
-      </AnimatedDialog>
+          </ResponsiveDialogFooter>
+        </ResponsiveDialogContent>
+      </ResponsiveDialog>
 
       {/* Policy dialogs */}
       <PolicyDialog

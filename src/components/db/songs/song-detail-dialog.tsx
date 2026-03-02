@@ -1,5 +1,5 @@
 import { Tabs, TabsList, TabsPanel, TabsPanels, TabsTab } from "@/components/animate-ui/components/base/tabs";
-import { DialogTitle } from "@/components/ui/dialog";
+import { ResponsiveDialogTitle } from "@/components/ui/dialog-friendly";
 import { ACHIEVEMENTS, DIFFICULTY_COLORS } from "@/lib/difficulty";
 import { calculateSongRating } from "@/lib/rating-calculator";
 import { Region, SongExtended } from "@/lib/types";
@@ -77,13 +77,13 @@ export function SongChartDialogContent({ charts, scores }: { charts: SongExtende
   const chart = charts.find(c => c.region === region)!;
 
   return <>
-    <DialogTitle>
+    <ResponsiveDialogTitle>
       <span className={cn("font-bold mr-2", DIFFICULTY_COLORS[chart.difficulty]?.text ?? "text-gray-600")}>
         {t(`common.difficulties.${chart.difficulty}`)}
       </span>
       <span className="text-lg font-bold tabular-nums">{chart.level}</span>
       <span className="text-xs">.{chart.difficulty === "utage" ? '?' : chart.levelPrecise % 10}</span>
-    </DialogTitle>
+    </ResponsiveDialogTitle>
     <Tabs value={region} onValueChange={(value) => setRegion(value as Region)}>
       <TabsList className={cn("grid w-full grid-cols-2", charts.length <= 1 && "hidden")}>
         {charts.map(c => (

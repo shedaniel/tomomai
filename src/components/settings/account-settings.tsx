@@ -83,7 +83,7 @@ export function AccountSettings() {
             {t("usernameSetup.usernameLabel")}
           </Label>
           <div className="flex items-center gap-3">
-            <span className="font-mono text-sm bg-muted px-3 py-2 rounded-md flex-1 text-foreground">
+            <span className="font-mono text-sm bg-muted px-3 py-2 rounded-md flex-1 min-w-0 truncate text-foreground">
               {userData?.username ?? "—"}
             </span>
             <Button

@@ -1,7 +1,6 @@
 import { flag } from "flags/next";
 
 export interface Flags {
-  newTokenDialog: boolean;
   historyCard: boolean;
   recommendationFilters: boolean;
   platesCard: boolean;
@@ -19,8 +18,6 @@ export interface FlagDefinition {
 export const useFlags = async (): Promise<Flags> => {
   return {
     // eslint-disable-next-line react-hooks/rules-of-hooks
-    newTokenDialog: await useNewTokenDialog(),
-    // eslint-disable-next-line react-hooks/rules-of-hooks
     historyCard: await useHistoryCard(),
     // eslint-disable-next-line react-hooks/rules-of-hooks
     recommendationFilters: await useRecommendationFilters(),
@@ -34,12 +31,6 @@ export const useFlags = async (): Promise<Flags> => {
 }
 
 export const flagDefinitions: Record<keyof Flags, FlagDefinition> = {
-  newTokenDialog: {
-    key: "newTokenDialog",
-    defaultValue: true,
-    userSelectable: true,
-    decide: async () => true,
-  },
   historyCard: {
     key: "historyCard",
     defaultValue: false,
@@ -73,14 +64,6 @@ export const flagDefinitions: Record<keyof Flags, FlagDefinition> = {
 };
 
 export const defaultFlags: Flags = Object.fromEntries(Object.entries(flagDefinitions).map(([key, value]) => [key, value.defaultValue])) as unknown as Flags;
-
-export const useNewTokenDialog = flag<boolean>({
-  key: "newTokenDialog",
-  defaultValue: true,
-  async decide() {
-    return true;
-  },
-});
 
 export const useHistoryCard = flag<boolean>({
   key: "historyCard",

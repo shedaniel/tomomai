@@ -14,8 +14,16 @@ import { AppRouter } from "@/server/routers/_app";
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 import { renderLevelPrecise } from "@/lib/name-utils";
 import { Button } from "@/components/ui/button";
-import { DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
-import { AnimatedDialog, AnimatedDialogContent, AnimatedDialogClose } from "@/components/ui/animated-dialog";
+import {
+  ResponsiveDialog,
+  ResponsiveDialogClose,
+  ResponsiveDialogContent,
+  ResponsiveDialogDescription,
+  ResponsiveDialogFooter,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+  ResponsiveDialogTrigger,
+} from "@/components/ui/dialog-friendly";
 import { Checkbox } from "@/components/animate-ui/components/radix/checkbox";
 import { toast } from "sonner";
 
@@ -182,20 +190,20 @@ export function AlbumCard({ region }: AlbumCardProps) {
           </div>
           <div className="flex items-center gap-3">
             {data?.storage && (
-              <AnimatedDialog>
-                <DialogTrigger asChild>
+              <ResponsiveDialog>
+                <ResponsiveDialogTrigger asChild>
                   <Button variant="outline" size="sm" className="gap-2">
                     <HardDrive className="h-4 w-4" />
                     <span className="hidden sm:inline">{t('storage')}</span>
                   </Button>
-                </DialogTrigger>
-                <AnimatedDialogContent>
-                  <DialogHeader>
-                    <DialogTitle>{t('storageTitle')}</DialogTitle>
-                    <DialogDescription>
+                </ResponsiveDialogTrigger>
+                <ResponsiveDialogContent>
+                  <ResponsiveDialogHeader>
+                    <ResponsiveDialogTitle>{t('storageTitle')}</ResponsiveDialogTitle>
+                    <ResponsiveDialogDescription>
                       {t('storageDescription')}
-                    </DialogDescription>
-                  </DialogHeader>
+                    </ResponsiveDialogDescription>
+                  </ResponsiveDialogHeader>
                   <div className="space-y-4">
                     {/* Total Storage with Stacked Progress Bar */}
                     <div className="space-y-3">
@@ -250,8 +258,8 @@ export function AlbumCard({ region }: AlbumCardProps) {
                       </div>
                     )}
                   </div>
-                </AnimatedDialogContent>
-              </AnimatedDialog>
+                </ResponsiveDialogContent>
+              </ResponsiveDialog>
             )}
             {albums.length > 0 && (
               <span className="text-sm font-normal text-muted-foreground">
@@ -374,14 +382,14 @@ export function AlbumCard({ region }: AlbumCardProps) {
         </div>
       </CardContent>
 
-      <AnimatedDialog open={showDialog} onOpenChange={setShowDialog}>
-        <AnimatedDialogContent showCloseButton={false}>
-          <DialogHeader>
-            <DialogTitle>{t('deleteTitle')}</DialogTitle>
-            <DialogDescription>
+      <ResponsiveDialog open={showDialog} onOpenChange={setShowDialog}>
+        <ResponsiveDialogContent showCloseButton={false}>
+          <ResponsiveDialogHeader>
+            <ResponsiveDialogTitle>{t('deleteTitle')}</ResponsiveDialogTitle>
+            <ResponsiveDialogDescription>
               {t('deleteDescription')}
-            </DialogDescription>
-          </DialogHeader>
+            </ResponsiveDialogDescription>
+          </ResponsiveDialogHeader>
           <div className="flex items-center gap-2">
             <Checkbox
               id="dont-ask-again"
@@ -392,14 +400,14 @@ export function AlbumCard({ region }: AlbumCardProps) {
               {t('dontAskAgain')}
             </label>
           </div>
-          <DialogFooter>
-            <AnimatedDialogClose asChild>
+          <ResponsiveDialogFooter>
+            <ResponsiveDialogClose asChild>
               <Button variant="outline">{t('cancel')}</Button>
-            </AnimatedDialogClose>
+            </ResponsiveDialogClose>
             <Button onClick={handleConfirmDelete}>{t('delete')}</Button>
-          </DialogFooter>
-        </AnimatedDialogContent>
-      </AnimatedDialog>
+          </ResponsiveDialogFooter>
+        </ResponsiveDialogContent>
+      </ResponsiveDialog>
     </Card>
   );
 }

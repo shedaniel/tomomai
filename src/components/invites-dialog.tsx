@@ -2,11 +2,12 @@
 
 import { Button } from "@/components/ui/button";
 import {
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { AnimatedDialog, AnimatedDialogContent } from "@/components/ui/animated-dialog";
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogDescription,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from "@/components/ui/dialog-friendly";
 import { Card } from "@/components/ui/card";
 import { Plus, Copy, X, Users, Clock } from "lucide-react";
 import { toast } from "sonner";
@@ -174,17 +175,17 @@ export function InvitesDialog({ isOpen, onOpenChange }: InvitesDialogProps) {
   };
 
   return (
-    <AnimatedDialog open={isOpen} onOpenChange={onOpenChange}>
-      <AnimatedDialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+    <ResponsiveDialog open={isOpen} onOpenChange={onOpenChange}>
+      <ResponsiveDialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <ResponsiveDialogHeader>
+          <ResponsiveDialogTitle className="flex items-center gap-2">
             <Users className="h-5 w-5" />
             {t('invites.title')}
-          </DialogTitle>
-          <DialogDescription>
+          </ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>
             {t('invites.description')}
-          </DialogDescription>
-        </DialogHeader>
+          </ResponsiveDialogDescription>
+        </ResponsiveDialogHeader>
 
         <div className="space-y-3">
           {/* Quota Display */}
@@ -290,7 +291,7 @@ export function InvitesDialog({ isOpen, onOpenChange }: InvitesDialogProps) {
             </div>
           )}
         </div>
-      </AnimatedDialogContent>
-    </AnimatedDialog>
+      </ResponsiveDialogContent>
+    </ResponsiveDialog>
   );
 }

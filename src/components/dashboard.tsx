@@ -250,7 +250,6 @@ export function Dashboard({ user, initialUserData, initialSnapshots, initialSnap
         isOpen={dialogType === "token"}
         onOpenChange={open => setDialogType(open ? "token" : null)}
         onTokenUpdate={handleTokenUpdate}
-        newTokenDialog={flags.newTokenDialog}
         startSessionPolling={startSessionPolling}
         stopSessionPolling={stopSessionPolling}
       />

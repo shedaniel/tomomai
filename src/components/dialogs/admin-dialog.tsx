@@ -1,11 +1,12 @@
 "use client";
 
 import {
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { AnimatedDialog, AnimatedDialogContent } from "@/components/ui/animated-dialog";
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogDescription,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from "@/components/ui/dialog-friendly";
 import { useCallback, useEffect, useState } from "react";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
@@ -318,14 +319,14 @@ export function AdminDialog({ open, onOpenChange }: AdminDialogProps) {
 
   return (
     <>
-      <AnimatedDialog open={open} onOpenChange={handleAdminDialogChange}>
-        <AnimatedDialogContent className={cn("max-w-2xl max-h-[80vh] overflow-y-auto transition-[opacity,scale] duration-200", usersBrowserOpen ? "opacity-70 scale-95" : "")}>
-          <DialogHeader>
-            <DialogTitle>ともマイ Admin Panel</DialogTitle>
-            <DialogDescription>
+      <ResponsiveDialog open={open} onOpenChange={handleAdminDialogChange}>
+        <ResponsiveDialogContent className={cn("max-w-2xl max-h-[80vh] overflow-y-auto transition-[opacity,scale] duration-200", usersBrowserOpen ? "opacity-70 scale-95" : "")}>
+          <ResponsiveDialogHeader>
+            <ResponsiveDialogTitle>ともマイ Admin Panel</ResponsiveDialogTitle>
+            <ResponsiveDialogDescription>
               Modifying the database and other admin-only features.
-            </DialogDescription>
-          </DialogHeader>
+            </ResponsiveDialogDescription>
+          </ResponsiveDialogHeader>
 
           <div className="space-y-6">
             <div className="grid gap-2">
@@ -518,8 +519,8 @@ export function AdminDialog({ open, onOpenChange }: AdminDialogProps) {
               </p>
             </div>
           </div>
-        </AnimatedDialogContent>
-      </AnimatedDialog>
+        </ResponsiveDialogContent>
+      </ResponsiveDialog>
 
       <UsersBrowserDialog
         open={usersBrowserOpen}

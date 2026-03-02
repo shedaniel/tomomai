@@ -144,8 +144,8 @@ export function SessionsSection() {
             return (
               <div key={session.id} className="flex items-start gap-4 px-4 py-3">
                 <div className="flex-1 min-w-0 space-y-1.5">
-                  <div className="flex items-center gap-2 flex-wrap h-5.5">
-                    <span className="text-sm font-semibold leading-none">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-sm font-semibold leading-none truncate">
                       {parseUserAgent(session.userAgent)}
                     </span>
                     {isCurrent && (
@@ -154,12 +154,9 @@ export function SessionsSection() {
                       </Badge>
                     )}
                   </div>
-                  <div className="flex items-center gap-2 flex-wrap text-xs text-muted-foreground">
+                  <div className="text-xs text-muted-foreground break-all">
                     {session.ipAddress && (
-                      <>
-                        <span>{t("ip")}: {session.ipAddress}</span>
-                        <span>·</span>
-                      </>
+                      <span>{t("ip")}: {session.ipAddress}  ·  </span>
                     )}
                     <span>{t("createdAt")}: {formatDate(session.createdAt)}</span>
                   </div>

@@ -167,7 +167,7 @@ function SelectContent({ children, label, className }: SelectContentProps) {
 
   if (isMobile) {
     return (<>
-      <DrawerContent>
+      <DrawerContent className="max-h-[90dvh]">
         <DrawerHeader>
           <DrawerTitle>{label || "Select an option"}</DrawerTitle>
           <DrawerDescription className="sr-only">{label || "Select an option"}</DrawerDescription>

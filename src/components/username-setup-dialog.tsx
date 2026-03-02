@@ -5,11 +5,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { AnimatedDialog, AnimatedDialogContent } from '@/components/ui/animated-dialog';
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogDescription,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from '@/components/ui/dialog-friendly';
 import { trpc } from '@/lib/trpc-client';
 import { toast } from 'sonner';
 import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
@@ -117,19 +118,19 @@ export function UsernameSetupDialog({ open, onComplete }: UsernameSetupDialogPro
   };
 
   return (
-    <AnimatedDialog open={open} onOpenChange={() => { }}>
-      <AnimatedDialogContent
+    <ResponsiveDialog open={open} onOpenChange={() => { }} dismissible={false}>
+      <ResponsiveDialogContent
         className="sm:max-w-md"
         onPointerDownOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => e.preventDefault()}
         showCloseButton={false}
       >
-        <DialogHeader>
-          <DialogTitle>{t('usernameSetup.title')}</DialogTitle>
-          <DialogDescription>
+        <ResponsiveDialogHeader>
+          <ResponsiveDialogTitle>{t('usernameSetup.title')}</ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>
             {t('usernameSetup.description')}
-          </DialogDescription>
-        </DialogHeader>
+          </ResponsiveDialogDescription>
+        </ResponsiveDialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
@@ -178,7 +179,7 @@ export function UsernameSetupDialog({ open, onComplete }: UsernameSetupDialogPro
             </Button>
           </div>
         </form>
-      </AnimatedDialogContent>
-    </AnimatedDialog>
+      </ResponsiveDialogContent>
+    </ResponsiveDialog>
   );
 }

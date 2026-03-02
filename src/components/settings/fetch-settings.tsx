@@ -11,7 +11,7 @@ import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
 
-export function FetchSettings({ newTokenDialog }: { newTokenDialog: boolean }) {
+export function FetchSettings() {
   const t = useTranslations();
   const [isLoading, setIsLoading] = useState(false);
   const [tokenDialogOpen, setTokenDialogOpen] = useState(false);
@@ -123,7 +123,6 @@ export function FetchSettings({ newTokenDialog }: { newTokenDialog: boolean }) {
         isOpen={tokenDialogOpen}
         onOpenChange={setTokenDialogOpen}
         onTokenUpdate={handleTokenUpdate}
-        newTokenDialog={newTokenDialog}
       />
     </div>
   );

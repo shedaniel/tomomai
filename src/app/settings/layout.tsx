@@ -16,7 +16,7 @@ export default async function SettingsLayout({
   }
 
   return (
-    <div className="container mx-auto max-w-200 px-4 py-8">
+    <div className="container mx-auto max-w-200 px-4 py-8 overflow-x-hidden">
       <div className="mb-8">
         <Link href="/">
           <Image

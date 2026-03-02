@@ -1,16 +1,15 @@
 "use client";
 
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+  ResponsiveDialog,
+  ResponsiveDialogClose,
+  ResponsiveDialogContent,
+  ResponsiveDialogDescription,
+  ResponsiveDialogFooter,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+  ResponsiveDialogTrigger,
+} from "@/components/ui/dialog-friendly";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -115,8 +114,8 @@ function DeleteSnapshotButton({
   onDeleteSnapshot: (snapshotId: string) => void;
 }) {
   return (
-    <AlertDialog>
-      <AlertDialogTrigger asChild>
+    <ResponsiveDialog>
+      <ResponsiveDialogTrigger asChild>
         <Button
           variant="outline"
           size="sm"
@@ -125,25 +124,29 @@ function DeleteSnapshotButton({
         >
           <Trash2 className="h-4 w-4" />
         </Button>
-      </AlertDialogTrigger>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Delete Snapshot</AlertDialogTitle>
-          <AlertDialogDescription>
+      </ResponsiveDialogTrigger>
+      <ResponsiveDialogContent showCloseButton={false}>
+        <ResponsiveDialogHeader>
+          <ResponsiveDialogTitle>Delete Snapshot</ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>
             Are you sure you want to delete this snapshot? This action cannot be undone and will permanently remove all your scores from this snapshot.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction
-            variant="destructive"
-            onClick={() => onDeleteSnapshot(selectedSnapshot)}
-          >
-            Delete
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+          </ResponsiveDialogDescription>
+        </ResponsiveDialogHeader>
+        <ResponsiveDialogFooter>
+          <ResponsiveDialogClose asChild>
+            <Button variant="outline">Cancel</Button>
+          </ResponsiveDialogClose>
+          <ResponsiveDialogClose asChild>
+            <Button
+              variant="destructive"
+              onClick={() => onDeleteSnapshot(selectedSnapshot)}
+            >
+              Delete
+            </Button>
+          </ResponsiveDialogClose>
+        </ResponsiveDialogFooter>
+      </ResponsiveDialogContent>
+    </ResponsiveDialog>
   );
 }
 
