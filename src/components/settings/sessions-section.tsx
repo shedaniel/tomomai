@@ -19,6 +19,7 @@ import { toast } from "sonner";
 import { Loader2, Monitor, Trash2, LogOut } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
+import { UAParser } from "ua-parser-js";
 
 type Session = {
   id: string;
@@ -30,21 +31,11 @@ type Session = {
 
 function parseUserAgent(ua: string | null): string {
   if (!ua) return "Unknown";
-
-  let browser = "Unknown browser";
-  if (ua.includes("Firefox/")) browser = "Firefox";
-  else if (ua.includes("Edg/")) browser = "Edge";
-  else if (ua.includes("Chrome/")) browser = "Chrome";
-  else if (ua.includes("Safari/") && !ua.includes("Chrome")) browser = "Safari";
-
-  let os = "";
-  if (ua.includes("Windows")) os = "Windows";
-  else if (ua.includes("Mac OS X") || ua.includes("Macintosh")) os = "macOS";
-  else if (ua.includes("Android")) os = "Android";
-  else if (ua.includes("Linux")) os = "Linux";
-  else if (ua.includes("iPhone") || ua.includes("iPad")) os = "iOS";
-
-  return os ? `${browser} on ${os}` : browser;
+  const { browser, os } = UAParser(ua);
+  const browserStr =
+    [browser.name, browser.major].filter(Boolean).join(" ") || "Unknown browser";
+  const osStr = [os.name, os.version].filter(Boolean).join(" ");
+  return osStr ? `${browserStr} on ${osStr}` : browserStr;
 }
 
 function formatDate(date: Date) {
@@ -143,7 +134,12 @@ export function SessionsSection() {
         </div>
       ) : (
         <div className="rounded-md border divide-y py-1">
-          {sessions.map((session) => {
+          {[...sessions].sort((a, b) => {
+            const aIsCurrent = a.token === currentToken;
+            const bIsCurrent = b.token === currentToken;
+            if (aIsCurrent !== bIsCurrent) return aIsCurrent ? -1 : 1;
+            return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+          }).map((session) => {
             const isCurrent = session.token === currentToken;
             return (
               <div key={session.id} className="flex items-start gap-4 px-4 py-3">
