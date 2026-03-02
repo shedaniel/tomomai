@@ -2,9 +2,9 @@ import { db } from '@/lib/db';
 import { getRatingImageUrl, splitSongs } from '@/lib/rating-calculator';
 import { ImageCache, renderImage, SongForRender } from '@/lib/render-image';
 import { fetchImageForServer, fontsLoaded } from '@/lib/render-image-server';
-import { songs, user, userScores, userSnapshots } from '@/lib/db/schema-pg';
+import { scoreData, snapshotB50, songs, user, userSnapshots } from '@/lib/db/schema-pg';
 import type { SnapshotWithSongs } from '@/lib/types';
-import { and, eq, lt } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { NextRequest, NextResponse } from 'next/server';
 import { Image, loadImage } from 'skia-canvas';
 import { VersionId } from '@/lib/metadata';
@@ -54,16 +54,14 @@ async function prepareData(snapshotPublicId: string): Promise<{
       levelPrecise: songs.levelPrecise,
       type: songs.type,
       addedVersion: songs.addedVersion,
-      achievement: userScores.achievement,
-      fc: userScores.fc,
-      fs: userScores.fs,
+      achievement: scoreData.achievement,
+      fc: scoreData.fc,
+      fs: scoreData.fs,
     })
-    .from(userScores)
-    .innerJoin(songs, eq(userScores.songId, songs.id))
-    .where(and(
-      eq(userScores.snapshotId, snapshot[0].id),
-      lt(userScores.rank, 50),
-    ))
+    .from(snapshotB50)
+    .innerJoin(scoreData, eq(snapshotB50.scoreId, scoreData.id))
+    .innerJoin(songs, eq(scoreData.songId, songs.id))
+    .where(eq(snapshotB50.snapshotId, snapshot[0].id))
     .orderBy(songs.songName, songs.difficulty);
 
   const [publishProfile, songsWithScores] = await Promise.all([publishProfilePromise, songsWithScoresPromise]);

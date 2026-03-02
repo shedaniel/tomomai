@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { songs, userScores } from "@/lib/db/schema-pg";
+import { scoreData, snapshotScores, songs } from "@/lib/db/schema-pg";
 import { and, eq } from "drizzle-orm";
 import type { Difficulty, Region, MinimalSongForDisplay } from "@/lib/types";
 
@@ -11,6 +11,19 @@ export async function fetchPlateSongs(
   difficulty: Difficulty,
   plateType: "kyoku" | "shou" | "shin" | "maimai"
 ): Promise<MinimalSongForDisplay[]> {
+  const snapshotScoresSub = db
+    .select({
+      songId: scoreData.songId,
+      achievement: scoreData.achievement,
+      fc: scoreData.fc,
+      fs: scoreData.fs,
+      dxScore: scoreData.dxScore,
+    })
+    .from(snapshotScores)
+    .innerJoin(scoreData, eq(snapshotScores.scoreId, scoreData.id))
+    .where(eq(snapshotScores.snapshotId, snapshotInternalId))
+    .as("snapshot_scores_sub");
+
   const allSongs = await db
     .select({
       songId: songs.publicId,
@@ -20,18 +33,15 @@ export async function fetchPlateSongs(
       difficulty: songs.difficulty,
       levelPrecise: songs.levelPrecise,
       type: songs.type,
-      achievement: userScores.achievement,
-      fc: userScores.fc,
-      fs: userScores.fs,
-      dxScore: userScores.dxScore,
+      achievement: snapshotScoresSub.achievement,
+      fc: snapshotScoresSub.fc,
+      fs: snapshotScoresSub.fs,
+      dxScore: snapshotScoresSub.dxScore,
     })
     .from(songs)
     .leftJoin(
-      userScores,
-      and(
-        eq(userScores.songId, songs.id),
-        eq(userScores.snapshotId, snapshotInternalId)
-      )
+      snapshotScoresSub,
+      eq(snapshotScoresSub.songId, songs.id)
     )
     .where(
       and(

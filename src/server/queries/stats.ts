@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { songs, userScores, userSnapshots } from "@/lib/db/schema-pg";
+import { scoreData, snapshotScores, songs, userSnapshots } from "@/lib/db/schema-pg";
 import { and, desc, eq, sql } from "drizzle-orm";
 import { getAchievementRate } from "@/lib/difficulty";
 import type { Region } from "@/lib/types";
@@ -21,15 +21,16 @@ export async function computeStatsForSnapshot(
 ): Promise<StatsResult> {
   const scores = await db
     .select({
-      achievement: userScores.achievement,
+      achievement: scoreData.achievement,
       addedVersion: songs.addedVersion,
       difficulty: songs.difficulty,
-      fc: userScores.fc,
-      fs: userScores.fs,
+      fc: scoreData.fc,
+      fs: scoreData.fs,
     })
-    .from(userScores)
-    .innerJoin(songs, eq(userScores.songId, songs.id))
-    .where(eq(userScores.snapshotId, snapshotInternalId));
+    .from(snapshotScores)
+    .innerJoin(scoreData, eq(snapshotScores.scoreId, scoreData.id))
+    .innerJoin(songs, eq(scoreData.songId, songs.id))
+    .where(eq(snapshotScores.snapshotId, snapshotInternalId));
 
   const allSongs = await db
     .select({

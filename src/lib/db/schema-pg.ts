@@ -190,6 +190,8 @@ export const songs = pgTable("songs", {
   index("songs_songname_type_idx").on(table.songName, table.type),
 ]);
 
+// Legacy table — reads/writes now use scoreData + snapshotScores + snapshotB50.
+// Kept for prod backfill migration; will be dropped after prod migration completes.
 export const userScores = pgTable("user_scores", {
   id: bigint("id", { mode: "bigint" }).primaryKey().generatedAlwaysAsIdentity(), // Internal only, never exposed
   snapshotId: integer("snapshotId").notNull().references(() => userSnapshots.id, { onDelete: "cascade" }),

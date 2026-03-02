@@ -129,18 +129,6 @@ async function normalize(searchParams: URLSearchParams) {
       try {
         // --- Phase 1: Relink children and delete actual duplicate song records ---
         if (duplicateIdsToCleanUp.length > 0) {
-          // Update userScores
-          if (MODIFY_DATABASE) {
-            const userScoresUpdateResult = await tx
-              .update(userScores)
-              .set({ songId: masterSong.id })
-              .where(inArray(userScores.songId, duplicateIdsToCleanUp))
-              .returning({ id: userScores.id });
-            log.debug({ count: userScoresUpdateResult.length, masterSongId: masterSong.id.toString() }, "Updated userScores references");
-          } else {
-            log.debug("[DRY RUN] Would update userScores referencing duplicates");
-          }
-
           // Update scoreData — handle unique constraint conflicts by deleting duplicates
           if (MODIFY_DATABASE) {
             // First, find scoreData rows that would conflict after update

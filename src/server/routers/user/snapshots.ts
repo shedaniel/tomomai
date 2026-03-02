@@ -1,18 +1,18 @@
 import { db } from '@/lib/db';
+import { scoreData, snapshotB50, snapshotScores, songs, user, userEvents, userSnapshots } from '@/lib/db/schema-pg';
+import { getEnabledRegions } from '@/lib/enabled-regions';
+import { logger } from '@/lib/logger';
 import { upsertScoreData } from '@/lib/maimai-fetcher';
 import { getVersionInfo, VersionId, VERSIONS } from '@/lib/metadata';
 import { addRatingsAndSort, RatingCalculationInput, splitSongs } from '@/lib/rating-calculator';
-import { songs, user, userEvents, userScores, userSnapshots, scoreData, snapshotScores, snapshotB50 } from '@/lib/db/schema-pg';
 import { protectedProcedure, publicProcedure, router } from '@/lib/trpc';
 import { SongWithScore } from '@/lib/types';
-import { TRPCError } from '@trpc/server';
-import { nanoid } from 'nanoid';
-import { and, count, desc, eq, inArray, lt, sql } from 'drizzle-orm';
-import { z } from 'zod';
-import { logger } from '@/lib/logger';
-import { getEnabledRegions } from '@/lib/enabled-regions';
-import { fetchUserSnapshots, fetchSnapshotData, fetchLatestSnapshotData } from '@/server/queries/snapshots';
 import { resolvePublicUserByUsername } from '@/server/queries/public-access';
+import { fetchLatestSnapshotData, fetchSnapshotData, fetchUserSnapshots } from '@/server/queries/snapshots';
+import { TRPCError } from '@trpc/server';
+import { and, count, desc, eq, inArray, sql } from 'drizzle-orm';
+import { nanoid } from 'nanoid';
+import { z } from 'zod';
 
 const regionSchema = z.enum(getEnabledRegions());
 
@@ -98,23 +98,23 @@ export const snapshotsRouter = router({
       const relevantSnapshotIds = Array.from(snapshotsNeedingScores);
       const allScores = await db
         .select({
-          snapshotId: userScores.snapshotId,
+          snapshotId: snapshotB50.snapshotId,
           songId: songs.id,
           songName: songs.songName,
           cover: songs.cover,
           difficulty: songs.difficulty,
           levelPrecise: songs.levelPrecise,
           addedVersion: songs.addedVersion,
-          achievement: userScores.achievement,
-          fc: userScores.fc,
+          achievement: scoreData.achievement,
+          fc: scoreData.fc,
         })
-        .from(userScores)
-        .innerJoin(songs, eq(userScores.songId, songs.id))
+        .from(snapshotB50)
+        .innerJoin(scoreData, eq(snapshotB50.scoreId, scoreData.id))
+        .innerJoin(songs, eq(scoreData.songId, songs.id))
         .where(
           and(
             eq(songs.region, input.region),
-            lt(userScores.rank, 50),
-            inArray(userScores.snapshotId, relevantSnapshotIds)
+            inArray(snapshotB50.snapshotId, relevantSnapshotIds)
           )
         );
       logger.info(`Fetched ${allScores.length} B50 scores in ${Date.now() - scoresStart}ms`);
@@ -404,14 +404,15 @@ export const snapshotsRouter = router({
           levelPrecise: songs.levelPrecise,
           type: songs.type,
           gameVersion: songs.addedVersion,
-          achievement: userScores.achievement,
-          dxScore: userScores.dxScore,
-          fc: userScores.fc,
-          fs: userScores.fs,
+          achievement: scoreData.achievement,
+          dxScore: scoreData.dxScore,
+          fc: scoreData.fc,
+          fs: scoreData.fs,
         })
-        .from(userScores)
-        .innerJoin(songs, eq(userScores.songId, songs.id))
-        .where(eq(userScores.snapshotId, snapshot[0].id))
+        .from(snapshotScores)
+        .innerJoin(scoreData, eq(snapshotScores.scoreId, scoreData.id))
+        .innerJoin(songs, eq(scoreData.songId, songs.id))
+        .where(eq(snapshotScores.snapshotId, snapshot[0].id))
         .orderBy(songs.songName, songs.difficulty);
 
       return {
@@ -525,14 +526,15 @@ export const snapshotsRouter = router({
           songName: songs.songName,
           songType: songs.type,
           songDifficulty: songs.difficulty,
-          achievement: userScores.achievement,
-          dxScore: userScores.dxScore,
-          fc: userScores.fc,
-          fs: userScores.fs,
+          achievement: scoreData.achievement,
+          dxScore: scoreData.dxScore,
+          fc: scoreData.fc,
+          fs: scoreData.fs,
         })
-        .from(userScores)
-        .innerJoin(songs, eq(userScores.songId, songs.id))
-        .where(eq(userScores.snapshotId, originalSnapshot.id));
+        .from(snapshotScores)
+        .innerJoin(scoreData, eq(snapshotScores.scoreId, scoreData.id))
+        .innerJoin(songs, eq(scoreData.songId, songs.id))
+        .where(eq(snapshotScores.snapshotId, originalSnapshot.id));
 
       const targetVersionSongs = await db
         .select({
@@ -555,14 +557,14 @@ export const snapshotsRouter = router({
         targetSongLookup.set(key, song.id);
       }
 
-      const newScores = [];
+      // Build score data for target version songs
+      const newScoreData: { songId: bigint; achievement: number; dxScore: number; fc: string; fs: string }[] = [];
       for (const originalScore of originalScores) {
         const lookupKey = `${originalScore.songName}|${originalScore.songType}|${originalScore.songDifficulty}`;
         const targetSongId = targetSongLookup.get(lookupKey);
 
         if (targetSongId) {
-          newScores.push({
-            snapshotId: newSnapshotInternalId,
+          newScoreData.push({
             songId: targetSongId,
             achievement: originalScore.achievement,
             dxScore: originalScore.dxScore,
@@ -572,16 +574,31 @@ export const snapshotsRouter = router({
         }
       }
 
-      if (newScores.length > 0) {
-        await db.insert(userScores).values(newScores);
-      }
-
       let newRating = originalSnapshot.rating;
 
-      if (newScores.length > 0) {
+      if (newScoreData.length > 0) {
+        // Step 1: Upsert scoreData and get IDs
+        const scoreDataLookup = await upsertScoreData(newScoreData);
+
+        // Step 2: Build and insert junction rows
+        const junctionRows: { snapshotId: number; scoreId: number }[] = [];
+        for (const score of newScoreData) {
+          const key = `${score.songId}-${score.achievement}-${score.dxScore}-${score.fc}-${score.fs}`;
+          const scoreDataId = scoreDataLookup.get(key);
+          if (scoreDataId) {
+            junctionRows.push({ snapshotId: newSnapshotInternalId, scoreId: scoreDataId });
+          }
+        }
+
+        if (junctionRows.length > 0) {
+          for (let i = 0; i < junctionRows.length; i += 1000) {
+            await db.insert(snapshotScores).values(junctionRows.slice(i, i + 1000)).onConflictDoNothing();
+          }
+        }
+
+        // Step 3: Read back with full song data for B50 calculation
         const scoresWithSongs = await db
           .select({
-            scoreId: userScores.id,
             songId: songs.id,
             songName: songs.songName,
             artist: songs.artist,
@@ -592,14 +609,15 @@ export const snapshotsRouter = router({
             type: songs.type,
             genre: songs.genre,
             addedVersion: songs.addedVersion,
-            achievement: userScores.achievement,
-            dxScore: userScores.dxScore,
-            fc: userScores.fc,
-            fs: userScores.fs,
+            achievement: scoreData.achievement,
+            dxScore: scoreData.dxScore,
+            fc: scoreData.fc,
+            fs: scoreData.fs,
           })
-          .from(userScores)
-          .innerJoin(songs, eq(userScores.songId, songs.id))
-          .where(eq(userScores.snapshotId, newSnapshotInternalId));
+          .from(snapshotScores)
+          .innerJoin(scoreData, eq(snapshotScores.scoreId, scoreData.id))
+          .innerJoin(songs, eq(scoreData.songId, songs.id))
+          .where(eq(snapshotScores.snapshotId, newSnapshotInternalId));
 
         const songsForCalculation: (Omit<SongWithScore, 'songId'> & { songId: bigint })[] = scoresWithSongs.map(song => ({
           songId: song.songId,
@@ -618,107 +636,34 @@ export const snapshotsRouter = router({
           fs: song.fs,
         }));
 
-        const { newSongsB15, oldSongsB35, newSongsRemaining, oldSongsRemaining } = splitSongs(songsForCalculation, input.targetVersion);
+        // Step 4: Compute B50 and insert
+        const { newSongsB15, oldSongsB35 } = splitSongs(songsForCalculation, input.targetVersion);
 
         const ratingContributingSongs = [...newSongsB15, ...oldSongsB35];
         newRating = ratingContributingSongs.reduce((sum, song) => sum + song.rating, 0);
 
-        const rankUpdates: Array<{ id: bigint; rank: number }> = [];
+        const b50Rows: { snapshotId: number; rank: number; scoreId: number }[] = [];
 
         for (let i = 0; i < newSongsB15.length; i++) {
           const song = newSongsB15[i];
-          const scoreRecord = scoresWithSongs.find(s =>
-            s.songId === song.songId &&
-            s.difficulty === song.difficulty
-          );
-          if (scoreRecord) {
-            rankUpdates.push({ id: scoreRecord.scoreId, rank: i });
+          const key = `${song.songId}-${song.achievement}-${song.dxScore}-${song.fc}-${song.fs}`;
+          const scoreDataId = scoreDataLookup.get(key);
+          if (scoreDataId) {
+            b50Rows.push({ snapshotId: newSnapshotInternalId, rank: i, scoreId: scoreDataId });
           }
         }
 
         for (let i = 0; i < oldSongsB35.length; i++) {
           const song = oldSongsB35[i];
-          const scoreRecord = scoresWithSongs.find(s =>
-            s.songId === song.songId &&
-            s.difficulty === song.difficulty
-          );
-          if (scoreRecord) {
-            rankUpdates.push({ id: scoreRecord.scoreId, rank: 15 + i });
+          const key = `${song.songId}-${song.achievement}-${song.dxScore}-${song.fc}-${song.fs}`;
+          const scoreDataId = scoreDataLookup.get(key);
+          if (scoreDataId) {
+            b50Rows.push({ snapshotId: newSnapshotInternalId, rank: 15 + i, scoreId: scoreDataId });
           }
         }
 
-        const remainingSongs = [...newSongsRemaining, ...oldSongsRemaining].sort((a, b) => b.rating - a.rating);
-        for (let i = 0; i < remainingSongs.length; i++) {
-          const song = remainingSongs[i];
-          const scoreRecord = scoresWithSongs.find(s =>
-            s.songId === song.songId &&
-            s.difficulty === song.difficulty
-          );
-          if (scoreRecord) {
-            rankUpdates.push({ id: scoreRecord.scoreId, rank: 50 + i });
-          }
-        }
-
-        if (rankUpdates.length > 0) {
-          const caseStatements = rankUpdates.map(
-            update => sql`WHEN ${update.id} THEN ${update.rank}`
-          );
-          const ids = rankUpdates.map(update => update.id);
-
-          await db
-            .update(userScores)
-            .set({
-              rank: sql`(CASE ${userScores.id} ${sql.join(caseStatements, sql.raw(' '))} END)::smallint`
-            })
-            .where(inArray(userScores.id, ids));
-        }
-
-        try {
-          const scoreDataLookup = await upsertScoreData(
-            scoresWithSongs.map(s => ({
-              songId: s.songId,
-              achievement: s.achievement,
-              dxScore: s.dxScore,
-              fc: s.fc,
-              fs: s.fs,
-            }))
-          );
-
-          const junctionRows: { snapshotId: number; scoreId: number }[] = [];
-          const b50Rows: { snapshotId: number; rank: number; scoreId: number }[] = [];
-
-          for (const update of rankUpdates) {
-            const scoreRecord = scoresWithSongs.find(s => s.scoreId === update.id);
-            if (!scoreRecord) continue;
-            const key = `${scoreRecord.songId}-${scoreRecord.achievement}-${scoreRecord.dxScore}-${scoreRecord.fc}-${scoreRecord.fs}`;
-            const scoreDataId = scoreDataLookup.get(key);
-            if (!scoreDataId) continue;
-            junctionRows.push({ snapshotId: newSnapshotInternalId, scoreId: scoreDataId });
-            if (update.rank < 50) {
-              b50Rows.push({ snapshotId: newSnapshotInternalId, rank: update.rank, scoreId: scoreDataId });
-            }
-          }
-
-          const rankedScoreIds = new Set(rankUpdates.map(u => u.id));
-          for (const s of scoresWithSongs) {
-            if (rankedScoreIds.has(s.scoreId)) continue;
-            const key = `${s.songId}-${s.achievement}-${s.dxScore}-${s.fc}-${s.fs}`;
-            const scoreDataId = scoreDataLookup.get(key);
-            if (scoreDataId) {
-              junctionRows.push({ snapshotId: newSnapshotInternalId, scoreId: scoreDataId });
-            }
-          }
-
-          if (junctionRows.length > 0) {
-            for (let i = 0; i < junctionRows.length; i += 1000) {
-              await db.insert(snapshotScores).values(junctionRows.slice(i, i + 1000)).onConflictDoNothing();
-            }
-          }
-          if (b50Rows.length > 0) {
-            await db.insert(snapshotB50).values(b50Rows).onConflictDoNothing();
-          }
-        } catch (error) {
-          logger.error(error, "copySnapshotToVersion: Dual-write to new tables failed (non-fatal)");
+        if (b50Rows.length > 0) {
+          await db.insert(snapshotB50).values(b50Rows).onConflictDoNothing();
         }
       }
 
@@ -730,7 +675,7 @@ export const snapshotsRouter = router({
       return {
         success: true,
         newSnapshotId: newSnapshotPublicId,
-        copiedScores: newScores.length,
+        copiedScores: newScoreData.length,
         totalOriginalScores: originalScores.length,
         originalRating: originalSnapshot.rating,
         newRating: newRating,

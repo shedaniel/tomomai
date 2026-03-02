@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { songs, userEvents, userScores, userSnapshots } from "@/lib/db/schema-pg";
+import { scoreData, snapshotScores, songs, userEvents, userSnapshots } from "@/lib/db/schema-pg";
 import { and, desc, eq } from "drizzle-orm";
 import type { Region } from "@/lib/types";
 import type { VersionId } from "@/lib/metadata";
@@ -66,14 +66,15 @@ export async function fetchSnapshotData(
       type: songs.type,
       genre: songs.genre,
       addedVersion: songs.addedVersion,
-      achievement: userScores.achievement,
-      dxScore: userScores.dxScore,
-      fc: userScores.fc,
-      fs: userScores.fs,
+      achievement: scoreData.achievement,
+      dxScore: scoreData.dxScore,
+      fc: scoreData.fc,
+      fs: scoreData.fs,
     })
-    .from(userScores)
-    .innerJoin(songs, eq(userScores.songId, songs.id))
-    .where(eq(userScores.snapshotId, snapshot[0].id))
+    .from(snapshotScores)
+    .innerJoin(scoreData, eq(snapshotScores.scoreId, scoreData.id))
+    .innerJoin(songs, eq(scoreData.songId, songs.id))
+    .where(eq(snapshotScores.snapshotId, snapshot[0].id))
     .orderBy(songs.songName, songs.difficulty);
 
   const events = await db
@@ -124,14 +125,15 @@ export async function fetchLatestSnapshotData(userId: string, region: Region) {
       type: songs.type,
       genre: songs.genre,
       addedVersion: songs.addedVersion,
-      achievement: userScores.achievement,
-      dxScore: userScores.dxScore,
-      fc: userScores.fc,
-      fs: userScores.fs,
+      achievement: scoreData.achievement,
+      dxScore: scoreData.dxScore,
+      fc: scoreData.fc,
+      fs: scoreData.fs,
     })
-    .from(userScores)
-    .innerJoin(songs, eq(userScores.songId, songs.id))
-    .where(eq(userScores.snapshotId, snapshot[0].id))
+    .from(snapshotScores)
+    .innerJoin(scoreData, eq(snapshotScores.scoreId, scoreData.id))
+    .innerJoin(songs, eq(scoreData.songId, songs.id))
+    .where(eq(snapshotScores.snapshotId, snapshot[0].id))
     .orderBy(songs.songName, songs.difficulty);
 
   const events = await db

@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { songs, userScores } from "@/lib/db/schema-pg";
+import { scoreData, songs } from "@/lib/db/schema-pg";
 import { logger } from "@/lib/logger";
 import { VersionId } from "@/lib/metadata";
 import { Difficulty, Region, SongType } from "@/lib/types";
@@ -478,10 +478,10 @@ export async function POST(request: NextRequest) {
     if (changes.deleted.length > 0 && changes.deleted.length < 100) {
       const deletedDbIds = changes.deleted.map(d => BigInt(d.dbId));
       const scoreCounts = await db
-        .select({ songId: userScores.songId, count: count() })
-        .from(userScores)
-        .where(inArray(userScores.songId, deletedDbIds))
-        .groupBy(userScores.songId);
+        .select({ songId: scoreData.songId, count: count() })
+        .from(scoreData)
+        .where(inArray(scoreData.songId, deletedDbIds))
+        .groupBy(scoreData.songId);
 
       const countMap = new Map(scoreCounts.map(r => [r.songId.toString(), r.count]));
       for (const deleted of changes.deleted) {
