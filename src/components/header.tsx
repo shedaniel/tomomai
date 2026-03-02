@@ -15,7 +15,9 @@ import { Fragment, useState } from "react";
 import { toast } from "sonner";
 import { LocaleSwitcher } from "./locale-switcher";
 import { RegionSwitcher } from "./region-switcher";
+import { Drawer, DrawerClose, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle, DrawerTrigger } from "./ui/drawer";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "./ui/dropdown-menu";
+import { Separator } from "./ui/separator";
 import { motion, AnimatePresence } from "motion/react";
 import { SPRING_CONFIGS, STAGGER, getTransition } from "@/lib/animation-constants";
 
@@ -184,15 +186,8 @@ function DiscordBanner({ onDismiss }: { onDismiss: () => void }) {
   )
 }
 
-function UserIcon({ user, menu, onAbout, onTheme, onDiscordInvite }: NonNullable<HeaderProps['user']> & {
-  onAbout: () => void;
-  onTheme: () => void;
-  onDiscordInvite: () => void;
-}) {
-  const t = useTranslations();
-  const isMobile = useMediaQuery('(max-width: 640px)');
-
-  if (!menu) return user.image ? (
+function UserAvatar({ user }: { user: User }) {
+  return user.image ? (
     <Image
       src={user.image}
       alt="Profile"
@@ -203,25 +198,126 @@ function UserIcon({ user, menu, onAbout, onTheme, onDiscordInvite }: NonNullable
   ) : (
     <LucideUserIcon className="h-5 w-5" />
   );
+}
+
+function UserIcon({ user, menu, onAbout, onTheme, onDiscordInvite }: NonNullable<HeaderProps['user']> & {
+  onAbout: () => void;
+  onTheme: () => void;
+  onDiscordInvite: () => void;
+}) {
+  const t = useTranslations();
+  const isMobile = useMediaQuery('(max-width: 640px)');
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
+  if (!menu) return <UserAvatar user={user} />;
 
   const { userRole, onInvites, onAdmin, onExperiments, onLogout } = menu;
+
+  const avatarButton = (
+    <Button variant="ghost" className="relative h-10 w-10 rounded-full p-0 focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 focus:ring-offset-background data-[state=open]:ring-2 data-[state=open]:ring-gray-300 data-[state=open]:ring-offset-2 data-[state=open]:ring-offset-background">
+      <UserAvatar user={user} />
+    </Button>
+  );
+
+  const drawerItemClass = "flex items-center gap-3 w-full px-4 py-2 text-sm rounded-md hover:bg-muted transition-colors";
+
+  if (isMobile) {
+    return (
+      <Drawer direction="right" open={drawerOpen} onOpenChange={setDrawerOpen}>
+        <DrawerTrigger asChild>
+          {avatarButton}
+        </DrawerTrigger>
+        <DrawerContent className="!max-w-[70dvw] !w-fit">
+          <DrawerHeader className="flex flex-row items-center gap-3 border-b pb-4">
+            <UserAvatar user={user} />
+            <div className="flex flex-col">
+              <DrawerTitle>{user.name}</DrawerTitle>
+              <p className="text-xs text-muted-foreground">{t('userHeader.memberLabel')}</p>
+            </div>
+          </DrawerHeader>
+          <DrawerDescription className="sr-only">{t('userHeader.memberLabel')}</DrawerDescription>
+          <div className="border-b px-4 py-3 mb-1">
+            <p className="text-xs text-muted-foreground text-balance">{t('userHeader.discordPrompt')}</p>
+            <a
+              href="https://discord.gg/jZqQHr3UDq"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs font-medium leading-none text-primary hover:underline"
+            >
+              {t('userHeader.joinDiscord')}
+            </a>
+          </div>
+          <div className="flex flex-col overflow-y-auto">
+            {SIGNUP_TYPE === 'invite-only' && (
+              <>
+                <DrawerClose asChild>
+                  <button className={drawerItemClass} onClick={onInvites}>
+                    <Users className="h-4 w-4" />
+                    <span>{t('common.invitations')}</span>
+                  </button>
+                </DrawerClose>
+                <Separator className="my-1" />
+              </>
+            )}
+            {userRole === "admin" && (
+              <>
+                <DrawerClose asChild>
+                  <button className={drawerItemClass} onClick={onAdmin}>
+                    <Users className="h-4 w-4" />
+                    <span>{t('header.admin')}</span>
+                  </button>
+                </DrawerClose>
+                <Separator className="my-1" />
+              </>
+            )}
+            <DrawerClose asChild>
+              <button className={drawerItemClass} onClick={onAbout}>
+                <Info className="h-4 w-4" />
+                <span>{t('common.about')}</span>
+              </button>
+            </DrawerClose>
+            <DrawerClose asChild>
+              <button className={drawerItemClass} onClick={onTheme}>
+                <Palette className="h-4 w-4" />
+                <span>{t('common.theme')}</span>
+              </button>
+            </DrawerClose>
+            <DrawerClose asChild>
+              <button className={drawerItemClass} onClick={onDiscordInvite}>
+                <DiscordIcon className="h-4 w-4" />
+                <span>{t('header.addDiscordBot')}</span>
+              </button>
+            </DrawerClose>
+            <Separator className="my-1" />
+            <DrawerClose asChild>
+              <button className={drawerItemClass} onClick={onExperiments}>
+                <Beaker className="h-4 w-4" />
+                <span>{t('common.experiments')}</span>
+              </button>
+            </DrawerClose>
+            <DrawerClose asChild>
+              <Link href="/settings" className={drawerItemClass}>
+                <Settings className="h-4 w-4" />
+                <span>{t('common.settings')}</span>
+              </Link>
+            </DrawerClose>
+            <Separator className="my-1" />
+            <DrawerClose asChild>
+              <button className={drawerItemClass} onClick={onLogout}>
+                <LogOut className="h-4 w-4" />
+                <span>{t('common.logout')}</span>
+              </button>
+            </DrawerClose>
+          </div>
+        </DrawerContent>
+      </Drawer>
+    );
+  }
 
   return (
     <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative h-10 w-10 rounded-full p-0 focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 focus:ring-offset-background data-[state=open]:ring-2 data-[state=open]:ring-gray-300 data-[state=open]:ring-offset-2 data-[state=open]:ring-offset-background">
-          {user.image ? (
-            <Image
-              src={user.image}
-              alt="Profile"
-              width={40}
-              height={40}
-              className="w-10 h-10 rounded-full"
-            />
-          ) : (
-            <LucideUserIcon className="h-5 w-5" />
-          )}
-        </Button>
+        {avatarButton}
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56" align="end" forceMount>
         <DropdownMenuLabel className="font-normal">
@@ -263,23 +359,6 @@ function UserIcon({ user, menu, onAbout, onTheme, onDiscordInvite }: NonNullable
             <DropdownMenuItem onClick={onAdmin}>
               <Users className="mr-2 h-4 w-4" />
               <span>{t('header.admin')}</span>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-          </>
-        )}
-        {isMobile && (
-          <>
-            <DropdownMenuItem onClick={onAbout}>
-              <Info className="mr-2 h-4 w-4" />
-              <span>{t('common.about')}</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={onTheme}>
-              <Palette className="mr-2 h-4 w-4" />
-              <span>{t('common.theme')}</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={onDiscordInvite}>
-              <DiscordIcon className="mr-2 h-4 w-4" />
-              <span>{t('common.discord')}</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
           </>

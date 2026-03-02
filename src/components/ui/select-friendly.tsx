@@ -1,8 +1,10 @@
 "use client"
 
 import {
-  Select as SelectPrimitive,
-  SelectContent as SelectPrimitiveContent,
+  AnimatedSelect as SelectPrimitive,
+  AnimatedSelectContent as SelectPrimitiveContent,
+} from "@/components/ui/animated-select"
+import {
   SelectItem as SelectPrimitiveItem,
   SelectTrigger as SelectPrimitiveTrigger,
   SelectValue as SelectPrimitiveValue,
@@ -160,9 +162,10 @@ interface SelectContentProps {
   children: React.ReactNode
   label?: string
   className?: string
+  align?: "start" | "center" | "end"
 }
 
-function SelectContent({ children, label, className }: SelectContentProps) {
+function SelectContent({ children, label, className, align }: SelectContentProps) {
   const { isMobile } = useSelectContext()
 
   if (isMobile) {
@@ -181,7 +184,7 @@ function SelectContent({ children, label, className }: SelectContentProps) {
     </>)
   }
 
-  return <SelectPrimitiveContent className={className}>{children}</SelectPrimitiveContent>
+  return <SelectPrimitiveContent className={className} align={align}>{children}</SelectPrimitiveContent>
 }
 
 interface SelectItemProps {
@@ -201,7 +204,7 @@ function SelectItem({ value, children }: SelectItemProps) {
           onClick={() => setValue(value)}
           className={cn(
             "w-full px-2 py-2 text-left text-sm rounded-md flex items-center gap-2",
-            selectedValue === value && "bg-card text-card-foreground shadow"
+            selectedValue === value && "bg-primary text-primary-foreground dark:bg-card dark:text-card-foreground dark:shadow"
           )}
         >
           {selectedValue === value ? <Check className="h-4 w-4 opacity-50" /> : <div className="h-4 w-4 opacity-50" />}

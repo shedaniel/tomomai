@@ -94,7 +94,7 @@ function SnapshotSelector({
           <SelectItem key={snapshot.id} value={snapshot.id}>
             <div className="flex flex-col items-start min-w-0 truncate">
               <span>{formatDate(snapshot.fetchedAt)}</span>
-              <span className="text-xs text-muted-foreground">
+              <span className="text-xs dark:text-muted-foreground">
                 {snapshot.displayName} • {snapshot.rating} rating • {getVersionInfo(snapshot.gameVersion)?.shortName || "Unknown"}
               </span>
             </div>
