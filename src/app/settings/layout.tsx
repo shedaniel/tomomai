@@ -3,6 +3,8 @@ import { SettingsSidebar } from "@/components/settings/sidebar";
 import Link from "next/link";
 import Image from "next/image";
 import { redirect } from "next/navigation";
+import { useFlags } from "@/lib/flags";
+import { cookies } from "next/headers";
 
 export default async function SettingsLayout({
   children,
@@ -10,6 +12,7 @@ export default async function SettingsLayout({
   children: React.ReactNode;
 }) {
   const session = await getServerSession();
+  const flags = await useFlags(cookies);
 
   if (!session) {
     redirect("/");
@@ -42,7 +45,7 @@ export default async function SettingsLayout({
 
       <div className="flex sm:flex-row flex-col gap-8">
         <aside className="shrink-0">
-          <SettingsSidebar />
+          <SettingsSidebar flags={flags} />
         </aside>
 
         <main className="flex-1 min-w-0">{children}</main>

@@ -1,4 +1,6 @@
 import { flag } from "flags/next";
+import type { cookies } from "next/headers";
+
 
 export interface Flags {
   historyCard: boolean;
@@ -6,6 +8,7 @@ export interface Flags {
   platesCard: boolean;
   eventsCard: boolean;
   albumsCard: boolean;
+  developerPortal: boolean;
 }
 
 export interface FlagDefinition {
@@ -15,7 +18,7 @@ export interface FlagDefinition {
   decide: () => Promise<boolean>;
 }
 
-export const useFlags = async (): Promise<Flags> => {
+export const useFlags0 = async (): Promise<Flags> => {
   return {
     // eslint-disable-next-line react-hooks/rules-of-hooks
     historyCard: await useHistoryCard(),
@@ -27,6 +30,8 @@ export const useFlags = async (): Promise<Flags> => {
     eventsCard: await useEventsCard(),
     // eslint-disable-next-line react-hooks/rules-of-hooks
     albumsCard: await useAlbumsCard(),
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    developerPortal: await useDeveloperPortal(),
   };
 }
 
@@ -60,6 +65,12 @@ export const flagDefinitions: Record<keyof Flags, FlagDefinition> = {
     defaultValue: true,
     userSelectable: true,
     decide: async () => true,
+  },
+  developerPortal: {
+    key: "developerPortal",
+    defaultValue: false,
+    userSelectable: false,
+    decide: async () => false,
   },
 };
 
@@ -113,6 +124,14 @@ export const useAlbumsCard = flag<boolean>({
   },
 });
 
+export const useDeveloperPortal = flag<boolean>({
+  key: "developerPortal",
+  defaultValue: false,
+  async decide() {
+    return false;
+  },
+});
+
 /**
  * Merge flag overrides from cookies with default flags
  * Overrides are stored in the flagOverrides cookie as JSON
@@ -139,4 +158,14 @@ export function applyFlagOverrides(flags: Flags, cookieValue?: string): Flags {
     // If cookie is malformed, just return original flags
     return flags;
   }
+}
+
+export async function useFlags(cookiesFunc: typeof cookies): Promise<Flags> {
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  let flags = await useFlags0();
+
+  // Apply flag overrides from cookies
+  const cookieStore = await cookiesFunc();
+  const flagOverridesCookie = cookieStore.get("flagOverrides")?.value;
+  return applyFlagOverrides(flags, flagOverridesCookie);
 }

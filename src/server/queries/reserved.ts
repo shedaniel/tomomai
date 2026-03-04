@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { songs } from "@/lib/db/schema-pg";
+import { getEnabledRegions } from "@/lib/enabled-regions";
 import { getCurrentVersion } from "@/lib/metadata";
 import type { VersionId } from "@/lib/metadata";
 import { splitSongs } from "@/lib/rating-calculator";
@@ -23,7 +24,7 @@ const RESERVED_PROFILES: Record<string, ReservedProfile> = {
     userId: "reserved-max",
     username: "max",
     displayName: "\uff4d\uff41\uff58\uff52\uff41\uff54\uff49\uff4e\uff47", // ｍａｘｒａｔｉｎｇ
-    profileMainRegion: "jp",
+    profileMainRegion: getEnabledRegions()[getEnabledRegions().length - 1],
   },
 };
 

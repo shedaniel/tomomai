@@ -5,15 +5,16 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { User, Download, Lock, Code, ArrowLeft } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { Flags } from "@/lib/flags";
 
-const navItems = [
-  { key: "account", href: "/settings/account", icon: User },
-  { key: "fetch", href: "/settings/fetch", icon: Download },
-  { key: "privacy", href: "/settings/privacy", icon: Lock },
-  { key: "developer", href: "/settings/developer", icon: Code },
-] as const;
+export function SettingsSidebar({ flags }: { flags: Flags }) {
+  const navItems = [
+    { key: "account", href: "/settings/account", icon: User },
+    { key: "fetch", href: "/settings/fetch", icon: Download },
+    { key: "privacy", href: "/settings/privacy", icon: Lock },
+    ...(flags.developerPortal ? [{ key: "developer", href: "/settings/developer", icon: Code }] : []),
+  ] as const;
 
-export function SettingsSidebar() {
   const pathname = usePathname();
   const t = useTranslations();
 
