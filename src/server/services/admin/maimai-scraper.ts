@@ -72,6 +72,10 @@ export async function prepareMaimaiScraper(region: Region, version: VersionId, c
             `Scraper integrity check failed: version ${version} has songs but difficulties [${emptyNames}] returned 0 songs. The scrape session may be broken.`
           );
         }
+      } else {
+        throw new Error(
+          `Scraper integrity check failed: version ${version} returned 0 songs across all difficulties. The scrape session may be broken.`
+        );
       }
 
       const versionTotal = difficultyData.reduce((sum, d) => sum + d.length, 0);
