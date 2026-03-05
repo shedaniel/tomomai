@@ -7,6 +7,7 @@ export const FETCH_STATES = {
   SONG_DATA_EXPERT: "song_data:expert",
   SONG_DATA_MASTER: "song_data:master",
   SONG_DATA_REMASTER: "song_data:remaster",
+  SONG_DATA_UTAGE: "song_data:utage",
   RECENT_SONGS: "recent_songs",
   HIDDEN_SONGS: "hidden_songs",
   ALBUM_DATA: "album_data",
@@ -21,6 +22,7 @@ export const DIFFICULTY_STATE_MAP: Record<number, FetchState> = {
   2: FETCH_STATES.SONG_DATA_EXPERT,
   3: FETCH_STATES.SONG_DATA_MASTER,
   4: FETCH_STATES.SONG_DATA_REMASTER,
+  10: FETCH_STATES.SONG_DATA_UTAGE,
 };
 
 // Helper function to parse statusStates string into array
@@ -46,6 +48,7 @@ export function getAllStates(): FetchState[] {
     FETCH_STATES.SONG_DATA_EXPERT,
     FETCH_STATES.SONG_DATA_MASTER,
     FETCH_STATES.SONG_DATA_REMASTER,
+    FETCH_STATES.SONG_DATA_UTAGE,
     FETCH_STATES.RECENT_SONGS,
     FETCH_STATES.HIDDEN_SONGS,
     FETCH_STATES.ALBUM_DATA,

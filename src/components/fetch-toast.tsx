@@ -48,6 +48,8 @@ function getStatusLabelKey(state: FetchState): string {
       return "states.songDataMaster";
     case FETCH_STATES.SONG_DATA_REMASTER:
       return "states.songDataRemaster";
+    case FETCH_STATES.SONG_DATA_UTAGE:
+      return "states.songDataUtage";
     case FETCH_STATES.RECENT_SONGS:
       return "states.recentSongs";
     case FETCH_STATES.HIDDEN_SONGS:

@@ -1,10 +1,12 @@
 import { SongDetails, UniqueSong, UniqueSongDifficulty } from '@/components/db/songs/types';
 import { db } from '@/lib/db';
 import { scoreData, snapshotScores, songs, userSnapshots } from '@/lib/db/schema-pg';
-import { VersionId } from '@/lib/metadata';
+import { DIFFICULTY_ENUM } from '@/lib/db/types';
+import { getCurrentVersion, VersionId } from '@/lib/metadata';
 import { getSongSlug, getSongSlugs } from '@/lib/song-slug';
 import { publicProcedure, router } from '@/lib/trpc';
 import { Region, SongExtended } from '@/lib/types';
+import { maxBy } from '@/lib/utils';
 import { TRPCError } from '@trpc/server';
 import { and, desc, eq, inArray } from 'drizzle-orm';
 import { unstable_cache } from 'next/cache';
@@ -90,7 +92,8 @@ export const songsRouter = router({
                 difficulty: d.difficulty,
                 levelPrecise: d.levelPrecise,
                 noteDesigner: d.noteDesigner,
-              }) satisfies UniqueSongDifficulty),
+              }) satisfies UniqueSongDifficulty)
+                .toSorted((a, b) => DIFFICULTY_ENUM.indexOf(a.difficulty) - DIFFICULTY_ENUM.indexOf(b.difficulty)),
               slug: song.slug,
               aliases: song.aliases,
             } satisfies UniqueSong;
@@ -199,13 +202,15 @@ export const songsRouter = router({
         }
       }
 
+      type ChartType = (typeof charts)[number]
+
       const byRegion = new Map<Region, Map<VersionId, SongExtended[]>>();
       for (const chart of charts) {
         if (!byRegion.has(chart.region)) {
           byRegion.set(chart.region, new Map());
         }
         const chartVersion = chart.gameVersion as VersionId;
-        const regionMap = byRegion.get(chart.region)!;
+        const regionMap: Map<VersionId, SongExtended[]> = byRegion.get(chart.region)!;
         if (!regionMap.has(chartVersion)) {
           regionMap.set(chartVersion, []);
         }
@@ -215,7 +220,13 @@ export const songsRouter = router({
         });
       }
 
-      const regions = Array.from(byRegion.entries()).map(([region, versionMap]) => ({
+      const regions: {
+        region: Region,
+        versions: {
+          gameVersion: VersionId,
+          charts: SongExtended[]
+        }[]
+      }[] = Array.from(byRegion.entries()).map(([region, versionMap]) => ({
         region,
         versions: Array.from(versionMap.entries()).map(([version, vCharts]) => ({
           gameVersion: version,
@@ -223,18 +234,19 @@ export const songsRouter = router({
         })).sort((a, b) => b.gameVersion - a.gameVersion),
       }));
 
-      const firstChart = charts[0];
-      const chartWithBpm = charts.find(c => c.bpm !== null);
-      const earliestAddedVersion = Math.min(...charts.map(c => c.addedVersion));
+      const preferredChart: ChartType = maxBy(charts, (chart) => chart.gameVersion * 100 + (chart.region === "jp" ? 1 : 0))!;
+      const chartBpm = preferredChart.bpm || charts.find(c => c.bpm !== null)?.bpm;
+
+      const availableInLatest = charts.some(chart => chart.gameVersion === getCurrentVersion(chart.region))
 
       return {
-        songName: firstChart.songName,
-        artist: firstChart.artist,
-        cover: firstChart.cover,
-        type: firstChart.type,
-        genre: firstChart.genre,
-        bpm: chartWithBpm?.bpm ?? null,
-        addedVersion: earliestAddedVersion as VersionId,
+        songName: preferredChart.songName,
+        artist: preferredChart.artist,
+        cover: preferredChart.cover,
+        type: preferredChart.type,
+        genre: preferredChart.genre,
+        bpm: chartBpm ?? null,
+        addedVersion: preferredChart.addedVersion as VersionId,
         userScores: userScoresMap,
         regions,
       } satisfies SongDetails;

@@ -15,6 +15,7 @@ import { logger } from "./logger";
 import { Difficulty } from "./types";
 import { uploadToR2, deleteFromR2 } from "./r2";
 import { convertJpegToAvif, fetchImageBuffer } from "./image-converter";
+import { DIFFICULTY_ENUM } from "./db/types";
 
 export const AGENT = new Agent({
   connect: {
@@ -689,13 +690,14 @@ function parseScoreData(html: string, difficulty: number): ScoreData[] {
   const $ = load(html);
 
   // Use correct selector based on difficulty
-  const difficultySelectors = [
-    ".music_basic_score_back",      // difficulty 0
-    ".music_advanced_score_back",   // difficulty 1
-    ".music_expert_score_back",     // difficulty 2
-    ".music_master_score_back",     // difficulty 3
-    ".music_remaster_score_back"    // difficulty 4
-  ];
+  const difficultySelectors: Record<number, string> = {
+    0: ".music_basic_score_back",
+    1: ".music_advanced_score_back",
+    2: ".music_expert_score_back",
+    3: ".music_master_score_back",
+    4: ".music_remaster_score_back",
+    10: ".music_utage_score_back"
+  };
 
   const selector = difficultySelectors[difficulty];
   if (!selector) {
@@ -721,26 +723,30 @@ function parseScoreData(html: string, difficulty: number): ScoreData[] {
       const parent = block.parent();
 
       // Extract music type (dx/std) from icon image
-      const iconElement = parent.find('img.music_kind_icon');
-      if (iconElement.length === 0) {
-        logger.warn(`No music kind icon found for score block ${index}`);
-        return;
-      }
-
-      const iconSrc = iconElement.attr('src');
-      if (!iconSrc) {
-        logger.warn(`No src attribute found for music kind icon in score block ${index}`);
-        return;
-      }
-
       let musicType: SongType;
-      if (iconSrc.includes('music_dx.png')) {
+      if (difficulty === 10) {
         musicType = "dx";
-      } else if (iconSrc.includes('music_standard.png')) {
-        musicType = "std";
       } else {
-        logger.warn(`Unknown music type icon: ${iconSrc} in score block ${index}`);
-        return;
+        const iconElement = parent.find('img.music_kind_icon');
+        if (iconElement.length === 0) {
+          logger.warn(`No music kind icon found for score block ${index}`);
+          return;
+        }
+
+        const iconSrc = iconElement.attr('src');
+        if (!iconSrc) {
+          logger.warn(`No src attribute found for music kind icon in score block ${index}`);
+          return;
+        }
+
+        if (iconSrc.includes('music_dx.png')) {
+          musicType = "dx";
+        } else if (iconSrc.includes('music_standard.png')) {
+          musicType = "std";
+        } else {
+          logger.warn(`Unknown music type icon: ${iconSrc} in score block ${index}`);
+          return;
+        }
       }
 
       // Extract song name
@@ -792,7 +798,7 @@ function parseScoreData(html: string, difficulty: number): ScoreData[] {
       }
 
       // First .h_30 is fs (sync status)
-      let fs: "none" | "sync" | "fs" | "fs+" | "fdx" | "fdx+" = "none";
+      let fs: FullSync = "none";
       const fsElement = h30Elements.eq(0);
       const fsSrc = fsElement.attr('src');
       if (fsSrc) {
@@ -810,7 +816,7 @@ function parseScoreData(html: string, difficulty: number): ScoreData[] {
       }
 
       // Second .h_30 is fc (full combo status)
-      let fc: "none" | "fc" | "fc+" | "ap" | "ap+" = "none";
+      let fc: FullCombo = "none";
       const fcElement = h30Elements.eq(1);
       const fcSrc = fcElement.attr('src');
       if (fcSrc) {
@@ -826,8 +832,7 @@ function parseScoreData(html: string, difficulty: number): ScoreData[] {
       }
 
       // Map difficulty number to difficulty name
-      const difficultyNames: Difficulty[] = ["basic", "advanced", "expert", "master", "remaster"];
-      const difficultyName = difficultyNames[difficulty] || "basic";
+      const difficultyName = difficulty === 10 ? "utage" : DIFFICULTY_ENUM[difficulty] || "basic";
 
       const scoreData: ScoreData = {
         songName,
@@ -889,7 +894,7 @@ async function fetchAllSongsData(cookies: string, region: Region, sessionId?: bi
   logger.info(`Fetching songs data for all difficulties (0-4)${sessionId ? ' with tracking' : ''}`);
 
   // Create promises for all difficulties to fetch concurrently
-  const difficultyPromises = Array.from({ length: 5 }, (_, difficulty) => {
+  const difficultyPromises = [0, 1, 2, 3, 4, 10].map(difficulty => {
     return fetchSongsData(cookies, difficulty, region).then((scoreData) => {
       logger.info(`Successfully fetched ${scoreData.length} scores for difficulty ${difficulty}`);
 
@@ -983,9 +988,12 @@ async function fetchRecentSongsData(cookies: string, region: Region, sessionId: 
       const diffImg = record.find("img.playlog_diff");
       const diffImgSrc = diffImg.attr("src") || "";
       let difficultyNumber = 0;
-      let difficulty = "basic";
+      let difficulty: Difficulty = "basic";
 
-      if (diffImgSrc.includes("remaster")) {
+      if (diffImgSrc.includes("utage")) {
+        difficultyNumber = 10;
+        difficulty = "utage";
+      } else if (diffImgSrc.includes("remaster")) {
         difficultyNumber = 4;
         difficulty = "remaster";
       } else if (diffImgSrc.includes("master")) {
@@ -1043,8 +1051,8 @@ async function fetchRecentSongsData(cookies: string, region: Region, sessionId: 
       // Extract FC and FS status from result images
       const resultImages = record.find(".playlog_result_innerblock > img");
 
-      let fc: "none" | "fc" | "fc+" | "ap" | "ap+" = "none";
-      let fs: "none" | "sync" | "fs" | "fs+" | "fdx" | "fdx+" = "none";
+      let fc: FullCombo = "none";
+      let fs: FullSync = "none";
 
       // First image is FC status
       if (resultImages.length > 0) {
@@ -1079,7 +1087,9 @@ async function fetchRecentSongsData(cookies: string, region: Region, sessionId: 
       // Determine music type (dx/std) from playlog_music_kind_icon
       const musicKindIcon = record.find("img.playlog_music_kind_icon");
       let musicType: SongType = "std";
-      if (musicKindIcon.length > 0) {
+      if (difficulty === "utage") {
+        musicType = "dx";
+      } else if (musicKindIcon.length > 0) {
         const iconSrc = musicKindIcon.attr("src") || "";
         if (iconSrc.includes("music_dx.png")) {
           musicType = "dx";
@@ -2437,22 +2447,13 @@ async function fetchAlbumData(cookies: string, region: Region): Promise<AlbumDat
         return;
       }
 
-      const musicKindIcon = block.find(".music_kind_icon");
-      let musicType: SongType = "std";
-      if (musicKindIcon.length > 0) {
-        const iconSrc = musicKindIcon.attr("src") || "";
-        if (iconSrc.includes("music_dx.png")) {
-          musicType = "dx";
-        } else if (iconSrc.includes("music_standard.png")) {
-          musicType = "std";
-        }
-      }
-
       const diffElement = block.find(".p_r");
       const diffClassName = diffElement.attr("class") || "";
-      let difficulty: "basic" | "advanced" | "expert" | "master" | "remaster" = "basic";
+      let difficulty: Difficulty = "basic";
 
-      if (diffClassName.includes("remaster")) {
+      if (diffClassName.includes("utage")) {
+        difficulty = "utage";
+      } else if (diffClassName.includes("remaster")) {
         difficulty = "remaster";
       } else if (diffClassName.includes("master")) {
         difficulty = "master";
@@ -2462,6 +2463,18 @@ async function fetchAlbumData(cookies: string, region: Region): Promise<AlbumDat
         difficulty = "advanced";
       } else if (diffClassName.includes("basic")) {
         difficulty = "basic";
+      }
+
+      const musicKindIcon = block.find(".music_kind_icon");
+      let musicType: SongType = "std";
+      if (difficulty === "utage") musicType = "dx";
+      else if (musicKindIcon.length > 0) {
+        const iconSrc = musicKindIcon.attr("src") || "";
+        if (iconSrc.includes("music_dx.png")) {
+          musicType = "dx";
+        } else if (iconSrc.includes("music_standard.png")) {
+          musicType = "std";
+        }
       }
 
       const blockInfo = block.find(".block_info");
@@ -2723,7 +2736,7 @@ export async function fetchMaimaiData(
       logger.info(`Skipping album fetch: user opted out (found ${albumData.length} albums)`);
     }
 
-    const bgWork = Promise.allSettled(backgroundTasks).then(() => {});
+    const bgWork = Promise.allSettled(backgroundTasks).then(() => { });
     if (backgroundWorkRef) {
       backgroundWorkRef.promise = bgWork;
     }

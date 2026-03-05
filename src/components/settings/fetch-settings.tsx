@@ -4,6 +4,7 @@ import { TokenDialog } from "@/components/token-dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { isChinaRegion } from "@/lib/enabled-regions";
 import { trpc } from "@/lib/trpc-client";
 import { Region } from "@/lib/types";
 import { AlertCircle, Images, Key } from "lucide-react";
@@ -84,7 +85,7 @@ export function FetchSettings() {
           </Button>
         </div>
 
-        <div className="grid gap-2">
+        {!isChinaRegion() && <div className="grid gap-2">
           <div className="flex items-center justify-between">
             <div className="grid gap-2">
               <Label htmlFor="fetch-albums" className="flex items-center gap-2">
@@ -106,7 +107,7 @@ export function FetchSettings() {
               <p className="text-xs text-muted-foreground">{t("settings.albumPrivacy.notSet")}</p>
             </div>
           )}
-        </div>
+        </div>}
       </div>
 
       <div className="flex justify-end space-x-2 mt-10 border-t pt-6">

@@ -64,7 +64,7 @@ export function AccountSettings() {
   if (isChinaRegion()) {
     return (
       <div className="">
-        <p className="text-sm text-muted-foreground">No account settings available.</p>
+        <p className="text-sm text-muted-foreground">暂无账户设置。</p>
       </div>
     );
   }

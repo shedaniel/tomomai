@@ -3,6 +3,7 @@
 import { Region } from "@/lib/types";
 import { TokenDialogJapan } from "./token-dialog-japan";
 import { TokenDialogIntlNew } from "./token-dialog-intl-new";
+import { TokenDialogCn } from "./token-dialog-cn";
 
 interface TokenDialogProps {
   region: Region;
@@ -24,6 +25,16 @@ export function TokenDialog({
   if (region === "jp") {
     return (
       <TokenDialogJapan
+        isOpen={isOpen}
+        onOpenChange={onOpenChange}
+        onTokenUpdate={onTokenUpdate}
+      />
+    );
+  }
+
+  if (region === "cn") {
+    return (
+      <TokenDialogCn
         isOpen={isOpen}
         onOpenChange={onOpenChange}
         onTokenUpdate={onTokenUpdate}
