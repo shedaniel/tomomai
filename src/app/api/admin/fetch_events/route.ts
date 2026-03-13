@@ -1,4 +1,4 @@
-import { generateText, streamText, tool, stepCountIs, gateway } from "ai";
+import { generateText, tool, stepCountIs, gateway } from "ai";
 import { load } from "cheerio";
 import { z } from "zod";
 import { NextRequest, NextResponse } from "next/server";
@@ -13,7 +13,7 @@ const StepSchema = z.object({
 
 const EventSchema = z.object({
   name: z.string(),
-  period: z.string(),
+  periods: z.array(z.string()).describe("One or more date range strings, e.g. [\"2020/08/07～2021/03/17\", \"2022/09/15～2023/03/22\"]"),
   steps: z.array(StepSchema),
 });
 
@@ -22,8 +22,11 @@ type Event = z.infer<typeof EventSchema>;
 const ALLOWED_HOST = "gamerch.com";
 const START_URL = "https://gamerch.com/maimai/533627";
 const MAX_CONTENT_LENGTH = 40000;
+const DISCOVERY_CONCURRENCY = 15;
+const SCRAPE_CONCURRENCY = 15;
+const MAX_BFS_DEPTH = 3;
 
-function extractAsMarkdown(html: string, baseUrl: string, visitedUrls: Set<string>): string {
+export function extractAsMarkdown(html: string, baseUrl: string, visitedUrls: Set<string>): string {
   const $ = load(html);
 
   // Remove non-content elements
@@ -36,8 +39,8 @@ function extractAsMarkdown(html: string, baseUrl: string, visitedUrls: Set<strin
   container.find("#comment, .comment, .comment-list, .comment_list, [id*='comment']").remove();
   // Remove share/social sections
   container.find(".share, .social, .sns").remove();
-  // Remove "new threads" sidebar content
-  container.find(".latestThread, [class*='latestThread'], [ref='latestThread'], .thread, [class*='thread'], [class*='Thread']").remove();
+  // Remove "new threads" sidebar content and BBS sections
+  container.find(".latestThread, [class*='latestThread'], [ref='latestThread'], .thread, [class*='thread'], [class*='Thread'], [class*='bbs']").remove();
 
   // Normalize the current page URL for self-link detection
   const currentUrl = new URL(baseUrl);
@@ -53,15 +56,32 @@ function extractAsMarkdown(html: string, baseUrl: string, visitedUrls: Set<strin
     if (!href || !text) return;
     try {
       const resolved = new URL(href, baseUrl);
+      const displayHref = resolved.href;
+      // Strip hash/search for dedup checks only
       resolved.hash = "";
+      resolved.search = "";
+      const normalizedHref = resolved.href;
       if (resolved.hostname.endsWith(ALLOWED_HOST) && resolved.pathname.startsWith("/maimai/")) {
-        // Skip same-page links (anchor links to sections on current page)
-        const resolvedClean = new URL(resolved.href);
-        resolvedClean.search = "";
-        if (resolvedClean.href === currentHref || visitedUrls.has(resolved.href)) {
+        // Skip links in reward table rows (a sibling <td> contains just a number = distance column)
+        // and song list tables (header contains 曲名)
+        const $row = $el.closest("tr");
+        if ($row.length > 0) {
+          const isRewardRow = $row.find("td").toArray().some((td) => /^\d+$/.test($(td).text().trim()));
+          const $table = $el.closest("table");
+          const isSongTable = $table.length > 0 && $table.find("th").toArray().some((th) => $(th).text().includes("曲名"));
+          if (isRewardRow || isSongTable) {
+            $el.replaceWith(text);
+            return;
+          }
+        }
+
+        // Skip same-page links and already-visited URLs
+        if (normalizedHref === currentHref || visitedUrls.has(normalizedHref)) {
           $el.replaceWith(text);
         } else {
-          $el.replaceWith(`[${text}](${resolved.href})`);
+          const title = $el.attr("title");
+          const titlePart = title ? ` "${title}"` : "";
+          $el.replaceWith(`[${text}](${displayHref}${titlePart})`);
         }
         return;
       }
@@ -93,7 +113,7 @@ async function fetchPageContent(url: string, visitedUrls: Set<string>, log: any)
   }
 
   try {
-    log.info({ url }, "Fetching page");
+    log.debug({ url }, "Fetching page");
 
     const response = await fetch(url, {
       headers: {
@@ -111,7 +131,7 @@ async function fetchPageContent(url: string, visitedUrls: Set<string>, log: any)
     visitedUrls.add(url);
     const content = extractAsMarkdown(html, url, visitedUrls);
 
-    log.info({ url, contentLength: content.length }, "Page extracted");
+    log.debug({ url, contentLength: content.length }, "Page extracted");
 
     return { content };
   } catch (err) {
@@ -122,21 +142,20 @@ async function fetchPageContent(url: string, visitedUrls: Set<string>, log: any)
 async function scrapePageForEvents(content: string, url: string, log: any): Promise<Event[]> {
   const model = gateway(process.env.AI_MODEL || "anthropic/claude-sonnet-4-5-20250514");
 
-  log.info({ url, contentLength: content.length }, "Starting scraper agent");
+  log.debug({ url, contentLength: content.length }, "Starting scraper agent");
 
   const extractedEvents: Event[] = [];
 
   try {
     await generateText({
       model,
-      maxTokens: 16384,
       system: `You are a JSON extraction agent. You receive wiki page content about maimai tour events (ちほー/つあーイベント).
 
 Your ONLY job: extract event data from the page and call submitEvents with the results.
 
 For each event found, extract:
 - name: The event name (e.g. "IOSYSちほー")
-- period: The date range string (開催期間), e.g. "2026/02/20～2026/04/16"
+- periods: Array of date range strings (開催期間/出現期間). Some events have multiple periods, e.g. ["2020/08/07～2021/03/17", "2022/09/15～2023/03/22"]. Always return an array, even if there's only one period.
 - steps: Array of reward steps, each with:
   - distance: number (km)
   - type: reward type (報酬の種類) e.g. "つあーメンバー", "課題曲", "ネームプレート", "フレーム", "解禁楽曲", "パーフェクトチャレンジ楽曲"
@@ -154,13 +173,13 @@ Rules:
             events: z.array(EventSchema),
           }),
           execute: async ({ events }) => {
-            log.info({ url, eventCount: events.length }, "Scraper agent extracted events");
+            log.debug({ url, eventCount: events.length }, "Scraper agent extracted events");
             extractedEvents.push(...events);
             return { received: events.length };
           },
         }),
       },
-      maxSteps: 2,
+      stopWhen: stepCountIs(1),
       prompt: `Extract all maimai tour event data from this page (${url}):\n\n${content}`,
       providerOptions: {
         gateway: {
@@ -186,6 +205,104 @@ Rules:
   }
 }
 
+/** Extract all markdown links from content, normalize and deduplicate */
+export function extractLinks(content: string, alreadyVisited: Set<string>): string[] {
+  const linkRegex = /\[([^\]]+)\]\(([^)]+?)(?:\s+"[^"]*")?\)/g;
+  const seen = new Set<string>();
+  const links: string[] = [];
+  let match;
+  while ((match = linkRegex.exec(content)) !== null) {
+    try {
+      const u = new URL(match[2]);
+      u.hash = "";
+      u.search = "";
+      const normalized = u.href;
+      if (
+        normalized.startsWith("https://gamerch.com/maimai/") &&
+        !normalized.includes("/author/") &&
+        !normalized.includes("/maimai/jump") &&
+        !normalized.includes("/maimai/tag/") &&
+        !alreadyVisited.has(normalized) &&
+        !seen.has(normalized)
+      ) {
+        seen.add(normalized);
+        links.push(normalized);
+      }
+    } catch {
+      // Skip invalid URLs
+    }
+  }
+  return links;
+}
+
+/** Use AI to determine whether a page should be scraped for event data */
+async function shouldScrapePage(content: string, url: string, log: any): Promise<boolean> {
+  const model = gateway(process.env.AI_MODEL || "anthropic/claude-sonnet-4-5-20250514");
+
+  let shouldScrape = false;
+
+  try {
+    await generateText({
+      model,
+      system: `You are an analysis agent for a maimai wiki crawler.
+
+You receive the text content of a page. Your ONLY job is to determine whether this page contains event reward tables.
+
+A page should be scraped if it contains event reward tables with columns like 距離[km], 報酬の種類, 報酬 — or inline event data with distance/reward pairs.
+
+Call submitDecision exactly once.`,
+      tools: {
+        submitDecision: tool({
+          description: "Submit whether this page should be scraped for event data.",
+          inputSchema: z.object({
+            shouldScrape: z.boolean().describe("Whether this page contains event reward tables"),
+          }),
+          execute: async ({ shouldScrape: s }) => {
+            shouldScrape = s;
+            return { received: true };
+          },
+        }),
+      },
+      stopWhen: stepCountIs(2),
+      prompt: `Does this page (${url}) contain event reward tables?\n\n${content}`,
+      providerOptions: {
+        gateway: {
+          caching: "auto",
+        },
+      },
+    });
+
+    log.debug({ url, shouldScrape }, "Scrape decision");
+  } catch (err) {
+    log.error(
+      { url, error: err instanceof Error ? err.message : String(err) },
+      "Scrape decision agent failed",
+    );
+  }
+
+  return shouldScrape;
+}
+
+export async function discoverLinks(
+  content: string,
+  url: string,
+  alreadyVisited: Set<string>,
+  log: any,
+): Promise<{ url: string; links: string[]; shouldScrape: boolean }> {
+  // Links are extracted programmatically — no AI needed
+  const links = extractLinks(content, alreadyVisited);
+
+  // AI only decides whether this page itself should be scraped
+  const shouldScrape = await shouldScrapePage(content, url, log);
+
+  log.debug(
+    { url, linksFound: links, shouldScrape },
+    "Discovery result",
+  );
+
+  return { url, links, shouldScrape };
+}
+
 export async function POST(request: NextRequest) {
   try {
     // Auth - same pattern as other admin routes
@@ -195,7 +312,7 @@ export async function POST(request: NextRequest) {
     if (!token) {
       return NextResponse.json(
         { error: "Missing authorization token" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -204,7 +321,7 @@ export async function POST(request: NextRequest) {
       console.error("ADMIN_UPDATE_TOKEN environment variable not set");
       return NextResponse.json(
         { error: "Server configuration error" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -212,7 +329,7 @@ export async function POST(request: NextRequest) {
       console.warn("Invalid admin token attempt");
       return NextResponse.json(
         { error: "Invalid authorization token" },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
@@ -222,199 +339,116 @@ export async function POST(request: NextRequest) {
     log.info("Starting event scraping");
 
     const collectedEvents: Event[] = [];
-    const visitedUrls = new Set<string>();
+    const visited = new Set<string>();
     const pageContentCache = new Map<string, string>();
+    const pagesToScrape: string[] = [];
     let pagesVisited = 0;
-    let totalSteps = 0;
 
-    const MAX_ATTEMPTS = 5;
+    // Phase 1: BFS Link Discovery
+    const queue: string[] = [START_URL];
 
-    const systemPrompt = `You are a web crawler agent for maimai tour event (つあーイベント) data from a Japanese wiki.
+    let bfsLevel = 0;
+    while (queue.length > 0 && bfsLevel < MAX_BFS_DEPTH) {
+      bfsLevel++;
+      log.debug({ bfsLevel, queueSize: queue.length, urls: queue }, "BFS wave start");
 
-Your ONLY job is to discover pages that contain event reward tables and submit them for scraping. You do NOT parse event data yourself.
+      // Fetch all queued pages in parallel
+      const fetchResults = await Promise.all(
+        queue.map(async (url) => {
+          visited.add(url);
+          const result = await fetchPageContent(url, visited, log);
+          if ("content" in result) {
+            pageContentCache.set(url, result.content);
+            pagesVisited++;
+            return { url, content: result.content };
+          }
+          log.error({ url, error: result.error }, "Failed to fetch during discovery");
+          return null;
+        }),
+      );
 
-Your task:
-1. Fetch the main event list page at ${START_URL}.
-2. The main page itself contains many event reward tables inline — submit it with submitPageForScrape.
-3. Some events on the main page say "詳しくはこちらをご覧ください" with a link to a DETAIL PAGE that has the reward table — submit those detail pages. These are event-specific pages like オンゲキちほー pages.
-4. The main page links to past version event lists (終了イベントちほー一覧) — fetch and submit each of those pages too (e.g. PRiSM, BUDDiES, FESTiVAL, UNiVERSE, Splash, でらっくす versions).
+      const fetched = fetchResults.filter(
+        (r): r is { url: string; content: string } => r !== null,
+      );
 
-IMPORTANT — What to submit vs what NOT to submit:
-- DO submit: pages that contain event reward TABLES (距離[km] / 報酬の種類 / 報酬 columns)
-- DO submit: the main page (${START_URL}) — it has many inline event tables
-- DO submit: event detail pages linked from "こちら" links
-- DO submit: past version event list pages (終了イベントちほー一覧)
-- Do NOT submit: individual SONG pages (楽曲ページ) — these are linked from reward tables but contain song info, not event data
-- Do NOT submit: pages about game mechanics, areas, tickets, etc.
-
-You MUST complete all submissions without stopping. Do NOT ask if you should continue — just do it. Submit ALL pages you find, then stop.`;
-
-    for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
-      const collectedNames = collectedEvents.map(e => e.name);
-      const visitedList = Array.from(visitedUrls);
-
-      let prompt: string;
-      if (attempt === 0) {
-        prompt = `Start by fetching ${START_URL}. Submit it for scraping (it has inline event tables). Then identify event detail pages (linked via "こちら") and past version event list pages (終了イベントちほー一覧) — fetch and submit each one. Do NOT submit individual song pages. Complete everything without stopping.`;
-      } else {
-        prompt = `Continue discovering maimai tour event pages. A previous attempt was interrupted.
-
-Already scraped ${collectedEvents.length} events: ${collectedNames.join(", ")}
-
-Already visited URLs: ${visitedList.join(", ")}
-
-Continue from ${START_URL} and discover any pages NOT already visited. Call submitPageForScrape for each new page.`;
-      }
-
-      log.info({ attempt: attempt + 1, collectedSoFar: collectedEvents.length, visitedPages: visitedList.length }, "Starting discovery attempt");
-
-      let hadStreamError = false;
-
-      const stream = streamText({
-        model: gateway(process.env.AI_MODEL || "anthropic/claude-sonnet-4-5-20250514"),
-        system: systemPrompt,
-        tools: {
-          fetchPage: tool({
-            description: "Fetch a page from the maimai wiki to read its content and find links. Only URLs under gamerch.com/maimai/ are allowed. This does NOT scrape events — use submitPageForScrape for that.",
-            inputSchema: z.object({
-              url: z.string().describe("The URL to fetch"),
-            }),
-            execute: async ({ url }) => {
-              pagesVisited++;
-              const result = await fetchPageContent(url, visitedUrls, log);
-              if ("content" in result) {
-                pageContentCache.set(url, result.content);
-                log.info({ url, content: result.content }, "Page content");
+      // Run discovery agents in parallel (batched by DISCOVERY_CONCURRENCY)
+      const nextQueue: string[] = [];
+      for (let i = 0; i < fetched.length; i += DISCOVERY_CONCURRENCY) {
+        const batch = fetched.slice(i, i + DISCOVERY_CONCURRENCY);
+        const discoveries = await Promise.all(
+          batch.map(({ url, content }) => discoverLinks(content, url, visited, log)),
+        );
+        for (const disc of discoveries) {
+          if (disc.shouldScrape && !pagesToScrape.includes(disc.url)) {
+            pagesToScrape.push(disc.url);
+          }
+          // Only follow links from pages that contain event data
+          if (disc.shouldScrape) {
+            for (const link of disc.links) {
+              if (!visited.has(link) && !nextQueue.includes(link) && !queue.includes(link)) {
+                nextQueue.push(link);
               }
-              return result;
-            },
-          }),
-          submitPageForScrape: tool({
-            description: "Submit a page URL for event data extraction by a separate AI agent. Call this for every page that contains event reward tables (距離/報酬). The page will be fetched automatically if not already cached.",
-            inputSchema: z.object({
-              url: z.string().describe("The URL of the page to scrape for events"),
-            }),
-            execute: async ({ url }) => {
-              log.info({ url }, "Page submitted for scraping");
-
-              // Use cached content or fetch
-              let content = pageContentCache.get(url);
-              if (!content) {
-                const result = await fetchPageContent(url, visitedUrls, log);
-                if ("error" in result) {
-                  log.error({ url, error: result.error }, "Failed to fetch page for scraping");
-                  return { error: result.error };
-                }
-                content = result.content;
-                pageContentCache.set(url, content);
-                pagesVisited++;
-              }
-
-              // Run the scraper agent on this page
-              const events = await scrapePageForEvents(content, url, log);
-              if (events.length > 0) {
-                collectedEvents.push(...events);
-                log.info({ url, newEvents: events.length, totalEvents: collectedEvents.length }, "Events collected from page");
-              }
-
-              return { success: true, eventsFound: events.length, totalCollected: collectedEvents.length };
-            },
-          }),
-        },
-        stopWhen: stepCountIs(30),
-        onError({ error }) {
-          hadStreamError = true;
-          const errorInfo = error instanceof Error
-            ? { message: error.message, name: error.name, stack: error.stack, cause: (error as any).cause?.message }
-            : String(error);
-          log.error({ errorInfo }, "Discovery stream error");
-        },
-        onStepFinish({ text, toolCalls, toolResults, finishReason, usage }) {
-          totalSteps++;
-          const step = totalSteps;
-          if (toolCalls?.length) {
-            for (const tc of toolCalls) {
-              log.info({
-                step,
-                tool: tc.toolName,
-                args: tc.args,
-              }, "Discovery tool call");
             }
           }
-          if (toolResults?.length) {
-            for (const tr of toolResults) {
-              log.info({
-                step,
-                tool: tr.toolName,
-                resultPreview: JSON.stringify(tr.result ?? null).slice(0, 300),
-              }, "Discovery tool result");
+        }
+      }
+
+      log.info(
+        { bfsLevel, newLinks: nextQueue.length, pagesToScrape: pagesToScrape.length },
+        "BFS wave complete",
+      );
+
+      queue.length = 0;
+      queue.push(...nextQueue);
+    }
+
+    // Phase 2: Run scraper agents in parallel (batches of 5)
+    log.info({ pagesToScrape: pagesToScrape.length }, "Discovery complete, starting parallel scraping phase");
+
+    for (let i = 0; i < pagesToScrape.length; i += SCRAPE_CONCURRENCY) {
+      const batch = pagesToScrape.slice(i, i + SCRAPE_CONCURRENCY);
+      log.info({ batch, batchIndex: Math.floor(i / SCRAPE_CONCURRENCY) + 1 }, "Starting scrape batch");
+
+      const results = await Promise.all(
+        batch.map(async (url) => {
+          let content = pageContentCache.get(url);
+          if (!content) {
+            const result = await fetchPageContent(url, visited, log);
+            if ("error" in result) {
+              log.error({ url, error: result.error }, "Failed to fetch page for scraping");
+              return [];
             }
+            content = result.content;
+            pagesVisited++;
           }
-          if (text) {
-            log.info({ step, text }, "Discovery text");
-          }
-          if (finishReason === "error" || finishReason === "length") {
-            log.error({ step, finishReason, usage }, "Discovery step error/truncation");
-            hadStreamError = true;
-          } else {
-            log.info({ step, finishReason, usage }, "Discovery step finished");
-          }
-        },
-        prompt,
-        providerOptions: {
-          gateway: {
-            caching: 'auto',
-          },
-        },
-      });
+          return scrapePageForEvents(content, url, log);
+        }),
+      );
 
-      try {
-        await stream.steps;
-      } catch (streamErr) {
-        hadStreamError = true;
-        log.error({
-          attempt: attempt + 1,
-          error: streamErr instanceof Error
-            ? { message: streamErr.message, name: streamErr.name, cause: (streamErr as any).cause?.message }
-            : String(streamErr),
-        }, "Discovery stream threw exception");
-      }
-
-      if (!hadStreamError) {
-        log.info({ attempt: attempt + 1 }, "Discovery completed successfully");
-        break;
-      }
-
-      log.warn({
-        attempt: attempt + 1,
-        collectedSoFar: collectedEvents.length,
-        willRetry: attempt < MAX_ATTEMPTS - 1,
-      }, "Discovery had errors, retrying with fresh context");
-
-      if (attempt === MAX_ATTEMPTS - 1) {
-        log.warn({ attempts: MAX_ATTEMPTS, collectedEvents: collectedEvents.length }, "All attempts exhausted, returning partial results");
+      for (const events of results) {
+        collectedEvents.push(...events);
       }
     }
 
     log.info({
       events: collectedEvents.length,
       pagesVisited,
-      totalSteps,
+      pagesScraped: pagesToScrape.length,
     }, "Event scraping complete");
 
     return NextResponse.json({
       success: true,
       events: collectedEvents,
       metadata: {
-        totalSteps,
         pagesVisited,
+        pagesScraped: pagesToScrape.length,
       },
     });
   } catch (error) {
     console.error("Error in admin fetch_events route:", error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
