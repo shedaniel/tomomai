@@ -83,9 +83,10 @@ export function getRatingImageUrl(rating: number) {
           : rating >= 12000 ? "bronze"
             : rating >= 10000 ? "purple"
               : rating >= 7000 ? "red"
-                : rating >= 4000 ? "yellow"
+                : rating >= 4000 ? "orange"
                   : rating >= 2000 ? "green"
-                    : "blue";
+                    : rating >= 1 ? "blue"
+                      : "normal";
 
-  return `https://maimaidx.jp/maimai-mobile/img/rating_base_${variant}.png?ver=1.55`;
+  return `/res/rating/${variant}.png`;
 }

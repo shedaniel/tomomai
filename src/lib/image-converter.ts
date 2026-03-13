@@ -1,5 +1,5 @@
 import sharp from "sharp";
-import { AGENT } from "./maimai-fetcher";
+import { AGENT } from "./http-agent";
 
 export async function convertJpegToAvif(
   jpegBuffer: Buffer,

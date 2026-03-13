@@ -4,7 +4,7 @@ import { awaitWrapper, sortKeys } from "@/lib/utils";
 import { sendDiscordNotice } from "@/server/services/admin/discord-webhooks";
 import { createNoticeSink } from "@/server/services/admin/fetcher-utils";
 import { fetchLevels } from "@/server/services/admin/level-fetcher";
-import { login } from "@/server/services/admin/maimai-login";
+import { loginAndGetCookies } from "@/server/services/maimai-login";
 import { nanoid } from "nanoid";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -69,7 +69,7 @@ export async function GET(request: NextRequest) {
 
     // Step 1: Validate the maimai token
     log.info("Validating maimai token...");
-    const [cookies, cookiesError] = await awaitWrapper(login(region, maimaiToken));
+    const [cookies, cookiesError] = await awaitWrapper(loginAndGetCookies(region, maimaiToken));
 
     log.info("Token validated. Fetching levels...");
 

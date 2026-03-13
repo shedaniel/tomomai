@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll } from "vitest";
 import { PendingSong, value } from "@/server/utils/admin/type";
 import type { Logger } from "pino";
 import { getCurrentVersion, VersionId } from "@/lib/metadata";
-import { login } from "./maimai-login";
+import { loginAndGetCookies } from "@/server/services/maimai-login";
 import { MaimaiBaseFetcher } from "./maimai-base-songs";
 import { DxDataFetcher } from "./dxrating";
 import { FETCHERS, FetchingContextExtended } from "./level-fetcher";
@@ -67,7 +67,7 @@ describe.skipIf(shouldSkip)("Integration: LevelFetcher", () => {
 
     // Login and get cookies
     console.log("Logging in to get cookies...");
-    cookies = await login(region, TOKEN);
+    cookies = await loginAndGetCookies(region, TOKEN);
     console.log("Login successful, cookies obtained");
 
     // Create base context

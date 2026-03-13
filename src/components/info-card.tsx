@@ -12,7 +12,7 @@ import { SPRING_CONFIGS, STAGGER, getTransition } from "@/lib/animation-constant
 
 function RatingImage({ rating }: { rating: number }) {
   return (
-    <Image src={createSafeMaimaiImageUrl(getRatingImageUrl(rating))} alt={rating.toString()} width={120} height={35} crossOrigin="anonymous" />
+    <Image src={getRatingImageUrl(rating)} alt={rating.toString()} width={120} height={35} crossOrigin="anonymous" />
   );
 }
 
