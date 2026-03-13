@@ -173,8 +173,8 @@ export const songs = pgTable("songs", {
   type: chartTypeEnum("type").notNull(),
   genre: text("genre").notNull(), // Will define enum later based on maimai genres
   region: regionEnum("region").notNull(),
-  gameVersion: smallint("gameVersion").notNull(),
-  addedVersion: smallint("addedVersion").notNull(), // -1 for legacy versions, or actual version number for newer versions
+  gameVersion: smallint("gameVersion").notNull(), // ref @metadata.ts
+  addedVersion: smallint("addedVersion").notNull(), // ref @metadata.ts
   bpm: smallint("bpm"),
   noteDesigner: text("noteDesigner"),
   tapCount: smallint("tapCount"),

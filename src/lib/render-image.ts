@@ -40,6 +40,7 @@ const VERSION_SETTINGS = {
       top: -100,
       opacity: 1.0,
     },
+    logoScale: 1.0,
     contentBackgroundColor: '#00000010',
     footerBackgroundColor: '#00000020',
   },
@@ -55,6 +56,7 @@ const VERSION_SETTINGS = {
       top: -100,
       opacity: 1.0,
     },
+    logoScale: 1.0,
     contentBackgroundColor: '#00000020',
     footerBackgroundColor: '#00000040',
   },
@@ -70,6 +72,23 @@ const VERSION_SETTINGS = {
       top: -30,
       opacity: 1.0,
     },
+    logoScale: 1.0,
+    contentBackgroundColor: '#00000020',
+    footerBackgroundColor: '#00000040',
+  },
+  13: {
+    backgroundGradient: [
+      { offset: 1, color: '#fbdffe' },
+      { offset: 0, color: '#fdb2e0' },
+    ],
+    character: {
+      scaleX: 0.6,
+      scaleY: 0.6,
+      left: CANVAS_WIDTH - 540,
+      top: -30,
+      opacity: 1.0,
+    },
+    logoScale: 1.2,
     contentBackgroundColor: '#00000020',
     footerBackgroundColor: '#00000040',
   },
@@ -159,9 +178,10 @@ async function renderHeaderBackground(
   cache: ImageCache,
 ) {
   const INNER_PADDING = 30;
+  const versionSettings = VERSION_SETTINGS[data.gameVersion as keyof typeof VERSION_SETTINGS]
 
   // Render character with clipping
-  const characterSettings = VERSION_SETTINGS[data.gameVersion as keyof typeof VERSION_SETTINGS]?.character || {
+  const characterSettings = versionSettings?.character || {
     scaleX: 0.56,
     scaleY: 0.56,
     left: CANVAS_WIDTH - 580,
@@ -186,7 +206,7 @@ async function renderHeaderBackground(
 
   // Render logo with shadow
   const logoImg = await loadImageWithCache(cache, `/res/logo/${data.gameVersion}.png`);
-  const logoScale = (TARGET_HEIGHT - INNER_PADDING * 2) / logoImg.height;
+  const logoScale = (TARGET_HEIGHT - INNER_PADDING * 2) / logoImg.height * (versionSettings?.logoScale || 1.0);
   const logoWidth = logoImg.width * logoScale;
   const logoHeight = logoImg.height * logoScale;
   const characterLeft = characterSettings.left;

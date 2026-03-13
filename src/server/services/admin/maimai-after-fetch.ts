@@ -1,5 +1,5 @@
 import { Region } from "@/lib/types";
-import { AGENT } from "@/lib/maimai-fetcher";
+import { AGENT } from "@/lib/http-agent";
 import { load } from "cheerio";
 import { normalizeGenre } from "@/lib/name-utils";
 import { type Logger } from "pino";

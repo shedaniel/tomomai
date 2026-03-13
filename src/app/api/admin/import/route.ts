@@ -1,13 +1,15 @@
 import { db } from "@/lib/db";
 import { songs } from "@/lib/db/schema-pg";
+import { VersionId } from "@/lib/metadata";
+import { Region } from "@/lib/types";
 import { and, eq, gte, lte, sql } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { NextRequest, NextResponse } from "next/server";
 
 // Helper function to parse the "from" parameter
 function parseFromParameter(from: string): {
-  region: "intl" | "jp";
-  gameVersion: number;
+  region: Region;
+  gameVersion: VersionId;
   versionFilter: "eq" | "lte" | "gte";
   versionValue: number;
 } {
@@ -27,8 +29,8 @@ function parseFromParameter(from: string): {
   const versionFilter = operator === "<=" ? "lte" : operator === ">=" ? "gte" : "eq";
 
   return {
-    region: region as "intl" | "jp",
-    gameVersion: parseInt(gameVersion, 10),
+    region: region as Region,
+    gameVersion: parseInt(gameVersion, 10) as VersionId,
     versionFilter,
     versionValue: parseInt(versionValue, 10),
   };
@@ -36,8 +38,8 @@ function parseFromParameter(from: string): {
 
 // Helper function to parse the "to" parameter
 function parseToParameter(to: string): {
-  region: "intl" | "jp";
-  gameVersion: number;
+  region: Region;
+  gameVersion: VersionId;
 } {
   // Expected format: "intl-11" or "jp-12"
   const match = to.match(/^(intl|jp)-(\d+)$/);
@@ -53,8 +55,8 @@ function parseToParameter(to: string): {
   }
 
   return {
-    region: region as "intl" | "jp",
-    gameVersion: parseInt(gameVersion, 10),
+    region: region as Region,
+    gameVersion: parseInt(gameVersion, 10) as VersionId,
   };
 }
 
@@ -262,14 +264,13 @@ export async function GET(request: NextRequest) {
           console.log(`Upserting batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(targetSongs.length / batchSize)} (${batch.length} songs)`);
 
           await db.insert(songs).values(batch).onConflictDoUpdate({
-            target: [songs.songName, songs.difficulty, songs.type, songs.region, songs.gameVersion],
+            target: [songs.songName, songs.difficulty, songs.type, songs.region, songs.gameVersion, songs.addedVersion],
             set: {
               artist: sql`excluded.artist`,
               cover: sql`excluded.cover`,
               level: sql`excluded.level`,
               levelPrecise: sql`excluded."levelPrecise"`,
               genre: sql`excluded.genre`,
-              addedVersion: sql`excluded."addedVersion"`,
               bpm: sql`excluded.bpm`,
               noteDesigner: sql`excluded."noteDesigner"`,
               tapCount: sql`excluded."tapCount"`,

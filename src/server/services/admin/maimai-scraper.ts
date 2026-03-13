@@ -1,5 +1,5 @@
 import { logger } from "@/lib/logger";
-import { AGENT } from "@/lib/maimai-fetcher";
+import { AGENT } from "@/lib/http-agent";
 import { VersionId } from "@/lib/metadata";
 import { normalizeName } from "@/lib/name-utils";
 import { Difficulty, Level, Region, SongType } from "@/lib/types";
