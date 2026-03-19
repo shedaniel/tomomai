@@ -219,7 +219,7 @@ export async function generateAndSendCreditImage({
     const imagesToCache = [
       getTypeBadgeUrl("dx"),
       getTypeBadgeUrl("std"),
-      getRatingImageUrl(snapshot.rating),
+      getRatingImageUrl(snapshot.rating, snapshot.gameVersion),
       snapshot.iconUrl,
       snapshot.classRankUrl,
       snapshot.courseRankUrl,

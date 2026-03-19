@@ -3230,7 +3230,7 @@ export const userRouter = router({
       region: regionSchema,
       version: z.string(),
       difficulty: z.enum(["basic", "advanced", "expert", "master"]),
-      plateType: z.enum(["kyoku", "shou", "shin", "maimai"]),
+      plateType: z.enum(["kiwami", "shou", "shin", "maimai"]),
     }))
     .query(async ({ ctx, input }) => {
       // Get the latest snapshot for this region
@@ -3292,7 +3292,7 @@ export const userRouter = router({
         const fs = song.fs || "none";
 
         switch (input.plateType) {
-          case "kyoku": // FC or above
+          case "kiwami": // FC or above
             return !["fc", "fc+", "ap", "ap+"].includes(fc);
           case "shou": // SSS or above
             return achievement < 1000000; // Less than 100%
@@ -3321,7 +3321,7 @@ export const userRouter = router({
       region: regionSchema,
       version: z.string(),
       difficulty: z.enum(["basic", "advanced", "expert", "master"]),
-      plateType: z.enum(["kyoku", "shou", "shin", "maimai"]),
+      plateType: z.enum(["kiwami", "shou", "shin", "maimai"]),
     }))
     .query(async ({ input }) => {
       // Resolve snapshot from publicId, verify profile is published
@@ -3378,7 +3378,7 @@ export const userRouter = router({
         const fs = song.fs || "none";
 
         switch (input.plateType) {
-          case "kyoku":
+          case "kiwami":
             return !["fc", "fc+", "ap", "ap+"].includes(fc);
           case "shou":
             return achievement < 1000000;

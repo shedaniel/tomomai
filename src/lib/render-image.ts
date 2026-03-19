@@ -7,6 +7,7 @@ import { calculateDXStars, calculateNoteLosses, distributeBreaks } from './score
 import type { Difficulty, FullCombo, FullSync, SongType, TitleType } from "./types";
 import { SnapshotWithSongs } from "./types";
 import { getTypeBadgeUrl } from "./utils";
+import { VersionId } from './metadata';
 
 type CanvasSize = {
   width: number;
@@ -317,7 +318,7 @@ async function renderHeader(ctx: SkiaContext, data: HeaderData, cache: ImageCach
   ctx.fillText(data.displayName, nameTextLeft, nameTextTop + NAME_FONT_SIZE / 2 + 10);
 
   // Render rating frame
-  const ratingFrame = await loadImageWithCache(cache, getRatingImageUrl(data.rating));
+  const ratingFrame = await loadImageWithCache(cache, getRatingImageUrl(data.rating, data.gameVersion as VersionId));
   const ratingScale = 0.75;
   const ratingWidth = ratingFrame.width * ratingScale;
   const ratingHeight = ratingFrame.height * ratingScale;

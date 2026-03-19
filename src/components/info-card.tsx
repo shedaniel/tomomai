@@ -9,10 +9,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { motion } from "motion/react";
 import { SPRING_CONFIGS, STAGGER, getTransition } from "@/lib/animation-constants";
+import { VersionId } from "@/lib/metadata";
 
-function RatingImage({ rating }: { rating: number }) {
+function RatingImage({ rating, version }: { rating: number; version?: VersionId }) {
   return (
-    <Image src={getRatingImageUrl(rating)} alt={rating.toString()} width={120} height={35} crossOrigin="anonymous" />
+    <Image src={getRatingImageUrl(rating, version)} alt={rating.toString()} width={120} height={35} crossOrigin="anonymous" />
   );
 }
 
@@ -71,7 +72,7 @@ export function InfoCard({
             <span className="text-lg font-medium flex items-center self-center max-xs:flex-col">
               <span className="mx-4 flex-1 whitespace-nowrap max-xs:text-md max-2xs:text-sm">{snapshot.displayName}</span>
               <div className="shrink-0 grow-0 min-w-fit w-[120px] h-[35px] relative">
-                <RatingImage rating={snapshot.rating} />
+                <RatingImage rating={snapshot.rating} version={snapshot.gameVersion} />
                 <span className="absolute top-[3px] left-[8px] w-[106px] h-[21px] tracking-[1.65px] text-right text-[18px] text-white box-border font-normal font-mono">{snapshot.rating}</span>
               </div>
             </span>
