@@ -1,6 +1,7 @@
 import { db } from '@/lib/db';
 import { songs, user, userRecentSongs, userRecentSongsDetailed, userSnapshots } from '@/lib/db/schema-pg';
 import { and, desc, eq, lte } from 'drizzle-orm';
+import { VersionId } from '@/lib/metadata';
 import { FullCombo, FullSync, TitleType } from '@/lib/types';
 
 // Type for detailed song statistics
@@ -74,7 +75,7 @@ export interface CreditData {
 export interface SnapshotMetadata {
   id: string;
   fetchedAt: Date;
-  gameVersion: number;
+  gameVersion: VersionId;
   rating: number;
   iconUrl: string;
   displayName: string;
@@ -386,7 +387,7 @@ export async function prepareCreditData(
   const snapshotMetadata: SnapshotMetadata = {
     id: snapshot.publicId,
     fetchedAt: snapshot.fetchedAt,
-    gameVersion: snapshot.gameVersion,
+    gameVersion: snapshot.gameVersion as VersionId,
     rating: snapshot.rating,
     iconUrl: snapshot.iconUrl,
     displayName: snapshot.displayName,

@@ -16,7 +16,7 @@ export const platesRouter = router({
       region: regionSchema,
       version: z.string(),
       difficulty: z.enum(["basic", "advanced", "expert", "master"]),
-      plateType: z.enum(["kyoku", "shou", "shin", "maimai"]),
+      plateType: z.enum(["kiwami", "shou", "shin", "maimai"]),
     }))
     .query(async ({ ctx, input }) => {
       const snapshot = await db
@@ -51,7 +51,7 @@ export const platesRouter = router({
       region: regionSchema,
       version: z.string(),
       difficulty: z.enum(["basic", "advanced", "expert", "master"]),
-      plateType: z.enum(["kyoku", "shou", "shin", "maimai"]),
+      plateType: z.enum(["kiwami", "shou", "shin", "maimai"]),
     }))
     .query(async ({ input }) => {
       const { snapshotInternalId, gameVersion } = await resolvePublicSnapshotUserId(input.snapshotId);

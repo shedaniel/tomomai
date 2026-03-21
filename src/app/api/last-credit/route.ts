@@ -75,7 +75,7 @@ export async function GET(request: NextRequest) {
     const imagesToCache = [
       getTypeBadgeUrl("dx"),
       getTypeBadgeUrl("std"),
-      getRatingImageUrl(snapshot.rating),
+      getRatingImageUrl(snapshot.rating, snapshot.gameVersion),
       snapshot.iconUrl,
       snapshot.classRankUrl,
       snapshot.courseRankUrl,

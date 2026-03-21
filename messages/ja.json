@@ -534,7 +534,7 @@
     "songsNotMeeting": "{requirement} 未達成の楽曲",
     "noSongsToDisplay": "表示する楽曲がありません",
     "plates": {
-      "kyoku": "全曲 FC 以上",
+      "kiwami": "全曲 FC 以上",
       "shou": "全曲 SSS 以上",
       "shin": "全曲 AP 以上",
       "maimai": "全曲 FDX 以上"

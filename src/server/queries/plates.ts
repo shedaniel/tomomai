@@ -9,7 +9,7 @@ export async function fetchPlateSongs(
   region: Region,
   version: string,
   difficulty: Difficulty,
-  plateType: "kyoku" | "shou" | "shin" | "maimai"
+  plateType: "kiwami" | "shou" | "shin" | "maimai"
 ): Promise<MinimalSongForDisplay[]> {
   const snapshotScoresSub = db
     .select({
@@ -58,7 +58,7 @@ export async function fetchPlateSongs(
     const fs = song.fs || "none";
 
     switch (plateType) {
-      case "kyoku":
+      case "kiwami":
         return !["fc", "fc+", "ap", "ap+"].includes(fc);
       case "shou":
         return achievement < 1000000;

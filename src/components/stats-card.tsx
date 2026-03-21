@@ -66,9 +66,9 @@ const FS_ORDER = FS_ENUM.filter(fs => fs !== "none").reverse();
 // FC and FS labels
 
 // Plate types
-type PlateType = "kyoku" | "shou" | "shin" | "maimai";
+type PlateType = "kiwami" | "shou" | "shin" | "maimai";
 const PLATE_LABELS: Record<PlateType, string> = {
-  kyoku: "極",
+  kiwami: "極",
   shou: "将",
   shin: "神",
   maimai: "舞舞",
@@ -126,7 +126,7 @@ function PlatesGrid({ data, selectedVersion, region, snapshotId }: PlatesGridPro
     const mainDifficulties = ["basic", "advanced", "expert", "master"];
     const totalSongs: Record<string, number> = {};
     const progress: Record<PlateType, Record<string, number>> = {
-      kyoku: {},
+      kiwami: {},
       shou: {},
       shin: {},
       maimai: {},
@@ -135,7 +135,7 @@ function PlatesGrid({ data, selectedVersion, region, snapshotId }: PlatesGridPro
     // Initialize counts
     for (const difficulty of mainDifficulties) {
       totalSongs[difficulty] = data.totalSongs[selectedVersion]?.[difficulty] || 0;
-      progress.kyoku[difficulty] = 0;
+      progress.kiwami[difficulty] = 0;
       progress.shou[difficulty] = 0;
       progress.shin[difficulty] = 0;
       progress.maimai[difficulty] = 0;
@@ -146,10 +146,10 @@ function PlatesGrid({ data, selectedVersion, region, snapshotId }: PlatesGridPro
       const diffData = versionData[difficulty];
       if (!diffData) continue;
 
-      // 極 (Kyoku): FC or above
+      // 極 (kiwami): FC or above
       const fcCount = (diffData.fc["fc"] || 0) + (diffData.fc["fc+"] || 0) +
         (diffData.fc["ap"] || 0) + (diffData.fc["ap+"] || 0);
-      progress.kyoku[difficulty] = fcCount;
+      progress.kiwami[difficulty] = fcCount;
 
       // 将 (Shou): SSS or above
       const sssCount = (diffData.grades["SSS"] || 0) + (diffData.grades["SSS+"] || 0);
