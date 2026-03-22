@@ -1,6 +1,5 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SnapshotWithSongs } from "@/lib/types";
 import { cn, createSafeMaimaiImageUrl } from "@/lib/utils";
 import { Map, Zap, CheckCircle2, Gift, Calendar } from "lucide-react";
@@ -165,15 +164,13 @@ export function EventsCard({ selectedSnapshotData }: { selectedSnapshotData: Sna
   const eventAreaEvents = allEvents.filter((e) => e.eventType === "eventArea");
 
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <div className="flex items-center gap-2">
-          <Map className="h-5 w-5" />
-          <CardTitle>{t("events.title")}</CardTitle>
-        </div>
-      </CardHeader>
+    <div className="w-full space-y-6">
+      <h2 className="text-lg font-semibold flex items-center gap-2">
+        <Map className="h-5 w-5" />
+        {t("events.title")}
+      </h2>
 
-      <CardContent>
+      <div>
         {allEvents.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">{t("events.noEventsAvailable")}</div>
         ) : (
@@ -206,7 +203,7 @@ export function EventsCard({ selectedSnapshotData }: { selectedSnapshotData: Sna
             </TabsPanels>
           </Tabs>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

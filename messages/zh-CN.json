@@ -501,7 +501,9 @@
       "type": "类型",
       "total": "总计",
       "totalLoss": "失分"
-    }
+    },
+    "clickToExpand": "点击展开详情",
+    "clickToCollapse": "点击收起"
   },
   "events": {
     "title": "活动地图",

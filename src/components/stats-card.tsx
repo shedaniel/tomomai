@@ -1,6 +1,5 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select-friendly";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
@@ -447,28 +446,24 @@ export function StatsCard({ region, selectedSnapshotData, snapshotId }: StatsCar
 
   if (isLoading) {
     return (
-      <Card>
-        <CardContent className="p-8 text-center w-full h-[calc(100vh-20rem)] flex flex-col items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-        </CardContent>
-      </Card>
+      <div className="p-8 text-center w-full h-[calc(100vh-20rem)] flex flex-col items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
     );
   }
 
   if (!data || Object.keys(data.stats).length === 0) {
     return (
-      <Card>
-        <CardContent className="p-8 text-center w-full h-[calc(100vh-20rem)] flex flex-col items-center justify-center">
-          <p className="text-muted-foreground">{t('playerStats.noDataAvailable')}</p>
-        </CardContent>
-      </Card>
+      <div className="p-8 text-center w-full h-[calc(100vh-20rem)] flex flex-col items-center justify-center">
+        <p className="text-muted-foreground">{t('playerStats.noDataAvailable')}</p>
+      </div>
     );
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{t('playerStats.title')}</CardTitle>
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-lg font-semibold">{t('playerStats.title')}</h2>
         <div className="flex flex-col sm:flex-row gap-2 mt-4">
           <Select value={selectedVersion} onValueChange={setSelectedVersion}>
             <SelectTrigger className="w-full sm:w-[200px]">
@@ -521,8 +516,8 @@ export function StatsCard({ region, selectedSnapshotData, snapshotId }: StatsCar
             )}
           </Button>
         </div>
-      </CardHeader>
-      <CardContent className="space-y-8">
+      </div>
+      <div className="space-y-8">
         {viewMode === "plates" ? (
           <PlatesGrid data={data} selectedVersion={selectedVersion} region={region} snapshotId={snapshotId} />
         ) : (
@@ -653,7 +648,7 @@ export function StatsCard({ region, selectedSnapshotData, snapshotId }: StatsCar
             </div>
           </>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

@@ -1,6 +1,5 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { Slider } from "@/components/ui/slider";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -128,14 +127,12 @@ export function HistoryCard({ region }: HistoryCardProps) {
   }, [chartData]);
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <TrendingUp className="h-5 w-5" />
-          {t("dataContent.history.title")}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
+    <div className="space-y-6">
+      <h2 className="text-lg font-semibold flex items-center gap-2">
+        <TrendingUp className="h-5 w-5" />
+        {t("dataContent.history.title")}
+      </h2>
+      <div>
         {isLoading ? (
           <div className="h-[400px] flex items-center justify-center text-muted-foreground">
             {t("common.loading")}
@@ -337,7 +334,7 @@ export function HistoryCard({ region }: HistoryCardProps) {
             )}
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

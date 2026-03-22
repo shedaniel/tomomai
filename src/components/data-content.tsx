@@ -197,17 +197,17 @@ export function DataContent({
         orientation="vertical"
         value={selectedTab}
         onValueChange={handleTabChange}
-        className="flex flex-col md:flex-row md:items-start"
+        className="flex flex-col md:flex-row md:items-start gap-x-6 lg:gap-x-8 gap-y-6"
       >
-        <TabsList className="shrink-0 grid grid-cols-1 min-w-30 p-0 bg-background md:mt-4 font-semibold max-md:h-fit max-md:mb-4">
+        <TabsList className="shrink-0 flex flex-row justify-start overflow-x-auto gap-x-1 md:grid md:grid-cols-1 md:w-48 md:overflow-x-visible md:-ml-3 p-0 bg-background h-fit rounded-none">
           {visibleTabs.map((tab) => (
-            <TabsTrigger key={tab.value} value={tab.value} className="border-l-2 border-transparent justify-start rounded-none data-[state=active]:shadow-none data-[state=active]:border-primary data-[state=active]:bg-primary/5 py-1.5 pr-4">
-              <tab.icon className="h-5 w-5 me-3" /> {tab.name}
+            <TabsTrigger key={tab.value} value={tab.value} className="justify-start rounded-md text-sm text-muted-foreground data-[state=active]:shadow-none data-[state=active]:bg-muted data-[state=active]:text-foreground data-[state=active]:font-medium data-[state=active]:border data-[state=active]:border-border data-[state=active]:md:px-3.5 data-[state=active]:md:my-1 data-[state=active]:md:text-[15px] data-[state=active]:max-md:px-4 px-3 py-2 whitespace-nowrap shrink-0 md:shrink md:whitespace-normal transition-all">
+              <tab.icon className="size-4 me-2 data-[state=active]:scale-125 transition-all" /> {tab.name}
             </TabsTrigger>
           ))}
         </TabsList>
 
-        <TabsContent value="info" className="mt-0 flex-1 min-w-0">
+        <TabsContent value="info" className="mt-0 flex-1 min-w-0 mx-1">
           <motion.div
             initial={{ opacity: 0, x: 10 }}
             animate={{ opacity: 1, x: 0 }}
@@ -221,7 +221,7 @@ export function DataContent({
           </motion.div>
         </TabsContent>
         {(visitedBySelf || !!privacySettings.showAllScores) && (
-          <TabsContent value="stats" className="mt-0 flex-1 min-w-0">
+          <TabsContent value="stats" className="mt-0 flex-1 min-w-0 mx-1">
             <motion.div
               initial={{ opacity: 0, x: 10 }}
               animate={{ opacity: 1, x: 0 }}
@@ -235,7 +235,7 @@ export function DataContent({
             </motion.div>
           </TabsContent>
         )}
-        <TabsContent value="songs" className="mt-0 flex-1 min-w-0">
+        <TabsContent value="songs" className="mt-0 flex-1 min-w-0 mx-1">
           <motion.div
             initial={{ opacity: 0, x: 10 }}
             animate={{ opacity: 1, x: 0 }}
@@ -245,7 +245,7 @@ export function DataContent({
           </motion.div>
         </TabsContent>
         {(visitedBySelf || !!privacySettings.showScoreDetails) && (
-          <TabsContent value="recent" className="mt-0 flex-1 min-w-0">
+          <TabsContent value="recent" className="mt-0 flex-1 min-w-0 mx-1">
             <RecentSongsCard
               region={region}
               beforeDate={selectedSnapshotData?.snapshot.fetchedAt}
@@ -253,7 +253,7 @@ export function DataContent({
             />
           </TabsContent>
         )}
-        <TabsContent value="recommendations" className="mt-0 flex-1 min-w-0">
+        <TabsContent value="recommendations" className="mt-0 flex-1 min-w-0 mx-1">
           <motion.div
             initial={{ opacity: 0, x: 10 }}
             animate={{ opacity: 1, x: 0 }}
@@ -263,25 +263,25 @@ export function DataContent({
           </motion.div>
         </TabsContent>
         {visitedBySelf && flags.historyCard && (
-          <TabsContent value="history" className="mt-0 flex-1 min-w-0">
+          <TabsContent value="history" className="mt-0 flex-1 min-w-0 mx-1">
             <HistoryCard region={region} />
           </TabsContent>
         )}
         {privacySettings.showEvents && (
-          <TabsContent value="map" className="mt-0 flex-1 min-w-0">
+          <TabsContent value="map" className="mt-0 flex-1 min-w-0 mx-1">
             <EventsCard selectedSnapshotData={selectedSnapshotData} />
           </TabsContent>
         )}
-        <TabsContent value="exportImage" className="mt-0 flex-1 min-w-0">
+        <TabsContent value="exportImage" className="mt-0 flex-1 min-w-0 mx-1">
           <ExportImageCard selectedSnapshotData={selectedSnapshotData} region={region} showLastCredit={visitedBySelf || !!privacySettings.showScoreDetails} username={visitableProfileAt ?? undefined} />
         </TabsContent>
         {visitedBySelf && (
-          <TabsContent value="developer" className="mt-0 flex-1 min-w-0">
+          <TabsContent value="developer" className="mt-0 flex-1 min-w-0 mx-1">
             <DeveloperCard selectedSnapshotData={selectedSnapshotData} />
           </TabsContent>
         )}
         {visitedBySelf && flags.albumsCard && (
-          <TabsContent value="albums" className="mt-0 flex-1 min-w-0">
+          <TabsContent value="albums" className="mt-0 flex-1 min-w-0 mx-1">
             <AlbumCard region={region} />
           </TabsContent>
         )}

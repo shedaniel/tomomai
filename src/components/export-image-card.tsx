@@ -1,7 +1,6 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CANVAS_HEIGHT, CANVAS_WIDTH } from "@/lib/image-spec";
 import { Region, SnapshotWithSongs } from "@/lib/types";
 import { Download, RefreshCw } from "lucide-react";
@@ -180,14 +179,12 @@ export function ExportImageCard({ selectedSnapshotData, region, showLastCredit =
   };
 
   return (
-    <Card className="w-full mx-auto">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Download className="h-5 w-5" />
-          {t('dataContent.tabs.exportImage')}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-6">
+    <div className="w-full mx-auto space-y-6">
+      <h2 className="text-lg font-semibold flex items-center gap-2">
+        <Download className="h-5 w-5" />
+        {t('dataContent.tabs.exportImage')}
+      </h2>
+      <div className="space-y-6">
         <div className="flex flex-col lg:flex-row gap-6">
           <ImagePanel
             imageUrl={exportImageUrl}
@@ -214,7 +211,7 @@ export function ExportImageCard({ selectedSnapshotData, region, showLastCredit =
             />
           )}
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

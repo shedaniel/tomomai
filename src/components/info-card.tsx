@@ -1,6 +1,6 @@
 "use client";
 
-import { Card, CardContent } from "@/components/ui/card";
+
 import { getRatingImageUrl } from "@/lib/rating-calculator";
 import { SnapshotWithSongs } from "@/lib/types";
 import { createSafeMaimaiImageUrl } from "@/lib/utils";
@@ -31,10 +31,9 @@ export function InfoCard({
   const { snapshot } = selectedSnapshotData;
 
   return (
-    <Card>
-      <CardContent>
+    <div className="space-y-6">
         {/* Profile Visibility Banner */}
-        <div className="mb-6 p-4 rounded-md bg-muted ring-2 ring-offset-2 ring-offset-card ring-foreground/20">
+        <div className="p-4 rounded-md bg-muted ring-2 ring-offset-2 ring-offset-background ring-foreground/20">
           {visitableProfileAt ? (
             <div>
               <h3 className="font-medium mb-1 text-foreground">{t('profileVisibility.public')}</h3>
@@ -115,7 +114,6 @@ export function InfoCard({
             )}
           </div>
         </div>
-      </CardContent>
-    </Card>
+    </div>
   );
 }

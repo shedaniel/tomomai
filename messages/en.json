@@ -502,7 +502,9 @@
       "type": "Type",
       "total": "Total",
       "totalLoss": "Loss"
-    }
+    },
+    "clickToExpand": "Click to expand details",
+    "clickToCollapse": "Click to collapse"
   },
   "events": {
     "title": "Events",

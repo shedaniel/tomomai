@@ -501,7 +501,9 @@
       "type": "類型",
       "total": "總計",
       "totalLoss": "失分"
-    }
+    },
+    "clickToExpand": "點擊展開詳情",
+    "clickToCollapse": "點擊收起"
   },
   "events": {
     "title": "活動地圖",

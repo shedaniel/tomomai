@@ -83,8 +83,8 @@ const VERSION_SETTINGS = {
       { offset: 0, color: '#fdb2e0' },
     ],
     character: {
-      scaleX: 0.6,
-      scaleY: 0.6,
+      scaleX: 0.65,
+      scaleY: 0.65,
       left: CANVAS_WIDTH - 540,
       top: -30,
       opacity: 1.0,

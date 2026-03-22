@@ -12,7 +12,6 @@ import {
 } from "@/components/ui/dialog-friendly";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -351,8 +350,8 @@ export function DataBanner({
   };
 
   return (
-    <Card className="w-full">
-      <CardContent>
+    <div className="border-b pb-6">
+      <div>
         <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0 md:space-x-4">
           {/* Left side - Snapshot selector */}
           <div className="flex items-center gap-x-4">
@@ -415,7 +414,7 @@ export function DataBanner({
           region={region}
           t={t}
         />
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

@@ -1,6 +1,5 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { trpc } from "@/lib/trpc-client";
 import { Region } from "@/lib/types";
 import { cn, getTypeBadgeUrl } from "@/lib/utils";
@@ -119,56 +118,44 @@ export function AlbumCard({ region }: AlbumCardProps) {
 
   if (isLoading && offset === 0) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Images className="h-5 w-5" />
-            {t('title')}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-          </div>
-        </CardContent>
-      </Card>
+      <div className="space-y-6">
+        <h2 className="text-lg font-semibold flex items-center gap-2">
+          <Images className="h-5 w-5" />
+          {t('title')}
+        </h2>
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      </div>
     );
   }
 
   if (error) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Images className="h-5 w-5" />
-            {t('title')}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-center py-12 text-muted-foreground">
-            <AlertCircle className="h-5 w-5 mr-2" />
-            <span>{t('error')}</span>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="space-y-6">
+        <h2 className="text-lg font-semibold flex items-center gap-2">
+          <Images className="h-5 w-5" />
+          {t('title')}
+        </h2>
+        <div className="flex items-center justify-center py-12 text-muted-foreground">
+          <AlertCircle className="h-5 w-5 mr-2" />
+          <span>{t('error')}</span>
+        </div>
+      </div>
     );
   }
 
   if (albums.length === 0 && !isLoading && processedOffsetsRef.current.has(0)) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Images className="h-5 w-5" />
-            {t('title')}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-center py-12 text-muted-foreground">
-            <span>{t('noAlbums')}</span>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="space-y-6">
+        <h2 className="text-lg font-semibold flex items-center gap-2">
+          <Images className="h-5 w-5" />
+          {t('title')}
+        </h2>
+        <div className="flex items-center justify-center py-12 text-muted-foreground">
+          <span>{t('noAlbums')}</span>
+        </div>
+      </div>
     );
   }
 
@@ -181,13 +168,12 @@ export function AlbumCard({ region }: AlbumCardProps) {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Images className="h-5 w-5" />
-            {t('title')}
-          </div>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-semibold flex items-center gap-2">
+          <Images className="h-5 w-5" />
+          {t('title')}
+        </h2>
           <div className="flex items-center gap-3">
             {data?.storage && (
               <ResponsiveDialog>
@@ -267,9 +253,8 @@ export function AlbumCard({ region }: AlbumCardProps) {
               </span>
             )}
           </div>
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
+      </div>
+      <div>
         {/* Upload Notice Banner */}
         <div className="mb-4 flex gap-2 p-3 bg-neutral-50 dark:bg-neutral-700/20 border border-neutral-200 dark:border-neutral-600 rounded-md">
           <Info className="h-4 w-4 text-neutral-600 dark:text-neutral-400 mt-0.5 shrink-0" />
@@ -304,7 +289,7 @@ export function AlbumCard({ region }: AlbumCardProps) {
                       coverUrl={album.cover}
                       alt={album.songName}
                       className={cn(
-                        "w-14 h-14 rounded ring-2 ring-offset-2 ring-offset-card object-cover",
+                        "w-14 h-14 rounded ring-2 ring-offset-2 ring-offset-background object-cover",
                         album.difficulty === "basic" && "ring-green-400",
                         album.difficulty === "advanced" && "ring-yellow-400",
                         album.difficulty === "expert" && "ring-red-400",
@@ -380,7 +365,7 @@ export function AlbumCard({ region }: AlbumCardProps) {
             </div>
           )}
         </div>
-      </CardContent>
+      </div>
 
       <ResponsiveDialog open={showDialog} onOpenChange={setShowDialog}>
         <ResponsiveDialogContent showCloseButton={false}>
@@ -408,6 +393,6 @@ export function AlbumCard({ region }: AlbumCardProps) {
           </ResponsiveDialogFooter>
         </ResponsiveDialogContent>
       </ResponsiveDialog>
-    </Card>
+    </div>
   );
 }

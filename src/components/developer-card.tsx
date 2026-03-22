@@ -1,7 +1,6 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { trpc } from "@/lib/trpc-client";
 import { SnapshotWithSongs } from "@/lib/types";
 import { ChevronDown, ChevronRight, Code, Download } from "lucide-react";
@@ -83,14 +82,12 @@ export function DeveloperCard({ selectedSnapshotData }: DeveloperCardProps) {
   };
 
   return (
-    <Card className="w-full mx-auto">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Code className="h-5 w-5" />
-          {t("dataContent.tabs.developer")}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-6">
+    <div className="w-full mx-auto space-y-6">
+      <h2 className="text-lg font-semibold flex items-center gap-2">
+        <Code className="h-5 w-5" />
+        {t("dataContent.tabs.developer")}
+      </h2>
+      <div className="space-y-6">
         <div className="flex flex-col items-start space-y-4">
           <Button
             onClick={handleExportJson}
@@ -133,7 +130,7 @@ export function DeveloperCard({ selectedSnapshotData }: DeveloperCardProps) {
             </div>
           </AutoHeight>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

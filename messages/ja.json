@@ -501,7 +501,9 @@
       "type": "タイプ",
       "total": "合計",
       "totalLoss": "ロス"
-    }
+    },
+    "clickToExpand": "クリックして詳細を展開",
+    "clickToCollapse": "クリックして折りたたむ"
   },
   "events": {
     "title": "ちほー",
