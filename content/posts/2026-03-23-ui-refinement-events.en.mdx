@@ -1,0 +1,70 @@
+---
+title: "UI Refinement, and Events Info"
+date: "2026-03-23"
+version: "2026.3"
+summary: "March Update: Mobile UI overhaul, dedicated settings page, and massive database optimization."
+locale: "en"
+canonicalSlug: "2026-03-23-ui-refinement-events"
+---
+
+## March Update: Refining the Experience
+
+Spring is here, and so is a massive overhaul to how you interact with tomomai. This month, we focused heavily on the mobile experience, reorganized our navigation, and performed some "major surgery" on our database to keep things fast and lean.
+
+## New Feature: Mobile UI Overhaul
+
+We want tomomai to feel like a native app on your phone. To achieve this, we've moved away from standard web dialogs in favor of a modern **Bottom Sheet** implementation.
+
+- **Draggable & Dismissible**: Menus now slide up from the bottom. You can drag them to expand or flick them away to dismiss.
+- **Improved Profile Navigation**: We’ve replaced the clunky top-right dropdown. On mobile, your profile and settings are now accessed via a sleek **side menu**.
+
+<ImageCarousel>
+  <ImageCarouselSlide src="/posts/2026-03-23-ui-refinement/new-select.png" alt="New select" caption="New select" />
+  <ImageCarouselSlide src="/posts/2026-03-23-ui-refinement/new-menu.png" alt="New profile side menu" caption="New profile side menu" />
+  <ImageCarouselSlide src="/posts/2026-03-23-ui-refinement/new-token.png" alt="New token menu" caption="New token menu" />
+</ImageCarousel>
+
+## New Feature: Dashboard & Settings Overhaul
+
+The Dashboard and Settings have graduated from simple pop-ups to full-fledged pages.
+
+### Modern Website Design
+We’ve moved away from the old card-based layout to a more streamlined design.
+
+<ImageComparison before="/posts/2026-03-23-ui-refinement/dashboard-old.png" after="/posts/2026-03-23-ui-refinement/dashboard-new.png" beforeAlt="Old Dashboard" afterAlt="New Dashboard" />
+
+### Dedicated Settings Page
+No more hunting through dialogs. The new Settings page is split into three clear sections: **Account**, **Fetch**, and **Privacy**.
+- **Session Management**: View and manage your active sessions.
+- **Username Changes**: You can now check availability and update your tomomai username directly.
+
+![New Settings Page](/posts/2026-03-23-ui-refinement/settings-page.png)
+
+## New Feature: Events Integration
+
+We’ve started scraping the maimai wiki to bring **Event Info** directly into the tomomai DB. You can now view active and upcoming events. This is the first step toward full event integration—stay tuned for more features like event-specific progress tracking in the coming months!
+
+## Backend: The Great Refactor
+
+Behind the scenes, we’ve performed one of the largest code cleanups in the project's history to ensure long-term maintainability and performance.
+
+### 1. Goodbye Monolith
+We deleted the massive `user.ts` router (which had grown to over 3,400 lines!) and split it into **11 specialized sub-routers** and **9 reusable query modules**. This makes the app snappier and allows us to squash bugs much faster.
+
+### 2. Database Normalization & 33% Storage Reduction
+We migrated our score storage from a "denormalized" system to a "normalized" one.
+- **The Old Way**: Every time you took a snapshot, we saved a full copy of every score, even if the score hadn't changed.
+- **The New Way**: We now use `scoreData`, `snapshotScores`, and `snapshotB50`. If a score remains the same across multiple snapshots, we only store the *fact* of the score once and link to it.
+
+**Why this matters:**
+- **Storage**: This has resulted in a **33% reduction** in database size.
+- **Types**: We migrated IDs from `bigint` to `integer`, simplifying our code and saving even more space.
+- **Accuracy**: Deduplicated data ensures your stats remain consistent across the entire platform.
+
+---
+
+Join our Discord to discuss the changes: [https://discord.gg/jZqQHr3UDq](https://discord.gg/jZqQHr3UDq)
+
+Help us translate tomomai: [https://crowdin.com/project/tomomai](https://crowdin.com/project/tomomai)
+
+Happy grinding!

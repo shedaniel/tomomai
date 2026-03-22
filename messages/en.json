@@ -637,7 +637,8 @@
       "db": "Database"
     },
     "addDiscordBot": "Add as Discord Bot",
-    "followTwitter": "Follow @shedaniel_",
+    "followTwitter": "Follow on X",
+    "followThreads": "Follow on Threads",
     "admin": "Admin",
     "errors": {
       "inviteLink": "Failed to open invite link"

@@ -69,6 +69,7 @@
     "dotenv": "^17.3.1",
     "drizzle-kit": "^0.31.9",
     "drizzle-orm": "^0.45.1",
+    "embla-carousel-react": "^8.6.0",
     "flags": "^4.0.3",
     "gray-matter": "^4.0.3",
     "jsdom": "^27.4.0",
