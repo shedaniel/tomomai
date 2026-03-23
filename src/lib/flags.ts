@@ -56,9 +56,9 @@ export const flagDefinitions: Record<keyof Flags, FlagDefinition> = {
   },
   eventsCard: {
     key: "eventsCard",
-    defaultValue: false,
+    defaultValue: true,
     userSelectable: true,
-    decide: async () => false,
+    decide: async () => true,
   },
   albumsCard: {
     key: "albumsCard",
@@ -110,9 +110,9 @@ export const usePlatesCard = flag<boolean>({
 
 export const useEventsCard = flag<boolean>({
   key: "eventsCard",
-  defaultValue: false,
+  defaultValue: true,
   async decide() {
-    return false;
+    return true;
   },
 });
 

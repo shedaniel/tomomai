@@ -754,7 +754,24 @@
       "songs": "Songs",
       "calculator": "Calculator",
       "stats": "Stats",
+      "events": "Events",
       "posts": "Changelog"
+    },
+    "events": {
+      "title": "Tour Events",
+      "description": "Browse all maimai tour events and their rewards",
+      "search": "Search events...",
+      "noEvents": "No events found.",
+      "selectEvent": "Select an event to view details",
+      "steps": "Steps",
+      "distance": "Distance",
+      "type": "Type",
+      "reward": "Reward",
+      "period": "Period",
+      "active": "Active",
+      "ended": "Ended",
+      "upcoming": "Upcoming",
+      "back": "Back"
     },
     "songs": {
       "metadata": {

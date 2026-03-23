@@ -5,10 +5,24 @@ import { and, desc, eq, gt, gte, inArray, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { unstable_cache } from 'next/cache';
 import { getEnabledRegions } from '@/lib/enabled-regions';
+import { fetchTourEvents, fetchTourEventsByNames } from '@/server/queries/events';
 
 const regionSchema = z.enum(getEnabledRegions());
 
 export const dbRouter = router({
+  getEventStepsByNames: publicProcedure
+    .input(z.object({ names: z.array(z.string()).max(200) }))
+    .query(async ({ input }) => {
+      return fetchTourEventsByNames(input.names);
+    }),
+  getEvents: publicProcedure.query(async () => {
+    const getCachedEvents = unstable_cache(
+      async () => fetchTourEvents(),
+      ['db-events'],
+      { revalidate: 3600, tags: ['db-events'] }
+    );
+    return getCachedEvents();
+  }),
   getStats: publicProcedure
     .input(z.object({
       region: regionSchema,

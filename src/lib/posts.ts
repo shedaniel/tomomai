@@ -7,14 +7,22 @@ import * as OpenCC from "opencc-js";
 
 const postsDirectory = path.join(process.cwd(), "content/posts");
 
-// Initialize OpenCC converter (Traditional Chinese to Simplified Chinese)
-const converter = OpenCC.Converter({ from: "tw", to: "cn" });
+// Initialize OpenCC converters
+const twToCnConverter = OpenCC.Converter({ from: "tw", to: "cn" });
+const twToHkConverter = OpenCC.Converter({ from: "tw", to: "hk" });
 
 /**
- * Convert Traditional Chinese text to Simplified Chinese using OpenCC
+ * Convert Traditional Chinese (TW) text to Simplified Chinese using OpenCC
  */
 function convertToSimplifiedChinese(text: string): string {
-  return converter(text);
+  return twToCnConverter(text);
+}
+
+/**
+ * Convert Traditional Chinese (TW) text to Hong Kong Traditional Chinese using OpenCC
+ */
+function convertToHongKongChinese(text: string): string {
+  return twToHkConverter(text);
 }
 
 export interface PostMeta {
@@ -101,16 +109,20 @@ export function getAllPostsMeta(locale: Locale): PostMeta[] {
     const fileContent = fs.readFileSync(filePath, "utf-8");
     const { data } = matter(fileContent);
 
-    // Check if we need to convert Traditional Chinese to Simplified Chinese
-    const needsConversion = locale === "zh-CN" && selectedLocale === "zh-TW";
+    // Check if we need to convert Traditional Chinese
+    const needsCnConversion = locale === "zh-CN" && selectedLocale === "zh-TW";
+    const needsHkConversion = locale === "zh-HK" && selectedLocale === "zh-TW";
+    const convertText = needsCnConversion ? convertToSimplifiedChinese
+      : needsHkConversion ? convertToHongKongChinese
+      : null;
 
     posts.push({
       slug: canonicalSlug,
-      locale: needsConversion ? "zh-CN" : selectedLocale,
-      title: needsConversion ? convertToSimplifiedChinese(data.title as string) : data.title as string,
+      locale: convertText ? locale : selectedLocale,
+      title: convertText ? convertText(data.title as string) : data.title as string,
       date: data.date as string,
       version: data.version as string,
-      summary: needsConversion ? convertToSimplifiedChinese(data.summary as string) : data.summary as string,
+      summary: convertText ? convertText(data.summary as string) : data.summary as string,
       canonicalSlug: data.canonicalSlug as string || canonicalSlug,
     });
   }
@@ -121,7 +133,7 @@ export function getAllPostsMeta(locale: Locale): PostMeta[] {
 /**
  * Get a specific post by canonical slug and locale with fallback chain
  * zh-HK and zh-CN fall back to zh-TW before English
- * zh-CN content from zh-TW is automatically converted to Simplified Chinese
+ * zh-CN/zh-HK content from zh-TW is automatically converted via OpenCC
  */
 export function getPostBySlug(slug: string, locale: Locale): Post | null {
   // Try each locale in the fallback chain
@@ -149,18 +161,22 @@ export function getPostBySlug(slug: string, locale: Locale): Post | null {
   const match = filename.match(/^(.+)\.([a-z]{2}(?:-[A-Z]{2})?)\.mdx$/);
   const actualLocale = match ? match[2] : "en";
 
-  // Check if we need to convert Traditional Chinese to Simplified Chinese
-  const needsConversion = locale === "zh-CN" && actualLocale === "zh-TW";
+  // Check if we need to convert Traditional Chinese
+  const needsCnConversion = locale === "zh-CN" && actualLocale === "zh-TW";
+  const needsHkConversion = locale === "zh-HK" && actualLocale === "zh-TW";
+  const convertText = needsCnConversion ? convertToSimplifiedChinese
+    : needsHkConversion ? convertToHongKongChinese
+    : null;
 
   return {
     slug,
-    locale: needsConversion ? "zh-CN" : actualLocale,
-    title: needsConversion ? convertToSimplifiedChinese(data.title as string) : data.title as string,
+    locale: convertText ? locale : actualLocale,
+    title: convertText ? convertText(data.title as string) : data.title as string,
     date: data.date as string,
     version: data.version as string,
-    summary: needsConversion ? convertToSimplifiedChinese(data.summary as string) : data.summary as string,
+    summary: convertText ? convertText(data.summary as string) : data.summary as string,
     canonicalSlug: data.canonicalSlug as string || slug,
-    content: needsConversion ? convertToSimplifiedChinese(content) : content,
+    content: convertText ? convertText(content) : content,
   };
 }
 
@@ -190,9 +206,12 @@ export function getAvailableTranslations(canonicalSlug: string): Locale[] {
   const hasZhTW = translations.includes("zh-TW");
 
   if (hasZhTW) {
-    // zh-CN can be auto-converted from zh-TW
+    // zh-CN and zh-HK can be auto-converted from zh-TW
     if (!translations.includes("zh-CN")) {
       translations.push("zh-CN");
+    }
+    if (!translations.includes("zh-HK")) {
+      translations.push("zh-HK");
     }
   }
 
