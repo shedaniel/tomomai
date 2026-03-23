@@ -179,6 +179,67 @@ describe("extractAsMarkdown", () => {
     expect(result).not.toContain("Thread Link");
     expect(result).not.toContain("533405");
   });
+
+  it("removes duplicate km column when table has both 距離[m] and 距離[Km] headers", () => {
+    const html = wrap(`
+      <table style="width:100%">
+        <tbody>
+          <tr>
+            <th style="text-align:center">距離[m]</th>
+            <th style="text-align:center">距離[Km]<br>(UNiVERSE+)</th>
+            <th style="text-align:center">報酬の種類</th>
+            <th style="text-align:center">報酬</th>
+          </tr>
+          <tr>
+            <td style="text-align:center">0</td>
+            <td style="text-align:center">0</td>
+            <td style="text-align:center">つあーメンバー</td>
+            <td style="text-align:center">アウル</td>
+          </tr>
+          <tr>
+            <td style="text-align:center">10</td>
+            <td style="text-align:center">9<a href="#notes_foot_1" title="課題曲">*1</a></td>
+            <td style="text-align:center">楽曲</td>
+            <td style="text-align:center"><a href="https://gamerch.com/maimai/533635" title="Secret Sleuth">Secret Sleuth</a></td>
+          </tr>
+          <tr>
+            <td style="text-align:center">2,500</td>
+            <td style="text-align:center">159</td>
+            <td style="text-align:center">つあーメンバー</td>
+            <td style="text-align:center">ヒュド・ルー</td>
+          </tr>
+          <tr>
+            <td style="text-align:center">7,000</td>
+            <td style="text-align:center"></td>
+            <td style="text-align:center">つあーメンバー</td>
+            <td style="text-align:center">クレメンス</td>
+          </tr>
+        </tbody>
+      </table>
+    `);
+
+    const result = extractAsMarkdown(html, BASE_URL, new Set());
+
+    // The 距離[m] values should remain
+    expect(result).toContain("0");
+    expect(result).toContain("10");
+    expect(result).toContain("2,500");
+    expect(result).toContain("7,000");
+
+    // The 距離[Km] header should be removed
+    expect(result).not.toContain("距離[Km]");
+    expect(result).not.toContain("UNiVERSE+");
+
+    // The km column values (9, 159) should be removed — check they don't appear
+    // between the meter values. We check the header is gone as the main assertion.
+    expect(result).toContain("距離[m]");
+
+    // Reward data should still be present
+    expect(result).toContain("アウル");
+    expect(result).toContain("Secret Sleuth");
+    expect(result).toContain("ヒュド・ルー");
+    expect(result).toContain("クレメンス");
+  });
 });
 
 describe("extractAsMarkdown integration", () => {

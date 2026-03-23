@@ -386,6 +386,24 @@ export const apikey = pgTable("apikey", {
   index("apikey_userid_idx").on(table.userId),
 ]);
 
+export const tourEvents = pgTable("tour_events", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  name: text("name").notNull().unique(),
+  periods: jsonb("periods").notNull().$type<Array<{ start: string | null; end: string | null }>>(),
+  createdAt: timestamp("createdAt", { precision: 0 }).notNull().defaultNow(),
+  updatedAt: timestamp("updatedAt", { precision: 0 }).notNull().defaultNow(),
+});
+
+export const tourEventSteps = pgTable("tour_event_steps", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  eventId: integer("eventId").notNull().references(() => tourEvents.id, { onDelete: "cascade" }),
+  distance: integer("distance").notNull(),
+  type: text("type").notNull(),
+  reward: text("reward").notNull(),
+}, (table) => [
+  index("tour_event_steps_eventid_idx").on(table.eventId),
+]);
+
 export const userAlbums = pgTable("user_albums", {
   id: bigint("id", { mode: "bigint" }).primaryKey().generatedAlwaysAsIdentity(),
   userId: text("userId").notNull().references(() => user.id, { onDelete: "cascade" }),
