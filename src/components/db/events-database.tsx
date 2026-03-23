@@ -37,16 +37,57 @@ function parseEventSeries(name: string): { base: string; num: number } {
   return { base: name, num: 1 };
 }
 
-/** Build a set of event names that have been superseded by a higher-numbered successor. */
-function findSupersededEvents(names: string[]): Set<string> {
-  const seriesMax = new Map<string, number>();
-  const parsed = names.map((n) => ({ name: n, ...parseEventSeries(n) }));
-  for (const { base, num } of parsed) {
-    seriesMax.set(base, Math.max(seriesMax.get(base) ?? 0, num));
+/** Get date-based status without considering superseded flag. */
+function getRawEventStatus(
+  periods: Array<{ start: string | null; end: string | null }>,
+): "active" | "ended" | "upcoming" {
+  const now = new Date();
+  for (const period of periods) {
+    const start = period.start ? new Date(period.start) : null;
+    const end = period.end ? new Date(period.end) : (start ? inferEnd(start) : null);
+    if (start && end) {
+      if (now >= start && now <= end) return "active";
+      if (now < start) return "upcoming";
+    } else if (!start && end) {
+      if (now <= end) return "active";
+    }
   }
+  if (periods.length === 0) return "ended";
+  const allEnded = periods.every((p) => {
+    const start = p.start ? new Date(p.start) : null;
+    const end = p.end ? new Date(p.end) : (start ? inferEnd(start) : null);
+    return end && now > end;
+  });
+  if (allEnded) return "ended";
+  return "upcoming";
+}
+
+/**
+ * Build a set of event names that have been superseded by a higher-numbered successor.
+ * An event is only superseded if a higher-numbered sibling is currently active or upcoming.
+ */
+function findSupersededEvents(
+  events: Array<{ name: string; periods: Array<{ start: string | null; end: string | null }> }>,
+): Set<string> {
+  const parsed = events.map((e) => ({
+    name: e.name,
+    periods: e.periods,
+    rawStatus: getRawEventStatus(e.periods),
+    ...parseEventSeries(e.name),
+  }));
+
+  // For each series base, find the max number among active/upcoming events
+  const seriesActiveMax = new Map<string, number>();
+  for (const { base, num, rawStatus } of parsed) {
+    if (rawStatus !== "ended") {
+      seriesActiveMax.set(base, Math.max(seriesActiveMax.get(base) ?? 0, num));
+    }
+  }
+
   const superseded = new Set<string>();
   for (const { name, base, num } of parsed) {
-    if (num < (seriesMax.get(base) ?? 0)) {
+    const activeMax = seriesActiveMax.get(base);
+    if (activeMax !== undefined && num < activeMax) {
       superseded.add(name);
     }
   }
@@ -112,7 +153,7 @@ export function EventsDatabase() {
 
   const eventsWithStatus = useMemo(() => {
     if (!events) return [];
-    const superseded = findSupersededEvents(events.map((e) => e.name));
+    const superseded = findSupersededEvents(events);
     return events.map((e) => ({
       ...e,
       status: getEventStatus(e.periods, superseded.has(e.name)),
