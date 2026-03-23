@@ -5,6 +5,7 @@ import { trpc } from "@/lib/trpc-client";
 import { useTranslations } from "next-intl";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { EVENT_STEP_TYPE_KEYS, normType } from "@/lib/event-types";
 import { Loader2, ArrowLeft, Search, Calendar } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
@@ -285,7 +286,12 @@ export function EventsDatabase() {
                           <TableCell className="font-mono text-sm pl-4">
                             {formatDistance(step.distance)}
                           </TableCell>
-                          <TableCell className="text-sm">{step.type}</TableCell>
+                          <TableCell className="text-sm">
+                            {(() => {
+                              const key = EVENT_STEP_TYPE_KEYS[normType(step.type)];
+                              return key ? t(`stepTypes.${key}`) : step.type;
+                            })()}
+                          </TableCell>
                           <TableCell className="text-sm">{step.reward}</TableCell>
                         </TableRow>
                       ))}

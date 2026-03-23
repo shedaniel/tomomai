@@ -24,24 +24,7 @@ function formatPeriod(p: { start: string | null; end: string | null }) {
   return `${p.start ?? "?"}~${p.end ?? "?"}`;
 }
 
-/** Normalize a string for comparison (NFKC + strip zero-width chars + trim) */
-export function norm(s: string): string {
-  return s.normalize("NFKC").replace(/[\u200B-\u200F\u2028-\u202F\uFEFF]/g, "").trim();
-}
-
-export const TYPE_ALIASES: Record<string, string> = {
-  "課題曲": "楽曲",
-  "解禁楽曲": "楽曲",
-  "譜面": "楽曲",
-  "プレート": "ネームプレート",
-  "KALEIDX SCOPE": "KALEIDXSCOPE",
-};
-
-/** Normalize a step type for comparison */
-export function normType(s: string): string {
-  const n = norm(s);
-  return TYPE_ALIASES[n] ?? n;
-}
+export { norm, normType, TYPE_ALIASES } from "@/lib/event-types";
 
 export async function computeEventDelta(events: ScrapedEvent[]): Promise<EventDelta> {
   const existingEvents = await db.select().from(tourEvents);

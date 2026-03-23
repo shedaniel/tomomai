@@ -771,7 +771,18 @@
       "active": "Active",
       "ended": "Ended",
       "upcoming": "Upcoming",
-      "back": "Back"
+      "back": "Back",
+      "stepTypes": {
+        "frame": "Frame",
+        "song": "Song",
+        "nameplate": "Nameplate",
+        "present": "Present",
+        "icon": "Icon",
+        "title": "Title",
+        "tourMember": "Tour Member",
+        "perfectChallenge": "Perfect Challenge",
+        "kaleidxscope": "KALEIDXSCOPE"
+      }
     },
     "songs": {
       "metadata": {
@@ -920,6 +931,7 @@
       "songDataExpert": "Fetched EXPERT scores",
       "songDataMaster": "Fetched MASTER scores",
       "songDataRemaster": "Fetched Re:MASTER scores",
+      "songDataUtage": "Fetched UTAGE scores",
       "recentSongs": "Fetched recent songs",
       "hiddenSongs": "Fetched hidden songs",
       "albumData": "Fetched album data"

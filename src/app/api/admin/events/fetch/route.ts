@@ -10,6 +10,7 @@ import { storePending } from "@/server/services/admin/pending-confirmation";
 import { sendDiscordNotice } from "@/server/services/admin/discord-webhooks";
 import { resolveBaseUrl } from "@/lib/base-url";
 import { computeEventDelta, formatEventDescription, deltaColor, norm, normType } from "@/server/services/admin/event-diff";
+import { KNOWN_STEP_TYPES } from "@/lib/event-types";
 
 const StepSchema = z.object({
   distance: z.number(),
@@ -583,12 +584,7 @@ export async function POST(request: NextRequest) {
         periods: dedupedPeriods,
         steps: event.steps.map((s) => {
           const type = normType(s.type);
-          const KNOWN_TYPES = new Set([
-            "フレーム", "楽曲", "ネームプレート", "プレゼント",
-            "アイコン", "称号", "つあーメンバー", "パーフェクトチャレンジ楽曲",
-            "KALEIDXSCOPE",
-          ]);
-          if (!KNOWN_TYPES.has(type)) {
+          if (!KNOWN_STEP_TYPES.has(type)) {
             console.warn(`Unknown step type for event "${event.name}": "${type}"`);
           }
           const multiply = multiplyAll || s.distance % 1.0 > 0.001;
