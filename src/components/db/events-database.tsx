@@ -282,7 +282,7 @@ export function EventsDatabase() {
             <Button
               variant="ghost"
               onClick={clearSelection}
-              className="md:hidden h-auto px-0 text-sm text-muted-foreground hover:text-foreground"
+              className="md:hidden h-auto w-full px-0 text-sm flex justify-start text-muted-foreground hover:text-foreground"
             >
               <ArrowLeft className="h-4 w-4" />
               {t("back")}
