@@ -1,8 +1,24 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { get } from '@vercel/edge-config';
 import { securityMiddleware } from './lib/security/middleware';
 
 export async function middleware(request: NextRequest) {
+  // Check maintenance mode (skip for the maintenance page itself and static assets)
+  const { pathname } = request.nextUrl;
+  if (pathname !== '/maintenance') {
+    try {
+      const maintenanceMode = await get<string>('maintenanceMode');
+      if (maintenanceMode) {
+        const url = request.nextUrl.clone();
+        url.pathname = '/maintenance';
+        return NextResponse.redirect(url, { status: 307 });
+      }
+    } catch {
+      // Edge config unavailable, continue normally
+    }
+  }
+
   // Apply security middleware to all requests
   const securityResponse = await securityMiddleware(request);
 
