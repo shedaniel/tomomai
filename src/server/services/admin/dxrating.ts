@@ -23,7 +23,7 @@ export const DxDataFetcher = asFetcher(async ({ version, region, notice }) => {
     difficulty: sheet.difficulty,
     bpm: !!song.bpm ? song.bpm : undefined,
     noteDesigner: !!sheet.noteDesigner && sheet.noteDesigner !== "-" ? sheet.noteDesigner : undefined,
-    noteCounts: !!sheet.noteCounts ? fromDxRatingCounts(sheet.noteCounts) : undefined,
+    noteCounts: hasValidNoteCounts(sheet.noteCounts) ? fromDxRatingCounts(sheet.noteCounts) : undefined,
     addedVersion: !!sheet.version ? getVersionByShortName(region === "intl" && "intl" in (sheet.regionOverrides ?? {}) ? sheet.regionOverrides!["intl"].version ?? sheet.version : sheet.version)?.id : undefined
   }) satisfies PendingSong));
 }, "only-modify");
@@ -75,12 +75,18 @@ function getInternalLevelFromDxData(
   return Math.round(internalLevel * 10);
 }
 
-function fromDxRatingCounts(counts: DxRatingResponse["songs"][number]["sheets"][number]["noteCounts"]): NoteCounts {
+type DxRatingNoteCounts = DxRatingResponse["songs"][number]["sheets"][number]["noteCounts"];
+
+function hasValidNoteCounts(counts: DxRatingNoteCounts): boolean {
+  return counts.tap != null && counts.hold != null && counts.slide != null && counts.break != null;
+}
+
+function fromDxRatingCounts(counts: DxRatingNoteCounts): NoteCounts {
   return {
-    tap: counts.tap,
-    hold: counts.hold,
-    slide: counts.slide,
-    touch: counts.touch || 0,
-    break: counts.break,
+    tap: counts.tap!,
+    hold: counts.hold!,
+    slide: counts.slide!,
+    touch: counts.touch ?? 0,
+    break: counts.break!,
   };
 }
