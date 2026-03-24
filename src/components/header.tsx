@@ -7,11 +7,11 @@ import { DiscordIcon } from "@/components/ui/discord-icon";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { user } from "@/lib/db/schema-pg";
 import { Region, User } from "@/lib/types";
-import { Beaker, Database, Home, Info, LogIn, LogOut, Palette, User as LucideUserIcon, Settings, Users, X } from "lucide-react";
+import { Beaker, Check, ChevronDown, Database, Flag, Home, Info, Languages, LogIn, LogOut, Menu, Palette, Ship, User as LucideUserIcon, Settings, Users, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
 import Link from "next/link";
-import { Fragment, useState } from "react";
+import { Fragment, useCallback, useState } from "react";
 import { toast } from "sonner";
 import { LocaleSwitcher } from "./locale-switcher";
 import { RegionSwitcher } from "./region-switcher";
@@ -19,10 +19,14 @@ import { Drawer, DrawerClose, DrawerContent, DrawerDescription, DrawerHeader, Dr
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "./ui/dropdown-menu";
 import { Separator } from "./ui/separator";
 import { motion, AnimatePresence } from "motion/react";
-import { SPRING_CONFIGS, STAGGER, getTransition } from "@/lib/animation-constants";
+import { AutoHeight } from "@/components/animate-ui/primitives/effects/auto-height";
+import { SPRING_CONFIGS, getTransition } from "@/lib/animation-constants";
 
+import { triggerHaptic } from "@/lib/haptics";
 import { getEnabledRegions, isChinaRegion } from "@/lib/enabled-regions";
-import { cn } from "@/lib/utils";
+import { Locale, setLocaleCookie } from "@/i18n/locale";
+import { cn, getLanguages } from "@/lib/utils";
+import { useLocale } from "./providers/locale-provider";
 
 function XIcon({ className }: { className?: string }) {
   return (
@@ -47,8 +51,8 @@ type CurrentTab = "dashboard" | "db";
 const ALL_TABS: CurrentTab[] = ["dashboard", "db"];
 
 const TAB_ICONS: Record<CurrentTab, React.ReactNode> = {
-  dashboard: <Home className="h-4 w-4" />,
-  db: <Database className="h-4 w-4" />,
+  dashboard: <Home className="size-5" />,
+  db: <Database className="size-5" />,
 };
 
 const TAB_LINKS: Record<CurrentTab, string> = {
@@ -83,7 +87,7 @@ interface HeaderProps {
   }
 }
 
-function NavbarButtons({ currentTab, onAbout, onTheme, onDiscordInvite }: { currentTab: CurrentTab; onAbout: () => void; onTheme: () => void; onDiscordInvite: () => void }) {
+function NavbarButtons({ currentTab }: { currentTab: CurrentTab }) {
   const t = useTranslations();
 
   return (<>
@@ -91,10 +95,10 @@ function NavbarButtons({ currentTab, onAbout, onTheme, onDiscordInvite }: { curr
       <Fragment key={tab}>
         <Button
           size="sm"
-          className="h-8 md:hidden max-xs:w-8"
+          className="h-10 md:hidden max-xs:w-10"
           asChild
         >
-          <Link href={TAB_LINKS[tab]} className="md:hidden">
+          <Link href={TAB_LINKS[tab]} className="md:hidden max-xs:rounded-full xs:px-4!">
             {TAB_ICONS[tab]}
             <span className="max-xs:hidden">{t(`header.tabs.${tab}`)}</span>
           </Link>
@@ -110,57 +114,6 @@ function NavbarButtons({ currentTab, onAbout, onTheme, onDiscordInvite }: { curr
         </Button>
       </Fragment>
     ))}
-    <Button
-      onClick={onAbout}
-      variant="outline"
-      size="sm"
-      className="h-8 w-8 p-0 hover:bg-muted md:hidden max-sm:hidden"
-    >
-      <Info className="h-4 w-4" />
-    </Button>
-    <Button
-      onClick={onAbout}
-      variant="ghost"
-      size="sm"
-      className="h-8 px-2 py-0 hover:bg-muted max-md:hidden"
-    >
-      {t('common.about')}
-    </Button>
-
-    <Button
-      onClick={onTheme}
-      variant="outline"
-      size="sm"
-      className="h-8 w-8 p-0 hover:bg-muted md:hidden max-sm:hidden"
-    >
-      <Palette className="h-4 w-4" />
-    </Button>
-    <Button
-      onClick={onTheme}
-      variant="ghost"
-      size="sm"
-      className="h-8 px-2 py-0 hover:bg-muted max-md:hidden"
-    >
-      {t('common.theme')}
-    </Button>
-
-    <Button
-      onClick={onDiscordInvite}
-      variant="outline"
-      size="sm"
-      className="h-8 w-8 p-0 hover:bg-muted md:hidden max-sm:hidden"
-    >
-      <DiscordIcon className="h-4 w-4" />
-    </Button>
-    <Button
-      onClick={onDiscordInvite}
-      variant="ghost"
-      size="sm"
-      className="h-8 px-2 py-0 hover:bg-muted max-md:hidden"
-    >
-      {t('header.addDiscordBot')}
-    </Button>
-
   </>)
 }
 
@@ -218,22 +171,117 @@ function UserAvatar({ user }: { user: User }) {
   );
 }
 
+const regionIcons: Record<Region, React.ReactNode> = {
+  intl: <Ship className="h-4 w-4" />,
+  jp: <Flag className="h-4 w-4" />,
+  cn: <Flag className="h-4 w-4" />,
+};
+
+function DrawerLocaleSwitcher({ drawerItemClass }: { drawerItemClass: string }) {
+  const t = useTranslations();
+  const LANGUAGES = getLanguages(t);
+  const { locale, setLocale } = useLocale();
+  const [expanded, setExpanded] = useState(false);
+
+  const handleNewLocale = useCallback((value: string) => {
+    const newLocale = value === "auto" ? null : value as Locale;
+    if (newLocale) {
+      setLocale(newLocale);
+      setLocaleCookie(newLocale);
+    } else {
+      if (typeof document !== 'undefined') {
+        document.cookie = 'NEXT_LOCALE=; path=/; max-age=0';
+      }
+      window.location.reload();
+    }
+  }, [setLocale]);
+
+  return (
+    <div className="flex flex-col">
+      <button className={cn(drawerItemClass)} onClick={() => { triggerHaptic("light"); setExpanded(v => !v); }}>
+        <Languages className="h-4 w-4" />
+        <span className="flex-1 text-left">{t('common.language')}</span>
+        <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform", expanded && "rotate-180")} />
+      </button>
+      <AutoHeight deps={[expanded]}>
+        <div className={cn("flex flex-col", !expanded && "max-h-0")}>
+          {LANGUAGES.map((language) => {
+            const value = language.value || "auto";
+            const isSelected = locale === (language.value || undefined);
+            return (
+              <button
+                key={value}
+                className={cn(drawerItemClass, "pl-9", isSelected && "text-primary font-medium")}
+                onClick={() => { triggerHaptic("light"); handleNewLocale(value); }}
+              >
+                <span className="flex-1 text-left">{language.label}</span>
+                {isSelected && <Check className="h-4 w-4" />}
+              </button>
+            );
+          })}
+        </div>
+      </AutoHeight>
+    </div>
+  );
+}
+
+function DrawerRegionSwitcher({ value, onChange, drawerItemClass }: { value: Region; onChange: (region: Region) => void; drawerItemClass: string }) {
+  const t = useTranslations();
+  const regions = getEnabledRegions();
+  const [expanded, setExpanded] = useState(false);
+
+  return (
+    <div className="flex flex-col">
+      <button className={cn(drawerItemClass)} onClick={() => { triggerHaptic("light"); setExpanded(v => !v); }}>
+        <Flag className="h-4 w-4" />
+        <span className="flex-1 text-left">{t('common.region')}</span>
+        <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform", expanded && "rotate-180")} />
+      </button>
+      <AutoHeight deps={[expanded]}>
+        <div className={cn("flex flex-col", !expanded && "max-h-0")}>
+          {regions.map((region) => {
+            const isSelected = value === region;
+            return (
+              <button
+                key={region}
+                className={cn(drawerItemClass, "pl-9", isSelected && "text-primary font-medium")}
+                onClick={() => { triggerHaptic("light"); onChange(region); }}
+              >
+                {regionIcons[region]}
+                <span className="flex-1 text-left">{t(`regions.${region}`)}</span>
+                {isSelected && <Check className="h-4 w-4" />}
+              </button>
+            );
+          })}
+        </div>
+      </AutoHeight>
+    </div>
+  );
+}
+
 function UserIcon({ user, menu, onAbout, onTheme, onDiscordInvite }: Partial<NonNullable<HeaderProps['user']>> & {
   onAbout: () => void;
   onTheme: () => void;
   onDiscordInvite: () => void;
 }) {
   const t = useTranslations();
-  const isMobile = useMediaQuery('(max-width: 640px)');
+  const isMobile = useMediaQuery('(max-width: 768px)');
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   const avatarButton = (
-    <Button variant="ghost" className="relative h-10 w-10 rounded-full p-0 focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 focus:ring-offset-background data-[state=open]:ring-2 data-[state=open]:ring-gray-300 data-[state=open]:ring-offset-2 data-[state=open]:ring-offset-background bg-border">
-      {user ? <UserAvatar user={user} /> : <LucideUserIcon className="h-5 w-5" />}
+    <Button variant="outline" className="relative bg-background h-10 md:h-8 rounded-full max-md:pl-3! pr-1! gap-3 md:gap-2 focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 focus:ring-offset-background data-[state=open]:ring-2 data-[state=open]:ring-gray-300 data-[state=open]:ring-offset-2 data-[state=open]:ring-offset-background">
+      <Menu className="size-5 md:size-3.5 text-muted-foreground" />
+      <div className="size-8 md:size-6 rounded-full bg-muted overflow-hidden flex items-center justify-center shrink-0">
+        {user?.image ? (
+          <Image src={user.image} alt="Profile" width={28} height={28} className="size-8 md:size-6 rounded-full" />
+        ) : (
+          <LucideUserIcon className="size-3" />
+        )}
+      </div>
     </Button>
   );
 
-  const drawerItemClass = "flex items-center gap-3 w-full px-2 py-2 text-sm rounded-md hover:bg-muted transition-colors";
+  const drawerItemClass = "flex items-center gap-3 w-full px-2 py-2.5 max-xs:text-sm text-[15px] rounded-md hover:bg-muted transition-colors";
 
   if (isMobile) {
     return (
@@ -252,18 +300,30 @@ function UserIcon({ user, menu, onAbout, onTheme, onDiscordInvite }: Partial<Non
           <DrawerDescription className="sr-only">{user ? t('userHeader.memberLabel') : t('common.guest')}</DrawerDescription>
           {user && (
             <div className="border-b px-4 py-3 mb-1">
-              <p className="text-xs text-muted-foreground text-balance">{t('userHeader.discordPrompt')}</p>
+              <p className="text-sm text-muted-foreground text-balance">{t('userHeader.discordPrompt')}</p>
               <a
                 href="https://discord.gg/jZqQHr3UDq"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-xs font-medium leading-none text-primary hover:underline"
+                className="text-sm font-medium leading-none text-primary hover:underline"
               >
                 {t('userHeader.joinDiscord')}
               </a>
             </div>
           )}
           <div className="flex flex-col overflow-y-auto flex-1 px-2">
+            {!isChinaRegion() && (
+              <>
+                <DrawerLocaleSwitcher drawerItemClass={drawerItemClass} />
+                <Separator className="my-1" />
+              </>
+            )}
+            {menu && getEnabledRegions().length > 1 && (
+              <>
+                <DrawerRegionSwitcher value={menu.selectedRegion} onChange={menu.onRegionChange} drawerItemClass={drawerItemClass} />
+                <Separator className="my-1" />
+              </>
+            )}
             {!user && (
               <>
                 <DrawerClose asChild>
@@ -410,6 +470,19 @@ function UserIcon({ user, menu, onAbout, onTheme, onDiscordInvite }: Partial<Non
             </DropdownMenuItem>
           </>
         )}
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={onAbout}>
+          <Info className="mr-2 h-4 w-4" />
+          <span>{t('common.about')}</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={onTheme}>
+          <Palette className="mr-2 h-4 w-4" />
+          <span>{t('common.theme')}</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={onDiscordInvite}>
+          <DiscordIcon className="mr-2 h-4 w-4" />
+          <span>{t('header.addDiscordBot')}</span>
+        </DropdownMenuItem>
         {menu && SIGNUP_TYPE === 'invite-only' && (
           <>
             <DropdownMenuItem onClick={menu.onInvites}>
@@ -496,12 +569,12 @@ export function Header({ currentTab, showDiscordBanner = true, user }: HeaderPro
               <Image src={TAB_ICONS_PATHS_DARK[currentTab]} alt="tomomai" width={4320} height={1080} priority className="h-11 w-auto hidden dark:block" style={{ aspectRatio: '4320 / 1080' }} />
             </motion.div>
           </Link>
-          <NavbarButtons currentTab={currentTab} onAbout={() => setAboutOpen(true)} onTheme={() => setThemeOpen(true)} onDiscordInvite={handleDiscordInvite} />
+          <NavbarButtons currentTab={currentTab} />
         </div>
 
         <div className="flex items-center space-x-4">
-          {!isChinaRegion() && <LocaleSwitcher />}
-          {user?.menu && getEnabledRegions().length > 1 && <RegionSwitcher header={true} value={user.menu.selectedRegion} onChange={user.menu.onRegionChange} />}
+          {!isChinaRegion() && <div className="max-md:hidden"><LocaleSwitcher /></div>}
+          {user?.menu && getEnabledRegions().length > 1 && <div className="max-md:hidden"><RegionSwitcher header={true} value={user.menu.selectedRegion} onChange={user.menu.onRegionChange} /></div>}
           <UserIcon user={user?.user} menu={user?.menu} onAbout={() => setAboutOpen(true)} onTheme={() => setThemeOpen(true)} onDiscordInvite={handleDiscordInvite} />
         </div>
       </div>
