@@ -1,5 +1,5 @@
 {
-  "id": "d32fa763-3c48-4b06-a282-e0ffe7ad7d2a",
+  "id": "83fdb44f-8a16-4908-ad9b-b1ade8063cc7",
   "prevId": "a7e7a6d7-2ce5-4ea1-a2ae-926a486813b0",
   "version": "7",
   "dialect": "postgresql",
@@ -565,7 +565,7 @@
       "columns": {
         "id": {
           "name": "id",
-          "type": "bigint",
+          "type": "integer",
           "primaryKey": true,
           "notNull": true,
           "identity": {
@@ -575,7 +575,7 @@
             "increment": "1",
             "startWith": "1",
             "minValue": "1",
-            "maxValue": "9223372036854775807",
+            "maxValue": "2147483647",
             "cache": "1",
             "cycle": false
           }
@@ -752,7 +752,7 @@
       "columns": {
         "snapshotId": {
           "name": "snapshotId",
-          "type": "bigint",
+          "type": "integer",
           "primaryKey": false,
           "notNull": true
         },
@@ -764,7 +764,7 @@
         },
         "scoreId": {
           "name": "scoreId",
-          "type": "bigint",
+          "type": "integer",
           "primaryKey": false,
           "notNull": true
         }
@@ -818,13 +818,13 @@
       "columns": {
         "snapshotId": {
           "name": "snapshotId",
-          "type": "bigint",
+          "type": "integer",
           "primaryKey": false,
           "notNull": true
         },
         "scoreId": {
           "name": "scoreId",
-          "type": "bigint",
+          "type": "integer",
           "primaryKey": false,
           "notNull": true
         }
@@ -1533,6 +1533,154 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+    "public.tour_event_steps": {
+      "name": "tour_event_steps",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "tour_event_steps_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "eventId": {
+          "name": "eventId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "distance": {
+          "name": "distance",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "type": {
+          "name": "type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "reward": {
+          "name": "reward",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "tour_event_steps_eventid_idx": {
+          "name": "tour_event_steps_eventid_idx",
+          "columns": [
+            {
+              "expression": "eventId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "tour_event_steps_eventId_tour_events_id_fk": {
+          "name": "tour_event_steps_eventId_tour_events_id_fk",
+          "tableFrom": "tour_event_steps",
+          "tableTo": "tour_events",
+          "columnsFrom": [
+            "eventId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.tour_events": {
+      "name": "tour_events",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "tour_events_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "periods": {
+          "name": "periods",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp (0)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp (0)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "tour_events_name_unique": {
+          "name": "tour_events_name_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "name"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "public.user": {
       "name": "user",
       "schema": "",
@@ -1879,7 +2027,7 @@
         },
         "snapshotId": {
           "name": "snapshotId",
-          "type": "bigint",
+          "type": "integer",
           "primaryKey": false,
           "notNull": true
         },
@@ -2413,7 +2561,7 @@
         },
         "snapshotId": {
           "name": "snapshotId",
-          "type": "bigint",
+          "type": "integer",
           "primaryKey": false,
           "notNull": true
         },
@@ -2555,7 +2703,7 @@
       "columns": {
         "id": {
           "name": "id",
-          "type": "bigint",
+          "type": "integer",
           "primaryKey": true,
           "notNull": true,
           "identity": {
@@ -2565,7 +2713,7 @@
             "increment": "1",
             "startWith": "1",
             "minValue": "1",
-            "maxValue": "9223372036854775807",
+            "maxValue": "2147483647",
             "cache": "1",
             "cycle": false
           }
