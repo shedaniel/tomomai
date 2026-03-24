@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "motion/react"
 import { XIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { getTransition } from "@/lib/animation-constants"
+import { triggerHaptic } from "@/lib/haptics"
 import {
   DialogTrigger,
   DialogPortal,
@@ -34,6 +35,7 @@ function AnimatedDialog({
 
   const handleOpenChange = React.useCallback(
     (value: boolean) => {
+      if (value) triggerHaptic("light")
       if (!isControlled) setUncontrolledOpen(value)
       onOpenChange?.(value)
     },

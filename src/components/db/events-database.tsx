@@ -7,6 +7,7 @@ import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { EVENT_STEP_TYPE_KEYS, normType } from "@/lib/event-types";
 import { Loader2, ArrowLeft, Search, Calendar } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -245,17 +246,18 @@ export function EventsDatabase() {
             return (
               <div key={event.id}>
                 {showHeader && <SectionHeader status={event.status} />}
-                <button
+                <Button
+                  variant="ghost"
                   onClick={() => selectEvent(event.name)}
                   className={cn(
-                    "w-full text-left px-3 py-2 rounded-md text-sm transition-colors",
+                    "w-full justify-start text-left px-3 py-2 h-auto text-sm transition-colors",
                     selectedEvent?.name === event.name
                       ? "bg-muted font-medium text-foreground"
                       : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
                   )}
                 >
                   <span className="line-clamp-2">{event.name}</span>
-                </button>
+                </Button>
               </div>
             );
           })}
@@ -277,13 +279,14 @@ export function EventsDatabase() {
         {selectedEvent ? (
           <div className="space-y-6">
             {/* Back button (mobile only) */}
-            <button
+            <Button
+              variant="ghost"
               onClick={clearSelection}
-              className="md:hidden flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              className="md:hidden h-auto px-0 text-sm text-muted-foreground hover:text-foreground"
             >
               <ArrowLeft className="h-4 w-4" />
               {t("back")}
-            </button>
+            </Button>
 
             {/* Event name + status */}
             <div>

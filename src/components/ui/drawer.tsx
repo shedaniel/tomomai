@@ -4,11 +4,50 @@ import * as React from "react"
 import { Drawer as DrawerPrimitive } from "vaul"
 
 import { cn } from "@/lib/utils"
+import { triggerHaptic } from "@/lib/haptics"
 
 function Drawer({
+  onOpenChange,
+  onClose,
+  onRelease,
+  setActiveSnapPoint,
   ...props
 }: React.ComponentProps<typeof DrawerPrimitive.Root>) {
-  return <DrawerPrimitive.Root data-slot="drawer" {...props} />
+  const handleOpenChange = React.useCallback(
+    (open: boolean) => {
+      triggerHaptic(open ? "medium" : "light")
+      onOpenChange?.(open)
+    },
+    [onOpenChange]
+  )
+  const handleClose = React.useCallback(() => {
+    triggerHaptic("light")
+    onClose?.()
+  }, [onClose])
+  const handleRelease = React.useCallback(
+    (e: React.PointerEvent<HTMLDivElement>, open: boolean) => {
+      if (!open) triggerHaptic("light")
+      onRelease?.(e, open)
+    },
+    [onRelease]
+  )
+  const handleSetActiveSnapPoint = React.useCallback(
+    (snapPoint: number | string | null) => {
+      triggerHaptic("selection")
+      setActiveSnapPoint?.(snapPoint)
+    },
+    [setActiveSnapPoint]
+  )
+  return (
+    <DrawerPrimitive.Root
+      data-slot="drawer"
+      onOpenChange={handleOpenChange}
+      onClose={handleClose}
+      onRelease={handleRelease}
+      setActiveSnapPoint={handleSetActiveSnapPoint}
+      {...props}
+    />
+  )
 }
 
 function DrawerTrigger({
