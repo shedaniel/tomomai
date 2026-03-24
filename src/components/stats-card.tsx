@@ -9,10 +9,12 @@ import { getVersionInfo, VERSIONS } from "@/lib/metadata";
 import { Region, SnapshotWithSongs } from "@/lib/types";
 import { trpc } from "@/lib/trpc-client";
 import { ArrowLeft, Award, ChevronRight, Loader2 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { STAGGER } from "@/lib/animation-constants";
+import { useMediaQuery } from "@/hooks/use-media-query";
 import { SongGridCard } from "@/components/songs-card";
 import { AutoHeight } from "./animate-ui/primitives/effects/auto-height";
 import { cn } from "@/lib/utils";
@@ -83,6 +85,7 @@ interface PlatesGridProps {
 
 function PlatesGrid({ data, selectedVersion, region, snapshotId }: PlatesGridProps) {
   const t = useTranslations();
+  const isDesktop = useMediaQuery("(min-width: 768px)", { initializeWithValue: false });
   const [expandedCell, setExpandedCell] = useState<{ plateType: PlateType; difficulty: string } | null>(null);
 
   const isExpanded = expandedCell !== null && selectedVersion !== "all";
@@ -186,8 +189,8 @@ function PlatesGrid({ data, selectedVersion, region, snapshotId }: PlatesGridPro
         return (
           <motion.div
             key={plateType}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
+            initial={{ opacity: 0, ...(isDesktop ? { x: -10 } : { y: 10 }) }}
+            animate={{ opacity: 1, x: 0, y: 0 }}
             transition={{
               duration: 0.3,
               delay: STAGGER.calculateDelay(plateIndex, 0.08),
@@ -311,6 +314,7 @@ function PlatesGrid({ data, selectedVersion, region, snapshotId }: PlatesGridPro
 
 export function StatsCard({ region, selectedSnapshotData, snapshotId }: StatsCardProps) {
   const t = useTranslations();
+  const isDesktop = useMediaQuery("(min-width: 768px)", { initializeWithValue: false });
   const { data: ownData, isLoading: ownLoading } = trpc.user.getPlayerStats.useQuery(
     { region },
     { enabled: !snapshotId }
@@ -446,8 +450,31 @@ export function StatsCard({ region, selectedSnapshotData, snapshotId }: StatsCar
 
   if (isLoading) {
     return (
-      <div className="p-8 text-center w-full h-[calc(100vh-20rem)] flex flex-col items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      <div className="space-y-6">
+        <div>
+          <Skeleton className="h-6 w-40 mb-4" />
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Skeleton className="h-10 w-full sm:w-[200px]" />
+            <Skeleton className="h-10 w-full sm:w-[200px]" />
+            <div className="flex-1" />
+            <Skeleton className="h-8 w-full sm:w-40" />
+          </div>
+        </div>
+        <div className="space-y-4">
+          <Skeleton className="h-4 w-32" />
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Skeleton className="w-12 h-6 rounded" />
+                  <Skeleton className="h-4 w-24" />
+                </div>
+                <Skeleton className="h-4 w-12" />
+              </div>
+              <Skeleton className="h-2 w-full" />
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
@@ -578,8 +605,8 @@ export function StatsCard({ region, selectedSnapshotData, snapshotId }: StatsCar
                 return (
                   <motion.div
                     key={fc}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
+                    initial={{ opacity: 0, ...(isDesktop ? { x: -10 } : { y: 10 }) }}
+                    animate={{ opacity: 1, x: 0, y: 0 }}
                     transition={{
                       duration: 0.2,
                       delay: STAGGER.calculateDelay(index, 0.03),
@@ -618,8 +645,8 @@ export function StatsCard({ region, selectedSnapshotData, snapshotId }: StatsCar
                 return (
                   <motion.div
                     key={fs}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
+                    initial={{ opacity: 0, ...(isDesktop ? { x: -10 } : { y: 10 }) }}
+                    animate={{ opacity: 1, x: 0, y: 0 }}
                     transition={{
                       duration: 0.2,
                       delay: STAGGER.calculateDelay(index, 0.03),

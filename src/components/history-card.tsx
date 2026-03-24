@@ -7,6 +7,7 @@ import { trpc } from "@/lib/trpc-client";
 import { Region } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { TrendingUp } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useTranslations } from "next-intl";
 import { CoverImage } from "@/components/cover-image";
 import { useEffect, useMemo, useState } from "react";
@@ -134,8 +135,17 @@ export function HistoryCard({ region }: HistoryCardProps) {
       </h2>
       <div>
         {isLoading ? (
-          <div className="h-[400px] flex items-center justify-center text-muted-foreground">
-            {t("common.loading")}
+          <div className="h-[400px] flex flex-col justify-end gap-2 p-4">
+            <div className="flex-1 flex items-end gap-1">
+              {Array.from({ length: 12 }).map((_, i) => (
+                <Skeleton
+                  key={i}
+                  className="flex-1 rounded-t"
+                  style={{ height: `${30 + Math.random() * 60}%` }}
+                />
+              ))}
+            </div>
+            <Skeleton className="h-4 w-full" />
           </div>
         ) : chartData.length < 2 ? (
           <div className="h-[400px] flex flex-col items-center justify-center text-muted-foreground">

@@ -22,6 +22,7 @@ import {
 import { SongHoverCard } from "@/components/song-hover-card";
 import { renderLevelPrecise } from "@/lib/name-utils";
 import { STAGGER, getTransition } from "@/lib/animation-constants";
+import { useMediaQuery } from "@/hooks/use-media-query";
 
 interface RecommendationData {
   song: SongWithRating;
@@ -220,6 +221,7 @@ function RecommendationRow({ recommendation }: { recommendation: RecommendationD
 
 export function RecommendationCard({ selectedSnapshotData, flags }: { selectedSnapshotData: SnapshotWithSongs, flags: Flags }) {
   const t = useTranslations();
+  const isDesktop = useMediaQuery("(min-width: 768px)", { initializeWithValue: false });
   const [filterCategory, setFilterCategory] = useState<"all" | "new" | "old" | "best">("all");
   const [advancedFilters, setAdvancedFilters] = useState<GenericFilter[]>([]);
   const [showFilterPanel, setShowFilterPanel] = useState(false);
@@ -400,24 +402,29 @@ export function RecommendationCard({ selectedSnapshotData, flags }: { selectedSn
             {filteredRecommendations.map((rec, index) => {
               // High-value recommendations get a more prominent animation
               const isHighValue = rec.ratingGain >= 50;
-              const delay = STAGGER.calculateDelay(index, 0.03, 0.2);
+              const delay = STAGGER.calculateDelay(index, 0.06, 0.4);
 
               return (
                 <motion.div
                   key={`${rec.song.songId}-${rec.song.difficulty}`}
                   initial={{
                     opacity: 0,
-                    x: rec.category === "new" ? -20 : 20,
+                    ...(isDesktop
+                      ? { x: rec.category === "new" ? -20 : 20 }
+                      : { y: rec.category === "new" ? -20 : 20 }),
                     scale: isHighValue ? 0.9 : 0.95,
                   }}
                   animate={{
                     opacity: 1,
                     x: 0,
+                    y: 0,
                     scale: 1,
                   }}
                   exit={{
                     opacity: 0,
-                    x: rec.category === "new" ? 10 : -10,
+                    ...(isDesktop
+                      ? { x: rec.category === "new" ? 10 : -10 }
+                      : { y: rec.category === "new" ? 10 : -10 }),
                     scale: 0.95,
                   }}
                   transition={getTransition({

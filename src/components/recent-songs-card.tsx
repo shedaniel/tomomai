@@ -4,6 +4,7 @@ import { trpc } from "@/lib/trpc-client";
 import { Region } from "@/lib/types";
 import { cn, getTypeBadgeUrl } from "@/lib/utils";
 import { Activity, Calendar, ChevronDown, ChevronRight, ChevronUp, Clock, Loader2, AlertCircle, TrendingUp, TrendingDown, Trophy, FastForward, Rewind, ArrowBigUpDash, ArrowBigDownDash, Grip, Sparkle, MapPin, SeparatorVertical, Slash, Star, Music, CloudOff } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useTranslations } from "next-intl";
 
 import { CoverImage } from "@/components/cover-image";
@@ -21,6 +22,7 @@ import { renderLevelPrecise } from "@/lib/name-utils";
 import { calculateDXStars, calculateNoteLosses, distributeBreaks } from "@/lib/score-details";
 import { motion } from "motion/react";
 import { SPRING_CONFIGS, STAGGER, getTransition } from "@/lib/animation-constants";
+import { useMediaQuery } from "@/hooks/use-media-query";
 
 interface RecentSongsCardProps {
   region: Region;
@@ -39,6 +41,7 @@ interface RecentSongRowProps {
 
 function RecentSongRow({ play, index, isFirst, isLast, onToggleExpand, isExpanded }: RecentSongRowProps) {
   const t = useTranslations('recentPlays');
+  const isDesktop = useMediaQuery("(min-width: 768px)", { initializeWithValue: false });
   const [isRowHovered, setIsRowHovered] = useState(false);
   const isDetailed = play.rating !== null;
   const playDate = new Date(play.playedAt);
@@ -52,8 +55,8 @@ function RecentSongRow({ play, index, isFirst, isLast, onToggleExpand, isExpande
       className={cn("flex flex-col transition-colors cursor-pointer group",
         isFirst ? "pb-4" : isLast ? "pt-4" : "py-4",
       )}
-      initial={{ opacity: 0, scale: 0.95, y: 20 }}
-      animate={{ opacity: 1, scale: 1, y: 0 }}
+      initial={{ opacity: 0, scale: 0.95, ...(isDesktop ? { x: -20 } : { y: 20 }) }}
+      animate={{ opacity: 1, scale: 1, x: 0, y: 0 }}
       transition={getTransition({
         type: 'spring',
         stiffness: 400,
@@ -614,8 +617,21 @@ export function RecentSongsCard({ region, beforeDate, snapshotId }: RecentSongsC
           <Clock className="h-5 w-5" />
           {t('title')}
         </h2>
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <div className="divide-y divide-dashed divide-border">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="flex gap-4 py-4">
+              <Skeleton className="w-14 h-14 rounded shrink-0" />
+              <div className="flex-1 min-w-0 space-y-2">
+                <Skeleton className="h-4 w-3/4" />
+                <Skeleton className="h-3 w-1/2" />
+                <Skeleton className="h-3 w-1/3" />
+              </div>
+              <div className="text-right space-y-2">
+                <Skeleton className="h-4 w-16 ml-auto" />
+                <Skeleton className="h-3 w-12 ml-auto" />
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     );

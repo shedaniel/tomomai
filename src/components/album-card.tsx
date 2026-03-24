@@ -4,6 +4,7 @@ import { trpc } from "@/lib/trpc-client";
 import { Region } from "@/lib/types";
 import { cn, getTypeBadgeUrl } from "@/lib/utils";
 import { Images, Loader2, AlertCircle, Calendar, MapPin, Music, HardDrive, Info, Trash2 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useTranslations } from "next-intl";
 
 import { CoverImage } from "@/components/cover-image";
@@ -123,8 +124,24 @@ export function AlbumCard({ region }: AlbumCardProps) {
           <Images className="h-5 w-5" />
           {t('title')}
         </h2>
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="flex flex-col gap-3 p-4 border rounded-lg">
+              <Skeleton className="w-full aspect-video rounded" />
+              <div className="flex gap-3">
+                <Skeleton className="w-14 h-14 rounded shrink-0 m-1" />
+                <div className="flex-1 min-w-0 space-y-2">
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-3 w-1/2" />
+                  <Skeleton className="h-2.5 w-8" />
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Skeleton className="h-3 w-32" />
+                <Skeleton className="h-3 w-24" />
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     );
