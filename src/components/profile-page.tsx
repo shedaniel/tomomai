@@ -77,7 +77,7 @@ export function ProfilePage({
   };
 
   return (
-    <div className="container mx-auto max-w-[1300px] px-4 py-8">
+    <div className="container mx-auto max-w-[1300px] px-3 md:px-6 lg:px-12 py-8">
       <Header
         currentTab="dashboard"
       />
