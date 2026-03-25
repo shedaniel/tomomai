@@ -1,6 +1,6 @@
 import { db } from "./db";
-import { userTokens, userSnapshots, songs, userScores, fetchSessions, userEvents, userRecentSongs, userRecentSongsDetailed, userAlbums } from "./db/schema-pg";
-import { eq, and, or } from "drizzle-orm";
+import { userTokens, userSnapshots, songs, fetchSessions, userEvents, userRecentSongs, userRecentSongsDetailed, userAlbums, scoreData, snapshotScores, snapshotB50 } from "./db/schema-pg";
+import { eq, and, or, inArray, sql as sqlDrizzle } from "drizzle-orm";
 import { load } from "cheerio";
 import { nanoid } from "nanoid";
 import { getCurrentVersion, VersionId } from "./metadata";
@@ -15,6 +15,7 @@ import { logger } from "./logger";
 import { Difficulty } from "./types";
 import { uploadToR2, deleteFromR2 } from "./r2";
 import { convertJpegToAvif, fetchImageBuffer } from "./image-converter";
+import { DIFFICULTY_ENUM } from "./db/types";
 import { processMaimaiToken, getCookiesFromRedirect } from "@/server/services/maimai-login";
 
 async function fetchPlayerData(region: Region, cookies: string, refererUrl: string): Promise<string> {
@@ -55,13 +56,14 @@ function parseScoreData(html: string, difficulty: number): ScoreData[] {
   const $ = load(html);
 
   // Use correct selector based on difficulty
-  const difficultySelectors = [
-    ".music_basic_score_back",      // difficulty 0
-    ".music_advanced_score_back",   // difficulty 1
-    ".music_expert_score_back",     // difficulty 2
-    ".music_master_score_back",     // difficulty 3
-    ".music_remaster_score_back"    // difficulty 4
-  ];
+  const difficultySelectors: Record<number, string> = {
+    0: ".music_basic_score_back",
+    1: ".music_advanced_score_back",
+    2: ".music_expert_score_back",
+    3: ".music_master_score_back",
+    4: ".music_remaster_score_back",
+    10: ".music_utage_score_back"
+  };
 
   const selector = difficultySelectors[difficulty];
   if (!selector) {
@@ -87,26 +89,30 @@ function parseScoreData(html: string, difficulty: number): ScoreData[] {
       const parent = block.parent();
 
       // Extract music type (dx/std) from icon image
-      const iconElement = parent.find('img.music_kind_icon');
-      if (iconElement.length === 0) {
-        logger.warn(`No music kind icon found for score block ${index}`);
-        return;
-      }
-
-      const iconSrc = iconElement.attr('src');
-      if (!iconSrc) {
-        logger.warn(`No src attribute found for music kind icon in score block ${index}`);
-        return;
-      }
-
       let musicType: SongType;
-      if (iconSrc.includes('music_dx.png')) {
+      if (difficulty === 10) {
         musicType = "dx";
-      } else if (iconSrc.includes('music_standard.png')) {
-        musicType = "std";
       } else {
-        logger.warn(`Unknown music type icon: ${iconSrc} in score block ${index}`);
-        return;
+        const iconElement = parent.find('img.music_kind_icon');
+        if (iconElement.length === 0) {
+          logger.warn(`No music kind icon found for score block ${index}`);
+          return;
+        }
+
+        const iconSrc = iconElement.attr('src');
+        if (!iconSrc) {
+          logger.warn(`No src attribute found for music kind icon in score block ${index}`);
+          return;
+        }
+
+        if (iconSrc.includes('music_dx.png')) {
+          musicType = "dx";
+        } else if (iconSrc.includes('music_standard.png')) {
+          musicType = "std";
+        } else {
+          logger.warn(`Unknown music type icon: ${iconSrc} in score block ${index}`);
+          return;
+        }
       }
 
       // Extract song name
@@ -158,7 +164,7 @@ function parseScoreData(html: string, difficulty: number): ScoreData[] {
       }
 
       // First .h_30 is fs (sync status)
-      let fs: "none" | "sync" | "fs" | "fs+" | "fdx" | "fdx+" = "none";
+      let fs: FullSync = "none";
       const fsElement = h30Elements.eq(0);
       const fsSrc = fsElement.attr('src');
       if (fsSrc) {
@@ -176,7 +182,7 @@ function parseScoreData(html: string, difficulty: number): ScoreData[] {
       }
 
       // Second .h_30 is fc (full combo status)
-      let fc: "none" | "fc" | "fc+" | "ap" | "ap+" = "none";
+      let fc: FullCombo = "none";
       const fcElement = h30Elements.eq(1);
       const fcSrc = fcElement.attr('src');
       if (fcSrc) {
@@ -192,8 +198,7 @@ function parseScoreData(html: string, difficulty: number): ScoreData[] {
       }
 
       // Map difficulty number to difficulty name
-      const difficultyNames: Difficulty[] = ["basic", "advanced", "expert", "master", "remaster"];
-      const difficultyName = difficultyNames[difficulty] || "basic";
+      const difficultyName = difficulty === 10 ? "utage" : DIFFICULTY_ENUM[difficulty] || "basic";
 
       const scoreData: ScoreData = {
         songName,
@@ -255,7 +260,7 @@ async function fetchAllSongsData(cookies: string, region: Region, sessionId?: bi
   logger.info(`Fetching songs data for all difficulties (0-4)${sessionId ? ' with tracking' : ''}`);
 
   // Create promises for all difficulties to fetch concurrently
-  const difficultyPromises = Array.from({ length: 5 }, (_, difficulty) => {
+  const difficultyPromises = [0, 1, 2, 3, 4, 10].map(difficulty => {
     return fetchSongsData(cookies, difficulty, region).then((scoreData) => {
       logger.info(`Successfully fetched ${scoreData.length} scores for difficulty ${difficulty}`);
 
@@ -349,9 +354,12 @@ async function fetchRecentSongsData(cookies: string, region: Region, sessionId: 
       const diffImg = record.find("img.playlog_diff");
       const diffImgSrc = diffImg.attr("src") || "";
       let difficultyNumber = 0;
-      let difficulty = "basic";
+      let difficulty: Difficulty = "basic";
 
-      if (diffImgSrc.includes("remaster")) {
+      if (diffImgSrc.includes("utage")) {
+        difficultyNumber = 10;
+        difficulty = "utage";
+      } else if (diffImgSrc.includes("remaster")) {
         difficultyNumber = 4;
         difficulty = "remaster";
       } else if (diffImgSrc.includes("master")) {
@@ -409,8 +417,8 @@ async function fetchRecentSongsData(cookies: string, region: Region, sessionId: 
       // Extract FC and FS status from result images
       const resultImages = record.find(".playlog_result_innerblock > img");
 
-      let fc: "none" | "fc" | "fc+" | "ap" | "ap+" = "none";
-      let fs: "none" | "sync" | "fs" | "fs+" | "fdx" | "fdx+" = "none";
+      let fc: FullCombo = "none";
+      let fs: FullSync = "none";
 
       // First image is FC status
       if (resultImages.length > 0) {
@@ -445,7 +453,9 @@ async function fetchRecentSongsData(cookies: string, region: Region, sessionId: 
       // Determine music type (dx/std) from playlog_music_kind_icon
       const musicKindIcon = record.find("img.playlog_music_kind_icon");
       let musicType: SongType = "std";
-      if (musicKindIcon.length > 0) {
+      if (difficulty === "utage") {
+        musicType = "dx";
+      } else if (musicKindIcon.length > 0) {
         const iconSrc = musicKindIcon.attr("src") || "";
         if (iconSrc.includes("music_dx.png")) {
           musicType = "dx";
@@ -1081,7 +1091,7 @@ async function createUserSnapshot(
   userId: string,
   region: Region,
   playerData: PlayerData,
-): Promise<bigint> {
+): Promise<number> {
   const publicId = nanoid();
 
   logger.info(`Creating user snapshot with publicId: ${publicId}`);
@@ -1150,88 +1160,70 @@ async function buildSongLookupMaps(
  * Adds rank field to user score inserts based on rating calculation.
  * Ranks are assigned as: 0-14 (new B15), 15-49 (old B35), 50+ (remaining)
  */
-async function withRank(
-  scoreInserts: typeof userScores.$inferInsert[],
-  fullSongMap: Map<bigint, typeof songs.$inferSelect>,
-  gameVersion: number
-): Promise<typeof userScores.$inferInsert[]> {
-  if (scoreInserts.length === 0) {
-    return scoreInserts;
+function scoreDataKey(songId: bigint, achievement: number, dxScore: number, fc: string, fs: string): string {
+  return `${songId}-${achievement}-${dxScore}-${fc}-${fs}`;
+}
+
+export async function upsertScoreData(
+  scores: { songId: bigint; achievement: number; dxScore: number; fc: string; fs: string }[]
+): Promise<Map<string, number>> {
+  if (scores.length === 0) return new Map();
+
+  // Deduplicate input scores by composite key
+  const uniqueScores = new Map<string, typeof scores[number]>();
+  for (const s of scores) {
+    const key = scoreDataKey(s.songId, s.achievement, s.dxScore, s.fc, s.fs);
+    uniqueScores.set(key, s);
   }
 
-  logger.debug(`Calculating ranks for ${scoreInserts.length} scores...`);
+  // Sort by unique constraint columns for deterministic lock ordering (prevents deadlocks)
+  const insertValues = [...uniqueScores.values()]
+    .map(s => ({
+      songId: s.songId,
+      achievement: s.achievement,
+      dxScore: s.dxScore,
+      fc: s.fc as typeof scoreData.$inferInsert['fc'],
+      fs: s.fs as typeof scoreData.$inferInsert['fs'],
+    }))
+    .sort((a, b) =>
+      Number(a.songId - b.songId)
+      || a.achievement - b.achievement
+      || a.dxScore - b.dxScore
+      || a.fc.localeCompare(b.fc)
+      || a.fs.localeCompare(b.fs)
+    );
 
-  // Convert score inserts to SongWithScore format for rating calculation
-  const songsForRanking: (Omit<SongWithScore, 'songId'> & { songId: bigint })[] = [];
-  for (const scoreInsert of scoreInserts) {
-    const fullSong = fullSongMap.get(scoreInsert.songId);
-    if (!fullSong) continue;
+  // Upsert in chunks sequentially (parallel chunks on the same table can deadlock)
+  const CHUNK_SIZE = 1000;
+  const result = new Map<string, number>();
 
-    songsForRanking.push({
-      songId: fullSong.id,
-      songName: fullSong.songName,
-      artist: fullSong.artist,
-      cover: fullSong.cover,
-      difficulty: fullSong.difficulty,
-      level: fullSong.level,
-      levelPrecise: fullSong.levelPrecise,
-      type: fullSong.type,
-      genre: fullSong.genre,
-      addedVersion: fullSong.addedVersion as VersionId,
-      achievement: scoreInsert.achievement,
-      dxScore: scoreInsert.dxScore,
-      fc: scoreInsert.fc,
-      fs: scoreInsert.fs,
-    });
-  }
+  for (let i = 0; i < insertValues.length; i += CHUNK_SIZE) {
+    const rows = await db.insert(scoreData)
+      .values(insertValues.slice(i, i + CHUNK_SIZE))
+      .onConflictDoUpdate({
+        target: [scoreData.songId, scoreData.achievement, scoreData.dxScore, scoreData.fc, scoreData.fs],
+        set: { songId: sqlDrizzle`excluded."songId"` },
+      })
+      .returning({
+        id: scoreData.id,
+        songId: scoreData.songId,
+        achievement: scoreData.achievement,
+        dxScore: scoreData.dxScore,
+        fc: scoreData.fc,
+        fs: scoreData.fs,
+      });
 
-  // Calculate rankings using splitSongs
-  const { newSongsB15, oldSongsB35, newSongsRemaining, oldSongsRemaining } = splitSongs(songsForRanking, gameVersion);
-
-  // Create a map of songId+difficulty -> rank
-  const rankMap = new Map<string, number>();
-
-  // New B15: ranks 0-14
-  for (let i = 0; i < newSongsB15.length; i++) {
-    const song = newSongsB15[i];
-    rankMap.set(`${song.songId}-${song.difficulty}`, i);
-  }
-
-  // Old B35: ranks 15-49
-  for (let i = 0; i < oldSongsB35.length; i++) {
-    const song = oldSongsB35[i];
-    rankMap.set(`${song.songId}-${song.difficulty}`, 15 + i);
-  }
-
-  // Remaining: merge and sort by rating desc, start from rank 50
-  const remainingSongs = [...newSongsRemaining, ...oldSongsRemaining].sort((a, b) => b.rating - a.rating);
-  for (let i = 0; i < remainingSongs.length; i++) {
-    const song = remainingSongs[i];
-    rankMap.set(`${song.songId}-${song.difficulty}`, 50 + i);
-  }
-
-  // Assign ranks to score inserts
-  for (const scoreInsert of scoreInserts) {
-    const fullSong = fullSongMap.get(scoreInsert.songId);
-    if (!fullSong) {
-      throw new Error(`Full song data not found for songId: ${scoreInsert.songId}`);
+    for (const row of rows) {
+      const key = scoreDataKey(row.songId, row.achievement, row.dxScore, row.fc, row.fs);
+      result.set(key, row.id);
     }
-
-    const rank = rankMap.get(`${fullSong.id}-${fullSong.difficulty}`);
-    if (rank === undefined) {
-      throw new Error(`Rank not calculated for song: ${fullSong.songName} (${fullSong.difficulty})`);
-    }
-
-    scoreInsert.rank = rank;
   }
 
-  logger.info(`Ranks calculated. B15: ${newSongsB15.length}, B35: ${oldSongsB35.length}, Remaining: ${remainingSongs.length}`);
-
-  return scoreInserts;
+  return result;
 }
 
 async function insertUserScores(
-  snapshotId: bigint,
+  snapshotId: number,
   region: Region,
   sessionId: bigint,
   allScoreData: { [difficulty: number]: ScoreData[] },
@@ -1256,46 +1248,107 @@ async function insertUserScores(
   }
 
   // Process all scores using the lookup map
-  const scoreInserts: typeof userScores.$inferInsert[] = [];
+  const resolvedScores: { songId: bigint; achievement: number; dxScore: number; fc: SongWithScore["fc"]; fs: SongWithScore["fs"] }[] = [];
   const notFoundScores: ScoreData[] = [];
-  let foundCount = 0;
-  let notFoundCount = 0;
 
-  for (const scoreData of allScores) {
+  for (const score of allScores) {
     try {
-      const lookupKey = `${scoreData.songName}|${scoreData.difficulty}|${scoreData.musicType}`;
+      const lookupKey = `${score.songName}|${score.difficulty}|${score.musicType}`;
       const songId = songLookup.get(lookupKey);
 
       if (!songId) {
-        logger.warn(`Could not find song in database: ${scoreData.songName} (${scoreData.difficulty}, ${scoreData.musicType})`);
-        notFoundScores.push(scoreData);
-        notFoundCount++;
+        logger.warn(`Could not find song in database: ${score.songName} (${score.difficulty}, ${score.musicType})`);
+        notFoundScores.push(score);
         continue;
       }
 
-      // Create user score record
-      scoreInserts.push({
-        snapshotId: snapshotId,
-        songId: songId,
-        achievement: scoreData.achievement,
-        dxScore: scoreData.dxScore,
-        fc: scoreData.fc,
-        fs: scoreData.fs,
+      resolvedScores.push({
+        songId,
+        achievement: score.achievement,
+        dxScore: score.dxScore,
+        fc: score.fc,
+        fs: score.fs,
       });
-
-      foundCount++;
     } catch (error) {
-      logger.error(error, `Error processing score for ${scoreData.songName}`);
-      notFoundCount++;
+      logger.error(error, `Error processing score for ${score.songName}`);
     }
   }
 
-  logger.info(`Prepared ${foundCount} score inserts, ${notFoundCount} songs not found in database`);
+  logger.info(`Prepared ${resolvedScores.length} scores, ${notFoundScores.length} songs not found in database`);
 
-  if (scoreInserts.length > 0) {
-    logger.info(`Batch inserting ${scoreInserts.length} user scores`);
-    await db.insert(userScores).values(await withRank(scoreInserts, fullSongMap, gameVersion));
-    logger.info(`Successfully inserted ${scoreInserts.length} user scores`);
+  if (resolvedScores.length > 0) {
+    // Step 1: Upsert into scoreData and get IDs
+    const scoreDataLookup = await upsertScoreData(resolvedScores);
+
+    // Step 2: Build junction rows for all scores
+    const junctionRows: { snapshotId: number; scoreId: number }[] = [];
+    for (const score of resolvedScores) {
+      const key = scoreDataKey(score.songId, score.achievement, score.dxScore, score.fc, score.fs);
+      const scoreDataId = scoreDataLookup.get(key);
+      if (!scoreDataId) {
+        logger.warn(`scoreData ID not found for key ${key}`);
+        continue;
+      }
+      junctionRows.push({ snapshotId, scoreId: scoreDataId });
+    }
+
+    // Step 3: Compute B50 via splitSongs
+    const songsForRanking: (Omit<SongWithScore, 'songId'> & { songId: bigint })[] = [];
+    for (const score of resolvedScores) {
+      const fullSong = fullSongMap.get(score.songId);
+      if (!fullSong) continue;
+      songsForRanking.push({
+        songId: fullSong.id,
+        songName: fullSong.songName,
+        artist: fullSong.artist,
+        cover: fullSong.cover,
+        difficulty: fullSong.difficulty,
+        level: fullSong.level,
+        levelPrecise: fullSong.levelPrecise,
+        type: fullSong.type,
+        genre: fullSong.genre,
+        addedVersion: fullSong.addedVersion as VersionId,
+        achievement: score.achievement,
+        dxScore: score.dxScore,
+        fc: score.fc,
+        fs: score.fs,
+      });
+    }
+
+    const { newSongsB15, oldSongsB35 } = splitSongs(songsForRanking, gameVersion);
+
+    // Step 4: Build B50 rows
+    const b50Rows: { snapshotId: number; rank: number; scoreId: number }[] = [];
+    for (let i = 0; i < newSongsB15.length; i++) {
+      const song = newSongsB15[i];
+      const key = scoreDataKey(song.songId, song.achievement, song.dxScore, song.fc, song.fs);
+      const scoreDataId = scoreDataLookup.get(key);
+      if (scoreDataId) {
+        b50Rows.push({ snapshotId, rank: i, scoreId: scoreDataId });
+      }
+    }
+    for (let i = 0; i < oldSongsB35.length; i++) {
+      const song = oldSongsB35[i];
+      const key = scoreDataKey(song.songId, song.achievement, song.dxScore, song.fc, song.fs);
+      const scoreDataId = scoreDataLookup.get(key);
+      if (scoreDataId) {
+        b50Rows.push({ snapshotId, rank: 15 + i, scoreId: scoreDataId });
+      }
+    }
+
+    logger.info(`B50 calculated. B15: ${newSongsB15.length}, B35: ${oldSongsB35.length}`);
+
+    // Step 5: Insert junction + B50 rows
+    if (junctionRows.length > 0) {
+      for (let i = 0; i < junctionRows.length; i += 1000) {
+        await db.insert(snapshotScores).values(junctionRows.slice(i, i + 1000)).onConflictDoNothing();
+      }
+    }
+    if (b50Rows.length > 0) {
+      await db.insert(snapshotB50).values(b50Rows).onConflictDoNothing();
+    }
+
+    logger.info(`Inserted ${junctionRows.length} snapshotScores, ${b50Rows.length} snapshotB50 rows`);
   } else {
     logger.warn("No valid scores to insert");
   }
@@ -1760,22 +1813,13 @@ async function fetchAlbumData(cookies: string, region: Region): Promise<AlbumDat
         return;
       }
 
-      const musicKindIcon = block.find(".music_kind_icon");
-      let musicType: SongType = "std";
-      if (musicKindIcon.length > 0) {
-        const iconSrc = musicKindIcon.attr("src") || "";
-        if (iconSrc.includes("music_dx.png")) {
-          musicType = "dx";
-        } else if (iconSrc.includes("music_standard.png")) {
-          musicType = "std";
-        }
-      }
-
       const diffElement = block.find(".p_r");
       const diffClassName = diffElement.attr("class") || "";
-      let difficulty: "basic" | "advanced" | "expert" | "master" | "remaster" = "basic";
+      let difficulty: Difficulty = "basic";
 
-      if (diffClassName.includes("remaster")) {
+      if (diffClassName.includes("utage")) {
+        difficulty = "utage";
+      } else if (diffClassName.includes("remaster")) {
         difficulty = "remaster";
       } else if (diffClassName.includes("master")) {
         difficulty = "master";
@@ -1785,6 +1829,18 @@ async function fetchAlbumData(cookies: string, region: Region): Promise<AlbumDat
         difficulty = "advanced";
       } else if (diffClassName.includes("basic")) {
         difficulty = "basic";
+      }
+
+      const musicKindIcon = block.find(".music_kind_icon");
+      let musicType: SongType = "std";
+      if (difficulty === "utage") musicType = "dx";
+      else if (musicKindIcon.length > 0) {
+        const iconSrc = musicKindIcon.attr("src") || "";
+        if (iconSrc.includes("music_dx.png")) {
+          musicType = "dx";
+        } else if (iconSrc.includes("music_standard.png")) {
+          musicType = "std";
+        }
       }
 
       const blockInfo = block.find(".block_info");
@@ -1833,7 +1889,7 @@ async function fetchAlbumData(cookies: string, region: Region): Promise<AlbumDat
 }
 
 async function insertUserEvents(
-  snapshotId: bigint,
+  snapshotId: number,
   areaEvents: EventData[],
   eventAreaEvents: EventAreaData[]
 ): Promise<void> {
@@ -2047,7 +2103,7 @@ export async function fetchMaimaiData(
       logger.info(`Skipping album fetch: user opted out (found ${albumData.length} albums)`);
     }
 
-    const bgWork = Promise.allSettled(backgroundTasks).then(() => {});
+    const bgWork = Promise.allSettled(backgroundTasks).then(() => { });
     if (backgroundWorkRef) {
       backgroundWorkRef.promise = bgWork;
     }

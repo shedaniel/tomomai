@@ -2,11 +2,12 @@
 
 import { useState } from "react";
 import {
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { AnimatedDialog, AnimatedDialogContent } from "@/components/ui/animated-dialog";
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogDescription,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from "@/components/ui/dialog-friendly";
 import { PolicyDialog } from "@/components/policy-dialog";
 import { trpc } from "@/lib/trpc-client";
 
@@ -24,14 +25,14 @@ export function AboutDialog({ open, onOpenChange }: AboutDialogProps) {
   });
 
   return (
-    <AnimatedDialog open={open} onOpenChange={onOpenChange}>
-      <AnimatedDialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>About ともマイ</DialogTitle>
-          <DialogDescription>
+    <ResponsiveDialog open={open} onOpenChange={onOpenChange}>
+      <ResponsiveDialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
+        <ResponsiveDialogHeader>
+          <ResponsiveDialogTitle>About ともマイ</ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>
             A modern web application for tracking and analyzing your maimai DX scores with friends.
-          </DialogDescription>
-        </DialogHeader>
+          </ResponsiveDialogDescription>
+        </ResponsiveDialogHeader>
 
         <div className="space-y-6">
           <div>
@@ -96,7 +97,7 @@ export function AboutDialog({ open, onOpenChange }: AboutDialogProps) {
             </p>
           </div>
         </div>
-      </AnimatedDialogContent>
+      </ResponsiveDialogContent>
 
       {/* Policy dialogs */}
       {policies && (
@@ -115,6 +116,6 @@ export function AboutDialog({ open, onOpenChange }: AboutDialogProps) {
           />
         </>
       )}
-    </AnimatedDialog>
+    </ResponsiveDialog>
   );
 }

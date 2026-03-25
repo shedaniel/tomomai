@@ -1,10 +1,10 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { trpc } from "@/lib/trpc-client";
 import { Region } from "@/lib/types";
 import { cn, getTypeBadgeUrl } from "@/lib/utils";
 import { Images, Loader2, AlertCircle, Calendar, MapPin, Music, HardDrive, Info, Trash2 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useTranslations } from "next-intl";
 
 import { CoverImage } from "@/components/cover-image";
@@ -14,8 +14,16 @@ import { AppRouter } from "@/server/routers/_app";
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 import { renderLevelPrecise } from "@/lib/name-utils";
 import { Button } from "@/components/ui/button";
-import { DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
-import { AnimatedDialog, AnimatedDialogContent, AnimatedDialogClose } from "@/components/ui/animated-dialog";
+import {
+  ResponsiveDialog,
+  ResponsiveDialogClose,
+  ResponsiveDialogContent,
+  ResponsiveDialogDescription,
+  ResponsiveDialogFooter,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+  ResponsiveDialogTrigger,
+} from "@/components/ui/dialog-friendly";
 import { Checkbox } from "@/components/animate-ui/components/radix/checkbox";
 import { toast } from "sonner";
 
@@ -111,56 +119,60 @@ export function AlbumCard({ region }: AlbumCardProps) {
 
   if (isLoading && offset === 0) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Images className="h-5 w-5" />
-            {t('title')}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-          </div>
-        </CardContent>
-      </Card>
+      <div className="space-y-6">
+        <h2 className="text-lg font-semibold flex items-center gap-2">
+          <Images className="h-5 w-5" />
+          {t('title')}
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="flex flex-col gap-3 p-4 border rounded-lg">
+              <Skeleton className="w-full aspect-video rounded" />
+              <div className="flex gap-3">
+                <Skeleton className="w-14 h-14 rounded shrink-0 m-1" />
+                <div className="flex-1 min-w-0 space-y-2">
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-3 w-1/2" />
+                  <Skeleton className="h-2.5 w-8" />
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Skeleton className="h-3 w-32" />
+                <Skeleton className="h-3 w-24" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
     );
   }
 
   if (error) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Images className="h-5 w-5" />
-            {t('title')}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-center py-12 text-muted-foreground">
-            <AlertCircle className="h-5 w-5 mr-2" />
-            <span>{t('error')}</span>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="space-y-6">
+        <h2 className="text-lg font-semibold flex items-center gap-2">
+          <Images className="h-5 w-5" />
+          {t('title')}
+        </h2>
+        <div className="flex items-center justify-center py-12 text-muted-foreground">
+          <AlertCircle className="h-5 w-5 mr-2" />
+          <span>{t('error')}</span>
+        </div>
+      </div>
     );
   }
 
   if (albums.length === 0 && !isLoading && processedOffsetsRef.current.has(0)) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Images className="h-5 w-5" />
-            {t('title')}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-center py-12 text-muted-foreground">
-            <span>{t('noAlbums')}</span>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="space-y-6">
+        <h2 className="text-lg font-semibold flex items-center gap-2">
+          <Images className="h-5 w-5" />
+          {t('title')}
+        </h2>
+        <div className="flex items-center justify-center py-12 text-muted-foreground">
+          <span>{t('noAlbums')}</span>
+        </div>
+      </div>
     );
   }
 
@@ -173,29 +185,28 @@ export function AlbumCard({ region }: AlbumCardProps) {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Images className="h-5 w-5" />
-            {t('title')}
-          </div>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-semibold flex items-center gap-2">
+          <Images className="h-5 w-5" />
+          {t('title')}
+        </h2>
           <div className="flex items-center gap-3">
             {data?.storage && (
-              <AnimatedDialog>
-                <DialogTrigger asChild>
+              <ResponsiveDialog>
+                <ResponsiveDialogTrigger asChild>
                   <Button variant="outline" size="sm" className="gap-2">
                     <HardDrive className="h-4 w-4" />
                     <span className="hidden sm:inline">{t('storage')}</span>
                   </Button>
-                </DialogTrigger>
-                <AnimatedDialogContent>
-                  <DialogHeader>
-                    <DialogTitle>{t('storageTitle')}</DialogTitle>
-                    <DialogDescription>
+                </ResponsiveDialogTrigger>
+                <ResponsiveDialogContent>
+                  <ResponsiveDialogHeader>
+                    <ResponsiveDialogTitle>{t('storageTitle')}</ResponsiveDialogTitle>
+                    <ResponsiveDialogDescription>
                       {t('storageDescription')}
-                    </DialogDescription>
-                  </DialogHeader>
+                    </ResponsiveDialogDescription>
+                  </ResponsiveDialogHeader>
                   <div className="space-y-4">
                     {/* Total Storage with Stacked Progress Bar */}
                     <div className="space-y-3">
@@ -250,8 +261,8 @@ export function AlbumCard({ region }: AlbumCardProps) {
                       </div>
                     )}
                   </div>
-                </AnimatedDialogContent>
-              </AnimatedDialog>
+                </ResponsiveDialogContent>
+              </ResponsiveDialog>
             )}
             {albums.length > 0 && (
               <span className="text-sm font-normal text-muted-foreground">
@@ -259,9 +270,8 @@ export function AlbumCard({ region }: AlbumCardProps) {
               </span>
             )}
           </div>
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
+      </div>
+      <div>
         {/* Upload Notice Banner */}
         <div className="mb-4 flex gap-2 p-3 bg-neutral-50 dark:bg-neutral-700/20 border border-neutral-200 dark:border-neutral-600 rounded-md">
           <Info className="h-4 w-4 text-neutral-600 dark:text-neutral-400 mt-0.5 shrink-0" />
@@ -296,7 +306,7 @@ export function AlbumCard({ region }: AlbumCardProps) {
                       coverUrl={album.cover}
                       alt={album.songName}
                       className={cn(
-                        "w-14 h-14 rounded ring-2 ring-offset-2 ring-offset-card object-cover",
+                        "w-14 h-14 rounded ring-2 ring-offset-2 ring-offset-background object-cover",
                         album.difficulty === "basic" && "ring-green-400",
                         album.difficulty === "advanced" && "ring-yellow-400",
                         album.difficulty === "expert" && "ring-red-400",
@@ -372,16 +382,16 @@ export function AlbumCard({ region }: AlbumCardProps) {
             </div>
           )}
         </div>
-      </CardContent>
+      </div>
 
-      <AnimatedDialog open={showDialog} onOpenChange={setShowDialog}>
-        <AnimatedDialogContent showCloseButton={false}>
-          <DialogHeader>
-            <DialogTitle>{t('deleteTitle')}</DialogTitle>
-            <DialogDescription>
+      <ResponsiveDialog open={showDialog} onOpenChange={setShowDialog}>
+        <ResponsiveDialogContent showCloseButton={false}>
+          <ResponsiveDialogHeader>
+            <ResponsiveDialogTitle>{t('deleteTitle')}</ResponsiveDialogTitle>
+            <ResponsiveDialogDescription>
               {t('deleteDescription')}
-            </DialogDescription>
-          </DialogHeader>
+            </ResponsiveDialogDescription>
+          </ResponsiveDialogHeader>
           <div className="flex items-center gap-2">
             <Checkbox
               id="dont-ask-again"
@@ -392,14 +402,14 @@ export function AlbumCard({ region }: AlbumCardProps) {
               {t('dontAskAgain')}
             </label>
           </div>
-          <DialogFooter>
-            <AnimatedDialogClose asChild>
+          <ResponsiveDialogFooter>
+            <ResponsiveDialogClose asChild>
               <Button variant="outline">{t('cancel')}</Button>
-            </AnimatedDialogClose>
+            </ResponsiveDialogClose>
             <Button onClick={handleConfirmDelete}>{t('delete')}</Button>
-          </DialogFooter>
-        </AnimatedDialogContent>
-      </AnimatedDialog>
-    </Card>
+          </ResponsiveDialogFooter>
+        </ResponsiveDialogContent>
+      </ResponsiveDialog>
+    </div>
   );
 }

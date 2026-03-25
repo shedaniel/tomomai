@@ -1,11 +1,12 @@
 "use client";
 
 import {
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { AnimatedDialog, AnimatedDialogContent } from "@/components/ui/animated-dialog";
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogDescription,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from "@/components/ui/dialog-friendly";
 import { useCallback, useEffect, useState } from "react";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
@@ -22,7 +23,6 @@ interface AdminDialogProps {
 export function AdminDialog({ open, onOpenChange }: AdminDialogProps) {
   const [adminToken, setAdminToken] = useState("");
   const [maimaiToken, setMaimaiToken] = useState("");
-  const [fallbackSongs, setFallbackSongs] = useState<object[]>([]);
   const [newSongs, setNewSongs] = useState<object[]>([]);
   const [consoleLog, setConsoleLog] = useState("Welcome to the admin panel!\n");
   const [usersBrowserOpen, setUsersBrowserOpen] = useState(false);
@@ -79,74 +79,10 @@ export function AdminDialog({ open, onOpenChange }: AdminDialogProps) {
     });
   }
 
-  function handleUpdateB50Database(region: "intl" | "jp") {
-    appendConsoleLog("Updating B50 database for region " + region + "...");
-    fetch(`/api/admin/db?type=update_b50&region=${region}`, {
-      method: "GET",
-      headers: { "Authorization": "Bearer " + adminToken }
-    }).then(async data => {
-      appendConsoleLog(`Response ${data.status} ${data.statusText}:`);
-      const text = await data.text();
-      try {
-        const json = JSON.parse(text);
-        appendConsoleLog(JSON.stringify(json, null, 2));
-      } catch (_) {
-        appendConsoleLog(text);
-      }
-    }).catch(error => {
-      appendConsoleLog("Error: " + error.message);
-    });
-  }
-
-  function handleFetchFallbackSongs(region: "intl" | "jp") {
-    appendConsoleLog("Fetching fallback songs for region " + region + "...");
-    const maimaiTokenEncoded = encodeURIComponent(maimaiToken);
-    fetch(`/api/admin/update?region=${region}&token=${maimaiTokenEncoded}`, {
-      method: "GET",
-      headers: { "Authorization": "Bearer " + adminToken }
-    }).then(async data => {
-      appendConsoleLog(`Response ${data.status} ${data.statusText}:`);
-      const text = await data.text();
-      try {
-        const json = JSON.parse(text);
-        if (json.success) {
-          appendConsoleLog("Fallback songs fetched successfully");
-          setFallbackSongs(json.records);
-        } else {
-          appendConsoleLog(JSON.stringify(json, null, 2));
-        }
-      } catch (_) {
-        appendConsoleLog(text);
-      }
-    }).catch(error => {
-      appendConsoleLog("Error: " + error.message);
-    });
-  }
-
-  function handleUpdateDatabase(region: "intl" | "jp") {
-    appendConsoleLog("Updating database for region " + region + "...");
-    fetch(`/api/admin/update_db?region=${region}`, {
-      method: "POST",
-      headers: { "Authorization": "Bearer " + adminToken },
-      body: JSON.stringify({ fallbackRecords: fallbackSongs }),
-    }).then(async data => {
-      appendConsoleLog(`Response ${data.status} ${data.statusText}:`);
-      const text = await data.text();
-      try {
-        const json = JSON.parse(text);
-        appendConsoleLog(JSON.stringify(json, null, 2));
-      } catch (_) {
-        appendConsoleLog(text);
-      }
-    }).catch(error => {
-      appendConsoleLog("Error: " + error.message);
-    });
-  }
-
-  function handleFetchNewSongs(region: "intl" | "jp") {
+  function handleFetchSongs(region: "intl" | "jp") {
     appendConsoleLog("Fetching new songs for region " + region + "...");
     const maimaiTokenEncoded = encodeURIComponent(maimaiToken);
-    fetch(`/api/admin/update_new?region=${region}&token=${maimaiTokenEncoded}`, {
+    fetch(`/api/admin/update?region=${region}&token=${maimaiTokenEncoded}`, {
       method: "GET",
       headers: { "Authorization": "Bearer " + adminToken }
     }).then(async data => {
@@ -177,7 +113,7 @@ export function AdminDialog({ open, onOpenChange }: AdminDialogProps) {
     const version = region === "intl" ? intlVersion : jpVersion;
     appendConsoleLog(`Previewing changes for ${region} v${version} (${newSongs.length} songs)...`);
 
-    fetch(`/api/admin/upload?region=${region}&version=${version}`, {
+    fetch(`/api/admin/upload?region=${region}&version=${version}&mode=noop`, {
       method: "POST",
       headers: {
         "Authorization": "Bearer " + adminToken,
@@ -318,14 +254,14 @@ export function AdminDialog({ open, onOpenChange }: AdminDialogProps) {
 
   return (
     <>
-      <AnimatedDialog open={open} onOpenChange={handleAdminDialogChange}>
-        <AnimatedDialogContent className={cn("max-w-2xl max-h-[80vh] overflow-y-auto transition-[opacity,scale] duration-200", usersBrowserOpen ? "opacity-70 scale-95" : "")}>
-          <DialogHeader>
-            <DialogTitle>ともマイ Admin Panel</DialogTitle>
-            <DialogDescription>
+      <ResponsiveDialog open={open} onOpenChange={handleAdminDialogChange}>
+        <ResponsiveDialogContent className={cn("max-w-2xl max-h-[80vh] overflow-y-auto transition-[opacity,scale] duration-200", usersBrowserOpen ? "opacity-70 scale-95" : "")}>
+          <ResponsiveDialogHeader>
+            <ResponsiveDialogTitle>ともマイ Admin Panel</ResponsiveDialogTitle>
+            <ResponsiveDialogDescription>
               Modifying the database and other admin-only features.
-            </DialogDescription>
-          </DialogHeader>
+            </ResponsiveDialogDescription>
+          </ResponsiveDialogHeader>
 
           <div className="space-y-6">
             <div className="grid gap-2">
@@ -369,26 +305,6 @@ export function AdminDialog({ open, onOpenChange }: AdminDialogProps) {
             </div>
 
             <div className="grid gap-2">
-              <Label>Update B50 Database</Label>
-              <div className="grid gap-2 grid-cols-2">
-                <Button
-                  id="updateB50IntlDatabase"
-                  variant="outline"
-                  onClick={() => handleUpdateB50Database("intl")}
-                >
-                  International
-                </Button>
-                <Button
-                  id="updateB50JpDatabase"
-                  variant="outline"
-                  onClick={() => handleUpdateB50Database("jp")}
-                >
-                  Japan
-                </Button>
-              </div>
-            </div>
-
-            <div className="grid gap-2">
               <Label htmlFor="maimaiToken">Maimai Token</Label>
               <span className="text-sm text-muted-foreground">
                 This is the token you use to fetch data from the maimai website.
@@ -403,32 +319,7 @@ export function AdminDialog({ open, onOpenChange }: AdminDialogProps) {
             </div>
 
             <div className="grid gap-2">
-              <Label>Fetch Fallback Songs from Official Sites</Label>
-              <span className="text-sm text-muted-foreground">
-                This will fetch the fallback songs from the official sites and add them to the database.
-                <br />
-                Current fallback songs: {fallbackSongs.length}
-              </span>
-              <div className="grid gap-2 grid-cols-2">
-                <Button
-                  id="fetchIntlFallbackSongs"
-                  variant="outline"
-                  onClick={() => handleFetchFallbackSongs("intl")}
-                >
-                  International (v{intlVersion})
-                </Button>
-                <Button
-                  id="fetchJpFallbackSongs"
-                  variant="outline"
-                  onClick={() => handleFetchFallbackSongs("jp")}
-                >
-                  Japan (v{jpVersion})
-                </Button>
-              </div>
-            </div>
-
-            <div className="grid gap-2">
-              <Label>Fetch New Songs from Pipeline</Label>
+              <Label>Fetch New Songs</Label>
               <span className="text-sm text-muted-foreground">
                 This will fetch songs using the full pipeline (scraper, dxdata, etc.).
                 <br />
@@ -438,14 +329,14 @@ export function AdminDialog({ open, onOpenChange }: AdminDialogProps) {
                 <Button
                   id="fetchIntlNewSongs"
                   variant="outline"
-                  onClick={() => handleFetchNewSongs("intl")}
+                  onClick={() => handleFetchSongs("intl")}
                 >
                   Fetch International (v{intlVersion})
                 </Button>
                 <Button
                   id="fetchJpNewSongs"
                   variant="outline"
-                  onClick={() => handleFetchNewSongs("jp")}
+                  onClick={() => handleFetchSongs("jp")}
                 >
                   Fetch Japan (v{jpVersion})
                 </Button>
@@ -478,26 +369,6 @@ export function AdminDialog({ open, onOpenChange }: AdminDialogProps) {
             </div>
 
             <div className="grid gap-2">
-              <Label>Update Database in addition with fallback songs</Label>
-              <div className="grid gap-2 grid-cols-2">
-                <Button
-                  id="updateIntlDatabase"
-                  variant="outline"
-                  onClick={() => handleUpdateDatabase("intl")}
-                >
-                  International (v{intlVersion})
-                </Button>
-                <Button
-                  id="updateJpDatabase"
-                  variant="outline"
-                  onClick={() => handleUpdateDatabase("jp")}
-                >
-                  Japan (v{jpVersion})
-                </Button>
-              </div>
-            </div>
-
-            <div className="grid gap-2">
               <Label>Cache Images</Label>
               <Button
                 id="cacheImages"
@@ -518,8 +389,8 @@ export function AdminDialog({ open, onOpenChange }: AdminDialogProps) {
               </p>
             </div>
           </div>
-        </AnimatedDialogContent>
-      </AnimatedDialog>
+        </ResponsiveDialogContent>
+      </ResponsiveDialog>
 
       <UsersBrowserDialog
         open={usersBrowserOpen}

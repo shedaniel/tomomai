@@ -124,3 +124,17 @@ export const levenshtein = (a: string, b: string): number => {
   }
   return tmp[b.length][a.length];
 };
+
+export function maxBy<T>(array: T[], iteratee: (item: T) => number): T | undefined {
+  if (array.length === 0) return undefined;
+  let maxItem = array[0];
+  let maxValue = iteratee(maxItem);
+  for (let i = 1; i < array.length; i++) {
+    const value = iteratee(array[i]);
+    if (value > maxValue) {
+      maxValue = value;
+      maxItem = array[i];
+    }
+  }
+  return maxItem;
+}

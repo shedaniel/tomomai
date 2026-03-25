@@ -1,8 +1,8 @@
 "use client";
 
 import { Region, SnapshotWithSongs } from "@/lib/types";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BarChart, Clock, Code, Database, Disc, Heart, Image as ImageIcon, Loader2, Map, Music, TrendingUp, User, Images } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { BarChart, Clock, Code, Database, Heart, Image as ImageIcon, Loader2, Map, Music, TrendingUp, User, Images } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState, useEffect } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
@@ -17,8 +17,9 @@ import { DeveloperCard } from "./developer-card";
 import { AlbumCard } from "./album-card";
 import { StatsCard } from "./stats-card";
 import { Flags } from "@/lib/flags";
-import { motion } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 import { getTransition } from "@/lib/animation-constants";
+import { useMediaQuery } from "@/hooks/use-media-query";
 
 interface DataContentProps {
   region: Region;
@@ -57,6 +58,7 @@ export function DataContent({
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const isDesktop = useMediaQuery("(min-width: 768px)", { initializeWithValue: false });
 
   // Valid tab values
   const allPossibleTabs = ["info", "stats", "songs", "recent", "recommendations", "map", "exportImage", "history", "developer", "albums"];
@@ -197,94 +199,69 @@ export function DataContent({
         orientation="vertical"
         value={selectedTab}
         onValueChange={handleTabChange}
-        className="flex flex-col md:flex-row md:items-start"
+        className="flex flex-col md:flex-row md:items-start gap-x-6 lg:gap-x-8 gap-y-6"
       >
-        <TabsList className="shrink-0 grid grid-cols-1 min-w-30 p-0 bg-background md:mt-4 font-semibold max-md:h-fit max-md:mb-4">
+        <TabsList className="shrink-0 flex flex-row justify-start overflow-x-auto gap-x-1 md:grid md:grid-cols-1 md:w-48 md:overflow-x-visible md:-ml-3 p-0 bg-background h-fit rounded-none">
           {visibleTabs.map((tab) => (
-            <TabsTrigger key={tab.value} value={tab.value} className="border-l-2 border-transparent justify-start rounded-none data-[state=active]:shadow-none data-[state=active]:border-primary data-[state=active]:bg-primary/5 py-1.5 pr-4">
-              <tab.icon className="h-5 w-5 me-3" /> {tab.name}
+            <TabsTrigger key={tab.value} value={tab.value} className="justify-start rounded-md text-sm text-muted-foreground data-[state=active]:shadow-none data-[state=active]:bg-muted data-[state=active]:text-foreground data-[state=active]:font-medium data-[state=active]:border data-[state=active]:border-border data-[state=active]:md:px-3.5 data-[state=active]:md:my-1 data-[state=active]:md:text-[15px] data-[state=active]:max-md:px-4 px-3 py-2 whitespace-nowrap shrink-0 md:shrink md:whitespace-normal transition-all">
+              <tab.icon className="size-4 me-2 data-[state=active]:scale-125 transition-all" /> {tab.name}
             </TabsTrigger>
           ))}
         </TabsList>
 
-        <TabsContent value="info" className="mt-0 flex-1 min-w-0">
+        <AnimatePresence mode="wait">
           <motion.div
-            initial={{ opacity: 0, x: 10 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={getTransition({ duration: 0.3, ease: [0.4, 0, 0.2, 1] })}
+            key={selectedTab}
+            initial={{ opacity: 0, ...(isDesktop ? { y: 10 } : { x: 10 }) }}
+            animate={{ opacity: 1, x: 0, y: 0 }}
+            exit={{ opacity: 0, ...(isDesktop ? { y: -10 } : { x: -10 }) }}
+            transition={getTransition({ duration: 0.2, ease: [0.4, 0, 0.2, 1] })}
+            className="flex-1 min-w-0 mx-1"
           >
-            <InfoCard
-              selectedSnapshotData={selectedSnapshotData}
-              showPlayCounts={privacySettings.showPlayCounts}
-              visitableProfileAt={visitableProfileAt}
-            />
-          </motion.div>
-        </TabsContent>
-        {(visitedBySelf || !!privacySettings.showAllScores) && (
-          <TabsContent value="stats" className="mt-0 flex-1 min-w-0">
-            <motion.div
-              initial={{ opacity: 0, x: 10 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={getTransition({ duration: 0.3, ease: [0.4, 0, 0.2, 1] })}
-            >
+            {selectedTab === "info" && (
+              <InfoCard
+                selectedSnapshotData={selectedSnapshotData}
+                showPlayCounts={privacySettings.showPlayCounts}
+                visitableProfileAt={visitableProfileAt}
+              />
+            )}
+            {selectedTab === "stats" && (visitedBySelf || !!privacySettings.showAllScores) && (
               <StatsCard
                 region={region}
                 selectedSnapshotData={selectedSnapshotData}
                 snapshotId={visitedBySelf ? undefined : selectedSnapshotData?.snapshot.id}
               />
-            </motion.div>
-          </TabsContent>
-        )}
-        <TabsContent value="songs" className="mt-0 flex-1 min-w-0">
-          <motion.div
-            initial={{ opacity: 0, x: 10 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={getTransition({ duration: 0.3, ease: [0.4, 0, 0.2, 1] })}
-          >
-            <SongsCard selectedSnapshotData={selectedSnapshotData} />
+            )}
+            {selectedTab === "songs" && (
+              <SongsCard selectedSnapshotData={selectedSnapshotData} />
+            )}
+            {selectedTab === "recent" && (visitedBySelf || !!privacySettings.showScoreDetails) && (
+              <RecentSongsCard
+                region={region}
+                beforeDate={selectedSnapshotData?.snapshot.fetchedAt}
+                snapshotId={visitedBySelf ? undefined : selectedSnapshotData?.snapshot.id}
+              />
+            )}
+            {selectedTab === "recommendations" && (
+              <RecommendationCard selectedSnapshotData={selectedSnapshotData} flags={flags} />
+            )}
+            {selectedTab === "history" && visitedBySelf && flags.historyCard && (
+              <HistoryCard region={region} />
+            )}
+            {selectedTab === "map" && privacySettings.showEvents && (
+              <EventsCard selectedSnapshotData={selectedSnapshotData} />
+            )}
+            {selectedTab === "exportImage" && (
+              <ExportImageCard selectedSnapshotData={selectedSnapshotData} region={region} showLastCredit={visitedBySelf || !!privacySettings.showScoreDetails} username={visitableProfileAt ?? undefined} />
+            )}
+            {selectedTab === "developer" && visitedBySelf && (
+              <DeveloperCard selectedSnapshotData={selectedSnapshotData} />
+            )}
+            {selectedTab === "albums" && visitedBySelf && flags.albumsCard && (
+              <AlbumCard region={region} />
+            )}
           </motion.div>
-        </TabsContent>
-        {(visitedBySelf || !!privacySettings.showScoreDetails) && (
-          <TabsContent value="recent" className="mt-0 flex-1 min-w-0">
-            <RecentSongsCard
-              region={region}
-              beforeDate={selectedSnapshotData?.snapshot.fetchedAt}
-              snapshotId={visitedBySelf ? undefined : selectedSnapshotData?.snapshot.id}
-            />
-          </TabsContent>
-        )}
-        <TabsContent value="recommendations" className="mt-0 flex-1 min-w-0">
-          <motion.div
-            initial={{ opacity: 0, x: 10 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={getTransition({ duration: 0.3, ease: [0.4, 0, 0.2, 1] })}
-          >
-            <RecommendationCard selectedSnapshotData={selectedSnapshotData} flags={flags} />
-          </motion.div>
-        </TabsContent>
-        {visitedBySelf && flags.historyCard && (
-          <TabsContent value="history" className="mt-0 flex-1 min-w-0">
-            <HistoryCard region={region} />
-          </TabsContent>
-        )}
-        {privacySettings.showEvents && (
-          <TabsContent value="map" className="mt-0 flex-1 min-w-0">
-            <EventsCard selectedSnapshotData={selectedSnapshotData} />
-          </TabsContent>
-        )}
-        <TabsContent value="exportImage" className="mt-0 flex-1 min-w-0">
-          <ExportImageCard selectedSnapshotData={selectedSnapshotData} region={region} showLastCredit={visitedBySelf || !!privacySettings.showScoreDetails} />
-        </TabsContent>
-        {visitedBySelf && (
-          <TabsContent value="developer" className="mt-0 flex-1 min-w-0">
-            <DeveloperCard selectedSnapshotData={selectedSnapshotData} />
-          </TabsContent>
-        )}
-        {visitedBySelf && flags.albumsCard && (
-          <TabsContent value="albums" className="mt-0 flex-1 min-w-0">
-            <AlbumCard region={region} />
-          </TabsContent>
-        )}
+        </AnimatePresence>
       </Tabs>
     )
   }

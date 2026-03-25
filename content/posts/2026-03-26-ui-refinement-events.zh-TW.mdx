@@ -1,0 +1,80 @@
+---
+title: "介面改版與活動資訊"
+date: "2026-03-26"
+version: "2026.3"
+summary: "3 月更新：活動追蹤、手機版介面大改版、獨立設定頁面，以及資料庫大瘦身。"
+locale: "zh-TW"
+canonicalSlug: "2026-03-26-ui-refinement-events"
+---
+
+## 3 月更新：介面改善與新功能
+
+春天到了，tomomai 也跟著大翻新！這個月我們加了活動追蹤、手機版介面整個砍掉重練、導覽重新整理過，還幫資料庫動了一場「大手術」，讓速度繼續飛快。
+
+## 新功能：活動整合
+
+我們把**活動**的資料直接拉進 tomomai，一次帶來兩個新功能：
+
+### 活動進度追蹤
+你的主頁現在多了一個 **「活動」分頁**，所有進行中的活動都會秀出**進度條**，每個獎勵節點都有旗子標起來。走到哪、下一個獎勵是啥、已經拿了哪些，看一眼就知道。
+
+![Event Progress](/posts/2026-03-26-ui-refinement/events-progress.png)
+
+### 活動資料庫
+到 **資料庫 > 活動** 就能看到所有 maimai 活動。側欄會按狀態分好（進行中、已結束），點進去可以看活動期間跟每一步的獎勵節點。目前介面還比較簡單，之後會持續改進。
+
+![Events Database](/posts/2026-03-26-ui-refinement/events-database.png)
+
+## 新功能：手機版介面大改版
+
+我們想讓 tomomai 在手機上用起來跟原生 App 一樣順。所以砍掉了傳統的網頁對話框，換成**底部滑出面板 (Bottom Sheet)**。
+
+- **能拖能甩**：選單從螢幕底部滑上來，往上拖就展開，往下甩就收掉。
+- **側邊選單取代下拉**：右上角那個舊的下拉選單拿掉了，手機上改用**側邊選單**來開個人檔案跟設定。
+
+<ImageCarousel>
+  <ImageCarouselSlide src="/posts/2026-03-26-ui-refinement/new-select.png" alt="新版選擇選單" caption="新版選擇選單" />
+  <ImageCarouselSlide src="/posts/2026-03-26-ui-refinement/new-menu.png" alt="新版側邊選單" caption="新版側邊選單" />
+  <ImageCarouselSlide src="/posts/2026-03-26-ui-refinement/new-token.png" alt="新版 Token 選單" caption="新版 Token 選單" />
+</ImageCarousel>
+
+## 新功能：主頁跟設定頁面大翻新
+
+主頁跟設定從小小的彈出視窗畢業了，正式升級成完整的獨立頁面。
+
+### 更現代的版面設計
+告別舊版卡片式排版，換成更乾淨俐落的設計。
+
+<ImageComparison before="/posts/2026-03-26-ui-refinement/dashboard-old.png" after="/posts/2026-03-26-ui-refinement/dashboard-new.png" beforeAlt="舊版主頁" afterAlt="新版主頁" />
+
+### 獨立設定頁面
+不用再東翻西找了。新的設定頁面切成三塊：**帳號**、**擷取**、**隱私**。
+- **登入裝置管理**：看你目前有哪些裝置登入中，不要的可以直接踢掉。
+- **改名字**：可以直接在這裡查名字有沒有被用過，然後改掉你的 tomomai 使用者名稱。
+
+![New Settings Page](/posts/2026-03-26-ui-refinement/settings-page.png)
+
+## 底層大工程：大規模重構
+
+在背後，我們做了一次大規模的程式碼整理，為了讓長期維護跟效能都更好。
+
+### 1. 告別巨石架構
+我們把肥到超過 3,400 行的 `user.ts` 路由砍掉，拆成 **11 個專用子路由**跟 **9 個可以重複用的查詢模組**。App 跑起來更快，修 Bug 的速度也快很多。
+
+### 2. 資料庫正規化 & 空間少了 33%
+成績儲存從「非正規化」搬到「正規化」架構。
+- **以前的做法**：每次快照都會把所有成績整包複製一份存起來，就算成績根本沒變。
+- **現在的做法**：用 `scoreData`、`snapshotScores` 跟 `snapshotB50`。如果某筆成績好幾次快照都沒變，我們只存一次，後面的快照用連結指過去就好。
+
+**所以有什麼好處？**
+- **空間**：資料庫整體縮小了 **33%**。
+- **型別簡化**：ID 從 `bigint` 改成 `integer`，程式碼更簡潔，空間又省一點。
+- **資料一致性**：去重之後，你的統計數據在整個平台上都會是一致的。
+
+---
+
+歡迎加入 Discord 聊聊這次的更新：[https://discord.gg/jZqQHr3UDq](https://discord.gg/jZqQHr3UDq)
+
+想幫忙翻譯？這邊請：[https://crowdin.com/project/tomomai](https://crowdin.com/project/tomomai)
+
+祝大家刷分愉快！

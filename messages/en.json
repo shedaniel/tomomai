@@ -11,6 +11,7 @@
     "update": "Update",
     "login": "Login",
     "join": "Join",
+    "guest": "Guest",
     "logout": "Logout",
     "username": "Username",
     "password": "Password",
@@ -27,6 +28,7 @@
     "discord": "Discord",
     "about": "About",
     "experiments": "Experiments",
+    "region": "Region",
     "comingSoon": "Coming soon...",
     "difficulties": {
       "basic": "Basic",
@@ -35,7 +37,9 @@
       "master": "Master",
       "remaster": "Re:Master",
       "utage": "Utage"
-    }
+    },
+    "back": "Back",
+    "clipboardError": "Failed to copy to clipboard"
   },
   "auth": {
     "loginWithDiscord": "Continue with Discord",
@@ -81,8 +85,24 @@
     "tokenUpdateSuccess": "Token saved successfully!"
   },
   "settings": {
-    "title": "Settings",
-    "description": "Customize your tomomai ともマイ experience.",
+    "pages": {
+      "account": {
+        "title": "Account",
+        "description": "Language and account preferences."
+      },
+      "fetch": {
+        "title": "Fetch",
+        "description": "Token and data fetching settings."
+      },
+      "privacy": {
+        "title": "Privacy",
+        "description": "Control who can see your profile and scores."
+      },
+      "developer": {
+        "title": "Developer",
+        "description": "Manage API keys and OAuth applications."
+      }
+    },
     "language": {
       "label": "Language",
       "description": "Select your preferred interface language.",
@@ -174,7 +194,174 @@
     "saveChanges": "Save Changes",
     "saving": "Saving...",
     "saved": "Settings saved successfully!",
-    "errorSaving": "Failed to save settings"
+    "errorSaving": "Failed to save settings",
+    "sessions": {
+      "title": "Sessions",
+      "description": "Manage your active sessions across devices.",
+      "currentSession": "Current",
+      "revoke": "Revoke",
+      "revokeAll": "Revoke All Others",
+      "revokeAllDescription": "This will sign out all other sessions. Only your current session will remain active.",
+      "revokeDescription": "This session will be signed out immediately.",
+      "noOtherSessions": "No active sessions found.",
+      "ip": "IP",
+      "createdAt": "Signed in",
+      "revokeConfirm": "Revoke this session?",
+      "revokeAllConfirm": "Revoke all other sessions?",
+      "revokeSuccess": "Session revoked successfully.",
+      "revokeAllSuccess": "All other sessions revoked."
+    },
+    "developer": {
+      "apiKeys": {
+        "label": "API Keys",
+        "description": "Authenticate requests to the tomomai API using these keys.",
+        "createButton": "Create API Key",
+        "loading": "Loading...",
+        "emptyTitle": "No API keys yet",
+        "emptyCreateLink": "Create your first key",
+        "emptySuffix": "to start using the tomomai API.",
+        "unnamed": "Unnamed key",
+        "expired": "Expired",
+        "disabled": "Disabled",
+        "never": "Never",
+        "createdAt": "Created {date}",
+        "expiresAt": "Expires {date}",
+        "toggleAriaLabel": "Toggle key",
+        "regenerateAriaLabel": "Regenerate key",
+        "deleteSuccess": "API key deleted",
+        "deleteError": "Failed to delete API key",
+        "updateError": "Failed to update key",
+        "regenerateError": "Failed to regenerate API key",
+        "regeneratedTitle": "Key Regenerated",
+        "regeneratedDescription": "Copy your new API key now. It will not be shown again.",
+        "regeneratedSaveWarning": "Save this key — it won't be shown again after closing this dialog.",
+        "regenerateDialog": {
+          "title": "Regenerate API key?",
+          "description": "This will immediately invalidate the current key. Any application using it will lose access until updated with the new key.",
+          "confirm": "Regenerate"
+        },
+        "deleteDialog": {
+          "title": "Delete API key?",
+          "description": "This action cannot be undone. Any application using this key will immediately lose access.",
+          "confirm": "Delete"
+        }
+      },
+      "createDialog": {
+        "title": "Create API Key",
+        "description": "Generate a new API key to access the tomomai API.",
+        "createdTitle": "API Key Created",
+        "createdDescription": "Copy your API key now. It will not be shown again.",
+        "copyAriaLabel": "Copy API key",
+        "saveWarning": "Save this key — it won't be shown again after closing this dialog.",
+        "done": "Done",
+        "nameLabel": "Name",
+        "namePlaceholder": "My App",
+        "nameDescription": "A descriptive name to identify this key.",
+        "scopesLabel": "Scopes",
+        "scopeDefaultBadge": "default",
+        "scopeDestructiveBadge": "destructive",
+        "scopeSensitiveBadge": "sensitive",
+        "scopeIncludedBadge": "included",
+        "sensitiveWarning": "One or more selected scopes are marked sensitive because they expose personal data or private identifiers. Grant only to apps you trust.",
+        "expirationLabel": "Expiration",
+        "expiration": {
+          "7d": "7 days",
+          "30d": "30 days",
+          "90d": "90 days",
+          "1y": "1 year",
+          "never": "Never"
+        },
+        "destructiveWarning": "This key grants access to destructive operations. Do you understand the risks?",
+        "confirmLabelPre": "Type",
+        "confirmPhrase": "Yes, I understand",
+        "confirmLabelPost": "to confirm",
+        "creating": "Creating...",
+        "createButton": "Create API Key",
+        "createError": "Failed to create API key"
+      },
+      "scopes": {
+        "ready": {
+          "name": "Ready",
+          "description": "Basic access. Grants GET /api/v1/ok. Included by default."
+        },
+        "user:metadata:read": {
+          "name": "User Metadata (Read)",
+          "description": "Read your username, region, profile visibility, and role. Grants GET /api/v1/me."
+        },
+        "snapshot:latest:metadata:read": {
+          "name": "Latest Snapshot Metadata (Read)",
+          "description": "Read metadata (rating, display name, play counts, etc.) for your latest snapshot. Grants GET /api/v1/snapshots/latest."
+        },
+        "snapshot:latest:songs:b50:read": {
+          "name": "Latest Snapshot B50 Songs (Read)",
+          "description": "Read the B50 song scores (best 50) from your latest snapshot."
+        },
+        "snapshot:latest:songs:read": {
+          "name": "Latest Snapshot All Songs (Read)",
+          "description": "Read all song scores from your latest snapshot."
+        },
+        "snapshot:latest:events:read": {
+          "name": "Latest Snapshot Events (Read)",
+          "description": "Read event progress data from your latest snapshot."
+        },
+        "snapshot:latest:icon:read": {
+          "name": "Latest Snapshot Icon (Read)",
+          "description": "Read your profile icon URL (Discord avatar) from your latest snapshot. Sensitive — may reveal your social identity."
+        },
+        "snapshot:all:metadata:read": {
+          "name": "All Snapshots Metadata (Read)",
+          "description": "List all your snapshots and read their metadata. Grants GET /api/v1/snapshots and GET /api/v1/snapshots/:id."
+        },
+        "snapshot:all:songs:b50:read": {
+          "name": "All Snapshots B50 Songs (Read)",
+          "description": "Read the B50 song scores from any of your snapshots."
+        },
+        "snapshot:all:songs:read": {
+          "name": "All Snapshots All Songs (Read)",
+          "description": "Read all song scores from any of your snapshots."
+        },
+        "snapshot:all:events:read": {
+          "name": "All Snapshots Events (Read)",
+          "description": "Read event progress data from any of your snapshots."
+        },
+        "snapshot:all:icon:read": {
+          "name": "All Snapshots Icon (Read)",
+          "description": "Read your profile icon URL (Discord avatar) from any snapshot. Sensitive — may reveal your social identity."
+        },
+        "recent:read": {
+          "name": "Recent Plays (Read)",
+          "description": "Read your recent play history including song info, achievement, and combo/sync status. Grants GET /api/v1/recents."
+        },
+        "recent:detailed:read": {
+          "name": "Recent Plays Detailed (Read)",
+          "description": "Adds venue and full per-note-type breakdown to recent play results."
+        },
+        "stats:read": {
+          "name": "Stats (Read)",
+          "description": "Read your grade/FC/FS distribution statistics. Grants GET /api/v1/stats."
+        },
+        "album:read": {
+          "name": "Albums (Read)",
+          "description": "Read your arcade photo album entries (metadata only, no image URLs). Grants GET /api/v1/albums."
+        },
+        "album:images:read": {
+          "name": "Album Images (Read)",
+          "description": "Adds resolved image URLs to album responses. Sensitive — photos may contain images of people."
+        },
+        "snapshot:latest:read": {
+          "name": "Latest Snapshot (Read)",
+          "description": "Grants metadata, song scores, and events for your latest snapshot only. Excludes icon (opt-in for privacy)."
+        },
+        "snapshot:all:read": {
+          "name": "All Snapshots (Read)",
+          "description": "Grants metadata, song scores, and events for all your snapshots, including the latest. Excludes icon (opt-in for privacy)."
+        },
+        "read": {
+          "name": "Read (All Non-Sensitive)",
+          "description": "Broad read access: user metadata, all snapshots, recents, stats, and albums. Excludes icon and album image URLs. Sensitive due to broad personal data access."
+        }
+      }
+    }
   },
   "dataBanner": {
     "dataSnapshot": "Data Snapshot:",
@@ -316,7 +503,9 @@
       "type": "Type",
       "total": "Total",
       "totalLoss": "Loss"
-    }
+    },
+    "clickToExpand": "Click to expand details",
+    "clickToCollapse": "Click to collapse"
   },
   "events": {
     "title": "Events",
@@ -449,6 +638,8 @@
       "db": "Database"
     },
     "addDiscordBot": "Add as Discord Bot",
+    "followTwitter": "Follow on X",
+    "followThreads": "Follow on Threads",
     "admin": "Admin",
     "errors": {
       "inviteLink": "Failed to open invite link"
@@ -474,7 +665,15 @@
     "validation": {
       "format": "Username must be 1-32 characters long and contain only letters, numbers, dashes, and underscores",
       "taken": "This username is already taken"
-    }
+    },
+    "changeTitle": "Change Username",
+    "changeDescription": "Choose a new username. Your profile URL will change.",
+    "changeButton": "Change",
+    "sameAsCurrent": "Same as your current username.",
+    "newProfileUrl": "New profile URL: /profile/{username}",
+    "changeSuccess": "Username updated successfully.",
+    "changingUsername": "Saving…",
+    "newUsernameLabel": "New username"
   },
   "invites": {
     "title": "Manage Invitations",
@@ -556,7 +755,35 @@
       "songs": "Songs",
       "calculator": "Calculator",
       "stats": "Stats",
+      "events": "Events",
       "posts": "Changelog"
+    },
+    "events": {
+      "title": "Tour Events",
+      "description": "Browse all maimai tour events and their rewards",
+      "search": "Search events...",
+      "noEvents": "No events found.",
+      "selectEvent": "Select an event to view details",
+      "steps": "Steps",
+      "distance": "Distance",
+      "type": "Type",
+      "reward": "Reward",
+      "period": "Period",
+      "active": "Active",
+      "ended": "Ended",
+      "upcoming": "Upcoming",
+      "back": "Back",
+      "stepTypes": {
+        "frame": "Frame",
+        "song": "Song",
+        "nameplate": "Nameplate",
+        "present": "Present",
+        "icon": "Icon",
+        "title": "Title",
+        "tourMember": "Tour Member",
+        "perfectChallenge": "Perfect Challenge",
+        "kaleidxscope": "KALEIDXSCOPE"
+      }
     },
     "songs": {
       "metadata": {
@@ -705,8 +932,10 @@
       "songDataExpert": "Fetched EXPERT scores",
       "songDataMaster": "Fetched MASTER scores",
       "songDataRemaster": "Fetched Re:MASTER scores",
+      "songDataUtage": "Fetched UTAGE scores",
       "recentSongs": "Fetched recent songs",
-      "hiddenSongs": "Fetched hidden songs"
+      "hiddenSongs": "Fetched hidden songs",
+      "albumData": "Fetched album data"
     }
   }
 }

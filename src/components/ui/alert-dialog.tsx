@@ -6,11 +6,20 @@ import * as AlertDialogPrimitive from "@radix-ui/react-alert-dialog"
 import { cn } from "@/lib/utils"
 import { type VariantProps } from "class-variance-authority"
 import { buttonVariants } from "@/components/ui/button"
+import { triggerHaptic } from "@/lib/haptics"
 
 function AlertDialog({
+  onOpenChange,
   ...props
 }: React.ComponentProps<typeof AlertDialogPrimitive.Root>) {
-  return <AlertDialogPrimitive.Root data-slot="alert-dialog" {...props} />
+  const handleOpenChange = React.useCallback(
+    (open: boolean) => {
+      if (open) triggerHaptic("light")
+      onOpenChange?.(open)
+    },
+    [onOpenChange]
+  )
+  return <AlertDialogPrimitive.Root data-slot="alert-dialog" onOpenChange={handleOpenChange} {...props} />
 }
 
 function AlertDialogTrigger({

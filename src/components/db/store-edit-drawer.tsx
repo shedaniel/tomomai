@@ -160,13 +160,13 @@ export function StoreEditDrawer({ open, onOpenChange, store, isLoggedIn }: Store
   const { data: session } = useSession();
 
   // Fetch edits for this store
-  const { data: editsData, refetch: refetchEdits, isRefetching: isRefetchingEdits } = trpc.user.getStoreEdits.useQuery(
+  const { data: editsData, refetch: refetchEdits, isRefetching: isRefetchingEdits } = trpc.store.getStoreEdits.useQuery(
     { storeId: store?.id || BigInt(0) },
     { enabled: open && !!store }
   );
 
   // Fetch user's votes (only if logged in)
-  const { data: votesData, refetch: refetchVotes, isRefetching: isRefetchingVotes } = trpc.user.getUserStoreEditVotes.useQuery(
+  const { data: votesData, refetch: refetchVotes, isRefetching: isRefetchingVotes } = trpc.store.getUserStoreEditVotes.useQuery(
     { storeId: store?.id || BigInt(0) },
     { enabled: open && !!store && isLoggedIn }
   );
@@ -177,19 +177,19 @@ export function StoreEditDrawer({ open, onOpenChange, store, isLoggedIn }: Store
 
   const utils = trpc.useUtils();
 
-  const voteMutation = trpc.user.voteOnStoreEdit.useMutation({
+  const voteMutation = trpc.store.voteOnStoreEdit.useMutation({
     onSuccess: () => {
-      utils.user.getStoreEdits.invalidate({ storeId: store?.id || BigInt(0) });
-      utils.user.getUserStoreEditVotes.invalidate({ storeId: store?.id || BigInt(0) });
-      utils.user.getStores.invalidate();
+      utils.store.getStoreEdits.invalidate({ storeId: store?.id || BigInt(0) });
+      utils.store.getUserStoreEditVotes.invalidate({ storeId: store?.id || BigInt(0) });
+      utils.store.getStores.invalidate();
     },
   });
 
-  const deleteMutation = trpc.user.deleteStoreEdit.useMutation({
+  const deleteMutation = trpc.store.deleteStoreEdit.useMutation({
     onSuccess: () => {
-      utils.user.getStoreEdits.invalidate({ storeId: store?.id || BigInt(0) });
-      utils.user.getUserStoreEditVotes.invalidate({ storeId: store?.id || BigInt(0) });
-      utils.user.getStores.invalidate();
+      utils.store.getStoreEdits.invalidate({ storeId: store?.id || BigInt(0) });
+      utils.store.getUserStoreEditVotes.invalidate({ storeId: store?.id || BigInt(0) });
+      utils.store.getStores.invalidate();
     },
   });
 

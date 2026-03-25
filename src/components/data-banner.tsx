@@ -1,19 +1,17 @@
 "use client";
 
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+  ResponsiveDialog,
+  ResponsiveDialogClose,
+  ResponsiveDialogContent,
+  ResponsiveDialogDescription,
+  ResponsiveDialogFooter,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+  ResponsiveDialogTrigger,
+} from "@/components/ui/dialog-friendly";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -95,7 +93,7 @@ function SnapshotSelector({
           <SelectItem key={snapshot.id} value={snapshot.id}>
             <div className="flex flex-col items-start min-w-0 truncate">
               <span>{formatDate(snapshot.fetchedAt)}</span>
-              <span className="text-xs text-muted-foreground">
+              <span className="text-xs dark:text-muted-foreground">
                 {snapshot.displayName} • {snapshot.rating} rating • {getVersionInfo(snapshot.gameVersion)?.shortName || "Unknown"}
               </span>
             </div>
@@ -115,8 +113,8 @@ function DeleteSnapshotButton({
   onDeleteSnapshot: (snapshotId: string) => void;
 }) {
   return (
-    <AlertDialog>
-      <AlertDialogTrigger asChild>
+    <ResponsiveDialog>
+      <ResponsiveDialogTrigger asChild>
         <Button
           variant="outline"
           size="sm"
@@ -125,25 +123,29 @@ function DeleteSnapshotButton({
         >
           <Trash2 className="h-4 w-4" />
         </Button>
-      </AlertDialogTrigger>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Delete Snapshot</AlertDialogTitle>
-          <AlertDialogDescription>
+      </ResponsiveDialogTrigger>
+      <ResponsiveDialogContent showCloseButton={false}>
+        <ResponsiveDialogHeader>
+          <ResponsiveDialogTitle>Delete Snapshot</ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>
             Are you sure you want to delete this snapshot? This action cannot be undone and will permanently remove all your scores from this snapshot.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction
-            variant="destructive"
-            onClick={() => onDeleteSnapshot(selectedSnapshot)}
-          >
-            Delete
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+          </ResponsiveDialogDescription>
+        </ResponsiveDialogHeader>
+        <ResponsiveDialogFooter>
+          <ResponsiveDialogClose asChild>
+            <Button variant="outline">Cancel</Button>
+          </ResponsiveDialogClose>
+          <ResponsiveDialogClose asChild>
+            <Button
+              variant="destructive"
+              onClick={() => onDeleteSnapshot(selectedSnapshot)}
+            >
+              Delete
+            </Button>
+          </ResponsiveDialogClose>
+        </ResponsiveDialogFooter>
+      </ResponsiveDialogContent>
+    </ResponsiveDialog>
   );
 }
 
@@ -348,8 +350,8 @@ export function DataBanner({
   };
 
   return (
-    <Card className="w-full">
-      <CardContent>
+    <div className="border-b pb-6">
+      <div>
         <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0 md:space-x-4">
           {/* Left side - Snapshot selector */}
           <div className="flex items-center gap-x-4">
@@ -412,7 +414,7 @@ export function DataBanner({
           region={region}
           t={t}
         />
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

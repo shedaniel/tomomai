@@ -70,7 +70,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: prepareDataResult.error }, { status: 404 });
     }
 
-    const { credit, snapshot, visitableProfileAt, hasNextCredit, hasPreviousCredit } = prepareDataResult;
+    const { credit, snapshot } = prepareDataResult;
 
     const imagesToCache = [
       getTypeBadgeUrl("dx"),
@@ -99,7 +99,7 @@ export async function GET(request: NextRequest) {
       ...['percentage_blue', 'percentage_red', 'percentage_gold',
         'score_blue', 'score_red', 'score_gold', 'score_big_blue', 'score_big_red', 'score_big_gold',
         'score_num_count', 'score_num_count_big',
-        'level_basic', 'level_advanced', 'level_expert', 'level_master', 'level_remaster']
+        'level_basic', 'level_advanced', 'level_expert', 'level_master', 'level_remaster', 'level_utage']
         .map(path => `/res/numbers/${path}.png`),
       ...['score_table', 'fast_late', 'track_1', 'track_2', 'track_3',
         'dxscore', 'star_1', 'star_2', 'star_3']

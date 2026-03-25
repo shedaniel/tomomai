@@ -1,4 +1,4 @@
-import { pgTable, text, integer, smallint, bigint, bigserial, boolean, timestamp, unique, index, pgEnum, jsonb, varchar, check, uuid, point } from "drizzle-orm/pg-core";
+import { pgTable, text, integer, smallint, bigint, bigserial, boolean, timestamp, unique, index, pgEnum, jsonb, varchar, check, uuid, point, primaryKey } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import {
   LANGUAGE_ENUM,
@@ -139,7 +139,7 @@ export const fetchSessions = pgTable("fetch_sessions", {
 ]);
 
 export const userSnapshots = pgTable("user_snapshots", {
-  id: bigint("id", { mode: "bigint" }).primaryKey().generatedAlwaysAsIdentity(), // Internal auto-increment ID for efficient indexing
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(), // Internal auto-increment ID for efficient indexing
   publicId: varchar("publicId", { length: 21 }).notNull().unique(), // Public-facing nanoid
   userId: text("userId").notNull().references(() => user.id, { onDelete: "cascade" }),
   region: regionEnum("region").notNull(),
@@ -190,9 +190,11 @@ export const songs = pgTable("songs", {
   index("songs_songname_type_idx").on(table.songName, table.type),
 ]);
 
+// Legacy table — reads/writes now use scoreData + snapshotScores + snapshotB50.
+// Kept for prod backfill migration; will be dropped after prod migration completes.
 export const userScores = pgTable("user_scores", {
   id: bigint("id", { mode: "bigint" }).primaryKey().generatedAlwaysAsIdentity(), // Internal only, never exposed
-  snapshotId: bigint("snapshotId", { mode: "bigint" }).notNull().references(() => userSnapshots.id, { onDelete: "cascade" }),
+  snapshotId: integer("snapshotId").notNull().references(() => userSnapshots.id, { onDelete: "cascade" }),
   songId: bigint("songId", { mode: "bigint" }).notNull().references(() => songs.id, { onDelete: "cascade" }),
   achievement: integer("achievement").notNull(), // stored as 10000x, e.g., 99.1234% = 991234 (max 1010000)
   dxScore: smallint("dxScore").notNull(),
@@ -205,9 +207,36 @@ export const userScores = pgTable("user_scores", {
   index("user_scores_songid_idx").on(table.songId),
 ]);
 
+export const scoreData = pgTable("score_data", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  songId: bigint("songId", { mode: "bigint" }).notNull().references(() => songs.id, { onDelete: "cascade" }),
+  achievement: integer("achievement").notNull(),
+  dxScore: smallint("dxScore").notNull(),
+  fc: fcEnum("fc").notNull(),
+  fs: fsEnum("fs").notNull(),
+}, (table) => [
+  unique("score_data_songid_achievement_dxscore_fc_fs_unique").on(table.songId, table.achievement, table.dxScore, table.fc, table.fs),
+  index("score_data_songid_idx").on(table.songId),
+]);
+
+export const snapshotScores = pgTable("snapshot_scores", {
+  snapshotId: integer("snapshotId").notNull().references(() => userSnapshots.id, { onDelete: "cascade" }),
+  scoreId: integer("scoreId").notNull().references(() => scoreData.id, { onDelete: "cascade" }),
+}, (table) => [
+  primaryKey({ columns: [table.snapshotId, table.scoreId] }),
+]);
+
+export const snapshotB50 = pgTable("snapshot_b50", {
+  snapshotId: integer("snapshotId").notNull().references(() => userSnapshots.id, { onDelete: "cascade" }),
+  rank: smallint("rank").notNull(),
+  scoreId: integer("scoreId").notNull().references(() => scoreData.id, { onDelete: "cascade" }),
+}, (table) => [
+  primaryKey({ columns: [table.snapshotId, table.rank] }),
+]);
+
 export const userEvents = pgTable("user_events", {
   id: bigint("id", { mode: "bigint" }).primaryKey().generatedAlwaysAsIdentity(), // Internal only, never exposed
-  snapshotId: bigint("snapshotId", { mode: "bigint" }).notNull().references(() => userSnapshots.id, { onDelete: "cascade" }),
+  snapshotId: integer("snapshotId").notNull().references(() => userSnapshots.id, { onDelete: "cascade" }),
   eventType: eventTypeEnum("eventType").notNull(), // area or eventArea
   name: text("name").notNull(),
   currentDistance: integer("currentDistance").notNull(), // 4 bytes
@@ -327,6 +356,52 @@ export const storeEditVotes = pgTable("store_edit_votes", {
 }, (table) => [
   unique("store_edit_votes_userid_editid_unique").on(table.userId, table.editId),
   index("store_edit_votes_editid_idx").on(table.editId),
+]);
+
+// Better Auth apiKey plugin table
+export const apikey = pgTable("apikey", {
+  id: text("id").primaryKey(),
+  name: text("name"),
+  start: text("start"),
+  prefix: text("prefix"),
+  key: text("key").notNull(),
+  userId: text("userId").notNull().references(() => user.id, { onDelete: "cascade" }),
+  refillInterval: integer("refillInterval"),
+  refillAmount: integer("refillAmount"),
+  lastRefillAt: timestamp("lastRefillAt"),
+  enabled: boolean("enabled").notNull().default(true),
+  rateLimitEnabled: boolean("rateLimitEnabled"),
+  rateLimitTimeWindow: integer("rateLimitTimeWindow"),
+  rateLimitMax: integer("rateLimitMax"),
+  requestCount: integer("requestCount"),
+  remaining: integer("remaining"),
+  lastRequest: timestamp("lastRequest"),
+  expiresAt: timestamp("expiresAt"),
+  createdAt: timestamp("createdAt").notNull(),
+  updatedAt: timestamp("updatedAt").notNull(),
+  permissions: text("permissions"),
+  metadata: text("metadata"),
+}, (table) => [
+  index("apikey_key_idx").on(table.key),
+  index("apikey_userid_idx").on(table.userId),
+]);
+
+export const tourEvents = pgTable("tour_events", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  name: text("name").notNull().unique(),
+  periods: jsonb("periods").notNull().$type<Array<{ start: string | null; end: string | null }>>(),
+  createdAt: timestamp("createdAt", { precision: 0 }).notNull().defaultNow(),
+  updatedAt: timestamp("updatedAt", { precision: 0 }).notNull().defaultNow(),
+});
+
+export const tourEventSteps = pgTable("tour_event_steps", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  eventId: integer("eventId").notNull().references(() => tourEvents.id, { onDelete: "cascade" }),
+  distance: integer("distance").notNull(),
+  type: text("type").notNull(),
+  reward: text("reward").notNull(),
+}, (table) => [
+  index("tour_event_steps_eventid_idx").on(table.eventId),
 ]);
 
 export const userAlbums = pgTable("user_albums", {

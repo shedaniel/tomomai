@@ -1,12 +1,14 @@
 import { flag } from "flags/next";
+import type { cookies } from "next/headers";
+
 
 export interface Flags {
-  newTokenDialog: boolean;
   historyCard: boolean;
   recommendationFilters: boolean;
   platesCard: boolean;
   eventsCard: boolean;
   albumsCard: boolean;
+  developerPortal: boolean;
 }
 
 export interface FlagDefinition {
@@ -16,10 +18,8 @@ export interface FlagDefinition {
   decide: () => Promise<boolean>;
 }
 
-export const useFlags = async (): Promise<Flags> => {
+export const useFlags0 = async (): Promise<Flags> => {
   return {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    newTokenDialog: await useNewTokenDialog(),
     // eslint-disable-next-line react-hooks/rules-of-hooks
     historyCard: await useHistoryCard(),
     // eslint-disable-next-line react-hooks/rules-of-hooks
@@ -30,16 +30,12 @@ export const useFlags = async (): Promise<Flags> => {
     eventsCard: await useEventsCard(),
     // eslint-disable-next-line react-hooks/rules-of-hooks
     albumsCard: await useAlbumsCard(),
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    developerPortal: await useDeveloperPortal(),
   };
 }
 
 export const flagDefinitions: Record<keyof Flags, FlagDefinition> = {
-  newTokenDialog: {
-    key: "newTokenDialog",
-    defaultValue: true,
-    userSelectable: true,
-    decide: async () => true,
-  },
   historyCard: {
     key: "historyCard",
     defaultValue: false,
@@ -60,9 +56,9 @@ export const flagDefinitions: Record<keyof Flags, FlagDefinition> = {
   },
   eventsCard: {
     key: "eventsCard",
-    defaultValue: false,
+    defaultValue: true,
     userSelectable: true,
-    decide: async () => false,
+    decide: async () => true,
   },
   albumsCard: {
     key: "albumsCard",
@@ -70,17 +66,15 @@ export const flagDefinitions: Record<keyof Flags, FlagDefinition> = {
     userSelectable: true,
     decide: async () => true,
   },
+  developerPortal: {
+    key: "developerPortal",
+    defaultValue: false,
+    userSelectable: false,
+    decide: async () => false,
+  },
 };
 
 export const defaultFlags: Flags = Object.fromEntries(Object.entries(flagDefinitions).map(([key, value]) => [key, value.defaultValue])) as unknown as Flags;
-
-export const useNewTokenDialog = flag<boolean>({
-  key: "newTokenDialog",
-  defaultValue: true,
-  async decide() {
-    return true;
-  },
-});
 
 export const useHistoryCard = flag<boolean>({
   key: "historyCard",
@@ -116,9 +110,9 @@ export const usePlatesCard = flag<boolean>({
 
 export const useEventsCard = flag<boolean>({
   key: "eventsCard",
-  defaultValue: false,
+  defaultValue: true,
   async decide() {
-    return false;
+    return true;
   },
 });
 
@@ -127,6 +121,14 @@ export const useAlbumsCard = flag<boolean>({
   defaultValue: true,
   async decide() {
     return true;
+  },
+});
+
+export const useDeveloperPortal = flag<boolean>({
+  key: "developerPortal",
+  defaultValue: false,
+  async decide() {
+    return false;
   },
 });
 
@@ -156,4 +158,14 @@ export function applyFlagOverrides(flags: Flags, cookieValue?: string): Flags {
     // If cookie is malformed, just return original flags
     return flags;
   }
+}
+
+export async function useFlags(cookiesFunc: typeof cookies): Promise<Flags> {
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  let flags = await useFlags0();
+
+  // Apply flag overrides from cookies
+  const cookieStore = await cookiesFunc();
+  const flagOverridesCookie = cookieStore.get("flagOverrides")?.value;
+  return applyFlagOverrides(flags, flagOverridesCookie);
 }

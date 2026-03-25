@@ -1,6 +1,5 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { Slider } from "@/components/ui/slider";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -8,6 +7,7 @@ import { trpc } from "@/lib/trpc-client";
 import { Region } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { TrendingUp } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useTranslations } from "next-intl";
 import { CoverImage } from "@/components/cover-image";
 import { useEffect, useMemo, useState } from "react";
@@ -128,17 +128,24 @@ export function HistoryCard({ region }: HistoryCardProps) {
   }, [chartData]);
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <TrendingUp className="h-5 w-5" />
-          {t("dataContent.history.title")}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
+    <div className="space-y-6">
+      <h2 className="text-lg font-semibold flex items-center gap-2">
+        <TrendingUp className="h-5 w-5" />
+        {t("dataContent.history.title")}
+      </h2>
+      <div>
         {isLoading ? (
-          <div className="h-[400px] flex items-center justify-center text-muted-foreground">
-            {t("common.loading")}
+          <div className="h-[400px] flex flex-col justify-end gap-2 p-4">
+            <div className="flex-1 flex items-end gap-1">
+              {Array.from({ length: 12 }).map((_, i) => (
+                <Skeleton
+                  key={i}
+                  className="flex-1 rounded-t"
+                  style={{ height: `${30 + Math.random() * 60}%` }}
+                />
+              ))}
+            </div>
+            <Skeleton className="h-4 w-full" />
           </div>
         ) : chartData.length < 2 ? (
           <div className="h-[400px] flex flex-col items-center justify-center text-muted-foreground">
@@ -337,7 +344,7 @@ export function HistoryCard({ region }: HistoryCardProps) {
             )}
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

@@ -42,7 +42,7 @@ export function LocaleSwitcher({ forceVisible }: LocaleSwitcherProps) {
           </div>
         </SelectValue>
       </SelectTrigger>
-      <SelectContent>
+      <SelectContent align="end">
         {LANGUAGES.map((language) => (
           <SelectItem key={language.value || "auto"} value={language.value || "auto"}>
             <div className="flex items-center justify-between gap-2">

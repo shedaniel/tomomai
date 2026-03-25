@@ -2,12 +2,13 @@
 
 import { Button } from "@/components/ui/button";
 import {
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { AnimatedDialog, AnimatedDialogContent } from "@/components/ui/animated-dialog";
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogDescription,
+  ResponsiveDialogFooter,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from "@/components/ui/dialog-friendly";
 import { Info } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
@@ -28,14 +29,14 @@ export function AlbumPrivacyDialog({
   const t = useTranslations('settings');
 
   return (
-    <AnimatedDialog open={open} onOpenChange={onOpenChange}>
-      <AnimatedDialogContent className="sm:max-w-[550px] max-h-[95dvh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{t('albumPrivacy.title')}</DialogTitle>
-          <DialogDescription>
+    <ResponsiveDialog open={open} onOpenChange={onOpenChange}>
+      <ResponsiveDialogContent className="sm:max-w-[550px] max-h-[90dvh]">
+        <ResponsiveDialogHeader>
+          <ResponsiveDialogTitle>{t('albumPrivacy.title')}</ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>
             {t('albumPrivacy.description')}
-          </DialogDescription>
-        </DialogHeader>
+          </ResponsiveDialogDescription>
+        </ResponsiveDialogHeader>
         <div className="space-y-4 py-4">
           <div className="flex gap-2 p-4 bg-muted border border-border rounded-md">
             <Info className="h-5 w-5 text-muted-foreground  mt-0.5 shrink-0" />
@@ -70,7 +71,7 @@ export function AlbumPrivacyDialog({
             </span>
           </div>
         </div>
-        <DialogFooter className="flex-col sm:flex-row gap-2">
+        <ResponsiveDialogFooter className="flex-col sm:flex-row gap-2">
           <Button
             variant="outline"
             onClick={() => onSelectPreference(false)}
@@ -86,8 +87,8 @@ export function AlbumPrivacyDialog({
           >
             {t('albumPrivacy.save')}
           </Button>
-        </DialogFooter>
-      </AnimatedDialogContent>
-    </AnimatedDialog>
+        </ResponsiveDialogFooter>
+      </ResponsiveDialogContent>
+    </ResponsiveDialog>
   );
 }

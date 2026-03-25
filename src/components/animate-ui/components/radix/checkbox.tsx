@@ -6,6 +6,7 @@ import {
   type CheckboxProps as CheckboxPrimitiveProps,
 } from '@/components/animate-ui/primitives/radix/checkbox';
 import { cn } from '@/lib/utils';
+import { triggerHaptic } from '@/lib/haptics';
 import { cva, type VariantProps } from 'class-variance-authority';
 
 const checkboxVariants = cva(
@@ -50,11 +51,16 @@ function Checkbox({
   children,
   variant,
   size,
+  onCheckedChange,
   ...props
 }: CheckboxProps) {
   return (
     <CheckboxPrimitive
       className={cn(checkboxVariants({ variant, size, className }))}
+      onCheckedChange={(checked) => {
+        triggerHaptic("selection")
+        onCheckedChange?.(checked)
+      }}
       {...props}
     >
       {children}

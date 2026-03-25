@@ -2,8 +2,13 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { AnimatedDialog, AnimatedDialogContent } from "@/components/ui/animated-dialog";
+import {
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogDescription,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from "@/components/ui/dialog-friendly";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { trpc } from "@/lib/trpc-client";
@@ -163,17 +168,17 @@ function StepBasedTokenDialog({
 
   if (showManualInput) {
     return (
-      <AnimatedDialog open={isOpen} onOpenChange={handleClose} modal={false}>
-        <AnimatedDialogContent className="sm:max-w-md shadow">
-          <DialogHeader>
-            <DialogTitle className="flex items-center space-x-2">
+      <ResponsiveDialog open={isOpen} onOpenChange={handleClose} modal={false}>
+        <ResponsiveDialogContent className="sm:max-w-md shadow">
+          <ResponsiveDialogHeader>
+            <ResponsiveDialogTitle className="flex items-center space-x-2">
               <Cookie className="h-5 w-5" />
               <span>{t('tokenDialog.tokenTab')}</span>
-            </DialogTitle>
-            <DialogDescription>
+            </ResponsiveDialogTitle>
+            <ResponsiveDialogDescription>
               {t('tokenDialog.tokenDialogDescription')}
-            </DialogDescription>
-          </DialogHeader>
+            </ResponsiveDialogDescription>
+          </ResponsiveDialogHeader>
 
           <form onSubmit={onSubmit} className="space-y-4">
             <div className="space-y-2">
@@ -195,7 +200,7 @@ function StepBasedTokenDialog({
               )}
             </div>
 
-            <div className="bg-muted/50 rounded-md text-xs text-muted-foreground space-y-2">
+            <div className="text-xs text-muted-foreground space-y-2">
               <p className="font-medium">
                 {t('tokenDialog.authenticationNote')}
               </p>
@@ -232,24 +237,24 @@ function StepBasedTokenDialog({
               </Button>
             </div>
           </form>
-        </AnimatedDialogContent>
-      </AnimatedDialog>
+        </ResponsiveDialogContent>
+      </ResponsiveDialog>
     );
   }
 
   return (
-    <AnimatedDialog open={isOpen} onOpenChange={handleClose} modal={false}>
-      <AnimatedDialogContent className="sm:max-w-md shadow">
-        <DialogHeader>
-          <DialogTitle className="flex items-center space-x-2">
+    <ResponsiveDialog open={isOpen} onOpenChange={handleClose} modal={false}>
+      <ResponsiveDialogContent className="sm:max-w-md shadow">
+        <ResponsiveDialogHeader>
+          <ResponsiveDialogTitle className="flex items-center space-x-2">
             <Cookie className="h-5 w-5" />
             <span>{t('tokenDialog.tokenTab')}</span>
             <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground text-md font-bold">
               {currentStep}
             </div>
             <span className="font-medium text-foreground tracking-tight">{t(`tokenDialog.steps.step${currentStep}Title`)}</span>
-          </DialogTitle>
-        </DialogHeader>
+          </ResponsiveDialogTitle>
+        </ResponsiveDialogHeader>
 
         <motion.div
           initial={false}
@@ -380,8 +385,8 @@ function StepBasedTokenDialog({
             {t('tokenDialog.navigation.nextStep')}
           </Button>
         </div>
-      </AnimatedDialogContent>
-    </AnimatedDialog>
+      </ResponsiveDialogContent>
+    </ResponsiveDialog>
   );
 }
 
@@ -401,17 +406,17 @@ function PasswordSubDialog({
   const canSubmit = username.trim().length > 0 && password.trim().length > 0 && !isSubmitting;
 
   return (
-    <AnimatedDialog open={isOpen} onOpenChange={onOpenChange} modal={false}>
-      <AnimatedDialogContent className="sm:max-w-md shadow">
-        <DialogHeader>
-          <DialogTitle className="flex items-center space-x-2">
+    <ResponsiveDialog open={isOpen} onOpenChange={onOpenChange} modal={false}>
+      <ResponsiveDialogContent className="sm:max-w-md shadow">
+        <ResponsiveDialogHeader>
+          <ResponsiveDialogTitle className="flex items-center space-x-2">
             <Lock className="h-5 w-5" />
             <span>{t('tokenDialog.passwordTab')}</span>
-          </DialogTitle>
-          <DialogDescription>
+          </ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>
             {t('tokenDialog.segaAccountDescription')}
-          </DialogDescription>
-        </DialogHeader>
+          </ResponsiveDialogDescription>
+        </ResponsiveDialogHeader>
 
         <form onSubmit={onSubmit} className="space-y-4">
           <div className="space-y-4">
@@ -449,7 +454,7 @@ function PasswordSubDialog({
             </div>
           </div>
 
-          <div className="rounded-md text-xs text-muted-foreground space-y-2">
+          <div className="text-xs text-muted-foreground space-y-2">
             <p className="font-medium">
               {t('tokenDialog.authenticationNote')}
             </p>
@@ -475,8 +480,8 @@ function PasswordSubDialog({
             )}
           </Button>
         </form>
-      </AnimatedDialogContent>
-    </AnimatedDialog>
+      </ResponsiveDialogContent>
+    </ResponsiveDialog>
   );
 }
 
@@ -581,17 +586,17 @@ export function TokenDialogIntlNew({
   return (
     <>
       {/* Main Selection Dialog */}
-      <AnimatedDialog open={isOpen} onOpenChange={handleClose}>
-        <AnimatedDialogContent className={cn("sm:max-w-md", isTokenDialogOpen || isPasswordDialogOpen ? "opacity-70!" : "")}>
-          <DialogHeader>
-            <DialogTitle className="flex items-center space-x-2">
+      <ResponsiveDialog open={isOpen} onOpenChange={handleClose}>
+        <ResponsiveDialogContent className={cn("sm:max-w-md", isTokenDialogOpen || isPasswordDialogOpen ? "opacity-70!" : "")}>
+          <ResponsiveDialogHeader>
+            <ResponsiveDialogTitle className="flex items-center space-x-2">
               <Key className="h-5 w-5" />
               <span>{t('tokenDialog.title')}</span>
-            </DialogTitle>
-            <DialogDescription>
+            </ResponsiveDialogTitle>
+            <ResponsiveDialogDescription>
               {t('tokenDialog.intlDescription')} {t('tokenDialog.credentialsStored')}
-            </DialogDescription>
-          </DialogHeader>
+            </ResponsiveDialogDescription>
+          </ResponsiveDialogHeader>
 
           <div className="space-y-3">
             {/* Token Option - Recommended */}
@@ -639,8 +644,8 @@ export function TokenDialogIntlNew({
               </div>
             </button>
           </div>
-        </AnimatedDialogContent>
-      </AnimatedDialog>
+        </ResponsiveDialogContent>
+      </ResponsiveDialog>
 
       {/* Token Dialog - Nested */}
       <StepBasedTokenDialog

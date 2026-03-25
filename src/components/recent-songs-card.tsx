@@ -1,10 +1,10 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { trpc } from "@/lib/trpc-client";
 import { Region } from "@/lib/types";
 import { cn, getTypeBadgeUrl } from "@/lib/utils";
-import { Activity, Calendar, ChevronRight, Clock, Loader2, AlertCircle, TrendingUp, TrendingDown, Trophy, FastForward, Rewind, ArrowBigUpDash, ArrowBigDownDash, Grip, Sparkle, MapPin, SeparatorVertical, Slash, Star, Music, CloudOff } from "lucide-react";
+import { Activity, Calendar, ChevronDown, ChevronRight, ChevronUp, Clock, Loader2, AlertCircle, TrendingUp, TrendingDown, Trophy, FastForward, Rewind, ArrowBigUpDash, ArrowBigDownDash, Grip, Sparkle, MapPin, SeparatorVertical, Slash, Star, Music, CloudOff } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useTranslations } from "next-intl";
 
 import { CoverImage } from "@/components/cover-image";
@@ -22,6 +22,7 @@ import { renderLevelPrecise } from "@/lib/name-utils";
 import { calculateDXStars, calculateNoteLosses, distributeBreaks } from "@/lib/score-details";
 import { motion } from "motion/react";
 import { SPRING_CONFIGS, STAGGER, getTransition } from "@/lib/animation-constants";
+import { useMediaQuery } from "@/hooks/use-media-query";
 
 interface RecentSongsCardProps {
   region: Region;
@@ -40,6 +41,7 @@ interface RecentSongRowProps {
 
 function RecentSongRow({ play, index, isFirst, isLast, onToggleExpand, isExpanded }: RecentSongRowProps) {
   const t = useTranslations('recentPlays');
+  const isDesktop = useMediaQuery("(min-width: 768px)", { initializeWithValue: false });
   const [isRowHovered, setIsRowHovered] = useState(false);
   const isDetailed = play.rating !== null;
   const playDate = new Date(play.playedAt);
@@ -53,8 +55,8 @@ function RecentSongRow({ play, index, isFirst, isLast, onToggleExpand, isExpande
       className={cn("flex flex-col transition-colors cursor-pointer group",
         isFirst ? "pb-4" : isLast ? "pt-4" : "py-4",
       )}
-      initial={{ opacity: 0, scale: 0.95, y: 20 }}
-      animate={{ opacity: 1, scale: 1, y: 0 }}
+      initial={{ opacity: 0, scale: 0.95, ...(isDesktop ? { x: -20 } : { y: 20 }) }}
+      animate={{ opacity: 1, scale: 1, x: 0, y: 0 }}
       transition={getTransition({
         type: 'spring',
         stiffness: 400,
@@ -79,7 +81,7 @@ function RecentSongRow({ play, index, isFirst, isLast, onToggleExpand, isExpande
             coverUrl={play.cover}
             alt={play.songName}
             className={cn(
-              "w-14 h-14 rounded ring-2 ring-offset-2 ring-offset-card object-cover",
+              "w-14 h-14 rounded ring-2 ring-offset-2 ring-offset-background object-cover",
               play.difficulty === "basic" && "ring-green-400",
               play.difficulty === "advanced" && "ring-yellow-400",
               play.difficulty === "expert" && "ring-red-400",
@@ -208,318 +210,333 @@ function RecentSongRow({ play, index, isFirst, isLast, onToggleExpand, isExpande
         </div>
       </div>
 
+      {/* Expand hint */}
+      {!isExpanded && (
+        <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground mt-4 md:mt-2">
+          <ChevronDown className="h-3 w-3" />
+          <span>{t('clickToExpand')}</span>
+        </div>
+      )}
+      {isExpanded && (
+        <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground mt-4 md:mt-2">
+          <ChevronUp className="h-3 w-3" />
+          <span>{t('clickToCollapse')}</span>
+        </div>
+      )}
 
       {/* Animated expandable content */}
       <AutoHeight deps={[isExpanded, isDetailed]}>
-        {isExpanded && !isDetailed && (
-          <>
-            {/* Take up space */}
-            <div className="h-6" />
-            <div className="px-4 rounded-md bg-muted/50 text-center">
+        <div className={cn(!isExpanded && "max-h-0")}>
+          {!isDetailed && (
+            <>
+              {/* Take up space */}
+              <div className="h-6" />
+              <div className="px-4 rounded-md bg-muted/50 text-center">
+                {/* Take up space */}
+                <div className="h-6" />
+
+                <CloudOff className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+                <p className="text-sm text-muted-foreground">
+                  {t('detailsNotFetched')}
+                </p>
+
+                {/* Take up space */}
+                <div className="h-6" />
+              </div>
+            </>
+          )}
+          {isDetailed && (
+            <>
               {/* Take up space */}
               <div className="h-6" />
 
-              <CloudOff className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">
-                {t('detailsNotFetched')}
-              </p>
-
-              {/* Take up space */}
-              <div className="h-6" />
-            </div>
-          </>
-        )}
-        {isExpanded && isDetailed && (
-          <>
-            {/* Take up space */}
-            <div className="h-6" />
-
-            {/* Detailed Info */}
-            <div className="flex flex-wrap items-center gap-2 text-xs">
-              {/* DX Score */}
-              <Badge variant="outline" className="flex items-center gap-1 font-medium text-foreground">
-                <Sparkle className="h-3 w-3" />
-                <span>{t('labels.dx')}</span>
-                <span>{play.dxScore}</span>
-                <Slash className="h-3 w-3 text-border" />
-                <span>{play.maxDxScore}</span>
-                <div className="h-3 w-px bg-border mx-1" />
-                <span>{calculateDXStars(play.dxScore, play.maxDxScore)}</span>
-                <Star className="h-3 w-3" fill={calculateDXStars(play.dxScore, play.maxDxScore) > 0 ? "currentColor" : "none"} />
-                <div className="h-3 w-px bg-border mx-1" />
-                <span>{(play.dxScore / play.maxDxScore * 100).toFixed(2)}%</span>
-              </Badge>
-
-              {/* Rating */}
-              {play.rating !== null && (
+              {/* Detailed Info */}
+              <div className="flex flex-wrap items-center gap-2 text-xs">
+                {/* DX Score */}
                 <Badge variant="outline" className="flex items-center gap-1 font-medium text-foreground">
-                  <Trophy className="h-3 w-3" />
-                  {play.rating}
-                  {play.ratingChange !== null && play.ratingChange !== 0 && (
-                    <span className="ml-1">
-                      {play.ratingChange > 0 ? (
-                        <TrendingUp className="h-3 w-3 inline mr-1" />
-                      ) : (
-                        <TrendingDown className="h-3 w-3 inline mr-1" />
-                      )}
-                      {Math.abs(play.ratingChange)}
-                    </span>
-                  )}
-                </Badge>
-              )}
-
-              {/* Combo */}
-              {play.combo !== null && (
-                <Badge variant="outline" className="flex items-center gap-1 font-medium text-foreground">
-                  <Grip className="h-3 w-3" />
-                  <span>{t('labels.combo')}</span>
-                  <span>{play.combo}</span>
+                  <Sparkle className="h-3 w-3" />
+                  <span>{t('labels.dx')}</span>
+                  <span>{play.dxScore}</span>
                   <Slash className="h-3 w-3 text-border" />
-                  <span>{play.maxCombo}</span>
-                </Badge>
-              )}
-
-              {/* Fast/Late */}
-              {(play.fastCount !== null || play.lateCount !== null) && (<>
-                <Badge variant="outline" className="flex items-center gap-1 font-medium text-foreground">
-                  <ArrowBigUpDash className="h-3.5 w-3.5" />
-                  <span>{t('labels.fast')}</span>
-                  <span>{play.fastCount ?? 0}</span>
+                  <span>{play.maxDxScore}</span>
                   <div className="h-3 w-px bg-border mx-1" />
-                  <ArrowBigDownDash className="h-3.5 w-3.5" />
-                  <span>{t('labels.late')}</span>
-                  <span>{play.lateCount ?? 0}</span>
+                  <span>{calculateDXStars(play.dxScore, play.maxDxScore)}</span>
+                  <Star className="h-3 w-3" fill={calculateDXStars(play.dxScore, play.maxDxScore) > 0 ? "currentColor" : "none"} />
+                  <div className="h-3 w-px bg-border mx-1" />
+                  <span>{(play.dxScore / play.maxDxScore * 100).toFixed(2)}%</span>
                 </Badge>
-              </>)}
 
-              {/* Venue (JP only) */}
-              {play.venue && (
-                <Badge variant="outline" className="flex items-center gap-1 font-medium text-foreground">
-                  <MapPin className="h-3 w-3" />
-                  <span>{play.venue}</span>
-                </Badge>
-              )}
-            </div>
+                {/* Rating */}
+                {play.rating !== null && (
+                  <Badge variant="outline" className="flex items-center gap-1 font-medium text-foreground">
+                    <Trophy className="h-3 w-3" />
+                    {play.rating}
+                    {play.ratingChange !== null && play.ratingChange !== 0 && (
+                      <span className="ml-1">
+                        {play.ratingChange > 0 ? (
+                          <TrendingUp className="h-3 w-3 inline mr-1" />
+                        ) : (
+                          <TrendingDown className="h-3 w-3 inline mr-1" />
+                        )}
+                        {Math.abs(play.ratingChange)}
+                      </span>
+                    )}
+                  </Badge>
+                )}
 
-            {/* Notes breakdown grid */}
-            {play.tapCPerfect !== null && (() => {
-              const notes = {
-                tap: {
-                  criticalPerfect: play.tapCPerfect ?? 0,
-                  perfect: play.tapPerfect ?? 0,
-                  great: play.tapGreat ?? 0,
-                  good: play.tapGood ?? 0,
-                  miss: play.tapMiss ?? 0,
-                },
-                hold: {
-                  criticalPerfect: play.holdCPerfect ?? 0,
-                  perfect: play.holdPerfect ?? 0,
-                  great: play.holdGreat ?? 0,
-                  good: play.holdGood ?? 0,
-                  miss: play.holdMiss ?? 0,
-                },
-                slide: {
-                  criticalPerfect: play.slideCPerfect ?? 0,
-                  perfect: play.slidePerfect ?? 0,
-                  great: play.slideGreat ?? 0,
-                  good: play.slideGood ?? 0,
-                  miss: play.slideMiss ?? 0,
-                },
-                touch: {
-                  criticalPerfect: play.touchCPerfect ?? 0,
-                  perfect: play.touchPerfect ?? 0,
-                  great: play.touchGreat ?? 0,
-                  good: play.touchGood ?? 0,
-                  miss: play.touchMiss ?? 0,
-                },
-                break: {
-                  criticalPerfect: play.breakCPerfect ?? 0,
-                  perfect: play.breakPerfect ?? 0,
-                  great: play.breakGreat ?? 0,
-                  good: play.breakGood ?? 0,
-                  miss: play.breakMiss ?? 0,
-                },
-              };
+                {/* Combo */}
+                {play.combo !== null && (
+                  <Badge variant="outline" className="flex items-center gap-1 font-medium text-foreground">
+                    <Grip className="h-3 w-3" />
+                    <span>{t('labels.combo')}</span>
+                    <span>{play.combo}</span>
+                    <Slash className="h-3 w-3 text-border" />
+                    <span>{play.maxCombo}</span>
+                  </Badge>
+                )}
 
-              const actualAchievement = play.achievement / 10000;
+                {/* Fast/Late */}
+                {(play.fastCount !== null || play.lateCount !== null) && (<>
+                  <Badge variant="outline" className="flex items-center gap-1 font-medium text-foreground">
+                    <ArrowBigUpDash className="h-3.5 w-3.5" />
+                    <span>{t('labels.fast')}</span>
+                    <span>{play.fastCount ?? 0}</span>
+                    <div className="h-3 w-px bg-border mx-1" />
+                    <ArrowBigDownDash className="h-3.5 w-3.5" />
+                    <span>{t('labels.late')}</span>
+                    <span>{play.lateCount ?? 0}</span>
+                  </Badge>
+                </>)}
 
-              const breakDist = distributeBreaks(
-                notes,
-                actualAchievement,
-                play.breakPerfect ?? 0,
-                play.breakGreat ?? 0
-              );
+                {/* Venue (JP only) */}
+                {play.venue && (
+                  <Badge variant="outline" className="flex items-center gap-1 font-medium text-foreground">
+                    <MapPin className="h-3 w-3" />
+                    <span>{play.venue}</span>
+                  </Badge>
+                )}
+              </div>
 
-              const losses = calculateNoteLosses(notes, breakDist);
+              {/* Notes breakdown grid */}
+              {play.tapCPerfect !== null && (() => {
+                const notes = {
+                  tap: {
+                    criticalPerfect: play.tapCPerfect ?? 0,
+                    perfect: play.tapPerfect ?? 0,
+                    great: play.tapGreat ?? 0,
+                    good: play.tapGood ?? 0,
+                    miss: play.tapMiss ?? 0,
+                  },
+                  hold: {
+                    criticalPerfect: play.holdCPerfect ?? 0,
+                    perfect: play.holdPerfect ?? 0,
+                    great: play.holdGreat ?? 0,
+                    good: play.holdGood ?? 0,
+                    miss: play.holdMiss ?? 0,
+                  },
+                  slide: {
+                    criticalPerfect: play.slideCPerfect ?? 0,
+                    perfect: play.slidePerfect ?? 0,
+                    great: play.slideGreat ?? 0,
+                    good: play.slideGood ?? 0,
+                    miss: play.slideMiss ?? 0,
+                  },
+                  touch: {
+                    criticalPerfect: play.touchCPerfect ?? 0,
+                    perfect: play.touchPerfect ?? 0,
+                    great: play.touchGreat ?? 0,
+                    good: play.touchGood ?? 0,
+                    miss: play.touchMiss ?? 0,
+                  },
+                  break: {
+                    criticalPerfect: play.breakCPerfect ?? 0,
+                    perfect: play.breakPerfect ?? 0,
+                    great: play.breakGreat ?? 0,
+                    good: play.breakGood ?? 0,
+                    miss: play.breakMiss ?? 0,
+                  },
+                };
 
-              return (
-                <div className="mt-3 overflow-x-auto">
-                  <div className="grid grid-cols-[auto_1fr_1fr_1fr_1fr_1fr_1fr_1fr] max-sm:grid-cols-[auto_1fr_1fr_1fr_1fr_1fr_1fr] text-sm max-sm:text-2xs max-md:text-xs min-w-fit border rounded-md">
-                    {/* Header Row */}
-                    <div className="text-center py-1 pl-4 pr-2 font-medium text-muted-foreground bg-accent/50 border-b border-r flex items-center justify-end">{t('notesBreakdown.type')}</div>
-                    <div className="text-center py-1 px-2 font-medium text-muted-foreground bg-accent/50 border-b border-r flex items-center justify-center max-sm:hidden">{t('notesBreakdown.total')}</div>
-                    <div className="text-center py-1 px-2 font-medium text-muted-foreground bg-accent/50 border-b border-r flex items-center justify-center gap-1">
-                      Critical Perfect
-                    </div>
-                    <div className="text-center py-1 px-2 font-medium text-muted-foreground bg-accent/50 border-b border-r flex items-center justify-center gap-1">
-                      Perfect
-                    </div>
-                    <div className="text-center py-1 px-2 font-medium text-muted-foreground bg-accent/50 border-b border-r flex items-center justify-center gap-1">
-                      Great
-                    </div>
-                    <div className="text-center py-1 px-2 font-medium text-muted-foreground bg-accent/50 border-b border-r flex items-center justify-center gap-1">
-                      Good
-                    </div>
-                    <div className="text-center py-1 px-2 font-medium text-muted-foreground bg-accent/50 border-b border-r flex items-center justify-center gap-1">
-                      Miss
-                    </div>
-                    <div className="text-center py-1 px-2 font-medium text-muted-foreground bg-accent/50 border-b flex items-center justify-center">
-                      {t('notesBreakdown.totalLoss')}
-                    </div>
+                const actualAchievement = play.achievement / 10000;
 
-                    {/* Tap Row */}
-                    <div className="text-right py-1 pl-4 pr-2 font-medium border-b border-r">Tap</div>
-                    <div className="text-center py-1 px-2 border-b border-r max-sm:hidden">
-                      {(play.tapCPerfect ?? 0) + (play.tapPerfect ?? 0) + (play.tapGreat ?? 0) + (play.tapGood ?? 0) + (play.tapMiss ?? 0)}
-                    </div>
-                    <div className="text-center bg-yellow-50 dark:bg-yellow-600/30 text-yellow-600 dark:text-yellow-400 py-1 px-2 border-b border-r">
-                      {play.tapCPerfect ?? 0}
-                    </div>
-                    <div className="text-center bg-orange-50 dark:bg-orange-600/30 text-orange-600 dark:text-orange-400 py-1 px-2 border-b border-r">
-                      {play.tapPerfect ?? 0}
-                    </div>
-                    <div className="text-center bg-pink-50 dark:bg-pink-600/30 text-pink-600 dark:text-pink-400 py-1 px-2 border-b border-r flex flex-col items-center">
-                      <div>{play.tapGreat ?? 0}</div>
-                      <div className="text-xs max-sm:text-[8px] text-pink-500 dark:text-pink-400">(-{losses.tap.great.toFixed(4)}%)</div>
-                    </div>
-                    <div className="text-center bg-green-50 dark:bg-green-600/30 text-green-600 dark:text-green-400 py-1 px-2 border-b border-r flex flex-col items-center">
-                      <div>{play.tapGood ?? 0}</div>
-                      <div className="text-xs max-sm:text-[8px] text-green-500 dark:text-green-400">(-{losses.tap.good.toFixed(4)}%)</div>
-                    </div>
-                    <div className="text-center bg-neutral-50 dark:bg-neutral-600/30 text-neutral-600 dark:text-neutral-400 py-1 px-2 border-b border-r flex flex-col items-center">
-                      <div>{play.tapMiss ?? 0}</div>
-                      <div className="text-xs max-sm:text-[8px] text-neutral-500 dark:text-neutral-400">(-{losses.tap.miss.toFixed(4)}%)</div>
-                    </div>
-                    <div className="text-center py-1 px-2 border-b font-medium text-muted-foreground flex items-center justify-center max-sm:text-2xs">
-                      -{(losses.tap.great + losses.tap.good + losses.tap.miss).toFixed(4)}%
-                    </div>
+                const breakDist = distributeBreaks(
+                  notes,
+                  actualAchievement,
+                  play.breakPerfect ?? 0,
+                  play.breakGreat ?? 0
+                );
 
-                    {/* Hold Row */}
-                    <div className="text-right py-1 pl-4 pr-2 font-medium border-b border-r">Hold</div>
-                    <div className="text-center py-1 px-2 border-b border-r max-sm:hidden">
-                      {(play.holdCPerfect ?? 0) + (play.holdPerfect ?? 0) + (play.holdGreat ?? 0) + (play.holdGood ?? 0) + (play.holdMiss ?? 0)}
-                    </div>
-                    <div className="text-center bg-yellow-50 dark:bg-yellow-600/30 text-yellow-600 dark:text-yellow-400 py-1 px-2 border-b border-r">
-                      {play.holdCPerfect ?? 0}
-                    </div>
-                    <div className="text-center bg-orange-50 dark:bg-orange-600/30 text-orange-600 dark:text-orange-400 py-1 px-2 border-b border-r">
-                      {play.holdPerfect ?? 0}
-                    </div>
-                    <div className="text-center bg-pink-50 dark:bg-pink-600/30 text-pink-600 dark:text-pink-400 py-1 px-2 border-b border-r flex flex-col items-center">
-                      <div>{play.holdGreat ?? 0}</div>
-                      <div className="text-xs max-sm:text-[8px] text-pink-500 dark:text-pink-400">(-{losses.hold.great.toFixed(4)}%)</div>
-                    </div>
-                    <div className="text-center bg-green-50 dark:bg-green-600/30 text-green-600 dark:text-green-400 py-1 px-2 border-b border-r flex flex-col items-center">
-                      <div>{play.holdGood ?? 0}</div>
-                      <div className="text-xs max-sm:text-[8px] text-green-500 dark:text-green-400">(-{losses.hold.good.toFixed(4)}%)</div>
-                    </div>
-                    <div className="text-center bg-neutral-50 dark:bg-neutral-600/30 text-neutral-600 dark:text-neutral-400 py-1 px-2 border-b border-r flex flex-col items-center">
-                      <div>{play.holdMiss ?? 0}</div>
-                      <div className="text-xs max-sm:text-[8px] text-neutral-500 dark:text-neutral-400">(-{losses.hold.miss.toFixed(4)}%)</div>
-                    </div>
-                    <div className="text-center py-1 px-2 border-b font-medium text-muted-foreground flex items-center justify-center max-sm:text-2xs">
-                      -{(losses.hold.great + losses.hold.good + losses.hold.miss).toFixed(4)}%
-                    </div>
+                const losses = calculateNoteLosses(notes, breakDist);
 
-                    {/* Slide Row */}
-                    <div className="text-right py-1 pl-4 pr-2 font-medium border-b border-r">Slide</div>
-                    <div className="text-center py-1 px-2 border-b border-r max-sm:hidden">
-                      {(play.slideCPerfect ?? 0) + (play.slidePerfect ?? 0) + (play.slideGreat ?? 0) + (play.slideGood ?? 0) + (play.slideMiss ?? 0)}
-                    </div>
-                    <div className="text-center bg-yellow-50 dark:bg-yellow-600/30 text-yellow-600 dark:text-yellow-400 py-1 px-2 border-b border-r">
-                      {play.slideCPerfect ?? 0}
-                    </div>
-                    <div className="text-center bg-orange-50 dark:bg-orange-600/30 text-orange-600 dark:text-orange-400 py-1 px-2 border-b border-r">
-                      {play.slidePerfect ?? 0}
-                    </div>
-                    <div className="text-center bg-pink-50 dark:bg-pink-600/30 text-pink-600 dark:text-pink-400 py-1 px-2 border-b border-r flex flex-col items-center">
-                      <div>{play.slideGreat ?? 0}</div>
-                      <div className="text-xs max-sm:text-[8px] text-pink-500 dark:text-pink-400">(-{losses.slide.great.toFixed(4)}%)</div>
-                    </div>
-                    <div className="text-center bg-green-50 dark:bg-green-600/30 text-green-600 dark:text-green-400 py-1 px-2 border-b border-r flex flex-col items-center">
-                      <div>{play.slideGood ?? 0}</div>
-                      <div className="text-xs max-sm:text-[8px] text-green-500 dark:text-green-400">(-{losses.slide.good.toFixed(4)}%)</div>
-                    </div>
-                    <div className="text-center bg-neutral-50 dark:bg-neutral-600/30 text-neutral-600 dark:text-neutral-400 py-1 px-2 border-b border-r flex flex-col items-center">
-                      <div>{play.slideMiss ?? 0}</div>
-                      <div className="text-xs max-sm:text-[8px] text-neutral-500 dark:text-neutral-400">(-{losses.slide.miss.toFixed(4)}%)</div>
-                    </div>
-                    <div className="text-center py-1 px-2 border-b font-medium text-muted-foreground flex items-center justify-center max-sm:text-2xs">
-                      -{(losses.slide.great + losses.slide.good + losses.slide.miss).toFixed(4)}%
-                    </div>
+                return (
+                  <div className="mt-3 overflow-x-auto">
+                    <div className="grid grid-cols-[auto_1fr_1fr_1fr_1fr_1fr_1fr_1fr] max-sm:grid-cols-[auto_1fr_1fr_1fr_1fr_1fr_1fr] text-sm max-sm:text-2xs max-md:text-xs min-w-fit border rounded-md">
+                      {/* Header Row */}
+                      <div className="text-center py-1 pl-4 pr-2 font-medium text-muted-foreground bg-accent/50 border-b border-r flex items-center justify-end">{t('notesBreakdown.type')}</div>
+                      <div className="text-center py-1 px-2 font-medium text-muted-foreground bg-accent/50 border-b border-r flex items-center justify-center max-sm:hidden">{t('notesBreakdown.total')}</div>
+                      <div className="text-center py-1 px-2 font-medium text-muted-foreground bg-accent/50 border-b border-r flex items-center justify-center gap-1">
+                        Critical Perfect
+                      </div>
+                      <div className="text-center py-1 px-2 font-medium text-muted-foreground bg-accent/50 border-b border-r flex items-center justify-center gap-1">
+                        Perfect
+                      </div>
+                      <div className="text-center py-1 px-2 font-medium text-muted-foreground bg-accent/50 border-b border-r flex items-center justify-center gap-1">
+                        Great
+                      </div>
+                      <div className="text-center py-1 px-2 font-medium text-muted-foreground bg-accent/50 border-b border-r flex items-center justify-center gap-1">
+                        Good
+                      </div>
+                      <div className="text-center py-1 px-2 font-medium text-muted-foreground bg-accent/50 border-b border-r flex items-center justify-center gap-1">
+                        Miss
+                      </div>
+                      <div className="text-center py-1 px-2 font-medium text-muted-foreground bg-accent/50 border-b flex items-center justify-center">
+                        {t('notesBreakdown.totalLoss')}
+                      </div>
 
-                    {/* Touch Row */}
-                    <div className="text-right py-1 pl-4 pr-2 font-medium border-b border-r">Touch</div>
-                    <div className="text-center py-1 px-2 border-b border-r max-sm:hidden">
-                      {(play.touchCPerfect ?? 0) + (play.touchPerfect ?? 0) + (play.touchGreat ?? 0) + (play.touchGood ?? 0) + (play.touchMiss ?? 0)}
-                    </div>
-                    <div className="text-center bg-yellow-50 dark:bg-yellow-600/30 text-yellow-600 dark:text-yellow-400 py-1 px-2 border-b border-r">
-                      {play.touchCPerfect ?? 0}
-                    </div>
-                    <div className="text-center bg-orange-50 dark:bg-orange-600/30 text-orange-600 dark:text-orange-400 py-1 px-2 border-b border-r">
-                      {play.touchPerfect ?? 0}
-                    </div>
-                    <div className="text-center bg-pink-50 dark:bg-pink-600/30 text-pink-600 dark:text-pink-400 py-1 px-2 border-b border-r flex flex-col items-center">
-                      <div>{play.touchGreat ?? 0}</div>
-                      <div className="text-xs max-sm:text-[8px] text-pink-500 dark:text-pink-400">(-{losses.touch.great.toFixed(4)}%)</div>
-                    </div>
-                    <div className="text-center bg-green-50 dark:bg-green-600/30 text-green-600 dark:text-green-400 py-1 px-2 border-b border-r flex flex-col items-center">
-                      <div>{play.touchGood ?? 0}</div>
-                      <div className="text-xs max-sm:text-[8px] text-green-500 dark:text-green-400">(-{losses.touch.good.toFixed(4)}%)</div>
-                    </div>
-                    <div className="text-center bg-neutral-50 dark:bg-neutral-600/30 text-neutral-600 dark:text-neutral-400 py-1 px-2 border-b border-r flex flex-col items-center">
-                      <div>{play.touchMiss ?? 0}</div>
-                      <div className="text-xs max-sm:text-[8px] text-neutral-500 dark:text-neutral-400">(-{losses.touch.miss.toFixed(4)}%)</div>
-                    </div>
-                    <div className="text-center py-1 px-2 border-b font-medium text-muted-foreground flex items-center justify-center max-sm:text-2xs">
-                      -{(losses.touch.great + losses.touch.good + losses.touch.miss).toFixed(4)}%
-                    </div>
+                      {/* Tap Row */}
+                      <div className="text-right py-1 pl-4 pr-2 font-medium border-b border-r">Tap</div>
+                      <div className="text-center py-1 px-2 border-b border-r max-sm:hidden">
+                        {(play.tapCPerfect ?? 0) + (play.tapPerfect ?? 0) + (play.tapGreat ?? 0) + (play.tapGood ?? 0) + (play.tapMiss ?? 0)}
+                      </div>
+                      <div className="text-center bg-yellow-50 dark:bg-yellow-600/30 text-yellow-600 dark:text-yellow-400 py-1 px-2 border-b border-r">
+                        {play.tapCPerfect ?? 0}
+                      </div>
+                      <div className="text-center bg-orange-50 dark:bg-orange-600/30 text-orange-600 dark:text-orange-400 py-1 px-2 border-b border-r">
+                        {play.tapPerfect ?? 0}
+                      </div>
+                      <div className="text-center bg-pink-50 dark:bg-pink-600/30 text-pink-600 dark:text-pink-400 py-1 px-2 border-b border-r flex flex-col items-center">
+                        <div>{play.tapGreat ?? 0}</div>
+                        <div className="text-xs max-sm:text-[8px] text-pink-500 dark:text-pink-400">(-{losses.tap.great.toFixed(4)}%)</div>
+                      </div>
+                      <div className="text-center bg-green-50 dark:bg-green-600/30 text-green-600 dark:text-green-400 py-1 px-2 border-b border-r flex flex-col items-center">
+                        <div>{play.tapGood ?? 0}</div>
+                        <div className="text-xs max-sm:text-[8px] text-green-500 dark:text-green-400">(-{losses.tap.good.toFixed(4)}%)</div>
+                      </div>
+                      <div className="text-center bg-neutral-50 dark:bg-neutral-600/30 text-neutral-600 dark:text-neutral-400 py-1 px-2 border-b border-r flex flex-col items-center">
+                        <div>{play.tapMiss ?? 0}</div>
+                        <div className="text-xs max-sm:text-[8px] text-neutral-500 dark:text-neutral-400">(-{losses.tap.miss.toFixed(4)}%)</div>
+                      </div>
+                      <div className="text-center py-1 px-2 border-b font-medium text-muted-foreground flex items-center justify-center max-sm:text-2xs">
+                        -{(losses.tap.great + losses.tap.good + losses.tap.miss).toFixed(4)}%
+                      </div>
 
-                    {/* Break Row */}
-                    <div className="text-right py-1 pl-4 pr-2 font-medium border-r">Break</div>
-                    <div className="text-center py-1 px-2 border-r max-sm:hidden">
-                      {(play.breakCPerfect ?? 0) + (play.breakPerfect ?? 0) + (play.breakGreat ?? 0) + (play.breakGood ?? 0) + (play.breakMiss ?? 0)}
-                    </div>
-                    <div className="text-center bg-yellow-50 dark:bg-yellow-600/30 text-yellow-600 dark:text-yellow-400 py-1 px-2 border-r">
-                      {play.breakCPerfect ?? 0}
-                    </div>
-                    <div className="text-center bg-orange-50 dark:bg-orange-600/30 text-orange-600 dark:text-orange-400 py-1 px-2 border-r flex flex-col items-center">
-                      <div>{breakDist.perfect2550}-{breakDist.perfect2500}</div>
-                      <div className="text-xs max-sm:text-[8px] text-orange-500 dark:text-orange-400">(-{losses.break.perfect.toFixed(4)}%)</div>
-                    </div>
-                    <div className="text-center bg-pink-50 dark:bg-pink-600/30 text-pink-600 dark:text-pink-400 py-1 px-2 border-r flex flex-col items-center">
-                      <div>{breakDist.great2000}-{breakDist.great1500}-{breakDist.great1250}</div>
-                      <div className="text-xs max-sm:text-[8px] text-pink-500 dark:text-pink-400">(-{losses.break.great.toFixed(4)}%)</div>
-                    </div>
-                    <div className="text-center bg-green-50 dark:bg-green-600/30 text-green-600 dark:text-green-400 py-1 px-2 border-r flex flex-col items-center">
-                      <div>{play.breakGood ?? 0}</div>
-                      <div className="text-xs max-sm:text-[8px] text-green-500 dark:text-green-400">(-{losses.break.good.toFixed(4)}%)</div>
-                    </div>
-                    <div className="text-center bg-neutral-50 dark:bg-neutral-600/30 text-neutral-600 dark:text-neutral-400 py-1 px-2 border-r flex flex-col items-center">
-                      <div>{play.breakMiss ?? 0}</div>
-                      <div className="text-xs max-sm:text-[8px] text-neutral-500 dark:text-neutral-400">(-{losses.break.miss.toFixed(4)}%)</div>
-                    </div>
-                    <div className="text-center py-1 px-2 font-medium text-muted-foreground flex items-center justify-center max-sm:text-2xs">
-                      -{(losses.break.perfect + losses.break.great + losses.break.good + losses.break.miss).toFixed(4)}%
+                      {/* Hold Row */}
+                      <div className="text-right py-1 pl-4 pr-2 font-medium border-b border-r">Hold</div>
+                      <div className="text-center py-1 px-2 border-b border-r max-sm:hidden">
+                        {(play.holdCPerfect ?? 0) + (play.holdPerfect ?? 0) + (play.holdGreat ?? 0) + (play.holdGood ?? 0) + (play.holdMiss ?? 0)}
+                      </div>
+                      <div className="text-center bg-yellow-50 dark:bg-yellow-600/30 text-yellow-600 dark:text-yellow-400 py-1 px-2 border-b border-r">
+                        {play.holdCPerfect ?? 0}
+                      </div>
+                      <div className="text-center bg-orange-50 dark:bg-orange-600/30 text-orange-600 dark:text-orange-400 py-1 px-2 border-b border-r">
+                        {play.holdPerfect ?? 0}
+                      </div>
+                      <div className="text-center bg-pink-50 dark:bg-pink-600/30 text-pink-600 dark:text-pink-400 py-1 px-2 border-b border-r flex flex-col items-center">
+                        <div>{play.holdGreat ?? 0}</div>
+                        <div className="text-xs max-sm:text-[8px] text-pink-500 dark:text-pink-400">(-{losses.hold.great.toFixed(4)}%)</div>
+                      </div>
+                      <div className="text-center bg-green-50 dark:bg-green-600/30 text-green-600 dark:text-green-400 py-1 px-2 border-b border-r flex flex-col items-center">
+                        <div>{play.holdGood ?? 0}</div>
+                        <div className="text-xs max-sm:text-[8px] text-green-500 dark:text-green-400">(-{losses.hold.good.toFixed(4)}%)</div>
+                      </div>
+                      <div className="text-center bg-neutral-50 dark:bg-neutral-600/30 text-neutral-600 dark:text-neutral-400 py-1 px-2 border-b border-r flex flex-col items-center">
+                        <div>{play.holdMiss ?? 0}</div>
+                        <div className="text-xs max-sm:text-[8px] text-neutral-500 dark:text-neutral-400">(-{losses.hold.miss.toFixed(4)}%)</div>
+                      </div>
+                      <div className="text-center py-1 px-2 border-b font-medium text-muted-foreground flex items-center justify-center max-sm:text-2xs">
+                        -{(losses.hold.great + losses.hold.good + losses.hold.miss).toFixed(4)}%
+                      </div>
+
+                      {/* Slide Row */}
+                      <div className="text-right py-1 pl-4 pr-2 font-medium border-b border-r">Slide</div>
+                      <div className="text-center py-1 px-2 border-b border-r max-sm:hidden">
+                        {(play.slideCPerfect ?? 0) + (play.slidePerfect ?? 0) + (play.slideGreat ?? 0) + (play.slideGood ?? 0) + (play.slideMiss ?? 0)}
+                      </div>
+                      <div className="text-center bg-yellow-50 dark:bg-yellow-600/30 text-yellow-600 dark:text-yellow-400 py-1 px-2 border-b border-r">
+                        {play.slideCPerfect ?? 0}
+                      </div>
+                      <div className="text-center bg-orange-50 dark:bg-orange-600/30 text-orange-600 dark:text-orange-400 py-1 px-2 border-b border-r">
+                        {play.slidePerfect ?? 0}
+                      </div>
+                      <div className="text-center bg-pink-50 dark:bg-pink-600/30 text-pink-600 dark:text-pink-400 py-1 px-2 border-b border-r flex flex-col items-center">
+                        <div>{play.slideGreat ?? 0}</div>
+                        <div className="text-xs max-sm:text-[8px] text-pink-500 dark:text-pink-400">(-{losses.slide.great.toFixed(4)}%)</div>
+                      </div>
+                      <div className="text-center bg-green-50 dark:bg-green-600/30 text-green-600 dark:text-green-400 py-1 px-2 border-b border-r flex flex-col items-center">
+                        <div>{play.slideGood ?? 0}</div>
+                        <div className="text-xs max-sm:text-[8px] text-green-500 dark:text-green-400">(-{losses.slide.good.toFixed(4)}%)</div>
+                      </div>
+                      <div className="text-center bg-neutral-50 dark:bg-neutral-600/30 text-neutral-600 dark:text-neutral-400 py-1 px-2 border-b border-r flex flex-col items-center">
+                        <div>{play.slideMiss ?? 0}</div>
+                        <div className="text-xs max-sm:text-[8px] text-neutral-500 dark:text-neutral-400">(-{losses.slide.miss.toFixed(4)}%)</div>
+                      </div>
+                      <div className="text-center py-1 px-2 border-b font-medium text-muted-foreground flex items-center justify-center max-sm:text-2xs">
+                        -{(losses.slide.great + losses.slide.good + losses.slide.miss).toFixed(4)}%
+                      </div>
+
+                      {/* Touch Row */}
+                      <div className="text-right py-1 pl-4 pr-2 font-medium border-b border-r">Touch</div>
+                      <div className="text-center py-1 px-2 border-b border-r max-sm:hidden">
+                        {(play.touchCPerfect ?? 0) + (play.touchPerfect ?? 0) + (play.touchGreat ?? 0) + (play.touchGood ?? 0) + (play.touchMiss ?? 0)}
+                      </div>
+                      <div className="text-center bg-yellow-50 dark:bg-yellow-600/30 text-yellow-600 dark:text-yellow-400 py-1 px-2 border-b border-r">
+                        {play.touchCPerfect ?? 0}
+                      </div>
+                      <div className="text-center bg-orange-50 dark:bg-orange-600/30 text-orange-600 dark:text-orange-400 py-1 px-2 border-b border-r">
+                        {play.touchPerfect ?? 0}
+                      </div>
+                      <div className="text-center bg-pink-50 dark:bg-pink-600/30 text-pink-600 dark:text-pink-400 py-1 px-2 border-b border-r flex flex-col items-center">
+                        <div>{play.touchGreat ?? 0}</div>
+                        <div className="text-xs max-sm:text-[8px] text-pink-500 dark:text-pink-400">(-{losses.touch.great.toFixed(4)}%)</div>
+                      </div>
+                      <div className="text-center bg-green-50 dark:bg-green-600/30 text-green-600 dark:text-green-400 py-1 px-2 border-b border-r flex flex-col items-center">
+                        <div>{play.touchGood ?? 0}</div>
+                        <div className="text-xs max-sm:text-[8px] text-green-500 dark:text-green-400">(-{losses.touch.good.toFixed(4)}%)</div>
+                      </div>
+                      <div className="text-center bg-neutral-50 dark:bg-neutral-600/30 text-neutral-600 dark:text-neutral-400 py-1 px-2 border-b border-r flex flex-col items-center">
+                        <div>{play.touchMiss ?? 0}</div>
+                        <div className="text-xs max-sm:text-[8px] text-neutral-500 dark:text-neutral-400">(-{losses.touch.miss.toFixed(4)}%)</div>
+                      </div>
+                      <div className="text-center py-1 px-2 border-b font-medium text-muted-foreground flex items-center justify-center max-sm:text-2xs">
+                        -{(losses.touch.great + losses.touch.good + losses.touch.miss).toFixed(4)}%
+                      </div>
+
+                      {/* Break Row */}
+                      <div className="text-right py-1 pl-4 pr-2 font-medium border-r">Break</div>
+                      <div className="text-center py-1 px-2 border-r max-sm:hidden">
+                        {(play.breakCPerfect ?? 0) + (play.breakPerfect ?? 0) + (play.breakGreat ?? 0) + (play.breakGood ?? 0) + (play.breakMiss ?? 0)}
+                      </div>
+                      <div className="text-center bg-yellow-50 dark:bg-yellow-600/30 text-yellow-600 dark:text-yellow-400 py-1 px-2 border-r">
+                        {play.breakCPerfect ?? 0}
+                      </div>
+                      <div className="text-center bg-orange-50 dark:bg-orange-600/30 text-orange-600 dark:text-orange-400 py-1 px-2 border-r flex flex-col items-center">
+                        <div>{breakDist.perfect2550}-{breakDist.perfect2500}</div>
+                        <div className="text-xs max-sm:text-[8px] text-orange-500 dark:text-orange-400">(-{losses.break.perfect.toFixed(4)}%)</div>
+                      </div>
+                      <div className="text-center bg-pink-50 dark:bg-pink-600/30 text-pink-600 dark:text-pink-400 py-1 px-2 border-r flex flex-col items-center">
+                        <div>{breakDist.great2000}-{breakDist.great1500}-{breakDist.great1250}</div>
+                        <div className="text-xs max-sm:text-[8px] text-pink-500 dark:text-pink-400">(-{losses.break.great.toFixed(4)}%)</div>
+                      </div>
+                      <div className="text-center bg-green-50 dark:bg-green-600/30 text-green-600 dark:text-green-400 py-1 px-2 border-r flex flex-col items-center">
+                        <div>{play.breakGood ?? 0}</div>
+                        <div className="text-xs max-sm:text-[8px] text-green-500 dark:text-green-400">(-{losses.break.good.toFixed(4)}%)</div>
+                      </div>
+                      <div className="text-center bg-neutral-50 dark:bg-neutral-600/30 text-neutral-600 dark:text-neutral-400 py-1 px-2 border-r flex flex-col items-center">
+                        <div>{play.breakMiss ?? 0}</div>
+                        <div className="text-xs max-sm:text-[8px] text-neutral-500 dark:text-neutral-400">(-{losses.break.miss.toFixed(4)}%)</div>
+                      </div>
+                      <div className="text-center py-1 px-2 font-medium text-muted-foreground flex items-center justify-center max-sm:text-2xs">
+                        -{(losses.break.perfect + losses.break.great + losses.break.good + losses.break.miss).toFixed(4)}%
+                      </div>
                     </div>
                   </div>
-                </div>
-              );
-            })()}
+                );
+              })()}
 
-            <ExpandedSongDetails publicId={play.songPublicId} />
-          </>
-        )}
+              <ExpandedSongDetails publicId={play.songPublicId} />
+            </>
+          )}
+        </div>
       </AutoHeight>
     </motion.div>
   );
@@ -595,38 +612,43 @@ export function RecentSongsCard({ region, beforeDate, snapshotId }: RecentSongsC
 
   if (isLoading && offset === 0) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Clock className="h-5 w-5" />
-            {t('title')}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-          </div>
-        </CardContent>
-      </Card>
+      <div className="space-y-6">
+        <h2 className="text-lg font-semibold flex items-center gap-2">
+          <Clock className="h-5 w-5" />
+          {t('title')}
+        </h2>
+        <div className="divide-y divide-dashed divide-border">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="flex gap-4 py-4">
+              <Skeleton className="w-14 h-14 rounded shrink-0" />
+              <div className="flex-1 min-w-0 space-y-2">
+                <Skeleton className="h-4 w-3/4" />
+                <Skeleton className="h-3 w-1/2" />
+                <Skeleton className="h-3 w-1/3" />
+              </div>
+              <div className="text-right space-y-2">
+                <Skeleton className="h-4 w-16 ml-auto" />
+                <Skeleton className="h-3 w-12 ml-auto" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
     );
   }
 
   if (error) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Clock className="h-5 w-5" />
-            {t('title')}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-center py-12 text-muted-foreground">
-            <AlertCircle className="h-5 w-5 mr-2" />
-            <span>{t('noPlays')}</span>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="space-y-6">
+        <h2 className="text-lg font-semibold flex items-center gap-2">
+          <Clock className="h-5 w-5" />
+          {t('title')}
+        </h2>
+        <div className="flex items-center justify-center py-12 text-muted-foreground">
+          <AlertCircle className="h-5 w-5 mr-2" />
+          <span>{t('noPlays')}</span>
+        </div>
+      </div>
     );
   }
 
@@ -635,33 +657,25 @@ export function RecentSongsCard({ region, beforeDate, snapshotId }: RecentSongsC
   // which would prevent the sentinel from being rendered
   if (allPlays.length === 0 && !isLoading && processedOffsetsRef.current.has(0)) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Clock className="h-5 w-5" />
-            {t('title')}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-center py-12 text-muted-foreground">
-            <span>{t('noPlays')}</span>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="space-y-6">
+        <h2 className="text-lg font-semibold flex items-center gap-2">
+          <Clock className="h-5 w-5" />
+          {t('title')}
+        </h2>
+        <div className="flex items-center justify-center py-12 text-muted-foreground">
+          <span>{t('noPlays')}</span>
+        </div>
+      </div>
     );
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Clock className="h-5 w-5" />
-            {t('title')}
-          </div>
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
+    <div className="space-y-6">
+      <h2 className="text-lg font-semibold flex items-center gap-2">
+        <Clock className="h-5 w-5" />
+        {t('title')}
+      </h2>
+      <div>
         <div className="divide-y divide-border divide-dashed">
           {allPlays.map((play, i) => (
             <RecentSongRow
@@ -682,8 +696,8 @@ export function RecentSongsCard({ region, beforeDate, snapshotId }: RecentSongsC
             </div>
           )}
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
 
@@ -738,21 +752,21 @@ function ExpandedSongDetails({ publicId }: { publicId: string }) {
           disabled={isLoading || !songDetails?.slug}
           asChild={!isLoading && !!songDetails?.slug}
         >
-        {isLoading ? (
-          <>
-            <Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" />
-            {t('common.loading')}
-          </>
-        ) : songDetails?.slug ? (
-          <Link href={`/db/songs/${songDetails.slug}`} target="_blank" className="relative">
-            <Music className="w-3.5 h-3.5 mr-2" />
-            {t('db.songs.detail.viewDetails')}
-            <ChevronRight className="w-3.5 absolute top-0 bottom-0 right-2 my-auto" />
-          </Link>
-        ) : (
-          <span className="text-destructive">Error</span>
-        )}
-      </Button>
+          {isLoading ? (
+            <>
+              <Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" />
+              {t('common.loading')}
+            </>
+          ) : songDetails?.slug ? (
+            <Link href={`/db/songs/${songDetails.slug}`} target="_blank" className="relative">
+              <Music className="w-3.5 h-3.5 mr-2" />
+              {t('db.songs.detail.viewDetails')}
+              <ChevronRight className="w-3.5 absolute top-0 bottom-0 right-2 my-auto" />
+            </Link>
+          ) : (
+            <span className="text-destructive">Error</span>
+          )}
+        </Button>
       </motion.div>
     </div>
   );

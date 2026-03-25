@@ -310,7 +310,7 @@ export function ArcadesMap() {
   });
 
   // Fetch stores using tRPC
-  const { data: storesResponse, isLoading: isLoadingStores } = trpc.user.getStores.useQuery(undefined, {
+  const { data: storesResponse, isLoading: isLoadingStores } = trpc.store.getStores.useQuery(undefined, {
     refetchOnWindowFocus: false,
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });

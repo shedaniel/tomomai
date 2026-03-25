@@ -1,11 +1,12 @@
 "use client";
 
 import {
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { AnimatedDialog, AnimatedDialogContent } from "@/components/ui/animated-dialog";
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogDescription,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from "@/components/ui/dialog-friendly";
 import { themes, getSavedThemeId, saveThemeId, applyTheme, Theme } from "@/lib/themes";
 import { cn } from "@/lib/utils";
 import { Check } from "lucide-react";
@@ -86,14 +87,14 @@ export function ThemeDialog({ open, onOpenChange }: ThemeDialogProps) {
   }, [themes]);
 
   return (
-    <AnimatedDialog open={open} onOpenChange={onOpenChange}>
-      <AnimatedDialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{t("theme.title")}</DialogTitle>
-          <DialogDescription>
+    <ResponsiveDialog open={open} onOpenChange={onOpenChange}>
+      <ResponsiveDialogContent className="sm:max-w-[calc(min(100vw,700px))] max-h-[90vh] overflow-y-auto">
+        <ResponsiveDialogHeader>
+          <ResponsiveDialogTitle>{t("theme.title")}</ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>
             {t("theme.description")}
-          </DialogDescription>
-        </DialogHeader>
+          </ResponsiveDialogDescription>
+        </ResponsiveDialogHeader>
 
         <div className="space-y-4">
           {colorFamilies.map((family) => {
@@ -117,7 +118,7 @@ export function ThemeDialog({ open, onOpenChange }: ThemeDialogProps) {
             );
           })}
         </div>
-      </AnimatedDialogContent>
-    </AnimatedDialog>
+      </ResponsiveDialogContent>
+    </ResponsiveDialog>
   );
 }

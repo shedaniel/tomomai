@@ -2,11 +2,12 @@
 
 import { Button } from "@/components/ui/button";
 import {
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { AnimatedDialog, AnimatedDialogContent } from "@/components/ui/animated-dialog";
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogDescription,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from "@/components/ui/dialog-friendly";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Flags } from "@/lib/flags";
@@ -78,11 +79,11 @@ export function ExperimentsDialog({ open, onOpenChange, initialFlags }: Experime
   }
 
   return (
-    <AnimatedDialog open={open} onOpenChange={onOpenChange}>
-      <AnimatedDialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
-          <DialogTitle>{t('common.experiments')}</DialogTitle>
-          <DialogDescription>
+    <ResponsiveDialog open={open} onOpenChange={onOpenChange}>
+      <ResponsiveDialogContent className="sm:max-w-[500px]">
+        <ResponsiveDialogHeader>
+          <ResponsiveDialogTitle>{t('common.experiments')}</ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>
             Welcome to the feature flags page for tomomai ともマイ.
             <br />
             <br />
@@ -91,8 +92,8 @@ export function ExperimentsDialog({ open, onOpenChange, initialFlags }: Experime
             <br />
             <br />
             Use at your own risk. Support is not provided for these features.
-          </DialogDescription>
-        </DialogHeader>
+          </ResponsiveDialogDescription>
+        </ResponsiveDialogHeader>
 
         <div className="space-y-3">
           {Object.entries(flagDefinitions).map(([key, def]: [string, any]) => {
@@ -127,10 +128,10 @@ export function ExperimentsDialog({ open, onOpenChange, initialFlags }: Experime
           })}
         </div>
 
-        <div className="flex justify-end pt-2">
+        <div className="flex justify-end pt-4">
           <Button onClick={handleApply} disabled={!hasChanges}>Apply</Button>
         </div>
-      </AnimatedDialogContent>
-    </AnimatedDialog>
+      </ResponsiveDialogContent>
+    </ResponsiveDialog>
   );
 }

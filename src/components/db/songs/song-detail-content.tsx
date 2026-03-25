@@ -1,7 +1,10 @@
 "use client";
 
-import { DialogTrigger } from "@/components/ui/dialog";
-import { AnimatedDialog, AnimatedDialogContent } from "@/components/ui/animated-dialog";
+import {
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogTrigger,
+} from "@/components/ui/dialog-friendly";
 import { DIFFICULTY_COLORS, getAchievementRate } from "@/lib/difficulty";
 import { getVersionInfo } from "@/lib/metadata";
 import { calculateSongRating } from "@/lib/rating-calculator";
@@ -109,7 +112,8 @@ function ScoreGrid({
           achievement: score.achievement,
           fc: score.fc as any,
           levelPrecise: chart.levelPrecise,
-          addedVersion: chart.addedVersion
+          addedVersion: chart.addedVersion,
+          difficulty: chart.difficulty,
         }, chart.gameVersion) : 0;
 
         const label = region === 'intl' ? t('regions.intl') : t('regions.jp');
@@ -182,8 +186,8 @@ export function SongChartRow({ difficulty, charts, index, data, hasTouch }: {
   }, [charts, data?.userScores]);
 
   return (
-    <AnimatedDialog key={difficulty}>
-      <DialogTrigger asChild>
+    <ResponsiveDialog key={difficulty}>
+      <ResponsiveDialogTrigger asChild>
         <div className="contents text-sm group *:group-hover:bg-accent *:transition-colors *:duration-200">
           {/* Difficulty */}
           <div className={cn("py-2.5 px-3 flex items-center gap-2", dataBorderClass)}>
@@ -244,11 +248,11 @@ export function SongChartRow({ difficulty, charts, index, data, hasTouch }: {
             />
           )}
         </div>
-      </DialogTrigger>
-      <AnimatedDialogContent>
+      </ResponsiveDialogTrigger>
+      <ResponsiveDialogContent className="grid w-full gap-4">
         <SongChartDialogContent charts={charts} scores={chartScores} />
-      </AnimatedDialogContent>
-    </AnimatedDialog>
+      </ResponsiveDialogContent>
+    </ResponsiveDialog>
   );
 }
 

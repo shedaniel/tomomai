@@ -1,6 +1,5 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { addRatingsAndSort, getRatingFactor, SongWithRating, splitSongs } from "@/lib/rating-calculator";
 import { SnapshotWithSongs } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -23,6 +22,7 @@ import {
 import { SongHoverCard } from "@/components/song-hover-card";
 import { renderLevelPrecise } from "@/lib/name-utils";
 import { STAGGER, getTransition } from "@/lib/animation-constants";
+import { useMediaQuery } from "@/hooks/use-media-query";
 
 interface RecommendationData {
   song: SongWithRating;
@@ -145,7 +145,7 @@ function RecommendationRow({ recommendation }: { recommendation: RecommendationD
             coverUrl={song.cover}
             alt={song.songName}
             className={cn(
-              "w-8 h-8 ml-1 mr-3 rounded ring-2 ring-offset-2 ring-offset-card",
+              "w-8 h-8 ml-1 mr-3 rounded ring-2 ring-offset-2 ring-offset-background",
               song.difficulty === "basic" && "ring-green-400",
               song.difficulty === "advanced" && "ring-yellow-400",
               song.difficulty === "expert" && "ring-red-400",
@@ -163,17 +163,17 @@ function RecommendationRow({ recommendation }: { recommendation: RecommendationD
               <div className="truncate font-medium">{song.songName}</div>
               <div className={cn(
                 "px-1.5 py-0.5 rounded text-xs font-medium whitespace-nowrap",
-                category === "new" ? "bg-lime-100 text-lime-800" : "bg-orange-100 text-orange-800"
+                category === "new" ? "bg-lime-100 text-lime-800 dark:bg-lime-600/30 dark:text-lime-400" : "bg-orange-100 text-orange-800 dark:bg-orange-600/30 dark:text-orange-400"
               )}>
                 {category === "new" ? "New" : "Old"}
               </div>
               {category === "new" && isInBest && (
-                <div className="px-1.5 py-0.5 rounded text-xs font-medium whitespace-nowrap bg-green-100 text-green-800">
+                <div className="px-1.5 py-0.5 rounded text-xs font-medium whitespace-nowrap bg-green-100 text-green-800 dark:bg-green-600/30 dark:text-green-400">
                   B15
                 </div>
               )}
               {category === "old" && isInBest && (
-                <div className="px-1.5 py-0.5 rounded text-xs font-medium whitespace-nowrap bg-red-100 text-red-800">
+                <div className="px-1.5 py-0.5 rounded text-xs font-medium whitespace-nowrap bg-red-100 text-red-800 dark:bg-red-600/30 dark:text-red-400">
                   B35
                 </div>
               )}
@@ -189,13 +189,13 @@ function RecommendationRow({ recommendation }: { recommendation: RecommendationD
             <div className="text-xs text-muted-foreground">Current → Target</div>
             <div className="font-mono text-xs">
               {currentAccuracy.toFixed(2)}% → {targetAccuracy === 101.0 ? (
-                <span className="text-green-600">AP</span>
+                <span className="text-green-600 dark:text-green-400">AP</span>
               ) : (
-                <span className="text-green-600">{targetAccuracy.toFixed(2)}%</span>
+                <span className="text-green-600 dark:text-green-400">{targetAccuracy.toFixed(2)}%</span>
               )}
             </div>
             <div className="font-mono text-xs">
-              {currentRating} → <span className="text-green-600">{targetRating}</span>
+              {currentRating} → <span className="text-green-600 dark:text-green-400">{targetRating}</span>
             </div>
           </div>
 
@@ -221,6 +221,7 @@ function RecommendationRow({ recommendation }: { recommendation: RecommendationD
 
 export function RecommendationCard({ selectedSnapshotData, flags }: { selectedSnapshotData: SnapshotWithSongs, flags: Flags }) {
   const t = useTranslations();
+  const isDesktop = useMediaQuery("(min-width: 768px)", { initializeWithValue: false });
   const [filterCategory, setFilterCategory] = useState<"all" | "new" | "old" | "best">("all");
   const [advancedFilters, setAdvancedFilters] = useState<GenericFilter[]>([]);
   const [showFilterPanel, setShowFilterPanel] = useState(false);
@@ -312,34 +313,30 @@ export function RecommendationCard({ selectedSnapshotData, flags }: { selectedSn
 
   if (recommendations.length === 0) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Heart className="h-5 w-5 text-pink-500" />
-            {t('dataContent.tabs.recommendations')}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center py-8">
-            <Heart className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-            <h3 className="text-lg font-medium mb-2">{t('recommendations.noRecommendations')}</h3>
-            <p className="text-muted-foreground">
-              {t('recommendations.allOptimal')}
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="space-y-6">
+        <h2 className="text-lg font-semibold flex items-center gap-2">
+          <Heart className="h-5 w-5 text-pink-500" />
+          {t('dataContent.tabs.recommendations')}
+        </h2>
+        <div className="text-center py-8">
+          <Heart className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+          <h3 className="text-lg font-medium mb-2">{t('recommendations.noRecommendations')}</h3>
+          <p className="text-muted-foreground">
+            {t('recommendations.allOptimal')}
+          </p>
+        </div>
+      </div>
     );
   }
 
   return (
-    <Card>
-      <CardHeader>
+    <div className="space-y-6">
+      <div>
         <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
+          <h2 className="text-lg font-semibold flex items-center gap-2">
             <Heart className="h-5 w-5 text-pink-500" />
             {t('dataContent.tabs.recommendations')} ({filteredRecommendations.length})
-          </CardTitle>
+          </h2>
           <div className="flex items-center gap-2">
             {flags.recommendationFilters && (
               <Button
@@ -398,31 +395,36 @@ export function RecommendationCard({ selectedSnapshotData, flags }: { selectedSn
             )}
           </AnimatePresence>
         )}
-      </CardHeader>
-      <CardContent>
+      </div>
+      <div>
         <div className="divide-y divide-dashed divide-border">
           <AnimatePresence mode="popLayout">
             {filteredRecommendations.map((rec, index) => {
               // High-value recommendations get a more prominent animation
               const isHighValue = rec.ratingGain >= 50;
-              const delay = STAGGER.calculateDelay(index, 0.03, 0.2);
+              const delay = STAGGER.calculateDelay(index, 0.06, 0.4);
 
               return (
                 <motion.div
                   key={`${rec.song.songId}-${rec.song.difficulty}`}
                   initial={{
                     opacity: 0,
-                    x: rec.category === "new" ? -20 : 20,
+                    ...(isDesktop
+                      ? { x: rec.category === "new" ? -20 : 20 }
+                      : { y: rec.category === "new" ? -20 : 20 }),
                     scale: isHighValue ? 0.9 : 0.95,
                   }}
                   animate={{
                     opacity: 1,
                     x: 0,
+                    y: 0,
                     scale: 1,
                   }}
                   exit={{
                     opacity: 0,
-                    x: rec.category === "new" ? 10 : -10,
+                    ...(isDesktop
+                      ? { x: rec.category === "new" ? 10 : -10 }
+                      : { y: rec.category === "new" ? 10 : -10 }),
                     scale: 0.95,
                   }}
                   transition={getTransition({
@@ -440,7 +442,7 @@ export function RecommendationCard({ selectedSnapshotData, flags }: { selectedSn
             })}
           </AnimatePresence>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

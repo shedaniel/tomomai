@@ -1,7 +1,6 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CANVAS_HEIGHT, CANVAS_WIDTH } from "@/lib/image-spec";
 import { Region, SnapshotWithSongs } from "@/lib/types";
 import { Download, RefreshCw } from "lucide-react";
@@ -122,21 +121,35 @@ interface ExportImageCardProps {
   selectedSnapshotData: SnapshotWithSongs;
   region: Region;
   showLastCredit?: boolean;
+  username?: string;
 }
 
-export function ExportImageCard({ selectedSnapshotData, region, showLastCredit = true }: ExportImageCardProps) {
+function buildExportImageUrl(snapshotId: string, region: Region, username?: string, extra?: Record<string, string>) {
+  const params = new URLSearchParams({ snapshotId });
+  if (username) {
+    params.set('username', username);
+    params.set('region', region);
+  }
+  if (extra) {
+    for (const [k, v] of Object.entries(extra)) params.set(k, v);
+  }
+  return `/api/export-image?${params.toString()}`;
+}
+
+export function ExportImageCard({ selectedSnapshotData, region, showLastCredit = true, username }: ExportImageCardProps) {
   const t = useTranslations();
 
   // Export image state
+  const snapshotId = selectedSnapshotData.snapshot.id;
   const [exportImageUrl, setExportImageUrl] = useState<string>(
-    `/api/export-image?snapshotId=${selectedSnapshotData.snapshot.id}`
+    buildExportImageUrl(snapshotId, region, username)
   );
   const [exportImageKey, setExportImageKey] = useState(0);
   const [exportIsLoading, setExportIsLoading] = useState(true);
 
   // Last credit image state
   const [lastCreditImageUrl, setLastCreditImageUrl] = useState<string>(
-    `/api/last-credit?region=${region}&beforeDate=${selectedSnapshotData.snapshot.fetchedAt}&snapshotId=${selectedSnapshotData.snapshot.id}`
+    `/api/last-credit?region=${region}&beforeDate=${selectedSnapshotData.snapshot.fetchedAt}&snapshotId=${snapshotId}`
   );
   const [lastCreditImageKey, setLastCreditImageKey] = useState(0);
   const [lastCreditIsLoading, setLastCreditIsLoading] = useState(true);
@@ -144,13 +157,13 @@ export function ExportImageCard({ selectedSnapshotData, region, showLastCredit =
   const handleExportRefresh = () => {
     setExportIsLoading(true);
     setExportImageKey(prev => prev + 1);
-    setExportImageUrl(`/api/export-image?snapshotId=${selectedSnapshotData.snapshot.id}&t=${Date.now()}`);
+    setExportImageUrl(buildExportImageUrl(snapshotId, region, username, { t: Date.now().toString() }));
   };
 
   const handleExportRefreshFast = () => {
     setExportIsLoading(true);
     setExportImageKey(prev => prev + 1);
-    setExportImageUrl(`/api/export-image?snapshotId=${selectedSnapshotData.snapshot.id}&scale=1&t=${Date.now()}`);
+    setExportImageUrl(buildExportImageUrl(snapshotId, region, username, { scale: '1', t: Date.now().toString() }));
   };
 
   const handleLastCreditRefresh = () => {
@@ -166,14 +179,12 @@ export function ExportImageCard({ selectedSnapshotData, region, showLastCredit =
   };
 
   return (
-    <Card className="w-full mx-auto">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Download className="h-5 w-5" />
-          {t('dataContent.tabs.exportImage')}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-6">
+    <div className="w-full mx-auto space-y-6">
+      <h2 className="text-lg font-semibold flex items-center gap-2">
+        <Download className="h-5 w-5" />
+        {t('dataContent.tabs.exportImage')}
+      </h2>
+      <div className="space-y-6">
         <div className="flex flex-col lg:flex-row gap-6">
           <ImagePanel
             imageUrl={exportImageUrl}
@@ -200,7 +211,7 @@ export function ExportImageCard({ selectedSnapshotData, region, showLastCredit =
             />
           )}
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

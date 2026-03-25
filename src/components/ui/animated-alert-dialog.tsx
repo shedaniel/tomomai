@@ -5,6 +5,7 @@ import * as AlertDialogPrimitive from "@radix-ui/react-alert-dialog"
 import { motion, AnimatePresence } from "motion/react"
 import { cn } from "@/lib/utils"
 import { getTransition } from "@/lib/animation-constants"
+import { triggerHaptic } from "@/lib/haptics"
 import {
   AlertDialogTrigger,
   AlertDialogPortal,
@@ -34,6 +35,7 @@ function AnimatedAlertDialog({
 
   const handleOpenChange = React.useCallback(
     (value: boolean) => {
+      if (value) triggerHaptic("light")
       if (!isControlled) setUncontrolledOpen(value)
       onOpenChange?.(value)
     },

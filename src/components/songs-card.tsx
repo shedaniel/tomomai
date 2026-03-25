@@ -1,15 +1,14 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { SongWithRating, splitSongs } from "@/lib/rating-calculator";
-import { MinimalSong, MinimalSongForDisplay, SnapshotWithSongs } from "@/lib/types";
+import { MinimalSongForDisplay, SnapshotWithSongs } from "@/lib/types";
 import { cn, getTypeBadgeUrl } from "@/lib/utils";
 import { LayoutGrid, LayoutList, Menu, Plus, Search, TrendingUp } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { CoverImage } from "@/components/cover-image";
-import { Fragment, useCallback, useEffect, useMemo, useState, forwardRef } from "react";
+import { Fragment, useCallback, useMemo, useState, forwardRef } from "react";
 import { Bar, BarChart, XAxis, YAxis } from "recharts";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select-friendly";
 import { Input } from "./ui/input";
@@ -86,7 +85,7 @@ function RatingChart({ songs, title }: { songs: SongWithRating[]; title: string 
   if (songs.length === 0) return null;
 
   return (
-    <div className="space-y-2 flex flex-col border border-border py-4 rounded-md shadow-sm">
+    <div className="space-y-2 flex flex-col border border-border py-4 rounded-md">
       <span className="text-sm text-center font-semibold">{title}</span>
       <ChartContainer config={chartConfig} className="h-[200px] w-full pr-10">
         <BarChart data={chartData}>
@@ -151,11 +150,12 @@ function RatingChart({ songs, title }: { songs: SongWithRating[]; title: string 
 const SongRow = forwardRef<HTMLDivElement, { song: SongWithRating } & React.HTMLAttributes<HTMLDivElement>>(({ song, ...props }, ref) => {
   return (
     <SongHoverCard song={song}>
-      <div ref={ref} {...props} className={cn("flex justify-between items-center text-sm border-b border-dashed border-gray-200 pb-1.5 h-12 hover:bg-muted/50 transition-colors px-2 -mx-2 rounded-md cursor-pointer", props.className)}>
+      <div ref={ref} {...props} className={cn("group relative isolate flex justify-between items-center text-sm border-b border-dashed border-border pb-1.5 h-12 px-2 -mx-2 cursor-pointer", props.className)}>
+        <div className="absolute inset-x-0 -top-1.5 bottom-0 rounded-md group-hover:bg-muted/50 transition-colors -z-10" />
         <CoverImage coverUrl={song.cover}
           alt={song.songName}
           className={cn(
-            "w-8 h-8 ml-1 mr-3 rounded ring-2 ring-offset-2 ring-offset-card",
+            "w-8 h-8 ml-1 mr-3 rounded ring-2 ring-offset-2 ring-offset-background",
             song.difficulty === "basic" && "ring-green-400",
             song.difficulty === "advanced" && "ring-yellow-400",
             song.difficulty === "expert" && "ring-red-400",
@@ -230,57 +230,57 @@ function CompactSongSection({ title, songs, count, t, sum, average, visibleCount
       </div>
       <div className="grid grid-cols-[4fr_2fr_min-content_min-content_min-content_min-content_min-content] text-xs overflow-x-auto">
         {/* Headers */}
-        <div className="font-semibold text-muted-foreground border-b border-gray-300 pb-1 px-2 text-left whitespace-nowrap min-w-48">
+        <div className="font-semibold text-muted-foreground border-b border-border pb-1 px-2 text-left whitespace-nowrap min-w-48">
           {t('dataContent.tableHeaders.song')}
         </div>
-        <div className="font-semibold text-muted-foreground border-b border-gray-300 pb-1 px-2 text-left whitespace-nowrap min-w-24">
+        <div className="font-semibold text-muted-foreground border-b border-border pb-1 px-2 text-left whitespace-nowrap min-w-24">
           {t('dataContent.tableHeaders.artist')}
         </div>
-        <div className="font-semibold text-muted-foreground border-b border-gray-300 pb-1 px-2 text-center whitespace-nowrap">
+        <div className="font-semibold text-muted-foreground border-b border-border pb-1 px-2 text-center whitespace-nowrap">
           {t('dataContent.tableHeaders.level')}
         </div>
-        <div className="font-semibold text-muted-foreground border-b border-gray-300 pb-1 px-2 text-center whitespace-nowrap">
+        <div className="font-semibold text-muted-foreground border-b border-border pb-1 px-2 text-center whitespace-nowrap">
           {t('dataContent.tableHeaders.achievement')}
         </div>
-        <div className="font-semibold text-muted-foreground border-b border-gray-300 pb-1 px-2 min-w-10 text-center whitespace-nowrap">
+        <div className="font-semibold text-muted-foreground border-b border-border pb-1 px-2 min-w-10 text-center whitespace-nowrap">
           {t('dataContent.tableHeaders.fc')}
         </div>
-        <div className="font-semibold text-muted-foreground border-b border-gray-300 pb-1 px-2 min-w-10 text-center whitespace-nowrap">
+        <div className="font-semibold text-muted-foreground border-b border-border pb-1 px-2 min-w-10 text-center whitespace-nowrap">
           {t('dataContent.tableHeaders.fs')}
         </div>
-        <div className="font-semibold text-muted-foreground border-b border-gray-300 pb-1 px-2 text-center whitespace-nowrap">
+        <div className="font-semibold text-muted-foreground border-b border-border pb-1 px-2 text-center whitespace-nowrap">
           {t('dataContent.tableHeaders.rating')}
         </div>
 
         {/* Song Data */}
         {visibleSongs.map(song => (
           <Fragment key={`${song.songId}-${song.difficulty}`}>
-            <div className="truncate font-medium py-1 px-2 border-b border-dashed border-gray-200">
+            <div className="truncate font-medium py-1 px-2 border-b border-dashed border-border/90">
               {song.songName}
             </div>
-            <div className="truncate text-muted-foreground py-1 px-2 border-b border-dashed border-gray-200">
+            <div className="truncate text-muted-foreground py-1 px-2 border-b border-dashed border-border/90">
               {song.artist}
             </div>
             <div className={cn("text-center border-b grid items-center font-medium border-dashed",
-              song.difficulty === "basic" && "bg-green-100 text-green-800 border-green-200",
-              song.difficulty === "advanced" && "bg-yellow-100 text-yellow-800 border-yellow-200",
-              song.difficulty === "expert" && "bg-red-100 text-red-800 border-red-200",
-              song.difficulty === "master" && "bg-purple-300 text-purple-900 border-purple-400",
-              song.difficulty === "remaster" && "bg-purple-50 text-purple-800 border-purple-200",
-              song.difficulty === "utage" && "bg-pink-100 text-pink-800 border-pink-200",
+              song.difficulty === "basic" && "bg-green-100 text-green-800 border-green-200 dark:bg-green-600/30 dark:text-green-400 dark:border-green-800",
+              song.difficulty === "advanced" && "bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-600/30 dark:text-yellow-400 dark:border-yellow-800",
+              song.difficulty === "expert" && "bg-red-100 text-red-800 border-red-200 dark:bg-red-600/30 dark:text-red-400 dark:border-red-800",
+              song.difficulty === "master" && "bg-purple-300 text-purple-900 border-purple-400 dark:bg-purple-600/30 dark:text-purple-400 dark:border-purple-800",
+              song.difficulty === "remaster" && "bg-purple-50 text-purple-800 border-purple-200 dark:bg-purple-50/80 dark:border-purple-300",
+              song.difficulty === "utage" && "bg-pink-100 text-pink-800 border-pink-200 dark:bg-pink-600/30 dark:text-pink-400 dark:border-pink-800",
             )}>
               {renderLevelPrecise(song.levelPrecise, song.difficulty)}
             </div>
-            <div className="text-right font-mono py-1 px-2 border-b border-dashed border-gray-200">
+            <div className="text-right font-mono py-1 px-2 border-b border-dashed border-border/90">
               {(song.achievement / 10000).toFixed(4)}%
             </div>
-            <div className="text-center text-muted-foreground py-1 px-2 border-b border-dashed border-gray-200">
+            <div className="text-center text-muted-foreground py-1 px-2 border-b border-dashed border-border/90">
               {song.fc !== 'none' ? song.fc.toUpperCase() : ''}
             </div>
-            <div className="text-center text-muted-foreground py-1 px-2 border-b border-dashed border-gray-200">
+            <div className="text-center text-muted-foreground py-1 px-2 border-b border-dashed border-border/90">
               {song.fs !== 'none' ? song.fs.toUpperCase() : ''}
             </div>
-            <div className="text-right font-mono font-semibold py-1 px-2 border-b border-dashed border-gray-200">
+            <div className="text-right font-mono font-semibold py-1 px-2 border-b border-dashed border-border/90">
               {song.rating}
             </div>
           </Fragment>
@@ -702,38 +702,36 @@ export function SongsCard({ selectedSnapshotData }: { selectedSnapshotData: Snap
   const b35Average = filteredData.oldSongsB35.length > 0 ? b35Sum / filteredData.oldSongsB35.length : 0;
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle>{t('dataContent.songs', { count: songs.length })}</CardTitle>
-          <Select value={displayMode} onValueChange={(value) => setDisplayMode(value as "list" | "grid" | "compact")}>
-            <SelectTrigger className="w-40 h-8">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="grid">
-                <div className="flex items-center gap-2">
-                  <LayoutGrid className="h-4 w-4" />
-                  <span>{t('dataContent.displayModes.grid')}</span>
-                </div>
-              </SelectItem>
-              <SelectItem value="list">
-                <div className="flex items-center gap-2">
-                  <LayoutList className="h-4 w-4" />
-                  <span>{t('dataContent.displayModes.list')}</span>
-                </div>
-              </SelectItem>
-              <SelectItem value="compact">
-                <div className="flex items-center gap-2">
-                  <Menu className="h-4 w-4" />
-                  <span>{t('dataContent.displayModes.compact')}</span>
-                </div>
-              </SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </CardHeader>
-      <CardContent>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-semibold">{t('dataContent.songs', { count: songs.length })}</h2>
+        <Select value={displayMode} onValueChange={(value) => setDisplayMode(value as "list" | "grid" | "compact")}>
+          <SelectTrigger className="w-40 h-8">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="grid">
+              <div className="flex items-center gap-2">
+                <LayoutGrid className="h-4 w-4" />
+                <span>{t('dataContent.displayModes.grid')}</span>
+              </div>
+            </SelectItem>
+            <SelectItem value="list">
+              <div className="flex items-center gap-2">
+                <LayoutList className="h-4 w-4" />
+                <span>{t('dataContent.displayModes.list')}</span>
+              </div>
+            </SelectItem>
+            <SelectItem value="compact">
+              <div className="flex items-center gap-2">
+                <Menu className="h-4 w-4" />
+                <span>{t('dataContent.displayModes.compact')}</span>
+              </div>
+            </SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      <div>
         <div className="space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <RatingChart songs={newSongsB15} title={t('dataContent.newSongsB15')} />
@@ -797,7 +795,7 @@ export function SongsCard({ selectedSnapshotData }: { selectedSnapshotData: Snap
             )}
           </AnimatePresence>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

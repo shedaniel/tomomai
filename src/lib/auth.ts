@@ -1,7 +1,7 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
-import { admin, openAPI } from "better-auth/plugins";
+import { admin, apiKey, openAPI } from "better-auth/plugins";
 import { and, count, eq, isNull, lt, or } from "drizzle-orm";
 import { db } from "./db";
 import * as schema from "./db/schema-pg";
@@ -112,6 +112,14 @@ export const auth = betterAuth({
   plugins: [
     nextCookies(),
     admin(),
+    apiKey({
+      enableMetadata: true,
+      defaultPrefix: "tmk_",
+      startingCharactersConfig: { shouldStore: true, charactersLength: 8 },
+      permissions: {
+        defaultPermissions: { ready: ["access"] },
+      },
+    }),
     ...(process.env.NODE_ENV === 'development' ? [openAPI()] : []),
   ],
   disabledPaths: [

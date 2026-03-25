@@ -10,6 +10,8 @@ import { PostLocaleSwitcher } from "@/components/post-locale-switcher";
 import { getTranslations } from "next-intl/server";
 import { Bot } from "lucide-react";
 import { isChinaRegion } from "@/lib/enabled-regions";
+import { MdxImageComparison } from "@/components/mdx-image-comparison";
+import { MdxImageCarousel, MdxImageCarouselSlide } from "@/components/mdx-image-carousel";
 
 type PostPageProps = {
   params: Promise<{
@@ -95,7 +97,7 @@ const mdxComponents = {
       alt={props.alt || ""}
       width={800}
       height={600}
-      className="rounded-lg my-6 w-[70%] h-auto mx-auto"
+      className="rounded-lg my-6 w-[70%] h-auto max-h-[32rem] object-contain mx-auto"
     />
   ),
 };
@@ -183,7 +185,7 @@ export default async function PostPage({ params }: PostPageProps) {
       <hr className="border-border mb-8" />
 
       <article className="prose-custom">
-        <MDXRemote source={post.content} components={{ ...mdxComponents, AITranslationHint }} />
+        <MDXRemote source={post.content} components={{ ...mdxComponents, AITranslationHint, ImageComparison: MdxImageComparison, ImageCarousel: MdxImageCarousel, ImageCarouselSlide: MdxImageCarouselSlide }} />
       </article>
     </div>
   );

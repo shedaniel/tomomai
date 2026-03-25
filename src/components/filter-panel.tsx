@@ -504,9 +504,9 @@ export function applyRecommendationFilters<T extends FilterableRecommendation>(
           case "difficulty":
             return rec.song.difficulty === filter.value;
           case "level": {
-            const level = rec.song.levelPrecise / 10;
-            const isPlus = level % 1 >= 0.6;
-            const baseLevel = Math.floor(level);
+            const level = rec.song.levelPrecise;
+            const isPlus = level % 10 >= 6;
+            const baseLevel = Math.floor(level / 10);
             const levelStr = isPlus ? `${baseLevel}+` : `${baseLevel}`;
             return levelStr === filter.value;
           }

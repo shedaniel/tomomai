@@ -1,20 +1,23 @@
 "use client"
 
 import {
-  Select as SelectPrimitive,
-  SelectContent as SelectPrimitiveContent,
+  AnimatedSelect as SelectPrimitive,
+  AnimatedSelectContent as SelectPrimitiveContent,
+} from "@/components/ui/animated-select"
+import {
   SelectItem as SelectPrimitiveItem,
   SelectTrigger as SelectPrimitiveTrigger,
   SelectValue as SelectPrimitiveValue,
 } from "@/components/ui/select"
 import {
-  Sheet,
-  SheetClose,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet"
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/ui/drawer"
 import { useMediaQuery } from "@/hooks/use-media-query"
 import { cn } from "@/lib/utils"
 import { Check, ChevronDown } from "lucide-react"
@@ -25,8 +28,8 @@ import { VariantProps } from "class-variance-authority"
 
 interface SelectContextValue<T extends string> {
   isMobile: boolean
-  sheetOpen: boolean
-  setSheetOpen: (open: boolean) => void
+  drawerOpen: boolean
+  setDrawerOpen: (open: boolean) => void
   value: T | null;
   setValue: (v: T) => void;
   valueNode: HTMLElement | null;
@@ -37,7 +40,7 @@ interface SelectContextValue<T extends string> {
 }
 
 const SelectContext = React.createContext<SelectContextValue<string> | null>(null)
-const SheetHiddenContext = React.createContext<boolean>(false)
+const DrawerHiddenContext = React.createContext<boolean>(false)
 
 function useSelectContext<T extends string>(): SelectContextValue<T> {
   const ctx = React.useContext(SelectContext)
@@ -45,8 +48,8 @@ function useSelectContext<T extends string>(): SelectContextValue<T> {
   return ctx as unknown as SelectContextValue<T>
 }
 
-function useSheetHiddenContext() {
-  return React.useContext(SheetHiddenContext)
+function useDrawerHiddenContext() {
+  return React.useContext(DrawerHiddenContext)
 }
 
 // Root component
@@ -62,15 +65,15 @@ function Select<T extends string>({ value, onValueChange, children, disabled }: 
     defaultValue: false,
     initializeWithValue: false, // Prevent hydration mismatch by matching server render
   })
-  const [sheetOpen, setSheetOpen] = React.useState(false);
+  const [drawerOpen, setDrawerOpen] = React.useState(false);
   const [valueNode, setValueNode] = React.useState<HTMLElement | null>(null);
   const [valueNodeHasChildren, setValueNodeHasChildren] = React.useState(false);
 
   return (
     <SelectContext.Provider value={{
       isMobile,
-      sheetOpen,
-      setSheetOpen,
+      drawerOpen,
+      setDrawerOpen,
       value: value ?? null,
       setValue: onValueChange as (v: string) => void,
       valueNode,
@@ -80,7 +83,7 @@ function Select<T extends string>({ value, onValueChange, children, disabled }: 
       disabled,
     }}>
       {isMobile ? (<>
-        <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>{children}</Sheet>
+        <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>{children}</Drawer>
         {/* <SelectItemPortalManager /> */}
       </>) : (
         <SelectPrimitive value={value} onValueChange={onValueChange} disabled={disabled}>
@@ -104,7 +107,7 @@ function SelectTrigger({ className, children, variant, size, ...props }: SelectT
 
   if (isMobile) {
     return (
-      <SheetTrigger asChild>
+      <DrawerTrigger asChild>
         <Button
           type="button"
           variant={variant || "outline"}
@@ -120,7 +123,7 @@ function SelectTrigger({ className, children, variant, size, ...props }: SelectT
           {children}
           <ChevronDown className="h-4 w-4 opacity-50 shrink-0" />
         </Button>
-      </SheetTrigger>
+      </DrawerTrigger>
     )
   }
 
@@ -159,27 +162,29 @@ interface SelectContentProps {
   children: React.ReactNode
   label?: string
   className?: string
+  align?: "start" | "center" | "end"
 }
 
-function SelectContent({ children, label, className }: SelectContentProps) {
+function SelectContent({ children, label, className, align }: SelectContentProps) {
   const { isMobile } = useSelectContext()
 
   if (isMobile) {
     return (<>
-      <SheetContent side="bottom" forceMount>
-        <SheetHeader className="border-b">
-          <SheetTitle>{label || "Select an option"}</SheetTitle>
-        </SheetHeader>
-        <div className="flex flex-col px-2 mb-4 max-h-[80vh] overflow-y-auto">{children}</div>
-      </SheetContent>
-      <SheetHiddenContext.Provider value={true}>
+      <DrawerContent className="max-h-[90dvh]">
+        <DrawerHeader>
+          <DrawerTitle>{label || "Select an option"}</DrawerTitle>
+          <DrawerDescription className="sr-only">{label || "Select an option"}</DrawerDescription>
+        </DrawerHeader>
+        <div className="flex flex-col px-2 pb-8 max-h-[80vh] overflow-y-auto">{children}</div>
+      </DrawerContent>
+      <DrawerHiddenContext.Provider value={true}>
         {/* hidden mirror for portals */}
         <div hidden>{children}</div>
-      </SheetHiddenContext.Provider>
+      </DrawerHiddenContext.Provider>
     </>)
   }
 
-  return <SelectPrimitiveContent className={className}>{children}</SelectPrimitiveContent>
+  return <SelectPrimitiveContent className={className} align={align}>{children}</SelectPrimitiveContent>
 }
 
 interface SelectItemProps {
@@ -188,25 +193,25 @@ interface SelectItemProps {
 }
 
 function SelectItem({ value, children }: SelectItemProps) {
-  const isWithinSheetHiddenContext = useSheetHiddenContext()
+  const isWithinDrawerHiddenContext = useDrawerHiddenContext()
   const { isMobile, value: selectedValue, setValue } = useSelectContext()
 
   if (isMobile) {
     return (<>
-      <SheetClose asChild>
+      <DrawerClose asChild>
         <button
           type="button"
           onClick={() => setValue(value)}
           className={cn(
             "w-full px-2 py-2 text-left text-sm rounded-md flex items-center gap-2",
-            selectedValue === value && "bg-card text-card-foreground shadow"
+            selectedValue === value && "bg-primary text-primary-foreground dark:bg-card dark:text-card-foreground dark:shadow"
           )}
         >
           {selectedValue === value ? <Check className="h-4 w-4 opacity-50" /> : <div className="h-4 w-4 opacity-50" />}
           {children}
         </button>
-      </SheetClose>
-      {isWithinSheetHiddenContext && <SelectItemPortal value={value}>{children}</SelectItemPortal>}
+      </DrawerClose>
+      {isWithinDrawerHiddenContext && <SelectItemPortal value={value}>{children}</SelectItemPortal>}
     </>
     )
   }

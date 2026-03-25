@@ -64,6 +64,8 @@ export function getStateFriendlyName(state: string): string {
       return 'Loading Master scores';
     case FETCH_STATES.SONG_DATA_REMASTER:
       return 'Loading Re:MASTER scores';
+    case FETCH_STATES.SONG_DATA_UTAGE:
+      return 'Loading Utage scores';
     case FETCH_STATES.ALBUM_DATA:
       return 'Loading album data';
     case FETCH_STATES.HIDDEN_SONGS:

@@ -1,18 +1,15 @@
 import { db } from "@/lib/db";
-import { getCurrentVersion, VersionId } from "@/lib/metadata";
+import { logger } from "@/lib/logger";
+import { getCurrentVersion } from "@/lib/metadata";
 import { normalizeName } from "@/lib/name-utils";
-import { splitSongs } from "@/lib/rating-calculator";
-import { songs, userScores, userSnapshots } from "@/lib/db/schema-pg";
-import { SongWithScore } from "@/lib/types";
-import { and, eq, inArray, sql } from "drizzle-orm";
+import { songs, userScores, userSnapshots, scoreData, snapshotScores, snapshotB50 } from "@/lib/db/schema-pg";
+import { upsertScoreData } from "@/lib/maimai-fetcher";
+import { and, eq, inArray, asc, sql } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
-interface SongWithScoreInternal extends Omit<SongWithScore, 'songId'> {
-  songId: bigint;
-}
+const log = logger.child({ module: "admin/db" });
 
 const MODIFY_DATABASE = true;
-const BATCH_SIZE = 10000;
 
 export async function GET(request: NextRequest) {
   try {
@@ -30,7 +27,7 @@ export async function GET(request: NextRequest) {
     // Validate token against environment variable
     const adminToken = process.env.ADMIN_UPDATE_TOKEN;
     if (!adminToken) {
-      console.error("ADMIN_UPDATE_TOKEN environment variable not set");
+      log.error("ADMIN_UPDATE_TOKEN environment variable not set");
       return NextResponse.json(
         { error: "Server configuration error" },
         { status: 500 }
@@ -38,7 +35,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (token !== adminToken) {
-      console.warn("Invalid admin token attempt");
+      log.warn("Invalid admin token attempt");
       return NextResponse.json(
         { error: "Invalid authorization token" },
         { status: 403 }
@@ -47,19 +44,21 @@ export async function GET(request: NextRequest) {
 
     // Get query parameters
     const { searchParams } = new URL(request.url);
-    const type = (searchParams.get('type') || "normalize") as "normalize" | "update_b50";
+    const type = (searchParams.get('type') || "normalize") as "normalize" | "backfill" | "clear_backfill";
     if (type === "normalize") {
       return normalize(searchParams);
-    } else if (type === "update_b50") {
-      return updateB50(searchParams);
+    } else if (type === "backfill") {
+      return backfillNewTables(searchParams);
+    } else if (type === "clear_backfill") {
+      return clearBackfill(searchParams);
     } else {
       return NextResponse.json(
-        { error: "Invalid 'type' parameter. Must be 'normalize' or 'update_b50'" },
+        { error: "Invalid 'type' parameter. Must be 'normalize', 'backfill', or 'clear_backfill'" },
         { status: 400 }
       );
     }
   } catch (error) {
-    console.error("Error in admin db route:", error);
+    log.error({ err: error }, "Error in admin db route");
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }
@@ -91,13 +90,13 @@ async function normalize(searchParams: URLSearchParams) {
   const version = searchParams.get('version') as string | null;
   const currentVersion = version ? parseInt(version) : getCurrentVersion(region);
 
-  console.log(`Admin update requested: updating database for region ${region} version ${currentVersion}`);
+  log.info({ region, version: currentVersion }, "Admin normalize requested");
 
   const allSongs = await db.select().from(songs).where(and(eq(songs.region, region), eq(songs.gameVersion, currentVersion)));
   const songsGrouped: Record<string, typeof allSongs | undefined> = Object.groupBy(allSongs, song => `${normalizeName(song.songName)}@${song.difficulty}@${song.type}` as string);
   const filteredSongsGrouped: Record<string, typeof allSongs> = Object.fromEntries(Object.entries(songsGrouped).filter(([_, value]) => value && (value.length > 1 || normalizeName(value[0].songName) !== value[0].songName)).map(([key, value]) => [key, value!]));
 
-  console.log("--- Starting Duplicate Song Merge Process ---");
+  log.info({ groupCount: Object.keys(filteredSongsGrouped).length }, "Starting duplicate song merge process");
 
   let index = 0;
   let totalDuplicatesMerged = 0;
@@ -106,7 +105,7 @@ async function normalize(searchParams: URLSearchParams) {
   const promises: Promise<void>[] = [];
 
   for (const [groupKey, duplicateSongRecords] of Object.entries(filteredSongsGrouped)) {
-    console.log(`\nFound duplicates for key: "${groupKey}" (${index + 1}/${Object.entries(filteredSongsGrouped).length})`);
+    log.info({ groupKey, progress: `${index + 1}/${Object.keys(filteredSongsGrouped).length}` }, "Processing duplicate group");
     index++;
     const masterSong = duplicateSongRecords[0]; // Choose the first record as the master
     const normalizedSongName = normalizeName(masterSong.songName);
@@ -120,42 +119,84 @@ async function normalize(searchParams: URLSearchParams) {
     const shouldUpdateMasterName = masterSong.songName !== normalizedSongName;
 
     if (duplicateIdsToCleanUp.length === 0 && !shouldUpdateMasterName) {
-      console.log("  No actual duplicates to delete and master name already normalized. Skipping group.");
+      log.debug({ groupKey }, "Skipping group — no duplicates and name already normalized");
       continue;
     }
 
-    console.log(`  Master Song ID: ${masterSong.id} (Original Name: "${masterSong.songName}")`);
-    if (duplicateIdsToCleanUp.length > 0) {
-      console.log(`  Duplicate Song IDs to merge/delete: ${duplicateIdsToCleanUp.join(", ")}`);
-    }
+    log.debug({ masterSongId: masterSong.id.toString(), originalName: masterSong.songName, duplicateIds: duplicateIdsToCleanUp.map(String) }, "Merging duplicates");
 
     promises.push(db.transaction(async (tx) => {
       try {
         // --- Phase 1: Relink children and delete actual duplicate song records ---
         if (duplicateIdsToCleanUp.length > 0) {
-          // Update userScores
-          console.log(`  Updating userScores referencing ${duplicateIdsToCleanUp.join(", ")} to ${masterSong.id}...`);
+          // Update scoreData — handle unique constraint conflicts by deleting duplicates
           if (MODIFY_DATABASE) {
-            const userScoresUpdateResult = await tx
-              .update(userScores)
-              .set({ songId: masterSong.id })
-              .where(inArray(userScores.songId, duplicateIdsToCleanUp))
-              .returning({ id: userScores.id });
-            console.log(`    Updated ${userScoresUpdateResult.length} userScores records.`);
-          } else {
-            console.log(`    [DRY RUN] Would update userScores referencing duplicates.`);
+            // First, find scoreData rows that would conflict after update
+            const duplicateScoreDataRows = await tx
+              .select({ id: scoreData.id, songId: scoreData.songId, achievement: scoreData.achievement, dxScore: scoreData.dxScore, fc: scoreData.fc, fs: scoreData.fs })
+              .from(scoreData)
+              .where(inArray(scoreData.songId, duplicateIdsToCleanUp));
+
+            const masterScoreDataRows = await tx
+              .select({ id: scoreData.id, songId: scoreData.songId, achievement: scoreData.achievement, dxScore: scoreData.dxScore, fc: scoreData.fc, fs: scoreData.fs })
+              .from(scoreData)
+              .where(eq(scoreData.songId, masterSong.id));
+
+            // Build a set of existing master keys
+            const masterKeys = new Set(masterScoreDataRows.map(r => `${r.achievement}-${r.dxScore}-${r.fc}-${r.fs}`));
+
+            const idsToRelink: number[] = [];
+            const idsToDelete: number[] = [];
+            const relinkMap = new Map<number, number>(); // old scoreData id -> master scoreData id
+
+            for (const dupRow of duplicateScoreDataRows) {
+              const key = `${dupRow.achievement}-${dupRow.dxScore}-${dupRow.fc}-${dupRow.fs}`;
+              if (masterKeys.has(key)) {
+                // Conflict: find the master row to remap references
+                const masterRow = masterScoreDataRows.find(r =>
+                  r.achievement === dupRow.achievement && r.dxScore === dupRow.dxScore && r.fc === dupRow.fc && r.fs === dupRow.fs
+                )!;
+                relinkMap.set(dupRow.id, masterRow.id);
+                idsToDelete.push(dupRow.id);
+              } else {
+                idsToRelink.push(dupRow.id);
+                masterKeys.add(key); // Prevent future conflicts within the same batch
+              }
+            }
+
+            // Relink snapshotScores and snapshotB50 for conflicting rows
+            for (const [oldId, newId] of relinkMap) {
+              // Update snapshotScores: change scoreId, ignore conflicts (the master score might already be linked)
+              await tx.execute(sql`UPDATE snapshot_scores SET "scoreId" = ${newId} WHERE "scoreId" = ${oldId} ON CONFLICT DO NOTHING`);
+              // Update snapshotB50
+              await tx.execute(sql`UPDATE snapshot_b50 SET "scoreId" = ${newId} WHERE "scoreId" = ${oldId} ON CONFLICT DO NOTHING`);
+            }
+
+            // Delete conflicting scoreData rows (cascades will clean up remaining refs)
+            if (idsToDelete.length > 0) {
+              await tx.delete(scoreData).where(inArray(scoreData.id, idsToDelete));
+              log.debug({ count: idsToDelete.length }, "Deleted conflicting scoreData rows");
+            }
+
+            // Update non-conflicting rows to master songId
+            if (idsToRelink.length > 0) {
+              await tx
+                .update(scoreData)
+                .set({ songId: masterSong.id })
+                .where(inArray(scoreData.id, idsToRelink));
+              log.debug({ count: idsToRelink.length }, "Relinked scoreData rows");
+            }
           }
 
           // Delete the duplicate songs records
-          console.log(`  Deleting duplicate song records ${duplicateIdsToCleanUp.join(", ")} from 'songs' table...`);
           if (MODIFY_DATABASE) {
             const deleteSongsResult = await tx
               .delete(songs)
               .where(inArray(songs.id, duplicateIdsToCleanUp))
               .returning({ id: songs.id });
-            console.log(`    Deleted ${deleteSongsResult.length} duplicate song records.`);
+            log.debug({ count: deleteSongsResult.length }, "Deleted duplicate song records");
           } else {
-            console.log(`    [DRY RUN] Would delete ${duplicateIdsToCleanUp.length} duplicate song records.`);
+            log.debug({ count: duplicateIdsToCleanUp.length }, "[DRY RUN] Would delete duplicate song records");
           }
 
           totalDuplicatesMerged += duplicateIdsToCleanUp.length;
@@ -163,23 +204,22 @@ async function normalize(searchParams: URLSearchParams) {
 
         // --- Phase 2: Normalize master song's name (after duplicates are gone) ---
         if (shouldUpdateMasterName) {
-          console.log(`  Normalizing master song's name from "${masterSong.songName}" to "${normalizedSongName}" (ID: ${masterSong.id})...`);
           if (MODIFY_DATABASE) {
             const masterNameUpdateResult = await tx
               .update(songs)
               .set({ songName: normalizedSongName })
               .where(eq(songs.id, masterSong.id))
               .returning({ id: songs.id });
-            console.log(`    Updated ${masterNameUpdateResult.length} master song name record.`);
+            log.debug({ songId: masterSong.id.toString(), from: masterSong.songName, to: normalizedSongName, count: masterNameUpdateResult.length }, "Normalized master song name");
           } else {
-            console.log(`    [DRY RUN] Would update master song name.`);
+            log.debug({ from: masterSong.songName, to: normalizedSongName }, "[DRY RUN] Would normalize master song name");
           }
           totalMasterNamesNormalized++;
         }
 
-        console.log(`  Successfully processed group for key: "${groupKey}"`);
+        log.debug({ groupKey }, "Successfully processed group");
       } catch (error) {
-        console.error(`  Error processing group "${groupKey}":`, error);
+        log.error({ err: error, groupKey }, "Error processing duplicate group");
         throw error; // Re-throw to ensure transaction is rolled back
       }
     }));
@@ -187,9 +227,7 @@ async function normalize(searchParams: URLSearchParams) {
 
   await Promise.all(promises);
 
-  console.log(`\n--- Duplicate Song Merge Process Complete ---`);
-  console.log(`Total duplicate song records merged/deleted: ${totalDuplicatesMerged}`);
-  console.log(`Total master song names normalized: ${totalMasterNamesNormalized}`);
+  log.info({ totalDuplicatesMerged, totalMasterNamesNormalized }, "Duplicate song merge process complete");
 
   return NextResponse.json({
     success: true,
@@ -201,238 +239,232 @@ async function normalize(searchParams: URLSearchParams) {
   });
 }
 
-async function updateB50(searchParams: URLSearchParams) {
-  const region = searchParams.get('region') as "intl" | "jp";
+async function backfillNewTables(searchParams: URLSearchParams) {
+  const region = searchParams.get('region') as "intl" | "jp" | null;
+  const limitParam = searchParams.get('limit');
+  const maxSnapshots = limitParam ? Math.max(1, parseInt(limitParam)) : Infinity;
+  const SUB_BATCH_SIZE = 50;
+  const FETCH_BATCH_SIZE = Math.min(500, maxSnapshots === Infinity ? 500 : maxSnapshots + 200); // Over-fetch to account for skips
+  const CHUNK_SIZE = 2000;
 
-  if (!region || (region !== "intl" && region !== "jp")) {
-    return NextResponse.json(
-      { error: "Missing or invalid 'region' query parameter. Must be 'intl' or 'jp'" },
-      { status: 400 }
-    );
-  }
+  log.info({ region, maxSnapshots: maxSnapshots === Infinity ? "all" : maxSnapshots, subBatchSize: SUB_BATCH_SIZE, chunkSize: CHUNK_SIZE }, "Starting backfill of scoreData/snapshotScores/snapshotB50");
 
-  console.log(`\n--- Starting B50 Rank Calculation for region: ${region} ---`);
+  let totalSnapshots = 0;
+  let totalSkipped = 0;
+  let totalScoreDataUpserted = 0;
+  let totalJunctionRows = 0;
+  let totalB50Rows = 0;
+  let lastId = 0;
 
-  // Query all songs for the region separately (fast lookup by primary key)
-  console.log("Fetching all songs for region...");
-  const allSongs = await db
-    .select()
-    .from(songs)
-    .where(eq(songs.region, region));
-
-  console.log(`Fetched ${allSongs.length} songs`);
-
-  // Create a lookup map by songId (primary key)
-  const songLookup = new Map(allSongs.map(song => [song.id, song]));
-
-  // Query all userScores with snapshot gameVersion
-  console.log("Fetching all user scores...");
-  const allScores = await db
-    .select({
-      scoreId: userScores.id,
-      snapshotId: userScores.snapshotId,
-      songId: userScores.songId,
-      currentRank: userScores.rank,
-      achievement: userScores.achievement,
-      dxScore: userScores.dxScore,
-      fc: userScores.fc,
-      fs: userScores.fs,
-      gameVersion: userSnapshots.gameVersion,
-    })
-    .from(userScores)
-    .innerJoin(userSnapshots, eq(userScores.snapshotId, userSnapshots.id))
-    .where(eq(userSnapshots.region, region));
-
-  console.log(`Fetched ${allScores.length} user scores`);
-
-  // Combine scores with song data using lookup
-  const allScoresWithData = allScores.map(score => {
-    const song = songLookup.get(score.songId);
-    if (!song) {
-      throw new Error(`Song not found for songId: ${score.songId}`);
+  while (totalSnapshots < maxSnapshots) {
+    const conditions = [sql`${userSnapshots.id} > ${lastId}`];
+    if (region) {
+      conditions.push(eq(userSnapshots.region, region));
     }
-    return {
-      ...score,
-      songName: song.songName,
-      artist: song.artist,
-      cover: song.cover,
-      difficulty: song.difficulty,
-      level: song.level,
-      levelPrecise: song.levelPrecise,
-      type: song.type,
-      genre: song.genre,
-      addedVersion: song.addedVersion,
-    };
-  });
 
-  // Group by snapshotId
-  const scoresBySnapshot = new Map<bigint, typeof allScoresWithData>();
-  for (const score of allScoresWithData) {
-    if (!scoresBySnapshot.has(score.snapshotId)) {
-      scoresBySnapshot.set(score.snapshotId, []);
+    // Fetch a batch of snapshot IDs
+    const snapshots = await db
+      .select({ id: userSnapshots.id })
+      .from(userSnapshots)
+      .where(and(...conditions))
+      .orderBy(asc(userSnapshots.id))
+      .limit(FETCH_BATCH_SIZE);
+
+    if (snapshots.length === 0) {
+      log.debug({ lastId: lastId.toString() }, "No more snapshots to fetch");
+      break;
     }
-    scoresBySnapshot.get(score.snapshotId)!.push(score);
-  }
 
-  console.log(`Grouped scores into ${scoresBySnapshot.size} snapshots`);
+    const snapshotIds = snapshots.map(s => s.id);
+    lastId = snapshotIds[snapshotIds.length - 1];
+    log.debug({ fetched: snapshotIds.length, firstId: snapshotIds[0].toString(), lastId: lastId.toString() }, "Fetched snapshot batch");
 
-  // Find snapshots that need recalculation (have any null ranks)
-  const snapshotsToRecalculate: bigint[] = [];
-  for (const [snapshotId, scores] of scoresBySnapshot.entries()) {
-    if (scores.some(s => s.currentRank === null)) {
-      snapshotsToRecalculate.push(snapshotId);
+    // Filter out already-backfilled snapshots
+    const alreadyBackfilled = await db
+      .selectDistinct({ snapshotId: snapshotScores.snapshotId })
+      .from(snapshotScores)
+      .where(inArray(snapshotScores.snapshotId, snapshotIds));
+
+    const backfilledSet = new Set(alreadyBackfilled.map(r => r.snapshotId));
+    let pendingIds = snapshotIds.filter(id => !backfilledSet.has(id));
+    const batchSkipped = snapshotIds.length - pendingIds.length;
+    totalSkipped += batchSkipped;
+    log.debug({ pending: pendingIds.length, alreadyDone: batchSkipped }, "Filtered already-backfilled snapshots");
+
+    // Cap to remaining limit
+    const remaining = maxSnapshots - totalSnapshots;
+    if (pendingIds.length > remaining) {
+      log.debug({ pending: pendingIds.length, remaining }, "Capping to remaining limit");
+      pendingIds = pendingIds.slice(0, remaining);
     }
-  }
 
-  console.log(`Found ${snapshotsToRecalculate.length} snapshots needing recalculation`);
+    if (pendingIds.length === 0) {
+      log.debug("No pending snapshots in this batch, continuing");
+      continue;
+    }
 
-  if (snapshotsToRecalculate.length === 0) {
-    console.log("No snapshots need recalculation. Exiting.");
-    return NextResponse.json({
-      success: true,
-      message: "No snapshots needed rank recalculation",
-      statistics: {
-        totalSnapshots: scoresBySnapshot.size,
-        snapshotsRecalculated: 0,
-        scoresUpdated: 0,
-      },
-    });
-  }
+    const batchStart = Date.now();
 
-  // Calculate ranks for snapshots that need it
-  const updates: Array<{ id: bigint; rank: number }> = [];
+    // Step 1: Fetch scores in parallel sub-batches (reads don't lock)
+    const subBatches: number[][] = [];
+    for (let i = 0; i < pendingIds.length; i += SUB_BATCH_SIZE) {
+      subBatches.push(pendingIds.slice(i, i + SUB_BATCH_SIZE));
+    }
+    log.debug({ subBatchCount: subBatches.length, pendingSnapshots: pendingIds.length }, "Fetching scores in parallel sub-batches");
 
-  for (const snapshotId of snapshotsToRecalculate) {
-    const scores = scoresBySnapshot.get(snapshotId)!;
-    const gameVersion = scores[0].gameVersion; // All scores in a snapshot have the same gameVersion
+    const fetchStart = Date.now();
+    const subBatchResults = await Promise.all(subBatches.map(async (subBatchIds, subIdx) => {
+      const scores = await db
+        .select({
+          snapshotId: userScores.snapshotId,
+          songId: userScores.songId,
+          achievement: userScores.achievement,
+          dxScore: userScores.dxScore,
+          fc: userScores.fc,
+          fs: userScores.fs,
+          rank: userScores.rank,
+        })
+        .from(userScores)
+        .where(inArray(userScores.snapshotId, subBatchIds));
 
-    // Convert to SongWithScore format for rating calculation
-    const songsForCalculation: SongWithScoreInternal[] = scores.map(score => ({
-      songId: score.songId,
-      songName: score.songName,
-      artist: score.artist,
-      cover: score.cover,
-      difficulty: score.difficulty,
-      level: score.level,
-      levelPrecise: score.levelPrecise,
-      type: score.type,
-      genre: score.genre,
-      addedVersion: score.addedVersion as VersionId,
-      achievement: score.achievement,
-      dxScore: score.dxScore,
-      fc: score.fc,
-      fs: score.fs,
+      log.debug({ subBatch: subIdx, snapshots: subBatchIds.length, scores: scores.length }, "Fetched scores for sub-batch");
+      return scores;
     }));
+    const allScores = subBatchResults.flat();
+    log.debug({ totalScores: allScores.length, fetchMs: Date.now() - fetchStart }, "All scores fetched");
 
-    // Use splitSongs to get B15 and B35
-    const { newSongsB15, oldSongsB35, newSongsRemaining, oldSongsRemaining } = splitSongs(songsForCalculation, gameVersion);
-
-    // Assign ranks
-    // New B15: ranks 0-14
-    for (let i = 0; i < newSongsB15.length; i++) {
-      const song = newSongsB15[i];
-      const scoreRecord = scores.find(s =>
-        s.songId === song.songId &&
-        s.difficulty === song.difficulty
-      );
-      if (scoreRecord) {
-        updates.push({ id: scoreRecord.scoreId, rank: i });
-      }
+    if (allScores.length === 0) {
+      totalSnapshots += pendingIds.length;
+      continue;
     }
 
-    // Old B35: ranks 15-49
-    for (let i = 0; i < oldSongsB35.length; i++) {
-      const song = oldSongsB35[i];
-      const scoreRecord = scores.find(s =>
-        s.songId === song.songId &&
-        s.difficulty === song.difficulty
-      );
-      if (scoreRecord) {
-        updates.push({ id: scoreRecord.scoreId, rank: 15 + i });
-      }
-    }
-
-    // Remaining songs: merge and sort by rating desc, start from rank 50
-    const remainingSongs = [...newSongsRemaining, ...oldSongsRemaining].sort((a, b) => b.rating - a.rating);
-    for (let i = 0; i < remainingSongs.length; i++) {
-      const song = remainingSongs[i];
-      const scoreRecord = scores.find(s =>
-        s.songId === song.songId &&
-        s.difficulty === song.difficulty
-      );
-      if (scoreRecord) {
-        updates.push({ id: scoreRecord.scoreId, rank: 50 + i });
-      }
-    }
-  }
-
-  console.log(`Calculated ranks for ${updates.length} scores`);
-
-  // Batch update in a single transaction
-  let totalUpdated = 0;
-
-  try {
-    if (MODIFY_DATABASE) {
-      await db.transaction(async (tx) => {
-        let batchIndex = 0;
-
-        for (let i = 0; i < updates.length; i += BATCH_SIZE) {
-          const batch = updates.slice(i, i + BATCH_SIZE);
-          batchIndex++;
-
-          console.log(`Processing batch ${batchIndex}/${Math.ceil(updates.length / BATCH_SIZE)} (${batch.length} updates)...`);
-
-          // Build CASE statement for batch update
-          const caseStatements = batch.map(
-            update => sql`WHEN ${update.id} THEN ${update.rank}`
-          );
-
-          const ids = batch.map(update => update.id);
-
-          // Single UPDATE with CASE for the entire batch
-          await tx
-            .update(userScores)
-            .set({
-              rank: sql`(CASE ${userScores.id} ${sql.join(caseStatements, sql.raw(' '))} END)::smallint`
-            })
-            .where(inArray(userScores.id, ids));
-
-          totalUpdated += batch.length;
-          console.log(`  Successfully updated batch ${batchIndex} (${totalUpdated}/${updates.length} total)`);
-        }
-      });
-    } else {
-      console.log(`[DRY RUN] Would update ${updates.length} scores in ${Math.ceil(updates.length / BATCH_SIZE)} batches`);
-      totalUpdated = updates.length;
-    }
-  } catch (error) {
-    console.error(`Error during batch update:`, error);
-    return NextResponse.json(
-      {
-        error: `Failed to update ranks: ${error instanceof Error ? error.message : "Unknown error"}`,
-        statistics: {
-          totalSnapshots: scoresBySnapshot.size,
-          snapshotsRecalculated: snapshotsToRecalculate.length,
-          scoresUpdated: totalUpdated,
-          scoresFailed: updates.length - totalUpdated,
-        }
-      },
-      { status: 500 }
+    // Step 2: Single upsert into score_data (sorted internally, no deadlock risk)
+    const upsertStart = Date.now();
+    const scoreDataLookup = await upsertScoreData(
+      allScores.map(s => ({
+        songId: s.songId,
+        achievement: s.achievement,
+        dxScore: s.dxScore,
+        fc: s.fc,
+        fs: s.fs,
+      }))
     );
+    log.debug({ uniqueScoreData: scoreDataLookup.size, upsertMs: Date.now() - upsertStart }, "Upserted scoreData for batch");
+
+    // Step 3: Build junction and B50 rows
+    const junctionRows: { snapshotId: number; scoreId: number }[] = [];
+    const b50Rows: { snapshotId: number; rank: number; scoreId: number }[] = [];
+    let missingKeys = 0;
+
+    for (const score of allScores) {
+      const key = `${score.songId}-${score.achievement}-${score.dxScore}-${score.fc}-${score.fs}`;
+      const scoreDataId = scoreDataLookup.get(key);
+      if (!scoreDataId) {
+        missingKeys++;
+        continue;
+      }
+
+      junctionRows.push({ snapshotId: score.snapshotId, scoreId: scoreDataId });
+      if (score.rank != null && score.rank < 50) {
+        b50Rows.push({ snapshotId: score.snapshotId, rank: score.rank, scoreId: scoreDataId });
+      }
+    }
+
+    if (missingKeys > 0) {
+      log.warn({ missingKeys }, "Some scores had no matching scoreData key after upsert");
+    }
+
+    // Step 4: Insert junction + B50 in parallel (partitioned by snapshotId, no deadlock risk)
+    const insertStart = Date.now();
+    const insertPromises: Promise<unknown>[] = [];
+    for (let i = 0; i < junctionRows.length; i += CHUNK_SIZE) {
+      insertPromises.push(
+        db.insert(snapshotScores).values(junctionRows.slice(i, i + CHUNK_SIZE)).onConflictDoNothing()
+      );
+    }
+    for (let i = 0; i < b50Rows.length; i += CHUNK_SIZE) {
+      insertPromises.push(
+        db.insert(snapshotB50).values(b50Rows.slice(i, i + CHUNK_SIZE)).onConflictDoNothing()
+      );
+    }
+    await Promise.all(insertPromises);
+    log.debug({ junctionRows: junctionRows.length, b50Rows: b50Rows.length, insertChunks: insertPromises.length, insertMs: Date.now() - insertStart }, "Inserted junction + B50 rows");
+
+    totalScoreDataUpserted += scoreDataLookup.size;
+    totalJunctionRows += junctionRows.length;
+    totalB50Rows += b50Rows.length;
+    totalSnapshots += pendingIds.length;
+    log.info({ backfilled: totalSnapshots, skipped: totalSkipped, lastId: lastId.toString(), junctionRows: totalJunctionRows, b50Rows: totalB50Rows, batchMs: Date.now() - batchStart }, "Backfill batch complete");
   }
 
-  console.log(`\n--- B50 Rank Calculation Complete ---`);
-  console.log(`Total snapshots: ${scoresBySnapshot.size}`);
-  console.log(`Snapshots recalculated: ${snapshotsToRecalculate.length}`);
-  console.log(`Scores updated: ${totalUpdated}`);
+  log.info({
+    totalSnapshots,
+    totalSkipped,
+    totalScoreDataUpserted,
+    totalJunctionRows,
+    totalB50Rows,
+    lastProcessedId: lastId.toString(),
+  }, "Backfill complete");
+
+  const done = totalSnapshots < maxSnapshots;
 
   return NextResponse.json({
     success: true,
-    message: "B50 rank calculation completed successfully",
+    message: done ? "Backfill completed — all snapshots processed" : `Backfill batch done — processed ${totalSnapshots}/${maxSnapshots} limit, call again to continue`,
+    done,
     statistics: {
-      totalSnapshots: scoresBySnapshot.size,
-      snapshotsRecalculated: snapshotsToRecalculate.length,
-      scoresUpdated: totalUpdated,
+      totalSnapshots,
+      totalSkipped,
+      totalScoreDataUpserted,
+      totalJunctionRows,
+      totalB50Rows,
+      lastProcessedId: lastId.toString(),
     },
   });
+}
+
+async function clearBackfill(searchParams: URLSearchParams) {
+  const region = searchParams.get('region') as "intl" | "jp" | null;
+
+  log.info({ region }, "Clearing backfill data");
+
+  if (region) {
+    // Delete only for snapshots in this region
+    const regionSnapshotIds = db
+      .select({ id: userSnapshots.id })
+      .from(userSnapshots)
+      .where(eq(userSnapshots.region, region));
+
+    const b50Deleted = await db.delete(snapshotB50)
+      .where(inArray(snapshotB50.snapshotId, regionSnapshotIds))
+      .returning({ snapshotId: snapshotB50.snapshotId });
+
+    const junctionDeleted = await db.delete(snapshotScores)
+      .where(inArray(snapshotScores.snapshotId, regionSnapshotIds))
+      .returning({ snapshotId: snapshotScores.snapshotId });
+
+    log.info({ region, junctionRowsDeleted: junctionDeleted.length, b50RowsDeleted: b50Deleted.length }, "Cleared backfill data for region");
+
+    return NextResponse.json({
+      success: true,
+      message: `Cleared backfill data for region ${region}`,
+      statistics: {
+        junctionRowsDeleted: junctionDeleted.length,
+        b50RowsDeleted: b50Deleted.length,
+      },
+    });
+  } else {
+    // Truncate all new tables
+    await db.execute(sql`TRUNCATE TABLE snapshot_b50`);
+    await db.execute(sql`TRUNCATE TABLE snapshot_scores`);
+    // Don't truncate score_data — it may be referenced by dual-write snapshots
+    // Orphaned score_data rows are harmless and cheap
+
+    log.info("Truncated snapshot_scores and snapshot_b50");
+
+    return NextResponse.json({
+      success: true,
+      message: "Cleared all backfill data (snapshot_scores and snapshot_b50 truncated)",
+    });
+  }
 }

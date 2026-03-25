@@ -33,7 +33,7 @@ export function RegionSwitcher({ header = false, value, onChange }: RegionSwitch
           </div>
         </SelectValue>
       </SelectTrigger>
-      <SelectContent>
+      <SelectContent align="end">
         {getEnabledRegions().map((region) => (
           <SelectItem key={region} value={region}>
             <div className="flex items-center justify-between gap-2 whitespace-nowrap">

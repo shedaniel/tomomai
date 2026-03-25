@@ -1,14 +1,28 @@
 import { db } from '@/lib/db';
-import { songs, userScores, userSnapshots } from '@/lib/db/schema-pg';
+import { scoreData, snapshotScores, songs, userSnapshots } from '@/lib/db/schema-pg';
 import { publicProcedure, router } from '@/lib/trpc';
 import { and, desc, eq, gt, gte, inArray, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { unstable_cache } from 'next/cache';
 import { getEnabledRegions } from '@/lib/enabled-regions';
+import { fetchTourEvents, fetchTourEventsByNames } from '@/server/queries/events';
 
 const regionSchema = z.enum(getEnabledRegions());
 
 export const dbRouter = router({
+  getEventStepsByNames: publicProcedure
+    .input(z.object({ names: z.array(z.string()).max(200) }))
+    .query(async ({ input }) => {
+      return fetchTourEventsByNames(input.names);
+    }),
+  getEvents: publicProcedure.query(async () => {
+    const getCachedEvents = unstable_cache(
+      async () => fetchTourEvents(),
+      ['db-events'],
+      { revalidate: 3600, tags: ['db-events'] }
+    );
+    return getCachedEvents();
+  }),
   getStats: publicProcedure
     .input(z.object({
       region: regionSchema,
@@ -96,12 +110,13 @@ export const dbRouter = router({
               cover: sql<string>`MAX(${songs.cover})`, // Just pick one cover
               artist: sql<string>`MAX(${songs.artist})`,
               count: sql<number>`COUNT(*)`.mapWith(Number),
-              averageAchievement: sql<number>`AVG(${userScores.achievement})`.mapWith(Number),
+              averageAchievement: sql<number>`AVG(${scoreData.achievement})`.mapWith(Number),
             })
-            .from(userScores)
-            .innerJoin(songs, eq(userScores.songId, songs.id))
+            .from(snapshotScores)
+            .innerJoin(scoreData, eq(snapshotScores.scoreId, scoreData.id))
+            .innerJoin(songs, eq(scoreData.songId, songs.id))
             .where(
-              inArray(userScores.snapshotId, latestSnapshotIds)
+              inArray(snapshotScores.snapshotId, latestSnapshotIds)
             )
             .groupBy(songs.songName, songs.type, songs.difficulty)
             .orderBy(desc(sql`COUNT(*)`))
@@ -117,13 +132,14 @@ export const dbRouter = router({
           const averageAchievementByLevelQuery = await db
             .select({
               level: songs.level,
-              averageAchievement: sql<number>`AVG(${userScores.achievement})`.mapWith(Number),
+              averageAchievement: sql<number>`AVG(${scoreData.achievement})`.mapWith(Number),
               count: sql<number>`COUNT(*)`.mapWith(Number),
             })
-            .from(userScores)
-            .innerJoin(songs, eq(userScores.songId, songs.id))
+            .from(snapshotScores)
+            .innerJoin(scoreData, eq(snapshotScores.scoreId, scoreData.id))
+            .innerJoin(songs, eq(scoreData.songId, songs.id))
             .where(
-              inArray(userScores.snapshotId, latestSnapshotIds)
+              inArray(snapshotScores.snapshotId, latestSnapshotIds)
             )
             .groupBy(songs.level)
             .orderBy(songs.level);

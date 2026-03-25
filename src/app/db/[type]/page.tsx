@@ -1,4 +1,5 @@
 import { ArcadesMap } from "@/components/db/arcades";
+import { EventsDatabase } from "@/components/db/events-database";
 import { SongsDatabase } from "@/components/db/songs-database";
 import { StatsDatabase } from "@/components/db/stats-database";
 import { createServerSideTRPC } from "@/lib/trpc-server";
@@ -34,6 +35,18 @@ export async function generateMetadata({ params }: DbTypePageProps): Promise<Met
       openGraph: {
         title: t("title"),
         description: t("title"),
+      },
+    };
+  }
+
+  if (type === "events") {
+    const t = await getTranslations("db.events");
+    return {
+      title: t("title"),
+      description: t("description"),
+      openGraph: {
+        title: t("title"),
+        description: t("description"),
       },
     };
   }
@@ -84,6 +97,10 @@ export default async function DbTypePage({ params }: DbTypePageProps) {
 
   if (type === "stats") {
     return <StatsDatabase />;
+  }
+
+  if (type === "events") {
+    return <EventsDatabase />;
   }
 
   return (

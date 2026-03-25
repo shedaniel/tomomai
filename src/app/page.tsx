@@ -2,7 +2,7 @@ import { AuthHandler } from "@/components/auth-handler";
 import { Dashboard } from "@/components/dashboard";
 import { LoginScreen } from "@/components/login-screen";
 import { getServerSession } from "@/lib/auth-server";
-import { applyFlagOverrides, useFlags } from "@/lib/flags";
+import { useFlags } from "@/lib/flags";
 import { getLatestPost } from "@/lib/posts";
 import { getLocale } from "@/i18n/locale-server";
 import { createServerSideTRPC } from "@/lib/trpc-server";
@@ -29,12 +29,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function Home() {
   const session = await getServerSession();
   // eslint-disable-next-line react-hooks/rules-of-hooks
-  let flags = await useFlags();
-
-  // Apply flag overrides from cookies
-  const cookieStore = await cookies();
-  const flagOverridesCookie = cookieStore.get("flagOverrides")?.value;
-  flags = applyFlagOverrides(flags, flagOverridesCookie);
+  let flags = await useFlags(cookies);
 
   if (!session) {
     // Fetch signup requirements on the server
@@ -70,18 +65,7 @@ export default async function Home() {
   const userRegion = userData.region || "intl";
 
   // Then fetch all other data in parallel using the correct region
-  const [profileSettings, snapshotsData] = await Promise.all([
-    trpc.user.getProfileSettings().catch(() => ({
-      publishProfile: false,
-      profileMainRegion: 'intl' as const,
-      profileShowAllScores: true,
-      profileShowScoreDetails: true,
-      profileShowPlates: true,
-      profileShowPlayCounts: true,
-      profileShowEvents: true,
-      profileShowInSearch: true,
-      fetchUseAlbums: null,
-    })),
+  const [snapshotsData] = await Promise.all([
     trpc.user.getSnapshots({ region: userRegion }).catch(() => ({ snapshots: [] })),
   ]);
 
@@ -102,7 +86,6 @@ export default async function Home() {
     <Dashboard
       user={session.user}
       initialUserData={userData}
-      initialProfileSettings={profileSettings}
       initialSnapshots={snapshotsData.snapshots}
       initialSnapshotData={initialSnapshotData}
       flags={flags}

@@ -85,6 +85,13 @@
       "when": 1772026900566,
       "tag": "0011_safe_sandman",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1774331011869,
+      "tag": "0012_tiny_jackpot",
+      "breakpoints": true
     }
   ]
 }

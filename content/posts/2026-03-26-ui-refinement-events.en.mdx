@@ -1,0 +1,80 @@
+---
+title: "UI Refinement, and Events Info"
+date: "2026-03-26"
+version: "2026.3"
+summary: "March Update: Tour event tracking, mobile UI overhaul, dedicated settings page, and massive database optimization."
+locale: "en"
+canonicalSlug: "2026-03-26-ui-refinement-events"
+---
+
+## March Update: Refining the Experience
+
+Spring is here, and so is a massive overhaul to how you interact with tomomai. This month, we've added tour event tracking, revamped the mobile experience, reorganized our navigation, and performed some "major surgery" on our database to keep things fast and lean.
+
+## New Feature: Events Integration
+
+We’ve brought **Tour Event** data directly into tomomai with two major additions:
+
+### Event Progress Tracking
+Your dashboard now has an **Events tab** showing all your active tour events with a **progress bar** for each one, complete with flag markers at every reward milestone. At a glance you can see how far you’ve traveled, what’s next, and what you’ve already claimed.
+
+![Event Progress](/posts/2026-03-26-ui-refinement/events-progress.png)
+
+### Events Database
+Browse all maimai tour events at **DB > Events**. A sidebar lists every event grouped by status (Active, Ended), and selecting one reveals its full details including periods and step-by-step reward milestones. The current UI is a bit bare-bones and will be improved in future updates.
+
+![Events Database](/posts/2026-03-26-ui-refinement/events-database.png)
+
+## New Feature: Mobile UI Overhaul
+
+We want tomomai to feel like a native app on your phone. To achieve this, we've moved away from standard web dialogs in favor of a modern **Bottom Sheet** implementation.
+
+- **Draggable & Dismissible**: Menus now slide up from the bottom. You can drag them to expand or flick them away to dismiss.
+- **Improved Profile Navigation**: We’ve replaced the clunky top-right dropdown. On mobile, your profile and settings are now accessed via a sleek **side menu**.
+
+<ImageCarousel>
+  <ImageCarouselSlide src="/posts/2026-03-26-ui-refinement/new-select.png" alt="New select" caption="New select" />
+  <ImageCarouselSlide src="/posts/2026-03-26-ui-refinement/new-menu.png" alt="New profile side menu" caption="New profile side menu" />
+  <ImageCarouselSlide src="/posts/2026-03-26-ui-refinement/new-token.png" alt="New token menu" caption="New token menu" />
+</ImageCarousel>
+
+## New Feature: Dashboard & Settings Overhaul
+
+The Dashboard and Settings have graduated from simple pop-ups to full-fledged pages.
+
+### Modern Website Design
+We’ve moved away from the old card-based layout to a more streamlined design.
+
+<ImageComparison before="/posts/2026-03-26-ui-refinement/dashboard-old.png" after="/posts/2026-03-26-ui-refinement/dashboard-new.png" beforeAlt="Old Dashboard" afterAlt="New Dashboard" />
+
+### Dedicated Settings Page
+No more hunting through dialogs. The new Settings page is split into three clear sections: **Account**, **Fetch**, and **Privacy**.
+- **Session Management**: View and manage your active sessions.
+- **Username Changes**: You can now check availability and update your tomomai username directly.
+
+![New Settings Page](/posts/2026-03-26-ui-refinement/settings-page.png)
+
+## Backend: The Great Refactor
+
+Behind the scenes, we’ve performed one of the largest code cleanups in the project's history to ensure long-term maintainability and performance.
+
+### 1. Goodbye Monolith
+We deleted the massive `user.ts` router (which had grown to over 3,400 lines!) and split it into **11 specialized sub-routers** and **9 reusable query modules**. This makes the app snappier and allows us to squash bugs much faster.
+
+### 2. Database Normalization & 33% Storage Reduction
+We migrated our score storage from a "denormalized" system to a "normalized" one.
+- **The Old Way**: Every time you took a snapshot, we saved a full copy of every score, even if the score hadn't changed.
+- **The New Way**: We now use `scoreData`, `snapshotScores`, and `snapshotB50`. If a score remains the same across multiple snapshots, we only store the *fact* of the score once and link to it.
+
+**Why this matters:**
+- **Storage**: This has resulted in a **33% reduction** in database size.
+- **Types**: We migrated IDs from `bigint` to `integer`, simplifying our code and saving even more space.
+- **Accuracy**: Deduplicated data ensures your stats remain consistent across the entire platform.
+
+---
+
+Join our Discord to discuss the changes: [https://discord.gg/jZqQHr3UDq](https://discord.gg/jZqQHr3UDq)
+
+Help us translate tomomai: [https://crowdin.com/project/tomomai](https://crowdin.com/project/tomomai)
+
+Happy grinding!

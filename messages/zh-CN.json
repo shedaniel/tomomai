@@ -27,6 +27,7 @@
     "discord": "Discord",
     "about": "关于",
     "experiments": "实验",
+    "region": "地区",
     "comingSoon": "敬请期待...",
     "difficulties": {
       "basic": "Basic",
@@ -35,7 +36,10 @@
       "master": "Master",
       "remaster": "Re:Master",
       "utage": "Utage"
-    }
+    },
+    "back": "返回",
+    "clipboardError": "复制到剪贴板失败",
+    "guest": "访客"
   },
   "auth": {
     "loginWithDiscord": "以 Discord 继续",
@@ -81,8 +85,24 @@
     "tokenUpdateSuccess": "验证方式保存成功！"
   },
   "settings": {
-    "title": "设置",
-    "description": "自定义你的 tomomai ともマイ 体验。",
+    "pages": {
+      "account": {
+        "title": "账户",
+        "description": "语言与账户偏好设置。"
+      },
+      "fetch": {
+        "title": "同步",
+        "description": "凭证与数据获取设置。"
+      },
+      "privacy": {
+        "title": "隐私",
+        "description": "控制谁能查看你的个人档案和成绩。"
+      },
+      "developer": {
+        "title": "开发者",
+        "description": "管理 API 密钥和 OAuth 应用程序。"
+      }
+    },
     "language": {
       "label": "语言",
       "description": "选择你偏好的界面语言。",
@@ -174,7 +194,174 @@
     "saveChanges": "保存变更",
     "saving": "保存中...",
     "saved": "设置保存成功！",
-    "errorSaving": "设置保存失败"
+    "errorSaving": "设置保存失败",
+    "sessions": {
+      "title": "会话",
+      "description": "管理你在各设备上的活跃会话。",
+      "currentSession": "当前",
+      "revoke": "撤销",
+      "revokeAll": "撤销其他所有会话",
+      "revokeAllDescription": "这将会注销其他所有会话，仅保留当前会话。",
+      "revokeDescription": "此会话将被立即注销。",
+      "noOtherSessions": "未找到其他活跃会话。",
+      "ip": "IP",
+      "createdAt": "登录于",
+      "revokeConfirm": "撤销此会话？",
+      "revokeAllConfirm": "撤销其他所有会话？",
+      "revokeSuccess": "会话已成功撤销。",
+      "revokeAllSuccess": "其他所有会话已撤销。"
+    },
+    "developer": {
+      "apiKeys": {
+        "label": "API 密钥",
+        "description": "使用这些密钥来验证对 tomomai API 的请求。",
+        "createButton": "创建 API 密钥",
+        "loading": "加载中...",
+        "emptyTitle": "暂无 API 密钥",
+        "emptyCreateLink": "创建你的第一个密钥",
+        "emptySuffix": "来开始使用 tomomai API。",
+        "unnamed": "未命名密钥",
+        "expired": "已过期",
+        "disabled": "已禁用",
+        "never": "永不过期",
+        "createdAt": "创建于 {date}",
+        "expiresAt": "过期于 {date}",
+        "toggleAriaLabel": "切换密钥状态",
+        "regenerateAriaLabel": "重新生成密钥",
+        "regenerateError": "重新生成 API 密钥失败",
+        "regeneratedTitle": "密钥已重新生成",
+        "regeneratedDescription": "请立即复制你的新 API 密钥，之后将不再显示。",
+        "regeneratedSaveWarning": "请保存此密钥 —— 关闭对话框后将不再显示。",
+        "regenerateDialog": {
+          "title": "重新生成 API 密钥？",
+          "description": "当前密钥将立即失效。使用该密钥的应用程序将无法访问，直到更新为新密钥。",
+          "confirm": "重新生成"
+        },
+        "deleteSuccess": "API 密钥已删除",
+        "deleteError": "删除 API 密钥失败",
+        "updateError": "更新密钥失败",
+        "deleteDialog": {
+          "title": "删除 API 密钥？",
+          "description": "此操作无法撤销。任何使用此密钥的应用程序将立即失去访问权限。",
+          "confirm": "删除"
+        }
+      },
+      "createDialog": {
+        "title": "创建 API 密钥",
+        "description": "生成一个新的 API 密钥以访问 tomomai API。",
+        "createdTitle": "API 密钥已创建",
+        "createdDescription": "请立即复制你的 API 密钥。关闭后将不再显示。",
+        "copyAriaLabel": "复制 API 密钥",
+        "saveWarning": "请保存此密钥 —— 关闭此对话框后将无法再次查看。",
+        "done": "完成",
+        "nameLabel": "名称",
+        "namePlaceholder": "我的应用",
+        "nameDescription": "用于识别此密钥的描述性名称。",
+        "scopesLabel": "权限范围",
+        "scopeDefaultBadge": "默认",
+        "scopeDestructiveBadge": "破坏性",
+        "scopeSensitiveBadge": "敏感",
+        "scopeIncludedBadge": "已包含",
+        "sensitiveWarning": "所选的一个或多个权限范围被标记为敏感，因为它们可能会暴露个人数据或私人标识符。请仅授权给你信任的应用程序。",
+        "expirationLabel": "有效期",
+        "expiration": {
+          "7d": "7 天",
+          "30d": "30 天",
+          "90d": "90 天",
+          "1y": "1 年",
+          "never": "永不过期"
+        },
+        "destructiveWarning": "此密钥授予执行破坏性操作的权限。你是否了解相关风险？",
+        "confirmLabelPre": "请输入",
+        "confirmPhrase": "是的，我明白",
+        "confirmLabelPost": "以确认",
+        "creating": "创建中...",
+        "createButton": "创建 API 密钥",
+        "createError": "创建 API 密钥失败"
+      },
+      "scopes": {
+        "ready": {
+          "name": "Ready",
+          "description": "基础访问权限。授予 GET /api/v1/ok。默认包含。"
+        },
+        "user:metadata:read": {
+          "name": "用户元数据（只读）",
+          "description": "读取你的用户名、地区、个人档案可见性和角色。授予 GET /api/v1/me。"
+        },
+        "snapshot:latest:metadata:read": {
+          "name": "最新快照元数据（只读）",
+          "description": "读取你最新快照的元数据（Rating、显示名称、游玩次数等）。授予 GET /api/v1/snapshots/latest。"
+        },
+        "snapshot:latest:songs:b50:read": {
+          "name": "最新快照 B50 歌曲（只读）",
+          "description": "从最新快照中读取 B50 歌曲分数。"
+        },
+        "snapshot:latest:songs:read": {
+          "name": "最新快照全部歌曲（只读）",
+          "description": "从最新快照中读取全部歌曲分数。"
+        },
+        "snapshot:latest:events:read": {
+          "name": "最新快照活动（只读）",
+          "description": "从你的最新快照中读取活动进度数据。"
+        },
+        "snapshot:latest:icon:read": {
+          "name": "最新快照头像（只读）",
+          "description": "从最新快照中读取你的头像 URL（Discord 头像）。敏感 —— 可能暴露社交身份。"
+        },
+        "snapshot:all:metadata:read": {
+          "name": "全部快照元数据（只读）",
+          "description": "列出你的所有快照并读取其元数据。授予 GET /api/v1/snapshots 和 GET /api/v1/snapshots/:id。"
+        },
+        "snapshot:all:songs:b50:read": {
+          "name": "全部快照 B50 歌曲（只读）",
+          "description": "从你的任意快照中读取 B50 歌曲分数。"
+        },
+        "snapshot:all:songs:read": {
+          "name": "全部快照全部歌曲（只读）",
+          "description": "从你的任意快照中读取全部歌曲分数。"
+        },
+        "snapshot:all:events:read": {
+          "name": "全部快照活动（只读）",
+          "description": "从你的任意快照中读取活动进度数据。"
+        },
+        "snapshot:all:icon:read": {
+          "name": "全部快照头像（只读）",
+          "description": "从任意快照中读取你的头像 URL（Discord 头像）。敏感 —— 可能暴露社交身份。"
+        },
+        "recent:read": {
+          "name": "最近游玩记录（只读）",
+          "description": "读取包含歌曲信息、达成率和连击/同步状态的最近游玩历史。授予 GET /api/v1/recents。"
+        },
+        "recent:detailed:read": {
+          "name": "最近游玩记录（详细·只读）",
+          "description": "在最近游玩记录中添加场地信息和每种音符类型的详细分类。"
+        },
+        "stats:read": {
+          "name": "统计数据（只读）",
+          "description": "读取你的评级/FC/FS 分布统计。授予 GET /api/v1/stats。"
+        },
+        "album:read": {
+          "name": "相册（只读）",
+          "description": "读取你的街机照片相册条目（仅元数据，不含图片 URL）。授予 GET /api/v1/albums。"
+        },
+        "album:images:read": {
+          "name": "相册图片（只读）",
+          "description": "在相册响应中包含图片 URL。敏感 —— 照片可能包含人物图像。"
+        },
+        "snapshot:latest:read": {
+          "name": "最新快照（只读）",
+          "description": "仅包含你最新快照的元数据、全部歌曲和活动。排除头像（出于隐私考虑，需单独授权）。"
+        },
+        "snapshot:all:read": {
+          "name": "全部快照（只读）",
+          "description": "包含你的所有快照（包括最新）的元数据、全部歌曲和活动。排除头像（出于隐私考虑，需单独授权）。"
+        },
+        "read": {
+          "name": "只读（所有非敏感数据）",
+          "description": "广泛的只读访问权限：用户元数据、所有快照、最近游玩、统计和相册。不包含头像和相册图片 URL。因涉及广泛的个人数据，标记为敏感。"
+        }
+      }
+    }
   },
   "dataBanner": {
     "dataSnapshot": "数据记录：",
@@ -316,7 +503,9 @@
       "type": "类型",
       "total": "总计",
       "totalLoss": "失分"
-    }
+    },
+    "clickToExpand": "点击展开详情",
+    "clickToCollapse": "点击折叠"
   },
   "events": {
     "title": "活动地图",
@@ -452,7 +641,9 @@
     "admin": "管理员",
     "errors": {
       "inviteLink": "无法打开邀请链接"
-    }
+    },
+    "followThreads": "在 Threads 上关注",
+    "followTwitter": "在 X 上关注"
   },
   "usernameSetup": {
     "title": "选择你的用户名",
@@ -474,7 +665,15 @@
     "validation": {
       "format": "用户名必须是 1-32 个字符，仅包含英数字、破折号和下划线",
       "taken": "此用户名已被使用"
-    }
+    },
+    "changeTitle": "更改用户名",
+    "changeDescription": "选择一个新的用户名。你的个人档案 URL 将会改变。",
+    "changeButton": "更改",
+    "sameAsCurrent": "与当前用户名相同。",
+    "newProfileUrl": "新个人档案 URL：/profile/{username}",
+    "changeSuccess": "用户名已成功更新。",
+    "changingUsername": "保存中...",
+    "newUsernameLabel": "新用户名"
   },
   "invites": {
     "title": "管理邀请",
@@ -556,7 +755,8 @@
       "songs": "歌曲",
       "calculator": "计算",
       "stats": "统计",
-      "posts": "更新日志"
+      "posts": "更新日志",
+      "events": "活动"
     },
     "songs": {
       "metadata": {
@@ -671,6 +871,33 @@
         "intl": "国际服",
         "jp": "日本服"
       }
+    },
+    "events": {
+      "active": "进行中",
+      "back": "返回",
+      "description": "浏览所有 maimai 区域活动及其奖励",
+      "distance": "距离",
+      "ended": "已结束",
+      "noEvents": "未找到活动。",
+      "period": "期间",
+      "reward": "奖励",
+      "search": "搜索活动...",
+      "selectEvent": "选择一个活动以查看详情",
+      "steps": "步数",
+      "title": "区域活动",
+      "type": "类型",
+      "upcoming": "即将开始",
+      "stepTypes": {
+        "frame": "底板",
+        "song": "乐曲",
+        "nameplate": "名牌板",
+        "present": "礼物",
+        "icon": "头像",
+        "title": "称号",
+        "tourMember": "旅伴",
+        "perfectChallenge": "Perfect Challenge 乐曲",
+        "kaleidxscope": "KALEIDXSCOPE"
+      }
     }
   },
   "theme": {
@@ -705,8 +932,10 @@
       "songDataExpert": "已导入 EXPERT 成绩",
       "songDataMaster": "已导入 MASTER 成绩",
       "songDataRemaster": "已导入 Re:MASTER 成绩",
+      "songDataUtage": "已导入 UTAGE 成绩",
       "recentSongs": "已导入最近游玩记录",
-      "hiddenSongs": "已导入隐藏歌曲"
+      "hiddenSongs": "已导入隐藏歌曲",
+      "albumData": "已导入相册数据"
     }
   }
 }
