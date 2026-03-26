@@ -124,6 +124,11 @@
     "account": {
       "label": "账户验证",
       "updateToken": "更新验证方式",
+      "deleteToken": "删除验证方式",
+      "deleteTokenDialogTitle": "删除验证方式",
+      "deleteTokenDialogDescription": "确定要删除已保存的验证方式吗？你将需要重新验证才能再次导入数据。",
+      "deleteTokenSuccess": "验证方式已成功删除。",
+      "deleteTokenError": "删除验证方式失败。",
       "description": "更新你的 maimai 验证方式以进行数据导入及同步玩家资料。"
     },
     "albumPrivacy": {
