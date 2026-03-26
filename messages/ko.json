@@ -124,6 +124,11 @@
     "account": {
       "label": "계정 인증",
       "updateToken": "인증 정보 갱신",
+      "deleteToken": "Delete Token",
+      "deleteTokenDialogTitle": "Delete Token",
+      "deleteTokenDialogDescription": "Are you sure you want to delete your saved token? You will need to re-authenticate to fetch data again.",
+      "deleteTokenSuccess": "Token deleted successfully.",
+      "deleteTokenError": "Failed to delete token.",
       "description": "데이터 동기화를 위해 maimai 인증 토큰을 갱신합니다."
     },
     "albumPrivacy": {
