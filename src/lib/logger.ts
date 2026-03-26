@@ -44,7 +44,7 @@ const createServerLogger = (): Logger => {
         translateTime: "SYS:standard",
         ignore: "pid,hostname",
       }),
-      level: "info",
+      level: "debug",
     });
   }
 

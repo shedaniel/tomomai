@@ -37,6 +37,7 @@ export const userRouter = router({
   startFetch: fetchRouter.startFetch,
   getFetchStatus: fetchRouter.getFetchStatus,
   getLatestFetchSessionId: fetchRouter.getLatestFetchSessionId,
+  deleteToken: fetchRouter.deleteToken,
 
   // Invites
   getSignupRequirements: invitesRouter.getSignupRequirements,

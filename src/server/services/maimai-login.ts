@@ -134,7 +134,7 @@ export async function processMaimaiToken(
   };
 }
 
-async function deleteToken(userId: string, region: Region): Promise<void> {
+export async function deleteToken(userId: string, region: Region): Promise<void> {
   await db
     .delete(userTokens)
     .where(
@@ -345,7 +345,7 @@ async function performInternationalAccountLogin(
   password: string
 ): Promise<TokenValidationResult> {
   const loginPageUrl = "https://lng-tgk-aime-gw.am-all.net/common_auth/login?site_id=maimaidxex&redirect_url=https://maimaidx-eng.com/maimai-mobile/&back_url=https://maimai.sega.com/";
-  const loginUrl = "https://lng-tgk-aime-gw.am-all.net/common_auth/login/sid/";
+  const loginUrl = "https://lng-tgk-aime-gw.am-all.net/common_auth/login/sid";
 
   logger.info(`Attempting account login for user ${userId} with username ${username}`);
 
@@ -362,35 +362,35 @@ async function performInternationalAccountLogin(
 
     logger.debug(`Login page response status: ${loginPageResponse.status}`);
 
-    // Extract JSESSIONID from Set-Cookie header
-    const setCookieHeader = loginPageResponse.headers.get("Set-Cookie");
-    let jsessionId = "";
-
-    if (setCookieHeader) {
-      const jsessionMatch = setCookieHeader.match(/JSESSIONID=([^;]+)/);
-      if (jsessionMatch) {
-        jsessionId = jsessionMatch[1];
-        logger.debug(`Extracted JSESSIONID: ${jsessionId.substring(0, 10)}...`);
-      } else {
-        logger.warn("Could not extract JSESSIONID from Set-Cookie header");
-        if (userId) {
-          await deleteToken(userId, "intl");
-        }
-        return {
-          isValid: false,
-          error: "Failed to obtain session ID. Please try again later.",
-        };
-      }
+    // Extract cookies from Set-Cookie headers
+    let setCookieHeaders: string[] = [];
+    if (loginPageResponse.headers.getSetCookie) {
+      setCookieHeaders = loginPageResponse.headers.getSetCookie();
     } else {
-      logger.warn("No Set-Cookie header in login page response");
+      // Fallback for environments that don't support getSetCookie()
+      const cookieHeader = loginPageResponse.headers.get('set-cookie');
+      if (cookieHeader) {
+        setCookieHeaders = [cookieHeader];
+      }
+    }
+
+    if (setCookieHeaders.length === 0) {
+      logger.warn("No Set-Cookie headers in login page response");
       if (userId) {
         await deleteToken(userId, "intl");
       }
       return {
         isValid: false,
-        error: "Failed to obtain session ID. Please try again later.",
+        error: "Failed to obtain session cookies. Please try again later.",
       };
     }
+
+    // Parse all cookies into a cookie bag
+    const cookieBag = setCookieHeaders.map(header => {
+      return header.split(';')[0];
+    }).join('; ');
+
+    logger.debug(`Collected ${setCookieHeaders.length} cookies from login page`);
 
     // Step 2: POST credentials with JSESSIONID cookie
     logger.debug("Step 2: Posting credentials with JSESSIONID");
@@ -404,7 +404,7 @@ async function performInternationalAccountLogin(
       method: "POST",
       headers: {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-        "Cookie": `JSESSIONID=${jsessionId}`,
+        "Cookie": cookieBag,
       },
       redirect: "manual", // Don't follow redirects
     });

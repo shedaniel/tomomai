@@ -2,12 +2,22 @@
 
 import { TokenDialog } from "@/components/token-dialog";
 import { Button } from "@/components/ui/button";
+import {
+  ResponsiveDialog,
+  ResponsiveDialogClose,
+  ResponsiveDialogContent,
+  ResponsiveDialogDescription,
+  ResponsiveDialogFooter,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+  ResponsiveDialogTrigger,
+} from "@/components/ui/dialog-friendly";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { isChinaRegion } from "@/lib/enabled-regions";
 import { trpc } from "@/lib/trpc-client";
 import { Region } from "@/lib/types";
-import { AlertCircle, Images, Key } from "lucide-react";
+import { AlertCircle, Images, Key, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -34,6 +44,7 @@ export function FetchSettings() {
 
   const updateAlbumPreference = trpc.user.setAlbumPreference.useMutation();
   const startFetch = trpc.user.startFetch.useMutation();
+  const deleteTokenMutation = trpc.user.deleteToken.useMutation();
 
   const handleSave = async () => {
     setIsLoading(true);
@@ -59,6 +70,16 @@ export function FetchSettings() {
     toast.success("Token saved successfully!");
   };
 
+  const handleDeleteToken = async () => {
+    try {
+      await deleteTokenMutation.mutateAsync({ region: selectedRegion });
+      toast.success(t("settings.account.deleteTokenSuccess"));
+    } catch (error) {
+      console.error("Failed to delete token:", error);
+      toast.error(t("settings.account.deleteTokenError"));
+    }
+  };
+
   const isLoadingSettings = profileSettingsLoading || isLoading;
 
   return (
@@ -75,14 +96,48 @@ export function FetchSettings() {
             {t("settings.account.label")}
           </Label>
           <p className="text-xs text-muted-foreground">{t("settings.account.description")}</p>
-          <Button
-            variant="outline"
-            onClick={() => setTokenDialogOpen(true)}
-            className="justify-start bg-background w-fit"
-          >
-            <Key className="h-4 w-4 mr-2" />
-            {t("settings.account.updateToken")}
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setTokenDialogOpen(true)}
+              className="justify-start bg-background w-fit"
+            >
+              <Key className="h-4 w-4 mr-2" />
+              {t("settings.account.updateToken")}
+            </Button>
+            <ResponsiveDialog>
+              <ResponsiveDialogTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="justify-start bg-background w-fit"
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  {t("settings.account.deleteToken")}
+                </Button>
+              </ResponsiveDialogTrigger>
+              <ResponsiveDialogContent showCloseButton={false}>
+                <ResponsiveDialogHeader>
+                  <ResponsiveDialogTitle>{t("settings.account.deleteTokenDialogTitle")}</ResponsiveDialogTitle>
+                  <ResponsiveDialogDescription>
+                    {t("settings.account.deleteTokenDialogDescription")}
+                  </ResponsiveDialogDescription>
+                </ResponsiveDialogHeader>
+                <ResponsiveDialogFooter>
+                  <ResponsiveDialogClose asChild>
+                    <Button variant="outline">{t("common.cancel")}</Button>
+                  </ResponsiveDialogClose>
+                  <ResponsiveDialogClose asChild>
+                    <Button
+                      variant="destructive"
+                      onClick={handleDeleteToken}
+                    >
+                      {t("settings.account.deleteToken")}
+                    </Button>
+                  </ResponsiveDialogClose>
+                </ResponsiveDialogFooter>
+              </ResponsiveDialogContent>
+            </ResponsiveDialog>
+          </div>
         </div>
 
         {!isChinaRegion() && <div className="grid gap-2">

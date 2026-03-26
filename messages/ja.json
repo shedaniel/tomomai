@@ -124,6 +124,11 @@
     "account": {
       "label": "アカウント認証",
       "updateToken": "認証情報を更新",
+      "deleteToken": "認証情報を削除",
+      "deleteTokenDialogTitle": "認証情報を削除",
+      "deleteTokenDialogDescription": "保存された認証情報を削除してもよろしいですか？再度データを取得するには、再認証が必要です。",
+      "deleteTokenSuccess": "認証情報を削除しました。",
+      "deleteTokenError": "認証情報の削除に失敗しました。",
       "description": "データ取得とプレイヤー同期のために、認証情報（トークン）を更新します。"
     },
     "albumPrivacy": {

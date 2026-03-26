@@ -101,4 +101,13 @@ export const fetchRouter = router({
 
       return session.length > 0 ? { id: session[0].publicId, startedAt: session[0].startedAt } : null;
     }),
+
+  deleteToken: protectedProcedure
+    .input(z.object({
+      region: regionSchema,
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const { deleteToken } = await import('@/server/services/maimai-login');
+      await deleteToken(ctx.session.user.id, input.region as Region);
+    }),
 });

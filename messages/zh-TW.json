@@ -124,6 +124,11 @@
     "account": {
       "label": "帳戶驗證",
       "updateToken": "更新驗證方式",
+      "deleteToken": "刪除驗證方式",
+      "deleteTokenDialogTitle": "刪除驗證方式",
+      "deleteTokenDialogDescription": "確定要刪除已儲存的驗證方式嗎？你將需要重新驗證才能再次匯入資料。",
+      "deleteTokenSuccess": "驗證方式已成功刪除。",
+      "deleteTokenError": "刪除驗證方式失敗。",
       "description": "更新你的 maimai 驗證方式以進行資料匯入及同步玩家資料。"
     },
     "albumPrivacy": {

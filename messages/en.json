@@ -124,6 +124,11 @@
     "account": {
       "label": "Account Authentication",
       "updateToken": "Update Token",
+      "deleteToken": "Delete Token",
+      "deleteTokenDialogTitle": "Delete Token",
+      "deleteTokenDialogDescription": "Are you sure you want to delete your saved token? You will need to re-authenticate to fetch data again.",
+      "deleteTokenSuccess": "Token deleted successfully.",
+      "deleteTokenError": "Failed to delete token.",
       "description": "Update your maimai token for data fetching. This is required to sync your player data."
     },
     "albumPrivacy": {
