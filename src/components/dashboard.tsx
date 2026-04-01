@@ -22,6 +22,7 @@ import { InvitesDialog } from "./invites-dialog";
 import { Header } from "./header";
 import { isChinaRegion } from "@/lib/enabled-regions";
 import { ChangelogDialog } from "./changelog-dialog";
+import { TomomaiAI } from "./tomomai-ai";
 import { PostMeta } from "@/lib/posts";
 
 type DialogType = null | "token" | "username" | "about" | "admin" | "invites" | "experiments" | "albumPrivacy";
@@ -276,6 +277,7 @@ export function Dashboard({ user, initialUserData, initialSnapshots, initialSnap
       <ChangelogDialog latestPost={latestPost} />
 
       <FetchToastContainer state={fetchToastState} />
+      <TomomaiAI snapshotData={selectedSnapshotData || null} region={selectedRegion} />
     </div>
   );
 }

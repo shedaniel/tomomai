@@ -1,3 +1,4 @@
+import { AprilFools } from '@/components/april-fools';
 import { LocaleProvider } from '@/components/providers/locale-provider';
 import { ThemeProvider } from '@/components/providers/theme-provider';
 import { TRPCProvider } from "@/components/providers/trpc-provider";
@@ -96,6 +97,7 @@ export default async function RootLayout({
                 {children}
                 {shouldInjectToolbar && <VercelToolbar />}
                 <Toaster />
+                <AprilFools />
               </TRPCProvider>
             </ThemeProvider>
           </LocaleProvider>

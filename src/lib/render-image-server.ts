@@ -1,5 +1,7 @@
 import { getCachedImageBuffer } from "./image_cacher";
+import { isAprilFools2026JST } from './april-fools';
 import { FontLibrary } from 'skia-canvas';
+import fs from 'fs';
 import path from 'path';
 
 // In-memory cache for fetched images
@@ -10,17 +12,17 @@ const CACHE_TTL = 1000 * 60 * 60; // 1 hour TTL
 // Clean up old cache entries
 function cleanupCache() {
   if (imageCache.size <= MAX_CACHE_SIZE) return;
-  
+
   const now = Date.now();
   const entries = Array.from(imageCache.entries());
-  
+
   // Remove expired entries first
   for (const [key, value] of entries) {
     if (now - value.timestamp > CACHE_TTL) {
       imageCache.delete(key);
     }
   }
-  
+
   // If still over limit, remove oldest entries
   if (imageCache.size > MAX_CACHE_SIZE) {
     const sorted = entries.sort((a, b) => a[1].timestamp - b[1].timestamp);
@@ -43,11 +45,24 @@ export const fontsLoaded = (async () => {
     FontLibrary.use('Noto Sans JP', [path.join(fontsDir, 'NotoSansJP-VariableFont_wght.woff2')]);
     FontLibrary.use('Geist Mono', [path.join(fontsDir, 'GeistMono-VariableFont_wght.woff2')]);
 
+    loadAprilFoolsFonts();
+
     console.log(`✅ Fonts loaded successfully in ${Date.now() - startTime}ms`);
   } catch (error) {
     console.error('❌ Failed to load fonts:', error);
   }
 })();
+
+export function loadAprilFoolsFonts() {
+  if (!isAprilFools2026JST()) return;
+  const comicNeueDir = path.join(process.cwd(), 'node_modules', '@fontsource', 'comic-neue', 'files');
+  const comicNeueFiles = fs.readdirSync(comicNeueDir).filter(f => f.endsWith('.woff2')).map(f => path.join(comicNeueDir, f));
+  FontLibrary.use('Comic Neue', comicNeueFiles);
+
+  const hachiDir = path.join(process.cwd(), 'node_modules', '@fontsource', 'zen-maru-gothic', 'files');
+  const hachiFiles = fs.readdirSync(hachiDir).filter(f => f.endsWith('.woff2')).map(f => path.join(hachiDir, f));
+  FontLibrary.use('Zen Maru Gothic', hachiFiles);
+}
 
 // Server-only function for fetching images with Node.js modules
 export async function fetchImageForServer(url: string): Promise<string> {
@@ -110,11 +125,11 @@ export async function fetchImageForServer(url: string): Promise<string> {
     }
 
     const dataUrl = `data:${contentType};base64,${buffer.toString('base64')}`;
-    
+
     // Store in cache
     imageCache.set(url, { data: dataUrl, timestamp: Date.now() });
     cleanupCache();
-    
+
     return dataUrl;
   } catch (error) {
     console.error('Error loading image for server-side rendering:', error);

@@ -7,6 +7,7 @@ import { calculateDXStars, calculateNoteLosses, distributeBreaks } from './score
 import type { Difficulty, FullCombo, FullSync, SongType, TitleType } from "./types";
 import { SnapshotWithSongs } from "./types";
 import { getTypeBadgeUrl } from "./utils";
+import { isAprilFools2026JST } from './april-fools';
 import { VersionId } from './metadata';
 
 type CanvasSize = {
@@ -25,8 +26,17 @@ export interface SongForRender extends RatingCalculationInput {
 const TARGET_HEIGHT = 204;
 const PADDING = 36;
 
-const FONT_FAMILY = 'Inter, Murecho, "Noto Sans JP"';
-const FONT_FAMILY_MONO = '"Geist Mono"';
+const FONT_FAMILY_DEFAULT = 'Inter, Murecho, "Noto Sans JP"';
+const FONT_FAMILY_MONO_DEFAULT = '"Geist Mono"';
+const FONT_FAMILY_APRIL_FOOLS = '"Comic Neue", "Zen Maru Gothic", Inter, Murecho, "Noto Sans JP"';
+const FONT_FAMILY_MONO_APRIL_FOOLS = '"Comic Neue", "Zen Maru Gothic", "Geist Mono"';
+
+function font(weight: number, size: number | string, mono: boolean = false) {
+  if (isAprilFools2026JST()) {
+    return `${weight} ${size}px ${mono ? FONT_FAMILY_MONO_APRIL_FOOLS : FONT_FAMILY_APRIL_FOOLS}`;
+  }
+  return `${weight} ${size}px ${mono ? FONT_FAMILY_MONO_DEFAULT : FONT_FAMILY_DEFAULT}`;
+}
 
 const VERSION_SETTINGS = {
   10: {
@@ -284,7 +294,7 @@ async function renderHeader(ctx: SkiaContext, data: HeaderData, cache: ImageCach
   ctx.drawImage(trophyBackground, trophyLeft, trophyTop, trophyWidth, trophyHeight);
 
   // Render trophy text with stroke
-  ctx.font = `450 ${TROPHY_FONT_SIZE}px ${FONT_FAMILY}`;
+  ctx.font = font(450, TROPHY_FONT_SIZE);
   const trophyTextWidth = measureTextWidth(ctx, data.title);
   const trophyTextLeft = trophyLeft + trophyWidth / 2 - trophyTextWidth / 2;
   const trophyTextTop = trophyTop + trophyHeight / 2 - TROPHY_FONT_SIZE / 2 - 2;
@@ -309,7 +319,7 @@ async function renderHeader(ctx: SkiaContext, data: HeaderData, cache: ImageCach
   ctx.restore();
 
   // Render name text
-  ctx.font = `700 ${NAME_FONT_SIZE}px ${FONT_FAMILY}`;
+  ctx.font = font(700, NAME_FONT_SIZE);
   const nameTextWidth = measureTextWidth(ctx, data.displayName);
   const nameTextLeft = nameRectLeft + trophyWidth / 2 - nameTextWidth / 2;
   const nameTextTop = nameRectTop + nameRectHeight / 2 - NAME_FONT_SIZE / 2;
@@ -327,7 +337,7 @@ async function renderHeader(ctx: SkiaContext, data: HeaderData, cache: ImageCach
   ctx.drawImage(ratingFrame, ratingLeft, ratingTop, ratingWidth, ratingHeight);
 
   // Render rating digits
-  ctx.font = `600 ${ratingHeight * 0.53}px ${FONT_FAMILY_MONO}`;
+  ctx.font = font(600, ratingHeight * 0.53, true);
   ctx.fillStyle = '#f9f0f4';
   let digitLeft = ratingLeft + ratingWidth * 0.43;
   for (const char of data.rating.toString()) {
@@ -457,7 +467,7 @@ async function renderSong<S extends SongForRender>(
   ctx.shadowBlur = 16;
   ctx.shadowOffsetX = 4;
   ctx.shadowOffsetY = 4;
-  ctx.font = `700 18px ${FONT_FAMILY}`;
+  ctx.font = font(700, 18);
   ctx.fillStyle = '#f5f5f5';
   ctx.textAlign = 'left';
   ctx.textBaseline = 'bottom';
@@ -475,7 +485,7 @@ async function renderSong<S extends SongForRender>(
   ctx.shadowBlur = 16;
   ctx.shadowOffsetX = 2;
   ctx.shadowOffsetY = 2;
-  ctx.font = `550 16px ${FONT_FAMILY_MONO}`;
+  ctx.font = font(550, 16, true);
   ctx.fillStyle = '#f5f5f5';
   ctx.textAlign = 'left';
   ctx.textBaseline = 'bottom';
@@ -492,7 +502,7 @@ async function renderSong<S extends SongForRender>(
   ctx.shadowBlur = 16;
   ctx.shadowOffsetX = 2;
   ctx.shadowOffsetY = 2;
-  ctx.font = `600 26px ${FONT_FAMILY_MONO}`;
+  ctx.font = font(600, 26, true);
   ctx.fillStyle = '#f5f5f5';
   ctx.textAlign = 'right';
   ctx.textBaseline = 'bottom';
@@ -501,7 +511,7 @@ async function renderSong<S extends SongForRender>(
 
   // Draw difficulty badge background
   ctx.save();
-  ctx.font = `500 14px ${FONT_FAMILY_MONO}`;
+  ctx.font = font(500, 14, true);
   const diffText = (song.levelPrecise / 10).toFixed(1);
   const diffTextWidth = ctx.measureText(diffText).width;
 
@@ -514,7 +524,7 @@ async function renderSong<S extends SongForRender>(
 
   // Draw difficulty text
   ctx.save();
-  ctx.font = `500 14px ${FONT_FAMILY_MONO}`;
+  ctx.font = font(500, 14, true);
   ctx.fillStyle = song.difficulty === "remaster" ? "#591a8b" : "#f2f2f2";
   ctx.textAlign = 'right';
   ctx.textBaseline = 'top';
@@ -843,13 +853,13 @@ async function renderTrack(
     ctx.textBaseline = 'middle';
     for (let i = 0; i < matrix.length; i++) {
       for (let j = 0; j < matrix[i].length; j++) {
-        ctx.font = `500 ${24 * tableScale}px ${FONT_FAMILY_MONO}`;
+        ctx.font = font(500, 24 * tableScale, true);
         const item = matrix[i][j];
         ctx.fillStyle = columnColor[j];
         const rowY = cellY + cellHeight * i + cellHeight * (item.p === undefined ? 0.5 : 0.35);
         ctx.fillText(item.c.toString(), cellX + cellWidth * j + cellWidth * 0.9, rowY);
         if (item.p !== undefined) {
-          ctx.font = `400 ${18 * tableScale}px ${FONT_FAMILY_MONO}`;
+          ctx.font = font(400, 18 * tableScale, true);
           ctx.fillText(`-${item.p.toFixed(4)}%`, cellX + cellWidth * j + cellWidth * 0.9, rowY + 0.4 * cellHeight);
         }
       }
@@ -882,7 +892,7 @@ async function renderTrack(
     ctx.restore();
     if (track.details) {
       ctx.save();
-      ctx.font = `500 ${fastLateScale * 30}px ${FONT_FAMILY_MONO}`;
+      ctx.font = font(500, fastLateScale * 30, true);
       ctx.fillStyle = '#1368D4';
       ctx.textAlign = 'right';
       ctx.fillText(track.details.fastCount.toString(), fastLateX + fastLate.width * fastLateScale * 0.6, fastLateY + fastLate.height * fastLateScale * 0.39);
@@ -963,12 +973,12 @@ async function renderTrack(
     const percentageFontSize = dxScoreScale * 16, percentageWeight = 500;
 
     ctx.save();
-    ctx.font = `${percentageWeight} ${percentageFontSize}px ${FONT_FAMILY_MONO}`;
+    ctx.font = font(percentageWeight, percentageFontSize, true);
     const percentageText = `${(track.dxScore / track.maxDxScore * 100).toFixed(2)}%`
     const percentageWidth = ctx.measureText(percentageText).width;
     const gapXBetweenPercentageAndScore = 8 * overallScale;
 
-    ctx.font = `${bigWeight} ${bigFontSize}px ${FONT_FAMILY_MONO}`;
+    ctx.font = font(bigWeight, bigFontSize, true);
     ctx.fillStyle = '#1368D4';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'alphabetic';
@@ -978,7 +988,7 @@ async function renderTrack(
 
     const dxScoreWidth = ctx.measureText(dxScoreText).width;
 
-    ctx.font = `${smallWeight} ${smallFontSize}px ${FONT_FAMILY_MONO}`;
+    ctx.font = font(smallWeight, smallFontSize, true);
     const slashWidth = ctx.measureText('/').width;
     const maxDxScoreWidth = ctx.measureText(maxDxScoreText).width;
 
@@ -988,14 +998,14 @@ async function renderTrack(
 
     let currentX = centerX - textTotalWidth / 2;
 
-    ctx.font = `${percentageWeight} ${percentageFontSize}px ${FONT_FAMILY_MONO}`;
+    ctx.font = font(percentageWeight, percentageFontSize, true);
     ctx.fillText(percentageText, x + dxScoreImage.width * dxScoreScale - percentageWidth, baselineY);
 
-    ctx.font = `${bigWeight} ${bigFontSize}px ${FONT_FAMILY_MONO}`;
+    ctx.font = font(bigWeight, bigFontSize, true);
     ctx.fillText(dxScoreText, currentX + dxScoreWidth / 2, baselineY);
     currentX += dxScoreWidth;
 
-    ctx.font = `${smallWeight} ${smallFontSize}px ${FONT_FAMILY_MONO}`;
+    ctx.font = font(smallWeight, smallFontSize, true);
     ctx.fillText('/', currentX + slashWidth / 2, baselineY - 1);
     currentX += slashWidth;
 
@@ -1192,7 +1202,7 @@ async function renderFooter<S>(ctx: SkiaContext, gameVersion: number, footerText
 
   ctx.save();
   ctx.globalAlpha = 0.86;
-  ctx.font = `500 16px ${FONT_FAMILY}`;
+  ctx.font = font(500, 16);
   ctx.fillStyle = '#f9f0f4';
   ctx.textAlign = 'left';
   ctx.textBaseline = 'top';
@@ -1204,7 +1214,7 @@ async function renderFooter<S>(ctx: SkiaContext, gameVersion: number, footerText
 
   ctx.save();
   ctx.globalAlpha = 0.86;
-  ctx.font = `400 16px ${FONT_FAMILY}`;
+  ctx.font = font(400, 16);
   ctx.fillStyle = '#f9f0f4';
   ctx.textAlign = 'right';
   ctx.textBaseline = 'top';

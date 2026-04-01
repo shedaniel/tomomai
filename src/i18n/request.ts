@@ -1,15 +1,36 @@
 import { getRequestConfig } from 'next-intl/server';
 import { getLocale } from './locale-server';
 import { deepMerge } from '@/lib/utils';
+import { isAprilFools2026JST } from '@/lib/april-fools';
+
+function lowercaseMessages(obj: Record<string, unknown>): Record<string, unknown> {
+  const result: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(obj)) {
+    if (typeof value === 'string') {
+      result[key] = value.toLowerCase();
+    } else if (typeof value === 'object' && value !== null) {
+      result[key] = lowercaseMessages(value as Record<string, unknown>);
+    } else {
+      result[key] = value;
+    }
+  }
+  return result;
+}
 
 export default getRequestConfig(async () => {
   const locale = await getLocale();
 
+  let messages = deepMerge(
+    (await import(`../../messages/en.json`)).default,
+    (await import(`../../messages/${locale}.json`)).default,
+  );
+
+  if (isAprilFools2026JST()) {
+    messages = lowercaseMessages(messages) as typeof messages;
+  }
+
   return {
     locale,
-    messages: deepMerge(
-      (await import(`../../messages/en.json`)).default,
-      (await import(`../../messages/${locale}.json`)).default,
-    ),
+    messages,
   };
 });

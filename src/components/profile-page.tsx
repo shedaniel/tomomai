@@ -3,6 +3,7 @@ import { PublicDataBanner } from "@/components/public-data-banner";
 import { Header } from "@/components/header";
 import { defaultFlags } from "@/lib/flags";
 import { Difficulty, EventData, ProfileData, Region, SnapshotWithSongs, SongWithScore, TitleType } from "@/lib/types";
+import { TomomaiAI } from "@/components/tomomai-ai";
 import { VersionId } from "@/lib/metadata";
 
 interface SnapshotData {
@@ -105,6 +106,7 @@ export function ProfilePage({
           flags={defaultFlags}
         />
       </div>
+      <TomomaiAI snapshotData={snapshotWithSongs} region={region} />
     </div>
   );
 }

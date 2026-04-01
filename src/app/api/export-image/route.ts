@@ -1,6 +1,6 @@
 import { getRatingImageUrl, splitSongs } from '@/lib/rating-calculator';
 import { ImageCache, renderImage, SongForRender } from '@/lib/render-image';
-import { fetchImageForServer, fontsLoaded } from '@/lib/render-image-server';
+import { fetchImageForServer, fontsLoaded, loadAprilFoolsFonts } from '@/lib/render-image-server';
 import type { Region } from '@/lib/types';
 import { NextRequest, NextResponse } from 'next/server';
 import { Image, loadImage } from 'skia-canvas';
@@ -13,6 +13,7 @@ export async function GET(request: NextRequest) {
   console.log('🚀 Starting skia-canvas export-image API request');
   try {
     await fontsLoaded;
+    loadAprilFoolsFonts();
 
     const snapshotId = request.nextUrl.searchParams.get('snapshotId');
     const scaleParam = request.nextUrl.searchParams.get('scale');

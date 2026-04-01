@@ -77,15 +77,78 @@ export function getStateFriendlyName(state: string): string {
   }
 }
 
+// Rating comments by tier — each returns a short phrase that fits:
+// "<@user> {comment}, you only have **{rating}** rating! 😤"
+const RATING_COMMENTS: { min: number; max: number; comments: string[] }[] = [
+  { min: 0, max: 10000, comments: [
+    "you REALLY suck",
+    "did you just install the game",
+    "the tutorial called, it wants you back",
+    "I've seen higher numbers on a dice roll",
+    "at least you found the arcade",
+  ]},
+  { min: 10000, max: 12000, comments: [
+    "impressive, as a beginner",
+    "the buttons aren't decorations, you know",
+    "the washing machine plays better",
+    "you're getting there... slowly",
+    "the tutorial is over, right",
+  ]},
+  { min: 12000, max: 13000, comments: [
+    "respectable, git good",
+    "a few months in and still struggling",
+    "most people discover the other buttons by now",
+    "at least you're consistent... consistently mid",
+    "the charts have yet to notice you",
+  ]},
+  { min: 13000, max: 14000, comments: [
+    "decent effort, at least you're trying",
+    "congrats on discovering master charts, sorry about the master charts",
+    "you graduated from expert to master, the scores say you should've been held back",
+    "getting into masters I see, my condolences",
+    "some people reach this in their first month btw",
+  ]},
+  { min: 14000, max: 14500, comments: [
+    "getting there, but you can do better",
+    "the songs are getting harder and your scores are getting... creative",
+    "you've reached the part where talent matters, how's that going",
+    "the hard part starts now, good luck with that",
+    "the gap between your confidence and your scores is showing",
+  ]},
+  { min: 14500, max: 15000, comments: [
+    "welcome to the real maimai",
+    "you've been grinding for this? genuinely asking",
+    "on a scale from 1 to good, you showed up",
+    "so close to not being a beginner anymore",
+    "the real game starts now, your scores suggest you're not ready",
+  ]},
+  { min: 15000, max: 15500, comments: [
+    "not terrible I guess",
+    "congrats on exiting the beginner zone, welcome to mid",
+    "you're no longer a beginner, now you're just regular bad",
+    "you left beginners behind, your scores didn't get the memo",
+    "finally past the tutorial, only took you this long",
+  ]},
+  { min: 15500, max: 16000, comments: [
+    "not bad, not good, room temperature water energy",
+    "starting to look competent, emphasis on 'starting' and 'look'",
+    "you're approaching decent, approaching being the key word",
+    "mid-tier and proud? actually don't answer that",
+    "technically above average, in the way that C+ is above failing",
+  ]},
+  { min: 16000, max: Infinity, comments: [
+    "actually decent, which somehow makes the remaining flaws funnier",
+    "all that effort and you're still not the best in your local arcade",
+    "high enough to know exactly how bad your remaining scores are",
+    "impressive, now explain why you still can't AP a 13+",
+    "not bad, but I've seen better from someone with half your play count",
+  ]},
+];
+
 // Helper function to get playful rating comments
 export function getRatingComment(rating: number): string {
-  if (rating >= 15000) return "not terrible I guess";
-  else if (rating >= 14000) return "getting there, but you can do better";
-  else if (rating >= 13000) return "decent effort, at least you're trying";
-  else if (rating >= 12000) return "respectable, git good";
-  else if (rating >= 11000) return "pretty good, for now";
-  else if (rating >= 10000) return "impressive, as a beginner";
-  else return "you REALLY suck";
+  const tier = RATING_COMMENTS.find(t => rating >= t.min && rating < t.max) ?? RATING_COMMENTS[0];
+  return tier.comments[Math.floor(Math.random() * tier.comments.length)];
 }
 
 // Standard response templates
