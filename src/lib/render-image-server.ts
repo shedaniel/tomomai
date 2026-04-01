@@ -1,7 +1,5 @@
 import { getCachedImageBuffer } from "./image_cacher";
-import { isAprilFools2026JST } from './april-fools';
 import { FontLibrary } from 'skia-canvas';
-import fs from 'fs';
 import path from 'path';
 
 // In-memory cache for fetched images
@@ -45,24 +43,11 @@ export const fontsLoaded = (async () => {
     FontLibrary.use('Noto Sans JP', [path.join(fontsDir, 'NotoSansJP-VariableFont_wght.woff2')]);
     FontLibrary.use('Geist Mono', [path.join(fontsDir, 'GeistMono-VariableFont_wght.woff2')]);
 
-    loadAprilFoolsFonts();
-
     console.log(`✅ Fonts loaded successfully in ${Date.now() - startTime}ms`);
   } catch (error) {
     console.error('❌ Failed to load fonts:', error);
   }
 })();
-
-export function loadAprilFoolsFonts() {
-  if (!isAprilFools2026JST()) return;
-  const comicNeueDir = path.join(process.cwd(), 'node_modules', '@fontsource', 'comic-neue', 'files');
-  const comicNeueFiles = fs.readdirSync(comicNeueDir).filter(f => f.endsWith('.woff2')).map(f => path.join(comicNeueDir, f));
-  FontLibrary.use('Comic Neue', comicNeueFiles);
-
-  const hachiDir = path.join(process.cwd(), 'node_modules', '@fontsource', 'zen-maru-gothic', 'files');
-  const hachiFiles = fs.readdirSync(hachiDir).filter(f => f.endsWith('.woff2')).map(f => path.join(hachiDir, f));
-  FontLibrary.use('Zen Maru Gothic', hachiFiles);
-}
 
 // Server-only function for fetching images with Node.js modules
 export async function fetchImageForServer(url: string): Promise<string> {

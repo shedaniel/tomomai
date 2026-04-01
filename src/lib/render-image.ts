@@ -7,7 +7,6 @@ import { calculateDXStars, calculateNoteLosses, distributeBreaks } from './score
 import type { Difficulty, FullCombo, FullSync, SongType, TitleType } from "./types";
 import { SnapshotWithSongs } from "./types";
 import { getTypeBadgeUrl } from "./utils";
-import { isAprilFools2026JST } from './april-fools';
 import { VersionId } from './metadata';
 
 type CanvasSize = {
@@ -28,13 +27,8 @@ const PADDING = 36;
 
 const FONT_FAMILY_DEFAULT = 'Inter, Murecho, "Noto Sans JP"';
 const FONT_FAMILY_MONO_DEFAULT = '"Geist Mono"';
-const FONT_FAMILY_APRIL_FOOLS = '"Comic Neue", "Zen Maru Gothic", Inter, Murecho, "Noto Sans JP"';
-const FONT_FAMILY_MONO_APRIL_FOOLS = '"Comic Neue", "Zen Maru Gothic", "Geist Mono"';
 
 function font(weight: number, size: number | string, mono: boolean = false) {
-  if (isAprilFools2026JST()) {
-    return `${weight} ${size}px ${mono ? FONT_FAMILY_MONO_APRIL_FOOLS : FONT_FAMILY_APRIL_FOOLS}`;
-  }
   return `${weight} ${size}px ${mono ? FONT_FAMILY_MONO_DEFAULT : FONT_FAMILY_DEFAULT}`;
 }
 
