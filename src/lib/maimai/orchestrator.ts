@@ -10,10 +10,19 @@ import { decryptToken } from "../token-crypto";
 import { Region } from "../types";
 import {
   getCookiesFromRedirect,
+  parseDivingFishToken,
   parseLxnsToken,
   processMaimaiToken,
   TokenValidationResult,
 } from "@/server/services/maimai-login";
+import {
+  DivingFishAuthError,
+  DivingFishPrivacyError,
+  DivingFishUserNotFoundError,
+  fetchDivingFishRecordsByDevToken,
+} from "./divingfish/client";
+import { parseDivingFishPlayerData } from "./player/divingfish-parse";
+import { parseDivingFishScoresData } from "./songs/divingfish-parse";
 import { persistAlbumData } from "./albums/persist";
 import { fetchAlbumData } from "./albums/fetch";
 import { fetchEventsData } from "./events/fetch";
@@ -107,11 +116,13 @@ const scrapeFetcher: DataFetcher = async ({ userId: _userId, region, sessionId, 
 
   appendFetchState(sessionId, FETCH_STATES.LOGIN);
 
-  const cookies = await getCookiesFromRedirect(
-    region,
-    validation.redirectUrl,
-    validation.cookies || null,
-  );
+  const cookies = validation.cookiesReady && validation.cookies
+    ? validation.cookies
+    : await getCookiesFromRedirect(
+        region,
+        validation.redirectUrl,
+        validation.cookies || null,
+      );
   const playerDataHtml = await fetchPlayerData(region, cookies, validation.redirectUrl);
 
   logger.info("Starting player data extraction and songs data fetch...");
@@ -125,10 +136,15 @@ const scrapeFetcher: DataFetcher = async ({ userId: _userId, region, sessionId, 
       appendFetchState(sessionId, FETCH_STATES.RECENT_SONGS);
       return data;
     }),
-    fetchAlbumData(cookies, region).then((data) => {
-      appendFetchState(sessionId, FETCH_STATES.ALBUM_DATA);
-      return data;
-    }),
+    region === "cn"
+      ? Promise.resolve([] as AlbumData[]).then((data) => {
+          appendFetchState(sessionId, FETCH_STATES.ALBUM_DATA);
+          return data;
+        })
+      : fetchAlbumData(cookies, region).then((data) => {
+          appendFetchState(sessionId, FETCH_STATES.ALBUM_DATA);
+          return data;
+        }),
   ]);
   logger.info("Player data extraction and songs data fetch completed");
 
@@ -210,8 +226,57 @@ const lxnsFetcher: DataFetcher = async ({ userId, region, sessionId, validation 
   };
 };
 
+const divingfishFetcher: DataFetcher = async ({ userId, region, sessionId, validation }) => {
+  if (region !== "cn") {
+    throw new Error(`divingfish fetcher is only supported for CN region (got ${region})`);
+  }
+  if (!validation.token) {
+    throw new Error("divingfish validation result is missing token");
+  }
+  const parsed = parseDivingFishToken(validation.token);
+  if (!parsed) {
+    throw new Error("Failed to parse divingfish token");
+  }
+
+  appendFetchState(sessionId, FETCH_STATES.LOGIN);
+
+  let response;
+  try {
+    response = await fetchDivingFishRecordsByDevToken(parsed);
+  } catch (error) {
+    if (error instanceof DivingFishUserNotFoundError || error instanceof DivingFishPrivacyError) {
+      logger.warn(`[divingfish] user inaccessible for user=${userId}, deleting token`);
+      await deleteToken(userId, region);
+      throw new Error("Session expired or invalid. Please provide a new token.");
+    }
+    if (error instanceof DivingFishAuthError) {
+      logger.error({ error }, "[divingfish] dev token rejected by server");
+      throw error;
+    }
+    throw error;
+  }
+
+  const playerData = parseDivingFishPlayerData(response);
+  appendFetchState(sessionId, FETCH_STATES.PLAYER_DATA);
+  const allSongsData = parseDivingFishScoresData(response.records);
+
+  return {
+    playerData,
+    allSongsData,
+    recentSongsData: [],
+    albumData: [],
+    eventsData: null,
+  };
+};
+
 function pickFetcher(region: Region, rawToken: string): DataFetcher {
   if (rawToken.startsWith("cookie://") || rawToken.startsWith("account://")) {
+    return scrapeFetcher;
+  }
+  if (rawToken.startsWith("cn-cookies://")) {
+    if (region !== "cn") {
+      throw new Error(`cn-cookies:// token is only valid for CN region (got ${region})`);
+    }
     return scrapeFetcher;
   }
   if (rawToken.startsWith("lxns://")) {
@@ -219,6 +284,12 @@ function pickFetcher(region: Region, rawToken: string): DataFetcher {
       throw new Error(`lxns:// token is only valid for CN region (got ${region})`);
     }
     return lxnsFetcher;
+  }
+  if (rawToken.startsWith("divingfish://")) {
+    if (region !== "cn") {
+      throw new Error(`divingfish:// token is only valid for CN region (got ${region})`);
+    }
+    return divingfishFetcher;
   }
   throw new Error(`Unsupported token provider for region ${region}`);
 }

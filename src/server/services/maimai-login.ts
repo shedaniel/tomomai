@@ -12,6 +12,9 @@ export interface TokenValidationResult {
   error?: string;
   cookies?: string;
   token?: string;
+  // True when `cookies` are already a fully-authenticated maimai-mobile
+  // session and don't need an additional getCookiesFromRedirect exchange.
+  cookiesReady?: boolean;
 }
 
 export async function processMaimaiToken(
@@ -172,6 +175,70 @@ export async function processMaimaiToken(
     return refreshed;
   }
 
+  // Handle cn-cookies:// format (maimai-mobile session cookies for CN,
+  // captured via the WeChat OAuth → HTTP-proxy flow). Returns the cookies
+  // verbatim plus a maimai-mobile referer so the existing scrapeFetcher
+  // pipeline can consume them like any other cookie-based session.
+  if (sanitizedToken.startsWith('cn-cookies://')) {
+    if (region !== "cn") {
+      return {
+        isValid: false,
+        error: "cn-cookies:// token format is only supported for CN region.",
+      };
+    }
+    const parsed = parseCnCookiesToken(sanitizedToken);
+    if (!parsed) {
+      logger.info("Invalid cn-cookies token format, removing from database");
+      if (userId) {
+        await deleteToken(userId, region);
+      }
+      return {
+        isValid: false,
+        error: "Invalid cn-cookies token format.",
+      };
+    }
+    return {
+      isValid: true,
+      redirectUrl: "https://maimai.wahlap.com/maimai-mobile/",
+      cookies: parsed.cookies,
+      cookiesReady: true,
+    };
+  }
+
+  // Handle divingfish:// format
+  if (sanitizedToken.startsWith('divingfish://')) {
+    if (region !== "cn") {
+      return {
+        isValid: false,
+        error: "divingfish:// token format is only supported for CN region.",
+      };
+    }
+
+    const parsed = parseDivingFishToken(sanitizedToken);
+    if (!parsed) {
+      logger.info("Invalid divingfish token format, removing from database");
+      if (userId) {
+        await deleteToken(userId, region);
+      }
+      return {
+        isValid: false,
+        error: "Invalid divingfish token format. Expected divingfish://<username|qq>:://<value>",
+      };
+    }
+
+    if (!process.env.DIVINGFISH_DEV_TOKEN) {
+      return {
+        isValid: false,
+        error: "diving-fish is not configured on the server.",
+      };
+    }
+
+    return {
+      isValid: true,
+      token: sanitizedToken,
+    };
+  }
+
   // Invalid token format
   logger.info("Invalid token format, removing from database");
   if (userId) {
@@ -179,8 +246,45 @@ export async function processMaimaiToken(
   }
   return {
     isValid: false,
-    error: "Invalid token format. Token must start with 'cookie://', 'account://', or 'lxns://'",
+    error: "Invalid token format. Token must start with 'cookie://', 'account://', 'lxns://', 'divingfish://', or 'cn-cookies://'",
   };
+}
+
+export interface ParsedDivingFishToken {
+  kind: "username" | "qq";
+  value: string;
+}
+
+export function parseDivingFishToken(token: string): ParsedDivingFishToken | null {
+  if (!token.startsWith('divingfish://')) return null;
+  const body = token.substring('divingfish://'.length);
+  const parts = body.split(':://');
+  if (parts.length !== 2) return null;
+  const [kind, value] = parts;
+  if ((kind !== "username" && kind !== "qq") || !value) return null;
+  return { kind, value };
+}
+
+export function formatDivingFishToken(parts: ParsedDivingFishToken): string {
+  return `divingfish://${parts.kind}:://${parts.value}`;
+}
+
+export async function saveDivingFishToken(userId: string, formattedToken: string): Promise<void> {
+  const encrypted = encryptToken(formattedToken);
+  try {
+    await db.insert(userTokens).values({
+      userId,
+      region: "cn",
+      token: encrypted,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+  } catch {
+    await db
+      .update(userTokens)
+      .set({ token: encrypted, updatedAt: new Date() })
+      .where(and(eq(userTokens.userId, userId), eq(userTokens.region, "cn")));
+  }
 }
 
 interface ParsedLxnsToken {
@@ -319,6 +423,35 @@ export async function exchangeLxnsCode(
   } catch (error) {
     logger.error({ error }, "lxns code exchange threw");
     return { isValid: false, error: "Network error during lxns code exchange." };
+  }
+}
+
+export function formatCnCookiesToken(cookies: string): string {
+  return `cn-cookies://${cookies}`;
+}
+
+export function parseCnCookiesToken(token: string): { cookies: string } | null {
+  if (!token.startsWith("cn-cookies://")) return null;
+  const cookies = token.substring("cn-cookies://".length);
+  if (!cookies) return null;
+  return { cookies };
+}
+
+export async function saveCnCookiesToken(userId: string, formattedToken: string): Promise<void> {
+  const encrypted = encryptToken(formattedToken);
+  try {
+    await db.insert(userTokens).values({
+      userId,
+      region: "cn",
+      token: encrypted,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+  } catch {
+    await db
+      .update(userTokens)
+      .set({ token: encrypted, updatedAt: new Date() })
+      .where(and(eq(userTokens.userId, userId), eq(userTokens.region, "cn")));
   }
 }
 

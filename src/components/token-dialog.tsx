@@ -10,7 +10,7 @@ interface TokenDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   onTokenUpdate: (token: string) => Promise<void>;
-  startSessionPolling?: (region: "intl" | "jp", onSessionDetected?: () => void) => void;
+  startSessionPolling?: (region: Region, onSessionDetected?: () => void) => void;
   stopSessionPolling?: () => void;
 }
 
@@ -38,6 +38,8 @@ export function TokenDialog({
         isOpen={isOpen}
         onOpenChange={onOpenChange}
         onTokenUpdate={onTokenUpdate}
+        startSessionPolling={startSessionPolling}
+        stopSessionPolling={stopSessionPolling}
       />
     );
   }

@@ -1,3 +1,4 @@
+import { normalizeName } from "@/lib/name-utils";
 import { DIFFICULTY_ENUM } from "../../db/types";
 import { logger } from "../../logger";
 import type { Difficulty, FullCombo, FullSync, SongType } from "../../types";
@@ -89,7 +90,7 @@ export function parseLxnsScoresData(scores: LxnsScore[]): { [difficulty: number]
     const fs: FullSync = score.fs ? (FS_MAP[score.fs] ?? "none") : "none";
 
     const entry: ScoreData = {
-      songName: score.song_name,
+      songName: normalizeName(score.song_name),
       level: score.level,
       musicType,
       difficulty: diff.difficulty,

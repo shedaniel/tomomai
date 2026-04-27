@@ -75,6 +75,40 @@
 | `NEXT_PUBLIC_ENABLED_REGIONS` | No | Comma-separated list of enabled regions |
 | `DEMO_FETCH` | No | Set to `true` to use demo data for fetching |
 
+### China Fetcher Providers
+
+These power the four options in the CN token dialog. All variables are optional — if a provider's variables are unset, that option is shown as "尚未配置" in the dialog and the rest of the providers continue to work.
+
+#### Diving-Fish (水鱼查分器)
+
+| Variable | Required | Description |
+|---|---|---|
+| `DIVINGFISH_DEV_TOKEN` | For diving-fish | Developer token issued by diving-fish, used to verify account ownership via the nickname challenge or import-token flows |
+
+#### Lxns (落雪咖啡屋查分器)
+
+| Variable | Required | Description |
+|---|---|---|
+| `LXNS_CLIENT_ID` | For lxns | OAuth client ID issued by lxns |
+| `LXNS_CLIENT_SECRET` | For lxns | OAuth client secret issued by lxns |
+
+#### HTTP Proxy (CN OAuth interception)
+
+Used by the WeChat OAuth → HTTP-proxy flow. The proxy itself lives in `proxy/` and must be deployed to a host reachable from the user's phone (typically Aliyun HK / mainland CN).
+
+| Variable | Required | Description |
+|---|---|---|
+| `CN_PROXY_HOST` (or `NEXT_PUBLIC_CN_PROXY_HOST`) | For HTTP proxy | Hostname/IP the user's phone should set as its HTTP proxy (displayed in the dialog) |
+| `CN_PROXY_PORT` (or `NEXT_PUBLIC_CN_PROXY_PORT`) | No | Proxy port displayed in the dialog (defaults to `2560`) |
+| `CN_PROXY_TOKEN_SECRET` | For HTTP proxy | HMAC secret for signing the JWT embedded in the WeChat OAuth link; the proxy forwards it back so the webhook can identify the user. Generate with `openssl rand -base64 32` |
+| `DEBUG_CN_FETCH` | No | When set (any truthy value), the `/api/cn-proxy/callback` webhook skips the server-side cookie capture and just logs the `maimai-mobile/?t=…` link so you can open it manually in a browser to inspect CSS/HTML. No fetch session is started while this is on. |
+
+The proxy process itself reads its own env vars (`PROXY_PORT`, `WEBHOOK_URL`, `RESULT_URL`) — see `proxy/README.md`.
+
+#### Android App
+
+Not yet implemented; no env vars.
+
 ### Vercel (auto-set by platform)
 
 | Variable | Description |

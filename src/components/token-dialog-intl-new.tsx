@@ -12,6 +12,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { trpc } from "@/lib/trpc-client";
+import type { Region } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { ChevronRight, Cookie, Copy, Eye, EyeOff, Key, Lock, Monitor, Save, Smartphone } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
@@ -24,7 +25,7 @@ interface TokenDialogIntlNewProps {
   onOpenChange: (open: boolean) => void;
   onTokenUpdate: (token: string) => Promise<void>;
   // Session polling functions from parent
-  startSessionPolling?: (region: "intl" | "jp", onSessionDetected?: () => void) => void;
+  startSessionPolling?: (region: Region, onSessionDetected?: () => void) => void;
   stopSessionPolling?: () => void;
 }
 

@@ -4,7 +4,9 @@ import { Region } from "../types";
 const USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36";
 
 export function maimaiBaseUrl(region: Region): string {
-  return region === "jp" ? "https://maimaidx.jp" : "https://maimaidx-eng.com";
+  if (region === "jp") return "https://maimaidx.jp";
+  if (region === "cn") return "https://maimai.wahlap.com";
+  return "https://maimaidx-eng.com";
 }
 
 // Authenticated GET against the maimai mobile site, mimicking the headers

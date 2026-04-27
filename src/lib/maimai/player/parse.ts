@@ -2,6 +2,7 @@ import { load } from "cheerio";
 import { logger } from "../../logger";
 import { Region, TitleType } from "../../types";
 import type { PlayerData } from "../types";
+import { maimaiBaseUrl } from "../http";
 
 export function parsePlayerData(html: string, region: Region): Omit<PlayerData, "iconBase64"> {
   const $ = load(html);
@@ -22,7 +23,7 @@ export function parsePlayerData(html: string, region: Region): Omit<PlayerData, 
     throw new Error("User icon element found but src attribute is missing");
   }
 
-  const iconUrl = iconSrc.startsWith('http') ? iconSrc : `https://maimaidx-eng.com${iconSrc}`;
+  const iconUrl = iconSrc.startsWith('http') ? iconSrc : `${maimaiBaseUrl(region)}${iconSrc}`;
   logger.debug(`Extracted icon URL: ${iconUrl}`);
 
   // Extract display name
@@ -91,8 +92,14 @@ export function parsePlayerData(html: string, region: Region): Omit<PlayerData, 
   const playCountText = playCountElement.text().trim();
   logger.debug(`Play count text: ${playCountText}`);
 
-  const playCountRegex = region === "jp" ? /現バージョンプレイ回数[：:]\s*([\d,]+)/ : /play count of current version[：:]\s*([\d,]+)/;
-  const totalPlayCountRegex = region === "jp" ? /累計プレイ回数[：:]\s*([\d,]+)/ : /maimaiDX total play count[：:]\s*([\d,]+)/;
+  const playCountRegex =
+    region === "jp" ? /現バージョンプレイ回数[：:]\s*([\d,]+)/
+    : region === "cn" ? /当前版本的游玩次数[：:]\s*([\d,]+)/
+    : /play count of current version[：:]\s*([\d,]+)/;
+  const totalPlayCountRegex =
+    region === "jp" ? /累計プレイ回数[：:]\s*([\d,]+)/
+    : region === "cn" ? /舞萌DX的累计游玩次数[：:]\s*([\d,]+)/
+    : /maimaiDX total play count[：:]\s*([\d,]+)/;
 
   // Parse version play count: "play count of current version：195"
   const versionPlayCountMatch = playCountText.match(playCountRegex);

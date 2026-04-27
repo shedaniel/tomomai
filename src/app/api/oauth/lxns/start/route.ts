@@ -5,7 +5,7 @@ import { resolveBaseUrl } from "@/lib/base-url";
 import { logger } from "@/lib/logger";
 
 const AUTHORIZE_URL = "https://maimai.lxns.net/oauth/authorize";
-const SCOPES = ["read_player", "read_user_profile", "read_player_scores"];
+const SCOPES = ["read_player", "read_user_profile"];
 const STATE_COOKIE = "lxns_oauth_state";
 const STATE_TTL_SECONDS = 600;
 
