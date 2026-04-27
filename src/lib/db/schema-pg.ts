@@ -190,23 +190,6 @@ export const songs = pgTable("songs", {
   index("songs_songname_type_idx").on(table.songName, table.type),
 ]);
 
-// Legacy table — reads/writes now use scoreData + snapshotScores + snapshotB50.
-// Kept for prod backfill migration; will be dropped after prod migration completes.
-export const userScores = pgTable("user_scores", {
-  id: bigint("id", { mode: "bigint" }).primaryKey().generatedAlwaysAsIdentity(), // Internal only, never exposed
-  snapshotId: integer("snapshotId").notNull().references(() => userSnapshots.id, { onDelete: "cascade" }),
-  songId: bigint("songId", { mode: "bigint" }).notNull().references(() => songs.id, { onDelete: "cascade" }),
-  achievement: integer("achievement").notNull(), // stored as 10000x, e.g., 99.1234% = 991234 (max 1010000)
-  dxScore: smallint("dxScore").notNull(),
-  fc: fcEnum("fc").notNull(),
-  fs: fsEnum("fs").notNull(),
-  rank: smallint("rank"), // Rank of the song in the snapshot (0-based). null = uncalculated, 0-49 = B50, 50+ = not in B50
-}, (table) => [
-  index("user_scores_snapshotid_rank_idx").on(table.snapshotId, table.rank),
-  index("user_scores_snapshotid_songid_idx").on(table.snapshotId, table.songId),
-  index("user_scores_songid_idx").on(table.songId),
-]);
-
 export const scoreData = pgTable("score_data", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   songId: bigint("songId", { mode: "bigint" }).notNull().references(() => songs.id, { onDelete: "cascade" }),
