@@ -10,6 +10,7 @@ export type PrepareDataResult =
   | {
       type: "success";
       data: SnapshotWithSongs<SongForRender>;
+      region: Region;
       visitableProfileAt: string | null;
     }
   | {
@@ -49,6 +50,7 @@ export async function prepareExportImageData(
             fs: s.fs,
           })),
         },
+        region: reservedRegion,
         visitableProfileAt: reservedUsername,
       };
     }
@@ -112,6 +114,7 @@ export async function prepareExportImageData(
       },
       songs: songsWithScores,
     },
+    region: snapshot[0].region,
     visitableProfileAt,
   };
 }

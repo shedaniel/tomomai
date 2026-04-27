@@ -147,7 +147,7 @@ export function DataContent({
       name: t('dataContent.tabs.albums'),
       value: "albums",
       icon: Images,
-      show: visitedBySelf && flags.albumsCard,
+      show: visitedBySelf && flags.albumsCard && region !== "cn",
     },
     {
       name: t('dataContent.tabs.map'),

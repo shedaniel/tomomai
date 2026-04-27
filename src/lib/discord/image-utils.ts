@@ -9,7 +9,7 @@ import { ImageCache, renderLastCreditImage } from '@/lib/render-image';
 import { fetchImageForServer } from '@/lib/render-image-server';
 import { Image, loadImage } from 'skia-canvas';
 import { getRatingImageUrl } from '@/lib/rating-calculator';
-import { getTypeBadgeUrl } from '@/lib/utils';
+import { getLogoUrl, getTypeBadgeUrl } from '@/lib/utils';
 import { DIFFICULTY_ENUM } from '@/lib/db/types';
 
 export interface SnapshotData {
@@ -229,7 +229,7 @@ export async function generateAndSendCreditImage({
       `/res/trophy/gold.png`,
       `/res/trophy/rainbow.png`,
       `/res/character/${snapshot.gameVersion}.png`,
-      `/res/logo/${snapshot.gameVersion}.png`,
+      getLogoUrl(snapshot.gameVersion, region),
       `/res/bg/${snapshot.gameVersion}.png`,
       `/res/bg/${snapshot.gameVersion}_long.png`,
       `/res/badge/${snapshot.gameVersion}/none.png`,
@@ -272,7 +272,7 @@ export async function generateAndSendCreditImage({
     );
 
     // Render the image
-    const canvas = await renderLastCreditImage(credit, snapshot, cache);
+    const canvas = await renderLastCreditImage(credit, snapshot, region, cache);
     const imageBuffer = Buffer.from(await canvas.toBuffer('jpg', { density: 2, quality: 0.9 }));
 
     // Create embed data

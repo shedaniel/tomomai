@@ -15,6 +15,13 @@ export const miscRouter = router({
       return { flags: selectableFlags };
     }),
 
+  getLxnsOAuthConfigured: publicProcedure
+    .query(async () => {
+      return {
+        configured: !!process.env.LXNS_CLIENT_ID && !!process.env.LXNS_CLIENT_SECRET,
+      };
+    }),
+
   getPolicies: publicProcedure
     .query(async () => {
       const tosPath = join(process.cwd(), 'public', 'tos');

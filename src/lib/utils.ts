@@ -35,6 +35,10 @@ export function getTypeBadgeUrl(type: "dx" | "std" | string): string {
   return `${process.env.NEXT_PUBLIC_R2_URL}/covers/${basename}.webp`;
 }
 
+export function getLogoUrl(gameVersion: number, region: "intl" | "jp" | "cn"): string {
+  return `/res/logo/${gameVersion}${region === "cn" ? "_cn" : ""}.png`;
+}
+
 // Utility function to handle maimaidx image URLs with SSL issues
 // Sync version for client-side React components
 export function createSafeMaimaiImageUrl(originalUrl: string): string {

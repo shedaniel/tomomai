@@ -70,4 +70,5 @@ export const userRouter = router({
   // Misc
   getUserSelectableFlags: miscRouter.getUserSelectableFlags,
   getPolicies: miscRouter.getPolicies,
+  getLxnsOAuthConfigured: miscRouter.getLxnsOAuthConfigured,
 });

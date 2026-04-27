@@ -4,7 +4,7 @@ import { fetchImageForServer, fontsLoaded } from '@/lib/render-image-server';
 import type { Region } from '@/lib/types';
 import { NextRequest, NextResponse } from 'next/server';
 import { Image, loadImage } from 'skia-canvas';
-import { getTypeBadgeUrl } from '@/lib/utils';
+import { getLogoUrl, getTypeBadgeUrl } from '@/lib/utils';
 import { prepareExportImageData } from '@/server/queries/export-image';
 
 export const dynamic = "force-dynamic";
@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: prepareDataResult.error }, { status: 404 });
     }
 
-    const { data, visitableProfileAt } = prepareDataResult;
+    const { data, region: snapshotRegion, visitableProfileAt } = prepareDataResult;
 
     // Pre-cache images
     console.log('🖼️ Pre-caching images...');
@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
       `/res/trophy/gold.png`,
       `/res/trophy/rainbow.png`,
       `/res/character/${data.snapshot.gameVersion}.png`,
-      `/res/logo/${data.snapshot.gameVersion}.png`,
+      getLogoUrl(data.snapshot.gameVersion, snapshotRegion),
       `/res/bg/${data.snapshot.gameVersion}.png`,
       `/res/badge/${data.snapshot.gameVersion}/none.png`,
       `/res/badge/${data.snapshot.gameVersion}/sync.png`,
@@ -68,25 +68,42 @@ export async function GET(request: NextRequest) {
     ];
 
     const cache: ImageCache = {};
+    const failedImages: { url: string; error: unknown }[] = [];
     await Promise.all(
       imagesToCache.map(async (url) => {
+        if (url.startsWith('data:')) return;
         try {
-          if (url.startsWith('data:')) return;
-          return fetchImageForServer(url).then(async img => {
-            let memo: Image | null = null;
-            cache[url] = async () => memo || (memo = await loadImage(img));
-          });
+          const img = await fetchImageForServer(url);
+          let memo: Image | null = null;
+          cache[url] = async () => memo || (memo = await loadImage(img));
         } catch (error) {
-          console.warn(`⚠️ Failed to cache image: ${url}`, error);
+          failedImages.push({ url, error });
+          console.warn(`⚠️ Failed to cache image: ${url}`, error instanceof Error ? error.message : error);
         }
       })
     );
+    if (failedImages.length > 0) {
+      console.error(`❌ ${failedImages.length} image(s) failed to load:`);
+      for (const { url, error } of failedImages) {
+        console.error(`   - ${url} → ${error instanceof Error ? error.message : String(error)}`);
+      }
+      return NextResponse.json(
+        {
+          error: 'Failed to fetch one or more images',
+          failed: failedImages.map(({ url, error }) => ({
+            url,
+            message: error instanceof Error ? error.message : String(error),
+          })),
+        },
+        { status: 502 }
+      );
+    }
     console.log(`✅ Cached ${Object.keys(cache).length} images in ${Date.now() - startTime}ms`);
 
     // Render the image using skia-canvas
     console.log('🎨 Rendering image with skia-canvas...');
     startTime = Date.now();
-    const canvas = await renderImage(data, cache, visitableProfileAt);
+    const canvas = await renderImage(data, snapshotRegion, cache, visitableProfileAt);
     console.log(`✅ Image rendered in ${Date.now() - startTime}ms`);
 
     // Convert canvas to WEBP buffer

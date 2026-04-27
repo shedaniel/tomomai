@@ -4,9 +4,9 @@ import { Canvas, Image, loadImage } from 'skia-canvas';
 import { CANVAS_HEIGHT, CANVAS_WIDTH } from './image-spec';
 import { getRatingImageUrl, RatingCalculationInput, splitSongs } from "./rating-calculator";
 import { calculateDXStars, calculateNoteLosses, distributeBreaks } from './score-details';
-import type { Difficulty, FullCombo, FullSync, SongType, TitleType } from "./types";
+import type { Difficulty, FullCombo, FullSync, Region, SongType, TitleType } from "./types";
 import { SnapshotWithSongs } from "./types";
-import { getTypeBadgeUrl } from "./utils";
+import { getLogoUrl, getTypeBadgeUrl } from "./utils";
 import { VersionId } from './metadata';
 import { resolveBaseUrl } from './base-url';
 
@@ -142,13 +142,13 @@ async function loadImageWithCache(cache: ImageCache, url: string): Promise<Image
   return img;
 }
 
-export async function renderImage(data: SnapshotWithSongs<SongForRender>, cache: ImageCache, visitableProfileAt: string | null): Promise<Canvas> {
+export async function renderImage(data: SnapshotWithSongs<SongForRender>, region: Region, cache: ImageCache, visitableProfileAt: string | null): Promise<Canvas> {
   const canvasSize = { width: CANVAS_WIDTH, height: CANVAS_HEIGHT };
   const canvas = new Canvas(canvasSize.width, canvasSize.height);
   const ctx = canvas.getContext('2d') as SkiaContext;
 
   await renderBackground(ctx, data.snapshot.gameVersion, false, cache, canvasSize);
-  const overlayRect = await renderHeader(ctx, data.snapshot, cache, canvasSize);
+  const overlayRect = await renderHeader(ctx, { ...data.snapshot, region }, cache, canvasSize);
   await renderContent(ctx, data, cache, overlayRect);
   const baseUrl = resolveBaseUrl();
   const footerText = visitableProfileAt
@@ -159,14 +159,14 @@ export async function renderImage(data: SnapshotWithSongs<SongForRender>, cache:
   return canvas;
 }
 
-export async function renderLastCreditImage(data: CreditData, snapshot: SnapshotMetadata, cache: ImageCache): Promise<Canvas> {
+export async function renderLastCreditImage(data: CreditData, snapshot: SnapshotMetadata, region: Region, cache: ImageCache): Promise<Canvas> {
   const long = data.tracks.length >= 4;
   const canvasSize = { width: CANVAS_WIDTH, height: !long ? 2420 : 3100 };
   const canvas = new Canvas(canvasSize.width, canvasSize.height);
   const ctx = canvas.getContext('2d') as SkiaContext;
 
   await renderBackground(ctx, snapshot.gameVersion, true, cache, canvasSize);
-  const overlayRect = await renderHeader(ctx, snapshot, cache, canvasSize);
+  const overlayRect = await renderHeader(ctx, { ...snapshot, region }, cache, canvasSize);
   await renderLastCreditContent(ctx, data, cache, overlayRect);
   const footerText = `Recent credit at ${data.playedAt.toLocaleString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tokyo' })}, generated with ${resolveBaseUrl()}/`;
   await renderFooter(ctx, snapshot.gameVersion, footerText, canvasSize);
@@ -212,7 +212,7 @@ async function renderHeaderBackground(
   ctx.restore();
 
   // Render logo with shadow
-  const logoImg = await loadImageWithCache(cache, `/res/logo/${data.gameVersion}.png`);
+  const logoImg = await loadImageWithCache(cache, getLogoUrl(data.gameVersion, data.region));
   const logoScale = (TARGET_HEIGHT - INNER_PADDING * 2) / logoImg.height * (versionSettings?.logoScale || 1.0);
   const logoWidth = logoImg.width * logoScale;
   const logoHeight = logoImg.height * logoScale;
@@ -264,6 +264,7 @@ type HeaderData = {
   classRankUrl: string;
   courseRankUrl: string;
   gameVersion: number;
+  region: Region;
 };
 
 async function renderHeader(ctx: SkiaContext, data: HeaderData, cache: ImageCache, canvas: CanvasSize): Promise<OverlayRect> {
@@ -344,8 +345,8 @@ async function renderHeader(ctx: SkiaContext, data: HeaderData, cache: ImageCach
   // Render class rank
   const classRankImg = await loadImageWithCache(cache, data.classRankUrl);
   const classRankScale = 0.7;
-  const classRankWidth = classRankImg.width * classRankScale;
-  const classRankHeight = classRankImg.height * classRankScale;
+  const classRankWidth = 126 * classRankScale;
+  const classRankHeight = classRankImg.height * (classRankWidth / classRankImg.width);
   const classRankLeft = ratingLeft + ratingWidth + 10;
   const classRankTop = ratingTop + ratingHeight / 2 - classRankHeight / 2;
   ctx.drawImage(classRankImg, classRankLeft, classRankTop, classRankWidth, classRankHeight);
@@ -353,8 +354,8 @@ async function renderHeader(ctx: SkiaContext, data: HeaderData, cache: ImageCach
   // Render course rank
   const courseRankImg = await loadImageWithCache(cache, data.courseRankUrl);
   const courseRankScale = 0.6;
-  const courseRankWidth = courseRankImg.width * courseRankScale;
-  const courseRankHeight = courseRankImg.height * courseRankScale;
+  const courseRankWidth = 175 * courseRankScale;
+  const courseRankHeight = courseRankImg.height * (courseRankWidth / courseRankImg.width);
   const courseRankLeft = classRankLeft + classRankWidth + 10;
   const courseRankTop = ratingTop + ratingHeight / 2 - courseRankHeight / 2;
   ctx.drawImage(courseRankImg, courseRankLeft, courseRankTop, courseRankWidth, courseRankHeight);

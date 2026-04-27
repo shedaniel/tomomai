@@ -123,6 +123,55 @@ export async function processMaimaiToken(
     return await performAccountLogin(userId, region, username, password);
   }
 
+  // Handle lxns:// format
+  if (sanitizedToken.startsWith('lxns://')) {
+    if (region !== "cn") {
+      return {
+        isValid: false,
+        error: "lxns:// token format is only supported for CN region.",
+      };
+    }
+
+    const parsed = parseLxnsToken(sanitizedToken);
+    if (!parsed) {
+      logger.info("Invalid lxns token format, removing from database");
+      if (userId) {
+        await deleteToken(userId, region);
+      }
+      return {
+        isValid: false,
+        error: "Invalid lxns token format. Expected lxns://<access>:://<refresh>:://<expiresAtMs>:://<scope>",
+      };
+    }
+
+    // Reuse access token if not within 30s of expiry
+    if (Date.now() < parsed.expiresAtMs - 30_000) {
+      const ttlSec = Math.round((parsed.expiresAtMs - Date.now()) / 1000);
+      logger.debug(`[lxns oauth] reusing cached access token for user=${userId} (ttl=${ttlSec}s)`);
+      return {
+        isValid: true,
+        token: sanitizedToken,
+      };
+    }
+
+    // Refresh
+    logger.debug(`[lxns oauth] access token expired/near-expiry for user=${userId}, refreshing`);
+    const refreshed = await refreshLxnsToken(parsed.refreshToken);
+    if (!refreshed.isValid || !refreshed.token) {
+      logger.warn("lxns refresh failed, deleting token");
+      if (userId) {
+        await deleteToken(userId, region);
+      }
+      return refreshed;
+    }
+
+    if (userId) {
+      await saveLxnsToken(userId, refreshed.token);
+      logger.info(`[lxns oauth] refreshed token saved for user=${userId}`);
+    }
+    return refreshed;
+  }
+
   // Invalid token format
   logger.info("Invalid token format, removing from database");
   if (userId) {
@@ -130,8 +179,147 @@ export async function processMaimaiToken(
   }
   return {
     isValid: false,
-    error: "Invalid token format. Token must start with 'cookie://' or 'account://'",
+    error: "Invalid token format. Token must start with 'cookie://', 'account://', or 'lxns://'",
   };
+}
+
+interface ParsedLxnsToken {
+  accessToken: string;
+  refreshToken: string;
+  expiresAtMs: number;
+  scope: string;
+}
+
+export function parseLxnsToken(token: string): ParsedLxnsToken | null {
+  if (!token.startsWith('lxns://')) return null;
+  const body = token.substring('lxns://'.length);
+  const parts = body.split(':://');
+  if (parts.length !== 4) return null;
+  const [accessToken, refreshToken, expiresAtRaw, scope] = parts;
+  const expiresAtMs = Number(expiresAtRaw);
+  if (!accessToken || !refreshToken || !Number.isFinite(expiresAtMs)) return null;
+  return { accessToken, refreshToken, expiresAtMs, scope };
+}
+
+export function formatLxnsToken(parts: ParsedLxnsToken): string {
+  return `lxns://${parts.accessToken}:://${parts.refreshToken}:://${parts.expiresAtMs}:://${parts.scope}`;
+}
+
+export async function saveLxnsToken(userId: string, formattedToken: string): Promise<void> {
+  const encrypted = encryptToken(formattedToken);
+  try {
+    await db.insert(userTokens).values({
+      userId,
+      region: "cn",
+      token: encrypted,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+  } catch {
+    await db
+      .update(userTokens)
+      .set({ token: encrypted, updatedAt: new Date() })
+      .where(and(eq(userTokens.userId, userId), eq(userTokens.region, "cn")));
+  }
+}
+
+const LXNS_TOKEN_URL = "https://maimai.lxns.net/api/v0/oauth/token";
+
+export async function refreshLxnsToken(refreshToken: string): Promise<TokenValidationResult> {
+  const clientId = process.env.LXNS_CLIENT_ID;
+  const clientSecret = process.env.LXNS_CLIENT_SECRET;
+  if (!clientId || !clientSecret) {
+    return { isValid: false, error: "lxns OAuth is not configured on the server." };
+  }
+
+  try {
+    const body = new URLSearchParams({
+      grant_type: "refresh_token",
+      refresh_token: refreshToken,
+      client_id: clientId,
+      client_secret: clientSecret,
+    });
+    const resp = await fetch(LXNS_TOKEN_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: body.toString(),
+    });
+    if (!resp.ok) {
+      const errorText = await resp.text().catch(() => "");
+      logger.warn(`lxns refresh failed: ${resp.status} ${errorText}`);
+      return { isValid: false, error: `lxns refresh failed (${resp.status}). Please re-authorize.` };
+    }
+    const json = await resp.json() as Record<string, unknown>;
+    const data = (json.data ?? json) as Record<string, unknown>;
+    const accessToken = typeof data.access_token === "string" ? data.access_token : "";
+    const newRefreshToken = typeof data.refresh_token === "string" ? data.refresh_token : refreshToken;
+    const expiresIn = typeof data.expires_in === "number" ? data.expires_in : 900;
+    const scope = typeof data.scope === "string" ? data.scope : "";
+    if (!accessToken) {
+      return { isValid: false, error: "lxns refresh response missing access_token." };
+    }
+    const formatted = formatLxnsToken({
+      accessToken,
+      refreshToken: newRefreshToken,
+      expiresAtMs: Date.now() + expiresIn * 1000,
+      scope,
+    });
+    logger.debug(`[lxns oauth] refresh success: expires_in=${expiresIn}s scope="${scope}"`);
+    return { isValid: true, token: formatted };
+  } catch (error) {
+    logger.error({ error }, "lxns refresh threw");
+    return { isValid: false, error: "Network error during lxns refresh." };
+  }
+}
+
+export async function exchangeLxnsCode(
+  code: string,
+  redirectUri: string
+): Promise<TokenValidationResult> {
+  const clientId = process.env.LXNS_CLIENT_ID;
+  const clientSecret = process.env.LXNS_CLIENT_SECRET;
+  if (!clientId || !clientSecret) {
+    return { isValid: false, error: "lxns OAuth is not configured on the server." };
+  }
+
+  try {
+    const body = new URLSearchParams({
+      grant_type: "authorization_code",
+      code,
+      client_id: clientId,
+      client_secret: clientSecret,
+      redirect_uri: redirectUri,
+    });
+    const resp = await fetch(LXNS_TOKEN_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: body.toString(),
+    });
+    if (!resp.ok) {
+      const errorText = await resp.text().catch(() => "");
+      logger.warn(`lxns code exchange failed: ${resp.status} ${errorText}`);
+      return { isValid: false, error: `lxns code exchange failed (${resp.status}).` };
+    }
+    const json = await resp.json() as Record<string, unknown>;
+    const data = (json.data ?? json) as Record<string, unknown>;
+    const accessToken = typeof data.access_token === "string" ? data.access_token : "";
+    const refreshToken = typeof data.refresh_token === "string" ? data.refresh_token : "";
+    const expiresIn = typeof data.expires_in === "number" ? data.expires_in : 900;
+    const scope = typeof data.scope === "string" ? data.scope : "";
+    if (!accessToken || !refreshToken) {
+      return { isValid: false, error: "lxns code exchange response missing tokens." };
+    }
+    const formatted = formatLxnsToken({
+      accessToken,
+      refreshToken,
+      expiresAtMs: Date.now() + expiresIn * 1000,
+      scope,
+    });
+    return { isValid: true, token: formatted };
+  } catch (error) {
+    logger.error({ error }, "lxns code exchange threw");
+    return { isValid: false, error: "Network error during lxns code exchange." };
+  }
 }
 
 export async function deleteToken(userId: string, region: Region): Promise<void> {

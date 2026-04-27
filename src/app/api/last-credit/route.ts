@@ -4,12 +4,14 @@ import { ImageCache, renderLastCreditImage } from '@/lib/render-image';
 import { fetchImageForServer } from '@/lib/render-image-server';
 import { Image, loadImage } from 'skia-canvas';
 import { getRatingImageUrl } from '@/lib/rating-calculator';
-import { getTypeBadgeUrl } from '@/lib/utils';
+import { getLogoUrl, getTypeBadgeUrl } from '@/lib/utils';
 import { DIFFICULTY_ENUM } from '@/lib/db/types';
 import { prepareCreditData } from '@/server/services/credit-data';
 import { db } from '@/lib/db';
 import { user, userSnapshots } from '@/lib/db/schema-pg';
 import { and, eq } from 'drizzle-orm';
+import { getEnabledRegions, isRegionEnabled } from '@/lib/enabled-regions';
+import { Region } from '@/lib/types';
 
 export const dynamic = "force-dynamic";
 
@@ -17,14 +19,14 @@ export async function GET(request: NextRequest) {
   console.log('Starting last-credit image API request');
   try {
     // Parse query parameters
-    const region = request.nextUrl.searchParams.get('region') as 'intl' | 'jp' | null;
+    const region = request.nextUrl.searchParams.get('region') as Region | null;
     const beforeDateStr = request.nextUrl.searchParams.get('beforeDate');
     const scaleParam = request.nextUrl.searchParams.get('scale');
     const snapshotId = request.nextUrl.searchParams.get('snapshotId');
     const scale = scaleParam === '1' ? 1 : 2; // Accept 1 or 2, default to 2
 
-    if (!region || (region !== 'intl' && region !== 'jp')) {
-      return NextResponse.json({ error: 'Valid region (intl or jp) is required' }, { status: 400 });
+    if (!region || !isRegionEnabled(region)) {
+      return NextResponse.json({ error: `Valid region (${getEnabledRegions().join(', ')}) is required` }, { status: 400 });
     }
 
     // Determine userId based on mode
@@ -85,7 +87,7 @@ export async function GET(request: NextRequest) {
       `/res/trophy/gold.png`,
       `/res/trophy/rainbow.png`,
       `/res/character/${snapshot.gameVersion}.png`,
-      `/res/logo/${snapshot.gameVersion}.png`,
+      getLogoUrl(snapshot.gameVersion, region),
       `/res/bg/${snapshot.gameVersion}.png`,
       `/res/bg/${snapshot.gameVersion}_long.png`,
       `/res/badge/${snapshot.gameVersion}/none.png`,
@@ -130,7 +132,7 @@ export async function GET(request: NextRequest) {
     console.log(`✅ Cached ${Object.keys(cache).length} images in ${Date.now() - startTime}ms`);
 
     // Render the image using skia-canvas
-    const canvas = await renderLastCreditImage(credit, snapshot, cache);
+    const canvas = await renderLastCreditImage(credit, snapshot, region, cache);
 
     // Convert canvas to WEBP buffer and return
     const buffer = await canvas.toBuffer('webp', { density: scale });
