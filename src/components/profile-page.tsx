@@ -1,7 +1,7 @@
 import { DataContent } from "@/components/data-content";
 import { PublicDataBanner } from "@/components/public-data-banner";
 import { Header } from "@/components/header";
-import { defaultFlags } from "@/lib/flags";
+import { Flags } from "@/lib/flags";
 import { Difficulty, EventData, ProfileData, Region, SnapshotWithSongs, SongWithScore, TitleType } from "@/lib/types";
 import { TomomaiAI } from "@/components/tomomai-ai";
 import { VersionId } from "@/lib/metadata";
@@ -54,6 +54,7 @@ interface ProfilePageProps {
   region: Region;
   username: string;
   initialTab?: string;
+  flags: Flags;
 }
 
 export function ProfilePage({
@@ -62,6 +63,7 @@ export function ProfilePage({
   region,
   username,
   initialTab,
+  flags,
 }: ProfilePageProps) {
 
   // Convert the snapshot data to the format expected by DataContent
@@ -103,10 +105,10 @@ export function ProfilePage({
           visitableProfileAt={username}
           initialTab={initialTab}
           visitedBySelf={false}
-          flags={defaultFlags}
+          flags={flags}
         />
       </div>
-      <TomomaiAI snapshotData={snapshotWithSongs} region={region} />
+      <TomomaiAI snapshotData={snapshotWithSongs} region={region} aprilFools2026={flags.aprilFools2026} />
     </div>
   );
 }

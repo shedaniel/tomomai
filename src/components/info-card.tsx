@@ -11,6 +11,7 @@ import { motion } from "motion/react";
 import { SPRING_CONFIGS, STAGGER, getTransition } from "@/lib/animation-constants";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { VersionId } from "@/lib/metadata";
+import { resolveBaseUrl } from "@/lib/base-url";
 
 function RatingImage({ rating, version }: { rating: number; version?: VersionId }) {
   return (
@@ -45,7 +46,7 @@ export function InfoCard({
                 href={`/profile/${visitableProfileAt}`}
                 className="text-foreground hover:text-foreground/80 underline"
               >
-                https://tomomai.lol/profile/{visitableProfileAt}
+                {resolveBaseUrl()}/profile/{visitableProfileAt}
               </Link>
               {t('profileVisibility.accessibleByEnd')} {t('profileVisibility.youMayChangePrivacySettings')}
             </p>

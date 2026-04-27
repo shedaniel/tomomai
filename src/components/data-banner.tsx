@@ -291,7 +291,7 @@ function NoDataInstructions({
   region: Region;
   t: any;
 }) {
-  if (hasSnapshots || region !== "intl") return null;
+  if (hasSnapshots) return null;
 
   return (
     <motion.div

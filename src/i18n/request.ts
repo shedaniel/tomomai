@@ -1,7 +1,7 @@
 import { getRequestConfig } from 'next-intl/server';
 import { getLocale } from './locale-server';
 import { deepMerge } from '@/lib/utils';
-import { isAprilFools2026JST } from '@/lib/april-fools';
+import { useAprilFools2026 } from '@/lib/flags';
 
 function lowercaseMessages(obj: Record<string, unknown>): Record<string, unknown> {
   const result: Record<string, unknown> = {};
@@ -25,7 +25,7 @@ export default getRequestConfig(async () => {
     (await import(`../../messages/${locale}.json`)).default,
   );
 
-  if (isAprilFools2026JST()) {
+  if (await useAprilFools2026()) {
     messages = lowercaseMessages(messages) as typeof messages;
   }
 

@@ -8,6 +8,7 @@ import type { Difficulty, FullCombo, FullSync, SongType, TitleType } from "./typ
 import { SnapshotWithSongs } from "./types";
 import { getTypeBadgeUrl } from "./utils";
 import { VersionId } from './metadata';
+import { resolveBaseUrl } from './base-url';
 
 type CanvasSize = {
   width: number;
@@ -149,9 +150,10 @@ export async function renderImage(data: SnapshotWithSongs<SongForRender>, cache:
   await renderBackground(ctx, data.snapshot.gameVersion, false, cache, canvasSize);
   const overlayRect = await renderHeader(ctx, data.snapshot, cache, canvasSize);
   await renderContent(ctx, data, cache, overlayRect);
+  const baseUrl = resolveBaseUrl();
   const footerText = visitableProfileAt
-    ? `Visit my profile at https://tomomai.lol/profile/${visitableProfileAt}/`
-    : "Generated with https://tomomai.lol/";
+    ? `Visit my profile at ${baseUrl}/profile/${visitableProfileAt}/`
+    : `Generated with ${baseUrl}/`;
   await renderFooter(ctx, data.snapshot.gameVersion, footerText, canvasSize);
 
   return canvas;
@@ -166,7 +168,7 @@ export async function renderLastCreditImage(data: CreditData, snapshot: Snapshot
   await renderBackground(ctx, snapshot.gameVersion, true, cache, canvasSize);
   const overlayRect = await renderHeader(ctx, snapshot, cache, canvasSize);
   await renderLastCreditContent(ctx, data, cache, overlayRect);
-  const footerText = `Recent credit at ${data.playedAt.toLocaleString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tokyo' })}, generated with https://tomomai.lol/`;
+  const footerText = `Recent credit at ${data.playedAt.toLocaleString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tokyo' })}, generated with ${resolveBaseUrl()}/`;
   await renderFooter(ctx, snapshot.gameVersion, footerText, canvasSize);
 
   return canvas;

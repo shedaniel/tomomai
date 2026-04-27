@@ -4,6 +4,8 @@ import { Region } from "@/lib/types";
 import { ProfilePage } from "@/components/profile-page";
 import { notFound } from "next/navigation";
 import { Metadata } from "next";
+import { useFlags } from "@/lib/flags";
+import { cookies } from "next/headers";
 
 // Mark this page as dynamic to avoid conflicts with cookie usage in layout
 export const dynamic = 'force-dynamic';
@@ -118,6 +120,8 @@ export default async function RegionProfilePage({ params, searchParams }: Region
       region,
     });
 
+    const flags = await useFlags(cookies);
+
     return (
       <ProfilePage
         profileData={profileData}
@@ -125,6 +129,7 @@ export default async function RegionProfilePage({ params, searchParams }: Region
         region={region}
         username={decodeURIComponent(username)}
         initialTab={tab}
+        flags={flags}
       />
     );
   } catch (error) {

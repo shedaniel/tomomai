@@ -1,6 +1,7 @@
 import { InteractionResponseType, InteractionResponseFlags } from 'discord-interactions';
 import { FETCH_STATUS_ENUM } from '../db/types';
 import { FETCH_STATES } from '../fetch-states';
+import { resolveBaseUrl } from '../base-url';
 
 export interface DiscordEmbed {
   title?: string;
@@ -162,7 +163,7 @@ export function createNotRegisteredResponse(): DiscordResponse {
         color: DISCORD_COLORS.RED,
         fields: [{
           name: '🔗 Get Started',
-          value: '[Visit tomomai ともマイ](https://tomomai.lol/) to sign in with Discord and start tracking your scores!',
+          value: `[Visit tomomai ともマイ](${resolveBaseUrl()}/) to sign in with Discord and start tracking your scores!`,
           inline: false,
         }],
         footer: {
@@ -184,7 +185,7 @@ export function createNoDataResponse(regionName: string): DiscordResponse {
         color: DISCORD_COLORS.YELLOW,
         fields: [{
           name: '🎯 Import Your Scores',
-          value: `[Visit tomomai ともマイ](https://tomomai.lol/) to import your ${regionName} maimai DX scores!`,
+          value: `[Visit tomomai ともマイ](${resolveBaseUrl()}/) to import your ${regionName} maimai DX scores!`,
           inline: false,
         }],
         footer: {

@@ -82,6 +82,8 @@
     "timezoneUpdateError": "時區更新失敗：{error}",
     "languageUpdateSuccess": "語言更新成功！",
     "languageUpdateError": "語言更新失敗：{error}",
+    "regionUpdateSuccess": "地區更新成功！",
+    "regionUpdateError": "地區更新失敗：{error}",
     "tokenUpdateSuccess": "驗證方式儲存成功！"
   },
   "settings": {
@@ -160,7 +162,7 @@
         "description": "選擇用於公開個人檔案的主要地區。",
         "intl": "國際區",
         "jp": "日本區",
-        "cn": "內地區"
+        "cn": "大陸區"
       },
       "privacy": {
         "label": "隱私設定",
@@ -622,11 +624,11 @@
   "regions": {
     "intl": "國際區",
     "jp": "日本區",
-    "cn": "內地區",
+    "cn": "大陸區",
     "short": {
-      "intl": "亞",
+      "intl": "國際區",
       "jp": "日本區",
-      "cn": "內地區"
+      "cn": "大陸區"
     }
   },
   "userHeader": {

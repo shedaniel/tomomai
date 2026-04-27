@@ -82,6 +82,8 @@
     "timezoneUpdateError": "タイムゾーンの更新に失敗しました: {error}",
     "languageUpdateSuccess": "言語の更新に成功しました！",
     "languageUpdateError": "言語の更新に失敗しました: {error}",
+    "regionUpdateSuccess": "地域の更新に成功しました！",
+    "regionUpdateError": "地域の更新に失敗しました: {error}",
     "tokenUpdateSuccess": "認証情報を保存しました！"
   },
   "settings": {

@@ -1,13 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { isAprilFools2026JST } from "@/lib/april-fools";
 
-export function AprilFools() {
+export function AprilFools({ enabled }: { enabled: boolean }) {
   const [active, setActive] = useState(false);
 
   useEffect(() => {
-    if (isAprilFools2026JST()) {
+    if (enabled) {
       import("@fontsource/comic-neue/300.css");
       import("@fontsource/comic-neue/400.css");
       import("@fontsource/comic-neue/700.css");
@@ -18,7 +17,7 @@ export function AprilFools() {
       import("@fontsource/zen-maru-gothic/900.css");
       setActive(true);
     }
-  }, []);
+  }, [enabled]);
 
   if (!active) return null;
 

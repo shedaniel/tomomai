@@ -1,5 +1,6 @@
 import { InteractionResponseType } from 'discord-interactions';
 import { DISCORD_COLORS, DiscordResponse } from '../responses';
+import { resolveBaseUrl } from '../../base-url';
 
 export interface InviteCommandOptions {
   applicationId: string;
@@ -31,7 +32,7 @@ export async function handleInviteCommand({
             },
             {
               name: '🌐 Website',
-              value: 'https://tomomai.lol/',
+              value: `${resolveBaseUrl()}/`,
               inline: false,
             }
           ],

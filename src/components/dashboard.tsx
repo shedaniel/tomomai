@@ -15,12 +15,13 @@ import { trpc } from "@/lib/trpc-client";
 import { Region, Snapshot, SnapshotWithSongs, User, UserData } from "@/lib/types";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 import { AboutDialog } from "./about-dialog";
 import { AdminDialog } from "./dialogs/admin-dialog";
 import { ExperimentsDialog } from "./experiments-dialog";
 import { InvitesDialog } from "./invites-dialog";
 import { Header } from "./header";
-import { isChinaRegion } from "@/lib/enabled-regions";
+import { isCnExclusive } from "@/lib/enabled-regions";
 import { ChangelogDialog } from "./changelog-dialog";
 import { TomomaiAI } from "./tomomai-ai";
 import { PostMeta } from "@/lib/posts";
@@ -38,6 +39,7 @@ interface DashboardProps {
 
 export function Dashboard({ user, initialUserData, initialSnapshots, initialSnapshotData, flags, latestPost }: DashboardProps) {
   const [dialogType, setDialogType] = useState<DialogType>(null);
+  const t = useTranslations("dashboard");
 
   // Check if user has username
   const { data: userData, refetch: refetchUserData } = trpc.user.getUserData.useQuery(
@@ -49,7 +51,7 @@ export function Dashboard({ user, initialUserData, initialSnapshots, initialSnap
   );
 
   // Use the stored region preference, fallback to "intl" or "cn" if not set
-  const selectedRegion: Region = (userData?.region as Region) || (isChinaRegion() ? "cn" : "intl");
+  const selectedRegion: Region = (userData?.region as Region) || (isCnExclusive() ? "cn" : "intl");
 
   // Show username setup dialog if user doesn't have username
   useEffect(() => {
@@ -92,11 +94,11 @@ export function Dashboard({ user, initialUserData, initialSnapshots, initialSnap
   // Update region mutation
   const updateRegionMutation = trpc.user.updateRegion.useMutation({
     onSuccess: () => {
-      toast.success("Region updated successfully!");
+      toast.success(t("regionUpdateSuccess"));
       refetchUserData();
     },
     onError: (error) => {
-      toast.error(`Failed to update region: ${error.message}`);
+      toast.error(t("regionUpdateError", { error: error.message }));
     },
   });
 
@@ -277,7 +279,7 @@ export function Dashboard({ user, initialUserData, initialSnapshots, initialSnap
       <ChangelogDialog latestPost={latestPost} />
 
       <FetchToastContainer state={fetchToastState} />
-      <TomomaiAI snapshotData={selectedSnapshotData || null} region={selectedRegion} />
+      <TomomaiAI snapshotData={selectedSnapshotData || null} region={selectedRegion} aprilFools2026={flags.aprilFools2026} />
     </div>
   );
 }

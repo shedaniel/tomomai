@@ -82,6 +82,8 @@
     "timezoneUpdateError": "Failed to update timezone: {error}",
     "languageUpdateSuccess": "Language updated successfully!",
     "languageUpdateError": "Failed to update language: {error}",
+    "regionUpdateSuccess": "Region updated successfully!",
+    "regionUpdateError": "Failed to update region: {error}",
     "tokenUpdateSuccess": "Token saved successfully!"
   },
   "settings": {

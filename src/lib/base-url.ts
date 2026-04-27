@@ -1,6 +1,10 @@
 export function resolveBaseUrl(): string {
   const normalize = (url: string) => url.replace(/\/+$/, "");
 
+  if (typeof window !== "undefined") {
+    return normalize(window.location.origin);
+  }
+
   if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
     const productionUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL;
     const full = productionUrl.startsWith("http") ? productionUrl : `https://${productionUrl}`;

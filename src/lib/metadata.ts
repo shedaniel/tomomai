@@ -7,6 +7,7 @@ export const Versions = {
     shortName: "maimai",
     intlReleaseDate: "2012/07/11",
     jpReleaseDate: "2012/07/11",
+    cnReleaseDate: null,
     version: 100,
   },
   MAIMAI_PLUS: {
@@ -15,6 +16,7 @@ export const Versions = {
     shortName: "maimai PLUS",
     intlReleaseDate: "2012/12/13",
     jpReleaseDate: "2012/12/13",
+    cnReleaseDate: null,
     version: 110,
   },
   MAIMAI_GREEN: {
@@ -23,6 +25,7 @@ export const Versions = {
     shortName: "GreeN",
     intlReleaseDate: "2013/07/11",
     jpReleaseDate: "2013/07/11",
+    cnReleaseDate: null,
     version: 120,
   },
   MAIMAI_GREEN_PLUS: {
@@ -31,6 +34,7 @@ export const Versions = {
     shortName: "GreeN PLUS",
     intlReleaseDate: "2014/02/26",
     jpReleaseDate: "2014/02/26",
+    cnReleaseDate: null,
     version: 130,
   },
   MAIMAI_ORANGE: {
@@ -39,6 +43,7 @@ export const Versions = {
     shortName: "ORANGE",
     intlReleaseDate: "2014/09/18",
     jpReleaseDate: "2014/09/18",
+    cnReleaseDate: null,
     version: 140,
   },
   MAIMAI_ORANGE_PLUS: {
@@ -47,6 +52,7 @@ export const Versions = {
     shortName: "ORANGE PLUS",
     intlReleaseDate: "2015/03/19",
     jpReleaseDate: "2015/03/19",
+    cnReleaseDate: null,
     version: 150,
   },
   MAIMAI_PINK: {
@@ -55,6 +61,7 @@ export const Versions = {
     shortName: "PiNK",
     intlReleaseDate: "2015/12/09",
     jpReleaseDate: "2015/12/09",
+    cnReleaseDate: null,
     version: 160,
   },
   MAIMAI_PINK_PLUS: {
@@ -63,6 +70,7 @@ export const Versions = {
     shortName: "PiNK PLUS",
     intlReleaseDate: "2016/06/30",
     jpReleaseDate: "2016/06/30",
+    cnReleaseDate: null,
     version: 170,
   },
   MAIMAI_MURASAKI: {
@@ -71,6 +79,7 @@ export const Versions = {
     shortName: "MURASAKi",
     intlReleaseDate: "2016/12/15",
     jpReleaseDate: "2016/12/15",
+    cnReleaseDate: null,
     version: 180,
   },
   MAIMAI_MURASAKI_PLUS: {
@@ -79,6 +88,7 @@ export const Versions = {
     shortName: "MURASAKi PLUS",
     intlReleaseDate: "2017/06/22",
     jpReleaseDate: "2017/06/22",
+    cnReleaseDate: null,
     version: 185,
   },
   MAIMAI_MILK: {
@@ -87,6 +97,7 @@ export const Versions = {
     shortName: "MiLK",
     intlReleaseDate: "2017/12/14",
     jpReleaseDate: "2017/12/14",
+    cnReleaseDate: null,
     version: 190,
   },
   MAIMAI_MILK_PLUS: {
@@ -95,6 +106,7 @@ export const Versions = {
     shortName: "MiLK PLUS",
     intlReleaseDate: "2018/06/21",
     jpReleaseDate: "2018/06/21",
+    cnReleaseDate: null,
     version: 195,
   },
   MAIMAI_FINALE: {
@@ -103,6 +115,7 @@ export const Versions = {
     shortName: "FiNALE",
     intlReleaseDate: "2018/12/13",
     jpReleaseDate: "2018/12/13",
+    cnReleaseDate: null,
     version: 199,
   },
   MAIMAI_DX: {
@@ -111,6 +124,7 @@ export const Versions = {
     shortName: "DX",
     intlReleaseDate: "2019/11/25",
     jpReleaseDate: "2019/07/11",
+    cnReleaseDate: "2019/09/10",
     version: 200,
   },
   MAIMAI_DX_PLUS: {
@@ -119,6 +133,7 @@ export const Versions = {
     shortName: "DX PLUS",
     intlReleaseDate: "2020/07/29",
     jpReleaseDate: "2020/01/23",
+    cnReleaseDate: null,
     version: 205,
   },
   MAIMAI_DX_SPLASH: {
@@ -127,6 +142,7 @@ export const Versions = {
     shortName: "Splash",
     intlReleaseDate: "2021/01/29",
     jpReleaseDate: "2020/09/17",
+    cnReleaseDate: "2021/04/28",
     version: 210,
   },
   MAIMAI_DX_SPLASH_PLUS: {
@@ -135,6 +151,7 @@ export const Versions = {
     shortName: "Splash PLUS",
     intlReleaseDate: "2021/07/30",
     jpReleaseDate: "2021/03/18",
+    cnReleaseDate: null,
     version: 215,
   },
   MAIMAI_DX_UNIVERSE: {
@@ -143,6 +160,7 @@ export const Versions = {
     shortName: "UNiVERSE",
     intlReleaseDate: "2022/01/27",
     jpReleaseDate: "2021/09/16",
+    cnReleaseDate: "2022/06/23",
     version: 220,
   },
   MAIMAI_DX_UNIVERSE_PLUS: {
@@ -151,6 +169,7 @@ export const Versions = {
     shortName: "UNiVERSE PLUS",
     intlReleaseDate: "2022/07/28",
     jpReleaseDate: "2022/03/24",
+    cnReleaseDate: null,
     version: 225,
   },
   MAIMAI_DX_FESTIVAL: {
@@ -159,6 +178,7 @@ export const Versions = {
     shortName: "FESTiVAL",
     intlReleaseDate: "2023/01/19",
     jpReleaseDate: "2022/09/15",
+    cnReleaseDate: "2023/06/08",
     version: 230,
   },
   MAIMAI_DX_FESTIVAL_PLUS: {
@@ -167,6 +187,7 @@ export const Versions = {
     shortName: "FESTiVAL PLUS",
     intlReleaseDate: "2023/07/27",
     jpReleaseDate: "2023/03/23",
+    cnReleaseDate: null,
     version: 235,
   },
   MAIMAI_DX_BUDDIES: {
@@ -175,6 +196,7 @@ export const Versions = {
     shortName: "BUDDiES",
     intlReleaseDate: "2024/01/18",
     jpReleaseDate: "2023/09/14",
+    cnReleaseDate: "2024/06/06",
     version: 240,
   },
   MAIMAI_DX_BUDDIES_PLUS: {
@@ -183,6 +205,7 @@ export const Versions = {
     shortName: "BUDDiES PLUS",
     intlReleaseDate: "2024/07/25",
     jpReleaseDate: "2024/03/21",
+    cnReleaseDate: null,
     version: 245,
   },
   MAIMAI_DX_PRISM: {
@@ -191,6 +214,7 @@ export const Versions = {
     shortName: "PRiSM",
     intlReleaseDate: "2025/01/16",
     jpReleaseDate: "2024/09/12",
+    cnReleaseDate: "2025/06/11",
     version: 250,
   },
   MAIMAI_DX_PRISM_PLUS: {
@@ -199,6 +223,7 @@ export const Versions = {
     shortName: "PRiSM PLUS",
     intlReleaseDate: "2025/07/24",
     jpReleaseDate: "2025/03/13",
+    cnReleaseDate: null,
     version: 255,
   },
   MAIMAI_DX_CIRCLE: {
@@ -207,6 +232,7 @@ export const Versions = {
     shortName: "CiRCLE",
     intlReleaseDate: "2026/01/22",
     jpReleaseDate: "2025/09/18",
+    cnReleaseDate: null,
     version: 260,
   },
   MAIMAI_DX_CIRCLE_PLUS: {
@@ -215,6 +241,7 @@ export const Versions = {
     shortName: "CiRCLE PLUS",
     intlReleaseDate: null,
     jpReleaseDate: "2026/03/19",
+    cnReleaseDate: null,
     version: 265,
   }
 } as const;
@@ -228,10 +255,19 @@ export interface VersionInfo {
   shortName: string;
   intlReleaseDate: string | null; // YYYY/MM/DD format, null if not released yet
   jpReleaseDate: string | null; // YYYY/MM/DD format, null if not released yet
+  cnReleaseDate: string | null; // YYYY/MM/DD format, null if not released in CN (CN skips PLUS versions)
   version: number;
 }
 
 export const VERSIONS: VersionInfo[] = Object.values(Versions);
+
+function getRegionReleaseDate(version: VersionInfo, region: Region): string | null {
+  switch (region) {
+    case "intl": return version.intlReleaseDate;
+    case "jp": return version.jpReleaseDate;
+    case "cn": return version.cnReleaseDate;
+  }
+}
 
 /**
  * Parse date string in YYYY/MM/DD format to Date object.
@@ -254,10 +290,7 @@ export function parseDate(dateString: string): Date {
  * Get all available versions for a region (excluding null release dates)
  */
 export function getAvailableVersions(region: Region): VersionInfo[] {
-  return VERSIONS.filter(v => {
-    const dateString = region === "intl" ? v.intlReleaseDate : v.jpReleaseDate;
-    return dateString !== null;
-  });
+  return VERSIONS.filter(v => getRegionReleaseDate(v, region) !== null);
 }
 
 /**
@@ -271,8 +304,8 @@ export function getLatestAvailableVersion(region: Region): VersionId {
 
   // Sort by release date (descending) and return the latest
   const sortedVersions = availableVersions.sort((a, b) => {
-    const dateA = parseDate(region === "intl" ? a.intlReleaseDate! : a.jpReleaseDate!);
-    const dateB = parseDate(region === "intl" ? b.intlReleaseDate! : b.jpReleaseDate!);
+    const dateA = parseDate(getRegionReleaseDate(a, region)!);
+    const dateB = parseDate(getRegionReleaseDate(b, region)!);
     return dateB.getTime() - dateA.getTime();
   });
 
@@ -297,14 +330,14 @@ export function getVersionFromDate(date: Date, region: Region): VersionId {
 
   // Sort versions by release date for the given region (descending)
   const sortedVersions = availableVersions.sort((a, b) => {
-    const dateA = parseDate(region === "intl" ? a.intlReleaseDate! : a.jpReleaseDate!);
-    const dateB = parseDate(region === "intl" ? b.intlReleaseDate! : b.jpReleaseDate!);
+    const dateA = parseDate(getRegionReleaseDate(a, region)!);
+    const dateB = parseDate(getRegionReleaseDate(b, region)!);
     return dateB.getTime() - dateA.getTime();
   });
 
   // Find the latest version that was released on or before the given date
   for (const version of sortedVersions) {
-    const releaseDate = parseDate(region === "intl" ? version.intlReleaseDate! : version.jpReleaseDate!);
+    const releaseDate = parseDate(getRegionReleaseDate(version, region)!);
     if (date >= releaseDate) {
       return version.id;
     }
@@ -312,8 +345,8 @@ export function getVersionFromDate(date: Date, region: Region): VersionId {
 
   // If no version was released before the given date, return the earliest available version
   const earliestVersion = availableVersions.sort((a, b) => {
-    const dateA = parseDate(region === "intl" ? a.intlReleaseDate! : a.jpReleaseDate!);
-    const dateB = parseDate(region === "intl" ? b.intlReleaseDate! : b.jpReleaseDate!);
+    const dateA = parseDate(getRegionReleaseDate(a, region)!);
+    const dateB = parseDate(getRegionReleaseDate(b, region)!);
     return dateA.getTime() - dateB.getTime();
   })[0];
 
@@ -347,8 +380,8 @@ export function getVersionInfo(versionId: VersionId): VersionInfo | null {
 export function getVersionsSortedByDate(region: Region, ascending = true): VersionInfo[] {
   const availableVersions = getAvailableVersions(region);
   return availableVersions.sort((a, b) => {
-    const dateA = parseDate(region === "intl" ? a.intlReleaseDate! : a.jpReleaseDate!);
-    const dateB = parseDate(region === "intl" ? b.intlReleaseDate! : b.jpReleaseDate!);
+    const dateA = parseDate(getRegionReleaseDate(a, region)!);
+    const dateB = parseDate(getRegionReleaseDate(b, region)!);
     return ascending ? dateA.getTime() - dateB.getTime() : dateB.getTime() - dateA.getTime();
   });
 }
@@ -366,7 +399,7 @@ export function isVersionAvailable(versionId: VersionId, region: Region, date: D
   const version = getVersionInfo(versionId);
   if (!version) return false;
 
-  const dateString = region === "intl" ? version.intlReleaseDate : version.jpReleaseDate;
+  const dateString = getRegionReleaseDate(version, region);
   if (!dateString) return false; // Not released yet
 
   const releaseDate = parseDate(dateString);

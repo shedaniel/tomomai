@@ -12,6 +12,7 @@ import localFont from "next/font/local";
 import "./globals.css";
 import { getServerThemeId } from '@/lib/themes-server';
 import { getThemeOrDefault, getThemeStyleProperties } from '@/lib/themes';
+import { useAprilFools2026 } from '@/lib/flags';
 
 const inter = localFont({
   src: "../../public/res/fonts/Inter-VariableFont_opsz,wght.woff2",
@@ -83,6 +84,7 @@ export default async function RootLayout({
   const themeId = await getServerThemeId();
   const theme = getThemeOrDefault(themeId);
   const messages = await getMessages();
+  const aprilFools2026 = await useAprilFools2026();
   const shouldInjectToolbar = process.env.NODE_ENV === "development";
 
   return (
@@ -97,7 +99,7 @@ export default async function RootLayout({
                 {children}
                 {shouldInjectToolbar && <VercelToolbar />}
                 <Toaster />
-                <AprilFools />
+                <AprilFools enabled={aprilFools2026} />
               </TRPCProvider>
             </ThemeProvider>
           </LocaleProvider>

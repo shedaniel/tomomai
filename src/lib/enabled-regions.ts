@@ -49,17 +49,15 @@ export function isRegionEnabled(region: Region): boolean {
 }
 
 /**
- * Check if the current region is China.
+ * Check if this build is the CN-exclusive deployment (only CN region enabled).
  *
- * @returns True if the current region is China
+ * Used to gate CN-deployment-specific UI (e.g. forced zh-CN locale, QQ auth,
+ * Bilibili links, hidden locale switcher). On a multi-region build that
+ * happens to include CN (e.g. intl,jp,cn on .lol), this returns false.
  *
- * @example
- * ```ts
- * if (isChinaRegion()) {
- *   // Show China-specific content
- * }
- * ```
+ * @returns True iff CN is the only enabled region
  */
-export function isChinaRegion(): boolean {
-  return getEnabledRegions().includes("cn");
+export function isCnExclusive(): boolean {
+  const regions = getEnabledRegions();
+  return regions.length === 1 && regions[0] === "cn";
 }

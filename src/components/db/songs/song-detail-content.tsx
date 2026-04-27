@@ -25,7 +25,7 @@ import Link from "next/link";
 import { toast } from "sonner";
 import { SongChartDialogContent } from "./song-detail-dialog";
 import { renderLevelPrecise } from "@/lib/name-utils";
-import { isChinaRegion } from "@/lib/enabled-regions";
+import { isCnExclusive } from "@/lib/enabled-regions";
 
 type SongExtendedIdentified = SongExtended & { region: Region; gameVersion: number };
 
@@ -282,7 +282,7 @@ export function SongDetailContent({ songName, slug, type, initialData }: SongDet
   const videoSearchURL = useMemo(() => {
     if (!data) return null;
     const searchQuery = encodeURIComponent(`maimai ${data.songName} ${data.artist}`);
-    if (isChinaRegion()) {
+    if (isCnExclusive()) {
       return `https://search.bilibili.com/all?keyword=${searchQuery}`;
     } else {
       return `https://www.youtube.com/results?search_query=${searchQuery}`;
@@ -367,7 +367,7 @@ export function SongDetailContent({ songName, slug, type, initialData }: SongDet
           </Link>
           <Link href={videoSearchURL ?? ""} target="_blank" aria-label={t('db.songs.detail.youtube')}>
             <Button variant="outline" className="bg-background">
-              {isChinaRegion() ? (<>
+              {isCnExclusive() ? (<>
                 <svg role="img" className="w-4 h-4" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
                   <g>
                     <path fill="none" d="M0 0h24v24H0z" />

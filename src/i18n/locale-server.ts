@@ -1,10 +1,10 @@
 import { cookies, headers } from 'next/headers';
 import { Locale, defaultLocale, locales } from './locale';
-import { isChinaRegion } from '@/lib/enabled-regions';
+import { isCnExclusive } from '@/lib/enabled-regions';
 
 export async function getLocale(): Promise<Locale> {
   // If the region is China, return "zh-CN"
-  if (isChinaRegion()) {
+  if (isCnExclusive()) {
     return "zh-CN";
   }
 

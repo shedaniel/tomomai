@@ -13,7 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select-friendly";
 import { Locale, setLocaleCookie } from "@/i18n/locale";
-import { isChinaRegion } from "@/lib/enabled-regions";
+import { isCnExclusive } from "@/lib/enabled-regions";
 import { trpc } from "@/lib/trpc-client";
 import { getLanguages } from "@/lib/utils";
 import { Languages, Pencil, User } from "lucide-react";
@@ -61,7 +61,7 @@ export function AccountSettings() {
     setSelectedLanguage(locale || null);
   };
 
-  if (isChinaRegion()) {
+  if (isCnExclusive()) {
     return (
       <div className="">
         <p className="text-sm text-muted-foreground">暂无账户设置。</p>

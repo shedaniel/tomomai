@@ -82,6 +82,8 @@
     "timezoneUpdateError": "时区更新失败：{error}",
     "languageUpdateSuccess": "语言更新成功！",
     "languageUpdateError": "语言更新失败：{error}",
+    "regionUpdateSuccess": "地区更新成功！",
+    "regionUpdateError": "地区更新失败：{error}",
     "tokenUpdateSuccess": "验证方式保存成功！"
   },
   "settings": {
@@ -624,7 +626,7 @@
     "jp": "日本服",
     "cn": "国服",
     "short": {
-      "intl": "亚",
+      "intl": "国际服",
       "jp": "日本服",
       "cn": "国服"
     }
