@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { scoreData, songs } from "@/lib/db/schema-pg";
 import { logger } from "@/lib/logger";
+import { getEnabledRegions, isRegionEnabled } from "@/lib/enabled-regions";
 import { VersionId } from "@/lib/metadata";
 import { Difficulty, Region, SongType } from "@/lib/types";
 import { UpdateSong } from "@/lib/types/update";
@@ -363,9 +364,9 @@ export async function POST(request: NextRequest) {
       ? updateParam
       : "noop";
 
-    if (!region || (region !== "intl" && region !== "jp")) {
+    if (!region || !isRegionEnabled(region)) {
       return NextResponse.json(
-        { error: "Missing or invalid 'region' query parameter. Must be 'intl' or 'jp'" },
+        { error: `Missing or invalid 'region' query parameter. Must be one of: ${getEnabledRegions().join(", ")}` },
         { status: 400 }
       );
     }

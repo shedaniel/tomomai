@@ -1,9 +1,11 @@
 import { db } from "@/lib/db";
 import { logger } from "@/lib/logger";
+import { getEnabledRegions, isRegionEnabled } from "@/lib/enabled-regions";
+import { Region } from "@/lib/types";
 import { getCurrentVersion } from "@/lib/metadata";
 import { normalizeName } from "@/lib/name-utils";
 import { songs, userScores, userSnapshots, scoreData, snapshotScores, snapshotB50 } from "@/lib/db/schema-pg";
-import { upsertScoreData } from "@/lib/maimai-fetcher";
+import { upsertScoreData } from "@/lib/maimai";
 import { and, eq, inArray, asc, sql } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -75,11 +77,11 @@ export async function POST() {
 }
 
 async function normalize(searchParams: URLSearchParams) {
-  const region = searchParams.get('region') as "intl" | "jp";
+  const region = searchParams.get('region') as Region | null;
 
-  if (!region || (region !== "intl" && region !== "jp")) {
+  if (!region || !isRegionEnabled(region)) {
     return NextResponse.json(
-      { error: "Missing or invalid 'region' query parameter. Must be 'intl' or 'jp'" },
+      { error: `Missing or invalid 'region' query parameter. Must be one of: ${getEnabledRegions().join(", ")}` },
       { status: 400 }
     );
   }

@@ -1,3 +1,4 @@
+import { maimaiBaseUrl } from "@/lib/maimai/http";
 import { getVersionFromDate, VersionId, Versions } from "@/lib/metadata";
 import { normalizeGenre, normalizeName } from "@/lib/name-utils";
 import { Difficulty, Level, NoteCounts, Region, SongType } from "@/lib/types";
@@ -163,7 +164,7 @@ async function fetchRecordsWithUrl(region: Region, version: VersionId, url: stri
         records.push({
           songName: normalizeName(song.title),
           artist: song.artist,
-          cover: region === "intl" ? `https://maimaidx-eng.com/maimai-mobile/img/Music/${song.image_url}` : `https://maimaidx.jp/maimai-mobile/img/Music/${song.image_url}`,
+          cover: `${maimaiBaseUrl(region)}/maimai-mobile/img/Music/${song.image_url}`,
           difficulty: difficulty as Difficulty,
           level,
           levelPrecise: !!song[prefix + "_i" as keyof SongsJsonRecord] ? Math.round(parseFloat(song[prefix + "_i" as keyof SongsJsonRecord] as string) * 10) : difficulty === "utage" ? levelToPrecise(level, version) : undefined,

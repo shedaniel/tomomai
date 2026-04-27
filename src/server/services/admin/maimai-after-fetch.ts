@@ -1,5 +1,5 @@
 import { Region } from "@/lib/types";
-import { AGENT } from "@/lib/http-agent";
+import { maimaiBaseUrl, maimaiGetHtml } from "@/lib/maimai/http";
 import { load } from "cheerio";
 import { normalizeGenre } from "@/lib/name-utils";
 import { type Logger } from "pino";
@@ -91,29 +91,14 @@ export const MaimaiAfterFetcher: SongFetcher = async (context, songs) => {
 async function fetchWebsite(region: Region, cookies: string, inputName: string, inputValue: string, log: Logger) {
   const params = new URLSearchParams();
   params.append(inputName, inputValue);
-  const detailUrl = `https://${region === "intl" ? "maimaidx-eng.com" : "maimaidx.jp"}/maimai-mobile/record/musicDetail/?${params.toString()}`;
+  const baseUrl = maimaiBaseUrl(region);
+  const detailUrl = `${baseUrl}/maimai-mobile/record/musicDetail/?${params.toString()}`;
   log.debug(`Fetching song detail from: ${detailUrl}`);
 
-  const detailResponse = await fetch(detailUrl, {
-    method: "GET",
-    headers: {
-      "Cookie": cookies,
-      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-      "Referer": `https://${region === "intl" ? "maimaidx-eng.com" : "maimaidx.jp"}/maimai-mobile/`,
-    },
-    ...{ dispatcher: AGENT },
-  });
-
-  log.debug(`Song detail response status: ${detailResponse.status}`);
-
-  if (detailResponse.status !== 200) {
-    throw new Error(`Failed to fetch song detail: HTTP ${detailResponse.status}`);
-  }
-
-  const detailHtml = await detailResponse.text();
+  const detailHtml = await maimaiGetHtml(detailUrl, cookies, `${baseUrl}/maimai-mobile/`);
   log.debug(`Song detail fetched successfully, length: ${detailHtml.length} characters`);
 
-  return detailHtml
+  return detailHtml;
 }
 
 function parseSongDetail(html: string, region: Region, log: Logger): {
@@ -135,7 +120,7 @@ function parseSongDetail(html: string, region: Region, log: Logger): {
     log.error({ html }, "Cover image element found but src attribute is missing");
     throw new Error("Cover image element found but src attribute is missing");
   }
-  const coverUrl = coverSrc.startsWith('http') ? coverSrc : `https://${region === "intl" ? "maimaidx-eng.com" : "maimaidx.jp"}${coverSrc}`;
+  const coverUrl = coverSrc.startsWith('http') ? coverSrc : `${maimaiBaseUrl(region)}${coverSrc}`;
 
   // Extract genre
   const genreElement = $('.basic_block .blue');

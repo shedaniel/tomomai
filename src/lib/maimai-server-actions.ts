@@ -1,5 +1,5 @@
 import { db } from '@/lib/db';
-import { fetchMaimaiData } from '@/lib/maimai-fetcher';
+import { fetchMaimaiData } from '@/lib/maimai';
 import { fetchSessions, userTokens, user } from '@/lib/db/schema-pg';
 import { nanoid } from 'nanoid';
 import { and, desc, eq } from 'drizzle-orm';

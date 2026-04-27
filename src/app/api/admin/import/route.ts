@@ -2,9 +2,18 @@ import { db } from "@/lib/db";
 import { songs } from "@/lib/db/schema-pg";
 import { VersionId } from "@/lib/metadata";
 import { Region } from "@/lib/types";
+import { getEnabledRegions, isRegionEnabled } from "@/lib/enabled-regions";
 import { and, eq, gte, lte, sql } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { NextRequest, NextResponse } from "next/server";
+
+const REGION_PATTERN = "[a-z]+";
+const FROM_REGEX = new RegExp(`^version(<=|>=|=)(\\d+)@(${REGION_PATTERN})-(-?\\d+)$`);
+const TO_REGEX = new RegExp(`^(${REGION_PATTERN})-(-?\\d+)$`);
+
+function regionsHint(): string {
+  return `[${getEnabledRegions().join("|")}]`;
+}
 
 // Helper function to parse the "from" parameter
 function parseFromParameter(from: string): {
@@ -14,16 +23,16 @@ function parseFromParameter(from: string): {
   versionValue: number;
 } {
   // Expected format: "version<=10@intl-10" or "version=11@jp-11" or "version>=5@intl-10"
-  const match = from.match(/^version(<=|>=|=)(\d+)@(intl|jp)-(\d+)$/);
+  const match = from.match(FROM_REGEX);
 
   if (!match) {
-    throw new Error(`Invalid 'from' parameter format. Expected format: version[<=|>=|=]NUMBER@[intl|jp]-NUMBER`);
+    throw new Error(`Invalid 'from' parameter format. Expected format: version[<=|>=|=]NUMBER@${regionsHint()}-NUMBER`);
   }
 
   const [, operator, versionValue, region, gameVersion] = match;
 
-  if (region !== "intl" && region !== "jp") {
-    throw new Error(`Invalid region in 'from' parameter: ${region}. Must be 'intl' or 'jp'`);
+  if (!isRegionEnabled(region as Region)) {
+    throw new Error(`Invalid region in 'from' parameter: ${region}. Must be one of: ${getEnabledRegions().join(", ")}`);
   }
 
   const versionFilter = operator === "<=" ? "lte" : operator === ">=" ? "gte" : "eq";
@@ -42,16 +51,16 @@ function parseToParameter(to: string): {
   gameVersion: VersionId;
 } {
   // Expected format: "intl-11" or "jp-12"
-  const match = to.match(/^(intl|jp)-(\d+)$/);
+  const match = to.match(TO_REGEX);
 
   if (!match) {
-    throw new Error(`Invalid 'to' parameter format. Expected format: [intl|jp]-NUMBER`);
+    throw new Error(`Invalid 'to' parameter format. Expected format: ${regionsHint()}-NUMBER`);
   }
 
   const [, region, gameVersion] = match;
 
-  if (region !== "intl" && region !== "jp") {
-    throw new Error(`Invalid region in 'to' parameter: ${region}. Must be 'intl' or 'jp'`);
+  if (!isRegionEnabled(region as Region)) {
+    throw new Error(`Invalid region in 'to' parameter: ${region}. Must be one of: ${getEnabledRegions().join(", ")}`);
   }
 
   return {
@@ -113,14 +122,14 @@ export async function GET(request: NextRequest) {
 
     if (!fromParam) {
       return NextResponse.json(
-        { error: "Missing 'from' query parameter. Expected format: version[<=|>=|=]NUMBER@[intl|jp]-NUMBER" },
+        { error: `Missing 'from' query parameter. Expected format: version[<=|>=|=]NUMBER@${regionsHint()}-NUMBER` },
         { status: 400 }
       );
     }
 
     if (!toParam) {
       return NextResponse.json(
-        { error: "Missing 'to' query parameter. Expected format: [intl|jp]-NUMBER" },
+        { error: `Missing 'to' query parameter. Expected format: ${regionsHint()}-NUMBER` },
         { status: 400 }
       );
     }

@@ -2,7 +2,7 @@ import { db } from '@/lib/db';
 import { scoreData, snapshotB50, snapshotScores, songs, user, userEvents, userSnapshots } from '@/lib/db/schema-pg';
 import { getEnabledRegions } from '@/lib/enabled-regions';
 import { logger } from '@/lib/logger';
-import { upsertScoreData } from '@/lib/maimai-fetcher';
+import { upsertScoreData } from '@/lib/maimai';
 import { getVersionInfo, VersionId, VERSIONS } from '@/lib/metadata';
 import { addRatingsAndSort, RatingCalculationInput, splitSongs } from '@/lib/rating-calculator';
 import { protectedProcedure, publicProcedure, router } from '@/lib/trpc';
