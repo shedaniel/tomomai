@@ -15,7 +15,7 @@ import { PolicyDialog } from "@/components/policy-dialog";
 import { ChevronDown, ChevronUp, Dot } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useLocale } from "./providers/locale-provider";
-import { isCnExclusive as isCNExclusive, isRegionEnabled } from "@/lib/enabled-regions";
+import { isCNExclusive, isRegionEnabled } from "@/lib/enabled-regions";
 
 interface ConsentDialogProps {
   open: boolean;

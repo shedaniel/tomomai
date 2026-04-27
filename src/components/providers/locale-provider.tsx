@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Locale, setLocaleCookie, getLocaleCookie } from '@/i18n/locale';
-import { isCnExclusive } from '@/lib/enabled-regions';
+import { isCNExclusive } from '@/lib/enabled-regions';
 
 interface LocaleContextType {
   locale: Locale;
@@ -44,7 +44,7 @@ export function LocaleProvider({ children, initialLocale }: LocaleProviderProps)
 }
 
 export function useLocale() {
-  if (isCnExclusive()) {
+  if (isCNExclusive()) {
     return {
       locale: 'zh-CN',
       setLocale: () => { }

@@ -21,7 +21,7 @@ import { AdminDialog } from "./dialogs/admin-dialog";
 import { ExperimentsDialog } from "./experiments-dialog";
 import { InvitesDialog } from "./invites-dialog";
 import { Header } from "./header";
-import { isCnExclusive } from "@/lib/enabled-regions";
+import { isCNExclusive } from "@/lib/enabled-regions";
 import { ChangelogDialog } from "./changelog-dialog";
 import { TomomaiAI } from "./tomomai-ai";
 import { PostMeta } from "@/lib/posts";
@@ -51,7 +51,7 @@ export function Dashboard({ user, initialUserData, initialSnapshots, initialSnap
   );
 
   // Use the stored region preference, fallback to "intl" or "cn" if not set
-  const selectedRegion: Region = (userData?.region as Region) || (isCnExclusive() ? "cn" : "intl");
+  const selectedRegion: Region = (userData?.region as Region) || (isCNExclusive() ? "cn" : "intl");
 
   // Show username setup dialog if user doesn't have username
   useEffect(() => {

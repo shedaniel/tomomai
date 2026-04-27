@@ -57,7 +57,7 @@ export function isRegionEnabled(region: Region): boolean {
  *
  * @returns True iff CN is the only enabled region
  */
-export function isCnExclusive(): boolean {
+export function isCNExclusive(): boolean {
   const regions = getEnabledRegions();
   return regions.length === 1 && regions[0] === "cn";
 }

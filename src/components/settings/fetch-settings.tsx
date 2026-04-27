@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/dialog-friendly";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { isCnExclusive } from "@/lib/enabled-regions";
+import { isCNExclusive } from "@/lib/enabled-regions";
 import { trpc } from "@/lib/trpc-client";
 import { Region } from "@/lib/types";
 import { AlertCircle, Images, Key, Trash2 } from "lucide-react";
@@ -140,7 +140,7 @@ export function FetchSettings() {
           </div>
         </div>
 
-        {!isCnExclusive() && <div className="grid gap-2">
+        {!isCNExclusive() && <div className="grid gap-2">
           <div className="flex items-center justify-between">
             <div className="grid gap-2">
               <Label htmlFor="fetch-albums" className="flex items-center gap-2">

@@ -23,7 +23,7 @@ import { AutoHeight } from "@/components/animate-ui/primitives/effects/auto-heig
 import { SPRING_CONFIGS, getTransition } from "@/lib/animation-constants";
 
 import { triggerHaptic } from "@/lib/haptics";
-import { getEnabledRegions, isCnExclusive } from "@/lib/enabled-regions";
+import { getEnabledRegions, isCNExclusive } from "@/lib/enabled-regions";
 import { Locale, setLocaleCookie } from "@/i18n/locale";
 import { cn, getLanguages } from "@/lib/utils";
 import { useLocale } from "./providers/locale-provider";
@@ -312,7 +312,7 @@ function UserIcon({ user, menu, onAbout, onTheme, onDiscordInvite }: Partial<Non
             </div>
           )}
           <div className="flex flex-col overflow-y-auto flex-1 px-2">
-            {!isCnExclusive() && (
+            {!isCNExclusive() && (
               <>
                 <DrawerLocaleSwitcher drawerItemClass={drawerItemClass} />
                 <Separator className="my-1" />
@@ -573,7 +573,7 @@ export function Header({ currentTab, showDiscordBanner = true, user }: HeaderPro
         </div>
 
         <div className="flex items-center space-x-4">
-          {!isCnExclusive() && <div className="max-md:hidden"><LocaleSwitcher /></div>}
+          {!isCNExclusive() && <div className="max-md:hidden"><LocaleSwitcher /></div>}
           {user?.menu && getEnabledRegions().length > 1 && <div className="max-md:hidden"><RegionSwitcher header={true} value={user.menu.selectedRegion} onChange={user.menu.onRegionChange} /></div>}
           <UserIcon user={user?.user} menu={user?.menu} onAbout={() => setAboutOpen(true)} onTheme={() => setThemeOpen(true)} onDiscordInvite={handleDiscordInvite} />
         </div>
