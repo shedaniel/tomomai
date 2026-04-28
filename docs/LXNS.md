@@ -1,0 +1,658 @@
+舞萌 DX API 文档
+
+在本查分器中，同一首曲目的标准、DX 谱面的曲目 ID 一致，不存在大于 10000 的曲目 ID（如有，请在请求前对 10000 取余处理）。宴会场曲目为例外，不分标准、DX 谱面，曲目 ID 大于 100000。
+API 类型
+
+    开发者 API
+    个人 API
+    公共 API
+
+开发者 API
+POST /api/v0/maimai/player
+
+创建或修改玩家信息。
+权限
+
+    allow_third_party_write_data
+
+请求体
+
+Player
+请求示例
+
+{
+    "name": "Ｌｘｎｓ",
+    "rating": 11307,
+    "friend_code": 123456789000000,
+    "trophy": {
+        "id": 300022
+    },
+    "course_rank": 0,
+    "class_rank": 0,
+    "star": 82,
+    "icon": {
+        "id": 200201
+    },
+    "name_plate": {
+        "id": 200201
+    },
+    "frame": {
+        "id": 300101
+    }
+}
+
+GET /api/v0/maimai/player/{friend_code}
+
+获取玩家信息。
+权限
+
+    allow_third_party_fetch_player
+
+URL 参数
+参数名	类型	说明
+friend_code	int	好友码
+响应体
+
+Player
+GET /api/v0/maimai/player/qq/{qq}
+
+通过 QQ 号获取玩家信息。
+权限
+
+    allow_third_party_fetch_player
+
+URL 参数
+参数名	类型	说明
+qq	int	查分器用户绑定的 QQ 号
+响应体
+
+Player
+GET /api/v0/maimai/player/{friend_code}/best
+
+获取玩家缓存谱面的最佳成绩。
+权限
+
+    allow_third_party_fetch_scores
+
+URL 参数
+参数名	类型	说明
+friend_code	int	好友码
+查询参数
+参数名	类型	说明
+song_id	int	曲目 ID，与 song_name 冲突
+song_name	string	曲名，与 song_id 冲突
+level_index	LevelIndex	难度
+song_type	SongType	谱面类型
+响应体
+
+Score
+GET /api/v0/maimai/player/{friend_code}/bests
+
+获取玩家缓存的 Best 50。
+权限
+
+    allow_third_party_fetch_scores
+
+URL 参数
+参数名	类型	说明
+friend_code	int	好友码
+响应体
+字段名	类型	说明
+standard_total	int	旧版本谱面 Best 35 总分
+dx_total	int	现版本谱面 Best 15 总分
+standard	Score[]	旧版本谱面 Best 35 列表
+dx	Score[]	现版本谱面 Best 15 列表
+GET /api/v0/maimai/player/{friend_code}/bests/ap
+
+获取玩家缓存的 All Perfect 50。
+权限
+
+    allow_third_party_fetch_scores
+
+URL 参数
+参数名	类型	说明
+friend_code	int	好友码
+响应体
+
+同 Best 50。
+GET /api/v0/maimai/player/{friend_code}/bests
+
+获取玩家缓存单曲所有谱面的成绩。
+权限
+
+    allow_third_party_fetch_scores
+
+URL 参数
+参数名	类型	说明
+friend_code	int	好友码
+查询参数
+参数名	类型	说明
+song_id	int	曲目 ID，与 song_name 冲突
+song_name	string	曲名，与 song_id 冲突
+song_type	SongType	谱面类型
+响应体
+
+Score[]
+POST /api/v0/maimai/player/{friend_code}/scores
+
+上传玩家成绩。
+权限
+
+    allow_third_party_write_data
+
+URL 参数
+参数名	类型	说明
+friend_code	int	好友码
+请求体
+
+JSON 格式的玩家成绩：
+字段名	类型	说明
+scores	Score[]	玩家成绩
+请求示例
+
+{
+    "scores": [
+        {
+            "id": 834,
+            "type": "standard",
+            "level_index": 4,
+            "achievements": 101,
+            "fc": "app",
+            "fs": null,
+            "dx_score": 0,
+            "play_time": "2023-12-31T16:00:00Z"
+        }
+    ]
+}
+
+GET /api/v0/maimai/player/{friend_code}/recents
+
+获取玩家缓存的 Recent 50（仅增量爬取可用），按照 play_time 排序。
+权限
+
+    allow_third_party_fetch_scores
+
+URL 参数
+参数名	类型	说明
+friend_code	int	好友码
+响应体
+
+Score[]
+GET /api/v0/maimai/player/{friend_code}/scores
+
+获取玩家缓存的所有最佳成绩（简化后）。
+权限
+
+    allow_third_party_fetch_scores
+
+URL 参数
+参数名	类型	说明
+friend_code	int	好友码
+响应体
+
+SimpleScore[]
+GET /api/v0/maimai/player/{friend_code}/heatmap
+
+获取玩家成绩上传热力图。
+权限
+
+    allow_third_party_fetch_history
+
+URL 参数
+参数名	类型	说明
+friend_code	int	好友码
+响应体
+
+日期与成绩数量的映射，键为日期（格式为 YYYY-MM-DD），值为该日期上传的成绩数量。
+GET /api/v0/maimai/player/{friend_code}/trend
+
+获取玩家 DX Rating 趋势。
+权限
+
+    allow_third_party_fetch_history
+
+查询参数
+参数名	类型	说明
+version	int	值可空，游戏版本，默认值为 25000
+提示
+
+指定 version 参数时，将会返回指定版本范围内的 DX Rating 趋势。
+URL 参数
+参数名	类型	说明
+friend_code	int	好友码
+响应体
+
+RatingTrend[]
+GET /api/v0/maimai/player/{friend_code}/score/history
+
+获取玩家成绩游玩历史记录。
+注意
+
+该接口仅返回带有 play_time 的成绩。
+权限
+
+    allow_third_party_fetch_history
+    allow_third_party_fetch_scores
+
+URL 参数
+参数名	类型	说明
+friend_code	int	好友码
+查询参数
+参数名	类型	说明
+song_id	int	曲目 ID
+song_type	SongType	谱面类型
+level_index	LevelIndex	难度
+响应体
+
+Score[]
+GET /api/v0/maimai/player/{friend_code}/{collection_type}/{collection_id}
+
+获取玩家收藏品进度。
+权限
+
+    allow_third_party_fetch_scores
+
+URL 参数
+参数名	类型	说明
+friend_code	int	好友码
+collection_type	string	收藏品类型，值为 trophy、icon、plate 或 frame
+collection_id	int	收藏品 ID
+响应体
+
+Collection
+POST /api/v0/maimai/player/{friend_code}/html
+
+通过 NET 的 HTML 源代码上传玩家数据。
+权限
+
+    allow_third_party_write_data
+
+请求体
+
+文本格式的 HTML 源代码。
+提示
+
+目前仅支持以下页面的 HTML 源代码：
+
+    玩家信息：friend/userFriendCode/
+    收藏品：
+        头像：collection/
+        姓名框：collection/nameplate/
+        背景：collection/frame/
+    最近游玩记录：record/
+    最佳成绩：
+        BASIC ~ Re:MASTER：record/musicSort/search/?search=V&sort=1&playCheck=on&diff={level_index}
+
+        请保持筛选条件不变，否则可能导致曲目解析不准确。
+        宴会场：record/musicGenre/search/?genre=99&diff=10
+
+注意
+
+不支持流式传输，上传的 HTML 源代码应当完整。
+个人 API
+
+仅列举部分 API 接口，完整接口请参考前端调用。
+GET /api/v0/user/maimai/player
+
+获取玩家信息。
+响应体
+
+Player
+GET /api/v0/user/maimai/player/scores
+
+获取玩家所有成绩。
+响应体
+
+Score[]
+POST /api/v0/user/maimai/player/scores
+
+上传玩家成绩。
+请求体
+
+JSON 格式的玩家成绩：
+字段名	类型	说明
+scores	Score[]	玩家成绩
+公共 API
+GET /api/v0/maimai/song/list
+
+获取曲目列表。
+查询参数
+参数名	类型	说明
+version	int	值可空，游戏版本，默认值为 25000
+notes	bool	值可空，是否包含谱面物量，默认值为 false
+响应体
+字段名	类型	说明
+songs	Song[]	曲目列表
+genres	Genre[]	乐曲分类列表
+versions	Version[]	曲目版本列表
+GET /api/v0/maimai/song/{song_id}
+
+获取曲目信息。
+查询参数
+参数名	类型	说明
+version	int	值可空，游戏版本，默认值为 25000
+URL 参数
+参数名	类型	说明
+song_id	int	曲目 ID
+响应体
+
+Song
+GET /api/v0/maimai/alias/list
+
+获取曲目别名列表。
+响应体
+字段名	类型	说明
+aliases	Alias[]	曲目别名列表
+GET /api/v0/maimai/{collection_type}/list
+
+获取收藏品列表。
+查询参数
+参数名	类型	说明
+version	int	值可空，游戏版本，默认值为 25000
+required	bool	值可空，是否包含曲目需求，默认值为 false
+URL 参数
+参数名	类型	说明
+collection_type	string	收藏品类型，值为 trophy、icon、plate 或 frame
+响应体
+字段名	类型	说明
+trophies	Collection[]	仅收藏品类型为 trophy，称号列表
+icons	Collection[]	仅收藏品类型为 icon，头像列表
+plates	Collection[]	仅收藏品类型为 plate，姓名框列表
+frames	Collection[]	仅收藏品类型为 frame，背景列表
+GET /api/v0/maimai/{collection_type}/{collection_id}
+
+获取收藏品信息。
+查询参数
+参数名	类型	说明
+version	int	值可空，游戏版本，默认值为 25000
+URL 参数
+参数名	类型	说明
+collection_type	string	收藏品类型，值为 trophy、icon、plate 或 frame
+collection_id	int	收藏品 ID
+响应体
+
+Collection
+GET /api/v0/maimai/collection-genre/list
+
+获取收藏品分类列表。
+查询参数
+参数名	类型	说明
+version	int	值可空，游戏版本，默认值为 25000
+响应体
+字段名	类型	说明
+collectionGenres	CollectionGenre[]	收藏品分类列表
+GET /api/v0/maimai/collection-genre/{collection_genre_id}
+
+获取收藏品分类信息。
+查询参数
+参数名	类型	说明
+version	int	值可空，游戏版本，默认值为 25000
+URL 参数
+参数名	类型	说明
+collection_genre_id	int	收藏品分类 ID
+响应体
+
+CollectionGenre
+游戏资源
+
+基础 URL：https://assets2.lxns.net/maimai
+
+路径：
+
+    头像：/icon/{icon_id}.png
+    姓名框：/plate/{plate_id}.png
+    背景：/frame/{frame_id}.png
+    曲绘：/jacket/{song_id}.png
+    音频：/music/{song_id}.mp3
+
+注意
+
+游戏资源的访问频率有限制，请勿频繁请求。
+结构体
+Player
+
+玩家
+字段名	类型	说明
+name	string	游戏内名称
+rating	int	玩家 DX Rating
+friend_code	int	好友码
+course_rank	int	段位 ID
+class_rank	int	阶级 ID
+star	int	搭档觉醒数
+trophy	Trophy	仅上传时可空，称号
+icon	Icon	值可空，头像
+name_plate	NamePlate	值可空，姓名框
+frame	Frame	值可空，背景
+upload_time	string	仅获取玩家信息返回，玩家被同步时的 UTC 时间
+提示
+
+若玩家设置的是随机分类的收藏品（头像、姓名框、背景），则开发者每次请求玩家信息时，收藏品都会在随机范围内随机变化。
+Score
+
+游玩成绩
+字段名	类型	说明
+id	int	曲目 ID
+song_name	string	仅获取 Score 时返回，曲名
+level	string	仅获取 Score 时返回，难度标级，如 14+
+level_index	LevelIndex	难度
+achievements	float	达成率
+fc	FCType	值可空，FULL COMBO 类型
+fs	FSType	值可空，FULL SYNC 类型
+dx_score	int	DX 分数
+dx_star	int	DX 星级，最大值为 5
+dx_rating	float	仅获取 Score 时返回，DX Rating，计算时需要向下取整
+rate	RateType	仅获取 Score 时返回，评级类型
+type	SongType	谱面类型
+play_time	string	值可空，游玩的 UTC 时间，精确到分钟
+upload_time	string	仅获取 Score 时返回，成绩被同步时的 UTC 时间
+last_played_time	string	仅获取成绩列表、获取最佳成绩时返回，谱面最后游玩的 UTC 时间
+SimpleScore
+
+游玩成绩（简化）
+字段名	类型	说明
+id	int	曲目 ID
+song_name	string	曲名
+level	string	难度标级，如 14+
+level_index	LevelIndex	难度
+fc	FCType	值可空，FULL COMBO 类型
+fs	FSType	值可空，FULL SYNC 类型
+rate	RateType	评级类型
+type	SongType	谱面类型
+RatingTrend
+
+DX Rating 趋势
+字段名	类型	说明
+total	int	总 DX Rating
+standard	int	旧版本谱面总 DX Rating
+dx	int	现版本谱面总 DX Rating
+date	string	日期
+Song
+
+曲目
+字段名	类型	说明
+id	int	曲目 ID
+title	string	曲名
+artist	string	艺术家
+genre	string	曲目分类
+bpm	int	曲目 BPM
+map	string	值可空，曲目所属区域
+version	int	曲目首次出现版本
+rights	string	值可空，曲目版权信息
+locked	bool	值可空，是否需要解锁，默认值为 false
+disabled	bool	值可空，是否被禁用，默认值为 false
+difficulties	SongDifficulties	谱面难度
+提示
+
+disabled 为 true 时，该曲目不会出现在 Best 50 中。
+SongDifficulties
+
+谱面难度
+字段名	类型	说明
+standard	SongDifficulty[]	曲目标准谱面难度列表
+dx	SongDifficulty[]	曲目 DX 谱面难度列表
+utage	SongDifficultyUtage[]	可选，宴会场曲目谱面难度列表
+提示
+
+仅宴会场曲目（曲目 ID 大于 100000）拥有 utage 字段。
+SongDifficulty
+
+谱面难度
+字段名	类型	说明
+type	SongType	谱面类型
+difficulty	LevelIndex	难度
+level	string	难度标级
+level_value	float	谱面定数
+note_designer	string	谱师
+version	int	谱面首次出现版本
+notes	Notes	值可空，谱面物量
+SongDifficultyUtage
+
+宴会场曲目谱面难度
+字段名	类型	说明
+kanji	string	谱面属性
+description	string	谱面描述
+is_buddy	bool	是否为 BUDDY 谱面
+notes	Notes 或 BuddyNotes	值可空，谱面物量
+提示
+
+is_buddy 为 true 时，notes 为 BuddyNotes。
+提示
+
+其他参数与 SongDifficulty 相同。
+Notes
+
+谱面物量
+字段名	类型	说明
+total	int	总物量
+tap	int	TAP 物量
+hold	int	HOLD 物量
+slide	int	SLIDE 物量
+touch	int	TOUCH 物量
+break	int	BREAK 物量
+BuddyNotes
+
+仅宴会场曲目，BUDDY 谱面物量
+字段名	类型	说明
+left	Notes	1P 谱面物量
+right	Notes	2P 谱面物量
+Genre
+
+乐曲分类
+字段名	类型	说明
+id	int	内部 ID
+title	string	分类标题
+genre	string	分类标题（日文）
+Version
+
+曲目版本
+字段名	类型	说明
+id	int	内部 ID
+title	string	版本标题
+version	int	主要版本 ID
+Alias
+
+曲目别名
+字段名	类型	说明
+song_id	int	曲目 ID
+aliases	string[]	曲目所有别名
+Collection
+
+收藏品
+字段名	类型	说明
+id	int	收藏品 ID
+name	string	收藏品名称
+color	TrophyColor	值可空，仅玩家称号，称号颜色
+description	string	值可空，收藏品说明
+genre	string	值可空，除玩家称号，收藏品分类（日文）
+required	CollectionRequired[]	值可空，收藏品要求
+CollectionRequired
+
+收藏品要求
+字段名	类型	说明
+difficulties	LevelIndex[]	值可空，要求的谱面难度，长度为 0 时代表任意难度
+rate	RateType	值可空，要求的评级类型
+fc	FCType	值可空，要求的 FULL COMBO 类型
+fs	FSType	值可空，要求的 FULL SYNC 类型
+songs	CollectionRequiredSong[]	值可空，要求的曲目列表
+completed	bool	值可空，要求是否全部完成
+CollectionRequiredSong
+
+收藏品要求曲目
+字段名	类型	说明
+id	int	曲目 ID
+title	string	曲名
+type	SongType	谱面类型
+completed	bool	值可空，要求的曲目是否完成
+completed_difficulties	LevelIndex[]	值可空，已完成的难度
+CollectionGenre
+
+收藏品分类
+字段名	类型	说明
+id	int	收藏品分类 ID
+title	string	分类标题
+genre	string	分类标题（日文）
+枚举类型
+LevelIndex
+
+难度
+值	类型	说明
+0	int	BASIC
+1	int	ADVANCED
+2	int	EXPERT
+3	int	MASTER
+4	int	Re:MASTER
+提示
+
+当曲目为宴会场曲目时，该字段默认为 0。
+FCType
+
+FULL COMBO 类型
+值	类型	说明
+app	string	AP+
+ap	string	AP
+fcp	string	FC+
+fc	string	FC
+FSType
+
+FULL SYNC 类型
+值	类型	说明
+fsdp	string	FDX+
+fsd	string	FDX
+fsp	string	FS+
+fs	string	FS
+sync	string	SYNC PLAY
+RateType
+
+评级类型
+值	类型	说明
+sssp	string	SSS+
+sss	string	SSS
+ssp	string	SS+
+ss	string	SS
+sp	string	S+
+s	string	S
+aaa	string	AAA
+aa	string	AA
+a	string	A
+bbb	string	BBB
+bb	string	BB
+b	string	B
+c	string	C
+d	string	D
+SongType
+
+谱面类型
+值	类型	说明
+standard	string	标准谱面
+dx	string	DX 谱面
+utage	string	宴会场谱面
+提示
+
+仅宴会场曲目（曲目 ID 大于 100000）为 utage 类型。
+TrophyColor
+值	类型	说明
+normal	string	普通
+bronze	string	铜
+silver	string	银
+gold	string	金
+rainbow	string	虹

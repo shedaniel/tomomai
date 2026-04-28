@@ -105,6 +105,8 @@ Used by the WeChat OAuth → HTTP-proxy flow. The proxy itself lives in `proxy/`
 
 The proxy process itself reads its own env vars (`PROXY_PORT`, `WEBHOOK_URL`, `RESULT_URL`) — see `proxy/README.md`.
 
+To deploy the proxy to an Ubuntu host over SSH, run `proxy/deploy.sh` from the repo. It prompts for the SSH target (`user@host` or `user@host:port`), the tomomai base URL (used to derive `RESULT_URL` and `WEBHOOK_URL`), and the proxy port, then rsyncs the folder to `/opt/tomomai-proxy`, installs Node 20 if missing, writes a systemd unit, and restarts the service. SSH password (if any) is entered once via ControlMaster multiplexing; sudo on the server should be passwordless. The cloud security group port still needs to be opened manually.
+
 #### Android App
 
 Not yet implemented; no env vars.

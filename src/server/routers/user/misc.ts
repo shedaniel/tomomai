@@ -103,7 +103,7 @@ export const miscRouter = router({
             message: 'diving-fish response did not include a username.',
           });
         }
-        const formatted = formatDivingFishToken({ kind: 'username', value: username });
+        const formatted = formatDivingFishToken({ kind: 'username', value: username as string });
         await saveDivingFishToken(ctx.session.user.id, formatted);
         logger.info(`[divingfish] verified via import-token for user=${ctx.session.user.id}, df_username=${username}`);
         // The Import-Token is intentionally not persisted anywhere, used only to confirm ownership.
