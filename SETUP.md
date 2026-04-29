@@ -64,7 +64,10 @@
 |---|---|---|
 | `LOG_LEVEL` | No | Log level (defaults to `trace` in dev, `info` in prod) |
 | `DEV_LOGTAIL_SOURCE_TOKEN` | No | Logtail source token for dev log shipping |
-| `INGESTING_HOST` | No | Custom log ingestion endpoint host |
+| `INGESTING_HOST` | No | Custom Logtail ingestion endpoint host |
+| `AXIOM_TOKEN` | No | Axiom API token for log shipping (requires `AXIOM_DATASET`) |
+| `AXIOM_DATASET` | No | Axiom dataset name to ingest logs into (requires `AXIOM_TOKEN`) |
+| `AXIOM_URL` | No | Custom Axiom ingest host (defaults to `api.axiom.co`; use `api.eu.axiom.co` for EU) |
 
 ### App Configuration
 

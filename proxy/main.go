@@ -12,6 +12,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"net/http/cookiejar"
 	"net/url"
 	"os"
 	"strconv"
@@ -25,8 +26,19 @@ var (
 	webhookURL = os.Getenv("WEBHOOK_URL")
 	resultURL  = os.Getenv("RESULT_URL")
 
+	// Optional. If the backend is behind Vercel deployment protection, set
+	// this to a *share-protection* token (the bit after `?_vercel_share=`
+	// in a Generate-Link URL). We append it as `_vercel_share=<token>`
+	// query param to webhook POSTs and to the result-URL redirect — both
+	// the proxy's own HTTP client and the user's WeChat browser get a
+	// `_vercel_jwt` cookie from Vercel's edge that lasts 7 days.
+	//
+	// Note: this is NOT the "Protection Bypass for Automation" header
+	// secret (`x-vercel-protection-bypass`); they're separate Vercel
+	// features with separate tokens.
+	vercelBypassToken = os.Getenv("VERCEL_BYPASS_TOKEN")
+
 	successRedirect string
-	errorRedirect   string
 
 	whitelist = map[string]bool{
 		"tgk-wcaime.wahlap.com": true,
@@ -44,6 +56,13 @@ var (
 			return http.ErrUseLastResponse
 		},
 	}
+
+	// Webhook client follows redirects (Vercel edge 307s after consuming
+	// `_vercel_share=`) and persists the resulting `_vercel_jwt` cookie
+	// across calls so we don't pay the redirect cost every time. Cookie
+	// jar is initialised in main() — `cookiejar.New` returns an error
+	// signature that doesn't compose nicely with var blocks.
+	webhookClient *http.Client
 )
 
 func envOr(k, def string) string {
@@ -53,15 +72,34 @@ func envOr(k, def string) string {
 	return def
 }
 
-func buildResultURL(typ string) string {
+// buildResultURL returns RESULT_URL?type=<typ>[&reason=<reason>]
+// [&_vercel_share=<token>]. `reason` is only emitted for error redirects so
+// the result page can show a useful failure message instead of a generic
+// "something went wrong".
+func buildResultURL(typ, reason string) string {
 	u, err := url.Parse(resultURL)
 	if err != nil {
 		log.Fatalf("invalid RESULT_URL: %v", err)
 	}
 	q := u.Query()
 	q.Set("type", typ)
+	if reason != "" {
+		q.Set("reason", reason)
+	}
+	if vercelBypassToken != "" {
+		// Vercel's edge sees `_vercel_share=<token>` and sets a session
+		// cookie so the rest of the redirected page loads work without
+		// re-prompting for auth.
+		q.Set("_vercel_share", vercelBypassToken)
+	}
 	u.RawQuery = q.Encode()
 	return u.String()
+}
+
+// errorURL is a thin wrapper for readability at the call sites in
+// handleAuthCallback — every error path produces a URL of the same shape.
+func errorURL(reason string) string {
+	return buildResultURL("error", reason)
 }
 
 func hostAllowed(target string) bool {
@@ -72,22 +110,47 @@ func hostAllowed(target string) bool {
 	return whitelist[host]
 }
 
-func postWebhook(payload map[string]any) {
+// postWebhook delivers the OAuth callback payload to the configured backend.
+// Returns nil on 2xx, an error otherwise. Callers route the user to the
+// failure screen on a non-nil error so problems aren't buried in the journal.
+func postWebhook(payload map[string]any) error {
 	if webhookURL == "" {
 		log.Printf("webhook skipped (WEBHOOK_URL unset): %v", payload)
-		return
+		return nil
 	}
+	target := webhookURL
+	if vercelBypassToken != "" {
+		// Append `_vercel_share=<token>` to the URL. Vercel's edge then
+		// 307-redirects to the same URL without the param after issuing
+		// a `_vercel_jwt` cookie; webhookClient follows the redirect
+		// (RFC 7231 307 preserves method+body) carrying the cookie, so
+		// the underlying serverless function actually sees the POST.
+		if u, err := url.Parse(webhookURL); err == nil {
+			q := u.Query()
+			q.Set("_vercel_share", vercelBypassToken)
+			u.RawQuery = q.Encode()
+			target = u.String()
+		}
+	}
+
 	body, _ := json.Marshal(payload)
-	req, _ := http.NewRequest("POST", webhookURL, bytes.NewReader(body))
-	req.Header.Set("content-type", "application/json")
-	res, err := http.DefaultClient.Do(req)
+	req, err := http.NewRequest("POST", target, bytes.NewReader(body))
 	if err != nil {
-		log.Printf("webhook error: %v", err)
-		return
+		return fmt.Errorf("build webhook request: %w", err)
+	}
+	req.Header.Set("content-type", "application/json")
+
+	res, err := webhookClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("webhook transport: %w", err)
 	}
 	defer res.Body.Close()
 	b, _ := io.ReadAll(io.LimitReader(res.Body, 200))
 	log.Printf("webhook %d: %s", res.StatusCode, b)
+	if res.StatusCode >= 400 {
+		return fmt.Errorf("webhook status %d", res.StatusCode)
+	}
+	return nil
 }
 
 // Replays the OAuth callback over HTTPS to consume the single-use code; we
@@ -134,7 +197,8 @@ func handleAuthCallback(reqURL *url.URL, w http.ResponseWriter) {
 	log.Printf("oauth callback intercepted r=%s code=%.8s… state=%.8s…", r, code, state)
 
 	if r == "" || code == "" {
-		http.Redirect(w, &http.Request{}, errorRedirect, http.StatusFound)
+		log.Printf("oauth callback rejected: missing r or code")
+		http.Redirect(w, &http.Request{}, errorURL("missing_params"), http.StatusFound)
 		return
 	}
 
@@ -142,12 +206,21 @@ func handleAuthCallback(reqURL *url.URL, w http.ResponseWriter) {
 	loc, maimaiToken, status, ok := consumeOAuthCallback(httpsCallback)
 	if !ok {
 		log.Printf("oauth consume failed status=%d location=%s", status, loc)
-		http.Redirect(w, &http.Request{}, errorRedirect, http.StatusFound)
+		// Distinguish "couldn't reach wahlap" (status==0) from "wahlap
+		// rejected the code" so the result page can show something
+		// useful.
+		reason := "consume_failed"
+		if status == 0 {
+			reason = "wahlap_unreachable"
+		} else {
+			reason = fmt.Sprintf("consume_%d", status)
+		}
+		http.Redirect(w, &http.Request{}, errorURL(reason), http.StatusFound)
 		return
 	}
 	log.Printf("oauth consumed; maimai token=%.12s…", maimaiToken)
 
-	postWebhook(map[string]any{
+	if err := postWebhook(map[string]any{
 		"r":              r,
 		"code":           code,
 		"state":          state,
@@ -156,7 +229,15 @@ func handleAuthCallback(reqURL *url.URL, w http.ResponseWriter) {
 		"callbackUrl":    httpsCallback,
 		"maimaiLoginUrl": loc,
 		"maimaiToken":    maimaiToken,
-	})
+	}); err != nil {
+		log.Printf("webhook failed: %v — redirecting user to error page", err)
+		// Webhook failure is the worst kind: we already consumed the
+		// single-use OAuth code with wahlap, so the user can't retry —
+		// they'd need a fresh auth link from the frontend. The result
+		// page should explain that and offer a "try again" button.
+		http.Redirect(w, &http.Request{}, errorURL("webhook_failed"), http.StatusFound)
+		return
+	}
 
 	http.Redirect(w, &http.Request{}, successRedirect, http.StatusFound)
 }
@@ -267,8 +348,16 @@ func main() {
 	if resultURL == "" {
 		log.Fatal("RESULT_URL env var is required.")
 	}
-	successRedirect = buildResultURL("done")
-	errorRedirect = buildResultURL("error")
+	successRedirect = buildResultURL("done", "")
+
+	jar, err := cookiejar.New(nil)
+	if err != nil {
+		log.Fatalf("cookiejar init: %v", err)
+	}
+	webhookClient = &http.Client{
+		Timeout: 15 * time.Second,
+		Jar:     jar,
+	}
 
 	if u, err := url.Parse(resultURL); err == nil {
 		whitelist[strings.ToLower(u.Hostname())] = true
@@ -288,6 +377,9 @@ func main() {
 		log.Printf("webhook: (disabled — set WEBHOOK_URL to forward callbacks)")
 	} else {
 		log.Printf("webhook: %s", webhookURL)
+	}
+	if vercelBypassToken != "" {
+		log.Printf("vercel bypass: enabled (token len=%d)", len(vercelBypassToken))
 	}
 	keys := make([]string, 0, len(whitelist))
 	for k := range whitelist {
