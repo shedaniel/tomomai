@@ -25,7 +25,7 @@ export async function fetchRecentSongsData(cookies: string, region: Region, sess
       const record = $(element);
 
       const trackText = record.find(".sub_title > .red").text().trim();
-      const trackMatch = trackText.match(/TRACK\s+(\d+)/i);
+      const trackMatch = trackText.match(/(?:TRACK|曲目)\s*(\d+)/i);
       if (!trackMatch) {
         logger.warn(`Could not parse track number from: ${trackText}`);
         return;

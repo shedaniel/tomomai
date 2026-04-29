@@ -479,11 +479,12 @@ function DivingFishAuthSubDialog({ isOpen, onOpenChange, onAuthorized }: DivingF
 interface HttpProxyAuthSubDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
+  onAuthorized: () => Promise<void>;
   startSessionPolling?: (region: Region, onSessionDetected?: () => void) => void;
   stopSessionPolling?: () => void;
 }
 
-function HttpProxyAuthSubDialog({ isOpen, onOpenChange, startSessionPolling, stopSessionPolling }: HttpProxyAuthSubDialogProps) {
+function HttpProxyAuthSubDialog({ isOpen, onOpenChange, onAuthorized, startSessionPolling, stopSessionPolling }: HttpProxyAuthSubDialogProps) {
   const { data: configData, isLoading: isLoadingConfig } = trpc.user.getCnProxyConfigured.useQuery(
     undefined,
     { enabled: isOpen, refetchOnWindowFocus: false }
@@ -502,9 +503,14 @@ function HttpProxyAuthSubDialog({ isOpen, onOpenChange, startSessionPolling, sto
     if (!isOpen || !linkData || !startSessionPolling || !stopSessionPolling) return;
     startSessionPolling("cn", () => {
       onOpenChange(false);
+      // Mirror the LXNS / DivingFish flows: notify the parent so it can
+      // trigger a fetch (onTokenUpdate("")) and close the outer dialog.
+      void onAuthorized().catch(() => {
+        // caller toasts the error
+      });
     });
     return () => stopSessionPolling();
-  }, [isOpen, linkData, startSessionPolling, stopSessionPolling, onOpenChange]);
+  }, [isOpen, linkData, startSessionPolling, stopSessionPolling, onOpenChange, onAuthorized]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -761,6 +767,7 @@ export function TokenDialogCn({
       <HttpProxyAuthSubDialog
         isOpen={isHttpProxyDialogOpen}
         onOpenChange={setIsHttpProxyDialogOpen}
+        onAuthorized={handleSubAuthorized}
         startSessionPolling={startSessionPolling}
         stopSessionPolling={stopSessionPolling}
       />
