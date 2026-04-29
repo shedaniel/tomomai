@@ -619,7 +619,99 @@
     },
     "recommended": "推荐歌曲",
     "tokenOptionDescription": "使用您的浏览器令牌登录您的 maimai DX NET 帐户。令牌可能会不时过期。无需密码，并支持社交登录。",
-    "passwordOptionDescription": "使用您的 SEGA 帐户凭证登录您的 maimai DX NET 帐户。永久有效。不推荐。"
+    "passwordOptionDescription": "使用您的 SEGA 帐户凭证登录您的 maimai DX NET 帐户。永久有效。不推荐。",
+    "cnTitle": "更新舞萌 DX 验证",
+    "cnDescription": "选择您的舞萌 DX 登录验证方式。",
+    "recommendedBadge": "推荐",
+    "comingSoonBadge": "即将推出",
+    "disabledBadge": "暂时停用",
+    "features": {
+      "playerInfo": "玩家资料",
+      "scores": "谱面成绩",
+      "recents": "最近游玩",
+      "events": "活动数据"
+    },
+    "fetchOptions": {
+      "divingFish": {
+        "name": "水鱼查分器",
+        "description": "使用您的水鱼查分器登入用户名 或 已绑定的 QQ 帐户 ID 取得资料。"
+      },
+      "lxns": {
+        "name": "落雪咖啡屋查分器",
+        "description": "以落雪咖啡屋帐号登入授权取得资料。"
+      },
+      "httpProxy": {
+        "name": "HTTP 代理",
+        "description": "透过 HTTP 代理拦截手机微信中的舞萌 DX 小程序请求以取得资料。"
+      },
+      "androidApp": {
+        "name": "Android 应用程式",
+        "description": "在 Android 装置上安装本应用程式以自动取得资料。"
+      }
+    },
+    "lxns": {
+      "title": "落雪咖啡屋查分器",
+      "description": "通过 OAuth 授权 {host} 读取您在落雪咖啡屋查分器上的舞萌 DX 数据。授权可随时在落雪咖啡屋帐号设置中撤销。",
+      "notConfiguredTitle": "落雪咖啡屋 OAuth 尚未配置",
+      "notConfiguredMessage": "请联系管理员在服务器上设置 <code>LXNS_CLIENT_ID</code> 与 <code>LXNS_CLIENT_SECRET</code> 环境变量。",
+      "instructionsLine1": "点击下方按钮后，将在新窗口打开落雪咖啡屋的授权页面。授权完成后窗口会自动关闭并返回此处。",
+      "instructionsLine2": "我们仅会请求读取玩家资料相关的权限，不会写入您的数据。",
+      "authorizeButton": "前往授权",
+      "authorizingButton": "等待授权完成…",
+      "popupBlocked": "无法开启授权窗口，请允许本站弹窗后再试。",
+      "authFailed": "授权失败：{error}",
+      "unknownError": "未知错误"
+    },
+    "divingFish": {
+      "title": "水鱼查分器",
+      "description": "将您的水鱼查分器帐号绑定到本站，绑定后我们会通过水鱼查分器的开发者接口读取您的舞萌 DX 数据。请先选择以下任一方式验证您拥有该帐号。",
+      "notConfiguredTitle": "水鱼查分器尚未配置",
+      "notConfiguredMessage": "请联系管理员在服务器上设置 <code>DIVINGFISH_DEV_TOKEN</code> 环境变量。",
+      "importTokenTab": "Import-Token 验证",
+      "nicknameTab": "昵称验证",
+      "importTokenInstructions": "在水鱼查分器 \"编辑个人资料\" 页面生成 Import-Token，并粘贴到此处。",
+      "importTokenSecureNote": "我们仅会用此 Token 验证一次帐号归属，验证后立即丢弃，不会保存。",
+      "importTokenPlaceholder": "粘贴您的 Import-Token",
+      "importTokenButton": "验证并绑定",
+      "importTokenVerifying": "验证中…",
+      "nicknameInstructions": "请按照以下步骤完成验证：",
+      "nicknameStep1": "登入水鱼查分器",
+      "nicknameStep2": "在 \"编辑个人资料\" 中将昵称改为下方代码",
+      "nicknameStep3": "保存修改",
+      "nicknameStep4": "回到此处填写您的用户名或 QQ 并验证",
+      "nicknameLabel": "请将昵称改为",
+      "refreshCode": "刷新代码",
+      "nicknameTypeLabel": "类型",
+      "nicknameUsername": "用户名",
+      "nicknameQQ": "QQ",
+      "nicknameIdentifierPlaceholder": "您的水鱼查分器用户名或绑定的 QQ 号",
+      "nicknameVerifyButton": "我已修改，开始验证",
+      "nicknameVerifying": "验证中…",
+      "nicknameRevertNote": "验证成功后您可以将昵称改回原本的设定。",
+      "verifyFailedFallback": "验证失败",
+      "challengePlaceholder": "-------"
+    },
+    "httpProxy": {
+      "title": "HTTP 代理",
+      "description": "将手机的全局 HTTP 代理指向我们的服务器，然后在微信中打开下方链接完成授权。整个过程仅授权一次。",
+      "notConfiguredTitle": "HTTP 代理服务尚未配置",
+      "notConfiguredMessage": "请联系管理员设置 <code>CN_PROXY_HOST</code> 及 <code>CN_PROXY_TOKEN_SECRET</code> 环境变量。",
+      "step1Title": "第 1 步：在手机 Wi-Fi 设置中将 HTTP 代理设为",
+      "step1Host": "主机名",
+      "step1Port": "端口",
+      "step2Title": "第 2 步：{generateOrRegenerate}授权链接",
+      "step2Generate": "生成",
+      "step2Regenerate": "如链接失效，可重新生成",
+      "step2GenerateButton": "生成授权链接",
+      "step2RegenerateButton": "重新生成",
+      "step2GeneratingButton": "生成中…",
+      "step2ErrorPrefix": "错误：",
+      "step3Title": "第 3 步：复制下方链接，发送到任意微信聊天后点击打开",
+      "step3Copy": "复制链接",
+      "step3CopyNote": "授权完成后微信会跳转到一个结果页面。届时请关闭该页面，回到 tomomai 查看导入进度，并记得在 Wi-Fi 设置中关闭代理。",
+      "copySuccess": "已复制",
+      "copyFailed": "复制失败，请手动复制"
+    }
   },
   "regions": {
     "intl": "国际服",

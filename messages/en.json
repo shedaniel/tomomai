@@ -619,7 +619,99 @@
     },
     "recommended": "Recommended",
     "tokenOptionDescription": "Login to your maimai DX NET account with your browser tokens. Token may expire from time to time. No password required and supports social logins.",
-    "passwordOptionDescription": "Login to your maimai DX NET account with your SEGA account credentials. Never expire. Not recommended."
+    "passwordOptionDescription": "Login to your maimai DX NET account with your SEGA account credentials. Never expire. Not recommended.",
+    "cnTitle": "Update maimai authentication",
+    "cnDescription": "Choose your authentication method for the China region.",
+    "recommendedBadge": "Recommended",
+    "comingSoonBadge": "Coming soon",
+    "disabledBadge": "Temporarily disabled",
+    "features": {
+      "playerInfo": "Player info",
+      "scores": "Chart scores",
+      "recents": "Recent plays",
+      "events": "Event data"
+    },
+    "fetchOptions": {
+      "divingFish": {
+        "name": "水鱼查分器",
+        "description": "Use your 水鱼查分器 username or linked QQ account ID to fetch data."
+      },
+      "lxns": {
+        "name": "落雪咖啡屋查分器",
+        "description": "Authorize with your 落雪咖啡屋 account to fetch data."
+      },
+      "httpProxy": {
+        "name": "HTTP Proxy",
+        "description": "Intercept requests from the WeChat maimai DX mini-program on your phone via an HTTP proxy."
+      },
+      "androidApp": {
+        "name": "Android App",
+        "description": "Install this app on your Android device to automatically fetch data."
+      }
+    },
+    "lxns": {
+      "title": "落雪咖啡屋查分器",
+      "description": "Authorize tomomai.lol to read your maimai DX data from your 落雪咖啡屋 account. You can revoke authorization anytime in your account settings.",
+      "notConfiguredTitle": "落雪咖啡屋 OAuth Not Configured",
+      "notConfiguredMessage": "Please ask an administrator to set the <code>LXNS_CLIENT_ID</code> and <code>LXNS_CLIENT_SECRET</code> environment variables on the server.",
+      "instructionsLine1": "Click the button below to open the 落雪咖啡屋 authorization page in a new window. The window will close automatically after authorization.",
+      "instructionsLine2": "We only request permissions to read player data and will not write any of your data.",
+      "authorizeButton": "Authorize",
+      "authorizingButton": "Waiting for authorization…",
+      "popupBlocked": "Could not open the authorization window. Please allow popups for this site and try again.",
+      "authFailed": "Authorization failed: {error}",
+      "unknownError": "Unknown error"
+    },
+    "divingFish": {
+      "title": "水鱼查分器",
+      "description": "Bind your 水鱼查分器 account to tomomai. We will read your maimai DX data from 水鱼查分器 after binding. Choose one of the following methods to verify your account ownership.",
+      "notConfiguredTitle": "水鱼查分器 Not Configured",
+      "notConfiguredMessage": "Please ask an administrator to set the <code>DIVINGFISH_DEV_TOKEN</code> environment variable on the server.",
+      "importTokenTab": "Import-Token Verification",
+      "nicknameTab": "Nickname Verification",
+      "importTokenInstructions": "Generate an Import-Token in the 水鱼查分器 \"Edit Profile\" page and paste it here.",
+      "importTokenSecureNote": "We only use this token to verify your account once and will discard it immediately after verification.",
+      "importTokenPlaceholder": "Paste your Import-Token",
+      "importTokenButton": "Verify and Bind",
+      "importTokenVerifying": "Verifying…",
+      "nicknameInstructions": "Follow these steps to complete verification:",
+      "nicknameStep1": "Log in to 水鱼查分器",
+      "nicknameStep2": "Change your nickname in \"Edit Profile\" to the code below",
+      "nicknameStep3": "Save changes",
+      "nicknameStep4": "Return here, fill in your username or QQ, and verify",
+      "nicknameLabel": "Change your nickname to",
+      "refreshCode": "Refresh code",
+      "nicknameTypeLabel": "Type",
+      "nicknameUsername": "Username",
+      "nicknameQQ": "QQ",
+      "nicknameIdentifierPlaceholder": "Your 水鱼查分器 username or linked QQ number",
+      "nicknameVerifyButton": "I've changed it, start verification",
+      "nicknameVerifying": "Verifying…",
+      "nicknameRevertNote": "After verification succeeds, you can change your nickname back to the original.",
+      "verifyFailedFallback": "Verification failed",
+      "challengePlaceholder": "-------"
+    },
+    "httpProxy": {
+      "title": "HTTP Proxy",
+      "description": "Point your phone's HTTP proxy to our server, then open the link below in WeChat to complete authorization. You only need to authorize once.",
+      "notConfiguredTitle": "HTTP Proxy Service Not Configured",
+      "notConfiguredMessage": "Please ask an administrator to set the <code>CN_PROXY_HOST</code> and <code>CN_PROXY_TOKEN_SECRET</code> environment variables.",
+      "step1Title": "Step 1: Set HTTP proxy on your phone's Wi-Fi settings to",
+      "step1Host": "Host",
+      "step1Port": "Port",
+      "step2Title": "Step 2: {generateOrRegenerate} authorization link",
+      "step2Generate": "Generate",
+      "step2Regenerate": "Regenerate if link expired",
+      "step2GenerateButton": "Generate Authorization Link",
+      "step2RegenerateButton": "Regenerate",
+      "step2GeneratingButton": "Generating…",
+      "step2ErrorPrefix": "Error: ",
+      "step3Title": "Step 3: Copy the link below, send it in any WeChat chat, then click to open",
+      "step3Copy": "Copy Link",
+      "step3CopyNote": "After authorization, WeChat will redirect to a result page. Please close that page, return to tomomai to check the import progress, and remember to turn off the proxy in your Wi-Fi settings.",
+      "copySuccess": "Copied",
+      "copyFailed": "Copy failed, please copy manually"
+    }
   },
   "regions": {
     "intl": "International",

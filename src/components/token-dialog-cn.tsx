@@ -41,11 +41,10 @@ interface FeatureSupport {
 const FULL_SUPPORT: FeatureSupport = { player: true, scores: true, recents: true, events: true };
 const PROBER_SUPPORT: FeatureSupport = { player: true, scores: true, recents: false, events: false };
 
-const FETCH_OPTIONS = [
+const FETCH_OPTIONS_KEYS = [
   {
     id: "diving-fish",
-    name: "水鱼查分器",
-    description: "使用您的水鱼查分器登入用户名 或 已绑定的 QQ 帐户 ID 取得资料。",
+    i18nKey: "divingFish",
     recommended: false,
     supported: false,
     disabledReason: "tomomai.lol 与水鱼查分器之间的连线不稳定，请求经常逾时，因此暂时停用。",
@@ -54,8 +53,7 @@ const FETCH_OPTIONS = [
   },
   {
     id: "lxns",
-    name: "落雪咖啡屋查分器",
-    description: "以落雪咖啡屋帐号登入授权取得资料。",
+    i18nKey: "lxns",
     recommended: false,
     supported: true,
     features: PROBER_SUPPORT,
@@ -63,8 +61,7 @@ const FETCH_OPTIONS = [
   },
   {
     id: "http-proxy",
-    name: "HTTP 代理",
-    description: "透过 HTTP 代理拦截手机微信中的舞萌 DX 小程序请求以取得资料。",
+    i18nKey: "httpProxy",
     recommended: false,
     supported: true,
     features: FULL_SUPPORT,
@@ -72,8 +69,7 @@ const FETCH_OPTIONS = [
   },
   {
     id: "android-app",
-    name: "Android 应用程式",
-    description: "在 Android 装置上安装本应用程式以自动取得资料。",
+    i18nKey: "androidApp",
     recommended: false,
     supported: false,
     features: FULL_SUPPORT,
@@ -102,6 +98,7 @@ interface LxnsAuthSubDialogProps {
 }
 
 function LxnsAuthSubDialog({ isOpen, onOpenChange, onAuthorized }: LxnsAuthSubDialogProps) {
+  const t = useTranslations();
   const [isAuthorizing, setIsAuthorizing] = useState(false);
   const popupRef = useRef<Window | null>(null);
   const pollIntervalRef = useRef<number | null>(null);
@@ -143,13 +140,13 @@ function LxnsAuthSubDialog({ isOpen, onOpenChange, onAuthorized }: LxnsAuthSubDi
           setIsAuthorizing(false);
         }
       } else {
-        toast.error(`授权失败：${payload.error ?? "未知错误"}`);
+        toast.error(t('tokenDialog.lxns.authFailed', { error: payload.error ?? t('tokenDialog.lxns.unknownError') }));
         setIsAuthorizing(false);
       }
     };
     window.addEventListener("message", handler);
     return () => window.removeEventListener("message", handler);
-  }, [isOpen, onAuthorized, onOpenChange]);
+  }, [isOpen, onAuthorized, onOpenChange, t]);
 
   const handleAuthorize = () => {
     if (!configured) return;
@@ -165,7 +162,7 @@ function LxnsAuthSubDialog({ isOpen, onOpenChange, onAuthorized }: LxnsAuthSubDi
     );
     if (!popup) {
       setIsAuthorizing(false);
-      toast.error("无法开启授权窗口，请允许本站弹窗后再试。");
+      toast.error(t('tokenDialog.lxns.popupBlocked'));
       return;
     }
     popupRef.current = popup;
@@ -190,10 +187,10 @@ function LxnsAuthSubDialog({ isOpen, onOpenChange, onAuthorized }: LxnsAuthSubDi
         <ResponsiveDialogHeader>
           <ResponsiveDialogTitle className="flex items-center space-x-2">
             <Snowflake className="h-5 w-5" />
-            <span>落雪咖啡屋查分器</span>
+            <span>{t('tokenDialog.lxns.title')}</span>
           </ResponsiveDialogTitle>
           <ResponsiveDialogDescription>
-            通过 OAuth 授权 {host || "本站"} 读取您在落雪咖啡屋查分器上的舞萌 DX 数据。授权可随时在落雪咖啡屋帐号设置中撤销。
+            {t('tokenDialog.lxns.description', { host: host || "tomomai" })}
           </ResponsiveDialogDescription>
         </ResponsiveDialogHeader>
 
@@ -202,17 +199,15 @@ function LxnsAuthSubDialog({ isOpen, onOpenChange, onAuthorized }: LxnsAuthSubDi
             <div className="flex items-start gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-sm">
               <AlertTriangle className="h-4 w-4 mt-0.5 flex-shrink-0 text-amber-600" />
               <div className="space-y-1">
-                <p className="font-medium">落雪咖啡屋 OAuth 尚未配置</p>
-                <p className="text-muted-foreground text-xs">
-                  请联系管理员在服务器上设置 <code className="font-mono">LXNS_CLIENT_ID</code> 与 <code className="font-mono">LXNS_CLIENT_SECRET</code> 环境变量。
-                </p>
+                <p className="font-medium">{t('tokenDialog.lxns.notConfiguredTitle')}</p>
+                <p className="text-muted-foreground text-xs" dangerouslySetInnerHTML={{ __html: t('tokenDialog.lxns.notConfiguredMessage') }} />
               </div>
             </div>
           )}
 
           <div className="text-xs text-muted-foreground space-y-2">
-            <p>点击下方按钮后，将在新窗口打开落雪咖啡屋的授权页面。授权完成后窗口会自动关闭并返回此处。</p>
-            <p>我们仅会请求读取玩家资料相关的权限，不会写入您的数据。</p>
+            <p>{t('tokenDialog.lxns.instructionsLine1')}</p>
+            <p>{t('tokenDialog.lxns.instructionsLine2')}</p>
           </div>
 
           <Button
@@ -224,12 +219,12 @@ function LxnsAuthSubDialog({ isOpen, onOpenChange, onAuthorized }: LxnsAuthSubDi
             {isAuthorizing ? (
               <>
                 <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-r-transparent mr-2" />
-                等待授权完成…
+                {t('tokenDialog.lxns.authorizingButton')}
               </>
             ) : (
               <>
                 <Snowflake className="h-4 w-4 mr-2" />
-                前往授权
+                {t('tokenDialog.lxns.authorizeButton')}
               </>
             )}
           </Button>
@@ -246,6 +241,7 @@ interface DivingFishAuthSubDialogProps {
 }
 
 function DivingFishAuthSubDialog({ isOpen, onOpenChange, onAuthorized }: DivingFishAuthSubDialogProps) {
+  const t = useTranslations();
   const [importToken, setImportToken] = useState("");
   const [kind, setKind] = useState<"username" | "qq">("username");
   const [identifier, setIdentifier] = useState("");
@@ -289,7 +285,7 @@ function DivingFishAuthSubDialog({ isOpen, onOpenChange, onAuthorized }: DivingF
         // caller toasts the error
       }
     } catch (err) {
-      const message = err instanceof Error ? err.message : "验证失败";
+      const message = err instanceof Error ? err.message : t('tokenDialog.divingFish.verifyFailedFallback');
       toast.error(message);
     }
   };
@@ -305,7 +301,7 @@ function DivingFishAuthSubDialog({ isOpen, onOpenChange, onAuthorized }: DivingF
         // caller toasts the error
       }
     } catch (err) {
-      const message = err instanceof Error ? err.message : "验证失败";
+      const message = err instanceof Error ? err.message : t('tokenDialog.divingFish.verifyFailedFallback');
       toast.error(message);
     }
   };
@@ -319,10 +315,10 @@ function DivingFishAuthSubDialog({ isOpen, onOpenChange, onAuthorized }: DivingF
         <ResponsiveDialogHeader>
           <ResponsiveDialogTitle className="flex items-center space-x-2">
             <Fish className="h-5 w-5" />
-            <span>水鱼查分器</span>
+            <span>{t('tokenDialog.divingFish.title')}</span>
           </ResponsiveDialogTitle>
           <ResponsiveDialogDescription>
-            将您的水鱼查分器帐号绑定到本站，绑定后我们会通过水鱼查分器的开发者接口读取您的舞萌 DX 数据。请先选择以下任一方式验证您拥有该帐号。
+            {t('tokenDialog.divingFish.description')}
           </ResponsiveDialogDescription>
         </ResponsiveDialogHeader>
 
@@ -331,10 +327,8 @@ function DivingFishAuthSubDialog({ isOpen, onOpenChange, onAuthorized }: DivingF
             <div className="flex items-start gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-sm">
               <AlertTriangle className="h-4 w-4 mt-0.5 flex-shrink-0 text-amber-600" />
               <div className="space-y-1">
-                <p className="font-medium">水鱼查分器尚未配置</p>
-                <p className="text-muted-foreground text-xs">
-                  请联系管理员在服务器上设置 <code className="font-mono">DIVINGFISH_DEV_TOKEN</code> 环境变量。
-                </p>
+                <p className="font-medium">{t('tokenDialog.divingFish.notConfiguredTitle')}</p>
+                <p className="text-muted-foreground text-xs" dangerouslySetInnerHTML={{ __html: t('tokenDialog.divingFish.notConfiguredMessage') }} />
               </div>
             </div>
           )}
@@ -349,20 +343,20 @@ function DivingFishAuthSubDialog({ isOpen, onOpenChange, onAuthorized }: DivingF
             className="w-full"
           >
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="import-token">Import-Token 验证</TabsTrigger>
-              <TabsTrigger value="nickname">昵称验证</TabsTrigger>
+              <TabsTrigger value="import-token">{t('tokenDialog.divingFish.importTokenTab')}</TabsTrigger>
+              <TabsTrigger value="nickname">{t('tokenDialog.divingFish.nicknameTab')}</TabsTrigger>
             </TabsList>
 
             <AutoHeight deps={[activeTab, challengeData?.challenge, kind, isImportBusy, isNicknameBusy, configured, isLoadingConfig]}>
             <div className="pt-3">
             <TabsContent value="import-token" className="space-y-3">
               <div className="text-xs text-muted-foreground space-y-1">
-                <p>在水鱼查分器 &quot;编辑个人资料&quot; 页面生成 Import-Token，并粘贴到此处。</p>
-                <p className="font-medium text-foreground">我们仅会用此 Token 验证一次帐号归属，验证后立即丢弃，不会保存。</p>
+                <p>{t('tokenDialog.divingFish.importTokenInstructions')}</p>
+                <p className="font-medium text-foreground">{t('tokenDialog.divingFish.importTokenSecureNote')}</p>
               </div>
               <Input
                 type="password"
-                placeholder="粘贴您的 Import-Token"
+                placeholder={t('tokenDialog.divingFish.importTokenPlaceholder')}
                 value={importToken}
                 onChange={(e) => setImportToken(e.target.value)}
                 disabled={!configured || isImportBusy}
@@ -377,12 +371,12 @@ function DivingFishAuthSubDialog({ isOpen, onOpenChange, onAuthorized }: DivingF
                 {isImportBusy ? (
                   <>
                     <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-r-transparent mr-2" />
-                    验证中…
+                    {t('tokenDialog.divingFish.importTokenVerifying')}
                   </>
                 ) : (
                   <>
                     <Key className="h-4 w-4 mr-2" />
-                    验证并绑定
+                    {t('tokenDialog.divingFish.importTokenButton')}
                   </>
                 )}
               </Button>
@@ -390,31 +384,31 @@ function DivingFishAuthSubDialog({ isOpen, onOpenChange, onAuthorized }: DivingF
 
             <TabsContent value="nickname" className="space-y-3">
               <div className="text-xs text-muted-foreground space-y-1">
-                <p>请按照以下步骤完成验证：</p>
+                <p>{t('tokenDialog.divingFish.nicknameInstructions')}</p>
                 <ol className="list-decimal list-inside space-y-0.5">
-                  <li>登入水鱼查分器</li>
-                  <li>在 &quot;编辑个人资料&quot; 中将昵称改为下方代码</li>
-                  <li>保存修改</li>
-                  <li>回到此处填写您的用户名或 QQ 并验证</li>
+                  <li>{t('tokenDialog.divingFish.nicknameStep1')}</li>
+                  <li>{t('tokenDialog.divingFish.nicknameStep2')}</li>
+                  <li>{t('tokenDialog.divingFish.nicknameStep3')}</li>
+                  <li>{t('tokenDialog.divingFish.nicknameStep4')}</li>
                 </ol>
               </div>
 
               <div className="rounded-md border bg-muted/40 p-3 text-center">
-                <p className="text-xs text-muted-foreground mb-1">请将昵称改为</p>
+                <p className="text-xs text-muted-foreground mb-1">{t('tokenDialog.divingFish.nicknameLabel')}</p>
                 <p className="font-mono text-2xl font-semibold tracking-widest">
-                  {challengeData?.challenge ?? "-------"}
+                  {challengeData?.challenge ?? t('tokenDialog.divingFish.challengePlaceholder')}
                 </p>
                 <button
                   type="button"
                   onClick={() => refetchChallenge()}
                   className="text-xs text-muted-foreground underline mt-1 hover:text-foreground"
                 >
-                  刷新代码
+                  {t('tokenDialog.divingFish.refreshCode')}
                 </button>
               </div>
 
               <div className="space-y-2">
-                <Label className="text-xs">类型</Label>
+                <Label className="text-xs">{t('tokenDialog.divingFish.nicknameTypeLabel')}</Label>
                 <div className="flex gap-2">
                   <Button
                     type="button"
@@ -423,7 +417,7 @@ function DivingFishAuthSubDialog({ isOpen, onOpenChange, onAuthorized }: DivingF
                     onClick={() => setKind("username")}
                     disabled={isNicknameBusy}
                   >
-                    用户名
+                    {t('tokenDialog.divingFish.nicknameUsername')}
                   </Button>
                   <Button
                     type="button"
@@ -432,13 +426,13 @@ function DivingFishAuthSubDialog({ isOpen, onOpenChange, onAuthorized }: DivingF
                     onClick={() => setKind("qq")}
                     disabled={isNicknameBusy}
                   >
-                    QQ
+                    {t('tokenDialog.divingFish.nicknameQQ')}
                   </Button>
                 </div>
               </div>
 
               <Input
-                placeholder={kind === "username" ? "您的水鱼查分器用户名" : "您绑定的 QQ 号"}
+                placeholder={t('tokenDialog.divingFish.nicknameIdentifierPlaceholder')}
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value)}
                 disabled={!configured || isNicknameBusy}
@@ -454,17 +448,17 @@ function DivingFishAuthSubDialog({ isOpen, onOpenChange, onAuthorized }: DivingF
                 {isNicknameBusy ? (
                   <>
                     <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-r-transparent mr-2" />
-                    验证中…
+                    {t('tokenDialog.divingFish.nicknameVerifying')}
                   </>
                 ) : (
                   <>
                     <Check className="h-4 w-4 mr-2" />
-                    我已修改，开始验证
+                    {t('tokenDialog.divingFish.nicknameVerifyButton')}
                   </>
                 )}
               </Button>
               <p className="text-xs text-muted-foreground">
-                验证成功后您可以将昵称改回原本的设定。
+                {t('tokenDialog.divingFish.nicknameRevertNote')}
               </p>
             </TabsContent>
             </div>
@@ -485,6 +479,7 @@ interface HttpProxyAuthSubDialogProps {
 }
 
 function HttpProxyAuthSubDialog({ isOpen, onOpenChange, onAuthorized, startSessionPolling, stopSessionPolling }: HttpProxyAuthSubDialogProps) {
+  const t = useTranslations();
   const { data: configData, isLoading: isLoadingConfig } = trpc.user.getCnProxyConfigured.useQuery(
     undefined,
     { enabled: isOpen, refetchOnWindowFocus: false }
@@ -526,9 +521,9 @@ function HttpProxyAuthSubDialog({ isOpen, onOpenChange, onAuthorized, startSessi
   const handleCopy = async (value: string) => {
     try {
       await navigator.clipboard.writeText(value);
-      toast.success("已复制");
+      toast.success(t('tokenDialog.httpProxy.copySuccess'));
     } catch {
-      toast.error("复制失败，请手动复制");
+      toast.error(t('tokenDialog.httpProxy.copyFailed'));
     }
   };
 
@@ -538,10 +533,10 @@ function HttpProxyAuthSubDialog({ isOpen, onOpenChange, onAuthorized, startSessi
         <ResponsiveDialogHeader>
           <ResponsiveDialogTitle className="flex items-center space-x-2">
             <Wifi className="h-5 w-5" />
-            <span>HTTP 代理</span>
+            <span>{t('tokenDialog.httpProxy.title')}</span>
           </ResponsiveDialogTitle>
           <ResponsiveDialogDescription>
-            将手机的全局 HTTP 代理指向我们的服务器，然后在微信中打开下方链接完成授权。整个过程仅授权一次。
+            {t('tokenDialog.httpProxy.description')}
           </ResponsiveDialogDescription>
         </ResponsiveDialogHeader>
 
@@ -551,20 +546,18 @@ function HttpProxyAuthSubDialog({ isOpen, onOpenChange, onAuthorized, startSessi
               <div className="flex items-start gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-sm">
                 <AlertTriangle className="h-4 w-4 mt-0.5 flex-shrink-0 text-amber-600" />
                 <div className="space-y-1">
-                  <p className="font-medium">HTTP 代理服务尚未配置</p>
-                  <p className="text-muted-foreground text-xs">
-                    请联系管理员设置 <code className="font-mono">CN_PROXY_HOST</code> 及 <code className="font-mono">CN_PROXY_TOKEN_SECRET</code> 环境变量。
-                  </p>
+                  <p className="font-medium">{t('tokenDialog.httpProxy.notConfiguredTitle')}</p>
+                  <p className="text-muted-foreground text-xs" dangerouslySetInnerHTML={{ __html: t('tokenDialog.httpProxy.notConfiguredMessage') }} />
                 </div>
               </div>
             )}
 
             {configured && (
               <div className="space-y-2">
-                <p className="text-xs font-medium">第 1 步：在手机 Wi-Fi 设置中将 HTTP 代理设为</p>
+                <p className="text-xs font-medium">{t('tokenDialog.httpProxy.step1Title')}</p>
                 <div className="grid grid-cols-2 gap-2">
                   <div className="rounded-md border bg-muted/40 p-2">
-                    <p className="text-[10px] text-muted-foreground uppercase tracking-wide">主机名</p>
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wide">{t('tokenDialog.httpProxy.step1Host')}</p>
                     <button
                       type="button"
                       onClick={() => handleCopy(proxyHost)}
@@ -575,7 +568,7 @@ function HttpProxyAuthSubDialog({ isOpen, onOpenChange, onAuthorized, startSessi
                     </button>
                   </div>
                   <div className="rounded-md border bg-muted/40 p-2">
-                    <p className="text-[10px] text-muted-foreground uppercase tracking-wide">端口</p>
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wide">{t('tokenDialog.httpProxy.step1Port')}</p>
                     <button
                       type="button"
                       onClick={() => handleCopy(proxyPort)}
@@ -592,7 +585,7 @@ function HttpProxyAuthSubDialog({ isOpen, onOpenChange, onAuthorized, startSessi
             {configured && (
               <div className="space-y-2">
                 <p className="text-xs font-medium">
-                  第 2 步：{linkData ? "如链接失效，可重新生成" : "生成授权链接"}
+                  {t('tokenDialog.httpProxy.step2Title', { generateOrRegenerate: linkData ? t('tokenDialog.httpProxy.step2Regenerate') : t('tokenDialog.httpProxy.step2Generate') })}
                 </p>
                 <Button
                   type="button"
@@ -604,18 +597,18 @@ function HttpProxyAuthSubDialog({ isOpen, onOpenChange, onAuthorized, startSessi
                   {generateLink.isPending ? (
                     <>
                       <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-r-transparent mr-2" />
-                      生成中…
+                      {t('tokenDialog.httpProxy.step2GeneratingButton')}
                     </>
                   ) : (
                     <>
                       <Key className="h-4 w-4 mr-2" />
-                      {linkData ? "重新生成" : "生成授权链接"}
+                      {linkData ? t('tokenDialog.httpProxy.step2RegenerateButton') : t('tokenDialog.httpProxy.step2GenerateButton')}
                     </>
                   )}
                 </Button>
                 {generateLink.error && (
                   <p className="text-xs text-destructive">
-                    {generateLink.error.message}
+                    {t('tokenDialog.httpProxy.step2ErrorPrefix')}{generateLink.error.message}
                   </p>
                 )}
               </div>
@@ -623,7 +616,7 @@ function HttpProxyAuthSubDialog({ isOpen, onOpenChange, onAuthorized, startSessi
 
             {linkData && (
               <div className="space-y-2">
-                <p className="text-xs font-medium">第 3 步：复制下方链接，发送到任意微信聊天后点击打开</p>
+                <p className="text-xs font-medium">{t('tokenDialog.httpProxy.step3Title')}</p>
                 <div className="rounded-md border bg-muted/40 p-2 break-all text-xs font-mono">
                   {linkData.url}
                 </div>
@@ -634,10 +627,10 @@ function HttpProxyAuthSubDialog({ isOpen, onOpenChange, onAuthorized, startSessi
                   onClick={() => handleCopy(linkData.url)}
                 >
                   <Copy className="h-4 w-4 mr-2" />
-                  复制链接
+                  {t('tokenDialog.httpProxy.step3Copy')}
                 </Button>
                 <p className="text-xs text-muted-foreground">
-                  授权完成后微信会跳转到一个结果页面。届时请关闭该页面，回到 tomomai 查看导入进度，并记得在 Wi-Fi 设置中关闭代理。
+                  {t('tokenDialog.httpProxy.step3CopyNote')}
                 </p>
               </div>
             )}
@@ -661,6 +654,13 @@ export function TokenDialogCn({
   const [isHttpProxyDialogOpen, setIsHttpProxyDialogOpen] = useState(false);
 
   const subDialogOpen = isLxnsDialogOpen || isDivingFishDialogOpen || isHttpProxyDialogOpen;
+
+  const fetchOptions = FETCH_OPTIONS_KEYS.map(option => ({
+    ...option,
+    name: t(`tokenDialog.fetchOptions.${option.i18nKey}.name`),
+    description: t(`tokenDialog.fetchOptions.${option.i18nKey}.description`),
+    disabledReason: "disabledReason" in option ? option.disabledReason : undefined,
+  }));
 
   const handleClose = (open: boolean) => {
     if (open) return;
@@ -696,17 +696,15 @@ export function TokenDialogCn({
           <ResponsiveDialogHeader>
             <ResponsiveDialogTitle className="flex items-center space-x-2">
               <Key className="h-5 w-5" />
-              <span>{t('tokenDialog.title')}</span>
+              <span>{t('tokenDialog.cnTitle')}</span>
             </ResponsiveDialogTitle>
             <ResponsiveDialogDescription>
-              {t('tokenDialog.intlDescription')} {t('tokenDialog.credentialsStored')}
+              {t('tokenDialog.cnDescription')}
             </ResponsiveDialogDescription>
           </ResponsiveDialogHeader>
 
           <div className="space-y-3">
-            {FETCH_OPTIONS.map(option => {
-              const disabledReason = "disabledReason" in option ? option.disabledReason : undefined;
-              return (
+            {fetchOptions.map(option => (
               <button
                 key={option.id}
                 onClick={() => handleOptionClick(option.id)}
@@ -721,33 +719,32 @@ export function TokenDialogCn({
                     <div className="flex items-center space-x-2 mb-1">
                       <span className="font-semibold text-base">{option.name}</span>
                       {option.recommended && (<Badge variant="default">
-                        {t('tokenDialog.recommended')}
+                        {t('tokenDialog.recommendedBadge')}
                       </Badge>)}
                       {!option.supported && (<Badge variant="secondary">
-                        {disabledReason ? "暂时停用" : "即将推出"}
+                        {option.disabledReason ? t('tokenDialog.disabledBadge') : t('tokenDialog.comingSoonBadge')}
                       </Badge>)}
                     </div>
                     <p className="text-sm text-muted-foreground leading-relaxed">
                       {option.description}
                     </p>
-                    {disabledReason && (
+                    {option.disabledReason && (
                       <p className="mt-1 text-xs text-amber-600 dark:text-amber-500 leading-relaxed">
                         <AlertTriangle className="inline-block h-3 w-3 mr-1 align-[-2px]" />
-                        {disabledReason}
+                        {option.disabledReason}
                       </p>
                     )}
                     <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
-                      <FeatureChip label="玩家资料" supported={option.features.player} />
-                      <FeatureChip label="谱面成绩" supported={option.features.scores} />
-                      <FeatureChip label="最近游玩" supported={option.features.recents} />
-                      <FeatureChip label="活动数据" supported={option.features.events} />
+                      <FeatureChip label={t('tokenDialog.features.playerInfo')} supported={option.features.player} />
+                      <FeatureChip label={t('tokenDialog.features.scores')} supported={option.features.scores} />
+                      <FeatureChip label={t('tokenDialog.features.recents')} supported={option.features.recents} />
+                      <FeatureChip label={t('tokenDialog.features.events')} supported={option.features.events} />
                     </div>
                   </div>
                   <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors mt-1" />
                 </div>
               </button>
-              );
-            })}
+            ))}
           </div>
         </ResponsiveDialogContent>
       </ResponsiveDialog>

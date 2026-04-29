@@ -12,7 +12,7 @@ export default function CnProxyLayout({ children }: { children: React.ReactNode 
       lang="zh-CN"
       className={notoSansSC.variable}
       style={{
-        fontFamily: "var(--font-noto-sans-sc), var(--font-inter), system-ui, sans-serif",
+        fontFamily: "var(--font-inter), var(--font-noto-sans-sc), system-ui, sans-serif",
       }}
     >
       {children}
