@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { getVersionInfo } from "@/lib/metadata";
 import { trpc } from "@/lib/trpc-client";
-import { cn, getTypeBadgeUrl } from "@/lib/utils";
+import { cn, createSafeMaimaiImageUrl, getTypeBadgeUrl } from "@/lib/utils";
 import { Activity, Calendar, ChevronRight, ListPlus, Loader2, Music } from "lucide-react";
 import { useTranslations } from "next-intl";
 
@@ -115,7 +115,7 @@ function SongCardContent({
           </p>
           <div className="flex items-center gap-1.5 mt-1.5 h-5">
             <img
-              src={getTypeBadgeUrl(song.type)}
+              src={createSafeMaimaiImageUrl(getTypeBadgeUrl(song.type))}
               alt={song.type.toUpperCase()}
               width={32}
               height={10}

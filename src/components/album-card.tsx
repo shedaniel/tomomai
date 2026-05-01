@@ -2,7 +2,7 @@
 
 import { trpc } from "@/lib/trpc-client";
 import { Region } from "@/lib/types";
-import { cn, getTypeBadgeUrl } from "@/lib/utils";
+import { cn, createSafeMaimaiImageUrl, getTypeBadgeUrl } from "@/lib/utils";
 import { Images, Loader2, AlertCircle, Calendar, MapPin, Music, HardDrive, Info, Trash2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTranslations } from "next-intl";
@@ -337,7 +337,7 @@ export function AlbumCard({ region }: AlbumCardProps) {
                     <p className="text-xs text-muted-foreground truncate">{album.artist}</p>
                     <div className="flex items-center gap-1.5 mt-1.5">
                       <img
-                        src={getTypeBadgeUrl(album.type)}
+                        src={createSafeMaimaiImageUrl(getTypeBadgeUrl(album.type))}
                         alt={album.type.toUpperCase()}
                         width={32}
                         height={10}

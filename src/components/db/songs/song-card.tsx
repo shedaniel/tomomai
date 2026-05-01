@@ -3,7 +3,7 @@
 import { motion } from "motion/react";
 import Link from "next/link";
 
-import { cn, getTypeBadgeUrl } from "@/lib/utils";
+import { cn, createSafeMaimaiImageUrl, getTypeBadgeUrl } from "@/lib/utils";
 import { CoverImage } from "@/components/cover-image";
 import { UniqueSong } from "./types";
 import { renderLevelPrecise } from "@/lib/name-utils";
@@ -107,7 +107,7 @@ export function SongCard({ song, index, isSelected, onSelect }: SongCardProps) {
         {/* Type Badge */}
         <div className="absolute top-2 left-2 z-10">
           <img
-            src={getTypeBadgeUrl(song.type)}
+            src={createSafeMaimaiImageUrl(getTypeBadgeUrl(song.type))}
             alt={song.type.toUpperCase()}
             width={32}
             height={10}

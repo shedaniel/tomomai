@@ -3,7 +3,7 @@
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { SongWithRating, splitSongs } from "@/lib/rating-calculator";
 import { MinimalSongForDisplay, SnapshotWithSongs } from "@/lib/types";
-import { cn, getTypeBadgeUrl } from "@/lib/utils";
+import { cn, createSafeMaimaiImageUrl, getTypeBadgeUrl } from "@/lib/utils";
 import { LayoutGrid, LayoutList, Menu, Plus, Search, TrendingUp } from "lucide-react";
 import { useTranslations } from "next-intl";
 
@@ -400,7 +400,7 @@ export const SongGridCard = forwardRef<HTMLDivElement, { song: MinimalSongForDis
           {/* Song Type Badge */}
           <div className="absolute top-2.5 left-2.5 2xs:max-xs:left-2 2xs:max-xs:top-2 2xs:max-xs:scale-75 origin-top-left z-30">
             <img
-              src={getTypeBadgeUrl(song.type)}
+              src={createSafeMaimaiImageUrl(getTypeBadgeUrl(song.type))}
               alt={song.type.toUpperCase()}
               width={37}
               height={11}

@@ -2,7 +2,7 @@
 
 import { trpc } from "@/lib/trpc-client";
 import { Region } from "@/lib/types";
-import { cn, getTypeBadgeUrl } from "@/lib/utils";
+import { cn, createSafeMaimaiImageUrl, getTypeBadgeUrl } from "@/lib/utils";
 import { Activity, Calendar, ChevronDown, ChevronRight, ChevronUp, Clock, Loader2, AlertCircle, TrendingUp, TrendingDown, Trophy, FastForward, Rewind, ArrowBigUpDash, ArrowBigDownDash, Grip, Sparkle, MapPin, SeparatorVertical, Slash, Star, Music, CloudOff } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTranslations } from "next-intl";
@@ -148,7 +148,7 @@ function RecentSongRow({ play, index, isFirst, isLast, onToggleExpand, isExpande
           </p>
           <div className="flex items-center gap-1.5 mt-1.5">
             <img
-              src={getTypeBadgeUrl(play.type)}
+              src={createSafeMaimaiImageUrl(getTypeBadgeUrl(play.type))}
               alt={play.type.toUpperCase()}
               width={32}
               height={10}

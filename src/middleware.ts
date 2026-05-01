@@ -27,7 +27,25 @@ export async function middleware(request: NextRequest) {
     return securityResponse;
   }
 
-  return NextResponse.next();
+  const response = NextResponse.next();
+
+  // Mirror Vercel's edge-geo header into a client-readable cookie so client
+  // code can route image requests to the regional CDN (e.g. cdn.cn.tomomai.lol
+  // for users in China). Skipped locally where the header is absent.
+  const country = request.headers.get('x-vercel-ip-country');
+  if (country) {
+    const existing = request.cookies.get('country')?.value;
+    if (existing !== country) {
+      response.cookies.set('country', country, {
+        path: '/',
+        sameSite: 'lax',
+        maxAge: 60 * 60 * 24, // 1 day
+        httpOnly: false,
+      });
+    }
+  }
+
+  return response;
 }
 
 // Apply middleware to all routes except static files and API routes that need special handling
