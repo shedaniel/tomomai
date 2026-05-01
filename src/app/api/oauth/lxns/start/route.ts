@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { nanoid } from "nanoid";
 import { getServerSession } from "@/lib/auth-server";
-import { resolveBaseUrl } from "@/lib/base-url";
+import { resolveBaseUrlFromHeaders } from "@/lib/base-url";
 import { logger } from "@/lib/logger";
 
 const AUTHORIZE_URL = "https://maimai.lxns.net/oauth/authorize";
@@ -9,7 +9,7 @@ const SCOPES = ["read_player", "read_user_profile"];
 const STATE_COOKIE = "lxns_oauth_state";
 const STATE_TTL_SECONDS = 600;
 
-export async function GET(_req: NextRequest) {
+export async function GET(req: NextRequest) {
   const clientId = process.env.LXNS_CLIENT_ID;
   const clientSecret = process.env.LXNS_CLIENT_SECRET;
   if (!clientId || !clientSecret) {
@@ -26,7 +26,7 @@ export async function GET(_req: NextRequest) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
-  const baseUrl = resolveBaseUrl();
+  const baseUrl = resolveBaseUrlFromHeaders(req.headers);
   const redirectUri =
     process.env.LXNS_REDIRECT_URI || `${baseUrl}/api/oauth/lxns/callback`;
   const state = nanoid(32);

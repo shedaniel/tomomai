@@ -5,7 +5,8 @@ import { ProfilePage } from "@/components/profile-page";
 import { notFound } from "next/navigation";
 import { Metadata } from "next";
 import { useFlags } from "@/lib/flags";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
+import { resolveBaseUrlFromHeaders } from "@/lib/base-url";
 
 // Mark this page as dynamic to avoid conflicts with cookie usage in layout
 export const dynamic = 'force-dynamic';
@@ -44,7 +45,7 @@ export async function generateMetadata({ params }: RegionProfilePageProps): Prom
     const title = `${username} | tomomai ともマイ`;
     const description = `View ${username}'s maimai profile for ${regionName}. Track and analyze maimai scores with friends.`;
 
-    const baseUrl = process.env.NEXTAUTH_URL || process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000';
+    const baseUrl = resolveBaseUrlFromHeaders(await headers());
     const profileUrl = `${baseUrl}/profile/${encodeURIComponent(username)}/${region}`;
 
     const userIcon = snapshotData.snapshot.iconUrl || `${baseUrl}/favicon.ico`;

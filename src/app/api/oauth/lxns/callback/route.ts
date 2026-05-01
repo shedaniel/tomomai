@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "@/lib/auth-server";
-import { resolveBaseUrl } from "@/lib/base-url";
+import { resolveBaseUrlFromHeaders } from "@/lib/base-url";
 import { exchangeLxnsCode, saveLxnsToken } from "@/server/services/maimai-login";
 import { logger } from "@/lib/logger";
 
@@ -8,9 +8,8 @@ const STATE_COOKIE = "lxns_oauth_state";
 
 function html(body: { ok: boolean; error?: string }): NextResponse {
   const safe = JSON.stringify(body).replace(/</g, "\\u003c");
-  const page = `<!doctype html><html><head><meta charset="utf-8"><title>lxns OAuth</title></head><body style="font-family:system-ui;padding:2rem;color:#333"><p>${
-    body.ok ? "授权成功，正在关闭窗口…" : `授权失败：${body.error ?? "未知错误"}`
-  }</p><script>(function(){try{if(window.opener){window.opener.postMessage({source:'lxns-oauth',payload:${safe}},window.location.origin);}}catch(e){}setTimeout(function(){window.close();},${body.ok ? 200 : 2500});})();</script></body></html>`;
+  const page = `<!doctype html><html><head><meta charset="utf-8"><title>lxns OAuth</title></head><body style="font-family:system-ui;padding:2rem;color:#333"><p>${body.ok ? "授权成功，正在关闭窗口…" : `授权失败：${body.error ?? "未知错误"}`
+    }</p><script>(function(){try{if(window.opener){window.opener.postMessage({source:'lxns-oauth',payload:${safe}},window.location.origin);}}catch(e){}setTimeout(function(){window.close();},${body.ok ? 200 : 2500});})();</script></body></html>`;
   return new NextResponse(page, {
     status: body.ok ? 200 : 400,
     headers: { "Content-Type": "text/html; charset=utf-8" },
@@ -62,7 +61,7 @@ export async function GET(req: NextRequest) {
 
   logger.debug(`[lxns oauth] callback: state verified for user=${session.user.id}, exchanging code`);
 
-  const baseUrl = resolveBaseUrl();
+  const baseUrl = resolveBaseUrlFromHeaders(req.headers);
   const redirectUri =
     process.env.LXNS_REDIRECT_URI || `${baseUrl}/api/oauth/lxns/callback`;
 

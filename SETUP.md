@@ -77,6 +77,8 @@
 | `NEXT_PUBLIC_ACCOUNT_SIGNUP_TYPE` | No | Signup mode: `disabled`, `invite-only`, or `enabled` (defaults to `disabled`). Set to `enabled` to allow account registration |
 | `NEXT_PUBLIC_ENABLED_REGIONS` | No | Comma-separated list of enabled regions |
 | `DEMO_FETCH` | No | Set to `true` to use demo data for fetching |
+| `TRUSTED_ORIGINS` | No | Comma-separated list of additional origins (e.g. `https://tomomai.lol,https://cn.tomomai.lol`). Read by Better Auth (`trustedOrigins`) and the CORS allowlist. Required when fronting the app with the [`cn/` reverse proxy](#cn-reverse-proxy-hk-cn2) so the proxy hostname is accepted for OAuth callbacks and CORS. |
+| `AUTH_COOKIE_DOMAIN` | No | Cookie domain for cross-subdomain Better Auth sessions (e.g. `.tomomai.lol`). Set this when serving the same app under multiple hostnames (apex + `cn.` proxy) so a session set on one is valid on the other. Omit for single-hostname deployments. |
 
 ### China Fetcher Providers
 
@@ -123,6 +125,22 @@ Not yet implemented; no env vars.
 | `VERCEL_URL` | Auto-assigned deployment URL |
 | `VERCEL_PROJECT_PRODUCTION_URL` | Auto-assigned production URL |
 | `NEXTAUTH_URL` | Base URL override for auth callbacks |
+
+## CN Reverse Proxy (HK CN2)
+
+For deployments serving mainland China users, a Caddy reverse proxy lives in `cn/`. It runs on a CN-routed server (typically an HK box on a CN2 line) and gives users a stable ~40ms RTT path that bypasses Cloudflare's anycast routing. TLS is terminated locally; `_next/static/*` and `/_next/image` are edge-cached on the proxy box to save CN2 bandwidth. HTTP/3 is enabled.
+
+This is independent from the WeChat OAuth proxy in `proxy/` — `proxy/` intercepts a specific OAuth callback, while `cn/` is a full reverse proxy for the whole site.
+
+To deploy:
+
+1. Add a gray-cloud (DNS-only) A record pointing your chosen hostname (e.g. `cn.tomomai.lol`) at the CN-routed server's public IP.
+2. Add the same hostname as a domain alias on your Vercel project so Vercel routes traffic for it (you don't need to verify Vercel's own cert — Caddy terminates TLS — but the alias is required for the project to accept the Host header).
+3. Set `TRUSTED_ORIGINS` and `AUTH_COOKIE_DOMAIN` (see [App Configuration](#app-configuration)) on Vercel so OAuth, CORS, and cross-subdomain sessions accept the new hostname.
+4. From your laptop, run `cn/deploy.sh install user@host` and answer the prompts (proxy domain, upstream domain, ACME email, cache TTLs). The script installs Caddy from the official apt repo, rebuilds it once with the [Souin cache module](https://github.com/caddyserver/cache-handler) via `xcaddy`, renders `cn/Caddyfile.tmpl` with your values, validates the rendered config remotely, and only swaps it in if validation passes.
+5. Verify with `cn/deploy.sh check cn.tomomai.lol` — five probes (TLS reachability, misdirected-host rejection, HTTP/3, edge-cache HIT on a real `_next/static/*` asset, cert CN match).
+
+The proxy is generalisable to any deployment — none of `Caddyfile.tmpl` or `deploy.sh` is hardcoded to `tomomai.lol`. See `cn/README.md` for the full reference and a "Generalising to your own domain" walkthrough.
 
 ## Populating Songs Data
 

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { apiRateLimiter, authRateLimiter } from './rate-limiter';
+import { CORS_CONFIG } from './config';
 import { logger } from '../logger';
 
 /**
@@ -115,12 +116,9 @@ function applyRateLimitHeaders(response: NextResponse, headers?: Record<string, 
  * Apply CORS headers for API routes
  */
 function applyCorsHeaders(response: NextResponse, request: NextRequest): void {
-  const allowedOrigins = [
-    'https://maimai-charts.vercel.app',
-    'https://localhost:3000',
-    'http://localhost:3000',
-    process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
-  ];
+  // Single source of truth — see CORS_CONFIG in ./config.ts (which also
+  // merges $TRUSTED_ORIGINS for the cn/ proxy and any other extra hosts).
+  const allowedOrigins = CORS_CONFIG.allowedOrigins;
 
   const origin = request.headers.get('origin');
   const referer = request.headers.get('referer');

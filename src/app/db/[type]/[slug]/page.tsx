@@ -4,7 +4,8 @@ import { Metadata } from "next";
 import { getServerSession } from "@/lib/auth-server";
 import { notFound } from "next/navigation";
 import { createSafeMaimaiImageUrl } from "@/lib/utils";
-import { resolveBaseUrl } from "@/lib/base-url";
+import { resolveBaseUrlFromHeaders } from "@/lib/base-url";
+import { headers } from "next/headers";
 
 type DbSlugPageProps = {
   params: Promise<{
@@ -29,7 +30,7 @@ export async function generateMetadata({ params }: DbSlugPageProps): Promise<Met
   if (song) {
     const relativeUrl = createSafeMaimaiImageUrl(song.cover);
     const absoluteUrl = relativeUrl.startsWith("/")
-      ? `${resolveBaseUrl()}${relativeUrl}`
+      ? `${resolveBaseUrlFromHeaders(await headers())}${relativeUrl}`
       : relativeUrl;
 
     return {
