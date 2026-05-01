@@ -15,7 +15,7 @@ import { getThemeOrDefault, getThemeStyleProperties } from '@/lib/themes';
 import { useAprilFools2026 } from '@/lib/flags';
 
 const inter = localFont({
-  src: "../../public/res/fonts/Inter-VariableFont_opsz,wght.woff2",
+  src: "../../public/res/fonts/Inter-VariableFont_opsz_wght.woff2",
   variable: "--font-inter",
   display: "swap",
 });
@@ -30,25 +30,28 @@ const notoSansJP = localFont({
   src: "../../public/res/fonts/NotoSansJP-VariableFont_wght.woff2",
   variable: "--font-noto-sans-jp",
   display: "swap",
+  preload: false,
 });
 
 const murecho = localFont({
   src: "../../public/res/fonts/Murecho-VariableFont_wght.woff2",
   variable: "--font-murecho",
   display: "swap",
+  preload: false,
 });
 
-// Google Fonts for Chinese variants
 const notoSansTC = localFont({
   src: "../../public/res/fonts/NotoSansTC-VariableFont_wght.woff2",
   variable: "--font-noto-sans-tc",
   display: "swap",
+  preload: false,
 });
 
 const notoSansSC = localFont({
   src: "../../public/res/fonts/NotoSansSC-VariableFont_wght.woff2",
   variable: "--font-noto-sans-sc",
   display: "swap",
+  preload: false,
 });
 
 // Function to get locale-specific font variables

@@ -1,10 +1,12 @@
-import { ArcadesMap } from "@/components/db/arcades";
-import { EventsDatabase } from "@/components/db/events-database";
-import { SongsDatabase } from "@/components/db/songs-database";
-import { StatsDatabase } from "@/components/db/stats-database";
 import { createServerSideTRPC } from "@/lib/trpc-server";
 import { Metadata } from "next";
+import dynamic from "next/dynamic";
 import { getTranslations } from "next-intl/server";
+
+const ArcadesMap = dynamic(() => import("@/components/db/arcades").then(m => m.ArcadesMap));
+const EventsDatabase = dynamic(() => import("@/components/db/events-database").then(m => m.EventsDatabase));
+const SongsDatabase = dynamic(() => import("@/components/db/songs-database").then(m => m.SongsDatabase));
+const StatsDatabase = dynamic(() => import("@/components/db/stats-database").then(m => m.StatsDatabase));
 
 type DbTypePageProps = {
   params: Promise<{

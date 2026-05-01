@@ -8,18 +8,23 @@ import { useState, useEffect } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { InfoCard } from "./info-card";
 import { SongsCard } from "./songs-card";
-import { RecommendationCard } from "./recommendation-card";
-import { ExportImageCard } from "./export-image-card";
-import { HistoryCard } from "./history-card";
-import { EventsCard } from "./events-card";
-import { RecentSongsCard } from "./recent-songs-card";
-import { DeveloperCard } from "./developer-card";
-import { AlbumCard } from "./album-card";
-import { StatsCard } from "./stats-card";
 import { Flags } from "@/lib/flags";
 import { AnimatePresence, motion } from "motion/react";
 import { getTransition } from "@/lib/animation-constants";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import dynamic from "next/dynamic";
+
+// Tab cards lazy-loaded — only the selected tab's chunk is fetched.
+// SongsCard + InfoCard stay eager because Songs is the default landing tab
+// and InfoCard is small and frequently shown.
+const StatsCard = dynamic(() => import("./stats-card").then(m => m.StatsCard));
+const RecommendationCard = dynamic(() => import("./recommendation-card").then(m => m.RecommendationCard));
+const ExportImageCard = dynamic(() => import("./export-image-card").then(m => m.ExportImageCard));
+const HistoryCard = dynamic(() => import("./history-card").then(m => m.HistoryCard));
+const EventsCard = dynamic(() => import("./events-card").then(m => m.EventsCard));
+const RecentSongsCard = dynamic(() => import("./recent-songs-card").then(m => m.RecentSongsCard));
+const DeveloperCard = dynamic(() => import("./developer-card").then(m => m.DeveloperCard));
+const AlbumCard = dynamic(() => import("./album-card").then(m => m.AlbumCard));
 
 interface DataContentProps {
   region: Region;

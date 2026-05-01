@@ -115,6 +115,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.3",
+    "@next/bundle-analyzer": "^16.2.4",
     "@tailwindcss/postcss": "^4.1.18",
     "@types/deep-equal": "^1.0.4",
     "@types/fabric": "^5.3.11",

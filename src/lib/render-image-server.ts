@@ -45,7 +45,7 @@ export const fontsLoaded = (async () => {
     const fontsDir = path.join(process.cwd(), 'public', 'res', 'fonts');
 
     FontLibrary.use('FOT-NewRodin Pro', [path.join(fontsDir, 'FOT-NewRodin Pro EB.woff2')]);
-    FontLibrary.use('Inter', [path.join(fontsDir, 'Inter-VariableFont_opsz,wght.woff2')]);
+    FontLibrary.use('Inter', [path.join(fontsDir, 'Inter-VariableFont_opsz_wght.woff2')]);
     FontLibrary.use('Murecho', [path.join(fontsDir, 'Murecho-VariableFont_wght.woff2')]);
     FontLibrary.use('Noto Sans JP', [path.join(fontsDir, 'NotoSansJP-VariableFont_wght.woff2')]);
     FontLibrary.use('Geist Mono', [path.join(fontsDir, 'GeistMono-VariableFont_wght.woff2')]);

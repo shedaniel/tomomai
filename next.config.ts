@@ -1,11 +1,27 @@
 import type { NextConfig } from "next";
 import createNextIntlPlugin from 'next-intl/plugin';
 import { withVercelToolbar as withVercelToolbarPlugin } from "@vercel/toolbar/plugins/next";
+import withBundleAnalyzer from '@next/bundle-analyzer';
 
 const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
+const withAnalyzer = withBundleAnalyzer({ enabled: process.env.ANALYZE === 'true' });
 
 const nextConfig: NextConfig = {
   serverExternalPackages: ["skia-canvas", "pino", "pino-pretty", "kuromoji", "kuroshiro", "kuroshiro-analyzer-kuromoji", "@logtail/node"],
+  experimental: {
+    optimizePackageImports: [
+      'lucide-react',
+      'recharts',
+      'date-fns',
+      '@base-ui-components/react',
+      '@radix-ui/react-dialog',
+      '@radix-ui/react-dropdown-menu',
+      '@radix-ui/react-popover',
+      '@radix-ui/react-tooltip',
+      '@radix-ui/react-select',
+      '@radix-ui/react-popper',
+    ],
+  },
   turbopack: {
     resolveAlias: {
       "pino-pretty": { browser: "./src/lib/empty-module.js" },
@@ -60,7 +76,7 @@ const nextConfig: NextConfig = {
       }
     ],
   },
-  webpack: (config, { isServer }) => {
+  webpack: (config, { isServer, nextRuntime }) => {
     // Ignore server-only file on client builds
     if (!isServer) {
       config.resolve.alias = {
@@ -74,6 +90,15 @@ const nextConfig: NextConfig = {
         ...config.externals,
         { 'skia-canvas': 'commonjs skia-canvas' },
       ]
+      // The edge runtime (middleware) can't load Node-only deps either.
+      // Mirrors the turbopack `browser` alias above.
+      if (nextRuntime === 'edge') {
+        config.resolve.alias = {
+          ...config.resolve.alias,
+          'pino-pretty': false,
+          '@logtail/node': false,
+        };
+      }
     }
     return config;
   },
@@ -88,4 +113,4 @@ const nextConfig: NextConfig = {
 
 const withVercelToolbar = withVercelToolbarPlugin();
 
-export default withNextIntl(withVercelToolbar(nextConfig));
+export default withAnalyzer(withNextIntl(withVercelToolbar(nextConfig)));
