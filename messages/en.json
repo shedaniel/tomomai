@@ -49,6 +49,7 @@
     "signupWithDiscord": "Sign up with Discord",
     "signupDisabled": "Sign up Currently Disabled",
     "signupDisabledMessage": "We are not accepting new registrations at this time. Please check back later.",
+    "peekExampleProfile": "Peek at an example profile",
     "features": {
       "title": "Features:",
       "trackScores": "Track scores across International and Japan regions",

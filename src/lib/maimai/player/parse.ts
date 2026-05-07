@@ -4,12 +4,16 @@ import { Region, TitleType } from "../../types";
 import type { PlayerData } from "../types";
 import { maimaiBaseUrl } from "../http";
 
-export function parsePlayerData(html: string, region: Region): Omit<PlayerData, "iconBase64"> {
+export type ParsedPlayerData = Omit<PlayerData, "iconBytes" | "iconContentType"> & {
+  iconUpstreamUrl: string;
+};
+
+export function parsePlayerData(html: string, region: Region): ParsedPlayerData {
   const $ = load(html);
   const block = $('.see_through_block');
 
   if (block.length === 0) {
-    throw new Error("Could not find .see_through_block in player data");
+    throw new Error("Player page did not contain expected profile content. The maimai server is likely rate-limiting your account; please wait a few minutes and try again.");
   }
 
   // Extract icon URL
@@ -141,7 +145,7 @@ export function parsePlayerData(html: string, region: Region): Omit<PlayerData, 
   logger.debug(`Extracted class rank URL: ${classRankUrl}`);
 
   return {
-    iconUrl,
+    iconUpstreamUrl: iconUrl,
     displayName,
     rating,
     title,

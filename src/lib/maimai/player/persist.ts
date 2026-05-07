@@ -3,6 +3,7 @@ import { db } from "../../db";
 import { userSnapshots } from "../../db/schema-pg";
 import { logger } from "../../logger";
 import { getCurrentVersion } from "../../metadata";
+import { uploadIconToR2 } from "../../r2";
 import { Region } from "../../types";
 import type { PlayerData } from "../types";
 
@@ -14,6 +15,13 @@ export async function createUserSnapshot(
   const publicId = nanoid();
 
   logger.info(`Creating user snapshot with publicId: ${publicId}`);
+
+  let iconUrl = "";
+  if (playerData.iconBytes && playerData.iconContentType) {
+    const { url } = await uploadIconToR2(playerData.iconBytes, playerData.iconContentType);
+    iconUrl = url;
+    logger.info(`Uploaded icon to R2: ${url}`);
+  }
 
   const [inserted] = await db.insert(userSnapshots).values({
     publicId: publicId,
@@ -27,7 +35,7 @@ export async function createUserSnapshot(
     stars: playerData.stars,
     versionPlayCount: playerData.versionPlayCount,
     totalPlayCount: playerData.totalPlayCount,
-    iconUrl: playerData.iconBase64,
+    iconUrl,
     displayName: playerData.displayName,
     title: playerData.title,
     titleType: playerData.titleType,

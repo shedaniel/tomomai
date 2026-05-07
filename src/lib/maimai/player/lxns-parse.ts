@@ -23,7 +23,7 @@ export function unwrapLxnsPlayerResponse(json: Record<string, unknown>): LxnsPla
 export async function parseLxnsPlayerData(player: LxnsPlayerResponse): Promise<PlayerData> {
   const iconId = player.icon?.id;
   const iconUrl = iconId ? `${LXNS_ICON_BASE}/${iconId}.png` : "";
-  const iconBase64 = iconUrl ? await imageUrlToDataUrl(iconUrl) : "";
+  const fetched = iconUrl ? await fetchIconAsBytes(iconUrl) : null;
 
   const courseRank = player.course_rank ?? 0;
   const classRank = player.class_rank ?? 0;
@@ -36,8 +36,8 @@ export async function parseLxnsPlayerData(player: LxnsPlayerResponse): Promise<P
     : "normal";
 
   return {
-    iconUrl,
-    iconBase64,
+    iconBytes: fetched?.buffer ?? null,
+    iconContentType: fetched?.contentType ?? null,
     displayName: player.name ?? "",
     rating: player.rating ?? 0,
     title: player.trophy?.name ?? "",
@@ -50,13 +50,15 @@ export async function parseLxnsPlayerData(player: LxnsPlayerResponse): Promise<P
   };
 }
 
-async function imageUrlToDataUrl(imageUrl: string): Promise<string> {
+async function fetchIconAsBytes(
+  imageUrl: string,
+): Promise<{ buffer: Buffer; contentType: string } | null> {
   const resp = await fetch(imageUrl);
   if (!resp.ok) {
     logger.warn(`[lxns] failed to fetch image ${imageUrl}: HTTP ${resp.status}`);
-    return "";
+    return null;
   }
   const buffer = Buffer.from(await resp.arrayBuffer());
   const contentType = resp.headers.get("content-type") || "image/png";
-  return `data:${contentType};base64,${buffer.toString("base64")}`;
+  return { buffer, contentType };
 }

@@ -3,6 +3,7 @@ import { scoreData, snapshotB50, snapshotScores, songs, user, userEvents, userSn
 import { getEnabledRegions } from '@/lib/enabled-regions';
 import { logger } from '@/lib/logger';
 import { upsertScoreData } from '@/lib/maimai';
+import { deleteFromR2, isR2IconUrl, r2KeyFromIconUrl } from '@/lib/r2';
 import { getVersionInfo, VersionId, VERSIONS } from '@/lib/metadata';
 import { addRatingsAndSort, RatingCalculationInput, splitSongs } from '@/lib/rating-calculator';
 import { protectedProcedure, publicProcedure, router } from '@/lib/trpc';
@@ -373,9 +374,8 @@ export const snapshotsRouter = router({
       region: regionSchema
     }))
     .mutation(async ({ ctx, input }) => {
-      const snapshot = await db
-        .select({ id: userSnapshots.id })
-        .from(userSnapshots)
+      const deleted = await db
+        .delete(userSnapshots)
         .where(
           and(
             eq(userSnapshots.publicId, input.snapshotId),
@@ -383,18 +383,34 @@ export const snapshotsRouter = router({
             eq(userSnapshots.region, input.region)
           )
         )
-        .limit(1);
+        .returning({ iconUrl: userSnapshots.iconUrl });
 
-      if (snapshot.length === 0) {
+      if (deleted.length === 0) {
         throw new TRPCError({
           code: 'NOT_FOUND',
           message: 'Snapshot not found or access denied',
         });
       }
 
-      await db
-        .delete(userSnapshots)
-        .where(eq(userSnapshots.id, snapshot[0].id));
+      const iconUrl = deleted[0].iconUrl;
+      if (iconUrl && isR2IconUrl(iconUrl)) {
+        try {
+          const stillUsed = await db
+            .select({ id: userSnapshots.id })
+            .from(userSnapshots)
+            .where(eq(userSnapshots.iconUrl, iconUrl))
+            .limit(1);
+          if (stillUsed.length === 0) {
+            const key = r2KeyFromIconUrl(iconUrl);
+            if (key) {
+              await deleteFromR2(key);
+              logger.info(`Deleted orphan icon from R2: ${key}`);
+            }
+          }
+        } catch (err) {
+          logger.warn({ err, iconUrl }, 'Failed to clean up orphan icon from R2');
+        }
+      }
 
       return { success: true };
     }),

@@ -26,7 +26,8 @@
     "discord:register": "node scripts/register-discord-commands.js",
     "token:cli": "node scripts/token-cli.js",
     "scripts:validate-snapshot": "node scripts/verify-snapshot.js",
-    "scripts:verify-backfill": "node scripts/verify-backfill.js"
+    "scripts:verify-backfill": "node scripts/verify-backfill.js",
+    "scripts:migrate-icons": "node scripts/migrate-icons-to-r2.js"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.990.0",

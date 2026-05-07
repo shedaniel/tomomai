@@ -79,6 +79,18 @@ const nextConfig: NextConfig = {
         hostname: 'cdn.cn.tomomai.lol',
         port: '',
         pathname: '/covers/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'cdn.tomomai.lol',
+        port: '',
+        pathname: '/icons/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'cdn.cn.tomomai.lol',
+        port: '',
+        pathname: '/icons/**',
       }
     ],
   },

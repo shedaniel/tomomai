@@ -1,4 +1,5 @@
-import { S3Client, PutObjectCommand, DeleteObjectCommand, ListObjectsV2Command } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, DeleteObjectCommand, ListObjectsV2Command, HeadObjectCommand } from "@aws-sdk/client-s3";
+import { createHash } from "crypto";
 import { nanoid } from "nanoid";
 
 export const r2Client = new S3Client({
@@ -80,4 +81,77 @@ export async function deleteFromR2(key: string): Promise<void> {
   });
 
   await r2Client.send(command);
+}
+
+export async function r2ObjectExists(key: string): Promise<boolean> {
+  try {
+    await r2Client.send(new HeadObjectCommand({ Bucket: R2_BUCKET, Key: key }));
+    return true;
+  } catch (err) {
+    const status = (err as { $metadata?: { httpStatusCode?: number } })?.$metadata?.httpStatusCode;
+    const name = (err as { name?: string })?.name;
+    if (status === 404 || name === "NotFound" || name === "NoSuchKey") return false;
+    throw err;
+  }
+}
+
+function extensionForContentType(contentType: string): string {
+  const ct = contentType.toLowerCase();
+  if (ct.includes("png")) return "png";
+  if (ct.includes("jpeg") || ct.includes("jpg")) return "jpg";
+  if (ct.includes("webp")) return "webp";
+  if (ct.includes("gif")) return "gif";
+  if (ct.includes("avif")) return "avif";
+  return "png";
+}
+
+export function iconKeyForBuffer(buffer: Buffer, contentType: string): string {
+  const hash = createHash("sha256").update(buffer).digest("hex");
+  return `icons/${hash}.${extensionForContentType(contentType)}`;
+}
+
+export async function uploadIconToR2(
+  buffer: Buffer,
+  contentType: string,
+): Promise<{ key: string; url: string }> {
+  const key = iconKeyForBuffer(buffer, contentType);
+  const url = iconPublicUrl(key);
+
+  if (await r2ObjectExists(key)) {
+    return { key, url };
+  }
+
+  await r2Client.send(new PutObjectCommand({
+    Bucket: R2_BUCKET,
+    Key: key,
+    Body: buffer,
+    ContentType: contentType,
+    CacheControl: "public, max-age=31536000, immutable",
+  }));
+
+  return { key, url };
+}
+
+function iconPublicUrl(key: string): string {
+  const base = process.env.NEXT_PUBLIC_R2_URL;
+  if (!base) throw new Error("NEXT_PUBLIC_R2_URL is not set");
+  return `${base.replace(/\/$/, "")}/${key}`;
+}
+
+export function isR2IconUrl(url: string): boolean {
+  const base = process.env.NEXT_PUBLIC_R2_URL;
+  const baseCn = process.env.NEXT_PUBLIC_R2_URL_CN;
+  const prefixes = [base, baseCn].filter(Boolean).map((b) => `${b!.replace(/\/$/, "")}/icons/`);
+  return prefixes.some((p) => url.startsWith(p));
+}
+
+export function r2KeyFromIconUrl(url: string): string | null {
+  const base = process.env.NEXT_PUBLIC_R2_URL;
+  const baseCn = process.env.NEXT_PUBLIC_R2_URL_CN;
+  for (const b of [base, baseCn]) {
+    if (!b) continue;
+    const prefix = `${b.replace(/\/$/, "")}/`;
+    if (url.startsWith(prefix)) return url.slice(prefix.length);
+  }
+  return null;
 }

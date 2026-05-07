@@ -1,8 +1,8 @@
 import { Difficulty, FullCombo, FullSync, SongType, TitleType } from "../types";
 
 export interface PlayerData {
-  iconUrl: string;
-  iconBase64: string;
+  iconBytes: Buffer | null;
+  iconContentType: string | null;
   displayName: string;
   rating: number;
   title: string;

@@ -49,6 +49,7 @@
     "signupWithDiscord": "用 Discord 註冊",
     "signupDisabled": "註冊功能已關閉",
     "signupDisabledMessage": "目前暫不開放新用戶註冊，請稍後再試。",
+    "peekExampleProfile": "看看範例個人檔案",
     "features": {
       "title": "功能：",
       "trackScores": "追蹤國際區和日本區的成績",

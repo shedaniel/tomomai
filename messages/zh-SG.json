@@ -49,6 +49,7 @@
     "signupWithDiscord": "用 Discord 注册",
     "signupDisabled": "注册功能已关闭",
     "signupDisabledMessage": "目前暂不开放新用户注册，请稍后再试。",
+    "peekExampleProfile": "看看范例个人主页",
     "features": {
       "title": "功能：",
       "trackScores": "追踪国际服和日本服的成绩",

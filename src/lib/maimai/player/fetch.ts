@@ -20,13 +20,16 @@ export async function fetchPlayerData(region: Region, cookies: string, refererUr
 }
 
 export async function extractPlayerData(region: Region, html: string, cookies: string): Promise<PlayerData> {
-  const parsed = parsePlayerData(html, region);
-  const iconBase64 = await fetchImageAsBase64(parsed.iconUrl, cookies);
-  return { ...parsed, iconBase64 };
+  const { iconUpstreamUrl, ...parsed } = parsePlayerData(html, region);
+  const { buffer, contentType } = await fetchIconBytes(iconUpstreamUrl, cookies);
+  return { ...parsed, iconBytes: buffer, iconContentType: contentType };
 }
 
-export async function fetchImageAsBase64(imageUrl: string, cookies: string): Promise<string> {
-  logger.info(`Fetching image for base64 encoding: ${imageUrl}`);
+export async function fetchIconBytes(
+  imageUrl: string,
+  cookies: string,
+): Promise<{ buffer: Buffer; contentType: string }> {
+  logger.info(`Fetching icon bytes: ${imageUrl}`);
 
   const response = await fetch(imageUrl, {
     headers: {
@@ -40,13 +43,9 @@ export async function fetchImageAsBase64(imageUrl: string, cookies: string): Pro
     throw new Error(`Failed to fetch icon image: HTTP ${response.status}`);
   }
 
-  const arrayBuffer = await response.arrayBuffer();
-  const buffer = Buffer.from(arrayBuffer);
-  const base64 = buffer.toString('base64');
+  const buffer = Buffer.from(await response.arrayBuffer());
+  const contentType = response.headers.get("content-type") || "image/png";
 
-  const contentType = response.headers.get('content-type') || 'image/png';
-  const dataUrl = `data:${contentType};base64,${base64}`;
-
-  logger.debug(`Image encoded as base64 (${base64.length} characters)`);
-  return dataUrl;
+  logger.debug(`Fetched icon bytes (${buffer.length} bytes, ${contentType})`);
+  return { buffer, contentType };
 }

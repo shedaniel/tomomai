@@ -46,6 +46,7 @@
     "signupWithDiscord": "Discord로 가입",
     "signupDisabled": "가입 일시 중단됨",
     "signupDisabledMessage": "현재 신규 가입을 받지 않고 있습니다. 나중에 다시 확인해 주세요.",
+    "peekExampleProfile": "예시 프로필 둘러보기",
     "features": {
       "title": "주요 기능:",
       "trackScores": "해외판(International) 및 일본판 성과 추적",

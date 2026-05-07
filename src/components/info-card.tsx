@@ -3,7 +3,7 @@
 
 import { getRatingImageUrl } from "@/lib/rating-calculator";
 import { SnapshotWithSongs } from "@/lib/types";
-import { createSafeMaimaiImageUrl } from "@/lib/utils";
+import { createSafeMaimaiImageUrl, isR2Url } from "@/lib/utils";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
 import Link from "next/link";
@@ -67,7 +67,7 @@ export function InfoCard({
           animate={{ opacity: 1, scale: 1, rotate: 0 }}
           transition={getTransition(SPRING_CONFIGS.default)}
         >
-          <Image src={createSafeMaimaiImageUrl(snapshot.iconUrl)} alt={snapshot.title} width={80} height={80} />
+          <Image src={createSafeMaimaiImageUrl(snapshot.iconUrl)} unoptimized={isR2Url(snapshot.iconUrl)} alt={snapshot.title} width={80} height={80} />
         </motion.div>
         <div className="flex flex-col min-w-0 self-stretch my-1 space-y-0.5 items-stretch">
           <span className="text-sm text-secondary-foreground bg-secondary rounded-full px-6 py-1 text-center inset-shadow-sm truncate">{snapshot.title}</span>

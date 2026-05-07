@@ -778,22 +778,16 @@ async function performInternationalAccountLogin(
           };
         } else {
           logger.warn("Could not extract clal cookie from Set-Cookie header");
-          if (userId) {
-            await deleteToken(userId, "intl");
-          }
           return {
             isValid: false,
-            error: "Login successful but could not extract authentication cookie.",
+            error: "maimai accepted your credentials but did not return a session cookie. This is usually a temporary upstream issue. Please try again in a few minutes. If it still fails, resubmit a token via Settings (top-right profile icon) > Fetch.",
           };
         }
       } else {
         logger.warn("No Set-Cookie header in login response");
-        if (userId) {
-          await deleteToken(userId, "intl");
-        }
         return {
           isValid: false,
-          error: "Login successful but no authentication cookie received.",
+          error: "maimai accepted your credentials but did not return a session cookie. This is usually a temporary upstream issue. Please try again in a few minutes. If it still fails, resubmit a token via Settings (top-right profile icon) > Fetch.",
         };
       }
     } else {
