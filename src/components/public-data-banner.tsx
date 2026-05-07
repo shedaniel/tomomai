@@ -41,9 +41,9 @@ export function PublicDataBanner({
           {snapshotData ? (
             <div className="flex flex-col items-start">
               <span className="text-sm font-medium">{t('dataBanner.dataSnapshot')} {snapshotData ? formatDate(snapshotData.fetchedAt) : ''}</span>
-              <span className="text-xs text-muted-foreground">
+              <h1 className="text-xs text-muted-foreground font-normal">
                 {snapshotData.displayName} • {snapshotData.rating} rating • {getVersionInfo(snapshotData.gameVersion)?.shortName || "Unknown"}
-              </span>
+              </h1>
             </div>
           ) : (
             <Badge variant="secondary">{t('dataBanner.noDataAvailable')}</Badge>

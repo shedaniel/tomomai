@@ -382,6 +382,16 @@
     "lastUpdate": "Last updated",
     "noDataInstructions": "No data found for this region. Click \"Fetch New Data\" to import your maimai scores. You'll need your maimai token for this process."
   },
+  "profileMetadata": {
+    "title": "{username} | tomomai ともマイ",
+    "description": "View {username}'s maimai profile for {region}. Track and analyze maimai scores with friends.",
+    "descriptionRich": "{displayName} ({username}) on {region} maimai — rating {rating}. View their B50, recent plays, and chart records on tomomai.",
+    "descriptionUnknownRegion": "View {username}'s maimai profile. Track and analyze maimai scores with friends.",
+    "notFoundTitle": "Profile Not Found | tomomai ともマイ",
+    "notFoundDescription": "The profile you're looking for doesn't exist or is not publicly accessible.",
+    "errorTitle": "Error | tomomai ともマイ",
+    "errorDescription": "An error occurred while loading this profile."
+  },
   "profileVisibility": {
     "public": "Public Profile",
     "private": "Private Profile",
@@ -892,9 +902,18 @@
     "songs": {
       "metadata": {
         "title": "Songs Database | maimai DX",
-        "description": "Browse and search all maimai DX songs. Filter by type, genre, and version. View song details, difficulty levels, and regional availability."
+        "description": "Browse and search all maimai DX songs. Filter by type, genre, and version. View song details, difficulty levels, and regional availability.",
+        "songTitle": "{songName} - {artist} | maimai DX",
+        "songDescription": "View detailed information about \"{songName}\" by {artist}. {chartType} chart • {genre}",
+        "songOgDescription": "View detailed information about \"{songName}\" by {artist}.",
+        "songFallbackTitle": "Song Details | maimai DX",
+        "songFallbackDescription": "View detailed information about this maimai DX song including difficulty levels and regional availability.",
+        "chartTypeDx": "DX",
+        "chartTypeStandard": "Standard",
+        "jsonLdChartDescription": "{chartType} chart from maimai DX"
       },
       "title": "Songs Database | maimai DX",
+      "heading": "Songs Database",
       "searchPlaceholder": "Search songs, artists, genres...",
       "noSongsFound": "No songs found",
       "tryAdjustingSearch": "Try adjusting your search",
@@ -913,7 +932,9 @@
         "share": "Share Link",
         "youtube": "YouTube",
         "viewCharts": "View Charts",
-        "viewDetails": "View Details on tomomai DB"
+        "viewDetails": "View Details on tomomai DB",
+        "summary": "{songName} is a maimai でらっくす {chartType} chart by {artist} in the {genre} genre, added in {versionName}. Difficulty ranges from {minLevel} to {maxLevel} across {chartCount, plural, =1 {# chart} other {# charts}}{bpmFragment}.",
+        "summaryBpmFragment": " (BPM {bpm})"
       },
       "filter": {
         "type": "Type",
@@ -966,6 +987,7 @@
     },
     "stats": {
       "title": "Global Statistics",
+      "description": "Explore aggregate maimai DX statistics across all tracked players: rating distributions, top titles, popular songs, and play activity over time.",
       "ratingDistribution": "Player Rating Distribution",
       "playCountDistribution": "Player Play Count Distribution",
       "topTitles": "Top Player Titles",

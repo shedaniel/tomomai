@@ -201,27 +201,42 @@ export function EventsDatabase() {
     router.replace(str ? `${pathname}?${str}` : pathname, { scroll: false });
   };
 
+  const pageHeader = (
+    <header className="space-y-1">
+      <h1 className="text-2xl font-semibold tracking-tight">{t("title")}</h1>
+      <p className="text-sm text-muted-foreground max-w-3xl leading-relaxed">
+        {t("description")}
+      </p>
+    </header>
+  );
+
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      <div className="flex flex-col gap-4 pt-3">
+        {pageHeader}
+        <div className="flex justify-center items-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
       </div>
     );
   }
 
   if (!events || events.length === 0) {
     return (
-      <div className="text-center py-16 text-muted-foreground">
-        {t("noEvents")}
+      <div className="flex flex-col gap-4 pt-3">
+        {pageHeader}
+        <div className="text-center py-16 text-muted-foreground">
+          {t("noEvents")}
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col md:flex-row md:items-start gap-6 pt-3">
-      <VisuallyHidden asChild>
-        <h1>{t("title")}</h1>
-      </VisuallyHidden>
+    <div className="flex flex-col gap-4 pt-3">
+      {pageHeader}
+
+      <div className="flex flex-col md:flex-row md:items-start gap-6">
 
       {/* Sidebar */}
       <aside
@@ -351,6 +366,7 @@ export function EventsDatabase() {
           </div>
         )}
       </main>
+      </div>
     </div>
   );
 }

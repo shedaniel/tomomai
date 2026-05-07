@@ -2,6 +2,8 @@ import { getAllPostsMeta, getPostBySlug, getAvailableTranslations } from "@/lib/
 import { getLocale } from "@/i18n/locale-server";
 import { MDXRemote } from "next-mdx-remote/rsc";
 import { Metadata } from "next";
+import { buildAlternates, breadcrumbJsonLd, openGraphLocales, withTl } from "@/lib/seo";
+import { resolveBaseUrl } from "@/lib/base-url";
 import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
@@ -35,11 +37,13 @@ export async function generateMetadata({ params }: PostPageProps): Promise<Metad
   const url = `/db/posts/${post.slug}`;
   const translations = getAvailableTranslations(post.canonicalSlug);
 
-  // Build hreflang alternates
-  const languages = translations.reduce((acc, lang) => ({
-    ...acc,
-    [lang]: url,
-  }), {});
+  // Hreflang: link each translated locale to `?tl=<locale>` on the same slug;
+  // locales without a translation aren't advertised.
+  const languages: Record<string, string> = {};
+  for (const lang of translations) {
+    languages[lang] = withTl(url, lang);
+  }
+  languages["x-default"] = url;
 
   return {
     title: `${post.title} | tomomai`,
@@ -49,9 +53,10 @@ export async function generateMetadata({ params }: PostPageProps): Promise<Metad
       description: post.summary,
       type: "article",
       url,
+      siteName: "tomomai ともマイ",
       publishedTime: post.date,
-      locale: post.locale,
       images: [{ url: `/db/posts/${post.slug}/opengraph-image`, width: 1200, height: 630 }],
+      ...openGraphLocales(locale),
     },
     twitter: {
       card: "summary_large_image",
@@ -124,28 +129,43 @@ export default async function PostPage({ params }: PostPageProps) {
 
   const availableTranslations = getAvailableTranslations(post.canonicalSlug);
 
+  const baseUrl = resolveBaseUrl();
+  const postUrl = `${baseUrl}/db/posts/${post.slug}`;
+  const tNav = await getTranslations("db.types");
+
   const structuredData = {
     "@context": "https://schema.org",
-    "@type": "Article",
+    "@type": "BlogPosting",
     headline: post.title,
     description: post.summary,
     datePublished: post.date,
     dateModified: post.date,
-    author: {
-      "@type": "Organization",
-      name: "tomomai",
-    },
+    inLanguage: post.locale,
+    mainEntityOfPage: { "@type": "WebPage", "@id": postUrl },
+    author: { "@type": "Organization", name: "tomomai", url: baseUrl },
     publisher: {
       "@type": "Organization",
       name: "tomomai",
+      logo: { "@type": "ImageObject", url: `${baseUrl}/icon.png` },
     },
+    image: `${postUrl}/opengraph-image`,
   };
+
+  const breadcrumb = breadcrumbJsonLd([
+    { name: "tomomai", url: `${baseUrl}/` },
+    { name: tNav("posts"), url: `${baseUrl}/db/posts` },
+    { name: post.title, url: postUrl },
+  ]);
 
   return (
     <div className="container mx-auto max-w-3xl px-4 py-12">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }}
       />
       {/* Header with back link and language switcher */}
       <div className="mb-8 flex items-center justify-between">

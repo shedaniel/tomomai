@@ -279,6 +279,24 @@ export function SongDetailContent({ songName, slug, type, initialData }: SongDet
   }, [chartsByDifficulty]);
   const hasTouch = allCharts.some(chart => chart.touchCount !== null);
 
+  // Pre-compute SEO summary inputs (visible prose paragraph below the header).
+  const summary = useMemo(() => {
+    if (!data || allCharts.length === 0) return null;
+    const levels = allCharts.map((c) => c.levelPrecise).filter((l) => l > 0);
+    if (levels.length === 0) return null;
+    const minLevel = Math.min(...levels);
+    const maxLevel = Math.max(...levels);
+    const fmtLevel = (l: number) => (l % 10 === 0 ? String(Math.floor(l / 10)) : (l / 10).toFixed(1));
+    return {
+      minLevel: fmtLevel(minLevel),
+      maxLevel: fmtLevel(maxLevel),
+      chartCount: chartsByDifficulty.size,
+      bpmFragment: data.bpm ? t('db.songs.detail.summaryBpmFragment', { bpm: data.bpm }) : '',
+      versionName: getVersionInfo(data.addedVersion)?.name ?? `Ver. ${data.addedVersion}`,
+      chartType: data.type === 'utage' ? '宴会場' : data.type === 'dx' ? 'DX' : 'Standard',
+    };
+  }, [data, allCharts, chartsByDifficulty, t]);
+
   const videoSearchURL = useMemo(() => {
     if (!data) return null;
     const searchQuery = encodeURIComponent(`maimai ${data.songName} ${data.artist}`);
@@ -334,6 +352,22 @@ export function SongDetailContent({ songName, slug, type, initialData }: SongDet
           </div>
         </div>
       </div>
+
+      {summary && (
+        <p className="text-sm text-muted-foreground leading-relaxed">
+          {t('db.songs.detail.summary', {
+            songName: data.songName,
+            artist: data.artist,
+            genre: data.genre,
+            chartType: summary.chartType,
+            versionName: summary.versionName,
+            minLevel: summary.minLevel,
+            maxLevel: summary.maxLevel,
+            chartCount: summary.chartCount,
+            bpmFragment: summary.bpmFragment,
+          })}
+        </p>
+      )}
 
       <section className="flex flex-wrap justify-between gap-y-3">
         {/* Song Info */}

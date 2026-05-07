@@ -3,29 +3,33 @@ import { getLocale } from "@/i18n/locale-server";
 import { Metadata } from "next";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
+import { buildAlternates, openGraphLocales } from "@/lib/seo";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const t = await getTranslations("db.posts.list");
+  const [t, locale] = await Promise.all([
+    getTranslations("db.posts.list"),
+    getLocale(),
+  ]);
   const title = `${t("title")} | tomomai`;
   const description = t("description");
 
   return {
     title,
     description,
+    alternates: buildAlternates("/db/posts"),
     openGraph: {
       title: t("title"),
       description,
       type: "website",
       url: "/db/posts",
+      siteName: "tomomai ともマイ",
       images: [{ url: "/db/posts/opengraph-image", width: 1200, height: 630 }],
+      ...openGraphLocales(locale),
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
-    },
-    alternates: {
-      canonical: "/db/posts",
     },
   };
 }

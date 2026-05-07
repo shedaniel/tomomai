@@ -14,6 +14,8 @@ import "./cjk-fonts.css";
 import { getServerThemeId } from '@/lib/themes-server';
 import { getThemeOrDefault, getThemeStyleProperties } from '@/lib/themes';
 import { useAprilFools2026 } from '@/lib/flags';
+import { resolveBaseUrl } from '@/lib/base-url';
+import { siteJsonLd } from '@/lib/seo';
 
 const inter = localFont({
   src: "../../public/res/fonts/Inter-VariableFont_opsz_wght.woff2",
@@ -36,6 +38,7 @@ const murecho = localFont({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(resolveBaseUrl()),
   title: "tomomai ともマイ",
   description: "Track and analyze maimai scores with friends.",
 };
@@ -55,6 +58,17 @@ export default async function RootLayout({
 
   return (
     <html lang={locale} className={theme.dark ? "dark" : ""} style={getThemeStyleProperties(theme)}>
+      <head>
+        <link rel="preconnect" href="https://cdn.tomomai.lol" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://cdn.tomomai.lol" />
+        {siteJsonLd().map((entry, i) => (
+          <script
+            key={i}
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{ __html: JSON.stringify(entry) }}
+          />
+        ))}
+      </head>
       <body
         className={`${inter.variable} ${geistMono.variable} ${murecho.variable} antialiased bg-background min-h-dvh`}
       >

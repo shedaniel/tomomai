@@ -268,13 +268,14 @@ export function SongsDatabase({ selectedSlug: initialSlug, initialSongs, current
   );
 
   return (
-    <main className="space-y-6 pb-16" role="main">
-      {!selectedSong && (
-        <VisuallyHidden asChild>
-          <h1>{t("db.songs.title")}</h1>
-        </VisuallyHidden>
-      )}
-      {/* Header */}
+    <main className="space-y-6 pb-16 pt-3" role="main">
+      <header className="space-y-1">
+        <h1 className="text-2xl font-semibold tracking-tight">{t("db.songs.heading")}</h1>
+        <p className="text-sm text-muted-foreground max-w-3xl leading-relaxed">
+          {t("db.songs.metadata.description")}
+        </p>
+      </header>
+      {/* Search + filters */}
       <header className="flex flex-col gap-4">
         {/* Search */}
         <div className="flex gap-2">

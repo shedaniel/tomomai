@@ -2,6 +2,8 @@ import { createServerSideTRPC } from "@/lib/trpc-server";
 import { Metadata } from "next";
 import dynamic from "next/dynamic";
 import { getTranslations } from "next-intl/server";
+import { getLocale } from "@/i18n/locale-server";
+import { buildAlternates, openGraphLocales } from "@/lib/seo";
 
 const ArcadesMap = dynamic(() => import("@/components/db/arcades").then(m => m.ArcadesMap));
 const EventsDatabase = dynamic(() => import("@/components/db/events-database").then(m => m.EventsDatabase));
@@ -16,44 +18,41 @@ type DbTypePageProps = {
 
 export async function generateMetadata({ params }: DbTypePageProps): Promise<Metadata> {
   const { type } = await params;
+  const locale = await getLocale();
 
+  type Section = { title: string; description: string };
+  let section: Section | null = null;
   if (type === "songs") {
     const t = await getTranslations("db.songs.metadata");
-    return {
-      title: t("title"),
-      description: t("description"),
-      openGraph: {
-        title: t("title"),
-        description: t("description"),
-      },
-    };
-  }
-
-  if (type === "stats") {
+    section = { title: t("title"), description: t("description") };
+  } else if (type === "stats") {
     const t = await getTranslations("db.stats");
-    return {
-      title: t("title"),
-      description: t("title"),
-      openGraph: {
-        title: t("title"),
-        description: t("title"),
-      },
-    };
-  }
-
-  if (type === "events") {
+    section = { title: t("title"), description: t("description") };
+  } else if (type === "events") {
     const t = await getTranslations("db.events");
-    return {
-      title: t("title"),
-      description: t("description"),
-      openGraph: {
-        title: t("title"),
-        description: t("description"),
-      },
-    };
+    section = { title: t("title"), description: t("description") };
   }
+  if (!section) return {};
 
-  return {};
+  const path = `/db/${type}`;
+  return {
+    title: section.title,
+    description: section.description,
+    alternates: buildAlternates(path),
+    openGraph: {
+      title: section.title,
+      description: section.description,
+      url: path,
+      siteName: "tomomai ともマイ",
+      type: "website",
+      ...openGraphLocales(locale),
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: section.title,
+      description: section.description,
+    },
+  };
 }
 
 export default async function DbTypePage({ params }: DbTypePageProps) {

@@ -8,6 +8,17 @@ export async function getLocale(): Promise<Locale> {
     return "zh-CN";
   }
 
+  // Honor explicit `?tl=<locale>` (forwarded as `x-tl-locale` by middleware).
+  // Highest precedence so SEO crawlers can index locale variants without
+  // mutating the user's cookie.
+  try {
+    const headersList = await headers();
+    const tl = headersList.get('x-tl-locale') as Locale | null;
+    if (tl && locales.includes(tl)) return tl;
+  } catch {
+    // Headers unavailable during static generation — fall through.
+  }
+
   try {
     // Try to get from cookie first (for immediate language switching)
     const cookieStore = await cookies();

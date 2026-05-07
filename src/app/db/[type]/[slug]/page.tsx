@@ -3,9 +3,10 @@ import { createServerSideTRPC } from "@/lib/trpc-server";
 import { Metadata } from "next";
 import { getServerSession } from "@/lib/auth-server";
 import { notFound } from "next/navigation";
-import { createSafeMaimaiImageUrl } from "@/lib/utils";
-import { resolveBaseUrlFromHeaders } from "@/lib/base-url";
-import { headers } from "next/headers";
+import { getTranslations } from "next-intl/server";
+import { getLocale } from "@/i18n/locale-server";
+import { buildAlternates, breadcrumbJsonLd, openGraphLocales } from "@/lib/seo";
+import { resolveBaseUrl } from "@/lib/base-url";
 
 type DbSlugPageProps = {
   params: Promise<{
@@ -23,30 +24,54 @@ export async function generateMetadata({ params }: DbSlugPageProps): Promise<Met
 
   const decodedSlug = decodeURIComponent(slug);
   const trpc = await createServerSideTRPC();
-  const songs = await trpc.user.getAllUniqueSongs();
+  const [songs, t, locale] = await Promise.all([
+    trpc.user.getAllUniqueSongs(),
+    getTranslations("db.songs.metadata"),
+    getLocale(),
+  ]);
 
   const song = songs.find(s => s.slug === decodedSlug);
+  const path = `/db/songs/${encodeURIComponent(decodedSlug)}`;
 
   if (song) {
-    const relativeUrl = createSafeMaimaiImageUrl(song.cover);
-    const absoluteUrl = relativeUrl.startsWith("/")
-      ? `${resolveBaseUrlFromHeaders(await headers())}${relativeUrl}`
-      : relativeUrl;
+    const chartType = song.type === "dx" ? t("chartTypeDx") : t("chartTypeStandard");
+    const title = t("songTitle", { songName: song.songName, artist: song.artist });
+    const description = t("songDescription", {
+      songName: song.songName,
+      artist: song.artist,
+      chartType,
+      genre: song.genre,
+    });
+    const ogDescription = t("songOgDescription", {
+      songName: song.songName,
+      artist: song.artist,
+    });
 
+    // og:image is provided by the sibling opengraph-image.tsx file convention.
     return {
-      title: `${song.songName} - ${song.artist} | maimai DX`,
-      description: `View detailed information about "${song.songName}" by ${song.artist}. ${song.type === 'dx' ? 'DX' : 'Standard'} chart • ${song.genre}`,
+      title,
+      description,
+      alternates: buildAlternates(path),
       openGraph: {
-        title: `${song.songName} - ${song.artist} | maimai DX`,
-        description: `View detailed information about "${song.songName}" by ${song.artist}.`,
-        images: [absoluteUrl],
+        title,
+        description: ogDescription,
+        url: path,
+        siteName: "tomomai ともマイ",
+        type: "article",
+        ...openGraphLocales(locale),
+      },
+      twitter: {
+        card: "summary_large_image",
+        title,
+        description: ogDescription,
       },
     };
   }
 
   return {
-    title: `Song Details | maimai DX`,
-    description: `View detailed information about this maimai DX song including difficulty levels and regional availability.`,
+    title: t("songFallbackTitle"),
+    description: t("songFallbackDescription"),
+    alternates: buildAlternates(path),
   };
 }
 
@@ -74,8 +99,14 @@ export default async function DbSlugPage({ params }: DbSlugPageProps) {
     }
   }
 
+  const [tMeta, tNav] = await Promise.all([
+    getTranslations("db.songs.metadata"),
+    getTranslations("db.types"),
+  ]);
+  const baseUrl = resolveBaseUrl();
+
   // JSON-LD structured data for SEO
-  const jsonLd = song ? {
+  const songJsonLd = song ? {
     "@context": "https://schema.org",
     "@type": "MusicRecording",
     name: song.songName,
@@ -84,15 +115,31 @@ export default async function DbSlugPage({ params }: DbSlugPageProps) {
       name: song.artist,
     },
     genre: song.genre,
-    description: `${song.type === 'dx' ? 'DX' : 'Standard'} chart from maimai DX`,
+    image: song.cover,
+    url: `${baseUrl}/db/songs/${encodeURIComponent(decodedSlug)}`,
+    description: tMeta("jsonLdChartDescription", {
+      chartType: song.type === "dx" ? tMeta("chartTypeDx") : tMeta("chartTypeStandard"),
+    }),
   } : null;
+
+  const breadcrumb = song ? breadcrumbJsonLd([
+    { name: "tomomai", url: `${baseUrl}/` },
+    { name: tNav("songs"), url: `${baseUrl}/db/songs` },
+    { name: song.songName, url: `${baseUrl}/db/songs/${encodeURIComponent(decodedSlug)}` },
+  ]) : null;
 
   return (
     <>
-      {jsonLd && (
+      {songJsonLd && (
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(songJsonLd) }}
+        />
+      )}
+      {breadcrumb && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }}
         />
       )}
       <SongsDatabase selectedSlug={decodedSlug} initialSongs={null} currentSong={song ?? null} initialSongDetails={songDetails} />

@@ -5,8 +5,11 @@ import { ProfilePage } from "@/components/profile-page";
 import { notFound } from "next/navigation";
 import { Metadata } from "next";
 import { useFlags } from "@/lib/flags";
-import { cookies, headers } from "next/headers";
-import { resolveBaseUrlFromHeaders } from "@/lib/base-url";
+import { cookies } from "next/headers";
+import { resolveBaseUrl } from "@/lib/base-url";
+import { getTranslations } from "next-intl/server";
+import { getLocale } from "@/i18n/locale-server";
+import { buildAlternates, openGraphLocales, breadcrumbJsonLd } from "@/lib/seo";
 
 // Mark this page as dynamic to avoid conflicts with cookie usage in layout
 export const dynamic = 'force-dynamic';
@@ -22,73 +25,69 @@ interface RegionProfilePageProps {
 }
 
 export async function generateMetadata({ params }: RegionProfilePageProps): Promise<Metadata> {
-  const { username, region } = await params;
+  const { username: rawUsername, region } = await params;
+  const username = decodeURIComponent(rawUsername);
 
-  // Validate region
+  const [tMeta, tRegions, locale] = await Promise.all([
+    getTranslations("profileMetadata"),
+    getTranslations("regions"),
+    getLocale(),
+  ]);
+
   if (!isValidRegion(region)) {
     return {
-      title: "Profile Not Found | tomomai ともマイ",
-      description: "The profile you're looking for doesn't exist.",
+      title: tMeta("notFoundTitle"),
+      description: tMeta("notFoundDescription"),
     };
   }
 
   try {
     const trpc = await createServerSideTRPC();
 
-    const snapshotData = await trpc.user.getPublicSnapshotData({
-      username: decodeURIComponent(username),
-      region,
+    // Pull snapshot for description enrichment + 404 detection.
+    const data = await trpc.user.getPublicSnapshotData({ username, region });
+    const snapshot = data.snapshot;
+
+    const title = tMeta("title", { username });
+    const description = tMeta("descriptionRich", {
+      username,
+      region: tRegions(region),
+      rating: snapshot.rating,
+      displayName: snapshot.displayName,
     });
 
-    const regionName = region === 'intl' ? 'International' : 'Japan';
+    const path = `/profile/${encodeURIComponent(username)}/${region}`;
 
-    const title = `${username} | tomomai ともマイ`;
-    const description = `View ${username}'s maimai profile for ${regionName}. Track and analyze maimai scores with friends.`;
-
-    const baseUrl = resolveBaseUrlFromHeaders(await headers());
-    const profileUrl = `${baseUrl}/profile/${encodeURIComponent(username)}/${region}`;
-
-    const userIcon = snapshotData.snapshot.iconUrl || `${baseUrl}/favicon.ico`;
-
+    // og:image is provided by the sibling opengraph-image.tsx file convention.
     return {
       title,
       description,
+      alternates: buildAlternates(path),
       openGraph: {
         title,
         description,
-        url: profileUrl,
-        siteName: 'tomomai ともマイ',
-        type: 'profile',
-        images: [
-          {
-            url: userIcon,
-            width: 512,
-            height: 512,
-            alt: `${username}'s maimai icon`,
-          },
-        ],
+        url: path,
+        siteName: "tomomai ともマイ",
+        type: "profile",
+        ...openGraphLocales(locale),
       },
       twitter: {
-        card: 'summary',
+        card: "summary_large_image",
         title,
         description,
-        images: [userIcon],
-      },
-      alternates: {
-        canonical: profileUrl,
       },
     };
   } catch (error) {
-    if (error instanceof TRPCError && error.code === 'NOT_FOUND') {
+    if (error instanceof TRPCError && error.code === "NOT_FOUND") {
       return {
-        title: "Profile Not Found | tomomai ともマイ",
-        description: "The profile you're looking for doesn't exist or is not publicly accessible.",
+        title: tMeta("notFoundTitle"),
+        description: tMeta("notFoundDescription"),
       };
     }
 
     return {
-      title: "Error | tomomai ともマイ",
-      description: "An error occurred while loading this profile.",
+      title: tMeta("errorTitle"),
+      description: tMeta("errorDescription"),
     };
   }
 }
@@ -123,15 +122,50 @@ export default async function RegionProfilePage({ params, searchParams }: Region
 
     const flags = await useFlags(cookies);
 
+    const decodedUsername = decodeURIComponent(username);
+    const baseUrl = resolveBaseUrl();
+    const profileUrl = `${baseUrl}/profile/${encodeURIComponent(decodedUsername)}/${region}`;
+    const tNav = await getTranslations("regions");
+
+    const profileJsonLd = {
+      "@context": "https://schema.org",
+      "@type": "ProfilePage",
+      mainEntity: {
+        "@type": "Person",
+        name: snapshotData.snapshot.displayName,
+        alternateName: decodedUsername,
+        identifier: decodedUsername,
+        url: profileUrl,
+        image: snapshotData.snapshot.iconUrl,
+      },
+      url: profileUrl,
+    };
+
+    const breadcrumb = breadcrumbJsonLd([
+      { name: "tomomai", url: `${baseUrl}/` },
+      { name: tNav(region), url: profileUrl },
+      { name: snapshotData.snapshot.displayName, url: profileUrl },
+    ]);
+
     return (
-      <ProfilePage
-        profileData={profileData}
-        snapshotData={snapshotData}
-        region={region}
-        username={decodeURIComponent(username)}
-        initialTab={tab}
-        flags={flags}
-      />
+      <>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(profileJsonLd) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }}
+        />
+        <ProfilePage
+          profileData={profileData}
+          snapshotData={snapshotData}
+          region={region}
+          username={decodedUsername}
+          initialTab={tab}
+          flags={flags}
+        />
+      </>
     );
   } catch (error) {
     if (error instanceof TRPCError && error.code === 'NOT_FOUND') {
