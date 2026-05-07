@@ -704,6 +704,15 @@ export function TokenDialogCn({
           </ResponsiveDialogHeader>
 
           <div className="space-y-3">
+            <div className="flex items-start gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-sm">
+              <AlertTriangle className="h-4 w-4 mt-0.5 flex-shrink-0 text-amber-600" />
+              <div className="space-y-1">
+                <p className="font-medium">{t('tokenDialog.cnExperimentalWarningTitle')}</p>
+                <p className="text-muted-foreground text-xs leading-relaxed">
+                  {t('tokenDialog.cnExperimentalWarningMessage')}
+                </p>
+              </div>
+            </div>
             {fetchOptions.map(option => (
               <button
                 key={option.id}

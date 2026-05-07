@@ -9,7 +9,11 @@ import {
   ResponsiveDialogTitle,
 } from "@/components/ui/dialog-friendly";
 import { PolicyDialog } from "@/components/policy-dialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { TRANSLATION_STATS } from "@/lib/i18n/translation-stats";
+import { getLanguages, cn } from "@/lib/utils";
 import { trpc } from "@/lib/trpc-client";
+import { useTranslations } from "next-intl";
 
 interface AboutDialogProps {
   open: boolean;
@@ -19,10 +23,16 @@ interface AboutDialogProps {
 export function AboutDialog({ open, onOpenChange }: AboutDialogProps) {
   const [showTos, setShowTos] = useState(false);
   const [showPrivacy, setShowPrivacy] = useState(false);
+  const t = useTranslations();
 
   const { data: policies } = trpc.user.getPolicies.useQuery(undefined, {
     enabled: open,
   });
+
+  const languages = getLanguages(t)
+    .filter((l) => l.value !== null && TRANSLATION_STATS[l.value])
+    .map((l) => ({ ...l, stats: TRANSLATION_STATS[l.value as string] }))
+    .sort((a, b) => b.stats.percent - a.stats.percent);
 
   return (
     <ResponsiveDialog open={open} onOpenChange={onOpenChange}>
@@ -45,8 +55,8 @@ export function AboutDialog({ open, onOpenChange }: AboutDialogProps) {
             <h3 className="text-lg font-semibold mb-3">Acknowledgments</h3>
             <div className="space-y-2 text-sm">
               <p><strong>SEGA</strong> for creating maimai DX</p>
-              <p><strong><a href="https://github.com/gekichumai/dxrating" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">dxrating</a></strong> for providing internal level data</p>
-              <p><strong><a href="https://github.com/zvuc/otoge-db" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">otoge-db</a></strong> for providing level data</p>
+              <p><strong><a href="https://github.com/gekichumai/dxrating" target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 hover:underline">dxrating</a></strong> for providing internal level data</p>
+              <p><strong><a href="https://github.com/zvuc/otoge-db" target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 hover:underline">otoge-db</a></strong> for providing level data</p>
             </div>
           </div>
 
@@ -71,11 +81,48 @@ export function AboutDialog({ open, onOpenChange }: AboutDialogProps) {
           </div>
 
           <div>
+            <h3 className="text-lg font-semibold mb-3">Translations</h3>
+            <TooltipProvider delayDuration={150}>
+              <div className="rounded-lg border divide-y">
+                {languages.map((language) => {
+                  const { translated, missing, percent } = language.stats;
+                  const colorClass =
+                    percent >= 100
+                      ? "text-green-500"
+                      : percent >= 80
+                        ? "text-lime-500"
+                        : percent >= 50
+                          ? "text-yellow-500"
+                          : "text-orange-500";
+                  return (
+                    <div
+                      key={language.value as string}
+                      className="flex items-center justify-between px-3 py-2 text-sm"
+                    >
+                      <span>{language.label}</span>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className={cn("font-medium tabular-nums cursor-help", colorClass)}>
+                            {percent}%
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          {translated} translated, {missing} missing
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+                  );
+                })}
+              </div>
+            </TooltipProvider>
+          </div>
+
+          <div>
             <h3 className="text-lg font-semibold mb-3">Legal</h3>
             <div className="space-y-2 text-sm">
               <button
                 onClick={() => setShowTos(true)}
-                className="text-blue-600 hover:underline text-left"
+                className="text-blue-600 dark:text-blue-400 hover:underline text-left"
                 disabled={!policies}
               >
                 Terms of Service
@@ -83,7 +130,7 @@ export function AboutDialog({ open, onOpenChange }: AboutDialogProps) {
               <br />
               <button
                 onClick={() => setShowPrivacy(true)}
-                className="text-blue-600 hover:underline text-left"
+                className="text-blue-600 dark:text-blue-400 hover:underline text-left"
                 disabled={!policies}
               >
                 Privacy Policy

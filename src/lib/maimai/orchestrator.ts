@@ -119,10 +119,10 @@ const scrapeFetcher: DataFetcher = async ({ userId: _userId, region, sessionId, 
   const cookies = validation.cookiesReady && validation.cookies
     ? validation.cookies
     : await getCookiesFromRedirect(
-        region,
-        validation.redirectUrl,
-        validation.cookies || null,
-      );
+      region,
+      validation.redirectUrl,
+      validation.cookies || null,
+    );
   const playerDataHtml = await fetchPlayerData(region, cookies, validation.redirectUrl);
 
   logger.info("Starting player data extraction and songs data fetch...");
@@ -138,13 +138,13 @@ const scrapeFetcher: DataFetcher = async ({ userId: _userId, region, sessionId, 
     }),
     region === "cn"
       ? Promise.resolve([] as AlbumData[]).then((data) => {
-          appendFetchState(sessionId, FETCH_STATES.ALBUM_DATA);
-          return data;
-        })
+        appendFetchState(sessionId, FETCH_STATES.ALBUM_DATA);
+        return data;
+      })
       : fetchAlbumData(cookies, region).then((data) => {
-          appendFetchState(sessionId, FETCH_STATES.ALBUM_DATA);
-          return data;
-        }),
+        appendFetchState(sessionId, FETCH_STATES.ALBUM_DATA);
+        return data;
+      }),
   ]);
   logger.info("Player data extraction and songs data fetch completed");
 

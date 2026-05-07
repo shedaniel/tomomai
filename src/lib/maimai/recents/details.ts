@@ -1,5 +1,5 @@
 import { load } from "cheerio";
-import { and, eq, or } from "drizzle-orm";
+import { and, eq, gt, inArray, or, sql } from "drizzle-orm";
 import { db } from "../../db";
 import { userRecentSongs, userRecentSongsDetailed } from "../../db/schema-pg";
 import { logger } from "../../logger";
@@ -22,12 +22,32 @@ export async function fetchAndInsertRecentSongsData(
     return;
   }
 
+  const existingValid = await db
+    .select({ playedAt: userRecentSongs.playedAt })
+    .from(userRecentSongsDetailed)
+    .innerJoin(userRecentSongs, eq(userRecentSongs.id, userRecentSongsDetailed.recentSongId))
+    .where(and(
+      eq(userRecentSongs.userId, userId),
+      inArray(userRecentSongs.playedAt, recentSongsData.map(r => r.playedAt)),
+      gt(userRecentSongsDetailed.maxCombo, 0),
+    ));
+  const existingPlayedAts = new Set(existingValid.map(r => r.playedAt.getTime()));
+  const toFetch = recentSongsData.filter(r => !existingPlayedAts.has(r.playedAt.getTime()));
+  const skipped = recentSongsData.length - toFetch.length;
+  if (skipped > 0) {
+    logger.info(`Skipping ${skipped} recent songs already having detailed rows; fetching ${toFetch.length}`);
+  }
+  if (toFetch.length === 0) {
+    logger.debug("All recent songs already have detailed rows; nothing to fetch");
+    return;
+  }
+
   const baseUrl = maimaiBaseUrl(region);
   const playlogDetailUrl = `${baseUrl}/maimai-mobile/record/playlogDetail/`;
 
   const BATCH_SIZE = 6;
-  for (let batchStart = 0; batchStart < recentSongsData.length; batchStart += BATCH_SIZE) {
-    const batch = recentSongsData.slice(batchStart, batchStart + BATCH_SIZE);
+  for (let batchStart = 0; batchStart < toFetch.length; batchStart += BATCH_SIZE) {
+    const batch = toFetch.slice(batchStart, batchStart + BATCH_SIZE);
     logger.debug(`Processing batch ${Math.floor(batchStart / BATCH_SIZE) + 1}: ${batch.length} records`);
 
     const detailPromises = batch.map(async (recentSong) => {
@@ -52,8 +72,12 @@ export async function fetchAndInsertRecentSongsData(
         const scoreBlocks = $(".playlog_score_block > div.white");
         const comboText = scoreBlocks.length > 1 ? scoreBlocks.eq(1).text().trim() : "";
         const comboMatch = comboText.match(/(\d+(?:,\d+)?)\s*\/\s*(\d+(?:,\d+)?)/);
-        const combo = comboMatch ? parseInt(comboMatch[1].replace(/,/g, ''), 10) : 0;
-        const maxCombo = comboMatch ? parseInt(comboMatch[2].replace(/,/g, ''), 10) : 0;
+        if (!comboMatch) {
+          logger.warn(`Playlog detail parse failed (no combo) for idx ${recentSong.idx}`);
+          return null;
+        }
+        const combo = parseInt(comboMatch[1].replace(/,/g, ''), 10);
+        const maxCombo = parseInt(comboMatch[2].replace(/,/g, ''), 10);
 
         const syncScoreText = scoreBlocks.length > 2 ? scoreBlocks.eq(2).text().trim() : "";
         let syncScore: number | null = null;
@@ -82,6 +106,10 @@ export async function fetchAndInsertRecentSongsData(
         }
 
         const noteRows = $(".playlog_notes_detail > * tr:not(:first-child)");
+        if (noteRows.length === 0) {
+          logger.warn(`Playlog detail parse failed (no note rows) for idx ${recentSong.idx}`);
+          return null;
+        }
         const noteTypes = ['tap', 'hold', 'slide', 'touch', 'break'];
         const noteData: { [key: string]: { [key: string]: number } } = {};
 
@@ -200,9 +228,47 @@ export async function fetchAndInsertRecentSongsData(
       await db
         .insert(userRecentSongsDetailed)
         .values(detailedInserts)
-        .onConflictDoNothing();
+        .onConflictDoUpdate({
+          target: userRecentSongsDetailed.recentSongId,
+          set: {
+            fastCount: sql`excluded."fastCount"`,
+            lateCount: sql`excluded."lateCount"`,
+            combo: sql`excluded.combo`,
+            maxCombo: sql`excluded."maxCombo"`,
+            syncScore: sql`excluded."syncScore"`,
+            maxSyncScore: sql`excluded."maxSyncScore"`,
+            tapCPerfect: sql`excluded."tapCPerfect"`,
+            tapPerfect: sql`excluded."tapPerfect"`,
+            tapGreat: sql`excluded."tapGreat"`,
+            tapGood: sql`excluded."tapGood"`,
+            tapMiss: sql`excluded."tapMiss"`,
+            holdCPerfect: sql`excluded."holdCPerfect"`,
+            holdPerfect: sql`excluded."holdPerfect"`,
+            holdGreat: sql`excluded."holdGreat"`,
+            holdGood: sql`excluded."holdGood"`,
+            holdMiss: sql`excluded."holdMiss"`,
+            slideCPerfect: sql`excluded."slideCPerfect"`,
+            slidePerfect: sql`excluded."slidePerfect"`,
+            slideGreat: sql`excluded."slideGreat"`,
+            slideGood: sql`excluded."slideGood"`,
+            slideMiss: sql`excluded."slideMiss"`,
+            touchCPerfect: sql`excluded."touchCPerfect"`,
+            touchPerfect: sql`excluded."touchPerfect"`,
+            touchGreat: sql`excluded."touchGreat"`,
+            touchGood: sql`excluded."touchGood"`,
+            touchMiss: sql`excluded."touchMiss"`,
+            breakCPerfect: sql`excluded."breakCPerfect"`,
+            breakPerfect: sql`excluded."breakPerfect"`,
+            breakGreat: sql`excluded."breakGreat"`,
+            breakGood: sql`excluded."breakGood"`,
+            breakMiss: sql`excluded."breakMiss"`,
+            venue: sql`excluded.venue`,
+            rating: sql`excluded.rating`,
+            ratingChange: sql`excluded."ratingChange"`,
+          },
+        });
 
-      logger.debug(`Inserted ${detailedInserts.length} detailed records for batch ${Math.floor(batchStart / BATCH_SIZE) + 1}`);
+      logger.debug(`Upserted ${detailedInserts.length} detailed records for batch ${Math.floor(batchStart / BATCH_SIZE) + 1}`);
     }
   }
 

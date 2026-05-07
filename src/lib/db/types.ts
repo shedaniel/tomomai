@@ -1,4 +1,4 @@
-export const LANGUAGE_ENUM = ["en", "en-GB", "ja", "zh-TW", "zh-HK", "zh-CN", "ko"] as const;
+export const LANGUAGE_ENUM = ["en", "en-GB", "ja", "zh-TW", "zh-HK", "zh-CN", "zh-SG", "ko"] as const;
 
 export const REGION_ENUM = ["intl", "jp", "cn"] as const;
 

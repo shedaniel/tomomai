@@ -41,8 +41,8 @@ async function loadInterFonts(): Promise<FontEntry[]> {
 async function loadLocaleFonts(locale: Locale, text: string): Promise<FontEntry[]> {
   // Mirror the logic from src/app/layout.tsx
   const needsJP = true; // NotoSansJP covers ja + ko + fallback
-  const needsTC = locale === "zh-TW" || locale === "zh-HK" || locale === "yue";
-  const needsSC = locale === "zh-CN";
+  const needsTC = locale === "zh-TW" || locale === "zh-HK";
+  const needsSC = locale === "zh-CN" || locale === "zh-SG";
 
   const fetches: Promise<FontEntry[]>[] = [];
 
@@ -90,9 +90,9 @@ function getFontFamily(locale: Locale): string {
   switch (locale) {
     case "zh-TW":
     case "zh-HK":
-    case "yue":
       return "Inter, Noto Sans TC, Noto Sans JP";
     case "zh-CN":
+    case "zh-SG":
       return "Inter, Noto Sans SC, Noto Sans JP";
     default:
       return "Inter, Noto Sans JP";

@@ -21,6 +21,7 @@ import {
 import { useMediaQuery } from "@/hooks/use-media-query"
 import { cn } from "@/lib/utils"
 import { Check, ChevronDown } from "lucide-react"
+import { useTranslations } from "next-intl"
 import * as React from "react"
 import ReactDOM from "react-dom"
 import { Button, type buttonVariants } from "./button"
@@ -167,13 +168,15 @@ interface SelectContentProps {
 
 function SelectContent({ children, label, className, align }: SelectContentProps) {
   const { isMobile } = useSelectContext()
+  const t = useTranslations("common")
+  const fallback = label || t("selectAnOption")
 
   if (isMobile) {
     return (<>
       <DrawerContent className="max-h-[90dvh]">
         <DrawerHeader>
-          <DrawerTitle>{label || "Select an option"}</DrawerTitle>
-          <DrawerDescription className="sr-only">{label || "Select an option"}</DrawerDescription>
+          <DrawerTitle>{fallback}</DrawerTitle>
+          <DrawerDescription className="sr-only">{fallback}</DrawerDescription>
         </DrawerHeader>
         <div className="flex flex-col px-2 pb-8 max-h-[80vh] overflow-y-auto">{children}</div>
       </DrawerContent>

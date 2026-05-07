@@ -52,14 +52,14 @@
 body:has([lang="zh-TW"]),
 html[lang="zh-TW"] body,
 body:has([lang="zh-HK"]),
-html[lang="zh-HK"] body,
-body:has([lang="yue"]),
-html[lang="yue"] body {
+html[lang="zh-HK"] body {
     --font-sans: var(--font-inter), 'NotoSansTC', system-ui, sans-serif;
 }
 
 body:has([lang="zh-CN"]),
-html[lang="zh-CN"] body {
+html[lang="zh-CN"] body,
+body:has([lang="zh-SG"]),
+html[lang="zh-SG"] body {
     --font-sans: var(--font-inter), 'NotoSansSC', system-ui, sans-serif;
 }
 

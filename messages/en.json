@@ -39,7 +39,8 @@
       "utage": "Utage"
     },
     "back": "Back",
-    "clipboardError": "Failed to copy to clipboard"
+    "clipboardError": "Failed to copy to clipboard",
+    "selectAnOption": "Select an option"
   },
   "auth": {
     "loginWithDiscord": "Continue with Discord",
@@ -115,7 +116,8 @@
       "ja": "日本語",
       "zh-TW": "繁體中文 (台灣)",
       "zh-HK": "繁體中文 (香港)",
-      "zh-CN": "简体中文",
+      "zh-CN": "简体中文 (中国大陆)",
+      "zh-SG": "简体中文 (新加坡, 马来西亚)",
       "ko": "한국어 (AI 번역)"
     },
     "timezone": {
@@ -622,6 +624,8 @@
     "passwordOptionDescription": "Login to your maimai DX NET account with your SEGA account credentials. Never expire. Not recommended.",
     "cnTitle": "Update maimai authentication",
     "cnDescription": "Choose your authentication method for the China region.",
+    "cnExperimentalWarningTitle": "China region is experimental",
+    "cnExperimentalWarningMessage": "Support may end abruptly, functionality may be unstable, and data may be wiped.",
     "recommendedBadge": "Recommended",
     "comingSoonBadge": "Coming soon",
     "disabledBadge": "Temporarily disabled",

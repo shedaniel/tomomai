@@ -36,7 +36,8 @@
       "remaster": "Re:Master",
       "utage": "Utage"
     },
-    "back": "뒤로"
+    "back": "뒤로",
+    "selectAnOption": "옵션 선택"
   },
   "auth": {
     "loginWithDiscord": "Discord로 계속하기",
@@ -110,7 +111,8 @@
       "ja": "日本語",
       "zh-TW": "繁體中文 (台灣)",
       "zh-HK": "繁體中文 (香港)",
-      "zh-CN": "简体中文",
+      "zh-CN": "简体中文 (中国大陆)",
+      "zh-SG": "简体中文 (新加坡, 马来西亚)",
       "ko": "한국어 (AI 번역)"
     },
     "timezone": {
