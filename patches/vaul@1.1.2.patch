@@ -1,0 +1,26 @@
+diff --git a/dist/index.js b/dist/index.js
+index 7f343be1fafe1cf302ee6afc7268c29490895e34..364b45756fc510a345c9f8cbfcef8d81ea37dc53 100644
+--- a/dist/index.js
++++ b/dist/index.js
+@@ -737,7 +737,7 @@ const noop = ()=>()=>{};
+ function useScaleBackground() {
+     const { direction, isOpen, shouldScaleBackground, setBackgroundColorOnScale, noBodyStyles } = useDrawerContext();
+     const timeoutIdRef = React__namespace.default.useRef(null);
+-    const initialBackgroundColor = React.useMemo(()=>document.body.style.backgroundColor, []);
++    const initialBackgroundColor = React.useMemo(()=>typeof document === 'undefined' ? undefined : document.body.style.backgroundColor, []);
+     function getScale() {
+         return (window.innerWidth - WINDOW_TOP_OFFSET) / window.innerWidth;
+     }
+diff --git a/dist/index.mjs b/dist/index.mjs
+index 0dbbce5526681925a81804ced237a045a53c0355..dd1bcce30305e27df3cca78b62f89b63cfb55c4c 100644
+--- a/dist/index.mjs
++++ b/dist/index.mjs
+@@ -715,7 +715,7 @@ const noop = ()=>()=>{};
+ function useScaleBackground() {
+     const { direction, isOpen, shouldScaleBackground, setBackgroundColorOnScale, noBodyStyles } = useDrawerContext();
+     const timeoutIdRef = React__default.useRef(null);
+-    const initialBackgroundColor = useMemo(()=>document.body.style.backgroundColor, []);
++    const initialBackgroundColor = useMemo(()=>typeof document === 'undefined' ? undefined : document.body.style.backgroundColor, []);
+     function getScale() {
+         return (window.innerWidth - WINDOW_TOP_OFFSET) / window.innerWidth;
+     }

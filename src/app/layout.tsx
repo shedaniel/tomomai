@@ -11,6 +11,7 @@ import { getMessages } from 'next-intl/server';
 import localFont from "next/font/local";
 import "./globals.css";
 import "./cjk-fonts.css";
+import "./vaul.css";
 import { getServerThemeId } from '@/lib/themes-server';
 import { getThemeOrDefault, getThemeStyleProperties } from '@/lib/themes';
 import { useAprilFools2026 } from '@/lib/flags';

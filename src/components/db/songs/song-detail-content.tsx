@@ -38,7 +38,6 @@ interface SongDetailContentProps {
   songName: string;
   slug: string;
   type: "std" | "dx";
-  onClose: () => void;
   initialData?: SongDetails | null;
 }
 

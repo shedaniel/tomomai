@@ -921,6 +921,7 @@
       "detail": {
         "title": "Song Details",
         "artist": "Song artist",
+        "detailsFor": "Details for {songName}",
         "charts": "Charts",
         "availability": "Availability",
         "yourScore": "Your Score",

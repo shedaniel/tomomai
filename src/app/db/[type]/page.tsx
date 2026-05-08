@@ -1,4 +1,4 @@
-import { createServerSideTRPC } from "@/lib/trpc-server";
+import { getAllUniqueSongsCached } from "@/server/queries/songs-cache";
 import { Metadata } from "next";
 import dynamic from "next/dynamic";
 import { getTranslations } from "next-intl/server";
@@ -7,7 +7,6 @@ import { buildAlternates, openGraphLocales } from "@/lib/seo";
 
 const ArcadesMap = dynamic(() => import("@/components/db/arcades").then(m => m.ArcadesMap));
 const EventsDatabase = dynamic(() => import("@/components/db/events-database").then(m => m.EventsDatabase));
-const SongsDatabase = dynamic(() => import("@/components/db/songs-database").then(m => m.SongsDatabase));
 const StatsDatabase = dynamic(() => import("@/components/db/stats-database").then(m => m.StatsDatabase));
 
 type DbTypePageProps = {
@@ -59,11 +58,12 @@ export default async function DbTypePage({ params }: DbTypePageProps) {
   const { type } = await params;
 
   if (type === "songs") {
-    const trpc = await createServerSideTRPC();
-    const songs = await trpc.user.getAllUniqueSongs();
+    // The list itself is mounted by /db/[type]/layout.tsx so it persists
+    // across /db/songs ↔ /db/songs/[slug] navigation. This page just emits
+    // page-level structured data.
+    const songs = await getAllUniqueSongsCached();
     const t = await getTranslations("db.songs.metadata");
 
-    // JSON-LD structured data for SEO
     const jsonLd = {
       "@context": "https://schema.org",
       "@type": "CollectionPage",
@@ -86,13 +86,10 @@ export default async function DbTypePage({ params }: DbTypePageProps) {
     };
 
     return (
-      <>
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-        />
-        <SongsDatabase selectedSlug={null} initialSongs={songs} currentSong={null} />
-      </>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
     );
   }
 
@@ -112,7 +109,6 @@ export default async function DbTypePage({ params }: DbTypePageProps) {
         </div>
       )}
 
-      {/* Songs is handled by the if block above */}
       {!["home", "arcades", "songs", "stats"].includes(type) && (
         <div className="mt-8">
           <div className="bg-muted/50 rounded-lg p-8 text-center">

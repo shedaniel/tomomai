@@ -57,7 +57,11 @@ function TypeSelector({
 
 const variants = {
   initial: { opacity: 0.5, filter: "blur(4px)" },
-  animate: { opacity: 1, filter: "blur(0px)" },
+  // `transitionEnd: { filter: "" }` strips the inline `filter: blur(0px)`
+  // after the animation completes. Even `blur(0px)` creates a new containing
+  // block for `position: fixed` descendants, which would re-anchor the song
+  // detail drawer to this element instead of the viewport.
+  animate: { opacity: 1, filter: "blur(0px)", transitionEnd: { filter: "" } },
   exit: { opacity: 0.5, filter: "blur(4px)" },
 };
 
