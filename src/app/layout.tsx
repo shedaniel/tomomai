@@ -1,9 +1,11 @@
 import { AprilFools } from '@/components/april-fools';
+import { PreMaintenanceBanner } from '@/components/pre-maintenance-banner';
 import { LocaleProvider } from '@/components/providers/locale-provider';
 import { ThemeProvider } from '@/components/providers/theme-provider';
 import { TRPCProvider } from "@/components/providers/trpc-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { getLocale } from '@/i18n/locale-server';
+import { get } from '@vercel/edge-config';
 import { VercelToolbar } from "@vercel/toolbar/next";
 import type { Metadata } from "next";
 import { NextIntlClientProvider } from 'next-intl';
@@ -85,6 +87,23 @@ export default async function RootLayout({
   const messages = await getMessages();
   const shouldInjectToolbar = process.env.NODE_ENV === "development";
 
+  let preMaintenanceBanner: { title: string; description: string; raw: string } | null = null;
+  try {
+    const raw = await get<string>('preMaintenanceMode');
+    if (raw) {
+      const parts = raw.split('||');
+      if (parts.length >= 2) {
+        preMaintenanceBanner = {
+          title: parts[0].trim(),
+          description: parts.slice(1).join('||').trim(),
+          raw,
+        };
+      }
+    }
+  } catch {
+    // Edge config unavailable, skip banner
+  }
+
   return (
     <html lang={locale} className={theme.dark ? "dark" : ""} style={getThemeStyleProperties(theme)}>
       <body
@@ -94,6 +113,13 @@ export default async function RootLayout({
           <LocaleProvider initialLocale={locale}>
             <ThemeProvider>
               <TRPCProvider>
+                {preMaintenanceBanner && (
+                  <PreMaintenanceBanner
+                    title={preMaintenanceBanner.title}
+                    description={preMaintenanceBanner.description}
+                    raw={preMaintenanceBanner.raw}
+                  />
+                )}
                 {children}
                 {shouldInjectToolbar && <VercelToolbar />}
                 <Toaster />
