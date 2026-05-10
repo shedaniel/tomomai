@@ -102,8 +102,8 @@ function ScoreGrid({
 
   return (
     <div className={cn(
-      "col-span-full grid gap-4 px-4 py-3 bg-muted group-hover:!bg-primary/10 border-t border-dashed",
-      Object.keys(scores).length === 2 ? "grid-cols-4" : "grid-cols-2"
+      "col-span-full grid gap-4 px-4 py-3 bg-muted/30 border-t border-dashed",
+      Object.keys(scores).length === 3 ? "grid-cols-6" : Object.keys(scores).length === 2 ? "grid-cols-4" : "grid-cols-2"
     )}>
       {Object.entries(scores).map(([region, score]) => {
         const chart = charts.find(c => c.region === region)!;
@@ -115,7 +115,7 @@ function ScoreGrid({
           difficulty: chart.difficulty,
         }, chart.gameVersion) : 0;
 
-        const label = region === 'intl' ? t('regions.intl') : t('regions.jp');
+        const label = t(`regions.${region}`);
 
         return (
           <div key={region} className="contents">
@@ -389,7 +389,7 @@ export function SongDetailContent({ songName, slug, type, initialData }: SongDet
         {/* Buttons or Links */}
         <div className="flex gap-2">
           <Link href={`/db/songs/${slug}`} onClick={async (e) => {
-            const baseUrl = await resolveBaseUrl();
+            const baseUrl = resolveBaseUrl();
             navigator.clipboard.writeText(`${baseUrl}/db/songs/${slug}`);
             e.preventDefault();
             toast.success("Share link copied to clipboard");
@@ -469,7 +469,7 @@ export function SongDetailContent({ songName, slug, type, initialData }: SongDet
           <div key={region} className="space-y-2">
             <div className="flex items-center gap-2">
               <h3 className="text-sm font-medium">
-                {region === "intl" ? t('regions.intl') : t('regions.jp')}
+                {t(`regions.${region}`)}
               </h3>
             </div>
 

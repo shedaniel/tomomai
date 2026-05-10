@@ -160,10 +160,11 @@ export function OnboardingDialog({
   const setUsernameMutation = trpc.username.setUsername.useMutation();
   const updatePublishProfileMutation = trpc.user.updatePublishProfile.useMutation();
   const updateRegionMutation = trpc.user.updateRegion.useMutation();
+  const updateProfileMainRegionMutation = trpc.user.updateProfileMainRegion.useMutation();
 
   const isSubmittingStep1 =
     setUsernameMutation.isPending || updatePublishProfileMutation.isPending;
-  const isSubmittingStep2 = updateRegionMutation.isPending;
+  const isSubmittingStep2 = updateRegionMutation.isPending || updateProfileMainRegionMutation.isPending;
 
   const baseHost = useMemo(() => stripProtocol(resolveBaseUrl()), []);
   const profileUrl = useMemo(() => {
@@ -189,6 +190,7 @@ export function OnboardingDialog({
   const goNextStep2 = async () => {
     try {
       await updateRegionMutation.mutateAsync({ region: selectedRegion });
+      await updateProfileMainRegionMutation.mutateAsync({ profileMainRegion: selectedRegion });
       setDirection(1);
       setStep(3);
     } catch (error) {

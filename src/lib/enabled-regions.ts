@@ -48,6 +48,10 @@ export function isRegionEnabled(region: Region): boolean {
   return getEnabledRegions().includes(region);
 }
 
+export function isRegionEnabledStr(region: string): region is Region {
+  return getEnabledRegions().includes(region as Region);
+}
+
 /**
  * Check if this build is the CN-exclusive deployment (only CN region enabled).
  *

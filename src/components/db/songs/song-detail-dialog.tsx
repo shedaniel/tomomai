@@ -88,7 +88,7 @@ export function SongChartDialogContent({ charts, scores }: { charts: SongExtende
       <span className="text-xs">.{chart.difficulty === "utage" ? '?' : chart.levelPrecise % 10}</span>
     </ResponsiveDialogTitle>
     <Tabs value={region} onValueChange={(value) => setRegion(value as Region)}>
-      <TabsList className={cn("grid w-full grid-cols-2", charts.length <= 1 && "hidden")}>
+      <TabsList className={cn("grid w-full", { 1: "grid-cols-1", 2: "grid-cols-2", 3: "grid-cols-3" }[charts.length], charts.length <= 1 && "hidden")}>
         {charts.map(c => (
           <TabsTab key={c.region} value={c.region}>{t(`regions.${c.region}`)}</TabsTab>
         ))}

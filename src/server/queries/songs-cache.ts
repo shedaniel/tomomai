@@ -1,4 +1,5 @@
-import { createServerSideTRPC } from "@/lib/trpc-server";
+import { queryAllUniqueSongs, querySongDetails } from "@/server/queries/songs";
+import { SongType } from "@/lib/types";
 import { cache } from "react";
 
 /**
@@ -15,13 +16,11 @@ import { cache } from "react";
  * + an in-process slug cache in lib/song-slug.ts).
  */
 export const getAllUniqueSongsCached = cache(async () => {
-  const trpc = await createServerSideTRPC();
-  return trpc.user.getAllUniqueSongs();
+  return queryAllUniqueSongs();
 });
 
 export const getSongDetailsCached = cache(
-  async (songName: string, type: "std" | "dx") => {
-    const trpc = await createServerSideTRPC();
-    return trpc.user.getSongDetails({ songName, type });
+  async (songName: string, type: SongType, userId?: string | null) => {
+    return querySongDetails(songName, type, userId);
   }
 );

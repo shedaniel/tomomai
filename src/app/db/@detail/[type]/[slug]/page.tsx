@@ -1,4 +1,5 @@
 import { SongDetailContent } from "@/components/db/songs/song-detail-content";
+import { getServerSession } from "@/lib/auth-server";
 import { getAllUniqueSongsCached, getSongDetailsCached } from "@/server/queries/songs-cache";
 import { getTranslations } from "next-intl/server";
 
@@ -15,13 +16,13 @@ export default async function DetailSlotPage({ params }: Props) {
   if (type !== "songs") return null;
 
   const decodedSlug = decodeURIComponent(slug);
-  const songs = await getAllUniqueSongsCached();
+  const [songs, session] = await Promise.all([getAllUniqueSongsCached(), getServerSession()]);
   const song = songs.find((s) => s.slug === decodedSlug);
   if (!song) return null;
 
   let initialDetails = null;
   try {
-    initialDetails = await getSongDetailsCached(song.songName, song.type);
+    initialDetails = await getSongDetailsCached(song.songName, song.type, session?.user?.id);
   } catch {
     // Silently fall back to the client-side query inside SongDetailContent.
   }

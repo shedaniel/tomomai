@@ -3,7 +3,7 @@ import { createServerSideTRPC } from "@/lib/trpc-server";
 import { getLocale } from "@/i18n/locale-server";
 import { getTranslations } from "next-intl/server";
 import { TRPCError } from "@trpc/server";
-import type { Region } from "@/lib/types";
+import { isRegionEnabledStr } from "@/lib/enabled-regions";
 
 export const runtime = "nodejs";
 export const alt = "maimai profile";
@@ -14,9 +14,6 @@ type Props = {
   params: Promise<{ username: string; region: string }>;
 };
 
-function isValidRegion(region: string): region is Region {
-  return region === "intl" || region === "jp";
-}
 
 export default async function Image({ params }: Props) {
   const { username: rawUsername, region } = await params;
@@ -24,7 +21,7 @@ export default async function Image({ params }: Props) {
   const locale = await getLocale();
   const t = await getTranslations("regions");
 
-  if (!isValidRegion(region)) {
+  if (!isRegionEnabledStr(region)) {
     return createProfileOGImage({
       displayName: username,
       username,

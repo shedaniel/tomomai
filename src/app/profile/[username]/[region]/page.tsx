@@ -1,6 +1,7 @@
 import { createServerSideTRPC } from "@/lib/trpc-server";
 import { TRPCError } from "@trpc/server";
 import { Region } from "@/lib/types";
+import { isRegionEnabledStr } from "@/lib/enabled-regions";
 import { ProfilePage } from "@/components/profile-page";
 import { notFound } from "next/navigation";
 import { Metadata } from "next";
@@ -34,7 +35,7 @@ export async function generateMetadata({ params }: RegionProfilePageProps): Prom
     getLocale(),
   ]);
 
-  if (!isValidRegion(region)) {
+  if (!isRegionEnabledStr(region)) {
     return {
       title: tMeta("notFoundTitle"),
       description: tMeta("notFoundDescription"),
@@ -92,17 +93,13 @@ export async function generateMetadata({ params }: RegionProfilePageProps): Prom
   }
 }
 
-// Validate region parameter
-function isValidRegion(region: string): region is Region {
-  return region === 'intl' || region === 'jp';
-}
 
 export default async function RegionProfilePage({ params, searchParams }: RegionProfilePageProps) {
   const { username, region } = await params;
   const { tab } = await searchParams;
 
   // Validate region
-  if (!isValidRegion(region)) {
+  if (!isRegionEnabledStr(region)) {
     notFound();
   }
 
