@@ -23,7 +23,6 @@ export async function generateMetadata(): Promise<Metadata> {
       type: "website",
       url: "/db/posts",
       siteName: "tomomai ともマイ",
-      images: [{ url: "/db/posts/opengraph-image", width: 1200, height: 630 }],
       ...openGraphLocales(locale),
     },
     twitter: {

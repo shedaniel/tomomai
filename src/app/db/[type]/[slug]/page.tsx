@@ -3,7 +3,7 @@ import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { getLocale } from "@/i18n/locale-server";
-import { buildAlternates, breadcrumbJsonLd, openGraphLocales } from "@/lib/seo";
+import { buildAlternates, breadcrumbJsonLd, openGraphLocales, ogImageUrl } from "@/lib/seo";
 import { resolveBaseUrl } from "@/lib/base-url";
 
 type DbSlugPageProps = {
@@ -54,6 +54,7 @@ export async function generateMetadata({ params }: DbSlugPageProps): Promise<Met
         url: path,
         siteName: "tomomai ともマイ",
         type: "article",
+        images: [{ url: ogImageUrl(path, locale) }],
         ...openGraphLocales(locale),
       },
       twitter: {

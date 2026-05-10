@@ -1,25 +1,31 @@
 import { createProfileOGImage, OG_SIZE } from "@/lib/og";
-import { createServerSideTRPC } from "@/lib/trpc-server";
-import { getLocale } from "@/i18n/locale-server";
 import { getTranslations } from "next-intl/server";
-import { TRPCError } from "@trpc/server";
 import { isRegionEnabledStr } from "@/lib/enabled-regions";
+import { db } from "@/lib/db";
+import { userSnapshots } from "@/lib/db/schema-pg";
+import { and, desc, eq } from "drizzle-orm";
+import { resolvePublicUserByUsername } from "@/server/queries/public-access";
+import { getReservedSnapshotData } from "@/server/queries/reserved";
+import { TRPCError } from "@trpc/server";
+import type { Locale } from "@/i18n/locale";
+import type { VersionId } from "@/lib/metadata";
+import { getStaticOGImageLocales } from "@/i18n/og-locale";
 
 export const runtime = "nodejs";
-export const alt = "maimai profile";
-export const size = OG_SIZE;
-export const contentType = "image/png";
+export const revalidate = 300;
 
 type Props = {
   params: Promise<{ username: string; region: string }>;
 };
 
+export function generateImageMetadata() {
+  return getStaticOGImageLocales().map(locale => ({ id: locale, alt: "maimai profile", size: OG_SIZE, contentType: "image/png" as const }));
+}
 
-export default async function Image({ params }: Props) {
-  const { username: rawUsername, region } = await params;
+export default async function Image({ params, id }: Props & { id: Promise<string> }) {
+  const [{ username: rawUsername, region }, locale] = await Promise.all([params, id]) as [{ username: string; region: string }, Locale];
   const username = decodeURIComponent(rawUsername);
-  const locale = await getLocale();
-  const t = await getTranslations("regions");
+  const t = await getTranslations({ locale, namespace: "regions" });
 
   if (!isRegionEnabledStr(region)) {
     return createProfileOGImage({
@@ -33,9 +39,38 @@ export default async function Image({ params }: Props) {
   }
 
   try {
-    const trpc = await createServerSideTRPC();
-    const data = await trpc.user.getPublicSnapshotData({ username, region });
-    const snapshot = data.snapshot;
+    const reservedData = await getReservedSnapshotData(username, region);
+    if (reservedData) {
+      const { snapshot } = reservedData;
+      return createProfileOGImage({
+        displayName: snapshot.displayName,
+        title: snapshot.title,
+        username,
+        regionLabel: t(region),
+        region,
+        rating: snapshot.rating,
+        gameVersion: snapshot.gameVersion as VersionId,
+        iconUrl: snapshot.iconUrl,
+        locale,
+      });
+    }
+
+    const userData = await resolvePublicUserByUsername(username);
+    const rows = await db
+      .select({
+        displayName: userSnapshots.displayName,
+        title: userSnapshots.title,
+        rating: userSnapshots.rating,
+        gameVersion: userSnapshots.gameVersion,
+        iconUrl: userSnapshots.iconUrl,
+      })
+      .from(userSnapshots)
+      .where(and(eq(userSnapshots.userId, userData.id), eq(userSnapshots.region, region)))
+      .orderBy(desc(userSnapshots.fetchedAt))
+      .limit(1);
+
+    if (rows.length === 0) throw new TRPCError({ code: "NOT_FOUND", message: "No snapshot" });
+    const snapshot = rows[0];
 
     return createProfileOGImage({
       displayName: snapshot.displayName,
@@ -44,7 +79,7 @@ export default async function Image({ params }: Props) {
       regionLabel: t(region),
       region,
       rating: snapshot.rating,
-      gameVersion: snapshot.gameVersion,
+      gameVersion: snapshot.gameVersion as VersionId,
       iconUrl: snapshot.iconUrl,
       locale,
     });

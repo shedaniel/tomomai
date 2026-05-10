@@ -1,27 +1,29 @@
 import { createSongOGImage, createHomeOGImage, DB_ACCENT, OG_SIZE } from "@/lib/og";
-import { createServerSideTRPC } from "@/lib/trpc-server";
-import { getLocale } from "@/i18n/locale-server";
+import { getAllUniqueSongsCached } from "@/server/queries/songs-cache";
 import { getTranslations } from "next-intl/server";
 import { createSafeMaimaiImageUrl, isR2Url } from "@/lib/utils";
 import { resolveBaseUrlFromHeaders } from "@/lib/base-url";
 import { headers } from "next/headers";
 import { getVersionInfo } from "@/lib/metadata";
+import type { Locale } from "@/i18n/locale";
+import { getStaticOGImageLocales } from "@/i18n/og-locale";
 
 export const runtime = "nodejs";
-export const alt = "maimai song";
-export const size = OG_SIZE;
-export const contentType = "image/png";
+export const revalidate = 3600;
 
 type Props = {
   params: Promise<{ type: string; slug: string }>;
 };
 
-export default async function Image({ params }: Props) {
-  const { type, slug } = await params;
-  const locale = await getLocale();
+export function generateImageMetadata() {
+  return getStaticOGImageLocales().map(locale => ({ id: locale, alt: "maimai song", size: OG_SIZE, contentType: "image/png" as const }));
+}
+
+export default async function Image({ params, id }: Props & { id: Promise<string> }) {
+  const [{ type, slug }, locale] = await Promise.all([params, id]) as [{ type: string; slug: string }, Locale];
 
   if (type !== "songs") {
-    const t = await getTranslations("db.songs.metadata");
+    const t = await getTranslations({ locale, namespace: "db.songs.metadata" });
     return createHomeOGImage({
       tagline: t("description"),
       locale,
@@ -32,12 +34,11 @@ export default async function Image({ params }: Props) {
   }
 
   const decodedSlug = decodeURIComponent(slug);
-  const trpc = await createServerSideTRPC();
-  const songs = await trpc.user.getAllUniqueSongs();
+  const songs = await getAllUniqueSongsCached();
   const song = songs.find(s => s.slug === decodedSlug);
 
   if (!song) {
-    const t = await getTranslations("db.songs.metadata");
+    const t = await getTranslations({ locale, namespace: "db.songs.metadata" });
     return createHomeOGImage({
       tagline: t("description"),
       locale,

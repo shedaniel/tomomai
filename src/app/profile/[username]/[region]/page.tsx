@@ -10,7 +10,7 @@ import { cookies } from "next/headers";
 import { resolveBaseUrl } from "@/lib/base-url";
 import { getTranslations } from "next-intl/server";
 import { getLocale } from "@/i18n/locale-server";
-import { buildAlternates, openGraphLocales, breadcrumbJsonLd } from "@/lib/seo";
+import { buildAlternates, openGraphLocales, breadcrumbJsonLd, ogImageUrl } from "@/lib/seo";
 
 // Mark this page as dynamic to avoid conflicts with cookie usage in layout
 export const dynamic = 'force-dynamic';
@@ -59,7 +59,6 @@ export async function generateMetadata({ params }: RegionProfilePageProps): Prom
 
     const path = `/profile/${encodeURIComponent(username)}/${region}`;
 
-    // og:image is provided by the sibling opengraph-image.tsx file convention.
     return {
       title,
       description,
@@ -70,6 +69,7 @@ export async function generateMetadata({ params }: RegionProfilePageProps): Prom
         url: path,
         siteName: "tomomai ともマイ",
         type: "profile",
+        images: [{ url: ogImageUrl(path, locale) }],
         ...openGraphLocales(locale),
       },
       twitter: {

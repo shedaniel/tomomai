@@ -1,22 +1,24 @@
 import { getPostBySlug } from "@/lib/posts";
 import { createOGImage, OG_SIZE } from "@/lib/og";
-import { getLocale } from "@/i18n/locale-server";
 import { getTranslations } from "next-intl/server";
+import type { Locale } from "@/i18n/locale";
+import { getStaticOGImageLocales } from "@/i18n/og-locale";
 
 export const runtime = "nodejs";
-export const alt = "Post";
-export const size = OG_SIZE;
-export const contentType = "image/png";
+export const revalidate = false;
 
 type Props = {
   params: Promise<{ post_id: string }>;
 };
 
-export default async function Image({ params }: Props) {
-  const { post_id } = await params;
-  const locale = await getLocale();
+export function generateImageMetadata() {
+  return getStaticOGImageLocales().map(locale => ({ id: locale, alt: "Post", size: OG_SIZE, contentType: "image/png" as const }));
+}
+
+export default async function Image({ params, id }: Props & { id: Promise<string> }) {
+  const [{ post_id }, locale] = await Promise.all([params, id]) as [{ post_id: string }, Locale];
   const post = getPostBySlug(post_id, locale);
-  const t = await getTranslations("db.posts.list");
+  const t = await getTranslations({ locale, namespace: "db.posts.list" });
 
   const date = post?.date
     ? new Date(post.date).toLocaleDateString(locale, {

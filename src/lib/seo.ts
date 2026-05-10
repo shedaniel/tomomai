@@ -61,6 +61,16 @@ export function buildAlternates(
   };
 }
 
+/**
+ * Return the absolute URL for the locale-specific opengraph-image variant.
+ * Used in generateMetadata to pin the first og:image tag to the user's
+ * current locale, while the ISR-cached variants from opengraph-image.tsx
+ * (static locale ordering) follow in the head.
+ */
+export function ogImageUrl(path: string, locale: Locale): string {
+  return `${resolveBaseUrl()}${path}/opengraph-image/${locale}`;
+}
+
 export type BreadcrumbItem = { name: string; url: string };
 
 export function breadcrumbJsonLd(items: BreadcrumbItem[]) {

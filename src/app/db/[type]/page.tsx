@@ -3,7 +3,7 @@ import { Metadata } from "next";
 import dynamic from "next/dynamic";
 import { getTranslations } from "next-intl/server";
 import { getLocale } from "@/i18n/locale-server";
-import { buildAlternates, openGraphLocales } from "@/lib/seo";
+import { buildAlternates, openGraphLocales, ogImageUrl } from "@/lib/seo";
 
 const ArcadesMap = dynamic(() => import("@/components/db/arcades").then(m => m.ArcadesMap));
 const EventsDatabase = dynamic(() => import("@/components/db/events-database").then(m => m.EventsDatabase));
@@ -44,6 +44,7 @@ export async function generateMetadata({ params }: DbTypePageProps): Promise<Met
       url: path,
       siteName: "tomomai ともマイ",
       type: "website",
+      images: [{ url: ogImageUrl(path, locale) }],
       ...openGraphLocales(locale),
     },
     twitter: {

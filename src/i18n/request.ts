@@ -17,8 +17,8 @@ function lowercaseMessages(obj: Record<string, unknown>): Record<string, unknown
   return result;
 }
 
-export default getRequestConfig(async () => {
-  const locale = await getLocale();
+export default getRequestConfig(async ({ requestLocale }) => {
+  const locale = (await requestLocale) ?? await getLocale();
 
   let messages = deepMerge(
     (await import(`../../messages/en.json`)).default,

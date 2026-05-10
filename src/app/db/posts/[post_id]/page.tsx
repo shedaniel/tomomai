@@ -2,7 +2,7 @@ import { getAllPostsMeta, getPostBySlug, getAvailableTranslations } from "@/lib/
 import { getLocale } from "@/i18n/locale-server";
 import { MDXRemote } from "next-mdx-remote/rsc";
 import { Metadata } from "next";
-import { buildAlternates, breadcrumbJsonLd, openGraphLocales, withTl } from "@/lib/seo";
+import { buildAlternates, breadcrumbJsonLd, openGraphLocales, withTl, ogImageUrl } from "@/lib/seo";
 import { resolveBaseUrl } from "@/lib/base-url";
 import Link from "next/link";
 import Image from "next/image";
@@ -56,7 +56,7 @@ export async function generateMetadata({ params }: PostPageProps): Promise<Metad
       url,
       siteName: "tomomai ともマイ",
       publishedTime: post.date,
-      images: [{ url: `/db/posts/${post.slug}/opengraph-image`, width: 1200, height: 630 }],
+      images: [{ url: ogImageUrl(url, locale) }],
       ...openGraphLocales(locale),
     },
     twitter: {
