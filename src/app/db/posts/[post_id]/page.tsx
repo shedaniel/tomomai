@@ -14,6 +14,7 @@ import { Bot } from "lucide-react";
 import { isCNExclusive } from "@/lib/enabled-regions";
 import { MdxImageComparison } from "@/components/mdx-image-comparison";
 import { MdxImageCarousel, MdxImageCarouselSlide } from "@/components/mdx-image-carousel";
+import remarkGfm from "remark-gfm";
 
 type PostPageProps = {
   params: Promise<{
@@ -77,6 +78,9 @@ const mdxComponents = {
   h3: (props: ComponentPropsWithoutRef<"h3">) => (
     <h3 className="text-xl font-semibold mt-6 mb-3" {...props} />
   ),
+  h4: (props: ComponentPropsWithoutRef<"h4">) => (
+    <h4 className="text-base font-semibold mt-4 mb-2" {...props} />
+  ),
   p: (props: ComponentPropsWithoutRef<"p">) => (
     <p className="text-muted-foreground leading-relaxed mb-4" {...props} />
   ),
@@ -96,6 +100,26 @@ const mdxComponents = {
     <strong className="font-semibold text-foreground" {...props} />
   ),
   hr: () => <hr className="my-8 border-border" />,
+  table: (props: ComponentPropsWithoutRef<"table">) => (
+    <div className="overflow-x-auto my-6 rounded-lg border border-border">
+      <table className="w-full text-sm border-collapse" {...props} />
+    </div>
+  ),
+  thead: (props: ComponentPropsWithoutRef<"thead">) => (
+    <thead className="border-b border-border bg-muted/50" {...props} />
+  ),
+  tbody: (props: ComponentPropsWithoutRef<"tbody">) => (
+    <tbody className="divide-y divide-border" {...props} />
+  ),
+  tr: (props: ComponentPropsWithoutRef<"tr">) => (
+    <tr className="hover:bg-muted/40 transition-colors" {...props} />
+  ),
+  th: (props: ComponentPropsWithoutRef<"th">) => (
+    <th className="px-4 py-2 text-left font-semibold text-foreground" {...props} />
+  ),
+  td: (props: ComponentPropsWithoutRef<"td">) => (
+    <td className="px-4 py-2 text-muted-foreground" {...props} />
+  ),
   img: (props: ComponentPropsWithoutRef<"img">) => (
     <Image
       src={props.src as string || ""}
@@ -205,7 +229,7 @@ export default async function PostPage({ params }: PostPageProps) {
       <hr className="border-border mb-8" />
 
       <article className="prose-custom">
-        <MDXRemote source={post.content} components={{ ...mdxComponents, AITranslationHint, ImageComparison: MdxImageComparison, ImageCarousel: MdxImageCarousel, ImageCarouselSlide: MdxImageCarouselSlide }} />
+        <MDXRemote source={post.content} options={{ mdxOptions: { remarkPlugins: [remarkGfm] } }} components={{ ...mdxComponents, AITranslationHint, ImageComparison: MdxImageComparison, ImageCarousel: MdxImageCarousel, ImageCarouselSlide: MdxImageCarouselSlide }} />
       </article>
     </div>
   );

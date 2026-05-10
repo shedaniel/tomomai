@@ -36,7 +36,8 @@ export async function sendDiscordWebhook(
   deleted: DeletedChange[],
   modified: ModifiedChange[],
 ) {
-  const webhookUrl = process.env.DISCORD_UPDATE_WEBHOOK;
+  const regionKey = `DISCORD_UPDATE_WEBHOOK_${region.toUpperCase()}`;
+  const webhookUrl = process.env[regionKey] ?? process.env.DISCORD_UPDATE_WEBHOOK;
   if (!webhookUrl) {
     console.log("DISCORD_UPDATE_WEBHOOK not set, skipping webhook notification");
     return;

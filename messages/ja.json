@@ -669,7 +669,7 @@
     },
     "divingFish": {
       "title": "水鱼查分器",
-      "description": "水鱼查分器のアカウントを tomomai に連携します。連携後は水鱼查分器の開発者 API を通じて、あなたの舞萌 DX データを読み取ります。下記のいずれかの方法でアカウントの所有確認を行ってください。",
+      "description": "水鱼查分器のアカウントを ともマイ に連携します。連携後は水鱼查分器の開発者 API を通じて、あなたの舞萌 DX データを読み取ります。下記のいずれかの方法でアカウントの所有確認を行ってください。",
       "notConfiguredTitle": "水鱼查分器が未設定です",
       "notConfiguredMessage": "サーバーの <code>DIVINGFISH_DEV_TOKEN</code> 環境変数を設定するよう、管理者にご連絡ください。",
       "importTokenTab": "Import-Token で認証",
@@ -713,7 +713,7 @@
       "step2ErrorPrefix": "エラー：",
       "step3Title": "ステップ 3：下のリンクをコピーし、任意の WeChat チャットに送信してからタップして開く",
       "step3Copy": "リンクをコピー",
-      "step3CopyNote": "認可が完了すると WeChat が結果ページに遷移します。そのページを閉じて tomomai に戻り、インポートの進捗をご確認ください。Wi-Fi 設定でプロキシをオフにすることもお忘れなく。",
+      "step3CopyNote": "認可が完了すると WeChat が結果ページに遷移します。そのページを閉じて ともマイ に戻り、インポートの進捗をご確認ください。Wi-Fi 設定でプロキシをオフにすることもお忘れなく。",
       "copySuccess": "コピーしました",
       "copyFailed": "コピーに失敗しました。手動でコピーしてください"
     }
@@ -751,10 +751,10 @@
     "followTwitter": "Xでフォロー"
   },
   "onboarding": {
-    "title": "maimai へようこそ！",
+    "title": "ともマイ へようこそ！",
     "step1": {
       "title": "ユーザー名を決める",
-      "description": "ユーザー名は tomomai でのあなたのハンドルです。公開を選ぶと、公開プロフィールのURLにも使われます。",
+      "description": "ユーザー名は ともマイ でのあなたのハンドルです。公開を選ぶと、公開プロフィールのURLにも使われます。",
       "publishToggleLabel": "プロフィールを友達に共有する",
       "publishToggleDescription": "他のユーザーが公開リンクであなたのスコアを見られるようになります。初期設定はオフです — いつでも変更できます。",
       "publicUrlHint": "あなたの公開プロフィール："
