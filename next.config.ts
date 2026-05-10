@@ -41,6 +41,10 @@ const nextConfig: NextConfig = {
       {
         pathname: '/**/*.png',
         search: '',
+      },
+      {
+        pathname: '/**/*.webp',
+        search: '',
       }
     ],
     remotePatterns: [
