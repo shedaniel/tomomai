@@ -39,7 +39,8 @@
       "utage": "Utage"
     },
     "back": "戻る",
-    "clipboardError": "クリップボードへのコピーに失敗しました"
+    "clipboardError": "クリップボードへのコピーに失敗しました",
+    "selectAnOption": "オプションを選択"
   },
   "auth": {
     "loginWithDiscord": "Discordで続行",
@@ -48,6 +49,7 @@
     "signupWithDiscord": "Discordでサインアップ",
     "signupDisabled": "サインアップは現在無効です",
     "signupDisabledMessage": "現在、新規登録は一時停止中です。後でもう一度お試しください。",
+    "peekExampleProfile": "プロフィールの例を見てみる",
     "features": {
       "title": "主な機能：",
       "trackScores": "インターナショナル／日本どちらのスコアも追跡",
@@ -82,6 +84,8 @@
     "timezoneUpdateError": "タイムゾーンの更新に失敗しました: {error}",
     "languageUpdateSuccess": "言語の更新に成功しました！",
     "languageUpdateError": "言語の更新に失敗しました: {error}",
+    "regionUpdateSuccess": "地域の更新に成功しました！",
+    "regionUpdateError": "地域の更新に失敗しました: {error}",
     "tokenUpdateSuccess": "認証情報を保存しました！"
   },
   "settings": {
@@ -113,7 +117,8 @@
       "ja": "日本語",
       "zh-TW": "繁體中文 (台灣)",
       "zh-HK": "繁體中文 (香港)",
-      "zh-CN": "简体中文",
+      "zh-CN": "简体中文 (中国大陆)",
+      "zh-SG": "简体中文 (新加坡, 马来西亚)",
       "ko": "한국어 (AI 번역)"
     },
     "timezone": {
@@ -377,6 +382,16 @@
     "lastUpdate": "最終更新",
     "noDataInstructions": "この地域のデータがまだありません。「新しいデータを取得」からmaimaiスコアを取り込みましょう（ログイン／トークンが必要です）。"
   },
+  "profileMetadata": {
+    "title": "{username} | tomomai ともマイ",
+    "description": "View {username}'s maimai profile for {region}. Track and analyze maimai scores with friends.",
+    "descriptionRich": "{displayName} ({username}) on {region} maimai — rating {rating}. View their B50, recent plays, and chart records on tomomai.",
+    "descriptionUnknownRegion": "View {username}'s maimai profile. Track and analyze maimai scores with friends.",
+    "notFoundTitle": "Profile Not Found | tomomai ともマイ",
+    "notFoundDescription": "The profile you're looking for doesn't exist or is not publicly accessible.",
+    "errorTitle": "Error | tomomai ともマイ",
+    "errorDescription": "An error occurred while loading this profile."
+  },
   "profileVisibility": {
     "public": "公開プロフィール",
     "private": "非公開プロフィール",
@@ -617,7 +632,103 @@
     },
     "recommended": "おすすめ楽曲",
     "tokenOptionDescription": "ブラウザのトークンを使用して maimai DX NET アカウントにログインします。トークンは一定期間で無効になることがありますので、その際は再度更新してください。パスワードは不要で、ソーシャルログインもサポートしています。",
-    "passwordOptionDescription": "SEGA アカウントの認証情報を使用して maimai DX NET アカウントにログインします。期限切れはありません。非推奨です。"
+    "passwordOptionDescription": "SEGA アカウントの認証情報を使用して maimai DX NET アカウントにログインします。期限切れはありません。非推奨です。",
+    "cnTitle": "舞萌 DX の認証を更新",
+    "cnDescription": "中国版舞萌 DX のログイン認証方式を選んでください。",
+    "cnExperimentalWarningTitle": "中国版は実験的なリージョンです",
+    "cnExperimentalWarningMessage": "サポートが突然終了したり、機能が不安定になったり、データが消去されたりする可能性があります。",
+    "recommendedBadge": "おすすめ",
+    "comingSoonBadge": "近日公開",
+    "disabledBadge": "一時停止中",
+    "features": {
+      "playerInfo": "プレイヤー情報",
+      "scores": "譜面スコア",
+      "recents": "プレイレコード",
+      "events": "イベント情報"
+    },
+    "fetchOptions": {
+      "divingFish": {
+        "name": "水鱼查分器",
+        "description": "水鱼查分器のユーザー名、または連携済みの QQ ID でデータを取得します。"
+      },
+      "lxns": {
+        "name": "落雪咖啡屋查分器",
+        "description": "落雪咖啡屋のアカウントを認可してデータを取得します。"
+      },
+      "httpProxy": {
+        "name": "HTTP プロキシ",
+        "description": "HTTP プロキシを介して、WeChat の舞萌 DX ミニプログラムの通信からデータを取得します。"
+      },
+      "androidApp": {
+        "name": "Android アプリ",
+        "description": "Android 端末に本アプリをインストールするだけで、データを自動で取得します。"
+      }
+    },
+    "lxns": {
+      "title": "落雪咖啡屋查分器",
+      "description": "{host} に対し、落雪咖啡屋查分器上のあなたの舞萌 DX データの読み取りを OAuth で認可します。認可はいつでも落雪咖啡屋のアカウント設定から取り消せます。",
+      "notConfiguredTitle": "落雪咖啡屋 OAuth が未設定です",
+      "notConfiguredMessage": "サーバーの <code>LXNS_CLIENT_ID</code> と <code>LXNS_CLIENT_SECRET</code> 環境変数を設定するよう、管理者にご連絡ください。",
+      "instructionsLine1": "下のボタンを押すと、新しいウィンドウで落雪咖啡屋の認可ページが開きます。認可が完了すると自動的にウィンドウが閉じ、こちらに戻ります。",
+      "instructionsLine2": "プレイヤーデータの読み取り権限のみを要求します。あなたのデータに書き込むことはありません。",
+      "authorizeButton": "認可する",
+      "authorizingButton": "認可を待っています…",
+      "popupBlocked": "認可ウィンドウを開けませんでした。本サイトのポップアップを許可してからもう一度お試しください。",
+      "authFailed": "認可に失敗しました：{error}",
+      "unknownError": "不明なエラー"
+    },
+    "divingFish": {
+      "title": "水鱼查分器",
+      "description": "水鱼查分器のアカウントを ともマイ に連携します。連携後は水鱼查分器の開発者 API を通じて、あなたの舞萌 DX データを読み取ります。下記のいずれかの方法でアカウントの所有確認を行ってください。",
+      "notConfiguredTitle": "水鱼查分器が未設定です",
+      "notConfiguredMessage": "サーバーの <code>DIVINGFISH_DEV_TOKEN</code> 環境変数を設定するよう、管理者にご連絡ください。",
+      "importTokenTab": "Import-Token で認証",
+      "nicknameTab": "ニックネームで認証",
+      "importTokenInstructions": "水鱼查分器の「プロフィール編集」ページで Import-Token を発行し、ここに貼り付けてください。",
+      "importTokenSecureNote": "このトークンはアカウントの所有確認に一度だけ使用し、確認後すぐに破棄します。保存することはありません。",
+      "importTokenPlaceholder": "Import-Token を貼り付け",
+      "importTokenButton": "認証して連携",
+      "importTokenVerifying": "認証中…",
+      "nicknameInstructions": "以下の手順で認証を完了してください：",
+      "nicknameStep1": "水鱼查分器にログイン",
+      "nicknameStep2": "「プロフィール編集」でニックネームを下のコードに変更",
+      "nicknameStep3": "変更を保存",
+      "nicknameStep4": "ここに戻り、ユーザー名または QQ を入力して認証",
+      "nicknameLabel": "ニックネームを次に変更",
+      "refreshCode": "コードを更新",
+      "nicknameTypeLabel": "種別",
+      "nicknameUsername": "ユーザー名",
+      "nicknameQQ": "QQ",
+      "nicknameIdentifierPlaceholder": "水鱼查分器のユーザー名、または連携済みの QQ 番号",
+      "nicknameVerifyButton": "変更したので認証を開始",
+      "nicknameVerifying": "認証中…",
+      "nicknameRevertNote": "認証成功後、ニックネームは元に戻して構いません。",
+      "verifyFailedFallback": "認証に失敗しました",
+      "challengePlaceholder": "-------"
+    },
+    "httpProxy": {
+      "title": "HTTP プロキシ",
+      "description": "スマートフォンの HTTP プロキシを当サービスのサーバーに設定し、WeChat で下のリンクを開いて認可を完了してください。認可は一度だけで済みます。",
+      "notConfiguredTitle": "HTTP プロキシサービスが未設定です",
+      "notConfiguredMessage": "<code>CN_PROXY_HOST</code> と <code>CN_PROXY_TOKEN_SECRET</code> 環境変数を設定するよう、管理者にご連絡ください。",
+      "step1Title": "ステップ 1：スマートフォンの Wi-Fi 設定で HTTP プロキシを次のように設定",
+      "step1Host": "ホスト",
+      "step1Port": "ポート",
+      "step2Title": "ステップ 2：認可リンクの{generateOrRegenerate}",
+      "step2Generate": "発行",
+      "step2Regenerate": "再発行（リンクが失効した場合）",
+      "step2GenerateButton": "認可リンクを発行",
+      "step2RegenerateButton": "再発行",
+      "step2GeneratingButton": "発行中…",
+      "step2ErrorPrefix": "エラー：",
+      "step3Title": "ステップ 3：下のリンクをコピーし、任意の WeChat チャットに送信してからタップして開く",
+      "step3Copy": "リンクをコピー",
+      "step3CopyNote": "認可が完了すると WeChat が結果ページに遷移します。そのページを閉じて ともマイ に戻り、インポートの進捗をご確認ください。Wi-Fi 設定でプロキシをオフにすることもお忘れなく。",
+      "copySuccess": "コピーしました",
+      "copyFailed": "コピーに失敗しました。手動でコピーしてください",
+      "clashConfigUrl": "Clash Config URL",
+      "clashImportButton": "Import to Clash"
+    }
   },
   "regions": {
     "intl": "インターナショナル",
@@ -646,8 +757,33 @@
     "followTwitter": "Xでフォロー",
     "followThreads": "Threadsでフォロー",
     "admin": "管理者",
+    "testOnboarding": "オンボーディングをテスト",
     "errors": {
       "inviteLink": "招待リンクを開けませんでした"
+    }
+  },
+  "onboarding": {
+    "title": "ともマイ へようこそ！",
+    "step1": {
+      "title": "ユーザー名を決める",
+      "description": "ユーザー名は ともマイ でのあなたのハンドルです。公開を選ぶと、公開プロフィールのURLにも使われます。",
+      "publishToggleLabel": "プロフィールを友達に共有する",
+      "publishToggleDescription": "他のユーザーが公開リンクであなたのスコアを見られるようになります。初期設定はオフです — いつでも変更できます。",
+      "publicUrlHint": "あなたの公開プロフィール："
+    },
+    "step2": {
+      "title": "地域を選ぶ",
+      "description": "あなたの maimai データを保存する地域を選んでください。後からメニューで変更できます。"
+    },
+    "step3": {
+      "title": "準備完了です！",
+      "description": "ようこそ。{host} からいつでも戻ってきてください。",
+      "goToDashboard": "ダッシュボードへ"
+    },
+    "navigation": {
+      "previous": "戻る",
+      "next": "次へ",
+      "saving": "保存中…"
     }
   },
   "usernameSetup": {
@@ -793,9 +929,18 @@
     "songs": {
       "metadata": {
         "title": "楽曲データベース | maimai でらっくす",
-        "description": "maimai でらっくすの楽曲を検索・閲覧できます。タイプ、ジャンル、バージョンでフィルタリング可能。楽曲詳細、難易度、収録地域も確認できます。"
+        "description": "maimai でらっくすの楽曲を検索・閲覧できます。タイプ、ジャンル、バージョンでフィルタリング可能。楽曲詳細、難易度、収録地域も確認できます。",
+        "songTitle": "{songName} - {artist} | maimai DX",
+        "songDescription": "View detailed information about \"{songName}\" by {artist}. {chartType} chart • {genre}",
+        "songOgDescription": "View detailed information about \"{songName}\" by {artist}.",
+        "songFallbackTitle": "Song Details | maimai DX",
+        "songFallbackDescription": "View detailed information about this maimai DX song including difficulty levels and regional availability.",
+        "chartTypeDx": "DX",
+        "chartTypeStandard": "Standard",
+        "jsonLdChartDescription": "{chartType} chart from maimai DX"
       },
       "title": "楽曲データベース | maimai でらっくす",
+      "heading": "Songs Database",
       "searchPlaceholder": "楽曲名、アーティスト、ジャンルなどで検索...",
       "noSongsFound": "楽曲が見つかりません",
       "tryAdjustingSearch": "検索条件を変更してください",
@@ -803,6 +948,7 @@
       "detail": {
         "title": "楽曲詳細",
         "artist": "アーティスト",
+        "detailsFor": "Details for {songName}",
         "charts": "譜面",
         "availability": "収録地域",
         "yourScore": "あなたのスコア",
@@ -814,7 +960,9 @@
         "share": "共有",
         "youtube": "YouTubeで検索",
         "viewCharts": "譜面を見る",
-        "viewDetails": "ともマイ DB で詳細を見る"
+        "viewDetails": "ともマイ DB で詳細を見る",
+        "summary": "{songName} is a maimai でらっくす {chartType} chart by {artist} in the {genre} genre, added in {versionName}. Difficulty ranges from {minLevel} to {maxLevel} across {chartCount, plural, =1 {# chart} other {# charts}}{bpmFragment}.",
+        "summaryBpmFragment": " (BPM {bpm})"
       },
       "filter": {
         "type": "タイプ",
@@ -867,6 +1015,7 @@
     },
     "stats": {
       "title": "全体統計",
+      "description": "Explore aggregate maimai DX statistics across all tracked players: rating distributions, top titles, popular songs, and play activity over time.",
       "ratingDistribution": "レート分布",
       "playCountDistribution": "プレイ回数分布",
       "topTitles": "人気称号",
