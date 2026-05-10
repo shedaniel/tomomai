@@ -39,7 +39,8 @@
       "utage": "Utage"
     },
     "back": "返回",
-    "clipboardError": "复制到剪贴板失败"
+    "clipboardError": "复制到剪贴板失败",
+    "selectAnOption": "选择选项"
   },
   "auth": {
     "loginWithDiscord": "以 Discord 继续",
@@ -48,10 +49,11 @@
     "signupWithDiscord": "用 Discord 注册",
     "signupDisabled": "注册功能已关闭",
     "signupDisabledMessage": "目前暂不开放新用户注册，请稍后再试。",
+    "peekExampleProfile": "看看示例个人主页",
     "features": {
       "title": "功能：",
       "trackScores": "追踪国际服和日本服的成绩",
-      "viewHistory": "查看你的历史游玩资料",
+      "viewHistory": "查看你的历史游玩数据",
       "importData": "从 maimai DX NET 导入数据",
       "analyzeProgress": "分析你的游玩记录"
     }
@@ -82,6 +84,8 @@
     "timezoneUpdateError": "时区更新失败：{error}",
     "languageUpdateSuccess": "语言更新成功！",
     "languageUpdateError": "语言更新失败：{error}",
+    "regionUpdateSuccess": "地区更新成功！",
+    "regionUpdateError": "地区更新失败：{error}",
     "tokenUpdateSuccess": "验证方式保存成功！"
   },
   "settings": {
@@ -96,7 +100,7 @@
       },
       "privacy": {
         "title": "隐私",
-        "description": "控制谁能查看你的个人档案和成绩。"
+        "description": "控制谁能查看你的个人主页和成绩。"
       },
       "developer": {
         "title": "开发者",
@@ -111,9 +115,10 @@
       "en": "English (US)",
       "en-GB": "English (UK)",
       "ja": "日本語",
-      "zh-TW": "繁体中文 (台灣)",
-      "zh-HK": "繁体中文 (香港)",
-      "zh-CN": "简体中文",
+      "zh-TW": "繁体中文 (中国台湾)",
+      "zh-HK": "繁体中文 (中国香港)",
+      "zh-CN": "简体中文 (中国大陆)",
+      "zh-SG": "简体中文 (新加坡, 马来西亚)",
       "ko": "한국어 (AI 번역)"
     },
     "timezone": {
@@ -129,7 +134,7 @@
       "deleteTokenDialogDescription": "确定要删除已保存的验证方式吗？你将需要重新验证才能再次导入数据。",
       "deleteTokenSuccess": "验证方式已成功删除。",
       "deleteTokenError": "删除验证方式失败。",
-      "description": "更新你的 maimai 验证方式以进行数据导入及同步玩家资料。"
+      "description": "更新你的 maimai 验证方式以进行数据导入及同步玩家数据。"
     },
     "albumPrivacy": {
       "title": "相册照片隐私设置",
@@ -153,11 +158,11 @@
       "notSet": "你尚未设置此偏好。下次获取数据时系统将会询问你。"
     },
     "profile": {
-      "publishProfile": "公开档案",
-      "publishDescription": "公开你的 maimai 档案，让他人可以查看你的分数和进度。",
+      "publishProfile": "公开主页",
+      "publishDescription": "公开你的 maimai 主页，让他人可以查看你的分数和进度。",
       "mainRegion": {
         "label": "主要地区",
-        "description": "选择用于公开档案的主要地区。",
+        "description": "选择用于公开主页的主要地区。",
         "intl": "国际服",
         "jp": "日本服",
         "cn": "国服"
@@ -186,13 +191,13 @@
         },
         "showInSearch": {
           "label": "允许搜索",
-          "description": "允许他人通过用户名搜索到你的档案。"
+          "description": "允许他人通过用户名搜索到你的主页。"
         }
       },
       "url": {
-        "label": "档案链接",
-        "description": "你可以与他人分享的公开档案链接。",
-        "copied": "档案链接已复制到剪贴板！",
+        "label": "主页链接",
+        "description": "你可以与他人分享的公开主页链接。",
+        "copied": "主页链接已复制到剪贴板！",
         "copyFailed": "复制链接到剪贴板失败"
       }
     },
@@ -291,7 +296,7 @@
         },
         "user:metadata:read": {
           "name": "用户元数据（只读）",
-          "description": "读取你的用户名、地区、个人档案可见性和角色。授予 GET /api/v1/me。"
+          "description": "读取你的用户名、地区、个人主页可见性和角色。授予 GET /api/v1/me。"
         },
         "snapshot:latest:metadata:read": {
           "name": "最新快照元数据（只读）",
@@ -377,13 +382,23 @@
     "lastUpdate": "最后更新",
     "noDataInstructions": "此区域没有任何数据。点击“导入新数据”来导入你的 maimai 成绩。"
   },
+  "profileMetadata": {
+    "title": "{username} | tomomai ともマイ",
+    "description": "View {username}'s maimai profile for {region}. Track and analyze maimai scores with friends.",
+    "descriptionRich": "{displayName} ({username}) on {region} maimai — rating {rating}. View their B50, recent plays, and chart records on tomomai.",
+    "descriptionUnknownRegion": "View {username}'s maimai profile. Track and analyze maimai scores with friends.",
+    "notFoundTitle": "Profile Not Found | tomomai ともマイ",
+    "notFoundDescription": "The profile you're looking for doesn't exist or is not publicly accessible.",
+    "errorTitle": "Error | tomomai ともマイ",
+    "errorDescription": "An error occurred while loading this profile."
+  },
   "profileVisibility": {
-    "public": "公开档案",
-    "private": "私人档案",
+    "public": "公开主页",
+    "private": "私人主页",
     "accessibleBy": "可通过 ",
     "accessibleByEnd": " 访问！",
-    "youMayChangePrivacySettings": "你可以在右上角图标 → 设置 → 公开档案 中更改隐私设置。",
-    "onlyAccessibleByYou": "只有你可以访问！你可以在右上角图标 → 设置 → 公开档案 中更改隐私设置。"
+    "youMayChangePrivacySettings": "你可以在右上角图标 → 设置 → 公开主页 中更改隐私设置。",
+    "onlyAccessibleByYou": "只有你可以访问！你可以在右上角图标 → 设置 → 公开主页 中更改隐私设置。"
   },
   "dataContent": {
     "loading": "加载数据中...",
@@ -588,7 +603,7 @@
       "loginLink": "正在生成个性化链接..."
     },
     "tokenDialogDescription": "输入您的浏览器令牌以进行验证",
-    "segaAccountDescription": "输入您的 SEGA 帐户凭证",
+    "segaAccountDescription": "输入您的 SEGA 账户凭证",
     "backToSteps": "返回步骤",
     "step1": {
       "description": "在<strong>无痕 / 隐私窗口</strong>中登录 maimai DX NET。",
@@ -616,15 +631,111 @@
       "nextStep": "下一步"
     },
     "recommended": "推荐歌曲",
-    "tokenOptionDescription": "使用您的浏览器令牌登录您的 maimai DX NET 帐户。令牌可能会不时过期。无需密码，并支持社交登录。",
-    "passwordOptionDescription": "使用您的 SEGA 帐户凭证登录您的 maimai DX NET 帐户。永久有效。不推荐。"
+    "tokenOptionDescription": "使用您的浏览器令牌登录您的 maimai DX NET 账户。令牌可能会不时过期。无需密码，并支持社交登录。",
+    "passwordOptionDescription": "使用您的 SEGA 账户凭证登录您的 maimai DX NET 账户。永久有效。不推荐。",
+    "cnTitle": "更新舞萌 DX 验证",
+    "cnDescription": "选择您的舞萌 DX 登录验证方式。",
+    "cnExperimentalWarningTitle": "国服为实验性地区",
+    "cnExperimentalWarningMessage": "国服支持可能会突然终止，功能可能不稳定，数据也可能会被清除。",
+    "recommendedBadge": "推荐",
+    "comingSoonBadge": "即将推出",
+    "disabledBadge": "暂时停用",
+    "features": {
+      "playerInfo": "玩家信息",
+      "scores": "谱面成绩",
+      "recents": "最近游玩",
+      "events": "活动数据"
+    },
+    "fetchOptions": {
+      "divingFish": {
+        "name": "水鱼查分器",
+        "description": "使用您的水鱼查分器登录用户名 或 已绑定的 QQ 账户 ID 获取数据。"
+      },
+      "lxns": {
+        "name": "落雪咖啡屋查分器",
+        "description": "以落雪咖啡屋账号登录授权获取数据。"
+      },
+      "httpProxy": {
+        "name": "HTTP 代理",
+        "description": "通过 HTTP 代理拦截手机微信中的舞萌 DX 小程序请求以获取数据。"
+      },
+      "androidApp": {
+        "name": "Android 应用程序",
+        "description": "在 Android 设备上安装本应用程序以自动获取数据。"
+      }
+    },
+    "lxns": {
+      "title": "落雪咖啡屋查分器",
+      "description": "通过 OAuth 授权 {host} 读取您在落雪咖啡屋查分器上的舞萌 DX 数据。授权可随时在落雪咖啡屋账号设置中撤销。",
+      "notConfiguredTitle": "落雪咖啡屋 OAuth 尚未配置",
+      "notConfiguredMessage": "请联系管理员在服务器上设置 <code>LXNS_CLIENT_ID</code> 与 <code>LXNS_CLIENT_SECRET</code> 环境变量。",
+      "instructionsLine1": "点击下方按钮后，将在新窗口打开落雪咖啡屋的授权页面。授权完成后窗口会自动关闭并返回此处。",
+      "instructionsLine2": "我们仅会请求读取玩家数据相关的权限，不会写入您的数据。",
+      "authorizeButton": "前往授权",
+      "authorizingButton": "等待授权完成…",
+      "popupBlocked": "无法开启授权窗口，请允许本站弹窗后再试。",
+      "authFailed": "授权失败：{error}",
+      "unknownError": "未知错误"
+    },
+    "divingFish": {
+      "title": "水鱼查分器",
+      "description": "将您的水鱼查分器账号绑定到本站，绑定后我们会通过水鱼查分器的开发者接口读取您的舞萌 DX 数据。请先选择以下任一方式验证您拥有该账号。",
+      "notConfiguredTitle": "水鱼查分器尚未配置",
+      "notConfiguredMessage": "请联系管理员在服务器上设置 <code>DIVINGFISH_DEV_TOKEN</code> 环境变量。",
+      "importTokenTab": "Import-Token 验证",
+      "nicknameTab": "昵称验证",
+      "importTokenInstructions": "在水鱼查分器 \"编辑个人资料\" 页面生成 Import-Token，并粘贴到此处。",
+      "importTokenSecureNote": "我们仅会用此 Token 验证一次账号归属，验证后立即丢弃，不会保存。",
+      "importTokenPlaceholder": "粘贴您的 Import-Token",
+      "importTokenButton": "验证并绑定",
+      "importTokenVerifying": "验证中…",
+      "nicknameInstructions": "请按照以下步骤完成验证：",
+      "nicknameStep1": "登录水鱼查分器",
+      "nicknameStep2": "在 \"编辑个人资料\" 中将昵称改为下方代码",
+      "nicknameStep3": "保存修改",
+      "nicknameStep4": "回到此处填写您的用户名或 QQ 并验证",
+      "nicknameLabel": "请将昵称改为",
+      "refreshCode": "刷新代码",
+      "nicknameTypeLabel": "类型",
+      "nicknameUsername": "用户名",
+      "nicknameQQ": "QQ",
+      "nicknameIdentifierPlaceholder": "您的水鱼查分器用户名或绑定的 QQ 号",
+      "nicknameVerifyButton": "我已修改，开始验证",
+      "nicknameVerifying": "验证中…",
+      "nicknameRevertNote": "验证成功后您可以将昵称改回原本的设置。",
+      "verifyFailedFallback": "验证失败",
+      "challengePlaceholder": "-------"
+    },
+    "httpProxy": {
+      "title": "HTTP 代理",
+      "description": "将手机的全局 HTTP 代理指向我们的服务器，然后在微信中打开下方链接完成授权。整个过程仅授权一次。",
+      "notConfiguredTitle": "HTTP 代理服务尚未配置",
+      "notConfiguredMessage": "请联系管理员设置 <code>CN_PROXY_HOST</code> 及 <code>CN_PROXY_TOKEN_SECRET</code> 环境变量。",
+      "step1Title": "第 1 步：在手机 Wi-Fi 设置中将 HTTP 代理设为",
+      "step1Host": "主机名",
+      "step1Port": "端口",
+      "step2Title": "第 2 步：{generateOrRegenerate}授权链接",
+      "step2Generate": "生成",
+      "step2Regenerate": "如链接失效，可重新生成",
+      "step2GenerateButton": "生成授权链接",
+      "step2RegenerateButton": "重新生成",
+      "step2GeneratingButton": "生成中…",
+      "step2ErrorPrefix": "错误：",
+      "step3Title": "第 3 步：复制下方链接，发送到任意微信聊天后点击打开",
+      "step3Copy": "复制链接",
+      "step3CopyNote": "授权完成后微信会跳转到一个结果页面。届时请关闭该页面，回到 tomomai 查看导入进度，并记得在 Wi-Fi 设置中关闭代理。",
+      "copySuccess": "已复制",
+      "copyFailed": "复制失败，请手动复制",
+      "clashConfigUrl": "Clash 配置 URL",
+      "clashImportButton": "导入 Clash"
+    }
   },
   "regions": {
     "intl": "国际服",
     "jp": "日本服",
     "cn": "国服",
     "short": {
-      "intl": "亚",
+      "intl": "国际服",
       "jp": "日本服",
       "cn": "国服"
     }
@@ -646,8 +757,33 @@
     "followTwitter": "在 X 上关注",
     "followThreads": "在 Threads 上关注",
     "admin": "管理员",
+    "testOnboarding": "测试新手引导",
     "errors": {
       "inviteLink": "无法打开邀请链接"
+    }
+  },
+  "onboarding": {
+    "title": "欢迎来到 tomomai！",
+    "step1": {
+      "title": "设定用户名",
+      "description": "用户名是你在 tomomai 的称呼。如果你选择公开，它也会成为你的公开个人资料网址。",
+      "publishToggleLabel": "和朋友分享我的资料",
+      "publishToggleDescription": "让其他人通过公开链接查看你的成绩。默认关闭 — 你可以随时更改。",
+      "publicUrlHint": "你的公开资料："
+    },
+    "step2": {
+      "title": "选择你的区服",
+      "description": "选择你的 maimai 数据所在的区服。之后可以在菜单中切换。"
+    },
+    "step3": {
+      "title": "全部完成！",
+      "description": "欢迎加入。随时可以回到 {host}。",
+      "goToDashboard": "前往主页"
+    },
+    "navigation": {
+      "previous": "上一步",
+      "next": "下一步",
+      "saving": "保存中…"
     }
   },
   "usernameSetup": {
@@ -672,10 +808,10 @@
       "taken": "此用户名已被使用"
     },
     "changeTitle": "修改用户名",
-    "changeDescription": "选择一个新的用户名。你的个人档案 URL 将会改变。",
+    "changeDescription": "选择一个新的用户名。你的个人主页 URL 将会改变。",
     "changeButton": "修改",
     "sameAsCurrent": "与当前的用户名相同。",
-    "newProfileUrl": "新个人档案 URL：/profile/{username}",
+    "newProfileUrl": "新个人主页 URL：/profile/{username}",
     "changeSuccess": "用户名已成功更新。",
     "changingUsername": "保存中...",
     "newUsernameLabel": "新用户名"
@@ -793,9 +929,18 @@
     "songs": {
       "metadata": {
         "title": "歌曲数据库 | maimai DX",
-        "description": "浏览和搜索所有 maimai DX 歌曲。按类型、分类和版本筛选。查看歌曲详情、难度等级和区域开放情况。"
+        "description": "浏览和搜索所有 maimai DX 歌曲。按类型、分类和版本筛选。查看歌曲详情、难度等级和区域开放情况。",
+        "songTitle": "{songName} - {artist} | maimai DX",
+        "songDescription": "View detailed information about \"{songName}\" by {artist}. {chartType} chart • {genre}",
+        "songOgDescription": "View detailed information about \"{songName}\" by {artist}.",
+        "songFallbackTitle": "Song Details | maimai DX",
+        "songFallbackDescription": "View detailed information about this maimai DX song including difficulty levels and regional availability.",
+        "chartTypeDx": "DX",
+        "chartTypeStandard": "Standard",
+        "jsonLdChartDescription": "{chartType} chart from maimai DX"
       },
       "title": "歌曲数据库 | maimai DX",
+      "heading": "Songs Database",
       "searchPlaceholder": "搜索歌曲、艺术家、分类...",
       "noSongsFound": "未找到歌曲",
       "tryAdjustingSearch": "尝试调整搜索条件",
@@ -803,6 +948,7 @@
       "detail": {
         "title": "歌曲详情",
         "artist": "艺术家",
+        "detailsFor": "Details for {songName}",
         "charts": "谱面",
         "availability": "区域",
         "yourScore": "你的成绩",
@@ -814,7 +960,9 @@
         "share": "分享",
         "youtube": "YouTube 搜索",
         "viewCharts": "查看谱面",
-        "viewDetails": "在 tomomai DB 查看详情"
+        "viewDetails": "在 tomomai DB 查看详情",
+        "summary": "{songName} is a maimai でらっくす {chartType} chart by {artist} in the {genre} genre, added in {versionName}. Difficulty ranges from {minLevel} to {maxLevel} across {chartCount, plural, =1 {# chart} other {# charts}}{bpmFragment}.",
+        "summaryBpmFragment": " (BPM {bpm})"
       },
       "filter": {
         "type": "类型",
@@ -867,6 +1015,7 @@
     },
     "stats": {
       "title": "全局统计",
+      "description": "Explore aggregate maimai DX statistics across all tracked players: rating distributions, top titles, popular songs, and play activity over time.",
       "ratingDistribution": "R 值分布",
       "playCountDistribution": "游玩次数分布",
       "topTitles": "热门称号",
