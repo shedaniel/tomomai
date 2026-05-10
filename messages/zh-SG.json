@@ -715,7 +715,9 @@
       "step3Copy": "复制链接",
       "step3CopyNote": "授权完成后微信会跳转到一个结果页面。届时请关闭该页面，回到 tomomai 查看导入进度，并记得在 Wi-Fi 设置中关闭代理。",
       "copySuccess": "已复制",
-      "copyFailed": "复制失败，请手动复制"
+      "copyFailed": "复制失败，请手动复制",
+      "clashConfigUrl": "Clash 配置 URL",
+      "clashImportButton": "导入 Clash"
     }
   },
   "regions": {
@@ -748,6 +750,30 @@
     },
     "followThreads": "在 Threads 上关注",
     "followTwitter": "在 X 上关注"
+  },
+  "onboarding": {
+    "title": "欢迎来到 maimai！",
+    "step1": {
+      "title": "设定用户名",
+      "description": "用户名是你在 tomomai 的称呼。如果你选择公开，它也会成为你的公开个人资料网址。",
+      "publishToggleLabel": "和朋友分享我的资料",
+      "publishToggleDescription": "让其他人透过公开链接查看你的成绩。默认关闭 — 你可以随时更改。",
+      "publicUrlHint": "你的公开资料："
+    },
+    "step2": {
+      "title": "选择你的地区",
+      "description": "选择你的 maimai 数据所在的地区。之后可以在选单中切换。"
+    },
+    "step3": {
+      "title": "一切就绪！",
+      "description": "欢迎加入。随时可以回到 {host}。",
+      "goToDashboard": "前往主页"
+    },
+    "navigation": {
+      "previous": "上一步",
+      "next": "下一步",
+      "saving": "保存中……"
+    }
   },
   "usernameSetup": {
     "title": "选择你的用户名",

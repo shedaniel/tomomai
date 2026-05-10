@@ -292,7 +292,8 @@ export function SongDetailContent({ songName, slug, type, initialData }: SongDet
       chartCount: chartsByDifficulty.size,
       bpmFragment: data.bpm ? t('db.songs.detail.summaryBpmFragment', { bpm: data.bpm }) : '',
       versionName: getVersionInfo(data.addedVersion)?.name ?? `Ver. ${data.addedVersion}`,
-      chartType: data.type === 'utage' ? '宴会場' : data.type === 'dx' ? 'DX' : 'Standard',
+      // TODO: add "utage" to SongType
+      chartType: (data.type as string) === 'utage' ? '宴会場' : data.type === 'dx' ? 'DX' : 'Standard',
     };
   }, [data, allCharts, chartsByDifficulty, t]);
 

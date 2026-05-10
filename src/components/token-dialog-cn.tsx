@@ -200,7 +200,9 @@ function LxnsAuthSubDialog({ isOpen, onOpenChange, onAuthorized }: LxnsAuthSubDi
               <AlertTriangle className="h-4 w-4 mt-0.5 flex-shrink-0 text-amber-600" />
               <div className="space-y-1">
                 <p className="font-medium">{t('tokenDialog.lxns.notConfiguredTitle')}</p>
-                <p className="text-muted-foreground text-xs" dangerouslySetInnerHTML={{ __html: t('tokenDialog.lxns.notConfiguredMessage') }} />
+                <p className="text-muted-foreground text-xs">
+                  {t.rich('tokenDialog.lxns.notConfiguredMessage', { code: (chunks) => <code>{chunks}</code> })}
+                </p>
               </div>
             </div>
           )}
@@ -328,7 +330,9 @@ function DivingFishAuthSubDialog({ isOpen, onOpenChange, onAuthorized }: DivingF
               <AlertTriangle className="h-4 w-4 mt-0.5 flex-shrink-0 text-amber-600" />
               <div className="space-y-1">
                 <p className="font-medium">{t('tokenDialog.divingFish.notConfiguredTitle')}</p>
-                <p className="text-muted-foreground text-xs" dangerouslySetInnerHTML={{ __html: t('tokenDialog.divingFish.notConfiguredMessage') }} />
+                <p className="text-muted-foreground text-xs">
+                  {t.rich('tokenDialog.divingFish.notConfiguredMessage', { code: (chunks) => <code>{chunks}</code> })}
+                </p>
               </div>
             </div>
           )}
@@ -470,6 +474,34 @@ function DivingFishAuthSubDialog({ isOpen, onOpenChange, onAuthorized }: DivingF
   );
 }
 
+function ClashImportRow({ t, onCopy }: { t: ReturnType<typeof useTranslations>; onCopy: (value: string) => Promise<void> }) {
+  const yamlPath = "/api/cn-proxy/yaml";
+  const absoluteUrl = `${resolveBaseUrl()}${yamlPath}`;
+  const clashUrl = `clash://install-config?url=${encodeURIComponent(absoluteUrl)}`;
+
+  return (
+    <div className="flex items-stretch gap-2 rounded-md border bg-muted/40 p-2">
+      <div className="flex-1 min-w-0">
+        <p className="text-[10px] text-muted-foreground uppercase tracking-wide">{t('tokenDialog.httpProxy.clashConfigUrl')}</p>
+        <button
+          type="button"
+          onClick={() => onCopy(absoluteUrl)}
+          className="flex items-center gap-1 font-mono text-sm hover:text-primary truncate"
+        >
+          {yamlPath}
+          <Copy className="h-3 w-3 opacity-60 shrink-0" />
+        </button>
+      </div>
+      <a
+        href={clashUrl}
+        className="shrink-0 self-stretch inline-flex items-center justify-center rounded-md border border-input bg-background px-3 text-xs font-medium shadow-xs hover:bg-accent hover:text-accent-foreground"
+      >
+        {t('tokenDialog.httpProxy.clashImportButton')}
+      </a>
+    </div>
+  );
+}
+
 interface HttpProxyAuthSubDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
@@ -547,7 +579,9 @@ function HttpProxyAuthSubDialog({ isOpen, onOpenChange, onAuthorized, startSessi
                 <AlertTriangle className="h-4 w-4 mt-0.5 flex-shrink-0 text-amber-600" />
                 <div className="space-y-1">
                   <p className="font-medium">{t('tokenDialog.httpProxy.notConfiguredTitle')}</p>
-                  <p className="text-muted-foreground text-xs" dangerouslySetInnerHTML={{ __html: t('tokenDialog.httpProxy.notConfiguredMessage') }} />
+                  <p className="text-muted-foreground text-xs">
+                    {t.rich('tokenDialog.httpProxy.notConfiguredMessage', { code: (chunks) => <code>{chunks}</code> })}
+                  </p>
                 </div>
               </div>
             )}
@@ -579,6 +613,7 @@ function HttpProxyAuthSubDialog({ isOpen, onOpenChange, onAuthorized, startSessi
                     </button>
                   </div>
                 </div>
+                <ClashImportRow t={t} onCopy={handleCopy} />
               </div>
             )}
 

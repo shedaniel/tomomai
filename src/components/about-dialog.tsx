@@ -57,6 +57,7 @@ export function AboutDialog({ open, onOpenChange }: AboutDialogProps) {
               <p><strong>SEGA</strong> for creating maimai DX</p>
               <p><strong><a href="https://github.com/gekichumai/dxrating" target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 hover:underline">dxrating</a></strong> for providing internal level data</p>
               <p><strong><a href="https://github.com/zvuc/otoge-db" target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 hover:underline">otoge-db</a></strong> for providing level data</p>
+              <p>Flag artwork from <strong><a href="https://github.com/jdecked/twemoji" target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 hover:underline">Twemoji</a></strong> by Twitter, Inc. and contributors, licensed under <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 hover:underline">CC-BY 4.0</a></p>
             </div>
           </div>
 

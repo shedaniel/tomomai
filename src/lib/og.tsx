@@ -6,7 +6,7 @@ import type { Locale } from "@/i18n/locale";
 import { getRatingImageUrl } from "@/lib/rating-calculator";
 import type { VersionId } from "@/lib/metadata";
 import { renderLevelPrecise } from "@/lib/name-utils";
-import type { Difficulty } from "@/lib/types";
+import type { Difficulty, Region } from "@/lib/types";
 
 export const OG_SIZE = { width: 1200, height: 630 };
 
@@ -546,8 +546,8 @@ export type ProfileOGImageOptions = {
   username: string;
   /** localized region label, e.g. "International" or "Japan" */
   regionLabel: string;
-  /** raw region key, used to color the chip ("intl" | "jp") */
-  region: "intl" | "jp";
+  /** raw region key, used to color the chip */
+  region: Region;
   rating: number;
   gameVersion?: VersionId;
   /** optional remote icon URL (http(s) only — data URLs are skipped) */
@@ -1017,7 +1017,6 @@ export async function createSongOGImage(options: SongOGImageOptions) {
                   lineHeight: 1.05,
                   letterSpacing: "-0.01em",
                   display: "-webkit-box",
-                  // @ts-expect-error satori-friendly clamp
                   WebkitLineClamp: 2,
                   WebkitBoxOrient: "vertical",
                   overflow: "hidden",
@@ -1034,7 +1033,6 @@ export async function createSongOGImage(options: SongOGImageOptions) {
                   fontWeight: 600,
                   lineHeight: 1.2,
                   display: "-webkit-box",
-                  // @ts-expect-error satori-friendly clamp
                   WebkitLineClamp: 1,
                   WebkitBoxOrient: "vertical",
                   overflow: "hidden",

@@ -4,7 +4,7 @@ import { DataBanner } from "@/components/data-banner";
 import { DataContent } from "@/components/data-content";
 import { FetchToastContainer } from "@/components/fetch-toast";
 import { TokenDialog } from "@/components/token-dialog";
-import { UsernameSetupDialog } from "@/components/username-setup-dialog";
+import { OnboardingDialog } from "@/components/onboarding-dialog";
 import { AlbumPrivacyDialog } from "@/components/album-privacy-dialog";
 import { useFetchSession } from "@/hooks/useFetchSession";
 import { useSnapshots } from "@/hooks/useSnapshots";
@@ -26,7 +26,7 @@ import { ChangelogDialog } from "./changelog-dialog";
 import { TomomaiAI } from "./tomomai-ai";
 import { PostMeta } from "@/lib/posts";
 
-type DialogType = null | "token" | "username" | "about" | "admin" | "invites" | "experiments" | "albumPrivacy";
+type DialogType = null | "token" | "onboarding" | "about" | "admin" | "invites" | "experiments" | "albumPrivacy";
 
 interface DashboardProps {
   user: User;
@@ -53,10 +53,10 @@ export function Dashboard({ user, initialUserData, initialSnapshots, initialSnap
   // Use the stored region preference, fallback to "intl" or "cn" if not set
   const selectedRegion: Region = (userData?.region as Region) || (isCNExclusive() ? "cn" : "intl");
 
-  // Show username setup dialog if user doesn't have username
+  // Show onboarding dialog if user doesn't have username
   useEffect(() => {
     if (userData && !userData.hasUsername) {
-      setDialogType("username");
+      setDialogType("onboarding");
     }
   }, [userData]);
 
@@ -218,6 +218,7 @@ export function Dashboard({ user, initialUserData, initialSnapshots, initialSnap
             onRegionChange: handleRegionChange,
             onInvites: () => setDialogType("invites"),
             onAdmin: () => setDialogType("admin"),
+            onTestOnboarding: () => setDialogType("onboarding"),
             onExperiments: () => setDialogType("experiments"),
             onLogout: handleLogout,
           },
@@ -257,9 +258,13 @@ export function Dashboard({ user, initialUserData, initialSnapshots, initialSnap
         stopSessionPolling={stopSessionPolling}
       />
 
-      <UsernameSetupDialog
-        open={dialogType === "username"}
+      <OnboardingDialog
+        open={dialogType === "onboarding"}
         onComplete={handleUsernameSetupComplete}
+        initialRegion={selectedRegion}
+        initialUsername={userData?.username}
+        initialPublishProfile={userData?.publishProfile}
+        testMode={!!userData?.hasUsername}
       />
 
       <AboutDialog open={dialogType === "about"} onOpenChange={open => setDialogType(open ? "about" : null)} />

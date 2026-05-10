@@ -1,5 +1,6 @@
 "use client";
 
+import { FetchToastContainer } from "@/components/fetch-toast";
 import { TokenDialog } from "@/components/token-dialog";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,6 +15,7 @@ import {
 } from "@/components/ui/dialog-friendly";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { useFetchSession } from "@/hooks/useFetchSession";
 import { isCNExclusive } from "@/lib/enabled-regions";
 import { trpc } from "@/lib/trpc-client";
 import { Region } from "@/lib/types";
@@ -42,8 +44,8 @@ export function FetchSettings() {
     ? selectedFetchUseAlbums
     : profileSettings?.fetchUseAlbums ?? null;
 
+  const { startDataFetch, fetchToastState } = useFetchSession();
   const updateAlbumPreference = trpc.user.setAlbumPreference.useMutation();
-  const startFetch = trpc.user.startFetch.useMutation();
   const deleteTokenMutation = trpc.user.deleteToken.useMutation();
 
   const handleSave = async () => {
@@ -66,8 +68,7 @@ export function FetchSettings() {
   };
 
   const handleTokenUpdate = async (token: string) => {
-    await startFetch.mutateAsync({ region: selectedRegion, token });
-    toast.success("Token saved successfully!");
+    await startDataFetch(selectedRegion, token);
   };
 
   const handleDeleteToken = async () => {
@@ -180,6 +181,8 @@ export function FetchSettings() {
         onOpenChange={setTokenDialogOpen}
         onTokenUpdate={handleTokenUpdate}
       />
+
+      <FetchToastContainer state={fetchToastState} />
     </div>
   );
 }

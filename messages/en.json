@@ -725,7 +725,9 @@
       "step3Copy": "Copy Link",
       "step3CopyNote": "After authorization, WeChat will redirect to a result page. Please close that page, return to tomomai to check the import progress, and remember to turn off the proxy in your Wi-Fi settings.",
       "copySuccess": "Copied",
-      "copyFailed": "Copy failed, please copy manually"
+      "copyFailed": "Copy failed, please copy manually",
+      "clashConfigUrl": "Clash Config URL",
+      "clashImportButton": "Import to Clash"
     }
   },
   "regions": {
@@ -755,8 +757,33 @@
     "followTwitter": "Follow on X",
     "followThreads": "Follow on Threads",
     "admin": "Admin",
+    "testOnboarding": "Test onboarding",
     "errors": {
       "inviteLink": "Failed to open invite link"
+    }
+  },
+  "onboarding": {
+    "title": "Welcome to maimai!",
+    "step1": {
+      "title": "Pick a username",
+      "description": "Your username is your handle on tomomai. If you choose to share, it also becomes your public profile URL.",
+      "publishToggleLabel": "Share my profile with friends",
+      "publishToggleDescription": "Let others view your scores at a public link. Off by default — you can change this anytime.",
+      "publicUrlHint": "Your public profile:"
+    },
+    "step2": {
+      "title": "Choose your region",
+      "description": "Pick where your maimai data lives. You can switch later from the menu."
+    },
+    "step3": {
+      "title": "You're all set!",
+      "description": "Welcome aboard. Come back anytime at {host}.",
+      "goToDashboard": "Go to dashboard"
+    },
+    "navigation": {
+      "previous": "Back",
+      "next": "Next",
+      "saving": "Saving…"
     }
   },
   "usernameSetup": {

@@ -743,11 +743,36 @@
     },
     "addDiscordBot": "Discordボットとして追加",
     "admin": "管理者",
+    "testOnboarding": "オンボーディングをテスト",
     "errors": {
       "inviteLink": "招待リンクを開けませんでした"
     },
     "followThreads": "Threadsでフォロー",
     "followTwitter": "Xでフォロー"
+  },
+  "onboarding": {
+    "title": "maimai へようこそ！",
+    "step1": {
+      "title": "ユーザー名を決める",
+      "description": "ユーザー名は tomomai でのあなたのハンドルです。公開を選ぶと、公開プロフィールのURLにも使われます。",
+      "publishToggleLabel": "プロフィールを友達に共有する",
+      "publishToggleDescription": "他のユーザーが公開リンクであなたのスコアを見られるようになります。初期設定はオフです — いつでも変更できます。",
+      "publicUrlHint": "あなたの公開プロフィール："
+    },
+    "step2": {
+      "title": "地域を選ぶ",
+      "description": "あなたの maimai データを保存する地域を選んでください。後からメニューで変更できます。"
+    },
+    "step3": {
+      "title": "準備完了です！",
+      "description": "ようこそ。{host} からいつでも戻ってきてください。",
+      "goToDashboard": "ダッシュボードへ"
+    },
+    "navigation": {
+      "previous": "戻る",
+      "next": "次へ",
+      "saving": "保存中…"
+    }
   },
   "usernameSetup": {
     "title": "ユーザー名を選択",
