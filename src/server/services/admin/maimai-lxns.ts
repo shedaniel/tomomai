@@ -7,7 +7,7 @@ import { asFetcher } from "./fetcher-utils";
 
 const LXNS_SONG_LIST_URL = "https://maimai.lxns.net/api/v0/maimai/song/list?notes=true";
 
-interface LxnsNotes {
+interface LxnsNotesSingle {
   total: number;
   tap: number;
   hold: number;
@@ -15,6 +15,13 @@ interface LxnsNotes {
   touch: number;
   break: number;
 }
+
+interface LxnsNotesBuddy {
+  left: LxnsNotesSingle;
+  right: LxnsNotesSingle;
+}
+
+type LxnsNotes = LxnsNotesSingle | LxnsNotesBuddy;
 
 interface LxnsChart {
   type: "standard" | "dx" | "utage";
@@ -73,13 +80,25 @@ export const LxnsFetcher = asFetcher(async ({ notice }) => {
       const addedVersion = getVersionByShortCode(String(chart.version))?.id;
       let noteCounts: NoteCounts | undefined = undefined;
       if (chart.notes) {
-        noteCounts = {
-          tap: chart.notes.tap,
-          hold: chart.notes.hold,
-          slide: chart.notes.slide,
-          touch: chart.notes.touch,
-          break: chart.notes.break,
-        };
+        const notes = chart.notes;
+        if ("tap" in notes) {
+          noteCounts = {
+            tap: notes.tap,
+            hold: notes.hold,
+            slide: notes.slide,
+            touch: notes.touch,
+            break: notes.break,
+          };
+        } else {
+          // Buddy chart: use left side
+          noteCounts = {
+            tap: notes.left.tap,
+            hold: notes.left.hold,
+            slide: notes.left.slide,
+            touch: notes.left.touch,
+            break: notes.left.break,
+          };
+        }
       }
       const levelPrecise =
         difficulty === "utage" || chart.level_value === 0
