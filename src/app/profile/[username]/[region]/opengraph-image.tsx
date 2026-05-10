@@ -9,17 +9,18 @@ import { getReservedSnapshotData } from "@/server/queries/reserved";
 import { TRPCError } from "@trpc/server";
 import type { Locale } from "@/i18n/locale";
 import type { VersionId } from "@/lib/metadata";
-import { getStaticOGImageLocales } from "@/i18n/og-locale";
+import { getOGImageLocales } from "@/i18n/og-locale";
 
 export const runtime = "nodejs";
-export const revalidate = 300;
+export const dynamic = "force-dynamic";
 
 type Props = {
   params: Promise<{ username: string; region: string }>;
 };
 
-export function generateImageMetadata() {
-  return getStaticOGImageLocales().map(locale => ({ id: locale, alt: "maimai profile", size: OG_SIZE, contentType: "image/png" as const }));
+export async function generateImageMetadata() {
+  const locales = await getOGImageLocales();
+  return locales.map(locale => ({ id: locale, alt: "maimai profile", size: OG_SIZE, contentType: "image/png" as const }));
 }
 
 export default async function Image({ params, id }: Props & { id: Promise<string> }) {

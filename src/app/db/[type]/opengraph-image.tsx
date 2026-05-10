@@ -1,17 +1,18 @@
 import { createHomeOGImage, DB_ACCENT, OG_SIZE } from "@/lib/og";
 import { getTranslations } from "next-intl/server";
 import type { Locale } from "@/i18n/locale";
-import { getStaticOGImageLocales } from "@/i18n/og-locale";
+import { getOGImageLocales } from "@/i18n/og-locale";
 
 export const runtime = "nodejs";
-export const revalidate = false;
+export const dynamic = "force-dynamic";
 
 type Props = {
   params: Promise<{ type: string }>;
 };
 
-export function generateImageMetadata() {
-  return getStaticOGImageLocales().map(locale => ({ id: locale, alt: "tomomai database", size: OG_SIZE, contentType: "image/png" as const }));
+export async function generateImageMetadata() {
+  const locales = await getOGImageLocales();
+  return locales.map(locale => ({ id: locale, alt: "tomomai database", size: OG_SIZE, contentType: "image/png" as const }));
 }
 
 export default async function Image({ params, id }: Props & { id: Promise<string> }) {

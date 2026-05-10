@@ -6,17 +6,18 @@ import { resolveBaseUrlFromHeaders } from "@/lib/base-url";
 import { headers } from "next/headers";
 import { getVersionInfo } from "@/lib/metadata";
 import type { Locale } from "@/i18n/locale";
-import { getStaticOGImageLocales } from "@/i18n/og-locale";
+import { getOGImageLocales } from "@/i18n/og-locale";
 
 export const runtime = "nodejs";
-export const revalidate = 3600;
+export const dynamic = "force-dynamic";
 
 type Props = {
   params: Promise<{ type: string; slug: string }>;
 };
 
-export function generateImageMetadata() {
-  return getStaticOGImageLocales().map(locale => ({ id: locale, alt: "maimai song", size: OG_SIZE, contentType: "image/png" as const }));
+export async function generateImageMetadata() {
+  const locales = await getOGImageLocales();
+  return locales.map(locale => ({ id: locale, alt: "maimai song", size: OG_SIZE, contentType: "image/png" as const }));
 }
 
 export default async function Image({ params, id }: Props & { id: Promise<string> }) {

@@ -14,6 +14,10 @@ const nextConfig: NextConfig = {
         headers: [
           { key: 'Cross-Origin-Resource-Policy', value: 'cross-site' },
           { key: 'Access-Control-Allow-Origin', value: '*' },
+          // Re-enable Vercel CDN caching for force-dynamic og-image routes.
+          // force-dynamic sets no-store by default; this overrides it so the
+          // edge caches the generated image for 1 hour (songs/profiles vary).
+          { key: 'Cache-Control', value: 'public, s-maxage=3600, stale-while-revalidate=86400' },
         ],
       },
     ];
