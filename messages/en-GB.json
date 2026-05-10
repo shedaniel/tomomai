@@ -39,7 +39,8 @@
       "utage": "Utage"
     },
     "back": "Back",
-    "clipboardError": "Failed to copy to clipboard"
+    "clipboardError": "Failed to copy to clipboard",
+    "selectAnOption": "Select an option"
   },
   "auth": {
     "loginWithDiscord": "Continue with Discord",
@@ -48,6 +49,7 @@
     "signupWithDiscord": "Sign up with Discord",
     "signupDisabled": "Sign up Currently Disabled",
     "signupDisabledMessage": "We are not accepting new registrations at this time. Please check back later.",
+    "peekExampleProfile": "Have a peek at an example profile",
     "features": {
       "title": "Features:",
       "trackScores": "Track scores across International and Japan regions",
@@ -82,6 +84,8 @@
     "timezoneUpdateError": "Failed to update timezone: {error}",
     "languageUpdateSuccess": "Language updated successfully!",
     "languageUpdateError": "Failed to update language: {error}",
+    "regionUpdateSuccess": "Region updated successfully!",
+    "regionUpdateError": "Failed to update region: {error}",
     "tokenUpdateSuccess": "Token saved successfully!"
   },
   "settings": {
@@ -113,7 +117,8 @@
       "ja": "日本語",
       "zh-TW": "繁體中文 (台灣)",
       "zh-HK": "繁體中文 (香港)",
-      "zh-CN": "简体中文",
+      "zh-CN": "简体中文 (中国大陆)",
+      "zh-SG": "简体中文 (新加坡, 马来西亚)",
       "ko": "한국어 (AI 번역)"
     },
     "timezone": {
@@ -377,6 +382,16 @@
     "lastUpdate": "Last updated",
     "noDataInstructions": "No data found for this region. Click \"Fetch New Data\" to import your maimai scores. You'll need your maimai token for this process."
   },
+  "profileMetadata": {
+    "title": "{username} | tomomai ともマイ",
+    "description": "View {username}'s maimai profile for {region}. Track and analyze maimai scores with friends.",
+    "descriptionRich": "{displayName} ({username}) on {region} maimai — rating {rating}. View their B50, recent plays, and chart records on tomomai.",
+    "descriptionUnknownRegion": "View {username}'s maimai profile. Track and analyze maimai scores with friends.",
+    "notFoundTitle": "Profile Not Found | tomomai ともマイ",
+    "notFoundDescription": "The profile you're looking for doesn't exist or is not publicly accessible.",
+    "errorTitle": "Error | tomomai ともマイ",
+    "errorDescription": "An error occurred while loading this profile."
+  },
   "profileVisibility": {
     "public": "Public Profile",
     "private": "Private Profile",
@@ -617,7 +632,103 @@
     },
     "recommended": "Recommended",
     "tokenOptionDescription": "Login to your maimai DX NET account with your browser tokens. Token may expire from time to time. No password required and supports social logins.",
-    "passwordOptionDescription": "Login to your maimai DX NET account with your SEGA account credentials. Never expire. Not recommended."
+    "passwordOptionDescription": "Login to your maimai DX NET account with your SEGA account credentials. Never expire. Not recommended.",
+    "cnTitle": "Update maimai authentication",
+    "cnDescription": "Choose your authentication method for the China region.",
+    "cnExperimentalWarningTitle": "China region is experimental",
+    "cnExperimentalWarningMessage": "Support may end abruptly, functionality may be unstable, and data may be wiped.",
+    "recommendedBadge": "Recommended",
+    "comingSoonBadge": "Coming soon",
+    "disabledBadge": "Temporarily disabled",
+    "features": {
+      "playerInfo": "Player info",
+      "scores": "Chart scores",
+      "recents": "Recent plays",
+      "events": "Event data"
+    },
+    "fetchOptions": {
+      "divingFish": {
+        "name": "水鱼查分器",
+        "description": "Use your 水鱼查分器 username or linked QQ account ID to fetch data."
+      },
+      "lxns": {
+        "name": "落雪咖啡屋查分器",
+        "description": "Authorize with your 落雪咖啡屋 account to fetch data."
+      },
+      "httpProxy": {
+        "name": "HTTP Proxy",
+        "description": "Intercept requests from the WeChat maimai DX mini-program on your phone via an HTTP proxy."
+      },
+      "androidApp": {
+        "name": "Android App",
+        "description": "Install this app on your Android device to automatically fetch data."
+      }
+    },
+    "lxns": {
+      "title": "落雪咖啡屋查分器",
+      "description": "Authorize tomomai.lol to read your maimai DX data from your 落雪咖啡屋 account. You can revoke authorization anytime in your account settings.",
+      "notConfiguredTitle": "落雪咖啡屋 OAuth Not Configured",
+      "notConfiguredMessage": "Please ask an administrator to set the <code>LXNS_CLIENT_ID</code> and <code>LXNS_CLIENT_SECRET</code> environment variables on the server.",
+      "instructionsLine1": "Click the button below to open the 落雪咖啡屋 authorization page in a new window. The window will close automatically after authorization.",
+      "instructionsLine2": "We only request permissions to read player data and will not write any of your data.",
+      "authorizeButton": "Authorize",
+      "authorizingButton": "Waiting for authorization…",
+      "popupBlocked": "Could not open the authorization window. Please allow popups for this site and try again.",
+      "authFailed": "Authorization failed: {error}",
+      "unknownError": "Unknown error"
+    },
+    "divingFish": {
+      "title": "水鱼查分器",
+      "description": "Bind your 水鱼查分器 account to tomomai. We will read your maimai DX data from 水鱼查分器 after binding. Choose one of the following methods to verify your account ownership.",
+      "notConfiguredTitle": "水鱼查分器 Not Configured",
+      "notConfiguredMessage": "Please ask an administrator to set the <code>DIVINGFISH_DEV_TOKEN</code> environment variable on the server.",
+      "importTokenTab": "Import-Token Verification",
+      "nicknameTab": "Nickname Verification",
+      "importTokenInstructions": "Generate an Import-Token in the 水鱼查分器 \"Edit Profile\" page and paste it here.",
+      "importTokenSecureNote": "We only use this token to verify your account once and will discard it immediately after verification.",
+      "importTokenPlaceholder": "Paste your Import-Token",
+      "importTokenButton": "Verify and Bind",
+      "importTokenVerifying": "Verifying…",
+      "nicknameInstructions": "Follow these steps to complete verification:",
+      "nicknameStep1": "Log in to 水鱼查分器",
+      "nicknameStep2": "Change your nickname in \"Edit Profile\" to the code below",
+      "nicknameStep3": "Save changes",
+      "nicknameStep4": "Return here, fill in your username or QQ, and verify",
+      "nicknameLabel": "Change your nickname to",
+      "refreshCode": "Refresh code",
+      "nicknameTypeLabel": "Type",
+      "nicknameUsername": "Username",
+      "nicknameQQ": "QQ",
+      "nicknameIdentifierPlaceholder": "Your 水鱼查分器 username or linked QQ number",
+      "nicknameVerifyButton": "I've changed it, start verification",
+      "nicknameVerifying": "Verifying…",
+      "nicknameRevertNote": "After verification succeeds, you can change your nickname back to the original.",
+      "verifyFailedFallback": "Verification failed",
+      "challengePlaceholder": "-------"
+    },
+    "httpProxy": {
+      "title": "HTTP Proxy",
+      "description": "Point your phone's HTTP proxy to our server, then open the link below in WeChat to complete authorization. You only need to authorize once.",
+      "notConfiguredTitle": "HTTP Proxy Service Not Configured",
+      "notConfiguredMessage": "Please ask an administrator to set the <code>CN_PROXY_HOST</code> and <code>CN_PROXY_TOKEN_SECRET</code> environment variables.",
+      "step1Title": "Step 1: Set HTTP proxy on your phone's Wi-Fi settings to",
+      "step1Host": "Host",
+      "step1Port": "Port",
+      "step2Title": "Step 2: {generateOrRegenerate} authorization link",
+      "step2Generate": "Generate",
+      "step2Regenerate": "Regenerate if link expired",
+      "step2GenerateButton": "Generate Authorization Link",
+      "step2RegenerateButton": "Regenerate",
+      "step2GeneratingButton": "Generating…",
+      "step2ErrorPrefix": "Error: ",
+      "step3Title": "Step 3: Copy the link below, send it in any WeChat chat, then click to open",
+      "step3Copy": "Copy Link",
+      "step3CopyNote": "After authorization, WeChat will redirect to a result page. Please close that page, return to tomomai to check the import progress, and remember to turn off the proxy in your Wi-Fi settings.",
+      "copySuccess": "Copied",
+      "copyFailed": "Copy failed, please copy manually",
+      "clashConfigUrl": "Clash Config URL",
+      "clashImportButton": "Import to Clash"
+    }
   },
   "regions": {
     "intl": "International",
@@ -646,8 +757,33 @@
     "followTwitter": "Follow on X",
     "followThreads": "Follow on Threads",
     "admin": "Admin",
+    "testOnboarding": "Test onboarding",
     "errors": {
       "inviteLink": "Failed to open invite link"
+    }
+  },
+  "onboarding": {
+    "title": "Welcome to tomomai!",
+    "step1": {
+      "title": "Pick a username",
+      "description": "Your username is your handle on tomomai. If you choose to share, it also becomes your public profile URL.",
+      "publishToggleLabel": "Share my profile with friends",
+      "publishToggleDescription": "Let others view your scores at a public link. Off by default — you can change this anytime.",
+      "publicUrlHint": "Your public profile:"
+    },
+    "step2": {
+      "title": "Choose your region",
+      "description": "Pick where your maimai data lives. You can switch later from the menu."
+    },
+    "step3": {
+      "title": "You're all set!",
+      "description": "Welcome aboard. Come back anytime at {host}.",
+      "goToDashboard": "Go to dashboard"
+    },
+    "navigation": {
+      "previous": "Back",
+      "next": "Next",
+      "saving": "Saving…"
     }
   },
   "usernameSetup": {
@@ -793,9 +929,18 @@
     "songs": {
       "metadata": {
         "title": "Songs Database | maimai DX",
-        "description": "Browse and search all maimai DX songs. Filter by type, genre, and version. View song details, difficulty levels, and regional availability."
+        "description": "Browse and search all maimai DX songs. Filter by type, genre, and version. View song details, difficulty levels, and regional availability.",
+        "songTitle": "{songName} - {artist} | maimai DX",
+        "songDescription": "View detailed information about \"{songName}\" by {artist}. {chartType} chart • {genre}",
+        "songOgDescription": "View detailed information about \"{songName}\" by {artist}.",
+        "songFallbackTitle": "Song Details | maimai DX",
+        "songFallbackDescription": "View detailed information about this maimai DX song including difficulty levels and regional availability.",
+        "chartTypeDx": "DX",
+        "chartTypeStandard": "Standard",
+        "jsonLdChartDescription": "{chartType} chart from maimai DX"
       },
       "title": "Songs Database | maimai DX",
+      "heading": "Songs Database",
       "searchPlaceholder": "Search songs, artists, genres...",
       "noSongsFound": "No songs found",
       "tryAdjustingSearch": "Try adjusting your search",
@@ -803,6 +948,7 @@
       "detail": {
         "title": "Song Details",
         "artist": "Song artist",
+        "detailsFor": "Details for {songName}",
         "charts": "Charts",
         "availability": "Availability",
         "yourScore": "Your Score",
@@ -814,7 +960,9 @@
         "share": "Share Link",
         "youtube": "YouTube",
         "viewCharts": "View Charts",
-        "viewDetails": "View Details on tomomai DB"
+        "viewDetails": "View Details on tomomai DB",
+        "summary": "{songName} is a maimai でらっくす {chartType} chart by {artist} in the {genre} genre, added in {versionName}. Difficulty ranges from {minLevel} to {maxLevel} across {chartCount, plural, =1 {# chart} other {# charts}}{bpmFragment}.",
+        "summaryBpmFragment": " (BPM {bpm})"
       },
       "filter": {
         "type": "Type",
@@ -867,6 +1015,7 @@
     },
     "stats": {
       "title": "Global Statistics",
+      "description": "Explore aggregate maimai DX statistics across all tracked players: rating distributions, top titles, popular songs, and play activity over time.",
       "ratingDistribution": "Player Rating Distribution",
       "playCountDistribution": "Player Play Count Distribution",
       "topTitles": "Top Player Titles",
