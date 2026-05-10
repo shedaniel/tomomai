@@ -42,6 +42,9 @@ export const metadata: Metadata = {
   metadataBase: new URL(resolveBaseUrl()),
   title: "tomomai ともマイ",
   description: "Track and analyze maimai scores with friends.",
+  icons: {
+    apple: "/icon.png",
+  },
 };
 
 export default async function RootLayout({
