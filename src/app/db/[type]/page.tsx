@@ -1,10 +1,13 @@
-import { ArcadesMap } from "@/components/db/arcades";
-import { EventsDatabase } from "@/components/db/events-database";
-import { SongsDatabase } from "@/components/db/songs-database";
-import { StatsDatabase } from "@/components/db/stats-database";
-import { createServerSideTRPC } from "@/lib/trpc-server";
+import { getAllUniqueSongsCached } from "@/server/queries/songs-cache";
 import { Metadata } from "next";
+import dynamic from "next/dynamic";
 import { getTranslations } from "next-intl/server";
+import { getLocale } from "@/i18n/locale-server";
+import { buildAlternates, openGraphLocales } from "@/lib/seo";
+
+const ArcadesMap = dynamic(() => import("@/components/db/arcades").then(m => m.ArcadesMap));
+const EventsDatabase = dynamic(() => import("@/components/db/events-database").then(m => m.EventsDatabase));
+const StatsDatabase = dynamic(() => import("@/components/db/stats-database").then(m => m.StatsDatabase));
 
 type DbTypePageProps = {
   params: Promise<{
@@ -14,55 +17,53 @@ type DbTypePageProps = {
 
 export async function generateMetadata({ params }: DbTypePageProps): Promise<Metadata> {
   const { type } = await params;
+  const locale = await getLocale();
 
+  type Section = { title: string; description: string };
+  let section: Section | null = null;
   if (type === "songs") {
     const t = await getTranslations("db.songs.metadata");
-    return {
-      title: t("title"),
-      description: t("description"),
-      openGraph: {
-        title: t("title"),
-        description: t("description"),
-      },
-    };
-  }
-
-  if (type === "stats") {
+    section = { title: t("title"), description: t("description") };
+  } else if (type === "stats") {
     const t = await getTranslations("db.stats");
-    return {
-      title: t("title"),
-      description: t("title"),
-      openGraph: {
-        title: t("title"),
-        description: t("title"),
-      },
-    };
-  }
-
-  if (type === "events") {
+    section = { title: t("title"), description: t("description") };
+  } else if (type === "events") {
     const t = await getTranslations("db.events");
-    return {
-      title: t("title"),
-      description: t("description"),
-      openGraph: {
-        title: t("title"),
-        description: t("description"),
-      },
-    };
+    section = { title: t("title"), description: t("description") };
   }
+  if (!section) return {};
 
-  return {};
+  const path = `/db/${type}`;
+  return {
+    title: section.title,
+    description: section.description,
+    alternates: buildAlternates(path),
+    openGraph: {
+      title: section.title,
+      description: section.description,
+      url: path,
+      siteName: "tomomai ともマイ",
+      type: "website",
+      ...openGraphLocales(locale),
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: section.title,
+      description: section.description,
+    },
+  };
 }
 
 export default async function DbTypePage({ params }: DbTypePageProps) {
   const { type } = await params;
 
   if (type === "songs") {
-    const trpc = await createServerSideTRPC();
-    const songs = await trpc.user.getAllUniqueSongs();
+    // The list itself is mounted by /db/[type]/layout.tsx so it persists
+    // across /db/songs ↔ /db/songs/[slug] navigation. This page just emits
+    // page-level structured data.
+    const songs = await getAllUniqueSongsCached();
     const t = await getTranslations("db.songs.metadata");
 
-    // JSON-LD structured data for SEO
     const jsonLd = {
       "@context": "https://schema.org",
       "@type": "CollectionPage",
@@ -85,13 +86,10 @@ export default async function DbTypePage({ params }: DbTypePageProps) {
     };
 
     return (
-      <>
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-        />
-        <SongsDatabase selectedSlug={null} initialSongs={songs} currentSong={null} />
-      </>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
     );
   }
 
@@ -111,7 +109,6 @@ export default async function DbTypePage({ params }: DbTypePageProps) {
         </div>
       )}
 
-      {/* Songs is handled by the if block above */}
       {!["home", "arcades", "songs", "stats"].includes(type) && (
         <div className="mt-8">
           <div className="bg-muted/50 rounded-lg p-8 text-center">

@@ -25,7 +25,7 @@ import Link from "next/link";
 import { toast } from "sonner";
 import { SongChartDialogContent } from "./song-detail-dialog";
 import { renderLevelPrecise } from "@/lib/name-utils";
-import { isChinaRegion } from "@/lib/enabled-regions";
+import { isCNExclusive } from "@/lib/enabled-regions";
 
 type SongExtendedIdentified = SongExtended & { region: Region; gameVersion: number };
 
@@ -38,7 +38,6 @@ interface SongDetailContentProps {
   songName: string;
   slug: string;
   type: "std" | "dx";
-  onClose: () => void;
   initialData?: SongDetails | null;
 }
 
@@ -103,8 +102,8 @@ function ScoreGrid({
 
   return (
     <div className={cn(
-      "col-span-full grid gap-4 px-4 py-3 bg-muted group-hover:!bg-primary/10 border-t border-dashed",
-      Object.keys(scores).length === 2 ? "grid-cols-4" : "grid-cols-2"
+      "col-span-full grid gap-4 px-4 py-3 bg-muted/30 border-t border-dashed",
+      Object.keys(scores).length === 3 ? "grid-cols-6" : Object.keys(scores).length === 2 ? "grid-cols-4" : "grid-cols-2"
     )}>
       {Object.entries(scores).map(([region, score]) => {
         const chart = charts.find(c => c.region === region)!;
@@ -116,7 +115,7 @@ function ScoreGrid({
           difficulty: chart.difficulty,
         }, chart.gameVersion) : 0;
 
-        const label = region === 'intl' ? t('regions.intl') : t('regions.jp');
+        const label = t(`regions.${region}`);
 
         return (
           <div key={region} className="contents">
@@ -279,10 +278,29 @@ export function SongDetailContent({ songName, slug, type, initialData }: SongDet
   }, [chartsByDifficulty]);
   const hasTouch = allCharts.some(chart => chart.touchCount !== null);
 
+  // Pre-compute SEO summary inputs (visible prose paragraph below the header).
+  const summary = useMemo(() => {
+    if (!data || allCharts.length === 0) return null;
+    const levels = allCharts.map((c) => c.levelPrecise).filter((l) => l > 0);
+    if (levels.length === 0) return null;
+    const minLevel = Math.min(...levels);
+    const maxLevel = Math.max(...levels);
+    const fmtLevel = (l: number) => (l % 10 === 0 ? String(Math.floor(l / 10)) : (l / 10).toFixed(1));
+    return {
+      minLevel: fmtLevel(minLevel),
+      maxLevel: fmtLevel(maxLevel),
+      chartCount: chartsByDifficulty.size,
+      bpmFragment: data.bpm ? t('db.songs.detail.summaryBpmFragment', { bpm: data.bpm }) : '',
+      versionName: getVersionInfo(data.addedVersion)?.name ?? `Ver. ${data.addedVersion}`,
+      // TODO: add "utage" to SongType
+      chartType: (data.type as string) === 'utage' ? '宴会場' : data.type === 'dx' ? 'DX' : 'Standard',
+    };
+  }, [data, allCharts, chartsByDifficulty, t]);
+
   const videoSearchURL = useMemo(() => {
     if (!data) return null;
     const searchQuery = encodeURIComponent(`maimai ${data.songName} ${data.artist}`);
-    if (isChinaRegion()) {
+    if (isCNExclusive()) {
       return `https://search.bilibili.com/all?keyword=${searchQuery}`;
     } else {
       return `https://www.youtube.com/results?search_query=${searchQuery}`;
@@ -335,6 +353,22 @@ export function SongDetailContent({ songName, slug, type, initialData }: SongDet
         </div>
       </div>
 
+      {summary && (
+        <p className="text-sm text-muted-foreground leading-relaxed">
+          {t('db.songs.detail.summary', {
+            songName: data.songName,
+            artist: data.artist,
+            genre: data.genre,
+            chartType: summary.chartType,
+            versionName: summary.versionName,
+            minLevel: summary.minLevel,
+            maxLevel: summary.maxLevel,
+            chartCount: summary.chartCount,
+            bpmFragment: summary.bpmFragment,
+          })}
+        </p>
+      )}
+
       <section className="flex flex-wrap justify-between gap-y-3">
         {/* Song Info */}
         <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
@@ -355,7 +389,7 @@ export function SongDetailContent({ songName, slug, type, initialData }: SongDet
         {/* Buttons or Links */}
         <div className="flex gap-2">
           <Link href={`/db/songs/${slug}`} onClick={async (e) => {
-            const baseUrl = await resolveBaseUrl();
+            const baseUrl = resolveBaseUrl();
             navigator.clipboard.writeText(`${baseUrl}/db/songs/${slug}`);
             e.preventDefault();
             toast.success("Share link copied to clipboard");
@@ -367,7 +401,7 @@ export function SongDetailContent({ songName, slug, type, initialData }: SongDet
           </Link>
           <Link href={videoSearchURL ?? ""} target="_blank" aria-label={t('db.songs.detail.youtube')}>
             <Button variant="outline" className="bg-background">
-              {isChinaRegion() ? (<>
+              {isCNExclusive() ? (<>
                 <svg role="img" className="w-4 h-4" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
                   <g>
                     <path fill="none" d="M0 0h24v24H0z" />
@@ -435,7 +469,7 @@ export function SongDetailContent({ songName, slug, type, initialData }: SongDet
           <div key={region} className="space-y-2">
             <div className="flex items-center gap-2">
               <h3 className="text-sm font-medium">
-                {region === "intl" ? t('regions.intl') : t('regions.jp')}
+                {t(`regions.${region}`)}
               </h3>
             </div>
 

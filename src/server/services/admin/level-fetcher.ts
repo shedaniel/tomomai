@@ -7,6 +7,8 @@ import { MaimaiAfterFetcher } from "./maimai-after-fetch";
 import { MaimaiBaseFetcher } from "./maimai-base-songs";
 import { MaimaiScraperFetcher } from "./maimai-scraper";
 import { OtogeDbFetcher } from "./otoge-db";
+import { LxnsFetcher } from "./maimai-lxns";
+import { Region } from "@/lib/types";
 import deepEqual from "deep-equal";
 import { normalizeGenre, normalizeName } from "@/lib/name-utils";
 import { isNullOrUndefined } from "@/lib/utils";
@@ -54,6 +56,23 @@ export const FETCHER_NAMES: string[] = [
   "Fill Level Precise",
   "Sorter",
 ]
+
+export const CN_FETCHERS: SongFetcher[] = [
+  LxnsFetcher,
+  FillLevelPreciseFetcher,
+  SorterFetcher,
+]
+
+export const CN_FETCHER_NAMES: string[] = [
+  "Lxns",
+  "Fill Level Precise",
+  "Sorter",
+]
+
+export function getFetchersForRegion(region: Region): { fetchers: SongFetcher[]; names: string[] } {
+  if (region === "cn") return { fetchers: CN_FETCHERS, names: CN_FETCHER_NAMES };
+  return { fetchers: FETCHERS, names: FETCHER_NAMES };
+}
 
 function validateSongs(songsInput: SongWithOrigin[], log: Logger): void {
   for (const song of songsInput) {
@@ -141,12 +160,14 @@ export async function fetchLevels(context: FetchingContext): Promise<UpdateSong[
     "Starting level fetch pipeline"
   );
 
+  const { fetchers, names } = getFetchersForRegion(context.region);
+
   let songs: SongWithOrigin[] = []
   let previous: SongFetcher | null = null;
   let index = 0;
   const stageResults: string[] = [];
-  for (const fetcher of FETCHERS) {
-    const fetcherName = FETCHER_NAMES[index] ?? `Fetcher ${index}`;
+  for (const fetcher of fetchers) {
+    const fetcherName = names[index] ?? `Fetcher ${index}`;
     const logger = context.log.child({ fetcherIndex: index });
     const notice = createNoticeSink();
     const extendedContext = {
@@ -168,7 +189,7 @@ export async function fetchLevels(context: FetchingContext): Promise<UpdateSong[
 
     sendDiscordNotice(
       context.region,
-      `Stage ${index + 1}/${FETCHERS.length}: ${fetcherName}`,
+      `Stage ${index + 1}/${fetchers.length}: ${fetcherName}`,
       stage.noticeBody,
       0x5865F2,
     ).catch(() => { });
@@ -187,7 +208,7 @@ export async function fetchLevels(context: FetchingContext): Promise<UpdateSong[
     sendDiscordNotice(
       context.region,
       "Fetch pipeline completed",
-      `**Total songs: ${songs.length}** (${FETCHERS.length} stages)`,
+      `**Total songs: ${songs.length}** (${fetchers.length} stages)`,
       0x00FF00,
     ).catch(() => { });
   }

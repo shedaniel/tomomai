@@ -31,12 +31,13 @@ function truncateLines(lines: string[], limit: number): string {
 }
 
 export async function sendDiscordWebhook(
-  region: "intl" | "jp",
+  region: "intl" | "jp" | "cn",
   added: AddedChange[],
   deleted: DeletedChange[],
   modified: ModifiedChange[],
 ) {
-  const webhookUrl = process.env.DISCORD_UPDATE_WEBHOOK;
+  const regionKey = `DISCORD_UPDATE_WEBHOOK_${region.toUpperCase()}`;
+  const webhookUrl = process.env[regionKey] ?? process.env.DISCORD_UPDATE_WEBHOOK;
   if (!webhookUrl) {
     console.log("DISCORD_UPDATE_WEBHOOK not set, skipping webhook notification");
     return;
@@ -64,7 +65,7 @@ export async function sendDiscordWebhook(
 
   const [month, day, year] = jstDate.split('/');
   const dateStr = `${year}/${month}/${day}`;
-  const regionName = region === "jp" ? "Japan" : "International";
+  const regionName = region === "jp" ? "Japan" : region === "cn" ? "China" : "International";
 
   let description = "";
 
@@ -232,7 +233,7 @@ export async function sendDiscordNotice(
   if (!webhookUrl) return;
 
   const baseUrl = resolveBaseUrl();
-  const regionName = region === "jp" ? "Japan" : "International";
+  const regionName = region === "jp" ? "Japan" : region === "cn" ? "China" : "International";
 
   const payload = {
     username: "ともマイ",

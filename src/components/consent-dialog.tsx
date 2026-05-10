@@ -15,7 +15,7 @@ import { PolicyDialog } from "@/components/policy-dialog";
 import { ChevronDown, ChevronUp, Dot } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useLocale } from "./providers/locale-provider";
-import { isChinaRegion } from "@/lib/enabled-regions";
+import { isCNExclusive, isRegionEnabled } from "@/lib/enabled-regions";
 
 interface ConsentDialogProps {
   open: boolean;
@@ -75,9 +75,9 @@ export function ConsentDialog({
                 </li>
                 <li className="flex items-start gap-1">
                   <Dot className="text-primary shrink-0" size={16} strokeWidth={3} fill="true" />
-                  <span>{!isChinaRegion() ? t("tldr.points.1") : "你的数据将安全存储在中国大陆境内的服务器上"}</span>
+                  <span>{!isCNExclusive() ? t("tldr.points.1") : "你的数据将安全存储在中国大陆境内的服务器上"}</span>
                 </li>
-                {!isChinaRegion() && (<li className="flex items-start gap-1">
+                {!isCNExclusive() && (<li className="flex items-start gap-1">
                   <Dot className="text-primary shrink-0" size={16} strokeWidth={3} fill="true" />
                   <span>{t("tldr.points.2")}</span>
                 </li>)}
@@ -87,17 +87,19 @@ export function ConsentDialog({
                 </li>
                 <li className="flex items-start gap-1">
                   <Dot className="text-primary shrink-0" size={16} strokeWidth={3} fill="true" />
-                  <span>{!isChinaRegion() ? t("tldr.points.4") : "我们是独立工具，与 SEGA 或 华立科技 没有任何关联"}</span>
+                  <span>{!isCNExclusive() ? t("tldr.points.4") : "我们是独立工具，与 SEGA 或 华立科技 没有任何关联"}</span>
                 </li>
                 {locale === "zh-CN" && (<li className="flex items-start gap-1">
                   <Dot className="text-primary shrink-0" size={16} strokeWidth={3} fill="true" />
-                  {isChinaRegion() ? (
+                  {isCNExclusive() ? (
                     <span>支持华立科技舞萌之覆盖地区<br />原则上仅限中国大陆地区访问</span>
+                  ) : isRegionEnabled("cn") ? (
+                    <span>支持 maimai 日本版及国际版、以及华立科技舞萌之覆盖地区<br /><span className="underline">本站为境外站点，中国大陆地区访问速度可能较慢且不稳定</span>，境内版 tomomai.cn 正在建设中</span>
                   ) : (
                     <span>支持 maimai 日本版及国际版覆盖地区<br />原则上暂不支持中国大陆地区访问</span>
                   )}
                 </li>)}
-                {isChinaRegion() && (<li className="flex items-start gap-1">
+                {isCNExclusive() && (<li className="flex items-start gap-1">
                   <Dot className="text-primary shrink-0" size={16} strokeWidth={3} fill="true" />
                   <span>国内版 tomomai (同萌) 目前处于内测阶段，部分功能可能与国际版存在差异</span>
                 </li>)}
@@ -179,7 +181,7 @@ export function ConsentDialog({
               )}
             </div>
 
-            {isChinaRegion() && (
+            {isCNExclusive() && (
               <div className="text-2xs mt-2">
                 国内版虽然也叫 tomomai，但你可以叫它「同萌」——取其「同我萌 (to-mo-mai)」之意
               </div>

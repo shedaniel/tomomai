@@ -70,4 +70,11 @@ export const userRouter = router({
   // Misc
   getUserSelectableFlags: miscRouter.getUserSelectableFlags,
   getPolicies: miscRouter.getPolicies,
+  getLxnsOAuthConfigured: miscRouter.getLxnsOAuthConfigured,
+  getCnProxyConfigured: miscRouter.getCnProxyConfigured,
+  getCnProxyAuthLink: miscRouter.getCnProxyAuthLink,
+  getDivingFishConfigured: miscRouter.getDivingFishConfigured,
+  getDivingFishNicknameChallenge: miscRouter.getDivingFishNicknameChallenge,
+  verifyDivingFishImportToken: miscRouter.verifyDivingFishImportToken,
+  verifyDivingFishNickname: miscRouter.verifyDivingFishNickname,
 });

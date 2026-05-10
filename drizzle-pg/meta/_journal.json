@@ -92,6 +92,13 @@
       "when": 1774331011869,
       "tag": "0012_tiny_jackpot",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1777288940448,
+      "tag": "0013_quiet_goblin_queen",
+      "breakpoints": true
     }
   ]
 }

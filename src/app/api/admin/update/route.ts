@@ -1,4 +1,6 @@
 import { logger } from "@/lib/logger";
+import { Region } from "@/lib/types";
+import { getEnabledRegions, isRegionEnabled } from "@/lib/enabled-regions";
 import { getCurrentVersion } from "@/lib/metadata";
 import { awaitWrapper, sortKeys } from "@/lib/utils";
 import { sendDiscordNotice } from "@/server/services/admin/discord-webhooks";
@@ -16,7 +18,7 @@ export async function GET(request: NextRequest) {
   });
 
   const { searchParams } = new URL(request.url);
-  const region = searchParams.get('region') as "intl" | "jp" | null;
+  const region = searchParams.get('region') as Region | null;
 
   try {
     // Check for admin token authentication
@@ -51,39 +53,45 @@ export async function GET(request: NextRequest) {
     // Get query parameters
     const maimaiToken = searchParams.get('token');
 
-    if (!maimaiToken) {
+    if (!region || !isRegionEnabled(region)) {
       return NextResponse.json(
-        { error: "Missing 'token' query parameter" },
+        { error: `Missing or invalid 'region' query parameter. Must be one of: ${getEnabledRegions().join(", ")}` },
         { status: 400 }
       );
     }
 
-    if (!region || (region !== "intl" && region !== "jp")) {
-      return NextResponse.json(
-        { error: "Missing or invalid 'region' query parameter. Must be 'intl' or 'jp'" },
-        { status: 400 }
-      );
-    }
+    // CN uses the public Lxns API and does not need a maimai session cookie.
+    let cookies = "";
+    if (region !== "cn") {
+      if (!maimaiToken) {
+        return NextResponse.json(
+          { error: "Missing 'token' query parameter" },
+          { status: 400 }
+        );
+      }
 
-    log.info({ region }, "Admin update requested: scraping maimai data");
+      log.info({ region }, "Admin update requested: scraping maimai data");
 
-    // Step 1: Validate the maimai token
-    log.info("Validating maimai token...");
-    const [cookies, cookiesError] = await awaitWrapper(loginAndGetCookies(region, maimaiToken));
+      log.info("Validating maimai token...");
+      const [resolved, cookiesError] = await awaitWrapper(loginAndGetCookies(region, maimaiToken));
 
-    log.info("Token validated. Fetching levels...");
+      log.info("Token validated. Fetching levels...");
 
-    if (cookiesError) {
-      return NextResponse.json(
-        { error: cookiesError.message },
-        { status: 400 }
-      );
+      if (cookiesError) {
+        return NextResponse.json(
+          { error: cookiesError.message },
+          { status: 400 }
+        );
+      }
+      cookies = resolved!;
+    } else {
+      log.info({ region }, "Admin update requested: fetching CN data from Lxns");
     }
 
     const songs = await fetchLevels({
       region,
       version: getCurrentVersion(region),
-      cookies: cookies!,
+      cookies,
       log,
       notice: createNoticeSink(),
     });

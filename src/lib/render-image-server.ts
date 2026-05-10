@@ -1,6 +1,13 @@
 import { getCachedImageBuffer } from "./image_cacher";
 import { FontLibrary } from 'skia-canvas';
 import path from 'path';
+import { Agent } from 'undici';
+
+const sharedFetchAgent = new Agent({
+  connect: { timeout: 30_000 },
+  connections: 16,
+  pipelining: 1,
+});
 
 // In-memory cache for fetched images
 const imageCache = new Map<string, { data: string; timestamp: number }>();
@@ -38,7 +45,7 @@ export const fontsLoaded = (async () => {
     const fontsDir = path.join(process.cwd(), 'public', 'res', 'fonts');
 
     FontLibrary.use('FOT-NewRodin Pro', [path.join(fontsDir, 'FOT-NewRodin Pro EB.woff2')]);
-    FontLibrary.use('Inter', [path.join(fontsDir, 'Inter-VariableFont_opsz,wght.woff2')]);
+    FontLibrary.use('Inter', [path.join(fontsDir, 'Inter-VariableFont_opsz_wght.woff2')]);
     FontLibrary.use('Murecho', [path.join(fontsDir, 'Murecho-VariableFont_wght.woff2')]);
     FontLibrary.use('Noto Sans JP', [path.join(fontsDir, 'NotoSansJP-VariableFont_wght.woff2')]);
     FontLibrary.use('Geist Mono', [path.join(fontsDir, 'GeistMono-VariableFont_wght.woff2')]);
@@ -90,15 +97,9 @@ export async function fetchImageForServer(url: string): Promise<string> {
               : ext === '.svg' ? 'image/svg+xml'
                 : 'image/png'; // default fallback
     } else {
-      const { Agent } = await import('undici');
-      const httpsAgent = new Agent({
-        connect: {
-          rejectUnauthorized: false
-        }
-      });
       const response = await fetch(finalUrl, {
         // @ts-ignore - dispatcher property exists but TypeScript doesn't recognize it
-        dispatcher: httpsAgent,
+        dispatcher: sharedFetchAgent,
       });
       if (!response.ok) {
         throw new Error(`Failed to fetch image: ${response.statusText}`);

@@ -10,16 +10,30 @@ import { cookies } from "next/headers";
 import { Suspense } from "react";
 import { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
+import { buildAlternates, openGraphLocales } from "@/lib/seo";
 
 // Force dynamic rendering since we need to check authentication
 export const dynamic = 'force-dynamic';
 
 export async function generateMetadata(): Promise<Metadata> {
-  const t = await getTranslations("dashboard");
+  const [t, locale] = await Promise.all([
+    getTranslations("dashboard"),
+    getLocale(),
+  ]);
   return {
     title: t("title"),
     description: t("description"),
+    alternates: buildAlternates("/"),
     openGraph: {
+      title: t("title"),
+      description: t("description"),
+      url: "/",
+      siteName: "tomomai ともマイ",
+      type: "website",
+      ...openGraphLocales(locale),
+    },
+    twitter: {
+      card: "summary_large_image",
       title: t("title"),
       description: t("description"),
     },

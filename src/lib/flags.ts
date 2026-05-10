@@ -1,5 +1,6 @@
 import { flag } from "flags/next";
 import type { cookies } from "next/headers";
+import { isAprilFools2026JST } from "@/lib/april-fools";
 
 
 export interface Flags {
@@ -9,6 +10,7 @@ export interface Flags {
   eventsCard: boolean;
   albumsCard: boolean;
   developerPortal: boolean;
+  aprilFools2026: boolean;
 }
 
 export interface FlagDefinition {
@@ -32,6 +34,8 @@ export const useFlags0 = async (): Promise<Flags> => {
     albumsCard: await useAlbumsCard(),
     // eslint-disable-next-line react-hooks/rules-of-hooks
     developerPortal: await useDeveloperPortal(),
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    aprilFools2026: await useAprilFools2026(),
   };
 }
 
@@ -71,6 +75,12 @@ export const flagDefinitions: Record<keyof Flags, FlagDefinition> = {
     defaultValue: false,
     userSelectable: false,
     decide: async () => false,
+  },
+  aprilFools2026: {
+    key: "aprilFools2026",
+    defaultValue: false,
+    userSelectable: true,
+    decide: async () => isAprilFools2026JST(),
   },
 };
 
@@ -129,6 +139,14 @@ export const useDeveloperPortal = flag<boolean>({
   defaultValue: false,
   async decide() {
     return false;
+  },
+});
+
+export const useAprilFools2026 = flag<boolean>({
+  key: "aprilFools2026",
+  defaultValue: false,
+  async decide() {
+    return isAprilFools2026JST();
   },
 });
 

@@ -1,0 +1,103 @@
+---
+title: "Performance Gains, Onboarding, and China Beta"
+date: "2026-05-11"
+version: "2026.4"
+summary: "April Update (delayed): Massive performance improvements, a new onboarding experience, fresh OG images, China region beta, storage fixes, and the April Fools flag is back."
+locale: "en"
+canonicalSlug: "2026-05-11-april-update"
+---
+
+## April Update: Worth the Wait
+
+This one took a little longer than usual to ship, sorry about that! It's a big one though. We've got meaningful performance improvements with real numbers to back them up, a much nicer first-run experience, some backend work to keep the site healthy, and the first public beta of China region support.
+
+## Performance Improvements
+
+We've been doing a lot of work under the hood to make tomomai feel faster, and the results are showing. Here are the **Largest Contentful Paint (LCP)** times before and after:
+
+| Region | Before | After |
+|---|--:|--:|
+| Japan | 808 ms | 432 ms |
+| Hong Kong | 3,180 ms | 780 ms |
+| China | 3,208 ms | 2,522 ms |
+
+Japan and Hong Kong saw dramatic improvements. China is still slower than we'd like. It's limited by the connection speed to our Cloudflare R2 bucket, which isn't well-optimized for mainland traffic. **We're working on a China-specific CDN for assets** that should bring those numbers much closer to the other regions in a future update.
+
+So what actually changed?
+
+#### CJK Font Subsetting
+
+This was the biggest single win. Previously, loading tomomai in Japanese, Traditional Chinese, or Simplified Chinese meant downloading a **4–7 MB monolithic font file** upfront for each language. We rewrote our font pipeline using fonttools to split each Noto Sans CJK font (JP/TC/SC) into **20 unicode-range chunks**. The browser now only fetches the glyph ranges that actually appear on screen. No more paying for thousands of characters you'll never see.
+
+We also stopped preloading CJK fonts entirely. Only Inter (Latin) is preloaded now. CJK fonts load on demand per locale.
+
+#### Bundle Optimizations
+
+On top of the font work, we made several other network improvements:
+
+- **Dynamic tab loading**: The heavier dashboard tabs (Stats, Recommendations, Export, History, Events, Recents, Developer, Albums) now load their code only when you switch to them. The initial page load no longer pulls in everything at once.
+- **Tree-shaking**: Added `optimizePackageImports` for `lucide-react`, `recharts`, `date-fns`, and several Radix UI packages, meaning only the icons and components actually used get bundled.
+- **Bundle analyzer**: We wired up `@next/bundle-analyzer` (toggle with `ANALYZE=true`) so we can keep tracking this going forward.
+
+## New OG Images
+
+When you share a tomomai link on Discord, Twitter, or anywhere else that renders link previews, you'll now get a proper image instead of a blank card.
+
+We added custom Open Graph images for every major section of the site:
+
+<ImageCarousel>
+  <ImageCarouselSlide src="/posts/2026-05-11-april-update/og-song.png" alt="Song detail OG image" caption="Song detail - cover art, name, artist, and difficulty levels" />
+  <ImageCarouselSlide src="/posts/2026-05-11-april-update/og-profile.png" alt="Player profile OG image" caption="Player profile - display name, rating, icon, and region" />
+  <ImageCarouselSlide src="/posts/2026-05-11-april-update/og-home.png" alt="Homepage OG image" caption="Homepage" />
+  <ImageCarouselSlide src="/posts/2026-05-11-april-update/og-db.png" alt="Database OG image" caption="Database root" />
+</ImageCarousel>
+
+The OG image renderer now uses locally bundled fonts instead of fetching from Google Fonts at render time, so generation is faster and doesn't depend on an external service.
+
+## New Feature: Onboarding Dialog
+
+New users now get a proper welcome instead of being dropped straight onto the dashboard. The new **onboarding flow** is a three-step animated dialog:
+
+1. **Username setup**: pick your tomomai username with live availability checking and an auto-suggested starting point. You can also control whether your profile is public from here.
+2. **Region selection**: choose your region from a set of themed cards.
+3. **Done**: you're in.
+
+<ImageCarousel>
+  <ImageCarouselSlide src="/posts/2026-05-11-april-update/onboarding-step1.png" alt="Onboarding Step 1 - Username" caption="Step 1: Username setup" />
+  <ImageCarouselSlide src="/posts/2026-05-11-april-update/onboarding-step2.png" alt="Onboarding Step 2 - Region" caption="Step 2: Region selection" />
+</ImageCarousel>
+
+The old single-field username dialog is gone. If you already have an account, nothing changes for you.
+
+## Technical
+
+### China Region Beta
+
+We're opening up **China region support in beta**. CN users will be able to connect tomomai to their maimai DX data through one of two methods:
+
+- **<a href="https://maimai.lxns.net" rel="nofollow noopener noreferrer" className="text-primary hover:underline" target="_blank">LXNS (落雪咖啡屋 maimai DX 查分器)</a>**: OAuth-based connection, no password handling. Syncs player profile and scores. Recents and event data are not supported by this source.
+- **Our own HTTP Proxy**: for players who want to use their native maimai account directly.
+
+Getting CN support right required significant structural changes behind the scenes. Our main data-fetching code had grown into a 2,100-line monolith. To properly support multiple fetch strategies per region, we refactored it into a clean `src/lib/maimai/` package organized by domain (player, songs, recents, albums, events), each with separate fetch, parse, and persist modules. This makes it much easier to add and maintain new data sources going forward.
+
+CN region is in beta and things may be rough around the edges. Feedback is very welcome in our Discord.
+
+### Storage: Migrating Player Icons to R2
+
+As the site has grown (from ~83 snapshots per month in October 2025 to over 2,190 per month in April 2026), keeping database storage under control has become increasingly important.
+
+One of the biggest quick wins was moving **player avatar icons out of the database**. They were previously stored as base64-encoded image data directly in Postgres, averaging 36 KB per row, with the same icon duplicated across every snapshot. By migrating icons to R2 object storage (content-addressed, so identical icons are stored only once), **we reclaim approximately 315 MB** from the database. The database total is expected to drop from ~1,167 MB to ~850 MB once the migration completes in production.
+
+This is just the first step, and we have a plan for handling the rest of the storage growth as the user base continues to scale.
+
+### April Fools 2026
+
+Did anyone catch the **tomomai ai** experience on April 1st? If you missed it, or just want to relive it, the April Fools mode is now accessible as a **toggleable flag**. You can enable it manually from the flag overrides, so you don't have to wait until next year.
+
+---
+
+Join our Discord to discuss the changes: [https://discord.gg/jZqQHr3UDq](https://discord.gg/jZqQHr3UDq)
+
+Help us translate tomomai: [https://crowdin.com/project/tomomai](https://crowdin.com/project/tomomai)
+
+Happy grinding!

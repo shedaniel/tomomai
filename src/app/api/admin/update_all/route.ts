@@ -1,10 +1,12 @@
 import { getCurrentVersion } from "@/lib/metadata";
+import { Region } from "@/lib/types";
+import { getEnabledRegions, isRegionEnabled } from "@/lib/enabled-regions";
 import { NextRequest, NextResponse } from "next/server";
 
 async function updateRegion(
   origin: string,
-  region: "intl" | "jp",
-  maimaiToken: string,
+  region: Region,
+  maimaiToken: string | null,
   adminToken: string,
   imageUpload: boolean,
 ): Promise<{ success: boolean; data?: any; error?: string; status?: number }> {
@@ -14,7 +16,10 @@ async function updateRegion(
   console.log(`Fetching ${region.toUpperCase()} records from /api/admin/update...`);
   const updateUrl = new URL(`${origin}/api/admin/update`);
   updateUrl.searchParams.set('region', region);
-  updateUrl.searchParams.set('token', maimaiToken);
+  // CN uses Lxns (public) and the update route does not require a maimai token.
+  if (region !== "cn" && maimaiToken) {
+    updateUrl.searchParams.set('token', maimaiToken);
+  }
 
   const updateResponse = await fetch(updateUrl.toString(), {
     method: "GET",
@@ -123,27 +128,27 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const maimaiToken = searchParams.get('token');
 
-    if (!maimaiToken) {
+    const regionParam = searchParams.get('region') as Region | null;
+    if (regionParam && !isRegionEnabled(regionParam)) {
       return NextResponse.json(
-        { error: "Missing 'token' query parameter" },
+        { error: `Invalid 'region' query parameter, must be one of: ${getEnabledRegions().join(", ")}` },
         { status: 400 }
       );
     }
-
-    const regionParam = searchParams.get('region');
-    if (regionParam && regionParam !== "jp" && regionParam !== "intl") {
-      return NextResponse.json(
-        { error: "Invalid 'region' query parameter, must be 'jp' or 'intl'" },
-        { status: 400 }
-      );
-    }
-    const region = regionParam as "jp" | "intl" | null;
 
     const imageUploadParam = searchParams.get('image_upload');
     const imageUpload = imageUploadParam !== "false";
 
     const origin = request.nextUrl.origin;
-    const regions: ("jp" | "intl")[] = region ? [region] : ["jp", "intl"];
+    const regions: Region[] = regionParam ? [regionParam] : getEnabledRegions();
+
+    // maimaiToken is only required if any non-CN region is being processed.
+    if (regions.some(r => r !== "cn") && !maimaiToken) {
+      return NextResponse.json(
+        { error: "Missing 'token' query parameter (required for jp/intl)" },
+        { status: 400 }
+      );
+    }
     console.log(`Admin update_all requested: processing ${regions.map(r => r.toUpperCase()).join(" then ")} (image_upload=${imageUpload})`);
 
     const results: Record<string, any> = {};

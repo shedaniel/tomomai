@@ -41,15 +41,17 @@ export interface Post extends PostMeta {
 
 /**
  * Get the fallback chain for a given locale
- * zh-HK and zh-CN falls back to zh-TW before English
+ * zh-HK and zh-CN fall back to zh-TW before English
+ * zh-SG falls back through zh-CN → zh-TW (both simplified-Chinese sources work)
  * All other locales fall back directly to English
  */
 function getLocaleFallbackChain(locale: Locale): string[] {
   const chain: string[] = [locale];
 
-  // Special case: zh-HK and zh-CN falls back to zh-TW first
   if (locale === "zh-HK" || locale === "zh-CN") {
     chain.push("zh-TW");
+  } else if (locale === "zh-SG") {
+    chain.push("zh-CN", "zh-TW");
   }
 
   // Always fall back to English at the end (if not already English)
@@ -110,7 +112,8 @@ export function getAllPostsMeta(locale: Locale): PostMeta[] {
     const { data } = matter(fileContent);
 
     // Check if we need to convert Traditional Chinese
-    const needsCnConversion = locale === "zh-CN" && selectedLocale === "zh-TW";
+    const needsCnConversion =
+      (locale === "zh-CN" || locale === "zh-SG") && selectedLocale === "zh-TW";
     const needsHkConversion = locale === "zh-HK" && selectedLocale === "zh-TW";
     const convertText = needsCnConversion ? convertToSimplifiedChinese
       : needsHkConversion ? convertToHongKongChinese
@@ -133,7 +136,8 @@ export function getAllPostsMeta(locale: Locale): PostMeta[] {
 /**
  * Get a specific post by canonical slug and locale with fallback chain
  * zh-HK and zh-CN fall back to zh-TW before English
- * zh-CN/zh-HK content from zh-TW is automatically converted via OpenCC
+ * zh-SG falls back zh-CN → zh-TW (using zh-CN as-is, or converting from zh-TW)
+ * zh-CN/zh-HK/zh-SG content from zh-TW is automatically converted via OpenCC
  */
 export function getPostBySlug(slug: string, locale: Locale): Post | null {
   // Try each locale in the fallback chain
@@ -162,7 +166,8 @@ export function getPostBySlug(slug: string, locale: Locale): Post | null {
   const actualLocale = match ? match[2] : "en";
 
   // Check if we need to convert Traditional Chinese
-  const needsCnConversion = locale === "zh-CN" && actualLocale === "zh-TW";
+  const needsCnConversion =
+    (locale === "zh-CN" || locale === "zh-SG") && actualLocale === "zh-TW";
   const needsHkConversion = locale === "zh-HK" && actualLocale === "zh-TW";
   const convertText = needsCnConversion ? convertToSimplifiedChinese
     : needsHkConversion ? convertToHongKongChinese
@@ -206,13 +211,19 @@ export function getAvailableTranslations(canonicalSlug: string): Locale[] {
   const hasZhTW = translations.includes("zh-TW");
 
   if (hasZhTW) {
-    // zh-CN and zh-HK can be auto-converted from zh-TW
+    // zh-CN, zh-HK, and zh-SG can be auto-converted from zh-TW
     if (!translations.includes("zh-CN")) {
       translations.push("zh-CN");
     }
     if (!translations.includes("zh-HK")) {
       translations.push("zh-HK");
     }
+    if (!translations.includes("zh-SG")) {
+      translations.push("zh-SG");
+    }
+  } else if (translations.includes("zh-CN") && !translations.includes("zh-SG")) {
+    // zh-SG can also use zh-CN directly (both are simplified)
+    translations.push("zh-SG");
   }
 
   // Sort translations using the canonical locale order from @/i18n/locale

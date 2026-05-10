@@ -5,7 +5,7 @@ import { Region, UserData } from '@/lib/types';
 import { TRPCError } from '@trpc/server';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
-import { getEnabledRegions, isChinaRegion } from '@/lib/enabled-regions';
+import { getEnabledRegions, isCNExclusive } from '@/lib/enabled-regions';
 import { resolvePublicUserByUsername } from '@/server/queries/public-access';
 
 const regionSchema = z.enum(getEnabledRegions());
@@ -16,7 +16,7 @@ export const profileRouter = router({
       const userRecord = await db
         .select({
           username: user.username, publishProfile: user.publishProfile, role: user.role,
-          ...(!isChinaRegion() ? { region: user.region } : {})
+          ...(!isCNExclusive() ? { region: user.region } : {})
         })
         .from(user)
         .where(eq(user.id, ctx.session.user.id))
@@ -33,7 +33,7 @@ export const profileRouter = router({
         hasUsername: !!userRecord[0].username,
         username: userRecord[0].username,
         publishProfile: userRecord[0].publishProfile,
-        region: (!isChinaRegion() ? userRecord[0].region! : 'cn') as Region,
+        region: (!isCNExclusive() ? userRecord[0].region! : 'cn') as Region,
         role: userRecord[0].role,
       } satisfies UserData;
     }),
@@ -111,7 +111,7 @@ export const profileRouter = router({
       profileMainRegion: regionSchema,
     }))
     .mutation(async ({ ctx, input }) => {
-      if (isChinaRegion()) throw new TRPCError({ code: 'BAD_REQUEST', message: 'Cannot update profile main region in China region' });
+      if (isCNExclusive()) throw new TRPCError({ code: 'BAD_REQUEST', message: 'Cannot update profile main region in China region' });
       await db
         .update(user)
         .set({

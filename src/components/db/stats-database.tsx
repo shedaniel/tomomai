@@ -15,7 +15,6 @@ import { RatingVsPlayCountHeatmap } from "./stats/rating-vs-play-count-heatmap";
 import { ActiveUsersChart } from "./stats/active-users-chart";
 import { FetchesPerDayChart } from "./stats/fetches-per-day-chart";
 import { Tabs, TabsList, TabsTab } from "../animate-ui/components/base/tabs";
-import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
 export function StatsDatabase() {
   const t = useTranslations("db.stats");
@@ -24,10 +23,13 @@ export function StatsDatabase() {
   const { data, isLoading } = trpc.db.getStats.useQuery({ region });
 
   return (
-    <div className="space-y-6">
-      <VisuallyHidden asChild>
-        <h1>{t("title")}</h1>
-      </VisuallyHidden>
+    <div className="space-y-6 pt-3">
+      <header className="space-y-1">
+        <h1 className="text-2xl font-semibold tracking-tight">{t("title")}</h1>
+        <p className="text-sm text-muted-foreground max-w-3xl leading-relaxed">
+          {t("description")}
+        </p>
+      </header>
       <div className="flex justify-between items-center">
         <Tabs value={region} onValueChange={(v) => setRegion(v as Region)}>
           <TabsList className="grid grid-cols-[1fr_1fr] gap-2">

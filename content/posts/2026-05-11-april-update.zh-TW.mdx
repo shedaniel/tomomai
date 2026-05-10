@@ -1,0 +1,103 @@
+---
+title: "效能大躍進、新手引導，還有中國地區 Beta"
+date: "2026-05-11"
+version: "2026.4"
+summary: "4 月更新（有點晚）：效能大幅提升有數據為證、全新新手引導流程、OG 圖片大換新、中國地區 Beta 開放、儲存空間修復，April Fools 彩蛋也回來了。"
+locale: "zh-TW"
+canonicalSlug: "2026-05-11-april-update"
+---
+
+## 4 月更新：慢工出細活
+
+這次比平常晚了一點，抱歉！不過內容真的很扎實。有有數字撐腰的效能提升、更友善的初次使用體驗、一些後端健康維護工程，還有中國地區支援的首次公開 Beta。
+
+## 效能提升
+
+我們在底層做了很多事讓 tomomai 跑起來更快，成果也慢慢浮現了。以下是 **Largest Contentful Paint (LCP)** 改善前後的數字：
+
+| 地區 | 改善前 | 改善後 |
+|---|--:|--:|
+| 日本 | 808 ms | 432 ms |
+| 香港 | 3,180 ms | 780 ms |
+| 中國 | 3,208 ms | 2,522 ms |
+
+日本跟香港進步幅度非常明顯。中國還是比我們想要的慢，主要原因是連到 Cloudflare R2 的速度對中國大陸的流量不太友善。**我們正在評估中國專用的資產 CDN**，應該能在之後的更新讓那個數字跟其他地區拉近。
+
+到底改了什麼？
+
+#### CJK 字型子集化
+
+這是這次最大的單一改善。以前用日文、繁體中文或簡體中文開 tomomai，每種語言都要一次下載 **4–7 MB 的超大字型檔**。我們用 fonttools 重寫了字型處理流程，把每個 Noto Sans CJK 字型（JP/TC/SC）切成 **20 個 unicode-range 區塊**。瀏覽器現在只會去抓畫面上實際出現的那些字，再也不用為那幾千個你根本不會看到的字買單。
+
+我們也把 CJK 字型的預載整個拿掉了。現在只有 Inter（拉丁字母）會預載，CJK 字型改成依照語系按需載入。
+
+#### Bundle 最佳化
+
+除了字型之外，我們還做了幾個網路面的改善：
+
+- **分頁動態載入**：比較重的 Dashboard 分頁（Stats、Recommendations、Export、History、Events、Recents、Developer、Albums）現在只有你切過去的時候才會載入程式碼，不會在第一次開頁面就全部塞進來。
+- **Tree-shaking**：幫 `lucide-react`、`recharts`、`date-fns` 還有幾個 Radix UI 套件加了 `optimizePackageImports`，只有實際有用到的圖示跟元件才會被打包進去。
+- **Bundle 分析器**：接上了 `@next/bundle-analyzer`（用 `ANALYZE=true` 開啟），之後可以持續追蹤這塊。
+
+## 全新 OG 圖片
+
+現在在 Discord、Twitter 或任何會顯示連結預覽的地方分享 tomomai 的連結，就能看到一張正經的預覽圖，不再是空白卡片了。
+
+網站的所有主要頁面都加了自訂 Open Graph 圖片：
+
+<ImageCarousel>
+  <ImageCarouselSlide src="/posts/2026-05-11-april-update/og-song.png" alt="歌曲詳細 OG 圖片" caption="歌曲詳細 - 封面、歌名、歌手、難易度" />
+  <ImageCarouselSlide src="/posts/2026-05-11-april-update/og-profile.png" alt="玩家個人資料 OG 圖片" caption="玩家個人資料 - 顯示名稱、Rating、頭像、地區" />
+  <ImageCarouselSlide src="/posts/2026-05-11-april-update/og-home.png" alt="首頁 OG 圖片" caption="首頁" />
+  <ImageCarouselSlide src="/posts/2026-05-11-april-update/og-db.png" alt="資料庫 OG 圖片" caption="資料庫首頁" />
+</ImageCarousel>
+
+OG 圖片渲染器現在改用本地內建的字型，不會再在渲染的時候去跟 Google Fonts 要字了，生成速度更快，也不依賴外部服務。
+
+## 新功能：新手引導流程
+
+新用戶再也不會一登入就被丟進 Dashboard 裡迷路了。全新的**新手引導流程**是一個三步驟的動畫對話框：
+
+1. **設定使用者名稱**：有即時可用性檢查跟自動建議，選一個你喜歡的 tomomai 使用者名稱。這裡也能設定要不要讓你的個人資料公開。
+2. **選擇地區**：從幾張有主題風格的卡片裡選你的地區。
+3. **完成**：可以開始用了。
+
+<ImageCarousel>
+  <ImageCarouselSlide src="/posts/2026-05-11-april-update/onboarding-step1.png" alt="新手引導步驟 1 - 使用者名稱" caption="步驟 1：設定使用者名稱" />
+  <ImageCarouselSlide src="/posts/2026-05-11-april-update/onboarding-step2.png" alt="新手引導步驟 2 - 地區" caption="步驟 2：選擇地區" />
+</ImageCarousel>
+
+舊版只有單一欄位的使用者名稱對話框已經拿掉了。已經有帳號的人不受影響。
+
+## 技術面
+
+### 中國地區 Beta
+
+**中國地區支援正式進入 Beta**。CN 用戶現在能透過以下兩種方式把 tomomai 接到 maimai DX 資料：
+
+- **<a href="https://maimai.lxns.net" rel="nofollow noopener noreferrer" className="text-primary hover:underline" target="_blank">LXNS（落雪咖啡屋 maimai DX 查分器）</a>**：OAuth 串接，不需要處理密碼。同步玩家資料和分數。最近遊玩記錄和活動資料這個來源暫不支援。
+- **我們自己的 HTTP Proxy**：給想直接用原生 maimai 帳號的玩家。
+
+要把 CN 支援做好，後端需要大幅度的結構調整。我們的主要資料抓取程式碼已經長成一個 2,100 行的大怪物。為了能夠乾淨地支援每個地區不同的資料來源，我們把它重構成一個 `src/lib/maimai/` 套件，依照領域（player、songs、recents、albums、events）分好資料夾，各自有獨立的抓取、解析、存儲模組。這樣以後新增跟維護資料來源就方便多了。
+
+CN 地區還在 Beta，邊邊角角可能還不太完美，歡迎到 Discord 回報。
+
+### 儲存：把玩家頭像搬到 R2
+
+隨著網站規模成長（從 2025 年 10 月每月約 83 次快照，到 2026 年 4 月每月超過 2,190 次），控制資料庫儲存空間變得越來越重要。
+
+最有效的改善之一就是把**玩家頭像圖示從資料庫裡搬出去**。以前是把 base64 編碼的圖片資料直接存在 Postgres，每筆平均 36 KB，而且同樣的圖示在每個快照都重複存一份。把頭像搬到 R2 物件儲存之後（以內容定址，相同的圖示只存一份），**資料庫可以釋放約 315 MB 的空間**。等正式環境的搬移完成，資料庫總量預計會從約 1,167 MB 降到約 850 MB。
+
+這只是第一步，我們也有計畫應對用戶持續增加帶來的後續儲存成長。
+
+### April Fools 2026
+
+有人發現 4 月 1 日的 **tomomai ai** 彩蛋嗎？如果錯過了，或是想再玩一次，April Fools 模式現在可以用**可切換的 Flag** 手動開啟。在 Flag 覆寫設定裡打開就好，不用等到明年。
+
+---
+
+歡迎加入 Discord 聊聊這次的更新：[https://discord.gg/jZqQHr3UDq](https://discord.gg/jZqQHr3UDq)
+
+想幫忙翻譯？這邊請：[https://crowdin.com/project/tomomai](https://crowdin.com/project/tomomai)
+
+祝大家刷分愉快！

@@ -93,7 +93,46 @@ async function validateAndClaimInvite(inviteCode: string, userId: string) {
   return invite;
 }
 
+// --- Multi-hostname config (e.g. tomomai.lol + cn.tomomai.lol via the HK
+// proxy in cn/) is driven by env vars so the same code works across
+// deployments without per-domain edits. See cn/README.md.
+//
+// TRUSTED_ORIGINS:    comma-separated origins allowed for OAuth callbacks /
+//                     CORS. Falls back to unset → Better Auth's default
+//                     (single-origin, derived from request host).
+// AUTH_COOKIE_DOMAIN: cookie domain for cross-subdomain sessions (e.g.
+//                     ".tomomai.lol" so cn.tomomai.lol shares sessions with
+//                     the apex). Omit for single-hostname deployments.
+const trustedOrigins = (process.env.TRUSTED_ORIGINS ?? "")
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
+const authCookieDomain = process.env.AUTH_COOKIE_DOMAIN?.trim() || undefined;
+
 export const auth = betterAuth({
+  ...(trustedOrigins.length ? { trustedOrigins } : {}),
+  advanced: {
+    // Honour x-forwarded-host / x-forwarded-proto when computing the base
+    // URL Better Auth uses for OAuth redirect_uri, cookie domain inference,
+    // etc. Without this, Better Auth falls back to `request.url` — which in
+    // local `pnpm dev` is http://localhost:3000 even when the request came
+    // in via the cn/ HK proxy (or via cloudflared tunnel during e2e dev),
+    // breaking Discord login by sending users back to localhost. Vercel
+    // and the cn/ Caddy both set these headers, so trusting them is safe
+    // — there is no path where an untrusted client can reach the app
+    // without going through one of them.
+    trustedProxyHeaders: true,
+    ...(authCookieDomain
+      ? {
+          crossSubDomainCookies: { enabled: true, domain: authCookieDomain },
+          defaultCookieAttributes: {
+            domain: authCookieDomain,
+            sameSite: "lax",
+            secure: true,
+          },
+        }
+      : {}),
+  },
   emailAndPassword: {
     enabled: false,
   },

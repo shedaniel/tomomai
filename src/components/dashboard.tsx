@@ -4,7 +4,7 @@ import { DataBanner } from "@/components/data-banner";
 import { DataContent } from "@/components/data-content";
 import { FetchToastContainer } from "@/components/fetch-toast";
 import { TokenDialog } from "@/components/token-dialog";
-import { UsernameSetupDialog } from "@/components/username-setup-dialog";
+import { OnboardingDialog } from "@/components/onboarding-dialog";
 import { AlbumPrivacyDialog } from "@/components/album-privacy-dialog";
 import { useFetchSession } from "@/hooks/useFetchSession";
 import { useSnapshots } from "@/hooks/useSnapshots";
@@ -15,17 +15,18 @@ import { trpc } from "@/lib/trpc-client";
 import { Region, Snapshot, SnapshotWithSongs, User, UserData } from "@/lib/types";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 import { AboutDialog } from "./about-dialog";
 import { AdminDialog } from "./dialogs/admin-dialog";
 import { ExperimentsDialog } from "./experiments-dialog";
 import { InvitesDialog } from "./invites-dialog";
 import { Header } from "./header";
-import { isChinaRegion } from "@/lib/enabled-regions";
+import { isCNExclusive } from "@/lib/enabled-regions";
 import { ChangelogDialog } from "./changelog-dialog";
 import { TomomaiAI } from "./tomomai-ai";
 import { PostMeta } from "@/lib/posts";
 
-type DialogType = null | "token" | "username" | "about" | "admin" | "invites" | "experiments" | "albumPrivacy";
+type DialogType = null | "token" | "onboarding" | "about" | "admin" | "invites" | "experiments" | "albumPrivacy";
 
 interface DashboardProps {
   user: User;
@@ -38,6 +39,7 @@ interface DashboardProps {
 
 export function Dashboard({ user, initialUserData, initialSnapshots, initialSnapshotData, flags, latestPost }: DashboardProps) {
   const [dialogType, setDialogType] = useState<DialogType>(null);
+  const t = useTranslations("dashboard");
 
   // Check if user has username
   const { data: userData, refetch: refetchUserData } = trpc.user.getUserData.useQuery(
@@ -49,12 +51,12 @@ export function Dashboard({ user, initialUserData, initialSnapshots, initialSnap
   );
 
   // Use the stored region preference, fallback to "intl" or "cn" if not set
-  const selectedRegion: Region = (userData?.region as Region) || (isChinaRegion() ? "cn" : "intl");
+  const selectedRegion: Region = (userData?.region as Region) || (isCNExclusive() ? "cn" : "intl");
 
-  // Show username setup dialog if user doesn't have username
+  // Show onboarding dialog if user doesn't have username
   useEffect(() => {
     if (userData && !userData.hasUsername) {
-      setDialogType("username");
+      setDialogType("onboarding");
     }
   }, [userData]);
 
@@ -92,11 +94,11 @@ export function Dashboard({ user, initialUserData, initialSnapshots, initialSnap
   // Update region mutation
   const updateRegionMutation = trpc.user.updateRegion.useMutation({
     onSuccess: () => {
-      toast.success("Region updated successfully!");
+      toast.success(t("regionUpdateSuccess"));
       refetchUserData();
     },
     onError: (error) => {
-      toast.error(`Failed to update region: ${error.message}`);
+      toast.error(t("regionUpdateError", { error: error.message }));
     },
   });
 
@@ -216,6 +218,7 @@ export function Dashboard({ user, initialUserData, initialSnapshots, initialSnap
             onRegionChange: handleRegionChange,
             onInvites: () => setDialogType("invites"),
             onAdmin: () => setDialogType("admin"),
+            onTestOnboarding: () => setDialogType("onboarding"),
             onExperiments: () => setDialogType("experiments"),
             onLogout: handleLogout,
           },
@@ -255,9 +258,13 @@ export function Dashboard({ user, initialUserData, initialSnapshots, initialSnap
         stopSessionPolling={stopSessionPolling}
       />
 
-      <UsernameSetupDialog
-        open={dialogType === "username"}
+      <OnboardingDialog
+        open={dialogType === "onboarding"}
         onComplete={handleUsernameSetupComplete}
+        initialRegion={selectedRegion}
+        initialUsername={userData?.username}
+        initialPublishProfile={userData?.publishProfile}
+        testMode={!!userData?.hasUsername}
       />
 
       <AboutDialog open={dialogType === "about"} onOpenChange={open => setDialogType(open ? "about" : null)} />
@@ -277,7 +284,7 @@ export function Dashboard({ user, initialUserData, initialSnapshots, initialSnap
       <ChangelogDialog latestPost={latestPost} />
 
       <FetchToastContainer state={fetchToastState} />
-      <TomomaiAI snapshotData={selectedSnapshotData || null} region={selectedRegion} />
+      <TomomaiAI snapshotData={selectedSnapshotData || null} region={selectedRegion} aprilFools2026={flags.aprilFools2026} />
     </div>
   );
 }

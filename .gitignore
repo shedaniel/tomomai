@@ -37,6 +37,12 @@ yarn-error.log*
 # vercel
 .vercel
 
+# cn proxy: deploy.sh renders Caddyfile.tmpl → Caddyfile.rendered locally
+# before scp'ing it. Cleaned up on EXIT, but ignore so a crashed run
+# doesn't leak prompted values (ACME email etc.) into git.
+/cn/Caddyfile.rendered
+/cn/Caddyfile.local
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

@@ -84,48 +84,70 @@ export async function getSongSlug(song: SongForSlug): Promise<string> {
 }
 
 /**
- * Generate slugs and aliases for multiple songs in parallel
+ * Module-level memo keyed by (songName, artist, type). Slug + aliases are
+ * pure deterministic functions of those three fields, and computing them
+ * runs `kuroshiro`/`kuromoji` (Japanese morphological analyzer) which is
+ * extremely expensive — ~1.6ms per song × 1602 songs × 4 calls/song was
+ * dominating every server render. The catalog only changes when the
+ * songs table changes (rare), so cache forever in-process.
+ */
+const slugCache = new Map<string, { slug: string; aliases: string[] }>();
+
+async function computeSlugAndAliases(
+  song: SongForSlug
+): Promise<{ slug: string; aliases: string[] }> {
+  const processedName = await toRomaji(song.songName);
+  const processedArtist = await toRomaji(song.artist);
+
+  const nameEverything = await toEverything(song.songName);
+  const artistEverything = await toEverything(song.artist);
+
+  const cleanedName = slug(processedName);
+  const cleanedArtist = slug(processedArtist.replace(/\s+/g, ''));
+
+  let baseSlug;
+  if (!cleanedName && cleanedArtist) {
+    baseSlug = `_-${cleanedArtist}`;
+  } else if (cleanedName && !cleanedArtist) {
+    baseSlug = cleanedName;
+  } else if (!cleanedName && !cleanedArtist) {
+    baseSlug = `song-${simpleHash(song.songName + song.artist)}`;
+  } else {
+    baseSlug = `${cleanedName}-${cleanedArtist}`;
+  }
+
+  const fullSlug = `${baseSlug}-${song.type}`;
+  const aliases = [
+    processedName,
+    processedArtist,
+    nameEverything.romaji,
+    nameEverything.katakana,
+    nameEverything.hiragana,
+    artistEverything.romaji,
+    artistEverything.katakana,
+    artistEverything.hiragana,
+  ].filter(Boolean);
+
+  return { slug: fullSlug, aliases };
+}
+
+/**
+ * Generate slugs and aliases for multiple songs in parallel.
+ * Uses an in-process cache so repeated calls (within the same process,
+ * across requests) skip the kuroshiro round-trip.
  */
 export async function getSongSlugs<T extends SongForSlug>(songs: T[]): Promise<(T & { slug: string; aliases: string[] })[]> {
   const results = await Promise.all(songs.map(async (song) => {
-    // Romanize Japanese text
-    const processedName = await toRomaji(song.songName);
-    const processedArtist = await toRomaji(song.artist);
-
-    const nameEverything = await toEverything(song.songName);
-    const artistEverything = await toEverything(song.artist);
-
-    // Generate slug logic duplicated to avoid re-running toRomaji
-    const cleanedName = slug(processedName);
-    const cleanedArtist = slug(processedArtist.replace(/\s+/g, ''));
-
-    let baseSlug;
-    if (!cleanedName && cleanedArtist) {
-      baseSlug = `_-${cleanedArtist}`;
-    } else if (cleanedName && !cleanedArtist) {
-      baseSlug = cleanedName;
-    } else if (!cleanedName && !cleanedArtist) {
-      baseSlug = `song-${simpleHash(song.songName + song.artist)}`;
-    } else {
-      baseSlug = `${cleanedName}-${cleanedArtist}`;
+    const key = `${song.songName}||${song.artist}||${song.type}`;
+    let cached = slugCache.get(key);
+    if (!cached) {
+      cached = await computeSlugAndAliases(song);
+      slugCache.set(key, cached);
     }
-
-    const fullSlug = `${baseSlug}-${song.type}`;
-    const aliases = [
-      processedName,
-      processedArtist,
-      nameEverything.romaji,
-      nameEverything.katakana,
-      nameEverything.hiragana,
-      artistEverything.romaji,
-      artistEverything.katakana,
-      artistEverything.hiragana,
-    ].filter(Boolean);
-
     return {
       ...song,
-      slug: fullSlug,
-      aliases
+      slug: cached.slug,
+      aliases: cached.aliases,
     };
   }));
 

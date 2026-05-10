@@ -1,7 +1,7 @@
-export type Locale = 'en' | 'en-GB' | 'ja' | 'zh-TW' | 'zh-HK' | 'zh-CN' | 'ko' | 'yue';
+export type Locale = 'en' | 'en-GB' | 'ja' | 'zh-TW' | 'zh-HK' | 'zh-CN' | 'zh-SG' | 'ko';
 
 export const defaultLocale: Locale = 'en';
-export const locales: Locale[] = ['en', 'en-GB', 'ja', 'zh-TW', 'zh-HK', 'zh-CN', 'ko', 'yue'];
+export const locales: Locale[] = ['en', 'en-GB', 'ja', 'zh-TW', 'zh-HK', 'zh-CN', 'zh-SG', 'ko'];
 
 export function setLocaleCookie(locale: Locale) {
   // This would be called from client-side when user changes language

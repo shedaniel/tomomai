@@ -2,6 +2,8 @@ import { getAllPostsMeta, getPostBySlug, getAvailableTranslations } from "@/lib/
 import { getLocale } from "@/i18n/locale-server";
 import { MDXRemote } from "next-mdx-remote/rsc";
 import { Metadata } from "next";
+import { buildAlternates, breadcrumbJsonLd, openGraphLocales, withTl } from "@/lib/seo";
+import { resolveBaseUrl } from "@/lib/base-url";
 import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
@@ -9,9 +11,10 @@ import { ComponentPropsWithoutRef } from "react";
 import { PostLocaleSwitcher } from "@/components/post-locale-switcher";
 import { getTranslations } from "next-intl/server";
 import { Bot } from "lucide-react";
-import { isChinaRegion } from "@/lib/enabled-regions";
+import { isCNExclusive } from "@/lib/enabled-regions";
 import { MdxImageComparison } from "@/components/mdx-image-comparison";
 import { MdxImageCarousel, MdxImageCarouselSlide } from "@/components/mdx-image-carousel";
+import remarkGfm from "remark-gfm";
 
 type PostPageProps = {
   params: Promise<{
@@ -35,11 +38,13 @@ export async function generateMetadata({ params }: PostPageProps): Promise<Metad
   const url = `/db/posts/${post.slug}`;
   const translations = getAvailableTranslations(post.canonicalSlug);
 
-  // Build hreflang alternates
-  const languages = translations.reduce((acc, lang) => ({
-    ...acc,
-    [lang]: url,
-  }), {});
+  // Hreflang: link each translated locale to `?tl=<locale>` on the same slug;
+  // locales without a translation aren't advertised.
+  const languages: Record<string, string> = {};
+  for (const lang of translations) {
+    languages[lang] = withTl(url, lang);
+  }
+  languages["x-default"] = url;
 
   return {
     title: `${post.title} | tomomai`,
@@ -49,9 +54,10 @@ export async function generateMetadata({ params }: PostPageProps): Promise<Metad
       description: post.summary,
       type: "article",
       url,
+      siteName: "tomomai ともマイ",
       publishedTime: post.date,
-      locale: post.locale,
       images: [{ url: `/db/posts/${post.slug}/opengraph-image`, width: 1200, height: 630 }],
+      ...openGraphLocales(locale),
     },
     twitter: {
       card: "summary_large_image",
@@ -72,6 +78,9 @@ const mdxComponents = {
   h3: (props: ComponentPropsWithoutRef<"h3">) => (
     <h3 className="text-xl font-semibold mt-6 mb-3" {...props} />
   ),
+  h4: (props: ComponentPropsWithoutRef<"h4">) => (
+    <h4 className="text-base font-semibold mt-4 mb-2" {...props} />
+  ),
   p: (props: ComponentPropsWithoutRef<"p">) => (
     <p className="text-muted-foreground leading-relaxed mb-4" {...props} />
   ),
@@ -91,6 +100,26 @@ const mdxComponents = {
     <strong className="font-semibold text-foreground" {...props} />
   ),
   hr: () => <hr className="my-8 border-border" />,
+  table: (props: ComponentPropsWithoutRef<"table">) => (
+    <div className="overflow-x-auto my-6 rounded-lg border border-border">
+      <table className="w-full text-sm border-collapse" {...props} />
+    </div>
+  ),
+  thead: (props: ComponentPropsWithoutRef<"thead">) => (
+    <thead className="border-b border-border bg-muted/50" {...props} />
+  ),
+  tbody: (props: ComponentPropsWithoutRef<"tbody">) => (
+    <tbody className="divide-y divide-border" {...props} />
+  ),
+  tr: (props: ComponentPropsWithoutRef<"tr">) => (
+    <tr className="hover:bg-muted/40 transition-colors" {...props} />
+  ),
+  th: (props: ComponentPropsWithoutRef<"th">) => (
+    <th className="px-4 py-2 text-left font-semibold text-foreground" {...props} />
+  ),
+  td: (props: ComponentPropsWithoutRef<"td">) => (
+    <td className="px-4 py-2 text-muted-foreground" {...props} />
+  ),
   img: (props: ComponentPropsWithoutRef<"img">) => (
     <Image
       src={props.src as string || ""}
@@ -124,28 +153,43 @@ export default async function PostPage({ params }: PostPageProps) {
 
   const availableTranslations = getAvailableTranslations(post.canonicalSlug);
 
+  const baseUrl = resolveBaseUrl();
+  const postUrl = `${baseUrl}/db/posts/${post.slug}`;
+  const tNav = await getTranslations("db.types");
+
   const structuredData = {
     "@context": "https://schema.org",
-    "@type": "Article",
+    "@type": "BlogPosting",
     headline: post.title,
     description: post.summary,
     datePublished: post.date,
     dateModified: post.date,
-    author: {
-      "@type": "Organization",
-      name: "tomomai",
-    },
+    inLanguage: post.locale,
+    mainEntityOfPage: { "@type": "WebPage", "@id": postUrl },
+    author: { "@type": "Organization", name: "tomomai", url: baseUrl },
     publisher: {
       "@type": "Organization",
       name: "tomomai",
+      logo: { "@type": "ImageObject", url: `${baseUrl}/icon.png` },
     },
+    image: `${postUrl}/opengraph-image`,
   };
+
+  const breadcrumb = breadcrumbJsonLd([
+    { name: "tomomai", url: `${baseUrl}/` },
+    { name: tNav("posts"), url: `${baseUrl}/db/posts` },
+    { name: post.title, url: postUrl },
+  ]);
 
   return (
     <div className="container mx-auto max-w-3xl px-4 py-12">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }}
       />
       {/* Header with back link and language switcher */}
       <div className="mb-8 flex items-center justify-between">
@@ -157,7 +201,7 @@ export default async function PostPage({ params }: PostPageProps) {
         </Link>
 
         {/* Language switcher (only shows if multiple translations exist) */}
-        {!isChinaRegion() && <PostLocaleSwitcher
+        {!isCNExclusive() && <PostLocaleSwitcher
           availableLocales={availableTranslations}
           currentLocale={post.locale}
         />}
@@ -185,7 +229,7 @@ export default async function PostPage({ params }: PostPageProps) {
       <hr className="border-border mb-8" />
 
       <article className="prose-custom">
-        <MDXRemote source={post.content} components={{ ...mdxComponents, AITranslationHint, ImageComparison: MdxImageComparison, ImageCarousel: MdxImageCarousel, ImageCarouselSlide: MdxImageCarouselSlide }} />
+        <MDXRemote source={post.content} options={{ mdxOptions: { remarkPlugins: [remarkGfm] } }} components={{ ...mdxComponents, AITranslationHint, ImageComparison: MdxImageComparison, ImageCarousel: MdxImageCarousel, ImageCarouselSlide: MdxImageCarouselSlide }} />
       </article>
     </div>
   );

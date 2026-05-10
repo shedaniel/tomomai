@@ -2,7 +2,7 @@ import { db } from '@/lib/db';
 import { songs, user, userRecentSongs, userRecentSongsDetailed, userSnapshots } from '@/lib/db/schema-pg';
 import { and, desc, eq, lte } from 'drizzle-orm';
 import { VersionId } from '@/lib/metadata';
-import { FullCombo, FullSync, TitleType } from '@/lib/types';
+import { FullCombo, FullSync, Region, TitleType } from '@/lib/types';
 
 // Type for detailed song statistics
 export interface RecentSongDetails {
@@ -101,7 +101,7 @@ export type CreditPrepareResult = {
 
 export async function prepareCreditData(
   userId: string,
-  region: 'intl' | 'jp',
+  region: Region,
   beforeDate?: Date
 ): Promise<CreditPrepareResult> {
   console.log('Fetching recent songs for credit...');

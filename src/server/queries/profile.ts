@@ -1,7 +1,7 @@
 import { db } from "@/lib/db";
 import { user } from "@/lib/db/schema-pg";
 import { eq } from "drizzle-orm";
-import { isChinaRegion } from "@/lib/enabled-regions";
+import { isCNExclusive } from "@/lib/enabled-regions";
 import type { Region } from "@/lib/types";
 
 export async function fetchUserData(userId: string) {
@@ -10,7 +10,7 @@ export async function fetchUserData(userId: string) {
       username: user.username,
       publishProfile: user.publishProfile,
       role: user.role,
-      ...(!isChinaRegion() ? { region: user.region } : {}),
+      ...(!isCNExclusive() ? { region: user.region } : {}),
     })
     .from(user)
     .where(eq(user.id, userId))
@@ -21,7 +21,7 @@ export async function fetchUserData(userId: string) {
   return {
     username: result[0].username,
     publishProfile: result[0].publishProfile,
-    region: (!isChinaRegion() ? result[0].region! : "cn") as Region,
+    region: (!isCNExclusive() ? result[0].region! : "cn") as Region,
     role: result[0].role,
   };
 }

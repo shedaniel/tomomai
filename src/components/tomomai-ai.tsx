@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { SparklesIcon } from "lucide-react";
-import { isAprilFools2026JST } from "@/lib/april-fools";
 import { splitSongs } from "@/lib/rating-calculator";
 import { trpc } from "@/lib/trpc-client";
 import { Region, SnapshotWithSongs } from "@/lib/types";
@@ -525,6 +524,7 @@ const THINKING_MESSAGES = [
 interface TomomaiAIProps {
   snapshotData: SnapshotWithSongs | null;
   region: Region;
+  aprilFools2026: boolean;
 }
 
 interface RoastData {
@@ -570,7 +570,7 @@ function fillTemplate(template: string, data: RoastData): string {
     .replace(/%most_played_recent%/g, data.mostPlayedRecent);
 }
 
-export function TomomaiAI({ snapshotData, region }: TomomaiAIProps) {
+export function TomomaiAI({ snapshotData, region, aprilFools2026 }: TomomaiAIProps) {
   const [open, setOpen] = useState(false);
   const [phase, setPhase] = useState<"idle" | "thinking" | "done">("idle");
   const [thinkingIndex, setThinkingIndex] = useState(0);
@@ -584,7 +584,7 @@ export function TomomaiAI({ snapshotData, region }: TomomaiAIProps) {
     { enabled: open, retry: false },
   );
 
-  if (!isAprilFools2026JST()) return null;
+  if (!aprilFools2026) return null;
 
   const clearTimeouts = () => {
     timeoutsRef.current.forEach(clearTimeout);

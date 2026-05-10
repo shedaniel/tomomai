@@ -1,5 +1,6 @@
 import { logger } from "@/lib/logger";
-import { AGENT } from "@/lib/http-agent";
+import { maimaiBaseUrl, maimaiRequest } from "@/lib/maimai/http";
+import { musicTypeFromIcon } from "@/lib/maimai/parse-utils";
 import { VersionId } from "@/lib/metadata";
 import { normalizeName } from "@/lib/name-utils";
 import { Difficulty, Level, Region, SongType } from "@/lib/types";
@@ -102,19 +103,12 @@ export async function prepareMaimaiScraper(region: Region, version: VersionId, c
 
 // Helper function to fetch and parse song data for a specific difficulty and version
 export async function fetchSongDataForDifficulty(region: Region, cookies: string, difficultyName: Difficulty, difficulty: number, version: number, log: Logger): Promise<ParsedSong[]> {
-  const songsUrl = `https://${region === "intl" ? "maimaidx-eng.com" : "maimaidx.jp"}/maimai-mobile/record/musicVersion/search/?version=${version}&diff=${difficulty}`;
+  const baseUrl = maimaiBaseUrl(region);
+  const songsUrl = `${baseUrl}/maimai-mobile/record/musicVersion/search/?version=${version}&diff=${difficulty}`;
   const childLog = log.child({ version, difficulty });
   childLog.debug(`Fetching songs data from: ${songsUrl}`);
 
-  const songsResponse = await fetch(songsUrl, {
-    method: "GET",
-    headers: {
-      "Cookie": cookies,
-      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-      "Referer": `https://${region === "intl" ? "maimaidx-eng.com" : "maimaidx.jp"}/maimai-mobile/`,
-    },
-    ...{ dispatcher: AGENT },
-  });
+  const songsResponse = await maimaiRequest(songsUrl, cookies, `${baseUrl}/maimai-mobile/`);
 
   childLog.debug({ status: songsResponse.status }, `Songs data response got`);
 
@@ -167,22 +161,16 @@ function parseSongData(html: string, difficultyName: Difficulty, difficulty: num
         return; // Skip this block
       }
 
-      const iconSrc = iconElement.attr('src');
-      if (!iconSrc) {
-        log.warn(`No src attribute found for music kind icon in block ${index}`);
-        return; // Skip this block
-      }
-
       let musicType: SongType;
       if (difficultyName === "utage") {
         musicType = "dx";
-      } else if (iconSrc.includes('music_dx.png')) {
-        musicType = "dx";
-      } else if (iconSrc.includes('music_standard.png')) {
-        musicType = "std";
       } else {
-        log.warn(`Unknown music type icon: ${iconSrc} in block ${index}`);
-        return; // Skip this block
+        const detected = musicTypeFromIcon(iconElement.attr('src'));
+        if (!detected) {
+          log.warn(`Unknown or missing music type icon for block ${index}: ${iconElement.attr('src')}`);
+          return;
+        }
+        musicType = detected;
       }
 
       // Extract song name

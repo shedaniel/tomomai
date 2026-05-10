@@ -15,9 +15,9 @@ const localeNames: Record<string, string> = {
   'ja': '日本語',
   'zh-TW': '繁體中文 (台灣)',
   'zh-HK': '繁體中文 (香港)',
-  'zh-CN': '简体中文',
+  'zh-CN': '简体中文 (中国大陆)',
+  'zh-SG': '简体中文 (新加坡, 马来西亚)',
   'ko': '한국어',
-  'yue': '廣東話',
 };
 
 export function PostLocaleSwitcher({ availableLocales, currentLocale }: PostLocaleSwitcherProps) {

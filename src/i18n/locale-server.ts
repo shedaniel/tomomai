@@ -1,11 +1,22 @@
 import { cookies, headers } from 'next/headers';
 import { Locale, defaultLocale, locales } from './locale';
-import { isChinaRegion } from '@/lib/enabled-regions';
+import { isCNExclusive } from '@/lib/enabled-regions';
 
 export async function getLocale(): Promise<Locale> {
   // If the region is China, return "zh-CN"
-  if (isChinaRegion()) {
+  if (isCNExclusive()) {
     return "zh-CN";
+  }
+
+  // Honor explicit `?tl=<locale>` (forwarded as `x-tl-locale` by middleware).
+  // Highest precedence so SEO crawlers can index locale variants without
+  // mutating the user's cookie.
+  try {
+    const headersList = await headers();
+    const tl = headersList.get('x-tl-locale') as Locale | null;
+    if (tl && locales.includes(tl)) return tl;
+  } catch {
+    // Headers unavailable during static generation — fall through.
   }
 
   try {
