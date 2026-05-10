@@ -12,6 +12,7 @@ const corsHeaders = {
   "Access-Control-Allow-Credentials": "true",
   "Access-Control-Allow-Private-Network": "true",
   "Access-Control-Max-Age": "86400",
+  "Cross-Origin-Resource-Policy": "cross-origin",
 };
 
 export async function GET() {
