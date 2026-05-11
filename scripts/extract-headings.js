@@ -377,7 +377,7 @@ function renderImages(images) {
   }
 }
 
-function renderLinks(links) {
+function renderLinks(links, _url) {
   section("Links");
   if (links.length === 0) { info("No links found"); return; }
 
@@ -444,7 +444,163 @@ function renderVisibleText(text) {
   if (text.length > 1200) info(`  ... (${text.length - 600} more chars)`);
 }
 
+// ── Robots + Sitemap ─────────────────────────────────────────────────────────
+
+function normalizeUrl(u) {
+  try {
+    const p = new URL(u);
+    // Strip trailing slash (except bare origin), strip default ports, lowercase host
+    let path = p.pathname.replace(/\/$/, "") || "/";
+    return `${p.protocol}//${p.host}${path}${p.search}`;
+  } catch { return u; }
+}
+
+async function fetchText(url) {
+  try {
+    const res = await fetch(url, {
+      headers: { "User-Agent": "Mozilla/5.0 (compatible; SEO-audit/1.0)" },
+    });
+    return res.ok ? await res.text() : null;
+  } catch { return null; }
+}
+
+async function fetchRobots(origin) {
+  const text = await fetchText(`${origin}/robots.txt`);
+  if (!text) return { disallowRules: [], sitemapUrls: [], raw: null };
+
+  const disallowRules = [];
+  const sitemapUrls = [];
+  let currentAgents = [];
+
+  for (const rawLine of text.split("\n")) {
+    const line = rawLine.trim();
+    if (!line || line.startsWith("#")) continue;
+    const [field, ...rest] = line.split(":");
+    const value = rest.join(":").trim();
+    const key = field.trim().toLowerCase();
+
+    if (key === "user-agent")   currentAgents = [value];
+    if (key === "disallow")     disallowRules.push({ agents: [...currentAgents], path: value });
+    if (key === "sitemap")      sitemapUrls.push(value);
+  }
+  return { disallowRules, sitemapUrls, raw: text };
+}
+
+function isDisallowed(path, rules) {
+  // Only consider rules for * or the specific bot
+  for (const { agents, path: rule } of rules) {
+    if (!agents.some(a => a === "*" || a.toLowerCase().includes("googlebot"))) continue;
+    if (!rule) continue;
+    if (path.startsWith(rule)) return rule;
+  }
+  return null;
+}
+
+async function fetchSitemapUrls(sitemapUrl, depth = 0) {
+  if (depth > 2) return new Set();
+  const text = await fetchText(sitemapUrl);
+  if (!text) return new Set();
+
+  const urls = new Set();
+
+  // Sitemap index — recurse into sub-sitemaps (one level)
+  const indexRe = /<sitemap>[\s\S]*?<loc>([\s\S]*?)<\/loc>[\s\S]*?<\/sitemap>/gi;
+  let m;
+  const subSitemaps = [];
+  while ((m = indexRe.exec(text)) !== null) subSitemaps.push(m[1].trim());
+
+  if (subSitemaps.length > 0) {
+    // Fetch sub-sitemaps in parallel, cap at 10
+    const results = await Promise.all(subSitemaps.slice(0, 10).map(u => fetchSitemapUrls(u, depth + 1)));
+    for (const set of results) for (const u of set) urls.add(u);
+    return urls;
+  }
+
+  // Regular sitemap
+  const locRe = /<loc>([\s\S]*?)<\/loc>/gi;
+  while ((m = locRe.exec(text)) !== null) urls.add(normalizeUrl(m[1].trim()));
+  return urls;
+}
+
+async function fetchCrawlData(origin) {
+  const robots = await fetchRobots(origin);
+  // Discover sitemap: prefer robots.txt Sitemap: directive, fall back to /sitemap.xml
+  const sitemapSources = robots.sitemapUrls.length > 0
+    ? robots.sitemapUrls
+    : [`${origin}/sitemap.xml`];
+  const sets = await Promise.all(sitemapSources.map(u => fetchSitemapUrls(u)));
+  const sitemapUrls = new Set();
+  for (const s of sets) for (const u of s) sitemapUrls.add(u);
+  return { robots, sitemapUrls };
+}
+
+function renderCrawlability(url, internalLinks, robots, sitemapUrls) {
+  section("Robots & Sitemap");
+
+  const { pathname } = new URL(url);
+  const origin = new URL(url).origin;
+
+  // ── Robots ──
+  const disallowedBy = isDisallowed(pathname, robots.disallowRules);
+  if (robots.raw === null) {
+    warn("Could not fetch robots.txt");
+  } else if (disallowedBy) {
+    err(`Disallowed by robots.txt  ${gray("(rule: Disallow: " + disallowedBy + ")")}`);
+  } else {
+    ok(`Allowed by robots.txt`);
+  }
+  if (robots.sitemapUrls.length > 0) {
+    info(`Sitemap declared in robots.txt: ${robots.sitemapUrls.join(", ")}`);
+  }
+
+  // ── Sitemap ──
+  if (sitemapUrls.size === 0) {
+    warn("Sitemap empty or unreachable");
+  } else {
+    info(`Sitemap contains ${sitemapUrls.size} URL(s)`);
+    const normalized = normalizeUrl(url);
+    if (sitemapUrls.has(normalized)) {
+      ok(`This URL is in the sitemap`);
+    } else {
+      warn(`This URL is NOT in the sitemap  ${gray(normalized)}`);
+    }
+  }
+
+  // ── Internal links vs sitemap ──
+  if (internalLinks.length > 0 && sitemapUrls.size > 0) {
+    const seen = new Map();
+    for (const { href, text } of internalLinks) {
+      const abs = href.startsWith("/") ? `${origin}${href}` : href;
+      const norm = normalizeUrl(abs);
+      if (!seen.has(norm)) seen.set(norm, text || href);
+    }
+
+    const inSitemap    = [...seen.entries()].filter(([u]) =>  sitemapUrls.has(u));
+    const notInSitemap = [...seen.entries()].filter(([u]) => !sitemapUrls.has(u));
+
+    console.log(`\n  ${bold("Internal links vs sitemap:")}  ${green(inSitemap.length + " indexed")}  ${notInSitemap.length > 0 ? yellow(notInSitemap.length + " missing") : ""}`);
+    if (notInSitemap.length > 0) {
+      for (const [u, text] of notInSitemap) {
+        const disallowed = isDisallowed(new URL(u).pathname, robots.disallowRules);
+        const flag = disallowed ? red("  [disallowed]") : yellow("  [not in sitemap]");
+        console.log(`    ${gray("·")} ${text.slice(0, 40).padEnd(42)} ${gray(u.replace(origin, "").slice(0, 60))}${flag}`);
+      }
+    }
+  }
+}
+
 // ── Main ─────────────────────────────────────────────────────────────────────
+
+// Pre-fetch robots + sitemap once per unique origin
+const crawlCache = new Map();
+async function getCrawlData(url) {
+  const origin = new URL(url).origin;
+  if (!crawlCache.has(origin)) {
+    crawlCache.set(origin, fetchCrawlData(origin));
+  }
+  return crawlCache.get(origin);
+}
+
 for (const url of urls) {
   console.log(`\n${"═".repeat(70)}`);
   console.log(`${bold(url)}`);
@@ -462,12 +618,16 @@ for (const url of urls) {
     continue;
   }
 
+  const links = extractLinks(html, url);
+  const { robots, sitemapUrls } = await getCrawlData(url);
+
   renderMeta(extractMeta(html), extractOG(html), extractTwitter(html));
   renderHeadings(extractHeadings(html));
   renderHreflang(extractHreflang(html));
   renderJsonLd(extractJsonLd(html));
   renderImages(extractImages(html));
-  renderLinks(extractLinks(html, url));
+  renderLinks(links);
+  renderCrawlability(url, links.filter(l => l.isInternal), robots, sitemapUrls);
   if (showText) {
     renderSelects(extractSelects(html));
     renderVisibleText(extractVisibleText(html));

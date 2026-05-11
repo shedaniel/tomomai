@@ -10,7 +10,7 @@ import { useFetchSession } from "@/hooks/useFetchSession";
 import { useSnapshots } from "@/hooks/useSnapshots";
 import { signOut } from "@/lib/auth-client";
 import { Flags } from "@/lib/flags";
-import { isTokenError } from "@/lib/token-errors";
+import { isTokenError, isCnCookiesSingleUseError } from "@/lib/token-errors";
 import { trpc } from "@/lib/trpc-client";
 import { Region, Snapshot, SnapshotWithSongs, User, UserData } from "@/lib/types";
 import { useEffect, useState } from "react";
@@ -25,8 +25,9 @@ import { isCNExclusive } from "@/lib/enabled-regions";
 import { ChangelogDialog } from "./changelog-dialog";
 import { TomomaiAI } from "./tomomai-ai";
 import { PostMeta } from "@/lib/posts";
+import { HttpProxyAuthSubDialog } from "./token-dialog-cn";
 
-type DialogType = null | "token" | "onboarding" | "about" | "admin" | "invites" | "experiments" | "albumPrivacy";
+type DialogType = null | "token" | "token-cn-proxy" | "onboarding" | "about" | "admin" | "invites" | "experiments" | "albumPrivacy";
 
 interface DashboardProps {
   user: User;
@@ -84,11 +85,11 @@ export function Dashboard({ user, initialUserData, initialSnapshots, initialSnap
     stopSessionPolling,
     fetchToastState,
   } = useFetchSession(refreshSnapshots, flags, () => {
-    // Called when a token-related error is detected during fetch
     setDialogType("token");
   }, () => {
-    // Called when album preference not set
     setDialogType("albumPrivacy");
+  }, () => {
+    setDialogType("token-cn-proxy");
   });
 
   // Update region mutation
@@ -146,13 +147,14 @@ export function Dashboard({ user, initialUserData, initialSnapshots, initialSnap
       console.error("Auto fetch failed:", error);
 
       if (error instanceof Error) {
-        toast.error(error.message);
-
-        // Only show token dialog if the error is about missing token
-        if (isTokenError(error.message)) {
+        if (isCnCookiesSingleUseError(error.message)) {
+          setDialogType("token-cn-proxy");
+        } else if (isTokenError(error.message)) {
+          toast.error(error.message);
           setDialogType("token");
+        } else {
+          toast.error(error.message);
         }
-        // For other errors (rate limiting, fetch in progress, etc.), just show the toast
       } else {
         toast.error("Failed to start data fetch");
         setDialogType("token");
@@ -257,6 +259,17 @@ export function Dashboard({ user, initialUserData, initialSnapshots, initialSnap
         startSessionPolling={startSessionPolling}
         stopSessionPolling={stopSessionPolling}
       />
+
+      {selectedRegion === "cn" ? (
+        <HttpProxyAuthSubDialog
+          isOpen={dialogType === "token-cn-proxy"}
+          onOpenChange={open => setDialogType(open ? "token-cn-proxy" : null)}
+          onAuthorized={async () => setDialogType(null)}
+          startSessionPolling={startSessionPolling}
+          stopSessionPolling={stopSessionPolling}
+          modal={true}
+        />
+      ) : null}
 
       <OnboardingDialog
         open={dialogType === "onboarding"}

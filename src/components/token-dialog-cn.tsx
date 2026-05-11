@@ -1,5 +1,7 @@
 "use client";
 
+import { AutoHeight } from "@/components/animate-ui/primitives/effects/auto-height";
+import { MaterialQRCode } from "@/components/material-qr-code";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,11 +14,10 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AutoHeight } from "@/components/animate-ui/primitives/effects/auto-height";
 import { resolveBaseUrl } from "@/lib/base-url";
 import { trpc } from "@/lib/trpc-client";
 import { cn } from "@/lib/utils";
-import { AlertTriangle, Check, ChevronRight, Copy, Fish, Key, Smartphone, Snowflake, Wifi, X } from "lucide-react";
+import { AlertTriangle, Check, ChevronRight, Copy, Fish, Key, QrCode, Smartphone, Snowflake, Wifi, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -273,7 +274,7 @@ function DivingFishAuthSubDialog({ isOpen, onOpenChange, onAuthorized }: DivingF
       verifyImport.reset();
       verifyNickname.reset();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
   const handleImportSubmit = async () => {
@@ -352,120 +353,120 @@ function DivingFishAuthSubDialog({ isOpen, onOpenChange, onAuthorized }: DivingF
             </TabsList>
 
             <AutoHeight deps={[activeTab, challengeData?.challenge, kind, isImportBusy, isNicknameBusy, configured, isLoadingConfig]}>
-            <div className="pt-3">
-            <TabsContent value="import-token" className="space-y-3">
-              <div className="text-xs text-muted-foreground space-y-1">
-                <p>{t('tokenDialog.divingFish.importTokenInstructions')}</p>
-                <p className="font-medium text-foreground">{t('tokenDialog.divingFish.importTokenSecureNote')}</p>
-              </div>
-              <Input
-                type="password"
-                placeholder={t('tokenDialog.divingFish.importTokenPlaceholder')}
-                value={importToken}
-                onChange={(e) => setImportToken(e.target.value)}
-                disabled={!configured || isImportBusy}
-                autoComplete="off"
-              />
-              <Button
-                type="button"
-                className="w-full"
-                disabled={!configured || isImportBusy || !importToken.trim()}
-                onClick={handleImportSubmit}
-              >
-                {isImportBusy ? (
-                  <>
-                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-r-transparent mr-2" />
-                    {t('tokenDialog.divingFish.importTokenVerifying')}
-                  </>
-                ) : (
-                  <>
-                    <Key className="h-4 w-4 mr-2" />
-                    {t('tokenDialog.divingFish.importTokenButton')}
-                  </>
-                )}
-              </Button>
-            </TabsContent>
-
-            <TabsContent value="nickname" className="space-y-3">
-              <div className="text-xs text-muted-foreground space-y-1">
-                <p>{t('tokenDialog.divingFish.nicknameInstructions')}</p>
-                <ol className="list-decimal list-inside space-y-0.5">
-                  <li>{t('tokenDialog.divingFish.nicknameStep1')}</li>
-                  <li>{t('tokenDialog.divingFish.nicknameStep2')}</li>
-                  <li>{t('tokenDialog.divingFish.nicknameStep3')}</li>
-                  <li>{t('tokenDialog.divingFish.nicknameStep4')}</li>
-                </ol>
-              </div>
-
-              <div className="rounded-md border bg-muted/40 p-3 text-center">
-                <p className="text-xs text-muted-foreground mb-1">{t('tokenDialog.divingFish.nicknameLabel')}</p>
-                <p className="font-mono text-2xl font-semibold tracking-widest">
-                  {challengeData?.challenge ?? t('tokenDialog.divingFish.challengePlaceholder')}
-                </p>
-                <button
-                  type="button"
-                  onClick={() => refetchChallenge()}
-                  className="text-xs text-muted-foreground underline mt-1 hover:text-foreground"
-                >
-                  {t('tokenDialog.divingFish.refreshCode')}
-                </button>
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-xs">{t('tokenDialog.divingFish.nicknameTypeLabel')}</Label>
-                <div className="flex gap-2">
+              <div className="pt-3">
+                <TabsContent value="import-token" className="space-y-3">
+                  <div className="text-xs text-muted-foreground space-y-1">
+                    <p>{t('tokenDialog.divingFish.importTokenInstructions')}</p>
+                    <p className="font-medium text-foreground">{t('tokenDialog.divingFish.importTokenSecureNote')}</p>
+                  </div>
+                  <Input
+                    type="password"
+                    placeholder={t('tokenDialog.divingFish.importTokenPlaceholder')}
+                    value={importToken}
+                    onChange={(e) => setImportToken(e.target.value)}
+                    disabled={!configured || isImportBusy}
+                    autoComplete="off"
+                  />
                   <Button
                     type="button"
-                    variant={kind === "username" ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setKind("username")}
-                    disabled={isNicknameBusy}
+                    className="w-full"
+                    disabled={!configured || isImportBusy || !importToken.trim()}
+                    onClick={handleImportSubmit}
                   >
-                    {t('tokenDialog.divingFish.nicknameUsername')}
+                    {isImportBusy ? (
+                      <>
+                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-r-transparent mr-2" />
+                        {t('tokenDialog.divingFish.importTokenVerifying')}
+                      </>
+                    ) : (
+                      <>
+                        <Key className="h-4 w-4 mr-2" />
+                        {t('tokenDialog.divingFish.importTokenButton')}
+                      </>
+                    )}
                   </Button>
+                </TabsContent>
+
+                <TabsContent value="nickname" className="space-y-3">
+                  <div className="text-xs text-muted-foreground space-y-1">
+                    <p>{t('tokenDialog.divingFish.nicknameInstructions')}</p>
+                    <ol className="list-decimal list-inside space-y-0.5">
+                      <li>{t('tokenDialog.divingFish.nicknameStep1')}</li>
+                      <li>{t('tokenDialog.divingFish.nicknameStep2')}</li>
+                      <li>{t('tokenDialog.divingFish.nicknameStep3')}</li>
+                      <li>{t('tokenDialog.divingFish.nicknameStep4')}</li>
+                    </ol>
+                  </div>
+
+                  <div className="rounded-md border bg-muted/40 p-3 text-center">
+                    <p className="text-xs text-muted-foreground mb-1">{t('tokenDialog.divingFish.nicknameLabel')}</p>
+                    <p className="font-mono text-2xl font-semibold tracking-widest">
+                      {challengeData?.challenge ?? t('tokenDialog.divingFish.challengePlaceholder')}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => refetchChallenge()}
+                      className="text-xs text-muted-foreground underline mt-1 hover:text-foreground"
+                    >
+                      {t('tokenDialog.divingFish.refreshCode')}
+                    </button>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-xs">{t('tokenDialog.divingFish.nicknameTypeLabel')}</Label>
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        variant={kind === "username" ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setKind("username")}
+                        disabled={isNicknameBusy}
+                      >
+                        {t('tokenDialog.divingFish.nicknameUsername')}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={kind === "qq" ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setKind("qq")}
+                        disabled={isNicknameBusy}
+                      >
+                        {t('tokenDialog.divingFish.nicknameQQ')}
+                      </Button>
+                    </div>
+                  </div>
+
+                  <Input
+                    placeholder={t('tokenDialog.divingFish.nicknameIdentifierPlaceholder')}
+                    value={identifier}
+                    onChange={(e) => setIdentifier(e.target.value)}
+                    disabled={!configured || isNicknameBusy}
+                    autoComplete="off"
+                  />
+
                   <Button
                     type="button"
-                    variant={kind === "qq" ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setKind("qq")}
-                    disabled={isNicknameBusy}
+                    className="w-full"
+                    disabled={!configured || isNicknameBusy || !identifier.trim()}
+                    onClick={handleNicknameVerify}
                   >
-                    {t('tokenDialog.divingFish.nicknameQQ')}
+                    {isNicknameBusy ? (
+                      <>
+                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-r-transparent mr-2" />
+                        {t('tokenDialog.divingFish.nicknameVerifying')}
+                      </>
+                    ) : (
+                      <>
+                        <Check className="h-4 w-4 mr-2" />
+                        {t('tokenDialog.divingFish.nicknameVerifyButton')}
+                      </>
+                    )}
                   </Button>
-                </div>
+                  <p className="text-xs text-muted-foreground">
+                    {t('tokenDialog.divingFish.nicknameRevertNote')}
+                  </p>
+                </TabsContent>
               </div>
-
-              <Input
-                placeholder={t('tokenDialog.divingFish.nicknameIdentifierPlaceholder')}
-                value={identifier}
-                onChange={(e) => setIdentifier(e.target.value)}
-                disabled={!configured || isNicknameBusy}
-                autoComplete="off"
-              />
-
-              <Button
-                type="button"
-                className="w-full"
-                disabled={!configured || isNicknameBusy || !identifier.trim()}
-                onClick={handleNicknameVerify}
-              >
-                {isNicknameBusy ? (
-                  <>
-                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-r-transparent mr-2" />
-                    {t('tokenDialog.divingFish.nicknameVerifying')}
-                  </>
-                ) : (
-                  <>
-                    <Check className="h-4 w-4 mr-2" />
-                    {t('tokenDialog.divingFish.nicknameVerifyButton')}
-                  </>
-                )}
-              </Button>
-              <p className="text-xs text-muted-foreground">
-                {t('tokenDialog.divingFish.nicknameRevertNote')}
-              </p>
-            </TabsContent>
-            </div>
             </AutoHeight>
           </Tabs>
         </div>
@@ -508,9 +509,10 @@ interface HttpProxyAuthSubDialogProps {
   onAuthorized: () => Promise<void>;
   startSessionPolling?: (region: Region, onSessionDetected?: () => void) => void;
   stopSessionPolling?: () => void;
+  modal?: boolean;
 }
 
-function HttpProxyAuthSubDialog({ isOpen, onOpenChange, onAuthorized, startSessionPolling, stopSessionPolling }: HttpProxyAuthSubDialogProps) {
+export function HttpProxyAuthSubDialog({ isOpen, onOpenChange, onAuthorized, startSessionPolling, stopSessionPolling, modal = false }: HttpProxyAuthSubDialogProps) {
   const t = useTranslations();
   const { data: configData, isLoading: isLoadingConfig } = trpc.user.getCnProxyConfigured.useQuery(
     undefined,
@@ -560,7 +562,7 @@ function HttpProxyAuthSubDialog({ isOpen, onOpenChange, onAuthorized, startSessi
   };
 
   return (
-    <ResponsiveDialog open={isOpen} onOpenChange={onOpenChange} modal={false}>
+    <ResponsiveDialog open={isOpen} onOpenChange={onOpenChange} modal={modal}>
       <ResponsiveDialogContent className="sm:max-w-md shadow">
         <ResponsiveDialogHeader>
           <ResponsiveDialogTitle className="flex items-center space-x-2">
@@ -650,20 +652,77 @@ function HttpProxyAuthSubDialog({ isOpen, onOpenChange, onAuthorized, startSessi
             )}
 
             {linkData && (
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <p className="text-xs font-medium">{t('tokenDialog.httpProxy.step3Title')}</p>
-                <div className="rounded-md border bg-muted/40 p-2 break-all text-xs font-mono">
-                  {linkData.url}
+
+                {/* Desktop: QR + scan label side by side */}
+                <div className="hidden sm:flex items-center gap-4">
+                  <div className="shrink-0 rounded-md bg-primary/10 p-3 text-primary">
+                    <MaterialQRCode value={linkData.url} size={100} />
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-1.5 text-xs font-medium">
+                      <QrCode className="h-3.5 w-3.5" />
+                      {t('tokenDialog.httpProxy.step3ScanWithWechat')}
+                    </div>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      {t('tokenDialog.httpProxy.step3ScanNote')}
+                    </p>
+                  </div>
                 </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full"
-                  onClick={() => handleCopy(linkData.url)}
-                >
-                  <Copy className="h-4 w-4 mr-2" />
-                  {t('tokenDialog.httpProxy.step3Copy')}
-                </Button>
+
+                {/* Desktop: or separator */}
+                <div className="hidden sm:flex items-center gap-2">
+                  <div className="flex-1 border-t" />
+                  <span className="text-xs text-muted-foreground">{t('tokenDialog.httpProxy.step3Or')}</span>
+                  <div className="flex-1 border-t" />
+                </div>
+
+                {/* Desktop: copy alternative, full width below */}
+                <div className="hidden sm:block space-y-1.5">
+                  <div className="flex items-center gap-1.5 text-xs font-medium">
+                    <Copy className="h-3.5 w-3.5" />
+                    {t('tokenDialog.httpProxy.step3OrCopy')}
+                  </div>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    {t('tokenDialog.httpProxy.step3OrCopyNote')}
+                  </p>
+                  <div className="flex gap-2 items-center">
+                    <div className="flex-1 rounded-md border bg-muted/40 px-2 py-1.5 text-xs font-mono truncate">
+                      {linkData.url}
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="shrink-0"
+                      onClick={() => handleCopy(linkData.url)}
+                    >
+                      <Copy className="h-3.5 w-3.5 mr-1.5" />
+                      {t('tokenDialog.httpProxy.step3Copy')}
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Mobile: just instruction + copy */}
+                <div className="sm:hidden space-y-2">
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    {t('tokenDialog.httpProxy.step3OrCopyNote')}
+                  </p>
+                  <div className="rounded-md border bg-muted/40 p-2 break-all text-xs font-mono">
+                    {linkData.url}
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => handleCopy(linkData.url)}
+                  >
+                    <Copy className="h-4 w-4 mr-2" />
+                    {t('tokenDialog.httpProxy.step3Copy')}
+                  </Button>
+                </div>
+
                 <p className="text-xs text-muted-foreground">
                   {t('tokenDialog.httpProxy.step3CopyNote')}
                 </p>
@@ -682,6 +741,7 @@ export function TokenDialogCn({
   onTokenUpdate,
   startSessionPolling,
   stopSessionPolling,
+  directHttpProxy,
 }: TokenDialogCnProps) {
   const t = useTranslations();
   const [isLxnsDialogOpen, setIsLxnsDialogOpen] = useState(false);

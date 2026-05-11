@@ -114,6 +114,11 @@ export async function startFetchServer(userId: string, region: Region, token?: s
       console.error('Failed to decrypt token:', error);
       throw new Error('Failed to decrypt stored token. Please re-add your authentication tokens.');
     }
+
+    // cn-cookies:// tokens are single-use and cannot be reused from storage
+    if (tokenToUse.startsWith('cn-cookies://')) {
+      throw new Error('CN_COOKIES_SINGLE_USE: This session token is single-use and has already been consumed. Please re-authenticate via the HTTP Proxy flow.');
+    }
   }
 
   // Store/update token if a new one was provided (do this BEFORE other checks so token is always saved)

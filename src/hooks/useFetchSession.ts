@@ -3,11 +3,11 @@ import { trpc, trpcClient } from "@/lib/trpc-client";
 import { toast } from "sonner";
 import { Region, FetchSession } from "@/lib/types";
 import { Flags } from "@/lib/flags";
-import { isTokenError, isAlbumSettingsError } from "@/lib/token-errors";
+import { isTokenError, isAlbumSettingsError, isCnCookiesSingleUseError } from "@/lib/token-errors";
 import { parseStatusStates } from "@/lib/fetch-states";
 import { FetchToastState } from "@/components/fetch-toast";
 
-export function useFetchSession(onFetchComplete?: () => void, flags?: Flags, onTokenError?: () => void, onUseAlbumError?: () => void) {
+export function useFetchSession(onFetchComplete?: () => void, flags?: Flags, onTokenError?: () => void, onUseAlbumError?: () => void, onCnCookiesExpired?: () => void) {
   const [currentSession, setCurrentSession] = useState<FetchSession | null>(null);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [lastFetchTime, setLastFetchTime] = useState<Date | null>(null);
@@ -97,9 +97,10 @@ export function useFetchSession(onFetchComplete?: () => void, flags?: Flags, onT
         onUseAlbumError?.();
         return;
       }
-
+      if (isCnCookiesSingleUseError(error.message) && !!onCnCookiesExpired) {
+        onCnCookiesExpired();
+      }
       setFetchError(error.message);
-      // Don't set error here - let it bubble up to be caught by the calling component
     },
   });
 

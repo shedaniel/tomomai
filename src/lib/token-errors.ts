@@ -15,10 +15,16 @@ export function isTokenError(message: string): boolean {
     "authentication token",
     "check your username and password",
     "Failed to decrypt stored token",
+    "CN_COOKIES_SINGLE_USE",
   ];
   return tokenErrorPatterns.some(pattern =>
     message.toLowerCase().includes(pattern.toLowerCase())
   );
+}
+
+// Check if error is a single-use cn-cookies token that needs re-authentication
+export function isCnCookiesSingleUseError(message: string): boolean {
+  return message.includes('CN_COOKIES_SINGLE_USE');
 }
 
 // Check if error is about missing album settings

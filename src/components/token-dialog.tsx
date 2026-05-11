@@ -1,9 +1,9 @@
 "use client";
 
 import { Region } from "@/lib/types";
-import { TokenDialogJapan } from "./token-dialog-japan";
-import { TokenDialogIntlNew } from "./token-dialog-intl-new";
 import { TokenDialogCn } from "./token-dialog-cn";
+import { TokenDialogIntlNew } from "./token-dialog-intl-new";
+import { TokenDialogJapan } from "./token-dialog-japan";
 
 interface TokenDialogProps {
   region: Region;
