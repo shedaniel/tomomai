@@ -4,20 +4,18 @@ All feature flags live in `src/lib/flags.ts` and are powered by `flags/next` (Ve
 
 ## Steps
 
-To add a new flag, touch four spots in `src/lib/flags.ts`:
+To add a new flag, touch three spots in `src/lib/flags.ts`:
 
 1. Add the key to the `Flags` interface.
-2. Add an `await use<Name>()` line to `useFlags0()`.
-3. Add an entry to `flagDefinitions` (`key`, `defaultValue`, `userSelectable`, `decide`).
-4. Export a `use<Name>` flag created with `flag<boolean>({ ... })`.
+2. Add an entry to `registry` (`defaultValue`, `userSelectable`, `decide`).
+3. Export a named `use<Name>` alias from `registry.<name>.fn`.
 
-The `decide()` in `flagDefinitions` and the `decide()` in the exported `flag<boolean>(...)` should return the same value — keep them in sync.
+`flagDefinitions`, `defaultFlags`, and `useFlags0` are all derived from `registry` automatically — no manual sync needed.
 
 ## Field reference
 
 | Field | Meaning |
 | --- | --- |
-| `key` | Stable string identifier. Must match the property name on `Flags`. |
 | `defaultValue` | Value returned when no override is set and `decide()` is unreachable. |
 | `userSelectable` | If `true`, the flag can be overridden via the `flagOverrides` cookie (see `applyFlagOverrides`). Non-user-selectable flags ignore overrides. |
 | `decide()` | Async function evaluated server-side per request. Use this to gate on time, env, user identity, etc. |
@@ -33,25 +31,15 @@ export interface Flags {
   aprilFools2026: boolean;
 }
 
-// 2. useFlags0
-aprilFools2026: await useAprilFools2026(),
-
-// 3. flagDefinitions
-aprilFools2026: {
-  key: "aprilFools2026",
+// 2. registry entry
+aprilFools2026: defineFlag("aprilFools2026", {
   defaultValue: false,
   userSelectable: true,
   decide: async () => isAprilFools2026JST(),
-},
+}),
 
-// 4. Exported flag
-export const useAprilFools2026 = flag<boolean>({
-  key: "aprilFools2026",
-  defaultValue: false,
-  async decide() {
-    return isAprilFools2026JST();
-  },
-});
+// 3. Named export (required for Vercel Flags SDK discovery)
+export const useAprilFools2026 = registry.aprilFools2026.fn;
 ```
 
 ## Reading flags at runtime

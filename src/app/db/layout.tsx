@@ -1,6 +1,7 @@
 import { DbLayoutClient } from "@/components/db/db-layout-client";
 import { SongDetailDrawer } from "@/components/db/song-detail-drawer";
 import { getServerSession } from "@/lib/auth-server";
+import { useCustomThemes } from "@/lib/flags";
 import { DB_TYPES } from "@/lib/db/types";
 import type { ReactNode } from "react";
 
@@ -19,11 +20,14 @@ export default async function DbLayout({
   children: ReactNode;
   detail: ReactNode;
 }) {
-  const session = await getServerSession();
+  const [session, customThemesEnabled] = await Promise.all([
+    getServerSession(),
+    useCustomThemes(),
+  ]);
 
   return (
     <>
-      <DbLayoutClient types={DB_TYPES} user={session?.user || null}>
+      <DbLayoutClient types={DB_TYPES} user={session?.user || null} customThemesEnabled={customThemesEnabled}>
         {children}
       </DbLayoutClient>
       <SongDetailDrawer>{detail}</SongDetailDrawer>

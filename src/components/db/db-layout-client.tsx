@@ -85,10 +85,12 @@ export function DbLayoutClient({
   user,
   children,
   types,
+  customThemesEnabled = false,
 }: {
   user: User | null;
   children: ReactNode;
   types: readonly string[];
+  customThemesEnabled?: boolean;
 }) {
   const segments = useSelectedLayoutSegments();
   const currentType = (segments[0] as string | undefined) ?? "home";
@@ -109,7 +111,7 @@ export function DbLayoutClient({
 
   return (
     <div className="container mx-auto max-w-[1300px] px-4 pt-8">
-      <Header currentTab="db" showDiscordBanner={false}
+      <Header currentTab="db" showDiscordBanner={false} customThemesEnabled={customThemesEnabled}
         user={user ? {
           user,
           menu: null,

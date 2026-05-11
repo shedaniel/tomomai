@@ -741,7 +741,6 @@ export function TokenDialogCn({
   onTokenUpdate,
   startSessionPolling,
   stopSessionPolling,
-  directHttpProxy,
 }: TokenDialogCnProps) {
   const t = useTranslations();
   const [isLxnsDialogOpen, setIsLxnsDialogOpen] = useState(false);

@@ -7,26 +7,27 @@ import {
   ResponsiveDialogHeader,
   ResponsiveDialogTitle,
 } from "@/components/ui/dialog-friendly";
-import { themes, getSavedThemeId, saveThemeId, applyTheme, Theme } from "@/lib/themes";
+import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/ui/slider";
+import { Switch } from "@/components/ui/switch";
+import { themes, getSavedThemeId, saveThemeId, applyTheme, Theme, buildCustomThemeId, isCustomThemeId, parseCustomThemeId } from "@/lib/themes";
 import { cn } from "@/lib/utils";
 import { Check } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 
 interface ThemeDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  customThemesEnabled?: boolean;
 }
 
 function ThemePreview({ theme, selected, onClick }: { theme: Theme; selected: boolean; onClick: () => void }) {
-  // Calculate preview colors based on theme values
   const isDark = theme.dark;
 
-  // For light themes
   const lightPrimaryColor = `oklch(${1 - theme.darkness} ${theme.contrast * 0.169} ${theme.hue})`;
   const lightBgColor = `oklch(${1 - (theme.lightness ?? 1.0) * 0.019} ${theme.contrast * 0.008 * (theme.saturation ?? 1.0)} ${theme.hue})`;
 
-  // For dark themes
   const darkPrimaryColor = `oklch(${0.75 + theme.darkness * 0.2} ${theme.contrast * 0.15} ${theme.hue})`;
   const darkBgColor = `oklch(${0.1 + (theme.lightness ?? 1.0) * 0.045} ${theme.contrast * 0.015 * (theme.saturation ?? 1.0)} ${theme.hue})`;
 
@@ -62,29 +63,145 @@ function ThemePreview({ theme, selected, onClick }: { theme: Theme; selected: bo
   );
 }
 
-export function ThemeDialog({ open, onOpenChange }: ThemeDialogProps) {
+function CustomThemePreview({ theme }: { theme: Theme }) {
+  const isDark = theme.dark;
+  const primaryColor = isDark
+    ? `oklch(${0.75 + theme.darkness * 0.2} ${theme.contrast * 0.15} ${theme.hue})`
+    : `oklch(${1 - theme.darkness} ${theme.contrast * 0.169} ${theme.hue})`;
+  const bgColor = isDark
+    ? `oklch(${0.1 + (theme.lightness ?? 1.0) * 0.045} ${theme.contrast * 0.015} ${theme.hue})`
+    : `oklch(${1 - (theme.lightness ?? 1.0) * 0.019} ${theme.contrast * 0.008} ${theme.hue})`;
+
+  return (
+    <div
+      className="w-full h-16 rounded-lg border border-border flex items-center justify-center gap-3 px-4"
+      style={{ backgroundColor: bgColor }}
+    >
+      <div className="w-8 h-8 rounded-full shrink-0" style={{ backgroundColor: primaryColor }} />
+      <div className="flex flex-col gap-1 flex-1">
+        <div className="h-2 rounded-full w-3/4" style={{ backgroundColor: primaryColor, opacity: 0.7 }} />
+        <div className="h-2 rounded-full w-1/2" style={{ backgroundColor: primaryColor, opacity: 0.4 }} />
+      </div>
+    </div>
+  );
+}
+
+function SliderRow({
+  label,
+  value,
+  min,
+  max,
+  step,
+  onChange,
+}: {
+  label: string;
+  value: number;
+  min: number;
+  max: number;
+  step: number;
+  onChange: (v: number) => void;
+}) {
+  return (
+    <div className="flex items-center gap-3">
+      <span className="text-xs text-muted-foreground w-20 shrink-0">{label}</span>
+      <Slider
+        min={min}
+        max={max}
+        step={step}
+        value={[value]}
+        onValueChange={([v]) => onChange(v)}
+        className="flex-1"
+      />
+      <span className="text-xs font-mono w-10 text-right shrink-0">{value.toFixed(step < 1 ? 2 : 0)}</span>
+    </div>
+  );
+}
+
+const DEFAULT_CUSTOM: Pick<Theme, "hue" | "contrast" | "darkness" | "dark" | "lightness"> = {
+  hue: 240,
+  contrast: 0.9,
+  darkness: 0.7,
+  dark: false,
+  lightness: 1.0,
+};
+
+export function ThemeDialog({ open, onOpenChange, customThemesEnabled = false }: ThemeDialogProps) {
   const t = useTranslations();
   const [selectedThemeId, setSelectedThemeId] = useState<string | null>(null);
+  const [customParams, setCustomParams] = useState(DEFAULT_CUSTOM);
+  const [useCustom, setUseCustom] = useState(false);
 
   useEffect(() => {
     if (open) {
-      setSelectedThemeId(getSavedThemeId() ?? "burnt-brown");
+      const savedId = getSavedThemeId() ?? "burnt-brown";
+      if (isCustomThemeId(savedId)) {
+        const parsed = parseCustomThemeId(savedId);
+        if (parsed) {
+          setCustomParams({
+            hue: parsed.hue,
+            contrast: parsed.contrast,
+            darkness: parsed.darkness,
+            dark: parsed.dark,
+            lightness: parsed.lightness ?? 1.0,
+          });
+          setUseCustom(true);
+          setSelectedThemeId(savedId);
+        }
+      } else {
+        setSelectedThemeId(savedId);
+        setUseCustom(false);
+      }
     }
   }, [open]);
 
   const handleThemeSelect = (theme: Theme) => {
     setSelectedThemeId(theme.id);
+    setUseCustom(false);
     saveThemeId(theme.id);
     applyTheme(theme);
   };
 
-  // Group themes by color family for better organization
+  const applyCustomTheme = useCallback((params: typeof DEFAULT_CUSTOM) => {
+    const id = buildCustomThemeId(params);
+    const theme: Theme = { id, group: "custom", name: "Custom", saturation: 1.0, ...params };
+    setSelectedThemeId(id);
+    saveThemeId(id);
+    applyTheme(theme);
+  }, []);
+
+  const handleCustomToggle = (enabled: boolean) => {
+    setUseCustom(enabled);
+    if (enabled) {
+      applyCustomTheme(customParams);
+    } else {
+      // revert to default preset
+      const fallbackId = "burnt-brown";
+      const fallback = themes.find(t => t.id === fallbackId)!;
+      setSelectedThemeId(fallbackId);
+      saveThemeId(fallbackId);
+      applyTheme(fallback);
+    }
+  };
+
+  const handleCustomParam = <K extends keyof typeof DEFAULT_CUSTOM>(key: K, value: typeof DEFAULT_CUSTOM[K]) => {
+    const next = { ...customParams, [key]: value };
+    setCustomParams(next);
+    applyCustomTheme(next);
+  };
+
   const colorFamilies = useMemo(() => {
-    // set of groups
     const groups = new Set<string>();
     themes.forEach(t => groups.add(t.group));
     return Array.from(groups).map(group => ({ labelKey: group }));
-  }, [themes]);
+  }, []);
+
+  const customThemeObj: Theme = {
+    id: buildCustomThemeId(customParams),
+    group: "custom",
+    name: "Custom",
+    saturation: 1.0,
+    ...customParams,
+  };
 
   return (
     <ResponsiveDialog open={open} onOpenChange={onOpenChange}>
@@ -97,6 +214,72 @@ export function ThemeDialog({ open, onOpenChange }: ThemeDialogProps) {
         </ResponsiveDialogHeader>
 
         <div className="space-y-4">
+          {customThemesEnabled && (
+            <div className="rounded-lg border border-border p-4 space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">Custom Theme</span>
+                <Switch checked={useCustom} onCheckedChange={handleCustomToggle} />
+              </div>
+
+              {useCustom && (
+                <div className="space-y-3">
+                  <CustomThemePreview theme={customThemeObj} />
+                  <SliderRow
+                    label="Hue"
+                    value={customParams.hue}
+                    min={0}
+                    max={360}
+                    step={1}
+                    onChange={v => handleCustomParam("hue", v)}
+                  />
+                  <SliderRow
+                    label="Contrast"
+                    value={customParams.contrast}
+                    min={0}
+                    max={2}
+                    step={0.01}
+                    onChange={v => handleCustomParam("contrast", v)}
+                  />
+                  <SliderRow
+                    label="Darkness"
+                    value={customParams.darkness}
+                    min={-1}
+                    max={1}
+                    step={0.01}
+                    onChange={v => handleCustomParam("darkness", v)}
+                  />
+                  <SliderRow
+                    label="Lightness"
+                    value={customParams.lightness ?? 1.0}
+                    min={0}
+                    max={4}
+                    step={0.01}
+                    onChange={v => handleCustomParam("lightness", v)}
+                  />
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs text-muted-foreground w-20 shrink-0">Dark mode</span>
+                    <Switch
+                      checked={customParams.dark}
+                      onCheckedChange={v => handleCustomParam("dark", v)}
+                    />
+                  </div>
+                  <div className="flex justify-end pt-1">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setCustomParams(DEFAULT_CUSTOM);
+                        applyCustomTheme(DEFAULT_CUSTOM);
+                      }}
+                    >
+                      Reset to default
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           {colorFamilies.map((family) => {
             const groupThemes = themes.filter(t => t.group === family.labelKey);
             return (
@@ -109,7 +292,7 @@ export function ThemeDialog({ open, onOpenChange }: ThemeDialogProps) {
                     <ThemePreview
                       key={theme.id}
                       theme={theme}
-                      selected={selectedThemeId === theme.id}
+                      selected={!useCustom && selectedThemeId === theme.id}
                       onClick={() => handleThemeSelect(theme)}
                     />
                   ))}

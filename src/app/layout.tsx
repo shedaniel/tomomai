@@ -16,7 +16,7 @@ import "./cjk-fonts.css";
 import "./vaul.css";
 import { getServerThemeId } from '@/lib/themes-server';
 import { getThemeOrDefault, getThemeStyleProperties } from '@/lib/themes';
-import { useAprilFools2026 } from '@/lib/flags';
+import { useAprilFools2026, useCustomThemes } from '@/lib/flags';
 import { resolveBaseUrl } from '@/lib/base-url';
 import { siteJsonLd } from '@/lib/seo';
 

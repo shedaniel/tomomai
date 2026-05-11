@@ -2,7 +2,6 @@ import { flag } from "flags/next";
 import type { cookies } from "next/headers";
 import { isAprilFools2026JST } from "@/lib/april-fools";
 
-
 export interface Flags {
   historyCard: boolean;
   recommendationFilters: boolean;
@@ -11,6 +10,7 @@ export interface Flags {
   albumsCard: boolean;
   developerPortal: boolean;
   aprilFools2026: boolean;
+  customThemes: boolean;
 }
 
 export interface FlagDefinition {
@@ -20,140 +20,91 @@ export interface FlagDefinition {
   decide: () => Promise<boolean>;
 }
 
-export const useFlags0 = async (): Promise<Flags> => {
+type RawFlagConfig = {
+  defaultValue: boolean;
+  userSelectable: boolean;
+  decide: () => Promise<boolean>;
+};
+
+type DefinedFlag = {
+  config: FlagDefinition;
+  fn: ReturnType<typeof flag<boolean>>;
+};
+
+function defineFlag(key: keyof Flags, cfg: RawFlagConfig): DefinedFlag {
   return {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    historyCard: await useHistoryCard(),
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    recommendationFilters: await useRecommendationFilters(),
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    platesCard: await usePlatesCard(),
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    eventsCard: await useEventsCard(),
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    albumsCard: await useAlbumsCard(),
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    developerPortal: await useDeveloperPortal(),
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    aprilFools2026: await useAprilFools2026(),
+    config: { key, ...cfg },
+    fn: flag<boolean>({ key, defaultValue: cfg.defaultValue, decide: cfg.decide }),
   };
 }
 
-export const flagDefinitions: Record<keyof Flags, FlagDefinition> = {
-  historyCard: {
-    key: "historyCard",
+const registry = {
+  historyCard: defineFlag("historyCard", {
     defaultValue: false,
     userSelectable: true,
     decide: async () => false,
-  },
-  recommendationFilters: {
-    key: "recommendationFilters",
+  }),
+  recommendationFilters: defineFlag("recommendationFilters", {
     defaultValue: true,
     userSelectable: true,
     decide: async () => true,
-  },
-  platesCard: {
-    key: "platesCard",
+  }),
+  platesCard: defineFlag("platesCard", {
     defaultValue: false,
     userSelectable: false,
     decide: async () => false,
-  },
-  eventsCard: {
-    key: "eventsCard",
+  }),
+  eventsCard: defineFlag("eventsCard", {
     defaultValue: true,
     userSelectable: true,
     decide: async () => true,
-  },
-  albumsCard: {
-    key: "albumsCard",
+  }),
+  albumsCard: defineFlag("albumsCard", {
     defaultValue: true,
     userSelectable: true,
     decide: async () => true,
-  },
-  developerPortal: {
-    key: "developerPortal",
+  }),
+  developerPortal: defineFlag("developerPortal", {
     defaultValue: false,
     userSelectable: false,
     decide: async () => false,
-  },
-  aprilFools2026: {
-    key: "aprilFools2026",
+  }),
+  aprilFools2026: defineFlag("aprilFools2026", {
     defaultValue: false,
     userSelectable: true,
     decide: async () => isAprilFools2026JST(),
-  },
+  }),
+  customThemes: defineFlag("customThemes", {
+    defaultValue: false,
+    userSelectable: true,
+    decide: async () => false,
+  }),
+} satisfies Record<keyof Flags, DefinedFlag>;
+
+export const flagDefinitions = Object.fromEntries(
+  Object.entries(registry).map(([k, v]) => [k, v.config]),
+) as Record<keyof Flags, FlagDefinition>;
+
+export const defaultFlags: Flags = Object.fromEntries(
+  Object.entries(registry).map(([k, v]) => [k, v.config.defaultValue]),
+) as unknown as Flags;
+
+export const useFlags0 = async (): Promise<Flags> => {
+  return Object.fromEntries(
+    await Promise.all(Object.entries(registry).map(async ([k, v]) => [k, await v.fn()])),
+  ) as Flags;
 };
 
-export const defaultFlags: Flags = Object.fromEntries(Object.entries(flagDefinitions).map(([key, value]) => [key, value.defaultValue])) as unknown as Flags;
+// Named exports required for Vercel Flags SDK discovery
+export const useHistoryCard = registry.historyCard.fn;
+export const useRecommendationFilters = registry.recommendationFilters.fn;
+export const usePlatesCard = registry.platesCard.fn;
+export const useEventsCard = registry.eventsCard.fn;
+export const useAlbumsCard = registry.albumsCard.fn;
+export const useDeveloperPortal = registry.developerPortal.fn;
+export const useAprilFools2026 = registry.aprilFools2026.fn;
+export const useCustomThemes = registry.customThemes.fn;
 
-export const useHistoryCard = flag<boolean>({
-  key: "historyCard",
-  defaultValue: false,
-  async decide() {
-    return false;
-  },
-});
-
-export const useRecommendationFilters = flag<boolean>({
-  key: "recommendationFilters",
-  defaultValue: true,
-  async decide() {
-    return true;
-  },
-});
-
-export const useStatsCard = flag<boolean>({
-  key: "statsCard",
-  defaultValue: false,
-  async decide() {
-    return false;
-  },
-});
-
-export const usePlatesCard = flag<boolean>({
-  key: "platesCard",
-  defaultValue: false,
-  async decide() {
-    return false;
-  },
-});
-
-export const useEventsCard = flag<boolean>({
-  key: "eventsCard",
-  defaultValue: true,
-  async decide() {
-    return true;
-  },
-});
-
-export const useAlbumsCard = flag<boolean>({
-  key: "albumsCard",
-  defaultValue: true,
-  async decide() {
-    return true;
-  },
-});
-
-export const useDeveloperPortal = flag<boolean>({
-  key: "developerPortal",
-  defaultValue: false,
-  async decide() {
-    return false;
-  },
-});
-
-export const useAprilFools2026 = flag<boolean>({
-  key: "aprilFools2026",
-  defaultValue: false,
-  async decide() {
-    return isAprilFools2026JST();
-  },
-});
-
-/**
- * Merge flag overrides from cookies with default flags
- * Overrides are stored in the flagOverrides cookie as JSON
- */
 export function applyFlagOverrides(flags: Flags, cookieValue?: string): Flags {
   if (!cookieValue) {
     return flags;
@@ -162,7 +113,6 @@ export function applyFlagOverrides(flags: Flags, cookieValue?: string): Flags {
   try {
     const overrides = JSON.parse(cookieValue) as Partial<Flags>;
 
-    // Only apply overrides for user-selectable flags
     const result = { ...flags };
     for (const [key, value] of Object.entries(overrides)) {
       const flagKey = key as keyof Flags;
@@ -173,16 +123,12 @@ export function applyFlagOverrides(flags: Flags, cookieValue?: string): Flags {
 
     return result;
   } catch {
-    // If cookie is malformed, just return original flags
     return flags;
   }
 }
 
 export async function useFlags(cookiesFunc: typeof cookies): Promise<Flags> {
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  let flags = await useFlags0();
-
-  // Apply flag overrides from cookies
+  const flags = await useFlags0();
   const cookieStore = await cookiesFunc();
   const flagOverridesCookie = cookieStore.get("flagOverrides")?.value;
   return applyFlagOverrides(flags, flagOverridesCookie);

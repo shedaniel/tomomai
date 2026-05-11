@@ -64,14 +64,44 @@ export const themes: Theme[] = [
 
 export const DEFAULT_THEME_ID = "gray-pink";
 export const THEME_STORAGE_KEY = "tomomai-theme";
+export const CUSTOM_THEME_PREFIX = "custom:";
+
+export function isCustomThemeId(id: string): boolean {
+  return id.startsWith(CUSTOM_THEME_PREFIX);
+}
+
+export function parseCustomThemeId(id: string): Theme | null {
+  if (!isCustomThemeId(id)) return null;
+  const parts = id.slice(CUSTOM_THEME_PREFIX.length).split(":");
+  if (parts.length < 4) return null;
+  const hue = parseFloat(parts[0]);
+  const contrast = parseFloat(parts[1]);
+  const darkness = parseFloat(parts[2]);
+  const dark = parts[3] === "1";
+  const lightness = parts[4] !== undefined ? parseFloat(parts[4]) : undefined;
+  if (isNaN(hue) || isNaN(contrast) || isNaN(darkness)) return null;
+  return { id, hue, contrast, darkness, lightness, dark, group: "custom", name: "Custom" };
+}
+
+export function buildCustomThemeId(theme: Pick<Theme, "hue" | "contrast" | "darkness" | "dark" | "lightness">): string {
+  const parts = [
+    String(Math.round(theme.hue)),
+    theme.contrast.toFixed(2),
+    theme.darkness.toFixed(2),
+    theme.dark ? "1" : "0",
+  ];
+  if (theme.lightness !== undefined) parts.push(theme.lightness.toFixed(2));
+  return CUSTOM_THEME_PREFIX + parts.join(":");
+}
 
 export function getThemeById(id: string): Theme | undefined {
+  if (isCustomThemeId(id)) return parseCustomThemeId(id) ?? undefined;
   return themes.find((theme) => theme.id === id);
 }
 
 export function getThemeOrDefault(id: string | null | undefined): Theme {
-  if (!id) return getThemeById(DEFAULT_THEME_ID)!;
-  return getThemeById(id) ?? getThemeById(DEFAULT_THEME_ID)!;
+  if (!id) return themes.find((t) => t.id === DEFAULT_THEME_ID)!;
+  return getThemeById(id) ?? themes.find((t) => t.id === DEFAULT_THEME_ID)!;
 }
 
 export function getSavedThemeId(): string | null {

@@ -83,6 +83,7 @@ export function ProfilePage({
     <div className="container mx-auto max-w-[1300px] px-3 md:px-6 lg:px-12 py-8">
       <Header
         currentTab="dashboard"
+        customThemesEnabled={flags.customThemes}
       />
 
       <div className="space-y-6">

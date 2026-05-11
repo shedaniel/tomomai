@@ -72,6 +72,7 @@ const TAB_ICONS_PATHS_DARK: Record<CurrentTab, string> = {
 interface HeaderProps {
   currentTab: CurrentTab;
   showDiscordBanner?: boolean;
+  customThemesEnabled?: boolean;
   user?: {
     user: User;
     menu: {
@@ -550,7 +551,7 @@ function UserIcon({ user, menu, onAbout, onTheme, onDiscordInvite }: Partial<Non
   )
 }
 
-export function Header({ currentTab, showDiscordBanner = true, user }: HeaderProps) {
+export function Header({ currentTab, showDiscordBanner = true, customThemesEnabled = false, user }: HeaderProps) {
   const t = useTranslations();
   const [aboutOpen, setAboutOpen] = useState(false);
   const [themeOpen, setThemeOpen] = useState(false);
@@ -594,7 +595,7 @@ export function Header({ currentTab, showDiscordBanner = true, user }: HeaderPro
       </AnimatePresence>
 
       <AboutDialog open={aboutOpen} onOpenChange={setAboutOpen} />
-      <ThemeDialog open={themeOpen} onOpenChange={setThemeOpen} />
+      <ThemeDialog open={themeOpen} onOpenChange={setThemeOpen} customThemesEnabled={customThemesEnabled} />
     </>
   );
 }

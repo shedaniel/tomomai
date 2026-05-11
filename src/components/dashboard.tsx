@@ -212,6 +212,7 @@ export function Dashboard({ user, initialUserData, initialSnapshots, initialSnap
       <Header
         currentTab="dashboard"
         showDiscordBanner={false}
+        customThemesEnabled={flags.customThemes}
         user={{
           user,
           menu: {
