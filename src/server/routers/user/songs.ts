@@ -4,9 +4,10 @@ import { VersionId } from '@/lib/metadata';
 import { getSongSlug } from '@/lib/song-slug';
 import { publicProcedure, router } from '@/lib/trpc';
 import { TRPCError } from '@trpc/server';
-import { eq } from 'drizzle-orm';
+import { eq, inArray } from 'drizzle-orm';
 import { z } from 'zod';
 import { queryAllUniqueSongs, querySongDetails } from '@/server/queries/songs';
+import { getChartPercentiles } from '@/server/queries/percentile';
 
 export const songsRouter = router({
   getAllUniqueSongs: publicProcedure
@@ -66,5 +67,36 @@ export const songsRouter = router({
         addedVersion: earliestAddedVersion,
         slug,
       };
+    }),
+
+  getChartPercentiles: publicProcedure
+    .input(z.object({
+      songs: z.array(z.object({
+        publicSongId: z.string(),
+        achievement: z.number().int().min(0).max(1010000),
+      })).max(60),
+      userRating: z.number().int().min(0).max(20000),
+    }))
+    .query(async ({ input }) => {
+      const publicIds = input.songs.map((s) => s.publicSongId);
+      const rows = await db
+        .select({ id: songs.id, publicId: songs.publicId })
+        .from(songs)
+        .where(inArray(songs.publicId, publicIds));
+
+      const idMap = new Map(rows.map((r) => [r.publicId, r.id]));
+      const inputs = input.songs
+        .map((s) => ({ internalSongId: idMap.get(s.publicSongId)!, achievement: s.achievement }))
+        .filter((s) => s.internalSongId != null);
+
+      const pctMap = await getChartPercentiles(inputs, input.userRating);
+
+      // Serialize: bigint keys → publicId string keys
+      const percentiles: Record<string, { percentile: number; peerCount: number; distribution: { lo: number; count: number }[] }> = {};
+      for (const [id, data] of pctMap.entries()) {
+        const row = rows.find((r) => r.id === id);
+        if (row) percentiles[row.publicId] = data;
+      }
+      return { percentiles };
     }),
 });

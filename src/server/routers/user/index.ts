@@ -66,6 +66,7 @@ export const userRouter = router({
   getAllUniqueSongs: songsRouter.getAllUniqueSongs,
   getSongDetails: songsRouter.getSongDetails,
   getSimpleSongDetails: songsRouter.getSimpleSongDetails,
+  getChartPercentiles: songsRouter.getChartPercentiles,
 
   // Misc
   getUserSelectableFlags: miscRouter.getUserSelectableFlags,

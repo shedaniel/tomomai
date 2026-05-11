@@ -11,6 +11,7 @@ export interface Flags {
   developerPortal: boolean;
   aprilFools2026: boolean;
   customThemes: boolean;
+  scorePercentile: boolean;
 }
 
 export interface FlagDefinition {
@@ -79,6 +80,11 @@ const registry = {
     userSelectable: true,
     decide: async () => false,
   }),
+  scorePercentile: defineFlag("scorePercentile", {
+    defaultValue: false,
+    userSelectable: true,
+    decide: async () => false,
+  }),
 } satisfies Record<keyof Flags, DefinedFlag>;
 
 export const flagDefinitions = Object.fromEntries(
@@ -104,6 +110,7 @@ export const useAlbumsCard = registry.albumsCard.fn;
 export const useDeveloperPortal = registry.developerPortal.fn;
 export const useAprilFools2026 = registry.aprilFools2026.fn;
 export const useCustomThemes = registry.customThemes.fn;
+export const useScorePercentile = registry.scorePercentile.fn;
 
 export function applyFlagOverrides(flags: Flags, cookieValue?: string): Flags {
   if (!cookieValue) {

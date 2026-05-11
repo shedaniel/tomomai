@@ -4,5 +4,11 @@
     "src/app/**/*": {
       "includeFiles": "node_modules/kuromoji/dict/*"
     }
-  }
+  },
+  "crons": [
+    {
+      "path": "/api/cron/percentile-bands",
+      "schedule": "0 4 * * *"
+    }
+  ]
 }
