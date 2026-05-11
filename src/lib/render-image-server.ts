@@ -4,7 +4,7 @@ import path from 'path';
 import { Agent } from 'undici';
 
 const sharedFetchAgent = new Agent({
-  connect: { timeout: 30_000 },
+  connect: { timeout: 30_000, rejectUnauthorized: false },
   connections: 16,
   pipelining: 1,
 });
