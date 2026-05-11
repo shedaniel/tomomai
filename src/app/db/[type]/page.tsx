@@ -71,19 +71,6 @@ export default async function DbTypePage({ params }: DbTypePageProps) {
       name: t("title"),
       description: t("description"),
       numberOfItems: songs.length,
-      itemListElement: songs.slice(0, 200).map((song, index) => ({
-        "@type": "ListItem",
-        position: index + 1,
-        item: {
-          "@type": "MusicRecording",
-          name: song.songName,
-          byArtist: {
-            "@type": "MusicGroup",
-            name: song.artist,
-          },
-          genre: song.genre,
-        },
-      })),
     };
 
     return (

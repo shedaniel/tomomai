@@ -34,6 +34,7 @@ export async function middleware(request: NextRequest) {
   const tl = request.nextUrl.searchParams.get('tl');
   const validTl = tl && locales.includes(tl as Locale) ? (tl as Locale) : null;
   const requestHeaders = new Headers(request.headers);
+  requestHeaders.set('x-pathname', pathname);
   if (validTl) requestHeaders.set('x-tl-locale', validTl);
 
   const response = NextResponse.next({ request: { headers: requestHeaders } });

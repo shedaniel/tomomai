@@ -122,16 +122,29 @@ export default async function RegionProfilePage({ params, searchParams }: Region
     const decodedUsername = decodeURIComponent(username);
     const baseUrl = resolveBaseUrl();
     const profileUrl = `${baseUrl}/profile/${encodeURIComponent(decodedUsername)}/${region}`;
-    const tNav = await getTranslations("regions");
+    const [tNav, tMeta] = await Promise.all([
+      getTranslations("regions"),
+      getTranslations("profileMetadata"),
+    ]);
+
+    const pageDescription = tMeta("descriptionRich", {
+      displayName: snapshotData.snapshot.displayName,
+      username: decodedUsername,
+      region: tNav(region),
+      rating: snapshotData.snapshot.rating,
+    });
 
     const profileJsonLd = {
       "@context": "https://schema.org",
       "@type": "ProfilePage",
+      name: tMeta("title", { username: decodedUsername }),
+      description: pageDescription,
       mainEntity: {
         "@type": "Person",
         name: snapshotData.snapshot.displayName,
         alternateName: decodedUsername,
         identifier: decodedUsername,
+        description: pageDescription,
         url: profileUrl,
         image: snapshotData.snapshot.iconUrl,
       },

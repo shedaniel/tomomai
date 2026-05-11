@@ -1,5 +1,7 @@
 import { SongsList } from "@/components/db/songs-list";
+import { SongsListNoSSR } from "@/components/db/songs-list-no-ssr";
 import { getAllUniqueSongsCached } from "@/server/queries/songs-cache";
+import { headers } from "next/headers";
 import type { ReactNode } from "react";
 
 export const dynamic = "force-dynamic";
@@ -10,6 +12,10 @@ export const dynamic = "force-dynamic";
 // position, filters, search, and grouping all survive opening/closing the
 // drawer. The {children} slot still renders below for JSON-LD and any
 // type-specific page content.
+//
+// On detail pages (/db/songs/[slug]) we skip SSR for the list via
+// SongsListNoSSR so crawlers don't receive duplicate song-name headings
+// on every detail page — they should only appear on the canonical list page.
 export default async function DbTypeLayout({
   params,
   children,
@@ -21,9 +27,15 @@ export default async function DbTypeLayout({
 
   if (type === "songs") {
     const songs = await getAllUniqueSongsCached();
+    const hdrs = await headers();
+    const pathname = hdrs.get("x-pathname") ?? "";
+    const isDetailPage = /^\/db\/songs\/.+/.test(pathname);
     return (
       <>
-        <SongsList initialSongs={songs} />
+        {isDetailPage
+          ? <SongsListNoSSR initialSongs={songs} />
+          : <SongsList initialSongs={songs} />
+        }
         {children}
       </>
     );

@@ -189,7 +189,7 @@ export function SongsList({ initialSongs }: SongsListProps) {
   );
 
   return (
-    <main className="space-y-6 pb-16 pt-3" role="main">
+    <main className="space-y-6 pb-16 pt-3" role="main" data-nosnippet>
       <header className="space-y-1">
         <h1 className="text-2xl font-semibold tracking-tight">{t("db.songs.heading")}</h1>
         <p className="text-sm text-muted-foreground max-w-3xl leading-relaxed">
