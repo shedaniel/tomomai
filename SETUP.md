@@ -16,6 +16,20 @@
 | `BETTER_AUTH_SECRET` | Yes | Secret key for Better Auth. Generate with `openssl rand -base64 32` |
 | `DISCORD_CLIENT_ID` | Yes | Discord OAuth application client ID |
 | `DISCORD_CLIENT_SECRET` | Yes | Discord OAuth application client secret |
+| `TWITTER_CLIENT_ID` | No | X (Twitter) OAuth 2.0 client ID. Required to enable X login |
+| `TWITTER_CLIENT_SECRET` | No | X (Twitter) OAuth 2.0 client secret. Required to enable X login |
+| `ALTCHA_HMAC_KEY` | No | HMAC secret for ALTCHA captcha challenges used during passkey registration. Generate with `openssl rand -hex 32`. Falls back to an insecure development default if unset |
+
+#### Setting up X (Twitter) OAuth
+
+1. Go to the [X Developer Portal](https://developer.twitter.com/en/portal/dashboard) and create an app.
+2. Under **User authentication settings**, enable OAuth 2.0 with **Type of App** set to **Web App**.
+3. Add your callback URL: `https://yourdomain.com/api/auth/callback/twitter`
+4. Copy the **Client ID** and **Client Secret** into `TWITTER_CLIENT_ID` / `TWITTER_CLIENT_SECRET`.
+
+#### Setting up Passkeys (WebAuthn)
+
+Passkeys work out of the box — no extra provider credentials needed. Set `ALTCHA_HMAC_KEY` to prevent passkey registration without a valid captcha solution. Users can register passkeys from Account Settings → Passkeys after signing in with Discord or X.
 
 ### Discord Bot
 

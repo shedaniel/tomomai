@@ -97,6 +97,20 @@ export const verification = pgTable("verification", {
   updatedAt: timestamp("updatedAt", { precision: 0 }),
 });
 
+export const passkey = pgTable("passkey", {
+  id: text("id").primaryKey(),
+  name: text("name"),
+  publicKey: text("publicKey").notNull(),
+  userId: text("userId").notNull().references(() => user.id, { onDelete: "cascade" }),
+  webauthnUserID: text("webauthnUserID").notNull(),
+  counter: integer("counter").notNull(),
+  deviceType: text("deviceType").notNull(),
+  backedUp: boolean("backedUp").notNull(),
+  transports: text("transports"),
+  createdAt: timestamp("createdAt", { precision: 0 }),
+  aaguid: text("aaguid"),
+});
+
 export const invites = pgTable("invites", {
   id: uuid("id").primaryKey().defaultRandom(),
   code: text("code").notNull().unique(),

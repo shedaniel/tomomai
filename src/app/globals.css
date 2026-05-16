@@ -176,3 +176,27 @@ html {
         background-position: 200% 0;
     }
 }
+
+.altcha-main {
+    margin-inline: auto !important;
+}
+
+altcha-widget {
+    --altcha-border-color: var(--border);
+    --altcha-border-radius: var(--radius-md);
+    --altcha-border-width: 1px;
+    --altcha-color-base: var(--card);
+    --altcha-color-base-content: var(--foreground);
+    --altcha-color-primary: var(--primary);
+    --altcha-color-primary-content: var(--primary-foreground);
+    --altcha-color-error: var(--destructive);
+    --altcha-color-error-content: oklch(100% 0 0);
+    --altcha-color-neutral: var(--border);
+    --altcha-color-neutral-content: var(--muted-foreground);
+    --altcha-checkbox-border-color: var(--border);
+    --altcha-checkbox-border-radius: var(--radius-sm);
+    --altcha-input-background-color: var(--background);
+    --altcha-input-color: var(--foreground);
+    --altcha-shadow: none;
+    --altcha-padding: 0.75rem;
+}

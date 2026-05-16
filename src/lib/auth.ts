@@ -1,7 +1,9 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
-import { admin, apiKey, openAPI } from "better-auth/plugins";
+import { admin, openAPI } from "better-auth/plugins";
+import { apiKey } from "@better-auth/api-key";
+import { passkey } from "@better-auth/passkey";
 import { and, count, eq, isNull, lt, or } from "drizzle-orm";
 import { db } from "./db";
 import * as schema from "./db/schema-pg";
@@ -124,13 +126,13 @@ export const auth = betterAuth({
     trustedProxyHeaders: true,
     ...(authCookieDomain
       ? {
-          crossSubDomainCookies: { enabled: true, domain: authCookieDomain },
-          defaultCookieAttributes: {
-            domain: authCookieDomain,
-            sameSite: "lax",
-            secure: true,
-          },
-        }
+        crossSubDomainCookies: { enabled: true, domain: authCookieDomain },
+        defaultCookieAttributes: {
+          domain: authCookieDomain,
+          sameSite: "lax",
+          secure: true,
+        },
+      }
       : {}),
   },
   emailAndPassword: {
@@ -147,6 +149,17 @@ export const auth = betterAuth({
       clientSecret: process.env.DISCORD_CLIENT_SECRET as string,
       disableImplicitSignUp: true,
     },
+    twitter: {
+      clientId: process.env.TWITTER_CLIENT_ID as string,
+      clientSecret: process.env.TWITTER_CLIENT_SECRET as string,
+      disableImplicitSignUp: true,
+    },
+  },
+  account: {
+    accountLinking: {
+      enabled: true,
+      trustedProviders: ["discord", "twitter"],
+    },
   },
   plugins: [
     nextCookies(),
@@ -159,6 +172,7 @@ export const auth = betterAuth({
         defaultPermissions: { ready: ["access"] },
       },
     }),
+    passkey(),
     ...(process.env.NODE_ENV === 'development' ? [openAPI()] : []),
   ],
   disabledPaths: [
@@ -173,8 +187,6 @@ export const auth = betterAuth({
     "/sign-in/email",
     "/delete-user",
     "/delete-user/callback",
-    "/link-social",
-    "/unlink-account",
   ],
   databaseHooks: {
     user: {

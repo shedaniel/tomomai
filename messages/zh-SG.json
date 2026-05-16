@@ -44,9 +44,15 @@
   },
   "auth": {
     "loginWithDiscord": "以 Discord 继续",
-    "loginDescription": "登入以开始追踪你的 maimai 成绩",
-    "noAccount": "没有账户？",
+    "loginWithX": "以 X 继续",
+    "loginWithPasskey": "使用 Passkey 登入",
+    "signIn": "登入",
+    "newHere": "第一次来吗？",
+    "noAccount": "建立账户以开始追踪你的成绩。",
+    "signup": "注册",
     "signupWithDiscord": "用 Discord 注册",
+    "signupWithX": "用 X 注册",
+    "signupWithPasskey": "用 Passkey 注册",
     "signupDisabled": "注册功能已关闭",
     "signupDisabledMessage": "目前暂不开放新用户注册，请稍后再试。",
     "peekExampleProfile": "看看范例个人主页",
@@ -57,6 +63,33 @@
       "importData": "从 maimai DX NET 导入数据",
       "analyzeProgress": "分析你的游玩记录"
     }
+  },
+  "linkedAccounts": {
+    "title": "已连结账户",
+    "description": "连结社交账户以新增其他登入方式。",
+    "link": "连结",
+    "unlink": "解除连结",
+    "linked": "已连结",
+    "notLinked": "未连结",
+    "unlinkError": "解除账户连结失败",
+    "unlinkSuccess": "已成功解除账户连结",
+    "linkSuccess": "已成功连结账户",
+    "cannotUnlinkLast": "无法解除你唯一的登入方式"
+  },
+  "passkeys": {
+    "title": "Passkey",
+    "description": "使用生物识别或硬件密钥登入，无需密码。",
+    "addPasskey": "新增 Passkey",
+    "addingPasskey": "新增中...",
+    "noPasskeys": "尚未注册任何 Passkey。",
+    "deletePasskey": "删除",
+    "deleteSuccess": "已删除 Passkey。",
+    "deleteError": "删除 Passkey 失败。",
+    "addError": "新增 Passkey 失败。",
+    "addSuccess": "已成功新增 Passkey。",
+    "verifyingCaptcha": "验证中...",
+    "captchaFailed": "验证码验证失败，请再试一次。",
+    "passkeyName": "Passkey {index}"
   },
   "consent": {
     "title": "欢迎来到 tomomai",

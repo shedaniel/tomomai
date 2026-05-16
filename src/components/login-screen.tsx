@@ -4,10 +4,10 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Database, ArrowRight, UserRound } from "lucide-react";
+import { Database, ArrowRight, UserRound, KeyRound } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { LocaleSwitcher } from "./locale-switcher";
-import { signIn } from "@/lib/auth-client";
+import { signIn, authClient } from "@/lib/auth-client";
 import { toast } from "sonner";
 import Link from "next/link";
 import { isCNExclusive } from "@/lib/enabled-regions";
@@ -15,6 +15,8 @@ import { motion } from "motion/react";
 import { STAGGER, getTransition } from "@/lib/animation-constants";
 import { ConsentDialog } from "@/components/consent-dialog";
 import { trpc } from "@/lib/trpc-client";
+import { DiscordIcon } from "@/components/ui/discord-icon";
+import { XIcon } from "@/components/ui/x-icon";
 
 interface SignupRequirements {
   signupEnabled: boolean;
@@ -61,42 +63,66 @@ export function LoginScreen({ signupRequirements }: LoginScreenProps) {
   const [showConsentDialog, setShowConsentDialog] = useState(false);
   const { data: policies } = trpc.user.getPolicies.useQuery();
 
-  const handleAuth = (signUp: boolean) => async () => {
+  const handleSocialLogin = (provider: "discord" | "twitter") => async () => {
     try {
       await signIn.social({
-        provider: "discord",
+        provider,
         callbackURL: "/",
         errorCallbackURL: "/",
-        requestSignUp: signUp,
+        requestSignUp: false,
       });
     } catch (error) {
-      console.error("Discord auth error:", error);
+      console.error(`${provider} auth error:`, error);
       toast.error("An error occurred during authentication. Please try again.");
     }
   };
 
+  const handlePasskeyLogin = async () => {
+    try {
+      await authClient.signIn.passkey();
+    } catch (error) {
+      console.error("Passkey sign-in error:", error);
+      toast.error("An error occurred during passkey sign-in. Please try again.");
+    }
+  };
+
   const handleSignupClick = () => {
-    // Show consent dialog BEFORE OAuth
     setShowConsentDialog(true);
   };
 
-  const handleConsentGiven = async () => {
-    setShowConsentDialog(false);
-    // NOW trigger OAuth signup
-    await handleAuth(true)();
+  const handleConsentGiven = async (method: "discord" | "twitter" | "passkey") => {
+    if (method === "discord" || method === "twitter") {
+      setShowConsentDialog(false);
+      try {
+        await signIn.social({
+          provider: method,
+          callbackURL: "/",
+          errorCallbackURL: "/",
+          requestSignUp: true,
+        });
+      } catch (error) {
+        console.error(`${method} signup error:`, error);
+        toast.error("An error occurred during authentication. Please try again.");
+      }
+    }
+    // For passkey, the dialog handles the full flow and calls onConsent after success
+    if (method === "passkey") {
+      setShowConsentDialog(false);
+    }
   };
 
   const handleConsentCancel = () => {
     setShowConsentDialog(false);
-    // User remains on login screen
   };
+
+  const cnMode = isCNExclusive();
 
   return (
     <div className="container mx-auto max-w-md px-4">
       <div className="flex justify-between py-4 *:w-fit items-center">
         <Image src="/icon.webp" alt="tomomai" width={4320} height={1080} className="h-10 w-auto dark:hidden" style={{ aspectRatio: '4320 / 1080' }} />
         <Image src="/icon-dark.webp" alt="tomomai" width={4320} height={1080} className="h-10 w-auto hidden dark:block" style={{ aspectRatio: '4320 / 1080' }} />
-        {!isCNExclusive() && <LocaleSwitcher forceVisible />}
+        {!cnMode && <LocaleSwitcher forceVisible />}
       </div>
       <DatabaseCard />
       <motion.div
@@ -115,39 +141,74 @@ export function LoginScreen({ signupRequirements }: LoginScreenProps) {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="text-center space-y-4">
-              <p className="text-sm text-muted-foreground text-balance">
-                {t('auth.loginDescription')}
-              </p>
-
-              <div className="text-center space-y-2">
-                <Button
-                  onClick={handleAuth(false)}
-                  className="w-full"
-                  size="lg"
-                >
-                  {!isCNExclusive() ? (
-                    <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.195.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z" />
-                    </svg>
-                  ) : (
+              <div className="space-y-3">
+                {!cnMode && (
+                  <div className="flex items-center gap-3">
+                    <div className="flex-1 h-px bg-border" />
+                    <span className="text-[11px] uppercase tracking-wider text-muted-foreground shrink-0">{t('auth.signIn')}</span>
+                    <div className="flex-1 h-px bg-border" />
+                  </div>
+                )}
+                {cnMode ? (
+                  // CN mode: single QQ button
+                  <Button onClick={handleSocialLogin("discord")} className="w-full" size="lg">
                     <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="currentColor">
                       <path d="M21.395 15.035a40 40 0 0 0-.803-2.264l-1.079-2.695c.001-.032.014-.562.014-.836C19.526 4.632 17.351 0 12 0S4.474 4.632 4.474 9.241c0 .274.013.804.014.836l-1.08 2.695a39 39 0 0 0-.802 2.264c-1.021 3.283-.69 4.643-.438 4.673.54.065 2.103-2.472 2.103-2.472 0 1.469.756 3.387 2.394 4.771-.612.188-1.363.479-1.845.835-.434.32-.379.646-.301.778.343.578 5.883.369 7.482.189 1.6.18 7.14.389 7.483-.189.078-.132.132-.458-.301-.778-.483-.356-1.233-.646-1.846-.836 1.637-1.384 2.393-3.302 2.393-4.771 0 0 1.563 2.537 2.103 2.472.251-.03.581-1.39-.438-4.673" />
                     </svg>
-                  )}
-                  {!isCNExclusive() ? t('auth.loginWithDiscord') : '以 QQ 继续'}
-                </Button>
-
-                <p className="text-sm text-muted-foreground">
-                  {t('auth.noAccount')}{" "}
-                  <Button
-                    variant="link"
-                    size="sm"
-                    onClick={handleSignupClick}
-                    disabled={!signupRequirements.signupEnabled}
-                  >
-                    {!isCNExclusive() ? t('auth.signupWithDiscord') : '用 QQ 注册'}
+                    以 QQ 继续
                   </Button>
-                </p>
+                ) : (
+                  // International mode: 3 equal-weight branded buttons
+                  <div className="grid grid-cols-5 gap-2">
+                    <Button
+                      onClick={handleSocialLogin("discord")}
+                      size="lg"
+                      title={t('auth.loginWithDiscord')}
+                      aria-label={t('auth.loginWithDiscord')}
+                      className="col-span-2 bg-indigo-500/90 hover:bg-indigo-500 text-white border border-input dark:bg-indigo-500/80 dark:hover:bg-indigo-500"
+                    >
+                      <DiscordIcon className="w-5 h-5" />
+                    </Button>
+                    <Button
+                      onClick={handleSocialLogin("twitter")}
+                      size="lg"
+                      title={t('auth.loginWithX')}
+                      aria-label={t('auth.loginWithX')}
+                      className="col-span-2 bg-neutral-900 hover:bg-neutral-800 text-white border border-input"
+                    >
+                      <XIcon className="w-5 h-5" />
+                    </Button>
+                    <Button
+                      onClick={handlePasskeyLogin}
+                      size="lg"
+                      variant="outline"
+                      title={t('auth.loginWithPasskey')}
+                      aria-label={t('auth.loginWithPasskey')}
+                      className="col-span-1"
+                    >
+                      <KeyRound className="w-5 h-5" />
+                    </Button>
+                  </div>
+                )}
+
+                <div className="pt-2">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="flex-1 h-px bg-border" />
+                    <span className="text-[11px] uppercase tracking-wider text-muted-foreground shrink-0">{t('auth.newHere')}</span>
+                    <div className="flex-1 h-px bg-border" />
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {t('auth.noAccount')}{" "}
+                    <Button
+                      variant="link"
+                      size="sm"
+                      onClick={handleSignupClick}
+                      disabled={!signupRequirements.signupEnabled}
+                    >
+                      {t('auth.signup')}
+                    </Button>
+                  </p>
+                </div>
               </div>
 
               {signupRequirements.reason === 'disabled' && (
@@ -173,7 +234,7 @@ export function LoginScreen({ signupRequirements }: LoginScreenProps) {
                   animate={{ opacity: 1, x: 0 }}
                   transition={getTransition({ delay: 0.1 + 0 * STAGGER.slow })}
                 >
-                  {!isCNExclusive() ? t('auth.features.trackScores') : '追踪华立国服的成绩'}
+                  {!cnMode ? t('auth.features.trackScores') : '追踪华立国服的成绩'}
                 </motion.li>
                 <motion.li
                   initial={{ opacity: 0, x: -10 }}
@@ -187,7 +248,7 @@ export function LoginScreen({ signupRequirements }: LoginScreenProps) {
                   animate={{ opacity: 1, x: 0 }}
                   transition={getTransition({ delay: 0.1 + 2 * STAGGER.slow })}
                 >
-                  {!isCNExclusive() ? t('auth.features.importData') : '从 舞萌 DX NET 导入数据'}
+                  {!cnMode ? t('auth.features.importData') : '从 舞萌 DX NET 导入数据'}
                 </motion.li>
                 <motion.li
                   initial={{ opacity: 0, x: -10 }}
@@ -219,7 +280,6 @@ export function LoginScreen({ signupRequirements }: LoginScreenProps) {
         </Link>
       </motion.div>
 
-      {/* Consent dialog */}
       {policies && (
         <ConsentDialog
           open={showConsentDialog}
@@ -227,6 +287,7 @@ export function LoginScreen({ signupRequirements }: LoginScreenProps) {
           privacyContent={policies.privacy.content}
           onConsent={handleConsentGiven}
           onCancel={handleConsentCancel}
+          signupEnabled={signupRequirements.signupEnabled}
         />
       )}
     </div>

@@ -44,9 +44,15 @@
   },
   "auth": {
     "loginWithDiscord": "Discordで続行",
-    "loginDescription": "Discordでログインして、maimaiのスコアを記録・管理しよう！",
-    "noAccount": "アカウントをお持ちでないですか？",
+    "loginWithX": "Xで続行",
+    "loginWithPasskey": "パスキーでサインイン",
+    "signIn": "サインイン",
+    "newHere": "初めてですか？",
+    "noAccount": "アカウントを作成してトラッキングを始めよう。",
+    "signup": "サインアップ",
     "signupWithDiscord": "Discordでサインアップ",
+    "signupWithX": "Xでサインアップ",
+    "signupWithPasskey": "パスキーで登録",
     "signupDisabled": "サインアップは現在無効です",
     "signupDisabledMessage": "現在、新規登録は一時停止中です。後でもう一度お試しください。",
     "peekExampleProfile": "プロフィールの例を見てみる",
@@ -57,6 +63,33 @@
       "importData": "maimai DX NETからデータ取り込み",
       "analyzeProgress": "プレイ進捗の分析"
     }
+  },
+  "linkedAccounts": {
+    "title": "連携アカウント",
+    "description": "ソーシャルアカウントを連携して、別のサインイン方法を追加できます。",
+    "link": "連携",
+    "unlink": "解除",
+    "linked": "連携済み",
+    "notLinked": "未連携",
+    "unlinkError": "アカウントの連携解除に失敗しました",
+    "unlinkSuccess": "アカウントの連携を解除しました",
+    "linkSuccess": "アカウントを連携しました",
+    "cannotUnlinkLast": "唯一のサインイン方法は解除できません"
+  },
+  "passkeys": {
+    "title": "パスキー",
+    "description": "生体認証やハードウェアキーを使って、パスワードなしでサインインできます。",
+    "addPasskey": "パスキーを追加",
+    "addingPasskey": "追加中…",
+    "noPasskeys": "登録されているパスキーはありません。",
+    "deletePasskey": "削除",
+    "deleteSuccess": "パスキーを削除しました。",
+    "deleteError": "パスキーの削除に失敗しました。",
+    "addError": "パスキーの追加に失敗しました。",
+    "addSuccess": "パスキーを追加しました。",
+    "verifyingCaptcha": "確認中…",
+    "captchaFailed": "キャプチャ認証に失敗しました。もう一度お試しください。",
+    "passkeyName": "パスキー {index}"
   },
   "consent": {
     "title": "ともマイへようこそ",

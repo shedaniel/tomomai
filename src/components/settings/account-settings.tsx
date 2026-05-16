@@ -3,6 +3,8 @@
 import { useLocale } from "@/components/providers/locale-provider";
 import { ChangeUsernameDialog } from "@/components/settings/change-username-dialog";
 import { SessionsSection } from "@/components/settings/sessions-section";
+import { LinkedAccountsSection } from "@/components/settings/linked-accounts-section";
+import { PasskeysSection } from "@/components/settings/passkeys-section";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
@@ -124,6 +126,14 @@ export function AccountSettings() {
             </SelectContent>
           </Select>
         </div>
+      </div>
+
+      <div className="mt-6 border-t pt-6">
+        <LinkedAccountsSection />
+      </div>
+
+      <div className="mt-6 border-t pt-6">
+        <PasskeysSection />
       </div>
 
       <div className="mt-6 border-t pt-6">

@@ -44,9 +44,15 @@
   },
   "auth": {
     "loginWithDiscord": "Continue with Discord",
-    "loginDescription": "Sign in with Discord to start tracking your maimai scores",
-    "noAccount": "Don't have an account?",
+    "loginWithX": "Continue with X",
+    "loginWithPasskey": "Sign in with Passkey",
+    "signIn": "Sign in",
+    "newHere": "New here?",
+    "noAccount": "Create an account to start tracking.",
+    "signup": "Sign up",
     "signupWithDiscord": "Sign up with Discord",
+    "signupWithX": "Sign up with X",
+    "signupWithPasskey": "Register with Passkey",
     "signupDisabled": "Sign up Currently Disabled",
     "signupDisabledMessage": "We are not accepting new registrations at this time. Please check back later.",
     "peekExampleProfile": "Peek at an example profile",
@@ -57,6 +63,33 @@
       "importData": "Import data directly from maimai DX NET",
       "analyzeProgress": "Analyze your progress over time"
     }
+  },
+  "linkedAccounts": {
+    "title": "Connected Accounts",
+    "description": "Link social accounts for additional sign-in methods.",
+    "link": "Link",
+    "unlink": "Unlink",
+    "linked": "Linked",
+    "notLinked": "Not linked",
+    "unlinkError": "Failed to unlink account",
+    "unlinkSuccess": "Account unlinked successfully",
+    "linkSuccess": "Account linked successfully",
+    "cannotUnlinkLast": "Cannot unlink your only sign-in method"
+  },
+  "passkeys": {
+    "title": "Passkeys",
+    "description": "Use biometrics or a hardware key to sign in without a password.",
+    "addPasskey": "Add Passkey",
+    "addingPasskey": "Adding...",
+    "noPasskeys": "No passkeys registered.",
+    "deletePasskey": "Delete",
+    "deleteSuccess": "Passkey deleted.",
+    "deleteError": "Failed to delete passkey.",
+    "addError": "Failed to add passkey.",
+    "addSuccess": "Passkey added successfully.",
+    "verifyingCaptcha": "Verifying...",
+    "captchaFailed": "Captcha verification failed. Please try again.",
+    "passkeyName": "Passkey {index}"
   },
   "consent": {
     "title": "Welcome to tomomai",
