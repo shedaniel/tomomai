@@ -151,7 +151,7 @@
       "dontSave": "不必了，謝謝",
       "save": "好的，請儲存我的相片",
       "example": "已儲存的相片示意圖",
-      "saved": "相簿偏好設定已儲存",
+      "saved": "",
       "error": "相簿偏好設定儲存失敗",
       "fetchAlbums": "儲存相簿內的相片",
       "fetchAlbumsDescription": "在匯入新資料時一併匯入並儲存你相簿裡的相片。請注意，相片中可能含有個人資訊。",
@@ -648,7 +648,7 @@
     },
     "fetchOptions": {
       "divingFish": {
-        "name": "水鱼查分器",
+        "name": "水魚查分器",
         "description": "使用你的水鱼查分器登入使用者名稱或已連結的 QQ 帳號 ID 取得資料。"
       },
       "lxns": {
@@ -678,7 +678,7 @@
       "unknownError": "未知錯誤"
     },
     "divingFish": {
-      "title": "水鱼查分器",
+      "title": "水魚查分器",
       "description": "將你的水鱼查分器帳號綁定到本站，綁定後我們會透過水鱼查分器的開發者介面讀取你的舞萌 DX 資料。請先選擇以下任一方式驗證你擁有該帳號。",
       "notConfiguredTitle": "水鱼查分器尚未設定",
       "notConfiguredMessage": "請聯絡管理員在伺服器上設定 <code>DIVINGFISH_DEV_TOKEN</code> 環境變數。",
@@ -938,14 +938,14 @@
         "songTitle": "{songName} - {artist} | maimai DX",
         "songDescription": "View detailed information about \"{songName}\" by {artist}. {chartType} chart • {genre}",
         "songOgDescription": "View detailed information about \"{songName}\" by {artist}.",
-        "songFallbackTitle": "Song Details | maimai DX",
+        "songFallbackTitle": "歌曲詳情 | maimai DX",
         "songFallbackDescription": "View detailed information about this maimai DX song including difficulty levels and regional availability.",
         "chartTypeDx": "DX",
         "chartTypeStandard": "Standard",
         "jsonLdChartDescription": "{chartType} chart from maimai DX"
       },
       "title": "歌曲資料庫 | maimai DX",
-      "heading": "Songs Database",
+      "heading": "歌曲資料庫",
       "searchPlaceholder": "搜尋歌曲、藝人、分類...",
       "noSongsFound": "找不到歌曲",
       "tryAdjustingSearch": "嘗試調整搜尋條件",
