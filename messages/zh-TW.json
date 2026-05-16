@@ -389,7 +389,7 @@
     "descriptionUnknownRegion": "View {username}'s maimai profile. Track and analyze maimai scores with friends.",
     "notFoundTitle": "Profile Not Found | tomomai ともマイ",
     "notFoundDescription": "The profile you're looking for doesn't exist or is not publicly accessible.",
-    "errorTitle": "Error | tomomai ともマイ",
+    "errorTitle": "錯誤 | tomomai ともマイ",
     "errorDescription": "An error occurred while loading this profile."
   },
   "profileVisibility": {
