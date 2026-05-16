@@ -384,9 +384,9 @@
   },
   "profileMetadata": {
     "title": "{username} | tomomai ともマイ",
-    "description": "View {username}'s maimai profile for {region}. Track and analyze maimai scores with friends.",
-    "descriptionRich": "{displayName} ({username}) on {region} maimai — rating {rating}. View their B50, recent plays, and chart records on tomomai.",
-    "descriptionUnknownRegion": "View {username}'s maimai profile. Track and analyze maimai scores with friends.",
+    "description": "正在檢視 {username} 在 {region} 的 maimai 個人檔案。和朋友一起追蹤並分析 maimai 分數吧。",
+    "descriptionRich": "{displayName} ({username}) 的 {region} maimai 成績 — rating {rating}. 在 tomomai 檢視他們的 B50、近期遊玩以及譜面紀錄。",
+    "descriptionUnknownRegion": "正在檢視 {username} 的 maimai 個人檔案。和朋友一起追蹤並分析 maimai 分數吧。",
     "notFoundTitle": "Profile Not Found | tomomai ともマイ",
     "notFoundDescription": "The profile you're looking for doesn't exist or is not publicly accessible.",
     "errorTitle": "錯誤 | tomomai ともマイ",
