@@ -5,15 +5,15 @@ import { ChangeUsernameDialog } from "@/components/settings/change-username-dial
 import { SessionsSection } from "@/components/settings/sessions-section";
 import { LinkedAccountsSection } from "@/components/settings/linked-accounts-section";
 import { PasskeysSection } from "@/components/settings/passkeys-section";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
+import { Button } from "@tomomai/ui";
+import { Label } from "@tomomai/ui";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select-friendly";
+} from "@tomomai/ui/select-friendly";
 import { Locale, setLocaleCookie } from "@/i18n/locale";
 import { isCNExclusive } from "@/lib/enabled-regions";
 import { trpc } from "@/lib/trpc-client";

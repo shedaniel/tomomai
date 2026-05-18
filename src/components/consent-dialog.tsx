@@ -9,17 +9,16 @@ import {
   ResponsiveDialogFooter,
   ResponsiveDialogHeader,
   ResponsiveDialogTitle,
-} from "@/components/ui/dialog-friendly";
+} from "@tomomai/ui";
 import { Checkbox } from "@/components/animate-ui/components/radix/checkbox";
-import { Button } from "@/components/ui/button";
+import { Button } from "@tomomai/ui";
 import { PolicyDialog } from "@/components/policy-dialog";
 import { ChevronDown, ChevronUp, Dot, KeyRound, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useLocale } from "./providers/locale-provider";
 import { isCNExclusive, isRegionEnabled } from "@/lib/enabled-regions";
-import { DiscordIcon } from "@/components/ui/discord-icon";
-import { XIcon } from "@/components/ui/x-icon";
-import { AltchaWidget } from "@/components/ui/altcha-widget";
+import { DiscordIcon, XIcon } from "@tomomai/ui";
+import { AltchaWidget } from "@/components/altcha-widget";
 import { authClient } from "@/lib/auth-client";
 import { toast } from "sonner";
 

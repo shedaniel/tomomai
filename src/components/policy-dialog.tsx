@@ -5,7 +5,7 @@ import {
   ResponsiveDialogContent,
   ResponsiveDialogHeader,
   ResponsiveDialogTitle,
-} from "@/components/ui/dialog-friendly";
+} from "@tomomai/ui";
 
 interface PolicyDialogProps {
   open: boolean;

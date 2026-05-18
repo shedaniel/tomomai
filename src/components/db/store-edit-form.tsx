@@ -1,25 +1,25 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@tomomai/ui";
+import { Input } from "@tomomai/ui";
+import { Label } from "@tomomai/ui";
+import { Textarea } from "@tomomai/ui";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@tomomai/ui";
 import {
   Drawer,
   DrawerContent,
   DrawerHeader,
   DrawerTitle,
   DrawerDescription,
-} from "@/components/ui/drawer";
-import { Switch } from "@/components/ui/switch";
+} from "@tomomai/ui";
+import { Switch } from "@tomomai/ui";
 import { X, Plus, CheckCircle, XCircle, PauseCircle } from "lucide-react";
 import { trpc } from "@/lib/trpc-client";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";

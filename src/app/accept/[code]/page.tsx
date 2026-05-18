@@ -1,7 +1,7 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@tomomai/ui";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@tomomai/ui";
 import { signIn, useSession } from "@/lib/auth-client";
 import { trpc } from "@/lib/trpc-client";
 import { AlertCircle, Database, UserCheck } from "lucide-react";

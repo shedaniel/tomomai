@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@tomomai/ui";
 import { CANVAS_HEIGHT, CANVAS_WIDTH } from "@/lib/image-spec";
 import { Region, SnapshotWithSongs } from "@/lib/types";
 import { Download, RefreshCw } from "lucide-react";

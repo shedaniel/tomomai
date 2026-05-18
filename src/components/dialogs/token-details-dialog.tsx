@@ -4,15 +4,15 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { AnimatedDialog, AnimatedDialogContent } from "@/components/ui/animated-dialog";
+} from "@tomomai/ui";
+import { AnimatedDialog, AnimatedDialogContent } from "@tomomai/ui";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { createTRPCClient, httpBatchLink } from '@trpc/client';
 import type { AppRouter } from '@/server/routers/_app';
 import superjson from 'superjson';
 import { format } from "date-fns";
 import { Copy, Check } from "lucide-react";
-import { Button } from "../ui/button";
+import { Button } from "@tomomai/ui";
 import {
   Table,
   TableBody,
@@ -20,7 +20,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from "@tomomai/ui";
 
 interface TokenDetailsDialogProps {
   open: boolean;

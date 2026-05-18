@@ -7,8 +7,8 @@ import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { EVENT_STEP_TYPE_KEYS, normType } from "@/lib/event-types";
 import { Loader2, ArrowLeft, Search, Calendar } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Button } from "@tomomai/ui";
+import { Input } from "@tomomai/ui";
 import {
   Table,
   TableBody,
@@ -16,7 +16,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from "@tomomai/ui";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
 type EventStatus = "active" | "ended" | "upcoming";

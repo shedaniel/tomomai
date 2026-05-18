@@ -9,9 +9,9 @@ import {
   ResponsiveDialogHeader,
   ResponsiveDialogTitle,
   ResponsiveDialogTrigger,
-} from "@/components/ui/dialog-friendly";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+} from "@tomomai/ui";
+import { Badge } from "@tomomai/ui";
+import { Button } from "@tomomai/ui";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,8 +20,8 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select-friendly";
+} from "@tomomai/ui";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@tomomai/ui/select-friendly";
 import { calculateProgress, parseStatusStates } from "@/lib/fetch-states";
 import { getVersionInfo, VersionId } from "@/lib/metadata";
 import { trpc } from "@/lib/trpc-client";

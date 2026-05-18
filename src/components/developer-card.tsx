@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@tomomai/ui";
 import { trpc } from "@/lib/trpc-client";
 import { SnapshotWithSongs } from "@/lib/types";
 import { ChevronDown, ChevronRight, Code, Download } from "lucide-react";

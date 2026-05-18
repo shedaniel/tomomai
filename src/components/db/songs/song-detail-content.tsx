@@ -4,7 +4,7 @@ import {
   ResponsiveDialog,
   ResponsiveDialogContent,
   ResponsiveDialogTrigger,
-} from "@/components/ui/dialog-friendly";
+} from "@tomomai/ui";
 import { DIFFICULTY_COLORS, getAchievementRate } from "@/lib/difficulty";
 import { getVersionInfo } from "@/lib/metadata";
 import { calculateSongRating } from "@/lib/rating-calculator";
@@ -17,8 +17,8 @@ import { CoverImage } from "@/components/cover-image";
 import { useMemo } from "react";
 import { SongDetails, UserScore } from "./types";
 
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
+import { Button } from "@tomomai/ui";
+import { Separator } from "@tomomai/ui";
 import { resolveBaseUrl } from "@/lib/base-url";
 import { useTranslations } from "next-intl";
 import Link from "next/link";

@@ -1,15 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
+import { Button, Label, DiscordIcon, XIcon } from "@tomomai/ui";
 import { Link2, Loader2, Link2Off } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { authClient } from "@/lib/auth-client";
 import { toast } from "sonner";
-import { DiscordIcon } from "@/components/ui/discord-icon";
-import { XIcon } from "@/components/ui/x-icon";
 
 type Account = {
   id: string;

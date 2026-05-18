@@ -1,7 +1,7 @@
 "use client";
 
 import { ScatterChart, Scatter, XAxis, YAxis, ZAxis, Tooltip, Cell } from "recharts";
-import { ChartContainer, ChartTooltip } from "@/components/ui/chart";
+import { ChartContainer, ChartTooltip } from "@tomomai/ui";
 import { useTranslations } from "next-intl";
 
 interface RatingVsPlayCountHeatmapProps {

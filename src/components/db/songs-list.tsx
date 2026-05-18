@@ -1,8 +1,8 @@
 "use client";
 
 import { FilterPanel, GenericFilter, getFilterKey } from "@/components/filter-panel";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Button } from "@tomomai/ui";
+import { Input } from "@tomomai/ui";
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 import { getVersionInfo } from "@/lib/metadata";
 import { trpc } from "@/lib/trpc-client";
@@ -12,7 +12,7 @@ import { useTranslations } from "next-intl";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select-friendly";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@tomomai/ui/select-friendly";
 import { applyUniqueSongFilters, createUniqueSongFilterCategories, hashString } from "./songs/filter-utils";
 import { SongCard } from "./songs/song-card";
 import { SongRow } from "./songs/song-row";

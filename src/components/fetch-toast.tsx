@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Progress } from "@/components/ui/progress";
+import { Progress } from "@tomomai/ui";
 import { cn } from "@/lib/utils";
 import { X, Loader2, CheckCircle2, XCircle } from "lucide-react";
 import {

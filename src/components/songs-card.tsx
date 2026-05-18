@@ -1,6 +1,6 @@
 "use client";
 
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@tomomai/ui";
 import { SongWithRating, splitSongs } from "@/lib/rating-calculator";
 import { MinimalSongForDisplay, SnapshotWithSongs } from "@/lib/types";
 import { cn, createSafeMaimaiImageUrl, getTypeBadgeUrl } from "@/lib/utils";
@@ -10,8 +10,8 @@ import { useTranslations } from "next-intl";
 import { CoverImage } from "@/components/cover-image";
 import { Fragment, useCallback, useMemo, useState, forwardRef } from "react";
 import { Bar, BarChart, XAxis, YAxis } from "recharts";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select-friendly";
-import { Input } from "./ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@tomomai/ui/select-friendly";
+import { Input } from "@tomomai/ui";
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 import { SongHoverCard } from "@/components/song-hover-card";
 import { renderLevelPrecise } from "@/lib/name-utils";

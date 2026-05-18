@@ -1,0 +1,73 @@
+{
+  "name": "@tomomai/ui",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./styles": "./src/styles/globals.css",
+    "./utils": {
+      "import": "./dist/utils.js",
+      "types": "./dist/utils.d.ts"
+    },
+    "./animation-constants": {
+      "import": "./dist/animation-constants.js",
+      "types": "./dist/animation-constants.d.ts"
+    },
+    "./themes": {
+      "import": "./dist/themes.js",
+      "types": "./dist/themes.d.ts"
+    },
+    "./select-friendly": {
+      "import": "./dist/select-friendly.js",
+      "types": "./dist/select-friendly.d.ts"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "src/styles"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch"
+  },
+  "peerDependencies": {
+    "@radix-ui/react-alert-dialog": "*",
+    "@radix-ui/react-dialog": "*",
+    "@radix-ui/react-dropdown-menu": "*",
+    "@radix-ui/react-label": "*",
+    "@radix-ui/react-progress": "*",
+    "@radix-ui/react-select": "*",
+    "@radix-ui/react-separator": "*",
+    "@radix-ui/react-slider": "*",
+    "@radix-ui/react-slot": "*",
+    "@radix-ui/react-switch": "*",
+    "@radix-ui/react-tabs": "*",
+    "@radix-ui/react-tooltip": "*",
+    "class-variance-authority": "*",
+    "clsx": "*",
+    "embla-carousel-react": "*",
+    "lucide-react": "*",
+    "motion": "*",
+    "radix-ui": "*",
+    "react": ">=18",
+    "react-dom": ">=18",
+    "react-hook-form": "*",
+    "recharts": "*",
+    "sonner": "*",
+    "tailwind-merge": "*",
+    "vaul": "*",
+    "web-haptics": "*"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.3"
+  }
+}

@@ -2,18 +2,18 @@
 
 import { AutoHeight } from "@/components/animate-ui/primitives/effects/auto-height";
 import { MaterialQRCode } from "@/components/material-qr-code";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Badge } from "@tomomai/ui";
+import { Button } from "@tomomai/ui";
 import {
   ResponsiveDialog,
   ResponsiveDialogContent,
   ResponsiveDialogDescription,
   ResponsiveDialogHeader,
   ResponsiveDialogTitle,
-} from "@/components/ui/dialog-friendly";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+} from "@tomomai/ui";
+import { Input } from "@tomomai/ui";
+import { Label } from "@tomomai/ui";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@tomomai/ui";
 import { resolveBaseUrl } from "@/lib/base-url";
 import { trpc } from "@/lib/trpc-client";
 import { cn } from "@/lib/utils";

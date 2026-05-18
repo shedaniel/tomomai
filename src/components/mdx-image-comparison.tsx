@@ -1,7 +1,7 @@
 "use client"
 
 import Image from "next/image"
-import { Comparison, ComparisonItem, ComparisonHandle } from "@/components/ui/comparison"
+import { Comparison, ComparisonItem, ComparisonHandle } from "@tomomai/ui"
 
 export function MdxImageComparison({
   before,

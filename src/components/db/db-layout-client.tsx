@@ -1,8 +1,8 @@
 "use client";
 
 import { Header } from "@/components/header";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
+import { Button } from "@tomomai/ui";
+import { Separator } from "@tomomai/ui";
 import { User } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { Loader2 } from "lucide-react";

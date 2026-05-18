@@ -2,7 +2,7 @@
 
 import { FetchToastContainer } from "@/components/fetch-toast";
 import { TokenDialog } from "@/components/token-dialog";
-import { Button } from "@/components/ui/button";
+import { Button } from "@tomomai/ui";
 import {
   ResponsiveDialog,
   ResponsiveDialogClose,
@@ -12,9 +12,9 @@ import {
   ResponsiveDialogHeader,
   ResponsiveDialogTitle,
   ResponsiveDialogTrigger,
-} from "@/components/ui/dialog-friendly";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
+} from "@tomomai/ui";
+import { Label } from "@tomomai/ui";
+import { Switch } from "@tomomai/ui";
 import { useFetchSession } from "@/hooks/useFetchSession";
 import { isCNExclusive } from "@/lib/enabled-regions";
 import { trpc } from "@/lib/trpc-client";

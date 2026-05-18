@@ -1,15 +1,15 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@tomomai/ui";
 import {
   ResponsiveDialog,
   ResponsiveDialogContent,
   ResponsiveDialogDescription,
   ResponsiveDialogHeader,
   ResponsiveDialogTitle,
-} from "@/components/ui/dialog-friendly";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
+} from "@tomomai/ui";
+import { Label } from "@tomomai/ui";
+import { Switch } from "@tomomai/ui";
 import { Flags } from "@/lib/flags";
 import { trpc } from "@/lib/trpc-client";
 import { useTranslations } from "next-intl";

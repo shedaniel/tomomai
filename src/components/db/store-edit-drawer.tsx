@@ -1,13 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@tomomai/ui";
 import {
   Drawer,
   DrawerContent,
   DrawerTitle,
   DrawerDescription,
-} from "@/components/ui/drawer";
+} from "@tomomai/ui";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -15,7 +15,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+} from "@tomomai/ui";
 import { DoorOpen, Cigarette, MapPin, Clock, CircleDollarSign, ThumbsUp, ThumbsDown, Crown, Loader2 } from "lucide-react";
 import { trpc } from "@/lib/trpc-client";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";

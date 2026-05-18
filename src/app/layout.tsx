@@ -3,7 +3,7 @@ import { PreMaintenanceBanner } from '@/components/pre-maintenance-banner';
 import { LocaleProvider } from '@/components/providers/locale-provider';
 import { ThemeProvider } from '@/components/providers/theme-provider';
 import { TRPCProvider } from "@/components/providers/trpc-provider";
-import { Toaster } from "@/components/ui/sonner";
+import { Toaster } from "@tomomai/ui";
 import { getLocale } from '@/i18n/locale-server';
 import { get } from '@vercel/edge-config';
 import { VercelToolbar } from "@vercel/toolbar/next";

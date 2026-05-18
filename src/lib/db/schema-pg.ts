@@ -414,3 +414,97 @@ export const userAlbums = pgTable("user_albums", {
   index("user_albums_userid_takenat_idx").on(table.userId, table.takenAt.desc()),
   index("user_albums_songid_idx").on(table.songId),
 ]);
+
+// Better Auth JWT plugin table
+export const jwks = pgTable("jwks", {
+  id: text("id").primaryKey(),
+  publicKey: text("publicKey").notNull(),
+  privateKey: text("privateKey").notNull(),
+  createdAt: timestamp("createdAt").notNull(),
+  expiresAt: timestamp("expiresAt"),
+});
+
+// Better Auth OAuth Provider plugin tables
+export const oauthClient = pgTable("oauthClient", {
+  id: text("id").primaryKey(),
+  clientId: text("clientId").notNull().unique(),
+  clientSecret: text("clientSecret"),
+  disabled: boolean("disabled").default(false),
+  skipConsent: boolean("skipConsent"),
+  enableEndSession: boolean("enableEndSession"),
+  subjectType: text("subjectType"),
+  scopes: text("scopes").array(),
+  userId: text("userId").references(() => user.id),
+  createdAt: timestamp("createdAt"),
+  updatedAt: timestamp("updatedAt"),
+  name: text("name"),
+  uri: text("uri"),
+  icon: text("icon"),
+  contacts: text("contacts").array(),
+  tos: text("tos"),
+  policy: text("policy"),
+  softwareId: text("softwareId"),
+  softwareVersion: text("softwareVersion"),
+  softwareStatement: text("softwareStatement"),
+  redirectUris: text("redirectUris").array().notNull(),
+  postLogoutRedirectUris: text("postLogoutRedirectUris").array(),
+  tokenEndpointAuthMethod: text("tokenEndpointAuthMethod"),
+  grantTypes: text("grantTypes").array(),
+  responseTypes: text("responseTypes").array(),
+  public: boolean("public"),
+  type: text("type"),
+  requirePKCE: boolean("requirePKCE"),
+  referenceId: text("referenceId"),
+  metadata: jsonb("metadata"),
+}, (table) => [
+  index("oauth_client_userid_idx").on(table.userId),
+]);
+
+export const oauthRefreshToken = pgTable("oauthRefreshToken", {
+  id: text("id").primaryKey(),
+  token: text("token").notNull().unique(),
+  clientId: text("clientId").notNull().references(() => oauthClient.clientId),
+  sessionId: text("sessionId").references(() => session.id, { onDelete: "set null" }),
+  userId: text("userId").notNull().references(() => user.id),
+  referenceId: text("referenceId"),
+  expiresAt: timestamp("expiresAt").notNull(),
+  createdAt: timestamp("createdAt").notNull(),
+  revoked: timestamp("revoked"),
+  authTime: timestamp("authTime"),
+  scopes: text("scopes").array().notNull(),
+}, (table) => [
+  index("oauth_refresh_token_clientid_idx").on(table.clientId),
+  index("oauth_refresh_token_sessionid_idx").on(table.sessionId),
+  index("oauth_refresh_token_userid_idx").on(table.userId),
+]);
+
+export const oauthAccessToken = pgTable("oauthAccessToken", {
+  id: text("id").primaryKey(),
+  token: text("token").unique(),
+  clientId: text("clientId").notNull().references(() => oauthClient.clientId),
+  sessionId: text("sessionId").references(() => session.id, { onDelete: "set null" }),
+  userId: text("userId").references(() => user.id),
+  referenceId: text("referenceId"),
+  refreshId: text("refreshId").references(() => oauthRefreshToken.id),
+  expiresAt: timestamp("expiresAt").notNull(),
+  createdAt: timestamp("createdAt").notNull(),
+  scopes: text("scopes").array().notNull(),
+}, (table) => [
+  index("oauth_access_token_clientid_idx").on(table.clientId),
+  index("oauth_access_token_sessionid_idx").on(table.sessionId),
+  index("oauth_access_token_userid_idx").on(table.userId),
+  index("oauth_access_token_refreshid_idx").on(table.refreshId),
+]);
+
+export const oauthConsent = pgTable("oauthConsent", {
+  id: text("id").primaryKey(),
+  clientId: text("clientId").notNull().references(() => oauthClient.clientId),
+  userId: text("userId").references(() => user.id),
+  referenceId: text("referenceId"),
+  scopes: text("scopes").array().notNull(),
+  createdAt: timestamp("createdAt").notNull(),
+  updatedAt: timestamp("updatedAt").notNull(),
+}, (table) => [
+  index("oauth_consent_clientid_idx").on(table.clientId),
+  index("oauth_consent_userid_idx").on(table.userId),
+]);

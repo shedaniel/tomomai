@@ -7,7 +7,7 @@ import {
   CarouselItem,
   CarouselPrevious,
   CarouselNext,
-} from "@/components/ui/carousel"
+} from "@tomomai/ui"
 import { type ReactNode } from "react"
 
 export function MdxImageCarousel({ children }: { children: ReactNode }) {

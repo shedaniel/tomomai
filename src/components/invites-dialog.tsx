@@ -1,14 +1,14 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@tomomai/ui";
 import {
   ResponsiveDialog,
   ResponsiveDialogContent,
   ResponsiveDialogDescription,
   ResponsiveDialogHeader,
   ResponsiveDialogTitle,
-} from "@/components/ui/dialog-friendly";
-import { Card } from "@/components/ui/card";
+} from "@tomomai/ui";
+import { Card } from "@tomomai/ui";
 import { Plus, Copy, X, Users, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";

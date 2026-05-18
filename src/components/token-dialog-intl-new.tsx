@@ -1,16 +1,16 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Badge } from "@tomomai/ui";
+import { Button } from "@tomomai/ui";
 import {
   ResponsiveDialog,
   ResponsiveDialogContent,
   ResponsiveDialogDescription,
   ResponsiveDialogHeader,
   ResponsiveDialogTitle,
-} from "@/components/ui/dialog-friendly";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+} from "@tomomai/ui";
+import { Input } from "@tomomai/ui";
+import { Label } from "@tomomai/ui";
 import { trpc } from "@/lib/trpc-client";
 import type { Region } from "@/lib/types";
 import { cn } from "@/lib/utils";

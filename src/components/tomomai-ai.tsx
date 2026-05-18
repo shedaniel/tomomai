@@ -14,7 +14,7 @@ import {
   ResponsiveDialogHeader,
   ResponsiveDialogTitle,
   ResponsiveDialogDescription,
-} from "@/components/ui/dialog-friendly";
+} from "@tomomai/ui";
 
 // --- Roast templates ---
 // Placeholders:

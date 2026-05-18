@@ -1,15 +1,15 @@
 "use client";
 
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select-friendly";
-import { Progress } from "@/components/ui/progress";
-import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@tomomai/ui/select-friendly";
+import { Progress } from "@tomomai/ui";
+import { Button } from "@tomomai/ui";
 import { ACHIEVEMENTS, DIFFICULTY_COLORS } from "@/lib/difficulty";
 import { DIFFICULTY_ENUM, FC_ENUM, FS_ENUM } from "@/lib/db/types";
 import { getVersionInfo, VERSIONS } from "@/lib/metadata";
 import { Region, SnapshotWithSongs } from "@/lib/types";
 import { trpc } from "@/lib/trpc-client";
 import { ArrowLeft, Award, ChevronRight, Loader2 } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Skeleton } from "@tomomai/ui";
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";

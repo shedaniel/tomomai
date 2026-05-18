@@ -2,7 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
+import { Badge } from "@tomomai/ui";
 
 interface TitleRankingTableProps {
   data: { title: string; percentage: number }[];

@@ -1,8 +1,8 @@
 "use client";
 
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/animate-ui/components/radix/hover-card";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
+import { Button } from "@tomomai/ui";
+import { Separator } from "@tomomai/ui";
 import { getVersionInfo } from "@/lib/metadata";
 import { trpc } from "@/lib/trpc-client";
 import { cn, createSafeMaimaiImageUrl, getTypeBadgeUrl } from "@/lib/utils";
@@ -12,14 +12,14 @@ import { useTranslations } from "next-intl";
 import { CoverImage } from "@/components/cover-image";
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { DialogTrigger } from "./ui/dialog";
-import { AnimatedDialog, AnimatedDialogContent } from "./ui/animated-dialog";
+import { DialogTrigger } from "@tomomai/ui";
+import { AnimatedDialog, AnimatedDialogContent } from "@tomomai/ui";
 import { SongChartDialogContent } from "./db/songs/song-detail-dialog";
 import { Difficulty, MinimalSong, Region, SongType } from "@/lib/types";
 import { getChartsByDifficulty, getChartScores } from "./db/songs/song-detail-content";
 import { UserScore } from "./db/songs/types";
 import { useMediaQuery } from "@/hooks/use-media-query";
-import { Drawer, DrawerContent, DrawerTrigger, DrawerHeader, DrawerTitle, DrawerDescription } from "@/components/ui/drawer";
+import { Drawer, DrawerContent, DrawerTrigger, DrawerHeader, DrawerTitle, DrawerDescription } from "@tomomai/ui";
 
 interface SongHoverCardProps {
   children: React.ReactNode;

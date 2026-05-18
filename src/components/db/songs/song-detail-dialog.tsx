@@ -1,5 +1,5 @@
 import { Tabs, TabsList, TabsPanel, TabsPanels, TabsTab } from "@/components/animate-ui/components/base/tabs";
-import { ResponsiveDialogTitle } from "@/components/ui/dialog-friendly";
+import { ResponsiveDialogTitle } from "@tomomai/ui";
 import { ACHIEVEMENTS, DIFFICULTY_COLORS } from "@/lib/difficulty";
 import { calculateSongRating } from "@/lib/rating-calculator";
 import { Region, SongExtended } from "@/lib/types";

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { trpc } from "@/lib/trpc-client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@tomomai/ui";
 import { useTranslations } from "next-intl";
 import { Loader2 } from "lucide-react";
 import { Region } from "@/lib/types";

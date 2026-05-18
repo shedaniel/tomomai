@@ -7,9 +7,9 @@ import {
   ResponsiveDialogDescription,
   ResponsiveDialogHeader,
   ResponsiveDialogTitle,
-} from "@/components/ui/dialog-friendly";
+} from "@tomomai/ui";
 import { PolicyDialog } from "@/components/policy-dialog";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@tomomai/ui";
 import { TRANSLATION_STATS } from "@/lib/i18n/translation-stats";
 import { getLanguages, cn } from "@/lib/utils";
 import { trpc } from "@/lib/trpc-client";

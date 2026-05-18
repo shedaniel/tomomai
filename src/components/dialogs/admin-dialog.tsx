@@ -6,11 +6,11 @@ import {
   ResponsiveDialogDescription,
   ResponsiveDialogHeader,
   ResponsiveDialogTitle,
-} from "@/components/ui/dialog-friendly";
+} from "@tomomai/ui";
 import { useCallback, useEffect, useState } from "react";
-import { Input } from "../ui/input";
-import { Label } from "../ui/label";
-import { Button } from "../ui/button";
+import { Input } from "@tomomai/ui";
+import { Label } from "@tomomai/ui";
+import { Button } from "@tomomai/ui";
 import { getCurrentVersion } from "@/lib/metadata";
 import { UsersBrowserDialog } from "./users-browser-dialog";
 import { cn } from "@/lib/utils";

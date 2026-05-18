@@ -2,8 +2,8 @@
 
 import { AboutDialog } from "@/components/about-dialog";
 import { ThemeDialog } from "@/components/theme-dialog";
-import { Button } from "@/components/ui/button";
-import { DiscordIcon } from "@/components/ui/discord-icon";
+import { Button } from "@tomomai/ui";
+import { DiscordIcon } from "@tomomai/ui";
 import { user } from "@/lib/db/schema-pg";
 import { Region, User } from "@/lib/types";
 import { Beaker, Check, ChevronDown, Database, Flag, Home, Info, Languages, LogIn, LogOut, Menu, Palette, Ship, Sparkles, User as LucideUserIcon, Settings, Users, X } from "lucide-react";
@@ -14,9 +14,9 @@ import { Fragment, useCallback, useState } from "react";
 import { toast } from "sonner";
 import { LocaleSwitcher } from "./locale-switcher";
 import { RegionSwitcher } from "./region-switcher";
-import { Drawer, DrawerClose, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle, DrawerTrigger } from "./ui/drawer";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "./ui/dropdown-menu";
-import { Separator } from "./ui/separator";
+import { Drawer, DrawerClose, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle, DrawerTrigger } from "@tomomai/ui";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@tomomai/ui";
+import { Separator } from "@tomomai/ui";
 import { motion, AnimatePresence } from "motion/react";
 import { AutoHeight } from "@/components/animate-ui/primitives/effects/auto-height";
 import { SPRING_CONFIGS, getTransition } from "@/lib/animation-constants";

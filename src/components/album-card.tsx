@@ -4,7 +4,7 @@ import { trpc } from "@/lib/trpc-client";
 import { Region } from "@/lib/types";
 import { cn, createSafeMaimaiImageUrl, getTypeBadgeUrl } from "@/lib/utils";
 import { Images, Loader2, AlertCircle, Calendar, MapPin, Music, HardDrive, Info, Trash2 } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Skeleton } from "@tomomai/ui";
 import { useTranslations } from "next-intl";
 
 import { CoverImage } from "@/components/cover-image";
@@ -13,7 +13,7 @@ import { inferRouterOutputs } from "@trpc/server";
 import { AppRouter } from "@/server/routers/_app";
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 import { renderLevelPrecise } from "@/lib/name-utils";
-import { Button } from "@/components/ui/button";
+import { Button } from "@tomomai/ui";
 import {
   ResponsiveDialog,
   ResponsiveDialogClose,
@@ -23,7 +23,7 @@ import {
   ResponsiveDialogHeader,
   ResponsiveDialogTitle,
   ResponsiveDialogTrigger,
-} from "@/components/ui/dialog-friendly";
+} from "@tomomai/ui";
 import { Checkbox } from "@/components/animate-ui/components/radix/checkbox";
 import { toast } from "sonner";
 

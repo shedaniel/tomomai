@@ -7,9 +7,9 @@ import { Award, Calendar, Disc3, Filter, Hash, Heart, Layers, Target, Zap } from
 import { useTranslations } from "next-intl";
 import { CoverImage } from "@/components/cover-image";
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { Select, SelectContent, SelectTrigger, SelectItem, SelectValue } from "./ui/select-friendly";
+import { Select, SelectContent, SelectTrigger, SelectItem, SelectValue } from "@tomomai/ui/select-friendly";
 import { Flags } from "@/lib/flags";
-import { Button } from "./ui/button";
+import { Button } from "@tomomai/ui";
 import { motion, AnimatePresence } from "motion/react";
 import {
   FilterPanel,

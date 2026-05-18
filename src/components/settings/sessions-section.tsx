@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Label } from "@/components/ui/label";
+import { Button } from "@tomomai/ui";
+import { Badge } from "@tomomai/ui";
+import { Label } from "@tomomai/ui";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -13,7 +13,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+} from "@tomomai/ui";
 import { authClient, useSession } from "@/lib/auth-client";
 import { toast } from "sonner";
 import { Loader2, Monitor, Trash2, LogOut } from "lucide-react";

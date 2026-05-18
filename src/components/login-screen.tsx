@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@tomomai/ui";
 import Image from "next/image";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@tomomai/ui";
 import { Database, ArrowRight, UserRound, KeyRound } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { LocaleSwitcher } from "./locale-switcher";
@@ -15,8 +15,7 @@ import { motion } from "motion/react";
 import { STAGGER, getTransition } from "@/lib/animation-constants";
 import { ConsentDialog } from "@/components/consent-dialog";
 import { trpc } from "@/lib/trpc-client";
-import { DiscordIcon } from "@/components/ui/discord-icon";
-import { XIcon } from "@/components/ui/x-icon";
+import { DiscordIcon, XIcon } from "@tomomai/ui";
 
 interface SignupRequirements {
   signupEnabled: boolean;

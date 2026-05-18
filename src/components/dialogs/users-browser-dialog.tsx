@@ -4,10 +4,10 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { AnimatedDialog, AnimatedDialogContent } from "@/components/ui/animated-dialog";
+} from "@tomomai/ui";
+import { AnimatedDialog, AnimatedDialogContent } from "@tomomai/ui";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Button } from "../ui/button";
+import { Button } from "@tomomai/ui";
 import { createTRPCClient, httpBatchLink } from '@trpc/client';
 import type { AppRouter } from '@/server/routers/_app';
 import superjson from 'superjson';
@@ -18,16 +18,16 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from "@tomomai/ui";
 import { format } from "date-fns";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@tomomai/ui";
 import { MoreHorizontal, Search, X } from "lucide-react";
-import { Input } from "../ui/input";
+import { Input } from "@tomomai/ui";
 import { TokenDetailsDialog } from "./token-details-dialog";
 
 interface UsersBrowserDialogProps {

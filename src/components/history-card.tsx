@@ -1,13 +1,13 @@
 "use client";
 
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { Slider } from "@/components/ui/slider";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@tomomai/ui";
+import { Slider } from "@tomomai/ui";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@tomomai/ui";
 import { trpc } from "@/lib/trpc-client";
 import { Region } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { TrendingUp } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Skeleton } from "@tomomai/ui";
 import { useTranslations } from "next-intl";
 import { CoverImage } from "@/components/cover-image";
 import { useEffect, useMemo, useState } from "react";

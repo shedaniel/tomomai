@@ -1,8 +1,8 @@
 "use client";
 
 import { memo } from "react";
-import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select-friendly";
+import { Button } from "@tomomai/ui";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@tomomai/ui/select-friendly";
 import { X } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { LucideIcon } from "lucide-react";

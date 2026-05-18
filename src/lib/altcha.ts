@@ -2,11 +2,13 @@ import { createChallenge, verifySolution, randomInt, HmacAlgorithm, type Challen
 import { deriveKey } from "altcha-lib/algorithms/argon2id";
 import { redis } from "@/lib/redis";
 
-const _altchaKey = process.env.ALTCHA_HMAC_KEY;
-if (!_altchaKey && process.env.NODE_ENV !== "development") {
-  throw new Error("ALTCHA_HMAC_KEY must be set in non-development environments");
+function getHmacKey(): string {
+  const key = process.env.ALTCHA_HMAC_KEY;
+  if (!key && process.env.NODE_ENV !== "development") {
+    throw new Error("ALTCHA_HMAC_KEY must be set in non-development environments");
+  }
+  return key ?? "development-altcha-key-change-in-production";
 }
-const HMAC_KEY = _altchaKey ?? "development-altcha-key-change-in-production";
 
 // Challenges expire 5 min after creation. Redis dedup TTL is slightly longer
 // so a replay can't outlive the signed expiry window.
@@ -35,7 +37,7 @@ export async function createAltchaChallenge(): Promise<Challenge> {
   return createChallenge({
     ...CHALLENGE_PARAMS,
     counter: randomInt(1, MAX_COUNTER),
-    hmacSignatureSecret: HMAC_KEY,
+    hmacSignatureSecret: getHmacKey(),
     expiresAt: new Date(Date.now() + ALTCHA_CHALLENGE_TTL_SECONDS * 1000),
   });
 }
@@ -59,7 +61,7 @@ export async function verifyAltchaPayload(payload: unknown): Promise<boolean> {
       challenge: decoded.challenge,
       solution: decoded.solution,
       deriveKey,
-      hmacSignatureSecret: HMAC_KEY,
+      hmacSignatureSecret: getHmacKey(),
     });
     return result.verified;
   } catch {
@@ -83,7 +85,7 @@ export async function consumeAltchaPayload(payload: unknown): Promise<boolean> {
       challenge: decoded.challenge,
       solution: decoded.solution,
       deriveKey,
-      hmacSignatureSecret: HMAC_KEY,
+      hmacSignatureSecret: getHmacKey(),
     });
     if (!result.verified) return false;
   } catch {

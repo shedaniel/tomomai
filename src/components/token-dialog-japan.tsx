@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Button } from "@tomomai/ui";
+import { Input } from "@tomomai/ui";
+import { Label } from "@tomomai/ui";
 import { Eye, EyeOff, Key, Save } from "lucide-react";
 import { useTranslations } from "next-intl";
 import {
@@ -12,7 +12,7 @@ import {
   ResponsiveDialogDescription,
   ResponsiveDialogHeader,
   ResponsiveDialogTitle,
-} from "./ui/dialog-friendly";
+} from "@tomomai/ui";
 
 interface TokenDialogJapanProps {
   isOpen: boolean;

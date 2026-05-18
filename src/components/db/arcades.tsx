@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@tomomai/ui";
 import { Navigation, X, DoorOpen, Cigarette, MapPin, Clock, CircleDollarSign, Edit } from "lucide-react";
 import Script from "next/script";
 import "maplibre-gl/dist/maplibre-gl.css";
@@ -11,14 +11,14 @@ import {
   DrawerHeader,
   DrawerTitle,
   DrawerDescription,
-} from "@/components/ui/drawer";
+} from "@tomomai/ui";
 import {
   Card,
   CardHeader,
   CardTitle,
   CardDescription,
   CardContent,
-} from "@/components/ui/card";
+} from "@tomomai/ui";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { trpc } from "@/lib/trpc-client";
 import { StoreEditDrawer } from "@/components/db/store-edit-drawer";

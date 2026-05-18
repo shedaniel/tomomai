@@ -1,14 +1,14 @@
 "use client";
 
 import { PostMeta } from "@/lib/posts";
-import { AnimatedDialog, AnimatedDialogContent } from "@/components/ui/animated-dialog";
+import { AnimatedDialog, AnimatedDialogContent } from "@tomomai/ui";
 import {
   DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+} from "@tomomai/ui";
+import { Button } from "@tomomai/ui";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";

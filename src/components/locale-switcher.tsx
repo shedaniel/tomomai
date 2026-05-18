@@ -6,7 +6,7 @@ import { useTranslations } from "next-intl";
 import { Locale, setLocaleCookie } from "@/i18n/locale";
 import { cn, getLanguages } from "@/lib/utils";
 import { useLocale } from "./providers/locale-provider";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select-friendly";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@tomomai/ui/select-friendly";
 
 interface LocaleSwitcherProps {
   forceVisible?: boolean;

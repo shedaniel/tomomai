@@ -6,10 +6,10 @@ import {
   ResponsiveDialogDescription,
   ResponsiveDialogHeader,
   ResponsiveDialogTitle,
-} from "@/components/ui/dialog-friendly";
-import { Button } from "@/components/ui/button";
-import { Slider } from "@/components/ui/slider";
-import { Switch } from "@/components/ui/switch";
+} from "@tomomai/ui";
+import { Button } from "@tomomai/ui";
+import { Slider } from "@tomomai/ui";
+import { Switch } from "@tomomai/ui";
 import { themes, getSavedThemeId, saveThemeId, applyTheme, Theme, buildCustomThemeId, isCustomThemeId, parseCustomThemeId } from "@/lib/themes";
 import { cn } from "@/lib/utils";
 import { Check } from "lucide-react";

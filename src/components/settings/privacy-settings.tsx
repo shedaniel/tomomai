@@ -1,15 +1,15 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
+import { Button } from "@tomomai/ui";
+import { Label } from "@tomomai/ui";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select-friendly";
-import { Switch } from "@/components/ui/switch";
+} from "@tomomai/ui/select-friendly";
+import { Switch } from "@tomomai/ui";
 import { getEnabledRegions } from "@/lib/enabled-regions";
 import { trpc } from "@/lib/trpc-client";
 import { ProfilePrivacySettings, Region } from "@/lib/types";
