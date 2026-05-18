@@ -72,6 +72,7 @@
     "linked": "連携済み",
     "notLinked": "未連携",
     "unlinkError": "アカウントの連携解除に失敗しました",
+    "linkError": "アカウントの連携に失敗しました",
     "unlinkSuccess": "アカウントの連携を解除しました",
     "linkSuccess": "アカウントを連携しました",
     "cannotUnlinkLast": "唯一のサインイン方法は解除できません"
@@ -89,7 +90,9 @@
     "addSuccess": "パスキーを追加しました。",
     "verifyingCaptcha": "確認中…",
     "captchaFailed": "キャプチャ認証に失敗しました。もう一度お試しください。",
-    "passkeyName": "パスキー {index}"
+    "passkeyName": "パスキー {index}",
+    "deleteTitle": "パスキーを削除しますか？",
+    "deleteDescription": "このパスキーは削除されます。今後、このパスキーでサインインできなくなります。"
   },
   "consent": {
     "title": "ともマイへようこそ",

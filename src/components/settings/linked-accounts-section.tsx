@@ -35,6 +35,7 @@ const PROVIDERS = [
 
 export function LinkedAccountsSection() {
   const t = useTranslations("linkedAccounts");
+  const tc = useTranslations("common");
   const queryClient = useQueryClient();
   const [linkingProvider, setLinkingProvider] = useState<string | null>(null);
 
@@ -69,7 +70,7 @@ export function LinkedAccountsSection() {
         callbackURL: "/settings",
       });
     } catch {
-      toast.error(t("unlinkError"));
+      toast.error(t("linkError"));
       setLinkingProvider(null);
     }
   };
@@ -90,7 +91,7 @@ export function LinkedAccountsSection() {
       {isLoading ? (
         <div className="flex items-center gap-2 py-4 text-sm text-muted-foreground">
           <Loader2 className="h-4 w-4 animate-spin" />
-          Loading...
+          {tc("loading")}
         </div>
       ) : (
         <div className="rounded-md border divide-y">

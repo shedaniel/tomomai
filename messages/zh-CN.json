@@ -72,6 +72,7 @@
     "linked": "已关联",
     "notLinked": "未关联",
     "unlinkError": "解除账户关联失败",
+    "linkError": "关联账户失败",
     "unlinkSuccess": "已成功解除账户关联",
     "linkSuccess": "已成功关联账户",
     "cannotUnlinkLast": "无法解除你唯一的登录方式"
@@ -89,7 +90,9 @@
     "addSuccess": "已成功添加通行密钥。",
     "verifyingCaptcha": "验证中...",
     "captchaFailed": "验证码校验失败，请重试。",
-    "passkeyName": "通行密钥 {index}"
+    "passkeyName": "通行密钥 {index}",
+    "deleteTitle": "删除通行密钥？",
+    "deleteDescription": "该通行密钥将被删除，你将无法再使用它登录。"
   },
   "consent": {
     "title": "欢迎来到 tomomai",

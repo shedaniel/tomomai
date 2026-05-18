@@ -72,6 +72,7 @@
     "linked": "已连结",
     "notLinked": "未连结",
     "unlinkError": "解除账户连结失败",
+    "linkError": "连结账户失败",
     "unlinkSuccess": "已成功解除账户连结",
     "linkSuccess": "已成功连结账户",
     "cannotUnlinkLast": "无法解除你唯一的登入方式"
@@ -89,7 +90,9 @@
     "addSuccess": "已成功新增 Passkey。",
     "verifyingCaptcha": "验证中...",
     "captchaFailed": "验证码验证失败，请再试一次。",
-    "passkeyName": "Passkey {index}"
+    "passkeyName": "Passkey {index}",
+    "deleteTitle": "删除 Passkey？",
+    "deleteDescription": "此 Passkey 将被删除，你将无法再使用它登入。"
   },
   "consent": {
     "title": "欢迎来到 tomomai",

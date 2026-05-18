@@ -18,7 +18,7 @@
 | `DISCORD_CLIENT_SECRET` | Yes | Discord OAuth application client secret |
 | `TWITTER_CLIENT_ID` | No | X (Twitter) OAuth 2.0 client ID. Required to enable X login |
 | `TWITTER_CLIENT_SECRET` | No | X (Twitter) OAuth 2.0 client secret. Required to enable X login |
-| `ALTCHA_HMAC_KEY` | No | HMAC secret for ALTCHA captcha challenges used during passkey registration. Generate with `openssl rand -hex 32`. Falls back to an insecure development default if unset |
+| `ALTCHA_HMAC_KEY` | Recommended | HMAC secret for ALTCHA captcha challenges used during passkey registration. Generate with `openssl rand -hex 32`. Required in non-development environments |
 
 #### Setting up X (Twitter) OAuth
 

@@ -69,18 +69,17 @@ export async function middleware(request: NextRequest) {
   return response;
 }
 
-// Apply middleware to all routes except static files and API routes that need special handling.
+// Apply middleware to all routes except static files.
 // Use Node runtime so ioredis (the Redis-backed rate limiter) can open TCP sockets.
 export const config = {
   runtime: 'nodejs',
   matcher: [
     /*
      * Match all request paths except for the ones starting with:
-     * - api/auth (auth routes have special handling)
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      */
-    '/((?!api/auth|_next/static|_next/image|favicon.ico).*)',
+    '/((?!_next/static|_next/image|favicon.ico).*)',
   ],
 };

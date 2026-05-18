@@ -21,9 +21,14 @@ export const developerRouter = router({
       if (!oldKey) {
         throw new TRPCError({ code: "FORBIDDEN", message: "Key not found" });
       }
-      const permissions = oldKey.permissions
-        ? (JSON.parse(oldKey.permissions) as Record<string, string[]>)
-        : undefined;
+      let permissions: Record<string, string[]> | undefined;
+      try {
+        permissions = oldKey.permissions
+          ? (JSON.parse(oldKey.permissions) as Record<string, string[]>)
+          : undefined;
+      } catch {
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Malformed key permissions" });
+      }
       const expiresIn = oldKey.expiresAt
         ? Math.max(0, Math.floor((new Date(oldKey.expiresAt).getTime() - Date.now()) / 1000))
         : null;

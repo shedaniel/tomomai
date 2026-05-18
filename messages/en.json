@@ -89,7 +89,9 @@
     "addSuccess": "Passkey added successfully.",
     "verifyingCaptcha": "Verifying...",
     "captchaFailed": "Captcha verification failed. Please try again.",
-    "passkeyName": "Passkey {index}"
+    "passkeyName": "Passkey {index}",
+    "deleteTitle": "Delete passkey?",
+    "deleteDescription": "This passkey will be removed. You won't be able to use it to sign in anymore."
   },
   "consent": {
     "title": "Welcome to tomomai",

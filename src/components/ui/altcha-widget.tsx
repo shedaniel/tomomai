@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface AltchaWidgetProps {
   onSolve: (payload: string) => void;
@@ -28,9 +28,16 @@ async function ensureAlgorithmsRegistered() {
 
 export function AltchaWidget({ onSolve, onError, className }: AltchaWidgetProps) {
   const ref = useRef<HTMLElement>(null);
+  const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
-    ensureAlgorithmsRegistered();
+    let cancelled = false;
+    async function init() {
+      await ensureAlgorithmsRegistered();
+      if (!cancelled) setInitialized(true);
+    }
+    init();
+    return () => { cancelled = true; };
   }, []);
 
   useEffect(() => {
@@ -65,6 +72,8 @@ export function AltchaWidget({ onSolve, onError, className }: AltchaWidgetProps)
     el.addEventListener("statechange", handleStateChange);
     return () => el.removeEventListener("statechange", handleStateChange);
   }, [onSolve, onError]);
+
+  if (!initialized) return null;
 
   // @ts-expect-error - altcha-widget is a custom element registered at runtime
   return <altcha-widget ref={ref} challenge="/api/altcha/challenge" hidefooter hidelogo style={{ display: "block", width: "100%" }} class={className} />;

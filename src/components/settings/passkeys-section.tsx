@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { KeyRound, Loader2, Trash2 } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { authClient } from "@/lib/auth-client";
 import { toast } from "sonner";
@@ -27,8 +27,8 @@ type Passkey = {
   deviceType: string;
 };
 
-function formatDate(date: Date) {
-  return new Intl.DateTimeFormat("en", {
+function formatDate(date: Date, locale: string) {
+  return new Intl.DateTimeFormat(locale, {
     year: "numeric",
     month: "short",
     day: "numeric",
@@ -37,6 +37,8 @@ function formatDate(date: Date) {
 
 export function PasskeysSection() {
   const t = useTranslations("passkeys");
+  const tc = useTranslations("common");
+  const locale = useLocale();
   const queryClient = useQueryClient();
   const [addingPasskey, setAddingPasskey] = useState(false);
   const [showAltcha, setShowAltcha] = useState(false);
@@ -136,7 +138,7 @@ export function PasskeysSection() {
           <p className="text-sm text-muted-foreground">{t("verifyingCaptcha")}</p>
           <AltchaWidget onSolve={handleAltchaSolve} onError={handleAltchaError} className="w-full" />
           <Button variant="ghost" size="sm" onClick={() => setShowAltcha(false)}>
-            Cancel
+            {tc("cancel")}
           </Button>
         </div>
       )}
@@ -144,7 +146,7 @@ export function PasskeysSection() {
       {isLoading ? (
         <div className="flex items-center gap-2 py-4 text-sm text-muted-foreground">
           <Loader2 className="h-4 w-4 animate-spin" />
-          Loading...
+          {tc("loading")}
         </div>
       ) : !passkeys || passkeys.length === 0 ? (
         <div className="flex flex-col items-center gap-3 py-8 rounded-md border border-dashed text-center">
@@ -161,7 +163,7 @@ export function PasskeysSection() {
                   {pk.name ?? t("passkeyName", { index: i + 1 })}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {pk.deviceType} · {formatDate(pk.createdAt)}
+                  {pk.deviceType} · {formatDate(pk.createdAt, locale)}
                 </p>
               </div>
               <Button
@@ -180,13 +182,13 @@ export function PasskeysSection() {
       <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete passkey?</AlertDialogTitle>
+            <AlertDialogTitle>{t("deleteTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              This passkey will be removed. You won&apos;t be able to use it to sign in anymore.
+              {t("deleteDescription")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleteMutation.isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={deleteMutation.isPending}>{tc("cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => deleteId && deleteMutation.mutate(deleteId)}
               disabled={deleteMutation.isPending}
