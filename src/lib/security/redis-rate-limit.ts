@@ -1,0 +1,143 @@
+import { NextRequest, NextResponse } from "next/server";
+import { RateLimiterRedis, RateLimiterRes } from "rate-limiter-flexible";
+import { redis } from "@/lib/redis";
+import { logger } from "../logger";
+
+export interface RateLimitOptions {
+  /** Bucket name — included in the Redis key. Keep unique per limit. */
+  name: string;
+  /** Rolling window in seconds. */
+  windowSeconds: number;
+  /** Max requests allowed within the window. */
+  max: number;
+  /** Optional block duration in seconds after exceeding the limit. Default = windowSeconds. */
+  blockSeconds?: number;
+}
+
+export interface RateLimitResult {
+  limited: boolean;
+  remaining: number;
+  /** Seconds until the limit fully resets / block ends. */
+  retryAfter: number;
+  headers: Record<string, string>;
+}
+
+/** Extracts client IP from common proxy headers. Vercel sets x-forwarded-for. */
+export function clientIp(req: NextRequest): string {
+  const raw =
+    req.headers.get("cf-connecting-ip") ??
+    req.headers.get("x-forwarded-for") ??
+    req.headers.get("x-real-ip") ??
+    "unknown";
+  return raw.split(",")[0].trim();
+}
+
+/**
+ * Redis-backed rate limiter using rate-limiter-flexible's atomic Lua scripts.
+ * One Redis round-trip per check.
+ */
+export class RedisRateLimiter {
+  private limiter: RateLimiterRedis;
+  private max: number;
+
+  constructor(opts: RateLimitOptions) {
+    this.max = opts.max;
+    this.limiter = new RateLimiterRedis({
+      storeClient: redis,
+      keyPrefix: `rl:${opts.name}`,
+      points: opts.max,
+      duration: opts.windowSeconds,
+      blockDuration: opts.blockSeconds ?? opts.windowSeconds,
+    });
+  }
+
+  async check(key: string): Promise<RateLimitResult> {
+    try {
+      const res = await this.limiter.consume(key, 1);
+      return this.buildResult(res, false);
+    } catch (err) {
+      if (err instanceof RateLimiterRes) {
+        return this.buildResult(err, true);
+      }
+      // Redis unreachable or other error — fail-open to avoid locking users out.
+      logger.error({ err, key }, "Rate limiter error — failing open");
+      return {
+        limited: false,
+        remaining: this.max,
+        retryAfter: 0,
+        headers: {},
+      };
+    }
+  }
+
+  async checkRequest(req: NextRequest): Promise<RateLimitResult> {
+    return this.check(clientIp(req));
+  }
+
+  private buildResult(res: RateLimiterRes, limited: boolean): RateLimitResult {
+    const retryAfter = Math.ceil(res.msBeforeNext / 1000);
+    const remaining = Math.max(0, res.remainingPoints);
+    return {
+      limited,
+      remaining,
+      retryAfter,
+      headers: {
+        "X-RateLimit-Limit": String(this.max),
+        "X-RateLimit-Remaining": String(remaining),
+        "X-RateLimit-Reset": String(retryAfter),
+        ...(limited ? { "Retry-After": String(retryAfter) } : {}),
+      },
+    };
+  }
+}
+
+/** Convenience: rate-limit a Next.js route handler by IP. Returns null when OK, a 429 Response when limited. */
+export async function rateLimit(
+  req: NextRequest,
+  limiter: RedisRateLimiter,
+  message = "Too many requests, please try again later.",
+): Promise<NextResponse | null> {
+  const result = await limiter.checkRequest(req);
+  if (!result.limited) return null;
+  const res = NextResponse.json({ error: message }, { status: 429 });
+  Object.entries(result.headers).forEach(([k, v]) => res.headers.set(k, v));
+  return res;
+}
+
+// --- Shared limiter instances ---
+
+/** Global API protection, broad, applied via middleware. */
+export const apiLimiter = new RedisRateLimiter({
+  name: "api",
+  windowSeconds: 60,
+  max: 180,
+});
+
+/** Auth endpoints, stricter than general API. */
+export const authLimiter = new RedisRateLimiter({
+  name: "auth",
+  windowSeconds: 90,
+  max: 10,
+});
+
+/** Captcha challenge creation */
+export const captchaChallengeLimiter = new RedisRateLimiter({
+  name: "captcha-challenge",
+  windowSeconds: 60,
+  max: 5,
+});
+
+/** Captcha pre-verify, UX only, looser. */
+export const captchaVerifyLimiter = new RedisRateLimiter({
+  name: "captcha-verify",
+  windowSeconds: 60,
+  max: 10,
+});
+
+/** Passkey registration — the abuse outcome. Very strict, long block. */
+export const passkeyRegisterLimiter = new RedisRateLimiter({
+  name: "passkey-register",
+  windowSeconds: 60 * 60,
+  max: 3,
+  blockSeconds: 60 * 60,
+});

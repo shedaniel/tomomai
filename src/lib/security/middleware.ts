@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { apiRateLimiter, authRateLimiter } from './rate-limiter';
+import { apiLimiter, authLimiter, clientIp } from './redis-rate-limit';
 import { CORS_CONFIG } from './config';
 import { logger } from '../logger';
 
@@ -65,37 +65,28 @@ async function checkRateLimiting(request: NextRequest, path: string): Promise<{
   response?: NextResponse;
 }> {
   try {
-    // Apply different rate limits based on path
+    let limiter: typeof apiLimiter | null = null;
+    let message = "Too many requests. Please try again later.";
+
     if (path.startsWith('/api/login') || path.startsWith('/api/auth')) {
-      // Auth endpoints - more restrictive
-      const result = await authRateLimiter.check(request);
-      if (result.limited) {
-        logger.warn({ key: authRateLimiter.keyGenerator(request) }, `Rate limit exceeded for auth endpoint: ${path}`);
-        const response = NextResponse.json(
-          { error: 'Too many authentication attempts. Please try again later.' },
-          { status: 429 }
-        );
-        applyRateLimitHeaders(response, result.headers);
-        return { limited: true, response };
-      }
-      applyRateLimitHeaders(NextResponse.next(), result.headers);
+      limiter = authLimiter;
+      message = "Too many authentication attempts. Please try again later.";
     } else if (path.startsWith('/api/')) {
-      // General API endpoints
-      const result = await apiRateLimiter.check(request);
-      if (result.limited) {
-        logger.warn({ key: apiRateLimiter.keyGenerator(request) }, `Rate limit exceeded for API endpoint: ${path}`);
-        const response = NextResponse.json(
-          { error: 'Too many requests. Please try again later.' },
-          { status: 429 }
-        );
-        applyRateLimitHeaders(response, result.headers);
-        return { limited: true, response };
-      }
-      applyRateLimitHeaders(NextResponse.next(), result.headers);
+      limiter = apiLimiter;
     }
 
+    if (!limiter) return { limited: false };
+
+    const result = await limiter.checkRequest(request);
+    if (result.limited) {
+      logger.warn({ ip: clientIp(request), path }, 'Rate limit exceeded');
+      const response = NextResponse.json({ error: message }, { status: 429 });
+      applyRateLimitHeaders(response, result.headers);
+      return { limited: true, response };
+    }
     return { limited: false };
   } catch (error) {
+    // Fail-open on unexpected errors so we don't lock everyone out if Redis hiccups.
     logger.error({ error, context: 'rate-limiting' }, 'Error checking rate limits');
     return { limited: false };
   }

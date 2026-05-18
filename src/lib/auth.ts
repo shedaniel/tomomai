@@ -10,6 +10,7 @@ import { db } from "./db";
 import * as schema from "./db/schema-pg";
 import { logger } from "@/lib/logger";
 import { consumeAltchaPayload } from "@/lib/altcha";
+import { passkeyRegisterLimiter } from "@/lib/security/redis-rate-limit";
 
 // Passkey endpoints that mint a new credential, must be captcha-gated to prevent
 // scripted abuse. Sign-in / authenticate paths are intentionally NOT gated.
@@ -199,6 +200,21 @@ export const auth = betterAuth({
   hooks: {
     before: createAuthMiddleware(async (ctx) => {
       if (!CAPTCHA_GATED_PATHS.has(ctx.path)) return;
+
+      // Per-IP rate limit on the abuse outcome itself, in addition to the captcha.
+      const ipHeader =
+        ctx.headers?.get("cf-connecting-ip") ??
+        ctx.headers?.get("x-forwarded-for") ??
+        ctx.headers?.get("x-real-ip") ??
+        "unknown";
+      const ip = ipHeader.split(",")[0].trim();
+      const rl = await passkeyRegisterLimiter.check(ip);
+      if (rl.limited) {
+        throw new APIError("TOO_MANY_REQUESTS", {
+          message: `Too many passkey registration attempts. Try again in ${rl.retryAfter}s.`,
+        });
+      }
+
       const captcha = ctx.headers?.get("x-captcha-response");
       if (!captcha) {
         throw new APIError("BAD_REQUEST", { message: "Captcha required" });
