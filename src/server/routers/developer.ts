@@ -3,6 +3,9 @@ import { API_SCOPES, expandScopes, type ScopeKey } from "@/lib/api/scopes";
 import { protectedProcedure, router } from "@/lib/trpc";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
+import { db } from "@/lib/db";
+import { apikey } from "@/lib/db/schema-pg";
+import { and, eq } from "drizzle-orm";
 
 const scopeKey = z.enum(Object.keys(API_SCOPES) as [ScopeKey, ...ScopeKey[]]);
 
@@ -11,13 +14,16 @@ export const developerRouter = router({
     .input(z.object({ keyId: z.string() }))
     .mutation(async ({ ctx, input }) => {
       // Verify the key belongs to the current user and get its config
-      const keys = await auth.api.listApiKeys({
-        query: { userId: ctx.session.user.id },
+      const oldKey = await db.query.apikey.findFirst({
+        where: and(eq(apikey.id, input.keyId), eq(apikey.userId, ctx.session.user.id)),
+        columns: { name: true, permissions: true },
       });
-      const oldKey = (keys as any[] | undefined)?.find((k: any) => k.id === input.keyId);
       if (!oldKey) {
         throw new TRPCError({ code: "FORBIDDEN", message: "Key not found" });
       }
+      const permissions = oldKey.permissions
+        ? (JSON.parse(oldKey.permissions) as Record<string, string[]>)
+        : undefined;
 
       // Better Auth has no rotateApiKey — implement as delete + recreate
       await auth.api.deleteApiKey({
@@ -28,7 +34,7 @@ export const developerRouter = router({
         body: {
           userId: ctx.session.user.id,
           name: oldKey.name ?? undefined,
-          permissions: oldKey.permissions ?? undefined,
+          permissions,
           expiresIn: null,
         },
       });

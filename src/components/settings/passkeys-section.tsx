@@ -76,24 +76,9 @@ export function PasskeysSection() {
     setShowAltcha(false);
     setAddingPasskey(true);
     try {
-      const verifyRes = await fetch("/api/altcha/verify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ payload }),
+      const result = await authClient.passkey.addPasskey({
+        fetchOptions: { headers: { "x-captcha-response": payload } },
       });
-      if (!verifyRes.ok) {
-        toast.error(t("captchaFailed"));
-        setAddingPasskey(false);
-        return;
-      }
-    } catch {
-      toast.error(t("captchaFailed"));
-      setAddingPasskey(false);
-      return;
-    }
-
-    try {
-      const result = await authClient.passkey.addPasskey();
       if (result?.error) {
         toast.error(result.error.message || t("addError"));
       } else {

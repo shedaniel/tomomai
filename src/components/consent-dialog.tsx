@@ -78,27 +78,11 @@ export function ConsentDialog({
   };
 
   const handleAltchaSolve = async (payload: string) => {
-    setPasskeyStage("verifying");
-    try {
-      const res = await fetch("/api/altcha/verify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ payload }),
-      });
-      if (!res.ok) {
-        toast.error(tp("captchaFailed"));
-        setPasskeyStage("captcha");
-        return;
-      }
-    } catch {
-      toast.error(tp("captchaFailed"));
-      setPasskeyStage("captcha");
-      return;
-    }
-
     setPasskeyStage("registering");
     try {
-      const result = await authClient.signIn.passkey();
+      const result = await authClient.signIn.passkey({
+        fetchOptions: { headers: { "x-captcha-response": payload } },
+      });
       if (result?.error) {
         toast.error(tp("addError"));
         setPasskeyStage("idle");
@@ -131,6 +115,7 @@ export function ConsentDialog({
         <ResponsiveDialogContent
           showCloseButton={false}
           className="max-w-2xl max-h-[90dvh]"
+          style={{ backgroundImage: "linear-gradient(160deg, color-mix(in srgb, var(--primary) 10%, transparent), transparent 22%)" }}
           onPointerDownOutside={(e) => e.preventDefault()}
           onEscapeKeyDown={(e) => e.preventDefault()}
         >
@@ -143,9 +128,9 @@ export function ConsentDialog({
 
           <div className="space-y-4 py-4">
             {/* TL;DR Section */}
-            <div className="bg-muted/50 p-4 rounded-md">
-              <h3 className="text-sm font-semibold mb-2">{t("tldr.title")}</h3>
-              <ul className="space-y-1.5 text-xs text-muted-foreground">
+            <div className="bg-primary/[0.03] border border-border p-4 rounded-xl">
+              <h3 className="text-[10px] font-semibold uppercase tracking-widest mb-3 text-primary/60">{t("tldr.title")}</h3>
+              <ul className="space-y-2 text-xs text-foreground/65">
                 <li className="flex items-start gap-1">
                   <Dot className="text-primary shrink-0" size={16} strokeWidth={3} fill="true" />
                   <span>{t("tldr.points.0")}</span>
@@ -184,8 +169,8 @@ export function ConsentDialog({
             </div>
 
             {/* Consent checkboxes */}
-            <div className="rounded-md border border-border/60 divide-y divide-border/60 overflow-hidden">
-              <div>
+            <div className="space-y-2">
+              <div className="rounded-xl border border-border overflow-hidden">
                 <div className="flex items-center gap-3 px-3 py-2.5">
                   <Checkbox
                     id="tos-consent"
@@ -194,7 +179,7 @@ export function ConsentDialog({
                   />
                   <label
                     htmlFor="tos-consent"
-                    className="text-sm font-medium cursor-pointer select-none flex-1"
+                    className="text-sm font-semibold cursor-pointer select-none flex-1"
                   >
                     {t("agreeToTos")}
                   </label>
@@ -215,7 +200,7 @@ export function ConsentDialog({
                   </div>
                 )}
               </div>
-              <div>
+              <div className="rounded-xl border border-border overflow-hidden">
                 <div className="flex items-center gap-3 px-3 py-2.5">
                   <Checkbox
                     id="privacy-consent"
@@ -224,7 +209,7 @@ export function ConsentDialog({
                   />
                   <label
                     htmlFor="privacy-consent"
-                    className="text-sm font-medium cursor-pointer select-none flex-1"
+                    className="text-sm font-semibold cursor-pointer select-none flex-1"
                   >
                     {t("agreeToPrivacy")}
                   </label>
@@ -258,7 +243,7 @@ export function ConsentDialog({
             {/* Agree separator — always visible */}
             <div className="relative w-full flex items-center gap-3">
               <div className="flex-1 h-px bg-border" />
-              <span className="text-[11px] uppercase tracking-wider text-muted-foreground shrink-0">{t("agree")}</span>
+              <span className="text-[10px] font-semibold uppercase tracking-widest text-foreground/40 shrink-0">{t("agree")}</span>
               <div className="flex-1 h-px bg-border" />
             </div>
 
@@ -293,7 +278,7 @@ export function ConsentDialog({
                     onClick={() => handleSocialMethod("discord")}
                     disabled={!canProceed || proceeding !== null}
                     size="lg"
-                    className="w-full justify-start bg-indigo-500/90 hover:bg-indigo-500 text-white border border-input dark:bg-indigo-500/80 dark:hover:bg-indigo-500"
+                    className="w-full justify-start bg-indigo-500/90 hover:bg-indigo-500 text-white border border-input dark:bg-indigo-500/80 dark:hover:bg-indigo-500 font-semibold"
                   >
                     {proceeding === "discord" ? (
                       <Loader2 className="w-5 h-5 mr-3 animate-spin shrink-0" />
@@ -306,7 +291,7 @@ export function ConsentDialog({
                     onClick={() => handleSocialMethod("twitter")}
                     disabled={!canProceed || proceeding !== null}
                     size="lg"
-                    className="w-full justify-start bg-neutral-900 hover:bg-neutral-800 text-white border border-input"
+                    className="w-full justify-start bg-neutral-900 hover:bg-neutral-800 text-white border border-input font-semibold"
                   >
                     {proceeding === "twitter" ? (
                       <Loader2 className="w-5 h-5 mr-3 animate-spin shrink-0" />
@@ -320,7 +305,7 @@ export function ConsentDialog({
                     disabled={!canProceed || proceeding !== null}
                     size="lg"
                     variant="outline"
-                    className="w-full justify-start"
+                    className="w-full justify-start font-semibold"
                   >
                     <KeyRound className="w-5 h-5 mr-3 shrink-0" />
                     {ta("signupWithPasskey")}

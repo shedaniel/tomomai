@@ -40,7 +40,12 @@ export function withApiKey(
         );
       }
 
-      const key = result.key as ApiKeyInfo;
+      const key: ApiKeyInfo = {
+        userId: result.key.referenceId,
+        permissions: result.key.permissions ?? {},
+        name: result.key.name,
+        expiresAt: result.key.expiresAt,
+      };
       return await handler(req, key);
     } catch (err) {
       console.error("API handler error:", err);

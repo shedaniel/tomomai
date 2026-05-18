@@ -74,7 +74,7 @@ export function ApiKeysSection() {
     queryFn: async () => {
       const result = await authClient.apiKey.list();
       if (result.error) throw new Error(result.error.message);
-      return result.data as ApiKey[];
+      return result.data.apiKeys as ApiKey[];
     },
   });
 

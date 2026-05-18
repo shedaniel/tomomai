@@ -1,4 +1,5 @@
 import { betterAuth } from "better-auth";
+import { createAuthMiddleware, APIError } from "better-auth/api";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
 import { admin, openAPI } from "better-auth/plugins";
@@ -8,6 +9,13 @@ import { and, count, eq, isNull, lt, or } from "drizzle-orm";
 import { db } from "./db";
 import * as schema from "./db/schema-pg";
 import { logger } from "@/lib/logger";
+import { consumeAltchaPayload } from "@/lib/altcha";
+
+// Passkey endpoints that mint a new credential, must be captcha-gated to prevent
+// scripted abuse. Sign-in / authenticate paths are intentionally NOT gated.
+const CAPTCHA_GATED_PATHS = new Set([
+  "/passkey/generate-register-options",
+]);
 
 const SIGNUP_TYPE = process.env.NEXT_PUBLIC_ACCOUNT_SIGNUP_TYPE || 'disabled'; // disabled, invite-only, enabled
 const SIGNUP_REQUIRED_AMOUNT = 128;
@@ -188,6 +196,19 @@ export const auth = betterAuth({
     "/delete-user",
     "/delete-user/callback",
   ],
+  hooks: {
+    before: createAuthMiddleware(async (ctx) => {
+      if (!CAPTCHA_GATED_PATHS.has(ctx.path)) return;
+      const captcha = ctx.headers?.get("x-captcha-response");
+      if (!captcha) {
+        throw new APIError("BAD_REQUEST", { message: "Captcha required" });
+      }
+      const ok = await consumeAltchaPayload(captcha);
+      if (!ok) {
+        throw new APIError("BAD_REQUEST", { message: "Invalid or already-used captcha" });
+      }
+    }),
+  },
   databaseHooks: {
     user: {
       create: {

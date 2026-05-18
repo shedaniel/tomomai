@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
 type AnyProps = Record<string, unknown>;
 
 type DOMMotionProps<T extends HTMLElement = HTMLElement> = Omit<
-  HTMLMotionProps<keyof HTMLElementTagNameMap>,
+  HTMLMotionProps<Exclude<keyof HTMLElementTagNameMap, `${string}-${string}`>>,
   'ref'
 > & { ref?: React.Ref<T> };
 
