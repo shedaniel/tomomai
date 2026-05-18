@@ -16,7 +16,7 @@ export const developerRouter = router({
       // Verify the key belongs to the current user and get its config
       const oldKey = await db.query.apikey.findFirst({
         where: and(eq(apikey.id, input.keyId), eq(apikey.userId, ctx.session.user.id)),
-        columns: { name: true, permissions: true },
+        columns: { name: true, permissions: true, expiresAt: true, enabled: true },
       });
       if (!oldKey) {
         throw new TRPCError({ code: "FORBIDDEN", message: "Key not found" });
@@ -24,6 +24,9 @@ export const developerRouter = router({
       const permissions = oldKey.permissions
         ? (JSON.parse(oldKey.permissions) as Record<string, string[]>)
         : undefined;
+      const expiresIn = oldKey.expiresAt
+        ? Math.max(0, Math.floor((new Date(oldKey.expiresAt).getTime() - Date.now()) / 1000))
+        : null;
 
       // Better Auth has no rotateApiKey — implement as delete + recreate
       await auth.api.deleteApiKey({
@@ -35,12 +38,18 @@ export const developerRouter = router({
           userId: ctx.session.user.id,
           name: oldKey.name ?? undefined,
           permissions,
-          expiresIn: null,
+          expiresIn,
         },
       });
 
       if (!result?.key) {
         throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to rotate API key" });
+      }
+
+      if (!oldKey.enabled) {
+        await auth.api.updateApiKey({
+          body: { keyId: result.id, enabled: false },
+        });
       }
 
       return { key: result.key };
