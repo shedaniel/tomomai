@@ -362,7 +362,8 @@ export const apikey = pgTable("apikey", {
   start: text("start"),
   prefix: text("prefix"),
   key: text("key").notNull(),
-  userId: text("userId").notNull().references(() => user.id, { onDelete: "cascade" }),
+  referenceId: text("referenceId").notNull(),
+  configId: text("configId").notNull(),
   refillInterval: integer("refillInterval"),
   refillAmount: integer("refillAmount"),
   lastRefillAt: timestamp("lastRefillAt"),
@@ -380,7 +381,8 @@ export const apikey = pgTable("apikey", {
   metadata: text("metadata"),
 }, (table) => [
   index("apikey_key_idx").on(table.key),
-  index("apikey_userid_idx").on(table.userId),
+  index("apikey_referenceid_idx").on(table.referenceId),
+  index("apikey_configid_idx").on(table.configId),
 ]);
 
 export const tourEvents = pgTable("tour_events", {

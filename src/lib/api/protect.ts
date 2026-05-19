@@ -1,5 +1,6 @@
 import { type NextRequest } from "next/server";
 import { auth } from "@/lib/auth";
+import { verifyAccessToken } from "better-auth/oauth2";
 import { type ScopeKey, scopesToPermissions } from "@/lib/api/scopes";
 
 export interface ApiKeyInfo {
@@ -12,6 +13,48 @@ export interface ApiKeyInfo {
 /** Returns true if the key holds the given scope. */
 export function keyHasScope(key: ApiKeyInfo, scope: ScopeKey): boolean {
   return Array.isArray(key.permissions[scope]) && key.permissions[scope].includes("access");
+}
+
+/**
+ * Verify an OAuth 2.1 Bearer JWT issued by our own oauthProvider plugin.
+ * Returns an ApiKeyInfo if valid, or null if the token is not a JWT / fails verification.
+ */
+async function verifyOAuthToken(
+  token: string,
+  requiredScopes: ScopeKey[],
+): Promise<ApiKeyInfo | null> {
+  // Quick structural check — JWTs have exactly two dots (three base64url segments).
+  if ((token.match(/\./g) ?? []).length !== 2) return null;
+
+  try {
+    const baseUrl = process.env.BETTER_AUTH_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? "";
+
+    const payload = await verifyAccessToken(token, {
+      verifyOptions: {
+        issuer: baseUrl,
+        audience: baseUrl,
+      },
+      // verifyAccessToken throws if any of these scopes are missing
+      scopes: requiredScopes as string[],
+    });
+
+    if (!payload.sub) return null;
+
+    // Convert the space-separated `scope` claim into our permissions map format
+    const scopeList = (typeof payload.scope === "string" ? payload.scope : "")
+      .split(" ")
+      .filter(Boolean);
+    const permissions = Object.fromEntries(scopeList.map((s) => [s, ["access"]]));
+
+    return {
+      userId: payload.sub,
+      permissions,
+      name: null,
+      expiresAt: payload.exp ? new Date(payload.exp * 1000) : null,
+    };
+  } catch {
+    return null;
+  }
 }
 
 export function withApiKey(
@@ -29,6 +72,16 @@ export function withApiKey(
     }
 
     try {
+      // ── OAuth JWT path ────────────────────────────────────────────────────
+      // API keys always start with the "tmk_" prefix; anything else that
+      // looks like a JWT is treated as an OAuth Bearer token.
+      if (!rawKey.startsWith("tmk_")) {
+        const oauthKey = await verifyOAuthToken(rawKey, requiredScopes);
+        if (oauthKey) return await handler(req, oauthKey);
+        return Response.json({ error: "Invalid or expired token" }, { status: 403 });
+      }
+
+      // ── Personal API key path ─────────────────────────────────────────────
       const result = await auth.api.verifyApiKey({
         body: { key: rawKey, permissions: scopesToPermissions(requiredScopes) },
       });

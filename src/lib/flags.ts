@@ -8,7 +8,8 @@ export interface Flags {
   platesCard: boolean;
   eventsCard: boolean;
   albumsCard: boolean;
-  developerPortal: boolean;
+  settingsApplications: boolean;
+  settingsDeveloper: boolean;
   aprilFools2026: boolean;
   customThemes: boolean;
 }
@@ -64,9 +65,14 @@ const registry = {
     userSelectable: true,
     decide: async () => true,
   }),
-  developerPortal: defineFlag("developerPortal", {
+  settingsApplications: defineFlag("settingsApplications", {
+    defaultValue: true,
+    userSelectable: true,
+    decide: async () => true,
+  }),
+  settingsDeveloper: defineFlag("settingsDeveloper", {
     defaultValue: false,
-    userSelectable: false,
+    userSelectable: true,
     decide: async () => false,
   }),
   aprilFools2026: defineFlag("aprilFools2026", {
@@ -101,7 +107,8 @@ export const useRecommendationFilters = registry.recommendationFilters.fn;
 export const usePlatesCard = registry.platesCard.fn;
 export const useEventsCard = registry.eventsCard.fn;
 export const useAlbumsCard = registry.albumsCard.fn;
-export const useDeveloperPortal = registry.developerPortal.fn;
+export const useSettingsApplications = registry.settingsApplications.fn;
+export const useSettingsDeveloper = registry.settingsDeveloper.fn;
 export const useAprilFools2026 = registry.aprilFools2026.fn;
 export const useCustomThemes = registry.customThemes.fn;
 

@@ -99,6 +99,20 @@
       "when": 1777288940448,
       "tag": "0013_quiet_goblin_queen",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1779117376091,
+      "tag": "0014_broken_warbound",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1779179890228,
+      "tag": "0015_perpetual_captain_midlands",
+      "breakpoints": true
     }
   ]
 }

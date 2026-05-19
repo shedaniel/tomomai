@@ -28,7 +28,7 @@ import { trpc } from "@/lib/trpc-client";
 import { API_SCOPES, type ScopeKey } from "@/lib/api/scopes";
 import { CreateApiKeyDialog } from "@/components/developer/create-api-key-dialog";
 import { toast } from "sonner";
-import { Plus, Trash2, Key, Loader2, RefreshCw, Copy, Check, AlertTriangle } from "lucide-react";
+import { Plus, Trash2, Key, Loader2, RefreshCw, Copy, Check, AlertTriangle, Pencil } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useLocale } from "@/components/providers/locale-provider";
@@ -59,6 +59,8 @@ export function ApiKeysSection() {
   const [regeneratedKey, setRegeneratedKey] = useState<string | null>(null);
   const [copiedRegen, setCopiedRegen] = useState(false);
   const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [editKey, setEditKey] = useState<{ id: string; name: string | null } | null>(null);
+  const [editName, setEditName] = useState("");
 
   function formatDate(date: Date | null) {
     if (!date) return t("apiKeys.never");
@@ -101,6 +103,20 @@ export function ApiKeysSection() {
     },
     onError: (err: Error) => {
       toast.error(err.message ?? t("apiKeys.deleteError"));
+    },
+  });
+
+  const editMutation = useMutation({
+    mutationFn: async ({ id, name }: { id: string; name: string }) => {
+      const result = await authClient.apiKey.update({ keyId: id, name });
+      if (result.error) throw new Error(result.error.message);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["api-keys"] });
+      setEditKey(null);
+    },
+    onError: (err: Error) => {
+      toast.error(err.message ?? t("apiKeys.editDialog.saveError"));
     },
   });
 
@@ -217,6 +233,15 @@ export function ApiKeysSection() {
                     variant="ghost"
                     size="icon"
                     className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                    onClick={() => { setEditKey({ id: key.id, name: key.name }); setEditName(key.name ?? ""); }}
+                    aria-label={t("apiKeys.editDialog.title")}
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-muted-foreground hover:text-foreground"
                     onClick={() => setRegenerateId(key.id)}
                     aria-label={t("apiKeys.regenerateAriaLabel")}
                   >
@@ -242,6 +267,50 @@ export function ApiKeysSection() {
         onOpenChange={setCreateOpen}
         onCreated={() => queryClient.invalidateQueries({ queryKey: ["api-keys"] })}
       />
+
+      {/* Edit name dialog */}
+      <Dialog open={!!editKey} onOpenChange={(open) => !open && setEditKey(null)}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>{t("apiKeys.editDialog.title")}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-key-name">{t("apiKeys.editDialog.nameLabel")}</Label>
+              <Input
+                id="edit-key-name"
+                placeholder={t("apiKeys.editDialog.namePlaceholder")}
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && editName.trim() && !editMutation.isPending) {
+                    editMutation.mutate({ id: editKey!.id, name: editName.trim() });
+                  }
+                }}
+                autoFocus
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setEditKey(null)} disabled={editMutation.isPending}>
+                {tc("cancel")}
+              </Button>
+              <Button
+                onClick={() => editKey && editMutation.mutate({ id: editKey.id, name: editName.trim() })}
+                disabled={!editName.trim() || editMutation.isPending}
+              >
+                {editMutation.isPending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    {t("apiKeys.editDialog.saving")}
+                  </>
+                ) : (
+                  t("apiKeys.editDialog.saveButton")
+                )}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Regenerate confirmation */}
       <AlertDialog open={!!regenerateId} onOpenChange={(open) => !open && setRegenerateId(null)}>

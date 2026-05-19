@@ -57,6 +57,27 @@ function applySecurityHeaders(response: NextResponse): void {
   response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
 }
 
+// Auth paths that involve credential submission or account state changes.
+// Read-only session/key management routes (e.g. /api/auth/api-key/list,
+// /api/auth/get-session) intentionally omitted — they use the general apiLimiter.
+const STRICT_AUTH_PREFIXES = [
+  '/api/auth/sign-in',
+  '/api/auth/sign-up',
+  '/api/auth/callback',
+  '/api/auth/oauth',
+  '/api/auth/passkey/authenticate',
+  '/api/auth/reset-password',
+  '/api/auth/change-password',
+  '/api/auth/send-verification-email',
+  '/api/auth/verify-email',
+  '/api/auth/delete-user',
+  '/api/login',
+];
+
+function isStrictAuthPath(path: string): boolean {
+  return STRICT_AUTH_PREFIXES.some((prefix) => path.startsWith(prefix));
+}
+
 /**
  * Check rate limiting based on request path
  */
@@ -68,7 +89,7 @@ async function checkRateLimiting(request: NextRequest, path: string): Promise<{
     let limiter: typeof apiLimiter | null = null;
     let message = "Too many requests. Please try again later.";
 
-    if (path.startsWith('/api/login') || path.startsWith('/api/auth')) {
+    if (isStrictAuthPath(path)) {
       limiter = authLimiter;
       message = "Too many authentication attempts. Please try again later.";
     } else if (path.startsWith('/api/')) {

@@ -1,7 +1,7 @@
 "use client";
 
 import { Region, SnapshotWithSongs } from "@/lib/types";
-import { Tabs, TabsList, TabsTrigger } from "@tomomai/ui";
+import { Sidebar, SidebarItem } from "@tomomai/ui";
 import { BarChart, Clock, Code, Database, Heart, Image as ImageIcon, Loader2, Map, Music, TrendingUp, User, Images } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState, useEffect } from "react";
@@ -200,19 +200,16 @@ export function DataContent({
 
   if (selectedSnapshotData) {
     return (
-      <Tabs
-        orientation="vertical"
-        value={selectedTab}
-        onValueChange={handleTabChange}
-        className="flex flex-col md:flex-row md:items-start gap-x-6 lg:gap-x-8 gap-y-6"
-      >
-        <TabsList className="shrink-0 flex flex-row justify-start overflow-x-auto gap-x-1 md:grid md:grid-cols-1 md:w-48 md:overflow-x-visible md:-ml-3 p-0 bg-background h-fit rounded-none">
+      <div className="flex flex-col md:flex-row md:items-start gap-x-6 lg:gap-x-8 gap-y-6">
+        <Sidebar
+          value={selectedTab}
+          onValueChange={handleTabChange}
+          className="sm:flex-row sm:w-full md:flex-col md:w-48 md:overflow-x-visible md:-ml-3"
+        >
           {visibleTabs.map((tab) => (
-            <TabsTrigger key={tab.value} value={tab.value} className="justify-start rounded-md text-sm text-muted-foreground data-[state=active]:shadow-none data-[state=active]:bg-muted data-[state=active]:text-foreground data-[state=active]:font-medium data-[state=active]:border data-[state=active]:border-border data-[state=active]:md:px-3.5 data-[state=active]:md:my-1 data-[state=active]:md:text-[15px] data-[state=active]:max-md:px-4 px-3 py-2 whitespace-nowrap shrink-0 md:shrink md:whitespace-normal transition-all">
-              <tab.icon className="size-4 me-2 data-[state=active]:scale-125 transition-all" /> {tab.name}
-            </TabsTrigger>
+            <SidebarItem key={tab.value} value={tab.value} icon={tab.icon} text={tab.name} />
           ))}
-        </TabsList>
+        </Sidebar>
 
         <AnimatePresence mode="wait">
           <motion.div
@@ -267,7 +264,7 @@ export function DataContent({
             )}
           </motion.div>
         </AnimatePresence>
-      </Tabs>
+      </div>
     )
   }
 

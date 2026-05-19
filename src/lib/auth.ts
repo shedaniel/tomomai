@@ -1,10 +1,13 @@
 import { betterAuth } from "better-auth";
+import { resolveBaseUrl } from "@/lib/base-url";
 import { createAuthMiddleware, APIError } from "better-auth/api";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
-import { admin, openAPI } from "better-auth/plugins";
+import { admin, jwt, openAPI } from "better-auth/plugins";
 import { apiKey } from "@better-auth/api-key";
 import { passkey } from "@better-auth/passkey";
+import { oauthProvider } from "@better-auth/oauth-provider";
+import { API_SCOPES } from "@/lib/api/scopes";
 import { and, count, eq, isNull, lt, or } from "drizzle-orm";
 import { db } from "./db";
 import * as schema from "./db/schema-pg";
@@ -121,6 +124,7 @@ const trustedOrigins = (process.env.TRUSTED_ORIGINS ?? "")
 const authCookieDomain = process.env.AUTH_COOKIE_DOMAIN?.trim() || undefined;
 
 export const auth = betterAuth({
+  baseURL: process.env.BETTER_AUTH_URL || resolveBaseUrl(),
   ...(trustedOrigins.length ? { trustedOrigins } : {}),
   advanced: {
     // Honour x-forwarded-host / x-forwarded-proto when computing the base
@@ -182,6 +186,18 @@ export const auth = betterAuth({
       },
     }),
     passkey(),
+    jwt(),
+    oauthProvider({
+      loginPage: "/",
+      consentPage: "/oauth/consent",
+      accessTokenExpiresIn: 3600,       // 1 hour
+      refreshTokenExpiresIn: 2592000,   // 30 days
+      // `scopes` is the canonical list the provider understands.
+      // `clientRegistrationAllowedScopes` restricts what clients may request —
+      // every entry here must also appear in `scopes`.
+      scopes: Object.keys(API_SCOPES) as string[],
+      clientRegistrationAllowedScopes: Object.keys(API_SCOPES) as string[],
+    }),
     ...(process.env.NODE_ENV === 'development' ? [openAPI()] : []),
   ],
   disabledPaths: [

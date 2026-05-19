@@ -4,7 +4,7 @@ import { protectedProcedure, router } from "@/lib/trpc";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { apikey } from "@/lib/db/schema-pg";
+import { apikey, oauthClient, oauthConsent, oauthRefreshToken, oauthAccessToken } from "@/lib/db/schema-pg";
 import { and, eq } from "drizzle-orm";
 
 const scopeKey = z.enum(Object.keys(API_SCOPES) as [ScopeKey, ...ScopeKey[]]);
@@ -15,7 +15,7 @@ export const developerRouter = router({
     .mutation(async ({ ctx, input }) => {
       // Verify the key belongs to the current user and get its config
       const oldKey = await db.query.apikey.findFirst({
-        where: and(eq(apikey.id, input.keyId), eq(apikey.userId, ctx.session.user.id)),
+        where: and(eq(apikey.id, input.keyId), eq(apikey.referenceId, ctx.session.user.id)),
         columns: { name: true, permissions: true, expiresAt: true, enabled: true },
       });
       if (!oldKey) {
@@ -92,5 +92,190 @@ export const developerRouter = router({
       }
 
       return { key: result.key };
+    }),
+
+  // ── OAuth Applications ────────────────────────────────────────────────────
+
+  listOAuthApps: protectedProcedure
+    .query(async ({ ctx }) => {
+      const apps = await db
+        .select({
+          id: oauthClient.id,
+          clientId: oauthClient.clientId,
+          name: oauthClient.name,
+          uri: oauthClient.uri,
+          icon: oauthClient.icon,
+          redirectUris: oauthClient.redirectUris,
+          scopes: oauthClient.scopes,
+          policy: oauthClient.policy,
+          tos: oauthClient.tos,
+          createdAt: oauthClient.createdAt,
+          updatedAt: oauthClient.updatedAt,
+        })
+        .from(oauthClient)
+        .where(eq(oauthClient.userId, ctx.session.user.id));
+      return apps;
+    }),
+
+  createOAuthApp: protectedProcedure
+    .input(
+      z.object({
+        name: z.string().min(1).max(64),
+        redirectUris: z.array(z.string().url("Each redirect URI must be a valid URL")).min(1).max(10),
+        scopes: z.array(z.enum(Object.keys(API_SCOPES) as [ScopeKey, ...ScopeKey[]])).min(1),
+        uri: z.string().url().optional(),
+        icon: z.string().url().optional(),
+        policy: z.string().url().optional(),
+        tos: z.string().url().optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      // Delegate creation to Better Auth so it handles client_id generation,
+      // secret hashing, and any internal bookkeeping consistently.
+      const result = await auth.api.createOAuthClient({
+        body: {
+          client_name: input.name,
+          redirect_uris: input.redirectUris,
+          scope: expandScopes(input.scopes).join(" "),
+          client_uri: input.uri,
+          logo_uri: input.icon,
+          policy_uri: input.policy,
+          tos_uri: input.tos,
+          token_endpoint_auth_method: "client_secret_basic",
+          grant_types: ["authorization_code"],
+          response_types: ["code"],
+        },
+        headers: ctx.req.headers,   // carry the session cookie so BA's sessionMiddleware is happy
+      });
+
+      if (!result) {
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to create OAuth application" });
+      }
+
+      // After creation, link the app to the user in the DB.
+      // Better Auth's createOAuthClient endpoint may not set userId automatically
+      // when the user is identified only via session cookie, so we patch it here.
+      await db
+        .update(oauthClient)
+        .set({ userId: ctx.session.user.id })
+        .where(eq(oauthClient.clientId, (result as any).client_id));
+
+      return result as { client_id: string; client_secret: string; [key: string]: unknown };
+    }),
+
+  updateOAuthApp: protectedProcedure
+    .input(
+      z.object({
+        clientId: z.string(),
+        name: z.string().min(1).max(64).optional(),
+        redirectUris: z.array(z.string().url()).min(1).max(10).optional(),
+        uri: z.string().url().optional().nullable(),
+        icon: z.string().url().optional().nullable(),
+        policy: z.string().url().optional().nullable(),
+        tos: z.string().url().optional().nullable(),
+        scopes: z.array(z.enum(Object.keys(API_SCOPES) as [ScopeKey, ...ScopeKey[]])).min(1).optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      // Verify ownership
+      const [app] = await db
+        .select({ id: oauthClient.id })
+        .from(oauthClient)
+        .where(and(eq(oauthClient.clientId, input.clientId), eq(oauthClient.userId, ctx.session.user.id)));
+      if (!app) throw new TRPCError({ code: "FORBIDDEN", message: "App not found" });
+
+      const result = await auth.api.updateOAuthClient({
+        body: {
+          client_id: input.clientId,
+          update: {
+            ...(input.redirectUris && { redirect_uris: input.redirectUris }),
+            ...(input.name !== undefined && { client_name: input.name }),
+            ...(input.uri !== undefined && { client_uri: input.uri ?? undefined }),
+            ...(input.icon !== undefined && { logo_uri: input.icon ?? undefined }),
+            ...(input.policy !== undefined && { policy_uri: input.policy ?? undefined }),
+            ...(input.tos !== undefined && { tos_uri: input.tos ?? undefined }),
+            ...(input.scopes && { scope: expandScopes(input.scopes).join(" ") }),
+          },
+        },
+        headers: ctx.req.headers,
+      });
+
+      if (!result) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to update OAuth application" });
+      return result;
+    }),
+
+  deleteOAuthApp: protectedProcedure
+    .input(z.object({ clientId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const [app] = await db
+        .select({ id: oauthClient.id })
+        .from(oauthClient)
+        .where(and(eq(oauthClient.clientId, input.clientId), eq(oauthClient.userId, ctx.session.user.id)));
+      if (!app) throw new TRPCError({ code: "FORBIDDEN", message: "App not found" });
+
+      await auth.api.deleteOAuthClient({
+        body: { client_id: input.clientId },
+        headers: ctx.req.headers,
+      });
+    }),
+
+  rotateOAuthSecret: protectedProcedure
+    .input(z.object({ clientId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const [app] = await db
+        .select({ id: oauthClient.id })
+        .from(oauthClient)
+        .where(and(eq(oauthClient.clientId, input.clientId), eq(oauthClient.userId, ctx.session.user.id)));
+      if (!app) throw new TRPCError({ code: "FORBIDDEN", message: "App not found" });
+
+      const result = await auth.api.rotateClientSecret({
+        body: { client_id: input.clientId },
+        headers: ctx.req.headers,
+      });
+
+      if (!result) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to rotate client secret" });
+      return result as { client_secret: string; [key: string]: unknown };
+    }),
+
+  // ── User OAuth Authorizations ──────────────────────────────────────────────
+
+  listOAuthAuthorizations: protectedProcedure
+    .query(async ({ ctx }) => {
+      const rows = await db
+        .select({
+          consentId: oauthConsent.id,
+          clientId: oauthConsent.clientId,
+          scopes: oauthConsent.scopes,
+          createdAt: oauthConsent.createdAt,
+          updatedAt: oauthConsent.updatedAt,
+          appName: oauthClient.name,
+          appIcon: oauthClient.icon,
+          appUri: oauthClient.uri,
+        })
+        .from(oauthConsent)
+        .innerJoin(oauthClient, eq(oauthConsent.clientId, oauthClient.clientId))
+        .where(eq(oauthConsent.userId, ctx.session.user.id));
+      return rows;
+    }),
+
+  revokeOAuthAuthorization: protectedProcedure
+    .input(z.object({ clientId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const [consent] = await db
+        .select({ id: oauthConsent.id })
+        .from(oauthConsent)
+        .where(and(eq(oauthConsent.clientId, input.clientId), eq(oauthConsent.userId, ctx.session.user.id)));
+      if (!consent) throw new TRPCError({ code: "NOT_FOUND", message: "Authorization not found" });
+
+      // Revoke all active tokens for this user+client pair, then delete consent
+      await db
+        .delete(oauthAccessToken)
+        .where(and(eq(oauthAccessToken.clientId, input.clientId), eq(oauthAccessToken.userId, ctx.session.user.id)));
+      await db
+        .delete(oauthRefreshToken)
+        .where(and(eq(oauthRefreshToken.clientId, input.clientId), eq(oauthRefreshToken.userId, ctx.session.user.id)));
+      await db
+        .delete(oauthConsent)
+        .where(and(eq(oauthConsent.clientId, input.clientId), eq(oauthConsent.userId, ctx.session.user.id)));
     }),
 });

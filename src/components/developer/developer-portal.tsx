@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { ApiKeysSection } from "@/components/developer/api-keys-section";
+import { OAuthAppsSection } from "@/components/developer/oauth-apps-section";
 
 export function DeveloperPortal() {
   const t = useTranslations();
@@ -13,8 +14,9 @@ export function DeveloperPortal() {
         <p className="text-sm text-muted-foreground mt-1">{t("settings.pages.developer.description")}</p>
       </div>
 
-      <div className="grid gap-6">
-        <ApiKeysSection />
+      <ApiKeysSection />
+      <div className="mt-6 border-t pt-6">
+        <OAuthAppsSection />
       </div>
     </div>
   );

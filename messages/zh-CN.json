@@ -141,6 +141,10 @@
       "developer": {
         "title": "开发者",
         "description": "管理 API 密钥和 OAuth 应用程序。"
+      },
+      "applications": {
+        "title": "Applications",
+        "description": "OAuth applications you have granted access to your account."
       }
     },
     "language": {
@@ -286,6 +290,14 @@
         "deleteSuccess": "API 密钥已删除",
         "deleteError": "删除 API 密钥失败",
         "updateError": "更新密钥失败",
+        "editDialog": {
+          "title": "编辑 API 密钥",
+          "nameLabel": "名称",
+          "namePlaceholder": "我的应用",
+          "saveButton": "保存",
+          "saving": "保存中…",
+          "saveError": "更新 API 密钥失败"
+        },
         "deleteDialog": {
           "title": "删除 API 密钥？",
           "description": "此操作无法撤销。任何使用此密钥的应用程序将立即失去访问权限。",
@@ -406,7 +418,85 @@
           "name": "只读（所有非敏感数据）",
           "description": "广泛的只读访问权限：用户元数据、所有快照、最近游玩、统计和相册。不包含头像和相册图片 URL。因涉及广泛的个人数据，标记为敏感。"
         }
+      },
+      "oauthApps": {
+        "label": "OAuth Applications",
+        "description": "Register apps that can request access on behalf of users via OAuth 2.1 + PKCE.",
+        "createButton": "New Application",
+        "loading": "Loading applications…",
+        "emptyTitle": "No OAuth applications yet",
+        "emptyCreateLink": "Create your first application",
+        "emptySuffix": "to get started with OAuth.",
+        "redirectUris": "Redirect URIs",
+        "scopes": "Scopes",
+        "rotateAriaLabel": "Rotate client secret",
+        "deleteAriaLabel": "Delete application",
+        "createDialog": {
+          "title": "Create OAuth Application",
+          "description": "Register a new application to use the OAuth 2.1 authorization flow.",
+          "nameLabel": "Application name",
+          "namePlaceholder": "My Userscript",
+          "nameDescription": "A descriptive name shown to users on the consent screen.",
+          "uriLabel": "Application URL",
+          "uriPlaceholder": "https://example.com",
+          "redirectLabel": "Redirect URIs",
+          "redirectPlaceholder": "https://example.com/callback",
+          "redirectAddButton": "Add",
+          "scopesLabel": "Scopes",
+          "createButton": "Create Application",
+          "creating": "Creating…",
+          "createError": "Failed to create application",
+          "createdTitle": "Application created",
+          "createdDescription": "Save your client secret now — it will not be shown again.",
+          "clientIdLabel": "Client ID",
+          "secretLabel": "Client Secret",
+          "copyAriaLabel": "Copy value",
+          "saveWarning": "Save this secret — it won't be shown again after closing this dialog.",
+          "done": "Done"
+        },
+        "rotateDialog": {
+          "title": "Rotate Client Secret?",
+          "description": "The current secret will stop working immediately. Any clients using it will need to be updated with the new secret.",
+          "confirm": "Rotate Secret"
+        },
+        "editDialog": {
+          "title": "Edit OAuth Application",
+          "description": "Update your application's details.",
+          "basicSection": "Basic Info",
+          "redirectSection": "Redirect URIs",
+          "scopesSection": "Scopes",
+          "scopesNote": "Existing tokens keep their current scopes until the user re-authorizes.",
+          "legalSection": "Legal",
+          "nameLabel": "Application name",
+          "uriLabel": "Application URL",
+          "iconLabel": "Icon URL",
+          "iconPlaceholder": "https://example.com/logo.png",
+          "policyLabel": "Privacy Policy URL",
+          "policyPlaceholder": "https://example.com/privacy",
+          "tosLabel": "Terms of Service URL",
+          "tosPlaceholder": "https://example.com/tos",
+          "saveButton": "Save Changes",
+          "saving": "Saving…",
+          "saveError": "Failed to update application"
+        },
+        "deleteDialog": {
+          "title": "Delete OAuth Application?",
+          "description": "This will permanently delete the application and revoke all issued tokens. This cannot be undone.",
+          "confirm": "Delete"
+        }
       }
+    },
+    "applications": {
+      "noAuthorizations": "You haven't authorized any OAuth applications yet.",
+      "grantedAt": "Authorized {date}",
+      "revokeButton": "Revoke",
+      "revokeDialog": {
+        "title": "Revoke Access?",
+        "description": "This will immediately revoke all tokens for this application. You will need to re-authorize it if you want to use it again.",
+        "confirm": "Revoke"
+      },
+      "revokeSuccess": "Access revoked",
+      "revokeError": "Failed to revoke access"
     }
   },
   "dataBanner": {

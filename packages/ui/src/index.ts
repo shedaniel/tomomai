@@ -27,6 +27,7 @@ export {
 } from "./components/select-friendly";
 export * from "./components/separator";
 export * from "./components/sheet";
+export * from "./components/sidebar";
 export * from "./components/skeleton";
 export * from "./components/slider";
 export * from "./components/sonner";

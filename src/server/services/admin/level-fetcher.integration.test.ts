@@ -25,7 +25,7 @@ function createTestLogger(): Logger {
     error: (...args: any[]) => logs.push({ level: "error", args }),
     child: (bindings: any) => {
       const childLogger = createTestLogger();
-      childLogger.logs = logs; // Share logs with parent
+      (childLogger as any).logs = logs; // Share logs with parent
       return childLogger;
     },
   } as any;
@@ -394,7 +394,7 @@ describe.skipIf(shouldSkip)("Integration: LevelFetcher", () => {
       previous: null,
       current: fetchers[0],
       fetcherIndex: 0,
-    } satisfies FetchingContextExtended;
+    } as FetchingContextExtended;
     let songs: PendingSong[] = [];
     songs = [
       ...await ScaledMaimaiScraperFetcher(-12)(scraperContext, []),
