@@ -1,0 +1,40 @@
+---
+title: Personal API keys
+description: Static, per-user keys. Best for scripts and CLIs you sign into yourself.
+order: 2
+---
+
+The fastest path. Tied to your account, can't be obtained by other users, no
+OAuth flow.
+
+## Create one
+
+1. Open **[Settings → Developer](/settings/developer)**.
+2. Create an API key. Pick the [scopes](/developer/scopes) you need — the
+   picker honours the bundle and implication rules, so picking `read`
+   automatically grants the constituent leaves.
+3. Copy the key **once**. It starts with `tmk_` and is shown only at
+   creation. Treat it like a password.
+
+## Use one
+
+```http
+GET /api/v1/me HTTP/1.1
+Host: tomomai.lol
+Authorization: Bearer tmk_xxxxxxxx_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+```
+
+`x-api-key` is also accepted as an alias for `Authorization: Bearer`.
+
+## Lifecycle
+
+- Keys don't rotate automatically. If a key leaks, revoke it from
+  [Settings → Developer](/settings/developer) and create a new one.
+- Keys can have an expiry — set it at creation if the key is for a one-off
+  script.
+
+## When not to use a key
+
+If anyone other than you will sign into your app, use
+[OAuth 2.1](/developer/guides/oauth) instead. Personal keys give holders
+total access to your account — they're not appropriate for multi-user apps.

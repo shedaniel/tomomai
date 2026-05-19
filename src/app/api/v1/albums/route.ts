@@ -1,7 +1,9 @@
 import { type NextRequest } from "next/server";
 import { withApiKey, keyHasScope } from "@/lib/api/protect";
 import { parseRegion, parsePagination } from "@/lib/api/params";
+import { zodJson } from "@/lib/api/zod-response";
 import { fetchUserAlbums } from "@/server/queries/albums";
+import { spec } from "./spec";
 
 export const GET = withApiKey(["album:read"], async (req: NextRequest, key) => {
   const { searchParams } = req.nextUrl;
@@ -14,7 +16,7 @@ export const GET = withApiKey(["album:read"], async (req: NextRequest, key) => {
 
   const { albums, hasMore } = await fetchUserAlbums(key.userId, region, limit, offset);
 
-  return Response.json({
+  return zodJson(spec.response, {
     albums: albums.map((album) => ({
       id: album.id,
       songId: album.songId,

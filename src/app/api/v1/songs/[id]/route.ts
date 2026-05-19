@@ -2,9 +2,11 @@ import { type NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { songs } from "@/lib/db/schema-pg";
 import { eq } from "drizzle-orm";
+import { zodJson } from "@/lib/api/zod-response";
+import { spec } from "./spec";
 
 export async function GET(
-  req: NextRequest,
+  _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id: songId } = await params;
@@ -40,7 +42,7 @@ export async function GET(
 
   const first = charts[0];
 
-  return Response.json({
+  return zodJson(spec.response, {
     songId: first.songId,
     songName: first.songName,
     artist: first.artist,

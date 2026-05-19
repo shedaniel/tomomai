@@ -1,8 +1,8 @@
 :root {
     --radius: 1.25rem;
-    --hue: 90;
+    --hue: 0;
     --contrast: 0.9;
-    --darkness: 0.7;
+    --darkness: 0.5;
     --lightness: 1.0;
     --saturation: 1.0;
     --background: oklch(calc(1 - var(--lightness) * 0.019) calc(var(--contrast) * 0.008 * var(--saturation)) var(--hue));
@@ -78,6 +78,11 @@
 }
 
 @keyframes shimmer {
-    0% { background-position: -200% 0; }
-    100% { background-position: 200% 0; }
+    0% {
+        background-position: -200% 0;
+    }
+
+    100% {
+        background-position: 200% 0;
+    }
 }

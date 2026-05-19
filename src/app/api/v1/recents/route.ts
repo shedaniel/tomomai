@@ -1,7 +1,9 @@
 import { type NextRequest } from "next/server";
 import { withApiKey, keyHasScope } from "@/lib/api/protect";
 import { parseRegion, parsePagination } from "@/lib/api/params";
+import { zodJson } from "@/lib/api/zod-response";
 import { fetchRecentSongs } from "@/server/queries/recents";
+import { spec } from "./spec";
 
 export const GET = withApiKey(["recent:read"], async (req: NextRequest, key) => {
   const { searchParams } = req.nextUrl;
@@ -65,5 +67,5 @@ export const GET = withApiKey(["recent:read"], async (req: NextRequest, key) => 
     };
   });
 
-  return Response.json({ plays, totalCount, hasMore });
+  return zodJson(spec.response, { plays, totalCount, hasMore });
 });

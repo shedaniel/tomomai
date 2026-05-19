@@ -17,7 +17,7 @@ import {
   DialogDescription,
 } from "./dialog"
 
-const AnimatedDialogContext = React.createContext<{ open: boolean }>({ open: false })
+const AnimatedDialogContext = React.createContext<{ open: boolean; container?: HTMLElement; inline?: boolean }>({ open: false })
 
 /**
  * AnimatedDialog wraps Radix Dialog and shares open state via context
@@ -26,9 +26,11 @@ const AnimatedDialogContext = React.createContext<{ open: boolean }>({ open: fal
 function AnimatedDialog({
   open: controlledOpen,
   onOpenChange,
+  container,
+  inline,
   children,
   ...props
-}: React.ComponentProps<typeof DialogPrimitive.Root>) {
+}: React.ComponentProps<typeof DialogPrimitive.Root> & { container?: HTMLElement; inline?: boolean }) {
   const [uncontrolledOpen, setUncontrolledOpen] = React.useState(false)
   const isControlled = controlledOpen !== undefined
   const open = isControlled ? controlledOpen : uncontrolledOpen
@@ -43,7 +45,7 @@ function AnimatedDialog({
   )
 
   return (
-    <AnimatedDialogContext.Provider value={{ open }}>
+    <AnimatedDialogContext.Provider value={{ open, container, inline }}>
       <DialogPrimitive.Root open={open} onOpenChange={handleOpenChange} {...props}>
         {children}
       </DialogPrimitive.Root>
@@ -90,57 +92,63 @@ function AnimatedDialogContent({
 }: React.ComponentProps<typeof DialogPrimitive.Content> & {
   showCloseButton?: boolean
 }) {
-  const { open } = React.useContext(AnimatedDialogContext)
+  const { open, container, inline } = React.useContext(AnimatedDialogContext)
+
+  const dialogContent = (
+    <>
+      <AnimatedDialogOverlay />
+      <DialogPrimitive.Content
+        forceMount
+        asChild
+        data-slot="dialog-content"
+        {...props}
+      >
+        <motion.div
+          className={cn(
+            "bg-background fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] gap-4 rounded-lg border p-6 shadow-lg sm:max-w-lg",
+            className
+          )}
+          initial={{ opacity: 0, scale: 0.85, y: "-45%", x: "-50%" }}
+          animate={{ opacity: 1, scale: 1, y: "-50%", x: "-50%" }}
+          exit={{ opacity: 0, scale: 0.9, y: "-48%", x: "-50%" }}
+          transition={getTransition({
+            type: 'spring',
+            stiffness: 400,
+            damping: 25
+          })}
+        >
+          {children}
+          {showCloseButton && (
+            <DialogPrimitive.Close
+              asChild
+              data-slot="dialog-close"
+            >
+              <motion.button
+                className="ring-offset-background focus:ring-ring data-[state=open]:bg-accent data-[state=open]:text-muted-foreground absolute top-4 right-4 rounded-xs opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4"
+                whileHover={{ rotate: 90, scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                transition={getTransition({
+                  type: 'spring',
+                  stiffness: 400,
+                  damping: 20
+                })}
+              >
+                <XIcon />
+                <span className="sr-only">Close</span>
+              </motion.button>
+            </DialogPrimitive.Close>
+          )}
+        </motion.div>
+      </DialogPrimitive.Content>
+    </>
+  )
 
   return (
     <AnimatePresence>
       {open && (
-        <DialogPortal forceMount data-slot="dialog-portal">
-          <AnimatedDialogOverlay />
-          <DialogPrimitive.Content
-            forceMount
-            asChild
-            data-slot="dialog-content"
-            {...props}
-          >
-            <motion.div
-              className={cn(
-                "bg-background fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] gap-4 rounded-lg border p-6 shadow-lg sm:max-w-lg",
-                className
-              )}
-              initial={{ opacity: 0, scale: 0.85, y: "-45%", x: "-50%" }}
-              animate={{ opacity: 1, scale: 1, y: "-50%", x: "-50%" }}
-              exit={{ opacity: 0, scale: 0.9, y: "-48%", x: "-50%" }}
-              transition={getTransition({
-                type: 'spring',
-                stiffness: 400,
-                damping: 25
-              })}
-            >
-              {children}
-              {showCloseButton && (
-                <DialogPrimitive.Close
-                  asChild
-                  data-slot="dialog-close"
-                >
-                  <motion.button
-                    className="ring-offset-background focus:ring-ring data-[state=open]:bg-accent data-[state=open]:text-muted-foreground absolute top-4 right-4 rounded-xs opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4"
-                    whileHover={{ rotate: 90, scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                    transition={getTransition({
-                      type: 'spring',
-                      stiffness: 400,
-                      damping: 20
-                    })}
-                  >
-                    <XIcon />
-                    <span className="sr-only">Close</span>
-                  </motion.button>
-                </DialogPrimitive.Close>
-              )}
-            </motion.div>
-          </DialogPrimitive.Content>
-        </DialogPortal>
+        inline
+          ? dialogContent
+          : <DialogPortal forceMount container={container} data-slot="dialog-portal">{dialogContent}</DialogPortal>
       )}
     </AnimatePresence>
   )

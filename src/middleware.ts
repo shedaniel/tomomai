@@ -4,9 +4,25 @@ import { get } from '@vercel/edge-config';
 import { securityMiddleware } from './lib/security/middleware';
 import { locales, type Locale } from './i18n/locale';
 
+const FONT_CORS_ORIGINS = new Set([
+  'https://maimaidx.jp',
+  'https://maimaidx-eng.com',
+]);
+
 export async function middleware(request: NextRequest) {
   // Check maintenance mode (skip for the maintenance page itself and static assets)
   const { pathname } = request.nextUrl;
+
+  if (pathname.startsWith('/res/fonts/')) {
+    const origin = request.headers.get('origin');
+    const response = NextResponse.next();
+    if (origin && FONT_CORS_ORIGINS.has(origin)) {
+      response.headers.set('Access-Control-Allow-Origin', origin);
+      response.headers.set('Cross-Origin-Resource-Policy', 'cross-origin');
+      response.headers.set('Vary', 'Origin');
+    }
+    return response;
+  }
   if (pathname !== '/maintenance') {
     try {
       const maintenanceMode = await get<string>('maintenanceMode');

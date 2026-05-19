@@ -197,6 +197,13 @@ export const auth = betterAuth({
       // every entry here must also appear in `scopes`.
       scopes: Object.keys(API_SCOPES) as string[],
       clientRegistrationAllowedScopes: Object.keys(API_SCOPES) as string[],
+      // Declare the site root as a valid audience so OAuth clients can request
+      // JWT-signed access tokens via `resource=<baseUrl>` (RFC 8707). Without
+      // this entry, Better Auth's default `validAudiences` is just
+      // `${baseURL}/api/auth` (its own mount), which is awkward to use as the
+      // API audience. We can add more (e.g. an `api.tomomai.lol` host or
+      // per-MCP audiences) as the surface grows.
+      validAudiences: [process.env.BETTER_AUTH_URL || resolveBaseUrl()],
     }),
     ...(process.env.NODE_ENV === 'development' ? [openAPI()] : []),
   ],

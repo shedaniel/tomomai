@@ -1,7 +1,12 @@
 import { type NextRequest } from "next/server";
+import { createHash } from "crypto";
 import { auth } from "@/lib/auth";
 import { verifyAccessToken } from "better-auth/oauth2";
 import { type ScopeKey, scopesToPermissions } from "@/lib/api/scopes";
+import { resolveBaseUrl } from "@/lib/base-url";
+import { db } from "@/lib/db";
+import { oauthAccessToken } from "@/lib/db/schema-pg";
+import { eq } from "drizzle-orm";
 
 export interface ApiKeyInfo {
   userId: string;
@@ -15,46 +20,88 @@ export function keyHasScope(key: ApiKeyInfo, scope: ScopeKey): boolean {
   return Array.isArray(key.permissions[scope]) && key.permissions[scope].includes("access");
 }
 
+/** Match Better Auth's defaultHasher: SHA-256 → base64url (no padding). */
+function hashTokenForStorage(token: string): string {
+  return createHash("sha256").update(token, "utf8").digest("base64url");
+}
+
 /**
- * Verify an OAuth 2.1 Bearer JWT issued by our own oauthProvider plugin.
- * Returns an ApiKeyInfo if valid, or null if the token is not a JWT / fails verification.
+ * Verify an OAuth Bearer access token issued by our own oauthProvider.
+ *
+ * Two paths, tried in order so any standard OAuth 2.1 client works out of the
+ * box:
+ *
+ * 1. **JWT** (fast, no DB hit). A client opts into this by sending
+ *    `resource=<baseUrl>` at the token endpoint per RFC 8707. The token is a
+ *    signed JWT verifiable via /api/auth/jwks. No issuer-side coordination
+ *    needed beyond `validAudiences` in the oauthProvider config.
+ *
+ * 2. **Opaque** (one indexed DB lookup). This is what Better Auth issues by
+ *    default — a 32-char random string keyed into `oauthAccessToken`. We
+ *    can't use /oauth2/introspect because it requires client credentials and
+ *    only validates tokens issued *to* the introspecting client, breaking
+ *    multi-app setups. Instead we read the table directly, applying the same
+ *    SHA-256-base64url hash Better Auth uses at write time (storeToken in
+ *    @better-auth/oauth-provider). This works for tokens issued to any
+ *    OAuth client without per-app configuration.
+ *
+ * Both paths enforce scope and expiry.
  */
 async function verifyOAuthToken(
   token: string,
   requiredScopes: ScopeKey[],
 ): Promise<ApiKeyInfo | null> {
-  // Quick structural check — JWTs have exactly two dots (three base64url segments).
-  if ((token.match(/\./g) ?? []).length !== 2) return null;
-
-  try {
-    const baseUrl = process.env.BETTER_AUTH_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? "";
-
-    const payload = await verifyAccessToken(token, {
-      verifyOptions: {
-        issuer: baseUrl,
-        audience: baseUrl,
-      },
-      // verifyAccessToken throws if any of these scopes are missing
-      scopes: requiredScopes as string[],
-    });
-
-    if (!payload.sub) return null;
-
-    // Convert the space-separated `scope` claim into our permissions map format
-    const scopeList = (typeof payload.scope === "string" ? payload.scope : "")
-      .split(" ")
-      .filter(Boolean);
-    const permissions = Object.fromEntries(scopeList.map((s) => [s, ["access"]]));
-
-    return {
-      userId: payload.sub,
-      permissions,
-      name: null,
-      expiresAt: payload.exp ? new Date(payload.exp * 1000) : null,
-    };
-  } catch {
-    return null;
+  // ── JWT fast-path ──────────────────────────────────────────────────────
+  if ((token.match(/\./g) ?? []).length === 2) {
+    const baseUrl =
+      process.env.BETTER_AUTH_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? resolveBaseUrl();
+    const issuer = `${baseUrl}/api/auth`;
+    try {
+      const payload = await verifyAccessToken(token, {
+        jwksUrl: `${issuer}/jwks`,
+        verifyOptions: { issuer, audience: baseUrl },
+        scopes: requiredScopes as string[],
+      });
+      if (payload.sub) {
+        const scopeList = (typeof payload.scope === "string" ? payload.scope : "")
+          .split(" ")
+          .filter(Boolean);
+        return {
+          userId: payload.sub,
+          permissions: Object.fromEntries(scopeList.map((s) => [s, ["access"]])),
+          name: null,
+          expiresAt: payload.exp ? new Date(payload.exp * 1000) : null,
+        };
+      }
+    } catch {
+      // Fall through to opaque lookup — token might look like a JWT but actually
+      // be a coincidence (3 dot-separated chunks of arbitrary chars).
+    }
   }
+
+  // ── Opaque-token DB lookup ─────────────────────────────────────────────
+  const [row] = await db
+    .select({
+      userId: oauthAccessToken.userId,
+      scopes: oauthAccessToken.scopes,
+      expiresAt: oauthAccessToken.expiresAt,
+    })
+    .from(oauthAccessToken)
+    .where(eq(oauthAccessToken.token, hashTokenForStorage(token)))
+    .limit(1);
+
+  if (!row || !row.userId) return null;
+  if (row.expiresAt.getTime() <= Date.now()) return null;
+  for (const required of requiredScopes) {
+    if (!row.scopes.includes(required)) return null;
+  }
+
+  return {
+    userId: row.userId,
+    permissions: Object.fromEntries(row.scopes.map((s) => [s, ["access"]])),
+    name: null,
+    expiresAt: row.expiresAt,
+  };
 }
 
 export function withApiKey(
@@ -72,16 +119,14 @@ export function withApiKey(
     }
 
     try {
-      // ── OAuth JWT path ────────────────────────────────────────────────────
-      // API keys always start with the "tmk_" prefix; anything else that
-      // looks like a JWT is treated as an OAuth Bearer token.
+      // API keys carry the "tmk_" prefix; anything else is treated as an
+      // OAuth Bearer token (JWT or opaque).
       if (!rawKey.startsWith("tmk_")) {
         const oauthKey = await verifyOAuthToken(rawKey, requiredScopes);
         if (oauthKey) return await handler(req, oauthKey);
         return Response.json({ error: "Invalid or expired token" }, { status: 403 });
       }
 
-      // ── Personal API key path ─────────────────────────────────────────────
       const result = await auth.api.verifyApiKey({
         body: { key: rawKey, permissions: scopesToPermissions(requiredScopes) },
       });

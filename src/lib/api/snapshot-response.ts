@@ -10,7 +10,7 @@ type SnapshotData = NonNullable<Awaited<ReturnType<typeof fetchSnapshotData>>>;
  * Build the JSON response for a snapshot detail endpoint.
  * `scopePrefix` is either "latest" or "all", used to resolve the correct scope keys.
  */
-export function buildSnapshotResponse(
+export function buildSnapshotPayload(
   { snapshot, songs, events }: SnapshotData,
   key: ApiKeyInfo,
   scopePrefix: "latest" | "all",
@@ -22,7 +22,24 @@ export function buildSnapshotResponse(
   const hasEventsRead = keyHasScope(key, scope("events:read"));
   const hasIconRead = keyHasScope(key, scope("icon:read"));
 
-  let songsPayload: unknown[] | null = null;
+  type SongPayload = {
+    songId: string;
+    songName: string;
+    artist: string;
+    cover: string | null;
+    difficulty: string;
+    level: string;
+    levelPrecise: number;
+    type: string;
+    genre: string;
+    addedVersion: number;
+    achievement: number;
+    dxScore: number;
+    fc: string;
+    fs: string;
+    rating?: number;
+  };
+  let songsPayload: SongPayload[] | null = null;
   if (hasSongsRead) {
     songsPayload = songs.map((s) => ({
       songId: s.songId,
@@ -66,7 +83,7 @@ export function buildSnapshotResponse(
     }));
   }
 
-  return Response.json({
+  return {
     id: snapshot.publicId,
     fetchedAt: snapshot.fetchedAt.toISOString(),
     rating: snapshot.rating,
@@ -91,5 +108,5 @@ export function buildSnapshotResponse(
           eventPeriodEnd: e.eventPeriodEnd?.toISOString() ?? null,
         }))
       : null,
-  });
+  };
 }

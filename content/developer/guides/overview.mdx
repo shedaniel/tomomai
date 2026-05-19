@@ -1,0 +1,39 @@
+---
+title: Overview
+description: What the tomomai API exposes and which auth mode to pick.
+order: 1
+---
+
+The tomomai API exposes a user's maimai DX data — snapshots, recent plays,
+stats, albums — over HTTP under `/api/v1/*`. Every protected endpoint accepts
+a Bearer token via the `Authorization` header (or `x-api-key` as an alias).
+
+There are two ways to get a token:
+
+- **[Personal API keys](/developer/guides/api-keys)** — a single static key
+  tied to one user, fastest to set up, great for scripts and one-off tools.
+  **Don't share these.**
+- **[OAuth 2.1 apps](/developer/guides/oauth)** — a registered application
+  that asks each user for permission. Use this any time another user (not
+  you) is going to sign in.
+
+| Building… | Use |
+|---|---|
+| A personal script that reads only your data | API key |
+| A CLI / dashboard that you alone log into | API key |
+| A bot, public website, or anything other users sign into | OAuth |
+| Anything that you can't safely keep a long-lived secret in | OAuth (public client + PKCE) |
+
+Both share the same [scope system](/developer/scopes) — a token holds a set
+of scopes, an endpoint declares the scopes it needs, and the request only
+succeeds if the token covers them.
+
+## Quick start
+
+```bash
+# Replace tmk_… with your personal API key
+curl https://tomomai.lol/api/v1/me \
+  -H "Authorization: Bearer tmk_xxxxxxxxxxxxxxxx"
+```
+
+See the [API reference](/developer/reference) for the full endpoint list.

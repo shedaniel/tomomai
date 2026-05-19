@@ -46,4 +46,8 @@
     * {
         @apply border-border outline-ring/50;
     }
+
+    :root {
+        font-family: 'Inter', 'Murecho', sans-serif !important;
+    }
 }

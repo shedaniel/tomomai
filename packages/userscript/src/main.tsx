@@ -3,7 +3,32 @@ import ReactDOM from "react-dom/client";
 import App from "./App";
 import styles from "./style.css?inline";
 
+function injectFonts() {
+  if (document.getElementById("tomomai-fonts")) return;
+  const style = document.createElement("style");
+  style.id = "tomomai-fonts";
+  style.textContent = `
+@font-face {
+  font-family: 'Inter';
+  src: url('${__API_BASE__}/res/fonts/Inter-VariableFont_opsz_wght.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Murecho';
+  src: url('${__API_BASE__}/res/fonts/Murecho-VariableFont_wght.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+`;
+  document.head.appendChild(style);
+}
+
 function mount() {
+  injectFonts();
+
   const host = document.createElement("div");
   host.id = "tomomai-root";
   document.body.appendChild(host);
@@ -29,7 +54,7 @@ function mount() {
 
   ReactDOM.createRoot(container).render(
     <React.StrictMode>
-      <App />
+      <App container={container} />
     </React.StrictMode>
   );
 }

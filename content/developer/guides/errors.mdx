@@ -1,0 +1,29 @@
+---
+title: Errors
+description: Status codes you can expect and how to react to each.
+order: 4
+---
+
+All `/api/v1/*` errors return JSON of the shape `{ "error": "..." }`.
+
+| Status | Meaning | What to do |
+|---|---|---|
+| `400` | Bad request — usually a missing or invalid query parameter (e.g. `?region=`). | Read the error message; fix the request. |
+| `401` | Missing API key — no `Authorization` / `x-api-key` header. | Add a token. |
+| `403` | Token is malformed, revoked, expired, or doesn't hold a required scope. | Re-auth (OAuth) or rotate the key (API key). |
+| `404` | Resource not found (e.g. snapshot ID doesn't belong to you). | Don't retry; double-check the path. |
+| `500` | Server error. | Retry with exponential backoff. If persistent, file an issue. |
+
+## OAuth-specific errors
+
+OAuth errors come from `/api/auth/oauth2/*` and follow
+[RFC 6749 §5.2](https://datatracker.ietf.org/doc/html/rfc6749#section-5.2)
+(`invalid_request`, `invalid_client`, `invalid_grant`, etc.). The
+authorisation server redirects errors back to your `redirect_uri` with
+`?error=…&error_description=…`.
+
+## Rate limiting
+
+tomomai applies per-IP and per-token rate limits. A blocked request returns
+`429 Too Many Requests` with a `retry-after` header — wait at least that
+many seconds before retrying.

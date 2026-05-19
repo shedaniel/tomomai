@@ -1,6 +1,8 @@
 import { db } from "@/lib/db";
 import { songs } from "@/lib/db/schema-pg";
 import { unstable_cache } from "next/cache";
+import { zodJson } from "@/lib/api/zod-response";
+import { spec } from "./spec";
 
 async function getAllSongs() {
   return unstable_cache(
@@ -31,8 +33,7 @@ async function getAllSongs() {
 
 export async function GET() {
   const allSongs = await getAllSongs();
-
-  return Response.json({
+  return zodJson(spec.response, {
     songs: allSongs.map((s) => ({
       songId: s.songId,
       songName: s.songName,
