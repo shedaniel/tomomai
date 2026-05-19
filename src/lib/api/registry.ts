@@ -89,6 +89,7 @@ export function findRouteBySlug(slug: string): RouteSpec | undefined {
 export function routeSlug(spec: RouteSpec): string {
   const path = spec.path
     .replace(/^\/api\/v1\/?/, "")
+    .replace(/\{(\w+)\}/g, "$1")
     .replace(/:/g, "")
     .replace(/\//g, "-");
   return `${spec.method.toLowerCase()}-${path || "root"}`;

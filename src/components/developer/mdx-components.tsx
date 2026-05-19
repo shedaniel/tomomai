@@ -2,12 +2,14 @@ import Link from "next/link";
 import type { ComponentProps } from "react";
 import { ScopeBadge } from "./scope-badge";
 import type { ScopeKey } from "@/lib/api/scopes";
+import { mdxBaseComponents } from "@/components/mdx-base-components";
 
 /**
  * Components made available to MDX guides. Authors can write
  * `<ScopeBadge scope="recent:read" />` inline and we wire it here.
  */
 export const mdxComponents = {
+  ...mdxBaseComponents,
   a: (props: ComponentProps<"a">) => {
     const href = props.href ?? "";
     if (href.startsWith("/")) {
@@ -24,7 +26,7 @@ export const mdxComponents = {
   code: (props: ComponentProps<"code">) => (
     <code
       {...props}
-      className="rounded bg-muted px-1 py-0.5 font-mono text-[0.9em] before:content-none after:content-none"
+      className="rounded-sm bg-muted px-2 py-0.5 font-mono text-[0.9em] before:content-none after:content-none"
     />
   ),
   ScopeBadge: ({ scope }: { scope: ScopeKey | "public" }) => <ScopeBadge scope={scope} />,

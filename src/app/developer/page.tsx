@@ -1,6 +1,10 @@
 import Link from "next/link";
+import { ArrowRight, KeyRound, ShieldCheck, Webhook } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@tomomai/ui";
 import { getRegistry, routeSlug } from "@/lib/api/specs";
 import { listGuides } from "@/lib/developer/guides";
+import { LinkButton } from "@/components/developer/link-button";
+import { MethodBadge } from "@/components/developer/method-badge";
 
 export default async function DeveloperHome() {
   const routes = getRegistry();
@@ -17,24 +21,19 @@ export default async function DeveloperHome() {
           the server validates against.
         </p>
         <div className="flex flex-wrap gap-3 pt-2">
-          <Link
-            href="/developer/guides/api-keys"
-            className="rounded-md bg-foreground px-4 py-2 text-sm font-medium text-background transition hover:opacity-90"
-          >
-            Get an API key →
-          </Link>
-          <Link
-            href="/developer/guides/oauth"
-            className="rounded-md border border-border px-4 py-2 text-sm font-medium hover:bg-muted"
-          >
+          <LinkButton href="/developer/guides/api-keys">
+            <KeyRound className="size-4" />
+            Get an API key
+            <ArrowRight className="size-4" />
+          </LinkButton>
+          <LinkButton href="/developer/guides/oauth" variant="outline">
+            <ShieldCheck className="size-4" />
             Set up OAuth
-          </Link>
-          <Link
-            href="/developer/reference"
-            className="rounded-md border border-border px-4 py-2 text-sm font-medium hover:bg-muted"
-          >
+          </LinkButton>
+          <LinkButton href="/developer/reference" variant="outline">
+            <Webhook className="size-4" />
             Browse the API
-          </Link>
+          </LinkButton>
         </div>
       </section>
 
@@ -59,35 +58,33 @@ export default async function DeveloperHome() {
       <section className="space-y-4">
         <h2 className="text-xl font-semibold tracking-tight">All endpoints</h2>
         <div className="overflow-hidden rounded-lg border border-border">
-          <table className="w-full text-sm">
-            <thead className="bg-muted/40 text-left text-xs uppercase tracking-wider text-muted-foreground">
-              <tr>
-                <th className="px-3 py-2 font-medium">Method</th>
-                <th className="px-3 py-2 font-medium">Path</th>
-                <th className="px-3 py-2 font-medium">Description</th>
-              </tr>
-            </thead>
-            <tbody>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[80px]">Method</TableHead>
+                <TableHead>Path</TableHead>
+                <TableHead>Description</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {routes.map((r) => (
-                <tr key={routeSlug(r)} className="border-t border-border">
-                  <td className="px-3 py-2 align-top">
-                    <span className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">
-                      {r.method}
-                    </span>
-                  </td>
-                  <td className="px-3 py-2 align-top">
+                <TableRow key={routeSlug(r)} className="align-top">
+                  <TableCell>
+                    <MethodBadge method={r.method} />
+                  </TableCell>
+                  <TableCell>
                     <Link
                       href={`/developer/reference/${routeSlug(r)}`}
                       className="font-mono text-xs hover:underline"
                     >
                       {r.path}
                     </Link>
-                  </td>
-                  <td className="px-3 py-2 align-top text-muted-foreground">{r.summary}</td>
-                </tr>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">{r.summary}</TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
       </section>
     </div>

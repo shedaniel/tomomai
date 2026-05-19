@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { AlertTriangle, CheckCircle2 } from "lucide-react";
+import { Badge } from "@tomomai/ui";
 import { API_SCOPES, SCOPE_EXPANSIONS, SCOPE_IMPLIES, type ScopeKey } from "@/lib/api/scopes";
 import { slugifyScope } from "@/components/developer/scope-badge";
 
@@ -57,29 +59,37 @@ export default function ScopesPage() {
                     className="rounded-lg border border-border p-4 scroll-mt-20"
                   >
                     <div className="flex flex-wrap items-center gap-2">
-                      <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-sm">
+                      <code className="rounded-sm bg-muted px-2 py-0.5 font-mono text-sm">
                         {scope}
                       </code>
                       {meta.sensitive ? (
-                        <span className="rounded-full border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-amber-800 dark:text-amber-200">
+                        <Badge
+                          variant="outline"
+                          className="gap-1 border-amber-500/40 bg-amber-500/10 text-[10px] uppercase tracking-wider text-amber-800 dark:text-amber-200"
+                        >
+                          <AlertTriangle className="size-3" />
                           Sensitive
-                        </span>
+                        </Badge>
                       ) : null}
                       {meta.default ? (
-                        <span className="rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-emerald-700 dark:text-emerald-300">
+                        <Badge
+                          variant="outline"
+                          className="gap-1 border-emerald-500/40 bg-emerald-500/10 text-[10px] uppercase tracking-wider text-emerald-700 dark:text-emerald-300"
+                        >
+                          <CheckCircle2 className="size-3" />
                           Granted by default
-                        </span>
+                        </Badge>
                       ) : null}
                       <span className="text-xs text-muted-foreground">{meta.name}</span>
                     </div>
                     <p className="mt-2 text-sm text-muted-foreground">{meta.description}</p>
                     {expansion ? (
-                      <div className="mt-3 text-xs text-muted-foreground">
+                      <div className="mt-3 text-xs text-muted-foreground flex flex-wrap gap-1">
                         <span className="font-medium text-foreground/80">Expands to:</span>{" "}
                         {expansion.map((e) => (
                           <code
                             key={e}
-                            className="ml-1 rounded bg-muted px-1 py-0.5 font-mono text-[11px]"
+                            className="rounded-sm bg-muted px-2 py-0.5 font-mono text-[11px]"
                           >
                             {e}
                           </code>
@@ -87,12 +97,12 @@ export default function ScopesPage() {
                       </div>
                     ) : null}
                     {implies ? (
-                      <div className="mt-2 text-xs text-muted-foreground">
+                      <div className="mt-2 text-xs text-muted-foreground flex flex-wrap gap-1">
                         <span className="font-medium text-foreground/80">Also grants:</span>{" "}
                         {implies.map((e) => (
                           <code
                             key={e}
-                            className="ml-1 rounded bg-muted px-1 py-0.5 font-mono text-[11px]"
+                            className="rounded-sm bg-muted px-2 py-0.5 font-mono text-[11px]"
                           >
                             {e}
                           </code>

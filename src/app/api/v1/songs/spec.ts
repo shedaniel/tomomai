@@ -8,9 +8,7 @@ export const spec = defineRoute({
   tag: "Songs",
   summary: "List the full song catalogue",
   description:
-    "Returns every song & chart in the catalogue across all regions. The " +
-    "response is cached on the edge for one hour — there is no user data in " +
-    "it, so this endpoint is fully public (no token required).",
+    "Returns every song & chart in the catalogue across all regions.",
   scope: "public",
   cacheSeconds: 3600,
   response: z.object({

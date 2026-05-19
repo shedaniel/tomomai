@@ -9,7 +9,7 @@ export const spec = defineRoute({
   summary: "Get a single song by public ID",
   description:
     "Returns the song with all chart difficulties merged into a single object, " +
-    "including note designer and per-note-type counts. Public — no token required.",
+    "including note designer and per-note-type counts.",
   scope: "public",
   params: z.object({
     id: z.string().describe("Public song ID (nanoid)."),

@@ -24,6 +24,14 @@
     "./select-friendly": {
       "import": "./src/components/select-friendly.tsx",
       "types": "./src/components/select-friendly.tsx"
+    },
+    "./shadcn-sidebar": {
+      "import": "./src/components/shadcn-sidebar.tsx",
+      "types": "./src/components/shadcn-sidebar.tsx"
+    },
+    "./use-mobile": {
+      "import": "./src/use-mobile.ts",
+      "types": "./src/use-mobile.ts"
     }
   },
   "main": "./src/index.ts",

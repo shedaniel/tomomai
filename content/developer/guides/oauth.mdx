@@ -35,7 +35,7 @@ You'll need:
 - **Redirect URIs** — each must match exactly (scheme, host, port, path)
   what you send in `redirect_uri` at runtime. Register one per environment.
 - **Scopes** — the maximum set your app may ask for. You can request a
-  subset per authorisation, but never a superset of what you registered.
+  subset per authorization, but never a superset of what you registered.
 
 After creation you receive:
 
@@ -53,7 +53,7 @@ is supported at `POST /api/auth/oauth2/register`. Discovery metadata is at
 `/.well-known/oauth-authorization-server/api/auth` and
 `/.well-known/openid-configuration/api/auth`.
 
-## 2. Authorisation request
+## 2. Authorization request
 
 Direct the user to:
 

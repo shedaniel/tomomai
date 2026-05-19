@@ -1,8 +1,11 @@
 import type { Metadata, Viewport } from "next";
 import Link from "next/link";
+import { FileCode2 } from "lucide-react";
+import { SidebarInset, SidebarProvider, SidebarTrigger } from "@tomomai/ui/shadcn-sidebar";
+import { Separator } from "@tomomai/ui";
 import { getRegistry, routeSlug } from "@/lib/api/specs";
 import { listGuides } from "@/lib/developer/guides";
-import { ScopeBadgeCss } from "@/components/developer/scope-badge";
+import { DeveloperSidebar } from "@/components/developer/sidebar";
 
 export const metadata: Metadata = {
   title: { default: "Developer Center", template: "%s — tomomai Developer Center" },
@@ -20,102 +23,39 @@ export default async function DeveloperLayout({ children }: { children: React.Re
   const routes = getRegistry();
   const guides = await listGuides();
 
-  // Group routes by tag for sidebar
   const grouped = new Map<string, typeof routes>();
   for (const r of routes) {
     const list = grouped.get(r.tag) ?? [];
     list.push(r);
     grouped.set(r.tag, list);
   }
+  const routeGroups = Array.from(grouped.entries()).map(([tag, list]) => ({
+    tag,
+    routes: list.map((r) => ({ slug: routeSlug(r), method: r.method, path: r.path })),
+  }));
 
   return (
-    <div className="min-h-dvh bg-background text-foreground">
-      <ScopeBadgeCss />
-      <header className="sticky top-0 z-30 border-b border-border bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="mx-auto flex h-14 max-w-[1400px] items-center justify-between px-4 sm:px-6">
-          <div className="flex items-center gap-6">
-            <Link href="/developer" className="font-semibold tracking-tight">
-              tomomai <span className="text-muted-foreground">/ developers</span>
-            </Link>
-            <nav className="hidden gap-4 text-sm text-muted-foreground sm:flex">
-              <Link href="/developer" className="hover:text-foreground">Overview</Link>
-              <Link href="/developer/reference" className="hover:text-foreground">Reference</Link>
-              <Link href="/developer/scopes" className="hover:text-foreground">Scopes</Link>
-              <Link href="/settings/developer" className="hover:text-foreground">Your keys</Link>
-            </nav>
+    <SidebarProvider>
+      <DeveloperSidebar guides={guides} routeGroups={routeGroups} />
+      <SidebarInset>
+        {/*<header className="sticky top-0 z-30 flex h-14 shrink-0 items-center gap-3 border-b border-border bg-background/80 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/60">*/}
+        <header className="flex h-14 shrink-0 px-4 items-center gap-3 border-b border-border justify-between">
+          <div className="flex items-center gap-2">
+            <SidebarTrigger className="-ml-1" />
+            <Separator orientation="vertical" className="data-[orientation=vertical]:h-4" />
           </div>
-          <div className="flex items-center gap-3 text-sm">
-            <a
-              href="/developer/openapi.json"
-              className="rounded-md border border-border px-2 py-1 text-xs text-muted-foreground hover:text-foreground"
-            >
-              OpenAPI
-            </a>
-          </div>
-        </div>
-      </header>
-
-      <div className="mx-auto flex max-w-[1400px] gap-8 px-4 py-8 sm:px-6">
-        <aside className="sticky top-20 hidden h-[calc(100dvh-6rem)] w-60 shrink-0 overflow-y-auto pr-2 text-sm md:block">
-          <div className="mb-6">
-            <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Guides
-            </div>
-            <ul className="space-y-0.5">
-              {guides.map((g) => (
-                <li key={g.slug}>
-                  <Link
-                    href={`/developer/guides/${g.slug}`}
-                    className="block rounded px-2 py-1 text-muted-foreground transition hover:bg-muted hover:text-foreground"
-                  >
-                    {g.title}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div className="mb-6">
-            <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Concepts
-            </div>
-            <ul className="space-y-0.5">
-              <li>
-                <Link
-                  href="/developer/scopes"
-                  className="block rounded px-2 py-1 text-muted-foreground transition hover:bg-muted hover:text-foreground"
-                >
-                  Scopes
-                </Link>
-              </li>
-            </ul>
-          </div>
-          <div>
-            <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Reference
-            </div>
-            {Array.from(grouped.entries()).map(([tag, list]) => (
-              <div key={tag} className="mb-3">
-                <div className="px-2 py-1 text-xs font-medium text-foreground/80">{tag}</div>
-                <ul className="space-y-0.5">
-                  {list.map((r) => (
-                    <li key={routeSlug(r)}>
-                      <Link
-                        href={`/developer/reference/${routeSlug(r)}`}
-                        className="flex items-center gap-2 rounded px-2 py-1 text-muted-foreground transition hover:bg-muted hover:text-foreground"
-                      >
-                        <span className="font-mono text-[10px] text-foreground/60">{r.method}</span>
-                        <span className="truncate">{r.path.replace(/^\/api\/v1/, "")}</span>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-        </aside>
-
-        <main className="min-w-0 flex-1">{children}</main>
-      </div>
-    </div>
+          <Link
+            href="/developer/openapi.json"
+            className="inline-flex h-8 items-center gap-1.5 rounded-md border border-input bg-card px-2.5 text-xs font-medium text-muted-foreground shadow-xs transition-colors hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:hover:bg-input/50"
+          >
+            <FileCode2 className="size-3.5" />
+            OpenAPI
+          </Link>
+        </header>
+        <main className="min-w-0 flex-1 px-4 py-8 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-5xl">{children}</div>
+        </main>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }

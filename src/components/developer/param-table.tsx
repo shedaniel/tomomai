@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { Badge, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@tomomai/ui";
 
 interface ParamTableProps {
   schema: z.ZodTypeAny | undefined;
@@ -19,39 +20,42 @@ export function ParamTable({ schema, kind }: ParamTableProps) {
   if (!rows.length) return null;
 
   return (
-    <div className="overflow-hidden rounded-lg border border-border">
-      <table className="w-full text-sm">
-        <thead className="bg-muted/40 text-left text-xs uppercase tracking-wider text-muted-foreground">
-          <tr>
-            <th className="px-3 py-2 font-medium">{kind === "path" ? "Path param" : "Query param"}</th>
-            <th className="px-3 py-2 font-medium">Type</th>
-            <th className="px-3 py-2 font-medium">Required</th>
-            <th className="px-3 py-2 font-medium">Description</th>
-          </tr>
-        </thead>
-        <tbody>
+    <div className="overflow-x-auto rounded-lg border border-border">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>{kind === "path" ? "Path param" : "Query param"}</TableHead>
+            <TableHead>Type</TableHead>
+            <TableHead>Required</TableHead>
+            <TableHead>Description</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
           {rows.map((row) => (
-            <tr key={row.name} className="border-t border-border align-top">
-              <td className="px-3 py-2">
+            <TableRow key={row.name} className="align-top">
+              <TableCell>
                 <code className="font-mono text-xs">{row.name}</code>
-              </td>
-              <td className="px-3 py-2 text-muted-foreground">
+              </TableCell>
+              <TableCell className="text-muted-foreground">
                 <code className="font-mono text-xs">{row.type}</code>
-              </td>
-              <td className="px-3 py-2">
+              </TableCell>
+              <TableCell>
                 {row.required ? (
-                  <span className="rounded-full border border-rose-500/40 bg-rose-500/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-rose-700 dark:text-rose-300">
+                  <Badge
+                    variant="outline"
+                    className="border-rose-500/40 bg-rose-500/10 text-[10px] uppercase tracking-wider text-rose-700 dark:text-rose-300"
+                  >
                     Required
-                  </span>
+                  </Badge>
                 ) : (
-                  <span className="text-muted-foreground text-xs">Optional</span>
+                  <span className="text-xs text-muted-foreground">Optional</span>
                 )}
-              </td>
-              <td className="px-3 py-2 text-muted-foreground">{row.description}</td>
-            </tr>
+              </TableCell>
+              <TableCell className="text-muted-foreground">{row.description}</TableCell>
+            </TableRow>
           ))}
-        </tbody>
-      </table>
+        </TableBody>
+      </Table>
     </div>
   );
 }

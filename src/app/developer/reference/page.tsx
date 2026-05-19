@@ -1,7 +1,9 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { FileCode2 } from "lucide-react";
 import { getRegistry, routeSlug } from "@/lib/api/specs";
 import { ScopeBadge } from "@/components/developer/scope-badge";
+import { MethodBadge } from "@/components/developer/method-badge";
 
 export const metadata: Metadata = {
   title: "API reference",
@@ -26,7 +28,11 @@ export default function ReferenceIndex() {
           Click an endpoint to see its required scope, query parameters,
           response schema, and a runnable `curl` example. The full machine
           spec is available at{" "}
-          <Link href="/developer/openapi.json" className="underline">
+          <Link
+            href="/developer/openapi.json"
+            className="inline-flex items-center gap-1 underline-offset-2 hover:underline"
+          >
+            <FileCode2 className="size-3.5" />
             /developer/openapi.json
           </Link>
           .
@@ -43,9 +49,7 @@ export default function ReferenceIndex() {
                   href={`/developer/reference/${routeSlug(r)}`}
                   className="flex flex-col gap-1 rounded-lg border border-border p-4 transition hover:border-foreground/40 hover:bg-muted/40 sm:flex-row sm:items-center sm:gap-4"
                 >
-                  <span className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">
-                    {r.method}
-                  </span>
+                  <MethodBadge method={r.method} size="md" />
                   <code className="font-mono text-sm">{r.path}</code>
                   <span className="flex-1 text-sm text-muted-foreground">{r.summary}</span>
                   <ScopeBadge

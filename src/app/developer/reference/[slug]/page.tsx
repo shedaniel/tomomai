@@ -6,7 +6,10 @@ import { resolveBaseUrl } from "@/lib/base-url";
 import { ScopeBadge } from "@/components/developer/scope-badge";
 import { ParamTable } from "@/components/developer/param-table";
 import { ResponseTree } from "@/components/developer/response-tree";
+import { ChevronRight, Terminal } from "lucide-react";
+import { Badge } from "@tomomai/ui";
 import { CodeSamples } from "@/components/developer/code-samples";
+import { MethodBadge } from "@/components/developer/method-badge";
 import type { RouteSpec } from "@/lib/api/registry";
 
 function buildExampleUrl(spec: RouteSpec, baseUrl: string): string {
@@ -60,33 +63,37 @@ export default async function ReferenceEndpointPage({
     <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1fr_360px]">
       <article className="min-w-0 space-y-8">
         <header className="space-y-3">
-          <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground">
+          <div className="flex items-center gap-1.5 text-xs uppercase tracking-wider text-muted-foreground">
             <Link href="/developer/reference" className="hover:text-foreground">
               Reference
             </Link>
-            <span>/</span>
+            <ChevronRight className="size-3" />
             <span>{spec.tag}</span>
           </div>
           <h1 className="flex flex-wrap items-center gap-3 text-2xl font-semibold tracking-tight">
-            <span className="rounded bg-muted px-2 py-0.5 font-mono text-base">{spec.method}</span>
+            <MethodBadge method={spec.method} size="md" />
             <code className="font-mono text-xl">{spec.path}</code>
           </h1>
           <p className="text-lg text-muted-foreground">{spec.summary}</p>
           {spec.deprecated ? (
-            <div className="rounded border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-800 dark:text-amber-200">
-              This endpoint is deprecated.
-            </div>
+            <Badge
+              variant="warning"
+              className="text-xs"
+            >
+              Deprecated
+            </Badge>
           ) : null}
         </header>
 
         <section className="space-y-3">
           <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-            Authorisation
+            Authorization
           </h2>
           {spec.scope === "public" ? (
-            <p className="text-sm text-muted-foreground">
-              No authentication required. <ScopeBadge scope="public" linked={false} />
-            </p>
+            <div className="text-sm text-muted-foreground flex gap-2">
+              <span>No authentication required.</span>
+              <ScopeBadge scope="public" linked={false} />
+            </div>
           ) : (
             <div className="space-y-2">
               <div className="flex flex-wrap items-center gap-2 text-sm">
@@ -165,7 +172,8 @@ export default async function ReferenceEndpointPage({
 
       <aside className="lg:sticky lg:top-20 lg:h-fit lg:self-start">
         <div className="space-y-3">
-          <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+          <h3 className="flex items-center gap-1.5 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+            <Terminal className="size-3.5" />
             Try it
           </h3>
           <CodeSamples
