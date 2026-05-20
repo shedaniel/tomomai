@@ -7,9 +7,15 @@ import { resolveBaseUrl } from "@/lib/base-url";
 import { db } from "@/lib/db";
 import { oauthAccessToken } from "@/lib/db/schema-pg";
 import { eq } from "drizzle-orm";
+import { findRouteByRequest } from "@/lib/api/registry";
+import { apiKeyLimiter, apiUserLimiter } from "@/lib/security/redis-rate-limit";
+import { consumeMonthly, peekMonthly, refundMonthly } from "@/lib/api/quota";
+import { logger } from "@/lib/logger";
 
 export interface ApiKeyInfo {
   userId: string;
+  /** Stable per-token identifier for the per-key rate limit bucket. */
+  keyId: string;
   permissions: Record<string, string[]>;
   name: string | null;
   expiresAt: Date | null;
@@ -25,28 +31,11 @@ function hashTokenForStorage(token: string): string {
   return createHash("sha256").update(token, "utf8").digest("base64url");
 }
 
-/**
- * Verify an OAuth Bearer access token issued by our own oauthProvider.
- *
- * Two paths, tried in order so any standard OAuth 2.1 client works out of the
- * box:
- *
- * 1. **JWT** (fast, no DB hit). A client opts into this by sending
- *    `resource=<baseUrl>` at the token endpoint per RFC 8707. The token is a
- *    signed JWT verifiable via /api/auth/jwks. No issuer-side coordination
- *    needed beyond `validAudiences` in the oauthProvider config.
- *
- * 2. **Opaque** (one indexed DB lookup). This is what Better Auth issues by
- *    default — a 32-char random string keyed into `oauthAccessToken`. We
- *    can't use /oauth2/introspect because it requires client credentials and
- *    only validates tokens issued *to* the introspecting client, breaking
- *    multi-app setups. Instead we read the table directly, applying the same
- *    SHA-256-base64url hash Better Auth uses at write time (storeToken in
- *    @better-auth/oauth-provider). This works for tokens issued to any
- *    OAuth client without per-app configuration.
- *
- * Both paths enforce scope and expiry.
- */
+/** Stable surrogate identifier for JWT bearer tokens that lack a `jti`. */
+function jwtSurrogateId(token: string): string {
+  return createHash("sha256").update(token, "utf8").digest("hex").slice(0, 16);
+}
+
 async function verifyOAuthToken(
   token: string,
   requiredScopes: ScopeKey[],
@@ -68,20 +57,21 @@ async function verifyOAuthToken(
           .filter(Boolean);
         return {
           userId: payload.sub,
+          keyId: jwtSurrogateId(token),
           permissions: Object.fromEntries(scopeList.map((s) => [s, ["access"]])),
           name: null,
           expiresAt: payload.exp ? new Date(payload.exp * 1000) : null,
         };
       }
     } catch {
-      // Fall through to opaque lookup — token might look like a JWT but actually
-      // be a coincidence (3 dot-separated chunks of arbitrary chars).
+      // Fall through to opaque lookup.
     }
   }
 
   // ── Opaque-token DB lookup ─────────────────────────────────────────────
   const [row] = await db
     .select({
+      id: oauthAccessToken.id,
       userId: oauthAccessToken.userId,
       scopes: oauthAccessToken.scopes,
       expiresAt: oauthAccessToken.expiresAt,
@@ -98,17 +88,45 @@ async function verifyOAuthToken(
 
   return {
     userId: row.userId,
+    keyId: row.id,
     permissions: Object.fromEntries(row.scopes.map((s) => [s, ["access"]])),
     name: null,
     expiresAt: row.expiresAt,
   };
 }
 
+function quotaResetSeconds(resetAt: Date): string {
+  return String(Math.floor(resetAt.getTime() / 1000));
+}
+
+interface RateState {
+  cost: number;
+  perKey: { limit: number; remaining: number; retryAfter: number };
+  perUser: { limit: number; remaining: number; retryAfter: number };
+  quota: { limit: number; used: number; resetAt: Date };
+}
+
+function applyV1Headers(res: Response, state: RateState): Response {
+  res.headers.set("X-RateLimit-Limit", String(state.perKey.limit));
+  res.headers.set("X-RateLimit-Remaining", String(state.perKey.remaining));
+  res.headers.set("X-RateLimit-Reset", String(state.perKey.retryAfter));
+  res.headers.set("X-RateLimit-User-Limit", String(state.perUser.limit));
+  res.headers.set("X-RateLimit-User-Remaining", String(state.perUser.remaining));
+  res.headers.set("X-RateLimit-Cost", String(state.cost));
+  res.headers.set("X-Quota-Limit", String(state.quota.limit));
+  res.headers.set(
+    "X-Quota-Remaining",
+    String(Math.max(0, state.quota.limit - state.quota.used)),
+  );
+  res.headers.set("X-Quota-Reset", quotaResetSeconds(state.quota.resetAt));
+  return res;
+}
+
 export function withApiKey(
   requiredScopes: ScopeKey[],
   handler: (req: NextRequest, key: ApiKeyInfo) => Promise<Response>
 ) {
-  return async (req: NextRequest, context?: unknown) => {
+  return async (req: NextRequest, _context?: unknown) => {
     const authHeader = req.headers.get("authorization");
     const rawKey =
       req.headers.get("x-api-key") ??
@@ -119,35 +137,121 @@ export function withApiKey(
     }
 
     try {
-      // API keys carry the "tmk_" prefix; anything else is treated as an
-      // OAuth Bearer token (JWT or opaque).
+      let key: ApiKeyInfo | null = null;
       if (!rawKey.startsWith("tmk_")) {
-        const oauthKey = await verifyOAuthToken(rawKey, requiredScopes);
-        if (oauthKey) return await handler(req, oauthKey);
-        return Response.json({ error: "Invalid or expired token" }, { status: 403 });
+        key = await verifyOAuthToken(rawKey, requiredScopes);
+        if (!key) {
+          return Response.json({ error: "Invalid or expired token" }, { status: 403 });
+        }
+      } else {
+        const result = await auth.api.verifyApiKey({
+          body: { key: rawKey, permissions: scopesToPermissions(requiredScopes) },
+        });
+        if (!result.valid || !result.key) {
+          return Response.json(
+            { error: result.error?.message ?? "Forbidden" },
+            { status: 403 }
+          );
+        }
+        key = {
+          userId: result.key.referenceId,
+          keyId: result.key.id,
+          permissions: result.key.permissions ?? {},
+          name: result.key.name,
+          expiresAt: result.key.expiresAt,
+        };
       }
 
-      const result = await auth.api.verifyApiKey({
-        body: { key: rawKey, permissions: scopesToPermissions(requiredScopes) },
-      });
-
-      if (!result.valid || !result.key) {
-        return Response.json(
-          { error: result.error?.message ?? "Forbidden" },
-          { status: 403 }
+      // Resolve cost from the registry. Default 1; warn if no spec was found.
+      const pathname = new URL(req.url).pathname;
+      const spec = findRouteByRequest(req.method, pathname);
+      const cost = spec?.cost ?? 1;
+      if (!spec) {
+        logger.warn(
+          { method: req.method, pathname },
+          "withApiKey: no RouteSpec found — cost defaulted to 1",
         );
       }
 
-      const key: ApiKeyInfo = {
-        userId: result.key.referenceId,
-        permissions: result.key.permissions ?? {},
-        name: result.key.name,
-        expiresAt: result.key.expiresAt,
+      // Layered rate-limit check. Consume in order; refund earlier consumes
+      // if a later limiter rejects. The race window is small and never grants
+      // extra budget — it only briefly over-counts during contention.
+      const perKey = await apiKeyLimiter.check(key.keyId, cost);
+      if (perKey.limited) {
+        const quota = await peekMonthly(key.userId);
+        return finalize429(perKey.retryAfter, "Per-key rate limit exceeded", {
+          cost,
+          perKey: { limit: perKey.limit, remaining: perKey.remaining, retryAfter: perKey.retryAfter },
+          perUser: { limit: 0, remaining: 0, retryAfter: 0 },
+          quota,
+        }, /*headersFromLimiter*/ true);
+      }
+
+      const perUser = await apiUserLimiter.check(key.userId, cost);
+      if (perUser.limited) {
+        await apiKeyLimiter.reward(key.keyId, cost);
+        const quota = await peekMonthly(key.userId);
+        return finalize429(perUser.retryAfter, "Per-user rate limit exceeded", {
+          cost,
+          perKey: { limit: perKey.limit, remaining: perKey.remaining + cost, retryAfter: perKey.retryAfter },
+          perUser: { limit: perUser.limit, remaining: perUser.remaining, retryAfter: perUser.retryAfter },
+          quota,
+        }, true);
+      }
+
+      const quota = await consumeMonthly(key.userId, cost);
+      if (!quota.ok) {
+        await apiKeyLimiter.reward(key.keyId, cost);
+        await apiUserLimiter.reward(key.userId, cost);
+        const retryAfter = Math.max(
+          1,
+          Math.floor((quota.resetAt.getTime() - Date.now()) / 1000),
+        );
+        return finalize429(retryAfter, "Monthly quota exceeded", {
+          cost,
+          perKey: { limit: perKey.limit, remaining: perKey.remaining + cost, retryAfter: perKey.retryAfter },
+          perUser: { limit: perUser.limit, remaining: perUser.remaining + cost, retryAfter: perUser.retryAfter },
+          quota,
+        }, true);
+      }
+
+      const state: RateState = {
+        cost,
+        perKey: { limit: perKey.limit, remaining: perKey.remaining, retryAfter: perKey.retryAfter },
+        perUser: { limit: perUser.limit, remaining: perUser.remaining, retryAfter: perUser.retryAfter },
+        quota,
       };
-      return await handler(req, key);
+
+      let response: Response;
+      try {
+        response = await handler(req, key);
+      } catch (err) {
+        // If the handler itself throws, refund — the request didn't succeed.
+        await Promise.all([
+          apiKeyLimiter.reward(key.keyId, cost),
+          apiUserLimiter.reward(key.userId, cost),
+          refundMonthly(key.userId, cost),
+        ]);
+        throw err;
+      }
+      return applyV1Headers(response, state);
     } catch (err) {
       console.error("API handler error:", err);
       return Response.json({ error: "Internal server error" }, { status: 500 });
     }
   };
+}
+
+function finalize429(
+  retryAfter: number,
+  message: string,
+  state: RateState,
+  setRetryAfter: boolean,
+): Response {
+  const res = Response.json({ error: message }, { status: 429 });
+  applyV1Headers(res, state);
+  if (setRetryAfter) {
+    res.headers.set("Retry-After", String(Math.max(1, retryAfter)));
+  }
+  return res;
 }

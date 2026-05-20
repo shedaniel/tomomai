@@ -14,6 +14,7 @@ export const spec = defineRoute({
     "Returns `412` if no token is stored; `409` if a fetch is already in " +
     "progress; `429` if upstream is rate-limiting.",
   scope: "fetch:start",
+  cost: 40,
   query: querySchemas.regionRequired,
   response: fetchStartResult,
 });

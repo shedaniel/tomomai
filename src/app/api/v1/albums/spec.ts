@@ -19,6 +19,7 @@ export const spec = defineRoute({
         "Populates `imageUrl` with the resolved R2 URL (sensitive — photos may contain images of people).",
     },
   ],
+  cost: 2,
   query: querySchemas.paginated,
   response: z.object({
     albums: z.array(albumEntry),

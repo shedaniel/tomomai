@@ -75,6 +75,17 @@ export default async function ReferenceEndpointPage({
             <code className="font-mono text-xl">{spec.path}</code>
           </h1>
           <p className="text-lg text-muted-foreground">{spec.summary}</p>
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            <Link
+              href="/developer/guides/rate-limits"
+              className="inline-flex items-center gap-1.5 rounded-md border border-border bg-muted/30 px-2 py-1 font-mono text-muted-foreground hover:text-foreground hover:bg-muted/60"
+              title="Cost units consumed per call — see Rate Limits guide"
+            >
+              <span className="uppercase tracking-wider">Cost</span>
+              <span className="font-semibold text-foreground">{spec.cost ?? 1}</span>
+              <span className="text-muted-foreground">{(spec.cost ?? 1) === 1 ? "unit" : "units"}</span>
+            </Link>
+          </div>
           {spec.deprecated ? (
             <Badge
               variant="warning"

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { RateLimiterRedis, RateLimiterRes } from "rate-limiter-flexible";
 import { redis } from "@/lib/redis";
 import { logger } from "../logger";
+import { TIER_I } from "@/lib/api/tiers";
 
 export interface RateLimitOptions {
   /** Bucket name — included in the Redis key. Keep unique per limit. */
@@ -17,6 +18,8 @@ export interface RateLimitOptions {
 export interface RateLimitResult {
   limited: boolean;
   remaining: number;
+  /** Window max (points). */
+  limit: number;
   /** Seconds until the limit fully resets / block ends. */
   retryAfter: number;
   headers: Record<string, string>;
@@ -51,9 +54,9 @@ export class RedisRateLimiter {
     });
   }
 
-  async check(key: string): Promise<RateLimitResult> {
+  async check(key: string, cost: number = 1): Promise<RateLimitResult> {
     try {
-      const res = await this.limiter.consume(key, 1);
+      const res = await this.limiter.consume(key, cost);
       return this.buildResult(res, false);
     } catch (err) {
       if (err instanceof RateLimiterRes) {
@@ -64,9 +67,19 @@ export class RedisRateLimiter {
       return {
         limited: false,
         remaining: this.max,
+        limit: this.max,
         retryAfter: 0,
         headers: {},
       };
+    }
+  }
+
+  /** Refund previously-consumed points (e.g. when a later limiter rejects). */
+  async reward(key: string, cost: number = 1): Promise<void> {
+    try {
+      await this.limiter.reward(key, cost);
+    } catch (err) {
+      logger.error({ err, key }, "Rate limiter reward failed");
     }
   }
 
@@ -80,6 +93,7 @@ export class RedisRateLimiter {
     return {
       limited,
       remaining,
+      limit: this.max,
       retryAfter,
       headers: {
         "X-RateLimit-Limit": String(this.max),
@@ -132,6 +146,20 @@ export const captchaVerifyLimiter = new RedisRateLimiter({
   name: "captcha-verify",
   windowSeconds: 60,
   max: 10,
+});
+
+/** Per-API-key burst limiter for `/api/v1/*`. */
+export const apiKeyLimiter = new RedisRateLimiter({
+  name: "api-key",
+  windowSeconds: TIER_I.perKeyBurst.windowSeconds,
+  max: TIER_I.perKeyBurst.max,
+});
+
+/** Per-user umbrella burst limiter for `/api/v1/*` — closes multi-key bypass. */
+export const apiUserLimiter = new RedisRateLimiter({
+  name: "api-user",
+  windowSeconds: TIER_I.perUserBurst.windowSeconds,
+  max: TIER_I.perUserBurst.max,
 });
 
 /** Passkey registration — the abuse outcome. Very strict, long block. */

@@ -12,6 +12,7 @@ export const spec = defineRoute({
     "returns `totalSongs`, the count of songs in the catalogue per version × " +
     "difficulty so the client can render percentages.",
   scope: "stats:read",
+  cost: 2,
   query: querySchemas.regionRequired,
   response: statsResponse,
 });

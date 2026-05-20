@@ -1,0 +1,97 @@
+---
+title: Rate limits and quotas
+description: How tomomai meters API traffic — per-key burst, per-user umbrella, and monthly quota.
+order: 5
+---
+
+Every authenticated `/api/v1/*` call is metered by three independent layers.
+Each layer protects against a different failure mode:
+
+| Layer | What it caps | Why it exists |
+|---|---|---|
+| **Per-key burst** | Cost-units per rolling 60s window, per API key (or OAuth token) | Stops a single noisy key from dominating shared infrastructure. |
+| **Per-user umbrella burst** | Cost-units per rolling 60s window, per user | Closes the multi-key bypass: 50 keys does **not** equal 50× the budget. Sums across every API key and OAuth token you own. |
+| **Monthly quota** | Cost-units per calendar month, per user | Long-term fairness. Resets at the first of next month, 00:00 UTC. |
+
+<Callout type="warning" title="Tier I — defaults, subject to change">
+Every account today is on **Tier I**. These numbers are the current defaults
+and **may change** as we observe real-world traffic and roll out tier
+upgrades for heavier workloads. Don't hard-code them — read the response
+headers below.
+
+| Layer | Limit |
+|---|---|
+| Per-key burst | **80** cost-units / 60s |
+| Per-user umbrella burst | **120** cost-units / 60s |
+| Monthly quota | **40,000** cost-units / month |
+</Callout>
+
+## Cost units
+
+Different endpoints consume different amounts of budget. Cheap reads cost
+**1 unit**; standard reads cost **2 units**; mutations and external-service
+calls cost more. The exact cost of each endpoint is shown on its reference
+page.
+
+A few rules of thumb:
+
+- Health checks (`GET /api/v1/ok`) and trivial metadata reads cost 1.
+- Standard data reads (snapshots, recents, stats, albums, plates, settings)
+  cost 2.
+- Snapshot deletion costs 10.
+- Triggering a fresh fetch from upstream (`POST /api/v1/fetch`) costs 40 —
+  it kicks off a polling job against an external service.
+
+Public endpoints (`/api/v1/songs*`) do not consume tier budget — they're
+served under the global IP limit instead.
+
+## Response headers
+
+Every `/api/v1/*` response — `200` or `429` — carries these headers so you
+can self-throttle without ever seeing a `429`:
+
+| Header | Meaning |
+|---|---|
+| `X-RateLimit-Limit` | Per-key window max |
+| `X-RateLimit-Remaining` | Per-key cost-units left in the current 60s window |
+| `X-RateLimit-Reset` | Seconds until the per-key window rolls over |
+| `X-RateLimit-User-Limit` | Per-user window max |
+| `X-RateLimit-User-Remaining` | Per-user cost-units left in the current 60s window |
+| `X-RateLimit-Cost` | What this single call cost |
+| `X-Quota-Limit` | Monthly cost-unit cap |
+| `X-Quota-Remaining` | Monthly cost-units left |
+| `X-Quota-Reset` | Unix timestamp (UTC) when the monthly quota resets |
+
+On `429`, the response also includes `Retry-After` (seconds). The `error`
+body tells you which layer rejected the request (`Per-key rate limit
+exceeded`, `Per-user rate limit exceeded`, or `Monthly quota exceeded`).
+
+## Polling guidance
+
+If you're polling `GET /api/v1/fetch/status` (cost 2) after kicking off a
+fetch, keep the interval at **2 seconds or more**. A 1-second cadence works
+out to 120 cost-units per minute, which can exceed the per-key burst budget
+on Tier I; 2 seconds (60/min) sits comfortably under.
+
+## OAuth and per-user quotas
+
+The monthly quota is **per user**, not per token. If you're a developer
+building an OAuth app:
+
+- Each user who authorizes your app gets their own monthly budget. Your
+  app does not consume one shared cap.
+- The per-key burst limit is per *token*, so each user × app pair gets
+  its own burst budget.
+- The per-user umbrella covers **all** of a user's traffic — across every
+  app they've authorized plus any personal API keys they've created.
+
+The intent: the user whose data is being read is the one being metered.
+
+## What to do on `429`
+
+1. Respect `Retry-After`. Don't retry sooner.
+2. Read `X-RateLimit-Remaining` and `X-Quota-Remaining` on successful
+   responses to estimate when you'll get close to a limit, and back off
+   *before* hitting `429`.
+3. If your workload genuinely needs more headroom, [open an issue](https://github.com/anthropics/tomomai/issues)
+   — we're tracking real-world traffic and will adjust the defaults.

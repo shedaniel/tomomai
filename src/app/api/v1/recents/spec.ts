@@ -19,6 +19,7 @@ export const spec = defineRoute({
       effect: "Adds `venue`, `combo`, `syncScore`, `rating`, and the `notes` per-note breakdown.",
     },
   ],
+  cost: 2,
   query: querySchemas.paginated,
   response: z.object({
     plays: z.array(recentPlay),

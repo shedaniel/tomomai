@@ -11,5 +11,6 @@ export const spec = defineRoute({
     "show scores, show plates, etc.). Does **not** include fetch-pipeline " +
     "preferences such as `fetchUseAlbums`.",
   scope: "user:settings:read",
+  cost: 2,
   response: profileSettings,
 });

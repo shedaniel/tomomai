@@ -11,6 +11,7 @@ export const spec = defineRoute({
     "— useful for polling after `POST /api/v1/fetch`. Returns `404` if no " +
     "fetch has ever been started for this region.",
   scope: "fetch:read",
+  cost: 2,
   query: querySchemas.regionRequired,
   response: fetchStatus,
 });

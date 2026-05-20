@@ -24,6 +24,7 @@ export const spec = defineRoute({
       effect: "Populates `iconUrl` (sensitive — may reveal social identity).",
     },
   ],
+  cost: 2,
   query: querySchemas.regionRequired,
   response: snapshotDetail,
 });

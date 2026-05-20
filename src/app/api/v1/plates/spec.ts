@@ -14,6 +14,7 @@ export const spec = defineRoute({
     "FDX depending on the `plateType`. Empty array if the user has no " +
     "snapshot in this region.",
   scope: "plate:read",
+  cost: 2,
   query: querySchemas.plates,
   response: z.object({
     songs: z.array(plateEntry),

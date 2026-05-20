@@ -79,6 +79,7 @@ function buildOperation(route: RouteSpec) {
       .replace(/^\/api\/v1\/?/, "")
       .replace(/[/{}]/g, "_")}`,
     deprecated: route.deprecated ?? undefined,
+    "x-tomomai-cost": route.cost ?? 1,
   };
 
   // Security

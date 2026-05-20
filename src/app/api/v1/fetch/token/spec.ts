@@ -11,6 +11,7 @@ export const spec = defineRoute({
     "given region. After this, `POST /api/v1/fetch` will return `412` " +
     "until a new token is supplied via the in-app flow.",
   scope: "fetch:delete",
+  cost: 20,
   query: querySchemas.regionRequired,
   response: successResponse,
 });

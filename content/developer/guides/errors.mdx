@@ -24,6 +24,12 @@ authorization server redirects errors back to your `redirect_uri` with
 
 ## Rate limiting
 
-tomomai applies per-IP and per-token rate limits. A blocked request returns
-`429 Too Many Requests` with a `retry-after` header — wait at least that
+tomomai applies a three-layer rate-limit model to `/api/v1/*` (per-key
+burst, per-user umbrella burst, and a monthly quota), plus a coarse per-IP
+limit on all `/api/*` traffic. A blocked request returns
+`429 Too Many Requests` with a `Retry-After` header — wait at least that
 many seconds before retrying.
+
+See the [Rate limits guide](/developer/guides/rate-limits) for the limits,
+the response headers you can read to self-throttle, and per-endpoint cost
+units.

@@ -11,6 +11,7 @@ export const spec = defineRoute({
     "Returns metadata for every snapshot tomomai has captured for the user " +
     "in the given region. Newer snapshots come first.",
   scope: "snapshot:all:metadata:read",
+  cost: 2,
   query: querySchemas.regionRequired,
   response: z.object({
     snapshots: z.array(snapshotMetadata),

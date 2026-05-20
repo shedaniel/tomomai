@@ -46,6 +46,8 @@ export interface RouteSpec<
   deprecated?: boolean;
   /** If true, the response is cached server-side for the given seconds. */
   cacheSeconds?: number;
+  /** Cost units consumed per call. Default 1. See the Rate Limits guide. */
+  cost?: number;
 }
 
 const REGISTRY = new Map<string, RouteSpec>();
@@ -75,6 +77,30 @@ export function getRegistry(): RouteSpec[] {
 /** Look up a single spec by `METHOD path` or by slugified path. */
 export function findRoute(method: string, path: string): RouteSpec | undefined {
   return REGISTRY.get(`${method.toUpperCase()} ${path}`);
+}
+
+/**
+ * Match a concrete request (method + pathname) against the registered spec
+ * templates. Templates use `{param}` placeholders (e.g. `/api/v1/snapshots/{id}`).
+ */
+export function findRouteByRequest(method: string, pathname: string): RouteSpec | undefined {
+  const upperMethod = method.toUpperCase();
+  for (const spec of REGISTRY.values()) {
+    if (spec.method !== upperMethod) continue;
+    if (matchTemplate(spec.path, pathname)) return spec;
+  }
+  return undefined;
+}
+
+function matchTemplate(template: string, pathname: string): boolean {
+  const regex = new RegExp(
+    "^" +
+      template
+        .replace(/[.+?^$()|[\]\\]/g, "\\$&")
+        .replace(/\{(\w+)\}/g, "[^/]+") +
+      "/?$",
+  );
+  return regex.test(pathname);
 }
 
 /**

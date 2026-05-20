@@ -27,6 +27,7 @@ export const spec = defineRoute({
   params: z.object({
     id: z.string().describe("Public snapshot ID."),
   }),
+  cost: 2,
   query: querySchemas.regionRequired,
   response: snapshotDetail,
 });
@@ -41,6 +42,7 @@ export const deleteSpec = defineRoute({
     "`404` if the snapshot ID does not belong to the caller in the given " +
     "region.",
   scope: "snapshot:all:delete",
+  cost: 10,
   params: z.object({
     id: z.string().describe("Public snapshot ID."),
   }),
