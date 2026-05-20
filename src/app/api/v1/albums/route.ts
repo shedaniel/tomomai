@@ -1,16 +1,15 @@
 import { type NextRequest } from "next/server";
 import { withApiKey, keyHasScope } from "@/lib/api/protect";
-import { parseRegion, parsePagination } from "@/lib/api/params";
+import { parseQuery } from "@/lib/api/parse-query";
 import { zodJson } from "@/lib/api/zod-response";
 import { fetchUserAlbums } from "@/server/queries/albums";
 import { spec } from "./spec";
 
 export const GET = withApiKey(["album:read"], async (req: NextRequest, key) => {
-  const { searchParams } = req.nextUrl;
-  const region = parseRegion(searchParams);
-  if (region instanceof Response) return region;
+  const parsed = parseQuery(req.nextUrl.searchParams, spec.query!);
+  if (parsed instanceof Response) return parsed;
+  const { region, limit = 20, offset = 0 } = parsed;
 
-  const { limit, offset } = parsePagination(searchParams, 20, 100);
   const hasImages = keyHasScope(key, "album:images:read");
   const r2BaseUrl = process.env.NEXT_PUBLIC_R2_URL;
 

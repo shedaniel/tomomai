@@ -4,6 +4,27 @@ import { eq } from "drizzle-orm";
 import { isCNExclusive } from "@/lib/enabled-regions";
 import type { Region } from "@/lib/types";
 
+export async function fetchProfileSettings(userId: string) {
+  const result = await db
+    .select({
+      publishProfile: user.publishProfile,
+      profileMainRegion: user.profileMainRegion,
+      profileShowAllScores: user.profileShowAllScores,
+      profileShowScoreDetails: user.profileShowScoreDetails,
+      profileShowPlates: user.profileShowPlates,
+      profileShowPlayCounts: user.profileShowPlayCounts,
+      profileShowEvents: user.profileShowEvents,
+      profileShowInSearch: user.profileShowInSearch,
+      fetchUseAlbums: user.fetchUseAlbums,
+    })
+    .from(user)
+    .where(eq(user.id, userId))
+    .limit(1);
+
+  if (result.length === 0) return null;
+  return result[0];
+}
+
 export async function fetchUserData(userId: string) {
   const result = await db
     .select({

@@ -131,6 +131,56 @@ export const API_SCOPES = {
     default: false,
   },
 
+  // ── Plates ────────────────────────────────────────────────────────────────
+  "plate:read": {
+    name: "Plates (Read)",
+    description: "Read your plate completion data (which songs still need to be cleared / FC'd / AP'd for each plate). Grants GET /api/v1/plates.",
+    destructive: false,
+    sensitive: false,
+    default: false,
+  },
+
+  // ── User: settings ────────────────────────────────────────────────────────
+  "user:settings:read": {
+    name: "User Settings (Read)",
+    description: "Read your privacy and profile-display settings (publish profile, show scores, show plates, etc.). Grants GET /api/v1/me/settings.",
+    destructive: false,
+    sensitive: false,
+    default: false,
+  },
+
+  // ── Snapshot: destructive ─────────────────────────────────────────────────
+  "snapshot:all:delete": {
+    name: "Snapshots (Delete)",
+    description: "Delete any of your snapshots. Grants DELETE /api/v1/snapshots/:id. Destructive — must be requested explicitly and is never implied by encompassing scopes.",
+    destructive: true,
+    sensitive: true,
+    default: false,
+  },
+
+  // ── Fetch control ─────────────────────────────────────────────────────────
+  "fetch:read": {
+    name: "Fetch Status (Read)",
+    description: "Read the status of your in-progress or most-recent maimai data fetch. Grants GET /api/v1/fetch/status.",
+    destructive: false,
+    sensitive: false,
+    default: false,
+  },
+  "fetch:start": {
+    name: "Start Fetch",
+    description: "Trigger a new maimai data fetch using your stored upstream token. Grants POST /api/v1/fetch. Destructive — consumes upstream API budget and writes a new snapshot.",
+    destructive: true,
+    sensitive: false,
+    default: false,
+  },
+  "fetch:delete": {
+    name: "Fetch Token (Delete)",
+    description: "Delete your stored upstream maimai authentication token. Grants DELETE /api/v1/fetch/token. Destructive and sensitive — breaks any in-app and API-driven fetch flow until you re-authenticate.",
+    destructive: true,
+    sensitive: true,
+    default: false,
+  },
+
   // ── Encompassing scopes ───────────────────────────────────────────────────
   "snapshot:latest:read": {
     name: "Latest Snapshot (Read)",
@@ -179,6 +229,7 @@ export const SCOPE_EXPANSIONS: Partial<Record<ScopeKey, ScopeKey[]>> = {
   // SCOPE_IMPLIES (all:* ⊇ latest:*), so listing them here would be redundant.
   "read": [
     "user:metadata:read",
+    "user:settings:read",
     "snapshot:all:metadata:read",
     "snapshot:all:songs:read",
     "snapshot:all:events:read",
@@ -186,6 +237,8 @@ export const SCOPE_EXPANSIONS: Partial<Record<ScopeKey, ScopeKey[]>> = {
     "recent:detailed:read",
     "stats:read",
     "album:read",
+    "plate:read",
+    "fetch:read",
   ],
 };
 
@@ -197,15 +250,15 @@ export const SCOPE_EXPANSIONS: Partial<Record<ScopeKey, ScopeKey[]>> = {
 export const SCOPE_IMPLIES: Partial<Record<ScopeKey, ScopeKey[]>> = {
   // All-snapshot access implies the corresponding latest-snapshot access (all ⊇ latest)
   "snapshot:all:metadata:read": ["snapshot:latest:metadata:read"],
-  "snapshot:all:songs:read":    ["snapshot:latest:songs:read", "snapshot:all:songs:b50:read"],
-  "snapshot:all:songs:b50:read":["snapshot:latest:songs:b50:read"],
-  "snapshot:all:events:read":   ["snapshot:latest:events:read"],
-  "snapshot:all:icon:read":     ["snapshot:latest:icon:read"],
+  "snapshot:all:songs:read": ["snapshot:latest:songs:read", "snapshot:all:songs:b50:read"],
+  "snapshot:all:songs:b50:read": ["snapshot:latest:songs:b50:read"],
+  "snapshot:all:events:read": ["snapshot:latest:events:read"],
+  "snapshot:all:icon:read": ["snapshot:latest:icon:read"],
   // All-songs access implies B50 access (full scores ⊇ B50 subset)
   "snapshot:latest:songs:read": ["snapshot:latest:songs:b50:read"],
   // Extended scopes imply their base scope (detailed ⊇ basic)
-  "recent:detailed:read":       ["recent:read"],
-  "album:images:read":          ["album:read"],
+  "recent:detailed:read": ["recent:read"],
+  "album:images:read": ["album:read"],
 };
 
 function addWithImplications(result: Set<ScopeKey>, scope: ScopeKey) {

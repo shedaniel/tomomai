@@ -406,6 +406,30 @@
           "name": "アルバム画像（読み取り）",
           "description": "アルバムレスポンスに画像URLを追加します。機密：写真に人物が含まれる場合があります。"
         },
+        "plate:read": {
+          "name": "プレート（読み取り）",
+          "description": "各プレートで未クリア／FC／APの楽曲を取得します。GET /api/v1/plates を許可します。"
+        },
+        "user:settings:read": {
+          "name": "ユーザー設定（読み取り）",
+          "description": "プロフィール公開やスコア表示などのプライバシー・表示設定を読み取ります。GET /api/v1/me/settings を許可します。"
+        },
+        "snapshot:all:delete": {
+          "name": "スナップショット（削除）",
+          "description": "任意のスナップショットを削除します。DELETE /api/v1/snapshots/:id を許可します。破壊的——明示的にリクエストする必要があり、包括的スコープでも自動付与されません。"
+        },
+        "fetch:read": {
+          "name": "フェッチ状態（読み取り）",
+          "description": "進行中または直近のmaimaiデータフェッチの状態を取得します。GET /api/v1/fetch/status を許可します。"
+        },
+        "fetch:start": {
+          "name": "フェッチ開始",
+          "description": "保存済みのアップストリームトークンで新しいmaimaiデータフェッチを開始します。POST /api/v1/fetch を許可します。破壊的——アップストリームAPIの予算を消費し新しいスナップショットを書き込みます。"
+        },
+        "fetch:delete": {
+          "name": "フェッチトークン（削除）",
+          "description": "保存済みのアップストリームmaimai認証トークンを削除します。DELETE /api/v1/fetch/token を許可します。破壊的かつ機密——再認証するまでアプリ内およびAPI経由のフェッチが停止します。"
+        },
         "snapshot:latest:read": {
           "name": "最新スナップショット（読み取り）",
           "description": "最新スナップショットのみのメタデータ・全楽曲・ちほーを含みます。アイコンは除外（プライバシー上のオプトイン）。"

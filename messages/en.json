@@ -405,6 +405,30 @@
           "name": "Album Images (Read)",
           "description": "Adds resolved image URLs to album responses. Sensitive — photos may contain images of people."
         },
+        "plate:read": {
+          "name": "Plates (Read)",
+          "description": "Read your plate completion data (which songs still need to be cleared / FC'd / AP'd for each plate). Grants GET /api/v1/plates."
+        },
+        "user:settings:read": {
+          "name": "User Settings (Read)",
+          "description": "Read your privacy and profile-display settings (publish profile, show scores, show plates, etc.). Grants GET /api/v1/me/settings."
+        },
+        "snapshot:all:delete": {
+          "name": "Snapshots (Delete)",
+          "description": "Delete any of your snapshots. Grants DELETE /api/v1/snapshots/:id. Destructive — must be requested explicitly and is never implied by encompassing scopes."
+        },
+        "fetch:read": {
+          "name": "Fetch Status (Read)",
+          "description": "Read the status of your in-progress or most-recent maimai data fetch. Grants GET /api/v1/fetch/status."
+        },
+        "fetch:start": {
+          "name": "Start Fetch",
+          "description": "Trigger a new maimai data fetch using your stored upstream token. Grants POST /api/v1/fetch. Destructive — consumes upstream API budget and writes a new snapshot."
+        },
+        "fetch:delete": {
+          "name": "Fetch Token (Delete)",
+          "description": "Delete your stored upstream maimai authentication token. Grants DELETE /api/v1/fetch/token. Destructive and sensitive — breaks any in-app and API-driven fetch flow until you re-authenticate."
+        },
         "snapshot:latest:read": {
           "name": "Latest Snapshot (Read)",
           "description": "Grants metadata, song scores, and events for your latest snapshot only. Excludes icon (opt-in for privacy)."

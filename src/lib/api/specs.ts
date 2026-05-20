@@ -17,6 +17,11 @@ import "@/app/api/v1/snapshots/[id]/spec";
 import "@/app/api/v1/recents/spec";
 import "@/app/api/v1/stats/spec";
 import "@/app/api/v1/albums/spec";
+import "@/app/api/v1/plates/spec";
+import "@/app/api/v1/me/settings/spec";
+import "@/app/api/v1/fetch/spec";
+import "@/app/api/v1/fetch/status/spec";
+import "@/app/api/v1/fetch/token/spec";
 
 export { getRegistry, findRouteBySlug, routeSlug } from "./registry";
 export type { RouteSpec } from "./registry";

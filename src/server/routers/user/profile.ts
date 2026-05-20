@@ -7,6 +7,7 @@ import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { getEnabledRegions, isCNExclusive } from '@/lib/enabled-regions';
 import { resolvePublicUserByUsername } from '@/server/queries/public-access';
+import { fetchProfileSettings } from '@/server/queries/profile';
 
 const regionSchema = z.enum(getEnabledRegions());
 
@@ -48,30 +49,14 @@ export const profileRouter = router({
 
   getProfileSettings: protectedProcedure
     .query(async ({ ctx }) => {
-      const userRecord = await db
-        .select({
-          publishProfile: user.publishProfile,
-          profileMainRegion: user.profileMainRegion,
-          profileShowAllScores: user.profileShowAllScores,
-          profileShowScoreDetails: user.profileShowScoreDetails,
-          profileShowPlates: user.profileShowPlates,
-          profileShowPlayCounts: user.profileShowPlayCounts,
-          profileShowEvents: user.profileShowEvents,
-          profileShowInSearch: user.profileShowInSearch,
-          fetchUseAlbums: user.fetchUseAlbums,
-        })
-        .from(user)
-        .where(eq(user.id, ctx.session.user.id))
-        .limit(1);
-
-      if (userRecord.length === 0) {
+      const settings = await fetchProfileSettings(ctx.session.user.id);
+      if (!settings) {
         throw new TRPCError({
           code: 'NOT_FOUND',
           message: 'User not found',
         });
       }
-
-      return userRecord[0];
+      return settings;
     }),
 
   updatePublishProfile: protectedProcedure

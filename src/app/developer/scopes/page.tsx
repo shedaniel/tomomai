@@ -19,6 +19,8 @@ const GROUPS: { title: string; match: (s: ScopeKey) => boolean }[] = [
   { title: "Recents", match: (s) => s.startsWith("recent:") },
   { title: "Stats", match: (s) => s.startsWith("stats:") },
   { title: "Albums", match: (s) => s.startsWith("album:") },
+  { title: "Plates", match: (s) => s.startsWith("plate:") },
+  { title: "Fetch", match: (s) => s.startsWith("fetch:") },
   {
     title: "Bundles",
     match: (s) => s === "read" || s === "snapshot:latest:read" || s === "snapshot:all:read",

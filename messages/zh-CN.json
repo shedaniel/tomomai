@@ -406,6 +406,30 @@
           "name": "相册图片（只读）",
           "description": "在相册响应中包含图片 URL。敏感 —— 照片可能包含人物图像。"
         },
+        "plate:read": {
+          "name": "牌子（只读）",
+          "description": "读取你的牌子完成数据（每个牌子还需要哪些歌曲完成 Clear / FC / AP）。授予 GET /api/v1/plates。"
+        },
+        "user:settings:read": {
+          "name": "用户设置（只读）",
+          "description": "读取你的隐私和资料显示设置（是否公开资料、是否显示分数、是否显示牌子等）。授予 GET /api/v1/me/settings。"
+        },
+        "snapshot:all:delete": {
+          "name": "快照（删除）",
+          "description": "删除你的任意快照。授予 DELETE /api/v1/snapshots/:id。破坏性 —— 必须显式申请，绝不被任何包含性范围隐式授予。"
+        },
+        "fetch:read": {
+          "name": "抓取状态（只读）",
+          "description": "读取你正在进行或最近一次 maimai 数据抓取的状态。授予 GET /api/v1/fetch/status。"
+        },
+        "fetch:start": {
+          "name": "开始抓取",
+          "description": "使用已保存的上游令牌发起一次新的 maimai 数据抓取。授予 POST /api/v1/fetch。破坏性 —— 消耗上游 API 配额并写入一份新快照。"
+        },
+        "fetch:delete": {
+          "name": "抓取令牌（删除）",
+          "description": "删除已保存的上游 maimai 认证令牌。授予 DELETE /api/v1/fetch/token。破坏性且敏感 —— 在重新认证之前会中断站内和 API 触发的抓取流程。"
+        },
         "snapshot:latest:read": {
           "name": "最新快照（只读）",
           "description": "仅包含你最新快照的元数据、全部歌曲和活动。排除头像（出于隐私考虑，需单独授权）。"

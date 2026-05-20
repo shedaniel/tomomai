@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { defineRoute } from "@/lib/api/registry";
-import { querySchemas, snapshotDetail } from "@/lib/api/schemas";
+import { querySchemas, snapshotDetail, successResponse } from "@/lib/api/schemas";
 
 export const spec = defineRoute({
   method: "GET",
@@ -29,4 +29,21 @@ export const spec = defineRoute({
   }),
   query: querySchemas.regionRequired,
   response: snapshotDetail,
+});
+
+export const deleteSpec = defineRoute({
+  method: "DELETE",
+  path: "/api/v1/snapshots/{id}",
+  tag: "Snapshots",
+  summary: "Delete a snapshot",
+  description:
+    "Permanently deletes one of the caller's snapshots. Returns " +
+    "`404` if the snapshot ID does not belong to the caller in the given " +
+    "region.",
+  scope: "snapshot:all:delete",
+  params: z.object({
+    id: z.string().describe("Public snapshot ID."),
+  }),
+  query: querySchemas.regionRequired,
+  response: successResponse,
 });

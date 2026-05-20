@@ -1,13 +1,14 @@
 import { type NextRequest } from "next/server";
 import { withApiKey } from "@/lib/api/protect";
-import { parseRegion } from "@/lib/api/params";
+import { parseQuery } from "@/lib/api/parse-query";
 import { zodJson } from "@/lib/api/zod-response";
 import { fetchUserSnapshots } from "@/server/queries/snapshots";
 import { spec } from "./spec";
 
 export const GET = withApiKey(["snapshot:all:metadata:read"], async (req: NextRequest, key) => {
-  const region = parseRegion(req.nextUrl.searchParams);
-  if (region instanceof Response) return region;
+  const parsed = parseQuery(req.nextUrl.searchParams, spec.query!);
+  if (parsed instanceof Response) return parsed;
+  const { region } = parsed;
 
   const snapshots = await fetchUserSnapshots(key.userId, region);
 

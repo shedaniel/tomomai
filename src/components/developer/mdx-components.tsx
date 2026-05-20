@@ -23,11 +23,20 @@ export const mdxComponents = {
       className="overflow-x-auto rounded-lg border border-border bg-muted/40 p-4 text-sm"
     />
   ),
-  code: (props: ComponentProps<"code">) => (
-    <code
-      {...props}
-      className="rounded-sm bg-muted px-2 py-0.5 font-mono text-[0.9em] before:content-none after:content-none"
-    />
-  ),
+  code: ({ className, children, ...props }: ComponentProps<"code">) => {
+    const hasLanguageClass = typeof className === "string" && className.length > 0;
+    const hasNewline = typeof children === "string" && children.includes("\n");
+    if (hasLanguageClass || hasNewline) {
+      return <code {...props} className={className}>{children}</code>;
+    }
+    return (
+      <code
+        {...props}
+        className="rounded-sm bg-muted px-2 py-0.5 font-mono text-[0.9em] before:content-none after:content-none"
+      >
+        {children}
+      </code>
+    );
+  },
   ScopeBadge: ({ scope }: { scope: ScopeKey | "public" }) => <ScopeBadge scope={scope} />,
 } as const;

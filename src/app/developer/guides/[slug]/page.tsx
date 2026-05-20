@@ -32,11 +32,13 @@ export default async function GuidePage({
 
   return (
     <article className="prose prose-neutral dark:prose-invert max-w-3xl">
-      <div className="text-xs uppercase tracking-wider text-muted-foreground">Guide</div>
-      <h1>{guide.title}</h1>
-      {guide.description ? (
-        <p className="lead text-muted-foreground">{guide.description}</p>
-      ) : null}
+      <header className="space-y-3">
+        <div className="text-xs uppercase tracking-wider text-muted-foreground">Guide</div>
+        <h1 className="text-3xl font-semibold tracking-tight">{guide.title}</h1>
+        {guide.description ? (
+          <p className="max-w-3xl text-muted-foreground">{guide.description}</p>
+        ) : null}
+      </header>
       <MDXRemote
         source={guide.content}
         components={mdxComponents}

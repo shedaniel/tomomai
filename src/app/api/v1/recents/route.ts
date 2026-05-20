@@ -1,16 +1,14 @@
 import { type NextRequest } from "next/server";
 import { withApiKey, keyHasScope } from "@/lib/api/protect";
-import { parseRegion, parsePagination } from "@/lib/api/params";
+import { parseQuery } from "@/lib/api/parse-query";
 import { zodJson } from "@/lib/api/zod-response";
 import { fetchRecentSongs } from "@/server/queries/recents";
 import { spec } from "./spec";
 
 export const GET = withApiKey(["recent:read"], async (req: NextRequest, key) => {
-  const { searchParams } = req.nextUrl;
-  const region = parseRegion(searchParams);
-  if (region instanceof Response) return region;
-
-  const { limit, offset } = parsePagination(searchParams, 50, 100);
+  const parsed = parseQuery(req.nextUrl.searchParams, spec.query!);
+  if (parsed instanceof Response) return parsed;
+  const { region, limit = 50, offset = 0 } = parsed;
   const hasDetailed = keyHasScope(key, "recent:detailed:read");
 
   const { recentPlays, totalCount, hasMore } = await fetchRecentSongs(
