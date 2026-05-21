@@ -1,8 +1,14 @@
 import type { Chart, Hint, HintKind } from "./types";
 import { TOTAL_STEPS } from "./types";
 import { HINT_META, IMAGE_KINDS, step0Kinds } from "./hints-meta";
-import { buildHeardlePlan, isHeardle } from "./heardle";
+import { buildHeardlePlan, hasAudioPreview } from "./heardle";
+import { isHeardle } from "./heardle-config";
 import { Rng } from "./rng";
+
+/** Audio level used when guess mode promotes the final hint to an audio clue. */
+const GUESS_FINAL_AUDIO_LEVEL = 5; // AUDIO_DURATIONS[5] === 16s
+/** Probability that the final guess-mode hint is replaced with an audio clip. */
+const GUESS_FINAL_AUDIO_CHANCE = 0.5;
 
 // Date helpers were moved to `date-slug.ts`; re-export here so existing
 // importers (`@/lib/daily`) keep working without churn.
@@ -122,6 +128,10 @@ export function buildStepPlan(chart: Chart, dateKey: string): Hint[] {
   ];
 
   const allCandidates: HintKind[] = (Object.values(HINT_META))
+    // Audio is heardle's primary clue; in guess mode it only appears as a
+    // special-cased final hint (see the coin flip below), never via the
+    // normal weighted selection.
+    .filter((e) => e.kind !== "audio")
     .filter((e) => !e.gatedBy || e.gatedBy(chart))
     .map((e) => e.kind);
 
@@ -132,6 +142,20 @@ export function buildStepPlan(chart: Chart, dateKey: string): Hint[] {
   const baseWeight = (k: HintKind): number => HINT_META[k].weight ?? 1;
 
   for (let step = 2; step <= TOTAL_STEPS - 2; step++) {
+    // Special-case the last hint slot: when the chart has an Apple Music
+    // preview, flip a coin to replace whatever the planner would have
+    // chosen with a 16s audio clip. Audio is excluded from the normal pool
+    // (see allCandidates above), so this is the only place it appears in
+    // guess mode. Deterministic per dateKey via the same Rng stream.
+    if (
+      step === TOTAL_STEPS - 2 &&
+      hasAudioPreview(chart) &&
+      rng.float() < GUESS_FINAL_AUDIO_CHANCE
+    ) {
+      plan.push({ kind: "audio", level: GUESS_FINAL_AUDIO_LEVEL } as Hint);
+      continue;
+    }
+
     // Partition candidates into fresh (cold intro) vs advanceable (already
     // in plan, level can advance). Both use the same level() oracle — null
     // result excludes the kind from either bucket this step.
