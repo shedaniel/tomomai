@@ -5,6 +5,7 @@ import { Card, CardContent } from "@tomomai/ui";
 import type { HintPayload } from "@/lib/client-types";
 import { IMAGE_KINDS } from "@/lib/hints-meta";
 import { buildImageUrl } from "@/lib/api-url";
+import { AudioHintCard } from "./AudioHintCard";
 
 type Props = {
   step: number;
@@ -13,11 +14,25 @@ type Props = {
   /** Past-date slug to append as `&date=…` so the image route resolves the
    *  same chart we're showing. Empty on `/` (today). */
   dateSlug?: string;
+  /** Whether this card is the currently-focused one. Audio cards use this
+   *  to pause playback when they slide out of focus. */
+  isActive?: boolean;
 };
 
 /** A single hint, rendered as one card in the deck. */
-export function HintCard({ step, hint, dateKey, dateSlug }: Props) {
+export function HintCard({ step, hint, dateKey, dateSlug, isActive }: Props) {
   const t = useTranslations("guess.hints");
+
+  if (hint.kind === "audio") {
+    return (
+      <AudioHintCard
+        previewUrl={hint.previewUrl}
+        durationSec={hint.durationSec}
+        level={hint.level}
+        isActive={isActive ?? true}
+      />
+    );
+  }
 
   if (IMAGE_KINDS.has(hint.kind)) {
     return (

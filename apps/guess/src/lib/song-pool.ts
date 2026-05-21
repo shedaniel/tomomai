@@ -1,5 +1,6 @@
 import type { Chart } from "./types";
 import { uniqueSongs, type SongSummary } from "./fuzzy";
+import { hasAudioPreview, isHeardle } from "./heardle";
 
 const DEFAULT_API = "https://www.tomomai.lol";
 const TTL_MS = 60 * 60 * 1000; // 1 hour
@@ -30,15 +31,21 @@ async function fetchCatalogue(): Promise<Chart[]> {
  *   - Master / Re:MASTER: keep ≥ 12.0
  */
 function filterPool(all: readonly Chart[]): Chart[] {
+  const heardle = isHeardle();
   return all.filter((c) => {
     if (c.region !== "jp") return false;
     if (c.cover == null) return false;
     if (c.type !== "std" && c.type !== "dx") return false;
-    if (c.difficulty === "expert") return c.levelPrecise >= 11.0;
-    if (c.difficulty === "master" || c.difficulty === "remaster") {
-      return c.levelPrecise >= 12.0;
+    if (c.difficulty === "expert") {
+      if (c.levelPrecise < 11.0) return false;
+    } else if (c.difficulty === "master" || c.difficulty === "remaster") {
+      if (c.levelPrecise < 12.0) return false;
+    } else {
+      return false;
     }
-    return false;
+    // Heardle additionally requires an Apple Music preview to be resolvable.
+    if (heardle && !hasAudioPreview(c)) return false;
+    return true;
   });
 }
 

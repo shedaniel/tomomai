@@ -44,7 +44,8 @@ export type HintKind =
   | "genre"
   | "game-version"
   | "artist"
-  | "note-designer";
+  | "note-designer"
+  | "audio";
 
 export type Hint =
   | { kind: "pixelate"; level: 0 | 1 | 2 }
@@ -60,7 +61,8 @@ export type Hint =
   | { kind: "genre"; level: 0 }
   | { kind: "game-version"; level: 0 }
   | { kind: "artist"; level: 0 | 1 }
-  | { kind: "note-designer"; level: 0 };
+  | { kind: "note-designer"; level: 0 }
+  | { kind: "audio"; level: 0 | 1 | 2 | 3 | 4 | 5 | 6 };
 
 export type Reveal = {
   songId: string;
@@ -71,6 +73,8 @@ export type Reveal = {
   level: string;
   levelPrecise: number;
   type: ChartType;
+  /** Only populated in heardle mode — full 30s preview URL for the reveal card. */
+  previewUrl?: string;
 };
 
 /**

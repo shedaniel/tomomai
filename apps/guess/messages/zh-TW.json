@@ -91,6 +91,13 @@
       },
       "note-designer": {
         "label": "譜面設計者"
+      },
+      "audio": {
+        "label": "音訊片段",
+        "play": "播放",
+        "pause": "暫停",
+        "duration": "{seconds} 秒",
+        "step": "提示 {current} / {total}"
       }
     },
     "reveal": {

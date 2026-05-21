@@ -86,7 +86,14 @@
       "genre": { "label": "ジャンル" },
       "game-version": { "label": "収録バージョン" },
       "artist": { "label": "アーティスト" },
-      "note-designer": { "label": "譜面制作者" }
+      "note-designer": { "label": "譜面制作者" },
+      "audio": {
+        "label": "音声クリップ",
+        "play": "再生",
+        "pause": "停止",
+        "duration": "{seconds}秒",
+        "step": "ヒント {current} / {total}"
+      }
     },
     "reveal": {
       "answer": "正解"

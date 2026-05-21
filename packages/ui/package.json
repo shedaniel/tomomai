@@ -32,6 +32,10 @@
     "./use-mobile": {
       "import": "./src/use-mobile.ts",
       "types": "./src/use-mobile.ts"
+    },
+    "./haptics": {
+      "import": "./src/haptics.ts",
+      "types": "./src/haptics.ts"
     }
   },
   "main": "./src/index.ts",

@@ -36,7 +36,8 @@ export type HintPayload =
       obfuscated?: string;
       revealed?: number;
     }
-  | { kind: "note-designer"; level: 0; designer: string };
+  | { kind: "note-designer"; level: 0; designer: string }
+  | { kind: "audio"; level: number; previewUrl: string; durationSec: number };
 
 export type RevealPayload = {
   songId: string;
@@ -47,6 +48,8 @@ export type RevealPayload = {
   level: string;
   levelPrecise: number;
   type: ChartType;
+  /** Only populated in heardle mode — full preview URL for end-of-game playback. */
+  previewUrl?: string;
 };
 
 export type StepResponse =

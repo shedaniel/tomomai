@@ -1,6 +1,7 @@
 import type { Chart, Hint, HintKind } from "./types";
 import { TOTAL_STEPS } from "./types";
 import { HINT_META, IMAGE_KINDS, step0Kinds } from "./hints-meta";
+import { buildHeardlePlan, isHeardle } from "./heardle";
 import { Rng } from "./rng";
 
 // Date helpers were moved to `date-slug.ts`; re-export here so existing
@@ -109,8 +110,9 @@ export function pickDailyChart(pool: readonly Chart[], dateKey: string): Chart {
  *   gates (`minStep`, `exclusiveWith`, `gatedBy`) are checked alongside.
  */
 export function buildStepPlan(chart: Chart, dateKey: string): Hint[] {
-  const rng = new Rng(`${dateKey}:steps`);
   const maxHints = TOTAL_STEPS - 1;
+  if (isHeardle()) return buildHeardlePlan(maxHints);
+  const rng = new Rng(`${dateKey}:steps`);
 
   const step0Kind = rng.pick(step0Kinds(maxHints));
   const step1Kind: HintKind = rng.float() < 0.5 ? "blinds" : "blinds-h";

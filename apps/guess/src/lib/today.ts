@@ -3,6 +3,7 @@ import { TOTAL_STEPS } from "./types";
 import { buildStepPlan, getDateKey, pickDailyChart } from "./daily";
 import { getSongPool } from "./song-pool";
 import { HINTS } from "./hints-registry";
+import { getAudioPreview, isHeardle } from "./heardle";
 
 export type Today = {
   dateKey: string;
@@ -25,7 +26,7 @@ export async function getToday(dateOverride?: string): Promise<Today> {
 }
 
 export function buildReveal(chart: Chart): Reveal {
-  return {
+  const base: Reveal = {
     songId: chart.songId,
     songName: chart.songName,
     artist: chart.artist,
@@ -35,6 +36,11 @@ export function buildReveal(chart: Chart): Reveal {
     levelPrecise: chart.levelPrecise,
     type: chart.type,
   };
+  if (isHeardle()) {
+    const preview = getAudioPreview(chart);
+    if (preview) base.previewUrl = preview.previewUrl;
+  }
+  return base;
 }
 
 /**

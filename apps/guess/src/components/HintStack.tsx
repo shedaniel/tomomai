@@ -1,9 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useVolume, volumeToAmplitude } from "@/lib/use-volume";
+import { VolumeControl } from "./VolumeControl";
 import { motion } from "motion/react";
-import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Loader2, Play, Pause } from "lucide-react";
 import { Button, Card, SPRING_CONFIGS } from "@tomomai/ui";
+import { triggerHaptic } from "@tomomai/ui/haptics";
 import { cn } from "@tomomai/ui/utils";
 import { useTranslations } from "next-intl";
 import type { HintPayload, RevealPayload } from "@/lib/client-types";
@@ -282,9 +285,10 @@ export function HintStack({ hints, dateKey, dateSlug, reveal }: Props) {
                     hint={entry.hint}
                     dateKey={dateKey}
                     dateSlug={dateSlug}
+                    isActive={isActive}
                   />
                 ) : (
-                  <RevealCardInner reveal={entry.reveal} />
+                  <RevealCardInner reveal={entry.reveal} isActive={isActive} />
                 )}
               </motion.div>
             );
@@ -313,7 +317,7 @@ export function HintStack({ hints, dateKey, dateSlug, reveal }: Props) {
 }
 
 /** Reveal card body — same square frame as HintCard, dark pill at bottom-left. */
-function RevealCardInner({ reveal }: { reveal: RevealPayload }) {
+function RevealCardInner({ reveal, isActive }: { reveal: RevealPayload; isActive: boolean }) {
   const t = useTranslations("guess.reveal");
   return (
     <Card className="overflow-hidden p-0 border-2 border-border shadow-lg">
@@ -329,6 +333,9 @@ function RevealCardInner({ reveal }: { reveal: RevealPayload }) {
             loading="eager"
             fetchPriority="high"
           />
+        )}
+        {reveal.previewUrl && (
+          <RevealAudioButton previewUrl={reveal.previewUrl} isActive={isActive} />
         )}
         {/* Bottom-left semi-dark panel, baked into the image — no entry
             animation, so it reads as part of the card frame. No
@@ -351,5 +358,77 @@ function RevealCardInner({ reveal }: { reveal: RevealPayload }) {
         </div>
       </div>
     </Card>
+  );
+}
+
+/**
+ * Floating play button overlaid on the reveal cover in heardle mode. Plays
+ * the full Apple Music preview (30s) using native audio controls.
+ */
+function RevealAudioButton({
+  previewUrl,
+  isActive,
+}: {
+  previewUrl: string;
+  isActive: boolean;
+}) {
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [playing, setPlaying] = useState(false);
+  const [volume] = useVolume();
+
+  useEffect(() => {
+    if (audioRef.current) audioRef.current.volume = volumeToAmplitude(volume);
+  }, [volume]);
+
+  // Pause when the card stops being the active one (swipe / arrow / submit /
+  // skip all flip the deck through `isActive`).
+  useEffect(() => {
+    if (!isActive && audioRef.current && !audioRef.current.paused) {
+      audioRef.current.pause();
+    }
+  }, [isActive]);
+
+  return (
+    <>
+      {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
+      <audio
+        ref={audioRef}
+        src={previewUrl}
+        preload="auto"
+        onPlay={() => setPlaying(true)}
+        onPause={() => setPlaying(false)}
+        onEnded={() => {
+          setPlaying(false);
+          // Soft confirmation that the full preview finished.
+          triggerHaptic("soft");
+        }}
+      />
+      <div className="absolute top-2 right-2 flex items-center gap-2">
+        <VolumeControl variant="overlay" />
+        <button
+          type="button"
+          onClick={() => {
+            triggerHaptic("medium");
+            const a = audioRef.current;
+            if (!a) return;
+            if (a.paused) void a.play().catch(() => {});
+            else a.pause();
+          }}
+          aria-label={playing ? "Pause preview" : "Play preview"}
+          className={cn(
+            "h-12 w-12 rounded-full",
+            "flex items-center justify-center",
+            "bg-black/70 text-white shadow-lg backdrop-blur-sm",
+            "hover:bg-black/85 active:scale-95 transition",
+          )}
+        >
+          {playing ? (
+            <Pause className="h-5 w-5" fill="currentColor" />
+          ) : (
+            <Play className="h-5 w-5 ml-0.5" fill="currentColor" />
+          )}
+        </button>
+      </div>
+    </>
   );
 }

@@ -6,7 +6,7 @@ import {
   type CheckboxProps as CheckboxPrimitiveProps,
 } from '@/components/animate-ui/primitives/radix/checkbox';
 import { cn } from '@/lib/utils';
-import { triggerHaptic } from '@/lib/haptics';
+import { triggerHaptic } from '@tomomai/ui/haptics';
 import { cva, type VariantProps } from 'class-variance-authority';
 
 const checkboxVariants = cva(

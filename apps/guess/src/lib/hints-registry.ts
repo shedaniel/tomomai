@@ -10,6 +10,7 @@ import {
   shuffleMove,
 } from "./image";
 import { getVersionName } from "./versions";
+import { audioDurationFor, getAudioPreview } from "./heardle";
 import { Rng } from "./rng";
 
 /**
@@ -131,6 +132,17 @@ const describeNoteDesigner: Describer = (_l, chart) => ({
   designer: chart.noteDesigner ?? "",
 });
 
+const describeAudio: Describer = (level, chart) => {
+  const preview = getAudioPreview(chart);
+  // In heardle mode, every chart in the pool has a preview (enforced by
+  // filterPool). If we ever hit a missing one here, surfacing an empty URL is
+  // safer than crashing — the client will show a disabled play button.
+  return {
+    previewUrl: preview?.previewUrl ?? "",
+    durationSec: audioDurationFor(level),
+  };
+};
+
 // ---------- registry ------------------------------------------------------
 
 const BEHAVIOURS: Partial<Record<HintKind, Pick<HintEntry, "transform" | "describe">>> = {
@@ -148,6 +160,7 @@ const BEHAVIOURS: Partial<Record<HintKind, Pick<HintEntry, "transform" | "descri
   "game-version": { describe: describeGameVersion },
   artist: { describe: describeArtist },
   "note-designer": { describe: describeNoteDesigner },
+  audio: { describe: describeAudio },
 };
 
 export const HINTS: Record<HintKind, HintEntry> = Object.fromEntries(

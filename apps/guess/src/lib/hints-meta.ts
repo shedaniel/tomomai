@@ -173,6 +173,13 @@ export const HINT_META: Record<HintKind, HintMeta> = {
       (chart.difficulty === "master" || chart.difficulty === "remaster"),
     level: stdLevel({ max: 0 }),
   },
+  audio: {
+    kind: "audio",
+    isImage: false,
+    // Only used in heardle mode; the regular planner never picks this because
+    // buildStepPlan short-circuits to buildHeardlePlan when GUESSER_MODE=heardle.
+    level: stdLevel({ max: 6 }),
+  },
 };
 
 export const ALL_HINT_KINDS: HintKind[] = Object.keys(HINT_META) as HintKind[];

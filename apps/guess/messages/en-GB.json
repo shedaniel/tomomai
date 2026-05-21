@@ -91,6 +91,13 @@
       },
       "note-designer": {
         "label": "Chart designer"
+      },
+      "audio": {
+        "label": "Audio clip",
+        "play": "Play clip",
+        "pause": "Pause clip",
+        "duration": "{seconds, plural, =1 {1 second} other {# seconds}}",
+        "step": "Clue {current} / {total}"
       }
     },
     "reveal": {
