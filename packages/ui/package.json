@@ -57,6 +57,7 @@
     "embla-carousel-react": "*",
     "lucide-react": "*",
     "motion": "*",
+    "next-themes": "*",
     "radix-ui": "*",
     "react": "catalog:",
     "react-dom": "catalog:",

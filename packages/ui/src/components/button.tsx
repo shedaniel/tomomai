@@ -5,7 +5,6 @@ import { Slot } from "@radix-ui/react-slot"
 import { cva, type VariantProps } from "class-variance-authority"
 import { motion, HTMLMotionProps } from "motion/react"
 import { cn } from "../utils"
-import { SPRING_CONFIGS, getTransition } from "../animation-constants"
 import { triggerHaptic } from "../haptics"
 
 const buttonVariants = cva(
@@ -113,7 +112,7 @@ const MotionButton = React.forwardRef<
         transition={transition}
         onTapStart={(e) => {
           triggerHaptic("light")
-          ;(props as any).onTapStart?.(e)
+            ; (props as any).onTapStart?.(e)
         }}
         {...props}
       />

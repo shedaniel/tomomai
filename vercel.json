@@ -1,8 +1,0 @@
-{
-  "installCommand": "pnpm install",
-  "functions": {
-    "src/app/**/*": {
-      "includeFiles": "node_modules/kuromoji/dict/*"
-    }
-  }
-}

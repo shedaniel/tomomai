@@ -1,0 +1,40 @@
+{
+  "name": "@tomomai/i18n",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./locale": {
+      "import": "./src/locale.ts",
+      "types": "./src/locale.ts"
+    },
+    "./server": {
+      "import": "./src/server.ts",
+      "types": "./src/server.ts"
+    },
+    "./client": {
+      "import": "./src/client.tsx",
+      "types": "./src/client.tsx"
+    },
+    "./languages": {
+      "import": "./src/languages.ts",
+      "types": "./src/languages.ts"
+    }
+  },
+  "files": ["src"],
+  "dependencies": {
+    "@tomomai/ui": "workspace:*"
+  },
+  "peerDependencies": {
+    "lucide-react": "*",
+    "next": "*",
+    "next-intl": "*",
+    "react": ">=18",
+    "react-dom": ">=18"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "typescript": "^5.9.3"
+  }
+}

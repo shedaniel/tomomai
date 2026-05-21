@@ -1,0 +1,8 @@
+{
+  "installCommand": "pnpm install --filter @tomomai/site... --config.node-linker=hoisted",
+  "functions": {
+    "src/app/**/*": {
+      "includeFiles": "node_modules/kuromoji/dict/*"
+    }
+  }
+}

@@ -1,0 +1,3 @@
+{
+  "installCommand": "pnpm install --filter @tomomai/guess... --config.node-linker=hoisted"
+}
