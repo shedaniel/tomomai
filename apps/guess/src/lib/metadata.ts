@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { formatDateKey } from "./date-slug";
+import { formatDateKey, getDateKey } from "./date-slug";
 
 type Translator = (key: string, values?: Record<string, string | number | Date>) => string;
 
@@ -13,6 +13,15 @@ type Args = {
 };
 
 /**
+ * Daily-rotating OG image URL — the `?d=YYYY-MM-DD` query bust forces Discord
+ * (and other link-unfurl caches) to re-fetch the freshly rendered image once
+ * per JST day instead of pinning yesterday's puzzle forever.
+ */
+function ogImageUrl(pathPrefix: string, imageDateKey: string): string {
+  return `${pathPrefix}/opengraph-image?d=${imageDateKey}`;
+}
+
+/**
  * Build the Next.js `Metadata` object for the homepage + past-date pages.
  * Branches on whether `dateKey`/`dateSlug` are present to pick the right
  * title/description keys; the OG/Twitter/alternates shape is identical in
@@ -23,15 +32,18 @@ export function buildGuessMetadata({ t, locale, dateKey, dateSlug }: Args): Meta
   let title: string;
   let description: string;
   let url: string;
+  let imageUrl: string;
   if (isPast && dateKey && dateSlug) {
     const formatted = formatDateKey(dateKey, locale);
     title = t("titleForDate", { date: formatted });
     description = t("descriptionForDate", { date: formatted });
     url = `/${dateSlug}`;
+    imageUrl = ogImageUrl(`/${dateSlug}`, dateKey);
   } else {
     title = t("title");
     description = t("description");
     url = "/";
+    imageUrl = ogImageUrl("", getDateKey());
   }
   return {
     title,
@@ -44,11 +56,13 @@ export function buildGuessMetadata({ t, locale, dateKey, dateSlug }: Args): Meta
       siteName: "tomomai · Guesser",
       url,
       locale,
+      images: [imageUrl],
     },
     twitter: {
       card: "summary",
       title,
       description,
+      images: [imageUrl],
     },
   };
 }

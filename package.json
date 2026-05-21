@@ -16,6 +16,7 @@
     "db:push": "pnpm --filter @tomomai/site db:push",
     "db:studio": "pnpm --filter @tomomai/site db:studio",
     "guess:dev": "pnpm --filter @tomomai/guess dev",
-    "guess:build": "pnpm --filter @tomomai/guess build"
+    "guess:build": "pnpm --filter @tomomai/guess build",
+    "guess:start": "pnpm --filter @tomomai/guess start"
   }
 }
