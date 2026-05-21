@@ -1,0 +1,26 @@
+{
+  "name": "@tomomai/security",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./redis": {
+      "import": "./src/redis.ts",
+      "types": "./src/redis.ts"
+    },
+    "./rate-limit": {
+      "import": "./src/rate-limit.ts",
+      "types": "./src/rate-limit.ts"
+    }
+  },
+  "files": ["src"],
+  "peerDependencies": {
+    "ioredis": "*",
+    "next": "*",
+    "rate-limiter-flexible": "*"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.13",
+    "typescript": "^5.9.3"
+  }
+}

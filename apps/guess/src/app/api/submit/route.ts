@@ -1,11 +1,16 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { rateLimit } from "@tomomai/security/rate-limit";
+import { submitLimiter } from "@/lib/rate-limit";
 import { buildReveal, getToday } from "@/lib/today";
 import { isGuessCorrect } from "@/lib/fuzzy";
 import { readDateOverride } from "@/lib/route-date";
 
 export const runtime = "nodejs";
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
+  const limited = await rateLimit(req, submitLimiter);
+  if (limited) return limited;
+
   const body = (await req.json().catch(() => null)) as
     | { guess?: unknown }
     | null;

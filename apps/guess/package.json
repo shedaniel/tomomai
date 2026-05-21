@@ -12,6 +12,10 @@
   "dependencies": {
     "@tomomai/ui": "workspace:*",
     "@tomomai/i18n": "workspace:*",
+    "@tomomai/utils": "workspace:*",
+    "@tomomai/security": "workspace:*",
+    "ioredis": "^5.10.1",
+    "rate-limiter-flexible": "^11.1.0",
     "@radix-ui/react-dialog": "^1.1.15",
     "@radix-ui/react-select": "^2.2.6",
     "@radix-ui/react-slot": "^1.2.4",

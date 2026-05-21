@@ -1,4 +1,5 @@
 import type { Chart } from "./types";
+import { levenshtein } from "@tomomai/utils";
 
 /** Lowercase + strip diacritics + drop punctuation (no whitespace). */
 export function normalize(s: string): string {
@@ -16,24 +17,6 @@ function tokenize(s: string): string[] {
     .replace(/[̀-ͯ]/g, "")
     .toLowerCase();
   return flat.split(/[^\p{L}\p{N}]+/u).filter(Boolean);
-}
-
-/** Standard edit distance — copied from apps/main/src/lib/utils.ts:128. */
-export function levenshtein(a: string, b: string): number {
-  if (a.length === 0) return b.length;
-  if (b.length === 0) return a.length;
-  const tmp: number[][] = [];
-  for (let i = 0; i <= b.length; i++) tmp[i] = [i];
-  for (let j = 0; j <= a.length; j++) tmp[0][j] = j;
-  for (let i = 1; i <= b.length; i++) {
-    for (let j = 1; j <= a.length; j++) {
-      tmp[i][j] =
-        b[i - 1] === a[j - 1]
-          ? tmp[i - 1][j - 1]
-          : Math.min(tmp[i - 1][j - 1] + 1, tmp[i][j - 1] + 1, tmp[i - 1][j] + 1);
-    }
-  }
-  return tmp[b.length][a.length];
 }
 
 export type SongSummary = {

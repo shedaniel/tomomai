@@ -48,12 +48,16 @@ export class Rng {
   intBelow(max: number): number {
     if (max <= 0) return 0;
     const b = this.nextBytes(4);
-    const u = (b[0] << 24) | (b[1] << 16) | (b[2] << 8) | b[3];
-    return Math.abs(u) % max;
+    // readUInt32BE — bit-shifting in JS produces a *signed* Int32, and
+    // `Math.abs(INT32_MIN)` is still INT32_MIN, which would yield negative
+    // modulo results and bias the distribution.
+    const u = b.readUInt32BE(0);
+    return u % max;
   }
 
   float(): number {
-    return this.intBelow(0x100000) / 0x100000;
+    const b = this.nextBytes(4);
+    return b.readUInt32BE(0) / 0x1_0000_0000;
   }
 
   pick<T>(arr: readonly T[]): T {

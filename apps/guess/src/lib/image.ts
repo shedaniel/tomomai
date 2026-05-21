@@ -102,7 +102,7 @@ export async function blindsHorizontal(
  * position is deterministic on (seedLabel, level).
  *   level 0 → 20% window (hardest)
  *   level 1 → 45% window
- *   level 2 → 60% window
+ *   level 2 → 78% window (easiest)
  */
 export async function crop(
   coverUrl: string,

@@ -1,5 +1,8 @@
-import Redis from "ioredis";
+import { getRedis } from "@tomomai/security/redis";
 
-const redis = new Redis(process.env.REDIS_URL!);
+const r = getRedis();
+if (!r) {
+  throw new Error("REDIS_URL is required");
+}
 
-export { redis };
+export const redis = r;

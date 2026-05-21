@@ -27,15 +27,24 @@ importers:
       '@tomomai/i18n':
         specifier: workspace:*
         version: link:../../packages/i18n
+      '@tomomai/security':
+        specifier: workspace:*
+        version: link:../../packages/security
       '@tomomai/ui':
         specifier: workspace:*
         version: link:../../packages/ui
+      '@tomomai/utils':
+        specifier: workspace:*
+        version: link:../../packages/utils
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
+      ioredis:
+        specifier: ^5.10.1
+        version: 5.10.1
       lucide-react:
         specifier: ^0.555.0
         version: 0.555.0(react@19.2.1)
@@ -54,6 +63,9 @@ importers:
       radix-ui:
         specifier: ^1.4.3
         version: 1.4.3(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      rate-limiter-flexible:
+        specifier: ^11.1.0
+        version: 11.1.0
       react:
         specifier: 19.2.1
         version: 19.2.1
@@ -190,9 +202,15 @@ importers:
       '@tomomai/i18n':
         specifier: workspace:*
         version: link:../../packages/i18n
+      '@tomomai/security':
+        specifier: workspace:*
+        version: link:../../packages/security
       '@tomomai/ui':
         specifier: workspace:*
         version: link:../../packages/ui
+      '@tomomai/utils':
+        specifier: workspace:*
+        version: link:../../packages/utils
       '@trpc/client':
         specifier: ^11.10.0
         version: 11.10.0(@trpc/server@11.10.0(typescript@5.9.3))(typescript@5.9.3)
@@ -478,6 +496,25 @@ importers:
         specifier: ^5.9.3
         version: 5.9.3
 
+  packages/security:
+    dependencies:
+      ioredis:
+        specifier: '*'
+        version: 5.10.1
+      next:
+        specifier: '*'
+        version: 16.0.7(@opentelemetry/api@1.9.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      rate-limiter-flexible:
+        specifier: '*'
+        version: 11.1.0
+    devDependencies:
+      '@types/node':
+        specifier: ^24.10.13
+        version: 24.10.13
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
   packages/ui:
     dependencies:
       '@radix-ui/react-alert-dialog':
@@ -614,6 +651,12 @@ importers:
       vite-plugin-monkey:
         specifier: ^7.1.9
         version: 7.1.9(postcss@8.5.6)(vite@6.4.2(@types/node@24.10.13)(jiti@2.6.1)(lightningcss@1.32.0)(yaml@2.8.2))
+
+  packages/utils:
+    devDependencies:
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
 
 packages:
 

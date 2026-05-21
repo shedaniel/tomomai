@@ -26,6 +26,23 @@ type DeckEntry =
 
 const REVEAL_PSEUDO_STEP = 9999;
 
+/** Firefox's WebRender treats every filtered element as its own compositor
+ *  pass and invalidates picture-cache tiles around it, so even a sub-pixel
+ *  `blur(0.5px)` on 6–8 stacked cards tanks framerate. Chromium and WebKit
+ *  composite the same filter cheaply, so we keep the subtle depth blur there.
+ *  Detection runs once after mount so SSR markup stays stable. */
+function useSupportsCheapFilter() {
+  const [ok, setOk] = useState(false);
+  useEffect(() => {
+    if (typeof navigator === "undefined") return;
+    // `Firefox/` covers Firefox itself and Gecko-based forks (Zen, LibreWolf,
+    // Waterfox). Chromium/Safari UAs only contain "like Gecko", not "Firefox/".
+    const isFirefox = /Firefox\//.test(navigator.userAgent);
+    setOk(!isFirefox);
+  }, []);
+  return ok;
+}
+
 /** Tiny deterministic PRNG so each card's jitter is stable across renders. */
 function seededJitter(step: number): { rot: number; dx: number; dy: number } {
   let s = (step + 1) * 0x9e3779b1;
@@ -46,6 +63,7 @@ function seededJitter(step: number): { rot: number; dx: number; dy: number } {
 }
 
 export function HintStack({ hints, dateKey, dateSlug, reveal }: Props) {
+  const supportsCheapFilter = useSupportsCheapFilter();
   const entries: DeckEntry[] = useMemo(() => {
     const out: DeckEntry[] = hints.map((h) => ({
       kind: "hint" as const,
@@ -133,116 +151,142 @@ export function HintStack({ hints, dateKey, dateSlug, reveal }: Props) {
           </Button>
         </div>
 
-        {entries.map((entry, i) => {
-          const key =
-            entry.kind === "reveal" ? `reveal` : `hint-${entry.step}`;
-          const jitterKey =
-            entry.kind === "reveal" ? REVEAL_PSEUDO_STEP : entry.step;
-          const isNew = !seenKeysRef.current.has(key);
-          const delta = i - idx;
-          const j = jitter[jitterKey]!;
-          const isActive = delta === 0;
-          const absDelta = Math.abs(delta);
+        {/* Card clipper. Sibling of the arrow-button overlays so their
+         * -left-2/-right-2 protrusion stays visible. Full-bleed horizontally
+         * via `left/right: calc(-50vw + 50%)` so the clip box reaches the
+         * actual viewport edges regardless of how many `px-*` ancestors wrap
+         * the deck — without this, the clip stopped at the page's 16px
+         * gutter and cards could still extend into it.
+         * `overflow: hidden` (not `clip`) for Safari ≤15 + better behavior
+         * with nested absolutely-positioned descendants on some Safari builds.
+         * Cards are still centered by `left-1/2 -translate-x-1/2` relative
+         * to the clipper, which is symmetric around the viewport center, so
+         * card positions don't shift. */}
+        <div
+          className="absolute top-0 bottom-0 overflow-hidden"
+          style={{
+            left: "calc(-50vw + 50%)",
+            right: "calc(-50vw + 50%)",
+          }}
+        >
 
-          const sideSign = delta < 0 ? -1 : delta > 0 ? 1 : 0;
-          const lateralFan = sideSign * Math.min(absDelta, 4) * 18;
-          const dropFan = Math.min(absDelta, 4) * 6;
+          {entries.map((entry, i) => {
+            const key =
+              entry.kind === "reveal" ? `reveal` : `hint-${entry.step}`;
+            const jitterKey =
+              entry.kind === "reveal" ? REVEAL_PSEUDO_STEP : entry.step;
+            const isNew = !seenKeysRef.current.has(key);
+            const delta = i - idx;
+            const j = jitter[jitterKey]!;
+            const isActive = delta === 0;
+            const absDelta = Math.abs(delta);
 
-          const x = isActive ? j.dx : lateralFan + j.dx * 0.6;
-          const y = isActive ? j.dy : dropFan + j.dy * 0.6;
-          const rotate = isActive
-            ? j.rot * 0.4
-            : sideSign * (4 + Math.min(absDelta, 4) * 1.5) + j.rot;
-          const scale = isActive ? 1 : Math.max(0.86, 0.94 - absDelta * 0.02);
-          // Keep opacity near 1 across the board so flipping cards doesn't
-          // dip them through a cheap-looking fade. Depth comes from scale +
-          // blur + drop-shadow now, not from heavy opacity changes.
-          const opacity = isActive ? 1 : Math.max(0.78, 0.95 - absDelta * 0.05);
-          const zIndex = 100 - absDelta;
-          // Use `blur(0px)` for the "none" case so motion can numerically
-          // interpolate filter on switch. Mixing `"blur(0.5px)"` and `"none"`
-          // makes motion snap at the end of the animation, which left the
-          // new active card's label blurred until the spring settled.
-          const filter = isActive ? "blur(0px)" : "blur(0.5px)";
+            const sideSign = delta < 0 ? -1 : delta > 0 ? 1 : 0;
+            const lateralFan = sideSign * Math.min(absDelta, 4) * 18;
+            const dropFan = Math.min(absDelta, 4) * 6;
 
-          return (
-            <motion.div
-              key={key}
-              className={cn(
-                "absolute left-1/2 top-0 w-full max-w-[260px] sm:max-w-[280px] -translate-x-1/2",
-                isActive
-                  ? "drop-shadow-[0_18px_30px_rgba(0,0,0,0.18)]"
-                  : "drop-shadow-[0_6px_12px_rgba(0,0,0,0.12)]",
-              )}
-              // touchAction `pan-y` on the active card lets vertical page
-              // scrolling still work while we capture horizontal swipes for
-              // card navigation.
-              style={{ zIndex, touchAction: isActive ? "pan-y" : undefined }}
-              // Brand-new cards get the slide-in `initial`. Existing cards
-              // get `initial={false}` so motion uses their *current* animated
-              // values as the start of the next transition — that way an
-              // already-fanned-out card doesn't snap back to (0,0) before
-              // animating to its new fanned-out position.
-              initial={
-                isNew
-                  ? {
+            const x = isActive ? j.dx : lateralFan + j.dx * 0.6;
+            const y = isActive ? j.dy : dropFan + j.dy * 0.6;
+            const rotate = isActive
+              ? j.rot * 0.4
+              : sideSign * (4 + Math.min(absDelta, 4) * 1.5) + j.rot;
+            const scale = isActive ? 1 : Math.max(0.86, 0.94 - absDelta * 0.02);
+            // Keep opacity near 1 across the board so flipping cards doesn't
+            // dip them through a cheap-looking fade. Depth comes from scale +
+            // blur + drop-shadow now, not from heavy opacity changes.
+            const opacity = isActive ? 1 : Math.max(0.78, 0.95 - absDelta * 0.05);
+            const zIndex = 100 - absDelta;
+
+            return (
+              <motion.div
+                key={key}
+                className={cn(
+                  "absolute left-1/2 top-0 w-full max-w-[260px] sm:max-w-[280px] -translate-x-1/2",
+                  // box-shadow instead of filter: drop-shadow so cards stay
+                  // GPU-composited on Firefox WebRender.
+                  isActive
+                    ? "shadow-[0_18px_30px_rgba(0,0,0,0.18)]"
+                    : "shadow-[0_6px_12px_rgba(0,0,0,0.12)]",
+                )}
+                // Static blur only on engines where filter is cheap (Blink /
+                // WebKit). On Firefox it's omitted — see useSupportsCheapFilter.
+                // No manual `will-change` either: Framer Motion toggles it
+                // during animation; pinning it on idle cards just keeps every
+                // card permanently promoted to its own GPU layer.
+                // touchAction `pan-y` on the active card lets vertical page
+                // scrolling still work while we capture horizontal swipes.
+                style={{
+                  zIndex,
+                  touchAction: isActive ? "pan-y" : undefined,
+                  filter:
+                    supportsCheapFilter && !isActive ? "blur(0.5px)" : undefined,
+                }}
+                // Brand-new cards get the slide-in `initial`. Existing cards
+                // get `initial={false}` so motion uses their *current* animated
+                // values as the start of the next transition — that way an
+                // already-fanned-out card doesn't snap back to (0,0) before
+                // animating to its new fanned-out position.
+                initial={
+                  isNew
+                    ? {
                       x: j.dx,
                       y: 80,
                       rotate: j.rot,
                       scale: 0.85,
                       opacity: 0,
                     }
-                  : false
-              }
-              animate={{ x, y, rotate, scale, opacity, filter }}
-              // Custom spring: a bit of overshoot, but a small one, with a
-              // longer settle so the bounce lingers instead of snapping shut.
-              //   - Lower stiffness    → slower oscillation period
-              //   - Slightly higher mass → drags the settle out
-              //   - Damping tuned so the damping ratio sits ~0.57, giving
-              //     ~11% peak overshoot (down from ~16%) over a longer arc.
-              transition={debugTransition({
-                type: "spring" as const,
-                stiffness: 200,
-                damping: 17,
-                mass: 1.1,
-              })}
-              // Touch / pointer swipe support on the active card. Drag is
-              // constrained to 0 with elasticity so the card visibly resists
-              // and bounces back — onDragEnd decides whether the gesture
-              // counted as a swipe by checking offset OR velocity.
-              drag={isActive ? "x" : false}
-              dragConstraints={{ left: 0, right: 0 }}
-              dragElastic={0.6}
-              dragMomentum={false}
-              onDragEnd={(_, info) => {
-                if (!isActive) return;
-                const swipePx = 60;
-                const swipeVel = 350;
-                if (info.offset.x < -swipePx || info.velocity.x < -swipeVel) {
-                  if (canNext) setActive((a) => a + 1);
-                } else if (info.offset.x > swipePx || info.velocity.x > swipeVel) {
-                  if (canPrev) setActive((a) => a - 1);
+                    : false
                 }
-              }}
-              onClick={() => !isActive && setActive(i)}
-              role={isActive ? undefined : "button"}
-              aria-label={isActive ? undefined : `Go to card ${i + 1}`}
-              tabIndex={isActive ? -1 : 0}
-            >
-              {entry.kind === "hint" ? (
-                <HintCard
-                  step={entry.step}
-                  hint={entry.hint}
-                  dateKey={dateKey}
-                  dateSlug={dateSlug}
-                />
-              ) : (
-                <RevealCardInner reveal={entry.reveal} />
-              )}
-            </motion.div>
-          );
-        })}
+                animate={{ x, y, rotate, scale, opacity }}
+                // Custom spring: a bit of overshoot, but a small one, with a
+                // longer settle so the bounce lingers instead of snapping shut.
+                //   - Lower stiffness    → slower oscillation period
+                //   - Slightly higher mass → drags the settle out
+                //   - Damping tuned so the damping ratio sits ~0.57, giving
+                //     ~11% peak overshoot (down from ~16%) over a longer arc.
+                transition={debugTransition({
+                  type: "spring" as const,
+                  stiffness: 200,
+                  damping: 17,
+                  mass: 1.1,
+                })}
+                // Touch / pointer swipe support on the active card. Drag is
+                // constrained to 0 with elasticity so the card visibly resists
+                // and bounces back — onDragEnd decides whether the gesture
+                // counted as a swipe by checking offset OR velocity.
+                drag={isActive ? "x" : false}
+                dragConstraints={{ left: 0, right: 0 }}
+                dragElastic={0.6}
+                dragMomentum={false}
+                onDragEnd={(_, info) => {
+                  if (!isActive) return;
+                  const swipePx = 60;
+                  const swipeVel = 350;
+                  if (info.offset.x < -swipePx || info.velocity.x < -swipeVel) {
+                    if (canNext) setActive((a) => a + 1);
+                  } else if (info.offset.x > swipePx || info.velocity.x > swipeVel) {
+                    if (canPrev) setActive((a) => a - 1);
+                  }
+                }}
+                onClick={() => !isActive && setActive(i)}
+                role={isActive ? undefined : "button"}
+                aria-label={isActive ? undefined : `Go to card ${i + 1}`}
+                tabIndex={isActive ? -1 : 0}
+              >
+                {entry.kind === "hint" ? (
+                  <HintCard
+                    step={entry.step}
+                    hint={entry.hint}
+                    dateKey={dateKey}
+                    dateSlug={dateSlug}
+                  />
+                ) : (
+                  <RevealCardInner reveal={entry.reveal} />
+                )}
+              </motion.div>
+            );
+          })}
+        </div>
       </div>
 
       <div className="flex justify-center gap-1.5">
