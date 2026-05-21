@@ -103,5 +103,13 @@
     "reveal": {
       "answer": "答案"
     }
+  },
+  "heardle": {
+    "meta": {
+      "title": "tomomai · 听歌识曲",
+      "description": "通过简短的音频片段识别今日的 maimai 歌曲。每天 JST 0:00 更新新曲。",
+      "titleForDate": "tomomai · 听歌识曲 · {date}",
+      "descriptionForDate": "重玩{date}的 maimai 听歌识曲题目。"
+    }
   }
 }

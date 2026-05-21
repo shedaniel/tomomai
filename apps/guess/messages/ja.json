@@ -82,11 +82,21 @@
           "utage": "宴会場"
         }
       },
-      "bpm": { "label": "BPM" },
-      "genre": { "label": "ジャンル" },
-      "game-version": { "label": "収録バージョン" },
-      "artist": { "label": "アーティスト" },
-      "note-designer": { "label": "譜面制作者" },
+      "bpm": {
+        "label": "BPM"
+      },
+      "genre": {
+        "label": "ジャンル"
+      },
+      "game-version": {
+        "label": "収録バージョン"
+      },
+      "artist": {
+        "label": "アーティスト"
+      },
+      "note-designer": {
+        "label": "譜面制作者"
+      },
       "audio": {
         "label": "音声クリップ",
         "play": "再生",
@@ -97,6 +107,14 @@
     },
     "reveal": {
       "answer": "正解"
+    }
+  },
+  "heardle": {
+    "meta": {
+      "title": "tomomai · イントロクイズ",
+      "description": "短い音声クリップから今日の maimai 楽曲を当てよう。JST 0:00 に新しい曲。",
+      "titleForDate": "tomomai · イントロクイズ · {date}",
+      "descriptionForDate": "{date}の maimai イントロクイズをもう一度プレイ。"
     }
   }
 }

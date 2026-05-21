@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { formatDateKey, getDateKey } from "./date-slug";
+import { isHeardle } from "./heardle-config";
 
 type Translator = (key: string, values?: Record<string, string | number | Date>) => string;
 
@@ -45,6 +46,7 @@ export function buildGuessMetadata({ t, locale, dateKey, dateSlug }: Args): Meta
     url = "/";
     imageUrl = ogImageUrl("", getDateKey());
   }
+  const siteName = isHeardle() ? "tomomai · Heardle" : "tomomai · Guesser";
   return {
     title,
     description,
@@ -53,7 +55,7 @@ export function buildGuessMetadata({ t, locale, dateKey, dateSlug }: Args): Meta
       title,
       description,
       type: "website",
-      siteName: "tomomai · Guesser",
+      siteName,
       url,
       locale,
       images: [imageUrl],
@@ -65,4 +67,9 @@ export function buildGuessMetadata({ t, locale, dateKey, dateSlug }: Args): Meta
       images: [imageUrl],
     },
   };
+}
+
+/** Translation namespace for metadata strings, switched per deployment mode. */
+export function metaNamespace(): "guess.meta" | "heardle.meta" {
+  return isHeardle() ? "heardle.meta" : "guess.meta";
 }

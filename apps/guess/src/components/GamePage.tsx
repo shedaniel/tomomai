@@ -6,6 +6,7 @@ import { PastBanner } from "@/components/PastBanner";
 import { SiteHeader } from "@/components/SiteHeader";
 import { TOTAL_STEPS } from "@/lib/types";
 import { formatDateKey } from "@/lib/date-slug";
+import { metaNamespace } from "@/lib/metadata";
 
 type Props = {
   dateKey: string;
@@ -20,7 +21,7 @@ type Props = {
  */
 export async function GamePage({ dateKey, dateSlug }: Props) {
   const [tMeta, locale] = await Promise.all([
-    getTranslations("guess.meta"),
+    getTranslations(metaNamespace()),
     getLocale(),
   ]);
   const isPast = Boolean(dateSlug);

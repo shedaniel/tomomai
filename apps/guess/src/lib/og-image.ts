@@ -2,16 +2,31 @@ import sharp from "sharp";
 import { pixelate } from "./image";
 import { getToday } from "./today";
 import { HINTS } from "./hints-registry";
+import { isHeardle } from "./heardle-config";
 
 const OG_SIZE = 1200;
 
 /**
- * Render the OpenGraph cover image for a given (optional) past date. We just
- * reuse step 0 of the day's plan — the most-obfuscated cover hint — and
- * upscale it to OG dimensions. Returns a `Response` ready to return from a
- * Next.js `opengraph-image.tsx` default export.
+ * Render the OpenGraph cover image for a given (optional) past date.
+ *
+ * - Guess mode: uses step 0 of the day's plan (the most-obfuscated cover
+ *   hint) upscaled to OG dimensions. Image hints intentionally leak no
+ *   recognisable detail.
+ * - Heardle mode: the cover is never a hint (the player only ever hears
+ *   audio), so showing it on the social card would spoil the answer.
+ *   Renders a branded blank instead.
  */
 export async function renderOgImage(dateOverride?: string): Promise<Response> {
+  if (isHeardle()) {
+    const png = await renderHeardleOg(dateOverride);
+    return new Response(new Uint8Array(png), {
+      headers: {
+        "Content-Type": "image/png",
+        "Cache-Control": "public, max-age=86400, immutable",
+      },
+    });
+  }
+
   const { chart, plan, dateKey } = await getToday(dateOverride);
   if (!chart.cover) {
     // No cover → return a tiny transparent placeholder rather than crashing.
@@ -49,6 +64,44 @@ export async function renderOgImage(dateOverride?: string): Promise<Response> {
       "Cache-Control": "public, max-age=86400, immutable",
     },
   });
+}
+
+/**
+ * Heardle social card — a square SVG with the day's date and a play-icon
+ * monogram. Deliberately content-free so it never spoils the answer.
+ */
+async function renderHeardleOg(dateOverride?: string): Promise<Buffer> {
+  const { dateKey } = await getToday(dateOverride);
+  const svg = `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="${OG_SIZE}" height="${OG_SIZE}" viewBox="0 0 ${OG_SIZE} ${OG_SIZE}">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1a1625"/>
+      <stop offset="100%" stop-color="#0d0a14"/>
+    </linearGradient>
+  </defs>
+  <rect width="${OG_SIZE}" height="${OG_SIZE}" fill="url(#bg)"/>
+  <g transform="translate(600, 480)">
+    <circle r="180" fill="#a78bfa" opacity="0.95"/>
+    <polygon points="-55,-80 95,0 -55,80" fill="#1a1625"/>
+  </g>
+  <text x="600" y="800" text-anchor="middle"
+        font-family="Inter, -apple-system, system-ui, sans-serif"
+        font-size="96" font-weight="800" fill="white" letter-spacing="-2">
+    tomomai Heardle
+  </text>
+  <text x="600" y="880" text-anchor="middle"
+        font-family="Inter, -apple-system, system-ui, sans-serif"
+        font-size="44" font-weight="500" fill="#a78bfa" letter-spacing="2">
+    ${dateKey}
+  </text>
+  <text x="600" y="990" text-anchor="middle"
+        font-family="Inter, -apple-system, system-ui, sans-serif"
+        font-size="36" font-weight="400" fill="#ffffff" opacity="0.6">
+    Guess the maimai song from a clip
+  </text>
+</svg>`;
+  return sharp(Buffer.from(svg)).png().toBuffer();
 }
 
 export const OG_DIMENSIONS = { width: OG_SIZE, height: OG_SIZE };

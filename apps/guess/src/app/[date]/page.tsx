@@ -4,7 +4,7 @@ import { getTranslations } from "next-intl/server";
 import { getLocale } from "@tomomai/i18n/server";
 import { GamePage } from "@/components/GamePage";
 import { isTodaySlug, parsePastDateSlug } from "@/lib/date-slug";
-import { buildGuessMetadata } from "@/lib/metadata";
+import { buildGuessMetadata, metaNamespace } from "@/lib/metadata";
 
 type Props = {
   params: Promise<{ date: string }>;
@@ -15,7 +15,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const dateKey = parsePastDateSlug(slug);
   if (!dateKey) return {};
   const [t, locale] = await Promise.all([
-    getTranslations("guess.meta"),
+    getTranslations(metaNamespace()),
     getLocale(),
   ]);
   return buildGuessMetadata({ t, locale, dateKey, dateSlug: slug });

@@ -103,5 +103,13 @@
     "reveal": {
       "answer": "정답"
     }
+  },
+  "heardle": {
+    "meta": {
+      "title": "tomomai · 히어들",
+      "description": "짧은 오디오 클립으로 오늘의 maimai 곡을 맞혀보세요. 매일 JST 자정에 새로운 곡이 공개됩니다.",
+      "titleForDate": "tomomai · 히어들 · {date}",
+      "descriptionForDate": "{date}의 maimai 히어들 퍼즐을 다시 플레이하세요."
+    }
   }
 }

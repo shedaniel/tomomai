@@ -177,7 +177,7 @@ export const HINT_META: Record<HintKind, HintMeta> = {
     kind: "audio",
     isImage: false,
     // Only used in heardle mode; the regular planner never picks this because
-    // buildStepPlan short-circuits to buildHeardlePlan when GUESSER_MODE=heardle.
+    // buildStepPlan short-circuits to buildHeardlePlan when NEXT_PUBLIC_GUESSER_MODE=heardle.
     level: stdLevel({ max: 6 }),
   },
 };

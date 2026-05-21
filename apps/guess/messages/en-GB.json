@@ -103,5 +103,13 @@
     "reveal": {
       "answer": "Answer"
     }
+  },
+  "heardle": {
+    "meta": {
+      "title": "tomomai · Heardle",
+      "description": "Guess today's maimai song from a short audio clip. New song every day at JST midnight.",
+      "titleForDate": "tomomai · Heardle · {date}",
+      "descriptionForDate": "Replay the {date} maimai Heardle puzzle."
+    }
   }
 }

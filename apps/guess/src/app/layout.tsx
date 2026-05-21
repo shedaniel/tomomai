@@ -7,6 +7,7 @@ import { Toaster } from "@tomomai/ui";
 import { LocaleProvider } from "@tomomai/i18n/client";
 import { getLocale } from "@tomomai/i18n/server";
 import { ThemeProvider } from "@/components/providers/theme-provider";
+import { isHeardle } from "@/lib/heardle-config";
 import "./globals.css";
 
 const inter = localFont({
@@ -59,8 +60,10 @@ export const metadata: Metadata = {
   // NEXT_PUBLIC_SITE_URL in deployment env (Vercel / production); falls back
   // to the prod URL otherwise. Same helper used by `robots.ts` & sitemap.
   metadataBase: new URL(resolveBaseUrl()),
-  title: "Guess the maimai song",
-  description: "Guess the maimai song.",
+  // Generic fallback — per-page generateMetadata() overrides with mode-aware
+  // strings (Guesser vs Heardle) sourced from i18n.
+  title: "tomomai",
+  description: "Daily maimai song puzzle.",
   icons: { apple: "/icon.png" },
 };
 
@@ -70,8 +73,15 @@ export default async function RootLayout({
   const locale = await getLocale();
   const messages = await getMessages();
 
+  // Heardle gets a violet-leaning palette (--hue 290) to set it visually
+  // apart from the neutral guesser theme. Override applies to both light
+  // and dark schemes because --hue is consumed by both blocks.
+  const themeStyle = isHeardle()
+    ? ({ "--hue": "290" } as React.CSSProperties)
+    : undefined;
+
   return (
-    <html lang={locale} suppressHydrationWarning>
+    <html lang={locale} suppressHydrationWarning style={themeStyle}>
       <body
         className={`${inter.variable} ${geistMono.variable} ${murecho.variable} ${notoSansJP.variable} ${notoSansSC.variable} ${notoSansTC.variable} antialiased bg-background min-h-dvh`}
       >

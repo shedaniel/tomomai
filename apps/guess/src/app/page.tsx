@@ -3,11 +3,11 @@ import { getTranslations } from "next-intl/server";
 import { getLocale } from "@tomomai/i18n/server";
 import { GamePage } from "@/components/GamePage";
 import { getDateKey } from "@/lib/date-slug";
-import { buildGuessMetadata } from "@/lib/metadata";
+import { buildGuessMetadata, metaNamespace } from "@/lib/metadata";
 
 export async function generateMetadata(): Promise<Metadata> {
   const [t, locale] = await Promise.all([
-    getTranslations("guess.meta"),
+    getTranslations(metaNamespace()),
     getLocale(),
   ]);
   return buildGuessMetadata({ t, locale });
