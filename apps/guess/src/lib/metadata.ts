@@ -46,7 +46,7 @@ export function buildGuessMetadata({ t, locale, dateKey, dateSlug }: Args): Meta
       locale,
     },
     twitter: {
-      card: "summary_large_image",
+      card: "summary",
       title,
       description,
     },

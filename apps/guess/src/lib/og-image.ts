@@ -32,8 +32,8 @@ export async function renderOgImage(dateOverride?: string): Promise<Response> {
 
   const hint = plan[0]!;
   const seed = `${dateKey}:0`;
-  // Step 0 is always an image kind (STEP0_KINDS only contains image kinds),
-  // but fall back to pixelate if a future change relaxes that.
+  // Step 0 is always an image kind (every step0-eligible kind in HINT_META
+  // is `isImage: true`), but fall back to pixelate if that ever changes.
   const transform = HINTS[hint.kind].transform ?? ((url, lv) => pixelate(url, lv));
   const buf = await transform(chart.cover, hint.level, seed);
 
