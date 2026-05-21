@@ -163,7 +163,7 @@ export function HintStack({ hints, dateKey, dateSlug, reveal }: Props) {
          * to the clipper, which is symmetric around the viewport center, so
          * card positions don't shift. */}
         <div
-          className="absolute top-0 bottom-0 overflow-hidden"
+          className="absolute -top-8 bottom-0 overflow-hidden"
           style={{
             left: "calc(-50vw + 50%)",
             right: "calc(-50vw + 50%)",
@@ -201,7 +201,10 @@ export function HintStack({ hints, dateKey, dateSlug, reveal }: Props) {
               <motion.div
                 key={key}
                 className={cn(
-                  "absolute left-1/2 top-0 w-full max-w-[260px] sm:max-w-[280px] -translate-x-1/2",
+                  // `top-8` compensates the clipper's `-top-8` headroom — cards
+                // visually anchor at the deck's top edge while the clip box
+                // extends 32px higher to fit rotated card corners + top shadow.
+                "absolute left-1/2 top-8 w-full max-w-[260px] sm:max-w-[280px] -translate-x-1/2",
                   // box-shadow instead of filter: drop-shadow so cards stay
                   // GPU-composited on Firefox WebRender.
                   isActive
