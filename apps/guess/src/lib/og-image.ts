@@ -67,11 +67,12 @@ export async function renderOgImage(dateOverride?: string): Promise<Response> {
 }
 
 /**
- * Heardle social card — a square SVG with the day's date and a play-icon
- * monogram. Deliberately content-free so it never spoils the answer.
+ * Heardle social card — a square SVG with a single centered play badge
+ * over the violet gradient. No text: sharp can't render fonts in Vercel
+ * runtimes without an explicit font setup, and the brand context is
+ * already carried by the page-level OG title/description anyway.
  */
-async function renderHeardleOg(dateOverride?: string): Promise<Buffer> {
-  const { dateKey } = await getToday(dateOverride);
+async function renderHeardleOg(_dateOverride?: string): Promise<Buffer> {
   const svg = `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="${OG_SIZE}" height="${OG_SIZE}" viewBox="0 0 ${OG_SIZE} ${OG_SIZE}">
   <defs>
@@ -81,25 +82,10 @@ async function renderHeardleOg(dateOverride?: string): Promise<Buffer> {
     </linearGradient>
   </defs>
   <rect width="${OG_SIZE}" height="${OG_SIZE}" fill="url(#bg)"/>
-  <g transform="translate(600, 480)">
-    <circle r="180" fill="#a78bfa" opacity="0.95"/>
-    <polygon points="-55,-80 95,0 -55,80" fill="#1a1625"/>
+  <g transform="translate(600, 600)">
+    <circle r="220" fill="#a78bfa" opacity="0.95"/>
+    <polygon points="-70,-100 120,0 -70,100" fill="#1a1625"/>
   </g>
-  <text x="600" y="800" text-anchor="middle"
-        font-family="Inter, -apple-system, system-ui, sans-serif"
-        font-size="96" font-weight="800" fill="white" letter-spacing="-2">
-    tomomai Heardle
-  </text>
-  <text x="600" y="880" text-anchor="middle"
-        font-family="Inter, -apple-system, system-ui, sans-serif"
-        font-size="44" font-weight="500" fill="#a78bfa" letter-spacing="2">
-    ${dateKey}
-  </text>
-  <text x="600" y="990" text-anchor="middle"
-        font-family="Inter, -apple-system, system-ui, sans-serif"
-        font-size="36" font-weight="400" fill="#ffffff" opacity="0.6">
-    Guess the maimai song from a clip
-  </text>
 </svg>`;
   return sharp(Buffer.from(svg)).png().toBuffer();
 }
