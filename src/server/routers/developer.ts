@@ -9,6 +9,28 @@ import { and, eq } from "drizzle-orm";
 
 const scopeKey = z.enum(Object.keys(API_SCOPES) as [ScopeKey, ...ScopeKey[]]);
 
+// OAuth redirect URIs must be https://, with http://localhost permitted for local dev.
+// Other schemes (javascript:, data:, plain http) are rejected to prevent token
+// exfiltration via malicious clients.
+const httpsRedirectUrl = z.string().url().refine(
+  (v) => {
+    try {
+      const u = new URL(v);
+      if (u.protocol === "https:") return true;
+      if (u.protocol === "http:" && (u.hostname === "localhost" || u.hostname === "127.0.0.1")) return true;
+      return false;
+    } catch { return false; }
+  },
+  { message: "Must be an https:// URL (http://localhost permitted for development)" },
+);
+
+// Metadata URLs (homepage, icon, policy, tos) are shown to end users on the
+// consent screen; restrict to http(s) so we can never render javascript:/data: links.
+const safeWebUrl = z.string().url().refine(
+  (v) => { try { return ["http:", "https:"].includes(new URL(v).protocol); } catch { return false; } },
+  { message: "Must be an http(s):// URL" },
+);
+
 export const developerRouter = router({
   rotateApiKey: protectedProcedure
     .input(z.object({ keyId: z.string() }))
@@ -121,12 +143,12 @@ export const developerRouter = router({
     .input(
       z.object({
         name: z.string().min(1).max(64),
-        redirectUris: z.array(z.string().url("Each redirect URI must be a valid URL")).min(1).max(10),
+        redirectUris: z.array(httpsRedirectUrl).min(1).max(10),
         scopes: z.array(z.enum(Object.keys(API_SCOPES) as [ScopeKey, ...ScopeKey[]])).min(1),
-        uri: z.string().url().optional(),
-        icon: z.string().url().optional(),
-        policy: z.string().url().optional(),
-        tos: z.string().url().optional(),
+        uri: safeWebUrl.optional(),
+        icon: safeWebUrl.optional(),
+        policy: safeWebUrl.optional(),
+        tos: safeWebUrl.optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -168,11 +190,11 @@ export const developerRouter = router({
       z.object({
         clientId: z.string(),
         name: z.string().min(1).max(64).optional(),
-        redirectUris: z.array(z.string().url()).min(1).max(10).optional(),
-        uri: z.string().url().optional().nullable(),
-        icon: z.string().url().optional().nullable(),
-        policy: z.string().url().optional().nullable(),
-        tos: z.string().url().optional().nullable(),
+        redirectUris: z.array(httpsRedirectUrl).min(1).max(10).optional(),
+        uri: safeWebUrl.optional().nullable(),
+        icon: safeWebUrl.optional().nullable(),
+        policy: safeWebUrl.optional().nullable(),
+        tos: safeWebUrl.optional().nullable(),
         scopes: z.array(z.enum(Object.keys(API_SCOPES) as [ScopeKey, ...ScopeKey[]])).min(1).optional(),
       })
     )

@@ -75,7 +75,8 @@
     "linkError": "連結帳戶失敗",
     "unlinkSuccess": "已成功解除帳戶連結",
     "linkSuccess": "已成功連結帳戶",
-    "cannotUnlinkLast": "無法解除你唯一的登入方式"
+    "cannotUnlinkLast": "無法解除你唯一的登入方式",
+    "reauthRequired": "連結新帳戶前請重新登入"
   },
   "passkeys": {
     "title": "Passkey",

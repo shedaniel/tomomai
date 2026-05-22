@@ -75,7 +75,8 @@
     "linkError": "アカウントの連携に失敗しました",
     "unlinkSuccess": "アカウントの連携を解除しました",
     "linkSuccess": "アカウントを連携しました",
-    "cannotUnlinkLast": "唯一のサインイン方法は解除できません"
+    "cannotUnlinkLast": "唯一のサインイン方法は解除できません",
+    "reauthRequired": "新しいアカウントを連携する前にもう一度サインインしてください"
   },
   "passkeys": {
     "title": "パスキー",

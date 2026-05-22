@@ -123,6 +123,15 @@ const trustedOrigins = (process.env.TRUSTED_ORIGINS ?? "")
   .filter(Boolean);
 const authCookieDomain = process.env.AUTH_COOKIE_DOMAIN?.trim() || undefined;
 
+const authSecret = (() => {
+  const v = process.env.BETTER_AUTH_SECRET;
+  if (v) return v;
+  if (process.env.NODE_ENV !== "development") {
+    throw new Error("BETTER_AUTH_SECRET is required in non-development environments");
+  }
+  return "development-secret-change-in-production";
+})();
+
 export const auth = betterAuth({
   baseURL: process.env.BETTER_AUTH_URL || resolveBaseUrl(),
   ...(trustedOrigins.length ? { trustedOrigins } : {}),
@@ -155,7 +164,7 @@ export const auth = betterAuth({
     provider: "pg",
     schema,
   }),
-  secret: process.env.BETTER_AUTH_SECRET || "development-secret-change-in-production",
+  secret: authSecret,
   socialProviders: {
     discord: {
       clientId: process.env.DISCORD_CLIENT_ID as string,
@@ -171,7 +180,7 @@ export const auth = betterAuth({
   account: {
     accountLinking: {
       enabled: true,
-      trustedProviders: ["discord", "twitter"],
+      trustedProviders: ["discord"],
     },
   },
   plugins: [

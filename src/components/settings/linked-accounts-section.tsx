@@ -62,6 +62,23 @@ export function LinkedAccountsSection() {
   const handleLink = async (providerId: string) => {
     setLinkingProvider(providerId);
     try {
+      // Require a fresh session before attaching a new provider: a stolen
+      // cookie alone shouldn't be enough to permanently link an attacker's
+      // account.
+      const FRESH_SESSION_MS = 5 * 60 * 1000;
+      const sessionRes = await authClient.getSession();
+      const session = (sessionRes as { data?: { session?: { createdAt?: string | Date } } }).data;
+      const createdAtRaw = session?.session?.createdAt;
+      const createdAt = createdAtRaw ? new Date(createdAtRaw).getTime() : 0;
+      if (!createdAt || Date.now() - createdAt > FRESH_SESSION_MS) {
+        toast.error(t("reauthRequired"));
+        setLinkingProvider(null);
+        const primary = accounts?.[0]?.providerId;
+        if (primary === "discord" || primary === "twitter") {
+          await authClient.signIn.social({ provider: primary, callbackURL: "/settings" });
+        }
+        return;
+      }
       await authClient.linkSocial({
         provider: providerId as "discord" | "twitter",
         callbackURL: "/settings",

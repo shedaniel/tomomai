@@ -72,9 +72,11 @@
     "linked": "Linked",
     "notLinked": "Not linked",
     "unlinkError": "Failed to unlink account",
+    "linkError": "Failed to link account",
     "unlinkSuccess": "Account unlinked successfully",
     "linkSuccess": "Account linked successfully",
-    "cannotUnlinkLast": "Cannot unlink your only sign-in method"
+    "cannotUnlinkLast": "Cannot unlink your only sign-in method",
+    "reauthRequired": "Please sign in again before linking a new account"
   },
   "passkeys": {
     "title": "Passkeys",

@@ -75,7 +75,8 @@
     "linkError": "关联账户失败",
     "unlinkSuccess": "已成功解除账户关联",
     "linkSuccess": "已成功关联账户",
-    "cannotUnlinkLast": "无法解除你唯一的登录方式"
+    "cannotUnlinkLast": "无法解除你唯一的登录方式",
+    "reauthRequired": "关联新账户前请重新登录"
   },
   "passkeys": {
     "title": "通行密钥",
