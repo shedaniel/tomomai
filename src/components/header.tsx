@@ -6,7 +6,7 @@ import { Button } from "@tomomai/ui";
 import { DiscordIcon } from "@tomomai/ui";
 import { user } from "@/lib/db/schema-pg";
 import { Region, User } from "@/lib/types";
-import { Beaker, Check, ChevronDown, Database, Flag, Home, Info, Languages, LogIn, LogOut, Menu, Palette, Ship, Sparkles, User as LucideUserIcon, Settings, Users, X, ScrollText } from "lucide-react";
+import { Beaker, Check, ChevronDown, Database, Flag, Home, Info, Languages, LogIn, LogOut, Menu, Palette, Ship, Sparkles, User as LucideUserIcon, Settings, Users, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
 import Link from "next/link";
@@ -260,11 +260,10 @@ function DrawerRegionSwitcher({ value, onChange, drawerItemClass }: { value: Reg
   );
 }
 
-function UserIcon({ user, menu, onAbout, onTheme, onDiscordInvite, onUserscript }: Partial<NonNullable<HeaderProps['user']>> & {
+function UserIcon({ user, menu, onAbout, onTheme, onDiscordInvite }: Partial<NonNullable<HeaderProps['user']>> & {
   onAbout: () => void;
   onTheme: () => void;
   onDiscordInvite: () => void;
-  onUserscript: () => void;
 }) {
   const t = useTranslations();
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -383,12 +382,6 @@ function UserIcon({ user, menu, onAbout, onTheme, onDiscordInvite, onUserscript 
                   <span>{t('header.addDiscordBot')}</span>
                 </button>
               </DrawerClose>
-              <DrawerClose asChild>
-                <button className={drawerItemClass} onClick={onUserscript}>
-                  <ScrollText className="h-4 w-4" />
-                  <span>{t('header.addUserscript')}</span>
-                </button>
-              </DrawerClose>
               {(menu || user) && (
                 <Separator className="my-1" />
               )}
@@ -495,10 +488,6 @@ function UserIcon({ user, menu, onAbout, onTheme, onDiscordInvite, onUserscript 
               <DiscordIcon className="mr-2 h-4 w-4" />
               <span>{t('header.addDiscordBot')}</span>
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={onUserscript}>
-              <ScrollText className="mr-2 h-4 w-4" />
-              <span>{t('header.addUserscript')}</span>
-            </DropdownMenuItem>
             {menu && SIGNUP_TYPE === 'invite-only' && (
               <>
                 <DropdownMenuItem onClick={menu.onInvites}>
@@ -578,15 +567,6 @@ export function Header({ currentTab, showDiscordBanner = true, customThemesEnabl
     }
   };
 
-  const handleUserscript = async () => {
-    try {
-      window.open('/userscript.user.js', '_blank');
-    } catch (error) {
-      console.error('Failed to open invite link:', error);
-      toast.error(t('header.errors.inviteLink'));
-    }
-  };
-
   return (
     <>
       <div className="flex items-center justify-between mb-8">
@@ -606,7 +586,7 @@ export function Header({ currentTab, showDiscordBanner = true, customThemesEnabl
         <div className="flex items-center space-x-4">
           {!isCNExclusive() && <div className="max-md:hidden"><LocaleSwitcher /></div>}
           {user?.menu && getEnabledRegions().length > 1 && <div className="max-md:hidden"><RegionSwitcher header={true} value={user.menu.selectedRegion} onChange={user.menu.onRegionChange} /></div>}
-          <UserIcon user={user?.user} menu={user?.menu} onAbout={() => setAboutOpen(true)} onTheme={() => setThemeOpen(true)} onDiscordInvite={handleDiscordInvite} onUserscript={handleUserscript} />
+          <UserIcon user={user?.user} menu={user?.menu} onAbout={() => setAboutOpen(true)} onTheme={() => setThemeOpen(true)} onDiscordInvite={handleDiscordInvite} />
         </div>
       </div>
 

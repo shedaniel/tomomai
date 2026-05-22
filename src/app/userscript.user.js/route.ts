@@ -12,6 +12,8 @@ const PLACEHOLDER = "__TOMOMAI_API_BASE__";
 const CLIENT_ID_PLACEHOLDER = "__TOMOMAI_USERSCRIPT_CLIENT_ID__";
 
 export async function GET(request: NextRequest) {
+  // TODO(v2026.5): Disable feature until release
+  if (process.env.ENABLE_USERSCRIPT !== "true") return new NextResponse("Not Found", { status: 404 });
   const clientId = process.env.USERSCRIPT_CLIENT_ID;
   if (!clientId) {
     return new NextResponse(

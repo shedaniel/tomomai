@@ -36,6 +36,19 @@ const FRESH_REQUIRED_PATHS = new Set<string>([
   "/passkey/update-passkey",
 ]);
 
+// Developer-portal mutation paths (OAuth client + API key writes). Gated by
+// ENABLE_DEV until v1 ships — UI may render, but no client/key can be created,
+// rotated, or destroyed via tRPC or direct BA HTTP.
+const DEV_PORTAL_BA_PATHS = new Set<string>([
+  "/oauth2/create-client",
+  "/oauth2/update-client",
+  "/oauth2/client/rotate-secret",
+  "/oauth2/delete-client",
+  "/api-key/create",
+  "/api-key/delete",
+  "/api-key/update",
+]);
+
 // Passkey endpoints that mint a new credential, must be captcha-gated to prevent
 // scripted abuse. Sign-in / authenticate paths are intentionally NOT gated.
 const CAPTCHA_GATED_PATHS = new Set([
@@ -205,7 +218,6 @@ export const auth = betterAuth({
     },
   },
   plugins: [
-    nextCookies(),
     admin(),
     apiKey({
       enableMetadata: true,
@@ -236,6 +248,7 @@ export const auth = betterAuth({
       validAudiences: [process.env.BETTER_AUTH_URL || resolveBaseUrl()],
     }),
     ...(process.env.NODE_ENV === 'development' ? [openAPI()] : []),
+    nextCookies(),
   ],
   disabledPaths: [
     // Password / email-credential flows — emailAndPassword is disabled.
@@ -253,6 +266,14 @@ export const auth = betterAuth({
     "/delete-user/callback",
     // Profile mutations not exposed in UI; otherwise stolen session could rename the user.
     "/update-user",
+    // Session mutations not used: /update-session is never called, and the
+    // sessions UI uses revokeSession/revokeOtherSessions — /revoke-sessions
+    // (bulk by token list) has no call site. /list-sessions and the two
+    // single/other revoke endpoints stay open for the settings UI.
+    "/update-session",
+    "/revoke-sessions",
+    // TODO(v2026.5): Disable feature until release
+    "/oauth2/introspect",
     // Social-provider token passthrough — we never expose Discord/Twitter
     // tokens to clients, so close these to avoid future foot-guns.
     "/refresh-token",
@@ -304,6 +325,9 @@ export const auth = betterAuth({
         }
       };
 
+
+      // TODO(v2026.5): Disable feature until release
+      if (DEV_PORTAL_BA_PATHS.has(ctx.path) && process.env.ENABLE_DEV !== "true") throw new APIError("NOT_FOUND", { message: "Not Found" });
 
       // Fresh-session gate for sensitive routes. Applies regardless of caller
       // (our tRPC router, the userscript, or a direct curl with a stolen cookie).

@@ -31,6 +31,8 @@ export async function OPTIONS(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  // TODO(v2026.5): Disable feature until release
+  if (process.env.ENABLE_USERSCRIPT !== "true") return new NextResponse("Not Found", { status: 404 });
   const origin = request.headers.get("origin");
   const cors = corsHeaders(origin);
 

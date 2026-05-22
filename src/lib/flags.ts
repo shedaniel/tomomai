@@ -66,9 +66,9 @@ const registry = {
     decide: async () => true,
   }),
   settingsApplications: defineFlag("settingsApplications", {
-    defaultValue: true,
+    defaultValue: false,
     userSelectable: true,
-    decide: async () => true,
+    decide: async () => false,
   }),
   settingsDeveloper: defineFlag("settingsDeveloper", {
     defaultValue: false,
