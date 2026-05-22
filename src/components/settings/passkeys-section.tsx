@@ -7,6 +7,7 @@ import { KeyRound, Loader2, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { authClient } from "@/lib/auth-client";
+import { reauthGuard } from "@/lib/security/fresh-session-client";
 import { toast } from "sonner";
 
 type Passkey = {
@@ -49,13 +50,15 @@ export function PasskeysSection() {
       const result = await authClient.passkey.deletePasskey({ id });
       if (result.error) throw new Error(result.error.message);
     },
+    ...reauthGuard({
+      callbackURL: "/settings",
+      reauthMessage: t("reauthRequired"),
+      fallback: t("deleteError"),
+    }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["passkeys"] });
       toast.success(t("deleteSuccess"));
       setDeleteId(null);
-    },
-    onError: (err: Error) => {
-      toast.error(err.message || t("deleteError"));
     },
   });
 

@@ -6,8 +6,9 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { apikey, oauthClient, oauthConsent, oauthRefreshToken, oauthAccessToken } from "@/lib/db/schema-pg";
 import { and, eq } from "drizzle-orm";
-import { requireFreshSession } from "@/lib/security/fresh-session";
+import { requireFreshSession } from "@/lib/security/fresh-session-server";
 import { httpsRedirectUrl, safeWebUrl, httpsWebUrl } from "@/lib/security/oauth-url";
+import { logger } from "@/lib/logger";
 
 const scopeKey = z.enum(Object.keys(API_SCOPES) as [ScopeKey, ...ScopeKey[]]);
 
@@ -125,7 +126,7 @@ export const developerRouter = router({
       z.object({
         name: z.string().min(1).max(64),
         redirectUris: z.array(httpsRedirectUrl).min(1).max(10),
-        scopes: z.array(z.enum(Object.keys(API_SCOPES) as [ScopeKey, ...ScopeKey[]])).min(1),
+        scopes: z.array(scopeKey).min(1),
         uri: safeWebUrl.optional(),
         icon: httpsWebUrl.optional(),
         policy: safeWebUrl.optional(),
@@ -168,10 +169,16 @@ export const developerRouter = router({
           .set({ userId: ctx.session.user.id })
           .where(eq(oauthClient.clientId, (result as any).client_id));
       } catch (err) {
+        const clientId = (result as any).client_id;
         await auth.api.deleteOAuthClient({
-          body: { client_id: (result as any).client_id },
+          body: { client_id: clientId },
           headers: ctx.req.headers,
-        }).catch(() => {});
+        }).catch((compensationErr) => {
+          logger.error(
+            { clientId, userId: ctx.session.user.id, originalErr: err, compensationErr },
+            "Failed to delete orphan OAuth client after userId patch failure",
+          );
+        });
         throw err;
       }
 
@@ -188,7 +195,7 @@ export const developerRouter = router({
         icon: httpsWebUrl.optional().nullable(),
         policy: safeWebUrl.optional().nullable(),
         tos: safeWebUrl.optional().nullable(),
-        scopes: z.array(z.enum(Object.keys(API_SCOPES) as [ScopeKey, ...ScopeKey[]])).min(1).optional(),
+        scopes: z.array(scopeKey).min(1).optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {

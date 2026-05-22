@@ -93,7 +93,8 @@
     "captchaFailed": "キャプチャ認証に失敗しました。もう一度お試しください。",
     "passkeyName": "パスキー {index}",
     "deleteTitle": "パスキーを削除しますか？",
-    "deleteDescription": "このパスキーは削除されます。今後、このパスキーでサインインできなくなります。"
+    "deleteDescription": "このパスキーは削除されます。今後、このパスキーでサインインできなくなります。",
+    "reauthRequired": "このパスキーを削除する前にもう一度サインインしてください。"
   },
   "consent": {
     "title": "ともマイへようこそ",

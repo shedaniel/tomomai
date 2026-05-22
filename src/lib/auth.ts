@@ -327,18 +327,20 @@ export const auth = betterAuth({
             }
           }
         }
+        const assertOptionalUrl = (
+          value: unknown,
+          pred: (v: unknown) => boolean,
+          message: string,
+        ) => {
+          if (value === undefined || value === null || value === "") return;
+          if (!pred(value)) throw new APIError("BAD_REQUEST", { message });
+        };
         for (const field of ["client_uri", "tos_uri", "policy_uri"] as const) {
-          const v = target[field];
-          if (v !== undefined && v !== null && v !== "" && !isSafeWebUrl(v)) {
-            throw new APIError("BAD_REQUEST", { message: `${field} must be an http(s):// URL` });
-          }
+          assertOptionalUrl(target[field], isSafeWebUrl, `${field} must be an http(s):// URL`);
         }
         // logo_uri is rendered as an <img> on the https consent page; tighten
         // to https-only to avoid mixed-content and phishing-pixel surface.
-        const logo = target.logo_uri;
-        if (logo !== undefined && logo !== null && logo !== "" && !isHttpsUrl(logo)) {
-          throw new APIError("BAD_REQUEST", { message: "logo_uri must be an https:// URL" });
-        }
+        assertOptionalUrl(target.logo_uri, isHttpsUrl, "logo_uri must be an https:// URL");
       }
 
       // Consent endpoint hardening: recover oauth_query from JSON or form body,

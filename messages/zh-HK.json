@@ -93,7 +93,8 @@
     "captchaFailed": "驗證碼驗證失敗，請再試一次。",
     "passkeyName": "Passkey {index}",
     "deleteTitle": "刪除 Passkey？",
-    "deleteDescription": "此 Passkey 將被刪除，你將無法再使用它登入。"
+    "deleteDescription": "此 Passkey 將被刪除，你將無法再使用它登入。",
+    "reauthRequired": "刪除此 Passkey 前請重新登入。"
   },
   "consent": {
     "title": "歡迎來到 tomomai",

@@ -27,17 +27,8 @@ import { authClient } from "@/lib/auth-client";
 import { trpc } from "@/lib/trpc-client";
 import { API_SCOPES, type ScopeKey } from "@/lib/api/scopes";
 import { CreateApiKeyDialog } from "@/components/developer/create-api-key-dialog";
-import { isFreshSessionError, triggerReauth } from "@/lib/security/fresh-session";
+import { reauthGuard } from "@/lib/security/fresh-session-client";
 import { toast } from "sonner";
-
-function handleSensitiveOpError(err: { message?: string }, fallback: string, reauthMessage: string) {
-  if (isFreshSessionError(err)) {
-    toast.error(reauthMessage);
-    void triggerReauth(authClient, "/settings/developer");
-    return;
-  }
-  toast.error(err.message ?? fallback);
-}
 import { Plus, Trash2, Key, Loader2, RefreshCw, Copy, Check, AlertTriangle, Pencil } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
@@ -91,12 +82,16 @@ export function ApiKeysSection() {
   });
 
   const rotateMutation = trpc.developer.rotateApiKey.useMutation({
+    ...reauthGuard({
+      callbackURL: "/settings/developer",
+      reauthMessage: t("reauthRequired"),
+      fallback: t("apiKeys.regenerateError"),
+    }),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["api-keys"] });
       setRegenerateId(null);
       setRegeneratedKey(data.key);
     },
-    onError: (err) => handleSensitiveOpError(err, t("apiKeys.regenerateError"), t("reauthRequired")),
   });
 
   const deleteMutation = useMutation({
@@ -104,12 +99,16 @@ export function ApiKeysSection() {
       const result = await authClient.apiKey.delete({ keyId: id });
       if (result.error) throw new Error(result.error.message);
     },
+    ...reauthGuard({
+      callbackURL: "/settings/developer",
+      reauthMessage: t("reauthRequired"),
+      fallback: t("apiKeys.deleteError"),
+    }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["api-keys"] });
       toast.success(t("apiKeys.deleteSuccess"));
       setDeleteId(null);
     },
-    onError: (err: Error) => handleSensitiveOpError(err, t("apiKeys.deleteError"), t("reauthRequired")),
   });
 
   const editMutation = useMutation({
@@ -117,11 +116,15 @@ export function ApiKeysSection() {
       const result = await authClient.apiKey.update({ keyId: id, name });
       if (result.error) throw new Error(result.error.message);
     },
+    ...reauthGuard({
+      callbackURL: "/settings/developer",
+      reauthMessage: t("reauthRequired"),
+      fallback: t("apiKeys.editDialog.saveError"),
+    }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["api-keys"] });
       setEditKey(null);
     },
-    onError: (err: Error) => handleSensitiveOpError(err, t("apiKeys.editDialog.saveError"), t("reauthRequired")),
   });
 
   async function handleToggle(id: string, enabled: boolean) {

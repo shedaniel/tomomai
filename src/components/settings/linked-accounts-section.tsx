@@ -1,12 +1,11 @@
 "use client";
 
-import { useState } from "react";
 import { Button, Label, DiscordIcon, XIcon } from "@tomomai/ui";
 import { Link2, Loader2, Link2Off } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { authClient } from "@/lib/auth-client";
-import { ensureFreshSessionOrReauth, REAUTH_PROVIDERS, type ReauthProvider } from "@/lib/security/fresh-session";
+import { reauthGuard } from "@/lib/security/fresh-session-client";
 import { toast } from "sonner";
 
 type Account = {
@@ -35,7 +34,6 @@ export function LinkedAccountsSection() {
   const t = useTranslations("linkedAccounts");
   const tc = useTranslations("common");
   const queryClient = useQueryClient();
-  const [linkingProvider, setLinkingProvider] = useState<string | null>(null);
 
   const { data: accounts, isLoading } = useQuery({
     queryKey: ["linked-accounts"],
@@ -51,39 +49,27 @@ export function LinkedAccountsSection() {
       const result = await authClient.unlinkAccount({ providerId });
       if (result.error) throw new Error(result.error.message);
     },
+    ...reauthGuard({
+      callbackURL: "/settings",
+      reauthMessage: t("reauthRequired"),
+      fallback: t("unlinkError"),
+    }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["linked-accounts"] });
       toast.success(t("unlinkSuccess"));
     },
-    onError: (err: Error) => {
-      toast.error(err.message || t("unlinkError"));
-    },
   });
 
-  const handleLink = async (providerId: string) => {
-    setLinkingProvider(providerId);
-    try {
-      // Require a fresh session before attaching a new provider: a stolen
-      // cookie alone shouldn't be enough to permanently link an attacker's
-      // account.
-      const primary = accounts?.find(
-        (a) => (REAUTH_PROVIDERS as readonly string[]).includes(a.providerId),
-      )?.providerId as ReauthProvider | undefined;
-      const fresh = await ensureFreshSessionOrReauth(authClient, primary ?? null, "/settings");
-      if (!fresh) {
-        toast.error(t("reauthRequired"));
-        setLinkingProvider(null);
-        return;
-      }
-      await authClient.linkSocial({
-        provider: providerId as "discord" | "twitter",
-        callbackURL: "/settings",
-      });
-    } catch {
-      toast.error(t("linkError"));
-      setLinkingProvider(null);
-    }
-  };
+  const linkMutation = useMutation({
+    mutationFn: async (providerId: "discord" | "twitter") => {
+      await authClient.linkSocial({ provider: providerId, callbackURL: "/settings" });
+    },
+    ...reauthGuard({
+      callbackURL: "/settings",
+      reauthMessage: t("reauthRequired"),
+      fallback: t("linkError"),
+    }),
+  });
 
   const linkedProviderIds = new Set(accounts?.map((a) => a.providerId) ?? []);
   const canUnlink = (accounts?.length ?? 0) > 1;
@@ -108,7 +94,7 @@ export function LinkedAccountsSection() {
           {PROVIDERS.map(({ id, label, Icon }) => {
             const isLinked = linkedProviderIds.has(id);
             const isUnlinking = unlinkMutation.isPending && unlinkMutation.variables === id;
-            const isLinking = linkingProvider === id;
+            const isLinking = linkMutation.isPending && linkMutation.variables === id;
 
             return (
               <div key={id} className="flex items-center gap-3 px-4 py-3">
@@ -141,7 +127,7 @@ export function LinkedAccountsSection() {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => handleLink(id)}
+                    onClick={() => linkMutation.mutate(id)}
                     disabled={isLinking}
                     className="shrink-0"
                   >

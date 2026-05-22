@@ -93,7 +93,8 @@
     "captchaFailed": "验证码校验失败，请重试。",
     "passkeyName": "通行密钥 {index}",
     "deleteTitle": "删除通行密钥？",
-    "deleteDescription": "该通行密钥将被删除，你将无法再使用它登录。"
+    "deleteDescription": "该通行密钥将被删除，你将无法再使用它登录。",
+    "reauthRequired": "删除此通行密钥前请重新登录。"
   },
   "consent": {
     "title": "欢迎来到 tomomai",

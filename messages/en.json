@@ -93,7 +93,8 @@
     "captchaFailed": "Captcha verification failed. Please try again.",
     "passkeyName": "Passkey {index}",
     "deleteTitle": "Delete passkey?",
-    "deleteDescription": "This passkey will be removed. You won't be able to use it to sign in anymore."
+    "deleteDescription": "This passkey will be removed. You won't be able to use it to sign in anymore.",
+    "reauthRequired": "Please sign in again before deleting this passkey."
   },
   "consent": {
     "title": "Welcome to tomomai",

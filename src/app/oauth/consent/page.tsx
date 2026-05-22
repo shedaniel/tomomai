@@ -102,20 +102,22 @@ export default function OAuthConsentPage() {
     );
   }
 
+  const iconHref = safeImg(client?.icon);
+  const homepageHref = safeHref(client?.uri);
+  const tosHref = safeHref(client?.tos);
+  const policyHref = safeHref(client?.policy);
+
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-muted/30">
       <Card className="w-full max-w-md shadow-lg">
         <CardHeader className="text-center">
           {/* App icon */}
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 border border-border overflow-hidden">
-            {(() => {
-              const icon = safeImg(client?.icon);
-              return icon ? (
-                <img src={icon} alt={client?.name ?? "App"} className="h-full w-full object-cover" />
-              ) : (
-                <Globe className="h-8 w-8 text-primary" />
-              );
-            })()}
+            {iconHref ? (
+              <img src={iconHref} alt={client?.name ?? "App"} className="h-full w-full object-cover" />
+            ) : (
+              <Globe className="h-8 w-8 text-primary" />
+            )}
           </div>
 
           <CardTitle className="text-xl">
@@ -123,19 +125,16 @@ export default function OAuthConsentPage() {
           </CardTitle>
           <CardDescription className="mt-1">
             This application is requesting permission to access your maimai data.
-            {(() => {
-              const uri = safeHref(client?.uri);
-              return uri ? (
-                <a
-                  href={uri}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block mt-1 text-primary hover:underline truncate"
-                >
-                  {uri}
-                </a>
-              ) : null;
-            })()}
+            {homepageHref && (
+              <a
+                href={homepageHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block mt-1 text-primary hover:underline truncate"
+              >
+                {homepageHref}
+              </a>
+            )}
           </CardDescription>
         </CardHeader>
 
@@ -186,25 +185,20 @@ export default function OAuthConsentPage() {
             You can revoke access at any time from your developer settings.
           </p>
 
-          {(() => {
-            const tos = safeHref(client?.tos);
-            const policy = safeHref(client?.policy);
-            if (!tos && !policy) return null;
-            return (
-              <div className="mt-2 flex gap-3 text-xs">
-                {tos && (
-                  <a href={tos} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
-                    Terms of Service
-                  </a>
-                )}
-                {policy && (
-                  <a href={policy} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
-                    Privacy Policy
-                  </a>
-                )}
-              </div>
-            );
-          })()}
+          {(tosHref || policyHref) && (
+            <div className="mt-2 flex gap-3 text-xs">
+              {tosHref && (
+                <a href={tosHref} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                  Terms of Service
+                </a>
+              )}
+              {policyHref && (
+                <a href={policyHref} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                  Privacy Policy
+                </a>
+              )}
+            </div>
+          )}
         </CardContent>
 
         <Separator />

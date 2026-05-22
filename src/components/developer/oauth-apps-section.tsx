@@ -23,19 +23,9 @@ import {
   ResponsiveDialogTitle,
 } from "@tomomai/ui";
 import { trpc } from "@/lib/trpc-client";
-import { authClient } from "@/lib/auth-client";
 import { API_SCOPES, type ScopeKey } from "@/lib/api/scopes";
-import { isFreshSessionError, triggerReauth } from "@/lib/security/fresh-session";
+import { reauthGuard } from "@/lib/security/fresh-session-client";
 import { toast } from "sonner";
-
-function handleSensitiveOpError(err: { message?: string }, fallback: string, reauthMessage: string) {
-  if (isFreshSessionError(err)) {
-    toast.error(reauthMessage);
-    void triggerReauth(authClient, "/settings/developer");
-    return;
-  }
-  toast.error(err.message ?? fallback);
-}
 import { Plus, Trash2, Globe, Loader2, RefreshCw, AlertTriangle, X, AppWindow, Pencil } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
@@ -277,11 +267,15 @@ function CreateOAuthAppDialog({
   const [createdApp, setCreatedApp] = useState<{ clientId: string; secret: string } | null>(null);
 
   const createMutation = trpc.developer.createOAuthApp.useMutation({
+    ...reauthGuard({
+      callbackURL: "/settings/developer",
+      reauthMessage: t("reauthRequired"),
+      fallback: t("oauthApps.createDialog.createError"),
+    }),
     onSuccess: (data) => {
       setCreatedApp({ clientId: String(data.client_id), secret: String(data.client_secret) });
       onCreated();
     },
-    onError: (err) => handleSensitiveOpError(err, t("oauthApps.createDialog.createError"), t("reauthRequired")),
   });
 
   function handleCreate() {
@@ -436,11 +430,15 @@ function EditOAuthAppDialog({
   });
 
   const updateMutation = trpc.developer.updateOAuthApp.useMutation({
+    ...reauthGuard({
+      callbackURL: "/settings/developer",
+      reauthMessage: t("reauthRequired"),
+      fallback: t("oauthApps.editDialog.saveError"),
+    }),
     onSuccess: () => {
       onSaved();
       onOpenChange(false);
     },
-    onError: (err) => handleSensitiveOpError(err, t("oauthApps.editDialog.saveError"), t("reauthRequired")),
   });
 
   function handleSave() {
@@ -595,20 +593,28 @@ export function OAuthAppsSection() {
   const { data: apps, isLoading } = trpc.developer.listOAuthApps.useQuery();
 
   const deleteMutation = trpc.developer.deleteOAuthApp.useMutation({
+    ...reauthGuard({
+      callbackURL: "/settings/developer",
+      reauthMessage: t("reauthRequired"),
+      fallback: t("oauthApps.deleteError"),
+    }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [["developer", "listOAuthApps"]] });
       setDeleteId(null);
     },
-    onError: (err) => handleSensitiveOpError(err, t("oauthApps.deleteError"), t("reauthRequired")),
   });
 
   const rotateMutation = trpc.developer.rotateOAuthSecret.useMutation({
+    ...reauthGuard({
+      callbackURL: "/settings/developer",
+      reauthMessage: t("reauthRequired"),
+      fallback: t("oauthApps.rotateError"),
+    }),
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: [["developer", "listOAuthApps"]] });
       setRotateId(null);
       setRotatedSecret({ clientId: variables.clientId, secret: String(data.client_secret) });
     },
-    onError: (err) => handleSensitiveOpError(err, t("oauthApps.rotateError"), t("reauthRequired")),
   });
 
   return (

@@ -17,36 +17,33 @@ function isLoopbackHostname(host: string): boolean {
   );
 }
 
+function parseUrl(v: unknown): URL | null {
+  if (typeof v !== "string") return null;
+  try { return new URL(v); } catch { return null; }
+}
+
 export function isSafeRedirectUrl(v: unknown): v is string {
-  if (typeof v !== "string") return false;
-  try {
-    const u = new URL(v);
-    // BCP 212 §3.1: reject userinfo (`https://attacker:x@trusted/cb`).
-    if (u.username !== "" || u.password !== "") return false;
-    if (u.protocol === "https:") return true;
-    if (u.protocol === "http:" && isLoopbackHostname(u.hostname)) return true;
-    return false;
-  } catch { return false; }
+  const u = parseUrl(v);
+  if (!u) return false;
+  // BCP 212 §3.1: reject userinfo (`https://attacker:x@trusted/cb`).
+  if (u.username !== "" || u.password !== "") return false;
+  if (u.protocol === "https:") return true;
+  return u.protocol === "http:" && isLoopbackHostname(u.hostname);
 }
 
 // Metadata URLs (homepage, policy, tos) are shown to end users on the
 // consent screen; restrict to http(s) so we can never render javascript:/data: links.
 // BA accepts these as plain strings with no scheme check.
 export function isSafeWebUrl(v: unknown): v is string {
-  if (typeof v !== "string") return false;
-  try {
-    return ["http:", "https:"].includes(new URL(v).protocol);
-  } catch { return false; }
+  const u = parseUrl(v);
+  return !!u && (u.protocol === "http:" || u.protocol === "https:");
 }
 
 // `logo_uri` (icon) is rendered as an <img> on the https consent page; plain
 // http would trip mixed-content warnings and lets an attacker host a phishing
 // pixel. Tightened to https-only while homepage/tos/policy stay http(s).
 export function isHttpsUrl(v: unknown): v is string {
-  if (typeof v !== "string") return false;
-  try {
-    return new URL(v).protocol === "https:";
-  } catch { return false; }
+  return parseUrl(v)?.protocol === "https:";
 }
 
 export const httpsRedirectUrl = z.string().url().refine(isSafeRedirectUrl, {
