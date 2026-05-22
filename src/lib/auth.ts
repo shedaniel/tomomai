@@ -15,6 +15,7 @@ import { logger } from "@/lib/logger";
 import { consumeAltchaPayload } from "@/lib/altcha";
 import { passkeyRegisterLimiter } from "@/lib/security/redis-rate-limit";
 import { isSessionFresh } from "@/lib/security/fresh-session";
+import { isSafeRedirectUrl, isSafeWebUrl } from "@/lib/security/oauth-url";
 
 // Sensitive Better Auth routes that grant lasting account / client takeover power
 // (secret rotation, redirect URI edits, account linking). Gated by fresh-session
@@ -29,6 +30,10 @@ const FRESH_REQUIRED_PATHS = new Set<string>([
   "/api-key/update",
   "/link-social",
   "/unlink-account",
+  // Passkey mutations: stolen session must not be able to silently strip a
+  // user's WebAuthn credentials. Registration is captcha-gated separately.
+  "/passkey/delete-passkey",
+  "/passkey/update-passkey",
 ]);
 
 // Passkey endpoints that mint a new credential, must be captcha-gated to prevent
@@ -233,6 +238,7 @@ export const auth = betterAuth({
     ...(process.env.NODE_ENV === 'development' ? [openAPI()] : []),
   ],
   disabledPaths: [
+    // Password / email-credential flows — emailAndPassword is disabled.
     "/reset-password",
     "/reset-password/{token}",
     "/change-password",
@@ -242,8 +248,43 @@ export const auth = betterAuth({
     "/request-password-reset",
     "/sign-up/email",
     "/sign-in/email",
+    "/verify-password",
     "/delete-user",
     "/delete-user/callback",
+    // Profile mutations not exposed in UI; otherwise stolen session could rename the user.
+    "/update-user",
+    // Social-provider token passthrough — we never expose Discord/Twitter
+    // tokens to clients, so close these to avoid future foot-guns.
+    "/refresh-token",
+    "/get-access-token",
+    "/account-info",
+    // OAuth provider surface we don't use:
+    // - /oauth2/register is BA's RFC 7591 dynamic client registration. It's
+    //   already gated behind allowDynamicClientRegistration:false (returns
+    //   FORBIDDEN), but disable explicitly so flipping that flag can't
+    //   accidentally expose an unauthenticated client-registration endpoint
+    //   with no scheme validation on metadata URLs.
+    // - /oauth2/end-session is OIDC RP-initiated logout; not wired up.
+    "/oauth2/register",
+    "/oauth2/end-session",
+    // Admin plugin is registered (for the `role` column) but no client or
+    // server code calls these endpoints. Disable until an admin UI exists,
+    // so a future role=admin user can't accidentally escalate via direct HTTP.
+    "/admin/set-role",
+    "/admin/get-user",
+    "/admin/create-user",
+    "/admin/update-user",
+    "/admin/list-users",
+    "/admin/list-user-sessions",
+    "/admin/unban-user",
+    "/admin/ban-user",
+    "/admin/impersonate-user",
+    "/admin/stop-impersonating",
+    "/admin/revoke-user-session",
+    "/admin/revoke-user-sessions",
+    "/admin/remove-user",
+    "/admin/set-user-password",
+    "/admin/has-permission",
   ],
   hooks: {
     before: createAuthMiddleware(async (ctx) => {
@@ -256,6 +297,41 @@ export const auth = betterAuth({
         }
         if (!isSessionFresh(session.session.createdAt)) {
           throw new APIError("FORBIDDEN", { message: "FRESH_SESSION_REQUIRED" });
+        }
+      }
+
+      // OAuth client URL scheme guards. BA's built-in SafeUrlSchema only runs
+      // on redirect_uris and permits arbitrary custom schemes (e.g. myapp://).
+      // The metadata URLs (client_uri, logo_uri, tos_uri, policy_uri) are
+      // declared as plain z.string() and accept javascript:/data: — which
+      // would then render raw on the consent screen. Our tRPC router applies
+      // stricter refinements, but those are bypassable by calling these BA
+      // endpoints directly with a session cookie. Re-enforce here.
+      if (
+        (ctx.path === "/oauth2/create-client" || ctx.path === "/oauth2/update-client") &&
+        ctx.body &&
+        typeof ctx.body === "object"
+      ) {
+        const body = ctx.body as Record<string, unknown>;
+        const target = ctx.path === "/oauth2/update-client"
+          ? ((body.update as Record<string, unknown>) ?? {})
+          : body;
+
+        const redirects = target.redirect_uris;
+        if (Array.isArray(redirects)) {
+          for (const r of redirects) {
+            if (!isSafeRedirectUrl(r)) {
+              throw new APIError("BAD_REQUEST", {
+                message: "redirect_uris must be https:// (http://localhost permitted for development)",
+              });
+            }
+          }
+        }
+        for (const field of ["client_uri", "logo_uri", "tos_uri", "policy_uri"] as const) {
+          const v = target[field];
+          if (v !== undefined && v !== null && v !== "" && !isSafeWebUrl(v)) {
+            throw new APIError("BAD_REQUEST", { message: `${field} must be an http(s):// URL` });
+          }
         }
       }
 

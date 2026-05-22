@@ -7,30 +7,9 @@ import { db } from "@/lib/db";
 import { apikey, oauthClient, oauthConsent, oauthRefreshToken, oauthAccessToken } from "@/lib/db/schema-pg";
 import { and, eq } from "drizzle-orm";
 import { requireFreshSession } from "@/lib/security/fresh-session";
+import { httpsRedirectUrl, safeWebUrl } from "@/lib/security/oauth-url";
 
 const scopeKey = z.enum(Object.keys(API_SCOPES) as [ScopeKey, ...ScopeKey[]]);
-
-// OAuth redirect URIs must be https://, with http://localhost permitted for local dev.
-// Other schemes (javascript:, data:, plain http) are rejected to prevent token
-// exfiltration via malicious clients.
-const httpsRedirectUrl = z.string().url().refine(
-  (v) => {
-    try {
-      const u = new URL(v);
-      if (u.protocol === "https:") return true;
-      if (u.protocol === "http:" && (u.hostname === "localhost" || u.hostname === "127.0.0.1")) return true;
-      return false;
-    } catch { return false; }
-  },
-  { message: "Must be an https:// URL (http://localhost permitted for development)" },
-);
-
-// Metadata URLs (homepage, icon, policy, tos) are shown to end users on the
-// consent screen; restrict to http(s) so we can never render javascript:/data: links.
-const safeWebUrl = z.string().url().refine(
-  (v) => { try { return ["http:", "https:"].includes(new URL(v).protocol); } catch { return false; } },
-  { message: "Must be an http(s):// URL" },
-);
 
 export const developerRouter = router({
   rotateApiKey: protectedProcedure
