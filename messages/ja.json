@@ -263,6 +263,7 @@
       "revokeAllSuccess": "他のすべてのセッションを取り消しました。"
     },
     "developer": {
+      "reauthRequired": "この操作を行う前に、もう一度サインインしてください。",
       "apiKeys": {
         "label": "API キー",
         "description": "これらのキーを使用して、ともマイ API へのリクエストを認証します。",
@@ -456,6 +457,8 @@
         "scopes": "Scopes",
         "rotateAriaLabel": "Rotate client secret",
         "deleteAriaLabel": "Delete application",
+        "deleteError": "アプリケーションの削除に失敗しました",
+        "rotateError": "シークレットの再生成に失敗しました",
         "createDialog": {
           "title": "Create OAuth Application",
           "description": "Register a new application to use the OAuth 2.1 authorization flow.",

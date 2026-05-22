@@ -96,7 +96,7 @@ export function ApiKeysSection() {
       setRegenerateId(null);
       setRegeneratedKey(data.key);
     },
-    onError: (err) => handleSensitiveOpError(err, t("apiKeys.regenerateError"), "Please sign in again before regenerating this API key."),
+    onError: (err) => handleSensitiveOpError(err, t("apiKeys.regenerateError"), t("reauthRequired")),
   });
 
   const deleteMutation = useMutation({
@@ -109,7 +109,7 @@ export function ApiKeysSection() {
       toast.success(t("apiKeys.deleteSuccess"));
       setDeleteId(null);
     },
-    onError: (err: Error) => handleSensitiveOpError(err, t("apiKeys.deleteError"), "Please sign in again before deleting this API key."),
+    onError: (err: Error) => handleSensitiveOpError(err, t("apiKeys.deleteError"), t("reauthRequired")),
   });
 
   const editMutation = useMutation({
@@ -121,7 +121,7 @@ export function ApiKeysSection() {
       queryClient.invalidateQueries({ queryKey: ["api-keys"] });
       setEditKey(null);
     },
-    onError: (err: Error) => handleSensitiveOpError(err, t("apiKeys.editDialog.saveError"), "Please sign in again before editing this API key."),
+    onError: (err: Error) => handleSensitiveOpError(err, t("apiKeys.editDialog.saveError"), t("reauthRequired")),
   });
 
   async function handleToggle(id: string, enabled: boolean) {

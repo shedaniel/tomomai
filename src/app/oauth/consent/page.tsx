@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 import { API_SCOPES, type ScopeKey } from "@/lib/api/scopes";
+import { safeHref, safeImg } from "@/lib/security/oauth-url";
 import { Button } from "@tomomai/ui";
 import { Badge } from "@tomomai/ui";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@tomomai/ui";
@@ -107,11 +108,14 @@ export default function OAuthConsentPage() {
         <CardHeader className="text-center">
           {/* App icon */}
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 border border-border overflow-hidden">
-            {client?.icon ? (
-              <img src={client.icon} alt={client?.name ?? "App"} className="h-full w-full object-cover" />
-            ) : (
-              <Globe className="h-8 w-8 text-primary" />
-            )}
+            {(() => {
+              const icon = safeImg(client?.icon);
+              return icon ? (
+                <img src={icon} alt={client?.name ?? "App"} className="h-full w-full object-cover" />
+              ) : (
+                <Globe className="h-8 w-8 text-primary" />
+              );
+            })()}
           </div>
 
           <CardTitle className="text-xl">
@@ -119,16 +123,19 @@ export default function OAuthConsentPage() {
           </CardTitle>
           <CardDescription className="mt-1">
             This application is requesting permission to access your maimai data.
-            {client?.uri && (
-              <a
-                href={client.uri}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block mt-1 text-primary hover:underline truncate"
-              >
-                {client.uri}
-              </a>
-            )}
+            {(() => {
+              const uri = safeHref(client?.uri);
+              return uri ? (
+                <a
+                  href={uri}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block mt-1 text-primary hover:underline truncate"
+                >
+                  {uri}
+                </a>
+              ) : null;
+            })()}
           </CardDescription>
         </CardHeader>
 
@@ -179,20 +186,25 @@ export default function OAuthConsentPage() {
             You can revoke access at any time from your developer settings.
           </p>
 
-          {(client?.policy || client?.tos) && (
-            <div className="mt-2 flex gap-3 text-xs">
-              {client.tos && (
-                <a href={client.tos} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
-                  Terms of Service
-                </a>
-              )}
-              {client.policy && (
-                <a href={client.policy} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
-                  Privacy Policy
-                </a>
-              )}
-            </div>
-          )}
+          {(() => {
+            const tos = safeHref(client?.tos);
+            const policy = safeHref(client?.policy);
+            if (!tos && !policy) return null;
+            return (
+              <div className="mt-2 flex gap-3 text-xs">
+                {tos && (
+                  <a href={tos} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                    Terms of Service
+                  </a>
+                )}
+                {policy && (
+                  <a href={policy} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                    Privacy Policy
+                  </a>
+                )}
+              </div>
+            );
+          })()}
         </CardContent>
 
         <Separator />

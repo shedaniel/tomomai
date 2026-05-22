@@ -263,6 +263,7 @@
       "revokeAllSuccess": "所有其他工作階段已撤銷。"
     },
     "developer": {
+      "reauthRequired": "請重新登入後再執行此操作。",
       "apiKeys": {
         "label": "API 金鑰",
         "description": "使用這些金鑰來驗證對 tomomai API 的請求。",
@@ -456,6 +457,8 @@
         "scopes": "Scopes",
         "rotateAriaLabel": "Rotate client secret",
         "deleteAriaLabel": "Delete application",
+        "deleteError": "刪除應用程式失敗",
+        "rotateError": "輪換密鑰失敗",
         "createDialog": {
           "title": "Create OAuth Application",
           "description": "Register a new application to use the OAuth 2.1 authorization flow.",

@@ -4,6 +4,11 @@ import matter from "gray-matter";
 
 const GUIDES_DIR = path.join(process.cwd(), "content/developer/guides");
 
+// Slug allow-list: lowercase letters, digits, and dashes. Stops path traversal
+// (../, encoded separators, etc.) at the source even if a caller skips the
+// route-level `dynamicParams = false` guard.
+const SLUG_RE = /^[a-z0-9-]+$/;
+
 export interface GuideMeta {
   slug: string;
   title: string;
@@ -35,6 +40,7 @@ export async function listGuides(): Promise<GuideMeta[]> {
 }
 
 export async function readGuide(slug: string): Promise<Guide | null> {
+  if (!SLUG_RE.test(slug)) return null;
   for (const ext of [".mdx", ".md"] as const) {
     try {
       const raw = await fs.readFile(path.join(GUIDES_DIR, `${slug}${ext}`), "utf8");

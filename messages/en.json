@@ -263,6 +263,7 @@
       "revokeAllSuccess": "All other sessions revoked."
     },
     "developer": {
+      "reauthRequired": "Please sign in again before performing this action.",
       "apiKeys": {
         "label": "API Keys",
         "description": "Authenticate requests to the tomomai API using these keys.",
@@ -456,6 +457,8 @@
         "scopes": "Scopes",
         "rotateAriaLabel": "Rotate client secret",
         "deleteAriaLabel": "Delete application",
+        "deleteError": "Failed to delete application",
+        "rotateError": "Failed to rotate secret",
         "createDialog": {
           "title": "Create OAuth Application",
           "description": "Register a new application to use the OAuth 2.1 authorization flow.",

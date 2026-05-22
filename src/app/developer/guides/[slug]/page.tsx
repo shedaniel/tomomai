@@ -5,6 +5,11 @@ import type { Metadata } from "next";
 import { listGuides, readGuide } from "@/lib/developer/guides";
 import { mdxComponents } from "@/components/developer/mdx-components";
 
+// Refuse slugs not produced by generateStaticParams(). Combined with the
+// SLUG_RE allow-list in readGuide(), this defeats path-traversal at both the
+// route and the data-layer boundary.
+export const dynamicParams = false;
+
 export async function generateStaticParams() {
   const guides = await listGuides();
   return guides.map((g) => ({ slug: g.slug }));

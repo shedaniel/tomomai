@@ -17,13 +17,23 @@ export function isSafeRedirectUrl(v: unknown): v is string {
   } catch { return false; }
 }
 
-// Metadata URLs (homepage, icon, policy, tos) are shown to end users on the
+// Metadata URLs (homepage, policy, tos) are shown to end users on the
 // consent screen; restrict to http(s) so we can never render javascript:/data: links.
 // BA accepts these as plain strings with no scheme check.
 export function isSafeWebUrl(v: unknown): v is string {
   if (typeof v !== "string") return false;
   try {
     return ["http:", "https:"].includes(new URL(v).protocol);
+  } catch { return false; }
+}
+
+// `logo_uri` (icon) is rendered as an <img> on the https consent page; plain
+// http would trip mixed-content warnings and lets an attacker host a phishing
+// pixel. Tightened to https-only while homepage/tos/policy stay http(s).
+export function isHttpsUrl(v: unknown): v is string {
+  if (typeof v !== "string") return false;
+  try {
+    return new URL(v).protocol === "https:";
   } catch { return false; }
 }
 
@@ -34,3 +44,18 @@ export const httpsRedirectUrl = z.string().url().refine(isSafeRedirectUrl, {
 export const safeWebUrl = z.string().url().refine(isSafeWebUrl, {
   message: "Must be an http(s):// URL",
 });
+
+export const httpsWebUrl = z.string().url().refine(isHttpsUrl, {
+  message: "Must be an https:// URL",
+});
+
+// Render-time guards for the consent page: defence-in-depth in case a write
+// path ever skips the hooks.before validators (DB seed, admin tool, future
+// endpoint that forgets to register).
+export function safeHref(v: unknown): string | undefined {
+  return isSafeWebUrl(v) ? v : undefined;
+}
+
+export function safeImg(v: unknown): string | undefined {
+  return isHttpsUrl(v) ? v : undefined;
+}

@@ -281,7 +281,7 @@ function CreateOAuthAppDialog({
       setCreatedApp({ clientId: String(data.client_id), secret: String(data.client_secret) });
       onCreated();
     },
-    onError: (err) => handleSensitiveOpError(err, t("oauthApps.createDialog.createError"), "Please sign in again before creating an OAuth application."),
+    onError: (err) => handleSensitiveOpError(err, t("oauthApps.createDialog.createError"), t("reauthRequired")),
   });
 
   function handleCreate() {
@@ -440,7 +440,7 @@ function EditOAuthAppDialog({
       onSaved();
       onOpenChange(false);
     },
-    onError: (err) => handleSensitiveOpError(err, t("oauthApps.editDialog.saveError"), "Please sign in again before editing this application."),
+    onError: (err) => handleSensitiveOpError(err, t("oauthApps.editDialog.saveError"), t("reauthRequired")),
   });
 
   function handleSave() {
@@ -599,7 +599,7 @@ export function OAuthAppsSection() {
       queryClient.invalidateQueries({ queryKey: [["developer", "listOAuthApps"]] });
       setDeleteId(null);
     },
-    onError: (err) => handleSensitiveOpError(err, "Failed to delete application", "Please sign in again before deleting this application."),
+    onError: (err) => handleSensitiveOpError(err, t("oauthApps.deleteError"), t("reauthRequired")),
   });
 
   const rotateMutation = trpc.developer.rotateOAuthSecret.useMutation({
@@ -608,7 +608,7 @@ export function OAuthAppsSection() {
       setRotateId(null);
       setRotatedSecret({ clientId: variables.clientId, secret: String(data.client_secret) });
     },
-    onError: (err) => handleSensitiveOpError(err, "Failed to rotate secret", "Please sign in again before rotating this secret."),
+    onError: (err) => handleSensitiveOpError(err, t("oauthApps.rotateError"), t("reauthRequired")),
   });
 
   return (

@@ -15,7 +15,7 @@ import { logger } from "@/lib/logger";
 import { consumeAltchaPayload } from "@/lib/altcha";
 import { passkeyRegisterLimiter } from "@/lib/security/redis-rate-limit";
 import { isSessionFresh } from "@/lib/security/fresh-session";
-import { isSafeRedirectUrl, isSafeWebUrl } from "@/lib/security/oauth-url";
+import { isSafeRedirectUrl, isSafeWebUrl, isHttpsUrl } from "@/lib/security/oauth-url";
 
 // Sensitive Better Auth routes that grant lasting account / client takeover power
 // (secret rotation, redirect URI edits, account linking). Gated by fresh-session
@@ -327,24 +327,63 @@ export const auth = betterAuth({
             }
           }
         }
-        for (const field of ["client_uri", "logo_uri", "tos_uri", "policy_uri"] as const) {
+        for (const field of ["client_uri", "tos_uri", "policy_uri"] as const) {
           const v = target[field];
           if (v !== undefined && v !== null && v !== "" && !isSafeWebUrl(v)) {
             throw new APIError("BAD_REQUEST", { message: `${field} must be an http(s):// URL` });
           }
         }
+        // logo_uri is rendered as an <img> on the https consent page; tighten
+        // to https-only to avoid mixed-content and phishing-pixel surface.
+        const logo = target.logo_uri;
+        if (logo !== undefined && logo !== null && logo !== "" && !isHttpsUrl(logo)) {
+          throw new APIError("BAD_REQUEST", { message: "logo_uri must be an https:// URL" });
+        }
       }
 
-      // Reject unknown scopes on consent — defense-in-depth against a stale or
-      // misconfigured authorize URL that managed to pass through with a scope
-      // not in our advertised set.
-      if (ctx.path === "/oauth2/consent" && ctx.body && typeof ctx.body === "object") {
-        const rawQuery = (ctx.body as { oauth_query?: string }).oauth_query;
-        if (rawQuery) {
-          const scopes = new URLSearchParams(rawQuery).get("scope")?.split(" ").filter(Boolean) ?? [];
-          const unknown = scopes.filter((s) => !(s in API_SCOPES));
-          if (unknown.length > 0) {
-            throw new APIError("BAD_REQUEST", { message: `Unknown scopes: ${unknown.join(", ")}` });
+      // Consent endpoint hardening: recover oauth_query from JSON or form body,
+      // reject unknown scopes (defence-in-depth against stale authorize URLs),
+      // and enforce body.scope ⊆ oauth_query.scope so the granted set never
+      // exceeds what the signed authorize request requested.
+      if (ctx.path === "/oauth2/consent") {
+        let rawQuery: string | undefined;
+        let bodyScope: string | undefined;
+        if (ctx.body && typeof ctx.body === "object") {
+          const b = ctx.body as { oauth_query?: unknown; scope?: unknown };
+          if (typeof b.oauth_query === "string") rawQuery = b.oauth_query;
+          if (typeof b.scope === "string") bodyScope = b.scope;
+        }
+        // BA may deliver application/x-www-form-urlencoded on this endpoint
+        // (the OAuth norm); the JSON cast above silently no-ops in that case.
+        if (!rawQuery) {
+          const contentType = ctx.request?.headers?.get?.("content-type") ?? "";
+          if (contentType.includes("application/x-www-form-urlencoded") && ctx.request) {
+            try {
+              const text = await ctx.request.clone().text();
+              const params = new URLSearchParams(text);
+              rawQuery = params.get("oauth_query") ?? undefined;
+              bodyScope = bodyScope ?? params.get("scope") ?? undefined;
+            } catch {
+              // fall through to the missing-oauth_query check below
+            }
+          }
+        }
+        if (!rawQuery) {
+          throw new APIError("BAD_REQUEST", { message: "oauth_query is required" });
+        }
+        const requestedScopes = new URLSearchParams(rawQuery).get("scope")?.split(" ").filter(Boolean) ?? [];
+        const unknown = requestedScopes.filter((s) => !(s in API_SCOPES));
+        if (unknown.length > 0) {
+          throw new APIError("BAD_REQUEST", { message: `Unknown scopes: ${unknown.join(", ")}` });
+        }
+        if (bodyScope) {
+          const requested = new Set(requestedScopes);
+          const granted = bodyScope.split(" ").filter(Boolean);
+          const extra = granted.filter((s) => !requested.has(s));
+          if (extra.length > 0) {
+            throw new APIError("BAD_REQUEST", {
+              message: `scope must be a subset of the originally-requested scopes (extra: ${extra.join(", ")})`,
+            });
           }
         }
       }

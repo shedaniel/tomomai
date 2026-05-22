@@ -7,7 +7,7 @@ import { db } from "@/lib/db";
 import { apikey, oauthClient, oauthConsent, oauthRefreshToken, oauthAccessToken } from "@/lib/db/schema-pg";
 import { and, eq } from "drizzle-orm";
 import { requireFreshSession } from "@/lib/security/fresh-session";
-import { httpsRedirectUrl, safeWebUrl } from "@/lib/security/oauth-url";
+import { httpsRedirectUrl, safeWebUrl, httpsWebUrl } from "@/lib/security/oauth-url";
 
 const scopeKey = z.enum(Object.keys(API_SCOPES) as [ScopeKey, ...ScopeKey[]]);
 
@@ -127,7 +127,7 @@ export const developerRouter = router({
         redirectUris: z.array(httpsRedirectUrl).min(1).max(10),
         scopes: z.array(z.enum(Object.keys(API_SCOPES) as [ScopeKey, ...ScopeKey[]])).min(1),
         uri: safeWebUrl.optional(),
-        icon: safeWebUrl.optional(),
+        icon: httpsWebUrl.optional(),
         policy: safeWebUrl.optional(),
         tos: safeWebUrl.optional(),
       })
@@ -185,7 +185,7 @@ export const developerRouter = router({
         name: z.string().min(1).max(64).optional(),
         redirectUris: z.array(httpsRedirectUrl).min(1).max(10).optional(),
         uri: safeWebUrl.optional().nullable(),
-        icon: safeWebUrl.optional().nullable(),
+        icon: httpsWebUrl.optional().nullable(),
         policy: safeWebUrl.optional().nullable(),
         tos: safeWebUrl.optional().nullable(),
         scopes: z.array(z.enum(Object.keys(API_SCOPES) as [ScopeKey, ...ScopeKey[]])).min(1).optional(),
