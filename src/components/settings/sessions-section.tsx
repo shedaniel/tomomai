@@ -15,6 +15,7 @@ import {
   AlertDialogTitle,
 } from "@tomomai/ui";
 import { authClient, useSession } from "@/lib/auth-client";
+import { useReauthGuard } from "@/lib/security/use-reauth-guard";
 import { toast } from "sonner";
 import { Loader2, Monitor, Trash2, LogOut } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -51,6 +52,7 @@ function formatDate(date: Date) {
 export function SessionsSection() {
   const t = useTranslations("settings.sessions");
   const tc = useTranslations("common");
+  const td = useTranslations("settings.developer");
   const { data: currentSession } = useSession();
   const queryClient = useQueryClient();
   const [revokeId, setRevokeId] = useState<string | null>(null);
@@ -70,13 +72,14 @@ export function SessionsSection() {
       const result = await authClient.revokeSession({ token });
       if (result.error) throw new Error(result.error.message);
     },
+    ...useReauthGuard({
+      callbackURL: "/settings",
+      reauthMessage: td("reauthRequired"),
+    }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["sessions"] });
       toast.success(t("revokeSuccess"));
       setRevokeId(null);
-    },
-    onError: (err: Error) => {
-      toast.error(err.message);
     },
   });
 
@@ -85,13 +88,14 @@ export function SessionsSection() {
       const result = await authClient.revokeOtherSessions();
       if (result.error) throw new Error(result.error.message);
     },
+    ...useReauthGuard({
+      callbackURL: "/settings",
+      reauthMessage: td("reauthRequired"),
+    }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["sessions"] });
       toast.success(t("revokeAllSuccess"));
       setRevokeAllOpen(false);
-    },
-    onError: (err: Error) => {
-      toast.error(err.message);
     },
   });
 

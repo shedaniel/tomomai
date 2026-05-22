@@ -4,6 +4,7 @@
     "loading": "加载中...",
     "save": "保存",
     "cancel": "取消",
+    "continue": "继续",
     "close": "关闭",
     "settings": "设置",
     "language": "语言",
@@ -41,6 +42,12 @@
     "clipboardError": "复制到剪贴板失败",
     "selectAnOption": "选择选项",
     "guest": "访客"
+  },
+  "security": {
+    "reauth": {
+      "title": "需要重新认证",
+      "description": "此操作需要重新登录。我们将跳转至你的登录提供方以重新认证。"
+    }
   },
   "auth": {
     "loginWithDiscord": "以 Discord 继续",
@@ -94,7 +101,7 @@
     "passkeyName": "通行密钥 {index}",
     "deleteTitle": "删除通行密钥？",
     "deleteDescription": "该通行密钥将被删除，你将无法再使用它登录。",
-    "reauthRequired": "删除此通行密钥前请重新登录。"
+    "reauthRequired": "管理通行密钥前请重新登录。"
   },
   "consent": {
     "title": "欢迎来到 tomomai",

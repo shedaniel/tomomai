@@ -2,6 +2,7 @@
 
 import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
+import { showConfirm } from "@/components/imperative-dialog";
 import {
   isFreshSessionError,
   isSessionFresh,
@@ -31,7 +32,13 @@ async function triggerReauth(callbackURL: string): Promise<void> {
 export interface ReauthGuardOptions {
   callbackURL: string;
   reauthMessage: string;
-  fallback: string;
+  /** Optional toast message when a non-reauth error arrives without `err.message`. */
+  fallback?: string;
+  /** Confirm dialog strings — caller pre-translates since this module is React-context-free. */
+  title: string;
+  description: string;
+  confirmLabel: string;
+  cancelLabel: string;
 }
 
 /**
@@ -50,21 +57,33 @@ export interface ReauthGuardOptions {
  * cross-tab expiry between pre-flight and request.
  */
 export function reauthGuard(opts: ReauthGuardOptions) {
+  const promptThenReauth = async () => {
+    const ok = await showConfirm({
+      title: opts.title,
+      description: opts.description,
+      confirmLabel: opts.confirmLabel,
+      cancelLabel: opts.cancelLabel,
+      dedupKey: "fresh-session:reauth",
+    });
+    if (ok) {
+      toast.error(opts.reauthMessage);
+      void triggerReauth(opts.callbackURL);
+    }
+  };
+
   return {
     onMutate: async () => {
       const sessionRes = await authClient.getSession();
       const session = (sessionRes as { data?: { session?: { createdAt?: string | Date } } }).data;
       if (!isSessionFresh(session?.session?.createdAt)) {
-        toast.error(opts.reauthMessage);
-        void triggerReauth(opts.callbackURL);
+        await promptThenReauth();
         throw new Error(FRESH_LOCAL_STALE);
       }
     },
-    onError: (err: { message?: string }) => {
+    onError: async (err: { message?: string }) => {
       if (err.message === FRESH_LOCAL_STALE) return;
       if (isFreshSessionError(err)) {
-        toast.error(opts.reauthMessage);
-        void triggerReauth(opts.callbackURL);
+        await promptThenReauth();
         return;
       }
       toast.error(err.message || opts.fallback);

@@ -28,7 +28,7 @@ import { trpc } from "@/lib/trpc-client";
 import { API_SCOPES, type ScopeKey } from "@/lib/api/scopes";
 import { CreateApiKeyDialog } from "@/components/developer/create-api-key-dialog";
 import { SettingsField } from "@/components/settings/primitives";
-import { reauthGuard } from "@/lib/security/fresh-session-client";
+import { useReauthGuard } from "@/lib/security/use-reauth-guard";
 import { toast } from "sonner";
 import { Plus, Trash2, Key, Loader2, RefreshCw, Copy, Check, AlertTriangle, Pencil } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -83,7 +83,7 @@ export function ApiKeysSection() {
   });
 
   const rotateMutation = trpc.developer.rotateApiKey.useMutation({
-    ...reauthGuard({
+    ...useReauthGuard({
       callbackURL: "/settings/developer",
       reauthMessage: t("reauthRequired"),
       fallback: t("apiKeys.regenerateError"),
@@ -100,7 +100,7 @@ export function ApiKeysSection() {
       const result = await authClient.apiKey.delete({ keyId: id });
       if (result.error) throw new Error(result.error.message);
     },
-    ...reauthGuard({
+    ...useReauthGuard({
       callbackURL: "/settings/developer",
       reauthMessage: t("reauthRequired"),
       fallback: t("apiKeys.deleteError"),
@@ -117,7 +117,7 @@ export function ApiKeysSection() {
       const result = await authClient.apiKey.update({ keyId: id, name });
       if (result.error) throw new Error(result.error.message);
     },
-    ...reauthGuard({
+    ...useReauthGuard({
       callbackURL: "/settings/developer",
       reauthMessage: t("reauthRequired"),
       fallback: t("apiKeys.editDialog.saveError"),

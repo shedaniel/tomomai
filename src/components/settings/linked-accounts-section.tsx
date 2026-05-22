@@ -6,7 +6,7 @@ import { Link2, Loader2, Link2Off } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { authClient } from "@/lib/auth-client";
-import { reauthGuard } from "@/lib/security/fresh-session-client";
+import { useReauthGuard } from "@/lib/security/use-reauth-guard";
 import { toast } from "sonner";
 
 type Account = {
@@ -50,7 +50,7 @@ export function LinkedAccountsSection() {
       const result = await authClient.unlinkAccount({ providerId });
       if (result.error) throw new Error(result.error.message);
     },
-    ...reauthGuard({
+    ...useReauthGuard({
       callbackURL: "/settings",
       reauthMessage: t("reauthRequired"),
       fallback: t("unlinkError"),
@@ -65,7 +65,7 @@ export function LinkedAccountsSection() {
     mutationFn: async (providerId: "discord" | "twitter") => {
       await authClient.linkSocial({ provider: providerId, callbackURL: "/settings" });
     },
-    ...reauthGuard({
+    ...useReauthGuard({
       callbackURL: "/settings",
       reauthMessage: t("reauthRequired"),
       fallback: t("linkError"),

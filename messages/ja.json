@@ -4,6 +4,7 @@
     "loading": "読み込み中...",
     "save": "保存",
     "cancel": "キャンセル",
+    "continue": "続行",
     "close": "閉じる",
     "settings": "設定",
     "language": "言語",
@@ -41,6 +42,12 @@
     "clipboardError": "クリップボードへのコピーに失敗しました",
     "selectAnOption": "オプションを選択",
     "guest": "ゲスト"
+  },
+  "security": {
+    "reauth": {
+      "title": "再認証が必要です",
+      "description": "この操作には新しいサインインが必要です。再認証のためプロバイダーにリダイレクトされます。"
+    }
   },
   "auth": {
     "loginWithDiscord": "Discordで続行",
@@ -94,7 +101,7 @@
     "passkeyName": "パスキー {index}",
     "deleteTitle": "パスキーを削除しますか？",
     "deleteDescription": "このパスキーは削除されます。今後、このパスキーでサインインできなくなります。",
-    "reauthRequired": "このパスキーを削除する前にもう一度サインインしてください。"
+    "reauthRequired": "パスキーを管理する前にもう一度サインインしてください。"
   },
   "consent": {
     "title": "ともマイへようこそ",

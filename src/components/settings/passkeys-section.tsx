@@ -8,7 +8,7 @@ import { KeyRound, Loader2, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { authClient } from "@/lib/auth-client";
-import { reauthGuard } from "@/lib/security/fresh-session-client";
+import { useReauthGuard } from "@/lib/security/use-reauth-guard";
 import { toast } from "sonner";
 
 type Passkey = {
@@ -51,7 +51,7 @@ export function PasskeysSection() {
       const result = await authClient.passkey.deletePasskey({ id });
       if (result.error) throw new Error(result.error.message);
     },
-    ...reauthGuard({
+    ...useReauthGuard({
       callbackURL: "/settings",
       reauthMessage: t("reauthRequired"),
       fallback: t("deleteError"),
@@ -63,6 +63,24 @@ export function PasskeysSection() {
     },
   });
 
+  const addMutation = useMutation({
+    mutationFn: async (payload: string) => {
+      const result = await authClient.passkey.addPasskey({
+        fetchOptions: { headers: { "x-captcha-response": payload } },
+      });
+      if (result?.error) throw new Error(result.error.message || t("addError"));
+    },
+    ...useReauthGuard({
+      callbackURL: "/settings",
+      reauthMessage: t("reauthRequired"),
+      fallback: t("addError"),
+    }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["passkeys"] });
+      toast.success(t("addSuccess"));
+    },
+  });
+
   const handleAddPasskeyClick = () => {
     setShowAltcha(true);
   };
@@ -71,18 +89,7 @@ export function PasskeysSection() {
     setShowAltcha(false);
     setAddingPasskey(true);
     try {
-      const result = await authClient.passkey.addPasskey({
-        fetchOptions: { headers: { "x-captcha-response": payload } },
-      });
-      if (result?.error) {
-        toast.error(result.error.message || t("addError"));
-      } else {
-        toast.success(t("addSuccess"));
-        queryClient.invalidateQueries({ queryKey: ["passkeys"] });
-      }
-    } catch (err) {
-      console.error("Add passkey error:", err);
-      toast.error(t("addError"));
+      await addMutation.mutateAsync(payload);
     } finally {
       setAddingPasskey(false);
     }

@@ -30,10 +30,21 @@ const FRESH_REQUIRED_PATHS = new Set<string>([
   "/api-key/update",
   "/link-social",
   "/unlink-account",
-  // Passkey mutations: stolen session must not be able to silently strip a
-  // user's WebAuthn credentials. Registration is captcha-gated separately.
+  // Passkey mutations: stolen session must not be able to silently mint or
+  // strip a user's WebAuthn credentials. Registration goes through both option
+  // generation and verification — both fresh-gated. Captcha gates automation,
+  // not stale cookies. BA's own freshSessionMiddleware uses a 24h default
+  // freshAge; our 5-min FRESH_REQUIRED_PATHS check fires first in hooks.before.
+  "/passkey/generate-register-options",
+  "/passkey/verify-registration",
   "/passkey/delete-passkey",
   "/passkey/update-passkey",
+  // Session revocation: kicking other devices is escalation territory once a
+  // stolen cookie has access (combined with a planted passkey it fully evicts
+  // the legitimate owner). /sign-out is intentionally NOT here so users can
+  // always end the current session even after reauth itself fails.
+  "/revoke-session",
+  "/revoke-other-sessions",
 ]);
 
 // Developer-portal mutation paths (OAuth client + API key writes). Gated by
@@ -214,7 +225,9 @@ export const auth = betterAuth({
   account: {
     accountLinking: {
       enabled: true,
+      // Blocks the signup-callback auto-merge by email; explicit /link-social still works.
       trustedProviders: ["discord"],
+      disableImplicitLinking: true,
     },
   },
   plugins: [

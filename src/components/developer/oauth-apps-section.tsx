@@ -24,7 +24,7 @@ import {
 } from "@tomomai/ui";
 import { trpc } from "@/lib/trpc-client";
 import { API_SCOPES, type ScopeKey } from "@/lib/api/scopes";
-import { reauthGuard } from "@/lib/security/fresh-session-client";
+import { useReauthGuard } from "@/lib/security/use-reauth-guard";
 import { SettingsField } from "@/components/settings/primitives";
 import { toast } from "sonner";
 import { Plus, Trash2, Globe, Loader2, RefreshCw, AlertTriangle, X, AppWindow, Pencil } from "lucide-react";
@@ -268,7 +268,7 @@ function CreateOAuthAppDialog({
   const [createdApp, setCreatedApp] = useState<{ clientId: string; secret: string } | null>(null);
 
   const createMutation = trpc.developer.createOAuthApp.useMutation({
-    ...reauthGuard({
+    ...useReauthGuard({
       callbackURL: "/settings/developer",
       reauthMessage: t("reauthRequired"),
       fallback: t("oauthApps.createDialog.createError"),
@@ -431,7 +431,7 @@ function EditOAuthAppDialog({
   });
 
   const updateMutation = trpc.developer.updateOAuthApp.useMutation({
-    ...reauthGuard({
+    ...useReauthGuard({
       callbackURL: "/settings/developer",
       reauthMessage: t("reauthRequired"),
       fallback: t("oauthApps.editDialog.saveError"),
@@ -594,7 +594,7 @@ export function OAuthAppsSection() {
   const { data: apps, isLoading } = trpc.developer.listOAuthApps.useQuery();
 
   const deleteMutation = trpc.developer.deleteOAuthApp.useMutation({
-    ...reauthGuard({
+    ...useReauthGuard({
       callbackURL: "/settings/developer",
       reauthMessage: t("reauthRequired"),
       fallback: t("oauthApps.deleteError"),
@@ -606,7 +606,7 @@ export function OAuthAppsSection() {
   });
 
   const rotateMutation = trpc.developer.rotateOAuthSecret.useMutation({
-    ...reauthGuard({
+    ...useReauthGuard({
       callbackURL: "/settings/developer",
       reauthMessage: t("reauthRequired"),
       fallback: t("oauthApps.rotateError"),

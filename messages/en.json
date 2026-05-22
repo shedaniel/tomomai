@@ -4,6 +4,7 @@
     "loading": "Loading...",
     "save": "Save",
     "cancel": "Cancel",
+    "continue": "Continue",
     "close": "Close",
     "settings": "Settings",
     "language": "Language",
@@ -41,6 +42,12 @@
     "back": "Back",
     "clipboardError": "Failed to copy to clipboard",
     "selectAnOption": "Select an option"
+  },
+  "security": {
+    "reauth": {
+      "title": "Re-authentication required",
+      "description": "This action needs a fresh sign-in. You'll be redirected to your provider to re-authenticate."
+    }
   },
   "auth": {
     "loginWithDiscord": "Continue with Discord",
@@ -94,7 +101,7 @@
     "passkeyName": "Passkey {index}",
     "deleteTitle": "Delete passkey?",
     "deleteDescription": "This passkey will be removed. You won't be able to use it to sign in anymore.",
-    "reauthRequired": "Please sign in again before deleting this passkey."
+    "reauthRequired": "Please sign in again before managing passkeys."
   },
   "consent": {
     "title": "Welcome to tomomai",
