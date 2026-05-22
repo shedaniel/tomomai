@@ -162,16 +162,22 @@ export function withApiKey(
         };
       }
 
-      // Resolve cost from the registry. Default 1; warn if no spec was found.
+      // Resolve cost from the registry. Fail closed if no spec is
+      // registered — every protected route must declare its cost, otherwise
+      // an unregistered handler would silently bypass quota accounting.
       const pathname = new URL(req.url).pathname;
       const spec = findRouteByRequest(req.method, pathname);
-      const cost = spec?.cost ?? 1;
       if (!spec) {
-        logger.warn(
+        logger.error(
           { method: req.method, pathname },
-          "withApiKey: no RouteSpec found — cost defaulted to 1",
+          "withApiKey: no RouteSpec registered for protected route",
+        );
+        return Response.json(
+          { error: "Internal server error" },
+          { status: 500 },
         );
       }
+      const cost = spec.cost ?? 1;
 
       // Layered rate-limit check. Consume in order; refund earlier consumes
       // if a later limiter rejects. The race window is small and never grants

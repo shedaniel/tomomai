@@ -44,9 +44,19 @@ export async function consumeMonthly(userId: string, cost: number): Promise<Quot
   }
 }
 
+// Atomically subtract `cost` from the counter, clamped at zero, preserving
+// the existing month-end TTL. Bare DECRBY would drift the counter negative
+// if a refund races ahead of (or duplicates) the matching INCRBY.
+const REFUND_LUA = `
+  local v = tonumber(redis.call('GET', KEYS[1]) or '0')
+  local n = math.max(0, v - tonumber(ARGV[1]))
+  redis.call('SET', KEYS[1], n, 'KEEPTTL')
+  return n
+`;
+
 export async function refundMonthly(userId: string, cost: number): Promise<void> {
   try {
-    await redis.decrby(monthKey(userId), cost);
+    await redis.eval(REFUND_LUA, 1, monthKey(userId), String(cost));
   } catch (err) {
     logger.error({ err, userId }, "Monthly quota refund failed");
   }

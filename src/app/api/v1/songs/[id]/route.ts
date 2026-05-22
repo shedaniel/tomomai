@@ -55,7 +55,7 @@ export async function GET(
     addedVersion: first.addedVersion,
     difficulty: first.difficulty,
     level: first.level,
-    levelPrecise: first.levelPrecise / 10,
+    levelPrecise: first.levelPrecise,
     noteDesigner: first.noteDesigner,
     noteCounts: {
       tap: first.tapCount,

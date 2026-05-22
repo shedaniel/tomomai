@@ -37,3 +37,20 @@ curl https://tomomai.lol/api/v1/me \
 ```
 
 See the [API reference](/developer/reference) for the full endpoint list.
+
+## Field encodings
+
+Several numeric fields are stored — and returned — as compact integers
+rather than the decimal a player would read in-game. Apply the transform
+on the client side.
+
+- **`levelPrecise`** — the chart's difficulty constant scaled ×10 as an
+  integer. Divide by 10 for the displayed decimal: `147` → `14.7`,
+  `150` → `15.0`. Returned in this form by every endpoint that surfaces a
+  chart's level (songs, snapshots, recents, albums, plates).
+- **`achievement`** — score scaled ×10000 as an integer. Divide by 10000
+  for the percentage: `991234` → `99.1234%`, `1010000` → `101.0000%`
+  (SSS+, the theoretical maximum). Range is `0` to `1010000`. Returned in
+  this form by every endpoint that surfaces a score (snapshots, recents,
+  plates).
+

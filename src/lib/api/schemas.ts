@@ -49,15 +49,38 @@ export const querySchemas = {
   }),
 };
 
+/**
+ * Difficulty constant scaled ×10 — the raw DB representation. Divide by 10
+ * to get the displayed decimal (e.g. 147 → 14.7). Used uniformly across
+ * every API v1 response that surfaces a chart's level.
+ */
+export const levelPreciseField = z
+  .number()
+  .int()
+  .describe(
+    "Difficulty constant scaled ×10 (integer). Divide by 10 to get the displayed decimal — e.g. 147 → 14.7.",
+  );
+
+/**
+ * Score achievement scaled ×10000 — the raw DB representation. Divide by
+ * 10000 to get the percentage. Range is 0 to 1010000 (101.0000%, SSS+).
+ */
+export const achievementField = z
+  .number()
+  .int()
+  .describe(
+    "Score achievement scaled ×10000 (integer). Divide by 10000 to get the percentage — e.g. 991234 → 99.1234%. Range 0 to 1010000 (101.0000%, SSS+).",
+  );
+
 export const plateEntry = z.object({
   songId: z.string(),
   songName: z.string(),
   artist: z.string(),
   cover: z.string().nullable(),
   difficulty: z.string(),
-  levelPrecise: z.number(),
+  levelPrecise: levelPreciseField,
   type: z.string(),
-  achievement: z.number().int(),
+  achievement: achievementField,
   fc: z.string(),
   fs: z.string(),
   dxScore: z.number().int(),
@@ -108,7 +131,7 @@ export const songCatalogueEntry = z.object({
   genre: z.string(),
   difficulty: z.enum(["basic", "advanced", "expert", "master", "remaster", "utage"]),
   level: z.string().describe("Displayed level, e.g. \"14+\"."),
-  levelPrecise: z.number().describe("Decimal level value, e.g. 14.7."),
+  levelPrecise: levelPreciseField,
   region: regionSchema,
   gameVersion: z.number().int(),
   addedVersion: z.number().int(),
@@ -146,11 +169,11 @@ const songScore = z.object({
   cover: z.string().nullable(),
   difficulty: z.string(),
   level: z.string(),
-  levelPrecise: z.number(),
+  levelPrecise: levelPreciseField,
   type: z.string(),
   genre: z.string(),
   addedVersion: z.number().int(),
-  achievement: z.number().int(),
+  achievement: achievementField,
   dxScore: z.number().int(),
   fc: z.string(),
   fs: z.string(),
@@ -193,7 +216,7 @@ const noteBreakdown = z.object({
 
 export const recentPlayBase = z.object({
   playedAt: z.string().describe("ISO 8601 timestamp."),
-  achievement: z.number().int(),
+  achievement: achievementField,
   dxScore: z.number().int(),
   maxDxScore: z.number().int(),
   fc: z.string(),
@@ -206,7 +229,7 @@ export const recentPlayBase = z.object({
     cover: z.string().nullable(),
     difficulty: z.string(),
     level: z.string(),
-    levelPrecise: z.number(),
+    levelPrecise: levelPreciseField,
     type: z.string(),
     genre: z.string(),
   }),
@@ -245,7 +268,7 @@ export const albumEntry = z.object({
   cover: z.string().nullable(),
   difficulty: z.string(),
   level: z.string(),
-  levelPrecise: z.number(),
+  levelPrecise: levelPreciseField,
   type: z.string(),
   takenAt: z.string().nullable(),
   venue: z.string().nullable(),

@@ -43,7 +43,7 @@ export async function GET() {
       genre: s.genre,
       difficulty: s.difficulty,
       level: s.level,
-      levelPrecise: s.levelPrecise / 10,
+      levelPrecise: s.levelPrecise,
       region: s.region,
       gameVersion: s.gameVersion,
       addedVersion: s.addedVersion,
