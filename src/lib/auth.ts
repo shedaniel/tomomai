@@ -1,6 +1,6 @@
 import { betterAuth } from "better-auth";
 import { resolveBaseUrl } from "@/lib/base-url";
-import { createAuthMiddleware, APIError } from "better-auth/api";
+import { createAuthMiddleware, APIError, getSessionFromCtx } from "better-auth/api";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
 import { admin, jwt, openAPI } from "better-auth/plugins";
@@ -14,6 +14,22 @@ import * as schema from "./db/schema-pg";
 import { logger } from "@/lib/logger";
 import { consumeAltchaPayload } from "@/lib/altcha";
 import { passkeyRegisterLimiter } from "@/lib/security/redis-rate-limit";
+import { isSessionFresh } from "@/lib/security/fresh-session";
+
+// Sensitive Better Auth routes that grant lasting account / client takeover power
+// (secret rotation, redirect URI edits, account linking). Gated by fresh-session
+// check so a stolen cookie alone cannot escalate without re-authentication.
+const FRESH_REQUIRED_PATHS = new Set<string>([
+  "/oauth2/create-client",
+  "/oauth2/update-client",
+  "/oauth2/client/rotate-secret",
+  "/oauth2/delete-client",
+  "/api-key/create",
+  "/api-key/delete",
+  "/api-key/update",
+  "/link-social",
+  "/unlink-account",
+]);
 
 // Passkey endpoints that mint a new credential, must be captcha-gated to prevent
 // scripted abuse. Sign-in / authenticate paths are intentionally NOT gated.
@@ -231,6 +247,32 @@ export const auth = betterAuth({
   ],
   hooks: {
     before: createAuthMiddleware(async (ctx) => {
+      // Fresh-session gate for sensitive routes. Applies regardless of caller
+      // (our tRPC router, the userscript, or a direct curl with a stolen cookie).
+      if (FRESH_REQUIRED_PATHS.has(ctx.path)) {
+        const session = await getSessionFromCtx(ctx);
+        if (!session?.session) {
+          throw new APIError("UNAUTHORIZED", { message: "Authentication required" });
+        }
+        if (!isSessionFresh(session.session.createdAt)) {
+          throw new APIError("FORBIDDEN", { message: "FRESH_SESSION_REQUIRED" });
+        }
+      }
+
+      // Reject unknown scopes on consent — defense-in-depth against a stale or
+      // misconfigured authorize URL that managed to pass through with a scope
+      // not in our advertised set.
+      if (ctx.path === "/oauth2/consent" && ctx.body && typeof ctx.body === "object") {
+        const rawQuery = (ctx.body as { oauth_query?: string }).oauth_query;
+        if (rawQuery) {
+          const scopes = new URLSearchParams(rawQuery).get("scope")?.split(" ").filter(Boolean) ?? [];
+          const unknown = scopes.filter((s) => !(s in API_SCOPES));
+          if (unknown.length > 0) {
+            throw new APIError("BAD_REQUEST", { message: `Unknown scopes: ${unknown.join(", ")}` });
+          }
+        }
+      }
+
       if (!CAPTCHA_GATED_PATHS.has(ctx.path)) return;
 
       // Per-IP rate limit on the abuse outcome itself, in addition to the captcha.

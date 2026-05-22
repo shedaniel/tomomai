@@ -1,5 +1,5 @@
 {
-  "id": "3d45318f-1439-4d98-9ae5-f579d8cccb8d",
+  "id": "2dfc2a61-f095-4292-9d25-0e8134f9f154",
   "prevId": "41958358-2cdb-48c7-be99-b810440e256f",
   "version": "7",
   "dialect": "postgresql",
@@ -143,8 +143,14 @@
           "primaryKey": false,
           "notNull": true
         },
-        "userId": {
-          "name": "userId",
+        "referenceId": {
+          "name": "referenceId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "configId": {
+          "name": "configId",
           "type": "text",
           "primaryKey": false,
           "notNull": true
@@ -257,11 +263,26 @@
           "method": "btree",
           "with": {}
         },
-        "apikey_userid_idx": {
-          "name": "apikey_userid_idx",
+        "apikey_referenceid_idx": {
+          "name": "apikey_referenceid_idx",
           "columns": [
             {
-              "expression": "userId",
+              "expression": "referenceId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "apikey_configid_idx": {
+          "name": "apikey_configid_idx",
+          "columns": [
+            {
+              "expression": "configId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -273,21 +294,7 @@
           "with": {}
         }
       },
-      "foreignKeys": {
-        "apikey_userId_user_id_fk": {
-          "name": "apikey_userId_user_id_fk",
-          "tableFrom": "apikey",
-          "tableTo": "user",
-          "columnsFrom": [
-            "userId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
@@ -740,7 +747,7 @@
           "columnsTo": [
             "clientId"
           ],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         },
         "oauthAccessToken_sessionId_session_id_fk": {
@@ -766,7 +773,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         },
         "oauthAccessToken_refreshId_oauthRefreshToken_id_fk": {
@@ -779,7 +786,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
@@ -1011,7 +1018,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
@@ -1119,7 +1126,7 @@
           "columnsTo": [
             "clientId"
           ],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         },
         "oauthConsent_userId_user_id_fk": {
@@ -1132,7 +1139,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
@@ -1271,7 +1278,7 @@
           "columnsTo": [
             "clientId"
           ],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         },
         "oauthRefreshToken_sessionId_session_id_fk": {
@@ -1297,7 +1304,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },

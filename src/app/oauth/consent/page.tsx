@@ -48,13 +48,22 @@ export default function OAuthConsentPage() {
       .finally(() => setLoading(false));
   }, [clientId]);
 
+  const knownScopes = requestedScopes.filter((s) => s in API_SCOPES);
+  const unknownScopes = requestedScopes.filter((s) => !(s in API_SCOPES));
+  const canAuthorize = unknownScopes.length === 0 && knownScopes.length > 0;
+
   async function handleConsent(accept: boolean) {
+    if (accept && !canAuthorize) return;
     setSubmitting(true);
     setError(null);
     try {
+      // Pass the known-scope subset explicitly so the server grants exactly
+      // what the user sees, never a stale/unknown scope from the signed query.
+      const body: Record<string, unknown> = { accept };
+      if (accept) body.scope = knownScopes.join(" ");
       await authClient.$fetch("/oauth2/consent", {
         method: "POST",
-        body: JSON.stringify({ accept }),
+        body: JSON.stringify(body),
         headers: { "Content-Type": "application/json" },
       });
       // Better Auth will redirect the browser to the redirect_uri via a 302.
@@ -91,9 +100,6 @@ export default function OAuthConsentPage() {
       </div>
     );
   }
-
-  const knownScopes = requestedScopes.filter((s) => s in API_SCOPES);
-  const unknownScopes = requestedScopes.filter((s) => !(s in API_SCOPES));
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-muted/30">
@@ -156,9 +162,13 @@ export default function OAuthConsentPage() {
           )}
 
           {unknownScopes.length > 0 && (
-            <p className="mt-3 text-xs text-muted-foreground">
-              Unknown scopes: {unknownScopes.join(", ")}
-            </p>
+            <div className="mt-3 rounded-md border border-destructive/50 bg-destructive/5 p-3 text-xs text-destructive">
+              <p className="font-medium">Unrecognized permissions requested</p>
+              <p className="mt-1">
+                This application is asking for scopes that no longer exist or aren&apos;t supported: {unknownScopes.join(", ")}.
+                Authorization is blocked until the application updates its request.
+              </p>
+            </div>
           )}
 
           {error && (
@@ -198,8 +208,9 @@ export default function OAuthConsentPage() {
           </Button>
           <Button
             className="flex-1"
-            disabled={submitting}
+            disabled={submitting || !canAuthorize}
             onClick={() => handleConsent(true)}
+            title={!canAuthorize ? "Cannot authorize: unrecognized or empty scopes" : undefined}
           >
             {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Authorize"}
           </Button>

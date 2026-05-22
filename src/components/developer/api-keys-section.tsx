@@ -27,7 +27,17 @@ import { authClient } from "@/lib/auth-client";
 import { trpc } from "@/lib/trpc-client";
 import { API_SCOPES, type ScopeKey } from "@/lib/api/scopes";
 import { CreateApiKeyDialog } from "@/components/developer/create-api-key-dialog";
+import { isFreshSessionError, triggerReauth } from "@/lib/security/fresh-session";
 import { toast } from "sonner";
+
+function handleSensitiveOpError(err: { message?: string }, fallback: string, reauthMessage: string) {
+  if (isFreshSessionError(err)) {
+    toast.error(reauthMessage);
+    void triggerReauth(authClient, "/settings/developer");
+    return;
+  }
+  toast.error(err.message ?? fallback);
+}
 import { Plus, Trash2, Key, Loader2, RefreshCw, Copy, Check, AlertTriangle, Pencil } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
@@ -86,9 +96,7 @@ export function ApiKeysSection() {
       setRegenerateId(null);
       setRegeneratedKey(data.key);
     },
-    onError: (err) => {
-      toast.error(err.message ?? t("apiKeys.regenerateError"));
-    },
+    onError: (err) => handleSensitiveOpError(err, t("apiKeys.regenerateError"), "Please sign in again before regenerating this API key."),
   });
 
   const deleteMutation = useMutation({
@@ -101,9 +109,7 @@ export function ApiKeysSection() {
       toast.success(t("apiKeys.deleteSuccess"));
       setDeleteId(null);
     },
-    onError: (err: Error) => {
-      toast.error(err.message ?? t("apiKeys.deleteError"));
-    },
+    onError: (err: Error) => handleSensitiveOpError(err, t("apiKeys.deleteError"), "Please sign in again before deleting this API key."),
   });
 
   const editMutation = useMutation({
@@ -115,9 +121,7 @@ export function ApiKeysSection() {
       queryClient.invalidateQueries({ queryKey: ["api-keys"] });
       setEditKey(null);
     },
-    onError: (err: Error) => {
-      toast.error(err.message ?? t("apiKeys.editDialog.saveError"));
-    },
+    onError: (err: Error) => handleSensitiveOpError(err, t("apiKeys.editDialog.saveError"), "Please sign in again before editing this API key."),
   });
 
   async function handleToggle(id: string, enabled: boolean) {

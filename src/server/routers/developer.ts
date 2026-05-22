@@ -6,6 +6,7 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { apikey, oauthClient, oauthConsent, oauthRefreshToken, oauthAccessToken } from "@/lib/db/schema-pg";
 import { and, eq } from "drizzle-orm";
+import { requireFreshSession } from "@/lib/security/fresh-session";
 
 const scopeKey = z.enum(Object.keys(API_SCOPES) as [ScopeKey, ...ScopeKey[]]);
 
@@ -35,6 +36,7 @@ export const developerRouter = router({
   rotateApiKey: protectedProcedure
     .input(z.object({ keyId: z.string() }))
     .mutation(async ({ ctx, input }) => {
+      requireFreshSession(ctx.session);
       // Verify the key belongs to the current user and get its config
       const oldKey = await db.query.apikey.findFirst({
         where: and(eq(apikey.id, input.keyId), eq(apikey.referenceId, ctx.session.user.id)),
@@ -152,6 +154,7 @@ export const developerRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
+      requireFreshSession(ctx.session);
       // Delegate creation to Better Auth so it handles client_id generation,
       // secret hashing, and any internal bookkeeping consistently.
       const result = await auth.api.createOAuthClient({
@@ -177,10 +180,21 @@ export const developerRouter = router({
       // After creation, link the app to the user in the DB.
       // Better Auth's createOAuthClient endpoint may not set userId automatically
       // when the user is identified only via session cookie, so we patch it here.
-      await db
-        .update(oauthClient)
-        .set({ userId: ctx.session.user.id })
-        .where(eq(oauthClient.clientId, (result as any).client_id));
+      // If the patch fails, compensate by deleting the orphan client so we don't
+      // leave an owner-less but still-functional OAuth client behind (we cannot
+      // share a Drizzle transaction with Better Auth's adapter).
+      try {
+        await db
+          .update(oauthClient)
+          .set({ userId: ctx.session.user.id })
+          .where(eq(oauthClient.clientId, (result as any).client_id));
+      } catch (err) {
+        await auth.api.deleteOAuthClient({
+          body: { client_id: (result as any).client_id },
+          headers: ctx.req.headers,
+        }).catch(() => {});
+        throw err;
+      }
 
       return result as { client_id: string; client_secret: string; [key: string]: unknown };
     }),
@@ -199,6 +213,10 @@ export const developerRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
+      // Redirect-URI changes can re-target the OAuth flow at an attacker-controlled
+      // endpoint, so require a fresh session for them. Pure metadata edits (name,
+      // icon, policy/tos) are lower-risk and stay session-only.
+      if (input.redirectUris) requireFreshSession(ctx.session);
       // Verify ownership
       const [app] = await db
         .select({ id: oauthClient.id })
@@ -229,6 +247,7 @@ export const developerRouter = router({
   deleteOAuthApp: protectedProcedure
     .input(z.object({ clientId: z.string() }))
     .mutation(async ({ ctx, input }) => {
+      requireFreshSession(ctx.session);
       const [app] = await db
         .select({ id: oauthClient.id })
         .from(oauthClient)
@@ -244,6 +263,7 @@ export const developerRouter = router({
   rotateOAuthSecret: protectedProcedure
     .input(z.object({ clientId: z.string() }))
     .mutation(async ({ ctx, input }) => {
+      requireFreshSession(ctx.session);
       const [app] = await db
         .select({ id: oauthClient.id })
         .from(oauthClient)
@@ -289,15 +309,19 @@ export const developerRouter = router({
         .where(and(eq(oauthConsent.clientId, input.clientId), eq(oauthConsent.userId, ctx.session.user.id)));
       if (!consent) throw new TRPCError({ code: "NOT_FOUND", message: "Authorization not found" });
 
-      // Revoke all active tokens for this user+client pair, then delete consent
-      await db
-        .delete(oauthAccessToken)
-        .where(and(eq(oauthAccessToken.clientId, input.clientId), eq(oauthAccessToken.userId, ctx.session.user.id)));
-      await db
-        .delete(oauthRefreshToken)
-        .where(and(eq(oauthRefreshToken.clientId, input.clientId), eq(oauthRefreshToken.userId, ctx.session.user.id)));
-      await db
-        .delete(oauthConsent)
-        .where(and(eq(oauthConsent.clientId, input.clientId), eq(oauthConsent.userId, ctx.session.user.id)));
+      // Revoke all active tokens for this user+client pair, then delete consent.
+      // Wrapped in a single transaction so a partial failure can't leave dangling
+      // access tokens after the refresh token / consent are already gone.
+      await db.transaction(async (tx) => {
+        await tx
+          .delete(oauthAccessToken)
+          .where(and(eq(oauthAccessToken.clientId, input.clientId), eq(oauthAccessToken.userId, ctx.session.user.id)));
+        await tx
+          .delete(oauthRefreshToken)
+          .where(and(eq(oauthRefreshToken.clientId, input.clientId), eq(oauthRefreshToken.userId, ctx.session.user.id)));
+        await tx
+          .delete(oauthConsent)
+          .where(and(eq(oauthConsent.clientId, input.clientId), eq(oauthConsent.userId, ctx.session.user.id)));
+      });
     }),
 });

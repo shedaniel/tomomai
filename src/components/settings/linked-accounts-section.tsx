@@ -6,6 +6,7 @@ import { Link2, Loader2, Link2Off } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { authClient } from "@/lib/auth-client";
+import { ensureFreshSessionOrReauth } from "@/lib/security/fresh-session";
 import { toast } from "sonner";
 
 type Account = {
@@ -65,18 +66,11 @@ export function LinkedAccountsSection() {
       // Require a fresh session before attaching a new provider: a stolen
       // cookie alone shouldn't be enough to permanently link an attacker's
       // account.
-      const FRESH_SESSION_MS = 5 * 60 * 1000;
-      const sessionRes = await authClient.getSession();
-      const session = (sessionRes as { data?: { session?: { createdAt?: string | Date } } }).data;
-      const createdAtRaw = session?.session?.createdAt;
-      const createdAt = createdAtRaw ? new Date(createdAtRaw).getTime() : 0;
-      if (!createdAt || Date.now() - createdAt > FRESH_SESSION_MS) {
+      const primary = accounts?.[0]?.providerId as "discord" | "twitter" | undefined;
+      const fresh = await ensureFreshSessionOrReauth(authClient, primary ?? null, "/settings");
+      if (!fresh) {
         toast.error(t("reauthRequired"));
         setLinkingProvider(null);
-        const primary = accounts?.[0]?.providerId;
-        if (primary === "discord" || primary === "twitter") {
-          await authClient.signIn.social({ provider: primary, callbackURL: "/settings" });
-        }
         return;
       }
       await authClient.linkSocial({

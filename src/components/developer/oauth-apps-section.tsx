@@ -23,8 +23,19 @@ import {
   ResponsiveDialogTitle,
 } from "@tomomai/ui";
 import { trpc } from "@/lib/trpc-client";
+import { authClient } from "@/lib/auth-client";
 import { API_SCOPES, type ScopeKey } from "@/lib/api/scopes";
+import { isFreshSessionError, triggerReauth } from "@/lib/security/fresh-session";
 import { toast } from "sonner";
+
+function handleSensitiveOpError(err: { message?: string }, fallback: string, reauthMessage: string) {
+  if (isFreshSessionError(err)) {
+    toast.error(reauthMessage);
+    void triggerReauth(authClient, "/settings/developer");
+    return;
+  }
+  toast.error(err.message ?? fallback);
+}
 import { Plus, Trash2, Globe, Loader2, RefreshCw, AlertTriangle, X, AppWindow, Pencil } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
@@ -270,7 +281,7 @@ function CreateOAuthAppDialog({
       setCreatedApp({ clientId: String(data.client_id), secret: String(data.client_secret) });
       onCreated();
     },
-    onError: (err) => toast.error(err.message ?? t("oauthApps.createDialog.createError")),
+    onError: (err) => handleSensitiveOpError(err, t("oauthApps.createDialog.createError"), "Please sign in again before creating an OAuth application."),
   });
 
   function handleCreate() {
@@ -429,7 +440,7 @@ function EditOAuthAppDialog({
       onSaved();
       onOpenChange(false);
     },
-    onError: (err) => toast.error(err.message ?? t("oauthApps.editDialog.saveError")),
+    onError: (err) => handleSensitiveOpError(err, t("oauthApps.editDialog.saveError"), "Please sign in again before editing this application."),
   });
 
   function handleSave() {
@@ -588,7 +599,7 @@ export function OAuthAppsSection() {
       queryClient.invalidateQueries({ queryKey: [["developer", "listOAuthApps"]] });
       setDeleteId(null);
     },
-    onError: (err) => toast.error(err.message ?? "Failed to delete application"),
+    onError: (err) => handleSensitiveOpError(err, "Failed to delete application", "Please sign in again before deleting this application."),
   });
 
   const rotateMutation = trpc.developer.rotateOAuthSecret.useMutation({
@@ -597,7 +608,7 @@ export function OAuthAppsSection() {
       setRotateId(null);
       setRotatedSecret({ clientId: variables.clientId, secret: String(data.client_secret) });
     },
-    onError: (err) => toast.error(err.message ?? "Failed to rotate secret"),
+    onError: (err) => handleSensitiveOpError(err, "Failed to rotate secret", "Please sign in again before rotating this secret."),
   });
 
   return (
