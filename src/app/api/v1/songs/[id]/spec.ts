@@ -11,6 +11,7 @@ export const spec = defineRoute({
     "Returns the song with all chart difficulties merged into a single object, " +
     "including note designer and per-note-type counts.",
   scope: "public",
+  cost: 1,
   params: z.object({
     id: z.string().describe("Public song ID (nanoid)."),
   }),

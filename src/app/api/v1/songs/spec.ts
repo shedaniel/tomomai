@@ -10,6 +10,7 @@ export const spec = defineRoute({
   description:
     "Returns every song & chart in the catalogue across all regions.",
   scope: "public",
+  cost: 1,
   cacheSeconds: 3600,
   response: z.object({
     songs: z.array(songCatalogueEntry),

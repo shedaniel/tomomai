@@ -46,8 +46,8 @@ export interface RouteSpec<
   deprecated?: boolean;
   /** If true, the response is cached server-side for the given seconds. */
   cacheSeconds?: number;
-  /** Cost units consumed per call. Default 1. See the Rate Limits guide. */
-  cost?: number;
+  /** Cost units consumed per call. See the Rate Limits guide. */
+  cost: number;
 }
 
 const REGISTRY = new Map<string, RouteSpec>();

@@ -11,6 +11,7 @@ export const spec = defineRoute({
     "Returns the username, primary region, profile visibility, and account " +
     "role for the user the token was issued to.",
   scope: "user:metadata:read",
+  cost: 1,
   response: z.object({
     username: z.string().nullable(),
     region: regionSchema,

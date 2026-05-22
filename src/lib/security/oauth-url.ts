@@ -7,12 +7,24 @@ import { z } from "zod";
 // schemes for mobile apps, so we enforce this stricter rule both in our tRPC
 // router AND in a hooks.before guard on /oauth2/{create,update}-client so direct
 // HTTP callers cannot bypass it.
+// RFC 6761 reserves `*.localhost`; `[::1]` is the WHATWG `hostname` form of IPv6 loopback.
+function isLoopbackHostname(host: string): boolean {
+  return (
+    host === "localhost" ||
+    host.endsWith(".localhost") ||
+    host === "127.0.0.1" ||
+    host === "[::1]"
+  );
+}
+
 export function isSafeRedirectUrl(v: unknown): v is string {
   if (typeof v !== "string") return false;
   try {
     const u = new URL(v);
+    // BCP 212 §3.1: reject userinfo (`https://attacker:x@trusted/cb`).
+    if (u.username !== "" || u.password !== "") return false;
     if (u.protocol === "https:") return true;
-    if (u.protocol === "http:" && (u.hostname === "localhost" || u.hostname === "127.0.0.1")) return true;
+    if (u.protocol === "http:" && isLoopbackHostname(u.hostname)) return true;
     return false;
   } catch { return false; }
 }

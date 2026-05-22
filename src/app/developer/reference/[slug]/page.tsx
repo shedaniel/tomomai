@@ -82,8 +82,8 @@ export default async function ReferenceEndpointPage({
               title="Cost units consumed per call — see Rate Limits guide"
             >
               <span className="uppercase tracking-wider">Cost</span>
-              <span className="font-semibold text-foreground">{spec.cost ?? 1}</span>
-              <span className="text-muted-foreground">{(spec.cost ?? 1) === 1 ? "unit" : "units"}</span>
+              <span className="font-semibold text-foreground">{spec.cost}</span>
+              <span className="text-muted-foreground">{spec.cost === 1 ? "unit" : "units"}</span>
             </Link>
           </div>
           {spec.deprecated ? (

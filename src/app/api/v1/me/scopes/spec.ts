@@ -11,6 +11,7 @@ export const spec = defineRoute({
     "your app stores the token long-term and wants to refresh its capability " +
     "list without re-running the OAuth flow.",
   scope: "ready",
+  cost: 1,
   response: z.object({
     scopes: z.array(z.string()).describe("Array of scope keys, e.g. `recent:read`."),
   }),

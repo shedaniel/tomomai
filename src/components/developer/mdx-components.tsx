@@ -72,7 +72,12 @@ export const mdxComponents = {
     if (href.startsWith("/")) {
       return <Link href={href}>{props.children}</Link>;
     }
-    return <a {...props} target={href.startsWith("http") ? "_blank" : undefined} rel="noopener noreferrer" />;
+    const isHttp = href.startsWith("http://") || href.startsWith("https://");
+    const isMailto = href.startsWith("mailto:");
+    if (!isHttp && !isMailto) {
+      return <span>{props.children}</span>;
+    }
+    return <a {...props} target={isHttp ? "_blank" : undefined} rel="noopener noreferrer" />;
   },
   pre: (props: ComponentProps<"pre">) => (
     <pre

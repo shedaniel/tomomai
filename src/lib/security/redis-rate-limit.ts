@@ -13,6 +13,8 @@ export interface RateLimitOptions {
   max: number;
   /** Optional block duration in seconds after exceeding the limit. Default = windowSeconds. */
   blockSeconds?: number;
+  /** If true, treat Redis errors as rate-limited instead of letting the request through. */
+  failClosed?: boolean;
 }
 
 export interface RateLimitResult {
@@ -42,9 +44,13 @@ export function clientIp(req: NextRequest): string {
 export class RedisRateLimiter {
   private limiter: RateLimiterRedis;
   private max: number;
+  private failClosed: boolean;
+  private windowSeconds: number;
 
   constructor(opts: RateLimitOptions) {
     this.max = opts.max;
+    this.failClosed = opts.failClosed ?? false;
+    this.windowSeconds = opts.windowSeconds;
     this.limiter = new RateLimiterRedis({
       storeClient: redis,
       keyPrefix: `rl:${opts.name}`,
@@ -62,7 +68,22 @@ export class RedisRateLimiter {
       if (err instanceof RateLimiterRes) {
         return this.buildResult(err, true);
       }
-      // Redis unreachable or other error — fail-open to avoid locking users out.
+      // Redis unreachable or other error.
+      if (this.failClosed) {
+        logger.error({ err, key }, "Rate limiter error — failing closed");
+        return {
+          limited: true,
+          remaining: 0,
+          limit: this.max,
+          retryAfter: this.windowSeconds,
+          headers: {
+            "X-RateLimit-Limit": String(this.max),
+            "X-RateLimit-Remaining": "0",
+            "X-RateLimit-Reset": String(this.windowSeconds),
+            "Retry-After": String(this.windowSeconds),
+          },
+        };
+      }
       logger.error({ err, key }, "Rate limiter error — failing open");
       return {
         limited: false,
@@ -132,6 +153,7 @@ export const authLimiter = new RedisRateLimiter({
   name: "auth",
   windowSeconds: 90,
   max: 10,
+  failClosed: true,
 });
 
 /** Captcha challenge creation */
@@ -168,4 +190,5 @@ export const passkeyRegisterLimiter = new RedisRateLimiter({
   windowSeconds: 60 * 60,
   max: 3,
   blockSeconds: 60 * 60,
+  failClosed: true,
 });

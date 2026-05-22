@@ -177,7 +177,7 @@ export function withApiKey(
           { status: 500 },
         );
       }
-      const cost = spec.cost ?? 1;
+      const cost = spec.cost;
 
       // Layered rate-limit check. Consume in order; refund earlier consumes
       // if a later limiter rejects. The race window is small and never grants
