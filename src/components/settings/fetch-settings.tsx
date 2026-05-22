@@ -13,8 +13,16 @@ import {
   ResponsiveDialogTitle,
   ResponsiveDialogTrigger,
 } from "@tomomai/ui";
-import { Label } from "@tomomai/ui";
 import { Switch } from "@tomomai/ui";
+import {
+  SettingsField,
+  SettingsFooter,
+  SettingsForm,
+  SettingsHeader,
+  useDirtyFlag,
+  useSettingsReset,
+  useSettingsSave,
+} from "@/components/settings/primitives";
 import { useFetchSession } from "@/hooks/useFetchSession";
 import { isCNExclusive } from "@/lib/enabled-regions";
 import { trpc } from "@/lib/trpc-client";
@@ -26,7 +34,20 @@ import { toast } from "sonner";
 
 export function FetchSettings() {
   const t = useTranslations();
-  const [isLoading, setIsLoading] = useState(false);
+  return (
+    <SettingsForm>
+      <SettingsHeader
+        title={t("settings.pages.fetch.title")}
+        description={t("settings.pages.fetch.description")}
+      />
+      <FetchFields />
+      <SettingsFooter />
+    </SettingsForm>
+  );
+}
+
+function FetchFields() {
+  const t = useTranslations();
   const [tokenDialogOpen, setTokenDialogOpen] = useState(false);
   const [selectedFetchUseAlbums, setSelectedFetchUseAlbums] = useState<boolean | null | undefined>(undefined);
 
@@ -48,24 +69,18 @@ export function FetchSettings() {
   const updateAlbumPreference = trpc.user.setAlbumPreference.useMutation();
   const deleteTokenMutation = trpc.user.deleteToken.useMutation();
 
-  const handleSave = async () => {
-    setIsLoading(true);
-    try {
-      if (profileSettings && effectiveFetchUseAlbums !== null && effectiveFetchUseAlbums !== profileSettings.fetchUseAlbums) {
-        await updateAlbumPreference.mutateAsync({ fetchUseAlbums: effectiveFetchUseAlbums });
-      }
-      toast.success(t("settings.saved"));
-    } catch (error) {
-      console.error("Failed to update settings:", error);
-      toast.error(t("settings.errorSaving"));
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const albumsDirty = !!profileSettings && effectiveFetchUseAlbums !== null && effectiveFetchUseAlbums !== profileSettings.fetchUseAlbums;
 
-  const handleReset = () => {
+  useDirtyFlag("fetch.albums", albumsDirty);
+
+  useSettingsSave("fetch.albums", async () => {
+    if (!profileSettings || !albumsDirty || effectiveFetchUseAlbums === null) return;
+    await updateAlbumPreference.mutateAsync({ fetchUseAlbums: effectiveFetchUseAlbums });
+  });
+
+  useSettingsReset("fetch.albums", () => {
     setSelectedFetchUseAlbums(undefined);
-  };
+  });
 
   const handleTokenUpdate = async (token: string) => {
     await startDataFetch(selectedRegion, token);
@@ -81,22 +96,14 @@ export function FetchSettings() {
     }
   };
 
-  const isLoadingSettings = profileSettingsLoading || isLoading;
-
   return (
-    <div className="">
-      <div className="mb-8">
-        <h1 className="text-2xl font-semibold">{t("settings.pages.fetch.title")}</h1>
-        <p className="text-sm text-muted-foreground mt-1">{t("settings.pages.fetch.description")}</p>
-      </div>
-
+    <>
       <div className="grid gap-6">
-        <div className="grid gap-2">
-          <Label className="flex items-center gap-2">
-            <Key className="h-4 w-4" />
-            {t("settings.account.label")}
-          </Label>
-          <p className="text-xs text-muted-foreground">{t("settings.account.description")}</p>
+        <SettingsField
+          icon={Key}
+          label={t("settings.account.label")}
+          description={t("settings.account.description")}
+        >
           <div className="flex gap-2">
             <Button
               variant="outline"
@@ -139,40 +146,32 @@ export function FetchSettings() {
               </ResponsiveDialogContent>
             </ResponsiveDialog>
           </div>
-        </div>
+        </SettingsField>
 
-        {!isCNExclusive() && <div className="grid gap-2">
-          <div className="flex items-center justify-between">
-            <div className="grid gap-2">
-              <Label htmlFor="fetch-albums" className="flex items-center gap-2">
-                <Images className="h-4 w-4" />
-                {t("settings.albumPrivacy.fetchAlbums")}
-              </Label>
-              <p className="text-xs text-muted-foreground">{t("settings.albumPrivacy.fetchAlbumsDescription")}</p>
-            </div>
-            <Switch
-              id="fetch-albums"
-              checked={effectiveFetchUseAlbums ?? false}
-              onCheckedChange={(v) => setSelectedFetchUseAlbums(v)}
-              disabled={isLoadingSettings || effectiveFetchUseAlbums === null}
-            />
-          </div>
-          {effectiveFetchUseAlbums === null && (
-            <div className="flex gap-2 p-2 bg-muted border border-border rounded-sm">
-              <AlertCircle className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
-              <p className="text-xs text-muted-foreground">{t("settings.albumPrivacy.notSet")}</p>
-            </div>
-          )}
-        </div>}
-      </div>
-
-      <div className="flex justify-end space-x-2 mt-10 border-t pt-6">
-        <Button variant="outline" onClick={handleReset} disabled={isLoadingSettings}>
-          {t("common.cancel")}
-        </Button>
-        <Button onClick={handleSave} disabled={isLoadingSettings}>
-          {isLoadingSettings ? t("settings.saving") : t("settings.saveChanges")}
-        </Button>
+        {!isCNExclusive() && (
+          <SettingsField
+            layout="inline"
+            icon={Images}
+            label={t("settings.albumPrivacy.fetchAlbums")}
+            description={t("settings.albumPrivacy.fetchAlbumsDescription")}
+            htmlFor="fetch-albums"
+            action={
+              <Switch
+                id="fetch-albums"
+                checked={effectiveFetchUseAlbums ?? false}
+                onCheckedChange={(v) => setSelectedFetchUseAlbums(v)}
+                disabled={profileSettingsLoading || effectiveFetchUseAlbums === null}
+              />
+            }
+          >
+            {effectiveFetchUseAlbums === null && (
+              <div className="flex gap-2 p-2 bg-muted border border-border rounded-sm">
+                <AlertCircle className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                <p className="text-xs text-muted-foreground">{t("settings.albumPrivacy.notSet")}</p>
+              </div>
+            )}
+          </SettingsField>
+        )}
       </div>
 
       <TokenDialog
@@ -183,6 +182,6 @@ export function FetchSettings() {
       />
 
       <FetchToastContainer state={fetchToastState} />
-    </div>
+    </>
   );
 }

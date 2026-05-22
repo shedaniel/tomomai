@@ -1,6 +1,7 @@
 "use client";
 
-import { Button, Label, DiscordIcon, XIcon } from "@tomomai/ui";
+import { Button, DiscordIcon, XIcon } from "@tomomai/ui";
+import { SettingsField } from "@/components/settings/primitives";
 import { Link2, Loader2, Link2Off } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -76,13 +77,7 @@ export function LinkedAccountsSection() {
 
   return (
     <div className="grid gap-4">
-      <div className="grid gap-1">
-        <Label className="flex items-center gap-2">
-          <Link2 className="h-4 w-4" />
-          {t("title")}
-        </Label>
-        <p className="text-xs text-muted-foreground">{t("description")}</p>
-      </div>
+      <SettingsField icon={Link2} label={t("title")} description={t("description")} />
 
       {isLoading ? (
         <div className="flex items-center gap-2 py-4 text-sm text-muted-foreground">

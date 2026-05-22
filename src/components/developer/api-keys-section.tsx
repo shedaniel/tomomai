@@ -27,6 +27,7 @@ import { authClient } from "@/lib/auth-client";
 import { trpc } from "@/lib/trpc-client";
 import { API_SCOPES, type ScopeKey } from "@/lib/api/scopes";
 import { CreateApiKeyDialog } from "@/components/developer/create-api-key-dialog";
+import { SettingsField } from "@/components/settings/primitives";
 import { reauthGuard } from "@/lib/security/fresh-session-client";
 import { toast } from "sonner";
 import { Plus, Trash2, Key, Loader2, RefreshCw, Copy, Check, AlertTriangle, Pencil } from "lucide-react";
@@ -145,26 +146,23 @@ export function ApiKeysSection() {
 
   return (
     <div className="grid gap-4">
-      <div className="flex items-start justify-between gap-4">
-        <div className="grid gap-2">
-          <Label className="flex items-center gap-2">
-            <Key className="h-4 w-4" />
-            {t("apiKeys.label")}
-          </Label>
-          <p className="text-xs text-muted-foreground">
-            {t("apiKeys.description")}
-          </p>
-        </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setCreateOpen(true)}
-          className="bg-background shrink-0"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          {t("apiKeys.createButton")}
-        </Button>
-      </div>
+      <SettingsField
+        layout="inline"
+        icon={Key}
+        label={t("apiKeys.label")}
+        description={t("apiKeys.description")}
+        action={
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCreateOpen(true)}
+            className="bg-background"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            {t("apiKeys.createButton")}
+          </Button>
+        }
+      />
 
       {isLoading ? (
         <div className="flex items-center justify-center gap-2 py-10 rounded-md border text-sm text-muted-foreground">

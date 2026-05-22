@@ -3,21 +3,21 @@
 import { useTranslations } from "next-intl";
 import { ApiKeysSection } from "@/components/developer/api-keys-section";
 import { OAuthAppsSection } from "@/components/developer/oauth-apps-section";
+import { SettingsHeader, SettingsSection } from "@/components/settings/primitives";
 
 export function DeveloperPortal() {
   const t = useTranslations();
 
   return (
-    <div className="">
-      <div className="mb-8">
-        <h1 className="text-2xl font-semibold">{t("settings.pages.developer.title")}</h1>
-        <p className="text-sm text-muted-foreground mt-1">{t("settings.pages.developer.description")}</p>
-      </div>
-
+    <div>
+      <SettingsHeader
+        title={t("settings.pages.developer.title")}
+        description={t("settings.pages.developer.description")}
+      />
       <ApiKeysSection />
-      <div className="mt-6 border-t pt-6">
+      <SettingsSection>
         <OAuthAppsSection />
-      </div>
+      </SettingsSection>
     </div>
   );
 }

@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Button, Label, AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@tomomai/ui";
+import { Button, AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@tomomai/ui";
+import { SettingsField } from "@/components/settings/primitives";
 import { AltchaWidget } from "@/components/altcha-widget";
 import { KeyRound, Loader2, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
@@ -94,36 +95,34 @@ export function PasskeysSection() {
 
   return (
     <div className="grid gap-4">
-      <div className="flex items-start justify-between gap-4">
-        <div className="grid gap-1">
-          <Label className="flex items-center gap-2">
-            <KeyRound className="h-4 w-4" />
-            {t("title")}
-          </Label>
-          <p className="text-xs text-muted-foreground">{t("description")}</p>
-        </div>
-        {!showAltcha && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleAddPasskeyClick}
-            disabled={addingPasskey}
-            className="shrink-0"
-          >
-            {addingPasskey ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                {t("addingPasskey")}
-              </>
-            ) : (
-              <>
-                <KeyRound className="h-4 w-4 mr-2" />
-                {t("addPasskey")}
-              </>
-            )}
-          </Button>
-        )}
-      </div>
+      <SettingsField
+        layout="inline"
+        icon={KeyRound}
+        label={t("title")}
+        description={t("description")}
+        action={
+          !showAltcha ? (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleAddPasskeyClick}
+              disabled={addingPasskey}
+            >
+              {addingPasskey ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  {t("addingPasskey")}
+                </>
+              ) : (
+                <>
+                  <KeyRound className="h-4 w-4 mr-2" />
+                  {t("addPasskey")}
+                </>
+              )}
+            </Button>
+          ) : null
+        }
+      />
 
       {showAltcha && (
         <div className="flex flex-col items-center gap-3 p-4 rounded-md border border-dashed">

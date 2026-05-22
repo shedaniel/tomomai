@@ -10,6 +10,15 @@ import {
   SelectValue,
 } from "@tomomai/ui/select-friendly";
 import { Switch } from "@tomomai/ui";
+import {
+  SettingsField,
+  SettingsFooter,
+  SettingsForm,
+  SettingsHeader,
+  useDirtyFlag,
+  useSettingsReset,
+  useSettingsSave,
+} from "@/components/settings/primitives";
 import { getEnabledRegions } from "@/lib/enabled-regions";
 import { trpc } from "@/lib/trpc-client";
 import { ProfilePrivacySettings, Region } from "@/lib/types";
@@ -20,7 +29,20 @@ import { toast } from "sonner";
 
 export function PrivacySettings() {
   const t = useTranslations();
-  const [isLoading, setIsLoading] = useState(false);
+  return (
+    <SettingsForm>
+      <SettingsHeader
+        title={t("settings.pages.privacy.title")}
+        description={t("settings.pages.privacy.description")}
+      />
+      <PrivacyFields />
+      <SettingsFooter />
+    </SettingsForm>
+  );
+}
+
+function PrivacyFields() {
+  const t = useTranslations();
 
   const { data: userData } = trpc.user.getUserData.useQuery(undefined, {
     refetchOnWindowFocus: false,
@@ -51,45 +73,33 @@ export function PrivacySettings() {
   const updateProfileMainRegion = trpc.user.updateProfileMainRegion.useMutation();
   const updateProfilePrivacySettings = trpc.user.updateProfilePrivacySettings.useMutation();
 
-  const handleSave = async () => {
-    setIsLoading(true);
-    try {
-      const promises: Promise<void>[] = [];
+  const publishDirty = !!profileSettings && effectivePublishProfile !== profileSettings.publishProfile;
+  const regionDirty = !!profileSettings && effectiveMainRegion !== profileSettings.profileMainRegion;
+  const privacyDirty = !!profileSettings && (
+    effectivePrivacySettings.profileShowAllScores !== profileSettings.profileShowAllScores ||
+    effectivePrivacySettings.profileShowScoreDetails !== profileSettings.profileShowScoreDetails ||
+    effectivePrivacySettings.profileShowPlates !== profileSettings.profileShowPlates ||
+    effectivePrivacySettings.profileShowPlayCounts !== profileSettings.profileShowPlayCounts ||
+    effectivePrivacySettings.profileShowEvents !== profileSettings.profileShowEvents ||
+    effectivePrivacySettings.profileShowInSearch !== profileSettings.profileShowInSearch
+  );
 
-      if (profileSettings) {
-        if (effectivePublishProfile !== profileSettings.publishProfile) {
-          promises.push(updatePublishProfile.mutateAsync({ publishProfile: effectivePublishProfile }).then(() => {}));
-        }
-        if (effectiveMainRegion !== profileSettings.profileMainRegion) {
-          promises.push(updateProfileMainRegion.mutateAsync({ profileMainRegion: effectiveMainRegion }).then(() => {}));
-        }
-        const privacyChanged =
-          effectivePrivacySettings.profileShowAllScores !== profileSettings.profileShowAllScores ||
-          effectivePrivacySettings.profileShowScoreDetails !== profileSettings.profileShowScoreDetails ||
-          effectivePrivacySettings.profileShowPlates !== profileSettings.profileShowPlates ||
-          effectivePrivacySettings.profileShowPlayCounts !== profileSettings.profileShowPlayCounts ||
-          effectivePrivacySettings.profileShowEvents !== profileSettings.profileShowEvents ||
-          effectivePrivacySettings.profileShowInSearch !== profileSettings.profileShowInSearch;
-        if (privacyChanged) {
-          promises.push(updateProfilePrivacySettings.mutateAsync(effectivePrivacySettings).then(() => {}));
-        }
-      }
+  useDirtyFlag("privacy", publishDirty || regionDirty || privacyDirty);
 
-      await Promise.all(promises);
-      toast.success(t("settings.saved"));
-    } catch (error) {
-      console.error("Failed to update settings:", error);
-      toast.error(t("settings.errorSaving"));
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  useSettingsSave("privacy", async () => {
+    if (!profileSettings) return;
+    const promises: Promise<unknown>[] = [];
+    if (publishDirty) promises.push(updatePublishProfile.mutateAsync({ publishProfile: effectivePublishProfile }));
+    if (regionDirty) promises.push(updateProfileMainRegion.mutateAsync({ profileMainRegion: effectiveMainRegion }));
+    if (privacyDirty) promises.push(updateProfilePrivacySettings.mutateAsync(effectivePrivacySettings));
+    await Promise.all(promises);
+  });
 
-  const handleReset = () => {
+  useSettingsReset("privacy", () => {
     setSelectedPublishProfile(null);
     setSelectedMainRegion(null);
     setSelectedPrivacySettings(null);
-  };
+  });
 
   const getProfileUrl = () => {
     if (!username) return "";
@@ -117,117 +127,107 @@ export function PrivacySettings() {
     }));
   };
 
-  const isLoadingSettings = profileSettingsLoading || isLoading;
+  const isLoadingSettings = profileSettingsLoading;
 
   return (
-    <div className="">
-      <div className="mb-8">
-        <h1 className="text-2xl font-semibold">{t("settings.pages.privacy.title")}</h1>
-        <p className="text-sm text-muted-foreground mt-1">{t("settings.pages.privacy.description")}</p>
-      </div>
+    <div className="grid gap-6">
+      <SettingsField
+        layout="inline"
+        icon={Globe}
+        label={t("settings.profile.publishProfile")}
+        description={t("settings.profile.publishDescription")}
+        htmlFor="publish-profile"
+        action={
+          <Switch
+            id="publish-profile"
+            checked={effectivePublishProfile}
+            onCheckedChange={(v) => setSelectedPublishProfile(v)}
+            disabled={isLoadingSettings}
+          />
+        }
+      />
 
-      <div className="grid gap-6">
-        <div className="grid gap-2">
-          <div className="flex items-center justify-between">
-            <Label htmlFor="publish-profile" className="flex items-center gap-2">
-              <Globe className="h-4 w-4" />
-              {t("settings.profile.publishProfile")}
-            </Label>
-            <Switch
-              id="publish-profile"
-              checked={effectivePublishProfile}
-              onCheckedChange={(v) => setSelectedPublishProfile(v)}
-              disabled={isLoadingSettings}
-            />
-          </div>
-          <p className="text-xs text-muted-foreground">{t("settings.profile.publishDescription")}</p>
-        </div>
+      {effectivePublishProfile && (
+        <div className="grid gap-4 pl-4 border-l-2 border-muted">
+          {getEnabledRegions().length > 1 && (
+            <SettingsField
+              label={t("settings.profile.mainRegion.label")}
+              description={t("settings.profile.mainRegion.description")}
+              htmlFor="main-region"
+            >
+              <Select
+                value={effectiveMainRegion}
+                onValueChange={(value: Region) => setSelectedMainRegion(value)}
+                disabled={isLoadingSettings}
+              >
+                <SelectTrigger id="main-region" className="bg-background">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {getEnabledRegions().map((region) => (
+                    <SelectItem key={region} value={region}>
+                      <div className="flex items-center space-x-2">
+                        <span className="text-xs font-mono bg-muted px-1 py-0.5 rounded">{region.toUpperCase()}</span>
+                        <span>{t(`settings.profile.mainRegion.${region}`)}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </SettingsField>
+          )}
 
-        {effectivePublishProfile && (
-          <div className="grid gap-4 pl-4 border-l-2 border-muted">
-            {getEnabledRegions().length > 1 && (
-              <div className="grid gap-2">
-                <Label htmlFor="main-region">{t("settings.profile.mainRegion.label")}</Label>
-                <Select
-                  value={effectiveMainRegion}
-                  onValueChange={(value: Region) => setSelectedMainRegion(value)}
-                  disabled={isLoadingSettings}
-                >
-                  <SelectTrigger id="main-region" className="bg-background">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {getEnabledRegions().map((region) => (
-                      <SelectItem key={region} value={region}>
-                        <div className="flex items-center space-x-2">
-                          <span className="text-xs font-mono bg-muted px-1 py-0.5 rounded">{region.toUpperCase()}</span>
-                          <span>{t(`settings.profile.mainRegion.${region}`)}</span>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-muted-foreground">{t("settings.profile.mainRegion.description")}</p>
-              </div>
-            )}
-
+          <div className="grid gap-3">
+            <Label>{t("settings.profile.privacy.label")}</Label>
             <div className="grid gap-3">
-              <Label>{t("settings.profile.privacy.label")}</Label>
-              <div className="grid gap-3">
-                {(
-                  [
-                    ["profileShowAllScores", "showAllScores"],
-                    ["profileShowScoreDetails", "showScoreDetails"],
-                    ["profileShowPlates", "showPlates"],
-                    ["profileShowPlayCounts", "showPlayCounts"],
-                    ["profileShowEvents", "showEvents"],
-                    ["profileShowInSearch", "showInSearch"],
-                  ] as const
-                ).map(([key, tKey]) => (
-                  <div key={key} className="flex items-center justify-between">
-                    <div className="grid gap-1">
-                      <Label className="text-sm font-normal">{t(`settings.profile.privacy.${tKey}.label`)}</Label>
-                      <p className="text-xs text-muted-foreground">{t(`settings.profile.privacy.${tKey}.description`)}</p>
-                    </div>
+              {(
+                [
+                  ["profileShowAllScores", "showAllScores"],
+                  ["profileShowScoreDetails", "showScoreDetails"],
+                  ["profileShowPlates", "showPlates"],
+                  ["profileShowPlayCounts", "showPlayCounts"],
+                  ["profileShowEvents", "showEvents"],
+                  ["profileShowInSearch", "showInSearch"],
+                ] as const
+              ).map(([key, tKey]) => (
+                <SettingsField
+                  key={key}
+                  layout="inline"
+                  label={t(`settings.profile.privacy.${tKey}.label`)}
+                  description={t(`settings.profile.privacy.${tKey}.description`)}
+                  labelClassName="text-sm font-normal"
+                  action={
                     <Switch
                       checked={effectivePrivacySettings[key]}
                       onCheckedChange={(checked) => updatePrivacySetting(key, checked)}
                       disabled={isLoadingSettings}
                     />
-                  </div>
-                ))}
-              </div>
+                  }
+                />
+              ))}
             </div>
-
-            {username && (
-              <div className="grid gap-2">
-                <Label>{t("settings.profile.url.label")}</Label>
-                <div className="flex items-center gap-2">
-                  <div className="flex-1 p-2 bg-muted rounded-md text-sm font-mono text-muted-foreground break-all">
-                    {getProfileUrl()}
-                  </div>
-                  <Button variant="outline" size="sm" onClick={copyToClipboard} className="shrink-0">
-                    <Copy className="h-4 w-4" />
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={openProfile} className="shrink-0">
-                    <ExternalLink className="h-4 w-4" />
-                  </Button>
-                </div>
-                <p className="text-xs text-muted-foreground">{t("settings.profile.url.description")}</p>
-              </div>
-            )}
           </div>
-        )}
-      </div>
 
-      <div className="flex justify-end space-x-2 mt-10 border-t pt-6">
-        <Button variant="outline" onClick={handleReset} disabled={isLoadingSettings}>
-          {t("common.cancel")}
-        </Button>
-        <Button onClick={handleSave} disabled={isLoadingSettings}>
-          {isLoadingSettings ? t("settings.saving") : t("settings.saveChanges")}
-        </Button>
-      </div>
+          {username && (
+            <SettingsField
+              label={t("settings.profile.url.label")}
+              description={t("settings.profile.url.description")}
+            >
+              <div className="flex items-center gap-2">
+                <div className="flex-1 p-2 bg-muted rounded-md text-sm font-mono text-muted-foreground break-all">
+                  {getProfileUrl()}
+                </div>
+                <Button variant="outline" size="sm" onClick={copyToClipboard} className="shrink-0">
+                  <Copy className="h-4 w-4" />
+                </Button>
+                <Button variant="outline" size="sm" onClick={openProfile} className="shrink-0">
+                  <ExternalLink className="h-4 w-4" />
+                </Button>
+              </div>
+            </SettingsField>
+          )}
+        </div>
+      )}
     </div>
   );
 }

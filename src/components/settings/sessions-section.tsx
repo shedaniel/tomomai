@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Button } from "@tomomai/ui";
 import { Badge } from "@tomomai/ui";
-import { Label } from "@tomomai/ui";
+import { SettingsField } from "@/components/settings/primitives";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -101,26 +101,25 @@ export function SessionsSection() {
 
   return (
     <div className="grid gap-4">
-      <div className="flex items-start justify-between gap-4">
-        <div className="grid gap-2">
-          <Label className="flex items-center gap-2">
-            <Monitor className="h-4 w-4" />
-            {t("title")}
-          </Label>
-          <p className="text-xs text-muted-foreground">{t("description")}</p>
-        </div>
-        {hasOtherSessions && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setRevokeAllOpen(true)}
-            className="bg-background shrink-0"
-          >
-            <LogOut className="h-4 w-4 mr-2" />
-            {t("revokeAll")}
-          </Button>
-        )}
-      </div>
+      <SettingsField
+        layout="inline"
+        icon={Monitor}
+        label={t("title")}
+        description={t("description")}
+        action={
+          hasOtherSessions ? (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setRevokeAllOpen(true)}
+              className="bg-background"
+            >
+              <LogOut className="h-4 w-4 mr-2" />
+              {t("revokeAll")}
+            </Button>
+          ) : null
+        }
+      />
 
       {isLoading ? (
         <div className="flex items-center justify-center gap-2 py-10 rounded-md border text-sm text-muted-foreground">

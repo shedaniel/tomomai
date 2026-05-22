@@ -20,6 +20,7 @@ import { Globe, Loader2, AppWindow } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useLocale } from "@/components/providers/locale-provider";
+import { SettingsHeader } from "@/components/settings/primitives";
 
 type Authorization = {
   consentId: string;
@@ -60,11 +61,11 @@ export function ApplicationsSettings() {
   }
 
   return (
-    <div className="">
-      <div className="mb-8">
-        <h1 className="text-2xl font-semibold">{t("settings.pages.applications.title")}</h1>
-        <p className="text-sm text-muted-foreground mt-1">{t("settings.pages.applications.description")}</p>
-      </div>
+    <div>
+      <SettingsHeader
+        title={t("settings.pages.applications.title")}
+        description={t("settings.pages.applications.description")}
+      />
 
       {isLoading ? (
         <div className="flex items-center justify-center gap-2 py-10 rounded-md border text-sm text-muted-foreground">

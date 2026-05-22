@@ -25,6 +25,7 @@ import {
 import { trpc } from "@/lib/trpc-client";
 import { API_SCOPES, type ScopeKey } from "@/lib/api/scopes";
 import { reauthGuard } from "@/lib/security/fresh-session-client";
+import { SettingsField } from "@/components/settings/primitives";
 import { toast } from "sonner";
 import { Plus, Trash2, Globe, Loader2, RefreshCw, AlertTriangle, X, AppWindow, Pencil } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -619,19 +620,18 @@ export function OAuthAppsSection() {
 
   return (
     <div className="grid gap-4">
-      <div className="flex items-start justify-between gap-4">
-        <div className="grid gap-2">
-          <Label className="flex items-center gap-2">
-            <AppWindow className="h-4 w-4" />
-            {t("oauthApps.label")}
-          </Label>
-          <p className="text-xs text-muted-foreground">{t("oauthApps.description")}</p>
-        </div>
-        <Button variant="outline" size="sm" onClick={() => setCreateOpen(true)} className="bg-background shrink-0">
-          <Plus className="h-4 w-4 mr-2" />
-          {t("oauthApps.createButton")}
-        </Button>
-      </div>
+      <SettingsField
+        layout="inline"
+        icon={AppWindow}
+        label={t("oauthApps.label")}
+        description={t("oauthApps.description")}
+        action={
+          <Button variant="outline" size="sm" onClick={() => setCreateOpen(true)} className="bg-background">
+            <Plus className="h-4 w-4 mr-2" />
+            {t("oauthApps.createButton")}
+          </Button>
+        }
+      />
 
       {isLoading ? (
         <div className="flex items-center justify-center gap-2 py-10 rounded-md border text-sm text-muted-foreground">
