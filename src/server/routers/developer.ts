@@ -1,7 +1,21 @@
 import { auth } from "@/lib/auth";
-import { API_SCOPES, expandScopes, type ScopeKey } from "@/lib/api/scopes";
+import { API_SCOPES, expandScopes, isInternalScope, type ScopeKey } from "@/lib/api/scopes";
 import { protectedProcedure, router } from "@/lib/trpc";
 import { TRPCError } from "@trpc/server";
+
+/** Throw FORBIDDEN if any requested scope is internal-only and the session
+ *  user is not an admin. Mirrors the BA hooks.before guard. */
+function assertInternalScopesAllowed(scopes: readonly ScopeKey[], userRole: string | null | undefined) {
+  const internal = scopes.filter(isInternalScope);
+  if (internal.length === 0) return;
+  if (userRole !== "admin") {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "INTERNAL_SCOPE_FORBIDDEN",
+      cause: { code: "INTERNAL_SCOPE_FORBIDDEN", scopes: internal },
+    });
+  }
+}
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { apikey, oauthClient, oauthConsent, oauthRefreshToken, oauthAccessToken } from "@/lib/db/schema-pg";
@@ -73,6 +87,7 @@ export const developerRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
+      assertInternalScopesAllowed(input.scopes, ctx.session.user.role);
       // Expand any encompassing scopes to their leaf scopes before storing.
       // This keeps verifyApiKey simple (pure AND logic, single Better Auth call).
       const leafScopes = expandScopes(input.scopes);
@@ -135,6 +150,7 @@ export const developerRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       requireFreshSession(ctx.session);
+      assertInternalScopesAllowed(input.scopes, ctx.session.user.role);
       // Delegate creation to Better Auth so it handles client_id generation,
       // secret hashing, and any internal bookkeeping consistently.
       const result = await auth.api.createOAuthClient({
@@ -203,6 +219,7 @@ export const developerRouter = router({
       // endpoint, so require a fresh session for them. Pure metadata edits (name,
       // icon, policy/tos) are lower-risk and stay session-only.
       if (input.redirectUris) requireFreshSession(ctx.session);
+      if (input.scopes) assertInternalScopesAllowed(input.scopes, ctx.session.user.role);
       // Verify ownership
       const [app] = await db
         .select({ id: oauthClient.id })

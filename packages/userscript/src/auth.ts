@@ -19,9 +19,13 @@ export function getStoredToken(): string | null {
   return (GM_getValue(KEY_ACCESS_TOKEN, null) as string | null) ?? null;
 }
 
+export function getStoredRefreshToken(): string | null {
+  return (GM_getValue(KEY_REFRESH_TOKEN, null) as string | null) ?? null;
+}
+
 export function isTokenExpired(): boolean {
   const expiresAt = GM_getValue(KEY_EXPIRES_AT, 0) as number;
-  return Date.now() >= expiresAt - 30_000; // 30s buffer
+  return Date.now() >= expiresAt - 60_000; // 60s skew
 }
 
 export function setStoredToken(
@@ -38,6 +42,56 @@ export function clearStoredToken(): void {
   GM_setValue(KEY_ACCESS_TOKEN, null);
   GM_setValue(KEY_REFRESH_TOKEN, null);
   GM_setValue(KEY_EXPIRES_AT, 0);
+}
+
+function refreshAccessToken(refreshToken: string): Promise<OAuthResult> {
+  const base = getApiBase();
+  return new Promise((resolve, reject) => {
+    GM_xmlhttpRequest({
+      method: "POST",
+      url: `${base}/api/userscript/token`,
+      headers: { "Content-Type": "application/json" },
+      data: JSON.stringify({
+        grant_type: "refresh_token",
+        refresh_token: refreshToken,
+      }),
+      onload(res) {
+        try {
+          const body = JSON.parse(res.responseText) as Record<string, unknown>;
+          if (res.status === 200 && typeof body.access_token === "string") {
+            resolve(body as unknown as OAuthResult);
+          } else {
+            reject(new Error(String(body.error ?? `refresh failed (${res.status})`)));
+          }
+        } catch {
+          reject(new Error(`refresh failed (${res.status})`));
+        }
+      },
+      onerror() {
+        reject(new Error("network error during refresh"));
+      },
+    });
+  });
+}
+
+/** Returns a non-expired access token, refreshing if needed. Throws (and
+ *  clears stored state) if no token is available or refresh fails. */
+export async function getValidAccessToken(): Promise<string> {
+  const access = getStoredToken();
+  if (access && !isTokenExpired()) return access;
+  const refresh = getStoredRefreshToken();
+  if (!refresh) {
+    clearStoredToken();
+    throw new Error("not signed in");
+  }
+  try {
+    const result = await refreshAccessToken(refresh);
+    setStoredToken(result.access_token, result.refresh_token, result.expires_in);
+    return result.access_token;
+  } catch (err) {
+    clearStoredToken();
+    throw err;
+  }
 }
 
 export type MeData = {

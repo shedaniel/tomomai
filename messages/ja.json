@@ -421,6 +421,10 @@
           "name": "スナップショット（削除）",
           "description": "任意のスナップショットを削除します。DELETE /api/v1/snapshots/:id を許可します。破壊的——明示的にリクエストする必要があり、包括的スコープでも自動付与されません。"
         },
+        "snapshot:submit": {
+          "name": "スナップショット（送信）",
+          "description": "新しいスナップショットを送信します。内部用 — 管理者のみ。"
+        },
         "fetch:read": {
           "name": "フェッチ状態（読み取り）",
           "description": "進行中または直近のmaimaiデータフェッチの状態を取得します。GET /api/v1/fetch/status を許可します。"

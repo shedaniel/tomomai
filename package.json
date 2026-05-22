@@ -5,7 +5,9 @@
   "type": "module",
   "packageManager": "pnpm@10.24.0",
   "scripts": {
-    "postinstall": "mkdir -p public/altcha && cp node_modules/altcha/dist/workers/argon2id.js public/altcha/argon2id.js",
+    "copy:altcha-worker": "mkdir -p public/altcha && cp node_modules/altcha/dist/workers/argon2id.js public/altcha/argon2id.js",
+    "predev": "pnpm run copy:altcha-worker",
+    "prebuild": "pnpm run copy:altcha-worker",
     "dev": "next dev --turbopack | pino-pretty -L info",
     "debug": "LOG_LEVEL=\"debug\" next dev --turbopack | pino-pretty",
     "build": "next build",

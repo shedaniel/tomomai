@@ -122,11 +122,15 @@ function applyV1Headers(res: Response, state: RateState): Response {
   return res;
 }
 
+export interface RouteContext {
+  params: Promise<Record<string, string | string[]>>;
+}
+
 export function withApiKey(
   requiredScopes: ScopeKey[],
-  handler: (req: NextRequest, key: ApiKeyInfo) => Promise<Response>
+  handler: (req: NextRequest, key: ApiKeyInfo, ctx: RouteContext) => Promise<Response>
 ) {
-  return async (req: NextRequest, _context?: unknown) => {
+  return async (req: NextRequest, context: RouteContext) => {
     const authHeader = req.headers.get("authorization");
     const rawKey =
       req.headers.get("x-api-key") ??
@@ -230,7 +234,7 @@ export function withApiKey(
 
       let response: Response;
       try {
-        response = await handler(req, key);
+        response = await handler(req, key, context);
       } catch (err) {
         // If the handler itself throws, refund — the request didn't succeed.
         await Promise.all([

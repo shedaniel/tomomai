@@ -11,7 +11,7 @@ import {
   clearStoredToken,
   fetchMe,
   getStoredToken,
-  isTokenExpired,
+  getValidAccessToken,
   MeData,
   openLoginPopup,
   setStoredToken,
@@ -27,16 +27,15 @@ export default function App({ container: _container }: Props) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const token = getStoredToken();
-    if (token && !isTokenExpired()) {
-      fetchMe(token)
-        .then(setUser)
-        .catch(() => clearStoredToken())
-        .finally(() => setLoading(false));
-    } else {
-      if (token) clearStoredToken();
+    if (!getStoredToken()) {
       setLoading(false);
+      return;
     }
+    getValidAccessToken()
+      .then(fetchMe)
+      .then(setUser)
+      .catch(() => clearStoredToken())
+      .finally(() => setLoading(false));
   }, []);
 
   async function handleLogin() {

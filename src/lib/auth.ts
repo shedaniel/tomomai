@@ -7,7 +7,7 @@ import { admin, jwt, openAPI } from "better-auth/plugins";
 import { apiKey } from "@better-auth/api-key";
 import { passkey } from "@better-auth/passkey";
 import { oauthProvider } from "@better-auth/oauth-provider";
-import { API_SCOPES } from "@/lib/api/scopes";
+import { API_SCOPES, isInternalScope } from "@/lib/api/scopes";
 import { and, count, eq, isNull, lt, or } from "drizzle-orm";
 import { db } from "./db";
 import * as schema from "./db/schema-pg";
@@ -288,6 +288,23 @@ export const auth = betterAuth({
   ],
   hooks: {
     before: createAuthMiddleware(async (ctx) => {
+      // Internal scopes (API_SCOPES[s].internal === true) may only be minted by
+      // admin-role users. BA's clientRegistrationAllowedScopes includes every
+      // key in API_SCOPES; without this check, any logged-in user could
+      // register a client carrying e.g. `snapshot:submit` via direct HTTP, or
+      // a non-admin could consent to such a scope if a client were
+      // misregistered. Sentinel-style message so a client-side detector can
+      // match exactly without substring drift. Shared between
+      // /oauth2/{create,update}-client and /oauth2/consent.
+      const rejectInternalScopesForNonAdmin = async (scopes: readonly string[]) => {
+        if (!scopes.some(isInternalScope)) return;
+        const s = await getSessionFromCtx(ctx);
+        if (s?.user?.role !== "admin") {
+          throw new APIError("FORBIDDEN", { message: "INTERNAL_SCOPE_FORBIDDEN" });
+        }
+      };
+
+
       // Fresh-session gate for sensitive routes. Applies regardless of caller
       // (our tRPC router, the userscript, or a direct curl with a stolen cookie).
       if (FRESH_REQUIRED_PATHS.has(ctx.path)) {
@@ -341,6 +358,10 @@ export const auth = betterAuth({
         // logo_uri is rendered as an <img> on the https consent page; tighten
         // to https-only to avoid mixed-content and phishing-pixel surface.
         assertOptionalUrl(target.logo_uri, isHttpsUrl, "logo_uri must be an https:// URL");
+
+        if (typeof target.scope === "string") {
+          await rejectInternalScopesForNonAdmin(target.scope.split(" ").filter(Boolean));
+        }
       }
 
       // Consent endpoint hardening: recover oauth_query from JSON or form body,
@@ -387,6 +408,9 @@ export const auth = betterAuth({
               message: `scope must be a subset of the originally-requested scopes (extra: ${extra.join(", ")})`,
             });
           }
+          // Defence-in-depth: even if a client is misregistered with an
+          // internal scope, a non-admin must not be able to consent to it.
+          await rejectInternalScopesForNonAdmin(granted);
         }
       }
 

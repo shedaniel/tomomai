@@ -48,6 +48,9 @@ export interface RouteSpec<
   cacheSeconds?: number;
   /** Cost units consumed per call. See the Rate Limits guide. */
   cost: number;
+  /** If true, route is omitted from the public OpenAPI document. Use for
+   *  first-party/internal-scope routes that should not be advertised. */
+  internal?: boolean;
 }
 
 const REGISTRY = new Map<string, RouteSpec>();
@@ -66,12 +69,17 @@ export function defineRoute<
   return spec;
 }
 
-/** Returns all registered route specs, sorted by tag then path. */
+/** Returns all registered route specs, sorted by tag then path.
+ *  Internal routes (RouteSpec.internal === true) are excluded — they don't
+ *  appear in the public developer reference or OpenAPI doc. Internal lookups
+ *  (e.g. by withApiKey via findRouteByRequest) still see every route. */
 export function getRegistry(): RouteSpec[] {
-  return Array.from(REGISTRY.values()).sort((a, b) => {
-    if (a.tag !== b.tag) return a.tag.localeCompare(b.tag);
-    return a.path.localeCompare(b.path);
-  });
+  return Array.from(REGISTRY.values())
+    .filter((r) => !r.internal)
+    .sort((a, b) => {
+      if (a.tag !== b.tag) return a.tag.localeCompare(b.tag);
+      return a.path.localeCompare(b.path);
+    });
 }
 
 /** Look up a single spec by `METHOD path` or by slugified path. */

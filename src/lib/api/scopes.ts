@@ -158,6 +158,22 @@ export const API_SCOPES = {
     default: false,
   },
 
+  // ── Snapshot: submit (internal) ───────────────────────────────────────────
+  // Reserved for first-party tooling (the userscript-server). Internal scopes
+  // are stripped from the public OpenAPI document and may only be minted by
+  // admin-role users — see hooks.before in src/lib/auth.ts and the tRPC guard
+  // in src/server/routers/developer.ts. End users should never authorize a
+  // client that holds this scope; the userscript reaches the submit endpoint
+  // by talking to our own server, which uses a server-side credential.
+  "snapshot:submit": {
+    name: "Snapshots (Submit)",
+    description: "Submit a new snapshot. Internal — admin only.",
+    destructive: true,
+    sensitive: true,
+    default: false,
+    internal: true,
+  },
+
   // ── Fetch control ─────────────────────────────────────────────────────────
   "fetch:read": {
     name: "Fetch Status (Read)",
@@ -209,6 +225,13 @@ export type ScopeKey = keyof typeof API_SCOPES;
 
 export function scopesToPermissions(scopes: ScopeKey[]) {
   return Object.fromEntries(scopes.map((s) => [s, ["access"]]));
+}
+
+/** Internal scopes are stripped from the public OpenAPI doc and may only be
+ *  minted by admin-role users. */
+export function isInternalScope(s: string): boolean {
+  const def = (API_SCOPES as Record<string, { internal?: boolean } | undefined>)[s];
+  return def?.internal === true;
 }
 
 /** Leaf scopes that each encompassing scope expands to (source scope is NOT stored). */

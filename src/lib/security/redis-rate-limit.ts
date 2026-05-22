@@ -151,7 +151,7 @@ export const apiLimiter = new RedisRateLimiter({
 /** Auth endpoints, stricter than general API. */
 export const authLimiter = new RedisRateLimiter({
   name: "auth",
-  windowSeconds: 90,
+  windowSeconds: 240,
   max: 10,
   failClosed: true,
 });

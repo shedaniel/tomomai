@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { API_SCOPES, type ScopeKey } from "./scopes";
+import { API_SCOPES, isInternalScope, type ScopeKey } from "./scopes";
 import { getRegistry, type RouteSpec } from "./registry";
 import "./specs";
 
@@ -10,7 +10,7 @@ import "./specs";
  * generators).
  */
 export function buildOpenApiDocument(baseUrl: string) {
-  const routes = getRegistry();
+  const routes = getRegistry().filter((r) => !r.internal);
 
   const securitySchemes = {
     BearerApiKey: {
@@ -30,7 +30,9 @@ export function buildOpenApiDocument(baseUrl: string) {
           tokenUrl: `${baseUrl}/api/auth/oauth2/token`,
           refreshUrl: `${baseUrl}/api/auth/oauth2/token`,
           scopes: Object.fromEntries(
-            (Object.keys(API_SCOPES) as ScopeKey[]).map((s) => [s, API_SCOPES[s].description]),
+            (Object.keys(API_SCOPES) as ScopeKey[])
+              .filter((s) => !isInternalScope(s))
+              .map((s) => [s, API_SCOPES[s].description]),
           ),
         },
       },

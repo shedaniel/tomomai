@@ -421,6 +421,10 @@
           "name": "快照（删除）",
           "description": "删除你的任意快照。授予 DELETE /api/v1/snapshots/:id。破坏性 —— 必须显式申请，绝不被任何包含性范围隐式授予。"
         },
+        "snapshot:submit": {
+          "name": "快照（提交）",
+          "description": "提交新快照。内部使用 — 仅管理员。"
+        },
         "fetch:read": {
           "name": "抓取状态（只读）",
           "description": "读取你正在进行或最近一次 maimai 数据抓取的状态。授予 GET /api/v1/fetch/status。"

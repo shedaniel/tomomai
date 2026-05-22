@@ -46,15 +46,15 @@ export function isHttpsUrl(v: unknown): v is string {
   return parseUrl(v)?.protocol === "https:";
 }
 
-export const httpsRedirectUrl = z.string().url().refine(isSafeRedirectUrl, {
+export const httpsRedirectUrl = z.url().refine(isSafeRedirectUrl, {
   message: "Must be an https:// URL (http://localhost permitted for development)",
 });
 
-export const safeWebUrl = z.string().url().refine(isSafeWebUrl, {
+export const safeWebUrl = z.url().refine(isSafeWebUrl, {
   message: "Must be an http(s):// URL",
 });
 
-export const httpsWebUrl = z.string().url().refine(isHttpsUrl, {
+export const httpsWebUrl = z.url().refine(isHttpsUrl, {
   message: "Must be an https:// URL",
 });
 

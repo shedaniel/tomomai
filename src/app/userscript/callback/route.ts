@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import { USERSCRIPT_ALLOWED_ORIGINS } from "@/lib/userscript/allowed-origins";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
@@ -13,6 +14,7 @@ export async function GET(request: NextRequest) {
     : { code, state };
 
   const payload = JSON.stringify(result);
+  const origins = JSON.stringify(USERSCRIPT_ALLOWED_ORIGINS);
   const html = `<!DOCTYPE html>
 <html>
 <head><title>tomomai</title></head>
@@ -20,7 +22,11 @@ export async function GET(request: NextRequest) {
 <script>
 (function(){
   var result=${payload};
-  if(window.opener){window.opener.postMessage(Object.assign({source:'tomomai-userscript'},result),'*');}
+  var origins=${origins};
+  if(window.opener){
+    var msg=Object.assign({source:'tomomai-userscript'},result);
+    for(var i=0;i<origins.length;i++){window.opener.postMessage(msg,origins[i]);}
+  }
   window.close();
 })();
 </script>

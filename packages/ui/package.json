@@ -37,13 +37,8 @@
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "files": [
-    "dist",
-    "src/styles"
+    "src"
   ],
-  "scripts": {
-    "build": "tsup",
-    "dev": "tsup --watch"
-  },
   "peerDependencies": {
     "@radix-ui/react-alert-dialog": "*",
     "@radix-ui/react-dialog": "*",
@@ -75,7 +70,6 @@
   "devDependencies": {
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
-    "tsup": "^8.5.0",
     "typescript": "^5.9.3"
   }
 }

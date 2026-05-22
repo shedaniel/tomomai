@@ -14,6 +14,9 @@ node_modules
 packages/*/dist
 packages/*/tsconfig.tsbuildinfo
 
+# Generated at prebuild/predev from node_modules/altcha
+/public/altcha/argon2id.js
+
 # testing
 /coverage
 
