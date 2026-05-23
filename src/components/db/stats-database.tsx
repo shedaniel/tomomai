@@ -1,20 +1,130 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
+import type { inferRouterOutputs } from "@trpc/server";
 import { trpc } from "@/lib/trpc-client";
-import { Card, CardContent, CardHeader, CardTitle } from "@tomomai/ui";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@tomomai/ui";
 import { useTranslations } from "next-intl";
 import { Loader2 } from "lucide-react";
+import type { AppRouter } from "@/server/routers/_app";
 import { Region } from "@/lib/types";
-import { RatingDistributionChart } from "./stats/rating-distribution-chart";
-import { PlayCountDistributionChart } from "./stats/play-count-distribution-chart";
 import { TitleRankingTable } from "./stats/title-ranking-table";
 import { SongRankingTable } from "./stats/song-ranking-table";
 import { AverageAchievementChart } from "./stats/average-achievement-chart";
 import { RatingVsPlayCountHeatmap } from "./stats/rating-vs-play-count-heatmap";
-import { ActiveUsersChart } from "./stats/active-users-chart";
-import { FetchesPerDayChart } from "./stats/fetches-per-day-chart";
+import { DistributionAreaChart } from "./stats/distribution-area-chart";
+import { TimeSeriesLineChart } from "./stats/time-series-line-chart";
+import { RatingClimbChart } from "./stats/rating-climb-chart";
+import { FetchActivityHeatmap } from "./stats/fetch-activity-heatmap";
 import { Tabs, TabsList, TabsTrigger } from "../animate-ui/components/radix/tabs";
+
+type StatsData = inferRouterOutputs<AppRouter>["db"]["getStats"];
+type StatCard = {
+  key: string;
+  titleKey: string;
+  descriptionKey?: string;
+  render: (d: StatsData, t: ReturnType<typeof useTranslations>) => ReactNode;
+};
+
+const CARDS: StatCard[] = [
+  {
+    key: "rating",
+    titleKey: "ratingDistribution",
+    render: (d, t) => <DistributionAreaChart data={d.ratingDistribution} xLabel={t("xAxis.rating")} />,
+  },
+  {
+    key: "playCount",
+    titleKey: "playCountDistribution",
+    render: (d, t) => <DistributionAreaChart data={d.playCountDistribution} xLabel={t("xAxis.playCount")} />,
+  },
+  {
+    key: "topTitles",
+    titleKey: "topTitles",
+    render: (d) => <TitleRankingTable data={d.titleRanking} />,
+  },
+  {
+    key: "topSongs",
+    titleKey: "topSongs",
+    render: (d) => <SongRankingTable data={d.mostPlayedSongs} />,
+  },
+  {
+    key: "avgAchievement",
+    titleKey: "averageAchievementByLevel",
+    render: (d) => <AverageAchievementChart data={d.averageAchievementByLevel} />,
+  },
+  {
+    key: "ratingVsPlayCount",
+    titleKey: "ratingVsPlayCount",
+    render: (d) => <RatingVsPlayCountHeatmap data={d.ratingVsPlayCount} />,
+  },
+  {
+    key: "ratingClimb",
+    titleKey: "ratingClimbByBand",
+    render: (d) => <RatingClimbChart data={d.ratingClimbByBand} />,
+  },
+  {
+    key: "newPlayers",
+    titleKey: "newPlayersPerWeek",
+    render: (d, t) => (
+      <TimeSeriesLineChart
+        data={d.newPlayersPerWeek}
+        xKey="week"
+        yKey="count"
+        xLabel={t("xAxis.week")}
+        yLabel={t("yAxis.newPlayers")}
+        formatXAxis={(v) =>
+          new Date(`${v}T00:00:00`).toLocaleDateString(undefined, { month: "short", day: "numeric" })
+        }
+        formatXTooltip={(v) =>
+          new Date(`${v}T00:00:00`).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })
+        }
+      />
+    ),
+  },
+  {
+    key: "activeUsers",
+    titleKey: "activeUsersOverTime",
+    render: (d, t) => (
+      <TimeSeriesLineChart
+        data={d.activeUsersOverTime}
+        xKey="days"
+        yKey="count"
+        xLabel={t("xAxis.days")}
+        yLabel={t("yAxis.activeUsers")}
+        formatXAxis={(v) => String(v)}
+        formatXTooltip={(v) =>
+          Number(v) === 1 ? t("xAxis.lastDay") : t("xAxis.lastDays", { days: Number(v) })
+        }
+        tooltipXLabel={t("xAxis.timePeriod")}
+      />
+    ),
+  },
+  {
+    key: "fetchesPerDay",
+    titleKey: "fetchesPerDay",
+    render: (d, t) => (
+      <TimeSeriesLineChart
+        data={d.fetchesPerDay}
+        xKey="date"
+        yKey="count"
+        xLabel={t("xAxis.date")}
+        yLabel={t("yAxis.usersWithFetches")}
+        formatXAxis={(v) =>
+          new Date(`${v}T00:00:00`).toLocaleDateString(undefined, { month: "short", day: "numeric" })
+        }
+        formatXTooltip={(v) =>
+          new Date(`${v}T00:00:00`).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })
+        }
+      />
+    ),
+  },
+  {
+    key: "fetchActivity",
+    titleKey: "fetchActivityHeatmap",
+    descriptionKey: "heatmapTimezoneNote",
+    render: (d) => <FetchActivityHeatmap data={d.fetchActivityHeatmap} />,
+  },
+];
 
 export function StatsDatabase() {
   const t = useTranslations("db.stats");
@@ -45,77 +155,17 @@ export function StatsDatabase() {
         </div>
       ) : data ? (
         <div className="columns-1 md:columns-2 gap-6 space-y-6 mb-6">
-          <Card className="break-inside-avoid">
-            <CardHeader>
-              <CardTitle>{t("ratingDistribution")}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <RatingDistributionChart data={data.ratingDistribution} />
-            </CardContent>
-          </Card>
-
-          <Card className="break-inside-avoid">
-            <CardHeader>
-              <CardTitle>{t("playCountDistribution")}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <PlayCountDistributionChart data={data.playCountDistribution} />
-            </CardContent>
-          </Card>
-
-          <Card className="break-inside-avoid">
-            <CardHeader>
-              <CardTitle>{t("topTitles")}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <TitleRankingTable data={data.titleRanking} />
-            </CardContent>
-          </Card>
-
-          <Card className="break-inside-avoid">
-            <CardHeader>
-              <CardTitle>{t("topSongs")}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <SongRankingTable data={data.mostPlayedSongs} />
-            </CardContent>
-          </Card>
-
-          <Card className="break-inside-avoid">
-            <CardHeader>
-              <CardTitle>{t("averageAchievementByLevel")}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <AverageAchievementChart data={data.averageAchievementByLevel} />
-            </CardContent>
-          </Card>
-
-          <Card className="break-inside-avoid">
-            <CardHeader>
-              <CardTitle>{t("ratingVsPlayCount")}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <RatingVsPlayCountHeatmap data={data.ratingVsPlayCount} />
-            </CardContent>
-          </Card>
-
-          <Card className="break-inside-avoid">
-            <CardHeader>
-              <CardTitle>{t("activeUsersOverTime")}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ActiveUsersChart data={data.activeUsersOverTime} />
-            </CardContent>
-          </Card>
-
-          <Card className="break-inside-avoid">
-            <CardHeader>
-              <CardTitle>{t("fetchesPerDay")}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <FetchesPerDayChart data={data.fetchesPerDay} />
-            </CardContent>
-          </Card>
+          {CARDS.map((card) => (
+            <Card key={card.key} className="break-inside-avoid">
+              <CardHeader>
+                <CardTitle>{t(card.titleKey)}</CardTitle>
+                {card.descriptionKey ? (
+                  <CardDescription>{t(card.descriptionKey)}</CardDescription>
+                ) : null}
+              </CardHeader>
+              <CardContent>{card.render(data, t)}</CardContent>
+            </Card>
+          ))}
         </div>
       ) : null}
     </div>

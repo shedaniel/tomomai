@@ -51,7 +51,7 @@ export function LinkedAccountsSection() {
       if (result.error) throw new Error(result.error.message);
     },
     ...useReauthGuard({
-      callbackURL: "/settings",
+      callbackURL: "/settings/account",
       reauthMessage: t("reauthRequired"),
       fallback: t("unlinkError"),
     }),
@@ -63,10 +63,14 @@ export function LinkedAccountsSection() {
 
   const linkMutation = useMutation({
     mutationFn: async (providerId: "discord" | "twitter") => {
-      await authClient.linkSocial({ provider: providerId, callbackURL: "/settings" });
+      await authClient.linkSocial({
+        provider: providerId,
+        callbackURL: "/settings/account",
+        errorCallbackURL: "/settings/account",
+      });
     },
     ...useReauthGuard({
-      callbackURL: "/settings",
+      callbackURL: "/settings/account",
       reauthMessage: t("reauthRequired"),
       fallback: t("linkError"),
     }),

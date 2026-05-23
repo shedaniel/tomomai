@@ -70,6 +70,7 @@ export const session = pgTable("session", {
   ipAddress: text("ipAddress"),
   userAgent: text("userAgent"),
   userId: text("userId").notNull().references(() => user.id, { onDelete: "cascade" }),
+  impersonatedBy: text("impersonatedBy"),
 });
 
 export const account = pgTable("account", {
@@ -102,14 +103,17 @@ export const passkey = pgTable("passkey", {
   name: text("name"),
   publicKey: text("publicKey").notNull(),
   userId: text("userId").notNull().references(() => user.id, { onDelete: "cascade" }),
-  webauthnUserID: text("webauthnUserID").notNull(),
+  credentialID: text("credentialID").notNull(),
   counter: integer("counter").notNull(),
   deviceType: text("deviceType").notNull(),
   backedUp: boolean("backedUp").notNull(),
   transports: text("transports"),
   createdAt: timestamp("createdAt", { precision: 0 }),
   aaguid: text("aaguid"),
-});
+}, (table) => [
+  index("passkey_userid_idx").on(table.userId),
+  index("passkey_credentialid_idx").on(table.credentialID),
+]);
 
 export const invites = pgTable("invites", {
   id: uuid("id").primaryKey().defaultRandom(),

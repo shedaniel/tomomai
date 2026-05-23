@@ -64,7 +64,7 @@ function Host<T>({
         <ResponsiveDialogHeader>
           <ResponsiveDialogTitle>{opts.title}</ResponsiveDialogTitle>
           {opts.description ? (
-            <ResponsiveDialogDescription>
+            <ResponsiveDialogDescription className="whitespace-pre-line">
               {opts.description}
             </ResponsiveDialogDescription>
           ) : null}

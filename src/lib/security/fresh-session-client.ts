@@ -22,6 +22,7 @@ async function triggerReauth(callbackURL: string): Promise<void> {
       await authClient.signIn.social({
         provider: provider as ReauthProvider,
         callbackURL,
+        errorCallbackURL: callbackURL,
       });
     }
   } catch {

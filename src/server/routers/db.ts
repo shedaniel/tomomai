@@ -229,7 +229,7 @@ export const dbRouter = router({
           for (let days = 1; days <= 30; days++) {
             runningTotal += userCountsByDaysAgo[days];
             activeUsersOverTime.push({
-              days: days,
+              days: String(days),
               count: runningTotal,
             });
           }
@@ -258,6 +258,84 @@ export const dbRouter = router({
             count: item.count,
           }));
 
+          // 9. Rating climb rate by current rating band
+          // For each user with >=14 days between first and last snapshot,
+          // compute rating gained per 30 days, bucketed by current (last) rating.
+          const ratingClimbQuery = await db.execute<{
+            band: number;
+            users: number;
+            avg_rating_per_30d: number;
+            avg_plays_per_30d: number;
+          }>(sql`
+            WITH bounds AS (
+              SELECT
+                "userId",
+                (array_agg(rating          ORDER BY "fetchedAt" ASC))[1]  AS first_r,
+                (array_agg(rating          ORDER BY "fetchedAt" DESC))[1] AS last_r,
+                (array_agg("totalPlayCount" ORDER BY "fetchedAt" ASC))[1]  AS first_p,
+                (array_agg("totalPlayCount" ORDER BY "fetchedAt" DESC))[1] AS last_p,
+                EXTRACT(EPOCH FROM (MAX("fetchedAt") - MIN("fetchedAt"))) / 86400 AS span_days
+              FROM user_snapshots
+              WHERE region = ${region}
+              GROUP BY "userId"
+            )
+            SELECT
+              (FLOOR(last_r / 500.0) * 500)::int AS band,
+              COUNT(*)::int AS users,
+              AVG((last_r - first_r) / NULLIF(span_days, 0) * 30)::float AS avg_rating_per_30d,
+              AVG((last_p - first_p) / NULLIF(span_days, 0) * 30)::float AS avg_plays_per_30d
+            FROM bounds
+            WHERE span_days >= 14 AND last_r >= 10000
+            GROUP BY band
+            ORDER BY band
+          `);
+          const ratingClimbByBand = ratingClimbQuery.map(r => ({
+            band: Number(r.band),
+            users: Number(r.users),
+            avgRatingPer30d: Number(r.avg_rating_per_30d) || 0,
+            avgPlaysPer30d: Number(r.avg_plays_per_30d) || 0,
+          }));
+
+          // 10. New tracked players per week (first snapshot week, last 24 weeks)
+          const newPlayersQuery = await db.execute<{ week: string; count: number }>(sql`
+            WITH first_snap AS (
+              SELECT "userId", MIN("fetchedAt") AS f
+              FROM user_snapshots
+              WHERE region = ${region}
+              GROUP BY "userId"
+            )
+            SELECT
+              date_trunc('week', f)::date::text AS week,
+              COUNT(*)::int AS count
+            FROM first_snap
+            WHERE f > NOW() - INTERVAL '24 weeks'
+            GROUP BY 1
+            ORDER BY 1
+          `);
+          const newPlayersPerWeek = newPlayersQuery.map(r => ({
+            week: String(r.week),
+            count: Number(r.count),
+          }));
+
+          // 11. Fetch activity heatmap: completed fetches by hour × weekday (JST, last 90 days)
+          const heatmapQuery = await db.execute<{ dow: number; hour: number; count: number }>(sql`
+            SELECT
+              EXTRACT(DOW  FROM ("startedAt" AT TIME ZONE 'UTC') AT TIME ZONE 'Asia/Tokyo')::int AS dow,
+              EXTRACT(HOUR FROM ("startedAt" AT TIME ZONE 'UTC') AT TIME ZONE 'Asia/Tokyo')::int AS hour,
+              COUNT(*)::int AS count
+            FROM fetch_sessions
+            WHERE region = ${region}
+              AND status = 'completed'
+              AND "startedAt" > NOW() - INTERVAL '90 days'
+            GROUP BY 1, 2
+            ORDER BY 1, 2
+          `);
+          const fetchActivityHeatmap = heatmapQuery.map(r => ({
+            dow: Number(r.dow),
+            hour: Number(r.hour),
+            count: Number(r.count),
+          }));
+
           return {
             ratingDistribution,
             playCountDistribution,
@@ -267,6 +345,9 @@ export const dbRouter = router({
             ratingVsPlayCount,
             activeUsersOverTime,
             fetchesPerDay,
+            ratingClimbByBand,
+            newPlayersPerWeek,
+            fetchActivityHeatmap,
             totalUsers: 0, // Hide actual count
           };
         },

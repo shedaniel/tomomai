@@ -24,7 +24,7 @@ import { SPRING_CONFIGS, getTransition } from "@/lib/animation-constants";
 import { triggerHaptic } from "@/lib/haptics";
 import { getEnabledRegions, isCNExclusive } from "@/lib/enabled-regions";
 import { Locale, setLocaleCookie } from "@/i18n/locale";
-import { cn, getLanguages } from "@/lib/utils";
+import { cn, getLanguages, isR2Url } from "@/lib/utils";
 import { useLocale } from "./providers/locale-provider";
 
 function XIcon({ className }: { className?: string }) {
@@ -166,6 +166,7 @@ function UserAvatar({ user }: { user: User }) {
       width={40}
       height={40}
       className="w-10 h-10 rounded-full"
+      unoptimized={isR2Url(user.image)}
     />
   ) : (
     <LucideUserIcon className="h-5 w-5" />
@@ -273,7 +274,7 @@ function UserIcon({ user, menu, onAbout, onTheme, onDiscordInvite }: Partial<Non
       <Menu className="size-5 md:size-3.5 text-muted-foreground" />
       <div className="size-8 md:size-6 rounded-full bg-muted overflow-hidden flex items-center justify-center shrink-0">
         {user?.image ? (
-          <Image src={user.image} alt="Profile" width={28} height={28} className="size-8 md:size-6 rounded-full" />
+          <Image src={user.image} alt="Profile" width={28} height={28} className="size-8 md:size-6 rounded-full" unoptimized={isR2Url(user.image)} />
         ) : (
           <LucideUserIcon className="size-3" />
         )}

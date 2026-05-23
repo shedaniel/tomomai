@@ -7,7 +7,7 @@ import { AltchaWidget } from "@/components/altcha-widget";
 import { KeyRound, Loader2, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { authClient } from "@/lib/auth-client";
+import { authClient, armCaptchaForPath } from "@/lib/auth-client";
 import { useReauthGuard } from "@/lib/security/use-reauth-guard";
 import { toast } from "sonner";
 
@@ -65,9 +65,8 @@ export function PasskeysSection() {
 
   const addMutation = useMutation({
     mutationFn: async (payload: string) => {
-      const result = await authClient.passkey.addPasskey({
-        fetchOptions: { headers: { "x-captcha-response": payload } },
-      });
+      armCaptchaForPath("/passkey/generate-register-options", payload);
+      const result = await authClient.passkey.addPasskey();
       if (result?.error) throw new Error(result.error.message || t("addError"));
     },
     ...useReauthGuard({

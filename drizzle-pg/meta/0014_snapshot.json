@@ -1,5 +1,5 @@
 {
-  "id": "2dfc2a61-f095-4292-9d25-0e8134f9f154",
+  "id": "fe57ba18-0221-4c2c-a8f7-ef13089b6f4c",
   "prevId": "41958358-2cdb-48c7-be99-b810440e256f",
   "version": "7",
   "dialect": "postgresql",
@@ -1350,8 +1350,8 @@
           "primaryKey": false,
           "notNull": true
         },
-        "webauthnUserID": {
-          "name": "webauthnUserID",
+        "credentialID": {
+          "name": "credentialID",
           "type": "text",
           "primaryKey": false,
           "notNull": true
@@ -1393,7 +1393,38 @@
           "notNull": false
         }
       },
-      "indexes": {},
+      "indexes": {
+        "passkey_userid_idx": {
+          "name": "passkey_userid_idx",
+          "columns": [
+            {
+              "expression": "userId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "passkey_credentialid_idx": {
+          "name": "passkey_credentialid_idx",
+          "columns": [
+            {
+              "expression": "credentialID",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
       "foreignKeys": {
         "passkey_userId_user_id_fk": {
           "name": "passkey_userId_user_id_fk",
@@ -1570,6 +1601,12 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true
+        },
+        "impersonatedBy": {
+          "name": "impersonatedBy",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {},

@@ -14,7 +14,7 @@ export function RatingVsPlayCountHeatmap({ data }: RatingVsPlayCountHeatmapProps
   const chartConfig = {
     count: {
       label: t("yAxis.count"),
-      color: "hsl(var(--primary))",
+      color: "var(--primary)",
     },
   };
 

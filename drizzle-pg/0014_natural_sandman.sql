@@ -85,7 +85,7 @@ CREATE TABLE "passkey" (
 	"name" text,
 	"publicKey" text NOT NULL,
 	"userId" text NOT NULL,
-	"webauthnUserID" text NOT NULL,
+	"credentialID" text NOT NULL,
 	"counter" integer NOT NULL,
 	"deviceType" text NOT NULL,
 	"backedUp" boolean NOT NULL,
@@ -103,6 +103,7 @@ DROP INDEX "apikey_userid_idx";--> statement-breakpoint
 TRUNCATE TABLE "apikey";--> statement-breakpoint
 ALTER TABLE "apikey" ADD COLUMN "referenceId" text NOT NULL;--> statement-breakpoint
 ALTER TABLE "apikey" ADD COLUMN "configId" text NOT NULL;--> statement-breakpoint
+ALTER TABLE "session" ADD COLUMN "impersonatedBy" text;--> statement-breakpoint
 ALTER TABLE "oauthAccessToken" ADD CONSTRAINT "oauthAccessToken_clientId_oauthClient_clientId_fk" FOREIGN KEY ("clientId") REFERENCES "public"."oauthClient"("clientId") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "oauthAccessToken" ADD CONSTRAINT "oauthAccessToken_sessionId_session_id_fk" FOREIGN KEY ("sessionId") REFERENCES "public"."session"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "oauthAccessToken" ADD CONSTRAINT "oauthAccessToken_userId_user_id_fk" FOREIGN KEY ("userId") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
@@ -124,6 +125,8 @@ CREATE INDEX "oauth_consent_userid_idx" ON "oauthConsent" USING btree ("userId")
 CREATE INDEX "oauth_refresh_token_clientid_idx" ON "oauthRefreshToken" USING btree ("clientId");--> statement-breakpoint
 CREATE INDEX "oauth_refresh_token_sessionid_idx" ON "oauthRefreshToken" USING btree ("sessionId");--> statement-breakpoint
 CREATE INDEX "oauth_refresh_token_userid_idx" ON "oauthRefreshToken" USING btree ("userId");--> statement-breakpoint
+CREATE INDEX "passkey_userid_idx" ON "passkey" USING btree ("userId");--> statement-breakpoint
+CREATE INDEX "passkey_credentialid_idx" ON "passkey" USING btree ("credentialID");--> statement-breakpoint
 CREATE INDEX "apikey_referenceid_idx" ON "apikey" USING btree ("referenceId");--> statement-breakpoint
 CREATE INDEX "apikey_configid_idx" ON "apikey" USING btree ("configId");--> statement-breakpoint
 ALTER TABLE "apikey" DROP COLUMN "userId";

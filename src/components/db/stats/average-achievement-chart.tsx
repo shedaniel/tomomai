@@ -14,7 +14,7 @@ export function AverageAchievementChart({ data }: AverageAchievementChartProps) 
   const chartConfig = {
     averageAchievement: {
       label: t("yAxis.achievement"),
-      color: "hsl(var(--primary))",
+      color: "var(--primary)",
     },
   };
 

@@ -16,6 +16,100 @@ import { consumeAltchaPayload } from "@/lib/altcha";
 import { passkeyRegisterLimiter } from "@/lib/security/redis-rate-limit";
 import { isSessionFresh } from "@/lib/security/fresh-session";
 import { isSafeRedirectUrl, isSafeWebUrl, isHttpsUrl } from "@/lib/security/oauth-url";
+import { mirrorRemoteAvatarToR2, isR2AvatarUrl } from "@/lib/r2";
+
+async function mirrorAvatarForSignup(
+  rawUrl: string | null | undefined,
+  userIdForLog: string,
+): Promise<string | null> {
+  if (!rawUrl) return null;
+  if (isR2AvatarUrl(rawUrl)) return rawUrl;
+  let result = await mirrorRemoteAvatarToR2(rawUrl);
+  if (result.url === null && result.reason === "transient") {
+    result = await mirrorRemoteAvatarToR2(rawUrl);
+  }
+  logger.info(
+    { userId: userIdForLog, oldUrl: rawUrl, newUrl: result.url, reason: result.reason ?? "ok" },
+    "auth.signup.avatar-mirror",
+  );
+  return result.url;
+}
+
+// Self-healing: when a user with image=null signs in, ask the provider for their
+// current avatar and mirror it. Users whose original avatar was dead at signup
+// (or whose backfill nulled them) recover by simply logging in again.
+async function fetchProviderAvatarUrl(
+  providerId: string,
+  accessToken: string,
+): Promise<string | null> {
+  try {
+    if (providerId === "discord") {
+      const res = await fetch("https://discord.com/api/users/@me", {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (!res.ok) return null;
+      const profile = (await res.json()) as { id?: string; avatar?: string | null };
+      if (!profile.id || !profile.avatar) return null;
+      const ext = profile.avatar.startsWith("a_") ? "gif" : "png";
+      return `https://cdn.discordapp.com/avatars/${profile.id}/${profile.avatar}.${ext}`;
+    }
+    if (providerId === "twitter") {
+      const res = await fetch("https://api.twitter.com/2/users/me?user.fields=profile_image_url", {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (!res.ok) return null;
+      const json = (await res.json()) as { data?: { profile_image_url?: string } };
+      // Twitter returns the `_normal` (48x48) variant by default; bump to 400x400.
+      return json.data?.profile_image_url?.replace("_normal.", "_400x400.") ?? null;
+    }
+  } catch {
+    // network failure → treat as missing
+  }
+  return null;
+}
+
+async function refreshAvatarIfMissing(userId: string): Promise<void> {
+  const [row] = await db
+    .select({ image: schema.user.image })
+    .from(schema.user)
+    .where(eq(schema.user.id, userId))
+    .limit(1);
+  if (!row || row.image) return;
+
+  const [acct] = await db
+    .select({ providerId: schema.account.providerId, accessToken: schema.account.accessToken })
+    .from(schema.account)
+    .where(
+      and(
+        eq(schema.account.userId, userId),
+        or(eq(schema.account.providerId, "discord"), eq(schema.account.providerId, "twitter")),
+      ),
+    )
+    .orderBy(schema.account.updatedAt)
+    .limit(1);
+  if (!acct?.accessToken) return;
+
+  const remoteUrl = await fetchProviderAvatarUrl(acct.providerId, acct.accessToken);
+  if (!remoteUrl) {
+    logger.info({ userId, providerId: acct.providerId }, "auth.signin.avatar-refresh-no-remote");
+    return;
+  }
+
+  const result = await mirrorRemoteAvatarToR2(remoteUrl);
+  if (!result.url) {
+    logger.info(
+      { userId, providerId: acct.providerId, remoteUrl, reason: result.reason },
+      "auth.signin.avatar-refresh-failed",
+    );
+    return;
+  }
+
+  await db.update(schema.user).set({ image: result.url }).where(eq(schema.user.id, userId));
+  logger.info(
+    { userId, providerId: acct.providerId, newUrl: result.url },
+    "auth.signin.avatar-refresh-ok",
+  );
+}
 
 // Sensitive Better Auth routes that grant lasting account / client takeover power
 // (secret rotation, redirect URI edits, account linking). Gated by fresh-session
@@ -478,9 +572,25 @@ export const auth = betterAuth({
     }),
   },
   databaseHooks: {
+    session: {
+      create: {
+        after: async (session) => {
+          // Best-effort, non-blocking. Errors must not break sign-in.
+          void refreshAvatarIfMissing(session.userId).catch((err) => {
+            logger.warn({ err, userId: session.userId }, "auth.signin.avatar-refresh-threw");
+          });
+        },
+      },
+    },
     user: {
       create: {
         before: async (user, context) => {
+          // Mirror Discord/Twitter avatar to R2 so we don't depend on their CDNs.
+          // Failures (dead URL, transient) end up as null; the UI falls back to initials.
+          if (user.image) {
+            user.image = await mirrorAvatarForSignup(user.image, user.id);
+          }
+
           const inviteRequired = await checkInviteRequirement();
 
           if (SIGNUP_TYPE === 'disabled') {

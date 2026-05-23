@@ -3,6 +3,7 @@
 import { Button } from "@tomomai/ui";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@tomomai/ui";
 import { signIn, useSession } from "@/lib/auth-client";
+import { AuthErrorHandler } from "@/components/auth-error-handler";
 import { trpc } from "@/lib/trpc-client";
 import { AlertCircle, Database, UserCheck } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -121,6 +122,7 @@ export default function AcceptInvitationPage() {
 
   return (
     <div className="container mx-auto max-w-md mt-8 px-4">
+      <AuthErrorHandler />
       <Card>
         <CardHeader className="text-center">
           <CardTitle className="flex items-center justify-center space-x-2">

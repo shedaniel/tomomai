@@ -145,6 +145,96 @@ export function isR2IconUrl(url: string): boolean {
   return prefixes.some((p) => url.startsWith(p));
 }
 
+export function avatarKeyForBuffer(buffer: Buffer, contentType: string): string {
+  const hash = createHash("sha256").update(buffer).digest("hex");
+  return `avatars/${hash}.${extensionForContentType(contentType)}`;
+}
+
+export async function uploadAvatarToR2(
+  buffer: Buffer,
+  contentType: string,
+): Promise<{ key: string; url: string }> {
+  const key = avatarKeyForBuffer(buffer, contentType);
+  const url = iconPublicUrl(key);
+
+  if (await r2ObjectExists(key)) {
+    return { key, url };
+  }
+
+  await r2Client.send(new PutObjectCommand({
+    Bucket: R2_BUCKET,
+    Key: key,
+    Body: buffer,
+    ContentType: contentType,
+    CacheControl: "public, max-age=31536000, immutable",
+  }));
+
+  return { key, url };
+}
+
+export function isR2AvatarUrl(url: string): boolean {
+  const base = process.env.NEXT_PUBLIC_R2_URL;
+  const baseCn = process.env.NEXT_PUBLIC_R2_URL_CN;
+  const prefixes = [base, baseCn].filter(Boolean).map((b) => `${b!.replace(/\/$/, "")}/avatars/`);
+  return prefixes.some((p) => url.startsWith(p));
+}
+
+export type MirrorResult =
+  | { url: string; reason?: undefined }
+  | { url: null; reason: "dead" | "transient" };
+
+export async function mirrorRemoteAvatarToR2(
+  remoteUrl: string,
+  { timeoutMs = 5000 }: { timeoutMs?: number } = {},
+): Promise<MirrorResult> {
+  if (isR2AvatarUrl(remoteUrl)) {
+    return { url: remoteUrl };
+  }
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  let response: Response;
+  try {
+    response = await fetch(remoteUrl, { signal: controller.signal, redirect: "follow" });
+  } catch {
+    return { url: null, reason: "transient" };
+  } finally {
+    clearTimeout(timer);
+  }
+
+  if (response.status === 404 || response.status === 403 || response.status === 410) {
+    return { url: null, reason: "dead" };
+  }
+  if (response.status >= 500) {
+    return { url: null, reason: "transient" };
+  }
+  if (!response.ok) {
+    return { url: null, reason: "dead" };
+  }
+
+  const contentType = (response.headers.get("content-type") || "").toLowerCase();
+  if (!contentType.startsWith("image/")) {
+    return { url: null, reason: "dead" };
+  }
+
+  let buffer: Buffer;
+  try {
+    buffer = Buffer.from(await response.arrayBuffer());
+  } catch {
+    return { url: null, reason: "transient" };
+  }
+  if (buffer.length === 0) {
+    return { url: null, reason: "dead" };
+  }
+
+  try {
+    const { url } = await uploadAvatarToR2(buffer, contentType);
+    return { url };
+  } catch {
+    return { url: null, reason: "transient" };
+  }
+}
+
 export function r2KeyFromIconUrl(url: string): string | null {
   const base = process.env.NEXT_PUBLIC_R2_URL;
   const baseCn = process.env.NEXT_PUBLIC_R2_URL_CN;
