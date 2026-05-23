@@ -71,6 +71,7 @@ export default async function Home() {
   const userData = await trpc.user.getUserData().catch(() => ({
     hasUsername: false,
     username: null,
+    email: "",
     publishProfile: false,
     region: "intl" as const,
     role: "user" as const,

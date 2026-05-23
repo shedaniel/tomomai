@@ -223,7 +223,7 @@ export const Versions = {
     shortName: "PRiSM PLUS",
     intlReleaseDate: "2025/07/24",
     jpReleaseDate: "2025/03/13",
-    cnReleaseDate: null,
+    cnReleaseDate: "2026/06/10",
     version: 255,
   },
   MAIMAI_DX_CIRCLE: {

@@ -16,6 +16,7 @@ import { STAGGER, getTransition } from "@/lib/animation-constants";
 import { ConsentDialog } from "@/components/consent-dialog";
 import { trpc } from "@/lib/trpc-client";
 import { DiscordIcon, XIcon } from "@tomomai/ui";
+import { showMessage } from "@/components/imperative-dialog";
 
 interface SignupRequirements {
   signupEnabled: boolean;
@@ -77,11 +78,27 @@ export function LoginScreen({ signupRequirements }: LoginScreenProps) {
   };
 
   const handlePasskeyLogin = async () => {
+    const showError = (description: string) =>
+      showMessage({
+        title: t("auth.passkey.errorTitle"),
+        description,
+        label: t("common.ok"),
+        dedupKey: "passkey-signin-error",
+      });
+
     try {
-      await authClient.signIn.passkey();
+      const result = await authClient.signIn.passkey();
+      if (result?.error) {
+        // User-cancellation is intentional silence — no dialog.
+        const errCode = (result.error as { code?: string }).code;
+        if (errCode === "AUTH_CANCELLED") return;
+        await showError(result.error.message ?? t("auth.passkey.errorGeneric"));
+        return;
+      }
+      window.location.reload();
     } catch (error) {
       console.error("Passkey sign-in error:", error);
-      toast.error("An error occurred during passkey sign-in. Please try again.");
+      await showError(t("auth.passkey.errorGeneric"));
     }
   };
 
@@ -89,24 +106,18 @@ export function LoginScreen({ signupRequirements }: LoginScreenProps) {
     setShowConsentDialog(true);
   };
 
-  const handleConsentGiven = async (method: "discord" | "twitter" | "passkey") => {
-    if (method === "discord" || method === "twitter") {
-      setShowConsentDialog(false);
-      try {
-        await signIn.social({
-          provider: method,
-          callbackURL: "/",
-          errorCallbackURL: "/",
-          requestSignUp: true,
-        });
-      } catch (error) {
-        console.error(`${method} signup error:`, error);
-        toast.error("An error occurred during authentication. Please try again.");
-      }
-    }
-    // For passkey, the dialog handles the full flow and calls onConsent after success
-    if (method === "passkey") {
-      setShowConsentDialog(false);
+  const handleConsentGiven = async (method: "discord" | "twitter") => {
+    setShowConsentDialog(false);
+    try {
+      await signIn.social({
+        provider: method,
+        callbackURL: "/",
+        errorCallbackURL: "/",
+        requestSignUp: true,
+      });
+    } catch (error) {
+      console.error(`${method} signup error:`, error);
+      toast.error("An error occurred during authentication. Please try again.");
     }
   };
 

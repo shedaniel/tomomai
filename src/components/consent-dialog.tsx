@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "motion/react";
+import { useEffect, useState } from "react";
 import {
   ResponsiveDialog,
   ResponsiveDialogContent,
@@ -13,20 +12,17 @@ import {
 import { Checkbox } from "@/components/animate-ui/components/radix/checkbox";
 import { Button } from "@tomomai/ui";
 import { PolicyDialog } from "@/components/policy-dialog";
-import { ChevronDown, ChevronUp, Dot, KeyRound, Loader2 } from "lucide-react";
+import { ChevronDown, ChevronUp, Dot, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useLocale } from "./providers/locale-provider";
 import { isCNExclusive, isRegionEnabled } from "@/lib/enabled-regions";
 import { DiscordIcon, XIcon } from "@tomomai/ui";
-import { AltchaWidget } from "@/components/altcha-widget";
-import { authClient } from "@/lib/auth-client";
-import { toast } from "sonner";
 
 interface ConsentDialogProps {
   open: boolean;
   tosContent: string;
   privacyContent: string;
-  onConsent: (method: "discord" | "twitter" | "passkey") => Promise<void>;
+  onConsent: (method: "discord" | "twitter") => Promise<void>;
   onCancel: () => void;
   signupEnabled?: boolean;
 }
@@ -41,7 +37,6 @@ export function ConsentDialog({
 }: ConsentDialogProps) {
   const { locale } = useLocale();
   const t = useTranslations("consent");
-  const tp = useTranslations("passkeys");
   const ta = useTranslations("auth");
   const [tosChecked, setTosChecked] = useState(false);
   const [privacyChecked, setPrivacyChecked] = useState(false);
@@ -49,16 +44,10 @@ export function ConsentDialog({
   const [showPrivacyDialog, setShowPrivacyDialog] = useState(false);
   const [showTosPreview, setShowTosPreview] = useState(false);
   const [showPrivacyPreview, setShowPrivacyPreview] = useState(false);
-
-  // Passkey flow state
-  const [passkeyStage, setPasskeyStage] = useState<"idle" | "captcha" | "verifying" | "registering">("idle");
   const [proceeding, setProceeding] = useState<"discord" | "twitter" | null>(null);
 
   useEffect(() => {
-    if (!open) {
-      setPasskeyStage("idle");
-      setProceeding(null);
-    }
+    if (!open) setProceeding(null);
   }, [open]);
 
   const canProceed = tosChecked && privacyChecked && signupEnabled;
@@ -70,40 +59,6 @@ export function ConsentDialog({
     } finally {
       setProceeding(null);
     }
-  };
-
-  const handlePasskeyClick = () => {
-    setPasskeyStage("captcha");
-  };
-
-  const handleAltchaSolve = async (payload: string) => {
-    setPasskeyStage("registering");
-    try {
-      const result = await authClient.signIn.passkey({
-        fetchOptions: { headers: { "x-captcha-response": payload } },
-      });
-      if (result?.error) {
-        toast.error(tp("addError"));
-        setPasskeyStage("idle");
-        return;
-      }
-      await onConsent("passkey");
-    } catch (err) {
-      console.error("Passkey sign-in error:", err);
-      toast.error(tp("addError"));
-      setPasskeyStage("idle");
-    }
-  };
-
-  const handleAltchaError = () => {
-    toast.error(tp("captchaFailed"));
-    setPasskeyStage("idle");
-  };
-
-  const handleCancel = () => {
-    setPasskeyStage("idle");
-    setProceeding(null);
-    onCancel();
   };
 
   const cnMode = isCNExclusive();
@@ -263,85 +218,40 @@ export function ConsentDialog({
                 以 QQ 注册
               </Button>
             ) : (
-              /* Buttons + captcha share the same space */
-              <div className="relative w-full flex flex-col gap-2">
-                <motion.div
-                  animate={passkeyStage === "idle"
-                    ? { opacity: 1, filter: "blur(0px)", scale: 1 }
-                    : { opacity: 0, filter: "blur(6px)", scale: 0.97 }}
-                  transition={{ duration: 0.18, ease: "easeInOut" }}
-                  className="flex flex-col gap-2 w-full"
-                  style={{ pointerEvents: passkeyStage === "idle" ? "auto" : "none" }}
+              <div className="w-full flex flex-col gap-2">
+                <Button
+                  onClick={() => handleSocialMethod("discord")}
+                  disabled={!canProceed || proceeding !== null}
+                  size="lg"
+                  className="w-full justify-start bg-indigo-500/90 hover:bg-indigo-500 text-white border border-input dark:bg-indigo-500/80 dark:hover:bg-indigo-500 font-semibold"
                 >
-                  <Button
-                    onClick={() => handleSocialMethod("discord")}
-                    disabled={!canProceed || proceeding !== null}
-                    size="lg"
-                    className="w-full justify-start bg-indigo-500/90 hover:bg-indigo-500 text-white border border-input dark:bg-indigo-500/80 dark:hover:bg-indigo-500 font-semibold"
-                  >
-                    {proceeding === "discord" ? (
-                      <Loader2 className="w-5 h-5 mr-3 animate-spin shrink-0" />
-                    ) : (
-                      <DiscordIcon className="w-5 h-5 mr-3 shrink-0" />
-                    )}
-                    {ta("signupWithDiscord")}
-                  </Button>
-                  <Button
-                    onClick={() => handleSocialMethod("twitter")}
-                    disabled={!canProceed || proceeding !== null}
-                    size="lg"
-                    className="w-full justify-start bg-neutral-900 hover:bg-neutral-800 text-white border border-input font-semibold"
-                  >
-                    {proceeding === "twitter" ? (
-                      <Loader2 className="w-5 h-5 mr-3 animate-spin shrink-0" />
-                    ) : (
-                      <XIcon className="w-5 h-5 mr-3 shrink-0" />
-                    )}
-                    {ta("signupWithX")}
-                  </Button>
-                  <Button
-                    onClick={handlePasskeyClick}
-                    disabled={!canProceed || proceeding !== null}
-                    size="lg"
-                    variant="outline"
-                    className="w-full justify-start font-semibold"
-                  >
-                    <KeyRound className="w-5 h-5 mr-3 shrink-0" />
-                    {ta("signupWithPasskey")}
-                  </Button>
-                </motion.div>
-
-                <AnimatePresence>
-                  {passkeyStage !== "idle" && (
-                    <motion.div
-                      key="passkey-overlay"
-                      initial={{ opacity: 0, filter: "blur(8px)", scale: 1.03, y: 4 }}
-                      animate={{ opacity: 1, filter: "blur(0px)", scale: 1, y: 0 }}
-                      exit={{ opacity: 0, filter: "blur(8px)", scale: 1.03, y: 4 }}
-                      transition={{ duration: 0.22, delay: 0.16, ease: "easeOut" }}
-                      className="absolute inset-0 flex flex-col items-center justify-center gap-2"
-                    >
-                      {passkeyStage === "captcha" && (
-                        <AltchaWidget onSolve={handleAltchaSolve} onError={handleAltchaError} className="w-full" />
-                      )}
-                      {(passkeyStage === "verifying" || passkeyStage === "registering") && (
-                        <div className="flex items-center gap-2 text-muted-foreground">
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                          <span className="text-sm">
-                            {passkeyStage === "verifying" ? tp("verifyingCaptcha") : tp("addingPasskey")}
-                          </span>
-                        </div>
-                      )}
-                    </motion.div>
+                  {proceeding === "discord" ? (
+                    <Loader2 className="w-5 h-5 mr-3 animate-spin shrink-0" />
+                  ) : (
+                    <DiscordIcon className="w-5 h-5 mr-3 shrink-0" />
                   )}
-                </AnimatePresence>
+                  {ta("signupWithDiscord")}
+                </Button>
+                <Button
+                  onClick={() => handleSocialMethod("twitter")}
+                  disabled={!canProceed || proceeding !== null}
+                  size="lg"
+                  className="w-full justify-start bg-neutral-900 hover:bg-neutral-800 text-white border border-input font-semibold"
+                >
+                  {proceeding === "twitter" ? (
+                    <Loader2 className="w-5 h-5 mr-3 animate-spin shrink-0" />
+                  ) : (
+                    <XIcon className="w-5 h-5 mr-3 shrink-0" />
+                  )}
+                  {ta("signupWithX")}
+                </Button>
               </div>
             )}
 
             <Button
               variant="ghost"
-              onClick={passkeyStage === "idle" ? handleCancel : () => setPasskeyStage("idle")}
-              disabled={passkeyStage === "verifying" || passkeyStage === "registering"}
+              onClick={onCancel}
+              disabled={proceeding !== null}
               className="w-full text-muted-foreground hover:text-foreground"
             >
               {t("cancel")}

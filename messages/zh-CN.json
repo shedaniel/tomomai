@@ -41,7 +41,9 @@
     "back": "返回",
     "clipboardError": "复制到剪贴板失败",
     "selectAnOption": "选择选项",
-    "guest": "访客"
+    "guest": "访客",
+    "ok": "确定",
+    "email": "邮箱"
   },
   "security": {
     "reauth": {
@@ -59,7 +61,10 @@
     "signup": "注册",
     "signupWithDiscord": "用 Discord 注册",
     "signupWithX": "用 X 注册",
-    "signupWithPasskey": "用通行密钥注册",
+    "passkey": {
+      "errorTitle": "通行密钥登录失败",
+      "errorGeneric": "无法完成通行密钥登录，请重试。"
+    },
     "signupDisabled": "注册功能已关闭",
     "signupDisabledMessage": "目前暂不开放新用户注册，请稍后再试。",
     "peekExampleProfile": "看看示例个人主页",

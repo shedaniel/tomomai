@@ -1,5 +1,5 @@
 import { betterAuth } from "better-auth";
-import { resolveBaseUrl } from "@/lib/base-url";
+import { resolveBaseUrl, stripSubdomains } from "@/lib/base-url";
 import { createAuthMiddleware, APIError, getSessionFromCtx } from "better-auth/api";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
@@ -334,7 +334,11 @@ export const auth = betterAuth({
         defaultPermissions: { ready: ["access"] },
       },
     }),
-    passkey(),
+    passkey({
+      // Pinned to the registrable apex so credentials roam across subdomains.
+      rpID: stripSubdomains(process.env.BETTER_AUTH_URL || resolveBaseUrl()),
+      rpName: "tomomai",
+    }),
     jwt(),
     oauthProvider({
       loginPage: "/",

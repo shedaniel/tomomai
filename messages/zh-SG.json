@@ -40,7 +40,9 @@
     "back": "返回",
     "clipboardError": "复制到剪贴板失败",
     "selectAnOption": "选择选项",
-    "guest": "访客"
+    "guest": "访客",
+    "ok": "确定",
+    "email": "邮箱"
   },
   "auth": {
     "loginWithDiscord": "以 Discord 继续",
@@ -52,7 +54,10 @@
     "signup": "注册",
     "signupWithDiscord": "用 Discord 注册",
     "signupWithX": "用 X 注册",
-    "signupWithPasskey": "用 Passkey 注册",
+    "passkey": {
+      "errorTitle": "Passkey 登入失败",
+      "errorGeneric": "无法完成 Passkey 登入，请重试。"
+    },
     "signupDisabled": "注册功能已关闭",
     "signupDisabledMessage": "目前暂不开放新用户注册，请稍后再试。",
     "peekExampleProfile": "看看范例个人主页",

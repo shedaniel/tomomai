@@ -27,7 +27,7 @@ import { Locale, setLocaleCookie } from "@/i18n/locale";
 import { isCNExclusive } from "@/lib/enabled-regions";
 import { trpc } from "@/lib/trpc-client";
 import { getLanguages } from "@/lib/utils";
-import { Languages, Pencil, User } from "lucide-react";
+import { Languages, Mail, Pencil, User } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
@@ -114,6 +114,15 @@ function AccountFields() {
             {t("usernameSetup.changeButton")}
           </Button>
         </div>
+      </SettingsField>
+
+      <SettingsField
+        icon={Mail}
+        label={t("common.email")}
+      >
+        <span className="font-mono text-sm bg-muted px-3 py-2 rounded-md flex-1 min-w-0 truncate text-foreground">
+          {userData?.email ?? "—"}
+        </span>
       </SettingsField>
 
       <SettingsField

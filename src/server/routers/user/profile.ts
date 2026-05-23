@@ -16,7 +16,7 @@ export const profileRouter = router({
     .query(async ({ ctx }) => {
       const userRecord = await db
         .select({
-          username: user.username, publishProfile: user.publishProfile, role: user.role,
+          username: user.username, email: user.email, publishProfile: user.publishProfile, role: user.role,
           ...(!isCNExclusive() ? { region: user.region } : {})
         })
         .from(user)
@@ -33,6 +33,7 @@ export const profileRouter = router({
       return {
         hasUsername: !!userRecord[0].username,
         username: userRecord[0].username,
+        email: userRecord[0].email,
         publishProfile: userRecord[0].publishProfile,
         region: (!isCNExclusive() ? userRecord[0].region! : 'cn') as Region,
         role: userRecord[0].role,

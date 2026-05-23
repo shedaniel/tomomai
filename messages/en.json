@@ -50,7 +50,9 @@
     },
     "back": "Back",
     "clipboardError": "Failed to copy to clipboard",
-    "selectAnOption": "Select an option"
+    "selectAnOption": "Select an option",
+    "ok": "OK",
+    "email": "Email"
   },
   "security": {
     "reauth": {
@@ -68,7 +70,10 @@
     "signup": "Sign up",
     "signupWithDiscord": "Sign up with Discord",
     "signupWithX": "Sign up with X",
-    "signupWithPasskey": "Register with Passkey",
+    "passkey": {
+      "errorTitle": "Passkey sign-in failed",
+      "errorGeneric": "Could not complete passkey sign-in. Please try again."
+    },
     "signupDisabled": "Sign up Currently Disabled",
     "signupDisabledMessage": "We are not accepting new registrations at this time. Please check back later.",
     "peekExampleProfile": "Peek at an example profile",

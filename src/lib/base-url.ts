@@ -54,6 +54,21 @@ export function resolveBaseUrl(): string {
  * or when the headers don't carry a usable host (e.g. background jobs,
  * sitemap generation outside a request context).
  */
+// Returns the last two labels of the URL's hostname (e.g. tomomai.lol from
+// dev.tomomai.lol). Passes localhost / IPs through unchanged. Heuristic —
+// breaks on multi-part eTLDs like .co.uk; swap in `psl` if that ever matters.
+export function stripSubdomains(baseUrl: string = resolveBaseUrl()): string {
+  let hostname: string;
+  try {
+    hostname = new URL(baseUrl).hostname;
+  } catch {
+    return "localhost";
+  }
+  if (hostname.startsWith("[") || /^\d+\.\d+\.\d+\.\d+$/.test(hostname)) return hostname;
+  const labels = hostname.split(".");
+  return labels.length < 2 ? hostname : labels.slice(-2).join(".");
+}
+
 export function resolveBaseUrlFromHeaders(h: Headers | undefined | null): string {
   if (typeof window !== "undefined") {
     return window.location.origin.replace(/\/+$/, "");

@@ -148,6 +148,7 @@ export interface SnapshotData extends Snapshot {
 export interface UserData {
   hasUsername: boolean;
   username: string | null;
+  email: string;
   publishProfile: boolean;
   region: Region;
   role: "user" | "admin";

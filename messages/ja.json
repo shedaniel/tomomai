@@ -41,7 +41,9 @@
     "back": "戻る",
     "clipboardError": "クリップボードへのコピーに失敗しました",
     "selectAnOption": "オプションを選択",
-    "guest": "ゲスト"
+    "guest": "ゲスト",
+    "ok": "OK",
+    "email": "メールアドレス"
   },
   "security": {
     "reauth": {
@@ -59,7 +61,10 @@
     "signup": "サインアップ",
     "signupWithDiscord": "Discordでサインアップ",
     "signupWithX": "Xでサインアップ",
-    "signupWithPasskey": "パスキーで登録",
+    "passkey": {
+      "errorTitle": "パスキーでのサインインに失敗しました",
+      "errorGeneric": "パスキーサインインを完了できませんでした。もう一度お試しください。"
+    },
     "signupDisabled": "サインアップは現在無効です",
     "signupDisabledMessage": "現在、新規登録は一時停止中です。後でもう一度お試しください。",
     "peekExampleProfile": "プロフィールの例を見てみる",

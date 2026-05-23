@@ -37,13 +37,19 @@
       "utage": "Utage"
     },
     "back": "Back",
-    "selectAnOption": "Select an option"
+    "selectAnOption": "Select an option",
+    "ok": "OK",
+    "email": "Email"
   },
   "auth": {
     "loginWithDiscord": "Continue with Discord",
     "loginDescription": "Sign in with Discord to start tracking your maimai scores",
     "noAccount": "Don't have an account?",
     "signupWithDiscord": "Sign up with Discord",
+    "passkey": {
+      "errorTitle": "Passkey sign-in failed",
+      "errorGeneric": "Could not complete passkey sign-in. Please try again."
+    },
     "signupDisabled": "Sign up Currently Disabled",
     "signupDisabledMessage": "We are not accepting new registrations at this time. Please check back later.",
     "peekExampleProfile": "Have a peek at an example profile",
