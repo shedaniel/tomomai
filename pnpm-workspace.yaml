@@ -1,6 +1,10 @@
 packages:
   - "packages/*"
 
+catalog:
+  react: 19.2.6
+  react-dom: 19.2.6
+
 allowBuilds:
   '@parcel/watcher': true
   '@swc/core': true

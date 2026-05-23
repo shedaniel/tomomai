@@ -124,6 +124,7 @@ export function Dashboard({ user, initialUserData, initialSnapshots, initialSnap
   const handleLogout = async () => {
     try {
       await signOut();
+      window.location.reload();
     } catch (error) {
       console.error("Logout error:", error);
     }

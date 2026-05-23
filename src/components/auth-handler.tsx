@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
+import { showMessage } from "@/components/imperative-dialog";
 
 export function AuthHandler() {
   const searchParams = useSearchParams();
@@ -33,7 +34,12 @@ export function AuthHandler() {
       }
 
       if (errorMessage) {
-        toast.error(errorMessage);
+        showMessage({
+          title: "Authentication error",
+          description: errorMessage,
+          label: "OK",
+          dedupKey: `auth-error:${error}`,
+        });
         // Clean up the URL
         window.history.replaceState({}, '', '/');
       }

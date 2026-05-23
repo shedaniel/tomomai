@@ -71,7 +71,7 @@ export function AltchaWidget({ onSolve, onError, className }: AltchaWidgetProps)
 
     el.addEventListener("statechange", handleStateChange);
     return () => el.removeEventListener("statechange", handleStateChange);
-  }, [onSolve, onError]);
+  }, [onSolve, onError, initialized]);
 
   if (!initialized) return null;
 

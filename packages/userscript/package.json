@@ -9,8 +9,8 @@
   },
   "dependencies": {
     "@tomomai/ui": "workspace:*",
-    "react": "19.2.1",
-    "react-dom": "19.2.1"
+    "react": "catalog:",
+    "react-dom": "catalog:"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.1.18",
