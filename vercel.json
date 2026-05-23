@@ -2,10 +2,5 @@
   "buildCommand": "pnpm --filter @tomomai/site build",
   "installCommand": "pnpm install --filter @tomomai/site... --config.node-linker=hoisted",
   "outputDirectory": "apps/main/.next",
-  "framework": "nextjs",
-  "functions": {
-    "apps/main/src/app/**/*": {
-      "includeFiles": "apps/main/node_modules/kuromoji/dict/*"
-    }
-  }
+  "framework": "nextjs"
 }
