@@ -20,10 +20,13 @@ import { getChartsByDifficulty, getChartScores } from "./db/songs/song-detail-co
 import { UserScore } from "./db/songs/types";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { Drawer, DrawerContent, DrawerTrigger, DrawerHeader, DrawerTitle, DrawerDescription } from "@tomomai/ui";
+import { PercentileDistribution } from "@/components/percentile-distribution";
+import type { PercentileDistributionData } from "@/lib/percentile-types";
 
 interface SongHoverCardProps {
   children: React.ReactNode;
   song: MinimalSong;
+  percentile?: PercentileDistributionData | null;
   side?: "top" | "bottom" | "left" | "right";
   className?: string;
 }
@@ -86,13 +89,15 @@ function SongCardContent({
   songDetails,
   isLoading,
   addedVersionInfo,
-  t
+  t,
+  percentile,
 }: {
   song: SongHoverCardProps['song'],
   songDetails: any,
   isLoading: boolean,
   addedVersionInfo: any,
-  t: any
+  t: any,
+  percentile?: SongHoverCardProps['percentile'],
 }) {
   return (
     <div className="p-4 space-y-3">
@@ -159,6 +164,8 @@ function SongCardContent({
         </div>
       </div>
 
+      {percentile && <PercentileDistribution data={percentile} />}
+
       {/* Action */}
       <div className="pt-1 flex items-center gap-2 flex-col">
         <SongDetailDialog songName={song.songName} type={song.type} difficulty={song.difficulty} />
@@ -188,7 +195,7 @@ function SongCardContent({
   );
 }
 
-export function SongHoverCard({ children, song, side, className }: SongHoverCardProps) {
+export function SongHoverCard({ children, song, percentile, side, className }: SongHoverCardProps) {
   const t = useTranslations();
   const [isOpen, setIsOpen] = useState(false);
   const isDesktop = useMediaQuery("(min-width: 768px)", { initializeWithValue: false });
@@ -212,6 +219,7 @@ export function SongHoverCard({ children, song, side, className }: SongHoverCard
       isLoading={isLoading}
       addedVersionInfo={addedVersionInfo}
       t={t}
+      percentile={percentile}
     />
   );
 

@@ -17,6 +17,9 @@ import { SongHoverCard } from "@/components/song-hover-card";
 import { renderLevelPrecise } from "@/lib/name-utils";
 import { motion, AnimatePresence } from "motion/react";
 import { SPRING_CONFIGS, STAGGER, getTransition } from "@/lib/animation-constants";
+import { trpc } from "@/lib/trpc-client";
+import { Flags } from "@/lib/flags";
+import type { PercentileEntry, PercentileMap } from "@/lib/percentile-types";
 
 // Helper function to group songs by individual rating values and difficulty
 function groupSongsByRating(songs: SongWithRating[]) {
@@ -147,9 +150,9 @@ function RatingChart({ songs, title }: { songs: SongWithRating[]; title: string 
 }
 
 // Component for rendering individual song rows
-const SongRow = forwardRef<HTMLDivElement, { song: SongWithRating } & React.HTMLAttributes<HTMLDivElement>>(({ song, ...props }, ref) => {
+const SongRow = forwardRef<HTMLDivElement, { song: SongWithRating; percentile?: PercentileEntry } & React.HTMLAttributes<HTMLDivElement>>(({ song, percentile, ...props }, ref) => {
   return (
-    <SongHoverCard song={song}>
+    <SongHoverCard song={song} percentile={percentile ? { ...percentile, userAchievement: song.achievement } : undefined}>
       <div ref={ref} {...props} className={cn("group relative isolate flex justify-between items-center text-sm border-b border-dashed border-border pb-1.5 h-12 px-2 -mx-2 cursor-pointer", props.className)}>
         <div className="absolute inset-x-0 -top-1.5 bottom-0 rounded-md group-hover:bg-muted/50 transition-colors -z-10" />
         <CoverImage coverUrl={song.cover}
@@ -296,7 +299,7 @@ function CompactSongSection({ title, songs, count, t, sum, average, visibleCount
 }
 
 // Component for rendering individual song cards in grid view
-export const SongGridCard = forwardRef<HTMLDivElement, { song: MinimalSongForDisplay } & React.HTMLAttributes<HTMLDivElement>>(({ song, ...props }, ref) => {
+export const SongGridCard = forwardRef<HTMLDivElement, { song: MinimalSongForDisplay; percentile?: PercentileEntry } & React.HTMLAttributes<HTMLDivElement>>(({ song, percentile, ...props }, ref) => {
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const card = e.currentTarget;
     const rect = card.getBoundingClientRect();
@@ -350,7 +353,7 @@ export const SongGridCard = forwardRef<HTMLDivElement, { song: MinimalSongForDis
   };
 
   return (
-    <SongHoverCard song={song} side="right">
+    <SongHoverCard song={song} side="right" percentile={percentile ? { ...percentile, userAchievement: song.achievement } : undefined}>
       <div
         ref={ref}
         {...props}
@@ -438,7 +441,7 @@ export const SongGridCard = forwardRef<HTMLDivElement, { song: MinimalSongForDis
 SongGridCard.displayName = "SongGridCard";
 
 // Component for rendering song sections
-function SongSection({ title, songs, count, displayMode, t, sum, average, visibleCount, onLoadMore }: {
+function SongSection({ title, songs, count, displayMode, t, sum, average, visibleCount, onLoadMore, percentileMap }: {
   title: string;
   songs: SongWithRating[];
   count?: string;
@@ -448,6 +451,7 @@ function SongSection({ title, songs, count, displayMode, t, sum, average, visibl
   average?: number;
   visibleCount: number;
   onLoadMore: () => void;
+  percentileMap?: PercentileMap;
 }) {
   const hasMore = visibleCount < songs.length;
   const loadMore = useCallback(() => {
@@ -489,7 +493,7 @@ function SongSection({ title, songs, count, displayMode, t, sum, average, visibl
       </div>
       <div className="space-y-2">
         {visibleSongs.map(song => (
-          <SongRow key={`${song.songId}-${song.difficulty}`} song={song} />
+          <SongRow key={`${song.songId}-${song.difficulty}`} song={song} percentile={percentileMap?.[song.songId]} />
         ))}
         {hasMore && (
           <div ref={sentinelRef} className="h-4" />
@@ -499,13 +503,14 @@ function SongSection({ title, songs, count, displayMode, t, sum, average, visibl
   );
 }
 
-function SongGridSection({ title, songs, count, t, sum, average }: {
+function SongGridSection({ title, songs, count, t, sum, average, percentileMap }: {
   title: string;
   songs: SongWithRating[];
   count?: string;
   t: any;
   sum?: number;
   average?: number;
+  percentileMap?: PercentileMap;
 }) {
   if (songs.length === 0) return null;
 
@@ -545,7 +550,7 @@ function SongGridSection({ title, songs, count, t, sum, average }: {
               ...getTransition({}),
             }}
           >
-            <SongGridCard song={song} />
+            <SongGridCard song={song} percentile={percentileMap?.[song.songId]} />
           </motion.div>
         ))}
       </div>
@@ -554,7 +559,7 @@ function SongGridSection({ title, songs, count, t, sum, average }: {
 }
 
 // Component for rendering the songs list with four sections
-function SongsList({ newSongsB15, oldSongsB35, remainingNewSongs, remainingOldSongs, t, displayMode, b15Sum, b15Average, b35Sum, b35Average }: {
+function SongsList({ newSongsB15, oldSongsB35, remainingNewSongs, remainingOldSongs, t, displayMode, b15Sum, b15Average, b35Sum, b35Average, percentileMap }: {
   newSongsB15: SongWithRating[];
   oldSongsB35: SongWithRating[];
   remainingNewSongs: SongWithRating[];
@@ -565,6 +570,7 @@ function SongsList({ newSongsB15, oldSongsB35, remainingNewSongs, remainingOldSo
   b15Average?: number;
   b35Sum?: number;
   b35Average?: number;
+  percentileMap?: PercentileMap;
 }) {
   const [visibleB15, setVisibleB15] = useState(Math.min(50, newSongsB15.length));
   const [visibleB35, setVisibleB35] = useState(Math.min(50, oldSongsB35.length));
@@ -599,6 +605,7 @@ function SongsList({ newSongsB15, oldSongsB35, remainingNewSongs, remainingOldSo
         average={b15Average}
         visibleCount={visibleB15}
         onLoadMore={loadMoreB15}
+        percentileMap={percentileMap}
       />
       <SongSection
         title={t('dataContent.oldSongsB35')}
@@ -610,6 +617,7 @@ function SongsList({ newSongsB15, oldSongsB35, remainingNewSongs, remainingOldSo
         average={b35Average}
         visibleCount={visibleB35}
         onLoadMore={loadMoreB35}
+        percentileMap={percentileMap}
       />
       <SongSection
         title={t('dataContent.newSongs')}
@@ -619,6 +627,7 @@ function SongsList({ newSongsB15, oldSongsB35, remainingNewSongs, remainingOldSo
         t={t}
         visibleCount={visibleNewRemaining}
         onLoadMore={loadMoreNewRemaining}
+        percentileMap={percentileMap}
       />
       <SongSection
         title={t('dataContent.oldSongs')}
@@ -628,12 +637,13 @@ function SongsList({ newSongsB15, oldSongsB35, remainingNewSongs, remainingOldSo
         t={t}
         visibleCount={visibleOldRemaining}
         onLoadMore={loadMoreOldRemaining}
+        percentileMap={percentileMap}
       />
     </div>
   );
 }
 
-function SongsGrid({ newSongsB15, oldSongsB35, remainingNewSongs, remainingOldSongs, t, b15Sum, b15Average, b35Sum, b35Average }: { newSongsB15: SongWithRating[]; oldSongsB35: SongWithRating[]; remainingNewSongs: SongWithRating[]; remainingOldSongs: SongWithRating[]; t: any; b15Sum?: number; b15Average?: number; b35Sum?: number; b35Average?: number }) {
+function SongsGrid({ newSongsB15, oldSongsB35, remainingNewSongs, remainingOldSongs, t, b15Sum, b15Average, b35Sum, b35Average, percentileMap }: { newSongsB15: SongWithRating[]; oldSongsB35: SongWithRating[]; remainingNewSongs: SongWithRating[]; remainingOldSongs: SongWithRating[]; t: any; b15Sum?: number; b15Average?: number; b35Sum?: number; b35Average?: number; percentileMap?: PercentileMap }) {
   return (
     <div className="space-y-6">
       <SongGridSection
@@ -643,6 +653,7 @@ function SongsGrid({ newSongsB15, oldSongsB35, remainingNewSongs, remainingOldSo
         t={t}
         sum={b15Sum}
         average={b15Average}
+        percentileMap={percentileMap}
       />
       <SongGridSection
         title={t('dataContent.oldSongsB35')}
@@ -651,6 +662,7 @@ function SongsGrid({ newSongsB15, oldSongsB35, remainingNewSongs, remainingOldSo
         t={t}
         sum={b35Sum}
         average={b35Average}
+        percentileMap={percentileMap}
       />
       {(remainingNewSongs.length > 0 || remainingOldSongs.length > 0) && (
         <div className="text-center text-sm text-muted-foreground mt-10 mb-4">
@@ -661,7 +673,7 @@ function SongsGrid({ newSongsB15, oldSongsB35, remainingNewSongs, remainingOldSo
   );
 }
 
-export function SongsCard({ selectedSnapshotData }: { selectedSnapshotData: SnapshotWithSongs }) {
+export function SongsCard({ selectedSnapshotData, flags }: { selectedSnapshotData: SnapshotWithSongs; flags?: Flags }) {
   const t = useTranslations();
   const [displayMode, setDisplayMode] = useState<"list" | "grid" | "compact">("grid");
   const [searchQuery, setSearchQuery] = useState("");
@@ -670,6 +682,20 @@ export function SongsCard({ selectedSnapshotData }: { selectedSnapshotData: Snap
 
   // Calculate ratings and sort by highest rating first
   const { newSongsB15, oldSongsB35, newSongsRemaining, oldSongsRemaining } = splitSongs(songs, snapshot.gameVersion);
+
+  const b50Songs = useMemo(() => [...newSongsB15, ...oldSongsB35], [newSongsB15, oldSongsB35]);
+
+  const { data: percentileData } = trpc.user.getChartPercentiles.useQuery(
+    {
+      songs: b50Songs.map((s) => ({ publicSongId: s.songId, achievement: s.achievement })),
+      userRating: snapshot.rating,
+    },
+    {
+      enabled: !!(flags?.scorePercentile && b50Songs.length > 0 && snapshot.rating > 0),
+      staleTime: 1000 * 60 * 5,
+    }
+  );
+  const percentileMap: PercentileMap = percentileData?.percentiles ?? {};
 
   // Filter songs based on search query
   const filteredData = useMemo(() => {
@@ -769,6 +795,7 @@ export function SongsCard({ selectedSnapshotData }: { selectedSnapshotData: Snap
                   b15Average={b15Average}
                   b35Sum={b35Sum}
                   b35Average={b35Average}
+                  percentileMap={percentileMap}
                 />
               </motion.div>
             ) : (
@@ -790,6 +817,7 @@ export function SongsCard({ selectedSnapshotData }: { selectedSnapshotData: Snap
                   b15Average={b15Average}
                   b35Sum={b35Sum}
                   b35Average={b35Average}
+                  percentileMap={percentileMap}
                 />
               </motion.div>
             )}

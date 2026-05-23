@@ -8,6 +8,7 @@ import { statsRouter } from './stats';
 import { platesRouter } from './plates';
 import { albumsRouter } from './albums';
 import { songsRouter } from './songs';
+import { percentileRouter } from './percentile';
 import { miscRouter } from './misc';
 
 export const userRouter = router({
@@ -66,6 +67,9 @@ export const userRouter = router({
   getAllUniqueSongs: songsRouter.getAllUniqueSongs,
   getSongDetails: songsRouter.getSongDetails,
   getSimpleSongDetails: songsRouter.getSimpleSongDetails,
+
+  // Percentile
+  getChartPercentiles: percentileRouter.getChartPercentiles,
 
   // Misc
   getUserSelectableFlags: miscRouter.getUserSelectableFlags,

@@ -235,7 +235,7 @@ export function DataContent({
               />
             )}
             {selectedTab === "songs" && (
-              <SongsCard selectedSnapshotData={selectedSnapshotData} />
+              <SongsCard selectedSnapshotData={selectedSnapshotData} flags={flags} />
             )}
             {selectedTab === "recent" && (visitedBySelf || !!privacySettings.showScoreDetails) && (
               <RecentSongsCard
