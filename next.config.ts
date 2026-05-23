@@ -23,7 +23,7 @@ const nextConfig: NextConfig = {
       },
     ];
   },
-  serverExternalPackages: ["skia-canvas", "pino", "pino-pretty", "kuromoji", "kuroshiro", "kuroshiro-analyzer-kuromoji", "@logtail/node"],
+  serverExternalPackages: ["skia-canvas", "pino", "kuromoji", "kuroshiro", "kuroshiro-analyzer-kuromoji", "@logtail/node"],
   experimental: {
     optimizePackageImports: [
       'lucide-react',

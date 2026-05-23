@@ -1,5 +1,5 @@
 {
-  "installCommand": "pnpm install --config.node-linker=hoisted",
+  "installCommand": "pnpm install",
   "functions": {
     "src/app/**/*": {
       "includeFiles": "node_modules/kuromoji/dict/*"
