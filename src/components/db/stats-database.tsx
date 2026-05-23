@@ -14,7 +14,7 @@ import { AverageAchievementChart } from "./stats/average-achievement-chart";
 import { RatingVsPlayCountHeatmap } from "./stats/rating-vs-play-count-heatmap";
 import { ActiveUsersChart } from "./stats/active-users-chart";
 import { FetchesPerDayChart } from "./stats/fetches-per-day-chart";
-import { Tabs, TabsList, TabsTab } from "../animate-ui/components/base/tabs";
+import { Tabs, TabsList, TabsTrigger } from "../animate-ui/components/radix/tabs";
 
 export function StatsDatabase() {
   const t = useTranslations("db.stats");
@@ -33,8 +33,8 @@ export function StatsDatabase() {
       <div className="flex justify-between items-center">
         <Tabs value={region} onValueChange={(v) => setRegion(v as Region)}>
           <TabsList className="grid grid-cols-[1fr_1fr] gap-2">
-            <TabsTab value="intl">{t("region.intl")}</TabsTab>
-            <TabsTab value="jp">{t("region.jp")}</TabsTab>
+            <TabsTrigger value="intl">{t("region.intl")}</TabsTrigger>
+            <TabsTrigger value="jp">{t("region.jp")}</TabsTrigger>
           </TabsList>
         </Tabs>
       </div>

@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { Tabs as TabsPrimitive } from '@base-ui-components/react/tabs';
+import { Tabs as TabsPrimitive } from 'radix-ui';
 import {
   motion,
   AnimatePresence,
@@ -84,56 +84,52 @@ function TabsHighlightItem(props: TabsHighlightItemProps) {
   return <HighlightItem data-slot="tabs-highlight-item" {...props} />;
 }
 
-type TabsTabProps = React.ComponentProps<typeof TabsPrimitive.Tab>;
+type TabsTriggerProps = React.ComponentProps<typeof TabsPrimitive.Trigger>;
 
-function TabsTab(props: TabsTabProps) {
-  return <TabsPrimitive.Tab data-slot="tabs-tab" {...props} />;
+function TabsTrigger(props: TabsTriggerProps) {
+  return <TabsPrimitive.Trigger data-slot="tabs-trigger" {...props} />;
 }
 
-type TabsPanelProps = React.ComponentProps<typeof TabsPrimitive.Panel> &
+type TabsContentProps = React.ComponentProps<typeof TabsPrimitive.Content> &
   HTMLMotionProps<'div'>;
 
-function TabsPanel({
+function TabsContent({
   value,
-  keepMounted,
+  forceMount,
   transition = { duration: 0.5, ease: 'easeInOut' },
   ...props
-}: TabsPanelProps) {
+}: TabsContentProps) {
   return (
     <AnimatePresence mode="wait">
-      <TabsPrimitive.Panel
-        render={
-          <motion.div
-            data-slot="tabs-panel"
-            layout
-            layoutDependency={value}
-            initial={{ opacity: 0, filter: 'blur(4px)' }}
-            animate={{ opacity: 1, filter: 'blur(0px)' }}
-            exit={{ opacity: 0, filter: 'blur(4px)' }}
-            transition={transition}
-            {...props}
-          />
-        }
-        keepMounted={keepMounted}
-        value={value}
-      />
+      <TabsPrimitive.Content asChild forceMount={forceMount} value={value}>
+        <motion.div
+          data-slot="tabs-content"
+          layout
+          layoutDependency={value}
+          initial={{ opacity: 0, filter: 'blur(4px)' }}
+          animate={{ opacity: 1, filter: 'blur(0px)' }}
+          exit={{ opacity: 0, filter: 'blur(4px)' }}
+          transition={transition}
+          {...props}
+        />
+      </TabsPrimitive.Content>
     </AnimatePresence>
   );
 }
 
-type TabsPanelsAutoProps = Omit<AutoHeightProps, 'children'> & {
+type TabsContentsAutoProps = AutoHeightProps & {
   mode?: 'auto-height';
   children: React.ReactNode;
   transition?: Transition;
 };
 
-type TabsPanelsLayoutProps = Omit<HTMLMotionProps<'div'>, 'children'> & {
+type TabsContentsLayoutProps = Omit<HTMLMotionProps<'div'>, 'transition'> & {
   mode: 'layout';
   children: React.ReactNode;
   transition?: Transition;
 };
 
-type TabsPanelsProps = TabsPanelsAutoProps | TabsPanelsLayoutProps;
+type TabsContentsProps = TabsContentsAutoProps | TabsContentsLayoutProps;
 
 const defaultTransition: Transition = {
   type: 'spring',
@@ -141,46 +137,37 @@ const defaultTransition: Transition = {
   damping: 30,
 };
 
-function isAutoMode(props: TabsPanelsProps): props is TabsPanelsAutoProps {
-  return !props.mode || props.mode === 'auto-height';
+function isAutoMode(props: TabsContentsProps): props is TabsContentsAutoProps {
+  return !('mode' in props) || props.mode === 'auto-height';
 }
 
-function TabsPanels(props: TabsPanelsProps) {
+function TabsContents(props: TabsContentsProps) {
   const { value } = useTabs();
 
   if (isAutoMode(props)) {
-    const { children, transition = defaultTransition, ...autoProps } = props;
+    const { transition = defaultTransition, ...autoProps } = props;
 
     return (
       <AutoHeight
-        data-slot="tabs-panels"
+        data-slot="tabs-contents"
         deps={[value]}
         transition={transition}
         {...autoProps}
-      >
-        <React.Fragment key={value}>{children}</React.Fragment>
-      </AutoHeight>
+      />
     );
   }
 
-  const {
-    children,
-    style,
-    transition = defaultTransition,
-    ...layoutProps
-  } = props;
+  const { transition = defaultTransition, style, ...layoutProps } = props;
 
   return (
     <motion.div
-      data-slot="tabs-panels"
+      data-slot="tabs-contents"
       layout="size"
       layoutDependency={value}
-      transition={{ layout: transition }}
       style={{ overflow: 'hidden', ...style }}
+      transition={{ layout: transition }}
       {...layoutProps}
-    >
-      <React.Fragment key={value}>{children}</React.Fragment>
-    </motion.div>
+    />
   );
 }
 
@@ -189,14 +176,14 @@ export {
   TabsHighlight,
   TabsHighlightItem,
   TabsList,
-  TabsTab,
-  TabsPanel,
-  TabsPanels,
+  TabsTrigger,
+  TabsContent,
+  TabsContents,
   type TabsProps,
   type TabsHighlightProps,
   type TabsHighlightItemProps,
   type TabsListProps,
-  type TabsTabProps,
-  type TabsPanelProps,
-  type TabsPanelsProps,
+  type TabsTriggerProps,
+  type TabsContentProps,
+  type TabsContentsProps,
 };

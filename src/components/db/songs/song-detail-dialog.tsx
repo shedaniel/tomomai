@@ -1,4 +1,4 @@
-import { Tabs, TabsList, TabsPanel, TabsPanels, TabsTab } from "@/components/animate-ui/components/base/tabs";
+import { Tabs, TabsList, TabsContent, TabsContents, TabsTrigger } from "@/components/animate-ui/components/radix/tabs";
 import { ResponsiveDialogTitle } from "@tomomai/ui";
 import { ACHIEVEMENTS, DIFFICULTY_COLORS } from "@/lib/difficulty";
 import { calculateSongRating } from "@/lib/rating-calculator";
@@ -90,17 +90,17 @@ export function SongChartDialogContent({ charts, scores }: { charts: SongExtende
     <Tabs value={region} onValueChange={(value) => setRegion(value as Region)}>
       <TabsList className={cn("grid w-full", { 1: "grid-cols-1", 2: "grid-cols-2", 3: "grid-cols-3" }[charts.length], charts.length <= 1 && "hidden")}>
         {charts.map(c => (
-          <TabsTab key={c.region} value={c.region}>{t(`regions.${c.region}`)}</TabsTab>
+          <TabsTrigger key={c.region} value={c.region}>{t(`regions.${c.region}`)}</TabsTrigger>
         ))}
       </TabsList>
 
-      <TabsPanels>
+      <TabsContents>
         {charts.map(c => (
-          <TabsPanel key={c.region} value={c.region}>
+          <TabsContent key={c.region} value={c.region}>
             <SongChartDialogGrid chart={c} score={scores[c.region]} />
-          </TabsPanel>
+          </TabsContent>
         ))}
-      </TabsPanels>
+      </TabsContents>
     </Tabs>
   </>;
 }

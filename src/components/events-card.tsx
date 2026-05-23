@@ -5,7 +5,7 @@ import { cn, createSafeMaimaiImageUrl } from "@/lib/utils";
 import { Map, Calendar, Flag, CheckCircle2, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
-import { Tabs, TabsList, TabsPanels, TabsTab, TabsPanel } from "@/components/animate-ui/components/base/tabs";
+import { Tabs, TabsList, TabsContents, TabsTrigger, TabsContent } from "@/components/animate-ui/components/radix/tabs";
 import { EventData } from "@/lib/types";
 import { trpc } from "@/lib/trpc-client";
 import { useMemo } from "react";
@@ -284,16 +284,16 @@ export function EventsCard({
         ) : (
           <Tabs defaultValue="area" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTab value="area">
+              <TabsTrigger value="area">
                 {t("events.areaEvents")} ({areaEvents.length})
-              </TabsTab>
-              <TabsTab value="eventArea">
+              </TabsTrigger>
+              <TabsTrigger value="eventArea">
                 {t("events.eventAreaEvents")} ({eventAreaEvents.length})
-              </TabsTab>
+              </TabsTrigger>
             </TabsList>
 
-            <TabsPanels>
-              <TabsPanel value="area">
+            <TabsContents>
+              <TabsContent value="area">
                 {areaEvents.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground text-sm">
                     {t("events.noAreaEvents")}
@@ -301,9 +301,9 @@ export function EventsCard({
                 ) : (
                   <EventsList events={areaEvents} stepsMap={stepsMap} />
                 )}
-              </TabsPanel>
+              </TabsContent>
 
-              <TabsPanel value="eventArea">
+              <TabsContent value="eventArea">
                 {eventAreaEvents.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground text-sm">
                     {t("events.noEventAreaEvents")}
@@ -311,8 +311,8 @@ export function EventsCard({
                 ) : (
                   <EventsList events={eventAreaEvents} stepsMap={stepsMap} />
                 )}
-              </TabsPanel>
-            </TabsPanels>
+              </TabsContent>
+            </TabsContents>
           </Tabs>
         )}
       </div>
