@@ -15,7 +15,7 @@ import { RatingVsPlayCountHeatmap } from "./stats/rating-vs-play-count-heatmap";
 import { DistributionAreaChart } from "./stats/distribution-area-chart";
 import { TimeSeriesLineChart } from "./stats/time-series-line-chart";
 import { RatingClimbChart } from "./stats/rating-climb-chart";
-import { FetchActivityHeatmap } from "./stats/fetch-activity-heatmap";
+import { HourWeekdayHeatmap } from "./stats/hour-weekday-heatmap";
 import { Tabs, TabsList, TabsTrigger } from "../animate-ui/components/radix/tabs";
 
 type StatsData = inferRouterOutputs<AppRouter>["db"]["getStats"];
@@ -122,7 +122,13 @@ const CARDS: StatCard[] = [
     key: "fetchActivity",
     titleKey: "fetchActivityHeatmap",
     descriptionKey: "heatmapTimezoneNote",
-    render: (d) => <FetchActivityHeatmap data={d.fetchActivityHeatmap} />,
+    render: (d) => <HourWeekdayHeatmap data={d.fetchActivityHeatmap} />,
+  },
+  {
+    key: "playActivity",
+    titleKey: "playActivityHeatmap",
+    descriptionKey: "heatmapTimezoneNote",
+    render: (d) => <HourWeekdayHeatmap data={d.playActivityHeatmap} />,
   },
 ];
 

@@ -1212,6 +1212,7 @@
       "ratingClimbByBand": "Average Rating Climb per 30 Days",
       "newPlayersPerWeek": "New Tracked Players per Week",
       "fetchActivityHeatmap": "Fetch Activity by Hour & Weekday",
+      "playActivityHeatmap": "Play Activity by Hour & Weekday",
       "heatmapTimezoneNote": "Hours shown in JST (UTC+9), last 90 days.",
       "xAxis": {
         "rating": "Rating",
@@ -1242,6 +1243,8 @@
         "percentage": "Percentage",
         "count": "Count"
       },
+      "showAll": "Show all {count}",
+      "showLess": "Show less",
       "region": {
         "intl": "International",
         "jp": "Japan"

@@ -3,13 +3,13 @@
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
 
-interface FetchActivityHeatmapProps {
+interface HourWeekdayHeatmapProps {
   data: { dow: number; hour: number; count: number }[];
 }
 
 const DAYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"] as const;
 
-export function FetchActivityHeatmap({ data }: FetchActivityHeatmapProps) {
+export function HourWeekdayHeatmap({ data }: HourWeekdayHeatmapProps) {
   const tDays = useTranslations("common.weekdays");
 
   const { grid, max } = useMemo(() => {
@@ -39,7 +39,8 @@ export function FetchActivityHeatmap({ data }: FetchActivityHeatmapProps) {
               </div>
               {Array.from({ length: 24 }, (_, h) => {
                 const v = grid[dow][h];
-                const intensity = max > 0 ? v / max : 0;
+                // Power scaling (gamma > 1) compresses low values and lets peaks pop brighter.
+                const intensity = max > 0 ? Math.pow(v / max, 3) : 0;
                 return (
                   <div
                     key={`c-${dow}-${h}`}

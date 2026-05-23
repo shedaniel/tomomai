@@ -63,8 +63,8 @@ export function TimeSeriesLineChart<T extends Record<string, unknown>>({
           type="monotone"
           stroke={`var(--color-${yKey})`}
           strokeWidth={2}
-          dot={{ fill: `var(--color-${yKey})`, strokeWidth: 2, r: 4 }}
-          activeDot={{ r: 6 }}
+          dot={false}
+          activeDot={{ r: 5, fill: `var(--color-${yKey})` }}
         />
       </LineChart>
     </ChartContainer>

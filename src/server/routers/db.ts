@@ -151,17 +151,19 @@ export const dbRouter = router({
 
           // 6. Average Rating vs Play Count Heatmap
           // Group ratings into 500 buckets and play counts into 1000 buckets
+          // Log-spaced buckets: 10 buckets per decade (e.g. 100, 126, 158, 200, ...).
+          const playCountLogBucket = sql<number>`ROUND(EXP(ROUND(LN(${latestSnapshots.totalPlayCount}::numeric) * 10) / 10.0))::int`;
           const ratingVsPlayCountQuery = await db
             .select({
               ratingBucket: sql<number>`ROUND(${latestSnapshots.rating} / 500.0) * 500`.mapWith(Number),
-              playCountBucket: sql<number>`ROUND(${latestSnapshots.totalPlayCount} / 100.0) * 100`.mapWith(Number),
+              playCountBucket: playCountLogBucket.mapWith(Number),
               count: sql<number>`COUNT(*)`.mapWith(Number),
             })
             .from(latestSnapshots)
             .where(gt(latestSnapshots.totalPlayCount, 0))
             .groupBy(
               sql`ROUND(${latestSnapshots.rating} / 500.0) * 500`,
-              sql`ROUND(${latestSnapshots.totalPlayCount} / 100.0) * 100`
+              playCountLogBucket
             );
 
           const ratingVsPlayCount = ratingVsPlayCountQuery.map(item => ({
@@ -170,68 +172,44 @@ export const dbRouter = router({
             count: item.count,
           }));
 
-          // 7. Active Users Over Time (cumulative by days)
-          // Get all user activity in the last 30 days with a single query
-          const thirtyDaysAgo = new Date();
-          thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+          // 7. Active Users Over Time — cumulative count of users whose last
+          // snapshot falls within the last N days (N = 1..ACTIVE_WINDOW_DAYS).
+          const ACTIVE_WINDOW_DAYS = 90;
+          const windowStart = new Date();
+          windowStart.setDate(windowStart.getDate() - ACTIVE_WINDOW_DAYS);
 
-          const userActivityQuery = await db
+          // Aggregate per-user MAX(fetchedAt) server-side so the wire payload
+          // is one row per active user instead of one row per snapshot.
+          const lastActivityRows = await db
             .select({
               userId: userSnapshots.userId,
-              fetchedAt: userSnapshots.fetchedAt,
+              lastAt: sql<Date>`MAX(${userSnapshots.fetchedAt})`.as("last_at"),
             })
             .from(userSnapshots)
             .where(
               and(
                 eq(userSnapshots.region, region),
-                gte(userSnapshots.fetchedAt, thirtyDaysAgo)
+                gte(userSnapshots.fetchedAt, windowStart)
               )
+            )
+            .groupBy(userSnapshots.userId);
+
+          const now = Date.now();
+          const usersByDaysAgo = new Array(ACTIVE_WINDOW_DAYS + 1).fill(0);
+          for (const { lastAt } of lastActivityRows) {
+            const diffDays = Math.max(
+              1,
+              Math.ceil((now - new Date(lastAt).getTime()) / 86_400_000)
             );
+            if (diffDays <= ACTIVE_WINDOW_DAYS) usersByDaysAgo[diffDays]++;
+          }
 
-          // Process the data to calculate cumulative active users
-          const activeUsersOverTime = [];
-          const today = new Date();
-
-          // 1. Find the most recent activity for each user
-          const lastActivityByUser = new Map<string, number>();
-          userActivityQuery.forEach(activity => {
-            const time = new Date(activity.fetchedAt).getTime();
-            const current = lastActivityByUser.get(activity.userId) || 0;
-            if (time > current) {
-              lastActivityByUser.set(activity.userId, time);
-            }
-          });
-
-          // 2. Bucket users by how many days ago they were last active
-          // index 1 = active within last 24h (1 day)
-          // index 30 = active within last 30 days (but not 29)
-          const userCountsByDaysAgo = new Array(31).fill(0);
-
-          lastActivityByUser.forEach((lastTime) => {
-            const diffTime = today.getTime() - lastTime;
-            // ceil to treat any activity within last 24h as 1 day ago, etc.
-            // If diffTime is negative (future), treat as 1
-            const diffDays = Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
-
-            if (diffDays <= 30) {
-              userCountsByDaysAgo[diffDays]++;
-            }
-          });
-
-          // 3. Calculate cumulative counts
-          // users active in last N days = users active in last 1 day + ... + users active in last N days
-          // Wait, logic check:
-          // If I was active 1 day ago, I am active in "Last 1 day", "Last 2 days", etc.
-          // If I was active 5 days ago, I am NOT active in "Last 1 day", but AM active in "Last 5 days".
-          // So for "Last N days", we want sum(userCountsByDaysAgo[1...N]).
-
+          // Cumulative: users active in "last N days" = sum over 1..N.
+          const activeUsersOverTime: { days: string; count: number }[] = [];
           let runningTotal = 0;
-          for (let days = 1; days <= 30; days++) {
-            runningTotal += userCountsByDaysAgo[days];
-            activeUsersOverTime.push({
-              days: String(days),
-              count: runningTotal,
-            });
+          for (let days = 1; days <= ACTIVE_WINDOW_DAYS; days++) {
+            runningTotal += usersByDaysAgo[days];
+            activeUsersOverTime.push({ days: String(days), count: runningTotal });
           }
 
           // 8. Users with Fetches per Day (last 90 days)
@@ -336,6 +314,26 @@ export const dbRouter = router({
             count: Number(r.count),
           }));
 
+          // 12. Play activity heatmap: recent plays by hour × weekday (JST, last 90 days)
+          // Region filter goes through songs.region (joined via songId).
+          const playHeatmapQuery = await db.execute<{ dow: number; hour: number; count: number }>(sql`
+            SELECT
+              EXTRACT(DOW  FROM (urs."playedAt" AT TIME ZONE 'UTC') AT TIME ZONE 'Asia/Tokyo')::int AS dow,
+              EXTRACT(HOUR FROM (urs."playedAt" AT TIME ZONE 'UTC') AT TIME ZONE 'Asia/Tokyo')::int AS hour,
+              COUNT(*)::int AS count
+            FROM user_recent_songs urs
+            JOIN songs s ON s.id = urs."songId"
+            WHERE s.region = ${region}
+              AND urs."playedAt" > NOW() - INTERVAL '90 days'
+            GROUP BY 1, 2
+            ORDER BY 1, 2
+          `);
+          const playActivityHeatmap = playHeatmapQuery.map(r => ({
+            dow: Number(r.dow),
+            hour: Number(r.hour),
+            count: Number(r.count),
+          }));
+
           return {
             ratingDistribution,
             playCountDistribution,
@@ -348,6 +346,7 @@ export const dbRouter = router({
             ratingClimbByBand,
             newPlayersPerWeek,
             fetchActivityHeatmap,
+            playActivityHeatmap,
             totalUsers: 0, // Hide actual count
           };
         },
