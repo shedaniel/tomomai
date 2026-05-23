@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 import createNextIntlPlugin from 'next-intl/plugin';
 import { withVercelToolbar as withVercelToolbarPlugin } from "@vercel/toolbar/plugins/next";
 import withBundleAnalyzer from '@next/bundle-analyzer';
+import path from 'path';
 
 const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 const withAnalyzer = withBundleAnalyzer({ enabled: process.env.ANALYZE === 'true' });
@@ -152,11 +153,16 @@ const nextConfig: NextConfig = {
     }
     return config;
   },
+  // Pull in workspace-root node_modules so .pnpm-resolved deps (like
+  // kuromoji's dict files) get traced and bundled at their real on-disk
+  // path. kuromoji does __dirname-based dict lookups at runtime, so files
+  // must be bundled at the .pnpm store path, not the apps/main symlink.
+  outputFileTracingRoot: path.resolve(process.cwd(), '..', '..'),
   outputFileTracingIncludes: {
     '/api/image-proxy': ['./public/res/**/*'],
     '/api/export-image': ['./public/res/**/*'],
     '/api/admin/cache_images': ['./public/res/**/*'],
-    '/**/*': ['./node_modules/kuromoji/dict/**/*'],
+    '/**/*': ['../../node_modules/.pnpm/kuromoji@*/node_modules/kuromoji/dict/**/*'],
   },
   devIndicators: false,
 };
