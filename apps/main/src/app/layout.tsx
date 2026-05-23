@@ -1,4 +1,3 @@
-import { AprilFools } from '@/components/april-fools';
 import { PreMaintenanceBanner } from '@/components/pre-maintenance-banner';
 import { LocaleProvider } from '@/components/providers/locale-provider';
 import { ThemeProvider } from '@/components/providers/theme-provider';
@@ -16,7 +15,7 @@ import "./cjk-fonts.css";
 import "./vaul.css";
 import { getServerThemeId } from '@/lib/themes-server';
 import { getThemeOrDefault, getThemeStyleProperties } from '@/lib/themes';
-import { useAprilFools2026, useCustomThemes } from '@/lib/flags';
+import { useCustomThemes } from '@/lib/flags';
 import { resolveBaseUrl } from '@/lib/base-url';
 import { siteJsonLd } from '@/lib/seo';
 
@@ -59,7 +58,6 @@ export default async function RootLayout({
   const themeId = await getServerThemeId();
   const theme = getThemeOrDefault(themeId);
   const messages = await getMessages();
-  const aprilFools2026 = await useAprilFools2026();
   const shouldInjectToolbar = process.env.NODE_ENV === "development";
 
   let preMaintenanceBanner: { title: string; description: string; raw: string } | null = null;
@@ -109,7 +107,6 @@ export default async function RootLayout({
                 {children}
                 {shouldInjectToolbar && <VercelToolbar />}
                 <Toaster />
-                <AprilFools enabled={aprilFools2026} />
               </TRPCProvider>
             </ThemeProvider>
           </LocaleProvider>

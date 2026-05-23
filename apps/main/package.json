@@ -42,8 +42,6 @@
     "@better-auth/api-key": "^1.6.11",
     "@better-auth/oauth-provider": "^1.6.11",
     "@better-auth/passkey": "^1.6.11",
-    "@fontsource/comic-neue": "^5.2.7",
-    "@fontsource/zen-maru-gothic": "^5.2.8",
     "@hookform/resolvers": "^5.2.2",
     "@libsql/client": "^0.15.15",
     "@logtail/node": "^0.5.6",
