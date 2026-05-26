@@ -566,13 +566,17 @@ export function RecentSongsCard({ region, beforeDate, snapshotId }: RecentSongsC
   const isFetching = snapshotId ? publicFetching : ownFetching;
   const error = snapshotId ? publicError : ownError;
 
-  // Reset pagination state when region or beforeDate changes
+  // Reset pagination state when region or beforeDate changes.
+  // Depend on the time value rather than the Date reference — callers commonly
+  // pass a fresh Date instance per render, which would otherwise wipe state
+  // after the data effect has populated allPlays.
+  const beforeDateKey = beforeDate?.getTime();
   useEffect(() => {
     setOffset(0);
     setAllPlays([]);
     setHasMore(false);
     processedOffsetsRef.current = new Set();
-  }, [region, beforeDate]);
+  }, [region, beforeDateKey]);
 
   // Update allPlays when new data arrives
   // Use isFetching (not isLoading) to prevent processing stale data during query transitions
@@ -590,7 +594,6 @@ export function RecentSongsCard({ region, beforeDate, snapshotId }: RecentSongsC
   }, [data, offset, isFetching]);
 
   const loadMore = useCallback(() => {
-    console.log('loadMore', hasMore, isFetching);
     if (hasMore && !isFetching) {
       setOffset(prev => prev + limit);
     }
