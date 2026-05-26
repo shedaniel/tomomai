@@ -1,6 +1,7 @@
 // Client-facing shapes of the /api responses. Mirrors describeHint() output
 // in lib/today.ts.
 import type { Difficulty, ChartType } from "./types";
+import type { AudioModifier } from "./heardle-config";
 
 export type HintPayload =
   | { kind: "pixelate"; level: number }
@@ -37,7 +38,16 @@ export type HintPayload =
       revealed?: number;
     }
   | { kind: "note-designer"; level: 0; designer: string }
-  | { kind: "audio"; level: number; previewUrl: string; durationSec: number };
+  | {
+      kind: "audio";
+      level: number;
+      previewUrl: string;
+      /** Displayed clip length. Differs from `audibleSec` only under speed. */
+      durationSec: number;
+      /** Wall-clock playback length — drives the progress timer. */
+      audibleSec: number;
+      modifier: AudioModifier;
+    };
 
 export type RevealPayload = {
   songId: string;

@@ -10,7 +10,13 @@ import {
   shuffleMove,
 } from "./image";
 import { getVersionName } from "./versions";
-import { audioDurationFor, getAudioPreview } from "./heardle";
+import {
+  audibleAudioDuration,
+  audioModifier,
+  getAudioPreview,
+  sourceAudioDuration,
+} from "./heardle";
+import { getPuzzleVersion } from "./puzzle-version";
 import { Rng } from "./rng";
 
 /**
@@ -132,14 +138,32 @@ const describeNoteDesigner: Describer = (_l, chart) => ({
   designer: chart.noteDesigner ?? "",
 });
 
-const describeAudio: Describer = (level, chart) => {
+const describeAudio: Describer = (level, chart, dateKey) => {
   const preview = getAudioPreview(chart);
-  // In heardle mode, every chart in the pool has a preview (enforced by
-  // filterPool). If we ever hit a missing one here, surfacing an empty URL is
-  // safer than crashing — the client will show a disabled play button.
+  const version = getPuzzleVersion(dateKey);
+  const variantRoll = new Rng(`${dateKey}:audio:${level}:variant`).intBelow(3);
+  const pitchRoll = new Rng(`${dateKey}:audio:${level}:pitch`).intBelow(2);
+  const modifier = audioModifier(version, level, variantRoll, pitchRoll);
+  // v2 routes audio through the server endpoint so the raw URL can't be
+  // grabbed from devtools to bypass the clip + modifier. v1 keeps the direct
+  // Apple URL — past puzzles must not change. In heardle mode, every chart
+  // in the pool has a preview (enforced by filterPool); a missing one is
+  // surfaced as empty URL rather than a crash so the play button just sits
+  // disabled.
+  const dateSlug = dateKey.replace(/-/g, "");
+  const previewUrl =
+    version === 2
+      ? `/api/audio/${dateSlug}/${level}`
+      : preview?.previewUrl ?? "";
   return {
-    previewUrl: preview?.previewUrl ?? "",
-    durationSec: audioDurationFor(level),
+    previewUrl,
+    // What the UI shows as "the clip length". For speed, this stays at the
+    // source length even though the audible playback is longer/shorter.
+    durationSec: sourceAudioDuration(level, modifier, version),
+    // Actual wall-clock length the audio element will play for. Drives the
+    // progress timer in AudioHintCard.
+    audibleSec: audibleAudioDuration(level, modifier, version),
+    modifier,
   };
 };
 

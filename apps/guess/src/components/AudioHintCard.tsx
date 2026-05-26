@@ -8,10 +8,16 @@ import { cn } from "@tomomai/ui/utils";
 import { Play, Pause, RotateCcw } from "lucide-react";
 import { useVolume, volumeToAmplitude } from "@/lib/use-volume";
 import { VolumeControl } from "./VolumeControl";
+import type { AudioModifier } from "@/lib/heardle-config";
 
 type Props = {
   previewUrl: string;
+  /** Displayed clip length (what the player reads on the card). */
   durationSec: number;
+  /** Actual wall-clock playback length. Defaults to `durationSec`. */
+  audibleSec?: number;
+  /** v2 audio modifier (plain / speed / pitch). Drives the badge text. */
+  modifier?: AudioModifier;
   /** Hint level (0..5) — used for the small label badge. */
   level: number;
   /** Total hint count, so the label reads "1 / 6" etc. */
@@ -19,6 +25,12 @@ type Props = {
   /** Pause playback when the card stops being the focused one in the deck. */
   isActive: boolean;
 };
+
+function modifierLabel(m: AudioModifier | undefined): string | null {
+  if (!m || m.kind === "plain") return null;
+  if (m.kind === "speed") return `${m.rate}× speed`;
+  return `pitch ${m.semitones > 0 ? "+" : "−"}${Math.abs(m.semitones)}`;
+}
 
 /**
  * Heardle audio hint card. Plays a clipped window (`durationSec`) of the
@@ -28,16 +40,20 @@ type Props = {
 export function AudioHintCard({
   previewUrl,
   durationSec,
+  audibleSec,
+  modifier,
   level,
   totalLevels,
   isActive,
 }: Props) {
+  const modLabel = modifierLabel(modifier);
+  const playSec = audibleSec ?? durationSec;
   const t = useTranslations("guess.hints.audio");
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const stopAtRef = useRef<number | null>(null);
   const rafRef = useRef<number | null>(null);
   const [playing, setPlaying] = useState(false);
-  const [progress, setProgress] = useState(0); // 0..1 of durationSec
+  const [progress, setProgress] = useState(0); // 0..1 of playSec
   const [volume] = useVolume();
 
   // Keep the audio element's volume in sync with the persisted setting.
@@ -59,11 +75,11 @@ export function AudioHintCard({
     setProgress(0);
   };
 
-  // Stop whenever URL or duration changes (e.g. moving between cards).
+  // Stop whenever URL or playback length changes (e.g. moving between cards).
   useEffect(() => {
     return () => stop();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [previewUrl, durationSec]);
+  }, [previewUrl, playSec]);
 
   // Pause when this card stops being the active one — swipe, arrow buttons,
   // dot nav, submit, and skip all flip the deck through `isActive`.
@@ -83,7 +99,7 @@ export function AudioHintCard({
       return;
     }
     setPlaying(true);
-    stopAtRef.current = performance.now() + durationSec * 1000;
+    stopAtRef.current = performance.now() + playSec * 1000;
     const tick = () => {
       if (stopAtRef.current == null) return;
       const remaining = stopAtRef.current - performance.now();
@@ -94,7 +110,7 @@ export function AudioHintCard({
         stop();
         return;
       }
-      setProgress(1 - remaining / (durationSec * 1000));
+      setProgress(1 - remaining / (playSec * 1000));
       rafRef.current = requestAnimationFrame(tick);
     };
     rafRef.current = requestAnimationFrame(tick);
@@ -126,6 +142,12 @@ export function AudioHintCard({
         <div className="text-xs uppercase tracking-wider text-muted-foreground">
           {t("label")}
         </div>
+
+        {modLabel && (
+          <div className="absolute top-2 left-2 px-2 py-1 rounded-full bg-destructive/15 text-destructive text-2xs font-medium uppercase tracking-wider">
+            {modLabel}
+          </div>
+        )}
 
         <button
           type="button"

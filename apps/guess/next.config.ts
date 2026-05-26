@@ -10,6 +10,8 @@ const WORKSPACE_ROOT = path.resolve(APP_DIR, "../..");
 const nextConfig: NextConfig = {
   transpilePackages: ["@tomomai/ui", "@tomomai/i18n"],
   outputFileTracingRoot: WORKSPACE_ROOT,
+  // Bundling rewrites the exported binary path to a non-existent `/ROOT/...`.
+  serverExternalPackages: ["ffmpeg-static"],
   turbopack: {
     root: WORKSPACE_ROOT,
   },

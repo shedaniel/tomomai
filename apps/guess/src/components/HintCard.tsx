@@ -28,6 +28,8 @@ export function HintCard({ step, hint, dateKey, dateSlug, isActive }: Props) {
       <AudioHintCard
         previewUrl={hint.previewUrl}
         durationSec={hint.durationSec}
+        audibleSec={hint.audibleSec}
+        modifier={hint.modifier}
         level={hint.level}
         isActive={isActive ?? true}
       />

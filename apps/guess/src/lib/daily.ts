@@ -3,6 +3,7 @@ import { TOTAL_STEPS } from "./types";
 import { HINT_META, IMAGE_KINDS, step0Kinds } from "./hints-meta";
 import { buildHeardlePlan, hasAudioPreview } from "./heardle";
 import { isHeardle } from "./heardle-config";
+import { getPuzzleVersion, type PuzzleVersion } from "./puzzle-version";
 import { Rng } from "./rng";
 
 /** Audio level used when guess mode promotes the final hint to an audio clue. */
@@ -34,11 +35,17 @@ export {
  * current max, so without a cap the 0.8^oldness multiplier underflows for
  * the oldest charts (0.8^26 ≈ 0.005) and the long tail accumulates an
  * unpredictable amount of weight. Clamping treats everything older than
- * OLDNESS_CAP versions as one "legacy" bucket — collectively ~14% of pool
- * weight at cap=12 — giving classic picks the occasional appearance
- * without letting any single ancient chart dominate by chance.
+ * OLDNESS_CAP versions as one "legacy" bucket — a smaller cap means the
+ * floor sits at a higher weight (0.8^small > 0.8^large), so legacy charts
+ * collectively command more of the pool and obscure picks surface more
+ * often. v2 lowers the cap to make the game harder.
  */
-const OLDNESS_CAP = 12;
+const OLDNESS_CAP_V1 = 12;
+const OLDNESS_CAP_V2 = 8;
+
+function oldnessCap(version: PuzzleVersion): number {
+  return version === 2 ? OLDNESS_CAP_V2 : OLDNESS_CAP_V1;
+}
 
 /**
  * Small penalty for titles that are mostly kana. Hiragana/katakana-only
@@ -78,7 +85,7 @@ function kanaRatio(s: string): number {
   return letters === 0 ? 0 : kana / letters;
 }
 
-function songWeight(c: Chart, maxAddedVersion: number): number {
+function songWeight(c: Chart, maxAddedVersion: number, version: PuzzleVersion): number {
   const lp = c.levelPrecise;
   let w: number;
   if (c.difficulty === "expert") {
@@ -87,7 +94,7 @@ function songWeight(c: Chart, maxAddedVersion: number): number {
     // master / remaster (basic / advanced / utage are filtered upstream)
     w = lp >= 13.0 && lp <= 15.0 ? 3.0 : 1.0;
   }
-  const oldness = Math.min(OLDNESS_CAP, Math.max(0, maxAddedVersion - c.addedVersion));
+  const oldness = Math.min(oldnessCap(version), Math.max(0, maxAddedVersion - c.addedVersion));
   let weight = w * Math.pow(0.8, oldness);
   if (kanaRatio(c.songName) >= KANA_PENALTY_THRESHOLD) weight *= KANA_PENALTY_FACTOR;
   return weight;
@@ -96,8 +103,9 @@ function songWeight(c: Chart, maxAddedVersion: number): number {
 export function pickDailyChart(pool: readonly Chart[], dateKey: string): Chart {
   if (pool.length === 0) throw new Error("Empty song pool");
   const rng = new Rng(`${dateKey}:song`);
+  const version = getPuzzleVersion(dateKey);
   const maxAddedVersion = pool.reduce((m, c) => Math.max(m, c.addedVersion), 0);
-  const weights = pool.map((c) => songWeight(c, maxAddedVersion));
+  const weights = pool.map((c) => songWeight(c, maxAddedVersion, version));
   return rng.pickWeighted(pool, weights);
 }
 
@@ -120,12 +128,17 @@ export function buildStepPlan(chart: Chart, dateKey: string): Hint[] {
   if (isHeardle()) return buildHeardlePlan(maxHints);
   const rng = new Rng(`${dateKey}:steps`);
 
+  const version = getPuzzleVersion(dateKey);
   const step0Kind = rng.pick(step0Kinds(maxHints));
-  const step1Kind: HintKind = rng.float() < 0.5 ? "blinds" : "blinds-h";
-  const plan: Hint[] = [
-    { kind: step0Kind, level: 0 } as Hint,
-    { kind: step1Kind, level: 0 } as Hint,
-  ];
+  const plan: Hint[] = [{ kind: step0Kind, level: 0 } as Hint];
+
+  // v1 forced step 1 to a blinds/blinds-h@0 image hint; v2 drops that and
+  // lets step 1 flow through the same weighted selection as later steps,
+  // which can land on a much harsher image transform (or a text kind).
+  if (version === 1) {
+    const step1Kind: HintKind = rng.float() < 0.5 ? "blinds" : "blinds-h";
+    plan.push({ kind: step1Kind, level: 0 } as Hint);
+  }
 
   const allCandidates: HintKind[] = (Object.values(HINT_META))
     // Audio is heardle's primary clue; in guess mode it only appears as a
@@ -141,7 +154,9 @@ export function buildStepPlan(chart: Chart, dateKey: string): Hint[] {
 
   const baseWeight = (k: HintKind): number => HINT_META[k].weight ?? 1;
 
-  for (let step = 2; step <= TOTAL_STEPS - 2; step++) {
+  // plan.length already accounts for the forced prefix (1 on v2, 2 on v1),
+  // so it's exactly the next step the weighted loop should fill.
+  for (let step = plan.length; step <= TOTAL_STEPS - 2; step++) {
     // Special-case the last hint slot: when the chart has an Apple Music
     // preview, flip a coin to replace whatever the planner would have
     // chosen with a 16s audio clip. Audio is excluded from the normal pool

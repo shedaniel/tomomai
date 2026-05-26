@@ -7,12 +7,17 @@ import previewsData from "../data/apple-music-previews.json";
 export {
   AUDIO_DURATIONS,
   FULL_PREVIEW_SEC,
+  audibleAudioDuration,
   audioDurationFor,
+  audioModifier,
   buildHeardlePlan,
   getMode,
   isHeardle,
+  sourceAudioDuration,
 } from "./heardle-config";
-export type { Mode } from "./heardle-config";
+export type { AudioModifier, AudioModifierKind, Mode } from "./heardle-config";
+export { getPuzzleVersion } from "./puzzle-version";
+export type { PuzzleVersion } from "./puzzle-version";
 
 export type PreviewEntry = {
   previewUrl: string;
