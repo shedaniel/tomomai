@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { Fragment, useState, type ReactNode } from "react";
 import type { inferRouterOutputs } from "@trpc/server";
 import { trpc } from "@/lib/trpc-client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@tomomai/ui";
@@ -9,7 +9,7 @@ import { Loader2 } from "lucide-react";
 import type { AppRouter } from "@/server/routers/_app";
 import { Region } from "@/lib/types";
 import { TitleRankingTable } from "./stats/title-ranking-table";
-import { SongRankingTable } from "./stats/song-ranking-table";
+import { TopSongsCard } from "./stats/top-songs-card";
 import { AverageAchievementChart } from "./stats/average-achievement-chart";
 import { RatingVsPlayCountHeatmap } from "./stats/rating-vs-play-count-heatmap";
 import { DistributionAreaChart } from "./stats/distribution-area-chart";
@@ -41,11 +41,6 @@ const CARDS: StatCard[] = [
     key: "topTitles",
     titleKey: "topTitles",
     render: (d) => <TitleRankingTable data={d.titleRanking} />,
-  },
-  {
-    key: "topSongs",
-    titleKey: "topSongs",
-    render: (d) => <SongRankingTable data={d.mostPlayedSongs} />,
   },
   {
     key: "avgAchievement",
@@ -119,6 +114,25 @@ const CARDS: StatCard[] = [
     ),
   },
   {
+    key: "recentPlaysPerDay",
+    titleKey: "recentPlaysPerDay",
+    render: (d, t) => (
+      <TimeSeriesLineChart
+        data={d.recentPlaysPerDay}
+        xKey="date"
+        yKey="count"
+        xLabel={t("xAxis.date")}
+        yLabel={t("yAxis.recentPlays")}
+        formatXAxis={(v) =>
+          new Date(`${v}T00:00:00`).toLocaleDateString(undefined, { month: "short", day: "numeric" })
+        }
+        formatXTooltip={(v) =>
+          new Date(`${v}T00:00:00`).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })
+        }
+      />
+    ),
+  },
+  {
     key: "fetchActivity",
     titleKey: "fetchActivityHeatmap",
     descriptionKey: "heatmapTimezoneNote",
@@ -162,15 +176,18 @@ export function StatsDatabase() {
       ) : data ? (
         <div className="columns-1 md:columns-2 gap-6 space-y-6 mb-6">
           {CARDS.map((card) => (
-            <Card key={card.key} className="break-inside-avoid">
-              <CardHeader>
-                <CardTitle>{t(card.titleKey)}</CardTitle>
-                {card.descriptionKey ? (
-                  <CardDescription>{t(card.descriptionKey)}</CardDescription>
-                ) : null}
-              </CardHeader>
-              <CardContent>{card.render(data, t)}</CardContent>
-            </Card>
+            <Fragment key={card.key}>
+              <Card className="break-inside-avoid">
+                <CardHeader>
+                  <CardTitle>{t(card.titleKey)}</CardTitle>
+                  {card.descriptionKey ? (
+                    <CardDescription>{t(card.descriptionKey)}</CardDescription>
+                  ) : null}
+                </CardHeader>
+                <CardContent>{card.render(data, t)}</CardContent>
+              </Card>
+              {card.key === "topTitles" ? <TopSongsCard region={region} /> : null}
+            </Fragment>
           ))}
         </div>
       ) : null}

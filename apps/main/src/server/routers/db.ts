@@ -1,5 +1,5 @@
 import { db } from '@/lib/db';
-import { scoreData, snapshotScores, songs, userSnapshots } from '@/lib/db/schema-pg';
+import { scoreData, snapshotScores, songs, userRecentSongs, userSnapshots } from '@/lib/db/schema-pg';
 import { publicProcedure, router } from '@/lib/trpc';
 import { and, desc, eq, gt, gte, inArray, sql } from 'drizzle-orm';
 import { z } from 'zod';
@@ -100,33 +100,6 @@ export const dbRouter = router({
             .from(userSnapshots)
             .where(eq(userSnapshots.region, region))
             .orderBy(userSnapshots.userId, desc(userSnapshots.fetchedAt));
-
-          // 4. Most Played Songs
-          const mostPlayedSongsQuery = await db
-            .select({
-              songName: songs.songName,
-              type: songs.type,
-              difficulty: songs.difficulty,
-              cover: sql<string>`MAX(${songs.cover})`, // Just pick one cover
-              artist: sql<string>`MAX(${songs.artist})`,
-              count: sql<number>`COUNT(*)`.mapWith(Number),
-              averageAchievement: sql<number>`AVG(${scoreData.achievement})`.mapWith(Number),
-            })
-            .from(snapshotScores)
-            .innerJoin(scoreData, eq(snapshotScores.scoreId, scoreData.id))
-            .innerJoin(songs, eq(scoreData.songId, songs.id))
-            .where(
-              inArray(snapshotScores.snapshotId, latestSnapshotIds)
-            )
-            .groupBy(songs.songName, songs.type, songs.difficulty)
-            .orderBy(desc(sql`COUNT(*)`))
-            .limit(20);
-
-          // We calculate percentage based on total snapshots (users)
-          const mostPlayedSongs = mostPlayedSongsQuery.map(item => ({
-            ...item,
-            percentage: totalUsers > 0 ? item.count / totalUsers : 0,
-          }));
 
           // 5. Average Achievement by Level
           const averageAchievementByLevelQuery = await db
@@ -334,15 +307,32 @@ export const dbRouter = router({
             count: Number(r.count),
           }));
 
+          // 13. Recent plays per day (last 90 days)
+          const recentPlaysPerDayQuery = await db.execute<{ date: string; count: number }>(sql`
+            SELECT
+              DATE((urs."playedAt" AT TIME ZONE 'UTC') AT TIME ZONE 'Asia/Tokyo')::text AS date,
+              COUNT(*)::int AS count
+            FROM user_recent_songs urs
+            JOIN songs s ON s.id = urs."songId"
+            WHERE s.region = ${region}
+              AND urs."playedAt" > NOW() - INTERVAL '90 days'
+            GROUP BY 1
+            ORDER BY 1
+          `);
+          const recentPlaysPerDay = recentPlaysPerDayQuery.map(r => ({
+            date: String(r.date),
+            count: Number(r.count),
+          }));
+
           return {
             ratingDistribution,
             playCountDistribution,
             titleRanking,
-            mostPlayedSongs,
             averageAchievementByLevel,
             ratingVsPlayCount,
             activeUsersOverTime,
             fetchesPerDay,
+            recentPlaysPerDay,
             ratingClimbByBand,
             newPlayersPerWeek,
             fetchActivityHeatmap,
@@ -358,5 +348,66 @@ export const dbRouter = router({
       );
 
       return getCachedStats(input.region);
+    }),
+  getTopSongs: publicProcedure
+    .input(z.object({
+      region: regionSchema,
+      window: z.enum(['all', '90d', '30d', '7d']).default('7d'),
+    }))
+    .query(async ({ input }) => {
+      const getCached = unstable_cache(
+        async (region: typeof input.region, window: typeof input.window) => {
+          const days = window === '90d' ? 90 : window === '30d' ? 30 : window === '7d' ? 7 : null;
+          const timeFilter = days !== null
+            ? sql`AND urs."playedAt" > NOW() - (${days} || ' days')::interval`
+            : sql``;
+
+          const rows = await db.execute<{
+            songName: string;
+            type: 'std' | 'dx';
+            difficulty: string;
+            cover: string;
+            artist: string;
+            count: number;
+            averageAchievement: number;
+          }>(sql`
+            SELECT
+              s."songName" AS "songName",
+              s."type" AS "type",
+              s."difficulty" AS "difficulty",
+              MAX(s."cover") AS "cover",
+              MAX(s."artist") AS "artist",
+              COUNT(*)::int AS "count",
+              AVG(urs."archievement")::float AS "averageAchievement"
+            FROM user_recent_songs urs
+            JOIN songs s ON s.id = urs."songId"
+            WHERE s.region = ${region}
+              ${timeFilter}
+            GROUP BY s."songName", s."type", s."difficulty"
+            ORDER BY COUNT(*) DESC
+            LIMIT 20
+          `);
+
+          const totalPlays = rows.reduce((acc, r) => acc + Number(r.count), 0);
+
+          return rows.map(r => ({
+            songName: String(r.songName),
+            type: r.type as 'std' | 'dx',
+            difficulty: String(r.difficulty),
+            cover: String(r.cover ?? ''),
+            artist: String(r.artist ?? ''),
+            count: Number(r.count),
+            averageAchievement: Number(r.averageAchievement) || 0,
+            percentage: totalPlays > 0 ? Number(r.count) / totalPlays : 0,
+          }));
+        },
+        ['db-top-songs'],
+        {
+          revalidate: 21600,
+          tags: ['db-top-songs'],
+        }
+      );
+
+      return getCached(input.region, input.window);
     }),
 });

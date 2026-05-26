@@ -43,7 +43,16 @@
     "selectAnOption": "オプションを選択",
     "guest": "ゲスト",
     "ok": "OK",
-    "email": "メールアドレス"
+    "email": "メールアドレス",
+    "weekdays": {
+      "sun": "日",
+      "mon": "月",
+      "tue": "火",
+      "wed": "水",
+      "thu": "木",
+      "fri": "金",
+      "sat": "土"
+    }
   },
   "security": {
     "reauth": {
@@ -157,8 +166,8 @@
         "description": "API キーと OAuth アプリケーションを管理します。"
       },
       "applications": {
-        "title": "Applications",
-        "description": "OAuth applications you have granted access to your account."
+        "title": "アプリ",
+        "description": "アカウントへのアクセスを許可した OAuth アプリ一覧。"
       }
     },
     "language": {
@@ -463,85 +472,85 @@
         }
       },
       "oauthApps": {
-        "label": "OAuth Applications",
-        "description": "Register apps that can request access on behalf of users via OAuth 2.1 + PKCE.",
-        "createButton": "New Application",
-        "loading": "Loading applications…",
-        "emptyTitle": "No OAuth applications yet",
-        "emptyCreateLink": "Create your first application",
-        "emptySuffix": "to get started with OAuth.",
-        "redirectUris": "Redirect URIs",
-        "scopes": "Scopes",
-        "rotateAriaLabel": "Rotate client secret",
-        "deleteAriaLabel": "Delete application",
-        "deleteError": "アプリケーションの削除に失敗しました",
+        "label": "OAuth アプリ",
+        "description": "OAuth 2.1 + PKCE を介してユーザーの代わりにアクセスをリクエストできるアプリを登録します。",
+        "createButton": "新規アプリ",
+        "loading": "アプリを読み込み中…",
+        "emptyTitle": "OAuth アプリはまだありません",
+        "emptyCreateLink": "最初のアプリを作成",
+        "emptySuffix": "して OAuth を使い始めましょう。",
+        "redirectUris": "リダイレクト URI",
+        "scopes": "スコープ",
+        "rotateAriaLabel": "クライアントシークレットを再生成",
+        "deleteAriaLabel": "アプリを削除",
+        "deleteError": "アプリの削除に失敗しました",
         "rotateError": "シークレットの再生成に失敗しました",
         "createDialog": {
-          "title": "Create OAuth Application",
-          "description": "Register a new application to use the OAuth 2.1 authorization flow.",
-          "nameLabel": "Application name",
+          "title": "OAuth アプリを作成",
+          "description": "OAuth 2.1 認可フローを使う新しいアプリを登録します。",
+          "nameLabel": "アプリ名",
           "namePlaceholder": "My Userscript",
-          "nameDescription": "A descriptive name shown to users on the consent screen.",
-          "uriLabel": "Application URL",
+          "nameDescription": "同意画面でユーザーに表示される説明的な名前。",
+          "uriLabel": "アプリ URL",
           "uriPlaceholder": "https://example.com",
-          "redirectLabel": "Redirect URIs",
+          "redirectLabel": "リダイレクト URI",
           "redirectPlaceholder": "https://example.com/callback",
-          "redirectAddButton": "Add",
-          "scopesLabel": "Scopes",
-          "createButton": "Create Application",
-          "creating": "Creating…",
-          "createError": "Failed to create application",
-          "createdTitle": "Application created",
-          "createdDescription": "Save your client secret now — it will not be shown again.",
-          "clientIdLabel": "Client ID",
-          "secretLabel": "Client Secret",
-          "copyAriaLabel": "Copy value",
-          "saveWarning": "Save this secret — it won't be shown again after closing this dialog.",
-          "done": "Done"
+          "redirectAddButton": "追加",
+          "scopesLabel": "スコープ",
+          "createButton": "アプリを作成",
+          "creating": "作成中…",
+          "createError": "アプリの作成に失敗しました",
+          "createdTitle": "アプリを作成しました",
+          "createdDescription": "今すぐクライアントシークレットを保存してください — 再表示されません。",
+          "clientIdLabel": "クライアント ID",
+          "secretLabel": "クライアントシークレット",
+          "copyAriaLabel": "値をコピー",
+          "saveWarning": "このシークレットを保存してください。ダイアログを閉じると再表示されません。",
+          "done": "完了"
         },
         "rotateDialog": {
-          "title": "Rotate Client Secret?",
-          "description": "The current secret will stop working immediately. Any clients using it will need to be updated with the new secret.",
-          "confirm": "Rotate Secret"
+          "title": "クライアントシークレットを再生成しますか？",
+          "description": "現在のシークレットは即座に無効になります。使用中のクライアントは新しいシークレットへの更新が必要です。",
+          "confirm": "シークレットを再生成"
         },
         "editDialog": {
-          "title": "Edit OAuth Application",
-          "description": "Update your application's details.",
-          "basicSection": "Basic Info",
-          "redirectSection": "Redirect URIs",
-          "scopesSection": "Scopes",
-          "scopesNote": "Existing tokens keep their current scopes until the user re-authorizes.",
-          "legalSection": "Legal",
-          "nameLabel": "Application name",
-          "uriLabel": "Application URL",
-          "iconLabel": "Icon URL",
+          "title": "OAuth アプリを編集",
+          "description": "アプリの詳細を更新します。",
+          "basicSection": "基本情報",
+          "redirectSection": "リダイレクト URI",
+          "scopesSection": "スコープ",
+          "scopesNote": "既存トークンはユーザーが再認可するまで現在のスコープを保持します。",
+          "legalSection": "法的情報",
+          "nameLabel": "アプリ名",
+          "uriLabel": "アプリ URL",
+          "iconLabel": "アイコン URL",
           "iconPlaceholder": "https://example.com/logo.png",
-          "policyLabel": "Privacy Policy URL",
+          "policyLabel": "プライバシーポリシー URL",
           "policyPlaceholder": "https://example.com/privacy",
-          "tosLabel": "Terms of Service URL",
+          "tosLabel": "利用規約 URL",
           "tosPlaceholder": "https://example.com/tos",
-          "saveButton": "Save Changes",
-          "saving": "Saving…",
-          "saveError": "Failed to update application"
+          "saveButton": "変更を保存",
+          "saving": "保存中…",
+          "saveError": "アプリの更新に失敗しました"
         },
         "deleteDialog": {
-          "title": "Delete OAuth Application?",
-          "description": "This will permanently delete the application and revoke all issued tokens. This cannot be undone.",
-          "confirm": "Delete"
+          "title": "OAuth アプリを削除しますか？",
+          "description": "アプリが完全に削除され、発行済みの全トークンが取り消されます。この操作は取り消せません。",
+          "confirm": "削除"
         }
       }
     },
     "applications": {
-      "noAuthorizations": "You haven't authorized any OAuth applications yet.",
-      "grantedAt": "Authorized {date}",
-      "revokeButton": "Revoke",
+      "noAuthorizations": "まだ OAuth アプリを認可していません。",
+      "grantedAt": "{date}に認可",
+      "revokeButton": "取り消す",
       "revokeDialog": {
-        "title": "Revoke Access?",
-        "description": "This will immediately revoke all tokens for this application. You will need to re-authorize it if you want to use it again.",
-        "confirm": "Revoke"
+        "title": "アクセスを取り消しますか？",
+        "description": "このアプリのすべてのトークンが即座に取り消されます。再び使うには再認可が必要です。",
+        "confirm": "取り消す"
       },
-      "revokeSuccess": "Access revoked",
-      "revokeError": "Failed to revoke access"
+      "revokeSuccess": "アクセスを取り消しました",
+      "revokeError": "アクセスの取り消しに失敗しました"
     }
   },
   "dataBanner": {
@@ -552,6 +561,16 @@
     "fetchingData": "データ取得中...",
     "lastUpdate": "最終更新",
     "noDataInstructions": "この地域のデータがまだありません。「新しいデータを取得」からmaimaiスコアを取り込みましょう（ログイン／トークンが必要です）。"
+  },
+  "profileMetadata": {
+    "title": "{username} | tomomai ともマイ",
+    "description": "{region} の {username} さんの maimai プロフィールを表示します。フレンドと一緒に maimai のスコアを記録・分析しよう。",
+    "descriptionRich": "{region} の maimai プレイヤー {displayName}（{username}）さん — Rating {rating}。tomomai で B50、最近のプレイ、譜面記録を見る。",
+    "descriptionUnknownRegion": "{username} さんの maimai プロフィールを表示します。フレンドと一緒に maimai のスコアを記録・分析しよう。",
+    "notFoundTitle": "プロフィールが見つかりません | tomomai ともマイ",
+    "notFoundDescription": "お探しのプロフィールは存在しないか、公開されていません。",
+    "errorTitle": "エラー | tomomai ともマイ",
+    "errorDescription": "プロフィールの読み込み中にエラーが発生しました。"
   },
   "profileVisibility": {
     "public": "公開プロフィール",
@@ -891,7 +910,9 @@
       "step3Copy": "リンクをコピー",
       "step3CopyNote": "認可が完了すると WeChat が結果ページに遷移します。そのページを閉じて ともマイ に戻り、インポートの進捗をご確認ください。Wi-Fi 設定でプロキシをオフにすることもお忘れなく。",
       "copySuccess": "コピーしました",
-      "copyFailed": "コピーに失敗しました。手動でコピーしてください"
+      "copyFailed": "コピーに失敗しました。手動でコピーしてください",
+      "clashConfigUrl": "Clash 設定 URL",
+      "clashImportButton": "Clash にインポート"
     }
   },
   "regions": {
@@ -1066,9 +1087,18 @@
     "songs": {
       "metadata": {
         "title": "楽曲データベース | maimai でらっくす",
-        "description": "maimai でらっくすの楽曲を検索・閲覧できます。タイプ、ジャンル、バージョンでフィルタリング可能。楽曲詳細、難易度、収録地域も確認できます。"
+        "description": "maimai でらっくすの楽曲を検索・閲覧できます。タイプ、ジャンル、バージョンでフィルタリング可能。楽曲詳細、難易度、収録地域も確認できます。",
+        "songTitle": "{songName} - {artist} | maimai DX",
+        "songDescription": "{artist} の「{songName}」の詳細情報を表示します。{chartType} 譜面 • {genre}",
+        "songOgDescription": "{artist} の「{songName}」の詳細情報を表示します。",
+        "songFallbackTitle": "楽曲詳細 | maimai DX",
+        "songFallbackDescription": "この maimai DX 楽曲の詳細情報（難易度や収録地域など）を表示します。",
+        "chartTypeDx": "DX",
+        "chartTypeStandard": "スタンダード",
+        "jsonLdChartDescription": "maimai DX の {chartType} 譜面"
       },
       "title": "楽曲データベース | maimai でらっくす",
+      "heading": "楽曲データベース",
       "searchPlaceholder": "楽曲名、アーティスト、ジャンルなどで検索...",
       "noSongsFound": "楽曲が見つかりません",
       "tryAdjustingSearch": "検索条件を変更してください",
@@ -1076,6 +1106,7 @@
       "detail": {
         "title": "楽曲詳細",
         "artist": "アーティスト",
+        "detailsFor": "{songName} の詳細",
         "charts": "譜面",
         "availability": "収録地域",
         "yourScore": "あなたのスコア",
@@ -1087,7 +1118,9 @@
         "share": "共有",
         "youtube": "YouTubeで検索",
         "viewCharts": "譜面を見る",
-        "viewDetails": "ともマイ DB で詳細を見る"
+        "viewDetails": "ともマイ DB で詳細を見る",
+        "summary": "{songName} は {versionName} で追加された、{artist} による {genre} ジャンルの maimai でらっくす {chartType} 譜面です。難易度は {chartCount, plural, =1 {# 譜面} other {# 譜面}} にわたり、{minLevel} から {maxLevel} までの範囲です{bpmFragment}。",
+        "summaryBpmFragment": "（BPM {bpm}）"
       },
       "filter": {
         "type": "タイプ",
@@ -1140,6 +1173,7 @@
     },
     "stats": {
       "title": "全体統計",
+      "description": "追跡中の全プレイヤーから集計した maimai DX の統計を見る：レート値の分布、人気の称号、人気楽曲、プレイアクティビティの推移など。",
       "ratingDistribution": "レート分布",
       "playCountDistribution": "プレイ回数分布",
       "topTitles": "人気称号",
@@ -1147,13 +1181,28 @@
       "averageAchievementByLevel": "レベル別平均達成率",
       "ratingVsPlayCount": "レート vs プレイ回数 ヒートマップ",
       "activeUsersOverTime": "アクティブユーザー数の推移",
-      "fetchesPerDay": "Users with Fetches per Day",
+      "fetchesPerDay": "日別データ取得ユーザー数",
+      "recentPlaysPerDay": "日別プレイ記録数",
+      "ratingClimbByBand": "30日あたりの平均レート上昇",
+      "newPlayersPerWeek": "週あたりの新規プレイヤー数",
+      "fetchActivityHeatmap": "時間帯×曜日 別データ取得アクティビティ",
+      "playActivityHeatmap": "時間帯×曜日 別プレイアクティビティ",
+      "heatmapTimezoneNote": "時刻は JST (UTC+9)、過去90日間。",
+      "topSongsWindow": {
+        "label": "期間",
+        "all": "全期間",
+        "90d": "過去90日間",
+        "30d": "過去30日間",
+        "7d": "過去7日間"
+      },
       "xAxis": {
         "rating": "レート値",
         "playCount": "プレイ回数",
         "level": "レベル",
         "date": "日付",
         "days": "日数",
+        "week": "週",
+        "currentRatingBand": "現在のレート値",
         "timePeriod": "期間",
         "lastDay": "過去1日",
         "lastDays": "過去{days}日間"
@@ -1163,7 +1212,11 @@
         "achievement": "達成率",
         "count": "ユーザー数",
         "activeUsers": "アクティブユーザー",
-        "usersWithFetches": "Users with Fetches"
+        "usersWithFetches": "データ取得ユーザー",
+        "recentPlays": "プレイ数",
+        "newPlayers": "新規プレイヤー",
+        "ratingPer30d": "30日間で獲得したレート値",
+        "playsPer30d": "30日間のプレイ数"
       },
       "table": {
         "rank": "順位",
@@ -1172,6 +1225,8 @@
         "percentage": "割合",
         "count": "数"
       },
+      "showAll": "{count}件すべて表示",
+      "showLess": "折りたたむ",
       "region": {
         "intl": "インターナショナル",
         "jp": "日本"

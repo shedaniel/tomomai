@@ -43,7 +43,16 @@
     "selectAnOption": "選擇選項",
     "guest": "訪客",
     "ok": "確定",
-    "email": "電郵"
+    "email": "電郵",
+    "weekdays": {
+      "sun": "日",
+      "mon": "一",
+      "tue": "二",
+      "wed": "三",
+      "thu": "四",
+      "fri": "五",
+      "sat": "六"
+    }
   },
   "security": {
     "reauth": {
@@ -60,7 +69,7 @@
     "noAccount": "建立帳戶以開始追蹤你的成績。",
     "signup": "註冊",
     "signupWithDiscord": "用 Discord 註冊",
-    "signupWithX": "用 X 註冊",
+    "signupWithX": "以 X 註冊",
     "passkey": {
       "errorTitle": "Passkey 登入失敗",
       "errorGeneric": "無法完成 Passkey 登入，請重試。"
@@ -157,8 +166,8 @@
         "description": "管理 API 金鑰與 OAuth 應用程式。"
       },
       "applications": {
-        "title": "Applications",
-        "description": "OAuth applications you have granted access to your account."
+        "title": "應用程式",
+        "description": "已授權存取你帳戶的 OAuth 應用程式。"
       }
     },
     "language": {
@@ -310,7 +319,7 @@
           "nameLabel": "名稱",
           "namePlaceholder": "我的應用程式",
           "saveButton": "儲存",
-          "saving": "儲存中…",
+          "saving": "儲存中……",
           "saveError": "更新 API 金鑰失敗"
         },
         "deleteDialog": {
@@ -435,19 +444,19 @@
         },
         "snapshot:submit": {
           "name": "快照（提交）",
-          "description": "提交新快照。內部使用 — 僅限管理員。"
+          "description": "提交新快照。內部使用——僅限管理員。"
         },
         "fetch:read": {
-          "name": "抓取狀態（唯讀）",
-          "description": "讀取你進行中或最近一次 maimai 資料抓取的狀態。授予 GET /api/v1/fetch/status。"
+          "name": "同步狀態（唯讀）",
+          "description": "讀取你進行中或最近一次 maimai 資料同步的狀態。授予 GET /api/v1/fetch/status。"
         },
         "fetch:start": {
-          "name": "開始抓取",
-          "description": "使用已儲存的上游令牌觸發一次新的 maimai 資料抓取。授予 POST /api/v1/fetch。破壞性——消耗上游 API 配額並寫入新快照。"
+          "name": "開始同步",
+          "description": "使用已儲存的上游令牌觸發一次新的 maimai 資料同步。授予 POST /api/v1/fetch。破壞性——消耗上游 API 配額並寫入新快照。"
         },
         "fetch:delete": {
-          "name": "抓取令牌（刪除）",
-          "description": "刪除你已儲存的上游 maimai 認證令牌。授予 DELETE /api/v1/fetch/token。破壞性且敏感——重新認證前會中斷站內和 API 觸發的抓取流程。"
+          "name": "同步令牌（刪除）",
+          "description": "刪除你已儲存的上游 maimai 認證令牌。授予 DELETE /api/v1/fetch/token。破壞性且敏感——重新認證前會中斷站內和 API 觸發的同步流程。"
         },
         "snapshot:latest:read": {
           "name": "最新快照（唯讀）",
@@ -463,85 +472,85 @@
         }
       },
       "oauthApps": {
-        "label": "OAuth Applications",
-        "description": "Register apps that can request access on behalf of users via OAuth 2.1 + PKCE.",
-        "createButton": "New Application",
-        "loading": "Loading applications…",
-        "emptyTitle": "No OAuth applications yet",
-        "emptyCreateLink": "Create your first application",
-        "emptySuffix": "to get started with OAuth.",
-        "redirectUris": "Redirect URIs",
-        "scopes": "Scopes",
-        "rotateAriaLabel": "Rotate client secret",
-        "deleteAriaLabel": "Delete application",
+        "label": "OAuth 應用程式",
+        "description": "註冊可透過 OAuth 2.1 + PKCE 代表用戶請求存取的應用程式。",
+        "createButton": "新增應用程式",
+        "loading": "載入應用程式中……",
+        "emptyTitle": "尚未有 OAuth 應用程式",
+        "emptyCreateLink": "建立你的第一個應用程式",
+        "emptySuffix": "以開始使用 OAuth。",
+        "redirectUris": "重新導向 URI",
+        "scopes": "權限範圍",
+        "rotateAriaLabel": "輪換 client secret",
+        "deleteAriaLabel": "刪除應用程式",
         "deleteError": "刪除應用程式失敗",
         "rotateError": "輪換密鑰失敗",
         "createDialog": {
-          "title": "Create OAuth Application",
-          "description": "Register a new application to use the OAuth 2.1 authorization flow.",
-          "nameLabel": "Application name",
-          "namePlaceholder": "My Userscript",
-          "nameDescription": "A descriptive name shown to users on the consent screen.",
-          "uriLabel": "Application URL",
+          "title": "建立 OAuth 應用程式",
+          "description": "註冊一個新應用程式以使用 OAuth 2.1 授權流程。",
+          "nameLabel": "應用程式名稱",
+          "namePlaceholder": "我的 Userscript",
+          "nameDescription": "在同意畫面上向用戶顯示的描述性名稱。",
+          "uriLabel": "應用程式網址",
           "uriPlaceholder": "https://example.com",
-          "redirectLabel": "Redirect URIs",
+          "redirectLabel": "重新導向 URI",
           "redirectPlaceholder": "https://example.com/callback",
-          "redirectAddButton": "Add",
-          "scopesLabel": "Scopes",
-          "createButton": "Create Application",
-          "creating": "Creating…",
-          "createError": "Failed to create application",
-          "createdTitle": "Application created",
-          "createdDescription": "Save your client secret now — it will not be shown again.",
+          "redirectAddButton": "新增",
+          "scopesLabel": "權限範圍",
+          "createButton": "建立應用程式",
+          "creating": "建立中……",
+          "createError": "建立應用程式失敗",
+          "createdTitle": "應用程式已建立",
+          "createdDescription": "請立即儲存你的 client secret，它不會再次顯示。",
           "clientIdLabel": "Client ID",
           "secretLabel": "Client Secret",
-          "copyAriaLabel": "Copy value",
-          "saveWarning": "Save this secret — it won't be shown again after closing this dialog.",
-          "done": "Done"
+          "copyAriaLabel": "複製內容",
+          "saveWarning": "請儲存此 secret，關閉對話框後將不會再顯示。",
+          "done": "完成"
         },
         "rotateDialog": {
-          "title": "Rotate Client Secret?",
-          "description": "The current secret will stop working immediately. Any clients using it will need to be updated with the new secret.",
-          "confirm": "Rotate Secret"
+          "title": "輪換 Client Secret？",
+          "description": "目前的 secret 會即時停止運作。任何使用它的客戶端都需要更新為新的 secret。",
+          "confirm": "輪換 Secret"
         },
         "editDialog": {
-          "title": "Edit OAuth Application",
-          "description": "Update your application's details.",
-          "basicSection": "Basic Info",
-          "redirectSection": "Redirect URIs",
-          "scopesSection": "Scopes",
-          "scopesNote": "Existing tokens keep their current scopes until the user re-authorizes.",
-          "legalSection": "Legal",
-          "nameLabel": "Application name",
-          "uriLabel": "Application URL",
-          "iconLabel": "Icon URL",
+          "title": "編輯 OAuth 應用程式",
+          "description": "更新你的應用程式資料。",
+          "basicSection": "基本資料",
+          "redirectSection": "重新導向 URI",
+          "scopesSection": "權限範圍",
+          "scopesNote": "現有令牌會保留目前的權限範圍，直至用戶重新授權。",
+          "legalSection": "法律",
+          "nameLabel": "應用程式名稱",
+          "uriLabel": "應用程式網址",
+          "iconLabel": "圖示網址",
           "iconPlaceholder": "https://example.com/logo.png",
-          "policyLabel": "Privacy Policy URL",
+          "policyLabel": "私隱政策網址",
           "policyPlaceholder": "https://example.com/privacy",
-          "tosLabel": "Terms of Service URL",
+          "tosLabel": "服務條款網址",
           "tosPlaceholder": "https://example.com/tos",
-          "saveButton": "Save Changes",
-          "saving": "Saving…",
-          "saveError": "Failed to update application"
+          "saveButton": "儲存變更",
+          "saving": "儲存中……",
+          "saveError": "更新應用程式失敗"
         },
         "deleteDialog": {
-          "title": "Delete OAuth Application?",
-          "description": "This will permanently delete the application and revoke all issued tokens. This cannot be undone.",
-          "confirm": "Delete"
+          "title": "刪除 OAuth 應用程式？",
+          "description": "此操作會永久刪除應用程式並撤銷所有已發出的令牌，且無法復原。",
+          "confirm": "刪除"
         }
       }
     },
     "applications": {
-      "noAuthorizations": "You haven't authorized any OAuth applications yet.",
-      "grantedAt": "Authorized {date}",
-      "revokeButton": "Revoke",
+      "noAuthorizations": "你尚未授權任何 OAuth 應用程式。",
+      "grantedAt": "於 {date} 授權",
+      "revokeButton": "撤銷",
       "revokeDialog": {
-        "title": "Revoke Access?",
-        "description": "This will immediately revoke all tokens for this application. You will need to re-authorize it if you want to use it again.",
-        "confirm": "Revoke"
+        "title": "撤銷存取權？",
+        "description": "此操作會即時撤銷此應用程式的所有令牌。如想再次使用，你需要重新授權。",
+        "confirm": "撤銷"
       },
-      "revokeSuccess": "Access revoked",
-      "revokeError": "Failed to revoke access"
+      "revokeSuccess": "已撤銷存取權",
+      "revokeError": "撤銷存取權失敗"
     }
   },
   "dataBanner": {
@@ -552,6 +561,16 @@
     "fetchingData": "匯入資料中……",
     "lastUpdate": "最後更新",
     "noDataInstructions": "此區域沒有任何資料。點擊「匯入新資料」以匯入你的 maimai 成績。"
+  },
+  "profileMetadata": {
+    "title": "{username} | tomomai ともマイ",
+    "description": "查看 {username} 在 {region} 的 maimai 個人主頁。與朋友一同追蹤並分析 maimai 成績。",
+    "descriptionRich": "{displayName}（{username}）在 {region} maimai——Rating {rating}。在 tomomai 上查看其 B50、最近遊玩和譜面紀錄。",
+    "descriptionUnknownRegion": "查看 {username} 的 maimai 個人主頁。與朋友一同追蹤並分析 maimai 成績。",
+    "notFoundTitle": "找不到個人主頁 | tomomai ともマイ",
+    "notFoundDescription": "你尋找的個人主頁不存在或未公開。",
+    "errorTitle": "錯誤 | tomomai ともマイ",
+    "errorDescription": "載入此個人主頁時發生錯誤。"
   },
   "profileVisibility": {
     "public": "公開個人檔案",
@@ -1068,9 +1087,18 @@
     "songs": {
       "metadata": {
         "title": "歌曲資料庫 | maimai DX",
-        "description": "瀏覽和搜尋所有 maimai DX 歌曲。依類型、分類和版本篩選。查看歌曲詳情、難度等級和區域開放情形。"
+        "description": "瀏覽和搜尋所有 maimai DX 歌曲。依類型、分類和版本篩選。查看歌曲詳情、難度等級和區域開放情形。",
+        "songTitle": "{songName} - {artist} | maimai DX",
+        "songDescription": "查看《{songName}》（{artist}）的詳細資料。{chartType} 譜面 · {genre}",
+        "songOgDescription": "查看《{songName}》（{artist}）的詳細資料。",
+        "songFallbackTitle": "歌曲詳情 | maimai DX",
+        "songFallbackDescription": "查看此 maimai DX 歌曲的詳細資料，包括難度等級及地區可用性。",
+        "chartTypeDx": "DX",
+        "chartTypeStandard": "標準",
+        "jsonLdChartDescription": "來自 maimai DX 的 {chartType} 譜面"
       },
       "title": "歌曲資料庫 | maimai DX",
+      "heading": "歌曲資料庫",
       "searchPlaceholder": "搜尋歌曲、藝人、分類……",
       "noSongsFound": "找不到歌曲",
       "tryAdjustingSearch": "嘗試調整搜尋條件",
@@ -1078,6 +1106,7 @@
       "detail": {
         "title": "歌曲詳情",
         "artist": "藝人",
+        "detailsFor": "{songName} 詳情",
         "charts": "譜面",
         "availability": "區域",
         "yourScore": "你的成績",
@@ -1089,7 +1118,9 @@
         "share": "分享",
         "youtube": "YouTube 搜尋",
         "viewCharts": "查看譜面",
-        "viewDetails": "在 tomomai DB 查看詳細資訊"
+        "viewDetails": "在 tomomai DB 查看詳細資訊",
+        "summary": "{songName} 是由 {artist} 製作的 maimai でらっくす {chartType} 譜面，屬於 {genre} 類型，於 {versionName} 收錄。難度範圍為 {minLevel} 至 {maxLevel}，共 {chartCount, plural, =1 {# 張譜面} other {# 張譜面}}{bpmFragment}。",
+        "summaryBpmFragment": "（BPM {bpm}）"
       },
       "filter": {
         "type": "類型",
@@ -1142,6 +1173,7 @@
     },
     "stats": {
       "title": "整體統計",
+      "description": "探索所有追蹤玩家的 maimai DX 整體統計：Rating 分佈、熱門稱號、熱門歌曲，以及隨時間變化的遊玩活動。",
       "ratingDistribution": "Rating 分佈",
       "playCountDistribution": "遊玩次數分佈",
       "topTitles": "熱門稱號",
@@ -1149,13 +1181,28 @@
       "averageAchievementByLevel": "等級平均達成率",
       "ratingVsPlayCount": "Rating vs 遊玩次數熱力圖",
       "activeUsersOverTime": "活躍用戶趨勢",
-      "fetchesPerDay": "Users with Fetches per Day",
+      "fetchesPerDay": "每日有同步的用戶數",
+      "recentPlaysPerDay": "每日最近遊玩數",
+      "ratingClimbByBand": "每 30 日平均 Rating 升幅",
+      "newPlayersPerWeek": "每週新增追蹤用戶",
+      "fetchActivityHeatmap": "按小時及星期劃分的同步活動",
+      "playActivityHeatmap": "按小時及星期劃分的遊玩活動",
+      "heatmapTimezoneNote": "時間以 JST（UTC+9）顯示，過去 90 日。",
+      "topSongsWindow": {
+        "label": "時間範圍",
+        "all": "全部時間",
+        "90d": "最近 90 日",
+        "30d": "最近 30 日",
+        "7d": "最近 7 日"
+      },
       "xAxis": {
         "rating": "Rating",
         "playCount": "遊玩次數",
         "level": "等級",
         "date": "日期",
         "days": "天數",
+        "week": "週",
+        "currentRatingBand": "目前 Rating",
         "timePeriod": "時間範圍",
         "lastDay": "過去 1 天",
         "lastDays": "過去 {days} 天"
@@ -1165,7 +1212,11 @@
         "achievement": "達成率",
         "count": "用戶數",
         "activeUsers": "活躍用戶",
-        "usersWithFetches": "Users with Fetches"
+        "usersWithFetches": "有同步的用戶",
+        "recentPlays": "遊玩數",
+        "newPlayers": "新用戶",
+        "ratingPer30d": "每 30 日 Rating 升幅",
+        "playsPer30d": "每 30 日遊玩次數"
       },
       "table": {
         "rank": "排名",
@@ -1174,6 +1225,8 @@
         "percentage": "百分比",
         "count": "數"
       },
+      "showAll": "顯示全部 {count} 項",
+      "showLess": "收起",
       "region": {
         "intl": "國際區",
         "jp": "日本區"

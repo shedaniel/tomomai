@@ -1209,11 +1209,19 @@
       "ratingVsPlayCount": "Rating vs Play Count Heatmap",
       "activeUsersOverTime": "Active Users Over Time",
       "fetchesPerDay": "Users with Fetches per Day",
+      "recentPlaysPerDay": "Recent Plays per Day",
       "ratingClimbByBand": "Average Rating Climb per 30 Days",
       "newPlayersPerWeek": "New Tracked Players per Week",
       "fetchActivityHeatmap": "Fetch Activity by Hour & Weekday",
       "playActivityHeatmap": "Play Activity by Hour & Weekday",
       "heatmapTimezoneNote": "Hours shown in JST (UTC+9), last 90 days.",
+      "topSongsWindow": {
+        "label": "Time Range",
+        "all": "All time",
+        "90d": "Last 90 days",
+        "30d": "Last 30 days",
+        "7d": "Last 7 days"
+      },
       "xAxis": {
         "rating": "Rating",
         "playCount": "Play Count",
@@ -1232,6 +1240,7 @@
         "count": "Users",
         "activeUsers": "Active Users",
         "usersWithFetches": "Users with Fetches",
+        "recentPlays": "Plays",
         "newPlayers": "New Players",
         "ratingPer30d": "Rating Gained / 30 days",
         "playsPer30d": "Plays / 30 days"

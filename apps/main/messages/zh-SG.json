@@ -29,6 +29,16 @@
     "experiments": "实验",
     "region": "地区",
     "comingSoon": "敬请期待...",
+    "continue": "继续",
+    "weekdays": {
+      "sun": "日",
+      "mon": "一",
+      "tue": "二",
+      "wed": "三",
+      "thu": "四",
+      "fri": "五",
+      "sat": "六"
+    },
     "difficulties": {
       "basic": "Basic",
       "advanced": "Advanced",
@@ -44,9 +54,25 @@
     "ok": "确定",
     "email": "邮箱"
   },
+  "profileMetadata": {
+    "title": "{username} | tomomai ともマイ",
+    "description": "查看 {username} 在 {region} 的 maimai 主页。和朋友一起追踪并分析 maimai 成绩。",
+    "descriptionRich": "{displayName}（{username}）在 {region} maimai——Rating {rating}。在 tomomai 上查看其 B50、最近游玩和谱面纪录。",
+    "descriptionUnknownRegion": "查看 {username} 的 maimai 主页。和朋友一起追踪并分析 maimai 成绩。",
+    "notFoundTitle": "找不到主页 | tomomai ともマイ",
+    "notFoundDescription": "你查找的主页不存在或未公开。",
+    "errorTitle": "错误 | tomomai ともマイ",
+    "errorDescription": "载入此主页时发生错误。"
+  },
+  "security": {
+    "reauth": {
+      "title": "需要重新认证",
+      "description": "此操作需要重新登入。我们会将你重定向到登入服务提供商以重新进行身份验证。"
+    }
+  },
   "auth": {
-    "loginWithDiscord": "以 Discord 继续",
-    "loginWithX": "以 X 继续",
+    "loginWithDiscord": "使用 Discord 登入",
+    "loginWithX": "使用 X 登入",
     "loginWithPasskey": "使用 Passkey 登入",
     "signIn": "登入",
     "newHere": "第一次来吗？",
@@ -80,7 +106,8 @@
     "linkError": "连结账户失败",
     "unlinkSuccess": "已成功解除账户连结",
     "linkSuccess": "已成功连结账户",
-    "cannotUnlinkLast": "无法解除你唯一的登入方式"
+    "cannotUnlinkLast": "无法解除你唯一的登入方式",
+    "reauthRequired": "连结新账户前请先重新登入"
   },
   "passkeys": {
     "title": "Passkey",
@@ -97,7 +124,8 @@
     "captchaFailed": "验证码验证失败，请再试一次。",
     "passkeyName": "Passkey {index}",
     "deleteTitle": "删除 Passkey？",
-    "deleteDescription": "此 Passkey 将被删除，你将无法再使用它登入。"
+    "deleteDescription": "此 Passkey 将被删除，你将无法再使用它登入。",
+    "reauthRequired": "管理 Passkey 前请先重新登入。"
   },
   "consent": {
     "title": "欢迎来到 tomomai",
@@ -146,6 +174,10 @@
       "developer": {
         "title": "开发者",
         "description": "管理 API 密钥和 OAuth 应用程式。"
+      },
+      "applications": {
+        "title": "应用程式",
+        "description": "你已授权存取账户的 OAuth 应用程式。"
       }
     },
     "language": {
@@ -263,6 +295,7 @@
       "revokeAllSuccess": "其他所有会话已撤销。"
     },
     "developer": {
+      "reauthRequired": "执行此操作前请先重新登入。",
       "apiKeys": {
         "label": "API 密钥",
         "description": "使用这些密钥来验证对 tomomai API 的请求。",
@@ -291,6 +324,14 @@
         "deleteSuccess": "API 密钥已删除",
         "deleteError": "删除 API 密钥失败",
         "updateError": "更新密钥失败",
+        "editDialog": {
+          "title": "编辑 API 金钥",
+          "nameLabel": "名称",
+          "namePlaceholder": "我的应用程式",
+          "saveButton": "储存",
+          "saving": "储存中……",
+          "saveError": "更新 API 金钥失败"
+        },
         "deleteDialog": {
           "title": "删除 API 密钥？",
           "description": "此操作无法撤销。任何使用此密钥的应用程式将立即失去访问权限。",
@@ -399,6 +440,34 @@
           "name": "相册图片（只读）",
           "description": "在相册响应中包含图片 URL。敏感 —— 照片可能包含人物图像。"
         },
+        "plate:read": {
+          "name": "称号（只读）",
+          "description": "读取你的称号完成数据（每个称号还需要哪些歌曲完成 Clear / FC / AP）。授予 GET /api/v1/plates。"
+        },
+        "user:settings:read": {
+          "name": "用户设定（只读）",
+          "description": "读取你的私隐与主页显示设定（是否公开主页、是否显示分数、是否显示称号等）。授予 GET /api/v1/me/settings。"
+        },
+        "snapshot:all:delete": {
+          "name": "快照（删除）",
+          "description": "删除你的任何快照。授予 DELETE /api/v1/snapshots/:id。破坏性权限——需明确请求，不会被父级范围涵盖。"
+        },
+        "snapshot:submit": {
+          "name": "快照（提交）",
+          "description": "提交新快照。内部使用——仅限管理员。"
+        },
+        "fetch:read": {
+          "name": "取得状态（只读）",
+          "description": "读取进行中或最近的 maimai 资料取得状态。授予 GET /api/v1/fetch/status。"
+        },
+        "fetch:start": {
+          "name": "开始取得",
+          "description": "使用已储存的上游令牌开始新的 maimai 资料取得。授予 POST /api/v1/fetch。破坏性——会消耗上游 API 预算并产生新快照。"
+        },
+        "fetch:delete": {
+          "name": "取得令牌（删除）",
+          "description": "删除已储存的上游 maimai 认证令牌。授予 DELETE /api/v1/fetch/token。破坏性且敏感——在重新认证之前会中断站内和 API 触发的取得流程。"
+        },
         "snapshot:latest:read": {
           "name": "最新快照（只读）",
           "description": "仅包含你最新快照的元数据、全部歌曲和活动。排除头像（出于隐私考虑，需单独授权）。"
@@ -411,7 +480,87 @@
           "name": "只读（所有非敏感数据）",
           "description": "广泛的只读访问权限：用户元数据、所有快照、最近游玩、统计和相册。不包含头像和相册图片 URL。因涉及广泛的个人数据，标记为敏感。"
         }
+      },
+      "oauthApps": {
+        "label": "OAuth 应用程式",
+        "description": "注册可透过 OAuth 2.1 + PKCE 代表用户请求存取的应用程式。",
+        "createButton": "新增应用程式",
+        "loading": "载入应用程式中……",
+        "emptyTitle": "尚未有 OAuth 应用程式",
+        "emptyCreateLink": "建立你的第一个应用程式",
+        "emptySuffix": "以开始使用 OAuth。",
+        "redirectUris": "重新导向 URI",
+        "scopes": "权限范围",
+        "rotateAriaLabel": "轮换客户端密钥",
+        "deleteAriaLabel": "删除应用程式",
+        "deleteError": "删除应用程式失败",
+        "rotateError": "轮换密钥失败",
+        "createDialog": {
+          "title": "建立 OAuth 应用程式",
+          "description": "注册新应用程式以使用 OAuth 2.1 授权流程。",
+          "nameLabel": "应用程式名称",
+          "namePlaceholder": "My Userscript",
+          "nameDescription": "在同意画面上向用户显示的描述性名称。",
+          "uriLabel": "应用程式网址",
+          "uriPlaceholder": "https://example.com",
+          "redirectLabel": "重新导向 URI",
+          "redirectPlaceholder": "https://example.com/callback",
+          "redirectAddButton": "新增",
+          "scopesLabel": "权限范围",
+          "createButton": "建立应用程式",
+          "creating": "建立中……",
+          "createError": "建立应用程式失败",
+          "createdTitle": "应用程式已建立",
+          "createdDescription": "请立即储存你的客户端密钥，它不会再次显示。",
+          "clientIdLabel": "Client ID",
+          "secretLabel": "Client Secret",
+          "copyAriaLabel": "复制值",
+          "saveWarning": "请储存此密钥。关闭此对话框后将不会再显示。",
+          "done": "完成"
+        },
+        "rotateDialog": {
+          "title": "轮换客户端密钥？",
+          "description": "目前的密钥会立即失效。任何使用它的客户端都需要更新为新密钥。",
+          "confirm": "轮换密钥"
+        },
+        "editDialog": {
+          "title": "编辑 OAuth 应用程式",
+          "description": "更新你的应用程式资料。",
+          "basicSection": "基本资料",
+          "redirectSection": "重新导向 URI",
+          "scopesSection": "权限范围",
+          "scopesNote": "现有令牌会保留目前的权限范围，直到用户重新授权。",
+          "legalSection": "法律",
+          "nameLabel": "应用程式名称",
+          "uriLabel": "应用程式网址",
+          "iconLabel": "图示网址",
+          "iconPlaceholder": "https://example.com/logo.png",
+          "policyLabel": "私隐政策网址",
+          "policyPlaceholder": "https://example.com/privacy",
+          "tosLabel": "服务条款网址",
+          "tosPlaceholder": "https://example.com/tos",
+          "saveButton": "储存变更",
+          "saving": "储存中……",
+          "saveError": "更新应用程式失败"
+        },
+        "deleteDialog": {
+          "title": "删除 OAuth 应用程式？",
+          "description": "应用程式将被永久删除，所有已发出的令牌将被撤销，此操作无法复原。",
+          "confirm": "删除"
+        }
       }
+    },
+    "applications": {
+      "noAuthorizations": "你尚未授权任何 OAuth 应用程式。",
+      "grantedAt": "于 {date} 授权",
+      "revokeButton": "撤销",
+      "revokeDialog": {
+        "title": "撤销存取权？",
+        "description": "此操作会立即撤销此应用程式的所有令牌。如想再次使用，你需要重新授权。",
+        "confirm": "撤销"
+      },
+      "revokeSuccess": "已撤销存取权",
+      "revokeError": "撤销存取权失败"
     }
   },
   "dataBanner": {
@@ -791,6 +940,7 @@
     },
     "addDiscordBot": "新增为 Discord 机器人",
     "admin": "管理员",
+    "testOnboarding": "测试新手引导",
     "errors": {
       "inviteLink": "无法打开邀请链接"
     },
@@ -937,14 +1087,26 @@
     "songs": {
       "metadata": {
         "title": "歌曲数据库 | maimai DX",
-        "description": "浏览和搜索所有 maimai DX 歌曲。按类型、分类和版本筛选。查看歌曲详情、难度等级和区域开放情况。"
+        "description": "浏览和搜索所有 maimai DX 歌曲。按类型、分类和版本筛选。查看歌曲详情、难度等级和区域开放情况。",
+        "songTitle": "{songName} - {artist} | maimai DX",
+        "songDescription": "查看《{songName}》（{artist}）的详细资料。{chartType} 谱面 · {genre}",
+        "songOgDescription": "查看《{songName}》（{artist}）的详细资料。",
+        "songFallbackTitle": "歌曲详情 | maimai DX",
+        "songFallbackDescription": "查看此 maimai DX 歌曲的详细资料，包括难度等级和地区可用性。",
+        "chartTypeDx": "DX",
+        "chartTypeStandard": "标准",
+        "jsonLdChartDescription": "来自 maimai DX 的 {chartType} 谱面"
       },
+      "heading": "歌曲资料库",
       "title": "歌曲数据库 | maimai DX",
       "searchPlaceholder": "搜索歌曲、艺术家、分类...",
       "noSongsFound": "未找到歌曲",
       "tryAdjustingSearch": "尝试调整搜索条件",
       "noSongsAvailable": "无可用歌曲",
       "detail": {
+        "detailsFor": "{songName} 详情",
+        "summary": "{songName} 是由 {artist} 制作的 maimai でらっくす {chartType} 谱面，属于 {genre} 类型，于 {versionName} 收录。难度范围为 {minLevel} 至 {maxLevel}，共 {chartCount, plural, =1 {# 张谱面} other {# 张谱面}}{bpmFragment}。",
+        "summaryBpmFragment": "（BPM {bpm}）",
         "title": "歌曲详情",
         "artist": "艺术家",
         "charts": "谱面",
@@ -1011,6 +1173,7 @@
     },
     "stats": {
       "title": "全局统计",
+      "description": "探索所有追踪玩家的 maimai DX 综合统计：Rating 分布、热门称号、热门歌曲，以及随时间变化的游玩活动。",
       "ratingDistribution": "R 值分布",
       "playCountDistribution": "游玩次数分布",
       "topTitles": "热门称号",
@@ -1018,13 +1181,28 @@
       "averageAchievementByLevel": "等级平均达成率",
       "ratingVsPlayCount": "R 值 vs 游玩次数热力图",
       "activeUsersOverTime": "活跃用户趋势",
-      "fetchesPerDay": "Users with Fetches per Day",
+      "fetchesPerDay": "每日有取得资料的用户数",
+      "recentPlaysPerDay": "每日最近游玩数",
+      "ratingClimbByBand": "每 30 天平均 Rating 提升",
+      "newPlayersPerWeek": "每週新增追踪玩家",
+      "fetchActivityHeatmap": "按小时和星期划分的取得活动",
+      "playActivityHeatmap": "按小时和星期划分的游玩活动",
+      "heatmapTimezoneNote": "时间以 JST（UTC+9）显示，过去 90 天。",
+      "topSongsWindow": {
+        "label": "时间范围",
+        "all": "全部时间",
+        "90d": "最近 90 天",
+        "30d": "最近 30 天",
+        "7d": "最近 7 天"
+      },
       "xAxis": {
         "rating": "R 值",
         "playCount": "游玩次数",
         "level": "等级",
         "date": "日期",
         "days": "天数",
+        "week": "週",
+        "currentRatingBand": "目前 Rating",
         "timePeriod": "时间范围",
         "lastDay": "过去 1 天",
         "lastDays": "过去 {days} 天"
@@ -1034,7 +1212,11 @@
         "achievement": "达成率",
         "count": "用户数",
         "activeUsers": "活跃用户",
-        "usersWithFetches": "Users with Fetches"
+        "usersWithFetches": "有取得资料的用户",
+        "recentPlays": "游玩数",
+        "newPlayers": "新增玩家",
+        "ratingPer30d": "每 30 天获得 Rating",
+        "playsPer30d": "每 30 天游玩次数"
       },
       "table": {
         "rank": "排名",
@@ -1043,6 +1225,8 @@
         "percentage": "占比",
         "count": "数"
       },
+      "showAll": "显示全部 {count} 项",
+      "showLess": "收起",
       "region": {
         "intl": "国际服",
         "jp": "日本服"

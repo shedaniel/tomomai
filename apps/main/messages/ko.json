@@ -28,6 +28,16 @@
     "about": "소개",
     "experiments": "실험실",
     "comingSoon": "준비 중...",
+    "continue": "계속",
+    "weekdays": {
+      "sun": "일",
+      "mon": "월",
+      "tue": "화",
+      "wed": "수",
+      "thu": "목",
+      "fri": "금",
+      "sat": "토"
+    },
     "difficulties": {
       "basic": "Basic",
       "advanced": "Advanced",
@@ -41,11 +51,22 @@
     "ok": "확인",
     "email": "이메일"
   },
+  "security": {
+    "reauth": {
+      "title": "재인증이 필요합니다",
+      "description": "이 작업을 수행하려면 다시 로그인해야 합니다. 재인증을 위해 제공자 페이지로 이동합니다."
+    }
+  },
   "auth": {
     "loginWithDiscord": "Discord로 계속하기",
-    "loginDescription": "Discord로 로그인하여 maimai 성과 기록을 시작하세요!",
+    "loginWithX": "X로 계속하기",
+    "loginWithPasskey": "패스키로 로그인",
+    "signIn": "로그인",
+    "newHere": "처음이신가요?",
     "noAccount": "계정이 없으신가요?",
+    "signup": "회원가입",
     "signupWithDiscord": "Discord로 가입",
+    "signupWithX": "X로 회원가입",
     "passkey": {
       "errorTitle": "패스키 로그인 실패",
       "errorGeneric": "패스키 로그인을 완료할 수 없습니다. 다시 시도해주세요."
@@ -60,6 +81,38 @@
       "importData": "maimai DX NET에서 데이터 가져오기",
       "analyzeProgress": "플레이 성과 및 성장 분석"
     }
+  },
+  "linkedAccounts": {
+    "title": "연결된 계정",
+    "description": "추가 로그인 수단을 위해 소셜 계정을 연결하세요.",
+    "link": "연결",
+    "unlink": "연결 해제",
+    "linked": "연결됨",
+    "notLinked": "연결 안 됨",
+    "unlinkError": "계정 연결 해제에 실패했습니다",
+    "linkError": "계정 연결에 실패했습니다",
+    "unlinkSuccess": "계정 연결이 해제되었습니다",
+    "linkSuccess": "계정이 연결되었습니다",
+    "cannotUnlinkLast": "유일한 로그인 수단은 해제할 수 없습니다",
+    "reauthRequired": "새 계정을 연결하기 전에 다시 로그인해주세요"
+  },
+  "passkeys": {
+    "title": "패스키",
+    "description": "생체 인증 또는 하드웨어 키로 비밀번호 없이 로그인하세요.",
+    "addPasskey": "패스키 추가",
+    "addingPasskey": "추가 중...",
+    "noPasskeys": "등록된 패스키가 없습니다.",
+    "deletePasskey": "삭제",
+    "deleteSuccess": "패스키가 삭제되었습니다.",
+    "deleteError": "패스키 삭제에 실패했습니다.",
+    "addError": "패스키 추가에 실패했습니다.",
+    "addSuccess": "패스키가 추가되었습니다.",
+    "verifyingCaptcha": "확인 중...",
+    "captchaFailed": "캡차 확인에 실패했습니다. 다시 시도해주세요.",
+    "passkeyName": "패스키 {index}",
+    "deleteTitle": "패스키를 삭제하시겠어요?",
+    "deleteDescription": "이 패스키가 삭제됩니다. 더 이상 이 패스키로 로그인할 수 없습니다.",
+    "reauthRequired": "패스키를 관리하기 전에 다시 로그인해주세요."
   },
   "consent": {
     "title": "Welcome to tomomai",
@@ -106,6 +159,10 @@
       "developer": {
         "title": "개발자",
         "description": "API 키와 OAuth 앱을 관리합니다."
+      },
+      "applications": {
+        "title": "애플리케이션",
+        "description": "계정 접근 권한을 부여한 OAuth 애플리케이션입니다."
       }
     },
     "language": {
@@ -200,7 +257,130 @@
     "saveChanges": "변경 사항 저장",
     "saving": "저장 중...",
     "saved": "설정이 저장되었습니다!",
-    "errorSaving": "설정 저장 실패"
+    "errorSaving": "설정 저장 실패",
+    "developer": {
+      "reauthRequired": "이 작업을 수행하기 전에 다시 로그인해주세요.",
+      "apiKeys": {
+        "editDialog": {
+          "title": "API 키 편집",
+          "nameLabel": "이름",
+          "namePlaceholder": "내 앱",
+          "saveButton": "저장",
+          "saving": "저장 중…",
+          "saveError": "API 키 업데이트에 실패했습니다"
+        }
+      },
+      "scopes": {
+        "plate:read": {
+          "name": "칭호 (읽기)",
+          "description": "칭호 진행 데이터(각 칭호별로 클리어 / FC / AP가 필요한 곡)를 읽습니다. GET /api/v1/plates 권한을 부여합니다."
+        },
+        "user:settings:read": {
+          "name": "사용자 설정 (읽기)",
+          "description": "개인정보 및 프로필 표시 설정(프로필 공개, 점수 표시, 칭호 표시 등)을 읽습니다. GET /api/v1/me/settings 권한을 부여합니다."
+        },
+        "snapshot:all:delete": {
+          "name": "스냅샷 (삭제)",
+          "description": "본인의 모든 스냅샷을 삭제합니다. DELETE /api/v1/snapshots/:id 권한을 부여합니다. 파괴적 권한 — 명시적으로 요청해야 하며 상위 스코프에 포함되지 않습니다."
+        },
+        "snapshot:submit": {
+          "name": "스냅샷 (제출)",
+          "description": "새 스냅샷을 제출합니다. 내부용 — 관리자 전용."
+        },
+        "fetch:read": {
+          "name": "가져오기 상태 (읽기)",
+          "description": "진행 중이거나 최근 maimai 데이터 가져오기 상태를 읽습니다. GET /api/v1/fetch/status 권한을 부여합니다."
+        },
+        "fetch:start": {
+          "name": "가져오기 시작",
+          "description": "저장된 업스트림 토큰으로 새 maimai 데이터 가져오기를 시작합니다. POST /api/v1/fetch 권한을 부여합니다. 파괴적 — 업스트림 API 예산을 소모하고 새 스냅샷을 생성합니다."
+        },
+        "fetch:delete": {
+          "name": "가져오기 토큰 (삭제)",
+          "description": "저장된 업스트림 maimai 인증 토큰을 삭제합니다. DELETE /api/v1/fetch/token 권한을 부여합니다. 파괴적이며 민감 — 재인증 전까지 앱 내 및 API 가져오기 흐름이 모두 중단됩니다."
+        }
+      },
+      "oauthApps": {
+        "label": "OAuth 애플리케이션",
+        "description": "OAuth 2.1 + PKCE로 사용자를 대신해 접근을 요청할 수 있는 앱을 등록합니다.",
+        "createButton": "새 애플리케이션",
+        "loading": "애플리케이션을 불러오는 중…",
+        "emptyTitle": "아직 OAuth 애플리케이션이 없습니다",
+        "emptyCreateLink": "첫 번째 애플리케이션을 생성",
+        "emptySuffix": "하여 OAuth를 시작하세요.",
+        "redirectUris": "리디렉션 URI",
+        "scopes": "스코프",
+        "rotateAriaLabel": "클라이언트 시크릿 재생성",
+        "deleteAriaLabel": "애플리케이션 삭제",
+        "deleteError": "애플리케이션 삭제에 실패했습니다",
+        "rotateError": "시크릿 재생성에 실패했습니다",
+        "createDialog": {
+          "title": "OAuth 애플리케이션 생성",
+          "description": "OAuth 2.1 인증 흐름을 사용할 새 애플리케이션을 등록합니다.",
+          "nameLabel": "애플리케이션 이름",
+          "namePlaceholder": "My Userscript",
+          "nameDescription": "동의 화면에서 사용자에게 표시되는 이름입니다.",
+          "uriLabel": "애플리케이션 URL",
+          "uriPlaceholder": "https://example.com",
+          "redirectLabel": "리디렉션 URI",
+          "redirectPlaceholder": "https://example.com/callback",
+          "redirectAddButton": "추가",
+          "scopesLabel": "스코프",
+          "createButton": "애플리케이션 생성",
+          "creating": "생성 중…",
+          "createError": "애플리케이션 생성에 실패했습니다",
+          "createdTitle": "애플리케이션이 생성되었습니다",
+          "createdDescription": "지금 클라이언트 시크릿을 저장하세요. 다시 표시되지 않습니다.",
+          "clientIdLabel": "Client ID",
+          "secretLabel": "Client Secret",
+          "copyAriaLabel": "값 복사",
+          "saveWarning": "이 시크릿을 저장하세요. 이 대화상자를 닫은 후에는 다시 표시되지 않습니다.",
+          "done": "완료"
+        },
+        "rotateDialog": {
+          "title": "클라이언트 시크릿을 재생성하시겠어요?",
+          "description": "현재 시크릿이 즉시 무효화됩니다. 이를 사용 중인 클라이언트는 새 시크릿으로 업데이트해야 합니다.",
+          "confirm": "시크릿 재생성"
+        },
+        "editDialog": {
+          "title": "OAuth 애플리케이션 편집",
+          "description": "애플리케이션 정보를 업데이트합니다.",
+          "basicSection": "기본 정보",
+          "redirectSection": "리디렉션 URI",
+          "scopesSection": "스코프",
+          "scopesNote": "기존 토큰은 사용자가 다시 인가할 때까지 현재 스코프를 유지합니다.",
+          "legalSection": "법적 정보",
+          "nameLabel": "애플리케이션 이름",
+          "uriLabel": "애플리케이션 URL",
+          "iconLabel": "아이콘 URL",
+          "iconPlaceholder": "https://example.com/logo.png",
+          "policyLabel": "개인정보 처리방침 URL",
+          "policyPlaceholder": "https://example.com/privacy",
+          "tosLabel": "서비스 약관 URL",
+          "tosPlaceholder": "https://example.com/tos",
+          "saveButton": "변경 사항 저장",
+          "saving": "저장 중…",
+          "saveError": "애플리케이션 업데이트에 실패했습니다"
+        },
+        "deleteDialog": {
+          "title": "OAuth 애플리케이션을 삭제하시겠어요?",
+          "description": "애플리케이션이 영구적으로 삭제되며 발급된 모든 토큰이 무효화됩니다. 이 작업은 되돌릴 수 없습니다.",
+          "confirm": "삭제"
+        }
+      }
+    },
+    "applications": {
+      "noAuthorizations": "아직 인가한 OAuth 애플리케이션이 없습니다.",
+      "grantedAt": "{date}에 인가됨",
+      "revokeButton": "해제",
+      "revokeDialog": {
+        "title": "접근 권한을 해제하시겠어요?",
+        "description": "이 애플리케이션의 모든 토큰이 즉시 무효화됩니다. 다시 사용하려면 재인가해야 합니다.",
+        "confirm": "해제"
+      },
+      "revokeSuccess": "접근 권한이 해제되었습니다",
+      "revokeError": "접근 권한 해제에 실패했습니다"
+    }
   },
   "dataBanner": {
     "dataSnapshot": "데이터 스냅샷:",
@@ -667,13 +847,28 @@
       "averageAchievementByLevel": "레벨별 평균 달성률",
       "ratingVsPlayCount": "레이팅 vs 플레이 횟수 히트맵",
       "activeUsersOverTime": "Active Users Over Time",
-      "fetchesPerDay": "Users with Fetches per Day",
+      "fetchesPerDay": "일일 가져오기 사용자",
+      "recentPlaysPerDay": "일일 최근 플레이 수",
+      "ratingClimbByBand": "30일당 평균 Rating 상승",
+      "newPlayersPerWeek": "주간 신규 추적 플레이어",
+      "fetchActivityHeatmap": "시간 및 요일별 가져오기 활동",
+      "playActivityHeatmap": "시간 및 요일별 플레이 활동",
+      "heatmapTimezoneNote": "시간은 JST(UTC+9) 기준, 최근 90일.",
+      "topSongsWindow": {
+        "label": "기간",
+        "all": "전체 기간",
+        "90d": "최근 90일",
+        "30d": "최근 30일",
+        "7d": "최근 7일"
+      },
       "xAxis": {
         "rating": "레이팅",
         "playCount": "플레이 횟수",
         "level": "레벨",
         "date": "Date",
         "days": "Days",
+        "week": "주",
+        "currentRatingBand": "현재 Rating",
         "timePeriod": "Time Period",
         "lastDay": "Last 1 day",
         "lastDays": "Last {days} days"
@@ -683,8 +878,14 @@
         "achievement": "달성률",
         "count": "유저 수",
         "activeUsers": "Active Users",
-        "usersWithFetches": "Users with Fetches"
+        "usersWithFetches": "가져오기 사용자",
+        "recentPlays": "플레이 수",
+        "newPlayers": "신규 플레이어",
+        "ratingPer30d": "Rating 상승 / 30일",
+        "playsPer30d": "플레이 수 / 30일"
       },
+      "showAll": "전체 {count}개 보기",
+      "showLess": "간략히 보기",
       "table": {
         "rank": "순위",
         "title": "칭호",
