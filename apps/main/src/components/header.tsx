@@ -13,6 +13,7 @@ import Link from "next/link";
 import { Fragment, useCallback, useState } from "react";
 import { toast } from "sonner";
 import { LocaleSwitcher } from "./locale-switcher";
+import { MinigameCards } from "./minigame-cards";
 import { RegionSwitcher } from "./region-switcher";
 import { Drawer, DrawerClose, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle, DrawerTrigger } from "@tomomai/ui";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@tomomai/ui";
@@ -416,6 +417,10 @@ function UserIcon({ user, menu, onAbout, onTheme, onDiscordInvite }: Partial<Non
                 </>
               )}
               <div className="mt-auto" />
+              <Separator className="my-1" />
+              <div className="px-2 py-2">
+                <MinigameCards />
+              </div>
               <Separator className="my-1" />
               <DrawerClose asChild>
                 <a href="https://x.com/shedaniel_sub" target="_blank" rel="noopener noreferrer" className={drawerItemClass}>

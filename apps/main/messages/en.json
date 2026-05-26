@@ -60,6 +60,17 @@
       "description": "This action needs a fresh sign-in. You'll be redirected to your provider to re-authenticate."
     }
   },
+  "minigames": {
+    "badge": "Minigame",
+    "guesser": {
+      "title": "Guesser",
+      "tagline": "Guess the song from its cover image."
+    },
+    "heardle": {
+      "title": "Heardle",
+      "tagline": "Guess the song from a few seconds."
+    }
+  },
   "auth": {
     "loginWithDiscord": "Continue with Discord",
     "loginWithX": "Continue with X",

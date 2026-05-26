@@ -7,6 +7,7 @@ import { useTranslations } from "next-intl";
 import { useState, useEffect } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { InfoCard } from "./info-card";
+import { MinigameCards } from "./minigame-cards";
 import { SongsCard } from "./songs-card";
 import { Flags } from "@/lib/flags";
 import { AnimatePresence, motion } from "motion/react";
@@ -201,15 +202,20 @@ export function DataContent({
   if (selectedSnapshotData) {
     return (
       <div className="flex flex-col md:flex-row md:items-start gap-x-6 lg:gap-x-8 gap-y-6">
-        <Sidebar
-          value={selectedTab}
-          onValueChange={handleTabChange}
-          className="sm:flex-row sm:w-full md:flex-col md:w-48 md:overflow-x-visible md:-ml-3"
-        >
-          {visibleTabs.map((tab) => (
-            <SidebarItem key={tab.value} value={tab.value} icon={tab.icon} text={tab.name} />
-          ))}
-        </Sidebar>
+        <div className="max-md:contents md:flex md:flex-col md:gap-4">
+          <Sidebar
+            value={selectedTab}
+            onValueChange={handleTabChange}
+            className="sm:flex-row sm:w-full md:flex-col md:w-48 md:overflow-x-visible md:-ml-3"
+          >
+            {visibleTabs.map((tab) => (
+              <SidebarItem key={tab.value} value={tab.value} icon={tab.icon} text={tab.name} />
+            ))}
+          </Sidebar>
+          <div className="max-md:hidden md:w-48 md:-ml-3">
+            <MinigameCards className="grid-cols-1" />
+          </div>
+        </div>
 
         <AnimatePresence mode="wait">
           <motion.div

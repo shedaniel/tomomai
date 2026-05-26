@@ -14,6 +14,7 @@ import { isCNExclusive } from "@/lib/enabled-regions";
 import { motion } from "motion/react";
 import { STAGGER, getTransition } from "@/lib/animation-constants";
 import { ConsentDialog } from "@/components/consent-dialog";
+import { MinigameCards } from "@/components/minigame-cards";
 import { trpc } from "@/lib/trpc-client";
 import { DiscordIcon, XIcon } from "@tomomai/ui";
 import { showMessage } from "@/components/imperative-dialog";
@@ -276,6 +277,15 @@ export function LoginScreen({ signupRequirements, flags }: LoginScreenProps) {
             </div>
           </CardContent>
         </Card>
+      </motion.div>
+
+      <motion.div
+        initial={{ opacity: 0, y: 6 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={getTransition({ duration: 0.5, delay: 0.2 })}
+        className="mt-4"
+      >
+        <MinigameCards />
       </motion.div>
 
       <motion.div

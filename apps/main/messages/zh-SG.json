@@ -54,6 +54,17 @@
     "ok": "确定",
     "email": "邮箱"
   },
+  "minigames": {
+    "badge": "迷你游戏",
+    "guesser": {
+      "title": "猜歌挑战",
+      "tagline": "透过封面图猜出歌曲。"
+    },
+    "heardle": {
+      "title": "Heardle",
+      "tagline": "透过几秒钟的音讯猜出歌曲。"
+    }
+  },
   "profileMetadata": {
     "title": "{username} | tomomai ともマイ",
     "description": "查看 {username} 在 {region} 的 maimai 主页。和朋友一起追踪并分析 maimai 成绩。",

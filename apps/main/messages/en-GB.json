@@ -54,6 +54,17 @@
     "ok": "OK",
     "email": "Email"
   },
+  "minigames": {
+    "badge": "Minigame",
+    "guesser": {
+      "title": "Guesser",
+      "tagline": "Guess the song from its cover image."
+    },
+    "heardle": {
+      "title": "Heardle",
+      "tagline": "Guess the song from a few seconds."
+    }
+  },
   "security": {
     "reauth": {
       "title": "Re-authentication required",

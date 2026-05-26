@@ -54,6 +54,17 @@
       "sat": "六"
     }
   },
+  "minigames": {
+    "badge": "迷你游戏",
+    "guesser": {
+      "title": "猜歌挑战",
+      "tagline": "通过封面图猜出歌曲。"
+    },
+    "heardle": {
+      "title": "Heardle",
+      "tagline": "通过几秒钟的音频猜出歌曲。"
+    }
+  },
   "security": {
     "reauth": {
       "title": "需要重新认证",

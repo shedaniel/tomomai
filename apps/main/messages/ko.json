@@ -51,6 +51,17 @@
     "ok": "확인",
     "email": "이메일"
   },
+  "minigames": {
+    "badge": "미니게임",
+    "guesser": {
+      "title": "곡 맞히기",
+      "tagline": "커버 이미지를 보고 곡을 맞혀보세요."
+    },
+    "heardle": {
+      "title": "Heardle",
+      "tagline": "몇 초의 오디오로 곡을 맞혀보세요."
+    }
+  },
   "security": {
     "reauth": {
       "title": "재인증이 필요합니다",

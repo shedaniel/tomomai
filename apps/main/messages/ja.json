@@ -54,6 +54,17 @@
       "sat": "土"
     }
   },
+  "minigames": {
+    "badge": "ミニゲーム",
+    "guesser": {
+      "title": "楽曲当てクイズ",
+      "tagline": "カバー画像から楽曲を当てよう。"
+    },
+    "heardle": {
+      "title": "Heardle",
+      "tagline": "数秒のサウンドから楽曲を当てよう。"
+    }
+  },
   "security": {
     "reauth": {
       "title": "再認証が必要です",
