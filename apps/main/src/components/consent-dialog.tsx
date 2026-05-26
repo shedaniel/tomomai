@@ -25,6 +25,7 @@ interface ConsentDialogProps {
   onConsent: (method: "discord" | "twitter") => Promise<void>;
   onCancel: () => void;
   signupEnabled?: boolean;
+  twitterOauthEnabled?: boolean;
 }
 
 export function ConsentDialog({
@@ -34,6 +35,7 @@ export function ConsentDialog({
   onConsent,
   onCancel,
   signupEnabled = true,
+  twitterOauthEnabled = false,
 }: ConsentDialogProps) {
   const { locale } = useLocale();
   const t = useTranslations("consent");
@@ -232,19 +234,21 @@ export function ConsentDialog({
                   )}
                   {ta("signupWithDiscord")}
                 </Button>
-                <Button
-                  onClick={() => handleSocialMethod("twitter")}
-                  disabled={!canProceed || proceeding !== null}
-                  size="lg"
-                  className="w-full justify-start bg-neutral-900 hover:bg-neutral-800 text-white border border-input font-semibold"
-                >
-                  {proceeding === "twitter" ? (
-                    <Loader2 className="w-5 h-5 mr-3 animate-spin shrink-0" />
-                  ) : (
-                    <XIcon className="w-5 h-5 mr-3 shrink-0" />
-                  )}
-                  {ta("signupWithX")}
-                </Button>
+                {twitterOauthEnabled && (
+                  <Button
+                    onClick={() => handleSocialMethod("twitter")}
+                    disabled={!canProceed || proceeding !== null}
+                    size="lg"
+                    className="w-full justify-start bg-neutral-900 hover:bg-neutral-800 text-white border border-input font-semibold"
+                  >
+                    {proceeding === "twitter" ? (
+                      <Loader2 className="w-5 h-5 mr-3 animate-spin shrink-0" />
+                    ) : (
+                      <XIcon className="w-5 h-5 mr-3 shrink-0" />
+                    )}
+                    {ta("signupWithX")}
+                  </Button>
+                )}
               </div>
             )}
 

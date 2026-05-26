@@ -21,7 +21,7 @@ interface HistoryCardProps {
 const chartConfig = {
   rating: {
     label: "Rating",
-    color: "hsl(var(--primary))",
+    color: "var(--primary)",
   },
 };
 

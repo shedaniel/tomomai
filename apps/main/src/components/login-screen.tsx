@@ -303,6 +303,7 @@ export function LoginScreen({ signupRequirements, flags }: LoginScreenProps) {
           onConsent={handleConsentGiven}
           onCancel={handleConsentCancel}
           signupEnabled={signupRequirements.signupEnabled}
+          twitterOauthEnabled={flags.twitterOauth}
         />
       )}
     </div>
