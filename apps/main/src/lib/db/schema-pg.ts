@@ -57,6 +57,8 @@ export const user = pgTable("user", {
   profileShowInSearch: boolean("profileShowInSearch").notNull().default(true),
   // Fetch settings
   fetchUseAlbums: boolean("fetchUseAlbums"),
+  // Feature flag overrides for userSelectable flags. Null = no overrides.
+  flagOverrides: jsonb("flagOverrides").$type<Record<string, boolean>>(),
 }, (table) => [
   check("username_pattern", sql`${table.username} IS NULL OR (length(${table.username}) >= 1 AND ${table.username} ~ '^[a-zA-Z0-9_-]+$')`),
 ]);

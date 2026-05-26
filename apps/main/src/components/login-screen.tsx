@@ -26,6 +26,7 @@ interface SignupRequirements {
 
 interface LoginScreenProps {
   signupRequirements: SignupRequirements;
+  flags: { passkey: boolean; twitterOauth: boolean };
 }
 
 function DatabaseCard() {
@@ -58,7 +59,7 @@ function DatabaseCard() {
   );
 }
 
-export function LoginScreen({ signupRequirements }: LoginScreenProps) {
+export function LoginScreen({ signupRequirements, flags }: LoginScreenProps) {
   const t = useTranslations();
   const [showConsentDialog, setShowConsentDialog] = useState(false);
   const { data: policies } = trpc.user.getPolicies.useQuery();
@@ -168,36 +169,40 @@ export function LoginScreen({ signupRequirements }: LoginScreenProps) {
                     以 QQ 继续
                   </Button>
                 ) : (
-                  // International mode: 3 equal-weight branded buttons
-                  <div className="grid grid-cols-5 gap-2">
+                  // International mode: branded buttons (twitter + passkey flag-gated)
+                  <div className="flex gap-2">
                     <Button
                       onClick={handleSocialLogin("discord")}
                       size="lg"
                       title={t('auth.loginWithDiscord')}
                       aria-label={t('auth.loginWithDiscord')}
-                      className="col-span-2 bg-indigo-500/90 hover:bg-indigo-500 text-white border border-input dark:bg-indigo-500/80 dark:hover:bg-indigo-500"
+                      className="flex-[2] bg-indigo-500/90 hover:bg-indigo-500 text-white border border-input dark:bg-indigo-500/80 dark:hover:bg-indigo-500"
                     >
                       <DiscordIcon className="w-5 h-5" />
                     </Button>
-                    <Button
-                      onClick={handleSocialLogin("twitter")}
-                      size="lg"
-                      title={t('auth.loginWithX')}
-                      aria-label={t('auth.loginWithX')}
-                      className="col-span-2 bg-neutral-900 hover:bg-neutral-800 text-white border border-input"
-                    >
-                      <XIcon className="w-5 h-5" />
-                    </Button>
-                    <Button
-                      onClick={handlePasskeyLogin}
-                      size="lg"
-                      variant="outline"
-                      title={t('auth.loginWithPasskey')}
-                      aria-label={t('auth.loginWithPasskey')}
-                      className="col-span-1"
-                    >
-                      <KeyRound className="w-5 h-5" />
-                    </Button>
+                    {flags.twitterOauth && (
+                      <Button
+                        onClick={handleSocialLogin("twitter")}
+                        size="lg"
+                        title={t('auth.loginWithX')}
+                        aria-label={t('auth.loginWithX')}
+                        className="flex-[2] bg-neutral-900 hover:bg-neutral-800 text-white border border-input"
+                      >
+                        <XIcon className="w-5 h-5" />
+                      </Button>
+                    )}
+                    {flags.passkey && (
+                      <Button
+                        onClick={handlePasskeyLogin}
+                        size="lg"
+                        variant="outline"
+                        title={t('auth.loginWithPasskey')}
+                        aria-label={t('auth.loginWithPasskey')}
+                        className="flex-[1]"
+                      >
+                        <KeyRound className="w-5 h-5" />
+                      </Button>
+                    )}
                   </div>
                 )}
 

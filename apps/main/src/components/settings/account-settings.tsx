@@ -3,7 +3,7 @@
 import { useLocale } from "@/components/providers/locale-provider";
 import { ChangeUsernameDialog } from "@/components/settings/change-username-dialog";
 import { SessionsSection } from "@/components/settings/sessions-section";
-import { LinkedAccountsSection } from "@/components/settings/linked-accounts-section";
+import { LinkedAccountsSection, type LinkedAccountProviderId } from "@/components/settings/linked-accounts-section";
 import { PasskeysSection } from "@/components/settings/passkeys-section";
 import {
   SettingsField,
@@ -31,7 +31,11 @@ import { Languages, Mail, Pencil, User } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
-export function AccountSettings() {
+interface AccountSettingsProps {
+  flags: { passkey: boolean; twitterOauth: boolean };
+}
+
+export function AccountSettings({ flags }: AccountSettingsProps) {
   const t = useTranslations();
 
   if (isCNExclusive()) {
@@ -42,6 +46,9 @@ export function AccountSettings() {
     );
   }
 
+  const enabledProviders: LinkedAccountProviderId[] = ["discord"];
+  if (flags.twitterOauth) enabledProviders.push("twitter");
+
   return (
     <SettingsForm>
       <SettingsHeader
@@ -50,11 +57,13 @@ export function AccountSettings() {
       />
       <AccountFields />
       <SettingsSection>
-        <LinkedAccountsSection />
+        <LinkedAccountsSection enabledProviders={enabledProviders} />
       </SettingsSection>
-      <SettingsSection>
-        <PasskeysSection />
-      </SettingsSection>
+      {flags.passkey && (
+        <SettingsSection>
+          <PasskeysSection />
+        </SettingsSection>
+      )}
       <SettingsSection>
         <SessionsSection />
       </SettingsSection>

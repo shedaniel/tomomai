@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { resolveBaseUrlFromHeaders } from "@/lib/base-url";
 import { USERSCRIPT_ALLOWED_ORIGINS } from "@/lib/userscript/allowed-origins";
+import { useUserscriptFetch } from "@/lib/flags";
 
 // Exchanges an OAuth authorization code (issued via the userscript's PKCE
 // flow) for tokens, injecting the confidential client's `client_secret`
@@ -31,8 +32,7 @@ export async function OPTIONS(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  // TODO(v2026.5): Disable feature until release
-  if (process.env.ENABLE_USERSCRIPT !== "true") return new NextResponse("Not Found", { status: 404 });
+  if (!(await useUserscriptFetch())) return new NextResponse("Not Found", { status: 404 });
   const origin = request.headers.get("origin");
   const cors = corsHeaders(origin);
 

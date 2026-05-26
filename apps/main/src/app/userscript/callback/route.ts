@@ -1,9 +1,9 @@
 import { NextRequest } from "next/server";
 import { USERSCRIPT_ALLOWED_ORIGINS } from "@/lib/userscript/allowed-origins";
+import { useUserscriptFetch } from "@/lib/flags";
 
 export async function GET(request: NextRequest) {
-  // TODO(v2026.5): Disable feature until release
-  if (process.env.ENABLE_USERSCRIPT !== "true") return new Response("Not Found", { status: 404 });
+  if (!(await useUserscriptFetch())) return new Response("Not Found", { status: 404 });
   const { searchParams } = request.nextUrl;
   const code = searchParams.get("code");
   const state = searchParams.get("state");

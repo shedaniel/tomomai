@@ -1,10 +1,11 @@
 import { createFlagsDiscoveryEndpoint, getProviderData } from "flags/next";
-import * as flags from "../../../../lib/flags";
+import * as flagsModule from "@/lib/flags";
 
 export const GET = createFlagsDiscoveryEndpoint(async () => {
-  const flagDefinitions = Object.fromEntries(
-    Object.entries(flags).filter(([, value]) => value && 'key' in value)
-  ) as Record<string, any>;
-  console.log(flagDefinitions);
-  return getProviderData(flagDefinitions);
+  // The `useX` aliases exported from @/lib/flags are the SDK-wrapped flags;
+  // filter the module exports down to those (they carry a `key` property).
+  const exportedFlags = Object.fromEntries(
+    Object.entries(flagsModule).filter(([, value]) => value && typeof value === "function" && "key" in (value as object)),
+  );
+  return getProviderData(exportedFlags as Parameters<typeof getProviderData>[0]);
 });

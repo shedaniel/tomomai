@@ -10,73 +10,85 @@ import {
 } from "@tomomai/ui";
 import { Label } from "@tomomai/ui";
 import { Switch } from "@tomomai/ui";
-import { Flags } from "@/lib/flags";
+import { FlagCategory, Flags } from "@/lib/flags";
 import { trpc } from "@/lib/trpc-client";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { X } from "lucide-react";
 
 interface ExperimentsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  initialFlags?: Flags;
 }
 
-export function ExperimentsDialog({ open, onOpenChange, initialFlags }: ExperimentsDialogProps) {
-  const t = useTranslations();
-  const [flagToggles, setFlagToggles] = useState<Partial<Flags>>(() => {
-    const toggles: Partial<Flags> = {};
-    if (initialFlags) {
-      // Initialize with all initial flags passed
-      return initialFlags;
-    }
-    return toggles;
-  });
+const LEGACY_COOKIE_NAME = "flagOverrides";
 
-  // Fetch user-selectable flags metadata
-  const { data: flagsData } = trpc.user.getUserSelectableFlags.useQuery();
+const CATEGORY_LABELS: Record<FlagCategory, string> = {
+  dashboard: "Dashboard",
+  profile: "Profile",
+  settings: "Settings",
+  theming: "Theming",
+  auth: "Authentication",
+  developer: "Developer",
+};
+
+function clearLegacyCookie() {
+  if (typeof document === "undefined") return;
+  if (!document.cookie.split("; ").some(c => c.startsWith(`${LEGACY_COOKIE_NAME}=`))) return;
+  document.cookie = `${LEGACY_COOKIE_NAME}=; path=/; Max-Age=0; SameSite=Lax`;
+}
+
+export function ExperimentsDialog({ open, onOpenChange }: ExperimentsDialogProps) {
+  const t = useTranslations();
+  const { data: flagsData, isLoading } = trpc.user.getUserSelectableFlags.useQuery();
+  const setOverrides = trpc.user.setFlagOverrides.useMutation();
+
   const flagDefinitions = flagsData?.flags;
+  const authenticated = flagsData?.authenticated ?? false;
+  const initialOverrides = flagsData?.currentOverrides ?? {};
+
+  const [overrideToggles, setOverrideToggles] = useState<Partial<Flags>>({});
+
+  useEffect(() => {
+    setOverrideToggles(initialOverrides);
+  }, [flagsData]);
+
+  useEffect(() => {
+    clearLegacyCookie();
+  }, []);
 
   const handleToggle = (flagKey: keyof Flags, value: boolean) => {
-    setFlagToggles(prev => ({
-      ...prev,
-      [flagKey]: value,
-    }));
+    setOverrideToggles(prev => ({ ...prev, [flagKey]: value }));
   };
 
   const handleReset = (flagKey: keyof Flags) => {
-    const def = flagDefinitions?.[flagKey] as any;
-    if (!def) return;
-    handleToggle(flagKey, def.defaultValue);
+    setOverrideToggles(prev => {
+      const next = { ...prev };
+      delete next[flagKey];
+      return next;
+    });
   };
 
-  const hasChanges = initialFlags
-    ? Object.keys(flagToggles).some(key => flagToggles[key as keyof Flags] !== initialFlags[key as keyof Flags])
-    : Object.keys(flagToggles).length > 0;
+  const initialKeys = Object.keys(initialOverrides) as (keyof Flags)[];
+  const currentKeys = Object.keys(overrideToggles) as (keyof Flags)[];
+  const hasChanges =
+    initialKeys.length !== currentKeys.length ||
+    currentKeys.some(k => overrideToggles[k] !== initialOverrides[k as keyof Flags]) ||
+    initialKeys.some(k => !(k in overrideToggles));
 
-  const handleApply = () => {
+  const handleApply = async () => {
     try {
-      const expiresAt = new Date();
-      expiresAt.setFullYear(expiresAt.getFullYear() + 1);
-
-      const cookieValue = JSON.stringify(flagToggles);
-      document.cookie = `flagOverrides=${encodeURIComponent(cookieValue)}; path=/; expires=${expiresAt.toUTCString()}; SameSite=Lax`;
-
+      await setOverrides.mutateAsync({ overrides: overrideToggles as Record<string, boolean> });
       toast.success(t('common.save'));
-
       setTimeout(() => {
         window.location.reload();
       }, 500);
     } catch (error) {
-      console.error("Failed to update flag:", error);
-      toast.error("Failed to update experiment flag");
+      console.error("Failed to update flags:", error);
+      toast.error("Failed to update experiment flags");
     }
   };
-
-  if (!flagDefinitions) {
-    return null;
-  }
 
   return (
     <ResponsiveDialog open={open} onOpenChange={onOpenChange}>
@@ -95,42 +107,68 @@ export function ExperimentsDialog({ open, onOpenChange, initialFlags }: Experime
           </ResponsiveDialogDescription>
         </ResponsiveDialogHeader>
 
-        <div className="space-y-3">
-          {Object.entries(flagDefinitions).map(([key, def]: [string, any]) => {
-            const flagKey = key as keyof Flags;
-            const isEnabled = flagToggles[flagKey] ?? false;
-            const isModified = flagToggles[flagKey] !== def.defaultValue;
+        {isLoading || !flagDefinitions ? (
+          <div className="py-6 text-sm text-muted-foreground">Loading…</div>
+        ) : !authenticated ? (
+          <div className="py-6 text-sm text-muted-foreground">
+            Sign in to enable experimental features. Overrides are now tied to your account.
+          </div>
+        ) : (
+          <>
+            <div className="space-y-5">
+              {(flagsData?.categoryOrder ?? []).map(category => {
+                const entries = Object.entries(flagDefinitions).filter(
+                  ([, def]) => def.category === category,
+                );
+                if (entries.length === 0) return null;
 
-            return (
-              <div key={flagKey} className="flex items-center justify-between">
-                <Label className="text-sm font-medium cursor-pointer">
-                  {flagKey}
-                </Label>
-                <div className="flex items-center gap-2">
-                  {isModified && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-4 w-4 p-0"
-                      onClick={() => handleReset(flagKey)}
-                      title="Reset to default"
-                    >
-                      <X className="h-3 w-3" />
-                    </Button>
-                  )}
-                  <Switch
-                    checked={isEnabled}
-                    onCheckedChange={(value) => handleToggle(flagKey, value)}
-                  />
-                </div>
-              </div>
-            );
-          })}
-        </div>
+                return (
+                  <div key={category} className="space-y-2">
+                    <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                      {CATEGORY_LABELS[category]}
+                    </div>
+                    <div className="space-y-3">
+                      {entries.map(([key, def]) => {
+                        const flagKey = key as keyof Flags;
+                        const overridden = flagKey in overrideToggles;
+                        const isEnabled = overrideToggles[flagKey] ?? def.defaultValue;
 
-        <div className="flex justify-end pt-4">
-          <Button onClick={handleApply} disabled={!hasChanges}>Apply</Button>
-        </div>
+                        return (
+                          <div key={flagKey} className="flex items-center justify-between">
+                            <Label className="text-sm font-medium cursor-pointer">{flagKey}</Label>
+                            <div className="flex items-center gap-2">
+                              {overridden && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-4 w-4 p-0"
+                                  onClick={() => handleReset(flagKey)}
+                                  title="Reset to default"
+                                >
+                                  <X className="h-3 w-3" />
+                                </Button>
+                              )}
+                              <Switch
+                                checked={isEnabled}
+                                onCheckedChange={value => handleToggle(flagKey, value)}
+                              />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="flex justify-end pt-4">
+              <Button onClick={handleApply} disabled={!hasChanges || setOverrides.isPending}>
+                Apply
+              </Button>
+            </div>
+          </>
+        )}
       </ResponsiveDialogContent>
     </ResponsiveDialog>
   );

@@ -31,7 +31,13 @@ const PROVIDERS = [
   },
 ] as const;
 
-export function LinkedAccountsSection() {
+export type LinkedAccountProviderId = typeof PROVIDERS[number]["id"];
+
+interface LinkedAccountsSectionProps {
+  enabledProviders: readonly LinkedAccountProviderId[];
+}
+
+export function LinkedAccountsSection({ enabledProviders }: LinkedAccountsSectionProps) {
   const t = useTranslations("linkedAccounts");
   const tc = useTranslations("common");
   const queryClient = useQueryClient();
@@ -90,7 +96,7 @@ export function LinkedAccountsSection() {
         </div>
       ) : (
         <div className="rounded-md border divide-y">
-          {PROVIDERS.map(({ id, label, Icon }) => {
+          {PROVIDERS.filter(({ id }) => enabledProviders.includes(id)).map(({ id, label, Icon }) => {
             const isLinked = linkedProviderIds.has(id);
             const isUnlinking = unlinkMutation.isPending && unlinkMutation.variables === id;
             const isLinking = linkMutation.isPending && linkMutation.variables === id;

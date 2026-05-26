@@ -6,7 +6,6 @@ import { ProfilePage } from "@/components/profile-page";
 import { notFound } from "next/navigation";
 import { Metadata } from "next";
 import { useFlags } from "@/lib/flags";
-import { cookies } from "next/headers";
 import { resolveBaseUrl } from "@/lib/base-url";
 import { getTranslations } from "next-intl/server";
 import { getLocale } from "@/i18n/locale-server";
@@ -117,7 +116,7 @@ export default async function RegionProfilePage({ params, searchParams }: Region
       region,
     });
 
-    const flags = await useFlags(cookies);
+    const flags = await useFlags();
 
     const decodedUsername = decodeURIComponent(username);
     const baseUrl = resolveBaseUrl();

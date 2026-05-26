@@ -1,5 +1,4 @@
 import { protectedProcedure, publicProcedure, router } from '@/lib/trpc';
-import { flagDefinitions } from '@/lib/flags';
 import { readFile } from 'fs/promises';
 import { join } from 'path';
 import { z } from 'zod';
@@ -27,17 +26,6 @@ const DIVING_FISH_DISABLED_ERROR = new TRPCError({
 });
 
 export const miscRouter = router({
-  getUserSelectableFlags: publicProcedure
-    .query(async () => {
-      const selectableFlags: Record<string, any> = {};
-      for (const [key, def] of Object.entries(flagDefinitions)) {
-        if (def.userSelectable) {
-          selectableFlags[key] = def;
-        }
-      }
-      return { flags: selectableFlags };
-    }),
-
   getLxnsOAuthConfigured: publicProcedure
     .query(async () => {
       return {

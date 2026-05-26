@@ -9,6 +9,7 @@ import { platesRouter } from './plates';
 import { albumsRouter } from './albums';
 import { songsRouter } from './songs';
 import { percentileRouter } from './percentile';
+import { flagsRouter } from './flags';
 import { miscRouter } from './misc';
 
 export const userRouter = router({
@@ -71,8 +72,11 @@ export const userRouter = router({
   // Percentile
   getChartPercentiles: percentileRouter.getChartPercentiles,
 
+  // Flags
+  getUserSelectableFlags: flagsRouter.getUserSelectableFlags,
+  setFlagOverrides: flagsRouter.setFlagOverrides,
+
   // Misc
-  getUserSelectableFlags: miscRouter.getUserSelectableFlags,
   getPolicies: miscRouter.getPolicies,
   getLxnsOAuthConfigured: miscRouter.getLxnsOAuthConfigured,
   getCnProxyConfigured: miscRouter.getCnProxyConfigured,

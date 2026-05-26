@@ -6,7 +6,6 @@ import { useFlags } from "@/lib/flags";
 import { getLatestPost } from "@/lib/posts";
 import { getLocale } from "@/i18n/locale-server";
 import { createServerSideTRPC } from "@/lib/trpc-server";
-import { cookies } from "next/headers";
 import { Suspense } from "react";
 import { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
@@ -43,7 +42,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function Home() {
   const session = await getServerSession();
   // eslint-disable-next-line react-hooks/rules-of-hooks
-  let flags = await useFlags(cookies);
+  let flags = await useFlags();
 
   if (!session) {
     // Fetch signup requirements on the server
@@ -59,7 +58,7 @@ export default async function Home() {
         <Suspense fallback={null}>
           <AuthHandler />
         </Suspense>
-        <LoginScreen signupRequirements={signupRequirements} />
+        <LoginScreen signupRequirements={signupRequirements} flags={{ passkey: flags.passkey, twitterOauth: flags.twitterOauth }} />
       </>
     );
   }

@@ -17,6 +17,7 @@ import { passkeyRegisterLimiter } from "@/lib/security/redis-rate-limit";
 import { isSessionFresh } from "@/lib/security/fresh-session";
 import { isSafeRedirectUrl, isSafeWebUrl, isHttpsUrl } from "@/lib/security/oauth-url";
 import { mirrorRemoteAvatarToR2, isR2AvatarUrl } from "@/lib/r2";
+import { useApiKeyCreation, useOauthAppCreation } from "@/lib/flags";
 
 async function mirrorAvatarForSignup(
   rawUrl: string | null | undefined,
@@ -141,14 +142,18 @@ const FRESH_REQUIRED_PATHS = new Set<string>([
   "/revoke-other-sessions",
 ]);
 
-// Developer-portal mutation paths (OAuth client + API key writes). Gated by
-// ENABLE_DEV until v1 ships — UI may render, but no client/key can be created,
-// rotated, or destroyed via tRPC or direct BA HTTP.
-const DEV_PORTAL_BA_PATHS = new Set<string>([
+// OAuth client mutation paths. Gated by the `oauthAppCreation` flag until
+// v1 ships — UI may render, but no client can be created, rotated, or
+// destroyed via tRPC or direct BA HTTP.
+const OAUTH_APP_BA_PATHS = new Set<string>([
   "/oauth2/create-client",
   "/oauth2/update-client",
   "/oauth2/client/rotate-secret",
   "/oauth2/delete-client",
+]);
+
+// API key mutation paths. Gated by the `apiKeyCreation` flag.
+const API_KEY_BA_PATHS = new Set<string>([
   "/api-key/create",
   "/api-key/delete",
   "/api-key/update",
@@ -437,8 +442,12 @@ export const auth = betterAuth({
       };
 
 
-      // TODO(v2026.5): Disable feature until release
-      if (DEV_PORTAL_BA_PATHS.has(ctx.path) && process.env.ENABLE_DEV !== "true") throw new APIError("NOT_FOUND", { message: "Not Found" });
+      if (OAUTH_APP_BA_PATHS.has(ctx.path) && !(await useOauthAppCreation())) {
+        throw new APIError("NOT_FOUND", { message: "Not Found" });
+      }
+      if (API_KEY_BA_PATHS.has(ctx.path) && !(await useApiKeyCreation())) {
+        throw new APIError("NOT_FOUND", { message: "Not Found" });
+      }
 
       // Fresh-session gate for sensitive routes. Applies regardless of caller
       // (our tRPC router, the userscript, or a direct curl with a stolen cookie).

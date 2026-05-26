@@ -5,7 +5,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { redirect } from "next/navigation";
 import { useFlags } from "@/lib/flags";
-import { cookies } from "next/headers";
 
 export default async function SettingsLayout({
   children,
@@ -13,7 +12,7 @@ export default async function SettingsLayout({
   children: React.ReactNode;
 }) {
   const session = await getServerSession();
-  const flags = await useFlags(cookies);
+  const flags = await useFlags();
 
   if (!session) {
     redirect("/");

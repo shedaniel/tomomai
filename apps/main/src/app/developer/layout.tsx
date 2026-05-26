@@ -1,11 +1,13 @@
 import type { Metadata, Viewport } from "next";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { FileCode2, TriangleAlert } from "lucide-react";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@tomomai/ui/shadcn-sidebar";
 import { Separator } from "@tomomai/ui";
 import { getRegistry, routeSlug } from "@/lib/api/specs";
 import { listGuides } from "@/lib/developer/guides";
 import { DeveloperSidebar } from "@/components/developer/sidebar";
+import { useDeveloperPortal } from "@/lib/flags";
 
 export const metadata: Metadata = {
   title: { default: "Developer Center", template: "%s — tomomai Developer Center" },
@@ -19,7 +21,13 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
+export const dynamic = "force-dynamic";
+
 export default async function DeveloperLayout({ children }: { children: React.ReactNode }) {
+  if (!(await useDeveloperPortal())) {
+    notFound();
+  }
+
   const routes = getRegistry();
   const guides = await listGuides();
 

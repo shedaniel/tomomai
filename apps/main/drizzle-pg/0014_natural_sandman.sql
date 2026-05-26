@@ -104,6 +104,7 @@ TRUNCATE TABLE "apikey";--> statement-breakpoint
 ALTER TABLE "apikey" ADD COLUMN "referenceId" text NOT NULL;--> statement-breakpoint
 ALTER TABLE "apikey" ADD COLUMN "configId" text NOT NULL;--> statement-breakpoint
 ALTER TABLE "session" ADD COLUMN "impersonatedBy" text;--> statement-breakpoint
+ALTER TABLE "user" ADD COLUMN "flagOverrides" jsonb;--> statement-breakpoint
 ALTER TABLE "oauthAccessToken" ADD CONSTRAINT "oauthAccessToken_clientId_oauthClient_clientId_fk" FOREIGN KEY ("clientId") REFERENCES "public"."oauthClient"("clientId") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "oauthAccessToken" ADD CONSTRAINT "oauthAccessToken_sessionId_session_id_fk" FOREIGN KEY ("sessionId") REFERENCES "public"."session"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "oauthAccessToken" ADD CONSTRAINT "oauthAccessToken_userId_user_id_fk" FOREIGN KEY ("userId") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint

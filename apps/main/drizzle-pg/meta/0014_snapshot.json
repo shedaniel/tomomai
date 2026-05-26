@@ -1,5 +1,5 @@
 {
-  "id": "fe57ba18-0221-4c2c-a8f7-ef13089b6f4c",
+  "id": "47b4b15b-a07e-46d9-b1aa-67edce6af488",
   "prevId": "41958358-2cdb-48c7-be99-b810440e256f",
   "version": "7",
   "dialect": "postgresql",
@@ -2728,6 +2728,12 @@
         "fetchUseAlbums": {
           "name": "fetchUseAlbums",
           "type": "boolean",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "flagOverrides": {
+          "name": "flagOverrides",
+          "type": "jsonb",
           "primaryKey": false,
           "notNull": false
         }
