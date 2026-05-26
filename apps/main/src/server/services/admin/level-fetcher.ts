@@ -12,7 +12,7 @@ import { Region } from "@/lib/types";
 import deepEqual from "deep-equal";
 import { normalizeGenre, normalizeName } from "@/lib/name-utils";
 import { isNullOrUndefined } from "@/lib/utils";
-import { FillLevelPreciseFetcher } from "./fill-level";
+import { FillMissingFetcher } from "./fill-level";
 import { createNoticeSink, FetchingContext, key, SongFetcher, SongWithOrigin } from "./fetcher-utils";
 import { sendDiscordNotice } from "./discord-webhooks";
 
@@ -40,8 +40,8 @@ export const FETCHERS: SongFetcher[] = [
   OtogeDbFetcher,
   // Fetches official maimaidx net details for missing cover, genre, artist
   MaimaiAfterFetcher,
-  // Fill level precise
-  FillLevelPreciseFetcher,
+  // Fill missing data
+  FillMissingFetcher,
   // Sorts the levels
   SorterFetcher,
 ]
@@ -53,19 +53,19 @@ export const FETCHER_NAMES: string[] = [
   "Fallback",
   "OtogeDB",
   "Maimai After Fetch",
-  "Fill Level Precise",
+  "Fill Missing",
   "Sorter",
 ]
 
 export const CN_FETCHERS: SongFetcher[] = [
   LxnsFetcher,
-  FillLevelPreciseFetcher,
+  FillMissingFetcher,
   SorterFetcher,
 ]
 
 export const CN_FETCHER_NAMES: string[] = [
   "Lxns",
-  "Fill Level Precise",
+  "Fill Missing",
   "Sorter",
 ]
 

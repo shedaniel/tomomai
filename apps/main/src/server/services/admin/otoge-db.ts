@@ -166,6 +166,7 @@ async function fetchRecordsWithUrl(region: Region, version: VersionId, url: stri
           artist: song.artist,
           cover: `${maimaiBaseUrl(region)}/maimai-mobile/img/Music/${song.image_url}`,
           difficulty: difficulty as Difficulty,
+          songKana: song.title_kana,
           level,
           levelPrecise: !!song[prefix + "_i" as keyof SongsJsonRecord] ? Math.round(parseFloat(song[prefix + "_i" as keyof SongsJsonRecord] as string) * 10) : difficulty === "utage" ? levelToPrecise(level, version) : undefined,
           type: type as SongType,

@@ -3,7 +3,7 @@ import { isNullish } from "utility-types";
 import { levelToPrecise } from "@/server/utils/level";
 import { SongFetcher } from "./fetcher-utils";
 
-export const FillLevelPreciseFetcher: SongFetcher = async (context, songs) => {
+export const FillMissingFetcher: SongFetcher = async (context, songs) => {
   let missing = 0, mismatched = 0;
   const result = songs.map(song => {
     if (isNullish(value(song.levelPrecise))) {

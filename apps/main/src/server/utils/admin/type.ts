@@ -23,6 +23,7 @@ export type PendingSong = {
   songName: string;
   type: SongType;
   difficulty: Difficulty;
+  songKana?: Pending<string>;
   artist?: Pending<string>;
   cover?: Pending<string>;
   level: Pending<Level>;

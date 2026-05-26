@@ -39,6 +39,7 @@ export const MaimaiBaseFetcher = asFetcher(async ({ region, version, cookies, no
           songName: normalizeName(song.title),
           type: type as SongType,
           difficulty: difficulty as Difficulty,
+          songKana: important(song.title_kana),
           level: important(((song as any)[fieldName] as string).replace("?", "") as Level),
           cover,
           genre: important(genre),
