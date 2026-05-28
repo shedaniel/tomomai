@@ -2,6 +2,7 @@ import { handleFetchCommand } from './commands/fetch';
 import { handleInviteCommand } from './commands/invite';
 import { handleProfileCommand } from './commands/profile';
 import { handleRecentsCommand } from './commands/recents';
+import { handleRecommendCommand } from './commands/recommend';
 import { handleAlbumPreferenceSelection } from './commands/album-preference';
 import { createUnknownCommandResponse, DiscordResponse } from './responses';
 
@@ -34,6 +35,14 @@ export const COMMANDS = {
   RECENTSJP: {
     name: 'recentsjp',
     description: 'Show your most recent play (Japan region)',
+  },
+  RECOMMEND: {
+    name: 'recommend',
+    description: 'Show song recommendations to improve your rating (International region)',
+  },
+  RECOMMENDJP: {
+    name: 'recommendjp',
+    description: 'Show song recommendations to improve your rating (Japan region)',
   },
 } as const;
 
@@ -90,6 +99,19 @@ export async function handleCommand(context: CommandContext): Promise<DiscordRes
       return handleRecentsCommand({
         discordUserId,
         region: recentsRegion,
+        applicationId,
+        interactionToken
+      });
+
+    case COMMANDS.RECOMMEND.name.toLowerCase():
+    case COMMANDS.RECOMMENDJP.name.toLowerCase():
+      if (!discordUserId) {
+        return createUnknownCommandResponse();
+      }
+      const recommendRegion = commandName.toLowerCase() === 'recommendjp' ? 'jp' : 'intl';
+      return handleRecommendCommand({
+        discordUserId,
+        region: recommendRegion,
         applicationId,
         interactionToken
       });

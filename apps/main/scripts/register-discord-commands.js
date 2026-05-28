@@ -37,6 +37,14 @@ const commands = [
     name: 'recentsjp',
     description: 'Show your most recent play (Japan region)',
   },
+  {
+    name: 'recommend',
+    description: 'Show song recommendations to improve your rating (International region)',
+  },
+  {
+    name: 'recommendjp',
+    description: 'Show song recommendations to improve your rating (Japan region)',
+  },
 ];
 
 async function registerCommands() {

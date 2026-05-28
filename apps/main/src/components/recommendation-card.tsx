@@ -1,6 +1,7 @@
 "use client";
 
-import { addRatingsAndSort, getRatingFactor, SongWithRating, splitSongs } from "@/lib/rating-calculator";
+import { addRatingsAndSort, SongWithRating } from "@/lib/rating-calculator";
+import { generateRecommendations, RecommendationData } from "@/server/queries/recommendations";
 import { SnapshotWithSongs } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { Award, Calendar, Disc3, Filter, Hash, Heart, Layers, Target, Zap } from "lucide-react";
@@ -24,113 +25,9 @@ import { renderLevelPrecise } from "@/lib/name-utils";
 import { STAGGER, getTransition } from "@/lib/animation-constants";
 import { useMediaQuery } from "@/hooks/use-media-query";
 
-interface RecommendationData {
-  song: SongWithRating;
-  currentAccuracy: number;
-  targetAccuracy: number;
-  currentRating: number;
-  targetRating: number;
-  accuracyDiff: number;
-  ratingGain: number;
-  isInBest: boolean;
-  category: "new" | "old";
-  efficiency: number;
-  order: number;
-}
-
-const ACCURACY_VALUES = [
-  94.0,
-  97.0,
-  98.0,
-  99.0,
-  99.5,
-  100.0,
-  100.5,
-  101.0,
-];
-
-function generateRecommendations(songsWithRating: SongWithRating[], version: number): RecommendationData[] {
-  const { newSongsB15, oldSongsB35, newSongsRemaining, oldSongsRemaining } = splitSongs(songsWithRating, version);
-
-  const minNewRating = newSongsB15.length > 0 ? Math.min(...newSongsB15.map(s => s.rating)) : 0;
-  const minOldRating = oldSongsB35.length > 0 ? Math.min(...oldSongsB35.map(s => s.rating)) : 0;
-
-  const recommendations: RecommendationData[] = [];
-
-  const newSongsB15Tuple = newSongsB15.map(song => ({ song, isNew: true }));
-  const oldSongsB35Tuple = oldSongsB35.map(song => ({ song, isNew: false }));
-  const newSongsRemainingTuple = newSongsRemaining.map(song => ({ song, isNew: true }));
-  const oldSongsRemainingTuple = oldSongsRemaining.map(song => ({ song, isNew: false }));
-
-  [...newSongsB15Tuple, ...oldSongsB35Tuple, ...newSongsRemainingTuple, ...oldSongsRemainingTuple].forEach(({ song, isNew }) => {
-    const isInB15 = isNew && newSongsB15.some(s => s.songId === song.songId && s.difficulty === song.difficulty);
-    const isInB35 = !isNew && oldSongsB35.some(s => s.songId === song.songId && s.difficulty === song.difficulty);
-    const isInBest = isInB15 || isInB35;
-
-    const currentAccuracy = song.achievement / 10000;
-    const minRequiredRating = isNew ? minNewRating : minOldRating;
-
-    if (version >= 12) {
-      if (currentAccuracy >= 100.5 && (song.fc === "ap" || song.fc === "ap+")) return;
-    } else {
-      if (currentAccuracy >= 100.5) return;
-    }
-
-    if (!isInBest) {
-      const extra = version >= 12 ? 1 : 0;
-      const maxPossibleRating = Math.floor(0.224 * 100.5 * song.levelPrecise / 10) + extra;
-      if (maxPossibleRating <= minRequiredRating) return;
-    }
-
-    let order = 0;
-
-    for (const accuracy of ACCURACY_VALUES) {
-      if (accuracy <= currentAccuracy) continue;
-      if (version < 12 && accuracy === 101.0) continue;
-
-      const factor = getRatingFactor(accuracy);
-      const extra = version >= 12 && accuracy === 101.0 ? 1 : 0;
-      const newRating = Math.floor(factor * Math.min(accuracy, 100.5) * song.levelPrecise / 10) + extra;
-
-      if (newRating <= minRequiredRating) continue;
-
-      const ratingGain = isInBest
-        ? newRating - song.rating
-        : newRating - minRequiredRating;
-
-      if (ratingGain <= 0) continue;
-
-      const efficiency = accuracy === 101.0
-        ? 2.0
-        : ratingGain / Math.max(accuracy - currentAccuracy, 0.1);
-
-      recommendations.push({
-        song,
-        currentAccuracy,
-        targetAccuracy: accuracy,
-        accuracyDiff: accuracy - currentAccuracy,
-        currentRating: song.rating,
-        targetRating: newRating,
-        ratingGain,
-        isInBest,
-        category: isNew ? "new" : "old",
-        efficiency,
-        order,
-      });
-
-      order++;
-    }
-  });
-
-  return recommendations.sort((a, b) => {
-    if (a.order !== b.order) {
-      return a.order - b.order;
-    }
-    if (Math.abs(a.efficiency - b.efficiency) < 0.1) {
-      return b.ratingGain - a.ratingGain;
-    }
-    return b.efficiency - a.efficiency;
-  });
+// Floor to 2 decimals so 99.9956% doesn't render as 100.00%
+function formatAccuracy(accuracy: number): string {
+  return (Math.floor(accuracy * 100) / 100).toFixed(2);
 }
 
 function RecommendationRow({ recommendation }: { recommendation: RecommendationData }) {
@@ -188,10 +85,10 @@ function RecommendationRow({ recommendation }: { recommendation: RecommendationD
           <div className="xs:text-right xs:ml-2">
             <div className="text-xs text-muted-foreground">Current → Target</div>
             <div className="font-mono text-xs">
-              {currentAccuracy.toFixed(2)}% → {targetAccuracy === 101.0 ? (
+              {formatAccuracy(currentAccuracy)}% → {targetAccuracy === 101.0 ? (
                 <span className="text-green-600 dark:text-green-400">AP</span>
               ) : (
-                <span className="text-green-600 dark:text-green-400">{targetAccuracy.toFixed(2)}%</span>
+                <span className="text-green-600 dark:text-green-400">{formatAccuracy(targetAccuracy)}%</span>
               )}
             </div>
             <div className="font-mono text-xs">
@@ -205,7 +102,7 @@ function RecommendationRow({ recommendation }: { recommendation: RecommendationD
               {targetAccuracy === 101.0 ? (
                 <span className="text-orange-400 font-semibold">AP</span>
               ) : (
-                <span>+{accuracyDiff.toFixed(2)}%</span>
+                <span>+{(Math.floor(targetAccuracy * 100) / 100 - Math.floor(currentAccuracy * 100) / 100).toFixed(2)}%</span>
               )}
             </div>
             <div className="text-xs flex items-center gap-1">
