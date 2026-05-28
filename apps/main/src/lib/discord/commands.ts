@@ -4,7 +4,10 @@ import { handleProfileCommand } from './commands/profile';
 import { handleRecentsCommand } from './commands/recents';
 import { handleRecommendCommand } from './commands/recommend';
 import { handleAlbumPreferenceSelection } from './commands/album-preference';
+import { handleDailyCommand, handleDailyAutocomplete } from './commands/daily';
 import { createUnknownCommandResponse, DiscordResponse } from './responses';
+
+type CommandOption = { name: string; value?: string; type: number; focused?: boolean };
 
 // Command definitions
 export const COMMANDS = {
@@ -44,10 +47,19 @@ export const COMMANDS = {
     name: 'recommendjp',
     description: 'Show song recommendations to improve your rating (Japan region)',
   },
+  DAILY: {
+    name: 'daily',
+    description: 'Show your plays from a single JST day (International region)',
+  },
+  DAILYJP: {
+    name: 'dailyjp',
+    description: 'Show your plays from a single JST day (Japan region)',
+  },
 } as const;
 
 export interface CommandContext {
   commandName: string;
+  options?: CommandOption[];
   discordUserId?: string;
   applicationId: string;
   interactionToken: string;
@@ -60,8 +72,14 @@ export interface ComponentContext {
   interactionToken: string;
 }
 
+export interface AutocompleteContext {
+  commandName: string;
+  options?: CommandOption[];
+  discordUserId?: string;
+}
+
 export async function handleCommand(context: CommandContext): Promise<DiscordResponse> {
-  const { commandName, discordUserId, applicationId, interactionToken } = context;
+  const { commandName, options, discordUserId, applicationId, interactionToken } = context;
 
   switch (commandName.toLowerCase()) {
     case COMMANDS.PROFILE.name.toLowerCase():
@@ -116,11 +134,45 @@ export async function handleCommand(context: CommandContext): Promise<DiscordRes
         interactionToken
       });
 
+    case COMMANDS.DAILY.name.toLowerCase():
+    case COMMANDS.DAILYJP.name.toLowerCase():
+      if (!discordUserId) {
+        return createUnknownCommandResponse();
+      }
+      const dailyRegion = commandName.toLowerCase() === 'dailyjp' ? 'jp' : 'intl';
+      const dateOption = options?.find(o => o.name === 'date');
+      const day = typeof dateOption?.value === 'string' && dateOption.value.length > 0
+        ? dateOption.value
+        : undefined;
+      return handleDailyCommand({
+        discordUserId,
+        region: dailyRegion,
+        day,
+        applicationId,
+        interactionToken,
+      });
+
     case COMMANDS.INVITE.name.toLowerCase():
       return handleInviteCommand({ applicationId });
 
     default:
       return createUnknownCommandResponse();
+  }
+}
+
+export async function handleAutocomplete(context: AutocompleteContext): Promise<DiscordResponse> {
+  const { commandName, options, discordUserId } = context;
+
+  switch (commandName.toLowerCase()) {
+    case COMMANDS.DAILY.name.toLowerCase():
+    case COMMANDS.DAILYJP.name.toLowerCase(): {
+      const region = commandName.toLowerCase() === 'dailyjp' ? 'jp' : 'intl';
+      const focused = options?.find(o => o.focused) ?? options?.find(o => o.name === 'date');
+      const focusedValue = typeof focused?.value === 'string' ? focused.value : '';
+      return handleDailyAutocomplete({ discordUserId, region, focusedValue });
+    }
+    default:
+      return { type: 8, data: { choices: [] } };
   }
 }
 

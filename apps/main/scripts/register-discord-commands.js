@@ -45,6 +45,28 @@ const commands = [
     name: 'recommendjp',
     description: 'Show song recommendations to improve your rating (Japan region)',
   },
+  {
+    name: 'daily',
+    description: 'Show your plays from a single JST day (International region)',
+    options: [{
+      type: 3,
+      name: 'date',
+      description: 'JST day (YYYY-MM-DD). Defaults to the day of your most recent play.',
+      required: false,
+      autocomplete: true,
+    }],
+  },
+  {
+    name: 'dailyjp',
+    description: 'Show your plays from a single JST day (Japan region)',
+    options: [{
+      type: 3,
+      name: 'date',
+      description: 'JST day (YYYY-MM-DD). Defaults to the day of your most recent play.',
+      required: false,
+      autocomplete: true,
+    }],
+  },
 ];
 
 async function registerCommands() {

@@ -1,6 +1,6 @@
 // Main exports for Discord functionality
-export { COMMANDS, handleCommand, handleComponents } from './commands';
-export type { CommandContext, ComponentContext } from './commands';
+export { COMMANDS, handleCommand, handleComponents, handleAutocomplete } from './commands';
+export type { CommandContext, ComponentContext, AutocompleteContext } from './commands';
 
 // Response utilities
 export {
@@ -23,6 +23,9 @@ export type { RecentsCommandOptions } from './commands/recents';
 export { handleAlbumPreferenceSelection } from './commands/album-preference';
 export type { AlbumPreferenceOptions } from './commands/album-preference';
 
+export { handleDailyCommand, handleDailyAutocomplete } from './commands/daily';
+export type { DailyCommandOptions, DailyAutocompleteOptions } from './commands/daily';
+
 // Image generation utilities
-export { generateAndSendProfileImage, generateAndSendCreditImage } from './image-utils';
-export type { ImageGenerationOptions, SnapshotData, CreditImageOptions } from './image-utils';
+export { generateAndSendProfileImage, generateAndSendCreditImage, generateAndSendDailyPlaysImage } from './image-utils';
+export type { ImageGenerationOptions, SnapshotData, CreditImageOptions, DailyPlaysImageOptions } from './image-utils';

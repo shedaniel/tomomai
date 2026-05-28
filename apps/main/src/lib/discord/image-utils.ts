@@ -5,8 +5,10 @@ import {
   getRatingComment
 } from './responses';
 import { prepareCreditData } from '@/server/services/credit-data';
-import { ImageCache, renderLastCreditImage } from '@/lib/render-image';
-import { fetchImageForServer } from '@/lib/render-image-server';
+import { prepareDailyPlaysData } from '@/server/services/daily-plays-data';
+import { ImageCache, renderDailyPlaysImage, renderLastCreditImage } from '@/lib/render-image';
+import { fetchImageForServer, loadCachedImage } from '@/lib/render-image-server';
+import { commonSnapshotResources } from '@/lib/render-image-route';
 import { Image, loadImage } from 'skia-canvas';
 import { getRatingImageUrl } from '@/lib/rating-calculator';
 import { getLogoUrl, getTypeBadgeUrl } from '@/lib/utils';
@@ -341,6 +343,89 @@ export async function generateAndSendCreditImage({
           text: 'tomomai ともマイ • maimai DX score tracker',
         },
       }],
+    });
+  }
+}
+
+export interface DailyPlaysImageOptions {
+  userId: string;
+  discordUserId: string;
+  region: 'intl' | 'jp';
+  day?: string;
+  applicationId: string;
+  interactionToken: string;
+}
+
+async function editDiscordMessageWithImageOnly(
+  applicationId: string,
+  interactionToken: string,
+  content: string,
+  imageBuffer: Buffer,
+  filename: string,
+): Promise<void> {
+  const formData = new FormData();
+  const blob = new Blob([new Uint8Array(imageBuffer)], { type: 'image/jpeg' });
+  formData.append('files[0]', blob, filename);
+  formData.append('payload_json', JSON.stringify({ content, embeds: [] }));
+
+  await fetch(
+    `https://discord.com/api/v10/webhooks/${applicationId}/${interactionToken}/messages/@original`,
+    { method: 'PATCH', body: formData },
+  );
+}
+
+export async function generateAndSendDailyPlaysImage({
+  userId,
+  discordUserId,
+  region,
+  day,
+  applicationId,
+  interactionToken,
+}: DailyPlaysImageOptions): Promise<void> {
+  const regionName = region === 'jp' ? 'Japan' : 'International';
+
+  try {
+    const result = await prepareDailyPlaysData(userId, region, day);
+    if (result.type === 'error') {
+      await editDiscordMessage(applicationId, interactionToken, {
+        content: `<@${discordUserId}> No plays found${day ? ` for ${day}` : ''} (${regionName}).`,
+      });
+      return;
+    }
+
+    const { plays, snapshot, day: resolvedDay } = result;
+
+    const urls = [
+      ...commonSnapshotResources(snapshot, region),
+      ...plays.map(p => p.cover),
+    ];
+
+    const cache: ImageCache = {};
+    await Promise.all(
+      urls.map(async (url) => {
+        try {
+          const image = await loadCachedImage(url);
+          cache[url] = async () => image;
+        } catch (error) {
+          console.warn(`Failed to cache image for daily plays: ${url}`, error);
+        }
+      })
+    );
+
+    const canvas = await renderDailyPlaysImage(plays, snapshot, region, resolvedDay, cache);
+    const imageBuffer = Buffer.from(await canvas.toBuffer('jpg', { density: 2, quality: 0.85 }));
+
+    await editDiscordMessageWithImageOnly(
+      applicationId,
+      interactionToken,
+      `<@${discordUserId}> Daily plays for **${resolvedDay}** (${regionName})`,
+      imageBuffer,
+      `maimai-daily-${resolvedDay}.jpg`,
+    );
+  } catch (error) {
+    console.error('Error generating daily plays image:', error);
+    await editDiscordMessage(applicationId, interactionToken, {
+      content: `<@${discordUserId}> ❌ Failed to generate daily plays image.`,
     });
   }
 }

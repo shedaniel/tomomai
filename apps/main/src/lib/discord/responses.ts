@@ -37,6 +37,7 @@ export interface DiscordResponse {
     embeds?: DiscordEmbed[];
     flags?: InteractionResponseFlags;
     components?: any[];
+    choices?: { name: string; value: string }[];
   };
 }
 

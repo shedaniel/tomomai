@@ -1,5 +1,5 @@
 import { getCachedImageBuffer } from "./image_cacher";
-import { FontLibrary } from 'skia-canvas';
+import { FontLibrary, Image, loadImage } from 'skia-canvas';
 import path from 'path';
 import { Agent } from 'undici';
 
@@ -9,32 +9,115 @@ const sharedFetchAgent = new Agent({
   pipelining: 1,
 });
 
-// In-memory cache for fetched images
+// In-memory cache of fetched base64 data URLs (legacy, kept for fetchImageForServer
+// callers that still need a data URL string).
 const imageCache = new Map<string, { data: string; timestamp: number }>();
-const MAX_CACHE_SIZE = 500; // Maximum number of cached images
-const CACHE_TTL = 1000 * 60 * 60; // 1 hour TTL
+const MAX_CACHE_SIZE = 500;
+const CACHE_TTL = 1000 * 60 * 60;
 
-// Clean up old cache entries
+// Process-level cache of *decoded* skia Image objects, keyed by URL.
+// Eliminates the per-request fetch + base64 + decode round-trip for any URL
+// that's already been requested at least once since process start. Uses
+// insertion-order eviction (Map preserves insertion order, on hit we
+// delete+re-set to refresh LRU position).
+const decodedImageCache = new Map<string, Image>();
+const MAX_DECODED_CACHE_SIZE = 256;
+// Inflight dedupe so concurrent first-time requests for the same URL share one fetch/decode.
+const inflightDecodes = new Map<string, Promise<Image>>();
+
+function touchDecodedCache(url: string, image: Image) {
+  if (decodedImageCache.has(url)) decodedImageCache.delete(url);
+  decodedImageCache.set(url, image);
+  while (decodedImageCache.size > MAX_DECODED_CACHE_SIZE) {
+    const oldest = decodedImageCache.keys().next().value;
+    if (oldest === undefined) break;
+    decodedImageCache.delete(oldest);
+  }
+}
+
 function cleanupCache() {
   if (imageCache.size <= MAX_CACHE_SIZE) return;
 
   const now = Date.now();
   const entries = Array.from(imageCache.entries());
 
-  // Remove expired entries first
   for (const [key, value] of entries) {
     if (now - value.timestamp > CACHE_TTL) {
       imageCache.delete(key);
     }
   }
 
-  // If still over limit, remove oldest entries
   if (imageCache.size > MAX_CACHE_SIZE) {
     const sorted = entries.sort((a, b) => a[1].timestamp - b[1].timestamp);
     const toRemove = sorted.slice(0, imageCache.size - MAX_CACHE_SIZE);
     for (const [key] of toRemove) {
       imageCache.delete(key);
     }
+  }
+}
+
+async function fetchBufferForServer(url: string): Promise<{ buffer: Buffer; contentType: string }> {
+  if (url.includes('maimaidx.jp') || url.includes('maimaidx-eng.com')) {
+    const cached = await getCachedImageBuffer(url);
+    if (cached) {
+      return { buffer: cached.buffer, contentType: cached.contentType };
+    }
+  }
+
+  if (url.startsWith('/res')) {
+    const fs = await import('fs/promises');
+    const filePath = path.join(process.cwd(), 'public', url);
+    const buffer = await fs.readFile(filePath);
+    const ext = path.extname(url).toLowerCase();
+    const contentType = ext === '.png' ? 'image/png'
+      : ext === '.jpg' || ext === '.jpeg' ? 'image/jpeg'
+        : ext === '.gif' ? 'image/gif'
+          : ext === '.webp' ? 'image/webp'
+            : ext === '.svg' ? 'image/svg+xml'
+              : 'image/png';
+    return { buffer, contentType };
+  }
+
+  const response = await fetch(url, {
+    // @ts-ignore - dispatcher exists on undici but not in lib.dom
+    dispatcher: sharedFetchAgent,
+  });
+  if (!response.ok) {
+    throw new Error(`Failed to fetch image: ${response.statusText}`);
+  }
+  const buffer = Buffer.from(await response.arrayBuffer());
+  return { buffer, contentType: response.headers.get('content-type') || 'image/png' };
+}
+
+/**
+ * Returns a decoded skia `Image` for `url`, using a process-level LRU cache.
+ * First call for a URL incurs fetch + decode; subsequent calls (anywhere in
+ * the process) return the same Image instance — skia is fine with drawing
+ * the same Image to many canvases.
+ */
+export async function loadCachedImage(url: string): Promise<Image> {
+  const cached = decodedImageCache.get(url);
+  if (cached) {
+    // Refresh LRU position.
+    decodedImageCache.delete(url);
+    decodedImageCache.set(url, cached);
+    return cached;
+  }
+
+  const inflight = inflightDecodes.get(url);
+  if (inflight) return inflight;
+
+  const promise = (async () => {
+    const { buffer } = await fetchBufferForServer(url);
+    const image = await loadImage(buffer);
+    touchDecodedCache(url, image);
+    return image;
+  })();
+  inflightDecodes.set(url, promise);
+  try {
+    return await promise;
+  } finally {
+    inflightDecodes.delete(url);
   }
 }
 

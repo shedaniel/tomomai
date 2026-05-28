@@ -4,7 +4,7 @@ import {
   verifyKey,
   InteractionResponseType,
 } from 'discord-interactions';
-import { handleCommand, handleComponents, createPongResponse } from '@/lib/discord';
+import { handleCommand, handleComponents, handleAutocomplete, createPongResponse } from '@/lib/discord';
 
 // Discord bot configuration
 const DISCORD_PUBLIC_KEY = process.env.DISCORD_PUBLIC_KEY!;
@@ -39,14 +39,29 @@ export async function POST(request: NextRequest) {
 
     // Handle application commands (slash commands)
     if (interaction.type === InteractionType.APPLICATION_COMMAND) {
-      const { data, member } = interaction;
-      const discordUserId = member?.user?.id;
+      const { data, member, user } = interaction;
+      const discordUserId = member?.user?.id ?? user?.id;
 
       const response = await handleCommand({
         commandName: data.name,
+        options: data.options,
         discordUserId,
         applicationId: APPLICATION_ID,
         interactionToken: interaction.token,
+      });
+
+      return Response.json(response);
+    }
+
+    // Handle autocomplete (slash command option suggestions)
+    if (interaction.type === InteractionType.APPLICATION_COMMAND_AUTOCOMPLETE) {
+      const { data, member, user } = interaction;
+      const discordUserId = member?.user?.id ?? user?.id;
+
+      const response = await handleAutocomplete({
+        commandName: data.name,
+        options: data.options,
+        discordUserId,
       });
 
       return Response.json(response);

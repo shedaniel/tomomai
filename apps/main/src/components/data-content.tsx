@@ -260,7 +260,13 @@ export function DataContent({
               <EventsCard selectedSnapshotData={selectedSnapshotData} />
             )}
             {selectedTab === "exportImage" && (
-              <ExportImageCard selectedSnapshotData={selectedSnapshotData} region={region} showLastCredit={visitedBySelf || !!privacySettings.showScoreDetails} username={visitableProfileAt ?? undefined} />
+              <ExportImageCard
+                selectedSnapshotData={selectedSnapshotData}
+                region={region}
+                showLastCredit={visitedBySelf || !!privacySettings.showScoreDetails}
+                username={visitableProfileAt ?? undefined}
+                publicSnapshotId={visitedBySelf ? undefined : selectedSnapshotData.snapshot.id}
+              />
             )}
             {selectedTab === "developer" && visitedBySelf && (
               <DeveloperCard selectedSnapshotData={selectedSnapshotData} />

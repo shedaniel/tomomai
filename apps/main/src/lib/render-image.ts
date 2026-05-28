@@ -9,6 +9,7 @@ import { SnapshotWithSongs } from "./types";
 import { getLogoUrl, getTypeBadgeUrl } from "./utils";
 import { VersionId } from './metadata';
 import { resolveBaseUrl } from './base-url';
+import { span } from './profiler';
 
 type CanvasSize = {
   width: number;
@@ -147,14 +148,58 @@ export async function renderImage(data: SnapshotWithSongs<SongForRender>, region
   const canvas = new Canvas(canvasSize.width, canvasSize.height);
   const ctx = canvas.getContext('2d') as SkiaContext;
 
-  await renderBackground(ctx, data.snapshot.gameVersion, false, cache, canvasSize);
-  const overlayRect = await renderHeader(ctx, { ...data.snapshot, region }, cache, canvasSize);
-  await renderContent(ctx, data, cache, overlayRect);
+  await span("background", () => renderBackground(ctx, data.snapshot.gameVersion, false, cache, canvasSize));
+  const overlayRect = await span("header", () => renderHeader(ctx, { ...data.snapshot, region }, cache, canvasSize));
+  await span("content", () => renderContent(ctx, data, cache, overlayRect));
   const baseUrl = resolveBaseUrl();
   const footerText = visitableProfileAt
     ? `Visit my profile at ${baseUrl}/profile/${visitableProfileAt}/`
     : `Generated with ${baseUrl}/`;
-  await renderFooter(ctx, data.snapshot.gameVersion, footerText, canvasSize);
+  await span("footer", () => renderFooter(ctx, data.snapshot.gameVersion, footerText, canvasSize));
+
+  return canvas;
+}
+
+export async function renderDailyPlaysImage(
+  plays: (SongForRender & { rating: number })[],
+  snapshot: SnapshotMetadata,
+  region: Region,
+  day: string,
+  cache: ImageCache,
+): Promise<Canvas> {
+  // Canvas height grows with row count instead of using the fixed CANVAS_HEIGHT —
+  // a 3-play day shouldn't render the same tall canvas as a 50-play day.
+  const SONG_TOP_OFFSET = 50;
+  const SONG_BOTTOM_PADDING = 24;
+  const FOOTER_HEIGHT = 50;
+  const ROW_GAP = 2 + SONG_PADDING;
+  const overlayWidth = CANVAS_WIDTH - PADDING * 2;
+  const songWidth = (overlayWidth - SONG_OUTER_PADDING * 2 - SONG_PADDING * 4) / 5;
+  const songHeight = songWidth / 16 * 11;
+  const rows = Math.max(1, Math.ceil(plays.length / 5));
+  const headerArea = TARGET_HEIGHT + PADDING * 2;
+  const computedHeight = Math.ceil(
+    headerArea + SONG_TOP_OFFSET + rows * songHeight + (rows - 1) * ROW_GAP + SONG_BOTTOM_PADDING + FOOTER_HEIGHT
+  );
+
+  const canvasSize = { width: CANVAS_WIDTH, height: computedHeight };
+  const canvas = new Canvas(canvasSize.width, canvasSize.height);
+  const ctx = canvas.getContext('2d') as SkiaContext;
+
+  await span("background", () => renderBackground(ctx, snapshot.gameVersion, false, cache, canvasSize));
+  const overlayRect = await span("header", () => renderHeader(ctx, { ...snapshot, region }, cache, canvasSize));
+
+  await span("content", async () => {
+    for (let i = 0; i < plays.length; i++) {
+      await span(`song[${i}]`, () => renderSong(ctx, cache, snapshot.gameVersion, overlayRect, plays[i], i, SONG_TOP_OFFSET));
+    }
+  });
+
+  const dayLabel = new Date(`${day}T00:00:00+09:00`).toLocaleDateString('en-US', {
+    year: 'numeric', month: 'long', day: 'numeric', timeZone: 'Asia/Tokyo',
+  });
+  const footerText = `Plays on ${dayLabel} (JST), generated with ${resolveBaseUrl()}/`;
+  await span("footer", () => renderFooter(ctx, snapshot.gameVersion, footerText, canvasSize));
 
   return canvas;
 }
@@ -175,8 +220,10 @@ export async function renderLastCreditImage(data: CreditData, snapshot: Snapshot
 }
 
 async function renderBackground(ctx: SkiaContext, gameVersion: number, long: boolean, cache: ImageCache, canvas: CanvasSize) {
-  const backgroundImg = await loadImageWithCache(cache, `/res/bg/${gameVersion}${long ? '_long' : ''}.png`);
-  ctx.drawImage(backgroundImg, 0, 0, canvas.width * 2, canvas.height * 2, 0, 0, canvas.width, canvas.height);
+  const backgroundImg = await span("loadBackground", () => loadImageWithCache(cache, `/res/bg/${gameVersion}${long ? '_long' : ''}.png`));
+  await span("drawBackground", async () => {
+    ctx.drawImage(backgroundImg, 0, 0, canvas.width * 2, canvas.height * 2, 0, 0, canvas.width, canvas.height);
+  });
 }
 
 async function renderHeaderBackground(
@@ -187,7 +234,6 @@ async function renderHeaderBackground(
   const INNER_PADDING = 30;
   const versionSettings = VERSION_SETTINGS[data.gameVersion as keyof typeof VERSION_SETTINGS]
 
-  // Render character with clipping
   const characterSettings = versionSettings?.character || {
     scaleX: 0.56,
     scaleY: 0.56,
@@ -195,37 +241,40 @@ async function renderHeaderBackground(
     top: -100,
     opacity: 0.9,
   };
-  const characterImg = await loadImageWithCache(cache, `/res/character/${data.gameVersion}.png`);
+  const characterImg = await span("loadCharacter", () => loadImageWithCache(cache, `/res/character/${data.gameVersion}.png`));
 
-  ctx.save();
-  ctx.globalAlpha = characterSettings.opacity;
-  ctx.beginPath();
-  ctx.rect(0, 0, CANVAS_WIDTH, TARGET_HEIGHT + PADDING * 2);
-  ctx.clip();
-  ctx.drawImage(
-    characterImg,
-    characterSettings.left,
-    characterSettings.top,
-    characterImg.width * characterSettings.scaleX,
-    characterImg.height * characterSettings.scaleY
-  );
-  ctx.restore();
+  await span("drawCharacter", async () => {
+    ctx.save();
+    ctx.globalAlpha = characterSettings.opacity;
+    ctx.beginPath();
+    ctx.rect(0, 0, CANVAS_WIDTH, TARGET_HEIGHT + PADDING * 2);
+    ctx.clip();
+    ctx.drawImage(
+      characterImg,
+      characterSettings.left,
+      characterSettings.top,
+      characterImg.width * characterSettings.scaleX,
+      characterImg.height * characterSettings.scaleY
+    );
+    ctx.restore();
+  });
 
-  // Render logo with shadow
-  const logoImg = await loadImageWithCache(cache, getLogoUrl(data.gameVersion, data.region));
-  const logoScale = (TARGET_HEIGHT - INNER_PADDING * 2) / logoImg.height * (versionSettings?.logoScale || 1.0);
-  const logoWidth = logoImg.width * logoScale;
-  const logoHeight = logoImg.height * logoScale;
-  const characterLeft = characterSettings.left;
-  const characterWidth = characterImg.width * characterSettings.scaleX;
-  const logoLeft = characterLeft + characterWidth / 2 - logoWidth / 2;
-  const logoTop = TARGET_HEIGHT - logoHeight / 2;
+  const logoImg = await span("loadLogo", () => loadImageWithCache(cache, getLogoUrl(data.gameVersion, data.region)));
+  await span("drawLogo", async () => {
+    const logoScale = (TARGET_HEIGHT - INNER_PADDING * 2) / logoImg.height * (versionSettings?.logoScale || 1.0);
+    const logoWidth = logoImg.width * logoScale;
+    const logoHeight = logoImg.height * logoScale;
+    const characterLeft = characterSettings.left;
+    const characterWidth = characterImg.width * characterSettings.scaleX;
+    const logoLeft = characterLeft + characterWidth / 2 - logoWidth / 2;
+    const logoTop = TARGET_HEIGHT - logoHeight / 2;
 
-  ctx.save();
-  ctx.shadowColor = '#FFFFFF50';
-  ctx.shadowBlur = 32;
-  ctx.drawImage(logoImg, logoLeft, logoTop, logoWidth, logoHeight);
-  ctx.restore();
+    ctx.save();
+    ctx.shadowColor = '#FFFFFF50';
+    ctx.shadowBlur = 32;
+    ctx.drawImage(logoImg, logoLeft, logoTop, logoWidth, logoHeight);
+    ctx.restore();
+  });
 }
 
 // Helper to measure text width
@@ -272,103 +321,106 @@ async function renderHeader(ctx: SkiaContext, data: HeaderData, cache: ImageCach
   const PROFILE_IMG_RIGHT_MARGIN = 28;
   const TROPHY_BOTTOM_MARGIN = 20;
 
-  // Render header background elements
-  await renderHeaderBackground(ctx, data, cache);
+  await span("headerBackground", () => renderHeaderBackground(ctx, data, cache));
 
-  // Render profile image
-  const profileImg = await loadImageWithCache(cache, data.iconUrl);
+  const profileImg = await span("loadProfileIcon", () => loadImageWithCache(cache, data.iconUrl));
   const profileScale = TARGET_HEIGHT / profileImg.height;
   const profileWidth = profileImg.width * profileScale;
-  ctx.drawImage(profileImg, PADDING, PADDING, profileWidth, TARGET_HEIGHT);
+  await span("drawProfileIcon", async () => {
+    ctx.drawImage(profileImg, PADDING, PADDING, profileWidth, TARGET_HEIGHT);
+  });
 
-  // Render trophy background
-  const trophyBackground = await loadImageWithCache(cache, `/res/trophy/${data.titleType}.png`);
+  const trophyBackground = await span("loadTrophy", () => loadImageWithCache(cache, `/res/trophy/${data.titleType}.png`));
   const trophyScale = 1.6;
   const trophyWidth = trophyBackground.width * trophyScale;
   const trophyHeight = trophyBackground.height * trophyScale;
   const trophyLeft = PADDING + PROFILE_IMG_RIGHT_MARGIN + profileWidth;
   const trophyTop = PADDING;
-  ctx.drawImage(trophyBackground, trophyLeft, trophyTop, trophyWidth, trophyHeight);
+  await span("drawTrophy", async () => {
+    ctx.drawImage(trophyBackground, trophyLeft, trophyTop, trophyWidth, trophyHeight);
 
-  // Render trophy text with stroke
-  ctx.font = font(450, TROPHY_FONT_SIZE);
-  const trophyTextWidth = measureTextWidth(ctx, data.title);
-  const trophyTextLeft = trophyLeft + trophyWidth / 2 - trophyTextWidth / 2;
-  const trophyTextTop = trophyTop + trophyHeight / 2 - TROPHY_FONT_SIZE / 2 - 2;
+    ctx.font = font(450, TROPHY_FONT_SIZE);
+    const trophyTextWidth = measureTextWidth(ctx, data.title);
+    const trophyTextLeft = trophyLeft + trophyWidth / 2 - trophyTextWidth / 2;
+    const trophyTextTop = trophyTop + trophyHeight / 2 - TROPHY_FONT_SIZE / 2 - 2;
 
-  ctx.strokeStyle = '#111111';
-  ctx.lineWidth = 4;
-  ctx.strokeText(data.title, trophyTextLeft, trophyTextTop + TROPHY_FONT_SIZE);
-  ctx.fillStyle = 'white';
-  ctx.fillText(data.title, trophyTextLeft, trophyTextTop + TROPHY_FONT_SIZE);
+    ctx.strokeStyle = '#111111';
+    ctx.lineWidth = 4;
+    ctx.strokeText(data.title, trophyTextLeft, trophyTextTop + TROPHY_FONT_SIZE);
+    ctx.fillStyle = 'white';
+    ctx.fillText(data.title, trophyTextLeft, trophyTextTop + TROPHY_FONT_SIZE);
+  });
 
-  // Render name rect
   const nameRectWidth = trophyWidth;
   const nameRectHeight = trophyHeight + NAME_FONT_SIZE;
   const nameRectLeft = trophyLeft;
   const nameRectTop = trophyTop + trophyHeight + TROPHY_BOTTOM_MARGIN;
 
-  ctx.save();
-  ctx.globalAlpha = 0.2;
-  ctx.fillStyle = 'black';
-  roundRect(ctx, nameRectLeft, nameRectTop, nameRectWidth, nameRectHeight, 10);
-  ctx.fill();
-  ctx.restore();
+  await span("drawNamePlate", async () => {
+    ctx.save();
+    ctx.globalAlpha = 0.2;
+    ctx.fillStyle = 'black';
+    roundRect(ctx, nameRectLeft, nameRectTop, nameRectWidth, nameRectHeight, 10);
+    ctx.fill();
+    ctx.restore();
 
-  // Render name text
-  ctx.font = font(700, NAME_FONT_SIZE);
-  const nameTextWidth = measureTextWidth(ctx, data.displayName);
-  const nameTextLeft = nameRectLeft + trophyWidth / 2 - nameTextWidth / 2;
-  const nameTextTop = nameRectTop + nameRectHeight / 2 - NAME_FONT_SIZE / 2;
+    ctx.font = font(700, NAME_FONT_SIZE);
+    const nameTextWidth = measureTextWidth(ctx, data.displayName);
+    const nameTextLeft = nameRectLeft + trophyWidth / 2 - nameTextWidth / 2;
+    const nameTextTop = nameRectTop + nameRectHeight / 2 - NAME_FONT_SIZE / 2;
 
-  ctx.fillStyle = '#f9f0f4';
-  ctx.fillText(data.displayName, nameTextLeft, nameTextTop + NAME_FONT_SIZE / 2 + 10);
+    ctx.fillStyle = '#f9f0f4';
+    ctx.fillText(data.displayName, nameTextLeft, nameTextTop + NAME_FONT_SIZE / 2 + 10);
+  });
 
-  // Render rating frame
-  const ratingFrame = await loadImageWithCache(cache, getRatingImageUrl(data.rating, data.gameVersion as VersionId));
+  const ratingFrame = await span("loadRatingFrame", () => loadImageWithCache(cache, getRatingImageUrl(data.rating, data.gameVersion as VersionId)));
   const ratingScale = 0.75;
   const ratingWidth = ratingFrame.width * ratingScale;
   const ratingHeight = ratingFrame.height * ratingScale;
   const ratingLeft = nameRectLeft - 2;
   const ratingTop = nameRectTop + nameRectHeight + TROPHY_BOTTOM_MARGIN - 2;
-  ctx.drawImage(ratingFrame, ratingLeft, ratingTop, ratingWidth, ratingHeight);
+  await span("drawRating", async () => {
+    ctx.drawImage(ratingFrame, ratingLeft, ratingTop, ratingWidth, ratingHeight);
 
-  // Render rating digits
-  ctx.font = font(600, ratingHeight * 0.53, true);
-  ctx.fillStyle = '#f9f0f4';
-  let digitLeft = ratingLeft + ratingWidth * 0.43;
-  for (const char of data.rating.toString()) {
-    ctx.fillText(char, digitLeft, ratingTop + ratingHeight * 0.19 + ratingHeight * 0.53);
-    digitLeft += 23;
-  }
+    ctx.font = font(600, ratingHeight * 0.53, true);
+    ctx.fillStyle = '#f9f0f4';
+    let digitLeft = ratingLeft + ratingWidth * 0.43;
+    for (const char of data.rating.toString()) {
+      ctx.fillText(char, digitLeft, ratingTop + ratingHeight * 0.19 + ratingHeight * 0.53);
+      digitLeft += 23;
+    }
+  });
 
-  // Render class rank
-  const classRankImg = await loadImageWithCache(cache, data.classRankUrl);
+  const classRankImg = await span("loadClassRank", () => loadImageWithCache(cache, data.classRankUrl));
   const classRankScale = 0.7;
   const classRankWidth = 126 * classRankScale;
   const classRankHeight = classRankImg.height * (classRankWidth / classRankImg.width);
   const classRankLeft = ratingLeft + ratingWidth + 10;
   const classRankTop = ratingTop + ratingHeight / 2 - classRankHeight / 2;
-  ctx.drawImage(classRankImg, classRankLeft, classRankTop, classRankWidth, classRankHeight);
+  await span("drawClassRank", async () => {
+    ctx.drawImage(classRankImg, classRankLeft, classRankTop, classRankWidth, classRankHeight);
+  });
 
-  // Render course rank
-  const courseRankImg = await loadImageWithCache(cache, data.courseRankUrl);
+  const courseRankImg = await span("loadCourseRank", () => loadImageWithCache(cache, data.courseRankUrl));
   const courseRankScale = 0.6;
   const courseRankWidth = 175 * courseRankScale;
   const courseRankHeight = courseRankImg.height * (courseRankWidth / courseRankImg.width);
   const courseRankLeft = classRankLeft + classRankWidth + 10;
   const courseRankTop = ratingTop + ratingHeight / 2 - courseRankHeight / 2;
-  ctx.drawImage(courseRankImg, courseRankLeft, courseRankTop, courseRankWidth, courseRankHeight);
+  await span("drawCourseRank", async () => {
+    ctx.drawImage(courseRankImg, courseRankLeft, courseRankTop, courseRankWidth, courseRankHeight);
+  });
 
-  // Render dark overlay
   const overlayTop = TARGET_HEIGHT + PADDING * 2;
-  const gradient = ctx.createLinearGradient(0, canvas.height, 0, 0);
-  const contentBackgroundColor = VERSION_SETTINGS[data.gameVersion as keyof typeof VERSION_SETTINGS]?.contentBackgroundColor || '#00000010';
-  gradient.addColorStop(1, contentBackgroundColor);
-  gradient.addColorStop(0, contentBackgroundColor);
+  await span("contentOverlay", async () => {
+    const gradient = ctx.createLinearGradient(0, canvas.height, 0, 0);
+    const contentBackgroundColor = VERSION_SETTINGS[data.gameVersion as keyof typeof VERSION_SETTINGS]?.contentBackgroundColor || '#00000010';
+    gradient.addColorStop(1, contentBackgroundColor);
+    gradient.addColorStop(0, contentBackgroundColor);
 
-  ctx.fillStyle = gradient;
-  ctx.fillRect(0, overlayTop, canvas.width, canvas.height - overlayTop);
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, overlayTop, canvas.width, canvas.height - overlayTop);
+  });
 
   return {
     left: PADDING,
@@ -398,7 +450,7 @@ async function renderSong<S extends SongForRender>(
             song.difficulty === "utage" ? "pink" :
               "white";
 
-  const img = await loadImageWithCache(cache, song.cover);
+  const img = await span("loadCover", () => loadImageWithCache(cache, song.cover));
 
   const imgWidth = (overlayRect.width - SONG_OUTER_PADDING * 2 - SONG_PADDING * 4) / 5;
   const requiredHeight = imgWidth / 16 * 11;
@@ -418,149 +470,169 @@ async function renderSong<S extends SongForRender>(
   const imgDrawTop = imgTop - (imgHeight - requiredHeight) * 0.75;
 
   // Draw image with clipping
-  ctx.save();
-  roundRect(ctx, imgLeft, imgTop, imgWidth, requiredHeight, 10);
-  ctx.clip();
-  ctx.drawImage(img, imgLeft - 4, imgDrawTop - 4, imgWidth + 8, imgHeight + 8);
-  ctx.restore();
+  await span("drawCover", async () => {
+    ctx.save();
+    roundRect(ctx, imgLeft, imgTop, imgWidth, requiredHeight, 10);
+    ctx.clip();
+    ctx.drawImage(img, imgLeft - 4, imgDrawTop - 4, imgWidth + 8, imgHeight + 8);
+    ctx.restore();
+  });
 
   // Draw cover gradient with stroke and shadow
-  ctx.save();
-  ctx.shadowColor = '#00000026';
-  ctx.shadowBlur = 10;
-  ctx.shadowOffsetX = 2;
-  ctx.shadowOffsetY = 2;
+  await span("coverGradient", async () => {
+    ctx.save();
+    ctx.shadowColor = '#00000026';
+    ctx.shadowBlur = 10;
+    ctx.shadowOffsetX = 2;
+    ctx.shadowOffsetY = 2;
 
-  const coverGradient = ctx.createLinearGradient(0, realBounds.top + realBounds.height, 0, realBounds.top);
-  coverGradient.addColorStop(0, '#0000003C');
-  coverGradient.addColorStop(0.5, '#00000029');
-  coverGradient.addColorStop(1, '#0000001C');
+    const coverGradient = ctx.createLinearGradient(0, realBounds.top + realBounds.height, 0, realBounds.top);
+    coverGradient.addColorStop(0, '#0000003C');
+    coverGradient.addColorStop(0.5, '#00000029');
+    coverGradient.addColorStop(1, '#0000001C');
 
-  ctx.fillStyle = coverGradient;
-  ctx.strokeStyle = difficultyColor;
-  ctx.lineWidth = 4;
-  roundRect(ctx, realBounds.left, realBounds.top, realBounds.width, realBounds.height, 10);
-  ctx.fill();
-  ctx.stroke();
-  ctx.restore();
+    ctx.fillStyle = coverGradient;
+    ctx.strokeStyle = difficultyColor;
+    ctx.lineWidth = 4;
+    roundRect(ctx, realBounds.left, realBounds.top, realBounds.width, realBounds.height, 10);
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
+  });
 
   // Draw info background gradient
-  const infoHeight = 70;
-  const infoGradient = ctx.createLinearGradient(0, realBounds.top + realBounds.height, 0, realBounds.top + realBounds.height - infoHeight);
-  infoGradient.addColorStop(0, '#00000060');
-  infoGradient.addColorStop(1, '#00000000');
+  await span("infoGradient", async () => {
+    const infoHeight = 70;
+    const infoGradient = ctx.createLinearGradient(0, realBounds.top + realBounds.height, 0, realBounds.top + realBounds.height - infoHeight);
+    infoGradient.addColorStop(0, '#00000060');
+    infoGradient.addColorStop(1, '#00000000');
 
-  ctx.save();
-  ctx.globalAlpha = 0.3;
-  roundRect(ctx, realBounds.left, realBounds.top, realBounds.width, realBounds.height, 10);
-  ctx.clip();
-  ctx.fillStyle = infoGradient;
-  ctx.fillRect(realBounds.left, realBounds.top + realBounds.height - infoHeight, realBounds.width, infoHeight);
-  ctx.restore();
+    ctx.save();
+    ctx.globalAlpha = 0.3;
+    roundRect(ctx, realBounds.left, realBounds.top, realBounds.width, realBounds.height, 10);
+    ctx.clip();
+    ctx.fillStyle = infoGradient;
+    ctx.fillRect(realBounds.left, realBounds.top + realBounds.height - infoHeight, realBounds.width, infoHeight);
+    ctx.restore();
+  });
 
   // Draw song name with shadow and clipping
-  ctx.save();
-  ctx.shadowColor = '#000000';
-  ctx.shadowBlur = 16;
-  ctx.shadowOffsetX = 4;
-  ctx.shadowOffsetY = 4;
-  ctx.font = font(700, 18);
-  ctx.fillStyle = '#f5f5f5';
-  ctx.textAlign = 'left';
-  ctx.textBaseline = 'bottom';
-  roundRect(ctx, realBounds.left + 2, realBounds.top + 2, realBounds.width - 14, realBounds.height - 14, 0);
-  ctx.clip();
-  ctx.fillText(song.songName, realBounds.left + 12, realBounds.top + realBounds.height - 16 - 12 - 11);
-  // more shadow
-  ctx.shadowColor = '#00000030';
-  ctx.fillText(song.songName, realBounds.left + 12, realBounds.top + realBounds.height - 16 - 12 - 11);
-  ctx.restore();
+  await span("songName", async () => {
+    ctx.save();
+    ctx.shadowColor = '#000000';
+    ctx.shadowBlur = 16;
+    ctx.shadowOffsetX = 4;
+    ctx.shadowOffsetY = 4;
+    ctx.font = font(700, 18);
+    ctx.fillStyle = '#f5f5f5';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'bottom';
+    roundRect(ctx, realBounds.left + 2, realBounds.top + 2, realBounds.width - 14, realBounds.height - 14, 0);
+    ctx.clip();
+    ctx.fillText(song.songName, realBounds.left + 12, realBounds.top + realBounds.height - 16 - 12 - 11);
+    // more shadow
+    ctx.shadowColor = '#00000030';
+    ctx.fillText(song.songName, realBounds.left + 12, realBounds.top + realBounds.height - 16 - 12 - 11);
+    ctx.restore();
+  });
 
   // Draw achievement text with shadow
-  ctx.save();
-  ctx.shadowColor = '#000000';
-  ctx.shadowBlur = 16;
-  ctx.shadowOffsetX = 2;
-  ctx.shadowOffsetY = 2;
-  ctx.font = font(550, 16, true);
-  ctx.fillStyle = '#f5f5f5';
-  ctx.textAlign = 'left';
-  ctx.textBaseline = 'bottom';
-  const achievementText = (song.achievement / 10000).toFixed(4) + '%';
-  ctx.fillText(achievementText, realBounds.left + 12, realBounds.top + realBounds.height - 14);
-  // more shadow
-  ctx.shadowColor = '#00000030';
-  ctx.fillText(achievementText, realBounds.left + 12, realBounds.top + realBounds.height - 14);
-  ctx.restore();
+  await span("achievement", async () => {
+    ctx.save();
+    ctx.shadowColor = '#000000';
+    ctx.shadowBlur = 16;
+    ctx.shadowOffsetX = 2;
+    ctx.shadowOffsetY = 2;
+    ctx.font = font(550, 16, true);
+    ctx.fillStyle = '#f5f5f5';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'bottom';
+    const achievementText = (song.achievement / 10000).toFixed(4) + '%';
+    ctx.fillText(achievementText, realBounds.left + 12, realBounds.top + realBounds.height - 14);
+    // more shadow
+    ctx.shadowColor = '#00000030';
+    ctx.fillText(achievementText, realBounds.left + 12, realBounds.top + realBounds.height - 14);
+    ctx.restore();
+  });
 
   // Draw rating text with shadow
-  ctx.save();
-  ctx.shadowColor = '#000000';
-  ctx.shadowBlur = 16;
-  ctx.shadowOffsetX = 2;
-  ctx.shadowOffsetY = 2;
-  ctx.font = font(600, 26, true);
-  ctx.fillStyle = '#f5f5f5';
-  ctx.textAlign = 'right';
-  ctx.textBaseline = 'bottom';
-  ctx.fillText(song.rating.toString(), realBounds.left + realBounds.width - 10, realBounds.top + realBounds.height - 8);
-  ctx.restore();
+  await span("rating", async () => {
+    ctx.save();
+    ctx.shadowColor = '#000000';
+    ctx.shadowBlur = 16;
+    ctx.shadowOffsetX = 2;
+    ctx.shadowOffsetY = 2;
+    ctx.font = font(600, 26, true);
+    ctx.fillStyle = '#f5f5f5';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'bottom';
+    ctx.fillText(song.rating.toString(), realBounds.left + realBounds.width - 10, realBounds.top + realBounds.height - 8);
+    ctx.restore();
+  });
 
   // Draw difficulty badge background
-  ctx.save();
-  ctx.font = font(500, 14, true);
   const diffText = (song.levelPrecise / 10).toFixed(1);
-  const diffTextWidth = ctx.measureText(diffText).width;
+  await span("difficultyBadge", async () => {
+    ctx.save();
+    ctx.font = font(500, 14, true);
+    const diffTextWidth = ctx.measureText(diffText).width;
 
-  ctx.fillStyle = difficultyColor;
-  roundRect(ctx, realBounds.left, realBounds.top, realBounds.width, realBounds.height, 10);
-  ctx.clip();
-  roundRect(ctx, realBounds.left + realBounds.width - diffTextWidth - 20, realBounds.top - 10, diffTextWidth + 20 + 10, 24 + 10, 10);
-  ctx.fill();
-  ctx.restore();
+    ctx.fillStyle = difficultyColor;
+    roundRect(ctx, realBounds.left, realBounds.top, realBounds.width, realBounds.height, 10);
+    ctx.clip();
+    roundRect(ctx, realBounds.left + realBounds.width - diffTextWidth - 20, realBounds.top - 10, diffTextWidth + 20 + 10, 24 + 10, 10);
+    ctx.fill();
+    ctx.restore();
+  });
 
   // Draw difficulty text
-  ctx.save();
-  ctx.font = font(500, 14, true);
-  ctx.fillStyle = song.difficulty === "remaster" ? "#591a8b" : "#f2f2f2";
-  ctx.textAlign = 'right';
-  ctx.textBaseline = 'top';
-  ctx.fillText(diffText, realBounds.left + realBounds.width - 10, realBounds.top + 3);
-  ctx.restore();
+  await span("difficultyText", async () => {
+    ctx.save();
+    ctx.font = font(500, 14, true);
+    ctx.fillStyle = song.difficulty === "remaster" ? "#591a8b" : "#f2f2f2";
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'top';
+    ctx.fillText(diffText, realBounds.left + realBounds.width - 10, realBounds.top + 3);
+    ctx.restore();
+  });
 
   // Draw song type badge
-  const songTypeBadge = await loadImageWithCache(cache, getTypeBadgeUrl(song.type));
-  const badgeScale = 0.45;
-  ctx.drawImage(
-    songTypeBadge,
-    realBounds.left + 12,
-    realBounds.top + 12,
-    songTypeBadge.width * badgeScale,
-    songTypeBadge.height * badgeScale
-  );
+  const songTypeBadge = await span("loadTypeBadge", () => loadImageWithCache(cache, getTypeBadgeUrl(song.type)));
+  await span("drawTypeBadge", async () => {
+    const badgeScale = 0.45;
+    ctx.drawImage(
+      songTypeBadge,
+      realBounds.left + 12,
+      realBounds.top + 12,
+      songTypeBadge.width * badgeScale,
+      songTypeBadge.height * badgeScale
+    );
+  });
 
   // Draw FC and FS badges
   const fcBadgeUrl = `/res/badge/${gameVersion}/${song.fc}.png`;
   const fsBadgeUrl = `/res/badge/${gameVersion}/${song.fs}.png`;
-  const fcBadge = await loadImageWithCache(cache, fcBadgeUrl);
-  const fsBadge = await loadImageWithCache(cache, fsBadgeUrl);
+  const fcBadge = await span("loadFcBadge", () => loadImageWithCache(cache, fcBadgeUrl));
+  const fsBadge = await span("loadFsBadge", () => loadImageWithCache(cache, fsBadgeUrl));
   const fcfsBadgeScale = 0.6;
   const fcfsStartX = realBounds.left + 10; // realBounds.left + realBounds.width - fcBadge.width * fcfsBadgeScale - fsBadge.width * fcfsBadgeScale - 3 - 1;
   const fcfsStartY = realBounds.top + 52;
-  ctx.drawImage(
-    fcBadge,
-    fcfsStartX,
-    fcfsStartY,
-    fcBadge.width * fcfsBadgeScale,
-    fcBadge.height * fcfsBadgeScale
-  );
-  ctx.drawImage(
-    fsBadge,
-    fcfsStartX + fcBadge.width * fcfsBadgeScale - 1,
-    fcfsStartY,
-    fsBadge.width * fcfsBadgeScale,
-    fsBadge.height * fcfsBadgeScale
-  );
+  await span("drawFcFsBadges", async () => {
+    ctx.drawImage(
+      fcBadge,
+      fcfsStartX,
+      fcfsStartY,
+      fcBadge.width * fcfsBadgeScale,
+      fcBadge.height * fcfsBadgeScale
+    );
+    ctx.drawImage(
+      fsBadge,
+      fcfsStartX + fcBadge.width * fcfsBadgeScale - 1,
+      fcfsStartY,
+      fsBadge.width * fcfsBadgeScale,
+      fsBadge.height * fcfsBadgeScale
+    );
+  });
 }
 
 async function renderContent<S extends SongForRender>(
@@ -573,16 +645,18 @@ async function renderContent<S extends SongForRender>(
 
   // Render new songs (B15)
   for (let i = 0; i < newSongsB15.length; i++) {
-    await renderSong(ctx, cache, data.snapshot.gameVersion, overlayRect, newSongsB15[i], i, 60);
+    await span(`song[new ${i}]`, () => renderSong(ctx, cache, data.snapshot.gameVersion, overlayRect, newSongsB15[i], i, 60));
   }
 
   // Render old songs (B35)
   for (let i = 0; i < oldSongsB35.length; i++) {
-    await renderSong(ctx, cache, data.snapshot.gameVersion, overlayRect, oldSongsB35[i], i + 15, 110);
+    await span(`song[old ${i}]`, () => renderSong(ctx, cache, data.snapshot.gameVersion, overlayRect, oldSongsB35[i], i + 15, 110));
   }
 
-  await renderSongsLabel(ctx, cache, overlayRect, true, 24);
-  await renderSongsLabel(ctx, cache, overlayRect, false, 566);
+  await span("labels", async () => {
+    await renderSongsLabel(ctx, cache, overlayRect, true, 24);
+    await renderSongsLabel(ctx, cache, overlayRect, false, 566);
+  });
 }
 
 async function renderLastCreditContent(
