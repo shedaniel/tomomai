@@ -21,8 +21,8 @@ function songSortKey(a: { songName: string; type: string; difficulty: string }, 
   return a.songName.localeCompare(b.songName) * 1000000 + a.type.localeCompare(b.type) * 1000 + a.difficulty.localeCompare(b.difficulty);
 }
 
-const LEVEL_TRUNCATE_LIMIT = 15;
-const OTHER_TRUNCATE_LIMIT = 5;
+const LEVEL_TRUNCATE_LIMIT = 32;
+const OTHER_TRUNCATE_LIMIT = 8;
 
 function truncateLines(lines: string[], limit: number): string {
   if (lines.length <= limit) return lines.join("\n");
@@ -31,7 +31,7 @@ function truncateLines(lines: string[], limit: number): string {
 }
 
 export async function sendDiscordWebhook(
-  region: "intl" | "jp" | "cn",
+  region: Region,
   added: AddedChange[],
   deleted: DeletedChange[],
   modified: ModifiedChange[],
