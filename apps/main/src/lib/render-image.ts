@@ -443,12 +443,15 @@ async function renderSong<S extends SongForRender>(
   yOffset: number
 ) {
   const difficultyColor = song.difficulty === "basic" ? "green" :
-    song.difficulty === "advanced" ? "yellow" :
+    song.difficulty === "advanced" ? "#a18912" :
       song.difficulty === "expert" ? "#ed5e65" :
         song.difficulty === "master" ? "#af5eed" :
-          song.difficulty === "remaster" ? "#E8D4FF" :
-            song.difficulty === "utage" ? "pink" :
-              "white";
+          song.difficulty === "remaster" ? "#e8d4ff" :
+            song.difficulty === "utage" ? "#ff14b9" :
+              "black";
+
+  const difficultyTextColor = song.difficulty === "remaster" ? "#591a8b" :
+    "#f2f2f2";
 
   const img = await span("loadCover", () => loadImageWithCache(cache, song.cover));
 
@@ -589,7 +592,7 @@ async function renderSong<S extends SongForRender>(
   await span("difficultyText", async () => {
     ctx.save();
     ctx.font = font(500, 14, true);
-    ctx.fillStyle = song.difficulty === "remaster" ? "#591a8b" : "#f2f2f2";
+    ctx.fillStyle = difficultyTextColor;
     ctx.textAlign = 'right';
     ctx.textBaseline = 'top';
     ctx.fillText(diffText, realBounds.left + realBounds.width - 10, realBounds.top + 3);
