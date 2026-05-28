@@ -6,6 +6,7 @@ import { Toaster } from "@tomomai/ui";
 import { getLocale } from '@/i18n/locale-server';
 import { get } from '@vercel/edge-config';
 import { VercelToolbar } from "@vercel/toolbar/next";
+import { Analytics } from '@vercel/analytics/next';
 import type { Metadata } from "next";
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
@@ -111,6 +112,7 @@ export default async function RootLayout({
             </ThemeProvider>
           </LocaleProvider>
         </NextIntlClientProvider>
+        <Analytics />
       </body>
     </html>
   );
