@@ -1,0 +1,109 @@
+---
+title: "猜歌、每日遊玩圖片匯出"
+date: "2026-05-29"
+version: "2026.5"
+summary: "5 月更新：猜歌挑戰和聽歌識曲兩款小遊戲、每日遊玩 匯出、全新 Discord 指令、分數百分位、頭像搬到 R2，還有即將登場的 Userscript 抓資料工具搶先看。"
+locale: "zh-TW"
+canonicalSlug: "2026-05-29-may-update"
+---
+
+## 5 月更新：一個月的衍生作品
+
+這個月主要在擴展 tomomai 的版圖。我們上線了兩款全新的小遊戲，新增了一種回顧當日遊玩的方式，背後也悄悄把整個專案改成 monorepo，這樣以後就能繼續推出各種衍生玩法。另外還有不少在 Developer API、分數百分位 上的進度，還有一個讓我們很期待的東西可以小小搶先看。
+
+## 新功能：猜歌挑戰與聽歌識曲
+
+兩款新的小遊戲現已上線，外觀和操作感都跟 tomomai 一脈相承。
+
+### 猜歌挑戰
+從歌曲封面被裁切、被處理過的提示中猜出歌名。每一回合會逐漸揭露更多畫面，越早猜中分數越高。每天日本時間 0 點換新題目。
+
+到 [guesser.tomomai.lol](https://guesser.tomomai.lol) 玩玩看。
+
+![猜歌挑戰](/posts/2026-05-29-may-update/guesser.webp)
+
+### 聽歌識曲
+聽一小段歌曲，然後猜出歌名。每答錯或跳過一次，下一段播放的長度就會稍微變長。跟猜歌挑戰一樣每天日本時間 0 點換新題目，看你對 maimai 的曲目熟不熟。
+
+到 [heardle.tomomai.lol](https://heardle.tomomai.lol) 玩玩看。
+
+![聽歌識曲](/posts/2026-05-29-may-update/heardle.webp)
+
+## 新功能：每日遊玩 匯出
+
+當日的刷分成果現在也能享受 B50 等級的呈現方式。全新的 **每日遊玩** 匯出會把指定那一天的所有遊玩做成 B50 風格的格子排版，非常適合用來分享當天的戰績。
+
+![每日遊玩 Export](/posts/2026-05-29-may-update/daily-plays.webp)
+
+Discord 機器人也支援：
+
+- `/daily`：國際版
+- `/dailyjp`：日版
+
+## 新的 Discord 指令：/recommend 與 /recommendjp
+
+Dashboard 上的推薦卡片現在也搬到 Discord 了。輸入 `/recommend`（或日版的 `/recommendjp`），機器人就會回傳跟網站上一樣的個人化譜面推薦，完全不用開瀏覽器。
+
+![Discord recommend](/posts/2026-05-29-may-update/discord-recommend.webp)
+
+## 還有這些事
+
+背後也有不少安靜進行中的工作，目前進度如下。
+
+### 1. Developer API 與 OAuth
+
+我們最近一直在打造正式的 **Developer API**，包含 API 金鑰、OAuth 應用程式，以及 **Twitter 登入**，全部都屬於同一個專案。系統大部分已經建好，正在測試階段。
+
+正式對外公開之前，需要先更新 **服務條款與隱私權政策**，預計下週初發佈。
+
+想搶先看 Developer Portal 的話，到 tomomai 的 experiments 區塊把 `developerPortal` 開起來，然後造訪 [tomomai.lol/developer](https://tomomai.lol/developer)。
+
+![Developer Portal](/posts/2026-05-29-may-update/developer-portal.webp)
+
+### 2. 分數百分位（實驗中）
+
+experiments 區塊裡還有另一個 `scorePercentile` 旗標。打開之後對 B50 上任何分數 hover，就能看到自己這分在同 Rating 級距的玩家裡大概排第幾。
+
+![分數百分位](/posts/2026-05-29-may-update/score-percentile.webp)
+
+順便講一下覆蓋率，這是最常被問到的部分。百分位是以你目前 Rating 為中心的滾動範圍計算的，當某個譜面有足夠多同範圍的玩家（至少 30 位）時才會顯示。實際情況大致如下：
+
+| Rating 範圍 | B50 覆蓋率 |
+|---|---|
+| 15000 以上 | 幾乎 100% |
+| 14500 至 15000 | 約 94% |
+| 13500 至 14500 | 約 82% 至 92% |
+| 13000 至 13500 | 約 62% |
+| 13000 以下 | 資料不足，不顯示 |
+
+所以如果你在 14.5k 以上，基本上每張譜面都會看到百分位。Rating 較低的話覆蓋率會下降，比較冷門的譜面就算在高 Rating 也可能不顯示。目前只有國際版有，日版跟中國版會跟進。
+
+### 3. 頭像搬到我們自己的 S3
+
+以前我們是直接代理 Discord 的頭像 URL，本來都很順，直到突然不順了。我們發現有 **500 多位使用者的頭像 URL 已經失效**，因為 Discord 那邊更新了 CDN token。
+
+現在所有頭像都改存在我們自己的 S3 bucket，登入時抓一次然後從這邊提供。如果你的頭像現在看起來壞掉了，重新登入一次就會自動補回來。
+
+之後也會做一個**正式的頭像挑選器**，讓你不用只能繼承登入提供者的頭像。
+
+### 4. Hello, Monorepo
+
+你可能有發現猜歌挑戰和聽歌識曲跟 tomomai 像得有點過頭，不是巧合也不是複製貼上。專案現在是 **monorepo**，我們把共用的 `@tomomai/ui` 套件抽出來，讓所有站台都能共用元件、主題跟樣式。
+
+這也是為什麼猜歌挑戰和聽歌識曲能在一個月內上線。之後要再推出小遊戲（或完全無關的姊妹站）也不用每次都從頭刻一套設計系統了。
+
+### 5. 搶先看：Userscript 與瀏覽器擴充功能
+
+我們最期待的東西：正在開發中的 **Userscript / 瀏覽器擴充功能**，可以直接在你的瀏覽器裡抓 maimai 資料，tomomai 完全不需要接觸你的 SEGA 密碼或 session cookie。
+
+這會是一個安全許多的資料同步方式，也能解鎖一些我們本來做不出來的功能。詳細之後再講，這邊先放一點點預告。
+
+![Userscript Sneak Peek](/posts/2026-05-29-may-update/userscript-sneak-peek.webp)
+
+---
+
+歡迎加入 Discord 聊聊這次的更新：[https://discord.gg/jZqQHr3UDq](https://discord.gg/jZqQHr3UDq)
+
+想幫忙翻譯？這邊請：[https://crowdin.com/project/tomomai](https://crowdin.com/project/tomomai)
+
+祝大家刷分愉快！

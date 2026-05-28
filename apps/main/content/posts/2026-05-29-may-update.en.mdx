@@ -1,0 +1,109 @@
+---
+title: "Guess the Song, Daily Image Export"
+date: "2026-05-29"
+version: "2026.5"
+summary: "May Update: Guesser and Heardle minigames, Daily Plays export, new Discord commands, Score Percentile, R2 profile images, and a peek at the upcoming Userscript scraper."
+locale: "en"
+canonicalSlug: "2026-05-29-may-update"
+---
+
+## May Update: A Month of Spinoffs
+
+This month is all about expanding the tomomai universe. We launched two brand new minigames, added a fresh way to look back at your daily plays, and quietly turned the project into a monorepo so we can keep spinning off ideas like this. There is also a healthy chunk of behind the scenes work on the Developer API, Score Percentile, and a sneak peek at something pretty exciting.
+
+## New Feature: Guesser and Heardle
+
+Two new minigames are now live, both sharing the tomomai look and feel.
+
+### Guesser
+Guess the song from cropped and obfuscated hints of its cover art. Each round drips in more of the image as you go, and you score by guessing as early as you can. A new song drops every day at JST midnight.
+
+Play it at [guesser.tomomai.lol](https://guesser.tomomai.lol).
+
+![Guesser](/posts/2026-05-29-may-update/guesser.webp)
+
+### Heardle
+Listen to a short clip of a song and try to name it. Each wrong guess or skip unlocks a slightly longer clip. Same daily JST rotation, different way of testing how well you actually know the soundtrack.
+
+Play it at [heardle.tomomai.lol](https://heardle.tomomai.lol).
+
+![Heardle](/posts/2026-05-29-may-update/heardle.webp)
+
+## New Feature: Daily Plays Export
+
+Your day of grinding now gets the B50 treatment. The new **Daily Plays** export lays out every play from a given day in a grid styled after the B50 chart, perfect for sharing how a session went.
+
+![Daily Plays Export](/posts/2026-05-29-may-update/daily-plays.webp)
+
+It is also wired into the Discord bot:
+
+- `/daily` for the international region
+- `/dailyjp` for the Japan region
+
+## New Discord Commands: /recommend and /recommendjp
+
+The dashboard's recommendation card is now a Discord command. Run `/recommend` (or `/recommendjp` for JP) and the bot will reply with the same personalized chart picks you would see on the site, no browser required.
+
+![Discord recommend](/posts/2026-05-29-may-update/discord-recommend.webp)
+
+## What We Have Been Up To
+
+A bunch of quieter work has been landing behind the scenes. Here is what is cooking.
+
+### 1. Developer API and OAuth
+
+We have been heads down building out a proper **Developer API**, with API keys, OAuth applications, and **Sign in with Twitter** all under the same umbrella. Most of the system is built and currently in testing.
+
+Before we can flip the switch publicly, we need to roll out an updated **Terms of Service and Privacy Policy**, which we are planning to publish early next week.
+
+If you want a sneak peek of the developer portal, enable the `developerPortal` flag in the experiments section in tomomai, then head to [tomomai.lol/developer](https://tomomai.lol/developer).
+
+![Developer Portal](/posts/2026-05-29-may-update/developer-portal.webp)
+
+### 2. Score Percentile (experiment)
+
+Also hiding in the experiments section: the `scorePercentile` flag. Turn it on and hover any score in your B50 to see how it compares to other players in your rating band.
+
+![Score Percentile](/posts/2026-05-29-may-update/score-percentile.webp)
+
+A quick word on coverage, since this is the most common question. Percentiles are based on a rolling window of players around your current rating, and we only show a percentile when there are enough peers on a given chart for the number to be meaningful (at least 30 players). In practice that means:
+
+| Rating band | B50 coverage |
+|---|---|
+| 15000 and above | effectively 100% |
+| 14500 to 15000 | around 94% |
+| 13500 to 14500 | around 82% to 92% |
+| 13000 to 13500 | around 62% |
+| Below 13000 | not enough data, percentile hidden |
+
+So if you sit at 14.5k+, expect to see a percentile on nearly every chart. Lower ratings will see partial coverage, and individual niche charts may still be suppressed even at high ratings. This is intl only for now, with jp and cn to follow.
+
+### 3. Profile Images Moved to Our Own S3
+
+We used to proxy Discord profile images directly. That worked fine until it did not, and we discovered **500+ users with broken avatar URLs** as Discord rotated CDN tokens.
+
+All profile images are now stored in our own S3 bucket, fetched once at login and served from there. If your avatar looks broken right now, just sign in again and it will repopulate automatically.
+
+A proper picker for choosing your profile image (rather than inheriting it from your auth provider) is on the roadmap.
+
+### 4. Hello, Monorepo
+
+You may have noticed that Guesser and Heardle feel suspiciously like tomomai. That is not a coincidence, and it is not copy paste. The project is now a **monorepo**, and we have extracted a shared `@tomomai/ui` package so all our sites can share components, themes, and styles.
+
+This is what made Guesser and Heardle viable to ship in a single month, and it sets us up to spin off more minigames (or unrelated sister sites) without rebuilding the design system every time.
+
+### 5. Sneak Peek: Userscript and Browser Extension
+
+The thing we are most excited about: we have been building a **Userscript / Browser Extension** that scrapes your maimai data directly from your browser, so tomomai never needs your SEGA password or session cookies.
+
+It is a much safer way to keep your data in sync, and it unlocks features we cannot build any other way. More details soon, but here is a tiny taste.
+
+![Userscript Sneak Peek](/posts/2026-05-29-may-update/userscript-sneak-peek.webp)
+
+---
+
+Join our Discord to discuss the changes: [https://discord.gg/jZqQHr3UDq](https://discord.gg/jZqQHr3UDq)
+
+Help us translate tomomai: [https://crowdin.com/project/tomomai](https://crowdin.com/project/tomomai)
+
+Happy grinding!
