@@ -3,6 +3,7 @@ import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
 import { Noto_Sans_JP, Noto_Sans_SC, Noto_Sans_TC } from "next/font/google";
 import localFont from "next/font/local";
+import { Analytics } from "@vercel/analytics/next";
 import { Toaster } from "@tomomai/ui";
 import { LocaleProvider } from "@tomomai/i18n/client";
 import { getLocale } from "@tomomai/i18n/server";
@@ -93,6 +94,7 @@ export default async function RootLayout({
             </ThemeProvider>
           </LocaleProvider>
         </NextIntlClientProvider>
+        <Analytics />
       </body>
     </html>
   );
