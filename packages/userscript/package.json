@@ -1,0 +1,26 @@
+{
+  "name": "@tomomai/userscript",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build"
+  },
+  "dependencies": {
+    "@tomomai/ui": "workspace:*",
+    "react": "catalog:",
+    "react-dom": "catalog:"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.1.18",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^4.5.2",
+    "tailwindcss": "^4.1.18",
+    "tw-animate-css": "^1.3.4",
+    "typescript": "^5.9.3",
+    "vite": "^6.3.5",
+    "vite-plugin-monkey": "^7.1.9"
+  }
+}

@@ -1,0 +1,35 @@
+---
+title: Pagination & regions
+description: How to page through long lists and request data from a specific region.
+order: 5
+---
+
+## Regions
+
+User-data endpoints (`/snapshots`, `/snapshots/latest`, `/snapshots/{id}`,
+`/recents`, `/stats`, `/albums`) require a `?region=` query parameter.
+Valid values:
+
+- `intl` — international
+- `jp` — Japan
+- `cn` — China
+
+A user can have data across multiple regions; tomomai will not silently
+pick one for you.
+
+## Pagination
+
+`/recents` and `/albums` accept `?limit=` and `?offset=`:
+
+- `limit` defaults to 50 for recents, 20 for albums. Max 100 for both.
+- `offset` defaults to 0.
+
+Responses include `hasMore: boolean`. Recents additionally returns
+`totalCount` so you can render a position indicator. Albums returns only
+`hasMore` — counting all albums up front would be expensive.
+
+```bash
+# Page 2 of recents (50 items per page)
+curl "https://tomomai.lol/api/v1/recents?region=intl&limit=50&offset=50" \
+  -H "Authorization: Bearer tmk_…"
+```

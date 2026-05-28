@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  health:
+    name: Repo health
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      # Fails if pnpm-lock.yaml is out of sync with package.json files,
+      # or if a workspace package has stale fields.
+      - name: Install (frozen lockfile)
+        run: pnpm install --frozen-lockfile
+
+      # Catches the class of bug we just hit: multiple React copies in the
+      # workspace cause split module state (toasts disappear, context providers
+      # don't connect, "Invalid hook call" in production).
+      # Extend this list when you add another library whose correctness depends
+      # on being a singleton (e.g. anything with module-level state).
+      - name: No duplicate singletons
+        run: |
+          set -e
+          fail=0
+          for pkg in react react-dom sonner next-intl next-themes; do
+            count=$(find node_modules/.pnpm -maxdepth 1 -type d -name "${pkg}@*" | wc -l | tr -d ' ')
+            if [ "$count" -gt 1 ]; then
+              echo "::error::Multiple copies of '$pkg' installed ($count). Workspace deps disagree on its version."
+              find node_modules/.pnpm -maxdepth 1 -type d -name "${pkg}@*" -printf '  %f\n'
+              fail=1
+            fi
+          done
+          exit $fail
+
+      # Surfaces opportunities to dedupe before they bite us.
+      - name: pnpm dedupe check
+        run: pnpm dedupe --check
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Lint
+        run: pnpm lint

@@ -1,0 +1,1312 @@
+{
+  "common": {
+    "title": "ともマイ",
+    "loading": "読み込み中...",
+    "save": "保存",
+    "cancel": "キャンセル",
+    "continue": "続行",
+    "close": "閉じる",
+    "settings": "設定",
+    "language": "言語",
+    "timezone": "タイムゾーン",
+    "update": "更新",
+    "login": "ログイン",
+    "join": "登録",
+    "logout": "ログアウト",
+    "username": "ユーザー名",
+    "password": "パスワード",
+    "token": "トークン",
+    "cookies": "クッキー",
+    "authentication": "認証",
+    "playerInfo": "プレイヤー情報",
+    "rating": "レート値",
+    "stars": "スター数",
+    "plays": "プレイ数",
+    "total": "合計",
+    "theme": "テーマ",
+    "invitations": "招待",
+    "discord": "Discord",
+    "about": "ともマイについて",
+    "experiments": "実験",
+    "region": "地域",
+    "comingSoon": "準備中...",
+    "difficulties": {
+      "basic": "Basic",
+      "advanced": "Advanced",
+      "expert": "Expert",
+      "master": "Master",
+      "remaster": "Re:Master",
+      "utage": "Utage"
+    },
+    "back": "戻る",
+    "clipboardError": "クリップボードへのコピーに失敗しました",
+    "selectAnOption": "オプションを選択",
+    "guest": "ゲスト",
+    "ok": "OK",
+    "email": "メールアドレス",
+    "weekdays": {
+      "sun": "日",
+      "mon": "月",
+      "tue": "火",
+      "wed": "水",
+      "thu": "木",
+      "fri": "金",
+      "sat": "土"
+    }
+  },
+  "minigames": {
+    "badge": "ミニゲーム",
+    "guesser": {
+      "title": "楽曲当てクイズ",
+      "tagline": "カバー画像から楽曲を当てよう。"
+    },
+    "heardle": {
+      "title": "Heardle",
+      "tagline": "数秒のサウンドから楽曲を当てよう。"
+    }
+  },
+  "security": {
+    "reauth": {
+      "title": "再認証が必要です",
+      "description": "この操作には新しいサインインが必要です。再認証のためプロバイダーにリダイレクトされます。"
+    }
+  },
+  "auth": {
+    "loginWithDiscord": "Discordで続行",
+    "loginWithX": "Xで続行",
+    "loginWithPasskey": "パスキーでサインイン",
+    "signIn": "サインイン",
+    "newHere": "初めてですか？",
+    "noAccount": "アカウントを作成してトラッキングを始めよう。",
+    "signup": "サインアップ",
+    "signupWithDiscord": "Discordでサインアップ",
+    "signupWithX": "Xでサインアップ",
+    "passkey": {
+      "errorTitle": "パスキーでのサインインに失敗しました",
+      "errorGeneric": "パスキーサインインを完了できませんでした。もう一度お試しください。"
+    },
+    "signupDisabled": "サインアップは現在無効です",
+    "signupDisabledMessage": "現在、新規登録は一時停止中です。後でもう一度お試しください。",
+    "peekExampleProfile": "プロフィールの例を見てみる",
+    "features": {
+      "title": "主な機能：",
+      "trackScores": "インターナショナル／日本どちらのスコアも追跡",
+      "viewHistory": "過去のスナップショットの閲覧",
+      "importData": "maimai DX NETからデータ取り込み",
+      "analyzeProgress": "プレイ進捗の分析"
+    }
+  },
+  "linkedAccounts": {
+    "title": "連携アカウント",
+    "description": "ソーシャルアカウントを連携して、別のサインイン方法を追加できます。",
+    "link": "連携",
+    "unlink": "解除",
+    "linked": "連携済み",
+    "notLinked": "未連携",
+    "unlinkError": "アカウントの連携解除に失敗しました",
+    "linkError": "アカウントの連携に失敗しました",
+    "unlinkSuccess": "アカウントの連携を解除しました",
+    "linkSuccess": "アカウントを連携しました",
+    "cannotUnlinkLast": "唯一のサインイン方法は解除できません",
+    "reauthRequired": "新しいアカウントを連携する前にもう一度サインインしてください"
+  },
+  "passkeys": {
+    "title": "パスキー",
+    "description": "生体認証やハードウェアキーを使って、パスワードなしでサインインできます。",
+    "addPasskey": "パスキーを追加",
+    "addingPasskey": "追加中…",
+    "noPasskeys": "登録されているパスキーはありません。",
+    "deletePasskey": "削除",
+    "deleteSuccess": "パスキーを削除しました。",
+    "deleteError": "パスキーの削除に失敗しました。",
+    "addError": "パスキーの追加に失敗しました。",
+    "addSuccess": "パスキーを追加しました。",
+    "verifyingCaptcha": "確認中…",
+    "captchaFailed": "キャプチャ認証に失敗しました。もう一度お試しください。",
+    "passkeyName": "パスキー {index}",
+    "deleteTitle": "パスキーを削除しますか？",
+    "deleteDescription": "このパスキーは削除されます。今後、このパスキーでサインインできなくなります。",
+    "reauthRequired": "パスキーを管理する前にもう一度サインインしてください。"
+  },
+  "consent": {
+    "title": "ともマイへようこそ",
+    "description": "アカウント作成にあたり、以下の規約およびポリシーをご確認の上、同意をお願いいたします。",
+    "tldr": {
+      "title": "本ポリシーの要点（法的効力を有しません）",
+      "points": [
+        "データの所有権はユーザーに帰属し、第三者への販売は一切行いません",
+        "データは日本国内のサーバーにて安全に管理・保管されます",
+        "データの処理については、香港特別行政区の法令に準拠します",
+        "本プロジェクトはオープンソース（AGPL-3.0）として公開されています",
+        "本ツールは非公式の個人開発によるものであり、株式会社セガとは一切関係ありません"
+      ]
+    },
+    "agreeToTos": "利用規約に同意する",
+    "agreeToPrivacy": "プライバシーポリシーに同意する",
+    "viewFullText": "全文を表示",
+    "cancel": "キャンセル",
+    "agree": "同意する"
+  },
+  "dashboard": {
+    "title": "ともマイ",
+    "description": "フレンドと一緒にmaimaiのスコアを共有・分析しよう！",
+    "timezoneUpdateSuccess": "タイムゾーンの更新に成功しました！",
+    "timezoneUpdateError": "タイムゾーンの更新に失敗しました: {error}",
+    "languageUpdateSuccess": "言語の更新に成功しました！",
+    "languageUpdateError": "言語の更新に失敗しました: {error}",
+    "regionUpdateSuccess": "地域の更新に成功しました！",
+    "regionUpdateError": "地域の更新に失敗しました: {error}",
+    "tokenUpdateSuccess": "認証情報を保存しました！"
+  },
+  "settings": {
+    "pages": {
+      "account": {
+        "title": "アカウント",
+        "description": "言語とアカウントの環境設定。"
+      },
+      "fetch": {
+        "title": "データ取得",
+        "description": "トークンとデータ取得の設定。"
+      },
+      "privacy": {
+        "title": "プライバシー",
+        "description": "プロフィールと成績の公開範囲を設定します。"
+      },
+      "developer": {
+        "title": "開発者",
+        "description": "API キーと OAuth アプリケーションを管理します。"
+      },
+      "applications": {
+        "title": "アプリ",
+        "description": "アカウントへのアクセスを許可した OAuth アプリ一覧。"
+      }
+    },
+    "language": {
+      "label": "言語",
+      "description": "希望する言語を選んでください。",
+      "placeholder": "言語を選択",
+      "auto": "自動検出",
+      "en": "English (US)",
+      "en-GB": "English (UK)",
+      "ja": "日本語",
+      "zh-TW": "繁體中文 (台灣)",
+      "zh-HK": "繁體中文 (香港)",
+      "zh-CN": "简体中文 (中国大陆)",
+      "zh-SG": "简体中文 (新加坡, 马来西亚)",
+      "ko": "한국어 (AI 번역)"
+    },
+    "timezone": {
+      "label": "タイムゾーン",
+      "description": "サイト上の日付や時刻の表示に影響します。デフォルトはmaimaiサーバーと同じ日本時間です。",
+      "placeholder": "タイムゾーンを選択"
+    },
+    "account": {
+      "label": "アカウント認証",
+      "updateToken": "認証情報を更新",
+      "deleteToken": "認証情報を削除",
+      "deleteTokenDialogTitle": "認証情報を削除",
+      "deleteTokenDialogDescription": "保存された認証情報を削除してもよろしいですか？再度データを取得するには、再認証が必要です。",
+      "deleteTokenSuccess": "認証情報を削除しました。",
+      "deleteTokenError": "認証情報の削除に失敗しました。",
+      "description": "データ取得とプレイヤー同期のために、認証情報（トークン）を更新します。"
+    },
+    "albumPrivacy": {
+      "title": "アルバム写真のプライバシー設定",
+      "description": "maimaiのアルバム写真を取得・保存しますか？",
+      "note": "ご注意：",
+      "noteText": "アルバム写真には、顔写真やその他の個人情報が含まれる場合があります。ともマイにこれらの情報を保存したくない場合は、この機能を無効にしてください。",
+      "privacy": "画像データの取り扱い：",
+      "stored": "サーバーに安全かつ非公開で保存されます",
+      "notShared": "第三者に提供されることはありません",
+      "onlyYou": "自分だけが閲覧できます",
+      "limit": "容量上限は25MB（画像約300枚分）です",
+      "autoDelete": "容量を超過した場合、古い写真から自動的に削除されます",
+      "changeLater": "この設定は後でプロフィール設定から変更できます。",
+      "dontSave": "いいえ、保存しません",
+      "save": "はい、アルバム写真を保存します",
+      "example": "保存される写真の例",
+      "saved": "アルバム設定を保存しました",
+      "error": "アルバム設定の保存に失敗しました",
+      "fetchAlbums": "アルバム写真を保存",
+      "fetchAlbumsDescription": "スコア取得時に、アルバム写真も自動的に保存します。写真には個人情報が含まれる場合がありますのでご注意ください。",
+      "notSet": "この設定はまだ完了していません。次回のデータ取得時に確認されます。"
+    },
+    "profile": {
+      "publishProfile": "プロフィールを公開",
+      "publishDescription": "maimaiプロフィールを公開して、他のプレイヤーにスコアや進捗を共有しよう。",
+      "mainRegion": {
+        "label": "メイン地域",
+        "description": "公開するプロフィールの主要地域を選択してください。",
+        "intl": "インターナショナル",
+        "jp": "日本",
+        "cn": "中国"
+      },
+      "privacy": {
+        "label": "プライバシー設定",
+        "showAllScores": {
+          "label": "すべてのスコアを表示",
+          "description": "ベスト50曲のみではなく、すべてのスコアを表示します。"
+        },
+        "showScoreDetails": {
+          "label": "スコアの詳細を表示",
+          "description": "プレイ回数や判定タイミングなどの詳細データを表示します。"
+        },
+        "showPlates": {
+          "label": "ネームプレートを表示",
+          "description": "ネームプレートコレクションを表示します。"
+        },
+        "showPlayCounts": {
+          "label": "プレイ回数を表示",
+          "description": "maimaiのプレイ回数を表示します。"
+        },
+        "showEvents": {
+          "label": "ちほーを表示",
+          "description": "ちほーの達成進捗を表示します。"
+        },
+        "showInSearch": {
+          "label": "検索で表示",
+          "description": "他の人があなたのユーザー名でプロフィールを検索できるようにします。"
+        }
+      },
+      "url": {
+        "label": "プロフィールURL",
+        "description": "プロフィールの共有リンクです。",
+        "copied": "プロフィールURLをクリップボードにコピーしました！",
+        "copyFailed": "URLのクリップボードへのコピーに失敗しました"
+      }
+    },
+    "saveChanges": "変更を保存",
+    "saving": "保存中...",
+    "saved": "設定が正常に保存されました！",
+    "errorSaving": "設定の保存に失敗しました",
+    "sessions": {
+      "title": "セッション",
+      "description": "デバイス間のアクティブなセッションを管理します。",
+      "currentSession": "現在",
+      "revoke": "取り消す",
+      "revokeAll": "他をすべて取り消す",
+      "revokeAllDescription": "他のすべてのセッションからサインアウトします。現在のセッションのみがアクティブのままになります。",
+      "revokeDescription": "このセッションは直ちにサインアウトされます。",
+      "noOtherSessions": "アクティブなセッションはありません。",
+      "ip": "IP",
+      "createdAt": "サインイン",
+      "revokeConfirm": "このセッションを取り消しますか？",
+      "revokeAllConfirm": "他のすべてのセッションを取り消しますか？",
+      "revokeSuccess": "セッションを取り消しました。",
+      "revokeAllSuccess": "他のすべてのセッションを取り消しました。"
+    },
+    "developer": {
+      "reauthRequired": "この操作を行う前に、もう一度サインインしてください。",
+      "apiKeys": {
+        "label": "API キー",
+        "description": "これらのキーを使用して、ともマイ API へのリクエストを認証します。",
+        "createButton": "API キーを作成",
+        "loading": "読み込み中…",
+        "emptyTitle": "API キーがありません",
+        "emptyCreateLink": "最初のキーを作成",
+        "emptySuffix": "して ともマイ API を使い始めましょう。",
+        "unnamed": "名前のないキー",
+        "expired": "期限切れ",
+        "disabled": "無効",
+        "never": "無期限",
+        "createdAt": "作成日：{date}",
+        "expiresAt": "有効期限：{date}",
+        "toggleAriaLabel": "キーの有効/無効を切り替え",
+        "regenerateAriaLabel": "キーを再生成",
+        "regenerateError": "APIキーの再生成に失敗しました",
+        "regeneratedTitle": "キーが再生成されました",
+        "regeneratedDescription": "新しいAPIキーを今すぐコピーしてください。再表示されません。",
+        "regeneratedSaveWarning": "このキーを保存してください — ダイアログを閉じると再表示されません。",
+        "regenerateDialog": {
+          "title": "APIキーを再生成しますか？",
+          "description": "現在のキーは即座に無効になります。このキーを使用しているアプリは新しいキーに更新するまでアクセスできなくなります。",
+          "confirm": "再生成"
+        },
+        "deleteSuccess": "API キーを削除しました",
+        "deleteError": "API キーの削除に失敗しました",
+        "updateError": "キーの更新に失敗しました",
+        "editDialog": {
+          "title": "API キーを編集",
+          "nameLabel": "名前",
+          "namePlaceholder": "マイアプリ",
+          "saveButton": "保存",
+          "saving": "保存中…",
+          "saveError": "API キーの更新に失敗しました"
+        },
+        "deleteDialog": {
+          "title": "API キーを削除しますか？",
+          "description": "この操作は取り消せません。このキーを使用しているすべてのアプリケーションは、即座にアクセス権を失います。",
+          "confirm": "削除"
+        }
+      },
+      "createDialog": {
+        "title": "API キーを作成",
+        "description": "ともマイ API にアクセスするための新しい API キーを生成します。",
+        "createdTitle": "API キーを作成しました",
+        "createdDescription": "今すぐ API キーをコピーしてください。二度と表示されません。",
+        "copyAriaLabel": "API キーをコピー",
+        "saveWarning": "このキーを保存してください。このダイアログを閉じると再表示できません。",
+        "done": "完了",
+        "nameLabel": "名前",
+        "namePlaceholder": "マイアプリ",
+        "nameDescription": "このキーを識別するための名前。",
+        "scopesLabel": "スコープ",
+        "scopeDefaultBadge": "デフォルト",
+        "scopeDestructiveBadge": "破壊的",
+        "scopeSensitiveBadge": "機密",
+        "scopeIncludedBadge": "含まれる",
+        "sensitiveWarning": "選択したスコープの一部は、個人データやプライベートな識別子を公開するため機密とマークされています。信頼するアプリにのみ許可してください。",
+        "expirationLabel": "有効期限",
+        "expiration": {
+          "7d": "7 日間",
+          "30d": "30 日間",
+          "90d": "90 日間",
+          "1y": "1 年間",
+          "never": "無期限"
+        },
+        "destructiveWarning": "このキーは破壊的な操作へのアクセスを許可します。リスクを理解していますか？",
+        "confirmLabelPre": "確認のため、",
+        "confirmPhrase": "はい、理解しました",
+        "confirmLabelPost": "と入力してください",
+        "creating": "作成中…",
+        "createButton": "API キーを作成",
+        "createError": "API キーの作成に失敗しました"
+      },
+      "scopes": {
+        "ready": {
+          "name": "Ready",
+          "description": "基本アクセス。GET /api/v1/ok を許可します。デフォルトで含まれます。"
+        },
+        "user:metadata:read": {
+          "name": "ユーザーメタデータ（読み取り）",
+          "description": "ユーザー名、地域、プロフィール公開設定、ロールを読み取ります。GET /api/v1/me を許可します。"
+        },
+        "snapshot:latest:metadata:read": {
+          "name": "最新スナップショットのメタデータ（読み取り）",
+          "description": "最新スナップショットのメタデータ（Rating、表示名、プレイ回数など）を読み取ります。GET /api/v1/snapshots/latest を許可します。"
+        },
+        "snapshot:latest:songs:b50:read": {
+          "name": "最新スナップショットのB50楽曲（読み取り）",
+          "description": "最新スナップショットのB50スコアを読み取ります。"
+        },
+        "snapshot:latest:songs:read": {
+          "name": "最新スナップショットの全楽曲（読み取り）",
+          "description": "最新スナップショットの全スコアを読み取ります。"
+        },
+        "snapshot:latest:events:read": {
+          "name": "最新スナップショットのちほー（読み取り）",
+          "description": "最新スナップショットのちほー進行状況を読み取ります。"
+        },
+        "snapshot:latest:icon:read": {
+          "name": "最新スナップショットのアイコン（読み取り）",
+          "description": "最新スナップショットのプロフィールアイコンURL（Discordアバター）を読み取ります。機密：ソーシャルIDが公開される可能性があります。"
+        },
+        "snapshot:all:metadata:read": {
+          "name": "全スナップショットのメタデータ（読み取り）",
+          "description": "全スナップショットを一覧表示し、メタデータを読み取ります。GET /api/v1/snapshots と GET /api/v1/snapshots/:id を許可します。"
+        },
+        "snapshot:all:songs:b50:read": {
+          "name": "全スナップショットのB50楽曲（読み取り）",
+          "description": "任意のスナップショットからB50の楽曲スコアを読み取ります。"
+        },
+        "snapshot:all:songs:read": {
+          "name": "全スナップショットの全楽曲（読み取り）",
+          "description": "任意のスナップショットの全スコアを読み取ります。"
+        },
+        "snapshot:all:events:read": {
+          "name": "全スナップショットのちほー（読み取り）",
+          "description": "任意のスナップショットからちほーの進行状況を読み取ります。"
+        },
+        "snapshot:all:icon:read": {
+          "name": "全スナップショットのアイコン（読み取り）",
+          "description": "任意のスナップショットのプロフィールアイコンURL（Discordアバター）を読み取ります。機密：ソーシャルIDが公開される可能性があります。"
+        },
+        "recent:read": {
+          "name": "最近のプレイ（読み取り）",
+          "description": "楽曲情報、達成度、コンボ/シンクを含む最近のプレイ履歴を読み取ります。GET /api/v1/recents を許可します。"
+        },
+        "recent:detailed:read": {
+          "name": "最近のプレイ（詳細・読み取り）",
+          "description": "最近のプレイ結果に、店舗情報とノートタイプ別の詳細な内訳を追加します。"
+        },
+        "stats:read": {
+          "name": "統計（読み取り）",
+          "description": "グレード/FC/FS分布統計を読み取ります。GET /api/v1/stats を許可します。"
+        },
+        "album:read": {
+          "name": "アルバム（読み取り）",
+          "description": "アーケード写真アルバムのエントリ（メタデータのみ）を読み取ります。GET /api/v1/albums を許可します。"
+        },
+        "album:images:read": {
+          "name": "アルバム画像（読み取り）",
+          "description": "アルバムレスポンスに画像URLを追加します。機密：写真に人物が含まれる場合があります。"
+        },
+        "plate:read": {
+          "name": "プレート（読み取り）",
+          "description": "各プレートで未クリア／FC／APの楽曲を取得します。GET /api/v1/plates を許可します。"
+        },
+        "user:settings:read": {
+          "name": "ユーザー設定（読み取り）",
+          "description": "プロフィール公開やスコア表示などのプライバシー・表示設定を読み取ります。GET /api/v1/me/settings を許可します。"
+        },
+        "snapshot:all:delete": {
+          "name": "スナップショット（削除）",
+          "description": "任意のスナップショットを削除します。DELETE /api/v1/snapshots/:id を許可します。破壊的——明示的にリクエストする必要があり、包括的スコープでも自動付与されません。"
+        },
+        "snapshot:submit": {
+          "name": "スナップショット（送信）",
+          "description": "新しいスナップショットを送信します。内部用 — 管理者のみ。"
+        },
+        "fetch:read": {
+          "name": "フェッチ状態（読み取り）",
+          "description": "進行中または直近のmaimaiデータフェッチの状態を取得します。GET /api/v1/fetch/status を許可します。"
+        },
+        "fetch:start": {
+          "name": "フェッチ開始",
+          "description": "保存済みのアップストリームトークンで新しいmaimaiデータフェッチを開始します。POST /api/v1/fetch を許可します。破壊的——アップストリームAPIの予算を消費し新しいスナップショットを書き込みます。"
+        },
+        "fetch:delete": {
+          "name": "フェッチトークン（削除）",
+          "description": "保存済みのアップストリームmaimai認証トークンを削除します。DELETE /api/v1/fetch/token を許可します。破壊的かつ機密——再認証するまでアプリ内およびAPI経由のフェッチが停止します。"
+        },
+        "snapshot:latest:read": {
+          "name": "最新スナップショット（読み取り）",
+          "description": "最新スナップショットのみのメタデータ・全楽曲・ちほーを含みます。アイコンは除外（プライバシー上のオプトイン）。"
+        },
+        "snapshot:all:read": {
+          "name": "全スナップショット（読み取り）",
+          "description": "最新を含む全スナップショットのメタデータ・全楽曲・ちほーを含みます。アイコンは除外（プライバシー上のオプトイン）。"
+        },
+        "read": {
+          "name": "読み取り（機密以外すべて）",
+          "description": "広範な読み取りアクセス：ユーザーメタデータ、全スナップショット、最近のプレイ、統計、アルバム。アイコンとアルバム画像URLは除外されます。個人データへの広範なアクセスのため機密扱い。"
+        }
+      },
+      "oauthApps": {
+        "label": "OAuth アプリ",
+        "description": "OAuth 2.1 + PKCE を介してユーザーの代わりにアクセスをリクエストできるアプリを登録します。",
+        "createButton": "新規アプリ",
+        "loading": "アプリを読み込み中…",
+        "emptyTitle": "OAuth アプリはまだありません",
+        "emptyCreateLink": "最初のアプリを作成",
+        "emptySuffix": "して OAuth を使い始めましょう。",
+        "redirectUris": "リダイレクト URI",
+        "scopes": "スコープ",
+        "rotateAriaLabel": "クライアントシークレットを再生成",
+        "deleteAriaLabel": "アプリを削除",
+        "deleteError": "アプリの削除に失敗しました",
+        "rotateError": "シークレットの再生成に失敗しました",
+        "createDialog": {
+          "title": "OAuth アプリを作成",
+          "description": "OAuth 2.1 認可フローを使う新しいアプリを登録します。",
+          "nameLabel": "アプリ名",
+          "namePlaceholder": "My Userscript",
+          "nameDescription": "同意画面でユーザーに表示される説明的な名前。",
+          "uriLabel": "アプリ URL",
+          "uriPlaceholder": "https://example.com",
+          "redirectLabel": "リダイレクト URI",
+          "redirectPlaceholder": "https://example.com/callback",
+          "redirectAddButton": "追加",
+          "scopesLabel": "スコープ",
+          "createButton": "アプリを作成",
+          "creating": "作成中…",
+          "createError": "アプリの作成に失敗しました",
+          "createdTitle": "アプリを作成しました",
+          "createdDescription": "今すぐクライアントシークレットを保存してください — 再表示されません。",
+          "clientIdLabel": "クライアント ID",
+          "secretLabel": "クライアントシークレット",
+          "copyAriaLabel": "値をコピー",
+          "saveWarning": "このシークレットを保存してください。ダイアログを閉じると再表示されません。",
+          "done": "完了"
+        },
+        "rotateDialog": {
+          "title": "クライアントシークレットを再生成しますか？",
+          "description": "現在のシークレットは即座に無効になります。使用中のクライアントは新しいシークレットへの更新が必要です。",
+          "confirm": "シークレットを再生成"
+        },
+        "editDialog": {
+          "title": "OAuth アプリを編集",
+          "description": "アプリの詳細を更新します。",
+          "basicSection": "基本情報",
+          "redirectSection": "リダイレクト URI",
+          "scopesSection": "スコープ",
+          "scopesNote": "既存トークンはユーザーが再認可するまで現在のスコープを保持します。",
+          "legalSection": "法的情報",
+          "nameLabel": "アプリ名",
+          "uriLabel": "アプリ URL",
+          "iconLabel": "アイコン URL",
+          "iconPlaceholder": "https://example.com/logo.png",
+          "policyLabel": "プライバシーポリシー URL",
+          "policyPlaceholder": "https://example.com/privacy",
+          "tosLabel": "利用規約 URL",
+          "tosPlaceholder": "https://example.com/tos",
+          "saveButton": "変更を保存",
+          "saving": "保存中…",
+          "saveError": "アプリの更新に失敗しました"
+        },
+        "deleteDialog": {
+          "title": "OAuth アプリを削除しますか？",
+          "description": "アプリが完全に削除され、発行済みの全トークンが取り消されます。この操作は取り消せません。",
+          "confirm": "削除"
+        }
+      }
+    },
+    "applications": {
+      "noAuthorizations": "まだ OAuth アプリを認可していません。",
+      "grantedAt": "{date}に認可",
+      "revokeButton": "取り消す",
+      "revokeDialog": {
+        "title": "アクセスを取り消しますか？",
+        "description": "このアプリのすべてのトークンが即座に取り消されます。再び使うには再認可が必要です。",
+        "confirm": "取り消す"
+      },
+      "revokeSuccess": "アクセスを取り消しました",
+      "revokeError": "アクセスの取り消しに失敗しました"
+    }
+  },
+  "dataBanner": {
+    "dataSnapshot": "データスナップショット：",
+    "noDataAvailable": "データがありません",
+    "selectSnapshot": "スナップショットを選択",
+    "fetchNewData": "データ取得",
+    "fetchingData": "データ取得中...",
+    "lastUpdate": "最終更新",
+    "noDataInstructions": "この地域のデータがまだありません。「新しいデータを取得」からmaimaiスコアを取り込みましょう（ログイン／トークンが必要です）。"
+  },
+  "profileMetadata": {
+    "title": "{username} | tomomai ともマイ",
+    "description": "{region} の {username} さんの maimai プロフィールを表示します。フレンドと一緒に maimai のスコアを記録・分析しよう。",
+    "descriptionRich": "{region} の maimai プレイヤー {displayName}（{username}）さん — Rating {rating}。tomomai で B50、最近のプレイ、譜面記録を見る。",
+    "descriptionUnknownRegion": "{username} さんの maimai プロフィールを表示します。フレンドと一緒に maimai のスコアを記録・分析しよう。",
+    "notFoundTitle": "プロフィールが見つかりません | tomomai ともマイ",
+    "notFoundDescription": "お探しのプロフィールは存在しないか、公開されていません。",
+    "errorTitle": "エラー | tomomai ともマイ",
+    "errorDescription": "プロフィールの読み込み中にエラーが発生しました。"
+  },
+  "profileVisibility": {
+    "public": "公開プロフィール",
+    "private": "非公開プロフィール",
+    "accessibleBy": "",
+    "accessibleByEnd": " から閲覧できます！",
+    "youMayChangePrivacySettings": "右上のアイコン → 設定 → プロフィールを公開 からプライバシー設定を変更できます。",
+    "onlyAccessibleByYou": "自分だけが閲覧できます！右上のアイコン → 設定 → プロフィールを公開 からプライバシー設定を変更できます。"
+  },
+  "dataContent": {
+    "loading": "データの読み込み中...",
+    "snapshotData": "スナップショットデータ",
+    "snapshotFrom": "{date} のスナップショット • {name} • {count}曲",
+    "tabs": {
+      "playerInfo": "プレイヤー情報",
+      "stats": "統計",
+      "songs": "楽曲",
+      "recentPlays": "プレイレコード",
+      "recommendations": "おすすめ楽曲",
+      "plates": "ネームプレート",
+      "map": "ちほー",
+      "exportImage": "エクスポート",
+      "history": "履歴",
+      "developer": "開発者",
+      "albums": "アルバム"
+    },
+    "playerInfo": "プレイヤー情報",
+    "rating": "レート値：{rating}",
+    "stars": "スター数：{stars}",
+    "versionPlays": "現バージョンプレイ回数：{count}",
+    "totalPlays": "累計プレイ回数：{count}",
+    "songs": "楽曲（合計 {count} 曲）",
+    "searchPlaceholder": "楽曲名、アーティスト、難易度、タイプなどで検索...",
+    "newSongsB15": "新規曲 B15",
+    "oldSongsB35": "過去曲 B35",
+    "newSongs": "新規曲",
+    "oldSongs": "過去曲",
+    "displayModes": {
+      "list": "リスト",
+      "grid": "グリッド",
+      "compact": "コンパクト表"
+    },
+    "tableHeaders": {
+      "song": "楽曲",
+      "artist": "アーティスト",
+      "level": "レベル",
+      "achievement": "達成率",
+      "fc": "FC",
+      "fs": "FS",
+      "rating": "レート値"
+    },
+    "statistics": {
+      "sum": "合計",
+      "average": "平均"
+    },
+    "switchToListForAllSongs": "すべての楽曲を見るには、リストまたは表表示に切り替えてください。",
+    "noDataAvailable": "データがありません",
+    "getStartedInstructions": "上の取得ボタンからmaimaiデータを取得して使い始めましょう。",
+    "history": {
+      "title": "レート値の履歴",
+      "ratingOverTime": "レート値の推移",
+      "noHistory": "レート値の履歴がありません",
+      "needMoreData": "履歴を表示するには、少なくとも2回データを取得してください"
+    },
+    "developer": {
+      "title": "開発者",
+      "exportJson": "スナップショットをJSONでエクスポート",
+      "exporting": "エクスポート中..."
+    }
+  },
+  "albums": {
+    "title": "マイアルバム",
+    "photos": "枚の写真",
+    "noAlbums": "アルバムがありません",
+    "loadMore": "さらに読み込む",
+    "loading": "読み込み中...",
+    "error": "アルバムの読み込みに失敗しました",
+    "storage": "ストレージ",
+    "storageTitle": "ストレージ使用量",
+    "storageDescription": "アルバムの保存容量を管理します。25MBを超えると、古い写真から自動的に削除されます。これは約300枚分の画像に相当します。",
+    "used": "使用済み",
+    "totalUsed": "合計使用量",
+    "limit": "上限",
+    "usedOf": "/",
+    "byRegion": "地域別",
+    "storageWarning": "容量上限に近づいています。古い写真を削除しない場合、古いアルバムから自動的に削除されます。",
+    "uploadNotice": "直近のスナップショットを取得した場合、新しい写真が表示されるまで少し時間がかかることがあります。しばらくしてから更新してください。",
+    "deleteTitle": "写真を削除",
+    "deleteDescription": "この写真を削除してもよろしいですか？この操作は取り消せません。",
+    "deleteSuccess": "写真を削除しました",
+    "deleteFailed": "写真の削除に失敗しました",
+    "dontAskAgain": "今日はもう確認しない",
+    "delete": "削除",
+    "cancel": "キャンセル"
+  },
+  "recommendations": {
+    "noRecommendations": "おすすめがありません",
+    "allOptimal": "レート値を伸ばせる曲はもうありません！",
+    "description": "現在のB15/B35スコアに基づき、レート値を伸ばしやすい楽曲をおすすめします。",
+    "filterButton": "フィルター",
+    "filters": {
+      "all": "すべて",
+      "best": "ベスト50内",
+      "new": "新規曲",
+      "old": "過去曲"
+    },
+    "filterCategories": {
+      "difficulty": "難易度",
+      "level": "レベル",
+      "type": "タイプ",
+      "targetRating": "目標レート",
+      "achievement": "達成率",
+      "version": "バージョン"
+    }
+  },
+  "recentPlays": {
+    "title": "プレイレコード",
+    "noPlays": "プレイレコードがありません",
+    "notFetched": "未取得",
+    "fetching": "取得中...",
+    "detailsNotFetched": "プレイ詳細データがまだ取得されていません。詳細な内訳を見るには、データを再同期してください。",
+    "detailsFetching": "詳細なプレイデータを取得中です。しばらく待ってからページを更新してください。",
+    "labels": {
+      "dx": "DX",
+      "combo": "コンボ",
+      "fast": "FAST",
+      "late": "LATE"
+    },
+    "notesBreakdown": {
+      "type": "タイプ",
+      "total": "合計",
+      "totalLoss": "ロス"
+    },
+    "clickToExpand": "クリックして詳細を展開",
+    "clickToCollapse": "クリックして折りたたむ"
+  },
+  "events": {
+    "title": "ちほー",
+    "areaEvents": "ちほー",
+    "eventAreaEvents": "イベントちほー",
+    "noEventsAvailable": "ちほーがありません",
+    "noAreaEvents": "ちほーがありません",
+    "noEventAreaEvents": "イベントちほーがありません",
+    "currentDistance": "累計距離",
+    "nextReward": "次の報酬まで",
+    "eventCompleted": "コンプリート",
+    "notStarted": "未開始",
+    "inProgress": "進行中",
+    "completed": "コンプリート"
+  },
+  "playerStats": {
+    "title": "プレイヤー統計",
+    "selectVersion": "バージョンを選択",
+    "allVersions": "全バージョン",
+    "selectDifficulty": "難易度を選択",
+    "allDifficulties": "全難易度",
+    "backToStats": "統計に戻る",
+    "viewPlatesProgress": "プレート進捗を表示",
+    "achievementGrades": "達成ランク",
+    "fullCombo": "フルコンボ",
+    "fullSync": "フルシンク",
+    "noDataAvailable": "データがありません",
+    "noMatchingScores": "条件に一致するスコアがありません",
+    "selectVersionForPlates": "プレートの進捗を確認するには、バージョンを指定してください",
+    "songsNotMeeting": "{requirement} 未達成の楽曲",
+    "noSongsToDisplay": "表示する楽曲がありません",
+    "plates": {
+      "kiwami": "全曲 FC 以上",
+      "shou": "全曲 SSS 以上",
+      "shin": "全曲 AP 以上",
+      "maimai": "全曲 FDX 以上"
+    }
+  },
+  "tokenDialog": {
+    "title": "maimai 認証情報を更新",
+    "japanDescription": "SEGAアカウントでログインします。",
+    "intlDescription": "認証方法を選択してください。",
+    "credentialsStored": "認証情報は今後の取得で使用されます。",
+    "username": "ユーザー名",
+    "usernamePlaceholder": "SEGAアカウントのユーザー名を入力",
+    "password": "パスワード",
+    "passwordPlaceholder": "SEGAアカウントのパスワードを入力",
+    "cookies": "クッキー",
+    "tokenPlaceholder": "clal=ここにCookie値を入力",
+    "tokenValidationError": "Cookieは「clal=」で始まり、英数字のみを含む必要があります。",
+    "authenticationNote": "認証：",
+    "segaCredentialsNote": "SEGAアカウントのユーザー名とパスワードで直接認証します。",
+    "credentialsSecureNote": "認証情報は保存され、今後の同期時に使用されます。",
+    "savingCredentials": "認証情報保存中...",
+    "saveCredentials": "認証情報を保存",
+    "tokenTab": "トークン",
+    "passwordTab": "パスワード",
+    "tokenInstructions": {
+      "description": "maimai DX NETから取得した「clal=」で始まるクッキー値を入力してください。",
+      "expiration": "トークンは一定期間で無効になる場合がありますので、その際は再度更新してください。"
+    },
+    "passwordInstructions": "SEGAアカウントのユーザー名とパスワードで直接ログイン",
+    "secureStorage": "認証情報は保存され、今後の同期時に使用されます。",
+    "steps": {
+      "step1Title": "maimai DX NETにログイン",
+      "step2Title": "「Not Found」ページに移動",
+      "step3Title": "コードを実行"
+    },
+    "clipboard": {
+      "copied": "クリップボードにコピーしました！",
+      "failed": "クリップボードへのコピーに失敗しました"
+    },
+    "loading": {
+      "scriptLink": "スクリプトリンクを生成中...",
+      "loginLink": "専用リンクを生成中..."
+    },
+    "tokenDialogDescription": "ブラウザのトークンを入力して認証します",
+    "segaAccountDescription": "SEGAアカウントの認証情報を入力します",
+    "backToSteps": "手順に戻る",
+    "step1": {
+      "description": "<strong>シークレット / プライベートウィンドウ</strong>で maimai DX NET にログインします。",
+      "clickToCopy": "下のリンクをクリックしてクリップボードにコピー：",
+      "haveCookies": "すでに Cookie をお持ちですか？",
+      "enterDirectly": "直接入力する"
+    },
+    "step2": {
+      "description": "同じシークレット / プライベートタブで、下のリンクにアクセスします。",
+      "otpLabel": "OTP：",
+      "otpExpires": "有効期限 ~ {time}",
+      "refreshing": "更新中...",
+      "refreshOtp": "OTPを更新"
+    },
+    "step3": {
+      "desktop": "デスクトップ",
+      "desktopInstructions": "下の JavaScript コードをコピーし、ブラウザの開発者コンソール（Ctrl + Shift + I または F12）に貼り付けます。",
+      "mobile": "モバイル",
+      "mobileStep1": "1. 下のコードをタップしてクリップボードにコピーします。",
+      "mobileStep2": "2. ブラウザでブックマークを作成し、コピーしたテキストを URL 欄に貼り付けます。",
+      "mobileStep3": "3. ブックマークを実行します。"
+    },
+    "navigation": {
+      "previousStep": "戻る",
+      "nextStep": "次へ"
+    },
+    "recommended": "おすすめ楽曲",
+    "tokenOptionDescription": "ブラウザのトークンを使用して maimai DX NET アカウントにログインします。トークンは一定期間で無効になることがありますので、その際は再度更新してください。パスワードは不要で、ソーシャルログインもサポートしています。",
+    "passwordOptionDescription": "SEGA アカウントの認証情報を使用して maimai DX NET アカウントにログインします。期限切れはありません。非推奨です。",
+    "cnTitle": "舞萌 DX の認証を更新",
+    "cnDescription": "中国版舞萌 DX のログイン認証方式を選んでください。",
+    "cnExperimentalWarningTitle": "中国版は実験的なリージョンです",
+    "cnExperimentalWarningMessage": "サポートが突然終了したり、機能が不安定になったり、データが消去されたりする可能性があります。",
+    "recommendedBadge": "おすすめ",
+    "comingSoonBadge": "近日公開",
+    "disabledBadge": "一時停止中",
+    "features": {
+      "playerInfo": "プレイヤー情報",
+      "scores": "譜面スコア",
+      "recents": "プレイレコード",
+      "events": "イベント情報"
+    },
+    "fetchOptions": {
+      "divingFish": {
+        "name": "水鱼查分器",
+        "description": "水鱼查分器のユーザー名、または連携済みの QQ ID でデータを取得します。"
+      },
+      "lxns": {
+        "name": "落雪咖啡屋查分器",
+        "description": "落雪咖啡屋のアカウントを認可してデータを取得します。"
+      },
+      "httpProxy": {
+        "name": "HTTP プロキシ",
+        "description": "HTTP プロキシを介して、WeChat の舞萌 DX ミニプログラムの通信からデータを取得します。"
+      },
+      "androidApp": {
+        "name": "Android アプリ",
+        "description": "Android 端末に本アプリをインストールするだけで、データを自動で取得します。"
+      }
+    },
+    "lxns": {
+      "title": "落雪咖啡屋查分器",
+      "description": "{host} に対し、落雪咖啡屋查分器上のあなたの舞萌 DX データの読み取りを OAuth で認可します。認可はいつでも落雪咖啡屋のアカウント設定から取り消せます。",
+      "notConfiguredTitle": "落雪咖啡屋 OAuth が未設定です",
+      "notConfiguredMessage": "サーバーの <code>LXNS_CLIENT_ID</code> と <code>LXNS_CLIENT_SECRET</code> 環境変数を設定するよう、管理者にご連絡ください。",
+      "instructionsLine1": "下のボタンを押すと、新しいウィンドウで落雪咖啡屋の認可ページが開きます。認可が完了すると自動的にウィンドウが閉じ、こちらに戻ります。",
+      "instructionsLine2": "プレイヤーデータの読み取り権限のみを要求します。あなたのデータに書き込むことはありません。",
+      "authorizeButton": "認可する",
+      "authorizingButton": "認可を待っています…",
+      "popupBlocked": "認可ウィンドウを開けませんでした。本サイトのポップアップを許可してからもう一度お試しください。",
+      "authFailed": "認可に失敗しました：{error}",
+      "unknownError": "不明なエラー"
+    },
+    "divingFish": {
+      "title": "水鱼查分器",
+      "description": "水鱼查分器のアカウントを ともマイ に連携します。連携後は水鱼查分器の開発者 API を通じて、あなたの舞萌 DX データを読み取ります。下記のいずれかの方法でアカウントの所有確認を行ってください。",
+      "notConfiguredTitle": "水鱼查分器が未設定です",
+      "notConfiguredMessage": "サーバーの <code>DIVINGFISH_DEV_TOKEN</code> 環境変数を設定するよう、管理者にご連絡ください。",
+      "importTokenTab": "Import-Token で認証",
+      "nicknameTab": "ニックネームで認証",
+      "importTokenInstructions": "水鱼查分器の「プロフィール編集」ページで Import-Token を発行し、ここに貼り付けてください。",
+      "importTokenSecureNote": "このトークンはアカウントの所有確認に一度だけ使用し、確認後すぐに破棄します。保存することはありません。",
+      "importTokenPlaceholder": "Import-Token を貼り付け",
+      "importTokenButton": "認証して連携",
+      "importTokenVerifying": "認証中…",
+      "nicknameInstructions": "以下の手順で認証を完了してください：",
+      "nicknameStep1": "水鱼查分器にログイン",
+      "nicknameStep2": "「プロフィール編集」でニックネームを下のコードに変更",
+      "nicknameStep3": "変更を保存",
+      "nicknameStep4": "ここに戻り、ユーザー名または QQ を入力して認証",
+      "nicknameLabel": "ニックネームを次に変更",
+      "refreshCode": "コードを更新",
+      "nicknameTypeLabel": "種別",
+      "nicknameUsername": "ユーザー名",
+      "nicknameQQ": "QQ",
+      "nicknameIdentifierPlaceholder": "水鱼查分器のユーザー名、または連携済みの QQ 番号",
+      "nicknameVerifyButton": "変更したので認証を開始",
+      "nicknameVerifying": "認証中…",
+      "nicknameRevertNote": "認証成功後、ニックネームは元に戻して構いません。",
+      "verifyFailedFallback": "認証に失敗しました",
+      "challengePlaceholder": "-------"
+    },
+    "httpProxy": {
+      "title": "HTTP プロキシ",
+      "description": "スマートフォンの HTTP プロキシを当サービスのサーバーに設定し、WeChat で下のリンクを開いて認可を完了してください。認可は一度だけで済みます。",
+      "notConfiguredTitle": "HTTP プロキシサービスが未設定です",
+      "notConfiguredMessage": "<code>CN_PROXY_HOST</code> と <code>CN_PROXY_TOKEN_SECRET</code> 環境変数を設定するよう、管理者にご連絡ください。",
+      "step1Title": "ステップ 1：スマートフォンの Wi-Fi 設定で HTTP プロキシを次のように設定",
+      "step1Host": "ホスト",
+      "step1Port": "ポート",
+      "step2Title": "ステップ 2：認可リンクの{generateOrRegenerate}",
+      "step2Generate": "発行",
+      "step2Regenerate": "再発行（リンクが失効した場合）",
+      "step2GenerateButton": "認可リンクを発行",
+      "step2RegenerateButton": "再発行",
+      "step2GeneratingButton": "発行中…",
+      "step2ErrorPrefix": "エラー：",
+      "step3Title": "ステップ 3：スマートフォンで認証リンクを開く",
+      "step3ScanWithWechat": "WeChat でスキャン",
+      "step3ScanNote": "WeChat を開き、スキャンアイコンをタップして QR コードを読み取ると、認証リンクが直接開きます。",
+      "step3Or": "または",
+      "step3OrCopy": "リンクを WeChat に送る",
+      "step3OrCopyNote": "リンクをコピーし、任意の WeChat チャットに送信してからタップして開いてください。",
+      "step3Copy": "リンクをコピー",
+      "step3CopyNote": "認可が完了すると WeChat が結果ページに遷移します。そのページを閉じて ともマイ に戻り、インポートの進捗をご確認ください。Wi-Fi 設定でプロキシをオフにすることもお忘れなく。",
+      "copySuccess": "コピーしました",
+      "copyFailed": "コピーに失敗しました。手動でコピーしてください",
+      "clashConfigUrl": "Clash 設定 URL",
+      "clashImportButton": "Clash にインポート"
+    }
+  },
+  "regions": {
+    "intl": "インターナショナル",
+    "jp": "日本",
+    "cn": "中国",
+    "short": {
+      "intl": "海外",
+      "jp": "日本",
+      "cn": "中国"
+    }
+  },
+  "userHeader": {
+    "memberLabel": "ともマイのメンバー",
+    "discordPrompt": "何かお困りのことはありますか？ともマイへのご意見・アイデアをぜひお聞かせください！",
+    "joinDiscord": "Discordコミュニティに参加する"
+  },
+  "publicHeader": {
+    "discordBanner": "ご質問やご提案は、ぜひDiscordコミュニティでお聞かせください！"
+  },
+  "header": {
+    "tabs": {
+      "dashboard": "ホーム",
+      "db": "データベース"
+    },
+    "addDiscordBot": "Discordボットとして追加",
+    "admin": "管理者",
+    "testOnboarding": "オンボーディングをテスト",
+    "errors": {
+      "inviteLink": "招待リンクを開けませんでした"
+    },
+    "followThreads": "Threadsでフォロー",
+    "followTwitter": "Xでフォロー"
+  },
+  "onboarding": {
+    "title": "ともマイ へようこそ！",
+    "step1": {
+      "title": "ユーザー名を決める",
+      "description": "ユーザー名は ともマイ でのあなたのハンドルです。公開を選ぶと、公開プロフィールのURLにも使われます。",
+      "publishToggleLabel": "プロフィールを友達に共有する",
+      "publishToggleDescription": "他のユーザーが公開リンクであなたのスコアを見られるようになります。初期設定はオフです — いつでも変更できます。",
+      "publicUrlHint": "あなたの公開プロフィール："
+    },
+    "step2": {
+      "title": "地域を選ぶ",
+      "description": "あなたの maimai データを保存する地域を選んでください。後からメニューで変更できます。"
+    },
+    "step3": {
+      "title": "準備完了です！",
+      "description": "ようこそ。{host} からいつでも戻ってきてください。",
+      "goToDashboard": "ダッシュボードへ"
+    },
+    "navigation": {
+      "previous": "戻る",
+      "next": "次へ",
+      "saving": "保存中…"
+    }
+  },
+  "usernameSetup": {
+    "title": "ユーザー名を選択",
+    "description": "このサイトを利用するには、ユーザー名を設定する必要があります。これは公開プロフィールのURLに使用され、一意である必要があります。",
+    "usernameLabel": "ユーザー名",
+    "placeholder": "ユーザー名を入力",
+    "checking": "利用可能性を確認中...",
+    "available": "ユーザー名は利用可能です！",
+    "rules": {
+      "length": "1-32文字",
+      "characters": "英数字、ダッシュ（-）、アンダースコア（_）のみ",
+      "profileUrl": "プロフィールURLに使用されます：/profile/{username}"
+    },
+    "setUsername": "ユーザー名を設定",
+    "settingUsername": "ユーザー名を設定中...",
+    "success": "ユーザー名が正常に設定されました！",
+    "enterUsername": "ユーザー名を入力してください",
+    "chooseAvailable": "利用可能なユーザー名を選択してください",
+    "validation": {
+      "format": "ユーザー名は1-32文字で、英数字、ダッシュ、アンダースコアのみ使用できます",
+      "taken": "このユーザー名は既に使用されています"
+    },
+    "changeTitle": "ユーザー名を変更",
+    "changeDescription": "新しいユーザー名を選択してください。プロフィール URL が変更されます。",
+    "changeButton": "変更",
+    "sameAsCurrent": "現在のユーザー名と同じです。",
+    "newProfileUrl": "新しいプロフィール URL：/profile/{username}",
+    "changeSuccess": "ユーザー名を更新しました。",
+    "changingUsername": "保存中…",
+    "newUsernameLabel": "新しいユーザー名"
+  },
+  "invites": {
+    "title": "招待管理",
+    "description": "新規ユーザー用の招待リンクを作成・管理します。\n3日間で3人まで招待でき、リンクは7日後に期限切れになります。\n信頼できる仲間だけを招待してください。",
+    "quota": "残り枠:",
+    "quotaExplanation": {
+      "available": "点線の丸 = 利用可能な枠",
+      "active": "通常の枠線 = 有効な招待",
+      "claimed": "塗りつぶし = 最近使用された招待"
+    },
+    "yourInvitations": "あなたの招待",
+    "createInvite": "招待を作成",
+    "creating": "作成中...",
+    "loading": "招待を読み込み中...",
+    "noInvitations": "まだ招待が作成されていません。",
+    "status": {
+      "activeCode": "有効なコード",
+      "claimedCode": "使用済みコード",
+      "expiredCode": "期限切れコード",
+      "revokedCode": "取り消されたコード"
+    },
+    "statusDetails": {
+      "activeUntil": "{date}まで有効",
+      "claimedBy": "{name}が{date}に使用しました",
+      "expiredOn": "{date}に期限切れ",
+      "revoked": "取り消し済み",
+      "unknownStatus": "不明なステータス"
+    },
+    "actions": {
+      "copyLink": "リンクをコピー",
+      "revoke": "取り消し",
+      "revoking": "取り消し中..."
+    },
+    "messages": {
+      "created": "招待が正常に作成されました！",
+      "linkCopied": "招待リンクがクリップボードにコピーされました！",
+      "createFailed": "招待の作成に失敗しました",
+      "revoked": "招待が正常に取り消されました！",
+      "revokeFailed": "招待の取り消しに失敗しました",
+      "copyFailed": "クリップボードへのコピーに失敗しました",
+      "clipboardNotSupported": "クリップボードはサポートされていません",
+      "quotaExceeded": "3日間で3つの有効な招待しか作成できません",
+      "newUserRestriction": "新規ユーザーは招待を作成する前に3日間待つ必要があります",
+      "newUserRestrictionDetails": "{date}以降に招待を作成できます"
+    }
+  },
+  "acceptInvitation": {
+    "title": "ともマイ",
+    "subtitle": "ともマイコミュニティに招待されました！",
+    "validating": "招待を検証中...",
+    "redirecting": "ホームページにリダイレクト中...",
+    "invited": "招待されました！",
+    "invitedBy": "{name}があなたをともマイに招待しました",
+    "expiresOn": "この招待は{date}まで有効です。",
+    "acceptAndSignUp": "招待を受けてサインアップ",
+    "backToHome": "ホームに戻る",
+    "alreadyLoggedIn": "ようこそ！既にログインしています。",
+    "authError": "認証中にエラーが発生しました。もう一度お試しください。",
+    "errors": {
+      "invalidCode": "無効な招待コード",
+      "revoked": "この招待は取り消されています",
+      "alreadyUsed": "この招待は既に使用されています",
+      "expired": "この招待は期限切れです",
+      "ownCode": "自分の招待コードは使用できません",
+      "validationFailed": "招待の検証に失敗しました"
+    }
+  },
+  "db": {
+    "callout": {
+      "title": "データベースを利用したいですか？",
+      "subtitle": "ログイン不要で楽曲データをチェック！",
+      "description": "ともマイ DB は、maimaiの楽曲、譜面情報、各種データを集めた公開データベースです"
+    },
+    "beta": {
+      "title": "ベータ機能",
+      "description": "データベース機能は現在ベータ版です。一部のデータは不完全または不正確な場合があります。"
+    },
+    "types": {
+      "songs": "楽曲",
+      "calculator": "計算",
+      "stats": "統計",
+      "posts": "更新履歴",
+      "events": "ちほー"
+    },
+    "songs": {
+      "metadata": {
+        "title": "楽曲データベース | maimai でらっくす",
+        "description": "maimai でらっくすの楽曲を検索・閲覧できます。タイプ、ジャンル、バージョンでフィルタリング可能。楽曲詳細、難易度、収録地域も確認できます。",
+        "songTitle": "{songName} - {artist} | maimai DX",
+        "songDescription": "{artist} の「{songName}」の詳細情報を表示します。{chartType} 譜面 • {genre}",
+        "songOgDescription": "{artist} の「{songName}」の詳細情報を表示します。",
+        "songFallbackTitle": "楽曲詳細 | maimai DX",
+        "songFallbackDescription": "この maimai DX 楽曲の詳細情報（難易度や収録地域など）を表示します。",
+        "chartTypeDx": "DX",
+        "chartTypeStandard": "スタンダード",
+        "jsonLdChartDescription": "maimai DX の {chartType} 譜面"
+      },
+      "title": "楽曲データベース | maimai でらっくす",
+      "heading": "楽曲データベース",
+      "searchPlaceholder": "楽曲名、アーティスト、ジャンルなどで検索...",
+      "noSongsFound": "楽曲が見つかりません",
+      "tryAdjustingSearch": "検索条件を変更してください",
+      "noSongsAvailable": "楽曲がありません",
+      "detail": {
+        "title": "楽曲詳細",
+        "artist": "アーティスト",
+        "detailsFor": "{songName} の詳細",
+        "charts": "譜面",
+        "availability": "収録地域",
+        "yourScore": "あなたのスコア",
+        "achievement": "達成率",
+        "rating": "レート値",
+        "chartDesigner": "譜面製作者",
+        "bpm": "BPM",
+        "added": "追加バージョン",
+        "share": "共有",
+        "youtube": "YouTubeで検索",
+        "viewCharts": "譜面を見る",
+        "viewDetails": "ともマイ DB で詳細を見る",
+        "summary": "{songName} は {versionName} で追加された、{artist} による {genre} ジャンルの maimai でらっくす {chartType} 譜面です。難易度は {chartCount, plural, =1 {# 譜面} other {# 譜面}} にわたり、{minLevel} から {maxLevel} までの範囲です{bpmFragment}。",
+        "summaryBpmFragment": "（BPM {bpm}）"
+      },
+      "filter": {
+        "type": "タイプ",
+        "genre": "ジャンル",
+        "addedVersion": "追加バージョン",
+        "std": "STD",
+        "dx": "DX",
+        "sort": "並び替え",
+        "sortVersionDesc": "バージョン（新しい順）",
+        "sortVersionAsc": "バージョン（古い順）",
+        "sortLevelAsc": "レベル（低い順）",
+        "sortLevelDesc": "レベル（高い順）",
+        "level": "レベル",
+        "groupBy": "グループ",
+        "noteDesigner": "譜面製作者",
+        "groups": {
+          "none": "なし",
+          "noteDesigner": "譜面製作者",
+          "levelAsc": "レベル（低い順）",
+          "levelDesc": "レベル（高い順）",
+          "versionAsc": "バージョン（古い順）",
+          "versionDesc": "バージョン（新しい順）",
+          "genre": "ジャンル",
+          "artist": "アーティスト"
+        }
+      }
+    },
+    "common": {
+      "difficulty": "難易度",
+      "level": "レベル",
+      "notes": "ノーツ数",
+      "chartDesigner": "譜面製作者",
+      "bpm": "BPM",
+      "added": "追加バージョン"
+    },
+    "posts": {
+      "list": {
+        "title": "更新履歴",
+        "description": "ともマイの最新情報や変更点。",
+        "noPosts": "記事がありません。"
+      },
+      "dialog": {
+        "dismiss": "閉じる",
+        "readMore": "詳細を見る"
+      },
+      "aiTranslationHint": {
+        "title": "AI による翻訳",
+        "description": "この記事は AI を使用して翻訳されました。翻訳は完全ではない可能性があります。もし間違いを見つけた場合は、修正のご協力をお願いします！"
+      }
+    },
+    "stats": {
+      "title": "全体統計",
+      "description": "追跡中の全プレイヤーから集計した maimai DX の統計を見る：レート値の分布、人気の称号、人気楽曲、プレイアクティビティの推移など。",
+      "ratingDistribution": "レート分布",
+      "playCountDistribution": "プレイ回数分布",
+      "topTitles": "人気称号",
+      "topSongs": "人気楽曲",
+      "averageAchievementByLevel": "レベル別平均達成率",
+      "ratingVsPlayCount": "レート vs プレイ回数 ヒートマップ",
+      "activeUsersOverTime": "アクティブユーザー数の推移",
+      "fetchesPerDay": "日別データ取得ユーザー数",
+      "recentPlaysPerDay": "日別プレイ記録数",
+      "ratingClimbByBand": "30日あたりの平均レート上昇",
+      "newPlayersPerWeek": "週あたりの新規プレイヤー数",
+      "fetchActivityHeatmap": "時間帯×曜日 別データ取得アクティビティ",
+      "playActivityHeatmap": "時間帯×曜日 別プレイアクティビティ",
+      "heatmapTimezoneNote": "時刻は JST (UTC+9)、過去90日間。",
+      "topSongsWindow": {
+        "label": "期間",
+        "all": "全期間",
+        "90d": "過去90日間",
+        "30d": "過去30日間",
+        "7d": "過去7日間"
+      },
+      "xAxis": {
+        "rating": "レート値",
+        "playCount": "プレイ回数",
+        "level": "レベル",
+        "date": "日付",
+        "days": "日数",
+        "week": "週",
+        "currentRatingBand": "現在のレート値",
+        "timePeriod": "期間",
+        "lastDay": "過去1日",
+        "lastDays": "過去{days}日間"
+      },
+      "yAxis": {
+        "percentage": "割合",
+        "achievement": "達成率",
+        "count": "ユーザー数",
+        "activeUsers": "アクティブユーザー",
+        "usersWithFetches": "データ取得ユーザー",
+        "recentPlays": "プレイ数",
+        "newPlayers": "新規プレイヤー",
+        "ratingPer30d": "30日間で獲得したレート値",
+        "playsPer30d": "30日間のプレイ数"
+      },
+      "table": {
+        "rank": "順位",
+        "title": "称号",
+        "song": "楽曲",
+        "percentage": "割合",
+        "count": "数"
+      },
+      "showAll": "{count}件すべて表示",
+      "showLess": "折りたたむ",
+      "region": {
+        "intl": "インターナショナル",
+        "jp": "日本"
+      }
+    },
+    "events": {
+      "active": "開催中",
+      "back": "戻る",
+      "description": "すべての maimai ちほーとその報酬を閲覧します",
+      "distance": "距離",
+      "ended": "終了",
+      "noEvents": "ちほーが見つかりません。",
+      "period": "期間",
+      "reward": "報酬",
+      "search": "ちほーを検索…",
+      "selectEvent": "ちほーを選択して詳細を表示",
+      "steps": "ステップ",
+      "title": "ちほー",
+      "type": "タイプ",
+      "upcoming": "開催予定",
+      "stepTypes": {
+        "frame": "フレーム",
+        "song": "楽曲",
+        "nameplate": "ネームプレート",
+        "present": "プレゼント",
+        "icon": "アイコン",
+        "title": "称号",
+        "tourMember": "つあーメンバー",
+        "perfectChallenge": "パーフェクトチャレンジ楽曲",
+        "kaleidxscope": "KALEIDXSCOPE"
+      }
+    }
+  },
+  "theme": {
+    "description": "インターフェースのカラーテーマを選択してください。",
+    "groups": {
+      "simple": "Simple",
+      "amaranth": "Amaranth",
+      "blue": "Blue",
+      "brown": "Brown",
+      "emerald": "Emerald",
+      "grass": "Grass",
+      "purple": "Purple",
+      "rose": "Rose",
+      "gold": "Gold",
+      "pink": "Pink"
+    },
+    "title": "テーマ"
+  },
+  "fetchToast": {
+    "header": {
+      "pending": "データ取得中...",
+      "completed": "取得完了",
+      "failed": "取得失敗"
+    },
+    "states": {
+      "connecting": "接続中...",
+      "connected": "接続しました",
+      "login": "ログインしました",
+      "playerData": "プレイヤーデータを取得しました",
+      "songDataBasic": "BASICスコアを取得しました",
+      "songDataAdvanced": "ADVANCEDスコアを取得しました",
+      "songDataExpert": "EXPERTスコアを取得しました",
+      "songDataMaster": "MASTERスコアを取得しました",
+      "songDataRemaster": "Re:MASTERスコアを取得しました",
+      "songDataUtage": "UTAGEスコアを取得しました",
+      "recentSongs": "最近のプレイ履歴を取得しました",
+      "hiddenSongs": "隠し楽曲を取得しました",
+      "albumData": "アルバムデータを取得しました"
+    }
+  }
+}

@@ -1,6 +1,24 @@
+packages:
+  - "packages/*"
+  - "apps/*"
+
+catalog:
+  react: 19.2.6
+  react-dom: 19.2.6
+
+allowBuilds:
+  '@parcel/watcher': true
+  '@swc/core': true
+  esbuild: true
+  ffmpeg-static: true
+  sharp: true
+  skia-canvas: true
+  unrs-resolver: true
+
 onlyBuiltDependencies:
   - '@swc/core'
   - esbuild
+  - ffmpeg-static
   - sharp
   - skia-canvas
   - unrs-resolver

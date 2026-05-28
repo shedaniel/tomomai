@@ -1,0 +1,115 @@
+{
+  "common": {
+    "language": "语言"
+  },
+  "settings": {
+    "language": {
+      "auto": "自动侦测"
+    }
+  },
+  "guess": {
+    "meta": {
+      "title": "tomomai · 猜歌挑战",
+      "description": "透过渐进式的封面提示猜出今日的 maimai 歌曲。每天 JST 0:00 更新新曲。",
+      "titleForDate": "tomomai · 猜歌挑战 · {date}",
+      "descriptionForDate": "重玩{date}的 maimai 猜歌题目。"
+    },
+    "pastBanner": {
+      "text": "你正在重玩{date}的题目。",
+      "button": "回到今天"
+    },
+    "input": {
+      "placeholder": "输入歌曲名称……"
+    },
+    "buttons": {
+      "submit": "提交",
+      "nextHint": "下一个提示",
+      "giveUp": "放弃"
+    },
+    "comeBack": "明天再回来挑战新的歌曲吧。",
+    "share": {
+      "button": "分享结果",
+      "copied": "已复制！",
+      "manualPromptTitle": "请复制以下文字"
+    },
+    "hints": {
+      "pixelate": {
+        "label": "马赛克 · 等级 {level}",
+        "alt": "马赛克化的封面"
+      },
+      "blinds": {
+        "label": "直向百叶 · 等级 {level}",
+        "alt": "直向百叶的封面"
+      },
+      "blinds-h": {
+        "label": "横向百叶 · 等级 {level}",
+        "alt": "横向百叶的封面"
+      },
+      "crop": {
+        "label": "局部 · 等级 {level}",
+        "alt": "封面的单格局部"
+      },
+      "shuffle-move": {
+        "label": "拼图 · 等级 {level}",
+        "alt": "打乱后的封面拼图"
+      },
+      "posterize": {
+        "label": "色阶分离 · 等级 {level}",
+        "alt": "色阶分离后的封面"
+      },
+      "edge-detect": {
+        "label": "边缘 · 等级 {level}",
+        "alt": "边缘侦测后的封面"
+      },
+      "length": {
+        "label": "曲名长度",
+        "exact": "{n} 个字元",
+        "range": "{min} – {max} 个字元"
+      },
+      "difficulty": {
+        "label": "难度",
+        "values": {
+          "basic": "Basic",
+          "advanced": "Advanced",
+          "expert": "Expert",
+          "master": "Master",
+          "remaster": "Re:MASTER",
+          "utage": "宴会场"
+        }
+      },
+      "bpm": {
+        "label": "BPM"
+      },
+      "genre": {
+        "label": "分类"
+      },
+      "game-version": {
+        "label": "收录版本"
+      },
+      "artist": {
+        "label": "创作者"
+      },
+      "note-designer": {
+        "label": "谱面设计者"
+      },
+      "audio": {
+        "label": "音频片段",
+        "play": "播放",
+        "pause": "暂停",
+        "duration": "{seconds} 秒",
+        "step": "提示 {current} / {total}"
+      }
+    },
+    "reveal": {
+      "answer": "答案"
+    }
+  },
+  "heardle": {
+    "meta": {
+      "title": "tomomai · 听歌识曲",
+      "description": "通过简短的音频片段识别今日的 maimai 歌曲。每天 JST 0:00 更新新曲。",
+      "titleForDate": "tomomai · 听歌识曲 · {date}",
+      "descriptionForDate": "重玩{date}的 maimai 听歌识曲题目。"
+    }
+  }
+}

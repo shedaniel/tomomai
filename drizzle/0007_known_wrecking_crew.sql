@@ -1,1 +1,0 @@
-ALTER TABLE `songs` ADD `addedVersion` integer NOT NULL;

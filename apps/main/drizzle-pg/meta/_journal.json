@@ -1,0 +1,111 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1762090244407,
+      "tag": "0000_opposite_elektra",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1762104176696,
+      "tag": "0001_wealthy_colleen_wing",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1762610330967,
+      "tag": "0002_abnormal_earthquake",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1763552599904,
+      "tag": "0003_tense_night_thrasher",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1763556195709,
+      "tag": "0004_magical_shadowcat",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1764334133227,
+      "tag": "0005_eager_stature",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1767556169512,
+      "tag": "0006_lean_giant_man",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1767567208397,
+      "tag": "0007_useful_mister_sinister",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1768221373429,
+      "tag": "0008_nervous_siren",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1768231403224,
+      "tag": "0009_wooden_christian_walker",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1768988058692,
+      "tag": "0010_oval_steve_rogers",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1772026900566,
+      "tag": "0011_safe_sandman",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1774331011869,
+      "tag": "0012_tiny_jackpot",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1777288940448,
+      "tag": "0013_quiet_goblin_queen",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1779791640695,
+      "tag": "0014_stiff_gideon",
+      "breakpoints": true
+    }
+  ]
+}

@@ -1,0 +1,949 @@
+{
+  "common": {
+    "title": "tomomai ともマイ",
+    "loading": "로딩 중...",
+    "save": "저장",
+    "cancel": "취소",
+    "close": "닫기",
+    "settings": "설정",
+    "language": "언어",
+    "timezone": "시간대",
+    "update": "업데이트",
+    "login": "로그인",
+    "join": "가입",
+    "logout": "로그아웃",
+    "username": "사용자명",
+    "password": "비밀번호",
+    "token": "토큰",
+    "cookies": "쿠키",
+    "authentication": "인증",
+    "playerInfo": "플레이어 정보",
+    "rating": "레이팅",
+    "stars": "스타",
+    "plays": "플레이 수",
+    "total": "합계",
+    "theme": "Theme",
+    "invitations": "초대",
+    "discord": "Discord",
+    "about": "소개",
+    "experiments": "실험실",
+    "comingSoon": "준비 중...",
+    "continue": "계속",
+    "weekdays": {
+      "sun": "일",
+      "mon": "월",
+      "tue": "화",
+      "wed": "수",
+      "thu": "목",
+      "fri": "금",
+      "sat": "토"
+    },
+    "difficulties": {
+      "basic": "Basic",
+      "advanced": "Advanced",
+      "expert": "Expert",
+      "master": "Master",
+      "remaster": "Re:Master",
+      "utage": "Utage"
+    },
+    "back": "뒤로",
+    "selectAnOption": "옵션 선택",
+    "ok": "확인",
+    "email": "이메일"
+  },
+  "minigames": {
+    "badge": "미니게임",
+    "guesser": {
+      "title": "곡 맞히기",
+      "tagline": "커버 이미지를 보고 곡을 맞혀보세요."
+    },
+    "heardle": {
+      "title": "Heardle",
+      "tagline": "몇 초의 오디오로 곡을 맞혀보세요."
+    }
+  },
+  "security": {
+    "reauth": {
+      "title": "재인증이 필요합니다",
+      "description": "이 작업을 수행하려면 다시 로그인해야 합니다. 재인증을 위해 제공자 페이지로 이동합니다."
+    }
+  },
+  "auth": {
+    "loginWithDiscord": "Discord로 계속하기",
+    "loginWithX": "X로 계속하기",
+    "loginWithPasskey": "패스키로 로그인",
+    "signIn": "로그인",
+    "newHere": "처음이신가요?",
+    "noAccount": "계정이 없으신가요?",
+    "signup": "회원가입",
+    "signupWithDiscord": "Discord로 가입",
+    "signupWithX": "X로 회원가입",
+    "passkey": {
+      "errorTitle": "패스키 로그인 실패",
+      "errorGeneric": "패스키 로그인을 완료할 수 없습니다. 다시 시도해주세요."
+    },
+    "signupDisabled": "가입 일시 중단됨",
+    "signupDisabledMessage": "현재 신규 가입을 받지 않고 있습니다. 나중에 다시 확인해 주세요.",
+    "peekExampleProfile": "예시 프로필 둘러보기",
+    "features": {
+      "title": "주요 기능:",
+      "trackScores": "해외판(International) 및 일본판 성과 추적",
+      "viewHistory": "과거 기록 스냅샷 열람",
+      "importData": "maimai DX NET에서 데이터 가져오기",
+      "analyzeProgress": "플레이 성과 및 성장 분석"
+    }
+  },
+  "linkedAccounts": {
+    "title": "연결된 계정",
+    "description": "추가 로그인 수단을 위해 소셜 계정을 연결하세요.",
+    "link": "연결",
+    "unlink": "연결 해제",
+    "linked": "연결됨",
+    "notLinked": "연결 안 됨",
+    "unlinkError": "계정 연결 해제에 실패했습니다",
+    "linkError": "계정 연결에 실패했습니다",
+    "unlinkSuccess": "계정 연결이 해제되었습니다",
+    "linkSuccess": "계정이 연결되었습니다",
+    "cannotUnlinkLast": "유일한 로그인 수단은 해제할 수 없습니다",
+    "reauthRequired": "새 계정을 연결하기 전에 다시 로그인해주세요"
+  },
+  "passkeys": {
+    "title": "패스키",
+    "description": "생체 인증 또는 하드웨어 키로 비밀번호 없이 로그인하세요.",
+    "addPasskey": "패스키 추가",
+    "addingPasskey": "추가 중...",
+    "noPasskeys": "등록된 패스키가 없습니다.",
+    "deletePasskey": "삭제",
+    "deleteSuccess": "패스키가 삭제되었습니다.",
+    "deleteError": "패스키 삭제에 실패했습니다.",
+    "addError": "패스키 추가에 실패했습니다.",
+    "addSuccess": "패스키가 추가되었습니다.",
+    "verifyingCaptcha": "확인 중...",
+    "captchaFailed": "캡차 확인에 실패했습니다. 다시 시도해주세요.",
+    "passkeyName": "패스키 {index}",
+    "deleteTitle": "패스키를 삭제하시겠어요?",
+    "deleteDescription": "이 패스키가 삭제됩니다. 더 이상 이 패스키로 로그인할 수 없습니다.",
+    "reauthRequired": "패스키를 관리하기 전에 다시 로그인해주세요."
+  },
+  "consent": {
+    "title": "Welcome to tomomai",
+    "description": "Before creating your account, please review and agree to our policies",
+    "tldr": {
+      "title": "TL;DR (Not Legal Advice)",
+      "points": [
+        "You own your data; it is never sold to third parties",
+        "Your data is stored securely on servers in Japan",
+        "Your data is processed in accordance with Hong Kong SAR laws",
+        "This project is Open Source (AGPL-3.0)",
+        "We are an independent tool and not affiliated with SEGA"
+      ]
+    },
+    "agreeToTos": "I agree to the Terms of Service",
+    "agreeToPrivacy": "I agree to the Privacy Policy",
+    "viewFullText": "View Full Text",
+    "cancel": "취소",
+    "agree": "I Agree"
+  },
+  "dashboard": {
+    "title": "tomomai ともマイ",
+    "description": "친구들과 함께 maimai 성과를 공유하고 분석해보세요!",
+    "timezoneUpdateSuccess": "시간대가 업데이트되었습니다!",
+    "timezoneUpdateError": "시간대 업데이트 실패: {error}",
+    "languageUpdateSuccess": "언어가 업데이트되었습니다!",
+    "languageUpdateError": "언어 업데이트 실패: {error}",
+    "tokenUpdateSuccess": "인증 정보가 저장되었습니다!"
+  },
+  "settings": {
+    "pages": {
+      "account": {
+        "title": "계정",
+        "description": "언어 및 계정 설정."
+      },
+      "fetch": {
+        "title": "가져오기",
+        "description": "토큰 및 데이터 가져오기 설정."
+      },
+      "privacy": {
+        "title": "개인 정보",
+        "description": "프로필 및 점수 공개 범위를 설정합니다."
+      },
+      "developer": {
+        "title": "개발자",
+        "description": "API 키와 OAuth 앱을 관리합니다."
+      },
+      "applications": {
+        "title": "애플리케이션",
+        "description": "계정 접근 권한을 부여한 OAuth 애플리케이션입니다."
+      }
+    },
+    "language": {
+      "label": "언어",
+      "description": "원하는 언어를 선택하세요.",
+      "placeholder": "언어 선택",
+      "auto": "자동 감지",
+      "en": "English (US)",
+      "en-GB": "English (UK)",
+      "ja": "日本語",
+      "zh-TW": "繁體中文 (台灣)",
+      "zh-HK": "繁體中文 (香港)",
+      "zh-CN": "简体中文 (中国大陆)",
+      "zh-SG": "简体中文 (新加坡, 马来西亚)",
+      "ko": "한국어 (AI 번역)"
+    },
+    "timezone": {
+      "label": "시간대",
+      "description": "사이트 내 날짜 및 시간 표시에 영향을 줍니다. 기본값은 maimai 서버 시간인 일본 시간입니다.",
+      "placeholder": "시간대 선택"
+    },
+    "account": {
+      "label": "계정 인증",
+      "updateToken": "인증 정보 갱신",
+      "description": "데이터 동기화를 위해 maimai 인증 토큰을 갱신합니다."
+    },
+    "albumPrivacy": {
+      "title": "Album Photo Privacy Settings",
+      "description": "Would you like to fetch and save your album photos from maimai?",
+      "note": "Please note:",
+      "noteText": "Album photos may contain your face or other personal information. If you do NOT want to have this info saved on tomomai ともマイ, you may disable this feature here.",
+      "privacy": "Your images are:",
+      "stored": "Stored privately on our servers",
+      "notShared": "Never shared with third parties",
+      "onlyYou": "Only shown to you",
+      "limit": "Limited to 25MB total (~300 images)",
+      "autoDelete": "Automatically deleted oldest-first when limit is exceeded",
+      "changeLater": "You can change this setting later in your profile settings.",
+      "dontSave": "No, don't save photos",
+      "save": "Yes, save my album photos",
+      "example": "Example saved album picture",
+      "saved": "Album preference saved successfully",
+      "error": "Failed to save album preference",
+      "fetchAlbums": "Save Album Photos",
+      "fetchAlbumsDescription": "Automatically fetch and save your album photos when fetching scores. Photos may contain personal information.",
+      "notSet": "You haven't set this preference yet. You'll be prompted on your next fetch."
+    },
+    "profile": {
+      "publishProfile": "프로필 공개",
+      "publishDescription": "다른 플레이어가 내 성과와 진행 상황을 볼 수 있도록 프로필을 공개합니다.",
+      "mainRegion": {
+        "label": "메인 지역",
+        "description": "공개 프로필에 표시할 주 지역을 선택하세요.",
+        "intl": "인터내셔널",
+        "jp": "일본",
+        "cn": "중국"
+      },
+      "privacy": {
+        "label": "개인정보 설정",
+        "showAllScores": {
+          "label": "모든 성과 표시",
+          "description": "베스트 50곡뿐만 아니라 모든 곡의 성과를 표시합니다."
+        },
+        "showScoreDetails": {
+          "label": "상세 성과 표시",
+          "description": "플레이 횟수 및 판정 통계 등 상세 정보를 표시합니다."
+        },
+        "showPlates": {
+          "label": "네임플레이트 표시",
+          "description": "보유한 네임플레이트와 획득 진행도를 표시합니다."
+        },
+        "showPlayCounts": {
+          "label": "플레이 횟수 표시",
+          "description": "maimai 총 플레이 횟수를 표시합니다."
+        },
+        "showEvents": {
+          "label": "지방(Chiho) 표시",
+          "description": "지방 진행도를 표시합니다."
+        },
+        "showInSearch": {
+          "label": "검색 허용",
+          "description": "다른 사람이 내 사용자명을 검색하여 프로필을 찾을 수 있게 합니다."
+        }
+      },
+      "url": {
+        "label": "프로필 URL",
+        "description": "공유 가능한 공개 프로필 링크입니다.",
+        "copied": "프로필 URL이 클립보드에 복사되었습니다!",
+        "copyFailed": "URL 복사에 실패했습니다."
+      }
+    },
+    "saveChanges": "변경 사항 저장",
+    "saving": "저장 중...",
+    "saved": "설정이 저장되었습니다!",
+    "errorSaving": "설정 저장 실패",
+    "developer": {
+      "reauthRequired": "이 작업을 수행하기 전에 다시 로그인해주세요.",
+      "apiKeys": {
+        "editDialog": {
+          "title": "API 키 편집",
+          "nameLabel": "이름",
+          "namePlaceholder": "내 앱",
+          "saveButton": "저장",
+          "saving": "저장 중…",
+          "saveError": "API 키 업데이트에 실패했습니다"
+        }
+      },
+      "scopes": {
+        "plate:read": {
+          "name": "칭호 (읽기)",
+          "description": "칭호 진행 데이터(각 칭호별로 클리어 / FC / AP가 필요한 곡)를 읽습니다. GET /api/v1/plates 권한을 부여합니다."
+        },
+        "user:settings:read": {
+          "name": "사용자 설정 (읽기)",
+          "description": "개인정보 및 프로필 표시 설정(프로필 공개, 점수 표시, 칭호 표시 등)을 읽습니다. GET /api/v1/me/settings 권한을 부여합니다."
+        },
+        "snapshot:all:delete": {
+          "name": "스냅샷 (삭제)",
+          "description": "본인의 모든 스냅샷을 삭제합니다. DELETE /api/v1/snapshots/:id 권한을 부여합니다. 파괴적 권한 — 명시적으로 요청해야 하며 상위 스코프에 포함되지 않습니다."
+        },
+        "snapshot:submit": {
+          "name": "스냅샷 (제출)",
+          "description": "새 스냅샷을 제출합니다. 내부용 — 관리자 전용."
+        },
+        "fetch:read": {
+          "name": "가져오기 상태 (읽기)",
+          "description": "진행 중이거나 최근 maimai 데이터 가져오기 상태를 읽습니다. GET /api/v1/fetch/status 권한을 부여합니다."
+        },
+        "fetch:start": {
+          "name": "가져오기 시작",
+          "description": "저장된 업스트림 토큰으로 새 maimai 데이터 가져오기를 시작합니다. POST /api/v1/fetch 권한을 부여합니다. 파괴적 — 업스트림 API 예산을 소모하고 새 스냅샷을 생성합니다."
+        },
+        "fetch:delete": {
+          "name": "가져오기 토큰 (삭제)",
+          "description": "저장된 업스트림 maimai 인증 토큰을 삭제합니다. DELETE /api/v1/fetch/token 권한을 부여합니다. 파괴적이며 민감 — 재인증 전까지 앱 내 및 API 가져오기 흐름이 모두 중단됩니다."
+        }
+      },
+      "oauthApps": {
+        "label": "OAuth 애플리케이션",
+        "description": "OAuth 2.1 + PKCE로 사용자를 대신해 접근을 요청할 수 있는 앱을 등록합니다.",
+        "createButton": "새 애플리케이션",
+        "loading": "애플리케이션을 불러오는 중…",
+        "emptyTitle": "아직 OAuth 애플리케이션이 없습니다",
+        "emptyCreateLink": "첫 번째 애플리케이션을 생성",
+        "emptySuffix": "하여 OAuth를 시작하세요.",
+        "redirectUris": "리디렉션 URI",
+        "scopes": "스코프",
+        "rotateAriaLabel": "클라이언트 시크릿 재생성",
+        "deleteAriaLabel": "애플리케이션 삭제",
+        "deleteError": "애플리케이션 삭제에 실패했습니다",
+        "rotateError": "시크릿 재생성에 실패했습니다",
+        "createDialog": {
+          "title": "OAuth 애플리케이션 생성",
+          "description": "OAuth 2.1 인증 흐름을 사용할 새 애플리케이션을 등록합니다.",
+          "nameLabel": "애플리케이션 이름",
+          "namePlaceholder": "My Userscript",
+          "nameDescription": "동의 화면에서 사용자에게 표시되는 이름입니다.",
+          "uriLabel": "애플리케이션 URL",
+          "uriPlaceholder": "https://example.com",
+          "redirectLabel": "리디렉션 URI",
+          "redirectPlaceholder": "https://example.com/callback",
+          "redirectAddButton": "추가",
+          "scopesLabel": "스코프",
+          "createButton": "애플리케이션 생성",
+          "creating": "생성 중…",
+          "createError": "애플리케이션 생성에 실패했습니다",
+          "createdTitle": "애플리케이션이 생성되었습니다",
+          "createdDescription": "지금 클라이언트 시크릿을 저장하세요. 다시 표시되지 않습니다.",
+          "clientIdLabel": "Client ID",
+          "secretLabel": "Client Secret",
+          "copyAriaLabel": "값 복사",
+          "saveWarning": "이 시크릿을 저장하세요. 이 대화상자를 닫은 후에는 다시 표시되지 않습니다.",
+          "done": "완료"
+        },
+        "rotateDialog": {
+          "title": "클라이언트 시크릿을 재생성하시겠어요?",
+          "description": "현재 시크릿이 즉시 무효화됩니다. 이를 사용 중인 클라이언트는 새 시크릿으로 업데이트해야 합니다.",
+          "confirm": "시크릿 재생성"
+        },
+        "editDialog": {
+          "title": "OAuth 애플리케이션 편집",
+          "description": "애플리케이션 정보를 업데이트합니다.",
+          "basicSection": "기본 정보",
+          "redirectSection": "리디렉션 URI",
+          "scopesSection": "스코프",
+          "scopesNote": "기존 토큰은 사용자가 다시 인가할 때까지 현재 스코프를 유지합니다.",
+          "legalSection": "법적 정보",
+          "nameLabel": "애플리케이션 이름",
+          "uriLabel": "애플리케이션 URL",
+          "iconLabel": "아이콘 URL",
+          "iconPlaceholder": "https://example.com/logo.png",
+          "policyLabel": "개인정보 처리방침 URL",
+          "policyPlaceholder": "https://example.com/privacy",
+          "tosLabel": "서비스 약관 URL",
+          "tosPlaceholder": "https://example.com/tos",
+          "saveButton": "변경 사항 저장",
+          "saving": "저장 중…",
+          "saveError": "애플리케이션 업데이트에 실패했습니다"
+        },
+        "deleteDialog": {
+          "title": "OAuth 애플리케이션을 삭제하시겠어요?",
+          "description": "애플리케이션이 영구적으로 삭제되며 발급된 모든 토큰이 무효화됩니다. 이 작업은 되돌릴 수 없습니다.",
+          "confirm": "삭제"
+        }
+      }
+    },
+    "applications": {
+      "noAuthorizations": "아직 인가한 OAuth 애플리케이션이 없습니다.",
+      "grantedAt": "{date}에 인가됨",
+      "revokeButton": "해제",
+      "revokeDialog": {
+        "title": "접근 권한을 해제하시겠어요?",
+        "description": "이 애플리케이션의 모든 토큰이 즉시 무효화됩니다. 다시 사용하려면 재인가해야 합니다.",
+        "confirm": "해제"
+      },
+      "revokeSuccess": "접근 권한이 해제되었습니다",
+      "revokeError": "접근 권한 해제에 실패했습니다"
+    }
+  },
+  "dataBanner": {
+    "dataSnapshot": "데이터 스냅샷:",
+    "noDataAvailable": "데이터 없음",
+    "selectSnapshot": "스냅샷 선택",
+    "fetchNewData": "데이터 가져오기",
+    "fetchingData": "데이터 가져오는 중...",
+    "lastUpdate": "최근 업데이트",
+    "noDataInstructions": "이 지역의 데이터가 없습니다. '데이터 가져오기'를 눌러 maimai 성과를 가져오세요 (로그인/토큰 필요)."
+  },
+  "profileVisibility": {
+    "public": "공개 프로필",
+    "private": "비공개 프로필",
+    "accessibleBy": "",
+    "accessibleByEnd": "에서 열람 가능!",
+    "youMayChangePrivacySettings": "우측 상단 아이콘 → 설정 → 프로필 공개에서 설정을 변경할 수 있습니다.",
+    "onlyAccessibleByYou": "나만 볼 수 있습니다! 우측 상단 아이콘 → 설정 → 프로필 공개에서 설정을 변경할 수 있습니다."
+  },
+  "dataContent": {
+    "loading": "데이터 로딩 중...",
+    "snapshotData": "스냅샷 데이터",
+    "snapshotFrom": "{date} 스냅샷 • {name} • {count}곡",
+    "tabs": {
+      "playerInfo": "플레이어 정보",
+      "stats": "통계",
+      "songs": "악곡",
+      "recentPlays": "최근 기록",
+      "recommendations": "추천 곡",
+      "plates": "네임플레이트",
+      "map": "지방(Chiho)",
+      "exportImage": "이미지 내보내기",
+      "history": "기록",
+      "developer": "Developer",
+      "albums": "Albums"
+    },
+    "playerInfo": "플레이어 정보",
+    "rating": "레이팅: {rating}",
+    "stars": "스타: {stars}",
+    "versionPlays": "현 버전 플레이: {count}",
+    "totalPlays": "총 플레이: {count}",
+    "songs": "악곡 (총 {count}곡)",
+    "searchPlaceholder": "곡명, 아티스트, 난이도, 타입으로 검색...",
+    "newSongsB15": "신곡 B15",
+    "oldSongsB35": "구곡 B35",
+    "newSongs": "신곡",
+    "oldSongs": "구곡",
+    "displayModes": {
+      "list": "목록",
+      "grid": "그리드",
+      "compact": "테이블"
+    },
+    "tableHeaders": {
+      "song": "곡명",
+      "artist": "아티스트",
+      "level": "레벨",
+      "achievement": "달성률",
+      "fc": "FC",
+      "fs": "FS",
+      "rating": "레이팅"
+    },
+    "statistics": {
+      "sum": "합계",
+      "average": "평균"
+    },
+    "switchToListForAllSongs": "모든 곡을 보려면 목록 또는 테이블 뷰로 전환하세요.",
+    "noDataAvailable": "데이터가 없습니다",
+    "getStartedInstructions": "상단의 가져오기 버튼을 눌러 maimai 데이터를 불러오세요.",
+    "history": {
+      "title": "레이팅 변동 기록",
+      "ratingOverTime": "레이팅 추이",
+      "noHistory": "레이팅 기록이 없습니다",
+      "needMoreData": "기록을 보려면 데이터를 최소 2회 이상 가져와야 합니다"
+    },
+    "developer": {
+      "title": "Developer",
+      "exportJson": "Export Snapshot as JSON",
+      "exporting": "Exporting..."
+    }
+  },
+  "albums": {
+    "title": "Photo Albums",
+    "photos": "photos",
+    "noAlbums": "No photo albums yet",
+    "loadMore": "Load More",
+    "loading": "로딩 중...",
+    "error": "Failed to load albums",
+    "storage": "Storage",
+    "storageTitle": "Storage Usage",
+    "storageDescription": "Manage your photo album storage. Oldest photos are automatically deleted when exceeding 25MB. This should be enough for ~300 images.",
+    "used": "Used",
+    "totalUsed": "Total Used",
+    "limit": "Limit",
+    "usedOf": "of",
+    "byRegion": "By Region",
+    "storageWarning": "You're approaching the storage limit. Consider deleting old photos or older albums will be automatically removed.",
+    "uploadNotice": "If you just fetched a snapshot, new album photos may take a few moments to upload and appear here. Please refresh in a while.",
+    "deleteTitle": "사진 삭제",
+    "deleteDescription": "이 사진을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.",
+    "deleteSuccess": "사진이 삭제되었습니다",
+    "deleteFailed": "사진 삭제에 실패했습니다",
+    "dontAskAgain": "오늘 다시 묻지 않기",
+    "delete": "삭제",
+    "cancel": "취소"
+  },
+  "recommendations": {
+    "noRecommendations": "추천 곡 없음",
+    "allOptimal": "더 이상 레이팅을 올릴 곡이 없습니다! 대단해요.",
+    "description": "현재 B15/B35 기록을 바탕으로 레이팅 상승에 도움이 될 곡을 추천합니다.",
+    "filterButton": "필터",
+    "filters": {
+      "all": "전체",
+      "best": "B15/B35 진입",
+      "new": "신곡",
+      "old": "구곡"
+    },
+    "filterCategories": {
+      "difficulty": "난이도",
+      "level": "레벨",
+      "type": "타입",
+      "targetRating": "목표 레이팅",
+      "achievement": "달성률",
+      "version": "버전"
+    }
+  },
+  "recentPlays": {
+    "title": "최근 기록",
+    "noPlays": "최근 플레이 기록이 없습니다",
+    "notFetched": "Not fetched",
+    "fetching": "Fetching...",
+    "detailsNotFetched": "Detailed play data hasn't been fetched yet. Sync your data again to get detailed breakdown.",
+    "detailsFetching": "Detailed play data is still being fetched. Please wait a moment and refresh the page.",
+    "labels": {
+      "dx": "DX",
+      "combo": "콤보",
+      "fast": "FAST",
+      "late": "LATE"
+    },
+    "notesBreakdown": {
+      "type": "타입",
+      "total": "합계",
+      "totalLoss": "감점"
+    }
+  },
+  "events": {
+    "title": "지방(Chiho)",
+    "areaEvents": "지방",
+    "eventAreaEvents": "이벤트 지방",
+    "noEventsAvailable": "진행 중인 지방 없음",
+    "noAreaEvents": "지방 없음",
+    "noEventAreaEvents": "이벤트 지방 없음",
+    "currentDistance": "현재 거리",
+    "nextReward": "다음 보상까지",
+    "eventCompleted": "완주",
+    "notStarted": "미시작",
+    "inProgress": "진행 중",
+    "completed": "완주"
+  },
+  "playerStats": {
+    "title": "Player Statistics",
+    "selectVersion": "Select version",
+    "allVersions": "All Versions",
+    "selectDifficulty": "Select difficulty",
+    "allDifficulties": "All Difficulties",
+    "backToStats": "Back to Stats",
+    "viewPlatesProgress": "View Plates Progress",
+    "achievementGrades": "Achievement Grades",
+    "fullCombo": "Full Combo",
+    "fullSync": "Full Sync",
+    "noDataAvailable": "데이터 없음",
+    "noMatchingScores": "No scores match the selected filters",
+    "selectVersionForPlates": "Please select a specific version to view plate progress",
+    "songsNotMeeting": "Songs not meeting {requirement}",
+    "noSongsToDisplay": "No songs to display",
+    "plates": {
+      "kiwami": "All FC or above",
+      "shou": "All SSS or above",
+      "shin": "All AP or above",
+      "maimai": "All FDX or above"
+    }
+  },
+  "tokenDialog": {
+    "title": "maimai 인증 갱신",
+    "japanDescription": "일본판: SEGA 계정 정보를 입력하세요.",
+    "intlDescription": "해외판: 인증 방식을 선택하세요.",
+    "credentialsStored": "인증 정보는 나중을 위해 안전하게 저장됩니다.",
+    "username": "사용자명",
+    "usernamePlaceholder": "SEGA ID 사용자명 입력",
+    "password": "비밀번호",
+    "passwordPlaceholder": "SEGA ID 비밀번호 입력",
+    "cookies": "쿠키",
+    "tokenPlaceholder": "clal=여기에 쿠키 값 입력",
+    "tokenValidationError": "쿠키는 \"clal=\"로 시작하고 영문과 숫자로만 구성되어야 합니다.",
+    "authenticationNote": "인증:",
+    "segaCredentialsNote": "SEGA 계정 정보로 maimai DX NET에 인증합니다.",
+    "credentialsSecureNote": "인증 정보는 향후 데이터 갱신을 위해 저장됩니다.",
+    "savingCredentials": "인증 정보 저장 중...",
+    "saveCredentials": "인증 정보 저장",
+    "tokenTab": "토큰",
+    "passwordTab": "비밀번호",
+    "tokenInstructions": {
+      "description": "maimai DX NET에서 추출한 \"clal=\"로 시작하는 쿠키 값입니다.",
+      "expiration": "토큰은 일정 시간이 지나면 만료될 수 있으므로, 나중에 다시 갱신해야 할 수도 있습니다."
+    },
+    "passwordInstructions": "SEGA 계정 아이디와 비밀번호를 직접 사용",
+    "secureStorage": "인증 정보는 향후 데이터 갱신을 위해 저장됩니다.",
+    "steps": {
+      "step1Title": "maimai DX NET 로그인",
+      "step2Title": "\"Not Found\" 페이지 이동",
+      "step3Title": "코드 실행"
+    },
+    "clipboard": {
+      "copied": "클립보드에 복사되었습니다!",
+      "failed": "복사에 실패했습니다"
+    },
+    "loading": {
+      "scriptLink": "스크립트 링크 생성 중...",
+      "loginLink": "개인화 링크 생성 중..."
+    },
+    "tokenDialogDescription": "브라우저 토큰을 입력하여 인증하세요",
+    "segaAccountDescription": "SEGA 계정 정보를 입력하세요",
+    "backToSteps": "이전 단계로",
+    "step1": {
+      "description": "<strong>시크릿 모드 / 개인 정보 보호 창</strong>에서 maimai DX NET에 로그인하세요.",
+      "clickToCopy": "아래 링크를 클릭하여 복사하세요:",
+      "haveCookies": "이미 쿠키를 가지고 계신가요?",
+      "enterDirectly": "직접 입력하기"
+    },
+    "step2": {
+      "description": "같은 시크릿 / 개인 정보 보호 탭에서 아래 링크를 방문하세요.",
+      "otpLabel": "OTP:",
+      "otpExpires": "만료 시간 ~ {time}",
+      "refreshing": "갱신 중...",
+      "refreshOtp": "OTP 갱신"
+    },
+    "step3": {
+      "desktop": "데스크탑",
+      "desktopInstructions": "아래의 자바스크립트 코드를 복사하여 브라우저 개발자 콘솔(Ctrl + Shift + I 또는 F12)에 붙여넣으세요.",
+      "mobile": "모바일",
+      "mobileStep1": "1. 아래 코드를 터치하여 복사하세요.",
+      "mobileStep2": "2. 브라우저 즐겨찾기(북마크)를 만들고, URL 입력란에 복사한 코드를 붙여넣으세요.",
+      "mobileStep3": "3. 해당 즐겨찾기를 실행하세요."
+    },
+    "navigation": {
+      "previousStep": "이전",
+      "nextStep": "다음"
+    },
+    "recommended": "추천 곡",
+    "tokenOptionDescription": "브라우저 토큰을 사용하여 maimai DX NET 계정에 로그인합니다. 토큰은 주기적으로 만료될 수 있습니다. 비밀번호가 필요 없으며 소셜 로그인도 지원합니다.",
+    "passwordOptionDescription": "SEGA 계정 정보를 사용하여 maimai DX NET 계정에 로그인합니다. 만료되지 않습니다. (비권장)"
+  },
+  "regions": {
+    "intl": "인터내셔널",
+    "jp": "일본",
+    "cn": "중국",
+    "short": {
+      "intl": "해외",
+      "jp": "일본",
+      "cn": "중국"
+    }
+  },
+  "userHeader": {
+    "memberLabel": "ともマイ 멤버",
+    "discordPrompt": "문제나 제안 사항이 있으신가요? tomomai ともマイ 디스코드에 참여하세요!",
+    "joinDiscord": "커뮤니티 Discord 참여하기"
+  },
+  "publicHeader": {
+    "discordBanner": "질문이나 제안이 있으신가요? Discord 커뮤니티에 참여하세요!"
+  },
+  "header": {
+    "tabs": {
+      "dashboard": "홈",
+      "db": "데이터베이스"
+    },
+    "addDiscordBot": "Discord 봇으로 추가",
+    "admin": "관리자",
+    "errors": {
+      "inviteLink": "초대 링크를 열 수 없습니다"
+    }
+  },
+  "usernameSetup": {
+    "title": "사용자명 선택",
+    "description": "이 사이트를 이용하려면 사용자명을 설정해야 합니다. 공개 프로필 URL로 사용되며 중복될 수 없습니다.",
+    "usernameLabel": "사용자명",
+    "placeholder": "사용자명 입력",
+    "checking": "사용 가능 여부 확인 중...",
+    "available": "사용 가능한 사용자명입니다!",
+    "rules": {
+      "length": "1-32자",
+      "characters": "영문, 숫자, 대시(-), 언더바(_)만 사용 가능",
+      "profileUrl": "프로필 URL에 사용됩니다: /profile/{username}"
+    },
+    "setUsername": "사용자명 설정",
+    "settingUsername": "설정 중...",
+    "success": "사용자명이 설정되었습니다!",
+    "enterUsername": "사용자명을 입력해 주세요",
+    "chooseAvailable": "사용 가능한 사용자명을 선택해 주세요",
+    "validation": {
+      "format": "사용자명은 1-32자여야 하며, 영문, 숫자, 대시, 언더바만 포함해야 합니다",
+      "taken": "이미 사용 중인 사용자명입니다"
+    },
+    "changeTitle": "사용자 이름 변경",
+    "changeDescription": "새로운 사용자 이름을 선택하세요. 프로필 URL이 변경됩니다.",
+    "changeButton": "변경",
+    "sameAsCurrent": "현재 사용자 이름과 동일합니다.",
+    "newProfileUrl": "새 프로필 URL: /profile/{username}",
+    "changeSuccess": "사용자 이름이 업데이트되었습니다.",
+    "changingUsername": "저장 중…",
+    "newUsernameLabel": "새 사용자 이름"
+  },
+  "invites": {
+    "title": "초대 관리",
+    "description": "신규 사용자를 위한 초대 링크를 생성하고 관리합니다.\n3일마다 3명을 초대할 수 있으며, 링크는 7일 후 만료됩니다.\n신뢰할 수 있는 지인만 초대해 주세요.",
+    "quota": "초대 가능 횟수:",
+    "quotaExplanation": {
+      "available": "점선 원 = 사용 가능",
+      "active": "실선 원 = 유효한 초대",
+      "claimed": "채워진 원 = 사용됨"
+    },
+    "yourInvitations": "내 초대 목록",
+    "createInvite": "초대 생성",
+    "creating": "생성 중...",
+    "loading": "초대 목록 로딩 중...",
+    "noInvitations": "생성된 초대가 없습니다.",
+    "status": {
+      "activeCode": "유효한 코드",
+      "claimedCode": "사용된 코드",
+      "expiredCode": "만료된 코드",
+      "revokedCode": "취소된 코드"
+    },
+    "statusDetails": {
+      "activeUntil": "{date}까지 유효",
+      "claimedBy": "{name}님이 {date}에 사용",
+      "expiredOn": "{date}에 만료됨",
+      "revoked": "취소됨",
+      "unknownStatus": "알 수 없음"
+    },
+    "actions": {
+      "copyLink": "링크 복사",
+      "revoke": "취소",
+      "revoking": "취소 중..."
+    },
+    "messages": {
+      "created": "초대가 생성되었습니다!",
+      "linkCopied": "초대 링크가 복사되었습니다!",
+      "createFailed": "초대 생성 실패",
+      "revoked": "초대가 취소되었습니다!",
+      "revokeFailed": "초대 취소 실패",
+      "copyFailed": "복사에 실패했습니다",
+      "clipboardNotSupported": "클립보드를 지원하지 않습니다",
+      "quotaExceeded": "3일 동안 3개의 유효한 초대만 생성할 수 있습니다",
+      "newUserRestriction": "신규 사용자는 가입 3일 후부터 초대를 생성할 수 있습니다",
+      "newUserRestrictionDetails": "{date} 이후부터 초대를 생성할 수 있습니다"
+    }
+  },
+  "acceptInvitation": {
+    "title": "tomomai ともマイ",
+    "subtitle": "tomomai ともマイ 커뮤니티에 초대되었습니다",
+    "validating": "초대 확인 중...",
+    "redirecting": "메인 페이지로 이동 중...",
+    "invited": "초대받으셨습니다!",
+    "invitedBy": "{name}님이 당신을 tomomai ともマイ에 초대했습니다",
+    "expiresOn": "이 초대는 {date}에 만료됩니다",
+    "acceptAndSignUp": "초대 수락 및 가입",
+    "backToHome": "홈으로 돌아가기",
+    "alreadyLoggedIn": "환영합니다! 이미 로그인되어 있습니다.",
+    "authError": "인증 중 오류가 발생했습니다. 다시 시도해 주세요.",
+    "errors": {
+      "invalidCode": "유효하지 않은 초대 코드",
+      "revoked": "취소된 초대입니다",
+      "alreadyUsed": "이미 사용된 초대입니다",
+      "expired": "만료된 초대입니다",
+      "ownCode": "자신의 초대 코드는 사용할 수 없습니다",
+      "validationFailed": "초대 검증 실패"
+    }
+  },
+  "db": {
+    "callout": {
+      "title": "데이터베이스를 찾으시나요?",
+      "subtitle": "로그인 없이 악곡 데이터베이스를 보려면 여기를 클릭하세요!",
+      "description": "tomomai ともマイ DB는 maimai의 채보, 오락실 정보 등을 모은 공개 데이터베이스입니다."
+    },
+    "beta": {
+      "title": "베타 기능",
+      "description": "데이터베이스 기능은 현재 베타 버전입니다. 일부 데이터가 불완전하거나 정확하지 않을 수 있습니다."
+    },
+    "types": {
+      "songs": "악곡",
+      "calculator": "계산기",
+      "stats": "통계",
+      "posts": "Changelog"
+    },
+    "songs": {
+      "metadata": {
+        "title": "악곡 데이터베이스 | maimai DX",
+        "description": "maimai DX의 모든 수록곡을 검색하고 열람하세요. 타입, 장르, 버전별 필터링을 지원합니다. 곡 상세 정보, 난이도, 수록 지역을 확인할 수 있습니다."
+      },
+      "title": "악곡 데이터베이스 | maimai DX",
+      "searchPlaceholder": "곡명, 아티스트, 장르 등으로 검색...",
+      "noSongsFound": "곡을 찾을 수 없습니다",
+      "tryAdjustingSearch": "검색 조건을 변경해 보세요",
+      "noSongsAvailable": "곡 데이터가 없습니다",
+      "detail": {
+        "title": "곡 상세 정보",
+        "artist": "아티스트",
+        "charts": "채보",
+        "availability": "수록 지역",
+        "yourScore": "내 점수",
+        "achievement": "달성률",
+        "rating": "레이팅",
+        "chartDesigner": "채보 제작자",
+        "bpm": "BPM",
+        "added": "추가일",
+        "share": "링크 공유",
+        "youtube": "YouTube 검색",
+        "viewCharts": "채보 보기",
+        "viewDetails": "tomomai DB에서 상세 보기"
+      },
+      "filter": {
+        "type": "타입",
+        "genre": "장르",
+        "addedVersion": "추가 버전",
+        "std": "STD",
+        "dx": "DX",
+        "sort": "Sort",
+        "sortVersionDesc": "Version (Latest)",
+        "sortVersionAsc": "Version (Oldest)",
+        "sortLevelAsc": "Level (Low -> High)",
+        "sortLevelDesc": "Level (High -> Low)",
+        "level": "레벨",
+        "groupBy": "Group By",
+        "noteDesigner": "Note Designer",
+        "groups": {
+          "none": "None",
+          "noteDesigner": "채보 제작자",
+          "levelAsc": "Level (Low -> High)",
+          "levelDesc": "Level (High -> Low)",
+          "versionAsc": "Version (Oldest)",
+          "versionDesc": "Version (Latest)",
+          "genre": "장르",
+          "artist": "아티스트"
+        }
+      }
+    },
+    "common": {
+      "difficulty": "난이도",
+      "level": "레벨",
+      "notes": "노트 수",
+      "chartDesigner": "채보 제작자",
+      "bpm": "BPM",
+      "added": "추가일"
+    },
+    "posts": {
+      "dialog": {
+        "dismiss": "닫기",
+        "readMore": "더 보기"
+      }
+    },
+    "stats": {
+      "title": "전체 통계",
+      "ratingDistribution": "레이팅 분포",
+      "playCountDistribution": "플레이 횟수 분포",
+      "topTitles": "인기 칭호",
+      "topSongs": "인기 곡",
+      "averageAchievementByLevel": "레벨별 평균 달성률",
+      "ratingVsPlayCount": "레이팅 vs 플레이 횟수 히트맵",
+      "activeUsersOverTime": "Active Users Over Time",
+      "fetchesPerDay": "일일 가져오기 사용자",
+      "recentPlaysPerDay": "일일 최근 플레이 수",
+      "ratingClimbByBand": "30일당 평균 Rating 상승",
+      "newPlayersPerWeek": "주간 신규 추적 플레이어",
+      "fetchActivityHeatmap": "시간 및 요일별 가져오기 활동",
+      "playActivityHeatmap": "시간 및 요일별 플레이 활동",
+      "heatmapTimezoneNote": "시간은 JST(UTC+9) 기준, 최근 90일.",
+      "topSongsWindow": {
+        "label": "기간",
+        "all": "전체 기간",
+        "90d": "최근 90일",
+        "30d": "최근 30일",
+        "7d": "최근 7일"
+      },
+      "xAxis": {
+        "rating": "레이팅",
+        "playCount": "플레이 횟수",
+        "level": "레벨",
+        "date": "Date",
+        "days": "Days",
+        "week": "주",
+        "currentRatingBand": "현재 Rating",
+        "timePeriod": "Time Period",
+        "lastDay": "Last 1 day",
+        "lastDays": "Last {days} days"
+      },
+      "yAxis": {
+        "percentage": "비율",
+        "achievement": "달성률",
+        "count": "유저 수",
+        "activeUsers": "Active Users",
+        "usersWithFetches": "가져오기 사용자",
+        "recentPlays": "플레이 수",
+        "newPlayers": "신규 플레이어",
+        "ratingPer30d": "Rating 상승 / 30일",
+        "playsPer30d": "플레이 수 / 30일"
+      },
+      "showAll": "전체 {count}개 보기",
+      "showLess": "간략히 보기",
+      "table": {
+        "rank": "순위",
+        "title": "칭호",
+        "song": "곡명",
+        "percentage": "비율",
+        "count": "수"
+      },
+      "region": {
+        "intl": "인터내셔널",
+        "jp": "일본"
+      }
+    }
+  },
+  "theme": {
+    "description": "Choose a colour theme for the interface.",
+    "groups": {
+      "simple": "Simple",
+      "amaranth": "Amaranth",
+      "blue": "Blue",
+      "brown": "Brown",
+      "emerald": "Emerald",
+      "grass": "Grass",
+      "purple": "Purple",
+      "rose": "Rose",
+      "gold": "Gold",
+      "pink": "Pink"
+    },
+    "title": "Theme"
+  },
+  "fetchToast": {
+    "header": {
+      "pending": "데이터 가져오는 중...",
+      "completed": "Fetch complete",
+      "failed": "Fetch failed"
+    },
+    "states": {
+      "connecting": "Connecting...",
+      "connected": "Connected",
+      "login": "Logged in",
+      "playerData": "Fetched player data",
+      "songDataBasic": "Fetched BASIC scores",
+      "songDataAdvanced": "Fetched ADVANCED scores",
+      "songDataExpert": "Fetched EXPERT scores",
+      "songDataMaster": "Fetched MASTER scores",
+      "songDataRemaster": "Fetched Re:MASTER scores",
+      "recentSongs": "Fetched recent songs",
+      "hiddenSongs": "Fetched hidden songs"
+    }
+  }
+}

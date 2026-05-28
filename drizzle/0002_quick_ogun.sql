@@ -1,1 +1,0 @@
-CREATE UNIQUE INDEX `user_tokens_userId_region_unique` ON `user_tokens` (`userId`,`region`);

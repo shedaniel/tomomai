@@ -1,0 +1,115 @@
+{
+  "common": {
+    "language": "언어"
+  },
+  "settings": {
+    "language": {
+      "auto": "자동 감지"
+    }
+  },
+  "guess": {
+    "meta": {
+      "title": "tomomai · 곡 맞히기",
+      "description": "점점 더 자세해지는 커버 힌트로 오늘의 maimai 곡을 맞혀보세요. 매일 JST 자정에 새로운 곡이 공개됩니다.",
+      "titleForDate": "tomomai · 곡 맞히기 · {date}",
+      "descriptionForDate": "{date}의 maimai 곡 맞히기 퍼즐을 다시 플레이하세요."
+    },
+    "pastBanner": {
+      "text": "{date}의 퍼즐을 다시 플레이하고 있습니다.",
+      "button": "오늘로 돌아가기"
+    },
+    "input": {
+      "placeholder": "곡 제목을 입력하세요…"
+    },
+    "buttons": {
+      "submit": "제출",
+      "nextHint": "다음 힌트",
+      "giveUp": "포기"
+    },
+    "comeBack": "내일 새로운 곡으로 다시 도전해 보세요.",
+    "share": {
+      "button": "결과 공유",
+      "copied": "복사됨!",
+      "manualPromptTitle": "아래 텍스트를 복사하세요"
+    },
+    "hints": {
+      "pixelate": {
+        "label": "픽셀화 · 레벨 {level}",
+        "alt": "픽셀화된 커버 아트"
+      },
+      "blinds": {
+        "label": "세로 블라인드 · 레벨 {level}",
+        "alt": "세로 블라인드 커버 아트"
+      },
+      "blinds-h": {
+        "label": "가로 블라인드 · 레벨 {level}",
+        "alt": "가로 블라인드 커버 아트"
+      },
+      "crop": {
+        "label": "잘라내기 · 레벨 {level}",
+        "alt": "커버의 일부 영역"
+      },
+      "shuffle-move": {
+        "label": "셔플 · 레벨 {level}",
+        "alt": "섞인 커버 타일"
+      },
+      "posterize": {
+        "label": "포스터화 · 레벨 {level}",
+        "alt": "포스터화된 커버 아트"
+      },
+      "edge-detect": {
+        "label": "윤곽 · 레벨 {level}",
+        "alt": "윤곽 검출된 커버 아트"
+      },
+      "length": {
+        "label": "제목 길이",
+        "exact": "{n}자",
+        "range": "{min} – {max}자"
+      },
+      "difficulty": {
+        "label": "난이도",
+        "values": {
+          "basic": "Basic",
+          "advanced": "Advanced",
+          "expert": "Expert",
+          "master": "Master",
+          "remaster": "Re:MASTER",
+          "utage": "宴(우타게)"
+        }
+      },
+      "bpm": {
+        "label": "BPM"
+      },
+      "genre": {
+        "label": "장르"
+      },
+      "game-version": {
+        "label": "수록 버전"
+      },
+      "artist": {
+        "label": "아티스트"
+      },
+      "note-designer": {
+        "label": "채보 제작자"
+      },
+      "audio": {
+        "label": "오디오 클립",
+        "play": "재생",
+        "pause": "일시정지",
+        "duration": "{seconds}초",
+        "step": "힌트 {current} / {total}"
+      }
+    },
+    "reveal": {
+      "answer": "정답"
+    }
+  },
+  "heardle": {
+    "meta": {
+      "title": "tomomai · 히어들",
+      "description": "짧은 오디오 클립으로 오늘의 maimai 곡을 맞혀보세요. 매일 JST 자정에 새로운 곡이 공개됩니다.",
+      "titleForDate": "tomomai · 히어들 · {date}",
+      "descriptionForDate": "{date}의 maimai 히어들 퍼즐을 다시 플레이하세요."
+    }
+  }
+}

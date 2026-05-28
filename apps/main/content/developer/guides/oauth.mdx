@@ -1,0 +1,171 @@
+---
+title: OAuth 2.1
+description: Register an app and let other users sign into tomomai through it.
+order: 3
+---
+
+Use OAuth when another user needs to authorise *your* application to read
+their data. The standard flow:
+
+```
+user clicks "Connect with tomomai"
+    │
+    ▼
+your app redirects them to /api/auth/oauth2/authorize?…
+    │
+    ▼
+they consent on a tomomai-hosted page
+    │
+    ▼
+tomomai redirects them back to your callback with a one-time code
+    │
+    ▼
+your server exchanges the code at /api/auth/oauth2/token for tokens
+    │
+    ▼
+you call /api/v1/* with Authorization: Bearer <access_token>
+```
+
+## 1. Register your app
+
+**[Settings → Developer → OAuth Applications](/settings/developer).**
+You'll need:
+
+- **Name, optional description / icon** — shown on the consent screen.
+- **Redirect URIs** — each must match exactly (scheme, host, port, path)
+  what you send in `redirect_uri` at runtime. Register one per environment.
+- **Scopes** — the maximum set your app may ask for. You can request a
+  subset per authorization, but never a superset of what you registered.
+
+After creation you receive:
+
+- `client_id` — public, embed in your app.
+- `client_secret` — **shown only once**, server-side only. Store like a
+  password.
+
+> **Public clients** (mobile, SPA, anything that can't keep a secret):
+> create the app with `token_endpoint_auth_method: "none"` via dynamic
+> registration (see below). The token endpoint will then accept PKCE-only
+> requests with no `client_secret`.
+
+Dynamic registration ([RFC 7591](https://datatracker.ietf.org/doc/html/rfc7591))
+is supported at `POST /api/auth/oauth2/register`. Discovery metadata is at
+`/.well-known/oauth-authorization-server/api/auth` and
+`/.well-known/openid-configuration/api/auth`.
+
+## 2. Authorization request
+
+Direct the user to:
+
+```
+GET https://tomomai.lol/api/auth/oauth2/authorize
+  ?response_type=code
+  &client_id=<your client_id>
+  &redirect_uri=<one of your registered URIs>
+  &scope=user:metadata:read%20recent:read   ← space-separated, URL-encoded
+  &state=<random opaque string>             ← required for CSRF protection
+  &code_challenge=<base64url(SHA-256(verifier))>
+  &code_challenge_method=S256
+```
+
+- **PKCE is mandatory.** Generate a high-entropy `code_verifier` (43–128
+  chars), keep it on the client, send the SHA-256 challenge here. The
+  `plain` method is not supported.
+- **`state`** is required and round-tripped to your callback — verify it
+  matches before doing anything with the `code`.
+- For long-lived access, include `offline_access` in the scope list — the
+  token response then includes a refresh token.
+
+## 3. Callback
+
+The user is redirected to `?code=<one-time code>&state=<your state>&iss=…`.
+
+- **Check `state` first.** Reject if it doesn't match what you sent.
+- **Use `iss` as a defence-in-depth check** — it should equal
+  `https://tomomai.lol/api/auth`
+  ([RFC 9207](https://datatracker.ietf.org/doc/html/rfc9207)).
+
+## 4. Exchange the code
+
+```http
+POST /api/auth/oauth2/token HTTP/1.1
+Host: tomomai.lol
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=authorization_code
+&code=<code from callback>
+&code_verifier=<the verifier you generated in step 2>
+&redirect_uri=<must match step 2>
+&client_id=<your client_id>
+&client_secret=<your client_secret>          ← omit for public clients
+```
+
+Response:
+
+```json
+{
+  "access_token": "…",
+  "token_type": "Bearer",
+  "expires_in": 3600,
+  "refresh_token": "…",
+  "scope": "user:metadata:read recent:read ready"
+}
+```
+
+The `scope` value is what was actually granted (the user could have approved
+a subset).
+
+## 5. Call the API
+
+```http
+GET /api/v1/me HTTP/1.1
+Host: tomomai.lol
+Authorization: Bearer <access_token>
+```
+
+## 6. Refresh
+
+When `expires_in` runs out, exchange the refresh token:
+
+```http
+POST /api/auth/oauth2/token
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=refresh_token
+&refresh_token=<your refresh token>
+&client_id=<your client_id>
+&client_secret=<your client_secret>
+```
+
+Refresh tokens **rotate** on every use — store the new one, discard the
+old. Refresh tokens are valid for 30 days; access tokens for 1 hour.
+
+## Token formats
+
+- **Default: opaque** — a random string. tomomai validates it via a hashed
+  lookup, so revoking from [Settings → Developer](/settings/developer) (or
+  via `/api/auth/oauth2/revoke`) takes effect immediately.
+- **JWT** — opt-in by sending `resource=https://tomomai.lol` in the
+  **token request body**. The returned access token is then a JWT signed
+  via the JWKS at `/api/auth/jwks`, verifiable locally without a network
+  round-trip. Useful for high-traffic resource servers. Standard
+  `iss`/`aud` claims apply (`iss = https://tomomai.lol/api/auth`,
+  `aud = https://tomomai.lol`).
+
+Both formats are accepted by every `/api/v1/*` endpoint — clients don't
+have to choose at integration time.
+
+## Revocation and introspection
+
+- `POST /api/auth/oauth2/revoke` — RFC 7009. Pass `token=…` plus your
+  client credentials to revoke an access or refresh token immediately.
+- `POST /api/auth/oauth2/introspect` — RFC 7662. Confidential clients can
+  ask the server about a token they were issued. Note: this endpoint only
+  returns `active: true` when the introspecting client matches the token's
+  issuing client, so it's most useful as a self-check.
+
+## A complete working example
+
+See [`packages/userscript`](https://github.com/shedaniel/maimai-charts/tree/main/packages/userscript)
+in the source — it's a tomomai-authored userscript that performs the full
+OAuth flow (PKCE, popup callback, refresh) from scratch.

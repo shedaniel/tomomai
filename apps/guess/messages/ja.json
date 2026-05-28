@@ -1,0 +1,120 @@
+{
+  "common": {
+    "language": "言語"
+  },
+  "settings": {
+    "language": {
+      "auto": "自動検出"
+    }
+  },
+  "guess": {
+    "meta": {
+      "title": "tomomai · 楽曲当てクイズ",
+      "description": "ヒントを順番に開けて、今日の maimai 楽曲を当てよう。JST 0:00 に新しい曲。",
+      "titleForDate": "tomomai · 楽曲当てクイズ · {date}",
+      "descriptionForDate": "{date}の maimai 楽曲当てクイズをもう一度プレイ。"
+    },
+    "pastBanner": {
+      "text": "{date}の問題に挑戦中。",
+      "button": "今日に戻る"
+    },
+    "notFound": {
+      "title": "ページが見つかりません",
+      "description": "お探しのページが見つかりませんでした。その日付の問題はまだ存在しないかもしれません。",
+      "button": "今日の問題に戻る"
+    },
+    "input": {
+      "placeholder": "曲名を入力…"
+    },
+    "buttons": {
+      "submit": "回答する",
+      "nextHint": "次のヒント",
+      "giveUp": "諦める"
+    },
+    "comeBack": "明日また新しい曲で挑戦できます。",
+    "share": {
+      "button": "結果をシェア",
+      "copied": "コピーしました！",
+      "manualPromptTitle": "下のテキストをコピーしてください"
+    },
+    "hints": {
+      "pixelate": {
+        "label": "モザイク · レベル {level}",
+        "alt": "モザイクのジャケット"
+      },
+      "blinds": {
+        "label": "縦ブラインド · レベル {level}",
+        "alt": "縦ブラインドのジャケット"
+      },
+      "blinds-h": {
+        "label": "横ブラインド · レベル {level}",
+        "alt": "横ブラインドのジャケット"
+      },
+      "crop": {
+        "label": "切り抜き · レベル {level}",
+        "alt": "ジャケットの一部"
+      },
+      "shuffle-move": {
+        "label": "シャッフル · レベル {level}",
+        "alt": "シャッフルされたジャケット"
+      },
+      "posterize": {
+        "label": "ポスタライズ · レベル {level}",
+        "alt": "ポスタライズされたジャケット"
+      },
+      "edge-detect": {
+        "label": "輪郭 · レベル {level}",
+        "alt": "輪郭抽出されたジャケット"
+      },
+      "length": {
+        "label": "曲名の長さ",
+        "exact": "{n} 文字",
+        "range": "{min} – {max} 文字"
+      },
+      "difficulty": {
+        "label": "難易度",
+        "values": {
+          "basic": "BASIC",
+          "advanced": "ADVANCED",
+          "expert": "EXPERT",
+          "master": "MASTER",
+          "remaster": "Re:MASTER",
+          "utage": "宴会場"
+        }
+      },
+      "bpm": {
+        "label": "BPM"
+      },
+      "genre": {
+        "label": "ジャンル"
+      },
+      "game-version": {
+        "label": "収録バージョン"
+      },
+      "artist": {
+        "label": "アーティスト"
+      },
+      "note-designer": {
+        "label": "譜面制作者"
+      },
+      "audio": {
+        "label": "音声クリップ",
+        "play": "再生",
+        "pause": "停止",
+        "duration": "{seconds}秒",
+        "step": "ヒント {current} / {total}"
+      }
+    },
+    "reveal": {
+      "answer": "正解"
+    }
+  },
+  "heardle": {
+    "meta": {
+      "title": "tomomai · イントロクイズ",
+      "description": "短い音声クリップから今日の maimai 楽曲を当てよう。JST 0:00 に新しい曲。",
+      "titleForDate": "tomomai · イントロクイズ · {date}",
+      "descriptionForDate": "{date}の maimai イントロクイズをもう一度プレイ。"
+    }
+  }
+}

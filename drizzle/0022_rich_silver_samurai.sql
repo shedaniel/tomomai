@@ -1,1 +1,0 @@
-ALTER TABLE `songs` ADD `b50` integer DEFAULT false NOT NULL;

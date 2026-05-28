@@ -1,1 +1,0 @@
-ALTER TABLE `fetch_sessions` ADD `extraData` text;

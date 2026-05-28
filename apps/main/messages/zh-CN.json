@@ -1,0 +1,1312 @@
+{
+  "common": {
+    "title": "tomomai ともマイ",
+    "loading": "加载中...",
+    "save": "保存",
+    "cancel": "取消",
+    "continue": "继续",
+    "close": "关闭",
+    "settings": "设置",
+    "language": "语言",
+    "timezone": "时区",
+    "update": "更新",
+    "login": "登录",
+    "join": "加入",
+    "logout": "登出",
+    "username": "用户名",
+    "password": "密码",
+    "token": "令牌",
+    "cookies": "Cookies",
+    "authentication": "验证",
+    "playerInfo": "玩家信息",
+    "rating": "R 值",
+    "stars": "星星数",
+    "plays": "游玩次数",
+    "total": "总计",
+    "theme": "主题",
+    "invitations": "邀请",
+    "discord": "Discord",
+    "about": "关于",
+    "experiments": "实验",
+    "region": "地区",
+    "comingSoon": "敬请期待...",
+    "difficulties": {
+      "basic": "Basic",
+      "advanced": "Advanced",
+      "expert": "Expert",
+      "master": "Master",
+      "remaster": "Re:Master",
+      "utage": "Utage"
+    },
+    "back": "返回",
+    "clipboardError": "复制到剪贴板失败",
+    "selectAnOption": "选择选项",
+    "guest": "访客",
+    "ok": "确定",
+    "email": "邮箱",
+    "weekdays": {
+      "sun": "日",
+      "mon": "一",
+      "tue": "二",
+      "wed": "三",
+      "thu": "四",
+      "fri": "五",
+      "sat": "六"
+    }
+  },
+  "minigames": {
+    "badge": "迷你游戏",
+    "guesser": {
+      "title": "猜歌挑战",
+      "tagline": "通过封面图猜出歌曲。"
+    },
+    "heardle": {
+      "title": "Heardle",
+      "tagline": "通过几秒钟的音频猜出歌曲。"
+    }
+  },
+  "security": {
+    "reauth": {
+      "title": "需要重新认证",
+      "description": "此操作需要重新登录。我们会将你重定向到登录服务提供商以重新进行身份验证。"
+    }
+  },
+  "auth": {
+    "loginWithDiscord": "使用 Discord 继续",
+    "loginWithX": "使用 X 继续",
+    "loginWithPasskey": "使用通行密钥登录",
+    "signIn": "登录",
+    "newHere": "新用户？",
+    "noAccount": "创建账户来开始追踪你的成绩。",
+    "signup": "注册",
+    "signupWithDiscord": "使用 Discord 注册",
+    "signupWithX": "使用 X 注册",
+    "passkey": {
+      "errorTitle": "通行密钥登录失败",
+      "errorGeneric": "无法完成通行密钥登录，请重试。"
+    },
+    "signupDisabled": "注册功能已关闭",
+    "signupDisabledMessage": "目前暂不开放新用户注册，请稍后再试。",
+    "peekExampleProfile": "看看示例个人主页",
+    "features": {
+      "title": "功能：",
+      "trackScores": "追踪国际服和日本服的成绩",
+      "viewHistory": "查看你的历史游玩数据",
+      "importData": "从 maimai DX NET 导入数据",
+      "analyzeProgress": "分析你的游玩记录"
+    }
+  },
+  "linkedAccounts": {
+    "title": "已关联账户",
+    "description": "关联社交账户以添加其他登录方式。",
+    "link": "关联",
+    "unlink": "解除关联",
+    "linked": "已关联",
+    "notLinked": "未关联",
+    "unlinkError": "解除账户关联失败",
+    "linkError": "关联账户失败",
+    "unlinkSuccess": "已成功解除账户关联",
+    "linkSuccess": "已成功关联账户",
+    "cannotUnlinkLast": "无法解除你唯一的登录方式",
+    "reauthRequired": "关联新账户前请重新登录"
+  },
+  "passkeys": {
+    "title": "通行密钥",
+    "description": "使用生物识别或硬件密钥登录，无需密码。",
+    "addPasskey": "添加通行密钥",
+    "addingPasskey": "添加中...",
+    "noPasskeys": "尚未注册任何通行密钥。",
+    "deletePasskey": "删除",
+    "deleteSuccess": "已删除通行密钥。",
+    "deleteError": "删除通行密钥失败。",
+    "addError": "添加通行密钥失败。",
+    "addSuccess": "已成功添加通行密钥。",
+    "verifyingCaptcha": "验证中...",
+    "captchaFailed": "验证码校验失败，请重试。",
+    "passkeyName": "通行密钥 {index}",
+    "deleteTitle": "删除通行密钥？",
+    "deleteDescription": "该通行密钥将被删除，你将无法再使用它登录。",
+    "reauthRequired": "管理通行密钥前请重新登录。"
+  },
+  "consent": {
+    "title": "欢迎来到 tomomai",
+    "description": "在创建账户前，请先阅读并同意我们的政策。",
+    "tldr": {
+      "title": "摘要（非法律建议）",
+      "points": [
+        "你拥有数据的所有权，我们绝不会将其出售给第三方",
+        "你的数据将安全存储在日本的服务器上",
+        "数据处理将遵循香港特别行政区的法律",
+        "本项目为开源软件（AGPL-3.0）",
+        "我们是独立工具，与 SEGA 没有任何关联"
+      ]
+    },
+    "agreeToTos": "我同意服务条款",
+    "agreeToPrivacy": "我同意隐私政策",
+    "viewFullText": "查看全文",
+    "cancel": "取消",
+    "agree": "同意"
+  },
+  "dashboard": {
+    "title": "tomomai ともマイ",
+    "description": "与好友一起分享 maimai 游玩成绩",
+    "timezoneUpdateSuccess": "时区更新成功！",
+    "timezoneUpdateError": "时区更新失败：{error}",
+    "languageUpdateSuccess": "语言更新成功！",
+    "languageUpdateError": "语言更新失败：{error}",
+    "regionUpdateSuccess": "地区更新成功！",
+    "regionUpdateError": "地区更新失败：{error}",
+    "tokenUpdateSuccess": "验证方式保存成功！"
+  },
+  "settings": {
+    "pages": {
+      "account": {
+        "title": "账户",
+        "description": "语言与账户偏好设置。"
+      },
+      "fetch": {
+        "title": "同步",
+        "description": "凭证与数据获取设置。"
+      },
+      "privacy": {
+        "title": "隐私",
+        "description": "控制谁能查看你的个人主页和成绩。"
+      },
+      "developer": {
+        "title": "开发者",
+        "description": "管理 API 密钥和 OAuth 应用程序。"
+      },
+      "applications": {
+        "title": "应用程序",
+        "description": "已授权访问你账户的 OAuth 应用程序。"
+      }
+    },
+    "language": {
+      "label": "语言",
+      "description": "选择你偏好的界面语言。",
+      "placeholder": "选择语言",
+      "auto": "自动检测",
+      "en": "English (US)",
+      "en-GB": "English (UK)",
+      "ja": "日本語",
+      "zh-TW": "繁体中文 (中国台湾)",
+      "zh-HK": "繁体中文 (中国香港)",
+      "zh-CN": "简体中文 (中国大陆)",
+      "zh-SG": "简体中文 (新加坡, 马来西亚)",
+      "ko": "한국어 (AI 번역)"
+    },
+    "timezone": {
+      "label": "时区",
+      "description": "这会影响日期和时间的显示方式。默认设置为日本时区，与 maimai 服务器时间相符。",
+      "placeholder": "选择时区"
+    },
+    "account": {
+      "label": "账户验证",
+      "updateToken": "更新验证方式",
+      "deleteToken": "删除验证方式",
+      "deleteTokenDialogTitle": "删除验证方式",
+      "deleteTokenDialogDescription": "确定要删除已保存的验证方式吗？你将需要重新验证才能再次导入数据。",
+      "deleteTokenSuccess": "验证方式已成功删除。",
+      "deleteTokenError": "删除验证方式失败。",
+      "description": "更新你的 maimai 验证方式以进行数据导入及同步玩家数据。"
+    },
+    "albumPrivacy": {
+      "title": "相册照片隐私设置",
+      "description": "你是否希望从 maimai 获取并保存你的相册照片？",
+      "note": "请注意：",
+      "noteText": "相册照片可能包含您的脸部或其他个人信息。 如果你不希望将这些信息保存在 tomomai ともマイ。您可以在这里禁用此功能。",
+      "privacy": "你的图片将会：",
+      "stored": "私密地存储在我们的服务器上",
+      "notShared": "绝从不与第三方共享",
+      "onlyYou": "仅对你显示",
+      "limit": "上限为 25 MB（约为 300 张图片）",
+      "autoDelete": "当存储空间不足时，自动删除最旧的照片",
+      "changeLater": "你随时可以通过设置界面再次编辑此设置。",
+      "dontSave": "不保存照片",
+      "save": "保存我的相册照片",
+      "example": "相册示例图片",
+      "saved": "相册偏好设置已保存成功",
+      "error": "保存相册偏好设置失败",
+      "fetchAlbums": "保存相册照片",
+      "fetchAlbumsDescription": "获取分数时自动获取和保存您的相册照片。请注意，照片中可能含有个人信息。",
+      "notSet": "你尚未设置此偏好。下次获取数据时系统将会询问你。"
+    },
+    "profile": {
+      "publishProfile": "公开主页",
+      "publishDescription": "公开你的 maimai 主页，让他人可以查看你的分数和进度。",
+      "mainRegion": {
+        "label": "主要地区",
+        "description": "选择用于公开主页的主要地区。",
+        "intl": "国际服",
+        "jp": "日本服",
+        "cn": "国服"
+      },
+      "privacy": {
+        "label": "隐私设置",
+        "showAllScores": {
+          "label": "显示所有分数",
+          "description": "显示所有分数，而不仅仅是最佳 50 首歌曲。"
+        },
+        "showScoreDetails": {
+          "label": "显示分数详情",
+          "description": "显示详细的分数信息，包括游玩次数和详细统计。"
+        },
+        "showPlates": {
+          "label": "显示称号",
+          "description": "显示你的称号收集和完成进度。"
+        },
+        "showPlayCounts": {
+          "label": "显示游玩次数",
+          "description": "显示你的 maimai 游玩次数。"
+        },
+        "showEvents": {
+          "label": "显示活动",
+          "description": "显示你的活动完成进度。"
+        },
+        "showInSearch": {
+          "label": "允许搜索",
+          "description": "允许他人通过用户名搜索到你的主页。"
+        }
+      },
+      "url": {
+        "label": "主页链接",
+        "description": "你可以与他人分享的公开主页链接。",
+        "copied": "主页链接已复制到剪贴板！",
+        "copyFailed": "复制链接到剪贴板失败"
+      }
+    },
+    "saveChanges": "保存变更",
+    "saving": "保存中...",
+    "saved": "设置保存成功！",
+    "errorSaving": "设置保存失败",
+    "sessions": {
+      "title": "会话",
+      "description": "管理你在各设备上的活跃会话。",
+      "currentSession": "当前",
+      "revoke": "撤销",
+      "revokeAll": "撤销其他所有会话",
+      "revokeAllDescription": "这将会注销其他所有会话，仅保留当前会话。",
+      "revokeDescription": "此会话将被立即注销。",
+      "noOtherSessions": "未找到其他活跃会话。",
+      "ip": "IP",
+      "createdAt": "登录于",
+      "revokeConfirm": "撤销此会话？",
+      "revokeAllConfirm": "撤销其他所有会话？",
+      "revokeSuccess": "会话已成功撤销。",
+      "revokeAllSuccess": "其他所有会话已撤销。"
+    },
+    "developer": {
+      "reauthRequired": "请重新登录后再执行此操作。",
+      "apiKeys": {
+        "label": "API 密钥",
+        "description": "使用这些密钥来验证对 tomomai API 的请求。",
+        "createButton": "创建 API 密钥",
+        "loading": "加载中...",
+        "emptyTitle": "暂无 API 密钥",
+        "emptyCreateLink": "创建你的第一个密钥",
+        "emptySuffix": "来开始使用 tomomai API。",
+        "unnamed": "未命名密钥",
+        "expired": "已过期",
+        "disabled": "已禁用",
+        "never": "永不过期",
+        "createdAt": "创建于 {date}",
+        "expiresAt": "过期于 {date}",
+        "toggleAriaLabel": "切换密钥状态",
+        "regenerateAriaLabel": "重新生成密钥",
+        "regenerateError": "重新生成 API 密钥失败",
+        "regeneratedTitle": "密钥已重新生成",
+        "regeneratedDescription": "请立即复制你的新 API 密钥，之后将不再显示。",
+        "regeneratedSaveWarning": "请保存此密钥 —— 关闭对话框后将不再显示。",
+        "regenerateDialog": {
+          "title": "重新生成 API 密钥？",
+          "description": "当前密钥将立即失效。使用该密钥的应用程序将无法访问，直到更新为新密钥。",
+          "confirm": "重新生成"
+        },
+        "deleteSuccess": "API 密钥已删除",
+        "deleteError": "删除 API 密钥失败",
+        "updateError": "更新密钥失败",
+        "editDialog": {
+          "title": "编辑 API 密钥",
+          "nameLabel": "名称",
+          "namePlaceholder": "我的应用",
+          "saveButton": "保存",
+          "saving": "保存中…",
+          "saveError": "更新 API 密钥失败"
+        },
+        "deleteDialog": {
+          "title": "删除 API 密钥？",
+          "description": "此操作无法撤销。任何使用此密钥的应用程序将立即失去访问权限。",
+          "confirm": "删除"
+        }
+      },
+      "createDialog": {
+        "title": "创建 API 密钥",
+        "description": "生成一个新的 API 密钥以访问 tomomai API。",
+        "createdTitle": "API 密钥已创建",
+        "createdDescription": "请立即复制你的 API 密钥。关闭后将不再显示。",
+        "copyAriaLabel": "复制 API 密钥",
+        "saveWarning": "请保存此密钥 —— 关闭此对话框后将无法再次查看。",
+        "done": "完成",
+        "nameLabel": "名称",
+        "namePlaceholder": "我的应用",
+        "nameDescription": "用于识别此密钥的描述性名称。",
+        "scopesLabel": "权限范围",
+        "scopeDefaultBadge": "默认",
+        "scopeDestructiveBadge": "破坏性",
+        "scopeSensitiveBadge": "敏感",
+        "scopeIncludedBadge": "已包含",
+        "sensitiveWarning": "所选的一个或多个权限范围被标记为敏感，因为它们可能会暴露个人数据或私人标识符。请仅授权给你信任的应用程序。",
+        "expirationLabel": "有效期",
+        "expiration": {
+          "7d": "7 天",
+          "30d": "30 天",
+          "90d": "90 天",
+          "1y": "1 年",
+          "never": "永不过期"
+        },
+        "destructiveWarning": "此密钥授予执行破坏性操作的权限。你是否了解相关风险？",
+        "confirmLabelPre": "请输入",
+        "confirmPhrase": "是的，我明白",
+        "confirmLabelPost": "以确认",
+        "creating": "创建中...",
+        "createButton": "创建 API 密钥",
+        "createError": "创建 API 密钥失败"
+      },
+      "scopes": {
+        "ready": {
+          "name": "Ready",
+          "description": "基础访问权限。授予 GET /api/v1/ok。默认包含。"
+        },
+        "user:metadata:read": {
+          "name": "用户元数据（只读）",
+          "description": "读取你的用户名、地区、个人主页可见性和角色。授予 GET /api/v1/me。"
+        },
+        "snapshot:latest:metadata:read": {
+          "name": "最新快照元数据（只读）",
+          "description": "读取你最新快照的元数据（Rating、显示名称、游玩次数等）。授予 GET /api/v1/snapshots/latest。"
+        },
+        "snapshot:latest:songs:b50:read": {
+          "name": "最新快照 B50 歌曲（只读）",
+          "description": "从最新快照中读取 B50 歌曲分数。"
+        },
+        "snapshot:latest:songs:read": {
+          "name": "最新快照全部歌曲（只读）",
+          "description": "从最新快照中读取全部歌曲分数。"
+        },
+        "snapshot:latest:events:read": {
+          "name": "最新快照活动（只读）",
+          "description": "从你的最新快照中读取活动进度数据。"
+        },
+        "snapshot:latest:icon:read": {
+          "name": "最新快照头像（只读）",
+          "description": "从最新快照中读取你的头像 URL（Discord 头像）。敏感 —— 可能暴露社交身份。"
+        },
+        "snapshot:all:metadata:read": {
+          "name": "全部快照元数据（只读）",
+          "description": "列出你的所有快照并读取其元数据。授予 GET /api/v1/snapshots 和 GET /api/v1/snapshots/:id。"
+        },
+        "snapshot:all:songs:b50:read": {
+          "name": "全部快照 B50 歌曲（只读）",
+          "description": "从你的任意快照中读取 B50 歌曲分数。"
+        },
+        "snapshot:all:songs:read": {
+          "name": "全部快照全部歌曲（只读）",
+          "description": "从你的任意快照中读取全部歌曲分数。"
+        },
+        "snapshot:all:events:read": {
+          "name": "全部快照活动（只读）",
+          "description": "从你的任意快照中读取活动进度数据。"
+        },
+        "snapshot:all:icon:read": {
+          "name": "全部快照头像（只读）",
+          "description": "从任意快照中读取你的头像 URL（Discord 头像）。敏感 —— 可能暴露社交身份。"
+        },
+        "recent:read": {
+          "name": "最近游玩记录（只读）",
+          "description": "读取包含歌曲信息、达成率和连击/同步状态的最近游玩历史。授予 GET /api/v1/recents。"
+        },
+        "recent:detailed:read": {
+          "name": "最近游玩记录（详细·只读）",
+          "description": "在最近游玩记录中添加场地信息和每种音符类型的详细分类。"
+        },
+        "stats:read": {
+          "name": "统计数据（只读）",
+          "description": "读取你的评级/FC/FS 分布统计。授予 GET /api/v1/stats。"
+        },
+        "album:read": {
+          "name": "相册（只读）",
+          "description": "读取你的街机照片相册条目（仅元数据，不含图片 URL）。授予 GET /api/v1/albums。"
+        },
+        "album:images:read": {
+          "name": "相册图片（只读）",
+          "description": "在相册响应中包含图片 URL。敏感 —— 照片可能包含人物图像。"
+        },
+        "plate:read": {
+          "name": "称号（只读）",
+          "description": "读取你的称号完成数据（每个称号还需要哪些歌曲完成 Clear / FC / AP）。授予 GET /api/v1/plates。"
+        },
+        "user:settings:read": {
+          "name": "用户设置（只读）",
+          "description": "读取你的隐私和主页显示设置（是否公开主页、是否显示分数、是否显示称号等）。授予 GET /api/v1/me/settings。"
+        },
+        "snapshot:all:delete": {
+          "name": "快照（删除）",
+          "description": "删除你的任意快照。授予 DELETE /api/v1/snapshots/:id。破坏性 —— 必须显式申请，绝不被任何包含性范围隐式授予。"
+        },
+        "snapshot:submit": {
+          "name": "快照（提交）",
+          "description": "提交新快照。内部使用 — 仅管理员。"
+        },
+        "fetch:read": {
+          "name": "同步状态（只读）",
+          "description": "读取你正在进行或最近一次 maimai 数据同步的状态。授予 GET /api/v1/fetch/status。"
+        },
+        "fetch:start": {
+          "name": "发起同步",
+          "description": "使用已保存的上游令牌发起一次新的 maimai 数据同步。授予 POST /api/v1/fetch。破坏性 —— 消耗上游 API 配额并写入一份新快照。"
+        },
+        "fetch:delete": {
+          "name": "同步令牌（删除）",
+          "description": "删除已保存的上游 maimai 认证令牌。授予 DELETE /api/v1/fetch/token。破坏性且敏感 —— 在重新认证之前会中断站内和 API 触发的同步流程。"
+        },
+        "snapshot:latest:read": {
+          "name": "最新快照（只读）",
+          "description": "仅包含你最新快照的元数据、全部歌曲和活动。排除头像（出于隐私考虑，需单独授权）。"
+        },
+        "snapshot:all:read": {
+          "name": "全部快照（只读）",
+          "description": "包含你的所有快照（包括最新）的元数据、全部歌曲和活动。排除头像（出于隐私考虑，需单独授权）。"
+        },
+        "read": {
+          "name": "只读（所有非敏感数据）",
+          "description": "广泛的只读访问权限：用户元数据、所有快照、最近游玩、统计和相册。不包含头像和相册图片 URL。因涉及广泛的个人数据，标记为敏感。"
+        }
+      },
+      "oauthApps": {
+        "label": "OAuth 应用程序",
+        "description": "注册可通过 OAuth 2.1 + PKCE 代表用户请求访问权限的应用程序。",
+        "createButton": "新建应用程序",
+        "loading": "加载应用程序中...",
+        "emptyTitle": "还没有 OAuth 应用程序",
+        "emptyCreateLink": "创建你的第一个应用程序",
+        "emptySuffix": "以开始使用 OAuth。",
+        "redirectUris": "重定向 URI",
+        "scopes": "权限范围",
+        "rotateAriaLabel": "轮换客户端密钥",
+        "deleteAriaLabel": "删除应用程序",
+        "deleteError": "删除应用程序失败",
+        "rotateError": "轮换密钥失败",
+        "createDialog": {
+          "title": "创建 OAuth 应用程序",
+          "description": "注册新应用程序以使用 OAuth 2.1 授权流程。",
+          "nameLabel": "应用程序名称",
+          "namePlaceholder": "My Userscript",
+          "nameDescription": "在同意页面上向用户显示的描述性名称。",
+          "uriLabel": "应用程序 URL",
+          "uriPlaceholder": "https://example.com",
+          "redirectLabel": "重定向 URI",
+          "redirectPlaceholder": "https://example.com/callback",
+          "redirectAddButton": "添加",
+          "scopesLabel": "权限范围",
+          "createButton": "创建应用程序",
+          "creating": "创建中...",
+          "createError": "创建应用程序失败",
+          "createdTitle": "应用程序已创建",
+          "createdDescription": "请立即保存你的客户端密钥，它不会再次显示。",
+          "clientIdLabel": "客户端 ID",
+          "secretLabel": "客户端密钥",
+          "copyAriaLabel": "复制值",
+          "saveWarning": "请保存此密钥。关闭此对话框后将不会再次显示。",
+          "done": "完成"
+        },
+        "rotateDialog": {
+          "title": "轮换客户端密钥？",
+          "description": "当前密钥将立即失效。任何使用它的客户端都需要更新为新密钥。",
+          "confirm": "轮换密钥"
+        },
+        "editDialog": {
+          "title": "编辑 OAuth 应用程序",
+          "description": "更新你的应用程序详情。",
+          "basicSection": "基本信息",
+          "redirectSection": "重定向 URI",
+          "scopesSection": "权限范围",
+          "scopesNote": "现有令牌将保留当前权限范围，直到用户重新授权。",
+          "legalSection": "法律",
+          "nameLabel": "应用程序名称",
+          "uriLabel": "应用程序 URL",
+          "iconLabel": "图标 URL",
+          "iconPlaceholder": "https://example.com/logo.png",
+          "policyLabel": "隐私政策 URL",
+          "policyPlaceholder": "https://example.com/privacy",
+          "tosLabel": "服务条款 URL",
+          "tosPlaceholder": "https://example.com/tos",
+          "saveButton": "保存更改",
+          "saving": "保存中...",
+          "saveError": "更新应用程序失败"
+        },
+        "deleteDialog": {
+          "title": "删除 OAuth 应用程序？",
+          "description": "应用程序将被永久删除，所有已发行的令牌将被撤销。此操作无法撤销。",
+          "confirm": "删除"
+        }
+      }
+    },
+    "applications": {
+      "noAuthorizations": "你尚未授权任何 OAuth 应用程序。",
+      "grantedAt": "于 {date} 授权",
+      "revokeButton": "撤销",
+      "revokeDialog": {
+        "title": "撤销访问权限？",
+        "description": "这将立即撤销此应用程序的所有令牌。如需再次使用，你需要重新授权。",
+        "confirm": "撤销"
+      },
+      "revokeSuccess": "访问权限已撤销",
+      "revokeError": "撤销访问权限失败"
+    }
+  },
+  "dataBanner": {
+    "dataSnapshot": "数据记录：",
+    "noDataAvailable": "无可用数据",
+    "selectSnapshot": "选择记录",
+    "fetchNewData": "导入新数据",
+    "fetchingData": "导入数据中...",
+    "lastUpdate": "最后更新",
+    "noDataInstructions": "此区域没有任何数据。点击“导入新数据”来导入你的 maimai 成绩。"
+  },
+  "profileMetadata": {
+    "title": "{username} | tomomai ともマイ",
+    "description": "查看 {username} 在 {region} 的 maimai 主页。和朋友一起追踪并分析 maimai 成绩。",
+    "descriptionRich": "{displayName}（{username}）在 {region} maimai —— Rating {rating}。在 tomomai 上查看其 B50、最近游玩和谱面记录。",
+    "descriptionUnknownRegion": "查看 {username} 的 maimai 主页。和朋友一起追踪并分析 maimai 成绩。",
+    "notFoundTitle": "主页未找到 | tomomai ともマイ",
+    "notFoundDescription": "你查找的主页不存在或未公开。",
+    "errorTitle": "错误 | tomomai ともマイ",
+    "errorDescription": "加载此主页时发生错误。"
+  },
+  "profileVisibility": {
+    "public": "公开主页",
+    "private": "私人主页",
+    "accessibleBy": "可通过 ",
+    "accessibleByEnd": " 访问！",
+    "youMayChangePrivacySettings": "你可以在右上角图标 → 设置 → 公开主页 中更改隐私设置。",
+    "onlyAccessibleByYou": "只有你可以访问！你可以在右上角图标 → 设置 → 公开主页 中更改隐私设置。"
+  },
+  "dataContent": {
+    "loading": "加载数据中...",
+    "snapshotData": "数据记录",
+    "snapshotFrom": "记录自 {date} • {name} • {count} 首歌曲",
+    "tabs": {
+      "playerInfo": "玩家信息",
+      "stats": "统计",
+      "songs": "歌曲",
+      "recentPlays": "最近游玩",
+      "recommendations": "推荐歌曲",
+      "plates": "名牌板",
+      "map": "活动地图",
+      "exportImage": "导出图片",
+      "history": "历史记录",
+      "developer": "开发者",
+      "albums": "相册"
+    },
+    "playerInfo": "玩家信息",
+    "rating": "R 值：{rating}",
+    "stars": "星星数：{stars}",
+    "versionPlays": "本版本游玩次数：{count}",
+    "totalPlays": "总游玩次数：{count}",
+    "songs": "歌曲（共 {count} 首）",
+    "searchPlaceholder": "以歌曲名称、艺术家、难度或类型搜索歌曲...",
+    "newSongsB15": "新曲 B15",
+    "oldSongsB35": "旧曲 B35",
+    "newSongs": "新曲",
+    "oldSongs": "旧曲",
+    "displayModes": {
+      "list": "列表",
+      "grid": "网格",
+      "compact": "表格"
+    },
+    "tableHeaders": {
+      "song": "歌曲",
+      "artist": "艺术家",
+      "level": "等级",
+      "achievement": "达成率",
+      "fc": "FC",
+      "fs": "FS",
+      "rating": "R 值"
+    },
+    "statistics": {
+      "sum": "总和",
+      "average": "平均"
+    },
+    "switchToListForAllSongs": "切换到列表或表格视图查看所有歌曲",
+    "noDataAvailable": "无可用数据",
+    "getStartedInstructions": "点击上方的导入按钮来导入你的 maimai 数据。",
+    "history": {
+      "title": "R 值历史记录",
+      "ratingOverTime": "R 值变化趋势",
+      "noHistory": "暂无历史记录",
+      "needMoreData": "至少导入两次数据才能查看历史记录"
+    },
+    "developer": {
+      "title": "开发者",
+      "exportJson": "导出记录为 JSON",
+      "exporting": "导出中..."
+    }
+  },
+  "albums": {
+    "title": "相册",
+    "photos": "张照片",
+    "noAlbums": "暂无相册照片",
+    "loadMore": "加载更多",
+    "loading": "加载中...",
+    "error": "加载相册失败",
+    "storage": "存储空间",
+    "storageTitle": "存储使用量",
+    "storageDescription": "管理你的相册存储空间。当超过 25 MB 时，系统会自动删除最旧的照片。这大约可存储 300 张图片。",
+    "used": "已使用",
+    "totalUsed": "总使用",
+    "limit": "上限",
+    "usedOf": "/",
+    "byRegion": "按地区",
+    "storageWarning": "存储空间即将达到上限。请考虑删除旧照片，否则系统将自动移除最旧的相册。",
+    "uploadNotice": "如果你刚导入了新数据，新相册照片可能需要一点时间才能显示。请稍后刷新页面。",
+    "deleteTitle": "删除照片",
+    "deleteDescription": "确定要删除这张照片吗？此操作无法撤销。",
+    "deleteSuccess": "照片删除成功",
+    "deleteFailed": "照片删除失败",
+    "dontAskAgain": "今天不再询问",
+    "delete": "删除",
+    "cancel": "取消"
+  },
+  "recommendations": {
+    "noRecommendations": "无推荐歌曲",
+    "allOptimal": "没有其他能提升 R 值的歌曲了。做得很好！",
+    "description": "根据你当前的成绩计算出可提升 R 值的歌曲。",
+    "filterButton": "筛选",
+    "filters": {
+      "all": "全部",
+      "best": "B15/B35 内",
+      "new": "新曲",
+      "old": "旧曲"
+    },
+    "filterCategories": {
+      "difficulty": "难度",
+      "level": "等级",
+      "type": "类型",
+      "targetRating": "目标分数",
+      "achievement": "达成率",
+      "version": "版本"
+    }
+  },
+  "recentPlays": {
+    "title": "最近游玩",
+    "noPlays": "未找到最近游玩记录",
+    "notFetched": "尚未获取",
+    "fetching": "获取中...",
+    "detailsNotFetched": "尚未获取详细游玩数据。请重新同步数据以获取详细分析。",
+    "detailsFetching": "正在获取详细游玩数据，请稍候并刷新页面。",
+    "labels": {
+      "dx": "DX",
+      "combo": "连击",
+      "fast": "FAST",
+      "late": "LATE"
+    },
+    "notesBreakdown": {
+      "type": "类型",
+      "total": "总计",
+      "totalLoss": "失分"
+    },
+    "clickToExpand": "点击展开详情",
+    "clickToCollapse": "点击折叠"
+  },
+  "events": {
+    "title": "活动地图",
+    "areaEvents": "地图",
+    "eventAreaEvents": "活动地图",
+    "noEventsAvailable": "无可用活动",
+    "noAreaEvents": "无地图",
+    "noEventAreaEvents": "无活动地图",
+    "currentDistance": "当前距离",
+    "nextReward": "下一个奖励",
+    "eventCompleted": "活动完成",
+    "notStarted": "未开始",
+    "inProgress": "进行中",
+    "completed": "已完成"
+  },
+  "playerStats": {
+    "title": "玩家统计",
+    "selectVersion": "选择版本",
+    "allVersions": "所有版本",
+    "selectDifficulty": "选择难度",
+    "allDifficulties": "所有难度",
+    "backToStats": "返回统计",
+    "viewPlatesProgress": "查看称号进度",
+    "achievementGrades": "达成等级",
+    "fullCombo": "Full Combo",
+    "fullSync": "Full Sync",
+    "noDataAvailable": "无可用数据",
+    "noMatchingScores": "没有符合筛选条件的成绩",
+    "selectVersionForPlates": "请选择特定版本以查看称号进度",
+    "songsNotMeeting": "未达成 {requirement} 的乐曲",
+    "noSongsToDisplay": "没有可显示的乐曲",
+    "plates": {
+      "kiwami": "所有乐曲 FC 及以上",
+      "shou": "所有乐曲 SSS 及以上",
+      "shin": "所有乐曲 AP 及以上",
+      "maimai": "所有乐曲 FDX 及以上"
+    }
+  },
+  "tokenDialog": {
+    "title": "更新 maimai 验证",
+    "japanDescription": "输入你的 SEGA 账户凭证。",
+    "intlDescription": "选择你的 maimai 登录验证方式。",
+    "credentialsStored": "你的验证方式将被保存以供将来使用。",
+    "username": "用户名",
+    "usernamePlaceholder": "输入你的 SEGA 账户用户名",
+    "password": "密码",
+    "passwordPlaceholder": "输入你的 SEGA 账户密码",
+    "cookies": "Cookies",
+    "tokenPlaceholder": "clal=在此输入你的 Cookies",
+    "tokenValidationError": "Cookies 必须以 \"clal=\" 开头，后面跟着字母和数字",
+    "authenticationNote": "验证：",
+    "segaCredentialsNote": "使用你的 SEGA 账户凭证来验证 maimai DX NET。",
+    "credentialsSecureNote": "你的验证方式将被保存以供将来使用。",
+    "savingCredentials": "保存验证方式中...",
+    "saveCredentials": "保存验证方式",
+    "tokenTab": "令牌",
+    "passwordTab": "密码",
+    "tokenInstructions": {
+      "description": "来自 maimai DX NET 的以 \"clal=\" 开头的 Cookie 值。",
+      "expiration": "Cookies 可能会在一段时间后失效，你可能需要重新登录。"
+    },
+    "passwordInstructions": "直接使用你的 SEGA 账户用户名和密码",
+    "secureStorage": "你的验证方式将被保存以供将来使用。",
+    "steps": {
+      "step1Title": "登录 maimai DX NET",
+      "step2Title": "访问 \"Not Found\" 页面",
+      "step3Title": "执行代码"
+    },
+    "clipboard": {
+      "copied": "已复制到剪贴板！",
+      "failed": "复制到剪贴板失败"
+    },
+    "loading": {
+      "scriptLink": "正在生成脚本链接...",
+      "loginLink": "正在生成个性化链接..."
+    },
+    "tokenDialogDescription": "输入您的浏览器令牌以进行验证",
+    "segaAccountDescription": "输入您的 SEGA 账户凭证",
+    "backToSteps": "返回步骤",
+    "step1": {
+      "description": "在<strong>无痕 / 隐私窗口</strong>中登录 maimai DX NET。",
+      "clickToCopy": "点击下方的链接以复制到剪贴板：",
+      "haveCookies": "已经有自己的 Cookies 了吗？",
+      "enterDirectly": "直接输入"
+    },
+    "step2": {
+      "description": "在同一个无痕 / 隐私标签页中，访问下方的链接。",
+      "otpLabel": "OTP:",
+      "otpExpires": "过期时间 ~ {time}",
+      "refreshing": "刷新中...",
+      "refreshOtp": "刷新 OTP"
+    },
+    "step3": {
+      "desktop": "桌面版",
+      "desktopInstructions": "复制下方的 JavaScript 代码，并将其粘贴到浏览器的开发者控制台（Ctrl + Shift + I 或 F12）中。",
+      "mobile": "移动版",
+      "mobileStep1": "1. 点击下方的代码以复制到剪贴板。",
+      "mobileStep2": "2. 在您的浏览器中创建一个书签，并将复制的文本粘贴到 URL 字段中。",
+      "mobileStep3": "3. 运行该书签。"
+    },
+    "navigation": {
+      "previousStep": "上一步",
+      "nextStep": "下一步"
+    },
+    "recommended": "推荐歌曲",
+    "tokenOptionDescription": "使用您的浏览器令牌登录您的 maimai DX NET 账户。令牌可能会不时过期。无需密码，并支持社交登录。",
+    "passwordOptionDescription": "使用您的 SEGA 账户凭证登录您的 maimai DX NET 账户。永久有效。不推荐。",
+    "cnTitle": "更新舞萌 DX 验证",
+    "cnDescription": "选择您的舞萌 DX 登录验证方式。",
+    "cnExperimentalWarningTitle": "国服为实验性地区",
+    "cnExperimentalWarningMessage": "国服支持可能会突然终止，功能可能不稳定，数据也可能会被清除。",
+    "recommendedBadge": "推荐",
+    "comingSoonBadge": "即将推出",
+    "disabledBadge": "暂时停用",
+    "features": {
+      "playerInfo": "玩家信息",
+      "scores": "谱面成绩",
+      "recents": "最近游玩",
+      "events": "活动数据"
+    },
+    "fetchOptions": {
+      "divingFish": {
+        "name": "水鱼查分器",
+        "description": "使用您的水鱼查分器登录用户名 或 已绑定的 QQ 账户 ID 获取数据。"
+      },
+      "lxns": {
+        "name": "落雪咖啡屋查分器",
+        "description": "以落雪咖啡屋账号登录授权获取数据。"
+      },
+      "httpProxy": {
+        "name": "HTTP 代理",
+        "description": "通过 HTTP 代理拦截手机微信中的舞萌 DX 小程序请求以获取数据。"
+      },
+      "androidApp": {
+        "name": "Android 应用程序",
+        "description": "在 Android 设备上安装本应用程序以自动获取数据。"
+      }
+    },
+    "lxns": {
+      "title": "落雪咖啡屋查分器",
+      "description": "通过 OAuth 授权 {host} 读取您在落雪咖啡屋查分器上的舞萌 DX 数据。授权可随时在落雪咖啡屋账号设置中撤销。",
+      "notConfiguredTitle": "落雪咖啡屋 OAuth 尚未配置",
+      "notConfiguredMessage": "请联系管理员在服务器上设置 <code>LXNS_CLIENT_ID</code> 与 <code>LXNS_CLIENT_SECRET</code> 环境变量。",
+      "instructionsLine1": "点击下方按钮后，将在新窗口打开落雪咖啡屋的授权页面。授权完成后窗口会自动关闭并返回此处。",
+      "instructionsLine2": "我们仅会请求读取玩家数据相关的权限，不会写入您的数据。",
+      "authorizeButton": "前往授权",
+      "authorizingButton": "等待授权完成…",
+      "popupBlocked": "无法开启授权窗口，请允许本站弹窗后再试。",
+      "authFailed": "授权失败：{error}",
+      "unknownError": "未知错误"
+    },
+    "divingFish": {
+      "title": "水鱼查分器",
+      "description": "将您的水鱼查分器账号绑定到本站，绑定后我们会通过水鱼查分器的开发者接口读取您的舞萌 DX 数据。请先选择以下任一方式验证您拥有该账号。",
+      "notConfiguredTitle": "水鱼查分器尚未配置",
+      "notConfiguredMessage": "请联系管理员在服务器上设置 <code>DIVINGFISH_DEV_TOKEN</code> 环境变量。",
+      "importTokenTab": "Import-Token 验证",
+      "nicknameTab": "昵称验证",
+      "importTokenInstructions": "在水鱼查分器 \"编辑个人资料\" 页面生成 Import-Token，并粘贴到此处。",
+      "importTokenSecureNote": "我们仅会用此 Token 验证一次账号归属，验证后立即丢弃，不会保存。",
+      "importTokenPlaceholder": "粘贴您的 Import-Token",
+      "importTokenButton": "验证并绑定",
+      "importTokenVerifying": "验证中…",
+      "nicknameInstructions": "请按照以下步骤完成验证：",
+      "nicknameStep1": "登录水鱼查分器",
+      "nicknameStep2": "在 \"编辑个人资料\" 中将昵称改为下方代码",
+      "nicknameStep3": "保存修改",
+      "nicknameStep4": "回到此处填写您的用户名或 QQ 并验证",
+      "nicknameLabel": "请将昵称改为",
+      "refreshCode": "刷新代码",
+      "nicknameTypeLabel": "类型",
+      "nicknameUsername": "用户名",
+      "nicknameQQ": "QQ",
+      "nicknameIdentifierPlaceholder": "您的水鱼查分器用户名或绑定的 QQ 号",
+      "nicknameVerifyButton": "我已修改，开始验证",
+      "nicknameVerifying": "验证中…",
+      "nicknameRevertNote": "验证成功后您可以将昵称改回原本的设置。",
+      "verifyFailedFallback": "验证失败",
+      "challengePlaceholder": "-------"
+    },
+    "httpProxy": {
+      "title": "HTTP 代理",
+      "description": "将手机的全局 HTTP 代理指向我们的服务器，然后在微信中打开下方链接完成授权。整个过程仅授权一次。",
+      "notConfiguredTitle": "HTTP 代理服务尚未配置",
+      "notConfiguredMessage": "请联系管理员设置 <code>CN_PROXY_HOST</code> 及 <code>CN_PROXY_TOKEN_SECRET</code> 环境变量。",
+      "step1Title": "第 1 步：在手机 Wi-Fi 设置中将 HTTP 代理设为",
+      "step1Host": "主机名",
+      "step1Port": "端口",
+      "step2Title": "第 2 步：{generateOrRegenerate}授权链接",
+      "step2Generate": "生成",
+      "step2Regenerate": "如链接失效，可重新生成",
+      "step2GenerateButton": "生成授权链接",
+      "step2RegenerateButton": "重新生成",
+      "step2GeneratingButton": "生成中…",
+      "step2ErrorPrefix": "错误：",
+      "step3Title": "第 3 步：在手机上打开授权链接",
+      "step3ScanWithWechat": "微信扫码",
+      "step3ScanNote": "打开微信，点击扫一扫图标，扫描二维码即可直接打开授权链接。",
+      "step3Or": "或",
+      "step3OrCopy": "复制链接到微信",
+      "step3OrCopyNote": "复制链接，发送到任意微信聊天，点击即可打开。",
+      "step3Copy": "复制链接",
+      "step3CopyNote": "授权完成后微信会跳转到一个结果页面。届时请关闭该页面，回到 tomomai 查看导入进度，并记得在 Wi-Fi 设置中关闭代理。",
+      "copySuccess": "已复制",
+      "copyFailed": "复制失败，请手动复制",
+      "clashConfigUrl": "Clash 配置 URL",
+      "clashImportButton": "导入 Clash"
+    }
+  },
+  "regions": {
+    "intl": "国际服",
+    "jp": "日本服",
+    "cn": "国服",
+    "short": {
+      "intl": "国际服",
+      "jp": "日本服",
+      "cn": "国服"
+    }
+  },
+  "userHeader": {
+    "memberLabel": "ともマイ 成员",
+    "discordPrompt": "遇到问题了吗？或想对 tomomai ともマイ 提出功能或建议？",
+    "joinDiscord": "加入我们的社群 Discord！"
+  },
+  "publicHeader": {
+    "discordBanner": "有任何问题或建议吗？欢迎加入我们的 Discord 社群！"
+  },
+  "header": {
+    "tabs": {
+      "dashboard": "首页",
+      "db": "数据库"
+    },
+    "addDiscordBot": "添加为 Discord 机器人",
+    "admin": "管理员",
+    "testOnboarding": "测试新手引导",
+    "errors": {
+      "inviteLink": "无法打开邀请链接"
+    },
+    "followThreads": "在 Threads 上关注",
+    "followTwitter": "在 X 上关注"
+  },
+  "onboarding": {
+    "title": "欢迎来到 tomomai！",
+    "step1": {
+      "title": "设定用户名",
+      "description": "用户名是你在 tomomai 的称呼。如果你选择公开，它也会成为你的公开个人资料网址。",
+      "publishToggleLabel": "和朋友分享我的资料",
+      "publishToggleDescription": "让其他人通过公开链接查看你的成绩。默认关闭 — 你可以随时更改。",
+      "publicUrlHint": "你的公开资料："
+    },
+    "step2": {
+      "title": "选择你的区服",
+      "description": "选择你的 maimai 数据所在的区服。之后可以在菜单中切换。"
+    },
+    "step3": {
+      "title": "全部完成！",
+      "description": "欢迎加入。随时可以回到 {host}。",
+      "goToDashboard": "前往主页"
+    },
+    "navigation": {
+      "previous": "上一步",
+      "next": "下一步",
+      "saving": "保存中…"
+    }
+  },
+  "usernameSetup": {
+    "title": "选择你的用户名",
+    "description": "你需要设置用户名才能使用此网站。这将用于你的公开个人资料网址，且必须是唯一的。",
+    "usernameLabel": "用户名",
+    "placeholder": "输入你的用户名",
+    "checking": "检查可用性中...",
+    "available": "用户名可用！",
+    "rules": {
+      "length": "1-32 个字符",
+      "characters": "仅限英数字、破折号 (-) 和下划线 (_)",
+      "profileUrl": "将用于你的个人资料网址：/profile/{username}"
+    },
+    "setUsername": "设置用户名",
+    "settingUsername": "设置用户名中...",
+    "success": "用户名设置成功！",
+    "enterUsername": "请输入用户名",
+    "chooseAvailable": "请选择可用的用户名",
+    "validation": {
+      "format": "用户名必须是 1-32 个字符，仅包含英数字、破折号和下划线",
+      "taken": "此用户名已被使用"
+    },
+    "changeTitle": "更改用户名",
+    "changeDescription": "选择一个新的用户名。你的个人主页 URL 将会改变。",
+    "changeButton": "更改",
+    "sameAsCurrent": "与当前用户名相同。",
+    "newProfileUrl": "新个人主页 URL：/profile/{username}",
+    "changeSuccess": "用户名已成功更新。",
+    "changingUsername": "保存中...",
+    "newUsernameLabel": "新用户名"
+  },
+  "invites": {
+    "title": "管理邀请",
+    "description": "为新用户创建和管理邀请链接。\n你可以在 3 天内邀请 3 位用户。邀请链接在 7 天后过期。\n请只邀请你信任或熟悉的玩家，你可能需要为他们的行为负责。",
+    "quota": "配额：",
+    "quotaExplanation": {
+      "available": "虚线圆圈 = 可用名额",
+      "active": "实线边框 = 有效邀请",
+      "claimed": "实心圆圈 = 最近使用的邀请"
+    },
+    "yourInvitations": "你的邀请",
+    "createInvite": "创建邀请",
+    "creating": "创建中...",
+    "loading": "加载邀请中...",
+    "noInvitations": "尚未创建任何邀请。",
+    "status": {
+      "activeCode": "有效代码",
+      "claimedCode": "已使用代码",
+      "expiredCode": "过期代码",
+      "revokedCode": "已撤销代码"
+    },
+    "statusDetails": {
+      "activeUntil": "有效至 {date}",
+      "claimedBy": "由 {name} 于 {date} 使用",
+      "expiredOn": "于 {date} 过期",
+      "revoked": "已撤销",
+      "unknownStatus": "未知状态"
+    },
+    "actions": {
+      "copyLink": "复制链接",
+      "revoke": "撤销",
+      "revoking": "撤销中..."
+    },
+    "messages": {
+      "created": "邀请创建成功！",
+      "linkCopied": "邀请链接已复制到剪贴板！",
+      "createFailed": "创建邀请失败",
+      "revoked": "邀请撤销成功！",
+      "revokeFailed": "撤销邀请失败",
+      "copyFailed": "复制到剪贴板失败",
+      "clipboardNotSupported": "不支持剪贴板",
+      "quotaExceeded": "你在 3 天内只能创建 3 个有效邀请",
+      "newUserRestriction": "新用户必须等待 3 天才能创建邀请",
+      "newUserRestrictionDetails": "你可以在 {date} 之后创建邀请"
+    }
+  },
+  "acceptInvitation": {
+    "title": "tomomai ともマイ",
+    "subtitle": "你已被邀请加入 tomomai ともマイ 社群",
+    "validating": "验证邀请中...",
+    "redirecting": "重新导向至首页...",
+    "invited": "你已被邀请！",
+    "invitedBy": "{name} 邀请你加入 tomomai ともマイ",
+    "expiresOn": "邀请于 {date} 过期",
+    "acceptAndSignUp": "接受邀请并注册",
+    "backToHome": "返回首页",
+    "alreadyLoggedIn": "欢迎！你已经登录了。",
+    "authError": "验证过程中发生错误。请再试一次。",
+    "errors": {
+      "invalidCode": "无效的邀请代码",
+      "revoked": "此邀请已被撤销",
+      "alreadyUsed": "此邀请已被使用",
+      "expired": "此邀请已过期",
+      "ownCode": "你不能使用自己的邀请代码",
+      "validationFailed": "邀请验证失败"
+    }
+  },
+  "db": {
+    "callout": {
+      "title": "想查询数据库吗？",
+      "subtitle": "无需登录即可查看歌曲数据库！",
+      "description": "tomomai ともマイ DB 是一个公开的 maimai 谱面、机厅及更多maimai信息的数据库"
+    },
+    "beta": {
+      "title": "测试功能",
+      "description": "数据库功能目前处于测试阶段。部分数据可能不完整或不准确。"
+    },
+    "types": {
+      "songs": "歌曲",
+      "calculator": "计算",
+      "stats": "统计",
+      "posts": "更新日志",
+      "events": "活动"
+    },
+    "songs": {
+      "metadata": {
+        "title": "歌曲数据库 | maimai DX",
+        "description": "浏览和搜索所有 maimai DX 歌曲。按类型、分类和版本筛选。查看歌曲详情、难度等级和区域开放情况。",
+        "songTitle": "{songName} - {artist} | maimai DX",
+        "songDescription": "查看《{songName}》（{artist}）的详细信息。{chartType} 谱面 · {genre}",
+        "songOgDescription": "查看《{songName}》（{artist}）的详细信息。",
+        "songFallbackTitle": "歌曲详情 | maimai DX",
+        "songFallbackDescription": "查看此 maimai DX 歌曲的详细信息，包括难度等级和地区可用性。",
+        "chartTypeDx": "DX",
+        "chartTypeStandard": "标准",
+        "jsonLdChartDescription": "来自 maimai DX 的 {chartType} 谱面"
+      },
+      "title": "歌曲数据库 | maimai DX",
+      "heading": "歌曲数据库",
+      "searchPlaceholder": "搜索歌曲、艺术家、分类...",
+      "noSongsFound": "未找到歌曲",
+      "tryAdjustingSearch": "尝试调整搜索条件",
+      "noSongsAvailable": "无可用歌曲",
+      "detail": {
+        "title": "歌曲详情",
+        "artist": "艺术家",
+        "detailsFor": "{songName} 详情",
+        "charts": "谱面",
+        "availability": "区域",
+        "yourScore": "你的成绩",
+        "achievement": "达成率",
+        "rating": "R 值",
+        "chartDesigner": "谱面设计者",
+        "bpm": "BPM",
+        "added": "添加版本",
+        "share": "分享",
+        "youtube": "YouTube 搜索",
+        "viewCharts": "查看谱面",
+        "viewDetails": "在 tomomai DB 查看详情",
+        "summary": "{songName} 是由 {artist} 制作的 maimai でらっくす {chartType} 谱面，属于 {genre} 类型，于 {versionName} 收录。难度范围为 {minLevel} 至 {maxLevel}，共 {chartCount, plural, =1 {# 张谱面} other {# 张谱面}}{bpmFragment}。",
+        "summaryBpmFragment": "（BPM {bpm}）"
+      },
+      "filter": {
+        "type": "类型",
+        "genre": "分类",
+        "addedVersion": "添加版本",
+        "std": "STD",
+        "dx": "DX",
+        "sort": "排序",
+        "sortVersionDesc": "版本 (从新到旧)",
+        "sortVersionAsc": "版本 (从旧到新)",
+        "sortLevelAsc": "等级 (从低到高)",
+        "sortLevelDesc": "等级 (从高到低)",
+        "level": "等级",
+        "groupBy": "分组依据",
+        "noteDesigner": "谱面设计者",
+        "groups": {
+          "none": "无",
+          "noteDesigner": "谱面设计者",
+          "levelAsc": "等级 (从低到高)",
+          "levelDesc": "等级 (从高到低)",
+          "versionAsc": "版本 (从旧到新)",
+          "versionDesc": "版本 (从新到旧)",
+          "genre": "分类",
+          "artist": "艺术家"
+        }
+      }
+    },
+    "common": {
+      "difficulty": "难度",
+      "level": "等级",
+      "notes": "物量",
+      "chartDesigner": "谱面设计者",
+      "bpm": "BPM",
+      "added": "添加版本"
+    },
+    "posts": {
+      "list": {
+        "title": "更新日志",
+        "description": "tomomai 的最新更新与变更。",
+        "noPosts": "暂无文章。"
+      },
+      "dialog": {
+        "dismiss": "关闭",
+        "readMore": "阅读更多"
+      },
+      "aiTranslationHint": {
+        "title": "AI 辅助翻译",
+        "description": "本文由 AI 辅助翻译，内容可能存在瑕疵。如发现任何问题，欢迎提交修正！"
+      }
+    },
+    "stats": {
+      "title": "全局统计",
+      "description": "探索所有被追踪玩家的 maimai DX 汇总统计：Rating 分布、热门称号、热门歌曲，以及随时间变化的游玩活动。",
+      "ratingDistribution": "R 值分布",
+      "playCountDistribution": "游玩次数分布",
+      "topTitles": "热门称号",
+      "topSongs": "热门歌曲",
+      "averageAchievementByLevel": "等级平均达成率",
+      "ratingVsPlayCount": "R 值 vs 游玩次数热力图",
+      "activeUsersOverTime": "活跃用户趋势",
+      "fetchesPerDay": "每日有同步的用户数",
+      "recentPlaysPerDay": "每日最近游玩数",
+      "ratingClimbByBand": "每 30 天平均 Rating 提升",
+      "newPlayersPerWeek": "每周新增追踪玩家",
+      "fetchActivityHeatmap": "按小时和星期划分的同步活动",
+      "playActivityHeatmap": "按小时和星期划分的游玩活动",
+      "heatmapTimezoneNote": "时间以 JST（UTC+9）显示，过去 90 天。",
+      "topSongsWindow": {
+        "label": "时间范围",
+        "all": "全部时间",
+        "90d": "最近 90 天",
+        "30d": "最近 30 天",
+        "7d": "最近 7 天"
+      },
+      "showAll": "显示全部 {count} 项",
+      "showLess": "收起",
+      "xAxis": {
+        "rating": "R 值",
+        "playCount": "游玩次数",
+        "level": "等级",
+        "date": "日期",
+        "days": "天数",
+        "timePeriod": "时间范围",
+        "lastDay": "过去 1 天",
+        "lastDays": "过去 {days} 天",
+        "week": "周",
+        "currentRatingBand": "当前 Rating"
+      },
+      "yAxis": {
+        "percentage": "占比",
+        "achievement": "达成率",
+        "count": "用户数",
+        "activeUsers": "活跃用户",
+        "usersWithFetches": "有同步的用户",
+        "recentPlays": "游玩数",
+        "newPlayers": "新增玩家",
+        "ratingPer30d": "每 30 天获得 Rating",
+        "playsPer30d": "每 30 天游玩次数"
+      },
+      "table": {
+        "rank": "排名",
+        "title": "称号",
+        "song": "歌曲",
+        "percentage": "占比",
+        "count": "数"
+      },
+      "region": {
+        "intl": "国际服",
+        "jp": "日本服"
+      }
+    },
+    "events": {
+      "active": "进行中",
+      "back": "返回",
+      "description": "浏览所有 maimai 区域活动及其奖励",
+      "distance": "距离",
+      "ended": "已结束",
+      "noEvents": "未找到活动。",
+      "period": "期间",
+      "reward": "奖励",
+      "search": "搜索活动...",
+      "selectEvent": "选择一个活动以查看详情",
+      "steps": "步数",
+      "title": "区域活动",
+      "type": "类型",
+      "upcoming": "即将开始",
+      "stepTypes": {
+        "frame": "底板",
+        "song": "乐曲",
+        "nameplate": "名牌板",
+        "present": "礼物",
+        "icon": "头像",
+        "title": "称号",
+        "tourMember": "旅伴",
+        "perfectChallenge": "Perfect Challenge 乐曲",
+        "kaleidxscope": "KALEIDXSCOPE"
+      }
+    }
+  },
+  "theme": {
+    "description": "选择界面的色彩主题。",
+    "groups": {
+      "simple": "Simple",
+      "amaranth": "Amaranth",
+      "blue": "Blue",
+      "brown": "Brown",
+      "emerald": "Emerald",
+      "grass": "Grass",
+      "purple": "Purple",
+      "rose": "Rose",
+      "gold": "Gold",
+      "pink": "Pink"
+    },
+    "title": "主题"
+  },
+  "fetchToast": {
+    "header": {
+      "pending": "导入数据中...",
+      "completed": "导入完成",
+      "failed": "导入失败"
+    },
+    "states": {
+      "connecting": "连接中...",
+      "connected": "已连接",
+      "login": "已登录",
+      "playerData": "已导入玩家数据",
+      "songDataBasic": "已导入 BASIC 成绩",
+      "songDataAdvanced": "已导入 ADVANCED 成绩",
+      "songDataExpert": "已导入 EXPERT 成绩",
+      "songDataMaster": "已导入 MASTER 成绩",
+      "songDataRemaster": "已导入 Re:MASTER 成绩",
+      "songDataUtage": "已导入 UTAGE 成绩",
+      "recentSongs": "已导入最近游玩记录",
+      "hiddenSongs": "已导入隐藏歌曲",
+      "albumData": "已导入相册数据"
+    }
+  }
+}

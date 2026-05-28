@@ -1,0 +1,128 @@
+{
+  "common": {
+    "language": "Language"
+  },
+  "settings": {
+    "language": {
+      "auto": "Auto-detect",
+      "en": "English (US)",
+      "en-GB": "English (UK)",
+      "ja": "日本語",
+      "zh-TW": "繁體中文 (台灣)",
+      "zh-HK": "繁體中文 (香港)",
+      "zh-CN": "简体中文 (中国大陆)",
+      "zh-SG": "简体中文 (新加坡, 马来西亚)",
+      "ko": "한국어 (AI 번역)"
+    }
+  },
+  "guess": {
+    "meta": {
+      "title": "tomomai · Guess The Song",
+      "description": "Guess today's maimai song from progressive cover hints. New song every day at JST midnight.",
+      "titleForDate": "tomomai · Guess The Song · {date}",
+      "descriptionForDate": "Replay the {date} maimai song guessing puzzle."
+    },
+    "pastBanner": {
+      "text": "You're replaying the puzzle from {date}.",
+      "button": "Back to today"
+    },
+    "notFound": {
+      "title": "Page not found",
+      "description": "We couldn't find what you were looking for. The puzzle for that date may not exist yet.",
+      "button": "Back to today's puzzle"
+    },
+    "input": {
+      "placeholder": "Type a song name…"
+    },
+    "buttons": {
+      "submit": "Submit",
+      "nextHint": "Next hint",
+      "giveUp": "Give up"
+    },
+    "comeBack": "Come back tomorrow for a new song.",
+    "share": {
+      "button": "Share result",
+      "copied": "Copied!",
+      "manualPromptTitle": "Copy the text below"
+    },
+    "hints": {
+      "pixelate": {
+        "label": "pixelate · level {level}",
+        "alt": "Pixelated cover art"
+      },
+      "blinds": {
+        "label": "blinds · level {level}",
+        "alt": "Vertical-blind cover art"
+      },
+      "blinds-h": {
+        "label": "h-blinds · level {level}",
+        "alt": "Horizontal-blind cover art"
+      },
+      "crop": {
+        "label": "crop · level {level}",
+        "alt": "Single-cell crop of the cover"
+      },
+      "shuffle-move": {
+        "label": "shuffle · level {level}",
+        "alt": "Shuffled tiles of the cover"
+      },
+      "posterize": {
+        "label": "posterize · level {level}",
+        "alt": "Posterised cover art"
+      },
+      "edge-detect": {
+        "label": "edges · level {level}",
+        "alt": "Edge-detected cover art"
+      },
+      "length": {
+        "label": "Title length",
+        "exact": "{n} characters",
+        "range": "{min} – {max} characters"
+      },
+      "difficulty": {
+        "label": "Difficulty",
+        "values": {
+          "basic": "Basic",
+          "advanced": "Advanced",
+          "expert": "Expert",
+          "master": "Master",
+          "remaster": "Re:MASTER",
+          "utage": "Utage"
+        }
+      },
+      "bpm": {
+        "label": "BPM"
+      },
+      "genre": {
+        "label": "Genre"
+      },
+      "game-version": {
+        "label": "Added in"
+      },
+      "artist": {
+        "label": "Artist"
+      },
+      "note-designer": {
+        "label": "Chart designer"
+      },
+      "audio": {
+        "label": "Audio clip",
+        "play": "Play clip",
+        "pause": "Pause clip",
+        "duration": "{seconds, plural, =1 {1 second} other {# seconds}}",
+        "step": "Clue {current} / {total}"
+      }
+    },
+    "reveal": {
+      "answer": "Answer"
+    }
+  },
+  "heardle": {
+    "meta": {
+      "title": "tomomai · Heardle",
+      "description": "Guess today's maimai song from a short audio clip. New song every day at JST midnight.",
+      "titleForDate": "tomomai · Heardle · {date}",
+      "descriptionForDate": "Replay the {date} maimai Heardle puzzle."
+    }
+  }
+}

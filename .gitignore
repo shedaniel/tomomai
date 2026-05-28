@@ -1,29 +1,32 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies
-/node_modules
-/.pnp
+node_modules
+.pnp
 .pnp.*
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/versions
 
-# testing
-/coverage
+# monorepo package build outputs
+packages/*/dist
+packages/*/tsconfig.tsbuildinfo
 
-# next.js
-/.next/
-/out/
+# Generated at prebuild/predev from node_modules/altcha
+apps/main/public/altcha/argon2id.js
+
+# next.js (any app)
+.next/
+out/
 
 # production
-/build
+build/
+
+# testing
+coverage/
 
 # misc
 .DS_Store
 *.pem
 .idea/
+.cache/
 
 # debug
 npm-debug.log*
@@ -31,24 +34,23 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
-.env*
+# env files
+.env
+.env.*
+!.env.example
 
 # vercel
 .vercel
 
-# cn proxy: deploy.sh renders Caddyfile.tmpl → Caddyfile.rendered locally
-# before scp'ing it. Cleaned up on EXIT, but ignore so a crashed run
-# doesn't leak prompted values (ACME email etc.) into git.
-/cn/Caddyfile.rendered
-/cn/Caddyfile.local
-
 # typescript
 *.tsbuildinfo
 next-env.d.ts
-.env*.local
 
-# resources
-/imgs/**/*.**
-!/imgs/**/*.afphoto
-/public/res/preloaded/*.gz
+# main-site resources
+apps/main/imgs/**/*.**
+!apps/main/imgs/**/*.afphoto
+apps/main/public/res/preloaded/*.gz
+
+# workspace-level imgs (legacy location)
+imgs/**/*.**
+!imgs/**/*.afphoto
