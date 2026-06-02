@@ -1,0 +1,112 @@
+Terms of Service for tomomai
+
+Last Updated: June 1, 2026
+
+1. Acceptance of Terms
+
+Welcome to tomo-services (collectively, the "Service"). The Service is provided by S.D. Studios ("Company," "we," or "us"), a proprietary entity registered in the Hong Kong Special Administrative Region.
+
+"tomo-services" means the tomomai.lol website and its subdomains, together with our current and future rhythm game trackers (such as tomomai), mini-games (such as Heardle-style and guessing games), analytics dashboards, and the developer API, in each case whether accessed directly or through an authorized application.
+
+By accessing or using any part of the Service, you agree to be bound by these Terms of Service ("TOS") and our Privacy Policy. If you do not agree to these TOS, you must not access or use the Service.
+
+2. Description of Service
+
+The Service is a data aggregation and display ecosystem for rhythm games. A core function of the Service is to allow users who log in to provide their rhythm game network login details or cookies (for example, credentials for maimai DX NET, CHUNITHM, or ONGEKI, operated by SEGA). We use this information to scrape and display their personal scores, performance, and related game data for their personal, non-commercial use. The Service also provides related tools such as mini-games, analytics, and a developer API.
+
+S.D. Studios is an independent operator and is not affiliated with, endorsed by, or officially connected to SEGA or any other rhythm game operator.
+
+3. User Accounts and Access
+
+3.1 Eligibility
+To use the Service, you must be the minimum age required by the relevant rhythm game network's policy for accessing their services and data. By using the Service, you confirm you meet this eligibility requirement.
+
+Geographic Scope. The Service is operated from the Hong Kong Special Administrative Region and is hosted in Japan. Our data practices are built to the standards of the Hong Kong Personal Data (Privacy) Ordinance (PDPO) and the European Union General Data Protection Regulation (GDPR). When you exercise your legal rights, we honor the rights afforded by your actual country of residence. You remain responsible for ensuring that your access to and use of the Service is lawful in the place from which you access it. If your local laws restrict or prohibit access to a service of this nature, you access the Service at your own discretion and responsibility.
+
+3.2 Account Creation
+Access to the Service requires an account. You may create an account using a supported third-party login provider (Discord is currently the primary provider) or a supported passwordless or passkey method. We may add, change, or remove supported login methods from time to time. When you create an account, you authorize us to collect and use the data described in Section 4 and in our Privacy Policy.
+
+3.3 Third-Party Account Access (Rhythm Game Networks)
+- You acknowledge and agree that providing your rhythm game network login details or cookies to the Service allows us to access your personal data hosted by that network operator on your behalf.
+- You must ensure that providing this information to the Service does not violate the terms of service of the relevant rhythm game network or its operator.
+- You assume all risks and liabilities associated with sharing your rhythm game network login details or cookies with the Service. We are not responsible for any actions taken by a network operator (including, but not limited to, account suspension or termination) as a result of your use of the Service.
+
+3.4 Developer Accounts and API Keys
+If you register as a developer or generate API keys to access the Service programmatically:
+- You are solely responsible for the security and confidentiality of your client credentials, API keys, and secrets. You must not share them or embed them where they can be extracted by untrusted parties.
+- You must comply with current authorization standards, including OAuth 2.1 and PKCE, when integrating with our authorization servers.
+- You are responsible for all activity that occurs under your credentials.
+- We reserve the right to suspend or revoke your API keys or developer access at any time, including for API abuse, violation of these TOS, or any actual or suspected security breach.
+
+3.5 Third-Party OAuth Authorizations
+The Service allows you to authorize third-party applications to access your data on your behalf through an OAuth handshake.
+- When you authorize a third-party application, you enter into a separate relationship between you and that application's developer. That developer is an independent third party, and their handling of your data is governed by their own terms and privacy policy, not ours.
+- We make a best effort to surface, on the consent screen, the risks of granting access and the specific permissions or scopes an application is requesting, so that you can make an informed decision. This information is provided on an "as is" basis and without warranty.
+- Once your data has been transmitted to an authorized application, we disclaim all liability for that application's data handling, security, retention, or misuse of the data.
+- You may review and revoke previously authorized applications at any time from your account settings. Revoking access stops future data flow to that application but cannot recall data that has already been transmitted.
+
+4. Data Collection and Privacy
+
+Your privacy is governed by our Privacy Policy, which describes in detail the categories of data we collect (including identity and login data, rhythm game network data, developer data, user-generated content, and operational data) and how we use them. By using the Service, you authorize us to collect and store that data as described in the Privacy Policy.
+
+Data Deletion and Takeout Requests
+You have the right to request deletion or takeout of the personal data we hold. All such requests must be sent via email to the following designated legal contact: daniel@shedaniel.me. We will process these requests in accordance with applicable Hong Kong laws and international data protection standards.
+
+5. Intellectual Property and Licensing
+
+5.1 Service Source Code
+The source code for tomomai is an open-source project and is licensed under the GNU Affero General Public License (AGPL).
+
+- You may view, download, use, copy, modify, and distribute the source code in accordance with the terms of the AGPL.
+- The full text of the license can be found here: https://github.com/shedaniel/tomomai/blob/main/LICENSE
+
+5.2 Self-Hosting and Distinctions
+The AGPL license permits you to run, modify, and redistribute the source code. However, if you choose to self-host a modified or unmodified version of the source code, you agree to:
+
+- Clearly distinguish your instance from the official Service hosted by S.D. Studios.
+- Not represent your instance as "official," "affiliated with," or endorsed by S.D. Studios.
+- Ensure that your use of the name "tomomai" or other tomo-services names does not cause confusion regarding the origin or maintenance of the service.
+
+5.3 User Data (Scraped Content)
+The rhythm game network data displayed by the Service remains the intellectual property of the relevant network operator (for example, SEGA), and access to it is governed by your agreement with that operator. You are only authorized to view and use this data within the Service for your personal, non-commercial review.
+
+6. User-Generated Content
+
+The Service allows you to submit content, including your profile description and a custom profile icon or avatar ("User-Generated Content").
+
+- License: By submitting User-Generated Content, you grant S.D. Studios a non-exclusive, royalty-free, worldwide license to host, store, reproduce, and display that content for the purpose of operating and providing the Service. This license exists only to let us run the Service.
+- No Sale to Third Parties: We will not sell your User-Generated Content to third parties. The license above is for operating the platform only, not for resale.
+- Responsibility: You are solely responsible for the User-Generated Content you submit. We are not liable for content submitted by users.
+- Removal: We reserve the right to remove or disable any User-Generated Content at our discretion, including content that violates the Acceptable Use Policy below.
+- Deletion: User-Generated Content is treated as your content. It is deleted when your account is deleted. See the Privacy Policy (Your Rights) for how to request deletion.
+
+7. Acceptable Use Policy
+
+You agree not to use the Service to:
+- Violate any applicable local, national, or international law, including the laws of Hong Kong.
+- Attempt to hack, disrupt, damage, or gain unauthorized access to our underlying infrastructure, servers, databases, authorization servers, or hosting environment, regardless of the open-source nature of the software.
+- Interfere with or disrupt the integrity or performance of the Service as hosted by S.D. Studios.
+- Bypass, circumvent, or attempt to defeat any rate limits, quotas, or access controls applied to the Service or its API.
+- Operate scrapers, bots, or automated clients in a manner that disrupts or degrades our authorization servers or other infrastructure.
+- Sell, resell, sublicense, or otherwise commercialize data obtained through the API, except as expressly permitted by us in writing.
+
+8. Disclaimers and Limitation of Liability
+
+8.1 No Warranty
+The Service is provided on an "AS IS" and "AS AVAILABLE" basis, without warranties of any kind, either express or implied. We do not warrant that the Service will be uninterrupted, error-free, or free of viruses or other harmful components. We make no warranty regarding the accuracy, reliability, or completeness of the scraped rhythm game network data, as it depends on the third-party source.
+
+8.2 Limitation of Liability
+To the maximum extent permitted by applicable law, in no event shall S.D. Studios be liable for any indirect, incidental, special, consequential, or punitive damages, or any loss of profits or revenues, whether incurred directly or indirectly, or any loss of data, use, goodwill, or other intangible losses, resulting from (a) your use of or inability to use the Service; (b) any unauthorized access to or use of your rhythm game network login details or data; (c) any action or non-action taken by a rhythm game network operator as a result of your use of the Service; or (d) the handling, security, or misuse of your data by any third-party application you have authorized.
+
+Our total liability to you for any damages, losses, and causes of action shall not exceed the amount you have paid us, if any, in the last six (6) months. Since the Service is not a paid service, this limit is zero (0) Hong Kong Dollars.
+
+9. Termination
+We may terminate or suspend your access to the Service immediately, without prior notice or liability, for any reason whatsoever, including without limitation if you breach these Terms. Upon termination, your right to use the Service will cease immediately.
+
+10. Governing Law and Jurisdiction
+
+These Terms shall be governed by the laws of the Hong Kong Special Administrative Region (HKSAR), without regard to its conflict of law principles. You agree to submit to the exclusive jurisdiction of the courts located in Hong Kong to resolve any legal matter arising from these Terms. As described in Section 3.1, the Service is operated from Hong Kong and hosted in Japan, and you remain responsible for ensuring that your access is lawful in your own jurisdiction.
+
+11. Changes to Terms
+
+We reserve the right to modify or replace these TOS at any time. We will provide notice of material changes by updating the "Last Updated" date at the top of these TOS. Your continued use of the Service after any changes constitutes your acceptance of the new TOS.

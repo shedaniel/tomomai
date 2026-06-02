@@ -1,0 +1,102 @@
+Privacy Policy for tomomai
+
+Effective Date: February 20, 2026
+
+This Privacy Policy describes how S.D. Studios ("Company," "we," or "us"), the operator of the open-source project tomomai, collects, uses, stores, and protects personal data from users in Hong Kong and internationally.
+
+1. Data Controller Contact Information
+
+- Data Controller: S.D. Studios
+- Location: Hong Kong Special Administrative Region
+- Legal Contact for Data Requests: daniel@shedaniel.me
+
+2. Data We Collect and How We Collect It
+
+We collect two main categories of data, which are necessary for the Service's function:
+
+Identity/Login Data
+- Elements Collected: Discord username, profile picture, email address.
+- Source: Via Discord OAuth2 login.
+- Purpose: Account creation, identification, and communication.
+
+Third-Party Data (Sensitive)
+- Elements Collected: maimai DX NET login details/cookies, User ID, game scores, performance records, achievements.
+- Source: Directly from the user, used to scrape data from maimai DX NET (SEGA) on the user's behalf.
+- Purpose: To provide the core functionality of the Service (displaying game data).
+
+Operational Data
+- Elements Collected: IP addresses, request times, pages accessed.
+- Source: Vercel logs (our hosting provider).
+- Purpose: Service monitoring, security, debugging, and traffic analysis.
+
+3. Basis and Use of Your Personal Data
+
+Under the Hong Kong Personal Data (Privacy) Ordinance (PDPO), we process your data based on Consent and Legitimate Interests.
+
+Cookies and Local Storage
+We use session cookies and/or local storage to maintain your login session and preferences (including authentication and language settings). These are "essential" for the Service to function. We do not use cookies for third-party tracking or advertising.
+
+Consent
+- Usage: Using your maimai DX NET credentials to scrape and display your game data. By logging in and providing these details, you explicitly consent to this processing.
+
+Legitimate Interest
+- Usage: Operational data (Vercel logs) is processed to maintain service security, stability, and troubleshoot issues necessary for the operation of our services.
+
+Specific Data Uses:
+
+- Service Delivery: To fetch, store, and display your personal maimai DX NET statistics.
+- User Profiles (Optional Public Setting): Users may voluntarily set their profile to public. This action makes their tomomai profile visible to anyone and may be indexed by public search engines (e.g., Google, Bing).
+- Aggregation: We use scraped data to generate aggregated and anonymized statistics (e.g., total number of songs played across all users). This aggregated data is publicly available on the website and does not contain any personally identifiable information.
+
+4. Data Storage and Security
+
+4.1 Security Measures
+We take reasonable steps to protect the personal data we hold. Specifically, the sensitive maimai DX NET login details/cookies are stored on secure servers located in Japan and protected using AES-256-GCM encryption.
+
+However, you acknowledge that no method of transmission over the Internet or method of electronic storage is 100% secure. You provide your data at your own risk.
+
+In the unlikely event of a data breach that compromises your personal data, we will notify you via the email address associated with your account in accordance with applicable laws.
+
+4.2 Data Retention
+We retain all collected personal data, including Discord data and scraped maimai DX NET data, indefinitely, or until you request its deletion. This allows you to maintain your full performance history on the Service.
+
+5. Sharing of Personal Data
+
+We do not share identifiable personal data with third parties for marketing or other commercial purposes.
+
+The only instances of data disclosure are:
+
+- Service Providers: We use compute and cloud database providers for hosting and storage. Your data is primarily processed and stored in Japan.
+- Public Profiles: If you opt-in to make your profile public, that data is shared with the public, including search engines.
+- Business Transfers: If S.D. Studios is involved in a merger, acquisition, or asset sale, your Personal Data may be transferred.
+- Legal Compliance: If required by law, court order, or governmental regulation in Hong Kong or another applicable jurisdiction.
+
+6. Your Rights (Data Access and Deletion)
+
+As a user, you have rights regarding your personal data under the PDPO and international standards. You have the right to:
+
+1. Request Access (Data Portability): Obtain a copy of your personal data we hold in a structured, machine-readable format (Data Takeout).
+2. Request Correction: Request the correction of any inaccurate data. (Note: Most data is scraped from SEGA, so primary corrections should be made there).
+3. Request Erasure (Deletion): Request the permanent deletion of your account and all associated data.
+
+All requests for data access or deletion must be submitted via email to: daniel@shedaniel.me. We will respond to your request within the time frames required by Hong Kong law.
+
+7. Notice to Users in the European Economic Area (EEA)
+
+If you are a resident of the EEA, you have additional rights under the General Data Protection Regulation (GDPR).
+
+Legal Basis for Processing
+We process your personal data based on the legal grounds of Consent (when you log in) and Legitimate Interests (for security and operations).
+
+Your Additional Rights
+In addition to the rights listed in Section 6, you have the right to:
+- Restrict Processing: Request that we limit the processing of your personal data.
+- Object to Processing: Object to our processing of your data based on legitimate interests.
+- Lodge a Complaint: You have the right to lodge a complaint with a supervisory authority in your country of residence if you believe we have violated your data protection rights.
+
+International Transfers
+Our Service infrastructure is located in Japan, a country recognized by the European Commission as providing an adequate level of data protection. However, the data controller (S.D. Studios) is located in Hong Kong. By using the Service, you acknowledge that your data will be processed in Japan and accessed from Hong Kong for administration purposes.
+
+8. Changes to This Privacy Policy
+
+We may update this Privacy Policy from time to time to reflect changes in our practices or legal requirements. We will notify you of any material changes by posting the new Privacy Policy on this page and updating the "Effective Date" at the top.

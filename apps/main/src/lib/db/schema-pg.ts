@@ -29,6 +29,7 @@ export const eventTypeEnum = pgEnum("event_type", EVENT_TYPE_ENUM);
 export const eventStateEnum = pgEnum("event_state", EVENT_STATE_ENUM);
 export const storeStatusEnum = pgEnum("store_status", STORE_STATUS_ENUM);
 export const titleTypeEnum = pgEnum("title_type", TITLE_TYPE_ENUM);
+export const legalDocTypeEnum = pgEnum("legal_doc_type", ["tos", "privacy"]);
 
 // Existing auth tables
 export const user = pgTable("user", {
@@ -515,4 +516,17 @@ export const oauthConsent = pgTable("oauthConsent", {
 }, (table) => [
   index("oauth_consent_clientid_idx").on(table.clientId),
   index("oauth_consent_userid_idx").on(table.userId),
+]);
+
+// The latest accepted version per doc type is MAX(version) grouped by docType
+// (see getAcceptedPolicyVersions in lib/legal-acceptance.ts).
+export const policyAcceptance = pgTable("policyAcceptance", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(), // internal only
+  userId: text("userId").notNull().references(() => user.id, { onDelete: "cascade" }),
+  docType: legalDocTypeEnum("docType").notNull(),
+  version: text("version").notNull(), // "YYYYMMDD" accepted
+  acceptedAt: timestamp("acceptedAt", { precision: 0 }).notNull(),
+}, (table) => [
+  index("policy_acceptance_userid_idx").on(table.userId),
+  index("policy_acceptance_user_doc_idx").on(table.userId, table.docType),
 ]);

@@ -9,6 +9,8 @@ import { useLocale, useTranslations } from "next-intl";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { authClient, armCaptchaForPath } from "@/lib/auth-client";
 import { useReauthGuard } from "@/lib/security/use-reauth-guard";
+import { useNewPolicyGuard } from "@/lib/security/use-new-policy-guard";
+import { composeGuards } from "@/lib/security/compose-guards";
 import { toast } from "sonner";
 
 type Passkey = {
@@ -69,11 +71,17 @@ export function PasskeysSection() {
       const result = await authClient.passkey.addPasskey();
       if (result?.error) throw new Error(result.error.message || t("addError"));
     },
-    ...useReauthGuard({
-      callbackURL: "/settings",
-      reauthMessage: t("reauthRequired"),
-      fallback: t("addError"),
-    }),
+    // Policy guard first (accept the new TOS/PP without navigating), then the
+    // fresh-session reauth bounce. Adding a passkey requires the 2026-06-01
+    // policy revision; the server (auth.ts) also enforces this.
+    ...composeGuards(
+      useNewPolicyGuard({ required: { tos: "20260601", privacy: "20260601" } }),
+      useReauthGuard({
+        callbackURL: "/settings",
+        reauthMessage: t("reauthRequired"),
+        fallback: t("addError"),
+      }),
+    ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["passkeys"] });
       toast.success(t("addSuccess"));

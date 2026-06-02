@@ -18,6 +18,9 @@ import { isSessionFresh } from "@/lib/security/fresh-session";
 import { isSafeRedirectUrl, isSafeWebUrl, isHttpsUrl } from "@/lib/security/oauth-url";
 import { mirrorRemoteAvatarToR2, isR2AvatarUrl } from "@/lib/r2";
 import { useApiKeyCreation, useOauthAppCreation } from "@/lib/flags";
+import { getCurrentLegalVersions } from "@/lib/legal";
+import { getAcceptedPolicyVersions } from "@/lib/legal-acceptance";
+import { NEW_POLICY_REQUIRED_CODE } from "@/lib/security/policy-gate";
 
 async function mirrorAvatarForSignup(
   rawUrl: string | null | undefined,
@@ -141,6 +144,16 @@ const FRESH_REQUIRED_PATHS = new Set<string>([
   "/revoke-session",
   "/revoke-other-sessions",
 ]);
+
+// Routes that require the user to have accepted a specific (newer) policy
+// version before proceeding. Enforced server-side regardless of caller; the
+// client catches NEW_POLICY_REQUIRED and launches the consent dialog. Adding a
+// passkey requires the 2026-06-01 revision. Versions are "YYYYMMDD" strings,
+// compared lexicographically (chronological).
+const POLICY_REQUIRED_PATHS: Record<string, { tos: string; privacy: string }> = {
+  "/passkey/generate-register-options": { tos: "20260601", privacy: "20260601" },
+  "/passkey/verify-registration": { tos: "20260601", privacy: "20260601" },
+};
 
 // OAuth client mutation paths. Gated by the `oauthAppCreation` flag until
 // v1 ships — UI may render, but no client can be created, rotated, or
@@ -449,6 +462,24 @@ export const auth = betterAuth({
         throw new APIError("NOT_FOUND", { message: "Not Found" });
       }
 
+      // New-policy gate. Checked BEFORE the fresh-session gate so the user
+      // accepts the updated policy (no navigation) before any reauth bounce
+      // (which navigates away). Applies regardless of caller.
+      const requiredPolicy = POLICY_REQUIRED_PATHS[ctx.path];
+      if (requiredPolicy) {
+        const session = await getSessionFromCtx(ctx);
+        if (!session?.user) {
+          throw new APIError("UNAUTHORIZED", { message: "Authentication required" });
+        }
+        const accepted = await getAcceptedPolicyVersions(session.user.id);
+        if (
+          (accepted.tos ?? "") < requiredPolicy.tos ||
+          (accepted.privacy ?? "") < requiredPolicy.privacy
+        ) {
+          throw new APIError("FORBIDDEN", { message: NEW_POLICY_REQUIRED_CODE });
+        }
+      }
+
       // Fresh-session gate for sensitive routes. Applies regardless of caller
       // (our tRPC router, the userscript, or a direct curl with a stolen cookie).
       if (FRESH_REQUIRED_PATHS.has(ctx.path)) {
@@ -702,6 +733,22 @@ export const auth = betterAuth({
             } else {
               console.log(`No invitation code found in after hook for user ${user.id}`);
             }
+          }
+
+          // Seed policy acceptance for the new user. The consent dialog is the
+          // only path that sets requestSignUp: true (login-screen.tsx
+          // handleConsentGiven), so a brand-new user has just agreed to the
+          // current versions. Best-effort: a failure must not break signup; the
+          // consent gate re-prompts any user whose acceptance was not recorded.
+          try {
+            const currentVersions = getCurrentLegalVersions();
+            const acceptedAt = new Date();
+            await db.insert(schema.policyAcceptance).values([
+              { userId: user.id, docType: "tos", version: currentVersions.tos, acceptedAt },
+              { userId: user.id, docType: "privacy", version: currentVersions.privacy, acceptedAt },
+            ]);
+          } catch (error) {
+            logger.error({ error, context: "policy-seed", userId: user.id }, "Failed to seed policy acceptance");
           }
         },
       },

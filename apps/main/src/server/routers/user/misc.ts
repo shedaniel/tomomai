@@ -1,6 +1,4 @@
 import { protectedProcedure, publicProcedure, router } from '@/lib/trpc';
-import { readFile } from 'fs/promises';
-import { join } from 'path';
 import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
 import {
@@ -159,21 +157,5 @@ export const miscRouter = router({
           message: 'Failed to verify nickname. Please try again later.',
         });
       }
-    }),
-
-  getPolicies: publicProcedure
-    .query(async () => {
-      const tosPath = join(process.cwd(), 'public', 'tos');
-      const privacyPath = join(process.cwd(), 'public', 'privacy');
-
-      const [tosContent, privacyContent] = await Promise.all([
-        readFile(tosPath, 'utf-8'),
-        readFile(privacyPath, 'utf-8'),
-      ]);
-
-      return {
-        tos: { content: tosContent },
-        privacy: { content: privacyContent },
-      };
     }),
 });
