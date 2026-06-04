@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 import { Card, CardContent } from "@tomomai/ui";
 import { triggerHaptic } from "@tomomai/ui/haptics";
 import { cn } from "@tomomai/ui/utils";
@@ -33,6 +34,29 @@ function modifierLabel(m: AudioModifier | undefined): string | null {
   return `pitch ${m.semitones > 0 ? "+" : "−"}${Math.abs(m.semitones)}`;
 }
 
+/** Human-readable name for an HTMLMediaElement error code. */
+const MEDIA_ERR_NAMES: Record<number, string> = {
+  1: "aborted",
+  2: "network",
+  3: "decode",
+  4: "src-not-supported",
+};
+
+/** Build a compact, technical description of an audio failure for the toast.
+ * Surfaces the media element's own MediaError when present (decode/format
+ * problems set this), otherwise the thrown error from `play()`. */
+function describeAudioError(el: HTMLAudioElement | null, thrown?: unknown): string {
+  const me = el?.error;
+  if (me) {
+    const name = MEDIA_ERR_NAMES[me.code] ?? `code ${me.code}`;
+    return me.message ? `${name} — ${me.message}` : name;
+  }
+  if (thrown instanceof Error) {
+    return thrown.message ? `${thrown.name}: ${thrown.message}` : thrown.name;
+  }
+  return thrown ? String(thrown) : "unknown error";
+}
+
 /**
  * Heardle audio hint card. Plays a clipped window (`durationSec`) of the
  * Apple Music preview starting from t=0. Each hint level reveals a longer
@@ -57,11 +81,12 @@ export function AudioHintCard({
   const [progress, setProgress] = useState(0); // 0..1 of playSec
   const [volume] = useVolume();
 
-  // The v2 route can serve Opus/WebM or AAC/MP4; Safari can't decode the
-  // former, so we negotiate the container client-side. SSR renders the bare
-  // `previewUrl` (no `?fmt`) and we resolve it after mount — keeping the
-  // initial markup identical avoids a hydration mismatch on the <audio> src.
-  const [src, setSrc] = useState(previewUrl);
+  // The v2 route serves Opus/WebM or AAC/MP4; Safari can't decode the former,
+  // so we negotiate the container client-side via canPlayType. We resolve the
+  // URL only after mount: the empty initial state is identical on server and
+  // client (no hydration mismatch) and, crucially, stops Safari from ever
+  // fetching the unplayable bare (webm) URL before the format is chosen.
+  const [src, setSrc] = useState("");
   useEffect(() => {
     setSrc(withAudioFormat(previewUrl));
   }, [previewUrl]);
@@ -101,11 +126,16 @@ export function AudioHintCard({
   const play = async () => {
     const a = audioRef.current;
     if (!a || !previewUrl) return;
-    a.currentTime = 0;
     try {
+      a.currentTime = 0;
       await a.play();
-    } catch {
-      // Autoplay policy or another race — ignore; user can re-click.
+    } catch (err) {
+      // Surface the failure so issues like Safari refusing the codec, an
+      // autoplay-policy block, or a failed fetch are visible instead of the
+      // button silently doing nothing.
+      toast.error(t("error", { detail: describeAudioError(a, err) }), {
+        id: "audio-error",
+      });
       return;
     }
     setPlaying(true);
@@ -140,9 +170,22 @@ export function AudioHintCard({
         {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
         <audio
           ref={audioRef}
-          src={src}
+          // Omit (rather than empty) when there's no clip: an empty src
+          // resolves to the page URL and would fire a bogus load error.
+          src={src || undefined}
           preload="auto"
           onEnded={stop}
+          onError={() => {
+            const a = audioRef.current;
+            // Ignore aborts — those come from our own src swap (format
+            // negotiation) or stop(), not a real failure. Surface genuine
+            // load/decode errors (bad fetch, unsupported codec). Shares an id
+            // with the play() catch so the two paths collapse into one toast.
+            if (!a?.error || a.error.code === a.error.MEDIA_ERR_ABORTED) return;
+            toast.error(t("error", { detail: describeAudioError(a) }), {
+              id: "audio-error",
+            });
+          }}
         />
 
         <div className="absolute top-2 right-2">
