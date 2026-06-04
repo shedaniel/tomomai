@@ -109,3 +109,9 @@ export function loadClip(url: string): Promise<AudioBuffer> {
   inflight.set(url, p);
   return p;
 }
+
+/** Whether a clip is already decoded and will play with no fetch/decode wait.
+ * Lets the UI skip the loading state for prewarmed clips (no spinner flicker). */
+export function isClipReady(url: string): boolean {
+  return decoded.has(url);
+}

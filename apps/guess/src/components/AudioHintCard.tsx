@@ -6,10 +6,10 @@ import { toast } from "sonner";
 import { Card, CardContent } from "@tomomai/ui";
 import { triggerHaptic } from "@tomomai/ui/haptics";
 import { cn } from "@tomomai/ui/utils";
-import { Play, Pause, RotateCcw } from "lucide-react";
+import { Play, Pause, RotateCcw, Loader2 } from "lucide-react";
 import { useVolume, volumeToAmplitude } from "@/lib/use-volume";
 import { withAudioFormat } from "@/lib/audio-format";
-import { getAudioContext, unlockAudio, loadClip } from "@/lib/audio-engine";
+import { getAudioContext, unlockAudio, loadClip, isClipReady } from "@/lib/audio-engine";
 import { VolumeControl } from "./VolumeControl";
 import type { AudioModifier } from "@/lib/heardle-config";
 
@@ -69,7 +69,12 @@ export function AudioHintCard({
   const gainRef = useRef<GainNode | null>(null);
   const startRef = useRef(0); // AudioContext.currentTime when playback began
   const rafRef = useRef<number | null>(null);
+  // Bumped on every stop/new play so an in-flight play() can tell it was
+  // cancelled (user pressed again, or the card changed) while it awaited the
+  // clip, and bail instead of starting stale audio.
+  const playTokenRef = useRef(0);
   const [playing, setPlaying] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState(0); // 0..1 of playSec
   const [volume] = useVolume();
 
@@ -93,8 +98,8 @@ export function AudioHintCard({
 
   const currentFmt = () => /[?&]fmt=([^&]+)/.exec(src)?.[1];
 
-  // Tear down the current playback graph and reset the UI.
-  const stop = () => {
+  // Tear down the audio graph without touching React state or the play token.
+  const teardownGraph = () => {
     const s = sourceRef.current;
     if (s) {
       s.onended = null; // prevent the natural-end handler from re-firing
@@ -112,7 +117,14 @@ export function AudioHintCard({
     }
     if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
     rafRef.current = null;
+  };
+
+  // User-facing stop: cancel any in-flight play(), tear down, reset the UI.
+  const stop = () => {
+    playTokenRef.current++;
+    teardownGraph();
     setPlaying(false);
+    setLoading(false);
     setProgress(0);
   };
 
@@ -147,11 +159,17 @@ export function AudioHintCard({
     // Synchronously, still inside the click gesture: unlock audio output so iOS
     // doesn't mute the first clip.
     unlockAudio(ctx);
+    const token = ++playTokenRef.current;
+    // Show the spinner only when the clip isn't decoded yet — prewarmed clips
+    // start instantly, so this avoids a flicker on the common path.
+    if (!isClipReady(src)) setLoading(true);
     try {
       if (ctx.state !== "running") await ctx.resume();
       const buffer = await loadClip(src);
+      // Bail if the user stopped/re-pressed or the card changed while we waited.
+      if (token !== playTokenRef.current) return;
 
-      stop(); // clear any prior graph before starting a new one
+      teardownGraph(); // clear any prior graph before starting a new one
       const source = ctx.createBufferSource();
       source.buffer = buffer;
       const gain = ctx.createGain();
@@ -170,6 +188,7 @@ export function AudioHintCard({
       // the audio and the progress ring always agree on the end.
       source.start(0, 0, playSec);
       startRef.current = ctx.currentTime;
+      setLoading(false);
       setPlaying(true);
 
       const tick = () => {
@@ -183,6 +202,7 @@ export function AudioHintCard({
       };
       rafRef.current = requestAnimationFrame(tick);
     } catch (err) {
+      if (token !== playTokenRef.current) return; // superseded; stay quiet
       // Surface failures (decode error, failed fetch, unsupported codec)
       // instead of the button silently doing nothing.
       toast.error(t("error", { detail: describeError(err, currentFmt()) }), {
@@ -194,7 +214,8 @@ export function AudioHintCard({
 
   const onPress = () => {
     triggerHaptic("medium");
-    if (playing) stop();
+    // While loading, a second press cancels (stop() bumps the play token).
+    if (playing || loading) stop();
     else play();
   };
 
@@ -221,6 +242,7 @@ export function AudioHintCard({
           type="button"
           onClick={onPress}
           disabled={disabled}
+          aria-busy={loading}
           aria-label={playing ? t("pause") : t("play")}
           className={cn(
             "relative h-24 w-24 rounded-full flex items-center justify-center transition-all",
@@ -258,7 +280,9 @@ export function AudioHintCard({
               style={{ transition: playing ? undefined : "stroke-dashoffset 200ms" }}
             />
           </svg>
-          {playing ? (
+          {loading ? (
+            <Loader2 className="h-9 w-9 relative animate-spin" />
+          ) : playing ? (
             <Pause className="h-10 w-10 relative" fill="currentColor" />
           ) : progress > 0 ? (
             <RotateCcw className="h-9 w-9 relative" />
