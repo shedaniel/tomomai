@@ -9,6 +9,7 @@ import { cn } from "@tomomai/ui/utils";
 import { Play, Pause, RotateCcw } from "lucide-react";
 import { useVolume, volumeToAmplitude } from "@/lib/use-volume";
 import { withAudioFormat } from "@/lib/audio-format";
+import { getAudioContext, unlockAudio, loadClip } from "@/lib/audio-engine";
 import { VolumeControl } from "./VolumeControl";
 import type { AudioModifier } from "@/lib/heardle-config";
 
@@ -34,27 +35,11 @@ function modifierLabel(m: AudioModifier | undefined): string | null {
   return `pitch ${m.semitones > 0 ? "+" : "−"}${Math.abs(m.semitones)}`;
 }
 
-/** Human-readable name for an HTMLMediaElement error code. */
-const MEDIA_ERR_NAMES: Record<number, string> = {
-  1: "aborted",
-  2: "network",
-  3: "decode",
-  4: "src-not-supported",
-};
-
-/** Build a compact, technical description of an audio failure for the toast.
- * Surfaces the media element's own MediaError when present (decode/format
- * problems set this), otherwise the thrown error from `play()`. */
-function describeAudioError(el: HTMLAudioElement | null, thrown?: unknown): string {
-  // Tag with the negotiated container so a lingering failure says which path
-  // (webm vs mp4) was tried.
-  const fmt = /[?&]fmt=([^&]+)/.exec(el?.currentSrc ?? "")?.[1];
+/** Compact, technical description of a playback failure for the toast. Tagged
+ * with the negotiated container so a lingering failure says which path (webm
+ * vs mp4) was tried. */
+function describeError(thrown: unknown, fmt?: string): string {
   const suffix = fmt ? ` (fmt=${fmt})` : "";
-  const me = el?.error;
-  if (me) {
-    const name = MEDIA_ERR_NAMES[me.code] ?? `code ${me.code}`;
-    return (me.message ? `${name} — ${me.message}` : name) + suffix;
-  }
   if (thrown instanceof Error) {
     return (thrown.message ? `${thrown.name}: ${thrown.message}` : thrown.name) + suffix;
   }
@@ -64,7 +49,8 @@ function describeAudioError(el: HTMLAudioElement | null, thrown?: unknown): stri
 /**
  * Heardle audio hint card. Plays a clipped window (`durationSec`) of the
  * Apple Music preview starting from t=0. Each hint level reveals a longer
- * window; same URL across levels so playback is instant on re-press.
+ * window; clips are decoded once and replayed from a buffer (see
+ * `lib/audio-engine.ts`) so playback is instant and reliable on iOS.
  */
 export function AudioHintCard({
   previewUrl,
@@ -78,48 +64,51 @@ export function AudioHintCard({
   const modLabel = modifierLabel(modifier);
   const playSec = audibleSec ?? durationSec;
   const t = useTranslations("guess.hints.audio");
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  const sourceRef = useRef<AudioBufferSourceNode | null>(null);
+  const gainRef = useRef<GainNode | null>(null);
+  const startRef = useRef(0); // AudioContext.currentTime when playback began
   const rafRef = useRef<number | null>(null);
   const [playing, setPlaying] = useState(false);
   const [progress, setProgress] = useState(0); // 0..1 of playSec
   const [volume] = useVolume();
 
   // The v2 route serves Opus/WebM or AAC/MP4; Safari can't decode the former,
-  // so we negotiate the container client-side via canPlayType. We resolve the
-  // URL only after mount: the empty initial state is identical on server and
-  // client (no hydration mismatch) and, crucially, stops Safari from ever
-  // fetching the unplayable bare (webm) URL before the format is chosen.
+  // so we negotiate the container client-side via canPlayType. Resolve the URL
+  // only after mount: the empty initial state is identical on server and client
+  // (no hydration mismatch) and keeps Safari from fetching an unplayable format.
   const [src, setSrc] = useState("");
   useEffect(() => {
     setSrc(withAudioFormat(previewUrl));
   }, [previewUrl]);
 
-  // Warm the HTTP cache for the focused card. iOS ignores `preload` until a
-  // user gesture, so without this the first press pays the full fetch latency
-  // before any sound — a plain fetch isn't gated by the gesture and the
-  // immutable response then satisfies the element's range requests from cache.
-  // Best-effort: failures are harmless (the element will fetch on play).
+  // Prewarm: fetch + decode the focused card's clip ahead of the first press so
+  // it plays instantly. Decoding works while the context is suspended.
   useEffect(() => {
     if (!isActive || !src) return;
-    const controller = new AbortController();
-    // Read the body to completion so the cache entry is fully written.
-    fetch(src, { signal: controller.signal })
-      .then((r) => r.arrayBuffer())
-      .catch(() => {});
-    return () => controller.abort();
+    loadClip(src).catch(() => {
+      // Surfaced when the user actually presses play; ignore here.
+    });
   }, [isActive, src]);
 
-  // Keep the audio element's volume in sync with the persisted setting.
-  useEffect(() => {
-    if (audioRef.current) audioRef.current.volume = volumeToAmplitude(volume);
-  }, [volume]);
+  const currentFmt = () => /[?&]fmt=([^&]+)/.exec(src)?.[1];
 
-  // Cleanly stop playback and clear timers.
+  // Tear down the current playback graph and reset the UI.
   const stop = () => {
-    const a = audioRef.current;
-    if (a) {
-      a.pause();
-      a.currentTime = 0;
+    const s = sourceRef.current;
+    if (s) {
+      s.onended = null; // prevent the natural-end handler from re-firing
+      try {
+        s.stop();
+      } catch {
+        // already stopped or ended
+      }
+      s.disconnect();
+      sourceRef.current = null;
+    }
+    if (gainRef.current) {
+      gainRef.current.disconnect();
+      gainRef.current = null;
     }
     if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
     rafRef.current = null;
@@ -127,11 +116,11 @@ export function AudioHintCard({
     setProgress(0);
   };
 
-  // Stop whenever URL or playback length changes (e.g. moving between cards).
+  // Stop whenever the clip or playback length changes (e.g. moving cards).
   useEffect(() => {
     return () => stop();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [previewUrl, playSec]);
+  }, [src, playSec]);
 
   // Pause when this card stops being the active one — swipe, arrow buttons,
   // dot nav, submit, and skip all flip the deck through `isActive`.
@@ -140,43 +129,67 @@ export function AudioHintCard({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isActive]);
 
+  // Live volume changes during playback. Uses a GainNode because iOS ignores
+  // HTMLMediaElement.volume entirely.
+  useEffect(() => {
+    if (gainRef.current) gainRef.current.gain.value = volumeToAmplitude(volume);
+  }, [volume]);
+
   const play = async () => {
-    const a = audioRef.current;
-    if (!a || !previewUrl) return;
-    try {
-      a.currentTime = 0;
-      await a.play();
-    } catch (err) {
-      // Surface the failure so issues like Safari refusing the codec, an
-      // autoplay-policy block, or a failed fetch are visible instead of the
-      // button silently doing nothing.
-      toast.error(t("error", { detail: describeAudioError(a, err) }), {
+    if (!src) return;
+    const ctx = getAudioContext();
+    if (!ctx) {
+      toast.error(t("error", { detail: "Web Audio unavailable" }), {
         id: "audio-error",
       });
       return;
     }
-    setPlaying(true);
-    // Drive progress off the element's real playback position, not a
-    // wall-clock timer. On iOS the first press has real startup latency (the
-    // range-request handshake + clip fetch), so a wall-clock timer would
-    // "end" the clip before any sound came out — leaving the progress ring
-    // sweeping over silence. Reading `currentTime` means the ring only moves
-    // once audio is actually playing, and the clip ends when it truly ends.
-    const tick = () => {
-      const el = audioRef.current;
-      // Bail if we've been stopped/paused (stop() pauses the element).
-      if (!el || el.paused) return;
-      if (el.currentTime >= playSec) {
+    // Synchronously, still inside the click gesture: unlock audio output so iOS
+    // doesn't mute the first clip.
+    unlockAudio(ctx);
+    try {
+      if (ctx.state !== "running") await ctx.resume();
+      const buffer = await loadClip(src);
+
+      stop(); // clear any prior graph before starting a new one
+      const source = ctx.createBufferSource();
+      source.buffer = buffer;
+      const gain = ctx.createGain();
+      gain.gain.value = volumeToAmplitude(volume);
+      source.connect(gain).connect(ctx.destination);
+      sourceRef.current = source;
+      gainRef.current = gain;
+
+      source.onended = () => {
         // Subtle tactile cue that the clip just ended — distinct from the
-        // firmer "medium" press the user feels when they trigger play/pause.
+        // firmer "medium" press felt when triggering play/pause.
         triggerHaptic("soft");
         stop();
-        return;
-      }
-      setProgress(Math.min(1, el.currentTime / playSec));
+      };
+      // Clips are already trimmed server-side; cap the duration defensively so
+      // the audio and the progress ring always agree on the end.
+      source.start(0, 0, playSec);
+      startRef.current = ctx.currentTime;
+      setPlaying(true);
+
+      const tick = () => {
+        const elapsed = ctx.currentTime - startRef.current;
+        if (elapsed >= playSec) {
+          setProgress(1); // onended resets shortly after
+          return;
+        }
+        setProgress(elapsed / playSec);
+        rafRef.current = requestAnimationFrame(tick);
+      };
       rafRef.current = requestAnimationFrame(tick);
-    };
-    rafRef.current = requestAnimationFrame(tick);
+    } catch (err) {
+      // Surface failures (decode error, failed fetch, unsupported codec)
+      // instead of the button silently doing nothing.
+      toast.error(t("error", { detail: describeError(err, currentFmt()) }), {
+        id: "audio-error",
+      });
+      stop();
+    }
   };
 
   const onPress = () => {
@@ -190,30 +203,6 @@ export function AudioHintCard({
   return (
     <Card className="p-0 border-2 border-border shadow-lg">
       <CardContent className="relative aspect-square flex flex-col items-center justify-center text-center gap-5 px-6">
-        {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
-        <audio
-          ref={audioRef}
-          // Omit (rather than empty) when there's no clip: an empty src
-          // resolves to the page URL and would fire a bogus load error.
-          src={src || undefined}
-          preload="auto"
-          onEnded={stop}
-          onError={() => {
-            const a = audioRef.current;
-            // Ignore aborts — those come from our own src swap (format
-            // negotiation) or stop(), not a real failure. Surface genuine
-            // load/decode errors (bad fetch, unsupported codec). Shares an id
-            // with the play() catch so the two paths collapse into one toast.
-            if (!a?.error || a.error.code === a.error.MEDIA_ERR_ABORTED) return;
-            toast.error(t("error", { detail: describeAudioError(a) }), {
-              id: "audio-error",
-            });
-            // Reset the UI: an error mid-playback otherwise leaves the button
-            // stuck on "pause" with the progress loop spinning over silence.
-            stop();
-          }}
-        />
-
         <div className="absolute top-2 right-2">
           <VolumeControl variant="card" />
         </div>
