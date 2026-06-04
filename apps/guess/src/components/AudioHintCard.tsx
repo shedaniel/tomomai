@@ -7,6 +7,7 @@ import { triggerHaptic } from "@tomomai/ui/haptics";
 import { cn } from "@tomomai/ui/utils";
 import { Play, Pause, RotateCcw } from "lucide-react";
 import { useVolume, volumeToAmplitude } from "@/lib/use-volume";
+import { withAudioFormat } from "@/lib/audio-format";
 import { VolumeControl } from "./VolumeControl";
 import type { AudioModifier } from "@/lib/heardle-config";
 
@@ -55,6 +56,15 @@ export function AudioHintCard({
   const [playing, setPlaying] = useState(false);
   const [progress, setProgress] = useState(0); // 0..1 of playSec
   const [volume] = useVolume();
+
+  // The v2 route can serve Opus/WebM or AAC/MP4; Safari can't decode the
+  // former, so we negotiate the container client-side. SSR renders the bare
+  // `previewUrl` (no `?fmt`) and we resolve it after mount — keeping the
+  // initial markup identical avoids a hydration mismatch on the <audio> src.
+  const [src, setSrc] = useState(previewUrl);
+  useEffect(() => {
+    setSrc(withAudioFormat(previewUrl));
+  }, [previewUrl]);
 
   // Keep the audio element's volume in sync with the persisted setting.
   useEffect(() => {
@@ -130,7 +140,7 @@ export function AudioHintCard({
         {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
         <audio
           ref={audioRef}
-          src={previewUrl}
+          src={src}
           preload="auto"
           onEnded={stop}
         />

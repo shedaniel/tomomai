@@ -60,8 +60,18 @@ function resolveSlug(slug: string): string | null {
   return dateKey;
 }
 
+/** Output container/codec. WebM/Opus is small and efficient; MP4/AAC is the
+ * universal fallback for browsers (Safari/WebKit, incl. all of iOS) that
+ * can't decode Opus-in-WebM via `<audio>`. */
+type AudioFormat = "webm" | "mp4";
+
 /** Build the ffmpeg argv. `sourceSec` is the length of source to read. */
-function ffmpegArgs(sourceUrl: string, sourceSec: number, modifier: AudioModifier): string[] {
+function ffmpegArgs(
+  sourceUrl: string,
+  sourceSec: number,
+  modifier: AudioModifier,
+  format: AudioFormat,
+): string[] {
   // `-t` BEFORE `-i` caps how many seconds of input we read. Output length
   // is whatever the filter chain produces from that input: same for plain,
   // same for pitch (true pitch shift preserves length), `sourceSec / rate`
@@ -85,19 +95,28 @@ function ffmpegArgs(sourceUrl: string, sourceSec: number, modifier: AudioModifie
       `asetrate=44100*${factor.toFixed(6)},aresample=44100,atempo=${(1 / factor).toFixed(6)}`,
     );
   }
-  // Opus in WebM is universally supported in modern browsers, small, and
-  // streamable from stdout (unlike m4a, whose moov atom needs the whole
-  // file before it can be written).
-  args.push(
-    "-vn",
-    "-c:a",
-    "libopus",
-    "-b:a",
-    "96k",
-    "-f",
-    "webm",
-    "pipe:1",
-  );
+  args.push("-vn");
+  if (format === "mp4") {
+    // AAC in fragmented MP4. `+frag_keyframe+empty_moov+default_base_moof`
+    // lets the file stream from stdout without seeking back to write the moov
+    // atom — the reason plain m4a can't be piped. Plays in every modern
+    // browser, including Safari/WebKit, which can't decode Opus-in-WebM.
+    args.push(
+      "-c:a",
+      "aac",
+      "-b:a",
+      "96k",
+      "-movflags",
+      "+frag_keyframe+empty_moov+default_base_moof",
+      "-f",
+      "mp4",
+      "pipe:1",
+    );
+  } else {
+    // Opus in WebM: small, efficient, streamable from stdout. Supported by
+    // Chrome/Firefox/Edge but NOT Safari — clients negotiate via `?fmt`.
+    args.push("-c:a", "libopus", "-b:a", "96k", "-f", "webm", "pipe:1");
+  }
   return args;
 }
 
@@ -152,7 +171,12 @@ export async function GET(
     return NextResponse.json({ error: "level out of range" }, { status: 400 });
   }
 
-  const cacheKey = `${dateKey}:${level}`;
+  // Container negotiated by the client (see lib/audio-format.ts). Defaults to
+  // webm to preserve the original behaviour for any caller that omits `fmt`.
+  const format: AudioFormat =
+    req.nextUrl.searchParams.get("fmt") === "mp4" ? "mp4" : "webm";
+
+  const cacheKey = `${dateKey}:${level}:${format}`;
   let buf = cacheGet(cacheKey);
   if (!buf) {
     // Resolve the chart from the dateKey. `getToday` accepts an override; for
@@ -170,13 +194,13 @@ export async function GET(
     const pitchRoll = new Rng(`${dateKey}:audio:${level}:pitch`).intBelow(2);
     const modifier = audioModifier(2, level, variantRoll, pitchRoll);
     const sourceSec = sourceAudioDuration(level, modifier, 2);
-    buf = await runFfmpeg(ffmpegArgs(preview.previewUrl, sourceSec, modifier));
+    buf = await runFfmpeg(ffmpegArgs(preview.previewUrl, sourceSec, modifier, format));
     cacheSet(cacheKey, buf);
   }
 
   return new Response(new Uint8Array(buf), {
     headers: {
-      "Content-Type": "audio/webm",
+      "Content-Type": format === "mp4" ? "audio/mp4" : "audio/webm",
       // Immutable: the (dateKey, level) pair fully determines the bytes.
       "Cache-Control": "public, max-age=86400, immutable",
     },
