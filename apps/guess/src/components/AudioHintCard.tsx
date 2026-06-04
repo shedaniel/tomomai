@@ -46,15 +46,19 @@ const MEDIA_ERR_NAMES: Record<number, string> = {
  * Surfaces the media element's own MediaError when present (decode/format
  * problems set this), otherwise the thrown error from `play()`. */
 function describeAudioError(el: HTMLAudioElement | null, thrown?: unknown): string {
+  // Tag with the negotiated container so a lingering failure says which path
+  // (webm vs mp4) was tried.
+  const fmt = /[?&]fmt=([^&]+)/.exec(el?.currentSrc ?? "")?.[1];
+  const suffix = fmt ? ` (fmt=${fmt})` : "";
   const me = el?.error;
   if (me) {
     const name = MEDIA_ERR_NAMES[me.code] ?? `code ${me.code}`;
-    return me.message ? `${name} — ${me.message}` : name;
+    return (me.message ? `${name} — ${me.message}` : name) + suffix;
   }
   if (thrown instanceof Error) {
-    return thrown.message ? `${thrown.name}: ${thrown.message}` : thrown.name;
+    return (thrown.message ? `${thrown.name}: ${thrown.message}` : thrown.name) + suffix;
   }
-  return thrown ? String(thrown) : "unknown error";
+  return (thrown ? String(thrown) : "unknown error") + suffix;
 }
 
 /**

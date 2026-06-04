@@ -120,6 +120,39 @@ function ffmpegArgs(
   return args;
 }
 
+/**
+ * Parse a single-range `Range` header against a known total size. Returns the
+ * resolved inclusive `{ start, end }`, `null` when there's no usable range
+ * (caller serves the full body), or `"invalid"` for an unsatisfiable range
+ * (caller replies 416). Only the single-range forms browsers actually send
+ * are supported: `bytes=start-`, `bytes=start-end`, and suffix `bytes=-n`.
+ */
+function parseRange(
+  header: string,
+  total: number,
+): { start: number; end: number } | "invalid" | null {
+  const match = /^bytes=(\d*)-(\d*)$/.exec(header.trim());
+  if (!match) return null;
+  const [, startStr, endStr] = match;
+  if (startStr === "" && endStr === "") return null;
+
+  let start: number;
+  let end: number;
+  if (startStr === "") {
+    // Suffix range: last `n` bytes.
+    const n = Number.parseInt(endStr, 10);
+    if (n <= 0) return "invalid";
+    start = Math.max(0, total - n);
+    end = total - 1;
+  } else {
+    start = Number.parseInt(startStr, 10);
+    end = endStr === "" ? total - 1 : Number.parseInt(endStr, 10);
+    if (end >= total) end = total - 1;
+  }
+  if (start > end || start >= total) return "invalid";
+  return { start, end };
+}
+
 function runFfmpeg(args: string[]): Promise<Buffer> {
   return new Promise((resolve, reject) => {
     if (!ffmpegPath) {
@@ -198,11 +231,41 @@ export async function GET(
     cacheSet(cacheKey, buf);
   }
 
+  const contentType = format === "mp4" ? "audio/mp4" : "audio/webm";
+  const total = buf.length;
+  const baseHeaders: Record<string, string> = {
+    "Content-Type": contentType,
+    // Immutable: the (dateKey, level, fmt) tuple fully determines the bytes.
+    "Cache-Control": "public, max-age=86400, immutable",
+    // iOS Safari refuses to play media from a server that doesn't advertise
+    // and honour byte ranges — it probes with `Range: bytes=0-1` and expects
+    // a 206. Without this the source fails as MEDIA_ERR_SRC_NOT_SUPPORTED.
+    "Accept-Ranges": "bytes",
+  };
+
+  const rangeHeader = req.headers.get("range");
+  const range = rangeHeader ? parseRange(rangeHeader, total) : null;
+  if (range === "invalid") {
+    return new Response(null, {
+      status: 416,
+      headers: { ...baseHeaders, "Content-Range": `bytes */${total}` },
+    });
+  }
+  if (range) {
+    const { start, end } = range;
+    const chunk = buf.subarray(start, end + 1);
+    return new Response(new Uint8Array(chunk), {
+      status: 206,
+      headers: {
+        ...baseHeaders,
+        "Content-Range": `bytes ${start}-${end}/${total}`,
+        "Content-Length": String(chunk.length),
+      },
+    });
+  }
+
   return new Response(new Uint8Array(buf), {
-    headers: {
-      "Content-Type": format === "mp4" ? "audio/mp4" : "audio/webm",
-      // Immutable: the (dateKey, level) pair fully determines the bytes.
-      "Cache-Control": "public, max-age=86400, immutable",
-    },
+    status: 200,
+    headers: { ...baseHeaders, "Content-Length": String(total) },
   });
 }
