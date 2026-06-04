@@ -36,6 +36,28 @@ export function getAudioContext(): AudioContext | null {
 let unlocked = false;
 
 /**
+ * iOS gives Web Audio the "ambient" audio session category by default, which
+ * the hardware mute switch silences — unlike `<audio>` elements, which use
+ * "playback" and keep sounding in silent mode. Opt into "playback" via the
+ * WebKit Audio Session API (Safari 16.4+) so heardle clips are audible with the
+ * ringer off, matching the old `<audio>`-based behaviour. No-op where the API
+ * is absent (older iOS, non-WebKit browsers — which don't mute Web Audio
+ * anyway).
+ */
+function preferPlaybackAudioSession(): void {
+  if (typeof navigator === "undefined") return;
+  const session = (
+    navigator as Navigator & { audioSession?: { type: string } }
+  ).audioSession;
+  if (!session) return;
+  try {
+    session.type = "playback";
+  } catch {
+    // Some engines expose the object but reject unknown values; ignore.
+  }
+}
+
+/**
  * Unlock audio output. Must be called synchronously inside a user gesture
  * (e.g. the play button's click handler, before any `await`). Resuming the
  * context and starting a one-sample silent buffer in the same gesture is the
@@ -45,6 +67,8 @@ let unlocked = false;
 export function unlockAudio(context: AudioContext): void {
   if (unlocked) return;
   unlocked = true;
+  // Route through the "playback" session so the mute switch doesn't silence us.
+  preferPlaybackAudioSession();
   void context.resume();
   try {
     const buffer = context.createBuffer(1, 1, 22050);
