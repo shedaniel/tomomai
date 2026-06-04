@@ -79,7 +79,6 @@ export function AudioHintCard({
   const playSec = audibleSec ?? durationSec;
   const t = useTranslations("guess.hints.audio");
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const stopAtRef = useRef<number | null>(null);
   const rafRef = useRef<number | null>(null);
   const [playing, setPlaying] = useState(false);
   const [progress, setProgress] = useState(0); // 0..1 of playSec
@@ -95,6 +94,21 @@ export function AudioHintCard({
     setSrc(withAudioFormat(previewUrl));
   }, [previewUrl]);
 
+  // Warm the HTTP cache for the focused card. iOS ignores `preload` until a
+  // user gesture, so without this the first press pays the full fetch latency
+  // before any sound — a plain fetch isn't gated by the gesture and the
+  // immutable response then satisfies the element's range requests from cache.
+  // Best-effort: failures are harmless (the element will fetch on play).
+  useEffect(() => {
+    if (!isActive || !src) return;
+    const controller = new AbortController();
+    // Read the body to completion so the cache entry is fully written.
+    fetch(src, { signal: controller.signal })
+      .then((r) => r.arrayBuffer())
+      .catch(() => {});
+    return () => controller.abort();
+  }, [isActive, src]);
+
   // Keep the audio element's volume in sync with the persisted setting.
   useEffect(() => {
     if (audioRef.current) audioRef.current.volume = volumeToAmplitude(volume);
@@ -107,7 +121,6 @@ export function AudioHintCard({
       a.pause();
       a.currentTime = 0;
     }
-    stopAtRef.current = null;
     if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
     rafRef.current = null;
     setPlaying(false);
@@ -143,18 +156,24 @@ export function AudioHintCard({
       return;
     }
     setPlaying(true);
-    stopAtRef.current = performance.now() + playSec * 1000;
+    // Drive progress off the element's real playback position, not a
+    // wall-clock timer. On iOS the first press has real startup latency (the
+    // range-request handshake + clip fetch), so a wall-clock timer would
+    // "end" the clip before any sound came out — leaving the progress ring
+    // sweeping over silence. Reading `currentTime` means the ring only moves
+    // once audio is actually playing, and the clip ends when it truly ends.
     const tick = () => {
-      if (stopAtRef.current == null) return;
-      const remaining = stopAtRef.current - performance.now();
-      if (remaining <= 0) {
+      const el = audioRef.current;
+      // Bail if we've been stopped/paused (stop() pauses the element).
+      if (!el || el.paused) return;
+      if (el.currentTime >= playSec) {
         // Subtle tactile cue that the clip just ended — distinct from the
         // firmer "medium" press the user feels when they trigger play/pause.
         triggerHaptic("soft");
         stop();
         return;
       }
-      setProgress(1 - remaining / (playSec * 1000));
+      setProgress(Math.min(1, el.currentTime / playSec));
       rafRef.current = requestAnimationFrame(tick);
     };
     rafRef.current = requestAnimationFrame(tick);
@@ -189,6 +208,9 @@ export function AudioHintCard({
             toast.error(t("error", { detail: describeAudioError(a) }), {
               id: "audio-error",
             });
+            // Reset the UI: an error mid-playback otherwise leaves the button
+            // stuck on "pause" with the progress loop spinning over silence.
+            stop();
           }}
         />
 
