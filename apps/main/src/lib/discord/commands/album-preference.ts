@@ -4,10 +4,11 @@ import { and, eq } from 'drizzle-orm';
 import { waitUntil } from '@vercel/functions';
 import { DiscordResponse, editDiscordMessage, DISCORD_COLORS, createDeferredResponse } from '../responses';
 import { handleFetchCommand } from './fetch';
+import type { Region } from '@/lib/types';
 
 export interface AlbumPreferenceOptions {
   discordUserId: string;
-  region: 'intl' | 'jp';
+  region: Region;
   fetchUseAlbums: boolean;
   applicationId: string;
   interactionToken: string;
@@ -83,7 +84,7 @@ export async function handleAlbumPreferenceSelection({
       // Trigger the fetch
       await handleFetchCommand({
         discordUserId,
-        region,
+        regionParam: region,
         applicationId,
         interactionToken,
       });
