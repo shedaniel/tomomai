@@ -70,12 +70,7 @@ const SidebarItem = React.forwardRef<HTMLButtonElement, SidebarItemProps>(
         {...props}
       >
         {Icon && (
-          <Icon
-            className={cn(
-              "size-4 me-2 transition-all",
-              isActive && "scale-125"
-            )}
-          />
+          <Icon className="size-4 me-2 transition-all" />
         )}
         {text ?? children}
       </button>

@@ -67,7 +67,7 @@ function AnimatedAlertDialogOverlay({
     >
       <motion.div
         className={cn(
-          "fixed inset-0 z-50 bg-black/50",
+          "fixed inset-0 z-50 bg-black/45",
           className
         )}
         initial={{ opacity: 0 }}
@@ -101,7 +101,7 @@ function AnimatedAlertDialogContent({
           >
             <motion.div
               className={cn(
-                "bg-background fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] gap-4 rounded-lg border p-6 shadow-lg sm:max-w-lg",
+                "glass-strong fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] gap-4 rounded-xl border p-6 shadow-lg sm:max-w-lg",
                 className
               )}
               initial={{ opacity: 0, scale: 0.85, y: "-45%", x: "-50%" }}
