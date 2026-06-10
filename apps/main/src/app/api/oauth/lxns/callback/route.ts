@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "@/lib/auth-server";
 import { resolveBaseUrlFromHeaders } from "@/lib/base-url";
 import { exchangeLxnsCode, saveLxnsToken } from "@/server/services/maimai-login";
-import { logger } from "@/lib/logger";
+import { requestLogger } from "@/lib/request-logger";
 
 const STATE_COOKIE = "lxns_oauth_state";
 
@@ -17,10 +17,11 @@ function html(body: { ok: boolean; error?: string }): NextResponse {
 }
 
 export async function GET(req: NextRequest) {
+  const { log } = requestLogger(req, "oauth/lxns/callback");
   const clientId = process.env.LXNS_CLIENT_ID;
   const clientSecret = process.env.LXNS_CLIENT_SECRET;
   if (!clientId || !clientSecret) {
-    logger.warn("[lxns oauth] callback blocked: env vars not configured");
+    log.warn("callback blocked: env vars not configured");
     return html({ ok: false, error: "lxns_oauth_not_configured" });
   }
 
@@ -30,36 +31,37 @@ export async function GET(req: NextRequest) {
   const oauthError = url.searchParams.get("error");
 
   if (oauthError) {
-    logger.warn(`[lxns oauth] callback received error from authorize: ${oauthError}`);
+    log.warn({ oauthError }, "callback received error from authorize");
     return html({ ok: false, error: oauthError });
   }
   if (!code || !state) {
-    logger.warn("[lxns oauth] callback missing code or state");
+    log.warn("callback missing code or state");
     return html({ ok: false, error: "missing_code_or_state" });
   }
 
   const session = await getServerSession();
   if (!session?.user) {
-    logger.warn("[lxns oauth] callback blocked: no session");
+    log.warn("callback blocked: no session");
     return html({ ok: false, error: "unauthorized" });
   }
 
   const stateCookie = req.cookies.get(STATE_COOKIE)?.value;
   if (!stateCookie) {
-    logger.warn(`[lxns oauth] callback missing state cookie for user=${session.user.id}`);
+    log.warn({ userId: session.user.id }, "callback missing state cookie");
     return html({ ok: false, error: "missing_state_cookie" });
   }
   const sep = stateCookie.indexOf(":");
   const cookieUserId = sep === -1 ? "" : stateCookie.slice(0, sep);
   const cookieState = sep === -1 ? "" : stateCookie.slice(sep + 1);
   if (cookieUserId !== session.user.id || cookieState !== state) {
-    logger.warn(
-      `[lxns oauth] callback state mismatch for user=${session.user.id} (cookieUserId=${cookieUserId}, stateMatch=${cookieState === state})`
+    log.warn(
+      { userId: session.user.id, cookieUserId, stateMatch: cookieState === state },
+      "callback state mismatch",
     );
     return html({ ok: false, error: "state_mismatch" });
   }
 
-  logger.debug(`[lxns oauth] callback: state verified for user=${session.user.id}, exchanging code`);
+  log.debug({ userId: session.user.id }, "callback: state verified, exchanging code");
 
   const baseUrl = resolveBaseUrlFromHeaders(req.headers);
   const redirectUri =
@@ -67,14 +69,14 @@ export async function GET(req: NextRequest) {
 
   const result = await exchangeLxnsCode(code, redirectUri);
   if (!result.isValid || !result.token) {
-    logger.warn(`lxns code exchange failed for user ${session.user.id}: ${result.error}`);
+    log.warn({ userId: session.user.id, error: result.error }, "lxns code exchange failed");
     const res = html({ ok: false, error: result.error ?? "exchange_failed" });
     res.cookies.delete(STATE_COOKIE);
     return res;
   }
 
   await saveLxnsToken(session.user.id, result.token);
-  logger.info(`[lxns oauth] callback: token persisted for user=${session.user.id}`);
+  log.info({ userId: session.user.id }, "callback: token persisted");
 
   const res = html({ ok: true });
   res.cookies.delete(STATE_COOKIE);

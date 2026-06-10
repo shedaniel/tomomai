@@ -3,7 +3,7 @@ import { verifyCnProxyToken } from "@/lib/cn-proxy-token";
 import { deleteToken, formatCnCookiesToken, saveCnCookiesToken } from "@/server/services/maimai-login";
 import { startFetchServer } from "@/lib/maimai-server-actions";
 import { AGENT } from "@/lib/http-agent";
-import { logger } from "@/lib/logger";
+import { requestLogger } from "@/lib/request-logger";
 
 export const dynamic = "force-dynamic";
 
@@ -67,6 +67,7 @@ interface WebhookPayload {
 }
 
 export async function POST(req: NextRequest) {
+  const { log } = requestLogger(req, "cn-proxy/callback");
   let body: WebhookPayload;
   try {
     body = (await req.json()) as WebhookPayload;
@@ -85,13 +86,13 @@ export async function POST(req: NextRequest) {
   try {
     ({ userId } = verifyCnProxyToken(body.token));
   } catch (err) {
-    logger.warn(`[cn-proxy] webhook rejected — bad token: ${String(err)}`);
+    log.warn({ err }, "webhook rejected — bad token");
     return NextResponse.json({ ok: false, error: "invalid token" }, { status: 401 });
   }
 
   if (process.env.DEBUG_CN_FETCH) {
     const debugUrl = `${CN_BASE}/maimai-mobile/?t=${encodeURIComponent(body.maimaiToken)}`;
-    logger.info(`[cn-proxy] DEBUG_CN_FETCH — open in your browser to capture cookies manually:\n  ${debugUrl}`);
+    log.info({ url: debugUrl }, "DEBUG_CN_FETCH — open in your browser to capture cookies manually");
     return NextResponse.json({ ok: true, debug: true, url: debugUrl });
   }
 
@@ -109,10 +110,10 @@ export async function POST(req: NextRequest) {
     }
     const playerName = extractPlayerNameQuick(html);
     await saveCnCookiesToken(userId, formatCnCookiesToken(cookies));
-    logger.info(`[cn-proxy] cookies saved user=${userId} r=${body.r} bytes=${html.length} name=${playerName ?? "?"}`);
+    log.info({ userId, r: body.r, bytes: html.length, name: playerName ?? "?" }, "cookies saved");
   } catch (err) {
     const error = err instanceof Error ? err.message : String(err);
-    logger.warn(`[cn-proxy] verification failed user=${userId} r=${body.r}: ${error}`);
+    log.warn({ userId, r: body.r, err }, "verification failed");
     await deleteToken(userId, "cn").catch(() => {});
     return NextResponse.json({ ok: false, error }, { status: 502 });
   }
@@ -121,11 +122,11 @@ export async function POST(req: NextRequest) {
   // polling will pick up the new session id and close the dialog.
   try {
     const result = await startFetchServer(userId, "cn", undefined, []);
-    logger.info(`[cn-proxy] started fetch session user=${userId} session=${result.sessionId}`);
+    log.info({ userId, session: result.sessionId }, "started fetch session");
     return NextResponse.json({ ok: true, sessionId: result.sessionId });
   } catch (err) {
     const error = err instanceof Error ? err.message : String(err);
-    logger.error(`[cn-proxy] startFetch failed user=${userId}: ${error}`);
+    log.error({ userId, err }, "startFetch failed");
     return NextResponse.json({ ok: false, error }, { status: 500 });
   }
 }
