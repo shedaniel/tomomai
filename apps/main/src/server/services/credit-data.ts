@@ -1,7 +1,7 @@
 import { db } from '@/lib/db';
 import { parentSong, songs, user, userRecentSongs, userRecentSongsDetailed, userSnapshots } from '@/lib/db/schema-pg';
 import { and, desc, eq, lte } from 'drizzle-orm';
-import { VersionId } from '@/lib/metadata';
+import { VersionId } from "@tomomai/catalog/metadata";
 import { FullCombo, FullSync, Region, TitleType } from '@/lib/types';
 
 // Type for detailed song statistics

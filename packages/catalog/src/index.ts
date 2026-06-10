@@ -3,5 +3,8 @@ export * from "./schema";
 export * from "./types";
 export * from "./metadata";
 export * from "./name-utils";
+export * from "./parse-utils";
+export * from "./enabled-regions";
+export * from "./event-types";
 export * from "./resolve-parent";
 export * from "./artifact";

@@ -1,6 +1,6 @@
-import { Difficulty, Level, NoteCounts, SongType } from "@/lib/types";
-import { normalizeGenre, normalizeName } from "@/lib/name-utils";
-import { getVersionByShortCode } from "@/lib/metadata";
+import { Difficulty, Level, NoteCounts, SongType } from "@tomomai/catalog/types";
+import { normalizeGenre, normalizeName } from "@tomomai/catalog/name-utils";
+import { getVersionByShortCode } from "@tomomai/catalog/metadata";
 import { important, PendingSong } from "@/server/utils/admin/type";
 import { levelToPrecise } from "@/server/utils/level";
 import { asFetcher } from "./fetcher-utils";

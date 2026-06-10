@@ -1,7 +1,7 @@
 import { SongDetails } from "@/components/db/songs/types";
 import { db } from "@/lib/db";
 import { parentSong, scoreData, snapshotScores, songs, userSnapshots } from "@/lib/db/schema-pg";
-import { VersionId } from "@/lib/metadata";
+import { VersionId } from "@tomomai/catalog/metadata";
 import { getSongSlugs } from "@/lib/song-slug";
 import { Region, SongExtended, SongType } from "@/lib/types";
 import { maxBy } from "@/lib/utils";

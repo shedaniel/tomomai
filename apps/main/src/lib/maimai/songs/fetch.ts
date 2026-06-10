@@ -2,10 +2,10 @@ import { load } from "cheerio";
 import { appendFetchState } from "../../fetch-states-server";
 import { getStateForDifficulty } from "../../fetch-states";
 import { logger } from "../../logger";
-import { normalizeName } from "../../name-utils";
+import { normalizeName } from "@tomomai/catalog/name-utils";
 import { Difficulty, Region } from "../../types";
-import { maimaiBaseUrl, maimaiGetHtml } from "../http";
-import { musicTypeFromIcon } from "../parse-utils";
+import { maimaiBaseUrl, maimaiGetHtml } from "@tomomai/server/maimai-http";
+import { musicTypeFromIcon } from "@tomomai/catalog/parse-utils";
 import type { ScoreData } from "../types";
 import { parseScoreData } from "./parse";
 

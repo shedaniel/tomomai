@@ -1,15 +1,15 @@
 import { logger } from "@/lib/logger";
-import { maimaiBaseUrl, maimaiRequest } from "@/lib/maimai/http";
-import { musicTypeFromIcon } from "@/lib/maimai/parse-utils";
-import { VersionId } from "@/lib/metadata";
-import { normalizeName } from "@/lib/name-utils";
-import { Difficulty, Level, Region, SongType } from "@/lib/types";
+import { maimaiBaseUrl, maimaiRequest } from "@tomomai/server/maimai-http";
+import { musicTypeFromIcon } from "@tomomai/catalog/parse-utils";
+import { VersionId } from "@tomomai/catalog/metadata";
+import { normalizeName } from "@tomomai/catalog/name-utils";
+import { Difficulty, Level, Region, SongType } from "@tomomai/catalog/types";
 import { ParsedSong } from "@/lib/types/update";
 import { important, PendingSong } from "@/server/utils/admin/type";
 import { load } from "cheerio";
 import { asFetcher, NoticeSink } from "./fetcher-utils";
 import { type Logger } from "pino";
-import { DIFFICULTY_ENUM } from "@/lib/db/types";
+import { DIFFICULTY_ENUM } from "@tomomai/catalog/enums";
 
 // Convert ParsedSong to PendingSong
 export function parsedSongToPendingSong(song: ParsedSong): PendingSong {

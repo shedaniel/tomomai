@@ -5,7 +5,7 @@ import { trpc } from "@/lib/trpc-client";
 import { useTranslations } from "next-intl";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { EVENT_STEP_TYPE_KEYS, normType } from "@/lib/event-types";
+import { EVENT_STEP_TYPE_KEYS, normType } from "@tomomai/catalog/event-types";
 import { Loader2, ArrowLeft, Search, Calendar } from "lucide-react";
 import { Button } from "@tomomai/ui";
 import { Input } from "@tomomai/ui";

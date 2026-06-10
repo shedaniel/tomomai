@@ -1,6 +1,6 @@
-import { resolveBaseUrl } from "@/lib/base-url";
+import { resolveBaseUrl } from "@tomomai/server/base-url";
 import type { AddedChange, DeletedChange, ModifiedChange } from "@/app/api/admin/upload/route";
-import { Difficulty, Region } from "@/lib/types";
+import { Difficulty, Region } from "@tomomai/catalog/types";
 
 function formatSongLabel(song: { songName: string; type: string; difficulty: Difficulty }): string {
   return `${song.songName} ${song.type.toUpperCase()} ${song.difficulty.slice(0, 3).toUpperCase()}`;

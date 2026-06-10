@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { catalogReleases, parentSong, songs, tourEvents, tourEventSteps } from "@/lib/db/schema";
-import { uploadCatalogArtifact, uploadCatalogManifest } from "@/lib/r2";
+import { uploadCatalogArtifact, uploadCatalogManifest } from "@tomomai/server/r2";
 import {
   CATALOG_MANIFEST_KEY,
   CATALOG_SCHEMA_VERSION,

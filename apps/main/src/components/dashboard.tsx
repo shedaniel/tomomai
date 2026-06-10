@@ -21,7 +21,7 @@ import { AdminDialog } from "./dialogs/admin-dialog";
 import { ExperimentsDialog } from "./experiments-dialog";
 import { InvitesDialog } from "./invites-dialog";
 import { Header } from "./header";
-import { isCNExclusive } from "@/lib/enabled-regions";
+import { isCNExclusive } from "@tomomai/catalog/enabled-regions";
 import { ChangelogDialog } from "./changelog-dialog";
 import { TomomaiAI } from "./tomomai-ai";
 import { PostMeta } from "@/lib/posts";

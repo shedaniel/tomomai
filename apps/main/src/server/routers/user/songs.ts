@@ -1,6 +1,6 @@
 import { db } from '@/lib/db';
 import { parentSong, songs } from '@/lib/db/schema-pg';
-import { VersionId } from '@/lib/metadata';
+import { VersionId } from "@tomomai/catalog/metadata";
 import { getSongSlug } from '@/lib/song-slug';
 import { publicProcedure, router } from '@/lib/trpc';
 import { TRPCError } from '@trpc/server';

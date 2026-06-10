@@ -6,7 +6,7 @@ import {
   ResponsiveDialogTrigger,
 } from "@tomomai/ui";
 import { DIFFICULTY_COLORS, getAchievementRate } from "@/lib/difficulty";
-import { getVersionInfo } from "@/lib/metadata";
+import { getVersionInfo } from "@tomomai/catalog/metadata";
 import { calculateSongRating } from "@/lib/rating-calculator";
 import { trpc } from "@/lib/trpc-client";
 import { Difficulty, Region, SongExtended } from "@/lib/types";
@@ -19,13 +19,13 @@ import { SongDetails, UserScore } from "./types";
 
 import { Button } from "@tomomai/ui";
 import { Separator } from "@tomomai/ui";
-import { resolveBaseUrl } from "@/lib/base-url";
+import { resolveBaseUrl } from "@tomomai/server/base-url";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { toast } from "sonner";
 import { SongChartDialogContent } from "./song-detail-dialog";
-import { renderLevelPrecise } from "@/lib/name-utils";
-import { isCNExclusive } from "@/lib/enabled-regions";
+import { renderLevelPrecise } from "@tomomai/catalog/name-utils";
+import { isCNExclusive } from "@tomomai/catalog/enabled-regions";
 
 type SongExtendedIdentified = SongExtended & { region: Region; gameVersion: number };
 

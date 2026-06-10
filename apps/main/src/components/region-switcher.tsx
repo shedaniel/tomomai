@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { Region } from "@/lib/types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@tomomai/ui/select-friendly";
 import { cn } from "@/lib/utils";
-import { getEnabledRegions } from "@/lib/enabled-regions";
+import { getEnabledRegions } from "@tomomai/catalog/enabled-regions";
 
 interface RegionSwitcherProps {
   header?: boolean;

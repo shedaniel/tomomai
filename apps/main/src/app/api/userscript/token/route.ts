@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { resolveBaseUrlFromHeaders } from "@/lib/base-url";
+import { resolveBaseUrlFromHeaders } from "@tomomai/server/base-url";
 import { USERSCRIPT_ALLOWED_ORIGINS } from "@/lib/userscript/allowed-origins";
 import { useUserscriptFetch } from "@/lib/flags";
 

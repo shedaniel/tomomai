@@ -10,8 +10,8 @@ import {
 import { Input } from "@tomomai/ui";
 import { Label } from "@tomomai/ui";
 import { Switch } from "@tomomai/ui";
-import { resolveBaseUrl } from "@/lib/base-url";
-import { getEnabledRegions, isCNExclusive } from "@/lib/enabled-regions";
+import { resolveBaseUrl } from "@tomomai/server/base-url";
+import { getEnabledRegions, isCNExclusive } from "@tomomai/catalog/enabled-regions";
 import { trpc } from "@/lib/trpc-client";
 import type { Region } from "@/lib/types";
 import { cn } from "@/lib/utils";

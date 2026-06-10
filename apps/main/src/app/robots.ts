@@ -1,4 +1,4 @@
-import { resolveBaseUrl } from '@/lib/base-url'
+import { resolveBaseUrl } from "@tomomai/server/base-url"
 import type { MetadataRoute } from 'next'
 
 export default function robots(): MetadataRoute.Robots {

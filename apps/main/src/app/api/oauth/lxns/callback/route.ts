@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "@/lib/auth-server";
-import { resolveBaseUrlFromHeaders } from "@/lib/base-url";
+import { resolveBaseUrlFromHeaders } from "@tomomai/server/base-url";
 import { exchangeLxnsCode, saveLxnsToken } from "@/server/services/maimai-login";
 import { logger } from "@/lib/logger";
 

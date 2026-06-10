@@ -1,8 +1,8 @@
-import { VersionId } from "@/lib/metadata";
-import { Difficulty, Region, SongType } from "@/lib/types";
+import { VersionId } from "@tomomai/catalog/metadata";
+import { Difficulty, Region, SongType } from "@tomomai/catalog/types";
 import { isImportant, Pending, PendingSong, unwrapUndefined, value } from "@/server/utils/admin/type";
 import { type Logger } from "pino";
-import { levenshtein } from "@/lib/utils";
+import { levenshtein } from "@tomomai/utils";
 import { FetchingContextExtended } from "./level-fetcher";
 import deepEqual from "deep-equal";
 

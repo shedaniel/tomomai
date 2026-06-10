@@ -1,6 +1,6 @@
 import { db } from '@/lib/db';
 import { account, user } from '@/lib/db/schema-pg';
-import { renderLevelPrecise } from '@/lib/name-utils';
+import { renderLevelPrecise } from "@tomomai/catalog/name-utils";
 import { addRatingsAndSort, SongWithRating } from '@/lib/rating-calculator';
 import { SongWithScore } from '@/lib/types';
 import { fetchLatestSnapshotData } from '@/server/queries/snapshots';

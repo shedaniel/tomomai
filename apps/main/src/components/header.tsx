@@ -23,7 +23,7 @@ import { AutoHeight } from "@/components/animate-ui/primitives/effects/auto-heig
 import { SPRING_CONFIGS, getTransition } from "@/lib/animation-constants";
 
 import { triggerHaptic } from "@tomomai/ui/haptics";
-import { getEnabledRegions, isCNExclusive } from "@/lib/enabled-regions";
+import { getEnabledRegions, isCNExclusive } from "@tomomai/catalog/enabled-regions";
 import { Locale, setLocaleCookie } from "@/i18n/locale";
 import { cn, getLanguages, isR2Url } from "@/lib/utils";
 import { useLocale } from "./providers/locale-provider";

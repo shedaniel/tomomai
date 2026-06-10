@@ -1,5 +1,5 @@
-import { VersionId } from "@/lib/metadata";
-import { Difficulty, Level, NoteCounts, SongType } from "@/lib/types";
+import { VersionId } from "@tomomai/catalog/metadata";
+import { Difficulty, Level, NoteCounts, SongType } from "@tomomai/catalog/types";
 
 export type Pending<T> = T | { important: boolean; value: T };
 

@@ -4,7 +4,7 @@ import { publicProcedure, router } from '@/lib/trpc';
 import { and, desc, eq, gt, gte, inArray, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { unstable_cache } from 'next/cache';
-import { getEnabledRegions } from '@/lib/enabled-regions';
+import { getEnabledRegions } from "@tomomai/catalog/enabled-regions";
 import { fetchTourEvents, fetchTourEventsByNames } from '@/server/queries/events';
 
 const regionSchema = z.enum(getEnabledRegions());

@@ -2,7 +2,7 @@ import { and, eq, sql as sqlDrizzle } from "drizzle-orm";
 import { db } from "../../db";
 import { fetchSessions, parentSong, scoreData, snapshotB50, snapshotScores, songs } from "../../db/schema-pg";
 import { logger } from "../../logger";
-import { getCurrentVersion, VersionId } from "../../metadata";
+import { getCurrentVersion, VersionId } from "@tomomai/catalog/metadata";
 import { splitSongs } from "../../rating-calculator";
 import { Region, SongWithScore } from "../../types";
 import type { ScoreData } from "../types";

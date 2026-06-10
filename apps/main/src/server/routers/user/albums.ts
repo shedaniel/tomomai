@@ -5,7 +5,7 @@ import { protectedProcedure, router } from '@/lib/trpc';
 import { TRPCError } from '@trpc/server';
 import { and, eq } from 'drizzle-orm';
 import { z } from 'zod';
-import { getEnabledRegions } from '@/lib/enabled-regions';
+import { getEnabledRegions } from "@tomomai/catalog/enabled-regions";
 import { fetchUserAlbums, fetchAlbumStorageUsage } from '@/server/queries/albums';
 
 const regionSchema = z.enum(getEnabledRegions());

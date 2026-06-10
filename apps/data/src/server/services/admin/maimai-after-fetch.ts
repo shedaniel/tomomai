@@ -1,7 +1,7 @@
-import { Region } from "@/lib/types";
-import { maimaiBaseUrl, maimaiGetHtml } from "@/lib/maimai/http";
+import { Region } from "@tomomai/catalog/types";
+import { maimaiBaseUrl, maimaiGetHtml } from "@tomomai/server/maimai-http";
 import { load } from "cheerio";
-import { normalizeGenre } from "@/lib/name-utils";
+import { normalizeGenre } from "@tomomai/catalog/name-utils";
 import { type Logger } from "pino";
 import pLimit from "p-limit";
 import { levelToPrecise } from "@/server/utils/level";

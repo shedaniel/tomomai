@@ -1,8 +1,8 @@
 import { db } from "@/lib/db";
 import { parentSong, songs } from "@/lib/db/schema-pg";
-import { getEnabledRegions } from "@/lib/enabled-regions";
-import { getCurrentVersion } from "@/lib/metadata";
-import type { VersionId } from "@/lib/metadata";
+import { getEnabledRegions } from "@tomomai/catalog/enabled-regions";
+import { getCurrentVersion } from "@tomomai/catalog/metadata";
+import type { VersionId } from "@tomomai/catalog/metadata";
 import { splitSongs } from "@/lib/rating-calculator";
 import type { Difficulty, Region } from "@/lib/types";
 import { and, desc, eq, inArray } from "drizzle-orm";

@@ -1,7 +1,7 @@
-import { AGENT } from "../../http-agent";
+import { AGENT } from "@tomomai/server/http-agent";
 import { logger } from "../../logger";
 import { Region } from "../../types";
-import { maimaiBaseUrl, maimaiGetHtml } from "../http";
+import { maimaiBaseUrl, maimaiGetHtml } from "@tomomai/server/maimai-http";
 import type { PlayerData } from "../types";
 import { parsePlayerData } from "./parse";
 

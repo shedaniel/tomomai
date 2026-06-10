@@ -34,6 +34,9 @@ importers:
       '@tomomai/security':
         specifier: workspace:*
         version: link:../../packages/security
+      '@tomomai/server':
+        specifier: workspace:*
+        version: link:../../packages/server
       '@tomomai/utils':
         specifier: workspace:*
         version: link:../../packages/utils
@@ -315,6 +318,9 @@ importers:
       '@tomomai/security':
         specifier: workspace:*
         version: link:../../packages/security
+      '@tomomai/server':
+        specifier: workspace:*
+        version: link:../../packages/server
       '@tomomai/ui':
         specifier: workspace:*
         version: link:../../packages/ui
@@ -637,6 +643,25 @@ importers:
       '@types/node':
         specifier: ^24.10.13
         version: 24.10.13
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
+  packages/server:
+    dependencies:
+      '@aws-sdk/client-s3':
+        specifier: ^3.990.0
+        version: 3.990.0
+      '@tomomai/catalog':
+        specifier: workspace:*
+        version: link:../catalog
+      sharp:
+        specifier: ^0.34.5
+        version: 0.34.5
+      undici:
+        specifier: ^7.22.0
+        version: 7.22.0
+    devDependencies:
       typescript:
         specifier: ^5.9.3
         version: 5.9.3

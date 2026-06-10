@@ -5,7 +5,7 @@ import { Progress } from "@tomomai/ui";
 import { Button } from "@tomomai/ui";
 import { ACHIEVEMENTS, DIFFICULTY_COLORS } from "@/lib/difficulty";
 import { DIFFICULTY_ENUM, FC_ENUM, FS_ENUM } from "@/lib/db/types";
-import { getVersionInfo, VERSIONS } from "@/lib/metadata";
+import { getVersionInfo, VERSIONS } from "@tomomai/catalog/metadata";
 import { Region, SnapshotWithSongs } from "@/lib/types";
 import { trpc } from "@/lib/trpc-client";
 import { ArrowLeft, Award, ChevronRight, Loader2 } from "lucide-react";

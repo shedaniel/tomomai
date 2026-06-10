@@ -24,8 +24,8 @@ function formatPeriod(p: { start: string | null; end: string | null }) {
   return `${p.start ?? "?"}~${p.end ?? "?"}`;
 }
 
-import { norm, normType } from "@/lib/event-types";
-export { norm, normType, TYPE_ALIASES } from "@/lib/event-types";
+import { norm, normType } from "@tomomai/catalog/event-types";
+export { norm, normType, TYPE_ALIASES } from "@tomomai/catalog/event-types";
 
 export async function computeEventDelta(events: ScrapedEvent[]): Promise<EventDelta> {
   const existingEvents = await db.select().from(tourEvents);

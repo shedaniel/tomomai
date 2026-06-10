@@ -1,4 +1,4 @@
-import { VersionId } from "@/lib/metadata";
+import { VersionId } from "@tomomai/catalog/metadata";
 
 // Helper function to convert level string to precise value (stored as 10x)
 export function levelToPrecise(level: string, version: VersionId): number {

@@ -5,7 +5,7 @@ import { Region, UserData } from '@/lib/types';
 import { TRPCError } from '@trpc/server';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
-import { getEnabledRegions, isCNExclusive } from '@/lib/enabled-regions';
+import { getEnabledRegions, isCNExclusive } from "@tomomai/catalog/enabled-regions";
 import { resolvePublicUserByUsername } from '@/server/queries/public-access';
 import { fetchProfileSettings } from '@/server/queries/profile';
 

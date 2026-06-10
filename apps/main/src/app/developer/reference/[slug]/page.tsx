@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { findRouteBySlug, getRegistry, routeSlug } from "@/lib/api/specs";
-import { resolveBaseUrl } from "@/lib/base-url";
+import { resolveBaseUrl } from "@tomomai/server/base-url";
 import { ScopeBadge } from "@/components/developer/scope-badge";
 import { ParamTable } from "@/components/developer/param-table";
 import { ResponseTree } from "@/components/developer/response-tree";

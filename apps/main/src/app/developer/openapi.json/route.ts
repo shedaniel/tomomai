@@ -1,5 +1,5 @@
 import { buildOpenApiDocument } from "@/lib/api/openapi";
-import { resolveBaseUrl } from "@/lib/base-url";
+import { resolveBaseUrl } from "@tomomai/server/base-url";
 import { useDeveloperPortal } from "@/lib/flags";
 
 export const dynamic = "force-dynamic";

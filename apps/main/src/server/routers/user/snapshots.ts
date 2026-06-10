@@ -1,10 +1,10 @@
 import { db } from '@/lib/db';
 import { parentSong, scoreData, snapshotB50, snapshotScores, songs, user, userEvents, userSnapshots } from '@/lib/db/schema-pg';
-import { getEnabledRegions } from '@/lib/enabled-regions';
+import { getEnabledRegions } from "@tomomai/catalog/enabled-regions";
 import { logger } from '@/lib/logger';
 import { upsertScoreData } from '@/lib/maimai';
 import { deleteUserSnapshot } from '@/server/queries/snapshots';
-import { getVersionInfo, VersionId, VERSIONS } from '@/lib/metadata';
+import { getVersionInfo, VersionId, VERSIONS } from "@tomomai/catalog/metadata";
 import { addRatingsAndSort, RatingCalculationInput, splitSongs } from '@/lib/rating-calculator';
 import { protectedProcedure, publicProcedure, router } from '@/lib/trpc';
 import { Difficulty, SongWithScore } from '@/lib/types';

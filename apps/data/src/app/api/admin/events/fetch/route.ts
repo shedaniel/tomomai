@@ -8,9 +8,9 @@ import { logger } from "@/lib/logger";
 import { redis } from "@/lib/redis";
 import { storePending } from "@/server/services/admin/pending-confirmation";
 import { sendDiscordNotice } from "@/server/services/admin/discord-webhooks";
-import { resolveBaseUrl } from "@/lib/base-url";
+import { resolveBaseUrl } from "@tomomai/server/base-url";
 import { computeEventDelta, formatEventDescription, deltaColor, norm, normType } from "@/server/services/admin/event-diff";
-import { KNOWN_STEP_TYPES } from "@/lib/event-types";
+import { KNOWN_STEP_TYPES } from "@tomomai/catalog/event-types";
 
 const StepSchema = z.object({
   distance: z.number(),

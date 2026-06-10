@@ -7,8 +7,8 @@ import { calculateDXStars, calculateNoteLosses, distributeBreaks } from './score
 import type { Difficulty, FullCombo, FullSync, Region, SongType, TitleType } from "./types";
 import { SnapshotWithSongs } from "./types";
 import { getLogoUrl, getTypeBadgeUrl } from "./utils";
-import { VersionId } from './metadata';
-import { resolveBaseUrl } from './base-url';
+import { VersionId } from "@tomomai/catalog/metadata";
+import { resolveBaseUrl } from "@tomomai/server/base-url";
 import { span } from './profiler';
 
 type CanvasSize = {

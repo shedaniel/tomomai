@@ -18,7 +18,7 @@ import {
 import { generateUserOtp, getOtpExpiryTimestamp } from '@/lib/otp';
 import { logger } from '@/lib/logger';
 import { signCnProxyToken } from '@/lib/cn-proxy-token';
-import { resolveBaseUrl } from '@/lib/base-url';
+import { resolveBaseUrl } from "@tomomai/server/base-url";
 
 const DIVING_FISH_DISABLED_ERROR = new TRPCError({
   code: 'PRECONDITION_FAILED',

@@ -1,7 +1,7 @@
 import { type ApiKeyInfo, keyHasScope } from "@/lib/api/protect";
 import { type ScopeKey } from "@/lib/api/scopes";
 import { splitSongs } from "@/lib/rating-calculator";
-import type { VersionId } from "@/lib/metadata";
+import type { VersionId } from "@tomomai/catalog/metadata";
 import type { fetchSnapshotData } from "@/server/queries/snapshots";
 
 type SnapshotData = NonNullable<Awaited<ReturnType<typeof fetchSnapshotData>>>;

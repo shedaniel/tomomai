@@ -1,4 +1,4 @@
-import { VersionId } from "./metadata";
+import { VersionId } from "@tomomai/catalog/metadata";
 import { Difficulty, FullCombo, SongWithScore } from "./types";
 
 // Minimal interface for rating calculation - only requires the fields actually used

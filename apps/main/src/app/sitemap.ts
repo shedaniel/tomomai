@@ -1,5 +1,5 @@
 import type { MetadataRoute } from 'next'
-import { resolveBaseUrl } from '@/lib/base-url';
+import { resolveBaseUrl } from "@tomomai/server/base-url";
 import { DB_TYPES } from '@/lib/db/types';
 import { user, userSnapshots, parentSong, songs } from '@/lib/db/schema-pg';
 import { and, eq, ne, sql } from 'drizzle-orm';

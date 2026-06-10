@@ -1,7 +1,7 @@
 import { db } from "@/lib/db";
 import { songs } from "@/lib/db/schema";
-import { REGION_ENUM } from "@/lib/db/types";
-import type { Region } from "@/lib/types";
+import { REGION_ENUM } from "@tomomai/catalog/enums";
+import type { Region } from "@tomomai/catalog/types";
 import type { ArtifactSong } from "@tomomai/catalog/artifact";
 import { and, eq, type SQL } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";

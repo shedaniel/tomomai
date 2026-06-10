@@ -1,5 +1,5 @@
 import { betterAuth } from "better-auth";
-import { resolveBaseUrl, stripSubdomains } from "@/lib/base-url";
+import { resolveBaseUrl, stripSubdomains } from "@tomomai/server/base-url";
 import { createAuthMiddleware, APIError, getSessionFromCtx } from "better-auth/api";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";

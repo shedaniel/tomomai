@@ -11,7 +11,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Input } from "@tomomai/ui";
 import { Label } from "@tomomai/ui";
 import { Button } from "@tomomai/ui";
-import { getCurrentVersion } from "@/lib/metadata";
+import { getCurrentVersion } from "@tomomai/catalog/metadata";
 import { UsersBrowserDialog } from "./users-browser-dialog";
 import { cn } from "@/lib/utils";
 

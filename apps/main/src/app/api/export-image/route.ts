@@ -4,7 +4,7 @@ import type { Region } from '@/lib/types';
 import { NextRequest } from 'next/server';
 import { commonSnapshotResources, renderWebpResponse } from '@/lib/render-image-route';
 import { prepareExportImageData } from '@/server/queries/export-image';
-import { getEnabledRegions } from '@/lib/enabled-regions';
+import { getEnabledRegions } from "@tomomai/catalog/enabled-regions";
 import { z } from 'zod';
 
 export const dynamic = "force-dynamic";

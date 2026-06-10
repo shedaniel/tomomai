@@ -1,4 +1,4 @@
-import { resolveBaseUrl } from "@/lib/base-url";
+import { resolveBaseUrl } from "@tomomai/server/base-url";
 import { locales, type Locale } from "@/i18n/locale";
 
 const OG_LOCALE_MAP: Record<Locale, string> = {

@@ -1,5 +1,5 @@
-import { AGENT } from "@/lib/http-agent";
-import { Region } from "@/lib/types";
+import { AGENT } from "@tomomai/server/http-agent";
+import { Region } from "@tomomai/catalog/types";
 import { logger } from "@/lib/logger";
 
 // Extracted from apps/main's maimai-login service: only the code path

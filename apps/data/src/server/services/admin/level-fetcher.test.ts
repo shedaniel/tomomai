@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { PendingSong, value, important, Pending } from "@/server/utils/admin/type";
 import type { Logger } from "pino";
-import { Difficulty, SongType } from "@/lib/types";
-import { VersionId } from "@/lib/metadata";
+import { Difficulty, SongType } from "@tomomai/catalog/types";
+import { VersionId } from "@tomomai/catalog/metadata";
 import { merger, mergeSongs, taker } from "./fetcher-utils";
 
 // Helper to create a basic song for testing

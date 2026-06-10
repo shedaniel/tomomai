@@ -1,4 +1,4 @@
-import { normalizeName } from "@/lib/name-utils";
+import { normalizeName } from "@tomomai/catalog/name-utils";
 import { DIFFICULTY_ENUM } from "../../db/types";
 import { logger } from "../../logger";
 import type { Difficulty, FullCombo, FullSync, SongType } from "../../types";

@@ -1,5 +1,5 @@
-import { getCurrentVersion } from "@/lib/metadata";
-import { Region } from "@/lib/types";
+import { getCurrentVersion } from "@tomomai/catalog/metadata";
+import { Region } from "@tomomai/catalog/types";
 
 // Orchestrates the full per-region ingestion pipeline by calling the sibling
 // admin routes over HTTP (same mechanism apps/main's update_all used):

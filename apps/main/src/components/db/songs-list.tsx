@@ -4,7 +4,7 @@ import { FilterPanel, GenericFilter, getFilterKey } from "@/components/filter-pa
 import { Button } from "@tomomai/ui";
 import { Input } from "@tomomai/ui";
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
-import { getVersionInfo } from "@/lib/metadata";
+import { getVersionInfo } from "@tomomai/catalog/metadata";
 import { trpc } from "@/lib/trpc-client";
 import { cn } from "@/lib/utils";
 import { LayoutGrid, LayoutList, Music, Search } from "lucide-react";

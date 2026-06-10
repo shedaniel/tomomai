@@ -39,6 +39,7 @@
     "@tomomai/i18n": "workspace:*",
     "@tomomai/utils": "workspace:*",
     "@tomomai/security": "workspace:*",
+    "@tomomai/server": "workspace:*",
     "@aws-sdk/client-s3": "^3.990.0",
     "@better-auth/api-key": "^1.6.11",
     "@better-auth/oauth-provider": "^1.6.11",

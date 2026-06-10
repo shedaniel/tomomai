@@ -6,7 +6,7 @@ import { waitUntil } from '@vercel/functions';
 import { and, desc, eq } from 'drizzle-orm';
 import { generateAndSendProfileImage } from '../image-utils';
 import { isAlbumSettingsError } from '@/lib/token-errors';
-import { resolveBaseUrl } from '@/lib/base-url';
+import { resolveBaseUrl } from "@tomomai/server/base-url";
 import {
   createDeferredResponse,
   createErrorResponse,

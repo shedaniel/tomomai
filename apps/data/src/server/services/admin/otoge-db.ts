@@ -1,7 +1,7 @@
-import { maimaiBaseUrl } from "@/lib/maimai/http";
-import { getVersionFromDate, VersionId, Versions } from "@/lib/metadata";
-import { normalizeGenre, normalizeName } from "@/lib/name-utils";
-import { Difficulty, Level, NoteCounts, Region, SongType } from "@/lib/types";
+import { maimaiBaseUrl } from "@tomomai/server/maimai-http";
+import { getVersionFromDate, VersionId, Versions } from "@tomomai/catalog/metadata";
+import { normalizeGenre, normalizeName } from "@tomomai/catalog/name-utils";
+import { Difficulty, Level, NoteCounts, Region, SongType } from "@tomomai/catalog/types";
 import { PendingSong } from "@/server/utils/admin/type";
 import { asFetcher } from "./fetcher-utils";
 import { key, SongWithMode } from "./fetcher-utils";

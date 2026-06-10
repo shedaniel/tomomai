@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { getEnabledRegions } from "@/lib/enabled-regions";
+import { getEnabledRegions } from "@tomomai/catalog/enabled-regions";
 
 /**
  * Shared Zod schemas used by `/api/v1/**` route specs. These are the

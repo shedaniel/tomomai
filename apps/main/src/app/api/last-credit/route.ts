@@ -7,7 +7,7 @@ import { prepareCreditData } from '@/server/services/credit-data';
 import { db } from '@/lib/db';
 import { user, userSnapshots } from '@/lib/db/schema-pg';
 import { and, eq } from 'drizzle-orm';
-import { getEnabledRegions } from '@/lib/enabled-regions';
+import { getEnabledRegions } from "@tomomai/catalog/enabled-regions";
 import { z } from 'zod';
 
 export const dynamic = "force-dynamic";

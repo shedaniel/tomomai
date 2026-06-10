@@ -4,8 +4,8 @@ import { readFile } from "fs/promises";
 import sharp from "sharp";
 import type { Locale } from "@/i18n/locale";
 import { getRatingImageUrl } from "@/lib/rating-calculator";
-import type { VersionId } from "@/lib/metadata";
-import { renderLevelPrecise } from "@/lib/name-utils";
+import type { VersionId } from "@tomomai/catalog/metadata";
+import { renderLevelPrecise } from "@tomomai/catalog/name-utils";
 import type { Difficulty, Region } from "@/lib/types";
 
 export const OG_SIZE = { width: 1200, height: 630 };

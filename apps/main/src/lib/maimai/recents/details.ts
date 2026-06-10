@@ -4,7 +4,7 @@ import { db } from "../../db";
 import { userRecentSongs, userRecentSongsDetailed } from "../../db/schema-pg";
 import { logger } from "../../logger";
 import { Region } from "../../types";
-import { maimaiBaseUrl, maimaiGet } from "../http";
+import { maimaiBaseUrl, maimaiGet } from "@tomomai/server/maimai-http";
 import type { RecentSongData } from "../types";
 
 // Fetches per-play playlog detail pages and writes the enriched per-note

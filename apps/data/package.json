@@ -21,6 +21,7 @@
     "@openrouter/ai-sdk-provider": "^2.3.3",
     "@tomomai/catalog": "workspace:*",
     "@tomomai/security": "workspace:*",
+    "@tomomai/server": "workspace:*",
     "@tomomai/utils": "workspace:*",
     "ai": "^6.0.116",
     "cheerio": "^1.2.0",

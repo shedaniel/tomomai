@@ -2,7 +2,7 @@ import { load } from "cheerio";
 import { logger } from "../../logger";
 import { Region, TitleType } from "../../types";
 import type { PlayerData } from "../types";
-import { maimaiBaseUrl } from "../http";
+import { maimaiBaseUrl } from "@tomomai/server/maimai-http";
 
 export type ParsedPlayerData = Omit<PlayerData, "iconBytes" | "iconContentType"> & {
   iconUpstreamUrl: string;

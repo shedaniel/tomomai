@@ -1,7 +1,7 @@
 import { db } from "@/lib/db";
 import { userTokens } from "@/lib/db/schema-pg";
 import { eq, and } from "drizzle-orm";
-import { AGENT } from "@/lib/http-agent";
+import { AGENT } from "@tomomai/server/http-agent";
 import { Region } from "@/lib/types";
 import { encryptToken } from "@/lib/token-crypto";
 import { logger } from "@/lib/logger";

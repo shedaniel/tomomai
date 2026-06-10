@@ -1,6 +1,6 @@
 import { logger } from "../../logger";
 import { Region } from "../../types";
-import { maimaiBaseUrl, maimaiGetHtml } from "../http";
+import { maimaiBaseUrl, maimaiGetHtml } from "@tomomai/server/maimai-http";
 import type { EventAreaData, EventData } from "../types";
 import { parseAreaEvents, parseEventAreaEvents } from "./parse";
 

@@ -1,9 +1,9 @@
 import { db } from "@/lib/db";
 import { parentSong, songs } from "@/lib/db/schema";
 import { logger } from "@/lib/logger";
-import { getEnabledRegions, isRegionEnabled } from "@/lib/enabled-regions";
-import { VersionId } from "@/lib/metadata";
-import { Difficulty, Region, SongType } from "@/lib/types";
+import { getEnabledRegions, isRegionEnabled } from "@tomomai/catalog/enabled-regions";
+import { VersionId } from "@tomomai/catalog/metadata";
+import { Difficulty, Region, SongType } from "@tomomai/catalog/types";
 import { UpdateSong } from "@/lib/types/update";
 import { mergeSongs, taker, merger, key, MergeSink } from "@/server/services/admin/fetcher-utils";
 import { important, PendingSong, value, Pending } from "@/server/utils/admin/type";

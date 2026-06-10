@@ -3,7 +3,7 @@ import { createHash } from "crypto";
 import { auth } from "@/lib/auth";
 import { verifyAccessToken } from "better-auth/oauth2";
 import { type ScopeKey, scopesToPermissions } from "@/lib/api/scopes";
-import { resolveBaseUrl } from "@/lib/base-url";
+import { resolveBaseUrl } from "@tomomai/server/base-url";
 import { db } from "@/lib/db";
 import { oauthAccessToken } from "@/lib/db/schema-pg";
 import { eq } from "drizzle-orm";

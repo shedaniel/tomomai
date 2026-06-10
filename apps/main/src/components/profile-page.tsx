@@ -4,7 +4,7 @@ import { Header } from "@/components/header";
 import { Flags } from "@/lib/flags";
 import { Difficulty, EventData, ProfileData, Region, SnapshotWithSongs, SongWithScore, TitleType } from "@/lib/types";
 import { TomomaiAI } from "@/components/tomomai-ai";
-import { VersionId } from "@/lib/metadata";
+import { VersionId } from "@tomomai/catalog/metadata";
 
 interface SnapshotData {
   snapshot: {

@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll } from "vitest";
 import { PendingSong, value } from "@/server/utils/admin/type";
 import type { Logger } from "pino";
-import { getCurrentVersion, VersionId } from "@/lib/metadata";
+import { getCurrentVersion, VersionId } from "@tomomai/catalog/metadata";
 import { loginAndGetCookies } from "@/server/services/maimai-login";
 import { MaimaiBaseFetcher } from "./maimai-base-songs";
 import { DxDataFetcher } from "./dxrating";

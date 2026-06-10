@@ -1,5 +1,5 @@
-import { VersionId } from "@/lib/metadata";
-import { Difficulty, Level, Region, SongType } from "@/lib/types";
+import { VersionId } from "@tomomai/catalog/metadata";
+import { Difficulty, Level, Region, SongType } from "@tomomai/catalog/types";
 import { UpdateSong } from "@/lib/types/update";
 import { PendingSong } from "@/server/utils/admin/type";
 import { promises as fs } from "fs";

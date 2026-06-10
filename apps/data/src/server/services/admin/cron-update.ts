@@ -1,5 +1,5 @@
-import { Region } from "@/lib/types";
-import { isRegionEnabled, getEnabledRegions } from "@/lib/enabled-regions";
+import { Region } from "@tomomai/catalog/types";
+import { isRegionEnabled, getEnabledRegions } from "@tomomai/catalog/enabled-regions";
 import { updateRegion } from "@/server/services/admin/update-pipeline";
 import { publishCatalog } from "@/server/catalog/publish";
 import { NextRequest, NextResponse } from "next/server";

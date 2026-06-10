@@ -1,5 +1,5 @@
 // Centralized type definitions for the maimai charts application
-import { VersionId } from "./metadata";
+import { VersionId } from "@tomomai/catalog/metadata";
 import type { Region, MinimalSong, SongBase } from "@tomomai/catalog/types";
 
 // Catalog types live in @tomomai/catalog (shared with the data service)

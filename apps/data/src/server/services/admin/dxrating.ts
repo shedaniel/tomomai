@@ -1,6 +1,6 @@
-import { getVersionByShortName, getVersionFromDate, getVersionInfo, parseDate, VersionId } from "@/lib/metadata";
-import { normalizeName } from "@/lib/name-utils";
-import { Level, NoteCounts } from "@/lib/types";
+import { getVersionByShortName, getVersionFromDate, getVersionInfo, parseDate, VersionId } from "@tomomai/catalog/metadata";
+import { normalizeName } from "@tomomai/catalog/name-utils";
+import { Level, NoteCounts } from "@tomomai/catalog/types";
 import { DxRatingResponse } from "@/lib/types/dxrating";
 import { PendingSong } from "@/server/utils/admin/type";
 import { asFetcher } from "./fetcher-utils";

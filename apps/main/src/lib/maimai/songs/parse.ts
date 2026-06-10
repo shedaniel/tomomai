@@ -1,9 +1,9 @@
 import { load } from "cheerio";
 import { DIFFICULTY_ENUM } from "../../db/types";
 import { logger } from "../../logger";
-import { normalizeName } from "../../name-utils";
+import { normalizeName } from "@tomomai/catalog/name-utils";
 import { FullCombo, FullSync, SongType } from "../../types";
-import { musicTypeFromIcon } from "../parse-utils";
+import { musicTypeFromIcon } from "@tomomai/catalog/parse-utils";
 import type { ScoreData } from "../types";
 
 // Parse score data from HTML for a specific difficulty

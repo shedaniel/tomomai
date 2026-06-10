@@ -3,7 +3,7 @@
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/animate-ui/components/radix/hover-card";
 import { Button } from "@tomomai/ui";
 import { Separator } from "@tomomai/ui";
-import { getVersionInfo } from "@/lib/metadata";
+import { getVersionInfo } from "@tomomai/catalog/metadata";
 import { trpc } from "@/lib/trpc-client";
 import { cn, createSafeMaimaiImageUrl, getTypeBadgeUrl } from "@/lib/utils";
 import { Activity, Calendar, ChevronRight, ListPlus, Loader2, Music } from "lucide-react";

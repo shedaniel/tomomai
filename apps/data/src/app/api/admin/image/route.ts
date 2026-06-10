@@ -1,7 +1,7 @@
-import { convertToWebp } from "@/lib/image-converter";
-import { fetchImageBuffer } from "@/lib/image-converter";
+import { convertToWebp } from "@tomomai/server/image-converter";
+import { fetchImageBuffer } from "@tomomai/server/image-converter";
 import { logger } from "@/lib/logger";
-import { listCoverKeys, uploadCoverToR2 } from "@/lib/r2";
+import { listCoverKeys, uploadCoverToR2 } from "@tomomai/server/r2";
 import { UpdateSong } from "@/lib/types/update";
 import { nanoid } from "nanoid";
 import { NextRequest, NextResponse } from "next/server";

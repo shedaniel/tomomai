@@ -1,7 +1,7 @@
 import { db } from "@/lib/db";
 import { user } from "@/lib/db/schema-pg";
 import { eq } from "drizzle-orm";
-import { isCNExclusive } from "@/lib/enabled-regions";
+import { isCNExclusive } from "@tomomai/catalog/enabled-regions";
 import type { Region } from "@/lib/types";
 
 export async function fetchProfileSettings(userId: string) {

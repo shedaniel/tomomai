@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ProxyAgent, fetch as undiciFetch } from "undici";
 import { verifyCnProxyToken } from "@/lib/cn-proxy-token";
-import { resolveBaseUrl } from "@/lib/base-url";
+import { resolveBaseUrl } from "@tomomai/server/base-url";
 import { logger } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";

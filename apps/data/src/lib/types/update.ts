@@ -1,4 +1,4 @@
-import { Difficulty, Level, NoteCounts, SongType } from "../types";
+import { Difficulty, Level, NoteCounts, SongType } from "@tomomai/catalog/types";
 
 type Song = {
   songName: string;
