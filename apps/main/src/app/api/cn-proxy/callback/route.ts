@@ -110,7 +110,7 @@ export async function POST(req: NextRequest) {
     }
     const playerName = extractPlayerNameQuick(html);
     await saveCnCookiesToken(userId, formatCnCookiesToken(cookies));
-    log.info({ userId, r: body.r, bytes: html.length, name: playerName ?? "?" }, "cookies saved");
+    log.info({ userId, r: body.r, size: html.length, playerName: playerName ?? "?" }, "cookies saved");
   } catch (err) {
     const error = err instanceof Error ? err.message : String(err);
     log.warn({ userId, r: body.r, err }, "verification failed");

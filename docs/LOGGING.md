@@ -85,7 +85,8 @@ Counts, sizes & timing (numbers — prefer these over logging collections):
 | `count`          | A generic count (specify what in `msg`).                          | `total`, `n`, `num`                        |
 | `songCount` / `recordCount` / `errorCount` / `eventCount` | Count of a named collection. | logging the collection itself              |
 | `durationMs`     | Elapsed time in milliseconds (number).                            | `duration`, `elapsed`, `tookMs`, `ms`      |
-| `size` / `bytes` / `contentLength` / `htmlLength` / `originalSize` / `webpSize` | Byte sizes (number). | `length`, `len`              |
+| `size`           | A byte size (number). Use for any single byte length.            | `bytes`, `length`, `len`, `htmlLength`, `contentLength` |
+| `originalSize` / `webpSize` | Paired before/after byte sizes for image conversion.  | —                                          |
 
 HTTP / request:
 
@@ -107,8 +108,8 @@ Aggregate namespaces (intentional nested objects — **bounded, fixed keys**; do
 
 > Route/job-specific scalars (`regions`, `imageUpload`, `updateMode`, `filename`,
 > `basename`, `groupKey`, `interactionType`, `oauthError`, `stepType`, `period`,
-> `event`, `pagesToScrape`, `queueSize`, `bfsLevel`, `shouldScrape`, `r`, `name`,
-> `index`, `batchIndex`, `progress`, `from`, `to`, `iconUrl`, `profile`,
+> `event`, `pagesToScrape`, `queueSize`, `bfsLevel`, `shouldScrape`, `r`,
+> `playerName`, `index`, `batchIndex`, `progress`, `from`, `to`, `profile`,
 > `addedDate`, `optional`, `modelId`, `uniqueCovers`, `existingR2Covers`,
 > `toDownload`, `skipped`, `duplicateIds`, `urls`, `totalDuplicatesMerged`,
 > `totalMasterNamesNormalized`, `originalName`) are also registered — keep this

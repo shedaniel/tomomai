@@ -162,7 +162,7 @@ async function fetchPageHtml(url: string, visitedUrls: Set<string>, log: any): P
     const html = await response.text();
     visitedUrls.add(url);
 
-    log.debug({ url, htmlLength: html.length }, "Page fetched");
+    log.debug({ url, size: html.length }, "Page fetched");
 
     return { html };
   } catch (err) {
@@ -225,7 +225,7 @@ async function runScraper(modelId: string, content: string, url: string, log: an
 async function scrapePageForEvents(content: string, url: string, log: any): Promise<Event[]> {
   const primaryModel = process.env.AI_MODEL || "anthropic/claude-sonnet-4-5-20250514";
 
-  log.debug({ url, contentLength: content.length }, "Starting scraper agent");
+  log.debug({ url, size: content.length }, "Starting scraper agent");
 
   try {
     const events = await runScraper(primaryModel, content, url, log);
