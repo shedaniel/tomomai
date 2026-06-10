@@ -57,43 +57,48 @@ Axiom (and Logtail) charge by unique field count, and queries assume consistent 
 6. **Prefer numeric fields for things you'll aggregate.** `durationMs: 153` (number), not `"153ms"` (string) — Axiom can't `avg()` strings.
 7. **Add new context via `logger.child(...)`** when it applies to many lines, instead of repeating the field on every call.
 
-## Per-request child loggers (recommended for routes)
+## Per-request correlation id (`requestId`)
 
-Every API route should create a `requestId` and a child logger that auto-attaches it (and any other request-scoped context) to every line. Return the `requestId` in error responses so users can quote it when reporting issues.
+Every request gets a `requestId` **automatically**. `middleware.ts` generates one
+(`nanoid(10)`, or honors an inbound `x-request-id` from a tracing proxy) and:
+
+- forwards it to the route handler as the **`x-request-id` request header**, and
+- echoes it on **every response** as the `x-request-id` response header.
+
+So you never have to generate one yourself, and clients can always read
+`x-request-id` off the response to quote in a bug report. To tie it to your logs,
+build the per-request child logger with the `requestLogger` helper — it reuses the
+header id so middleware, route logs, and the response header all share one value:
 
 ```ts
-import { logger } from "@/lib/logger";
-import { nanoid } from "nanoid";
+import { requestLogger } from "@/lib/request-logger";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
-  const requestId = nanoid(10);
-  const log = logger.child({
-    route: "your-route-name",
-    requestId,
-    // add anything else that should appear on every line of this request:
-    // userId, region, snapshotId, ...
-  });
+  // `log` is logger.child({ route, requestId }); pass extra request-scoped
+  // context as a third arg (e.g. { userId }). Add region/version later with
+  // `log = log.child({ region })` once you've parsed them.
+  const { log, requestId } = requestLogger(request, "your-route-name");
 
   log.info("starting request");
 
   try {
     // ... do work, using `log` everywhere instead of `logger` ...
-    return NextResponse.json({ ok: true }, { headers: { "X-Request-Id": requestId } });
+    // The x-request-id response header is set by middleware; include requestId
+    // in the JSON body too so it survives logging/copy-paste of the payload.
+    return NextResponse.json({ ok: true, requestId });
   } catch (error) {
-    log.error(
-      { err: error instanceof Error ? { message: error.message, stack: error.stack } : error },
-      "request failed",
-    );
-    return NextResponse.json(
-      { error: "Internal Error", requestId },
-      { status: 500 },
-    );
+    log.error({ err: error }, "request failed");
+    return NextResponse.json({ error: "Internal Error", requestId }, { status: 500 });
   }
 }
 ```
 
-Reference implementations: `src/app/api/admin/update/route.ts`, `src/app/api/export-image/route.ts`.
+> Note: a cached/static response keeps the `x-request-id` of the request that
+> populated the cache — it's most meaningful on dynamic (API) responses.
+
+Reference implementations: `src/app/api/admin/update_all/route.ts`,
+`src/app/api/admin/upload/route.ts`, `src/app/api/admin/update/route.ts`.
 
 ### Why a child logger?
 

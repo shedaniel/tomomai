@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { scoreData, songs } from "@/lib/db/schema-pg";
-import { logger, flushLogger } from "@/lib/logger";
+import { flushLogger } from "@/lib/logger";
+import { requestLogger } from "@/lib/request-logger";
 import { getEnabledRegions, isRegionEnabled } from "@/lib/enabled-regions";
 import { VersionId } from "@/lib/metadata";
 import { Difficulty, Region, SongType } from "@/lib/types";
@@ -325,8 +326,8 @@ async function applyChanges(
 }
 
 export async function POST(request: NextRequest) {
-  const requestId = nanoid(10);
-  let log = logger.child({ route: "admin/upload", requestId });
+  const { log: baseLog, requestId } = requestLogger(request, "admin/upload");
+  let log = baseLog;
   try {
     // Check for admin token authentication
     const authHeader = request.headers.get("authorization");
@@ -563,6 +564,7 @@ export async function POST(request: NextRequest) {
     // Return response
     return NextResponse.json({
       success: true,
+      requestId,
       updateMode,
       applied,
       statistics: {
@@ -590,7 +592,7 @@ export async function POST(request: NextRequest) {
       0xFF0000,
     ).catch(() => { });
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Internal server error" },
+      { error: error instanceof Error ? error.message : "Internal server error", requestId },
       { status: 500 }
     );
   } finally {

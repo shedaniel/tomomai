@@ -1,8 +1,8 @@
 import { getCurrentVersion } from "@/lib/metadata";
-import { logger, flushLogger } from "@/lib/logger";
+import { flushLogger } from "@/lib/logger";
+import { requestLogger } from "@/lib/request-logger";
 import { Region } from "@/lib/types";
 import { getEnabledRegions, isRegionEnabled } from "@/lib/enabled-regions";
-import { nanoid } from "nanoid";
 import { NextRequest, NextResponse } from "next/server";
 import type { Logger } from "pino";
 
@@ -98,8 +98,7 @@ async function updateRegion(
 }
 
 export async function GET(request: NextRequest) {
-  const requestId = nanoid(10);
-  const log = logger.child({ route: "admin/update_all", requestId });
+  const { log, requestId } = requestLogger(request, "admin/update_all");
   try {
     // Check for admin token authentication
     const authHeader = request.headers.get("authorization");
@@ -168,6 +167,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
+      requestId,
       message: `${regions.map(r => r.toUpperCase()).join(" and ")} updated successfully`,
       ...results,
     });
@@ -175,7 +175,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     log.error({ err: error }, "Error in admin update_all route");
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Internal server error" },
+      { error: error instanceof Error ? error.message : "Internal server error", requestId },
       { status: 500 }
     );
   } finally {
