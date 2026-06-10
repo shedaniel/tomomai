@@ -1,5 +1,5 @@
 {
-  "id": "51da4571-1eb2-4c16-8286-5ef2b4250622",
+  "id": "69b33005-967b-48ee-92f4-83fefcc62b7b",
   "prevId": "47b4b15b-a07e-46d9-b1aa-67edce6af488",
   "version": "7",
   "dialect": "postgresql",
@@ -294,6 +294,51 @@
           "with": {}
         }
       },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.catalog_state": {
+      "name": "catalog_state",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "smallint",
+          "primaryKey": true,
+          "notNull": true,
+          "default": 1
+        },
+        "sequence": {
+          "name": "sequence",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "schemaVersion": {
+          "name": "schemaVersion",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sha256": {
+          "name": "sha256",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "syncedAt": {
+          "name": "syncedAt",
+          "type": "timestamp (0)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
@@ -1928,40 +1973,9 @@
             "cycle": false
           }
         },
-        "publicId": {
-          "name": "publicId",
-          "type": "varchar(21)",
-          "primaryKey": false,
-          "notNull": true
-        },
         "parentId": {
           "name": "parentId",
           "type": "bigint",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "songName": {
-          "name": "songName",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "artist": {
-          "name": "artist",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "cover": {
-          "name": "cover",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "difficulty": {
-          "name": "difficulty",
-          "type": "difficulty",
-          "typeSchema": "public",
           "primaryKey": false,
           "notNull": true
         },
@@ -1975,19 +1989,6 @@
         "levelPrecise": {
           "name": "levelPrecise",
           "type": "smallint",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "type": {
-          "name": "type",
-          "type": "chart_type",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "genre": {
-          "name": "genre",
-          "type": "text",
           "primaryKey": false,
           "notNull": true
         },
@@ -2009,12 +2010,6 @@
           "type": "smallint",
           "primaryKey": false,
           "notNull": true
-        },
-        "bpm": {
-          "name": "bpm",
-          "type": "smallint",
-          "primaryKey": false,
-          "notNull": false
         },
         "noteDesigner": {
           "name": "noteDesigner",
@@ -2069,21 +2064,6 @@
           "method": "btree",
           "with": {}
         },
-        "songs_publicid_idx": {
-          "name": "songs_publicid_idx",
-          "columns": [
-            {
-              "expression": "publicId",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
         "songs_region_gameversion_idx": {
           "name": "songs_region_gameversion_idx",
           "columns": [
@@ -2095,48 +2075,6 @@
             },
             {
               "expression": "gameVersion",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "songs_songname_difficulty_idx": {
-          "name": "songs_songname_difficulty_idx",
-          "columns": [
-            {
-              "expression": "songName",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "difficulty",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "songs_songname_type_idx": {
-          "name": "songs_songname_type_idx",
-          "columns": [
-            {
-              "expression": "songName",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "type",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -2165,23 +2103,13 @@
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
-        "songs_publicId_unique": {
-          "name": "songs_publicId_unique",
+        "songs_parent_region_version_unique": {
+          "name": "songs_parent_region_version_unique",
           "nullsNotDistinct": false,
           "columns": [
-            "publicId"
-          ]
-        },
-        "song_name_difficulty_type_region_version_addedversion_unique": {
-          "name": "song_name_difficulty_type_region_version_addedversion_unique",
-          "nullsNotDistinct": false,
-          "columns": [
-            "songName",
-            "difficulty",
-            "type",
+            "parentId",
             "region",
-            "gameVersion",
-            "addedVersion"
+            "gameVersion"
           ]
         }
       },
