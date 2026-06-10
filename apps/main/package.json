@@ -35,6 +35,7 @@
   },
   "dependencies": {
     "@tomomai/ui": "workspace:*",
+    "@tomomai/catalog": "workspace:*",
     "@tomomai/i18n": "workspace:*",
     "@tomomai/utils": "workspace:*",
     "@tomomai/security": "workspace:*",

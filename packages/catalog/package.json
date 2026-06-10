@@ -1,0 +1,25 @@
+{
+  "name": "@tomomai/catalog",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./schema": "./src/schema.ts",
+    "./enums": "./src/enums.ts",
+    "./types": "./src/types.ts",
+    "./metadata": "./src/metadata.ts",
+    "./name-utils": "./src/name-utils.ts",
+    "./artifact": "./src/artifact.ts"
+  },
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "files": ["src"],
+  "dependencies": {
+    "drizzle-orm": "^0.45.2",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
+}

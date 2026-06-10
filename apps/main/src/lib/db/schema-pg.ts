@@ -1,11 +1,7 @@
-import { pgTable, text, integer, smallint, bigint, bigserial, boolean, timestamp, unique, index, pgEnum, jsonb, varchar, check, uuid, point, primaryKey } from "drizzle-orm/pg-core";
+import { pgTable, text, integer, smallint, bigint, boolean, timestamp, unique, index, pgEnum, jsonb, varchar, check, uuid, point, primaryKey } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import {
   LANGUAGE_ENUM,
-  REGION_ENUM,
-  DIFFICULTY_ENUM,
-  LEVEL_ENUM,
-  CHART_TYPE_ENUM,
   FC_ENUM,
   FS_ENUM,
   FETCH_STATUS_ENUM,
@@ -14,14 +10,15 @@ import {
   STORE_STATUS_ENUM,
   TITLE_TYPE_ENUM,
 } from "./types";
+import { regionEnum, difficultyEnum, levelEnum, chartTypeEnum, songs, tourEvents, tourEventSteps } from "@tomomai/catalog/schema";
+
+// Catalog tables and enums live in @tomomai/catalog (shared with the data
+// service); re-exported here so drizzle-kit and existing imports see one schema.
+export { regionEnum, difficultyEnum, levelEnum, chartTypeEnum, songs, tourEvents, tourEventSteps };
 
 // PostgreSQL enum types
 export const languageEnum = pgEnum("language", LANGUAGE_ENUM);
-export const regionEnum = pgEnum("region", REGION_ENUM);
 export const roleEnum = pgEnum("role", ["user", "admin"]);
-export const difficultyEnum = pgEnum("difficulty", DIFFICULTY_ENUM);
-export const levelEnum = pgEnum("level", LEVEL_ENUM);
-export const chartTypeEnum = pgEnum("chart_type", CHART_TYPE_ENUM);
 export const fcEnum = pgEnum("fc", FC_ENUM);
 export const fsEnum = pgEnum("fs", FS_ENUM);
 export const fetchStatusEnum = pgEnum("fetch_status", FETCH_STATUS_ENUM);
@@ -179,35 +176,6 @@ export const userSnapshots = pgTable("user_snapshots", {
   index("user_snapshots_publicid_idx").on(table.publicId),
   index("user_snapshots_userid_region_idx").on(table.userId, table.region),
   index("user_snapshots_userid_region_fetchedat_idx").on(table.userId, table.region, table.fetchedAt),
-]);
-
-export const songs = pgTable("songs", {
-  id: bigint("id", { mode: "bigint" }).primaryKey().generatedAlwaysAsIdentity(), // Internal auto-increment ID
-  publicId: varchar("publicId", { length: 21 }).notNull().unique(), // Public-facing nanoid
-  songName: text("songName").notNull(),
-  artist: text("artist").notNull(),
-  cover: text("cover").notNull(), // URL
-  difficulty: difficultyEnum("difficulty").notNull(),
-  level: levelEnum("level").notNull(),
-  levelPrecise: smallint("levelPrecise").notNull(), // stored as 10x, e.g., 16.5 = 165
-  type: chartTypeEnum("type").notNull(),
-  genre: text("genre").notNull(), // Will define enum later based on maimai genres
-  region: regionEnum("region").notNull(),
-  gameVersion: smallint("gameVersion").notNull(), // ref @metadata.ts
-  addedVersion: smallint("addedVersion").notNull(), // ref @metadata.ts
-  bpm: smallint("bpm"),
-  noteDesigner: text("noteDesigner"),
-  tapCount: smallint("tapCount"),
-  holdCount: smallint("holdCount"),
-  slideCount: smallint("slideCount"),
-  touchCount: smallint("touchCount"),
-  breakCount: smallint("breakCount"),
-}, (table) => [
-  unique("song_name_difficulty_type_region_version_addedversion_unique").on(table.songName, table.difficulty, table.type, table.region, table.gameVersion, table.addedVersion),
-  index("songs_publicid_idx").on(table.publicId),
-  index("songs_region_gameversion_idx").on(table.region, table.gameVersion),
-  index("songs_songname_difficulty_idx").on(table.songName, table.difficulty),
-  index("songs_songname_type_idx").on(table.songName, table.type),
 ]);
 
 export const scoreData = pgTable("score_data", {
@@ -389,24 +357,6 @@ export const apikey = pgTable("apikey", {
   index("apikey_key_idx").on(table.key),
   index("apikey_referenceid_idx").on(table.referenceId),
   index("apikey_configid_idx").on(table.configId),
-]);
-
-export const tourEvents = pgTable("tour_events", {
-  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
-  name: text("name").notNull().unique(),
-  periods: jsonb("periods").notNull().$type<Array<{ start: string | null; end: string | null }>>(),
-  createdAt: timestamp("createdAt", { precision: 0 }).notNull().defaultNow(),
-  updatedAt: timestamp("updatedAt", { precision: 0 }).notNull().defaultNow(),
-});
-
-export const tourEventSteps = pgTable("tour_event_steps", {
-  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
-  eventId: integer("eventId").notNull().references(() => tourEvents.id, { onDelete: "cascade" }),
-  distance: integer("distance").notNull(),
-  type: text("type").notNull(),
-  reward: text("reward").notNull(),
-}, (table) => [
-  index("tour_event_steps_eventid_idx").on(table.eventId),
 ]);
 
 export const userAlbums = pgTable("user_albums", {

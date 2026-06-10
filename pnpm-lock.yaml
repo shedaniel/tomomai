@@ -206,6 +206,9 @@ importers:
       '@tanstack/react-query-devtools':
         specifier: ^5.91.3
         version: 5.91.3(@tanstack/react-query@5.90.21(react@19.2.6))(react@19.2.6)
+      '@tomomai/catalog':
+        specifier: workspace:*
+        version: link:../../packages/catalog
       '@tomomai/i18n':
         specifier: workspace:*
         version: link:../../packages/i18n
@@ -474,6 +477,19 @@ importers:
       vitest:
         specifier: ^4.0.18
         version: 4.0.18(@opentelemetry/api@1.9.0)(@types/node@24.10.13)(@vitest/ui@4.0.18)(jiti@2.6.1)(jsdom@27.4.0(@noble/hashes@2.0.1))(lightningcss@1.32.0)(yaml@2.8.2)
+
+  packages/catalog:
+    dependencies:
+      drizzle-orm:
+        specifier: ^0.45.2
+        version: 0.45.2(@libsql/client@0.15.15)(@opentelemetry/api@1.9.0)(kysely@0.28.17)(postgres@3.4.8)
+      zod:
+        specifier: ^4.3.6
+        version: 4.3.6
+    devDependencies:
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
 
   packages/i18n:
     dependencies:

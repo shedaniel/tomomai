@@ -8,7 +8,7 @@ const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 const withAnalyzer = withBundleAnalyzer({ enabled: process.env.ANALYZE === 'true' });
 
 const nextConfig: NextConfig = {
-  transpilePackages: ["@tomomai/ui", "@tomomai/i18n"],
+  transpilePackages: ["@tomomai/ui", "@tomomai/i18n", "@tomomai/catalog"],
   async headers() {
     return [
       {
