@@ -373,6 +373,16 @@ export const userAlbums = pgTable("user_albums", {
   index("user_albums_songid_idx").on(table.songId),
 ]);
 
+// Tracks the catalog artifact currently loaded from the data service.
+// Single row (id = 1).
+export const catalogState = pgTable("catalog_state", {
+  id: smallint("id").primaryKey().default(1),
+  sequence: integer("sequence").notNull(),
+  schemaVersion: smallint("schemaVersion").notNull(),
+  sha256: varchar("sha256", { length: 64 }).notNull(),
+  syncedAt: timestamp("syncedAt", { precision: 0 }).notNull().defaultNow(),
+});
+
 // Better Auth JWT plugin table
 export const jwks = pgTable("jwks", {
   id: text("id").primaryKey(),

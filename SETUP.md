@@ -38,8 +38,6 @@ Passkeys work out of the box — no extra provider credentials needed. Set `ALTC
 | `DISCORD_PUBLIC_KEY` | Yes | Discord application public key for interaction verification |
 | `NEXT_PUBLIC_DISCORD_APPLICATION_ID` | Yes | Discord application ID (public, used client-side) |
 | `DISCORD_BOT_TOKEN` | Scripts | Bot token for registering slash commands |
-| `DISCORD_UPDATE_WEBHOOK` | No | Webhook URL for posting update notifications |
-| `DISCORD_UPDATE_WEBHOOK_NOTICE` | No | Webhook URL for posting update notices. The channel should never be publicly accessible as it contains admin confirmation buttons |
 
 ### Cloudflare R2
 
@@ -65,12 +63,14 @@ Passkeys work out of the box — no extra provider credentials needed. Set `ALTC
 | `MAIMAI_TOTP_SECRET` | Yes | Secret for TOTP code generation. Generate with `openssl rand -hex 32` |
 | `FLAGS_SECRET` | Yes | Secret for feature flags. Generate with `node -e "console.log(crypto.randomBytes(32).toString('base64url'))"` |
 
-### AI
+### Catalog
+
+Chart (song) and event data is loaded from a published catalog artifact rather than scraped per host. The defaults point at the official tomomai instance, so self-hosters normally don't need to set these at all.
 
 | Variable | Required | Description |
 |---|---|---|
-| `OPENROUTER_KEY` | For events | OpenRouter API key for AI-powered event fetching |
-| `AI_MODEL` | No | AI model to use (recommended: `google/gemini-3.1-flash-lite-preview`) |
+| `CATALOG_URL` | No | Base URL the catalog artifact is fetched from (defaults to the official tomomai CDN) |
+| `CATALOG_COVER_BASE_URL` | No | Base URL cover image keys are resolved against (defaults to the official tomomai CDN, so no cover storage is needed) |
 
 ### Logging
 
@@ -156,49 +156,19 @@ To deploy:
 
 The proxy is generalisable to any deployment — none of `Caddyfile.tmpl` or `deploy.sh` is hardcoded to `tomomai.lol`. See `cn/README.md` for the full reference and a "Generalising to your own domain" walkthrough.
 
-## Populating Songs Data
+## Populating Catalog Data (Songs & Events)
 
-After setting up the database and environment variables, you need to populate the songs database. Run the following curl commands for each region individually:
+Chart and event data is distributed as a versioned catalog artifact published by the official tomomai instance. You do not need SEGA credentials, scrapers, an OpenRouter key, or a cover-image bucket — just sync the catalog:
 
 ```bash
-# Update JP songs
-curl -X POST "https://yourdomain.com/api/admin/update_all?region=jp&token=account://<sega-username>:://<sega-password>" \
-  -H "Authorization: Bearer $ADMIN_UPDATE_TOKEN"
-
-# Update INTL songs
-curl -X POST "https://yourdomain.com/api/admin/update_all?region=intl&token=account://<sega-username>:://<sega-password>" \
+curl -X POST "https://yourdomain.com/api/admin/catalog-sync" \
   -H "Authorization: Bearer $ADMIN_UPDATE_TOKEN"
 ```
 
-Replace `<sega-username>` and `<sega-password>` with your SEGA account credentials for the respective region. Each region must be updated separately.
+This downloads the latest artifact from `CATALOG_URL` (defaults to the official CDN), verifies its checksum, and loads songs and events into your database with the same globally stable ids every tomomai instance uses. The bundled Vercel cron (`/api/cron/catalog-sync`, daily) keeps it up to date afterwards — set `CRON_SECRET` so the cron endpoint is protected. Pass `?force=true` to reload even when the published sequence hasn't changed.
 
-For INTL, you can also use a cookie token instead of account credentials:
+Cover images are hot-linked from the official CDN via `CATALOG_COVER_BASE_URL`, so R2 storage is only needed for user content (photo albums, icons).
 
-```bash
-curl -X POST "https://yourdomain.com/api/admin/update_all?region=intl&token=cookie://<cookie-value>" \
-  -H "Authorization: Bearer $ADMIN_UPDATE_TOKEN"
-```
+## Running the Data Service (official host / advanced)
 
-## Preparing a New Game Version
-
-When a new maimai DX version is released, you need to copy the existing songs data to the new version. For example, to prepare version 13 (CiRCLE PLUS) for JP by copying all songs from version 12 (CiRCLE):
-
-```bash
-curl "https://yourdomain.com/api/admin/import?from=version<=12@jp-12&to=jp-13" \
-  -H "Authorization: Bearer $ADMIN_UPDATE_TOKEN"
-```
-
-This copies all songs where `addedVersion <= 12` from `jp-12` to `jp-13`. The `from` parameter format is `version[<=|>=|=]NUMBER@[intl|jp]-VERSION_ID` and the `to` parameter format is `[intl|jp]-VERSION_ID`.
-
-After importing, run the [songs update](#populating-songs-data) for that region to pull in any new songs added in the new version.
-
-## Populating Events Data
-
-After populating songs, fetch event data (requires `OPENROUTER_KEY` to be set):
-
-```bash
-curl -X POST "https://yourdomain.com/api/admin/events/fetch" \
-  -H "Authorization: Bearer $ADMIN_UPDATE_TOKEN"
-```
-
-After running this, check the Discord channel configured for `DISCORD_UPDATE_WEBHOOK_NOTICE` and click **Confirm** to approve the fetched events.
+The scrapers and event fetchers that *produce* the catalog live in `apps/data` — a separate service that only the official host (or a fully independent deployment) needs to run. It has its own PostgreSQL database and publishes the artifact to R2. See [docs/data-service.md](docs/data-service.md) for its environment variables, the `update_all` / `import` / `events/fetch` admin commands (which work as before, just against the data service), seeding from an existing main database, and the daily scraper crons.

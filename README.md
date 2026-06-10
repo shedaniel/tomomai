@@ -34,12 +34,21 @@ A modern web application for tracking and analyzing your maimai DX scores with f
    pnpm run db:migrate
    ```
 
-5. **Register Discord bot commands (optional)**
+5. **Load the song catalog**
+
+   Chart and event data is synced from the official tomomai catalog — no scraping or data sourcing needed:
+   ```bash
+   curl -X POST "http://localhost:3000/api/admin/catalog-sync" \
+     -H "Authorization: Bearer $ADMIN_UPDATE_TOKEN"
+   ```
+   See [SETUP.md](SETUP.md#populating-catalog-data-songs--events) for details.
+
+6. **Register Discord bot commands (optional)**
    ```bash
    pnpm run discord:register
    ```
 
-6. **Start development server**
+7. **Start development server**
    ```bash
    pnpm run dev
    ```

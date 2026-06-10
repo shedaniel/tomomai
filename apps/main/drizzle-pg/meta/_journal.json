@@ -127,6 +127,13 @@
       "when": 1781092280572,
       "tag": "0017_drop_percentile_view_for_parent_join",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1781092363864,
+      "tag": "0018_hot_mongoose",
+      "breakpoints": true
     }
   ]
 }

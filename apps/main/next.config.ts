@@ -161,7 +161,6 @@ const nextConfig: NextConfig = {
   outputFileTracingIncludes: {
     '/api/image-proxy': ['./public/res/**/*'],
     '/api/export-image': ['./public/res/**/*'],
-    '/api/admin/cache_images': ['./public/res/**/*'],
     '/**/*': ['../../node_modules/.pnpm/kuromoji@*/node_modules/kuromoji/dict/**/*'],
   },
   devIndicators: false,

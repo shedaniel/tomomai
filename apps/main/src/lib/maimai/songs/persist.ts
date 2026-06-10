@@ -7,6 +7,13 @@ import { splitSongs } from "../../rating-calculator";
 import { Region, SongWithScore } from "../../types";
 import type { ScoreData } from "../types";
 
+/** Chart instance plus the chart-stable attributes that live on parent_song. */
+export type FullSongData = typeof songs.$inferSelect &
+  Pick<
+    typeof parentSong.$inferSelect,
+    "songName" | "artist" | "cover" | "difficulty" | "type" | "genre" | "bpm"
+  >;
+
 /**
  * Builds song lookup maps for efficient song matching during insertion.
  * Queries all songs for the specified region and game version once.
@@ -20,7 +27,7 @@ export async function buildSongLookupMaps(
   gameVersion: number,
 ): Promise<{
   songLookup: Map<string, bigint>;
-  fullSongMap: Map<bigint, typeof songs.$inferSelect>;
+  fullSongMap: Map<bigint, FullSongData>;
 }> {
   logger.info(`Batch querying songs for region ${region}, game version ${gameVersion}`);
   const allSongs = await db
@@ -34,14 +41,14 @@ export async function buildSongLookupMaps(
   logger.info(`Found ${allSongs.length} songs in database for this region/version`);
 
   const songLookup = new Map<string, bigint>();
-  const fullSongMap = new Map<bigint, typeof songs.$inferSelect>();
+  const fullSongMap = new Map<bigint, FullSongData>();
 
   for (const { song, parent } of allSongs) {
     const key = `${parent.songName}|${parent.difficulty}|${parent.type}`;
     songLookup.set(key, song.id);
     fullSongMap.set(song.id, {
       ...song,
-      // Chart-stable attributes now live on parent_song; overlay them so
+      // Chart-stable attributes live on parent_song; merge them so
       // downstream consumers (ranking, B50) read the parent values.
       songName: parent.songName,
       artist: parent.artist,
@@ -124,7 +131,7 @@ export async function insertUserScores(
   sessionId: bigint,
   allScoreData: { [difficulty: number]: ScoreData[] },
   songLookup: Map<string, bigint>,
-  fullSongMap: Map<bigint, typeof songs.$inferSelect>,
+  fullSongMap: Map<bigint, FullSongData>,
 ): Promise<void> {
   const gameVersion = getCurrentVersion(region);
 
