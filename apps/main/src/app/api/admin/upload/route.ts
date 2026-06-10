@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { scoreData, songs } from "@/lib/db/schema-pg";
-import { logger } from "@/lib/logger";
+import { logger, flushLogger } from "@/lib/logger";
 import { getEnabledRegions, isRegionEnabled } from "@/lib/enabled-regions";
 import { VersionId } from "@/lib/metadata";
 import { Difficulty, Region, SongType } from "@/lib/types";
@@ -325,6 +325,8 @@ async function applyChanges(
 }
 
 export async function POST(request: NextRequest) {
+  const requestId = nanoid(10);
+  let log = logger.child({ route: "admin/upload", requestId });
   try {
     // Check for admin token authentication
     const authHeader = request.headers.get("authorization");
@@ -340,7 +342,7 @@ export async function POST(request: NextRequest) {
     // Validate token against environment variable
     const adminToken = process.env.ADMIN_UPDATE_TOKEN;
     if (!adminToken) {
-      console.error("ADMIN_UPDATE_TOKEN environment variable not set");
+      log.error("ADMIN_UPDATE_TOKEN environment variable not set");
       return NextResponse.json(
         { error: "Server configuration error" },
         { status: 500 }
@@ -348,7 +350,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (token !== adminToken) {
-      console.warn("Invalid admin token attempt");
+      log.warn("Invalid admin token attempt");
       return NextResponse.json(
         { error: "Invalid authorization token" },
         { status: 403 }
@@ -404,14 +406,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create logger for this request
-    const requestId = nanoid(10);
-    const log = logger.child({
-      route: "admin/upload",
-      requestId,
-      region,
-      version
-    });
+    // Enrich the request logger now that region/version are known
+    log = log.child({ region, version });
 
     log.info({
       inputSongs: uploadSongs.length
@@ -586,7 +582,7 @@ export async function POST(request: NextRequest) {
       }
     });
   } catch (error) {
-    console.error("Error in admin upload route:", error);
+    log.error({ err: error }, "Error in admin upload route");
     sendDiscordNotice(
       "intl",
       "Upload error",
@@ -597,6 +593,9 @@ export async function POST(request: NextRequest) {
       { error: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }
     );
+  } finally {
+    // Serverless: ship buffered logs before the function is frozen/terminated.
+    await flushLogger();
   }
 }
 

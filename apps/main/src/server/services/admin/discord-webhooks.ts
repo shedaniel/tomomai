@@ -1,6 +1,41 @@
+import { after } from "next/server";
 import { resolveBaseUrl } from "@/lib/base-url";
+import { logger, flushLogger } from "@/lib/logger";
 import type { AddedChange, DeletedChange, ModifiedChange } from "@/app/api/admin/upload/route";
 import { Difficulty, Region } from "@/lib/types";
+
+// Discord rejects an embed whose description exceeds 4096 chars with a 400.
+// Cut at a line boundary and mark the truncation so the message still posts.
+const DISCORD_DESC_LIMIT = 4096;
+function truncateForDiscord(description: string): string {
+  if (description.length <= DISCORD_DESC_LIMIT) return description;
+  const marker = "\n… (truncated)";
+  const budget = DISCORD_DESC_LIMIT - marker.length;
+  const cut = description.lastIndexOf("\n", budget);
+  return description.slice(0, cut > budget * 0.5 ? cut : budget).trimEnd() + marker;
+}
+
+// Vercel freezes the function as soon as the response is sent, killing any
+// in-flight fetch that wasn't registered with after(). Run webhook delivery
+// here so it survives the freeze, and flush logs afterwards so the outcome is
+// actually observable (a bare fire-and-forget loses both the request and its
+// logs). Falls back to best-effort when called outside a request scope.
+function deliverInBackground(work: () => Promise<void>) {
+  const task = (async () => {
+    try {
+      await work();
+    } catch (error) {
+      logger.error({ err: error }, "Discord delivery threw");
+    } finally {
+      await flushLogger().catch(() => { });
+    }
+  })();
+  try {
+    after(task);
+  } catch {
+    void task; // outside a request scope (scripts/tests) — best effort
+  }
+}
 
 function formatSongLabel(song: { songName: string; type: string; difficulty: Difficulty }): string {
   return `${song.songName} ${song.type.toUpperCase()} ${song.difficulty.slice(0, 3).toUpperCase()}`;
@@ -39,7 +74,7 @@ export async function sendDiscordWebhook(
   const regionKey = `DISCORD_UPDATE_WEBHOOK_${region.toUpperCase()}`;
   const webhookUrl = process.env[regionKey] ?? process.env.DISCORD_UPDATE_WEBHOOK;
   if (!webhookUrl) {
-    console.log("DISCORD_UPDATE_WEBHOOK not set, skipping webhook notification");
+    logger.debug({ region }, "DISCORD_UPDATE_WEBHOOK not set, skipping webhook notification");
     return;
   }
 
@@ -49,7 +84,7 @@ export async function sendDiscordWebhook(
   );
 
   if (added.length === 0 && deleted.length === 0 && filteredModified.length === 0) {
-    console.log("No changes detected, skipping webhook notification");
+    logger.debug({ region }, "No changes detected, skipping webhook notification");
     return;
   }
 
@@ -195,14 +230,14 @@ export async function sendDiscordWebhook(
     embeds: [
       {
         title: `Song data update - ${dateStr} - ${regionName}`,
-        description: description.trim() || "No changes detected",
+        description: truncateForDiscord(description.trim() || "No changes detected"),
         color: color,
         timestamp: now.toISOString(),
       },
     ],
   };
 
-  try {
+  deliverInBackground(async () => {
     const response = await fetch(webhookUrl, {
       method: "POST",
       headers: {
@@ -212,15 +247,12 @@ export async function sendDiscordWebhook(
     });
 
     if (!response.ok) {
-      console.error(`Discord webhook failed: ${response.status} ${response.statusText}`);
       const errorText = await response.text();
-      console.error(`Discord webhook error response: ${errorText}`);
+      logger.error({ region, status: response.status, statusText: response.statusText, body: errorText }, "Discord webhook failed");
     } else {
-      console.log("Discord webhook sent successfully");
+      logger.info({ region }, "Discord webhook sent");
     }
-  } catch (error) {
-    console.error("Error sending Discord webhook:", error);
-  }
+  });
 }
 
 export async function sendDiscordNotice(
@@ -241,14 +273,14 @@ export async function sendDiscordNotice(
     embeds: [
       {
         title: `[${regionName}] ${title}`,
-        description: description.trim().slice(0, 4000) || undefined,
+        description: truncateForDiscord(description.trim()) || undefined,
         color,
         timestamp: new Date().toISOString(),
       },
     ],
   };
 
-  try {
+  deliverInBackground(async () => {
     const response = await fetch(webhookUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -256,9 +288,8 @@ export async function sendDiscordNotice(
     });
 
     if (!response.ok) {
-      console.error(`Discord notice webhook failed: ${response.status} ${response.statusText}`);
+      const errorText = await response.text();
+      logger.error({ region, status: response.status, statusText: response.statusText, body: errorText }, "Discord notice webhook failed");
     }
-  } catch (error) {
-    console.error("Error sending Discord notice webhook:", error);
-  }
+  });
 }
