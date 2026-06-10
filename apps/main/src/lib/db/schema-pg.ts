@@ -10,11 +10,11 @@ import {
   STORE_STATUS_ENUM,
   TITLE_TYPE_ENUM,
 } from "./types";
-import { regionEnum, difficultyEnum, levelEnum, chartTypeEnum, songs, tourEvents, tourEventSteps } from "@tomomai/catalog/schema";
+import { regionEnum, difficultyEnum, levelEnum, chartTypeEnum, parentSong, songs, tourEvents, tourEventSteps } from "@tomomai/catalog/schema";
 
 // Catalog tables and enums live in @tomomai/catalog (shared with the data
 // service); re-exported here so drizzle-kit and existing imports see one schema.
-export { regionEnum, difficultyEnum, levelEnum, chartTypeEnum, songs, tourEvents, tourEventSteps };
+export { regionEnum, difficultyEnum, levelEnum, chartTypeEnum, parentSong, songs, tourEvents, tourEventSteps };
 
 // PostgreSQL enum types
 export const languageEnum = pgEnum("language", LANGUAGE_ENUM);

@@ -3,6 +3,7 @@ import { songs } from "@/lib/db/schema-pg";
 import { VersionId } from "@/lib/metadata";
 import { Region } from "@/lib/types";
 import { getEnabledRegions, isRegionEnabled } from "@/lib/enabled-regions";
+import { syncMissingParents } from "@/server/services/admin/parent-sync";
 import { and, eq, gte, lte, sql } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { NextRequest, NextResponse } from "next/server";
@@ -298,6 +299,9 @@ export async function GET(request: NextRequest) {
         console.error("Error during batch upsert:", error);
         throw new Error(`Database upsert failed: ${error instanceof Error ? error.message : "Unknown error"}`);
       }
+
+      // Source rows carry their parentId over; resolve any rows still missing one
+      await syncMissingParents();
     }
 
     const totalProcessed = mode === "only-upsert" ? updatedCount : importedCount;

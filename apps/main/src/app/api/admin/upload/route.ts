@@ -8,6 +8,7 @@ import { UpdateSong } from "@/lib/types/update";
 import { mergeSongs, taker, merger, key, MergeSink } from "@/server/services/admin/fetcher-utils";
 import { important, PendingSong, value, Pending } from "@/server/utils/admin/type";
 import { sendDiscordNotice, sendDiscordWebhook } from "@/server/services/admin/discord-webhooks";
+import { syncMissingParents } from "@/server/services/admin/parent-sync";
 import { and, eq, inArray, count, sql } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { NextRequest, NextResponse } from "next/server";
@@ -320,6 +321,9 @@ async function applyChanges(
       appliedDeleted += batch.length;
     }
   }
+
+  // Newly inserted rows have no parent yet; resolve/create parent_song rows
+  await syncMissingParents();
 
   return { added: appliedAdded, modified: appliedModified, deleted: appliedDeleted };
 }
