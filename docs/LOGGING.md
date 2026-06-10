@@ -83,7 +83,7 @@ Counts, sizes & timing (numbers — prefer these over logging collections):
 | Field            | Use for                                                            | Don't use                                  |
 |------------------|--------------------------------------------------------------------|--------------------------------------------|
 | `count`          | A generic count (specify what in `msg`).                          | `total`, `n`, `num`                        |
-| `songCount` / `recordCount` / `errorCount` / `eventCount` | Count of a named collection. | logging the collection itself              |
+| `songCount` / `recordCount` / `errorCount` / `eventCount` / `cachedCount` | Count of a named collection. | logging the collection itself |
 | `durationMs`     | Elapsed time in milliseconds (number).                            | `duration`, `elapsed`, `tookMs`, `ms`      |
 | `size`           | A byte size (number). Use for any single byte length.            | `bytes`, `length`, `len`, `htmlLength`, `contentLength` |
 | `originalSize` / `webpSize` | Paired before/after byte sizes for image conversion.  | —                                          |
