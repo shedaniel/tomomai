@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { scoreData, snapshotB50, songs, user, userSnapshots } from "@/lib/db/schema-pg";
+import { parentSong, scoreData, snapshotB50, songs, user, userSnapshots } from "@/lib/db/schema-pg";
 import type { VersionId } from "@/lib/metadata";
 import type { SongForRender } from "@/lib/render-image";
 import type { Region, SnapshotWithSongs } from "@/lib/types";
@@ -78,11 +78,11 @@ export async function prepareExportImageData(
       .limit(1),
     db
       .select({
-        songName: songs.songName,
-        cover: songs.cover,
-        difficulty: songs.difficulty,
+        songName: parentSong.songName,
+        cover: parentSong.cover,
+        difficulty: parentSong.difficulty,
         levelPrecise: songs.levelPrecise,
-        type: songs.type,
+        type: parentSong.type,
         addedVersion: songs.addedVersion,
         achievement: scoreData.achievement,
         fc: scoreData.fc,
@@ -91,8 +91,9 @@ export async function prepareExportImageData(
       .from(snapshotB50)
       .innerJoin(scoreData, eq(snapshotB50.scoreId, scoreData.id))
       .innerJoin(songs, eq(scoreData.songId, songs.id))
+      .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
       .where(eq(snapshotB50.snapshotId, snapshot[0].id))
-      .orderBy(songs.songName, songs.difficulty),
+      .orderBy(parentSong.songName, parentSong.difficulty),
   ]);
 
   if (publishProfile.length === 0) {

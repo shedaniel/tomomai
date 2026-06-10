@@ -27,7 +27,8 @@ best_scores AS (
   JOIN snapshot_scores ss ON ss."snapshotId" = us.id
   JOIN score_data sd      ON sd.id = ss."scoreId"
   JOIN songs s            ON s.id = sd."songId"
-  WHERE s.difficulty IN ('expert', 'master', 'remaster')
+  JOIN parent_song p      ON p.id = s."parentId"
+  WHERE p.difficulty IN ('expert', 'master', 'remaster')
     AND s.region = 'intl'
   GROUP BY lr."userId", sd."songId", lr.rating
 ),

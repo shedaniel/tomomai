@@ -1,7 +1,7 @@
 import { db } from '@/lib/db';
-import { songs } from '@/lib/db/schema-pg';
+import { parentSong, songs } from '@/lib/db/schema-pg';
 import { publicProcedure, router } from '@/lib/trpc';
-import { inArray } from 'drizzle-orm';
+import { eq, inArray } from 'drizzle-orm';
 import { z } from 'zod';
 import { getChartPercentiles } from '@/server/queries/percentile';
 import type { PercentileMap } from '@/lib/percentile-types';
@@ -18,9 +18,10 @@ export const percentileRouter = router({
     .query(async ({ input }) => {
       const publicIds = input.songs.map((s) => s.publicSongId);
       const rows = await db
-        .select({ id: songs.id, publicId: songs.publicId })
+        .select({ id: songs.id, publicId: parentSong.publicId })
         .from(songs)
-        .where(inArray(songs.publicId, publicIds));
+        .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
+        .where(inArray(parentSong.publicId, publicIds));
 
       const idMap = new Map(rows.map((r) => [r.publicId, r.id]));
       const inputs = input.songs

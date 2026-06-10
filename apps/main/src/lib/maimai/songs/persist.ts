@@ -1,6 +1,6 @@
 import { and, eq, sql as sqlDrizzle } from "drizzle-orm";
 import { db } from "../../db";
-import { fetchSessions, scoreData, snapshotB50, snapshotScores, songs } from "../../db/schema-pg";
+import { fetchSessions, parentSong, scoreData, snapshotB50, snapshotScores, songs } from "../../db/schema-pg";
 import { logger } from "../../logger";
 import { getCurrentVersion, VersionId } from "../../metadata";
 import { splitSongs } from "../../rating-calculator";
@@ -23,21 +23,34 @@ export async function buildSongLookupMaps(
   fullSongMap: Map<bigint, typeof songs.$inferSelect>;
 }> {
   logger.info(`Batch querying songs for region ${region}, game version ${gameVersion}`);
-  const allSongs = await db.query.songs.findMany({
-    where: and(
+  const allSongs = await db
+    .select({ song: songs, parent: parentSong })
+    .from(songs)
+    .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
+    .where(and(
       eq(songs.region, region),
       eq(songs.gameVersion, gameVersion),
-    ),
-  });
+    ));
   logger.info(`Found ${allSongs.length} songs in database for this region/version`);
 
   const songLookup = new Map<string, bigint>();
   const fullSongMap = new Map<bigint, typeof songs.$inferSelect>();
 
-  for (const song of allSongs) {
-    const key = `${song.songName}|${song.difficulty}|${song.type}`;
+  for (const { song, parent } of allSongs) {
+    const key = `${parent.songName}|${parent.difficulty}|${parent.type}`;
     songLookup.set(key, song.id);
-    fullSongMap.set(song.id, song);
+    fullSongMap.set(song.id, {
+      ...song,
+      // Chart-stable attributes now live on parent_song; overlay them so
+      // downstream consumers (ranking, B50) read the parent values.
+      songName: parent.songName,
+      artist: parent.artist,
+      cover: parent.cover,
+      difficulty: parent.difficulty,
+      type: parent.type,
+      genre: parent.genre,
+      bpm: parent.bpm,
+    });
   }
   logger.info(`Created song lookup maps with ${songLookup.size} entries`);
 

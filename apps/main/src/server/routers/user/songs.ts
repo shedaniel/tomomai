@@ -1,10 +1,10 @@
 import { db } from '@/lib/db';
-import { songs } from '@/lib/db/schema-pg';
+import { parentSong, songs } from '@/lib/db/schema-pg';
 import { VersionId } from '@/lib/metadata';
 import { getSongSlug } from '@/lib/song-slug';
 import { publicProcedure, router } from '@/lib/trpc';
 import { TRPCError } from '@trpc/server';
-import { eq } from 'drizzle-orm';
+import { desc, eq, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { queryAllUniqueSongs, querySongDetails } from '@/server/queries/songs';
 
@@ -30,15 +30,17 @@ export const songsRouter = router({
     .query(async ({ input }) => {
       const charts = await db
         .select({
-          songName: songs.songName,
-          artist: songs.artist,
-          type: songs.type,
-          genre: songs.genre,
-          bpm: songs.bpm,
+          songName: parentSong.songName,
+          artist: parentSong.artist,
+          type: parentSong.type,
+          genre: parentSong.genre,
+          bpm: parentSong.bpm,
           addedVersion: songs.addedVersion,
         })
         .from(songs)
-        .where(eq(songs.publicId, input.publicId));
+        .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
+        .where(eq(parentSong.publicId, input.publicId))
+        .orderBy(desc(songs.gameVersion), sql`case when ${songs.region} = 'jp' then 0 else 1 end`);
 
       if (charts.length === 0) {
         throw new TRPCError({

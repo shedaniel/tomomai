@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { scoreData, snapshotScores, songs, userSnapshots } from "@/lib/db/schema-pg";
+import { parentSong, scoreData, snapshotScores, songs, userSnapshots } from "@/lib/db/schema-pg";
 import { and, desc, eq, sql } from "drizzle-orm";
 import { getAchievementRate } from "@/lib/difficulty";
 import type { Region } from "@/lib/types";
@@ -23,29 +23,31 @@ export async function computeStatsForSnapshot(
     .select({
       achievement: scoreData.achievement,
       addedVersion: songs.addedVersion,
-      difficulty: songs.difficulty,
+      difficulty: parentSong.difficulty,
       fc: scoreData.fc,
       fs: scoreData.fs,
     })
     .from(snapshotScores)
     .innerJoin(scoreData, eq(snapshotScores.scoreId, scoreData.id))
     .innerJoin(songs, eq(scoreData.songId, songs.id))
+    .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
     .where(eq(snapshotScores.snapshotId, snapshotInternalId));
 
   const allSongs = await db
     .select({
       addedVersion: songs.addedVersion,
-      difficulty: songs.difficulty,
+      difficulty: parentSong.difficulty,
       count: sql<number>`count(*)`.mapWith(Number),
     })
     .from(songs)
+    .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
     .where(
       and(
         eq(songs.region, region),
         eq(songs.gameVersion, gameVersion)
       )
     )
-    .groupBy(songs.addedVersion, songs.difficulty);
+    .groupBy(songs.addedVersion, parentSong.difficulty);
 
   const totalSongs: Record<string, Record<string, number>> = {};
   for (const song of allSongs) {

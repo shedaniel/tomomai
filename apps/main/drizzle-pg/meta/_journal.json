@@ -120,6 +120,13 @@
       "when": 1781091054318,
       "tag": "0016_parent_song_backfill",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1781092280572,
+      "tag": "0017_drop_percentile_view_for_parent_join",
+      "breakpoints": true
     }
   ]
 }

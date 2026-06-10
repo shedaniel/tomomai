@@ -1,7 +1,7 @@
 import type { MetadataRoute } from 'next'
 import { resolveBaseUrl } from '@/lib/base-url';
 import { DB_TYPES } from '@/lib/db/types';
-import { user, userSnapshots, songs } from '@/lib/db/schema-pg';
+import { user, userSnapshots, parentSong, songs } from '@/lib/db/schema-pg';
 import { and, eq, ne, sql } from 'drizzle-orm';
 import { db } from '@/lib/db';
 import { getSongSlug } from '@/lib/song-slug';
@@ -34,13 +34,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   type Song = { songName: string; artist: string; type: "std" | "dx" }
   const uniqueSongs: Song[] = await db
     .select({
-      songName: songs.songName,
-      artist: songs.artist,
-      type: songs.type,
+      songName: parentSong.songName,
+      artist: parentSong.artist,
+      type: parentSong.type,
     })
     .from(songs)
-    .where(ne(songs.difficulty, "utage"))
-    .groupBy(songs.songName, songs.artist, songs.type);
+    .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
+    .where(ne(parentSong.difficulty, "utage"))
+    .groupBy(parentSong.songName, parentSong.artist, parentSong.type);
 
   // Deduplicate songs by songName + type
   const songSet = new Map<string, Song>();
