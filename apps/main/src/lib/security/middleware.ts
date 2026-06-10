@@ -108,7 +108,7 @@ async function checkRateLimiting(request: NextRequest, path: string): Promise<{
     return { limited: false };
   } catch (error) {
     // Fail-open on unexpected errors so we don't lock everyone out if Redis hiccups.
-    logger.error({ error, context: 'rate-limiting' }, 'Error checking rate limits');
+    logger.error({ err: error, context: 'rate-limiting' }, 'Error checking rate limits');
     return { limited: false };
   }
 }

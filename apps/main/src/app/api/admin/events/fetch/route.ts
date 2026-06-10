@@ -410,7 +410,7 @@ export async function POST(request: NextRequest) {
               const content = extractAsMarkdown(result.html, url, visited);
               return { url, content };
             }
-            log.error({ url, error: result.error }, "Failed to fetch during discovery");
+            log.error({ url }, `Failed to fetch during discovery: ${result.error}`);
             return null;
           }),
         );
@@ -468,7 +468,7 @@ export async function POST(request: NextRequest) {
           if (!html) {
             const result = await fetchPageHtml(url, visited, log);
             if ("error" in result) {
-              log.error({ url, error: result.error }, "Failed to fetch page for scraping");
+              log.error({ url }, `Failed to fetch page for scraping: ${result.error}`);
               return [];
             }
             html = result.html;

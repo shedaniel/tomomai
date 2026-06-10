@@ -69,7 +69,7 @@ export async function GET(req: NextRequest) {
 
   const result = await exchangeLxnsCode(code, redirectUri);
   if (!result.isValid || !result.token) {
-    log.warn({ userId: session.user.id, error: result.error }, "lxns code exchange failed");
+    log.warn({ userId: session.user.id }, `lxns code exchange failed: ${result.error}`);
     const res = html({ ok: false, error: result.error ?? "exchange_failed" });
     res.cookies.delete(STATE_COOKIE);
     return res;

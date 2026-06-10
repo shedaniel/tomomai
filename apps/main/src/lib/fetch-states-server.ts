@@ -48,7 +48,7 @@ export async function appendFetchState(sessionId: bigint, state: FetchState): Pr
       }
     } catch (error) {
       // Non-blocking - just log the error and continue
-      logger.error({ error }, `Failed to append state '${state}' to session ${sessionId}`);
+      logger.error({ err: error }, `Failed to append state '${state}' to session ${sessionId}`);
     }
   }).finally(() => {
     // Clean up the lock if it's the current one

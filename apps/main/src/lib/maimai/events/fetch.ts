@@ -18,10 +18,10 @@ export async function fetchEventsData(cookies: string, region: Region, sessionId
     ]);
 
     const areaEvents = parseAreaEvents(areaHtml);
-    logger.debug({ areaEvents }, `Parsed ${areaEvents.length} area events`);
+    logger.debug(`Parsed ${areaEvents.length} area events`);
 
     const eventAreaEvents = parseEventAreaEvents(eventAreaHtml, region);
-    logger.debug({ eventAreaEvents }, `Parsed ${eventAreaEvents.length} event area events`);
+    logger.debug(`Parsed ${eventAreaEvents.length} event area events`);
 
     return { areaEvents, eventAreaEvents };
   } catch (error) {

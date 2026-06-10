@@ -371,7 +371,7 @@ export async function refreshLxnsToken(refreshToken: string): Promise<TokenValid
     logger.debug(`[lxns oauth] refresh success: expires_in=${expiresIn}s scope="${scope}"`);
     return { isValid: true, token: formatted };
   } catch (error) {
-    logger.error({ error }, "lxns refresh threw");
+    logger.error({ err: error }, "lxns refresh threw");
     return { isValid: false, error: "Network error during lxns refresh." };
   }
 }
@@ -421,7 +421,7 @@ export async function exchangeLxnsCode(
     });
     return { isValid: true, token: formatted };
   } catch (error) {
-    logger.error({ error }, "lxns code exchange threw");
+    logger.error({ err: error }, "lxns code exchange threw");
     return { isValid: false, error: "Network error during lxns code exchange." };
   }
 }

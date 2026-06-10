@@ -8,7 +8,7 @@ export async function getServerSession() {
     const session = await auth.api.getSession({ headers: headersList });
     return session;
   } catch (error) {
-    logger.error({ error, context: "auth-server" }, "Failed to get server session");
+    logger.error({ err: error, context: "auth-server" }, "Failed to get server session");
     return null;
   }
 }

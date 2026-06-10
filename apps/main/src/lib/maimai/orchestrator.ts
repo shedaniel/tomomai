@@ -250,7 +250,7 @@ const divingfishFetcher: DataFetcher = async ({ userId, region, sessionId, valid
       throw new Error("Session expired or invalid. Please provide a new token.");
     }
     if (error instanceof DivingFishAuthError) {
-      logger.error({ error }, "[divingfish] dev token rejected by server");
+      logger.error({ err: error }, "[divingfish] dev token rejected by server");
       throw error;
     }
     throw error;

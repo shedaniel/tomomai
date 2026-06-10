@@ -199,7 +199,7 @@ async function validateAndClaimInvite(inviteCode: string, userId: string) {
         )
       );
   } catch (error) {
-    logger.error({ error, context: "auto-cleanup" }, "Auto-cleanup failed");
+    logger.error({ err: error, context: "auto-cleanup" }, "Auto-cleanup failed");
   }
 
   // Find the invitation
@@ -695,7 +695,7 @@ export const auth = betterAuth({
                 await validateAndClaimInvite(inviteCode, user.id);
                 console.log(`Successfully claimed invitation ${inviteCode} for user ${user.id}`);
               } catch (error) {
-                logger.error({ error, context: "invite-claim", userId: user.id, inviteCode }, "Failed to claim invitation");
+                logger.error({ err: error, context: "invite-claim", userId: user.id, inviteCode }, "Failed to claim invitation");
                 // Note: At this point the user is already created, so we can't easily roll back
                 // In a production system, you might want to implement compensation logic
               }

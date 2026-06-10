@@ -23,11 +23,34 @@ log.info({ userId }, "user signed in");
 log.info(`user ${userId} signed in`);
 ```
 
-## Field naming conventions
+## Field naming & the 256-field budget
 
-Axiom (and Logtail) charge by unique field count, and queries assume consistent names. **Use the canonical names below — don't invent synonyms.** If a name you need isn't listed, pick a short `camelCase` noun and add it here.
+> [!IMPORTANT]
+> **Axiom caps a dataset at 256 fields, and a field is never removed from the
+> schema once seen.** Every distinct key you log permanently consumes one of
+> those slots. So:
+>
+> 1. **Every field must be registered in the table below before you log it.**
+>    Adding a key to a `log.*` call without adding it here is not allowed — the
+>    registry is how we track the budget and avoid blowing the cap.
+> 2. **Field values must be scalar** (string / number / boolean / array of
+>    primitives). A nested object is flattened by Axiom into **one field per
+>    leaf key** — `log.info({ song })` can add ~15 fields (`song.songName`,
+>    `song.noteCounts.tap`, …). Log a scalar identifier (`songKey`) or an
+>    explicit summary (`{ added: x.length }`) instead, never the whole object.
+> 3. **Reuse a registered name** — synonyms (`error` vs `err`) each cost a slot
+>    and split queries.
+>
+> Audit what's actually in use before adding a field:
+> ```bash
+> # list distinct keys passed to log/logger calls
+> rg -oN "\b(log|logger|context\.log)\.\w+\(\{[^}]*\}" apps/main/src \
+>   | rg -oN "[a-zA-Z_][a-zA-Z0-9_]*\s*:" | sort -u
+> ```
 
-### Canonical field names
+### Registered fields
+
+Automatic / cross-cutting:
 
 | Field            | Use for                                                            | Don't use                                  |
 |------------------|--------------------------------------------------------------------|--------------------------------------------|
@@ -37,25 +60,70 @@ Axiom (and Logtail) charge by unique field count, and queries assume consistent 
 | `err`            | An error object, with `{ message, stack }` extracted.              | `error`, `errorMessage`, `exception`, `e`  |
 | `requestId`      | Per-request correlation id (`nanoid(10)`).                         | `reqId`, `request_id`, `traceId`           |
 | `route`          | Route identifier (e.g. `"export-image"`, `"admin/update"`).        | `path`, `endpoint`, `handler`              |
+| `via`            | Provenance tag (currently `"console"` for bridged calls).          | `source`, `from`                           |
+| `context`        | Logical operation tag in lib code without a `route` (e.g. `"auth-server"`). | `module`, `component`            |
+
+Identifiers & domain:
+
+| Field            | Use for                                                            | Don't use                                  |
+|------------------|--------------------------------------------------------------------|--------------------------------------------|
 | `userId`         | Internal user id.                                                  | `user`, `uid`, `user_id`                   |
 | `snapshotId`     | Public snapshot id.                                                | `snapshot`, `snap_id`                      |
+| `sessionId`      | Fetch session id.                                                  | `session`                                  |
+| `songId` / `masterSongId` | Numeric song row id(s).                                   | —                                          |
+| `songKey`        | Single `name@type@difficulty` key.                                | `song` (never log the whole object)        |
+| `songKeys`       | Array of song keys (array of strings = 1 field).                  | `songs` (never log the array of objects)   |
 | `region`         | `"intl"` / `"jp"` / `"cn"`.                                        | `country`, `locale`                        |
-| `durationMs`     | Elapsed time in milliseconds (number).                             | `duration`, `elapsed`, `tookMs`, `ms`      |
-| `count`          | A count of something (specify what in `msg`).                      | `total`, `n`, `num`                        |
-| `size`           | Byte size (number).                                                | `bytes`, `length`, `len`                   |
-| `url`            | A URL relevant to this log line.                                   | `link`, `href`, `uri`                      |
-| `status`         | HTTP status code or job status string.                             | `statusCode`, `code`, `httpStatus`         |
-| `via`            | Provenance tag (currently `"console"` for bridged calls).          | `source`, `from`                           |
+| `version` / `addedVersion` | Game / chart version (number).                          | —                                          |
+| `difficulty`     | Difficulty name or enum.                                          | `diff`                                     |
+| `providerId`     | External provider id (lxns/divingfish).                          | —                                          |
+
+Counts, sizes & timing (numbers — prefer these over logging collections):
+
+| Field            | Use for                                                            | Don't use                                  |
+|------------------|--------------------------------------------------------------------|--------------------------------------------|
+| `count`          | A generic count (specify what in `msg`).                          | `total`, `n`, `num`                        |
+| `songCount` / `recordCount` / `errorCount` / `eventCount` | Count of a named collection. | logging the collection itself              |
+| `durationMs`     | Elapsed time in milliseconds (number).                            | `duration`, `elapsed`, `tookMs`, `ms`      |
+| `size` / `bytes` / `contentLength` / `htmlLength` / `originalSize` / `webpSize` | Byte sizes (number). | `length`, `len`              |
+
+HTTP / request:
+
+| Field            | Use for                                                            | Don't use                                  |
+|------------------|--------------------------------------------------------------------|--------------------------------------------|
+| `url`            | A URL relevant to this log line.                                  | `link`, `href`, `uri`                      |
+| `status`         | HTTP status code or job status string.                           | `statusCode`, `code`, `httpStatus`         |
+| `statusText`     | HTTP status text (paired with `status`).                         | —                                          |
+| `method`         | HTTP method.                                                     | `verb`                                     |
+| `path`           | Request path (set by `onRequestError`).                          | —                                          |
+
+Aggregate namespaces (intentional nested objects — **bounded, fixed keys**; do not add new ones casually):
+
+| Field            | Leaf keys                                                          |
+|------------------|--------------------------------------------------------------------|
+| `statistics.*`   | `inputSongs`, `dbSongs`, `mergedSongs`, `added`, `modified`, `deleted`, `unchanged` |
+| `applied.*`      | `added`, `modified`, `deleted`                                     |
+| `stats.*`        | `uploaded`, `skipped`, `unchanged`                                 |
+
+> Route/job-specific scalars (`regions`, `imageUpload`, `updateMode`, `filename`,
+> `basename`, `groupKey`, `interactionType`, `oauthError`, `stepType`, `period`,
+> `event`, `pagesToScrape`, `queueSize`, `bfsLevel`, `shouldScrape`, `r`, `name`,
+> `index`, `batchIndex`, `progress`, `from`, `to`, `iconUrl`, `profile`,
+> `addedDate`, `optional`, `modelId`, `uniqueCovers`, `existingR2Covers`,
+> `toDownload`, `skipped`, `duplicateIds`, `urls`, `totalDuplicatesMerged`,
+> `totalMasterNamesNormalized`, `originalName`) are also registered — keep this
+> list current when you add one.
 
 ### Rules of thumb
 
 1. **`camelCase`, never `snake_case` or `kebab-case`.** Pino emits camelCase; matching it avoids duplicate logical fields.
 2. **One concept, one name.** If you log an error, it's `err`. Always. Not `error` once and `err` somewhere else.
-3. **Units in the name when ambiguous.** `durationMs`, `sizeBytes`, `timeoutSec` — never just `duration` / `size` / `timeout`.
-4. **Don't put values into field names.** `userId: "u_123"` ✓, `user_u_123: true` ✗. Field cardinality matters; values are free.
-5. **Don't repeat the message in fields.** `log.info({ snapshotId }, "loaded snapshot")` is right. `log.info({ snapshotId, msg: "loaded snapshot" }, "...")` duplicates.
-6. **Prefer numeric fields for things you'll aggregate.** `durationMs: 153` (number), not `"153ms"` (string) — Axiom can't `avg()` strings.
-7. **Add new context via `logger.child(...)`** when it applies to many lines, instead of repeating the field on every call.
+3. **Never log a whole object.** Each leaf key becomes a permanent Axiom field. Log a scalar id or an explicit summary; if `msg` already names the thing (e.g. includes the song key), drop the object entirely.
+4. **Units in the name when ambiguous.** `durationMs`, `sizeBytes`, `timeoutSec` — never just `duration` / `size` / `timeout`.
+5. **Don't put values into field names.** `userId: "u_123"` ✓, `user_u_123: true` ✗. Field cardinality matters; values are free.
+6. **Don't repeat the message in fields.** `log.info({ snapshotId }, "loaded snapshot")` is right. `log.info({ snapshotId, msg: "loaded snapshot" }, "...")` duplicates.
+7. **Prefer numeric fields for things you'll aggregate.** `durationMs: 153` (number), not `"153ms"` (string) — Axiom can't `avg()` strings.
+8. **Add new context via `logger.child(...)`** when it applies to many lines, instead of repeating the field on every call.
 
 ## Per-request correlation id (`requestId`)
 

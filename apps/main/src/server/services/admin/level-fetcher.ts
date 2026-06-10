@@ -78,18 +78,18 @@ function validateSongs(songsInput: SongWithOrigin[], log: Logger): void {
   for (const song of songsInput) {
     // validate non-null
     if (isNullOrUndefined(song.songName) || isNullOrUndefined(song.type) || isNullOrUndefined(song.difficulty)) {
-      log.error({ song }, "Song name, type, or difficulty is missing");
+      log.error({ songKey: key(song) }, "Song name, type, or difficulty is missing");
     }
     if (isNullOrUndefined(song.level) || isNullOrUndefined(value(song.level))) {
-      log.error({ song }, "Level is missing");
+      log.error({ songKey: key(song) }, "Level is missing");
     }
 
     // validate normalization
     if (song.songName !== normalizeName(song.songName)) {
-      log.error({ song }, "Song name does not match normalized name");
+      log.error({ songKey: key(song) }, "Song name does not match normalized name");
     }
     if (!!value(song.genre) && value(song.genre) !== normalizeGenre(value(song.genre)!)) {
-      log.error({ song }, "Genre does not match normalized genre");
+      log.error({ songKey: key(song) }, "Genre does not match normalized genre");
     }
   }
 
@@ -103,12 +103,12 @@ function validateSongs(songsInput: SongWithOrigin[], log: Logger): void {
   for (const song of songs) {
     if (addedKeys.has(song.key)) {
       const duplicates = songs.filter(s => s.key === song.key);
-      log.warn({ songs: duplicates }, "Duplicate song key");
+      log.warn({ songKeys: duplicates.map(s => s.key) }, "Duplicate song key");
       songs = songs.filter(s => s.key !== song.key);
     }
     if (addedNormalizedKeys.has(song.normalizedKey)) {
       const duplicates = songs.filter(s => s.normalizedKey === song.normalizedKey);
-      log.warn({ songs: duplicates }, "Duplicate song normalized key");
+      log.warn({ songKeys: duplicates.map(s => s.normalizedKey) }, "Duplicate song normalized key");
       songs = songs.filter(s => s.normalizedKey !== song.normalizedKey);
     }
     addedKeys.add(song.key);
@@ -216,7 +216,7 @@ export async function fetchLevels(context: FetchingContext): Promise<UpdateSong[
   function nonnull<T>(value: T | null | undefined, fieldName: string, song: PendingSong): T {
     if (value === null || value === undefined) {
       const errorMsg = `Value is null or undefined for ${fieldName}`;
-      context.log.error({ error: errorMsg, song }, errorMsg);
+      context.log.error({ songKey: key(song) }, errorMsg);
       throw new Error(errorMsg);
     }
     return value;
@@ -246,7 +246,7 @@ export async function fetchLevels(context: FetchingContext): Promise<UpdateSong[
     }
   }
   if (errors.length > 0) {
-    context.log.error({ errors, songs }, "Errors occurred during song update");
+    context.log.error({ errorCount: errors.length, songCount: songs.length }, "Errors occurred during song update");
     throw new Error("Errors occurred during song update");
   }
   return updateSongs;
