@@ -34,7 +34,8 @@ export function requestLogger(
   extra?: Record<string, unknown>,
 ): { log: Logger; requestId: string } {
   const requestId = getRequestId(request);
-  const log = logger.child({ route, requestId, ...extra });
+  // `extra` first so a caller can't accidentally clobber route/requestId.
+  const log = logger.child({ ...extra, route, requestId });
   // Bind as the ambient logger for the rest of this request's async chain.
   loggerStorage.enterWith(log);
   return { log, requestId };

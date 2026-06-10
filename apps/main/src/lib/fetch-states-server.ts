@@ -8,7 +8,6 @@ import {
   serializeStatusStates,
   calculateProgress
 } from "./fetch-states";
-import { logger } from "./logger";
 
 // Lock mechanism to prevent race conditions when updating session states
 const sessionLocks = new Map<string, Promise<void>>();
@@ -45,11 +44,11 @@ export async function appendFetchState(sessionId: bigint, state: FetchState): Pr
           .set({ statusStates: newStatusStates })
           .where(eq(fetchSessions.id, sessionId));
 
-        logger.debug(`Appended state '${state}' to session ${sessionId}. Progress: ${calculateProgress(newStates)}%`);
+        getLogger().debug(`Appended state '${state}' to session ${sessionId}. Progress: ${calculateProgress(newStates)}%`);
       }
     } catch (error) {
       // Non-blocking - just log the error and continue
-      logger.error({ err: error }, `Failed to append state '${state}' to session ${sessionId}`);
+      getLogger().error({ err: error }, `Failed to append state '${state}' to session ${sessionId}`);
     }
   }).finally(() => {
     // Clean up the lock if it's the current one

@@ -633,7 +633,7 @@ export const auth = betterAuth({
               throw new Error("Invitation required for signup");
             }
 
-            logger.info({ inviteCode }, "Found invitation code during signup");
+            logger.info("Found invitation code during signup");
 
             // Validate invitation (we'll claim it in the after hook)
             const now = new Date();
@@ -690,12 +690,12 @@ export const auth = betterAuth({
             }
 
             if (inviteCode) {
-              logger.info({ inviteCode, userId: user.id }, "Attempting to claim invitation");
+              logger.info({ userId: user.id }, "Attempting to claim invitation");
               try {
                 await validateAndClaimInvite(inviteCode, user.id);
-                logger.info({ inviteCode, userId: user.id }, "Successfully claimed invitation");
+                logger.info({ userId: user.id }, "Successfully claimed invitation");
               } catch (error) {
-                logger.error({ err: error, context: "invite-claim", userId: user.id, inviteCode }, "Failed to claim invitation");
+                logger.error({ err: error, context: "invite-claim", userId: user.id }, "Failed to claim invitation");
                 // Note: At this point the user is already created, so we can't easily roll back
                 // In a production system, you might want to implement compensation logic
               }

@@ -6,9 +6,10 @@ import { SongFetcher } from "./fetcher-utils";
 export const FillMissingFetcher: SongFetcher = async (context, songs) => {
   let missing = 0, mismatched = 0;
   const result = songs.map(song => {
+    const songKey = `${song.songName}@${song.type}@${song.difficulty}`;
     if (isNullish(value(song.levelPrecise))) {
       missing++;
-      context.log.warn(`Level precise is missing for ${song.songName}@${song.type}@${song.difficulty}`);
+      context.log.warn({ songKey }, "Level precise is missing");
       song = {
         ...song,
         levelPrecise: levelToPrecise(value(song.level), context.version)
@@ -19,7 +20,7 @@ export const FillMissingFetcher: SongFetcher = async (context, songs) => {
     const levelToPrecised = levelToPrecise(level, context.version);
     if (levelPrecise < levelToPrecised || levelPrecise > levelToPrecised + (levelToPrecised < 70 ? 9 : 5)) {
       mismatched++;
-      context.log.warn(`Level precise is mismatched for ${song.songName}@${song.type}@${song.difficulty}`);
+      context.log.warn({ songKey }, "Level precise is mismatched");
       song = {
         ...song,
         levelPrecise: levelToPrecise(level, context.version)

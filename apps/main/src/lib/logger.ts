@@ -272,16 +272,28 @@ export const logger: Logger = isBrowser
   ? createBrowserLogger()
   : createServerLogger();
 
+const FLUSH_TIMEOUT_MS = 250;
+
+// Resolve when `op` settles or after `timeoutMs`, whichever comes first — a
+// stalled provider must never hold up request completion when flushLogger() is
+// awaited in a route's finally. Errors are swallowed (best effort).
+async function settleWithTimeout(op: Promise<void> | undefined, timeoutMs = FLUSH_TIMEOUT_MS): Promise<void> {
+  if (!op) return;
+  await new Promise<void>((resolve) => {
+    const t = setTimeout(resolve, timeoutMs);
+    op.then(() => { }, () => { }).finally(() => {
+      clearTimeout(t);
+      resolve();
+    });
+  });
+}
+
 export async function flushLogger(): Promise<void> {
-  // A log flush must never break a request: swallow provider errors so a
-  // rejection here can't override a handler's response when awaited in a finally.
-  try {
-    await Promise.all([
-      logtailInstance?.flush(),
-      axiomFlush?.(),
-    ]);
-  } catch {
-    // best effort — the Axiom transport already disables itself after repeated
-    // failures, so there's nothing actionable to do here.
-  }
+  // A log flush must never break or stall a request: bound each provider flush
+  // with a timeout and swallow errors, so neither a rejection nor a hang can
+  // affect a handler's response when awaited in a finally.
+  await Promise.all([
+    settleWithTimeout(logtailInstance?.flush()),
+    settleWithTimeout(axiomFlush?.()),
+  ]);
 }

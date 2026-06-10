@@ -110,7 +110,6 @@ Aggregate namespaces (intentional nested objects — **bounded, fixed keys**; do
 > `basename`, `groupKey`, `interactionType`, `oauthError`, `stepType`, `period`,
 > `event`, `pagesToScrape`, `queueSize`, `bfsLevel`, `shouldScrape`, `r`,
 > `playerName`, `index`, `batchIndex`, `progress`, `from`, `to`, `profile`,
-> `inviteCode`,
 > `addedDate`, `optional`, `modelId`, `uniqueCovers`, `existingR2Covers`,
 > `toDownload`, `skipped`, `duplicateIds`, `urls`, `totalDuplicatesMerged`,
 > `totalMasterNamesNormalized`, `originalName`) are also registered — keep this
@@ -121,7 +120,7 @@ Aggregate namespaces (intentional nested objects — **bounded, fixed keys**; do
 1. **`camelCase`, never `snake_case` or `kebab-case`.** Pino emits camelCase; matching it avoids duplicate logical fields.
 2. **One concept, one name.** If you log an error, it's `err`. Always. Not `error` once and `err` somewhere else.
 3. **Never log a whole object.** Each leaf key becomes a permanent Axiom field. Log a scalar id or an explicit summary; if `msg` already names the thing (e.g. includes the song key), drop the object entirely.
-4. **Units in the name when ambiguous.** `durationMs`, `sizeBytes`, `timeoutSec` — never just `duration` / `size` / `timeout`.
+4. **Units in the name when ambiguous.** `durationMs`, `timeoutSec` — never just `duration` / `timeout`. For byte length the canonical field is `size` (a number).
 5. **Don't put values into field names.** `userId: "u_123"` ✓, `user_u_123: true` ✗. Field cardinality matters; values are free.
 6. **Don't repeat the message in fields.** `log.info({ snapshotId }, "loaded snapshot")` is right. `log.info({ snapshotId, msg: "loaded snapshot" }, "...")` duplicates.
 7. **Prefer numeric fields for things you'll aggregate.** `durationMs: 153` (number), not `"153ms"` (string) — Axiom can't `avg()` strings.
