@@ -1,5 +1,6 @@
 import { db } from "./db";
 import { fetchSessions } from "./db/schema-pg";
+import { getLogger } from "./request-logger";
 import { eq } from "drizzle-orm";
 import {
   FetchState,
@@ -28,7 +29,7 @@ export async function appendFetchState(sessionId: bigint, state: FetchState): Pr
         .limit(1);
 
       if (currentSession.length === 0) {
-        console.warn(`Session ${sessionId} not found when trying to append state ${state}`);
+        getLogger().warn({ sessionId }, `Session not found when trying to append state ${state}`);
         return;
       }
 

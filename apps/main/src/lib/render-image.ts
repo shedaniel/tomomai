@@ -1,4 +1,5 @@
 import { CreditData, RecentSongData, SnapshotMetadata } from '@/server/services/credit-data';
+import { getLogger } from '@/lib/request-logger';
 import type { CanvasRenderingContext2D as SkiaContext } from 'skia-canvas';
 import { Canvas, Image, loadImage } from 'skia-canvas';
 import { CANVAS_HEIGHT, CANVAS_WIDTH } from './image-spec';
@@ -135,7 +136,7 @@ async function loadImageWithCache(cache: ImageCache, url: string): Promise<Image
     return await cache[url]();
   }
 
-  console.log("🔍 Loading image from URL:", url);
+  getLogger().debug({ url }, "Loading image from URL");
 
   const absoluteUrl = toAbsoluteUrl(url);
   const img = await loadImage(absoluteUrl);

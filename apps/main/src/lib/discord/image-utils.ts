@@ -8,6 +8,7 @@ import { prepareCreditData } from '@/server/services/credit-data';
 import { prepareDailyPlaysData } from '@/server/services/daily-plays-data';
 import { ImageCache, renderDailyPlaysImage, renderLastCreditImage } from '@/lib/render-image';
 import { fetchImageForServer, loadCachedImage } from '@/lib/render-image-server';
+import { getLogger } from '@/lib/request-logger';
 import { commonSnapshotResources } from '@/lib/render-image-route';
 import { Image, loadImage } from 'skia-canvas';
 import { getRatingImageUrl } from '@/lib/rating-calculator';
@@ -124,12 +125,12 @@ export async function generateAndSendProfileImage({
       await editDiscordMessageWithImage(applicationId, interactionToken, embedData, imageBuffer, components);
     } else {
       // Fallback to regular message if image generation fails
-      console.error('Failed to generate image:', await imageResponse.text());
+      getLogger().error({ status: imageResponse.status }, `Failed to generate image: ${await imageResponse.text()}`);
       await editDiscordMessage(applicationId, interactionToken, { embeds: [embedData], components });
     }
   } catch (imageError) {
     // Fallback to regular message if image generation fails
-    console.error('Error generating image:', imageError);
+    getLogger().error({ err: imageError }, 'Error generating image');
     await editDiscordMessage(applicationId, interactionToken, { embeds: [embedData], components });
   }
 }
@@ -268,7 +269,7 @@ export async function generateAndSendCreditImage({
             cache[url] = async () => memo || (memo = await loadImage(img));
           });
         } catch (error) {
-          console.warn(`⚠️ Failed to cache image: ${url}`);
+          getLogger().warn({ err: error, url }, 'Failed to cache image');
         }
       })
     );
@@ -333,7 +334,7 @@ export async function generateAndSendCreditImage({
     await editDiscordMessageWithImage(applicationId, interactionToken, embedData, imageBuffer, components);
 
   } catch (error) {
-    console.error('Error generating credit image:', error);
+    getLogger().error({ err: error }, 'Error generating credit image');
     await editDiscordMessage(applicationId, interactionToken, {
       embeds: [{
         title: '❌ Error',
@@ -407,7 +408,7 @@ export async function generateAndSendDailyPlaysImage({
           const image = await loadCachedImage(url);
           cache[url] = async () => image;
         } catch (error) {
-          console.warn(`Failed to cache image for daily plays: ${url}`, error);
+          getLogger().warn({ err: error, url }, 'Failed to cache image for daily plays');
         }
       })
     );
@@ -423,7 +424,7 @@ export async function generateAndSendDailyPlaysImage({
       `maimai-daily-${resolvedDay}.jpg`,
     );
   } catch (error) {
-    console.error('Error generating daily plays image:', error);
+    getLogger().error({ err: error }, 'Error generating daily plays image');
     await editDiscordMessage(applicationId, interactionToken, {
       content: `<@${discordUserId}> ❌ Failed to generate daily plays image.`,
     });

@@ -5,6 +5,7 @@ import { addRatingsAndSort, SongWithRating } from '@/lib/rating-calculator';
 import { SongWithScore } from '@/lib/types';
 import { fetchLatestSnapshotData } from '@/server/queries/snapshots';
 import { generateRecommendations, RecommendationData } from '@/server/queries/recommendations';
+import { getLogger } from '@/lib/request-logger';
 import { waitUntil } from '@vercel/functions';
 import { and, eq } from 'drizzle-orm';
 import {
@@ -145,7 +146,7 @@ export async function handleRecommendCommand({
           embeds: [embed],
         });
       } catch (error) {
-        console.error('Error generating recommendations:', error);
+        getLogger().error({ err: error }, 'Error generating recommendations');
         await editDiscordMessage(applicationId, interactionToken, {
           content: 'An error occurred while generating recommendations. Please try again later.',
         });
@@ -156,7 +157,7 @@ export async function handleRecommendCommand({
 
     return deferredResponse;
   } catch (error) {
-    console.error('Error handling recommend command:', error);
+    getLogger().error({ err: error }, 'Error handling recommend command');
     return createErrorResponse('An error occurred while generating recommendations. Please try again later.');
   }
 }

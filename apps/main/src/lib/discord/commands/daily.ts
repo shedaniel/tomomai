@@ -1,5 +1,6 @@
 import { db } from '@/lib/db';
 import { account, user } from '@/lib/db/schema-pg';
+import { getLogger } from '@/lib/request-logger';
 import { waitUntil } from '@vercel/functions';
 import { and, eq } from 'drizzle-orm';
 import {
@@ -66,7 +67,7 @@ export async function handleDailyCommand({
 
     return deferredResponse;
   } catch (error) {
-    console.error('Error handling daily command:', error);
+    getLogger().error({ err: error }, 'Error handling daily command');
     return createErrorResponse('An error occurred while fetching your daily plays. Please try again later.');
   }
 }
@@ -109,7 +110,7 @@ export async function handleDailyAutocomplete({
 
     return { type: 8, data: { choices } };
   } catch (error) {
-    console.error('Error in daily autocomplete:', error);
+    getLogger().error({ err: error }, 'Error in daily autocomplete');
     return { type: 8, data: { choices: [] } };
   }
 }

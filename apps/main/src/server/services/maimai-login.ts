@@ -5,6 +5,7 @@ import { AGENT } from "@/lib/http-agent";
 import { Region } from "@/lib/types";
 import { encryptToken } from "@/lib/token-crypto";
 import { logger } from "@/lib/logger";
+import { getLogger } from "@/lib/request-logger";
 
 export interface TokenValidationResult {
   isValid: boolean;
@@ -962,7 +963,6 @@ export async function loginAndGetCookies(region: Region, maimaiToken: string): P
     throw new Error("No redirect URL received from token validation");
   }
 
-  console.log("Token validation successful, proceeding with data scraping...");
-  console.log("Getting cookies from redirect URL...");
+  getLogger().info("Token validation successful, getting cookies from redirect URL...");
   return await getCookiesFromRedirect(region, validation.redirectUrl, validation.cookies || null);
 }

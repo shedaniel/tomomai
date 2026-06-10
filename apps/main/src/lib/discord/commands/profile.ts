@@ -1,5 +1,6 @@
 import { db } from '@/lib/db';
 import { account, user, userSnapshots } from '@/lib/db/schema-pg';
+import { getLogger } from '@/lib/request-logger';
 import { waitUntil } from '@vercel/functions';
 import { and, desc, eq } from 'drizzle-orm';
 import { generateAndSendProfileImage } from '../image-utils';
@@ -110,7 +111,7 @@ export async function handleProfileCommand({
           username: dbUser.username ?? dbUser.name,
         });
       } catch (error) {
-        console.error('Error generating profile image:', error);
+        getLogger().error({ err: error }, 'Error generating profile image');
         // Fallback to text-only response
         const rating = latestSnapshot.rating;
         const comment = getRatingComment(rating);
@@ -151,7 +152,7 @@ export async function handleProfileCommand({
 
     return deferredResponse;
   } catch (error) {
-    console.error('Error fetching user rating:', error);
+    getLogger().error({ err: error }, 'Error fetching user rating');
     return createErrorResponse('An error occurred while fetching your rating. Please try again later.');
   }
 }

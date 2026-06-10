@@ -1,5 +1,6 @@
 import { db } from '@/lib/db';
 import { account, user } from '@/lib/db/schema-pg';
+import { getLogger } from '@/lib/request-logger';
 import { waitUntil } from '@vercel/functions';
 import { and, eq } from 'drizzle-orm';
 import {
@@ -70,7 +71,7 @@ export async function handleRecentsCommand({
     return deferredResponse;
 
   } catch (error) {
-    console.error('Error handling recents command:', error);
+    getLogger().error({ err: error }, 'Error handling recents command');
     return createErrorResponse('An error occurred while fetching your recent plays. Please try again later.');
   }
 }

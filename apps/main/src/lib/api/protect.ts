@@ -1,5 +1,6 @@
 import { type NextRequest } from "next/server";
 import { createHash } from "crypto";
+import { requestLogger } from "@/lib/request-logger";
 import { auth } from "@/lib/auth";
 import { verifyAccessToken } from "better-auth/oauth2";
 import { type ScopeKey, scopesToPermissions } from "@/lib/api/scopes";
@@ -131,6 +132,10 @@ export function withApiKey(
   handler: (req: NextRequest, key: ApiKeyInfo, ctx: RouteContext) => Promise<Response>
 ) {
   return async (req: NextRequest, context: RouteContext) => {
+    // Bind the ambient request logger for all v1 handlers and the lib code
+    // they call (see request-logger.ts).
+    const { log } = requestLogger(req, req.nextUrl.pathname.replace(/^\/api\//, ""));
+
     const authHeader = req.headers.get("authorization");
     const rawKey =
       req.headers.get("x-api-key") ??
@@ -246,7 +251,7 @@ export function withApiKey(
       }
       return applyV1Headers(response, state);
     } catch (err) {
-      console.error("API handler error:", err);
+      log.error({ err }, "API handler error");
       return Response.json({ error: "Internal server error" }, { status: 500 });
     }
   };

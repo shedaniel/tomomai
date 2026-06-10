@@ -110,6 +110,7 @@ Aggregate namespaces (intentional nested objects — **bounded, fixed keys**; do
 > `basename`, `groupKey`, `interactionType`, `oauthError`, `stepType`, `period`,
 > `event`, `pagesToScrape`, `queueSize`, `bfsLevel`, `shouldScrape`, `r`,
 > `playerName`, `index`, `batchIndex`, `progress`, `from`, `to`, `profile`,
+> `inviteCode`,
 > `addedDate`, `optional`, `modelId`, `uniqueCovers`, `existingR2Covers`,
 > `toDownload`, `skipped`, `duplicateIds`, `urls`, `totalDuplicatesMerged`,
 > `totalMasterNamesNormalized`, `originalName`) are also registered — keep this
@@ -172,6 +173,36 @@ Reference implementations: `src/app/api/admin/update_all/route.ts`,
 ### Why a child logger?
 
 `logger.child({ requestId, route })` returns a logger that prepends those fields to **every** log line, including ones emitted by helpers it's passed to. Pass `log` (not `logger`) into downstream functions so their logs inherit the same context — that's how a single Axiom query like `route == "export-image" AND requestId == "abc123"` reconstructs the entire request timeline.
+
+### Ambient logger for lib/service code (`getLogger()`)
+
+Lib and service code that isn't handed a `log` explicitly should use the
+**ambient request logger** instead of the root `logger`:
+
+```ts
+import { getLogger } from "@/lib/request-logger";
+
+getLogger().warn({ err }, "failed to cache image");
+```
+
+`requestLogger()` binds the request-scoped child logger to the current async
+execution context (AsyncLocalStorage), so `getLogger()` returns that logger —
+with `route` and `requestId` — anywhere downstream of the route, **including
+`after()` / `waitUntil()` background tasks** (Next snapshots ALS context).
+Outside a request scope (build time, scripts) it falls back to the root logger,
+so it's always safe to call.
+
+The ambient logger is bound automatically for:
+- any route that calls `requestLogger(request, route)`,
+- every tRPC procedure (middleware in `src/lib/trpc.ts`, `route: "trpc/<path>"`),
+- every v1 API handler (`withApiKey` in `src/lib/api/protect.ts`).
+
+Prefer explicit `log` threading when a helper is part of one request flow and
+already takes a context (e.g. the admin fetcher pipeline's `context.log`);
+use `getLogger()` for shared lib code called from many places.
+
+> `request-logger.ts` imports `node:async_hooks`, so it is **server-only** —
+> never import it from client components or shared client/server modules.
 
 ## Levels
 

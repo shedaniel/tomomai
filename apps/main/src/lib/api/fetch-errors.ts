@@ -1,3 +1,4 @@
+import { getLogger } from "@/lib/request-logger";
 import { isAlbumSettingsError, isTokenError } from "@/lib/token-errors";
 
 /**
@@ -27,6 +28,6 @@ export function mapFetchStartError(error: unknown): Response {
       return Response.json({ error: error.message }, { status: 429 });
     }
   }
-  console.error("startFetch error:", error);
+  getLogger().error({ err: error }, "startFetch error");
   return Response.json({ error: "Failed to start fetch" }, { status: 500 });
 }

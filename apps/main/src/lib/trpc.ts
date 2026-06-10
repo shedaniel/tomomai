@@ -1,5 +1,7 @@
 import { initTRPC, TRPCError } from '@trpc/server';
 import { auth } from '@/lib/auth';
+import { logger } from '@/lib/logger';
+import { getRequestId, runWithLogger } from '@/lib/request-logger';
 import superjson from 'superjson';
 import type { NextRequest } from 'next/server';
 
@@ -23,13 +25,21 @@ const t = initTRPC.context<Context>().create({
   },
 });
 
+// Bind the ambient request logger for every procedure, so lib code reached
+// from tRPC picks up route/requestId via getLogger() (see request-logger.ts).
+const withRequestLogger = t.middleware(({ ctx, path, next }) => {
+  const requestId = getRequestId(ctx.req);
+  const log = logger.child({ route: `trpc/${path}`, requestId });
+  return runWithLogger(log, () => next());
+});
+
 // Export reusable router and procedure helpers
 export const router = t.router;
-export const publicProcedure = t.procedure;
+export const publicProcedure = t.procedure.use(withRequestLogger);
 export const middleware = t.middleware;
 
 // Protected procedure that requires authentication
-export const protectedProcedure = t.procedure.use(({ ctx, next }) => {
+export const protectedProcedure = publicProcedure.use(({ ctx, next }) => {
   if (!ctx.session) {
     throw new TRPCError({ code: 'UNAUTHORIZED' });
   }

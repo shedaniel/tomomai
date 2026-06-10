@@ -1,5 +1,6 @@
 import type { MetadataRoute } from 'next'
 import { resolveBaseUrl } from '@/lib/base-url';
+import { logger } from '@/lib/logger';
 import { DB_TYPES } from '@/lib/db/types';
 import { user, userSnapshots, songs } from '@/lib/db/schema-pg';
 import { and, eq, ne, sql } from 'drizzle-orm';
@@ -67,7 +68,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   for (const [slug, songs] of counter.entries()) {
     if (songs.length > 1) {
-      console.error(`Same slug found: ${slug} for ${songs.map(s => `'${s.songName}' by '${s.artist}'`).join(', ')}`);
+      logger.warn(`Same slug found: ${slug} for ${songs.map(s => `'${s.songName}' by '${s.artist}'`).join(', ')}`);
     }
   }
 
