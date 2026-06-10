@@ -136,6 +136,19 @@ log.error(
 );
 ```
 
+## Unhandled errors are logged automatically
+
+`instrumentation.ts` exports an `onRequestError` hook that fires for **every**
+uncaught error thrown by a route handler, server component, or server action. It
+logs the error with the request's `requestId` (set by middleware), so even a
+route with no try/catch of its own produces a correlated `error`-level line in
+Axiom — query `msg == "Unhandled request error"`.
+
+A per-route `try/catch` + `log.error({ err }, "...")` is still worth it when you
+want a **friendly response body** (e.g. include `requestId` in the JSON) or
+route-specific context — but you no longer need one *just* to make the failure
+observable.
+
 ## `console.*` calls
 
 `logger.ts` installs a global bridge that forwards `console.log/info/warn/error/debug/trace` to the shipping streams (Axiom / Logtail) tagged with `via: "console"`. This means existing `console.log(...)` calls in legacy code still get shipped.
