@@ -273,8 +273,15 @@ export const logger: Logger = isBrowser
   : createServerLogger();
 
 export async function flushLogger(): Promise<void> {
-  await Promise.all([
-    logtailInstance?.flush(),
-    axiomFlush?.(),
-  ]);
+  // A log flush must never break a request: swallow provider errors so a
+  // rejection here can't override a handler's response when awaited in a finally.
+  try {
+    await Promise.all([
+      logtailInstance?.flush(),
+      axiomFlush?.(),
+    ]);
+  } catch {
+    // best effort — the Axiom transport already disables itself after repeated
+    // failures, so there's nothing actionable to do here.
+  }
 }
