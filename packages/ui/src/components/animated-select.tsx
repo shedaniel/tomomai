@@ -82,7 +82,7 @@ function AnimatedSelectContent({
       >
         <motion.div
           className={cn(
-            "relative z-50 max-h-96 min-w-[8rem] overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-md",
+            "relative z-50 max-h-96 min-w-[8rem] overflow-hidden rounded-md border glass-surface text-popover-foreground shadow-md",
             // transform-origin based on which side content appears
             "data-[side=bottom]:origin-top data-[side=top]:origin-bottom data-[side=left]:origin-right data-[side=right]:origin-left",
             position === "popper" &&

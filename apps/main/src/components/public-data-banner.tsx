@@ -39,11 +39,13 @@ export function PublicDataBanner({
         {/* Left side - Latest snapshot info */}
         <div className="flex items-center space-x-4">
           {snapshotData ? (
-            <div className="flex flex-col items-start">
-              <span className="text-sm font-medium">{t('dataBanner.dataSnapshot')} {snapshotData ? formatDate(snapshotData.fetchedAt) : ''}</span>
-              <h1 className="text-xs text-muted-foreground font-normal">
-                {snapshotData.displayName} • {snapshotData.rating} rating • {getVersionInfo(snapshotData.gameVersion)?.shortName || "Unknown"}
-              </h1>
+            <div className="flex flex-col items-start gap-1.5">
+              <div className="flex items-center gap-2">
+                <h1 className="m-0 text-base font-medium">{snapshotData.displayName}</h1>
+                <Badge variant="tonal" className="font-medium bg-primary-container/50">{snapshotData.rating} rating</Badge>
+                <Badge variant="secondary" className="font-normal bg-secondary/50">{getVersionInfo(snapshotData.gameVersion)?.shortName || "Unknown"}</Badge>
+              </div>
+              <span className="text-xs text-muted-foreground">{t('dataBanner.dataSnapshot')} {snapshotData ? formatDate(snapshotData.fetchedAt) : ''}</span>
             </div>
           ) : (
             <Badge variant="secondary">{t('dataBanner.noDataAvailable')}</Badge>
