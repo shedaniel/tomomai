@@ -104,6 +104,44 @@ describe("resolveParents", () => {
     expect(result.assignments.get(BigInt(1))).not.toBe(result.assignments.get(BigInt(2)));
   });
 
+  it("matches by artist when addedVersion drifted across versions (prod Link case)", () => {
+    // In production, Circle-of-friends "Link" carries addedVersion -1 in
+    // early region/version rows but -9 in later ones. A new instance with the
+    // drifted addedVersion must still land on the artist-matching parent
+    // instead of spawning a third one.
+    const linkA = parent({
+      id: BigInt(1),
+      songName: "Link",
+      difficulty: "master",
+      artist: "Circle of friends",
+      childAddedVersions: new Set([-1]),
+      childRegionVersions: new Set(["jp:11"]),
+    });
+    const linkB = parent({
+      id: BigInt(2),
+      songName: "Link",
+      difficulty: "master",
+      artist: "Clean Tears feat. Youna",
+      disambiguator: 1,
+      childAddedVersions: new Set([-12]),
+      childRegionVersions: new Set(["jp:11"]),
+    });
+    const result = resolveParents([
+      song({
+        id: BigInt(9),
+        songName: "Link",
+        difficulty: "master",
+        artist: "Circle of friends",
+        addedVersion: -9, // drifted from -1
+        region: "jp",
+        gameVersion: 12,
+      }),
+    ], [linkA, linkB]);
+
+    expect(result.newParents).toHaveLength(0);
+    expect(result.assignments.get(BigInt(9))).toBe(linkA);
+  });
+
   it("prefers the artist-matching parent among disambiguated candidates", () => {
     const linkA = parent({
       id: BigInt(1),

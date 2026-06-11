@@ -37,9 +37,11 @@ CREATE INDEX "songs_parentid_idx" ON "songs" USING btree ("parentId");
 -- groups where two genuinely different charts share that key (e.g. the two
 -- songs both titled "Link"). Such groups are detected as a real collision:
 -- two rows sharing (songName, type, difficulty) inside a single
--- (region, gameVersion). Within a colliding group the rows of one chart are
--- separated from the other chart's rows by addedVersion (guaranteed distinct
--- per (region, gameVersion) by the songs unique constraint).
+-- (region, gameVersion). Within a colliding group the charts are separated
+-- by artist: addedVersion is NOT a reliable separator (in production data
+-- the Circle-of-friends "Link" carries addedVersion -1 in early
+-- region/version rows and -9 in later ones), while the artist strings of
+-- colliding charts are distinct and stable.
 --
 -- Non-colliding groups always collapse into a single parent, regardless of
 -- artist/genre/cover drift across versions.
@@ -57,7 +59,7 @@ SELECT
 	s."type",
 	s."difficulty",
 	CASE WHEN c."songName" IS NOT NULL
-		THEN DENSE_RANK() OVER (PARTITION BY s."songName", s."type", s."difficulty" ORDER BY s."addedVersion") - 1
+		THEN DENSE_RANK() OVER (PARTITION BY s."songName", s."type", s."difficulty" ORDER BY s."artist") - 1
 		ELSE 0
 	END AS disambiguator
 FROM songs s
@@ -108,6 +110,31 @@ BEGIN
 	) dup;
 	IF n > 0 THEN
 		RAISE EXCEPTION 'parent_song backfill: % (parent, region, gameVersion) groups have multiple children', n;
+	END IF;
+
+	-- Over-splitting guard: a colliding (songName, type, difficulty) group must
+	-- produce exactly as many parents as charts that ever coexist in a single
+	-- (region, gameVersion). More parents than that means one chart's rows got
+	-- split apart (e.g. by artist text drift): abort.
+	SELECT COUNT(*) INTO n
+	FROM (
+		SELECT "songName", "type", "difficulty", COUNT(*) AS n_parents
+		FROM parent_song
+		GROUP BY "songName", "type", "difficulty"
+		HAVING COUNT(*) > 1
+	) c
+	JOIN (
+		SELECT "songName", "type", "difficulty", MAX(cnt) AS max_multiplicity
+		FROM (
+			SELECT "songName", "type", "difficulty", "region", "gameVersion", COUNT(*) AS cnt
+			FROM songs
+			GROUP BY "songName", "type", "difficulty", "region", "gameVersion"
+		) per_rv
+		GROUP BY "songName", "type", "difficulty"
+	) m USING ("songName", "type", "difficulty")
+	WHERE c.n_parents <> m.max_multiplicity;
+	IF n > 0 THEN
+		RAISE EXCEPTION 'parent_song backfill: % chart groups split into more parents than their collision multiplicity', n;
 	END IF;
 END $$;
 --> statement-breakpoint
