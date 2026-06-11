@@ -24,7 +24,7 @@ import {
   SelectValue,
 } from "@tomomai/ui/select-friendly";
 import { Locale, setLocaleCookie } from "@/i18n/locale";
-import { isCNExclusive } from "@/lib/enabled-regions";
+import { isCNExclusive } from "@tomomai/catalog/enabled-regions";
 import { trpc } from "@/lib/trpc-client";
 import { getLanguages } from "@/lib/utils";
 import { Languages, Mail, Pencil, User } from "lucide-react";

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { getEnabledRegions } from "@/lib/enabled-regions";
+import { getEnabledRegions } from "@tomomai/catalog/enabled-regions";
 
 /**
  * Shared Zod schemas used by `/api/v1/**` route specs. These are the
@@ -122,8 +122,23 @@ export const fetchStartResult = z.object({
 
 export const successResponse = z.object({ success: z.literal(true) });
 
+export const chartCatalogueEntry = z.object({
+  songId: z.string().describe("Chart ID (8-char nanoid) — the prefix of every composite instance ID."),
+  songName: z.string(),
+  artist: z.string(),
+  cover: z.string().nullable().describe("Cover image URL, may be null."),
+  type: z.enum(["std", "dx", "utage"]).describe("Chart type."),
+  genre: z.string(),
+  difficulty: z.enum(["basic", "advanced", "expert", "master", "remaster", "utage"]),
+  bpm: z.number().nullable(),
+  disambiguator: z
+    .number()
+    .int()
+    .describe("0 except for the rare distinct charts sharing the same name, type and difficulty."),
+});
+
 export const songCatalogueEntry = z.object({
-  songId: z.string().describe("Public song ID (21-char nanoid)."),
+  songId: z.string().describe("Composite instance ID: <chartId>:<regionLetter><gameVersion> (e.g. Ab3xK9pQ:j11 = jp @ version 11; chart ID is an 8-char nanoid, regions j/i/c, versions may be negative). Truncate at ':' for the chart-level ID."),
   songName: z.string(),
   artist: z.string(),
   cover: z.string().nullable().describe("Cover image URL, may be null."),

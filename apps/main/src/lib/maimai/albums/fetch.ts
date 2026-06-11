@@ -1,9 +1,9 @@
 import { load } from "cheerio";
 import { logger } from "../../logger";
-import { normalizeName } from "../../name-utils";
+import { normalizeName } from "@tomomai/catalog/name-utils";
 import { Difficulty, Region, SongType } from "../../types";
-import { maimaiBaseUrl, maimaiGetHtml } from "../http";
-import { musicTypeFromIcon } from "../parse-utils";
+import { maimaiBaseUrl, maimaiGetHtml } from "@tomomai/server/maimai-http";
+import { musicTypeFromIcon } from "@tomomai/catalog/parse-utils";
 import type { AlbumData } from "../types";
 
 export async function fetchAlbumData(cookies: string, region: Region): Promise<AlbumData[]> {

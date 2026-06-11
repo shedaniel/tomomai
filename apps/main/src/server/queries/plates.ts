@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { scoreData, snapshotScores, songs } from "@/lib/db/schema-pg";
+import { parentSong, scoreData, snapshotScores, songs } from "@/lib/db/schema-pg";
 import { and, eq } from "drizzle-orm";
 import type { Difficulty, Region, MinimalSongForDisplay } from "@/lib/types";
 
@@ -26,19 +26,20 @@ export async function fetchPlateSongs(
 
   const allSongs = await db
     .select({
-      songId: songs.publicId,
-      songName: songs.songName,
-      artist: songs.artist,
-      cover: songs.cover,
-      difficulty: songs.difficulty,
+      songId: parentSong.publicId,
+      songName: parentSong.songName,
+      artist: parentSong.artist,
+      cover: parentSong.cover,
+      difficulty: parentSong.difficulty,
       levelPrecise: songs.levelPrecise,
-      type: songs.type,
+      type: parentSong.type,
       achievement: snapshotScoresSub.achievement,
       fc: snapshotScoresSub.fc,
       fs: snapshotScoresSub.fs,
       dxScore: snapshotScoresSub.dxScore,
     })
     .from(songs)
+    .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
     .leftJoin(
       snapshotScoresSub,
       eq(snapshotScoresSub.songId, songs.id)
@@ -46,7 +47,7 @@ export async function fetchPlateSongs(
     .where(
       and(
         eq(songs.addedVersion, parseInt(version)),
-        eq(songs.difficulty, difficulty),
+        eq(parentSong.difficulty, difficulty),
         eq(songs.region, region),
         eq(songs.gameVersion, gameVersion)
       )

@@ -8,7 +8,7 @@ const APP_DIR = typeof __dirname !== "undefined" ? __dirname : process.cwd();
 const WORKSPACE_ROOT = path.resolve(APP_DIR, "../..");
 
 const nextConfig: NextConfig = {
-  transpilePackages: ["@tomomai/ui", "@tomomai/i18n"],
+  transpilePackages: ["@tomomai/ui", "@tomomai/i18n", "@tomomai/catalog"],
   outputFileTracingRoot: WORKSPACE_ROOT,
   // Bundling rewrites the exported binary path to a non-existent `/ROOT/...`.
   serverExternalPackages: ["ffmpeg-static"],

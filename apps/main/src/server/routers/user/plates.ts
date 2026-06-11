@@ -4,7 +4,7 @@ import { protectedProcedure, publicProcedure, router } from '@/lib/trpc';
 import { TRPCError } from '@trpc/server';
 import { and, desc, eq } from 'drizzle-orm';
 import { z } from 'zod';
-import { getEnabledRegions } from '@/lib/enabled-regions';
+import { getEnabledRegions } from "@tomomai/catalog/enabled-regions";
 import { fetchPlateSongs } from '@/server/queries/plates';
 import { resolvePublicSnapshotUserId } from '@/server/queries/public-access';
 

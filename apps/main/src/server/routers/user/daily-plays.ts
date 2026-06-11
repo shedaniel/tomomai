@@ -1,6 +1,6 @@
 import { protectedProcedure, publicProcedure, router } from '@/lib/trpc';
 import { z } from 'zod';
-import { getEnabledRegions } from '@/lib/enabled-regions';
+import { getEnabledRegions } from "@tomomai/catalog/enabled-regions";
 import { listDailyPlaysAvailableDays } from '@/server/services/daily-plays-data';
 import { resolvePublicSnapshotUserId } from '@/server/queries/public-access';
 

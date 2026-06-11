@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { nanoid } from "nanoid";
 import { getServerSession } from "@/lib/auth-server";
-import { resolveBaseUrlFromHeaders } from "@/lib/base-url";
+import { resolveBaseUrlFromHeaders } from "@tomomai/server/base-url";
 import { logger } from "@/lib/logger";
 
 const AUTHORIZE_URL = "https://maimai.lxns.net/oauth/authorize";

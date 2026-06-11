@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { verifyCnProxyToken } from "@/lib/cn-proxy-token";
 import { deleteToken, formatCnCookiesToken, saveCnCookiesToken } from "@/server/services/maimai-login";
 import { startFetchServer } from "@/lib/maimai-server-actions";
-import { AGENT } from "@/lib/http-agent";
+import { AGENT } from "@tomomai/server/http-agent";
 import { logger } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";

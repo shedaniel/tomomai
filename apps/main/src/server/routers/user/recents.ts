@@ -1,7 +1,7 @@
 import { protectedProcedure, publicProcedure, router } from '@/lib/trpc';
 import { Region } from '@/lib/types';
 import { z } from 'zod';
-import { getEnabledRegions } from '@/lib/enabled-regions';
+import { getEnabledRegions } from "@tomomai/catalog/enabled-regions";
 import { fetchRecentSongs } from '@/server/queries/recents';
 import { resolvePublicSnapshotUserId } from '@/server/queries/public-access';
 

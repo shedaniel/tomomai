@@ -1,7 +1,7 @@
 import { headers } from "next/headers";
 import { getLocale as getLocaleBase } from "@tomomai/i18n/server";
 import { Locale, locales } from "@tomomai/i18n/locale";
-import { isCNExclusive } from "@/lib/enabled-regions";
+import { isCNExclusive } from "@tomomai/catalog/enabled-regions";
 
 export async function getLocale(): Promise<Locale> {
   return getLocaleBase({

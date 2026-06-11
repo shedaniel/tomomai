@@ -2,9 +2,9 @@ import { createSongOGImage, createHomeOGImage, DB_ACCENT, OG_SIZE } from "@/lib/
 import { getAllUniqueSongsCached } from "@/server/queries/songs-cache";
 import { getTranslations } from "next-intl/server";
 import { createSafeMaimaiImageUrl, isR2Url } from "@/lib/utils";
-import { resolveBaseUrlFromHeaders } from "@/lib/base-url";
+import { resolveBaseUrlFromHeaders } from "@tomomai/server/base-url";
 import { headers } from "next/headers";
-import { getVersionInfo } from "@/lib/metadata";
+import { getVersionInfo } from "@tomomai/catalog/metadata";
 import type { Locale } from "@/i18n/locale";
 import { getOGImageLocales } from "@/i18n/og-locale";
 

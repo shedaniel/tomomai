@@ -4,7 +4,7 @@ import { publicProcedure, router } from '@/lib/trpc';
 import { and, desc, eq, gt, gte, inArray, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { unstable_cache } from 'next/cache';
-import { getEnabledRegions } from '@/lib/enabled-regions';
+import { getEnabledRegions } from "@tomomai/catalog/enabled-regions";
 import { fetchTourEvents, fetchTourEventsByNames } from '@/server/queries/events';
 
 const regionSchema = z.enum(getEnabledRegions());
@@ -372,18 +372,19 @@ export const dbRouter = router({
             averageAchievement: number;
           }>(sql`
             SELECT
-              s."songName" AS "songName",
-              s."type" AS "type",
-              s."difficulty" AS "difficulty",
-              MAX(s."cover") AS "cover",
-              MAX(s."artist") AS "artist",
+              p."songName" AS "songName",
+              p."type" AS "type",
+              p."difficulty" AS "difficulty",
+              MAX(p."cover") AS "cover",
+              MAX(p."artist") AS "artist",
               COUNT(*)::int AS "count",
               AVG(urs."archievement")::float AS "averageAchievement"
             FROM user_recent_songs urs
             JOIN songs s ON s.id = urs."songId"
+            JOIN parent_song p ON p.id = s."parentId"
             WHERE s.region = ${region}
               ${timeFilter}
-            GROUP BY s."songName", s."type", s."difficulty"
+            GROUP BY p."songName", p."type", p."difficulty"
             ORDER BY COUNT(*) DESC
             LIMIT 20
           `);

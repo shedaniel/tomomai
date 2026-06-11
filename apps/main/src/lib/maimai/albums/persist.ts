@@ -1,9 +1,9 @@
 import { eq } from "drizzle-orm";
 import { db } from "../../db";
 import { userAlbums } from "../../db/schema-pg";
-import { convertJpegToAvif } from "../../image-converter";
+import { convertJpegToAvif } from "@tomomai/server/image-converter";
 import { logger } from "../../logger";
-import { getCurrentVersion } from "../../metadata";
+import { getCurrentVersion } from "@tomomai/catalog/metadata";
 import { deleteFromR2, uploadToR2 } from "../../r2";
 import { Region } from "../../types";
 import { buildSongLookupMaps } from "../songs/persist";

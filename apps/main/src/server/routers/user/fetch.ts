@@ -1,6 +1,6 @@
 import { db } from '@/lib/db';
 import { generateUserOtp, getOtpExpiryTimestamp, createOpaqueUserId } from '@/lib/otp';
-import { resolveBaseUrl } from '@/lib/base-url';
+import { resolveBaseUrl } from "@tomomai/server/base-url";
 import { getFetchStatusServer, startFetchServer } from '@/lib/maimai-server-actions';
 import { protectedProcedure, router } from '@/lib/trpc';
 import { Region } from '@/lib/types';
@@ -8,7 +8,7 @@ import { TRPCError } from '@trpc/server';
 import { isTokenError, isAlbumSettingsError } from '@/lib/token-errors';
 import { and, desc, eq } from 'drizzle-orm';
 import { z } from 'zod';
-import { getEnabledRegions } from '@/lib/enabled-regions';
+import { getEnabledRegions } from "@tomomai/catalog/enabled-regions";
 
 const regionSchema = z.enum(getEnabledRegions());
 

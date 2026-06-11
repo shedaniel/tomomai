@@ -5,7 +5,7 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { CoverImage } from "@/components/cover-image";
 import { UniqueSong } from "./types";
-import { renderLevelPrecise } from "@/lib/name-utils";
+import { renderLevelPrecise } from "@tomomai/catalog/name-utils";
 
 interface SongRowProps {
   song: UniqueSong;

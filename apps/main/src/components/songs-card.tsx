@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@tomomai/ui";
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 import { SongHoverCard } from "@/components/song-hover-card";
-import { renderLevelPrecise } from "@/lib/name-utils";
+import { renderLevelPrecise } from "@tomomai/catalog/name-utils";
 import { motion, AnimatePresence } from "motion/react";
 import { SPRING_CONFIGS, STAGGER, getTransition } from "@/lib/animation-constants";
 import { trpc } from "@/lib/trpc-client";

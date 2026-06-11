@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { getLocale } from "@/i18n/locale-server";
 import { buildAlternates, breadcrumbJsonLd, openGraphLocales, ogImageUrl } from "@/lib/seo";
-import { resolveBaseUrl } from "@/lib/base-url";
+import { resolveBaseUrl } from "@tomomai/server/base-url";
 
 type DbSlugPageProps = {
   params: Promise<{

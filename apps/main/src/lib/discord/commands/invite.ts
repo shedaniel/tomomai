@@ -1,6 +1,6 @@
 import { InteractionResponseType } from 'discord-interactions';
 import { DISCORD_COLORS, DiscordResponse } from '../responses';
-import { resolveBaseUrl } from '../../base-url';
+import { resolveBaseUrl } from "@tomomai/server/base-url";
 
 export interface InviteCommandOptions {
   applicationId: string;

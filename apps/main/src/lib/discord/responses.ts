@@ -1,7 +1,7 @@
 import { InteractionResponseType, InteractionResponseFlags } from 'discord-interactions';
 import { FETCH_STATUS_ENUM } from '../db/types';
 import { FETCH_STATES } from '../fetch-states';
-import { resolveBaseUrl } from '../base-url';
+import { resolveBaseUrl } from "@tomomai/server/base-url";
 
 export interface DiscordEmbed {
   title?: string;

@@ -11,7 +11,7 @@ import { getLogoUrl, getTypeBadgeUrl } from '@/lib/utils';
 import { logger } from '@/lib/logger';
 import { enterProfile, formatProfileTree, span } from '@/lib/profiler';
 import type { Region } from '@/lib/types';
-import type { VersionId } from '@/lib/metadata';
+import type { VersionId } from "@tomomai/catalog/metadata";
 
 type SnapshotForResources = {
   rating: number;

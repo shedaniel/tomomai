@@ -1,11 +1,18 @@
 import { and, eq, sql as sqlDrizzle } from "drizzle-orm";
 import { db } from "../../db";
-import { fetchSessions, scoreData, snapshotB50, snapshotScores, songs } from "../../db/schema-pg";
+import { fetchSessions, parentSong, scoreData, snapshotB50, snapshotScores, songs } from "../../db/schema-pg";
 import { logger } from "../../logger";
-import { getCurrentVersion, VersionId } from "../../metadata";
+import { getCurrentVersion, VersionId } from "@tomomai/catalog/metadata";
 import { splitSongs } from "../../rating-calculator";
 import { Region, SongWithScore } from "../../types";
 import type { ScoreData } from "../types";
+
+/** Chart instance plus the chart-stable attributes that live on parent_song. */
+export type FullSongData = typeof songs.$inferSelect &
+  Pick<
+    typeof parentSong.$inferSelect,
+    "songName" | "artist" | "cover" | "difficulty" | "type" | "genre" | "bpm"
+  >;
 
 /**
  * Builds song lookup maps for efficient song matching during insertion.
@@ -20,24 +27,37 @@ export async function buildSongLookupMaps(
   gameVersion: number,
 ): Promise<{
   songLookup: Map<string, bigint>;
-  fullSongMap: Map<bigint, typeof songs.$inferSelect>;
+  fullSongMap: Map<bigint, FullSongData>;
 }> {
   logger.info(`Batch querying songs for region ${region}, game version ${gameVersion}`);
-  const allSongs = await db.query.songs.findMany({
-    where: and(
+  const allSongs = await db
+    .select({ song: songs, parent: parentSong })
+    .from(songs)
+    .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
+    .where(and(
       eq(songs.region, region),
       eq(songs.gameVersion, gameVersion),
-    ),
-  });
+    ));
   logger.info(`Found ${allSongs.length} songs in database for this region/version`);
 
   const songLookup = new Map<string, bigint>();
-  const fullSongMap = new Map<bigint, typeof songs.$inferSelect>();
+  const fullSongMap = new Map<bigint, FullSongData>();
 
-  for (const song of allSongs) {
-    const key = `${song.songName}|${song.difficulty}|${song.type}`;
+  for (const { song, parent } of allSongs) {
+    const key = `${parent.songName}|${parent.difficulty}|${parent.type}`;
     songLookup.set(key, song.id);
-    fullSongMap.set(song.id, song);
+    fullSongMap.set(song.id, {
+      ...song,
+      // Chart-stable attributes live on parent_song; merge them so
+      // downstream consumers (ranking, B50) read the parent values.
+      songName: parent.songName,
+      artist: parent.artist,
+      cover: parent.cover,
+      difficulty: parent.difficulty,
+      type: parent.type,
+      genre: parent.genre,
+      bpm: parent.bpm,
+    });
   }
   logger.info(`Created song lookup maps with ${songLookup.size} entries`);
 
@@ -111,7 +131,7 @@ export async function insertUserScores(
   sessionId: bigint,
   allScoreData: { [difficulty: number]: ScoreData[] },
   songLookup: Map<string, bigint>,
-  fullSongMap: Map<bigint, typeof songs.$inferSelect>,
+  fullSongMap: Map<bigint, FullSongData>,
 ): Promise<void> {
   const gameVersion = getCurrentVersion(region);
 

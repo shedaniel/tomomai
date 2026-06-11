@@ -21,7 +21,7 @@ import {
   applyRecommendationFilters,
 } from "@/components/filter-panel";
 import { SongHoverCard } from "@/components/song-hover-card";
-import { renderLevelPrecise } from "@/lib/name-utils";
+import { renderLevelPrecise } from "@tomomai/catalog/name-utils";
 import { STAGGER, getTransition } from "@/lib/animation-constants";
 import { useMediaQuery } from "@/hooks/use-media-query";
 

@@ -1,6 +1,6 @@
 import { RegionSwitcherClient } from "@/components/region-switcher";
 import { Badge } from "@tomomai/ui";
-import { getVersionInfo, VersionId } from "@/lib/metadata";
+import { getVersionInfo, VersionId } from "@tomomai/catalog/metadata";
 import { Region } from "@/lib/types";
 import { User } from "lucide-react";
 import { useTranslations } from "next-intl";

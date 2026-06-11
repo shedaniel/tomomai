@@ -8,7 +8,7 @@ const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 const withAnalyzer = withBundleAnalyzer({ enabled: process.env.ANALYZE === 'true' });
 
 const nextConfig: NextConfig = {
-  transpilePackages: ["@tomomai/ui", "@tomomai/i18n"],
+  transpilePackages: ["@tomomai/ui", "@tomomai/i18n", "@tomomai/catalog", "@tomomai/server"],
   async headers() {
     return [
       {
@@ -161,7 +161,6 @@ const nextConfig: NextConfig = {
   outputFileTracingIncludes: {
     '/api/image-proxy': ['./public/res/**/*'],
     '/api/export-image': ['./public/res/**/*'],
-    '/api/admin/cache_images': ['./public/res/**/*'],
     '/**/*': ['../../node_modules/.pnpm/kuromoji@*/node_modules/kuromoji/dict/**/*'],
   },
   devIndicators: false,

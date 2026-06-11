@@ -14,7 +14,7 @@ import {
 import { Input } from "@tomomai/ui";
 import { Label } from "@tomomai/ui";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@tomomai/ui";
-import { resolveBaseUrl } from "@/lib/base-url";
+import { resolveBaseUrl } from "@tomomai/server/base-url";
 import { trpc } from "@/lib/trpc-client";
 import { cn } from "@/lib/utils";
 import { AlertTriangle, Check, ChevronRight, Copy, Fish, Key, QrCode, Smartphone, Snowflake, Wifi, X } from "lucide-react";

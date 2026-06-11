@@ -19,7 +19,7 @@ import {
   useSettingsReset,
   useSettingsSave,
 } from "@/components/settings/primitives";
-import { getEnabledRegions } from "@/lib/enabled-regions";
+import { getEnabledRegions } from "@tomomai/catalog/enabled-regions";
 import { trpc } from "@/lib/trpc-client";
 import { ProfilePrivacySettings, Region } from "@/lib/types";
 import { Copy, ExternalLink, Globe } from "lucide-react";

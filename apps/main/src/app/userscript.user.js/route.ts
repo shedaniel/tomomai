@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { NextRequest, NextResponse } from "next/server";
-import { resolveBaseUrlFromHeaders } from "@/lib/base-url";
+import { resolveBaseUrlFromHeaders } from "@tomomai/server/base-url";
 import { useUserscriptFetch } from "@/lib/flags";
 
 const BUNDLE_PATH = path.join(

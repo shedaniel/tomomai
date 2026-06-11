@@ -23,7 +23,7 @@ import {
 } from "@tomomai/ui";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@tomomai/ui/select-friendly";
 import { calculateProgress, parseStatusStates } from "@/lib/fetch-states";
-import { getVersionInfo, VersionId } from "@/lib/metadata";
+import { getVersionInfo, VersionId } from "@tomomai/catalog/metadata";
 import { trpc } from "@/lib/trpc-client";
 import { FetchSession, Region, Snapshot } from "@/lib/types";
 import { Calendar, Copy, Download, MoreHorizontal, Trash2 } from "lucide-react";

@@ -6,7 +6,7 @@ import { and, eq } from 'drizzle-orm';
 import { renderDailyPlaysImage } from '@/lib/render-image';
 import { commonSnapshotResources, renderWebpResponse } from '@/lib/render-image-route';
 import { prepareDailyPlaysData } from '@/server/services/daily-plays-data';
-import { getEnabledRegions } from '@/lib/enabled-regions';
+import { getEnabledRegions } from "@tomomai/catalog/enabled-regions";
 import { z } from 'zod';
 
 export const dynamic = "force-dynamic";

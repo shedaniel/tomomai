@@ -1,9 +1,11 @@
 // Centralized type definitions for the maimai charts application
-import { VersionId } from "./metadata";
+import { VersionId } from "@tomomai/catalog/metadata";
+import type { Region, MinimalSong, SongBase } from "@tomomai/catalog/types";
+
+// Catalog types live in @tomomai/catalog (shared with the data service)
+export type { Region, Difficulty, Level, SongType, MinimalSong, SongBase, SongExtended, NoteCounts } from "@tomomai/catalog/types";
 
 // ===== CORE TYPES =====
-
-export type Region = "intl" | "jp" | "cn";
 
 export interface User {
   id: string;
@@ -26,15 +28,6 @@ export interface Snapshot {
 }
 
 // Song data with score information
-export type MinimalSong = {
-  songId: string;
-  songName: string;
-  artist: string;
-  cover: string;
-  type: SongType;
-  difficulty: Difficulty;
-}
-
 export type MinimalSongForDisplay = MinimalSong & {
   levelPrecise: number;
   achievement: number;
@@ -43,32 +36,7 @@ export type MinimalSongForDisplay = MinimalSong & {
   dxScore: number;
 }
 
-export type SongBase = MinimalSong & {
-  level: string;
-  levelPrecise: number;
-  genre: string;
-  addedVersion: VersionId;
-}
-
 export type SongWithScore = SongBase & MinimalSongForDisplay
-
-export type SongExtended = SongBase & {
-  bpm: number | null;
-  noteDesigner: string | null;
-  tapCount: number | null;
-  holdCount: number | null;
-  slideCount: number | null;
-  touchCount: number | null;
-  breakCount: number | null;
-};
-
-export interface NoteCounts {
-  tap: number;
-  hold: number;
-  slide: number;
-  touch: number;
-  break: number;
-}
 
 // Event data for area and event area events
 export interface EventData {
@@ -116,16 +84,6 @@ export type ClassRank =
   | "SS5" | "SS4" | "SS3" | "SS2" | "SS1"
   | "SSS5" | "SSS4" | "SSS3" | "SSS2" | "SSS1"
   | "LEGEND";
-
-export type Difficulty = "basic" | "advanced" | "expert" | "master" | "remaster" | "utage";
-
-export type Level =
-  | "1" | "1+" | "2" | "2+" | "3" | "3+" | "4" | "4+" | "5" | "5+"
-  | "6" | "6+" | "7" | "7+" | "8" | "8+" | "9" | "9+" | "10" | "10+"
-  | "11" | "11+" | "12" | "12+" | "13" | "13+" | "14" | "14+" | "15" | "15+"
-  | "16" | "16+";
-
-export type SongType = "std" | "dx";
 
 export type FullCombo = "none" | "fc" | "fc+" | "ap" | "ap+";
 

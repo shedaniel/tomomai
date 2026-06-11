@@ -1,5 +1,5 @@
 import { GenericFilter } from "@/components/filter-panel";
-import { VersionId } from "@/lib/metadata";
+import { VersionId } from "@tomomai/catalog/metadata";
 import { Difficulty, Region, SongExtended, SongType } from "@/lib/types";
 
 export interface UniqueSong {

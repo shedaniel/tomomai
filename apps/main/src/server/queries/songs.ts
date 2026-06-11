@@ -1,7 +1,7 @@
 import { SongDetails } from "@/components/db/songs/types";
 import { db } from "@/lib/db";
-import { scoreData, snapshotScores, songs, userSnapshots } from "@/lib/db/schema-pg";
-import { VersionId } from "@/lib/metadata";
+import { parentSong, scoreData, snapshotScores, songs, userSnapshots } from "@/lib/db/schema-pg";
+import { VersionId } from "@tomomai/catalog/metadata";
 import { getSongSlugs } from "@/lib/song-slug";
 import { Region, SongExtended, SongType } from "@/lib/types";
 import { maxBy } from "@/lib/utils";
@@ -19,19 +19,19 @@ export async function querySongDetails(
 ): Promise<SongDetails> {
   const chartsQuery = db
     .select({
-      songId: songs.publicId,
-      songName: songs.songName,
-      artist: songs.artist,
-      cover: songs.cover,
-      difficulty: songs.difficulty,
+      songId: parentSong.publicId,
+      songName: parentSong.songName,
+      artist: parentSong.artist,
+      cover: parentSong.cover,
+      difficulty: parentSong.difficulty,
       level: songs.level,
       levelPrecise: songs.levelPrecise,
-      type: songs.type,
-      genre: songs.genre,
+      type: parentSong.type,
+      genre: parentSong.genre,
       region: songs.region,
       gameVersion: songs.gameVersion,
       addedVersion: songs.addedVersion,
-      bpm: songs.bpm,
+      bpm: parentSong.bpm,
       noteDesigner: songs.noteDesigner,
       tapCount: songs.tapCount,
       holdCount: songs.holdCount,
@@ -40,8 +40,9 @@ export async function querySongDetails(
       breakCount: songs.breakCount,
     })
     .from(songs)
-    .where(and(eq(songs.songName, songName), eq(songs.type, type)))
-    .orderBy(songs.region, desc(songs.gameVersion), songs.difficulty);
+    .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
+    .where(and(eq(parentSong.songName, songName), eq(parentSong.type, type)))
+    .orderBy(songs.region, desc(songs.gameVersion), parentSong.difficulty);
 
   let scoresQuery: Promise<
     { region: string; difficulty: string; achievement: number; fc: string; fs: string }[]
@@ -51,7 +52,7 @@ export async function querySongDetails(
     scoresQuery = db
       .select({
         region: songs.region,
-        difficulty: songs.difficulty,
+        difficulty: parentSong.difficulty,
         achievement: scoreData.achievement,
         fc: scoreData.fc,
         fs: scoreData.fs,
@@ -59,10 +60,11 @@ export async function querySongDetails(
       .from(snapshotScores)
       .innerJoin(scoreData, eq(snapshotScores.scoreId, scoreData.id))
       .innerJoin(songs, eq(scoreData.songId, songs.id))
+      .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
       .where(
         and(
-          eq(songs.songName, songName),
-          eq(songs.type, type),
+          eq(parentSong.songName, songName),
+          eq(parentSong.type, type),
           inArray(
             snapshotScores.snapshotId,
             db
@@ -151,12 +153,12 @@ export async function queryAllUniqueSongs() {
       const allSongs = await db
         .select({
           id: songs.id,
-          songName: songs.songName,
-          artist: songs.artist,
-          cover: songs.cover,
-          type: songs.type,
-          genre: songs.genre,
-          difficulty: songs.difficulty,
+          songName: parentSong.songName,
+          artist: parentSong.artist,
+          cover: parentSong.cover,
+          type: parentSong.type,
+          genre: parentSong.genre,
+          difficulty: parentSong.difficulty,
           levelPrecise: songs.levelPrecise,
           noteDesigner: songs.noteDesigner,
           addedVersion: songs.addedVersion,
@@ -164,7 +166,8 @@ export async function queryAllUniqueSongs() {
           gameVersion: songs.gameVersion,
         })
         .from(songs)
-        .orderBy(songs.songName);
+        .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
+        .orderBy(parentSong.songName);
 
       const allSongsSortedById = [...allSongs].sort((a, b) => Number(a.id) - Number(b.id));
       const allSongsToSortedIndex = Object.fromEntries(

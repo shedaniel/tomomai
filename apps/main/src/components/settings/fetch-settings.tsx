@@ -24,7 +24,7 @@ import {
   useSettingsSave,
 } from "@/components/settings/primitives";
 import { useFetchSession } from "@/hooks/useFetchSession";
-import { isCNExclusive } from "@/lib/enabled-regions";
+import { isCNExclusive } from "@tomomai/catalog/enabled-regions";
 import { trpc } from "@/lib/trpc-client";
 import { Region } from "@/lib/types";
 import { AlertCircle, Images, Key, Trash2 } from "lucide-react";

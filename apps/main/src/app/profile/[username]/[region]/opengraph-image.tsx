@@ -1,6 +1,6 @@
 import { createProfileOGImage, OG_SIZE } from "@/lib/og";
 import { getTranslations } from "next-intl/server";
-import { isRegionEnabledStr } from "@/lib/enabled-regions";
+import { isRegionEnabledStr } from "@tomomai/catalog/enabled-regions";
 import { db } from "@/lib/db";
 import { userSnapshots } from "@/lib/db/schema-pg";
 import { and, desc, eq } from "drizzle-orm";
@@ -8,7 +8,7 @@ import { resolvePublicUserByUsername } from "@/server/queries/public-access";
 import { getReservedSnapshotData } from "@/server/queries/reserved";
 import { TRPCError } from "@trpc/server";
 import type { Locale } from "@/i18n/locale";
-import type { VersionId } from "@/lib/metadata";
+import type { VersionId } from "@tomomai/catalog/metadata";
 import { getOGImageLocales } from "@/i18n/og-locale";
 
 export const runtime = "nodejs";

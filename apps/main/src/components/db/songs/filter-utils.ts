@@ -1,5 +1,5 @@
 import { FilterCategory } from "@/components/filter-panel";
-import { getVersionInfo } from "@/lib/metadata";
+import { getVersionInfo } from "@tomomai/catalog/metadata";
 import { Disc3, Folder, Calendar, ArrowUpDown, BarChart, Pencil } from "lucide-react";
 import { GroupMode, UniqueSong, UniqueSongDifficulty, UniqueSongFilter } from "./types";
 import { LEVEL_ENUM } from "@/lib/db/types";

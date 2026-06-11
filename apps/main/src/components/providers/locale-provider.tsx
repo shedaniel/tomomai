@@ -2,7 +2,7 @@
 
 import { LocaleProvider as BaseLocaleProvider } from "@tomomai/i18n/client";
 import type { Locale } from "@tomomai/i18n/locale";
-import { isCNExclusive } from "@/lib/enabled-regions";
+import { isCNExclusive } from "@tomomai/catalog/enabled-regions";
 
 export { useLocale } from "@tomomai/i18n/client";
 

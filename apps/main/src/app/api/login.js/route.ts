@@ -1,4 +1,4 @@
-import { resolveBaseUrl } from "@/lib/base-url";
+import { resolveBaseUrl } from "@tomomai/server/base-url";
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";

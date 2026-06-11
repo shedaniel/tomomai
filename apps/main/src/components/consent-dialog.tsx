@@ -15,7 +15,7 @@ import { PolicyDialog } from "@/components/policy-dialog";
 import { Dot, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useLocale } from "./providers/locale-provider";
-import { isCNExclusive, isRegionEnabled } from "@/lib/enabled-regions";
+import { isCNExclusive, isRegionEnabled } from "@tomomai/catalog/enabled-regions";
 import { DiscordIcon, XIcon } from "@tomomai/ui";
 
 interface ConsentDialogProps {

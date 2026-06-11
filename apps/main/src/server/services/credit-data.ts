@@ -1,7 +1,7 @@
 import { db } from '@/lib/db';
-import { songs, user, userRecentSongs, userRecentSongsDetailed, userSnapshots } from '@/lib/db/schema-pg';
+import { parentSong, songs, user, userRecentSongs, userRecentSongsDetailed, userSnapshots } from '@/lib/db/schema-pg';
 import { and, desc, eq, lte } from 'drizzle-orm';
-import { VersionId } from '@/lib/metadata';
+import { VersionId } from "@tomomai/catalog/metadata";
 import { FullCombo, FullSync, Region, TitleType } from '@/lib/types';
 
 // Type for detailed song statistics
@@ -123,13 +123,13 @@ export async function prepareCreditData(
       fc: userRecentSongs.fc,
       fs: userRecentSongs.fs,
       track: userRecentSongs.track,
-      songName: songs.songName,
-      artist: songs.artist,
-      cover: songs.cover,
-      difficulty: songs.difficulty,
+      songName: parentSong.songName,
+      artist: parentSong.artist,
+      cover: parentSong.cover,
+      difficulty: parentSong.difficulty,
       level: songs.level,
       levelPrecise: songs.levelPrecise,
-      type: songs.type,
+      type: parentSong.type,
       addedVersion: songs.addedVersion,
       // Detailed stats from separate table (may be null)
       fastCount: userRecentSongsDetailed.fastCount,
@@ -170,6 +170,7 @@ export async function prepareCreditData(
     })
     .from(userRecentSongs)
     .innerJoin(songs, eq(userRecentSongs.songId, songs.id))
+    .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
     .leftJoin(userRecentSongsDetailed, eq(userRecentSongs.id, userRecentSongsDetailed.recentSongId))
     .where(
       and(

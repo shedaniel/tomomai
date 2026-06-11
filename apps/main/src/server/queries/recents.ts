@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { songs, userRecentSongs, userRecentSongsDetailed } from "@/lib/db/schema-pg";
+import { parentSong, songs, userRecentSongs, userRecentSongsDetailed } from "@/lib/db/schema-pg";
 import { and, count, desc, eq, lt } from "drizzle-orm";
 import type { Region } from "@/lib/types";
 
@@ -26,15 +26,15 @@ export async function fetchRecentSongs(
       fc: userRecentSongs.fc,
       fs: userRecentSongs.fs,
       track: userRecentSongs.track,
-      songId: songs.publicId,
-      songName: songs.songName,
-      artist: songs.artist,
-      cover: songs.cover,
-      difficulty: songs.difficulty,
+      songId: parentSong.publicId,
+      songName: parentSong.songName,
+      artist: parentSong.artist,
+      cover: parentSong.cover,
+      difficulty: parentSong.difficulty,
       level: songs.level,
       levelPrecise: songs.levelPrecise,
-      type: songs.type,
-      genre: songs.genre,
+      type: parentSong.type,
+      genre: parentSong.genre,
       fastCount: userRecentSongsDetailed.fastCount,
       lateCount: userRecentSongsDetailed.lateCount,
       combo: userRecentSongsDetailed.combo,
@@ -72,6 +72,7 @@ export async function fetchRecentSongs(
     })
     .from(userRecentSongs)
     .innerJoin(songs, eq(userRecentSongs.songId, songs.id))
+    .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
     .leftJoin(userRecentSongsDetailed, eq(userRecentSongs.id, userRecentSongsDetailed.recentSongId))
     .where(whereClause)
     .orderBy(desc(userRecentSongs.playedAt))

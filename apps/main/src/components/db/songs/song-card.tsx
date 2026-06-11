@@ -6,7 +6,7 @@ import Link from "next/link";
 import { cn, createSafeMaimaiImageUrl, getTypeBadgeUrl } from "@/lib/utils";
 import { CoverImage } from "@/components/cover-image";
 import { UniqueSong } from "./types";
-import { renderLevelPrecise } from "@/lib/name-utils";
+import { renderLevelPrecise } from "@tomomai/catalog/name-utils";
 
 interface SongCardProps {
   song: UniqueSong;

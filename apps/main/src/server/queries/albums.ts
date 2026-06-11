@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { songs, userAlbums } from "@/lib/db/schema-pg";
+import { parentSong, songs, userAlbums } from "@/lib/db/schema-pg";
 import { and, desc, eq, sql } from "drizzle-orm";
 import type { Region } from "@/lib/types";
 
@@ -12,14 +12,14 @@ export async function fetchUserAlbums(
   const userAlbumsList = await db
     .select({
       id: userAlbums.id,
-      songId: songs.publicId,
-      songName: songs.songName,
-      artist: songs.artist,
-      cover: songs.cover,
-      difficulty: songs.difficulty,
+      songId: parentSong.publicId,
+      songName: parentSong.songName,
+      artist: parentSong.artist,
+      cover: parentSong.cover,
+      difficulty: parentSong.difficulty,
       level: songs.level,
       levelPrecise: songs.levelPrecise,
-      type: songs.type,
+      type: parentSong.type,
       takenAt: userAlbums.takenAt,
       imageKey: userAlbums.imageKey,
       imageSize: userAlbums.imageSize,
@@ -28,6 +28,7 @@ export async function fetchUserAlbums(
     })
     .from(userAlbums)
     .innerJoin(songs, eq(userAlbums.songId, songs.id))
+    .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
     .where(
       and(
         eq(userAlbums.userId, userId),

@@ -1,12 +1,12 @@
 import { createServerSideTRPC } from "@/lib/trpc-server";
 import { TRPCError } from "@trpc/server";
 import { Region } from "@/lib/types";
-import { isRegionEnabledStr } from "@/lib/enabled-regions";
+import { isRegionEnabledStr } from "@tomomai/catalog/enabled-regions";
 import { ProfilePage } from "@/components/profile-page";
 import { notFound } from "next/navigation";
 import { Metadata } from "next";
 import { useFlags } from "@/lib/flags";
-import { resolveBaseUrl } from "@/lib/base-url";
+import { resolveBaseUrl } from "@tomomai/server/base-url";
 import { getTranslations } from "next-intl/server";
 import { getLocale } from "@/i18n/locale-server";
 import { buildAlternates, openGraphLocales, breadcrumbJsonLd, ogImageUrl } from "@/lib/seo";

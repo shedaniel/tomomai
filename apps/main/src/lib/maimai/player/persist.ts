@@ -2,7 +2,7 @@ import { nanoid } from "nanoid";
 import { db } from "../../db";
 import { userSnapshots } from "../../db/schema-pg";
 import { logger } from "../../logger";
-import { getCurrentVersion } from "../../metadata";
+import { getCurrentVersion } from "@tomomai/catalog/metadata";
 import { uploadIconToR2 } from "../../r2";
 import { Region } from "../../types";
 import type { PlayerData } from "../types";

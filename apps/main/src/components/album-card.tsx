@@ -12,7 +12,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { inferRouterOutputs } from "@trpc/server";
 import { AppRouter } from "@/server/routers/_app";
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
-import { renderLevelPrecise } from "@/lib/name-utils";
+import { renderLevelPrecise } from "@tomomai/catalog/name-utils";
 import { Button } from "@tomomai/ui";
 import {
   ResponsiveDialog,
