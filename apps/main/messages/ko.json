@@ -4,6 +4,7 @@
     "loading": "로딩 중...",
     "save": "저장",
     "cancel": "취소",
+    "continue": "계속",
     "close": "닫기",
     "settings": "설정",
     "language": "언어",
@@ -11,6 +12,7 @@
     "update": "업데이트",
     "login": "로그인",
     "join": "가입",
+    "guest": "Guest",
     "logout": "로그아웃",
     "username": "사용자명",
     "password": "비밀번호",
@@ -27,8 +29,8 @@
     "discord": "Discord",
     "about": "소개",
     "experiments": "실험실",
+    "region": "Region",
     "comingSoon": "준비 중...",
-    "continue": "계속",
     "weekdays": {
       "sun": "일",
       "mon": "월",
@@ -47,9 +49,16 @@
       "utage": "Utage"
     },
     "back": "뒤로",
+    "clipboardError": "Failed to copy to clipboard",
     "selectAnOption": "옵션 선택",
     "ok": "확인",
     "email": "이메일"
+  },
+  "security": {
+    "reauth": {
+      "title": "재인증이 필요합니다",
+      "description": "이 작업을 수행하려면 다시 로그인해야 합니다. 재인증을 위해 제공자 페이지로 이동합니다."
+    }
   },
   "minigames": {
     "badge": "미니게임",
@@ -60,12 +69,6 @@
     "heardle": {
       "title": "Heardle",
       "tagline": "몇 초의 오디오로 곡을 맞혀보세요."
-    }
-  },
-  "security": {
-    "reauth": {
-      "title": "재인증이 필요합니다",
-      "description": "이 작업을 수행하려면 다시 로그인해야 합니다. 재인증을 위해 제공자 페이지로 이동합니다."
     }
   },
   "auth": {
@@ -151,6 +154,8 @@
     "timezoneUpdateError": "시간대 업데이트 실패: {error}",
     "languageUpdateSuccess": "언어가 업데이트되었습니다!",
     "languageUpdateError": "언어 업데이트 실패: {error}",
+    "regionUpdateSuccess": "Region updated successfully!",
+    "regionUpdateError": "Failed to update region: {error}",
     "tokenUpdateSuccess": "인증 정보가 저장되었습니다!"
   },
   "settings": {
@@ -198,6 +203,11 @@
     "account": {
       "label": "계정 인증",
       "updateToken": "인증 정보 갱신",
+      "deleteToken": "Delete Token",
+      "deleteTokenDialogTitle": "Delete Token",
+      "deleteTokenDialogDescription": "Are you sure you want to delete your saved token? You will need to re-authenticate to fetch data again.",
+      "deleteTokenSuccess": "Token deleted successfully.",
+      "deleteTokenError": "Failed to delete token.",
       "description": "데이터 동기화를 위해 maimai 인증 토큰을 갱신합니다."
     },
     "albumPrivacy": {
@@ -269,9 +279,52 @@
     "saving": "저장 중...",
     "saved": "설정이 저장되었습니다!",
     "errorSaving": "설정 저장 실패",
+    "sessions": {
+      "title": "Sessions",
+      "description": "Manage your active sessions across devices.",
+      "currentSession": "Current",
+      "revoke": "Revoke",
+      "revokeAll": "Revoke All Others",
+      "revokeAllDescription": "This will sign out all other sessions. Only your current session will remain active.",
+      "revokeDescription": "This session will be signed out immediately.",
+      "noOtherSessions": "No active sessions found.",
+      "ip": "IP",
+      "createdAt": "Signed in",
+      "revokeConfirm": "Revoke this session?",
+      "revokeAllConfirm": "Revoke all other sessions?",
+      "revokeSuccess": "Session revoked successfully.",
+      "revokeAllSuccess": "All other sessions revoked."
+    },
     "developer": {
       "reauthRequired": "이 작업을 수행하기 전에 다시 로그인해주세요.",
       "apiKeys": {
+        "label": "API Keys",
+        "description": "Authenticate requests to the tomomai API using these keys.",
+        "createButton": "Create API Key",
+        "loading": "Loading...",
+        "emptyTitle": "No API keys yet",
+        "emptyCreateLink": "Create your first key",
+        "emptySuffix": "to start using the tomomai API.",
+        "unnamed": "Unnamed key",
+        "expired": "Expired",
+        "disabled": "Disabled",
+        "never": "Never",
+        "createdAt": "Created {date}",
+        "expiresAt": "Expires {date}",
+        "toggleAriaLabel": "Toggle key",
+        "regenerateAriaLabel": "Regenerate key",
+        "deleteSuccess": "API key deleted",
+        "deleteError": "Failed to delete API key",
+        "updateError": "Failed to update key",
+        "regenerateError": "Failed to regenerate API key",
+        "regeneratedTitle": "Key Regenerated",
+        "regeneratedDescription": "Copy your new API key now. It will not be shown again.",
+        "regeneratedSaveWarning": "Save this key — it won't be shown again after closing this dialog.",
+        "regenerateDialog": {
+          "title": "Regenerate API key?",
+          "description": "This will immediately invalidate the current key. Any application using it will lose access until updated with the new key.",
+          "confirm": "Regenerate"
+        },
         "editDialog": {
           "title": "API 키 편집",
           "nameLabel": "이름",
@@ -279,9 +332,115 @@
           "saveButton": "저장",
           "saving": "저장 중…",
           "saveError": "API 키 업데이트에 실패했습니다"
+        },
+        "deleteDialog": {
+          "title": "Delete API key?",
+          "description": "This action cannot be undone. Any application using this key will immediately lose access.",
+          "confirm": "Delete"
         }
       },
+      "createDialog": {
+        "title": "Create API Key",
+        "description": "Generate a new API key to access the tomomai API.",
+        "createdTitle": "API Key Created",
+        "createdDescription": "Copy your API key now. It will not be shown again.",
+        "copyAriaLabel": "Copy API key",
+        "saveWarning": "Save this key — it won't be shown again after closing this dialog.",
+        "done": "Done",
+        "nameLabel": "Name",
+        "namePlaceholder": "My App",
+        "nameDescription": "A descriptive name to identify this key.",
+        "scopesLabel": "Scopes",
+        "scopeDefaultBadge": "default",
+        "scopeDestructiveBadge": "destructive",
+        "scopeSensitiveBadge": "sensitive",
+        "scopeIncludedBadge": "included",
+        "sensitiveWarning": "One or more selected scopes are marked sensitive because they expose personal data or private identifiers. Grant only to apps you trust.",
+        "expirationLabel": "Expiration",
+        "expiration": {
+          "7d": "7 days",
+          "30d": "30 days",
+          "90d": "90 days",
+          "1y": "1 year",
+          "never": "Never"
+        },
+        "destructiveWarning": "This key grants access to destructive operations. Do you understand the risks?",
+        "confirmLabelPre": "Type",
+        "confirmPhrase": "Yes, I understand",
+        "confirmLabelPost": "to confirm",
+        "creating": "Creating...",
+        "createButton": "Create API Key",
+        "createError": "Failed to create API key"
+      },
       "scopes": {
+        "ready": {
+          "name": "Ready",
+          "description": "Basic access. Grants GET /api/v1/ok. Included by default."
+        },
+        "user:metadata:read": {
+          "name": "User Metadata (Read)",
+          "description": "Read your username, region, profile visibility, and role. Grants GET /api/v1/me."
+        },
+        "snapshot:latest:metadata:read": {
+          "name": "Latest Snapshot Metadata (Read)",
+          "description": "Read metadata (rating, display name, play counts, etc.) for your latest snapshot. Grants GET /api/v1/snapshots/latest."
+        },
+        "snapshot:latest:songs:b50:read": {
+          "name": "Latest Snapshot B50 Songs (Read)",
+          "description": "Read the B50 song scores (best 50) from your latest snapshot."
+        },
+        "snapshot:latest:songs:read": {
+          "name": "Latest Snapshot All Songs (Read)",
+          "description": "Read all song scores from your latest snapshot."
+        },
+        "snapshot:latest:events:read": {
+          "name": "Latest Snapshot Events (Read)",
+          "description": "Read event progress data from your latest snapshot."
+        },
+        "snapshot:latest:icon:read": {
+          "name": "Latest Snapshot Icon (Read)",
+          "description": "Read your profile icon URL (Discord avatar) from your latest snapshot. Sensitive — may reveal your social identity."
+        },
+        "snapshot:all:metadata:read": {
+          "name": "All Snapshots Metadata (Read)",
+          "description": "List all your snapshots and read their metadata. Grants GET /api/v1/snapshots and GET /api/v1/snapshots/:id."
+        },
+        "snapshot:all:songs:b50:read": {
+          "name": "All Snapshots B50 Songs (Read)",
+          "description": "Read the B50 song scores from any of your snapshots."
+        },
+        "snapshot:all:songs:read": {
+          "name": "All Snapshots All Songs (Read)",
+          "description": "Read all song scores from any of your snapshots."
+        },
+        "snapshot:all:events:read": {
+          "name": "All Snapshots Events (Read)",
+          "description": "Read event progress data from any of your snapshots."
+        },
+        "snapshot:all:icon:read": {
+          "name": "All Snapshots Icon (Read)",
+          "description": "Read your profile icon URL (Discord avatar) from any snapshot. Sensitive — may reveal your social identity."
+        },
+        "recent:read": {
+          "name": "Recent Plays (Read)",
+          "description": "Read your recent play history including song info, achievement, and combo/sync status. Grants GET /api/v1/recents."
+        },
+        "recent:detailed:read": {
+          "name": "Recent Plays Detailed (Read)",
+          "description": "Adds venue and full per-note-type breakdown to recent play results."
+        },
+        "stats:read": {
+          "name": "Stats (Read)",
+          "description": "Read your grade/FC/FS distribution statistics. Grants GET /api/v1/stats."
+        },
+        "album:read": {
+          "name": "Albums (Read)",
+          "description": "Read your arcade photo album entries (metadata only, no image URLs). Grants GET /api/v1/albums."
+        },
+        "album:images:read": {
+          "name": "Album Images (Read)",
+          "description": "Adds resolved image URLs to album responses. Sensitive — photos may contain images of people."
+        },
         "plate:read": {
           "name": "칭호 (읽기)",
           "description": "칭호 진행 데이터(각 칭호별로 클리어 / FC / AP가 필요한 곡)를 읽습니다. GET /api/v1/plates 권한을 부여합니다."
@@ -309,6 +468,18 @@
         "fetch:delete": {
           "name": "가져오기 토큰 (삭제)",
           "description": "저장된 업스트림 maimai 인증 토큰을 삭제합니다. DELETE /api/v1/fetch/token 권한을 부여합니다. 파괴적이며 민감 — 재인증 전까지 앱 내 및 API 가져오기 흐름이 모두 중단됩니다."
+        },
+        "snapshot:latest:read": {
+          "name": "Latest Snapshot (Read)",
+          "description": "Grants metadata, song scores, and events for your latest snapshot only. Excludes icon (opt-in for privacy)."
+        },
+        "snapshot:all:read": {
+          "name": "All Snapshots (Read)",
+          "description": "Grants metadata, song scores, and events for all your snapshots, including the latest. Excludes icon (opt-in for privacy)."
+        },
+        "read": {
+          "name": "Read (All Non-Sensitive)",
+          "description": "Broad read access: user metadata, all snapshots, recents, stats, and albums. Excludes icon and album image URLs. Sensitive due to broad personal data access."
         }
       },
       "oauthApps": {
@@ -402,6 +573,16 @@
     "lastUpdate": "최근 업데이트",
     "noDataInstructions": "이 지역의 데이터가 없습니다. '데이터 가져오기'를 눌러 maimai 성과를 가져오세요 (로그인/토큰 필요)."
   },
+  "profileMetadata": {
+    "title": "{username} | tomomai ともマイ",
+    "description": "View {username}'s maimai profile for {region}. Track and analyze maimai scores with friends.",
+    "descriptionRich": "{displayName} ({username}) on {region} maimai — rating {rating}. View their B50, recent plays, and chart records on tomomai.",
+    "descriptionUnknownRegion": "View {username}'s maimai profile. Track and analyze maimai scores with friends.",
+    "notFoundTitle": "Profile Not Found | tomomai ともマイ",
+    "notFoundDescription": "The profile you're looking for doesn't exist or is not publicly accessible.",
+    "errorTitle": "Error | tomomai ともマイ",
+    "errorDescription": "An error occurred while loading this profile."
+  },
   "profileVisibility": {
     "public": "공개 프로필",
     "private": "비공개 프로필",
@@ -469,6 +650,15 @@
       "title": "Developer",
       "exportJson": "Export Snapshot as JSON",
       "exporting": "Exporting..."
+    },
+    "exportImageCard": {
+      "profileImage": "Profile Image",
+      "lastCredit": "Last Credit",
+      "dailyPlays": "Daily Plays",
+      "dayLabel": "Day",
+      "dayPlaceholder": "Select a day",
+      "dayLoading": "Loading days...",
+      "noPlays": "No daily plays available"
     }
   },
   "albums": {
@@ -533,7 +723,9 @@
       "type": "타입",
       "total": "합계",
       "totalLoss": "감점"
-    }
+    },
+    "clickToExpand": "Click to expand details",
+    "clickToCollapse": "Click to collapse"
   },
   "events": {
     "title": "지방(Chiho)",
@@ -640,7 +832,108 @@
     },
     "recommended": "추천 곡",
     "tokenOptionDescription": "브라우저 토큰을 사용하여 maimai DX NET 계정에 로그인합니다. 토큰은 주기적으로 만료될 수 있습니다. 비밀번호가 필요 없으며 소셜 로그인도 지원합니다.",
-    "passwordOptionDescription": "SEGA 계정 정보를 사용하여 maimai DX NET 계정에 로그인합니다. 만료되지 않습니다. (비권장)"
+    "passwordOptionDescription": "SEGA 계정 정보를 사용하여 maimai DX NET 계정에 로그인합니다. 만료되지 않습니다. (비권장)",
+    "cnTitle": "Update maimai authentication",
+    "cnDescription": "Choose your authentication method for the China region.",
+    "cnExperimentalWarningTitle": "China region is experimental",
+    "cnExperimentalWarningMessage": "Support may end abruptly, functionality may be unstable, and data may be wiped.",
+    "recommendedBadge": "Recommended",
+    "comingSoonBadge": "Coming soon",
+    "disabledBadge": "Temporarily disabled",
+    "features": {
+      "playerInfo": "Player info",
+      "scores": "Chart scores",
+      "recents": "Recent plays",
+      "events": "Event data"
+    },
+    "fetchOptions": {
+      "divingFish": {
+        "name": "水鱼查分器",
+        "description": "Use your 水鱼查分器 username or linked QQ account ID to fetch data."
+      },
+      "lxns": {
+        "name": "落雪咖啡屋查分器",
+        "description": "Authorize with your 落雪咖啡屋 account to fetch data."
+      },
+      "httpProxy": {
+        "name": "HTTP Proxy",
+        "description": "Intercept requests from the WeChat maimai DX mini-program on your phone via an HTTP proxy."
+      },
+      "androidApp": {
+        "name": "Android App",
+        "description": "Install this app on your Android device to automatically fetch data."
+      }
+    },
+    "lxns": {
+      "title": "落雪咖啡屋查分器",
+      "description": "Authorize tomomai.lol to read your maimai DX data from your 落雪咖啡屋 account. You can revoke authorization anytime in your account settings.",
+      "notConfiguredTitle": "落雪咖啡屋 OAuth Not Configured",
+      "notConfiguredMessage": "Please ask an administrator to set the <code>LXNS_CLIENT_ID</code> and <code>LXNS_CLIENT_SECRET</code> environment variables on the server.",
+      "instructionsLine1": "Click the button below to open the 落雪咖啡屋 authorization page in a new window. The window will close automatically after authorization.",
+      "instructionsLine2": "We only request permissions to read player data and will not write any of your data.",
+      "authorizeButton": "Authorize",
+      "authorizingButton": "Waiting for authorization…",
+      "popupBlocked": "Could not open the authorization window. Please allow popups for this site and try again.",
+      "authFailed": "Authorization failed: {error}",
+      "unknownError": "Unknown error"
+    },
+    "divingFish": {
+      "title": "水鱼查分器",
+      "description": "Bind your 水鱼查分器 account to tomomai. We will read your maimai DX data from 水鱼查分器 after binding. Choose one of the following methods to verify your account ownership.",
+      "notConfiguredTitle": "水鱼查分器 Not Configured",
+      "notConfiguredMessage": "Please ask an administrator to set the <code>DIVINGFISH_DEV_TOKEN</code> environment variable on the server.",
+      "importTokenTab": "Import-Token Verification",
+      "nicknameTab": "Nickname Verification",
+      "importTokenInstructions": "Generate an Import-Token in the 水鱼查分器 \"Edit Profile\" page and paste it here.",
+      "importTokenSecureNote": "We only use this token to verify your account once and will discard it immediately after verification.",
+      "importTokenPlaceholder": "Paste your Import-Token",
+      "importTokenButton": "Verify and Bind",
+      "importTokenVerifying": "Verifying…",
+      "nicknameInstructions": "Follow these steps to complete verification:",
+      "nicknameStep1": "Log in to 水鱼查分器",
+      "nicknameStep2": "Change your nickname in \"Edit Profile\" to the code below",
+      "nicknameStep3": "Save changes",
+      "nicknameStep4": "Return here, fill in your username or QQ, and verify",
+      "nicknameLabel": "Change your nickname to",
+      "refreshCode": "Refresh code",
+      "nicknameTypeLabel": "Type",
+      "nicknameUsername": "Username",
+      "nicknameQQ": "QQ",
+      "nicknameIdentifierPlaceholder": "Your 水鱼查分器 username or linked QQ number",
+      "nicknameVerifyButton": "I've changed it, start verification",
+      "nicknameVerifying": "Verifying…",
+      "nicknameRevertNote": "After verification succeeds, you can change your nickname back to the original.",
+      "verifyFailedFallback": "Verification failed",
+      "challengePlaceholder": "-------"
+    },
+    "httpProxy": {
+      "title": "HTTP Proxy",
+      "description": "Point your phone's HTTP proxy to our server, then open the link below in WeChat to complete authorization. You only need to authorize once.",
+      "notConfiguredTitle": "HTTP Proxy Service Not Configured",
+      "notConfiguredMessage": "Please ask an administrator to set the <code>CN_PROXY_HOST</code> and <code>CN_PROXY_TOKEN_SECRET</code> environment variables.",
+      "step1Title": "Step 1: Set HTTP proxy on your phone's Wi-Fi settings to",
+      "step1Host": "Host",
+      "step1Port": "Port",
+      "step2Title": "Step 2: {generateOrRegenerate} authorization link",
+      "step2Generate": "Generate",
+      "step2Regenerate": "Regenerate if link expired",
+      "step2GenerateButton": "Generate Authorization Link",
+      "step2RegenerateButton": "Regenerate",
+      "step2GeneratingButton": "Generating…",
+      "step2ErrorPrefix": "Error: ",
+      "step3Title": "Step 3: Open the authorization link on your phone",
+      "step3ScanWithWechat": "Scan with WeChat",
+      "step3ScanNote": "Open WeChat, tap the scan icon, and scan the QR code to open the authorization link directly.",
+      "step3Or": "or",
+      "step3OrCopy": "Copy link to WeChat",
+      "step3OrCopyNote": "Copy the link, send it to any WeChat chat, then tap to open.",
+      "step3Copy": "Copy Link",
+      "step3CopyNote": "After authorization, WeChat will redirect to a result page. Please close that page, return to tomomai to check the import progress, and remember to turn off the proxy in your Wi-Fi settings.",
+      "copySuccess": "Copied",
+      "copyFailed": "Copy failed, please copy manually",
+      "clashConfigUrl": "Clash Config URL",
+      "clashImportButton": "Import to Clash"
+    }
   },
   "regions": {
     "intl": "인터내셔널",
@@ -666,9 +959,36 @@
       "db": "데이터베이스"
     },
     "addDiscordBot": "Discord 봇으로 추가",
+    "followTwitter": "Follow on X",
+    "followThreads": "Follow on Threads",
     "admin": "관리자",
+    "testOnboarding": "Test onboarding",
     "errors": {
       "inviteLink": "초대 링크를 열 수 없습니다"
+    }
+  },
+  "onboarding": {
+    "title": "Welcome to tomomai!",
+    "step1": {
+      "title": "Pick a username",
+      "description": "Your username is your handle on tomomai. If you choose to share, it also becomes your public profile URL.",
+      "publishToggleLabel": "Share my profile with friends",
+      "publishToggleDescription": "Let others view your scores at a public link. Off by default — you can change this anytime.",
+      "publicUrlHint": "Your public profile:"
+    },
+    "step2": {
+      "title": "Choose your region",
+      "description": "Pick where your maimai data lives. You can switch later from the menu."
+    },
+    "step3": {
+      "title": "You're all set!",
+      "description": "Welcome aboard. Come back anytime at {host}.",
+      "goToDashboard": "Go to dashboard"
+    },
+    "navigation": {
+      "previous": "Back",
+      "next": "Next",
+      "saving": "Saving…"
     }
   },
   "usernameSetup": {
@@ -781,14 +1101,51 @@
       "songs": "악곡",
       "calculator": "계산기",
       "stats": "통계",
+      "events": "Events",
       "posts": "Changelog"
+    },
+    "events": {
+      "title": "Tour Events",
+      "description": "Browse all maimai tour events and their rewards",
+      "search": "Search events...",
+      "noEvents": "No events found.",
+      "selectEvent": "Select an event to view details",
+      "steps": "Steps",
+      "distance": "Distance",
+      "type": "Type",
+      "reward": "Reward",
+      "period": "Period",
+      "active": "Active",
+      "ended": "Ended",
+      "upcoming": "Upcoming",
+      "back": "Back",
+      "stepTypes": {
+        "frame": "Frame",
+        "song": "Song",
+        "nameplate": "Nameplate",
+        "present": "Present",
+        "icon": "Icon",
+        "title": "Title",
+        "tourMember": "Tour Member",
+        "perfectChallenge": "Perfect Challenge",
+        "kaleidxscope": "KALEIDXSCOPE"
+      }
     },
     "songs": {
       "metadata": {
         "title": "악곡 데이터베이스 | maimai DX",
-        "description": "maimai DX의 모든 수록곡을 검색하고 열람하세요. 타입, 장르, 버전별 필터링을 지원합니다. 곡 상세 정보, 난이도, 수록 지역을 확인할 수 있습니다."
+        "description": "maimai DX의 모든 수록곡을 검색하고 열람하세요. 타입, 장르, 버전별 필터링을 지원합니다. 곡 상세 정보, 난이도, 수록 지역을 확인할 수 있습니다.",
+        "songTitle": "{songName} - {artist} | maimai DX",
+        "songDescription": "View detailed information about \"{songName}\" by {artist}. {chartType} chart • {genre}",
+        "songOgDescription": "View detailed information about \"{songName}\" by {artist}.",
+        "songFallbackTitle": "Song Details | maimai DX",
+        "songFallbackDescription": "View detailed information about this maimai DX song including difficulty levels and regional availability.",
+        "chartTypeDx": "DX",
+        "chartTypeStandard": "Standard",
+        "jsonLdChartDescription": "{chartType} chart from maimai DX"
       },
       "title": "악곡 데이터베이스 | maimai DX",
+      "heading": "Songs Database",
       "searchPlaceholder": "곡명, 아티스트, 장르 등으로 검색...",
       "noSongsFound": "곡을 찾을 수 없습니다",
       "tryAdjustingSearch": "검색 조건을 변경해 보세요",
@@ -796,6 +1153,7 @@
       "detail": {
         "title": "곡 상세 정보",
         "artist": "아티스트",
+        "detailsFor": "Details for {songName}",
         "charts": "채보",
         "availability": "수록 지역",
         "yourScore": "내 점수",
@@ -807,7 +1165,9 @@
         "share": "링크 공유",
         "youtube": "YouTube 검색",
         "viewCharts": "채보 보기",
-        "viewDetails": "tomomai DB에서 상세 보기"
+        "viewDetails": "tomomai DB에서 상세 보기",
+        "summary": "{songName} is a maimai でらっくす {chartType} chart by {artist} in the {genre} genre, added in {versionName}. Difficulty ranges from {minLevel} to {maxLevel} across {chartCount, plural, =1 {# chart} other {# charts}}{bpmFragment}.",
+        "summaryBpmFragment": " (BPM {bpm})"
       },
       "filter": {
         "type": "타입",
@@ -844,13 +1204,23 @@
       "added": "추가일"
     },
     "posts": {
+      "list": {
+        "title": "Changelog",
+        "description": "Latest updates and changes to tomomai.",
+        "noPosts": "No posts yet."
+      },
       "dialog": {
         "dismiss": "닫기",
         "readMore": "더 보기"
+      },
+      "aiTranslationHint": {
+        "title": "AI-Assisted Translation",
+        "description": "This article was translated with the help of AI. The translation may not be perfect. If you spot any issues, contributions are welcome!"
       }
     },
     "stats": {
       "title": "전체 통계",
+      "description": "Explore aggregate maimai DX statistics across all tracked players: rating distributions, top titles, popular songs, and play activity over time.",
       "ratingDistribution": "레이팅 분포",
       "playCountDistribution": "플레이 횟수 분포",
       "topTitles": "인기 칭호",
@@ -895,8 +1265,6 @@
         "ratingPer30d": "Rating 상승 / 30일",
         "playsPer30d": "플레이 수 / 30일"
       },
-      "showAll": "전체 {count}개 보기",
-      "showLess": "간략히 보기",
       "table": {
         "rank": "순위",
         "title": "칭호",
@@ -904,6 +1272,8 @@
         "percentage": "비율",
         "count": "수"
       },
+      "showAll": "전체 {count}개 보기",
+      "showLess": "간략히 보기",
       "region": {
         "intl": "인터내셔널",
         "jp": "일본"
@@ -942,8 +1312,10 @@
       "songDataExpert": "Fetched EXPERT scores",
       "songDataMaster": "Fetched MASTER scores",
       "songDataRemaster": "Fetched Re:MASTER scores",
+      "songDataUtage": "Fetched UTAGE scores",
       "recentSongs": "Fetched recent songs",
-      "hiddenSongs": "Fetched hidden songs"
+      "hiddenSongs": "Fetched hidden songs",
+      "albumData": "Fetched album data"
     }
   }
 }
