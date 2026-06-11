@@ -1,6 +1,6 @@
-# Data Service (`apps/data`)
+# Setup — Data Service (`apps/data`)
 
-The data service owns the **catalog**: maimai chart (song) data and tour event data. It scrapes the upstream sources, maintains the canonical database where every chart gets its globally stable integer id, and publishes the catalog as a versioned artifact to object storage. The main app — official instance and self-hosted instances alike — never scrapes; it loads the published artifact (see `SETUP.md` → *Populating Catalog Data*).
+The data service owns the **catalog**: maimai chart (song) data and tour event data. It scrapes the upstream sources, maintains the canonical database where every chart gets its globally stable integer id, and publishes the catalog as a versioned artifact to object storage. The main app — official instance and self-hosted instances alike — never scrapes; it loads the published artifact (see the root `SETUP.md` → *Populating Catalog Data*).
 
 Self-hosters do **not** run this service. It exists so that one host (the official instance) does the scraping and everyone else just points at the result.
 
@@ -14,27 +14,79 @@ apps/data  (this service, own Postgres)
   publish: catalog/catalog-<sequence>.json.gz + catalog/latest.json -> R2
 
 apps/main  (user data, official + self-hosted)
-  /api/cron/catalog-sync (daily) or POST /api/admin/catalog-sync
+  GET /api/cron/catalog-sync (scheduled) or POST /api/admin/catalog-sync
   downloads latest.json -> verifies sha256 -> upserts songs/parents/events by id
 ```
 
 The artifact contract (zod schemas, schema version) lives in `packages/catalog/src/artifact.ts`. Catalog tables: `parent_song` is the chart itself (name, artist, genre, cover, bpm, type, difficulty — stable across regions and versions, owns the public API id); `songs` is one chart instance per region + game version (level, levelPrecise, addedVersion, note metadata). User data in the main app references `songs.id`.
 
-## Environment variables
+## Environment Variables
+
+### Database
 
 | Variable | Required | Description |
 |---|---|---|
 | `POSTGRES_URL` | Yes | The data service's own PostgreSQL database (not the main app's) |
-| `REDIS_URL` | Yes | Redis, used for pending-confirmation storage and scrape caches |
-| `ADMIN_UPDATE_TOKEN` | Yes | Bearer token for the admin routes |
-| `CRON_SECRET` | Yes (prod) | Bearer token Vercel sends to the cron routes |
-| `R2_ENDPOINT` / `R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY` / `R2_BUCKET` | Yes | R2 bucket that receives covers and catalog artifacts |
-| `MAIMAI_TOKEN_JP` | For jp cron | maimai session token (`account://USER:://PASS` or cookie format) used by the scheduled JP scrape |
+| `REDIS_URL` | Yes | Redis connection string, used for pending-confirmation storage and scrape caches |
+
+### Auth / Scheduling
+
+| Variable | Required | Description |
+|---|---|---|
+| `ADMIN_UPDATE_TOKEN` | Yes | Bearer token for the admin routes. Generate with `openssl rand -base64 32` |
+| `CRON_SECRET` | Yes (prod) | Bearer token the external scheduler (e.g. Cronicle) must send to `/api/cron/update` |
+
+### Cloudflare R2
+
+Receives the converted cover images and the published catalog artifacts.
+
+| Variable | Required | Description |
+|---|---|---|
+| `R2_ENDPOINT` | Yes | R2 S3-compatible endpoint URL |
+| `R2_ACCESS_KEY_ID` | Yes | R2 access key ID |
+| `R2_SECRET_ACCESS_KEY` | Yes | R2 secret access key |
+| `R2_BUCKET` | Yes | R2 bucket name |
+
+### Scraping
+
+| Variable | Required | Description |
+|---|---|---|
+| `MAIMAI_TOKEN_JP` | For jp cron | maimai session token (`account://USER:://PASS` format) used by the scheduled JP scrape |
 | `MAIMAI_TOKEN_INTL` | For intl cron | Same for INTL (`cookie://VALUE` also supported) |
+| `NEXT_PUBLIC_ENABLED_REGIONS` | No | Comma-separated list of enabled regions (defaults to `intl,jp`) |
+
+CN needs no token — it uses the public Lxns API.
+
+### Events (AI fetcher)
+
+| Variable | Required | Description |
+|---|---|---|
 | `OPENROUTER_KEY` | For events | OpenRouter API key for the AI event fetcher |
 | `AI_MODEL` | No | Model override for the event fetcher |
+
+### Discord Notifications
+
+| Variable | Required | Description |
+|---|---|---|
 | `DISCORD_UPDATE_WEBHOOK` | No | Webhook for public update notifications |
+| `DISCORD_UPDATE_WEBHOOK_JP` / `_INTL` / `_CN` | No | Per-region override of `DISCORD_UPDATE_WEBHOOK` |
 | `DISCORD_UPDATE_WEBHOOK_NOTICE` | No | Webhook for admin notices incl. event confirmation buttons — keep the channel private |
+
+### App Configuration
+
+| Variable | Required | Description |
+|---|---|---|
+| `NEXT_PUBLIC_SITE_URL` (or `SITE_URL`) | No | Public base URL of this service, used in links sent to Discord. Falls back to the Vercel-provided URL when deployed there |
+| `LOG_LEVEL` | No | Log level (defaults to `trace` in dev, `info` in prod) |
+
+### Seed Script Only
+
+Read by `scripts/seed-from-main.js`, not by the running service:
+
+| Variable | Required | Description |
+|---|---|---|
+| `SEED_SOURCE_POSTGRES_URL` | For seeding | The main app's database to copy the existing catalog (with its ids) from |
+| `SEED_COVER_BASE_URL` | No | Cover URLs under this base are converted to object keys (defaults to the official CDN) |
 
 ## Initial setup
 
@@ -67,7 +119,16 @@ curl -X POST "https://data.yourdomain.com/api/admin/update_all?region=jp&token=a
   -H "Authorization: Bearer $ADMIN_UPDATE_TOKEN"
 ```
 
-The scheduled crons in `apps/data/vercel.json` (`/api/cron/update-{jp,intl,cn}`, daily, staggered) run the same pipeline using `MAIMAI_TOKEN_JP` / `MAIMAI_TOKEN_INTL` (CN uses the public Lxns API and needs no token).
+### Scheduled updates
+
+There is a single cron endpoint; schedule it per region from your external scheduler (e.g. Cronicle):
+
+```bash
+curl "https://data.yourdomain.com/api/cron/update?region=jp" \
+  -H "Authorization: Bearer $CRON_SECRET"
+```
+
+It runs the full update → covers → upsert → publish pipeline for that region, reading the maimai session from `MAIMAI_TOKEN_JP` / `MAIMAI_TOKEN_INTL` (CN needs no token).
 
 ### Preparing a new game version
 

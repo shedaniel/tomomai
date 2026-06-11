@@ -54,6 +54,7 @@ Passkeys work out of the box — no extra provider credentials needed. Set `ALTC
 | Variable | Required | Description |
 |---|---|---|
 | `ADMIN_UPDATE_TOKEN` | Yes | Bearer token for admin API routes. Generate with `openssl rand -base64 32` |
+| `CRON_SECRET` | Recommended | Bearer token your scheduler must send to the cron endpoints (`/api/cron/catalog-sync`, `/api/cron/percentile-bands`). Generate with `openssl rand -base64 32` |
 
 ### Crypto / Tokens
 
@@ -165,10 +166,10 @@ curl -X POST "https://yourdomain.com/api/admin/catalog-sync" \
   -H "Authorization: Bearer $ADMIN_UPDATE_TOKEN"
 ```
 
-This downloads the latest artifact from `CATALOG_URL` (defaults to the official CDN), verifies its checksum, and loads songs and events into your database with the same globally stable ids every tomomai instance uses. The bundled Vercel cron (`/api/cron/catalog-sync`, daily) keeps it up to date afterwards — set `CRON_SECRET` so the cron endpoint is protected. Pass `?force=true` to reload even when the published sequence hasn't changed.
+This downloads the latest artifact from `CATALOG_URL` (defaults to the official CDN), verifies its checksum, and loads songs and events into your database with the same globally stable ids every tomomai instance uses. To keep it up to date, schedule `GET /api/cron/catalog-sync` (e.g. daily) from your scheduler of choice with an `Authorization: Bearer $CRON_SECRET` header — set `CRON_SECRET` so the endpoint is protected. Pass `?force=true` to reload even when the published sequence hasn't changed.
 
 Cover images are hot-linked from the official CDN via `CATALOG_COVER_BASE_URL`, so R2 storage is only needed for user content (photo albums, icons).
 
 ## Running the Data Service (official host / advanced)
 
-The scrapers and event fetchers that *produce* the catalog live in `apps/data` — a separate service that only the official host (or a fully independent deployment) needs to run. It has its own PostgreSQL database and publishes the artifact to R2. See [docs/data-service.md](docs/data-service.md) for its environment variables, the `update_all` / `import` / `events/fetch` admin commands (which work as before, just against the data service), seeding from an existing main database, and the daily scraper crons.
+The scrapers and event fetchers that *produce* the catalog live in `apps/data` — a separate service that only the official host (or a fully independent deployment) needs to run. It has its own PostgreSQL database and publishes the artifact to R2. See [apps/data/SETUP.md](apps/data/SETUP.md) for its environment variables, the `update_all` / `import` / `events/fetch` admin commands (which work as before, just against the data service), seeding from an existing main database, and the scheduled scraper cron.

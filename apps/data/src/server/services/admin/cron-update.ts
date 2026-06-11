@@ -4,7 +4,7 @@ import { updateRegion } from "@/server/services/admin/update-pipeline";
 import { publishCatalog } from "@/server/catalog/publish";
 import { NextRequest, NextResponse } from "next/server";
 
-// Shared handler for the per-region cron routes. Guarded by CRON_SECRET
+// Handler for the /api/cron/update?region= route. Guarded by CRON_SECRET
 // (Bearer check, dev bypass) exactly like apps/main's cron routes; jp/intl
 // read their maimai session token from MAIMAI_TOKEN_JP / MAIMAI_TOKEN_INTL,
 // cn needs no token. On success the updated catalog is published.
