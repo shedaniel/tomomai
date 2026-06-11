@@ -10,6 +10,7 @@
     "./types": "./src/types.ts",
     "./metadata": "./src/metadata.ts",
     "./name-utils": "./src/name-utils.ts",
+    "./song-instance-id": "./src/song-instance-id.ts",
     "./parse-utils": "./src/parse-utils.ts",
     "./enabled-regions": "./src/enabled-regions.ts",
     "./event-types": "./src/event-types.ts",

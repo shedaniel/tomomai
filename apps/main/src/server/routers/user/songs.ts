@@ -3,6 +3,7 @@ import { parentSong, songs } from '@/lib/db/schema-pg';
 import { VersionId } from "@tomomai/catalog/metadata";
 import { getSongSlug } from '@/lib/song-slug';
 import { publicProcedure, router } from '@/lib/trpc';
+import { parentPublicIdOf } from '@tomomai/catalog/song-instance-id';
 import { TRPCError } from '@trpc/server';
 import { desc, eq, sql } from 'drizzle-orm';
 import { z } from 'zod';
@@ -28,6 +29,8 @@ export const songsRouter = router({
       publicId: z.string(),
     }))
     .query(async ({ input }) => {
+      // Accept both chart ids and composite instance ids
+      const parentPublicId = parentPublicIdOf(input.publicId);
       const charts = await db
         .select({
           songName: parentSong.songName,
@@ -39,7 +42,7 @@ export const songsRouter = router({
         })
         .from(songs)
         .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
-        .where(eq(parentSong.publicId, input.publicId))
+        .where(eq(parentSong.publicId, parentPublicId))
         .orderBy(desc(songs.gameVersion), sql`case when ${songs.region} = 'jp' then 0 else 1 end`);
 
       if (charts.length === 0) {

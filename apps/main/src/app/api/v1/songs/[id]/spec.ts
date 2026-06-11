@@ -13,7 +13,7 @@ export const spec = defineRoute({
   scope: "public",
   cost: 1,
   params: z.object({
-    id: z.string().describe("Public song ID (nanoid)."),
+    id: z.string().describe("Chart ID (nanoid) for the preferred instance, or a composite instance ID <chartId>:<regionLetter><gameVersion> (e.g. abcd:j11) for an exact one."),
   }),
   response: songDetail,
 });

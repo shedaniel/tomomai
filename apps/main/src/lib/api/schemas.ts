@@ -123,7 +123,7 @@ export const fetchStartResult = z.object({
 export const successResponse = z.object({ success: z.literal(true) });
 
 export const songCatalogueEntry = z.object({
-  songId: z.string().describe("Public song ID (21-char nanoid)."),
+  songId: z.string().describe("Composite instance ID: <chartId>:<regionLetter><gameVersion> (e.g. abcd:j11 = jp @ version 11; regions j/i/c, versions may be negative). Truncate at ':' for the chart-level ID."),
   songName: z.string(),
   artist: z.string(),
   cover: z.string().nullable().describe("Cover image URL, may be null."),

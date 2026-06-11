@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { parentSong, songs } from "@/lib/db/schema-pg";
+import { formatSongInstanceId } from "@tomomai/catalog/song-instance-id";
 import { eq } from "drizzle-orm";
 import { unstable_cache } from "next/cache";
 import { zodJson } from "@/lib/api/zod-response";
@@ -38,7 +39,9 @@ export async function GET() {
   const allSongs = await getAllSongs();
   return zodJson(spec.response, {
     songs: allSongs.map((s) => ({
-      songId: s.songId,
+      // Composite instance id: <parent nanoid>:<regionLetter><gameVersion>.
+      // Unique per row; truncate at ':' for the chart-level id.
+      songId: formatSongInstanceId(s.songId, s.region, s.gameVersion),
       songName: s.songName,
       artist: s.artist,
       cover: s.cover,

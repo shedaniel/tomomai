@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { parentSong, songs } from "@/lib/db/schema";
 import { REGION_ENUM } from "@tomomai/catalog/enums";
 import type { Region } from "@tomomai/catalog/types";
+import { formatSongInstanceId } from "@tomomai/catalog/song-instance-id";
 import { and, eq, type SQL } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -59,8 +60,12 @@ export async function GET(request: NextRequest) {
     ? await baseQuery.where(and(...conditions))
     : await baseQuery;
 
+  // Composite instance id: <parent nanoid>:<regionLetter><gameVersion>;
+  // truncate at ':' for the chart-level id served by /api/v1/parents.
+  const result = rows.map(r => ({ ...r, songId: formatSongInstanceId(r.songId, r.region, r.gameVersion) }));
+
   return NextResponse.json(
-    { songs: rows },
+    { songs: result },
     { headers: { "Cache-Control": "public, max-age=300" } },
   );
 }
