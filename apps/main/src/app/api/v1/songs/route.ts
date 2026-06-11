@@ -1,12 +1,15 @@
 import { db } from "@/lib/db";
 import { parentSong, songs } from "@/lib/db/schema-pg";
 import { formatSongInstanceId } from "@tomomai/catalog/song-instance-id";
-import { eq } from "drizzle-orm";
+import type { Region } from "@tomomai/catalog/types";
+import { and, eq } from "drizzle-orm";
+import { type NextRequest } from "next/server";
 import { unstable_cache } from "next/cache";
+import { parseQuery } from "@/lib/api/parse-query";
 import { zodJson } from "@/lib/api/zod-response";
 import { spec } from "./spec";
 
-async function getAllSongs() {
+async function getSongs(region: Region, gameVersion: number) {
   return unstable_cache(
     async () => {
       return db
@@ -28,15 +31,19 @@ async function getAllSongs() {
         })
         .from(songs)
         .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
+        .where(and(eq(songs.region, region), eq(songs.gameVersion, gameVersion)))
         .orderBy(parentSong.songName, parentSong.difficulty);
     },
-    ["api-v1-songs"],
+    ["api-v1-songs", region, String(gameVersion)],
     { revalidate: 3600, tags: ["api-v1-songs"] }
   )();
 }
 
-export async function GET() {
-  const allSongs = await getAllSongs();
+export async function GET(req: NextRequest) {
+  const parsed = parseQuery(req.nextUrl.searchParams, spec.query!);
+  if (parsed instanceof Response) return parsed;
+
+  const allSongs = await getSongs(parsed.region, parsed.gameVersion);
   return zodJson(spec.response, {
     songs: allSongs.map((s) => ({
       // Composite instance id: <parent nanoid>:<regionLetter><gameVersion>.

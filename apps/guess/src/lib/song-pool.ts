@@ -1,3 +1,4 @@
+import { getCurrentVersion } from "@tomomai/catalog/metadata";
 import type { Chart } from "./types";
 import { uniqueSongs, type SongSummary } from "./fuzzy";
 import { hasAudioPreview, isHeardle } from "./heardle";
@@ -10,12 +11,12 @@ function apiBase(): string {
 }
 
 async function fetchCatalogue(): Promise<Chart[]> {
-  const url = `${apiBase()}/api/v1/songs`;
-  // `no-store` is deliberate: the catalogue JSON is ~14 MB, which exceeds
-  // Next's 2 MB data-cache cap and would log "items over 2MB can not be
-  // cached" on every call. The module-level memo below (1h TTL) is what
-  // actually keeps this cheap; the network fetch only happens after a cold
-  // start or memo expiry.
+  // The pool only ever uses jp charts (see filterPool), and the API requires
+  // region + gameVersion, so fetch exactly the jp slice at the current
+  // version (~1 MB instead of the old full-catalogue 14 MB).
+  // `no-store` + the module-level memo below (1h TTL) keep this cheap; the
+  // network fetch only happens after a cold start or memo expiry.
+  const url = `${apiBase()}/api/v1/songs?region=jp&gameVersion=${getCurrentVersion("jp")}`;
   const res = await fetch(url, { cache: "no-store" });
   if (!res.ok) {
     throw new Error(`Failed to fetch song catalogue: ${res.status} ${res.statusText}`);
@@ -50,9 +51,8 @@ function filterPool(all: readonly Chart[]): Chart[] {
 }
 
 // ---------- In-process cache ---------------------------------------------
-// The catalogue JSON is ~14 MB — too large for Next's unstable_cache (2 MB cap)
-// and pointless to round-trip through that layer anyway. A simple module-level
-// memo with TTL is plenty: each server instance fetches once per hour.
+// A simple module-level memo with TTL is plenty: each server instance
+// fetches the jp slice (~1 MB) once per hour.
 
 type CacheEntry<T> = { value: T; expiresAt: number };
 let catalogue: CacheEntry<Chart[]> | Promise<Chart[]> | null = null;
