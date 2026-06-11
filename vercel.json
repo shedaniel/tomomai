@@ -2,11 +2,5 @@
   "buildCommand": "pnpm --filter @tomomai/site build",
   "installCommand": "pnpm install --filter @tomomai/site... --config.node-linker=hoisted",
   "outputDirectory": "apps/main/.next",
-  "framework": "nextjs",
-  "crons": [
-    {
-      "path": "/api/cron/percentile-bands",
-      "schedule": "0 4 * * *"
-    }
-  ]
+  "framework": "nextjs"
 }

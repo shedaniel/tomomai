@@ -4,10 +4,11 @@ import { updateRegion } from "@/server/services/admin/update-pipeline";
 import { publishCatalog } from "@/server/catalog/publish";
 import { NextRequest, NextResponse } from "next/server";
 
-// Handler for the /api/cron/update?region= route. Guarded by CRON_SECRET
-// (Bearer check, dev bypass) exactly like apps/main's cron routes; jp/intl
-// read their maimai session token from MAIMAI_TOKEN_JP / MAIMAI_TOKEN_INTL,
-// cn needs no token. On success the updated catalog is published.
+// Handler for the /api/cron/update?region= route. Authenticated with
+// ADMIN_UPDATE_TOKEN (the same secret the pipeline uses to call the admin
+// routes); jp/intl read their maimai session token from MAIMAI_TOKEN_JP /
+// MAIMAI_TOKEN_INTL, cn needs no token. On success the updated catalog is
+// published.
 
 const TOKEN_ENV_BY_REGION: Partial<Record<Region, string>> = {
   jp: "MAIMAI_TOKEN_JP",
@@ -15,19 +16,14 @@ const TOKEN_ENV_BY_REGION: Partial<Record<Region, string>> = {
 };
 
 export async function runCronRegionUpdate(req: NextRequest, region: Region): Promise<NextResponse> {
-  const cronSecret = process.env.CRON_SECRET;
-  const isDev = process.env.NODE_ENV === "development";
-
-  if (!cronSecret) {
-    if (!isDev) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  } else if (req.headers.get("authorization") !== `Bearer ${cronSecret}`) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   const adminToken = process.env.ADMIN_UPDATE_TOKEN;
   if (!adminToken) {
     console.error("ADMIN_UPDATE_TOKEN environment variable not set");
     return NextResponse.json({ error: "ADMIN_UPDATE_TOKEN is not configured" }, { status: 500 });
+  }
+
+  if (req.headers.get("authorization") !== `Bearer ${adminToken}`) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   if (!isRegionEnabled(region)) {

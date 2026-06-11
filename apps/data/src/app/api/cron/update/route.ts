@@ -8,7 +8,7 @@ export const maxDuration = 800;
 
 // Single cron entry point (invoked by an external scheduler, e.g. Cronicle):
 //   GET /api/cron/update?region=jp
-//   Authorization: Bearer $CRON_SECRET
+//   Authorization: Bearer $ADMIN_UPDATE_TOKEN
 export async function GET(req: NextRequest) {
   const region = req.nextUrl.searchParams.get("region");
   if (!region || !REGION_ENUM.includes(region as Region)) {

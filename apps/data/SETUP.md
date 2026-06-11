@@ -29,12 +29,11 @@ The artifact contract (zod schemas, schema version) lives in `packages/catalog/s
 | `POSTGRES_URL` | Yes | The data service's own PostgreSQL database (not the main app's) |
 | `REDIS_URL` | Yes | Redis connection string, used for pending-confirmation storage and scrape caches |
 
-### Auth / Scheduling
+### Auth
 
 | Variable | Required | Description |
 |---|---|---|
-| `ADMIN_UPDATE_TOKEN` | Yes | Bearer token for the admin routes. Generate with `openssl rand -base64 32` |
-| `CRON_SECRET` | Yes (prod) | Bearer token the external scheduler (e.g. Cronicle) must send to `/api/cron/update` |
+| `ADMIN_UPDATE_TOKEN` | Yes | Bearer token for the admin routes and the cron route (`/api/cron/update`), sent by the external scheduler (e.g. Cronicle). Generate with `openssl rand -base64 32` |
 
 ### Cloudflare R2
 
@@ -125,7 +124,7 @@ There is a single cron endpoint; schedule it per region from your external sched
 
 ```bash
 curl "https://data.yourdomain.com/api/cron/update?region=jp" \
-  -H "Authorization: Bearer $CRON_SECRET"
+  -H "Authorization: Bearer $ADMIN_UPDATE_TOKEN"
 ```
 
 It runs the full update → covers → upsert → publish pipeline for that region, reading the maimai session from `MAIMAI_TOKEN_JP` / `MAIMAI_TOKEN_INTL` (CN needs no token).
