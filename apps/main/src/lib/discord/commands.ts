@@ -6,10 +6,12 @@ import { handleRecommendCommand } from './commands/recommend';
 import { handleAlbumPreferenceSelection } from './commands/album-preference';
 import { handleDailyCommand, handleDailyAutocomplete } from './commands/daily';
 import { createUnknownCommandResponse, DiscordResponse } from './responses';
+import type { Region } from '@/lib/types';
 
 type CommandOption = { name: string; value?: string; type: number; focused?: boolean };
 
-// Command definitions
+// Command definitions. Each data command defaults to the user's selected
+// region and accepts an optional `region` option to override it.
 export const COMMANDS = {
   INVITE: {
     name: 'invite',
@@ -17,45 +19,30 @@ export const COMMANDS = {
   },
   PROFILE: {
     name: 'profile',
-    description: 'Show your latest maimai rating (International region)',
-  },
-  PROFILEJP: {
-    name: 'profilejp',
-    description: 'Show your latest maimai rating (Japan region)',
+    description: 'Show your latest maimai rating',
   },
   FETCH: {
     name: 'fetch',
-    description: 'Refetch and update your latest maimai scores (International region)',
-  },
-  FETCHJP: {
-    name: 'fetchjp',
-    description: 'Refetch and update your latest maimai scores (Japan region)',
+    description: 'Refetch and update your latest maimai scores',
   },
   RECENTS: {
     name: 'recents',
-    description: 'Show your most recent play (International region)',
-  },
-  RECENTSJP: {
-    name: 'recentsjp',
-    description: 'Show your most recent play (Japan region)',
+    description: 'Show your most recent play',
   },
   RECOMMEND: {
     name: 'recommend',
-    description: 'Show song recommendations to improve your rating (International region)',
-  },
-  RECOMMENDJP: {
-    name: 'recommendjp',
-    description: 'Show song recommendations to improve your rating (Japan region)',
+    description: 'Show song recommendations to improve your rating',
   },
   DAILY: {
     name: 'daily',
-    description: 'Show your plays from a single JST day (International region)',
-  },
-  DAILYJP: {
-    name: 'dailyjp',
-    description: 'Show your plays from a single JST day (Japan region)',
+    description: 'Show your plays from a single JST day',
   },
 } as const;
+
+function getRegionParam(options?: CommandOption[]): string | undefined {
+  const value = options?.find(o => o.name === 'region')?.value;
+  return typeof value === 'string' && value.length > 0 ? value : undefined;
+}
 
 export interface CommandContext {
   commandName: string;
@@ -81,72 +68,64 @@ export interface AutocompleteContext {
 export async function handleCommand(context: CommandContext): Promise<DiscordResponse> {
   const { commandName, options, discordUserId, applicationId, interactionToken } = context;
 
+  const regionParam = getRegionParam(options);
+
   switch (commandName.toLowerCase()) {
     case COMMANDS.PROFILE.name.toLowerCase():
-    case COMMANDS.PROFILEJP.name.toLowerCase():
       if (!discordUserId) {
         return createUnknownCommandResponse();
       }
-      const region = commandName.toLowerCase() === 'profilejp' ? 'jp' : 'intl';
       return handleProfileCommand({
         discordUserId,
-        region,
+        regionParam,
         applicationId,
         interactionToken
       });
 
     case COMMANDS.FETCH.name.toLowerCase():
-    case COMMANDS.FETCHJP.name.toLowerCase():
       if (!discordUserId) {
         return createUnknownCommandResponse();
       }
-      const fetchRegion = commandName.toLowerCase() === 'fetchjp' ? 'jp' : 'intl';
       return handleFetchCommand({
         discordUserId,
-        region: fetchRegion,
+        regionParam,
         applicationId,
         interactionToken
       });
 
     case COMMANDS.RECENTS.name.toLowerCase():
-    case COMMANDS.RECENTSJP.name.toLowerCase():
       if (!discordUserId) {
         return createUnknownCommandResponse();
       }
-      const recentsRegion = commandName.toLowerCase() === 'recentsjp' ? 'jp' : 'intl';
       return handleRecentsCommand({
         discordUserId,
-        region: recentsRegion,
+        regionParam,
         applicationId,
         interactionToken
       });
 
     case COMMANDS.RECOMMEND.name.toLowerCase():
-    case COMMANDS.RECOMMENDJP.name.toLowerCase():
       if (!discordUserId) {
         return createUnknownCommandResponse();
       }
-      const recommendRegion = commandName.toLowerCase() === 'recommendjp' ? 'jp' : 'intl';
       return handleRecommendCommand({
         discordUserId,
-        region: recommendRegion,
+        regionParam,
         applicationId,
         interactionToken
       });
 
     case COMMANDS.DAILY.name.toLowerCase():
-    case COMMANDS.DAILYJP.name.toLowerCase():
       if (!discordUserId) {
         return createUnknownCommandResponse();
       }
-      const dailyRegion = commandName.toLowerCase() === 'dailyjp' ? 'jp' : 'intl';
       const dateOption = options?.find(o => o.name === 'date');
       const day = typeof dateOption?.value === 'string' && dateOption.value.length > 0
         ? dateOption.value
         : undefined;
       return handleDailyCommand({
         discordUserId,
-        region: dailyRegion,
+        regionParam,
         day,
         applicationId,
         interactionToken,
@@ -164,12 +143,11 @@ export async function handleAutocomplete(context: AutocompleteContext): Promise<
   const { commandName, options, discordUserId } = context;
 
   switch (commandName.toLowerCase()) {
-    case COMMANDS.DAILY.name.toLowerCase():
-    case COMMANDS.DAILYJP.name.toLowerCase(): {
-      const region = commandName.toLowerCase() === 'dailyjp' ? 'jp' : 'intl';
+    case COMMANDS.DAILY.name.toLowerCase(): {
+      const regionParam = getRegionParam(options);
       const focused = options?.find(o => o.focused) ?? options?.find(o => o.name === 'date');
       const focusedValue = typeof focused?.value === 'string' ? focused.value : '';
-      return handleDailyAutocomplete({ discordUserId, region, focusedValue });
+      return handleDailyAutocomplete({ discordUserId, regionParam, focusedValue });
     }
     default:
       return { type: 8, data: { choices: [] } };
@@ -184,7 +162,7 @@ export async function handleComponents(context: ComponentContext): Promise<Disco
     const parts = customId.split('_');
     if (parts.length === 4) {
       const buttonUserId = parts[1];
-      const region = parts[2] as 'intl' | 'jp';
+      const region = parts[2];
       const skip = parseInt(parts[3], 10);
 
       // verify the user clicking is the same as the user who initiated the command
@@ -194,7 +172,7 @@ export async function handleComponents(context: ComponentContext): Promise<Disco
 
       return handleRecentsCommand({
         discordUserId,
-        region,
+        regionParam: region,
         applicationId,
         interactionToken,
         skip,
@@ -207,7 +185,7 @@ export async function handleComponents(context: ComponentContext): Promise<Disco
     const parts = customId.split('_');
     if (parts.length === 5) {
       const buttonUserId = parts[2];
-      const region = parts[3] as 'intl' | 'jp';
+      const region = parts[3] as Region;
       const choice = parts[4];
 
       // verify the user clicking is the same as the user who initiated the command
