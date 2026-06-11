@@ -12,7 +12,7 @@ import {
 import { Checkbox } from "@/components/animate-ui/components/radix/checkbox";
 import { Button } from "@tomomai/ui";
 import { PolicyDialog } from "@/components/policy-dialog";
-import { ChevronDown, ChevronUp, Dot, Loader2 } from "lucide-react";
+import { Dot, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useLocale } from "./providers/locale-provider";
 import { isCNExclusive, isRegionEnabled } from "@tomomai/catalog/enabled-regions";
@@ -44,8 +44,6 @@ export function ConsentDialog({
   const [privacyChecked, setPrivacyChecked] = useState(false);
   const [showTosDialog, setShowTosDialog] = useState(false);
   const [showPrivacyDialog, setShowPrivacyDialog] = useState(false);
-  const [showTosPreview, setShowTosPreview] = useState(false);
-  const [showPrivacyPreview, setShowPrivacyPreview] = useState(false);
   const [proceeding, setProceeding] = useState<"discord" | "twitter" | null>(null);
 
   useEffect(() => {
@@ -71,7 +69,7 @@ export function ConsentDialog({
         <ResponsiveDialogContent
           showCloseButton={false}
           className="max-w-2xl max-h-[90dvh]"
-          style={{ backgroundImage: "linear-gradient(160deg, color-mix(in srgb, var(--primary) 10%, transparent), transparent 22%)" }}
+          style={{ backgroundImage: "linear-gradient(160deg, color-mix(in srgb, var(--primary) 18%, transparent), transparent 22%)" }}
           onPointerDownOutside={(e) => e.preventDefault()}
           onEscapeKeyDown={(e) => e.preventDefault()}
         >
@@ -126,65 +124,37 @@ export function ConsentDialog({
 
             {/* Consent checkboxes */}
             <div className="space-y-2">
-              <div className="rounded-xl border border-border overflow-hidden">
-                <div className="flex items-center gap-3 px-3 py-2.5">
-                  <Checkbox
-                    id="tos-consent"
-                    checked={tosChecked}
-                    onCheckedChange={(checked) => setTosChecked(checked === true)}
-                  />
-                  <label
-                    htmlFor="tos-consent"
-                    className="text-sm font-semibold cursor-pointer select-none flex-1"
-                  >
-                    {t("agreeToTos")}
-                  </label>
-                  <Button variant="ghost" size="sm" className="h-7 px-2" onClick={() => setShowTosDialog(true)}>
-                    {t("viewFullText")}
-                  </Button>
-                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setShowTosPreview(!showTosPreview)}>
-                    {showTosPreview ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                  </Button>
-                </div>
-                {showTosPreview && (
-                  <div className="px-3 pb-3">
-                    <div className="p-3 bg-muted/60 rounded-md max-h-50 overflow-y-auto">
-                      <p className="text-xs text-muted-foreground whitespace-pre-wrap line-clamp-8">
-                        {tosContent.substring(0, 1000)}...
-                      </p>
-                    </div>
-                  </div>
-                )}
+              <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl border border-border">
+                <Checkbox
+                  id="tos-consent"
+                  checked={tosChecked}
+                  onCheckedChange={(checked) => setTosChecked(checked === true)}
+                />
+                <label
+                  htmlFor="tos-consent"
+                  className="text-sm font-semibold cursor-pointer select-none flex-1"
+                >
+                  {t("agreeToTos")}
+                </label>
+                <Button variant="ghost" size="sm" className="h-7 px-2" onClick={() => setShowTosDialog(true)}>
+                  {t("viewFullText")}
+                </Button>
               </div>
-              <div className="rounded-xl border border-border overflow-hidden">
-                <div className="flex items-center gap-3 px-3 py-2.5">
-                  <Checkbox
-                    id="privacy-consent"
-                    checked={privacyChecked}
-                    onCheckedChange={(checked) => setPrivacyChecked(checked === true)}
-                  />
-                  <label
-                    htmlFor="privacy-consent"
-                    className="text-sm font-semibold cursor-pointer select-none flex-1"
-                  >
-                    {t("agreeToPrivacy")}
-                  </label>
-                  <Button variant="ghost" size="sm" className="h-7 px-2" onClick={() => setShowPrivacyDialog(true)}>
-                    {t("viewFullText")}
-                  </Button>
-                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setShowPrivacyPreview(!showPrivacyPreview)}>
-                    {showPrivacyPreview ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                  </Button>
-                </div>
-                {showPrivacyPreview && (
-                  <div className="px-3 pb-3">
-                    <div className="p-3 bg-muted/60 rounded-md max-h-32 overflow-y-auto">
-                      <p className="text-xs text-muted-foreground whitespace-pre-wrap line-clamp-6">
-                        {privacyContent.substring(0, 500)}...
-                      </p>
-                    </div>
-                  </div>
-                )}
+              <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl border border-border">
+                <Checkbox
+                  id="privacy-consent"
+                  checked={privacyChecked}
+                  onCheckedChange={(checked) => setPrivacyChecked(checked === true)}
+                />
+                <label
+                  htmlFor="privacy-consent"
+                  className="text-sm font-semibold cursor-pointer select-none flex-1"
+                >
+                  {t("agreeToPrivacy")}
+                </label>
+                <Button variant="ghost" size="sm" className="h-7 px-2" onClick={() => setShowPrivacyDialog(true)}>
+                  {t("viewFullText")}
+                </Button>
               </div>
             </div>
 

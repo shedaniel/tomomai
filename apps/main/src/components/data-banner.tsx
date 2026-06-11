@@ -77,11 +77,13 @@ function SnapshotSelector({
       <SelectTrigger className="flex-1 min-w-0 h-10">
         <SelectValue placeholder={t('dataBanner.selectSnapshot')} className="overflow-hidden">
           {selectedSnapshotData ? (
-            <div className="flex flex-col items-start min-w-0 truncate text-xs">
-              <span>{formatDate(selectedSnapshotData.fetchedAt)}</span>
-              <span className="text-2xs text-muted-foreground">
-                {selectedSnapshotData.displayName} • {selectedSnapshotData.rating} rating • {getVersionInfo(selectedSnapshotData.gameVersion)?.shortName || "Unknown"}
-              </span>
+            <div className="flex flex-col items-start min-w-0 gap-0.5">
+              <div className="flex items-center gap-1.5 min-w-0">
+                <span className="truncate text-xs font-medium">{selectedSnapshotData.displayName}</span>
+                <Badge variant="tonal" className="shrink-0 px-1.5 py-0 text-2xs font-medium bg-primary-container/50">{selectedSnapshotData.rating} rating</Badge>
+                <Badge variant="secondary" className="shrink-0 px-1.5 py-0 text-2xs font-normal bg-secondary/50">{getVersionInfo(selectedSnapshotData.gameVersion)?.shortName || "Unknown"}</Badge>
+              </div>
+              <span className="text-2xs text-muted-foreground">{formatDate(selectedSnapshotData.fetchedAt)}</span>
             </div>
           ) : (
             <span>{t('dataBanner.selectSnapshot')}</span>
@@ -91,11 +93,13 @@ function SnapshotSelector({
       <SelectContent>
         {snapshots.map((snapshot) => (
           <SelectItem key={snapshot.id} value={snapshot.id}>
-            <div className="flex flex-col items-start min-w-0 truncate">
-              <span>{formatDate(snapshot.fetchedAt)}</span>
-              <span className="text-xs dark:text-muted-foreground">
-                {snapshot.displayName} • {snapshot.rating} rating • {getVersionInfo(snapshot.gameVersion)?.shortName || "Unknown"}
-              </span>
+            <div className="flex flex-col items-start min-w-0 gap-0.5">
+              <div className="flex items-center gap-1.5 min-w-0">
+                <span className="truncate text-xs font-medium">{snapshot.displayName}</span>
+                <Badge variant="tonal" className="shrink-0 px-1.5 py-0 text-2xs font-medium bg-primary-container/50">{snapshot.rating} rating</Badge>
+                <Badge variant="secondary" className="shrink-0 px-1.5 py-0 text-2xs font-normal bg-secondary/50">{getVersionInfo(snapshot.gameVersion)?.shortName || "Unknown"}</Badge>
+              </div>
+              <span className="text-2xs text-muted-foreground">{formatDate(snapshot.fetchedAt)}</span>
             </div>
           </SelectItem>
         ))}
