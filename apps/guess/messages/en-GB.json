@@ -97,7 +97,8 @@
         "play": "Play clip",
         "pause": "Pause clip",
         "duration": "{seconds, plural, =1 {1 second} other {# seconds}}",
-        "step": "Clue {current} / {total}"
+        "step": "Clue {current} / {total}",
+        "error": "Couldn’t play audio: {detail}"
       }
     },
     "reveal": {
