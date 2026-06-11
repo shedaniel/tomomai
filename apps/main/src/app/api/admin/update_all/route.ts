@@ -1,7 +1,10 @@
 import { getCurrentVersion } from "@/lib/metadata";
+import { flushLogger } from "@/lib/logger";
+import { requestLogger } from "@/lib/request-logger";
 import { Region } from "@/lib/types";
 import { getEnabledRegions, isRegionEnabled } from "@/lib/enabled-regions";
 import { NextRequest, NextResponse } from "next/server";
+import type { Logger } from "pino";
 
 async function updateRegion(
   origin: string,
@@ -9,11 +12,12 @@ async function updateRegion(
   maimaiToken: string | null,
   adminToken: string,
   imageUpload: boolean,
+  log: Logger,
 ): Promise<{ success: boolean; data?: any; error?: string; status?: number }> {
   const version = getCurrentVersion(region);
 
   // Step 1: Fetch records from /api/admin/update
-  console.log(`Fetching ${region.toUpperCase()} records from /api/admin/update...`);
+  log.info({ region, version }, `Fetching ${region.toUpperCase()} records from /api/admin/update...`);
   const updateUrl = new URL(`${origin}/api/admin/update`);
   updateUrl.searchParams.set('region', region);
   // CN uses Lxns (public) and the update route does not require a maimai token.
@@ -28,22 +32,22 @@ async function updateRegion(
 
   if (!updateResponse.ok) {
     const errorText = await updateResponse.text();
-    console.error(`Failed to fetch ${region.toUpperCase()} records: ${updateResponse.status} ${updateResponse.statusText}`);
+    log.error({ region, status: updateResponse.status, statusText: updateResponse.statusText }, `Failed to fetch ${region.toUpperCase()} records`);
     return { success: false, error: `Failed to fetch ${region.toUpperCase()} records: ${errorText}`, status: updateResponse.status };
   }
 
   const updateData = await updateResponse.json();
   if (!updateData.success || !updateData.records) {
-    console.error(`${region.toUpperCase()} update response did not contain records`);
+    log.error({ region }, `${region.toUpperCase()} update response did not contain records`);
     return { success: false, error: `${region.toUpperCase()} update response did not contain records`, status: 500 };
   }
 
-  console.log(`Fetched ${updateData.records.length} ${region.toUpperCase()} records`);
+  log.info({ region, records: updateData.records.length }, `Fetched ${updateData.records.length} ${region.toUpperCase()} records`);
 
   // Step 2: Process cover images via /api/admin/image
   let songsForUpload = updateData.records;
   if (imageUpload) {
-    console.log(`Processing ${region.toUpperCase()} cover images via /api/admin/image...`);
+    log.info({ region }, `Processing ${region.toUpperCase()} cover images via /api/admin/image...`);
     const imageUrl = new URL(`${origin}/api/admin/image`);
 
     const imageResponse = await fetch(imageUrl.toString(), {
@@ -57,17 +61,17 @@ async function updateRegion(
 
     if (!imageResponse.ok) {
       const errorText = await imageResponse.text();
-      console.error(`Failed to process ${region.toUpperCase()} cover images: ${imageResponse.status} ${imageResponse.statusText}`);
+      log.error({ region, status: imageResponse.status, statusText: imageResponse.statusText }, `Failed to process ${region.toUpperCase()} cover images`);
       return { success: false, error: `Failed to process ${region.toUpperCase()} cover images: ${errorText}`, status: imageResponse.status };
     }
 
     const imageData = await imageResponse.json();
     songsForUpload = imageData.songs;
-    console.log(`${region.toUpperCase()} cover images processed:`, imageData.stats);
+    log.info({ region, stats: imageData.stats }, `${region.toUpperCase()} cover images processed`);
   }
 
   // Step 3: Upload to /api/admin/upload with update=alter
-  console.log(`Uploading ${region.toUpperCase()} records to /api/admin/upload...`);
+  log.info({ region }, `Uploading ${region.toUpperCase()} records to /api/admin/upload...`);
   const uploadUrl = new URL(`${origin}/api/admin/upload`);
   uploadUrl.searchParams.set('region', region);
   uploadUrl.searchParams.set('version', String(version));
@@ -84,16 +88,17 @@ async function updateRegion(
 
   if (!uploadResponse.ok) {
     const errorText = await uploadResponse.text();
-    console.error(`Failed to upload ${region.toUpperCase()} records: ${uploadResponse.status} ${uploadResponse.statusText}`);
+    log.error({ region, status: uploadResponse.status, statusText: uploadResponse.statusText }, `Failed to upload ${region.toUpperCase()} records`);
     return { success: false, error: `Failed to upload ${region.toUpperCase()} records: ${errorText}`, status: uploadResponse.status };
   }
 
   const uploadData = await uploadResponse.json();
-  console.log(`${region.toUpperCase()} upload completed:`, uploadData.statistics);
+  log.info({ region, statistics: uploadData.statistics }, `${region.toUpperCase()} upload completed`);
   return { success: true, data: uploadData };
 }
 
 export async function GET(request: NextRequest) {
+  const { log, requestId } = requestLogger(request, "admin/update_all");
   try {
     // Check for admin token authentication
     const authHeader = request.headers.get("authorization");
@@ -109,7 +114,7 @@ export async function GET(request: NextRequest) {
     // Validate token against environment variable
     const adminToken = process.env.ADMIN_UPDATE_TOKEN;
     if (!adminToken) {
-      console.error("ADMIN_UPDATE_TOKEN environment variable not set");
+      log.error("ADMIN_UPDATE_TOKEN environment variable not set");
       return NextResponse.json(
         { error: "Server configuration error" },
         { status: 500 }
@@ -117,7 +122,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (token !== adminToken) {
-      console.warn("Invalid admin token attempt");
+      log.warn("Invalid admin token attempt");
       return NextResponse.json(
         { error: "Invalid authorization token" },
         { status: 403 }
@@ -149,11 +154,11 @@ export async function GET(request: NextRequest) {
         { status: 400 }
       );
     }
-    console.log(`Admin update_all requested: processing ${regions.map(r => r.toUpperCase()).join(" then ")} (image_upload=${imageUpload})`);
+    log.info({ regions, imageUpload }, `Admin update_all requested: processing ${regions.map(r => r.toUpperCase()).join(" then ")} (image_upload=${imageUpload})`);
 
     const results: Record<string, any> = {};
     for (const r of regions) {
-      const result = await updateRegion(origin, r, maimaiToken, token, imageUpload);
+      const result = await updateRegion(origin, r, maimaiToken, token, imageUpload, log);
       if (!result.success) {
         return NextResponse.json({ error: result.error }, { status: result.status ?? 500 });
       }
@@ -162,16 +167,20 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
+      requestId,
       message: `${regions.map(r => r.toUpperCase()).join(" and ")} updated successfully`,
       ...results,
     });
 
   } catch (error) {
-    console.error("Error in admin update_all route:", error);
+    log.error({ err: error }, "Error in admin update_all route");
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Internal server error" },
+      { error: error instanceof Error ? error.message : "Internal server error", requestId },
       { status: 500 }
     );
+  } finally {
+    // Serverless: ship buffered logs before the function is frozen/terminated.
+    await flushLogger();
   }
 }
 

@@ -76,7 +76,7 @@ export async function cacheImage(url: string): Promise<void> {
 
     await fs.writeFile(cachedFilePath, compressedBuffer);
   } catch (error) {
-    logger.error({ error, url }, "Error caching image");
+    logger.error({ err: error, url }, "Error caching image");
   }
 }
 
@@ -122,7 +122,7 @@ export async function getCachedImageBuffer(url: string): Promise<{ buffer: Buffe
     return null;
 
   } catch (error) {
-    logger.error({ error, url }, "Error reading cached image");
+    logger.error({ err: error, url }, "Error reading cached image");
     return null;
   }
 }

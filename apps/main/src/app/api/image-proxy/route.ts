@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Agent } from 'undici';
 import { getCachedImageBuffer, cacheImage } from '@/lib/image_cacher';
+import { flushLogger } from '@/lib/logger';
+import { requestLogger } from '@/lib/request-logger';
 import { SAFE_MAIMAI_IMAGE_URLS } from '@/lib/utils';
 
 export async function GET(request: NextRequest) {
+  const { log, requestId } = requestLogger(request, "image-proxy");
   const { searchParams } = new URL(request.url);
   const imageUrl = searchParams.get('url');
 
@@ -72,7 +75,10 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Error proxying image:', error);
-    return new NextResponse('Internal server error', { status: 500 });
+    log.error({ err: error, url: imageUrl }, "Error proxying image");
+    // Flush only on the error path — successful image serving is hot and must
+    // not wait on a log flush.
+    await flushLogger();
+    return new NextResponse(`Internal server error (${requestId})`, { status: 500 });
   }
 }

@@ -1,4 +1,5 @@
 import { getCachedImageBuffer } from "./image_cacher";
+import { getLogger } from "./request-logger";
 import { FontLibrary, Image, loadImage } from 'skia-canvas';
 import path from 'path';
 import { Agent } from 'undici';
@@ -133,9 +134,9 @@ export const fontsLoaded = (async () => {
     FontLibrary.use('Noto Sans JP', [path.join(fontsDir, 'NotoSansJP-VariableFont_wght.woff2')]);
     FontLibrary.use('Geist Mono', [path.join(fontsDir, 'GeistMono-VariableFont_wght.woff2')]);
 
-    console.log(`✅ Fonts loaded successfully in ${Date.now() - startTime}ms`);
+    getLogger().info({ durationMs: Date.now() - startTime }, 'Fonts loaded successfully');
   } catch (error) {
-    console.error('❌ Failed to load fonts:', error);
+    getLogger().error({ err: error }, 'Failed to load fonts');
   }
 })();
 
@@ -201,7 +202,7 @@ export async function fetchImageForServer(url: string): Promise<string> {
 
     return dataUrl;
   } catch (error) {
-    console.error('Error loading image for server-side rendering:', error);
+    getLogger().error({ err: error }, 'Error loading image for server-side rendering');
     throw error;
   }
 }

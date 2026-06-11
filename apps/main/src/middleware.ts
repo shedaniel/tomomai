@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { get } from '@vercel/edge-config';
+import { nanoid } from 'nanoid';
 import { securityMiddleware } from './lib/security/middleware';
 import { locales, type Locale } from './i18n/locale';
 
@@ -13,6 +14,19 @@ export async function middleware(request: NextRequest) {
   // Check maintenance mode (skip for the maintenance page itself and static assets)
   const { pathname } = request.nextUrl;
 
+  // Per-request correlation id. Honor an upstream one if present (idempotent for
+  // retries / tracing proxies), otherwise generate. Propagated to route handlers
+  // via the x-request-id request header and echoed on every response so it can
+  // be quoted in bug reports and matched against Axiom logs (docs/LOGGING.md).
+  // The inbound header is client-controllable, so only accept safe token shapes
+  // (nanoid alphabet, bounded length) to avoid log injection.
+  const inboundId = request.headers.get('x-request-id');
+  const requestId = inboundId && /^[A-Za-z0-9_-]{1,64}$/.test(inboundId) ? inboundId : nanoid(10);
+  const stamp = (res: NextResponse) => {
+    res.headers.set('x-request-id', requestId);
+    return res;
+  };
+
   if (pathname.startsWith('/res/fonts/')) {
     const origin = request.headers.get('origin');
     const response = NextResponse.next();
@@ -21,7 +35,7 @@ export async function middleware(request: NextRequest) {
       response.headers.set('Cross-Origin-Resource-Policy', 'cross-origin');
       response.headers.set('Vary', 'Origin');
     }
-    return response;
+    return stamp(response);
   }
   if (pathname !== '/maintenance') {
     try {
@@ -29,7 +43,7 @@ export async function middleware(request: NextRequest) {
       if (maintenanceMode) {
         const url = request.nextUrl.clone();
         url.pathname = '/maintenance';
-        return NextResponse.redirect(url, { status: 307 });
+        return stamp(NextResponse.redirect(url, { status: 307 }));
       }
     } catch {
       // Edge config unavailable, continue normally
@@ -41,7 +55,7 @@ export async function middleware(request: NextRequest) {
 
   // If security middleware returns a response (e.g., rate limited), return it
   if (securityResponse.status !== 200) {
-    return securityResponse;
+    return stamp(securityResponse);
   }
 
   // Forward `?tl=<locale>` as a request header so page-level `getLocale()` can
@@ -51,6 +65,7 @@ export async function middleware(request: NextRequest) {
   const validTl = tl && locales.includes(tl as Locale) ? (tl as Locale) : null;
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set('x-pathname', pathname);
+  requestHeaders.set('x-request-id', requestId);
   if (validTl) requestHeaders.set('x-tl-locale', validTl);
 
   const response = NextResponse.next({ request: { headers: requestHeaders } });
@@ -82,7 +97,7 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  return response;
+  return stamp(response);
 }
 
 // Apply middleware to all routes except static files.

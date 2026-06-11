@@ -9,6 +9,7 @@ import { appendFetchState } from './fetch-states-server';
 import { getAllStates } from './fetch-states';
 import { after } from 'next/server';
 import { flushLogger } from './logger';
+import { getLogger } from './request-logger';
 
 export interface StartFetchResult {
   sessionId: string;
@@ -61,7 +62,7 @@ export async function demoFetch(userId: string, region: Region): Promise<StartFe
         })
         .where(eq(fetchSessions.id, insertedSession.id));
     } catch (error) {
-      console.error("Error during demo fetch:", error);
+      getLogger().error({ err: error }, "Error during demo fetch");
 
       // Mark as failed if error occurs
       await db
@@ -111,7 +112,7 @@ export async function startFetchServer(userId: string, region: Region, token?: s
     try {
       tokenToUse = decryptToken(savedToken[0].token);
     } catch (error) {
-      console.error('Failed to decrypt token:', error);
+      getLogger().error({ err: error }, 'Failed to decrypt token');
       throw new Error('Failed to decrypt stored token. Please re-add your authentication tokens.');
     }
 
@@ -278,7 +279,7 @@ export async function startFetchServer(userId: string, region: Region, token?: s
         })
         .where(eq(fetchSessions.id, fetchSessionInternalId));
     } catch (error) {
-      console.error("Error during maimai data fetch:", error);
+      getLogger().error({ err: error }, "Error during maimai data fetch");
 
       // Mark fetch as failed
       await db

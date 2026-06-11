@@ -77,7 +77,7 @@ export async function deleteUserSnapshot(
         }
       }
     } catch (err) {
-      logger.warn({ err, iconUrl }, "Failed to clean up orphan icon from R2");
+      logger.warn({ err, url: iconUrl }, "Failed to clean up orphan icon from R2");
     }
   }
 

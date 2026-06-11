@@ -2,6 +2,7 @@ import { db } from '@/lib/db';
 import { getAllStates, parseStatusStates } from '@/lib/fetch-states';
 import { getFetchStatusServer, startFetchServer } from '@/lib/maimai-server-actions';
 import { account, user } from '@/lib/db/schema-pg';
+import { getLogger } from '@/lib/request-logger';
 import { waitUntil } from '@vercel/functions';
 import { and, eq } from 'drizzle-orm';
 import { generateAndSendProfileImage } from '../image-utils';
@@ -140,7 +141,7 @@ export async function handleFetchCommand({
         // Ensure background work (detail fetches for recents/albums) completes
         await startResult.backgroundWork;
       } catch (error) {
-        console.error('Error in fetch process:', error);
+        getLogger().error({ err: error }, 'Error in fetch process');
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
 
         // Check if this is an album settings error
@@ -168,7 +169,7 @@ export async function handleFetchCommand({
 
     return deferredResponse;
   } catch (error) {
-    console.error('Error starting fetch:', error);
+    getLogger().error({ err: error }, 'Error starting fetch');
     return createErrorResponse('An error occurred while starting the fetch. Please try again later.');
   }
 }
@@ -223,7 +224,7 @@ async function pollForUpdates(
       attempts++;
       await new Promise(resolve => setTimeout(resolve, 500)); // Poll every 0.5 seconds
     } catch (error) {
-      console.error('Error polling fetch status:', error);
+      getLogger().error({ err: error }, 'Error polling fetch status');
       attempts++;
       await new Promise(resolve => setTimeout(resolve, 500));
     }

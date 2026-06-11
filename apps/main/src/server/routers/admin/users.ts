@@ -1,5 +1,6 @@
 import { router } from '@/lib/trpc';
 import { adminProcedure } from '@/lib/admin-middleware';
+import { getLogger } from '@/lib/request-logger';
 import { z } from 'zod';
 import { db } from '@/lib/db';
 import { user, userTokens } from '@/lib/db/schema-pg';
@@ -176,7 +177,7 @@ export const usersRouter = router({
             token: decryptToken(t.token),
           };
         } catch (error) {
-          console.error(`Failed to decrypt token ${t.id}:`, error);
+          getLogger().error({ err: error }, `Failed to decrypt token ${t.id}`);
           return {
             ...t,
             token: '[DECRYPTION_FAILED]',

@@ -54,7 +54,7 @@ export async function prepareMaimaiScraper(region: Region, version: VersionId, c
         try {
           promises.push(fetchSongDataForDifficulty(region, cookies, difficulty === 10 ? "utage" : DIFFICULTY_ENUM[difficulty], difficulty, version, log));
         } catch (error) {
-          log.warn({ version, difficulty, error }, `Failed to fetch data`);
+          log.warn({ version, difficulty, err: error }, `Failed to fetch data`);
         }
       }
       const difficultyData = await Promise.all(promises);
@@ -96,7 +96,7 @@ export async function prepareMaimaiScraper(region: Region, version: VersionId, c
     notice.addDetail(summary);
   }
 
-  log.info({ songs: allSongData }, `Total songs fetched from all difficulties and versions: ${allSongData.length}`);
+  log.info({ songCount: allSongData.length }, `Total songs fetched from all difficulties and versions: ${allSongData.length}`);
 
   return allSongData;
 }
@@ -218,7 +218,7 @@ function parseSongData(html: string, difficultyName: Difficulty, difficulty: num
 
       log.debug(`Extracted song ${index}: ${songName} (${level}, ${musicType}, ${difficultyName})`);
     } catch (error) {
-      logger.error({ error, index }, "Error processing song block");
+      logger.error({ err: error, index }, "Error processing song block");
     }
   });
 

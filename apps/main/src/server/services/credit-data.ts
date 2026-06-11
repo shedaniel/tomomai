@@ -2,6 +2,7 @@ import { db } from '@/lib/db';
 import { songs, user, userRecentSongs, userRecentSongsDetailed, userSnapshots } from '@/lib/db/schema-pg';
 import { and, desc, eq, lte } from 'drizzle-orm';
 import { VersionId } from '@/lib/metadata';
+import { getLogger } from '@/lib/request-logger';
 import { FullCombo, FullSync, Region, TitleType } from '@/lib/types';
 
 // Type for detailed song statistics
@@ -104,7 +105,8 @@ export async function prepareCreditData(
   region: Region,
   beforeDate?: Date
 ): Promise<CreditPrepareResult> {
-  console.log('Fetching recent songs for credit...');
+  const log = getLogger().child({ userId, region });
+  log.debug('Fetching recent songs for credit...');
   let startTime = Date.now();
 
   // We need to fetch enough tracks to find the complete credit
@@ -182,13 +184,13 @@ export async function prepareCreditData(
     .limit(maxTracksToFetch);
 
   if (recentPlays.length === 0) {
-    console.error('No recent plays found');
+    log.warn('No recent plays found');
     return {
       type: "error",
       error: 'No recent plays found',
     };
   }
-  console.log(`Fetched ${recentPlays.length} recent plays in ${Date.now() - startTime}ms`);
+  log.debug({ count: recentPlays.length, durationMs: Date.now() - startTime }, 'Fetched recent plays');
 
   // Group tracks into credits
   // Track numbers go in DESCENDING order within a credit: 4, 3, 2, 1
@@ -214,7 +216,7 @@ export async function prepareCreditData(
   }
 
   if (credits.length === 0) {
-    console.error('No credits found');
+    log.warn('No credits found');
     return {
       type: "error",
       error: 'No credits found',
@@ -234,7 +236,7 @@ export async function prepareCreditData(
   const hasPreviousCredit = credits.length > 1;
 
   // Get user privacy settings and snapshot closest to (but not after) the credit date
-  console.log('Fetching user privacy settings and snapshot...');
+  log.debug('Fetching user privacy settings and snapshot...');
   startTime = Date.now();
 
   const [userRecord, snapshotRecord] = await Promise.all([
@@ -268,7 +270,7 @@ export async function prepareCreditData(
   ]);
 
   if (userRecord.length === 0) {
-    console.error('User not found');
+    log.warn('User not found');
     return {
       type: "error",
       error: 'User not found',
@@ -276,7 +278,7 @@ export async function prepareCreditData(
   }
 
   if (snapshotRecord.length === 0) {
-    console.error('No snapshot found for this credit date');
+    log.warn('No snapshot found for this credit date');
     return {
       type: "error",
       error: 'No snapshot found for this credit date',
@@ -284,7 +286,7 @@ export async function prepareCreditData(
   }
 
   const snapshot = snapshotRecord[0];
-  console.log(`User privacy settings and snapshot fetched in ${Date.now() - startTime}ms`);
+  log.debug({ durationMs: Date.now() - startTime }, 'User privacy settings and snapshot fetched');
 
   // Determine visitable profile URL
   const visitableProfileAt = userRecord[0].publishProfile && userRecord[0].username

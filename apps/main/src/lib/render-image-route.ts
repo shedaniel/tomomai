@@ -96,7 +96,7 @@ async function buildImageCache(urls: string[], log: Logger): Promise<{ cache: Im
         cache[url] = async () => image;
       } catch (error) {
         failed.push({ url, error });
-        log.warn({ url, err: error instanceof Error ? error.message : error }, `Failed to cache image: ${url}`);
+        log.warn({ url, err: error }, `Failed to cache image: ${url}`);
       }
     })
   );
@@ -176,7 +176,7 @@ export async function renderWebpResponse<D, P>(opts: RenderRouteOptions<D, P>): 
         },
       });
     } catch (error) {
-      log.error({ err: error instanceof Error ? { message: error.message, stack: error.stack } : error }, 'Failed to generate image');
+      log.error({ err: error }, 'Failed to generate image');
       return NextResponse.json(
         {
           error: 'Failed to generate image',

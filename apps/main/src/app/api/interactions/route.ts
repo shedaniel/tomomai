@@ -5,12 +5,15 @@ import {
   InteractionResponseType,
 } from 'discord-interactions';
 import { handleCommand, handleComponents, handleAutocomplete, createPongResponse } from '@/lib/discord';
+import { flushLogger } from '@/lib/logger';
+import { requestLogger } from '@/lib/request-logger';
 
 // Discord bot configuration
 const DISCORD_PUBLIC_KEY = process.env.DISCORD_PUBLIC_KEY!;
 const APPLICATION_ID = process.env.NEXT_PUBLIC_DISCORD_APPLICATION_ID!;
 
 export async function POST(request: NextRequest) {
+  const { log, requestId } = requestLogger(request, "discord/interactions");
   try {
     // Get the raw body for signature verification
     const bytes = await request.bytes();
@@ -30,7 +33,7 @@ export async function POST(request: NextRequest) {
     // Parse the interaction
     const interaction = JSON.parse(new TextDecoder().decode(bytes));
 
-    console.log(interaction);
+    log.debug({ interactionType: interaction.type }, "Discord interaction received");
 
     // Handle PING interactions (Discord verification)
     if (interaction.type === InteractionType.PING) {
@@ -99,7 +102,9 @@ export async function POST(request: NextRequest) {
 
     return new Response('Unknown interaction type', { status: 400 });
   } catch (error) {
-    console.error('Error handling Discord interaction:', error);
-    return new Response('Internal server error', { status: 500 });
+    log.error({ err: error }, "Error handling Discord interaction");
+    // Flush only on the error path — Discord requires a fast ack on success.
+    await flushLogger();
+    return new Response(`Internal server error (${requestId})`, { status: 500 });
   }
 }
