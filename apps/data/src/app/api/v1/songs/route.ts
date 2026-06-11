@@ -1,13 +1,14 @@
 import { db } from "@/lib/db";
-import { songs } from "@/lib/db/schema";
+import { parentSong, songs } from "@/lib/db/schema";
 import { REGION_ENUM } from "@tomomai/catalog/enums";
 import type { Region } from "@tomomai/catalog/types";
-import type { ArtifactSong } from "@tomomai/catalog/artifact";
 import { and, eq, type SQL } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
-// Public read API: chart instances (children), shaped like the catalog
-// artifact rows. Optional ?region= and ?gameVersion= filters.
+// Public read API: chart instances (children). Optional ?region= and
+// ?gameVersion= filters. Instances reference their chart by the parent's
+// public nanoid (songId); together with region + gameVersion that is the
+// instance's full identity — internal integer ids never leave the service.
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const regionParam = searchParams.get("region");
@@ -36,28 +37,30 @@ export async function GET(request: NextRequest) {
     conditions.push(eq(songs.gameVersion, gameVersion));
   }
 
-  const rows = conditions.length > 0
-    ? await db.select().from(songs).where(and(...conditions))
-    : await db.select().from(songs);
+  const baseQuery = db
+    .select({
+      songId: parentSong.publicId,
+      region: songs.region,
+      gameVersion: songs.gameVersion,
+      addedVersion: songs.addedVersion,
+      level: songs.level,
+      levelPrecise: songs.levelPrecise,
+      noteDesigner: songs.noteDesigner,
+      tapCount: songs.tapCount,
+      holdCount: songs.holdCount,
+      slideCount: songs.slideCount,
+      touchCount: songs.touchCount,
+      breakCount: songs.breakCount,
+    })
+    .from(songs)
+    .innerJoin(parentSong, eq(songs.parentId, parentSong.id));
 
-  const result: ArtifactSong[] = rows.map(s => ({
-    id: Number(s.id),
-    parentId: Number(s.parentId),
-    region: s.region,
-    gameVersion: s.gameVersion,
-    addedVersion: s.addedVersion,
-    level: s.level,
-    levelPrecise: s.levelPrecise,
-    noteDesigner: s.noteDesigner,
-    tapCount: s.tapCount,
-    holdCount: s.holdCount,
-    slideCount: s.slideCount,
-    touchCount: s.touchCount,
-    breakCount: s.breakCount,
-  }));
+  const rows = conditions.length > 0
+    ? await baseQuery.where(and(...conditions))
+    : await baseQuery;
 
   return NextResponse.json(
-    { songs: result },
+    { songs: rows },
     { headers: { "Cache-Control": "public, max-age=300" } },
   );
 }

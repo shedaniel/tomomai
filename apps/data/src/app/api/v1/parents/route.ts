@@ -1,17 +1,16 @@
 import { db } from "@/lib/db";
 import { parentSong } from "@/lib/db/schema";
-import type { ArtifactParentSong } from "@tomomai/catalog/artifact";
 import { NextResponse } from "next/server";
 
 export const revalidate = 300;
 
-// Public read API: all parent charts, shaped like the catalog artifact rows.
+// Public read API: all parent charts. Charts are identified by their public
+// nanoid (songId) — internal integer ids never leave the service.
 export async function GET() {
   const rows = await db.select().from(parentSong);
 
-  const parents: ArtifactParentSong[] = rows.map(p => ({
-    id: Number(p.id),
-    publicId: p.publicId,
+  const parents = rows.map(p => ({
+    songId: p.publicId,
     songName: p.songName,
     artist: p.artist,
     genre: p.genre,

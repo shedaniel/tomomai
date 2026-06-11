@@ -151,9 +151,11 @@ Then confirm via the Discord notice channel, as before. Confirming publishes a n
 
 Unauthenticated, served by the data service:
 
-- `GET /api/v1/parents` — all charts (canonical identity + stable attributes)
-- `GET /api/v1/songs?region=&gameVersion=` — chart instances
-- `GET /api/v1/events` — tour events with reward steps
+- `GET /api/v1/parents` — all charts, identified by their public nanoid (`songId`)
+- `GET /api/v1/songs?region=&gameVersion=` — chart instances, referencing their chart via `songId` (+ `region`/`gameVersion` as the instance identity)
+- `GET /api/v1/events` — tour events (identified by name) with reward steps
+
+Internal integer ids are never exposed here; they only travel inside the published artifact, which is host-to-host infrastructure consumed by the main app's catalog sync.
 
 ## Publishing details
 
