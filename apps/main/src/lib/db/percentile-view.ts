@@ -5,6 +5,12 @@
 
 export const CHART_PERCENTILE_VIEW = "chart_percentile_bands";
 
+// Bands are keyed by parent_song.id (the chart's canonical identity), not the
+// per-region/version songs.id: a user's best score on a chart counts toward
+// the same band regardless of which game version it was scored in, so the
+// percentile history survives version bumps instead of resetting with each
+// new chart-instance row.
+//
 // Creates the view on first run only; subsequent runs use REFRESH below.
 export const CREATE_CHART_PERCENTILE_VIEW_SQL = `
 CREATE MATERIALIZED VIEW IF NOT EXISTS chart_percentile_bands AS
@@ -19,7 +25,7 @@ WITH latest_ratings AS (
 best_scores AS (
   SELECT
     lr."userId",
-    sd."songId" AS song_id,
+    s."parentId" AS parent_id,
     lr.rating,
     MAX(sd.achievement) AS best_achievement
   FROM latest_ratings lr
@@ -30,20 +36,20 @@ best_scores AS (
   JOIN parent_song p      ON p.id = s."parentId"
   WHERE p.difficulty IN ('expert', 'master', 'remaster')
     AND s.region = 'intl'
-  GROUP BY lr."userId", sd."songId", lr.rating
+  GROUP BY lr."userId", s."parentId", lr.rating
 ),
 band_aggregates AS (
   SELECT
-    song_id,
+    parent_id,
     (FLOOR(rating / 125.0) * 125)::smallint              AS band_lo,
     COUNT(DISTINCT "userId")::integer                     AS player_count,
     ARRAY_AGG(best_achievement ORDER BY best_achievement) AS all_achievements
   FROM best_scores
-  GROUP BY song_id, (FLOOR(rating / 125.0) * 125)::smallint
+  GROUP BY parent_id, (FLOOR(rating / 125.0) * 125)::smallint
   HAVING COUNT(DISTINCT "userId") >= 10
 )
 SELECT
-  song_id,
+  parent_id,
   band_lo,
   CASE
     WHEN array_length(all_achievements, 1) <= 100 THEN all_achievements
@@ -63,13 +69,13 @@ FROM band_aggregates
 // Unique index required for REFRESH CONCURRENTLY; created once then reused.
 export const CREATE_CHART_PERCENTILE_INDEX_SQL = `
 CREATE UNIQUE INDEX IF NOT EXISTS chart_percentile_bands_pkey
-  ON chart_percentile_bands (song_id, band_lo)
+  ON chart_percentile_bands (parent_id, band_lo)
 `;
 
 // Row type returned by raw SQL queries against the view.
 // Must extend Record<string, unknown> to satisfy the postgres.js Row constraint.
 export type ChartPercentileBandRow = {
-  song_id: bigint;
+  parent_id: bigint;
   band_lo: number;
   achievements: number[];
   player_count: number;

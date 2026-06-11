@@ -18,7 +18,8 @@ function hasPgCode(err: unknown, code: string): boolean {
 }
 
 export interface ChartPercentileInput {
-  internalSongId: bigint;
+  /** parent_song.id — the chart's canonical, version-independent identity */
+  parentId: bigint;
   /** achievement stored as integer ×10000 (e.g. 1000000 = 100.0000%) */
   achievement: number;
 }
@@ -117,12 +118,12 @@ const MIN_PEERS_DISPLAY = 30;
 const MIN_PEERS_EXPAND = 20;
 
 /**
- * For up to 60 (song, achievement) pairs and a user rating, returns the
+ * For up to 60 (chart, achievement) pairs and a user rating, returns the
  * percentile for each chart that has enough peers. Charts below the peer
  * threshold are omitted from the result map.
  *
- * Makes a single DB round-trip by fetching all 8 bands for all songs at once,
- * then decides per-song whether to use the ±250 or ±500 window.
+ * Makes a single DB round-trip by fetching all 8 bands for all charts at once,
+ * then decides per-chart whether to use the ±250 or ±500 window.
  */
 export async function getChartPercentiles(
   inputs: ChartPercentileInput[],
@@ -130,20 +131,20 @@ export async function getChartPercentiles(
 ): Promise<Map<bigint, ChartPercentileResult>> {
   if (inputs.length === 0) return new Map();
 
-  const songIds = inputs.map((i) => i.internalSongId);
+  const parentIds = inputs.map((i) => i.parentId);
   const { lo, hi } = getBandRange(userRating);
   const primary = new Set(primaryBands(userRating));
 
-  // Single query: all bands for all songs in the ±500 window.
+  // Single query: all bands for all charts in the ±500 window.
   // statement_timeout bounds the read so a slow/contended matview can't hang the request.
   let rows: ChartPercentileBandRow[];
   try {
     rows = await db.transaction(async (tx) => {
       await tx.execute(sql.raw(`SET LOCAL statement_timeout = ${CHART_PERCENTILE_TIMEOUT_MS}`));
       return tx.execute<ChartPercentileBandRow>(sql`
-        SELECT song_id, band_lo, achievements, player_count
+        SELECT parent_id, band_lo, achievements, player_count
         FROM ${sql.raw(CHART_PERCENTILE_VIEW)}
-        WHERE song_id = ANY(${sql.raw(`ARRAY[${songIds.map(String).join(",")}]::bigint[]`)})
+        WHERE parent_id = ANY(${sql.raw(`ARRAY[${parentIds.map(String).join(",")}]::bigint[]`)})
           AND band_lo >= ${lo}
           AND band_lo < ${hi}
       `);
@@ -154,18 +155,18 @@ export async function getChartPercentiles(
     throw err;
   }
 
-  // Group rows by song_id
+  // Group rows by parent_id
   const byId = new Map<bigint, ChartPercentileBandRow[]>();
   for (const row of rows) {
-    const id = BigInt(row.song_id);
+    const id = BigInt(row.parent_id);
     if (!byId.has(id)) byId.set(id, []);
     byId.get(id)!.push(row);
   }
 
   const result = new Map<bigint, ChartPercentileResult>();
 
-  for (const { internalSongId, achievement } of inputs) {
-    const allBands = byId.get(internalSongId) ?? [];
+  for (const { parentId, achievement } of inputs) {
+    const allBands = byId.get(parentId) ?? [];
 
     // Try ±250 first
     let bands = allBands.filter((r) => primary.has(r.band_lo));
@@ -199,7 +200,7 @@ export async function getChartPercentiles(
     const percentile = merged.length > 0 ? rank / merged.length : 0;
     const distribution = buildDistribution(merged);
 
-    result.set(internalSongId, { percentile, peerCount, distribution });
+    result.set(parentId, { percentile, peerCount, distribution });
   }
 
   return result;
