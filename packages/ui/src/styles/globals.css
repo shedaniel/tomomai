@@ -30,10 +30,28 @@
     --color-popover: var(--popover);
     --color-card-foreground: var(--card-foreground);
     --color-card: var(--card);
+    --color-surface: var(--background);
+    --color-surface-container-lowest: var(--surface-container-lowest);
+    --color-surface-container-low: var(--surface-container-low);
+    --color-surface-container: var(--surface-container);
+    --color-surface-container-high: var(--surface-container-high);
+    --color-surface-container-highest: var(--surface-container-highest);
+    --color-primary-container: var(--primary-container);
+    --color-on-primary-container: var(--on-primary-container);
+    --color-secondary-container: var(--secondary-container);
+    --color-on-secondary-container: var(--on-secondary-container);
+    --color-tertiary: var(--tertiary);
+    --color-tertiary-foreground: var(--on-tertiary);
+    --color-tertiary-container: var(--tertiary-container);
+    --color-on-tertiary-container: var(--on-tertiary-container);
+    --color-border-strong: var(--border-strong);
+    --radius-xs: calc(var(--radius) - 14px);
     --radius-sm: calc(var(--radius) - 6px);
     --radius-md: calc(var(--radius) - 3px);
     --radius-lg: var(--radius);
-    --radius-xl: calc(var(--radius) + 6px);
+    --radius-xl: calc(var(--radius) + 8px);
+    --radius-2xl: calc(var(--radius) + 16px);
+    --radius-3xl: calc(var(--radius) + 28px);
     --text-2xs: 0.625rem;
     --breakpoint-2xs: 20rem;
     --breakpoint-xs: 30rem;
@@ -66,6 +84,29 @@
     --border: oklch(0.9 calc(var(--contrast) * 0.01518) var(--hue));
     --input: oklch(0.9 calc(var(--contrast) * 0.01518) var(--hue));
     --ring: oklch(0.7 calc(var(--contrast) * 0.0759) var(--hue));
+
+    /* MD3 tonal surface ladder (light) — elevation rises toward lighter + faint hue tint */
+    --surface-container-lowest: oklch(1 calc(var(--contrast) * 0.002 * var(--saturation)) var(--hue));
+    --surface-container-low: oklch(calc(1 - var(--lightness) * 0.012) calc(var(--contrast) * 0.005 * var(--saturation)) var(--hue));
+    --surface-container: var(--content);
+    --surface-container-high: oklch(calc(1 - var(--lightness) * 0.033) calc(var(--contrast) * 0.009 * var(--saturation)) var(--hue));
+    --surface-container-highest: oklch(calc(1 - var(--lightness) * 0.048) calc(var(--contrast) * 0.012 * var(--saturation)) var(--hue));
+    --border-strong: oklch(0.82 calc(var(--contrast) * 0.025) var(--hue));
+
+    /* Glass fills for floating overlays — light theme: bright translucent */
+    --glass-surface: oklch(0.99 calc(var(--contrast) * 0.004 * var(--saturation)) var(--hue) / 71%);
+    --glass-strong: oklch(0.996 calc(var(--contrast) * 0.004 * var(--saturation)) var(--hue) / 90%);
+
+    /* MD3 container color roles (light) — hue-driven so dynamic color is preserved */
+    --primary-container: oklch(0.92 calc(var(--contrast) * 0.065) var(--hue));
+    --on-primary-container: oklch(0.32 calc(var(--contrast) * 0.13) var(--hue));
+    --secondary-container: oklch(0.93 calc(var(--contrast) * 0.02) var(--hue));
+    --on-secondary-container: oklch(0.34 calc(var(--contrast) * 0.04) var(--hue));
+    --tertiary: oklch(0.55 calc(var(--contrast) * 0.13) calc(var(--hue) + 60));
+    --on-tertiary: oklch(0.99 calc(var(--contrast) * 0.02) calc(var(--hue) + 60));
+    --tertiary-container: oklch(0.92 calc(var(--contrast) * 0.06) calc(var(--hue) + 60));
+    --on-tertiary-container: oklch(0.30 calc(var(--contrast) * 0.11) calc(var(--hue) + 60));
+
     --chart-1: oklch(0.646 0.222 41.116);
     --chart-2: oklch(0.6 0.118 184.704);
     --chart-3: oklch(0.398 0.07 227.392);
@@ -100,9 +141,34 @@
     --accent: var(--secondary);
     --accent-foreground: var(--foreground);
     --destructive: oklch(0.704 0.191 22.216);
-    --border: oklch(1 calc(var(--contrast) * 0.01) var(--hue) / 10%);
+    --border: oklch(1 calc(var(--contrast) * 0.012) var(--hue) / 14%);
     --input: oklch(1 calc(var(--contrast) * 0.01) var(--hue) / 15%);
     --ring: oklch(0.556 calc(var(--contrast) * 0.05) var(--hue));
+
+    /* MD3 tonal surface ladder (dark) — elevation rises toward lighter + stronger hue tint */
+    --surface-container-lowest: oklch(calc(0.10 + var(--lightness) * 0.02) calc(var(--contrast) * 0.012 * var(--saturation)) var(--hue));
+    --surface-container-low: oklch(calc(0.13 + var(--lightness) * 0.04) calc(var(--contrast) * 0.016 * var(--saturation)) var(--hue));
+    --surface-container: var(--content);
+    --surface-container-high: oklch(calc(0.17 + var(--lightness) * 0.065) calc(var(--contrast) * 0.024 * var(--saturation)) var(--hue));
+    --surface-container-highest: oklch(calc(0.20 + var(--lightness) * 0.075) calc(var(--contrast) * 0.028 * var(--saturation)) var(--hue));
+    --border-strong: oklch(1 calc(var(--contrast) * 0.012) var(--hue) / 22%);
+
+    /* Glass fills for floating overlays — dark theme: deep translucent, only a touch
+     * above the page so the panel reads dark like the page, with the border doing
+     * the separation (not a milky light-grey wash). */
+    --glass-surface: oklch(calc(0.15 + var(--lightness) * 0.03) calc(var(--contrast) * 0.016 * var(--saturation)) var(--hue) / 73%);
+    --glass-strong: oklch(calc(0.14 + var(--lightness) * 0.03) calc(var(--contrast) * 0.02 * var(--saturation)) var(--hue) / 80%);
+
+    /* MD3 container color roles (dark) — hue-driven so dynamic color is preserved */
+    --primary-container: oklch(0.36 calc(var(--contrast) * 0.10) var(--hue));
+    --on-primary-container: oklch(0.92 calc(var(--contrast) * 0.06) var(--hue));
+    --secondary-container: oklch(0.32 calc(var(--contrast) * 0.035) var(--hue));
+    --on-secondary-container: oklch(0.92 calc(var(--contrast) * 0.025) var(--hue));
+    --tertiary: oklch(0.82 calc(var(--contrast) * 0.11) calc(var(--hue) + 60));
+    --on-tertiary: oklch(0.24 calc(var(--contrast) * 0.06) calc(var(--hue) + 60));
+    --tertiary-container: oklch(0.37 calc(var(--contrast) * 0.085) calc(var(--hue) + 60));
+    --on-tertiary-container: oklch(0.92 calc(var(--contrast) * 0.05) calc(var(--hue) + 60));
+
     --chart-1: oklch(0.488 0.243 264.376);
     --chart-2: oklch(0.696 0.17 162.48);
     --chart-3: oklch(0.769 0.188 70.08);
@@ -125,5 +191,45 @@
 
     100% {
         background-position: 200% 0;
+    }
+}
+
+/* Glass — floating surfaces that sit ABOVE content. Never use on base cards.
+ * The blur lives on the panel itself, so it aligns exactly and animates with the
+ * panel's own enter/exit. The value is var()-wrapped because Lightning CSS (in
+ * @tailwindcss/postcss) strips concrete backdrop-filter values but keeps var()
+ * ones; without the var() the declaration silently never reaches the browser. */
+@utility glass-surface {
+    background-color: var(--glass-surface);
+    --glass-blur: blur(16px) saturate(150%);
+    -webkit-backdrop-filter: var(--glass-blur);
+    backdrop-filter: var(--glass-blur);
+}
+
+@utility glass-strong {
+    background-color: var(--glass-strong);
+    --glass-blur: blur(24px) saturate(160%);
+    -webkit-backdrop-filter: var(--glass-blur);
+    backdrop-filter: var(--glass-blur);
+}
+
+/* Opaque fallback where backdrop-filter is unsupported, so overlays stay legible. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+
+    .glass-surface,
+    .glass-strong {
+        background-color: var(--surface-container-high);
+    }
+}
+
+@layer base {
+    body {
+        /* Inter stylistic sets for a cleaner, more modern glyph set; tabular figures
+         * so the rating / score numbers that fill this app line up like a readout. */
+        font-feature-settings: "cv02", "cv03", "cv04", "cv11", "ss03";
+        font-variant-numeric: tabular-nums;
+        font-optical-sizing: auto;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
     }
 }

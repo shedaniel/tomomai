@@ -1,9 +1,10 @@
 import {
   DISCORD_COLORS,
   editDiscordMessage,
-  editDiscordMessageWithImage,
-  getRatingComment
+  editDiscordMessageWithImageAndContent,
 } from './responses';
+import { formatProfileSummaryContent, regionDisplayName, type ProfileSummary } from './region';
+import type { Region } from '@/lib/types';
 import { prepareCreditData } from '@/server/services/credit-data';
 import { prepareDailyPlaysData } from '@/server/services/daily-plays-data';
 import { ImageCache, renderDailyPlaysImage, renderLastCreditImage } from '@/lib/render-image';
@@ -15,38 +16,25 @@ import { getRatingImageUrl } from '@/lib/rating-calculator';
 import { getLogoUrl, getTypeBadgeUrl } from '@/lib/utils';
 import { DIFFICULTY_ENUM } from '@/lib/db/types';
 
-export interface SnapshotData {
-  publicId: string;
-  rating: number;
-  stars: number;
-  totalPlayCount: number;
-  fetchedAt: Date;
-}
-
 export interface ImageGenerationOptions {
-  snapshot: SnapshotData;
+  summary: ProfileSummary;
   discordUserId: string;
   regionName: string;
   applicationId: string;
   interactionToken: string;
-  title: string;
   username: string;
   showGeneratingStatus?: boolean;
 }
 
 export async function generateAndSendProfileImage({
-  snapshot,
+  summary,
   discordUserId,
   regionName,
   applicationId,
   interactionToken,
-  title,
   username,
   showGeneratingStatus = false,
 }: ImageGenerationOptions): Promise<void> {
-  const rating = snapshot.rating;
-  const comment = getRatingComment(rating);
-
   // Show image generation status if requested
   if (showGeneratingStatus) {
     await editDiscordMessage(applicationId, interactionToken, {
@@ -73,32 +61,7 @@ export async function generateAndSendProfileImage({
     : 'http://localhost:3000';
   const profileUrl = `${baseUrl}/profile/${username}/`;
 
-  const embedData = {
-    title,
-    description: `<@${discordUserId}> ${comment}, you only have **${rating}** rating! 😤`,
-    color: DISCORD_COLORS.GREEN,
-    fields: [
-      {
-        name: '⭐ Stars',
-        value: snapshot.stars.toString(),
-        inline: true,
-      },
-      {
-        name: '🎮 Total Plays',
-        value: snapshot.totalPlayCount.toString(),
-        inline: true,
-      },
-      {
-        name: '📅 Updated',
-        value: `<t:${Math.floor(snapshot.fetchedAt.getTime() / 1000)}:R>`,
-        inline: true,
-      },
-    ],
-    footer: {
-      text: 'tomomai ともマイ • maimai DX score tracker',
-    },
-    timestamp: new Date().toISOString(),
-  };
+  const content = formatProfileSummaryContent(discordUserId, summary, regionName);
 
   const components = [
     {
@@ -116,29 +79,29 @@ export async function generateAndSendProfileImage({
 
   try {
     // Generate the image
-    const imageResponse = await fetch(`${baseUrl}/api/export-image?snapshotId=${snapshot.publicId}`, {
+    const imageResponse = await fetch(`${baseUrl}/api/export-image?snapshotId=${summary.publicId}`, {
       method: 'GET',
     });
 
     if (imageResponse.ok) {
       const imageBuffer = Buffer.from(await imageResponse.arrayBuffer());
-      await editDiscordMessageWithImage(applicationId, interactionToken, embedData, imageBuffer, components);
+      await editDiscordMessageWithImageAndContent(applicationId, interactionToken, content, imageBuffer, components);
     } else {
-      // Fallback to regular message if image generation fails
+      // Fallback to text-only message if image generation fails
       getLogger().error({ status: imageResponse.status }, `Failed to generate image: ${await imageResponse.text()}`);
-      await editDiscordMessage(applicationId, interactionToken, { embeds: [embedData], components });
+      await editDiscordMessage(applicationId, interactionToken, { content, embeds: [], components });
     }
   } catch (imageError) {
-    // Fallback to regular message if image generation fails
+    // Fallback to text-only message if image generation fails
     getLogger().error({ err: imageError }, 'Error generating image');
-    await editDiscordMessage(applicationId, interactionToken, { embeds: [embedData], components });
+    await editDiscordMessage(applicationId, interactionToken, { content, embeds: [], components });
   }
 }
 
 export interface CreditImageOptions {
   userId: string;
   discordUserId: string;
-  region: 'intl' | 'jp';
+  region: Region;
   applicationId: string;
   interactionToken: string;
   skip?: number;
@@ -152,7 +115,7 @@ export async function generateAndSendCreditImage({
   interactionToken,
   skip = 0,
 }: CreditImageOptions): Promise<void> {
-  const regionName = region === 'jp' ? 'Japan' : 'International';
+  const regionName = regionDisplayName(region);
 
   try {
     // Show loading message
@@ -278,28 +241,9 @@ export async function generateAndSendCreditImage({
     const canvas = await renderLastCreditImage(credit, snapshot, region, cache);
     const imageBuffer = Buffer.from(await canvas.toBuffer('jpg', { density: 2, quality: 0.9 }));
 
-    // Create embed data
-    const embedData = {
-      title: `🎵 ${regionName} Recent Plays`,
-      description: `<@${discordUserId}> Here are your recent plays!`,
-      color: DISCORD_COLORS.BLURPLE,
-      fields: [
-        {
-          name: '📅 Played At',
-          value: `<t:${Math.floor(credit.playedAt.getTime() / 1000)}:R>`,
-          inline: true,
-        },
-        {
-          name: '🎮 Tracks',
-          value: credit.tracks.length.toString(),
-          inline: true,
-        },
-      ],
-      footer: {
-        text: 'tomomai ともマイ • maimai DX score tracker',
-      },
-      timestamp: new Date().toISOString(),
-    };
+    // Plain content line, mirroring /profile and /daily styling
+    const playedUnix = Math.floor(credit.playedAt.getTime() / 1000);
+    const content = `<@${discordUserId}> Here are your recent plays at <t:${playedUnix}:f> (${regionName})`;
 
     // Create navigation buttons
     const components = [
@@ -330,8 +274,15 @@ export async function generateAndSendCreditImage({
       },
     ];
 
-    // Send the image
-    await editDiscordMessageWithImage(applicationId, interactionToken, embedData, imageBuffer, components);
+    // Send the image with plain content (no embed)
+    await editDiscordMessageWithImageOnly(
+      applicationId,
+      interactionToken,
+      content,
+      imageBuffer,
+      `maimai-recent-${region}.jpg`,
+      components,
+    );
 
   } catch (error) {
     getLogger().error({ err: error }, 'Error generating credit image');
@@ -351,7 +302,7 @@ export async function generateAndSendCreditImage({
 export interface DailyPlaysImageOptions {
   userId: string;
   discordUserId: string;
-  region: 'intl' | 'jp';
+  region: Region;
   day?: string;
   applicationId: string;
   interactionToken: string;
@@ -363,11 +314,16 @@ async function editDiscordMessageWithImageOnly(
   content: string,
   imageBuffer: Buffer,
   filename: string,
+  components?: any[],
 ): Promise<void> {
   const formData = new FormData();
   const blob = new Blob([new Uint8Array(imageBuffer)], { type: 'image/jpeg' });
   formData.append('files[0]', blob, filename);
-  formData.append('payload_json', JSON.stringify({ content, embeds: [] }));
+  const payload: any = { content, embeds: [] };
+  if (components) {
+    payload.components = components;
+  }
+  formData.append('payload_json', JSON.stringify(payload));
 
   await fetch(
     `https://discord.com/api/v10/webhooks/${applicationId}/${interactionToken}/messages/@original`,
@@ -383,7 +339,7 @@ export async function generateAndSendDailyPlaysImage({
   applicationId,
   interactionToken,
 }: DailyPlaysImageOptions): Promise<void> {
-  const regionName = region === 'jp' ? 'Japan' : 'International';
+  const regionName = regionDisplayName(region);
 
   try {
     const result = await prepareDailyPlaysData(userId, region, day);

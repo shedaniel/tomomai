@@ -248,6 +248,36 @@ export async function editDiscordMessage(
   );
 }
 
+// Helper function to edit a Discord message with plain text content + an image
+// attachment (no embed), optionally with components.
+export async function editDiscordMessageWithImageAndContent(
+  applicationId: string,
+  interactionToken: string,
+  content: string,
+  imageBuffer: Buffer,
+  components?: any[]
+): Promise<void> {
+  const formData = new FormData();
+
+  const blob = new Blob([new Uint8Array(imageBuffer)], { type: 'image/png' });
+  formData.append('files[0]', blob, 'maimai-profile.png');
+
+  const payload: any = { content, embeds: [] };
+  if (components) {
+    payload.components = components;
+  }
+
+  formData.append('payload_json', JSON.stringify(payload));
+
+  await fetch(
+    `https://discord.com/api/v10/webhooks/${applicationId}/${interactionToken}/messages/@original`,
+    {
+      method: 'PATCH',
+      body: formData,
+    }
+  );
+}
+
 // Helper function to edit Discord message with image attachment
 export async function editDiscordMessageWithImage(
   applicationId: string,

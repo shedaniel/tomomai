@@ -17,10 +17,11 @@ import {
   DiscordResponse,
   editDiscordMessage,
 } from '../responses';
+import { regionDisplayName, resolveRegion } from '../region';
 
 export interface RecommendCommandOptions {
   discordUserId: string;
-  region: 'intl' | 'jp';
+  regionParam?: string;
   applicationId: string;
   interactionToken: string;
 }
@@ -91,12 +92,10 @@ function buildNoRecommendationsEmbed(regionName: string, discordUserId: string) 
 
 export async function handleRecommendCommand({
   discordUserId,
-  region,
+  regionParam,
   applicationId,
   interactionToken,
 }: RecommendCommandOptions): Promise<DiscordResponse> {
-  const regionName = region === 'jp' ? 'Japan' : 'International';
-
   try {
     if (!discordUserId) {
       return createErrorResponse('Unable to identify Discord user. Please try again.');
@@ -105,6 +104,7 @@ export async function handleRecommendCommand({
     const [dbUser] = await db
       .select({
         id: user.id,
+        region: user.region,
       })
       .from(user)
       .innerJoin(account, eq(account.userId, user.id))
@@ -117,6 +117,9 @@ export async function handleRecommendCommand({
     if (!dbUser) {
       return createNotRegisteredResponse();
     }
+
+    const region = resolveRegion(regionParam, dbUser.region);
+    const regionName = regionDisplayName(region);
 
     const deferredResponse = createDeferredResponse();
 

@@ -1,11 +1,12 @@
 import { db } from '@/lib/db';
 import { getAllStates, parseStatusStates } from '@/lib/fetch-states';
 import { getFetchStatusServer, startFetchServer } from '@/lib/maimai-server-actions';
-import { account, user, userSnapshots } from '@/lib/db/schema-pg';
+import { account, user } from '@/lib/db/schema-pg';
 import { getLogger } from '@/lib/request-logger';
 import { waitUntil } from '@vercel/functions';
-import { and, desc, eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { generateAndSendProfileImage } from '../image-utils';
+import { getProfileSummary, regionDisplayName, resolveRegion } from '../region';
 import { isAlbumSettingsError } from '@/lib/token-errors';
 import { resolveBaseUrl } from '@/lib/base-url';
 import {
@@ -21,12 +22,12 @@ import { Region } from '@/lib/types';
 
 export interface FetchCommandOptions {
   discordUserId: string;
-  region: 'intl' | 'jp';
+  regionParam?: string;
   applicationId: string;
   interactionToken: string;
 }
 
-function createAlbumPreferenceMessage(discordUserId: string, region: 'intl' | 'jp') {
+function createAlbumPreferenceMessage(discordUserId: string, region: Region) {
   return {
     embeds: [{
       title: '⚙️ Album Privacy Settings Required',
@@ -68,12 +69,10 @@ function createAlbumPreferenceMessage(discordUserId: string, region: 'intl' | 'j
 
 export async function handleFetchCommand({
   discordUserId,
-  region,
+  regionParam,
   applicationId,
   interactionToken
 }: FetchCommandOptions): Promise<DiscordResponse> {
-  const regionName = region === 'jp' ? 'Japan' : 'International';
-
   try {
     if (!discordUserId) {
       return createErrorResponse('Unable to identify Discord user. Please try again.');
@@ -85,6 +84,7 @@ export async function handleFetchCommand({
         id: user.id,
         name: user.name,
         username: user.username,
+        region: user.region,
       })
       .from(user)
       .innerJoin(account, eq(account.userId, user.id))
@@ -97,6 +97,9 @@ export async function handleFetchCommand({
     if (!dbUser) {
       return createNotRegisteredResponse();
     }
+
+    const region = resolveRegion(regionParam, dbUser.region);
+    const regionName = regionDisplayName(region);
 
     // Check current time, if it is within 4AM - 7AM in JST, throw an error
     const now = new Date();
@@ -112,7 +115,7 @@ export async function handleFetchCommand({
     const backgroundTask = (async () => {
       try {
         // Start the fetch
-        const startResult = await startFetchServer(dbUser.id, region as Region, undefined, undefined, { skipAfter: true });
+        const startResult = await startFetchServer(dbUser.id, region, undefined, undefined, { skipAfter: true });
 
         // Send initial message
         await editDiscordMessage(applicationId, interactionToken, {
@@ -174,7 +177,7 @@ export async function handleFetchCommand({
 async function pollForUpdates(
   userId: string,
   username: string,
-  region: 'intl' | 'jp',
+  region: Region,
   regionName: string,
   discordUserId: string,
   sessionId: string,
@@ -186,7 +189,7 @@ async function pollForUpdates(
 
   while (attempts < maxAttempts) {
     try {
-      const status = await getFetchStatusServer(userId, region as Region);
+      const status = await getFetchStatusServer(userId, region);
 
       if (status && status.id === sessionId) {
         if (status.status === "completed") {
@@ -249,39 +252,24 @@ async function pollForUpdates(
 async function handleFetchCompleted(
   userId: string,
   username: string,
-  region: 'intl' | 'jp',
+  region: Region,
   regionName: string,
   discordUserId: string,
   applicationId: string,
   interactionToken: string
 ): Promise<void> {
-  // Get the updated snapshot data
-  const [latestSnapshot] = await db
-    .select({
-      publicId: userSnapshots.publicId,
-      rating: userSnapshots.rating,
-      stars: userSnapshots.stars,
-      totalPlayCount: userSnapshots.totalPlayCount,
-      fetchedAt: userSnapshots.fetchedAt,
-    })
-    .from(userSnapshots)
-    .where(and(
-      eq(userSnapshots.userId, userId),
-      eq(userSnapshots.region, region)
-    ))
-    .orderBy(desc(userSnapshots.fetchedAt))
-    .limit(1);
+  // Get the updated snapshot data with new/old chart rating breakdown
+  const summary = await getProfileSummary(userId, region);
 
-  if (latestSnapshot) {
+  if (summary) {
     // Generate and send the profile image using the shared utility
     await new Promise(resolve => setTimeout(resolve, 500));
     await generateAndSendProfileImage({
-      snapshot: latestSnapshot,
+      summary,
       discordUserId,
       regionName,
       applicationId,
       interactionToken,
-      title: `✅ ${regionName} Data Updated`,
       username,
       showGeneratingStatus: true,
     });
@@ -302,7 +290,7 @@ async function handleFetchCompleted(
 
 async function updateFetchProgress(
   statusStates: string,
-  region: 'intl' | 'jp',
+  region: Region,
   regionName: string,
   discordUserId: string,
   applicationId: string,

@@ -9,11 +9,12 @@ import {
   createNotRegisteredResponse,
   DiscordResponse,
 } from '../responses';
+import { resolveRegion } from '../region';
 import { generateAndSendCreditImage } from '../image-utils';
 
 export interface RecentsCommandOptions {
   discordUserId: string;
-  region: 'intl' | 'jp';
+  regionParam?: string;
   applicationId: string;
   interactionToken: string;
   skip?: number;
@@ -21,7 +22,7 @@ export interface RecentsCommandOptions {
 
 export async function handleRecentsCommand({
   discordUserId,
-  region,
+  regionParam,
   applicationId,
   interactionToken,
   skip = 0,
@@ -37,6 +38,7 @@ export async function handleRecentsCommand({
         id: user.id,
         name: user.name,
         username: user.username,
+        region: user.region,
       })
       .from(user)
       .innerJoin(account, eq(account.userId, user.id))
@@ -49,6 +51,8 @@ export async function handleRecentsCommand({
     if (!dbUser) {
       return createNotRegisteredResponse();
     }
+
+    const region = resolveRegion(regionParam, dbUser.region);
 
     // Defer the response since image generation can take a moment
     const deferredResponse = createDeferredResponse();

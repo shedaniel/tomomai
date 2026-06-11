@@ -9,12 +9,13 @@ import {
   createNotRegisteredResponse,
   DiscordResponse,
 } from '../responses';
+import { resolveRegion } from '../region';
 import { generateAndSendDailyPlaysImage } from '../image-utils';
 import { listDailyPlaysAvailableDays } from '@/server/services/daily-plays-data';
 
 async function findDbUserByDiscordId(discordUserId: string) {
   const [dbUser] = await db
-    .select({ id: user.id })
+    .select({ id: user.id, region: user.region })
     .from(user)
     .innerJoin(account, eq(account.userId, user.id))
     .where(and(
@@ -27,7 +28,7 @@ async function findDbUserByDiscordId(discordUserId: string) {
 
 export interface DailyCommandOptions {
   discordUserId: string;
-  region: 'intl' | 'jp';
+  regionParam?: string;
   day?: string;
   applicationId: string;
   interactionToken: string;
@@ -35,7 +36,7 @@ export interface DailyCommandOptions {
 
 export async function handleDailyCommand({
   discordUserId,
-  region,
+  regionParam,
   day,
   applicationId,
   interactionToken,
@@ -49,6 +50,8 @@ export async function handleDailyCommand({
     if (!dbUser) {
       return createNotRegisteredResponse();
     }
+
+    const region = resolveRegion(regionParam, dbUser.region);
 
     const deferredResponse = createDeferredResponse();
 
@@ -74,18 +77,18 @@ export async function handleDailyCommand({
 
 export interface DailyAutocompleteOptions {
   discordUserId?: string;
-  region: 'intl' | 'jp';
+  regionParam?: string;
   focusedValue: string;
 }
 
 /**
- * Autocomplete handler for the `date` option on /daily and /dailyjp.
+ * Autocomplete handler for the `date` option on /daily.
  * Returns up to 25 days the user has plays on, newest first, filtered by
  * whatever the user has typed so far.
  */
 export async function handleDailyAutocomplete({
   discordUserId,
-  region,
+  regionParam,
   focusedValue,
 }: DailyAutocompleteOptions): Promise<DiscordResponse> {
   if (!discordUserId) {
@@ -98,6 +101,7 @@ export async function handleDailyAutocomplete({
       return { type: 8, data: { choices: [] } };
     }
 
+    const region = resolveRegion(regionParam, dbUser.region);
     const days = await listDailyPlaysAvailableDays(dbUser.id, region);
     const filtered = focusedValue
       ? days.filter(d => d.day.includes(focusedValue))
