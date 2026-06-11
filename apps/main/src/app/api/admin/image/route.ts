@@ -6,7 +6,7 @@ import { listCoverKeys, uploadCoverToR2 } from "@/lib/r2";
 import { UpdateSong } from "@/lib/types/update";
 import { NextRequest, NextResponse } from "next/server";
 
-const MAIMAI_COVER_PATTERN = /^https?:\/\/maimaidx(?:-eng)?\.com\/maimai-mobile\/img\/Music\/(.+)$/;
+const MAIMAI_COVER_PATTERN = /^https?:\/\/(?:maimaidx\.jp|maimaidx(?:-eng)?\.com)\/maimai-mobile\/img\/Music\/(.+)$/;
 // Lxns CN jacket: https://assets2.lxns.net/maimai/jacket/{id}.png — namespace under
 // `lxns_{id}` to avoid collisions with the JP/INTL md5-style filenames.
 const LXNS_COVER_PATTERN = /^https?:\/\/assets2?\.lxns\.net\/maimai\/jacket\/(\d+)\.png$/;
