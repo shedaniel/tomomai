@@ -106,7 +106,7 @@ export async function handleProfileCommand({
         console.error('Error generating profile image:', error);
         // Fallback to text-only roast
         await editDiscordMessage(applicationId, interactionToken, {
-          content: formatProfileSummaryContent(discordUserId, summary),
+          content: formatProfileSummaryContent(discordUserId, summary, regionName),
           embeds: [],
         });
       }

@@ -1,7 +1,6 @@
 import {
   DISCORD_COLORS,
   editDiscordMessage,
-  editDiscordMessageWithImage,
   editDiscordMessageWithImageAndContent,
 } from './responses';
 import { formatProfileSummaryContent, regionDisplayName, type ProfileSummary } from './region';
@@ -61,7 +60,7 @@ export async function generateAndSendProfileImage({
     : 'http://localhost:3000';
   const profileUrl = `${baseUrl}/profile/${username}/`;
 
-  const content = formatProfileSummaryContent(discordUserId, summary);
+  const content = formatProfileSummaryContent(discordUserId, summary, regionName);
 
   const components = [
     {
@@ -241,28 +240,9 @@ export async function generateAndSendCreditImage({
     const canvas = await renderLastCreditImage(credit, snapshot, region, cache);
     const imageBuffer = Buffer.from(await canvas.toBuffer('jpg', { density: 2, quality: 0.9 }));
 
-    // Create embed data
-    const embedData = {
-      title: `🎵 ${regionName} Recent Plays`,
-      description: `<@${discordUserId}> Here are your recent plays!`,
-      color: DISCORD_COLORS.BLURPLE,
-      fields: [
-        {
-          name: '📅 Played At',
-          value: `<t:${Math.floor(credit.playedAt.getTime() / 1000)}:R>`,
-          inline: true,
-        },
-        {
-          name: '🎮 Tracks',
-          value: credit.tracks.length.toString(),
-          inline: true,
-        },
-      ],
-      footer: {
-        text: 'tomomai ともマイ • maimai DX score tracker',
-      },
-      timestamp: new Date().toISOString(),
-    };
+    // Plain content line, mirroring /profile and /daily styling
+    const playedUnix = Math.floor(credit.playedAt.getTime() / 1000);
+    const content = `<@${discordUserId}> Here are your recent plays at <t:${playedUnix}:f> (${regionName})`;
 
     // Create navigation buttons
     const components = [
@@ -293,8 +273,15 @@ export async function generateAndSendCreditImage({
       },
     ];
 
-    // Send the image
-    await editDiscordMessageWithImage(applicationId, interactionToken, embedData, imageBuffer, components);
+    // Send the image with plain content (no embed)
+    await editDiscordMessageWithImageOnly(
+      applicationId,
+      interactionToken,
+      content,
+      imageBuffer,
+      `maimai-recent-${region}.jpg`,
+      components,
+    );
 
   } catch (error) {
     console.error('Error generating credit image:', error);
@@ -326,11 +313,16 @@ async function editDiscordMessageWithImageOnly(
   content: string,
   imageBuffer: Buffer,
   filename: string,
+  components?: any[],
 ): Promise<void> {
   const formData = new FormData();
   const blob = new Blob([new Uint8Array(imageBuffer)], { type: 'image/jpeg' });
   formData.append('files[0]', blob, filename);
-  formData.append('payload_json', JSON.stringify({ content, embeds: [] }));
+  const payload: any = { content, embeds: [] };
+  if (components) {
+    payload.components = components;
+  }
+  formData.append('payload_json', JSON.stringify(payload));
 
   await fetch(
     `https://discord.com/api/v10/webhooks/${applicationId}/${interactionToken}/messages/@original`,

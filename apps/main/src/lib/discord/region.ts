@@ -35,7 +35,9 @@ export interface ProfileSummary {
   publicId: string;
   rating: number;
   newRating: number;
+  newCount: number;
   oldRating: number;
+  oldCount: number;
   stars: number;
   totalPlayCount: number;
   fetchedAt: Date;
@@ -58,7 +60,9 @@ export async function getProfileSummary(userId: string, region: Region): Promise
     publicId: snapshot.publicId,
     rating: snapshot.rating,
     newRating,
+    newCount: newSongsB15.length,
     oldRating,
+    oldCount: oldSongsB35.length,
     stars: snapshot.stars,
     totalPlayCount: snapshot.totalPlayCount,
     fetchedAt: snapshot.fetchedAt,
@@ -68,13 +72,20 @@ export async function getProfileSummary(userId: string, region: Region): Promise
 /**
  * Build the simple two-line roast text used by /profile and /fetch:
  *
- *   <@user> {comment}, you only have **{rating}** rating! 😤
- *   -# New Charts: {b15} - Old Charts: {b35} - Stars: {stars} - Total Plays: {plays}
+ *   <@user> {comment}, you only have **{rating}** rating! 😤 (Region)
+ *   -# New Charts: {b15} (avg: {b15avg}) - Old Charts: {b35} (avg: {b35avg}) - Stars: {stars} - Total Plays: {plays}
  */
-export function formatProfileSummaryContent(discordUserId: string, summary: ProfileSummary): string {
+export function formatProfileSummaryContent(
+  discordUserId: string,
+  summary: ProfileSummary,
+  regionName?: string
+): string {
   const comment = getRatingComment(summary.rating);
+  const newAvg = summary.newCount > 0 ? (summary.newRating / summary.newCount).toFixed(1) : '0.0';
+  const oldAvg = summary.oldCount > 0 ? (summary.oldRating / summary.oldCount).toFixed(1) : '0.0';
+  const regionSuffix = regionName ? ` (${regionName})` : '';
   return (
-    `<@${discordUserId}> ${comment}, you only have **${summary.rating}** rating! 😤\n` +
-    `-# New Charts: ${summary.newRating} - Old Charts: ${summary.oldRating} - Stars: ${summary.stars} - Total Plays: ${summary.totalPlayCount}`
+    `<@${discordUserId}> ${comment}, you only have **${summary.rating}** rating! 😤${regionSuffix}\n` +
+    `-# New Charts: ${summary.newRating} (avg: ${newAvg}) - Old Charts: ${summary.oldRating} (avg: ${oldAvg}) - Stars: ${summary.stars} - Total Plays: ${summary.totalPlayCount}`
   );
 }

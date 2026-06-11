@@ -8,6 +8,7 @@
     "dev": "pnpm --filter @tomomai/site dev",
     "build": "pnpm --filter @tomomai/site build",
     "start": "pnpm --filter @tomomai/site start",
+    "tunnel": "cloudflared tunnel run --url http://localhost:3000 tomomai",
     "lint": "pnpm -r lint",
     "typecheck": "pnpm -r typecheck",
     "test": "pnpm --filter @tomomai/site test",
