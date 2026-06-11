@@ -1,5 +1,10 @@
 import type { Region } from "./types";
 
+// 8 chars over the 64-symbol nanoid alphabet = 48 bits — comfortably
+// collision-free for a catalog of tens of thousands of charts, and the
+// unique constraint catches the lottery case.
+export const PARENT_PUBLIC_ID_LENGTH = 8;
+
 // Public identifier scheme for charts and their instances:
 //
 //   abcd            -> the chart (parent_song.publicId, a nanoid)

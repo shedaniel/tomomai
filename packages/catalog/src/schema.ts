@@ -13,7 +13,7 @@ export const chartTypeEnum = pgEnum("chart_type", CHART_TYPE_ENUM);
 // e.g. the two different songs both titled "Link".
 export const parentSong = pgTable("parent_song", {
   id: bigint("id", { mode: "bigint" }).primaryKey().generatedByDefaultAsIdentity(), // Globally stable via the published catalog artifact
-  publicId: varchar("publicId", { length: 21 }).notNull().unique(), // Public-facing nanoid
+  publicId: varchar("publicId", { length: 8 }).notNull().unique(), // Public-facing nanoid (8 chars; see PARENT_PUBLIC_ID_LENGTH)
   songName: text("songName").notNull(),
   artist: text("artist").notNull(),
   genre: text("genre").notNull(),

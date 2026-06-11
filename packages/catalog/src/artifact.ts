@@ -9,7 +9,7 @@ export const CATALOG_SCHEMA_VERSION = 1;
 
 export const artifactParentSongSchema = z.object({
   id: z.number().int().positive(),
-  publicId: z.string().min(1).max(21),
+  publicId: z.string().min(1).max(8),
   songName: z.string(),
   artist: z.string(),
   genre: z.string(),

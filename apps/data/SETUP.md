@@ -151,7 +151,7 @@ Then confirm via the Discord notice channel, as before. Confirming publishes a n
 
 Unauthenticated, served by the data service:
 
-- `GET /api/v1/parents` — all charts, identified by their public nanoid (`songId`)
+- `GET /api/v1/parents` — all charts, identified by their public 8-char nanoid (`songId`)
 - `GET /api/v1/songs?region=&gameVersion=` — chart instances, identified by the composite id `<chartId>:<regionLetter><gameVersion>` (e.g. `abcd:j11` = jp @ version 11; regions `j`/`i`/`c`, versions may be negative). Truncate at `:` for the chart id
 - `GET /api/v1/events` — tour events (identified by name) with reward steps
 

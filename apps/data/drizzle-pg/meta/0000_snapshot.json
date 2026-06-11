@@ -114,7 +114,7 @@
         },
         "publicId": {
           "name": "publicId",
-          "type": "varchar(21)",
+          "type": "varchar(8)",
           "primaryKey": false,
           "notNull": true
         },

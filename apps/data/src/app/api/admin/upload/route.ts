@@ -8,6 +8,7 @@ import { UpdateSong } from "@/lib/types/update";
 import { mergeSongs, taker, merger, key, MergeSink } from "@/server/services/admin/fetcher-utils";
 import { important, PendingSong, value, Pending } from "@/server/utils/admin/type";
 import { sendDiscordNotice, sendDiscordWebhook } from "@/server/services/admin/discord-webhooks";
+import { PARENT_PUBLIC_ID_LENGTH } from "@tomomai/catalog/song-instance-id";
 import { resolveParents, type ParentState, type SongToParent } from "@tomomai/catalog/resolve-parent";
 import { and, eq, inArray, notExists, sql } from "drizzle-orm";
 import { nanoid } from "nanoid";
@@ -309,7 +310,7 @@ async function resolveParentsForAddedRows(addedRows: WriteRow[], region: Region,
     const inserted = await db
       .insert(parentSong)
       .values(newParents.map(p => ({
-        publicId: nanoid(),
+        publicId: nanoid(PARENT_PUBLIC_ID_LENGTH),
         songName: p.songName,
         artist: p.artist,
         genre: p.genre,
