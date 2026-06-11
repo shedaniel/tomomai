@@ -1,0 +1,11 @@
+/* Storybook-only font fallbacks.
+ *
+ * The app sets --font-inter / --font-geist-mono / --font-murecho via next/font
+ * in src/app/layout.tsx, which doesn't run in Storybook. globals.css maps
+ * --font-sans to var(--font-inter), so without these the body falls back to an
+ * unstyled default. Provide reasonable system fallbacks here. */
+:root {
+    --font-inter: "Inter", ui-sans-serif, system-ui, sans-serif;
+    --font-geist-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+    --font-murecho: "Murecho", sans-serif;
+}

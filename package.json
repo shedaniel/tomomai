@@ -6,6 +6,7 @@
   "packageManager": "pnpm@11.2.2",
   "scripts": {
     "dev": "pnpm --filter @tomomai/site dev",
+    "tunnel": "cloudflared tunnel run --url http://localhost:3000 tomomai",
     "build": "pnpm --filter @tomomai/site build",
     "start": "pnpm --filter @tomomai/site start",
     "lint": "pnpm -r lint",
