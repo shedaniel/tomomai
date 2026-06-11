@@ -54,6 +54,12 @@
     "ok": "OK",
     "email": "Email"
   },
+  "security": {
+    "reauth": {
+      "title": "Re-authentication required",
+      "description": "This action needs a fresh sign-in. You'll be redirected to your provider to re-authenticate."
+    }
+  },
   "minigames": {
     "badge": "Minigame",
     "guesser": {
@@ -63,12 +69,6 @@
     "heardle": {
       "title": "Heardle",
       "tagline": "Guess the song from a few seconds."
-    }
-  },
-  "security": {
-    "reauth": {
-      "title": "Re-authentication required",
-      "description": "This action needs a fresh sign-in. You'll be redirected to your provider to re-authenticate."
     }
   },
   "auth": {
@@ -650,6 +650,15 @@
       "title": "Developer",
       "exportJson": "Export Snapshot as JSON",
       "exporting": "Exporting..."
+    },
+    "exportImageCard": {
+      "profileImage": "Profile Image",
+      "lastCredit": "Last Credit",
+      "dailyPlays": "Daily Plays",
+      "dayLabel": "Day",
+      "dayPlaceholder": "Select a day",
+      "dayLoading": "Loading days...",
+      "noPlays": "No daily plays available"
     }
   },
   "albums": {
