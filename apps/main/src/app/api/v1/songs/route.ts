@@ -34,7 +34,9 @@ async function getAllSongs() {
 
 export async function GET() {
   const allSongs = await getAllSongs();
-  return zodJson(spec.response, {
+  return zodJson(
+    spec.response,
+    {
     songs: allSongs.map((s) => ({
       songId: s.songId,
       songName: s.songName,
@@ -51,5 +53,13 @@ export async function GET() {
       bpm: s.bpm,
       noteDesigner: s.noteDesigner,
     })),
-  });
+    },
+    {
+      headers: {
+        // Catalog changes at most hourly; let the CDN serve it without
+        // hitting the function so this stops counting as origin transfer.
+        "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400",
+      },
+    },
+  );
 }
