@@ -383,7 +383,7 @@
         },
         "snapshot:latest:metadata:read": {
           "name": "最新スナップショットのメタデータ（読み取り）",
-          "description": "最新スナップショットのメタデータ（Rating、表示名、プレイ回数など）を読み取ります。GET /api/v1/snapshots/latest を許可します。"
+          "description": "最新スナップショットのメタデータ（Rating、表示名、プレイ回数など）を読み取ります。GET /api/v1/maimai/snapshots/latest を許可します。"
         },
         "snapshot:latest:songs:b50:read": {
           "name": "最新スナップショットのB50楽曲（読み取り）",
@@ -403,7 +403,7 @@
         },
         "snapshot:all:metadata:read": {
           "name": "全スナップショットのメタデータ（読み取り）",
-          "description": "全スナップショットを一覧表示し、メタデータを読み取ります。GET /api/v1/snapshots と GET /api/v1/snapshots/:id を許可します。"
+          "description": "全スナップショットを一覧表示し、メタデータを読み取ります。GET /api/v1/maimai/snapshots と GET /api/v1/maimai/snapshots/:id を許可します。"
         },
         "snapshot:all:songs:b50:read": {
           "name": "全スナップショットのB50楽曲（読み取り）",
@@ -423,7 +423,7 @@
         },
         "recent:read": {
           "name": "最近のプレイ（読み取り）",
-          "description": "楽曲情報、達成度、コンボ/シンクを含む最近のプレイ履歴を読み取ります。GET /api/v1/recents を許可します。"
+          "description": "楽曲情報、達成度、コンボ/シンクを含む最近のプレイ履歴を読み取ります。GET /api/v1/maimai/recents を許可します。"
         },
         "recent:detailed:read": {
           "name": "最近のプレイ（詳細・読み取り）",
@@ -431,11 +431,11 @@
         },
         "stats:read": {
           "name": "統計（読み取り）",
-          "description": "グレード/FC/FS分布統計を読み取ります。GET /api/v1/stats を許可します。"
+          "description": "グレード/FC/FS分布統計を読み取ります。GET /api/v1/maimai/stats を許可します。"
         },
         "album:read": {
           "name": "アルバム（読み取り）",
-          "description": "アーケード写真アルバムのエントリ（メタデータのみ）を読み取ります。GET /api/v1/albums を許可します。"
+          "description": "アーケード写真アルバムのエントリ（メタデータのみ）を読み取ります。GET /api/v1/maimai/albums を許可します。"
         },
         "album:images:read": {
           "name": "アルバム画像（読み取り）",
@@ -443,7 +443,7 @@
         },
         "plate:read": {
           "name": "プレート（読み取り）",
-          "description": "各プレートで未クリア／FC／APの楽曲を取得します。GET /api/v1/plates を許可します。"
+          "description": "各プレートで未クリア／FC／APの楽曲を取得します。GET /api/v1/maimai/plates を許可します。"
         },
         "user:settings:read": {
           "name": "ユーザー設定（読み取り）",
@@ -451,7 +451,7 @@
         },
         "snapshot:all:delete": {
           "name": "スナップショット（削除）",
-          "description": "任意のスナップショットを削除します。DELETE /api/v1/snapshots/:id を許可します。破壊的——明示的にリクエストする必要があり、包括的スコープでも自動付与されません。"
+          "description": "任意のスナップショットを削除します。DELETE /api/v1/maimai/snapshots/:id を許可します。破壊的——明示的にリクエストする必要があり、包括的スコープでも自動付与されません。"
         },
         "snapshot:submit": {
           "name": "スナップショット（送信）",
@@ -459,15 +459,15 @@
         },
         "fetch:read": {
           "name": "フェッチ状態（読み取り）",
-          "description": "進行中または直近のmaimaiデータフェッチの状態を取得します。GET /api/v1/fetch/status を許可します。"
+          "description": "進行中または直近のmaimaiデータフェッチの状態を取得します。GET /api/v1/maimai/fetch/status を許可します。"
         },
         "fetch:start": {
           "name": "フェッチ開始",
-          "description": "保存済みのアップストリームトークンで新しいmaimaiデータフェッチを開始します。POST /api/v1/fetch を許可します。破壊的——アップストリームAPIの予算を消費し新しいスナップショットを書き込みます。"
+          "description": "保存済みのアップストリームトークンで新しいmaimaiデータフェッチを開始します。POST /api/v1/maimai/fetch を許可します。破壊的——アップストリームAPIの予算を消費し新しいスナップショットを書き込みます。"
         },
         "fetch:delete": {
           "name": "フェッチトークン（削除）",
-          "description": "保存済みのアップストリームmaimai認証トークンを削除します。DELETE /api/v1/fetch/token を許可します。破壊的かつ機密——再認証するまでアプリ内およびAPI経由のフェッチが停止します。"
+          "description": "保存済みのアップストリームmaimai認証トークンを削除します。DELETE /api/v1/maimai/fetch/token を許可します。破壊的かつ機密——再認証するまでアプリ内およびAPI経由のフェッチが停止します。"
         },
         "snapshot:latest:read": {
           "name": "最新スナップショット（読み取り）",

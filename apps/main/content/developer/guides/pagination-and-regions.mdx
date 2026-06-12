@@ -6,9 +6,9 @@ order: 5
 
 ## Regions
 
-User-data endpoints (`/snapshots`, `/snapshots/latest`, `/snapshots/{id}`,
-`/recents`, `/stats`, `/albums`) require a `?region=` query parameter.
-Valid values:
+User-data endpoints (`/maimai/snapshots`, `/maimai/snapshots/latest`,
+`/maimai/snapshots/{id}`, `/maimai/recents`, `/maimai/stats`,
+`/maimai/albums`) require a `?region=` query parameter. Valid values:
 
 - `intl` — international
 - `jp` — Japan
@@ -19,7 +19,7 @@ pick one for you.
 
 ## Pagination
 
-`/recents` and `/albums` accept `?limit=` and `?offset=`:
+`/maimai/recents` and `/maimai/albums` accept `?limit=` and `?offset=`:
 
 - `limit` defaults to 50 for recents, 20 for albums. Max 100 for both.
 - `offset` defaults to 0.
@@ -30,6 +30,6 @@ Responses include `hasMore: boolean`. Recents additionally returns
 
 ```bash
 # Page 2 of recents (50 items per page)
-curl "https://tomomai.lol/api/v1/recents?region=intl&limit=50&offset=50" \
+curl "https://tomomai.lol/api/v1/maimai/recents?region=intl&limit=50&offset=50" \
   -H "Authorization: Bearer tmk_…"
 ```

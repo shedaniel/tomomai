@@ -347,7 +347,7 @@ async function resolveSong(songName, artist) {
 // ---------- catalog -------------------------------------------------------
 
 async function fetchCatalog() {
-  const url = `${CATALOG_URL}/api/v1/songs`;
+  const url = `${CATALOG_URL}/api/v1/maimai/songs`;
   console.log(`Fetching catalog: ${url}`);
   const res = await fetch(url);
   if (!res.ok) throw new Error(`Catalog fetch failed: ${res.status}`);

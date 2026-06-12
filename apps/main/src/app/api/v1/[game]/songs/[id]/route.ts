@@ -1,0 +1,69 @@
+import { type NextRequest } from "next/server";
+import { db } from "@/lib/db";
+import { songs } from "@/lib/db/schema-pg";
+import { eq } from "drizzle-orm";
+import { parseParams } from "@/lib/api/parse-params";
+import { zodJson } from "@/lib/api/zod-response";
+import { type RouteContext } from "@/lib/api/protect";
+import { spec } from "./spec";
+
+export async function GET(_req: NextRequest, ctx: RouteContext) {
+  const params = await parseParams(ctx.params, spec.params!);
+  if (params instanceof Response) return params;
+  const { id: songId } = params as { id: string };
+
+  const charts = await db
+    .select({
+      songId: songs.publicId,
+      songName: songs.songName,
+      artist: songs.artist,
+      cover: songs.cover,
+      type: songs.type,
+      genre: songs.genre,
+      difficulty: songs.difficulty,
+      level: songs.level,
+      levelPrecise: songs.levelPrecise,
+      region: songs.region,
+      gameVersion: songs.gameVersion,
+      addedVersion: songs.addedVersion,
+      bpm: songs.bpm,
+      noteDesigner: songs.noteDesigner,
+      tapCount: songs.tapCount,
+      holdCount: songs.holdCount,
+      slideCount: songs.slideCount,
+      touchCount: songs.touchCount,
+      breakCount: songs.breakCount,
+    })
+    .from(songs)
+    .where(eq(songs.publicId, songId));
+
+  if (charts.length === 0) {
+    return Response.json({ error: "Song not found" }, { status: 404 });
+  }
+
+  const first = charts[0];
+
+  return zodJson(spec.response, {
+    songId: first.songId,
+    songName: first.songName,
+    artist: first.artist,
+    cover: first.cover,
+    type: first.type,
+    genre: first.genre,
+    bpm: first.bpm,
+    region: first.region,
+    gameVersion: first.gameVersion,
+    addedVersion: first.addedVersion,
+    difficulty: first.difficulty,
+    level: first.level,
+    levelPrecise: first.levelPrecise,
+    noteDesigner: first.noteDesigner,
+    noteCounts: {
+      tap: first.tapCount,
+      hold: first.holdCount,
+      slide: first.slideCount,
+      touch: first.touchCount,
+      break: first.breakCount,
+    },
+  });
+}

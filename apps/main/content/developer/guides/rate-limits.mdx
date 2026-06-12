@@ -39,10 +39,10 @@ A few rules of thumb:
 - Standard data reads (snapshots, recents, stats, albums, plates, settings)
   cost 2.
 - Snapshot deletion costs 10.
-- Triggering a fresh fetch from upstream (`POST /api/v1/fetch`) costs 40 —
+- Triggering a fresh fetch from upstream (`POST /api/v1/maimai/fetch`) costs 40 —
   it kicks off a polling job against an external service.
 
-Public endpoints (`/api/v1/songs*`) do not consume tier budget — they're
+Public endpoints (`/api/v1/maimai/songs*`) do not consume tier budget — they're
 served under the global IP limit instead.
 
 ## Response headers
@@ -68,7 +68,7 @@ exceeded`, `Per-user rate limit exceeded`, or `Monthly quota exceeded`).
 
 ## Polling guidance
 
-If you're polling `GET /api/v1/fetch/status` (cost 2) after kicking off a
+If you're polling `GET /api/v1/maimai/fetch/status` (cost 2) after kicking off a
 fetch, keep the interval at **2 seconds or more**. A 1-second cadence works
 out to 120 cost-units per minute, which can exceed the per-key burst budget
 on Tier I; 2 seconds (60/min) sits comfortably under.

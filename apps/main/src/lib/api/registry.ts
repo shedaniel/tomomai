@@ -89,7 +89,7 @@ export function findRoute(method: string, path: string): RouteSpec | undefined {
 
 /**
  * Match a concrete request (method + pathname) against the registered spec
- * templates. Templates use `{param}` placeholders (e.g. `/api/v1/snapshots/{id}`).
+ * templates. Templates use `{param}` placeholders (e.g. `/api/v1/{game}/snapshots/{id}`).
  */
 export function findRouteByRequest(method: string, pathname: string): RouteSpec | undefined {
   const upperMethod = method.toUpperCase();
@@ -114,7 +114,7 @@ function matchTemplate(template: string, pathname: string): boolean {
 /**
  * Find a route by its slug as used in the docs URL.
  * Slug rules: lowercase, `:param` → `param`, `/` → `-`, strip leading `/api-v1-`.
- * Example: `GET /api/v1/snapshots/:id` → `snapshots-id`.
+ * Example: `GET /api/v1/{game}/snapshots/{id}` → `get-game-snapshots-id`.
  */
 export function findRouteBySlug(slug: string): RouteSpec | undefined {
   return getRegistry().find((r) => routeSlug(r) === slug);

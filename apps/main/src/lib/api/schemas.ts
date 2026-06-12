@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { getEnabledRegions } from "@/lib/enabled-regions";
+import { getEnabledGames } from "@/lib/enabled-games";
 
 /**
  * Shared Zod schemas used by `/api/v1/**` route specs. These are the
@@ -16,6 +17,25 @@ export const regionSchema = z
   .refine((r) => getEnabledRegions().includes(r), {
     message: `Region is not enabled on this deployment. Enabled regions: ${getEnabledRegions().join(", ")}`,
   });
+
+/**
+ * The game a route operates on, taken from the `[game]` path segment. The enum
+ * lists every game the API knows about; the refine narrows it to those enabled
+ * on this deployment. This is the path-param analogue of `regionSchema`.
+ */
+export const gameSchema = z
+  .enum(["maimai"])
+  .describe("Game to read data from.")
+  .refine((g) => getEnabledGames().includes(g), {
+    message: `Game is not enabled on this deployment. Enabled games: ${getEnabledGames().join(", ")}`,
+  });
+
+/** Shared path-param schemas for `/api/v1/{game}/**` route specs. */
+export const paramSchemas = {
+  game: z.object({
+    game: gameSchema,
+  }),
+};
 
 export const querySchemas = {
   regionRequired: z.object({
