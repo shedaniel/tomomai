@@ -246,7 +246,7 @@ export function StoreEditDrawer({ open, onOpenChange, store, isLoggedIn }: Store
   return (
     <>
       <Drawer open={open} onOpenChange={onOpenChange}>
-        <DrawerContent className="bg-card">
+        <DrawerContent>
           <VisuallyHidden>
             <DrawerTitle>Arcade Edits</DrawerTitle>
             <DrawerDescription>View and vote on arcade edits</DrawerDescription>
