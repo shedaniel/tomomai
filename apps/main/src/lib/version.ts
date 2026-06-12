@@ -36,6 +36,6 @@ export function getAppVersion() {
     stamp,
     sha,
     full: `${minor}.${stamp}`,
-    display: `v${minor}.${stamp} · ${sha}`,
+    display: `v${minor}.${stamp} · commit ${sha}`,
   };
 }

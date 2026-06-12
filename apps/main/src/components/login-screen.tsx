@@ -130,7 +130,7 @@ export function LoginScreen({ signupRequirements, flags }: LoginScreenProps) {
   const cnMode = isCNExclusive();
 
   return (
-    <div className="container mx-auto max-w-md px-4">
+    <div className="container mx-auto flex min-h-dvh max-w-md flex-col px-4 pb-8">
       <div className="flex justify-between py-4 *:w-fit items-center">
         <Image src="/icon.webp" alt="tomomai" width={4320} height={1080} className="h-10 w-auto dark:hidden" style={{ aspectRatio: '4320 / 1080' }} />
         <Image src="/icon-dark.webp" alt="tomomai" width={4320} height={1080} className="h-10 w-auto hidden dark:block" style={{ aspectRatio: '4320 / 1080' }} />

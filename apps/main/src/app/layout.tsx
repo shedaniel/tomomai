@@ -92,7 +92,7 @@ export default async function RootLayout({
         ))}
       </head>
       <body
-        className={`${inter.variable} ${geistMono.variable} ${murecho.variable} antialiased bg-background min-h-dvh`}
+        className={`${inter.variable} ${geistMono.variable} ${murecho.variable} antialiased bg-background flex min-h-dvh flex-col`}
       >
         <NextIntlClientProvider messages={messages}>
           <LocaleProvider initialLocale={locale}>
