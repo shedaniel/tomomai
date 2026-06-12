@@ -4,7 +4,7 @@ import { ThemeProvider } from '@/components/providers/theme-provider';
 import { TRPCProvider } from "@/components/providers/trpc-provider";
 import { Toaster } from "@tomomai/ui";
 import { getLocale } from '@/i18n/locale-server';
-import { get } from '@vercel/edge-config';
+import { getCachedEdgeConfig } from '@/lib/edge-config-cache';
 import { VercelToolbar } from "@vercel/toolbar/next";
 import type { Metadata } from "next";
 import { NextIntlClientProvider } from 'next-intl';
@@ -62,7 +62,7 @@ export default async function RootLayout({
 
   let preMaintenanceBanner: { title: string; description: string; raw: string } | null = null;
   try {
-    const raw = await get<string>('preMaintenanceMode');
+    const raw = await getCachedEdgeConfig<string>('preMaintenanceMode');
     if (raw) {
       const parts = raw.split('||');
       if (parts.length >= 2) {

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { get } from '@vercel/edge-config';
+import { getCachedEdgeConfig } from './lib/edge-config-cache';
 import { nanoid } from 'nanoid';
 import { securityMiddleware } from './lib/security/middleware';
 import { locales, type Locale } from './i18n/locale';
@@ -39,7 +39,7 @@ export async function middleware(request: NextRequest) {
   }
   if (pathname !== '/maintenance') {
     try {
-      const maintenanceMode = await get<string>('maintenanceMode');
+      const maintenanceMode = await getCachedEdgeConfig<string>('maintenanceMode');
       if (maintenanceMode) {
         const url = request.nextUrl.clone();
         url.pathname = '/maintenance';
