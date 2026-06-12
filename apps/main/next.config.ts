@@ -2,13 +2,26 @@ import type { NextConfig } from "next";
 import createNextIntlPlugin from 'next-intl/plugin';
 import { withVercelToolbar as withVercelToolbarPlugin } from "@vercel/toolbar/plugins/next";
 import withBundleAnalyzer from '@next/bundle-analyzer';
+import { execSync } from "node:child_process";
 import path from 'path';
 
 const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 const withAnalyzer = withBundleAnalyzer({ enabled: process.env.ANALYZE === 'true' });
 
+// Rolling-release build identity, frozen at build time and inlined via `env`
+// below (git is not available at serverless runtime). BUILD_STAMP is the HEAD
+// commit time (MMDDHHMM) — auto-bumps per build, shallow-clone-safe, and
+// reproducible for rebuilds of the same commit. See docs / changelog versions.
+const git = (cmd: string, fallback = "dev") => {
+  try { return execSync(cmd, { stdio: ["ignore", "pipe", "ignore"] }).toString().trim(); }
+  catch { return fallback; }
+};
+const BUILD_STAMP = git("git show -s --format=%cd --date=format:%m%d%H%M HEAD");
+const GIT_SHA = (process.env.VERCEL_GIT_COMMIT_SHA || git("git rev-parse HEAD", "")).slice(0, 7) || "dev";
+
 const nextConfig: NextConfig = {
   transpilePackages: ["@tomomai/ui", "@tomomai/i18n"],
+  env: { BUILD_STAMP, GIT_SHA },
   async headers() {
     return [
       {
