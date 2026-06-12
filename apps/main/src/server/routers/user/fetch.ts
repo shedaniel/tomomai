@@ -1,7 +1,7 @@
 import { db } from '@/lib/db';
 import { generateUserOtp, getOtpExpiryTimestamp, createOpaqueUserId } from '@/lib/otp';
 import { resolveBaseUrl } from '@/lib/base-url';
-import { getFetchStatusServer, startFetchServer } from '@/lib/maimai-server-actions';
+import { getFetchStatusServer, startFetchServer, watchFetchStatusServer } from '@/lib/maimai-server-actions';
 import { getLogger } from '@/lib/request-logger';
 import { protectedProcedure, router } from '@/lib/trpc';
 import { Region } from '@/lib/types';
@@ -79,6 +79,23 @@ export const fetchRouter = router({
     }))
     .query(async ({ ctx, input }) => {
       return await getFetchStatusServer(ctx.session.user.id, input.region as Region);
+    }),
+
+  // SSE subscription: pushes fetch status to the client instead of having it
+  // poll getFetchStatus/getLatestFetchSessionId. Yields whenever progress
+  // changes and closes once the fetch reaches a terminal state.
+  //  - sessionId set   → watch that session.
+  //  - sessionId unset → detect-and-watch the next new session (token-submit flow).
+  onFetchStatus: protectedProcedure
+    .input(z.object({
+      region: regionSchema,
+      sessionId: z.string().optional(),
+    }))
+    .subscription(async function* ({ ctx, input, signal }) {
+      yield* watchFetchStatusServer(ctx.session.user.id, input.region as Region, {
+        sessionId: input.sessionId,
+        signal,
+      });
     }),
 
   getLatestFetchSessionId: protectedProcedure

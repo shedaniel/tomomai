@@ -3,6 +3,10 @@ import { appRouter } from '@/server/routers/_app';
 import { createTRPCContext } from '@/lib/trpc';
 import { NextRequest } from 'next/server';
 
+// onFetchStatus subscriptions hold the SSE connection open while a fetch runs
+// (the worker times out at 2 minutes); allow the function to outlive that.
+export const maxDuration = 130;
+
 const handler = (req: NextRequest) =>
   fetchRequestHandler({
     endpoint: '/api/trpc',
