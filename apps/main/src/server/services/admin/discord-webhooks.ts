@@ -3,6 +3,7 @@ import { resolveBaseUrl } from "@/lib/base-url";
 import { logger, flushLogger } from "@/lib/logger";
 import type { AddedChange, DeletedChange, ModifiedChange } from "@/app/api/admin/upload/route";
 import { Difficulty, Region, SongType } from "@/lib/types";
+import { DIFFICULTY_ENUM } from "@/lib/db/types";
 
 // Discord rejects an embed whose description exceeds 4096 chars with a 400.
 // Cut at a line boundary and mark the truncation so the message still posts.
@@ -41,15 +42,10 @@ function formatPrecise(value: number): string {
   return (value / 10).toFixed(1);
 }
 
-// Play order so grouped charts read BAS / ADV / EXP / MAS / ReMAS / 宴.
-const DIFFICULTY_ORDER: Record<string, number> = {
-  basic: 0,
-  advanced: 1,
-  expert: 2,
-  master: 3,
-  remaster: 4,
-  utage: 5,
-};
+// Play order (BAS / ADV / EXP / MAS / ReMAS / 宴) derived from the canonical
+// difficulty enum, so grouped charts stay sorted if that list ever changes.
+const DIFFICULTY_ORDER: Record<string, number> =
+  Object.fromEntries(DIFFICULTY_ENUM.map((difficulty, index) => [difficulty, index]));
 
 function difficultyShort(difficulty: string): string {
   return difficulty.slice(0, 3).toUpperCase();
