@@ -1,33 +1,18 @@
-import { getAllPostsMeta } from "@/lib/posts";
-
 /**
- * The version we are *currently developing* ("dev of next").
+ * Build the rolling app version from build-time identity injected by
+ * next.config.ts via `env`:
  *
- * Changelog posts are recaps of the just-finished cycle, so once the `2026.5`
- * post is published we are already working toward `2026.6`. The current dev
- * minor is therefore the latest post's minor + 1, with a year rollover in
- * December (minors track months, so they top out at 12).
+ *   - APP_VERSION_MINOR — the "dev of next" minor derived from the latest
+ *     changelog post (e.g. published `2026.5` -> dev `2026.6`).
+ *   - BUILD_STAMP — HEAD commit time (MMDDHHMM).
+ *   - GIT_SHA — short commit SHA.
  *
- *   nextDevVersion("2026.5")  -> "2026.6"
- *   nextDevVersion("2026.12") -> "2027.1"
- */
-export function nextDevVersion(latest: string): string {
-  const [year, minor] = latest.split(".").map(Number);
-  if (!Number.isFinite(year) || !Number.isFinite(minor)) return latest;
-  return minor >= 12 ? `${year + 1}.1` : `${year}.${minor + 1}`;
-}
-
-/**
- * Build the rolling app version from the latest changelog post (the editorial
- * source of truth for the minor) plus the build-time stamp and short SHA
- * injected by next.config.ts. The post version is identical across locales, so
- * we always read English.
+ * All three are frozen at build time, so this is a pure read with no runtime
+ * file I/O — important because SiteFooter (in RootLayout) renders it on every
+ * server request. The minor computation lives in next.config.ts.
  */
 export function getAppVersion() {
-  const latest = getAllPostsMeta("en").find(
-    (p) => p.version && p.version !== "N/A",
-  )?.version;
-  const minor = latest ? nextDevVersion(latest) : "0.0";
+  const minor = process.env.APP_VERSION_MINOR || "0.0";
   const stamp = process.env.BUILD_STAMP || "dev";
   const sha = process.env.GIT_SHA || "dev";
 
