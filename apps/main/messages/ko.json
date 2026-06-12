@@ -284,7 +284,7 @@
       "scopes": {
         "plate:read": {
           "name": "칭호 (읽기)",
-          "description": "칭호 진행 데이터(각 칭호별로 클리어 / FC / AP가 필요한 곡)를 읽습니다. GET /api/v1/plates 권한을 부여합니다."
+          "description": "칭호 진행 데이터(각 칭호별로 클리어 / FC / AP가 필요한 곡)를 읽습니다. GET /api/v1/maimai/plates 권한을 부여합니다."
         },
         "user:settings:read": {
           "name": "사용자 설정 (읽기)",
@@ -292,7 +292,7 @@
         },
         "snapshot:all:delete": {
           "name": "스냅샷 (삭제)",
-          "description": "본인의 모든 스냅샷을 삭제합니다. DELETE /api/v1/snapshots/:id 권한을 부여합니다. 파괴적 권한 — 명시적으로 요청해야 하며 상위 스코프에 포함되지 않습니다."
+          "description": "본인의 모든 스냅샷을 삭제합니다. DELETE /api/v1/maimai/snapshots/:id 권한을 부여합니다. 파괴적 권한 — 명시적으로 요청해야 하며 상위 스코프에 포함되지 않습니다."
         },
         "snapshot:submit": {
           "name": "스냅샷 (제출)",
@@ -300,15 +300,15 @@
         },
         "fetch:read": {
           "name": "가져오기 상태 (읽기)",
-          "description": "진행 중이거나 최근 maimai 데이터 가져오기 상태를 읽습니다. GET /api/v1/fetch/status 권한을 부여합니다."
+          "description": "진행 중이거나 최근 maimai 데이터 가져오기 상태를 읽습니다. GET /api/v1/maimai/fetch/status 권한을 부여합니다."
         },
         "fetch:start": {
           "name": "가져오기 시작",
-          "description": "저장된 업스트림 토큰으로 새 maimai 데이터 가져오기를 시작합니다. POST /api/v1/fetch 권한을 부여합니다. 파괴적 — 업스트림 API 예산을 소모하고 새 스냅샷을 생성합니다."
+          "description": "저장된 업스트림 토큰으로 새 maimai 데이터 가져오기를 시작합니다. POST /api/v1/maimai/fetch 권한을 부여합니다. 파괴적 — 업스트림 API 예산을 소모하고 새 스냅샷을 생성합니다."
         },
         "fetch:delete": {
           "name": "가져오기 토큰 (삭제)",
-          "description": "저장된 업스트림 maimai 인증 토큰을 삭제합니다. DELETE /api/v1/fetch/token 권한을 부여합니다. 파괴적이며 민감 — 재인증 전까지 앱 내 및 API 가져오기 흐름이 모두 중단됩니다."
+          "description": "저장된 업스트림 maimai 인증 토큰을 삭제합니다. DELETE /api/v1/maimai/fetch/token 권한을 부여합니다. 파괴적이며 민감 — 재인증 전까지 앱 내 및 API 가져오기 흐름이 모두 중단됩니다."
         }
       },
       "oauthApps": {

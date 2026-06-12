@@ -383,7 +383,7 @@
         },
         "snapshot:latest:metadata:read": {
           "name": "最新快照元資料（唯讀）",
-          "description": "讀取最新快照的元資料（Rating、顯示名稱、遊玩次數等）。授予 GET /api/v1/snapshots/latest。"
+          "description": "讀取最新快照的元資料（Rating、顯示名稱、遊玩次數等）。授予 GET /api/v1/maimai/snapshots/latest。"
         },
         "snapshot:latest:songs:b50:read": {
           "name": "最新快照 B50 歌曲（唯讀）",
@@ -403,7 +403,7 @@
         },
         "snapshot:all:metadata:read": {
           "name": "全部快照元資料（唯讀）",
-          "description": "列出所有快照並讀取其元資料。授予 GET /api/v1/snapshots 和 GET /api/v1/snapshots/:id。"
+          "description": "列出所有快照並讀取其元資料。授予 GET /api/v1/maimai/snapshots 和 GET /api/v1/maimai/snapshots/:id。"
         },
         "snapshot:all:songs:b50:read": {
           "name": "全部快照 B50 歌曲（唯讀）",
@@ -423,7 +423,7 @@
         },
         "recent:read": {
           "name": "最近遊玩記錄（唯讀）",
-          "description": "讀取包含歌曲資訊、達成率和連擊/同步狀態的最近遊玩歷史。授予 GET /api/v1/recents。"
+          "description": "讀取包含歌曲資訊、達成率和連擊/同步狀態的最近遊玩歷史。授予 GET /api/v1/maimai/recents。"
         },
         "recent:detailed:read": {
           "name": "最近遊玩記錄（詳細·唯讀）",
@@ -431,11 +431,11 @@
         },
         "stats:read": {
           "name": "統計資料（唯讀）",
-          "description": "讀取評級/FC/FS 分布統計。授予 GET /api/v1/stats。"
+          "description": "讀取評級/FC/FS 分布統計。授予 GET /api/v1/maimai/stats。"
         },
         "album:read": {
           "name": "相簿（唯讀）",
-          "description": "讀取街機照片相簿條目（僅元資料，不含圖片 URL）。授予 GET /api/v1/albums。"
+          "description": "讀取街機照片相簿條目（僅元資料，不含圖片 URL）。授予 GET /api/v1/maimai/albums。"
         },
         "album:images:read": {
           "name": "相簿圖片（唯讀）",
@@ -443,7 +443,7 @@
         },
         "plate:read": {
           "name": "稱號（唯讀）",
-          "description": "讀取你的稱號完成資料（每個稱號尚需哪些歌曲達成 Clear / FC / AP）。授予 GET /api/v1/plates。"
+          "description": "讀取你的稱號完成資料（每個稱號尚需哪些歌曲達成 Clear / FC / AP）。授予 GET /api/v1/maimai/plates。"
         },
         "user:settings:read": {
           "name": "使用者設定（唯讀）",
@@ -451,7 +451,7 @@
         },
         "snapshot:all:delete": {
           "name": "快照（刪除）",
-          "description": "刪除你的任何快照。授予 DELETE /api/v1/snapshots/:id。破壞性——必須明確申請，絕不會被任何包含性範圍隱含授予。"
+          "description": "刪除你的任何快照。授予 DELETE /api/v1/maimai/snapshots/:id。破壞性——必須明確申請，絕不會被任何包含性範圍隱含授予。"
         },
         "snapshot:submit": {
           "name": "快照（提交）",
@@ -459,15 +459,15 @@
         },
         "fetch:read": {
           "name": "同步狀態（唯讀）",
-          "description": "讀取你進行中或最近一次 maimai 資料同步的狀態。授予 GET /api/v1/fetch/status。"
+          "description": "讀取你進行中或最近一次 maimai 資料同步的狀態。授予 GET /api/v1/maimai/fetch/status。"
         },
         "fetch:start": {
           "name": "開始同步",
-          "description": "使用已儲存的上游權杖觸發一次新的 maimai 資料同步。授予 POST /api/v1/fetch。破壞性——消耗上游 API 配額並寫入新快照。"
+          "description": "使用已儲存的上游權杖觸發一次新的 maimai 資料同步。授予 POST /api/v1/maimai/fetch。破壞性——消耗上游 API 配額並寫入新快照。"
         },
         "fetch:delete": {
           "name": "同步權杖（刪除）",
-          "description": "刪除你已儲存的上游 maimai 認證權杖。授予 DELETE /api/v1/fetch/token。破壞性且敏感——重新認證前會中斷站內和 API 觸發的同步流程。"
+          "description": "刪除你已儲存的上游 maimai 認證權杖。授予 DELETE /api/v1/maimai/fetch/token。破壞性且敏感——重新認證前會中斷站內和 API 觸發的同步流程。"
         },
         "snapshot:latest:read": {
           "name": "最新快照（唯讀）",

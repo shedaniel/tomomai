@@ -10,7 +10,7 @@ function apiBase(): string {
 }
 
 async function fetchCatalogue(): Promise<Chart[]> {
-  const url = `${apiBase()}/api/v1/songs`;
+  const url = `${apiBase()}/api/v1/maimai/songs`;
   // `no-store` is deliberate: the catalogue JSON is ~14 MB, which exceeds
   // Next's 2 MB data-cache cap and would log "items over 2MB can not be
   // cached" on every call. The module-level memo below (1h TTL) is what

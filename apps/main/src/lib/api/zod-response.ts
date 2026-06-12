@@ -11,7 +11,7 @@ import { logger } from "@/lib/logger";
  * unknown fields and hide drift, so the handler's output must match the
  * schema exactly for the request to succeed.
  *
- * Optional `routeId` (e.g. `"GET /api/v1/songs"`) is included in the log
+ * Optional `routeId` (e.g. `"GET /api/v1/maimai/songs"`) is included in the log
  * line so logs are actionable when a handler is added without a spec
  * update or vice versa.
  */

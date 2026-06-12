@@ -393,7 +393,7 @@
         },
         "snapshot:latest:metadata:read": {
           "name": "最新快照元数据（只读）",
-          "description": "读取你最新快照的元数据（Rating、显示名称、游玩次数等）。授予 GET /api/v1/snapshots/latest。"
+          "description": "读取你最新快照的元数据（Rating、显示名称、游玩次数等）。授予 GET /api/v1/maimai/snapshots/latest。"
         },
         "snapshot:latest:songs:b50:read": {
           "name": "最新快照 B50 歌曲（只读）",
@@ -413,7 +413,7 @@
         },
         "snapshot:all:metadata:read": {
           "name": "全部快照元数据（只读）",
-          "description": "列出你的所有快照并读取其元数据。授予 GET /api/v1/snapshots 和 GET /api/v1/snapshots/:id。"
+          "description": "列出你的所有快照并读取其元数据。授予 GET /api/v1/maimai/snapshots 和 GET /api/v1/maimai/snapshots/:id。"
         },
         "snapshot:all:songs:b50:read": {
           "name": "全部快照 B50 歌曲（只读）",
@@ -433,7 +433,7 @@
         },
         "recent:read": {
           "name": "最近游玩记录（只读）",
-          "description": "读取包含歌曲资讯、达成率和连击/同步状态的最近游玩历史。授予 GET /api/v1/recents。"
+          "description": "读取包含歌曲资讯、达成率和连击/同步状态的最近游玩历史。授予 GET /api/v1/maimai/recents。"
         },
         "recent:detailed:read": {
           "name": "最近游玩记录（详细·只读）",
@@ -441,11 +441,11 @@
         },
         "stats:read": {
           "name": "统计数据（只读）",
-          "description": "读取你的评级/FC/FS 分布统计。授予 GET /api/v1/stats。"
+          "description": "读取你的评级/FC/FS 分布统计。授予 GET /api/v1/maimai/stats。"
         },
         "album:read": {
           "name": "相册（只读）",
-          "description": "读取你的街机照片相册条目（仅元数据，不含图片 URL）。授予 GET /api/v1/albums。"
+          "description": "读取你的街机照片相册条目（仅元数据，不含图片 URL）。授予 GET /api/v1/maimai/albums。"
         },
         "album:images:read": {
           "name": "相册图片（只读）",
@@ -453,7 +453,7 @@
         },
         "plate:read": {
           "name": "称号（只读）",
-          "description": "读取你的称号完成数据（每个称号还需要哪些歌曲完成 Clear / FC / AP）。授予 GET /api/v1/plates。"
+          "description": "读取你的称号完成数据（每个称号还需要哪些歌曲完成 Clear / FC / AP）。授予 GET /api/v1/maimai/plates。"
         },
         "user:settings:read": {
           "name": "用户设定（只读）",
@@ -461,7 +461,7 @@
         },
         "snapshot:all:delete": {
           "name": "快照（删除）",
-          "description": "删除你的任何快照。授予 DELETE /api/v1/snapshots/:id。破坏性权限——需明确请求，不会被父级范围涵盖。"
+          "description": "删除你的任何快照。授予 DELETE /api/v1/maimai/snapshots/:id。破坏性权限——需明确请求，不会被父级范围涵盖。"
         },
         "snapshot:submit": {
           "name": "快照（提交）",
@@ -469,15 +469,15 @@
         },
         "fetch:read": {
           "name": "取得状态（只读）",
-          "description": "读取进行中或最近的 maimai 资料取得状态。授予 GET /api/v1/fetch/status。"
+          "description": "读取进行中或最近的 maimai 资料取得状态。授予 GET /api/v1/maimai/fetch/status。"
         },
         "fetch:start": {
           "name": "开始取得",
-          "description": "使用已储存的上游令牌开始新的 maimai 资料取得。授予 POST /api/v1/fetch。破坏性——会消耗上游 API 预算并产生新快照。"
+          "description": "使用已储存的上游令牌开始新的 maimai 资料取得。授予 POST /api/v1/maimai/fetch。破坏性——会消耗上游 API 预算并产生新快照。"
         },
         "fetch:delete": {
           "name": "取得令牌（删除）",
-          "description": "删除已储存的上游 maimai 认证令牌。授予 DELETE /api/v1/fetch/token。破坏性且敏感——在重新认证之前会中断站内和 API 触发的取得流程。"
+          "description": "删除已储存的上游 maimai 认证令牌。授予 DELETE /api/v1/maimai/fetch/token。破坏性且敏感——在重新认证之前会中断站内和 API 触发的取得流程。"
         },
         "snapshot:latest:read": {
           "name": "最新快照（只读）",
