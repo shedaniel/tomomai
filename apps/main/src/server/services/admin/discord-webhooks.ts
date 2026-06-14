@@ -2,7 +2,8 @@ import { after } from "next/server";
 import { resolveBaseUrl } from "@/lib/base-url";
 import { logger, flushLogger } from "@/lib/logger";
 import type { AddedChange, DeletedChange, ModifiedChange } from "@/app/api/admin/upload/route";
-import { Difficulty, Region } from "@/lib/types";
+import { Difficulty, Region, SongType } from "@/lib/types";
+import { DIFFICULTY_ENUM } from "@/lib/db/types";
 
 // Discord rejects an embed whose description exceeds 4096 chars with a 400.
 // Cut at a line boundary and mark the truncation so the message still posts.
@@ -37,23 +38,103 @@ function deliverInBackground(work: () => Promise<void>) {
   }
 }
 
-function formatSongLabel(song: { songName: string; type: string; difficulty: Difficulty }): string {
-  return `${song.songName} ${song.type.toUpperCase()} ${song.difficulty.slice(0, 3).toUpperCase()}`;
-}
-
 function formatPrecise(value: number): string {
   return (value / 10).toFixed(1);
 }
 
-function formatSongKey(songKey: string): string {
-  const parts = songKey.split("@");
-  if (parts.length !== 3) return songKey.replaceAll("@", " ");
-  const [songName, type, difficulty] = parts;
-  return `${songName} ${type.toUpperCase()} ${difficulty.slice(0, 3).toUpperCase()}`;
+// Play order (BAS / ADV / EXP / MAS / ReMAS / 宴) derived from the canonical
+// difficulty enum, so grouped charts stay sorted if that list ever changes.
+const DIFFICULTY_ORDER: Record<string, number> =
+  Object.fromEntries(DIFFICULTY_ENUM.map((difficulty, index) => [difficulty, index]));
+
+function difficultyShort(difficulty: string): string {
+  return difficulty.slice(0, 3).toUpperCase();
 }
 
-function songSortKey(a: { songName: string; type: string; difficulty: string }, b: { songName: string; type: string; difficulty: string }) {
-  return a.songName.localeCompare(b.songName) * 1000000 + a.type.localeCompare(b.type) * 1000 + a.difficulty.localeCompare(b.difficulty);
+// Collapse every chart that shares a song (name + type) onto one compact line,
+// e.g. "- ECHO DX: BAS 4 (4.0) / ADV 7+ (7.9) / EXP 11 (11.2)", with the
+// difficulties listed in play order. `formatChart` renders one chart's segment.
+function groupChartLines<T extends { songName: string; type: SongType; difficulty: Difficulty }>(
+  charts: T[],
+  formatChart: (chart: T) => string,
+): string[] {
+  const groups = new Map<string, T[]>();
+  for (const chart of charts) {
+    const key = `${chart.songName} ${chart.type}`;
+    const bucket = groups.get(key);
+    if (bucket) bucket.push(chart);
+    else groups.set(key, [chart]);
+  }
+  return [...groups.values()]
+    .sort((a, b) => a[0].songName.localeCompare(b[0].songName) || a[0].type.localeCompare(b[0].type))
+    .map(bucket => {
+      const segments = bucket
+        .toSorted((a, b) => (DIFFICULTY_ORDER[a.difficulty] ?? 99) - (DIFFICULTY_ORDER[b.difficulty] ?? 99))
+        .map(formatChart)
+        .join(" / ");
+      return `- ${bucket[0].songName} ${bucket[0].type.toUpperCase()}: ${segments}`;
+    });
+}
+
+type OtherEntry = { songName: string; type: SongType; difficulty: Difficulty; oldValue: any; newValue: any };
+
+// Render one "other field" change (genre, version, …) as the text after the
+// song label. Two charts whose changes produce the same string are treated as
+// identical and folded together.
+function formatFieldDiff(oldValue: any, newValue: any): string {
+  const oldObj = oldValue && typeof oldValue === "object" ? oldValue as Record<string, unknown> : null;
+  const newObj = newValue && typeof newValue === "object" ? newValue as Record<string, unknown> : null;
+  if (oldObj && newObj) {
+    return Object.keys({ ...oldObj, ...newObj })
+      .filter(k => oldObj[k] !== newObj[k])
+      .map(k => `${k} ${oldObj[k]}→${newObj[k]}`)
+      .join(", ");
+  } else if (!oldObj && newObj) {
+    return `(new) ${Object.entries(newObj).map(([k, v]) => `${k}:${v}`).join(" ")}`;
+  } else if (oldObj && !newObj) {
+    return `(removed) ${Object.entries(oldObj).map(([k, v]) => `${k}:${v}`).join(" ")}`;
+  }
+  return `${oldValue} → ${newValue}`;
+}
+
+// Fold an "other field" bucket by song (name + type, never across std/dx).
+// When every changed difficulty of a song shares one change, emit a single
+// markerless line; when they diverge, emit one line per distinct change listing
+// the difficulties it covers in play order.
+function groupOtherFieldLines(entries: OtherEntry[]): string[] {
+  const songGroups = new Map<string, OtherEntry[]>();
+  for (const entry of entries) {
+    const key = `${entry.songName} ${entry.type}`;
+    const bucket = songGroups.get(key);
+    if (bucket) bucket.push(entry);
+    else songGroups.set(key, [entry]);
+  }
+  const difficultyRank = (e: OtherEntry) => DIFFICULTY_ORDER[e.difficulty] ?? 99;
+  return [...songGroups.values()]
+    .sort((a, b) => a[0].songName.localeCompare(b[0].songName) || a[0].type.localeCompare(b[0].type))
+    .flatMap(group => {
+      const label = `${group[0].songName} ${group[0].type.toUpperCase()}`;
+      const byDiff = new Map<string, OtherEntry[]>();
+      for (const entry of group) {
+        const diff = formatFieldDiff(entry.oldValue, entry.newValue);
+        const bucket = byDiff.get(diff);
+        if (bucket) bucket.push(entry);
+        else byDiff.set(diff, [entry]);
+      }
+      // All present difficulties share the same change — drop the markers.
+      if (byDiff.size === 1) {
+        const [diff] = byDiff.keys();
+        return [`- ${label}: ${diff}`];
+      }
+      return [...byDiff.entries()]
+        .sort((a, b) => Math.min(...a[1].map(difficultyRank)) - Math.min(...b[1].map(difficultyRank)))
+        .map(([diff, es]) => {
+          const diffs = es.toSorted((a, b) => difficultyRank(a) - difficultyRank(b))
+            .map(e => difficultyShort(e.difficulty))
+            .join(" / ");
+          return `- ${label} ${diffs}: ${diff}`;
+        });
+    });
 }
 
 const LEVEL_TRUNCATE_LIMIT = 32;
@@ -63,6 +144,108 @@ function truncateLines(lines: string[], limit: number): string {
   if (lines.length <= limit) return lines.join("\n");
   const extra = lines.length - limit;
   return lines.slice(0, limit).join("\n") + `\n... and ${extra} more changes`;
+}
+
+// Build the embed description body for a song-data update. `modified` must
+// already have cover-only entries filtered out. Charts are grouped by song so
+// every difficulty for one song lands on a single compact line.
+export function buildChangeDescription(
+  added: AddedChange[],
+  deleted: DeletedChange[],
+  modified: ModifiedChange[],
+): string {
+  let description = "";
+
+  const formatLevelSegment = (chart: { difficulty: Difficulty; level: string; levelPrecise: number | undefined }) =>
+    `${difficultyShort(chart.difficulty)} ${chart.level} (${chart.levelPrecise ? formatPrecise(chart.levelPrecise) : 'unknown'})`;
+
+  // Added charts
+  if (added.length > 0) {
+    description += `**${added.length} Chart${added.length > 1 ? 's' : ''} Added**\n`;
+    const lines = groupChartLines(added, formatLevelSegment);
+    description += truncateLines(lines, LEVEL_TRUNCATE_LIMIT) + "\n\n";
+  }
+
+  // Deleted charts
+  if (deleted.length > 0) {
+    description += `**${deleted.length} Chart${deleted.length > 1 ? 's' : ''} Deleted**\n`;
+    const lines = groupChartLines(deleted, formatLevelSegment);
+    description += truncateLines(lines, LEVEL_TRUNCATE_LIMIT) + "\n\n";
+  }
+
+  // Modified charts grouped by field
+  if (modified.length > 0) {
+    type LevelEntry = {
+      songName: string;
+      type: SongType;
+      difficulty: Difficulty;
+      oldValue?: any;
+      newValue?: any;
+      levelPreciseOld?: any;
+      levelPreciseNew?: any;
+    };
+    const levelBucket: LevelEntry[] = [];
+    const otherBuckets: Record<string, OtherEntry[]> = {};
+
+    for (const song of modified) {
+      const levelChange = song.fieldChanges.find(c => c.field === "level");
+      const levelPreciseChange = song.fieldChanges.find(c => c.field === "levelPrecise");
+
+      if (levelChange || levelPreciseChange) {
+        levelBucket.push({
+          songName: song.songName,
+          type: song.type,
+          difficulty: song.difficulty,
+          oldValue: levelChange?.oldValue,
+          newValue: levelChange?.newValue,
+          levelPreciseOld: levelPreciseChange?.oldValue,
+          levelPreciseNew: levelPreciseChange?.newValue,
+        });
+      }
+
+      for (const change of song.fieldChanges) {
+        if (change.field === "level" || change.field === "levelPrecise" || change.field === "cover") continue;
+        if (!otherBuckets[change.field]) otherBuckets[change.field] = [];
+        otherBuckets[change.field].push({
+          songName: song.songName,
+          type: song.type,
+          difficulty: song.difficulty,
+          oldValue: change.oldValue,
+          newValue: change.newValue,
+        });
+      }
+    }
+
+    // Level section first, grouped by song with one segment per difficulty
+    if (levelBucket.length > 0) {
+      description += `**${levelBucket.length} Level Change${levelBucket.length > 1 ? 's' : ''}**\n`;
+      const lines = groupChartLines(levelBucket, change => {
+        const diff = difficultyShort(change.difficulty);
+        const hasLevel = change.oldValue !== undefined || change.newValue !== undefined;
+        const hasPrecise = change.levelPreciseOld !== undefined || change.levelPreciseNew !== undefined;
+        const preciseOld = change.levelPreciseOld !== undefined ? formatPrecise(change.levelPreciseOld) : "?";
+        const preciseNew = change.levelPreciseNew !== undefined ? formatPrecise(change.levelPreciseNew) : "?";
+        if (hasLevel && hasPrecise) {
+          return `${diff} ${change.oldValue ?? "?"} (${preciseOld}) → ${change.newValue ?? "?"} (${preciseNew})`;
+        } else if (hasLevel) {
+          return `${diff} ${change.oldValue ?? "?"} → ${change.newValue ?? "?"}`;
+        }
+        return `${diff} (${preciseOld}) → (${preciseNew})`;
+      });
+      description += truncateLines(lines, LEVEL_TRUNCATE_LIMIT) + "\n\n";
+    }
+
+    // Other fields alphabetically
+    for (const field of Object.keys(otherBuckets).sort()) {
+      const entries = otherBuckets[field];
+      const fieldLabel = field.charAt(0).toUpperCase() + field.slice(1);
+      description += `**${entries.length} ${fieldLabel} Change${entries.length > 1 ? 's' : ''}**\n`;
+      const lines = groupOtherFieldLines(entries);
+      description += truncateLines(lines, OTHER_TRUNCATE_LIMIT) + "\n\n";
+    }
+  }
+
+  return description;
 }
 
 export async function sendDiscordWebhook(
@@ -102,110 +285,7 @@ export async function sendDiscordWebhook(
   const dateStr = `${year}/${month}/${day}`;
   const regionName = region === "jp" ? "Japan" : region === "cn" ? "China" : "International";
 
-  let description = "";
-
-  // Added charts
-  if (added.length > 0) {
-    description += `**${added.length} Chart${added.length > 1 ? 's' : ''} Added**\n`;
-    const lines = added.toSorted(songSortKey).map(
-      song => `- ${formatSongLabel(song)} ${song.level} (${song.levelPrecise ? formatPrecise(song.levelPrecise) : 'unknown'})`
-    );
-    description += truncateLines(lines, LEVEL_TRUNCATE_LIMIT) + "\n\n";
-  }
-
-  // Deleted charts
-  if (deleted.length > 0) {
-    description += `**${deleted.length} Chart${deleted.length > 1 ? 's' : ''} Deleted**\n`;
-    const lines = deleted.toSorted(songSortKey).map(
-      song => `- ${formatSongLabel(song)} ${song.level} (${song.levelPrecise ? formatPrecise(song.levelPrecise) : 'unknown'})`
-    );
-    description += truncateLines(lines, LEVEL_TRUNCATE_LIMIT) + "\n\n";
-  }
-
-  // Modified charts grouped by field
-  if (filteredModified.length > 0) {
-    type LevelEntry = { songKey: string; oldValue?: any; newValue?: any; levelPreciseOld?: any; levelPreciseNew?: any };
-    type OtherEntry = { songKey: string; oldValue: any; newValue: any };
-
-    const levelBucket: LevelEntry[] = [];
-    const otherBuckets: Record<string, OtherEntry[]> = {};
-
-    for (const song of filteredModified) {
-      const levelChange = song.fieldChanges.find(c => c.field === "level");
-      const levelPreciseChange = song.fieldChanges.find(c => c.field === "levelPrecise");
-
-      if (levelChange || levelPreciseChange) {
-        levelBucket.push({
-          songKey: song.songKey,
-          oldValue: levelChange?.oldValue,
-          newValue: levelChange?.newValue,
-          levelPreciseOld: levelPreciseChange?.oldValue,
-          levelPreciseNew: levelPreciseChange?.newValue,
-        });
-      }
-
-      for (const change of song.fieldChanges) {
-        if (change.field === "level" || change.field === "levelPrecise" || change.field === "cover") continue;
-        if (!otherBuckets[change.field]) otherBuckets[change.field] = [];
-        otherBuckets[change.field].push({
-          songKey: song.songKey,
-          oldValue: change.oldValue,
-          newValue: change.newValue,
-        });
-      }
-    }
-
-    // Level section first
-    if (levelBucket.length > 0) {
-      description += `**${levelBucket.length} Level Change${levelBucket.length > 1 ? 's' : ''}**\n`;
-      const lines = levelBucket.map(change => {
-        const hasBoth = (change.oldValue !== undefined || change.newValue !== undefined) &&
-          (change.levelPreciseOld !== undefined || change.levelPreciseNew !== undefined);
-        const label = formatSongKey(change.songKey);
-        if (hasBoth) {
-          const preciseOld = change.levelPreciseOld !== undefined ? formatPrecise(change.levelPreciseOld) : "?";
-          const preciseNew = change.levelPreciseNew !== undefined ? formatPrecise(change.levelPreciseNew) : "?";
-          return `- ${label}: ${change.oldValue ?? "?"} (${preciseOld}) → ${change.newValue ?? "?"} (${preciseNew})`;
-        } else if (change.oldValue !== undefined || change.newValue !== undefined) {
-          return `- ${label}: Level: ${change.oldValue ?? "?"} → ${change.newValue ?? "?"}`;
-        } else {
-          const preciseOld = change.levelPreciseOld !== undefined ? formatPrecise(change.levelPreciseOld) : "?";
-          const preciseNew = change.levelPreciseNew !== undefined ? formatPrecise(change.levelPreciseNew) : "?";
-          return `- ${label}: Precise: ${preciseOld} → ${preciseNew}`;
-        }
-      });
-      description += truncateLines(lines, LEVEL_TRUNCATE_LIMIT) + "\n\n";
-    }
-
-    // Other fields alphabetically
-    for (const field of Object.keys(otherBuckets).sort()) {
-      const entries = otherBuckets[field];
-      const fieldLabel = field.charAt(0).toUpperCase() + field.slice(1);
-      description += `**${entries.length} ${fieldLabel} Change${entries.length > 1 ? 's' : ''}**\n`;
-      const lines = entries.map(change => {
-        const label = formatSongKey(change.songKey);
-        const oldObj = change.oldValue && typeof change.oldValue === "object" ? change.oldValue as Record<string, unknown> : null;
-        const newObj = change.newValue && typeof change.newValue === "object" ? change.newValue as Record<string, unknown> : null;
-        if (oldObj && newObj) {
-          const diffs = Object.keys({ ...oldObj, ...newObj })
-            .filter(k => oldObj[k] !== newObj[k])
-            .map(k => `${k} ${oldObj[k]}→${newObj[k]}`)
-            .join(", ");
-          return `- ${label}: ${diffs}`;
-        } else if (!oldObj && newObj) {
-          const summary = Object.entries(newObj).map(([k, v]) => `${k}:${v}`).join(" ");
-          return `- ${label}: (new) ${summary}`;
-        } else if (oldObj && !newObj) {
-          const summary = Object.entries(oldObj).map(([k, v]) => `${k}:${v}`).join(" ");
-          return `- ${label}: (removed) ${summary}`;
-        }
-        const oldVal = change.oldValue;
-        const newVal = change.newValue;
-        return `- ${label}: ${oldVal} → ${newVal}`;
-      });
-      description += truncateLines(lines, OTHER_TRUNCATE_LIMIT) + "\n\n";
-    }
-  }
+  const description = buildChangeDescription(added, deleted, filteredModified);
 
   // Determine color based on changes
   const hasLevelChanges = filteredModified.some(m =>
