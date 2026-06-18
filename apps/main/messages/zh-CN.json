@@ -12,6 +12,7 @@
     "update": "更新",
     "login": "登录",
     "join": "加入",
+    "guest": "访客",
     "logout": "登出",
     "username": "用户名",
     "password": "密码",
@@ -30,6 +31,15 @@
     "experiments": "实验",
     "region": "地区",
     "comingSoon": "敬请期待...",
+    "weekdays": {
+      "sun": "日",
+      "mon": "一",
+      "tue": "二",
+      "wed": "三",
+      "thu": "四",
+      "fri": "五",
+      "sat": "六"
+    },
     "difficulties": {
       "basic": "Basic",
       "advanced": "Advanced",
@@ -41,17 +51,13 @@
     "back": "返回",
     "clipboardError": "复制到剪贴板失败",
     "selectAnOption": "选择选项",
-    "guest": "访客",
     "ok": "确定",
-    "email": "邮箱",
-    "weekdays": {
-      "sun": "日",
-      "mon": "一",
-      "tue": "二",
-      "wed": "三",
-      "thu": "四",
-      "fri": "五",
-      "sat": "六"
+    "email": "邮箱"
+  },
+  "security": {
+    "reauth": {
+      "title": "需要重新认证",
+      "description": "此操作需要重新登录。我们会将你重定向到登录服务提供商以重新进行身份验证。"
     }
   },
   "minigames": {
@@ -63,12 +69,6 @@
     "heardle": {
       "title": "Heardle",
       "tagline": "通过几秒钟的音频猜出歌曲。"
-    }
-  },
-  "security": {
-    "reauth": {
-      "title": "需要重新认证",
-      "description": "此操作需要重新登录。我们会将你重定向到登录服务提供商以重新进行身份验证。"
     }
   },
   "auth": {
@@ -313,6 +313,9 @@
         "expiresAt": "过期于 {date}",
         "toggleAriaLabel": "切换密钥状态",
         "regenerateAriaLabel": "重新生成密钥",
+        "deleteSuccess": "API 密钥已删除",
+        "deleteError": "删除 API 密钥失败",
+        "updateError": "更新密钥失败",
         "regenerateError": "重新生成 API 密钥失败",
         "regeneratedTitle": "密钥已重新生成",
         "regeneratedDescription": "请立即复制你的新 API 密钥，之后将不再显示。",
@@ -322,9 +325,6 @@
           "description": "当前密钥将立即失效。使用该密钥的应用程序将无法访问，直到更新为新密钥。",
           "confirm": "重新生成"
         },
-        "deleteSuccess": "API 密钥已删除",
-        "deleteError": "删除 API 密钥失败",
-        "updateError": "更新密钥失败",
         "editDialog": {
           "title": "编辑 API 密钥",
           "nameLabel": "名称",
@@ -650,6 +650,15 @@
       "title": "开发者",
       "exportJson": "导出记录为 JSON",
       "exporting": "导出中..."
+    },
+    "exportImageCard": {
+      "profileImage": "Profile Image",
+      "lastCredit": "Last Credit",
+      "dailyPlays": "Daily Plays",
+      "dayLabel": "Day",
+      "dayPlaceholder": "Select a day",
+      "dayLoading": "Loading days...",
+      "noPlays": "No daily plays available"
     }
   },
   "albums": {
@@ -950,13 +959,13 @@
       "db": "数据库"
     },
     "addDiscordBot": "添加为 Discord 机器人",
+    "followTwitter": "在 X 上关注",
+    "followThreads": "在 Threads 上关注",
     "admin": "管理员",
     "testOnboarding": "测试新手引导",
     "errors": {
       "inviteLink": "无法打开邀请链接"
-    },
-    "followThreads": "在 Threads 上关注",
-    "followTwitter": "在 X 上关注"
+    }
   },
   "onboarding": {
     "title": "欢迎来到 tomomai！",
@@ -1003,10 +1012,10 @@
       "format": "用户名必须是 1-32 个字符，仅包含英数字、破折号和下划线",
       "taken": "此用户名已被使用"
     },
-    "changeTitle": "更改用户名",
+    "changeTitle": "修改用户名",
     "changeDescription": "选择一个新的用户名。你的个人主页 URL 将会改变。",
-    "changeButton": "更改",
-    "sameAsCurrent": "与当前用户名相同。",
+    "changeButton": "修改",
+    "sameAsCurrent": "与当前的用户名相同。",
     "newProfileUrl": "新个人主页 URL：/profile/{username}",
     "changeSuccess": "用户名已成功更新。",
     "changingUsername": "保存中...",
@@ -1092,8 +1101,35 @@
       "songs": "歌曲",
       "calculator": "计算",
       "stats": "统计",
-      "posts": "更新日志",
-      "events": "活动"
+      "events": "活动",
+      "posts": "更新日志"
+    },
+    "events": {
+      "title": "区域活动",
+      "description": "浏览所有 maimai 区域活动及其奖励",
+      "search": "搜索活动...",
+      "noEvents": "未找到活动。",
+      "selectEvent": "选择一个活动以查看详情",
+      "steps": "步数",
+      "distance": "距离",
+      "type": "类型",
+      "reward": "奖励",
+      "period": "期间",
+      "active": "进行中",
+      "ended": "已结束",
+      "upcoming": "即将开始",
+      "back": "返回",
+      "stepTypes": {
+        "frame": "底板",
+        "song": "乐曲",
+        "nameplate": "名牌板",
+        "present": "礼物",
+        "icon": "头像",
+        "title": "称号",
+        "tourMember": "旅伴",
+        "perfectChallenge": "Perfect Challenge 乐曲",
+        "kaleidxscope": "KALEIDXSCOPE"
+      }
     },
     "songs": {
       "metadata": {
@@ -1206,19 +1242,17 @@
         "30d": "最近 30 天",
         "7d": "最近 7 天"
       },
-      "showAll": "显示全部 {count} 项",
-      "showLess": "收起",
       "xAxis": {
         "rating": "R 值",
         "playCount": "游玩次数",
         "level": "等级",
         "date": "日期",
         "days": "天数",
+        "week": "周",
+        "currentRatingBand": "当前 Rating",
         "timePeriod": "时间范围",
         "lastDay": "过去 1 天",
-        "lastDays": "过去 {days} 天",
-        "week": "周",
-        "currentRatingBand": "当前 Rating"
+        "lastDays": "过去 {days} 天"
       },
       "yAxis": {
         "percentage": "占比",
@@ -1238,36 +1272,11 @@
         "percentage": "占比",
         "count": "数"
       },
+      "showAll": "显示全部 {count} 项",
+      "showLess": "收起",
       "region": {
         "intl": "国际服",
         "jp": "日本服"
-      }
-    },
-    "events": {
-      "active": "进行中",
-      "back": "返回",
-      "description": "浏览所有 maimai 区域活动及其奖励",
-      "distance": "距离",
-      "ended": "已结束",
-      "noEvents": "未找到活动。",
-      "period": "期间",
-      "reward": "奖励",
-      "search": "搜索活动...",
-      "selectEvent": "选择一个活动以查看详情",
-      "steps": "步数",
-      "title": "区域活动",
-      "type": "类型",
-      "upcoming": "即将开始",
-      "stepTypes": {
-        "frame": "底板",
-        "song": "乐曲",
-        "nameplate": "名牌板",
-        "present": "礼物",
-        "icon": "头像",
-        "title": "称号",
-        "tourMember": "旅伴",
-        "perfectChallenge": "Perfect Challenge 乐曲",
-        "kaleidxscope": "KALEIDXSCOPE"
       }
     }
   },

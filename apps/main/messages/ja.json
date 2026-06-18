@@ -12,6 +12,7 @@
     "update": "更新",
     "login": "ログイン",
     "join": "登録",
+    "guest": "ゲスト",
     "logout": "ログアウト",
     "username": "ユーザー名",
     "password": "パスワード",
@@ -30,6 +31,15 @@
     "experiments": "実験",
     "region": "地域",
     "comingSoon": "準備中...",
+    "weekdays": {
+      "sun": "日",
+      "mon": "月",
+      "tue": "火",
+      "wed": "水",
+      "thu": "木",
+      "fri": "金",
+      "sat": "土"
+    },
     "difficulties": {
       "basic": "Basic",
       "advanced": "Advanced",
@@ -41,17 +51,13 @@
     "back": "戻る",
     "clipboardError": "クリップボードへのコピーに失敗しました",
     "selectAnOption": "オプションを選択",
-    "guest": "ゲスト",
     "ok": "OK",
-    "email": "メールアドレス",
-    "weekdays": {
-      "sun": "日",
-      "mon": "月",
-      "tue": "火",
-      "wed": "水",
-      "thu": "木",
-      "fri": "金",
-      "sat": "土"
+    "email": "メールアドレス"
+  },
+  "security": {
+    "reauth": {
+      "title": "再認証が必要です",
+      "description": "この操作には新しいサインインが必要です。再認証のためプロバイダーにリダイレクトされます。"
     }
   },
   "minigames": {
@@ -63,12 +69,6 @@
     "heardle": {
       "title": "Heardle",
       "tagline": "数秒のサウンドから楽曲を当てよう。"
-    }
-  },
-  "security": {
-    "reauth": {
-      "title": "再認証が必要です",
-      "description": "この操作には新しいサインインが必要です。再認証のためプロバイダーにリダイレクトされます。"
     }
   },
   "auth": {
@@ -313,6 +313,9 @@
         "expiresAt": "有効期限：{date}",
         "toggleAriaLabel": "キーの有効/無効を切り替え",
         "regenerateAriaLabel": "キーを再生成",
+        "deleteSuccess": "API キーを削除しました",
+        "deleteError": "API キーの削除に失敗しました",
+        "updateError": "キーの更新に失敗しました",
         "regenerateError": "APIキーの再生成に失敗しました",
         "regeneratedTitle": "キーが再生成されました",
         "regeneratedDescription": "新しいAPIキーを今すぐコピーしてください。再表示されません。",
@@ -322,9 +325,6 @@
           "description": "現在のキーは即座に無効になります。このキーを使用しているアプリは新しいキーに更新するまでアクセスできなくなります。",
           "confirm": "再生成"
         },
-        "deleteSuccess": "API キーを削除しました",
-        "deleteError": "API キーの削除に失敗しました",
-        "updateError": "キーの更新に失敗しました",
         "editDialog": {
           "title": "API キーを編集",
           "nameLabel": "名前",
@@ -650,6 +650,15 @@
       "title": "開発者",
       "exportJson": "スナップショットをJSONでエクスポート",
       "exporting": "エクスポート中..."
+    },
+    "exportImageCard": {
+      "profileImage": "Profile Image",
+      "lastCredit": "Last Credit",
+      "dailyPlays": "Daily Plays",
+      "dayLabel": "Day",
+      "dayPlaceholder": "Select a day",
+      "dayLoading": "Loading days...",
+      "noPlays": "No daily plays available"
     }
   },
   "albums": {
@@ -950,13 +959,13 @@
       "db": "データベース"
     },
     "addDiscordBot": "Discordボットとして追加",
+    "followTwitter": "Xでフォロー",
+    "followThreads": "Threadsでフォロー",
     "admin": "管理者",
     "testOnboarding": "オンボーディングをテスト",
     "errors": {
       "inviteLink": "招待リンクを開けませんでした"
-    },
-    "followThreads": "Threadsでフォロー",
-    "followTwitter": "Xでフォロー"
+    }
   },
   "onboarding": {
     "title": "ともマイ へようこそ！",
@@ -1092,8 +1101,35 @@
       "songs": "楽曲",
       "calculator": "計算",
       "stats": "統計",
-      "posts": "更新履歴",
-      "events": "ちほー"
+      "events": "ちほー",
+      "posts": "更新履歴"
+    },
+    "events": {
+      "title": "ちほー",
+      "description": "すべての maimai ちほーとその報酬を閲覧します",
+      "search": "ちほーを検索…",
+      "noEvents": "ちほーが見つかりません。",
+      "selectEvent": "ちほーを選択して詳細を表示",
+      "steps": "ステップ",
+      "distance": "距離",
+      "type": "タイプ",
+      "reward": "報酬",
+      "period": "期間",
+      "active": "開催中",
+      "ended": "終了",
+      "upcoming": "開催予定",
+      "back": "戻る",
+      "stepTypes": {
+        "frame": "フレーム",
+        "song": "楽曲",
+        "nameplate": "ネームプレート",
+        "present": "プレゼント",
+        "icon": "アイコン",
+        "title": "称号",
+        "tourMember": "つあーメンバー",
+        "perfectChallenge": "パーフェクトチャレンジ楽曲",
+        "kaleidxscope": "KALEIDXSCOPE"
+      }
     },
     "songs": {
       "metadata": {
@@ -1241,33 +1277,6 @@
       "region": {
         "intl": "インターナショナル",
         "jp": "日本"
-      }
-    },
-    "events": {
-      "active": "開催中",
-      "back": "戻る",
-      "description": "すべての maimai ちほーとその報酬を閲覧します",
-      "distance": "距離",
-      "ended": "終了",
-      "noEvents": "ちほーが見つかりません。",
-      "period": "期間",
-      "reward": "報酬",
-      "search": "ちほーを検索…",
-      "selectEvent": "ちほーを選択して詳細を表示",
-      "steps": "ステップ",
-      "title": "ちほー",
-      "type": "タイプ",
-      "upcoming": "開催予定",
-      "stepTypes": {
-        "frame": "フレーム",
-        "song": "楽曲",
-        "nameplate": "ネームプレート",
-        "present": "プレゼント",
-        "icon": "アイコン",
-        "title": "称号",
-        "tourMember": "つあーメンバー",
-        "perfectChallenge": "パーフェクトチャレンジ楽曲",
-        "kaleidxscope": "KALEIDXSCOPE"
       }
     }
   },

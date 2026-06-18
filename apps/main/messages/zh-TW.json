@@ -12,6 +12,7 @@
     "update": "更新",
     "login": "登入",
     "join": "加入",
+    "guest": "訪客",
     "logout": "登出",
     "username": "使用者名稱",
     "password": "密碼",
@@ -30,6 +31,15 @@
     "experiments": "實驗功能",
     "region": "地區",
     "comingSoon": "敬請期待...",
+    "weekdays": {
+      "sun": "日",
+      "mon": "一",
+      "tue": "二",
+      "wed": "三",
+      "thu": "四",
+      "fri": "五",
+      "sat": "六"
+    },
     "difficulties": {
       "basic": "Basic",
       "advanced": "Advanced",
@@ -41,17 +51,13 @@
     "back": "返回",
     "clipboardError": "複製到剪貼簿失敗",
     "selectAnOption": "選擇選項",
-    "guest": "訪客",
     "ok": "確定",
-    "email": "電子郵件",
-    "weekdays": {
-      "sun": "日",
-      "mon": "一",
-      "tue": "二",
-      "wed": "三",
-      "thu": "四",
-      "fri": "五",
-      "sat": "六"
+    "email": "電子郵件"
+  },
+  "security": {
+    "reauth": {
+      "title": "需要重新驗證",
+      "description": "此操作需要重新登入。我們會將你重新導向至登入服務商以完成驗證。"
     }
   },
   "minigames": {
@@ -63,12 +69,6 @@
     "heardle": {
       "title": "Heardle",
       "tagline": "透過幾秒的音訊猜出歌曲。"
-    }
-  },
-  "security": {
-    "reauth": {
-      "title": "需要重新驗證",
-      "description": "此操作需要重新登入。我們會將你重新導向至登入服務商以完成驗證。"
     }
   },
   "auth": {
@@ -225,7 +225,7 @@
       "dontSave": "不必了，謝謝",
       "save": "好的，請儲存我的相片",
       "example": "已儲存的相片示意圖",
-      "saved": "相簿偏好設定已儲存",
+      "saved": "",
       "error": "相簿偏好設定儲存失敗",
       "fetchAlbums": "儲存相簿內的相片",
       "fetchAlbumsDescription": "在匯入新資料時一併匯入並儲存你相簿裡的相片。請注意，相片中可能含有個人資訊。",
@@ -313,6 +313,9 @@
         "expiresAt": "到期於 {date}",
         "toggleAriaLabel": "切換金鑰狀態",
         "regenerateAriaLabel": "重新產生金鑰",
+        "deleteSuccess": "API 金鑰已刪除",
+        "deleteError": "刪除 API 金鑰失敗",
+        "updateError": "更新金鑰失敗",
         "regenerateError": "重新產生 API 金鑰失敗",
         "regeneratedTitle": "金鑰已重新產生",
         "regeneratedDescription": "請立即複製你的新 API 金鑰，之後將不會再次顯示。",
@@ -322,9 +325,6 @@
           "description": "目前的金鑰將立即失效。使用該金鑰的應用程式將無法存取，直到更新為新金鑰。",
           "confirm": "重新產生"
         },
-        "deleteSuccess": "API 金鑰已刪除",
-        "deleteError": "刪除 API 金鑰失敗",
-        "updateError": "更新金鑰失敗",
         "editDialog": {
           "title": "編輯 API 金鑰",
           "nameLabel": "名稱",
@@ -650,6 +650,15 @@
       "title": "開發者",
       "exportJson": "匯出紀錄為 JSON",
       "exporting": "匯出中..."
+    },
+    "exportImageCard": {
+      "profileImage": "Profile Image",
+      "lastCredit": "Last Credit",
+      "dailyPlays": "Daily Plays",
+      "dayLabel": "Day",
+      "dayPlaceholder": "Select a day",
+      "dayLoading": "Loading days...",
+      "noPlays": "No daily plays available"
     }
   },
   "albums": {
@@ -839,7 +848,7 @@
     },
     "fetchOptions": {
       "divingFish": {
-        "name": "水鱼查分器",
+        "name": "水魚查分器",
         "description": "使用你的水鱼查分器登入使用者名稱或已連結的 QQ 帳號 ID 取得資料。"
       },
       "lxns": {
@@ -869,7 +878,7 @@
       "unknownError": "未知錯誤"
     },
     "divingFish": {
-      "title": "水鱼查分器",
+      "title": "水魚查分器",
       "description": "將你的水鱼查分器帳號綁定到本站，綁定後我們會透過水鱼查分器的開發者介面讀取你的舞萌 DX 資料。請先選擇以下任一方式驗證你擁有該帳號。",
       "notConfiguredTitle": "水鱼查分器尚未設定",
       "notConfiguredMessage": "請聯絡管理員在伺服器上設定 <code>DIVINGFISH_DEV_TOKEN</code> 環境變數。",
@@ -950,13 +959,13 @@
       "db": "資料庫"
     },
     "addDiscordBot": "新增為 Discord 機器人",
+    "followTwitter": "在 X 上追蹤",
+    "followThreads": "在 Threads 上追蹤",
     "admin": "管理員",
     "testOnboarding": "測試新手引導",
     "errors": {
       "inviteLink": "無法開啟邀請連結"
-    },
-    "followThreads": "在 Threads 上追蹤",
-    "followTwitter": "在 X 上追蹤"
+    }
   },
   "onboarding": {
     "title": "歡迎來到 tomomai！",
@@ -1092,8 +1101,35 @@
       "songs": "歌曲",
       "calculator": "計算",
       "stats": "統計",
-      "posts": "更新日誌",
-      "events": "活動"
+      "events": "活動",
+      "posts": "更新日誌"
+    },
+    "events": {
+      "title": "活動地圖",
+      "description": "瀏覽所有 maimai 地區活動及其獎勵",
+      "search": "搜尋活動……",
+      "noEvents": "找不到活動。",
+      "selectEvent": "選擇活動以查看詳情",
+      "steps": "步數",
+      "distance": "距離",
+      "type": "類型",
+      "reward": "獎勵",
+      "period": "期間",
+      "active": "進行中",
+      "ended": "已結束",
+      "upcoming": "即將開始",
+      "back": "返回",
+      "stepTypes": {
+        "frame": "底板",
+        "song": "樂曲",
+        "nameplate": "名牌板",
+        "present": "禮物",
+        "icon": "頭像",
+        "title": "稱號",
+        "tourMember": "旅伴",
+        "perfectChallenge": "Perfect Challenge 樂曲",
+        "kaleidxscope": "KALEIDXSCOPE"
+      }
     },
     "songs": {
       "metadata": {
@@ -1206,19 +1242,17 @@
         "30d": "最近 30 天",
         "7d": "最近 7 天"
       },
-      "showAll": "顯示全部 {count} 項",
-      "showLess": "顯示較少",
       "xAxis": {
         "rating": "R 值",
         "playCount": "遊玩次數",
         "level": "等級",
         "date": "日期",
         "days": "天數",
+        "week": "週",
+        "currentRatingBand": "目前 Rating",
         "timePeriod": "時間範圍",
         "lastDay": "過去 1 天",
-        "lastDays": "過去 {days} 天",
-        "week": "週",
-        "currentRatingBand": "目前 Rating"
+        "lastDays": "過去 {days} 天"
       },
       "yAxis": {
         "percentage": "百分比",
@@ -1238,36 +1272,11 @@
         "percentage": "百分比",
         "count": "數"
       },
+      "showAll": "顯示全部 {count} 項",
+      "showLess": "顯示較少",
       "region": {
         "intl": "國際區",
         "jp": "日本區"
-      }
-    },
-    "events": {
-      "active": "進行中",
-      "back": "返回",
-      "description": "瀏覽所有 maimai 地區活動及其獎勵",
-      "distance": "距離",
-      "ended": "已結束",
-      "noEvents": "找不到活動。",
-      "period": "期間",
-      "reward": "獎勵",
-      "search": "搜尋活動……",
-      "selectEvent": "選擇活動以查看詳情",
-      "steps": "步數",
-      "title": "活動地圖",
-      "type": "類型",
-      "upcoming": "即將開始",
-      "stepTypes": {
-        "frame": "底板",
-        "song": "樂曲",
-        "nameplate": "名牌板",
-        "present": "禮物",
-        "icon": "頭像",
-        "title": "稱號",
-        "tourMember": "旅伴",
-        "perfectChallenge": "Perfect Challenge 樂曲",
-        "kaleidxscope": "KALEIDXSCOPE"
       }
     }
   },
