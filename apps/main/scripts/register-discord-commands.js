@@ -96,6 +96,7 @@ async function registerCommands() {
         body: JSON.stringify(commands.map(command => ({
           ...command,
           integration_types: [0, 1],
+          contexts: [0, 1, 2],
         }))),
       }
     );
@@ -117,4 +118,4 @@ async function registerCommands() {
   }
 }
 
-registerCommands(); 
+registerCommands();
