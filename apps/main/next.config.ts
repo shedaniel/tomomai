@@ -24,7 +24,7 @@ const nextConfig: NextConfig = {
       },
     ];
   },
-  serverExternalPackages: ["skia-canvas", "pino", "kuromoji", "kuroshiro", "kuroshiro-analyzer-kuromoji", "@logtail/node"],
+  serverExternalPackages: ["pino", "kuromoji", "kuroshiro", "kuroshiro-analyzer-kuromoji", "@logtail/node"],
   experimental: {
     optimizePackageImports: [
       'lucide-react',
@@ -128,28 +128,16 @@ const nextConfig: NextConfig = {
     ],
   },
   webpack: (config, { isServer, nextRuntime }) => {
-    // Ignore server-only file on client builds
-    if (!isServer) {
+    // The browser bundle and the edge runtime (middleware) can't load Node-only
+    // deps, so alias them out. Mirrors the turbopack `browser` alias above.
+    // (skia-canvas and the server-only render-image-server used to be wired
+    // through here too; both moved out when rendering moved to apps/render.)
+    if (!isServer || nextRuntime === 'edge') {
       config.resolve.alias = {
         ...config.resolve.alias,
-        './render-image-server': false,
         'pino-pretty': false,
         '@logtail/node': false,
       };
-    } else {
-      config.externals = [
-        ...config.externals,
-        { 'skia-canvas': 'commonjs skia-canvas' },
-      ]
-      // The edge runtime (middleware) can't load Node-only deps either.
-      // Mirrors the turbopack `browser` alias above.
-      if (nextRuntime === 'edge') {
-        config.resolve.alias = {
-          ...config.resolve.alias,
-          'pino-pretty': false,
-          '@logtail/node': false,
-        };
-      }
     }
     return config;
   },
@@ -160,7 +148,6 @@ const nextConfig: NextConfig = {
   outputFileTracingRoot: path.resolve(process.cwd(), '..', '..'),
   outputFileTracingIncludes: {
     '/api/image-proxy': ['./public/res/**/*'],
-    '/api/export-image': ['./public/res/**/*'],
     '/api/admin/cache_images': ['./public/res/**/*'],
     '/**/*': ['../../node_modules/.pnpm/kuromoji@*/node_modules/kuromoji/dict/**/*'],
   },

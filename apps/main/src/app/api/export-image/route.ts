@@ -1,9 +1,6 @@
-import { splitSongs } from '@/lib/rating-calculator';
-import { renderImage } from '@/lib/render-image';
+import { NextRequest, NextResponse } from 'next/server';
 import type { Region } from '@/lib/types';
-import { NextRequest } from 'next/server';
-import { commonSnapshotResources, renderWebpResponse } from '@/lib/render-image-route';
-import { prepareExportImageData } from '@/server/queries/export-image';
+import { renderRedirectUrl } from '@/lib/render-token';
 import { getEnabledRegions } from '@/lib/enabled-regions';
 import { z } from 'zod';
 
@@ -15,38 +12,25 @@ const searchParams = z.object({
   region: z.enum(getEnabledRegions()).optional(),
 });
 
+// Rendering moved to apps/render. This route is the auth/capability boundary:
+// access is possession of the unguessable snapshot publicId, so we just validate
+// and 302 to the render service with a signed token. No session check (unchanged
+// from the previous behaviour, which rendered for anyone holding the publicId).
 export async function GET(request: NextRequest) {
-  return renderWebpResponse({
-    request,
-    routeName: "export-image",
-    searchParams,
-    prepareData: async ({ snapshotId, username, region }) => {
-      const result = await prepareExportImageData(snapshotId, username, region as Region | undefined);
-      if (result.type === "error") {
-        return { type: "error", status: 404, message: result.error };
-      }
-      return {
-        type: "ok",
-        data: {
-          snapshotId,
-          data: result.data,
-          region: result.region,
-          visitableProfileAt: result.visitableProfileAt,
-        },
-      };
-    },
-    resources: ({ data, region }) => {
-      const { newSongsB15, oldSongsB35 } = splitSongs(data.songs, data.snapshot.gameVersion);
-      return [
-        ...commonSnapshotResources(data.snapshot, region),
-        `/res/label/new.png`,
-        `/res/label/old.png`,
-        ...newSongsB15.map(s => s.cover),
-        ...oldSongsB35.map(s => s.cover),
-      ];
-    },
-    render: ({ data, region, visitableProfileAt }, cache) =>
-      renderImage(data, region, cache, visitableProfileAt),
-    filename: ({ snapshotId }) => `maimai-profile-snapshot-${snapshotId}`,
+  const parsed = searchParams.safeParse(Object.fromEntries(request.nextUrl.searchParams));
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: 'Invalid query parameters', issues: parsed.error.flatten().fieldErrors },
+      { status: 400 },
+    );
+  }
+  const { snapshotId, username, region } = parsed.data;
+
+  const url = renderRedirectUrl(request.nextUrl.searchParams, {
+    route: 'export-image',
+    snapshotId,
+    username,
+    region: region as Region | undefined,
   });
+  return NextResponse.redirect(url, 302);
 }

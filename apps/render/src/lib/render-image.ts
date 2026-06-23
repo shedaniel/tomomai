@@ -1,5 +1,5 @@
-import { CreditData, RecentSongData, SnapshotMetadata } from '@/server/services/credit-data';
-import { getLogger } from '@/lib/request-logger';
+import { CreditData, RecentSongData, SnapshotMetadata } from '../server/services/credit-data';
+import { getLogger } from './request-logger';
 import type { CanvasRenderingContext2D as SkiaContext } from 'skia-canvas';
 import { Canvas, Image, loadImage } from 'skia-canvas';
 import { CANVAS_HEIGHT, CANVAS_WIDTH } from './image-spec';

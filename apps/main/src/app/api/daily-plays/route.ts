@@ -1,11 +1,10 @@
 import { getServerSession } from '@/lib/auth-server';
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { user, userSnapshots } from '@/lib/db/schema-pg';
 import { and, eq } from 'drizzle-orm';
-import { renderDailyPlaysImage } from '@/lib/render-image';
-import { commonSnapshotResources, renderWebpResponse } from '@/lib/render-image-route';
-import { prepareDailyPlaysData } from '@/server/services/daily-plays-data';
+import { renderRedirectUrl } from '@/lib/render-token';
+import { requestLogger } from '@/lib/request-logger';
 import { getEnabledRegions } from '@/lib/enabled-regions';
 import { z } from 'zod';
 
@@ -17,53 +16,47 @@ const searchParams = z.object({
   day: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
 });
 
+// Rendering moved to apps/render. This route stays the auth boundary: it resolves
+// who the plays belong to (public snapshot, or the signed-in user), then 302s to
+// the render service with a token carrying the resolved userId.
 export async function GET(request: NextRequest) {
-  return renderWebpResponse({
-    request,
-    routeName: "daily-plays",
-    searchParams,
-    prepareData: async ({ region, snapshotId, day }, log) => {
-      let userId: string;
-      if (snapshotId) {
-        const snapshot = await db
-          .select({ userId: userSnapshots.userId })
-          .from(userSnapshots)
-          .innerJoin(user, eq(userSnapshots.userId, user.id))
-          .where(and(
-            eq(userSnapshots.publicId, snapshotId),
-            eq(user.publishProfile, true)
-          ))
-          .limit(1);
+  const { log } = requestLogger(request, "daily-plays");
+  const parsed = searchParams.safeParse(Object.fromEntries(request.nextUrl.searchParams));
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: 'Invalid query parameters', issues: parsed.error.flatten().fieldErrors },
+      { status: 400 },
+    );
+  }
+  const { region, snapshotId, day } = parsed.data;
 
-        if (snapshot.length === 0) {
-          return { type: "error", status: 404, message: 'Snapshot not found or not public' };
-        }
-        userId = snapshot[0].userId;
-        log.info({ userId, snapshotId }, 'Public mode');
-      } else {
-        const session = await getServerSession();
-        if (!session?.user?.id) {
-          return { type: "error", status: 401, message: 'Unauthorized' };
-        }
-        userId = session.user.id;
-        log.info({ userId }, 'Authenticated mode');
-      }
+  let userId: string;
+  if (snapshotId) {
+    const snapshot = await db
+      .select({ userId: userSnapshots.userId })
+      .from(userSnapshots)
+      .innerJoin(user, eq(userSnapshots.userId, user.id))
+      .where(and(eq(userSnapshots.publicId, snapshotId), eq(user.publishProfile, true)))
+      .limit(1);
+    if (snapshot.length === 0) {
+      return NextResponse.json({ error: 'Snapshot not found or not public' }, { status: 404 });
+    }
+    userId = snapshot[0].userId;
+    log.info({ userId, snapshotId }, 'Public mode');
+  } else {
+    const session = await getServerSession();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    userId = session.user.id;
+    log.info({ userId }, 'Authenticated mode');
+  }
 
-      const result = await prepareDailyPlaysData(userId, region, day);
-      if (result.type === "error") {
-        return { type: "error", status: 404, message: result.error };
-      }
-      return {
-        type: "ok",
-        data: { ...result, region },
-      };
-    },
-    resources: ({ plays, snapshot, region }) => [
-      ...commonSnapshotResources(snapshot, region),
-      ...plays.map(p => p.cover),
-    ],
-    render: ({ plays, snapshot, region, day }, cache) =>
-      renderDailyPlaysImage(plays, snapshot, region, day, cache),
-    filename: ({ day }) => `maimai-daily-${day}`,
+  const url = renderRedirectUrl(request.nextUrl.searchParams, {
+    route: 'daily-plays',
+    userId,
+    region,
+    day,
   });
+  return NextResponse.redirect(url, 302);
 }

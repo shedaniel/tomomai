@@ -1,8 +1,8 @@
-import { db } from "@/lib/db";
-import { scoreData, snapshotB50, songs, user, userSnapshots } from "@/lib/db/schema-pg";
-import type { VersionId } from "@/lib/metadata";
-import type { SongForRender } from "@/lib/render-image";
-import type { Region, SnapshotWithSongs } from "@/lib/types";
+import { db } from "../../lib/db";
+import { scoreData, snapshotB50, songs, user, userSnapshots } from "../../lib/db/schema-pg";
+import type { VersionId } from "../../lib/metadata";
+import type { SongForRender } from "../../lib/render-image";
+import type { Region, SnapshotWithSongs } from "../../lib/types";
 import { eq } from "drizzle-orm";
 import { getReservedSnapshotData } from "./reserved";
 

@@ -31,6 +31,29 @@ export async function securityMiddleware(request: NextRequest): Promise<NextResp
   return response;
 }
 
+// Render service origin (apps/render). Image previews load from it via the 302
+// from /api/{export-image,last-credit,daily-plays}, and the download button
+// fetch()es it — so it must be allowlisted in img-src (loads) and connect-src
+// (fetch). Derived from RENDER_PUBLIC_URL so we don't hardcode the host.
+const RENDER_ORIGIN = (() => {
+  const u = process.env.RENDER_PUBLIC_URL;
+  if (!u) return null;
+  try { return new URL(u).origin; } catch { return null; }
+})();
+
+const CONTENT_SECURITY_POLICY = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+  "style-src 'self' 'unsafe-inline'",
+  `img-src 'self' data:${RENDER_ORIGIN ? ` ${RENDER_ORIGIN}` : ''}`,
+  "font-src 'self'",
+  `connect-src 'self'${RENDER_ORIGIN ? ` ${RENDER_ORIGIN}` : ''}`,
+  "frame-src 'none'",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+].join('; ');
+
 /**
  * Apply security headers to response
  */
@@ -40,11 +63,9 @@ function applySecurityHeaders(response: NextResponse): void {
   response.headers.set('X-Frame-Options', 'DENY');
   response.headers.set('X-XSS-Protection', '1; mode=block');
 
-  // Content Security Policy - adjust as needed for your application
-  response.headers.set(
-    'Content-Security-Policy',
-    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'"
-  );
+  // Content Security Policy - adjust as needed for your application.
+  // Built once at module load; includes the render service origin when set.
+  response.headers.set('Content-Security-Policy', CONTENT_SECURITY_POLICY);
 
   // Prevent MIME sniffing
   response.headers.set('X-Download-Options', 'noopen');
