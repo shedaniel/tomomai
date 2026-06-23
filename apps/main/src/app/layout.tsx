@@ -1,4 +1,5 @@
 import { PreMaintenanceBanner } from '@/components/pre-maintenance-banner';
+import { SiteFooter } from '@/components/site-footer';
 import { LocaleProvider } from '@/components/providers/locale-provider';
 import { ThemeProvider } from '@/components/providers/theme-provider';
 import { TRPCProvider } from "@/components/providers/trpc-provider";
@@ -91,7 +92,7 @@ export default async function RootLayout({
         ))}
       </head>
       <body
-        className={`${inter.variable} ${geistMono.variable} ${murecho.variable} antialiased bg-background min-h-dvh`}
+        className={`${inter.variable} ${geistMono.variable} ${murecho.variable} antialiased bg-background flex min-h-dvh flex-col`}
       >
         <NextIntlClientProvider messages={messages}>
           <LocaleProvider initialLocale={locale}>
@@ -105,6 +106,7 @@ export default async function RootLayout({
                   />
                 )}
                 {children}
+                <SiteFooter />
                 {shouldInjectToolbar && <VercelToolbar />}
                 <Toaster />
               </TRPCProvider>

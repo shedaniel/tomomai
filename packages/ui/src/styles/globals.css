@@ -95,7 +95,7 @@
 
     /* Glass fills for floating overlays — light theme: bright translucent */
     --glass-surface: oklch(0.99 calc(var(--contrast) * 0.004 * var(--saturation)) var(--hue) / 71%);
-    --glass-strong: oklch(0.996 calc(var(--contrast) * 0.004 * var(--saturation)) var(--hue) / 90%);
+    --glass-strong: oklch(0.994 calc(var(--contrast) * 0.006 * var(--saturation)) var(--hue) / 90%);
 
     /* MD3 container color roles (light) — hue-driven so dynamic color is preserved */
     --primary-container: oklch(0.92 calc(var(--contrast) * 0.065) var(--hue));
@@ -201,14 +201,14 @@
  * ones; without the var() the declaration silently never reaches the browser. */
 @utility glass-surface {
     background-color: var(--glass-surface);
-    --glass-blur: blur(16px) saturate(150%);
+    --glass-blur: blur(8px) saturate(120%);
     -webkit-backdrop-filter: var(--glass-blur);
     backdrop-filter: var(--glass-blur);
 }
 
 @utility glass-strong {
     background-color: var(--glass-strong);
-    --glass-blur: blur(24px) saturate(160%);
+    --glass-blur: blur(24px) saturate(200%);
     -webkit-backdrop-filter: var(--glass-blur);
     backdrop-filter: var(--glass-blur);
 }
