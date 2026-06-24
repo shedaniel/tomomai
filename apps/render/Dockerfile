@@ -13,6 +13,9 @@ WORKDIR /app
 # --- deps: install only what @tomomai/render needs ---
 FROM base AS deps
 COPY pnpm-workspace.yaml pnpm-lock.yaml package.json ./
+# patches/ is referenced from pnpm-lock.yaml's patchedDependencies (vaul); the
+# install fails without it present, even though render doesn't depend on vaul.
+COPY patches patches
 COPY apps/render/package.json apps/render/package.json
 COPY packages/i18n/package.json packages/i18n/package.json
 COPY packages/utils/package.json packages/utils/package.json
@@ -36,4 +39,8 @@ WORKDIR /app/apps/render
 RUN chown -R node:node /app
 USER node
 EXPOSE 8080
-CMD ["pnpm", "start"]
+# Invoke tsx directly rather than `pnpm start`: the corepack shim isn't seeded in
+# the runtime stage, so `pnpm start` would download pnpm at boot (slow, and fails
+# under restricted egress). --env-file-if-exists=.env.local is a no-op in the
+# container (secrets arrive via the platform env); it only loads in dev.
+CMD ["node", "node_modules/tsx/dist/cli.mjs", "--env-file-if-exists=.env.local", "src/server.ts"]
