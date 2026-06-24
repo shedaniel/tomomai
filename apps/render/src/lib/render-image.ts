@@ -9,9 +9,10 @@ import type { Difficulty, FullCombo, FullSync, Region, SongType, TitleType } fro
 import { SnapshotWithSongs } from "./types";
 import { getLogoUrl, getTypeBadgeUrl } from "./utils";
 import { VersionId } from './metadata';
-import { resolveBaseUrl } from './base-url';
 import { span } from './profiler';
 import { loadCachedImage } from './render-image-server';
+
+const SITE_URL = 'https://tomomai.lol';
 
 type CanvasSize = {
   width: number;
@@ -138,10 +139,9 @@ export async function renderImage(data: SnapshotWithSongs<SongForRender>, region
   await span("background", () => renderBackground(ctx, data.snapshot.gameVersion, false, cache, canvasSize));
   const overlayRect = await span("header", () => renderHeader(ctx, { ...data.snapshot, region }, cache, canvasSize));
   await span("content", () => renderContent(ctx, data, cache, overlayRect));
-  const baseUrl = resolveBaseUrl();
   const footerText = visitableProfileAt
-    ? `Visit my profile at ${baseUrl}/profile/${visitableProfileAt}/`
-    : `Generated with ${baseUrl}/`;
+    ? `Visit my profile at ${SITE_URL}/profile/${visitableProfileAt}/`
+    : `Generated with ${SITE_URL}/`;
   await span("footer", () => renderFooter(ctx, data.snapshot.gameVersion, footerText, canvasSize));
 
   return canvas;
@@ -185,7 +185,7 @@ export async function renderDailyPlaysImage(
   const dayLabel = new Date(`${day}T00:00:00+09:00`).toLocaleDateString('en-US', {
     year: 'numeric', month: 'long', day: 'numeric', timeZone: 'Asia/Tokyo',
   });
-  const footerText = `Plays on ${dayLabel} (JST), generated with ${resolveBaseUrl()}/`;
+  const footerText = `Plays on ${dayLabel} (JST), generated with ${SITE_URL}/`;
   await span("footer", () => renderFooter(ctx, snapshot.gameVersion, footerText, canvasSize));
 
   return canvas;
@@ -200,7 +200,7 @@ export async function renderLastCreditImage(data: CreditData, snapshot: Snapshot
   await renderBackground(ctx, snapshot.gameVersion, true, cache, canvasSize);
   const overlayRect = await renderHeader(ctx, { ...snapshot, region }, cache, canvasSize);
   await renderLastCreditContent(ctx, data, cache, overlayRect);
-  const footerText = `Recent credit at ${data.playedAt.toLocaleString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tokyo' })}, generated with ${resolveBaseUrl()}/`;
+  const footerText = `Recent credit at ${data.playedAt.toLocaleString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tokyo' })}, generated with ${SITE_URL}/`;
   await renderFooter(ctx, snapshot.gameVersion, footerText, canvasSize);
 
   return canvas;
