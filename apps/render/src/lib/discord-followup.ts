@@ -16,9 +16,12 @@ export async function uploadDiscordFollowup(
   form.append('files[0]', new Blob([new Uint8Array(buffer)], { type: 'image/webp' }), filename);
   form.append('payload_json', JSON.stringify(payloadJson));
 
+  // Bound the upload so a slow Discord API can't stall the render request. 15s
+  // is well within Discord's typical response times and the interaction token's
+  // 15-minute validity window.
   const res = await fetch(
     `https://discord.com/api/v10/webhooks/${applicationId}/${interactionToken}/messages/@original`,
-    { method: 'PATCH', body: form },
+    { method: 'PATCH', body: form, signal: AbortSignal.timeout(15_000) },
   );
   if (!res.ok) {
     throw new Error(`Discord followup PATCH failed: ${res.status} ${await res.text()}`);

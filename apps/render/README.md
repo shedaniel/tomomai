@@ -52,5 +52,6 @@ requests (unlike Vercel lambdas).
   `server/services/*`, …) is **copied** from `apps/main`, not shared — the
   upcoming catalogue PR extracts these into a shared package; reconcile then.
 - `apps/main` still owns the `/api/export-image`, `/api/last-credit`,
-  `/api/daily-plays` routes; wiring them to mint a token + 302 here is the next
-  step.
+  `/api/daily-plays` routes; they mint a short-lived signed token and 302 to
+  this service's `/img` (web) or POST `/discord/render` (Discord followup).
+  See `apps/main/src/lib/render-token.ts` and `render-client.ts`.

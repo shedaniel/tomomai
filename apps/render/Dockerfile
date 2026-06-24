@@ -1,7 +1,8 @@
 # Build from the REPO ROOT so the pnpm workspace and apps/main's assets are in context:
 #   docker build -f apps/render/Dockerfile -t tomomai-render .
 FROM node:22-bookworm-slim AS base
-ENV PNPM_HOME=/pnpm PATH=$PNPM_HOME:$PATH
+ENV PNPM_HOME=/pnpm
+ENV PATH=$PNPM_HOME:$PATH
 RUN corepack enable
 # skia-canvas / sharp runtime libs (fontconfig is needed for font loading).
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -30,5 +31,9 @@ COPY apps/render/src apps/render/src
 # apps/render/public/res). No reaching into apps/main.
 COPY apps/render/public/res /app/public/res
 WORKDIR /app/apps/render
+# Drop root. The node base image ships a `node` user (uid 1000); chown /app so it
+# can write the runtime cover cache under public/res/preloaded.
+RUN chown -R node:node /app
+USER node
 EXPOSE 8080
 CMD ["pnpm", "start"]

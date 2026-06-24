@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
 const searchParams = z.object({
   region: z.enum(getEnabledRegions()),
   snapshotId: z.string().min(1).optional(),
-  day: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  day: z.iso.date().optional(),
 });
 
 // Rendering moved to apps/render. This route stays the auth boundary: it resolves

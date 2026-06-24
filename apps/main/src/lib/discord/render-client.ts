@@ -24,6 +24,10 @@ export async function requestDiscordRender(args: {
   const exp = Math.floor(Date.now() / 1000) + 120;
   const token = mintRenderToken({ ...args.render, scale: args.render.scale ?? 2, exp }, secret);
 
+  // Bound the call so a stalled render service can't hang the Vercel function —
+  // a timeout lets us fall back to the text message instead of never returning.
+  // 25s leaves headroom under Vercel's default function timeout for the caller's
+  // own fallback handling.
   const res = await fetch(`${base.replace(/\/$/, '')}/discord/render`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -34,6 +38,7 @@ export async function requestDiscordRender(args: {
       payloadJson: args.payloadJson,
       filename: args.filename,
     }),
+    signal: AbortSignal.timeout(25_000),
   });
   if (!res.ok) {
     throw new Error(`render /discord/render failed: ${res.status} ${await res.text()}`);
