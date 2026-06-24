@@ -1,7 +1,15 @@
-// @copied-from apps/main/src/lib/image_cacher.ts — temporary duplicate; do not edit manually, change apps/main and re-sync (extracted to a shared package in the catalogue PR).
+/**
+ * On-disk gzip cache for maimaidx.jp images (which have SSL issues and are
+ * slow to fetch). Render is a long-lived process, so the filesystem cache
+ * persists across requests.
+ *
+ * Stripped from the apps/main copy: `isServer()` is always true and
+ * `isServerless()` always false here (long-lived Node process, not Vercel),
+ * so those guards are removed.
+ */
 
 import { createHash } from 'crypto';
-import { SAFE_MAIMAI_IMAGE_URLS, isServer, isServerless } from './utils';
+import { SAFE_MAIMAI_IMAGE_URLS } from './utils';
 import { gzip, gunzip } from 'zlib';
 import { promisify } from 'util';
 import path from 'path';
@@ -12,37 +20,27 @@ import { PUBLIC_DIR } from "./paths";
 const gzipAsync = promisify(gzip);
 const gunzipAsync = promisify(gunzip);
 
-// Generate a hash for the URL to use as filename
 function generateUrlHash(url: string): string {
   return createHash('md5').update(url).digest('hex');
 }
 
-// Check if URL is from allowed maimaidx domains
 function isMaimaidxDomain(url: string): boolean {
   try {
     const urlObj = new URL(url);
-    return SAFE_MAIMAI_IMAGE_URLS.some(domain => urlObj.hostname.includes(domain))
+    return SAFE_MAIMAI_IMAGE_URLS.some(domain => urlObj.hostname.includes(domain));
   } catch {
     return false;
   }
 }
 
-// Cache and return local path for maimaidx images
 export async function cacheImage(url: string): Promise<void> {
-  // Only cache on server and for maimaidx domains
-  if (!isServer() || !isMaimaidxDomain(url) || isServerless()) {
-    return;
-  }
+  if (!isMaimaidxDomain(url)) return;
 
   try {
-    // Generate hash for filename
     const urlHash = generateUrlHash(url);
-
-    // Use different cache directory based on environment
     const cacheDir: string = path.join(PUBLIC_DIR, 'res', 'preloaded');
     await fs.mkdir(cacheDir, { recursive: true });
 
-    // Check if file already exists
     const filePath = path.join(cacheDir, `${urlHash}.gz`);
     try {
       await fs.access(filePath);
@@ -52,9 +50,7 @@ export async function cacheImage(url: string): Promise<void> {
 
     const { Agent } = await import('undici');
     const httpsAgent = new Agent({
-      connect: {
-        rejectUnauthorized: false
-      }
+      connect: { rejectUnauthorized: false },
     });
 
     const response = await fetch(url, {
@@ -71,40 +67,24 @@ export async function cacheImage(url: string): Promise<void> {
 
     const arrayBuffer = await response.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
-
-    // Save to cache
-    const cachedFilePath = path.join(cacheDir, `${urlHash}.gz`);
-
     const compressedBuffer = await gzipAsync(buffer);
-
-    await fs.writeFile(cachedFilePath, compressedBuffer);
+    await fs.writeFile(path.join(cacheDir, `${urlHash}.gz`), compressedBuffer);
   } catch (error) {
     logger.error({ err: error, url }, "Error caching image");
   }
 }
 
-// Get cached image buffer for API routes
 export async function getCachedImageBuffer(url: string): Promise<{ buffer: Buffer; contentType: string } | null> {
-  if (!isServer() || !isMaimaidxDomain(url)) {
-    return null;
-  }
-
-  // In serverless environments, no filesystem caching available
-  if (isServerless()) {
-    return null;
-  }
+  if (!isMaimaidxDomain(url)) return null;
 
   try {
     const urlHash = generateUrlHash(url);
     const cacheDir = path.join(PUBLIC_DIR, 'res', 'preloaded');
-
-    // Check if gzipped cached file exists
     const cachedFilePath = path.join(cacheDir, `${urlHash}.gz`);
     try {
       const compressedBuffer = await fs.readFile(cachedFilePath);
       const buffer = await gunzipAsync(compressedBuffer);
 
-      // Check magic bytes for image type
       let contentType = 'image/png';
       if (buffer[0] === 0xFF && buffer[1] === 0xD8) {
         contentType = 'image/jpeg';
@@ -121,9 +101,7 @@ export async function getCachedImageBuffer(url: string): Promise<{ buffer: Buffe
       return { buffer, contentType };
     } catch {
     }
-
     return null;
-
   } catch (error) {
     logger.error({ err: error, url }, "Error reading cached image");
     return null;

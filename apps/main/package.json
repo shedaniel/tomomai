@@ -34,6 +34,7 @@
     "scripts:migrate-icons": "node scripts/migrate-icons-to-r2.js"
   },
   "dependencies": {
+    "@tomomai/render-token": "workspace:*",
     "@tomomai/ui": "workspace:*",
     "@tomomai/i18n": "workspace:*",
     "@tomomai/utils": "workspace:*",

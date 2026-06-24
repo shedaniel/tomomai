@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import type { Region } from '@/lib/types';
 import { renderRedirectUrl } from '@/lib/render-token';
+import { buildExportImageMessage } from '@/lib/render-data';
 import { getEnabledRegions } from '@/lib/enabled-regions';
 import { z } from 'zod';
 
@@ -12,10 +13,15 @@ const searchParams = z.object({
   region: z.enum(getEnabledRegions()).optional(),
 });
 
-// Rendering moved to apps/render. This route is the auth/capability boundary:
-// access is possession of the unguessable snapshot publicId, so we just validate
-// and 302 to the render service with a signed token. No session check (unchanged
-// from the previous behaviour, which rendered for anyone holding the publicId).
+/**
+ * Auth/capability boundary for the export-image render. Access is possession
+ * of the unguessable snapshot publicId (unchanged from the pre-token era).
+ *
+ * Now does the full data prep here (DB → RenderMessage) and mints a signed
+ * token carrying the B50 scores + header metadata. The 302 carries the token;
+ * apps/render verifies + renders with zero DB access. Catalog fields (song
+ * names, covers, levels) are joined from /api/v1/songs on the render side.
+ */
 export async function GET(request: NextRequest) {
   const parsed = searchParams.safeParse(Object.fromEntries(request.nextUrl.searchParams));
   if (!parsed.success) {
@@ -26,11 +32,16 @@ export async function GET(request: NextRequest) {
   }
   const { snapshotId, username, region } = parsed.data;
 
-  const url = renderRedirectUrl(request.nextUrl.searchParams, {
-    route: 'export-image',
+  const result = await buildExportImageMessage({
     snapshotId,
     username,
     region: region as Region | undefined,
+    scale: 2,
   });
+  if (!result.ok) {
+    return NextResponse.json({ error: result.error }, { status: result.status });
+  }
+
+  const url = renderRedirectUrl(request.nextUrl.searchParams, result.message);
   return NextResponse.redirect(url, 302);
 }

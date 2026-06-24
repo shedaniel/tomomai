@@ -1,4 +1,4 @@
-import { CreditData, RecentSongData, SnapshotMetadata } from '../server/services/credit-data';
+import { CreditData, RecentSongData, SnapshotMetadata } from './types';
 import { getLogger } from './request-logger';
 import type { CanvasRenderingContext2D as SkiaContext } from 'skia-canvas';
 import { Canvas, Image, loadImage } from 'skia-canvas';
@@ -8,7 +8,7 @@ import { calculateDXStars, calculateNoteLosses, distributeBreaks } from './score
 import type { Difficulty, FullCombo, FullSync, Region, SongType, TitleType } from "./types";
 import { SnapshotWithSongs } from "./types";
 import { getLogoUrl, getTypeBadgeUrl } from "./utils";
-import { VersionId } from './metadata';
+import { VersionId } from './types';
 import { span } from './profiler';
 import { loadCachedImage } from './render-image-server';
 

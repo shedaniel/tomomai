@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { user, userSnapshots } from '@/lib/db/schema-pg';
 import { and, eq } from 'drizzle-orm';
 import { renderRedirectUrl } from '@/lib/render-token';
+import { buildLastCreditMessage } from '@/lib/render-data';
 import { requestLogger } from '@/lib/request-logger';
 import { getEnabledRegions } from '@/lib/enabled-regions';
 import { z } from 'zod';
@@ -16,9 +17,11 @@ const searchParams = z.object({
   beforeDate: z.iso.datetime().optional(),
 });
 
-// Rendering moved to apps/render. This route stays the auth boundary: it resolves
-// who the credit belongs to (public snapshot, or the signed-in user), then 302s
-// to the render service with a token carrying the resolved userId.
+/**
+ * Auth boundary for last-credit render. Resolves who the credit belongs to
+ * (public snapshot or signed-in user), then does the full data prep here and
+ * mints a signed token carrying the credit tracks + header. 302s to render.
+ */
 export async function GET(request: NextRequest) {
   const { log } = requestLogger(request, "last-credit");
   const parsed = searchParams.safeParse(Object.fromEntries(request.nextUrl.searchParams));
@@ -52,11 +55,16 @@ export async function GET(request: NextRequest) {
     log.info({ userId }, 'Authenticated mode');
   }
 
-  const url = renderRedirectUrl(request.nextUrl.searchParams, {
-    route: 'last-credit',
+  const result = await buildLastCreditMessage({
     userId,
     region,
-    beforeDate,
+    beforeDate: beforeDate ? new Date(beforeDate) : undefined,
+    scale: 2,
   });
+  if (!result.ok) {
+    return NextResponse.json({ error: result.error }, { status: result.status });
+  }
+
+  const url = renderRedirectUrl(request.nextUrl.searchParams, result.message);
   return NextResponse.redirect(url, 302);
 }

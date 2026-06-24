@@ -1,54 +1,51 @@
-import { createHmac } from 'crypto';
-import type { Region } from '@/lib/types';
-
 /**
- * Mints short-lived signed tokens for the render service (apps/render). apps/main
- * is the auth boundary: it resolves the session / public snapshot, then mints a
- * token describing exactly what may be rendered and 302s the client to
- * `${RENDER_PUBLIC_URL}/img?t=…`. The render service verifies the signature and
- * trusts the payload.
+ * Thin wrapper around @tomomai/render-token for apps/main.
  *
- * Token format MUST stay byte-compatible with apps/render/src/token.ts
- * (`base64url(JSON) + "." + base64url(HMAC-SHA256)`). This is a deliberate small
- * duplicate of the verify-side payload type; the catalogue PR reconciles it.
+ * apps/main does ALL data prep (see lib/render-data.ts), builds a
+ * `RenderMessage`, then either:
+ *   - 302s the client to  `${RENDER_PUBLIC_URL}/img?t=<token>`  (web download)
+ *   - POSTs the token to  `${RENDER_INTERNAL_URL}/discord/render`  (Discord)
+ *
+ * The token carries the full render payload (HMAC-signed); apps/render has zero
+ * DB access. See docs/render-token-v1.md for the wire format.
  */
-export interface RenderTokenPayload {
-  route: 'export-image' | 'last-credit' | 'daily-plays';
-  /** Optional for export-image (the snapshot determines its region); required for the others. */
-  region?: Region;
-  scale: 1 | 2;
-  snapshotId?: string;
-  username?: string;
-  userId?: string;
-  beforeDate?: string;
-  day?: string;
-  exp: number;
+
+import {
+  mintRenderToken,
+  type RenderMessage,
+} from "@tomomai/render-token";
+
+function getSecret(): string {
+  const secret = process.env.RENDER_TOKEN_SECRET;
+  if (!secret) throw new Error("RENDER_TOKEN_SECRET is not set");
+  return secret;
 }
 
-const TTL_SECONDS = 300;
+function getPublicBase(): string {
+  const base = process.env.RENDER_PUBLIC_URL;
+  if (!base) throw new Error("RENDER_PUBLIC_URL is not set");
+  return base.replace(/\/$/, "");
+}
 
-export function mintRenderToken(payload: RenderTokenPayload, secret: string): string {
-  const payloadB64 = Buffer.from(JSON.stringify(payload)).toString('base64url');
-  const sig = createHmac('sha256', secret).update(payloadB64).digest('base64url');
-  return `${payloadB64}.${sig}`;
+/** Mint a signed token for a fully-prepared RenderMessage. */
+export function mintToken(message: RenderMessage): string {
+  return mintRenderToken(message, getSecret());
 }
 
 /**
- * Builds the absolute `/img` redirect URL for a render token. Reads `scale` from
- * the incoming query (`scale=1` → 1, else 2) and stamps a short expiry. Throws if
- * the render env is unset.
+ * Build the absolute `/img` redirect URL for a prepared RenderMessage.
+ * Extracts `scale` from the incoming query for backward compat (scale=1 → 1).
  */
 export function renderRedirectUrl(
   searchParams: URLSearchParams,
-  payload: Omit<RenderTokenPayload, 'scale' | 'exp'>,
+  message: RenderMessage,
 ): string {
-  const secret = process.env.RENDER_TOKEN_SECRET;
-  const base = process.env.RENDER_PUBLIC_URL;
-  if (!secret) throw new Error('RENDER_TOKEN_SECRET is not set');
-  if (!base) throw new Error('RENDER_PUBLIC_URL is not set');
-
-  const scale: 1 | 2 = searchParams.get('scale') === '1' ? 1 : 2;
-  const exp = Math.floor(Date.now() / 1000) + TTL_SECONDS;
-  const token = mintRenderToken({ ...payload, scale, exp }, secret);
-  return `${base.replace(/\/$/, '')}/img?t=${encodeURIComponent(token)}`;
+  // Override scale from query (the only field the client still controls).
+  const scale: 1 | 2 = searchParams.get("scale") === "1" ? 1 : 2;
+  message.header.scale = scale;
+  const token = mintToken(message);
+  return `${getPublicBase()}/img?t=${token}`;
 }
+
+export { mintToken as mintRenderToken };
+export type { RenderMessage };

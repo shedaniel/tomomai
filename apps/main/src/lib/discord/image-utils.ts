@@ -5,6 +5,7 @@ import { prepareCreditData } from '@/server/services/credit-data';
 import { prepareDailyPlaysData } from '@/server/services/daily-plays-data';
 import { getLogger } from '@/lib/request-logger';
 import { requestDiscordRender } from './render-client';
+import { buildExportImageMessage, buildLastCreditMessage, buildDailyPlaysMessage } from '@/lib/render-data';
 
 // Image rendering lives in apps/render. These helpers stay the Discord-domain
 // layer: they compose the message (content/components), resolve the metadata the
@@ -60,8 +61,10 @@ export async function generateAndSendProfileImage({
   ];
 
   try {
+    const renderResult = await buildExportImageMessage({ snapshotId: summary.publicId, scale: 2 });
+    if (!renderResult.ok) throw new Error(renderResult.error);
     await requestDiscordRender({
-      render: { route: 'export-image', snapshotId: summary.publicId },
+      message: renderResult.message,
       applicationId,
       interactionToken,
       payloadJson: { content, embeds: [], components },
@@ -168,8 +171,10 @@ export async function generateAndSendCreditImage({
       },
     ];
 
+    const renderResult = await buildLastCreditMessage({ userId, region, beforeDate, scale: 2 });
+    if (!renderResult.ok) throw new Error(renderResult.error);
     await requestDiscordRender({
-      render: { route: 'last-credit', userId, region, beforeDate: beforeDate?.toISOString() },
+      message: renderResult.message,
       applicationId,
       interactionToken,
       payloadJson: { content, embeds: [], components },
@@ -221,8 +226,10 @@ export async function generateAndSendDailyPlaysImage({
     const { day: resolvedDay } = result;
     const content = `<@${discordUserId}> Daily plays for **${resolvedDay}** (${regionName})`;
 
+    const renderResult = await buildDailyPlaysMessage({ userId, region, day: resolvedDay, scale: 2 });
+    if (!renderResult.ok) throw new Error(renderResult.error);
     await requestDiscordRender({
-      render: { route: 'daily-plays', userId, region, day: resolvedDay },
+      message: renderResult.message,
       applicationId,
       interactionToken,
       payloadJson: { content, embeds: [] },

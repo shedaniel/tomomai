@@ -1,31 +1,23 @@
-import { renderToWebp, type RenderOutcome } from '../render-route';
-import type { RenderTokenPayload } from '../token';
-import { buildExportImageJob } from './export-image';
-import { buildLastCreditJob } from './last-credit';
-import { buildDailyPlaysJob } from './daily-plays';
+import type { RenderMessage } from '@tomomai/render-token';
+import type { RenderOutcome } from '../render-route';
+import { renderExportImage } from './export-image';
+import { renderLastCredit } from './last-credit';
+import { renderDailyPlays } from './daily-plays';
 
 /**
- * Renders the webp for a verified token payload, dispatching on `route`. Each
- * case is monomorphic (the specific job builder → renderToWebp), so the generic
- * `D` stays inferred without variance gymnastics. Both delivery modes — the
- * `/img` HTTP response and the Discord followup upload — go through here.
+ * Dispatches on the decoded RenderMessage's route. Each handler joins the token
+ * data with the song catalogue and renders. No DB access anywhere.
  */
-export function renderOutcomeFor(
-  payload: RenderTokenPayload,
+export async function renderOutcomeFor(
+  message: RenderMessage,
   opts: { requestId: string; profile: boolean },
 ): Promise<RenderOutcome> {
-  switch (payload.route) {
+  switch (message.route) {
     case 'export-image':
-      return renderToWebp(buildExportImageJob(payload, opts));
+      return renderExportImage(message, opts);
     case 'last-credit':
-      return renderToWebp(buildLastCreditJob(payload, opts));
+      return renderLastCredit(message, opts);
     case 'daily-plays':
-      return renderToWebp(buildDailyPlaysJob(payload, opts));
-    default:
-      return Promise.resolve({
-        ok: false,
-        status: 400,
-        body: { error: `Unknown route: ${(payload as { route?: string }).route}`, requestId: opts.requestId },
-      });
+      return renderDailyPlays(message, opts);
   }
 }

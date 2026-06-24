@@ -1,15 +1,15 @@
-import { mintRenderToken, type RenderTokenPayload } from '@/lib/render-token';
+import { mintRenderToken, type RenderMessage } from '@tomomai/render-token';
 
 /**
- * Asks the render service (apps/render) to render an image and upload it as the
- * Discord interaction followup. apps/main composes the message body
- * (`payloadJson`) and authorizes the render by minting a signed token; the image
+ * Asks the render service (apps/render) to render an image and upload it as
+ * the Discord interaction followup. apps/main does all data prep (building the
+ * RenderMessage) and authorizes the render by minting a signed token; the image
  * bytes go render → Discord directly (never through Vercel).
  *
  * Throws on a non-2xx so callers can post their own text fallback.
  */
 export async function requestDiscordRender(args: {
-  render: Omit<RenderTokenPayload, 'scale' | 'exp'> & { scale?: 1 | 2 };
+  message: RenderMessage;
   applicationId: string;
   interactionToken: string;
   /** Discord message body (content/embeds/components). */
@@ -21,8 +21,7 @@ export async function requestDiscordRender(args: {
   if (!secret) throw new Error('RENDER_TOKEN_SECRET is not set');
   if (!base) throw new Error('RENDER_INTERNAL_URL / RENDER_PUBLIC_URL is not set');
 
-  const exp = Math.floor(Date.now() / 1000) + 120;
-  const token = mintRenderToken({ ...args.render, scale: args.render.scale ?? 2, exp }, secret);
+  const token = mintRenderToken(args.message, secret);
 
   // Bound the call so a stalled render service can't hang the Vercel function —
   // a timeout lets us fall back to the text message instead of never returning.

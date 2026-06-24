@@ -8,11 +8,10 @@ import { getLogoUrl, getTypeBadgeUrl } from './lib/utils';
 import { logger } from './lib/logger';
 import { enterProfile, formatProfileTree, span } from './lib/profiler';
 import type { Region } from './lib/types';
-import type { VersionId } from './lib/metadata';
 
 type SnapshotForResources = {
   rating: number;
-  gameVersion: VersionId;
+  gameVersion: number;
   iconUrl: string;
   classRankUrl: string;
   courseRankUrl: string;
@@ -22,9 +21,6 @@ type SnapshotForResources = {
  * Resource URLs every snapshot-based renderer needs: type badges, rating image,
  * the user's icon/class/course rank, trophies, the version character and logo,
  * default bg, and the full badge set. Renderers add their own extras on top.
- *
- * (Moved verbatim from apps/main's render-image-route.ts; the only change in
- * this app is that the surrounding pipeline no longer depends on Next.)
  */
 export function commonSnapshotResources(snapshot: SnapshotForResources, region: Region): string[] {
   const v = snapshot.gameVersion;
@@ -54,10 +50,6 @@ export function commonSnapshotResources(snapshot: SnapshotForResources, region: 
   ];
 }
 
-export type PrepareResult<D> =
-  | { type: "ok"; data: D }
-  | { type: "error"; status: number; message: string };
-
 function jsonResponse(body: unknown, status: number, requestId: string): Response {
   return new Response(JSON.stringify(body), {
     status,
@@ -81,32 +73,22 @@ async function buildImageCache(
         failed.push({ url, error });
         log.warn({ url, err: error }, `Failed to cache image: ${url}`);
       }
-    })
+    }),
   );
   return { cache, failed };
 }
 
-export interface RenderJob<D> {
+export interface RenderJob {
   routeName: string;
   requestId: string;
   scale: 1 | 2;
   profile?: boolean;
-  /** Validate + load whatever the renderer needs. Params are captured by the caller's closure. */
-  prepareData: (log: Logger) => Promise<PrepareResult<D>>;
   /** URLs to pre-fetch into the ImageCache before render. */
-  resources: (data: D) => string[];
-  render: (data: D, cache: ImageCache) => Promise<Canvas>;
+  resources: string[];
+  /** Render the image using the pre-filled cache. */
+  render: (cache: ImageCache) => Promise<Canvas>;
   /** Content-Disposition filename (no extension). */
-  filename: (data: D) => string;
-}
-
-/**
- * Identity helper that infers `D` from the literal and type-checks the
- * cross-references between `prepareData` → `resources`/`render`/`filename`
- * (the linkage `runRenderJob<D>(...)` used to provide at the call site).
- */
-export function defineRenderJob<D>(job: RenderJob<D>): RenderJob<D> {
-  return job;
+  filename: string;
 }
 
 export type RenderOutcome =
@@ -114,15 +96,13 @@ export type RenderOutcome =
   | { ok: false; status: number; body: Record<string, unknown> };
 
 /**
- * Core "skia-canvas → webp buffer" pipeline shared by both delivery modes
- * (`/img` HTTP response and the Discord followup upload): fontsLoaded,
- * prepareData, image-cache fill, render, webp encode. Returns a structured
- * outcome rather than a Response so callers choose how to deliver the bytes.
+ * Core "skia-canvas → webp buffer" pipeline. Fonts → image-cache fill → render
+ * → webp encode. Data comes from the decoded token (verified upstream); no DB.
  *
- * Output is byte-identical to apps/main's old web render (same skia toBuffer,
- * density=scale, quality 0.85).
+ * Returns a structured outcome so callers choose delivery: `/img` HTTP response
+ * or Discord followup upload.
  */
-export async function renderToWebp<D>(job: RenderJob<D>): Promise<RenderOutcome> {
+export async function renderToWebp(job: RenderJob): Promise<RenderOutcome> {
   const { routeName, requestId } = job;
   const log = logger.child({ route: routeName, requestId });
   log.info(`Starting ${routeName} render`);
@@ -131,14 +111,8 @@ export async function renderToWebp<D>(job: RenderJob<D>): Promise<RenderOutcome>
     try {
       await span("fontsLoaded", () => fontsLoaded.then(() => undefined));
 
-      const prepared = await span("prepareData", () => job.prepareData(log));
-      if (prepared.type === "error") {
-        return { ok: false, status: prepared.status, body: { error: prepared.message, requestId } };
-      }
-      const { data } = prepared;
-
       let startTime = Date.now();
-      const { cache, failed } = await span("buildImageCache", () => buildImageCache(job.resources(data), log));
+      const { cache, failed } = await span("buildImageCache", () => buildImageCache(job.resources, log));
       if (failed.length > 0) {
         log.error({ count: failed.length }, `${failed.length} image(s) failed to load`);
         return {
@@ -157,14 +131,14 @@ export async function renderToWebp<D>(job: RenderJob<D>): Promise<RenderOutcome>
       log.info({ count: Object.keys(cache).length, durationMs: Date.now() - startTime }, `Cached ${Object.keys(cache).length} images`);
 
       startTime = Date.now();
-      const canvas = await span("render", () => job.render(data, cache));
+      const canvas = await span("render", () => job.render(cache));
       log.info({ durationMs: Date.now() - startTime, profile: job.profile }, `Image rendered`);
 
       startTime = Date.now();
       const encoded = await span("encodeWebp", () => canvas.toBuffer('webp', { density: job.scale, quality: 0.85 }));
       log.info({ size: encoded.length, durationMs: Date.now() - startTime }, `Encoded webp (${encoded.length} bytes)`);
 
-      return { ok: true, buffer: Buffer.from(encoded), filename: job.filename(data) };
+      return { ok: true, buffer: Buffer.from(encoded), filename: job.filename };
     } catch (error) {
       log.error({ err: error }, 'Failed to generate image');
       return {
