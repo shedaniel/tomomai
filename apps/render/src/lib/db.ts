@@ -1,3 +1,5 @@
+// @copied-from apps/main/src/lib/db.ts — temporary duplicate; do not edit manually, change apps/main and re-sync (extracted to a shared package in the catalogue PR).
+
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import * as schema from "./db/schema-pg";

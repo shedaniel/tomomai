@@ -1,3 +1,5 @@
+// @copied-from apps/main/src/lib/image_cacher.ts — temporary duplicate; do not edit manually, change apps/main and re-sync (extracted to a shared package in the catalogue PR).
+
 import { createHash } from 'crypto';
 import { SAFE_MAIMAI_IMAGE_URLS, isServer, isServerless } from './utils';
 import { gzip, gunzip } from 'zlib';

@@ -1,3 +1,5 @@
+// @copied-from apps/main/src/lib/score-details.ts — temporary duplicate; do not edit manually, change apps/main and re-sync (extracted to a shared package in the catalogue PR).
+
 import { logger } from "./logger";
 
 // Constants for achievement calculation

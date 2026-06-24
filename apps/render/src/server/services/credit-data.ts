@@ -1,3 +1,5 @@
+// @copied-from apps/main/src/server/services/credit-data.ts — temporary duplicate; do not edit manually, change apps/main and re-sync (extracted to a shared package in the catalogue PR).
+
 import { db } from '../../lib/db';
 import { songs, user, userRecentSongs, userRecentSongsDetailed, userSnapshots } from '../../lib/db/schema-pg';
 import { and, desc, eq, lte } from 'drizzle-orm';

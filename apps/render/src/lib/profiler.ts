@@ -1,3 +1,5 @@
+// @copied-from apps/main/src/lib/profiler.ts — temporary duplicate; do not edit manually, change apps/main and re-sync (extracted to a shared package in the catalogue PR).
+
 import { AsyncLocalStorage } from 'node:async_hooks';
 
 /**

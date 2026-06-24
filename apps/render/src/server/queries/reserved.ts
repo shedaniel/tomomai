@@ -1,3 +1,5 @@
+// @copied-from apps/main/src/server/queries/reserved.ts — temporary duplicate; do not edit manually, change apps/main and re-sync (extracted to a shared package in the catalogue PR).
+
 import { db } from "../../lib/db";
 import { songs } from "../../lib/db/schema-pg";
 import { getEnabledRegions } from "../../lib/enabled-regions";

@@ -1,3 +1,5 @@
+// @copied-from apps/main/src/lib/base-url.ts — temporary duplicate; do not edit manually, change apps/main and re-sync (extracted to a shared package in the catalogue PR).
+
 export function resolveBaseUrl(): string {
   const normalize = (url: string) => url.replace(/\/+$/, "");
   const withProtocol = (url: string) => (url.startsWith("http") ? url : `https://${url}`);

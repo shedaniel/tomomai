@@ -1,3 +1,5 @@
+// @copied-from apps/main/src/lib/db/schema-pg.ts — temporary duplicate; do not edit manually, change apps/main and re-sync (extracted to a shared package in the catalogue PR).
+
 import { pgTable, text, integer, smallint, bigint, bigserial, boolean, timestamp, unique, index, pgEnum, jsonb, varchar, check, uuid, point, primaryKey } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import {

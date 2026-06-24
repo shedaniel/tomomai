@@ -1,3 +1,5 @@
+// @copied-from apps/main/src/lib/db/types.ts — temporary duplicate; do not edit manually, change apps/main and re-sync (extracted to a shared package in the catalogue PR).
+
 export const LANGUAGE_ENUM = ["en", "en-GB", "ja", "zh-TW", "zh-HK", "zh-CN", "zh-SG", "ko"] as const;
 
 export const REGION_ENUM = ["intl", "jp", "cn"] as const;

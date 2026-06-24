@@ -1,3 +1,5 @@
+// @copied-from apps/main/src/lib/rating-calculator.ts — temporary duplicate; do not edit manually, change apps/main and re-sync (extracted to a shared package in the catalogue PR).
+
 import { VersionId } from "./metadata";
 import { Difficulty, FullCombo, SongWithScore } from "./types";
 

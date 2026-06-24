@@ -1,3 +1,5 @@
+// @copied-from apps/main/src/lib/request-logger.ts — temporary duplicate; do not edit manually, change apps/main and re-sync (extracted to a shared package in the catalogue PR).
+
 import { logger } from "./logger";
 import { nanoid } from "nanoid";
 import type { Logger } from "pino";

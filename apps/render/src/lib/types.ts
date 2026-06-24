@@ -1,3 +1,5 @@
+// @copied-from apps/main/src/lib/types.ts — temporary duplicate; do not edit manually, change apps/main and re-sync (extracted to a shared package in the catalogue PR).
+
 // Centralized type definitions for the maimai charts application
 import { VersionId } from "./metadata";
 
