@@ -11,6 +11,7 @@ import { getLogoUrl, getTypeBadgeUrl } from "./utils";
 import { VersionId } from './metadata';
 import { resolveBaseUrl } from './base-url';
 import { span } from './profiler';
+import { loadCachedImage } from './render-image-server';
 
 type CanvasSize = {
   width: number;
@@ -112,20 +113,6 @@ function isDataUrl(url: string): boolean {
   return url.startsWith('data:');
 }
 
-// Helper to convert relative URLs to absolute URLs (for server-side rendering)
-function toAbsoluteUrl(url: string): string {
-  if (url.startsWith('http://') || url.startsWith('https://')) {
-    return url;
-  }
-  // Get base URL from environment or default to localhost
-  const baseUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL
-    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
-    : process.env.VERCEL_URL
-      ? `https://${process.env.VERCEL_URL}`
-      : 'http://localhost:3000';
-  return `${baseUrl}${url}`;
-}
-
 // Helper to load images with caching
 async function loadImageWithCache(cache: ImageCache, url: string): Promise<Image> {
   if (isDataUrl(url)) {
@@ -138,8 +125,7 @@ async function loadImageWithCache(cache: ImageCache, url: string): Promise<Image
 
   getLogger().debug({ url }, "Loading image from URL");
 
-  const absoluteUrl = toAbsoluteUrl(url);
-  const img = await loadImage(absoluteUrl);
+  const img = await loadCachedImage(url);
   cache[url] = () => Promise.resolve(img);
   return img;
 }
