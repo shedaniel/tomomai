@@ -1,6 +1,7 @@
 "use client";
 
 import { useLocale } from "@/components/providers/locale-provider";
+import { stripLocaleFromPath } from "@tomomai/i18n/client";
 import { ChangeUsernameDialog } from "@/components/settings/change-username-dialog";
 import { SessionsSection } from "@/components/settings/sessions-section";
 import { LinkedAccountsSection, type LinkedAccountProviderId } from "@/components/settings/linked-accounts-section";
@@ -24,6 +25,7 @@ import {
   SelectValue,
 } from "@tomomai/ui/select-friendly";
 import { Locale, setLocaleCookie } from "@/i18n/locale";
+import { usePathname } from "@/i18n/navigation";
 import { isCNExclusive } from "@/lib/enabled-regions";
 import { trpc } from "@/lib/trpc-client";
 import { getLanguages } from "@/lib/utils";
@@ -75,6 +77,7 @@ export function AccountSettings({ flags }: AccountSettingsProps) {
 function AccountFields() {
   const t = useTranslations();
   const { locale, setLocale } = useLocale();
+  const pathname = usePathname();
   const [selectedLanguage, setSelectedLanguage] = useState<string | null>(locale || null);
   const [usernameDialogOpen, setUsernameDialogOpen] = useState(false);
 
@@ -94,8 +97,8 @@ function AccountFields() {
     } else {
       if (typeof document !== "undefined") {
         document.cookie = "NEXT_LOCALE=; path=/; max-age=0";
+        window.location.href = stripLocaleFromPath(pathname || "/");
       }
-      window.location.reload();
     }
   });
 

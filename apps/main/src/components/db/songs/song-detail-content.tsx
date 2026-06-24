@@ -21,7 +21,7 @@ import { Button } from "@tomomai/ui";
 import { Separator } from "@tomomai/ui";
 import { resolveBaseUrl } from "@/lib/base-url";
 import { useTranslations } from "next-intl";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation"
 import { toast } from "sonner";
 import { SongChartDialogContent } from "./song-detail-dialog";
 import { renderLevelPrecise } from "@/lib/name-utils";

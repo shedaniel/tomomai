@@ -3,30 +3,67 @@ import type { NextRequest } from 'next/server';
 import { getCachedEdgeConfig } from './lib/edge-config-cache';
 import { nanoid } from 'nanoid';
 import { securityMiddleware } from './lib/security/middleware';
-import { locales, type Locale } from './i18n/locale';
+import { locales, defaultLocale, type Locale } from './i18n/locale';
 
 const FONT_CORS_ORIGINS = new Set([
   'https://maimaidx.jp',
   'https://maimaidx-eng.com',
 ]);
 
+// Path prefixes that must NOT be locale-prefixed.
+function isUnlocalizable(pathname: string): boolean {
+  // Any path whose last segment has a file extension is a static asset or a
+  // route handler (e.g. /icon.webp, /sitemap.xml, /openapi.json) and must
+  // never be locale-redirected — doing so breaks next/image optimization
+  // and asset fetches.
+  const lastSegment = pathname.split('/').pop() || '';
+  if (/[./][a-zA-Z0-9]+$/.test(lastSegment)) return true;
+  return (
+    pathname.startsWith('/api/') ||
+    pathname.startsWith('/.well-known/') ||
+    pathname.startsWith('/cn-proxy/link') ||
+    pathname.startsWith('/userscript')
+  );
+}
+
+function isLocalized(pathname: string): boolean {
+  const first = pathname.split('/')[1];
+  return !!first && (locales as readonly string[]).includes(first);
+}
+
+/** Negotiate a locale from the NEXT_LOCALE cookie then Accept-Language. */
+function negotiateLocale(request: NextRequest): Locale {
+  const cookie = request.cookies.get('NEXT_LOCALE')?.value as Locale | undefined;
+  if (cookie && (locales as readonly string[]).includes(cookie)) return cookie;
+
+  const acceptLanguage = request.headers.get('accept-language');
+  if (acceptLanguage) {
+    const langs = acceptLanguage.split(',').map((l) => l.split(';')[0].trim());
+    for (const l of langs) {
+      if ((locales as readonly string[]).includes(l)) return l as Locale;
+    }
+    for (const l of langs) {
+      const short = l.split('-')[0];
+      const match = locales.find((loc) => loc.startsWith(short));
+      if (match) return match;
+    }
+  }
+  return defaultLocale;
+}
+
 export async function middleware(request: NextRequest) {
-  // Check maintenance mode (skip for the maintenance page itself and static assets)
   const { pathname } = request.nextUrl;
 
-  // Per-request correlation id. Honor an upstream one if present (idempotent for
-  // retries / tracing proxies), otherwise generate. Propagated to route handlers
-  // via the x-request-id request header and echoed on every response so it can
-  // be quoted in bug reports and matched against Axiom logs (docs/LOGGING.md).
-  // The inbound header is client-controllable, so only accept safe token shapes
-  // (nanoid alphabet, bounded length) to avoid log injection.
+  // Per-request correlation id (see docs/LOGGING.md).
   const inboundId = request.headers.get('x-request-id');
-  const requestId = inboundId && /^[A-Za-z0-9_-]{1,64}$/.test(inboundId) ? inboundId : nanoid(10);
+  const requestId =
+    inboundId && /^[A-Za-z0-9_-]{1,64}$/.test(inboundId) ? inboundId : nanoid(10);
   const stamp = (res: NextResponse) => {
     res.headers.set('x-request-id', requestId);
     return res;
   };
 
+  // Font CORS handling.
   if (pathname.startsWith('/res/fonts/')) {
     const origin = request.headers.get('origin');
     const response = NextResponse.next();
@@ -37,12 +74,20 @@ export async function middleware(request: NextRequest) {
     }
     return stamp(response);
   }
-  if (pathname !== '/maintenance') {
+
+  const isMaintenanceRoute =
+    pathname === '/maintenance' ||
+    /^\/[a-zA-Z-]+\/maintenance(?:\/.*)?$/.test(pathname);
+
+  // Maintenance mode redirect to the localized maintenance page.
+  if (!isMaintenanceRoute && !isUnlocalizable(pathname)) {
     try {
       const maintenanceMode = await getCachedEdgeConfig<string>('maintenanceMode');
       if (maintenanceMode) {
+        const locale = negotiateLocale(request);
         const url = request.nextUrl.clone();
-        url.pathname = '/maintenance';
+        url.pathname = `/${locale}/maintenance`;
+        url.search = '';
         return stamp(NextResponse.redirect(url, { status: 307 }));
       }
     } catch {
@@ -50,40 +95,38 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // Apply security middleware to all requests
-  const securityResponse = await securityMiddleware(request);
+  // Locale routing: redirect bare paths to `/{locale}...`.
+  if (!isLocalized(pathname) && !isUnlocalizable(pathname)) {
+    const locale = negotiateLocale(request);
+    const url = request.nextUrl.clone();
+    url.pathname = `/${locale}${pathname === '/' ? '' : pathname}`;
+    const res = NextResponse.redirect(url, { status: 307 });
+    // Persist the negotiated locale.
+    if (request.cookies.get('NEXT_LOCALE')?.value !== locale) {
+      res.cookies.set('NEXT_LOCALE', locale, {
+        path: '/',
+        sameSite: 'lax',
+        maxAge: 60 * 60 * 24 * 365,
+        httpOnly: false,
+      });
+    }
+    return stamp(res);
+  }
 
-  // If security middleware returns a response (e.g., rate limited), return it
+  // Apply security middleware to all requests that proceed.
+  const securityResponse = await securityMiddleware(request);
   if (securityResponse.status !== 200) {
     return stamp(securityResponse);
   }
 
-  // Forward `?tl=<locale>` as a request header so page-level `getLocale()` can
-  // honor it. Used to expose locale variants for SEO crawlers via hreflang
-  // and as a "switch and stay" link for shared URLs (e.g. Google SERP → JP).
-  const tl = request.nextUrl.searchParams.get('tl');
-  const validTl = tl && locales.includes(tl as Locale) ? (tl as Locale) : null;
+  // Forward pathname + request id to route handlers / pages.
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set('x-pathname', pathname);
   requestHeaders.set('x-request-id', requestId);
-  if (validTl) requestHeaders.set('x-tl-locale', validTl);
 
   const response = NextResponse.next({ request: { headers: requestHeaders } });
 
-  // Persist `?tl=` as the user's locale so subsequent internal navigation
-  // (which doesn't carry the query) stays in the chosen language.
-  if (validTl && request.cookies.get('NEXT_LOCALE')?.value !== validTl) {
-    response.cookies.set('NEXT_LOCALE', validTl, {
-      path: '/',
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 365, // 1 year — matches the client-side setLocaleCookie
-      httpOnly: false,
-    });
-  }
-
-  // Mirror Vercel's edge-geo header into a client-readable cookie so client
-  // code can route image requests to the regional CDN (e.g. cdn.cn.tomomai.lol
-  // for users in China). Skipped locally where the header is absent.
+  // Mirror Vercel edge-geo into a client-readable cookie for CDN routing.
   const country = request.headers.get('x-vercel-ip-country');
   if (country) {
     const existing = request.cookies.get('country')?.value;
@@ -91,7 +134,7 @@ export async function middleware(request: NextRequest) {
       response.cookies.set('country', country, {
         path: '/',
         sameSite: 'lax',
-        maxAge: 60 * 60 * 24, // 1 day
+        maxAge: 60 * 60 * 24,
         httpOnly: false,
       });
     }
@@ -100,17 +143,13 @@ export async function middleware(request: NextRequest) {
   return stamp(response);
 }
 
-// Apply middleware to all routes except static files.
 // Use Node runtime so ioredis (the Redis-backed rate limiter) can open TCP sockets.
 export const config = {
   runtime: 'nodejs',
   matcher: [
     /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
+     * Match all request paths except static assets.
      */
-    '/((?!_next/static|_next/image|favicon.ico).*)',
+    '/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml).*)',
   ],
 };

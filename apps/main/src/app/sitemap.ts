@@ -6,7 +6,12 @@ import { user, userSnapshots, songs } from '@/lib/db/schema-pg';
 import { and, eq, ne, sql } from 'drizzle-orm';
 import { db } from '@/lib/db';
 import { getSongSlug } from '@/lib/song-slug';
-import { getAllPostsMeta, getAvailableTranslations } from '@/lib/posts';
+import { getAllPostsMeta } from '@/lib/posts';
+import { defaultLocale, locales } from '@/i18n/locale';
+
+/** Build a localized absolute URL for the sitemap. */
+const loc = (baseUrl: string, path: string) =>
+  `${baseUrl}/${defaultLocale}${path === '/' ? '' : path}`;
 
 type SitemapItem = MetadataRoute.Sitemap[number];
 
@@ -73,7 +78,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }
 
   const songSitemapItems = counter.keys().map((slug) => ({
-    url: `${baseUrl}/db/songs/${encodeURIComponent(slug)}`,
+    url: loc(baseUrl, `/db/songs/${encodeURIComponent(slug)}`),
     changeFrequency: 'monthly',
     priority: 0.55,
   } satisfies SitemapItem));
@@ -81,17 +86,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Get all posts for sitemap (using English as base)
   const posts = getAllPostsMeta('en');
   const postSitemapItems = posts.map((post) => {
-    const translations = getAvailableTranslations(post.canonicalSlug);
-
     return {
-      url: `${baseUrl}/db/posts/${post.slug}`,
+      url: loc(baseUrl, `/db/posts/${post.slug}`),
       lastModified: new Date(post.date),
       changeFrequency: 'monthly',
       priority: 0.7,
       alternates: {
-        languages: translations.reduce((acc, lang) => ({
+        languages: locales.reduce((acc, l) => ({
           ...acc,
-          [lang]: `${baseUrl}/db/posts/${post.slug}`,
+          [l]: `${baseUrl}/${l}/db/posts/${post.slug}`,
         }), {}),
       },
     } satisfies SitemapItem;
@@ -99,20 +102,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   return [
     {
-      url: `${baseUrl}/`,
+      url: loc(baseUrl, '/'),
       lastModified: new Date(),
       changeFrequency: 'weekly',
       priority: 0.8,
     },
     ...DB_TYPES.map((type) => ({
-      url: `${baseUrl}/db/${type}`,
+      url: loc(baseUrl, `/db/${type}`),
       lastModified: new Date(),
       changeFrequency: 'daily',
       priority: 0.8,
     }) satisfies SitemapItem),
     ...postSitemapItems,
     ...profiles.map((profile) => ({
-      url: `${baseUrl}/profile/${profile.username}`,
+      url: loc(baseUrl, `/profile/${profile.username}`),
       lastModified: profile.latestSnapshotAt ?? new Date(),
       changeFrequency: 'weekly',
       priority: 0.6,

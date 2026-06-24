@@ -1,7 +1,6 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { Link, usePathname, useRouter } from "@/i18n/navigation";
 import { Sidebar, SidebarItem } from "@tomomai/ui";
 import { User, Download, Lock, Code, ArrowLeft, AppWindow } from "lucide-react";
 import { useTranslations } from "next-intl";

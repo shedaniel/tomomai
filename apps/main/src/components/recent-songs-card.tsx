@@ -8,7 +8,7 @@ import { Skeleton } from "@tomomai/ui";
 import { useTranslations } from "next-intl";
 
 import { CoverImage } from "@/components/cover-image";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation"
 import { useCallback, useState, useEffect, useRef, useMemo } from "react";
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 import { Badge } from "@tomomai/ui";

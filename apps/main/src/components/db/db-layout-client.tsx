@@ -8,8 +8,8 @@ import { cn } from "@/lib/utils";
 import { Loader2 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useTranslations } from "next-intl";
-import Link from "next/link";
-import { useRouter, useSelectedLayoutSegments } from "next/navigation";
+import { Link, useRouter } from "@/i18n/navigation";
+import { useSelectedLayoutSegments } from "next/navigation";
 import { Fragment, type ReactNode, useEffect, useRef, useTransition } from "react";
 
 function TypeSelector({

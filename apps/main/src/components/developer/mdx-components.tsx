@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Link } from "@/i18n/navigation"
 import type { ComponentProps, ReactNode } from "react";
 import { AlertTriangle, Info, CheckCircle2, AlertCircle } from "lucide-react";
 import { ScopeBadge } from "./scope-badge";

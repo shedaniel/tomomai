@@ -9,7 +9,7 @@ import { useTranslations } from "next-intl";
 import { LocaleSwitcher } from "./locale-switcher";
 import { signIn, authClient } from "@/lib/auth-client";
 import { toast } from "sonner";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation"
 import { isCNExclusive } from "@/lib/enabled-regions";
 import { motion } from "motion/react";
 import { STAGGER, getTransition } from "@/lib/animation-constants";
