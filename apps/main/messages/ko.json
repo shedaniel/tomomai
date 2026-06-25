@@ -1167,7 +1167,8 @@
         "viewCharts": "채보 보기",
         "viewDetails": "tomomai DB에서 상세 보기",
         "summary": "{songName} is a maimai でらっくす {chartType} chart by {artist} in the {genre} genre, added in {versionName}. Difficulty ranges from {minLevel} to {maxLevel} across {chartCount, plural, =1 {# chart} other {# charts}}{bpmFragment}.",
-        "summaryBpmFragment": " (BPM {bpm})"
+        "summaryBpmFragment": " (BPM {bpm})",
+        "loadFailed": "곡 상세 정보를 불러오지 못했습니다"
       },
       "filter": {
         "type": "타입",
