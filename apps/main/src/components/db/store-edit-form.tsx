@@ -248,7 +248,7 @@ export function StoreEditForm({ open, onOpenChange, store, existingEdit }: Store
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="bg-card">
+      <DrawerContent>
         <VisuallyHidden>
           <DrawerTitle>{existingEdit ? "Edit" : "Create"} Arcade Data</DrawerTitle>
           <DrawerDescription>Submit your arcade information</DrawerDescription>

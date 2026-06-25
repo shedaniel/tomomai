@@ -837,7 +837,7 @@ export function ArcadesMap() {
           onOpenChange={(open) => !open && closeSelection()}
           modal={false}
         >
-          <DrawerContent className="bg-card">
+          <DrawerContent>
             <VisuallyHidden>
               <DrawerTitle>{selectedStore?.name || "Arcade Details"}</DrawerTitle>
               <DrawerDescription>{selectedStore?.address || "Address of the arcade"}</DrawerDescription>

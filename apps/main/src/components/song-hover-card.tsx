@@ -241,7 +241,7 @@ export function SongHoverCard({ children, song, percentile, side, className }: S
       <DrawerTrigger asChild>
         {children}
       </DrawerTrigger>
-      <DrawerContent className="bg-card">
+      <DrawerContent>
         <DrawerHeader className="text-left pb-1">
           <DrawerTitle>{t('db.songs.detail.title')}</DrawerTitle>
           <DrawerDescription className="hidden">

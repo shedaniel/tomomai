@@ -14,6 +14,7 @@ import type { Locale } from '@tomomai/i18n/locale';
 import { DEFAULT_THEME_ID, getThemeOrDefault, getThemeStyleProperties, themeNoFlashScript } from '@/lib/themes';
 import { resolveBaseUrl } from '@/lib/base-url';
 import { siteJsonLd } from '@/lib/seo';
+import { SiteFooter } from '@/components/site-footer';
 
 const inter = localFont({
   src: "../../../public/res/fonts/Inter-VariableFont_opsz_wght.woff2",
@@ -89,13 +90,14 @@ export default async function LocaleLayout({ children, params }: Props) {
         ))}
       </head>
       <body
-        className={`${inter.variable} ${geistMono.variable} ${murecho.variable} antialiased bg-background min-h-dvh`}
+        className={`${inter.variable} ${geistMono.variable} ${murecho.variable} antialiased bg-background flex min-h-dvh flex-col`}
       >
         <NextIntlClientProvider messages={messages}>
           <LocaleProvider initialLocale={typedLocale}>
             <ThemeProvider>
               <TRPCProvider>
                 {children}
+                <SiteFooter />
                 {shouldInjectToolbar && <VercelToolbar />}
                 <Toaster />
               </TRPCProvider>

@@ -2,13 +2,57 @@ import type { NextConfig } from "next";
 import createNextIntlPlugin from 'next-intl/plugin';
 import { withVercelToolbar as withVercelToolbarPlugin } from "@vercel/toolbar/plugins/next";
 import withBundleAnalyzer from '@next/bundle-analyzer';
+import { execSync } from "node:child_process";
+import fs from "node:fs";
+import matter from "gray-matter";
 import path from 'path';
 
 const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 const withAnalyzer = withBundleAnalyzer({ enabled: process.env.ANALYZE === 'true' });
 
+// Rolling-release build identity, frozen at build time and inlined via `env`
+// below (git is not available at serverless runtime). BUILD_STAMP is the HEAD
+// commit time (MMDDHHMM) — auto-bumps per build, shallow-clone-safe, and
+// reproducible for rebuilds of the same commit. See docs / changelog versions.
+const git = (cmd: string, fallback = "dev") => {
+  try { return execSync(cmd, { stdio: ["ignore", "pipe", "ignore"] }).toString().trim(); }
+  catch { return fallback; }
+};
+const BUILD_STAMP = git("git show -s --format=%cd --date=format:%m%d%H%M HEAD");
+const GIT_SHA = (process.env.VERCEL_GIT_COMMIT_SHA || git("git rev-parse HEAD", "")).slice(0, 7) || "dev";
+
+// The rolling version minor ("dev of next") derived from the latest changelog
+// post. Changelog posts are recaps of the just-finished cycle, so once the
+// `2026.5` post is published we are already working toward `2026.6`; minors
+// track months and roll the year over in December. Frozen at build time and
+// inlined via `env` so SiteFooter (in RootLayout) never re-reads post files
+// from disk on every server render. See src/lib/version.ts and docs.
+const APP_VERSION_MINOR = (() => {
+  const nextDevVersion = (latest: string) => {
+    const [year, minor] = latest.split(".").map(Number);
+    if (!Number.isFinite(year) || !Number.isFinite(minor)) return latest;
+    return minor >= 12 ? `${year + 1}.1` : `${year}.${minor + 1}`;
+  };
+  try {
+    const dir = path.join(process.cwd(), "content/posts");
+    const latest = fs
+      .readdirSync(dir)
+      .filter((f) => f.endsWith(".en.mdx"))
+      .map((f) => matter(fs.readFileSync(path.join(dir, f), "utf-8")).data as {
+        date?: string;
+        version?: string;
+      })
+      .filter((d) => d.version && d.version !== "N/A")
+      .sort((a, b) => ((a.date ?? "") > (b.date ?? "") ? -1 : 1))[0]?.version;
+    return latest ? nextDevVersion(latest) : "0.0";
+  } catch {
+    return "0.0";
+  }
+})();
+
 const nextConfig: NextConfig = {
   transpilePackages: ["@tomomai/ui", "@tomomai/i18n"],
+  env: { BUILD_STAMP, GIT_SHA, APP_VERSION_MINOR },
   async headers() {
     return [
       {
