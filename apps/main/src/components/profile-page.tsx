@@ -5,6 +5,7 @@ import { Flags } from "@/lib/flags";
 import { Difficulty, EventData, ProfileData, Region, SnapshotWithSongs, SongWithScore, TitleType } from "@/lib/types";
 import { TomomaiAI } from "@/components/tomomai-ai";
 import { VersionId } from "@/lib/metadata";
+import { Suspense } from "react";
 
 interface SnapshotData {
   snapshot: {
@@ -98,16 +99,18 @@ export function ProfilePage({
           profileUsername={username}
         />
 
-        <DataContent
-          region={region}
-          selectedSnapshotData={snapshotWithSongs}
-          isLoading={false}
-          privacySettings={snapshotData.privacySettings}
-          visitableProfileAt={username}
-          initialTab={initialTab}
-          visitedBySelf={false}
-          flags={flags}
-        />
+        <Suspense>
+          <DataContent
+            region={region}
+            selectedSnapshotData={snapshotWithSongs}
+            isLoading={false}
+            privacySettings={snapshotData.privacySettings}
+            visitableProfileAt={username}
+            initialTab={initialTab}
+            visitedBySelf={false}
+            flags={flags}
+          />
+        </Suspense>
       </div>
       <TomomaiAI snapshotData={snapshotWithSongs} region={region} aprilFools2026={flags.aprilFools2026} />
     </div>
