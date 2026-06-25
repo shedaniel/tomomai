@@ -24,7 +24,7 @@ interface ProfilePageProps {
 
 export async function generateMetadata({ params }: ProfilePageProps): Promise<Metadata> {
   const { username: rawUsername } = await params;
-  const username = decodeURIComponent(rawUsername);
+  const username = safeDecodeURIComponent(rawUsername);
   const [t, locale] = await Promise.all([
     getTranslations("profileMetadata"),
     getLocale(),

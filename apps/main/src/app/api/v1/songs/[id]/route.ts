@@ -46,6 +46,10 @@ export async function GET(
 ) {
   const { id: songId } = await params;
 
+  if (!/^[A-Za-z0-9_-]{21}$/.test(songId)) {
+    return Response.json({ error: "Song not found" }, { status: 404 });
+  }
+
   const charts = await getSongById(songId);
 
   if (charts.length === 0) {
