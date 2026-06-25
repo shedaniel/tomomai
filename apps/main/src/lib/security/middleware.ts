@@ -43,7 +43,7 @@ function applySecurityHeaders(response: NextResponse): void {
   // Content Security Policy - adjust as needed for your application
   response.headers.set(
     'Content-Security-Policy',
-    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'"
+    buildCsp()
   );
 
   // Prevent MIME sniffing
@@ -55,6 +55,40 @@ function applySecurityHeaders(response: NextResponse): void {
 
   // Strict Transport Security
   response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+}
+
+// Image hosts rendered directly by <img>/<Image>. External maimai art is
+// proxied through /api/image-proxy (same-origin), but R2 assets are served
+// direct (unoptimized) so their CDN origins must be in img-src.
+function imgSrcOrigins(): string[] {
+  const origins: string[] = [];
+  for (const env of ['NEXT_PUBLIC_R2_URL', 'NEXT_PUBLIC_R2_URL_CN']) {
+    const base = process.env[env];
+    if (!base) continue;
+    try {
+      const { host } = new URL(base);
+      if (host) origins.push(`https://${host}`);
+    } catch {
+      // invalid URL, skip
+    }
+  }
+  return [...new Set(origins)];
+}
+
+function buildCsp(): string {
+  const imgSrc = ["'self'", 'data:', ...imgSrcOrigins()].join(' ');
+  return [
+    "default-src 'self'",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+    "style-src 'self' 'unsafe-inline'",
+    `img-src ${imgSrc}`,
+    "font-src 'self'",
+    "connect-src 'self'",
+    "frame-src 'none'",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+  ].join('; ');
 }
 
 // Auth paths that involve credential submission or account state changes.
@@ -133,7 +167,6 @@ function applyCorsHeaders(response: NextResponse, request: NextRequest): void {
   const allowedOrigins = CORS_CONFIG.allowedOrigins;
 
   const origin = request.headers.get('origin');
-  const referer = request.headers.get('referer');
 
   // Allow requests from our domains
   if (origin && allowedOrigins.some(url => origin.startsWith(url))) {
