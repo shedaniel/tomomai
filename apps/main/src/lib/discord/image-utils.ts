@@ -351,8 +351,11 @@ export async function generateAndSendDailyPlaysImage({
   try {
     const result = await prepareDailyPlaysData(userId, region, day);
     if (result.type === 'error') {
+      const content = day
+        ? t(locale, 'daily.noPlaysDay', { userId: discordUserId, day, regionName })
+        : t(locale, 'daily.noPlays', { userId: discordUserId, regionName });
       await editDiscordMessage(applicationId, interactionToken, {
-        content: t(locale, 'daily.noPlays', { userId: discordUserId, day: day ? ` for ${day}` : '', regionName }),
+        content,
       });
       return;
     }

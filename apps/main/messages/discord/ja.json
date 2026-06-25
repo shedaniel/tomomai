@@ -152,7 +152,8 @@
     "errorContent": "おすすめ楽曲の生成中にエラーが発生しました。しばらくしてからもう一度お試しください。"
   },
   "daily": {
-    "noPlays": "<@{userId}> {day} のプレイ記録は見つかりませんでした（{regionName}）。",
+    "noPlays": "<@{userId}> プレイ記録は見つかりませんでした（{regionName}）。",
+    "noPlaysDay": "<@{userId}> {day} のプレイ記録は見つかりませんでした（{regionName}）。",
     "content": "<@{userId}> **{day}** のデイリー記録（{regionName}）",
     "failed": "<@{userId}> ❌ デイリー記録画像の作成に失敗しました。",
     "errorGeneric": "デイリー記録の読み込み中にエラーが発生しました。しばらくしてからもう一度お試しください。",

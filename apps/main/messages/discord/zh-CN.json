@@ -152,7 +152,8 @@
     "errorContent": "推荐算法开小差了，请稍候再试。"
   },
   "daily": {
-    "noPlays": "<@{userId}> 找不到 {day} 的出勤记录喔（{regionName}）。",
+    "noPlays": "<@{userId}> 找不到出勤记录喔（{regionName}）。",
+    "noPlaysDay": "<@{userId}> 找不到 {day} 的出勤记录喔（{regionName}）。",
     "content": "<@{userId}> 这是你 **{day}** 的每日出勤记录（{regionName}）：",
     "failed": "<@{userId}> ❌ 图片生成失败，看不到每日游玩了。",
     "errorGeneric": "拉取每日游玩记录时出错了，请稍后再试。",

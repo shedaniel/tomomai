@@ -152,7 +152,8 @@
     "errorContent": "An error occurred while generating recommendations. Please try again later."
   },
   "daily": {
-    "noPlays": "<@{userId}> No plays found{day} ({regionName}).",
+    "noPlays": "<@{userId}> No plays found ({regionName}).",
+    "noPlaysDay": "<@{userId}> No plays found for {day} ({regionName}).",
     "content": "<@{userId}> Daily plays for **{day}** ({regionName})",
     "failed": "<@{userId}> ❌ Failed to generate daily plays image.",
     "errorGeneric": "An error occurred while fetching your daily plays. Please try again later.",

@@ -152,7 +152,8 @@
     "errorContent": "推薦演算法開小差了，請稍候再試。"
   },
   "daily": {
-    "noPlays": "<@{userId}> 找不到 {day} 的遊玩紀錄喔（{regionName}）。",
+    "noPlays": "<@{userId}> 找不到遊玩紀錄喔（{regionName}）。",
+    "noPlaysDay": "<@{userId}> 找不到 {day} 的遊玩紀錄喔（{regionName}）。",
     "content": "<@{userId}> 這是你 **{day}** 的每日出勤紀錄（{regionName}）：",
     "failed": "<@{userId}> ❌ 產生每日遊玩圖片失敗了。",
     "errorGeneric": "讀取每日出勤紀錄時出錯，請稍後再試。",

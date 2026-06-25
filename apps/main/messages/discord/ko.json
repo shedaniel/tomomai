@@ -152,7 +152,8 @@
     "errorContent": "추천 곡을 분석하는 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요."
   },
   "daily": {
-    "noPlays": "<@{userId}> {day}의 플레이 기록을 찾을 수 없습니다. ({regionName})",
+    "noPlays": "<@{userId}> 플레이 기록을 찾을 수 없습니다. ({regionName})",
+    "noPlaysDay": "<@{userId}> {day}의 플레이 기록을 찾을 수 없습니다. ({regionName})",
     "content": "<@{userId}> **{day}** 일일 플레이 기록 ({regionName})",
     "failed": "<@{userId}> ❌ 일일 플레이 기록 이미지 생성에 실패했습니다.",
     "errorGeneric": "일일 플레이 기록을 불러오는 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.",
