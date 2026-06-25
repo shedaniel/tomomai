@@ -6,7 +6,6 @@ import { and, eq } from 'drizzle-orm';
 import type { Region } from '@/lib/types';
 import { generateAndSendProfileImage } from '../image-utils';
 import {
-  formatProfileSummaryContent,
   getProfileSummary,
   regionDisplayName,
   resolveRegion,
@@ -51,33 +50,32 @@ export async function executeProfileCommand({
 }: ExecuteProfileOptions): Promise<void> {
   const regionName = regionDisplayName(region, locale);
 
-  // Send initial loading message
-  await editDiscordMessage(applicationId, interactionToken, {
-    embeds: [{
-      title: t(locale, 'profile.loading.title', { regionName }),
-      description: t(locale, 'profile.loading.description', { userId: discordUserId }),
-      color: DISCORD_COLORS.BLURPLE,
-      fields: [{
-        name: t(locale, 'profile.loading.status'),
-        value: t(locale, 'profile.loading.statusValue'),
-        inline: false,
-      }],
-      footer: {
-        text: t(locale, 'common.footer'),
-      },
-      timestamp: new Date().toISOString(),
-    }],
-  });
-
-  const summary = await getProfileSummary(dbUser.id, region);
-  if (!summary) {
-    await editDiscordMessage(applicationId, interactionToken, {
-      embeds: [createNoDataResponse(regionName, locale).data!.embeds![0]],
-    });
-    return;
-  }
-
   try {
+    await editDiscordMessage(applicationId, interactionToken, {
+      embeds: [{
+        title: t(locale, 'profile.loading.title', { regionName }),
+        description: t(locale, 'profile.loading.description', { userId: discordUserId }),
+        color: DISCORD_COLORS.BLURPLE,
+        fields: [{
+          name: t(locale, 'profile.loading.status'),
+          value: t(locale, 'profile.loading.statusValue'),
+          inline: false,
+        }],
+        footer: {
+          text: t(locale, 'common.footer'),
+        },
+        timestamp: new Date().toISOString(),
+      }],
+    });
+
+    const summary = await getProfileSummary(dbUser.id, region);
+    if (!summary) {
+      await editDiscordMessage(applicationId, interactionToken, {
+        embeds: [createNoDataResponse(regionName, locale).data!.embeds![0]],
+      });
+      return;
+    }
+
     await new Promise(resolve => setTimeout(resolve, 500));
     await generateAndSendProfileImage({
       summary,
@@ -91,7 +89,7 @@ export async function executeProfileCommand({
   } catch (error) {
     getLogger().error({ err: error }, 'Error generating profile image');
     await editDiscordMessage(applicationId, interactionToken, {
-      content: formatProfileSummaryContent(discordUserId, summary, regionName),
+      content: t(locale, 'profile.error'),
       embeds: [],
     });
   }

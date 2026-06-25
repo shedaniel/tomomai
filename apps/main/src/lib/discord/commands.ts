@@ -10,7 +10,7 @@ import type { Region } from '@/lib/types';
 import type { StaleCommand } from './staleness';
 import { handleStalenessChoice } from './commands/staleness';
 
-type CommandOption = { name: string; value?: string; type: number; focused?: boolean };
+type CommandOption = { name: string; value?: string | boolean; type: number; focused?: boolean };
 
 // Command definitions. Each data command defaults to the user's selected
 // region and accepts an optional `region` option to override it.
@@ -48,7 +48,7 @@ function getRegionParam(options?: CommandOption[]): string | undefined {
 
 function getBooleanParam(options: CommandOption[] | undefined, name: string): boolean {
   const value = options?.find(o => o.name === name)?.value;
-  return value === 'true';
+  return value === true || value === 'true';
 }
 
 export interface CommandContext {

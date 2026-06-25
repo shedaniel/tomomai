@@ -24,7 +24,7 @@ export function formatRelativeAge(past: Date, locale?: string, now: number = Dat
   const day = Math.floor(hr / 24);
   if (day < 30) return day === 1 ? t(locale, 'age.day') : t(locale, 'age.days', { count: day });
   const month = Math.floor(day / 30);
-  if (month < 12) return month === 1 ? t(locale, 'age.month') : t(locale, 'age.months', { count: month });
+  if (day < 365) return month === 1 ? t(locale, 'age.month') : t(locale, 'age.months', { count: month });
   const year = Math.floor(day / 365);
   return year === 1 ? t(locale, 'age.year') : t(locale, 'age.years', { count: year });
 }
