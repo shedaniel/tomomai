@@ -7,6 +7,8 @@ import { handleAlbumPreferenceSelection } from './commands/album-preference';
 import { handleDailyCommand, handleDailyAutocomplete } from './commands/daily';
 import { createUnknownCommandResponse, DiscordResponse } from './responses';
 import type { Region } from '@/lib/types';
+import type { StaleCommand } from './staleness';
+import { handleStalenessChoice } from './commands/staleness';
 
 type CommandOption = { name: string; value?: string; type: number; focused?: boolean };
 
@@ -44,12 +46,18 @@ function getRegionParam(options?: CommandOption[]): string | undefined {
   return typeof value === 'string' && value.length > 0 ? value : undefined;
 }
 
+function getBooleanParam(options: CommandOption[] | undefined, name: string): boolean {
+  const value = options?.find(o => o.name === name)?.value;
+  return value === 'true';
+}
+
 export interface CommandContext {
   commandName: string;
   options?: CommandOption[];
   discordUserId?: string;
   applicationId: string;
   interactionToken: string;
+  forceFetch?: boolean;
 }
 
 export interface ComponentContext {
@@ -66,9 +74,10 @@ export interface AutocompleteContext {
 }
 
 export async function handleCommand(context: CommandContext): Promise<DiscordResponse> {
-  const { commandName, options, discordUserId, applicationId, interactionToken } = context;
+  const { commandName, options, discordUserId, applicationId, interactionToken, forceFetch } = context;
 
   const regionParam = getRegionParam(options);
+  const forceFetchParam = forceFetch ?? getBooleanParam(options, 'fetch');
 
   switch (commandName.toLowerCase()) {
     case COMMANDS.PROFILE.name.toLowerCase():
@@ -79,7 +88,8 @@ export async function handleCommand(context: CommandContext): Promise<DiscordRes
         discordUserId,
         regionParam,
         applicationId,
-        interactionToken
+        interactionToken,
+        forceFetch: forceFetchParam,
       });
 
     case COMMANDS.FETCH.name.toLowerCase():
@@ -92,6 +102,7 @@ export async function handleCommand(context: CommandContext): Promise<DiscordRes
         applicationId,
         interactionToken
       });
+      // /fetch ignores the `fetch` boolean option on purpose.
 
     case COMMANDS.RECENTS.name.toLowerCase():
       if (!discordUserId) {
@@ -101,7 +112,8 @@ export async function handleCommand(context: CommandContext): Promise<DiscordRes
         discordUserId,
         regionParam,
         applicationId,
-        interactionToken
+        interactionToken,
+        forceFetch: forceFetchParam,
       });
 
     case COMMANDS.RECOMMEND.name.toLowerCase():
@@ -112,7 +124,8 @@ export async function handleCommand(context: CommandContext): Promise<DiscordRes
         discordUserId,
         regionParam,
         applicationId,
-        interactionToken
+        interactionToken,
+        forceFetch: forceFetchParam,
       });
 
     case COMMANDS.DAILY.name.toLowerCase():
@@ -129,6 +142,7 @@ export async function handleCommand(context: CommandContext): Promise<DiscordRes
         day,
         applicationId,
         interactionToken,
+        forceFetch: forceFetchParam,
       });
 
     case COMMANDS.INVITE.name.toLowerCase():
@@ -199,6 +213,34 @@ export async function handleComponents(context: ComponentContext): Promise<Disco
         discordUserId,
         region,
         fetchUseAlbums,
+        applicationId,
+        interactionToken,
+      });
+    }
+  }
+
+  // Parse the custom_id: staleness_<cmd>_<userId>_<region>_<choice>_<payload>
+  if (customId.startsWith('staleness_')) {
+    const parts = customId.split('_');
+    // staleness _ cmd _ userId _ region _ choice _ payload(payload may be empty)
+    if (parts.length >= 6) {
+      const cmd = parts[1];
+      const buttonUserId = parts[2];
+      const region = parts[3] as Region;
+      const refetch = parts[4] === '1';
+      const payload = parts.slice(5).join('_');
+
+      // verify the user clicking is the same as the user who initiated the command
+      if (!discordUserId || discordUserId !== buttonUserId) {
+        return null;
+      }
+
+      return handleStalenessChoice({
+        command: cmd as StaleCommand,
+        discordUserId,
+        region,
+        refetch,
+        payload,
         applicationId,
         interactionToken,
       });

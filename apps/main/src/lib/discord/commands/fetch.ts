@@ -111,61 +111,15 @@ export async function handleFetchCommand({
     // Defer the response since fetch can take a while
     const deferredResponse = createDeferredResponse();
 
-    // Start the fetch process in the background using waitUntil to prevent termination
-    const backgroundTask = (async () => {
-      try {
-        // Start the fetch
-        const startResult = await startFetchServer(dbUser.id, region, undefined, undefined, { skipAfter: true });
-
-        // Send initial message
-        await editDiscordMessage(applicationId, interactionToken, {
-          embeds: [{
-            title: `🔄 Fetching ${regionName} Data`,
-            description: `<@${discordUserId}> Starting data fetch from maimai DX NET...`,
-            color: DISCORD_COLORS.YELLOW,
-            fields: [{
-              name: '📊 Status',
-              value: 'Initializing...',
-              inline: false,
-            }],
-            footer: {
-              text: 'tomomai ともマイ • maimai DX score tracker',
-            },
-            timestamp: new Date().toISOString(),
-          }],
-        });
-
-        // Poll for status updates
-        await pollForUpdates(dbUser.id, dbUser.username ?? dbUser.name, region, regionName, discordUserId, startResult.sessionId, applicationId, interactionToken);
-
-        // Ensure background work (detail fetches for recents/albums) completes
-        await startResult.backgroundWork;
-      } catch (error) {
-        getLogger().error({ err: error }, 'Error in fetch process');
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-
-        // Check if this is an album settings error
-        if (isAlbumSettingsError(errorMessage)) {
-          await editDiscordMessage(applicationId, interactionToken, createAlbumPreferenceMessage(discordUserId, region));
-        } else {
-          // Edit message with error
-          await editDiscordMessage(applicationId, interactionToken, {
-            embeds: [{
-              title: '❌ Fetch Error',
-              description: `<@${discordUserId}> An error occurred while fetching your data: ${errorMessage}`,
-              color: DISCORD_COLORS.RED,
-              footer: {
-                text: 'tomomai ともマイ • maimai DX score tracker',
-              },
-              timestamp: new Date().toISOString(),
-            }],
-          });
-        }
-      }
-    })();
-
-    // Use waitUntil to ensure the background task continues after response
-    waitUntil(backgroundTask);
+    waitUntil(runFetchSession({
+      userId: dbUser.id,
+      username: dbUser.username ?? dbUser.name,
+      region,
+      regionName,
+      discordUserId,
+      applicationId,
+      interactionToken,
+    }));
 
     return deferredResponse;
   } catch (error) {
@@ -174,16 +128,91 @@ export async function handleFetchCommand({
   }
 }
 
+export async function runFetchSession({
+  userId,
+  username,
+  region,
+  regionName,
+  discordUserId,
+  applicationId,
+  interactionToken,
+  onCompleted,
+}: {
+  userId: string;
+  username: string;
+  region: Region;
+  regionName: string;
+  discordUserId: string;
+  applicationId: string;
+  interactionToken: string;
+  onCompleted?: () => Promise<void>;
+}): Promise<boolean> {
+  try {
+    // Start the fetch
+    const startResult = await startFetchServer(userId, region, undefined, undefined, { skipAfter: true });
+
+    // Send initial message
+    await editDiscordMessage(applicationId, interactionToken, {
+      embeds: [{
+        title: `🔄 Fetching ${regionName} Data`,
+        description: `<@${discordUserId}> Starting data fetch from maimai DX NET...`,
+        color: DISCORD_COLORS.YELLOW,
+        fields: [{
+          name: '📊 Status',
+          value: 'Initializing...',
+          inline: false,
+        }],
+        footer: {
+          text: 'tomomai ともマイ • maimai DX score tracker',
+        },
+        timestamp: new Date().toISOString(),
+      }],
+    });
+
+    const completed = await pollForUpdates(userId, region, regionName, discordUserId, startResult.sessionId, applicationId, interactionToken);
+    if (!completed) return false;
+
+    // Ensure background work (detail fetches for recents/albums) completes
+    await startResult.backgroundWork;
+
+    if (onCompleted) {
+      await onCompleted();
+    } else {
+      await handleFetchCompleted(userId, username, region, regionName, discordUserId, applicationId, interactionToken);
+    }
+    return true;
+  } catch (error) {
+    getLogger().error({ err: error }, 'Error in fetch process');
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+
+    if (isAlbumSettingsError(errorMessage)) {
+      await editDiscordMessage(applicationId, interactionToken, createAlbumPreferenceMessage(discordUserId, region));
+    } else {
+      await editDiscordMessage(applicationId, interactionToken, {
+        embeds: [{
+          title: '❌ Fetch Error',
+          description: `<@${discordUserId}> An error occurred while fetching your data: ${errorMessage}`,
+          color: DISCORD_COLORS.RED,
+          footer: {
+            text: 'tomomai ともマイ • maimai DX score tracker',
+          },
+          timestamp: new Date().toISOString(),
+        }],
+      });
+    }
+    return false;
+  }
+}
+
 async function pollForUpdates(
   userId: string,
-  username: string,
   region: Region,
   regionName: string,
   discordUserId: string,
   sessionId: string,
   applicationId: string,
   interactionToken: string
-): Promise<void> {
+): Promise<boolean> {
   const maxAttempts = 600; // 5 minutes max
   let attempts = 0;
 
@@ -193,8 +222,7 @@ async function pollForUpdates(
 
       if (status && status.id === sessionId) {
         if (status.status === "completed") {
-          await handleFetchCompleted(userId, username, region, regionName, discordUserId, applicationId, interactionToken);
-          return;
+          return true;
         } else if (status.status === "failed") {
           const failureReason = status.errorMessage || 'Unknown error';
 
@@ -214,10 +242,10 @@ async function pollForUpdates(
               }],
             });
           }
-          return;
+          return false;
         } else {
           // Still pending, update with progress
-          await updateFetchProgress(status.statusStates || '', region, regionName, discordUserId, applicationId, interactionToken);
+          await updateFetchProgress(status.statusStates || '', regionName, discordUserId, applicationId, interactionToken);
         }
       }
 
@@ -247,6 +275,7 @@ async function pollForUpdates(
       timestamp: new Date().toISOString(),
     }],
   });
+  return false;
 }
 
 async function handleFetchCompleted(
@@ -290,7 +319,6 @@ async function handleFetchCompleted(
 
 async function updateFetchProgress(
   statusStates: string,
-  region: Region,
   regionName: string,
   discordUserId: string,
   applicationId: string,

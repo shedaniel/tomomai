@@ -3,6 +3,7 @@ import { account, user } from '@/lib/db/schema-pg';
 import { getLogger } from '@/lib/request-logger';
 import { waitUntil } from '@vercel/functions';
 import { and, eq } from 'drizzle-orm';
+import type { Region } from '@/lib/types';
 import {
   createDeferredResponse,
   createErrorResponse,
@@ -12,10 +13,11 @@ import {
 import { resolveRegion } from '../region';
 import { generateAndSendDailyPlaysImage } from '../image-utils';
 import { listDailyPlaysAvailableDays } from '@/server/services/daily-plays-data';
+import { applyStalenessGate } from './staleness';
 
 async function findDbUserByDiscordId(discordUserId: string) {
   const [dbUser] = await db
-    .select({ id: user.id, region: user.region })
+    .select({ id: user.id, name: user.name, username: user.username, region: user.region })
     .from(user)
     .innerJoin(account, eq(account.userId, user.id))
     .where(and(
@@ -32,6 +34,34 @@ export interface DailyCommandOptions {
   day?: string;
   applicationId: string;
   interactionToken: string;
+  forceFetch?: boolean;
+}
+
+export interface ExecuteDailyOptions {
+  dbUserId: string;
+  region: Region;
+  discordUserId: string;
+  day?: string;
+  applicationId: string;
+  interactionToken: string;
+}
+
+export async function executeDailyCommand({
+  dbUserId,
+  region,
+  discordUserId,
+  day,
+  applicationId,
+  interactionToken,
+}: ExecuteDailyOptions): Promise<void> {
+  await generateAndSendDailyPlaysImage({
+    userId: dbUserId,
+    discordUserId,
+    region,
+    day,
+    applicationId,
+    interactionToken,
+  });
 }
 
 export async function handleDailyCommand({
@@ -40,6 +70,7 @@ export async function handleDailyCommand({
   day,
   applicationId,
   interactionToken,
+  forceFetch,
 }: DailyCommandOptions): Promise<DiscordResponse> {
   try {
     if (!discordUserId) {
@@ -53,20 +84,29 @@ export async function handleDailyCommand({
 
     const region = resolveRegion(regionParam, dbUser.region);
 
+    const gate = await applyStalenessGate({
+      command: 'daily',
+      dbUser: { id: dbUser.id, name: dbUser.name, username: dbUser.username, region: dbUser.region },
+      region,
+      discordUserId,
+      forceFetch,
+      payload: day ?? '',
+      day,
+      applicationId,
+      interactionToken,
+    });
+    if (gate) return gate;
+
     const deferredResponse = createDeferredResponse();
 
-    const backgroundTask = (async () => {
-      await generateAndSendDailyPlaysImage({
-        userId: dbUser.id,
-        discordUserId,
-        region,
-        day,
-        applicationId,
-        interactionToken,
-      });
-    })();
-
-    waitUntil(backgroundTask);
+    waitUntil(executeDailyCommand({
+      dbUserId: dbUser.id,
+      region,
+      discordUserId,
+      day,
+      applicationId,
+      interactionToken,
+    }));
 
     return deferredResponse;
   } catch (error) {
