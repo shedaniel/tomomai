@@ -7,6 +7,13 @@ import { getTranslations } from "next-intl/server";
 import { getLocale } from "@/i18n/locale-server";
 import { buildAlternates, openGraphLocales, localizePath } from "@/lib/seo";
 
+export const revalidate = 300;
+export const dynamicParams = true;
+
+export function generateStaticParams() {
+  return [];
+}
+
 interface ProfilePageProps {
   params: Promise<{
     locale: string;

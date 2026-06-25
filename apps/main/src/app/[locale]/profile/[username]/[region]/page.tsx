@@ -5,22 +5,23 @@ import { isRegionEnabledStr } from "@/lib/enabled-regions";
 import { ProfilePage } from "@/components/profile-page";
 import { notFound } from "next/navigation";
 import { Metadata } from "next";
-import { useFlags } from "@/lib/flags";
+import { defaultFlags } from "@/lib/flags";
 import { resolveBaseUrl } from "@/lib/base-url";
 import { getTranslations } from "next-intl/server";
 import { getLocale } from "@/i18n/locale-server";
 import { buildAlternates, openGraphLocales, breadcrumbJsonLd, ogImageUrl, localizePath } from "@/lib/seo";
 
-// Mark this page as dynamic to avoid conflicts with cookie usage in layout
-export const dynamic = 'force-dynamic';
+export const revalidate = 300;
+export const dynamicParams = true;
+
+export function generateStaticParams() {
+  return [];
+}
 
 interface RegionProfilePageProps {
   params: Promise<{
     username: string;
     region: string;
-  }>;
-  searchParams: Promise<{
-    tab?: string;
   }>;
 }
 
@@ -93,9 +94,8 @@ export async function generateMetadata({ params }: RegionProfilePageProps): Prom
 }
 
 
-export default async function RegionProfilePage({ params, searchParams }: RegionProfilePageProps) {
+export default async function RegionProfilePage({ params }: RegionProfilePageProps) {
   const { username, region } = await params;
-  const { tab } = await searchParams;
 
   // Validate region
   if (!isRegionEnabledStr(region)) {
@@ -116,7 +116,7 @@ export default async function RegionProfilePage({ params, searchParams }: Region
       region,
     });
 
-    const flags = await useFlags();
+    const flags = defaultFlags;
 
     const decodedUsername = decodeURIComponent(username);
     const baseUrl = resolveBaseUrl();
@@ -171,7 +171,6 @@ export default async function RegionProfilePage({ params, searchParams }: Region
           snapshotData={snapshotData}
           region={region}
           username={decodedUsername}
-          initialTab={tab}
           flags={flags}
         />
       </>
