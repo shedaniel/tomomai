@@ -5,6 +5,7 @@ import { getTranslations } from "next-intl/server";
 import { getLocale } from "@/i18n/locale-server";
 import { buildAlternates, breadcrumbJsonLd, openGraphLocales, ogImageUrl, localizePath } from "@/lib/seo";
 import { resolveBaseUrl } from "@/lib/base-url";
+import { safeDecodeURIComponent } from "@/lib/utils";
 
 // On-demand ISR.
 export const revalidate = 3600;
@@ -27,7 +28,7 @@ export async function generateMetadata({ params }: DbSlugPageProps): Promise<Met
     return {};
   }
 
-  const decodedSlug = decodeURIComponent(slug);
+  const decodedSlug = safeDecodeURIComponent(slug);
   const [songs, t, locale] = await Promise.all([
     getAllUniqueSongsCached(),
     getTranslations("db.songs.metadata"),
@@ -90,7 +91,7 @@ export default async function DbSlugPage({ params }: DbSlugPageProps) {
   // is rendered by the @detail parallel slot at /db/@detail/[type]/[slug].
   // This page just emits per-song JSON-LD.
 
-  const decodedSlug = decodeURIComponent(slug);
+  const decodedSlug = safeDecodeURIComponent(slug);
   const songs = await getAllUniqueSongsCached();
   const song = songs.find(s => s.slug === decodedSlug);
 
@@ -103,6 +104,7 @@ export default async function DbSlugPage({ params }: DbSlugPageProps) {
     getTranslations("db.types"),
   ]);
   const baseUrl = resolveBaseUrl();
+  const locale = await getLocale();
 
   const songJsonLd = {
     "@context": "https://schema.org",
@@ -114,16 +116,16 @@ export default async function DbSlugPage({ params }: DbSlugPageProps) {
     },
     genre: song.genre,
     image: song.cover,
-    url: `${baseUrl}/db/songs/${encodeURIComponent(decodedSlug)}`,
+    url: `${baseUrl}${localizePath(`/db/songs/${encodeURIComponent(decodedSlug)}`, locale)}`,
     description: tMeta("jsonLdChartDescription", {
       chartType: song.type === "dx" ? tMeta("chartTypeDx") : tMeta("chartTypeStandard"),
     }),
   };
 
   const breadcrumb = breadcrumbJsonLd([
-    { name: "tomomai", url: `${baseUrl}/` },
-    { name: tNav("songs"), url: `${baseUrl}/db/songs` },
-    { name: song.songName, url: `${baseUrl}/db/songs/${encodeURIComponent(decodedSlug)}` },
+    { name: "tomomai", url: `${baseUrl}${localizePath("/", locale)}` },
+    { name: tNav("songs"), url: `${baseUrl}${localizePath("/db/songs", locale)}` },
+    { name: song.songName, url: `${baseUrl}${localizePath(`/db/songs/${encodeURIComponent(decodedSlug)}`, locale)}` },
   ]);
 
   return (

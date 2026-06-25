@@ -10,6 +10,7 @@ import { resolveBaseUrl } from "@/lib/base-url";
 import { getTranslations } from "next-intl/server";
 import { getLocale } from "@/i18n/locale-server";
 import { buildAlternates, openGraphLocales, breadcrumbJsonLd, ogImageUrl, localizePath } from "@/lib/seo";
+import { safeDecodeURIComponent } from "@/lib/utils";
 
 export const revalidate = 300;
 export const dynamicParams = true;
@@ -107,20 +108,22 @@ export default async function RegionProfilePage({ params }: RegionProfilePagePro
 
     // Get the user's profile data
     const profileData = await trpc.user.getPublicProfile({
-      username: decodeURIComponent(username),
+      username: safeDecodeURIComponent(username),
     });
 
     // Get the user's snapshot data for the specified region
     const snapshotData = await trpc.user.getPublicSnapshotData({
-      username: decodeURIComponent(username),
+      username: safeDecodeURIComponent(username),
       region,
     });
 
     const flags = defaultFlags;
 
-    const decodedUsername = decodeURIComponent(username);
+    const decodedUsername = safeDecodeURIComponent(username);
     const baseUrl = resolveBaseUrl();
-    const profileUrl = `${baseUrl}/profile/${encodeURIComponent(decodedUsername)}/${region}`;
+    const locale = await getLocale();
+    const profilePath = localizePath(`/profile/${encodeURIComponent(decodedUsername)}/${region}`, locale);
+    const profileUrl = `${baseUrl}${profilePath}`;
     const [tNav, tMeta] = await Promise.all([
       getTranslations("regions"),
       getTranslations("profileMetadata"),
@@ -151,7 +154,7 @@ export default async function RegionProfilePage({ params }: RegionProfilePagePro
     };
 
     const breadcrumb = breadcrumbJsonLd([
-      { name: "tomomai", url: `${baseUrl}/` },
+      { name: "tomomai", url: `${baseUrl}${localizePath("/", locale)}` },
       { name: tNav(region), url: profileUrl },
       { name: snapshotData.snapshot.displayName, url: profileUrl },
     ]);

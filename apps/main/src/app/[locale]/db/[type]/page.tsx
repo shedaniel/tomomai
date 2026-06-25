@@ -11,7 +11,7 @@ import { DB_TYPES } from "@/lib/db/types";
 export const revalidate = 3600;
 
 export function generateStaticParams() {
-  return DB_TYPES.map((type) => ({ type }));
+  return DB_TYPES.filter((type) => type !== "posts").map((type) => ({ type }));
 }
 
 const ArcadesMap = dynamic(() => import("@/components/db/arcades").then(m => m.ArcadesMap));

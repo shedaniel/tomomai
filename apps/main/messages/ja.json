@@ -1131,7 +1131,8 @@
         "viewCharts": "譜面を見る",
         "viewDetails": "ともマイ DB で詳細を見る",
         "summary": "{songName} は {versionName} で追加された、{artist} による {genre} ジャンルの maimai でらっくす {chartType} 譜面です。難易度は {chartCount, plural, =1 {# 譜面} other {# 譜面}} にわたり、{minLevel} から {maxLevel} までの範囲です{bpmFragment}。",
-        "summaryBpmFragment": "（BPM {bpm}）"
+        "summaryBpmFragment": "（BPM {bpm}）",
+        "loadFailed": "楽曲詳細の読み込みに失敗しました"
       },
       "filter": {
         "type": "タイプ",

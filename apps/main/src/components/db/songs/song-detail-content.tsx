@@ -321,7 +321,7 @@ export function SongDetailContent({ songName, slug, type, initialData }: SongDet
     if (error) {
       return (
         <div className="text-center py-20 text-muted-foreground">
-          Failed to load song details
+          {t('db.songs.detail.loadFailed')}
         </div>
       );
     }

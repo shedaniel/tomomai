@@ -97,7 +97,9 @@ function AccountFields() {
     } else {
       if (typeof document !== "undefined") {
         document.cookie = "NEXT_LOCALE=; path=/; max-age=0";
-        window.location.href = stripLocaleFromPath(pathname || "/");
+        const search = window.location.search;
+        const hash = window.location.hash;
+        window.location.href = `${stripLocaleFromPath(pathname || "/")}${search}${hash}`;
       }
     }
   });

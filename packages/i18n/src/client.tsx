@@ -80,7 +80,9 @@ export function LocaleProvider({
     setLocaleState(newLocale);
     setLocaleCookie(newLocale);
     const next = swapLocaleInPath(pathname || "/", newLocale);
-    router.push(next);
+    const search = typeof window !== "undefined" ? window.location.search : "";
+    const hash = typeof window !== "undefined" ? window.location.hash : "";
+    router.push(`${next}${search}${hash}`);
   };
 
   const value = forcedLocale

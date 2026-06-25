@@ -1,5 +1,6 @@
 import { SongDetailContent } from "@/components/db/songs/song-detail-content";
 import { getAllUniqueSongsCached, getSongDetailsCached } from "@/server/queries/songs-cache";
+import { safeDecodeURIComponent } from "@/lib/utils";
 import { getTranslations } from "next-intl/server";
 
 // Match the parent [slug] route's ISR mode.
@@ -17,7 +18,7 @@ export default async function DetailSlotPage({ params }: Props) {
   const { type, slug } = await params;
   if (type !== "songs") return null;
 
-  const decodedSlug = decodeURIComponent(slug);
+  const decodedSlug = safeDecodeURIComponent(slug);
   const songs = await getAllUniqueSongsCached();
   const song = songs.find((s) => s.slug === decodedSlug);
   if (!song) return null;

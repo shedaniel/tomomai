@@ -6,8 +6,8 @@ import { user, userSnapshots, songs } from '@/lib/db/schema-pg';
 import { and, eq, ne, sql } from 'drizzle-orm';
 import { db } from '@/lib/db';
 import { getSongSlug } from '@/lib/song-slug';
-import { getAllPostsMeta } from '@/lib/posts';
-import { defaultLocale, locales } from '@/i18n/locale';
+import { getAllPostsMeta, getAvailableTranslations } from '@/lib/posts';
+import { defaultLocale } from '@/i18n/locale';
 
 /** Build a localized absolute URL for the sitemap. */
 const loc = (baseUrl: string, path: string) =>
@@ -86,16 +86,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Get all posts for sitemap (using English as base)
   const posts = getAllPostsMeta('en');
   const postSitemapItems = posts.map((post) => {
+    const available = getAvailableTranslations(post.canonicalSlug);
+    const languages: Record<string, string> = {};
+    for (const l of available) {
+      languages[l] = `${baseUrl}/${l}/db/posts/${post.slug}`;
+    }
+    languages['x-default'] = `${baseUrl}/${defaultLocale}/db/posts/${post.slug}`;
     return {
       url: loc(baseUrl, `/db/posts/${post.slug}`),
       lastModified: new Date(post.date),
       changeFrequency: 'monthly',
       priority: 0.7,
       alternates: {
-        languages: locales.reduce((acc, l) => ({
-          ...acc,
-          [l]: `${baseUrl}/${l}/db/posts/${post.slug}`,
-        }), {}),
+        languages,
       },
     } satisfies SitemapItem;
   });

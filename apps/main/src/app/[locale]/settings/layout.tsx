@@ -14,11 +14,12 @@ export default async function SettingsLayout({
 }) {
   const { locale } = await params;
   const session = await getServerSession();
-  const flags = await useFlags();
 
   if (!session) {
     redirect({ href: "/", locale });
   }
+
+  const flags = await useFlags();
 
   return (
     <div className="container mx-auto max-w-200 px-4 py-8 overflow-x-hidden">

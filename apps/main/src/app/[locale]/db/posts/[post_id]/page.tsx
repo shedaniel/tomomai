@@ -1,5 +1,6 @@
 import { getAllPostsMeta, getPostBySlug, getAvailableTranslations } from "@/lib/posts";
 import { getLocale, setStaticLocale } from "@/i18n/locale-server";
+import { defaultLocale } from "@tomomai/i18n/locale";
 import { MDXRemote } from "next-mdx-remote/rsc";
 import { Metadata } from "next";
 import { breadcrumbJsonLd, openGraphLocales, localizePath, ogImageUrl } from "@/lib/seo";
@@ -42,7 +43,7 @@ export async function generateMetadata({ params }: PostPageProps): Promise<Metad
   for (const lang of translations) {
     languages[lang] = localizePath(url, lang);
   }
-  languages["x-default"] = localizePath(url, locale);
+  languages["x-default"] = localizePath(url, defaultLocale);
 
   return {
     title: `${post.title} | tomomai`,

@@ -38,7 +38,16 @@ function negotiateLocale(request: NextRequest): Locale {
 
   const acceptLanguage = request.headers.get('accept-language');
   if (acceptLanguage) {
-    const langs = acceptLanguage.split(',').map((l) => l.split(';')[0].trim());
+    const parsed = acceptLanguage.split(',').map((l) => {
+      const [tag, ...params] = l.split(';').map((s) => s.trim());
+      const qParam = params.find((p) => p.startsWith('q='));
+      const q = qParam ? parseFloat(qParam.slice(2)) : 1;
+      return { tag: tag!, q: isNaN(q) ? 0 : q };
+    });
+    const langs = parsed
+      .filter((e) => e.tag)
+      .sort((a, b) => b.q - a.q)
+      .map((e) => e.tag);
     for (const l of langs) {
       if ((locales as readonly string[]).includes(l)) return l as Locale;
     }
@@ -125,6 +134,12 @@ export async function middleware(request: NextRequest) {
   requestHeaders.set('x-request-id', requestId);
 
   const response = NextResponse.next({ request: { headers: requestHeaders } });
+
+  // securityMiddleware set CSP/HSTS/CORS/etc. on its own NextResponse.next();
+  // carry them onto the response we actually return so they aren't dropped.
+  securityResponse.headers.forEach((value, key) => {
+    response.headers.set(key, value);
+  });
 
   // Mirror Vercel edge-geo into a client-readable cookie for CDN routing.
   const country = request.headers.get('x-vercel-ip-country');

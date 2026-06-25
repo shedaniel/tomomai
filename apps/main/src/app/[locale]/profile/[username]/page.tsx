@@ -6,6 +6,7 @@ import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { getLocale } from "@/i18n/locale-server";
 import { buildAlternates, openGraphLocales, localizePath } from "@/lib/seo";
+import { safeDecodeURIComponent } from "@/lib/utils";
 
 export const revalidate = 300;
 export const dynamicParams = true;
@@ -62,7 +63,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
     // Get the user's profile to find their main region
     const trpc = await createServerSideTRPC();
     const profileData = await trpc.user.getPublicProfile({
-      username: decodeURIComponent(username),
+      username: safeDecodeURIComponent(username),
     });
 
     // Redirect to the specific region page using the user's main region

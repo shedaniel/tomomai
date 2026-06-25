@@ -54,13 +54,13 @@ export default async function DeveloperLayout({ children }: { children: React.Re
               <SidebarTrigger className="-ml-1" />
               <Separator orientation="vertical" className="data-[orientation=vertical]:h-4" />
             </div>
-            <Link
+            <a
               href="/developer/openapi.json"
               className="inline-flex h-8 items-center gap-1.5 rounded-md border border-input bg-card px-2.5 text-xs font-medium text-muted-foreground shadow-xs transition-colors hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:hover:bg-input/50"
             >
               <FileCode2 className="size-3.5" />
               OpenAPI
-            </Link>
+            </a>
           </header>
           <main className="min-w-0 flex-1 px-4 py-8 sm:px-6 lg:px-8">
             <div className="mx-auto max-w-5xl">{children}</div>

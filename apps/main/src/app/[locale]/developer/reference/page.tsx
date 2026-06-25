@@ -28,13 +28,13 @@ export default function ReferenceIndex() {
           Click an endpoint to see its required scope, query parameters,
           response schema, and a runnable `curl` example. The full machine
           spec is available at{" "}
-          <Link
+          <a
             href="/developer/openapi.json"
             className="inline-flex items-center gap-1 underline-offset-2 hover:underline"
           >
             <FileCode2 className="size-3.5" />
             /developer/openapi.json
-          </Link>
+          </a>
           .
         </p>
       </header>
