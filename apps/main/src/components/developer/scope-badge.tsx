@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Link } from "@/i18n/navigation"
 import { AlertTriangle } from "lucide-react";
 import { Badge } from "@tomomai/ui";
 import { API_SCOPES, type ScopeKey } from "@/lib/api/scopes";

@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect } from "react";
-import { usePathname, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
+import { usePathname } from "@/i18n/navigation";
 import { showMessage } from "@/components/imperative-dialog";
 
 const ERROR_MESSAGES: Record<string, string> = {

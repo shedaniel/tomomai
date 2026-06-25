@@ -9,7 +9,7 @@ import { Region, User } from "@/lib/types";
 import { Beaker, Check, ChevronDown, Database, Flag, Home, Info, Languages, LogIn, LogOut, Menu, Palette, Ship, Sparkles, User as LucideUserIcon, Settings, Users, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation"
 import { Fragment, useCallback, useState } from "react";
 import { toast } from "sonner";
 import { LocaleSwitcher } from "./locale-switcher";

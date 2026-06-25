@@ -9,7 +9,7 @@ import {
   DialogTitle,
 } from "@tomomai/ui";
 import { Button } from "@tomomai/ui";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation"
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 

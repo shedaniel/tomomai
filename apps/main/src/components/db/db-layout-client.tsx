@@ -5,23 +5,18 @@ import { Button } from "@tomomai/ui";
 import { Separator } from "@tomomai/ui";
 import { User } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import { Loader2 } from "lucide-react";
-import { AnimatePresence, motion } from "motion/react";
+import { Info } from "lucide-react";
 import { useTranslations } from "next-intl";
-import Link from "next/link";
-import { useRouter, useSelectedLayoutSegments } from "next/navigation";
-import { Fragment, type ReactNode, useEffect, useRef, useTransition } from "react";
+import { Link } from "@/i18n/navigation";
+import { useSelectedLayoutSegments } from "next/navigation";
+import { Fragment, type ReactNode } from "react";
 
 function TypeSelector({
   currentType,
   types,
-  onStartTransition,
-  onPrefetch,
 }: {
   currentType: string;
   types: readonly string[];
-  onStartTransition: (href: string) => void;
-  onPrefetch: (href: string) => void;
 }) {
   const t = useTranslations();
 
@@ -40,8 +35,6 @@ function TypeSelector({
                 "hover:bg-primary! hover:text-primary-foreground!",
                 isActive ? "bg-muted border" : "",
               )}
-              onClick={() => !isActive && onStartTransition(href)}
-              onMouseEnter={() => onPrefetch(href)}
               asChild
             >
               <Link href={href} scroll={false}>
@@ -54,18 +47,6 @@ function TypeSelector({
     </div>
   );
 }
-
-const variants = {
-  initial: { opacity: 0.5, filter: "blur(4px)" },
-  // `transitionEnd: { filter: "" }` strips the inline `filter: blur(0px)`
-  // after the animation completes. Even `blur(0px)` creates a new containing
-  // block for `position: fixed` descendants, which would re-anchor the song
-  // detail drawer to this element instead of the viewport.
-  animate: { opacity: 1, filter: "blur(0px)", transitionEnd: { filter: "" } },
-  exit: { opacity: 0.5, filter: "blur(4px)" },
-};
-
-import { Info } from "lucide-react";
 
 function BetaBanner() {
   const t = useTranslations("db.beta");
@@ -95,20 +76,6 @@ export function DbLayoutClient({
   const segments = useSelectedLayoutSegments();
   const currentType = (segments[0] as string | undefined) ?? "home";
 
-  const [isPending, startTransition] = useTransition();
-  const router = useRouter();
-  const isFirstRender = useRef(true);
-
-  useEffect(() => {
-    isFirstRender.current = false;
-  }, []);
-
-  const handleNavigate = (href: string) => {
-    startTransition(() => {
-      router.push(href, { scroll: false });
-    });
-  };
-
   return (
     <div className="container mx-auto max-w-[1300px] px-4 pt-8">
       <Header currentTab="db" showDiscordBanner={false} customThemesEnabled={customThemesEnabled}
@@ -120,36 +87,11 @@ export function DbLayoutClient({
 
       <BetaBanner />
 
-      <TypeSelector
-        currentType={currentType}
-        types={types}
-        onStartTransition={(href) => handleNavigate(href)}
-        onPrefetch={(href) => router.prefetch(href)}
-      />
+      <TypeSelector currentType={currentType} types={types} />
 
       <Separator className="my-4" />
 
-      <div className="relative min-h-[50vh]">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={currentType}
-            variants={!isFirstRender.current ? variants : undefined}
-            initial="initial"
-            animate="animate"
-            exit="exit"
-            transition={{ duration: 0.25, ease: "easeOut" }}
-            className="min-h-[50vh]"
-          >
-            {isPending ? (
-              <div className="absolute inset-0 flex items-center justify-center">
-                <Loader2 className="h-12 w-12 animate-spin text-muted-foreground/50" />
-              </div>
-            ) : (
-              children
-            )}
-          </motion.div>
-        </AnimatePresence>
-      </div>
+      <div className="min-h-[50vh]">{children}</div>
     </div>
   );
 }

@@ -21,7 +21,7 @@ import { Button } from "@tomomai/ui";
 import { Separator } from "@tomomai/ui";
 import { resolveBaseUrl } from "@/lib/base-url";
 import { useTranslations } from "next-intl";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation"
 import { toast } from "sonner";
 import { SongChartDialogContent } from "./song-detail-dialog";
 import { renderLevelPrecise } from "@/lib/name-utils";
@@ -257,15 +257,18 @@ export function SongChartRow({ difficulty, charts, index, data, hasTouch }: {
 
 export function SongDetailContent({ songName, slug, type, initialData }: SongDetailContentProps) {
   const t = useTranslations();
-  const { data: fetchedData, isLoading, error } = trpc.user.getSongDetails.useQuery(
+  // `initialData` is the SSR-rendered static snapshot (charts/regions/bpm,
+  // no scores). Keep the query enabled and stale so the client refetches on
+  // mount — the browser sends the session cookie, so the refetch layers in
+  // the signed-in user's scores on top of the hydrated static shell.
+  const hasInitialData = !!initialData;
+  const { data, isLoading, error } = trpc.user.getSongDetails.useQuery(
     { songName, type },
     {
-      staleTime: 300000,
-      enabled: !initialData,
+      staleTime: 0,
+      ...(hasInitialData ? { initialData: initialData as SongDetails } : {}),
     }
   );
-
-  const data = initialData ?? fetchedData;
   const difficultyOrder = ["basic", "advanced", "expert", "master", "remaster", "utage"];
 
   // Get the latest version's charts for display (prefer intl, then jp)
@@ -307,20 +310,22 @@ export function SongDetailContent({ songName, slug, type, initialData }: SongDet
     }
   }, [data]);
 
-  if (!initialData && isLoading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
-
-  if (error || !data) {
-    return (
-      <div className="text-center py-20 text-muted-foreground">
-        Failed to load song details
-      </div>
-    );
+  if (!data) {
+    if (isLoading) {
+      return (
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+        </div>
+      );
+    }
+    if (error) {
+      return (
+        <div className="text-center py-20 text-muted-foreground">
+          {t('db.songs.detail.loadFailed')}
+        </div>
+      );
+    }
+    return null;
   }
 
   const addedVersionInfo = getVersionInfo(data.addedVersion);
