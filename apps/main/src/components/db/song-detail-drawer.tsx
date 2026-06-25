@@ -62,8 +62,8 @@ export function SongDetailDrawer({ children }: SongDetailDrawerProps) {
   }, [isOpen]);
 
   const handleClose = useCallback(() => {
-    const basePath = type ? `/db/${type}` : "/db";
-    router.push(basePath, { scroll: false });
+    if (!type) return;
+    router.push(`/db/${type}`, { scroll: false });
   }, [router, type]);
 
   const handleSnapChange = useCallback(
@@ -84,7 +84,9 @@ export function SongDetailDrawer({ children }: SongDetailDrawerProps) {
       setActiveSnapPoint={handleSnapChange}
       fadeFromIndex={2}
       open={isOpen}
-      onOpenChange={(open) => !open && handleClose()}
+      onOpenChange={(open) => {
+        if (!open) handleClose();
+      }}
       dismissible
     >
       <DrawerContent

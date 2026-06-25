@@ -1,4 +1,4 @@
-import { SongsListNoSSR } from "@/components/db/songs-list-no-ssr";
+import { SongsList } from "@/components/db/songs-list";
 import { getAllUniqueSongsCached } from "@/server/queries/songs-cache";
 import type { ReactNode } from "react";
 
@@ -15,7 +15,7 @@ export default async function DbTypeLayout({
     const songs = await getAllUniqueSongsCached();
     return (
       <>
-        <SongsListNoSSR initialSongs={songs} />
+        <SongsList initialSongs={songs} />
         {children}
       </>
     );

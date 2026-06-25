@@ -1,5 +1,5 @@
 import { SongDetailContent } from "@/components/db/songs/song-detail-content";
-import { getAllUniqueSongsCached } from "@/server/queries/songs-cache";
+import { getAllUniqueSongsCached, getSongDetailsCached } from "@/server/queries/songs-cache";
 import { getTranslations } from "next-intl/server";
 
 // Match the parent [slug] route's ISR mode.
@@ -22,6 +22,11 @@ export default async function DetailSlotPage({ params }: Props) {
   const song = songs.find((s) => s.slug === decodedSlug);
   if (!song) return null;
 
+  // SSR the full static chart data (no userId → no scores) so the drawer
+  // body is in the document for crawlers and no-JS clients. The client
+  // component refetches on mount to layer in the signed-in user's scores.
+  const details = await getSongDetailsCached(song.songName, song.type);
+
   const t = await getTranslations("db.songs.detail");
   // Fall back to artist when the song name is empty (some entries have
   // symbol-only or empty `songName`, e.g. `_-x0o0x-dx`) so the
@@ -34,7 +39,7 @@ export default async function DetailSlotPage({ params }: Props) {
         songName={song.songName}
         slug={song.slug}
         type={song.type}
-        initialData={null}
+        initialData={details}
       />
     </article>
   );
