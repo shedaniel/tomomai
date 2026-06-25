@@ -11,7 +11,7 @@ import { notFound } from 'next/navigation';
 import localFont from "next/font/local";
 import { routing } from '@/i18n/routing';
 import type { Locale } from '@tomomai/i18n/locale';
-import { DEFAULT_THEME_ID, getThemeOrDefault, getThemeStyleProperties } from '@/lib/themes';
+import { DEFAULT_THEME_ID, getThemeOrDefault, getThemeStyleProperties, themeNoFlashScript } from '@/lib/themes';
 import { resolveBaseUrl } from '@/lib/base-url';
 import { siteJsonLd } from '@/lib/seo';
 
@@ -67,11 +67,9 @@ export default async function LocaleLayout({ children, params }: Props) {
   const messages = await getMessages();
   const typedLocale = locale as Locale;
 
-  // SSR the default theme. The user's cookie theme is applied client-side by
-  // ThemeProvider (initializeTheme). This keeps the layout static/cacheable
-  // — reading the theme cookie here would force the whole tree dynamic again.
-  // (TODO: add a small inline blocking script to apply the cookie theme
-  // pre-paint and eliminate the FOUC for non-default themes.)
+  // SSR the default theme; the user's saved theme is applied pre-paint by
+  // the blocking no-flash script below (cookie read happens in the browser,
+  // so this stays static/cacheable instead of forcing the layout dynamic).
   const theme = getThemeOrDefault(DEFAULT_THEME_ID);
 
   const shouldInjectToolbar = process.env.NODE_ENV === "development";
@@ -79,6 +77,7 @@ export default async function LocaleLayout({ children, params }: Props) {
   return (
     <html lang={typedLocale} className={theme.dark ? "dark" : ""} style={getThemeStyleProperties(theme)} suppressHydrationWarning>
       <head>
+        <script dangerouslySetInnerHTML={{ __html: themeNoFlashScript() }} />
         <link rel="preconnect" href="https://cdn.tomomai.lol" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://cdn.tomomai.lol" />
         {siteJsonLd().map((entry, i) => (
