@@ -169,7 +169,7 @@ function applyCorsHeaders(response: NextResponse, request: NextRequest): void {
   const origin = request.headers.get('origin');
 
   // Allow requests from our domains
-  if (origin && allowedOrigins.some(url => origin.startsWith(url))) {
+  if (origin && allowedOrigins.includes(origin)) {
     response.headers.set('Access-Control-Allow-Origin', origin);
     response.headers.set('Access-Control-Allow-Credentials', 'true');
   }
