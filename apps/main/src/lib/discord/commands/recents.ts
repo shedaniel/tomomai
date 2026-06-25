@@ -13,6 +13,7 @@ import {
 import { resolveRegion } from '../region';
 import { generateAndSendCreditImage } from '../image-utils';
 import { applyStalenessGate } from './staleness';
+import { t } from '../i18n';
 
 export interface RecentsCommandOptions {
   discordUserId: string;
@@ -21,6 +22,7 @@ export interface RecentsCommandOptions {
   interactionToken: string;
   skip?: number;
   forceFetch?: boolean;
+  locale?: string;
 }
 
 export interface ExecuteRecentsOptions {
@@ -30,6 +32,7 @@ export interface ExecuteRecentsOptions {
   applicationId: string;
   interactionToken: string;
   skip?: number;
+  locale?: string;
 }
 
 export async function executeRecentsCommand({
@@ -39,6 +42,7 @@ export async function executeRecentsCommand({
   applicationId,
   interactionToken,
   skip = 0,
+  locale,
 }: ExecuteRecentsOptions): Promise<void> {
   await generateAndSendCreditImage({
     userId: dbUserId,
@@ -47,6 +51,7 @@ export async function executeRecentsCommand({
     applicationId,
     interactionToken,
     skip,
+    locale,
   });
 }
 
@@ -57,10 +62,11 @@ export async function handleRecentsCommand({
   interactionToken,
   skip = 0,
   forceFetch,
+  locale,
 }: RecentsCommandOptions): Promise<DiscordResponse> {
   try {
     if (!discordUserId) {
-      return createErrorResponse('Unable to identify Discord user. Please try again.');
+      return createErrorResponse(t(locale, 'common.error.unableToIdentify'), locale);
     }
 
     // Find user by Discord ID via account table
@@ -80,7 +86,7 @@ export async function handleRecentsCommand({
       .limit(1);
 
     if (!dbUser) {
-      return createNotRegisteredResponse();
+      return createNotRegisteredResponse(locale);
     }
 
     const region = resolveRegion(regionParam, dbUser.region);
@@ -96,6 +102,7 @@ export async function handleRecentsCommand({
         payload: '',
         applicationId,
         interactionToken,
+        locale,
       });
       if (gate) return gate;
     }
@@ -110,12 +117,13 @@ export async function handleRecentsCommand({
       applicationId,
       interactionToken,
       skip,
+      locale,
     }));
 
     return deferredResponse;
 
   } catch (error) {
     getLogger().error({ err: error }, 'Error handling recents command');
-    return createErrorResponse('An error occurred while fetching your recent plays. Please try again later.');
+    return createErrorResponse(t(locale, 'recents.errorGeneric'), locale);
   }
 }

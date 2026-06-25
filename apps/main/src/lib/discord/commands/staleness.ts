@@ -11,7 +11,8 @@ import {
   DISCORD_COLORS,
   editDiscordMessage,
 } from '../responses';
-import { regionDisplayName, resolveRegion } from '../region';
+import { resolveRegion } from '../region';
+import { t } from '../i18n';
 import { runFetchSession } from './fetch';
 import { executeProfileCommand } from './profile';
 import { executeRecentsCommand } from './recents';
@@ -48,20 +49,21 @@ async function runCommand(
   discordUserId: string,
   applicationId: string,
   interactionToken: string,
+  locale: string | undefined,
   day?: string,
 ): Promise<void> {
   switch (command) {
     case 'profile':
-      await executeProfileCommand({ dbUser, region, discordUserId, applicationId, interactionToken });
+      await executeProfileCommand({ dbUser, region, discordUserId, applicationId, interactionToken, locale });
       break;
     case 'recents':
-      await executeRecentsCommand({ dbUserId: dbUser.id, region, discordUserId, applicationId, interactionToken });
+      await executeRecentsCommand({ dbUserId: dbUser.id, region, discordUserId, applicationId, interactionToken, locale });
       break;
     case 'recommend':
-      await executeRecommendCommand({ dbUserId: dbUser.id, region, discordUserId, applicationId, interactionToken });
+      await executeRecommendCommand({ dbUserId: dbUser.id, region, discordUserId, applicationId, interactionToken, locale });
       break;
     case 'daily':
-      await executeDailyCommand({ dbUserId: dbUser.id, region, discordUserId, day, applicationId, interactionToken });
+      await executeDailyCommand({ dbUserId: dbUser.id, region, discordUserId, day, applicationId, interactionToken, locale });
       break;
   }
 }
@@ -76,6 +78,7 @@ export interface ApplyStalenessGateOptions {
   day?: string;
   applicationId: string;
   interactionToken: string;
+  locale?: string;
 }
 
 /**
@@ -93,9 +96,8 @@ export async function applyStalenessGate({
   day,
   applicationId,
   interactionToken,
+  locale,
 }: ApplyStalenessGateOptions): Promise<DiscordResponse | null> {
-  const regionName = regionDisplayName(region);
-
   if (forceFetch) {
     return runRefetchThenCommand({
       command,
@@ -104,6 +106,7 @@ export async function applyStalenessGate({
       discordUserId,
       applicationId,
       interactionToken,
+      locale,
       day,
     });
   }
@@ -111,13 +114,15 @@ export async function applyStalenessGate({
   try {
     const lastFetchedAt = await getLatestSnapshotFetchedAt(dbUser.id, region);
     if (lastFetchedAt && isStale(lastFetchedAt)) {
+      const { regionDisplayName } = await import('../region');
       return getStalePromptResponse({
         command,
         discordUserId,
         region,
-        regionName,
+        regionName: regionDisplayName(region, locale),
         lastFetchedAt,
         payload,
+        locale,
       });
     }
   } catch (error) {
@@ -134,6 +139,7 @@ export interface RunRefetchThenCommandOptions {
   discordUserId: string;
   applicationId: string;
   interactionToken: string;
+  locale?: string;
   day?: string;
 }
 
@@ -149,19 +155,21 @@ export function runRefetchThenCommand({
   discordUserId,
   applicationId,
   interactionToken,
+  locale,
   day,
 }: RunRefetchThenCommandOptions): DiscordResponse {
   const deferredResponse = createDeferredResponse();
 
   const backgroundTask = (async () => {
-    const regionName = regionDisplayName(region);
+    const { regionDisplayName } = await import('../region');
+    const regionName = regionDisplayName(region, locale);
     try {
       await editDiscordMessage(applicationId, interactionToken, {
         embeds: [{
-          title: `🔄 Refetching ${regionName} Data`,
-          description: `<@${discordUserId}> Refetching from maimai DX NET, then continuing...`,
+          title: t(locale, 'staleness.refetching.title', { regionName }),
+          description: t(locale, 'staleness.refetching.description', { userId: discordUserId }),
           color: DISCORD_COLORS.YELLOW,
-          footer: { text: 'tomomai ともマイ • maimai DX score tracker' },
+          footer: { text: t(locale, 'common.footer') },
           timestamp: new Date().toISOString(),
         }],
         components: [],
@@ -175,20 +183,21 @@ export function runRefetchThenCommand({
         discordUserId,
         applicationId,
         interactionToken,
+        locale,
         onCompleted: async () => { /* command runs next */ },
       });
 
       if (!ok) return; // runFetchSession already posted the error/timeout embed
 
-      await runCommand(command, dbUser, region, discordUserId, applicationId, interactionToken, day);
+      await runCommand(command, dbUser, region, discordUserId, applicationId, interactionToken, locale, day);
     } catch (error) {
       getLogger().error({ err: error }, 'Error in refetch-then-command');
       await editDiscordMessage(applicationId, interactionToken, {
         embeds: [{
-          title: '❌ Error',
-          description: `<@${discordUserId}> An error occurred while refetching. Please try again later.`,
+          title: t(locale, 'staleness.refetchError.title'),
+          description: t(locale, 'staleness.refetchError.description', { userId: discordUserId }),
           color: DISCORD_COLORS.RED,
-          footer: { text: 'tomomai ともマイ • maimai DX score tracker' },
+          footer: { text: t(locale, 'common.footer') },
           timestamp: new Date().toISOString(),
         }],
       });
@@ -208,6 +217,7 @@ export interface HandleStalenessChoiceOptions {
   payload: string;
   applicationId: string;
   interactionToken: string;
+  locale?: string;
 }
 
 /**
@@ -222,14 +232,15 @@ export async function handleStalenessChoice({
   payload,
   applicationId,
   interactionToken,
+  locale,
 }: HandleStalenessChoiceOptions): Promise<DiscordResponse> {
   if (!discordUserId) {
-    return createErrorResponse('Unable to identify Discord user.');
+    return createErrorResponse(t(locale, 'common.error.unableToIdentifyShort'), locale);
   }
 
   const dbUser = await resolveDbUser(discordUserId);
   if (!dbUser) {
-    return createErrorResponse('Unable to find your account. Please try again.');
+    return createErrorResponse(t(locale, 'common.error.generic'), locale);
   }
 
   const resolvedRegion = resolveRegion(region, dbUser.region);
@@ -243,6 +254,7 @@ export async function handleStalenessChoice({
       discordUserId,
       applicationId,
       interactionToken,
+      locale,
       day,
     });
   }
@@ -253,23 +265,23 @@ export async function handleStalenessChoice({
     try {
       await editDiscordMessage(applicationId, interactionToken, {
         embeds: [{
-          title: '⏳ Loading...',
-          description: `<@${discordUserId}> Continuing with your current data...`,
+          title: t(locale, 'common.loading.title'),
+          description: t(locale, 'common.loading.description', { userId: discordUserId }),
           color: DISCORD_COLORS.BLURPLE,
-          footer: { text: 'tomomai ともマイ • maimai DX score tracker' },
+          footer: { text: t(locale, 'common.footer') },
           timestamp: new Date().toISOString(),
         }],
         components: [],
       });
-      await runCommand(command, dbUser, resolvedRegion, discordUserId, applicationId, interactionToken, day);
+      await runCommand(command, dbUser, resolvedRegion, discordUserId, applicationId, interactionToken, locale, day);
     } catch (error) {
       getLogger().error({ err: error }, 'Error in staleness continue path');
       await editDiscordMessage(applicationId, interactionToken, {
         embeds: [{
-          title: '❌ Error',
-          description: `<@${discordUserId}> An error occurred. Please try again later.`,
+          title: t(locale, 'common.error.title'),
+          description: t(locale, 'common.error.generic'),
           color: DISCORD_COLORS.RED,
-          footer: { text: 'tomomai ともマイ • maimai DX score tracker' },
+          footer: { text: t(locale, 'common.footer') },
           timestamp: new Date().toISOString(),
         }],
       });

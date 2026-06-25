@@ -19,6 +19,7 @@ import {
 } from '../responses';
 import { regionDisplayName, resolveRegion } from '../region';
 import { applyStalenessGate } from './staleness';
+import { t } from '../i18n';
 
 export interface RecommendCommandOptions {
   discordUserId: string;
@@ -26,6 +27,7 @@ export interface RecommendCommandOptions {
   applicationId: string;
   interactionToken: string;
   forceFetch?: boolean;
+  locale?: string;
 }
 
 export interface ExecuteRecommendOptions {
@@ -34,6 +36,7 @@ export interface ExecuteRecommendOptions {
   discordUserId: string;
   applicationId: string;
   interactionToken: string;
+  locale?: string;
 }
 
 export async function executeRecommendCommand({
@@ -42,13 +45,14 @@ export async function executeRecommendCommand({
   discordUserId,
   applicationId,
   interactionToken,
+  locale,
 }: ExecuteRecommendOptions): Promise<void> {
-  const regionName = regionDisplayName(region);
+  const regionName = regionDisplayName(region, locale);
   try {
     const data = await fetchLatestSnapshotData(dbUserId, region);
     if (!data) {
       await editDiscordMessage(applicationId, interactionToken, {
-        embeds: [createNoDataResponse(regionName).data!.embeds![0]],
+        embeds: [createNoDataResponse(regionName, locale).data!.embeds![0]],
       });
       return;
     }
@@ -62,8 +66,8 @@ export async function executeRecommendCommand({
     );
 
     const embed = deduped.length === 0
-      ? buildNoRecommendationsEmbed(regionName, discordUserId)
-      : buildRecommendationEmbed(deduped, regionName, discordUserId);
+      ? buildNoRecommendationsEmbed(regionName, discordUserId, locale)
+      : buildRecommendationEmbed(deduped, regionName, discordUserId, locale);
 
     await editDiscordMessage(applicationId, interactionToken, {
       embeds: [embed],
@@ -71,7 +75,7 @@ export async function executeRecommendCommand({
   } catch (error) {
     getLogger().error({ err: error }, 'Error generating recommendations');
     await editDiscordMessage(applicationId, interactionToken, {
-      content: 'An error occurred while generating recommendations. Please try again later.',
+      content: t(locale, 'recommend.errorContent'),
     });
   }
 }
@@ -113,28 +117,28 @@ function formatRow(rec: RecommendationData, rank: number): string {
   ].join('\n');
 }
 
-function buildRecommendationEmbed(recommendations: RecommendationData[], regionName: string, discordUserId: string) {
+function buildRecommendationEmbed(recommendations: RecommendationData[], regionName: string, discordUserId: string, locale?: string) {
   const top = recommendations.slice(0, MAX_ROWS);
   const body = top.map((r, i) => formatRow(r, i + 1)).join('\n');
 
   return {
-    title: `🎯 ${regionName} Recommendations`,
-    description: `<@${discordUserId}>\n\`\`\`\n${body}\n\`\`\``,
+    title: t(locale, 'recommend.title', { regionName }),
+    description: t(locale, 'recommend.description', { userId: discordUserId, body }),
     color: DISCORD_COLORS.BLURPLE,
     footer: {
-      text: 'tomomai ともマイ • maimai DX score tracker',
+      text: t(locale, 'common.footer'),
     },
     timestamp: new Date().toISOString(),
   };
 }
 
-function buildNoRecommendationsEmbed(regionName: string, discordUserId: string) {
+function buildNoRecommendationsEmbed(regionName: string, discordUserId: string, locale?: string) {
   return {
-    title: `🎯 ${regionName} Recommendations`,
-    description: `<@${discordUserId}> No recommendations — your scores are already optimal!`,
+    title: t(locale, 'recommend.none.title', { regionName }),
+    description: t(locale, 'recommend.none.description', { userId: discordUserId }),
     color: DISCORD_COLORS.GREEN,
     footer: {
-      text: 'tomomai ともマイ • maimai DX score tracker',
+      text: t(locale, 'common.footer'),
     },
     timestamp: new Date().toISOString(),
   };
@@ -146,10 +150,11 @@ export async function handleRecommendCommand({
   applicationId,
   interactionToken,
   forceFetch,
+  locale,
 }: RecommendCommandOptions): Promise<DiscordResponse> {
   try {
     if (!discordUserId) {
-      return createErrorResponse('Unable to identify Discord user. Please try again.');
+      return createErrorResponse(t(locale, 'common.error.unableToIdentify'), locale);
     }
 
     const [dbUser] = await db
@@ -168,7 +173,7 @@ export async function handleRecommendCommand({
       .limit(1);
 
     if (!dbUser) {
-      return createNotRegisteredResponse();
+      return createNotRegisteredResponse(locale);
     }
 
     const region = resolveRegion(regionParam, dbUser.region);
@@ -182,6 +187,7 @@ export async function handleRecommendCommand({
       payload: '',
       applicationId,
       interactionToken,
+      locale,
     });
     if (gate) return gate;
 
@@ -193,11 +199,12 @@ export async function handleRecommendCommand({
       discordUserId,
       applicationId,
       interactionToken,
+      locale,
     }));
 
     return deferredResponse;
   } catch (error) {
     getLogger().error({ err: error }, 'Error handling recommend command');
-    return createErrorResponse('An error occurred while generating recommendations. Please try again later.');
+    return createErrorResponse(t(locale, 'recommend.errorGeneric'), locale);
   }
 }

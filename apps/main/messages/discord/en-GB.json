@@ -1,0 +1,189 @@
+{
+  "common": {
+    "footer": "tomomai ともマイ • maimai DX score tracker",
+    "notRegistered": {
+      "title": "❌ Not Registered",
+      "description": "You haven't linked your Discord account to tomomai yet!",
+      "getStarted": {
+        "name": "🔗 Get Started",
+        "value": "[Visit tomomai ともマイ]({baseUrl}/) to sign in with Discord and start tracking your scores!"
+      }
+    },
+    "noData": {
+      "title": "📊 No Data Found",
+      "description": "You don't have any {regionName} region data yet!",
+      "import": {
+        "name": "🎯 Import Your Scores",
+        "value": "[Visit tomomai ともマイ]({baseUrl}/) to import your {regionName} maimai DX scores!"
+      }
+    },
+    "error": {
+      "title": "❌ Error",
+      "unableToIdentify": "Unable to identify Discord user. Please try again.",
+      "unableToIdentifyShort": "Unable to identify Discord user.",
+      "generic": "An error occurred. Please try again later.",
+      "notAvailableToYou": "❌ This button is not available to you.",
+      "unknownCommand": "Unknown command"
+    },
+    "loading": {
+      "title": "⏳ Loading...",
+      "description": "<@{userId}> Continuing with your current data..."
+    }
+  },
+  "staleness": {
+    "title": "⏳ Stale Data",
+    "description": "<@{userId}> Your last **{regionName}** fetch was **{age}** ago.\n{cmdLine}",
+    "cmdLine": {
+      "profile": "Do you still want to view your profile?",
+      "recents": "Do you still want to view your recent plays?",
+      "recommend": "Do you still want to view your recommendations?",
+      "daily": "Do you still want to generate your daily plays for {day}?",
+      "dailyDefault": "Do you still want to generate your daily plays?",
+      "default": "Do you want to continue?"
+    },
+    "buttons": {
+      "continue": "Continue",
+      "refetchAndContinue": "Refetch and continue"
+    },
+    "refetching": {
+      "title": "🔄 Refetching {regionName} Data",
+      "description": "<@{userId}> Refetching from maimai DX NET, then continuing..."
+    },
+    "refetchError": {
+      "title": "❌ Error",
+      "description": "<@{userId}> An error occurred while refetching. Please try again later."
+    }
+  },
+  "fetch": {
+    "maintenanceWindow": "Cannot fetch data during maintenance window (4AM - 7AM JST)",
+    "startError": "An error occurred while starting the fetch. Please try again later.",
+    "initializing": {
+      "title": "🔄 Fetching {regionName} Data",
+      "description": "<@{userId}> Starting data fetch from maimai DX NET...",
+      "status": "📊 Status",
+      "statusValue": "Initialising..."
+    },
+    "error": {
+      "title": "❌ Fetch Error",
+      "description": "<@{userId}> An error occurred while fetching your data: {message}"
+    },
+    "failed": {
+      "title": "❌ Fetch Failed",
+      "description": "<@{userId}> Failed to fetch {regionName} data: {reason}"
+    },
+    "timeout": {
+      "title": "⏰ Fetch Timeout",
+      "description": "<@{userId}> The fetch is taking longer than expected. Please check your data on the website.",
+      "statusName": "🌐 Check Status",
+      "statusValue": "[Visit tomomai ともマイ]({baseUrl}/) to see your latest data!"
+    },
+    "complete": {
+      "title": "✅ Fetch Complete",
+      "description": "<@{userId}> Data fetch completed successfully!"
+    },
+    "generatingImage": {
+      "title": "🔄 Fetching {regionName} Data",
+      "description": "<@{userId}> Data fetch completed, generating profile image...",
+      "status": "📊 Status",
+      "statusValue": "⏳ Generating Profile Image"
+    },
+    "progress": {
+      "title": "🔄 Fetching {regionName} Data",
+      "description": "<@{userId}> Fetching data from maimai DX NET...",
+      "status": "📊 Status"
+    },
+    "albumPreference": {
+      "title": "⚙️ Album Privacy Settings Required",
+      "description": "<@{userId}> Before fetching data, you need to set your album privacy preference.",
+      "whatName": "What is this?",
+      "whatValue": "Albums are images stored with your profile data. You can choose whether to save them or not based on your privacy preferences.",
+      "privacyName": "Privacy Assurance",
+      "privacyValue": "✓ Albums are stored in your private profile\n✓ Not shared publicly unless you make them public\n✓ Only you can see them\n✓ Automatically deleted after 30 days\n✓ You can change this setting anytime",
+      "dontSave": "Don't Save Albums",
+      "save": "Save Albums",
+      "preferenceSet": {
+        "title": "✅ Preference Set",
+        "description": "Your album preference has been set to \"{choice}\". Starting fetch...",
+        "save": "Save Albums",
+        "dontSave": "Don't Save Albums"
+      }
+    }
+  },
+  "profile": {
+    "loading": {
+      "title": "🔄 Loading {regionName} Profile",
+      "description": "<@{userId}> Generating your profile image...",
+      "status": "📊 Status",
+      "statusValue": "⏳ Generating Profile Image"
+    },
+    "error": "An error occurred while fetching your rating. Please try again later.",
+    "content": "<@{userId}> {comment}, you only have **{rating}** rating! 😤{regionSuffix}\n-# New Charts: {newRating} (avg: {newAvg}) - Old Charts: {oldRating} (avg: {oldAvg}) - Stars: {stars} - Total Plays: {totalPlays}",
+    "viewFullProfile": "🔗 View Full Profile"
+  },
+  "recents": {
+    "loading": {
+      "title": "🔄 Loading {regionName} Recent Plays",
+      "description": "<@{userId}> Generating your recent play image...",
+      "status": "📊 Status",
+      "statusValue": "⏳ Generating Image"
+    },
+    "noPlays": {
+      "title": "📊 No Recent Plays Found",
+      "description": "You don't have any recent {regionName} region plays yet!",
+      "noMore": "No more plays found."
+    },
+    "error": {
+      "title": "❌ Error",
+      "description": "Failed to generate image: {message}"
+    },
+    "content": "<@{userId}> Here are your recent plays at <t:{unix}:f> ({regionName})",
+    "newerPlay": "Newer Play",
+    "olderPlay": "Older Play",
+    "errorGeneric": "An error occurred while fetching your recent plays. Please try again later."
+  },
+  "recommend": {
+    "title": "🎯 {regionName} Recommendations",
+    "description": "<@{userId}>\n```\n{body}\n```",
+    "none": {
+      "title": "🎯 {regionName} Recommendations",
+      "description": "<@{userId}> No recommendations — your scores are already optimal!"
+    },
+    "errorGeneric": "An error occurred while generating recommendations. Please try again later.",
+    "errorContent": "An error occurred while generating recommendations. Please try again later."
+  },
+  "daily": {
+    "noPlays": "<@{userId}> No plays found{day} ({regionName}).",
+    "content": "<@{userId}> Daily plays for **{day}** ({regionName})",
+    "failed": "<@{userId}> ❌ Failed to generate daily plays image.",
+    "errorGeneric": "An error occurred while fetching your daily plays. Please try again later.",
+    "play": "play",
+    "plays": "plays"
+  },
+  "invite": {
+    "title": "🎯 Invite tomomai ともマイ",
+    "description": "Add tomomai ともマイ bot to your Discord server to track and share maimai DX scores!",
+    "featuresName": "✨ Features",
+    "featuresValue": "• Track scores across International and Japan regions\n• Import data directly from maimai DX NET\n• View historical progress with snapshots\n• Beautiful score analysis and rating calculations",
+    "addName": "🔗 Add to Server",
+    "addValue": "[Click here to invite the bot]({url})",
+    "websiteName": "🌐 Website"
+  },
+  "regions": {
+    "intl": "International",
+    "jp": "Japan",
+    "cn": "China"
+  },
+  "age": {
+    "justNow": "just now",
+    "minute": "1 minute",
+    "minutes": "{count} minutes",
+    "hour": "1 hour",
+    "hours": "{count} hours",
+    "day": "1 day",
+    "days": "{count} days",
+    "month": "1 month",
+    "months": "{count} months",
+    "year": "1 year",
+    "years": "{count} years"
+  }
+}

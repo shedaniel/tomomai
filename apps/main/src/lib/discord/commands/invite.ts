@@ -1,13 +1,16 @@
 import { InteractionResponseType } from 'discord-interactions';
 import { DISCORD_COLORS, DiscordResponse } from '../responses';
 import { resolveBaseUrl } from '../../base-url';
+import { t } from '../i18n';
 
 export interface InviteCommandOptions {
   applicationId: string;
+  locale?: string;
 }
 
 export async function handleInviteCommand({
-  applicationId
+  applicationId,
+  locale,
 }: InviteCommandOptions): Promise<DiscordResponse> {
   const botInviteUrl = `https://discord.com/oauth2/authorize?client_id=${applicationId}&scope=applications.commands`;
 
@@ -16,28 +19,28 @@ export async function handleInviteCommand({
     data: {
       embeds: [
         {
-          title: '🎯 Invite tomomai ともマイ',
-          description: 'Add tomomai ともマイ bot to your Discord server to track and share maimai DX scores!',
+          title: t(locale, 'invite.title'),
+          description: t(locale, 'invite.description'),
           color: DISCORD_COLORS.BLURPLE,
           fields: [
             {
-              name: '✨ Features',
-              value: '• Track scores across International and Japan regions\n• Import data directly from maimai DX NET\n• View historical progress with snapshots\n• Beautiful score analysis and rating calculations',
+              name: t(locale, 'invite.featuresName'),
+              value: t(locale, 'invite.featuresValue'),
               inline: false,
             },
             {
-              name: '🔗 Add to Server',
-              value: `[Click here to invite the bot](${botInviteUrl})`,
+              name: t(locale, 'invite.addName'),
+              value: t(locale, 'invite.addValue', { url: botInviteUrl }),
               inline: false,
             },
             {
-              name: '🌐 Website',
+              name: t(locale, 'invite.websiteName'),
               value: `${resolveBaseUrl()}/`,
               inline: false,
             }
           ],
           footer: {
-            text: 'tomomai ともマイ • maimai DX score tracker',
+            text: t(locale, 'common.footer'),
           },
           timestamp: new Date().toISOString(),
         },

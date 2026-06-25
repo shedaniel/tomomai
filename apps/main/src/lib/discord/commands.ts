@@ -58,6 +58,7 @@ export interface CommandContext {
   applicationId: string;
   interactionToken: string;
   forceFetch?: boolean;
+  locale?: string;
 }
 
 export interface ComponentContext {
@@ -65,16 +66,18 @@ export interface ComponentContext {
   discordUserId?: string;
   applicationId: string;
   interactionToken: string;
+  locale?: string;
 }
 
 export interface AutocompleteContext {
   commandName: string;
   options?: CommandOption[];
   discordUserId?: string;
+  locale?: string;
 }
 
 export async function handleCommand(context: CommandContext): Promise<DiscordResponse> {
-  const { commandName, options, discordUserId, applicationId, interactionToken, forceFetch } = context;
+  const { commandName, options, discordUserId, applicationId, interactionToken, forceFetch, locale } = context;
 
   const regionParam = getRegionParam(options);
   const forceFetchParam = forceFetch ?? getBooleanParam(options, 'fetch');
@@ -90,6 +93,7 @@ export async function handleCommand(context: CommandContext): Promise<DiscordRes
         applicationId,
         interactionToken,
         forceFetch: forceFetchParam,
+        locale,
       });
 
     case COMMANDS.FETCH.name.toLowerCase():
@@ -100,7 +104,8 @@ export async function handleCommand(context: CommandContext): Promise<DiscordRes
         discordUserId,
         regionParam,
         applicationId,
-        interactionToken
+        interactionToken,
+        locale,
       });
       // /fetch ignores the `fetch` boolean option on purpose.
 
@@ -114,6 +119,7 @@ export async function handleCommand(context: CommandContext): Promise<DiscordRes
         applicationId,
         interactionToken,
         forceFetch: forceFetchParam,
+        locale,
       });
 
     case COMMANDS.RECOMMEND.name.toLowerCase():
@@ -126,6 +132,7 @@ export async function handleCommand(context: CommandContext): Promise<DiscordRes
         applicationId,
         interactionToken,
         forceFetch: forceFetchParam,
+        locale,
       });
 
     case COMMANDS.DAILY.name.toLowerCase():
@@ -143,10 +150,11 @@ export async function handleCommand(context: CommandContext): Promise<DiscordRes
         applicationId,
         interactionToken,
         forceFetch: forceFetchParam,
+        locale,
       });
 
     case COMMANDS.INVITE.name.toLowerCase():
-      return handleInviteCommand({ applicationId });
+      return handleInviteCommand({ applicationId, locale });
 
     default:
       return createUnknownCommandResponse();
@@ -154,14 +162,14 @@ export async function handleCommand(context: CommandContext): Promise<DiscordRes
 }
 
 export async function handleAutocomplete(context: AutocompleteContext): Promise<DiscordResponse> {
-  const { commandName, options, discordUserId } = context;
+  const { commandName, options, discordUserId, locale } = context;
 
   switch (commandName.toLowerCase()) {
     case COMMANDS.DAILY.name.toLowerCase(): {
       const regionParam = getRegionParam(options);
       const focused = options?.find(o => o.focused) ?? options?.find(o => o.name === 'date');
       const focusedValue = typeof focused?.value === 'string' ? focused.value : '';
-      return handleDailyAutocomplete({ discordUserId, regionParam, focusedValue });
+      return handleDailyAutocomplete({ discordUserId, regionParam, focusedValue, locale });
     }
     default:
       return { type: 8, data: { choices: [] } };
@@ -169,7 +177,7 @@ export async function handleAutocomplete(context: AutocompleteContext): Promise<
 }
 
 export async function handleComponents(context: ComponentContext): Promise<DiscordResponse | null> {
-  const { customId, discordUserId, applicationId, interactionToken } = context;
+  const { customId, discordUserId, applicationId, interactionToken, locale } = context;
 
   // Parse the custom_id: recents_<userId>_<region>_<skip>
   if (customId.startsWith('recents_')) {
@@ -190,6 +198,7 @@ export async function handleComponents(context: ComponentContext): Promise<Disco
         applicationId,
         interactionToken,
         skip,
+        locale,
       });
     }
   }
@@ -215,6 +224,7 @@ export async function handleComponents(context: ComponentContext): Promise<Disco
         fetchUseAlbums,
         applicationId,
         interactionToken,
+        locale,
       });
     }
   }
@@ -243,6 +253,7 @@ export async function handleComponents(context: ComponentContext): Promise<Disco
         payload,
         applicationId,
         interactionToken,
+        locale,
       });
     }
   }

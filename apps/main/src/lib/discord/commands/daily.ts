@@ -14,6 +14,7 @@ import { resolveRegion } from '../region';
 import { generateAndSendDailyPlaysImage } from '../image-utils';
 import { listDailyPlaysAvailableDays } from '@/server/services/daily-plays-data';
 import { applyStalenessGate } from './staleness';
+import { t } from '../i18n';
 
 async function findDbUserByDiscordId(discordUserId: string) {
   const [dbUser] = await db
@@ -35,6 +36,7 @@ export interface DailyCommandOptions {
   applicationId: string;
   interactionToken: string;
   forceFetch?: boolean;
+  locale?: string;
 }
 
 export interface ExecuteDailyOptions {
@@ -44,6 +46,7 @@ export interface ExecuteDailyOptions {
   day?: string;
   applicationId: string;
   interactionToken: string;
+  locale?: string;
 }
 
 export async function executeDailyCommand({
@@ -53,6 +56,7 @@ export async function executeDailyCommand({
   day,
   applicationId,
   interactionToken,
+  locale,
 }: ExecuteDailyOptions): Promise<void> {
   await generateAndSendDailyPlaysImage({
     userId: dbUserId,
@@ -61,6 +65,7 @@ export async function executeDailyCommand({
     day,
     applicationId,
     interactionToken,
+    locale,
   });
 }
 
@@ -71,15 +76,16 @@ export async function handleDailyCommand({
   applicationId,
   interactionToken,
   forceFetch,
+  locale,
 }: DailyCommandOptions): Promise<DiscordResponse> {
   try {
     if (!discordUserId) {
-      return createErrorResponse('Unable to identify Discord user. Please try again.');
+      return createErrorResponse(t(locale, 'common.error.unableToIdentify'), locale);
     }
 
     const dbUser = await findDbUserByDiscordId(discordUserId);
     if (!dbUser) {
-      return createNotRegisteredResponse();
+      return createNotRegisteredResponse(locale);
     }
 
     const region = resolveRegion(regionParam, dbUser.region);
@@ -94,6 +100,7 @@ export async function handleDailyCommand({
       day,
       applicationId,
       interactionToken,
+      locale,
     });
     if (gate) return gate;
 
@@ -106,12 +113,13 @@ export async function handleDailyCommand({
       day,
       applicationId,
       interactionToken,
+      locale,
     }));
 
     return deferredResponse;
   } catch (error) {
     getLogger().error({ err: error }, 'Error handling daily command');
-    return createErrorResponse('An error occurred while fetching your daily plays. Please try again later.');
+    return createErrorResponse(t(locale, 'daily.errorGeneric'), locale);
   }
 }
 
@@ -119,6 +127,7 @@ export interface DailyAutocompleteOptions {
   discordUserId?: string;
   regionParam?: string;
   focusedValue: string;
+  locale?: string;
 }
 
 /**
@@ -130,6 +139,7 @@ export async function handleDailyAutocomplete({
   discordUserId,
   regionParam,
   focusedValue,
+  locale,
 }: DailyAutocompleteOptions): Promise<DiscordResponse> {
   if (!discordUserId) {
     return { type: 8, data: { choices: [] } };
@@ -148,7 +158,7 @@ export async function handleDailyAutocomplete({
       : days;
 
     const choices = filtered.slice(0, 25).map(d => ({
-      name: `${d.day} — ${d.count} ${d.count === 1 ? 'play' : 'plays'}`,
+      name: `${d.day} — ${d.count} ${t(locale, d.count === 1 ? 'daily.play' : 'daily.plays')}`,
       value: d.day,
     }));
 

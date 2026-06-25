@@ -21,6 +21,7 @@ import {
   editDiscordMessage,
 } from '../responses';
 import { applyStalenessGate } from './staleness';
+import { t } from '../i18n';
 
 export interface ProfileCommandOptions {
   discordUserId: string;
@@ -28,6 +29,7 @@ export interface ProfileCommandOptions {
   applicationId: string;
   interactionToken: string;
   forceFetch?: boolean;
+  locale?: string;
 }
 
 export interface ExecuteProfileOptions {
@@ -36,6 +38,7 @@ export interface ExecuteProfileOptions {
   discordUserId: string;
   applicationId: string;
   interactionToken: string;
+  locale?: string;
 }
 
 export async function executeProfileCommand({
@@ -44,22 +47,23 @@ export async function executeProfileCommand({
   discordUserId,
   applicationId,
   interactionToken,
+  locale,
 }: ExecuteProfileOptions): Promise<void> {
-  const regionName = regionDisplayName(region);
+  const regionName = regionDisplayName(region, locale);
 
   // Send initial loading message
   await editDiscordMessage(applicationId, interactionToken, {
     embeds: [{
-      title: `🔄 Loading ${regionName} Profile`,
-      description: `<@${discordUserId}> Generating your profile image...`,
+      title: t(locale, 'profile.loading.title', { regionName }),
+      description: t(locale, 'profile.loading.description', { userId: discordUserId }),
       color: DISCORD_COLORS.BLURPLE,
       fields: [{
-        name: '📊 Status',
-        value: '⏳ Generating Profile Image',
+        name: t(locale, 'profile.loading.status'),
+        value: t(locale, 'profile.loading.statusValue'),
         inline: false,
       }],
       footer: {
-        text: 'tomomai ともマイ • maimai DX score tracker',
+        text: t(locale, 'common.footer'),
       },
       timestamp: new Date().toISOString(),
     }],
@@ -68,7 +72,7 @@ export async function executeProfileCommand({
   const summary = await getProfileSummary(dbUser.id, region);
   if (!summary) {
     await editDiscordMessage(applicationId, interactionToken, {
-      embeds: [createNoDataResponse(regionName).data!.embeds![0]],
+      embeds: [createNoDataResponse(regionName, locale).data!.embeds![0]],
     });
     return;
   }
@@ -82,6 +86,7 @@ export async function executeProfileCommand({
       applicationId,
       interactionToken,
       username: dbUser.username ?? dbUser.name,
+      locale,
     });
   } catch (error) {
     getLogger().error({ err: error }, 'Error generating profile image');
@@ -98,10 +103,11 @@ export async function handleProfileCommand({
   applicationId,
   interactionToken,
   forceFetch,
+  locale,
 }: ProfileCommandOptions): Promise<DiscordResponse> {
   try {
     if (!discordUserId) {
-      return createErrorResponse('Unable to identify Discord user. Please try again.');
+      return createErrorResponse(t(locale, 'common.error.unableToIdentify'), locale);
     }
 
     // Find user by Discord ID via account table
@@ -121,7 +127,7 @@ export async function handleProfileCommand({
       .limit(1);
 
     if (!dbUser) {
-      return createNotRegisteredResponse();
+      return createNotRegisteredResponse(locale);
     }
 
     const region = resolveRegion(regionParam, dbUser.region);
@@ -135,6 +141,7 @@ export async function handleProfileCommand({
       payload: '',
       applicationId,
       interactionToken,
+      locale,
     });
     if (gate) return gate;
 
@@ -147,11 +154,12 @@ export async function handleProfileCommand({
       discordUserId,
       applicationId,
       interactionToken,
+      locale,
     }));
 
     return deferredResponse;
   } catch (error) {
     getLogger().error({ err: error }, 'Error fetching user rating');
-    return createErrorResponse('An error occurred while fetching your rating. Please try again later.');
+    return createErrorResponse(t(locale, 'profile.error'), locale);
   }
 }
