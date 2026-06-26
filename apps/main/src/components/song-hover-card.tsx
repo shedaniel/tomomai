@@ -10,7 +10,7 @@ import { Activity, Calendar, ChevronRight, ListPlus, Loader2, Music } from "luci
 import { useTranslations } from "next-intl";
 
 import { CoverImage } from "@/components/cover-image";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation"
 import { useMemo, useState } from "react";
 import { DialogTrigger } from "@tomomai/ui";
 import { AnimatedDialog, AnimatedDialogContent } from "@tomomai/ui";
@@ -241,7 +241,7 @@ export function SongHoverCard({ children, song, percentile, side, className }: S
       <DrawerTrigger asChild>
         {children}
       </DrawerTrigger>
-      <DrawerContent className="bg-card">
+      <DrawerContent>
         <DrawerHeader className="text-left pb-1">
           <DrawerTitle>{t('db.songs.detail.title')}</DrawerTitle>
           <DrawerDescription className="hidden">

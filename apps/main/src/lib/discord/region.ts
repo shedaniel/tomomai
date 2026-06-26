@@ -3,6 +3,7 @@ import { splitSongs } from '@/lib/rating-calculator';
 import type { Region, SongWithScore } from '@/lib/types';
 import { fetchLatestSnapshotData } from '@/server/queries/snapshots';
 import { getRatingComment } from './responses';
+import { t } from './i18n';
 
 const REGION_NAMES: Record<Region, string> = {
   intl: 'International',
@@ -10,7 +11,10 @@ const REGION_NAMES: Record<Region, string> = {
   cn: 'China',
 };
 
-export function regionDisplayName(region: Region): string {
+export function regionDisplayName(region: Region, locale?: string): string {
+  if (locale) {
+    return t(locale, `regions.${region}`);
+  }
   return REGION_NAMES[region] ?? region;
 }
 
@@ -78,14 +82,23 @@ export async function getProfileSummary(userId: string, region: Region): Promise
 export function formatProfileSummaryContent(
   discordUserId: string,
   summary: ProfileSummary,
-  regionName?: string
+  regionName?: string,
+  locale?: string,
 ): string {
   const comment = getRatingComment(summary.rating);
   const newAvg = summary.newCount > 0 ? (summary.newRating / summary.newCount).toFixed(1) : '0.0';
   const oldAvg = summary.oldCount > 0 ? (summary.oldRating / summary.oldCount).toFixed(1) : '0.0';
   const regionSuffix = regionName ? ` (${regionName})` : '';
-  return (
-    `<@${discordUserId}> ${comment}, you only have **${summary.rating}** rating! 😤${regionSuffix}\n` +
-    `-# New Charts: ${summary.newRating} (avg: ${newAvg}) - Old Charts: ${summary.oldRating} (avg: ${oldAvg}) - Stars: ${summary.stars} - Total Plays: ${summary.totalPlayCount}`
-  );
+  return t(locale, 'profile.content', {
+    userId: discordUserId,
+    comment,
+    rating: String(summary.rating),
+    regionSuffix,
+    newRating: String(summary.newRating),
+    newAvg,
+    oldRating: String(summary.oldRating),
+    oldAvg,
+    stars: String(summary.stars),
+    totalPlays: String(summary.totalPlayCount),
+  });
 }

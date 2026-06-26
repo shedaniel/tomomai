@@ -9,7 +9,7 @@ import { trpc } from "@/lib/trpc-client";
 import { cn } from "@/lib/utils";
 import { LayoutGrid, LayoutList, Music, Search } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter } from "@/i18n/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@tomomai/ui/select-friendly";
@@ -44,6 +44,7 @@ export function SongsList({ initialSongs }: SongsListProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const [searchBoxFocused, setSearchBoxFocused] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   // Debounce search query
@@ -54,6 +55,10 @@ export function SongsList({ initialSongs }: SongsListProps) {
     }, 300);
     return () => clearTimeout(timer);
   }, [searchQuery]);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const [displayMode, setDisplayMode] = useState<"grid" | "list">("grid");
   const [groupMode, setGroupMode] = useState<GroupMode>("none");
@@ -187,6 +192,10 @@ export function SongsList({ initialSongs }: SongsListProps) {
       <h3 className="font-semibold text-lg text-foreground/90 border-b border-border/50 pb-1">{key}</h3>
     </div>
   );
+
+  if (selectedSlug !== null && !mounted) {
+    return null;
+  }
 
   return (
     <main className="space-y-6 pb-16 pt-3" role="main" data-nosnippet>

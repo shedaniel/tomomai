@@ -3,6 +3,7 @@
 import { Languages } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { createContext, useContext, useEffect, useState } from "react";
 import {
   Select,
@@ -15,9 +16,29 @@ import { cn } from "@tomomai/ui/utils";
 import { getLanguages } from "./languages";
 import {
   Locale,
-  getLocaleCookie,
+  locales,
   setLocaleCookie,
 } from "./locale";
+
+/** Swap the locale segment at the front of a pathname. */
+export function swapLocaleInPath(pathname: string, locale: Locale): string {
+  const segments = pathname.split("/").filter(Boolean);
+  if (segments.length > 0 && (locales as readonly string[]).includes(segments[0])) {
+    segments[0] = locale;
+  } else {
+    segments.unshift(locale);
+  }
+  return `/${segments.join("/")}`;
+}
+
+/** Strip a leading locale segment, returning the bare path. */
+export function stripLocaleFromPath(pathname: string): string {
+  const segments = pathname.split("/").filter(Boolean);
+  if (segments.length > 0 && (locales as readonly string[]).includes(segments[0])) {
+    segments.shift();
+  }
+  return `/${segments.join("/")}`;
+}
 
 interface LocaleContextType {
   locale: Locale;
@@ -44,20 +65,24 @@ export function LocaleProvider({
 }: LocaleProviderProps) {
   const [locale, setLocaleState] = useState<Locale>(forcedLocale ?? initialLocale);
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     if (forcedLocale) return;
-    const cookieLocale = getLocaleCookie();
-    if (cookieLocale && cookieLocale !== locale) {
-      setLocaleState(cookieLocale);
+    const first = pathname.split("/")[1];
+    if (first && (locales as readonly string[]).includes(first) && first !== locale) {
+      setLocaleState(first as Locale);
     }
-  }, [locale, forcedLocale]);
+  }, [pathname, locale, forcedLocale]);
 
   const setLocale = (newLocale: Locale) => {
     if (forcedLocale) return;
     setLocaleState(newLocale);
     setLocaleCookie(newLocale);
-    router.refresh();
+    const next = swapLocaleInPath(pathname || "/", newLocale);
+    const search = typeof window !== "undefined" ? window.location.search : "";
+    const hash = typeof window !== "undefined" ? window.location.hash : "";
+    router.push(`${next}${search}${hash}`);
   };
 
   const value = forcedLocale
@@ -83,6 +108,7 @@ export function LocaleSwitcher({ forceVisible }: LocaleSwitcherProps) {
   const t = useTranslations();
   const LANGUAGES = getLanguages(t);
   const { locale, setLocale } = useLocale();
+  const pathname = usePathname();
 
   const handleNewLocale = (value: string) => {
     const newLocale = value === "auto" ? null : (value as Locale);
@@ -92,8 +118,9 @@ export function LocaleSwitcher({ forceVisible }: LocaleSwitcherProps) {
     } else {
       if (typeof document !== "undefined") {
         document.cookie = "NEXT_LOCALE=; path=/; max-age=0";
+        const bare = stripLocaleFromPath(pathname || "/");
+        window.location.href = bare;
       }
-      window.location.reload();
     }
   };
 

@@ -32,6 +32,14 @@ const regionOption = {
   choices: enabledRegions.map(r => ({ name: REGION_LABELS[r] ?? r, value: r })),
 };
 
+// Shared optional `fetch` option. When true, force a refetch before running.
+const fetchOption = {
+  type: 5, // BOOLEAN
+  name: 'fetch',
+  description: 'Force a refetch from maimai DX NET before running this command.',
+  required: false,
+};
+
 // Define the commands to register
 const commands = [
   {
@@ -41,7 +49,7 @@ const commands = [
   {
     name: 'profile',
     description: 'Show your latest maimai rating',
-    options: [regionOption],
+    options: [regionOption, fetchOption],
   },
   {
     name: 'fetch',
@@ -51,18 +59,19 @@ const commands = [
   {
     name: 'recents',
     description: 'Show your most recent play',
-    options: [regionOption],
+    options: [regionOption, fetchOption],
   },
   {
     name: 'recommend',
     description: 'Show song recommendations to improve your rating',
-    options: [regionOption],
+    options: [regionOption, fetchOption],
   },
   {
     name: 'daily',
     description: 'Show your plays from a single JST day',
     options: [
       regionOption,
+      fetchOption,
       {
         type: 3,
         name: 'date',

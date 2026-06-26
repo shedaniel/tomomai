@@ -147,6 +147,28 @@ export async function fetchSnapshotData(
   };
 }
 
+/**
+ * Return the `fetchedAt` of the user's newest snapshot for a region, or null
+ * if they have none. Cheap single-column query used for staleness checks.
+ */
+export async function getLatestSnapshotFetchedAt(
+  userId: string,
+  region: Region,
+): Promise<Date | null> {
+  const [row] = await db
+    .select({ fetchedAt: userSnapshots.fetchedAt })
+    .from(userSnapshots)
+    .where(
+      and(
+        eq(userSnapshots.userId, userId),
+        eq(userSnapshots.region, region),
+      ),
+    )
+    .orderBy(desc(userSnapshots.fetchedAt))
+    .limit(1);
+  return row?.fetchedAt ?? null;
+}
+
 export async function fetchLatestSnapshotData(userId: string, region: Region) {
   const snapshot = await db
     .select()

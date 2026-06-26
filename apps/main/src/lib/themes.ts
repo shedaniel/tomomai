@@ -128,6 +128,44 @@ export function getThemeStyleProperties(theme: Theme): React.CSSProperties {
   } as React.CSSProperties;
 }
 
+export const THEME_NOFLASH_COOKIE = THEME_STORAGE_KEY;
+
+export function applyThemeProperties(el: HTMLElement, theme: Theme): void {
+  el.style.setProperty("--hue", String(theme.hue));
+  el.style.setProperty("--contrast", String(theme.contrast));
+  el.style.setProperty("--darkness", String(theme.darkness));
+  el.style.setProperty("--lightness", String(theme.lightness ?? 1.0));
+  el.style.setProperty("--saturation", String(theme.saturation ?? 1.0));
+  if (theme.dark) el.classList.add("dark");
+  else el.classList.remove("dark");
+}
+
+/**
+ * Minimal inline blocking script that applies the saved theme pre-paint.
+ * Reads the theme cookie synchronously before first paint to eliminate
+ * the FOUC for non-default themes, without forcing the layout dynamic
+ * (the cookie read happens in the browser, not on the server).
+ *
+ * Named themes are embedded as a compact lookup so the script is fully
+ * self-contained; custom themes are parsed from the id.
+ */
+export function themeNoFlashScript(): string {
+  const table = themes.map((t) => [
+    t.id,
+    t.hue,
+    t.contrast,
+    t.darkness,
+    t.dark ? 1 : 0,
+    t.lightness ?? 1,
+    t.saturation ?? 1,
+  ]);
+  return `(function(){try{var T=${JSON.stringify(table)};var k=${JSON.stringify(
+    THEME_STORAGE_KEY
+  )};var m=document.cookie.match(new RegExp('(^| )'+k+'=([^;]+)'));var id=m?m[2]:localStorage.getItem(k);var th=null;if(id){if(id.indexOf(${JSON.stringify(
+    CUSTOM_THEME_PREFIX
+  )})===0){var p=id.slice(${CUSTOM_THEME_PREFIX.length}).split(':');if(p.length>=4){var h=parseFloat(p[0]),c=parseFloat(p[1]),d=parseFloat(p[2]),dr=p[3]==='1';if(!isNaN(h)&&!isNaN(c)&&!isNaN(d))th=[null,h,c,d,dr,p[4]!==undefined?parseFloat(p[4]):1,1];}}else{for(var i=0;i<T.length;i++){if(T[i][0]===id){th=T[i];break;}}}if(th){var e=document.documentElement;e.style.setProperty('--hue',String(th[1]));e.style.setProperty('--contrast',String(th[2]));e.style.setProperty('--darkness',String(th[3]));if(th[4])e.classList.add('dark');else e.classList.remove('dark');e.style.setProperty('--lightness',String(th[5]));e.style.setProperty('--saturation',String(th[6]));}}}catch(e){}})();`;
+}
+
 export function applyTheme(theme: Theme): void {
   if (typeof document === "undefined") return;
   document.documentElement.style.setProperty("--hue", String(theme.hue));
