@@ -12,9 +12,11 @@ interface SongRowProps {
   index: number;
   isSelected: boolean;
   onSelect: (song: UniqueSong) => void;
+  /** Skip the entrance animation on first mount (set by the list). */
+  disableInitialAnimation?: boolean;
 }
 
-export function SongRow({ song, index, isSelected, onSelect }: SongRowProps) {
+export function SongRow({ song, index, isSelected, onSelect, disableInitialAnimation }: SongRowProps) {
   const href = `/db/songs/${encodeURIComponent(song.slug)}`;
   const isSingleDifficulty = song.difficulties.length === 1;
   const singleDiff = isSingleDifficulty ? song.difficulties[0] : null;
@@ -26,7 +28,7 @@ export function SongRow({ song, index, isSelected, onSelect }: SongRowProps) {
 
   return (
     <motion.div
-      initial={{ opacity: 0, x: -10 }}
+      initial={disableInitialAnimation ? false : { opacity: 0, x: -10 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{
         duration: 0.3,

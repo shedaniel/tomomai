@@ -9,6 +9,9 @@ import { UpdateSong } from "@/lib/types/update";
 import { mergeSongs, taker, merger, key, MergeSink } from "@/server/services/admin/fetcher-utils";
 import { important, PendingSong, value, Pending } from "@/server/utils/admin/type";
 import { sendDiscordNotice, sendDiscordWebhook } from "@/server/services/admin/discord-webhooks";
+import { revalidatePath, revalidateTag } from "next/cache";
+import { getSongSlugs } from "@/lib/song-slug";
+import { locales } from "@tomomai/i18n/locale";
 import { and, eq, inArray, count, sql } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { NextRequest, NextResponse } from "next/server";
@@ -208,6 +211,48 @@ function analyzeChanges(
 }
 
 type UpdateMode = "noop" | "alter" | "destructive";
+
+/**
+ * Push catalog edits to the ISR cache without waiting for the 7-day
+ * revalidate window. Busts the shared songs data cache, then regenerates
+ * each affected song-detail page (per locale) plus the list pages.
+ */
+async function revalidateSongsCache(
+  affected: Array<{ songName: string; artist: string; type: SongType }>,
+  log: (obj: unknown, msg?: string) => void,
+) {
+  revalidateTag("all-unique-songs", { expire: 3600 });
+
+  // Dedupe by songName+type (artist is part of slug derivation only).
+  const seen = new Set<string>();
+  const deduped = affected.filter((s) => {
+    const k = `${s.songName}||${s.type}`;
+    if (seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  });
+
+  const withSlugs = await getSongSlugs(deduped);
+  const slugs = new Set(withSlugs.map((s) => s.slug));
+
+  // Bulk uploads (full catalog re-push) can touch hundreds of songs; fall
+  // back to invalidating the whole dynamic segment instead of thousands of
+  // individual path revalidations.
+  const bulk = slugs.size > 200;
+  for (const locale of locales) {
+    if (bulk) {
+      revalidatePath(`/${locale}/db/songs/[slug]`, "page");
+    } else {
+      for (const slug of slugs) {
+        revalidatePath(`/${locale}/db/songs/${slug}`, "page");
+      }
+    }
+    revalidatePath(`/${locale}/db/songs`, "page");
+  }
+  revalidatePath("/sitemap.xml", "page");
+
+  log({ revalidatedSlugs: slugs.size, bulk }, "ISR cache revalidated");
+}
 
 function pendingSongToDbValues(song: PendingSong, region: Region, gameVersion: VersionId) {
   const noteCounts = value(song.noteCounts as Pending<any>);
@@ -533,6 +578,22 @@ export async function POST(request: NextRequest) {
     const applied = await applyChanges(changes, addedSongs, mergeEvents, region, version, updateMode);
 
     log.info({ updateMode, applied }, "DB update complete");
+
+    // Push the edits to ISR: regenerate affected song pages + bust the catalog
+    // data cache so the next read is fresh. Only when changes were applied.
+    if (updateMode !== "noop") {
+      const affectedSongs = [
+        ...addedSongs.map(s => ({ songName: s.songName, artist: value(s.artist) ?? "", type: s.type })),
+        ...mergeEvents.flatMap(e => [e.existing, e.result])
+          .map(s => ({ songName: s.songName, artist: value(s.artist) ?? "", type: s.type })),
+        ...changes.deleted.map(d => ({ songName: d.songName, artist: d.artist, type: d.type })),
+      ];
+      try {
+        await revalidateSongsCache(affectedSongs, (obj, msg) => log.info(obj, msg ?? ""));
+      } catch (err) {
+        log.error({ err }, "Failed to revalidate songs ISR cache");
+      }
+    }
 
     // Send Discord webhook if changes were applied
     if (updateMode !== "noop") {
