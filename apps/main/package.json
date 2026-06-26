@@ -31,13 +31,11 @@
     "token:cli": "node scripts/token-cli.js",
     "scripts:validate-snapshot": "node scripts/verify-snapshot.js",
     "scripts:verify-backfill": "node scripts/verify-backfill.js",
-    "scripts:migrate-icons": "node scripts/migrate-icons-to-r2.js"
+    "scripts:migrate-icons": "node scripts/migrate-icons-to-r2.js",
+    "scripts:measure-isr": "node scripts/measure-isr-payload.js --dir .next",
+    "scripts:measure-isr:live": "node scripts/measure-isr-live.js"
   },
   "dependencies": {
-    "@tomomai/ui": "workspace:*",
-    "@tomomai/i18n": "workspace:*",
-    "@tomomai/utils": "workspace:*",
-    "@tomomai/security": "workspace:*",
     "@aws-sdk/client-s3": "^3.990.0",
     "@better-auth/api-key": "^1.6.11",
     "@better-auth/oauth-provider": "^1.6.11",
@@ -63,6 +61,10 @@
     "@radix-ui/react-visually-hidden": "^1.2.4",
     "@tanstack/react-query": "^5.90.21",
     "@tanstack/react-query-devtools": "^5.91.3",
+    "@tomomai/i18n": "workspace:*",
+    "@tomomai/security": "workspace:*",
+    "@tomomai/ui": "workspace:*",
+    "@tomomai/utils": "workspace:*",
     "@trpc/client": "^11.10.0",
     "@trpc/next": "^11.10.0",
     "@trpc/react-query": "^11.10.0",

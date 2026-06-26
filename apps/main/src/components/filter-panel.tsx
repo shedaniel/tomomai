@@ -42,6 +42,8 @@ interface FilterPanelProps<T> {
   getFilterLabel: GetFilterLabelFn;
   className?: string;
   triggerClassName?: string;
+  /** Skip entrance animations on first mount (set by the parent list). */
+  disableInitialAnimation?: boolean;
 }
 
 function FilterPanelInner<T>({
@@ -53,6 +55,7 @@ function FilterPanelInner<T>({
   getFilterLabel,
   className,
   triggerClassName,
+  disableInitialAnimation,
 }: FilterPanelProps<T>) {
   const wouldYieldResults = (testFilter: GenericFilter): boolean => {
     // First check if the filter alone yields any results (remove useless filters)
@@ -82,7 +85,7 @@ function FilterPanelInner<T>({
 
   return (
     <motion.div
-      initial={{ height: 0, opacity: 0 }}
+      initial={disableInitialAnimation ? false : { height: 0, opacity: 0 }}
       animate={{ height: "auto", opacity: 1 }}
       exit={{ height: 0, opacity: 0 }}
       transition={{
@@ -92,7 +95,7 @@ function FilterPanelInner<T>({
     >
       <motion.div
         className={cn("space-y-3", className)}
-        initial={{ y: -10 }}
+        initial={disableInitialAnimation ? false : { y: -10 }}
         animate={{ y: 0 }}
         transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
       >
@@ -102,7 +105,7 @@ function FilterPanelInner<T>({
             {filters.map((filter, index) => (
               <motion.div
                 key={getFilterKey(filter)}
-                initial={{ width: 0, opacity: 0 }}
+                initial={disableInitialAnimation ? false : { width: 0, opacity: 0 }}
                 animate={{ width: "auto", opacity: 1 }}
                 exit={{ width: 0, opacity: 0 }}
                 transition={{
@@ -136,7 +139,7 @@ function FilterPanelInner<T>({
               return (
                 <motion.div
                   key={category.type}
-                  initial={{ width: 0, opacity: 0 }}
+                  initial={disableInitialAnimation ? false : { width: 0, opacity: 0 }}
                   animate={{ width: "auto", opacity: 1 }}
                   exit={{ width: 0, opacity: 0 }}
                   transition={{
