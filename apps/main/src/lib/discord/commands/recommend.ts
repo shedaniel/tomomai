@@ -2,7 +2,7 @@ import { db } from '@/lib/db';
 import { account, user } from '@/lib/db/schema-pg';
 import { renderLevelPrecise } from '@/lib/name-utils';
 import { addRatingsAndSort, SongWithRating } from '@/lib/rating-calculator';
-import { SongWithScore } from '@/lib/types';
+import { SongWithScore, Region } from '@/lib/types';
 import { fetchLatestSnapshotData } from '@/server/queries/snapshots';
 import { generateRecommendations, RecommendationData } from '@/server/queries/recommendations';
 import { getLogger } from '@/lib/request-logger';
@@ -18,12 +18,66 @@ import {
   editDiscordMessage,
 } from '../responses';
 import { regionDisplayName, resolveRegion } from '../region';
+import { applyStalenessGate } from './staleness';
+import { t } from '../i18n';
 
 export interface RecommendCommandOptions {
   discordUserId: string;
   regionParam?: string;
   applicationId: string;
   interactionToken: string;
+  forceFetch?: boolean;
+  locale?: string;
+}
+
+export interface ExecuteRecommendOptions {
+  dbUserId: string;
+  region: Region;
+  discordUserId: string;
+  applicationId: string;
+  interactionToken: string;
+  locale?: string;
+}
+
+export async function executeRecommendCommand({
+  dbUserId,
+  region,
+  discordUserId,
+  applicationId,
+  interactionToken,
+  locale,
+}: ExecuteRecommendOptions): Promise<void> {
+  const regionName = regionDisplayName(region, locale);
+  try {
+    const data = await fetchLatestSnapshotData(dbUserId, region);
+    if (!data) {
+      await editDiscordMessage(applicationId, interactionToken, {
+        embeds: [createNoDataResponse(regionName, locale).data!.embeds![0]],
+      });
+      return;
+    }
+
+    const { snapshot, songs } = data;
+    const songsWithRating = addRatingsAndSort(songs as SongWithScore[], snapshot.gameVersion) as SongWithRating[];
+    const recommendations = generateRecommendations(songsWithRating, snapshot.gameVersion);
+
+    const deduped = recommendations.filter((rec, index, self) =>
+      index === self.findIndex(r => r.song.songId === rec.song.songId && r.song.difficulty === rec.song.difficulty)
+    );
+
+    const embed = deduped.length === 0
+      ? buildNoRecommendationsEmbed(regionName, discordUserId, locale)
+      : buildRecommendationEmbed(deduped, regionName, discordUserId, locale);
+
+    await editDiscordMessage(applicationId, interactionToken, {
+      embeds: [embed],
+    });
+  } catch (error) {
+    getLogger().error({ err: error }, 'Error generating recommendations');
+    await editDiscordMessage(applicationId, interactionToken, {
+      content: t(locale, 'recommend.errorContent'),
+    });
+  }
 }
 
 const MAX_ROWS = 10;
@@ -63,28 +117,28 @@ function formatRow(rec: RecommendationData, rank: number): string {
   ].join('\n');
 }
 
-function buildRecommendationEmbed(recommendations: RecommendationData[], regionName: string, discordUserId: string) {
+function buildRecommendationEmbed(recommendations: RecommendationData[], regionName: string, discordUserId: string, locale?: string) {
   const top = recommendations.slice(0, MAX_ROWS);
   const body = top.map((r, i) => formatRow(r, i + 1)).join('\n');
 
   return {
-    title: `🎯 ${regionName} Recommendations`,
-    description: `<@${discordUserId}>\n\`\`\`\n${body}\n\`\`\``,
+    title: t(locale, 'recommend.title', { regionName }),
+    description: t(locale, 'recommend.description', { userId: discordUserId, body }),
     color: DISCORD_COLORS.BLURPLE,
     footer: {
-      text: 'tomomai ともマイ • maimai DX score tracker',
+      text: t(locale, 'common.footer'),
     },
     timestamp: new Date().toISOString(),
   };
 }
 
-function buildNoRecommendationsEmbed(regionName: string, discordUserId: string) {
+function buildNoRecommendationsEmbed(regionName: string, discordUserId: string, locale?: string) {
   return {
-    title: `🎯 ${regionName} Recommendations`,
-    description: `<@${discordUserId}> No recommendations — your scores are already optimal!`,
+    title: t(locale, 'recommend.none.title', { regionName }),
+    description: t(locale, 'recommend.none.description', { userId: discordUserId }),
     color: DISCORD_COLORS.GREEN,
     footer: {
-      text: 'tomomai ともマイ • maimai DX score tracker',
+      text: t(locale, 'common.footer'),
     },
     timestamp: new Date().toISOString(),
   };
@@ -95,15 +149,19 @@ export async function handleRecommendCommand({
   regionParam,
   applicationId,
   interactionToken,
+  forceFetch,
+  locale,
 }: RecommendCommandOptions): Promise<DiscordResponse> {
   try {
     if (!discordUserId) {
-      return createErrorResponse('Unable to identify Discord user. Please try again.');
+      return createErrorResponse(t(locale, 'common.error.unableToIdentify'), locale);
     }
 
     const [dbUser] = await db
       .select({
         id: user.id,
+        name: user.name,
+        username: user.username,
         region: user.region,
       })
       .from(user)
@@ -115,52 +173,38 @@ export async function handleRecommendCommand({
       .limit(1);
 
     if (!dbUser) {
-      return createNotRegisteredResponse();
+      return createNotRegisteredResponse(locale);
     }
 
     const region = resolveRegion(regionParam, dbUser.region);
-    const regionName = regionDisplayName(region);
+
+    const gate = await applyStalenessGate({
+      command: 'recommend',
+      dbUser: { id: dbUser.id, name: dbUser.name, username: dbUser.username, region: dbUser.region },
+      region,
+      discordUserId,
+      forceFetch,
+      payload: '',
+      applicationId,
+      interactionToken,
+      locale,
+    });
+    if (gate) return gate;
 
     const deferredResponse = createDeferredResponse();
 
-    const backgroundTask = (async () => {
-      try {
-        const data = await fetchLatestSnapshotData(dbUser.id, region);
-        if (!data) {
-          await editDiscordMessage(applicationId, interactionToken, {
-            embeds: [createNoDataResponse(regionName).data!.embeds![0]],
-          });
-          return;
-        }
-
-        const { snapshot, songs } = data;
-        const songsWithRating = addRatingsAndSort(songs as SongWithScore[], snapshot.gameVersion) as SongWithRating[];
-        const recommendations = generateRecommendations(songsWithRating, snapshot.gameVersion);
-
-        const deduped = recommendations.filter((rec, index, self) =>
-          index === self.findIndex(r => r.song.songId === rec.song.songId && r.song.difficulty === rec.song.difficulty)
-        );
-
-        const embed = deduped.length === 0
-          ? buildNoRecommendationsEmbed(regionName, discordUserId)
-          : buildRecommendationEmbed(deduped, regionName, discordUserId);
-
-        await editDiscordMessage(applicationId, interactionToken, {
-          embeds: [embed],
-        });
-      } catch (error) {
-        getLogger().error({ err: error }, 'Error generating recommendations');
-        await editDiscordMessage(applicationId, interactionToken, {
-          content: 'An error occurred while generating recommendations. Please try again later.',
-        });
-      }
-    })();
-
-    waitUntil(backgroundTask);
+    waitUntil(executeRecommendCommand({
+      dbUserId: dbUser.id,
+      region,
+      discordUserId,
+      applicationId,
+      interactionToken,
+      locale,
+    }));
 
     return deferredResponse;
   } catch (error) {
     getLogger().error({ err: error }, 'Error handling recommend command');
-    return createErrorResponse('An error occurred while generating recommendations. Please try again later.');
+    return createErrorResponse(t(locale, 'recommend.errorGeneric'), locale);
   }
 }

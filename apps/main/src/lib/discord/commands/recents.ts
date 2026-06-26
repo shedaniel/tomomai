@@ -3,6 +3,7 @@ import { account, user } from '@/lib/db/schema-pg';
 import { getLogger } from '@/lib/request-logger';
 import { waitUntil } from '@vercel/functions';
 import { and, eq } from 'drizzle-orm';
+import type { Region } from '@/lib/types';
 import {
   createDeferredResponse,
   createErrorResponse,
@@ -11,6 +12,8 @@ import {
 } from '../responses';
 import { resolveRegion } from '../region';
 import { generateAndSendCreditImage } from '../image-utils';
+import { applyStalenessGate } from './staleness';
+import { t } from '../i18n';
 
 export interface RecentsCommandOptions {
   discordUserId: string;
@@ -18,6 +21,38 @@ export interface RecentsCommandOptions {
   applicationId: string;
   interactionToken: string;
   skip?: number;
+  forceFetch?: boolean;
+  locale?: string;
+}
+
+export interface ExecuteRecentsOptions {
+  dbUserId: string;
+  region: Region;
+  discordUserId: string;
+  applicationId: string;
+  interactionToken: string;
+  skip?: number;
+  locale?: string;
+}
+
+export async function executeRecentsCommand({
+  dbUserId,
+  region,
+  discordUserId,
+  applicationId,
+  interactionToken,
+  skip = 0,
+  locale,
+}: ExecuteRecentsOptions): Promise<void> {
+  await generateAndSendCreditImage({
+    userId: dbUserId,
+    discordUserId,
+    region,
+    applicationId,
+    interactionToken,
+    skip,
+    locale,
+  });
 }
 
 export async function handleRecentsCommand({
@@ -26,10 +61,12 @@ export async function handleRecentsCommand({
   applicationId,
   interactionToken,
   skip = 0,
+  forceFetch,
+  locale,
 }: RecentsCommandOptions): Promise<DiscordResponse> {
   try {
     if (!discordUserId) {
-      return createErrorResponse('Unable to identify Discord user. Please try again.');
+      return createErrorResponse(t(locale, 'common.error.unableToIdentify'), locale);
     }
 
     // Find user by Discord ID via account table
@@ -49,33 +86,44 @@ export async function handleRecentsCommand({
       .limit(1);
 
     if (!dbUser) {
-      return createNotRegisteredResponse();
+      return createNotRegisteredResponse(locale);
     }
 
     const region = resolveRegion(regionParam, dbUser.region);
 
+    // Staleness/force-fetch only apply on the initial invocation, not pagination.
+    if (!skip) {
+      const gate = await applyStalenessGate({
+        command: 'recents',
+        dbUser: { id: dbUser.id, name: dbUser.name, username: dbUser.username, region: dbUser.region },
+        region,
+        discordUserId,
+        forceFetch,
+        payload: '',
+        applicationId,
+        interactionToken,
+        locale,
+      });
+      if (gate) return gate;
+    }
+
     // Defer the response since image generation can take a moment
     const deferredResponse = createDeferredResponse();
 
-    // Generate and send credit image in the background
-    const backgroundTask = (async () => {
-      await generateAndSendCreditImage({
-        userId: dbUser.id,
-        discordUserId,
-        region,
-        applicationId,
-        interactionToken,
-        skip,
-      });
-    })();
-
-    // Use waitUntil to ensure the background task continues
-    waitUntil(backgroundTask);
+    waitUntil(executeRecentsCommand({
+      dbUserId: dbUser.id,
+      region,
+      discordUserId,
+      applicationId,
+      interactionToken,
+      skip,
+      locale,
+    }));
 
     return deferredResponse;
 
   } catch (error) {
     getLogger().error({ err: error }, 'Error handling recents command');
-    return createErrorResponse('An error occurred while fetching your recent plays. Please try again later.');
+    return createErrorResponse(t(locale, 'recents.errorGeneric'), locale);
   }
 }

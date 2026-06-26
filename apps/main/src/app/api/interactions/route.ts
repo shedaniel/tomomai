@@ -5,6 +5,7 @@ import {
   InteractionResponseType,
 } from 'discord-interactions';
 import { handleCommand, handleComponents, handleAutocomplete, createPongResponse } from '@/lib/discord';
+import { t } from '@/lib/discord/i18n';
 import { flushLogger } from '@/lib/logger';
 import { requestLogger } from '@/lib/request-logger';
 
@@ -51,6 +52,7 @@ export async function POST(request: NextRequest) {
         discordUserId,
         applicationId: APPLICATION_ID,
         interactionToken: interaction.token,
+        locale: interaction.locale,
       });
 
       return Response.json(response);
@@ -65,6 +67,7 @@ export async function POST(request: NextRequest) {
         commandName: data.name,
         options: data.options,
         discordUserId,
+        locale: interaction.locale,
       });
 
       return Response.json(response);
@@ -80,6 +83,7 @@ export async function POST(request: NextRequest) {
         discordUserId,
         applicationId: APPLICATION_ID,
         interactionToken: interaction.token,
+        locale: interaction.locale,
       });
 
       if (!response) {
@@ -87,7 +91,7 @@ export async function POST(request: NextRequest) {
         return Response.json({
           type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
           data: {
-            content: '❌ This button is not available to you.',
+            content: t(interaction.locale, 'common.error.notAvailableToYou'),
             flags: 64, // EPHEMERAL
           },
         });

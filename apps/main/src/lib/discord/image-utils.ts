@@ -15,6 +15,7 @@ import { Image, loadImage } from 'skia-canvas';
 import { getRatingImageUrl } from '@/lib/rating-calculator';
 import { getLogoUrl, getTypeBadgeUrl } from '@/lib/utils';
 import { DIFFICULTY_ENUM } from '@/lib/db/types';
+import { t } from './i18n';
 
 export interface ImageGenerationOptions {
   summary: ProfileSummary;
@@ -24,6 +25,7 @@ export interface ImageGenerationOptions {
   interactionToken: string;
   username: string;
   showGeneratingStatus?: boolean;
+  locale?: string;
 }
 
 export async function generateAndSendProfileImage({
@@ -34,21 +36,22 @@ export async function generateAndSendProfileImage({
   interactionToken,
   username,
   showGeneratingStatus = false,
+  locale,
 }: ImageGenerationOptions): Promise<void> {
   // Show image generation status if requested
   if (showGeneratingStatus) {
     await editDiscordMessage(applicationId, interactionToken, {
       embeds: [{
-        title: `🔄 Fetching ${regionName} Data`,
-        description: `<@${discordUserId}> Data fetch completed, generating profile image...`,
+        title: t(locale, 'fetch.generatingImage.title', { regionName }),
+        description: t(locale, 'fetch.generatingImage.description', { userId: discordUserId }),
         color: DISCORD_COLORS.YELLOW,
         fields: [{
-          name: '📊 Status',
-          value: '⏳ Generating Profile Image',
+          name: t(locale, 'fetch.generatingImage.status'),
+          value: t(locale, 'fetch.generatingImage.statusValue'),
           inline: false,
         }],
         footer: {
-          text: 'tomomai ともマイ • maimai DX score tracker',
+          text: t(locale, 'common.footer'),
         },
         timestamp: new Date().toISOString(),
       }],
@@ -61,7 +64,7 @@ export async function generateAndSendProfileImage({
     : 'http://localhost:3000';
   const profileUrl = `${baseUrl}/profile/${username}/`;
 
-  const content = formatProfileSummaryContent(discordUserId, summary, regionName);
+  const content = formatProfileSummaryContent(discordUserId, summary, regionName, locale);
 
   const components = [
     {
@@ -70,7 +73,7 @@ export async function generateAndSendProfileImage({
         {
           type: 2, // Button
           style: 5, // Link style
-          label: '🔗 View Full Profile',
+          label: t(locale, 'profile.viewFullProfile'),
           url: profileUrl,
         },
       ],
@@ -105,6 +108,7 @@ export interface CreditImageOptions {
   applicationId: string;
   interactionToken: string;
   skip?: number;
+  locale?: string;
 }
 
 export async function generateAndSendCreditImage({
@@ -114,23 +118,24 @@ export async function generateAndSendCreditImage({
   applicationId,
   interactionToken,
   skip = 0,
+  locale,
 }: CreditImageOptions): Promise<void> {
-  const regionName = regionDisplayName(region);
+  const regionName = regionDisplayName(region, locale);
 
   try {
     // Show loading message
     await editDiscordMessage(applicationId, interactionToken, {
       embeds: [{
-        title: `🔄 Loading ${regionName} Recent Plays`,
-        description: `<@${discordUserId}> Generating your recent play image...`,
+        title: t(locale, 'recents.loading.title', { regionName }),
+        description: t(locale, 'recents.loading.description', { userId: discordUserId }),
         color: DISCORD_COLORS.BLURPLE,
         fields: [{
-          name: '📊 Status',
-          value: '⏳ Generating Image',
+          name: t(locale, 'recents.loading.status'),
+          value: t(locale, 'recents.loading.statusValue'),
           inline: false,
         }],
         footer: {
-          text: 'tomomai ともマイ • maimai DX score tracker',
+          text: t(locale, 'common.footer'),
         },
         timestamp: new Date().toISOString(),
       }],
@@ -166,13 +171,13 @@ export async function generateAndSendCreditImage({
     if (prepareDataResult.type === "error") {
       await editDiscordMessage(applicationId, interactionToken, {
         embeds: [{
-          title: '📊 No Recent Plays Found',
+          title: t(locale, 'recents.noPlays.title'),
           description: skip === 0
-            ? `You don't have any recent ${regionName} region plays yet!`
-            : `No more plays found.`,
+            ? t(locale, 'recents.noPlays.description', { regionName })
+            : t(locale, 'recents.noPlays.noMore'),
           color: DISCORD_COLORS.YELLOW,
           footer: {
-            text: 'tomomai ともマイ • maimai DX score tracker',
+            text: t(locale, 'common.footer'),
           },
         }],
       });
@@ -243,7 +248,7 @@ export async function generateAndSendCreditImage({
 
     // Plain content line, mirroring /profile and /daily styling
     const playedUnix = Math.floor(credit.playedAt.getTime() / 1000);
-    const content = `<@${discordUserId}> Here are your recent plays at <t:${playedUnix}:f> (${regionName})`;
+    const content = t(locale, 'recents.content', { userId: discordUserId, unix: playedUnix, regionName });
 
     // Create navigation buttons
     const components = [
@@ -253,7 +258,7 @@ export async function generateAndSendCreditImage({
           {
             type: 2, // BUTTON
             custom_id: `recents_${discordUserId}_${region}_${skip - 1}`,
-            label: 'Newer Play',
+            label: t(locale, 'recents.newerPlay'),
             style: 2, // SECONDARY
             emoji: {
               name: '⬅️'
@@ -263,7 +268,7 @@ export async function generateAndSendCreditImage({
           {
             type: 2, // BUTTON
             custom_id: `recents_${discordUserId}_${region}_${skip + 1}`,
-            label: 'Older Play',
+            label: t(locale, 'recents.olderPlay'),
             style: 2, // SECONDARY
             emoji: {
               name: '➡️'
@@ -288,11 +293,11 @@ export async function generateAndSendCreditImage({
     getLogger().error({ err: error }, 'Error generating credit image');
     await editDiscordMessage(applicationId, interactionToken, {
       embeds: [{
-        title: '❌ Error',
-        description: `Failed to generate image: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        title: t(locale, 'recents.error.title'),
+        description: t(locale, 'recents.error.description', { message: error instanceof Error ? error.message : 'Unknown error' }),
         color: DISCORD_COLORS.RED,
         footer: {
-          text: 'tomomai ともマイ • maimai DX score tracker',
+          text: t(locale, 'common.footer'),
         },
       }],
     });
@@ -306,6 +311,7 @@ export interface DailyPlaysImageOptions {
   day?: string;
   applicationId: string;
   interactionToken: string;
+  locale?: string;
 }
 
 async function editDiscordMessageWithImageOnly(
@@ -338,14 +344,18 @@ export async function generateAndSendDailyPlaysImage({
   day,
   applicationId,
   interactionToken,
+  locale,
 }: DailyPlaysImageOptions): Promise<void> {
-  const regionName = regionDisplayName(region);
+  const regionName = regionDisplayName(region, locale);
 
   try {
     const result = await prepareDailyPlaysData(userId, region, day);
     if (result.type === 'error') {
+      const content = day
+        ? t(locale, 'daily.noPlaysDay', { userId: discordUserId, day, regionName })
+        : t(locale, 'daily.noPlays', { userId: discordUserId, regionName });
       await editDiscordMessage(applicationId, interactionToken, {
-        content: `<@${discordUserId}> No plays found${day ? ` for ${day}` : ''} (${regionName}).`,
+        content,
       });
       return;
     }
@@ -375,14 +385,14 @@ export async function generateAndSendDailyPlaysImage({
     await editDiscordMessageWithImageOnly(
       applicationId,
       interactionToken,
-      `<@${discordUserId}> Daily plays for **${resolvedDay}** (${regionName})`,
+      t(locale, 'daily.content', { userId: discordUserId, day: resolvedDay, regionName }),
       imageBuffer,
       `maimai-daily-${resolvedDay}.jpg`,
     );
   } catch (error) {
     getLogger().error({ err: error }, 'Error generating daily plays image');
     await editDiscordMessage(applicationId, interactionToken, {
-      content: `<@${discordUserId}> ❌ Failed to generate daily plays image.`,
+      content: t(locale, 'daily.failed', { userId: discordUserId }),
     });
   }
 }

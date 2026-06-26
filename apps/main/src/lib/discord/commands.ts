@@ -7,8 +7,10 @@ import { handleAlbumPreferenceSelection } from './commands/album-preference';
 import { handleDailyCommand, handleDailyAutocomplete } from './commands/daily';
 import { createUnknownCommandResponse, DiscordResponse } from './responses';
 import type { Region } from '@/lib/types';
+import type { StaleCommand } from './staleness';
+import { handleStalenessChoice } from './commands/staleness';
 
-type CommandOption = { name: string; value?: string; type: number; focused?: boolean };
+type CommandOption = { name: string; value?: string | boolean; type: number; focused?: boolean };
 
 // Command definitions. Each data command defaults to the user's selected
 // region and accepts an optional `region` option to override it.
@@ -44,12 +46,19 @@ function getRegionParam(options?: CommandOption[]): string | undefined {
   return typeof value === 'string' && value.length > 0 ? value : undefined;
 }
 
+function getBooleanParam(options: CommandOption[] | undefined, name: string): boolean {
+  const value = options?.find(o => o.name === name)?.value;
+  return value === true || value === 'true';
+}
+
 export interface CommandContext {
   commandName: string;
   options?: CommandOption[];
   discordUserId?: string;
   applicationId: string;
   interactionToken: string;
+  forceFetch?: boolean;
+  locale?: string;
 }
 
 export interface ComponentContext {
@@ -57,18 +66,21 @@ export interface ComponentContext {
   discordUserId?: string;
   applicationId: string;
   interactionToken: string;
+  locale?: string;
 }
 
 export interface AutocompleteContext {
   commandName: string;
   options?: CommandOption[];
   discordUserId?: string;
+  locale?: string;
 }
 
 export async function handleCommand(context: CommandContext): Promise<DiscordResponse> {
-  const { commandName, options, discordUserId, applicationId, interactionToken } = context;
+  const { commandName, options, discordUserId, applicationId, interactionToken, forceFetch, locale } = context;
 
   const regionParam = getRegionParam(options);
+  const forceFetchParam = forceFetch ?? getBooleanParam(options, 'fetch');
 
   switch (commandName.toLowerCase()) {
     case COMMANDS.PROFILE.name.toLowerCase():
@@ -79,7 +91,9 @@ export async function handleCommand(context: CommandContext): Promise<DiscordRes
         discordUserId,
         regionParam,
         applicationId,
-        interactionToken
+        interactionToken,
+        forceFetch: forceFetchParam,
+        locale,
       });
 
     case COMMANDS.FETCH.name.toLowerCase():
@@ -90,8 +104,10 @@ export async function handleCommand(context: CommandContext): Promise<DiscordRes
         discordUserId,
         regionParam,
         applicationId,
-        interactionToken
+        interactionToken,
+        locale,
       });
+      // /fetch ignores the `fetch` boolean option on purpose.
 
     case COMMANDS.RECENTS.name.toLowerCase():
       if (!discordUserId) {
@@ -101,7 +117,9 @@ export async function handleCommand(context: CommandContext): Promise<DiscordRes
         discordUserId,
         regionParam,
         applicationId,
-        interactionToken
+        interactionToken,
+        forceFetch: forceFetchParam,
+        locale,
       });
 
     case COMMANDS.RECOMMEND.name.toLowerCase():
@@ -112,7 +130,9 @@ export async function handleCommand(context: CommandContext): Promise<DiscordRes
         discordUserId,
         regionParam,
         applicationId,
-        interactionToken
+        interactionToken,
+        forceFetch: forceFetchParam,
+        locale,
       });
 
     case COMMANDS.DAILY.name.toLowerCase():
@@ -129,10 +149,12 @@ export async function handleCommand(context: CommandContext): Promise<DiscordRes
         day,
         applicationId,
         interactionToken,
+        forceFetch: forceFetchParam,
+        locale,
       });
 
     case COMMANDS.INVITE.name.toLowerCase():
-      return handleInviteCommand({ applicationId });
+      return handleInviteCommand({ applicationId, locale });
 
     default:
       return createUnknownCommandResponse();
@@ -140,14 +162,14 @@ export async function handleCommand(context: CommandContext): Promise<DiscordRes
 }
 
 export async function handleAutocomplete(context: AutocompleteContext): Promise<DiscordResponse> {
-  const { commandName, options, discordUserId } = context;
+  const { commandName, options, discordUserId, locale } = context;
 
   switch (commandName.toLowerCase()) {
     case COMMANDS.DAILY.name.toLowerCase(): {
       const regionParam = getRegionParam(options);
       const focused = options?.find(o => o.focused) ?? options?.find(o => o.name === 'date');
       const focusedValue = typeof focused?.value === 'string' ? focused.value : '';
-      return handleDailyAutocomplete({ discordUserId, regionParam, focusedValue });
+      return handleDailyAutocomplete({ discordUserId, regionParam, focusedValue, locale });
     }
     default:
       return { type: 8, data: { choices: [] } };
@@ -155,7 +177,7 @@ export async function handleAutocomplete(context: AutocompleteContext): Promise<
 }
 
 export async function handleComponents(context: ComponentContext): Promise<DiscordResponse | null> {
-  const { customId, discordUserId, applicationId, interactionToken } = context;
+  const { customId, discordUserId, applicationId, interactionToken, locale } = context;
 
   // Parse the custom_id: recents_<userId>_<region>_<skip>
   if (customId.startsWith('recents_')) {
@@ -176,6 +198,7 @@ export async function handleComponents(context: ComponentContext): Promise<Disco
         applicationId,
         interactionToken,
         skip,
+        locale,
       });
     }
   }
@@ -201,6 +224,36 @@ export async function handleComponents(context: ComponentContext): Promise<Disco
         fetchUseAlbums,
         applicationId,
         interactionToken,
+        locale,
+      });
+    }
+  }
+
+  // Parse the custom_id: staleness_<cmd>_<userId>_<region>_<choice>_<payload>
+  if (customId.startsWith('staleness_')) {
+    const parts = customId.split('_');
+    // staleness _ cmd _ userId _ region _ choice _ payload(payload may be empty)
+    if (parts.length >= 6) {
+      const cmd = parts[1];
+      const buttonUserId = parts[2];
+      const region = parts[3] as Region;
+      const refetch = parts[4] === '1';
+      const payload = parts.slice(5).join('_');
+
+      // verify the user clicking is the same as the user who initiated the command
+      if (!discordUserId || discordUserId !== buttonUserId) {
+        return null;
+      }
+
+      return handleStalenessChoice({
+        command: cmd as StaleCommand,
+        discordUserId,
+        region,
+        refetch,
+        payload,
+        applicationId,
+        interactionToken,
+        locale,
       });
     }
   }

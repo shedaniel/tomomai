@@ -4,6 +4,7 @@ import { getLogger } from '@/lib/request-logger';
 import { and, eq } from 'drizzle-orm';
 import { waitUntil } from '@vercel/functions';
 import { DiscordResponse, editDiscordMessage, DISCORD_COLORS, createDeferredResponse } from '../responses';
+import { t } from '../i18n';
 import { handleFetchCommand } from './fetch';
 import type { Region } from '@/lib/types';
 
@@ -13,6 +14,7 @@ export interface AlbumPreferenceOptions {
   fetchUseAlbums: boolean;
   applicationId: string;
   interactionToken: string;
+  locale?: string;
 }
 
 export async function handleAlbumPreferenceSelection({
@@ -21,6 +23,7 @@ export async function handleAlbumPreferenceSelection({
   fetchUseAlbums,
   applicationId,
   interactionToken,
+  locale,
 }: AlbumPreferenceOptions): Promise<DiscordResponse> {
   // Return deferred response immediately
   const deferredResponse = createDeferredResponse();
@@ -44,11 +47,11 @@ export async function handleAlbumPreferenceSelection({
       if (!dbUser) {
         await editDiscordMessage(applicationId, interactionToken, {
           embeds: [{
-            title: '❌ Error',
-            description: 'Unable to find your account. Please try again.',
+            title: t(locale, 'common.error.title' ),
+            description: t(locale, 'common.error.generic'),
             color: DISCORD_COLORS.RED,
             footer: {
-              text: 'tomomai ともマイ • maimai DX score tracker',
+              text: t(locale, 'common.footer'),
             },
             timestamp: new Date().toISOString(),
           }],
@@ -68,11 +71,13 @@ export async function handleAlbumPreferenceSelection({
       // Show confirmation message
       await editDiscordMessage(applicationId, interactionToken, {
         embeds: [{
-          title: '✅ Preference Set',
-          description: `Your album preference has been set to "${fetchUseAlbums ? 'Save Albums' : 'Don\'t Save Albums'}". Starting fetch...`,
+          title: t(locale, 'fetch.albumPreference.preferenceSet.title'),
+          description: t(locale, 'fetch.albumPreference.preferenceSet.description', {
+            choice: t(locale, fetchUseAlbums ? 'fetch.albumPreference.preferenceSet.save' : 'fetch.albumPreference.preferenceSet.dontSave'),
+          }),
           color: DISCORD_COLORS.GREEN,
           footer: {
-            text: 'tomomai ともマイ • maimai DX score tracker',
+            text: t(locale, 'common.footer'),
           },
           timestamp: new Date().toISOString(),
         }],
@@ -88,16 +93,17 @@ export async function handleAlbumPreferenceSelection({
         regionParam: region,
         applicationId,
         interactionToken,
+        locale,
       });
     } catch (error) {
       getLogger().error({ err: error }, 'Error handling album preference');
       await editDiscordMessage(applicationId, interactionToken, {
         embeds: [{
-          title: '❌ Error',
-          description: 'An error occurred while setting your preference. Please try again.',
+          title: t(locale, 'common.error.title'),
+          description: t(locale, 'common.error.generic'),
           color: DISCORD_COLORS.RED,
           footer: {
-            text: 'tomomai ともマイ • maimai DX score tracker',
+            text: t(locale, 'common.footer'),
           },
           timestamp: new Date().toISOString(),
         }],
