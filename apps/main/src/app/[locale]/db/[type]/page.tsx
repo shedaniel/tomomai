@@ -8,7 +8,13 @@ import { buildAlternates, openGraphLocales, ogImageUrl, localizePath } from "@/l
 import { DB_TYPES } from "@/lib/db/types";
 
 // On-demand ISR.
-export const revalidate = 3600;
+export const revalidate = 10800;
+
+export async function headers() {
+  return {
+    "cache-control": "public, max-age=3600, stale-while-revalidate=86400",
+  };
+}
 
 export function generateStaticParams() {
   return DB_TYPES.filter((type) => type !== "posts").map((type) => ({ type }));
