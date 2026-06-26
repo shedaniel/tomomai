@@ -8,7 +8,13 @@ import { resolveBaseUrl } from "@/lib/base-url";
 import { safeDecodeURIComponent } from "@/lib/utils";
 
 // On-demand ISR.
-export const revalidate = 3600;
+export const revalidate = 86400;
+
+export async function headers() {
+  return {
+    "cache-control": "public, max-age=3600, stale-while-revalidate=86400",
+  };
+}
 
 export function generateStaticParams() {
   return [];
