@@ -4,16 +4,16 @@ import { createServerSideTRPC } from "@/lib/trpc-server";
 import { TRPCError } from "@trpc/server";
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
-import { getLocale } from "@/i18n/locale-server";
+import { getLocale, setStaticLocale } from "@/i18n/locale-server";
 import { buildAlternates, openGraphLocales, localizePath } from "@/lib/seo";
 import { safeDecodeURIComponent } from "@/lib/utils";
 
-export const revalidate = 300;
-export const dynamicParams = true;
-
-export function generateStaticParams() {
-  return [];
-}
+// This route looks up the user's main region from the DB and redirects to
+// /profile/[username]/[region]. It can never serve static HTML (the redirect
+// target is per-user and can change), so it is request-time by nature.
+// Declaring it dynamic avoids the "changed from static to dynamic" bailout
+// that ISR generation logged on every request.
+export const dynamic = "force-dynamic";
 
 interface ProfilePageProps {
   params: Promise<{
@@ -23,7 +23,8 @@ interface ProfilePageProps {
 }
 
 export async function generateMetadata({ params }: ProfilePageProps): Promise<Metadata> {
-  const { username: rawUsername } = await params;
+  const { locale: routeLocale, username: rawUsername } = await params;
+  await setStaticLocale(routeLocale);
   const username = safeDecodeURIComponent(rawUsername);
   const [t, locale] = await Promise.all([
     getTranslations("profileMetadata"),
@@ -58,6 +59,7 @@ export async function generateMetadata({ params }: ProfilePageProps): Promise<Me
 
 export default async function ProfilePage({ params }: ProfilePageProps) {
   const { locale, username } = await params;
+  await setStaticLocale(locale);
 
   try {
     // Get the user's profile to find their main region
