@@ -87,7 +87,7 @@ export default async function RootLayout({
         className={`${inter.variable} ${geistMono.variable} ${murecho.variable} ${notoSansJP.variable} ${notoSansSC.variable} ${notoSansTC.variable} antialiased bg-background min-h-dvh`}
       >
         <NextIntlClientProvider messages={messages}>
-          <LocaleProvider initialLocale={locale}>
+          <LocaleProvider initialLocale={locale} pathMode="cookie">
             <ThemeProvider>
               {children}
               <Toaster />
