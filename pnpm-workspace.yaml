@@ -11,6 +11,7 @@ allowBuilds:
   '@swc/core': true
   esbuild: true
   ffmpeg-static: true
+  msw: false
   sharp: true
   skia-canvas: true
   unrs-resolver: true
@@ -25,3 +26,15 @@ onlyBuiltDependencies:
 
 patchedDependencies:
   vaul@1.1.2: patches/vaul@1.1.2.patch
+
+minimumReleaseAgeExclude:
+  - '@storybook/addon-a11y@10.4.3'
+  - '@storybook/addon-docs@10.4.3'
+  - '@storybook/addon-themes@10.4.3'
+  - '@storybook/builder-vite@10.4.3'
+  - '@storybook/csf-plugin@10.4.3'
+  - '@storybook/nextjs-vite@10.4.3'
+  - '@storybook/react-dom-shim@10.4.3'
+  - '@storybook/react-vite@10.4.3'
+  - '@storybook/react@10.4.3'
+  - storybook@10.4.3

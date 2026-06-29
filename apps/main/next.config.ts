@@ -51,6 +51,7 @@ const APP_VERSION_MINOR = (() => {
 })();
 
 const nextConfig: NextConfig = {
+  allowedDevOrigins: ["dev.tomomai.lol"],
   transpilePackages: ["@tomomai/ui", "@tomomai/i18n"],
   env: { BUILD_STAMP, GIT_SHA, APP_VERSION_MINOR },
   async headers() {
