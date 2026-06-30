@@ -145,7 +145,20 @@
     "agreeToPrivacy": "我同意隐私政策",
     "viewFullText": "查看全文",
     "cancel": "取消",
-    "agree": "同意"
+    "agree": "同意",
+    "reconsent": {
+      "title": "我们更新了政策",
+      "description": "请阅读并同意更新后的服务条款和隐私政策以继续",
+      "confirm": "同意并继续",
+      "remindLater": "稍后提醒我",
+      "reviewBy": "请在 {date} 前查看"
+    },
+    "gatePrompt": {
+      "title": "需要同意更新后的政策",
+      "description": "此操作需要同意更新后的服务条款和隐私政策",
+      "confirm": "同意并继续",
+      "retry": "已接受政策，请重新尝试该操作。"
+    }
   },
   "dashboard": {
     "title": "tomomai ともマイ",
