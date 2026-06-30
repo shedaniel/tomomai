@@ -6,10 +6,17 @@ import { BarChart, Clock, Code, Database, Heart, Image as ImageIcon, Loader2, Ma
 import { useTranslations } from "next-intl";
 import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import { useRouter, usePathname } from "@/i18n/navigation";
 import { InfoCard } from "./info-card";
 import { MinigameCards } from "./minigame-cards";
 import { SongsCard } from "./songs-card";
+import { StatsCardSkeleton } from "./stats-card.skeleton";
+import { RecommendationCardSkeleton } from "./recommendation-card.skeleton";
+import { ExportImageCardSkeleton } from "./export-image-card.skeleton";
+import { HistoryCardSkeleton } from "./history-card.skeleton";
+import { EventsCardSkeleton } from "./events-card.skeleton";
+import { RecentSongsCardSkeleton } from "./recent-songs-card.skeleton";
+import { DeveloperCardSkeleton } from "./developer-card.skeleton";
+import { AlbumCardSkeleton } from "./album-card.skeleton";
 import { Flags } from "@/lib/flags";
 import { AnimatePresence, motion } from "motion/react";
 import { getTransition } from "@/lib/animation-constants";
@@ -19,14 +26,20 @@ import dynamic from "next/dynamic";
 // Tab cards lazy-loaded — only the selected tab's chunk is fetched.
 // SongsCard + InfoCard stay eager because Songs is the default landing tab
 // and InfoCard is small and frequently shown.
-const StatsCard = dynamic(() => import("./stats-card").then(m => m.StatsCard));
-const RecommendationCard = dynamic(() => import("./recommendation-card").then(m => m.RecommendationCard));
-const ExportImageCard = dynamic(() => import("./export-image-card").then(m => m.ExportImageCard));
-const HistoryCard = dynamic(() => import("./history-card").then(m => m.HistoryCard));
-const EventsCard = dynamic(() => import("./events-card").then(m => m.EventsCard));
-const RecentSongsCard = dynamic(() => import("./recent-songs-card").then(m => m.RecentSongsCard));
-const DeveloperCard = dynamic(() => import("./developer-card").then(m => m.DeveloperCard));
-const AlbumCard = dynamic(() => import("./album-card").then(m => m.AlbumCard));
+// Each dynamic() shares the card's own skeleton as its `loading`. That does
+// two things: (1) gives Next 16's React.lazy a LOCAL Suspense boundary so the
+// suspension doesn't bubble to the fallback-less <Suspense> wrapping
+// DataContent (which rendered null and blanked the sidebar + content), and
+// (2) makes the chunk-load placeholder identical to the data-load placeholder
+// so the transition into real data is seamless.
+const StatsCard = dynamic(() => import("./stats-card").then(m => m.StatsCard), { loading: () => <StatsCardSkeleton /> });
+const RecommendationCard = dynamic(() => import("./recommendation-card").then(m => m.RecommendationCard), { loading: () => <RecommendationCardSkeleton /> });
+const ExportImageCard = dynamic(() => import("./export-image-card").then(m => m.ExportImageCard), { loading: () => <ExportImageCardSkeleton /> });
+const HistoryCard = dynamic(() => import("./history-card").then(m => m.HistoryCard), { loading: () => <HistoryCardSkeleton /> });
+const EventsCard = dynamic(() => import("./events-card").then(m => m.EventsCard), { loading: () => <EventsCardSkeleton /> });
+const RecentSongsCard = dynamic(() => import("./recent-songs-card").then(m => m.RecentSongsCard), { loading: () => <RecentSongsCardSkeleton /> });
+const DeveloperCard = dynamic(() => import("./developer-card").then(m => m.DeveloperCard), { loading: () => <DeveloperCardSkeleton /> });
+const AlbumCard = dynamic(() => import("./album-card").then(m => m.AlbumCard), { loading: () => <AlbumCardSkeleton /> });
 
 interface DataContentProps {
   region: Region;
@@ -62,8 +75,6 @@ export function DataContent({
   flags,
 }: DataContentProps) {
   const t = useTranslations();
-  const router = useRouter();
-  const pathname = usePathname();
   const searchParams = useSearchParams();
   const isDesktop = useMediaQuery("(min-width: 768px)", { initializeWithValue: false });
 
@@ -89,27 +100,26 @@ export function DataContent({
 
   const [selectedTab, setSelectedTab] = useState(getInitialTab);
 
+  // Update the URL via the native History API so Next.js doesn't re-fetch the
+  // RSC payload and re-suspend the <Suspense> boundary that wraps DataContent
+  // (which is what caused the tab+content to flash out on every tab switch).
+  const updateTabUrl = (value: string) => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    if (value === "songs") {
+      params.delete('tab');
+    } else {
+      params.set('tab', value);
+    }
+    const qs = params.toString();
+    const next = qs ? `${window.location.pathname}?${qs}` : window.location.pathname;
+    window.history.replaceState(null, "", next);
+  };
+
   // Update URL when tab changes
   const handleTabChange = (value: string) => {
     setSelectedTab(value);
-
-    // Create new search params
-    const newSearchParams = new URLSearchParams(searchParams.toString());
-
-    if (value === "songs") {
-      // Remove tab parameter for default tab
-      newSearchParams.delete('tab');
-    } else {
-      // Set tab parameter for non-default tabs
-      newSearchParams.set('tab', value);
-    }
-
-    // Build the URL with or without search params
-    const searchString = newSearchParams.toString();
-    const newUrl = searchString ? `${pathname}?${searchString}` : pathname;
-
-    // Update URL without triggering a full page reload
-    router.replace(newUrl, { scroll: false });
+    updateTabUrl(value);
   };
 
   // Define visible tabs based on privacy settings
@@ -183,13 +193,9 @@ export function DataContent({
   useEffect(() => {
     if (selectedSnapshotData && !validTabs.includes(selectedTab)) {
       setSelectedTab("songs");
-      const newSearchParams = new URLSearchParams(searchParams.toString());
-      newSearchParams.delete('tab'); // Remove tab param when falling back to songs
-      const searchString = newSearchParams.toString();
-      const newUrl = searchString ? `${pathname}?${searchString}` : pathname;
-      router.replace(newUrl, { scroll: false });
+      updateTabUrl("songs");
     }
-  }, [selectedTab, validTabs, pathname, router, searchParams, selectedSnapshotData]);
+  }, [selectedTab, validTabs, selectedSnapshotData]);
 
   if (isLoading) {
     return (

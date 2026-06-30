@@ -8,7 +8,7 @@ import { Metadata } from "next";
 import { defaultFlags } from "@/lib/flags";
 import { resolveBaseUrl } from "@/lib/base-url";
 import { getTranslations } from "next-intl/server";
-import { getLocale } from "@/i18n/locale-server";
+import { getLocale, setStaticLocale } from "@/i18n/locale-server";
 import { buildAlternates, openGraphLocales, breadcrumbJsonLd, ogImageUrl, localizePath } from "@/lib/seo";
 import { safeDecodeURIComponent } from "@/lib/utils";
 
@@ -21,13 +21,15 @@ export function generateStaticParams() {
 
 interface RegionProfilePageProps {
   params: Promise<{
+    locale: string;
     username: string;
     region: string;
   }>;
 }
 
 export async function generateMetadata({ params }: RegionProfilePageProps): Promise<Metadata> {
-  const { username: rawUsername, region } = await params;
+  const { locale: routeLocale, username: rawUsername, region } = await params;
+  await setStaticLocale(routeLocale);
   const username = safeDecodeURIComponent(rawUsername);
 
   const [tMeta, tRegions, locale] = await Promise.all([
@@ -96,7 +98,8 @@ export async function generateMetadata({ params }: RegionProfilePageProps): Prom
 
 
 export default async function RegionProfilePage({ params }: RegionProfilePageProps) {
-  const { username, region } = await params;
+  const { locale: routeLocale, username, region } = await params;
+  await setStaticLocale(routeLocale);
 
   // Validate region
   if (!isRegionEnabledStr(region)) {
