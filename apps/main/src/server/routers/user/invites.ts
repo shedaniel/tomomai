@@ -1,5 +1,6 @@
 import { db } from '@/lib/db';
 import { invites, user } from '@/lib/db/schema-pg';
+import { getLogger } from '@/lib/request-logger';
 import { protectedProcedure, publicProcedure, router } from '@/lib/trpc';
 import { TRPCError } from '@trpc/server';
 import { nanoid } from 'nanoid';
@@ -92,7 +93,7 @@ export const invitesRouter = router({
             )
           );
       } catch (error) {
-        console.error("Auto-cleanup failed:", error);
+        getLogger().error({ err: error }, "Auto-cleanup failed");
       }
 
       const userInvites = await db
@@ -195,7 +196,7 @@ export const invitesRouter = router({
             )
           );
       } catch (error) {
-        console.error("Auto-cleanup failed:", error);
+        getLogger().error({ err: error }, "Auto-cleanup failed");
       }
 
       const threeDaysAgo = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000);
@@ -293,7 +294,7 @@ export const invitesRouter = router({
             )
           );
       } catch (error) {
-        console.error("Auto-cleanup failed:", error);
+        getLogger().error({ err: error }, "Auto-cleanup failed");
       }
 
       return { success: true };
@@ -329,7 +330,7 @@ export const invitesRouter = router({
             )
           );
       } catch (error) {
-        console.error("Auto-cleanup failed:", error);
+        getLogger().error({ err: error }, "Auto-cleanup failed");
       }
 
       const invite = await db

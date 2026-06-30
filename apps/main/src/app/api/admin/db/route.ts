@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
-import { logger } from "@/lib/logger";
+import { flushLogger } from "@/lib/logger";
+import { requestLogger } from "@/lib/request-logger";
 import { getEnabledRegions, isRegionEnabled } from "@/lib/enabled-regions";
 import { Region } from "@/lib/types";
 import { getCurrentVersion } from "@/lib/metadata";
@@ -7,12 +8,12 @@ import { normalizeName } from "@/lib/name-utils";
 import { songs, scoreData } from "@/lib/db/schema-pg";
 import { and, eq, inArray, sql } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
-
-const log = logger.child({ module: "admin/db" });
+import type { Logger } from "pino";
 
 const MODIFY_DATABASE = true;
 
 export async function GET(request: NextRequest) {
+  const { log, requestId } = requestLogger(request, "admin/db");
   try {
     // Check for admin token authentication
     const authHeader = request.headers.get("authorization");
@@ -47,7 +48,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const type = (searchParams.get('type') || "normalize") as "normalize";
     if (type === "normalize") {
-      return normalize(searchParams);
+      return await normalize(searchParams, log);
     } else {
       return NextResponse.json(
         { error: "Invalid 'type' parameter. Must be 'normalize'" },
@@ -57,9 +58,11 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     log.error({ err: error }, "Error in admin db route");
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Internal server error" },
+      { error: error instanceof Error ? error.message : "Internal server error", requestId },
       { status: 500 }
     );
+  } finally {
+    await flushLogger();
   }
 }
 
@@ -71,7 +74,7 @@ export async function POST() {
   );
 }
 
-async function normalize(searchParams: URLSearchParams) {
+async function normalize(searchParams: URLSearchParams, log: Logger) {
   const region = searchParams.get('region') as Region | null;
 
   if (!region || !isRegionEnabled(region)) {

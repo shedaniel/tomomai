@@ -23,11 +23,34 @@ log.info({ userId }, "user signed in");
 log.info(`user ${userId} signed in`);
 ```
 
-## Field naming conventions
+## Field naming & the 256-field budget
 
-Axiom (and Logtail) charge by unique field count, and queries assume consistent names. **Use the canonical names below — don't invent synonyms.** If a name you need isn't listed, pick a short `camelCase` noun and add it here.
+> [!IMPORTANT]
+> **Axiom caps a dataset at 256 fields, and a field is never removed from the
+> schema once seen.** Every distinct key you log permanently consumes one of
+> those slots. So:
+>
+> 1. **Every field must be registered in the table below before you log it.**
+>    Adding a key to a `log.*` call without adding it here is not allowed — the
+>    registry is how we track the budget and avoid blowing the cap.
+> 2. **Field values must be scalar** (string / number / boolean / array of
+>    primitives). A nested object is flattened by Axiom into **one field per
+>    leaf key** — `log.info({ song })` can add ~15 fields (`song.songName`,
+>    `song.noteCounts.tap`, …). Log a scalar identifier (`songKey`) or an
+>    explicit summary (`{ added: x.length }`) instead, never the whole object.
+> 3. **Reuse a registered name** — synonyms (`error` vs `err`) each cost a slot
+>    and split queries.
+>
+> Audit what's actually in use before adding a field:
+> ```bash
+> # list distinct keys passed to log/logger calls
+> rg -oN "\b(log|logger|context\.log)\.\w+\(\{[^}]*\}" apps/main/src \
+>   | rg -oN "[a-zA-Z_][a-zA-Z0-9_]*\s*:" | sort -u
+> ```
 
-### Canonical field names
+### Registered fields
+
+Automatic / cross-cutting:
 
 | Field            | Use for                                                            | Don't use                                  |
 |------------------|--------------------------------------------------------------------|--------------------------------------------|
@@ -37,67 +60,148 @@ Axiom (and Logtail) charge by unique field count, and queries assume consistent 
 | `err`            | An error object, with `{ message, stack }` extracted.              | `error`, `errorMessage`, `exception`, `e`  |
 | `requestId`      | Per-request correlation id (`nanoid(10)`).                         | `reqId`, `request_id`, `traceId`           |
 | `route`          | Route identifier (e.g. `"export-image"`, `"admin/update"`).        | `path`, `endpoint`, `handler`              |
+| `via`            | Provenance tag (currently `"console"` for bridged calls).          | `source`, `from`                           |
+| `context`        | Logical operation tag in lib code without a `route` (e.g. `"auth-server"`). | `module`, `component`            |
+
+Identifiers & domain:
+
+| Field            | Use for                                                            | Don't use                                  |
+|------------------|--------------------------------------------------------------------|--------------------------------------------|
 | `userId`         | Internal user id.                                                  | `user`, `uid`, `user_id`                   |
 | `snapshotId`     | Public snapshot id.                                                | `snapshot`, `snap_id`                      |
+| `sessionId`      | Fetch session id.                                                  | `session`                                  |
+| `songId` / `masterSongId` | Numeric song row id(s).                                   | —                                          |
+| `songKey`        | Single `name@type@difficulty` key.                                | `song` (never log the whole object)        |
+| `songKeys`       | Array of song keys (array of strings = 1 field).                  | `songs` (never log the array of objects)   |
 | `region`         | `"intl"` / `"jp"` / `"cn"`.                                        | `country`, `locale`                        |
-| `durationMs`     | Elapsed time in milliseconds (number).                             | `duration`, `elapsed`, `tookMs`, `ms`      |
-| `count`          | A count of something (specify what in `msg`).                      | `total`, `n`, `num`                        |
-| `size`           | Byte size (number).                                                | `bytes`, `length`, `len`                   |
-| `url`            | A URL relevant to this log line.                                   | `link`, `href`, `uri`                      |
-| `status`         | HTTP status code or job status string.                             | `statusCode`, `code`, `httpStatus`         |
-| `via`            | Provenance tag (currently `"console"` for bridged calls).          | `source`, `from`                           |
+| `version` / `addedVersion` | Game / chart version (number).                          | —                                          |
+| `difficulty`     | Difficulty name or enum.                                          | `diff`                                     |
+| `providerId`     | External provider id (lxns/divingfish).                          | —                                          |
+
+Counts, sizes & timing (numbers — prefer these over logging collections):
+
+| Field            | Use for                                                            | Don't use                                  |
+|------------------|--------------------------------------------------------------------|--------------------------------------------|
+| `count`          | A generic count (specify what in `msg`).                          | `total`, `n`, `num`                        |
+| `songCount` / `recordCount` / `errorCount` / `eventCount` / `cachedCount` | Count of a named collection. | logging the collection itself |
+| `durationMs`     | Elapsed time in milliseconds (number).                            | `duration`, `elapsed`, `tookMs`, `ms`      |
+| `size`           | A byte size (number). Use for any single byte length.            | `bytes`, `length`, `len`, `htmlLength`, `contentLength` |
+| `originalSize` / `webpSize` | Paired before/after byte sizes for image conversion.  | —                                          |
+
+HTTP / request:
+
+| Field            | Use for                                                            | Don't use                                  |
+|------------------|--------------------------------------------------------------------|--------------------------------------------|
+| `url`            | A URL relevant to this log line.                                  | `link`, `href`, `uri`                      |
+| `status`         | HTTP status code or job status string.                           | `statusCode`, `code`, `httpStatus`         |
+| `statusText`     | HTTP status text (paired with `status`).                         | —                                          |
+| `method`         | HTTP method.                                                     | `verb`                                     |
+| `path`           | Request path (set by `onRequestError`).                          | —                                          |
+
+Aggregate namespaces (intentional nested objects — **bounded, fixed keys**; do not add new ones casually):
+
+| Field            | Leaf keys                                                          |
+|------------------|--------------------------------------------------------------------|
+| `statistics.*`   | `inputSongs`, `dbSongs`, `mergedSongs`, `added`, `modified`, `deleted`, `unchanged` |
+| `applied.*`      | `added`, `modified`, `deleted`                                     |
+| `stats.*`        | `uploaded`, `skipped`, `unchanged`                                 |
+
+> Route/job-specific scalars (`regions`, `imageUpload`, `updateMode`, `filename`,
+> `basename`, `groupKey`, `interactionType`, `oauthError`, `stepType`, `period`,
+> `event`, `pagesToScrape`, `queueSize`, `bfsLevel`, `shouldScrape`, `r`,
+> `playerName`, `index`, `batchIndex`, `progress`, `from`, `to`, `profile`,
+> `addedDate`, `optional`, `modelId`, `uniqueCovers`, `existingR2Covers`,
+> `toDownload`, `skipped`, `duplicateIds`, `urls`, `totalDuplicatesMerged`,
+> `totalMasterNamesNormalized`, `originalName`) are also registered — keep this
+> list current when you add one.
 
 ### Rules of thumb
 
 1. **`camelCase`, never `snake_case` or `kebab-case`.** Pino emits camelCase; matching it avoids duplicate logical fields.
 2. **One concept, one name.** If you log an error, it's `err`. Always. Not `error` once and `err` somewhere else.
-3. **Units in the name when ambiguous.** `durationMs`, `sizeBytes`, `timeoutSec` — never just `duration` / `size` / `timeout`.
-4. **Don't put values into field names.** `userId: "u_123"` ✓, `user_u_123: true` ✗. Field cardinality matters; values are free.
-5. **Don't repeat the message in fields.** `log.info({ snapshotId }, "loaded snapshot")` is right. `log.info({ snapshotId, msg: "loaded snapshot" }, "...")` duplicates.
-6. **Prefer numeric fields for things you'll aggregate.** `durationMs: 153` (number), not `"153ms"` (string) — Axiom can't `avg()` strings.
-7. **Add new context via `logger.child(...)`** when it applies to many lines, instead of repeating the field on every call.
+3. **Never log a whole object.** Each leaf key becomes a permanent Axiom field. Log a scalar id or an explicit summary; if `msg` already names the thing (e.g. includes the song key), drop the object entirely.
+4. **Units in the name when ambiguous.** `durationMs`, `timeoutSec` — never just `duration` / `timeout`. For byte length the canonical field is `size` (a number).
+5. **Don't put values into field names.** `userId: "u_123"` ✓, `user_u_123: true` ✗. Field cardinality matters; values are free.
+6. **Don't repeat the message in fields.** `log.info({ snapshotId }, "loaded snapshot")` is right. `log.info({ snapshotId, msg: "loaded snapshot" }, "...")` duplicates.
+7. **Prefer numeric fields for things you'll aggregate.** `durationMs: 153` (number), not `"153ms"` (string) — Axiom can't `avg()` strings.
+8. **Add new context via `logger.child(...)`** when it applies to many lines, instead of repeating the field on every call.
 
-## Per-request child loggers (recommended for routes)
+## Per-request correlation id (`requestId`)
 
-Every API route should create a `requestId` and a child logger that auto-attaches it (and any other request-scoped context) to every line. Return the `requestId` in error responses so users can quote it when reporting issues.
+Every request gets a `requestId` **automatically**. `middleware.ts` generates one
+(`nanoid(10)`, or honors an inbound `x-request-id` from a tracing proxy) and:
+
+- forwards it to the route handler as the **`x-request-id` request header**, and
+- echoes it on **every response** as the `x-request-id` response header.
+
+So you never have to generate one yourself, and clients can always read
+`x-request-id` off the response to quote in a bug report. To tie it to your logs,
+build the per-request child logger with the `requestLogger` helper — it reuses the
+header id so middleware, route logs, and the response header all share one value:
 
 ```ts
-import { logger } from "@/lib/logger";
-import { nanoid } from "nanoid";
+import { requestLogger } from "@/lib/request-logger";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
-  const requestId = nanoid(10);
-  const log = logger.child({
-    route: "your-route-name",
-    requestId,
-    // add anything else that should appear on every line of this request:
-    // userId, region, snapshotId, ...
-  });
+  // `log` is logger.child({ route, requestId }); pass extra request-scoped
+  // context as a third arg (e.g. { userId }). Add region/version later with
+  // `log = log.child({ region })` once you've parsed them.
+  const { log, requestId } = requestLogger(request, "your-route-name");
 
   log.info("starting request");
 
   try {
     // ... do work, using `log` everywhere instead of `logger` ...
-    return NextResponse.json({ ok: true }, { headers: { "X-Request-Id": requestId } });
+    // The x-request-id response header is set by middleware; include requestId
+    // in the JSON body too so it survives logging/copy-paste of the payload.
+    return NextResponse.json({ ok: true, requestId });
   } catch (error) {
-    log.error(
-      { err: error instanceof Error ? { message: error.message, stack: error.stack } : error },
-      "request failed",
-    );
-    return NextResponse.json(
-      { error: "Internal Error", requestId },
-      { status: 500 },
-    );
+    log.error({ err: error }, "request failed");
+    return NextResponse.json({ error: "Internal Error", requestId }, { status: 500 });
   }
 }
 ```
 
-Reference implementations: `src/app/api/admin/update/route.ts`, `src/app/api/export-image/route.ts`.
+> Note: a cached/static response keeps the `x-request-id` of the request that
+> populated the cache — it's most meaningful on dynamic (API) responses.
+
+Reference implementations: `src/app/api/admin/update_all/route.ts`,
+`src/app/api/admin/upload/route.ts`, `src/app/api/admin/update/route.ts`.
 
 ### Why a child logger?
 
 `logger.child({ requestId, route })` returns a logger that prepends those fields to **every** log line, including ones emitted by helpers it's passed to. Pass `log` (not `logger`) into downstream functions so their logs inherit the same context — that's how a single Axiom query like `route == "export-image" AND requestId == "abc123"` reconstructs the entire request timeline.
+
+### Ambient logger for lib/service code (`getLogger()`)
+
+Lib and service code that isn't handed a `log` explicitly should use the
+**ambient request logger** instead of the root `logger`:
+
+```ts
+import { getLogger } from "@/lib/request-logger";
+
+getLogger().warn({ err }, "failed to cache image");
+```
+
+`requestLogger()` binds the request-scoped child logger to the current async
+execution context (AsyncLocalStorage), so `getLogger()` returns that logger —
+with `route` and `requestId` — anywhere downstream of the route, **including
+`after()` / `waitUntil()` background tasks** (Next snapshots ALS context).
+Outside a request scope (build time, scripts) it falls back to the root logger,
+so it's always safe to call.
+
+The ambient logger is bound automatically for:
+- any route that calls `requestLogger(request, route)`,
+- every tRPC procedure (middleware in `src/lib/trpc.ts`, `route: "trpc/<path>"`),
+- every v1 API handler (`withApiKey` in `src/lib/api/protect.ts`).
+
+Prefer explicit `log` threading when a helper is part of one request flow and
+already takes a context (e.g. the admin fetcher pipeline's `context.log`);
+use `getLogger()` for shared lib code called from many places.
+
+> `request-logger.ts` imports `node:async_hooks`, so it is **server-only** —
+> never import it from client components or shared client/server modules.
 
 ## Levels
 
@@ -130,6 +234,19 @@ log.error(
   "...",
 );
 ```
+
+## Unhandled errors are logged automatically
+
+`instrumentation.ts` exports an `onRequestError` hook that fires for **every**
+uncaught error thrown by a route handler, server component, or server action. It
+logs the error with the request's `requestId` (set by middleware), so even a
+route with no try/catch of its own produces a correlated `error`-level line in
+Axiom — query `msg == "Unhandled request error"`.
+
+A per-route `try/catch` + `log.error({ err }, "...")` is still worth it when you
+want a **friendly response body** (e.g. include `requestId` in the JSON) or
+route-specific context — but you no longer need one *just* to make the failure
+observable.
 
 ## `console.*` calls
 

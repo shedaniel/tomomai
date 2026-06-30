@@ -3,6 +3,7 @@
 import { Languages } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { createContext, useContext, useEffect, useState } from "react";
 import {
   Select,
@@ -15,16 +16,47 @@ import { cn } from "@tomomai/ui/utils";
 import { getLanguages } from "./languages";
 import {
   Locale,
-  getLocaleCookie,
+  locales,
   setLocaleCookie,
 } from "./locale";
+
+/** Swap the locale segment at the front of a pathname. */
+export function swapLocaleInPath(pathname: string, locale: Locale): string {
+  const segments = pathname.split("/").filter(Boolean);
+  if (segments.length > 0 && (locales as readonly string[]).includes(segments[0])) {
+    segments[0] = locale;
+  } else {
+    segments.unshift(locale);
+  }
+  return `/${segments.join("/")}`;
+}
+
+/** Strip a leading locale segment, returning the bare path. */
+export function stripLocaleFromPath(pathname: string): string {
+  const segments = pathname.split("/").filter(Boolean);
+  if (segments.length > 0 && (locales as readonly string[]).includes(segments[0])) {
+    segments.shift();
+  }
+  return `/${segments.join("/")}`;
+}
 
 interface LocaleContextType {
   locale: Locale;
   setLocale: (locale: Locale) => void;
+  pathMode: LocalePathMode;
 }
 
 const LocaleContext = createContext<LocaleContextType | undefined>(undefined);
+
+/**
+ * How `setLocale` updates the URL.
+ * - `'segment'` (default): rewrite the leading `/{locale}` segment. For apps
+ *   using `[locale]/...` routing (apps/main), where locale lives in the URL.
+ * - `'cookie'`: set the cookie and reload the current path as-is. For apps
+ *   that detect locale from the cookie server-side and have no locale
+ *   segment (apps/guess); rewriting the path would 404 there.
+ */
+export type LocalePathMode = 'segment' | 'cookie';
 
 interface LocaleProviderProps {
   children: React.ReactNode;
@@ -35,34 +67,51 @@ interface LocaleProviderProps {
    * a single locale regardless of user choice.
    */
   forcedLocale?: Locale;
+  /**
+   * Controls how `setLocale` navigates. Defaults to `'segment'`.
+   */
+  pathMode?: LocalePathMode;
 }
 
 export function LocaleProvider({
   children,
   initialLocale,
   forcedLocale,
+  pathMode = 'segment',
 }: LocaleProviderProps) {
   const [locale, setLocaleState] = useState<Locale>(forcedLocale ?? initialLocale);
   const router = useRouter();
+  const pathname = usePathname();
 
+  // In cookie mode the URL never carries the locale, so there's nothing to
+  // sync from the pathname.
   useEffect(() => {
-    if (forcedLocale) return;
-    const cookieLocale = getLocaleCookie();
-    if (cookieLocale && cookieLocale !== locale) {
-      setLocaleState(cookieLocale);
+    if (forcedLocale || pathMode === 'cookie') return;
+    const first = pathname.split("/")[1];
+    if (first && (locales as readonly string[]).includes(first) && first !== locale) {
+      setLocaleState(first as Locale);
     }
-  }, [locale, forcedLocale]);
+  }, [pathname, locale, forcedLocale, pathMode]);
 
   const setLocale = (newLocale: Locale) => {
     if (forcedLocale) return;
     setLocaleState(newLocale);
     setLocaleCookie(newLocale);
-    router.refresh();
+    if (pathMode === 'cookie') {
+      // No locale segment in the URL — a full reload re-runs server-side
+      // locale detection with the new cookie.
+      if (typeof window !== 'undefined') window.location.reload();
+      return;
+    }
+    const next = swapLocaleInPath(pathname || "/", newLocale);
+    const search = typeof window !== "undefined" ? window.location.search : "";
+    const hash = typeof window !== "undefined" ? window.location.hash : "";
+    router.push(`${next}${search}${hash}`);
   };
 
   const value = forcedLocale
-    ? { locale: forcedLocale, setLocale: () => {} }
-    : { locale, setLocale };
+    ? { locale: forcedLocale, setLocale: () => {}, pathMode }
+    : { locale, setLocale, pathMode };
 
   return <LocaleContext.Provider value={value}>{children}</LocaleContext.Provider>;
 }
@@ -75,6 +124,11 @@ export function useLocale(): LocaleContextType {
   return context;
 }
 
+/** Convenience hook for just the path mode (used by LocaleSwitcher). */
+export function useLocalePathMode(): LocalePathMode {
+  return useLocale().pathMode;
+}
+
 interface LocaleSwitcherProps {
   forceVisible?: boolean;
 }
@@ -83,6 +137,8 @@ export function LocaleSwitcher({ forceVisible }: LocaleSwitcherProps) {
   const t = useTranslations();
   const LANGUAGES = getLanguages(t);
   const { locale, setLocale } = useLocale();
+  const pathname = usePathname();
+  const pathMode = useLocalePathMode();
 
   const handleNewLocale = (value: string) => {
     const newLocale = value === "auto" ? null : (value as Locale);
@@ -92,8 +148,15 @@ export function LocaleSwitcher({ forceVisible }: LocaleSwitcherProps) {
     } else {
       if (typeof document !== "undefined") {
         document.cookie = "NEXT_LOCALE=; path=/; max-age=0";
+        // In cookie mode the URL has no locale segment — just reload so the
+        // server re-detects from headers.
+        if (pathMode === 'cookie') {
+          window.location.reload();
+          return;
+        }
+        const bare = stripLocaleFromPath(pathname || "/");
+        window.location.href = bare;
       }
-      window.location.reload();
     }
   };
 

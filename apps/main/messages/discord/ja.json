@@ -1,0 +1,190 @@
+{
+  "common": {
+    "footer": "tomomai ともマイ • maimai DX スコア管理BOT",
+    "notRegistered": {
+      "title": "❌ アカウント未連携",
+      "description": "Discordアカウントがまだ tomomai と連携されていません！",
+      "getStarted": {
+        "name": "🔗 はじめよう",
+        "value": "[tomomai ともマイ]({baseUrl}/) にアクセスしてDiscordでログインし、スコア管理を始めましょう！"
+      }
+    },
+    "noData": {
+      "title": "📊 データがありません",
+      "description": "まだ {regionName} のプレイデータが登録されていません。",
+      "import": {
+        "name": "🎯 スコアを同期する",
+        "value": "[tomomai ともマイ]({baseUrl}/) にアクセスして、{regionName} のスコアデータを同期しましょう！"
+      }
+    },
+    "error": {
+      "title": "❌ エラー",
+      "unableToIdentify": "Discordユーザーを特定できませんでした。もう一度お試しください。",
+      "unableToIdentifyShort": "Discordユーザーを特定できません。",
+      "generic": "エラーが発生しました。しばらくしてからもう一度お試しください。",
+      "notAvailableToYou": "❌ このボタンはあなたには使用できません。",
+      "unknownCommand": "無効なコマンドです"
+    },
+    "loading": {
+      "title": "⏳ 読み込み中…",
+      "description": "<@{userId}> 保存されているデータで処理を続行します…"
+    }
+  },
+  "staleness": {
+    "title": "⏳ データ未更新",
+    "description": "<@{userId}> 最後に {regionName} のデータを同期してから **{age}** が経過しています。\n{cmdLine}",
+    "cmdLine": {
+      "profile": "このまま（古いデータで）プロフィールを表示しますか？",
+      "recents": "このまま最近のプレイ記録を表示しますか？",
+      "recommend": "このままおすすめ楽曲を表示しますか？",
+      "daily": "このまま {day} のプレイ記録を作成しますか？",
+      "dailyDefault": "このまま今日のプレイ記録を作成しますか？",
+      "default": "このまま続行しますか？"
+    },
+    "buttons": {
+      "continue": "このまま続行",
+      "refetchAndContinue": "データを更新して続行"
+    },
+    "refetching": {
+      "title": "🔄 {regionName} データを更新中",
+      "description": "<@{userId}> maimai DX NET から最新データを取得しています…"
+    },
+    "refetchError": {
+      "title": "❌ エラー",
+      "description": "<@{userId}> データの更新中にエラーが発生しました。しばらくしてからもう一度お試しください。"
+    }
+  },
+  "fetch": {
+    "maintenanceWindow": "現在メンテナンス時間中（午前4時〜7時）のため、データ同期はできません。",
+    "startError": "データ同期を開始できませんでした。しばらくしてからもう一度お試しください。",
+    "initializing": {
+      "title": "🔄 {regionName} データを同期中",
+      "description": "<@{userId}> maimai DX NET との同期を開始します…",
+      "status": "📊 ステータス",
+      "statusValue": "準備中…"
+    },
+    "error": {
+      "title": "❌ 同期エラー",
+      "description": "<@{userId}> データの同期中にエラーが発生しました：{message}"
+    },
+    "failed": {
+      "title": "❌ 同期失敗",
+      "description": "<@{userId}> {regionName} データの同期に失敗しました：{reason}"
+    },
+    "timeout": {
+      "title": "⏰ タイムアウト",
+      "description": "<@{userId}> データ同期に時間がかかっています。最新の状態はウェブサイトでご確認ください。",
+      "statusName": "🌐 状況を確認",
+      "statusValue": "[tomomai ともマイ]({baseUrl}/) で最新データをご確認ください！"
+    },
+    "complete": {
+      "title": "✅ 同期完了",
+      "description": "<@{userId}> データの同期が完了しました！"
+    },
+    "generatingImage": {
+      "title": "🔄 {regionName} データを同期中",
+      "description": "<@{userId}> データの同期が完了しました。プロフィール画像を作成しています…",
+      "status": "📊 ステータス",
+      "statusValue": "⏳ プロフィール画像を作成中"
+    },
+    "progress": {
+      "title": "🔄 {regionName} データを同期中",
+      "description": "<@{userId}> maimai DX NET からデータを受信しています…",
+      "status": "📊 ステータス"
+    },
+    "albumPreference": {
+      "title": "⚙️ アルバムの公開設定が必要です",
+      "description": "<@{userId}> データを同期する前に、アルバムの保存設定を行ってください。",
+      "whatName": "これは何ですか？",
+      "whatValue": "アルバムはプロフィールデータと一緒に保存される画像（リザルト画面など）です。プライバシーの案内に基づいて、保存の有無を選択できます。",
+      "privacyName": "プライバシーについて",
+      "privacyValue": "✓ アルバムは非公開の状態で保存されます\n✓ ご自身で公開しない限り、他者には見られません\n✓ あなた自身のみが閲覧可能です\n✓ 30日経過後に自動削除されます\n✓ この設定はいつでも変更可能です",
+      "dontSave": "保存しない",
+      "save": "保存する",
+      "preferenceSet": {
+        "title": "✅ 設定完了",
+        "description": "アルバム設定を「{choice}」として保存しました。同期を開始します…",
+        "save": "保存する",
+        "dontSave": "保存しない"
+      }
+    }
+  },
+  "profile": {
+    "loading": {
+      "title": "🔄 {regionName} プロフィールを読み込み中",
+      "description": "<@{userId}> プロフィール画像を作成しています…",
+      "status": "📊 ステータス",
+      "statusValue": "⏳ プロフィール画像を作成中"
+    },
+    "error": "Rating の取得中にエラーが発生しました。しばらくしてからもう一度お試しください。",
+    "content": "<@{userId}> {comment}、あなたの Rating は、たったの **{rating}** です！😤{regionSuffix}\n-# 新曲枠：{newRating}（平均：{newAvg}）- 旧曲枠：{oldRating}（平均：{oldAvg}）- 獲得スター：{stars} - 総プレイ回数：{totalPlays}",
+    "viewFullProfile": "🔗 プロフィール詳細を見る"
+  },
+  "recents": {
+    "loading": {
+      "title": "🔄 {regionName} プレイ記録を読み込み中",
+      "description": "<@{userId}> 最近のプレイ記録の画像を作成しています…",
+      "status": "📊 ステータス",
+      "statusValue": "⏳ 画像を作成中"
+    },
+    "noPlays": {
+      "title": "📊 プレイ記録がありません",
+      "description": "まだ {regionName} のプレイ記録がありません！",
+      "noMore": "これより前の記録は見つかりませんでした。"
+    },
+    "error": {
+      "title": "❌ エラー",
+      "description": "画像の作成に失敗しました：{message}"
+    },
+    "content": "<@{userId}> <t:{unix}:f> 時点のプレイ記録です（{regionName}）",
+    "newerPlay": "新しい記録",
+    "olderPlay": "過去の記録",
+    "errorGeneric": "プレイ記録の読み込み中にエラーが発生しました。しばらくしてからもう一度お試しください。"
+  },
+  "recommend": {
+    "title": "🎯 {regionName} おすすめ楽曲",
+    "description": "<@{userId}>\n```\n{body}\n```",
+    "none": {
+      "title": "🎯 {regionName} おすすめ楽曲",
+      "description": "<@{userId}> おすすめする楽曲はありません — すでに完璧なスコアです！"
+    },
+    "errorGeneric": "おすすめ楽曲の生成中にエラーが発生しました。しばらくしてからもう一度お試しください。",
+    "errorContent": "おすすめ楽曲の生成中にエラーが発生しました。しばらくしてからもう一度お試しください。"
+  },
+  "daily": {
+    "noPlays": "<@{userId}> プレイ記録は見つかりませんでした（{regionName}）。",
+    "noPlaysDay": "<@{userId}> {day} のプレイ記録は見つかりませんでした（{regionName}）。",
+    "content": "<@{userId}> **{day}** のデイリー記録（{regionName}）",
+    "failed": "<@{userId}> ❌ デイリー記録画像の作成に失敗しました。",
+    "errorGeneric": "デイリー記録の読み込み中にエラーが発生しました。しばらくしてからもう一度お試しください。",
+    "play": "回",
+    "plays": "回"
+  },
+  "invite": {
+    "title": "🎯 tomomai ともマイ をサーバーに招待",
+    "description": "tomomai を Discord サーバーに追加して、maimai DX のスコアを管理・シェアしましょう！",
+    "featuresName": "✨ 主な機能",
+    "featuresValue": "• 日本版・海外版の両リージョンに対応したスコア管理\n• maimai DX NET からの直接データ同期\n• スナップショット機能による過去の成長記録\n• 詳細なスコア分析と Rating 計算",
+    "addName": "🔗 サーバーに追加",
+    "addValue": "[ここをクリックしてbotを招待]({url})",
+    "websiteName": "🌐 ウェブサイト"
+  },
+  "regions": {
+    "intl": "海外",
+    "jp": "日本",
+    "cn": "中国"
+  },
+  "age": {
+    "justNow": "たった今",
+    "minute": "1分",
+    "minutes": "{count}分",
+    "hour": "1時間",
+    "hours": "{count}時間",
+    "day": "1日",
+    "days": "{count}日",
+    "month": "1ヶ月",
+    "months": "{count}ヶ月",
+    "year": "1年",
+    "years": "{count}年"
+  }
+}

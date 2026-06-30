@@ -97,7 +97,8 @@
         "play": "재생",
         "pause": "일시정지",
         "duration": "{seconds}초",
-        "step": "힌트 {current} / {total}"
+        "step": "힌트 {current} / {total}",
+        "error": "오디오를 재생할 수 없습니다: {detail}"
       }
     },
     "reveal": {

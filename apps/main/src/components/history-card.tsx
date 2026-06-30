@@ -7,8 +7,8 @@ import { trpc } from "@/lib/trpc-client";
 import { Region } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { TrendingUp } from "lucide-react";
-import { Skeleton } from "@tomomai/ui";
 import { useTranslations } from "next-intl";
+import { HistoryCardSkeleton } from "./history-card.skeleton";
 import { CoverImage } from "@/components/cover-image";
 import { useEffect, useMemo, useState } from "react";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
@@ -127,6 +127,10 @@ export function HistoryCard({ region }: HistoryCardProps) {
     };
   }, [chartData]);
 
+  if (isLoading) {
+    return <HistoryCardSkeleton />;
+  }
+
   return (
     <div className="space-y-6">
       <h2 className="text-lg font-semibold flex items-center gap-2">
@@ -134,20 +138,7 @@ export function HistoryCard({ region }: HistoryCardProps) {
         {t("dataContent.history.title")}
       </h2>
       <div>
-        {isLoading ? (
-          <div className="h-[400px] flex flex-col justify-end gap-2 p-4">
-            <div className="flex-1 flex items-end gap-1">
-              {Array.from({ length: 12 }).map((_, i) => (
-                <Skeleton
-                  key={i}
-                  className="flex-1 rounded-t"
-                  style={{ height: `${30 + Math.random() * 60}%` }}
-                />
-              ))}
-            </div>
-            <Skeleton className="h-4 w-full" />
-          </div>
-        ) : chartData.length < 2 ? (
+        {chartData.length < 2 ? (
           <div className="h-[400px] flex flex-col items-center justify-center text-muted-foreground">
             <TrendingUp className="h-12 w-12 mb-4 opacity-50" />
             <h3 className="text-lg font-medium mb-2">{t("dataContent.history.noHistory")}</h3>

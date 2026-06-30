@@ -7,6 +7,39 @@ config({ path: ".env.local" });
 const APPLICATION_ID = process.env.NEXT_PUBLIC_DISCORD_APPLICATION_ID;
 const BOT_TOKEN = process.env.DISCORD_BOT_TOKEN;
 
+// Mirror of getEnabledRegions() from src/lib/enabled-regions.ts (this is a
+// plain Node script and cannot import the TS module).
+const REGION_LABELS = { intl: 'International', jp: 'Japan', cn: 'China' };
+
+function getEnabledRegions() {
+  const envValue = process.env.NEXT_PUBLIC_ENABLED_REGIONS;
+  if (!envValue) return ['intl', 'jp'];
+  const regions = envValue
+    .split(',')
+    .map(r => r.trim())
+    .filter(r => r === 'intl' || r === 'jp' || r === 'cn');
+  return regions.length === 0 ? ['intl', 'jp'] : regions;
+}
+
+const enabledRegions = getEnabledRegions();
+
+// Shared optional `region` option. Defaults to the user's selected region.
+const regionOption = {
+  type: 3, // STRING
+  name: 'region',
+  description: 'Region to use. Defaults to your selected region.',
+  required: false,
+  choices: enabledRegions.map(r => ({ name: REGION_LABELS[r] ?? r, value: r })),
+};
+
+// Shared optional `fetch` option. When true, force a refetch before running.
+const fetchOption = {
+  type: 5, // BOOLEAN
+  name: 'fetch',
+  description: 'Force a refetch from maimai DX NET before running this command.',
+  required: false,
+};
+
 // Define the commands to register
 const commands = [
   {
@@ -15,57 +48,38 @@ const commands = [
   },
   {
     name: 'profile',
-    description: 'Show your latest maimai rating (International region)',
-  },
-  {
-    name: 'profilejp',
-    description: 'Show your latest maimai rating (Japan region)',
+    description: 'Show your latest maimai rating',
+    options: [regionOption, fetchOption],
   },
   {
     name: 'fetch',
-    description: 'Refetch and update your latest maimai scores (International region)',
-  },
-  {
-    name: 'fetchjp',
-    description: 'Refetch and update your latest maimai scores (Japan region)',
+    description: 'Refetch and update your latest maimai scores',
+    options: [regionOption],
   },
   {
     name: 'recents',
-    description: 'Show your most recent play (International region)',
-  },
-  {
-    name: 'recentsjp',
-    description: 'Show your most recent play (Japan region)',
+    description: 'Show your most recent play',
+    options: [regionOption, fetchOption],
   },
   {
     name: 'recommend',
-    description: 'Show song recommendations to improve your rating (International region)',
-  },
-  {
-    name: 'recommendjp',
-    description: 'Show song recommendations to improve your rating (Japan region)',
+    description: 'Show song recommendations to improve your rating',
+    options: [regionOption, fetchOption],
   },
   {
     name: 'daily',
-    description: 'Show your plays from a single JST day (International region)',
-    options: [{
-      type: 3,
-      name: 'date',
-      description: 'JST day (YYYY-MM-DD). Defaults to the day of your most recent play.',
-      required: false,
-      autocomplete: true,
-    }],
-  },
-  {
-    name: 'dailyjp',
-    description: 'Show your plays from a single JST day (Japan region)',
-    options: [{
-      type: 3,
-      name: 'date',
-      description: 'JST day (YYYY-MM-DD). Defaults to the day of your most recent play.',
-      required: false,
-      autocomplete: true,
-    }],
+    description: 'Show your plays from a single JST day',
+    options: [
+      regionOption,
+      fetchOption,
+      {
+        type: 3,
+        name: 'date',
+        description: 'JST day (YYYY-MM-DD). Defaults to the day of your most recent play.',
+        required: false,
+        autocomplete: true,
+      },
+    ],
   },
 ];
 
@@ -77,6 +91,7 @@ async function registerCommands() {
   }
 
   try {
+    console.log(`🌏 Region choices: ${enabledRegions.join(', ')}${process.env.NEXT_PUBLIC_ENABLED_REGIONS ? '' : ' (default — NEXT_PUBLIC_ENABLED_REGIONS not set)'}`);
     console.log('🔄 Registering Discord slash commands...');
 
     const response = await fetch(
@@ -90,6 +105,7 @@ async function registerCommands() {
         body: JSON.stringify(commands.map(command => ({
           ...command,
           integration_types: [0, 1],
+          contexts: [0, 1, 2],
         }))),
       }
     );
@@ -111,4 +127,4 @@ async function registerCommands() {
   }
 }
 
-registerCommands(); 
+registerCommands();

@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation"
 
 import { cn, createSafeMaimaiImageUrl, getTypeBadgeUrl } from "@/lib/utils";
 import { CoverImage } from "@/components/cover-image";
@@ -13,9 +13,11 @@ interface SongCardProps {
   index: number;
   isSelected: boolean;
   onSelect: (song: UniqueSong) => void;
+  /** Skip the entrance animation on first mount (set by the list). */
+  disableInitialAnimation?: boolean;
 }
 
-export function SongCard({ song, index, isSelected, onSelect }: SongCardProps) {
+export function SongCard({ song, index, isSelected, onSelect, disableInitialAnimation }: SongCardProps) {
   const href = `/db/songs/${encodeURIComponent(song.slug)}`;
 
   const handleClick = (e: React.MouseEvent) => {
@@ -66,7 +68,7 @@ export function SongCard({ song, index, isSelected, onSelect }: SongCardProps) {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={disableInitialAnimation ? false : { opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{
         duration: 0.4,

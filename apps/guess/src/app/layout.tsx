@@ -3,6 +3,7 @@ import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
 import { Noto_Sans_JP, Noto_Sans_SC, Noto_Sans_TC } from "next/font/google";
 import localFont from "next/font/local";
+import { Analytics } from "@vercel/analytics/next";
 import { Toaster } from "@tomomai/ui";
 import { LocaleProvider } from "@tomomai/i18n/client";
 import { getLocale } from "@tomomai/i18n/server";
@@ -86,13 +87,14 @@ export default async function RootLayout({
         className={`${inter.variable} ${geistMono.variable} ${murecho.variable} ${notoSansJP.variable} ${notoSansSC.variable} ${notoSansTC.variable} antialiased bg-background min-h-dvh`}
       >
         <NextIntlClientProvider messages={messages}>
-          <LocaleProvider initialLocale={locale}>
+          <LocaleProvider initialLocale={locale} pathMode="cookie">
             <ThemeProvider>
               {children}
               <Toaster />
             </ThemeProvider>
           </LocaleProvider>
         </NextIntlClientProvider>
+        <Analytics />
       </body>
     </html>
   );

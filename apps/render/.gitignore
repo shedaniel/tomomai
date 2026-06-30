@@ -1,0 +1,4 @@
+node_modules
+.env
+# Runtime maimaidx cover cache written by image_cacher (regenerable).
+public/res/preloaded

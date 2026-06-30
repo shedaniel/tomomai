@@ -7,6 +7,7 @@ import { and, eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { getEnabledRegions } from '@/lib/enabled-regions';
 import { fetchUserAlbums, fetchAlbumStorageUsage } from '@/server/queries/albums';
+import { MAX_STORAGE_BYTES } from '@/lib/maimai/albums/persist';
 
 const regionSchema = z.enum(getEnabledRegions());
 
@@ -24,7 +25,7 @@ export const albumsRouter = router({
       const { albums, hasMore } = await fetchUserAlbums(userId, region, limit, offset);
       const storage = await fetchAlbumStorageUsage(userId);
 
-      const storageLimit = 25 * 1024 * 1024; // 25MB
+      const storageLimit = MAX_STORAGE_BYTES;
 
       return {
         albums,

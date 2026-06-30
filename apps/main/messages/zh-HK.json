@@ -232,7 +232,7 @@
       "stored": "私密地儲存在我們的伺服器上",
       "notShared": "絕不會分享給第三方",
       "onlyYou": "僅對你顯示",
-      "limit": "上限為 25 MB（約 300 張相片）",
+      "limit": "上限為 8 MB（約 170 張相片）",
       "autoDelete": "當儲存空間不足時，自動刪除最舊的相片",
       "changeLater": "你之後可以隨時在設定中變更此選項。",
       "dontSave": "不必了，多謝",
@@ -674,7 +674,7 @@
     "error": "載入相簿失敗",
     "storage": "儲存空間",
     "storageTitle": "儲存空間用量",
-    "storageDescription": "管理你的相簿儲存空間。當超過 25 MB 時，系統會自動刪除最舊的相片。這應該足以儲存約 300 張圖片。",
+    "storageDescription": "管理你的相簿儲存空間。當超過 8 MB 時，系統會自動刪除最舊的相片。這應該足以儲存約 170 張圖片。",
     "used": "已使用",
     "totalUsed": "總共已使用",
     "limit": "容量上限",
@@ -1144,7 +1144,8 @@
         "viewCharts": "查看譜面",
         "viewDetails": "在 tomomai DB 查看詳細資訊",
         "summary": "{songName} 是由 {artist} 製作的 maimai でらっくす {chartType} 譜面，屬於 {genre} 類型，於 {versionName} 收錄。難度範圍為 {minLevel} 至 {maxLevel}，共 {chartCount, plural, =1 {# 張譜面} other {# 張譜面}}{bpmFragment}。",
-        "summaryBpmFragment": "（BPM {bpm}）"
+        "summaryBpmFragment": "（BPM {bpm}）",
+        "loadFailed": "載入歌曲詳情失敗"
       },
       "filter": {
         "type": "類型",

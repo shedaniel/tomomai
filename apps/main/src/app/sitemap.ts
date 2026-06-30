@@ -1,11 +1,17 @@
 import type { MetadataRoute } from 'next'
 import { resolveBaseUrl } from '@/lib/base-url';
+import { logger } from '@/lib/logger';
 import { DB_TYPES } from '@/lib/db/types';
 import { user, userSnapshots, songs } from '@/lib/db/schema-pg';
 import { and, eq, ne, sql } from 'drizzle-orm';
 import { db } from '@/lib/db';
 import { getSongSlug } from '@/lib/song-slug';
 import { getAllPostsMeta, getAvailableTranslations } from '@/lib/posts';
+import { defaultLocale } from '@/i18n/locale';
+
+/** Build a localized absolute URL for the sitemap. */
+const loc = (baseUrl: string, path: string) =>
+  `${baseUrl}/${defaultLocale}${path === '/' ? '' : path}`;
 
 type SitemapItem = MetadataRoute.Sitemap[number];
 
@@ -67,12 +73,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   for (const [slug, songs] of counter.entries()) {
     if (songs.length > 1) {
-      console.error(`Same slug found: ${slug} for ${songs.map(s => `'${s.songName}' by '${s.artist}'`).join(', ')}`);
+      logger.warn(`Same slug found: ${slug} for ${songs.map(s => `'${s.songName}' by '${s.artist}'`).join(', ')}`);
     }
   }
 
   const songSitemapItems = counter.keys().map((slug) => ({
-    url: `${baseUrl}/db/songs/${encodeURIComponent(slug)}`,
+    url: loc(baseUrl, `/db/songs/${encodeURIComponent(slug)}`),
     changeFrequency: 'monthly',
     priority: 0.55,
   } satisfies SitemapItem));
@@ -80,38 +86,39 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Get all posts for sitemap (using English as base)
   const posts = getAllPostsMeta('en');
   const postSitemapItems = posts.map((post) => {
-    const translations = getAvailableTranslations(post.canonicalSlug);
-
+    const available = getAvailableTranslations(post.canonicalSlug);
+    const languages: Record<string, string> = {};
+    for (const l of available) {
+      languages[l] = `${baseUrl}/${l}/db/posts/${post.slug}`;
+    }
+    languages['x-default'] = `${baseUrl}/${defaultLocale}/db/posts/${post.slug}`;
     return {
-      url: `${baseUrl}/db/posts/${post.slug}`,
+      url: loc(baseUrl, `/db/posts/${post.slug}`),
       lastModified: new Date(post.date),
       changeFrequency: 'monthly',
       priority: 0.7,
       alternates: {
-        languages: translations.reduce((acc, lang) => ({
-          ...acc,
-          [lang]: `${baseUrl}/db/posts/${post.slug}`,
-        }), {}),
+        languages,
       },
     } satisfies SitemapItem;
   });
 
   return [
     {
-      url: `${baseUrl}/`,
+      url: loc(baseUrl, '/'),
       lastModified: new Date(),
       changeFrequency: 'weekly',
       priority: 0.8,
     },
     ...DB_TYPES.map((type) => ({
-      url: `${baseUrl}/db/${type}`,
+      url: loc(baseUrl, `/db/${type}`),
       lastModified: new Date(),
       changeFrequency: 'daily',
       priority: 0.8,
     }) satisfies SitemapItem),
     ...postSitemapItems,
     ...profiles.map((profile) => ({
-      url: `${baseUrl}/profile/${profile.username}`,
+      url: loc(baseUrl, `/profile/${profile.username}`),
       lastModified: profile.latestSnapshotAt ?? new Date(),
       changeFrequency: 'weekly',
       priority: 0.6,

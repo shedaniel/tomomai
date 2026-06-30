@@ -7,6 +7,16 @@ import {
 } from "@/lib/db/percentile-view";
 import { sql } from "drizzle-orm";
 
+const CHART_PERCENTILE_TIMEOUT_MS = 5000;
+
+// 42P01 = undefined_table (matview not built yet), 57014 = query_canceled (statement_timeout).
+function hasPgCode(err: unknown, code: string): boolean {
+  for (let e: unknown = err; e != null; e = (e as { cause?: unknown }).cause) {
+    if (typeof e === "object" && (e as { code?: string }).code === code) return true;
+  }
+  return false;
+}
+
 export interface ChartPercentileInput {
   internalSongId: bigint;
   /** achievement stored as integer ×10000 (e.g. 1000000 = 100.0000%) */
@@ -124,14 +134,25 @@ export async function getChartPercentiles(
   const { lo, hi } = getBandRange(userRating);
   const primary = new Set(primaryBands(userRating));
 
-  // Single query: all bands for all songs in the ±500 window
-  const rows = await db.execute<ChartPercentileBandRow>(sql`
-    SELECT song_id, band_lo, achievements, player_count
-    FROM ${sql.raw(CHART_PERCENTILE_VIEW)}
-    WHERE song_id = ANY(${sql.raw(`ARRAY[${songIds.map(String).join(",")}]::bigint[]`)})
-      AND band_lo >= ${lo}
-      AND band_lo < ${hi}
-  `);
+  // Single query: all bands for all songs in the ±500 window.
+  // statement_timeout bounds the read so a slow/contended matview can't hang the request.
+  let rows: ChartPercentileBandRow[];
+  try {
+    rows = await db.transaction(async (tx) => {
+      await tx.execute(sql.raw(`SET LOCAL statement_timeout = ${CHART_PERCENTILE_TIMEOUT_MS}`));
+      return tx.execute<ChartPercentileBandRow>(sql`
+        SELECT song_id, band_lo, achievements, player_count
+        FROM ${sql.raw(CHART_PERCENTILE_VIEW)}
+        WHERE song_id = ANY(${sql.raw(`ARRAY[${songIds.map(String).join(",")}]::bigint[]`)})
+          AND band_lo >= ${lo}
+          AND band_lo < ${hi}
+      `);
+    });
+  } catch (err) {
+    // Matview not built yet (cron never ran) or query timed out — degrade to no data.
+    if (hasPgCode(err, "42P01") || hasPgCode(err, "57014")) return new Map();
+    throw err;
+  }
 
   // Group rows by song_id
   const byId = new Map<bigint, ChartPercentileBandRow[]>();

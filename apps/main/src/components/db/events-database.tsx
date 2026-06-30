@@ -3,7 +3,8 @@
 import { useState, useMemo } from "react";
 import { trpc } from "@/lib/trpc-client";
 import { useTranslations } from "next-intl";
-import { useSearchParams, useRouter, usePathname } from "next/navigation";
+import { useSearchParams } from "next/navigation";
+import { useRouter, usePathname } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
 import { EVENT_STEP_TYPE_KEYS, normType } from "@/lib/event-types";
 import { Loader2, ArrowLeft, Search, Calendar } from "lucide-react";

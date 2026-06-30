@@ -8,6 +8,7 @@
     "dev": "pnpm --filter @tomomai/site dev",
     "build": "pnpm --filter @tomomai/site build",
     "start": "pnpm --filter @tomomai/site start",
+    "tunnel": "cloudflared tunnel run --url http://localhost:3000 tomomai",
     "lint": "pnpm -r lint",
     "typecheck": "pnpm -r typecheck",
     "test": "pnpm --filter @tomomai/site test",
@@ -17,6 +18,9 @@
     "db:studio": "pnpm --filter @tomomai/site db:studio",
     "guess:dev": "pnpm --filter @tomomai/guess dev",
     "guess:build": "pnpm --filter @tomomai/guess build",
-    "guess:start": "pnpm --filter @tomomai/guess start"
+    "guess:start": "pnpm --filter @tomomai/guess start",
+    "render:dev": "pnpm --filter @tomomai/render dev",
+    "render:start": "pnpm --filter @tomomai/render start",
+    "render:typecheck": "pnpm --filter @tomomai/render typecheck"
   }
 }

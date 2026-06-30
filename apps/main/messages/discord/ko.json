@@ -1,0 +1,190 @@
+{
+  "common": {
+    "footer": "tomomai ともマイ • maimai DX 성적 관리 봇",
+    "notRegistered": {
+      "title": "❌ 계정 미연동",
+      "description": "아직 Discord 계정이 tomomai와 연동되지 않았어요!",
+      "getStarted": {
+        "name": "🔗 시작하기",
+        "value": "[tomomai ともマイ]({baseUrl}/)에 접속해 Discord로 로그인하고 성적 관리를 시작해 보세요!"
+      }
+    },
+    "noData": {
+      "title": "📊 데이터 없음",
+      "description": "아직 {regionName} 리전의 플레이 데이터가 없습니다.",
+      "import": {
+        "name": "🎯 점수 동기화하기",
+        "value": "[tomomai ともマイ]({baseUrl}/)에 접속하여 {regionName} maimai DX 점수를 동기화해 주세요!"
+      }
+    },
+    "error": {
+      "title": "❌ 오류",
+      "unableToIdentify": "Discord 사용자를 확인할 수 없습니다. 다시 시도해 주세요.",
+      "unableToIdentifyShort": "Discord 사용자를 확인할 수 없습니다.",
+      "generic": "오류가 발생했습니다. 잠시 후 다시 시도해 주세요.",
+      "notAvailableToYou": "❌ 본인만 사용할 수 있는 버튼입니다.",
+      "unknownCommand": "알 수 없는 명령어입니다."
+    },
+    "loading": {
+      "title": "⏳ 로딩 중...",
+      "description": "<@{userId}> 저장된 데이터로 계속 진행합니다..."
+    }
+  },
+  "staleness": {
+    "title": "⏳ 데이터 갱신 필요",
+    "description": "<@{userId}> 마지막으로 **{regionName}** 데이터를 동기화한 지 **{age}**가 지났습니다.\n{cmdLine}",
+    "cmdLine": {
+      "profile": "이대로 프로필을 확인하시겠어요?",
+      "recents": "이대로 최근 플레이 기록을 확인하시겠어요?",
+      "recommend": "이대로 추천 곡을 확인하시겠어요?",
+      "daily": "이대로 {day}의 플레이 기록을 생성하시겠어요?",
+      "dailyDefault": "이대로 오늘의 플레이 기록을 생성하시겠어요?",
+      "default": "이대로 진행하시겠어요?"
+    },
+    "buttons": {
+      "continue": "이대로 계속",
+      "refetchAndContinue": "데이터 갱신 후 계속"
+    },
+    "refetching": {
+      "title": "🔄 {regionName} 데이터 갱신 중",
+      "description": "<@{userId}> maimai DX NET에서 최신 데이터를 가져오고 있습니다..."
+    },
+    "refetchError": {
+      "title": "❌ 오류",
+      "description": "<@{userId}> 데이터를 갱신하는 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요."
+    }
+  },
+  "fetch": {
+    "maintenanceWindow": "서버 점검 시간(한국 시간 오전 4시 ~ 7시)에는 데이터를 갱신할 수 없습니다.",
+    "startError": "데이터 동기화를 시작하지 못했습니다. 잠시 후 다시 시도해 주세요.",
+    "initializing": {
+      "title": "🔄 {regionName} 데이터 동기화 중",
+      "description": "<@{userId}> maimai DX NET과 데이터 동기화를 시작합니다...",
+      "status": "📊 상태",
+      "statusValue": "준비 중..."
+    },
+    "error": {
+      "title": "❌ 동기화 오류",
+      "description": "<@{userId}> 데이터를 동기화하는 중 오류가 발생했습니다: {message}"
+    },
+    "failed": {
+      "title": "❌ 동기화 실패",
+      "description": "<@{userId}> {regionName} 데이터를 동기화하지 못했습니다: {reason}"
+    },
+    "timeout": {
+      "title": "⏰ 처리 지연",
+      "description": "<@{userId}> 데이터 갱신이 예상보다 오래 걸리고 있습니다. 웹사이트에서 최신 상태를 확인해 주세요.",
+      "statusName": "🌐 상태 확인",
+      "statusValue": "[tomomai ともマイ]({baseUrl}/)에서 최신 데이터를 확인하세요!"
+    },
+    "complete": {
+      "title": "✅ 동기화 완료",
+      "description": "<@{userId}> 데이터 동기화가 성공적으로 완료되었습니다!"
+    },
+    "generatingImage": {
+      "title": "🔄 {regionName} 데이터 동기화 중",
+      "description": "<@{userId}> 데이터 동기화 완료! 프로필 이미지를 생성하고 있습니다...",
+      "status": "📊 상태",
+      "statusValue": "⏳ 프로필 이미지 생성 중"
+    },
+    "progress": {
+      "title": "🔄 {regionName} 데이터 동기화 중",
+      "description": "<@{userId}> maimai DX NET에서 데이터를 읽어오는 중...",
+      "status": "📊 상태"
+    },
+    "albumPreference": {
+      "title": "⚙️ 앨범 프라이버시 설정 필요",
+      "description": "<@{userId}> 데이터를 동기화하려면 먼저 앨범 저장 설정을 완료해야 합니다.",
+      "whatName": "이것은 무엇인가요?",
+      "whatValue": "앨범은 리절트 화면 등 프로필 데이터와 함께 저장되는 이미지입니다. 프라이버시 설정에 따라 저장 여부를 직접 선택할 수 있습니다.",
+      "privacyName": "개인정보 보호 안내",
+      "privacyValue": "✓ 앨범은 비공개 상태로 안전하게 저장됩니다.\n✓ 본인이 공개로 변경하지 않는 한 타인에게 노출되지 않습니다.\n✓ 본인만 볼 수 있습니다.\n✓ 30일 후 자동으로 삭제됩니다.\n✓ 설정은 언제든 변경할 수 있습니다.",
+      "dontSave": "앨범 저장하지 않음",
+      "save": "앨범 저장함",
+      "preferenceSet": {
+        "title": "✅ 설정 완료",
+        "description": "앨범 설정이 '{choice}'(으)로 저장되었습니다. 동기화를 시작합니다...",
+        "save": "앨범 저장함",
+        "dontSave": "앨범 저장하지 않음"
+      }
+    }
+  },
+  "profile": {
+    "loading": {
+      "title": "🔄 {regionName} 프로필 불러오는 중",
+      "description": "<@{userId}> 프로필 이미지를 생성하고 있습니다...",
+      "status": "📊 상태",
+      "statusValue": "⏳ 프로필 이미지 생성 중"
+    },
+    "error": "레이팅 정보를 불러오는 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.",
+    "content": "<@{userId}> {comment}! 당신의 레이팅은 겨우 **{rating}**밖에 안 되네요! 😤{regionSuffix}\n-# 신곡: {newRating} (평균: {newAvg}) - 구곡: {oldRating} (평균: {oldAvg}) - 스타: {stars} - 총 플레이: {totalPlays}회",
+    "viewFullProfile": "🔗 전체 프로필 보기"
+  },
+  "recents": {
+    "loading": {
+      "title": "🔄 {regionName} 최근 기록 불러오는 중",
+      "description": "<@{userId}> 최근 플레이 기록 이미지를 생성하고 있습니다...",
+      "status": "📊 상태",
+      "statusValue": "⏳ 이미지 생성 중"
+    },
+    "noPlays": {
+      "title": "📊 플레이 기록 없음",
+      "description": "아직 {regionName} 리전에 최근 플레이 기록이 없습니다!",
+      "noMore": "더 이상 이전 기록이 없습니다."
+    },
+    "error": {
+      "title": "❌ 오류",
+      "description": "이미지를 생성하지 못했습니다: {message}"
+    },
+    "content": "<@{userId}> <t:{unix}:f> 기준 최근 플레이 기록입니다. ({regionName})",
+    "newerPlay": "더 최신 기록",
+    "olderPlay": "이전 기록",
+    "errorGeneric": "최근 플레이 기록을 불러오는 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요."
+  },
+  "recommend": {
+    "title": "🎯 {regionName} 추천 곡",
+    "description": "<@{userId}>\n```\n{body}\n```",
+    "none": {
+      "title": "🎯 {regionName} 추천 곡",
+      "description": "<@{userId}> 추천해드릴 곡이 없습니다 — 이미 너무 완벽한 점수네요!"
+    },
+    "errorGeneric": "추천 곡을 분석하는 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.",
+    "errorContent": "추천 곡을 분석하는 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요."
+  },
+  "daily": {
+    "noPlays": "<@{userId}> 플레이 기록을 찾을 수 없습니다. ({regionName})",
+    "noPlaysDay": "<@{userId}> {day}의 플레이 기록을 찾을 수 없습니다. ({regionName})",
+    "content": "<@{userId}> **{day}** 일일 플레이 기록 ({regionName})",
+    "failed": "<@{userId}> ❌ 일일 플레이 기록 이미지 생성에 실패했습니다.",
+    "errorGeneric": "일일 플레이 기록을 불러오는 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.",
+    "play": "회",
+    "plays": "회"
+  },
+  "invite": {
+    "title": "🎯 tomomai ともマイ 초대하기",
+    "description": "tomomai 봇을 Discord 서버에 추가하고 maimai DX 친구들과 성적을 공유해 보세요!",
+    "featuresName": "✨ 주요 기능",
+    "featuresValue": "• 글로벌 및 일본 서버 성적 완벽 지원\n• maimai DX NET에서 데이터 직접 동기화\n• 스냅샷 기능으로 과거 성장 기록 확인\n• 깔끔한 성적 분석 및 레이팅(상수) 계산",
+    "addName": "🔗 서버에 봇 추가",
+    "addValue": "[여기를 눌러 봇을 초대하세요]({url})",
+    "websiteName": "🌐 웹사이트"
+  },
+  "regions": {
+    "intl": "해외",
+    "jp": "일본",
+    "cn": "중국"
+  },
+  "age": {
+    "justNow": "방금 전",
+    "minute": "1분 됨",
+    "minutes": "{count}분",
+    "hour": "1시간 됨",
+    "hours": "{count}시간",
+    "day": "1일 됨",
+    "days": "{count}일",
+    "month": "1개월 됨",
+    "months": "{count}개월",
+    "year": "1년 됨",
+    "years": "{count}년"
+  }
+}

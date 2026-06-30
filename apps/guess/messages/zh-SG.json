@@ -97,7 +97,8 @@
         "play": "播放",
         "pause": "暂停",
         "duration": "{seconds} 秒",
-        "step": "提示 {current} / {total}"
+        "step": "提示 {current} / {total}",
+        "error": "无法播放音频：{detail}"
       }
     },
     "reveal": {

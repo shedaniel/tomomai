@@ -3,8 +3,8 @@ import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { load } from "cheerio";
 import { z } from "zod";
 import { NextRequest, NextResponse } from "next/server";
-import { nanoid } from "nanoid";
-import { logger } from "@/lib/logger";
+import { flushLogger } from "@/lib/logger";
+import { requestLogger } from "@/lib/request-logger";
 import { redis } from "@/lib/redis";
 import { storePending } from "@/server/services/admin/pending-confirmation";
 import { sendDiscordNotice } from "@/server/services/admin/discord-webhooks";
@@ -162,7 +162,7 @@ async function fetchPageHtml(url: string, visitedUrls: Set<string>, log: any): P
     const html = await response.text();
     visitedUrls.add(url);
 
-    log.debug({ url, htmlLength: html.length }, "Page fetched");
+    log.debug({ url, size: html.length }, "Page fetched");
 
     return { html };
   } catch (err) {
@@ -225,7 +225,7 @@ async function runScraper(modelId: string, content: string, url: string, log: an
 async function scrapePageForEvents(content: string, url: string, log: any): Promise<Event[]> {
   const primaryModel = process.env.AI_MODEL || "anthropic/claude-sonnet-4-5-20250514";
 
-  log.debug({ url, contentLength: content.length }, "Starting scraper agent");
+  log.debug({ url, size: content.length }, "Starting scraper agent");
 
   try {
     const events = await runScraper(primaryModel, content, url, log);
@@ -344,6 +344,7 @@ export async function discoverLinks(
 }
 
 export async function POST(request: NextRequest) {
+  const { log, requestId } = requestLogger(request, "admin/fetch_events");
   try {
     // Auth - same pattern as other admin routes
     const authHeader = request.headers.get("authorization");
@@ -358,7 +359,7 @@ export async function POST(request: NextRequest) {
 
     const adminToken = process.env.ADMIN_UPDATE_TOKEN;
     if (!adminToken) {
-      console.error("ADMIN_UPDATE_TOKEN environment variable not set");
+      log.error("ADMIN_UPDATE_TOKEN environment variable not set");
       return NextResponse.json(
         { error: "Server configuration error" },
         { status: 500 },
@@ -366,15 +367,12 @@ export async function POST(request: NextRequest) {
     }
 
     if (token !== adminToken) {
-      console.warn("Invalid admin token attempt");
+      log.warn("Invalid admin token attempt");
       return NextResponse.json(
         { error: "Invalid authorization token" },
         { status: 403 },
       );
     }
-
-    const requestId = nanoid(10);
-    const log = logger.child({ route: "admin/fetch_events", requestId });
 
     log.info("Starting event scraping");
 
@@ -412,7 +410,7 @@ export async function POST(request: NextRequest) {
               const content = extractAsMarkdown(result.html, url, visited);
               return { url, content };
             }
-            log.error({ url, error: result.error }, "Failed to fetch during discovery");
+            log.error({ url }, `Failed to fetch during discovery: ${result.error}`);
             return null;
           }),
         );
@@ -470,7 +468,7 @@ export async function POST(request: NextRequest) {
           if (!html) {
             const result = await fetchPageHtml(url, visited, log);
             if ("error" in result) {
-              log.error({ url, error: result.error }, "Failed to fetch page for scraping");
+              log.error({ url }, `Failed to fetch page for scraping: ${result.error}`);
               return [];
             }
             html = result.html;
@@ -540,7 +538,7 @@ export async function POST(request: NextRequest) {
           });
           continue;
         }
-        console.warn(`Period does not match expected format for event "${event.name}": "${p}"`);
+        log.warn({ event: event.name, period: p }, "Period does not match expected format");
       }
       // Merge complementary partial periods (start-only + end-only) if end > start,
       // then remove remaining partials subsumed by a more complete period
@@ -585,7 +583,7 @@ export async function POST(request: NextRequest) {
         steps: event.steps.map((s) => {
           const type = normType(s.type);
           if (!KNOWN_STEP_TYPES.has(type)) {
-            console.warn(`Unknown step type for event "${event.name}": "${type}"`);
+            log.warn({ event: event.name, stepType: type }, "Unknown step type");
           }
           const multiply = multiplyAll || s.distance % 1.0 > 0.001;
           const distance = multiply ? Math.round(s.distance * 1000) : Math.round(s.distance);
@@ -623,6 +621,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
+      requestId,
       pendingId,
       confirmUrl,
       descriptionUrl,
@@ -638,11 +637,14 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("Error in admin fetch_events route:", error);
+    log.error({ err: error }, "Error in admin fetch_events route");
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Internal server error" },
+      { error: error instanceof Error ? error.message : "Internal server error", requestId },
       { status: 500 },
     );
+  } finally {
+    // Serverless: ship buffered logs before the function is frozen/terminated.
+    await flushLogger();
   }
 }
 

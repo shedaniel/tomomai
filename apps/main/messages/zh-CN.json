@@ -232,7 +232,7 @@
       "stored": "私密地存储在我们的服务器上",
       "notShared": "绝从不与第三方共享",
       "onlyYou": "仅对你显示",
-      "limit": "上限为 25 MB（约为 300 张图片）",
+      "limit": "上限为 8 MB（约为 170 张图片）",
       "autoDelete": "当存储空间不足时，自动删除最旧的照片",
       "changeLater": "你随时可以通过设置界面再次编辑此设置。",
       "dontSave": "不保存照片",
@@ -674,7 +674,7 @@
     "error": "加载相册失败",
     "storage": "存储空间",
     "storageTitle": "存储使用量",
-    "storageDescription": "管理你的相册存储空间。当超过 25 MB 时，系统会自动删除最旧的照片。这大约可存储 300 张图片。",
+    "storageDescription": "管理你的相册存储空间。当超过 8 MB 时，系统会自动删除最旧的照片。这大约可存储 170 张图片。",
     "used": "已使用",
     "totalUsed": "总使用",
     "limit": "上限",
@@ -1144,7 +1144,8 @@
         "viewCharts": "查看谱面",
         "viewDetails": "在 tomomai DB 查看详情",
         "summary": "{songName} 是由 {artist} 制作的 maimai でらっくす {chartType} 谱面，属于 {genre} 类型，于 {versionName} 收录。难度范围为 {minLevel} 至 {maxLevel}，共 {chartCount, plural, =1 {# 张谱面} other {# 张谱面}}{bpmFragment}。",
-        "summaryBpmFragment": "（BPM {bpm}）"
+        "summaryBpmFragment": "（BPM {bpm}）",
+        "loadFailed": "加载歌曲详情失败"
       },
       "filter": {
         "type": "类型",

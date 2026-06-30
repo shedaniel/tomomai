@@ -9,7 +9,7 @@ import { trpc } from "@/lib/trpc-client";
 import { cn } from "@/lib/utils";
 import { LayoutGrid, LayoutList, Music, Search } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter } from "@/i18n/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@tomomai/ui/select-friendly";
@@ -19,21 +19,22 @@ import { SongRow } from "./songs/song-row";
 import { GroupMode, UniqueSong, UniqueSongFilter, UniqueSongFilterType } from "./songs/types";
 
 interface SongsListProps {
-  /** Server-fetched songs catalog (passed by /db/[type]/layout for type=songs). */
-  initialSongs: UniqueSong[];
+  /** No longer accepts server data — the list is client-fetched via tRPC so it can live in the shared /db/[type]/layout (which keeps it mounted, and thus uncached, across /db/songs ↔ /db/songs/[slug]). */
 }
 
 /**
  * Songs catalog list. Pure list — does NOT own the song-detail drawer.
  *
- * Mounted in /db/[type]/layout.tsx so it persists across /db/songs ↔
- * /db/songs/[slug] navigation (filter/scroll state survives drawer
- * open/close). The selected song highlight is derived from the URL via
- * `usePathname()`, and selecting a song does a soft `router.push` to the
- * slug route — which feeds content into the @detail parallel slot at the
- * /db level, where the drawer wrapper picks it up.
+ * Mounted in /db/[type]/layout.tsx so it NEVER unmounts across
+ * /db/songs ↔ /db/songs/[slug] navigation: filter/search/scroll/visible-count
+ * state survives in plain React state, and the catalog survives in the tRPC
+ * cache (1h). No `initialSongs` prop is accepted — passing it would
+ * serialize the whole catalog into the shared layout's RSC segment and
+ * leak onto the detail route's ISR payload. The /db/songs page renders a
+ * separate SSR <ul> of song links for crawlers; this component hides it
+ * once its interactive grid hydrates.
  */
-export function SongsList({ initialSongs }: SongsListProps) {
+export function SongsList(_: SongsListProps = {}) {
   const t = useTranslations();
   const router = useRouter();
   const pathname = usePathname();
@@ -44,7 +45,14 @@ export function SongsList({ initialSongs }: SongsListProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const [searchBoxFocused, setSearchBoxFocused] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // Once the interactive grid hydrates, dismiss the SSR SEO <ul> the list
+  // page rendered (Option B morph: plain list → interactive grid).
+  useEffect(() => {
+    document.getElementById("songs-seo-list")?.setAttribute("hidden", "");
+  }, []);
 
   // Debounce search query
   useEffect(() => {
@@ -53,17 +61,22 @@ export function SongsList({ initialSongs }: SongsListProps) {
       setDebouncedSearchQuery(searchQuery);
     }, 300);
     return () => clearTimeout(timer);
-  }, [searchQuery]);
+  }, [searchQuery, debouncedSearchQuery]);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const [displayMode, setDisplayMode] = useState<"grid" | "list">("grid");
   const [groupMode, setGroupMode] = useState<GroupMode>("none");
   const [filters, setFilters] = useState<UniqueSongFilter[]>([]);
 
-  // Use the server-provided initial data; refresh via tRPC client cache.
+  // Catalog is client-fetched via tRPC (1h cache, shared with the detail
+  // route). Keeping it out of props is what lets this component live in the
+  // shared layout without serializing the catalog into the ISR payload.
   const { data: allSongs } = trpc.user.getAllUniqueSongs.useQuery(undefined, {
     staleTime: 3600000, // 1 hour
     refetchOnWindowFocus: false,
-    initialData: initialSongs,
   });
 
   const flattenedSongs = useMemo(() => {
@@ -187,6 +200,10 @@ export function SongsList({ initialSongs }: SongsListProps) {
       <h3 className="font-semibold text-lg text-foreground/90 border-b border-border/50 pb-1">{key}</h3>
     </div>
   );
+
+  if (selectedSlug !== null && !mounted) {
+    return null;
+  }
 
   return (
     <main className="space-y-6 pb-16 pt-3" role="main" data-nosnippet>

@@ -2,6 +2,7 @@ import { InteractionResponseType, InteractionResponseFlags } from 'discord-inter
 import { FETCH_STATUS_ENUM } from '../db/types';
 import { FETCH_STATES } from '../fetch-states';
 import { resolveBaseUrl } from '../base-url';
+import { t } from './i18n';
 
 export interface DiscordEmbed {
   title?: string;
@@ -154,21 +155,21 @@ export function getRatingComment(rating: number): string {
 }
 
 // Standard response templates
-export function createNotRegisteredResponse(): DiscordResponse {
+export function createNotRegisteredResponse(locale?: string): DiscordResponse {
   return {
     type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
     data: {
       embeds: [{
-        title: '❌ Not Registered',
-        description: `You haven't linked your Discord account to tomomai yet!`,
+        title: t(locale, 'common.notRegistered.title'),
+        description: t(locale, 'common.notRegistered.description'),
         color: DISCORD_COLORS.RED,
         fields: [{
-          name: '🔗 Get Started',
-          value: `[Visit tomomai ともマイ](${resolveBaseUrl()}/) to sign in with Discord and start tracking your scores!`,
+          name: t(locale, 'common.notRegistered.getStarted.name'),
+          value: t(locale, 'common.notRegistered.getStarted.value', { baseUrl: resolveBaseUrl() }),
           inline: false,
         }],
         footer: {
-          text: 'tomomai ともマイ • maimai DX score tracker',
+          text: t(locale, 'common.footer'),
         },
       }],
       flags: InteractionResponseFlags.EPHEMERAL,
@@ -176,21 +177,21 @@ export function createNotRegisteredResponse(): DiscordResponse {
   };
 }
 
-export function createNoDataResponse(regionName: string): DiscordResponse {
+export function createNoDataResponse(regionName: string, locale?: string): DiscordResponse {
   return {
     type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
     data: {
       embeds: [{
-        title: '📊 No Data Found',
-        description: `You don't have any ${regionName} region data yet!`,
+        title: t(locale, 'common.noData.title'),
+        description: t(locale, 'common.noData.description', { regionName }),
         color: DISCORD_COLORS.YELLOW,
         fields: [{
-          name: '🎯 Import Your Scores',
-          value: `[Visit tomomai ともマイ](${resolveBaseUrl()}/) to import your ${regionName} maimai DX scores!`,
+          name: t(locale, 'common.noData.import.name'),
+          value: t(locale, 'common.noData.import.value', { baseUrl: resolveBaseUrl(), regionName }),
           inline: false,
         }],
         footer: {
-          text: 'tomomai ともマイ • maimai DX score tracker',
+          text: t(locale, 'common.footer'),
         },
       }],
       flags: InteractionResponseFlags.EPHEMERAL,
@@ -198,7 +199,7 @@ export function createNoDataResponse(regionName: string): DiscordResponse {
   };
 }
 
-export function createErrorResponse(message: string): DiscordResponse {
+export function createErrorResponse(message: string, locale?: string): DiscordResponse {
   return {
     type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
     data: {
@@ -220,11 +221,11 @@ export function createPongResponse(): DiscordResponse {
   };
 }
 
-export function createUnknownCommandResponse(): DiscordResponse {
+export function createUnknownCommandResponse(locale?: string): DiscordResponse {
   return {
     type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
     data: {
-      content: 'Unknown command',
+      content: t(locale, 'common.error.unknownCommand'),
       flags: InteractionResponseFlags.EPHEMERAL,
     },
   };
@@ -244,6 +245,36 @@ export async function editDiscordMessage(
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(content),
+    }
+  );
+}
+
+// Helper function to edit a Discord message with plain text content + an image
+// attachment (no embed), optionally with components.
+export async function editDiscordMessageWithImageAndContent(
+  applicationId: string,
+  interactionToken: string,
+  content: string,
+  imageBuffer: Buffer,
+  components?: any[]
+): Promise<void> {
+  const formData = new FormData();
+
+  const blob = new Blob([new Uint8Array(imageBuffer)], { type: 'image/png' });
+  formData.append('files[0]', blob, 'maimai-profile.png');
+
+  const payload: any = { content, embeds: [] };
+  if (components) {
+    payload.components = components;
+  }
+
+  formData.append('payload_json', JSON.stringify(payload));
+
+  await fetch(
+    `https://discord.com/api/v10/webhooks/${applicationId}/${interactionToken}/messages/@original`,
+    {
+      method: 'PATCH',
+      body: formData,
     }
   );
 }

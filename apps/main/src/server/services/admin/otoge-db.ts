@@ -51,11 +51,11 @@ export const OtogeDbFetcher = asFetcher(async (context) => {
         mode: "only-modify",
       } satisfies SongWithMode)));
     for (const song of allRecords) {
-      context.log.trace({ song }, `Song ${key(song)} has been processed for otoge-db`);
+      context.log.trace(`Song ${key(song)} has been processed for otoge-db`);
     }
   }
 
-  context.log.trace({ songs: allRecords.map(key) }, "Fetched records from otoge-db")
+  context.log.trace({ songKeys: allRecords.map(key) }, "Fetched records from otoge-db")
 
   return allRecords
 })
@@ -179,7 +179,7 @@ async function fetchRecordsWithUrl(region: Region, version: VersionId, url: stri
         } satisfies SongWithMode);
       }
     }
-    log.debug({ song, addedDate, addedVersion, optional, records, region }, `Fetched basic info on otoge-db for ${song.title}`);
+    log.debug({ addedDate, addedVersion, optional, region, recordCount: records.length }, `Fetched basic info on otoge-db for ${song.title}`);
     return records;
   });
 }

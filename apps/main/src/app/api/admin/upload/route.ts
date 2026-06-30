@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { scoreData, songs } from "@/lib/db/schema-pg";
-import { logger } from "@/lib/logger";
+import { flushLogger } from "@/lib/logger";
+import { requestLogger } from "@/lib/request-logger";
 import { getEnabledRegions, isRegionEnabled } from "@/lib/enabled-regions";
 import { VersionId } from "@/lib/metadata";
 import { Difficulty, Region, SongType } from "@/lib/types";
@@ -8,6 +9,9 @@ import { UpdateSong } from "@/lib/types/update";
 import { mergeSongs, taker, merger, key, MergeSink } from "@/server/services/admin/fetcher-utils";
 import { important, PendingSong, value, Pending } from "@/server/utils/admin/type";
 import { sendDiscordNotice, sendDiscordWebhook } from "@/server/services/admin/discord-webhooks";
+import { revalidatePath, revalidateTag } from "next/cache";
+import { getSongSlugs } from "@/lib/song-slug";
+import { locales } from "@tomomai/i18n/locale";
 import { and, eq, inArray, count, sql } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { NextRequest, NextResponse } from "next/server";
@@ -208,6 +212,48 @@ function analyzeChanges(
 
 type UpdateMode = "noop" | "alter" | "destructive";
 
+/**
+ * Push catalog edits to the ISR cache without waiting for the 7-day
+ * revalidate window. Busts the shared songs data cache, then regenerates
+ * each affected song-detail page (per locale) plus the list pages.
+ */
+async function revalidateSongsCache(
+  affected: Array<{ songName: string; artist: string; type: SongType }>,
+  log: (obj: unknown, msg?: string) => void,
+) {
+  revalidateTag("all-unique-songs", { expire: 3600 });
+
+  // Dedupe by songName+type (artist is part of slug derivation only).
+  const seen = new Set<string>();
+  const deduped = affected.filter((s) => {
+    const k = `${s.songName}||${s.type}`;
+    if (seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  });
+
+  const withSlugs = await getSongSlugs(deduped);
+  const slugs = new Set(withSlugs.map((s) => s.slug));
+
+  // Bulk uploads (full catalog re-push) can touch hundreds of songs; fall
+  // back to invalidating the whole dynamic segment instead of thousands of
+  // individual path revalidations.
+  const bulk = slugs.size > 200;
+  for (const locale of locales) {
+    if (bulk) {
+      revalidatePath(`/${locale}/db/songs/[slug]`, "page");
+    } else {
+      for (const slug of slugs) {
+        revalidatePath(`/${locale}/db/songs/${slug}`, "page");
+      }
+    }
+    revalidatePath(`/${locale}/db/songs`, "page");
+  }
+  revalidatePath("/sitemap.xml", "page");
+
+  log({ revalidatedSlugs: slugs.size, bulk }, "ISR cache revalidated");
+}
+
 function pendingSongToDbValues(song: PendingSong, region: Region, gameVersion: VersionId) {
   const noteCounts = value(song.noteCounts as Pending<any>);
   return {
@@ -325,6 +371,8 @@ async function applyChanges(
 }
 
 export async function POST(request: NextRequest) {
+  const { log: baseLog, requestId } = requestLogger(request, "admin/upload");
+  let log = baseLog;
   try {
     // Check for admin token authentication
     const authHeader = request.headers.get("authorization");
@@ -340,7 +388,7 @@ export async function POST(request: NextRequest) {
     // Validate token against environment variable
     const adminToken = process.env.ADMIN_UPDATE_TOKEN;
     if (!adminToken) {
-      console.error("ADMIN_UPDATE_TOKEN environment variable not set");
+      log.error("ADMIN_UPDATE_TOKEN environment variable not set");
       return NextResponse.json(
         { error: "Server configuration error" },
         { status: 500 }
@@ -348,7 +396,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (token !== adminToken) {
-      console.warn("Invalid admin token attempt");
+      log.warn("Invalid admin token attempt");
       return NextResponse.json(
         { error: "Invalid authorization token" },
         { status: 403 }
@@ -404,14 +452,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create logger for this request
-    const requestId = nanoid(10);
-    const log = logger.child({
-      route: "admin/upload",
-      requestId,
-      region,
-      version
-    });
+    // Enrich the request logger now that region/version are known
+    log = log.child({ region, version });
 
     log.info({
       inputSongs: uploadSongs.length
@@ -537,6 +579,22 @@ export async function POST(request: NextRequest) {
 
     log.info({ updateMode, applied }, "DB update complete");
 
+    // Push the edits to ISR: regenerate affected song pages + bust the catalog
+    // data cache so the next read is fresh. Only when changes were applied.
+    if (updateMode !== "noop") {
+      const affectedSongs = [
+        ...addedSongs.map(s => ({ songName: s.songName, artist: value(s.artist) ?? "", type: s.type })),
+        ...mergeEvents.flatMap(e => [e.existing, e.result])
+          .map(s => ({ songName: s.songName, artist: value(s.artist) ?? "", type: s.type })),
+        ...changes.deleted.map(d => ({ songName: d.songName, artist: d.artist, type: d.type })),
+      ];
+      try {
+        await revalidateSongsCache(affectedSongs, (obj, msg) => log.info(obj, msg ?? ""));
+      } catch (err) {
+        log.error({ err }, "Failed to revalidate songs ISR cache");
+      }
+    }
+
     // Send Discord webhook if changes were applied
     if (updateMode !== "noop") {
       const actuallyDeleted = changes.deleted.filter(d => (d.playRecordCount ?? 0) === 0);
@@ -567,6 +625,7 @@ export async function POST(request: NextRequest) {
     // Return response
     return NextResponse.json({
       success: true,
+      requestId,
       updateMode,
       applied,
       statistics: {
@@ -586,7 +645,7 @@ export async function POST(request: NextRequest) {
       }
     });
   } catch (error) {
-    console.error("Error in admin upload route:", error);
+    log.error({ err: error }, "Error in admin upload route");
     sendDiscordNotice(
       "intl",
       "Upload error",
@@ -594,9 +653,12 @@ export async function POST(request: NextRequest) {
       0xFF0000,
     ).catch(() => { });
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Internal server error" },
+      { error: error instanceof Error ? error.message : "Internal server error", requestId },
       { status: 500 }
     );
+  } finally {
+    // Serverless: ship buffered logs before the function is frozen/terminated.
+    await flushLogger();
   }
 }
 

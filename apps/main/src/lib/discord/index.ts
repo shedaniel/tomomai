@@ -28,4 +28,8 @@ export type { DailyCommandOptions, DailyAutocompleteOptions } from './commands/d
 
 // Image generation utilities
 export { generateAndSendProfileImage, generateAndSendCreditImage, generateAndSendDailyPlaysImage } from './image-utils';
-export type { ImageGenerationOptions, SnapshotData, CreditImageOptions, DailyPlaysImageOptions } from './image-utils';
+export type { ImageGenerationOptions, CreditImageOptions, DailyPlaysImageOptions } from './image-utils';
+
+// Region helpers
+export { regionDisplayName, resolveRegion, getProfileSummary, formatProfileSummaryContent } from './region';
+export type { ProfileSummary } from './region';

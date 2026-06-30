@@ -232,7 +232,7 @@
       "stored": "Stored privately on our servers",
       "notShared": "Never shared with third parties",
       "onlyYou": "Only shown to you",
-      "limit": "Limited to 25MB total (~300 images)",
+      "limit": "Limited to 8MB total (~170 images)",
       "autoDelete": "Automatically deleted oldest-first when limit is exceeded",
       "changeLater": "You can change this setting later in your profile settings.",
       "dontSave": "No, don't save photos",
@@ -674,7 +674,7 @@
     "error": "Failed to load albums",
     "storage": "Storage",
     "storageTitle": "Storage Usage",
-    "storageDescription": "Manage your photo album storage. Oldest photos are automatically deleted when exceeding 25MB. This should be enough for ~300 images.",
+    "storageDescription": "Manage your photo album storage. Oldest photos are automatically deleted when exceeding 8MB. This should be enough for ~170 images.",
     "used": "Used",
     "totalUsed": "Total Used",
     "limit": "Limit",
@@ -1171,7 +1171,8 @@
         "viewCharts": "View Charts",
         "viewDetails": "View Details on tomomai DB",
         "summary": "{songName} is a maimai でらっくす {chartType} chart by {artist} in the {genre} genre, added in {versionName}. Difficulty ranges from {minLevel} to {maxLevel} across {chartCount, plural, =1 {# chart} other {# charts}}{bpmFragment}.",
-        "summaryBpmFragment": " (BPM {bpm})"
+        "summaryBpmFragment": " (BPM {bpm})",
+        "loadFailed": "Failed to load song details"
       },
       "filter": {
         "type": "Type",

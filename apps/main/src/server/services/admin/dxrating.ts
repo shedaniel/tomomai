@@ -2,6 +2,7 @@ import { getVersionByShortName, getVersionFromDate, getVersionInfo, parseDate, V
 import { normalizeName } from "@/lib/name-utils";
 import { Level, NoteCounts } from "@/lib/types";
 import { DxRatingResponse } from "@/lib/types/dxrating";
+import { getLogger } from "@/lib/request-logger";
 import { PendingSong } from "@/server/utils/admin/type";
 import { asFetcher } from "./fetcher-utils";
 
@@ -30,7 +31,7 @@ export const DxDataFetcher = asFetcher(async ({ version, region, notice }) => {
 
 // Helper function to fetch dxdata.json
 export async function fetchDxDataJson(): Promise<DxRatingResponse> {
-  console.log("Fetching dxdata.json...");
+  getLogger().info("Fetching dxdata.json...");
   const dxDataResponse = await fetch(DXDATA_URL, {
     headers: {
       "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
@@ -42,7 +43,7 @@ export async function fetchDxDataJson(): Promise<DxRatingResponse> {
   }
 
   const dxData = await dxDataResponse.json();
-  console.log(`Loaded ${dxData.songs.length} songs from dxdata.json`);
+  getLogger().info(`Loaded ${dxData.songs.length} songs from dxdata.json`);
   return dxData;
 }
 

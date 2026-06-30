@@ -24,6 +24,14 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+export function safeDecodeURIComponent(value: string): string {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+}
+
 // R2 CDN URLs are pre-optimized WebP — skip Next.js image optimization for them
 export function isR2Url(url: string): boolean {
   const r2Base = process.env.NEXT_PUBLIC_R2_URL;

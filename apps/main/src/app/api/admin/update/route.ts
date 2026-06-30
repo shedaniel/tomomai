@@ -1,4 +1,5 @@
-import { logger } from "@/lib/logger";
+import { flushLogger } from "@/lib/logger";
+import { requestLogger } from "@/lib/request-logger";
 import { Region } from "@/lib/types";
 import { getEnabledRegions, isRegionEnabled } from "@/lib/enabled-regions";
 import { getCurrentVersion } from "@/lib/metadata";
@@ -7,15 +8,10 @@ import { sendDiscordNotice } from "@/server/services/admin/discord-webhooks";
 import { createNoticeSink } from "@/server/services/admin/fetcher-utils";
 import { fetchLevels } from "@/server/services/admin/level-fetcher";
 import { loginAndGetCookies } from "@/server/services/maimai-login";
-import { nanoid } from "nanoid";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
-  const requestId = nanoid(10);
-  const log = logger.child({
-    route: "admin/update",
-    requestId,
-  });
+  const { log, requestId } = requestLogger(request, "admin/update");
 
   const { searchParams } = new URL(request.url);
   const region = searchParams.get('region') as Region | null;
@@ -106,11 +102,12 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
+      requestId,
       message: "Song data update completed",
       records: newRecords,
     });
   } catch (error) {
-    log.error(error, "Critical error in admin update route");
+    log.error({ err: error }, "Critical error in admin update route");
     sendDiscordNotice(
       region ?? "intl",
       "Fetch pipeline error",
@@ -121,6 +118,8 @@ export async function GET(request: NextRequest) {
       error: "Internal Error",
       requestId
     }, { status: 500 });
+  } finally {
+    await flushLogger();
   }
 }
 

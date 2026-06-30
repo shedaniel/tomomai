@@ -222,7 +222,7 @@
       "stored": "Stored privately on our servers",
       "notShared": "Never shared with third parties",
       "onlyYou": "Only shown to you",
-      "limit": "Limited to 25MB total (~300 images)",
+      "limit": "Limited to 8MB total (~170 images)",
       "autoDelete": "Automatically deleted oldest-first when limit is exceeded",
       "changeLater": "You can change this setting later in your profile settings.",
       "dontSave": "No, don't save photos",
@@ -493,7 +493,7 @@
     "error": "Failed to load albums",
     "storage": "Storage",
     "storageTitle": "Storage Usage",
-    "storageDescription": "Manage your photo album storage. Oldest photos are automatically deleted when exceeding 25MB. This should be enough for ~300 images.",
+    "storageDescription": "Manage your photo album storage. Oldest photos are automatically deleted when exceeding 8MB. This should be enough for ~170 images.",
     "used": "Used",
     "totalUsed": "Total Used",
     "limit": "Limit",
@@ -820,7 +820,8 @@
         "share": "링크 공유",
         "youtube": "YouTube 검색",
         "viewCharts": "채보 보기",
-        "viewDetails": "tomomai DB에서 상세 보기"
+        "viewDetails": "tomomai DB에서 상세 보기",
+        "loadFailed": "곡 상세 정보를 불러오지 못했습니다"
       },
       "filter": {
         "type": "타입",

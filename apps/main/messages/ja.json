@@ -232,7 +232,7 @@
       "stored": "サーバーに安全かつ非公開で保存されます",
       "notShared": "第三者に提供されることはありません",
       "onlyYou": "自分だけが閲覧できます",
-      "limit": "容量上限は25MB（画像約300枚分）です",
+      "limit": "容量上限は8MB（画像約170枚分）です",
       "autoDelete": "容量を超過した場合、古い写真から自動的に削除されます",
       "changeLater": "この設定は後でプロフィール設定から変更できます。",
       "dontSave": "いいえ、保存しません",
@@ -674,7 +674,7 @@
     "error": "アルバムの読み込みに失敗しました",
     "storage": "ストレージ",
     "storageTitle": "ストレージ使用量",
-    "storageDescription": "アルバムの保存容量を管理します。25MBを超えると、古い写真から自動的に削除されます。これは約300枚分の画像に相当します。",
+    "storageDescription": "アルバムの保存容量を管理します。8MBを超えると、古い写真から自動的に削除されます。これは約170枚分の画像に相当します。",
     "used": "使用済み",
     "totalUsed": "合計使用量",
     "limit": "上限",
@@ -1144,7 +1144,8 @@
         "viewCharts": "譜面を見る",
         "viewDetails": "ともマイ DB で詳細を見る",
         "summary": "{songName} は {versionName} で追加された、{artist} による {genre} ジャンルの maimai でらっくす {chartType} 譜面です。難易度は {chartCount, plural, =1 {# 譜面} other {# 譜面}} にわたり、{minLevel} から {maxLevel} までの範囲です{bpmFragment}。",
-        "summaryBpmFragment": "（BPM {bpm}）"
+        "summaryBpmFragment": "（BPM {bpm}）",
+        "loadFailed": "楽曲詳細の読み込みに失敗しました"
       },
       "filter": {
         "type": "タイプ",

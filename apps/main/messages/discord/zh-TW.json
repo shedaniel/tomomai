@@ -1,0 +1,190 @@
+{
+  "common": {
+    "footer": "tomomai ともマイ • maimai DX 查分器",
+    "notRegistered": {
+      "title": "❌ 尚未綁定",
+      "description": "你的 Discord 帳號還沒有綁定 tomomai 喔！",
+      "getStarted": {
+        "name": "🔗 開始使用",
+        "value": "[前往 tomomai ともマイ]({baseUrl}/) 以 Discord 登入，開始管理你的成績吧！"
+      }
+    },
+    "noData": {
+      "title": "📊 查無資料",
+      "description": "系統裡面還沒有你 {regionName} 的遊玩資料！",
+      "import": {
+        "name": "🎯 同步成績",
+        "value": "[前往 tomomai ともマイ]({baseUrl}/) 一鍵同步你的 {regionName} maimai DX 成績！"
+      }
+    },
+    "error": {
+      "title": "❌ 發生錯誤",
+      "unableToIdentify": "無法驗證 Discord 使用者，請稍後再試。",
+      "unableToIdentifyShort": "無法驗證 Discord 使用者。",
+      "generic": "出錯了，請稍後再試一次。",
+      "notAvailableToYou": "❌ 這是專屬別人的按鈕，你無法操作。",
+      "unknownCommand": "未知的無效指令"
+    },
+    "loading": {
+      "title": "⏳ 正在載入……",
+      "description": "<@{userId}> 正在使用原有的快取資料繼續……"
+    }
+  },
+  "staleness": {
+    "title": "⏳ 資料未更新",
+    "description": "<@{userId}> 距離你上次同步 **{regionName}** 的資料已經過 **{age}** 囉。\n{cmdLine}",
+    "cmdLine": {
+      "profile": "確定要直接查看舊版的個人名片嗎？",
+      "recents": "確定要直接查看舊版的遊玩紀錄嗎？",
+      "recommend": "確定要基於舊版資料查看推薦嗎？",
+      "daily": "確定要直接產生 {day} 的遊玩紀錄嗎？",
+      "dailyDefault": "確定要直接產生今日的遊玩紀錄嗎？",
+      "default": "確定要繼續嗎？"
+    },
+    "buttons": {
+      "continue": "仍然繼續",
+      "refetchAndContinue": "重新同步並查看"
+    },
+    "refetching": {
+      "title": "🔄 正在更新 {regionName} 資料",
+      "description": "<@{userId}> 正在向 maimai DX NET 請求最新資料，請稍等……"
+    },
+    "refetchError": {
+      "title": "❌ 同步錯誤",
+      "description": "<@{userId}> 資料重新同步時出了點狀況，請稍後再試。"
+    }
+  },
+  "fetch": {
+    "maintenanceWindow": "目前是伺服器維護時段（台灣/香港時間凌晨 3 點至 6 點），暫時無法同步資料喔。",
+    "startError": "啟動資料同步時失敗，請稍候重試。",
+    "initializing": {
+      "title": "🔄 正在同步 {regionName} 資料",
+      "description": "<@{userId}> 正在連線 maimai DX NET 準備同步……",
+      "status": "📊 狀態",
+      "statusValue": "初始化中……"
+    },
+    "error": {
+      "title": "❌ 同步發生錯誤",
+      "description": "<@{userId}> 同步資料時發生錯誤：{message}"
+    },
+    "failed": {
+      "title": "❌ 同步失敗",
+      "description": "<@{userId}> 取得 {regionName} 資料失敗：{reason}"
+    },
+    "timeout": {
+      "title": "⏰ 同步逾時",
+      "description": "<@{userId}> 這次資料同步花了比較多時間，建議直接前往網站查看最新狀態。",
+      "statusName": "🌐 查看網頁狀態",
+      "statusValue": "[前往 tomomai ともマイ]({baseUrl}/) 確認你的最新面板！"
+    },
+    "complete": {
+      "title": "✅ 同步完成",
+      "description": "<@{userId}> 你的遊玩資料已經成功更新囉！"
+    },
+    "generatingImage": {
+      "title": "🔄 正在同步 {regionName} 資料",
+      "description": "<@{userId}> 資料同步完畢！正在為你繪製個人名片……",
+      "status": "📊 狀態",
+      "statusValue": "⏳ 正在產生名片"
+    },
+    "progress": {
+      "title": "🔄 正在同步 {regionName} 資料",
+      "description": "<@{userId}> 正在從 maimai DX NET 拉取資料中……",
+      "status": "📊 狀態"
+    },
+    "albumPreference": {
+      "title": "⚙️ 需先設定相簿隱私",
+      "description": "<@{userId}> 在同步資料前，請先告訴我是否需要保存你的遊玩截圖（相簿）。",
+      "whatName": "這是什麼？",
+      "whatValue": "相簿是跟成績一起保存的遊戲結算畫面。你可以基於隱私考量，決定 Bot 是否該保留它們。",
+      "privacyName": "隱私聲明",
+      "privacyValue": "✓ 相簿預設保存在你私人的檔案中\n✓ 除非你主動公開，否則只有你能看見\n✓ 伺服器會在 30 天後自動刪除圖片\n✓ 你隨時可以回來更改這項設定",
+      "dontSave": "不保存相簿",
+      "save": "保存相簿",
+      "preferenceSet": {
+        "title": "✅ 設定完成",
+        "description": "已將你的相簿偏好設定為「{choice}」。開始取得資料……",
+        "save": "保存相簿",
+        "dontSave": "不保存相簿"
+      }
+    }
+  },
+  "profile": {
+    "loading": {
+      "title": "🔄 正在載入 {regionName} 玩家名片",
+      "description": "<@{userId}> 正在產生你的個人名片，馬上就好……",
+      "status": "📊 狀態",
+      "statusValue": "⏳ 產生名片中"
+    },
+    "error": "讀取你的 Rating 數值卡住了，請稍後再查一下。",
+    "content": "<@{userId}> {comment}，你的 Rating 居然只有 **{rating}** 嗎！😤{regionSuffix}\n-# 新譜：{newRating}（平均：{newAvg}）- 舊譜：{oldRating}（平均：{oldAvg}）- 星星數：{stars} - 總遊玩：{totalPlays} 局",
+    "viewFullProfile": "🔗 查看網頁版完整名片"
+  },
+  "recents": {
+    "loading": {
+      "title": "🔄 正在載入 {regionName} 遊玩紀錄",
+      "description": "<@{userId}> 正在排版並產出出勤紀錄圖片……",
+      "status": "📊 狀態",
+      "statusValue": "⏳ 正在產生中"
+    },
+    "noPlays": {
+      "title": "📊 找不到遊玩紀錄",
+      "description": "目前找不到你在 {regionName} 地區的任何出勤紀錄喔！",
+      "noMore": "已經是極限了，翻不到更舊的紀錄囉。"
+    },
+    "error": {
+      "title": "❌ 發生錯誤",
+      "description": "產生紀錄圖片失敗：{message}"
+    },
+    "content": "<@{userId}> 這是你 <t:{unix}:f> 的出勤紀錄（{regionName}）：",
+    "newerPlay": "較新的紀錄",
+    "olderPlay": "較舊的紀錄",
+    "errorGeneric": "讀取遊玩紀錄時出錯了，請稍候再試。"
+  },
+  "recommend": {
+    "title": "🎯 {regionName} 推分建議",
+    "description": "<@{userId}>\n```\n{body}\n```",
+    "none": {
+      "title": "🎯 {regionName} 推分建議",
+      "description": "<@{userId}> 目前沒有推分建議 — 你的技術已經練到爐火純青啦！"
+    },
+    "errorGeneric": "產生推薦清單時發生錯誤，稍後重新嘗試看看。",
+    "errorContent": "推薦演算法開小差了，請稍候再試。"
+  },
+  "daily": {
+    "noPlays": "<@{userId}> 找不到遊玩紀錄喔（{regionName}）。",
+    "noPlaysDay": "<@{userId}> 找不到 {day} 的遊玩紀錄喔（{regionName}）。",
+    "content": "<@{userId}> 這是你 **{day}** 的每日出勤紀錄（{regionName}）：",
+    "failed": "<@{userId}> ❌ 產生每日遊玩圖片失敗了。",
+    "errorGeneric": "讀取每日出勤紀錄時出錯，請稍後再試。",
+    "play": "局",
+    "plays": "局"
+  },
+  "invite": {
+    "title": "🎯 邀請 tomomai ともマイ 加入伺服器",
+    "description": "把 tomomai 帶到你的 Discord 頻道，跟朋友們一起輕鬆查分與分享 maimai DX 紀錄！",
+    "featuresName": "✨ 功能亮點",
+    "featuresValue": "• 完美支援國際版與日本版雙伺服器的成績同步\n• 安全直連，直接從 maimai DX NET 更新成績\n• 擁有資料快照功能，讓你回顧成長歷程\n• 詳細的定數分析與 Rating 結算面板",
+    "addName": "🔗 一鍵加入伺服器",
+    "addValue": "[點擊這裡邀請 Bot 加入]({url})",
+    "websiteName": "🌐 官方網站"
+  },
+  "regions": {
+    "intl": "國際版",
+    "jp": "日本版",
+    "cn": "中國版"
+  },
+  "age": {
+    "justNow": "剛剛",
+    "minute": "1 分鐘",
+    "minutes": "{count} 分鐘",
+    "hour": "1 小時",
+    "hours": "{count} 小時",
+    "day": "1 天",
+    "days": "{count} 天",
+    "month": "1 個月",
+    "months": "{count} 個月",
+    "year": "1 年",
+    "years": "{count} 年"
+  }
+}

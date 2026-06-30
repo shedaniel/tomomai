@@ -1,9 +1,7 @@
-import { splitSongs } from '@/lib/rating-calculator';
-import { renderImage } from '@/lib/render-image';
+import { NextRequest, NextResponse } from 'next/server';
 import type { Region } from '@/lib/types';
-import { NextRequest } from 'next/server';
-import { commonSnapshotResources, renderWebpResponse } from '@/lib/render-image-route';
-import { prepareExportImageData } from '@/server/queries/export-image';
+import { renderRedirectUrl } from '@/lib/render-token';
+import { buildExportImageMessage } from '@/lib/render-data';
 import { getEnabledRegions } from '@/lib/enabled-regions';
 import { z } from 'zod';
 
@@ -15,38 +13,35 @@ const searchParams = z.object({
   region: z.enum(getEnabledRegions()).optional(),
 });
 
+/**
+ * Auth/capability boundary for the export-image render. Access is possession
+ * of the unguessable snapshot publicId (unchanged from the pre-token era).
+ *
+ * Now does the full data prep here (DB → RenderMessage) and mints a signed
+ * token carrying the B50 scores + header metadata. The 302 carries the token;
+ * apps/render verifies + renders with zero DB access. Catalog fields (song
+ * names, covers, levels) are joined from /api/v1/songs on the render side.
+ */
 export async function GET(request: NextRequest) {
-  return renderWebpResponse({
-    request,
-    routeName: "export-image",
-    searchParams,
-    prepareData: async ({ snapshotId, username, region }) => {
-      const result = await prepareExportImageData(snapshotId, username, region as Region | undefined);
-      if (result.type === "error") {
-        return { type: "error", status: 404, message: result.error };
-      }
-      return {
-        type: "ok",
-        data: {
-          snapshotId,
-          data: result.data,
-          region: result.region,
-          visitableProfileAt: result.visitableProfileAt,
-        },
-      };
-    },
-    resources: ({ data, region }) => {
-      const { newSongsB15, oldSongsB35 } = splitSongs(data.songs, data.snapshot.gameVersion);
-      return [
-        ...commonSnapshotResources(data.snapshot, region),
-        `/res/label/new.png`,
-        `/res/label/old.png`,
-        ...newSongsB15.map(s => s.cover),
-        ...oldSongsB35.map(s => s.cover),
-      ];
-    },
-    render: ({ data, region, visitableProfileAt }, cache) =>
-      renderImage(data, region, cache, visitableProfileAt),
-    filename: ({ snapshotId }) => `maimai-profile-snapshot-${snapshotId}`,
+  const parsed = searchParams.safeParse(Object.fromEntries(request.nextUrl.searchParams));
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: 'Invalid query parameters', issues: parsed.error.flatten().fieldErrors },
+      { status: 400 },
+    );
+  }
+  const { snapshotId, username, region } = parsed.data;
+
+  const result = await buildExportImageMessage({
+    snapshotId,
+    username,
+    region: region as Region | undefined,
+    scale: 2,
   });
+  if (!result.ok) {
+    return NextResponse.json({ error: result.error }, { status: result.status });
+  }
+
+  const url = renderRedirectUrl(request.nextUrl.searchParams, result.message);
+  return NextResponse.redirect(url, 302);
 }

@@ -1,12 +1,12 @@
 import { convertToWebp } from "@/lib/image-converter";
 import { fetchImageBuffer } from "@/lib/image-converter";
-import { logger } from "@/lib/logger";
+import { flushLogger } from "@/lib/logger";
+import { requestLogger } from "@/lib/request-logger";
 import { listCoverKeys, uploadCoverToR2 } from "@/lib/r2";
 import { UpdateSong } from "@/lib/types/update";
-import { nanoid } from "nanoid";
 import { NextRequest, NextResponse } from "next/server";
 
-const MAIMAI_COVER_PATTERN = /^https?:\/\/maimaidx(?:-eng)?\.com\/maimai-mobile\/img\/Music\/(.+)$/;
+const MAIMAI_COVER_PATTERN = /^https?:\/\/(?:maimaidx\.jp|maimaidx(?:-eng)?\.com)\/maimai-mobile\/img\/Music\/(.+)$/;
 // Lxns CN jacket: https://assets2.lxns.net/maimai/jacket/{id}.png — namespace under
 // `lxns_{id}` to avoid collisions with the JP/INTL md5-style filenames.
 const LXNS_COVER_PATTERN = /^https?:\/\/assets2?\.lxns\.net\/maimai\/jacket\/(\d+)\.png$/;
@@ -45,6 +45,7 @@ async function processBatch<T, R>(
 }
 
 export async function POST(request: NextRequest) {
+  const { log, requestId } = requestLogger(request, "admin/image");
   try {
     const authHeader = request.headers.get("authorization");
     const token = authHeader?.replace("Bearer ", "");
@@ -70,9 +71,6 @@ export async function POST(request: NextRequest) {
         { status: 403 }
       );
     }
-
-    const requestId = nanoid(10);
-    const log = logger.child({ route: "admin/image", requestId });
 
     const body = await request.json();
     const songs: UpdateSong[] = body.songs;
@@ -174,13 +172,16 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       songs: updatedSongs,
       stats,
+      requestId,
     });
   } catch (error) {
-    logger.error({ err: error, route: "admin/image" }, "Error in admin image route");
+    log.error({ err: error }, "Error in admin image route");
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Internal server error" },
+      { error: error instanceof Error ? error.message : "Internal server error", requestId },
       { status: 500 }
     );
+  } finally {
+    await flushLogger();
   }
 }
 

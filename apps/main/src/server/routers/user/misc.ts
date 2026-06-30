@@ -99,7 +99,7 @@ export const miscRouter = router({
         if (error instanceof DivingFishImportTokenError) {
           throw new TRPCError({ code: 'BAD_REQUEST', message: 'Invalid Import-Token.' });
         }
-        logger.error({ error }, '[divingfish] import-token verification failed');
+        logger.error({ err: error }, '[divingfish] import-token verification failed');
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
           message: 'Failed to verify Import-Token. Please try again later.',
@@ -151,7 +151,7 @@ export const miscRouter = router({
             message: 'diving-fish server configuration error. Please contact the administrator.',
           });
         }
-        logger.error({ error }, '[divingfish] nickname verification failed');
+        logger.error({ err: error }, '[divingfish] nickname verification failed');
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
           message: 'Failed to verify nickname. Please try again later.',

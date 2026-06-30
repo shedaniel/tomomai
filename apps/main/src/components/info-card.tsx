@@ -6,7 +6,7 @@ import { SnapshotWithSongs } from "@/lib/types";
 import { createSafeMaimaiImageUrl, isR2Url } from "@/lib/utils";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation"
 import { motion } from "motion/react";
 import { SPRING_CONFIGS, STAGGER, getTransition } from "@/lib/animation-constants";
 import { useMediaQuery } from "@/hooks/use-media-query";

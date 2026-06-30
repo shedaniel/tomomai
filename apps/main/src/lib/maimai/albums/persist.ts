@@ -9,7 +9,12 @@ import { Region } from "../../types";
 import { buildSongLookupMaps } from "../songs/persist";
 import type { AlbumData } from "../types";
 
-export const MAX_STORAGE_BYTES = 25 * 1024 * 1024; // 25 MB
+export const MAX_STORAGE_BYTES = 8 * 1024 * 1024; // 8 MB
+
+// AVIF quality for album images. q40 is ~0.35x the size of q80 with no
+// perceptible quality loss on these 1056x594 result-screen photos, keeping
+// ~177 albums within the 8 MB cap.
+export const ALBUM_AVIF_QUALITY = 40;
 
 export async function enforceStorageLimit(userId: string): Promise<void> {
   const userAlbumsList = await db.query.userAlbums.findMany({
@@ -21,11 +26,11 @@ export async function enforceStorageLimit(userId: string): Promise<void> {
   let totalSize = userAlbumsList.reduce((sum, a) => sum + a.imageSize, 0);
 
   if (totalSize <= MAX_STORAGE_BYTES) {
-    logger.debug(`User ${userId} storage: ${totalSize} bytes (within 25MB limit)`);
+    logger.debug(`User ${userId} storage: ${totalSize} bytes (within ${MAX_STORAGE_BYTES} byte limit)`);
     return;
   }
 
-  logger.info(`User ${userId} storage: ${totalSize} bytes (exceeds 25MB limit), cleaning up...`);
+  logger.info(`User ${userId} storage: ${totalSize} bytes (exceeds ${MAX_STORAGE_BYTES} byte limit), cleaning up...`);
 
   for (const album of userAlbumsList) {
     if (totalSize <= MAX_STORAGE_BYTES) {
@@ -101,7 +106,7 @@ export async function persistAlbumData(
   for (const album of albumsToUpload) {
     try {
       const jpegBuffer = await fetchImageBytes(album);
-      const avifBuffer = await convertJpegToAvif(jpegBuffer, 80);
+      const avifBuffer = await convertJpegToAvif(jpegBuffer, ALBUM_AVIF_QUALITY);
       const { key, size } = await uploadToR2(avifBuffer, "image/avif");
 
       albumInserts.push({
