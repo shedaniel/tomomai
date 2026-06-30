@@ -1,6 +1,6 @@
 Terms of Service for tomomai
 
-Last Updated: June 1, 2026
+Last Updated: June 30, 2026
 
 1. Acceptance of Terms
 
@@ -19,7 +19,7 @@ S.D. Studios is an independent operator and is not affiliated with, endorsed by,
 3. User Accounts and Access
 
 3.1 Eligibility
-To use the Service, you must be the minimum age required by the relevant rhythm game network's policy for accessing their services and data. By using the Service, you confirm you meet this eligibility requirement.
+To use the Service, you must be the minimum age required by applicable local law and by the relevant rhythm game network's policy for accessing their services and data (for example, 15 in Japan). By using the Service, you confirm you meet this eligibility requirement.
 
 Geographic Scope. The Service is operated from the Hong Kong Special Administrative Region and is hosted in Japan. Our data practices are built to the standards of the Hong Kong Personal Data (Privacy) Ordinance (PDPO) and the European Union General Data Protection Regulation (GDPR). When you exercise your legal rights, we honor the rights afforded by your actual country of residence. You remain responsible for ensuring that your access to and use of the Service is lawful in the place from which you access it. If your local laws restrict or prohibit access to a service of this nature, you access the Service at your own discretion and responsibility.
 
@@ -44,6 +44,7 @@ The Service allows you to authorize third-party applications to access your data
 - We make a best effort to surface, on the consent screen, the risks of granting access and the specific permissions or scopes an application is requesting, so that you can make an informed decision. This information is provided on an "as is" basis and without warranty.
 - Once your data has been transmitted to an authorized application, we disclaim all liability for that application's data handling, security, retention, or misuse of the data.
 - You may review and revoke previously authorized applications at any time from your account settings. Revoking access stops future data flow to that application but cannot recall data that has already been transmitted.
+- OAuth authorizations are, in effect, scoped delegations of API access to your data. The developer responsibilities in Section 3.4 apply equally to the developers of authorized applications and to any credentials they obtain through this flow.
 
 4. Data Collection and Privacy
 
@@ -55,13 +56,13 @@ You have the right to request deletion or takeout of the personal data we hold. 
 5. Intellectual Property and Licensing
 
 5.1 Service Source Code
-The source code for tomomai is an open-source project and is licensed under the GNU Affero General Public License (AGPL).
+Our source code is published across multiple repositories. The license for each repository is stated in that repository's LICENSE file on GitHub (for example, https://github.com/shedaniel/tomomai).
 
-- You may view, download, use, copy, modify, and distribute the source code in accordance with the terms of the AGPL.
-- The full text of the license can be found here: https://github.com/shedaniel/tomomai/blob/main/LICENSE
+- You may view, download, use, copy, modify, and distribute source code from a repository only in accordance with the license terms stated in that repository's LICENSE file.
+- Some repositories are licensed under the GNU Affero General Public License (AGPL); where so, the full AGPL terms apply.
 
 5.2 Self-Hosting and Distinctions
-The AGPL license permits you to run, modify, and redistribute the source code. However, if you choose to self-host a modified or unmodified version of the source code, you agree to:
+Where a repository's license permits, you may run, modify, and redistribute that source code. However, if you choose to self-host a modified or unmodified version of the source code, you agree to:
 
 - Clearly distinguish your instance from the official Service hosted by S.D. Studios.
 - Not represent your instance as "official," "affiliated with," or endorsed by S.D. Studios.
@@ -69,6 +70,9 @@ The AGPL license permits you to run, modify, and redistribute the source code. H
 
 5.3 User Data (Scraped Content)
 The rhythm game network data displayed by the Service remains the intellectual property of the relevant network operator (for example, SEGA), and access to it is governed by your agreement with that operator. You are only authorized to view and use this data within the Service for your personal, non-commercial review.
+
+5.4 Copyright and Takedown Requests
+We respect intellectual property rights. If you believe that User-Generated Content on the Service infringes your copyright, you may submit a takedown request by emailing daniel@shedaniel.me. To be actionable, your request should include the details required by applicable law: identification of the copyrighted work, the location of the allegedly infringing material, your contact information, a statement that you have a good-faith belief that the use is unauthorized, and a statement under penalty of perjury that you are authorized to act on the copyright owner's behalf. We will review requests in good faith and may remove or disable access to allegedly infringing material. We may suspend or terminate the accounts of repeat infringers.
 
 6. User-Generated Content
 
@@ -98,7 +102,10 @@ The Service is provided on an "AS IS" and "AS AVAILABLE" basis, without warranti
 8.2 Limitation of Liability
 To the maximum extent permitted by applicable law, in no event shall S.D. Studios be liable for any indirect, incidental, special, consequential, or punitive damages, or any loss of profits or revenues, whether incurred directly or indirectly, or any loss of data, use, goodwill, or other intangible losses, resulting from (a) your use of or inability to use the Service; (b) any unauthorized access to or use of your rhythm game network login details or data; (c) any action or non-action taken by a rhythm game network operator as a result of your use of the Service; or (d) the handling, security, or misuse of your data by any third-party application you have authorized.
 
-Our total liability to you for any damages, losses, and causes of action shall not exceed the amount you have paid us, if any, in the last six (6) months. Since the Service is not a paid service, this limit is zero (0) Hong Kong Dollars.
+Our total liability to you for any damages, losses, and causes of action shall not exceed the amount you have contributed to us, if any, in the last six (6) months. For users who have not made any voluntary contribution, this limit is zero (0) Hong Kong Dollars.
+
+8.3 Indemnification
+To the maximum extent permitted by applicable law, you agree to indemnify, defend, and hold harmless S.D. Studios and its operators from and against any claims, damages, losses, liabilities, costs, and expenses (including reasonable legal fees) arising out of or relating to: (a) your User-Generated Content; (b) your misuse of API keys, client credentials, or the developer API; (c) your breach of these Terms; or (d) any third-party application you have authorized to access your data, including that application's handling of data it receives from the Service.
 
 9. Termination
 We may terminate or suspend your access to the Service immediately, without prior notice or liability, for any reason whatsoever, including without limitation if you breach these Terms. Upon termination, your right to use the Service will cease immediately.
@@ -110,3 +117,21 @@ These Terms shall be governed by the laws of the Hong Kong Special Administrativ
 11. Changes to Terms
 
 We reserve the right to modify or replace these TOS at any time. We will provide notice of material changes by updating the "Last Updated" date at the top of these TOS. Your continued use of the Service after any changes constitutes your acceptance of the new TOS.
+
+12. Voluntary Support and Supporter Perks
+
+12.1 Voluntary Contributions. The Service is provided free of charge. We may accept voluntary contributions ("contributions" or "support") from users to help fund the operation of the Service. A contribution is voluntary support for the Service, not a purchase of any product or service.
+
+12.2 Supporter Perks. As a courtesy and in recognition of a contribution, we may grant you access to special features, badges, or other benefits ("perks"). Perks are provided at our sole discretion. They are not sold to you, they create no entitlement, and the availability, scope, and nature of any perk may be changed, limited, or discontinued by us at any time without notice. Your contribution does not guarantee that any specific perk will continue to be available.
+
+12.3 Payment Processing. Contributions are processed through third-party payment processors. We do not collect or store your full card or payment instrument details; those are handled by the processor under its own terms and privacy policy. By making a contribution, you agree to the applicable processor's terms.
+
+12.4 Refunds. Contributions are non-refundable. We may, at our sole discretion, consider refund requests sent to daniel@shedaniel.me in exceptional circumstances, but the decision to grant any refund (full or partial) is entirely at our discretion.
+
+12.5 No Charity; No Tax Deduction. S.D. Studios is a for-profit entity and is not a charity. Contributions are not tax-deductible.
+
+12.6 Termination of Supporter Status. If we terminate or suspend your account under Section 9, any associated perks cease immediately, and no refund is owed except as provided in Section 12.4.
+
+13. Miscellaneous
+13.1 Severability. If any provision of these Terms is held to be unenforceable, invalid, or illegal by a court or authority of competent jurisdiction, that provision shall be severed and the remaining provisions shall continue in full force and effect.
+13.2 Entire Agreement. These Terms, together with the Privacy Policy and any terms referenced herein (including each repository's LICENSE file), constitute the entire agreement between you and S.D. Studios regarding the Service, and supersede all prior or contemporaneous understandings or agreements on that subject.

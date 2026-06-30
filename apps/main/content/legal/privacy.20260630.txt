@@ -1,6 +1,6 @@
 Privacy Policy for tomomai
 
-Effective Date: June 1, 2026
+Effective Date: June 30, 2026
 
 This Privacy Policy describes how S.D. Studios ("Company," "we," or "us"), the operator of tomo-services (collectively, the "Service"), collects, uses, stores, and protects personal data from users in Hong Kong and internationally. The Service includes the tomomai.lol website and its subdomains, our rhythm game trackers, mini-games, analytics dashboards, and the developer API.
 
@@ -35,6 +35,17 @@ User-Generated Content Data
 - Source: Directly from the user.
 - Purpose: To display your profile as you have configured it.
 
+Gameplay and Mini-Game Data
+- Elements Collected: mini-game scores, guesses, results, streaks, and leaderboard entries (for example, from Heardle-style and guessing games).
+- Source: Directly from the user, generated through play.
+- Purpose: To record and display your gameplay history and to place your results on public leaderboards.
+
+Payment and Supporter Data
+- Elements Collected: contributor email, transaction identifier, contribution tier or amount, and metadata returned by our payment processor (such as a processor-provided customer reference).
+- Source: From you and our third-party payment processor when you make a voluntary contribution.
+- Purpose: To process contributions, attribute supporter perks to your account, and maintain contribution records.
+- Note: We do not collect or store full card numbers. Card and payment instrument details are handled by our payment processor under its own privacy policy.
+
 Operational Data
 - Elements Collected: IP addresses, request times, pages accessed, API telemetry, token issuance and revocation history, and rate-limiting records.
 - Source: Our hosting provider's logs and our own application infrastructure.
@@ -57,6 +68,7 @@ Specific Data Uses:
 
 - Service Delivery: To fetch, store, and display your personal rhythm game statistics.
 - User Profiles (Optional Public Setting): Users may voluntarily set their profile to public. This action makes their profile visible to anyone and may be indexed by public search engines (e.g., Google, Bing).
+- Public Leaderboards: Your mini-game scores and related gameplay results may be displayed publicly on leaderboards, visible to other users and visitors of the Service.
 - Aggregation: We use scraped data to generate aggregated and anonymized statistics (e.g., total number of songs played across all users). This aggregated data is publicly available on the website and does not contain any personally identifiable information.
 
 4. Data Storage and Security
@@ -71,7 +83,7 @@ However, you acknowledge that no method of transmission over the Internet or met
 In the unlikely event of a data breach that compromises your personal data, we will notify you via the email address associated with your account in accordance with applicable laws.
 
 4.2 Data Retention
-We retain your game history and account data (including login data and scraped rhythm game data) indefinitely, or until you request its deletion, so that you can maintain your full performance history on the Service. Operational data such as logs and API telemetry is retained only for as long as reasonably necessary for security, debugging, and abuse prevention.
+We retain your game history and account data (including login data, scraped rhythm game data, and gameplay and mini-game data) indefinitely, or until you request its deletion, so that you can maintain your full performance history on the Service. Operational data such as logs and API telemetry is retained only for as long as reasonably necessary for security, debugging, and abuse prevention. We retain payment and contribution records for as long as required by applicable tax and accounting laws.
 
 5. Sharing of Personal Data
 
@@ -82,7 +94,7 @@ You may authorize third-party applications to access your data through our OAuth
 
 The other instances of data disclosure are:
 
-- Service Providers: We use compute, cloud database, and content delivery providers for hosting, storage, and media delivery. Your sensitive data is primarily processed and stored in Japan.
+- Service Providers: We use compute, cloud database, content delivery, and payment processing providers for hosting, storage, media delivery, and contribution processing. Your sensitive data is primarily processed and stored in Japan.
 - Public Profiles: If you opt-in to make your profile public, that data is shared with the public, including search engines.
 - Business Transfers: If S.D. Studios is involved in a merger, acquisition, or asset sale, your Personal Data may be transferred.
 - Legal Compliance: If required by law, court order, or governmental regulation in Hong Kong or another applicable jurisdiction.
