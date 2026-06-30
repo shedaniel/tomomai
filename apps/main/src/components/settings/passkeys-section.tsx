@@ -71,11 +71,10 @@ export function PasskeysSection() {
       const result = await authClient.passkey.addPasskey();
       if (result?.error) throw new Error(result.error.message || t("addError"));
     },
-    // Policy guard first (accept the new TOS/PP without navigating), then the
-    // fresh-session reauth bounce. Adding a passkey requires the 2026-06-01
-    // policy revision; the server (auth.ts) also enforces this.
+    // Policy guard first (accept the new TOS/PP without navigating away), then
+    // the fresh-session reauth bounce. The server (auth.ts) also enforces this.
     ...composeGuards(
-      useNewPolicyGuard({ required: { tos: "20260601", privacy: "20260601" } }),
+      useNewPolicyGuard({ required: { tos: "20260630", privacy: "20260630" } }),
       useReauthGuard({
         callbackURL: "/settings",
         reauthMessage: t("reauthRequired"),

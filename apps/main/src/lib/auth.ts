@@ -147,12 +147,12 @@ const FRESH_REQUIRED_PATHS = new Set<string>([
 
 // Routes that require the user to have accepted a specific (newer) policy
 // version before proceeding. Enforced server-side regardless of caller; the
-// client catches NEW_POLICY_REQUIRED and launches the consent dialog. Adding a
-// passkey requires the 2026-06-01 revision. Versions are "YYYYMMDD" strings,
-// compared lexicographically (chronological).
+// client catches NEW_POLICY_REQUIRED and launches the consent dialog. Versions
+// are "YYYYMMDD" strings, compared lexicographically (chronological).
 const POLICY_REQUIRED_PATHS: Record<string, { tos: string; privacy: string }> = {
-  "/passkey/generate-register-options": { tos: "20260601", privacy: "20260601" },
-  "/passkey/verify-registration": { tos: "20260601", privacy: "20260601" },
+  "/passkey/generate-register-options": { tos: "20260630", privacy: "20260630" },
+  "/passkey/verify-registration": { tos: "20260630", privacy: "20260630" },
+  "/link-social": { tos: "20260630", privacy: "20260630" },
 };
 
 // OAuth client mutation paths. Gated by the `oauthAppCreation` flag until
