@@ -4,15 +4,18 @@ import { useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
   Button,
+  cn,
   ResponsiveDialog,
   ResponsiveDialogContent,
   ResponsiveDialogDescription,
   ResponsiveDialogFooter,
   ResponsiveDialogHeader,
   ResponsiveDialogTitle,
+  ScrollArea,
 } from "@tomomai/ui";
 import { Checkbox } from "@/components/animate-ui/components/radix/checkbox";
 import { ChevronDown, ChevronUp, Loader2 } from "lucide-react";
+import { AutoHeight } from "./animate-ui/primitives/effects/auto-height";
 
 export interface ShowPolicyConsentOptions {
   title: string;
@@ -57,13 +60,11 @@ function PolicyRow({
           {expanded ? <ChevronUp className="ml-1 h-4 w-4" /> : <ChevronDown className="ml-1 h-4 w-4" />}
         </Button>
       </div>
-      {expanded && (
-        <div className="px-3 pb-3">
-          <div className="p-3 bg-muted/60 rounded-md max-h-60 overflow-y-auto">
-            <p className="text-xs text-muted-foreground whitespace-pre-wrap">{content}</p>
-          </div>
-        </div>
-      )}
+      <AutoHeight className={cn("px-3", expanded && "pb-3")} deps={[expanded]} >
+        <ScrollArea className={cn("bg-muted/60 rounded-md w-full h-60", !expanded && "h-0")}>
+          <p className="p-3 text-xs text-muted-foreground whitespace-pre-wrap">{content}</p>
+        </ScrollArea>
+      </AutoHeight>
     </div>
   );
 }
@@ -92,7 +93,7 @@ function Host({
     <ResponsiveDialog
       open={open}
       dismissible={false}
-      onOpenChange={() => {}}
+      onOpenChange={() => { }}
     >
       <ResponsiveDialogContent
         showCloseButton={false}

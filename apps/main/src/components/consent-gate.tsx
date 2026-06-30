@@ -3,17 +3,20 @@
 import { useState } from "react";
 import {
   Button,
+  cn,
   ResponsiveDialog,
   ResponsiveDialogContent,
   ResponsiveDialogDescription,
   ResponsiveDialogFooter,
   ResponsiveDialogHeader,
   ResponsiveDialogTitle,
+  ScrollArea,
 } from "@tomomai/ui";
 import { Checkbox } from "@/components/animate-ui/components/radix/checkbox";
 import { ChevronDown, ChevronUp, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { trpc } from "@/lib/trpc-client";
+import { AutoHeight } from "./animate-ui/primitives/effects/auto-height";
 
 function dismissKey(versions: { tos: string; privacy: string }) {
   return `consent-gate-skip:${versions.tos}:${versions.privacy}`;
@@ -47,13 +50,11 @@ function PolicyRow({
           {expanded ? <ChevronUp className="ml-1 h-4 w-4" /> : <ChevronDown className="ml-1 h-4 w-4" />}
         </Button>
       </div>
-      {expanded && (
-        <div className="px-3 pb-3">
-          <div className="p-3 bg-muted/60 rounded-md max-h-60 overflow-y-auto">
-            <p className="text-xs text-muted-foreground whitespace-pre-wrap">{content}</p>
-          </div>
-        </div>
-      )}
+      <AutoHeight className={cn("px-3", expanded && "pb-3")} deps={[expanded]} >
+        <ScrollArea className={cn("bg-muted/60 rounded-md w-full h-60", !expanded && "h-0")}>
+          <p className="p-3 text-xs text-muted-foreground whitespace-pre-wrap">{content}</p>
+        </ScrollArea>
+      </AutoHeight>
     </div>
   );
 }
@@ -111,7 +112,7 @@ export function ConsentGate() {
   };
 
   return (
-    <ResponsiveDialog open dismissible={false} onOpenChange={() => {}}>
+    <ResponsiveDialog open dismissible={false} onOpenChange={() => { }}>
       <ResponsiveDialogContent
         showCloseButton={false}
         className="max-w-2xl max-h-[90dvh]"
