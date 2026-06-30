@@ -75,7 +75,7 @@ export function getCurrentLegalVersions(): Record<LegalType, string> {
  */
 export function getLegalDocument(type: LegalType, version?: string): LegalDocument | null {
   const resolved = version ?? versionsFor(type)[0];
-  if (!resolved) return null;
+  if (!resolved || !/^\d{8}$/.test(resolved)) return null;
   const filePath = path.join(legalDirectory, `${type}.${resolved}.txt`);
   if (!fs.existsSync(filePath)) return null;
   return {
