@@ -23,6 +23,7 @@ import { InvitesDialog } from "./invites-dialog";
 import { Header } from "./header";
 import { isCNExclusive } from "@/lib/enabled-regions";
 import { ChangelogDialog } from "./changelog-dialog";
+import { ConsentGate } from "./consent-gate";
 import { TomomaiAI } from "./tomomai-ai";
 import { PostMeta } from "@/lib/posts";
 import { HttpProxyAuthSubDialog } from "./token-dialog-cn";
@@ -297,6 +298,8 @@ export function Dashboard({ user, initialUserData, initialSnapshots, initialSnap
       />
 
       <ChangelogDialog latestPost={latestPost} />
+
+      <ConsentGate />
 
       <FetchToastContainer state={fetchToastState} />
       <TomomaiAI snapshotData={selectedSnapshotData || null} region={selectedRegion} aprilFools2026={flags.aprilFools2026} />

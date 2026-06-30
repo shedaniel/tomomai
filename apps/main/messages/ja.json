@@ -145,7 +145,20 @@
     "agreeToPrivacy": "プライバシーポリシーに同意する",
     "viewFullText": "全文を表示",
     "cancel": "キャンセル",
-    "agree": "同意する"
+    "agree": "同意する",
+    "reconsent": {
+      "title": "ポリシーを更新しました",
+      "description": "続けるには、更新された利用規約とプライバシーポリシーをご確認のうえ同意してください",
+      "confirm": "同意して続ける",
+      "remindLater": "後で通知する",
+      "reviewBy": "{date} までにご確認ください"
+    },
+    "gatePrompt": {
+      "title": "更新されたポリシーへの同意が必要です",
+      "description": "この操作には、更新された利用規約とプライバシーポリシーへの同意が必要です",
+      "confirm": "同意して続ける",
+      "retry": "ポリシーに同意しました。もう一度お試しください。"
+    }
   },
   "dashboard": {
     "title": "ともマイ",

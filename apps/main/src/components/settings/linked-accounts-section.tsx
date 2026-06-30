@@ -7,6 +7,8 @@ import { useTranslations } from "next-intl";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { authClient } from "@/lib/auth-client";
 import { useReauthGuard } from "@/lib/security/use-reauth-guard";
+import { useNewPolicyGuard } from "@/lib/security/use-new-policy-guard";
+import { composeGuards } from "@/lib/security/compose-guards";
 import { toast } from "sonner";
 
 type Account = {
@@ -75,11 +77,15 @@ export function LinkedAccountsSection({ enabledProviders }: LinkedAccountsSectio
         errorCallbackURL: "/settings/account",
       });
     },
-    ...useReauthGuard({
-      callbackURL: "/settings/account",
-      reauthMessage: t("reauthRequired"),
-      fallback: t("linkError"),
-    }),
+    // Accept the new TOS/PP before the reauth bounce; server enforces on /link-social.
+    ...composeGuards(
+      useNewPolicyGuard({ required: { tos: "20260630", privacy: "20260630" } }),
+      useReauthGuard({
+        callbackURL: "/settings/account",
+        reauthMessage: t("reauthRequired"),
+        fallback: t("linkError"),
+      }),
+    ),
   });
 
   const linkedProviderIds = new Set(accounts?.map((a) => a.providerId) ?? []);

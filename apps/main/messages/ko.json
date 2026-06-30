@@ -142,7 +142,20 @@
     "agreeToPrivacy": "I agree to the Privacy Policy",
     "viewFullText": "View Full Text",
     "cancel": "취소",
-    "agree": "I Agree"
+    "agree": "I Agree",
+    "reconsent": {
+      "title": "정책이 업데이트되었습니다",
+      "description": "계속하려면 업데이트된 이용약관과 개인정보처리방침을 검토하고 동의해 주세요",
+      "confirm": "동의하고 계속하기",
+      "remindLater": "나중에 다시 알림",
+      "reviewBy": "{date}까지 검토해 주세요"
+    },
+    "gatePrompt": {
+      "title": "업데이트된 정책 동의 필요",
+      "description": "이 작업을 진행하려면 업데이트된 이용약관과 개인정보처리방침에 동의해야 합니다",
+      "confirm": "동의하고 계속하기",
+      "retry": "정책에 동의했습니다. 작업을 다시 시도해 주세요."
+    }
   },
   "dashboard": {
     "title": "tomomai ともマイ",

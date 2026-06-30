@@ -1,0 +1,133 @@
+Privacy Policy for tomomai
+
+Effective Date: June 30, 2026
+
+This Privacy Policy describes how S.D. Studios ("Company," "we," or "us"), the operator of tomo-services (collectively, the "Service"), collects, uses, stores, and protects personal data from users in Hong Kong and internationally. The Service includes the tomomai.lol website and its subdomains, our rhythm game trackers, mini-games, analytics dashboards, and the developer API.
+
+1. Data Controller Contact Information
+
+- Data Controller: S.D. Studios
+- Location: Hong Kong Special Administrative Region
+- Legal Contact for Data Requests: daniel@shedaniel.me
+
+2. Data We Collect and How We Collect It
+
+We collect the following categories of data, which are necessary for the Service's function:
+
+Identity/Login Data
+- Elements Collected: account identifiers from your supported login provider (for example, a Discord username, profile picture, and email address), and metadata associated with passwordless or passkey authentication.
+- Source: Via your chosen login provider's OAuth flow, or via passkey registration on your device.
+- Purpose: Account creation, identification, and communication.
+- Note: We do not collect or store biometric data. Passkeys rely on credentials held on your own device; the biometric check (such as a fingerprint or face scan) happens locally on your device and is never transmitted to or stored by us.
+
+Third-Party Data (Sensitive)
+- Elements Collected: Rhythm Game Network Credentials (login details or cookies, for example maimai DX NET credentials), User ID, game scores, performance records, and achievements.
+- Source: Directly from the user, used to scrape data from the relevant rhythm game network on the user's behalf.
+- Purpose: To provide the core functionality of the Service (displaying game data). This may include other rhythm game networks we support in the future.
+
+Developer Data
+- Elements Collected: application names, client and redirect URLs, and developer contact emails.
+- Source: Directly from developers who register applications or generate API keys.
+- Purpose: To operate the developer API, manage API keys and OAuth applications, and contact developers about their integrations.
+
+User-Generated Content Data
+- Elements Collected: profile descriptions and custom profile icons or avatars.
+- Source: Directly from the user.
+- Purpose: To display your profile as you have configured it.
+
+Gameplay and Mini-Game Data
+- Elements Collected: mini-game scores, guesses, results, streaks, and leaderboard entries (for example, from Heardle-style and guessing games).
+- Source: Directly from the user, generated through play.
+- Purpose: To record and display your gameplay history and to place your results on public leaderboards.
+
+Payment and Supporter Data
+- Elements Collected: contributor email, transaction identifier, contribution tier or amount, and metadata returned by our payment processor (such as a processor-provided customer reference).
+- Source: From you and our third-party payment processor when you make a voluntary contribution.
+- Purpose: To process contributions, attribute supporter perks to your account, and maintain contribution records.
+- Note: We do not collect or store full card numbers. Card and payment instrument details are handled by our payment processor under its own privacy policy.
+
+Operational Data
+- Elements Collected: IP addresses, request times, pages accessed, API telemetry, token issuance and revocation history, and rate-limiting records.
+- Source: Our hosting provider's logs and our own application infrastructure.
+- Purpose: Service monitoring, security, debugging, abuse prevention, and traffic analysis.
+
+3. Basis and Use of Your Personal Data
+
+Under the Hong Kong Personal Data (Privacy) Ordinance (PDPO), we process your data based on Consent and Legitimate Interests.
+
+Cookies and Local Storage
+We use session cookies and/or local storage to maintain your login session and preferences (including authentication and language settings). These are "essential" for the Service to function. We do not use cookies for third-party tracking or advertising.
+
+Consent
+- Usage: Using your Rhythm Game Network Credentials to scrape and display your game data. By logging in and providing these details, you explicitly consent to this processing.
+
+Legitimate Interest
+- Usage: Operational data (such as logs and API telemetry) is processed to maintain service security, stability, abuse prevention, and to troubleshoot issues necessary for the operation of our services.
+
+Specific Data Uses:
+
+- Service Delivery: To fetch, store, and display your personal rhythm game statistics.
+- User Profiles (Optional Public Setting): Users may voluntarily set their profile to public. This action makes their profile visible to anyone and may be indexed by public search engines (e.g., Google, Bing).
+- Public Leaderboards: Your mini-game scores and related gameplay results may be displayed publicly on leaderboards, visible to other users and visitors of the Service.
+- Aggregation: We use scraped data to generate aggregated and anonymized statistics (e.g., total number of songs played across all users). This aggregated data is publicly available on the website and does not contain any personally identifiable information.
+
+4. Data Storage and Security
+
+4.1 Security Measures
+We take reasonable steps to protect the personal data we hold. Specifically, the sensitive Rhythm Game Network Credentials are stored on secure servers located in Japan and protected using AES-256-GCM encryption.
+
+User-submitted media, such as profile icons or avatars, may be served through global cloud providers or content delivery networks (CDNs) to improve regional performance. Our core infrastructure and sensitive data remain in Japan and Hong Kong. Because such media may be served from public, unauthenticated URLs, you should not treat an uploaded profile image as private.
+
+However, you acknowledge that no method of transmission over the Internet or method of electronic storage is 100% secure. You provide your data at your own risk.
+
+In the unlikely event of a data breach that compromises your personal data, we will notify you via the email address associated with your account in accordance with applicable laws.
+
+4.2 Data Retention
+We retain your game history and account data (including login data, scraped rhythm game data, and gameplay and mini-game data) indefinitely, or until you request its deletion, so that you can maintain your full performance history on the Service. Operational data such as logs and API telemetry is retained only for as long as reasonably necessary for security, debugging, and abuse prevention. We retain payment and contribution records for as long as required by applicable tax and accounting laws.
+
+5. Sharing of Personal Data
+
+We do not share identifiable personal data with third parties for marketing or other commercial purposes.
+
+User-Directed Data Transfers (OAuth)
+You may authorize third-party applications to access your data through our OAuth flow. The OAuth consent screen is the interface through which you give explicit, informed consent: it shows the permissions or scopes an application requests before you approve. Once your data is transmitted to an application you have authorized, that data is governed solely by that third party's own, independent privacy policy, and not by this Privacy Policy. You may review and revoke authorized applications at any time from your account settings. Revocation stops future data flow to that application but cannot recall data that has already been transmitted.
+
+The other instances of data disclosure are:
+
+- Service Providers: We use compute, cloud database, content delivery, and payment processing providers for hosting, storage, media delivery, and contribution processing. Your sensitive data is primarily processed and stored in Japan.
+- Public Profiles: If you opt-in to make your profile public, that data is shared with the public, including search engines.
+- Business Transfers: If S.D. Studios is involved in a merger, acquisition, or asset sale, your Personal Data may be transferred.
+- Legal Compliance: If required by law, court order, or governmental regulation in Hong Kong or another applicable jurisdiction.
+
+6. Your Rights (Data Access and Deletion)
+
+As a user, you have rights regarding your personal data under the PDPO and international standards. You have the right to:
+
+1. Request Access (Data Portability): Obtain a copy of your personal data we hold in a structured, machine-readable format (Data Takeout).
+2. Request Correction: Request the correction of any inaccurate data. (Note: Most game data is scraped from the rhythm game network, so primary corrections should be made there.)
+3. Request Erasure (Deletion): Request the permanent deletion of your account and all associated data. Your User-Generated Content (profile descriptions and custom icons or avatars) is treated as your content and is deleted together with your account, consistent with the User-Generated Content section of our Terms of Service.
+
+All requests for data access or deletion must be submitted via email to: daniel@shedaniel.me. We will respond to your request within the time frames required by Hong Kong law.
+
+7. International Transfers and Cross-Border Considerations
+
+If you are a resident of the European Economic Area (EEA), you have additional rights under the General Data Protection Regulation (GDPR).
+
+Legal Basis for Processing
+We process your personal data based on the legal grounds of Consent (when you log in) and Legitimate Interests (for security and operations).
+
+Your Additional Rights
+In addition to the rights listed in Section 6, you have the right to:
+- Restrict Processing: Request that we limit the processing of your personal data.
+- Object to Processing: Object to our processing of your data based on legitimate interests.
+- Lodge a Complaint: You have the right to lodge a complaint with a supervisory authority in your country of residence if you believe we have violated your data protection rights.
+
+International Transfers
+Our Service infrastructure is located in Japan, a country recognized by the European Commission as providing an adequate level of data protection. However, the data controller (S.D. Studios) is located in Hong Kong. By using the Service, you acknowledge that your data will be processed in Japan and accessed from Hong Kong for administration purposes.
+
+Cross-Border Standards
+Our privacy practices are built to the standards of the Hong Kong PDPO and the EU GDPR. When you exercise your legal rights, we honor the rights afforded by your actual country of residence. You remain responsible for ensuring that your use of the Service is lawful where you are.
+
+8. Changes to This Privacy Policy
+
+We may update this Privacy Policy from time to time to reflect changes in our practices or legal requirements. We will notify you of any material changes by posting the new Privacy Policy on this page and updating the "Effective Date" at the top.

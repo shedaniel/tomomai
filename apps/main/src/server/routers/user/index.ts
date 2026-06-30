@@ -11,6 +11,7 @@ import { albumsRouter } from './albums';
 import { songsRouter } from './songs';
 import { percentileRouter } from './percentile';
 import { flagsRouter } from './flags';
+import { legalRouter } from './legal';
 import { miscRouter } from './misc';
 
 export const userRouter = router({
@@ -81,8 +82,12 @@ export const userRouter = router({
   getUserSelectableFlags: flagsRouter.getUserSelectableFlags,
   setFlagOverrides: flagsRouter.setFlagOverrides,
 
+  // Legal / policy consent
+  getPolicies: legalRouter.getPolicies,
+  getPendingConsents: legalRouter.getPendingConsents,
+  acceptPolicies: legalRouter.acceptPolicies,
+
   // Misc
-  getPolicies: miscRouter.getPolicies,
   getLxnsOAuthConfigured: miscRouter.getLxnsOAuthConfigured,
   getCnProxyConfigured: miscRouter.getCnProxyConfigured,
   getCnProxyAuthLink: miscRouter.getCnProxyAuthLink,
