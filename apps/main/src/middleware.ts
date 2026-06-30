@@ -22,7 +22,10 @@ function isUnlocalizable(pathname: string): boolean {
     pathname.startsWith('/api/') ||
     pathname.startsWith('/.well-known/') ||
     pathname.startsWith('/cn-proxy/link') ||
-    pathname.startsWith('/userscript')
+    pathname.startsWith('/userscript') ||
+    // Legal pages are locale-independent reference docs served at a fixed URL.
+    pathname === '/tos' ||
+    pathname === '/privacy'
   );
 }
 
