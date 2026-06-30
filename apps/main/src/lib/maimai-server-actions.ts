@@ -350,3 +350,91 @@ export async function getFetchStatusServer(userId: string, region: Region): Prom
     notFoundScores: typeof session.extraData === "object" && session.extraData !== null && "notFoundScores" in session.extraData ? (session.extraData as { notFoundScores?: { songName: string; difficulty: string; musicType: string }[] }).notFoundScores ?? null : null,
   };
 }
+
+// Resolves after `ms`, or immediately when the abort signal fires — lets the
+// watch loop wake up promptly on client disconnect instead of waiting out the
+// full interval.
+function sleep(ms: number, signal?: AbortSignal): Promise<void> {
+  return new Promise((resolve) => {
+    if (signal?.aborted) return resolve();
+    const timer = setTimeout(resolve, ms);
+    signal?.addEventListener(
+      'abort',
+      () => {
+        clearTimeout(timer);
+        resolve();
+      },
+      { once: true },
+    );
+  });
+}
+
+export interface WatchFetchStatusOptions {
+  /** Only emit for this specific session (publicId); other sessions are ignored. */
+  sessionId?: string;
+  /** Server-side DB poll cadence in ms. Defaults to 750ms (≈ the old client poll). */
+  intervalMs?: number;
+  /** Hard cap on total watch duration in ms. Must stay under the serverless timeout. */
+  maxDurationMs?: number;
+  /** Abort signal — ends the stream when the client disconnects. */
+  signal?: AbortSignal;
+}
+
+/**
+ * Async generator that watches a region's latest fetch session and yields the
+ * status whenever it changes, closing once the fetch reaches a terminal state
+ * (or the duration cap / abort signal fires).
+ *
+ * In serverless there is no cross-invocation pub/sub, so this polls the DB
+ * server-side. It backs both the `onFetchStatus` tRPC subscription and the
+ * REST SSE endpoint, so the client no longer has to poll.
+ *
+ * Two modes:
+ *  - `sessionId` provided → watch that session until terminal.
+ *  - `sessionId` omitted (detect mode) → record the latest session at start as
+ *    a baseline, then adopt and watch the first newer session that appears.
+ *    Used by the external token-submit flow that waits for a session to show up.
+ */
+export async function* watchFetchStatusServer(
+  userId: string,
+  region: Region,
+  options: WatchFetchStatusOptions = {},
+): AsyncGenerator<FetchStatusResult> {
+  const intervalMs = options.intervalMs ?? 750;
+  const maxDurationMs = options.maxDurationMs ?? 130_000;
+  const { signal, sessionId } = options;
+  const startedAt = Date.now();
+
+  let target = sessionId;
+  let baselineId: string | null | undefined;
+  let lastSignature: string | null = null;
+
+  while (!signal?.aborted && Date.now() - startedAt < maxDurationMs) {
+    const status = await getFetchStatusServer(userId, region);
+
+    if (status) {
+      if (!target) {
+        // Detect mode: capture baseline on first read, then adopt the next
+        // session whose id differs from it.
+        if (baselineId === undefined) {
+          baselineId = status.id;
+        } else if (status.id !== baselineId) {
+          target = status.id;
+        }
+      }
+
+      if (target && status.id === target) {
+        const signature = `${status.status}|${status.statusStates ?? ''}|${status.errorMessage ?? ''}`;
+        if (signature !== lastSignature) {
+          lastSignature = signature;
+          yield status;
+        }
+        if (status.status === 'completed' || status.status === 'failed') {
+          return;
+        }
+      }
+    }
+
+    await sleep(intervalMs, signal);
+  }
+}

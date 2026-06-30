@@ -21,6 +21,7 @@ import "@/app/api/v1/plates/spec";
 import "@/app/api/v1/me/settings/spec";
 import "@/app/api/v1/fetch/spec";
 import "@/app/api/v1/fetch/status/spec";
+import "@/app/api/v1/fetch/status/stream/spec";
 import "@/app/api/v1/fetch/token/spec";
 
 export { getRegistry, findRouteBySlug, routeSlug } from "./registry";

@@ -1,5 +1,6 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { trpc, trpcClient } from "@/lib/trpc-client";
+import { useState, useRef, useCallback, useMemo } from "react";
+import { skipToken } from "@tanstack/react-query";
+import { trpc } from "@/lib/trpc-client";
 import { toast } from "sonner";
 import { Region, FetchSession } from "@/lib/types";
 import { Flags } from "@/lib/flags";
@@ -7,75 +8,82 @@ import { isTokenError, isAlbumSettingsError, isCnCookiesSingleUseError } from "@
 import { parseStatusStates } from "@/lib/fetch-states";
 import { FetchToastState } from "@/components/fetch-toast";
 
+// What the SSE subscription should watch. `sessionId` present → watch that
+// specific session; absent → detect-and-watch the next new session (the
+// external token-submit flow). null → idle, no subscription.
+interface WatchTarget {
+  region: Region;
+  sessionId?: string;
+}
+
 export function useFetchSession(onFetchComplete?: () => void, flags?: Flags, onTokenError?: () => void, onUseAlbumError?: () => void, onCnCookiesExpired?: () => void) {
   const [currentSession, setCurrentSession] = useState<FetchSession | null>(null);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [lastFetchTime, setLastFetchTime] = useState<Date | null>(null);
 
-  // Session polling state
-  const [sessionPollingEnabled, setSessionPollingEnabled] = useState(false);
-  const [sessionPollingRegion, setSessionPollingRegion] = useState<Region | null>(null);
-  const lastKnownSessionIdRef = useRef<string | null>(null);
-  const onSessionDetectedRef = useRef<(() => void) | undefined>(undefined);
+  // Drives a single SSE subscription (trpc.user.onFetchStatus). null = idle.
+  const [watchTarget, setWatchTarget] = useState<WatchTarget | null>(null);
+  // True only while waiting for an externally-submitted token to create a
+  // session (detect mode, before the session is observed).
+  const [isDetecting, setIsDetecting] = useState(false);
 
-  // Poll for new fetch sessions (lightweight query)
-  const { data: latestSessionData } = trpc.user.getLatestFetchSessionId.useQuery(
-    { region: sessionPollingRegion! },
+  const onSessionDetectedRef = useRef<(() => void) | undefined>(undefined);
+  // Guards the one-time "session detected" side effects. False only while in
+  // detect mode (startSessionPolling) before the new session is observed;
+  // true in session mode (startFetch) where the session is already known.
+  const detectedRef = useRef(false);
+
+  // Single push-based subscription. Replaces the old getLatestFetchSessionId
+  // (1s) and getFetchStatus (0.5s) polling loops.
+  trpc.user.onFetchStatus.useSubscription(
+    watchTarget
+      ? { region: watchTarget.region, sessionId: watchTarget.sessionId }
+      : skipToken,
     {
-      enabled: sessionPollingEnabled && sessionPollingRegion !== null,
-      refetchInterval: 1000, // Poll every 1 seconds
-      refetchOnWindowFocus: false,
+      onData: (status) => {
+        // First emission in detect mode means a new session was created.
+        if (!detectedRef.current) {
+          detectedRef.current = true;
+          setIsDetecting(false);
+          setLastFetchTime(new Date());
+          toast.success("Token submitted successfully");
+          onSessionDetectedRef.current?.();
+        }
+
+        const updatedSession: FetchSession = {
+          id: status.id,
+          status: status.status,
+          startedAt: status.startedAt,
+          completedAt: status.completedAt ?? undefined,
+          errorMessage: status.errorMessage ?? undefined,
+          statusStates: status.statusStates ?? undefined,
+        };
+        setCurrentSession(updatedSession);
+
+        if (status.status === "completed") {
+          if (status.notFoundScores && status.notFoundScores.length > 0) {
+            toast.warning(`${status.notFoundScores.length} songs not found in database`, {
+              description: status.notFoundScores.map((score) => `${score.songName} (${score.difficulty})`).join(", "),
+            });
+          }
+          onFetchComplete?.();
+          setWatchTarget(null); // terminal — close the subscription
+        } else if (status.status === "failed") {
+          const errorMessage = status.errorMessage || "Fetch failed";
+          setFetchError(errorMessage);
+          if (isTokenError(errorMessage)) onTokenError?.();
+          if (isAlbumSettingsError(errorMessage)) onUseAlbumError?.();
+          setWatchTarget(null); // terminal — close the subscription
+        }
+      },
+      onError: (error) => {
+        // Transient connection drops shouldn't be surfaced as fetch failures —
+        // the DB session status remains the source of truth and the link will
+        // reconnect. Log for visibility only.
+        console.error("Fetch status subscription error:", error);
+      },
     }
   );
-
-  // Detect new sessions
-  useEffect(() => {
-    if (!latestSessionData || !sessionPollingEnabled) return;
-
-    const currentSessionId = latestSessionData.id;
-
-    console.log("[Session Polling] Current session ID:", currentSessionId, "Last known:", lastKnownSessionIdRef.current);
-
-    // Initialize the last known session ID on first poll
-    if (lastKnownSessionIdRef.current === null) {
-      console.log("[Session Polling] Initializing with session ID:", currentSessionId);
-      lastKnownSessionIdRef.current = currentSessionId;
-      return;
-    }
-
-    // Check if a new session was created
-    if (currentSessionId !== lastKnownSessionIdRef.current) {
-      console.log("[Session Polling] NEW SESSION DETECTED! Old:", lastKnownSessionIdRef.current, "New:", currentSessionId);
-      lastKnownSessionIdRef.current = currentSessionId;
-
-      // Show success toast
-      toast.success("Token submitted successfully");
-      console.log("Token submitted successfully, on " + sessionPollingRegion + " region");
-
-      // Stop session polling
-      setSessionPollingEnabled(false);
-
-      // Start full fetch status polling for the new session
-      if (sessionPollingRegion) {
-        const session: FetchSession = {
-          id: currentSessionId,
-          status: "pending",
-          startedAt: new Date(latestSessionData.startedAt),
-        };
-        setCurrentSession(session);
-        setLastFetchTime(new Date());
-        setFetchError(null);
-
-        // Start polling for the new session
-        pollFetchStatus(currentSessionId, sessionPollingRegion);
-      }
-
-      // Call the callback if provided
-      if (onSessionDetectedRef.current) {
-        onSessionDetectedRef.current();
-      }
-    }
-  }, [latestSessionData, sessionPollingEnabled, sessionPollingRegion]);
 
   // tRPC mutation for starting fetch
   const startFetchMutation = trpc.user.startFetch.useMutation({
@@ -89,8 +97,10 @@ export function useFetchSession(onFetchComplete?: () => void, flags?: Flags, onT
       setLastFetchTime(new Date());
       setFetchError(null);
 
-      // Start polling immediately with the returned session ID
-      pollFetchStatus(data.sessionId, variables.region);
+      // Watch this specific session via the subscription.
+      detectedRef.current = true; // session is already known; skip detect logic
+      setIsDetecting(false);
+      setWatchTarget({ region: variables.region, sessionId: data.sessionId });
     },
     onError: (error) => {
       if (isAlbumSettingsError(error.message) && !!onUseAlbumError) {
@@ -123,99 +133,28 @@ export function useFetchSession(onFetchComplete?: () => void, flags?: Flags, onT
     return startDataFetch(region); // No token provided, will use saved token
   };
 
-  const pollFetchStatus = async (sessionId: string, region: Region) => {
-    const maxAttempts = 600; // 5 minutes max (300 seconds / 0.5 second = 600 attempts)
-    let attempts = 0;
-
-    const poll = async () => {
-      try {
-        // Query the latest fetch status directly using tRPC client
-        const result = await trpcClient.user.getFetchStatus.query({
-          region,
-        });
-
-        if (result && result.id === sessionId) {
-          // Only update if this is the session we're tracking
-          const updatedSession: FetchSession = {
-            id: result.id,
-            status: result.status,
-            startedAt: result.startedAt,
-            completedAt: result.completedAt || undefined,
-            errorMessage: result.errorMessage || undefined,
-            statusStates: result.statusStates || undefined,
-          };
-          console.log("Fetch status updated for session " + sessionId + " on " + region + " region: " + JSON.stringify(updatedSession));
-          setCurrentSession(updatedSession);
-
-          if (result.status === "completed") {
-            // Show warning toast for not found scores (separate from the custom toast)
-            if (result.notFoundScores && result.notFoundScores.length > 0) {
-              toast.warning(`${result.notFoundScores.length} songs not found in database`, {
-                description: result.notFoundScores.map(score => `${score.songName} (${score.difficulty})`).join(", "),
-              });
-            }
-            onFetchComplete?.();
-            return "completed";
-          } else if (result.status === "failed") {
-            const errorMessage = result.errorMessage || "Fetch failed";
-            setFetchError(errorMessage);
-
-            // Check if this is a token-related error and trigger callback
-            if (isTokenError(errorMessage)) {
-              onTokenError?.();
-            }
-
-            // Check if this is an album settings error
-            if (isAlbumSettingsError(errorMessage)) {
-              onUseAlbumError?.();
-            }
-
-            return "failed";
-          }
-        } else if (!result) {
-          // No fetch sessions found at all
-          setFetchError("Fetch session not found");
-          return "error";
-        }
-
-        attempts++;
-        if (attempts < maxAttempts) {
-          setTimeout(poll, 500); // Poll every 0.5 second
-        } else {
-          setFetchError("Fetch timeout");
-          return "timeout";
-        }
-      } catch (error) {
-        console.error("Error polling fetch status:", error);
-        setFetchError("Failed to check fetch status");
-        return "error";
-      }
-    };
-
-    return poll();
-  };
-
   const resetFetchSession = useCallback(() => {
     setCurrentSession(null);
     setFetchError(null);
   }, []);
 
-  // Start polling for new sessions
+  // Start watching for a session created by the external token-submit flow.
   const startSessionPolling = useCallback((region: Region, onSessionDetected?: () => void) => {
-    console.log("[startSessionPolling] Starting session polling for region:", region);
-    setSessionPollingRegion(region);
-    setSessionPollingEnabled(true);
-    lastKnownSessionIdRef.current = null; // Reset to detect the first session
+    detectedRef.current = false;
     onSessionDetectedRef.current = onSessionDetected;
+    setFetchError(null);
+    setIsDetecting(true);
+    setWatchTarget({ region }); // detect mode — no sessionId
   }, []);
 
-  // Stop polling for new sessions
+  // Stop watching for a new session.
   const stopSessionPolling = useCallback(() => {
-    console.log("[stopSessionPolling] Stopping session polling");
-    setSessionPollingEnabled(false);
-    setSessionPollingRegion(null);
-    lastKnownSessionIdRef.current = null;
+    setIsDetecting(false);
+    detectedRef.current = false;
     onSessionDetectedRef.current = undefined;
+    // Only tear down the subscription if we were still in detect mode; once a
+    // session is being watched we let it run to completion.
+    setWatchTarget((prev) => (prev && !prev.sessionId ? null : prev));
   }, []);
 
   const isFetching = currentSession?.status === "pending" || startFetchMutation.isPending;
@@ -243,7 +182,7 @@ export function useFetchSession(onFetchComplete?: () => void, flags?: Flags, onT
     resetFetchSession,
     startSessionPolling,
     stopSessionPolling,
-    isPollingForSession: sessionPollingEnabled,
+    isPollingForSession: isDetecting,
     fetchToastState,
   };
 }
