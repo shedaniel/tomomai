@@ -181,16 +181,16 @@ const registry = {
 
   // ── auth ─────────────────────────────────────────────────────────────────
   passkey: defineFlag("passkey", {
-    defaultValue: false,
+    defaultValue: true,
     userSelectable: true,
     category: "auth",
-    decide: () => false,
+    decide: () => true,
   }),
   twitterOauth: defineFlag("twitterOauth", {
-    defaultValue: false,
+    defaultValue: true,
     userSelectable: true,
     category: "auth",
-    decide: () => false,
+    decide: () => true,
   }),
 
   // ── developer ────────────────────────────────────────────────────────────
