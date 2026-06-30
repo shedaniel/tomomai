@@ -31,6 +31,20 @@ export async function securityMiddleware(request: NextRequest): Promise<NextResp
   return response;
 }
 
+// Render service origin (apps/render). Image previews load from it via the 302
+// from /api/{export-image,last-credit,daily-plays}, and the download button
+// fetch()es it — so it must be allowlisted in img-src (loads) and connect-src
+// (fetch). Derived from RENDER_PUBLIC_URL so we don't hardcode the host.
+// Render service origin (apps/render). Image previews load from it via the 302
+// from /api/{export-image,last-credit,daily-plays}, and the download button
+// fetch()es it — so it must be allowlisted in img-src (loads) and connect-src
+// (fetch). Derived from RENDER_PUBLIC_URL so we don't hardcode the host.
+const RENDER_ORIGIN = (() => {
+  const u = process.env.RENDER_PUBLIC_URL;
+  if (!u) return null;
+  try { return new URL(u).origin; } catch { return null; }
+})();
+
 /**
  * Apply security headers to response
  */
@@ -41,10 +55,7 @@ function applySecurityHeaders(response: NextResponse): void {
   response.headers.set('X-XSS-Protection', '1; mode=block');
 
   // Content Security Policy - adjust as needed for your application
-  response.headers.set(
-    'Content-Security-Policy',
-    buildCsp()
-  );
+  response.headers.set('Content-Security-Policy', buildCsp());
 
   // Prevent MIME sniffing
   response.headers.set('X-Download-Options', 'noopen');
@@ -76,14 +87,16 @@ function imgSrcOrigins(): string[] {
 }
 
 function buildCsp(): string {
-  const imgSrc = ["'self'", 'data:', ...imgSrcOrigins()].join(' ');
+  const imgExtra = [...imgSrcOrigins(), ...(RENDER_ORIGIN ? [RENDER_ORIGIN] : [])];
+  const imgSrc = ["'self'", 'data:', ...imgExtra].join(' ');
+  const connectSrc = ["'self'", ...(RENDER_ORIGIN ? [RENDER_ORIGIN] : [])].join(' ');
   return [
     "default-src 'self'",
     "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
     "style-src 'self' 'unsafe-inline'",
     `img-src ${imgSrc}`,
     "font-src 'self'",
-    "connect-src 'self'",
+    `connect-src ${connectSrc}`,
     "frame-src 'none'",
     "object-src 'none'",
     "base-uri 'self'",

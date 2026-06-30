@@ -59,6 +59,7 @@ export interface DailyPlay {
   achievement: number;
   fc: FullCombo;
   fs: FullSync;
+  songPublicId: string;
   songName: string;
   cover: string;
   difficulty: Difficulty;
@@ -113,6 +114,7 @@ export async function prepareDailyPlaysData(
       achievement: userRecentSongs.archievement,
       fc: userRecentSongs.fc,
       fs: userRecentSongs.fs,
+      songPublicId: songs.publicId,
       songName: songs.songName,
       cover: songs.cover,
       difficulty: songs.difficulty,
@@ -176,6 +178,7 @@ export async function prepareDailyPlaysData(
     achievement: row.achievement,
     fc: row.fc as FullCombo,
     fs: row.fs as FullSync,
+    songPublicId: row.songPublicId,
     songName: row.songName,
     cover: row.cover,
     difficulty: row.difficulty as Difficulty,

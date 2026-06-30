@@ -54,6 +54,7 @@ export interface RecentSongData {
   fc: FullCombo;
   fs: FullSync;
   track: number;
+  songPublicId: string;
   songName: string;
   artist: string;
   cover: string;
@@ -125,6 +126,7 @@ export async function prepareCreditData(
       fc: userRecentSongs.fc,
       fs: userRecentSongs.fs,
       track: userRecentSongs.track,
+      songPublicId: songs.publicId,
       songName: songs.songName,
       artist: songs.artist,
       cover: songs.cover,
@@ -338,6 +340,7 @@ export async function prepareCreditData(
         fc: track.fc,
         fs: track.fs,
         track: track.track,
+        songPublicId: track.songPublicId,
         songName: track.songName,
         artist: track.artist,
         cover: track.cover,

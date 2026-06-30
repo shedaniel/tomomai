@@ -1,5 +1,5 @@
-import { CreditData, RecentSongData, SnapshotMetadata } from '@/server/services/credit-data';
-import { getLogger } from '@/lib/request-logger';
+import { CreditData, RecentSongData, SnapshotMetadata } from './types';
+import { getLogger } from './request-logger';
 import type { CanvasRenderingContext2D as SkiaContext } from 'skia-canvas';
 import { Canvas, Image, loadImage } from 'skia-canvas';
 import { CANVAS_HEIGHT, CANVAS_WIDTH } from './image-spec';
@@ -8,9 +8,11 @@ import { calculateDXStars, calculateNoteLosses, distributeBreaks } from './score
 import type { Difficulty, FullCombo, FullSync, Region, SongType, TitleType } from "./types";
 import { SnapshotWithSongs } from "./types";
 import { getLogoUrl, getTypeBadgeUrl } from "./utils";
-import { VersionId } from './metadata';
-import { resolveBaseUrl } from './base-url';
+import { VersionId } from './types';
 import { span } from './profiler';
+import { loadCachedImage } from './render-image-server';
+
+const SITE_URL = 'https://tomomai.lol';
 
 type CanvasSize = {
   width: number;
@@ -112,20 +114,6 @@ function isDataUrl(url: string): boolean {
   return url.startsWith('data:');
 }
 
-// Helper to convert relative URLs to absolute URLs (for server-side rendering)
-function toAbsoluteUrl(url: string): string {
-  if (url.startsWith('http://') || url.startsWith('https://')) {
-    return url;
-  }
-  // Get base URL from environment or default to localhost
-  const baseUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL
-    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
-    : process.env.VERCEL_URL
-      ? `https://${process.env.VERCEL_URL}`
-      : 'http://localhost:3000';
-  return `${baseUrl}${url}`;
-}
-
 // Helper to load images with caching
 async function loadImageWithCache(cache: ImageCache, url: string): Promise<Image> {
   if (isDataUrl(url)) {
@@ -138,8 +126,7 @@ async function loadImageWithCache(cache: ImageCache, url: string): Promise<Image
 
   getLogger().debug({ url }, "Loading image from URL");
 
-  const absoluteUrl = toAbsoluteUrl(url);
-  const img = await loadImage(absoluteUrl);
+  const img = await loadCachedImage(url);
   cache[url] = () => Promise.resolve(img);
   return img;
 }
@@ -152,10 +139,9 @@ export async function renderImage(data: SnapshotWithSongs<SongForRender>, region
   await span("background", () => renderBackground(ctx, data.snapshot.gameVersion, false, cache, canvasSize));
   const overlayRect = await span("header", () => renderHeader(ctx, { ...data.snapshot, region }, cache, canvasSize));
   await span("content", () => renderContent(ctx, data, cache, overlayRect));
-  const baseUrl = resolveBaseUrl();
   const footerText = visitableProfileAt
-    ? `Visit my profile at ${baseUrl}/profile/${visitableProfileAt}/`
-    : `Generated with ${baseUrl}/`;
+    ? `Visit my profile at ${SITE_URL}/profile/${visitableProfileAt}/`
+    : `Generated with ${SITE_URL}/`;
   await span("footer", () => renderFooter(ctx, data.snapshot.gameVersion, footerText, canvasSize));
 
   return canvas;
@@ -199,7 +185,7 @@ export async function renderDailyPlaysImage(
   const dayLabel = new Date(`${day}T00:00:00+09:00`).toLocaleDateString('en-US', {
     year: 'numeric', month: 'long', day: 'numeric', timeZone: 'Asia/Tokyo',
   });
-  const footerText = `Plays on ${dayLabel} (JST), generated with ${resolveBaseUrl()}/`;
+  const footerText = `Plays on ${dayLabel} (JST), generated with ${SITE_URL}/`;
   await span("footer", () => renderFooter(ctx, snapshot.gameVersion, footerText, canvasSize));
 
   return canvas;
@@ -214,7 +200,7 @@ export async function renderLastCreditImage(data: CreditData, snapshot: Snapshot
   await renderBackground(ctx, snapshot.gameVersion, true, cache, canvasSize);
   const overlayRect = await renderHeader(ctx, { ...snapshot, region }, cache, canvasSize);
   await renderLastCreditContent(ctx, data, cache, overlayRect);
-  const footerText = `Recent credit at ${data.playedAt.toLocaleString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tokyo' })}, generated with ${resolveBaseUrl()}/`;
+  const footerText = `Recent credit at ${data.playedAt.toLocaleString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tokyo' })}, generated with ${SITE_URL}/`;
   await renderFooter(ctx, snapshot.gameVersion, footerText, canvasSize);
 
   return canvas;

@@ -3,6 +3,7 @@ import { getLogger } from "./request-logger";
 import { FontLibrary, Image, loadImage } from 'skia-canvas';
 import path from 'path';
 import { Agent } from 'undici';
+import { PUBLIC_DIR } from './paths';
 
 const sharedFetchAgent = new Agent({
   connect: { timeout: 30_000, rejectUnauthorized: false },
@@ -67,7 +68,7 @@ async function fetchBufferForServer(url: string): Promise<{ buffer: Buffer; cont
 
   if (url.startsWith('/res')) {
     const fs = await import('fs/promises');
-    const filePath = path.join(process.cwd(), 'public', url);
+    const filePath = path.join(PUBLIC_DIR, url);
     const buffer = await fs.readFile(filePath);
     const ext = path.extname(url).toLowerCase();
     const contentType = ext === '.png' ? 'image/png'
@@ -126,7 +127,7 @@ export async function loadCachedImage(url: string): Promise<Image> {
 export const fontsLoaded = (async () => {
   const startTime = Date.now();
   try {
-    const fontsDir = path.join(process.cwd(), 'public', 'res', 'fonts');
+    const fontsDir = path.join(PUBLIC_DIR, 'res', 'fonts');
 
     FontLibrary.use('FOT-NewRodin Pro', [path.join(fontsDir, 'FOT-NewRodin Pro EB.woff2')]);
     FontLibrary.use('Inter', [path.join(fontsDir, 'Inter-VariableFont_opsz_wght.woff2')]);
@@ -168,7 +169,7 @@ export async function fetchImageForServer(url: string): Promise<string> {
       const path = await import('path');
 
       // Convert URL path to filesystem path (remove leading /, add public/)
-      const filePath = path.join(process.cwd(), 'public', finalUrl);
+      const filePath = path.join(PUBLIC_DIR, finalUrl);
 
       buffer = await fs.readFile(filePath);
 

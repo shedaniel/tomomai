@@ -1,0 +1,47 @@
+# apps/render builds from the REPO ROOT (see apps/render/Dockerfile). Without a
+# root .dockerignore, Docker ships the entire monorepo as build context — this
+# repo is ~1GB of junk (.git, apps/guess, apps/main's node_modules/public) that
+# none of the COPY instructions reach. Keep only what the Dockerfile references:
+# root manifests, apps/render, and the shared packages/{i18n,utils}.
+
+# VCS — never needed in any image.
+.git
+.gitignore
+.gitattributes
+
+# Per-app build artifacts and deps (the image installs its own deps in the deps
+# stage, so shipping existing node_modules is pointless and huge).
+**/node_modules
+**/.next
+**/.turbo
+**/.cache
+**/dist
+**/build
+**/coverage
+**/.nuxt
+
+# Secrets — never bake into an image. Keep the template so the .env example
+# stays copyable for local dev.
+.env
+.env.*
+!.env.example
+
+# Other apps — the render image only ever COPYs from apps/render and packages/*.
+# Explicitly drop the rest so a root-context build stays tiny.
+apps/main
+apps/guess
+apps/data
+
+# Docs and CI noise.
+docs
+*.md
+!apps/render/README.md
+LICENSE
+.github
+.vscode
+.idea
+
+# Misc generated/tooling files.
+pnpm-debug.log*
+*.log
+.DS_Store

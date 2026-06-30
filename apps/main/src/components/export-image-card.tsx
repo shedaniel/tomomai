@@ -192,7 +192,7 @@ export function ExportImageCard({ selectedSnapshotData, region, showLastCredit =
 
   // Last credit image state
   const [lastCreditImageUrl, setLastCreditImageUrl] = useState<string>(
-    `/api/last-credit?region=${region}&beforeDate=${selectedSnapshotData.snapshot.fetchedAt}&snapshotId=${snapshotId}`
+    `/api/last-credit?region=${region}&beforeDate=${selectedSnapshotData.snapshot.fetchedAt.toISOString()}&snapshotId=${snapshotId}`
   );
   const [lastCreditImageKey, setLastCreditImageKey] = useState(0);
   const [lastCreditIsLoading, setLastCreditIsLoading] = useState(true);
@@ -251,13 +251,13 @@ export function ExportImageCard({ selectedSnapshotData, region, showLastCredit =
   const handleLastCreditRefresh = () => {
     setLastCreditIsLoading(true);
     setLastCreditImageKey(prev => prev + 1);
-    setLastCreditImageUrl(`/api/last-credit?region=${region}&beforeDate=${selectedSnapshotData.snapshot.fetchedAt}&snapshotId=${snapshotId}&t=${Date.now()}`);
+    setLastCreditImageUrl(`/api/last-credit?region=${region}&beforeDate=${selectedSnapshotData.snapshot.fetchedAt.toISOString()}&snapshotId=${snapshotId}&t=${Date.now()}`);
   };
 
   const handleLastCreditRefreshFast = () => {
     setLastCreditIsLoading(true);
     setLastCreditImageKey(prev => prev + 1);
-    setLastCreditImageUrl(`/api/last-credit?region=${region}&beforeDate=${selectedSnapshotData.snapshot.fetchedAt}&snapshotId=${snapshotId}&scale=1&t=${Date.now()}`);
+    setLastCreditImageUrl(`/api/last-credit?region=${region}&beforeDate=${selectedSnapshotData.snapshot.fetchedAt.toISOString()}&snapshotId=${snapshotId}&scale=1&t=${Date.now()}`);
   };
 
   const handleDailyDayChange = (day: string) => {

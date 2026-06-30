@@ -65,6 +65,20 @@ Passkeys work out of the box — no extra provider credentials needed. Set `ALTC
 | `MAIMAI_TOTP_SECRET` | Yes | Secret for TOTP code generation. Generate with `openssl rand -hex 32` |
 | `FLAGS_SECRET` | Yes | Secret for feature flags. Generate with `node -e "console.log(crypto.randomBytes(32).toString('base64url'))"` |
 
+### Render Service
+
+Image rendering (profile/export, last-credit, daily-plays) runs in a separate
+service (`apps/render`). `apps/main` is the auth boundary. It mints a signed
+token and either 302s browser image requests to the render service or asks it to
+upload the Discord followup. These are the variables `apps/main` needs to talk to
+that service.
+
+| Variable | Required | Description |
+|---|---|---|
+| `RENDER_TOKEN_SECRET` | Yes | Shared HMAC secret. `apps/main` signs render tokens with it and the render service verifies them, so it must match the render service's `RENDER_TOKEN_SECRET`. Generate with `openssl rand -base64 32` |
+| `RENDER_PUBLIC_URL` | Yes | Public origin of the render service (e.g. `https://render.yourdomain.com`). The image routes 302 here, and it is added to the Content-Security-Policy `img-src`/`connect-src` so browsers can load and download the images |
+| `RENDER_INTERNAL_URL` | No | Server-to-server origin used for the Discord followup upload call. Falls back to `RENDER_PUBLIC_URL`. Set this when the render service is reachable on a private or internal URL from `apps/main` |
+
 ### AI
 
 | Variable | Required | Description |
