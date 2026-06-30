@@ -1,0 +1,98 @@
+---
+title: "Sign in with X & Passkeys, Rolling Release"
+date: "2026-06-30"
+version: "2026.6"
+summary: "June recap: new sign-in options, X (Twitter) and Passkeys, are live, enabled by a new versioned ToS & Privacy Policy. tomomai is also moving to a rolling release model. Plus a big Discord bot upgrade, difficulty-capped reserved profiles, MD3 UI polish, and a large batch of performance and infra work under the hood."
+locale: "en"
+canonicalSlug: "2026-06-30-june-update"
+---
+
+## June Update: Going Rolling
+
+A small but important change to how we ship tomomai. From now on we're moving to a **rolling release**: new features and improvements land whenever they're ready, instead of being batched up for one date in the month. Less waiting between something being done and you getting to use it.
+
+These month-end posts are sticking around, but their job is changing. They're now a **recap** of everything that shipped during the month, rather than a launch event. This is the first one. It comes with new ways to sign in, a big Discord upgrade, and a lot of faster-and-cheaper work under the hood.
+
+## New: Sign in with X and Passkeys
+
+Two new ways to sign in: **X (Twitter)** and **Passkeys**. Both have been built and sitting ready for a little while. What held them back was the Terms of Service and Privacy Policy needing an update to cover them. With the new versioned policies shipping today, they're live for everyone. (A nice example of the rolling model in action: the code was ready at the end of May, but waited on the legal update before going live.)
+
+**Passkeys.** Sign in and register with a passkey (Face ID, Touch ID, Windows Hello, or a hardware key) instead of a password. Passkeys are phishing-resistant and device-bound, so they're both easier and safer than passwords. You can add and manage multiple passkeys from settings, and registration is protected by a proof-of-work captcha to keep bots out.
+
+![Sign in with X and Passkeys](/posts/2026-06-30-june-update/sign-in.webp)
+
+**Sign in with X.** You can now link an X (Twitter) account alongside Discord, and use either to sign in. Head to settings to link or unlink accounts.
+
+### The new Terms of Service & Privacy Policy
+
+Turning these on required an updated, **versioned Terms of Service and Privacy Policy**, with a consent flow. If you've used tomomai before, you'll be asked to re-consent to the new versions the next time you do something key. We track which version you last accepted, so we only prompt you again when something actually changes.
+
+This also clears the way for the **Developer API** (API keys, OAuth applications, and the developer portal), which we'll have more on shortly.
+
+Read the updated [Terms of Service](/tos) and [Privacy Policy](/privacy).
+
+## Discord Bot: Region Options, Freshness Prompts, and i18n
+
+The Discord bot got a lot of attention this month.
+
+**One command per action.** The old per-region command pairs are gone. `/fetch`, `/profile`, `/recents`, `/recommend`, and `/daily` are now single commands that **default to your selected region** and accept an optional `region` option if you want to override it. CN support is wired through the whole bot now too.
+
+![Discord region option](/posts/2026-06-30-june-update/discord-region.webp)
+
+**Staleness-aware refetch.** If your latest snapshot for a region is more than an hour old, the bot now stops and asks before running: **Continue** (run on the data you already have) or **Refetch and continue** (pull fresh data first, then run). There's also a new optional `fetch` option on those same commands to force a refetch-and-run with no prompt.
+
+![Discord staleness prompt](/posts/2026-06-30-june-update/discord-staleness.webp)
+
+**Localized messages.** Bot responses now follow your Discord client's language, fully translated across all supported locales (`en-US`, `en-GB`, `ja`, `zh-CN`, `zh-TW`, and `ko`).
+
+Commands are also now registered for all interaction contexts: guilds, bot DMs, and user DMs.
+
+## Difficulty-Capped Reserved Profiles
+
+You probably know the [`max`](/profile/max) reserved profile, which shows the theoretical maximum rating. We added difficulty-capped variants: [maxbas](/profile/maxbas), [maxadv](/profile/maxadv), [maxexp](/profile/maxexp), [maxmas](/profile/maxmas), and [maxrem](/profile/maxrem). Each shows the theoretical max rating using only charts up to that difficulty (utage excluded everywhere). Handy for theorycrafting where you'd land if a given difficulty tier didn't exist.
+
+![Difficulty-capped profiles](/posts/2026-06-30-june-update/reserved-profiles.webp)
+
+## UI Polish: MD3 Surfaces, Glass, and Pills
+
+A Material 3 pass across the app:
+
+- **Tonal surfaces** and container color roles added to the theme, with new glass-surface utilities for floating overlays (modals, dialogs, dropdowns).
+- Buttons and badges are now **pill-shaped**, with new tonal and tertiary variants.
+- The rating and version chips in the data banners are now badges.
+- Inter picked up stylistic sets and tabular numerics.
+
+![MD3 glass and pills](/posts/2026-06-30-june-update/md3-ui.webp)
+
+There's also a new **site footer** showing a rolling build identity: the version, a build timestamp, and the commit it shipped from. It's fully automatic, driven by the changelog post and the build itself, so it stays accurate without anyone remembering to bump it.
+
+![Version footer](/posts/2026-06-30-june-update/version-footer.webp)
+
+## Under the Hood
+
+The bulk of June was performance and infrastructure. None of this changes how tomomai looks, but it makes the site faster and cheaper to run.
+
+### Static caching via `[locale]` routing
+
+We moved the locale into the URL (`/en/...`) so it becomes part of the cache key instead of a per-request cookie read. That flipped a large chunk of the app from dynamic to cacheable: **static pages went from 104 to 440**. The catalog (`/db/songs`, song detail) and public profiles are now ISR (generated once and served from the cache) instead of rendered fresh on every visit.
+
+Follow-ups pushed the savings further: wider ISR windows plus browser cache headers on the catalog, so returning visitors reuse cached HTML for an hour and then stale-while-revalidate for a day; and the song-detail route's ISR write cost came down roughly **10x** by keeping the song list in the shared layout instead of serializing the whole catalog into every detail page. As a bonus, opening a chart drawer no longer unmounts and reloads the list.
+
+A small blocking `<script>` now applies your saved theme before first paint, so there's no more flash of the wrong theme on load.
+
+### Image rendering, extracted
+
+All image rendering (export image, last-credit, daily-plays) moved off the main app into a dedicated `apps/render` service. The output is pixel-identical; the win is that the webp encode (the heaviest ~78% of request CPU) no longer runs on the Vercel function, and the rendered bytes no longer count against Vercel egress. The main app stays the auth boundary: it mints a short-lived token and hands off, and image bytes never flow through it.
+
+### Cost cuts
+
+- **Covers:** most song covers were stuck on `maimaidx.jp` and getting re-optimized by Vercel on every size and format. We widened the migration pattern and backfilled: **29,071 rows** moved to our R2 CDN, and covers are now 100% off the optimization path.
+- **Albums:** the per-user storage cap dropped from 25 MB to **8 MB**, and new uploads re-encode to AVIF q40 (imperceptible for these result-screen photos). We backfilled existing albums too: fleet album storage went from **750 MB to 268 MB (−64%)**, and nobody ended up over the new cap.
+
+---
+
+Join our Discord to discuss the changes: [https://discord.gg/jZqQHr3UDq](https://discord.gg/jZqQHr3UDq)
+
+Help us translate tomomai: [https://crowdin.com/project/tomomai](https://crowdin.com/project/tomomai)
+
+Happy grinding!
