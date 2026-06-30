@@ -145,7 +145,20 @@
     "agreeToPrivacy": "I agree to the Privacy Policy",
     "viewFullText": "View Full Text",
     "cancel": "Cancel",
-    "agree": "I Agree"
+    "agree": "I Agree",
+    "reconsent": {
+      "title": "We updated our policies",
+      "description": "Please review and agree to our updated Terms of Service and Privacy Policy to continue",
+      "confirm": "Agree and continue",
+      "remindLater": "Remind me later",
+      "reviewBy": "Please review by {date}"
+    },
+    "gatePrompt": {
+      "title": "Updated policies required",
+      "description": "This action requires agreeing to our updated Terms of Service and Privacy Policy",
+      "confirm": "Agree and continue",
+      "retry": "Policies accepted. Please try that action again."
+    }
   },
   "dashboard": {
     "title": "tomomai ともマイ",
