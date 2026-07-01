@@ -45,6 +45,7 @@ import type {
   RecentSongData,
   ScoreData,
 } from "./types";
+import type { Flags } from "../flags";
 
 // ---------------------------------------------------------------------------
 // Shared fetcher contract
@@ -66,7 +67,7 @@ interface FetcherContext {
   userId: string;
   region: Region;
   sessionId: bigint;
-  flags: string[];
+  flags: Flags;
   validation: TokenValidationResult;
 }
 
@@ -170,7 +171,7 @@ const scrapeFetcher: DataFetcher = async ({ userId: _userId, region, sessionId, 
   }
 
   let eventsData: FetchedMaimaiData["eventsData"] = null;
-  if (flags.includes("eventsCard")) {
+  if (flags.eventsCard) {
     try {
       logger.info("Fetching events data...");
       eventsData = await fetchEventsData(cookies, region, sessionId);
@@ -378,7 +379,7 @@ export async function fetchMaimaiData(
   userId: string,
   region: Region,
   sessionId: bigint,
-  flags: string[] = [],
+  flags: Flags,
   shouldFetchAlbums: boolean = false,
   backgroundWorkRef?: { promise: Promise<void> },
 ): Promise<void> {

@@ -155,7 +155,7 @@ export async function runFetchSession({
 }): Promise<boolean> {
   try {
     // Start the fetch
-    const startResult = await startFetchServer(userId, region, undefined, undefined, { skipAfter: true });
+    const startResult = await startFetchServer(userId, region, undefined, { skipAfter: true });
 
     // Send initial message
     await editDiscordMessage(applicationId, interactionToken, {

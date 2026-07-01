@@ -12,7 +12,7 @@ export const POST = withApiKey(["fetch:start"], async (req: NextRequest, key) =>
   const { region } = parsed;
 
   try {
-    const result = await startFetchServer(key.userId, region, undefined, []);
+    const result = await startFetchServer(key.userId, region);
     return zodJson(spec.response, {
       sessionId: result.sessionId,
       status: result.status,

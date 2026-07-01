@@ -2,12 +2,11 @@ import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { trpc, trpcClient } from "@/lib/trpc-client";
 import { toast } from "sonner";
 import { Region, FetchSession } from "@/lib/types";
-import { Flags } from "@/lib/flags";
 import { isTokenError, isAlbumSettingsError, isCnCookiesSingleUseError } from "@/lib/token-errors";
 import { parseStatusStates } from "@/lib/fetch-states";
 import { FetchToastState } from "@/components/fetch-toast";
 
-export function useFetchSession(onFetchComplete?: () => void, flags?: Flags, onTokenError?: () => void, onUseAlbumError?: () => void, onCnCookiesExpired?: () => void) {
+export function useFetchSession(onFetchComplete?: () => void, onTokenError?: () => void, onUseAlbumError?: () => void, onCnCookiesExpired?: () => void) {
   const [currentSession, setCurrentSession] = useState<FetchSession | null>(null);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [lastFetchTime, setLastFetchTime] = useState<Date | null>(null);
@@ -108,14 +107,8 @@ export function useFetchSession(onFetchComplete?: () => void, flags?: Flags, onT
   const startDataFetch = async (region: Region, token?: string): Promise<void> => {
     setFetchError(null);
 
-    // Build flags array for fetch
-    const fetchFlags: string[] = [];
-    if (flags?.eventsCard) {
-      fetchFlags.push("eventsCard");
-    }
-
     // Let the mutation error bubble up to the caller
-    await startFetchMutation.mutateAsync({ region, token, flags: fetchFlags });
+    await startFetchMutation.mutateAsync({ region, token });
   };
 
   // Start automatic fetch using saved token
