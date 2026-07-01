@@ -252,9 +252,16 @@ export async function resolveFlagsForUser(userId: string): Promise<Flags> {
   await Promise.all(
     Object.entries(registry).map(async ([key, defined]) => {
       const flagKey = key as keyof Flags;
-      const value = defined.config.userSelectable && ctx.overrides[flagKey] != null
-        ? ctx.overrides[flagKey]!
-        : await defined.decide(ctx);
+      let value: boolean;
+      if (defined.config.userSelectable && ctx.overrides[flagKey] != null) {
+        value = ctx.overrides[flagKey]!;
+      } else {
+        try {
+          value = await defined.decide(ctx);
+        } catch {
+          value = defined.config.defaultValue;
+        }
+      }
       result[flagKey] = value;
     }),
   );
