@@ -436,6 +436,7 @@ export const snapshotsRouter = router({
         metadata: {
           id: snapshot[0].publicId,
           displayName: snapshot[0].displayName,
+          trophyType: snapshot[0].titleType,
           trophy: snapshot[0].title,
           region: snapshot[0].region,
           fetchedAt: snapshot[0].fetchedAt,

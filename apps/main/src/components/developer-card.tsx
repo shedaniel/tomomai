@@ -17,6 +17,7 @@ const EXPORT_SNAPSHOTS_SCHEMA_DOCS = `{
   "metadata": {
     "id": string, // Unique snapshot identifier
     "displayName": string, // Player's display name
+    "trophyType": string, // Player's trophy type ('normal', 'bronze', 'silver', 'gold', 'rainbow')
     "trophy": string, // Player's trophy
     "region": string, // Region code (e.g., 'intl', 'jp', 'cn')
     "fetchedAt": string, // ISO 8601 timestamp of when data was fetched
