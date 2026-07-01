@@ -10,6 +10,7 @@ import { getAllStates } from './fetch-states';
 import { after } from 'next/server';
 import { flushLogger } from './logger';
 import { getLogger } from './request-logger';
+import { resolveFlagsForUser } from './flags';
 
 export interface StartFetchResult {
   sessionId: string;
@@ -83,7 +84,7 @@ export async function demoFetch(userId: string, region: Region): Promise<StartFe
 }
 
 // Extract startFetch logic from tRPC procedure
-export async function startFetchServer(userId: string, region: Region, token?: string, flags: string[] = [], options?: { skipAfter?: boolean }): Promise<StartFetchResult> {
+export async function startFetchServer(userId: string, region: Region, token?: string, options?: { skipAfter?: boolean }): Promise<StartFetchResult> {
   // Check if demo mode is enabled
   if (process.env.DEMO_FETCH === 'true') {
     return demoFetch(userId, region);
@@ -265,6 +266,7 @@ export async function startFetchServer(userId: string, region: Region, token?: s
       // fetchMaimaiData populates backgroundWorkRef with the optional detail fetches
       // (fetchAndInsertRecentSongsData / fetchAndInsertAlbumData) so the snapshot
       // can be marked completed before those finish.
+      const flags = await resolveFlagsForUser(userId);
       await Promise.race([
         fetchMaimaiData(userId, region, fetchSessionInternalId, flags, shouldFetchAlbums, backgroundWorkRef),
         timeoutPromise

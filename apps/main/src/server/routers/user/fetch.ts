@@ -36,11 +36,10 @@ export const fetchRouter = router({
     .input(z.object({
       region: regionSchema,
       token: z.string().optional(),
-      flags: z.string().array().default([]),
     }))
     .mutation(async ({ ctx, input }) => {
       try {
-        return await startFetchServer(ctx.session.user.id, input.region as Region, input.token, input.flags);
+        return await startFetchServer(ctx.session.user.id, input.region as Region, input.token);
       } catch (error) {
         if (error instanceof Error) {
           if (isAlbumSettingsError(error.message)) {

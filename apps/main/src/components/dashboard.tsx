@@ -85,7 +85,7 @@ export function Dashboard({ user, initialUserData, initialSnapshots, initialSnap
     startSessionPolling,
     stopSessionPolling,
     fetchToastState,
-  } = useFetchSession(refreshSnapshots, flags, () => {
+  } = useFetchSession(refreshSnapshots, () => {
     setDialogType("token");
   }, () => {
     setDialogType("albumPrivacy");

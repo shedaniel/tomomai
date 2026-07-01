@@ -70,6 +70,7 @@ type RawFlagConfig = {
 type DefinedFlag = {
   config: FlagDefinition;
   fn: ReturnType<typeof flag<boolean, FlagContext>>;
+  decide: (ctx: FlagContext) => boolean | Promise<boolean>;
 };
 
 const identifyFlagContext = dedupe(async (): Promise<FlagContext> => {
@@ -91,6 +92,7 @@ const identifyFlagContext = dedupe(async (): Promise<FlagContext> => {
 function defineFlag(key: keyof Flags, cfg: RawFlagConfig): DefinedFlag {
   return {
     config: { key, defaultValue: cfg.defaultValue, userSelectable: cfg.userSelectable, category: cfg.category },
+    decide: cfg.decide,
     fn: flag<boolean, FlagContext>({
       key,
       defaultValue: cfg.defaultValue,
@@ -233,6 +235,38 @@ export const useFlags = async (): Promise<Flags> => {
     await Promise.all(Object.entries(registry).map(async ([k, v]) => [k, await v.fn()])),
   ) as Flags;
 };
+
+// Resolve flags from the user's DB row without an HTTP session, so non-request
+// call sites (e.g. the Discord fetch command) honor flagOverrides like the web.
+export async function resolveFlagsForUser(userId: string): Promise<Flags> {
+  const row = await db.query.user.findFirst({
+    where: eq(user.id, userId),
+    columns: { id: true, role: true, flagOverrides: true },
+  });
+  const ctx: FlagContext = {
+    userId: row?.id ?? userId,
+    role: row?.role ?? null,
+    overrides: (row?.flagOverrides as Partial<Flags> | null) ?? {},
+  };
+  const result = {} as Flags;
+  await Promise.all(
+    Object.entries(registry).map(async ([key, defined]) => {
+      const flagKey = key as keyof Flags;
+      let value: boolean;
+      if (defined.config.userSelectable && ctx.overrides[flagKey] != null) {
+        value = ctx.overrides[flagKey]!;
+      } else {
+        try {
+          value = await defined.decide(ctx);
+        } catch {
+          value = defined.config.defaultValue;
+        }
+      }
+      result[flagKey] = value;
+    }),
+  );
+  return result;
+}
 
 // Named exports required for Vercel Flags SDK discovery
 // dashboard
