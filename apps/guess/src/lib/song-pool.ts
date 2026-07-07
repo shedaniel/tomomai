@@ -3,7 +3,7 @@ import { uniqueSongs, type SongSummary } from "./fuzzy";
 import { hasAudioPreview, isHeardle } from "./heardle";
 
 const DEFAULT_API = "https://www.tomomai.lol";
-const TTL_MS = 60 * 60 * 1000; // 1 hour
+const TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 function apiBase(): string {
   return process.env.TOMOMAI_API_URL?.replace(/\/$/, "") ?? DEFAULT_API;
@@ -13,9 +13,8 @@ async function fetchCatalogue(): Promise<Chart[]> {
   const url = `${apiBase()}/api/v1/songs`;
   // `no-store` is deliberate: the catalogue JSON is ~14 MB, which exceeds
   // Next's 2 MB data-cache cap and would log "items over 2MB can not be
-  // cached" on every call. The module-level memo below (1h TTL) is what
-  // actually keeps this cheap; the network fetch only happens after a cold
-  // start or memo expiry.
+  // cached" on every call. The 24h module-level memo below is the runtime
+  // cache that keeps the cross-app transfer bounded for guess traffic.
   const res = await fetch(url, { cache: "no-store" });
   if (!res.ok) {
     throw new Error(`Failed to fetch song catalogue: ${res.status} ${res.statusText}`);
@@ -52,7 +51,7 @@ function filterPool(all: readonly Chart[]): Chart[] {
 // ---------- In-process cache ---------------------------------------------
 // The catalogue JSON is ~14 MB — too large for Next's unstable_cache (2 MB cap)
 // and pointless to round-trip through that layer anyway. A simple module-level
-// memo with TTL is plenty: each server instance fetches once per hour.
+// memo with a daily TTL matches the daily game cadence and limits refetches.
 
 type CacheEntry<T> = { value: T; expiresAt: number };
 let catalogue: CacheEntry<Chart[]> | Promise<Chart[]> | null = null;
