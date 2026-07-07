@@ -206,6 +206,7 @@
       "zh-HK": "繁體中文 (香港)",
       "zh-CN": "简体中文 (中国大陆)",
       "zh-SG": "简体中文 (新加坡, 马来西亚)",
+      "zh-MS": "Chinese (Microsoft)",
       "ko": "한국어 (AI 번역)"
     },
     "timezone": {
@@ -332,7 +333,7 @@
         "regenerateError": "Failed to regenerate API key",
         "regeneratedTitle": "Key Regenerated",
         "regeneratedDescription": "Copy your new API key now. It will not be shown again.",
-        "regeneratedSaveWarning": "Save this key — it won't be shown again after closing this dialog.",
+        "regeneratedSaveWarning": "Save this key; it won't be shown again after closing this dialog.",
         "regenerateDialog": {
           "title": "Regenerate API key?",
           "description": "This will immediately invalidate the current key. Any application using it will lose access until updated with the new key.",
@@ -358,7 +359,7 @@
         "createdTitle": "API Key Created",
         "createdDescription": "Copy your API key now. It will not be shown again.",
         "copyAriaLabel": "Copy API key",
-        "saveWarning": "Save this key — it won't be shown again after closing this dialog.",
+        "saveWarning": "Save this key; it won't be shown again after closing this dialog.",
         "done": "Done",
         "nameLabel": "Name",
         "namePlaceholder": "My App",
@@ -388,15 +389,15 @@
       "scopes": {
         "ready": {
           "name": "Ready",
-          "description": "Basic access. Grants GET /api/v1/ok. Included by default."
+          "description": "Basic access. Included by default."
         },
         "user:metadata:read": {
           "name": "User Metadata (Read)",
-          "description": "Read your username, region, profile visibility, and role. Grants GET /api/v1/me."
+          "description": "Read your username, region, profile visibility, and role."
         },
         "snapshot:latest:metadata:read": {
           "name": "Latest Snapshot Metadata (Read)",
-          "description": "Read metadata (rating, display name, play counts, etc.) for your latest snapshot. Grants GET /api/v1/snapshots/latest."
+          "description": "Read metadata (rating, display name, play counts, etc.) for your latest snapshot."
         },
         "snapshot:latest:songs:b50:read": {
           "name": "Latest Snapshot B50 Songs (Read)",
@@ -412,11 +413,11 @@
         },
         "snapshot:latest:icon:read": {
           "name": "Latest Snapshot Icon (Read)",
-          "description": "Read your profile icon URL (Discord avatar) from your latest snapshot. Sensitive — may reveal your social identity."
+          "description": "Read your profile icon URL from your latest snapshot. Sensitive: may reveal your social identity."
         },
         "snapshot:all:metadata:read": {
           "name": "All Snapshots Metadata (Read)",
-          "description": "List all your snapshots and read their metadata. Grants GET /api/v1/snapshots and GET /api/v1/snapshots/:id."
+          "description": "List all your snapshots and read their metadata."
         },
         "snapshot:all:songs:b50:read": {
           "name": "All Snapshots B50 Songs (Read)",
@@ -432,11 +433,11 @@
         },
         "snapshot:all:icon:read": {
           "name": "All Snapshots Icon (Read)",
-          "description": "Read your profile icon URL (Discord avatar) from any snapshot. Sensitive — may reveal your social identity."
+          "description": "Read your profile icon URL from any snapshot. Sensitive: may reveal your social identity."
         },
         "recent:read": {
           "name": "Recent Plays (Read)",
-          "description": "Read your recent play history including song info, achievement, and combo/sync status. Grants GET /api/v1/recents."
+          "description": "Read your recent play history including song info, achievement, and combo/sync status."
         },
         "recent:detailed:read": {
           "name": "Recent Plays Detailed (Read)",
@@ -444,51 +445,51 @@
         },
         "stats:read": {
           "name": "Stats (Read)",
-          "description": "Read your grade/FC/FS distribution statistics. Grants GET /api/v1/stats."
+          "description": "Read your grade/FC/FS distribution statistics."
         },
         "album:read": {
           "name": "Albums (Read)",
-          "description": "Read your arcade photo album entries (metadata only, no image URLs). Grants GET /api/v1/albums."
+          "description": "Read your arcade photo album entries (metadata only, no image URLs)."
         },
         "album:images:read": {
           "name": "Album Images (Read)",
-          "description": "Adds resolved image URLs to album responses. Sensitive — photos may contain images of people."
+          "description": "Adds resolved image URLs to album responses. Sensitive: photos may contain images of people."
         },
         "plate:read": {
           "name": "Plates (Read)",
-          "description": "Read your plate completion data (which songs still need to be cleared / FC'd / AP'd for each plate). Grants GET /api/v1/plates."
+          "description": "Read your plate completion data (which songs still need to be cleared / FC'd / AP'd for each plate)."
         },
         "user:settings:read": {
           "name": "User Settings (Read)",
-          "description": "Read your privacy and profile-display settings (publish profile, show scores, show plates, etc.). Grants GET /api/v1/me/settings."
+          "description": "Read your privacy and profile-display settings (publish profile, show scores, show plates, etc.)."
         },
         "snapshot:all:delete": {
           "name": "Snapshots (Delete)",
-          "description": "Delete any of your snapshots. Grants DELETE /api/v1/snapshots/:id. Destructive — must be requested explicitly and is never implied by encompassing scopes."
+          "description": "Delete any of your snapshots. Destructive: must be requested explicitly and is never implied by encompassing scopes."
         },
         "snapshot:submit": {
           "name": "Snapshots (Submit)",
-          "description": "Submit a new snapshot. Internal — admin only."
+          "description": "Submit a new snapshot. Internal: admin only."
         },
         "fetch:read": {
           "name": "Fetch Status (Read)",
-          "description": "Read the status of your in-progress or most-recent maimai data fetch. Grants GET /api/v1/fetch/status."
+          "description": "Read the status of your in-progress or most-recent maimai data fetch."
         },
         "fetch:start": {
           "name": "Start Fetch",
-          "description": "Trigger a new maimai data fetch using your stored upstream token. Grants POST /api/v1/fetch. Destructive — consumes upstream API budget and writes a new snapshot."
+          "description": "Trigger a new maimai data fetch using your stored upstream token. Destructive: consumes upstream API budget and writes a new snapshot."
         },
         "fetch:delete": {
           "name": "Fetch Token (Delete)",
-          "description": "Delete your stored upstream maimai authentication token. Grants DELETE /api/v1/fetch/token. Destructive and sensitive — breaks any in-app and API-driven fetch flow until you re-authenticate."
+          "description": "Delete your stored upstream maimai authentication token. Destructive and sensitive: breaks any in-app and API-driven fetch flow until you re-authenticate."
         },
         "snapshot:latest:read": {
           "name": "Latest Snapshot (Read)",
-          "description": "Grants metadata, song scores, and events for your latest snapshot only. Excludes icon (opt-in for privacy)."
+          "description": "Read metadata, song scores, and events for your latest snapshot only. Excludes icon (opt-in for privacy)."
         },
         "snapshot:all:read": {
           "name": "All Snapshots (Read)",
-          "description": "Grants metadata, song scores, and events for all your snapshots, including the latest. Excludes icon (opt-in for privacy)."
+          "description": "Read metadata, song scores, and events for all your snapshots, including the latest. Excludes icon (opt-in for privacy)."
         },
         "read": {
           "name": "Read (All Non-Sensitive)",
@@ -525,11 +526,11 @@
           "creating": "Creating…",
           "createError": "Failed to create application",
           "createdTitle": "Application created",
-          "createdDescription": "Save your client secret now — it will not be shown again.",
+          "createdDescription": "Save your client secret now; it will not be shown again.",
           "clientIdLabel": "Client ID",
           "secretLabel": "Client Secret",
           "copyAriaLabel": "Copy value",
-          "saveWarning": "Save this secret — it won't be shown again after closing this dialog.",
+          "saveWarning": "Save this secret; it won't be shown again after closing this dialog.",
           "done": "Done"
         },
         "rotateDialog": {
@@ -589,7 +590,7 @@
   "profileMetadata": {
     "title": "{username} | tomomai ともマイ",
     "description": "View {username}'s maimai profile for {region}. Track and analyze maimai scores with friends.",
-    "descriptionRich": "{displayName} ({username}) on {region} maimai — rating {rating}. View their B50, recent plays, and chart records on tomomai.",
+    "descriptionRich": "{displayName} ({username}) on {region} maimai: rating {rating}. View their B50, recent plays, and chart records on tomomai.",
     "descriptionUnknownRegion": "View {username}'s maimai profile. Track and analyze maimai scores with friends.",
     "notFoundTitle": "Profile Not Found | tomomai ともマイ",
     "notFoundDescription": "The profile you're looking for doesn't exist or is not publicly accessible.",
@@ -986,7 +987,7 @@
       "title": "Pick a username",
       "description": "Your username is your handle on tomomai. If you choose to share, it also becomes your public profile URL.",
       "publishToggleLabel": "Share my profile with friends",
-      "publishToggleDescription": "Let others view your scores at a public link. Off by default — you can change this anytime.",
+      "publishToggleDescription": "Let others view your scores at a public link. Off by default; you can change this anytime.",
       "publicUrlHint": "Your public profile:"
     },
     "step2": {

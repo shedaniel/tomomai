@@ -1,0 +1,1336 @@
+{
+  "common": {
+    "title": "tomomai ともマイ",
+    "loading": "載入正在...",
+    "save": "節省",
+    "cancel": "取消",
+    "continue": "繼續",
+    "close": "關閉",
+    "settings": "設定值",
+    "language": "語言",
+    "timezone": "時間區",
+    "update": "更新",
+    "login": "登入",
+    "join": "加入",
+    "guest": "客人",
+    "logout": "登出",
+    "username": "使用者名字",
+    "password": "通過字",
+    "token": "令牌",
+    "cookies": "曲奇",
+    "authentication": "認證化",
+    "playerInfo": "玩家信息",
+    "rating": "額定值",
+    "stars": "星星",
+    "plays": "播放數",
+    "total": "總的",
+    "theme": "主題",
+    "invitations": "邀請物",
+    "discord": "Discord",
+    "about": "關於",
+    "experiments": "實驗們",
+    "region": "區域",
+    "comingSoon": "來很快...",
+    "weekdays": {
+      "sun": "太陽",
+      "mon": "月",
+      "tue": "二",
+      "wed": "婚",
+      "thu": "雷",
+      "fri": "自由",
+      "sat": "坐"
+    },
+    "difficulties": {
+      "basic": "基本",
+      "advanced": "先進",
+      "expert": "專家",
+      "master": "主人",
+      "remaster": "再:主人",
+      "utage": "宴"
+    },
+    "back": "背面",
+    "clipboardError": "失敗去複製到剪貼板",
+    "selectAnOption": "選擇一個選項",
+    "ok": "OK",
+    "email": "Email"
+  },
+  "security": {
+    "reauth": {
+      "title": "重新認證被需要",
+      "description": "這個動作需要一個新鮮的登入。你將會被重新導向到你的提供者去重新認證。"
+    }
+  },
+  "minigames": {
+    "badge": "迷你遊戲",
+    "guesser": {
+      "title": "猜者",
+      "tagline": "從它的封面影像猜這首歌。"
+    },
+    "heardle": {
+      "title": "Heardle",
+      "tagline": "從幾秒鐘猜這首歌。"
+    }
+  },
+  "auth": {
+    "loginWithDiscord": "繼續與 Discord",
+    "loginWithX": "繼續與 X",
+    "loginWithPasskey": "簽入與 Passkey",
+    "signIn": "簽入",
+    "newHere": "新在這裡？",
+    "noAccount": "建立一個帳戶去開始追蹤。",
+    "signup": "簽上",
+    "signupWithDiscord": "簽上與 Discord",
+    "signupWithX": "簽上與 X",
+    "passkey": {
+      "errorTitle": "Passkey 簽入失敗了",
+      "errorGeneric": "不可以完成 passkey 簽入。請再試。"
+    },
+    "signupDisabled": "簽上目前被停用",
+    "signupDisabledMessage": "我們不是接受新登記在這個時間。請檢查回來之後。",
+    "peekExampleProfile": "偷看在一個例子個人檔案",
+    "features": {
+      "title": "特徵們：",
+      "trackScores": "追蹤分數橫跨 International 和 Japan 區域",
+      "viewHistory": "看歷史的資料快照們",
+      "importData": "直接從 maimai DX NET 進口資料",
+      "analyzeProgress": "分析你的進步超過時間"
+    }
+  },
+  "linkedAccounts": {
+    "title": "已連接的帳戶們",
+    "description": "連結社交帳戶們為額外的簽入方法。",
+    "link": "連結",
+    "unlink": "取消連結",
+    "linked": "已連結",
+    "notLinked": "沒有被連結",
+    "unlinkError": "失敗去取消連結帳戶",
+    "linkError": "失敗去連結帳戶",
+    "unlinkSuccess": "帳戶取消連結成功地",
+    "linkSuccess": "帳戶連結成功地",
+    "cannotUnlinkLast": "不可以取消連結你的只有一個簽入方法",
+    "reauthRequired": "請再次簽入在連結一個新帳戶之前"
+  },
+  "passkeys": {
+    "title": "Passkeys",
+    "description": "使用生物計量或一個硬體鑰匙去簽入沒有密碼。",
+    "addPasskey": "加入 Passkey",
+    "addingPasskey": "正在加入...",
+    "noPasskeys": "沒有 passkeys 被登記。",
+    "deletePasskey": "刪除",
+    "deleteSuccess": "Passkey 已刪除。",
+    "deleteError": "失敗去刪除 passkey。",
+    "addError": "失敗去加入 passkey。",
+    "addSuccess": "Passkey 加入成功地。",
+    "verifyingCaptcha": "正在驗證...",
+    "captchaFailed": "Captcha 驗證失敗了。請再試。",
+    "passkeyName": "Passkey {index}",
+    "deleteTitle": "刪除 passkey？",
+    "deleteDescription": "這個 passkey 將會被移除。你不會能夠使用它去簽入再多。",
+    "reauthRequired": "請再次簽入在管理 passkeys 之前。"
+  },
+  "consent": {
+    "title": "歡迎到 tomomai",
+    "description": "在創造你的帳戶之前，請複查和同意到我們的政策們",
+    "tldr": {
+      "title": "太長；不讀（不是法律忠告）",
+      "points": [
+        "你擁有你的資料；它是從不賣到第三方們",
+        "你的資料被安全地儲存在日本的伺服器們上",
+        "你的資料被處理依照香港 SAR 法律們",
+        "這個專案是開放來源（AGPL-3.0）",
+        "我們是一個獨立工具和不是附屬與 SEGA"
+      ]
+    },
+    "agreeToTos": "我同意到服務條款",
+    "agreeToPrivacy": "我同意到隱私政策",
+    "viewFullText": "觀看完整文字",
+    "cancel": "取消",
+    "agree": "我同意",
+    "reconsent": {
+      "title": "我們更新了我們的政策們",
+      "description": "請複查和同意到我們的已更新服務條款和隱私政策去繼續",
+      "confirm": "同意和繼續",
+      "remindLater": "提醒我之後",
+      "reviewBy": "請複查由 {date}"
+    },
+    "gatePrompt": {
+      "title": "已更新政策們被需要",
+      "description": "這個動作需要同意到我們的已更新服務條款和隱私政策",
+      "confirm": "同意和繼續",
+      "retry": "政策們已接受。請再試那個動作。"
+    }
+  },
+  "dashboard": {
+    "title": "tomomai ともマイ",
+    "description": "追蹤和分析你的 maimai 分數與朋友們",
+    "timezoneUpdateSuccess": "時間區更新成功地！",
+    "timezoneUpdateError": "失敗去更新時間區：{error}",
+    "languageUpdateSuccess": "語言更新成功地！",
+    "languageUpdateError": "失敗去更新語言：{error}",
+    "regionUpdateSuccess": "區域更新成功地！",
+    "regionUpdateError": "失敗去更新區域：{error}",
+    "tokenUpdateSuccess": "令牌儲存成功地！"
+  },
+  "settings": {
+    "pages": {
+      "account": {
+        "title": "帳戶",
+        "description": "語言和帳戶偏好東西。"
+      },
+      "fetch": {
+        "title": "取回",
+        "description": "權杖和資料取回設定。"
+      },
+      "privacy": {
+        "title": "隱私",
+        "description": "控制誰可以看見你的設定檔和分數。"
+      },
+      "developer": {
+        "title": "開發者",
+        "description": "管理 API 鑰匙和 OAuth 應用程式。"
+      },
+      "applications": {
+        "title": "應用程式",
+        "description": "OAuth 應用程式你已經給予存取到你的帳戶。"
+      }
+    },
+    "language": {
+      "label": "語言",
+      "description": "選取你的偏好介面語言。",
+      "placeholder": "選取語言",
+      "auto": "自動偵測",
+      "en": "English (US)",
+      "en-GB": "English (UK)",
+      "ja": "日本語",
+      "zh-TW": "繁體中文 (台灣)",
+      "zh-HK": "繁體中文 (香港)",
+      "zh-CN": "簡體中文 (中國大陸)",
+      "zh-SG": "簡體中文 (新加坡, 馬來西亞)",
+      "zh-MS": "中文 (微軟)",
+      "ko": "한국어 (AI 번역)"
+    },
+    "timezone": {
+      "label": "時間區域",
+      "description": "這影響日期和時間如何被顯示穿過這個 app。日本時間區域是預設因為它符合 maimai 的伺服器時間。",
+      "placeholder": "選取時間區域"
+    },
+    "account": {
+      "label": "帳戶驗證",
+      "updateToken": "更新權杖",
+      "deleteToken": "刪除權杖",
+      "deleteTokenDialogTitle": "刪除權杖",
+      "deleteTokenDialogDescription": "你確定你想刪除你的已儲存權杖嗎？你將需要重新驗證去再次取回資料。",
+      "deleteTokenSuccess": "權杖刪除成功地。",
+      "deleteTokenError": "失敗去刪除權杖。",
+      "description": "更新你的 maimai 權杖為資料取回。這被要求來同步你的玩家資料。"
+    },
+    "albumPrivacy": {
+      "title": "相簿相片隱私設定",
+      "description": "你會喜歡去取回和儲存你的相簿相片從 maimai 嗎？",
+      "note": "請注意：",
+      "noteText": "相簿相片可能包含你的臉或其他個人資訊。如果你不想要有這個資訊被儲存在 tomomai ともマイ，你可以停用這個功能這裡。",
+      "privacy": "你的影像是：",
+      "stored": "被私下儲存在我們的伺服器上",
+      "notShared": "從來不與第三方分享",
+      "onlyYou": "只有顯示給你",
+      "limit": "被限制到 8MB 總計 (~170 影像)",
+      "autoDelete": "自動刪除最舊優先當限制被超過",
+      "changeLater": "你可以改變這個設定稍後在你的設定檔設定。",
+      "dontSave": "不，不要儲存相片",
+      "save": "是，儲存我的相簿相片",
+      "example": "範例已儲存相簿圖片",
+      "saved": "相簿偏好被儲存成功地",
+      "error": "失敗去儲存相簿偏好",
+      "fetchAlbums": "儲存相簿相片",
+      "fetchAlbumsDescription": "自動地取回和儲存你的相簿相片當取回分數。相片可能包含個人資訊。",
+      "notSet": "你尚未設定這個偏好還。你會被提示在你的下一次取回。"
+    },
+    "profile": {
+      "publishProfile": "發布設定檔",
+      "publishDescription": "製作你的 maimai 設定檔公開地可存取為其他人檢視你的分數和進度。",
+      "mainRegion": {
+        "label": "主要區域",
+        "description": "選擇你的主要區域為已發布設定檔。",
+        "intl": "國際",
+        "jp": "日本",
+        "cn": "中國"
+      },
+      "privacy": {
+        "label": "隱私設定",
+        "showAllScores": {
+          "label": "顯示所有分數",
+          "description": "顯示所有你的分數而不是只有你的最佳 50 歌曲。"
+        },
+        "showScoreDetails": {
+          "label": "顯示分數詳細資料",
+          "description": "顯示詳細分數資訊包含遊玩計數和時間統計。"
+        },
+        "showPlates": {
+          "label": "顯示盤子",
+          "description": "顯示你的盤子收集和完成進度。"
+        },
+        "showPlayCounts": {
+          "label": "顯示遊玩計數",
+          "description": "顯示你的 maimai 遊玩計數。"
+        },
+        "showEvents": {
+          "label": "顯示事件",
+          "description": "顯示你的事件完成進度。"
+        },
+        "showInSearch": {
+          "label": "顯示在搜尋",
+          "description": "允許其他人去找到你的設定檔藉由搜尋你的使用者名稱。"
+        }
+      },
+      "url": {
+        "label": "設定檔 URL",
+        "description": "你的公開設定檔連結那你可以分享與其他人。",
+        "copied": "設定檔 URL 已複製到剪貼簿！",
+        "copyFailed": "失敗去複製 URL 到剪貼簿"
+      }
+    },
+    "saveChanges": "儲存變更",
+    "saving": "正在儲存...",
+    "saved": "設定儲存成功地！",
+    "errorSaving": "失敗去儲存設定",
+    "sessions": {
+      "title": "工作階段",
+      "description": "管理你的活躍工作階段橫跨裝置。",
+      "currentSession": "目前",
+      "revoke": "撤銷",
+      "revokeAll": "撤銷所有其他",
+      "revokeAllDescription": "這將簽出所有其他工作階段。只有你的目前工作階段將保留活躍。",
+      "revokeDescription": "這個工作階段將被簽出立即。",
+      "noOtherSessions": "沒有活躍工作階段被找到。",
+      "ip": "IP",
+      "createdAt": "簽入",
+      "revokeConfirm": "撤銷這個工作階段？",
+      "revokeAllConfirm": "撤銷所有其他工作階段？",
+      "revokeSuccess": "工作階段撤銷成功地。",
+      "revokeAllSuccess": "所有其他工作階段已撤銷。"
+    },
+    "developer": {
+      "reauthRequired": "請再次簽入在執行這個動作之前。",
+      "apiKeys": {
+        "label": "API 鑰匙",
+        "description": "驗證請求到 tomomai API 使用這些鑰匙。",
+        "createButton": "建立 API 鑰匙",
+        "loading": "正在載入...",
+        "emptyTitle": "沒有 API 鑰匙還",
+        "emptyCreateLink": "建立你的第一個鑰匙",
+        "emptySuffix": "以開始使用 tomomai API。",
+        "unnamed": "未命名鑰匙",
+        "expired": "已過期",
+        "disabled": "已停用",
+        "never": "從不",
+        "createdAt": "已建立 {date}",
+        "expiresAt": "過期 {date}",
+        "toggleAriaLabel": "切換鑰匙",
+        "regenerateAriaLabel": "重新產生鑰匙",
+        "deleteSuccess": "API 鑰匙已刪除",
+        "deleteError": "失敗去刪除 API 鑰匙",
+        "updateError": "失敗去更新鑰匙",
+        "regenerateError": "失敗去重新產生 API 鑰匙",
+        "regeneratedTitle": "鑰匙重新產生了",
+        "regeneratedDescription": "複製你的新 API 鑰匙現在。它不會被顯示再次。",
+        "regeneratedSaveWarning": "儲存這個鑰匙；它不會被顯示再次在關閉這個對話方塊後。",
+        "regenerateDialog": {
+          "title": "重新產生 API 鑰匙？",
+          "description": "這將立即使目前鑰匙無效。任何應用程式使用它將失去存取直到用新鑰匙更新。",
+          "confirm": "重新產生"
+        },
+        "editDialog": {
+          "title": "編輯 API 鑰匙",
+          "nameLabel": "名稱",
+          "namePlaceholder": "我的 App",
+          "saveButton": "儲存",
+          "saving": "正在儲存…",
+          "saveError": "失敗去更新 API 鑰匙"
+        },
+        "deleteDialog": {
+          "title": "刪除 API 鑰匙？",
+          "description": "這個動作不能被復原。任何應用程式使用這個鑰匙將立即失去存取。",
+          "confirm": "刪除"
+        }
+      },
+      "createDialog": {
+        "title": "建立 API 鑰匙",
+        "description": "產生新的 API 鑰匙去存取 tomomai API。",
+        "createdTitle": "API 鑰匙已建立",
+        "createdDescription": "複製你的 API 鑰匙現在。它不會被顯示再次。",
+        "copyAriaLabel": "複製 API 鑰匙",
+        "saveWarning": "儲存這個鑰匙；它不會被顯示再次在關閉這個對話方塊後。",
+        "done": "完成",
+        "nameLabel": "名稱",
+        "namePlaceholder": "我的 App",
+        "nameDescription": "一個描述性名稱去識別這個鑰匙。",
+        "scopesLabel": "範圍",
+        "scopeDefaultBadge": "預設",
+        "scopeDestructiveBadge": "破壞性",
+        "scopeSensitiveBadge": "敏感",
+        "scopeIncludedBadge": "已包含",
+        "sensitiveWarning": "一個或更多已選範圍被標記敏感因為它們暴露個人資料或私人識別碼。只授予給 app 你信任。",
+        "expirationLabel": "過期",
+        "expiration": {
+          "7d": "7 天",
+          "30d": "30 天",
+          "90d": "90 天",
+          "1y": "1 年",
+          "never": "從不"
+        },
+        "destructiveWarning": "這個鑰匙授予存取到破壞性操作。你理解風險嗎？",
+        "confirmLabelPre": "輸入",
+        "confirmPhrase": "是，我理解",
+        "confirmLabelPost": "以確認",
+        "creating": "正在建立...",
+        "createButton": "建立 API 鑰匙",
+        "createError": "失敗去建立 API 鑰匙"
+      },
+      "scopes": {
+        "ready": {
+          "name": "準備好",
+          "description": "基本存取。被包含由預設。"
+        },
+        "user:metadata:read": {
+          "name": "使用者中繼資料 (讀取)",
+          "description": "讀取你的使用者名稱、區域、設定檔可見性、和角色。"
+        },
+        "snapshot:latest:metadata:read": {
+          "name": "最新快照中繼資料 (讀取)",
+          "description": "讀取中繼資料 (rating、顯示名稱、遊玩計數、等等) 為你的最新快照。"
+        },
+        "snapshot:latest:songs:b50:read": {
+          "name": "最新快照 B50 歌曲 (讀取)",
+          "description": "讀取 B50 歌曲分數 (最佳 50) 從你的最新快照。"
+        },
+        "snapshot:latest:songs:read": {
+          "name": "最新快照所有歌曲 (讀取)",
+          "description": "讀取所有歌曲分數從你的最新快照。"
+        },
+        "snapshot:latest:events:read": {
+          "name": "最新快照事件 (讀取)",
+          "description": "讀取事件進度資料從你的最新快照。"
+        },
+        "snapshot:latest:icon:read": {
+          "name": "最新快照圖示 (讀取)",
+          "description": "讀取你的設定檔圖示 URL 從你的最新快照。敏感：可能揭露你的社交身份。"
+        },
+        "snapshot:all:metadata:read": {
+          "name": "所有快照中繼資料 (讀取)",
+          "description": "列出所有你的快照和讀取它們的中繼資料。"
+        },
+        "snapshot:all:songs:b50:read": {
+          "name": "所有快照 B50 歌曲 (讀取)",
+          "description": "讀取 B50 歌曲分數從任何你的快照。"
+        },
+        "snapshot:all:songs:read": {
+          "name": "所有快照所有歌曲 (讀取)",
+          "description": "讀取所有歌曲分數從任何你的快照。"
+        },
+        "snapshot:all:events:read": {
+          "name": "所有快照事件 (讀取)",
+          "description": "讀取事件進度資料從任何你的快照。"
+        },
+        "snapshot:all:icon:read": {
+          "name": "所有快照圖示 (讀取)",
+          "description": "讀取你的設定檔圖示 URL 從任何快照。敏感：可能揭露你的社交身份。"
+        },
+        "recent:read": {
+          "name": "最近遊玩 (讀取)",
+          "description": "讀取你的最近遊玩歷史包含歌曲資訊、achievement、和 combo/sync 狀態。"
+        },
+        "recent:detailed:read": {
+          "name": "最近遊玩詳細 (讀取)",
+          "description": "新增場所和完整每音符類型分解到最近遊玩結果。"
+        },
+        "stats:read": {
+          "name": "統計 (讀取)",
+          "description": "讀取你的 grade/FC/FS 分布統計。"
+        },
+        "album:read": {
+          "name": "相簿 (讀取)",
+          "description": "讀取你的街機相片相簿項目 (只有中繼資料，沒有影像 URL)。"
+        },
+        "album:images:read": {
+          "name": "相簿影像 (讀取)",
+          "description": "新增已解析影像 URLs 到相簿回應。敏感：相片可能包含人的影像。"
+        },
+        "plate:read": {
+          "name": "盤子 (讀取)",
+          "description": "讀取你的盤子完成資料 (哪些歌曲仍然需要被 cleared / FC'd / AP'd 為每個盤子)。"
+        },
+        "user:settings:read": {
+          "name": "使用者設定 (讀取)",
+          "description": "讀取你的隱私和設定檔顯示設定 (發布設定檔、顯示分數、顯示盤子、等等)。"
+        },
+        "snapshot:all:delete": {
+          "name": "快照 (刪除)",
+          "description": "刪除任何你的快照。破壞性：必須明確地被請求而且從不被包含範圍暗示。"
+        },
+        "snapshot:submit": {
+          "name": "快照 (提交)",
+          "description": "提交一個新快照。內部：管理員只。"
+        },
+        "fetch:read": {
+          "name": "取回狀態 (讀取)",
+          "description": "讀取狀態為你的進行中或最近的 maimai 資料取回。"
+        },
+        "fetch:start": {
+          "name": "開始取回",
+          "description": "觸發一個新 maimai 資料取回使用你的已儲存上游權杖。破壞性：消耗上游 API 預算並寫入新快照。"
+        },
+        "fetch:delete": {
+          "name": "取回權杖 (刪除)",
+          "description": "刪除你的已儲存上游 maimai 驗證權杖。破壞性和敏感：打破任何 app 內和 API 驅動取回流程直到你重新驗證。"
+        },
+        "snapshot:latest:read": {
+          "name": "最新快照 (讀取)",
+          "description": "讀取中繼資料、歌曲分數、和事件為你的最新快照只。排除圖示 (選擇加入為隱私)。"
+        },
+        "snapshot:all:read": {
+          "name": "所有快照 (讀取)",
+          "description": "讀取中繼資料、歌曲分數、和事件為所有你的快照，包含最新。排除圖示 (選擇加入為隱私)。"
+        },
+        "read": {
+          "name": "讀取 (所有非敏感)",
+          "description": "寬廣讀取存取：使用者中繼資料、所有快照、最近、統計、和相簿。排除圖示和相簿影像 URLs。敏感由於寬廣個人資料存取。"
+        }
+      },
+      "oauthApps": {
+        "label": "OAuth 應用程式",
+        "description": "註冊 app 那可以請求存取代表使用者透過 OAuth 2.1 + PKCE。",
+        "createButton": "新應用程式",
+        "loading": "正在載入應用程式…",
+        "emptyTitle": "沒有 OAuth 應用程式還",
+        "emptyCreateLink": "建立你的第一個應用程式",
+        "emptySuffix": "以開始與 OAuth。",
+        "redirectUris": "重新導向 URIs",
+        "scopes": "範圍",
+        "rotateAriaLabel": "旋轉 client secret",
+        "deleteAriaLabel": "刪除應用程式",
+        "deleteError": "失敗去刪除應用程式",
+        "rotateError": "失敗去旋轉 secret",
+        "createDialog": {
+          "title": "建立 OAuth 應用程式",
+          "description": "註冊一個新應用程式去使用 OAuth 2.1 授權流程。",
+          "nameLabel": "應用程式名稱",
+          "namePlaceholder": "我的 Userscript",
+          "nameDescription": "一個描述性名稱顯示給使用者在同意畫面。",
+          "uriLabel": "應用程式 URL",
+          "uriPlaceholder": "https://example.com",
+          "redirectLabel": "重新導向 URIs",
+          "redirectPlaceholder": "https://example.com/callback",
+          "redirectAddButton": "新增",
+          "scopesLabel": "範圍",
+          "createButton": "建立應用程式",
+          "creating": "正在建立…",
+          "createError": "失敗去建立應用程式",
+          "createdTitle": "應用程式已建立",
+          "createdDescription": "儲存你的 client secret 現在；它不會被顯示再次。",
+          "clientIdLabel": "Client ID",
+          "secretLabel": "Client Secret",
+          "copyAriaLabel": "複製值",
+          "saveWarning": "儲存這個 secret；它不會被顯示再次在關閉這個對話方塊後。",
+          "done": "完成"
+        },
+        "rotateDialog": {
+          "title": "旋轉 Client Secret？",
+          "description": "目前 secret 將停止工作立即。任何 clients 使用它將需要被更新與新 secret。",
+          "confirm": "旋轉 Secret"
+        },
+        "editDialog": {
+          "title": "編輯 OAuth 應用程式",
+          "description": "更新你的應用程式的詳細資料。",
+          "basicSection": "基本資訊",
+          "redirectSection": "重新導向 URIs",
+          "scopesSection": "範圍",
+          "scopesNote": "現有權杖保留它們目前範圍直到使用者重新授權。",
+          "legalSection": "法律",
+          "nameLabel": "應用程式名稱",
+          "uriLabel": "應用程式 URL",
+          "iconLabel": "圖示 URL",
+          "iconPlaceholder": "https://example.com/logo.png",
+          "policyLabel": "隱私政策 URL",
+          "policyPlaceholder": "https://example.com/privacy",
+          "tosLabel": "服務條款 URL",
+          "tosPlaceholder": "https://example.com/tos",
+          "saveButton": "儲存變更",
+          "saving": "正在儲存…",
+          "saveError": "失敗去更新應用程式"
+        },
+        "deleteDialog": {
+          "title": "刪除 OAuth 應用程式？",
+          "description": "這將永久刪除應用程式和撤銷所有已發行權杖。這不能被復原。",
+          "confirm": "刪除"
+        }
+      }
+    },
+    "applications": {
+      "noAuthorizations": "你尚未授權任何 OAuth 應用程式還。",
+      "grantedAt": "已授權 {date}",
+      "revokeButton": "撤銷",
+      "revokeDialog": {
+        "title": "撤銷存取？",
+        "description": "這將立即撤銷所有權杖為這個應用程式。你將需要重新授權它如果你想要使用它再次。",
+        "confirm": "撤銷"
+      },
+      "revokeSuccess": "存取已撤銷",
+      "revokeError": "失敗去撤銷存取"
+    }
+  },
+  "dataBanner": {
+    "dataSnapshot": "資料快照：",
+    "noDataAvailable": "沒有資料可用",
+    "selectSnapshot": "選取一個快照",
+    "fetchNewData": "抓取新資料",
+    "fetchingData": "正在抓取資料...",
+    "lastUpdate": "最後已更新",
+    "noDataInstructions": "沒有資料被找到為這個區域。按一下 \"Fetch New Data\" 去匯入你的 maimai 分數。你會需要你的 maimai token 為了這個處理。"
+  },
+  "profileMetadata": {
+    "title": "{username} | tomomai ともマイ",
+    "description": "檢視 {username} 的 maimai 個人檔案為 {region}。追蹤和分析 maimai 分數與朋友。",
+    "descriptionRich": "{displayName} ({username}) 在 {region} maimai：rating {rating}。檢視他們的 B50、最近遊玩、和譜面記錄在 tomomai。",
+    "descriptionUnknownRegion": "檢視 {username} 的 maimai 個人檔案。追蹤和分析 maimai 分數與朋友。",
+    "notFoundTitle": "個人檔案不是找到 | tomomai ともマイ",
+    "notFoundDescription": "你正在尋找的個人檔案不存在或不是公開可存取。",
+    "errorTitle": "錯誤 | tomomai ともマイ",
+    "errorDescription": "一個錯誤發生了當載入這個個人檔案。"
+  },
+  "profileVisibility": {
+    "public": "公開個人檔案",
+    "private": "私人個人檔案",
+    "accessibleBy": "可存取由 ",
+    "accessibleByEnd": "!",
+    "youMayChangePrivacySettings": "你可以變更你的隱私設定在右上方 Icon → Settings → Publish Profile。",
+    "onlyAccessibleByYou": "只可存取由你！你可以變更你的隱私設定在右上方 Icon → Settings → Publish Profile。"
+  },
+  "dataContent": {
+    "loading": "載入資料中...",
+    "snapshotData": "快照資料",
+    "snapshotFrom": "快照從 {date} • {name} • {count} songs",
+    "tabs": {
+      "playerInfo": "玩家資訊",
+      "stats": "統計",
+      "songs": "歌曲",
+      "recentPlays": "最近遊玩",
+      "recommendations": "已推薦",
+      "plates": "盤子",
+      "map": "事件",
+      "exportImage": "匯出影像",
+      "history": "歷史",
+      "developer": "開發者",
+      "albums": "相簿"
+    },
+    "playerInfo": "玩家資訊",
+    "rating": "Rating：{rating}",
+    "stars": "星星：{stars}",
+    "versionPlays": "版本遊玩：{count}",
+    "totalPlays": "總計遊玩：{count}",
+    "songs": "歌曲（{count} total）",
+    "searchPlaceholder": "搜尋歌曲由名稱、artist、難度、或類型...",
+    "newSongsB15": "新歌曲 B15",
+    "oldSongsB35": "舊歌曲 B35",
+    "newSongs": "新歌曲",
+    "oldSongs": "舊歌曲",
+    "displayModes": {
+      "list": "清單",
+      "grid": "格線",
+      "compact": "表格"
+    },
+    "tableHeaders": {
+      "song": "歌曲",
+      "artist": "Artist",
+      "level": "等級",
+      "achievement": "達成",
+      "fc": "FC",
+      "fs": "FS",
+      "rating": "Rating"
+    },
+    "statistics": {
+      "sum": "加總",
+      "average": "Avg"
+    },
+    "switchToListForAllSongs": "切換到清單或表格檢視為了所有歌曲",
+    "noDataAvailable": "沒有資料可用",
+    "getStartedInstructions": "得到開始由抓取你的 maimai 資料使用上面的抓取按鈕。",
+    "history": {
+      "title": "Rating 歷史",
+      "ratingOverTime": "Rating 超過時間",
+      "noHistory": "沒有 rating 歷史可用",
+      "needMoreData": "抓取資料至少兩次去看你的 rating 歷史"
+    },
+    "developer": {
+      "title": "開發者",
+      "exportJson": "匯出快照作為 JSON",
+      "exporting": "正在匯出..."
+    },
+    "exportImageCard": {
+      "profileImage": "個人檔案影像",
+      "lastCredit": "最後 Credit",
+      "dailyPlays": "每日遊玩",
+      "dayLabel": "日",
+      "dayPlaceholder": "選取一個日",
+      "dayLoading": "正在載入日...",
+      "noPlays": "沒有每日遊玩可用"
+    }
+  },
+  "albums": {
+    "title": "相片相簿",
+    "photos": "相片",
+    "noAlbums": "還沒有相片相簿",
+    "loadMore": "載入更多",
+    "loading": "載入中...",
+    "error": "失敗去載入相簿",
+    "storage": "儲存體",
+    "storageTitle": "儲存體使用",
+    "storageDescription": "管理你的相片相簿儲存體。最舊相片是自動刪除當超過 8MB。這應該是足夠為 ~170 images。",
+    "used": "已使用",
+    "totalUsed": "總計已使用",
+    "limit": "限制",
+    "usedOf": "的",
+    "byRegion": "由區域",
+    "storageWarning": "你正在接近儲存體限制。考慮刪除舊相片或較舊相簿將會自動被移除。",
+    "uploadNotice": "如果你剛抓取了一個快照，新的相簿相片可能拿一些時刻去上傳和出現在這裡。請重新整理在一會兒。",
+    "deleteTitle": "刪除相片",
+    "deleteDescription": "你確定你想要刪除這個相片？這個動作不能被反轉。",
+    "deleteSuccess": "相片刪除成功地",
+    "deleteFailed": "失敗去刪除相片",
+    "dontAskAgain": "今天不要再顯示這個確認",
+    "delete": "刪除",
+    "cancel": "取消"
+  },
+  "recommendations": {
+    "noRecommendations": "沒有推薦可用",
+    "allOptimal": "所有你的分數已經是最佳！保持上這個偉大工作。",
+    "description": "歌曲被推薦去改善你的 rating 基於你目前 B15/B35 分數。",
+    "filterButton": "篩選",
+    "filters": {
+      "all": "全部",
+      "best": "在 B15/B35",
+      "new": "新歌曲",
+      "old": "舊歌曲"
+    },
+    "filterCategories": {
+      "difficulty": "難度",
+      "level": "等級",
+      "type": "類型",
+      "targetRating": "目標 Rating",
+      "achievement": "達成",
+      "version": "版本"
+    }
+  },
+  "recentPlays": {
+    "title": "最近遊玩",
+    "noPlays": "沒有最近遊玩被找到",
+    "notFetched": "不是已抓取",
+    "fetching": "抓取中...",
+    "detailsNotFetched": "詳細遊玩資料還沒有被抓取。同步你的資料再次去得到詳細 breakdown。",
+    "detailsFetching": "詳細遊玩資料仍然正在被抓取。請等待一個時刻並重新整理頁面。",
+    "labels": {
+      "dx": "DX",
+      "combo": "Combo",
+      "fast": "Fast",
+      "late": "Late"
+    },
+    "notesBreakdown": {
+      "type": "類型",
+      "total": "總計",
+      "totalLoss": "損失"
+    },
+    "clickToExpand": "按一下去展開詳細資料",
+    "clickToCollapse": "按一下去摺疊"
+  },
+  "events": {
+    "title": "事件",
+    "areaEvents": "區域事件",
+    "eventAreaEvents": "事件區域事件",
+    "noEventsAvailable": "沒有事件可用",
+    "noAreaEvents": "沒有區域事件可用",
+    "noEventAreaEvents": "沒有事件區域事件可用",
+    "currentDistance": "目前距離",
+    "nextReward": "下一個獎勵在",
+    "eventCompleted": "事件已完成",
+    "notStarted": "未開始",
+    "inProgress": "在進度中",
+    "completed": "已完成"
+  },
+  "playerStats": {
+    "title": "玩家統計",
+    "selectVersion": "選取版本",
+    "allVersions": "所有版本",
+    "selectDifficulty": "選取難度",
+    "allDifficulties": "所有難度",
+    "backToStats": "返回到統計",
+    "viewPlatesProgress": "檢視盤子進度",
+    "achievementGrades": "達成等級",
+    "fullCombo": "Full Combo",
+    "fullSync": "Full Sync",
+    "noDataAvailable": "沒有資料可用",
+    "noMatchingScores": "沒有分數符合已選取篩選器",
+    "selectVersionForPlates": "請選取一個特定版本去檢視盤子進度",
+    "songsNotMeeting": "歌曲不是符合 {requirement}",
+    "noSongsToDisplay": "沒有歌曲去顯示",
+    "plates": {
+      "kiwami": "全部 FC 或以上",
+      "shou": "全部 SSS 或以上",
+      "shin": "全部 AP 或以上",
+      "maimai": "全部 FDX 或以上"
+    }
+  },
+  "tokenDialog": {
+    "title": "更新 maimai 認證化",
+    "japanDescription": "進入你的 SEGA 帳目信物為了日本區域。",
+    "intlDescription": "選擇你的認證化方法為了國際的區域。",
+    "credentialsStored": "你的信物將會被節省為了未來使用。",
+    "username": "使用者名字",
+    "usernamePlaceholder": "進入你的 SEGA 帳目使用者名字",
+    "password": "通過字",
+    "passwordPlaceholder": "進入你的 SEGA 帳目通過字",
+    "cookies": "曲奇",
+    "tokenPlaceholder": "clal=你的令牌在這裡",
+    "tokenValidationError": "令牌必須開始與 \"clal=\" 後面跟著只有字母們和數字們",
+    "authenticationNote": "認證化：",
+    "segaCredentialsNote": "使用你的 SEGA 帳目信物去認證化與 maimai DX NET。",
+    "credentialsSecureNote": "你的信物將會被儲藏為了未來取物們。",
+    "savingCredentials": "正在節省信物...",
+    "saveCredentials": "節省信物",
+    "tokenTab": "令牌",
+    "passwordTab": "通過字",
+    "tokenInstructions": {
+      "description": "曲奇值開始與 \"clal=\" 從 maimai DX NET。",
+      "expiration": "這個令牌可能會得到被作廢在某段時間之後，所以你可能需要更新它在未來。"
+    },
+    "passwordInstructions": "使用你的 SEGA 帳目使用者名字和通過字直接地",
+    "secureStorage": "你的信物將會被儲藏為了未來取物們。",
+    "steps": {
+      "step1Title": "登入到 maimai DX NET",
+      "step2Title": "去到找不到網頁",
+      "step3Title": "處決密碼"
+    },
+    "clipboard": {
+      "copied": "已被複製到剪貼板！",
+      "failed": "失敗去複製到剪貼板"
+    },
+    "loading": {
+      "scriptLink": "正在生產手稿連結...",
+      "loginLink": "正在生產人格化連結..."
+    },
+    "tokenDialogDescription": "進入你的瀏覽機令牌去認證化",
+    "segaAccountDescription": "進入你的 SEGA 帳目信物",
+    "backToSteps": "背面到步驟們",
+    "step1": {
+      "description": "登入到 maimai DX NET 在一個 <strong>不認識人 / 私人窗戶</strong>。",
+      "clickToCopy": "按一下下面連結去複製到剪貼板：",
+      "haveCookies": "有你自己的曲奇已經了嗎？",
+      "enterDirectly": "直接進入它"
+    },
+    "step2": {
+      "description": "參拜這個下面連結，在相同的不認識人 / 私人分頁。",
+      "otpLabel": "一次性通過字：",
+      "otpExpires": "吐氣 ～ {time}",
+      "refreshing": "正在再新鮮...",
+      "refreshOtp": "再新鮮一次性通過字"
+    },
+    "step3": {
+      "desktop": "桌面台",
+      "desktopInstructions": "複製下面爪哇手稿密碼並且貼上它在你瀏覽機的開發者控制台（Ctrl + Shift + I 或 F12）。",
+      "mobile": "可動電話",
+      "mobileStep1": "1. 點選下面密碼去複製到剪貼板。",
+      "mobileStep2": "2. 建立一個書籤在你的瀏覽機並且貼上被複製文字在網址欄位。",
+      "mobileStep3": "3. 跑這個書籤。"
+    },
+    "navigation": {
+      "previousStep": "之前步驟",
+      "nextStep": "下一個步驟"
+    },
+    "recommended": "被推薦的",
+    "tokenOptionDescription": "登入到你的 maimai DX NET 帳目用你的瀏覽機令牌們。令牌可能會吐氣時不時。沒有通過字被需要並且支援社交登入們。",
+    "passwordOptionDescription": "登入到你的 maimai DX NET 帳目用你的 SEGA 帳目信物。永不吐氣。不被推薦。",
+    "cnTitle": "更新舞萌認證化",
+    "cnDescription": "選擇你的認證化方法為了中國區域。",
+    "cnExperimentalWarningTitle": "中國區域是實驗性的",
+    "cnExperimentalWarningMessage": "支援可能結束突然地，功能可能不穩定，並且資料可能被擦掉。",
+    "recommendedBadge": "被推薦的",
+    "comingSoonBadge": "來很快",
+    "disabledBadge": "暫時被停用",
+    "features": {
+      "playerInfo": "玩家資訊",
+      "scores": "譜面分數們",
+      "recents": "最近遊玩們",
+      "events": "活動資料"
+    },
+    "fetchOptions": {
+      "divingFish": {
+        "name": "水鱼查分器",
+        "description": "使用你的水鱼查分器使用者名字或被連結的 QQ 帳目識別碼去取物資料。"
+      },
+      "lxns": {
+        "name": "落雪咖啡屋查分器",
+        "description": "授權用你的落雪咖啡屋帳目去取物資料。"
+      },
+      "httpProxy": {
+        "name": "HTTP 代理人",
+        "description": "半路攔截請求們從微信 maimai DX 迷你程式在你的電話機經由一個 HTTP 代理人。"
+      },
+      "androidApp": {
+        "name": "安卓應用程式",
+        "description": "安裝這個應用程式在你的安卓裝置去自動地取物資料。"
+      }
+    },
+    "lxns": {
+      "title": "落雪咖啡屋查分器",
+      "description": "授權 tomomai.lol 去讀取你的 maimai DX 資料從你的落雪咖啡屋帳目。你可以撤回授權任何時候在你的帳目設定值。",
+      "notConfiguredTitle": "落雪咖啡屋 OAuth 沒有被設定",
+      "notConfiguredMessage": "請求一個管理者去設定 <code>LXNS_CLIENT_ID</code> 和 <code>LXNS_CLIENT_SECRET</code> 環境變數們在伺候者上。",
+      "instructionsLine1": "按一下下面按鈕去開啟落雪咖啡屋授權網頁在一個新窗戶。窗戶將會自動關閉在授權之後。",
+      "instructionsLine2": "我們只有請求允許去讀取玩家資料並且將不會寫任何你的資料。",
+      "authorizeButton": "授權",
+      "authorizingButton": "正在等待授權…",
+      "popupBlocked": "不可以開啟授權窗戶。請允許彈出物們為了這個網站並且再試。",
+      "authFailed": "授權失敗了：{error}",
+      "unknownError": "不認識的錯誤"
+    },
+    "divingFish": {
+      "title": "水鱼查分器",
+      "description": "綁住你的水鱼查分器帳目到 tomomai。我們將會讀取你的 maimai DX 資料從水鱼查分器在綁住之後。選擇下面方法之一去證明對你的帳目所有權。",
+      "notConfiguredTitle": "水鱼查分器沒有被設定",
+      "notConfiguredMessage": "請求一個管理者去設定 <code>DIVINGFISH_DEV_TOKEN</code> 環境變數在伺候者上。",
+      "importTokenTab": "進口-令牌證明對",
+      "nicknameTab": "暱稱證明對",
+      "importTokenInstructions": "生產一個進口-令牌在水鱼查分器 \"編輯設定檔\" 網頁並且貼上它在這裡。",
+      "importTokenSecureNote": "我們只有使用這個令牌去證明對你的帳目一次並且將會丟棄它立即地在證明對之後。",
+      "importTokenPlaceholder": "貼上你的進口-令牌",
+      "importTokenButton": "證明對並且綁住",
+      "importTokenVerifying": "正在證明對…",
+      "nicknameInstructions": "跟隨這些步驟去完成證明對：",
+      "nicknameStep1": "登入到水鱼查分器",
+      "nicknameStep2": "改變你的暱稱在 \"編輯設定檔\" 到下面密碼",
+      "nicknameStep3": "節省改變們",
+      "nicknameStep4": "返回這裡，填入你的使用者名字或 QQ，並且證明對",
+      "nicknameLabel": "改變你的暱稱到",
+      "refreshCode": "再新鮮密碼",
+      "nicknameTypeLabel": "類型",
+      "nicknameUsername": "使用者名字",
+      "nicknameQQ": "QQ",
+      "nicknameIdentifierPlaceholder": "你的水鱼查分器使用者名字或被連結的 QQ 號碼",
+      "nicknameVerifyButton": "我已經改變了它，開始證明對",
+      "nicknameVerifying": "正在證明對…",
+      "nicknameRevertNote": "在證明對成功之後，你可以改變你的暱稱背面到原本的。",
+      "verifyFailedFallback": "證明對失敗了",
+      "challengePlaceholder": "-------"
+    },
+    "httpProxy": {
+      "title": "HTTP 代理人",
+      "description": "指你的電話機的 HTTP 代理人到我們的伺候者，然後開啟下面連結在微信去完成授權。你只有需要授權一次。",
+      "notConfiguredTitle": "HTTP 代理人服務沒有被設定",
+      "notConfiguredMessage": "請求一個管理者去設定 <code>CN_PROXY_HOST</code> 和 <code>CN_PROXY_TOKEN_SECRET</code> 環境變數們。",
+      "step1Title": "步驟 1：設定 HTTP 代理人在你的電話機的無線網路設定值到",
+      "step1Host": "主人",
+      "step1Port": "港口",
+      "step2Title": "步驟 2：{generateOrRegenerate}授權連結",
+      "step2Generate": "生產",
+      "step2Regenerate": "如果連結吐氣了，再生產",
+      "step2GenerateButton": "生產授權連結",
+      "step2RegenerateButton": "再生產",
+      "step2GeneratingButton": "正在生產…",
+      "step2ErrorPrefix": "錯誤：",
+      "step3Title": "步驟 3：開啟授權連結在你的電話機上",
+      "step3ScanWithWechat": "掃描與微信",
+      "step3ScanNote": "開啟微信，點選掃描圖示，並且掃描 QR 密碼去直接開啟授權連結。",
+      "step3Or": "或",
+      "step3OrCopy": "複製連結到微信",
+      "step3OrCopyNote": "複製連結，發送它到任何微信聊天，然後點選去開啟。",
+      "step3Copy": "複製連結",
+      "step3CopyNote": "在授權之後，微信將會重新導向到一個結果網頁。請關閉那個網頁，返回 tomomai 去檢查進口進行中，並且記得關掉代理人在你的無線網路設定值。",
+      "copySuccess": "已被複製",
+      "copyFailed": "複製失敗了，請手動複製",
+      "clashConfigUrl": "衝突設定 URL",
+      "clashImportButton": "進口到衝突"
+    }
+  },
+  "regions": {
+    "intl": "國際的",
+    "jp": "日本",
+    "cn": "中國",
+    "short": {
+      "intl": "亞洲",
+      "jp": "日本",
+      "cn": "中國"
+    }
+  },
+  "userHeader": {
+    "memberLabel": "ともマイ 成員",
+    "discordPrompt": "面對問題？或者有功能或想法要加入到 tomomai ともマイ？",
+    "joinDiscord": "加入我們的社群 Discord！"
+  },
+  "publicHeader": {
+    "discordBanner": "有問題或建議？加入我們的 Discord 社群！"
+  },
+  "header": {
+    "tabs": {
+      "dashboard": "儀表板",
+      "db": "資料庫"
+    },
+    "addDiscordBot": "加入作為 Discord Bot",
+    "followTwitter": "在 X 上跟隨",
+    "followThreads": "在 Threads 上跟隨",
+    "admin": "管理",
+    "testOnboarding": "測試在登上",
+    "errors": {
+      "inviteLink": "打開邀請連結失敗了"
+    }
+  },
+  "onboarding": {
+    "title": "歡迎到 tomomai！",
+    "step1": {
+      "title": "揀一個使用者名稱",
+      "description": "你的使用者名稱是你在 tomomai 上面的把手。如果你選擇分享，它也變成你的公開設定檔 URL。",
+      "publishToggleLabel": "與朋友分享我的設定檔",
+      "publishToggleDescription": "讓其他人檢視你的分數在一個公開連結。關閉由預設；你可以改變這個任何時間。",
+      "publicUrlHint": "你的公開設定檔："
+    },
+    "step2": {
+      "title": "選擇你的區域",
+      "description": "揀你的 maimai 資料居住在哪裡。你可以稍後從功能表切換。"
+    },
+    "step3": {
+      "title": "你是全部設定！",
+      "description": "歡迎在船上。任何時間回來在 {host}。",
+      "goToDashboard": "去到儀表板"
+    },
+    "navigation": {
+      "previous": "背後",
+      "next": "下一個",
+      "saving": "正在儲存…"
+    }
+  },
+  "usernameSetup": {
+    "title": "選擇你的使用者名稱",
+    "description": "你需要設定一個使用者名稱去使用這個應用。這將被用於你的公開設定檔 URL 並且必須是唯一。",
+    "usernameLabel": "使用者名稱",
+    "placeholder": "進入你的使用者名稱",
+    "checking": "檢查可用性...",
+    "available": "使用者名稱是可用！",
+    "rules": {
+      "length": "1-32 字元長",
+      "characters": "字母、數字、破折號 (-)、和底線 (_) 只",
+      "profileUrl": "將被用在你的設定檔 URL：/profile/{username}"
+    },
+    "setUsername": "設定使用者名稱",
+    "settingUsername": "正在設定使用者名稱...",
+    "success": "使用者名稱成功地設定！",
+    "enterUsername": "請進入一個使用者名稱",
+    "chooseAvailable": "請選擇一個可用使用者名稱",
+    "validation": {
+      "format": "使用者名稱必須是 1-32 字元長並只包含字母、數字、破折號、和底線",
+      "taken": "這個使用者名稱已經被拿走"
+    },
+    "changeTitle": "改變使用者名稱",
+    "changeDescription": "選擇一個新的使用者名稱。你的設定檔 URL 將改變。",
+    "changeButton": "改變",
+    "sameAsCurrent": "同樣作為你目前的使用者名稱。",
+    "newProfileUrl": "新設定檔 URL：/profile/{username}",
+    "changeSuccess": "使用者名稱成功地更新。",
+    "changingUsername": "正在儲存…",
+    "newUsernameLabel": "新使用者名稱"
+  },
+  "invites": {
+    "title": "管理邀請",
+    "description": "建立和管理邀請連結為新使用者。\n你可以每 3 天邀請 3 使用者。邀請連結在 7 天後過期。\n只邀請你信任或個人知道的人，你可能對他們的行動有責任。",
+    "quota": "配額：",
+    "quotaExplanation": {
+      "available": "虛線圓 = 可用槽",
+      "active": "正常邊界 = 主動邀請",
+      "claimed": "填滿圓 = 最近被宣稱"
+    },
+    "yourInvitations": "你的邀請",
+    "createInvite": "建立邀請",
+    "creating": "正在建立...",
+    "loading": "正在載入邀請...",
+    "noInvitations": "還沒有邀請被建立。",
+    "status": {
+      "activeCode": "主動代碼",
+      "claimedCode": "宣稱代碼",
+      "expiredCode": "過期代碼",
+      "revokedCode": "撤銷代碼"
+    },
+    "statusDetails": {
+      "activeUntil": "主動直到 {date}",
+      "claimedBy": "被 {name} 宣稱在 {date}",
+      "expiredOn": "過期在 {date}",
+      "revoked": "撤銷了",
+      "unknownStatus": "未知狀態"
+    },
+    "actions": {
+      "copyLink": "複製連結",
+      "revoke": "撤銷",
+      "revoking": "正在撤銷..."
+    },
+    "messages": {
+      "created": "邀請成功地建立！",
+      "linkCopied": "邀請連結複製到剪貼簿！",
+      "createFailed": "建立邀請失敗了",
+      "revoked": "邀請成功地撤銷！",
+      "revokeFailed": "撤銷邀請失敗了",
+      "copyFailed": "複製到剪貼簿失敗了",
+      "clipboardNotSupported": "剪貼簿不支援",
+      "quotaExceeded": "你只可以有 3 主動邀請每 3 天",
+      "newUserRestriction": "新使用者必須等待 3 天在建立邀請之前",
+      "newUserRestrictionDetails": "你可以建立邀請在 {date} 之後"
+    }
+  },
+  "acceptInvitation": {
+    "title": "tomomai ともマイ",
+    "subtitle": "你已經被邀請去加入 tomomai ともマイ 社群",
+    "validating": "正在驗證邀請...",
+    "redirecting": "重新指向到首頁...",
+    "invited": "你已經被邀請！",
+    "invitedBy": "{name} 已邀請你去加入 tomomai ともマイ",
+    "expiresOn": "邀請過期在 {date}",
+    "acceptAndSignUp": "接受邀請 & 註冊",
+    "backToHome": "背後到家",
+    "alreadyLoggedIn": "歡迎！你已經登入。",
+    "authError": "一個錯誤發生在驗證期間。請再試一次。",
+    "errors": {
+      "invalidCode": "無效邀請代碼",
+      "revoked": "這個邀請已經被撤銷",
+      "alreadyUsed": "這個邀請已經已經被使用",
+      "expired": "這個邀請已經過期",
+      "ownCode": "你不能使用你自己的邀請代碼",
+      "validationFailed": "驗證邀請失敗了"
+    }
+  },
+  "db": {
+    "callout": {
+      "title": "改為存取那個資料庫？",
+      "subtitle": "按這裡以看歌曲資料庫沒有登入在裡面。",
+      "description": "tomomai ともマイ DB 是一個公開資料庫的 maimai 譜面、機台、以及更多。"
+    },
+    "beta": {
+      "title": "Beta 功能",
+      "description": "資料庫功能現在是在 beta。某些資料可能是未完成或不精準的。"
+    },
+    "types": {
+      "songs": "歌曲們",
+      "calculator": "計算器",
+      "stats": "統計們",
+      "events": "事件們",
+      "posts": "變更記錄"
+    },
+    "events": {
+      "title": "旅行事件們",
+      "description": "瀏覽全部 maimai 旅行事件們和它們的獎賞",
+      "search": "搜尋事件們...",
+      "noEvents": "沒有事件被找到。",
+      "selectEvent": "選取一個事件為了看細節",
+      "steps": "步驟們",
+      "distance": "距離",
+      "type": "類型",
+      "reward": "獎賞",
+      "period": "期間",
+      "active": "活動中",
+      "ended": "已結束的",
+      "upcoming": "即將來的",
+      "back": "背面",
+      "stepTypes": {
+        "frame": "框架",
+        "song": "歌曲",
+        "nameplate": "名字盤子",
+        "present": "現在物",
+        "icon": "圖示",
+        "title": "標題",
+        "tourMember": "旅行成員",
+        "perfectChallenge": "完美挑戰",
+        "kaleidxscope": "KALEIDXSCOPE"
+      }
+    },
+    "songs": {
+      "metadata": {
+        "title": "歌曲們資料庫 | maimai DX",
+        "description": "瀏覽和搜尋全部 maimai DX 歌曲們。由類型、流派、以及版本去篩選。檢視歌曲細節、難度等級、和區域可用性。",
+        "songTitle": "{songName} - {artist} | maimai DX",
+        "songDescription": "檢視詳細資訊關於 \"{songName}\" 由 {artist}。{chartType} 譜面 • {genre}",
+        "songOgDescription": "檢視詳細資訊關於 \"{songName}\" 由 {artist}。",
+        "songFallbackTitle": "歌曲細節 | maimai DX",
+        "songFallbackDescription": "檢視詳細資訊關於這個 maimai DX 歌曲包含難度等級和區域可用性。",
+        "chartTypeDx": "DX",
+        "chartTypeStandard": "標準",
+        "jsonLdChartDescription": "{chartType} 譜面從 maimai DX"
+      },
+      "title": "歌曲們資料庫 | maimai DX",
+      "heading": "歌曲們資料庫",
+      "searchPlaceholder": "搜尋歌曲們、藝術家們、流派們...",
+      "noSongsFound": "沒有歌曲被找到",
+      "tryAdjustingSearch": "嘗試調整你的搜尋",
+      "noSongsAvailable": "沒有歌曲可用的",
+      "detail": {
+        "title": "歌曲細節們",
+        "artist": "歌曲藝術家",
+        "detailsFor": "細節為 {songName}",
+        "charts": "譜面們",
+        "availability": "可用性",
+        "yourScore": "你的分數",
+        "achievement": "成就",
+        "rating": "評級",
+        "chartDesigner": "譜面設計者",
+        "bpm": "BPM",
+        "added": "被加入",
+        "share": "分享連結",
+        "youtube": "YouTube",
+        "viewCharts": "檢視譜面們",
+        "viewDetails": "在 tomomai DB 檢視細節",
+        "summary": "{songName} 是一個 maimai でらっくす {chartType} 譜面由 {artist} 在 {genre} 流派，被加入在 {versionName}。難度範圍從 {minLevel} 到 {maxLevel} 橫跨 {chartCount, plural, =1 {# 譜面} other {# 譜面們}}{bpmFragment}。",
+        "summaryBpmFragment": " (BPM {bpm})",
+        "loadFailed": "失敗去載入歌曲細節"
+      },
+      "filter": {
+        "type": "類型",
+        "genre": "流派",
+        "addedVersion": "被加入版本",
+        "std": "STD",
+        "dx": "DX",
+        "sort": "排序",
+        "sortVersionDesc": "版本 (最新)",
+        "sortVersionAsc": "版本 (最舊)",
+        "sortLevelAsc": "等級 (低 -> 高)",
+        "sortLevelDesc": "等級 (高 -> 低)",
+        "level": "等級",
+        "groupBy": "群組由",
+        "noteDesigner": "音符設計者",
+        "groups": {
+          "none": "沒有一個",
+          "noteDesigner": "譜面設計者",
+          "levelAsc": "等級 (低 -> 高)",
+          "levelDesc": "等級 (高 -> 低)",
+          "versionAsc": "版本 (最舊)",
+          "versionDesc": "版本 (最新)",
+          "genre": "流派",
+          "artist": "藝術家"
+        }
+      }
+    },
+    "common": {
+      "difficulty": "困難度",
+      "level": "等級",
+      "notes": "筆記們",
+      "chartDesigner": "譜面設計者",
+      "bpm": "BPM",
+      "added": "被加入"
+    },
+    "posts": {
+      "list": {
+        "title": "變更記錄",
+        "description": "最新更新們和變更們到 tomomai。",
+        "noPosts": "尚無貼文還。"
+      },
+      "dialog": {
+        "dismiss": "解散",
+        "readMore": "讀更多"
+      },
+      "aiTranslationHint": {
+        "title": "AI-協助的翻譯",
+        "description": "這個文章被翻譯用 AI 的幫助。翻譯可能不是完美。如果你點到任何問題，貢獻是歡迎的！"
+      }
+    },
+    "stats": {
+      "title": "全球統計們",
+      "description": "探索聚合 maimai DX 統計跨越全部被追蹤玩家們：評級分佈、頂部標題們、流行歌曲們、和遊玩活動越過時間。",
+      "ratingDistribution": "玩家評級分佈",
+      "playCountDistribution": "玩家遊玩計數分佈",
+      "topTitles": "頂部玩家標題們",
+      "topSongs": "最被遊玩歌曲們",
+      "averageAchievementByLevel": "平均成就由等級",
+      "ratingVsPlayCount": "評級 vs 遊玩計數熱地圖",
+      "activeUsersOverTime": "活動使用者們越過時間",
+      "fetchesPerDay": "使用者們與抓取們每一天",
+      "recentPlaysPerDay": "最近遊玩們每一天",
+      "ratingClimbByBand": "平均評級爬升每 30 天",
+      "newPlayersPerWeek": "新被追蹤玩家們每週",
+      "fetchActivityHeatmap": "抓取活動由小時 & 星期日",
+      "playActivityHeatmap": "遊玩活動由小時 & 星期日",
+      "heatmapTimezoneNote": "小時顯示在 JST (UTC+9)，最後 90 天。",
+      "topSongsWindow": {
+        "label": "時間範圍",
+        "all": "全部時間",
+        "90d": "最後 90 天",
+        "30d": "最後 30 天",
+        "7d": "最後 7 天"
+      },
+      "xAxis": {
+        "rating": "評級",
+        "playCount": "遊玩計數",
+        "level": "等級",
+        "date": "日期",
+        "days": "天們",
+        "week": "週",
+        "currentRatingBand": "目前評級",
+        "timePeriod": "時間期間",
+        "lastDay": "最後 1 天",
+        "lastDays": "最後 {days} 天"
+      },
+      "yAxis": {
+        "percentage": "百分比",
+        "achievement": "成就",
+        "count": "使用者們",
+        "activeUsers": "活動使用者們",
+        "usersWithFetches": "使用者們與抓取們",
+        "recentPlays": "遊玩們",
+        "newPlayers": "新玩家們",
+        "ratingPer30d": "評級被取得 / 30 天",
+        "playsPer30d": "遊玩們 / 30 天"
+      },
+      "table": {
+        "rank": "階級",
+        "title": "標題",
+        "song": "歌曲",
+        "percentage": "百分比",
+        "count": "計數"
+      },
+      "showAll": "顯示全部 {count}",
+      "showLess": "顯示少一點",
+      "region": {
+        "intl": "國際",
+        "jp": "日本"
+      }
+    }
+  },
+  "theme": {
+    "description": "選擇一個顏色主題為介面。",
+    "groups": {
+      "simple": "簡單",
+      "amaranth": "莧菜紅",
+      "blue": "藍",
+      "brown": "棕",
+      "emerald": "翡翠",
+      "grass": "草",
+      "purple": "紫",
+      "rose": "玫瑰",
+      "gold": "金",
+      "pink": "粉紅"
+    },
+    "title": "主題"
+  },
+  "fetchToast": {
+    "header": {
+      "pending": "正在抓取資料...",
+      "completed": "抓取完整",
+      "failed": "抓取失敗"
+    },
+    "states": {
+      "connecting": "正在連接...",
+      "connected": "已連接",
+      "login": "已登入在",
+      "playerData": "已抓取玩家資料",
+      "songDataBasic": "已抓取 BASIC 分數們",
+      "songDataAdvanced": "已抓取 ADVANCED 分數們",
+      "songDataExpert": "已抓取 EXPERT 分數們",
+      "songDataMaster": "已抓取 MASTER 分數們",
+      "songDataRemaster": "已抓取 Re:MASTER 分數們",
+      "songDataUtage": "已抓取 UTAGE 分數們",
+      "recentSongs": "已抓取最近歌曲們",
+      "hiddenSongs": "已抓取隱藏歌曲們",
+      "albumData": "已抓取相簿資料"
+    }
+  }
+}

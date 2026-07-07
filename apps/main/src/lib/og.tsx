@@ -56,7 +56,7 @@ async function loadGeistMono(): Promise<FontEntry[]> {
 async function loadLocaleFonts(locale: Locale): Promise<FontEntry[]> {
   // Mirror the logic from src/app/layout.tsx
   const needsJP = true; // NotoSansJP covers ja + ko + fallback
-  const needsTC = locale === "zh-TW" || locale === "zh-HK";
+  const needsTC = locale === "zh-TW" || locale === "zh-HK" || locale === "zh-MS";
   const needsSC = locale === "zh-CN" || locale === "zh-SG";
 
   const loads: Promise<FontEntry[]>[] = [];
@@ -99,6 +99,7 @@ function getFontFamily(locale: Locale): string {
   switch (locale) {
     case "zh-TW":
     case "zh-HK":
+    case "zh-MS":
       return "Inter, Noto Sans TC, Noto Sans JP";
     case "zh-CN":
     case "zh-SG":

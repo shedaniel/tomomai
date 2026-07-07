@@ -48,7 +48,7 @@ export interface Post extends PostMeta {
 function getLocaleFallbackChain(locale: Locale): string[] {
   const chain: string[] = [locale];
 
-  if (locale === "zh-HK" || locale === "zh-CN") {
+  if (locale === "zh-HK" || locale === "zh-CN" || locale === "zh-MS") {
     chain.push("zh-TW");
   } else if (locale === "zh-SG") {
     chain.push("zh-CN", "zh-TW");
@@ -211,7 +211,7 @@ export function getAvailableTranslations(canonicalSlug: string): Locale[] {
   const hasZhTW = translations.includes("zh-TW");
 
   if (hasZhTW) {
-    // zh-CN, zh-HK, and zh-SG can be auto-converted from zh-TW
+    // zh-CN, zh-HK, zh-SG, and zh-MS can be auto-converted from zh-TW
     if (!translations.includes("zh-CN")) {
       translations.push("zh-CN");
     }
@@ -220,6 +220,9 @@ export function getAvailableTranslations(canonicalSlug: string): Locale[] {
     }
     if (!translations.includes("zh-SG")) {
       translations.push("zh-SG");
+    }
+    if (!translations.includes("zh-MS")) {
+      translations.push("zh-MS");
     }
   } else if (translations.includes("zh-CN") && !translations.includes("zh-SG")) {
     // zh-SG can also use zh-CN directly (both are simplified)

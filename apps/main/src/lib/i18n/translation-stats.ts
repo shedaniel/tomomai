@@ -5,6 +5,7 @@ import zhTW from "../../../messages/zh-TW.json";
 import zhHK from "../../../messages/zh-HK.json";
 import zhCN from "../../../messages/zh-CN.json";
 import zhSG from "../../../messages/zh-SG.json";
+import zhMS from "../../../messages/zh-MS.json";
 import ko from "../../../messages/ko.json";
 
 function flatten(obj: unknown, prefix = "", out = new Set<string>()): Set<string> {
@@ -55,5 +56,6 @@ export const TRANSLATION_STATS: Record<string, TranslationStat> = {
   "zh-HK": { locale: "zh-HK", ...statsFor(zhHK) },
   "zh-CN": { locale: "zh-CN", ...statsFor(zhCN) },
   "zh-SG": { locale: "zh-SG", ...statsFor(zhSG) },
+  "zh-MS": { locale: "zh-MS", ...statsFor(zhMS) },
   "ko": { locale: "ko", ...statsFor(ko) },
 };
