@@ -539,10 +539,9 @@ export const auth = betterAuth({
         }
       }
 
-      // Consent endpoint hardening: recover oauth_query from JSON or form body,
-      // reject unknown scopes (defence-in-depth against stale authorize URLs),
-      // and enforce body.scope ⊆ oauth_query.scope so the granted set never
-      // exceeds what the signed authorize request requested.
+      // Consent endpoint hardening. Better Auth's OAuth provider accepts
+      // { accept, scope? }; its client plugin adds oauth_query when the custom
+      // consent page is reached from a signed authorize redirect.
       if (ctx.path === "/oauth2/consent") {
         let rawQuery: string | undefined;
         let bodyScope: string | undefined;
@@ -551,8 +550,6 @@ export const auth = betterAuth({
           if (typeof b.oauth_query === "string") rawQuery = b.oauth_query;
           if (typeof b.scope === "string") bodyScope = b.scope;
         }
-        // BA may deliver application/x-www-form-urlencoded on this endpoint
-        // (the OAuth norm); the JSON cast above silently no-ops in that case.
         if (!rawQuery) {
           const contentType = ctx.request?.headers?.get?.("content-type") ?? "";
           if (contentType.includes("application/x-www-form-urlencoded") && ctx.request) {
@@ -562,30 +559,36 @@ export const auth = betterAuth({
               rawQuery = params.get("oauth_query") ?? undefined;
               bodyScope = bodyScope ?? params.get("scope") ?? undefined;
             } catch {
-              // fall through to the missing-oauth_query check below
+              // Better Auth will return its own invalid_request if state is missing.
             }
           }
         }
-        if (!rawQuery) {
-          throw new APIError("BAD_REQUEST", { message: "oauth_query is required" });
+
+        const grantedScopes = bodyScope?.split(" ").filter(Boolean) ?? [];
+        const unknownGranted = grantedScopes.filter((s) => !(s in API_SCOPES));
+        if (unknownGranted.length > 0) {
+          throw new APIError("BAD_REQUEST", { message: `Unknown scopes: ${unknownGranted.join(", ")}` });
         }
-        const requestedScopes = new URLSearchParams(rawQuery).get("scope")?.split(" ").filter(Boolean) ?? [];
-        const unknown = requestedScopes.filter((s) => !(s in API_SCOPES));
-        if (unknown.length > 0) {
-          throw new APIError("BAD_REQUEST", { message: `Unknown scopes: ${unknown.join(", ")}` });
-        }
-        if (bodyScope) {
-          const requested = new Set(requestedScopes);
-          const granted = bodyScope.split(" ").filter(Boolean);
-          const extra = granted.filter((s) => !requested.has(s));
-          if (extra.length > 0) {
-            throw new APIError("BAD_REQUEST", {
-              message: `scope must be a subset of the originally-requested scopes (extra: ${extra.join(", ")})`,
-            });
+
+        if (rawQuery) {
+          const requestedScopes = new URLSearchParams(rawQuery).get("scope")?.split(" ").filter(Boolean) ?? [];
+          const unknownRequested = requestedScopes.filter((s) => !(s in API_SCOPES));
+          if (unknownRequested.length > 0) {
+            throw new APIError("BAD_REQUEST", { message: `Unknown scopes: ${unknownRequested.join(", ")}` });
           }
-          // Defence-in-depth: even if a client is misregistered with an
-          // internal scope, a non-admin must not be able to consent to it.
-          await rejectInternalScopesForNonAdmin(granted);
+          if (bodyScope) {
+            const requested = new Set(requestedScopes);
+            const extra = grantedScopes.filter((s) => !requested.has(s));
+            if (extra.length > 0) {
+              throw new APIError("BAD_REQUEST", {
+                message: `scope must be a subset of the originally-requested scopes (extra: ${extra.join(", ")})`,
+              });
+            }
+          }
+        }
+
+        if (grantedScopes.length > 0) {
+          await rejectInternalScopesForNonAdmin(grantedScopes);
         }
       }
 
