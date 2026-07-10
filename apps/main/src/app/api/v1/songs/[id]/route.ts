@@ -5,6 +5,7 @@ import { eq } from "drizzle-orm";
 import { unstable_cache } from "next/cache";
 import { zodJson } from "@/lib/api/zod-response";
 import { spec } from "./spec";
+import { SONG_CATALOG_CACHE_HEADERS } from "../cache-headers";
 
 async function getSongById(songId: string) {
   return unstable_cache(
@@ -84,9 +85,7 @@ export async function GET(
       },
     },
     {
-      headers: {
-        "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400",
-      },
+      headers: SONG_CATALOG_CACHE_HEADERS,
     },
   );
 }

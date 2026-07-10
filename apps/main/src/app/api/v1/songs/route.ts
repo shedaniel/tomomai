@@ -3,6 +3,7 @@ import { songs } from "@/lib/db/schema-pg";
 import { unstable_cache } from "next/cache";
 import { zodJson } from "@/lib/api/zod-response";
 import { spec } from "./spec";
+import { SONG_CATALOG_CACHE_HEADERS } from "./cache-headers";
 
 async function getAllSongs() {
   return unstable_cache(
@@ -37,29 +38,25 @@ export async function GET() {
   return zodJson(
     spec.response,
     {
-    songs: allSongs.map((s) => ({
-      songId: s.songId,
-      songName: s.songName,
-      artist: s.artist,
-      cover: s.cover,
-      type: s.type,
-      genre: s.genre,
-      difficulty: s.difficulty,
-      level: s.level,
-      levelPrecise: s.levelPrecise,
-      region: s.region,
-      gameVersion: s.gameVersion,
-      addedVersion: s.addedVersion,
-      bpm: s.bpm,
-      noteDesigner: s.noteDesigner,
-    })),
+      songs: allSongs.map((s) => ({
+        songId: s.songId,
+        songName: s.songName,
+        artist: s.artist,
+        cover: s.cover,
+        type: s.type,
+        genre: s.genre,
+        difficulty: s.difficulty,
+        level: s.level,
+        levelPrecise: s.levelPrecise,
+        region: s.region,
+        gameVersion: s.gameVersion,
+        addedVersion: s.addedVersion,
+        bpm: s.bpm,
+        noteDesigner: s.noteDesigner,
+      })),
     },
     {
-      headers: {
-        // Catalog changes at most hourly; let the CDN serve it without
-        // hitting the function so this stops counting as origin transfer.
-        "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400",
-      },
+      headers: SONG_CATALOG_CACHE_HEADERS,
     },
   );
 }
