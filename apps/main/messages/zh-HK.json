@@ -341,7 +341,7 @@
         "editDialog": {
           "title": "編輯 API 金鑰",
           "nameLabel": "名稱",
-          "namePlaceholder": "我的應用程式",
+          "namePlaceholder": "我的 Userscript",
           "saveButton": "儲存",
           "saving": "儲存中……",
           "saveError": "更新 API 金鑰失敗"
@@ -361,7 +361,7 @@
         "saveWarning": "請儲存此金鑰 — 關閉此對話框後將無法再次查看。",
         "done": "完成",
         "nameLabel": "名稱",
-        "namePlaceholder": "我的應用程式",
+        "namePlaceholder": "我的 Userscript",
         "nameDescription": "一個用於辨識此金鑰的描述性名稱。",
         "scopesLabel": "權限範圍",
         "scopeDefaultBadge": "預設",
@@ -513,7 +513,7 @@
           "title": "建立 OAuth 應用程式",
           "description": "註冊一個新應用程式以使用 OAuth 2.1 授權流程。",
           "nameLabel": "應用程式名稱",
-          "namePlaceholder": "我的 Userscript",
+          "namePlaceholder": "我的應用程式",
           "nameDescription": "在同意畫面上向用戶顯示的描述性名稱。",
           "uriLabel": "應用程式網址",
           "uriPlaceholder": "https://example.com",
