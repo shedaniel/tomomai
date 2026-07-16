@@ -341,7 +341,7 @@
         "editDialog": {
           "title": "编辑 API 密钥",
           "nameLabel": "名称",
-          "namePlaceholder": "我的应用",
+          "namePlaceholder": "我的用户脚本",
           "saveButton": "保存",
           "saving": "保存中…",
           "saveError": "更新 API 密钥失败"
@@ -361,7 +361,7 @@
         "saveWarning": "请保存此密钥 —— 关闭此对话框后将无法再次查看。",
         "done": "完成",
         "nameLabel": "名称",
-        "namePlaceholder": "我的应用",
+        "namePlaceholder": "我的用户脚本",
         "nameDescription": "用于识别此密钥的描述性名称。",
         "scopesLabel": "权限范围",
         "scopeDefaultBadge": "默认",
@@ -513,7 +513,7 @@
           "title": "创建 OAuth 应用程序",
           "description": "注册新应用程序以使用 OAuth 2.1 授权流程。",
           "nameLabel": "应用程序名称",
-          "namePlaceholder": "My Userscript",
+          "namePlaceholder": "我的应用",
           "nameDescription": "在同意页面上向用户显示的描述性名称。",
           "uriLabel": "应用程序 URL",
           "uriPlaceholder": "https://example.com",
