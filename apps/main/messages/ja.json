@@ -341,7 +341,7 @@
         "editDialog": {
           "title": "API キーを編集",
           "nameLabel": "名前",
-          "namePlaceholder": "マイアプリ",
+          "namePlaceholder": "マイ Userscript",
           "saveButton": "保存",
           "saving": "保存中…",
           "saveError": "API キーの更新に失敗しました"
@@ -361,7 +361,7 @@
         "saveWarning": "このキーを保存してください。このダイアログを閉じると再表示できません。",
         "done": "完了",
         "nameLabel": "名前",
-        "namePlaceholder": "マイアプリ",
+        "namePlaceholder": "マイ Userscript",
         "nameDescription": "このキーを識別するための名前。",
         "scopesLabel": "スコープ",
         "scopeDefaultBadge": "デフォルト",
@@ -513,7 +513,7 @@
           "title": "OAuth アプリを作成",
           "description": "OAuth 2.1 認可フローを使う新しいアプリを登録します。",
           "nameLabel": "アプリ名",
-          "namePlaceholder": "My Userscript",
+          "namePlaceholder": "マイアプリ",
           "nameDescription": "同意画面でユーザーに表示される説明的な名前。",
           "uriLabel": "アプリ URL",
           "uriPlaceholder": "https://example.com",
