@@ -341,7 +341,7 @@
         "editDialog": {
           "title": "API 키 편집",
           "nameLabel": "이름",
-          "namePlaceholder": "내 앱",
+          "namePlaceholder": "내 Userscript",
           "saveButton": "저장",
           "saving": "저장 중…",
           "saveError": "API 키 업데이트에 실패했습니다"
@@ -361,7 +361,7 @@
         "saveWarning": "Save this key — it won't be shown again after closing this dialog.",
         "done": "Done",
         "nameLabel": "Name",
-        "namePlaceholder": "My App",
+        "namePlaceholder": "My Userscript",
         "nameDescription": "A descriptive name to identify this key.",
         "scopesLabel": "Scopes",
         "scopeDefaultBadge": "default",
@@ -513,7 +513,7 @@
           "title": "OAuth 애플리케이션 생성",
           "description": "OAuth 2.1 인증 흐름을 사용할 새 애플리케이션을 등록합니다.",
           "nameLabel": "애플리케이션 이름",
-          "namePlaceholder": "My Userscript",
+          "namePlaceholder": "내 앱",
           "nameDescription": "동의 화면에서 사용자에게 표시되는 이름입니다.",
           "uriLabel": "애플리케이션 URL",
           "uriPlaceholder": "https://example.com",
