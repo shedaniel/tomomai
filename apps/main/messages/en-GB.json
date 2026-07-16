@@ -341,7 +341,7 @@
         "editDialog": {
           "title": "Edit API Key",
           "nameLabel": "Name",
-          "namePlaceholder": "My App",
+          "namePlaceholder": "My Userscript",
           "saveButton": "Save",
           "saving": "Saving…",
           "saveError": "Failed to update API key"
@@ -361,7 +361,7 @@
         "saveWarning": "Save this key — it won't be shown again after closing this dialog.",
         "done": "Done",
         "nameLabel": "Name",
-        "namePlaceholder": "My App",
+        "namePlaceholder": "My Userscript",
         "nameDescription": "A descriptive name to identify this key.",
         "scopesLabel": "Scopes",
         "scopeDefaultBadge": "default",
@@ -513,7 +513,7 @@
           "title": "Create OAuth Application",
           "description": "Register a new application to use the OAuth 2.1 authorisation flow.",
           "nameLabel": "Application name",
-          "namePlaceholder": "My Userscript",
+          "namePlaceholder": "My App",
           "nameDescription": "A descriptive name shown to users on the consent screen.",
           "uriLabel": "Application URL",
           "uriPlaceholder": "https://example.com",
