@@ -239,7 +239,7 @@ export const Versions = {
     id: 13,
     name: "maimai DX CiRCLE PLUS",
     shortName: "CiRCLE PLUS",
-    intlReleaseDate: null,
+    intlReleaseDate: "2026/07/23",
     jpReleaseDate: "2026/03/19",
     cnReleaseDate: null,
     version: 265,
