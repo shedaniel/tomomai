@@ -76,11 +76,16 @@ class ByteWriter {
   }
 
   /** u8 length || UTF-8 bytes (strings ≤ 255 bytes). */
-  l8(str: string): void {
+  l8(str: string, overflow: "reject" | "truncate" = "reject"): void {
     const bytes = utf8(str);
-    if (bytes.length > 255) throw new EncodeError(`L8 string too long (${bytes.length} bytes): ${str}`);
-    this.u8(bytes.length);
-    for (const b of bytes) this.buf.push(b);
+    let length = bytes.length;
+    if (length > 255) {
+      if (overflow === "reject") throw new EncodeError(`L8 string too long (${length} bytes): ${str}`);
+      length = 255;
+      while ((bytes[length]! & 0xc0) === 0x80) length--;
+    }
+    this.u8(length);
+    for (let i = 0; i < length; i++) this.buf.push(bytes[i]!);
   }
 
   /** Optional L8: 0 = absent, 1 = present + L8 value. */
@@ -286,9 +291,9 @@ function encodeHeader(w: ByteWriter, h: RenderHeader): void {
   w.u8(h.gameVersion);
   w.u8(enumIndex(REGIONS, h.region));
   w.u16(h.rating);
-  w.l8(h.displayName);
+  w.l8(h.displayName, "truncate");
   w.l16(h.iconUrl);
-  w.l8(h.title);
+  w.l8(h.title, "truncate");
   w.u8(enumIndex(TITLE_TYPES, h.titleType));
   w.l16(h.classRankUrl);
   w.l16(h.courseRankUrl);
