@@ -24,6 +24,13 @@ export const submitLimiter = new RedisRateLimiter({
   max: 30,
 });
 
+/** Site-wide Turnstile verification — one short burst per browser tab. */
+export const turnstileVerifyLimiter = new RedisRateLimiter({
+  name: "guess-turnstile-verify",
+  windowSeconds: 60,
+  max: 10,
+});
+
 /**
  * Shared bucket for read routes: /api/today, /api/chart/[step],
  * /api/chart/[step]/image. A single page load fires ~12 reads (today + ~6

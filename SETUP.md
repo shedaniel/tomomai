@@ -31,6 +31,18 @@
 
 Passkeys work out of the box — no extra provider credentials needed. Set `ALTCHA_HMAC_KEY` to prevent passkey registration without a valid captcha solution. Users can register passkeys from Account Settings → Passkeys after signing in with Discord or X.
 
+### Cloudflare Turnstile
+
+Both `apps/main` and `apps/guess` support a site-wide Turnstile pre-clearance gate. Set both credentials separately on each deployment to enable it; if either credential is absent, Turnstile is disabled.
+
+| Variable | Required | Description |
+|---|---|---|
+| `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | No | Public Turnstile widget site key. This is bundled at build time and only takes effect when `TURNSTILE_SECRET_KEY` is also set. Enable pre-clearance on the widget and allow every hostname served by the deployment. |
+| `TURNSTILE_SECRET_KEY` | No | Server-only widget secret used by `/api/turnstile/verify`. Turnstile remains disabled unless this and the public site key are both set. Never expose this value to the client. |
+| `TURNSTILE_EXPECTED_HOSTNAME` | Recommended | Exact hostname expected in the Siteverify response, such as `www.tomomai.lol`, `guesser.tomomai.lol`, or `heardle.tomomai.lol`. |
+
+When enabled, the widget must have [pre-clearance enabled](https://developers.cloudflare.com/turnstile/concepts/pre-clearance-support/) at the clearance level used by the zone's WAF challenge rule. The application validates every token with Siteverify; Cloudflare's `cf_clearance` cookie and WAF configuration enforce clearance for subsequent site traffic.
+
 ### Discord Bot
 
 | Variable | Required | Description |

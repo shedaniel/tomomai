@@ -36,6 +36,10 @@
     "./haptics": {
       "import": "./src/haptics.ts",
       "types": "./src/haptics.ts"
+    },
+    "./turnstile": {
+      "import": "./src/components/turnstile.tsx",
+      "types": "./src/components/turnstile.tsx"
     }
   },
   "main": "./src/index.ts",
