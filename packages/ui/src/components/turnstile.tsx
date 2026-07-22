@@ -1,9 +1,35 @@
 "use client";
 
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
+import { ShieldCheck } from "lucide-react";
+
+export const TURNSTILE_TEST_SITE_KEY = "1x00000000000000000000AA";
 
 const SCRIPT_ID = "tomomai-turnstile-script";
 const SCRIPT_URL = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+
+const PRECLEARANCE_TITLES = {
+  en: "Verifying you're not a robot",
+  ja: "ロボットでないかの確認中",
+  ko: "로봇 여부 확인 중",
+  zhHans: "正在进行人机验证",
+  zhHant: "正在進行人機驗證",
+} as const;
+
+function resolvePreclearanceTitle(languages: readonly string[]): string {
+  for (const language of languages) {
+    const locale = language.toLowerCase();
+    if (locale.startsWith("ja")) return PRECLEARANCE_TITLES.ja;
+    if (locale.startsWith("ko")) return PRECLEARANCE_TITLES.ko;
+    if (locale.startsWith("zh")) {
+      return /(?:-|_)(?:hk|mo|tw)|hant/.test(locale)
+        ? PRECLEARANCE_TITLES.zhHant
+        : PRECLEARANCE_TITLES.zhHans;
+    }
+    if (locale.startsWith("en")) return PRECLEARANCE_TITLES.en;
+  }
+  return PRECLEARANCE_TITLES.en;
+}
 
 type WidgetId = string;
 
@@ -69,6 +95,9 @@ export interface TurnstileWidgetHandle {
 export interface TurnstileWidgetProps {
   siteKey: string;
   action: string;
+  appearance?: "always" | "execute" | "interaction-only";
+  theme?: "app" | "auto" | "dark" | "light";
+  size?: "compact" | "flexible" | "normal";
   onToken: (token: string) => void;
   onExpire?: () => void;
   onError?: () => void;
@@ -76,7 +105,20 @@ export interface TurnstileWidgetProps {
 }
 
 export const TurnstileWidget = forwardRef<TurnstileWidgetHandle, TurnstileWidgetProps>(
-  function TurnstileWidget({ siteKey, action, onToken, onExpire, onError, className }, ref) {
+  function TurnstileWidget(
+    {
+      siteKey,
+      action,
+      appearance = "interaction-only",
+      theme = "auto",
+      size = "flexible",
+      onToken,
+      onExpire,
+      onError,
+      className,
+    },
+    ref,
+  ) {
     const containerRef = useRef<HTMLDivElement>(null);
     const widgetIdRef = useRef<WidgetId | null>(null);
     const onTokenRef = useRef(onToken);
@@ -101,12 +143,16 @@ export const TurnstileWidget = forwardRef<TurnstileWidgetHandle, TurnstileWidget
       void loadTurnstile()
         .then((turnstile) => {
           if (cancelled || !containerRef.current) return;
+          const resolvedTheme =
+            theme === "app"
+              ? document.documentElement.classList.contains("dark") ? "dark" : "light"
+              : theme;
           widgetIdRef.current = turnstile.render(containerRef.current, {
             sitekey: siteKey,
             action,
-            theme: "auto",
-            size: "flexible",
-            appearance: "interaction-only",
+            theme: resolvedTheme,
+            size,
+            appearance,
             callback: (token: string) => onTokenRef.current(token),
             "expired-callback": () => onExpireRef.current?.(),
             "error-callback": () => onErrorRef.current?.(),
@@ -123,7 +169,7 @@ export const TurnstileWidget = forwardRef<TurnstileWidgetHandle, TurnstileWidget
           widgetIdRef.current = null;
         }
       };
-    }, [action, siteKey]);
+    }, [action, appearance, siteKey, size, theme]);
 
     return <div ref={containerRef} className={className} />;
   },
@@ -134,24 +180,32 @@ const PRECLEARANCE_SESSION_KEY = "tomomai-turnstile-precleared";
 export interface TurnstilePreclearanceProps {
   siteKey: string;
   verifyPath?: string;
+  preview?: boolean;
 }
 
 export function TurnstilePreclearance({
   siteKey,
   verifyPath = "/api/turnstile/verify",
+  preview = false,
 }: TurnstilePreclearanceProps) {
   const widgetRef = useRef<TurnstileWidgetHandle>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
   const verifyingRef = useRef(false);
   const [cleared, setCleared] = useState(false);
+  const [title, setTitle] = useState<string | null>(null);
 
   useEffect(() => {
+    setTitle(resolvePreclearanceTitle(navigator.languages));
+  }, []);
+
+  useEffect(() => {
+    if (preview) return;
     try {
       setCleared(sessionStorage.getItem(PRECLEARANCE_SESSION_KEY) === "1");
     } catch {
       // A blocked storage API should not prevent verification.
     }
-  }, []);
+  }, [preview]);
 
   useEffect(() => {
     if (cleared || !overlayRef.current) return;
@@ -190,6 +244,7 @@ export function TurnstilePreclearance({
   }, [cleared]);
 
   async function verify(token: string) {
+    if (preview) return;
     if (verifyingRef.current) return;
     verifyingRef.current = true;
 
@@ -221,22 +276,29 @@ export function TurnstilePreclearance({
       ref={overlayRef}
       role="dialog"
       aria-modal="true"
-      aria-label="Security verification"
-      className="fixed inset-0 z-[100] grid place-items-center bg-background/95 p-6 backdrop-blur-md"
+      aria-label={title ?? "Security verification"}
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-background p-6 text-foreground"
     >
-      <div className="w-full max-w-sm rounded-xl border border-border bg-card p-5 shadow-xl">
-        <div
-          aria-hidden="true"
-          className="mx-auto mb-4 size-7 animate-spin rounded-full border-2 border-muted border-t-primary"
-        />
-        <TurnstileWidget
-          ref={widgetRef}
-          siteKey={siteKey}
-          action="site-access"
-          onToken={verify}
-          onExpire={() => widgetRef.current?.reset()}
-          className="w-full"
-        />
+      <div className={`w-full max-w-lg space-y-6 ${title ? "opacity-100" : "opacity-0"}`}>
+        <div className="flex items-center gap-4">
+          <div className="shrink-0 rounded-full bg-muted p-3">
+            <ShieldCheck className="size-6 text-muted-foreground" />
+          </div>
+          <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
+        </div>
+        <div className="flex justify-center">
+          <TurnstileWidget
+            ref={widgetRef}
+            siteKey={siteKey}
+            action="site-access"
+            appearance={preview ? "always" : "interaction-only"}
+            theme="app"
+            size="normal"
+            onToken={verify}
+            onExpire={() => widgetRef.current?.reset()}
+            className="w-full"
+          />
+        </div>
       </div>
     </div>
   );
