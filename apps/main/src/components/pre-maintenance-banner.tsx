@@ -1,30 +1,70 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { TriangleAlert, X } from 'lucide-react';
 
 const STORAGE_KEY = 'dismissed-pre-maintenance';
 
-interface Props {
+interface Banner {
   title: string;
   description: string;
   raw: string;
 }
 
-export function PreMaintenanceBanner({ title, description, raw }: Props) {
-  const [visible, setVisible] = useState(false);
+function isBanner(value: unknown): value is Banner {
+  if (typeof value !== 'object' || value === null) return false;
+
+  const banner = value as Record<string, unknown>;
+  return (
+    typeof banner.title === 'string' &&
+    typeof banner.description === 'string' &&
+    typeof banner.raw === 'string'
+  );
+}
+
+export function PreMaintenanceBanner() {
+  const [banner, setBanner] = useState<Banner | null>(null);
 
   useEffect(() => {
-    if (localStorage.getItem(STORAGE_KEY) !== raw) {
-      setVisible(true);
-    }
-  }, [raw]);
+    const controller = new AbortController();
 
-  if (!visible) return null;
+    async function loadBanner() {
+      try {
+        const response = await fetch('/api/pre-maintenance', {
+          signal: controller.signal,
+        });
+        if (!response.ok) return;
+
+        const payload: unknown = await response.json();
+        if (
+          typeof payload !== 'object' ||
+          payload === null ||
+          !('banner' in payload) ||
+          !isBanner(payload.banner)
+        ) {
+          return;
+        }
+
+        if (localStorage.getItem(STORAGE_KEY) !== payload.banner.raw) {
+          setBanner(payload.banner);
+        }
+      } catch {
+        // Fetch and response errors intentionally leave the banner hidden.
+      }
+    }
+
+    void loadBanner();
+
+    return () => controller.abort();
+  }, []);
+
+  if (!banner) return null;
+
+  const { title, description, raw } = banner;
 
   function dismiss() {
     localStorage.setItem(STORAGE_KEY, raw);
-    setVisible(false);
+    setBanner(null);
   }
 
   return (
