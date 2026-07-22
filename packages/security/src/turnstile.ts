@@ -17,6 +17,7 @@ interface SiteverifyResponse {
   success?: unknown;
   action?: unknown;
   hostname?: unknown;
+  metadata?: unknown;
 }
 
 export async function verifyTurnstileToken({
@@ -47,10 +48,17 @@ export async function verifyTurnstileToken({
 
     const result = (await response.json()) as SiteverifyResponse;
     if (result.success !== true) return { success: false, reason: "invalid" };
-    if (expectedAction && result.action !== expectedAction) {
+    const testingKeyResult =
+      typeof result.metadata === "object" &&
+      result.metadata !== null &&
+      "result_with_testing_key" in result.metadata &&
+      result.metadata.result_with_testing_key === true;
+
+    // Testing keys return a synthetic hostname and omit the configured action.
+    if (!testingKeyResult && expectedAction && result.action !== expectedAction) {
       return { success: false, reason: "invalid" };
     }
-    if (expectedHostname && result.hostname !== expectedHostname) {
+    if (!testingKeyResult && expectedHostname && result.hostname !== expectedHostname) {
       return { success: false, reason: "invalid" };
     }
 
