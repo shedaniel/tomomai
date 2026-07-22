@@ -15,6 +15,7 @@ import { DEFAULT_THEME_ID, getThemeOrDefault, getThemeStyleProperties, themeNoFl
 import { resolveBaseUrl } from '@/lib/base-url';
 import { siteJsonLd } from '@/lib/seo';
 import { SiteFooter } from '@/components/site-footer';
+import { PreMaintenanceBanner } from '@/components/pre-maintenance-banner';
 
 const inter = localFont({
   src: "../../../public/res/fonts/Inter-VariableFont_opsz_wght.woff2",
@@ -96,6 +97,7 @@ export default async function LocaleLayout({ children, params }: Props) {
           <LocaleProvider initialLocale={typedLocale}>
             <ThemeProvider>
               <TRPCProvider>
+                <PreMaintenanceBanner />
                 {children}
                 <SiteFooter />
                 {shouldInjectToolbar && <VercelToolbar />}
