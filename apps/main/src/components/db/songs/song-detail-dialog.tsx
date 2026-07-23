@@ -2,14 +2,14 @@ import { Tabs, TabsList, TabsContent, TabsContents, TabsTrigger } from "@/compon
 import { ResponsiveDialogTitle } from "@tomomai/ui";
 import { ACHIEVEMENTS, DIFFICULTY_COLORS } from "@/lib/difficulty";
 import { calculateSongRating } from "@/lib/rating-calculator";
-import { Region, SongExtended } from "@/lib/types";
+import { Region } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { Fragment, useState } from "react";
-import { UserScore } from "./types";
+import { SongDetailChart, UserScore } from "./types";
 
 import { useTranslations } from "next-intl";
 
-type SongExtendedIdentified = SongExtended & { region: Region; gameVersion: number };
+type SongExtendedIdentified = SongDetailChart & { region: Region; gameVersion: number };
 
 function SongChartDialogGrid({ chart, score }: { chart: SongExtendedIdentified; score: UserScore }) {
   const t = useTranslations();

@@ -9,13 +9,13 @@ import { DIFFICULTY_COLORS, getAchievementRate } from "@/lib/difficulty";
 import { getVersionInfo } from "@/lib/metadata";
 import { calculateSongRating } from "@/lib/rating-calculator";
 import { trpc } from "@/lib/trpc-client";
-import { Difficulty, Region, SongExtended } from "@/lib/types";
+import { Difficulty, Region } from "@/lib/types";
 import { cn, getTypeBadgeUrl } from "@/lib/utils";
 import { Activity, Calendar, ChevronRight, Globe, Loader2, Music, Pencil, Share } from "lucide-react";
 
 import { CoverImage } from "@/components/cover-image";
 import { useMemo } from "react";
-import { SongDetails, UserScore } from "./types";
+import { SongDetailChart, SongDetailHistoricalChart, SongDetails, UserScore } from "./types";
 
 import { Button } from "@tomomai/ui";
 import { Separator } from "@tomomai/ui";
@@ -27,7 +27,13 @@ import { SongChartDialogContent } from "./song-detail-dialog";
 import { renderLevelPrecise } from "@/lib/name-utils";
 import { isCNExclusive } from "@/lib/enabled-regions";
 
-type SongExtendedIdentified = SongExtended & { region: Region; gameVersion: number };
+type SongExtendedIdentified = SongDetailChart & { region: Region; gameVersion: number };
+
+function isSongDetailChart(
+  chart: SongDetailChart | SongDetailHistoricalChart,
+): chart is SongDetailChart {
+  return "level" in chart;
+}
 
 function getRate(achievement: number, version: number, fc: string) {
   if (version >= 12 && (fc === "ap" || fc === "ap+")) return "SSS+ AP";
@@ -47,6 +53,7 @@ export function getChartsByDifficulty(regions: SongDetails['regions']): Map<Diff
     const latestGameVersion = Math.max(...region.versions.map(v => v.gameVersion));
     const latestVersion = region.versions.find(v => v.gameVersion === latestGameVersion)!;
     for (const chart of latestVersion.charts) {
+      if (!isSongDetailChart(chart)) continue;
       if (!record.has(chart.difficulty)) {
         record.set(chart.difficulty, []);
       }
@@ -484,7 +491,7 @@ export function SongDetailContent({ songName, slug, type, initialData }: SongDet
                 const versionInfo = getVersionInfo(gameVersion);
 
                 // Group charts by difficulty to show level changes
-                const byDifficulty = new Map<Difficulty, SongExtended[]>();
+                const byDifficulty = new Map<Difficulty, (SongDetailChart | SongDetailHistoricalChart)[]>();
                 charts.forEach(chart => {
                   if (!byDifficulty.has(chart.difficulty)) {
                     byDifficulty.set(chart.difficulty, []);

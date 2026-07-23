@@ -1,9 +1,9 @@
-import { SongDetails } from "@/components/db/songs/types";
+import { SongDetailChart, SongDetailHistoricalChart, SongDetails } from "@/components/db/songs/types";
 import { db } from "@/lib/db";
 import { scoreData, snapshotScores, songs, userSnapshots } from "@/lib/db/schema-pg";
 import { VersionId } from "@/lib/metadata";
 import { getSongSlugs } from "@/lib/song-slug";
-import { Region, SongExtended, SongType } from "@/lib/types";
+import { Region, SongType } from "@/lib/types";
 import { maxBy } from "@/lib/utils";
 import { TRPCError } from "@trpc/server";
 import { and, desc, eq, inArray } from "drizzle-orm";
@@ -100,31 +100,45 @@ export async function querySongDetails(
 
   type ChartType = (typeof charts)[number];
 
-  const byRegion = new Map<Region, Map<VersionId, SongExtended[]>>();
+  const byRegion = new Map<Region, Map<VersionId, ChartType[]>>();
   for (const chart of charts) {
     if (!byRegion.has(chart.region)) {
       byRegion.set(chart.region, new Map());
     }
     const chartVersion = chart.gameVersion as VersionId;
-    const regionMap: Map<VersionId, SongExtended[]> = byRegion.get(chart.region)!;
+    const regionMap = byRegion.get(chart.region)!;
     if (!regionMap.has(chartVersion)) {
       regionMap.set(chartVersion, []);
     }
-    regionMap.get(chartVersion)!.push({
-      ...chart,
-      addedVersion: chart.addedVersion as VersionId,
-    });
+    regionMap.get(chartVersion)!.push(chart);
   }
 
-  const regions: {
-    region: Region;
-    versions: { gameVersion: VersionId; charts: SongExtended[] }[];
-  }[] = Array.from(byRegion.entries()).map(([region, versionMap]) => ({
-    region,
-    versions: Array.from(versionMap.entries())
-      .map(([version, vCharts]) => ({ gameVersion: version, charts: vCharts }))
-      .sort((a, b) => b.gameVersion - a.gameVersion),
-  }));
+  const regions: SongDetails["regions"] = Array.from(byRegion.entries()).map(([region, versionMap]) => {
+    const versions = Array.from(versionMap.entries()).sort(([a], [b]) => b - a);
+    return {
+      region,
+      versions: versions.map(([gameVersion, versionCharts], index) => ({
+        gameVersion,
+        charts: index === 0
+          ? versionCharts.map((chart): SongDetailChart => ({
+              difficulty: chart.difficulty,
+              level: chart.level,
+              levelPrecise: chart.levelPrecise,
+              addedVersion: chart.addedVersion as VersionId,
+              noteDesigner: chart.noteDesigner,
+              tapCount: chart.tapCount,
+              holdCount: chart.holdCount,
+              slideCount: chart.slideCount,
+              touchCount: chart.touchCount,
+              breakCount: chart.breakCount,
+            }))
+          : versionCharts.map((chart): SongDetailHistoricalChart => ({
+              difficulty: chart.difficulty,
+              levelPrecise: chart.levelPrecise,
+            })),
+      })),
+    };
+  });
 
   const preferredChart: ChartType = maxBy(
     charts,
