@@ -1,7 +1,7 @@
 "use client";
 
 import { SnapshotWithSongs } from "@/lib/types";
-import { cn, createSafeMaimaiImageUrl } from "@/lib/utils";
+import { cn, createSafeMaimaiImageUrl, isR2Url } from "@/lib/utils";
 import { Map, Calendar, Flag, CheckCircle2, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
@@ -132,6 +132,8 @@ function EventCard({
           width={80}
           height={80}
           loading="lazy"
+          sizes="(min-width: 475px) 80px, 64px"
+          unoptimized={isR2Url(event.imageUrl)}
         />
 
         <div className="flex-1 min-w-0">

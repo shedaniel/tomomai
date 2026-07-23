@@ -16,16 +16,107 @@ export function useFetchSession(onFetchComplete?: () => void, onTokenError?: () 
   const [sessionPollingRegion, setSessionPollingRegion] = useState<Region | null>(null);
   const lastKnownSessionIdRef = useRef<string | null>(null);
   const onSessionDetectedRef = useRef<(() => void) | undefined>(undefined);
+  const fetchPollingTimeoutRef = useRef<number | null>(null);
+  const fetchPollingGenerationRef = useRef(0);
 
   // Poll for new fetch sessions (lightweight query)
   const { data: latestSessionData } = trpc.user.getLatestFetchSessionId.useQuery(
     { region: sessionPollingRegion! },
     {
       enabled: sessionPollingEnabled && sessionPollingRegion !== null,
-      refetchInterval: 1000, // Poll every 1 seconds
+      refetchInterval: 2000, // Poll every 2 seconds
       refetchOnWindowFocus: false,
     }
   );
+
+  const pollFetchStatus = useCallback((sessionId: string, region: Region) => {
+    const deadline = Date.now() + 5 * 60 * 1000;
+    const generation = ++fetchPollingGenerationRef.current;
+
+    if (fetchPollingTimeoutRef.current !== null) {
+      window.clearTimeout(fetchPollingTimeoutRef.current);
+      fetchPollingTimeoutRef.current = null;
+    }
+
+    const stopPolling = () => {
+      if (fetchPollingTimeoutRef.current !== null) {
+        window.clearTimeout(fetchPollingTimeoutRef.current);
+        fetchPollingTimeoutRef.current = null;
+      }
+    };
+
+    const poll = async () => {
+      if (generation !== fetchPollingGenerationRef.current) return;
+      if (Date.now() >= deadline) {
+        stopPolling();
+        setFetchError("Fetch timeout");
+        return;
+      }
+
+      try {
+        const result = await trpcClient.user.getFetchStatus.query({ region });
+
+        if (generation !== fetchPollingGenerationRef.current) return;
+
+        if (result && result.id === sessionId) {
+          const updatedSession: FetchSession = {
+            id: result.id,
+            status: result.status,
+            startedAt: result.startedAt,
+            completedAt: result.completedAt || undefined,
+            errorMessage: result.errorMessage || undefined,
+            statusStates: result.statusStates || undefined,
+          };
+          console.log("Fetch status updated for session " + sessionId + " on " + region + " region: " + JSON.stringify(updatedSession));
+          setCurrentSession(updatedSession);
+
+          if (result.status === "completed") {
+            stopPolling();
+            if (result.notFoundScores && result.notFoundScores.length > 0) {
+              toast.warning(`${result.notFoundScores.length} songs not found in database`, {
+                description: result.notFoundScores.map(score => `${score.songName} (${score.difficulty})`).join(", "),
+              });
+            }
+            onFetchComplete?.();
+            return;
+          }
+
+          if (result.status === "failed") {
+            stopPolling();
+            const errorMessage = result.errorMessage || "Fetch failed";
+            setFetchError(errorMessage);
+
+            if (isTokenError(errorMessage)) {
+              onTokenError?.();
+            }
+            if (isAlbumSettingsError(errorMessage)) {
+              onUseAlbumError?.();
+            }
+            return;
+          }
+        } else if (!result) {
+          stopPolling();
+          setFetchError("Fetch session not found");
+          return;
+        }
+
+        const remaining = deadline - Date.now();
+        if (remaining <= 0) {
+          stopPolling();
+          setFetchError("Fetch timeout");
+          return;
+        }
+        fetchPollingTimeoutRef.current = window.setTimeout(poll, Math.min(1000, remaining));
+      } catch (error) {
+        if (generation !== fetchPollingGenerationRef.current) return;
+        stopPolling();
+        console.error("Error polling fetch status:", error);
+        setFetchError("Failed to check fetch status");
+      }
+    };
+
+    void poll();
+  }, [onFetchComplete, onTokenError, onUseAlbumError]);
 
   // Detect new sessions
   useEffect(() => {
@@ -74,7 +165,7 @@ export function useFetchSession(onFetchComplete?: () => void, onTokenError?: () 
         onSessionDetectedRef.current();
       }
     }
-  }, [latestSessionData, sessionPollingEnabled, sessionPollingRegion]);
+  }, [latestSessionData, sessionPollingEnabled, sessionPollingRegion, pollFetchStatus]);
 
   // tRPC mutation for starting fetch
   const startFetchMutation = trpc.user.startFetch.useMutation({
@@ -116,79 +207,21 @@ export function useFetchSession(onFetchComplete?: () => void, onTokenError?: () 
     return startDataFetch(region); // No token provided, will use saved token
   };
 
-  const pollFetchStatus = async (sessionId: string, region: Region) => {
-    const maxAttempts = 600; // 5 minutes max (300 seconds / 0.5 second = 600 attempts)
-    let attempts = 0;
 
-    const poll = async () => {
-      try {
-        // Query the latest fetch status directly using tRPC client
-        const result = await trpcClient.user.getFetchStatus.query({
-          region,
-        });
-
-        if (result && result.id === sessionId) {
-          // Only update if this is the session we're tracking
-          const updatedSession: FetchSession = {
-            id: result.id,
-            status: result.status,
-            startedAt: result.startedAt,
-            completedAt: result.completedAt || undefined,
-            errorMessage: result.errorMessage || undefined,
-            statusStates: result.statusStates || undefined,
-          };
-          console.log("Fetch status updated for session " + sessionId + " on " + region + " region: " + JSON.stringify(updatedSession));
-          setCurrentSession(updatedSession);
-
-          if (result.status === "completed") {
-            // Show warning toast for not found scores (separate from the custom toast)
-            if (result.notFoundScores && result.notFoundScores.length > 0) {
-              toast.warning(`${result.notFoundScores.length} songs not found in database`, {
-                description: result.notFoundScores.map(score => `${score.songName} (${score.difficulty})`).join(", "),
-              });
-            }
-            onFetchComplete?.();
-            return "completed";
-          } else if (result.status === "failed") {
-            const errorMessage = result.errorMessage || "Fetch failed";
-            setFetchError(errorMessage);
-
-            // Check if this is a token-related error and trigger callback
-            if (isTokenError(errorMessage)) {
-              onTokenError?.();
-            }
-
-            // Check if this is an album settings error
-            if (isAlbumSettingsError(errorMessage)) {
-              onUseAlbumError?.();
-            }
-
-            return "failed";
-          }
-        } else if (!result) {
-          // No fetch sessions found at all
-          setFetchError("Fetch session not found");
-          return "error";
-        }
-
-        attempts++;
-        if (attempts < maxAttempts) {
-          setTimeout(poll, 500); // Poll every 0.5 second
-        } else {
-          setFetchError("Fetch timeout");
-          return "timeout";
-        }
-      } catch (error) {
-        console.error("Error polling fetch status:", error);
-        setFetchError("Failed to check fetch status");
-        return "error";
-      }
-    };
-
-    return poll();
-  };
+  useEffect(() => () => {
+    fetchPollingGenerationRef.current++;
+    if (fetchPollingTimeoutRef.current !== null) {
+      window.clearTimeout(fetchPollingTimeoutRef.current);
+      fetchPollingTimeoutRef.current = null;
+    }
+  }, []);
 
   const resetFetchSession = useCallback(() => {
+    fetchPollingGenerationRef.current++;
+    if (fetchPollingTimeoutRef.current !== null) {
+      window.clearTimeout(fetchPollingTimeoutRef.current);
+      fetchPollingTimeoutRef.current = null;
+    }
     setCurrentSession(null);
     setFetchError(null);
   }, []);

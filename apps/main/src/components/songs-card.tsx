@@ -169,6 +169,7 @@ const SongRow = forwardRef<HTMLDivElement, { song: SongWithRating; percentile?: 
           width={36}
           height={36}
           loading="lazy"
+          sizes="32px"
         />
         <div className="flex-1 min-w-0">
           <div className="truncate font-medium">{song.songName}&#8203;</div>
@@ -377,6 +378,7 @@ export const SongGridCard = forwardRef<HTMLDivElement, { song: MinimalSongForDis
           fill
           className="object-cover rounded-[8px] overflow-hidden"
           loading="lazy"
+          sizes="(min-width: 1024px) 20vw, (min-width: 640px) 33.3vw, (min-width: 375px) 50vw, 100vw"
         />
 
         {/* Dark overlay for text readability */}

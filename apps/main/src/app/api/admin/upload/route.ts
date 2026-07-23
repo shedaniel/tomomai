@@ -9,6 +9,7 @@ import { UpdateSong } from "@/lib/types/update";
 import { mergeSongs, taker, merger, key, MergeSink } from "@/server/services/admin/fetcher-utils";
 import { important, PendingSong, value, Pending } from "@/server/utils/admin/type";
 import { sendDiscordNotice, sendDiscordWebhook } from "@/server/services/admin/discord-webhooks";
+import { publishSongCatalog } from "@/server/services/admin/song-catalog";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { getSongSlugs } from "@/lib/song-slug";
 import { locales } from "@tomomai/i18n/locale";
@@ -213,32 +214,30 @@ function analyzeChanges(
 type UpdateMode = "noop" | "alter" | "destructive";
 
 /**
- * Push catalog edits to the ISR cache without waiting for the 7-day
+ * Push catalog edits to the ISR cache without waiting for the 14-day
  * revalidate window. Busts the shared songs data cache, then regenerates
  * each affected song-detail page (per locale) plus the list pages.
  */
 async function revalidateSongsCache(
   affected: Array<{ songName: string; artist: string; type: SongType }>,
   log: (obj: unknown, msg?: string) => void,
+  forceBulk = false,
 ) {
   revalidateTag("all-unique-songs", { expire: 3600 });
 
-  // Dedupe by songName+type (artist is part of slug derivation only).
   const seen = new Set<string>();
-  const deduped = affected.filter((s) => {
-    const k = `${s.songName}||${s.type}`;
-    if (seen.has(k)) return false;
-    seen.add(k);
+  const deduped = affected.filter((song) => {
+    const key = `${song.songName}||${song.artist}||${song.type}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
     return true;
   });
 
   const withSlugs = await getSongSlugs(deduped);
-  const slugs = new Set(withSlugs.map((s) => s.slug));
+  const slugs = new Set(withSlugs.map((song) => song.slug));
 
-  // Bulk uploads (full catalog re-push) can touch hundreds of songs; fall
-  // back to invalidating the whole dynamic segment instead of thousands of
-  // individual path revalidations.
-  const bulk = slugs.size > 200;
+  // Bulk uploads can touch hundreds of songs, so avoid thousands of calls.
+  const bulk = forceBulk || slugs.size > 200;
   for (const locale of locales) {
     if (bulk) {
       revalidatePath(`/${locale}/db/songs/[slug]`, "page");
@@ -298,9 +297,13 @@ async function applyChanges(
   let appliedDeleted = 0;
 
   // Update modified songs
-  if (mergeEvents.length > 0) {
+  if (changes.modified.length > 0) {
+    const modifiedDbIds = new Set(changes.modified.map(change => change.dbId));
     const modifiedRows = mergeEvents
-      .filter(({ existing }) => existing.extras?.dbId)
+      .filter(({ existing }) => {
+        const dbId = existing.extras?.dbId;
+        return dbId && modifiedDbIds.has(String(dbId));
+      })
       .map(({ result }) => pendingSongToDbValues(result, region, version));
 
     const batchSize = 1000;
@@ -577,19 +580,36 @@ export async function POST(request: NextRequest) {
     // Apply DB changes if requested
     const applied = await applyChanges(changes, addedSongs, mergeEvents, region, version, updateMode);
 
+    const appliedCount = applied.added + applied.modified + applied.deleted;
+    if (updateMode !== "noop") {
+      // Publish first: ISR invalidation must never advertise catalog changes
+      // while the stable API object still contains the previous DB state.
+      const publication = await publishSongCatalog();
+      log.info(publication, "Published public song catalog to R2");
+    }
+
     log.info({ updateMode, applied }, "DB update complete");
 
-    // Push the edits to ISR: regenerate affected song pages + bust the catalog
-    // data cache so the next read is fresh. Only when changes were applied.
+    // Push only committed edits to ISR; preserve both slug inputs for renames.
     if (updateMode !== "noop") {
+      const modifiedDbIds = new Set(changes.modified.map(change => change.dbId));
+      const modifiedSongs = mergeEvents
+        .filter(({ existing }) => {
+          const dbId = existing.extras?.dbId;
+          return dbId && modifiedDbIds.has(String(dbId));
+        })
+        .flatMap(({ existing, result }) => [existing, result])
+        .map(song => ({ songName: song.songName, artist: value(song.artist) ?? "", type: song.type }));
+      const appliedDeletions = (updateMode === "destructive"
+        ? changes.deleted
+        : changes.deleted.filter(change => (change.playRecordCount ?? 0) === 0));
       const affectedSongs = [
-        ...addedSongs.map(s => ({ songName: s.songName, artist: value(s.artist) ?? "", type: s.type })),
-        ...mergeEvents.flatMap(e => [e.existing, e.result])
-          .map(s => ({ songName: s.songName, artist: value(s.artist) ?? "", type: s.type })),
-        ...changes.deleted.map(d => ({ songName: d.songName, artist: d.artist, type: d.type })),
+        ...addedSongs.map(song => ({ songName: song.songName, artist: value(song.artist) ?? "", type: song.type })),
+        ...modifiedSongs,
+        ...appliedDeletions.map(change => ({ songName: change.songName, artist: change.artist, type: change.type })),
       ];
       try {
-        await revalidateSongsCache(affectedSongs, (obj, msg) => log.info(obj, msg ?? ""));
+        await revalidateSongsCache(affectedSongs, (obj, msg) => log.info(obj, msg ?? ""), appliedCount === 0);
       } catch (err) {
         log.error({ err }, "Failed to revalidate songs ISR cache");
       }

@@ -54,6 +54,7 @@ export const mdxBaseComponents = {
       width={800}
       height={600}
       className="rounded-lg my-6 w-[70%] h-auto max-h-[32rem] object-contain mx-auto"
+      sizes="70vw"
     />
   ),
 } as const;

@@ -25,6 +25,7 @@ export function MdxImageComparison({
         width={800}
         height={600}
         className="invisible w-full h-auto"
+        sizes="70vw"
         aria-hidden="true"
         draggable={false}
       />
@@ -35,6 +36,7 @@ export function MdxImageComparison({
           width={800}
           height={600}
           className="size-full object-contain"
+          sizes="70vw"
           draggable={false}
         />
       </ComparisonItem>
@@ -45,6 +47,7 @@ export function MdxImageComparison({
           width={800}
           height={600}
           className="size-full object-contain"
+          sizes="70vw"
           draggable={false}
         />
       </ComparisonItem>

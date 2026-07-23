@@ -96,11 +96,11 @@ const slugCache = new Map<string, { slug: string; aliases: string[] }>();
 async function computeSlugAndAliases(
   song: SongForSlug
 ): Promise<{ slug: string; aliases: string[] }> {
-  const processedName = await toRomaji(song.songName);
-  const processedArtist = await toRomaji(song.artist);
 
   const nameEverything = await toEverything(song.songName);
   const artistEverything = await toEverything(song.artist);
+  const processedName = nameEverything.romaji;
+  const processedArtist = artistEverything.romaji;
 
   const cleanedName = slug(processedName);
   const cleanedArtist = slug(processedArtist.replace(/\s+/g, ''));

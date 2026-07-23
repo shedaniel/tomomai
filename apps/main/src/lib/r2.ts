@@ -13,6 +13,28 @@ export const r2Client = new S3Client({
 
 export const R2_BUCKET = process.env.R2_BUCKET!;
 
+export interface PutR2ObjectOptions {
+  key: string;
+  body: string | Uint8Array | Buffer;
+  contentType: string;
+  cacheControl: string;
+}
+
+export async function putR2Object({
+  key,
+  body,
+  contentType,
+  cacheControl,
+}: PutR2ObjectOptions): Promise<void> {
+  await r2Client.send(new PutObjectCommand({
+    Bucket: R2_BUCKET,
+    Key: key,
+    Body: body,
+    ContentType: contentType,
+    CacheControl: cacheControl,
+  }));
+}
+
 export async function uploadToR2(
   buffer: Buffer,
   contentType: string = "image/avif"

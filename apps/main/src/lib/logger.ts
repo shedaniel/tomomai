@@ -137,7 +137,7 @@ type StreamEntry = { stream: { write: (chunk: string) => void } | NodeJS.Writabl
 const createServerLogger = (): Logger => {
   const pino = require("pino");
   const isEdge = process.env.NEXT_RUNTIME === "edge";
-  const baseLevel = process.env.LOG_LEVEL || "trace";
+  const baseLevel = process.env.LOG_LEVEL || (process.env.NODE_ENV === "development" ? "trace" : "info");
 
   if (isEdge) {
     return pino({ level: baseLevel }) as Logger;
@@ -162,7 +162,7 @@ const createServerLogger = (): Logger => {
         translateTime: "SYS:standard",
         ignore: "pid,hostname",
       }),
-      level: "debug",
+      level: baseLevel,
     });
   }
 
@@ -186,7 +186,7 @@ const createServerLogger = (): Logger => {
           }
         },
       },
-      level: "trace",
+      level: baseLevel,
     });
   }
 
@@ -195,7 +195,7 @@ const createServerLogger = (): Logger => {
     axiomFlush = axiom.flush;
     shippingStreams.push({
       stream: axiom.stream,
-      level: "trace",
+      level: baseLevel,
     });
   }
 
@@ -213,7 +213,7 @@ const createServerLogger = (): Logger => {
     return pino({ level: baseLevel }, pino.multistream(streams)) as Logger;
   }
 
-  return pino({ level: process.env.LOG_LEVEL || "info" }) as Logger;
+  return pino({ level: baseLevel }) as Logger;
 };
 
 // Use a global marker so the bridge is installed at most once across all
