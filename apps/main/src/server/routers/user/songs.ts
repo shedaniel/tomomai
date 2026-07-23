@@ -2,11 +2,11 @@ import { db } from '@/lib/db';
 import { songs } from '@/lib/db/schema-pg';
 import { VersionId } from '@/lib/metadata';
 import { getSongSlug } from '@/lib/song-slug';
-import { publicProcedure, router } from '@/lib/trpc';
+import { protectedProcedure, publicProcedure, router } from '@/lib/trpc';
 import { TRPCError } from '@trpc/server';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
-import { queryAllUniqueSongs, querySongDetails } from '@/server/queries/songs';
+import { queryAllUniqueSongs, querySongDetails, querySongScores } from '@/server/queries/songs';
 
 export const songsRouter = router({
   getAllUniqueSongs: publicProcedure
@@ -21,6 +21,18 @@ export const songsRouter = router({
     }))
     .query(async ({ input, ctx }) => {
       return querySongDetails(input.songName, input.type, ctx.session?.user?.id);
+    }),
+
+  getSongScores: protectedProcedure
+    .input(z.object({
+      songName: z.string(),
+      type: z.enum(['std', 'dx']),
+    }))
+    .query(async ({ input, ctx }) => {
+      return {
+        viewerId: ctx.session.user.id,
+        userScores: await querySongScores(input.songName, input.type, ctx.session.user.id),
+      };
     }),
 
   getSimpleSongDetails: publicProcedure

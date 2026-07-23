@@ -1,6 +1,6 @@
 import { GenericFilter } from "@/components/filter-panel";
 import { VersionId } from "@/lib/metadata";
-import { Difficulty, Region, SongExtended, SongType } from "@/lib/types";
+import { Difficulty, Region, SongType } from "@/lib/types";
 
 export interface UniqueSong {
   index: number;
@@ -27,6 +27,22 @@ export interface UserScore {
   fs: string;
 }
 
+export interface SongDetailHistoricalChart {
+  difficulty: Difficulty;
+  levelPrecise: number;
+}
+
+export interface SongDetailChart extends SongDetailHistoricalChart {
+  level: string;
+  addedVersion: VersionId;
+  noteDesigner: string | null;
+  tapCount: number | null;
+  holdCount: number | null;
+  slideCount: number | null;
+  touchCount: number | null;
+  breakCount: number | null;
+}
+
 export interface SongDetails {
   songName: string;
   artist: string;
@@ -40,7 +56,7 @@ export interface SongDetails {
     region: Region;
     versions: {
       gameVersion: VersionId;
-      charts: SongExtended[];
+      charts: (SongDetailChart | SongDetailHistoricalChart)[];
     }[];
   }[];
 }
