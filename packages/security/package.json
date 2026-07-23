@@ -11,6 +11,10 @@
     "./rate-limit": {
       "import": "./src/rate-limit.ts",
       "types": "./src/rate-limit.ts"
+    },
+    "./turnstile": {
+      "import": "./src/turnstile.ts",
+      "types": "./src/turnstile.ts"
     }
   },
   "files": ["src"],

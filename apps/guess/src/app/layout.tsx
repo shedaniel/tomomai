@@ -5,6 +5,7 @@ import { Noto_Sans_JP, Noto_Sans_SC, Noto_Sans_TC } from "next/font/google";
 import localFont from "next/font/local";
 import { Analytics } from "@vercel/analytics/next";
 import { Toaster } from "@tomomai/ui";
+import { TurnstilePreclearance } from "@tomomai/ui/turnstile";
 import { LocaleProvider } from "@tomomai/i18n/client";
 import { getLocale } from "@tomomai/i18n/server";
 import { ThemeProvider } from "@/components/providers/theme-provider";
@@ -73,6 +74,10 @@ export default async function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   const locale = await getLocale();
   const messages = await getMessages();
+  const turnstileSiteKey =
+    process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && process.env.TURNSTILE_SECRET_KEY
+      ? process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY
+      : undefined;
 
   // Heardle gets a violet-leaning palette (--hue 290) to set it visually
   // apart from the neutral guesser theme. Override applies to both light
@@ -90,6 +95,9 @@ export default async function RootLayout({
           <LocaleProvider initialLocale={locale} pathMode="cookie">
             <ThemeProvider>
               {children}
+              {turnstileSiteKey ? (
+                <TurnstilePreclearance siteKey={turnstileSiteKey} />
+              ) : null}
               <Toaster />
             </ThemeProvider>
           </LocaleProvider>

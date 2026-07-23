@@ -92,12 +92,12 @@ function buildCsp(): string {
   const connectSrc = ["'self'", ...(RENDER_ORIGIN ? [RENDER_ORIGIN] : [])].join(' ');
   return [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://challenges.cloudflare.com",
     "style-src 'self' 'unsafe-inline'",
     `img-src ${imgSrc}`,
     "font-src 'self'",
     `connect-src ${connectSrc}`,
-    "frame-src 'none'",
+    "frame-src https://challenges.cloudflare.com",
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",

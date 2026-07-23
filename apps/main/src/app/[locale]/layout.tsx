@@ -2,6 +2,7 @@ import { LocaleProvider } from '@/components/providers/locale-provider';
 import { ThemeProvider } from '@/components/providers/theme-provider';
 import { TRPCProvider } from "@/components/providers/trpc-provider";
 import { Toaster } from "@tomomai/ui";
+import { TurnstilePreclearance } from "@tomomai/ui/turnstile";
 import { VercelToolbar } from "@vercel/toolbar/next";
 import type { Metadata } from "next";
 import { NextIntlClientProvider, hasLocale } from 'next-intl';
@@ -16,6 +17,11 @@ import { resolveBaseUrl } from '@/lib/base-url';
 import { siteJsonLd } from '@/lib/seo';
 import { SiteFooter } from '@/components/site-footer';
 import { PreMaintenanceBanner } from '@/components/pre-maintenance-banner';
+
+const TURNSTILE_SITE_KEY =
+  process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && process.env.TURNSTILE_SECRET_KEY
+    ? process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY
+    : undefined;
 
 const inter = localFont({
   src: "../../../public/res/fonts/Inter-VariableFont_opsz_wght.woff2",
@@ -97,6 +103,7 @@ export default async function LocaleLayout({ children, params }: Props) {
           <LocaleProvider initialLocale={typedLocale}>
             <ThemeProvider>
               <TRPCProvider>
+                {TURNSTILE_SITE_KEY && <TurnstilePreclearance siteKey={TURNSTILE_SITE_KEY} />}
                 <PreMaintenanceBanner />
                 {children}
                 <SiteFooter />
