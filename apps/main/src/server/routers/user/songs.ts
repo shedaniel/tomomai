@@ -30,6 +30,7 @@ export const songsRouter = router({
     }))
     .query(async ({ input, ctx }) => {
       return {
+        viewerId: ctx.session.user.id,
         userScores: await querySongScores(input.songName, input.type, ctx.session.user.id),
       };
     }),

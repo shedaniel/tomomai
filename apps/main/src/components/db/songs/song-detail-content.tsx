@@ -15,7 +15,7 @@ import { cn, getTypeBadgeUrl } from "@/lib/utils";
 import { Activity, Calendar, ChevronRight, Globe, Loader2, Music, Pencil, Share } from "lucide-react";
 
 import { CoverImage } from "@/components/cover-image";
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { SongDetailChart, SongDetailHistoricalChart, SongDetails, UserScore } from "./types";
 
 import { Button } from "@tomomai/ui";
@@ -267,6 +267,16 @@ export function SongDetailContent({ songName, slug, type, initialData }: SongDet
   const t = useTranslations();
   const hasInitialData = !!initialData;
   const { data: session } = useSession();
+  const viewerId = session?.user.id ?? null;
+  const utils = trpc.useUtils();
+  const previousViewerId = useRef<string | null | undefined>(undefined);
+
+  useEffect(() => {
+    const previous = previousViewerId.current;
+    previousViewerId.current = viewerId;
+    if (previous === undefined || previous === null || previous === viewerId) return;
+    void utils.user.getSongScores.reset();
+  }, [utils, viewerId]);
   const {
     data: fetchedData,
     isLoading,
@@ -277,15 +287,15 @@ export function SongDetailContent({ songName, slug, type, initialData }: SongDet
   );
   const { data: scoreData } = trpc.user.getSongScores.useQuery(
     { songName, type },
-    { enabled: hasInitialData && !!session?.user }
+    { enabled: hasInitialData && viewerId !== null }
   );
   const data = useMemo(() => {
     if (!initialData) return fetchedData;
     return {
       ...initialData,
-      userScores: scoreData?.userScores ?? initialData.userScores,
+      userScores: scoreData?.viewerId === viewerId ? scoreData.userScores : undefined,
     };
-  }, [fetchedData, initialData, scoreData?.userScores]);
+  }, [fetchedData, initialData, scoreData, viewerId]);
   const difficultyOrder = ["basic", "advanced", "expert", "master", "remaster", "utage"];
 
   // Get the latest version's charts for display (prefer intl, then jp)
