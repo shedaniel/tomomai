@@ -12,6 +12,53 @@ import { Optional } from "utility-types";
 import { DIFFICULTY_ENUM } from "@/lib/db/types";
 import { UniqueSong, UniqueSongDifficulty } from "@/components/db/songs/types";
 
+export async function querySongScores(
+  songName: string,
+  type: SongType,
+  userId: string
+): Promise<SongDetails["userScores"]> {
+  const scores = await db
+    .select({
+      region: songs.region,
+      difficulty: songs.difficulty,
+      achievement: scoreData.achievement,
+      fc: scoreData.fc,
+      fs: scoreData.fs,
+    })
+    .from(snapshotScores)
+    .innerJoin(scoreData, eq(snapshotScores.scoreId, scoreData.id))
+    .innerJoin(songs, eq(scoreData.songId, songs.id))
+    .where(
+      and(
+        eq(songs.songName, songName),
+        eq(songs.type, type),
+        inArray(
+          snapshotScores.snapshotId,
+          db
+            .selectDistinctOn([userSnapshots.region], { id: userSnapshots.id })
+            .from(userSnapshots)
+            .where(eq(userSnapshots.userId, userId))
+            .orderBy(userSnapshots.region, desc(userSnapshots.fetchedAt))
+        )
+      )
+    );
+
+  if (scores.length === 0) return undefined;
+
+  const userScores: NonNullable<SongDetails["userScores"]> = {};
+  for (const score of scores) {
+    if (!userScores[score.region]) {
+      userScores[score.region] = {};
+    }
+    userScores[score.region][score.difficulty] = {
+      achievement: score.achievement,
+      fc: score.fc,
+      fs: score.fs,
+    };
+  }
+  return userScores;
+}
+
 export async function querySongDetails(
   songName: string,
   type: SongType,
@@ -43,37 +90,9 @@ export async function querySongDetails(
     .where(and(eq(songs.songName, songName), eq(songs.type, type)))
     .orderBy(songs.region, desc(songs.gameVersion), songs.difficulty);
 
-  let scoresQuery: Promise<
-    { region: string; difficulty: string; achievement: number; fc: string; fs: string }[]
-  > = Promise.resolve([]);
-
-  if (userId) {
-    scoresQuery = db
-      .select({
-        region: songs.region,
-        difficulty: songs.difficulty,
-        achievement: scoreData.achievement,
-        fc: scoreData.fc,
-        fs: scoreData.fs,
-      })
-      .from(snapshotScores)
-      .innerJoin(scoreData, eq(snapshotScores.scoreId, scoreData.id))
-      .innerJoin(songs, eq(scoreData.songId, songs.id))
-      .where(
-        and(
-          eq(songs.songName, songName),
-          eq(songs.type, type),
-          inArray(
-            snapshotScores.snapshotId,
-            db
-              .selectDistinctOn([userSnapshots.region], { id: userSnapshots.id })
-              .from(userSnapshots)
-              .where(eq(userSnapshots.userId, userId))
-              .orderBy(userSnapshots.region, desc(userSnapshots.fetchedAt))
-          )
-        )
-      );
-  }
+  const scoresQuery = userId
+    ? querySongScores(songName, type, userId)
+    : Promise.resolve(undefined);
 
   const [charts, scores] = await Promise.all([chartsQuery, scoresQuery]);
 
@@ -81,22 +100,7 @@ export async function querySongDetails(
     throw new TRPCError({ code: "NOT_FOUND", message: "Song not found" });
   }
 
-  let userScoresMap:
-    | Record<string, Record<string, { achievement: number; fc: string; fs: string }>>
-    | undefined;
-  if (scores.length > 0) {
-    userScoresMap = {};
-    for (const score of scores) {
-      if (!userScoresMap[score.region]) {
-        userScoresMap[score.region] = {};
-      }
-      userScoresMap[score.region][score.difficulty] = {
-        achievement: score.achievement,
-        fc: score.fc,
-        fs: score.fs,
-      };
-    }
-  }
+  const userScoresMap = scores;
 
   type ChartType = (typeof charts)[number];
 

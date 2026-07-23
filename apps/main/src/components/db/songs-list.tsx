@@ -39,6 +39,15 @@ export function SongsList(_: SongsListProps = {}) {
   const router = useRouter();
   const pathname = usePathname();
 
+  // Derive this before the catalog query so direct detail loads can skip it.
+  // The component remains mounted during soft navigation, and disabling a
+  // query preserves any catalog already held in the tRPC/React Query cache.
+  const selectedSlug = useMemo(() => {
+    if (!pathname) return null;
+    const match = pathname.match(/^\/db\/songs\/([^/]+)\/?$/);
+    return match ? decodeURIComponent(match[1]) : null;
+  }, [pathname]);
+
   const tFilter = useMemo(() => (key: string) => t(`db.songs.filter.${key}`), [t]);
   const tGroups = useMemo(() => (key: string) => t(`db.songs.filter.groups.${key}`), [t]);
 
@@ -75,6 +84,7 @@ export function SongsList(_: SongsListProps = {}) {
   // route). Keeping it out of props is what lets this component live in the
   // shared layout without serializing the catalog into the ISR payload.
   const { data: allSongs } = trpc.user.getAllUniqueSongs.useQuery(undefined, {
+    enabled: selectedSlug === null,
     staleTime: 3600000, // 1 hour
     refetchOnWindowFocus: false,
   });
@@ -156,12 +166,6 @@ export function SongsList(_: SongsListProps = {}) {
 
   const sentinelRef = useInfiniteScroll(loadMore, hasMore);
 
-  // Derive selected slug from URL: /db/songs/<slug> → <slug>, else null.
-  const selectedSlug = useMemo(() => {
-    if (!pathname) return null;
-    const match = pathname.match(/^\/db\/songs\/([^/]+)\/?$/);
-    return match ? decodeURIComponent(match[1]) : null;
-  }, [pathname]);
 
   const handleSelectSong = useCallback((song: UniqueSong) => {
     router.push(`/db/songs/${encodeURIComponent(song.slug)}`, { scroll: false });

@@ -115,6 +115,7 @@ export function SongDetailDrawer({ children }: SongDetailDrawerProps) {
               href={closeHref}
               aria-label={t("common.close")}
               scroll={false}
+              prefetch={false}
               onClick={(e) => {
                 // JS-on: soft close via router.push. JS-off: native nav.
                 e.preventDefault();

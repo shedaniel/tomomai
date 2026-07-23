@@ -37,7 +37,7 @@ function TypeSelector({
               )}
               asChild
             >
-              <Link href={href} scroll={false}>
+              <Link href={href} scroll={false} prefetch={isActive ? false : undefined}>
                 {t(`db.types.${type}`)}
               </Link>
             </Button>

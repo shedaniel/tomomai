@@ -27,23 +27,23 @@ export default async function SettingsLayout({
       <div className="mb-8">
         <Link href="/">
           <Image
-            src="/icon.webp"
+            src="/icon-small.webp"
             alt="tomomai"
-            width={4320}
-            height={1080}
+            width={528}
+            height={132}
             priority
             sizes="176px"
             className="h-11 w-auto dark:hidden"
-            style={{ aspectRatio: "4320 / 1080" }}
+            style={{ aspectRatio: "4 / 1" }}
           />
           <Image
-            src="/icon-dark.webp"
+            src="/icon-small-dark.webp"
             alt="tomomai"
-            width={4320}
-            height={1080}
+            width={528}
+            height={132}
             className="h-11 w-auto hidden dark:block"
             sizes="176px"
-            style={{ aspectRatio: "4320 / 1080" }}
+            style={{ aspectRatio: "4 / 1" }}
           />
         </Link>
       </div>

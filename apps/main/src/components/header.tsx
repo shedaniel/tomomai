@@ -61,13 +61,13 @@ const TAB_LINKS: Record<CurrentTab, string> = {
 };
 
 const TAB_ICONS_PATHS: Record<CurrentTab, string> = {
-  dashboard: "/icon.webp",
-  db: "/icon-db.webp",
+  dashboard: "/icon-small.webp",
+  db: "/icon-db-small.webp",
 };
 
 const TAB_ICONS_PATHS_DARK: Record<CurrentTab, string> = {
-  dashboard: "/icon-dark.webp",
-  db: "/icon-db-dark.webp",
+  dashboard: "/icon-small-dark.webp",
+  db: "/icon-db-small-dark.webp",
 };
 
 interface HeaderProps {
@@ -582,8 +582,8 @@ export function Header({ currentTab, showDiscordBanner = true, customThemesEnabl
               whileHover={{ scale: 1.05 }}
               transition={getTransition(SPRING_CONFIGS.snappy)}
             >
-              <Image src={TAB_ICONS_PATHS[currentTab]} alt="tomomai" width={4320} height={1080} priority className="h-11 w-auto dark:hidden" style={{ aspectRatio: '4320 / 1080' }} />
-              <Image src={TAB_ICONS_PATHS_DARK[currentTab]} alt="tomomai" width={4320} height={1080} priority className="h-11 w-auto hidden dark:block" style={{ aspectRatio: '4320 / 1080' }} />
+              <Image src={TAB_ICONS_PATHS[currentTab]} alt="tomomai" width={528} height={132} sizes="176px" priority className="h-11 w-auto dark:hidden" style={{ aspectRatio: '4 / 1' }} />
+              <Image src={TAB_ICONS_PATHS_DARK[currentTab]} alt="tomomai" width={528} height={132} sizes="176px" priority className="h-11 w-auto hidden dark:block" style={{ aspectRatio: '4 / 1' }} />
             </motion.div>
           </Link>
           <NavbarButtons currentTab={currentTab} />

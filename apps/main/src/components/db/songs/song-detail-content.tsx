@@ -9,6 +9,7 @@ import { DIFFICULTY_COLORS, getAchievementRate } from "@/lib/difficulty";
 import { getVersionInfo } from "@/lib/metadata";
 import { calculateSongRating } from "@/lib/rating-calculator";
 import { trpc } from "@/lib/trpc-client";
+import { useSession } from "@/lib/auth-client";
 import { Difficulty, Region } from "@/lib/types";
 import { cn, getTypeBadgeUrl } from "@/lib/utils";
 import { Activity, Calendar, ChevronRight, Globe, Loader2, Music, Pencil, Share } from "lucide-react";
@@ -264,18 +265,27 @@ export function SongChartRow({ difficulty, charts, index, data, hasTouch }: {
 
 export function SongDetailContent({ songName, slug, type, initialData }: SongDetailContentProps) {
   const t = useTranslations();
-  // `initialData` is the SSR-rendered static snapshot (charts/regions/bpm,
-  // no scores). Keep the query enabled and stale so the client refetches on
-  // mount — the browser sends the session cookie, so the refetch layers in
-  // the signed-in user's scores on top of the hydrated static shell.
   const hasInitialData = !!initialData;
-  const { data, isLoading, error } = trpc.user.getSongDetails.useQuery(
+  const { data: session } = useSession();
+  const {
+    data: fetchedData,
+    isLoading,
+    error,
+  } = trpc.user.getSongDetails.useQuery(
     { songName, type },
-    {
-      staleTime: 0,
-      ...(hasInitialData ? { initialData: initialData as SongDetails } : {}),
-    }
+    { enabled: !hasInitialData }
   );
+  const { data: scoreData } = trpc.user.getSongScores.useQuery(
+    { songName, type },
+    { enabled: hasInitialData && !!session?.user }
+  );
+  const data = useMemo(() => {
+    if (!initialData) return fetchedData;
+    return {
+      ...initialData,
+      userScores: scoreData?.userScores ?? initialData.userScores,
+    };
+  }, [fetchedData, initialData, scoreData?.userScores]);
   const difficultyOrder = ["basic", "advanced", "expert", "master", "remaster", "utage"];
 
   // Get the latest version's charts for display (prefer intl, then jp)
