@@ -32,6 +32,7 @@ export default async function SettingsLayout({
             width={4320}
             height={1080}
             priority
+            sizes="176px"
             className="h-11 w-auto dark:hidden"
             style={{ aspectRatio: "4320 / 1080" }}
           />
@@ -40,8 +41,8 @@ export default async function SettingsLayout({
             alt="tomomai"
             width={4320}
             height={1080}
-            priority
             className="h-11 w-auto hidden dark:block"
+            sizes="176px"
             style={{ aspectRatio: "4320 / 1080" }}
           />
         </Link>

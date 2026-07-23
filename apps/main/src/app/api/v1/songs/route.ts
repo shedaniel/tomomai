@@ -1,62 +1,16 @@
-import { db } from "@/lib/db";
-import { songs } from "@/lib/db/schema-pg";
-import { unstable_cache } from "next/cache";
-import { zodJson } from "@/lib/api/zod-response";
-import { spec } from "./spec";
 import { SONG_CATALOG_CACHE_HEADERS } from "./cache-headers";
 
-async function getAllSongs() {
-  return unstable_cache(
-    async () => {
-      return db
-        .select({
-          songId: songs.publicId,
-          songName: songs.songName,
-          artist: songs.artist,
-          cover: songs.cover,
-          type: songs.type,
-          genre: songs.genre,
-          difficulty: songs.difficulty,
-          level: songs.level,
-          levelPrecise: songs.levelPrecise,
-          region: songs.region,
-          gameVersion: songs.gameVersion,
-          addedVersion: songs.addedVersion,
-          bpm: songs.bpm,
-          noteDesigner: songs.noteDesigner,
-        })
-        .from(songs)
-        .orderBy(songs.songName, songs.difficulty);
-    },
-    ["api-v1-songs"],
-    { revalidate: 3600, tags: ["api-v1-songs"] }
-  )();
-}
+export function GET() {
+  const r2BaseUrl = process.env.NEXT_PUBLIC_R2_URL;
+  if (!r2BaseUrl) {
+    throw new Error("NEXT_PUBLIC_R2_URL is required for the song catalog redirect");
+  }
 
-export async function GET() {
-  const allSongs = await getAllSongs();
-  return zodJson(
-    spec.response,
-    {
-      songs: allSongs.map((s) => ({
-        songId: s.songId,
-        songName: s.songName,
-        artist: s.artist,
-        cover: s.cover,
-        type: s.type,
-        genre: s.genre,
-        difficulty: s.difficulty,
-        level: s.level,
-        levelPrecise: s.levelPrecise,
-        region: s.region,
-        gameVersion: s.gameVersion,
-        addedVersion: s.addedVersion,
-        bpm: s.bpm,
-        noteDesigner: s.noteDesigner,
-      })),
+  return new Response(null, {
+    status: 302,
+    headers: {
+      ...SONG_CATALOG_CACHE_HEADERS,
+      Location: `${r2BaseUrl.replace(/\/$/, "")}/api/v1/songs`,
     },
-    {
-      headers: SONG_CATALOG_CACHE_HEADERS,
-    },
-  );
+  });
 }

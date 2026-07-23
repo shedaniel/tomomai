@@ -7,6 +7,7 @@ import { fetchImageBuffer } from "../image-converter";
 import { logger } from "../logger";
 import { getCurrentVersion } from "../metadata";
 import { decryptToken } from "../token-crypto";
+import { revalidatePublicProfileForUser } from "../profile-cache";
 import { Region } from "../types";
 import {
   getCookiesFromRedirect,
@@ -339,6 +340,8 @@ async function persistFetchedData(
     await insertUserEvents(snapshotId, fetched.eventsData.areaEvents, fetched.eventsData.eventAreaEvents);
     logger.info("User events insertion completed");
   }
+
+  await revalidatePublicProfileForUser(userId, [region]);
 
   logger.info("Player data processed and snapshot created successfully");
   logger.info(`Session ID: ${sessionId}`);

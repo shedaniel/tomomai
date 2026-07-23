@@ -19,7 +19,7 @@ function isUnlocalizable(pathname: string): boolean {
   const lastSegment = pathname.split('/').pop() || '';
   if (/[./][a-zA-Z0-9]+$/.test(lastSegment)) return true;
   return (
-    pathname.startsWith('/api/') ||
+    (pathname === '/api' || pathname.startsWith('/api/')) ||
     pathname.startsWith('/.well-known/') ||
     pathname.startsWith('/cn-proxy/link') ||
     pathname.startsWith('/userscript') ||
@@ -65,6 +65,7 @@ function negotiateLocale(request: NextRequest): Locale {
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const isApiPath = pathname === '/api' || pathname.startsWith('/api/');
 
   // Per-request correlation id (see docs/LOGGING.md).
   const inboundId = request.headers.get('x-request-id');
@@ -131,9 +132,8 @@ export async function middleware(request: NextRequest) {
     return stamp(securityResponse);
   }
 
-  // Forward pathname + request id to route handlers / pages.
+  // Forward the request id to route handlers / pages.
   const requestHeaders = new Headers(request.headers);
-  requestHeaders.set('x-pathname', pathname);
   requestHeaders.set('x-request-id', requestId);
 
   const response = NextResponse.next({ request: { headers: requestHeaders } });
@@ -144,17 +144,19 @@ export async function middleware(request: NextRequest) {
     response.headers.set(key, value);
   });
 
-  // Mirror Vercel edge-geo into a client-readable cookie for CDN routing.
-  const country = request.headers.get('x-vercel-ip-country');
-  if (country) {
-    const existing = request.cookies.get('country')?.value;
-    if (existing !== country) {
-      response.cookies.set('country', country, {
-        path: '/',
-        sameSite: 'lax',
-        maxAge: 60 * 60 * 24,
-        httpOnly: false,
-      });
+  // API responses must remain free of location cookies so shared CDN caches can store them.
+  if (!isApiPath) {
+    const country = request.headers.get('x-vercel-ip-country');
+    if (country) {
+      const existing = request.cookies.get('country')?.value;
+      if (existing !== country) {
+        response.cookies.set('country', country, {
+          path: '/',
+          sameSite: 'lax',
+          maxAge: 60 * 60 * 24,
+          httpOnly: false,
+        });
+      }
     }
   }
 
@@ -165,9 +167,9 @@ export async function middleware(request: NextRequest) {
 export const config = {
   runtime: 'nodejs',
   matcher: [
-    /*
-     * Match all request paths except static assets.
-     */
-    '/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml).*)',
+    '/api/:path*',
+    '/.well-known/:path*',
+    '/res/fonts/:path*',
+    '/((?!_next/static|_next/image|.*\\.segments?(?:/|$)|.*\\.[^/]+$).*)',
   ],
 };

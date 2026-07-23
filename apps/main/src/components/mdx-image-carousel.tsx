@@ -40,6 +40,7 @@ export function MdxImageCarouselSlide({
           width={800}
           height={600}
           className="rounded-lg w-auto max-w-full max-h-[32rem]"
+          sizes="80vw"
           draggable={false}
         />
         {caption && (

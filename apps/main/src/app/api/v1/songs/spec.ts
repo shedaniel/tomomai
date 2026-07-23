@@ -1,6 +1,5 @@
-import { z } from "zod";
 import { defineRoute } from "@/lib/api/registry";
-import { songCatalogueEntry } from "@/lib/api/schemas";
+import { songCatalogue } from "@/lib/api/schemas";
 
 export const spec = defineRoute({
   method: "GET",
@@ -12,7 +11,5 @@ export const spec = defineRoute({
   scope: "public",
   cost: 1,
   cacheSeconds: 3600,
-  response: z.object({
-    songs: z.array(songCatalogueEntry),
-  }),
+  response: songCatalogue,
 });

@@ -109,6 +109,7 @@ function SongCardContent({
             alt={song.songName}
             fill
             className="object-cover"
+            sizes="64px"
           />
         </div>
         <div className="flex-1 min-w-0 py-0.5">

@@ -15,6 +15,7 @@ import { TRPCError } from '@trpc/server';
 import { and, count, desc, eq, inArray, sql } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
 import { z } from 'zod';
+import { revalidatePublicProfileForUser } from '@/lib/profile-cache';
 
 const regionSchema = z.enum(getEnabledRegions());
 
@@ -385,6 +386,7 @@ export const snapshotsRouter = router({
           message: 'Snapshot not found or access denied',
         });
       }
+      await revalidatePublicProfileForUser(ctx.session.user.id, [input.region]);
       return { success: true };
     }),
 
@@ -690,6 +692,7 @@ export const snapshotsRouter = router({
         .set({ rating: newRating })
         .where(eq(userSnapshots.id, newSnapshotInternalId));
 
+      await revalidatePublicProfileForUser(ctx.session.user.id, [input.region]);
       return {
         success: true,
         newSnapshotId: newSnapshotPublicId,

@@ -340,6 +340,7 @@ export function SongDetailContent({ songName, slug, type, initialData }: SongDet
             alt={data.songName}
             fill
             className="object-cover"
+            sizes="(max-width: 767px) 80px, 96px"
           />
         </div>
         <div className="flex-1 min-w-0 my-auto">

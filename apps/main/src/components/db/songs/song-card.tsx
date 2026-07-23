@@ -101,6 +101,7 @@ export function SongCard({ song, index, isSelected, onSelect, disableInitialAnim
           fill
           className="object-cover"
           loading="lazy"
+          sizes="(min-width: 1280px) 12.5vw, (min-width: 1024px) 14.3vw, (min-width: 768px) 16.7vw, (min-width: 640px) 20vw, (min-width: 475px) 25vw, 33.3vw"
         />
 
         {/* Dark overlay */}
