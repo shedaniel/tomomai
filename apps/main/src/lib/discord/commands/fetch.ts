@@ -240,7 +240,7 @@ async function pollForUpdates(
             await editDiscordMessage(applicationId, interactionToken, {
               embeds: [{
                 title: t(locale, 'fetch.failed.title'),
-                description: t(locale, 'fetch.failed.description', { userId: discordUserId, regionName }),
+                description: t(locale, 'fetch.failed.description', { userId: discordUserId, regionName, reason: failureReason }),
                 color: DISCORD_COLORS.RED,
                 footer: {
                   text: t(locale, 'common.footer'),
