@@ -12,7 +12,7 @@ import { getLocale, setStaticLocale } from "@/i18n/locale-server";
 import { buildAlternates, openGraphLocales, breadcrumbJsonLd, ogImageUrl, localizePath } from "@/lib/seo";
 import { safeDecodeURIComponent } from "@/lib/utils";
 
-export const revalidate = 300;
+export const revalidate = 3600;
 export const dynamicParams = true;
 
 export function generateStaticParams() {

@@ -8,6 +8,7 @@ import { z } from 'zod';
 import { getEnabledRegions, isCNExclusive } from '@/lib/enabled-regions';
 import { resolvePublicUserByUsername } from '@/server/queries/public-access';
 import { fetchProfileSettings } from '@/server/queries/profile';
+import { revalidatePublicProfile } from '@/lib/profile-cache';
 
 const regionSchema = z.enum(getEnabledRegions());
 
@@ -65,6 +66,17 @@ export const profileRouter = router({
       publishProfile: z.boolean(),
     }))
     .mutation(async ({ ctx, input }) => {
+      const [current] = await db
+        .select({ username: user.username, publishProfile: user.publishProfile })
+        .from(user)
+        .where(eq(user.id, ctx.session.user.id))
+        .limit(1);
+
+      if (!current) {
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'User not found' });
+      }
+      if (current.publishProfile === input.publishProfile) return { success: true };
+
       await db
         .update(user)
         .set({
@@ -73,6 +85,7 @@ export const profileRouter = router({
         })
         .where(eq(user.id, ctx.session.user.id));
 
+      revalidatePublicProfile([current.username]);
       return { success: true };
     }),
 
@@ -98,6 +111,15 @@ export const profileRouter = router({
     }))
     .mutation(async ({ ctx, input }) => {
       if (isCNExclusive()) throw new TRPCError({ code: 'BAD_REQUEST', message: 'Cannot update profile main region in China region' });
+      const [current] = await db
+        .select({ username: user.username, profileMainRegion: user.profileMainRegion })
+        .from(user)
+        .where(eq(user.id, ctx.session.user.id))
+        .limit(1);
+
+      if (!current) throw new TRPCError({ code: 'NOT_FOUND', message: 'User not found' });
+      if (current.profileMainRegion === input.profileMainRegion) return { success: true };
+
       await db
         .update(user)
         .set({
@@ -106,6 +128,7 @@ export const profileRouter = router({
         })
         .where(eq(user.id, ctx.session.user.id));
 
+      revalidatePublicProfile([current.username]);
       return { success: true };
     }),
 
@@ -119,19 +142,35 @@ export const profileRouter = router({
       profileShowInSearch: z.boolean(),
     }))
     .mutation(async ({ ctx, input }) => {
+      const [current] = await db
+        .select({
+          username: user.username,
+          profileShowAllScores: user.profileShowAllScores,
+          profileShowScoreDetails: user.profileShowScoreDetails,
+          profileShowPlates: user.profileShowPlates,
+          profileShowPlayCounts: user.profileShowPlayCounts,
+          profileShowEvents: user.profileShowEvents,
+          profileShowInSearch: user.profileShowInSearch,
+        })
+        .from(user)
+        .where(eq(user.id, ctx.session.user.id))
+        .limit(1);
+
+      if (!current) throw new TRPCError({ code: 'NOT_FOUND', message: 'User not found' });
+      const changed = Object.entries(input).some(
+        ([field, next]) => current[field as keyof typeof input] !== next,
+      );
+      if (!changed) return { success: true };
+
       await db
         .update(user)
         .set({
-          profileShowAllScores: input.profileShowAllScores,
-          profileShowScoreDetails: input.profileShowScoreDetails,
-          profileShowPlates: input.profileShowPlates,
-          profileShowPlayCounts: input.profileShowPlayCounts,
-          profileShowEvents: input.profileShowEvents,
-          profileShowInSearch: input.profileShowInSearch,
+          ...input,
           updatedAt: new Date(),
         })
         .where(eq(user.id, ctx.session.user.id));
 
+      revalidatePublicProfile([current.username]);
       return { success: true };
     }),
 

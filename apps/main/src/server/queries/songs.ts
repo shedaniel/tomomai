@@ -1,9 +1,9 @@
-import { SongDetails } from "@/components/db/songs/types";
+import { SongDetailChart, SongDetailHistoricalChart, SongDetails } from "@/components/db/songs/types";
 import { db } from "@/lib/db";
 import { scoreData, snapshotScores, songs, userSnapshots } from "@/lib/db/schema-pg";
 import { VersionId } from "@/lib/metadata";
 import { getSongSlugs } from "@/lib/song-slug";
-import { Region, SongExtended, SongType } from "@/lib/types";
+import { Region, SongType } from "@/lib/types";
 import { maxBy } from "@/lib/utils";
 import { TRPCError } from "@trpc/server";
 import { and, desc, eq, inArray } from "drizzle-orm";
@@ -11,6 +11,53 @@ import { unstable_cache } from "next/cache";
 import { Optional } from "utility-types";
 import { DIFFICULTY_ENUM } from "@/lib/db/types";
 import { UniqueSong, UniqueSongDifficulty } from "@/components/db/songs/types";
+
+export async function querySongScores(
+  songName: string,
+  type: SongType,
+  userId: string
+): Promise<SongDetails["userScores"]> {
+  const scores = await db
+    .select({
+      region: songs.region,
+      difficulty: songs.difficulty,
+      achievement: scoreData.achievement,
+      fc: scoreData.fc,
+      fs: scoreData.fs,
+    })
+    .from(snapshotScores)
+    .innerJoin(scoreData, eq(snapshotScores.scoreId, scoreData.id))
+    .innerJoin(songs, eq(scoreData.songId, songs.id))
+    .where(
+      and(
+        eq(songs.songName, songName),
+        eq(songs.type, type),
+        inArray(
+          snapshotScores.snapshotId,
+          db
+            .selectDistinctOn([userSnapshots.region], { id: userSnapshots.id })
+            .from(userSnapshots)
+            .where(eq(userSnapshots.userId, userId))
+            .orderBy(userSnapshots.region, desc(userSnapshots.fetchedAt))
+        )
+      )
+    );
+
+  if (scores.length === 0) return undefined;
+
+  const userScores: NonNullable<SongDetails["userScores"]> = {};
+  for (const score of scores) {
+    if (!userScores[score.region]) {
+      userScores[score.region] = {};
+    }
+    userScores[score.region][score.difficulty] = {
+      achievement: score.achievement,
+      fc: score.fc,
+      fs: score.fs,
+    };
+  }
+  return userScores;
+}
 
 export async function querySongDetails(
   songName: string,
@@ -43,37 +90,9 @@ export async function querySongDetails(
     .where(and(eq(songs.songName, songName), eq(songs.type, type)))
     .orderBy(songs.region, desc(songs.gameVersion), songs.difficulty);
 
-  let scoresQuery: Promise<
-    { region: string; difficulty: string; achievement: number; fc: string; fs: string }[]
-  > = Promise.resolve([]);
-
-  if (userId) {
-    scoresQuery = db
-      .select({
-        region: songs.region,
-        difficulty: songs.difficulty,
-        achievement: scoreData.achievement,
-        fc: scoreData.fc,
-        fs: scoreData.fs,
-      })
-      .from(snapshotScores)
-      .innerJoin(scoreData, eq(snapshotScores.scoreId, scoreData.id))
-      .innerJoin(songs, eq(scoreData.songId, songs.id))
-      .where(
-        and(
-          eq(songs.songName, songName),
-          eq(songs.type, type),
-          inArray(
-            snapshotScores.snapshotId,
-            db
-              .selectDistinctOn([userSnapshots.region], { id: userSnapshots.id })
-              .from(userSnapshots)
-              .where(eq(userSnapshots.userId, userId))
-              .orderBy(userSnapshots.region, desc(userSnapshots.fetchedAt))
-          )
-        )
-      );
-  }
+  const scoresQuery = userId
+    ? querySongScores(songName, type, userId)
+    : Promise.resolve(undefined);
 
   const [charts, scores] = await Promise.all([chartsQuery, scoresQuery]);
 
@@ -81,50 +100,49 @@ export async function querySongDetails(
     throw new TRPCError({ code: "NOT_FOUND", message: "Song not found" });
   }
 
-  let userScoresMap:
-    | Record<string, Record<string, { achievement: number; fc: string; fs: string }>>
-    | undefined;
-  if (scores.length > 0) {
-    userScoresMap = {};
-    for (const score of scores) {
-      if (!userScoresMap[score.region]) {
-        userScoresMap[score.region] = {};
-      }
-      userScoresMap[score.region][score.difficulty] = {
-        achievement: score.achievement,
-        fc: score.fc,
-        fs: score.fs,
-      };
-    }
-  }
+  const userScoresMap = scores;
 
   type ChartType = (typeof charts)[number];
 
-  const byRegion = new Map<Region, Map<VersionId, SongExtended[]>>();
+  const byRegion = new Map<Region, Map<VersionId, ChartType[]>>();
   for (const chart of charts) {
     if (!byRegion.has(chart.region)) {
       byRegion.set(chart.region, new Map());
     }
     const chartVersion = chart.gameVersion as VersionId;
-    const regionMap: Map<VersionId, SongExtended[]> = byRegion.get(chart.region)!;
+    const regionMap = byRegion.get(chart.region)!;
     if (!regionMap.has(chartVersion)) {
       regionMap.set(chartVersion, []);
     }
-    regionMap.get(chartVersion)!.push({
-      ...chart,
-      addedVersion: chart.addedVersion as VersionId,
-    });
+    regionMap.get(chartVersion)!.push(chart);
   }
 
-  const regions: {
-    region: Region;
-    versions: { gameVersion: VersionId; charts: SongExtended[] }[];
-  }[] = Array.from(byRegion.entries()).map(([region, versionMap]) => ({
-    region,
-    versions: Array.from(versionMap.entries())
-      .map(([version, vCharts]) => ({ gameVersion: version, charts: vCharts }))
-      .sort((a, b) => b.gameVersion - a.gameVersion),
-  }));
+  const regions: SongDetails["regions"] = Array.from(byRegion.entries()).map(([region, versionMap]) => {
+    const versions = Array.from(versionMap.entries()).sort(([a], [b]) => b - a);
+    return {
+      region,
+      versions: versions.map(([gameVersion, versionCharts], index) => ({
+        gameVersion,
+        charts: index === 0
+          ? versionCharts.map((chart): SongDetailChart => ({
+              difficulty: chart.difficulty,
+              level: chart.level,
+              levelPrecise: chart.levelPrecise,
+              addedVersion: chart.addedVersion as VersionId,
+              noteDesigner: chart.noteDesigner,
+              tapCount: chart.tapCount,
+              holdCount: chart.holdCount,
+              slideCount: chart.slideCount,
+              touchCount: chart.touchCount,
+              breakCount: chart.breakCount,
+            }))
+          : versionCharts.map((chart): SongDetailHistoricalChart => ({
+              difficulty: chart.difficulty,
+              levelPrecise: chart.levelPrecise,
+            })),
+      })),
+    };
+  });
 
   const preferredChart: ChartType = maxBy(
     charts,

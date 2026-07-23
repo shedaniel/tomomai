@@ -73,6 +73,7 @@ export const userRouter = router({
   // Songs
   getAllUniqueSongs: songsRouter.getAllUniqueSongs,
   getSongDetails: songsRouter.getSongDetails,
+  getSongScores: songsRouter.getSongScores,
   getSimpleSongDetails: songsRouter.getSimpleSongDetails,
 
   // Percentile

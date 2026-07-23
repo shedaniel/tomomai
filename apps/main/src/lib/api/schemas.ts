@@ -139,6 +139,10 @@ export const songCatalogueEntry = z.object({
   noteDesigner: z.string().nullable().describe("Chart designer name."),
 });
 
+export const songCatalogue = z.object({
+  songs: z.array(songCatalogueEntry),
+});
+
 export const songDetail = songCatalogueEntry.extend({
   noteCounts: z.object({
     tap: z.number().int().nullable(),

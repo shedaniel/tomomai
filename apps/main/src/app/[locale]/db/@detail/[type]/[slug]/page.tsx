@@ -4,7 +4,7 @@ import { safeDecodeURIComponent } from "@/lib/utils";
 import { getTranslations } from "next-intl/server";
 
 // Match the parent [slug] route's ISR mode.
-export const revalidate = 1209600;
+export const revalidate = 2592000;
 
 export async function headers() {
   return {

@@ -16,6 +16,7 @@ import { DEFAULT_THEME_ID, getThemeOrDefault, getThemeStyleProperties, themeNoFl
 import { resolveBaseUrl } from '@/lib/base-url';
 import { siteJsonLd } from '@/lib/seo';
 import { SiteFooter } from '@/components/site-footer';
+import { PreMaintenanceBanner } from '@/components/pre-maintenance-banner';
 
 const TURNSTILE_SITE_KEY =
   process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && process.env.TURNSTILE_SECRET_KEY
@@ -103,6 +104,7 @@ export default async function LocaleLayout({ children, params }: Props) {
             <ThemeProvider>
               <TRPCProvider>
                 {TURNSTILE_SITE_KEY && <TurnstilePreclearance siteKey={TURNSTILE_SITE_KEY} />}
+                <PreMaintenanceBanner />
                 {children}
                 <SiteFooter />
                 {shouldInjectToolbar && <VercelToolbar />}

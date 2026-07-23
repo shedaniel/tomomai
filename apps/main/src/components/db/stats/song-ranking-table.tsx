@@ -55,6 +55,7 @@ export function SongRankingTable({ data, collapsedCount = 5 }: SongRankingTableP
                   fill
                   className="object-cover"
                   loading="lazy"
+                  sizes="40px"
                 />
               </div>
               <div className="flex flex-col min-w-0">
