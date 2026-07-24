@@ -91,7 +91,7 @@
     "embla-carousel-react": "^8.6.0",
     "flags": "^4.0.3",
     "gray-matter": "^4.0.3",
-    "ioredis": "^5.10.1",
+    "ioredis": "^5.11.1",
     "jsdom": "^27.4.0",
     "kuromoji": "^0.1.2",
     "kuroshiro": "^1.2.0",

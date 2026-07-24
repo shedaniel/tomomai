@@ -1,6 +1,5 @@
 import { createServerSideTRPC } from "@/lib/trpc-server";
 import { TRPCError } from "@trpc/server";
-import { Region } from "@/lib/types";
 import { isRegionEnabledStr } from "@/lib/enabled-regions";
 import { ProfilePage } from "@/components/profile-page";
 import { notFound } from "next/navigation";
@@ -12,12 +11,7 @@ import { getLocale, setStaticLocale } from "@/i18n/locale-server";
 import { buildAlternates, openGraphLocales, breadcrumbJsonLd, ogImageUrl, localizePath } from "@/lib/seo";
 import { safeDecodeURIComponent } from "@/lib/utils";
 
-export const revalidate = 3600;
-export const dynamicParams = true;
-
-export function generateStaticParams() {
-  return [];
-}
+export const dynamic = "force-dynamic";
 
 interface RegionProfilePageProps {
   params: Promise<{
