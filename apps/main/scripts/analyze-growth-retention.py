@@ -158,6 +158,100 @@ def section(title: str):
     print("=" * 78)
 
 
+LOGIN_SOURCE_ORDER = [
+    "discord",
+    "twitter",
+    "passkey",
+    "passkey_or_unmatched",
+    "discord_or_twitter",
+    "unknown",
+]
+
+
+def login_session_source_cte(active_only: bool = True) -> str:
+    active_clause = 'WHERE s."expiresAt" > NOW()' if active_only else ""
+    return f"""
+        WITH session_base AS (
+          SELECT s.id, s."userId", s."createdAt", s."expiresAt"
+          FROM session s
+          {active_clause}
+        ),
+        session_social AS (
+          SELECT DISTINCT ON (s.id)
+                 s.id,
+                 a."providerId" AS source,
+                 ABS(EXTRACT(EPOCH FROM (a."updatedAt" - s."createdAt"))) AS seconds_from_session
+          FROM session_base s
+          JOIN account a
+            ON a."userId" = s."userId"
+           AND a."providerId" IN ('discord', 'twitter')
+          WHERE ABS(EXTRACT(EPOCH FROM (a."updatedAt" - s."createdAt"))) <= 600
+          ORDER BY s.id, seconds_from_session
+        ),
+        user_login_sources AS (
+          SELECT u.id AS "userId",
+                 COALESCE(BOOL_OR(a."providerId" = 'discord'), FALSE) AS has_discord,
+                 COALESCE(BOOL_OR(a."providerId" = 'twitter'), FALSE) AS has_twitter,
+                 EXISTS (SELECT 1 FROM passkey p WHERE p."userId" = u.id) AS has_passkey
+          FROM "user" u
+          LEFT JOIN account a
+            ON a."userId" = u.id
+           AND a."providerId" IN ('discord', 'twitter')
+          GROUP BY u.id
+        ),
+        session_source AS (
+          SELECT s.id,
+                 s."userId",
+                 s."createdAt",
+                 s."expiresAt",
+                 COALESCE(
+                   ss.source,
+                   CASE
+                     WHEN us.has_passkey AND NOT us.has_discord AND NOT us.has_twitter THEN 'passkey'
+                     WHEN us.has_discord AND NOT us.has_twitter AND NOT us.has_passkey THEN 'discord'
+                     WHEN us.has_twitter AND NOT us.has_discord AND NOT us.has_passkey THEN 'twitter'
+                     WHEN us.has_passkey THEN 'passkey_or_unmatched'
+                     WHEN us.has_discord AND us.has_twitter THEN 'discord_or_twitter'
+                     ELSE 'unknown'
+                   END
+                 ) AS source
+          FROM session_base s
+          JOIN user_login_sources us USING ("userId")
+          LEFT JOIN session_social ss USING (id)
+        )
+    """
+
+
+def login_source_setup_cte() -> str:
+    return """
+        WITH user_login_sources AS (
+          SELECT u.id AS "userId",
+                 COALESCE(BOOL_OR(a."providerId" = 'discord'), FALSE) AS has_discord,
+                 COALESCE(BOOL_OR(a."providerId" = 'twitter'), FALSE) AS has_twitter,
+                 EXISTS (SELECT 1 FROM passkey p WHERE p."userId" = u.id) AS has_passkey
+          FROM "user" u
+          LEFT JOIN account a
+            ON a."userId" = u.id
+           AND a."providerId" IN ('discord', 'twitter')
+          GROUP BY u.id
+        ),
+        login_setup AS (
+          SELECT "userId",
+                 CASE
+                   WHEN has_discord AND has_twitter AND has_passkey THEN 'discord+twitter+passkey'
+                   WHEN has_discord AND has_twitter THEN 'discord+twitter'
+                   WHEN has_discord AND has_passkey THEN 'discord+passkey'
+                   WHEN has_twitter AND has_passkey THEN 'twitter+passkey'
+                   WHEN has_discord THEN 'discord'
+                   WHEN has_twitter THEN 'twitter'
+                   WHEN has_passkey THEN 'passkey'
+                   ELSE 'none'
+                 END AS setup
+          FROM user_login_sources
+        )
+    """
+
+
 def main():
     conn = psycopg2.connect(DSN)
     cur = conn.cursor()
@@ -708,6 +802,152 @@ def main():
         tabulate(out, headers=["activation", "users", "7d", "14d", "30d", "avg_snaps"])
     )
 
+
+    # ---- Login source signals ----
+    section("Login session source signals (current sessions, inferred)")
+    print(
+        "Note: Better Auth session rows do not store the auth source directly; "
+        "social sessions are matched to account.updatedAt within ±10 minutes, "
+        "and unmatched multi-method passkey users are bucketed as passkey_or_unmatched."
+    )
+    cur.execute(login_session_source_cte() + """
+        SELECT source,
+               COUNT(*) AS sessions,
+               COUNT(DISTINCT "userId") AS users,
+               ROUND((COUNT(*)::numeric / NULLIF(COUNT(DISTINCT "userId"), 0)), 2) AS sessions_per_user,
+               MIN("createdAt") AS oldest_session,
+               MAX("createdAt") AS newest_session
+        FROM session_source
+        GROUP BY 1 ORDER BY sessions DESC
+    """)
+    print(
+        tabulate(
+            cur.fetchall(),
+            headers=[
+                "source",
+                "sessions",
+                "users",
+                "sessions/user",
+                "oldest_session",
+                "newest_session",
+            ],
+        )
+    )
+
+    cur.execute(login_session_source_cte() + """
+        SELECT date_trunc('week', "createdAt") AS week,
+               source,
+               COUNT(*) AS sessions
+        FROM session_source
+        WHERE "createdAt" > NOW() - INTERVAL '12 weeks'
+        GROUP BY 1, 2 ORDER BY 1, 2
+    """)
+    rows = cur.fetchall()
+    if rows:
+        weeks = sorted({r[0] for r in rows})
+        present_sources = {r[1] for r in rows}
+        sources = [s for s in LOGIN_SOURCE_ORDER if s in present_sources]
+        sources += sorted(present_sources - set(sources))
+        pivot = {(w, s): 0 for w in weeks for s in sources}
+        for w, source, sessions in rows:
+            pivot[(w, source)] = sessions
+        out = [[w.date()] + [pivot[(w, s)] for s in sources] for w in weeks]
+        print("\nActive sessions created by week × inferred source:")
+        print(tabulate(out, headers=["week"] + sources))
+
+    print("\nRetention by latest active login session source:")
+    cur.execute(login_session_source_cte() + """
+        , latest_session AS (
+          SELECT DISTINCT ON ("userId") "userId", source, "createdAt"
+          FROM session_source ORDER BY "userId", "createdAt" DESC
+        ),
+        fl AS (
+          SELECT "userId", MIN("fetchedAt") f, MAX("fetchedAt") l, COUNT(*) n
+          FROM user_snapshots GROUP BY 1
+        )
+        SELECT ls.source,
+          COUNT(*) users,
+          COUNT(*) FILTER (WHERE fl.l > NOW() - INTERVAL '7 days') a7,
+          COUNT(*) FILTER (WHERE fl.l > NOW() - INTERVAL '14 days') a14,
+          COUNT(*) FILTER (WHERE fl.l > NOW() - INTERVAL '30 days') a30,
+          ROUND(AVG(fl.n)::numeric, 1) avg_snaps
+        FROM fl JOIN latest_session ls USING("userId")
+        WHERE fl.f < NOW() - INTERVAL '28 days'
+        GROUP BY 1 ORDER BY 2 DESC
+    """)
+    rows = cur.fetchall()
+    out = []
+    source_retention: dict[str, tuple[int, int]] = {}
+    for source, u, a7, a14, a30, avg in rows:
+        pct = lambda x: f"{x} ({100 * x / u:.0f}%)"
+        out.append([source, u, pct(a7), pct(a14), pct(a30), avg])
+        source_retention[source] = (u, a30)
+    print(tabulate(out, headers=["source", "users", "7d", "14d", "30d", "avg_snaps"]))
+
+    test_sources = [
+        s for s in LOGIN_SOURCE_ORDER if s in source_retention and source_retention[s][0] >= 30
+    ]
+    if len(test_sources) >= 2:
+        table = [[source_retention[s][1], source_retention[s][0] - source_retention[s][1]] for s in test_sources]
+        chi2, p, dof, _ = chi2_contingency(table)
+        sig = "***" if p < 0.001 else "**" if p < 0.01 else "*" if p < 0.05 else "ns"
+        print(
+            f"\n  latest active login source (30d; {', '.join(test_sources)}): "
+            f"chi2={chi2:.3f}, dof={dof}, p={p:.6f} {sig}"
+        )
+
+    cur.execute(login_session_source_cte() + f"""
+        , latest_session AS (
+          SELECT DISTINCT ON ("userId") "userId", source, "createdAt"
+          FROM session_source ORDER BY "userId", "createdAt" DESC
+        ),
+        latest_rating AS (
+          SELECT DISTINCT ON ("userId") "userId", rating
+          FROM user_snapshots ORDER BY "userId", "fetchedAt" DESC
+        )
+        SELECT {band_case_sql("lr.rating")} AS band,
+               ls.source,
+               COUNT(*) AS users
+        FROM latest_rating lr JOIN latest_session ls USING("userId")
+        GROUP BY 1, 2 ORDER BY 1, 2
+    """)
+    rows = cur.fetchall()
+    if rows:
+        present_sources = {r[1] for r in rows}
+        sources = [s for s in LOGIN_SOURCE_ORDER if s in present_sources]
+        sources += sorted(present_sources - set(sources))
+        source_band = {(band, source): 0 for band, _, _ in BANDS for source in sources}
+        for band, source, users in rows:
+            source_band[(band, source)] = users
+        out = []
+        for band, _, _ in BANDS:
+            row = [band] + [source_band[(band, s)] for s in sources]
+            if sum(row[1:]) > 0:
+                out.append(row)
+        print("\nLatest active login source distribution by rating band:")
+        print(tabulate(out, headers=["band"] + sources))
+
+    section("Retention by linked login sources (user-level auth setup)")
+    cur.execute(login_source_setup_cte() + """
+        , fl AS (
+          SELECT "userId", MIN("fetchedAt") f, MAX("fetchedAt") l, COUNT(*) n
+          FROM user_snapshots GROUP BY 1
+        )
+        SELECT ls.setup,
+          COUNT(*) users,
+          COUNT(*) FILTER (WHERE fl.l > NOW() - INTERVAL '7 days') a7,
+          COUNT(*) FILTER (WHERE fl.l > NOW() - INTERVAL '14 days') a14,
+          COUNT(*) FILTER (WHERE fl.l > NOW() - INTERVAL '30 days') a30,
+          ROUND(AVG(fl.n)::numeric, 1) avg_snaps
+        FROM fl JOIN login_setup ls USING("userId")
+        WHERE fl.f < NOW() - INTERVAL '28 days'
+        GROUP BY 1 ORDER BY 2 DESC
+    """)
+    out = []
+    for setup, u, a7, a14, a30, avg in cur.fetchall():
+        pct = lambda x: f"{x} ({100 * x / u:.0f}%)"
+        out.append([setup, u, pct(a7), pct(a14), pct(a30), avg])
+    print(tabulate(out, headers=["setup", "users", "7d", "14d", "30d", "avg_snaps"]))
     # ---- User-Agent / device signals ----
     section("Device class & browser signals (from session.userAgent)")
     cur.execute("""
