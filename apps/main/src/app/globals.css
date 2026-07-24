@@ -6,6 +6,7 @@
  * explicitly so classes used inside them are emitted. */
 @source "../../../../packages/ui/src/**/*.{ts,tsx}";
 @source "../../../../packages/i18n/src/**/*.{ts,tsx}";
+@source "../../../../packages/markdown/src/**/*.{ts,tsx}";
 
 @custom-variant dark (&:is(.dark *));
 

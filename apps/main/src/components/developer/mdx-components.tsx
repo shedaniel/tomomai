@@ -1,9 +1,9 @@
 import { Link } from "@/i18n/navigation"
+import { ExternalMarkdownLink, markdownBaseComponents } from "@tomomai/markdown";
 import type { ComponentProps, ReactNode } from "react";
 import { AlertTriangle, Info, CheckCircle2, AlertCircle } from "lucide-react";
 import { ScopeBadge } from "./scope-badge";
 import type { ScopeKey } from "@/lib/api/scopes";
-import { mdxBaseComponents } from "@/components/mdx-base-components";
 
 type CalloutType = "info" | "warning" | "danger" | "success";
 
@@ -66,18 +66,21 @@ function Callout({
  * `<ScopeBadge scope="recent:read" />` inline and we wire it here.
  */
 export const mdxComponents = {
-  ...mdxBaseComponents,
+  ...markdownBaseComponents,
   a: (props: ComponentProps<"a">) => {
     const href = props.href ?? "";
+    const isHttp = href.startsWith("http://") || href.startsWith("https://");
+    const isMailto = href.startsWith("mailto:");
     if (href.startsWith("/")) {
       return <Link href={href}>{props.children}</Link>;
     }
-    const isHttp = href.startsWith("http://") || href.startsWith("https://");
-    const isMailto = href.startsWith("mailto:");
-    if (!isHttp && !isMailto) {
+    if (isHttp) {
+      return <ExternalMarkdownLink {...props} />;
+    }
+    if (!isMailto) {
       return <span>{props.children}</span>;
     }
-    return <a {...props} target={isHttp ? "_blank" : undefined} rel="noopener noreferrer" />;
+    return <a {...props} rel="noopener noreferrer" />;
   },
   pre: (props: ComponentProps<"pre">) => (
     <pre

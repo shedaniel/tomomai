@@ -1,20 +1,19 @@
 import { getAllPostsMeta, getPostBySlug, getAvailableTranslations } from "@/lib/posts";
 import { getLocale, setStaticLocale } from "@/i18n/locale-server";
 import { defaultLocale } from "@tomomai/i18n/locale";
+import { ExternalMarkdownLink, markdownBaseComponents } from "@tomomai/markdown";
 import { MDXRemote } from "next-mdx-remote/rsc";
 import { Metadata } from "next";
 import { breadcrumbJsonLd, openGraphLocales, localizePath, ogImageUrl } from "@/lib/seo";
 import { resolveBaseUrl } from "@/lib/base-url";
 import { Link } from "@/i18n/navigation"
 import { notFound } from "next/navigation";
-import { ComponentPropsWithoutRef } from "react";
 import { PostLocaleSwitcher } from "@/components/post-locale-switcher";
 import { getTranslations } from "next-intl/server";
 import { Bot } from "lucide-react";
 import { isCNExclusive } from "@/lib/enabled-regions";
 import { MdxImageComparison } from "@/components/mdx-image-comparison";
 import { MdxImageCarousel, MdxImageCarouselSlide } from "@/components/mdx-image-carousel";
-import { mdxBaseComponents } from "@/components/mdx-base-components";
 import remarkGfm from "remark-gfm";
 
 type PostPageProps = {
@@ -71,10 +70,8 @@ export async function generateMetadata({ params }: PostPageProps): Promise<Metad
 }
 
 const mdxComponents = {
-  ...mdxBaseComponents,
-  a: (props: ComponentPropsWithoutRef<"a">) => (
-    <a className="text-primary hover:underline" target="_blank" rel="noopener noreferrer" {...props} />
-  ),
+  ...markdownBaseComponents,
+  a: ExternalMarkdownLink,
 };
 
 export default async function PostPage({ params }: PostPageProps) {
