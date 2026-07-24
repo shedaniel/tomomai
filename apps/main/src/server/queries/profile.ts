@@ -8,6 +8,7 @@ export async function fetchProfileSettings(userId: string) {
   const result = await db
     .select({
       publishProfile: user.publishProfile,
+      profileDescription: user.profileDescription,
       profileMainRegion: user.profileMainRegion,
       profileShowAllScores: user.profileShowAllScores,
       profileShowScoreDetails: user.profileShowScoreDetails,

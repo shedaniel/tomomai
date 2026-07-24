@@ -1,6 +1,7 @@
 import { router } from '@/lib/trpc';
 import { snapshotsRouter } from './snapshots';
 import { profileRouter } from './profile';
+import { profileReportsRouter } from './profile-reports';
 import { fetchRouter } from './fetch';
 import { invitesRouter } from './invites';
 import { recentsRouter } from './recents';
@@ -30,6 +31,8 @@ export const userRouter = router({
   getUserData: profileRouter.getUserData,
   getPublicProfile: profileRouter.getPublicProfile,
   getProfileSettings: profileRouter.getProfileSettings,
+  updateProfileDescription: profileRouter.updateProfileDescription,
+  submitProfileReport: profileReportsRouter.submitProfileReport,
   updatePublishProfile: profileRouter.updatePublishProfile,
   updateRegion: profileRouter.updateRegion,
   updateProfileMainRegion: profileRouter.updateProfileMainRegion,
