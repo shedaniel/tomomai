@@ -53,6 +53,7 @@ interface DataContentProps {
     showScoreDetails?: boolean;
   };
   visitableProfileAt: string | null;
+  profileDescription?: string | null;
   initialTab?: string;
   visitedBySelf: boolean;
   flags: Flags;
@@ -69,6 +70,7 @@ export function DataContent({
     showScoreDetails: true,
   },
   visitableProfileAt,
+  profileDescription,
   initialTab,
   visitedBySelf,
   region,
@@ -238,6 +240,7 @@ export function DataContent({
                 selectedSnapshotData={selectedSnapshotData}
                 showPlayCounts={privacySettings.showPlayCounts}
                 visitableProfileAt={visitableProfileAt}
+                profileDescription={profileDescription}
               />
             )}
             {selectedTab === "stats" && (visitedBySelf || !!privacySettings.showAllScores) && (

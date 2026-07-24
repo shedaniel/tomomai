@@ -1,4 +1,5 @@
 import { RegionSwitcherClient } from "@/components/region-switcher";
+import { ProfileReportDialog } from "@/components/profile-report-dialog";
 import { Badge } from "@tomomai/ui";
 import { getVersionInfo, VersionId } from "@/lib/metadata";
 import { Region } from "@/lib/types";
@@ -14,12 +15,16 @@ interface PublicDataBannerProps {
     gameVersion: VersionId;
   } | null;
   profileUsername: string;
+  profileUserId: string;
+  hasProfileDescription: boolean;
 }
 
 export function PublicDataBanner({
   region,
   snapshotData,
   profileUsername,
+  profileUserId,
+  hasProfileDescription,
 }: PublicDataBannerProps) {
   const t = useTranslations();
 
@@ -61,6 +66,11 @@ export function PublicDataBanner({
           <RegionSwitcherClient
             value={region}
             username={profileUsername}
+          />
+          <ProfileReportDialog
+            username={profileUsername}
+            profileUserId={profileUserId}
+            hasProfileDescription={hasProfileDescription}
           />
         </div>
       </div>

@@ -16,9 +16,16 @@ import {
   SettingsForm,
   SettingsHeader,
   useDirtyFlag,
+  useSettingsForm,
   useSettingsReset,
   useSettingsSave,
 } from "@/components/settings/primitives";
+import {
+  MarkdownEditor,
+  PROFILE_MARKDOWN_POLICY,
+  videoEmbedExtension,
+} from "@tomomai/markdown";
+import { PROFILE_DESCRIPTION_LIMITS } from "@/lib/profile-description";
 import { getEnabledRegions } from "@/lib/enabled-regions";
 import { trpc } from "@/lib/trpc-client";
 import { ProfilePrivacySettings, Region } from "@/lib/types";
@@ -26,6 +33,8 @@ import { Copy, ExternalLink, Globe } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
+
+const PROFILE_MARKDOWN_EXTENSIONS = [videoEmbedExtension] as const;
 
 export function PrivacySettings() {
   const t = useTranslations();
@@ -43,6 +52,8 @@ export function PrivacySettings() {
 
 function PrivacyFields() {
   const t = useTranslations();
+  const { isLoading: isSaving } = useSettingsForm();
+  const utils = trpc.useUtils();
 
   const { data: userData } = trpc.user.getUserData.useQuery(undefined, {
     refetchOnWindowFocus: false,
@@ -57,6 +68,7 @@ function PrivacyFields() {
   const [selectedPublishProfile, setSelectedPublishProfile] = useState<boolean | null>(null);
   const [selectedMainRegion, setSelectedMainRegion] = useState<Region | null>(null);
   const [selectedPrivacySettings, setSelectedPrivacySettings] = useState<ProfilePrivacySettings | null>(null);
+  const [selectedProfileDescription, setSelectedProfileDescription] = useState<string>();
 
   const effectivePublishProfile = selectedPublishProfile ?? profileSettings?.publishProfile ?? false;
   const effectiveMainRegion = selectedMainRegion ?? profileSettings?.profileMainRegion ?? "intl";
@@ -68,11 +80,13 @@ function PrivacyFields() {
     profileShowEvents: profileSettings?.profileShowEvents ?? true,
     profileShowInSearch: profileSettings?.profileShowInSearch ?? true,
   };
+  const effectiveProfileDescription = selectedProfileDescription ?? profileSettings?.profileDescription ?? "";
 
   const updatePublishProfile = trpc.user.updatePublishProfile.useMutation();
   const updateProfileMainRegion = trpc.user.updateProfileMainRegion.useMutation();
   const updateProfilePrivacySettings = trpc.user.updateProfilePrivacySettings.useMutation();
 
+  const updateProfileDescription = trpc.user.updateProfileDescription.useMutation();
   const publishDirty = !!profileSettings && effectivePublishProfile !== profileSettings.publishProfile;
   const regionDirty = !!profileSettings && effectiveMainRegion !== profileSettings.profileMainRegion;
   const privacyDirty = !!profileSettings && (
@@ -83,8 +97,10 @@ function PrivacyFields() {
     effectivePrivacySettings.profileShowEvents !== profileSettings.profileShowEvents ||
     effectivePrivacySettings.profileShowInSearch !== profileSettings.profileShowInSearch
   );
+  const descriptionDirty = !!profileSettings && effectiveProfileDescription !== (profileSettings.profileDescription ?? "");
 
   useDirtyFlag("privacy", publishDirty || regionDirty || privacyDirty);
+  useDirtyFlag("privacy.profileDescription", descriptionDirty);
 
   useSettingsSave("privacy", async () => {
     if (!profileSettings) return;
@@ -99,6 +115,21 @@ function PrivacyFields() {
     setSelectedPublishProfile(null);
     setSelectedMainRegion(null);
     setSelectedPrivacySettings(null);
+  });
+
+  useSettingsSave("privacy.profileDescription", async () => {
+    if (!profileSettings || !descriptionDirty) return;
+
+    const normalizedDescription = effectiveProfileDescription.trim() || null;
+    await updateProfileDescription.mutateAsync({ profileDescription: normalizedDescription });
+    utils.user.getProfileSettings.setData(undefined, (current) => current
+      ? { ...current, profileDescription: normalizedDescription }
+      : current);
+    setSelectedProfileDescription(undefined);
+  });
+
+  useSettingsReset("privacy.profileDescription", () => {
+    setSelectedProfileDescription(undefined);
   });
 
   const getProfileUrl = () => {
@@ -146,6 +177,39 @@ function PrivacyFields() {
           />
         }
       />
+
+      <SettingsField
+        label={t("settings.profile.description.label")}
+        description={t("settings.profile.description.description")}
+        htmlFor="profile-description"
+      >
+        <div className="space-y-2">
+          {!effectivePublishProfile && (
+            <p className="text-xs text-muted-foreground">
+              {t("settings.profile.description.unpublished")}
+            </p>
+          )}
+          <MarkdownEditor
+            id="profile-description"
+            ariaLabel={t("settings.profile.description.label")}
+            value={effectiveProfileDescription}
+            onChange={setSelectedProfileDescription}
+            limits={PROFILE_DESCRIPTION_LIMITS}
+            policy={PROFILE_MARKDOWN_POLICY}
+            extensions={PROFILE_MARKDOWN_EXTENSIONS}
+            disabled={profileSettingsLoading || isSaving}
+          />
+          <div className="space-y-1 text-xs text-muted-foreground">
+            <p>{t("settings.profile.description.formats")}</p>
+            <p>
+              {t("settings.profile.description.limits", {
+                characters: PROFILE_DESCRIPTION_LIMITS.maxCharacters,
+                bytes: PROFILE_DESCRIPTION_LIMITS.maxUtf8Bytes,
+              })}
+            </p>
+          </div>
+        </div>
+      </SettingsField>
 
       {effectivePublishProfile && (
         <div className="grid gap-4 pl-4 border-l-2 border-muted">

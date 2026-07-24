@@ -12,6 +12,13 @@ import { SPRING_CONFIGS, STAGGER, getTransition } from "@/lib/animation-constant
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { VersionId } from "@/lib/metadata";
 import { resolveBaseUrl } from "@/lib/base-url";
+import {
+  MarkdownContent,
+  PROFILE_MARKDOWN_POLICY,
+  videoEmbedExtension,
+} from "@tomomai/markdown";
+
+const PROFILE_MARKDOWN_EXTENSIONS = [videoEmbedExtension] as const;
 
 function RatingImage({ rating, version }: { rating: number; version?: VersionId }) {
   return (
@@ -23,10 +30,12 @@ export function InfoCard({
   selectedSnapshotData,
   showPlayCounts = true,
   visitableProfileAt,
+  profileDescription,
 }: {
   selectedSnapshotData: SnapshotWithSongs;
   showPlayCounts?: boolean;
   visitableProfileAt: string | null;
+  profileDescription?: string | null;
 }) {
   const t = useTranslations();
   const isDesktop = useMediaQuery("(min-width: 768px)", { initializeWithValue: false });
@@ -60,6 +69,20 @@ export function InfoCard({
           </div>
         )}
       </div>
+
+      {profileDescription ? (
+        <section aria-labelledby="profile-about-heading" className="space-y-2">
+          <h3 id="profile-about-heading" className="font-medium text-foreground">
+            {t("publicProfile.about", { username: visitableProfileAt ?? "" })}
+          </h3>
+          <MarkdownContent
+            value={profileDescription}
+            className="max-w-[75ch]"
+            policy={PROFILE_MARKDOWN_POLICY}
+            extensions={PROFILE_MARKDOWN_EXTENSIONS}
+          />
+        </section>
+      ) : null}
 
       <div className="flex items-center gap-2 mb-4">
         <motion.div
