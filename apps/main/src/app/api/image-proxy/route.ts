@@ -3,7 +3,7 @@ import { Agent } from 'undici';
 import { getCachedImageBuffer, cacheImage } from '@/lib/image_cacher';
 import { flushLogger } from '@/lib/logger';
 import { requestLogger } from '@/lib/request-logger';
-import { SAFE_MAIMAI_IMAGE_URLS } from '@/lib/utils';
+import { isSafeMaimaiImageUrl } from '@/lib/utils';
 
 export async function GET(request: NextRequest) {
   const { log, requestId } = requestLogger(request, "image-proxy");
@@ -14,8 +14,8 @@ export async function GET(request: NextRequest) {
     return new NextResponse('Missing url parameter', { status: 400 });
   }
 
-  // Validate that this is a maimaidx domain for security
-  if (!SAFE_MAIMAI_IMAGE_URLS.some(domain => imageUrl.includes(domain))) {
+  // Only fetch exact HTTPS hosts from the cover-image allowlist.
+  if (!isSafeMaimaiImageUrl(imageUrl)) {
     return new NextResponse('Unauthorized domain', { status: 403 });
   }
 
