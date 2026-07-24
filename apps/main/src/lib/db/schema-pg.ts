@@ -1,4 +1,4 @@
-import { pgTable, text, integer, smallint, bigint, bigserial, boolean, timestamp, unique, index, pgEnum, jsonb, varchar, check, uuid, point, primaryKey } from "drizzle-orm/pg-core";
+import { pgTable, text, integer, smallint, bigint, bigserial, boolean, timestamp, unique, uniqueIndex, index, pgEnum, jsonb, varchar, check, uuid, point, primaryKey } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import {
   LANGUAGE_ENUM,
@@ -30,6 +30,16 @@ export const eventStateEnum = pgEnum("event_state", EVENT_STATE_ENUM);
 export const storeStatusEnum = pgEnum("store_status", STORE_STATUS_ENUM);
 export const titleTypeEnum = pgEnum("title_type", TITLE_TYPE_ENUM);
 export const legalDocTypeEnum = pgEnum("legal_doc_type", ["tos", "privacy"]);
+export const profileReportReasonEnum = pgEnum("profile_report_reason", [
+  "harassment",
+  "hate",
+  "sexual",
+  "violence",
+  "spam",
+  "impersonation",
+  "other",
+]);
+export const profileReportStatusEnum = pgEnum("profile_report_status", ["pending", "dismissed", "removed"]);
 
 // Existing auth tables
 export const user = pgTable("user", {
@@ -56,6 +66,7 @@ export const user = pgTable("user", {
   profileShowPlayCounts: boolean("profileShowPlayCounts").notNull().default(true),
   profileShowEvents: boolean("profileShowEvents").notNull().default(true),
   profileShowInSearch: boolean("profileShowInSearch").notNull().default(true),
+  profileDescription: text("profileDescription"),
   // Fetch settings
   fetchUseAlbums: boolean("fetchUseAlbums"),
   // Feature flag overrides for userSelectable flags. Null = no overrides.
@@ -129,6 +140,25 @@ export const invites = pgTable("invites", {
   revoked: boolean("revoked").notNull().default(false),
 }, (table) => [
   index("invites_createdby_idx").on(table.createdBy),
+]);
+
+export const profileReports = pgTable("profile_reports", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  reporterUserId: text("reporterUserId").notNull().references(() => user.id, { onDelete: "cascade" }),
+  targetUserId: text("targetUserId").notNull().references(() => user.id, { onDelete: "cascade" }),
+  reason: profileReportReasonEnum("reason").notNull(),
+  details: varchar("details", { length: 1000 }),
+  descriptionSnapshot: text("descriptionSnapshot").notNull(),
+  status: profileReportStatusEnum("status").notNull().default("pending"),
+  createdAt: timestamp("createdAt", { precision: 0 }).notNull().defaultNow(),
+  resolvedAt: timestamp("resolvedAt", { precision: 0 }),
+  resolutionNote: varchar("resolutionNote", { length: 1000 }),
+}, (table) => [
+  index("profile_reports_status_createdat_idx").on(table.status, table.createdAt),
+  index("profile_reports_targetuserid_idx").on(table.targetUserId),
+  uniqueIndex("profile_reports_pending_reporter_target_idx")
+    .on(table.reporterUserId, table.targetUserId)
+    .where(sql`${table.status} = 'pending'`),
 ]);
 
 // Maimai-specific tables
