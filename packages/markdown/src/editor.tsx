@@ -107,10 +107,8 @@ export function MarkdownEditor({
   }, []);
 
   const runAction = (action: ToolbarAction) => {
-    const textarea = textareaRef.current;
-    if (!textarea || disabled) return;
-    const current = { start: textarea.selectionStart, end: textarea.selectionEnd };
-    const result = applyAction(value, current, action);
+    if (disabled || selection === null) return;
+    const result = applyAction(value, selection, action);
     if (!validateMarkdownSize(result.value, limits).ok) return;
     onChange(result.value);
     restoreSelection(result.selection);
