@@ -254,6 +254,13 @@
         "jp": "日本",
         "cn": "中国"
       },
+      "description": {
+        "label": "プロフィール紹介",
+        "description": "Markdownを使って公開用の自己紹介を書けます。",
+        "unpublished": "今から編集できます。プロフィールを公開すると表示されます。",
+        "formats": "太字、斜体、取り消し線、リンク、リスト、引用、および単独行のYouTubeまたはbilibiliリンクに対応しています。",
+        "limits": "最大{characters}文字、{bytes}バイト。"
+      },
       "privacy": {
         "label": "プライバシー設定",
         "showAllScores": {
@@ -1321,6 +1328,95 @@
       "recentSongs": "最近のプレイ履歴を取得しました",
       "hiddenSongs": "隠し楽曲を取得しました",
       "albumData": "アルバムデータを取得しました"
+    }
+  },
+  "publicProfile": {
+    "about": "{username}について"
+  },
+  "profileReport": {
+    "trigger": "プロフィールを報告",
+    "title": "{username}を報告",
+    "description": "このプロフィール紹介の問題点をお知らせください。報告は管理者が確認します。",
+    "reasonLabel": "理由",
+    "reasons": {
+      "harassment": "嫌がらせ",
+      "hate": "ヘイトスピーチ",
+      "sexual": "性的コンテンツ",
+      "violence": "暴力",
+      "spam": "スパム",
+      "impersonation": "なりすまし",
+      "other": "その他"
+    },
+    "detailsLabel": "詳細（任意）",
+    "detailsPlaceholder": "審査に役立つ補足情報を入力してください",
+    "submit": "報告を送信",
+    "cancel": "キャンセル",
+    "signInDescription": "ログインすると、このプロフィール紹介を報告できます。",
+    "signInAction": "ログイン",
+    "success": "報告を送信しました。プロフィールの安全維持にご協力いただきありがとうございます。",
+    "error": "報告を送信できませんでした。もう一度お試しください。"
+  },
+  "Admin": {
+    "profileReports": {
+      "open": "プロフィールの報告を確認",
+      "sectionLabel": "プロフィールのモデレーション",
+      "title": "プロフィールの報告",
+      "summary": "全{total}件を表示中。{page}/{totalPages}ページ。",
+      "filterLabel": "報告のステータス",
+      "filters": {
+        "pending": "保留中",
+        "dismissed": "却下済み",
+        "removed": "削除済み"
+      },
+      "columns": {
+        "report": "報告",
+        "reason": "理由",
+        "snapshot": "報告時の内容",
+        "current": "現在の紹介",
+        "status": "ステータス",
+        "actions": "操作"
+      },
+      "reportedBy": "報告者：{username}",
+      "target": "対象：{username}",
+      "submittedAt": "送信日時：{date}",
+      "resolvedAt": "解決日時：{date}",
+      "resolutionNote": "対応メモ：{note}",
+      "details": "詳細：{details}",
+      "status": {
+        "pending": "保留中",
+        "dismissed": "却下済み",
+        "removed": "削除済み"
+      },
+      "reason": {
+        "harassment": "嫌がらせ",
+        "hate": "ヘイト",
+        "sexual": "性的コンテンツ",
+        "violence": "暴力",
+        "spam": "スパム",
+        "impersonation": "なりすまし",
+        "other": "その他"
+      },
+      "loading": "報告を読み込み中...",
+      "empty": {
+        "pending": "保留中の報告はありません。新しい報告が届くと、ここに表示されます。",
+        "dismissed": "却下済みの報告はありません。",
+        "removed": "削除済みの報告はありません。"
+      },
+      "loadErrorTitle": "プロフィールの報告を読み込めませんでした",
+      "retry": "もう一度試す",
+      "dismiss": "却下",
+      "remove": "紹介を削除",
+      "dismissSuccess": "報告を却下しました",
+      "removeSuccess": "紹介を削除しました",
+      "actionError": "この報告を更新できませんでした",
+      "noDescription": "現在の紹介はありません",
+      "previous": "前へ",
+      "next": "次へ",
+      "showing": "全{total}件中{start}～{end}件を表示",
+      "confirmRemoveTitle": "このプロフィール紹介を削除しますか？",
+      "confirmRemoveDescription": "@{username}のプロフィール紹介を削除し、このプロフィールに対する保留中の報告をすべて解決済みにします。ユーザーは禁止されません。",
+      "cancel": "キャンセル",
+      "confirmRemove": "紹介を削除"
     }
   }
 }

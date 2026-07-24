@@ -10,6 +10,57 @@ import path from 'path';
 const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 const withAnalyzer = withBundleAnalyzer({ enabled: process.env.ANALYZE === 'true' });
 
+function configuredOrigin(value: string | undefined): string | null {
+  if (!value) return null;
+  try {
+    const url = new URL(value);
+    return url.protocol === 'http:' || url.protocol === 'https:' ? url.origin : null;
+  } catch {
+    return null;
+  }
+}
+
+function buildContentSecurityPolicy(): string {
+  const isDevelopment = process.env.NODE_ENV !== 'production';
+  const configuredImageOrigins = [
+    configuredOrigin(process.env.NEXT_PUBLIC_R2_URL),
+    configuredOrigin(process.env.NEXT_PUBLIC_R2_URL_CN),
+    configuredOrigin(process.env.RENDER_PUBLIC_URL),
+  ].filter((origin): origin is string => origin !== null);
+  const imageOrigins = [...new Set([
+    'https://cdn.tomomai.lol',
+    'https://cdn.cn.tomomai.lol',
+    'https://tiles.openfreemap.org',
+    ...configuredImageOrigins,
+  ])];
+  const renderOrigin = configuredOrigin(process.env.RENDER_PUBLIC_URL);
+  const connectOrigins = [
+    "'self'",
+    'https://challenges.cloudflare.com',
+    'https://tiles.openfreemap.org',
+    ...(renderOrigin ? [renderOrigin] : []),
+    ...(isDevelopment
+      ? ['http://localhost:*', 'https://localhost:*', 'ws://localhost:*', 'wss://localhost:*']
+      : []),
+  ];
+
+  return [
+    "default-src 'self'",
+    `script-src 'self' 'unsafe-inline'${isDevelopment ? " 'unsafe-eval'" : ''} https://challenges.cloudflare.com https://unpkg.com`,
+    "style-src 'self' 'unsafe-inline'",
+    `img-src 'self' data: blob: ${imageOrigins.join(' ')}`,
+    "font-src 'self' data:",
+    `connect-src ${connectOrigins.join(' ')}`,
+    "worker-src 'self' blob:",
+    'frame-src https://challenges.cloudflare.com https://www.youtube-nocookie.com https://player.bilibili.com',
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "frame-ancestors 'none'",
+    ...(isDevelopment ? [] : ['upgrade-insecure-requests']),
+  ].join('; ');
+}
+
 // Rolling-release build identity, frozen at build time and inlined via `env`
 // below (git is not available at serverless runtime). BUILD_STAMP is the HEAD
 // commit time (MMDDHHMM) — auto-bumps per build, shallow-clone-safe, and
@@ -51,10 +102,16 @@ const APP_VERSION_MINOR = (() => {
 })();
 
 const nextConfig: NextConfig = {
-  transpilePackages: ["@tomomai/ui", "@tomomai/i18n"],
+  transpilePackages: ["@tomomai/ui", "@tomomai/i18n", "@tomomai/markdown"],
   env: { BUILD_STAMP, GIT_SHA, APP_VERSION_MINOR },
   async headers() {
     return [
+      {
+        source: '/:path*',
+        headers: [
+          { key: 'Content-Security-Policy', value: buildContentSecurityPolicy() },
+        ],
+      },
       {
         source: '/:path*/opengraph-image(.*)',
         headers: [

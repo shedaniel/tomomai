@@ -244,6 +244,13 @@
         "jp": "일본",
         "cn": "중국"
       },
+      "description": {
+        "label": "프로필 소개",
+        "description": "Markdown으로 공개 소개글을 작성하세요.",
+        "unpublished": "지금 편집할 수 있으며, 프로필을 공개하면 표시됩니다.",
+        "formats": "굵게, 기울임꼴, 취소선, 링크, 목록, 인용문, 단독 YouTube 또는 bilibili 링크를 지원합니다.",
+        "limits": "최대 {characters}자, {bytes}바이트."
+      },
       "privacy": {
         "label": "개인정보 설정",
         "showAllScores": {
@@ -958,6 +965,95 @@
       "songDataRemaster": "Fetched Re:MASTER scores",
       "recentSongs": "Fetched recent songs",
       "hiddenSongs": "Fetched hidden songs"
+    }
+  },
+  "publicProfile": {
+    "about": "{username} 소개"
+  },
+  "profileReport": {
+    "trigger": "프로필 신고",
+    "title": "{username} 신고",
+    "description": "이 프로필 소개의 문제점을 알려 주세요. 관리자가 신고 내용을 검토합니다.",
+    "reasonLabel": "사유",
+    "reasons": {
+      "harassment": "괴롭힘",
+      "hate": "혐오 발언",
+      "sexual": "성적 콘텐츠",
+      "violence": "폭력",
+      "spam": "스팸",
+      "impersonation": "사칭",
+      "other": "기타"
+    },
+    "detailsLabel": "세부 정보 (선택 사항)",
+    "detailsPlaceholder": "검토에 도움이 될 추가 정보를 입력하세요",
+    "submit": "신고 제출",
+    "cancel": "취소",
+    "signInDescription": "로그인하면 이 프로필 소개를 신고할 수 있습니다.",
+    "signInAction": "로그인",
+    "success": "신고가 접수되었습니다. 안전한 프로필 환경을 만드는 데 도움을 주셔서 감사합니다.",
+    "error": "신고를 제출할 수 없습니다. 다시 시도해 주세요."
+  },
+  "Admin": {
+    "profileReports": {
+      "open": "프로필 신고 검토",
+      "sectionLabel": "프로필 검토",
+      "title": "프로필 신고",
+      "summary": "총 {total}건 중 표시 중. {page}/{totalPages}페이지.",
+      "filterLabel": "신고 상태",
+      "filters": {
+        "pending": "대기 중",
+        "dismissed": "기각됨",
+        "removed": "삭제됨"
+      },
+      "columns": {
+        "report": "신고",
+        "reason": "사유",
+        "snapshot": "신고 당시 내용",
+        "current": "현재 소개",
+        "status": "상태",
+        "actions": "작업"
+      },
+      "reportedBy": "신고자: {username}",
+      "target": "대상: {username}",
+      "submittedAt": "제출: {date}",
+      "resolvedAt": "처리: {date}",
+      "resolutionNote": "처리 메모: {note}",
+      "details": "세부 정보: {details}",
+      "status": {
+        "pending": "대기 중",
+        "dismissed": "기각됨",
+        "removed": "삭제됨"
+      },
+      "reason": {
+        "harassment": "괴롭힘",
+        "hate": "혐오",
+        "sexual": "성적 콘텐츠",
+        "violence": "폭력",
+        "spam": "스팸",
+        "impersonation": "사칭",
+        "other": "기타"
+      },
+      "loading": "신고를 불러오는 중...",
+      "empty": {
+        "pending": "대기 중인 신고가 없습니다. 새 신고가 접수되면 여기에 표시됩니다.",
+        "dismissed": "기각된 신고가 없습니다.",
+        "removed": "삭제 처리된 신고가 없습니다."
+      },
+      "loadErrorTitle": "프로필 신고를 불러올 수 없습니다",
+      "retry": "다시 시도",
+      "dismiss": "기각",
+      "remove": "소개 삭제",
+      "dismissSuccess": "신고를 기각했습니다",
+      "removeSuccess": "소개를 삭제했습니다",
+      "actionError": "이 신고를 업데이트할 수 없습니다",
+      "noDescription": "현재 소개 없음",
+      "previous": "이전",
+      "next": "다음",
+      "showing": "총 {total}건 중 {start}-{end}건 표시",
+      "confirmRemoveTitle": "이 프로필 소개를 삭제할까요?",
+      "confirmRemoveDescription": "@{username}의 프로필 소개를 삭제하고 이 프로필에 대해 대기 중인 모든 신고를 처리합니다. 사용자는 차단되지 않습니다.",
+      "cancel": "취소",
+      "confirmRemove": "소개 삭제"
     }
   }
 }

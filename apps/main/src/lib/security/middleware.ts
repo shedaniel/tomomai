@@ -31,20 +31,6 @@ export async function securityMiddleware(request: NextRequest): Promise<NextResp
   return response;
 }
 
-// Render service origin (apps/render). Image previews load from it via the 302
-// from /api/{export-image,last-credit,daily-plays}, and the download button
-// fetch()es it — so it must be allowlisted in img-src (loads) and connect-src
-// (fetch). Derived from RENDER_PUBLIC_URL so we don't hardcode the host.
-// Render service origin (apps/render). Image previews load from it via the 302
-// from /api/{export-image,last-credit,daily-plays}, and the download button
-// fetch()es it — so it must be allowlisted in img-src (loads) and connect-src
-// (fetch). Derived from RENDER_PUBLIC_URL so we don't hardcode the host.
-const RENDER_ORIGIN = (() => {
-  const u = process.env.RENDER_PUBLIC_URL;
-  if (!u) return null;
-  try { return new URL(u).origin; } catch { return null; }
-})();
-
 /**
  * Apply security headers to response
  */
@@ -53,9 +39,6 @@ function applySecurityHeaders(response: NextResponse): void {
   response.headers.set('X-Content-Type-Options', 'nosniff');
   response.headers.set('X-Frame-Options', 'DENY');
   response.headers.set('X-XSS-Protection', '1; mode=block');
-
-  // Content Security Policy - adjust as needed for your application
-  response.headers.set('Content-Security-Policy', buildCsp());
 
   // Prevent MIME sniffing
   response.headers.set('X-Download-Options', 'noopen');
@@ -66,42 +49,6 @@ function applySecurityHeaders(response: NextResponse): void {
 
   // Strict Transport Security
   response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
-}
-
-// Image hosts rendered directly by <img>/<Image>. External maimai art is
-// proxied through /api/image-proxy (same-origin), but R2 assets are served
-// direct (unoptimized) so their CDN origins must be in img-src.
-function imgSrcOrigins(): string[] {
-  const origins: string[] = [];
-  for (const env of ['NEXT_PUBLIC_R2_URL', 'NEXT_PUBLIC_R2_URL_CN']) {
-    const base = process.env[env];
-    if (!base) continue;
-    try {
-      const { host } = new URL(base);
-      if (host) origins.push(`https://${host}`);
-    } catch {
-      // invalid URL, skip
-    }
-  }
-  return [...new Set(origins)];
-}
-
-function buildCsp(): string {
-  const imgExtra = [...imgSrcOrigins(), ...(RENDER_ORIGIN ? [RENDER_ORIGIN] : [])];
-  const imgSrc = ["'self'", 'data:', ...imgExtra].join(' ');
-  const connectSrc = ["'self'", ...(RENDER_ORIGIN ? [RENDER_ORIGIN] : [])].join(' ');
-  return [
-    "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://challenges.cloudflare.com",
-    "style-src 'self' 'unsafe-inline'",
-    `img-src ${imgSrc}`,
-    "font-src 'self'",
-    `connect-src ${connectSrc}`,
-    "frame-src https://challenges.cloudflare.com",
-    "object-src 'none'",
-    "base-uri 'self'",
-    "form-action 'self'",
-  ].join('; ');
 }
 
 // Auth paths that involve credential submission or account state changes.

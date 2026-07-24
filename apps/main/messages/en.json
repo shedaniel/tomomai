@@ -254,6 +254,13 @@
         "jp": "Japan",
         "cn": "China"
       },
+      "description": {
+        "label": "Profile description",
+        "description": "Write a public introduction using Markdown.",
+        "unpublished": "You can edit this now. It will appear when your profile is published.",
+        "formats": "Supports bold, italic, strikethrough, links, lists, quotes, and standalone YouTube or bilibili links.",
+        "limits": "Up to {characters} characters and {bytes} bytes."
+      },
       "privacy": {
         "label": "Privacy Settings",
         "showAllScores": {
@@ -1330,6 +1337,95 @@
       "recentSongs": "Fetched recent songs",
       "hiddenSongs": "Fetched hidden songs",
       "albumData": "Fetched album data"
+    }
+  },
+  "publicProfile": {
+    "about": "About {username}"
+  },
+  "profileReport": {
+    "trigger": "Report profile",
+    "title": "Report {username}",
+    "description": "Tell us what is wrong with this profile description. Reports are reviewed by an administrator.",
+    "reasonLabel": "Reason",
+    "reasons": {
+      "harassment": "Harassment",
+      "hate": "Hate speech",
+      "sexual": "Sexual content",
+      "violence": "Violence",
+      "spam": "Spam",
+      "impersonation": "Impersonation",
+      "other": "Other"
+    },
+    "detailsLabel": "Details (optional)",
+    "detailsPlaceholder": "Add context that can help the reviewer",
+    "submit": "Submit report",
+    "cancel": "Cancel",
+    "signInDescription": "Sign in to report this profile description.",
+    "signInAction": "Sign in",
+    "success": "Report submitted. Thank you for helping keep profiles safe.",
+    "error": "Unable to submit the report. Try again."
+  },
+  "Admin": {
+    "profileReports": {
+      "open": "Review profile reports",
+      "sectionLabel": "Profile moderation",
+      "title": "Profile reports",
+      "summary": "Showing {total} reports. Page {page} of {totalPages}.",
+      "filterLabel": "Report status",
+      "filters": {
+        "pending": "Pending",
+        "dismissed": "Dismissed",
+        "removed": "Removed"
+      },
+      "columns": {
+        "report": "Report",
+        "reason": "Reason",
+        "snapshot": "Reported snapshot",
+        "current": "Current description",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "reportedBy": "Reported by {username}",
+      "target": "Target: {username}",
+      "submittedAt": "Submitted {date}",
+      "resolvedAt": "Resolved {date}",
+      "resolutionNote": "Resolution note: {note}",
+      "details": "Details: {details}",
+      "status": {
+        "pending": "Pending",
+        "dismissed": "Dismissed",
+        "removed": "Removed"
+      },
+      "reason": {
+        "harassment": "Harassment",
+        "hate": "Hate",
+        "sexual": "Sexual content",
+        "violence": "Violence",
+        "spam": "Spam",
+        "impersonation": "Impersonation",
+        "other": "Other"
+      },
+      "loading": "Loading reports...",
+      "empty": {
+        "pending": "No pending reports. New reports will appear here for review.",
+        "dismissed": "No dismissed reports.",
+        "removed": "No removed reports."
+      },
+      "loadErrorTitle": "Could not load profile reports",
+      "retry": "Try again",
+      "dismiss": "Dismiss",
+      "remove": "Remove description",
+      "dismissSuccess": "Report dismissed",
+      "removeSuccess": "Description removed",
+      "actionError": "Could not update this report",
+      "noDescription": "No current description",
+      "previous": "Previous",
+      "next": "Next",
+      "showing": "Showing {start}-{end} of {total}",
+      "confirmRemoveTitle": "Remove this profile description?",
+      "confirmRemoveDescription": "This clears @{username}’s profile description and resolves every pending report for that profile. It does not ban the user.",
+      "cancel": "Cancel",
+      "confirmRemove": "Remove description"
     }
   }
 }
