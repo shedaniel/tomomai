@@ -19,7 +19,7 @@
   },
   "files": ["src"],
   "peerDependencies": {
-    "ioredis": "*",
+    "ioredis": "^5.11.1",
     "next": "*",
     "rate-limiter-flexible": "*"
   },
