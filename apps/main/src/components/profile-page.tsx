@@ -99,8 +99,6 @@ export function ProfilePage({
             gameVersion: snapshotData.snapshot.gameVersion,
           }}
           profileUsername={username}
-          profileUserId={profileData.id}
-          hasProfileDescription={!!profileData.profileDescription}
         />
 
         <Suspense>
@@ -119,6 +117,7 @@ export function ProfilePage({
             visitableProfileAt={username}
             profileDescription={profileData.profileDescription}
             profileUsername={username}
+            profileUserId={profileData.id}
             publishProfile={profileData.publishProfile}
             isOwner={isOwner}
             initialTab={initialTab}

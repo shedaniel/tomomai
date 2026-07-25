@@ -1,6 +1,7 @@
 "use client";
 
 
+import { ProfileReportDialog } from "@/components/profile-report-dialog";
 import { getRatingImageUrl } from "@/lib/rating-calculator";
 import { SnapshotWithSongs } from "@/lib/types";
 import { createSafeMaimaiImageUrl, isR2Url } from "@/lib/utils";
@@ -71,6 +72,7 @@ interface InfoCardProps {
   visitableProfileAt: string | null;
   profileUsername?: string | null;
   profileDescription?: string | null;
+  profileUserId?: string | null;
   isOwner?: boolean;
   privacySettings: ProfilePrivacySettings;
   publishProfile: boolean;
@@ -110,6 +112,7 @@ export function InfoCard({
   visitableProfileAt,
   profileUsername,
   profileDescription,
+  profileUserId,
   isOwner = false,
   privacySettings,
   publishProfile,
@@ -435,15 +438,23 @@ export function InfoCard({
             <h3 id="profile-about-heading" className="font-medium text-foreground">
               {t("publicProfile.about", { username: aboutUsername })}
             </h3>
-            {isOwner && !isDescriptionEditing && !profileSettingsLoading ? (
-              <Button type="button" variant="ghost" size="sm" onClick={startEditingDescription}>
-                {canonicalDescription ? <Pencil /> : <Plus />}
-                {t(
-                  canonicalDescription
-                    ? "publicProfile.descriptionEditor.edit"
-                    : "publicProfile.descriptionEditor.add",
-                )}
-              </Button>
+            {isOwner ? (
+              !isDescriptionEditing && !profileSettingsLoading ? (
+                <Button type="button" variant="ghost" size="sm" onClick={startEditingDescription}>
+                  {canonicalDescription ? <Pencil /> : <Plus />}
+                  {t(
+                    canonicalDescription
+                      ? "publicProfile.descriptionEditor.edit"
+                      : "publicProfile.descriptionEditor.add",
+                  )}
+                </Button>
+              ) : null
+            ) : canonicalDescription && profileUserId ? (
+              <ProfileReportDialog
+                username={aboutUsername}
+                profileUserId={profileUserId}
+                hasProfileDescription={true}
+              />
             ) : null}
           </div>
 

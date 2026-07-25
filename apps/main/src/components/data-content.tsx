@@ -24,8 +24,8 @@ import { useMediaQuery } from "@/hooks/use-media-query";
 import dynamic from "next/dynamic";
 
 // Tab cards lazy-loaded — only the selected tab's chunk is fetched.
-// SongsCard + InfoCard stay eager because Songs is the default landing tab
-// and InfoCard is small and frequently shown.
+// SongsCard + InfoCard stay eager because Info is the default landing tab
+// and Songs remains a primary destination.
 // Each dynamic() shares the card's own skeleton as its `loading`. That does
 // two things: (1) gives Next 16's React.lazy a LOCAL Suspense boundary so the
 // suspension doesn't bubble to the fallback-less <Suspense> wrapping
@@ -58,6 +58,7 @@ interface DataContentProps {
   visitableProfileAt: string | null;
   profileDescription?: string | null;
   profileUsername?: string | null;
+  profileUserId?: string | null;
   publishProfile?: boolean;
   isOwner?: boolean;
   initialTab?: string;
@@ -72,6 +73,7 @@ export function DataContent({
   visitableProfileAt,
   profileDescription,
   profileUsername,
+  profileUserId,
   publishProfile,
   isOwner = false,
   initialTab,
@@ -121,7 +123,7 @@ export function DataContent({
     }
 
     // Default fallback
-    return "songs";
+    return "info";
   };
 
   const [selectedTab, setSelectedTab] = useState(getInitialTab);
@@ -132,7 +134,7 @@ export function DataContent({
   const updateTabUrl = (value: string) => {
     if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
-    if (value === "songs") {
+    if (value === "info") {
       params.delete('tab');
     } else {
       params.set('tab', value);
@@ -215,11 +217,11 @@ export function DataContent({
   const visibleTabs = allTabs.filter(tab => tab.show);
   const validTabs = visibleTabs.map(tab => tab.value);
 
-  // Ensure selected tab is valid/visible, fallback to songs if not
+  // Ensure selected tab is valid/visible, fallback to info if not
   useEffect(() => {
     if (selectedSnapshotData && !validTabs.includes(selectedTab)) {
-      setSelectedTab("songs");
-      updateTabUrl("songs");
+      setSelectedTab("info");
+      updateTabUrl("info");
     }
   }, [selectedTab, validTabs, selectedSnapshotData]);
 
@@ -266,6 +268,7 @@ export function DataContent({
                 visitableProfileAt={effectiveVisitableProfileAt}
                 profileUsername={effectiveProfileUsername}
                 profileDescription={localProfileDescription}
+                profileUserId={profileUserId}
                 isOwner={isOwner}
                 privacySettings={localPrivacySettings}
                 publishProfile={localPublishProfile}
