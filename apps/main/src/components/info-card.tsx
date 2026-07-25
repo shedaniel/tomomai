@@ -15,6 +15,7 @@ import { resolveBaseUrl } from "@/lib/base-url";
 import {
   MarkdownContent,
   MarkdownEditor,
+  measureMarkdown,
   PROFILE_MARKDOWN_POLICY,
   videoEmbedExtension,
   type MarkdownEditorLabels,
@@ -145,6 +146,7 @@ export function InfoCard({
   const { snapshot } = selectedSnapshotData;
   const canonicalDescription = profileSettings?.profileDescription ?? profileDescription ?? null;
   const aboutUsername = profileUsername ?? snapshot.displayName;
+  const descriptionSize = measureMarkdown(descriptionDraft);
   const visibilitySaving =
     updatePublishProfile.isPending ||
     updateProfileMainRegion.isPending ||
@@ -465,11 +467,13 @@ export function InfoCard({
                 labels={editorLabels}
               />
               <div className="space-y-1 text-xs text-muted-foreground">
-                <p>{t("publicProfile.descriptionEditor.formats")}</p>
-                <p>
-                  {t("publicProfile.descriptionEditor.limits", {
-                    characters: PROFILE_DESCRIPTION_LIMITS.maxCharacters,
-                    bytes: PROFILE_DESCRIPTION_LIMITS.maxUtf8Bytes,
+                <p>{t("publicProfile.descriptionEditor.disclaimer")}</p>
+                <p aria-live="polite" aria-atomic="true">
+                  {t("publicProfile.descriptionEditor.usage", {
+                    usedCharacters: descriptionSize.characters,
+                    maxCharacters: PROFILE_DESCRIPTION_LIMITS.maxCharacters,
+                    usedBytes: descriptionSize.utf8Bytes,
+                    maxBytes: PROFILE_DESCRIPTION_LIMITS.maxUtf8Bytes,
                   })}
                 </p>
               </div>
