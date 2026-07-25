@@ -14,6 +14,7 @@ function FooterLink({ href, children }: { href: string; children: React.ReactNod
   return (
     <Link
       href={href}
+      prefetch={false}
       className="text-muted-foreground/80 transition-colors hover:text-foreground"
     >
       {children}

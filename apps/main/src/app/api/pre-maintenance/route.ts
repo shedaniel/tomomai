@@ -4,8 +4,14 @@ import { parsePreMaintenanceBanner } from "./parse";
 
 const CACHE_HEADERS = {
   "Cache-Control": "public, max-age=300",
-  "CDN-Cache-Control": "public, s-maxage=300",
-  "Vercel-CDN-Cache-Control": "public, s-maxage=300",
+  "CDN-Cache-Control": "public, max-age=300",
+  "Vercel-CDN-Cache-Control": "public, max-age=300",
+} as const;
+
+const NO_STORE_HEADERS = {
+  "Cache-Control": "no-store",
+  "CDN-Cache-Control": "no-store",
+  "Vercel-CDN-Cache-Control": "no-store",
 } as const;
 
 export async function GET() {
@@ -18,7 +24,7 @@ export async function GET() {
   } catch {
     return NextResponse.json(
       { banner: null },
-      { status: 503, headers: CACHE_HEADERS },
+      { status: 503, headers: NO_STORE_HEADERS },
     );
   }
 }
