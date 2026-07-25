@@ -3,11 +3,19 @@ import { describe, expect, it } from "vitest";
 import {
   PROFILE_DESCRIPTION_BYTE_LIMIT_MESSAGE,
   PROFILE_DESCRIPTION_CHARACTER_LIMIT_MESSAGE,
+  PROFILE_DESCRIPTION_LIMITS,
   createProfileDescriptionInputSchema,
   profileDescriptionInputSchema,
 } from "./profile-description";
 
 describe("profile description input", () => {
+  it("uses the default profile allowance", () => {
+    expect(PROFILE_DESCRIPTION_LIMITS).toEqual({
+      maxCharacters: 500,
+      maxUtf8Bytes: 2048,
+    });
+  });
+
   it("trims source and normalizes blank input to null", () => {
     expect(profileDescriptionInputSchema.parse({ profileDescription: "  **About me**  " })).toEqual({
       profileDescription: "**About me**",
@@ -20,13 +28,13 @@ describe("profile description input", () => {
     });
   });
 
-  it("accepts exactly 2,000 characters and rejects 2,001 without truncating", () => {
-    const boundary = "x".repeat(2000);
+  it("accepts exactly 500 characters and rejects 501 without truncating", () => {
+    const boundary = "x".repeat(PROFILE_DESCRIPTION_LIMITS.maxCharacters);
     expect(profileDescriptionInputSchema.parse({ profileDescription: boundary })).toEqual({
       profileDescription: boundary,
     });
 
-    const oversized = "x".repeat(2001);
+    const oversized = `${boundary}x`;
     const result = profileDescriptionInputSchema.safeParse({ profileDescription: oversized });
     expect(result.success).toBe(false);
     if (!result.success) {
