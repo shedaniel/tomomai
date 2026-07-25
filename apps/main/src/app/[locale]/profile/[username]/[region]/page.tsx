@@ -10,6 +10,7 @@ import { getTranslations } from "next-intl/server";
 import { getLocale, setStaticLocale } from "@/i18n/locale-server";
 import { buildAlternates, openGraphLocales, breadcrumbJsonLd, ogImageUrl, localizePath } from "@/lib/seo";
 import { safeDecodeURIComponent } from "@/lib/utils";
+import { getServerSession } from "@/lib/auth-server";
 
 export const dynamic = "force-dynamic";
 
@@ -114,6 +115,9 @@ export default async function RegionProfilePage({ params }: RegionProfilePagePro
       region,
     });
 
+    const session = await getServerSession();
+    const isOwner = session?.user.id === profileData.id;
+
     const flags = defaultFlags;
 
     const decodedUsername = safeDecodeURIComponent(username);
@@ -172,6 +176,7 @@ export default async function RegionProfilePage({ params }: RegionProfilePagePro
           region={region}
           username={decodedUsername}
           flags={flags}
+          isOwner={isOwner}
         />
       </>
     );

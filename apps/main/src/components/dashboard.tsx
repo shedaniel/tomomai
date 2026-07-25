@@ -249,6 +249,9 @@ export function Dashboard({ user, initialUserData, initialSnapshots, initialSnap
           selectedSnapshotData={selectedSnapshotData || null}
           isLoading={isLoadingSnapshots}
           visitableProfileAt={userData?.publishProfile ? userData?.username : null}
+          profileUsername={userData?.username}
+          publishProfile={userData?.publishProfile}
+          isOwner={true}
           visitedBySelf={true}
           flags={flags}
         />
