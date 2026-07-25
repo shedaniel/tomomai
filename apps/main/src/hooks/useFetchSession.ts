@@ -6,6 +6,10 @@ import { isTokenError, isAlbumSettingsError, isCnCookiesSingleUseError } from "@
 import { parseStatusStates } from "@/lib/fetch-states";
 import { FetchToastState } from "@/components/fetch-toast";
 
+const SESSION_DETECTION_INTERVAL_MS = 3000;
+const FETCH_STATUS_INTERVAL_MS = 2000;
+const HIDDEN_TAB_RECHECK_INTERVAL_MS = 5000;
+
 export function useFetchSession(onFetchComplete?: () => void, onTokenError?: () => void, onUseAlbumError?: () => void, onCnCookiesExpired?: () => void) {
   const [currentSession, setCurrentSession] = useState<FetchSession | null>(null);
   const [fetchError, setFetchError] = useState<string | null>(null);
@@ -24,7 +28,8 @@ export function useFetchSession(onFetchComplete?: () => void, onTokenError?: () 
     { region: sessionPollingRegion! },
     {
       enabled: sessionPollingEnabled && sessionPollingRegion !== null,
-      refetchInterval: 2000, // Poll every 2 seconds
+      refetchInterval: SESSION_DETECTION_INTERVAL_MS,
+      refetchIntervalInBackground: false,
       refetchOnWindowFocus: false,
     }
   );
@@ -50,6 +55,14 @@ export function useFetchSession(onFetchComplete?: () => void, onTokenError?: () 
       if (Date.now() >= deadline) {
         stopPolling();
         setFetchError("Fetch timeout");
+        return;
+      }
+
+      if (document.visibilityState === "hidden") {
+        fetchPollingTimeoutRef.current = window.setTimeout(
+          poll,
+          Math.min(HIDDEN_TAB_RECHECK_INTERVAL_MS, deadline - Date.now()),
+        );
         return;
       }
 
@@ -106,7 +119,7 @@ export function useFetchSession(onFetchComplete?: () => void, onTokenError?: () 
           setFetchError("Fetch timeout");
           return;
         }
-        fetchPollingTimeoutRef.current = window.setTimeout(poll, Math.min(1000, remaining));
+        fetchPollingTimeoutRef.current = window.setTimeout(poll, Math.min(FETCH_STATUS_INTERVAL_MS, remaining));
       } catch (error) {
         if (generation !== fetchPollingGenerationRef.current) return;
         stopPolling();
