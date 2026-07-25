@@ -51,7 +51,7 @@ function EditorHarness({
 
 function select(start: number, end: number) {
   const textarea = screen.getByLabelText("Markdown source") as HTMLTextAreaElement;
-  textarea.focus();
+  fireEvent.focus(textarea);
   textarea.setSelectionRange(start, end);
   fireEvent.select(textarea);
   return textarea;
