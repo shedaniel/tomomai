@@ -374,7 +374,7 @@ function ProfileVisibilityBanner({
 
 function PlayerIdentitySummary({ snapshot }: { snapshot: Snapshot }) {
   return (
-    <div className="mb-4 flex items-center gap-2">
+    <div className="flex items-center gap-2">
       <motion.div
         initial={{ opacity: 0, scale: 0.8, rotate: -5 }}
         animate={{ opacity: 1, scale: 1, rotate: 0 }}
@@ -527,7 +527,6 @@ function ProfileAboutSection({
       t("publicProfile.descriptionEditor.editor.byteLimitExceeded", { maxUtf8Bytes }),
   };
 
-  if (!canonicalDescription && !isOwner) return null;
 
   return (
     <section aria-labelledby="profile-about-heading" className="space-y-3">
@@ -624,6 +623,10 @@ function ProfileAboutSection({
         />
       ) : profileSettingsLoading ? (
         <div className="h-16 animate-pulse rounded-md bg-muted" aria-hidden="true" />
+      ) : !isOwner ? (
+        <p className="max-w-[75ch] text-sm text-muted-foreground">
+          {t("publicProfile.emptyDescription")}
+        </p>
       ) : null}
     </section>
   );
@@ -866,14 +869,14 @@ export function InfoCard({
   const aboutUsername = profileUsername ?? snapshot.displayName;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       <ProfileVisibilityBanner
         visitableProfileAt={visitableProfileAt}
         isOwner={isOwner}
         profileSettingsLoading={ownerSettings.profileSettingsLoading}
         onOpenSettings={ownerSettings.visibility.openSettings}
       />
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] xl:items-start">
+      <div className="grid gap-4 md:gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] xl:items-start">
         <PlayerIdentitySummary snapshot={snapshot} />
         <PlayerStatisticsBlock snapshot={snapshot} showPlayCounts={showPlayCounts} />
       </div>

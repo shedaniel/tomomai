@@ -962,6 +962,7 @@
   },
   "publicProfile": {
     "about": "{username} 소개",
+    "emptyDescription": "이 사람은 프로필 소개를 작성하지 않았습니다.",
     "descriptionEditor": {
       "add": "소개 추가",
       "edit": "편집",

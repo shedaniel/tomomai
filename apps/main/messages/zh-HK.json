@@ -1325,6 +1325,7 @@
   },
   "publicProfile": {
     "about": "關於 {username}",
+    "emptyDescription": "此用戶尚未填寫個人簡介。",
     "descriptionEditor": {
       "add": "新增簡介",
       "edit": "編輯",

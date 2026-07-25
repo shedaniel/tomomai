@@ -1334,6 +1334,7 @@
   },
   "publicProfile": {
     "about": "About {username}",
+    "emptyDescription": "This person doesn’t have a profile description.",
     "descriptionEditor": {
       "add": "Add description",
       "edit": "Edit",

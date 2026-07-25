@@ -1325,6 +1325,7 @@
   },
   "publicProfile": {
     "about": "{username}について",
+    "emptyDescription": "この人はプロフィール紹介をまだ設定していません。",
     "descriptionEditor": {
       "add": "紹介を追加",
       "edit": "編集",
