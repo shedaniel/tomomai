@@ -85,7 +85,7 @@ export function ProfileReportDialog({
     if (!reason || submitReport.isPending) return;
     setError(undefined);
     submitReport.mutate({
-      username,
+      targetUserId: profileUserId,
       reason,
       details: details.trim() || undefined,
     });

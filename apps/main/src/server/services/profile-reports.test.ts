@@ -31,20 +31,29 @@ describe("profile report input", () => {
   it.each(PROFILE_REPORT_REASONS)("accepts the %s reason", (reason) => {
     expect(
       profileReportInputSchema.parse({
-        username: "target",
+        targetUserId: "target-user",
         reason,
         details: " context ",
       }),
-    ).toEqual({ username: "target", reason, details: "context" });
+    ).toEqual({ targetUserId: "target-user", reason, details: "context" });
+  });
+
+  it("rejects the legacy username-only input", () => {
+    expect(
+      profileReportInputSchema.safeParse({ username: "renamed-user", reason: "spam" }).success,
+    ).toBe(false);
   });
 
   it("rejects unsupported reasons and details over 1,000 characters", () => {
     expect(
-      profileReportInputSchema.safeParse({ username: "target", reason: "copyright" }).success,
+      profileReportInputSchema.safeParse({
+        targetUserId: "target-user",
+        reason: "copyright",
+      }).success,
     ).toBe(false);
     expect(
       profileReportInputSchema.safeParse({
-        username: "target",
+        targetUserId: "target-user",
         reason: "other",
         details: "x".repeat(1001),
       }).success,
@@ -59,10 +68,11 @@ describe("submitProfileReport", () => {
     await expect(
       submitProfileReport(
         "reporter-user",
-        { username: "target", reason: "spam", details: " evidence " },
+        { targetUserId: "target-user", reason: "spam", details: " evidence " },
         dependencies,
       ),
     ).resolves.toEqual({ reportId: "report-id", status: "pending" });
+    expect(dependencies.findTarget).toHaveBeenCalledWith("target-user");
 
     expect(dependencies.insertReport).toHaveBeenCalledWith({
       reporterUserId: "reporter-user",
@@ -85,7 +95,7 @@ describe("submitProfileReport", () => {
     await expect(
       submitProfileReport(
         "reporter-user",
-        { username: "target", reason: "other" },
+        { targetUserId: "target-user", reason: "other" },
         dependencies,
       ),
     ).rejects.toMatchObject({ code: "NOT_FOUND" });
@@ -104,7 +114,7 @@ describe("submitProfileReport", () => {
     await expect(
       submitProfileReport(
         "reporter-user",
-        { username: "self", reason: "other" },
+        { targetUserId: "reporter-user", reason: "other" },
         dependencies,
       ),
     ).rejects.toMatchObject({ code: "BAD_REQUEST" });
@@ -122,7 +132,7 @@ describe("submitProfileReport", () => {
     await expect(
       submitProfileReport(
         "reporter-user",
-        { username: "target", reason: "spam" },
+        { targetUserId: "target-user", reason: "spam" },
         dependencies,
       ),
     ).rejects.toMatchObject({
@@ -142,7 +152,7 @@ describe("submitProfileReport", () => {
       await expect(
         submitProfileReport(
           "reporter-user",
-          { username: `target-${index}`, reason: "spam" },
+          { targetUserId: `target-user-${index}`, reason: "spam" },
           dependencies,
         ),
       ).resolves.toMatchObject({ status: "pending" });
@@ -151,7 +161,7 @@ describe("submitProfileReport", () => {
     await expect(
       submitProfileReport(
         "reporter-user",
-        { username: "target-6", reason: "spam" },
+        { targetUserId: "target-user-6", reason: "spam" },
         dependencies,
       ),
     ).rejects.toMatchObject({

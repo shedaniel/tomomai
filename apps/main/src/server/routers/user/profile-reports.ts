@@ -14,7 +14,7 @@ export const profileReportsRouter = router({
     .input(profileReportInputSchema)
     .mutation(async ({ ctx, input }) => {
       return submitProfileReport(ctx.session.user.id, input, {
-        async findTarget(username) {
+        async findTarget(targetUserId) {
           const [target] = await db
             .select({
               id: user.id,
@@ -22,7 +22,7 @@ export const profileReportsRouter = router({
               profileDescription: user.profileDescription,
             })
             .from(user)
-            .where(eq(user.username, username))
+            .where(eq(user.id, targetUserId))
             .limit(1);
           return target ?? null;
         },

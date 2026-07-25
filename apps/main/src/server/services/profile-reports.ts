@@ -14,7 +14,7 @@ export const PROFILE_REPORT_REASONS = [
 export const PROFILE_REPORT_STATUSES = ["pending", "dismissed", "removed"] as const;
 
 export const profileReportInputSchema = z.object({
-  username: z.string(),
+  targetUserId: z.string(),
   reason: z.enum(PROFILE_REPORT_REASONS),
   details: z.string().max(1000).trim().optional(),
 });
@@ -44,7 +44,7 @@ export interface ReportableProfile {
 }
 
 export interface SubmitProfileReportDependencies {
-  findTarget(username: string): Promise<ReportableProfile | null>;
+  findTarget(targetUserId: string): Promise<ReportableProfile | null>;
   checkRateLimit(reporterUserId: string): Promise<{ limited: boolean }>;
   insertReport(values: {
     reporterUserId: string;
@@ -71,7 +71,7 @@ export async function submitProfileReport(
   input: z.infer<typeof profileReportInputSchema>,
   dependencies: SubmitProfileReportDependencies,
 ): Promise<{ reportId: string; status: "pending" }> {
-  const target = await dependencies.findTarget(input.username);
+  const target = await dependencies.findTarget(input.targetUserId);
   if (!target?.publishProfile || !target.profileDescription) {
     throw new TRPCError({
       code: "NOT_FOUND",
