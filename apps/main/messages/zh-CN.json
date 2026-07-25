@@ -1331,7 +1331,7 @@
       "ariaLabel": "个人简介",
       "placeholder": "向大家介绍一下自己...",
       "unpublished": "主页公开后将显示此简介。",
-      "disclaimer": "简介将公开显示，且必须遵守服务条款。",
+      "disclaimer": "简介将公开显示，且可能被举报。违反服务条款的内容可能会被删除，并可能导致账号被暂停或终止。",
       "usage": "已使用 {usedCharacters} / {maxCharacters} 个字符及 {usedBytes} / {maxBytes} 字节。",
       "saving": "保存中...",
       "saveSuccess": "个人简介已更新。",

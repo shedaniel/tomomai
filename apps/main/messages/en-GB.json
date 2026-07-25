@@ -1331,7 +1331,7 @@
       "ariaLabel": "Profile description",
       "placeholder": "Tell people about yourself...",
       "unpublished": "This description will appear when your profile is public.",
-      "disclaimer": "Your description is public and must follow the Terms of Service.",
+      "disclaimer": "Your description is public and can be reported. Content that violates the Terms of Service may be removed and may result in account suspension or termination.",
       "usage": "{usedCharacters} / {maxCharacters} characters and {usedBytes} / {maxBytes} bytes used.",
       "saving": "Saving...",
       "saveSuccess": "Profile description updated.",

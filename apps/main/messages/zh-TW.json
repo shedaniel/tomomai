@@ -1331,7 +1331,7 @@
       "ariaLabel": "個人簡介",
       "placeholder": "向大家介紹一下自己...",
       "unpublished": "個人檔案公開後將顯示此簡介。",
-      "disclaimer": "簡介將公開顯示，且必須遵守服務條款。",
+      "disclaimer": "簡介會公開顯示，也可能遭到檢舉。違反服務條款的內容可能會被移除，並可能導致帳號遭停權或終止。",
       "usage": "已使用 {usedCharacters} / {maxCharacters} 個字元及 {usedBytes} / {maxBytes} 位元組。",
       "saving": "儲存中...",
       "saveSuccess": "個人簡介已更新。",

@@ -1331,7 +1331,7 @@
       "ariaLabel": "プロフィール紹介",
       "placeholder": "自己紹介を書いてみましょう...",
       "unpublished": "プロフィールを公開すると、この紹介が表示されます。",
-      "disclaimer": "紹介は公開されます。利用規約を守ってください。",
+      "disclaimer": "紹介は公開され、通報される場合があります。利用規約に違反する内容は削除される場合があり、アカウントの一時停止または削除につながることがあります。",
       "usage": "{usedCharacters} / {maxCharacters}文字、{usedBytes} / {maxBytes}バイト使用中。",
       "saving": "保存中...",
       "saveSuccess": "プロフィール紹介を更新しました。",
