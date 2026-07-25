@@ -873,8 +873,10 @@ export function InfoCard({
         profileSettingsLoading={ownerSettings.profileSettingsLoading}
         onOpenSettings={ownerSettings.visibility.openSettings}
       />
-      <PlayerIdentitySummary snapshot={snapshot} />
-      <PlayerStatisticsBlock snapshot={snapshot} showPlayCounts={showPlayCounts} />
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] xl:items-start">
+        <PlayerIdentitySummary snapshot={snapshot} />
+        <PlayerStatisticsBlock snapshot={snapshot} showPlayCounts={showPlayCounts} />
+      </div>
       <ProfileAboutSection
         username={aboutUsername}
         profileUserId={profileUserId}
