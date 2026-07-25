@@ -20,6 +20,21 @@ export const SAFE_MAIMAI_IMAGE_URLS = [
   'maimai.sega.jp',
 ]
 
+export function isSafeMaimaiImageUrl(value: string): boolean {
+  try {
+    const url = new URL(value);
+    return (
+      url.protocol === 'https:' &&
+      url.username === '' &&
+      url.password === '' &&
+      url.port === '' &&
+      SAFE_MAIMAI_IMAGE_URLS.includes(url.hostname)
+    );
+  } catch {
+    return false;
+  }
+}
+
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
@@ -72,7 +87,7 @@ export function getLogoUrl(gameVersion: number, region: "intl" | "jp" | "cn"): s
 // Sync version for client-side React components
 export function createSafeMaimaiImageUrl(originalUrl: string): string {
   // Check if it's a maimaidx domain
-  if (SAFE_MAIMAI_IMAGE_URLS.some(domain => originalUrl.includes(domain))) {
+  if (isSafeMaimaiImageUrl(originalUrl)) {
     // On client side, always use proxy (cache check would require server-side APIs)
     const encodedUrl = encodeURIComponent(originalUrl);
     return `/api/image-proxy?url=${encodedUrl}`;
