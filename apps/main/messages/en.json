@@ -254,13 +254,6 @@
         "jp": "Japan",
         "cn": "China"
       },
-      "description": {
-        "label": "Profile description",
-        "description": "Write a public introduction using Markdown.",
-        "unpublished": "You can edit this now. It will appear when your profile is published.",
-        "formats": "Supports bold, italic, strikethrough, links, lists, quotes, and standalone YouTube or bilibili links.",
-        "limits": "Up to {characters} characters and {bytes} bytes."
-      },
       "privacy": {
         "label": "Privacy Settings",
         "showAllScores": {
@@ -1340,7 +1333,69 @@
     }
   },
   "publicProfile": {
-    "about": "About {username}"
+    "about": "About {username}",
+    "descriptionEditor": {
+      "add": "Add description",
+      "edit": "Edit",
+      "ariaLabel": "Profile description",
+      "placeholder": "Tell people about yourself...",
+      "unpublished": "This description will appear when your profile is public.",
+      "formats": "Supports bold, italic, strikethrough, links, lists, quotes, and standalone YouTube or bilibili links.",
+      "limits": "Up to {characters} characters and {bytes} bytes.",
+      "saving": "Saving...",
+      "saveSuccess": "Profile description updated.",
+      "saveError": "Could not save your profile description. Your draft has been kept.",
+      "confirmCancelTitle": "Discard description changes?",
+      "confirmCancelDescription": "Your unsaved description draft will be lost.",
+      "discard": "Discard changes",
+      "keepEditing": "Keep editing",
+      "editor": {
+        "formattingToolbar": "Formatting toolbar",
+        "bold": "Bold",
+        "italic": "Italic",
+        "strikethrough": "Strikethrough",
+        "link": "Link",
+        "unorderedList": "Bulleted list",
+        "orderedList": "Numbered list",
+        "blockquote": "Quote",
+        "media": "Media",
+        "editorView": "Editor view",
+        "write": "Write",
+        "preview": "Preview",
+        "previewAriaLabel": "Markdown preview",
+        "linkDialogTitle": "Insert link",
+        "linkDialogDescription": "Add an HTTPS link and optional display text.",
+        "linkText": "Link text",
+        "linkTextPlaceholder": "Text to display",
+        "linkUrl": "Link URL",
+        "linkUrlPlaceholder": "https://example.com",
+        "invalidHttpsUrl": "Enter a valid HTTPS URL.",
+        "insertLink": "Insert link",
+        "mediaDialogTitle": "Insert video",
+        "mediaDialogDescription": "Paste a supported YouTube or bilibili video URL.",
+        "mediaUrl": "Video URL",
+        "mediaUrlPlaceholder": "https://www.youtube.com/watch?v=...",
+        "unsupportedMediaUrl": "Enter a supported YouTube or bilibili HTTPS URL.",
+        "insertMedia": "Insert video",
+        "cancel": "Cancel",
+        "sizeStatus": "{characters} / {maxCharacters} characters · {utf8Bytes} / {maxUtf8Bytes} bytes",
+        "characterLimitExceeded": "Description cannot exceed {maxCharacters} characters.",
+        "byteLimitExceeded": "Description cannot exceed {maxUtf8Bytes} bytes."
+      }
+    },
+    "visibilitySettings": {
+      "trigger": "Privacy settings",
+      "title": "Profile visibility",
+      "description": "Choose what visitors can see on your public profile.",
+      "loading": "Loading privacy settings...",
+      "saving": "Saving...",
+      "saveSuccess": "Profile visibility updated.",
+      "saveError": "Could not update your profile visibility. Your changes have been kept.",
+      "confirmUnpublishTitle": "Make your profile private?",
+      "confirmUnpublishDescription": "Other people will no longer be able to open your profile. Your description and privacy choices will stay saved.",
+      "confirmUnpublish": "Make private",
+      "keepPublic": "Keep public"
+    }
   },
   "profileReport": {
     "trigger": "Report profile",

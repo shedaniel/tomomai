@@ -244,13 +244,6 @@
         "jp": "일본",
         "cn": "중국"
       },
-      "description": {
-        "label": "프로필 소개",
-        "description": "Markdown으로 공개 소개글을 작성하세요.",
-        "unpublished": "지금 편집할 수 있으며, 프로필을 공개하면 표시됩니다.",
-        "formats": "굵게, 기울임꼴, 취소선, 링크, 목록, 인용문, 단독 YouTube 또는 bilibili 링크를 지원합니다.",
-        "limits": "최대 {characters}자, {bytes}바이트."
-      },
       "privacy": {
         "label": "개인정보 설정",
         "showAllScores": {
@@ -968,7 +961,69 @@
     }
   },
   "publicProfile": {
-    "about": "{username} 소개"
+    "about": "{username} 소개",
+    "descriptionEditor": {
+      "add": "소개 추가",
+      "edit": "편집",
+      "ariaLabel": "프로필 소개",
+      "placeholder": "자신을 소개해 보세요...",
+      "unpublished": "프로필을 공개하면 이 소개가 표시됩니다.",
+      "formats": "굵게, 기울임꼴, 취소선, 링크, 목록, 인용문, 단독 YouTube 또는 bilibili 링크를 지원합니다.",
+      "limits": "최대 {characters}자, {bytes}바이트.",
+      "saving": "저장 중...",
+      "saveSuccess": "프로필 소개를 업데이트했습니다.",
+      "saveError": "프로필 소개를 저장하지 못했습니다. 작성 중인 내용은 유지됩니다.",
+      "confirmCancelTitle": "소개 변경 사항을 버리시겠습니까?",
+      "confirmCancelDescription": "저장하지 않은 소개 초안이 사라집니다.",
+      "discard": "변경 사항 버리기",
+      "keepEditing": "계속 편집",
+      "editor": {
+        "formattingToolbar": "서식 도구 모음",
+        "bold": "굵게",
+        "italic": "기울임꼴",
+        "strikethrough": "취소선",
+        "link": "링크",
+        "unorderedList": "글머리 기호 목록",
+        "orderedList": "번호 매기기 목록",
+        "blockquote": "인용",
+        "media": "동영상",
+        "editorView": "편집기 보기",
+        "write": "작성",
+        "preview": "미리보기",
+        "previewAriaLabel": "Markdown 미리보기",
+        "linkDialogTitle": "링크 삽입",
+        "linkDialogDescription": "HTTPS 링크와 선택 사항인 표시 문구를 추가하세요.",
+        "linkText": "링크 문구",
+        "linkTextPlaceholder": "표시할 문구",
+        "linkUrl": "링크 URL",
+        "linkUrlPlaceholder": "https://example.com",
+        "invalidHttpsUrl": "올바른 HTTPS URL을 입력하세요.",
+        "insertLink": "링크 삽입",
+        "mediaDialogTitle": "동영상 삽입",
+        "mediaDialogDescription": "지원되는 YouTube 또는 bilibili 동영상 URL을 붙여 넣으세요.",
+        "mediaUrl": "동영상 URL",
+        "mediaUrlPlaceholder": "https://www.youtube.com/watch?v=...",
+        "unsupportedMediaUrl": "지원되는 YouTube 또는 bilibili HTTPS URL을 입력하세요.",
+        "insertMedia": "동영상 삽입",
+        "cancel": "취소",
+        "sizeStatus": "{characters} / {maxCharacters}자 · {utf8Bytes} / {maxUtf8Bytes}바이트",
+        "characterLimitExceeded": "소개는 {maxCharacters}자를 초과할 수 없습니다.",
+        "byteLimitExceeded": "소개는 {maxUtf8Bytes}바이트를 초과할 수 없습니다."
+      }
+    },
+    "visibilitySettings": {
+      "trigger": "공개 설정",
+      "title": "프로필 공개 범위",
+      "description": "공개 프로필에서 방문자에게 표시할 내용을 선택하세요.",
+      "loading": "공개 설정 불러오는 중...",
+      "saving": "저장 중...",
+      "saveSuccess": "프로필 공개 범위를 업데이트했습니다.",
+      "saveError": "프로필 공개 범위를 업데이트하지 못했습니다. 변경 사항은 유지됩니다.",
+      "confirmUnpublishTitle": "프로필을 비공개로 전환하시겠습니까?",
+      "confirmUnpublishDescription": "다른 사람이 더 이상 프로필을 열 수 없습니다. 소개와 공개 설정은 그대로 저장됩니다.",
+      "confirmUnpublish": "비공개로 전환",
+      "keepPublic": "공개 유지"
+    }
   },
   "profileReport": {
     "trigger": "프로필 신고",

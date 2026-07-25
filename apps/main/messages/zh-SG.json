@@ -264,13 +264,6 @@
         "jp": "日本服",
         "cn": "中国服"
       },
-      "description": {
-        "label": "个人简介",
-        "description": "使用 Markdown 编写公开的个人介绍。",
-        "unpublished": "你现在就可以编辑。公开主页后，简介将会显示。",
-        "formats": "支持粗体、斜体、删除线、链接、列表、引用，以及单独一行的 YouTube 或 bilibili 链接。",
-        "limits": "最多 {characters} 个字符和 {bytes} 字节。"
-      },
       "privacy": {
         "label": "隐私设置",
         "showAllScores": {
@@ -1331,7 +1324,69 @@
     }
   },
   "publicProfile": {
-    "about": "关于 {username}"
+    "about": "关于 {username}",
+    "descriptionEditor": {
+      "add": "添加简介",
+      "edit": "编辑",
+      "ariaLabel": "个人简介",
+      "placeholder": "向大家介绍一下自己...",
+      "unpublished": "主页公开后将显示此简介。",
+      "formats": "支持粗体、斜体、删除线、链接、列表、引用，以及单独一行的 YouTube 或 bilibili 链接。",
+      "limits": "最多 {characters} 个字符和 {bytes} 字节。",
+      "saving": "保存中...",
+      "saveSuccess": "个人简介已更新。",
+      "saveError": "无法保存个人简介。你的草稿已保留。",
+      "confirmCancelTitle": "放弃简介更改？",
+      "confirmCancelDescription": "尚未保存的简介草稿将会丢失。",
+      "discard": "放弃更改",
+      "keepEditing": "继续编辑",
+      "editor": {
+        "formattingToolbar": "格式工具栏",
+        "bold": "粗体",
+        "italic": "斜体",
+        "strikethrough": "删除线",
+        "link": "链接",
+        "unorderedList": "项目符号列表",
+        "orderedList": "编号列表",
+        "blockquote": "引用",
+        "media": "视频",
+        "editorView": "编辑器视图",
+        "write": "编写",
+        "preview": "预览",
+        "previewAriaLabel": "Markdown 预览",
+        "linkDialogTitle": "插入链接",
+        "linkDialogDescription": "添加 HTTPS 链接及可选的显示文本。",
+        "linkText": "链接文本",
+        "linkTextPlaceholder": "要显示的文本",
+        "linkUrl": "链接 URL",
+        "linkUrlPlaceholder": "https://example.com",
+        "invalidHttpsUrl": "请输入有效的 HTTPS URL。",
+        "insertLink": "插入链接",
+        "mediaDialogTitle": "插入视频",
+        "mediaDialogDescription": "粘贴受支持的 YouTube 或 bilibili 视频链接。",
+        "mediaUrl": "视频链接",
+        "mediaUrlPlaceholder": "https://www.youtube.com/watch?v=...",
+        "unsupportedMediaUrl": "请输入受支持的 YouTube 或 bilibili HTTPS 链接。",
+        "insertMedia": "插入视频",
+        "cancel": "取消",
+        "sizeStatus": "{characters} / {maxCharacters} 个字符 · {utf8Bytes} / {maxUtf8Bytes} 字节",
+        "characterLimitExceeded": "简介不能超过 {maxCharacters} 个字符。",
+        "byteLimitExceeded": "简介不能超过 {maxUtf8Bytes} 字节。"
+      }
+    },
+    "visibilitySettings": {
+      "trigger": "隐私设置",
+      "title": "主页可见性",
+      "description": "选择访客可以在公开主页中看到的内容。",
+      "loading": "正在加载隐私设置...",
+      "saving": "保存中...",
+      "saveSuccess": "主页可见性已更新。",
+      "saveError": "无法更新主页可见性。你的更改已保留。",
+      "confirmUnpublishTitle": "将主页设为不公开？",
+      "confirmUnpublishDescription": "其他人将无法再打开你的主页。你的简介和隐私选项仍会保留。",
+      "confirmUnpublish": "设为不公开",
+      "keepPublic": "保持公开"
+    }
   },
   "profileReport": {
     "trigger": "举报主页",

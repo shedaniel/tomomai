@@ -254,13 +254,6 @@
         "jp": "日本",
         "cn": "中国"
       },
-      "description": {
-        "label": "プロフィール紹介",
-        "description": "Markdownを使って公開用の自己紹介を書けます。",
-        "unpublished": "今から編集できます。プロフィールを公開すると表示されます。",
-        "formats": "太字、斜体、取り消し線、リンク、リスト、引用、および単独行のYouTubeまたはbilibiliリンクに対応しています。",
-        "limits": "最大{characters}文字、{bytes}バイト。"
-      },
       "privacy": {
         "label": "プライバシー設定",
         "showAllScores": {
@@ -1331,7 +1324,69 @@
     }
   },
   "publicProfile": {
-    "about": "{username}について"
+    "about": "{username}について",
+    "descriptionEditor": {
+      "add": "紹介を追加",
+      "edit": "編集",
+      "ariaLabel": "プロフィール紹介",
+      "placeholder": "自己紹介を書いてみましょう...",
+      "unpublished": "プロフィールを公開すると、この紹介が表示されます。",
+      "formats": "太字、斜体、取り消し線、リンク、リスト、引用、および単独行のYouTubeまたはbilibiliリンクに対応しています。",
+      "limits": "最大{characters}文字、{bytes}バイト。",
+      "saving": "保存中...",
+      "saveSuccess": "プロフィール紹介を更新しました。",
+      "saveError": "プロフィール紹介を保存できませんでした。下書きは保持されています。",
+      "confirmCancelTitle": "紹介の変更を破棄しますか？",
+      "confirmCancelDescription": "保存していない紹介の下書きは失われます。",
+      "discard": "変更を破棄",
+      "keepEditing": "編集を続ける",
+      "editor": {
+        "formattingToolbar": "書式ツールバー",
+        "bold": "太字",
+        "italic": "斜体",
+        "strikethrough": "取り消し線",
+        "link": "リンク",
+        "unorderedList": "箇条書き",
+        "orderedList": "番号付きリスト",
+        "blockquote": "引用",
+        "media": "動画",
+        "editorView": "エディター表示",
+        "write": "入力",
+        "preview": "プレビュー",
+        "previewAriaLabel": "Markdownプレビュー",
+        "linkDialogTitle": "リンクを挿入",
+        "linkDialogDescription": "HTTPSリンクと、必要に応じて表示テキストを追加します。",
+        "linkText": "リンクテキスト",
+        "linkTextPlaceholder": "表示するテキスト",
+        "linkUrl": "リンクURL",
+        "linkUrlPlaceholder": "https://example.com",
+        "invalidHttpsUrl": "有効なHTTPS URLを入力してください。",
+        "insertLink": "リンクを挿入",
+        "mediaDialogTitle": "動画を挿入",
+        "mediaDialogDescription": "対応しているYouTubeまたはbilibiliの動画URLを貼り付けてください。",
+        "mediaUrl": "動画URL",
+        "mediaUrlPlaceholder": "https://www.youtube.com/watch?v=...",
+        "unsupportedMediaUrl": "対応しているYouTubeまたはbilibiliのHTTPS URLを入力してください。",
+        "insertMedia": "動画を挿入",
+        "cancel": "キャンセル",
+        "sizeStatus": "{characters} / {maxCharacters}文字 · {utf8Bytes} / {maxUtf8Bytes}バイト",
+        "characterLimitExceeded": "紹介は{maxCharacters}文字以内で入力してください。",
+        "byteLimitExceeded": "紹介は{maxUtf8Bytes}バイト以内で入力してください。"
+      }
+    },
+    "visibilitySettings": {
+      "trigger": "公開設定",
+      "title": "プロフィールの公開設定",
+      "description": "公開プロフィールで訪問者に表示する内容を選択します。",
+      "loading": "公開設定を読み込み中...",
+      "saving": "保存中...",
+      "saveSuccess": "プロフィールの公開設定を更新しました。",
+      "saveError": "プロフィールの公開設定を更新できませんでした。変更内容は保持されています。",
+      "confirmUnpublishTitle": "プロフィールを非公開にしますか？",
+      "confirmUnpublishDescription": "他の人はあなたのプロフィールを開けなくなります。紹介と公開設定は保存されたままです。",
+      "confirmUnpublish": "非公開にする",
+      "keepPublic": "公開を続ける"
+    }
   },
   "profileReport": {
     "trigger": "プロフィールを報告",

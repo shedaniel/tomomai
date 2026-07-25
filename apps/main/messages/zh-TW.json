@@ -254,13 +254,6 @@
         "jp": "日本區",
         "cn": "大陸區"
       },
-      "description": {
-        "label": "個人簡介",
-        "description": "使用 Markdown 編寫公開的個人介紹。",
-        "unpublished": "你現在就可以編輯。公開個人檔案後，簡介將會顯示。",
-        "formats": "支援粗體、斜體、刪除線、連結、清單、引文，以及獨立一行的 YouTube 或 bilibili 連結。",
-        "limits": "最多 {characters} 個字元及 {bytes} 位元組。"
-      },
       "privacy": {
         "label": "隱私設定",
         "showAllScores": {
@@ -1331,7 +1324,69 @@
     }
   },
   "publicProfile": {
-    "about": "關於 {username}"
+    "about": "關於 {username}",
+    "descriptionEditor": {
+      "add": "新增簡介",
+      "edit": "編輯",
+      "ariaLabel": "個人簡介",
+      "placeholder": "向大家介紹一下自己...",
+      "unpublished": "個人檔案公開後將顯示此簡介。",
+      "formats": "支援粗體、斜體、刪除線、連結、清單、引文，以及獨立一行的 YouTube 或 bilibili 連結。",
+      "limits": "最多 {characters} 個字元及 {bytes} 位元組。",
+      "saving": "儲存中...",
+      "saveSuccess": "個人簡介已更新。",
+      "saveError": "無法儲存個人簡介。你的草稿已保留。",
+      "confirmCancelTitle": "要捨棄簡介變更嗎？",
+      "confirmCancelDescription": "尚未儲存的簡介草稿將會遺失。",
+      "discard": "捨棄變更",
+      "keepEditing": "繼續編輯",
+      "editor": {
+        "formattingToolbar": "格式工具列",
+        "bold": "粗體",
+        "italic": "斜體",
+        "strikethrough": "刪除線",
+        "link": "連結",
+        "unorderedList": "項目符號清單",
+        "orderedList": "編號清單",
+        "blockquote": "引用",
+        "media": "影片",
+        "editorView": "編輯器檢視",
+        "write": "編寫",
+        "preview": "預覽",
+        "previewAriaLabel": "Markdown 預覽",
+        "linkDialogTitle": "插入連結",
+        "linkDialogDescription": "新增 HTTPS 連結及選填的顯示文字。",
+        "linkText": "連結文字",
+        "linkTextPlaceholder": "要顯示的文字",
+        "linkUrl": "連結網址",
+        "linkUrlPlaceholder": "https://example.com",
+        "invalidHttpsUrl": "請輸入有效的 HTTPS 網址。",
+        "insertLink": "插入連結",
+        "mediaDialogTitle": "插入影片",
+        "mediaDialogDescription": "貼上支援的 YouTube 或 bilibili 影片網址。",
+        "mediaUrl": "影片網址",
+        "mediaUrlPlaceholder": "https://www.youtube.com/watch?v=...",
+        "unsupportedMediaUrl": "請輸入支援的 YouTube 或 bilibili HTTPS 網址。",
+        "insertMedia": "插入影片",
+        "cancel": "取消",
+        "sizeStatus": "{characters} / {maxCharacters} 個字元 · {utf8Bytes} / {maxUtf8Bytes} 位元組",
+        "characterLimitExceeded": "簡介不能超過 {maxCharacters} 個字元。",
+        "byteLimitExceeded": "簡介不能超過 {maxUtf8Bytes} 位元組。"
+      }
+    },
+    "visibilitySettings": {
+      "trigger": "隱私設定",
+      "title": "個人檔案可見度",
+      "description": "選擇訪客可在公開個人檔案中看到的內容。",
+      "loading": "正在載入隱私設定...",
+      "saving": "儲存中...",
+      "saveSuccess": "個人檔案可見度已更新。",
+      "saveError": "無法更新個人檔案可見度。你的變更已保留。",
+      "confirmUnpublishTitle": "要將個人檔案設為不公開嗎？",
+      "confirmUnpublishDescription": "其他人將無法再開啟你的個人檔案。你的簡介和隱私選項仍會保留。",
+      "confirmUnpublish": "設為不公開",
+      "keepPublic": "保持公開"
+    }
   },
   "profileReport": {
     "trigger": "檢舉個人檔案",
