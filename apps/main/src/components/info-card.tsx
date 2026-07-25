@@ -333,7 +333,7 @@ export function InfoCard({
   return (
     <div className="space-y-6">
       <div className="rounded-md bg-muted p-4 ring-2 ring-foreground/20 ring-offset-2 ring-offset-background">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           {visitableProfileAt ? (
             <div>
               <h3 className="mb-1 font-medium text-foreground">{t("profileVisibility.public")}</h3>
@@ -360,11 +360,69 @@ export function InfoCard({
               variant="outline"
               onClick={openVisibilitySettings}
               disabled={profileSettingsLoading}
-              className="shrink-0"
+              className="shrink-0 self-center"
             >
               <Settings2 />
               {t("publicProfile.visibilitySettings.trigger")}
             </Button>
+          ) : null}
+        </div>
+      </div>
+
+
+      <div className="mb-4 flex items-center gap-2">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8, rotate: -5 }}
+          animate={{ opacity: 1, scale: 1, rotate: 0 }}
+          transition={getTransition(SPRING_CONFIGS.default)}
+        >
+          <Image src={createSafeMaimaiImageUrl(snapshot.iconUrl)} unoptimized={isR2Url(snapshot.iconUrl)} alt={snapshot.title} width={80} height={80} />
+        </motion.div>
+        <div className="my-1 flex min-w-0 self-stretch flex-col items-stretch space-y-0.5">
+          <span className="inset-shadow-sm truncate rounded-full bg-secondary px-6 py-1 text-center text-sm text-secondary-foreground">{snapshot.title}</span>
+          <span className="flex items-center self-center text-lg font-medium max-xs:flex-col">
+            <span className="mx-4 flex-1 whitespace-nowrap max-2xs:text-sm max-xs:text-md">{snapshot.displayName}</span>
+            <div className="relative h-[35px] w-[120px] min-w-fit shrink-0 grow-0">
+              <RatingImage rating={snapshot.rating} version={snapshot.gameVersion} />
+              <span className="absolute top-[3px] left-[8px] box-border w-[106px] text-right font-mono text-[18px] font-normal tracking-[1.65px] text-white">{snapshot.rating}</span>
+            </div>
+          </span>
+        </div>
+      </div>
+      <div className="rounded-md bg-muted/50 p-4">
+        <h4 className="mb-2 font-medium">{t("dataContent.playerInfo")}</h4>
+        <div className={`grid gap-2 text-sm ${showPlayCounts ? "grid-cols-2" : "grid-cols-1"}`}>
+          <motion.div
+            initial={{ opacity: 0, ...(isDesktop ? { x: -10 } : { y: 10 }) }}
+            animate={{ opacity: 1, x: 0, y: 0 }}
+            transition={getTransition({ delay: STAGGER.slow * 0 })}
+          >
+            {t("dataContent.rating", { rating: snapshot.rating })}
+          </motion.div>
+          <motion.div
+            initial={{ opacity: 0, ...(isDesktop ? { x: -10 } : { y: 10 }) }}
+            animate={{ opacity: 1, x: 0, y: 0 }}
+            transition={getTransition({ delay: STAGGER.slow * 1 })}
+          >
+            {t("dataContent.stars", { stars: snapshot.stars })}
+          </motion.div>
+          {showPlayCounts ? (
+            <>
+              <motion.div
+                initial={{ opacity: 0, ...(isDesktop ? { x: -10 } : { y: 10 }) }}
+                animate={{ opacity: 1, x: 0, y: 0 }}
+                transition={getTransition({ delay: STAGGER.slow * 2 })}
+              >
+                {t("dataContent.versionPlays", { count: snapshot.versionPlayCount })}
+              </motion.div>
+              <motion.div
+                initial={{ opacity: 0, ...(isDesktop ? { x: -10 } : { y: 10 }) }}
+                animate={{ opacity: 1, x: 0, y: 0 }}
+                transition={getTransition({ delay: STAGGER.slow * 3 })}
+              >
+                {t("dataContent.totalPlays", { count: snapshot.totalPlayCount })}
+              </motion.div>
+            </>
           ) : null}
         </div>
       </div>
@@ -460,63 +518,6 @@ export function InfoCard({
           ) : null}
         </section>
       ) : null}
-
-      <div className="mb-4 flex items-center gap-2">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.8, rotate: -5 }}
-          animate={{ opacity: 1, scale: 1, rotate: 0 }}
-          transition={getTransition(SPRING_CONFIGS.default)}
-        >
-          <Image src={createSafeMaimaiImageUrl(snapshot.iconUrl)} unoptimized={isR2Url(snapshot.iconUrl)} alt={snapshot.title} width={80} height={80} />
-        </motion.div>
-        <div className="my-1 flex min-w-0 self-stretch flex-col items-stretch space-y-0.5">
-          <span className="inset-shadow-sm truncate rounded-full bg-secondary px-6 py-1 text-center text-sm text-secondary-foreground">{snapshot.title}</span>
-          <span className="flex items-center self-center text-lg font-medium max-xs:flex-col">
-            <span className="mx-4 flex-1 whitespace-nowrap max-2xs:text-sm max-xs:text-md">{snapshot.displayName}</span>
-            <div className="relative h-[35px] w-[120px] min-w-fit shrink-0 grow-0">
-              <RatingImage rating={snapshot.rating} version={snapshot.gameVersion} />
-              <span className="absolute top-[3px] left-[8px] box-border w-[106px] text-right font-mono text-[18px] font-normal tracking-[1.65px] text-white">{snapshot.rating}</span>
-            </div>
-          </span>
-        </div>
-      </div>
-      <div className="rounded-md bg-muted/50 p-4">
-        <h4 className="mb-2 font-medium">{t("dataContent.playerInfo")}</h4>
-        <div className={`grid gap-2 text-sm ${showPlayCounts ? "grid-cols-2" : "grid-cols-1"}`}>
-          <motion.div
-            initial={{ opacity: 0, ...(isDesktop ? { x: -10 } : { y: 10 }) }}
-            animate={{ opacity: 1, x: 0, y: 0 }}
-            transition={getTransition({ delay: STAGGER.slow * 0 })}
-          >
-            {t("dataContent.rating", { rating: snapshot.rating })}
-          </motion.div>
-          <motion.div
-            initial={{ opacity: 0, ...(isDesktop ? { x: -10 } : { y: 10 }) }}
-            animate={{ opacity: 1, x: 0, y: 0 }}
-            transition={getTransition({ delay: STAGGER.slow * 1 })}
-          >
-            {t("dataContent.stars", { stars: snapshot.stars })}
-          </motion.div>
-          {showPlayCounts ? (
-            <>
-              <motion.div
-                initial={{ opacity: 0, ...(isDesktop ? { x: -10 } : { y: 10 }) }}
-                animate={{ opacity: 1, x: 0, y: 0 }}
-                transition={getTransition({ delay: STAGGER.slow * 2 })}
-              >
-                {t("dataContent.versionPlays", { count: snapshot.versionPlayCount })}
-              </motion.div>
-              <motion.div
-                initial={{ opacity: 0, ...(isDesktop ? { x: -10 } : { y: 10 }) }}
-                animate={{ opacity: 1, x: 0, y: 0 }}
-                transition={getTransition({ delay: STAGGER.slow * 3 })}
-              >
-                {t("dataContent.totalPlays", { count: snapshot.totalPlayCount })}
-              </motion.div>
-            </>
-          ) : null}
-        </div>
-      </div>
 
       <ResponsiveDialog open={visibilityOpen} onOpenChange={handleVisibilityOpenChange}>
         <ResponsiveDialogContent className="sm:max-w-xl">
