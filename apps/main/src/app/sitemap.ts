@@ -2,7 +2,7 @@ import type { MetadataRoute } from 'next'
 import { resolveBaseUrl } from '@/lib/base-url';
 import { DB_TYPES } from '@/lib/db/types';
 import { user, userSnapshots } from '@/lib/db/schema-pg';
-import { and, eq, sql } from 'drizzle-orm';
+import { and, eq, isNotNull, sql } from 'drizzle-orm';
 import { db } from '@/lib/db';
 import { getAllPostsMeta, getAvailableTranslations } from '@/lib/posts';
 import { defaultLocale } from '@/i18n/locale';
@@ -30,6 +30,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       and(
         eq(user.publishProfile, true),
         eq(user.profileShowInSearch, true),
+        isNotNull(userSnapshots.fetchedAt),
       ),
     )
     .groupBy(user.id, user.username)
