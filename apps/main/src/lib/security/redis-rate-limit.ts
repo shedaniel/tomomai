@@ -1,4 +1,9 @@
-import { RedisRateLimiter, clientIp, rateLimit } from "@tomomai/security/rate-limit";
+import {
+  RedisRateLimiter,
+  clientIp,
+  clientIpFromHeaders,
+  rateLimit,
+} from "@tomomai/security/rate-limit";
 import { logger } from "../logger";
 import { TIER_I } from "@/lib/api/tiers";
 
@@ -6,7 +11,7 @@ export type {
   RateLimitOptions,
   RateLimitResult,
 } from "@tomomai/security/rate-limit";
-export { RedisRateLimiter, clientIp, rateLimit };
+export { RedisRateLimiter, clientIp, clientIpFromHeaders, rateLimit };
 
 // --- Shared limiter instances ---
 
