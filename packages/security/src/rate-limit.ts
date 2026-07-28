@@ -1,3 +1,4 @@
+import { isIP } from "node:net";
 import { NextRequest, NextResponse } from "next/server";
 import { RateLimiterRedis, RateLimiterRes } from "rate-limiter-flexible";
 import { getRedis } from "./redis";
@@ -27,14 +28,30 @@ export interface RateLimitResult {
   headers: Record<string, string>;
 }
 
-/** Extracts client IP from common proxy headers. Vercel sets x-forwarded-for. */
+const CLIENT_IP_HEADERS = [
+  "x-vercel-forwarded-for",
+  "cf-connecting-ip",
+  "x-forwarded-for",
+  "x-real-ip",
+] as const;
+
+type HeaderReader = { get(name: string): string | null };
+
+/** Extracts a validated client IP, preferring headers controlled by Vercel and Cloudflare. */
+export function clientIpFromHeaders(headers: HeaderReader): string {
+  for (const name of CLIENT_IP_HEADERS) {
+    const raw = headers.get(name);
+    if (!raw) continue;
+
+    const candidate = raw.split(",")[0]!.trim();
+    if (isIP(candidate)) return candidate;
+  }
+
+  return "unknown";
+}
+
 export function clientIp(req: NextRequest): string {
-  const raw =
-    req.headers.get("cf-connecting-ip") ??
-    req.headers.get("x-forwarded-for") ??
-    req.headers.get("x-real-ip") ??
-    "unknown";
-  return raw.split(",")[0]!.trim();
+  return clientIpFromHeaders(req.headers);
 }
 
 /**
