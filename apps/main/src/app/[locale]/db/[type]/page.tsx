@@ -1,5 +1,4 @@
 import { getAllUniqueSongsCached } from "@/server/queries/songs-cache";
-import { SongListSeo } from "@/components/db/songs/song-list-seo";
 import { Metadata } from "next";
 import dynamic from "next/dynamic";
 import { Suspense } from "react";
@@ -75,9 +74,8 @@ export default async function DbTypePage({ params }: DbTypePageProps) {
   const { type } = await params;
 
   if (type === "songs") {
-    // The interactive SongsList is mounted by /db/[type]/layout (so it
-    // persists across list ↔ detail). This page just emits the SSR
-    // crawlable song-link list (hidden once the grid hydrates) + JSON-LD.
+    // The interactive SongsList is mounted by /db/[type]/layout so it
+    // persists across list ↔ detail navigation.
     const songs = await getAllUniqueSongsCached();
     const t = await getTranslations("db.songs.metadata");
 
@@ -91,7 +89,6 @@ export default async function DbTypePage({ params }: DbTypePageProps) {
 
     return (
       <>
-        <SongListSeo />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
