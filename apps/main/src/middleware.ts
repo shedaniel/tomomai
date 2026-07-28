@@ -5,11 +5,6 @@ import { nanoid } from 'nanoid';
 import { securityMiddleware } from './lib/security/middleware';
 import { locales, defaultLocale, type Locale } from './i18n/locale';
 
-const FONT_CORS_ORIGINS = new Set([
-  'https://maimaidx.jp',
-  'https://maimaidx-eng.com',
-]);
-
 // Path prefixes that must NOT be locale-prefixed.
 function isUnlocalizable(pathname: string): boolean {
   // Any path whose last segment has a file extension is a static asset or a
@@ -75,18 +70,6 @@ export async function middleware(request: NextRequest) {
     res.headers.set('x-request-id', requestId);
     return res;
   };
-
-  // Font CORS handling.
-  if (pathname.startsWith('/res/fonts/')) {
-    const origin = request.headers.get('origin');
-    const response = NextResponse.next();
-    if (origin && FONT_CORS_ORIGINS.has(origin)) {
-      response.headers.set('Access-Control-Allow-Origin', origin);
-      response.headers.set('Cross-Origin-Resource-Policy', 'cross-origin');
-      response.headers.set('Vary', 'Origin');
-    }
-    return stamp(response);
-  }
 
   const isMaintenanceRoute =
     pathname === '/maintenance' ||
@@ -169,7 +152,6 @@ export const config = {
   matcher: [
     '/api/:path*',
     '/.well-known/:path*',
-    '/res/fonts/:path*',
     '/((?!_next/static|_next/image|.*\\.segments?(?:/|$)|.*\\.[^/]+$).*)',
   ],
 };

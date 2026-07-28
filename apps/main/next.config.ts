@@ -56,6 +56,14 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
+        source: '/res/fonts/:path*',
+        headers: [
+          { key: 'Access-Control-Allow-Origin', value: '*' },
+          { key: 'Cross-Origin-Resource-Policy', value: 'cross-origin' },
+          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
+        ],
+      },
+      {
         source: '/:path*/opengraph-image(.*)',
         headers: [
           { key: 'Cross-Origin-Resource-Policy', value: 'cross-site' },

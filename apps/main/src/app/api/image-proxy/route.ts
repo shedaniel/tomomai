@@ -5,6 +5,13 @@ import { flushLogger } from '@/lib/logger';
 import { requestLogger } from '@/lib/request-logger';
 import { isSafeMaimaiImageUrl } from '@/lib/utils';
 
+const imageSuccessHeaders = (contentType: string) => ({
+  'Content-Type': contentType,
+  'Cache-Control': 'public, max-age=31536000, immutable',
+  'CDN-Cache-Control': 'public, max-age=31536000',
+  'Vercel-CDN-Cache-Control': 'public, max-age=31536000',
+});
+
 export async function GET(request: NextRequest) {
   const { log, requestId } = requestLogger(request, "image-proxy");
   const { searchParams } = new URL(request.url);
@@ -24,10 +31,7 @@ export async function GET(request: NextRequest) {
     const cachedResult = await getCachedImageBuffer(imageUrl);
     if (cachedResult) {
       return new NextResponse(new Uint8Array(cachedResult.buffer), {
-        headers: {
-          'Content-Type': cachedResult.contentType,
-          'Cache-Control': 'public, max-age=31536000, immutable',
-        },
+        headers: imageSuccessHeaders(cachedResult.contentType),
       });
     }
 
@@ -38,10 +42,7 @@ export async function GET(request: NextRequest) {
     const newCachedResult = await getCachedImageBuffer(imageUrl);
     if (newCachedResult) {
       return new NextResponse(new Uint8Array(newCachedResult.buffer), {
-        headers: {
-          'Content-Type': newCachedResult.contentType,
-          'Cache-Control': 'public, max-age=31536000, immutable',
-        },
+        headers: imageSuccessHeaders(newCachedResult.contentType),
       });
     }
 
@@ -68,10 +69,7 @@ export async function GET(request: NextRequest) {
     const contentType = response.headers.get('content-type') || 'image/png';
 
     return new NextResponse(imageBuffer, {
-      headers: {
-        'Content-Type': contentType,
-        'Cache-Control': 'public, max-age=31536000, immutable',
-      },
+      headers: imageSuccessHeaders(contentType),
     });
 
   } catch (error) {

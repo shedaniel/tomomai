@@ -30,9 +30,7 @@ interface SongsListProps {
  * state survives in plain React state, and the catalog survives in the tRPC
  * cache (1h). No `initialSongs` prop is accepted — passing it would
  * serialize the whole catalog into the shared layout's RSC segment and
- * leak onto the detail route's ISR payload. The /db/songs page renders a
- * separate SSR <ul> of song links for crawlers; this component hides it
- * once its interactive grid hydrates.
+ * leak onto the detail route's ISR payload.
  */
 export function SongsList(_: SongsListProps = {}) {
   const t = useTranslations();
@@ -57,11 +55,6 @@ export function SongsList(_: SongsListProps = {}) {
   const [mounted, setMounted] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  // Once the interactive grid hydrates, dismiss the SSR SEO <ul> the list
-  // page rendered (Option B morph: plain list → interactive grid).
-  useEffect(() => {
-    document.getElementById("songs-seo-list")?.setAttribute("hidden", "");
-  }, []);
 
   // Debounce search query
   useEffect(() => {
