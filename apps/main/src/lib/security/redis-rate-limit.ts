@@ -18,6 +18,16 @@ export const apiLimiter = new RedisRateLimiter({
   logger,
 });
 
+/** Localized song detail pages share one per-IP bucket across all slugs. */
+export const songDetailLimiter = new RedisRateLimiter({
+  name: "song-detail",
+  windowSeconds: 60,
+  max: 10,
+  blockSeconds: 10 * 60,
+  failClosed: false,
+  logger,
+});
+
 /** Auth endpoints, stricter than general API. */
 export const authLimiter = new RedisRateLimiter({
   name: "auth",
