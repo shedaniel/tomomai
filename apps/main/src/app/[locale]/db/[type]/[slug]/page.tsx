@@ -3,7 +3,7 @@ import { getAllUniqueSongsCached } from "@/server/queries/songs-cache";
 import { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { getLocale } from "@/i18n/locale-server";
-import { breadcrumbJsonLd, openGraphLocales, ogImageUrl, localizePath } from "@/lib/seo";
+import { buildAlternates, breadcrumbJsonLd, openGraphLocales, ogImageUrl, localizePath } from "@/lib/seo";
 import { resolveBaseUrl } from "@/lib/base-url";
 import { safeDecodeURIComponent } from "@/lib/utils";
 
@@ -72,7 +72,7 @@ export async function generateMetadata({ params }: DbSlugPageProps): Promise<Met
   return {
     title,
     description,
-    robots: { index: false, follow: false },
+    alternates: await buildAlternates(path),
     openGraph: {
       title,
       description: ogDescription,

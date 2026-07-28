@@ -28,9 +28,10 @@ interface SongsListProps {
  * Mounted in /db/[type]/layout.tsx so it NEVER unmounts across
  * /db/songs ↔ /db/songs/[slug] navigation: filter/search/scroll/visible-count
  * state survives in plain React state, and the catalog survives in the tRPC
- * cache (1h). No `initialSongs` prop is accepted — passing it would
- * serialize the whole catalog into the shared layout's RSC segment and
- * leak onto the detail route's ISR payload.
+ * cache (1h). No `initialSongs` prop is accepted — passing it would serialize
+ * the whole catalog into the shared layout's RSC segment and leak onto the
+ * detail route's ISR payload. The /db/songs page renders a separate SSR list
+ * of song links, which this component hides after hydration.
  */
 export function SongsList(_: SongsListProps = {}) {
   const t = useTranslations();
@@ -67,6 +68,12 @@ export function SongsList(_: SongsListProps = {}) {
 
   useEffect(() => {
     setMounted(true);
+  }, []);
+
+  // Replace the crawler-facing SSR list with the interactive catalog after
+  // hydration while leaving the complete link list in the initial HTML.
+  useEffect(() => {
+    document.getElementById("songs-seo-list")?.setAttribute("hidden", "");
   }, []);
 
   const [displayMode, setDisplayMode] = useState<"grid" | "list">("grid");

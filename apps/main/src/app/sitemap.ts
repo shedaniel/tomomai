@@ -6,6 +6,7 @@ import { and, eq, isNotNull, sql } from 'drizzle-orm';
 import { db } from '@/lib/db';
 import { getAllPostsMeta, getAvailableTranslations } from '@/lib/posts';
 import { defaultLocale } from '@/i18n/locale';
+import { getAllUniqueSongsCached } from '@/server/queries/songs-cache';
 
 /** Build a localized absolute URL for the sitemap. */
 const loc = (baseUrl: string, path: string) =>
@@ -36,6 +37,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     .groupBy(user.id, user.username)
     .orderBy(sql`${latestSnapshotAt} desc nulls last`)
     .limit(50);
+
+  // Keep discovery aligned with SongListSeo: use the same cached catalog
+  // sequence and bound only the sitemap projection.
+  const catalogSongs = await getAllUniqueSongsCached();
+  const songSitemapItems = catalogSongs.slice(0, 100).map((song) => ({
+    url: loc(baseUrl, `/db/songs/${encodeURIComponent(song.slug)}`),
+    changeFrequency: 'monthly',
+    priority: 0.55,
+  }) satisfies SitemapItem);
   // Get all posts for sitemap (using English as base)
   const posts = getAllPostsMeta('en');
   const postSitemapItems = posts.map((post) => {
@@ -76,5 +86,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'weekly',
       priority: 0.6,
     }) satisfies SitemapItem),
+    ...songSitemapItems,
   ]
 }
