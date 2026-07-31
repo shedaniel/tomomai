@@ -10,6 +10,67 @@ import path from 'path';
 const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 const withAnalyzer = withBundleAnalyzer({ enabled: process.env.ANALYZE === 'true' });
 
+function configuredOrigin(value: string | undefined): string | null {
+  if (!value) return null;
+  try {
+    const url = new URL(value);
+    return url.protocol === 'http:' || url.protocol === 'https:' ? url.origin : null;
+  } catch {
+    return null;
+  }
+}
+
+// Third-party origins the app talks to unconditionally. Everything else is
+// derived from env so hosts are never duplicated between config and deploy.
+const CLOUDFLARE_TURNSTILE_ORIGIN = 'https://challenges.cloudflare.com';
+const OPENFREEMAP_ORIGIN = 'https://tiles.openfreemap.org';
+
+// headers() runs at build time, so these must be set in the build environment,
+// not only at runtime — a missing value silently drops the origin from the CSP.
+function assetOrigin(name: string): string | null {
+  const origin = configuredOrigin(process.env[name]);
+  if (!origin && process.env.NODE_ENV === 'production') {
+    console.warn(`[csp] ${name} is unset at build time; its origin will be omitted from the CSP`);
+  }
+  return origin;
+}
+
+function buildContentSecurityPolicy(): string {
+  const isDevelopment = process.env.NODE_ENV !== 'production';
+  const renderOrigin = assetOrigin('RENDER_PUBLIC_URL');
+  const imageOrigins = [...new Set([
+    assetOrigin('NEXT_PUBLIC_R2_URL'),
+    assetOrigin('NEXT_PUBLIC_R2_URL_CN'),
+    renderOrigin,
+    OPENFREEMAP_ORIGIN,
+  ].filter((origin): origin is string => origin !== null))];
+  const connectOrigins = [
+    "'self'",
+    CLOUDFLARE_TURNSTILE_ORIGIN,
+    OPENFREEMAP_ORIGIN,
+    ...(renderOrigin ? [renderOrigin] : []),
+    ...(isDevelopment
+      ? ['http://localhost:*', 'https://localhost:*', 'ws://localhost:*', 'wss://localhost:*']
+      : []),
+  ];
+
+  return [
+    "default-src 'self'",
+    `script-src 'self' 'unsafe-inline'${isDevelopment ? " 'unsafe-eval'" : ''} ${CLOUDFLARE_TURNSTILE_ORIGIN}`,
+    "style-src 'self' 'unsafe-inline'",
+    `img-src 'self' data: blob: ${imageOrigins.join(' ')}`,
+    "font-src 'self' data:",
+    `connect-src ${connectOrigins.join(' ')}`,
+    "worker-src 'self' blob:",
+    `frame-src ${CLOUDFLARE_TURNSTILE_ORIGIN} https://www.youtube-nocookie.com https://player.bilibili.com`,
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "frame-ancestors 'none'",
+    ...(isDevelopment ? [] : ['upgrade-insecure-requests']),
+  ].join('; ');
+}
+
 // Rolling-release build identity, frozen at build time and inlined via `env`
 // below (git is not available at serverless runtime). BUILD_STAMP is the HEAD
 // commit time (MMDDHHMM) — auto-bumps per build, shallow-clone-safe, and
@@ -51,10 +112,16 @@ const APP_VERSION_MINOR = (() => {
 })();
 
 const nextConfig: NextConfig = {
-  transpilePackages: ["@tomomai/ui", "@tomomai/i18n"],
+  transpilePackages: ["@tomomai/ui", "@tomomai/i18n", "@tomomai/markdown"],
   env: { BUILD_STAMP, GIT_SHA, APP_VERSION_MINOR },
   async headers() {
     return [
+      {
+        source: '/:path*',
+        headers: [
+          { key: 'Content-Security-Policy', value: buildContentSecurityPolicy() },
+        ],
+      },
       {
         source: '/res/fonts/:path*',
         headers: [

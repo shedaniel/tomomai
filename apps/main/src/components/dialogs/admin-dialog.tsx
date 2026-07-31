@@ -13,7 +13,9 @@ import { Label } from "@tomomai/ui";
 import { Button } from "@tomomai/ui";
 import { getCurrentVersion } from "@/lib/metadata";
 import { UsersBrowserDialog } from "./users-browser-dialog";
+import { ProfileReportsDialog } from "./profile-reports-dialog";
 import { cn } from "@/lib/utils";
+import { useTranslations } from "next-intl";
 
 interface AdminDialogProps {
   open: boolean;
@@ -26,6 +28,8 @@ export function AdminDialog({ open, onOpenChange }: AdminDialogProps) {
   const [newSongs, setNewSongs] = useState<object[]>([]);
   const [consoleLog, setConsoleLog] = useState("Welcome to the admin panel!\n");
   const [usersBrowserOpen, setUsersBrowserOpen] = useState(false);
+  const [profileReportsOpen, setProfileReportsOpen] = useState(false);
+  const profileReportsT = useTranslations("Admin.profileReports");
 
   const intlVersion = getCurrentVersion("intl");
   const jpVersion = getCurrentVersion("jp");
@@ -248,14 +252,14 @@ export function AdminDialog({ open, onOpenChange }: AdminDialogProps) {
   }
 
   const handleAdminDialogChange = (newOpen: boolean) => {
-    if (usersBrowserOpen) return;
+    if (usersBrowserOpen || profileReportsOpen) return;
     onOpenChange(newOpen);
   };
 
   return (
     <>
       <ResponsiveDialog open={open} onOpenChange={handleAdminDialogChange}>
-        <ResponsiveDialogContent className={cn("max-w-2xl max-h-[80vh] overflow-y-auto transition-[opacity,scale] duration-200", usersBrowserOpen ? "opacity-70 scale-95" : "")}>
+        <ResponsiveDialogContent className={cn("max-w-2xl max-h-[80vh] overflow-y-auto transition-[opacity,scale] duration-200", usersBrowserOpen || profileReportsOpen ? "opacity-70 scale-95" : "")}>
           <ResponsiveDialogHeader>
             <ResponsiveDialogTitle>ともマイ Admin Panel</ResponsiveDialogTitle>
             <ResponsiveDialogDescription>
@@ -281,6 +285,17 @@ export function AdminDialog({ open, onOpenChange }: AdminDialogProps) {
                 onClick={() => setUsersBrowserOpen(true)}
               >
                 Browse All Users
+              </Button>
+            </div>
+
+            <div className="grid gap-2">
+              <Label>{profileReportsT("sectionLabel")}</Label>
+              <Button
+                id="reviewProfileReports"
+                variant="outline"
+                onClick={() => setProfileReportsOpen(true)}
+              >
+                {profileReportsT("open")}
               </Button>
             </div>
 
@@ -395,6 +410,12 @@ export function AdminDialog({ open, onOpenChange }: AdminDialogProps) {
       <UsersBrowserDialog
         open={usersBrowserOpen}
         onOpenChange={setUsersBrowserOpen}
+        adminToken={adminToken}
+      />
+
+      <ProfileReportsDialog
+        open={profileReportsOpen}
+        onOpenChange={setProfileReportsOpen}
         adminToken={adminToken}
       />
     </>

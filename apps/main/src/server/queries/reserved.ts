@@ -161,6 +161,7 @@ export function getReservedPublicUser(username: string) {
     id: profile.userId,
     name: profile.displayName,
     publishProfile: true,
+    profileDescription: null,
     profileMainRegion: profile.profileMainRegion,
     profileShowAllScores: false,
     profileShowScoreDetails: false,

@@ -1,7 +1,6 @@
 "use client";
 
-import { Button } from "@tomomai/ui";
-import { Label } from "@tomomai/ui";
+import { Button, Label } from "@tomomai/ui";
 import {
   Select,
   SelectContent,
@@ -19,6 +18,7 @@ import {
   useSettingsReset,
   useSettingsSave,
 } from "@/components/settings/primitives";
+import { ProfilePrivacyFields } from "@/components/profile-privacy-fields";
 import { getEnabledRegions } from "@/lib/enabled-regions";
 import { trpc } from "@/lib/trpc-client";
 import { ProfilePrivacySettings, Region } from "@/lib/types";
@@ -26,6 +26,7 @@ import { Copy, ExternalLink, Globe } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
+
 
 export function PrivacySettings() {
   const t = useTranslations();
@@ -120,12 +121,6 @@ function PrivacyFields() {
     window.open(getProfileUrl(), "_blank");
   };
 
-  const updatePrivacySetting = (key: keyof ProfilePrivacySettings, value: boolean) => {
-    setSelectedPrivacySettings((prev) => ({
-      ...(prev ?? effectivePrivacySettings),
-      [key]: value,
-    }));
-  };
 
   const isLoadingSettings = profileSettingsLoading;
 
@@ -146,6 +141,7 @@ function PrivacyFields() {
           />
         }
       />
+
 
       {effectivePublishProfile && (
         <div className="grid gap-4 pl-4 border-l-2 border-muted">
@@ -179,33 +175,12 @@ function PrivacyFields() {
 
           <div className="grid gap-3">
             <Label>{t("settings.profile.privacy.label")}</Label>
-            <div className="grid gap-3">
-              {(
-                [
-                  ["profileShowAllScores", "showAllScores"],
-                  ["profileShowScoreDetails", "showScoreDetails"],
-                  ["profileShowPlates", "showPlates"],
-                  ["profileShowPlayCounts", "showPlayCounts"],
-                  ["profileShowEvents", "showEvents"],
-                  ["profileShowInSearch", "showInSearch"],
-                ] as const
-              ).map(([key, tKey]) => (
-                <SettingsField
-                  key={key}
-                  layout="inline"
-                  label={t(`settings.profile.privacy.${tKey}.label`)}
-                  description={t(`settings.profile.privacy.${tKey}.description`)}
-                  labelClassName="text-sm font-normal"
-                  action={
-                    <Switch
-                      checked={effectivePrivacySettings[key]}
-                      onCheckedChange={(checked) => updatePrivacySetting(key, checked)}
-                      disabled={isLoadingSettings}
-                    />
-                  }
-                />
-              ))}
-            </div>
+            <ProfilePrivacyFields
+              value={effectivePrivacySettings}
+              onChange={setSelectedPrivacySettings}
+              disabled={isLoadingSettings}
+              idPrefix="settings-profile-privacy"
+            />
           </div>
 
           {username && (

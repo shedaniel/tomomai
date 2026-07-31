@@ -8,7 +8,8 @@ import { z } from 'zod';
 import { getEnabledRegions, isCNExclusive } from '@/lib/enabled-regions';
 import { resolvePublicUserByUsername } from '@/server/queries/public-access';
 import { fetchProfileSettings } from '@/server/queries/profile';
-import { revalidatePublicProfile } from '@/lib/profile-cache';
+import { revalidatePublicProfile, revalidatePublicProfileForUser } from '@/lib/profile-cache';
+import { profileDescriptionInputSchema } from '@/lib/profile-description';
 
 const regionSchema = z.enum(getEnabledRegions());
 
@@ -59,6 +60,21 @@ export const profileRouter = router({
         });
       }
       return settings;
+    }),
+
+  updateProfileDescription: protectedProcedure
+    .input(profileDescriptionInputSchema)
+    .mutation(async ({ ctx, input }) => {
+      await db
+        .update(user)
+        .set({
+          profileDescription: input.profileDescription,
+          updatedAt: new Date(),
+        })
+        .where(eq(user.id, ctx.session.user.id));
+
+      await revalidatePublicProfileForUser(ctx.session.user.id);
+      return { success: true };
     }),
 
   updatePublishProfile: protectedProcedure

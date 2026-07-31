@@ -1,6 +1,6 @@
 "use client";
 
-import { Region, SnapshotWithSongs } from "@/lib/types";
+import { ProfilePrivacySettings, Region, SnapshotWithSongs } from "@/lib/types";
 import { Sidebar, SidebarItem } from "@tomomai/ui";
 import { BarChart, Clock, Code, Database, Heart, Image as ImageIcon, Loader2, Map, Music, TrendingUp, User, Images } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -24,8 +24,8 @@ import { useMediaQuery } from "@/hooks/use-media-query";
 import dynamic from "next/dynamic";
 
 // Tab cards lazy-loaded — only the selected tab's chunk is fetched.
-// SongsCard + InfoCard stay eager because Songs is the default landing tab
-// and InfoCard is small and frequently shown.
+// SongsCard + InfoCard stay eager because Info is the default landing tab
+// and Songs remains a primary destination.
 // Each dynamic() shares the card's own skeleton as its `loading`. That does
 // two things: (1) gives Next 16's React.lazy a LOCAL Suspense boundary so the
 // suspension doesn't bubble to the fallback-less <Suspense> wrapping
@@ -41,18 +41,26 @@ const RecentSongsCard = dynamic(() => import("./recent-songs-card").then(m => m.
 const DeveloperCard = dynamic(() => import("./developer-card").then(m => m.DeveloperCard), { loading: () => <DeveloperCardSkeleton /> });
 const AlbumCard = dynamic(() => import("./album-card").then(m => m.AlbumCard), { loading: () => <AlbumCardSkeleton /> });
 
+const DEFAULT_PRIVACY_SETTINGS: ProfilePrivacySettings = {
+  profileShowAllScores: true,
+  profileShowScoreDetails: true,
+  profileShowPlates: true,
+  profileShowPlayCounts: true,
+  profileShowEvents: true,
+  profileShowInSearch: true,
+};
+
 interface DataContentProps {
   region: Region;
   selectedSnapshotData: SnapshotWithSongs | null;
   isLoading: boolean;
-  privacySettings?: {
-    showPlayCounts?: boolean;
-    showPlates?: boolean;
-    showEvents?: boolean;
-    showAllScores?: boolean;
-    showScoreDetails?: boolean;
-  };
+  privacySettings?: ProfilePrivacySettings;
   visitableProfileAt: string | null;
+  profileDescription?: string | null;
+  profileUsername?: string | null;
+  profileUserId?: string | null;
+  publishProfile?: boolean;
+  isOwner?: boolean;
   initialTab?: string;
   visitedBySelf: boolean;
   flags: Flags;
@@ -61,14 +69,13 @@ interface DataContentProps {
 export function DataContent({
   selectedSnapshotData,
   isLoading,
-  privacySettings = {
-    showPlayCounts: true,
-    showPlates: true,
-    showEvents: true,
-    showAllScores: true,
-    showScoreDetails: true,
-  },
+  privacySettings = DEFAULT_PRIVACY_SETTINGS,
   visitableProfileAt,
+  profileDescription,
+  profileUsername,
+  profileUserId,
+  publishProfile,
+  isOwner = false,
   initialTab,
   visitedBySelf,
   region,
@@ -77,6 +84,27 @@ export function DataContent({
   const t = useTranslations();
   const searchParams = useSearchParams();
   const isDesktop = useMediaQuery("(min-width: 768px)", { initializeWithValue: false });
+  const [localPrivacySettings, setLocalPrivacySettings] = useState(privacySettings);
+  const [localPublishProfile, setLocalPublishProfile] = useState(publishProfile ?? !!visitableProfileAt);
+  const [localProfileDescription, setLocalProfileDescription] = useState(profileDescription ?? null);
+  const [descriptionDraft, setDescriptionDraft] = useState(profileDescription ?? "");
+  const [isDescriptionEditing, setIsDescriptionEditing] = useState(false);
+
+  useEffect(() => {
+    setLocalPrivacySettings(privacySettings);
+  }, [privacySettings]);
+
+  useEffect(() => {
+    setLocalPublishProfile(publishProfile ?? !!visitableProfileAt);
+  }, [publishProfile, visitableProfileAt]);
+
+  useEffect(() => {
+    setLocalProfileDescription(profileDescription ?? null);
+    if (!isDescriptionEditing) setDescriptionDraft(profileDescription ?? "");
+  }, [profileDescription, isDescriptionEditing]);
+
+  const effectiveProfileUsername = profileUsername ?? visitableProfileAt;
+  const effectiveVisitableProfileAt = localPublishProfile ? effectiveProfileUsername : null;
 
   // Valid tab values
   const allPossibleTabs = ["info", "stats", "songs", "recent", "recommendations", "map", "exportImage", "history", "developer", "albums"];
@@ -95,7 +123,7 @@ export function DataContent({
     }
 
     // Default fallback
-    return "songs";
+    return "info";
   };
 
   const [selectedTab, setSelectedTab] = useState(getInitialTab);
@@ -106,7 +134,7 @@ export function DataContent({
   const updateTabUrl = (value: string) => {
     if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
-    if (value === "songs") {
+    if (value === "info") {
       params.delete('tab');
     } else {
       params.set('tab', value);
@@ -134,7 +162,7 @@ export function DataContent({
       name: t('dataContent.tabs.stats'),
       value: "stats",
       icon: BarChart,
-      show: visitedBySelf || !!privacySettings.showAllScores,
+      show: visitedBySelf || !!localPrivacySettings.profileShowAllScores,
     },
     {
       name: t('dataContent.tabs.songs'),
@@ -146,7 +174,7 @@ export function DataContent({
       name: t('dataContent.tabs.recentPlays'),
       value: "recent",
       icon: Clock,
-      show: visitedBySelf || !!privacySettings.showScoreDetails,
+      show: visitedBySelf || !!localPrivacySettings.profileShowScoreDetails,
     },
     {
       name: t('dataContent.tabs.recommendations'),
@@ -170,7 +198,7 @@ export function DataContent({
       name: t('dataContent.tabs.map'),
       value: "map",
       icon: Map,
-      show: privacySettings.showEvents && flags.eventsCard,
+      show: localPrivacySettings.profileShowEvents && flags.eventsCard,
     },
     {
       name: t('dataContent.tabs.exportImage'),
@@ -189,11 +217,11 @@ export function DataContent({
   const visibleTabs = allTabs.filter(tab => tab.show);
   const validTabs = visibleTabs.map(tab => tab.value);
 
-  // Ensure selected tab is valid/visible, fallback to songs if not
+  // Ensure selected tab is valid/visible, fallback to info if not
   useEffect(() => {
     if (selectedSnapshotData && !validTabs.includes(selectedTab)) {
-      setSelectedTab("songs");
-      updateTabUrl("songs");
+      setSelectedTab("info");
+      updateTabUrl("info");
     }
   }, [selectedTab, validTabs, selectedSnapshotData]);
 
@@ -236,11 +264,24 @@ export function DataContent({
             {selectedTab === "info" && (
               <InfoCard
                 selectedSnapshotData={selectedSnapshotData}
-                showPlayCounts={privacySettings.showPlayCounts}
-                visitableProfileAt={visitableProfileAt}
+                showPlayCounts={localPrivacySettings.profileShowPlayCounts}
+                visitableProfileAt={effectiveVisitableProfileAt}
+                profileUsername={effectiveProfileUsername}
+                profileDescription={localProfileDescription}
+                profileUserId={profileUserId}
+                isOwner={isOwner}
+                privacySettings={localPrivacySettings}
+                publishProfile={localPublishProfile}
+                descriptionDraft={descriptionDraft}
+                isDescriptionEditing={isDescriptionEditing}
+                onDescriptionDraftChange={setDescriptionDraft}
+                onDescriptionEditingChange={setIsDescriptionEditing}
+                onProfileDescriptionChange={setLocalProfileDescription}
+                onPrivacySettingsChange={setLocalPrivacySettings}
+                onPublishProfileChange={setLocalPublishProfile}
               />
             )}
-            {selectedTab === "stats" && (visitedBySelf || !!privacySettings.showAllScores) && (
+            {selectedTab === "stats" && (visitedBySelf || !!localPrivacySettings.profileShowAllScores) && (
               <StatsCard
                 region={region}
                 selectedSnapshotData={selectedSnapshotData}
@@ -250,7 +291,7 @@ export function DataContent({
             {selectedTab === "songs" && (
               <SongsCard selectedSnapshotData={selectedSnapshotData} flags={flags} />
             )}
-            {selectedTab === "recent" && (visitedBySelf || !!privacySettings.showScoreDetails) && (
+            {selectedTab === "recent" && (visitedBySelf || !!localPrivacySettings.profileShowScoreDetails) && (
               <RecentSongsCard
                 region={region}
                 beforeDate={selectedSnapshotData?.snapshot.fetchedAt}
@@ -263,15 +304,15 @@ export function DataContent({
             {selectedTab === "history" && visitedBySelf && flags.historyCard && (
               <HistoryCard region={region} />
             )}
-            {selectedTab === "map" && privacySettings.showEvents && (
+            {selectedTab === "map" && localPrivacySettings.profileShowEvents && (
               <EventsCard selectedSnapshotData={selectedSnapshotData} />
             )}
             {selectedTab === "exportImage" && (
               <ExportImageCard
                 selectedSnapshotData={selectedSnapshotData}
                 region={region}
-                showLastCredit={visitedBySelf || !!privacySettings.showScoreDetails}
-                username={visitableProfileAt ?? undefined}
+                showLastCredit={visitedBySelf || !!localPrivacySettings.profileShowScoreDetails}
+                username={effectiveVisitableProfileAt ?? undefined}
                 publicSnapshotId={visitedBySelf ? undefined : selectedSnapshotData.snapshot.id}
               />
             )}

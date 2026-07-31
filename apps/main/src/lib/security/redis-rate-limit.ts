@@ -42,6 +42,15 @@ export const authLimiter = new RedisRateLimiter({
   logger,
 });
 
+/** Profile reports, capped per reporter account over a rolling day. */
+export const profileReportLimiter = new RedisRateLimiter({
+  name: "profile-report",
+  windowSeconds: 86400,
+  max: 5,
+  failClosed: true,
+  logger,
+});
+
 /** Captcha challenge creation */
 export const captchaChallengeLimiter = new RedisRateLimiter({
   name: "captcha-challenge",

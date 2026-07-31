@@ -13,6 +13,7 @@ export async function resolvePublicUserByUsername(username: string) {
       id: user.id,
       name: user.name,
       publishProfile: user.publishProfile,
+      profileDescription: user.profileDescription,
       profileMainRegion: user.profileMainRegion,
       profileShowAllScores: user.profileShowAllScores,
       profileShowScoreDetails: user.profileShowScoreDetails,

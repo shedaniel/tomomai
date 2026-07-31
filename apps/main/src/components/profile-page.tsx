@@ -56,6 +56,7 @@ interface ProfilePageProps {
   username: string;
   initialTab?: string;
   flags: Flags;
+  isOwner: boolean;
 }
 
 export function ProfilePage({
@@ -65,6 +66,7 @@ export function ProfilePage({
   username,
   initialTab,
   flags,
+  isOwner,
 }: ProfilePageProps) {
 
   // Convert the snapshot data to the format expected by DataContent
@@ -103,9 +105,21 @@ export function ProfilePage({
           <DataContent
             region={region}
             selectedSnapshotData={snapshotWithSongs}
+            privacySettings={{
+              profileShowAllScores: snapshotData.privacySettings.showAllScores,
+              profileShowScoreDetails: snapshotData.privacySettings.showScoreDetails,
+              profileShowPlates: snapshotData.privacySettings.showPlates,
+              profileShowPlayCounts: snapshotData.privacySettings.showPlayCounts,
+              profileShowEvents: snapshotData.privacySettings.showEvents,
+              profileShowInSearch: profileData.profileShowInSearch,
+            }}
             isLoading={false}
-            privacySettings={snapshotData.privacySettings}
             visitableProfileAt={username}
+            profileDescription={profileData.profileDescription}
+            profileUsername={username}
+            profileUserId={profileData.id}
+            publishProfile={profileData.publishProfile}
+            isOwner={isOwner}
             initialTab={initialTab}
             visitedBySelf={false}
             flags={flags}
