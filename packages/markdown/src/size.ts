@@ -3,9 +3,7 @@ import type { MarkdownLimits, MarkdownSize } from "./types";
 export function measureMarkdown(value: string): MarkdownSize {
   return {
     characters: Array.from(value).length,
-    utf8Bytes: typeof window === "undefined"
-      ? Buffer.byteLength(value, "utf8")
-      : new TextEncoder().encode(value).byteLength,
+    utf8Bytes: new TextEncoder().encode(value).byteLength,
   };
 }
 

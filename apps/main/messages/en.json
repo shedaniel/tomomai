@@ -1378,6 +1378,8 @@
         "mediaUrlPlaceholder": "https://www.youtube.com/watch?v=...",
         "unsupportedMediaUrl": "Enter a supported YouTube or bilibili HTTPS URL.",
         "insertMedia": "Insert video",
+        "loadVideo": "Load video",
+        "videoRegionLabel": "{provider} video",
         "cancel": "Cancel",
         "sizeStatus": "{characters} / {maxCharacters} characters · {utf8Bytes} / {maxUtf8Bytes} bytes",
         "characterLimitExceeded": "Description cannot exceed {maxCharacters} characters.",
@@ -1445,6 +1447,7 @@
       "target": "Target: {username}",
       "submittedAt": "Submitted {date}",
       "resolvedAt": "Resolved {date}",
+      "resolvedBy": "Resolved by {moderator}",
       "resolutionNote": "Resolution note: {note}",
       "details": "Details: {details}",
       "status": {

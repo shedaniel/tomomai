@@ -1369,6 +1369,8 @@
         "mediaUrlPlaceholder": "https://www.youtube.com/watch?v=...",
         "unsupportedMediaUrl": "対応しているYouTubeまたはbilibiliのHTTPS URLを入力してください。",
         "insertMedia": "動画を挿入",
+        "loadVideo": "動画を読み込む",
+        "videoRegionLabel": "{provider} の動画",
         "cancel": "キャンセル",
         "sizeStatus": "{characters} / {maxCharacters}文字 · {utf8Bytes} / {maxUtf8Bytes}バイト",
         "characterLimitExceeded": "紹介は{maxCharacters}文字以内で入力してください。",
@@ -1436,6 +1438,7 @@
       "target": "対象：{username}",
       "submittedAt": "送信日時：{date}",
       "resolvedAt": "解決日時：{date}",
+      "resolvedBy": "対応者：{moderator}",
       "resolutionNote": "対応メモ：{note}",
       "details": "詳細：{details}",
       "status": {

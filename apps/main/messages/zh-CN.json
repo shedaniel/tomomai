@@ -1369,6 +1369,8 @@
         "mediaUrlPlaceholder": "https://www.youtube.com/watch?v=...",
         "unsupportedMediaUrl": "请输入受支持的 YouTube 或 bilibili HTTPS 链接。",
         "insertMedia": "插入视频",
+        "loadVideo": "加载视频",
+        "videoRegionLabel": "{provider} 视频",
         "cancel": "取消",
         "sizeStatus": "{characters} / {maxCharacters} 个字符 · {utf8Bytes} / {maxUtf8Bytes} 字节",
         "characterLimitExceeded": "简介不能超过 {maxCharacters} 个字符。",
@@ -1436,6 +1438,7 @@
       "target": "目标用户：{username}",
       "submittedAt": "提交于 {date}",
       "resolvedAt": "处理于 {date}",
+      "resolvedBy": "处理人：{moderator}",
       "resolutionNote": "处理备注：{note}",
       "details": "详细说明：{details}",
       "status": {

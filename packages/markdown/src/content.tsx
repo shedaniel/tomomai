@@ -73,8 +73,11 @@ export function MarkdownContent({
   policy: MarkdownPolicy;
   extensions?: readonly MarkdownExtension[];
 }) {
-  const Paragraph = ({ children, ...props }: ComponentPropsWithoutRef<"p"> & { "data-standalone-url"?: string }) => {
-    const standaloneUrl = props["data-standalone-url"];
+  const Paragraph = ({
+    children,
+    "data-standalone-url": standaloneUrl,
+    ...props
+  }: ComponentPropsWithoutRef<"p"> & { "data-standalone-url"?: string }) => {
     if (standaloneUrl) {
       const parsed = parseHttpsUrl(standaloneUrl, policy);
       if (parsed) {

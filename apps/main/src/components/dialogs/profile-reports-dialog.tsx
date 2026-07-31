@@ -352,6 +352,14 @@ export function ProfileReportsDialog({
                                   })}
                                 </p>
                               )}
+                              {(report.resolvedByUsername ?? report.resolvedByUserId) && (
+                                <p className="text-xs text-muted-foreground">
+                                  {t("resolvedBy", {
+                                    moderator:
+                                      report.resolvedByUsername ?? report.resolvedByUserId!,
+                                  })}
+                                </p>
+                              )}
                               {report.resolutionNote && (
                                 <p className="text-xs text-muted-foreground">
                                   {t("resolutionNote", {

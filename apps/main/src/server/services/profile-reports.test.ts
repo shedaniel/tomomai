@@ -99,10 +99,10 @@ describe("submitProfileReport", () => {
         dependencies,
       ),
     ).rejects.toMatchObject({ code: "NOT_FOUND" });
-    expect(dependencies.checkRateLimit).not.toHaveBeenCalled();
+    expect(dependencies.checkRateLimit).toHaveBeenCalledWith("reporter-user");
   });
 
-  it("rejects self-reporting before consuming rate limit", async () => {
+  it("rejects self-reporting", async () => {
     const dependencies = createSubmitDependencies({
       findTarget: vi.fn().mockResolvedValue({
         id: "reporter-user",
@@ -118,7 +118,7 @@ describe("submitProfileReport", () => {
         dependencies,
       ),
     ).rejects.toMatchObject({ code: "BAD_REQUEST" });
-    expect(dependencies.checkRateLimit).not.toHaveBeenCalled();
+    expect(dependencies.insertReport).not.toHaveBeenCalled();
   });
 
   it("converts the pending-report unique conflict", async () => {
@@ -127,6 +127,30 @@ describe("submitProfileReport", () => {
         code: "23505",
         constraint_name: "profile_reports_pending_reporter_target_idx",
       }),
+    });
+
+    await expect(
+      submitProfileReport(
+        "reporter-user",
+        { targetUserId: "target-user", reason: "spam" },
+        dependencies,
+      ),
+    ).rejects.toMatchObject({
+      code: "CONFLICT",
+      message: DUPLICATE_PROFILE_REPORT_MESSAGE,
+    });
+  });
+
+  it("converts the conflict when the driver error is wrapped by Drizzle", async () => {
+    const dependencies = createSubmitDependencies({
+      insertReport: vi.fn().mockRejectedValue(
+        Object.assign(new Error("Failed query"), {
+          cause: {
+            code: "23505",
+            constraint: "profile_reports_pending_reporter_target_idx",
+          },
+        }),
+      ),
     });
 
     await expect(
@@ -178,6 +202,7 @@ describe("admin profile report transitions", () => {
     await expect(
       dismissProfileReport(
         { reportId: "63b7adf0-51a8-46ad-b2f6-327770e94086", resolutionNote: " reviewed " },
+        "admin-user",
         { dismissPendingReport },
       ),
     ).resolves.toEqual({
@@ -185,12 +210,13 @@ describe("admin profile report transitions", () => {
       status: "dismissed",
     });
     expect(dismissPendingReport).toHaveBeenCalledWith(
-      expect.objectContaining({ resolutionNote: " reviewed " }),
+      expect.objectContaining({ resolutionNote: " reviewed ", resolvedByUserId: "admin-user" }),
     );
 
     await expect(
       dismissProfileReport(
         { reportId: "63b7adf0-51a8-46ad-b2f6-327770e94086" },
+        "admin-user",
         { dismissPendingReport: vi.fn().mockResolvedValue(false) },
       ),
     ).rejects.toMatchObject({ code: "CONFLICT", message: STALE_PROFILE_REPORT_MESSAGE });
@@ -217,6 +243,7 @@ describe("admin profile report transitions", () => {
             targetUserId: string;
             resolutionNote: string | null;
             resolvedAt: Date;
+            resolvedByUserId: string | null;
           }): Promise<void>;
         }) => Promise<T>,
       ) {
@@ -246,6 +273,7 @@ describe("admin profile report transitions", () => {
     await expect(
       removeReportedProfileDescription(
         { reportId: "selected", resolutionNote: "policy violation" },
+        "admin-user",
         dependencies,
       ),
     ).resolves.toEqual({ targetUserId: "target", targetUsername: "target-name" });
@@ -258,7 +286,7 @@ describe("admin profile report transitions", () => {
     ]);
 
     await expect(
-      removeReportedProfileDescription({ reportId: "selected" }, dependencies),
+      removeReportedProfileDescription({ reportId: "selected" }, "admin-user", dependencies),
     ).rejects.toMatchObject({ code: "CONFLICT", message: STALE_PROFILE_REPORT_MESSAGE });
   });
 });

@@ -152,6 +152,9 @@ export const profileReports = pgTable("profile_reports", {
   status: profileReportStatusEnum("status").notNull().default("pending"),
   createdAt: timestamp("createdAt", { precision: 0 }).notNull().defaultNow(),
   resolvedAt: timestamp("resolvedAt", { precision: 0 }),
+  // Moderator who resolved the report. Kept nullable and set-null on delete so
+  // the audit row survives the moderator's account being removed.
+  resolvedByUserId: text("resolvedByUserId").references(() => user.id, { onDelete: "set null" }),
   resolutionNote: varchar("resolutionNote", { length: 1000 }),
 }, (table) => [
   index("profile_reports_status_createdat_idx").on(table.status, table.createdAt),

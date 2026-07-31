@@ -1006,6 +1006,8 @@
         "mediaUrlPlaceholder": "https://www.youtube.com/watch?v=...",
         "unsupportedMediaUrl": "지원되는 YouTube 또는 bilibili HTTPS URL을 입력하세요.",
         "insertMedia": "동영상 삽입",
+        "loadVideo": "동영상 불러오기",
+        "videoRegionLabel": "{provider} 동영상",
         "cancel": "취소",
         "sizeStatus": "{characters} / {maxCharacters}자 · {utf8Bytes} / {maxUtf8Bytes}바이트",
         "characterLimitExceeded": "소개는 {maxCharacters}자를 초과할 수 없습니다.",
@@ -1073,6 +1075,7 @@
       "target": "대상: {username}",
       "submittedAt": "제출: {date}",
       "resolvedAt": "처리: {date}",
+      "resolvedBy": "처리자: {moderator}",
       "resolutionNote": "처리 메모: {note}",
       "details": "세부 정보: {details}",
       "status": {

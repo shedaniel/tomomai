@@ -1,5 +1,5 @@
 {
-  "id": "6cad9f95-df8f-4ef3-8e72-d010cf34fb08",
+  "id": "6b8739ff-96d1-450a-835f-9d27e78c2d9f",
   "prevId": "cf05c91e-614d-4dff-95ef-bd763a0cc132",
   "version": "7",
   "dialect": "postgresql",
@@ -1615,6 +1615,12 @@
           "primaryKey": false,
           "notNull": false
         },
+        "resolvedByUserId": {
+          "name": "resolvedByUserId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "resolutionNote": {
           "name": "resolutionNote",
           "type": "varchar(1000)",
@@ -1707,6 +1713,19 @@
             "id"
           ],
           "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "profile_reports_resolvedByUserId_user_id_fk": {
+          "name": "profile_reports_resolvedByUserId_user_id_fk",
+          "tableFrom": "profile_reports",
+          "tableTo": "user",
+          "columnsFrom": [
+            "resolvedByUserId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
           "onUpdate": "no action"
         }
       },

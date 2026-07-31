@@ -20,24 +20,34 @@ function configuredOrigin(value: string | undefined): string | null {
   }
 }
 
+// Third-party origins the app talks to unconditionally. Everything else is
+// derived from env so hosts are never duplicated between config and deploy.
+const CLOUDFLARE_TURNSTILE_ORIGIN = 'https://challenges.cloudflare.com';
+const OPENFREEMAP_ORIGIN = 'https://tiles.openfreemap.org';
+
+// headers() runs at build time, so these must be set in the build environment,
+// not only at runtime — a missing value silently drops the origin from the CSP.
+function assetOrigin(name: string): string | null {
+  const origin = configuredOrigin(process.env[name]);
+  if (!origin && process.env.NODE_ENV === 'production') {
+    console.warn(`[csp] ${name} is unset at build time; its origin will be omitted from the CSP`);
+  }
+  return origin;
+}
+
 function buildContentSecurityPolicy(): string {
   const isDevelopment = process.env.NODE_ENV !== 'production';
-  const configuredImageOrigins = [
-    configuredOrigin(process.env.NEXT_PUBLIC_R2_URL),
-    configuredOrigin(process.env.NEXT_PUBLIC_R2_URL_CN),
-    configuredOrigin(process.env.RENDER_PUBLIC_URL),
-  ].filter((origin): origin is string => origin !== null);
+  const renderOrigin = assetOrigin('RENDER_PUBLIC_URL');
   const imageOrigins = [...new Set([
-    'https://cdn.tomomai.lol',
-    'https://cdn.cn.tomomai.lol',
-    'https://tiles.openfreemap.org',
-    ...configuredImageOrigins,
-  ])];
-  const renderOrigin = configuredOrigin(process.env.RENDER_PUBLIC_URL);
+    assetOrigin('NEXT_PUBLIC_R2_URL'),
+    assetOrigin('NEXT_PUBLIC_R2_URL_CN'),
+    renderOrigin,
+    OPENFREEMAP_ORIGIN,
+  ].filter((origin): origin is string => origin !== null))];
   const connectOrigins = [
     "'self'",
-    'https://challenges.cloudflare.com',
-    'https://tiles.openfreemap.org',
+    CLOUDFLARE_TURNSTILE_ORIGIN,
+    OPENFREEMAP_ORIGIN,
     ...(renderOrigin ? [renderOrigin] : []),
     ...(isDevelopment
       ? ['http://localhost:*', 'https://localhost:*', 'ws://localhost:*', 'wss://localhost:*']
@@ -46,13 +56,13 @@ function buildContentSecurityPolicy(): string {
 
   return [
     "default-src 'self'",
-    `script-src 'self' 'unsafe-inline'${isDevelopment ? " 'unsafe-eval'" : ''} https://challenges.cloudflare.com https://unpkg.com`,
+    `script-src 'self' 'unsafe-inline'${isDevelopment ? " 'unsafe-eval'" : ''} ${CLOUDFLARE_TURNSTILE_ORIGIN}`,
     "style-src 'self' 'unsafe-inline'",
     `img-src 'self' data: blob: ${imageOrigins.join(' ')}`,
     "font-src 'self' data:",
     `connect-src ${connectOrigins.join(' ')}`,
     "worker-src 'self' blob:",
-    'frame-src https://challenges.cloudflare.com https://www.youtube-nocookie.com https://player.bilibili.com',
+    `frame-src ${CLOUDFLARE_TURNSTILE_ORIGIN} https://www.youtube-nocookie.com https://player.bilibili.com`,
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",

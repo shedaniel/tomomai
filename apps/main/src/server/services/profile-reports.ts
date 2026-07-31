@@ -55,15 +55,24 @@ export interface SubmitProfileReportDependencies {
   }): Promise<{ id: string }>;
 }
 
-function isPendingReportConflict(error: unknown): boolean {
+// Drizzle wraps driver errors in DrizzleQueryError, so the pg fields we match on
+// can sit any number of `cause` levels below the error we actually catch.
+function isPendingReportConflict(error: unknown, depth = 4): boolean {
   if (!error || typeof error !== "object") return false;
 
-  const databaseError = error as { code?: unknown; constraint_name?: unknown; constraint?: unknown };
+  const databaseError = error as {
+    code?: unknown;
+    constraint_name?: unknown;
+    constraint?: unknown;
+    cause?: unknown;
+  };
   const constraint = databaseError.constraint_name ?? databaseError.constraint;
-  return (
+  if (
     databaseError.code === "23505" &&
     constraint === "profile_reports_pending_reporter_target_idx"
-  );
+  ) return true;
+
+  return depth > 0 && isPendingReportConflict(databaseError.cause, depth - 1);
 }
 
 export async function submitProfileReport(
@@ -71,6 +80,15 @@ export async function submitProfileReport(
   input: z.infer<typeof profileReportInputSchema>,
   dependencies: SubmitProfileReportDependencies,
 ): Promise<{ reportId: string; status: "pending" }> {
+  // Checked before the lookup so probing for user ids costs the reporter quota.
+  const rateLimit = await dependencies.checkRateLimit(reporterUserId);
+  if (rateLimit.limited) {
+    throw new TRPCError({
+      code: "TOO_MANY_REQUESTS",
+      message: PROFILE_REPORT_RATE_LIMIT_MESSAGE,
+    });
+  }
+
   const target = await dependencies.findTarget(input.targetUserId);
   if (!target?.publishProfile || !target.profileDescription) {
     throw new TRPCError({
@@ -83,14 +101,6 @@ export async function submitProfileReport(
     throw new TRPCError({
       code: "BAD_REQUEST",
       message: "You cannot report your own profile",
-    });
-  }
-
-  const rateLimit = await dependencies.checkRateLimit(reporterUserId);
-  if (rateLimit.limited) {
-    throw new TRPCError({
-      code: "TOO_MANY_REQUESTS",
-      message: PROFILE_REPORT_RATE_LIMIT_MESSAGE,
     });
   }
 
@@ -119,17 +129,20 @@ export interface DismissProfileReportDependencies {
     reportId: string;
     resolutionNote: string | null;
     resolvedAt: Date;
+    resolvedByUserId: string | null;
   }): Promise<boolean>;
 }
 
 export async function dismissProfileReport(
   input: z.infer<typeof resolveProfileReportInputSchema>,
+  resolvedByUserId: string | null,
   dependencies: DismissProfileReportDependencies,
 ): Promise<{ reportId: string; status: "dismissed" }> {
   const dismissed = await dependencies.dismissPendingReport({
     reportId: input.reportId,
     resolutionNote: input.resolutionNote || null,
     resolvedAt: new Date(),
+    resolvedByUserId,
   });
 
   if (!dismissed) {
@@ -149,6 +162,7 @@ export interface ProfileReportRemovalTransaction {
     targetUserId: string;
     resolutionNote: string | null;
     resolvedAt: Date;
+    resolvedByUserId: string | null;
   }): Promise<void>;
 }
 
@@ -160,6 +174,7 @@ export interface RemoveProfileDescriptionDependencies {
 
 export async function removeReportedProfileDescription(
   input: z.infer<typeof resolveProfileReportInputSchema>,
+  resolvedByUserId: string | null,
   dependencies: RemoveProfileDescriptionDependencies,
 ): Promise<{ targetUserId: string; targetUsername: string }> {
   return dependencies.transaction(async (transaction) => {
@@ -174,6 +189,7 @@ export async function removeReportedProfileDescription(
       targetUserId: report.targetUserId,
       resolutionNote: input.resolutionNote || null,
       resolvedAt,
+      resolvedByUserId,
     });
 
     return report;

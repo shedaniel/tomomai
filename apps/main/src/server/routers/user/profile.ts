@@ -9,10 +9,7 @@ import { getEnabledRegions, isCNExclusive } from '@/lib/enabled-regions';
 import { resolvePublicUserByUsername } from '@/server/queries/public-access';
 import { fetchProfileSettings } from '@/server/queries/profile';
 import { revalidatePublicProfile, revalidatePublicProfileForUser } from '@/lib/profile-cache';
-import {
-  profileDescriptionMutationInputSchema,
-  validateProfileDescriptionInput,
-} from '@/lib/profile-description';
+import { profileDescriptionInputSchema } from '@/lib/profile-description';
 
 const regionSchema = z.enum(getEnabledRegions());
 
@@ -66,20 +63,12 @@ export const profileRouter = router({
     }),
 
   updateProfileDescription: protectedProcedure
-    .input(profileDescriptionMutationInputSchema)
+    .input(profileDescriptionInputSchema)
     .mutation(async ({ ctx, input }) => {
-      const parsed = validateProfileDescriptionInput(input);
-      if (!parsed.success) {
-        throw new TRPCError({
-          code: 'BAD_REQUEST',
-          message: parsed.error.issues[0]?.message ?? 'Invalid profile description',
-        });
-      }
-
       await db
         .update(user)
         .set({
-          profileDescription: parsed.data.profileDescription,
+          profileDescription: input.profileDescription,
           updatedAt: new Date(),
         })
         .where(eq(user.id, ctx.session.user.id));

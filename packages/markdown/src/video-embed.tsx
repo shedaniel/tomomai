@@ -4,10 +4,26 @@ import { useState } from "react";
 
 export type VideoEmbedData = { provider: "youtube" | "bilibili"; id: string; embedUrl: string };
 
-export function VideoEmbed({ video }: { video: VideoEmbedData }) {
+export type VideoEmbedLabels = {
+  loadVideo: string;
+  formatRegionLabel(provider: string): string;
+};
+
+export const DEFAULT_VIDEO_EMBED_LABELS: VideoEmbedLabels = {
+  loadVideo: "Load video",
+  formatRegionLabel: (provider) => `${provider} video`,
+};
+
+export function VideoEmbed({
+  video,
+  labels = DEFAULT_VIDEO_EMBED_LABELS,
+}: {
+  video: VideoEmbedData;
+  labels?: VideoEmbedLabels;
+}) {
   const [loaded, setLoaded] = useState(false);
   const provider = video.provider === "youtube" ? "YouTube" : "bilibili";
-  const label = `${provider} video`;
+  const label = labels.formatRegionLabel(provider);
 
   return (
     <section aria-label={label} className="my-4 aspect-video w-full overflow-hidden rounded-lg border border-border bg-muted/40">
@@ -30,7 +46,7 @@ export function VideoEmbed({ video }: { video: VideoEmbedData }) {
             className="rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             onClick={() => setLoaded(true)}
           >
-            Load video
+            {labels.loadVideo}
           </button>
         </div>
       )}

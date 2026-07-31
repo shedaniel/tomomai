@@ -15,6 +15,7 @@ import {
 
 const reporter = alias(user, "profile_report_reporter");
 const target = alias(user, "profile_report_target");
+const resolver = alias(user, "profile_report_resolver");
 
 export const profileReportsRouter = router({
   list: adminProcedure
@@ -37,10 +38,13 @@ export const profileReportsRouter = router({
             reporterUsername: reporter.username,
             targetUsername: target.username,
             currentDescription: target.profileDescription,
+            resolvedByUserId: profileReports.resolvedByUserId,
+            resolvedByUsername: resolver.username,
           })
           .from(profileReports)
           .innerJoin(reporter, eq(profileReports.reporterUserId, reporter.id))
           .innerJoin(target, eq(profileReports.targetUserId, target.id))
+          .leftJoin(resolver, eq(profileReports.resolvedByUserId, resolver.id))
           .where(where)
           .orderBy(desc(profileReports.createdAt))
           .limit(input.limit)
@@ -53,14 +57,15 @@ export const profileReportsRouter = router({
 
   dismiss: adminProcedure
     .input(resolveProfileReportInputSchema)
-    .mutation(async ({ input }) => {
-      return dismissProfileReport(input, {
+    .mutation(async ({ ctx, input }) => {
+      return dismissProfileReport(input, ctx.session?.user.id ?? null, {
         async dismissPendingReport(values) {
           const [dismissed] = await db
             .update(profileReports)
             .set({
               status: "dismissed",
               resolvedAt: values.resolvedAt,
+              resolvedByUserId: values.resolvedByUserId,
               resolutionNote: values.resolutionNote,
             })
             .where(
@@ -77,8 +82,8 @@ export const profileReportsRouter = router({
 
   removeDescription: adminProcedure
     .input(resolveProfileReportInputSchema)
-    .mutation(async ({ input }) => {
-      const result = await removeReportedProfileDescription(input, {
+    .mutation(async ({ ctx, input }) => {
+      const result = await removeReportedProfileDescription(input, ctx.session?.user.id ?? null, {
         transaction(callback) {
           return db.transaction(async (transaction) => {
             return callback({
@@ -116,6 +121,7 @@ export const profileReportsRouter = router({
                   .set({
                     status: "removed",
                     resolvedAt: values.resolvedAt,
+                    resolvedByUserId: values.resolvedByUserId,
                     resolutionNote: values.resolutionNote,
                   })
                   .where(

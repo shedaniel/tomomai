@@ -1369,6 +1369,8 @@
         "mediaUrlPlaceholder": "https://www.youtube.com/watch?v=...",
         "unsupportedMediaUrl": "請輸入支援的 YouTube 或 bilibili HTTPS 網址。",
         "insertMedia": "插入影片",
+        "loadVideo": "載入影片",
+        "videoRegionLabel": "{provider} 影片",
         "cancel": "取消",
         "sizeStatus": "{characters} / {maxCharacters} 個字元 · {utf8Bytes} / {maxUtf8Bytes} 位元組",
         "characterLimitExceeded": "簡介不能超過 {maxCharacters} 個字元。",
@@ -1436,6 +1438,7 @@
       "target": "對象：{username}",
       "submittedAt": "提交於 {date}",
       "resolvedAt": "處理於 {date}",
+      "resolvedBy": "處理人：{moderator}",
       "resolutionNote": "處理備註：{note}",
       "details": "詳細說明：{details}",
       "status": {

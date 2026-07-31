@@ -1,5 +1,5 @@
 import { createElement } from "react";
-import { VideoEmbed, type VideoEmbedData } from "./video-embed";
+import { VideoEmbed, type VideoEmbedData, type VideoEmbedLabels } from "./video-embed";
 import type { MarkdownExtension } from "./types";
 
 const YOUTUBE_ID = /^[A-Za-z0-9_-]{11}$/;
@@ -43,13 +43,22 @@ export function parseSupportedVideoUrl(url: string): VideoEmbedData | null {
   return null;
 }
 
-export const videoEmbedExtension: MarkdownExtension = {
-  id: "video-embed",
-  resolveStandaloneUrl(url) {
-    const video = parseSupportedVideoUrl(url.href);
-    return video ? { key: `${video.provider}:${video.id}`, data: video } : null;
-  },
-  render(resolved) {
-    return createElement(VideoEmbed, { video: resolved.data as VideoEmbedData, key: resolved.key });
-  },
-};
+export function createVideoEmbedExtension(labels?: VideoEmbedLabels): MarkdownExtension {
+  return {
+    id: "video-embed",
+    resolveStandaloneUrl(url) {
+      const video = parseSupportedVideoUrl(url.href);
+      return video ? { key: `${video.provider}:${video.id}`, data: video } : null;
+    },
+    render(resolved) {
+      return createElement(VideoEmbed, {
+        video: resolved.data as VideoEmbedData,
+        labels,
+        key: resolved.key,
+      });
+    },
+  };
+}
+
+/** English-labelled extension, for callers without a translation scope. */
+export const videoEmbedExtension = createVideoEmbedExtension();
