@@ -168,6 +168,24 @@ describe("MarkdownEditor", () => {
     expect(screen.getByTestId("value").textContent).toBe("before\n\nhttps://media.example/video\n\nafter");
   });
 
+  it("inserts the extension's canonical URL instead of the pasted one", () => {
+    const canonicalizing: MarkdownExtension = {
+      id: "test-canonical",
+      resolveStandaloneUrl: (url) =>
+        url.hostname === "media.example"
+          ? { key: url.href, data: url.href, canonicalUrl: "https://short.example/v1" }
+          : null,
+      render: (resolved) => <div>{String(resolved.data)}</div>,
+    };
+    render(<EditorHarness initial="" extensions={[canonicalizing]} />);
+    select(0, 0);
+    fireEvent.click(screen.getByRole("button", { name: "Media" }));
+    const url = screen.getByLabelText("Media URL");
+    fireEvent.change(url, { target: { value: "https://media.example/video?tracking=abcdefghijklmnop" } });
+    fireEvent.submit(url.closest("form")!);
+    expect(screen.getByTestId("value").textContent).toBe("https://short.example/v1");
+  });
+
   it("cancels dialogs without changing source and restores focus and selection", async () => {
     render(<EditorHarness />);
     const textarea = select(1, 5);

@@ -2,7 +2,13 @@
 
 import { useState } from "react";
 
-export type VideoEmbedData = { provider: "youtube" | "bilibili"; id: string; embedUrl: string };
+export type VideoEmbedData = {
+  provider: "youtube" | "bilibili";
+  id: string;
+  embedUrl: string;
+  /** Shortest canonical form of the source URL, for storing in Markdown. */
+  canonicalUrl: string;
+};
 
 export type VideoEmbedLabels = {
   loadVideo: string;
@@ -33,7 +39,10 @@ export function VideoEmbed({
           src={video.embedUrl}
           title={label}
           sandbox="allow-scripts allow-same-origin allow-presentation"
-          referrerPolicy="no-referrer"
+          // Providers validate the embedding origin from the Referer; sending
+          // none makes YouTube fail with error 153. Origin-only still keeps the
+          // profile path private.
+          referrerPolicy="strict-origin-when-cross-origin"
           loading="lazy"
           allow="fullscreen"
           allowFullScreen

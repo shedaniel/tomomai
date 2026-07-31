@@ -31,14 +31,36 @@ describe("trusted Markdown presentation", () => {
 });
 
 describe("video embeds", () => {
+  const YOUTUBE = {
+    provider: "youtube",
+    id: "dQw4w9WgXcQ",
+    embedUrl: "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ",
+    canonicalUrl: "https://youtu.be/dQw4w9WgXcQ",
+  };
+  const BILIBILI = {
+    provider: "bilibili",
+    id: "BV1xx411c7mD",
+    embedUrl: "https://player.bilibili.com/player.html?bvid=BV1xx411c7mD",
+    canonicalUrl: "https://bilibili.com/video/BV1xx411c7mD",
+  };
+
   it.each([
-    ["https://www.youtube.com/watch?v=dQw4w9WgXcQ", "youtube", "dQw4w9WgXcQ", "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ"],
-    ["https://youtube.com/watch?v=dQw4w9WgXcQ", "youtube", "dQw4w9WgXcQ", "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ"],
-    ["https://youtu.be/dQw4w9WgXcQ", "youtube", "dQw4w9WgXcQ", "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ"],
-    ["https://www.bilibili.com/video/BV1xx411c7mD", "bilibili", "BV1xx411c7mD", "https://player.bilibili.com/player.html?bvid=BV1xx411c7mD"],
-    ["https://bilibili.com/video/BV1xx411c7mD", "bilibili", "BV1xx411c7mD", "https://player.bilibili.com/player.html?bvid=BV1xx411c7mD"],
-  ])("accepts approved provider URL %s", (url, provider, id, embedUrl) => {
-    expect(parseSupportedVideoUrl(url)).toEqual({ provider, id, embedUrl });
+    ["https://www.youtube.com/watch?v=dQw4w9WgXcQ", YOUTUBE],
+    ["https://youtube.com/watch?v=dQw4w9WgXcQ", YOUTUBE],
+    ["https://youtu.be/dQw4w9WgXcQ", YOUTUBE],
+    ["https://www.bilibili.com/video/BV1xx411c7mD", BILIBILI],
+    ["https://bilibili.com/video/BV1xx411c7mD", BILIBILI],
+  ])("accepts approved provider URL %s", (url, expected) => {
+    expect(parseSupportedVideoUrl(url)).toEqual(expected);
+  });
+
+  it.each([
+    ["https://www.youtube.com/watch?v=dQw4w9WgXcQ&pp=ugUEEgJqYdIHCQmjCwGHKiGM7w%3D%3D", YOUTUBE],
+    ["https://youtube.com/watch?v=dQw4w9WgXcQ&autoplay=1&t=42", YOUTUBE],
+    ["https://youtu.be/dQw4w9WgXcQ?si=abcdef#t=90", YOUTUBE],
+    ["https://www.bilibili.com/video/BV1xx411c7mD?autoplay=1&spm_id_from=333", BILIBILI],
+  ])("ignores extra params and canonicalizes %s", (url, expected) => {
+    expect(parseSupportedVideoUrl(url)).toEqual(expected);
   });
 
   it.each([
@@ -46,11 +68,19 @@ describe("video embeds", () => {
     "https://youtube.com.attacker.invalid/watch?v=dQw4w9WgXcQ",
     "https://user@youtube.com/watch?v=dQw4w9WgXcQ",
     "https://youtube.com:444/watch?v=dQw4w9WgXcQ",
-    "https://youtube.com/watch?v=dQw4w9WgXcQ&autoplay=1",
+    "https://youtube.com/watch?v=notanid",
+    "https://youtube.com/embed/dQw4w9WgXcQ",
     "https://bilibili.com.attacker.invalid/video/BV1xx411c7mD",
-    "https://www.bilibili.com/video/BV1xx411c7mD?autoplay=1",
+    "https://bilibili.com/video/XX1xx411c7mD",
   ])("rejects unsafe or unsupported provider URL %s", (url) => {
     expect(parseSupportedVideoUrl(url)).toBeNull();
+  });
+
+  it("exposes the canonical short URL to the editor", () => {
+    const url = new URL("https://www.youtube.com/watch?v=dQw4w9WgXcQ&pp=ugUEEgJqYdIHCQmjCwGHKiGM7w%3D%3D");
+    expect(videoEmbedExtension.resolveStandaloneUrl(url)?.canonicalUrl).toBe(
+      "https://youtu.be/dQw4w9WgXcQ",
+    );
   });
 
   it("creates no iframe until Load video is activated", () => {
@@ -65,7 +95,7 @@ describe("video embeds", () => {
     const iframe = container.querySelector("iframe");
     expect(iframe?.getAttribute("src")).toBe(parsed.embedUrl);
     expect(iframe?.getAttribute("sandbox")).toBe("allow-scripts allow-same-origin allow-presentation");
-    expect(iframe?.getAttribute("referrerpolicy")).toBe("no-referrer");
+    expect(iframe?.getAttribute("referrerpolicy")).toBe("strict-origin-when-cross-origin");
     expect(iframe?.getAttribute("loading")).toBe("lazy");
     expect(iframe?.hasAttribute("allowfullscreen")).toBe(true);
   });

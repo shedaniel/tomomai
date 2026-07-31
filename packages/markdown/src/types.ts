@@ -1,8 +1,15 @@
 import type { ReactNode } from "react";
 
+export type ResolvedStandaloneUrl = {
+  key: string;
+  data: unknown;
+  /** Shortest equivalent of the source URL, inserted in place of what was pasted. */
+  canonicalUrl?: string;
+};
+
 export type MarkdownExtension = {
   id: string;
-  resolveStandaloneUrl(url: URL): { key: string; data: unknown } | null;
+  resolveStandaloneUrl(url: URL): ResolvedStandaloneUrl | null;
   render(resolved: { key: string; data: unknown }): ReactNode;
 };
 

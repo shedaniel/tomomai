@@ -30,7 +30,13 @@ import {
 } from "@tomomai/ui";
 import { MarkdownContent } from "./content";
 import { measureMarkdown, validateMarkdownSize } from "./size";
-import type { MarkdownExtension, MarkdownLimits, MarkdownPolicy, MarkdownSize } from "./types";
+import type {
+  MarkdownExtension,
+  MarkdownLimits,
+  MarkdownPolicy,
+  MarkdownSize,
+  ResolvedStandaloneUrl,
+} from "./types";
 
 type Selection = { start: number; end: number };
 type InlineAction = "bold" | "italic" | "strike";
@@ -425,12 +431,18 @@ export function MarkdownEditor({
     event.preventDefault();
     const range = dialogSelection.current;
     const url = parseAbsoluteHttpsUrl(mediaUrl.trim());
-    const supported = url && extensions.some((extension) => extension.resolveStandaloneUrl(url) !== null);
-    if (!range || !url || !supported) {
+    const resolved = url
+      ? extensions.reduce<ResolvedStandaloneUrl | null>(
+          (found, extension) => found ?? extension.resolveStandaloneUrl(url),
+          null,
+        )
+      : null;
+    if (!range || !url || !resolved) {
       setDialogError(labels.unsupportedMediaUrl);
       return;
     }
-    const transform = insertStandaloneParagraph(value, range, url.href);
+    // Store the canonical form so tracking params don't eat the size budget.
+    const transform = insertStandaloneParagraph(value, range, resolved.canonicalUrl ?? url.href);
     const error = limitMessage(transform.value);
     if (error) {
       setDialogError(error);
