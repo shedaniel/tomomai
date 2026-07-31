@@ -3,7 +3,14 @@ import { Agent } from 'undici';
 import { getCachedImageBuffer, cacheImage } from '@/lib/image_cacher';
 import { flushLogger } from '@/lib/logger';
 import { requestLogger } from '@/lib/request-logger';
-import { SAFE_MAIMAI_IMAGE_URLS } from '@/lib/utils';
+import { isSafeMaimaiImageUrl } from '@/lib/utils';
+
+const imageSuccessHeaders = (contentType: string) => ({
+  'Content-Type': contentType,
+  'Cache-Control': 'public, max-age=31536000, immutable',
+  'CDN-Cache-Control': 'public, max-age=31536000',
+  'Vercel-CDN-Cache-Control': 'public, max-age=31536000',
+});
 
 export async function GET(request: NextRequest) {
   const { log, requestId } = requestLogger(request, "image-proxy");
@@ -14,8 +21,8 @@ export async function GET(request: NextRequest) {
     return new NextResponse('Missing url parameter', { status: 400 });
   }
 
-  // Validate that this is a maimaidx domain for security
-  if (!SAFE_MAIMAI_IMAGE_URLS.some(domain => imageUrl.includes(domain))) {
+  // Only fetch exact HTTPS hosts from the cover-image allowlist.
+  if (!isSafeMaimaiImageUrl(imageUrl)) {
     return new NextResponse('Unauthorized domain', { status: 403 });
   }
 
@@ -24,10 +31,7 @@ export async function GET(request: NextRequest) {
     const cachedResult = await getCachedImageBuffer(imageUrl);
     if (cachedResult) {
       return new NextResponse(new Uint8Array(cachedResult.buffer), {
-        headers: {
-          'Content-Type': cachedResult.contentType,
-          'Cache-Control': 'public, max-age=31536000, immutable',
-        },
+        headers: imageSuccessHeaders(cachedResult.contentType),
       });
     }
 
@@ -38,10 +42,7 @@ export async function GET(request: NextRequest) {
     const newCachedResult = await getCachedImageBuffer(imageUrl);
     if (newCachedResult) {
       return new NextResponse(new Uint8Array(newCachedResult.buffer), {
-        headers: {
-          'Content-Type': newCachedResult.contentType,
-          'Cache-Control': 'public, max-age=31536000, immutable',
-        },
+        headers: imageSuccessHeaders(newCachedResult.contentType),
       });
     }
 
@@ -68,10 +69,7 @@ export async function GET(request: NextRequest) {
     const contentType = response.headers.get('content-type') || 'image/png';
 
     return new NextResponse(imageBuffer, {
-      headers: {
-        'Content-Type': contentType,
-        'Cache-Control': 'public, max-age=31536000, immutable',
-      },
+      headers: imageSuccessHeaders(contentType),
     });
 
   } catch (error) {

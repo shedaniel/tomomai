@@ -1,4 +1,9 @@
-import { RedisRateLimiter, clientIp, rateLimit } from "@tomomai/security/rate-limit";
+import {
+  RedisRateLimiter,
+  clientIp,
+  clientIpFromHeaders,
+  rateLimit,
+} from "@tomomai/security/rate-limit";
 import { logger } from "../logger";
 import { TIER_I } from "@/lib/api/tiers";
 
@@ -6,7 +11,7 @@ export type {
   RateLimitOptions,
   RateLimitResult,
 } from "@tomomai/security/rate-limit";
-export { RedisRateLimiter, clientIp, rateLimit };
+export { RedisRateLimiter, clientIp, clientIpFromHeaders, rateLimit };
 
 // --- Shared limiter instances ---
 
@@ -15,6 +20,16 @@ export const apiLimiter = new RedisRateLimiter({
   name: "api",
   windowSeconds: 60,
   max: 180,
+  logger,
+});
+
+/** Localized song detail pages share one per-IP bucket across all slugs. */
+export const songDetailLimiter = new RedisRateLimiter({
+  name: "song-detail",
+  windowSeconds: 60,
+  max: 10,
+  blockSeconds: 10 * 60,
+  failClosed: false,
   logger,
 });
 

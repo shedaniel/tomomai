@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { apiLimiter, authLimiter, clientIp } from './redis-rate-limit';
+import { apiLimiter, authLimiter, clientIp, songDetailLimiter } from './redis-rate-limit';
 import { CORS_CONFIG } from './config';
 import { logger } from '../logger';
+import { locales } from '@tomomai/i18n/locale';
 
 /**
  * Security middleware that combines multiple security features:
@@ -72,6 +73,16 @@ function isStrictAuthPath(path: string): boolean {
   return STRICT_AUTH_PREFIXES.some((prefix) => path.startsWith(prefix));
 }
 
+function isSongDetailPath(path: string): boolean {
+  const segments = path.split('/');
+  return (segments.length === 5 || (segments.length === 6 && segments[5] === ''))
+    && segments[0] === ''
+    && (locales as readonly string[]).includes(segments[1]!)
+    && segments[2] === 'db'
+    && segments[3] === 'songs'
+    && segments[4] !== '';
+}
+
 /**
  * Check rate limiting based on request path
  */
@@ -83,7 +94,10 @@ async function checkRateLimiting(request: NextRequest, path: string): Promise<{
     let limiter: typeof apiLimiter | null = null;
     let message = "Too many requests. Please try again later.";
 
-    if (isStrictAuthPath(path)) {
+    if (isSongDetailPath(path)) {
+      limiter = songDetailLimiter;
+      message = "Too many song detail requests. Please try again later.";
+    } else if (isStrictAuthPath(path)) {
       limiter = authLimiter;
       message = "Too many authentication attempts. Please try again later.";
     } else if (path.startsWith('/api/')) {

@@ -1,5 +1,5 @@
 import { createHash } from 'crypto';
-import { SAFE_MAIMAI_IMAGE_URLS, isServer, isServerless } from './utils';
+import { isSafeMaimaiImageUrl, isServer, isServerless } from './utils';
 import { gzip, gunzip } from 'zlib';
 import { promisify } from 'util';
 import path from 'path';
@@ -14,20 +14,11 @@ function generateUrlHash(url: string): string {
   return createHash('md5').update(url).digest('hex');
 }
 
-// Check if URL is from allowed maimaidx domains
-function isMaimaidxDomain(url: string): boolean {
-  try {
-    const urlObj = new URL(url);
-    return SAFE_MAIMAI_IMAGE_URLS.some(domain => urlObj.hostname.includes(domain))
-  } catch {
-    return false;
-  }
-}
 
 // Cache and return local path for maimaidx images
 export async function cacheImage(url: string): Promise<void> {
   // Only cache on server and for maimaidx domains
-  if (!isServer() || !isMaimaidxDomain(url) || isServerless()) {
+  if (!isServer() || !isSafeMaimaiImageUrl(url) || isServerless()) {
     return;
   }
 
@@ -82,7 +73,7 @@ export async function cacheImage(url: string): Promise<void> {
 
 // Get cached image buffer for API routes
 export async function getCachedImageBuffer(url: string): Promise<{ buffer: Buffer; contentType: string } | null> {
-  if (!isServer() || !isMaimaidxDomain(url)) {
+  if (!isServer() || !isSafeMaimaiImageUrl(url)) {
     return null;
   }
 

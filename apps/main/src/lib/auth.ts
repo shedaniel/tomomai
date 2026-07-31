@@ -13,7 +13,7 @@ import { db } from "./db";
 import * as schema from "./db/schema-pg";
 import { logger } from "@/lib/logger";
 import { consumeAltchaPayload } from "@/lib/altcha";
-import { passkeyRegisterLimiter } from "@/lib/security/redis-rate-limit";
+import { clientIpFromHeaders, passkeyRegisterLimiter } from "@/lib/security/redis-rate-limit";
 import { isSessionFresh } from "@/lib/security/fresh-session";
 import { isSafeRedirectUrl, isSafeWebUrl, isHttpsUrl } from "@/lib/security/oauth-url";
 import { mirrorRemoteAvatarToR2, isR2AvatarUrl } from "@/lib/r2";
@@ -303,6 +303,14 @@ export const auth = betterAuth({
     // — there is no path where an untrusted client can reach the app
     // without going through one of them.
     trustedProxyHeaders: true,
+    ipAddress: {
+      ipAddressHeaders: [
+        "x-vercel-forwarded-for",
+        "cf-connecting-ip",
+        "x-forwarded-for",
+        "x-real-ip",
+      ],
+    },
     ...(authCookieDomain
       ? {
         crossSubDomainCookies: { enabled: true, domain: authCookieDomain },
@@ -592,12 +600,7 @@ export const auth = betterAuth({
       if (!CAPTCHA_GATED_PATHS.has(ctx.path)) return;
 
       // Per-IP rate limit on the abuse outcome itself, in addition to the captcha.
-      const ipHeader =
-        ctx.headers?.get("cf-connecting-ip") ??
-        ctx.headers?.get("x-forwarded-for") ??
-        ctx.headers?.get("x-real-ip") ??
-        "unknown";
-      const ip = ipHeader.split(",")[0].trim();
+      const ip = ctx.headers ? clientIpFromHeaders(ctx.headers) : "unknown";
       const rl = await passkeyRegisterLimiter.check(ip);
       if (rl.limited) {
         throw new APIError("TOO_MANY_REQUESTS", {
