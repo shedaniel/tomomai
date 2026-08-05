@@ -39,6 +39,9 @@ export function generateRecommendations(songsWithRating: SongWithRating[], versi
   const oldSongsRemainingTuple = oldSongsRemaining.map(song => ({ song, isNew: false }));
 
   [...newSongsB15Tuple, ...oldSongsB35Tuple, ...newSongsRemainingTuple, ...oldSongsRemainingTuple].forEach(({ song, isNew }) => {
+    // utage charts never contribute rating; recommending them would show a fake rating gain
+    if (song.difficulty === "utage") return;
+
     const isInB15 = isNew && newSongsB15.some(s => s.songId === song.songId && s.difficulty === song.difficulty);
     const isInB35 = !isNew && oldSongsB35.some(s => s.songId === song.songId && s.difficulty === song.difficulty);
     const isInBest = isInB15 || isInB35;
