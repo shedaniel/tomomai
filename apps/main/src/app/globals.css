@@ -21,7 +21,9 @@
 body:has([lang="zh-TW"]),
 html[lang="zh-TW"] body,
 body:has([lang="zh-HK"]),
-html[lang="zh-HK"] body {
+html[lang="zh-HK"] body,
+body:has([lang="zh-MS"]),
+html[lang="zh-MS"] body {
     --font-sans: var(--font-inter), 'NotoSansTC', system-ui, sans-serif;
 }
 
