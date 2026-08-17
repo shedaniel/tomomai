@@ -164,6 +164,8 @@ export async function querySongDetails(
 }
 
 export async function queryAllUniqueSongs() {
+  // Uploads invalidate this tag and the affected routes; 30 days is only the
+  // fallback freshness window shared by the list, detail, and sitemap routes.
   const getCachedUniqueSongs = unstable_cache(
     async () => {
       const allSongs = await db
@@ -269,7 +271,7 @@ export async function queryAllUniqueSongs() {
       return songsStripped;
     },
     ["all-unique-songs"],
-    { revalidate: 3600, tags: ["all-unique-songs"] }
+    { revalidate: 2592000, tags: ["all-unique-songs"] }
   );
 
   return getCachedUniqueSongs();

@@ -1,3 +1,4 @@
+import { SongListSeo } from "@/components/db/songs/song-list-seo";
 import { getAllUniqueSongsCached } from "@/server/queries/songs-cache";
 import { Metadata } from "next";
 import dynamic from "next/dynamic";
@@ -7,8 +8,9 @@ import { getLocale } from "@/i18n/locale-server";
 import { buildAlternates, openGraphLocales, ogImageUrl, localizePath } from "@/lib/seo";
 import { DB_TYPES } from "@/lib/db/types";
 
-// On-demand ISR.
-export const revalidate = 10800;
+// On-demand ISR. Catalog uploads explicitly revalidate this route; 30 days is
+// the fallback freshness window.
+export const revalidate = 2592000;
 
 export async function headers() {
   return {
@@ -75,7 +77,8 @@ export default async function DbTypePage({ params }: DbTypePageProps) {
 
   if (type === "songs") {
     // The interactive SongsList is mounted by /db/[type]/layout so it
-    // persists across list ↔ detail navigation.
+    // persists across list ↔ detail navigation. This page emits the complete
+    // server-rendered link list for discovery plus the catalog JSON-LD.
     const songs = await getAllUniqueSongsCached();
     const t = await getTranslations("db.songs.metadata");
 
@@ -93,6 +96,7 @@ export default async function DbTypePage({ params }: DbTypePageProps) {
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
+        <SongListSeo />
       </>
     );
   }
