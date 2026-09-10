@@ -7,6 +7,19 @@ Before adding or changing any logging, read docs/LOGGING.md and follow the musts
 it lays out (structured logger over console, the `err` field for errors,
 per-request logger and requestId, flushing in serverless handlers).
 
+## Database Migrations
+Never run `db:push`, `db:migrate`, `drizzle-kit push`, `drizzle-kit migrate`, or
+equivalent schema-application commands in this repository. The only permitted
+Drizzle schema command is `db:generate`/`drizzle-kit generate`.
+
+Before generating a migration, notify the user that generation is about to
+reset migration state. Then restore the tracked contents of
+`apps/main/drizzle-pg` from `upstream/main` and remove only untracked files
+inside that exact directory so the journal, snapshots, and SQL migrations match
+`upstream/main`. Never reset `schema-pg.ts` or unrelated files. Confirm the
+reset result to the user before running generation. Production receives one
+new generated migration version for the multi-game backend change.
+
 ## Discord Commands
 Discord commands are handled with src/app/api/interactions, and they are registered with scripts/register-discord-commands.js.
 Documentation: <https://discord.com/developers/docs/interactions/receiving-and-responding>

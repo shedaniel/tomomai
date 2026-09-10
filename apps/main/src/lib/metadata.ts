@@ -243,6 +243,15 @@ export const Versions = {
     jpReleaseDate: "2026/03/19",
     cnReleaseDate: null,
     version: 265,
+  },
+  MAIMAI_DX_MAGICAL: {
+    id: 13,
+    name: "maimai DX MAGiCAL",
+    shortName: "MAGiCAL",
+    intlReleaseDate: null,
+    jpReleaseDate: "2026/09/17",
+    cnReleaseDate: null,
+    version: 270,
   }
 } as const;
 
