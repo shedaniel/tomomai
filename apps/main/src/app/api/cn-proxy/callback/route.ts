@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { verifyCnProxyToken } from "@/lib/cn-proxy-token";
 import { deleteToken, formatCnCookiesToken, saveCnCookiesToken } from "@/server/services/maimai-login";
 import { startFetchServer } from "@/lib/maimai-server-actions";
-import { AGENT } from "@/lib/http-agent";
+import { agentFetch } from "@/lib/http-agent";
 import { requestLogger } from "@/lib/request-logger";
 
 export const dynamic = "force-dynamic";
@@ -12,14 +12,13 @@ const CN_BASE = "https://maimai.wahlap.com";
 async function fetchPlayerHtml(maimaiToken: string): Promise<{ html: string; cookies: string }> {
   // Step 1: hit the entry URL with ?t=<maimaiToken> to get the session cookies.
   const entryUrl = `${CN_BASE}/maimai-mobile/?t=${encodeURIComponent(maimaiToken)}`;
-  const entryRes = await fetch(entryUrl, {
+  const entryRes = await agentFetch(entryUrl, {
     method: "GET",
     headers: {
       "User-Agent": "Mozilla/5.0 (Linux; Android 12; MicroMessenger/8.0)",
       "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
     },
     redirect: "manual",
-    ...{ dispatcher: AGENT },
   });
 
   const setCookies =
@@ -33,7 +32,7 @@ async function fetchPlayerHtml(maimaiToken: string): Promise<{ html: string; coo
   const cookies = setCookies.map((c) => c.split(";")[0]).join("; ");
 
   // Step 2: fetch playerData with the captured cookies + referer.
-  const playerRes = await fetch(`${CN_BASE}/maimai-mobile/playerData/`, {
+  const playerRes = await agentFetch(`${CN_BASE}/maimai-mobile/playerData/`, {
     method: "GET",
     headers: {
       "User-Agent": "Mozilla/5.0 (Linux; Android 12; MicroMessenger/8.0)",
@@ -41,7 +40,6 @@ async function fetchPlayerHtml(maimaiToken: string): Promise<{ html: string; coo
       "Referer": `${CN_BASE}/maimai-mobile/`,
     },
     redirect: "manual",
-    ...{ dispatcher: AGENT },
   });
   const html = await playerRes.text();
   if (playerRes.status !== 200) {

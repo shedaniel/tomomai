@@ -1,4 +1,4 @@
-import { AGENT } from "../http-agent";
+import { agentFetch } from "../http-agent";
 import { Region } from "../types";
 
 const USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36";
@@ -13,14 +13,13 @@ export function maimaiBaseUrl(region: Region): string {
 // the real client sends. Does NOT check status — callers that want custom
 // error-handling (e.g. logging the response body) use this directly.
 export async function maimaiRequest(url: string, cookies: string, referer: string): Promise<Response> {
-  return fetch(url, {
+  return agentFetch(url, {
     method: "GET",
     headers: {
       "Cookie": cookies,
       "User-Agent": USER_AGENT,
       "Referer": referer,
     },
-    ...{ dispatcher: AGENT },
   });
 }
 

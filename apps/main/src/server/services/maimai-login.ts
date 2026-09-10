@@ -1,10 +1,9 @@
 import { db } from "@/lib/db";
 import { userTokens } from "@/lib/db/schema-pg";
 import { eq, and } from "drizzle-orm";
-import { AGENT } from "@/lib/http-agent";
+import { agentFetch } from "@/lib/http-agent";
 import { Region } from "@/lib/types";
 import { encryptToken } from "@/lib/token-crypto";
-import { logger } from "@/lib/logger";
 import { getLogger } from "@/lib/request-logger";
 
 export interface TokenValidationResult {
@@ -65,7 +64,7 @@ export async function processMaimaiToken(
       username = parts[1];
       password = parts[2];
     } else {
-      logger.info("Invalid account token format, removing from database");
+      getLogger().info("Invalid account token format, removing from database");
       if (userId) {
         await deleteToken(userId, region);
       }
@@ -77,7 +76,7 @@ export async function processMaimaiToken(
 
     // Validate that we have all required parts
     if (!username || !password) {
-      logger.info("Invalid account token format, missing username or password");
+      getLogger().info("Invalid account token format, missing username or password");
       if (userId) {
         await deleteToken(userId, region);
       }
@@ -89,7 +88,7 @@ export async function processMaimaiToken(
 
     // If we have a cookie, try to validate it first
     if (cookieValue && region === "intl") {
-      logger.info(`Trying to validate existing cookie for user ${userId}`);
+      getLogger().info({ userId, region }, "Trying to validate existing cookie");
       // Validate token without auto-deleting (we'll handle re-login here)
       const cookieResult = await validateInternationalMaimaiToken(
         userId,
@@ -102,7 +101,7 @@ export async function processMaimaiToken(
       }
 
       // Token validation failed - attempt automatic re-login
-      logger.info("Token validation failed, attempting automatic re-login");
+      getLogger().info("Token validation failed, attempting automatic re-login");
       const refreshResult = await performInternationalAccountLogin(
         userId,
         username,
@@ -110,13 +109,13 @@ export async function processMaimaiToken(
       );
 
       if (refreshResult.isValid && refreshResult.token && userId) {
-        logger.info("Token refresh successful, updating database");
+        getLogger().info("Token refresh successful, updating database");
         await updateToken(userId, region, refreshResult.token, { username, password });
         return refreshResult;
       }
 
       // Re-login also failed - delete token and return error
-      logger.warn("Token refresh failed, deleting token");
+      getLogger().warn("Token refresh failed, deleting token");
       if (userId) {
         await deleteToken(userId, region);
       }
@@ -138,7 +137,7 @@ export async function processMaimaiToken(
 
     const parsed = parseLxnsToken(sanitizedToken);
     if (!parsed) {
-      logger.info("Invalid lxns token format, removing from database");
+      getLogger().info("Invalid lxns token format, removing from database");
       if (userId) {
         await deleteToken(userId, region);
       }
@@ -151,7 +150,7 @@ export async function processMaimaiToken(
     // Reuse access token if not within 30s of expiry
     if (Date.now() < parsed.expiresAtMs - 30_000) {
       const ttlSec = Math.round((parsed.expiresAtMs - Date.now()) / 1000);
-      logger.debug(`[lxns oauth] reusing cached access token for user=${userId} (ttl=${ttlSec}s)`);
+      getLogger().debug({ userId, ttlSec }, "lxns oauth: reusing cached access token");
       return {
         isValid: true,
         token: sanitizedToken,
@@ -159,10 +158,10 @@ export async function processMaimaiToken(
     }
 
     // Refresh
-    logger.debug(`[lxns oauth] access token expired/near-expiry for user=${userId}, refreshing`);
+    getLogger().debug({ userId }, "lxns oauth: access token expired or near expiry, refreshing");
     const refreshed = await refreshLxnsToken(parsed.refreshToken);
     if (!refreshed.isValid || !refreshed.token) {
-      logger.warn("lxns refresh failed, deleting token");
+      getLogger().warn("lxns refresh failed, deleting token");
       if (userId) {
         await deleteToken(userId, region);
       }
@@ -171,7 +170,7 @@ export async function processMaimaiToken(
 
     if (userId) {
       await saveLxnsToken(userId, refreshed.token);
-      logger.info(`[lxns oauth] refreshed token saved for user=${userId}`);
+      getLogger().info({ userId }, "lxns oauth: refreshed token saved");
     }
     return refreshed;
   }
@@ -189,7 +188,7 @@ export async function processMaimaiToken(
     }
     const parsed = parseCnCookiesToken(sanitizedToken);
     if (!parsed) {
-      logger.info("Invalid cn-cookies token format, removing from database");
+      getLogger().info("Invalid cn-cookies token format, removing from database");
       if (userId) {
         await deleteToken(userId, region);
       }
@@ -217,7 +216,7 @@ export async function processMaimaiToken(
 
     const parsed = parseDivingFishToken(sanitizedToken);
     if (!parsed) {
-      logger.info("Invalid divingfish token format, removing from database");
+      getLogger().info("Invalid divingfish token format, removing from database");
       if (userId) {
         await deleteToken(userId, region);
       }
@@ -241,7 +240,7 @@ export async function processMaimaiToken(
   }
 
   // Invalid token format
-  logger.info("Invalid token format, removing from database");
+  getLogger().info("Invalid token format, removing from database");
   if (userId) {
     await deleteToken(userId, region);
   }
@@ -351,7 +350,7 @@ export async function refreshLxnsToken(refreshToken: string): Promise<TokenValid
     });
     if (!resp.ok) {
       const errorText = await resp.text().catch(() => "");
-      logger.warn(`lxns refresh failed: ${resp.status} ${errorText}`);
+      getLogger().warn({ status: resp.status }, `lxns refresh failed: ${errorText}`);
       return { isValid: false, error: `lxns refresh failed (${resp.status}). Please re-authorize.` };
     }
     const json = await resp.json() as Record<string, unknown>;
@@ -369,10 +368,10 @@ export async function refreshLxnsToken(refreshToken: string): Promise<TokenValid
       expiresAtMs: Date.now() + expiresIn * 1000,
       scope,
     });
-    logger.debug(`[lxns oauth] refresh success: expires_in=${expiresIn}s scope="${scope}"`);
+    getLogger().debug({ ttlSec: expiresIn, scope }, "lxns oauth: refresh succeeded");
     return { isValid: true, token: formatted };
   } catch (error) {
-    logger.error({ err: error }, "lxns refresh threw");
+    getLogger().error({ err: error }, "lxns refresh threw");
     return { isValid: false, error: "Network error during lxns refresh." };
   }
 }
@@ -402,7 +401,7 @@ export async function exchangeLxnsCode(
     });
     if (!resp.ok) {
       const errorText = await resp.text().catch(() => "");
-      logger.warn(`lxns code exchange failed: ${resp.status} ${errorText}`);
+      getLogger().warn({ status: resp.status }, `lxns code exchange failed: ${errorText}`);
       return { isValid: false, error: `lxns code exchange failed (${resp.status}).` };
     }
     const json = await resp.json() as Record<string, unknown>;
@@ -422,7 +421,7 @@ export async function exchangeLxnsCode(
     });
     return { isValid: true, token: formatted };
   } catch (error) {
-    logger.error({ err: error }, "lxns code exchange threw");
+    getLogger().error({ err: error }, "lxns code exchange threw");
     return { isValid: false, error: "Network error during lxns code exchange." };
   }
 }
@@ -507,21 +506,20 @@ async function performJapanAccountLogin(
   const maimaiMobileUrl = "https://maimaidx.jp/maimai-mobile/";
   const submitUrl = "https://maimaidx.jp/maimai-mobile/submit/";
 
-  logger.info(`Attempting Japan account login for user ${userId} with username ${username}`);
+  getLogger().info({ userId, region: "jp" }, "Attempting account login");
 
   try {
     // Step 1: Get the maimai mobile page to obtain _t token and cookies
-    logger.info("Step 1: Fetching maimai mobile page to get _t token and cookies");
-    const maimaiPageResponse = await fetch(maimaiMobileUrl, {
+    getLogger().debug("Step 1: fetching maimai mobile page to get _t token and cookies");
+    const maimaiPageResponse = await agentFetch(maimaiMobileUrl, {
       method: "GET",
       headers: {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
       },
       redirect: "manual", // Don't follow redirects
-      ...{ dispatcher: AGENT },
     });
 
-    logger.debug(`Maimai mobile page response status: ${maimaiPageResponse.status}`);
+    getLogger().debug({ status: maimaiPageResponse.status }, "Maimai mobile page fetched");
 
     // Extract cookies from Set-Cookie headers
     let setCookieHeaders: string[] = [];
@@ -536,7 +534,7 @@ async function performJapanAccountLogin(
     }
 
     if (setCookieHeaders.length === 0) {
-      logger.warn("No Set-Cookie headers in maimai mobile page response");
+      getLogger().warn("No Set-Cookie headers in maimai mobile page response");
       if (userId) {
         await deleteToken(userId, "jp");
       }
@@ -555,14 +553,14 @@ async function performJapanAccountLogin(
       // Check if this is the _t token
       if (cookiePart.startsWith('_t=')) {
         tToken = cookiePart.substring(3); // Remove '_t=' prefix
-        logger.debug(`Extracted _t token: ${tToken.substring(0, 10)}...`);
+        getLogger().debug("Extracted _t token");
       }
 
       return cookiePart;
     }).join('; ');
 
     if (!tToken) {
-      logger.warn("Could not extract _t token from Set-Cookie headers");
+      getLogger().warn("Could not extract _t token from Set-Cookie headers");
       if (userId) {
         await deleteToken(userId, "jp");
       }
@@ -572,17 +570,17 @@ async function performJapanAccountLogin(
       };
     }
 
-    logger.debug(`Parsed cookies for login request: ${cookies.substring(0, 50)}...`);
+    getLogger().debug({ count: setCookieHeaders.length }, "Parsed cookies for login request");
 
     // Step 2: POST credentials with all cookies and _t token
-    logger.info("Step 2: Posting credentials with cookies and _t token");
+    getLogger().debug("Step 2: posting credentials with cookies and _t token");
     const formData = new URLSearchParams({
       segaId: username,
       password: password,
       token: tToken
     });
 
-    const response = await fetch(submitUrl, {
+    const response = await agentFetch(submitUrl, {
       method: "POST",
       headers: {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
@@ -592,19 +590,18 @@ async function performJapanAccountLogin(
       },
       body: formData.toString(),
       redirect: "manual", // Don't follow redirects
-      ...{ ...{ dispatcher: AGENT }, },
     });
 
-    logger.debug(`Japan account login response status: ${response.status}`);
+    getLogger().debug({ status: response.status }, "Japan account login response");
 
     if (response.status === 302) {
       // Check redirect URL
       const redirectUrl = response.headers.get("Location");
-      logger.debug(`Login redirect URL: ${redirectUrl}`);
+      getLogger().debug({ url: redirectUrl }, "Login redirect");
 
       if (!redirectUrl) {
         // 302 without redirect URL means login failed
-        logger.warn("Login failed: 302 response without redirect URL");
+        getLogger().warn("Login failed: 302 response without redirect URL");
         if (userId) {
           await deleteToken(userId, "jp");
         }
@@ -616,11 +613,8 @@ async function performJapanAccountLogin(
 
       if (redirectUrl.includes("https://maimaidx.jp/maimai-mobile/aimeList/")) {
         // Login successful
-        logger.debug("Login successful, redirecting to aimeList");
-
-        // Return success with the aimeList submit URL and cookies
         const aimeListSubmitUrl = "https://maimaidx.jp/maimai-mobile/aimeList/submit/?idx=0";
-        logger.debug(`Login successful. Using aimeList submit URL: ${aimeListSubmitUrl}`);
+        getLogger().debug({ url: aimeListSubmitUrl }, "Login successful, using aimeList submit URL");
 
         return {
           isValid: true,
@@ -629,7 +623,7 @@ async function performJapanAccountLogin(
         };
       } else {
         // Unexpected redirect URL
-        logger.warn(`Unexpected redirect URL: ${redirectUrl}`);
+        getLogger().warn({ url: redirectUrl }, "Login failed: unexpected redirect URL");
         if (userId) {
           await deleteToken(userId, "jp");
         }
@@ -640,7 +634,7 @@ async function performJapanAccountLogin(
       }
     } else {
       // Login failed with non-302 status
-      logger.warn(`Japan account login failed with status: ${response.status}`);
+      getLogger().warn({ status: response.status }, "Japan account login failed");
       if (userId) {
         await deleteToken(userId, "jp");
       }
@@ -650,7 +644,7 @@ async function performJapanAccountLogin(
       };
     }
   } catch (error) {
-    logger.error(error, "Error during Japan account login");
+    getLogger().error({ err: error }, "Error during Japan account login");
     if (userId) {
       await deleteToken(userId, "jp");
     }
@@ -669,11 +663,11 @@ async function performInternationalAccountLogin(
   const loginPageUrl = "https://lng-tgk-aime-gw.am-all.net/common_auth/login?site_id=maimaidxex&redirect_url=https://maimaidx-eng.com/maimai-mobile/&back_url=https://maimai.sega.com/";
   const loginUrl = "https://lng-tgk-aime-gw.am-all.net/common_auth/login/sid";
 
-  logger.info(`Attempting account login for user ${userId} with username ${username}`);
+  getLogger().info({ userId, region: "intl" }, "Attempting account login");
 
   try {
     // Step 1: Get the login page to obtain JSESSIONID
-    logger.info("Step 1: Fetching login page to get JSESSIONID");
+    getLogger().debug("Step 1: fetching login page to get JSESSIONID");
     const loginPageResponse = await fetch(loginPageUrl, {
       method: "GET",
       headers: {
@@ -682,7 +676,7 @@ async function performInternationalAccountLogin(
       redirect: "manual", // Don't follow redirects
     });
 
-    logger.debug(`Login page response status: ${loginPageResponse.status}`);
+    getLogger().debug({ status: loginPageResponse.status }, "Login page fetched");
 
     // Extract cookies from Set-Cookie headers
     let setCookieHeaders: string[] = [];
@@ -697,7 +691,7 @@ async function performInternationalAccountLogin(
     }
 
     if (setCookieHeaders.length === 0) {
-      logger.warn("No Set-Cookie headers in login page response");
+      getLogger().warn("No Set-Cookie headers in login page response");
       if (userId) {
         await deleteToken(userId, "intl");
       }
@@ -712,10 +706,10 @@ async function performInternationalAccountLogin(
       return header.split(';')[0];
     }).join('; ');
 
-    logger.debug(`Collected ${setCookieHeaders.length} cookies from login page`);
+    getLogger().debug({ count: setCookieHeaders.length }, "Collected cookies from login page");
 
     // Step 2: POST credentials with JSESSIONID cookie
-    logger.debug("Step 2: Posting credentials with JSESSIONID");
+    getLogger().debug("Step 2: posting credentials with JSESSIONID");
     const params = new URLSearchParams({
       retention: '1',
       sid: username,
@@ -731,19 +725,18 @@ async function performInternationalAccountLogin(
       redirect: "manual", // Don't follow redirects
     });
 
-    logger.debug(`Account login response status: ${response.status}`);
+    getLogger().debug({ status: response.status }, "Account login response");
 
     if (response.status === 302) {
       // Login successful, extract clal cookie from Set-Cookie header
       const loginSetCookieHeader = response.headers.get("Set-Cookie");
-      logger.debug(`Login Set-Cookie header: ${loginSetCookieHeader}`);
 
       if (loginSetCookieHeader) {
         // Extract clal cookie value
         const clalMatch = loginSetCookieHeader.match(/clal=([^;]+)/);
         if (clalMatch) {
           const clalValue = clalMatch[1];
-          logger.debug(`Extracted clal cookie: ${clalValue.substring(0, 10)}...`);
+          getLogger().debug("Extracted clal cookie from login response");
 
           // Update token in database with new format including cookie
           const newToken = `account://${clalValue}:://${username}:://${password}`;
@@ -766,11 +759,11 @@ async function performInternationalAccountLogin(
               );
           }
 
-          logger.debug("Token updated in database with extracted cookie");
+          getLogger().debug("Token updated in database with extracted cookie");
 
           // Get redirect URL for validation result
           const redirectUrl = response.headers.get("Location");
-          logger.debug(`Login successful. Redirect URL: ${redirectUrl}`);
+          getLogger().debug({ url: redirectUrl }, "Account login successful");
 
           return {
             isValid: true,
@@ -778,14 +771,14 @@ async function performInternationalAccountLogin(
             token: clalValue,
           };
         } else {
-          logger.warn("Could not extract clal cookie from Set-Cookie header");
+          getLogger().warn("Could not extract clal cookie from Set-Cookie header");
           return {
             isValid: false,
             error: "maimai accepted your credentials but did not return a session cookie. This is usually a temporary upstream issue. Please try again in a few minutes. If it still fails, resubmit a token via Settings (top-right profile icon) > Fetch.",
           };
         }
       } else {
-        logger.warn("No Set-Cookie header in login response");
+        getLogger().warn("No Set-Cookie header in login response");
         return {
           isValid: false,
           error: "maimai accepted your credentials but did not return a session cookie. This is usually a temporary upstream issue. Please try again in a few minutes. If it still fails, resubmit a token via Settings (top-right profile icon) > Fetch.",
@@ -793,7 +786,7 @@ async function performInternationalAccountLogin(
       }
     } else {
       // Login failed
-      logger.warn(`Account login failed with status: ${response.status}`);
+      getLogger().warn({ status: response.status }, "Account login failed");
       if (userId) {
         await deleteToken(userId, "intl");
       }
@@ -803,7 +796,7 @@ async function performInternationalAccountLogin(
       };
     }
   } catch (error) {
-    logger.error(error, "Error during account login");
+    getLogger().error({ err: error }, "Error during account login");
     if (userId) {
       await deleteToken(userId, "intl");
     }
@@ -826,7 +819,7 @@ export async function validateInternationalMaimaiToken(
 
   // Check if token contains only ASCII characters
   if (!/^[\x00-\x7F]*$/.test(sanitizedToken)) {
-    logger.warn("Token contains non-ASCII characters, removing from database");
+    getLogger().warn("Token contains non-ASCII characters, removing from database");
 
     // Remove invalid token from database
     if (userId) {
@@ -841,7 +834,7 @@ export async function validateInternationalMaimaiToken(
 
   // Check if token is not empty
   if (!sanitizedToken) {
-    logger.warn("Empty token provided, removing from database");
+    getLogger().warn("Empty token provided, removing from database");
 
     // Remove empty token from database
     if (userId) {
@@ -854,7 +847,7 @@ export async function validateInternationalMaimaiToken(
     };
   }
 
-  logger.debug(`Validating token for user ${userId} in intl region (token length: ${sanitizedToken.length})`);
+  getLogger().debug({ userId, region: "intl", count: sanitizedToken.length }, "Validating token");
 
   try {
     const response = await fetch(loginUrl, {
@@ -866,12 +859,12 @@ export async function validateInternationalMaimaiToken(
       redirect: "manual", // Don't follow redirects
     });
 
-    logger.debug(`Token validation response status: ${response.status}`);
+    getLogger().debug({ status: response.status }, "Token validation response");
 
     if (response.status === 302) {
       // Token is valid, get redirect URL
       const redirectUrl = response.headers.get("Location");
-      logger.debug(`Token validation successful. Redirect URL: ${redirectUrl}`);
+      getLogger().debug({ url: redirectUrl }, "Token validation successful");
 
       return {
         isValid: true,
@@ -879,11 +872,11 @@ export async function validateInternationalMaimaiToken(
       };
     } else if (response.status === 200) {
       // Token expired
-      logger.warn("Token expired");
+      getLogger().warn("Token expired");
 
       // Only delete if deleteIfFailed is true
       if (deleteIfFailed && userId) {
-        logger.debug("Deleting expired token from database");
+        getLogger().debug("Deleting expired token from database");
         await deleteToken(userId, "intl");
       }
 
@@ -893,14 +886,14 @@ export async function validateInternationalMaimaiToken(
       };
     } else {
       // Unexpected status code
-      logger.warn(`Unexpected response status: ${response.status}`);
+      getLogger().warn({ status: response.status }, "Unexpected response from token validation");
       return {
         isValid: false,
         error: `Unexpected response from SEGA servers (${response.status})`,
       };
     }
   } catch (error) {
-    logger.error(error, "Error validating token");
+    getLogger().error({ err: error }, "Error validating token");
     return {
       isValid: false,
       error: "Failed to validate token. Please try again later.",
@@ -909,19 +902,18 @@ export async function validateInternationalMaimaiToken(
 }
 
 export async function getCookiesFromRedirect(region: Region, redirectUrl: string, redirectCookies: string | null): Promise<string> {
-  logger.debug(`Fetching redirect URL to get login cookies: ${redirectUrl}`);
+  getLogger().debug({ region, url: redirectUrl }, "Fetching redirect URL to get login cookies");
 
-  const loginResponse = await fetch(redirectUrl, {
+  const loginResponse = await agentFetch(redirectUrl, {
     method: "GET",
     headers: {
       "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
       ...(redirectCookies ? { "Cookie": redirectCookies } : {}),
     },
     redirect: "manual", // Don't follow redirects
-    ...{ dispatcher: AGENT },
   });
 
-  logger.debug(`Login response status: ${loginResponse.status}`);
+  getLogger().debug({ status: loginResponse.status }, "Login redirect response");
 
   // Extract Set-Cookie headers
   let setCookieHeaders: string[] = [];
@@ -936,10 +928,11 @@ export async function getCookiesFromRedirect(region: Region, redirectUrl: string
   }
 
   if (setCookieHeaders.length === 0) {
-    throw new Error("No cookies received from login redirect");
+    getLogger().warn({ region, status: loginResponse.status, url: redirectUrl }, "No cookies received from login redirect");
+    throw new Error(`No cookies received from login redirect (status ${loginResponse.status})`);
   }
 
-  logger.debug(`Received ${setCookieHeaders.length} cookies from login`);
+  getLogger().debug({ count: setCookieHeaders.length }, "Received cookies from login");
 
   // Parse cookies into a single Cookie header value
   const cookies = setCookieHeaders.map(header => {
@@ -948,7 +941,7 @@ export async function getCookiesFromRedirect(region: Region, redirectUrl: string
     return cookiePart;
   }).join('; ');
 
-  logger.debug(`Parsed cookies for request`);
+  getLogger().debug("Parsed cookies for request");
   return cookies;
 }
 
@@ -963,6 +956,6 @@ export async function loginAndGetCookies(region: Region, maimaiToken: string): P
     throw new Error("No redirect URL received from token validation");
   }
 
-  getLogger().info("Token validation successful, getting cookies from redirect URL...");
+  getLogger().info({ region }, "Token validation successful, getting cookies from redirect URL");
   return await getCookiesFromRedirect(region, validation.redirectUrl, validation.cookies || null);
 }

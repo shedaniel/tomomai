@@ -112,7 +112,7 @@ Aggregate namespaces (intentional nested objects — **bounded, fixed keys**; do
 > `playerName`, `index`, `batchIndex`, `progress`, `from`, `to`, `profile`,
 > `addedDate`, `optional`, `modelId`, `uniqueCovers`, `existingR2Covers`,
 > `toDownload`, `skipped`, `duplicateIds`, `urls`, `totalDuplicatesMerged`,
-> `totalMasterNamesNormalized`, `originalName`) are also registered — keep this
+> `totalMasterNamesNormalized`, `originalName`, `ttlSec`, `scope`) are also registered — keep this
 > list current when you add one.
 
 ### Rules of thumb

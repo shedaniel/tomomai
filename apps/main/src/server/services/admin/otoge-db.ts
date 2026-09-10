@@ -8,13 +8,14 @@ import { key, SongWithMode } from "./fetcher-utils";
 import { Logger } from "pino";
 import { levelToPrecise } from "@/server/utils/level";
 
-const MAIMAI_SONGS_JSON_URL = "https://github.com/zvuc/otoge-db/raw/refs/heads/master/maimai/data/music-ex.json";
-const MAIMAI_SONGS_JSON_URL_INTL = "https://github.com/zvuc/otoge-db/raw/refs/heads/master/maimai/data/music-ex-intl.json";
+const MAIMAI_SONGS_JSON_URL = "https://github.com/zvuc/otoge-db/raw/refs/heads/main/maimai/data/music-ex.json";
+const MAIMAI_SONGS_JSON_URL_INTL = "https://github.com/zvuc/otoge-db/raw/refs/heads/main/maimai/data/music-ex-intl.json";
 
 const JP_FALLBACK_FOR_INTL: Partial<Record<VersionId, string>> = {
-  [Versions.MAIMAI_DX_PRISM.id]: "https://github.com/zvuc/otoge-db/raw/refs/heads/master/maimai/data/music-ex-prism-final.json",
-  [Versions.MAIMAI_DX_PRISM_PLUS.id]: "https://github.com/zvuc/otoge-db/raw/refs/heads/master/maimai/data/music-ex-prismplus-final.json",
-  [Versions.MAIMAI_DX_CIRCLE.id]: MAIMAI_SONGS_JSON_URL,
+  [Versions.MAIMAI_DX_PRISM.id]: "https://github.com/zvuc/otoge-db/raw/refs/heads/main/maimai/data/music-ex-prism-final.json",
+  [Versions.MAIMAI_DX_PRISM_PLUS.id]: "https://github.com/zvuc/otoge-db/raw/refs/heads/main/maimai/data/music-ex-prismplus-final.json",
+  [Versions.MAIMAI_DX_CIRCLE.id]: "https://github.com/zvuc/otoge-db/raw/refs/heads/main/maimai/data/music-ex-circle-final.json",
+  [Versions.MAIMAI_DX_CIRCLE_PLUS.id]: MAIMAI_SONGS_JSON_URL,
 }
 
 export const OtogeDbFetcher = asFetcher(async (context) => {

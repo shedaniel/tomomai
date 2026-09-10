@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
 
     if (!token) {
       return NextResponse.json(
-        { error: "Missing authorization token" },
+        { error: "Missing authorization token", requestId },
         { status: 401 }
       );
     }
@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
     if (!adminToken) {
       log.error("ADMIN_UPDATE_TOKEN environment variable not set");
       return NextResponse.json(
-        { error: "Server configuration error" },
+        { error: "Server configuration error", requestId },
         { status: 500 }
       );
     }
@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
     if (token !== adminToken) {
       log.warn("Invalid admin token attempt");
       return NextResponse.json(
-        { error: "Invalid authorization token" },
+        { error: "Invalid authorization token", requestId },
         { status: 403 }
       );
     }
@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
 
     if (!region || !isRegionEnabled(region)) {
       return NextResponse.json(
-        { error: `Missing or invalid 'region' query parameter. Must be one of: ${getEnabledRegions().join(", ")}` },
+        { error: `Missing or invalid 'region' query parameter. Must be one of: ${getEnabledRegions().join(", ")}`, requestId },
         { status: 400 }
       );
     }
@@ -61,7 +61,7 @@ export async function GET(request: NextRequest) {
     if (region !== "cn") {
       if (!maimaiToken) {
         return NextResponse.json(
-          { error: "Missing 'token' query parameter" },
+          { error: "Missing 'token' query parameter", requestId },
           { status: 400 }
         );
       }
@@ -71,14 +71,15 @@ export async function GET(request: NextRequest) {
       log.info("Validating maimai token...");
       const [resolved, cookiesError] = await awaitWrapper(loginAndGetCookies(region, maimaiToken));
 
-      log.info("Token validated. Fetching levels...");
-
       if (cookiesError) {
+        log.error({ err: cookiesError, region }, "Token validation failed");
         return NextResponse.json(
-          { error: cookiesError.message },
+          { error: cookiesError.message, requestId },
           { status: 400 }
         );
       }
+
+      log.info("Token validated. Fetching levels...");
       cookies = resolved!;
     } else {
       log.info({ region }, "Admin update requested: fetching CN data from Lxns");

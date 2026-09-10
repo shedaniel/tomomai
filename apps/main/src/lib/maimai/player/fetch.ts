@@ -1,4 +1,4 @@
-import { AGENT } from "../../http-agent";
+import { agentFetch } from "../../http-agent";
 import { logger } from "../../logger";
 import { Region } from "../../types";
 import { maimaiBaseUrl, maimaiGetHtml } from "../http";
@@ -31,12 +31,11 @@ export async function fetchIconBytes(
 ): Promise<{ buffer: Buffer; contentType: string }> {
   logger.info(`Fetching icon bytes: ${imageUrl}`);
 
-  const response = await fetch(imageUrl, {
+  const response = await agentFetch(imageUrl, {
     headers: {
       "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
       "Cookie": cookies || "",
     },
-    ...{ dispatcher: AGENT },
   });
 
   if (!response.ok) {
