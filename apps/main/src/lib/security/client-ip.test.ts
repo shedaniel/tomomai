@@ -2,10 +2,19 @@ import { describe, expect, it } from "vitest";
 import { clientIpFromHeaders } from "@tomomai/security/rate-limit";
 
 describe("clientIpFromHeaders", () => {
-  it("prefers Vercel's protected client IP over proxy-supplied headers", () => {
+  it("prefers Cloudflare's connecting IP over Vercel's view of the edge", () => {
     const headers = new Headers({
       "x-vercel-forwarded-for": "203.0.113.10",
       "cf-connecting-ip": "198.51.100.20",
+      "x-forwarded-for": "192.0.2.30",
+    });
+
+    expect(clientIpFromHeaders(headers)).toBe("198.51.100.20");
+  });
+
+  it("falls back to Vercel's client IP when Cloudflare is not in front", () => {
+    const headers = new Headers({
+      "x-vercel-forwarded-for": "203.0.113.10",
       "x-forwarded-for": "192.0.2.30",
     });
 

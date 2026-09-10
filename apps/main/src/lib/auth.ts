@@ -305,8 +305,8 @@ export const auth = betterAuth({
     trustedProxyHeaders: true,
     ipAddress: {
       ipAddressHeaders: [
-        "x-vercel-forwarded-for",
         "cf-connecting-ip",
+        "x-vercel-forwarded-for",
         "x-forwarded-for",
         "x-real-ip",
       ],

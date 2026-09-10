@@ -28,16 +28,18 @@ export interface RateLimitResult {
   headers: Record<string, string>;
 }
 
+// Cloudflare fronts Vercel, so Vercel's own headers carry the Cloudflare edge
+// IP, not the visitor's. cf-connecting-ip is the only header with the real one.
 const CLIENT_IP_HEADERS = [
-  "x-vercel-forwarded-for",
   "cf-connecting-ip",
+  "x-vercel-forwarded-for",
   "x-forwarded-for",
   "x-real-ip",
 ] as const;
 
 type HeaderReader = { get(name: string): string | null };
 
-/** Extracts a validated client IP, preferring headers controlled by Vercel and Cloudflare. */
+/** Extracts a validated client IP, preferring headers controlled by Cloudflare and Vercel. */
 export function clientIpFromHeaders(headers: HeaderReader): string {
   for (const name of CLIENT_IP_HEADERS) {
     const raw = headers.get(name);
