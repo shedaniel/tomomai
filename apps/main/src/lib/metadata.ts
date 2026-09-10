@@ -245,7 +245,7 @@ export const Versions = {
     version: 265,
   },
   MAIMAI_DX_MAGICAL: {
-    id: 13,
+    id: 14,
     name: "maimai DX MAGiCAL",
     shortName: "MAGiCAL",
     intlReleaseDate: null,
