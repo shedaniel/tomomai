@@ -1114,5 +1114,25 @@
       "cancel": "취소",
       "confirmRemove": "소개 삭제"
     }
+  },
+  "scoreComparison": {
+    "title": "점수 비교",
+    "view": "비교 보기",
+    "you": "나 · {achievement}",
+    "curveTab": "점수 곡선",
+    "ratingTab": "Rating별",
+    "ratingHeading": "플레이어 Rating별 달성률",
+    "curveHeading": "이 달성률 이하인 플레이어 비율",
+    "unavailable": "비슷한 Rating의 플레이어 데이터가 부족하거나 편중되어 점수 곡선을 표시할 수 없습니다.",
+    "ratingAxis": "플레이어 Rating",
+    "achievementAxis": "달성률",
+    "top": "비슷한 실력의 플레이어 중 상위 {percent}",
+    "bottom": "비슷한 실력의 플레이어 중 하위 {percent}",
+    "median": "비슷한 실력의 플레이어 중 중앙값 부근",
+    "lessThan": "{percent} 미만",
+    "ratingDescription": "사용 가능한 Rating 구간의 Intl 플레이어 {count}명의 기록을 바탕으로 Rating과 달성률을 비교합니다. 점은 Rating 125점, 달성률 0.1% 단위로 묶은 표본이며 각 구간 안에 분산되어 표시됩니다. 위치는 근사치입니다. 내 Rating은 {rating}, 달성률은 {achievement}입니다.",
+    "curveDescription": "비슷한 Rating의 플레이어 중 각 달성률 이하인 비율의 추정치입니다. 내 달성률 {achievement} 이하인 플레이어는 {percent}이며 동점도 포함합니다.",
+    "clusterDescription": "Rating {ratingMin}–{ratingMax}, 달성률 {achievementMin}–{achievementMax}: 표본 {count}개",
+    "youDescription": "나: Rating {rating}, 달성률 {achievement}"
   }
 }

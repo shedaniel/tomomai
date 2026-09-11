@@ -1477,5 +1477,25 @@
       "cancel": "キャンセル",
       "confirmRemove": "紹介を削除"
     }
+  },
+  "scoreComparison": {
+    "title": "スコア比較",
+    "view": "比較表示",
+    "you": "あなた · {achievement}",
+    "curveTab": "スコア曲線",
+    "ratingTab": "Rating別",
+    "ratingHeading": "プレイヤーのRatingと達成率",
+    "curveHeading": "この達成率以下のプレイヤーの割合",
+    "unavailable": "近いRatingのプレイヤーのデータが十分かつ均等に集まっていないため、曲線を表示できません。",
+    "ratingAxis": "プレイヤーのRating",
+    "achievementAxis": "達成率",
+    "top": "同程度のプレイヤー内で上位{percent}",
+    "bottom": "同程度のプレイヤー内で下位{percent}",
+    "median": "同程度のプレイヤー内で中央値付近",
+    "lessThan": "{percent}未満",
+    "ratingDescription": "利用可能なRating帯のIntlプレイヤー{count}人の記録に基づく、Ratingと達成率の比較です。点はRating幅125、達成率幅0.1%のサンプルをまとめ、各範囲内に分散して表示しています。位置は概算です。あなたのRatingは{rating}、達成率は{achievement}です。",
+    "curveDescription": "近いRatingのプレイヤーのうち、各達成率以下の割合の推定値です。あなたの達成率{achievement}以下は{percent}です。同点を含みます。",
+    "clusterDescription": "Rating {ratingMin}～{ratingMax}、達成率{achievementMin}～{achievementMax}：{count}件のサンプル",
+    "youDescription": "あなた：Rating {rating}、達成率{achievement}"
   }
 }

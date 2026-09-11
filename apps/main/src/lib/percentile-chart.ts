@@ -35,11 +35,10 @@ export function cumulativeLabel(share: number) {
   return percent > 0 && percent < 1 ? '<1%' : `${Math.round(percent)}%`;
 }
 
-export function peerRankLabel(shareBelow: number, shareAtOrBelow: number) {
-  const format = (share: number) => share < 0.01 ? '<1%' : cumulativeLabel(share);
-  if (shareBelow >= 0.5) return `Top ${format(1 - shareBelow)}`;
-  if (shareAtOrBelow <= 0.5) return `Bottom ${format(shareAtOrBelow)}`;
-  return 'Around median';
+export function peerRank(shareBelow: number, shareAtOrBelow: number) {
+  if (shareBelow >= 0.5) return { kind: 'top' as const, share: 1 - shareBelow };
+  if (shareAtOrBelow <= 0.5) return { kind: 'bottom' as const, share: shareAtOrBelow };
+  return { kind: 'median' as const, share: 0.5 };
 }
 
 /** Stable offsets reveal overlapping bins without implying exact player ratings. */

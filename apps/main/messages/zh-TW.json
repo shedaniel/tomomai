@@ -1477,5 +1477,25 @@
       "cancel": "取消",
       "confirmRemove": "移除簡介"
     }
+  },
+  "scoreComparison": {
+    "title": "成績比較",
+    "view": "比較檢視",
+    "you": "你 · {achievement}",
+    "curveTab": "成績曲線",
+    "ratingTab": "依 Rating",
+    "ratingHeading": "玩家 Rating 與達成率",
+    "curveHeading": "達成率不高於此值的玩家比例",
+    "unavailable": "相近 Rating 的玩家資料不足或分布不均，無法顯示成績曲線。",
+    "ratingAxis": "玩家 Rating",
+    "achievementAxis": "達成率",
+    "top": "同程度玩家中前 {percent}",
+    "bottom": "同程度玩家中後 {percent}",
+    "median": "同程度玩家中接近中位數",
+    "lessThan": "低於 {percent}",
+    "ratingDescription": "依據可用 Rating 區間內 {count} 位Intl玩家的紀錄，比較 Rating 與達成率。圓點將樣本按 125 點 Rating 和 0.1% 達成率分組，並分散在各組範圍內顯示，位置為概略值。你的 Rating 為 {rating}，達成率為 {achievement}。",
+    "curveDescription": "估計相近 Rating 玩家中，達成率不高於各數值的比例。有 {percent} 的玩家達成率不高於你的 {achievement}，包含同分。",
+    "clusterDescription": "Rating {ratingMin}–{ratingMax}；達成率 {achievementMin}–{achievementMax}：{count} 筆樣本",
+    "youDescription": "你：Rating {rating}，達成率 {achievement}"
   }
 }

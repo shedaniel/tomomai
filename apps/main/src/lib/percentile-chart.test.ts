@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { achievementRange, cumulativeLabel, ratingClusterPosition, cumulativePoints, shareAtOrBelow, peerRankLabel } from './percentile-chart';
+import { achievementRange, cumulativeLabel, ratingClusterPosition, cumulativePoints, shareAtOrBelow, peerRank } from './percentile-chart';
 
 describe('score comparison geometry', () => {
   it('keeps a 99.5720% score on the achievement axis even beyond all peers', () => {
@@ -61,14 +61,15 @@ describe('rating cluster positions', () => {
 
 describe('peer rank labels', () => {
   it('includes ties in top and bottom groups', () => {
-    expect(peerRankLabel(0.8, 0.85)).toBe('Top 20%');
-    expect(peerRankLabel(0.15, 0.2)).toBe('Bottom 20%');
-    expect(peerRankLabel(0.4, 0.6)).toBe('Around median');
-    expect(peerRankLabel(0, 1)).toBe('Around median');
+    expect(peerRank(0.8, 0.85)).toMatchObject({ kind: 'top' });
+    expect(peerRank(0.8, 0.85).share).toBeCloseTo(0.2);
+    expect(peerRank(0.15, 0.2)).toMatchObject({ kind: 'bottom', share: 0.2 });
+    expect(peerRank(0.4, 0.6)).toMatchObject({ kind: 'median' });
+    expect(peerRank(0, 1)).toMatchObject({ kind: 'median' });
   });
 
-  it('avoids zero-percent ranks at either extreme', () => {
-    expect(peerRankLabel(1, 1)).toBe('Top <1%');
-    expect(peerRankLabel(0, 0)).toBe('Bottom <1%');
+  it('returns the share for formatting at either extreme', () => {
+    expect(peerRank(1, 1)).toEqual({ kind: 'top', share: 0 });
+    expect(peerRank(0, 0)).toEqual({ kind: 'bottom', share: 0 });
   });
 });
