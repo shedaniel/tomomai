@@ -6,6 +6,7 @@ import { appendFetchState } from "../fetch-states-server";
 import { fetchImageBuffer } from "../image-converter";
 import { logger } from "../logger";
 import { getCurrentVersion } from "../metadata";
+import { isMaimaiMaintenance } from "./maintenance";
 import { decryptToken } from "../token-crypto";
 import { revalidatePublicProfileForUser } from "../profile-cache";
 import { Region } from "../types";
@@ -90,11 +91,10 @@ async function validateRegionAccess(
     throw new Error("No token found for this region. Please add your maimai token first.");
   }
 
-  // Maintenance window: 4-7 AM JST
-  const now = new Date();
-  const jstHour = (now.getUTCHours() + 9) % 24;
-  if (jstHour >= 4 && jstHour < 7) {
-    throw new Error("Cannot fetch data during maintenance window (4AM - 7AM JST)");
+  if (isMaimaiMaintenance(region)) {
+    throw new Error(region === "intl"
+      ? "Cannot fetch data during maintenance window (1AM - 2AM JST; Wednesdays 1AM - 4AM JST)"
+      : "Cannot fetch data during maintenance window (4AM - 7AM JST)");
   }
 
   const rawToken = decryptToken(tokenRecord.token);

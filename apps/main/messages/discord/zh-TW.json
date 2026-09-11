@@ -56,6 +56,7 @@
   },
   "fetch": {
     "maintenanceWindow": "目前是伺服器維護時段（台灣/香港時間凌晨 3 點至 6 點），暫時無法同步資料喔。",
+    "maintenanceWindowIntl": "目前是伺服器維護時段（日本時間凌晨 1 點至 2 點，週三為凌晨 1 點至 4 點），暫時無法同步資料喔。",
     "startError": "啟動資料同步時失敗，請稍候重試。",
     "initializing": {
       "title": "🔄 正在同步 {regionName} 資料",

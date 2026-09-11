@@ -56,6 +56,7 @@
   },
   "fetch": {
     "maintenanceWindow": "Cannot fetch data during maintenance window (4AM - 7AM JST)",
+    "maintenanceWindowIntl": "Cannot fetch data during maintenance window (1AM - 2AM JST; Wednesdays 1AM - 4AM JST)",
     "startError": "An error occurred while starting the fetch. Please try again later.",
     "initializing": {
       "title": "🔄 Fetching {regionName} Data",

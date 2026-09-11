@@ -20,6 +20,7 @@ import {
 } from '../responses';
 import { t } from '../i18n';
 import { Region } from '@/lib/types';
+import { isMaimaiMaintenance } from '@/lib/maimai/maintenance';
 
 export interface FetchCommandOptions {
   discordUserId: string;
@@ -104,11 +105,10 @@ export async function handleFetchCommand({
     const region = resolveRegion(regionParam, dbUser.region);
     const regionName = regionDisplayName(region, locale);
 
-    // Check current time, if it is within 4AM - 7AM in JST, throw an error
-    const now = new Date();
-    const jstHour = (now.getUTCHours() + 9) % 24;
-    if (jstHour >= 4 && jstHour < 7) {
-      return createErrorResponse(t(locale, 'fetch.maintenanceWindow'), locale);
+    if (isMaimaiMaintenance(region)) {
+      return createErrorResponse(t(locale, region === 'intl'
+        ? 'fetch.maintenanceWindowIntl'
+        : 'fetch.maintenanceWindow'), locale);
     }
 
     // Defer the response since fetch can take a while

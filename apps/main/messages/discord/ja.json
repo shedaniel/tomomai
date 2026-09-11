@@ -56,6 +56,7 @@
   },
   "fetch": {
     "maintenanceWindow": "現在メンテナンス時間中（午前4時〜7時）のため、データ同期はできません。",
+    "maintenanceWindowIntl": "現在メンテナンス時間中（日本時間午前1時〜2時、水曜日は午前1時〜4時）のため、データ同期はできません。",
     "startError": "データ同期を開始できませんでした。しばらくしてからもう一度お試しください。",
     "initializing": {
       "title": "🔄 {regionName} データを同期中",
