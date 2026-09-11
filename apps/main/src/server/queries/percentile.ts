@@ -6,6 +6,7 @@ import {
   ChartPercentileBandRow,
 } from "@/lib/db/percentile-view";
 import { sql } from "drizzle-orm";
+import type { PercentileEntry, PercentileBucket, RatingScoreBucket } from "@/lib/percentile-types";
 
 const CHART_PERCENTILE_TIMEOUT_MS = 5000;
 
@@ -25,20 +26,7 @@ export interface ChartPercentileInput {
   achievement: number;
 }
 
-export interface DistributionBucket {
-  /** lower bound of bucket (achievement ×10000) */
-  lo: number;
-  count: number;
-}
-
-export interface ChartPercentileResult {
-  /** 0.0–1.0; 0.0 = lowest scorer, 1.0 = highest scorer among peers */
-  percentile: number;
-  /** merged distinct player count used for this calculation */
-  peerCount: number;
-  /** pre-binned score distribution for the hover-card chart */
-  distribution: DistributionBucket[];
-}
+export type ChartPercentileResult = PercentileEntry;
 
 // ---------------------------------------------------------------------------
 // Rebuild
@@ -65,7 +53,7 @@ export async function rebuildChartPercentileBands(): Promise<{ rowsInserted: num
 /** ±500 band set: 8 consecutive 125-wide bands centred on the user's rating. */
 function getBandRange(userRating: number): { lo: number; hi: number } {
   const centre = Math.floor(userRating / 125) * 125;
-  return { lo: centre - 375, hi: centre + 500 };
+  return { lo: centre - 375, hi: centre + 625 };
 }
 
 /** 4-band (±250) band list */
@@ -86,44 +74,39 @@ function rankBelow(sorted: number[], target: number): number {
   return lo;
 }
 
-/** Merge N pre-sorted arrays into one sorted array. */
-function mergeSorted(arrays: number[][]): number[] {
-  const result: number[] = [];
-  for (const arr of arrays) result.push(...arr);
-  result.sort((a, b) => a - b);
-  return result;
+function buildDistribution(bands: ChartPercentileBandRow[]): PercentileBucket[] {
+  const counts = new Map<number, number>();
+  for (const band of bands) {
+    // Each sampled score represents its share of the band's full player count.
+    const weight = band.player_count / band.achievements.length;
+    for (const score of band.achievements) {
+      counts.set(score, (counts.get(score) ?? 0) + weight);
+    }
+  }
+  return [...counts].sort(([a], [b]) => a - b).map(([lo, count]) => ({ lo, count }));
 }
 
-/** Bin a sorted array into ~numBuckets uniform buckets across its range. */
-function buildDistribution(sorted: number[], numBuckets = 20): DistributionBucket[] {
-  if (sorted.length === 0) return [];
-  const min = sorted[0];
-  const max = sorted[sorted.length - 1];
-  if (min === max) return [{ lo: min, count: sorted.length }];
-
-  const step = (max - min) / numBuckets;
-  const buckets: DistributionBucket[] = Array.from({ length: numBuckets }, (_, i) => ({
-    lo: Math.round(min + i * step),
-    count: 0,
-  }));
-
-  for (const v of sorted) {
-    const idx = Math.min(Math.floor((v - min) / step), numBuckets - 1);
-    buckets[idx].count++;
-  }
-
-  return buckets;
+function buildRatingDistribution(bands: ChartPercentileBandRow[]): RatingScoreBucket[] {
+  return bands.flatMap((band) => {
+    const counts = new Map<number, number>();
+    for (const score of band.achievements) {
+      const lo = Math.floor(score / 1000) * 1000;
+      counts.set(lo, (counts.get(lo) ?? 0) + 1);
+    }
+    return [...counts].sort(([a], [b]) => a - b).map(([achievementLo, count]) => ({
+      ratingLo: band.band_lo, achievementLo, count,
+    }));
+  });
 }
 
 const MIN_PEERS_DISPLAY = 30;
-const MIN_PEERS_EXPAND = 20;
+const MIN_PEERS_EXPAND = MIN_PEERS_DISPLAY;
 
 /**
- * For up to 60 (chart, achievement) pairs and a user rating, returns the
- * percentile for each chart that has enough peers. Charts below the peer
- * threshold are omitted from the result map.
+ * For up to 60 charts, returns all-rating score clusters and a peer comparison
+ * when enough balanced nearby rating bands are available.
  *
- * Makes a single DB round-trip by fetching all 8 bands for all charts at once,
+ * Makes a single DB round-trip by fetching all rating bands for all charts,
  * then decides per-chart whether to use the ±250 or ±500 window.
  */
 export async function getChartPercentiles(
@@ -136,7 +119,7 @@ export async function getChartPercentiles(
   const { lo, hi } = getBandRange(userRating);
   const primary = new Set(primaryBands(userRating));
 
-  // Single query: all bands for all charts in the ±500 window.
+  // All rating bands also feed the rating-versus-achievement plot.
   // statement_timeout bounds the read so a slow/contended matview can't hang the request.
   let rows: ChartPercentileBandRow[];
   try {
@@ -146,8 +129,6 @@ export async function getChartPercentiles(
         SELECT parent_id, band_lo, achievements, player_count
         FROM ${sql.raw(CHART_PERCENTILE_VIEW)}
         WHERE parent_id = ANY(${sql.raw(`ARRAY[${parentIds.map(String).join(",")}]::bigint[]`)})
-          AND band_lo >= ${lo}
-          AND band_lo < ${hi}
       `);
     });
   } catch (err) {
@@ -167,7 +148,9 @@ export async function getChartPercentiles(
   const result = new Map<string, ChartPercentileResult>();
 
   for (const { publicSongId, parentId, achievement } of inputs) {
-    const allBands = byId.get(parentId) ?? [];
+    const chartBands = (byId.get(parentId) ?? []).filter((band) => band.achievements.length > 0);
+    if (!chartBands.length) continue;
+    const allBands = chartBands.filter((band) => band.band_lo >= lo && band.band_lo < hi);
 
     // Try ±250 first
     let bands = allBands.filter((r) => primary.has(r.band_lo));
@@ -179,7 +162,7 @@ export async function getChartPercentiles(
       peerCount = bands.reduce((s, r) => s + r.player_count, 0);
     }
 
-    if (peerCount < MIN_PEERS_DISPLAY) continue;
+
 
     // Guard: if the peer pool is heavily skewed toward higher- or lower-rated
     // bands, the merged score distribution is shifted away from the user's true
@@ -194,14 +177,22 @@ export async function getChartPercentiles(
     const dominant = Math.max(abovePeers, belowAndOwnPeers);
     const minority = Math.min(abovePeers, belowAndOwnPeers);
     // 3:1 threshold — one side must not outnumber the other by more than 3×
-    if (dominant > 3 * (minority + 1)) continue;
+    const hasPeers = peerCount >= MIN_PEERS_DISPLAY && dominant <= 3 * (minority + 1);
+    const rank = hasPeers ? bands.reduce((sum, band) =>
+      sum + rankBelow(band.achievements, achievement) / band.achievements.length * band.player_count, 0) : 0;
 
-    const merged = mergeSorted(bands.map((r) => r.achievements));
-    const rank = rankBelow(merged, achievement);
-    const percentile = merged.length > 0 ? rank / merged.length : 0;
-    const distribution = buildDistribution(merged);
-
-    result.set(publicSongId, { percentile, peerCount, distribution });
+    result.set(publicSongId, {
+      userRating,
+      percentile: hasPeers ? rank / peerCount : null,
+      peerCount,
+      distribution: hasPeers ? buildDistribution(bands) : [],
+      ratingDistribution: buildRatingDistribution(chartBands),
+      totalPlayerCount: chartBands.reduce((sum, band) => sum + band.player_count, 0),
+      peerRatingRange: hasPeers ? {
+        min: Math.min(...bands.map((band) => band.band_lo)),
+        max: Math.max(...bands.map((band) => band.band_lo)) + 124,
+      } : null,
+    });
   }
 
   return result;
