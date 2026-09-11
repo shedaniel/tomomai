@@ -1,3 +1,4 @@
+import pino from "pino";
 import type { NextConfig } from "next";
 import createNextIntlPlugin from 'next-intl/plugin';
 import { withVercelToolbar as withVercelToolbarPlugin } from "@vercel/toolbar/plugins/next";
@@ -30,7 +31,7 @@ const OPENFREEMAP_ORIGIN = 'https://tiles.openfreemap.org';
 function assetOrigin(name: string): string | null {
   const origin = configuredOrigin(process.env[name]);
   if (!origin && process.env.NODE_ENV === 'production') {
-    console.warn(`[csp] ${name} is unset at build time; its origin will be omitted from the CSP`);
+    pino().warn({ scope: name }, "Asset origin is unset at build time; omitted from CSP");
   }
   return origin;
 }
@@ -42,6 +43,7 @@ function buildContentSecurityPolicy(): string {
     assetOrigin('NEXT_PUBLIC_R2_URL'),
     assetOrigin('NEXT_PUBLIC_R2_URL_CN'),
     renderOrigin,
+    configuredOrigin(process.env.CATALOG_COVER_BASE_URL ?? "https://cdn.tomomai.lol"),
     OPENFREEMAP_ORIGIN,
   ].filter((origin): origin is string => origin !== null))];
   const connectOrigins = [
@@ -112,8 +114,8 @@ const APP_VERSION_MINOR = (() => {
 })();
 
 const nextConfig: NextConfig = {
-  transpilePackages: ["@tomomai/ui", "@tomomai/i18n", "@tomomai/markdown"],
-  env: { BUILD_STAMP, GIT_SHA, APP_VERSION_MINOR },
+  transpilePackages: ["@tomomai/ui", "@tomomai/i18n", "@tomomai/markdown", "@tomomai/catalog", "@tomomai/server"],
+  env: { BUILD_STAMP, GIT_SHA, APP_VERSION_MINOR, NEXT_PUBLIC_CATALOG_COVER_BASE_URL: process.env.CATALOG_COVER_BASE_URL ?? "https://cdn.tomomai.lol" },
   async headers() {
     return [
       {
@@ -184,6 +186,7 @@ const nextConfig: NextConfig = {
       }
     ],
     remotePatterns: [
+      new URL(`${(process.env.CATALOG_COVER_BASE_URL ?? "https://cdn.tomomai.lol").replace(/\/$/, "")}/**`),
       {
         protocol: 'https',
         hostname: 'cdn.discordapp.com',
@@ -267,7 +270,6 @@ const nextConfig: NextConfig = {
   outputFileTracingRoot: path.resolve(process.cwd(), '..', '..'),
   outputFileTracingIncludes: {
     '/api/image-proxy': ['./public/res/**/*'],
-    '/api/admin/cache_images': ['./public/res/**/*'],
     '/**/*': ['../../node_modules/.pnpm/kuromoji@*/node_modules/kuromoji/dict/**/*'],
   },
   devIndicators: false,

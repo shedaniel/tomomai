@@ -1,0 +1,814 @@
+import { agentFetch } from "@tomomai/server/http-agent";
+import { Region } from "@/lib/types";
+import { getLogger } from "@/lib/request-logger";
+
+export interface TokenValidationResult {
+  isValid: boolean;
+  redirectUrl?: string;
+  error?: string;
+  cookies?: string;
+  token?: string;
+  // True when `cookies` are already a fully-authenticated maimai-mobile
+  // session and don't need an additional getCookiesFromRedirect exchange.
+  cookiesReady?: boolean;
+}
+
+export async function processMaimaiToken(
+  userId: string | null,
+  region: Region,
+  token: string
+): Promise<TokenValidationResult> {
+  const sanitizedToken = token.trim();
+
+  // Handle cookie:// format
+  if (sanitizedToken.startsWith('cookie://')) {
+    if (region === "jp") {
+      return {
+        isValid: false,
+        error: "Cookie format is not supported for Japan region.",
+      };
+    }
+
+    let cookieValue = sanitizedToken.substring('cookie://'.length);
+
+    // Strip clal= prefix if present since validateMaimaiToken expects just the cookie value
+    if (cookieValue.startsWith('clal=')) {
+      cookieValue = cookieValue.substring('clal='.length);
+    }
+
+    return await validateInternationalMaimaiToken(userId, cookieValue);
+  }
+
+  // Handle account:// format
+  if (sanitizedToken.startsWith('account://')) {
+    const accountData = sanitizedToken.substring('account://'.length);
+
+    let cookieValue: string | null = null;
+    let username: string;
+    let password: string;
+
+    // Use :://  as delimiter to avoid conflicts with @ in passwords
+    const parts = accountData.split(':://');
+
+    if (parts.length === 2) {
+      // Format: account://USERNAME:://PASSWORD
+      username = parts[0];
+      password = parts[1];
+    } else if (parts.length === 3) {
+      // Format: account://COOKIE:://USERNAME:://PASSWORD
+      cookieValue = parts[0];
+      username = parts[1];
+      password = parts[2];
+    } else {
+      getLogger().info("Invalid account token format, removing from database");
+
+      return {
+        isValid: false,
+        error: "Invalid account token format. Expected account://USERNAME:://PASSWORD or account://COOKIE:://USERNAME:://PASSWORD",
+      };
+    }
+
+    // Validate that we have all required parts
+    if (!username || !password) {
+      getLogger().info("Invalid account token format, missing username or password");
+
+      return {
+        isValid: false,
+        error: "Invalid account token format. Username and password cannot be empty.",
+      };
+    }
+
+    // If we have a cookie, try to validate it first
+    if (cookieValue && region === "intl") {
+      getLogger().info({ userId, region }, "Trying to validate existing cookie");
+      // Validate token without auto-deleting (we'll handle re-login here)
+      const cookieResult = await validateInternationalMaimaiToken(
+        userId,
+        cookieValue,
+        false  // Don't delete on failure - we'll try to refresh first
+      );
+
+      if (cookieResult.isValid) {
+        return cookieResult;
+      }
+
+      // Token validation failed - attempt automatic re-login
+      getLogger().info("Token validation failed, attempting automatic re-login");
+      const refreshResult = await performInternationalAccountLogin(
+        userId,
+        username,
+        password
+      );
+
+
+
+      // Re-login also failed - delete token and return error
+      getLogger().warn("Token refresh failed, deleting token");
+
+      return refreshResult;
+    }
+
+    // Proceed with login flow
+    return await performAccountLogin(userId, region, username, password);
+  }
+
+  // Handle lxns:// format
+  if (sanitizedToken.startsWith('lxns://')) {
+    if (region !== "cn") {
+      return {
+        isValid: false,
+        error: "lxns:// token format is only supported for CN region.",
+      };
+    }
+
+    const parsed = parseLxnsToken(sanitizedToken);
+    if (!parsed) {
+      getLogger().info("Invalid lxns token format, removing from database");
+
+      return {
+        isValid: false,
+        error: "Invalid lxns token format. Expected lxns://<access>:://<refresh>:://<expiresAtMs>:://<scope>",
+      };
+    }
+
+    // Reuse access token if not within 30s of expiry
+    if (Date.now() < parsed.expiresAtMs - 30_000) {
+      const ttlSec = Math.round((parsed.expiresAtMs - Date.now()) / 1000);
+      getLogger().debug({ userId, ttlSec }, "lxns oauth: reusing cached access token");
+      return {
+        isValid: true,
+        token: sanitizedToken,
+      };
+    }
+
+    // Refresh
+    getLogger().debug({ userId }, "lxns oauth: access token expired or near expiry, refreshing");
+    const refreshed = await refreshLxnsToken(parsed.refreshToken);
+    if (!refreshed.isValid || !refreshed.token) {
+      getLogger().warn("lxns refresh failed, deleting token");
+
+      return refreshed;
+    }
+
+
+    return refreshed;
+  }
+
+  // Handle cn-cookies:// format (maimai-mobile session cookies for CN,
+  // captured via the WeChat OAuth → HTTP-proxy flow). Returns the cookies
+  // verbatim plus a maimai-mobile referer so the existing scrapeFetcher
+  // pipeline can consume them like any other cookie-based session.
+  if (sanitizedToken.startsWith('cn-cookies://')) {
+    if (region !== "cn") {
+      return {
+        isValid: false,
+        error: "cn-cookies:// token format is only supported for CN region.",
+      };
+    }
+    const parsed = parseCnCookiesToken(sanitizedToken);
+    if (!parsed) {
+      getLogger().info("Invalid cn-cookies token format, removing from database");
+
+      return {
+        isValid: false,
+        error: "Invalid cn-cookies token format.",
+      };
+    }
+    return {
+      isValid: true,
+      redirectUrl: "https://maimai.wahlap.com/maimai-mobile/",
+      cookies: parsed.cookies,
+      cookiesReady: true,
+    };
+  }
+
+  // Handle divingfish:// format
+  if (sanitizedToken.startsWith('divingfish://')) {
+    if (region !== "cn") {
+      return {
+        isValid: false,
+        error: "divingfish:// token format is only supported for CN region.",
+      };
+    }
+
+    const parsed = parseDivingFishToken(sanitizedToken);
+    if (!parsed) {
+      getLogger().info("Invalid divingfish token format, removing from database");
+
+      return {
+        isValid: false,
+        error: "Invalid divingfish token format. Expected divingfish://<username|qq>:://<value>",
+      };
+    }
+
+    if (!process.env.DIVINGFISH_DEV_TOKEN) {
+      return {
+        isValid: false,
+        error: "diving-fish is not configured on the server.",
+      };
+    }
+
+    return {
+      isValid: true,
+      token: sanitizedToken,
+    };
+  }
+
+  // Invalid token format
+  getLogger().info("Invalid token format");
+
+  return {
+    isValid: false,
+    error: "Invalid token format. Token must start with 'cookie://', 'account://', 'lxns://', 'divingfish://', or 'cn-cookies://'",
+  };
+}
+
+export interface ParsedDivingFishToken {
+  kind: "username" | "qq";
+  value: string;
+}
+
+export function parseDivingFishToken(token: string): ParsedDivingFishToken | null {
+  if (!token.startsWith('divingfish://')) return null;
+  const body = token.substring('divingfish://'.length);
+  const parts = body.split(':://');
+  if (parts.length !== 2) return null;
+  const [kind, value] = parts;
+  if ((kind !== "username" && kind !== "qq") || !value) return null;
+  return { kind, value };
+}
+
+export function formatDivingFishToken(parts: ParsedDivingFishToken): string {
+  return `divingfish://${parts.kind}:://${parts.value}`;
+}
+
+
+
+interface ParsedLxnsToken {
+  accessToken: string;
+  refreshToken: string;
+  expiresAtMs: number;
+  scope: string;
+}
+
+export function parseLxnsToken(token: string): ParsedLxnsToken | null {
+  if (!token.startsWith('lxns://')) return null;
+  const body = token.substring('lxns://'.length);
+  const parts = body.split(':://');
+  if (parts.length !== 4) return null;
+  const [accessToken, refreshToken, expiresAtRaw, scope] = parts;
+  const expiresAtMs = Number(expiresAtRaw);
+  if (!accessToken || !refreshToken || !Number.isFinite(expiresAtMs)) return null;
+  return { accessToken, refreshToken, expiresAtMs, scope };
+}
+
+export function formatLxnsToken(parts: ParsedLxnsToken): string {
+  return `lxns://${parts.accessToken}:://${parts.refreshToken}:://${parts.expiresAtMs}:://${parts.scope}`;
+}
+
+
+
+const LXNS_TOKEN_URL = "https://maimai.lxns.net/api/v0/oauth/token";
+
+export async function refreshLxnsToken(refreshToken: string): Promise<TokenValidationResult> {
+  const clientId = process.env.LXNS_CLIENT_ID;
+  const clientSecret = process.env.LXNS_CLIENT_SECRET;
+  if (!clientId || !clientSecret) {
+    return { isValid: false, error: "lxns OAuth is not configured on the server." };
+  }
+
+  try {
+    const body = new URLSearchParams({
+      grant_type: "refresh_token",
+      refresh_token: refreshToken,
+      client_id: clientId,
+      client_secret: clientSecret,
+    });
+    const resp = await fetch(LXNS_TOKEN_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: body.toString(),
+    });
+    if (!resp.ok) {
+      const errorText = await resp.text().catch(() => "");
+      getLogger().warn({ status: resp.status }, `lxns refresh failed: ${errorText}`);
+      return { isValid: false, error: `lxns refresh failed (${resp.status}). Please re-authorize.` };
+    }
+    const json = await resp.json() as Record<string, unknown>;
+    const data = (json.data ?? json) as Record<string, unknown>;
+    const accessToken = typeof data.access_token === "string" ? data.access_token : "";
+    const newRefreshToken = typeof data.refresh_token === "string" ? data.refresh_token : refreshToken;
+    const expiresIn = typeof data.expires_in === "number" ? data.expires_in : 900;
+    const scope = typeof data.scope === "string" ? data.scope : "";
+    if (!accessToken) {
+      return { isValid: false, error: "lxns refresh response missing access_token." };
+    }
+    const formatted = formatLxnsToken({
+      accessToken,
+      refreshToken: newRefreshToken,
+      expiresAtMs: Date.now() + expiresIn * 1000,
+      scope,
+    });
+    getLogger().debug({ ttlSec: expiresIn, scope }, "lxns oauth: refresh succeeded");
+    return { isValid: true, token: formatted };
+  } catch (error) {
+    getLogger().error({ err: error }, "lxns refresh threw");
+    return { isValid: false, error: "Network error during lxns refresh." };
+  }
+}
+
+export async function exchangeLxnsCode(
+  code: string,
+  redirectUri: string
+): Promise<TokenValidationResult> {
+  const clientId = process.env.LXNS_CLIENT_ID;
+  const clientSecret = process.env.LXNS_CLIENT_SECRET;
+  if (!clientId || !clientSecret) {
+    return { isValid: false, error: "lxns OAuth is not configured on the server." };
+  }
+
+  try {
+    const body = new URLSearchParams({
+      grant_type: "authorization_code",
+      code,
+      client_id: clientId,
+      client_secret: clientSecret,
+      redirect_uri: redirectUri,
+    });
+    const resp = await fetch(LXNS_TOKEN_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: body.toString(),
+    });
+    if (!resp.ok) {
+      const errorText = await resp.text().catch(() => "");
+      getLogger().warn({ status: resp.status }, `lxns code exchange failed: ${errorText}`);
+      return { isValid: false, error: `lxns code exchange failed (${resp.status}).` };
+    }
+    const json = await resp.json() as Record<string, unknown>;
+    const data = (json.data ?? json) as Record<string, unknown>;
+    const accessToken = typeof data.access_token === "string" ? data.access_token : "";
+    const refreshToken = typeof data.refresh_token === "string" ? data.refresh_token : "";
+    const expiresIn = typeof data.expires_in === "number" ? data.expires_in : 900;
+    const scope = typeof data.scope === "string" ? data.scope : "";
+    if (!accessToken || !refreshToken) {
+      return { isValid: false, error: "lxns code exchange response missing tokens." };
+    }
+    const formatted = formatLxnsToken({
+      accessToken,
+      refreshToken,
+      expiresAtMs: Date.now() + expiresIn * 1000,
+      scope,
+    });
+    return { isValid: true, token: formatted };
+  } catch (error) {
+    getLogger().error({ err: error }, "lxns code exchange threw");
+    return { isValid: false, error: "Network error during lxns code exchange." };
+  }
+}
+
+export function formatCnCookiesToken(cookies: string): string {
+  return `cn-cookies://${cookies}`;
+}
+
+export function parseCnCookiesToken(token: string): { cookies: string } | null {
+  if (!token.startsWith("cn-cookies://")) return null;
+  const cookies = token.substring("cn-cookies://".length);
+  if (!cookies) return null;
+  return { cookies };
+}
+
+
+
+
+
+
+
+async function performAccountLogin(
+  userId: string | null,
+  region: Region,
+  username: string,
+  password: string
+): Promise<TokenValidationResult> {
+  return region === "intl" ? await performInternationalAccountLogin(userId, username, password) : await performJapanAccountLogin(userId, username, password);
+}
+
+async function performJapanAccountLogin(
+  userId: string | null,
+  username: string,
+  password: string
+): Promise<TokenValidationResult> {
+  const maimaiMobileUrl = "https://maimaidx.jp/maimai-mobile/";
+  const submitUrl = "https://maimaidx.jp/maimai-mobile/submit/";
+
+  getLogger().info({ userId, region: "jp" }, "Attempting account login");
+
+  try {
+    // Step 1: Get the maimai mobile page to obtain _t token and cookies
+    getLogger().debug("Step 1: fetching maimai mobile page to get _t token and cookies");
+    const maimaiPageResponse = await agentFetch(maimaiMobileUrl, {
+      method: "GET",
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+      },
+      redirect: "manual", // Don't follow redirects
+    });
+
+    getLogger().debug({ status: maimaiPageResponse.status }, "Maimai mobile page fetched");
+
+    // Extract cookies from Set-Cookie headers
+    let setCookieHeaders: string[] = [];
+    if (maimaiPageResponse.headers.getSetCookie) {
+      setCookieHeaders = maimaiPageResponse.headers.getSetCookie();
+    } else {
+      // Fallback for environments that don't support getSetCookie()
+      const cookieHeader = maimaiPageResponse.headers.get('set-cookie');
+      if (cookieHeader) {
+        setCookieHeaders = [cookieHeader];
+      }
+    }
+
+    if (setCookieHeaders.length === 0) {
+      getLogger().warn("No Set-Cookie headers in maimai mobile page response");
+
+      return {
+        isValid: false,
+        error: "Failed to obtain session cookies. Please try again later.",
+      };
+    }
+
+    // Extract _t token from Set-Cookie headers
+    let tToken = "";
+    const cookies = setCookieHeaders.map(header => {
+      // Extract just the name=value part (before first semicolon)
+      const cookiePart = header.split(';')[0];
+
+      // Check if this is the _t token
+      if (cookiePart.startsWith('_t=')) {
+        tToken = cookiePart.substring(3); // Remove '_t=' prefix
+        getLogger().debug("Extracted _t token");
+      }
+
+      return cookiePart;
+    }).join('; ');
+
+    if (!tToken) {
+      getLogger().warn("Could not extract _t token from Set-Cookie headers");
+
+      return {
+        isValid: false,
+        error: "Failed to obtain authentication token. Please try again later.",
+      };
+    }
+
+    getLogger().debug({ count: setCookieHeaders.length }, "Parsed cookies for login request");
+
+    // Step 2: POST credentials with all cookies and _t token
+    getLogger().debug("Step 2: posting credentials with cookies and _t token");
+    const formData = new URLSearchParams({
+      segaId: username,
+      password: password,
+      token: tToken
+    });
+
+    const response = await agentFetch(submitUrl, {
+      method: "POST",
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+        "Cookie": cookies,
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Referer": maimaiMobileUrl,
+      },
+      body: formData.toString(),
+      redirect: "manual", // Don't follow redirects
+    });
+
+    getLogger().debug({ status: response.status }, "Japan account login response");
+
+    if (response.status === 302) {
+      // Check redirect URL
+      const redirectUrl = response.headers.get("Location");
+      getLogger().debug({ url: redirectUrl }, "Login redirect");
+
+      if (!redirectUrl) {
+        // 302 without redirect URL means login failed
+        getLogger().warn("Login failed: 302 response without redirect URL");
+
+        return {
+          isValid: false,
+          error: "Login failed. Please check your username and password.",
+        };
+      }
+
+      if (redirectUrl.includes("https://maimaidx.jp/maimai-mobile/aimeList/")) {
+        // Login successful
+        const aimeListSubmitUrl = "https://maimaidx.jp/maimai-mobile/aimeList/submit/?idx=0";
+        getLogger().debug({ url: aimeListSubmitUrl }, "Login successful, using aimeList submit URL");
+
+        return {
+          isValid: true,
+          redirectUrl: aimeListSubmitUrl,
+          cookies: cookies,
+        };
+      } else {
+        // Unexpected redirect URL
+        getLogger().warn({ url: redirectUrl }, "Login failed: unexpected redirect URL");
+
+        return {
+          isValid: false,
+          error: "Login failed. Please check your username and password.",
+        };
+      }
+    } else {
+      // Login failed with non-302 status
+      getLogger().warn({ status: response.status }, "Japan account login failed");
+
+      return {
+        isValid: false,
+        error: "Login failed. Please check your username and password.",
+      };
+    }
+  } catch (error) {
+    getLogger().error({ err: error }, "Error during Japan account login");
+
+    return {
+      isValid: false,
+      error: "Failed to login. Please try again later.",
+    };
+  }
+}
+
+async function performInternationalAccountLogin(
+  userId: string | null,
+  username: string,
+  password: string
+): Promise<TokenValidationResult> {
+  const loginPageUrl = "https://lng-tgk-aime-gw.am-all.net/common_auth/login?site_id=maimaidxex&redirect_url=https://maimaidx-eng.com/maimai-mobile/&back_url=https://maimai.sega.com/";
+  const loginUrl = "https://lng-tgk-aime-gw.am-all.net/common_auth/login/sid";
+
+  getLogger().info({ userId, region: "intl" }, "Attempting account login");
+
+  try {
+    // Step 1: Get the login page to obtain JSESSIONID
+    getLogger().debug("Step 1: fetching login page to get JSESSIONID");
+    const loginPageResponse = await fetch(loginPageUrl, {
+      method: "GET",
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+      },
+      redirect: "manual", // Don't follow redirects
+    });
+
+    getLogger().debug({ status: loginPageResponse.status }, "Login page fetched");
+
+    // Extract cookies from Set-Cookie headers
+    let setCookieHeaders: string[] = [];
+    if (loginPageResponse.headers.getSetCookie) {
+      setCookieHeaders = loginPageResponse.headers.getSetCookie();
+    } else {
+      // Fallback for environments that don't support getSetCookie()
+      const cookieHeader = loginPageResponse.headers.get('set-cookie');
+      if (cookieHeader) {
+        setCookieHeaders = [cookieHeader];
+      }
+    }
+
+    if (setCookieHeaders.length === 0) {
+      getLogger().warn("No Set-Cookie headers in login page response");
+
+      return {
+        isValid: false,
+        error: "Failed to obtain session cookies. Please try again later.",
+      };
+    }
+
+    // Parse all cookies into a cookie bag
+    const cookieBag = setCookieHeaders.map(header => {
+      return header.split(';')[0];
+    }).join('; ');
+
+    getLogger().debug({ count: setCookieHeaders.length }, "Collected cookies from login page");
+
+    // Step 2: POST credentials with JSESSIONID cookie
+    getLogger().debug("Step 2: posting credentials with JSESSIONID");
+    const params = new URLSearchParams({
+      retention: '1',
+      sid: username,
+      password: password
+    });
+
+    const response = await fetch(`${loginUrl}?${params.toString()}`, {
+      method: "POST",
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+        "Cookie": cookieBag,
+      },
+      redirect: "manual", // Don't follow redirects
+    });
+
+    getLogger().debug({ status: response.status }, "Account login response");
+
+    if (response.status === 302) {
+      // Login successful, extract clal cookie from Set-Cookie header
+      const loginSetCookieHeader = response.headers.get("Set-Cookie");
+
+      if (loginSetCookieHeader) {
+        // Extract clal cookie value
+        const clalMatch = loginSetCookieHeader.match(/clal=([^;]+)/);
+        if (clalMatch) {
+          const clalValue = clalMatch[1];
+          getLogger().debug("Extracted clal cookie from login response");
+
+          const newToken = `account://${clalValue}:://${username}:://${password}`;
+
+
+
+          getLogger().debug("Prepared refreshed account token");
+
+          // Get redirect URL for validation result
+          const redirectUrl = response.headers.get("Location");
+          getLogger().debug({ url: redirectUrl }, "Account login successful");
+
+          return {
+            isValid: true,
+            redirectUrl: redirectUrl || undefined,
+            token: clalValue,
+          };
+        } else {
+          getLogger().warn("Could not extract clal cookie from Set-Cookie header");
+          return {
+            isValid: false,
+            error: "maimai accepted your credentials but did not return a session cookie. This is usually a temporary upstream issue. Please try again in a few minutes. If it still fails, resubmit a token via Settings (top-right profile icon) > Fetch.",
+          };
+        }
+      } else {
+        getLogger().warn("No Set-Cookie header in login response");
+        return {
+          isValid: false,
+          error: "maimai accepted your credentials but did not return a session cookie. This is usually a temporary upstream issue. Please try again in a few minutes. If it still fails, resubmit a token via Settings (top-right profile icon) > Fetch.",
+        };
+      }
+    } else {
+      // Login failed
+      getLogger().warn({ status: response.status }, "Account login failed");
+
+      return {
+        isValid: false,
+        error: "Login failed. Please check your username and password.",
+      };
+    }
+  } catch (error) {
+    getLogger().error({ err: error }, "Error during account login");
+
+    return {
+      isValid: false,
+      error: "Failed to login. Please try again later.",
+    };
+  }
+}
+
+export async function validateInternationalMaimaiToken(
+  userId: string | null,
+  token: string,
+  deleteIfFailed: boolean = true
+): Promise<TokenValidationResult> {
+  const loginUrl = "https://lng-tgk-aime-gw.am-all.net/common_auth/login?site_id=maimaidxex&redirect_url=https://maimaidx-eng.com/maimai-mobile/&back_url=https://maimai.sega.com/";
+
+  // Validate and sanitize the token
+  const sanitizedToken = token.trim();
+
+  // Check if token contains only ASCII characters
+  if (!/^[\x00-\x7F]*$/.test(sanitizedToken)) {
+    getLogger().warn("Token contains non-ASCII characters, removing from database");
+
+    // Remove invalid token from database
+
+
+    return {
+      isValid: false,
+      error: "Invalid token format. Please ensure you copied the clal cookie correctly (ASCII characters only).",
+    };
+  }
+
+  // Check if token is not empty
+  if (!sanitizedToken) {
+    getLogger().warn("Empty token provided, removing from database");
+
+    // Remove empty token from database
+
+
+    return {
+      isValid: false,
+      error: "Token cannot be empty.",
+    };
+  }
+
+  getLogger().debug({ userId, region: "intl", count: sanitizedToken.length }, "Validating token");
+
+  try {
+    const response = await fetch(loginUrl, {
+      method: "GET",
+      headers: {
+        "Cookie": `clal=${sanitizedToken}`,
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+      },
+      redirect: "manual", // Don't follow redirects
+    });
+
+    getLogger().debug({ status: response.status }, "Token validation response");
+
+    if (response.status === 302) {
+      // Token is valid, get redirect URL
+      const redirectUrl = response.headers.get("Location");
+      getLogger().debug({ url: redirectUrl }, "Token validation successful");
+
+      return {
+        isValid: true,
+        redirectUrl: redirectUrl || undefined,
+      };
+    } else if (response.status === 200) {
+      // Token expired
+      getLogger().warn("Token expired");
+
+      // Only delete if deleteIfFailed is true
+
+
+      return {
+        isValid: false,
+        error: "Token has expired. Please provide a new token.",
+      };
+    } else {
+      // Unexpected status code
+      getLogger().warn({ status: response.status }, "Unexpected response from token validation");
+      return {
+        isValid: false,
+        error: `Unexpected response from SEGA servers (${response.status})`,
+      };
+    }
+  } catch (error) {
+    getLogger().error({ err: error }, "Error validating token");
+    return {
+      isValid: false,
+      error: "Failed to validate token. Please try again later.",
+    };
+  }
+}
+
+export async function getCookiesFromRedirect(region: Region, redirectUrl: string, redirectCookies: string | null): Promise<string> {
+  getLogger().debug({ region, url: redirectUrl }, "Fetching redirect URL to get login cookies");
+
+  const loginResponse = await agentFetch(redirectUrl, {
+    method: "GET",
+    headers: {
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+      ...(redirectCookies ? { "Cookie": redirectCookies } : {}),
+    },
+    redirect: "manual", // Don't follow redirects
+  });
+
+  getLogger().debug({ status: loginResponse.status }, "Login redirect response");
+
+  // Extract Set-Cookie headers
+  let setCookieHeaders: string[] = [];
+  if (loginResponse.headers.getSetCookie) {
+    setCookieHeaders = loginResponse.headers.getSetCookie();
+  } else {
+    // Fallback for environments that don't support getSetCookie()
+    const cookieHeader = loginResponse.headers.get('set-cookie');
+    if (cookieHeader) {
+      setCookieHeaders = [cookieHeader];
+    }
+  }
+
+  if (setCookieHeaders.length === 0) {
+    getLogger().warn({ region, status: loginResponse.status, url: redirectUrl }, "No cookies received from login redirect");
+    throw new Error(`No cookies received from login redirect (status ${loginResponse.status})`);
+  }
+
+  getLogger().debug({ count: setCookieHeaders.length }, "Received cookies from login");
+
+  // Parse cookies into a single Cookie header value
+  const cookies = setCookieHeaders.map(header => {
+    // Extract just the name=value part (before first semicolon)
+    const cookiePart = header.split(';')[0];
+    return cookiePart;
+  }).join('; ');
+
+  getLogger().debug("Parsed cookies for request");
+  return cookies;
+}
+
+export async function loginAndGetCookies(region: Region, maimaiToken: string): Promise<string> {
+  const validation = await processMaimaiToken(null, region, maimaiToken);
+
+  if (!validation.isValid) {
+    throw new Error(validation.error || "Token validation failed");
+  }
+
+  if (!validation.redirectUrl) {
+    throw new Error("No redirect URL received from token validation");
+  }
+
+  getLogger().info({ region }, "Token validation successful, getting cookies from redirect URL");
+  return await getCookiesFromRedirect(region, validation.redirectUrl, validation.cookies || null);
+}

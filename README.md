@@ -46,6 +46,13 @@ A modern web application for tracking and analyzing your maimai DX scores with f
 
 Visit [http://localhost:3000](http://localhost:3000) to see your application running!
 
+## Catalog data
+
+Main synchronizes the chart and event catalog from the official catalog CDN.
+Self-hosters do not need scraper accounts or a catalog bucket. Catalog operators
+run `apps/data` separately; see [SETUP.md](SETUP.md) and
+[the catalog service rollout](docs/CATALOG_SERVICE.md).
+
 ## Usage
 
 ## Development

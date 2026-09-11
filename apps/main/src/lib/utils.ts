@@ -51,7 +51,8 @@ export function safeDecodeURIComponent(value: string): string {
 export function isR2Url(url: string): boolean {
   const r2Base = process.env.NEXT_PUBLIC_R2_URL;
   const r2BaseCN = process.env.NEXT_PUBLIC_R2_URL_CN;
-  return (!!r2Base && url.startsWith(r2Base)) || (!!r2BaseCN && url.startsWith(r2BaseCN));
+  const catalogBase = process.env.NEXT_PUBLIC_CATALOG_COVER_BASE_URL ?? "https://cdn.tomomai.lol";
+  return url.startsWith(`${catalogBase.replace(/\/$/, "")}/`) || (!!r2Base && url.startsWith(r2Base)) || (!!r2BaseCN && url.startsWith(r2BaseCN));
 }
 
 // Reads `country` cookie (set by middleware from x-vercel-ip-country).
@@ -76,7 +77,8 @@ function maybeRewriteR2ForCN(url: string): string {
 
 export function getTypeBadgeUrl(type: "dx" | "std" | string): string {
   const basename = type === "dx" ? "music_dx" : "music_standard";
-  return `${process.env.NEXT_PUBLIC_R2_URL}/covers/${basename}.webp`;
+  const base = process.env.NEXT_PUBLIC_CATALOG_COVER_BASE_URL ?? "https://cdn.tomomai.lol";
+  return `${base.replace(/\/$/, "")}/covers/${basename}.webp`;
 }
 
 export function getLogoUrl(gameVersion: number, region: "intl" | "jp" | "cn"): string {

@@ -50,8 +50,6 @@ When enabled, the widget must have [pre-clearance enabled](https://developers.cl
 | `DISCORD_PUBLIC_KEY` | Yes | Discord application public key for interaction verification |
 | `NEXT_PUBLIC_DISCORD_APPLICATION_ID` | Yes | Discord application ID (public, used client-side) |
 | `DISCORD_BOT_TOKEN` | Scripts | Bot token for registering slash commands |
-| `DISCORD_UPDATE_WEBHOOK` | No | Webhook URL for posting update notifications |
-| `DISCORD_UPDATE_WEBHOOK_NOTICE` | No | Webhook URL for posting update notices. The channel should never be publicly accessible as it contains admin confirmation buttons |
 
 ### Cloudflare R2
 
@@ -91,12 +89,16 @@ that service.
 | `RENDER_PUBLIC_URL` | Yes | Public origin of the render service (e.g. `https://render.yourdomain.com`). The image routes 302 here, and it is added to the Content-Security-Policy `img-src`/`connect-src` so browsers can load and download the images |
 | `RENDER_INTERNAL_URL` | No | Server-to-server origin used for the Discord followup upload call. Falls back to `RENDER_PUBLIC_URL`. Set this when the render service is reachable on a private or internal URL from `apps/main` |
 
-### AI
+### Catalog
 
 | Variable | Required | Description |
 |---|---|---|
-| `OPENROUTER_KEY` | For events | OpenRouter API key for AI-powered event fetching |
-| `AI_MODEL` | No | AI model to use (recommended: `google/gemini-3.1-flash-lite-preview`) |
+| `CATALOG_URL` | No | Catalog storage base URL; defaults to `https://cdn.tomomai.lol`. Used for `catalog/latest.json` and public catalog redirects. |
+| `CATALOG_COVER_BASE_URL` | No | Base URL for relative cover keys; defaults to the official CDN. Set at build time too for the image CSP. |
+
+Main imports chart and tour-event data from the catalog service. It does not
+need SEGA scraper accounts or an OpenRouter key. R2 credentials above are for
+user assets such as albums and avatars, independent of catalog storage.
 
 ### Logging
 
@@ -182,49 +184,27 @@ To deploy:
 
 The proxy is generalisable to any deployment — none of `Caddyfile.tmpl` or `deploy.sh` is hardcoded to `tomomai.lol`. See `cn/README.md` for the full reference and a "Generalising to your own domain" walkthrough.
 
-## Populating Songs Data
+## Synchronizing the Catalog
 
-After setting up the database and environment variables, you need to populate the songs database. Run the following curl commands for each region individually:
+After the deployment mechanism applies the main database migrations, load the
+published catalog:
 
 ```bash
-# Update JP songs
-curl -X POST "https://yourdomain.com/api/admin/update_all?region=jp&token=account://<sega-username>:://<sega-password>" \
-  -H "Authorization: Bearer $ADMIN_UPDATE_TOKEN"
-
-# Update INTL songs
-curl -X POST "https://yourdomain.com/api/admin/update_all?region=intl&token=account://<sega-username>:://<sega-password>" \
+curl -X POST "https://yourdomain.com/api/admin/catalog-sync" \
   -H "Authorization: Bearer $ADMIN_UPDATE_TOKEN"
 ```
 
-Replace `<sega-username>` and `<sega-password>` with your SEGA account credentials for the respective region. Each region must be updated separately.
+Schedule authenticated `GET /api/cron/catalog-sync` with your external scheduler.
+The cron endpoint uses `CRON_SECRET`; manual sync uses `ADMIN_UPDATE_TOKEN`.
+Repeated syncs skip an unchanged
+release. A failed sync leaves the prior catalog in place; correct the error
+and retry. User-referenced charts removed upstream are retained locally.
 
-For INTL, you can also use a cookie token instead of account credentials:
+Use one catalog source for the lifetime of an instance. Sync rejects identity
+conflicts instead of reassigning existing scores to a different chart. Existing
+independently populated databases require an explicit identity reconciliation;
+changing the source URL does not perform one.
 
-```bash
-curl -X POST "https://yourdomain.com/api/admin/update_all?region=intl&token=cookie://<cookie-value>" \
-  -H "Authorization: Bearer $ADMIN_UPDATE_TOKEN"
-```
-
-## Preparing a New Game Version
-
-When a new maimai DX version is released, you need to copy the existing songs data to the new version. For example, to prepare version 13 (CiRCLE PLUS) for JP by copying all songs from version 12 (CiRCLE):
-
-```bash
-curl "https://yourdomain.com/api/admin/import?from=version<=12@jp-12&to=jp-13" \
-  -H "Authorization: Bearer $ADMIN_UPDATE_TOKEN"
-```
-
-This copies all songs where `addedVersion <= 12` from `jp-12` to `jp-13`. The `from` parameter format is `version[<=|>=|=]NUMBER@[intl|jp]-VERSION_ID` and the `to` parameter format is `[intl|jp]-VERSION_ID`.
-
-After importing, run the [songs update](#populating-songs-data) for that region to pull in any new songs added in the new version.
-
-## Populating Events Data
-
-After populating songs, fetch event data (requires `OPENROUTER_KEY` to be set):
-
-```bash
-curl -X POST "https://yourdomain.com/api/admin/events/fetch" \
-  -H "Authorization: Bearer $ADMIN_UPDATE_TOKEN"
-```
-
-After running this, check the Discord channel configured for `DISCORD_UPDATE_WEBHOOK_NOTICE` and click **Confirm** to approve the fetched events.
+Only the catalog operator runs scrapers, cover publication, version imports,
+and event confirmation. See [the data service setup](apps/data/SETUP.md) and
+[the extraction rollout](docs/CATALOG_SERVICE.md).

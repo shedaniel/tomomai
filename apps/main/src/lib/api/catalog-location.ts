@@ -12,7 +12,6 @@ export function songCatalogKey(region: Region, gameVersion: number): string {
 }
 
 export function catalogUrl(key: string): string {
-  const base = process.env.NEXT_PUBLIC_R2_URL;
-  if (!base) throw new Error("NEXT_PUBLIC_R2_URL is required for the song catalog redirect");
+  const base = process.env.CATALOG_URL ?? "https://cdn.tomomai.lol";
   return `${base.replace(/\/$/, "")}/${key}`;
 }
