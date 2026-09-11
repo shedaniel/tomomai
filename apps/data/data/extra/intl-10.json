@@ -1,0 +1,158 @@
+[
+    {
+        "title": "果ての空、僕らが見た光。",
+        "artist": "TAKU1175 ft.駄々子",
+        "genre": "maimai",
+        "type": "dx",
+        "addedVersion": 10,
+        "cover": "https://maimai.sega.jp/storage/area/region/skystreet6/jacket/skystreet6-4.png",
+        "levels": {
+            "easy": {
+                "level": "4",
+                "levelPrecise": 40
+            },
+            "advanced": {
+                "level": "8",
+                "levelPrecise": 80
+            },
+            "expert": {
+                "level": "10+",
+                "levelPrecise": 108
+            },
+            "master": {
+                "level": "13+",
+                "levelPrecise": 137
+            }
+        }
+    },
+    {
+        "title": "氷滅の135小節",
+        "artist": "大国奏音",
+        "genre": "maimai",
+        "type": "dx",
+        "addedVersion": 10,
+        "cover": "https://cdn.gamerch.com/resize/eyJidWNrZXQiOiJnYW1lcmNoLWltZy1jb250ZW50cyIsImtleSI6Indpa2lcLzM5NTJcL2VudHJ5XC9IempkdmE1My5wbmciLCJlZGl0cyI6eyJ3ZWJwIjp7InF1YWxpdHkiOjg1fSwidG9Gb3JtYXQiOiJ3ZWJwIiwicmVzaXplIjp7IndpZHRoIjoyMDAsImZpdCI6ImNvdmVyIn19fQ==",
+        "levels": {
+            "easy": {
+                "level": "7",
+                "levelPrecise": 70
+            },
+            "advanced": {
+                "level": "9+",
+                "levelPrecise": 96
+            },
+            "expert": {
+                "level": "13",
+                "levelPrecise": 134
+            },
+            "master": {
+                "level": "14+",
+                "levelPrecise": 148
+            }
+        }
+    },
+    {
+        "title": "有明/Ariake",
+        "artist": "SIINCA",
+        "genre": "maimai",
+        "type": "dx",
+        "addedVersion": 10,
+        "cover": "https://maimaidx.jp/maimai-mobile/img/Music/2e4769fb4445584c.png",
+        "levels": {
+            "easy": {
+                "level": "5",
+                "levelPrecise": 50
+            },
+            "advanced": {
+                "level": "8",
+                "levelPrecise": 80
+            },
+            "expert": {
+                "level": "12",
+                "levelPrecise": 124
+            },
+            "master": {
+                "level": "14",
+                "levelPrecise": 144
+            }
+        }
+    },
+    {
+        "title": "宙天",
+        "artist": "t+pazolite vs かねこちはる",
+        "genre": "maimai",
+        "type": "dx",
+        "addedVersion": 10,
+        "cover": "https://info-maimai.sega.jp/wp-content/uploads/2025/02/48aee117c7aac016b1b0e4618ce98374.jpg",
+        "levels": {
+            "easy": {
+                "level": "6",
+                "levelPrecise": 60
+            },
+            "advanced": {
+                "level": "8+",
+                "levelPrecise": 86
+            },
+            "expert": {
+                "level": "13",
+                "levelPrecise": 135
+            },
+            "master": {
+                "level": "14+",
+                "levelPrecise": 149
+            }
+        }
+    },
+    {
+        "title": "宙天",
+        "artist": "t+pazolite vs かねこちはる",
+        "genre": "maimai",
+        "type": "dx",
+        "addedVersion": 10,
+        "cover": "https://info-maimai.sega.jp/wp-content/uploads/2025/02/48aee117c7aac016b1b0e4618ce98374.jpg",
+        "levels": {
+            "easy": {
+                "level": "6",
+                "levelPrecise": 60
+            },
+            "advanced": {
+                "level": "8+",
+                "levelPrecise": 86
+            },
+            "expert": {
+                "level": "13",
+                "levelPrecise": 135
+            },
+            "master": {
+                "level": "14+",
+                "levelPrecise": 149
+            }
+        }
+    },
+    {
+        "title": "Cryptarithm",
+        "artist": "削除",
+        "genre": "maimai",
+        "type": "dx",
+        "addedVersion": 10,
+        "cover": "https://maimaidx.jp/maimai-mobile/img/Music/cb40822c0f5a3ec1.png",
+        "levels": {
+            "easy": {
+                "level": "6",
+                "levelPrecise": 60
+            },
+            "advanced": {
+                "level": "8+",
+                "levelPrecise": 86
+            },
+            "expert": {
+                "level": "13",
+                "levelPrecise": 130
+            },
+            "master": {
+                "level": "14+",
+                "levelPrecise": 147
+            }
+        }
+    }
+]

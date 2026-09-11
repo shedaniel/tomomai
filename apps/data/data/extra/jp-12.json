@@ -1,0 +1,318 @@
+[
+    {
+        "title": "果ての空、僕らが見た光。",
+        "artist": "TAKU1175 ft.駄々子",
+        "genre": "maimai",
+        "type": "dx",
+        "addedVersion": 10,
+        "cover": "https://maimai.sega.jp/storage/area/region/skystreet6/jacket/skystreet6-4.png",
+        "levels": {
+            "easy": {
+                "level": "4",
+                "levelPrecise": 40
+            },
+            "advanced": {
+                "level": "8",
+                "levelPrecise": 80
+            },
+            "expert": {
+                "level": "10+",
+                "levelPrecise": 108
+            },
+            "master": {
+                "level": "13+",
+                "levelPrecise": 137
+            }
+        }
+    },
+    {
+        "title": "氷滅の135小節",
+        "artist": "大国奏音",
+        "genre": "maimai",
+        "type": "dx",
+        "addedVersion": 10,
+        "cover": "https://cdn.gamerch.com/resize/eyJidWNrZXQiOiJnYW1lcmNoLWltZy1jb250ZW50cyIsImtleSI6Indpa2lcLzM5NTJcL2VudHJ5XC9IempkdmE1My5wbmciLCJlZGl0cyI6eyJ3ZWJwIjp7InF1YWxpdHkiOjg1fSwidG9Gb3JtYXQiOiJ3ZWJwIiwicmVzaXplIjp7IndpZHRoIjoyMDAsImZpdCI6ImNvdmVyIn19fQ==",
+        "levels": {
+            "easy": {
+                "level": "7",
+                "levelPrecise": 70
+            },
+            "advanced": {
+                "level": "9+",
+                "levelPrecise": 96
+            },
+            "expert": {
+                "level": "13",
+                "levelPrecise": 134
+            },
+            "master": {
+                "level": "14+",
+                "levelPrecise": 148
+            }
+        }
+    },
+    {
+        "title": "有明/Ariake",
+        "artist": "SIINCA",
+        "genre": "maimai",
+        "type": "dx",
+        "addedVersion": 10,
+        "cover": "https://maimaidx.jp/maimai-mobile/img/Music/2e4769fb4445584c.png",
+        "levels": {
+            "easy": {
+                "level": "5",
+                "levelPrecise": 50
+            },
+            "advanced": {
+                "level": "8",
+                "levelPrecise": 80
+            },
+            "expert": {
+                "level": "12",
+                "levelPrecise": 124
+            },
+            "master": {
+                "level": "14",
+                "levelPrecise": 144
+            }
+        }
+    },
+    {
+        "title": "宙天",
+        "artist": "t+pazolite vs かねこちはる",
+        "genre": "maimai",
+        "type": "dx",
+        "addedVersion": 10,
+        "cover": "https://info-maimai.sega.jp/wp-content/uploads/2025/02/48aee117c7aac016b1b0e4618ce98374.jpg",
+        "levels": {
+            "easy": {
+                "level": "6",
+                "levelPrecise": 60
+            },
+            "advanced": {
+                "level": "8+",
+                "levelPrecise": 86
+            },
+            "expert": {
+                "level": "13",
+                "levelPrecise": 135
+            },
+            "master": {
+                "level": "14+",
+                "levelPrecise": 149
+            }
+        }
+    },
+    {
+        "title": "Åntinomiε",
+        "artist": "ああ…翡翠茶漬け…",
+        "genre": "maimai",
+        "type": "dx",
+        "addedVersion": 11,
+        "cover": "https://maimaidx.jp/maimai-mobile/img/Music/b232e4ac452ac306.png",
+        "levels": {
+            "easy": {
+                "level": "6",
+                "levelPrecise": 60
+            },
+            "advanced": {
+                "level": "9",
+                "levelPrecise": 95
+            },
+            "expert": {
+                "level": "12+",
+                "levelPrecise": 128
+            },
+            "master": {
+                "level": "14+",
+                "levelPrecise": 146
+            }
+        }
+    },
+    {
+        "title": "FLΛME/FRΦST",
+        "artist": "FANTAGIRAFF",
+        "genre": "maimai",
+        "type": "dx",
+        "addedVersion": 11,
+        "cover": "https://maimaidx.jp/maimai-mobile/img/Music/cd7dc8b9ec80cf06.png",
+        "levels": {
+            "easy": {
+                "level": "5",
+                "levelPrecise": 50
+            },
+            "advanced": {
+                "level": "8",
+                "levelPrecise": 80
+            },
+            "expert": {
+                "level": "12+",
+                "levelPrecise": 129
+            },
+            "master": {
+                "level": "14+",
+                "levelPrecise": 148
+            }
+        }
+    },
+    {
+        "title": "World's end BLACKBOX",
+        "artist": "打打だいず",
+        "genre": "maimai",
+        "type": "dx",
+        "addedVersion": 11,
+        "cover": "https://maimaidx.jp/maimai-mobile/img/Music/4f8dd5d9c721b249.png",
+        "levels": {
+            "easy": {
+                "level": "7+",
+                "levelPrecise": 78
+            },
+            "advanced": {
+                "level": "10",
+                "levelPrecise": 105
+            },
+            "expert": {
+                "level": "13",
+                "levelPrecise": 131
+            },
+            "master": {
+                "level": "14+",
+                "levelPrecise": 149
+            }
+        }
+    },
+    {
+        "title": "プリズム△▽リズム",
+        "artist": "Shoichiro Hirata feat.Sana",
+        "genre": "maimai",
+        "type": "std",
+        "addedVersion": 11,
+        "cover": "https://maimaidx.jp/maimai-mobile/img/Music/0357191a14ae5114.png",
+        "levels": {
+            "easy": {
+                "level": "4",
+                "levelPrecise": 40
+            },
+            "advanced": {
+                "level": "6",
+                "levelPrecise": 60
+            },
+            "expert": {
+                "level": "9",
+                "levelPrecise": 90
+            },
+            "master": {
+                "level": "13",
+                "levelPrecise": 130
+            }
+        }
+    },
+    {
+        "title": "Believe the Rainbow",
+        "artist": "Shoichiro Hirata feat.Sana",
+        "genre": "maimai",
+        "type": "dx",
+        "addedVersion": 11,
+        "cover": "https://maimai.sega.jp/storage/jacket/190701_img3.jpg",
+        "levels": {
+            "easy": {
+                "level": "2",
+                "levelPrecise": 20
+            },
+            "advanced": {
+                "level": "6",
+                "levelPrecise": 60
+            },
+            "expert": {
+                "level": "9+",
+                "levelPrecise": 96
+            },
+            "master": {
+                "level": "13",
+                "levelPrecise": 130
+            }
+        }
+    },
+    {
+        "title": "AFTER PANDORA",
+        "artist": "削除",
+        "genre": "maimai",
+        "type": "std",
+        "addedVersion": 11,
+        "cover": "https://maimaidx.jp/maimai-mobile/img/Music/337975e1e775a059.png",
+        "levels": {
+            "easy": {
+                "level": "3",
+                "levelPrecise": 30
+            },
+            "advanced": {
+                "level": "7+",
+                "levelPrecise": 7
+            },
+            "expert": {
+                "level": "12",
+                "levelPrecise": 125
+            },
+            "master": {
+                "level": "14",
+                "levelPrecise": 142
+            }
+        }
+    },
+    {
+        "title": "Xaleid◆scopiX",
+        "artist": "xi",
+        "genre": "maimai",
+        "type": "dx",
+        "addedVersion": 11,
+        "cover": "https://maimaidx.jp/maimai-mobile/img/Music/7bf12d9c7382a32c.png",
+        "levels": {
+            "easy": {
+                "level": "7+",
+                "levelPrecise": 79
+            },
+            "advanced": {
+                "level": "11",
+                "levelPrecise": 110
+            },
+            "expert": {
+                "level": "13+",
+                "levelPrecise": 137
+            },
+            "master": {
+                "level": "14+",
+                "levelPrecise": 149
+            },
+            "remaster": {
+                "level": "15",
+                "levelPrecise": 150
+            }
+        }
+    },
+    {
+        "title": "Ref:rain (for 7th Heaven)",
+        "artist": "カモメサノエレクトリックオーケストラ include Limonène",
+        "genre": "maimai",
+        "type": "dx",
+        "addedVersion": 11,
+        "cover": "https://maimaidx.jp/maimai-mobile/img/Music/3012b0903feb6e15.png",
+        "levels": {
+            "easy": {
+                "level": "4",
+                "levelPrecise": 40
+            },
+            "advanced": {
+                "level": "8",
+                "levelPrecise": 80
+            },
+            "expert": {
+                "level": "12",
+                "levelPrecise": 125
+            },
+            "master": {
+                "level": "14",
+                "levelPrecise": 140
+            }
+        }
+    }
+]
