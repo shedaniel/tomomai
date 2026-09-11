@@ -7,6 +7,7 @@ describe("version release times", () => {
   it.each([
     ["intl", "2026-07-23", 12, 13],
     ["jp", "2026-09-17", 13, 14],
+    ["cn", "2026-06-10", 10, 11],
   ] as const)("switches %s at exactly 7 AM JST", (region, day, previous, next) => {
     for (const time of ["00:00:00", "02:00:00", "06:59:59.999"]) {
       const date = new Date(`${day}T${time}+09:00`);
@@ -23,13 +24,6 @@ describe("version release times", () => {
     expect(getCurrentVersion(region)).toBe(previous);
     vi.setSystemTime(release);
     expect(getCurrentVersion(region)).toBe(next);
-  });
-
-  it("preserves CN midnight releases", () => {
-    const release = new Date("2026-06-10T00:00:00+09:00");
-    expect(getVersionFromDate(new Date(release.getTime() - 1), "cn")).toBe(10);
-    expect(getVersionFromDate(release, "cn")).toBe(11);
-    expect(isVersionAvailable(11, "cn", release)).toBe(true);
   });
 
   it("keeps date parsing at JST midnight", () => {
