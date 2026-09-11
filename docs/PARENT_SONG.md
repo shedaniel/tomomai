@@ -1,8 +1,9 @@
 # Parent chart catalog
 
 The catalog separates canonical charts from their region/version instances.
-Scraping, imports, events, covers, catalog publication and user data live
-in `apps/main` and its database.
+Scraping, imports, events, covers, and catalog publication live in `apps/data`.
+User data and a local catalog replica live in `apps/main`. See
+[the catalog service](CATALOG_SERVICE.md) for synchronization and rollout.
 
 ## Identity and persistence
 
@@ -15,9 +16,9 @@ the backfill. Parent deletion is restricted while any child exists.
 Uploads and imports resolve parents and preserve child IDs. Catalog writes
 are serialized with a transaction advisory lock, as is publication. Upload
 matching reserves exact artist matches before weaker fallbacks, so a new
-colliding chart cannot take a known chart's identity. Ordinary deletion checks
-scores, recent plays and albums; the explicit destructive mode still permits
-deleting referenced songs. Orphan parents are retained.
+colliding chart cannot take a known chart's identity. Main synchronization retains removed instances referenced by scores, recent
+plays, or albums. The data service retains removed instance identities for
+reuse if a chart returns. Orphan parents are retained.
 
 Percentile bands aggregate each player's best score by parent identity across
 versions, retaining the existing international-player population policy.
@@ -52,7 +53,7 @@ The public dictionary and song slices are validated and uploaded to the new
 to R2, preserving CDN delivery instead of restoring per-request database reads.
 Every metadata-supported slice is published, including empty ones, to replace
 stale contents when the last song in a slice disappears. Unknown versions are
-rejected before catalog writes. Main's current version metadata remains the
+rejected before catalog writes. Shared catalog version metadata remains the
 authority, including MAGiCAL and CiRCLE PLUS release dates.
 
 The publisher holds the shared catalog advisory lock from its joined read
@@ -67,39 +68,12 @@ Guess retains its daily memo. Render caches the exact slices named by each
 token's chart IDs, including historical or mixed-version plays. Main catalog
 cache keys have a new namespace while existing invalidation tags remain valid.
 
-## Deployment sequence
+## Deployment
 
-This repository change does not apply schema changes or publish data. Deployment
-must be coordinated because old application code reads columns removed by the
-new schema and old renderers cannot decode new tokens.
-
-1. Back up and audit the current database. Quiesce old application traffic and
-   catalog jobs for the coordinated schema/application cutover.
-2. Have the authorized deployment mechanism apply the reviewed single new
-   `0017_windy_namorita.sql` migration. It locks songs, creates parents,
-   backfills children, checks collision multiplicity and completeness, drops
-   the old percentile view, and only then enforces the new child constraints
-   and removes duplicate columns. It does not renumber song rows.
-   Collision groups seed identities from the largest slice, preferring the
-   latest version and JP on ties. Each remaining slice reserves unique artist
-   matches against all assigned aliases, then permits a rename only when one
-   chart and one identity remain. Ambiguous matches abort the migration with
-   the chart and slice to audit; resolve those mappings before retrying.
-3. Start the new main app behind the maintenance boundary. Invoke authenticated
-   `POST /api/admin/catalog/publish` with the existing `ADMIN_UPDATE_TOKEN` to
-   populate the new R2 namespace without scraping or rewriting catalog rows.
-   On failure, retry this endpoint before reopening public traffic.
-4. Deploy the updated render service and guess app with main. Purge cached old
-   `/api/v1/songs` redirects and any old frontend/API payloads that hold old
-   song IDs. Verify the parent dictionary, current and historical slices,
-   a profile image, last credit and daily plays before reopening traffic.
-5. Run the existing authorized percentile refresh job to recreate the view
-   and index. Until it runs, percentile reads gracefully return no bands.
-
-Rolling back application code alone is not sufficient after this destructive
-schema migration. Use the database backup and matching old application versions
-if rollback is required. The legacy one-off Turso-to-Postgres import script
-targets the old schema and is not a supported restore path for this schema.
+The parent schema is the baseline for catalog extraction. Follow the
+[catalog service rollout](CATALOG_SERVICE.md#coordinated-rollout) when moving
+catalog ownership to the data service. Existing song IDs and user references
+must be preserved by seeding before enabling synchronization.
 
 ## Verification evidence
 

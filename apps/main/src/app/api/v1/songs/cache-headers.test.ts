@@ -6,13 +6,13 @@ import { GET as getParents } from "../parents/route";
 
 const EXPECTED_SONG_CATALOG_CACHE_VALUE = "public, max-age=3600, stale-while-revalidate=86400";
 
-const originalR2Url = process.env.NEXT_PUBLIC_R2_URL;
+const originalCatalogUrl = process.env.CATALOG_URL;
 
 afterEach(() => {
-  if (originalR2Url === undefined) {
-    delete process.env.NEXT_PUBLIC_R2_URL;
+  if (originalCatalogUrl === undefined) {
+    delete process.env.CATALOG_URL;
   } else {
-    process.env.NEXT_PUBLIC_R2_URL = originalR2Url;
+    process.env.CATALOG_URL = originalCatalogUrl;
   }
 });
 
@@ -26,7 +26,7 @@ describe("SONG_CATALOG_CACHE_HEADERS", () => {
   });
 
   it("redirects the stable API path to the R2 catalog with the shared cache policy", () => {
-    process.env.NEXT_PUBLIC_R2_URL = "https://cdn.example.test/";
+    process.env.CATALOG_URL = "https://cdn.example.test/";
 
     const response = GET(new NextRequest("https://example.test/api/v1/songs?region=jp&gameVersion=11"));
 
@@ -43,7 +43,7 @@ describe("SONG_CATALOG_CACHE_HEADERS", () => {
   });
 
   it("redirects the parent dictionary to the new R2 namespace", () => {
-    process.env.NEXT_PUBLIC_R2_URL = "https://cdn.example.test";
+    process.env.CATALOG_URL = "https://cdn.example.test";
     const response = getParents();
     expect(response.headers.get("location")).toBe("https://cdn.example.test/api/v1/catalog-parent-v1/parents");
     expect(response.headers.get("Cache-Control")).toBe(EXPECTED_SONG_CATALOG_CACHE_VALUE);

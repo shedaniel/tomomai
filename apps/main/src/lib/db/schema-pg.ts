@@ -1,11 +1,9 @@
+import { parentSong, songs, tourEvents, tourEventSteps, regionEnum, difficultyEnum, levelEnum, chartTypeEnum } from "@tomomai/catalog/schema";
+export { parentSong, songs, tourEvents, tourEventSteps, regionEnum, difficultyEnum, levelEnum, chartTypeEnum };
 import { pgTable, text, integer, smallint, bigint, bigserial, boolean, timestamp, unique, uniqueIndex, index, pgEnum, jsonb, varchar, check, uuid, point, primaryKey } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import {
   LANGUAGE_ENUM,
-  REGION_ENUM,
-  DIFFICULTY_ENUM,
-  LEVEL_ENUM,
-  CHART_TYPE_ENUM,
   FC_ENUM,
   FS_ENUM,
   FETCH_STATUS_ENUM,
@@ -17,11 +15,7 @@ import {
 
 // PostgreSQL enum types
 export const languageEnum = pgEnum("language", LANGUAGE_ENUM);
-export const regionEnum = pgEnum("region", REGION_ENUM);
 export const roleEnum = pgEnum("role", ["user", "admin"]);
-export const difficultyEnum = pgEnum("difficulty", DIFFICULTY_ENUM);
-export const levelEnum = pgEnum("level", LEVEL_ENUM);
-export const chartTypeEnum = pgEnum("chart_type", CHART_TYPE_ENUM);
 export const fcEnum = pgEnum("fc", FC_ENUM);
 export const fsEnum = pgEnum("fs", FS_ENUM);
 export const fetchStatusEnum = pgEnum("fetch_status", FETCH_STATUS_ENUM);
@@ -215,42 +209,6 @@ export const userSnapshots = pgTable("user_snapshots", {
   index("user_snapshots_userid_region_fetchedat_idx").on(table.userId, table.region, table.fetchedAt),
 ]);
 
-export const parentSong = pgTable("parent_song", {
-  id: bigint("id", { mode: "bigint" }).primaryKey().generatedAlwaysAsIdentity(),
-  publicId: varchar("publicId", { length: 8 }).notNull().unique(),
-  songName: text("songName").notNull(),
-  artist: text("artist").notNull(),
-  genre: text("genre").notNull(),
-  cover: text("cover").notNull(),
-  bpm: smallint("bpm"),
-  type: chartTypeEnum("type").notNull(),
-  difficulty: difficultyEnum("difficulty").notNull(),
-  disambiguator: smallint("disambiguator").notNull().default(0),
-}, (table) => [
-  unique("parent_song_name_type_difficulty_disambiguator_unique").on(table.songName, table.type, table.difficulty, table.disambiguator),
-  index("parent_song_songname_type_idx").on(table.songName, table.type),
-]);
-
-export const songs = pgTable("songs", {
-  id: bigint("id", { mode: "bigint" }).primaryKey().generatedAlwaysAsIdentity(), // Internal auto-increment ID
-  parentId: bigint("parentId", { mode: "bigint" }).notNull().references(() => parentSong.id, { onDelete: "restrict" }),
-  level: levelEnum("level").notNull(),
-  levelPrecise: smallint("levelPrecise").notNull(), // stored as 10x, e.g., 16.5 = 165
-  region: regionEnum("region").notNull(),
-  gameVersion: smallint("gameVersion").notNull(), // ref @metadata.ts
-  addedVersion: smallint("addedVersion").notNull(), // ref @metadata.ts
-  noteDesigner: text("noteDesigner"),
-  tapCount: smallint("tapCount"),
-  holdCount: smallint("holdCount"),
-  slideCount: smallint("slideCount"),
-  touchCount: smallint("touchCount"),
-  breakCount: smallint("breakCount"),
-}, (table) => [
-  unique("songs_parent_region_version_unique").on(table.parentId, table.region, table.gameVersion),
-  index("songs_parentid_idx").on(table.parentId),
-  index("songs_region_gameversion_idx").on(table.region, table.gameVersion),
-]);
-
 export const scoreData = pgTable("score_data", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   songId: bigint("songId", { mode: "bigint" }).notNull().references(() => songs.id, { onDelete: "cascade" }),
@@ -432,24 +390,6 @@ export const apikey = pgTable("apikey", {
   index("apikey_configid_idx").on(table.configId),
 ]);
 
-export const tourEvents = pgTable("tour_events", {
-  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
-  name: text("name").notNull().unique(),
-  periods: jsonb("periods").notNull().$type<Array<{ start: string | null; end: string | null }>>(),
-  createdAt: timestamp("createdAt", { precision: 0 }).notNull().defaultNow(),
-  updatedAt: timestamp("updatedAt", { precision: 0 }).notNull().defaultNow(),
-});
-
-export const tourEventSteps = pgTable("tour_event_steps", {
-  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
-  eventId: integer("eventId").notNull().references(() => tourEvents.id, { onDelete: "cascade" }),
-  distance: integer("distance").notNull(),
-  type: text("type").notNull(),
-  reward: text("reward").notNull(),
-}, (table) => [
-  index("tour_event_steps_eventid_idx").on(table.eventId),
-]);
-
 export const userAlbums = pgTable("user_albums", {
   id: bigint("id", { mode: "bigint" }).primaryKey().generatedAlwaysAsIdentity(),
   userId: text("userId").notNull().references(() => user.id, { onDelete: "cascade" }),
@@ -570,3 +510,12 @@ export const policyAcceptance = pgTable("policyAcceptance", {
   index("policy_acceptance_userid_idx").on(table.userId),
   index("policy_acceptance_user_doc_idx").on(table.userId, table.docType),
 ]);
+
+export const catalogState = pgTable("catalog_state", {
+  id: integer("id").primaryKey(),
+  sequence: bigint("sequence", { mode: "number" }).notNull(),
+  schemaVersion: integer("schemaVersion").notNull(),
+  sha256: text("sha256").notNull(),
+  sourceUrl: text("sourceUrl").notNull(),
+  syncedAt: timestamp("syncedAt", { precision: 0 }).notNull(),
+});
