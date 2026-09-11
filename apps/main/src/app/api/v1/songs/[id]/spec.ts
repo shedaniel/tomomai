@@ -8,7 +8,7 @@ export const spec = defineRoute({
   tag: "Songs",
   summary: "Get a single song by public ID",
   description:
-    "Returns the song with all chart difficulties merged into a single object, " +
+    "Returns one chart difficulty for the preferred or specified region and game version, " +
     "including note designer and per-note-type counts.",
   scope: "public",
   cost: 1,
