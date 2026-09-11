@@ -10,6 +10,8 @@ import "@/app/api/v1/ok/spec";
 import "@/app/api/v1/me/spec";
 import "@/app/api/v1/me/scopes/spec";
 import "@/app/api/v1/songs/spec";
+import "@/app/api/v1/parents/spec";
+import "@/app/api/v1/songs/versions/spec";
 import "@/app/api/v1/songs/[id]/spec";
 import "@/app/api/v1/snapshots/spec";
 import "@/app/api/v1/snapshots/latest/spec";

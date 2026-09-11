@@ -5,7 +5,6 @@ import { Suspense } from "react";
 import { getTranslations } from "next-intl/server";
 import { getLocale } from "@/i18n/locale-server";
 import { buildAlternates, openGraphLocales, ogImageUrl, localizePath } from "@/lib/seo";
-import { DB_TYPES } from "@/lib/db/types";
 
 // On-demand ISR.
 export const revalidate = 10800;
@@ -17,7 +16,8 @@ export async function headers() {
 }
 
 export function generateStaticParams() {
-  return DB_TYPES.filter((type) => type !== "posts").map((type) => ({ type }));
+  // Defer generation until the first request so builds do not query the database.
+  return [];
 }
 
 const ArcadesMap = dynamic(() => import("@/components/db/arcades").then(m => m.ArcadesMap));

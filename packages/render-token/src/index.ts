@@ -6,7 +6,7 @@
  *
  * The compact binary format keeps the token URL-safe (~2KB for a B50 render),
  * so it can ride the existing 302 redirect without a callback or DB access in
- * render. See docs/render-token-v1.md for the wire format.
+ * render. See docs/render-token-v2.md for the wire format.
  */
 
 export {

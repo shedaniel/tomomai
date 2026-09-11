@@ -1,5 +1,6 @@
+import { songInstanceId } from "@/lib/db/song-instance-id";
 import { db } from "@/lib/db";
-import { songs } from "@/lib/db/schema-pg";
+import { parentSong, songs } from "@/lib/db/schema-pg";
 import { getEnabledRegions } from "@/lib/enabled-regions";
 import { getCurrentVersion } from "@/lib/metadata";
 import type { VersionId } from "@/lib/metadata";
@@ -74,15 +75,15 @@ const RESERVED_PROFILES: Record<string, ReservedProfile> = {
 };
 
 const songSelect = {
-  songId: songs.publicId,
-  songName: songs.songName,
-  artist: songs.artist,
-  cover: songs.cover,
-  difficulty: songs.difficulty,
+  songId: songInstanceId,
+  songName: parentSong.songName,
+  artist: parentSong.artist,
+  cover: parentSong.cover,
+  difficulty: parentSong.difficulty,
   level: songs.level,
   levelPrecise: songs.levelPrecise,
-  type: songs.type,
-  genre: songs.genre,
+  type: parentSong.type,
+  genre: parentSong.genre,
   addedVersion: songs.addedVersion,
 } as const;
 
@@ -95,11 +96,12 @@ const fetchReservedSongs = unstable_cache(
       db
         .select(songSelect)
         .from(songs)
+        .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
         .where(
           and(
             eq(songs.region, region),
             eq(songs.gameVersion, gameVersion),
-            inArray(songs.difficulty, difficulties)
+            inArray(parentSong.difficulty, difficulties)
           )
         )
         .orderBy(desc(songs.levelPrecise))
@@ -107,12 +109,13 @@ const fetchReservedSongs = unstable_cache(
       db
         .select(songSelect)
         .from(songs)
+        .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
         .where(
           and(
             eq(songs.region, region),
             eq(songs.gameVersion, gameVersion),
             inArray(songs.addedVersion, [gameVersion, gameVersion - 1]),
-            inArray(songs.difficulty, difficulties)
+            inArray(parentSong.difficulty, difficulties)
           )
         ),
     ]);
@@ -149,7 +152,7 @@ const fetchReservedSongs = unstable_cache(
 
     return { songs: allSongs, gameVersion, rating };
   },
-  ["reserved-songs"],
+  ["reserved-songs", "parent-v1"],
   { revalidate: 3600, tags: ["reserved-songs"] }
 );
 

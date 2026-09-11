@@ -1,5 +1,6 @@
+import { songInstanceId } from "@/lib/db/song-instance-id";
 import { db } from "@/lib/db";
-import { scoreData, snapshotScores, songs, userEvents, userSnapshots } from "@/lib/db/schema-pg";
+import { parentSong, scoreData, snapshotScores, songs, userEvents, userSnapshots } from "@/lib/db/schema-pg";
 import { and, desc, eq } from "drizzle-orm";
 import type { Region } from "@/lib/types";
 import type { VersionId } from "@/lib/metadata";
@@ -105,15 +106,15 @@ export async function fetchSnapshotData(
 
   const songsWithScores = await db
     .select({
-      songId: songs.publicId,
-      songName: songs.songName,
-      artist: songs.artist,
-      cover: songs.cover,
-      difficulty: songs.difficulty,
+      songId: songInstanceId,
+      songName: parentSong.songName,
+      artist: parentSong.artist,
+      cover: parentSong.cover,
+      difficulty: parentSong.difficulty,
       level: songs.level,
       levelPrecise: songs.levelPrecise,
-      type: songs.type,
-      genre: songs.genre,
+      type: parentSong.type,
+      genre: parentSong.genre,
       addedVersion: songs.addedVersion,
       achievement: scoreData.achievement,
       dxScore: scoreData.dxScore,
@@ -123,8 +124,9 @@ export async function fetchSnapshotData(
     .from(snapshotScores)
     .innerJoin(scoreData, eq(snapshotScores.scoreId, scoreData.id))
     .innerJoin(songs, eq(scoreData.songId, songs.id))
+    .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
     .where(eq(snapshotScores.snapshotId, snapshot[0].id))
-    .orderBy(songs.songName, songs.difficulty);
+    .orderBy(parentSong.songName, parentSong.difficulty);
 
   const events = await db
     .select({
@@ -186,15 +188,15 @@ export async function fetchLatestSnapshotData(userId: string, region: Region) {
 
   const songsWithScores = await db
     .select({
-      songId: songs.publicId,
-      songName: songs.songName,
-      artist: songs.artist,
-      cover: songs.cover,
-      difficulty: songs.difficulty,
+      songId: songInstanceId,
+      songName: parentSong.songName,
+      artist: parentSong.artist,
+      cover: parentSong.cover,
+      difficulty: parentSong.difficulty,
       level: songs.level,
       levelPrecise: songs.levelPrecise,
-      type: songs.type,
-      genre: songs.genre,
+      type: parentSong.type,
+      genre: parentSong.genre,
       addedVersion: songs.addedVersion,
       achievement: scoreData.achievement,
       dxScore: scoreData.dxScore,
@@ -204,8 +206,9 @@ export async function fetchLatestSnapshotData(userId: string, region: Region) {
     .from(snapshotScores)
     .innerJoin(scoreData, eq(snapshotScores.scoreId, scoreData.id))
     .innerJoin(songs, eq(scoreData.songId, songs.id))
+    .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
     .where(eq(snapshotScores.snapshotId, snapshot[0].id))
-    .orderBy(songs.songName, songs.difficulty);
+    .orderBy(parentSong.songName, parentSong.difficulty);
 
   const events = await db
     .select({

@@ -1,4 +1,4 @@
-# Render Token v1 — Binary Wire Format
+# Render Token v2 — Binary Wire Format
 
 The render token carries the **full render payload** (header metadata + score
 data) from `apps/main` to `apps/render`, HMAC-signed with `RENDER_TOKEN_SECRET`.
@@ -27,11 +27,12 @@ token   = base64url(message) || "." || base64url(HMAC-SHA256(secret, message))
 | Term | Meaning |
 |------|---------|
 | `u8` / `u16` / `u32` | unsigned int, big-endian |
+| `i16` | signed two's-complement int, big-endian |
+| `ascii8` | eight fixed ASCII bytes from the nanoid alphabet |
 | `u24` | 3-byte unsigned int, big-endian |
 | `L8` | `u8 length` ‖ UTF-8 bytes (strings ≤ 255 bytes) |
 | `L8?` | `u8 0` (absent) ‖ `u8 1` + L8 (present) |
 | `L16` | `u16 length` ‖ UTF-8 bytes (URLs, ≤ 65535 bytes) |
-| `ascii21` | 21 ASCII bytes, fixed width (the `songId`) |
 | Enums | `u8` index into an ordered set |
 
 ## Byte layout
@@ -40,7 +41,7 @@ token   = base64url(message) || "." || base64url(HMAC-SHA256(secret, message))
 
 | Offset | Field | Type | Notes |
 |--------|-------|------|-------|
-| 0 | `version` | u8 | **`0x01`**. If ≠ 0x01 → `unsupported-version`. |
+| 0 | `version` | u8 | **`0x02`**. If ≠ 0x02 → `unsupported-version`. |
 | 1 | `route` | u8 | `0=export-image, 1=last-credit, 2=daily-plays` |
 | 2 | `scale` | u8 | `1` or `2` |
 | 3 | `exp` | u32 | unix seconds; render rejects if `now > exp` (410) |
@@ -84,12 +85,12 @@ token   = base64url(message) || "." || base64url(HMAC-SHA256(secret, message))
 
 | Field | Type | Notes |
 |-------|------|-------|
-| `songId` | ascii21 | `songs.publicId`; catalog fields joined by this |
+| `songId` | ascii8 + i16 | parent ID + version; region inherited from HEADER |
 | `achievement` | u24 | 0..1,005,000 |
 | `fc` | u8 | `0=none,1=fc,2=fc+,3=ap,4=ap+` |
 | `fs` | u8 | `0=none,1=sync,2=fs,3=fs+,4=fdx,5=fdx+` |
 
-**26 bytes.** The chart's `difficulty`, `type`, `levelPrecise`, `level`,
+**15 bytes.** The chart's `difficulty`, `type`, `levelPrecise`, `level`,
 `cover`, `songName`, `addedVersion` are **never in the token** — render joins
 them from `/api/v1/songs` by `songId`.
 
@@ -97,7 +98,7 @@ them from `/api/v1/songs` by `songId`.
 
 | Field | Type | Notes |
 |-------|------|-------|
-| `songId` | ascii21 | |
+| `songId` | ascii8 + i16 | same fixed 10-byte instance ID as ChartRecord |
 | `achievement` | u24 | |
 | `fc` | u8 | |
 | `fs` | u8 | |
@@ -112,36 +113,34 @@ them from `/api/v1/songs` by `songId`.
 | `touch` | NoteCounts | only if hasDetails |
 | `break` | NoteCounts | only if hasDetails |
 
-**35 bytes** without details, **89 bytes** with.
+**24 bytes** without details, **78 bytes** with.
 
 ### NoteCounts (5 × u16)
 
 `criticalPerfect`, `perfect`, `great`, `good`, `miss` — each `u16` (10 bytes
 total per note type).
 
-## Worked sizes (base64url token, including 43-char signature)
+## Deployment and catalog lookup
 
-| Route | Raw message | Token URL length |
-|-------|-------------|-----------------|
-| export-image (B50, normal user) | ~1.47 KB | **~2.0 KB** |
-| export-image (reserved profile) | ~1.42 KB | ~1.95 KB |
-| last-credit (4 detailed tracks) | ~0.51 KB | ~0.7 KB |
-| daily-plays (50 plays) | ~1.47 KB | ~2.0 KB |
+Version 2 encodes each song instance in exactly **10 bytes**: eight ASCII
+parent-ID bytes and a signed 16-bit game version. Region is inherited from
+HEADER; the encoder rejects charts whose region differs from the header. There
+is no length prefix or padding. The decoded DTO uses the usual composite string
+(for example `Ab3xK9pQ:j14`); its textual length does not affect the wire width.
+Negative historical versions use two's-complement encoding. Both encoder and
+decoder validate the parent alphabet and region. A chart record is 15 bytes;
+50 charts use 750 bytes plus the header before base64url and the signature.
 
-Well within modern browser/proxy limits (8KB+). The only "limit" exceeded is the
-IE-era 2083-char myth, which nothing modern enforces.
-
-## Future: nanoid(8)
-
-When `songs.publicId` migrates from nanoid(21) to nanoid(8), the token shrinks
-by ~650 bytes (B50). This will be a **v2 token** (version byte `0x02`,
-`SONG_ID_LEN = 8`). Old v1 tokens are rejected by the new render; no migration.
+Deploy main and render together: the new decoder rejects v1 tokens and an old
+renderer rejects v2 tokens. Previously issued tokens must be regenerated.
+The renderer fetches the region/version slices named by the individual chart
+IDs, so historical or mixed-version plays resolve to their exact instances.
 
 ## Failure semantics
 
 | Condition | HTTP status | reason |
 |-----------|-------------|--------|
-| `version ≠ 0x01` | 401 | `unsupported-version` |
+| `version ≠ 0x02` | 401 | `unsupported-version` |
 | HMAC mismatch / malformed | 401 | `bad-signature` / `malformed` |
 | `now > exp` | 410 | `expired` |
 | `songId` not in catalog | 502 | stale chart (log + fail) |

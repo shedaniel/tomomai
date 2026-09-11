@@ -43,6 +43,7 @@ function getRate(achievement: number, version: number, fc: string) {
 
 interface SongDetailContentProps {
   songName: string;
+  artist?: string;
   slug: string;
   type: "std" | "dx";
   initialData?: SongDetails | null;
@@ -263,7 +264,7 @@ export function SongChartRow({ difficulty, charts, index, data, hasTouch }: {
   );
 }
 
-export function SongDetailContent({ songName, slug, type, initialData }: SongDetailContentProps) {
+export function SongDetailContent({ songName, artist, slug, type, initialData }: SongDetailContentProps) {
   const t = useTranslations();
   const hasInitialData = !!initialData;
   const { data: session } = useSession();
@@ -282,11 +283,11 @@ export function SongDetailContent({ songName, slug, type, initialData }: SongDet
     isLoading,
     error,
   } = trpc.user.getSongDetails.useQuery(
-    { songName, type },
+    { songName, artist: artist ?? initialData?.artist, type },
     { enabled: !hasInitialData }
   );
   const { data: scoreData } = trpc.user.getSongScores.useQuery(
-    { songName, type },
+    { songName, artist: artist ?? initialData?.artist, type },
     { enabled: hasInitialData && viewerId !== null }
   );
   const data = useMemo(() => {

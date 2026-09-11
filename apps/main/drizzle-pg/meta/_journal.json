@@ -120,6 +120,13 @@
       "when": 1785472749127,
       "tag": "0016_blue_pretty_boy",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1789116246048,
+      "tag": "0017_windy_namorita",
+      "breakpoints": true
     }
   ]
 }

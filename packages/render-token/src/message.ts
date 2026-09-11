@@ -34,7 +34,7 @@ export interface RenderHeader {
  * by `songId` at render time — they never travel in the token.
  */
 export interface ChartRecord {
-  /** `songs.publicId` — the nanoid that `/api/v1/songs` exposes as `songId`. */
+  /** Composite chart instance ID exposed by `/api/v1/songs`. */
   songId: string;
   achievement: number;
   fc: FullCombo;

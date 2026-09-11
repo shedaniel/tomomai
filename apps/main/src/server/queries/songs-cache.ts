@@ -20,7 +20,7 @@ export const getAllUniqueSongsCached = cache(async () => {
 });
 
 export const getSongDetailsCached = cache(
-  async (songName: string, type: SongType, userId?: string | null) => {
-    return querySongDetails(songName, type, userId);
+  async (songName: string, type: SongType, userId?: string | null, artist?: string) => {
+    return querySongDetails(songName, type, userId, artist);
   }
 );

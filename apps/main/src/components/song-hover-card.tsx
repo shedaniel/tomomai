@@ -31,8 +31,9 @@ interface SongHoverCardProps {
   className?: string;
 }
 
-function SongDetailDialog({ songName, type, difficulty }: {
+function SongDetailDialog({ songName, artist, type, difficulty }: {
   songName: string;
+  artist: string;
   type: SongType;
   difficulty: Difficulty;
 }) {
@@ -42,6 +43,7 @@ function SongDetailDialog({ songName, type, difficulty }: {
   const { data: songDetails, isLoading } = trpc.user.getSongDetails.useQuery(
     {
       songName,
+      artist,
       type,
     },
     {
@@ -169,7 +171,7 @@ function SongCardContent({
 
       {/* Action */}
       <div className="pt-1 flex items-center gap-2 flex-col">
-        <SongDetailDialog songName={song.songName} type={song.type} difficulty={song.difficulty} />
+        <SongDetailDialog songName={song.songName} artist={song.artist} type={song.type} difficulty={song.difficulty} />
         <Button
           className="w-full h-8 text-xs"
           variant="default"

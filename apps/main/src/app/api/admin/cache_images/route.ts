@@ -2,7 +2,7 @@ import { db } from "@/lib/db";
 import { cacheImage } from "@/lib/image_cacher";
 import { flushLogger } from "@/lib/logger";
 import { requestLogger } from "@/lib/request-logger";
-import { songs } from "@/lib/db/schema-pg";
+import { parentSong } from "@/lib/db/schema-pg";
 import { NextRequest, NextResponse } from "next/server";
 import type { Logger } from "pino";
 
@@ -90,9 +90,9 @@ export async function GET(request: NextRequest) {
 
     // Step 1: Get all distinct cover URLs from songs table
     const distinctCovers = await db
-      .select({ cover: songs.cover })
-      .from(songs)
-      .groupBy(songs.cover);
+      .select({ cover: parentSong.cover })
+      .from(parentSong)
+      .groupBy(parentSong.cover);
 
     // Step 2: Filter out data URLs and empty/null URLs
     const httpUrls = distinctCovers

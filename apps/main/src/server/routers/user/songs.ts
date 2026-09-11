@@ -1,10 +1,11 @@
+import { parseSongId } from "@/lib/catalog/song-instance-id";
 import { db } from '@/lib/db';
-import { songs } from '@/lib/db/schema-pg';
+import { parentSong, songs } from '@/lib/db/schema-pg';
 import { VersionId } from '@/lib/metadata';
 import { getSongSlug } from '@/lib/song-slug';
 import { protectedProcedure, publicProcedure, router } from '@/lib/trpc';
 import { TRPCError } from '@trpc/server';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { queryAllUniqueSongs, querySongDetails, querySongScores } from '@/server/queries/songs';
 
@@ -17,21 +18,23 @@ export const songsRouter = router({
   getSongDetails: publicProcedure
     .input(z.object({
       songName: z.string(),
+      artist: z.string().optional(),
       type: z.enum(['std', 'dx']),
     }))
     .query(async ({ input, ctx }) => {
-      return querySongDetails(input.songName, input.type, ctx.session?.user?.id);
+      return querySongDetails(input.songName, input.type, ctx.session?.user?.id, input.artist);
     }),
 
   getSongScores: protectedProcedure
     .input(z.object({
       songName: z.string(),
+      artist: z.string().optional(),
       type: z.enum(['std', 'dx']),
     }))
     .query(async ({ input, ctx }) => {
       return {
         viewerId: ctx.session.user.id,
-        userScores: await querySongScores(input.songName, input.type, ctx.session.user.id),
+        userScores: await querySongScores(input.songName, input.type, ctx.session.user.id, input.artist),
       };
     }),
 
@@ -40,17 +43,24 @@ export const songsRouter = router({
       publicId: z.string(),
     }))
     .query(async ({ input }) => {
+      const parsed = parseSongId(input.publicId);
+      if (!parsed) throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid song ID" });
       const charts = await db
         .select({
-          songName: songs.songName,
-          artist: songs.artist,
-          type: songs.type,
-          genre: songs.genre,
-          bpm: songs.bpm,
+          songName: parentSong.songName,
+          artist: parentSong.artist,
+          type: parentSong.type,
+          genre: parentSong.genre,
+          bpm: parentSong.bpm,
           addedVersion: songs.addedVersion,
         })
         .from(songs)
-        .where(eq(songs.publicId, input.publicId));
+        .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
+        .where(and(
+          eq(parentSong.publicId, parsed.parentPublicId),
+          parsed.kind === "instance" ? eq(songs.region, parsed.region) : undefined,
+          parsed.kind === "instance" ? eq(songs.gameVersion, parsed.gameVersion) : undefined,
+        ));
 
       if (charts.length === 0) {
         throw new TRPCError({

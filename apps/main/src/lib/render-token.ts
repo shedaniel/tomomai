@@ -7,7 +7,7 @@
  *   - POSTs the token to  `${RENDER_INTERNAL_URL}/discord/render`  (Discord)
  *
  * The token carries the full render payload (HMAC-signed); apps/render has zero
- * DB access. See docs/render-token-v1.md for the wire format.
+ * DB access. See docs/render-token-v2.md for the wire format.
  */
 
 import {

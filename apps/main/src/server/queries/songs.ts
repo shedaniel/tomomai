@@ -1,6 +1,7 @@
+import { songInstanceId } from "@/lib/db/song-instance-id";
 import { SongDetailChart, SongDetailHistoricalChart, SongDetails } from "@/components/db/songs/types";
 import { db } from "@/lib/db";
-import { scoreData, snapshotScores, songs, userSnapshots } from "@/lib/db/schema-pg";
+import { parentSong, scoreData, snapshotScores, songs, userSnapshots } from "@/lib/db/schema-pg";
 import { VersionId } from "@/lib/metadata";
 import { getSongSlugs } from "@/lib/song-slug";
 import { Region, SongType } from "@/lib/types";
@@ -15,12 +16,25 @@ import { UniqueSong, UniqueSongDifficulty } from "@/components/db/songs/types";
 export async function querySongScores(
   songName: string,
   type: SongType,
-  userId: string
+  userId: string,
+  artist?: string
 ): Promise<SongDetails["userScores"]> {
+  if (artist === undefined) {
+    const artists = await db.selectDistinct({ artist: parentSong.artist })
+      .from(parentSong)
+      .innerJoin(songs, eq(songs.parentId, parentSong.id))
+      .where(and(eq(parentSong.songName, songName), eq(parentSong.type, type)))
+      .limit(2);
+    if (artists.length > 1) {
+      throw new TRPCError({ code: "BAD_REQUEST", message: "Artist is required for songs with the same name" });
+    }
+  }
+
   const scores = await db
     .select({
       region: songs.region,
-      difficulty: songs.difficulty,
+      artist: parentSong.artist,
+      difficulty: parentSong.difficulty,
       achievement: scoreData.achievement,
       fc: scoreData.fc,
       fs: scoreData.fs,
@@ -28,10 +42,12 @@ export async function querySongScores(
     .from(snapshotScores)
     .innerJoin(scoreData, eq(snapshotScores.scoreId, scoreData.id))
     .innerJoin(songs, eq(scoreData.songId, songs.id))
+    .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
     .where(
       and(
-        eq(songs.songName, songName),
-        eq(songs.type, type),
+        eq(parentSong.songName, songName),
+        eq(parentSong.type, type),
+        artist !== undefined ? eq(parentSong.artist, artist) : undefined,
         inArray(
           snapshotScores.snapshotId,
           db
@@ -44,6 +60,9 @@ export async function querySongScores(
     );
 
   if (scores.length === 0) return undefined;
+  if (new Set(scores.map(score => score.artist)).size > 1) {
+    throw new TRPCError({ code: "BAD_REQUEST", message: "Artist is required for songs with the same name" });
+  }
 
   const userScores: NonNullable<SongDetails["userScores"]> = {};
   for (const score of scores) {
@@ -62,23 +81,24 @@ export async function querySongScores(
 export async function querySongDetails(
   songName: string,
   type: SongType,
-  userId?: string | null
+  userId?: string | null,
+  artist?: string
 ): Promise<SongDetails> {
   const chartsQuery = db
     .select({
-      songId: songs.publicId,
-      songName: songs.songName,
-      artist: songs.artist,
-      cover: songs.cover,
-      difficulty: songs.difficulty,
+      songId: songInstanceId,
+      songName: parentSong.songName,
+      artist: parentSong.artist,
+      cover: parentSong.cover,
+      difficulty: parentSong.difficulty,
       level: songs.level,
       levelPrecise: songs.levelPrecise,
-      type: songs.type,
-      genre: songs.genre,
+      type: parentSong.type,
+      genre: parentSong.genre,
       region: songs.region,
       gameVersion: songs.gameVersion,
       addedVersion: songs.addedVersion,
-      bpm: songs.bpm,
+      bpm: parentSong.bpm,
       noteDesigner: songs.noteDesigner,
       tapCount: songs.tapCount,
       holdCount: songs.holdCount,
@@ -87,17 +107,22 @@ export async function querySongDetails(
       breakCount: songs.breakCount,
     })
     .from(songs)
-    .where(and(eq(songs.songName, songName), eq(songs.type, type)))
-    .orderBy(songs.region, desc(songs.gameVersion), songs.difficulty);
+    .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
+    .where(and(eq(parentSong.songName, songName), eq(parentSong.type, type), artist !== undefined ? eq(parentSong.artist, artist) : undefined))
+    .orderBy(songs.region, desc(songs.gameVersion), parentSong.difficulty);
 
   const scoresQuery = userId
-    ? querySongScores(songName, type, userId)
+    ? querySongScores(songName, type, userId, artist)
     : Promise.resolve(undefined);
 
   const [charts, scores] = await Promise.all([chartsQuery, scoresQuery]);
 
   if (charts.length === 0) {
     throw new TRPCError({ code: "NOT_FOUND", message: "Song not found" });
+  }
+
+  if (new Set(charts.map(chart => chart.artist)).size > 1) {
+    throw new TRPCError({ code: "BAD_REQUEST", message: "Artist is required for songs with the same name" });
   }
 
   const userScoresMap = scores;
@@ -169,12 +194,12 @@ export async function queryAllUniqueSongs() {
       const allSongs = await db
         .select({
           id: songs.id,
-          songName: songs.songName,
-          artist: songs.artist,
-          cover: songs.cover,
-          type: songs.type,
-          genre: songs.genre,
-          difficulty: songs.difficulty,
+          songName: parentSong.songName,
+          artist: parentSong.artist,
+          cover: parentSong.cover,
+          type: parentSong.type,
+          genre: parentSong.genre,
+          difficulty: parentSong.difficulty,
           levelPrecise: songs.levelPrecise,
           noteDesigner: songs.noteDesigner,
           addedVersion: songs.addedVersion,
@@ -182,7 +207,8 @@ export async function queryAllUniqueSongs() {
           gameVersion: songs.gameVersion,
         })
         .from(songs)
-        .orderBy(songs.songName);
+        .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
+        .orderBy(parentSong.songName);
 
       const allSongsSortedById = [...allSongs].sort((a, b) => Number(a.id) - Number(b.id));
       const allSongsToSortedIndex = Object.fromEntries(
@@ -203,7 +229,7 @@ export async function queryAllUniqueSongs() {
         }
       > = new Map();
       for (const song of allSongsWithIndex) {
-        const key = `${song.songName}||${song.type}`;
+        const key = JSON.stringify([song.songName, song.artist, song.type]);
         if (!uniqueSongs.has(key)) {
           uniqueSongs.set(key, { ...song, difficulties: [] });
         } else {
@@ -268,7 +294,7 @@ export async function queryAllUniqueSongs() {
       }));
       return songsStripped;
     },
-    ["all-unique-songs"],
+    ["all-unique-songs", "parent-v1"],
     { revalidate: 3600, tags: ["all-unique-songs"] }
   );
 

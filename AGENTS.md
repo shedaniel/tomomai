@@ -20,6 +20,13 @@ inside that exact directory so the journal, snapshots, and SQL migrations match
 reset result to the user before running generation. Production receives one
 new generated migration version for the multi-game backend change.
 
+Direct edits to migration `.sql` files introduced on the current branch
+(relative to `upstream/main`) are allowed for custom logic that Drizzle Kit
+cannot generate, such as data backfills, identity matching, and validation.
+These SQL-only edits do not require regeneration or the migration-state reset
+above. Do not rewrite migrations already present on `upstream/main`. The ban
+on applying migrations still applies.
+
 ## Discord Commands
 Discord commands are handled with src/app/api/interactions, and they are registered with scripts/register-discord-commands.js.
 Documentation: <https://discord.com/developers/docs/interactions/receiving-and-responding>

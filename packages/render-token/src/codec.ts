@@ -5,9 +5,9 @@
  *   message = HEADER || ROUTE_PAYLOAD
  *   token   = base64url(message) || "." || base64url(HMAC-SHA256(secret, message))
  *
- * Version byte 0x01. If ≠ 0x01 on decode → reject. No migration.
+ * Version byte 0x02. If ≠ 0x02 on decode → reject. No migration.
  *
- * See docs/render-token-v1.md for the full spec.
+ * See docs/render-token-v2.md for the full spec.
  */
 
 import type {
@@ -38,7 +38,7 @@ import {
 
 // ---- version ----
 
-export const VERSION = 0x01;
+export const VERSION = 0x02;
 
 const ROUTE_IDS: readonly Route[] = ["export-image", "last-credit", "daily-plays"];
 
@@ -257,10 +257,32 @@ function enumValue<T extends string>(arr: readonly T[], i: number): T {
 export class EncodeError extends Error {}
 export class DecodeError extends Error {}
 
-// ---- SONG_ID constant ----
+const SONG_ID_PATTERN = /^[A-Za-z0-9_-]{8}:[jic](?:0|-?[1-9]\d*)$/;
 
-/** Current `songs.publicId` length. Bumps to a new VERSION when this changes. */
-export const SONG_ID_LEN = 21;
+function validSongId(id: string): boolean {
+  if (!SONG_ID_PATTERN.test(id)) return false;
+  const version = Number(id.slice(10));
+  return Number.isInteger(version) && version >= -32768 && version <= 32767;
+}
+
+export const SONG_ID_LEN = 10;
+const SONG_REGION_LETTERS = { intl: "i", jp: "j", cn: "c" } as const;
+
+function encodeSongId(w: ByteWriter, id: string, region: RenderHeader["region"]): void {
+  if (!validSongId(id)) throw new EncodeError(`invalid song instance id: ${id}`);
+  if (id[9] !== SONG_REGION_LETTERS[region]) throw new EncodeError("song region must match header region");
+  w.asciiFixed(id.slice(0, 8), 8);
+  w.u16(Number(id.slice(10)));
+}
+
+function decodeSongId(r: ByteReader, region: RenderHeader["region"]): string {
+  const parentId = r.asciiFixed(8);
+  const encodedVersion = r.u16();
+  const version = encodedVersion >= 0x8000 ? encodedVersion - 0x10000 : encodedVersion;
+  const id = `${parentId}:${SONG_REGION_LETTERS[region]}${version}`;
+  if (!validSongId(id)) throw new DecodeError(`invalid song instance id: ${id}`);
+  return id;
+}
 
 // ---- ENCODE ----
 
@@ -272,13 +294,13 @@ export function encodeMessage(msg: RenderMessage): Uint8Array {
   encodeHeader(w, msg.header);
   switch (msg.route) {
     case "export-image":
-      encodeExportImage(w, msg.payload);
+      encodeExportImage(w, msg.payload, msg.header.region);
       break;
     case "last-credit":
-      encodeLastCredit(w, msg.payload);
+      encodeLastCredit(w, msg.payload, msg.header.region);
       break;
     case "daily-plays":
-      encodeDailyPlays(w, msg.payload);
+      encodeDailyPlays(w, msg.payload, msg.header.region);
       break;
   }
   return w.toUint8Array();
@@ -299,39 +321,33 @@ function encodeHeader(w: ByteWriter, h: RenderHeader): void {
   w.l16(h.courseRankUrl);
 }
 
-function encodeExportImage(w: ByteWriter, p: ExportImagePayload): void {
+function encodeExportImage(w: ByteWriter, p: ExportImagePayload, region: RenderHeader["region"]): void {
   w.l8Optional(p.visitableProfileAt);
   w.u8(p.charts.length);
-  for (const c of p.charts) encodeChart(w, c);
+  for (const c of p.charts) encodeChart(w, c, region);
 }
 
-function encodeLastCredit(w: ByteWriter, p: LastCreditPayload): void {
+function encodeLastCredit(w: ByteWriter, p: LastCreditPayload, region: RenderHeader["region"]): void {
   w.u32(p.playedAt);
   w.u8(p.tracks.length);
-  for (const t of p.tracks) encodeTrack(w, t);
+  for (const t of p.tracks) encodeTrack(w, t, region);
 }
 
-function encodeDailyPlays(w: ByteWriter, p: DailyPlaysPayload): void {
+function encodeDailyPlays(w: ByteWriter, p: DailyPlaysPayload, region: RenderHeader["region"]): void {
   w.l8(p.day);
   w.u8(p.plays.length);
-  for (const c of p.plays) encodeChart(w, c);
+  for (const c of p.plays) encodeChart(w, c, region);
 }
 
-function encodeChart(w: ByteWriter, c: ChartRecord): void {
-  if (c.songId.length !== SONG_ID_LEN) {
-    throw new EncodeError(`songId must be ${SONG_ID_LEN} chars, got ${c.songId.length}: ${c.songId}`);
-  }
-  w.asciiFixed(c.songId, SONG_ID_LEN);
+function encodeChart(w: ByteWriter, c: ChartRecord, region: RenderHeader["region"]): void {
+  encodeSongId(w, c.songId, region);
   w.u24(c.achievement);
   w.u8(enumIndex(FULL_COMBOS, c.fc));
   w.u8(enumIndex(FULL_SYNCS, c.fs));
 }
 
-function encodeTrack(w: ByteWriter, t: TrackRecord): void {
-  if (t.songId.length !== SONG_ID_LEN) {
-    throw new EncodeError(`songId must be ${SONG_ID_LEN} chars, got ${t.songId.length}`);
-  }
-  w.asciiFixed(t.songId, SONG_ID_LEN);
+function encodeTrack(w: ByteWriter, t: TrackRecord, region: RenderHeader["region"]): void {
+  encodeSongId(w, t.songId, region);
   w.u24(t.achievement);
   w.u8(enumIndex(FULL_COMBOS, t.fc));
   w.u8(enumIndex(FULL_SYNCS, t.fs));
@@ -373,13 +389,13 @@ export function decodeMessage(data: Uint8Array): RenderMessage {
   let payload: ExportImagePayload | LastCreditPayload | DailyPlaysPayload;
   switch (route) {
     case "export-image":
-      payload = decodeExportImage(r);
+      payload = decodeExportImage(r, header.region);
       break;
     case "last-credit":
-      payload = decodeLastCredit(r);
+      payload = decodeLastCredit(r, header.region);
       break;
     case "daily-plays":
-      payload = decodeDailyPlays(r);
+      payload = decodeDailyPlays(r, header.region);
       break;
   }
   // Trailing bytes are allowed (forward-compat ignore). We don't enforce
@@ -416,40 +432,40 @@ function decodeHeader(r: ByteReader): RenderHeader {
   };
 }
 
-function decodeExportImage(r: ByteReader): ExportImagePayload {
+function decodeExportImage(r: ByteReader, region: RenderHeader["region"]): ExportImagePayload {
   const visitableProfileAt = r.l8Optional();
   const count = r.u8();
   const charts: ChartRecord[] = [];
-  for (let i = 0; i < count; i++) charts.push(decodeChart(r));
+  for (let i = 0; i < count; i++) charts.push(decodeChart(r, region));
   return { visitableProfileAt, charts };
 }
 
-function decodeLastCredit(r: ByteReader): LastCreditPayload {
+function decodeLastCredit(r: ByteReader, region: RenderHeader["region"]): LastCreditPayload {
   const playedAt = r.u32();
   const count = r.u8();
   const tracks: TrackRecord[] = [];
-  for (let i = 0; i < count; i++) tracks.push(decodeTrack(r));
+  for (let i = 0; i < count; i++) tracks.push(decodeTrack(r, region));
   return { playedAt, tracks };
 }
 
-function decodeDailyPlays(r: ByteReader): DailyPlaysPayload {
+function decodeDailyPlays(r: ByteReader, region: RenderHeader["region"]): DailyPlaysPayload {
   const day = r.l8();
   const count = r.u8();
   const plays: ChartRecord[] = [];
-  for (let i = 0; i < count; i++) plays.push(decodeChart(r));
+  for (let i = 0; i < count; i++) plays.push(decodeChart(r, region));
   return { day, plays };
 }
 
-function decodeChart(r: ByteReader): ChartRecord {
-  const songId = r.asciiFixed(SONG_ID_LEN);
+function decodeChart(r: ByteReader, region: RenderHeader["region"]): ChartRecord {
+  const songId = decodeSongId(r, region);
   const achievement = r.u24();
   const fc = enumValue(FULL_COMBOS, r.u8());
   const fs = enumValue(FULL_SYNCS, r.u8());
   return { songId, achievement, fc, fs };
 }
 
-function decodeTrack(r: ByteReader): TrackRecord {
-  const songId = r.asciiFixed(SONG_ID_LEN);
+function decodeTrack(r: ByteReader, region: RenderHeader["region"]): TrackRecord {
+  const songId = decodeSongId(r, region);
   const achievement = r.u24();
   const fc = enumValue(FULL_COMBOS, r.u8());
   const fs = enumValue(FULL_SYNCS, r.u8());

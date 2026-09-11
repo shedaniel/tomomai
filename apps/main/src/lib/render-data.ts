@@ -2,7 +2,7 @@
  * Builds `RenderMessage` DTOs from DB data, then mints signed tokens.
  *
  * This is the mint side of the render-token contract (see
- * @tomomai/render-token + docs/render-token-v1.md). apps/main does ALL the DB
+ * @tomomai/render-token + docs/render-token-v2.md). apps/main does ALL the DB
  * work here; apps/render receives the signed token and joins catalog fields
  * from /api/v1/songs — zero DB access on the render side.
  *
@@ -12,12 +12,14 @@
 
 import { db } from "@/lib/db";
 import {
+  parentSong,
   scoreData,
   snapshotB50,
   songs,
   user,
   userSnapshots,
 } from "@/lib/db/schema-pg";
+import { formatSongInstanceId } from "@/lib/catalog/song-instance-id";
 import { and, eq } from "drizzle-orm";
 import type { Region } from "@/lib/types";
 import type { VersionId } from "@/lib/metadata";
@@ -112,7 +114,9 @@ export async function buildExportImageMessage(opts: {
       .limit(1),
     db
       .select({
-        songId: songs.publicId,
+        songId: parentSong.publicId,
+        songRegion: songs.region,
+        songVersion: songs.gameVersion,
         achievement: scoreData.achievement,
         fc: scoreData.fc,
         fs: scoreData.fs,
@@ -120,6 +124,7 @@ export async function buildExportImageMessage(opts: {
       .from(snapshotB50)
       .innerJoin(scoreData, eq(snapshotB50.scoreId, scoreData.id))
       .innerJoin(songs, eq(scoreData.songId, songs.id))
+      .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
       .where(eq(snapshotB50.snapshotId, snapshot[0].id)),
   ]);
 
@@ -145,7 +150,7 @@ export async function buildExportImageMessage(opts: {
   };
 
   const charts: ChartRecord[] = scoreRows.map((r) => ({
-    songId: r.songId,
+    songId: formatSongInstanceId(r.songId, r.songRegion, r.songVersion),
     achievement: r.achievement,
     fc: r.fc as FullCombo,
     fs: r.fs as FullSync,
