@@ -3,7 +3,8 @@ import { flushLogger } from "@/lib/logger";
 import { requestLogger } from "@/lib/request-logger";
 import { getEnabledRegions, isRegionEnabled } from "@/lib/enabled-regions";
 import { Region } from "@/lib/types";
-import { getCurrentVersion } from "@/lib/metadata";
+import { parseCatalogVersion } from "@/lib/catalog/parse-version";
+import { getCurrentVersion, type VersionId } from "@/lib/metadata";
 import { normalizeName } from "@/lib/name-utils";
 import { songs, parentSong } from "@/lib/db/schema-pg";
 import { and, eq, inArray, sql } from "drizzle-orm";
@@ -87,8 +88,10 @@ async function normalize(searchParams: URLSearchParams, log: Logger) {
   }
 
   const version = searchParams.get("version");
-  const currentVersion = version ? Number(version) : getCurrentVersion(region);
-  if (!Number.isInteger(currentVersion)) {
+  let currentVersion: VersionId;
+  try {
+    currentVersion = version === null ? getCurrentVersion(region) : parseCatalogVersion(region, version);
+  } catch {
     return NextResponse.json({ error: "Invalid version" }, { status: 400 });
   }
 

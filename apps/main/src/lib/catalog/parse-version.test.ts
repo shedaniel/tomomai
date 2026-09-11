@@ -18,7 +18,7 @@ describe("parseCatalogVersion", () => {
 
   it("requires a complete canonical integer", () => {
     const version = String(getAvailableVersions("jp")[0].id);
-    for (const input of ["", " ", `${version}garbage`, `${version}.0`, ` ${version}`, `${version} `, `+${version}`, `0${version}`, "-0", "Infinity", "NaN"]) {
+    for (const input of ["", " ", `${version}garbage`, `${version}.0`, ` ${version}`, `${version} `, `+${version}`, `0${version}`, "-0", "1e3", "Infinity", "NaN"]) {
       expect(() => parseCatalogVersion("jp", input), input).toThrow();
     }
   });
