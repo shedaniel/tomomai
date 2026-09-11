@@ -1,11 +1,5 @@
 import type { Difficulty, SongType } from "@/lib/types";
 
-// Parent resolution for newly ingested song rows. Mirrors the backfill
-// migration's clustering rules: a chart is identified by
-// (songName, type, difficulty), extended by a disambiguator for the rare
-// distinct charts sharing that key (e.g. the two songs both titled "Link"),
-// which are told apart by addedVersion.
-
 export interface SongToParent {
   id: bigint;
   songName: string;

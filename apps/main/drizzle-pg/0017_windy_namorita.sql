@@ -24,26 +24,113 @@ ALTER TABLE "songs" ADD COLUMN "parentId" bigint;--> statement-breakpoint
 CREATE INDEX "parent_song_songname_type_idx" ON "parent_song" USING btree ("songName","type");--> statement-breakpoint
 ALTER TABLE "songs" ADD CONSTRAINT "songs_parentId_parent_song_id_fk" FOREIGN KEY ("parentId") REFERENCES "public"."parent_song"("id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
 CREATE INDEX "songs_parentid_idx" ON "songs" USING btree ("parentId");--> statement-breakpoint
--- Preserve child IDs while assigning canonical charts before enforcing parentId.
+-- Seed collisions from one complete slice so artist renames cannot create extra parents.
 CREATE TEMP TABLE song_clusters AS
-WITH colliding AS (
-	SELECT DISTINCT "songName", "type", "difficulty"
-	FROM songs
-	GROUP BY "songName", "type", "difficulty", "region", "gameVersion"
-	HAVING COUNT(*) > 1
+SELECT "id" AS song_id, "songName", "type", "difficulty", "artist", "region", "gameVersion",
+	NULL::bigint AS disambiguator
+FROM songs;
+--> statement-breakpoint
+CREATE INDEX ON song_clusters ("songName", "type", "difficulty");
+--> statement-breakpoint
+WITH noncolliding AS (
+	SELECT "songName", "type", "difficulty" FROM song_clusters
+	GROUP BY "songName", "type", "difficulty"
+	HAVING COUNT(*) = COUNT(DISTINCT ("region", "gameVersion"))
 )
-SELECT
-	s."id" AS song_id,
-	s."songName",
-	s."type",
-	s."difficulty",
-	CASE WHEN c."songName" IS NOT NULL
-		THEN DENSE_RANK() OVER (PARTITION BY s."songName", s."type", s."difficulty" ORDER BY s."artist") - 1
-		ELSE 0
-	END AS disambiguator
-FROM songs s
-LEFT JOIN colliding c
-	ON c."songName" = s."songName" AND c."type" = s."type" AND c."difficulty" = s."difficulty";
+UPDATE song_clusters sc SET disambiguator = 0 FROM noncolliding n
+WHERE sc."songName" = n."songName" AND sc."type" = n."type" AND sc."difficulty" = n."difficulty";
+--> statement-breakpoint
+CREATE TEMP TABLE song_cluster_candidates (song_id bigint, disambiguator bigint);
+--> statement-breakpoint
+DO $$
+DECLARE
+	chart_group record;
+	slice record;
+	parent_count bigint;
+	unmatched_count bigint;
+	available_count bigint;
+	remaining_parent bigint;
+BEGIN
+	FOR chart_group IN
+		SELECT "songName", "type", "difficulty"
+		FROM song_clusters WHERE disambiguator IS NULL
+		GROUP BY "songName", "type", "difficulty"
+	LOOP
+		SELECT MAX(n) INTO parent_count FROM (
+			SELECT COUNT(*) AS n FROM song_clusters
+			WHERE "songName" = chart_group."songName" AND "type" = chart_group."type"
+				AND "difficulty" = chart_group."difficulty"
+			GROUP BY "region", "gameVersion"
+		) counts;
+
+
+		FOR slice IN
+			SELECT "region", "gameVersion", COUNT(*) AS n FROM song_clusters
+			WHERE "songName" = chart_group."songName" AND "type" = chart_group."type"
+				AND "difficulty" = chart_group."difficulty"
+			GROUP BY "region", "gameVersion"
+			ORDER BY COUNT(*) DESC, "gameVersion" DESC, ("region" = 'jp') DESC, "region"
+		LOOP
+			IF NOT EXISTS (
+				SELECT 1 FROM song_clusters
+				WHERE "songName" = chart_group."songName" AND "type" = chart_group."type"
+					AND "difficulty" = chart_group."difficulty" AND disambiguator IS NOT NULL
+			) THEN
+				WITH seeds AS (
+					SELECT song_id, ROW_NUMBER() OVER (ORDER BY "artist", song_id) - 1 AS slot
+					FROM song_clusters
+					WHERE "songName" = chart_group."songName" AND "type" = chart_group."type"
+						AND "difficulty" = chart_group."difficulty"
+						AND "region" = slice."region" AND "gameVersion" = slice."gameVersion"
+				)
+				UPDATE song_clusters sc SET disambiguator = seeds.slot FROM seeds WHERE sc.song_id = seeds.song_id;
+				CONTINUE;
+			END IF;
+
+			TRUNCATE song_cluster_candidates;
+			INSERT INTO song_cluster_candidates
+			SELECT DISTINCT incoming.song_id, known.disambiguator
+			FROM song_clusters incoming
+			JOIN song_clusters known ON known."songName" = incoming."songName"
+				AND known."type" = incoming."type" AND known."difficulty" = incoming."difficulty"
+				AND known."artist" = incoming."artist" AND known.disambiguator IS NOT NULL
+			WHERE incoming."songName" = chart_group."songName" AND incoming."type" = chart_group."type"
+				AND incoming."difficulty" = chart_group."difficulty"
+				AND incoming."region" = slice."region" AND incoming."gameVersion" = slice."gameVersion";
+
+			IF EXISTS (SELECT 1 FROM song_cluster_candidates GROUP BY song_id HAVING COUNT(*) > 1)
+				OR EXISTS (SELECT 1 FROM song_cluster_candidates GROUP BY disambiguator HAVING COUNT(*) > 1) THEN
+				RAISE EXCEPTION 'parent_song backfill: ambiguous artist matches for %/%/% in %/%',
+					chart_group."songName", chart_group."type", chart_group."difficulty", slice."region", slice."gameVersion";
+			END IF;
+
+			UPDATE song_clusters sc SET disambiguator = c.disambiguator
+			FROM song_cluster_candidates c WHERE sc.song_id = c.song_id;
+
+			SELECT COUNT(*) INTO unmatched_count FROM song_clusters
+			WHERE "songName" = chart_group."songName" AND "type" = chart_group."type"
+				AND "difficulty" = chart_group."difficulty"
+				AND "region" = slice."region" AND "gameVersion" = slice."gameVersion" AND disambiguator IS NULL;
+			IF unmatched_count = 0 THEN CONTINUE; END IF;
+
+			SELECT COUNT(*), MIN(slot) INTO available_count, remaining_parent
+			FROM generate_series(0::bigint, parent_count - 1) AS slots(slot)
+			WHERE NOT EXISTS (SELECT 1 FROM song_cluster_candidates c WHERE c.disambiguator = slots.slot);
+
+			IF unmatched_count <> 1 OR available_count <> 1 THEN
+				RAISE EXCEPTION 'parent_song backfill: unresolved chart identities for %/%/% in %/%; audit artist mappings before retrying',
+					chart_group."songName", chart_group."type", chart_group."difficulty", slice."region", slice."gameVersion";
+			END IF;
+
+			UPDATE song_clusters SET disambiguator = remaining_parent
+			WHERE "songName" = chart_group."songName" AND "type" = chart_group."type"
+				AND "difficulty" = chart_group."difficulty"
+				AND "region" = slice."region" AND "gameVersion" = slice."gameVersion" AND disambiguator IS NULL;
+		END LOOP;
+	END LOOP;
+END $$;
+--> statement-breakpoint
+DROP TABLE song_cluster_candidates;
 --> statement-breakpoint
 
 INSERT INTO parent_song ("publicId", "songName", "artist", "genre", "cover", "bpm", "type", "difficulty", "disambiguator")

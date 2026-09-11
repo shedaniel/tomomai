@@ -80,6 +80,11 @@ new schema and old renderers cannot decode new tokens.
    backfills children, checks collision multiplicity and completeness, drops
    the old percentile view, and only then enforces the new child constraints
    and removes duplicate columns. It does not renumber song rows.
+   Collision groups seed identities from the largest slice, preferring the
+   latest version and JP on ties. Each remaining slice reserves unique artist
+   matches against all assigned aliases, then permits a rename only when one
+   chart and one identity remain. Ambiguous matches abort the migration with
+   the chart and slice to audit; resolve those mappings before retrying.
 3. Start the new main app behind the maintenance boundary. Invoke authenticated
    `POST /api/admin/catalog/publish` with the existing `ADMIN_UPDATE_TOKEN` to
    populate the new R2 namespace without scraping or rewriting catalog rows.
@@ -99,11 +104,16 @@ targets the old schema and is not a supported restore path for this schema.
 ## Verification evidence
 
 The 2026-09-11 read-only public catalog audit covered 52,127 instances across
-nine region/version slices. The backfill grouping rules produced 6,519 parents.
+nine region/version slices. The initial grouping audit produced 6,519 parents.
 The four standard Link difficulty groups each split into the two expected
 artists; the audit found no duplicate parent/region/version assignments or
 over-splitting. This checks current public data, not hidden database state or
-the execution of the migration SQL itself.
+the execution of the migration SQL itself. The collision matcher now handles
+artist renames by matching slices one to one. A pure implementation of that
+matching algorithm passed seven rename/ambiguity fixtures and reproduced
+6,519 parents from the same cached catalog, with no ambiguous assignments or
+duplicate children. This does not execute the migration SQL or establish that
+every deployment database is unambiguous.
 
 Tests cover collision resolution, upload matching, supported versions, public
 IDs, API lookup predicates, catalog publication/retry, percentile results,
