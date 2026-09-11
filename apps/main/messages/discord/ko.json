@@ -56,6 +56,7 @@
   },
   "fetch": {
     "maintenanceWindow": "서버 점검 시간(한국 시간 오전 4시 ~ 7시)에는 데이터를 갱신할 수 없습니다.",
+    "maintenanceWindowIntl": "서버 점검 시간(일본 시간 오전 1시 ~ 2시, 수요일은 오전 1시 ~ 4시)에는 데이터를 갱신할 수 없습니다.",
     "startError": "데이터 동기화를 시작하지 못했습니다. 잠시 후 다시 시도해 주세요.",
     "initializing": {
       "title": "🔄 {regionName} 데이터 동기화 중",

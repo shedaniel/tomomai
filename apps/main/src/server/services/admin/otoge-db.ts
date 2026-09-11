@@ -132,9 +132,8 @@ async function fetchRecordsWithUrl(region: Region, version: VersionId, url: stri
       return null;
     }
     const [, year, month, day] = match;
-    // Create ISO 8601 string with JST timezone offset (+09:00)
-    // This ensures the date is interpreted as JST midnight regardless of server timezone
-    return new Date(`${year}-${month}-${day}T00:00:00+09:00`);
+    // Date-only additions belong to the version released that day, after the 7 AM rollover.
+    return new Date(`${year}-${month}-${day}T07:00:00+09:00`);
   }
   return data.flatMap((song: SongsJsonRecord) => {
     const records: SongWithMode[] = [];

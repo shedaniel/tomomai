@@ -295,6 +295,11 @@ export function parseDate(dateString: string): Date {
   return new Date(`${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}T00:00:00+09:00`);
 }
 
+function getReleaseTime(dateString: string): number {
+  // Version rollovers stay at 7 AM JST, independent of regional maintenance.
+  return parseDate(dateString).getTime() + 7 * 60 * 60 * 1000;
+}
+
 /**
  * Get all available versions for a region (excluding null release dates)
  */
@@ -321,19 +326,7 @@ export function getLatestAvailableVersion(region: Region): VersionId {
   return sortedVersions[0].id;
 }
 
-/**
- * Get the version that was current on a specific date for a given region.
- *
- * @param date - Date object representing a point in time. Should be in JST
- *              for correct results (use {@link parseDate} to create JST dates).
- * @param region - Region to check
- * @returns The version ID that was current at the given date
- *
- * @example
- * // Get version for a specific JST date
- * const date = parseDate('2025/01/16');
- * getVersionFromDate(date, 'jp');
- */
+/** Get the version current at an instant; all releases start at 7 AM JST. */
 export function getVersionFromDate(date: Date, region: Region): VersionId {
   const availableVersions = getAvailableVersions(region);
 
@@ -346,8 +339,8 @@ export function getVersionFromDate(date: Date, region: Region): VersionId {
 
   // Find the latest version that was released on or before the given date
   for (const version of sortedVersions) {
-    const releaseDate = parseDate(getRegionReleaseDate(version, region)!);
-    if (date >= releaseDate) {
+    const releaseTime = getReleaseTime(getRegionReleaseDate(version, region)!);
+    if (date.getTime() >= releaseTime) {
       return version.id;
     }
   }
@@ -401,7 +394,7 @@ export function getVersionsSortedByDate(region: Region, ascending = true): Versi
  * @param versionId - Version ID to check
  * @param region - Region to check
  * @param date - Date object representing when to check availability.
- *               Defaults to current time. For correct results, use JST dates.
+ *               Defaults to current time. All releases start at 7 AM JST.
  * @returns Whether the version was available at the given date
  */
 export function isVersionAvailable(versionId: VersionId, region: Region, date: Date = new Date()): boolean {
@@ -411,8 +404,7 @@ export function isVersionAvailable(versionId: VersionId, region: Region, date: D
   const dateString = getRegionReleaseDate(version, region);
   if (!dateString) return false; // Not released yet
 
-  const releaseDate = parseDate(dateString);
-  return date >= releaseDate;
+  return date.getTime() >= getReleaseTime(dateString);
 }
 
 /**

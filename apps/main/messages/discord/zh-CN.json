@@ -56,6 +56,7 @@
   },
   "fetch": {
     "maintenanceWindow": "现在是服务器维护时段（北京时间凌晨 3 点至 6 点），暂时无法同步数据喔。",
+    "maintenanceWindowIntl": "现在是服务器维护时段（日本时间凌晨 1 点至 2 点，周三为凌晨 1 点至 4 点），暂时无法同步数据喔。",
     "startError": "启动数据同步失败，请稍候重试。",
     "initializing": {
       "title": "🔄 正在同步 {regionName} 数据",
