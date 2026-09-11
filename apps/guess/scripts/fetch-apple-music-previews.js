@@ -1,13 +1,16 @@
 #!/usr/bin/env node
 // Fetch Apple Music / iTunes 30s preview URLs for the maimai song catalog and
-// emit a JSON map keyed by `<songName>|<artist>`. See plan in
-// .claude/plans/let-s-do-apple-music-staged-quail.md.
+// emit a JSON map keyed by `<songName>|<artist>`.
 
 import { createHash } from "node:crypto";
 import { mkdir, readFile, writeFile, stat } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { ProxyAgent } from "undici";
+import pino from "pino";
+import { fetchPreviewCatalog } from "./preview-catalog.js";
+
+const log = pino({}, pino.destination({ sync: true }));
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const APP_ROOT = resolve(__dirname, "..");
@@ -162,10 +165,10 @@ async function loadProxies() {
       networkFails: 0,
       dead: false,
     });
-    console.log("No WEBSHARE_PROXY_LIST_URL — using direct connection (1 IP, ~17 req/min).");
+    log.info("No WEBSHARE_PROXY_LIST_URL — using direct connection (1 IP, ~17 req/min).");
     return;
   }
-  console.log("Fetching proxy list…");
+  log.info("Fetching proxy list…");
   const res = await fetch(PROXY_LIST_URL);
   if (!res.ok) throw new Error(`Proxy list fetch failed: ${res.status}`);
   const text = await res.text();
@@ -190,7 +193,7 @@ async function loadProxies() {
   if (!proxyPool.length) {
     throw new Error("Proxy list was empty");
   }
-  console.log(`Loaded ${proxyPool.length} proxies — effective rate ~${Math.round((60_000 / RATE_LIMIT_MS) * proxyPool.length)} req/min.`);
+  log.info(`Loaded ${proxyPool.length} proxies — effective rate ~${Math.round((60_000 / RATE_LIMIT_MS) * proxyPool.length)} req/min.`);
 }
 
 // Serialise proxy reservation across concurrent workers so two workers can't
@@ -249,9 +252,9 @@ async function itunesSearch(term) {
       proxy.cooldownUntil = Date.now() + NETWORK_COOLDOWN_MS;
       if (proxy.networkFails >= DEAD_AFTER_FAILS) {
         proxy.dead = true;
-        console.warn(`  ☠ proxy ${proxy.id} dead after ${proxy.networkFails} fails (${aliveCount()} alive)`);
+        log.warn({ err }, `  ☠ proxy ${proxy.id} dead after ${proxy.networkFails} fails (${aliveCount()} alive)`);
       } else {
-        console.warn(`  ⚠ network error via ${proxy.id}: ${err.message} (fail ${proxy.networkFails}/${DEAD_AFTER_FAILS})`);
+        log.warn({ err }, `  ⚠ network error via ${proxy.id}: ${err.message} (fail ${proxy.networkFails}/${DEAD_AFTER_FAILS})`);
       }
       continue; // network errors don't burn retry budget
     }
@@ -259,7 +262,7 @@ async function itunesSearch(term) {
     if (res.status === 403 || res.status === 429) {
       rateLimitAttempts++;
       const backoff = 2 ** rateLimitAttempts * BACKOFF_BASE_MS;
-      console.warn(`  rate limited (${res.status}) via ${proxy.id}, cooling down ${backoff}ms`);
+      log.warn(`  rate limited (${res.status}) via ${proxy.id}, cooling down ${backoff}ms`);
       proxy.cooldownUntil = Date.now() + backoff;
       continue;
     }
@@ -347,12 +350,8 @@ async function resolveSong(songName, artist) {
 // ---------- catalog -------------------------------------------------------
 
 async function fetchCatalog() {
-  const url = `${CATALOG_URL}/api/v1/songs`;
-  console.log(`Fetching catalog: ${url}`);
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`Catalog fetch failed: ${res.status}`);
-  const body = await res.json();
-  return body.songs;
+  log.info({ url: CATALOG_URL }, "Fetching current JP catalog");
+  return fetchPreviewCatalog(CATALOG_URL);
 }
 
 function uniqueSongs(charts) {
@@ -398,34 +397,34 @@ async function debugUnmatched(genreFilter, sampleSize) {
     (u) => !genreFilter || u.genre === genreFilter,
   );
   if (!unmatched.length) {
-    console.log(`No unmatched entries${genreFilter ? ` for genre "${genreFilter}"` : ""}.`);
+    log.info(`No unmatched entries${genreFilter ? ` for genre "${genreFilter}"` : ""}.`);
     return;
   }
   // Random sample
   const shuffled = [...unmatched].sort(() => Math.random() - 0.5);
   const sample = shuffled.slice(0, sampleSize);
-  console.log(`Sampling ${sample.length}/${unmatched.length} unmatched in "${genreFilter ?? "(all)"}"`);
+  log.info(`Sampling ${sample.length}/${unmatched.length} unmatched in "${genreFilter ?? "(all)"}"`);
 
   for (const u of sample) {
     const cleanName = stripUtageBracket(u.songName);
-    console.log("\n" + "═".repeat(70));
-    console.log(`maimai: ${u.songName} — ${u.artist}`);
-    if (cleanName !== u.songName) console.log(`  (stripped: ${cleanName})`);
-    console.log(`  normalized song: "${normalize(u.songName)}"`);
-    console.log(`  normalized artist tokens: [${tokens(u.artist).join(", ")}]`);
+    log.info("\n" + "═".repeat(70));
+    log.info(`maimai: ${u.songName} — ${u.artist}`);
+    if (cleanName !== u.songName) log.info(`  (stripped: ${cleanName})`);
+    log.info(`  normalized song: "${normalize(u.songName)}"`);
+    log.info(`  normalized artist tokens: [${tokens(u.artist).join(", ")}]`);
 
     for (const q of [`${cleanName} ${u.artist}`, cleanName]) {
-      console.log(`\n  query → "${q}"`);
+      log.info(`\n  query → "${q}"`);
       let body;
       try {
         body = await itunesSearch(q);
       } catch (err) {
-        console.log(`    ERROR: ${err.message}`);
+        log.error({ err }, "Search failed");
         continue;
       }
       const results = (body.results ?? []).slice(0, 5);
       if (!results.length) {
-        console.log(`    (no results)`);
+        log.info(`    (no results)`);
         continue;
       }
       const sNorm = normalize(u.songName);
@@ -447,7 +446,7 @@ async function debugUnmatched(genreFilter, sampleSize) {
         const artistOk = artistMatches(u.artist, r.artistName ?? "");
         const trackOk = !trackTier.startsWith("fail");
         const verdict = trackOk && artistOk ? `✓ ${trackTier}` : `✗ track=${trackTier} artist=${artistOk ? "y" : "n"}`;
-        console.log(`    ${verdict}  "${r.trackName}" — ${r.artistName}${r.previewUrl ? "" : " (no preview)"}`);
+        log.info(`    ${verdict}  "${r.trackName}" — ${r.artistName}${r.previewUrl ? "" : " (no preview)"}`);
       }
     }
   }
@@ -472,8 +471,8 @@ async function main() {
   await loadProxies();
   const [catalog, existing] = await Promise.all([fetchCatalog(), loadExisting()]);
   const songs = uniqueSongs(catalog);
-  console.log(`Unique songs: ${songs.length}`);
-  console.log(`Already resolved: ${Object.keys(existing.songs).length}`);
+  log.info(`Unique songs: ${songs.length}`);
+  log.info(`Already resolved: ${Object.keys(existing.songs).length}`);
 
   const out = { ...existing.songs };
   const unmatched = [];
@@ -500,7 +499,7 @@ async function main() {
   });
 
   const concurrency = Math.max(1, Math.min(MAX_CONCURRENCY, aliveCount()));
-  console.log(`Running ${concurrency} workers in parallel.`);
+  log.info(`Running ${concurrency} workers in parallel.`);
 
   const queue = [...songs];
   let cursor = 0;
@@ -526,14 +525,14 @@ async function main() {
           else if (match.confidence === "loose") looseCount++;
           else fuzzyCount++;
           const mark = match.confidence === "exact" ? "✓" : match.confidence === "loose" ? "≈" : "~";
-          console.log(`${tag} ${mark} ${s.songName} — ${s.artist}`);
+          log.info(`${tag} ${mark} ${s.songName} — ${s.artist}`);
         } else {
           unmatched.push({ songName: s.songName, artist: s.artist, genre: s.genre });
           unmatchedByGenre.set(s.genre, (unmatchedByGenre.get(s.genre) ?? 0) + 1);
-          console.log(`${tag} ✗ ${s.songName} — ${s.artist}`);
+          log.info(`${tag} ✗ ${s.songName} — ${s.artist}`);
         }
       } catch (err) {
-        console.error(`${tag} ! error resolving ${s.songName}:`, err.message);
+        log.error({ err, songKey: s.key }, "Error resolving preview");
         unmatched.push({
           songName: s.songName,
           artist: s.artist,
@@ -571,28 +570,28 @@ async function main() {
   });
 
   const pct = (n) => ((n / songs.length) * 100).toFixed(1);
-  console.log("");
-  console.log("─── Coverage ─────────────────────────────────────");
-  console.log(`Total unique songs:  ${stats.total}`);
-  console.log(`  matched (exact):   ${stats.exact} (${pct(stats.exact)}%)`);
-  console.log(`  matched (loose):   ${stats.loose} (${pct(stats.loose)}%)`);
-  console.log(`  matched (fuzzy):   ${stats.fuzzy} (${pct(stats.fuzzy)}%)`);
-  console.log(`  unmatched:         ${stats.unmatched} (${pct(stats.unmatched)}%)`);
-  console.log("");
+  log.info("");
+  log.info("─── Coverage ─────────────────────────────────────");
+  log.info(`Total unique songs:  ${stats.total}`);
+  log.info(`  matched (exact):   ${stats.exact} (${pct(stats.exact)}%)`);
+  log.info(`  matched (loose):   ${stats.loose} (${pct(stats.loose)}%)`);
+  log.info(`  matched (fuzzy):   ${stats.fuzzy} (${pct(stats.fuzzy)}%)`);
+  log.info(`  unmatched:         ${stats.unmatched} (${pct(stats.unmatched)}%)`);
+  log.info("");
   const topGenres = [...unmatchedByGenre.entries()]
     .sort((a, b) => b[1] - a[1])
     .slice(0, 10);
   if (topGenres.length) {
-    console.log("Top unmatched genres:");
+    log.info("Top unmatched genres:");
     for (const [genre, n] of topGenres) {
-      console.log(`  ${genre.padEnd(30)} ${n}`);
+      log.info(`  ${genre.padEnd(30)} ${n}`);
     }
   }
-  console.log("");
-  console.log(`Wrote ${OUTPUT_PATH}`);
+  log.info("");
+  log.info(`Wrote ${OUTPUT_PATH}`);
 }
 
 main().catch((err) => {
-  console.error(err);
+  log.error({ err }, "Preview fetch failed");
   process.exit(1);
 });
