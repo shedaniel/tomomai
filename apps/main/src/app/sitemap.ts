@@ -1,4 +1,6 @@
 import type { MetadataRoute } from 'next'
+import { unstable_cache } from 'next/cache';
+import { connection } from 'next/server';
 import { resolveBaseUrl } from '@/lib/base-url';
 import { DB_TYPES } from '@/lib/db/types';
 import { user, userSnapshots } from '@/lib/db/schema-pg';
@@ -13,9 +15,12 @@ const loc = (baseUrl: string, path: string) =>
 
 type SitemapItem = MetadataRoute.Sitemap[number];
 
-export const revalidate = 21600;
-
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  await connection();
+  return getSitemap();
+}
+
+const getSitemap = unstable_cache(async (): Promise<MetadataRoute.Sitemap> => {
   const baseUrl = resolveBaseUrl();
 
   const latestSnapshotAt = sql<Date | null>`max(${userSnapshots.fetchedAt})`;
@@ -77,4 +82,4 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.6,
     }) satisfies SitemapItem),
   ]
-}
+}, ['sitemap'], { revalidate: 21600 });
