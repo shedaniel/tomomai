@@ -432,7 +432,7 @@ async function updateParentAttributes(db: CatalogTransaction, allRows: WriteRow[
     const artist = value(merged.artist as Pending<any>) ?? parent.artist;
     const cover = value(merged.cover as Pending<any>) ?? parent.cover;
     const genre = value(merged.genre as Pending<any>) ?? parent.genre;
-    const bpm = value(merged.bpm as Pending<any>) ?? null;
+    const bpm = value(merged.bpm as Pending<any>) ?? parent.bpm;
 
     if (artist !== parent.artist || cover !== parent.cover || genre !== parent.genre || bpm !== parent.bpm) {
       await db
