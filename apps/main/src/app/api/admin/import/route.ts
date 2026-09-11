@@ -1,3 +1,4 @@
+import { parseCatalogVersion } from "@/lib/catalog/parse-version";
 import { db } from "@/lib/db";
 import { songs } from "@/lib/db/schema-pg";
 import { VersionId } from "@/lib/metadata";
@@ -6,7 +7,9 @@ import { getEnabledRegions, isRegionEnabled } from "@/lib/enabled-regions";
 import { flushLogger } from "@/lib/logger";
 import { requestLogger } from "@/lib/request-logger";
 import { and, eq, gte, lte, sql } from "drizzle-orm";
-import { nanoid } from "nanoid";
+import { publishSongCatalog } from "@/server/services/admin/song-catalog";
+import { revalidateTag, revalidatePath } from "next/cache";
+import { locales } from "@tomomai/i18n/locale";
 import { NextRequest, NextResponse } from "next/server";
 
 const REGION_PATTERN = "[a-z]+";
@@ -41,7 +44,7 @@ function parseFromParameter(from: string): {
 
   return {
     region: region as Region,
-    gameVersion: parseInt(gameVersion, 10) as VersionId,
+    gameVersion: parseCatalogVersion(region as Region, gameVersion),
     versionFilter,
     versionValue: parseInt(versionValue, 10),
   };
@@ -67,7 +70,7 @@ function parseToParameter(to: string): {
 
   return {
     region: region as Region,
-    gameVersion: parseInt(gameVersion, 10) as VersionId,
+    gameVersion: parseCatalogVersion(region as Region, gameVersion),
   };
 }
 
@@ -163,161 +166,168 @@ export async function GET(request: NextRequest) {
 
     const versionCondition = buildVersionFilter(sourceConfig.versionFilter, sourceConfig.versionValue);
 
-    const sourceSongs = await db
-      .select()
-      .from(songs)
-      .where(
-        and(
-          eq(songs.region, sourceConfig.region),
-          eq(songs.gameVersion, sourceConfig.gameVersion),
-          versionCondition
-        )
-      );
-
-    log.info({ count: sourceSongs.length }, "Found source songs matching criteria");
-
-    if (sourceSongs.length === 0) {
-      return NextResponse.json({
-        success: true,
-        requestId,
-        message: "No songs found matching the source criteria",
-        statistics: {
-          sourceFound: 0,
-          imported: 0,
-          updated: 0,
-          skipped: 0,
-          from: fromParam,
-          to: toParam,
-          mode: mode || 'insert+upsert',
-          timestamp: new Date().toISOString(),
-        },
-      });
-    }
-
-    // Step 2: Check existing songs in target if mode is "only-upsert"
-    let existingTargetSongs: any[] = [];
-
-    if (mode === "only-upsert") {
-      log.debug("Querying existing target songs for upsert mode");
-      existingTargetSongs = await db
+    const result = await db.transaction(async (tx) => {
+      await tx.execute(sql`SELECT pg_advisory_xact_lock(73641932)`);
+      const sourceSongs = await tx
         .select()
         .from(songs)
         .where(
           and(
-            eq(songs.region, targetConfig.region),
-            eq(songs.gameVersion, targetConfig.gameVersion)
+            eq(songs.region, sourceConfig.region),
+            eq(songs.gameVersion, sourceConfig.gameVersion),
+            versionCondition
           )
         );
 
-      log.debug({ count: existingTargetSongs.length }, "Found existing songs in target");
-    }
+      log.info({ count: sourceSongs.length }, "Found source songs matching criteria");
 
-    const targetSongs: any[] = [];
-    let importedCount = 0;
-    let updatedCount = 0;
-    let skippedCount = 0;
+      if (sourceSongs.length === 0) {
+        return NextResponse.json({
+          success: true,
+          requestId,
+          message: "No songs found matching the source criteria",
+          statistics: {
+            sourceFound: 0,
+            imported: 0,
+            updated: 0,
+            skipped: 0,
+            from: fromParam,
+            to: toParam,
+            mode: mode || 'insert+upsert',
+            timestamp: new Date().toISOString(),
+          },
+        });
+      }
 
-    // Create a map of existing target songs for quick lookup (songName + difficulty + type)
-    const existingTargetMap = new Map<string, any>();
-    if (mode === "only-upsert") {
-      existingTargetSongs.forEach(song => {
-        const key = `${song.songName}|${song.difficulty}|${song.type}`;
-        existingTargetMap.set(key, song);
-      });
-    }
-
-    for (const sourceSong of sourceSongs) {
-      const songKey = `${sourceSong.songName}|${sourceSong.difficulty}|${sourceSong.type}`;
+      // Step 2: Check existing songs in target if mode is "only-upsert"
+      let existingTargetSongs: (typeof songs.$inferSelect)[] = [];
 
       if (mode === "only-upsert") {
-        // Only include songs that already exist in target
-        if (!existingTargetMap.has(songKey)) {
-          log.debug({ songKey }, "Skipping new song in upsert mode");
-          skippedCount++;
-          continue;
-        }
-        updatedCount++;
-      } else {
-        importedCount++;
+        log.debug("Querying existing target songs for upsert mode");
+        existingTargetSongs = await tx
+          .select()
+          .from(songs)
+          .where(
+            and(
+              eq(songs.region, targetConfig.region),
+              eq(songs.gameVersion, targetConfig.gameVersion)
+            )
+          );
+
+        log.debug({ count: existingTargetSongs.length }, "Found existing songs in target");
       }
 
-      // Create new song record with target region/version
-      // ID is auto-generated by PostgreSQL, publicId is generated via nanoid
-      const { id, publicId, ...songWithoutIds } = sourceSong;
-      const targetSong = {
-        ...songWithoutIds,
-        publicId: nanoid(),
-        region: targetConfig.region,
-        gameVersion: targetConfig.gameVersion,
-      };
+      const targetSongs: (typeof songs.$inferInsert)[] = [];
+      let importedCount = 0;
+      let updatedCount = 0;
+      let skippedCount = 0;
 
-      targetSongs.push(targetSong);
-    }
+      const existingTargetMap = new Map<string, typeof songs.$inferSelect>();
+      if (mode === "only-upsert") {
+        existingTargetSongs.forEach(song => {
+          const key = String(song.parentId);
+          existingTargetMap.set(key, song);
+        });
+      }
 
-    log.info({ count: targetSongs.length }, "Prepared songs for import");
+      for (const sourceSong of sourceSongs) {
+        const songKey = String(sourceSong.parentId);
 
-    // Step 4: Perform batch upsert
-    if (targetSongs.length > 0) {
-      log.debug({ count: targetSongs.length }, "Performing batch upsert");
-
-      try {
-        // Split into batches of 1000 records to avoid SQL limits
-        const batchSize = 1000;
-        let totalProcessed = 0;
-
-        for (let i = 0; i < targetSongs.length; i += batchSize) {
-          const batch = targetSongs.slice(i, i + batchSize);
-          log.debug(`Upserting batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(targetSongs.length / batchSize)} (${batch.length} songs)`);
-
-          await db.insert(songs).values(batch).onConflictDoUpdate({
-            target: [songs.songName, songs.difficulty, songs.type, songs.region, songs.gameVersion, songs.addedVersion],
-            set: {
-              artist: sql`excluded.artist`,
-              cover: sql`excluded.cover`,
-              level: sql`excluded.level`,
-              levelPrecise: sql`excluded."levelPrecise"`,
-              genre: sql`excluded.genre`,
-              bpm: sql`excluded.bpm`,
-              noteDesigner: sql`excluded."noteDesigner"`,
-              tapCount: sql`excluded."tapCount"`,
-              holdCount: sql`excluded."holdCount"`,
-              slideCount: sql`excluded."slideCount"`,
-              touchCount: sql`excluded."touchCount"`,
-              breakCount: sql`excluded."breakCount"`,
-            },
-          });
-
-          totalProcessed += batch.length;
+        if (mode === "only-upsert") {
+          // Only include songs that already exist in target
+          if (!existingTargetMap.has(songKey)) {
+            log.debug({ songKey }, "Skipping new song in upsert mode");
+            skippedCount++;
+            continue;
+          }
+          updatedCount++;
+        } else {
+          importedCount++;
         }
 
-        log.debug({ count: totalProcessed }, "Upserted songs to target");
-      } catch (error) {
-        log.error({ err: error }, "Error during batch upsert");
-        throw new Error(`Database upsert failed: ${error instanceof Error ? error.message : "Unknown error"}`);
+        const { id, ...songWithoutIds } = sourceSong;
+        const targetSong = {
+          ...songWithoutIds,
+          region: targetConfig.region,
+          gameVersion: targetConfig.gameVersion,
+        };
+
+        targetSongs.push(targetSong);
       }
-    }
 
-    const totalProcessed = mode === "only-upsert" ? updatedCount : importedCount;
-    log.info({ count: totalProcessed, skipped: skippedCount }, "Import completed");
+      log.info({ count: targetSongs.length }, "Prepared songs for import");
 
-    return NextResponse.json({
-      success: true,
-      requestId,
-      message: "Song import completed successfully",
-      statistics: {
-        sourceFound: sourceSongs.length,
-        imported: mode === "only-upsert" ? 0 : importedCount,
-        updated: mode === "only-upsert" ? updatedCount : 0,
-        skipped: skippedCount,
-        totalProcessed: targetSongs.length,
-        from: fromParam,
-        to: toParam,
-        mode: mode || 'insert+upsert',
-        sourceConfig,
-        targetConfig,
-        timestamp: new Date().toISOString(),
-      },
+      // Step 4: Perform batch upsert
+      if (targetSongs.length > 0) {
+        log.debug({ count: targetSongs.length }, "Performing batch upsert");
+
+        try {
+          // Split into batches of 1000 records to avoid SQL limits
+          const batchSize = 1000;
+          let totalProcessed = 0;
+
+          for (let i = 0; i < targetSongs.length; i += batchSize) {
+            const batch = targetSongs.slice(i, i + batchSize);
+            log.debug(`Upserting batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(targetSongs.length / batchSize)} (${batch.length} songs)`);
+
+            await tx.insert(songs).values(batch).onConflictDoUpdate({
+              target: [songs.parentId, songs.region, songs.gameVersion],
+              set: {
+                addedVersion: sql`excluded."addedVersion"`,
+                level: sql`excluded.level`,
+                levelPrecise: sql`excluded."levelPrecise"`,
+                noteDesigner: sql`excluded."noteDesigner"`,
+                tapCount: sql`excluded."tapCount"`,
+                holdCount: sql`excluded."holdCount"`,
+                slideCount: sql`excluded."slideCount"`,
+                touchCount: sql`excluded."touchCount"`,
+                breakCount: sql`excluded."breakCount"`,
+              },
+            });
+
+            totalProcessed += batch.length;
+          }
+
+          log.debug({ count: totalProcessed }, "Upserted songs to target");
+        } catch (error) {
+          log.error({ err: error }, "Error during batch upsert");
+          throw new Error(`Database upsert failed: ${error instanceof Error ? error.message : "Unknown error"}`);
+        }
+      }
+
+      const totalProcessed = mode === "only-upsert" ? updatedCount : importedCount;
+      log.info({ count: totalProcessed, skipped: skippedCount }, "Import completed");
+
+      return NextResponse.json({
+        success: true,
+        requestId,
+        message: "Song import completed successfully",
+        statistics: {
+          sourceFound: sourceSongs.length,
+          imported: mode === "only-upsert" ? 0 : importedCount,
+          updated: mode === "only-upsert" ? updatedCount : 0,
+          skipped: skippedCount,
+          totalProcessed: targetSongs.length,
+          from: fromParam,
+          to: toParam,
+          mode: mode || 'insert+upsert',
+          sourceConfig,
+          targetConfig,
+          timestamp: new Date().toISOString(),
+        },
     });
+
+    });
+    await publishSongCatalog();
+    revalidateTag("all-unique-songs", { expire: 3600 });
+    revalidateTag("reserved-songs", { expire: 0 });
+    revalidateTag("api-v1-songs", { expire: 0 });
+    for (const locale of locales) {
+      revalidatePath(`/${locale}/db/songs/[slug]`, "page");
+      revalidatePath(`/${locale}/db/songs`, "page");
+    }
+    revalidatePath("/sitemap.xml", "page");
+    return result;
 
   } catch (error) {
     log.error({ err: error }, "Error in admin import route");

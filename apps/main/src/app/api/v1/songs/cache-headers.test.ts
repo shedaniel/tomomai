@@ -1,6 +1,8 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { SONG_CATALOG_CACHE_HEADERS } from "./cache-headers";
 import { GET } from "./route";
+import { NextRequest } from "next/server";
+import { GET as getParents } from "../parents/route";
 
 const EXPECTED_SONG_CATALOG_CACHE_VALUE = "public, max-age=3600, stale-while-revalidate=86400";
 
@@ -26,12 +28,25 @@ describe("SONG_CATALOG_CACHE_HEADERS", () => {
   it("redirects the stable API path to the R2 catalog with the shared cache policy", () => {
     process.env.NEXT_PUBLIC_R2_URL = "https://cdn.example.test/";
 
-    const response = GET();
+    const response = GET(new NextRequest("https://example.test/api/v1/songs?region=jp&gameVersion=11"));
 
     expect(response.status).toBe(302);
-    expect(response.headers.get("location")).toBe("https://cdn.example.test/api/v1/songs");
+    expect(response.headers.get("location")).toBe("https://cdn.example.test/api/v1/catalog-parent-v1/songs/jp/11");
     for (const [name, value] of Object.entries(SONG_CATALOG_CACHE_HEADERS)) {
       expect(response.headers.get(name)).toBe(value);
     }
   });
+  it("rejects missing, malformed, and unknown slice parameters", () => {
+    for (const query of ["", "?region=jp", "?region=jp&gameVersion=", "?region=jp&gameVersion=999", "?region=jp&gameVersion=1.5", "?region=bad&gameVersion=11"]) {
+      expect(GET(new NextRequest(`https://example.test/api/v1/songs${query}`)).status).toBe(400);
+    }
+  });
+
+  it("redirects the parent dictionary to the new R2 namespace", () => {
+    process.env.NEXT_PUBLIC_R2_URL = "https://cdn.example.test";
+    const response = getParents();
+    expect(response.headers.get("location")).toBe("https://cdn.example.test/api/v1/catalog-parent-v1/parents");
+    expect(response.headers.get("Cache-Control")).toBe(EXPECTED_SONG_CATALOG_CACHE_VALUE);
+  });
+
 });

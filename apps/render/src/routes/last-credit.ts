@@ -37,7 +37,7 @@ export async function renderLastCredit(
   const { header, payload } = message;
   const region = header.region as Region;
 
-  const catalog = await getCatalog();
+  const catalog = await getCatalog(payload.tracks.map(chart => chart.songId));
 
   const tracks: RecentSongData[] = payload.tracks.map((t, index) => {
     const entry = catalog.get(t.songId);

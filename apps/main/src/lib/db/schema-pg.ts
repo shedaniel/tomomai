@@ -215,21 +215,30 @@ export const userSnapshots = pgTable("user_snapshots", {
   index("user_snapshots_userid_region_fetchedat_idx").on(table.userId, table.region, table.fetchedAt),
 ]);
 
-export const songs = pgTable("songs", {
-  id: bigint("id", { mode: "bigint" }).primaryKey().generatedAlwaysAsIdentity(), // Internal auto-increment ID
-  publicId: varchar("publicId", { length: 21 }).notNull().unique(), // Public-facing nanoid
+export const parentSong = pgTable("parent_song", {
+  id: bigint("id", { mode: "bigint" }).primaryKey().generatedAlwaysAsIdentity(),
+  publicId: varchar("publicId", { length: 8 }).notNull().unique(),
   songName: text("songName").notNull(),
   artist: text("artist").notNull(),
-  cover: text("cover").notNull(), // URL
+  genre: text("genre").notNull(),
+  cover: text("cover").notNull(),
+  bpm: smallint("bpm"),
+  type: chartTypeEnum("type").notNull(),
   difficulty: difficultyEnum("difficulty").notNull(),
+  disambiguator: smallint("disambiguator").notNull().default(0),
+}, (table) => [
+  unique("parent_song_name_type_difficulty_disambiguator_unique").on(table.songName, table.type, table.difficulty, table.disambiguator),
+  index("parent_song_songname_type_idx").on(table.songName, table.type),
+]);
+
+export const songs = pgTable("songs", {
+  id: bigint("id", { mode: "bigint" }).primaryKey().generatedAlwaysAsIdentity(), // Internal auto-increment ID
+  parentId: bigint("parentId", { mode: "bigint" }).notNull().references(() => parentSong.id, { onDelete: "restrict" }),
   level: levelEnum("level").notNull(),
   levelPrecise: smallint("levelPrecise").notNull(), // stored as 10x, e.g., 16.5 = 165
-  type: chartTypeEnum("type").notNull(),
-  genre: text("genre").notNull(), // Will define enum later based on maimai genres
   region: regionEnum("region").notNull(),
   gameVersion: smallint("gameVersion").notNull(), // ref @metadata.ts
   addedVersion: smallint("addedVersion").notNull(), // ref @metadata.ts
-  bpm: smallint("bpm"),
   noteDesigner: text("noteDesigner"),
   tapCount: smallint("tapCount"),
   holdCount: smallint("holdCount"),
@@ -237,11 +246,9 @@ export const songs = pgTable("songs", {
   touchCount: smallint("touchCount"),
   breakCount: smallint("breakCount"),
 }, (table) => [
-  unique("song_name_difficulty_type_region_version_addedversion_unique").on(table.songName, table.difficulty, table.type, table.region, table.gameVersion, table.addedVersion),
-  index("songs_publicid_idx").on(table.publicId),
+  unique("songs_parent_region_version_unique").on(table.parentId, table.region, table.gameVersion),
+  index("songs_parentid_idx").on(table.parentId),
   index("songs_region_gameversion_idx").on(table.region, table.gameVersion),
-  index("songs_songname_difficulty_idx").on(table.songName, table.difficulty),
-  index("songs_songname_type_idx").on(table.songName, table.type),
 ]);
 
 export const scoreData = pgTable("score_data", {

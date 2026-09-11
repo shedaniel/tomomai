@@ -1,5 +1,6 @@
+import { songInstanceId } from "@/lib/db/song-instance-id";
 import { db } from '@/lib/db';
-import { songs, user, userRecentSongs, userSnapshots } from '@/lib/db/schema-pg';
+import { parentSong, songs, user, userRecentSongs, userSnapshots } from '@/lib/db/schema-pg';
 import { and, desc, eq, gte, lt, lte } from 'drizzle-orm';
 import { VersionId } from '@/lib/metadata';
 import { Difficulty, FullCombo, FullSync, Region, SongType } from '@/lib/types';
@@ -92,6 +93,7 @@ export async function prepareDailyPlaysData(
       .select({ playedAt: userRecentSongs.playedAt })
       .from(userRecentSongs)
       .innerJoin(songs, eq(userRecentSongs.songId, songs.id))
+      .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
       .where(and(eq(userRecentSongs.userId, userId), eq(songs.region, region)))
       .orderBy(desc(userRecentSongs.playedAt))
       .limit(50);
@@ -114,16 +116,17 @@ export async function prepareDailyPlaysData(
       achievement: userRecentSongs.archievement,
       fc: userRecentSongs.fc,
       fs: userRecentSongs.fs,
-      songPublicId: songs.publicId,
-      songName: songs.songName,
-      cover: songs.cover,
-      difficulty: songs.difficulty,
+      songPublicId: songInstanceId,
+      songName: parentSong.songName,
+      cover: parentSong.cover,
+      difficulty: parentSong.difficulty,
       levelPrecise: songs.levelPrecise,
-      type: songs.type,
+      type: parentSong.type,
       addedVersion: songs.addedVersion,
     })
     .from(userRecentSongs)
     .innerJoin(songs, eq(userRecentSongs.songId, songs.id))
+    .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
     .where(and(
       eq(userRecentSongs.userId, userId),
       eq(songs.region, region),
@@ -232,6 +235,7 @@ export async function listDailyPlaysAvailableDays(
     .select({ playedAt: userRecentSongs.playedAt })
     .from(userRecentSongs)
     .innerJoin(songs, eq(userRecentSongs.songId, songs.id))
+    .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
     .where(and(eq(userRecentSongs.userId, userId), eq(songs.region, region)))
     .orderBy(desc(userRecentSongs.playedAt));
 

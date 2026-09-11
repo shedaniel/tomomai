@@ -1,5 +1,5 @@
 import { db } from '@/lib/db';
-import { scoreData, snapshotB50, snapshotScores, songs, user, userEvents, userSnapshots } from '@/lib/db/schema-pg';
+import { parentSong, scoreData, snapshotB50, snapshotScores, songs, user, userEvents, userSnapshots } from '@/lib/db/schema-pg';
 import { getEnabledRegions } from '@/lib/enabled-regions';
 import { logger } from '@/lib/logger';
 import { upsertScoreData } from '@/lib/maimai';
@@ -103,9 +103,9 @@ export const snapshotsRouter = router({
         .select({
           snapshotId: snapshotB50.snapshotId,
           songId: songs.id,
-          songName: songs.songName,
-          cover: songs.cover,
-          difficulty: songs.difficulty,
+          songName: parentSong.songName,
+          cover: parentSong.cover,
+          difficulty: parentSong.difficulty,
           levelPrecise: songs.levelPrecise,
           addedVersion: songs.addedVersion,
           achievement: scoreData.achievement,
@@ -114,6 +114,7 @@ export const snapshotsRouter = router({
         .from(snapshotB50)
         .innerJoin(scoreData, eq(snapshotB50.scoreId, scoreData.id))
         .innerJoin(songs, eq(scoreData.songId, songs.id))
+        .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
         .where(
           and(
             eq(songs.region, input.region),
@@ -415,13 +416,13 @@ export const snapshotsRouter = router({
 
       const songsWithScores = await db
         .select({
-          songName: songs.songName,
-          artist: songs.artist,
-          cover: songs.cover,
-          difficulty: songs.difficulty,
+          songName: parentSong.songName,
+          artist: parentSong.artist,
+          cover: parentSong.cover,
+          difficulty: parentSong.difficulty,
           level: songs.level,
           levelPrecise: songs.levelPrecise,
-          type: songs.type,
+          type: parentSong.type,
           gameVersion: songs.addedVersion,
           achievement: scoreData.achievement,
           dxScore: scoreData.dxScore,
@@ -431,8 +432,9 @@ export const snapshotsRouter = router({
         .from(snapshotScores)
         .innerJoin(scoreData, eq(snapshotScores.scoreId, scoreData.id))
         .innerJoin(songs, eq(scoreData.songId, songs.id))
+        .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
         .where(eq(snapshotScores.snapshotId, snapshot[0].id))
-        .orderBy(songs.songName, songs.difficulty);
+        .orderBy(parentSong.songName, parentSong.difficulty);
 
       return {
         metadata: {
@@ -473,6 +475,7 @@ export const snapshotsRouter = router({
           count: count()
         })
         .from(songs)
+        .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
         .where(eq(songs.region, input.region))
         .groupBy(songs.gameVersion);
 
@@ -543,9 +546,7 @@ export const snapshotsRouter = router({
 
       const originalScores = await db
         .select({
-          songName: songs.songName,
-          songType: songs.type,
-          songDifficulty: songs.difficulty,
+          parentId: songs.parentId,
           achievement: scoreData.achievement,
           dxScore: scoreData.dxScore,
           fc: scoreData.fc,
@@ -554,16 +555,16 @@ export const snapshotsRouter = router({
         .from(snapshotScores)
         .innerJoin(scoreData, eq(snapshotScores.scoreId, scoreData.id))
         .innerJoin(songs, eq(scoreData.songId, songs.id))
+        .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
         .where(eq(snapshotScores.snapshotId, originalSnapshot.id));
 
       const targetVersionSongs = await db
         .select({
           id: songs.id,
-          songName: songs.songName,
-          type: songs.type,
-          difficulty: songs.difficulty,
+          parentId: songs.parentId,
         })
         .from(songs)
+        .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
         .where(
           and(
             eq(songs.region, input.region),
@@ -571,16 +572,16 @@ export const snapshotsRouter = router({
           )
         );
 
-      const targetSongLookup = new Map<string, bigint>();
+      const targetSongLookup = new Map<bigint, bigint>();
       for (const song of targetVersionSongs) {
-        const key = `${song.songName}|${song.type}|${song.difficulty}`;
+        const key = song.parentId;
         targetSongLookup.set(key, song.id);
       }
 
       // Build score data for target version songs
       const newScoreData: { songId: bigint; achievement: number; dxScore: number; fc: string; fs: string }[] = [];
       for (const originalScore of originalScores) {
-        const lookupKey = `${originalScore.songName}|${originalScore.songType}|${originalScore.songDifficulty}`;
+        const lookupKey = originalScore.parentId;
         const targetSongId = targetSongLookup.get(lookupKey);
 
         if (targetSongId) {
@@ -620,14 +621,14 @@ export const snapshotsRouter = router({
         const scoresWithSongs = await db
           .select({
             songId: songs.id,
-            songName: songs.songName,
-            artist: songs.artist,
-            cover: songs.cover,
-            difficulty: songs.difficulty,
+            songName: parentSong.songName,
+            artist: parentSong.artist,
+            cover: parentSong.cover,
+            difficulty: parentSong.difficulty,
             level: songs.level,
             levelPrecise: songs.levelPrecise,
-            type: songs.type,
-            genre: songs.genre,
+            type: parentSong.type,
+            genre: parentSong.genre,
             addedVersion: songs.addedVersion,
             achievement: scoreData.achievement,
             dxScore: scoreData.dxScore,
@@ -637,6 +638,7 @@ export const snapshotsRouter = router({
           .from(snapshotScores)
           .innerJoin(scoreData, eq(snapshotScores.scoreId, scoreData.id))
           .innerJoin(songs, eq(scoreData.songId, songs.id))
+          .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
           .where(eq(snapshotScores.snapshotId, newSnapshotInternalId));
 
         const songsForCalculation: (Omit<SongWithScore, 'songId'> & { songId: bigint })[] = scoresWithSongs.map(song => ({

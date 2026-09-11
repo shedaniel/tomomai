@@ -32,7 +32,7 @@ export default async function DetailSlotPage({ params }: Props) {
   // SSR the full static chart data (no userId → no scores) so the drawer
   // body is in the document for crawlers and no-JS clients. The client
   // component refetches on mount to layer in the signed-in user's scores.
-  const details = await getSongDetailsCached(song.songName, song.type);
+  const details = await getSongDetailsCached(song.songName, song.type, undefined, song.artist);
 
   const t = await getTranslations("db.songs.detail");
   // Fall back to artist when the song name is empty (some entries have
@@ -44,6 +44,7 @@ export default async function DetailSlotPage({ params }: Props) {
     <article aria-label={label} data-song-slug={song.slug}>
       <SongDetailContent
         songName={song.songName}
+        artist={song.artist}
         slug={song.slug}
         type={song.type}
         initialData={details}

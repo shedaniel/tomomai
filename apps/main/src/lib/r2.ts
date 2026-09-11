@@ -14,6 +14,7 @@ export const r2Client = new S3Client({
 export const R2_BUCKET = process.env.R2_BUCKET!;
 
 export interface PutR2ObjectOptions {
+  abortSignal?: AbortSignal;
   key: string;
   body: string | Uint8Array | Buffer;
   contentType: string;
@@ -21,6 +22,7 @@ export interface PutR2ObjectOptions {
 }
 
 export async function putR2Object({
+  abortSignal,
   key,
   body,
   contentType,
@@ -32,7 +34,7 @@ export async function putR2Object({
     Body: body,
     ContentType: contentType,
     CacheControl: cacheControl,
-  }));
+  }), { abortSignal });
 }
 
 export async function uploadToR2(

@@ -20,7 +20,7 @@ export async function renderExportImage(
   const { header, payload } = message;
   const region = header.region as Region;
 
-  const catalog = await getCatalog();
+  const catalog = await getCatalog(payload.charts.map(chart => chart.songId));
 
   const songs: SongForRender[] = payload.charts.map((c) => {
     const entry = catalog.get(c.songId);

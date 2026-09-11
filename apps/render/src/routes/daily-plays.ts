@@ -20,7 +20,7 @@ export async function renderDailyPlays(
   const { header, payload } = message;
   const region = header.region as Region;
 
-  const catalog = await getCatalog();
+  const catalog = await getCatalog(payload.plays.map(chart => chart.songId));
 
   const plays = payload.plays.map((p) => {
     const entry = catalog.get(p.songId);

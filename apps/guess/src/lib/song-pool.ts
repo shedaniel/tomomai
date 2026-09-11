@@ -10,11 +10,12 @@ function apiBase(): string {
 }
 
 async function fetchCatalogue(): Promise<Chart[]> {
-  const url = `${apiBase()}/api/v1/songs`;
-  // `no-store` is deliberate: the catalogue JSON is ~14 MB, which exceeds
-  // Next's 2 MB data-cache cap and would log "items over 2MB can not be
-  // cached" on every call. The 24h module-level memo below is the runtime
-  // cache that keeps the cross-app transfer bounded for guess traffic.
+  const metadata = await fetch(`${apiBase()}/api/v1/songs/versions?region=jp`, { cache: "no-store" });
+  if (!metadata.ok) throw new Error(`Failed to fetch song versions: ${metadata.status}`);
+  const { currentVersion } = await metadata.json() as { currentVersion: number };
+  if (!Number.isInteger(currentVersion)) throw new Error("Invalid current JP game version");
+  const url = `${apiBase()}/api/v1/songs?region=jp&gameVersion=${currentVersion}`;
+  // The daily module memo bounds transfers without relying on Next's data-cache size limit.
   const res = await fetch(url, { cache: "no-store" });
   if (!res.ok) {
     throw new Error(`Failed to fetch song catalogue: ${res.status} ${res.statusText}`);
@@ -49,9 +50,7 @@ function filterPool(all: readonly Chart[]): Chart[] {
 }
 
 // ---------- In-process cache ---------------------------------------------
-// The catalogue JSON is ~14 MB — too large for Next's unstable_cache (2 MB cap)
-// and pointless to round-trip through that layer anyway. A simple module-level
-// memo with a daily TTL matches the daily game cadence and limits refetches.
+// A daily TTL matches the game cadence and limits cross-app transfers.
 
 type CacheEntry<T> = { value: T; expiresAt: number };
 let catalogue: CacheEntry<Chart[]> | Promise<Chart[]> | null = null;

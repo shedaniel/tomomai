@@ -44,12 +44,12 @@ export interface CatalogEntry {
   noteDesigner: string | null;
 }
 
-let cache: { map: Map<string, CatalogEntry>; fetchedAt: number } | null = null;
-let inflight: Promise<Map<string, CatalogEntry>> | null = null;
+const cache = new Map<string, { map: Map<string, CatalogEntry>; fetchedAt: number }>();
+const inflight = new Map<string, Promise<Map<string, CatalogEntry>>>();
 
-async function fetchCatalog(): Promise<Map<string, CatalogEntry>> {
+async function fetchCatalog(region: string, gameVersion: number): Promise<Map<string, CatalogEntry>> {
   const log = getLogger();
-  const url = `${CATALOG_URL.replace(/\/+$/, "")}/api/v1/songs`;
+  const url = `${CATALOG_URL.replace(/\/+$/, "")}/api/v1/songs?region=${region}&gameVersion=${gameVersion}`;
   log.info({ url }, "Fetching song catalogue");
   const startTime = Date.now();
 
@@ -73,31 +73,43 @@ async function fetchCatalog(): Promise<Map<string, CatalogEntry>> {
   return map;
 }
 
-/** Returns the catalogue map, fetching if stale. Thread-safe via inflight dedupe. */
-export async function getCatalog(): Promise<Map<string, CatalogEntry>> {
-  if (cache && Date.now() - cache.fetchedAt < CATALOG_TTL_MS) {
-    return cache.map;
-  }
-  if (inflight) return inflight;
-
-  inflight = (async () => {
-    try {
-      const map = await fetchCatalog();
-      cache = { map, fetchedAt: Date.now() };
-      return map;
-    } finally {
-      inflight = null;
-    }
-  })();
-  return inflight;
+async function getSlice(region: string, gameVersion: number): Promise<Map<string, CatalogEntry>> {
+  const key = `${region}:${gameVersion}`;
+  const cached = cache.get(key);
+  if (cached && Date.now() - cached.fetchedAt < CATALOG_TTL_MS) return cached.map;
+  const pending = inflight.get(key);
+  if (pending) return pending;
+  const request = fetchCatalog(region, gameVersion).then(map => {
+    cache.delete(key);
+    if (cache.size >= 128) cache.delete(cache.keys().next().value!);
+    cache.set(key, { map, fetchedAt: Date.now() });
+    return map;
+  }).finally(() => { inflight.delete(key); });
+  inflight.set(key, request);
+  return request;
 }
 
-/** Look up a single chart by its publicId. Throws if not found (stale chart). */
-export async function getCatalogEntry(songId: string): Promise<CatalogEntry> {
-  const catalog = await getCatalog();
-  const entry = catalog.get(songId);
-  if (!entry) {
-    throw new Error(`Chart not in catalogue: ${songId}`);
+export async function getCatalog(songIds: readonly string[]): Promise<Map<string, CatalogEntry>> {
+  const slices = new Map<string, { region: string; gameVersion: number }>();
+  for (const id of songIds) {
+    const match = /^[A-Za-z0-9_-]{8}:([jic])(0|-?[1-9]\d*)$/.exec(id);
+    if (!match) throw new Error(`Invalid song instance id: ${id}`);
+    const region = { j: "jp", i: "intl", c: "cn" }[match[1]]!;
+    const gameVersion = Number(match[2]);
+    if (!Number.isInteger(gameVersion) || gameVersion < -32768 || gameVersion > 32767) {
+      throw new Error(`Invalid song version: ${id}`);
+    }
+    slices.set(`${region}:${gameVersion}`, { region, gameVersion });
   }
+  const result = new Map<string, CatalogEntry>();
+  const maps = await Promise.all([...slices.values()].map(({ region, gameVersion }) => getSlice(region, gameVersion)));
+  for (const map of maps) for (const [id, entry] of map) result.set(id, entry);
+  return result;
+}
+
+export async function getCatalogEntry(songId: string): Promise<CatalogEntry> {
+  const catalog = await getCatalog([songId]);
+  const entry = catalog.get(songId);
+  if (!entry) throw new Error(`Chart not in catalogue: ${songId}`);
   return entry;
 }

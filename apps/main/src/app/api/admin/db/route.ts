@@ -5,12 +5,14 @@ import { getEnabledRegions, isRegionEnabled } from "@/lib/enabled-regions";
 import { Region } from "@/lib/types";
 import { getCurrentVersion } from "@/lib/metadata";
 import { normalizeName } from "@/lib/name-utils";
-import { songs, scoreData } from "@/lib/db/schema-pg";
+import { songs, parentSong } from "@/lib/db/schema-pg";
 import { and, eq, inArray, sql } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
+import { publishSongCatalog } from "@/server/services/admin/song-catalog";
+import { revalidatePath, revalidateTag } from "next/cache";
+import { locales } from "@tomomai/i18n/locale";
 import type { Logger } from "pino";
 
-const MODIFY_DATABASE = true;
 
 export async function GET(request: NextRequest) {
   const { log, requestId } = requestLogger(request, "admin/db");
@@ -84,157 +86,49 @@ async function normalize(searchParams: URLSearchParams, log: Logger) {
     );
   }
 
-  // We should get all songs, then try to normalize their names, then compare to the database
-  // If there are duplicates, we must first merge the data to prevent data loss
-  // Then we should update the database with the new data
-  const version = searchParams.get('version') as string | null;
-  const currentVersion = version ? parseInt(version) : getCurrentVersion(region);
-
-  log.info({ region, version: currentVersion }, "Admin normalize requested");
-
-  const allSongs = await db.select().from(songs).where(and(eq(songs.region, region), eq(songs.gameVersion, currentVersion)));
-  const songsGrouped: Record<string, typeof allSongs | undefined> = Object.groupBy(allSongs, song => `${normalizeName(song.songName)}@${song.difficulty}@${song.type}` as string);
-  const filteredSongsGrouped: Record<string, typeof allSongs> = Object.fromEntries(Object.entries(songsGrouped).filter(([_, value]) => value && (value.length > 1 || normalizeName(value[0].songName) !== value[0].songName)).map(([key, value]) => [key, value!]));
-
-  log.info({ groupCount: Object.keys(filteredSongsGrouped).length }, "Starting duplicate song merge process");
-
-  let index = 0;
-  let totalDuplicatesMerged = 0;
-  let totalMasterNamesNormalized = 0;
-
-  const promises: Promise<void>[] = [];
-
-  for (const [groupKey, duplicateSongRecords] of Object.entries(filteredSongsGrouped)) {
-    log.info({ groupKey, progress: `${index + 1}/${Object.keys(filteredSongsGrouped).length}` }, "Processing duplicate group");
-    index++;
-    const masterSong = duplicateSongRecords[0]; // Choose the first record as the master
-    const normalizedSongName = normalizeName(masterSong.songName);
-
-    // Filter out the master song from the list of IDs to be considered for deletion
-    const duplicateIdsToCleanUp = duplicateSongRecords
-      .slice(1) // All but the first are actual duplicates
-      .map((s) => s.id);
-
-    // Check if the master song's name needs normalization
-    const shouldUpdateMasterName = masterSong.songName !== normalizedSongName;
-
-    if (duplicateIdsToCleanUp.length === 0 && !shouldUpdateMasterName) {
-      log.debug({ groupKey }, "Skipping group — no duplicates and name already normalized");
-      continue;
-    }
-
-    log.debug({ masterSongId: masterSong.id.toString(), originalName: masterSong.songName, duplicateIds: duplicateIdsToCleanUp.map(String) }, "Merging duplicates");
-
-    promises.push(db.transaction(async (tx) => {
-      try {
-        // --- Phase 1: Relink children and delete actual duplicate song records ---
-        if (duplicateIdsToCleanUp.length > 0) {
-          // Update scoreData — handle unique constraint conflicts by deleting duplicates
-          if (MODIFY_DATABASE) {
-            // First, find scoreData rows that would conflict after update
-            const duplicateScoreDataRows = await tx
-              .select({ id: scoreData.id, songId: scoreData.songId, achievement: scoreData.achievement, dxScore: scoreData.dxScore, fc: scoreData.fc, fs: scoreData.fs })
-              .from(scoreData)
-              .where(inArray(scoreData.songId, duplicateIdsToCleanUp));
-
-            const masterScoreDataRows = await tx
-              .select({ id: scoreData.id, songId: scoreData.songId, achievement: scoreData.achievement, dxScore: scoreData.dxScore, fc: scoreData.fc, fs: scoreData.fs })
-              .from(scoreData)
-              .where(eq(scoreData.songId, masterSong.id));
-
-            // Build a set of existing master keys
-            const masterKeys = new Set(masterScoreDataRows.map(r => `${r.achievement}-${r.dxScore}-${r.fc}-${r.fs}`));
-
-            const idsToRelink: number[] = [];
-            const idsToDelete: number[] = [];
-            const relinkMap = new Map<number, number>(); // old scoreData id -> master scoreData id
-
-            for (const dupRow of duplicateScoreDataRows) {
-              const key = `${dupRow.achievement}-${dupRow.dxScore}-${dupRow.fc}-${dupRow.fs}`;
-              if (masterKeys.has(key)) {
-                // Conflict: find the master row to remap references
-                const masterRow = masterScoreDataRows.find(r =>
-                  r.achievement === dupRow.achievement && r.dxScore === dupRow.dxScore && r.fc === dupRow.fc && r.fs === dupRow.fs
-                )!;
-                relinkMap.set(dupRow.id, masterRow.id);
-                idsToDelete.push(dupRow.id);
-              } else {
-                idsToRelink.push(dupRow.id);
-                masterKeys.add(key); // Prevent future conflicts within the same batch
-              }
-            }
-
-            // Relink snapshotScores and snapshotB50 for conflicting rows
-            for (const [oldId, newId] of relinkMap) {
-              // Update snapshotScores: change scoreId, ignore conflicts (the master score might already be linked)
-              await tx.execute(sql`UPDATE snapshot_scores SET "scoreId" = ${newId} WHERE "scoreId" = ${oldId} ON CONFLICT DO NOTHING`);
-              // Update snapshotB50
-              await tx.execute(sql`UPDATE snapshot_b50 SET "scoreId" = ${newId} WHERE "scoreId" = ${oldId} ON CONFLICT DO NOTHING`);
-            }
-
-            // Delete conflicting scoreData rows (cascades will clean up remaining refs)
-            if (idsToDelete.length > 0) {
-              await tx.delete(scoreData).where(inArray(scoreData.id, idsToDelete));
-              log.debug({ count: idsToDelete.length }, "Deleted conflicting scoreData rows");
-            }
-
-            // Update non-conflicting rows to master songId
-            if (idsToRelink.length > 0) {
-              await tx
-                .update(scoreData)
-                .set({ songId: masterSong.id })
-                .where(inArray(scoreData.id, idsToRelink));
-              log.debug({ count: idsToRelink.length }, "Relinked scoreData rows");
-            }
-          }
-
-          // Delete the duplicate songs records
-          if (MODIFY_DATABASE) {
-            const deleteSongsResult = await tx
-              .delete(songs)
-              .where(inArray(songs.id, duplicateIdsToCleanUp))
-              .returning({ id: songs.id });
-            log.debug({ count: deleteSongsResult.length }, "Deleted duplicate song records");
-          } else {
-            log.debug({ count: duplicateIdsToCleanUp.length }, "[DRY RUN] Would delete duplicate song records");
-          }
-
-          totalDuplicatesMerged += duplicateIdsToCleanUp.length;
-        }
-
-        // --- Phase 2: Normalize master song's name (after duplicates are gone) ---
-        if (shouldUpdateMasterName) {
-          if (MODIFY_DATABASE) {
-            const masterNameUpdateResult = await tx
-              .update(songs)
-              .set({ songName: normalizedSongName })
-              .where(eq(songs.id, masterSong.id))
-              .returning({ id: songs.id });
-            log.debug({ songId: masterSong.id.toString(), from: masterSong.songName, to: normalizedSongName, count: masterNameUpdateResult.length }, "Normalized master song name");
-          } else {
-            log.debug({ from: masterSong.songName, to: normalizedSongName }, "[DRY RUN] Would normalize master song name");
-          }
-          totalMasterNamesNormalized++;
-        }
-
-        log.debug({ groupKey }, "Successfully processed group");
-      } catch (error) {
-        log.error({ err: error, groupKey }, "Error processing duplicate group");
-        throw error; // Re-throw to ensure transaction is rolled back
-      }
-    }));
+  const version = searchParams.get("version");
+  const currentVersion = version ? Number(version) : getCurrentVersion(region);
+  if (!Number.isInteger(currentVersion)) {
+    return NextResponse.json({ error: "Invalid version" }, { status: 400 });
   }
 
-  await Promise.all(promises);
+  const totalMasterNamesNormalized = await db.transaction(async (tx) => {
+    await tx.execute(sql`SELECT pg_advisory_xact_lock(73641932)`);
+    const selected = await tx.selectDistinct({ parentId: songs.parentId }).from(songs)
+      .where(and(eq(songs.region, region), eq(songs.gameVersion, currentVersion)));
+    if (selected.length === 0) return 0;
+    const parents = await tx.select().from(parentSong)
+      .where(inArray(parentSong.id, selected.map(song => song.parentId)))
+      .orderBy(parentSong.id);
+    let updated = 0;
+    for (const parent of parents) {
+      const songName = normalizeName(parent.songName);
+      if (songName === parent.songName) continue;
+      const collisions = await tx.select({ disambiguator: parentSong.disambiguator }).from(parentSong)
+        .where(and(eq(parentSong.songName, songName), eq(parentSong.type, parent.type), eq(parentSong.difficulty, parent.difficulty)));
+      const occupied = new Set(collisions.map(row => row.disambiguator));
+      let disambiguator = parent.disambiguator;
+      // Normalizing a title is insufficient evidence to merge chart identities.
+      if (occupied.has(disambiguator)) disambiguator = Math.max(...occupied) + 1;
+      await tx.update(parentSong).set({ songName, disambiguator }).where(eq(parentSong.id, parent.id));
+      updated++;
+    }
+    return updated;
+  });
 
-  log.info({ totalDuplicatesMerged, totalMasterNamesNormalized }, "Duplicate song merge process complete");
-
+  await publishSongCatalog();
+  revalidateTag("all-unique-songs", { expire: 3600 });
+  revalidateTag("reserved-songs", { expire: 0 });
+  revalidateTag("api-v1-songs", { expire: 0 });
+  for (const locale of locales) {
+    revalidatePath(`/${locale}/db/songs/[slug]`, "page");
+    revalidatePath(`/${locale}/db/songs`, "page");
+  }
+  revalidatePath("/sitemap.xml", "page");
+  log.info({ totalMasterNamesNormalized }, "Parent song names normalized");
   return NextResponse.json({
     success: true,
     message: "Song data normalization completed",
-    statistics: {
-      totalDuplicatesMerged,
-      totalMasterNamesNormalized,
-    },
+    statistics: { totalDuplicatesMerged: 0, totalMasterNamesNormalized },
   });
 }
