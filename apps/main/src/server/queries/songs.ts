@@ -19,6 +19,17 @@ export async function querySongScores(
   userId: string,
   artist?: string
 ): Promise<SongDetails["userScores"]> {
+  if (artist === undefined) {
+    const artists = await db.selectDistinct({ artist: parentSong.artist })
+      .from(parentSong)
+      .innerJoin(songs, eq(songs.parentId, parentSong.id))
+      .where(and(eq(parentSong.songName, songName), eq(parentSong.type, type)))
+      .limit(2);
+    if (artists.length > 1) {
+      throw new TRPCError({ code: "BAD_REQUEST", message: "Artist is required for songs with the same name" });
+    }
+  }
+
   const scores = await db
     .select({
       region: songs.region,
