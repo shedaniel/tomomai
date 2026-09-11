@@ -1497,7 +1497,7 @@
     "bottom": "同程度玩家中後 {percent}",
     "median": "同程度玩家中接近中位數",
     "lessThan": "低於 {percent}",
-    "ratingDescription": "依據可用 Rating 區間內 {count} 位Intl玩家的紀錄，比較 Rating 與達成率。圓點將樣本按 125 點 Rating 和 0.1% 達成率分組，並分散在各組範圍內顯示，位置為概略值。你的 Rating 為 {rating}，達成率為 {achievement}。",
+    "ratingDescription": "依據所有遊玩紀錄，比較 {count} 位玩家的 Rating 與達成率。圓點將樣本按 125 點 Rating 和 0.1% 達成率分組，並分散在各組範圍內顯示，位置為概略值。你的 Rating 為 {rating}，達成率為 {achievement}。",
     "curveDescription": "估計相近 Rating 玩家中，達成率不高於各數值的比例。有 {percent} 的玩家達成率不高於你的 {achievement}，包含同分。",
     "clusterDescription": "Rating {ratingMin}–{ratingMax}；達成率 {achievementMin}–{achievementMax}：{count} 筆樣本",
     "youDescription": "你：Rating {rating}，達成率 {achievement}"

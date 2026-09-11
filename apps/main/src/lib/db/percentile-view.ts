@@ -1,20 +1,24 @@
-// Defines the chart_percentile_bands materialized view — not tracked by Drizzle.
+// Defines the chart_percentile_bands_all_regions materialized view — not tracked by Drizzle.
 // The percentile cron job creates the view and refreshes it daily.
 // All reads go through raw SQL in src/server/queries/percentile.ts.
 
-export const CHART_PERCENTILE_VIEW = "chart_percentile_bands";
+export const CHART_PERCENTILE_VIEW = "chart_percentile_bands_all_regions";
 
-// Parent identity pools each player's best score across game versions.
+// Parent identity pools each player's best score across regions and versions.
 // Creates the view on first run only; subsequent runs use REFRESH below.
 export const CREATE_CHART_PERCENTILE_VIEW_SQL = `
-CREATE MATERIALIZED VIEW IF NOT EXISTS chart_percentile_bands AS
-WITH latest_ratings AS (
-  SELECT DISTINCT ON ("userId")
+CREATE MATERIALIZED VIEW IF NOT EXISTS chart_percentile_bands_all_regions AS
+WITH latest_regional_ratings AS (
+  SELECT DISTINCT ON ("userId", region)
     "userId",
     rating
   FROM user_snapshots
-  WHERE region = 'intl'
-  ORDER BY "userId", "fetchedAt" DESC
+  ORDER BY "userId", region, "fetchedAt" DESC, id DESC
+),
+latest_ratings AS (
+  SELECT "userId", MAX(rating) AS rating
+  FROM latest_regional_ratings
+  GROUP BY "userId"
 ),
 best_scores AS (
   SELECT
@@ -23,13 +27,12 @@ best_scores AS (
     lr.rating,
     MAX(sd.achievement) AS best_achievement
   FROM latest_ratings lr
-  JOIN user_snapshots us  ON us."userId" = lr."userId" AND us.region = 'intl'
+  JOIN user_snapshots us  ON us."userId" = lr."userId"
   JOIN snapshot_scores ss ON ss."snapshotId" = us.id
   JOIN score_data sd      ON sd.id = ss."scoreId"
   JOIN songs s            ON s.id = sd."songId"
   JOIN parent_song p      ON p.id = s."parentId"
   WHERE p.difficulty IN ('expert', 'master', 'remaster')
-    AND s.region = 'intl'
   GROUP BY lr."userId", s."parentId", lr.rating
 ),
 band_aggregates AS (
@@ -62,8 +65,8 @@ FROM band_aggregates
 
 // Unique index required for REFRESH CONCURRENTLY; created once then reused.
 export const CREATE_CHART_PERCENTILE_INDEX_SQL = `
-CREATE UNIQUE INDEX IF NOT EXISTS chart_percentile_bands_pkey
-  ON chart_percentile_bands (parent_id, band_lo)
+CREATE UNIQUE INDEX IF NOT EXISTS chart_percentile_bands_all_regions_pkey
+  ON chart_percentile_bands_all_regions (parent_id, band_lo)
 `;
 
 // Row type returned by raw SQL queries against the view.

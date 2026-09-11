@@ -1497,7 +1497,7 @@
     "bottom": "同程度のプレイヤー内で下位{percent}",
     "median": "同程度のプレイヤー内で中央値付近",
     "lessThan": "{percent}未満",
-    "ratingDescription": "利用可能なRating帯のIntlプレイヤー{count}人の記録に基づく、Ratingと達成率の比較です。点はRating幅125、達成率幅0.1%のサンプルをまとめ、各範囲内に分散して表示しています。位置は概算です。あなたのRatingは{rating}、達成率は{achievement}です。",
+    "ratingDescription": "すべてのプレイ記録をもとに、{count}人のRatingと達成率を比較しています。点はRating幅125、達成率幅0.1%のサンプルをまとめ、各範囲内に分散して表示しています。位置は概算です。あなたのRatingは{rating}、達成率は{achievement}です。",
     "curveDescription": "近いRatingのプレイヤーのうち、各達成率以下の割合の推定値です。あなたの達成率{achievement}以下は{percent}です。同点を含みます。",
     "clusterDescription": "Rating {ratingMin}～{ratingMax}、達成率{achievementMin}～{achievementMax}：{count}件のサンプル",
     "youDescription": "あなた：Rating {rating}、達成率{achievement}"

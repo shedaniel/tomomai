@@ -145,7 +145,7 @@ export function RecommendationCard({ selectedSnapshotData, flags, region }: { se
     [songsWithRating, snapshot.gameVersion]
   );
 
-  const potentialEnabled = !!flags.scorePercentile && region === "intl";
+  const potentialEnabled = !!flags.scorePercentile;
   const potentialSongIds = useMemo(() => [...new Set(baseRecommendations.map(rec => rec.song.songId))].slice(0, 2000).sort(), [baseRecommendations]);
   const { data: potential, status: potentialStatus, fetchStatus: potentialFetchStatus, error: potentialError } = trpc.user.getRecommendationPeers.useQuery(
     { publicSongIds: potentialSongIds, userRating: snapshot.rating },
