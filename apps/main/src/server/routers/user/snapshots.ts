@@ -102,7 +102,7 @@ export const snapshotsRouter = router({
       const allScores = await db
         .select({
           snapshotId: snapshotB50.snapshotId,
-          songId: songs.id,
+          songId: parentSong.id,
           songName: parentSong.songName,
           cover: parentSong.cover,
           difficulty: parentSong.difficulty,
