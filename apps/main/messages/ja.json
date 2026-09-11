@@ -700,6 +700,10 @@
     "cancel": "キャンセル"
   },
   "recommendations": {
+    "peerAchieved": "同Rating帯の約{percent}が達成",
+    "newBadge": "新曲",
+    "oldBadge": "旧曲",
+    "currentToTarget": "現在 → 目標",
     "noRecommendations": "おすすめがありません",
     "allOptimal": "レート値を伸ばせる曲はもうありません！",
     "description": "現在のB15/B35スコアに基づき、レート値を伸ばしやすい楽曲をおすすめします。",
@@ -1486,5 +1490,25 @@
       "cancel": "キャンセル",
       "confirmRemove": "紹介を削除"
     }
+  },
+  "scoreComparison": {
+    "title": "スコア比較",
+    "view": "比較表示",
+    "you": "あなた · {achievement}",
+    "curveTab": "スコア曲線",
+    "ratingTab": "Rating別",
+    "ratingHeading": "プレイヤーのRatingと達成率",
+    "curveHeading": "この達成率以下のプレイヤーの割合",
+    "unavailable": "近いRatingのプレイヤーのデータが十分かつ均等に集まっていないため、曲線を表示できません。",
+    "ratingAxis": "プレイヤーのRating",
+    "achievementAxis": "達成率",
+    "top": "同程度のプレイヤー内で上位{percent}",
+    "bottom": "同程度のプレイヤー内で下位{percent}",
+    "median": "同程度のプレイヤー内で中央値付近",
+    "lessThan": "{percent}未満",
+    "ratingDescription": "すべてのプレイ記録をもとに、{count}人のRatingと達成率を比較しています。点はRating幅125、達成率幅0.1%のサンプルをまとめ、各範囲内に分散して表示しています。位置は概算です。あなたのRatingは{rating}、達成率は{achievement}です。",
+    "curveDescription": "近いRatingのプレイヤーのうち、各達成率以下の割合の推定値です。あなたの達成率{achievement}以下は{percent}です。同点を含みます。",
+    "clusterDescription": "Rating {ratingMin}–{ratingMax}; {achievementMin}–{achievementMax}: {count, plural, one {# sampled score} other {# sampled scores}}",
+    "youDescription": "あなた：Rating {rating}、達成率{achievement}"
   }
 }
