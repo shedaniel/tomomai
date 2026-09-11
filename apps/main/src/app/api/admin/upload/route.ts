@@ -15,7 +15,7 @@ import { getSongSlugs } from "@/lib/song-slug";
 import { locales } from "@tomomai/i18n/locale";
 import { and, eq, inArray, count, sql, getTableColumns, notExists } from "drizzle-orm";
 import { parseCatalogVersion } from "@/lib/catalog/parse-version";
-import { matchUpload } from "@/lib/catalog/match-upload";
+import { findDuplicateUpload, matchUpload } from "@/lib/catalog/match-upload";
 import { resolveParents, type ParentState, type SongToParent } from "@/lib/catalog/resolve-parent";
 import { PARENT_PUBLIC_ID_LENGTH } from "@/lib/catalog/song-instance-id";
 import { nanoid } from "nanoid";
@@ -607,6 +607,14 @@ export async function POST(request: NextRequest) {
     if (uploadSongs.length === 0) {
       return NextResponse.json(
         { error: "Empty 'songs' array in request body" },
+        { status: 400 }
+      );
+    }
+
+    const duplicateIndex = findDuplicateUpload(uploadSongs);
+    if (duplicateIndex !== undefined) {
+      return NextResponse.json(
+        { error: `Duplicate chart identity at songs[${duplicateIndex}]`, requestId },
         { status: 400 }
       );
     }

@@ -8,6 +8,15 @@ type Chart = {
   addedVersion: number | undefined;
 };
 
+export function findDuplicateUpload(charts: Chart[]): number | undefined {
+  const seen = new Set<string>();
+  for (const [index, chart] of charts.entries()) {
+    const identity = JSON.stringify([chart.songName, chart.type, chart.difficulty, chart.artist, chart.addedVersion]);
+    if (seen.has(identity)) return index;
+    seen.add(identity);
+  }
+}
+
 export function matchUpload(existing: Chart[], incoming: Chart[]): Map<number, number> {
   const assignments = new Map<number, number>();
   const used = new Set<number>();

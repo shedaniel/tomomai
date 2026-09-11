@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { matchUpload } from "./match-upload";
+import { findDuplicateUpload, matchUpload } from "./match-upload";
 
 const chart = (artist: string, addedVersion: number) => ({ songName: "Link", artist, addedVersion, type: "std" as const, difficulty: "master" as const });
 
@@ -30,5 +30,22 @@ describe("matchUpload", () => {
 
   it("does not match across chart types or difficulties", () => {
     expect(matchUpload([chart("A", 1)], [{ ...chart("A", 1), type: "dx" }, { ...chart("A", 1), difficulty: "expert" }]).size).toBe(0);
+  });
+});
+
+describe("findDuplicateUpload", () => {
+  it("rejects repeated identities even when chart metadata differs", () => {
+    const original = { ...chart("A", 1), levelPrecise: 140 };
+    expect(findDuplicateUpload([original, { ...original }])).toBe(1);
+    expect(findDuplicateUpload([original, chart("B", 2), { ...original, levelPrecise: 141 }])).toBe(2);
+  });
+
+  it("preserves distinct artists, versions, types and difficulties", () => {
+    expect(findDuplicateUpload([
+      chart("A", 1), chart("B", 1), chart("A", 2),
+      { ...chart("A", 1), type: "dx" },
+      { ...chart("A", 1), difficulty: "expert" },
+    ])).toBeUndefined();
+    expect(findDuplicateUpload([])).toBeUndefined();
   });
 });
