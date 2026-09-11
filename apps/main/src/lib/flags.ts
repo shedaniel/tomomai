@@ -147,10 +147,10 @@ const registry = {
 
   // ── profile ──────────────────────────────────────────────────────────────
   scorePercentile: defineFlag("scorePercentile", {
-    defaultValue: false,
+    defaultValue: true,
     userSelectable: true,
     category: "profile",
-    decide: () => false,
+    decide: () => true,
   }),
 
   // ── settings ─────────────────────────────────────────────────────────────

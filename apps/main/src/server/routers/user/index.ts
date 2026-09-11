@@ -81,6 +81,7 @@ export const userRouter = router({
 
   // Percentile
   getChartPercentiles: percentileRouter.getChartPercentiles,
+  getRecommendationPeers: percentileRouter.getRecommendationPeers,
 
   // Flags
   getUserSelectableFlags: flagsRouter.getUserSelectableFlags,

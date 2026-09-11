@@ -691,6 +691,10 @@
     "cancel": "取消"
   },
   "recommendations": {
+    "peerAchieved": "约 {percent} 同程度玩家达成",
+    "newBadge": "新曲",
+    "oldBadge": "旧曲",
+    "currentToTarget": "目前 → 目标",
     "noRecommendations": "无推荐歌曲",
     "allOptimal": "没有其他能提升 R 值的歌曲了。做得很好！",
     "description": "根据你目前的成绩计算出可提升 R 值的歌曲。",
@@ -1477,5 +1481,25 @@
       "cancel": "取消",
       "confirmRemove": "移除简介"
     }
+  },
+  "scoreComparison": {
+    "title": "成绩比较",
+    "view": "比较视图",
+    "you": "你 · {achievement}",
+    "curveTab": "成绩曲线",
+    "ratingTab": "按 Rating",
+    "ratingHeading": "玩家 Rating 与达成率",
+    "curveHeading": "达成率不高于此值的玩家比例",
+    "unavailable": "相近 Rating 的玩家资料不足或分布不均，无法显示成绩曲线。",
+    "ratingAxis": "玩家 Rating",
+    "achievementAxis": "达成率",
+    "top": "同水平玩家中前 {percent}",
+    "bottom": "同水平玩家中后 {percent}",
+    "median": "同水平玩家中接近中位数",
+    "lessThan": "低于 {percent}",
+    "ratingDescription": "根据所有游玩记录，比较 {count} 位玩家的 Rating 与达成率。圆点将样本按 125 点 Rating 和 0.1% 达成率分组，并分散在各组范围内显示，位置为近似值。你的 Rating 为 {rating}，达成率为 {achievement}。",
+    "curveDescription": "估计相近 Rating 玩家中，达成率不高于各数值的比例。有 {percent} 的玩家达成率不高于你的 {achievement}，包含同分。",
+    "clusterDescription": "Rating {ratingMin}–{ratingMax}；达成率 {achievementMin}–{achievementMax}：{count} 笔样本",
+    "youDescription": "你：Rating {rating}，达成率 {achievement}"
   }
 }

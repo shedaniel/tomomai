@@ -1,162 +1,127 @@
 "use client";
 
-import { Separator } from "@tomomai/ui";
-import { Area, AreaChart, ReferenceLine, ResponsiveContainer, XAxis, YAxis } from "recharts";
-import { cn } from "@/lib/utils";
+import { useId, useState } from "react";
+import { Separator, Tabs, TabsList, TabsTrigger, TabsContent } from "@tomomai/ui";
+import { useFormatter, useTranslations } from "next-intl";
+import { Popover } from "radix-ui";
 import type { PercentileDistributionData } from "@/lib/percentile-types";
+import { achievementRange, ratingClusterPosition, cumulativePoints, shareAtOrBelow, peerRank } from "@/lib/percentile-chart";
 
-// achievement ×10000 thresholds for grade boundaries
-const TIER_BANDS = [
-  { x1: 0, x2: 970000, fill: "#94a3b8" }, // < 97%
-  { x1: 970000, x2: 980000, fill: "#f59e0b" }, // S
-  { x1: 980000, x2: 990000, fill: "#38bdf8" }, // S+
-  { x1: 990000, x2: 1000000, fill: "#facc15" }, // SS / SS+
-  { x1: 1000000, x2: 1005000, fill: "#4ade80" }, // SSS
-  { x1: 1005000, x2: 1100000, fill: "#c084fc" }, // SSS+
-] as const;
+const PLOT = { left: 38, right: 308, top: 14, bottom: 151 };
+const GRADE_STOPS = [970000, 980000, 990000, 1000000, 1005000, 1010000];
 
-const TIER_TICKS = [970000, 980000, 990000, 1000000, 1005000, 1010000];
-const TIER_TICK_LABELS: Record<number, string> = {
-  970000: "97%",
-  980000: "98%",
-  990000: "99%",
-  1000000: "100%",
-  1005000: "100.5%",
-  1010000: "101%",
-};
-
-/** Compute horizontal gradient stops with sharp transitions at tier boundaries. */
-function buildTierGradient(minLo: number, maxLo: number) {
-  const range = maxLo - minLo;
-  const stops: { offset: string; color: string }[] = [];
-  for (const band of TIER_BANDS) {
-    const s = range > 0 ? (band.x1 - minLo) / range : 0;
-    const e = range > 0 ? (band.x2 - minLo) / range : 1;
-    if (e <= 0 || s >= 1) continue;
-    const cs = Math.max(0, s);
-    const ce = Math.min(1, e);
-    stops.push({ offset: `${(cs * 100).toFixed(2)}%`, color: band.fill });
-    stops.push({ offset: `${(ce * 100).toFixed(2)}%`, color: band.fill });
-  }
-  if (!stops.length) {
-    const color = (TIER_BANDS.find(b => minLo >= b.x1 && minLo < b.x2) ?? TIER_BANDS[0]).fill;
-    return [{ offset: "0%", color }, { offset: "100%", color }];
-  }
-  return stops;
-}
-
-interface PercentileDistributionProps {
+export function PercentileDistribution({ data, withSeparator = true }: {
   data: PercentileDistributionData;
-  /** Render a top divider before the chart. Defaults to true (for hover-card layouts). */
   withSeparator?: boolean;
-  /** Unique gradient id so multiple instances on the same page don't collide. */
-  gradientId?: string;
-}
-
-export function PercentileDistribution({
-  data,
-  withSeparator = true,
-  gradientId = "tierGrad",
-}: PercentileDistributionProps) {
-  const pct = data.percentile;
-  let labelText: string;
-  let labelColor: string;
-  if (pct >= 0.6) {
-    const topPct = Math.round((1 - pct) * 100);
-    labelText = `Top ${topPct}%`;
-    labelColor = topPct <= 10 ? "text-yellow-500" : "text-green-500";
-  } else if (pct >= 0.4) {
-    labelText = "About Average";
-    labelColor = "text-muted-foreground";
-  } else {
-    labelText = `Bottom ${Math.round(pct * 100)}%`;
-    labelColor = "text-red-400";
-  }
-
-  const dist = data.distribution;
-  const minLo = dist[0]?.lo ?? data.userAchievement;
-  const maxLo = dist[dist.length - 1]?.lo ?? data.userAchievement;
-  const clampedX = Math.max(minLo, Math.min(maxLo, data.userAchievement));
-  // Extend to the nearest tier tick <= minLo and always to 101% on the right.
-  const leftEdge = Math.max(940000, Math.min(970000, minLo));
-  const rightEdge = 1010000;
-
-  // "dataMin"/"dataMax" domain detection produces the correct axis extent.
-  const paddedDist: { lo: number; count: number }[] = [
-    { lo: leftEdge, count: 0 },
-    { lo: Math.max(leftEdge, minLo - 2000), count: 0 },
-    ...dist.filter(d => d.lo >= leftEdge && d.lo <= rightEdge),
-    { lo: Math.min(rightEdge, maxLo + 2000), count: 0 },
-    { lo: rightEdge, count: 0 },
-  ];
-
-  const tierStops = buildTierGradient(leftEdge, rightEdge);
+}) {
+  const t = useTranslations('scoreComparison');
+  const format = useFormatter();
+  const scoreLabel = (score: number, digits = 1) => format.number(score / 1000000, {
+    style: 'percent', minimumFractionDigits: digits === 4 ? 4 : 0, maximumFractionDigits: digits,
+  });
+  const percentLabel = (share: number) => format.number(share, { style: 'percent', maximumFractionDigits: 0 });
+  const achievement = scoreLabel(data.userAchievement, 4);
+  const curveAvailable = data.percentile != null && data.distribution.length > 0;
+  const [selectedView, setSelectedView] = useState<'rating' | 'curve' | null>(null);
+  const [errorOpen, setErrorOpen] = useState(false);
+  const view = selectedView === 'rating' || !curveAvailable ? 'rating' : 'curve';
+  const titleId = useId();
+  const isRating = view === 'rating';
+  const scores = isRating ? data.ratingDistribution.map(point => point.achievementLo) : data.distribution.map(point => point.lo);
+  const { min, max } = achievementRange(scores, data.userAchievement, false);
+  const ratingMin = Math.floor(Math.min(data.userRating, ...data.ratingDistribution.map(point => point.ratingLo)) / 1000) * 1000;
+  const ratingMax = Math.max(ratingMin + 1000, Math.ceil(Math.max(data.userRating, ...data.ratingDistribution.map(point => point.ratingLo + 125)) / 1000) * 1000);
+  const x = (value: number) => PLOT.left + (value - (isRating ? ratingMin : min)) / (isRating ? ratingMax - ratingMin : max - min) * (PLOT.right - PLOT.left);
+  const y = (value: number) => PLOT.bottom - (value - (isRating ? min : 0)) / (isRating ? max - min : 100) * (PLOT.bottom - PLOT.top);
+  const userX = x(isRating ? data.userRating : data.userAchievement);
+  const cumulativeShare = shareAtOrBelow(data.distribution, data.userAchievement);
+  const userY = y(isRating ? data.userAchievement : cumulativeShare * 100);
+  const gradeStops = GRADE_STOPS.filter(score => score >= min && score <= max);
+  const xTicks = !isRating && min >= 940000 ? [...(min < 970000 ? [min] : []), ...gradeStops] : Array.from({ length: 5 }, (_, i) => (isRating ? ratingMin : min) + i * (isRating ? ratingMax - ratingMin : max - min) / 4);
+  const yTicks = Array.from({ length: 5 }, (_, i) => isRating ? min + i * (max - min) / 4 : i * 25);
+  const curve = cumulativePoints(data.distribution, min, max).map((point, index) => `${index ? 'L' : 'M'}${x(point.score)},${y(point.percent)}`).join(' ');
+  const rank = peerRank(data.percentile ?? 0, cumulativeShare);
+  const rankPercent = rank.share < 0.01 ? t('lessThan', { percent: percentLabel(0.01) }) : percentLabel(rank.share);
+  const rankLabel = rank.kind === 'median' ? t('median') : t(rank.kind, { percent: rankPercent });
+  const description = isRating
+    ? t('ratingDescription', { count: format.number(data.totalPlayerCount), rating: format.number(data.userRating), achievement })
+    : t('curveDescription', { percent: percentLabel(cumulativeShare), achievement });
 
   return (
     <>
       {withSeparator && <Separator />}
-      <div className="space-y-1">
-        <div className="flex items-center justify-between text-xs">
-          <span className="text-muted-foreground">Among peers</span>
-          <span className={cn("font-semibold tabular-nums", labelColor)}>
-            {labelText}
-          </span>
+      <Tabs value={view} activationMode="manual" onValueChange={(value) => {
+        if (value === 'curve' && !curveAvailable) return;
+        setSelectedView(value as 'rating' | 'curve');
+        setErrorOpen(false);
+      }} className="space-y-2" aria-label={t('title')}>
+        <div className="flex items-center justify-between gap-2 text-xs">
+          <span className="font-medium">{t('title')}</span>
+          <span className="text-primary font-semibold tabular-nums">{t('you', { achievement })}</span>
         </div>
-        <div className="w-full h-30 -mx-0.5">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={paddedDist} margin={{ top: 4, right: 2, left: 2, bottom: 8 }}>
-              <defs>
-                <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="0%">
-                  {tierStops.map((s, i) => (
-                    <stop key={i} offset={s.offset} stopColor={s.color} />
-                  ))}
-                </linearGradient>
-              </defs>
-              <XAxis
-                dataKey="lo"
-                type="number"
-                domain={["dataMin", "dataMax"]}
-                ticks={TIER_TICKS.filter(t => t > leftEdge)}
-                interval={0}
-                tick={({ x, y, payload }: any) => (
-                  <g transform={`translate(${x},${y})`}>
-                    <text
-                      x={0} y={0} dy={4}
-                      textAnchor="end"
-                      transform="rotate(-40)"
-                      style={{ fill: "var(--muted-foreground)", fontSize: 8 }}
-                    >
-                      {TIER_TICK_LABELS[payload.value as number] ?? ""}
-                    </text>
-                  </g>
-                )}
-                axisLine={false}
-                tickLine={false}
-                height={20}
-              />
-              <YAxis hide />
-              <Area
-                type="monotone"
-                dataKey="count"
-                stroke={`url(#${gradientId})`}
-                strokeWidth={1.5}
-                fill={`url(#${gradientId})`}
-                fillOpacity={0.25}
-                dot={false}
-                isAnimationActive={false}
-              />
-              <ReferenceLine
-                x={clampedX}
-                stroke={`var(--color-${labelColor.replace('text-', '')})`}
-                strokeWidth={2}
-              />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
-        <p className="text-[10px] text-muted-foreground text-right">
-          out of {data.peerCount} similarly rated players
-        </p>
-      </div>
+        <TabsList className="flex h-auto w-full rounded-full p-0.5" aria-label={t('view')}>
+          <Popover.Root open={errorOpen && !curveAvailable} onOpenChange={setErrorOpen}>
+            <Popover.Anchor asChild>
+              <TabsTrigger value="curve" className="flex-1 rounded-full text-[11px]" aria-disabled={!curveAvailable}
+                onClick={() => { if (!curveAvailable) setErrorOpen(true); }}
+                onKeyDown={(event) => {
+                  if (!curveAvailable && (event.key === 'Enter' || event.key === ' ')) {
+                    event.preventDefault();
+                    setErrorOpen(true);
+                  }
+                }}>
+                {t('curveTab')}
+              </TabsTrigger>
+            </Popover.Anchor>
+            <Popover.Portal>
+              <Popover.Content side="bottom" align="start" sideOffset={6}
+                onOpenAutoFocus={(event) => event.preventDefault()}
+                onCloseAutoFocus={(event) => event.preventDefault()}
+                className="z-50 max-w-60 rounded-md border bg-popover p-3 text-xs text-popover-foreground shadow-md">
+                {t('unavailable')}
+              </Popover.Content>
+            </Popover.Portal>
+          </Popover.Root>
+          <TabsTrigger value="rating" className="flex-1 rounded-full text-[11px]">{t('ratingTab')}</TabsTrigger>
+        </TabsList>
+        <TabsContent value={view} className="space-y-2">
+          <p className="text-[10px] text-muted-foreground">{t(isRating ? 'ratingHeading' : 'curveHeading')}</p>
+          <svg viewBox="0 0 320 200" className="block w-full overflow-visible" role="img" aria-labelledby={titleId}>
+            <title id={titleId}>{description}</title>
+            {yTicks.map(tick => (
+              <g key={tick}>
+                {isRating && <line x1={PLOT.left} x2={PLOT.right} y1={y(tick)} y2={y(tick)} stroke="var(--border)" strokeDasharray="2 4" />}
+                <text x={PLOT.left - 7} y={y(tick) + 3} textAnchor="end" fontSize="10" fill="var(--muted-foreground)">{isRating ? scoreLabel(tick) : percentLabel(tick / 100)}</text>
+              </g>
+            ))}
+            {!isRating && gradeStops.map(tick => <line key={tick} x1={x(tick)} x2={x(tick)} y1={PLOT.top} y2={PLOT.bottom} stroke="var(--border)" strokeDasharray="2 4" />)}
+            {xTicks.map(tick => <text key={tick} x={x(tick)} y={PLOT.bottom + (!isRating && tick === 1005000 ? 29 : 16)} textAnchor="middle" fontSize="10" fill="var(--muted-foreground)">{isRating ? format.number(tick, { notation: 'compact', maximumFractionDigits: 2 }) : scoreLabel(tick)}</text>)}
+            <text x={(PLOT.left + PLOT.right) / 2} y="198" textAnchor="middle" fontSize="10" fill="var(--muted-foreground)">{t(isRating ? 'ratingAxis' : 'achievementAxis')}</text>
+            {isRating ? data.ratingDistribution.filter(point => point.achievementLo >= min).map(point => {
+              const position = ratingClusterPosition(point);
+              return <circle key={`${point.ratingLo}:${point.achievementLo}`} cx={x(position.rating)} cy={y(position.achievement)}
+                r={Math.min(4, 1.4 + Math.sqrt(point.count) * 0.5)} fill="var(--muted-foreground)" opacity={0.35 + Math.min(0.4, point.count / 30)}>
+                <title>{t('clusterDescription', {
+                  ratingMin: format.number(point.ratingLo), ratingMax: format.number(point.ratingLo + 124),
+                  achievementMin: scoreLabel(point.achievementLo), achievementMax: scoreLabel(Math.min(1010000, point.achievementLo + 1000)),
+                  count: point.count,
+                })}</title>
+              </circle>
+            }) : <path d={curve} fill="none" stroke="var(--muted-foreground)" strokeWidth="1.8" strokeLinejoin="round" />}
+            <line x1={PLOT.left} x2={userX} y1={userY} y2={userY} stroke="var(--primary)" strokeDasharray="3 3" opacity="0.65" />
+            <line x1={userX} x2={userX} y1={userY} y2={PLOT.bottom} stroke="var(--primary)" strokeDasharray="3 3" opacity="0.65" />
+            {!isRating && data.percentile != null && (
+              <text x={PLOT.left + 5} y={userY - 7} fontSize="11" fontWeight="600" fill="var(--primary)"
+                stroke="var(--background)" strokeWidth="3" paintOrder="stroke" strokeLinejoin="round">
+                {rankLabel}
+              </text>
+            )}
+            <path d={`M${userX},${userY - 5} l5,5 l-5,5 l-5,-5 Z`} fill="var(--primary)" stroke="var(--background)" strokeWidth="1.5">
+              <title>{t('youDescription', { rating: format.number(data.userRating), achievement })}</title>
+            </path>
+          </svg>
+        </TabsContent>
+      </Tabs>
     </>
   );
 }

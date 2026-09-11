@@ -2,21 +2,25 @@
 // Server-side internals (raw view rows, batch-query inputs) live in
 // src/server/queries/percentile.ts.
 
-/** A single bin in the chart's pre-binned score distribution. */
+/** A sampled score with a weight representing players in its rating band. */
 export interface PercentileBucket {
-  /** lower bound of bucket (achievement ×10000) */
+  /** Achievement ×10000. */
   lo: number;
   count: number;
 }
 
 /** Per-chart percentile data as returned by the tRPC endpoint. */
 export interface PercentileEntry {
-  /** 0.0–1.0; 0.0 = lowest scorer, 1.0 = highest scorer among peers */
-  percentile: number;
+  /** Estimated fraction strictly below this score; null when the peer pool is insufficient. */
+  percentile: number | null;
+  userRating: number;
   /** merged distinct player count used for this calculation */
   peerCount: number;
   /** pre-binned score distribution for the hover-card chart */
   distribution: PercentileBucket[];
+  ratingDistribution: RatingScoreBucket[];
+  totalPlayerCount: number;
+  peerRatingRange: { min: number; max: number } | null;
 }
 
 /** Keyed by public song id. */
@@ -26,4 +30,13 @@ export type PercentileMap = Record<string, PercentileEntry>;
 export interface PercentileDistributionData extends PercentileEntry {
   /** the viewer's own achievement on this chart (×10000) */
   userAchievement: number;
+}
+
+/** Anonymous clusters; ratings are only available in 125-point bands. */
+export interface RatingScoreBucket {
+  ratingLo: number;
+  /** Lower bound of a 0.1 percentage-point achievement bin, ×10000. */
+  achievementLo: number;
+  /** Sample count, not the full population count. */
+  count: number;
 }

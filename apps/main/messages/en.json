@@ -700,6 +700,10 @@
     "cancel": "Cancel"
   },
   "recommendations": {
+    "peerAchieved": "Achieved by ≈{percent} peers",
+    "newBadge": "New",
+    "oldBadge": "Old",
+    "currentToTarget": "Current → Target",
     "noRecommendations": "No Recommendations Available",
     "allOptimal": "All your scores are already optimal! Keep up the great work.",
     "description": "Songs recommended to improve your rating based on your current B15/B35 scores.",
@@ -1486,5 +1490,25 @@
       "cancel": "Cancel",
       "confirmRemove": "Remove description"
     }
+  },
+  "scoreComparison": {
+    "title": "Score comparison",
+    "view": "Comparison view",
+    "you": "You · {achievement}",
+    "curveTab": "Score curve",
+    "ratingTab": "By Rating",
+    "ratingHeading": "Achievement by player Rating",
+    "curveHeading": "Players scoring at or below this achievement",
+    "unavailable": "Not enough players with similar Rating or a balanced enough sample for a score curve.",
+    "ratingAxis": "Player Rating",
+    "achievementAxis": "Achievement",
+    "top": "Top {percent} among peers",
+    "bottom": "Bottom {percent} among peers",
+    "median": "Around median among peers",
+    "lessThan": "<{percent}",
+    "ratingDescription": "Achievement versus Rating for {count} players, based on all play records. Dots group sampled scores into 125 Rating points and 0.1% achievement, with approximate positions spread within each bin. Your Rating is {rating}, achievement {achievement}.",
+    "curveDescription": "Estimated share of players with similar Rating scoring at or below each achievement. {percent} scored at or below your {achievement}. Ties are included.",
+    "clusterDescription": "Rating {ratingMin}–{ratingMax}; {achievementMin}–{achievementMax}: {count, plural, one {# sampled score} other {# sampled scores}}",
+    "youDescription": "You: {rating} Rating, {achievement}"
   }
 }
