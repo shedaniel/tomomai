@@ -691,6 +691,10 @@
     "cancel": "取消"
   },
   "recommendations": {
+    "peerAchieved": "約 {percent} 同程度玩家達成",
+    "newBadge": "新曲",
+    "oldBadge": "舊曲",
+    "currentToTarget": "目前 → 目標",
     "noRecommendations": "無推薦歌曲",
     "allOptimal": "沒有其他能夠提升 R 值的歌曲了。做得很好！",
     "description": "根據你目前的成績推薦可提升 R 值的歌曲。",

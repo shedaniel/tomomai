@@ -115,6 +115,13 @@ Aggregate namespaces (intentional nested objects — **bounded, fixed keys**; do
 > `totalMasterNamesNormalized`, `originalName`, `ttlSec`, `scope`) are also registered — keep this
 > list current when you add one.
 
+Browser recommendation diagnostics (temporary, scalar fields):
+`userRating`, `percentileEnabled`, `potentialEnabled`, `fetchStatus`,
+`requestedCharts`, `potentialCharts`, `qualifyingTargets`, `displayedPotential`.
+`recommendationRows` is an array of strings describing the displayed rows in
+sort order, including scores, peer reach shares, Rating gains, efficiency scores and
+promotion status.
+
 ### Rules of thumb
 
 1. **`camelCase`, never `snake_case` or `kebab-case`.** Pino emits camelCase; matching it avoids duplicate logical fields.

@@ -1,3 +1,4 @@
+import { recommendationEfficiency, type RecommendationPeers } from "@/lib/recommendation-potential";
 import { getRatingFactor, SongWithRating, splitSongs } from "@/lib/rating-calculator";
 
 export interface RecommendationData {
@@ -11,6 +12,10 @@ export interface RecommendationData {
   isInBest: boolean;
   category: "new" | "old";
   efficiency: number;
+  efficiencyScore: number;
+  peerReach: number | null;
+  peerWeight: number;
+  hasPotential: boolean;
   order: number;
 }
 
@@ -25,7 +30,7 @@ export const ACCURACY_VALUES = [
   101.0,
 ];
 
-export function generateRecommendations(songsWithRating: SongWithRating[], version: number): RecommendationData[] {
+export function generateRecommendations(songsWithRating: SongWithRating[], version: number, peers: Record<string, RecommendationPeers> = {}): RecommendationData[] {
   const { newSongsB15, oldSongsB35, newSongsRemaining, oldSongsRemaining } = splitSongs(songsWithRating, version);
 
   const minNewRating = newSongsB15.length > 0 ? Math.min(...newSongsB15.map(s => s.rating)) : 0;
@@ -83,6 +88,7 @@ export function generateRecommendations(songsWithRating: SongWithRating[], versi
         ? 2.0
         : ratingGain / Math.max(accuracy - currentAccuracy, 0.1);
 
+      const peerScore = recommendationEfficiency(efficiency, ratingGain, accuracy, peers[song.songId]);
       recommendations.push({
         song,
         currentAccuracy,
@@ -94,6 +100,8 @@ export function generateRecommendations(songsWithRating: SongWithRating[], versi
         isInBest,
         category: isNew ? "new" : "old",
         efficiency,
+        ...peerScore,
+        hasPotential: peerScore.peerWeight >= 1.1,
         order,
       });
 
@@ -105,9 +113,9 @@ export function generateRecommendations(songsWithRating: SongWithRating[], versi
     if (a.order !== b.order) {
       return a.order - b.order;
     }
-    if (Math.abs(a.efficiency - b.efficiency) < 0.1) {
+    if (Math.abs(a.efficiencyScore - b.efficiencyScore) < 0.1) {
       return b.ratingGain - a.ratingGain;
     }
-    return b.efficiency - a.efficiency;
+    return b.efficiencyScore - a.efficiencyScore;
   });
 }

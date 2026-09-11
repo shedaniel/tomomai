@@ -1,11 +1,11 @@
 "use client";
 
-import { addRatingsAndSort, SongWithRating } from "@/lib/rating-calculator";
+import { addRatingsAndSort } from "@/lib/rating-calculator";
 import { generateRecommendations, RecommendationData } from "@/server/queries/recommendations";
-import { SnapshotWithSongs } from "@/lib/types";
+import { Region, SnapshotWithSongs } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { Award, Calendar, Disc3, Filter, Hash, Heart, Layers, Target, Zap } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useFormatter, useTranslations } from "next-intl";
 import { CoverImage } from "@/components/cover-image";
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Select, SelectContent, SelectTrigger, SelectItem, SelectValue } from "@tomomai/ui/select-friendly";
@@ -23,6 +23,8 @@ import {
 import { SongHoverCard } from "@/components/song-hover-card";
 import { renderLevelPrecise } from "@/lib/name-utils";
 import { STAGGER, getTransition } from "@/lib/animation-constants";
+import { logger } from "@/lib/logger";
+import { trpc } from "@/lib/trpc-client";
 import { useMediaQuery } from "@/hooks/use-media-query";
 
 // Floor to 2 decimals so 99.9956% doesn't render as 100.00%
@@ -31,18 +33,20 @@ function formatAccuracy(accuracy: number): string {
 }
 
 function RecommendationRow({ recommendation }: { recommendation: RecommendationData }) {
+  const t = useTranslations('recommendations');
+  const format = useFormatter();
   const { song, currentAccuracy, targetAccuracy, currentRating, targetRating, accuracyDiff, ratingGain, isInBest, category } = recommendation;
   return (
     <SongHoverCard song={song}>
       <motion.div
-        className="flex xs:justify-between xs:items-center text-sm h-16 max-xs:h-30 max-xs:flex-col max-xs:justify-start max-xs:gap-y-2 px-2 -mx-2 rounded-md cursor-pointer group"
+        className="flex xs:justify-between xs:items-center text-sm min-h-16 py-2 max-xs:min-h-30 max-xs:flex-col max-xs:justify-start max-xs:gap-y-2 px-2 -mx-2 rounded-md cursor-pointer group"
       >
-        <div className="flex items-center xs:flex-1 min-w-0 h-12 max-xs:mt-1.5">
+        <div className="flex items-center xs:flex-1 min-w-0 min-h-12 max-xs:mt-1.5">
           <CoverImage
             coverUrl={song.cover}
             alt={song.songName}
             className={cn(
-              "w-8 h-8 ml-1 mr-3 rounded ring-2 ring-offset-2 ring-offset-background",
+              "w-8 h-8 shrink-0 ml-1 mr-3 rounded ring-2 ring-offset-2 ring-offset-background",
               song.difficulty === "basic" && "ring-green-400",
               song.difficulty === "advanced" && "ring-yellow-400",
               song.difficulty === "expert" && "ring-red-400",
@@ -56,13 +60,13 @@ function RecommendationRow({ recommendation }: { recommendation: RecommendationD
           />
 
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1">
-              <div className="truncate font-medium">{song.songName}</div>
+            <div className="mb-1 flex flex-wrap items-center gap-x-2 gap-y-1 md:flex-nowrap">
+              <div className="min-w-0 basis-full truncate font-medium md:basis-auto">{song.songName}</div>
               <div className={cn(
                 "px-1.5 py-0.5 rounded text-xs font-medium whitespace-nowrap",
                 category === "new" ? "bg-lime-100 text-lime-800 dark:bg-lime-600/30 dark:text-lime-400" : "bg-orange-100 text-orange-800 dark:bg-orange-600/30 dark:text-orange-400"
               )}>
-                {category === "new" ? "New" : "Old"}
+                {t(category === 'new' ? 'newBadge' : 'oldBadge')}
               </div>
               {category === "new" && isInBest && (
                 <div className="px-1.5 py-0.5 rounded text-xs font-medium whitespace-nowrap bg-green-100 text-green-800 dark:bg-green-600/30 dark:text-green-400">
@@ -74,6 +78,11 @@ function RecommendationRow({ recommendation }: { recommendation: RecommendationD
                   B35
                 </div>
               )}
+              {recommendation.hasPotential && recommendation.peerReach != null && (
+                <span className="inline-flex shrink-0 whitespace-nowrap rounded bg-primary/10 px-1.5 py-0.5 text-xs font-medium text-primary dark:bg-primary/20">
+                  {t('peerAchieved', { percent: format.number(recommendation.peerReach, { style: 'percent', maximumFractionDigits: 0 }) })}
+                </span>
+              )}
             </div>
             <div className="text-muted-foreground text-xs truncate">
               {song.type.toUpperCase()} • {song.difficulty.slice(0, 3).toUpperCase()} {renderLevelPrecise(song.levelPrecise, song.difficulty)} • {song.artist}
@@ -83,7 +92,7 @@ function RecommendationRow({ recommendation }: { recommendation: RecommendationD
 
         <div className="flex items-center justify-between">
           <div className="xs:text-right xs:ml-2">
-            <div className="text-xs text-muted-foreground">Current → Target</div>
+            <div className="text-xs text-muted-foreground">{t('currentToTarget')}</div>
             <div className="font-mono text-xs">
               {formatAccuracy(currentAccuracy)}% → {targetAccuracy === 101.0 ? (
                 <span className="text-green-600 dark:text-green-400">AP</span>
@@ -116,7 +125,7 @@ function RecommendationRow({ recommendation }: { recommendation: RecommendationD
   );
 }
 
-export function RecommendationCard({ selectedSnapshotData, flags }: { selectedSnapshotData: SnapshotWithSongs, flags: Flags }) {
+export function RecommendationCard({ selectedSnapshotData, flags, region }: { selectedSnapshotData: SnapshotWithSongs, flags: Flags, region: Region }) {
   const t = useTranslations();
   const isDesktop = useMediaQuery("(min-width: 768px)", { initializeWithValue: false });
   const [filterCategory, setFilterCategory] = useState<"all" | "new" | "old" | "best">("all");
@@ -129,12 +138,23 @@ export function RecommendationCard({ selectedSnapshotData, flags }: { selectedSn
   }, []);
 
   const { songs, snapshot } = selectedSnapshotData;
-  const songsWithRating: SongWithRating[] = addRatingsAndSort(songs, snapshot.gameVersion);
+  const songsWithRating = useMemo(() => addRatingsAndSort(songs, snapshot.gameVersion), [songs, snapshot.gameVersion]);
 
-  const recommendations = useMemo(
+  const baseRecommendations = useMemo(
     () => generateRecommendations(songsWithRating, snapshot.gameVersion),
     [songsWithRating, snapshot.gameVersion]
   );
+
+  const potentialEnabled = !!flags.scorePercentile && region === "intl";
+  const potentialSongIds = useMemo(() => [...new Set(baseRecommendations.map(rec => rec.song.songId))].slice(0, 2000).sort(), [baseRecommendations]);
+  const { data: potential, status: potentialStatus, fetchStatus: potentialFetchStatus, error: potentialError } = trpc.user.getRecommendationPeers.useQuery(
+    { publicSongIds: potentialSongIds, userRating: snapshot.rating },
+    { enabled: potentialEnabled && potentialSongIds.length > 0 && snapshot.rating > 0, staleTime: 5 * 60 * 1000, retry: false },
+  );
+  const recommendations = useMemo(() => {
+    const peers = potentialEnabled ? potential ?? {} : {};
+    return generateRecommendations(songsWithRating, snapshot.gameVersion, peers);
+  }, [songsWithRating, snapshot.gameVersion, potential, potentialEnabled]);
 
   // Create filter categories for the FilterPanel
   const filterCategories = useMemo(() => {
@@ -170,7 +190,7 @@ export function RecommendationCard({ selectedSnapshotData, flags }: { selectedSn
 
   const applyFilters = useCallback((filters: GenericFilter[]) => {
     return applyRecommendationFilters(recommendations, filters);
-  }, []);
+  }, [recommendations]);
 
   const handleAddFilter = useCallback((filter: GenericFilter) => {
     setAdvancedFilters(prev => [...prev, filter]);
@@ -184,7 +204,7 @@ export function RecommendationCard({ selectedSnapshotData, flags }: { selectedSn
   let filteredRecommendations = recommendations;
 
   if (flags.recommendationFilters) {
-    filteredRecommendations = applyFilters(advancedFilters);
+    filteredRecommendations = applyRecommendationFilters(recommendations, advancedFilters);
   } else {
     filteredRecommendations = recommendations.filter(rec => {
       switch (filterCategory) {
@@ -207,6 +227,49 @@ export function RecommendationCard({ selectedSnapshotData, flags }: { selectedSn
 
   // Limit the number of recommendations to 200
   filteredRecommendations = filteredRecommendations.slice(0, 200);
+
+  const diagnostic = JSON.stringify({
+    context: 'recommendation-potential',
+    region,
+    version: snapshot.gameVersion,
+    userRating: snapshot.rating,
+    percentileEnabled: !!flags.scorePercentile,
+    potentialEnabled,
+    status: potentialStatus,
+    fetchStatus: potentialFetchStatus,
+    requestedCharts: potentialSongIds.length,
+    potentialCharts: Object.keys(potential ?? {}).length,
+    recordCount: baseRecommendations.length,
+    qualifyingTargets: recommendations.filter(rec => rec.hasPotential).length,
+    displayedPotential: filteredRecommendations.filter(rec => rec.hasPotential).length,
+    err: potentialError?.message ?? null,
+    recommendationRows: filteredRecommendations.map((rec, index) => {
+      const peerCount = potential?.[rec.song.songId]?.peerCount;
+      return [
+        `${index + 1}. ${rec.song.songName}`,
+        `${rec.song.type.toUpperCase()} ${rec.song.difficulty} ${renderLevelPrecise(rec.song.levelPrecise, rec.song.difficulty)}`,
+        `id=${rec.song.songId}`,
+        `current=${rec.currentAccuracy.toFixed(4)}%`,
+        `target=${rec.targetAccuracy === 101 ? 'AP' : rec.targetAccuracy.toFixed(4) + '%'}`,
+        `peerReach=${rec.peerReach == null ? 'missing' : (rec.peerReach * 100).toFixed(1) + '%'}`,
+        `peerCount=${peerCount ?? 0}`,
+        `chartRating=${rec.currentRating}->${rec.targetRating}`,
+        `gain=+${rec.ratingGain}`,
+        `potential=${rec.hasPotential}`,
+        `peerWeight=${rec.peerWeight.toFixed(3)}`,
+        `pool=${rec.category}`,
+        `inBest=${rec.isInBest}`,
+        `baseEfficiency=${rec.efficiency.toFixed(2)}`,
+        `efficiencyScore=${rec.efficiencyScore.toFixed(2)}`,
+      ].join(' | ');
+    }),
+  });
+  const lastDiagnostic = useRef('');
+  useEffect(() => {
+    if (lastDiagnostic.current === diagnostic) return;
+    lastDiagnostic.current = diagnostic;
+    logger.info(JSON.parse(diagnostic), '[recommendation-potential]');
+  }, [diagnostic]);
 
   if (recommendations.length === 0) {
     return (

@@ -691,6 +691,10 @@
     "cancel": "キャンセル"
   },
   "recommendations": {
+    "peerAchieved": "同Rating帯の約{percent}が達成",
+    "newBadge": "新曲",
+    "oldBadge": "旧曲",
+    "currentToTarget": "現在 → 目標",
     "noRecommendations": "おすすめがありません",
     "allOptimal": "レート値を伸ばせる曲はもうありません！",
     "description": "現在のB15/B35スコアに基づき、レート値を伸ばしやすい楽曲をおすすめします。",

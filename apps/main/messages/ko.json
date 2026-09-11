@@ -510,6 +510,10 @@
     "cancel": "취소"
   },
   "recommendations": {
+    "peerAchieved": "동급 플레이어 약 {percent} 달성",
+    "newBadge": "신곡",
+    "oldBadge": "구곡",
+    "currentToTarget": "현재 → 목표",
     "noRecommendations": "추천 곡 없음",
     "allOptimal": "더 이상 레이팅을 올릴 곡이 없습니다! 대단해요.",
     "description": "현재 B15/B35 기록을 바탕으로 레이팅 상승에 도움이 될 곡을 추천합니다.",

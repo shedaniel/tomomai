@@ -112,6 +112,7 @@ const MIN_PEERS_EXPAND = MIN_PEERS_DISPLAY;
 export async function getChartPercentiles(
   inputs: ChartPercentileInput[],
   userRating: number,
+  nearbyOnly = false,
 ): Promise<Map<string, ChartPercentileResult>> {
   if (inputs.length === 0) return new Map();
 
@@ -129,6 +130,7 @@ export async function getChartPercentiles(
         SELECT parent_id, band_lo, achievements, player_count
         FROM ${sql.raw(CHART_PERCENTILE_VIEW)}
         WHERE parent_id = ANY(${sql.raw(`ARRAY[${parentIds.map(String).join(",")}]::bigint[]`)})
+          ${nearbyOnly ? sql`AND band_lo >= ${lo} AND band_lo < ${hi}` : sql``}
       `);
     });
   } catch (err) {
@@ -186,7 +188,7 @@ export async function getChartPercentiles(
       percentile: hasPeers ? rank / peerCount : null,
       peerCount,
       distribution: hasPeers ? buildDistribution(bands) : [],
-      ratingDistribution: buildRatingDistribution(chartBands),
+      ratingDistribution: nearbyOnly ? [] : buildRatingDistribution(chartBands),
       totalPlayerCount: chartBands.reduce((sum, band) => sum + band.player_count, 0),
       peerRatingRange: hasPeers ? {
         min: Math.min(...bands.map((band) => band.band_lo)),

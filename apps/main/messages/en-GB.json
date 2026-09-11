@@ -691,6 +691,10 @@
     "cancel": "Cancel"
   },
   "recommendations": {
+    "peerAchieved": "Achieved by ≈{percent} peers",
+    "newBadge": "New",
+    "oldBadge": "Old",
+    "currentToTarget": "Current → Target",
     "noRecommendations": "No Recommendations Available",
     "allOptimal": "All your scores are already optimal! Keep up the great work.",
     "description": "Songs recommended to improve your rating based on your current B15/B35 scores.",
