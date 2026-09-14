@@ -19,6 +19,10 @@
     "guess:dev": "pnpm --filter @tomomai/guess dev",
     "guess:build": "pnpm --filter @tomomai/guess build",
     "guess:start": "pnpm --filter @tomomai/guess start",
+    "takeout:dev": "pnpm --filter @tomomai/takeout dev",
+    "takeout:build": "pnpm --filter @tomomai/takeout build",
+    "takeout:start": "pnpm --filter @tomomai/takeout start",
+    "takeout:test": "pnpm --filter @tomomai/takeout test",
     "render:dev": "pnpm --filter @tomomai/render dev",
     "render:start": "pnpm --filter @tomomai/render start",
     "render:typecheck": "pnpm --filter @tomomai/render typecheck"
