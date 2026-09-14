@@ -1,7 +1,7 @@
-export type Locale = 'en' | 'en-GB' | 'ja' | 'zh-TW' | 'zh-HK' | 'zh-CN' | 'zh-SG' | 'ko';
+export type Locale = 'en' | 'en-GB' | 'ja' | 'zh-TW' | 'zh-HK' | 'zh-CN' | 'zh-SG' | 'zh-MS' | 'ko';
 
 export const defaultLocale: Locale = 'en';
-export const locales: Locale[] = ['en', 'en-GB', 'ja', 'zh-TW', 'zh-HK', 'zh-CN', 'zh-SG', 'ko'];
+export const locales: Locale[] = ['en', 'en-GB', 'ja', 'zh-TW', 'zh-HK', 'zh-CN', 'zh-SG', 'zh-MS', 'ko'];
 
 export function setLocaleCookie(locale: Locale) {
   if (typeof document !== 'undefined') {
