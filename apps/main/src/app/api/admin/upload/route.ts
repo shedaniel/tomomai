@@ -385,11 +385,13 @@ async function resolveParentsForAddedRows(db: CatalogTransaction, addedRows: Wri
   return newParents.length;
 }
 
+const instanceScore = (region: Region, version: number) => version * 100 + (region === "jp" ? 2 : region === "intl" ? 1 : 0);
+
 /**
  * Update chart-stable parent attributes (artist, cover, genre, bpm) from the
  * merged values — but only when this upload's (region, gameVersion) is the
  * parent's preferred instance. Preferred = max over the parent's children of
- * gameVersion * 100 + (region === "jp" ? 1 : 0); this keeps parent attributes
+ * gameVersion * 100 + (region === "jp" ? 2 : region === "intl" ? 1 : 0); this keeps parent attributes
  * tracking the latest-jp-preferred chart instance, matching how reads used to
  * pick attributes from the flat songs table.
  */
@@ -409,7 +411,6 @@ async function updateParentAttributes(db: CatalogTransaction, allRows: WriteRow[
       .where(inArray(songs.parentId, parentIds)),
   ]);
 
-  const instanceScore = (r: string, v: number) => v * 100 + (r === "jp" ? 1 : 0);
   const uploadScore = instanceScore(region, gameVersion);
 
   const maxScoreByParent = new Map<string, number>();
@@ -648,6 +649,16 @@ export async function POST(request: NextRequest) {
         songCount: dbSongs.length
       }, "Found existing songs in database");
 
+      const parentIds = [...new Set(dbSongs.map(song => song.parentId))];
+      const siblings = parentIds.length === 0 ? [] : await tx
+        .select({ parentId: songs.parentId, region: songs.region, gameVersion: songs.gameVersion })
+        .from(songs)
+        .where(inArray(songs.parentId, parentIds));
+      const uploadScore = instanceScore(region, version);
+      const nonPreferredParents = new Set(siblings
+        .filter(child => instanceScore(child.region, child.gameVersion) > uploadScore)
+        .map(child => String(child.parentId)));
+
       // Convert DB songs to PendingSong format
       const dbPendingSongs: PendingSong[] = dbSongs.map(convertDbSongToPendingSong);
 
@@ -670,6 +681,11 @@ export async function POST(request: NextRequest) {
       }
       const existing = dbPendingSongs[existingIndex];
       const result = merge(existing, incoming);
+      if (nonPreferredParents.has(String(existing.extras!.parentId))) {
+        Object.assign(result, {
+          artist: existing.artist, cover: existing.cover, genre: existing.genre, bpm: existing.bpm,
+        });
+      }
       mergeEvents.push({ existing, incoming, result });
       return result;
     });
