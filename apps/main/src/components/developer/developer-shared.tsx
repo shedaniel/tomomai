@@ -18,6 +18,7 @@ export const SCOPE_TREE: TreeNode[] = [
     key: "read",
     children: [
       { key: "user:metadata:read" },
+      { key: "user:settings:read" },
       {
         key: "snapshot:all:read",
         children: [
@@ -26,6 +27,8 @@ export const SCOPE_TREE: TreeNode[] = [
           { key: "snapshot:all:songs:read" },
           { key: "snapshot:all:events:read" },
           { key: "snapshot:all:icon:read" },
+          { key: "snapshot:all:delete" },
+          { key: "snapshot:submit" },
         ],
       },
       {
@@ -41,6 +44,8 @@ export const SCOPE_TREE: TreeNode[] = [
       { key: "recent:read", children: [{ key: "recent:detailed:read" }] },
       { key: "stats:read" },
       { key: "album:read", children: [{ key: "album:images:read" }] },
+      { key: "plate:read" },
+      { key: "fetch:read", children: [{ key: "fetch:start" }, { key: "fetch:delete" }] },
     ],
   },
 ];

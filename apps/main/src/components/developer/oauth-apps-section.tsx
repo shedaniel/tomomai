@@ -188,7 +188,7 @@ function RedirectUrisField({
       {redirectUris.length > 0 && (
         <ul className="space-y-1 mt-1">
           {redirectUris.map((uri) => (
-            <li key={uri} className="flex items-center gap-2 text-sm bg-muted rounded px-2 py-1">
+            <li key={uri} className="flex items-center gap-2 text-sm bg-muted rounded-md border px-2 py-1">
               <span className="flex-1 truncate font-mono text-xs">{uri}</span>
               <button
                 type="button"
@@ -228,7 +228,7 @@ function ScopePickerField({
 }) {
   return (
     <div className="border rounded-md">
-      <div className="max-h-64 overflow-y-auto p-1">
+      <div className="max-h-128 overflow-y-auto p-1">
         {SCOPE_TREE.map((node) => (
           <ScopeTreeNode
             key={node.key}
@@ -450,10 +450,10 @@ function EditOAuthAppDialog({
       clientId: app.clientId,
       name: form.name.trim(),
       redirectUris: form.redirectUris,
-      uri: form.uriInput || null,
-      icon: form.iconInput || null,
-      policy: form.policyInput || null,
-      tos: form.tosInput || null,
+      uri: form.uriInput.trim() || null,
+      icon: form.iconInput.trim() || null,
+      policy: form.policyInput.trim() || null,
+      tos: form.tosInput.trim() || null,
       scopes: Array.from(form.selectedScopes) as [ScopeKey, ...ScopeKey[]],
     });
   }

@@ -244,6 +244,24 @@ export const developerRouter = router({
       });
 
       if (!result) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to update OAuth application" });
+
+      const clearedMetadata: {
+        uri?: null;
+        icon?: null;
+        policy?: null;
+        tos?: null;
+        updatedAt: Date;
+      } = { updatedAt: new Date() };
+      if (input.uri === null) clearedMetadata.uri = null;
+      if (input.icon === null) clearedMetadata.icon = null;
+      if (input.policy === null) clearedMetadata.policy = null;
+      if (input.tos === null) clearedMetadata.tos = null;
+      if (Object.keys(clearedMetadata).length > 1) {
+        await db
+          .update(oauthClient)
+          .set(clearedMetadata)
+          .where(and(eq(oauthClient.clientId, input.clientId), eq(oauthClient.userId, ctx.session.user.id)));
+      }
       return result;
     }),
 
