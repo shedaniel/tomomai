@@ -12,7 +12,7 @@
  */
 
 import { getLogger } from "./request-logger";
-import { Agent } from "undici";
+import { Agent, fetch } from "undici";
 
 const CATALOG_URL =
   process.env.CATALOG_URL ??

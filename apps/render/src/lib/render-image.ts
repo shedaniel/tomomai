@@ -102,6 +102,22 @@ const VERSION_SETTINGS = {
     contentBackgroundColor: '#00000020',
     footerBackgroundColor: '#00000040',
   },
+  14: {
+    backgroundGradient: [
+      { offset: 1, color: '#fbdffe' },
+      { offset: 0, color: '#fdb2e0' },
+    ],
+    character: {
+      scaleX: 1.0,
+      scaleY: 1.0,
+      left: CANVAS_WIDTH - 500,
+      top: -80,
+      opacity: 1.0,
+    },
+    logoScale: 1.3,
+    contentBackgroundColor: '#00000020',
+    footerBackgroundColor: '#00000040',
+  },
 }
 
 export type ImageCache = {
