@@ -1,5 +1,5 @@
 import { afterEach, expect, it, vi } from "vitest";
-import { getAvailableVersions, getCurrentVersion, getVersionInfo } from "./versions";
+import { getAvailableVersions, getCurrentVersion, getVersionInfo, getVersionFromDate } from "./versions";
 
 afterEach(() => vi.useRealTimers());
 
@@ -17,4 +17,11 @@ it("keeps CHUNITHM region availability separate", () => {
   expect(getVersionInfo("chunithm", "intl", 9)).toBeNull();
   expect(getVersionInfo("chunithm", "jp", 9)?.shortName).toBe("Mate");
   expect(getAvailableVersions("chunithm", "cn")).toEqual([]);
+});
+
+it("uses the same regional version lookup boundary for both games", () => {
+  expect(getVersionFromDate("maimai", "jp", new Date("2026-09-17T07:00:00+09:00"))).toBe(14);
+  expect(getVersionFromDate("chunithm", "jp", new Date("2026-07-02T06:59:59+09:00"))).toBe(8);
+  expect(getVersionFromDate("chunithm", "jp", new Date("2026-07-02T07:00:00+09:00"))).toBe(9);
+  expect(() => getCurrentVersion("chunithm", "cn")).toThrow("No versions available");
 });

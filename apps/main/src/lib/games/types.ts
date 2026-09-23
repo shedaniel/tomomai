@@ -32,6 +32,7 @@ export type GameVersionInfo = {
 };
 
 export interface VersionProvider {
+  getAvailableVersions(region: Region): GameVersionInfo[];
   getCurrentVersion(region: Region): number;
   getVersionInfo(region: Region, version: number): GameVersionInfo | null;
 }
