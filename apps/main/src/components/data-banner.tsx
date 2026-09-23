@@ -1,5 +1,7 @@
 "use client";
 
+import { useGameId } from "@/components/providers/game-provider";
+import { formatGameRating } from "@/lib/games/presentation";
 import {
   ResponsiveDialog,
   ResponsiveDialogClose,
@@ -70,6 +72,7 @@ function SnapshotSelector({
   onSnapshotChange: (snapshotId: string) => void;
   t: any;
 }) {
+  const game = useGameId();
   const selectedSnapshotData = snapshots.find(snapshot => snapshot.id === selectedSnapshot);
 
   return (
@@ -80,7 +83,7 @@ function SnapshotSelector({
             <div className="flex flex-col items-start min-w-0 gap-0.5">
               <div className="flex items-center gap-1.5 min-w-0">
                 <span className="truncate text-xs font-medium">{selectedSnapshotData.displayName}</span>
-                <Badge variant="tonal" className="shrink-0 px-1.5 py-0 text-2xs font-medium bg-primary-container/50">{selectedSnapshotData.rating} rating</Badge>
+                <Badge variant="tonal" className="shrink-0 px-1.5 py-0 text-2xs font-medium bg-primary-container/50">{formatGameRating(game, selectedSnapshotData.rating)} rating</Badge>
                 <Badge variant="secondary" className="shrink-0 px-1.5 py-0 text-2xs font-normal bg-secondary/50">{getVersionInfo(selectedSnapshotData.gameVersion)?.shortName || "Unknown"}</Badge>
               </div>
               <span className="text-2xs text-muted-foreground">{formatDate(selectedSnapshotData.fetchedAt)}</span>
@@ -96,7 +99,7 @@ function SnapshotSelector({
             <div className="flex flex-col items-start min-w-0 gap-0.5">
               <div className="flex items-center gap-1.5 min-w-0">
                 <span className="truncate text-xs font-medium">{snapshot.displayName}</span>
-                <Badge variant="tonal" className="shrink-0 px-1.5 py-0 text-2xs font-medium bg-primary-container/50">{snapshot.rating} rating</Badge>
+                <Badge variant="tonal" className="shrink-0 px-1.5 py-0 text-2xs font-medium bg-primary-container/50">{formatGameRating(game, snapshot.rating)} rating</Badge>
                 <Badge variant="secondary" className="shrink-0 px-1.5 py-0 text-2xs font-normal bg-secondary/50">{getVersionInfo(snapshot.gameVersion)?.shortName || "Unknown"}</Badge>
               </div>
               <span className="text-2xs text-muted-foreground">{formatDate(snapshot.fetchedAt)}</span>

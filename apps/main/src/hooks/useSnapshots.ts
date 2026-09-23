@@ -1,3 +1,4 @@
+import { useGameId } from "@/components/providers/game-provider";
 import { trpc } from "@/lib/trpc-client";
 import { Region, Snapshot, SnapshotWithSongs } from "@/lib/types";
 import { useEffect, useRef, useState } from "react";
@@ -12,12 +13,23 @@ export function useSnapshots(
   isAuthenticated: boolean,
   options?: UseSnapshotsOptions
 ) {
-  const { initialSnapshots, initialSnapshotData } = options || {};
+  const game = useGameId();
+  const initialScope = useRef(`${game}:${region}`);
+  const currentScope = `${game}:${region}`;
+  const previousScope = useRef(currentScope);
+  const { initialSnapshots, initialSnapshotData } = initialScope.current === currentScope ? options || {} : {};
 
   // Initialize selected snapshot with the first snapshot from initial data
-  const [selectedSnapshot, setSelectedSnapshot] = useState<string | null>(
+  const [selectedSnapshotId, setSelectedSnapshot] = useState<string | null>(
     initialSnapshots && initialSnapshots.length > 0 ? initialSnapshots[0].id : null
   );
+  const selectedSnapshot = previousScope.current === currentScope ? selectedSnapshotId : null;
+  useEffect(() => {
+    if (previousScope.current !== currentScope) {
+      previousScope.current = currentScope;
+      setSelectedSnapshot(null);
+    }
+  }, [currentScope]);
   const previousLengthRef = useRef<number>(initialSnapshots?.length || 0);
 
   // Use tRPC query to fetch snapshots metadata only (with initial data)
@@ -25,13 +37,13 @@ export function useSnapshots(
     data: snapshotsData,
     isLoading: isLoadingSnapshots,
     refetch: refreshSnapshots,
-  } = trpc.user.getSnapshots.useQuery(
-    { region },
+  } = trpc.user.getSnapshotsForGame.useQuery(
+    { game, region },
     {
-      enabled: isAuthenticated, // Only run query if authenticated
+      enabled: isAuthenticated && game === "maimai", // Only run query if authenticated
       refetchOnWindowFocus: false,
       staleTime: 5 * 60 * 1000, // 5 minutes
-      initialData: initialSnapshots ? { snapshots: initialSnapshots } : undefined,
+      initialData: game === "maimai" ? initialSnapshots : undefined,
     }
   );
 
@@ -44,24 +56,25 @@ export function useSnapshots(
     refetch: refreshSnapshotData,
   } = trpc.user.getSnapshotData.useQuery(
     {
+      game: "maimai",
       snapshotId: selectedSnapshot!,
       region
     },
     {
-      enabled: isAuthenticated && !!selectedSnapshot,
+      enabled: isAuthenticated && game === "maimai" && !!selectedSnapshot,
       refetchOnWindowFocus: false,
       staleTime: 10 * 60 * 1000, // 10 minutes - snapshot data changes less frequently
-      ...(hasInitialDataForSelected && { initialData: initialSnapshotData as any }),
+      ...(game === "maimai" && hasInitialDataForSelected && { initialData: initialSnapshotData as any }),
     }
   );
 
-  const snapshots: Snapshot[] = snapshotsData?.snapshots || [];
+  const snapshots: Snapshot[] = snapshotsData?.map(snapshot => ({ ...snapshot, gameVersion: snapshot.gameVersion as Snapshot["gameVersion"], courseRankUrl: snapshot.courseRankUrl ?? "", classRankUrl: snapshot.classRankUrl ?? "", stars: snapshot.stars ?? 0 })) || [];
   const isLoading = isLoadingSnapshots || (!!selectedSnapshot && isLoadingSnapshotData);
 
   // Auto-select the latest snapshot if none selected and we have snapshots
-  if (snapshots.length > 0 && !selectedSnapshot) {
-    setSelectedSnapshot(snapshots[0].id);
-  }
+  useEffect(() => {
+    if (snapshots.length > 0 && !selectedSnapshot) setSelectedSnapshot(snapshots[0].id);
+  }, [snapshots, selectedSnapshot]);
 
   // Auto-select the latest snapshot when new data is fetched (length changes)
   useEffect(() => {

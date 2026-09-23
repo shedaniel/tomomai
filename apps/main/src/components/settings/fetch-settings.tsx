@@ -1,5 +1,6 @@
 "use client";
 
+import { useGame } from "@/components/providers/game-provider";
 import { FetchToastContainer } from "@/components/fetch-toast";
 import { TokenDialog } from "@/components/token-dialog";
 import { Button } from "@tomomai/ui";
@@ -34,6 +35,8 @@ import { toast } from "sonner";
 
 export function FetchSettings() {
   const t = useTranslations();
+  const game = useGame();
+  if (game.id !== "maimai") return <SettingsHeader title={t("settings.pages.fetch.title")} description={t("multiGame.fetchUnavailable", { game: game.displayName })} />;
   return (
     <SettingsForm>
       <SettingsHeader

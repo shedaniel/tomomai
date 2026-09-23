@@ -1,5 +1,7 @@
 "use client";
 
+import { signOut } from "@/lib/auth-client";
+import { useGame } from "@/components/providers/game-provider";
 import { AboutDialog } from "@/components/about-dialog";
 import { ThemeDialog } from "@/components/theme-dialog";
 import { Button } from "@tomomai/ui";
@@ -232,7 +234,7 @@ function DrawerLocaleSwitcher({ drawerItemClass }: { drawerItemClass: string }) 
 
 function DrawerRegionSwitcher({ value, onChange, drawerItemClass }: { value: Region; onChange: (region: Region) => void; drawerItemClass: string }) {
   const t = useTranslations();
-  const regions = getEnabledRegions();
+  const regions = useGame().regions;
   const [expanded, setExpanded] = useState(false);
 
   return (
@@ -274,6 +276,11 @@ interface UserIconHandlers {
 function UserIcon({ user, menu, onAbout, onTheme, onDiscordInvite, onSignIn }: Partial<NonNullable<HeaderProps['user']>> & UserIconHandlers) {
   const t = useTranslations();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const game = useGame();
+  const handleLogout = menu?.onLogout ?? (async () => {
+    await signOut();
+    window.location.reload();
+  });
 
   const avatarButton = (
     <Button variant="outline" className="relative bg-background h-10 md:h-8 rounded-full max-md:pl-3! pr-1! gap-3 md:gap-2 focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 focus:ring-offset-background data-[state=open]:ring-2 data-[state=open]:ring-gray-300 data-[state=open]:ring-offset-2 data-[state=open]:ring-offset-background">
@@ -326,7 +333,7 @@ function UserIcon({ user, menu, onAbout, onTheme, onDiscordInvite, onSignIn }: P
                   <Separator className="my-1" />
                 </>
               )}
-              {menu && getEnabledRegions().length > 1 && (
+              {menu && game.regions.length > 1 && (
                 <>
                   <DrawerRegionSwitcher value={menu.selectedRegion} onChange={menu.onRegionChange} drawerItemClass={drawerItemClass} />
                   <Separator className="my-1" />
@@ -410,11 +417,11 @@ function UserIcon({ user, menu, onAbout, onTheme, onDiscordInvite, onSignIn }: P
                   </Link>
                 </DrawerClose>
               )}
-              {menu && (
+              {user && (
                 <>
                   <Separator className="my-1" />
                   <DrawerClose asChild>
-                    <button className={drawerItemClass} onClick={menu.onLogout}>
+                    <button className={drawerItemClass} onClick={handleLogout}>
                       <LogOut className="h-4 w-4" />
                       <span>{t('common.logout')}</span>
                     </button>
@@ -424,7 +431,7 @@ function UserIcon({ user, menu, onAbout, onTheme, onDiscordInvite, onSignIn }: P
               <div className="mt-auto" />
               <Separator className="my-1" />
               <div className="px-2 py-2">
-                <MinigameCards />
+                {game.id === "maimai" && <MinigameCards />}
               </div>
               <Separator className="my-1" />
               <DrawerClose asChild>
@@ -534,8 +541,8 @@ function UserIcon({ user, menu, onAbout, onTheme, onDiscordInvite, onSignIn }: P
                 </Link>
               </DropdownMenuItem>
             )}
-            {menu && (
-              <DropdownMenuItem onClick={menu.onLogout}>
+            {user && (
+              <DropdownMenuItem onClick={handleLogout}>
                 <LogOut className="mr-2 h-4 w-4" />
                 <span>{t('common.logout')}</span>
               </DropdownMenuItem>
@@ -585,6 +592,7 @@ function SessionUserIcon(handlers: Omit<UserIconHandlers, "onSignIn">) {
 
 export function Header({ currentTab, showDiscordBanner = true, customThemesEnabled = false, user }: HeaderProps) {
   const t = useTranslations();
+  const game = useGame();
   const [aboutOpen, setAboutOpen] = useState(false);
   const [themeOpen, setThemeOpen] = useState(false);
   const [showBanner, setShowBanner] = useState(showDiscordBanner);
@@ -608,8 +616,8 @@ export function Header({ currentTab, showDiscordBanner = true, customThemesEnabl
               whileHover={{ scale: 1.05 }}
               transition={getTransition(SPRING_CONFIGS.snappy)}
             >
-              <Image src={TAB_ICONS_PATHS[currentTab]} alt="tomomai" width={528} height={132} sizes="176px" priority className="h-11 w-auto dark:hidden" style={{ aspectRatio: '4 / 1' }} />
-              <Image src={TAB_ICONS_PATHS_DARK[currentTab]} alt="tomomai" width={528} height={132} sizes="176px" priority className="h-11 w-auto hidden dark:block" style={{ aspectRatio: '4 / 1' }} />
+              {game.id === "maimai" ? <><Image src={TAB_ICONS_PATHS[currentTab]} alt="tomomai" width={528} height={132} sizes="176px" priority className="h-11 w-auto dark:hidden" style={{ aspectRatio: '4 / 1' }} />
+              <Image src={TAB_ICONS_PATHS_DARK[currentTab]} alt="tomomai" width={528} height={132} sizes="176px" priority className="h-11 w-auto hidden dark:block" style={{ aspectRatio: '4 / 1' }} /></> : <span className="text-2xl font-semibold">{game.productName}</span>}
             </motion.div>
           </Link>
           <NavbarButtons currentTab={currentTab} />
@@ -617,7 +625,7 @@ export function Header({ currentTab, showDiscordBanner = true, customThemesEnabl
 
         <div className="flex items-center space-x-4">
           {!isCNExclusive() && <div className="max-md:hidden"><LocaleSwitcher /></div>}
-          {user?.menu && getEnabledRegions().length > 1 && <div className="max-md:hidden"><RegionSwitcher header={true} value={user.menu.selectedRegion} onChange={user.menu.onRegionChange} /></div>}
+          {user?.menu && game.regions.length > 1 && <div className="max-md:hidden"><RegionSwitcher header={true} value={user.menu.selectedRegion} onChange={user.menu.onRegionChange} /></div>}
           {user ? (
             <UserIcon user={user.user} menu={user.menu} onAbout={() => setAboutOpen(true)} onTheme={() => setThemeOpen(true)} onDiscordInvite={handleDiscordInvite} />
           ) : (
@@ -627,7 +635,7 @@ export function Header({ currentTab, showDiscordBanner = true, customThemesEnabl
       </div>
 
       <AnimatePresence>
-        {showBanner && <DiscordBanner onDismiss={() => setShowBanner(false)} />}
+        {game.id === "maimai" && showBanner && <DiscordBanner onDismiss={() => setShowBanner(false)} />}
       </AnimatePresence>
 
       <AboutDialog open={aboutOpen} onOpenChange={setAboutOpen} />
