@@ -1,7 +1,7 @@
 import { db } from "./db";
 import { fetchSessions } from "./db/schema-pg";
 import { getLogger } from "./request-logger";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import {
   FetchState,
   parseStatusStates,
@@ -24,7 +24,7 @@ export async function appendFetchState(sessionId: bigint, state: FetchState): Pr
       const currentSession = await db
         .select({ statusStates: fetchSessions.statusStates })
         .from(fetchSessions)
-        .where(eq(fetchSessions.id, sessionId))
+        .where(and(eq(fetchSessions.id, sessionId), eq(fetchSessions.game, "maimai"), eq(fetchSessions.status, "pending")))
         .limit(1);
 
       if (currentSession.length === 0) {
@@ -42,7 +42,7 @@ export async function appendFetchState(sessionId: bigint, state: FetchState): Pr
         await db
           .update(fetchSessions)
           .set({ statusStates: newStatusStates })
-          .where(eq(fetchSessions.id, sessionId));
+          .where(and(eq(fetchSessions.id, sessionId), eq(fetchSessions.game, "maimai"), eq(fetchSessions.status, "pending")));
 
         getLogger().debug(`Appended state '${state}' to session ${sessionId}. Progress: ${calculateProgress(newStates)}%`);
       }

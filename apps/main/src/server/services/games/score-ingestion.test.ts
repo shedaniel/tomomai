@@ -15,6 +15,7 @@ const testState = vi.hoisted(() => {
     sessions: Row[];
     tokens: Row[];
     users: Row[];
+    optionalRows: Row[];
     nextSnapshotId: number;
     nextScoreId: number;
     activeSessionId: bigint;
@@ -29,6 +30,7 @@ const testState = vi.hoisted(() => {
     sessions: [],
     tokens: [],
     users: [],
+    optionalRows: [],
     nextSnapshotId: 1,
     nextScoreId: 1,
     activeSessionId: BigInt(1),
@@ -116,6 +118,7 @@ const testState = vi.hoisted(() => {
       return inserted;
     }
 
+    state.optionalRows.push(...values);
     return values;
   }
 
@@ -313,6 +316,7 @@ describe("score ingestion", () => {
     testState.state.sessions = [];
     testState.state.tokens = [];
     testState.state.users = [];
+    testState.state.optionalRows = [];
     testState.state.nextSnapshotId = 1;
     testState.state.nextScoreId = 1;
     testState.state.activeSessionId = BigInt(1);
@@ -701,6 +705,27 @@ describe("score ingestion", () => {
       await vi.advanceTimersByTimeAsync(1);
       expect(testState.state.snapshots).toHaveLength(0);
     } finally { vi.useRealTimers(); }
+  });
+
+  it("stores generic optional payloads without maimai-only requirements", async () => {
+    const gameVersion = getCurrentVersion("chunithm", "intl");
+    testState.state.songs = [createSong("chunithm", gameVersion, 401, "Generic Chart")];
+    const score = createScore("chunithm", "intl", gameVersion, "Generic Chart", { secondaryScore: 0, comboStatus: 0, syncStatus: 0 });
+    const playedAt = new Date("2026-09-01T00:00:00Z");
+    await persistFetchResult({ game: "chunithm", region: "intl", userId: "user-1", sessionId: BigInt(1), gameVersion,
+      fetched: { ...createFetched([score]),
+        player: { ...createPlayer(), metadata: { adapterVersion: 1 } },
+        recents: [{ ...score, playedAt, details: { judgement: "complete" } }],
+        events: [{ name: "Map progress", metadata: { steps: 10 } }],
+        albums: [{ chart: score.chart, capturedAt: playedAt, metadata: { url: "https://example.test/image" } }],
+      },
+    });
+    expect(testState.state.snapshots[0].metadata).toEqual({ adapterVersion: 1 });
+    expect(testState.state.optionalRows).toEqual([
+      expect.objectContaining({ game: "chunithm", scoreValue: score.scoreValue, maxDxScore: null, metadata: { judgement: "complete" } }),
+      expect.objectContaining({ game: "chunithm", name: "Map progress", eventType: null, state: null, metadata: { steps: 10 } }),
+      expect.objectContaining({ game: "chunithm", takenAt: playedAt, metadata: { url: "https://example.test/image" } }),
+    ]);
   });
 
 });
