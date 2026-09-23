@@ -4,7 +4,9 @@ LOCK TABLE parent_song, songs, user_tokens, fetch_sessions, user_snapshots,
   score_data, snapshot_scores, snapshot_b50, user_recent_songs, user_albums, user_events
   IN ACCESS EXCLUSIVE MODE;
 --> statement-breakpoint
-DROP MATERIALIZED VIEW IF EXISTS chart_percentile_bands_all_regions;
+DROP MATERIALIZED VIEW IF EXISTS "public"."chart_percentile_bands";
+--> statement-breakpoint
+DROP MATERIALIZED VIEW IF EXISTS "public"."chart_percentile_bands_all_regions";
 --> statement-breakpoint
 DO $$
 BEGIN

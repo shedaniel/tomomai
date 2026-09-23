@@ -25,8 +25,10 @@ The new SQL customizes the generated diff to preserve data:
   bucket-relative ranks. Assert row counts and exact mappings before dropping
   `snapshot_b50`.
 - Remove temporary game defaults, so new writes must explicitly choose game.
-- Drop the old percentile materialized view before its referenced columns
-  change; the existing authorized refresh job recreates it afterward.
+- Drop both known public percentile materialized views (`chart_percentile_bands`
+  and `chart_percentile_bands_all_regions`) before any referenced column changes.
+  The existing authorized refresh job recreates the current view afterward.
+  Cleanup uses restrictive drops, so unexpected dependent objects stop migration.
 
 Generation and static artifact checks do not execute this migration. No
 schema-application command was run. Repository instructions prohibit applying
@@ -78,3 +80,27 @@ results. These checks do not establish execution time, locking behavior or
 backfill correctness against a production database. Static migration checks
 verify snapshot lineage, single-version journal advancement, generated
 constraint coverage, dependency ordering and preservation of upstream files.
+
+## Retrying a failed percentile dependency cutover
+
+The first 0018 artifact removed only `chart_percentile_bands_all_regions`. A
+deployment retaining `public.chart_percentile_bands` could fail with PostgreSQL
+`0A000` when converting `parent_song.difficulty`. The corrected 0018 removes both
+known view names before every column type conversion; no migration regeneration
+or new version is needed. Upstream 0017 remains unchanged.
+
+With the installed Drizzle PostgreSQL migrator, pending migration statements and
+their journal inserts run inside one transaction. A failed statement rolls back
+that transaction, so the failed 0018 should not be recorded as applied. Deploy
+the corrected artifact and retry through the authorized migration mechanism
+after the deployment operator confirms rollback and maintenance conditions.
+If a different runner executed statements individually, verify its database
+state before retrying. Do not mark the failed migration complete or manually
+drop unrelated dependencies. These changes were tested statically, without
+connecting to or applying SQL against any database.
+
+Run the dependency-order regression without database configuration:
+
+```sh
+node --test apps/main/scripts/check-multi-game-migration.mjs
+```
