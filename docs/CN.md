@@ -68,7 +68,7 @@ This means even items that "support cn today" via hardcoded paths must be revisi
 - [ ] Missing CN equivalents of `japanDescription` / `intlDescription` (auth/token guidance) across `en.json`, `ja.json`, `zh-CN.json`, `zh-HK.json`, `zh-TW.json`
 
 ## Env
-- [ ] `NEXT_PUBLIC_ENABLED_REGIONS` must include `cn`
+- [ ] `NEXT_PUBLIC_ENABLED_MAIMAI_REGIONS` must include `cn` (legacy `NEXT_PUBLIC_ENABLED_REGIONS` is used only when the game-specific variable is unset)
 
 **Biggest WIP areas:** the maimai-fetcher pipeline, login/token service, admin scraper URLs, the admin HTTP routes, and the fetcher pipeline branching — most of these still hard-branch on `jp` vs `intl` (or now on `cn`) rather than going through `getEnabledRegions()` / `isRegionEnabled()`.
 
