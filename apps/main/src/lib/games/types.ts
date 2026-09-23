@@ -1,0 +1,207 @@
+import type { Region } from "@/lib/types";
+import type { Flags } from "@/lib/flags";
+import type { CatalogFetchContext, PendingChart } from "./catalog-types";
+
+export const CANONICAL_GAME_IDS = ["maimai", "chunithm"] as const;
+export type CanonicalGameId = (typeof CANONICAL_GAME_IDS)[number];
+
+export type GameContext = {
+  game: CanonicalGameId;
+  region: Region;
+};
+
+export const GAME_CAPABILITIES = [
+  "catalog",
+  "scores",
+  "recents",
+  "albums",
+  "events",
+  "rankings",
+  "rating",
+  "plates",
+  "score-details",
+  "profile-icon",
+] as const;
+export type GameCapability = (typeof GAME_CAPABILITIES)[number];
+
+export type GameVersionInfo = {
+  id: number;
+  name: string;
+  shortName: string;
+  releaseDate: string;
+};
+
+export interface VersionProvider {
+  getCurrentVersion(region: Region): number;
+  getVersionInfo(region: Region, version: number): GameVersionInfo | null;
+}
+
+export type ChartRef = GameContext & {
+  version: number;
+  songName: string;
+  chartType: number;
+  difficulty: number;
+};
+
+export type NormalizedPlayer = {
+  displayName: string;
+  rating: number;
+  title: string;
+  titleType: number;
+  iconUrl: string;
+  totalPlayCount: number;
+  currentVersionPlayCount: number;
+  courseRankUrl?: string;
+  classRankUrl?: string;
+  stars?: number;
+  metadata?: Record<string, unknown>;
+};
+
+export type NormalizedScore = {
+  chart: ChartRef;
+  scoreValue: number;
+  secondaryScore: number;
+  comboStatus: number;
+  syncStatus: number;
+  clearStatus: number;
+  details?: Record<string, unknown>;
+};
+
+export type NormalizedRecent = NormalizedScore & {
+  playedAt: Date;
+};
+
+export type NormalizedAlbum = {
+  chart: ChartRef;
+  capturedAt: Date;
+  metadata?: Record<string, unknown>;
+};
+
+export type NormalizedEvent = {
+  name: string;
+  metadata?: Record<string, unknown>;
+};
+
+export type GameFetchResult = {
+  player: NormalizedPlayer;
+  scores: NormalizedScore[];
+  recents?: NormalizedRecent[];
+  albums?: NormalizedAlbum[];
+  events?: NormalizedEvent[];
+  providerMetadata?: Record<string, unknown>;
+};
+
+export const RANKING_BUCKET = {
+  new: 1,
+  old: 2,
+} as const;
+export type RankingBucket = (typeof RANKING_BUCKET)[keyof typeof RANKING_BUCKET];
+
+export type RankedScore = {
+  chartId: string;
+  addedVersion: number;
+  rating: number;
+};
+
+export type RankingSelection<T extends RankedScore> = {
+  newScores: T[];
+  oldScores: T[];
+  newRemaining: T[];
+  oldRemaining: T[];
+};
+
+export interface CatalogAdapter {
+  configured: boolean;
+  loadImplementation?: () => Promise<unknown>;
+}
+
+export interface CatalogSourceAdapter extends CatalogAdapter {
+  notConfiguredReason?: string;
+  getStages?: (region: Region) => { names: string[] };
+  resolveVersion?: (region: Region) => number;
+  collect?: (ctx: CatalogFetchContext) => Promise<PendingChart[]>;
+}
+
+export type ScoreTokenValidationContext = {
+  userId: string;
+  region: Region;
+  flags: Flags;
+  token: string;
+  tokenProvided: boolean;
+};
+
+export type ScoreFetchContext = {
+  userId: string;
+  region: Region;
+  sessionId: bigint;
+  gameVersion: number;
+  flags: Flags;
+  token: string;
+  extra?: Record<string, unknown>;
+};
+
+export type ChartResolutionMap = Map<string, bigint>;
+
+export type PersistedSnapshotContext = {
+  userId: string;
+  region: Region;
+  sessionId: bigint;
+  snapshotId: number;
+  gameVersion: number;
+  chartResolution: ChartResolutionMap;
+};
+
+export interface ScoreAdapter {
+  configured: boolean;
+  notConfiguredReason?: string;
+  validateToken?: (ctx: ScoreTokenValidationContext) => void | Promise<void>;
+  fetch?: (ctx: ScoreFetchContext) => Promise<{
+    result: GameFetchResult;
+    persistExtra?: (
+      ctx: PersistedSnapshotContext,
+      backgroundWorkRef?: { promise: Promise<void> },
+    ) => Promise<void>;
+  }>;
+}
+
+export type GameCodeMaps = {
+  chartType: Readonly<Record<number, string>>;
+  difficulty: Readonly<Record<number, string>>;
+  comboStatus: Readonly<Record<number, string>>;
+  syncStatus: Readonly<Record<number, string>>;
+  clearStatus: Readonly<Record<number, string>>;
+  titleType: Readonly<Record<number, string>>;
+  rankingBucket: Readonly<Record<number, string>>;
+};
+
+export interface GameAdapter {
+  game: CanonicalGameId;
+  capabilities: ReadonlySet<GameCapability>;
+  supportedRegions: ReadonlySet<Region>;
+  versions: VersionProvider;
+  codes: GameCodeMaps;
+  catalog: CatalogSourceAdapter;
+  scores: ScoreAdapter;
+  calculateChartRating(input: { scoreValue: number; levelPrecise: number; difficulty: number; comboStatus?: number }, version: number): number;
+  selectRankings<T extends RankedScore>(scores: T[], currentVersion: number): RankingSelection<T>;
+}
+
+export type GameAdapterErrorCode =
+  | "UNKNOWN_GAME"
+  | "GAME_NOT_ENABLED"
+  | "UNSUPPORTED_REGION"
+  | "UNSUPPORTED_CAPABILITY"
+  | "SOURCE_NOT_CONFIGURED";
+
+export class GameAdapterError extends Error {
+  constructor(
+    public readonly code: GameAdapterErrorCode,
+    message: string,
+    public readonly game?: CanonicalGameId,
+    public readonly region?: Region,
+    public readonly capability?: GameCapability,
+  ) {
+    super(message);
+    this.name = "GameAdapterError";
+  }
+}

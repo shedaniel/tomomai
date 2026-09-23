@@ -115,7 +115,9 @@ that service.
 |---|---|---|
 | `NEXT_PUBLIC_APP_URL` | No | Public app URL (defaults to `http://localhost:3000`) |
 | `NEXT_PUBLIC_ACCOUNT_SIGNUP_TYPE` | No | Signup mode: `disabled`, `invite-only`, or `enabled` (defaults to `disabled`). Set to `enabled` to allow account registration |
-| `NEXT_PUBLIC_ENABLED_REGIONS` | No | Comma-separated list of enabled regions |
+| `NEXT_PUBLIC_ENABLED_MAIMAI_REGIONS` | No | Comma-separated maimai regions (`intl,jp` by default); an empty value disables all regions |
+| `NEXT_PUBLIC_ENABLED_CHUNITHM_REGIONS` | No | Reserved CHUNITHM regions; game remains disabled until its source and integration gate are ready |
+| `NEXT_PUBLIC_ENABLED_REGIONS` | No | Legacy maimai fallback when `NEXT_PUBLIC_ENABLED_MAIMAI_REGIONS` is unset |
 | `DEMO_FETCH` | No | Set to `true` to use demo data for fetching |
 | `TRUSTED_ORIGINS` | No | Comma-separated list of additional origins (e.g. `https://tomomai.lol,https://cn.tomomai.lol`). Read by Better Auth (`trustedOrigins`) and the CORS allowlist. Required when fronting the app with the [`cn/` reverse proxy](#cn-reverse-proxy-hk-cn2) so the proxy hostname is accepted for OAuth callbacks and CORS. |
 | `AUTH_COOKIE_DOMAIN` | No | Cookie domain for cross-subdomain Better Auth sessions (e.g. `.tomomai.lol`). Set this when serving the same app under multiple hostnames (apex + `cn.` proxy) so a session set on one is valid on the other. Omit for single-hostname deployments. |

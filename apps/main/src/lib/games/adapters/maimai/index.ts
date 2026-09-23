@@ -1,0 +1,21 @@
+import { GAME_CODE_MAPS } from "../../codes";
+import { calculateMaimaiChartRating, selectMaimaiRankings } from "../../rating";
+import type { GameAdapter } from "../../types";
+import { maimaiVersionProvider } from "../../versions";
+
+export const maimaiAdapter: GameAdapter = {
+  game: "maimai",
+  capabilities: new Set(["catalog", "scores", "recents", "albums", "events", "rankings", "rating", "plates", "score-details", "profile-icon"]),
+  supportedRegions: new Set(["intl", "jp", "cn"]),
+  versions: maimaiVersionProvider,
+  codes: GAME_CODE_MAPS.maimai,
+  catalog: {
+    configured: true,
+    resolveVersion: region => maimaiVersionProvider.getCurrentVersion(region),
+  },
+  scores: { configured: true },
+  calculateChartRating({ scoreValue, levelPrecise, difficulty, comboStatus = 0 }, version) {
+    return calculateMaimaiChartRating(scoreValue, levelPrecise, difficulty, comboStatus, version);
+  },
+  selectRankings: selectMaimaiRankings,
+};

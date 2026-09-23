@@ -1,0 +1,27 @@
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { getEnabledRegions, normalizeGameId, requireConfiguredSource, resolveGameContext } from "./registry";
+
+afterEach(() => vi.unstubAllEnvs());
+
+describe("game boundaries", () => {
+  it("canonicalizes aliases only at resolution", () => {
+    expect(normalizeGameId("maimaidx")).toBe("maimai");
+    expect(normalizeGameId("tomomai")).toBeNull();
+    vi.stubEnv("NEXT_PUBLIC_ENABLED_MAIMAI_REGIONS", "intl,jp");
+    expect(resolveGameContext("maimaidx", "jp", "scores")).toEqual({ game: "maimai", region: "jp" });
+  });
+  it("honors explicit empty configuration and rejects disabled regions", () => {
+    vi.stubEnv("NEXT_PUBLIC_ENABLED_MAIMAI_REGIONS", "");
+    expect(getEnabledRegions("maimai")).toEqual([]);
+    expect(() => resolveGameContext("maimai", "jp")).toThrow(expect.objectContaining({ code: "UNSUPPORTED_REGION" }));
+  });
+  it("filters and deduplicates configured regions", () => {
+    vi.stubEnv("NEXT_PUBLIC_ENABLED_MAIMAI_REGIONS", "jp, invalid, jp,cn");
+    expect(getEnabledRegions("maimai")).toEqual(["jp", "cn"]);
+  });
+  it("does not enable CHUNITHM by configuring regions", () => {
+    vi.stubEnv("NEXT_PUBLIC_ENABLED_CHUNITHM_REGIONS", "jp");
+    expect(() => resolveGameContext("chunithm", "jp")).toThrow(expect.objectContaining({ code: "GAME_NOT_ENABLED" }));
+    expect(() => requireConfiguredSource("chunithm", "scores")).toThrow(expect.objectContaining({ code: "SOURCE_NOT_CONFIGURED" }));
+  });
+});
