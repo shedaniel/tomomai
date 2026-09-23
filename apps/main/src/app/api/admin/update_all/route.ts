@@ -1,4 +1,7 @@
-import { getCurrentVersion } from "@/lib/metadata";
+import { resolveAdminGame } from "@/lib/api/admin-game";
+import { GameAdapterError, type CanonicalGameId } from "@/lib/games/types";
+import { gameErrorResponse } from "@/lib/api/game-context";
+import { getCurrentVersion } from "@/lib/games/versions";
 import { flushLogger } from "@/lib/logger";
 import { requestLogger } from "@/lib/request-logger";
 import { Region } from "@/lib/types";
@@ -7,6 +10,7 @@ import { NextRequest, NextResponse } from "next/server";
 import type { Logger } from "pino";
 
 async function updateRegion(
+  game: CanonicalGameId,
   origin: string,
   region: Region,
   maimaiToken: string | null,
@@ -14,11 +18,12 @@ async function updateRegion(
   imageUpload: boolean,
   log: Logger,
 ): Promise<{ success: boolean; data?: any; error?: string; status?: number }> {
-  const version = getCurrentVersion(region);
+  const version = getCurrentVersion(game, region);
 
   // Step 1: Fetch records from /api/admin/update
   log.info({ region, version }, `Fetching ${region.toUpperCase()} records from /api/admin/update...`);
   const updateUrl = new URL(`${origin}/api/admin/update`);
+  updateUrl.searchParams.set('game', game);
   updateUrl.searchParams.set('region', region);
   // CN uses Lxns (public) and the update route does not require a maimai token.
   if (region !== "cn" && maimaiToken) {
@@ -49,6 +54,7 @@ async function updateRegion(
   if (imageUpload) {
     log.info({ region }, `Processing ${region.toUpperCase()} cover images via /api/admin/image...`);
     const imageUrl = new URL(`${origin}/api/admin/image`);
+    imageUrl.searchParams.set("game", game);
 
     const imageResponse = await fetch(imageUrl.toString(), {
       method: "POST",
@@ -73,6 +79,7 @@ async function updateRegion(
   // Step 3: Upload to /api/admin/upload with update=alter
   log.info({ region }, `Uploading ${region.toUpperCase()} records to /api/admin/upload...`);
   const uploadUrl = new URL(`${origin}/api/admin/upload`);
+  uploadUrl.searchParams.set('game', game);
   uploadUrl.searchParams.set('region', region);
   uploadUrl.searchParams.set('version', String(version));
   uploadUrl.searchParams.set('update', 'alter');
@@ -131,6 +138,7 @@ export async function GET(request: NextRequest) {
 
     // Get query parameters
     const { searchParams } = new URL(request.url);
+    const game = resolveAdminGame(searchParams);
     const maimaiToken = searchParams.get('token');
 
     const regionParam = searchParams.get('region') as Region | null;
@@ -158,7 +166,7 @@ export async function GET(request: NextRequest) {
 
     const results: Record<string, any> = {};
     for (const r of regions) {
-      const result = await updateRegion(origin, r, maimaiToken, token, imageUpload, log);
+      const result = await updateRegion(game, origin, r, maimaiToken, token, imageUpload, log);
       if (!result.success) {
         return NextResponse.json({ error: result.error }, { status: result.status ?? 500 });
       }
@@ -173,6 +181,7 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
+    if (error instanceof GameAdapterError) return gameErrorResponse(error);
     log.error({ err: error }, "Error in admin update_all route");
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Internal server error", requestId },

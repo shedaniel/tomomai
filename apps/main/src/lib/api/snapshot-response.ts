@@ -1,10 +1,9 @@
 import { type ApiKeyInfo, keyHasScope } from "@/lib/api/protect";
 import { type ScopeKey } from "@/lib/api/scopes";
-import { splitSongs } from "@/lib/rating-calculator";
-import type { VersionId } from "@/lib/metadata";
-import type { fetchSnapshotData } from "@/server/queries/snapshots";
+import { resolveGame } from "@/lib/games/registry";
+import type { fetchSnapshotDataForGame } from "@/server/queries/snapshots";
 
-type SnapshotData = NonNullable<Awaited<ReturnType<typeof fetchSnapshotData>>>;
+type SnapshotData = NonNullable<Awaited<ReturnType<typeof fetchSnapshotDataForGame>>>;
 
 /**
  * Build the JSON response for a snapshot detail endpoint.
@@ -42,12 +41,14 @@ export function buildSnapshotPayload(
       clearStatus: s.clearStatus,
     }));
   } else if (hasSongsB50Read) {
-    // splitSongs expects raw DB levelPrecise (×10 integer)
-    const { newSongsB15, oldSongsB35 } = splitSongs(
-      songs,
-      snapshot.gameVersion as VersionId,
-    );
-    const b50 = [...newSongsB15, ...oldSongsB35];
+    const adapter = resolveGame(snapshot.game).adapter;
+    const rated = songs.map(song => ({
+      ...song,
+      chartId: song.songId,
+      rating: adapter.calculateChartRating(song, snapshot.gameVersion),
+    }));
+    const selection = adapter.selectRankings(rated, snapshot.gameVersion);
+    const b50 = [...selection.newScores, ...selection.oldScores];
     songsPayload = b50.map((s) => ({
       songId: s.songId,
       songName: s.songName,

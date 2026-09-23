@@ -15,7 +15,7 @@ vi.mock("next/cache", () => ({ revalidateTag: mocks.invalidate }));
 import { POST } from "./route";
 
 function request(token?: string) {
-  return new NextRequest("https://example.test/api/admin/catalog/publish", {
+  return new NextRequest("https://example.test/api/admin/catalog/publish?game=maimai", {
     method: "POST",
     headers: token ? { authorization: `Bearer ${token}` } : {},
   });
@@ -29,7 +29,7 @@ beforeEach(() => {
 });
 afterEach(() => vi.unstubAllEnvs());
 
-describe("POST /api/admin/catalog/publish", () => {
+describe("POST /api/admin/catalog/publish?game=maimai", () => {
   it.each([[undefined, 401], ["wrong-token", 403]] as const)("rejects unauthorized token %s without publishing", async (token, status) => {
     const response = await POST(request(token));
     expect(response.status).toBe(status);
@@ -54,11 +54,11 @@ describe("POST /api/admin/catalog/publish", () => {
     complete({ songCount: 12, bytes: 345 });
     const response = await pending;
     expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({ success: true, requestId: "publish-test", songCount: 12, bytes: 345 });
+    expect(await response.json()).toEqual({ success: true, game: "maimai", requestId: "publish-test", songCount: 12, bytes: 345 });
     expect(mocks.invalidate.mock.calls).toEqual([
-      ["all-unique-songs", { expire: 0 }],
-      ["reserved-songs", { expire: 0 }],
-      ["api-v1-songs", { expire: 0 }],
+      ["all-unique-songs:maimai", { expire: 0 }],
+      ["reserved-songs:maimai", { expire: 0 }],
+      ["api-v1-songs:maimai", { expire: 0 }],
     ]);
     expect(mocks.flush).toHaveBeenCalledOnce();
   });

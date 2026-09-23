@@ -4,16 +4,16 @@ import { fetchPreviewCatalog } from "./preview-catalog.js";
 
 test("fetches the current JP slice from the configured API", async () => {
   const requests = [];
-  const songs = [{ songId: "Ab3xK9pQ:j14", songName: "Example" }];
+  const songs = [{ songId: "Ab3xK9pQ:j14", songName: "Example", type: 1, difficulty: 3 }];
   const result = await fetchPreviewCatalog("https://example.test/", async url => {
     requests.push(url);
-    return Response.json(requests.length === 1 ? { currentVersion: 14 } : { songs });
+    return Response.json(requests.length === 1 ? { currentVersion: 14 } : { game: "maimai", songs });
   });
   assert.deepEqual(requests, [
     "https://example.test/api/v1/games/maimai/songs/versions?region=jp",
     "https://example.test/api/v1/games/maimai/songs?region=jp&gameVersion=14",
   ]);
-  assert.deepEqual(result, songs);
+  assert.deepEqual(result, songs.map(song => ({ ...song, type: "dx", difficulty: "master" })));
 });
 
 test("rejects invalid metadata without fetching the catalog", async () => {

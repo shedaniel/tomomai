@@ -9,6 +9,13 @@ export async function fetchPreviewCatalog(baseUrl, fetcher = fetch) {
   const response = await fetcher(`${base}/api/v1/games/maimai/songs?region=jp&gameVersion=${currentVersion}`);
   if (!response.ok) throw new Error(`Catalog fetch failed: ${response.status}`);
   const body = await response.json();
-  if (!Array.isArray(body.songs)) throw new Error("Invalid song catalog response");
-  return body.songs;
+  if (body.game !== "maimai" || !Array.isArray(body.songs)) throw new Error("Invalid song catalog response");
+  const types = ["std", "dx", "utage"];
+  const difficulties = ["basic", "advanced", "expert", "master", "remaster", "utage"];
+  return body.songs.map(song => {
+    const type = types[song.type];
+    const difficulty = difficulties[song.difficulty];
+    if (!type || !difficulty) throw new Error("Unknown maimai chart code");
+    return { ...song, type, difficulty };
+  });
 }

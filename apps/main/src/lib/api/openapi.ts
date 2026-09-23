@@ -64,7 +64,7 @@ export function buildOpenApiDocument(baseUrl: string) {
         Error: {
           type: "object",
           required: ["error"],
-          properties: { error: { type: "string" } },
+          properties: { error: { type: "string" }, code: { type: "string", description: "Stable game boundary error code, when applicable." } },
         },
       },
     },
@@ -135,6 +135,13 @@ function buildOperation(route: RouteSpec) {
   if (route.scope !== "public") {
     responses["401"] = errorRef("Missing API key");
     responses["403"] = errorRef("Invalid or expired token, or missing required scope");
+  }
+  if (route.path.includes("/games/{game}/")) {
+    responses["400"] = errorRef("Invalid game, region, path, or query parameter (UNKNOWN_GAME or UNSUPPORTED_REGION)");
+    responses["422"] = errorRef("Game or capability unavailable (GAME_NOT_ENABLED, UNSUPPORTED_CAPABILITY, SOURCE_NOT_CONFIGURED)");
+  }
+  if (route.path.endsWith("/songs") || route.path.endsWith("/parents")) {
+    responses["302"] = { description: "Redirect to this game's published catalog object", headers: { Location: { schema: { type: "string", format: "uri" } } } };
   }
   responses["500"] = errorRef("Internal server error");
   operation.responses = responses;

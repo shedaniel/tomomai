@@ -66,7 +66,7 @@ export function AdminDialog({ open, onOpenChange }: AdminDialogProps) {
 
   function handleNormalizeDatabase(region: "intl" | "jp") {
     appendConsoleLog("Normalizing database for region " + region + "...");
-    fetch(`/api/admin/db?type=normalize&region=${region}`, {
+    fetch(`/api/admin/db?game=maimai&type=normalize&region=${region}`, {
       method: "GET",
       headers: { "Authorization": "Bearer " + adminToken }
     }).then(async data => {
@@ -86,7 +86,7 @@ export function AdminDialog({ open, onOpenChange }: AdminDialogProps) {
   function handleFetchSongs(region: "intl" | "jp") {
     appendConsoleLog("Fetching new songs for region " + region + "...");
     const maimaiTokenEncoded = encodeURIComponent(maimaiToken);
-    fetch(`/api/admin/update?region=${region}&token=${maimaiTokenEncoded}`, {
+    fetch(`/api/admin/update?game=maimai&region=${region}&token=${maimaiTokenEncoded}`, {
       method: "GET",
       headers: { "Authorization": "Bearer " + adminToken }
     }).then(async data => {
@@ -117,7 +117,7 @@ export function AdminDialog({ open, onOpenChange }: AdminDialogProps) {
     const version = region === "intl" ? intlVersion : jpVersion;
     appendConsoleLog(`Previewing changes for ${region} v${version} (${newSongs.length} songs)...`);
 
-    fetch(`/api/admin/upload?region=${region}&version=${version}&mode=noop`, {
+    fetch(`/api/admin/upload?game=maimai&region=${region}&version=${version}&mode=noop`, {
       method: "POST",
       headers: {
         "Authorization": "Bearer " + adminToken,
@@ -234,7 +234,7 @@ export function AdminDialog({ open, onOpenChange }: AdminDialogProps) {
 
   function handleCacheImages() {
     appendConsoleLog("Caching images...");
-    fetch(`/api/admin/cache_images`, {
+    fetch(`/api/admin/cache_images?game=maimai`, {
       method: "GET",
       headers: { "Authorization": "Bearer " + adminToken },
     }).then(async data => {

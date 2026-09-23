@@ -1,3 +1,6 @@
+import { resolveAdminGame } from "@/lib/api/admin-game";
+import { GameAdapterError, type CanonicalGameId } from "@/lib/games/types";
+import { gameErrorResponse } from "@/lib/api/game-context";
 import { parseCatalogVersion } from "@/lib/catalog/parse-version";
 import { db } from "@/lib/db";
 import { songs } from "@/lib/db/schema-pg";
@@ -21,7 +24,7 @@ function regionsHint(): string {
 }
 
 // Helper function to parse the "from" parameter
-function parseFromParameter(from: string): {
+function parseFromParameter(game: CanonicalGameId, from: string): {
   region: Region;
   gameVersion: VersionId;
   versionFilter: "eq" | "lte" | "gte";
@@ -44,14 +47,14 @@ function parseFromParameter(from: string): {
 
   return {
     region: region as Region,
-    gameVersion: parseCatalogVersion(region as Region, gameVersion),
+    gameVersion: parseCatalogVersion(game, region as Region, gameVersion),
     versionFilter,
     versionValue: parseInt(versionValue, 10),
   };
 }
 
 // Helper function to parse the "to" parameter
-function parseToParameter(to: string): {
+function parseToParameter(game: CanonicalGameId, to: string): {
   region: Region;
   gameVersion: VersionId;
 } {
@@ -70,7 +73,7 @@ function parseToParameter(to: string): {
 
   return {
     region: region as Region,
-    gameVersion: parseCatalogVersion(region as Region, gameVersion),
+    gameVersion: parseCatalogVersion(game, region as Region, gameVersion),
   };
 }
 
@@ -122,6 +125,7 @@ export async function GET(request: NextRequest) {
 
     // Get query parameters
     const { searchParams } = new URL(request.url);
+    const game = resolveAdminGame(searchParams);
     const fromParam = searchParams.get('from');
     const toParam = searchParams.get('to');
     const mode = searchParams.get('mode'); // "only-upsert" or null (default: insert+upsert)
@@ -153,8 +157,8 @@ export async function GET(request: NextRequest) {
     let sourceConfig, targetConfig;
 
     try {
-      sourceConfig = parseFromParameter(fromParam);
-      targetConfig = parseToParameter(toParam);
+      sourceConfig = parseFromParameter(game, fromParam);
+      targetConfig = parseToParameter(game, toParam);
     } catch (parseError) {
       return NextResponse.json(
         { error: parseError instanceof Error ? parseError.message : "Parameter parsing failed" },
@@ -173,6 +177,7 @@ export async function GET(request: NextRequest) {
         .from(songs)
         .where(
           and(
+            eq(songs.game, game),
             eq(songs.region, sourceConfig.region),
             eq(songs.gameVersion, sourceConfig.gameVersion),
             versionCondition
@@ -209,6 +214,7 @@ export async function GET(request: NextRequest) {
           .from(songs)
           .where(
             and(
+              eq(songs.game, game),
               eq(songs.region, targetConfig.region),
               eq(songs.gameVersion, targetConfig.gameVersion)
             )
@@ -318,10 +324,10 @@ export async function GET(request: NextRequest) {
     });
 
     });
-    await publishSongCatalog();
-    revalidateTag("all-unique-songs", { expire: 3600 });
-    revalidateTag("reserved-songs", { expire: 0 });
-    revalidateTag("api-v1-songs", { expire: 0 });
+    await publishSongCatalog(game);
+    revalidateTag(`all-unique-songs:${game}`, { expire: 3600 });
+    revalidateTag(`reserved-songs:${game}`, { expire: 0 });
+    revalidateTag(`api-v1-songs:${game}`, { expire: 0 });
     for (const locale of locales) {
       revalidatePath(`/${locale}/db/songs/[slug]`, "page");
       revalidatePath(`/${locale}/db/songs`, "page");
@@ -330,6 +336,7 @@ export async function GET(request: NextRequest) {
     return result;
 
   } catch (error) {
+    if (error instanceof GameAdapterError) return gameErrorResponse(error);
     log.error({ err: error }, "Error in admin import route");
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Internal server error", requestId },

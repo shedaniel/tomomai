@@ -11,6 +11,7 @@ export const maimaiAdapter: GameAdapter = {
   codes: GAME_CODE_MAPS.maimai,
   catalog: {
     configured: true,
+    loadImplementation: async () => (await import("./catalog")).maimaiCatalogImplementation,
     resolveVersion: region => maimaiVersionProvider.getCurrentVersion(region),
   },
   scores: { configured: true },

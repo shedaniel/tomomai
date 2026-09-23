@@ -20,7 +20,7 @@ const searchParams = z.object({
  * Now does the full data prep here (DB → RenderMessage) and mints a signed
  * token carrying the B50 scores + header metadata. The 302 carries the token;
  * apps/render verifies + renders with zero DB access. Catalog fields (song
- * names, covers, levels) are joined from /api/v1/songs on the render side.
+ * names, covers, levels) are joined from /api/v1/games/maimai/songs on the render side.
  */
 export async function GET(request: NextRequest) {
   const parsed = searchParams.safeParse(Object.fromEntries(request.nextUrl.searchParams));

@@ -28,7 +28,7 @@ const DIFFICULTY_SPRITES = ['basic', 'advanced', 'expert', 'master', 'remaster',
  *
  * The token carries the credit tracks (songId + achievement + fc + fs + dxScore
  * + maxDxScore + optional detail breakdowns); catalog fields are joined from
- * /api/v1/songs. No DB access.
+ * /api/v1/games/maimai/songs. No DB access.
  */
 export async function renderLastCredit(
   message: Extract<RenderMessage, { route: 'last-credit' }>,

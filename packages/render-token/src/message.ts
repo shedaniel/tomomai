@@ -30,11 +30,11 @@ export interface RenderHeader {
 
 /**
  * A chart score. The chart's catalog fields (songName, cover, difficulty,
- * levelPrecise, type, addedVersion, level) are joined from `/api/v1/songs`
+ * levelPrecise, type, addedVersion, level) are joined from `/api/v1/games/maimai/songs`
  * by `songId` at render time — they never travel in the token.
  */
 export interface ChartRecord {
-  /** Composite chart instance ID exposed by `/api/v1/songs`. */
+  /** Composite chart instance ID exposed by `/api/v1/games/maimai/songs`. */
   songId: string;
   achievement: number;
   fc: FullCombo;

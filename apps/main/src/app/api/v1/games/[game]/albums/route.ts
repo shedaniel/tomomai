@@ -29,7 +29,7 @@ export const GET = withApiKey(["album:read"], async (req: NextRequest, key) => {
       takenAt: album.takenAt,
       venue: album.venue,
       createdAt: album.createdAt,
-      imageUrl: hasImages && r2BaseUrl ? `${r2BaseUrl}/${album.imageKey}` : null,
+      imageUrl: hasImages && r2BaseUrl && album.imageKey ? `${r2BaseUrl}/${album.imageKey}` : null,
     })),
     hasMore,
   });

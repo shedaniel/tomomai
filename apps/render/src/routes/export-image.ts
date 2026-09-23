@@ -11,7 +11,7 @@ import type { RenderMessage } from '@tomomai/render-token';
  *
  * The token carries B50 score data (songId + achievement + fc + fs per chart);
  * catalog fields (songName, cover, difficulty, levelPrecise, type, addedVersion)
- * are joined from /api/v1/songs. No DB access.
+ * are joined from /api/v1/games/maimai/songs. No DB access.
  */
 export async function renderExportImage(
   message: Extract<RenderMessage, { route: 'export-image' }>,

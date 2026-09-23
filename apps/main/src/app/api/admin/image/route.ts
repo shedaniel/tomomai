@@ -1,3 +1,6 @@
+import { resolveAdminGame } from "@/lib/api/admin-game";
+import { GameAdapterError } from "@/lib/games/types";
+import { gameErrorResponse } from "@/lib/api/game-context";
 import { convertToWebp } from "@/lib/image-converter";
 import { fetchImageBuffer } from "@/lib/image-converter";
 import { flushLogger } from "@/lib/logger";
@@ -72,6 +75,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const game = resolveAdminGame(request.nextUrl.searchParams);
     const body = await request.json();
     const songs: UpdateSong[] = body.songs;
 
@@ -175,6 +179,7 @@ export async function POST(request: NextRequest) {
       requestId,
     });
   } catch (error) {
+    if (error instanceof GameAdapterError) return gameErrorResponse(error);
     log.error({ err: error }, "Error in admin image route");
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Internal server error", requestId },

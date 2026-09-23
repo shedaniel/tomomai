@@ -1,3 +1,6 @@
+import { resolveAdminGame } from "@/lib/api/admin-game";
+import { GameAdapterError, type CanonicalGameId } from "@/lib/games/types";
+import { gameErrorResponse } from "@/lib/api/game-context";
 import { db } from "@/lib/db";
 import { flushLogger } from "@/lib/logger";
 import { requestLogger } from "@/lib/request-logger";
@@ -49,9 +52,10 @@ export async function GET(request: NextRequest) {
 
     // Get query parameters
     const { searchParams } = new URL(request.url);
+    const game = resolveAdminGame(searchParams);
     const type = (searchParams.get('type') || "normalize") as "normalize";
     if (type === "normalize") {
-      return await normalize(searchParams, log);
+      return await normalize(game, searchParams, log);
     } else {
       return NextResponse.json(
         { error: "Invalid 'type' parameter. Must be 'normalize'" },
@@ -59,6 +63,7 @@ export async function GET(request: NextRequest) {
       );
     }
   } catch (error) {
+    if (error instanceof GameAdapterError) return gameErrorResponse(error);
     log.error({ err: error }, "Error in admin db route");
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Internal server error", requestId },
@@ -77,7 +82,7 @@ export async function POST() {
   );
 }
 
-async function normalize(searchParams: URLSearchParams, log: Logger) {
+async function normalize(game: CanonicalGameId, searchParams: URLSearchParams, log: Logger) {
   const region = searchParams.get('region') as Region | null;
 
   if (!region || !isRegionEnabled(region)) {
@@ -90,7 +95,7 @@ async function normalize(searchParams: URLSearchParams, log: Logger) {
   const version = searchParams.get("version");
   let currentVersion: VersionId;
   try {
-    currentVersion = version === null ? getCurrentVersion(region) : parseCatalogVersion(region, version);
+    currentVersion = version === null ? getCurrentVersion(region) : parseCatalogVersion(game, region, version);
   } catch {
     return NextResponse.json({ error: "Invalid version" }, { status: 400 });
   }
@@ -98,7 +103,7 @@ async function normalize(searchParams: URLSearchParams, log: Logger) {
   const totalMasterNamesNormalized = await db.transaction(async (tx) => {
     await tx.execute(sql`SELECT pg_advisory_xact_lock(73641932)`);
     const selected = await tx.selectDistinct({ parentId: songs.parentId }).from(songs)
-      .where(and(eq(songs.region, region), eq(songs.gameVersion, currentVersion)));
+      .where(and(eq(songs.game, game), eq(songs.region, region), eq(songs.gameVersion, currentVersion)));
     if (selected.length === 0) return 0;
     const parents = await tx.select().from(parentSong)
       .where(inArray(parentSong.id, selected.map(song => song.parentId)))
@@ -108,7 +113,7 @@ async function normalize(searchParams: URLSearchParams, log: Logger) {
       const songName = normalizeName(parent.songName);
       if (songName === parent.songName) continue;
       const collisions = await tx.select({ disambiguator: parentSong.disambiguator }).from(parentSong)
-        .where(and(eq(parentSong.songName, songName), eq(parentSong.type, parent.type), eq(parentSong.difficulty, parent.difficulty)));
+        .where(and(eq(parentSong.game, game), eq(parentSong.songName, songName), eq(parentSong.type, parent.type), eq(parentSong.difficulty, parent.difficulty)));
       const occupied = new Set(collisions.map(row => row.disambiguator));
       let disambiguator = parent.disambiguator;
       // Normalizing a title is insufficient evidence to merge chart identities.
@@ -119,10 +124,10 @@ async function normalize(searchParams: URLSearchParams, log: Logger) {
     return updated;
   });
 
-  await publishSongCatalog();
-  revalidateTag("all-unique-songs", { expire: 3600 });
-  revalidateTag("reserved-songs", { expire: 0 });
-  revalidateTag("api-v1-songs", { expire: 0 });
+  await publishSongCatalog(game);
+  revalidateTag(`all-unique-songs:${game}`, { expire: 3600 });
+  revalidateTag(`reserved-songs:${game}`, { expire: 0 });
+  revalidateTag(`api-v1-songs:${game}`, { expire: 0 });
   for (const locale of locales) {
     revalidatePath(`/${locale}/db/songs/[slug]`, "page");
     revalidatePath(`/${locale}/db/songs`, "page");

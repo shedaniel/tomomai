@@ -1,12 +1,15 @@
+import { resolveAdminGame } from "@/lib/api/admin-game";
+import { GameAdapterError } from "@/lib/games/types";
+import { gameErrorResponse } from "@/lib/api/game-context";
 import { flushLogger } from "@/lib/logger";
 import { requestLogger } from "@/lib/request-logger";
 import { Region } from "@/lib/types";
 import { getEnabledRegions, isRegionEnabled } from "@/lib/enabled-regions";
-import { getCurrentVersion } from "@/lib/metadata";
+import { getCurrentVersion } from "@/lib/games/versions";
 import { awaitWrapper, sortKeys } from "@/lib/utils";
 import { sendDiscordNotice } from "@/server/services/admin/discord-webhooks";
 import { createNoticeSink } from "@/server/services/admin/fetcher-utils";
-import { fetchLevels } from "@/server/services/admin/level-fetcher";
+import { collectCatalog } from "@/server/services/games/catalog-ingestion";
 import { loginAndGetCookies } from "@/server/services/maimai-login";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -45,6 +48,8 @@ export async function GET(request: NextRequest) {
         { status: 403 }
       );
     }
+
+    const game = resolveAdminGame(searchParams);
 
     // Get query parameters
     const maimaiToken = searchParams.get('token');
@@ -85,9 +90,9 @@ export async function GET(request: NextRequest) {
       log.info({ region }, "Admin update requested: fetching CN data from Lxns");
     }
 
-    const songs = await fetchLevels({
+    const songs = await collectCatalog(game, {
       region,
-      version: getCurrentVersion(region),
+      version: getCurrentVersion(game, region),
       cookies,
       log,
       notice: createNoticeSink(),
@@ -108,6 +113,7 @@ export async function GET(request: NextRequest) {
       records: newRecords,
     });
   } catch (error) {
+    if (error instanceof GameAdapterError) return gameErrorResponse(error);
     log.error({ err: error }, "Critical error in admin update route");
     sendDiscordNotice(
       region ?? "intl",

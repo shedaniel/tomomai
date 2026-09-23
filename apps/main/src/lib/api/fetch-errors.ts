@@ -1,3 +1,5 @@
+import { GameAdapterError } from "@/lib/games/types";
+import { gameErrorResponse } from "./game-context";
 import { getLogger } from "@/lib/request-logger";
 import { isAlbumSettingsError, isTokenError } from "@/lib/token-errors";
 
@@ -14,6 +16,7 @@ import { isAlbumSettingsError, isTokenError } from "@/lib/token-errors";
  * - Anything else          → 500 Internal Server Error
  */
 export function mapFetchStartError(error: unknown): Response {
+  if (error instanceof GameAdapterError) return gameErrorResponse(error);
   if (error instanceof Error) {
     if (isAlbumSettingsError(error.message)) {
       return Response.json({ error: error.message }, { status: 412 });

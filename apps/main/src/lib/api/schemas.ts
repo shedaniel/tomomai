@@ -278,10 +278,10 @@ export const albumEntry = z.object({
   songName: z.string(),
   artist: z.string(),
   cover: z.string().nullable(),
-  difficulty: z.string(),
+  difficulty: z.number().int(),
   level: z.string(),
   levelPrecise: levelPreciseField,
-  type: z.string(),
+  type: z.number().int(),
   takenAt: z.string().nullable(),
   venue: z.string().nullable(),
   createdAt: z.string(),
@@ -308,7 +308,7 @@ export const statsResponse = z.object({
 });
 
 export const errorResponse = z
-  .object({ error: z.string() })
+  .object({ error: z.string(), code: z.string().optional() })
   .describe("Returned on 4xx and 5xx responses.");
 
 export const songCatalogue = z.object({ game: gameSchema, songs: z.array(songCatalogueEntry) });

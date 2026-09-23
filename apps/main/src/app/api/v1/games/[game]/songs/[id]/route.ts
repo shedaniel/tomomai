@@ -11,7 +11,7 @@ import { spec } from "./spec";
 import { unstable_cache } from "next/cache";
 import { SONG_CATALOG_CACHE_HEADERS } from "../cache-headers";
 
-const getSongById = unstable_cache(async (game: CanonicalGameId, songId: string) => {
+const getSongById = (game: CanonicalGameId, songId: string) => unstable_cache(async () => {
   const parsed = parseSongId(songId);
   if (!parsed) return [];
   const instanceFilter = parsed.kind === "instance"
@@ -46,7 +46,7 @@ const getSongById = unstable_cache(async (game: CanonicalGameId, songId: string)
     .orderBy(desc(songs.gameVersion), sql`case when ${songs.region} = 'jp' then 0 else 1 end`, songs.region)
     .limit(1);
 
-}, ["api-v1-parent-song-by-id"], { revalidate: 3600, tags: ["api-v1-songs"] });
+}, ["api-v1-parent-song-by-id", game, songId], { revalidate: 3600, tags: [`api-v1-songs:${game}`] })();
 
 export async function GET(req: NextRequest, context: RouteContext) {
   const game = await resolveApiGame(req, context, "catalog");

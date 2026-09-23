@@ -10,7 +10,7 @@ import type { RenderMessage } from '@tomomai/render-token';
  * daily-plays route: decode token → join catalog → compute ratings → render.
  *
  * The token carries the day's plays (songId + achievement + fc + fs); catalog
- * fields are joined from /api/v1/songs. Per-play rating is computed here
+ * fields are joined from /api/v1/games/maimai/songs. Per-play rating is computed here
  * (deterministic: catalog levelPrecise + achievement + fc + gameVersion).
  */
 export async function renderDailyPlays(

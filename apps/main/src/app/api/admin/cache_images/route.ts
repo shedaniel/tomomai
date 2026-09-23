@@ -1,3 +1,7 @@
+import { eq } from "drizzle-orm";
+import { resolveAdminGame } from "@/lib/api/admin-game";
+import { GameAdapterError } from "@/lib/games/types";
+import { gameErrorResponse } from "@/lib/api/game-context";
 import { db } from "@/lib/db";
 import { cacheImage } from "@/lib/image_cacher";
 import { flushLogger } from "@/lib/logger";
@@ -76,6 +80,7 @@ export async function GET(request: NextRequest) {
 
     // Get query parameters
     const { searchParams } = new URL(request.url);
+    const game = resolveAdminGame(searchParams);
     const batchSizeParam = searchParams.get('batch_size');
     const batchSize = batchSizeParam ? parseInt(batchSizeParam, 10) : 20; // Default batch size of 20
 
@@ -92,6 +97,7 @@ export async function GET(request: NextRequest) {
     const distinctCovers = await db
       .select({ cover: parentSong.cover })
       .from(parentSong)
+      .where(eq(parentSong.game, game))
       .groupBy(parentSong.cover);
 
     // Step 2: Filter out data URLs and empty/null URLs
@@ -161,6 +167,7 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
+    if (error instanceof GameAdapterError) return gameErrorResponse(error);
     log.error({ err: error }, "Error in admin cache_images route");
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Internal server error", requestId },

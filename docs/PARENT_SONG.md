@@ -31,13 +31,13 @@ enough identifying data.
 - Parent ID: eight characters from the nanoid alphabet, e.g. `Ab3xK9pQ`.
 - Instance ID: `<parentId>:<regionLetter><gameVersion>`, e.g. `Ab3xK9pQ:j14`.
   Region letters are `j`, `i`, `c`; historical versions can be negative.
-- `GET /api/v1/parents` returns the canonical chart dictionary.
-- `GET /api/v1/songs?region=jp&gameVersion=14` returns one supported slice.
+- `GET /api/v1/games/maimai/parents` returns the canonical chart dictionary.
+- `GET /api/v1/games/maimai/songs?region=jp&gameVersion=14` returns one supported slice.
   Both parameters are required. Missing/malformed/unsupported slices return
   a client error before any catalog lookup.
-- `GET /api/v1/songs/versions?region=jp` returns version metadata, including
+- `GET /api/v1/games/maimai/songs/versions?region=jp` returns version metadata, including
   the current version used by the guess app.
-- `GET /api/v1/songs/Ab3xK9pQ:j14` resolves the exact instance; a bare parent
+- `GET /api/v1/games/maimai/songs/Ab3xK9pQ:j14` resolves the exact instance; a bare parent
   ID resolves a preferred child (latest version, then JP preference).
 
 These are breaking API changes. Old 21-character song IDs are not aliases for
@@ -48,7 +48,7 @@ again. See [the wire format](render-token-v2.md).
 ## Publication and caching
 
 The public dictionary and song slices are validated and uploaded to the new
-`api/v1/catalog-parent-v1` R2 prefix. The API keeps redirecting catalog requests
+`api/v1/games/{game}` R2 prefix. The API keeps redirecting catalog requests
 to R2, preserving CDN delivery instead of restoring per-request database reads.
 Every metadata-supported slice is published, including empty ones, to replace
 stale contents when the last song in a slice disappears. Unknown versions are
@@ -90,7 +90,7 @@ new schema and old renderers cannot decode new tokens.
    populate the new R2 namespace without scraping or rewriting catalog rows.
    On failure, retry this endpoint before reopening public traffic.
 4. Deploy the updated render service and guess app with main. Purge cached old
-   `/api/v1/songs` redirects and any old frontend/API payloads that hold old
+   `/api/v1/games/maimai/songs` redirects and any old frontend/API payloads that hold old
    song IDs. Verify the parent dictionary, current and historical slices,
    a profile image, last credit and daily plays before reopening traffic.
 5. Run the existing authorized percentile refresh job to recreate the view
@@ -119,3 +119,36 @@ Tests cover collision resolution, upload matching, supported versions, public
 IDs, API lookup predicates, catalog publication/retry, percentile results,
 ambiguous score ingestion, render-token round trips and render slice caching.
 No schema-application commands were run during development.
+
+
+## Multi-game publication
+
+Parent and instance rows carry canonical game IDs, enforced across their foreign
+key. Parent identity matching and upload candidates are restricted to the selected
+game. Existing parent public IDs and composite region/version instance IDs remain
+unchanged. The supported maimai upload adapter keeps artist reservation, preferred
+instance metadata, deletion guards, and the shared publication advisory lock.
+
+Every catalog/admin operation now requires `game=maimai` explicitly. User-facing
+API resources require `/api/v1/games/{game}/...`; `/me`, `/me/settings`, `/me/scopes`
+and `/ok` remain global. CHUNITHM is registered but disabled before adapters or
+writes are reached. `songs`, `parents`, `songs/versions`, `songs/{id}`, snapshots
+(list/latest/detail/delete), recents, albums, stats, plates and fetch
+(start/status/token deletion) all use the game namespace.
+
+Published JSON includes `game`; chart type/difficulty are numeric game codes.
+The parent dictionary lives at `api/v1/games/maimai/parents` and slices at
+`api/v1/games/maimai/songs/{region}/{gameVersion}`. Empty slices are published too,
+so removing a slice's final song cannot expose a stale object. Query/cache keys
+include game; publication invalidates `all-unique-songs:{game}`,
+`reserved-songs:{game}`, and `api-v1-songs:{game}`. Legacy website pages stay
+maimai-only while their data boundaries bind maimai explicitly.
+
+During the schema/application cutover, publish the new maimai objects with
+`POST /api/admin/catalog/publish?game=maimai` using the existing admin bearer
+authentication. Complete this publication before routing consumers to the new
+API namespace. Deploy the render and guess consumers together with the API;
+they request `/api/v1/games/maimai/songs` and decode maimai chart codes at their
+boundary. Keep the old R2 objects through deployment verification; the new API
+does not read or overwrite them. Re-running publication rebuilds all slices
+and is safe after a partial R2 failure.

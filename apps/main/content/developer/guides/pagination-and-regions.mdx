@@ -4,6 +4,24 @@ description: How to page through long lists and request data from a specific reg
 order: 5
 ---
 
+## Games
+
+All game data lives under `/api/v1/games/{game}`. Use canonical `maimai` or
+`chunithm`; CHUNITHM currently returns `GAME_NOT_ENABLED`. Aliases and omitted
+game IDs are invalid. Successful JSON responses include `game`.
+
+`/api/v1/me`, `/api/v1/me/settings`, `/api/v1/me/scopes`, and `/api/v1/ok` are global.
+
+Catalog routes include `/games/{game}/parents`, `/games/{game}/songs/versions`,
+`/games/{game}/songs`, and `/games/{game}/songs/{id}`. The song catalog requires
+both `region` and `gameVersion`; use the versions endpoint to discover them.
+Catalog type/difficulty and score combo/sync/clear statuses are game-specific
+integer codes. Scores expose `scoreValue` and `secondaryScore`.
+
+Unknown games and unavailable regions return HTTP 400 with `UNKNOWN_GAME` or
+`UNSUPPORTED_REGION`. Disabled games and unsupported capabilities return
+HTTP 422 with `GAME_NOT_ENABLED` or `UNSUPPORTED_CAPABILITY`.
+
 ## Regions
 
 User-data endpoints (`/snapshots`, `/snapshots/latest`, `/snapshots/{id}`,
@@ -30,6 +48,6 @@ Responses include `hasMore: boolean`. Recents additionally returns
 
 ```bash
 # Page 2 of recents (50 items per page)
-curl "https://tomomai.lol/api/v1/recents?region=intl&limit=50&offset=50" \
+curl "https://tomomai.lol/api/v1/games/maimai/recents?region=intl&limit=50&offset=50" \
   -H "Authorization: Bearer tmk_…"
 ```
