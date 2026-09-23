@@ -1,3 +1,4 @@
+import { getFrontendGame } from "@/lib/games/frontend-server";
 import { createHomeOGImage, OG_SIZE } from "@/lib/og";
 import { getTranslations } from "next-intl/server";
 import type { Locale } from "@/i18n/locale";
@@ -16,7 +17,7 @@ export default async function Image({ id }: { id: Promise<string> }) {
   const t = await getTranslations({ locale, namespace: "dashboard" });
 
   return createHomeOGImage({
-    tagline: t("description"),
+    tagline: t("description", { game: getFrontendGame().displayName }),
     locale,
   });
 }

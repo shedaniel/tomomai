@@ -45,7 +45,7 @@ export async function generateMetadata({ params }: RegionProfilePageProps): Prom
   try {
     const { snapshotData } = await fetchPublicGameProfile(game.id, username, region);
     const snapshot = snapshotData?.snapshot;
-    if (!snapshot) return { title: tMeta("title", { username }), alternates: await buildAlternates(`/profile/${encodeURIComponent(username)}/${region}`) };
+    if (!snapshot) return { title: tMeta("title", { username, brand: getGameBrand(game).title }), alternates: await buildAlternates(`/profile/${encodeURIComponent(username)}/${region}`) };
 
     const title = tMeta("title", { username, brand: getGameBrand(game).title });
     const description = tMeta("descriptionRich", {
@@ -130,7 +130,7 @@ export default async function RegionProfilePage({ params }: RegionProfilePagePro
     const profileJsonLd = {
       "@context": "https://schema.org",
       "@type": "ProfilePage",
-      name: tMeta("title", { username: decodedUsername }),
+      name: tMeta("title", { username: decodedUsername, brand: getGameBrand(game).title }),
       description: pageDescription,
       mainEntity: {
         "@type": "Person",
