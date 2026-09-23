@@ -2,56 +2,16 @@ import { DataContent } from "@/components/data-content";
 import { PublicDataBanner } from "@/components/public-data-banner";
 import { Header } from "@/components/header";
 import { Flags } from "@/lib/flags";
-import { Difficulty, EventData, ProfileData, Region, SnapshotWithSongs, SongWithScore, TitleType } from "@/lib/types";
+import { ProfileData, Region } from "@/lib/types";
 import { TomomaiAI } from "@/components/tomomai-ai";
-import { VersionId } from "@/lib/metadata";
+import { getPlayerPresentation, type GameSnapshotData } from "@/lib/games/player-view";
+import type { FrontendGame } from "@/lib/games/frontend";
 import { Suspense } from "react";
-
-interface SnapshotData {
-  snapshot: {
-    id: string;
-    fetchedAt: Date;
-    rating: number;
-    displayName: string;
-    gameVersion: VersionId;
-    courseRankUrl: string;
-    classRankUrl: string;
-    stars: number;
-    versionPlayCount: number;
-    totalPlayCount: number;
-    iconUrl: string;
-    title: string;
-    titleType: TitleType;
-  };
-  songs: Array<{
-    songId: string;
-    songName: string;
-    artist: string;
-    cover: string;
-    difficulty: string;
-    level: string;
-    levelPrecise: number;
-    type: string;
-    genre: string;
-    addedVersion: VersionId;
-    achievement: number;
-    dxScore: number;
-    fc: string;
-    fs: string;
-  }>;
-  privacySettings: {
-    showPlayCounts: boolean;
-    showPlates: boolean;
-    showEvents: boolean;
-    showAllScores: boolean;
-    showScoreDetails: boolean;
-  };
-  events?: EventData[];
-}
 
 interface ProfilePageProps {
   profileData: ProfileData;
-  snapshotData: SnapshotData;
+  snapshotData: GameSnapshotData | null;
+  game: FrontendGame;
   region: Region;
   username: string;
   initialTab?: string;
@@ -61,6 +21,7 @@ interface ProfilePageProps {
 
 export function ProfilePage({
   profileData,
+  game,
   snapshotData,
   region,
   username,
@@ -69,18 +30,7 @@ export function ProfilePage({
   isOwner,
 }: ProfilePageProps) {
 
-  // Convert the snapshot data to the format expected by DataContent
-  const snapshotWithSongs: SnapshotWithSongs = {
-    snapshot: snapshotData.snapshot,
-    songs: snapshotData.songs.map(song => ({
-      ...song,
-      difficulty: song.difficulty as Difficulty,
-      type: song.type as "std" | "dx",
-      fc: song.fc as "none" | "fc" | "fc+" | "ap" | "ap+",
-      fs: song.fs as "none" | "sync" | "fs" | "fs+" | "fdx" | "fdx+",
-    })) as SongWithScore[],
-    ...(snapshotData.events && { events: snapshotData.events }),
-  };
+  const snapshotWithSongs = snapshotData ? getPlayerPresentation(game.id).legacySnapshot(snapshotData) : null;
 
   return (
     <div className="container mx-auto max-w-[1300px] px-3 md:px-6 lg:px-12 py-8">
@@ -92,12 +42,12 @@ export function ProfilePage({
       <div className="space-y-6">
         <PublicDataBanner
           region={region}
-          snapshotData={{
+          snapshotData={snapshotData ? {
             fetchedAt: snapshotData.snapshot.fetchedAt,
             displayName: snapshotData.snapshot.displayName,
             rating: snapshotData.snapshot.rating,
             gameVersion: snapshotData.snapshot.gameVersion,
-          }}
+          } : null}
           profileUsername={username}
         />
 
@@ -105,12 +55,13 @@ export function ProfilePage({
           <DataContent
             region={region}
             selectedSnapshotData={snapshotWithSongs}
+            normalizedSnapshotData={snapshotData}
             privacySettings={{
-              profileShowAllScores: snapshotData.privacySettings.showAllScores,
-              profileShowScoreDetails: snapshotData.privacySettings.showScoreDetails,
-              profileShowPlates: snapshotData.privacySettings.showPlates,
-              profileShowPlayCounts: snapshotData.privacySettings.showPlayCounts,
-              profileShowEvents: snapshotData.privacySettings.showEvents,
+              profileShowAllScores: profileData.profileShowAllScores,
+              profileShowScoreDetails: profileData.profileShowScoreDetails,
+              profileShowPlates: profileData.profileShowPlates,
+              profileShowPlayCounts: profileData.profileShowPlayCounts,
+              profileShowEvents: profileData.profileShowEvents,
               profileShowInSearch: profileData.profileShowInSearch,
             }}
             isLoading={false}
@@ -126,7 +77,7 @@ export function ProfilePage({
           />
         </Suspense>
       </div>
-      <TomomaiAI snapshotData={snapshotWithSongs} region={region} aprilFools2026={flags.aprilFools2026} />
+      {snapshotWithSongs && <TomomaiAI snapshotData={snapshotWithSongs} region={region} aprilFools2026={flags.aprilFools2026} />}
     </div>
   );
 }

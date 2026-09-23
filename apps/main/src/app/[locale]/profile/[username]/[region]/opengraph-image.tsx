@@ -60,7 +60,7 @@ export default async function Image({ params, id }: Props & { id: Promise<string
       });
     }
 
-    const userData = await resolvePublicUserByUsername(username);
+    const userData = await resolvePublicUserByUsername(username, game.id);
     const rows = await db
       .select({
         displayName: userSnapshots.displayName,

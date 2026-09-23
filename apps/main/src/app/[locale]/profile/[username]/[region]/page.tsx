@@ -1,8 +1,7 @@
+import { getGameBrand } from "@/lib/games/frontend";
 import { getFrontendGame } from "@/lib/games/frontend-server";
 import type { Region } from "@/lib/types";
 import { fetchPublicGameProfile } from "@/server/queries/game-profile";
-import { GameProfile } from "@/components/game-profile";
-import { createServerSideTRPC } from "@/lib/trpc-server";
 import { TRPCError } from "@trpc/server";
 import { ProfilePage } from "@/components/profile-page";
 import { notFound } from "next/navigation";
@@ -30,8 +29,9 @@ export async function generateMetadata({ params }: RegionProfilePageProps): Prom
   await setStaticLocale(routeLocale);
   const username = safeDecodeURIComponent(rawUsername);
 
-  const [tMeta, tRegions, locale] = await Promise.all([
+  const [tMeta, tGame, tRegions, locale] = await Promise.all([
     getTranslations("profileMetadata"),
+    getTranslations("multiGame"),
     getTranslations("regions"),
     getLocale(),
   ]);
@@ -44,27 +44,17 @@ export async function generateMetadata({ params }: RegionProfilePageProps): Prom
     };
   }
 
-  if (game.id !== "maimai") {
-    const path = `/profile/${encodeURIComponent(username)}/${region}`;
-    return {
-      title: `${username} | ${game.productName}`,
-      alternates: await buildAlternates(path),
-      openGraph: { title: `${username} | ${game.productName}`, siteName: game.productName, url: localizePath(path, locale), type: "profile", ...openGraphLocales(locale) },
-    };
-  }
-
   try {
-    const trpc = await createServerSideTRPC();
+    const { snapshotData } = await fetchPublicGameProfile(game.id, username, region as Region);
+    const snapshot = snapshotData?.snapshot;
+    if (!snapshot) return { title: tMeta("title", { username }), alternates: await buildAlternates(`/profile/${encodeURIComponent(username)}/${region}`) };
 
-    // Pull snapshot for description enrichment + 404 detection.
-    const data = await trpc.user.getPublicSnapshotData({ game: game.id, username, region: region as Region });
-    const snapshot = data.snapshot;
-
-    const title = tMeta("title", { username });
-    const description = tMeta("descriptionRich", {
+    const title = tGame("profileTitle", { username, brand: getGameBrand(game).title });
+    const description = tGame("profileDescription", {
+      game: game.displayName,
+      brand: game.productName,
       username,
       region: tRegions(region),
-      rating: snapshot.rating,
       displayName: snapshot.displayName,
     });
 
@@ -78,9 +68,9 @@ export async function generateMetadata({ params }: RegionProfilePageProps): Prom
         title,
         description,
         url: localizePath(path, locale),
-        siteName: game.productName,
+        siteName: getGameBrand(game).title,
         type: "profile",
-        images: [{ url: ogImageUrl(path, locale) }],
+        ...(game.capabilities.includes("plates") ? { images: [{ url: ogImageUrl(path, locale) }] } : {}),
         ...openGraphLocales(locale),
       },
       twitter: {
@@ -113,31 +103,8 @@ export default async function RegionProfilePage({ params }: RegionProfilePagePro
   const game = getFrontendGame();
   if (!game.enabled || !game.regions.includes(region as Region)) notFound();
 
-  if (game.id !== "maimai") {
-    try {
-      const decodedUsername = safeDecodeURIComponent(username);
-      const { profile, snapshotData } = await fetchPublicGameProfile(game.id, decodedUsername, region as Region);
-      return <GameProfile region={region as Region} username={decodedUsername} snapshotData={snapshotData} showAllScores={profile.profileShowAllScores} showScoreDetails={profile.profileShowScoreDetails} showPlayCounts={profile.profileShowPlayCounts} />;
-    } catch (error) {
-      if (error instanceof TRPCError && error.code === "NOT_FOUND") notFound();
-      throw error;
-    }
-  }
-
   try {
-    const trpc = await createServerSideTRPC();
-
-    // Get the user's profile data
-    const profileData = await trpc.user.getPublicProfile({
-      username: safeDecodeURIComponent(username),
-    });
-
-    // Get the user's snapshot data for the specified region
-    const snapshotData = await trpc.user.getPublicSnapshotData({
-      game: game.id,
-      username: safeDecodeURIComponent(username),
-      region: region as Region,
-    });
+    const { profile: profileData, snapshotData } = await fetchPublicGameProfile(game.id, safeDecodeURIComponent(username), region as Region);
 
     const session = await getServerSession();
     const isOwner = session?.user.id === profileData.id;
@@ -149,16 +116,18 @@ export default async function RegionProfilePage({ params }: RegionProfilePagePro
     const locale = await getLocale();
     const profilePath = localizePath(`/profile/${encodeURIComponent(decodedUsername)}/${region}`, locale);
     const profileUrl = `${baseUrl}${profilePath}`;
-    const [tNav, tMeta] = await Promise.all([
+    const [tNav, tMeta, tGame] = await Promise.all([
       getTranslations("regions"),
       getTranslations("profileMetadata"),
+      getTranslations("multiGame"),
     ]);
 
-    const pageDescription = tMeta("descriptionRich", {
-      displayName: snapshotData.snapshot.displayName,
+    const pageDescription = tGame("profileDescription", {
+      game: game.displayName,
+      brand: game.productName,
+      displayName: snapshotData?.snapshot.displayName ?? decodedUsername,
       username: decodedUsername,
       region: tNav(region),
-      rating: snapshotData.snapshot.rating,
     });
 
     const profileJsonLd = {
@@ -168,20 +137,20 @@ export default async function RegionProfilePage({ params }: RegionProfilePagePro
       description: pageDescription,
       mainEntity: {
         "@type": "Person",
-        name: snapshotData.snapshot.displayName,
+        name: snapshotData?.snapshot.displayName ?? decodedUsername,
         alternateName: decodedUsername,
         identifier: decodedUsername,
         description: pageDescription,
         url: profileUrl,
-        image: snapshotData.snapshot.iconUrl,
+        image: snapshotData?.snapshot.iconUrl,
       },
       url: profileUrl,
     };
 
     const breadcrumb = breadcrumbJsonLd([
-      { name: "tomomai", url: `${baseUrl}${localizePath("/", locale)}` },
+      { name: game.productName, url: `${baseUrl}${localizePath("/", locale)}` },
       { name: tNav(region), url: profileUrl },
-      { name: snapshotData.snapshot.displayName, url: profileUrl },
+      { name: snapshotData?.snapshot.displayName ?? decodedUsername, url: profileUrl },
     ]);
 
     return (
@@ -195,6 +164,7 @@ export default async function RegionProfilePage({ params }: RegionProfilePagePro
           dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }}
         />
         <ProfilePage
+          game={game}
           profileData={profileData}
           snapshotData={snapshotData}
           region={region as Region}

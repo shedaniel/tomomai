@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { toPublicGameSnapshot } from "./public-player";
 import type { GameSnapshotData } from "./player-view";
-import { getGameRegion } from "./frontend";
+import { getGameBrand, getGameRegion } from "./frontend";
 
 const data: GameSnapshotData = {
   snapshot: { publicId: "snapshot", game: "chunithm", displayName: "Player", rating: 1600, gameVersion: 1, fetchedAt: new Date(), totalPlayCount: 100, versionPlayCount: 10 },
@@ -13,6 +13,11 @@ const data: GameSnapshotData = {
 };
 
 describe("public game snapshots", () => {
+  it("preserves the maimai brand while separating CHUNITHM metadata", () => {
+    expect(getGameBrand({ id: "maimai", productName: "tomomai" }).title).toBe("tomomai ともマイ");
+    expect(getGameBrand({ id: "chunithm", productName: "tomochu" }).title).toBe("tomochu ともチュウ");
+  });
+
   it("filters CHUNITHM rankings before sending public data and removes private fields", () => {
     const stored = { ...data, snapshot: { ...data.snapshot, userId: "private", id: 1 }, events: [{ name: "private" }], songs: data.songs.map(song => ({ ...song, dxScore: 123 })) };
     const result = toPublicGameSnapshot("chunithm", stored, { profileShowAllScores: false, profileShowScoreDetails: false, profileShowPlayCounts: false });

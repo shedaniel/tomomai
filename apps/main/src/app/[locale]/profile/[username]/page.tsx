@@ -1,9 +1,9 @@
+import { getGameBrand } from "@/lib/games/frontend";
 import { getFrontendGame } from "@/lib/games/frontend-server";
 import { getGameRegion } from "@/lib/games/frontend";
 import { resolvePublicUserByUsername } from "@/server/queries/public-access";
 import { notFound } from "next/navigation";
 import { redirect } from "@/i18n/navigation";
-import { createServerSideTRPC } from "@/lib/trpc-server";
 import { TRPCError } from "@trpc/server";
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
@@ -30,10 +30,13 @@ export async function generateMetadata({ params }: ProfilePageProps): Promise<Me
   await setStaticLocale(routeLocale);
   const username = safeDecodeURIComponent(rawUsername);
   const [t, locale] = await Promise.all([
-    getTranslations("profileMetadata"),
+    getTranslations("multiGame"),
     getLocale(),
   ]);
 
+  const game = getFrontendGame();
+  const title = t("profileTitle", { username, brand: getGameBrand(game).title });
+  const description = t("profileDescriptionUnknown", { username, game: game.displayName, brand: game.productName });
   const path = `/profile/${encodeURIComponent(username)}`;
 
   // Mirror the regional page's metadata so embed crawlers that don't follow
@@ -41,21 +44,21 @@ export async function generateMetadata({ params }: ProfilePageProps): Promise<Me
   // regional page's opengraph-image.tsx — crawlers that follow the redirect
   // will pick that up; ones that don't get the title/description here.
   return {
-    title: t("title", { username }),
-    description: t("descriptionUnknownRegion", { username }),
+    title,
+    description,
     alternates: await buildAlternates(path),
     openGraph: {
-      title: t("title", { username }),
-      description: t("descriptionUnknownRegion", { username }),
+      title,
+      description,
       url: localizePath(path, locale),
-      siteName: getFrontendGame().productName,
+      siteName: getGameBrand(getFrontendGame()).title,
       type: "profile",
       ...openGraphLocales(locale),
     },
     twitter: {
       card: "summary_large_image",
-      title: t("title", { username }),
-      description: t("descriptionUnknownRegion", { username }),
+      title,
+      description,
     },
   };
 }
@@ -66,12 +69,9 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
 
   try {
     // Get the user's profile to find their main region
-    const trpc = await createServerSideTRPC();
     const game = getFrontendGame();
     if (!game.enabled) notFound();
-    const profileData = game.id === "maimai"
-      ? await trpc.user.getPublicProfile({ username: safeDecodeURIComponent(username) })
-      : await resolvePublicUserByUsername(safeDecodeURIComponent(username), game.id);
+    const profileData = await resolvePublicUserByUsername(safeDecodeURIComponent(username), game.id);
     const region = getGameRegion(game, profileData.profileMainRegion);
     if (!region) notFound();
 

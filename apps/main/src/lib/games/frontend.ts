@@ -6,8 +6,14 @@ export interface FrontendGame {
   displayName: string;
   productName: "tomomai" | "tomochu";
   enabled: boolean;
+  fetchConfigured?: boolean;
   regions: readonly Region[];
   capabilities: readonly GameCapability[];
+}
+
+export function getGameBrand(game: Pick<FrontendGame, "id" | "productName">) {
+  const japaneseName = game.id === "maimai" ? "ともマイ" : "ともチュウ";
+  return { name: game.productName, japaneseName, title: [game.productName, japaneseName].filter(Boolean).join(" ") };
 }
 
 export function supportsGameFeature(game: FrontendGame, capability: GameCapability): boolean {

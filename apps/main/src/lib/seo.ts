@@ -1,6 +1,7 @@
 import { resolveBaseUrl } from "@/lib/base-url";
 import { defaultLocale, locales, type Locale } from "@/i18n/locale";
 import { getLocale } from "@/i18n/locale-server";
+import { getGameBrand, type FrontendGame } from "@/lib/games/frontend";
 
 const OG_LOCALE_MAP: Record<Locale, string> = {
   "en": "en_US",
@@ -87,14 +88,15 @@ export function breadcrumbJsonLd(items: BreadcrumbItem[]) {
 }
 
 /** Site-level Organization + WebSite JSON-LD for the root layout. */
-export function siteJsonLd(): unknown[] {
+export function siteJsonLd(game: Pick<FrontendGame, "id" | "productName">): unknown[] {
   const baseUrl = resolveBaseUrl();
+  const brand = getGameBrand(game);
   return [
     {
       "@context": "https://schema.org",
       "@type": "Organization",
-      name: "tomomai",
-      alternateName: "ともマイ",
+      name: brand.name,
+      alternateName: brand.japaneseName,
       url: baseUrl,
       logo: `${baseUrl}/icon.png`,
       sameAs: [
@@ -104,7 +106,7 @@ export function siteJsonLd(): unknown[] {
     {
       "@context": "https://schema.org",
       "@type": "WebSite",
-      name: "tomomai ともマイ",
+      name: brand.title,
       url: baseUrl,
       potentialAction: {
         "@type": "SearchAction",

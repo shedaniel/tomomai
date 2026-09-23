@@ -1,6 +1,10 @@
+"use client";
+
+import { useGameId } from "@/components/providers/game-provider";
+import { formatGameRating } from "@/lib/games/presentation";
 import { RegionSwitcherClient } from "@/components/region-switcher";
 import { Badge } from "@tomomai/ui";
-import { getVersionInfo, VersionId } from "@/lib/metadata";
+import { getVersionInfo } from "@/lib/games/versions";
 import { Region } from "@/lib/types";
 import { User } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -11,7 +15,7 @@ interface PublicDataBannerProps {
     fetchedAt: Date;
     displayName: string;
     rating: number;
-    gameVersion: VersionId;
+    gameVersion: number;
   } | null;
   profileUsername: string;
 }
@@ -22,6 +26,7 @@ export function PublicDataBanner({
   profileUsername,
 }: PublicDataBannerProps) {
   const t = useTranslations();
+  const game = useGameId();
 
   const formatDate = (date: Date) => {
     return new Intl.DateTimeFormat("en-US", {
@@ -42,8 +47,8 @@ export function PublicDataBanner({
             <div className="flex flex-col items-start gap-1.5">
               <div className="flex items-center gap-2">
                 <h1 className="m-0 text-base font-medium">{snapshotData.displayName}</h1>
-                <Badge variant="tonal" className="font-medium bg-primary-container/50">{snapshotData.rating} rating</Badge>
-                <Badge variant="secondary" className="font-normal bg-secondary/50">{getVersionInfo(snapshotData.gameVersion)?.shortName || "Unknown"}</Badge>
+                <Badge variant="tonal" className="font-medium bg-primary-container/50">{formatGameRating(game, snapshotData.rating)} rating</Badge>
+                <Badge variant="secondary" className="font-normal bg-secondary/50">{getVersionInfo(game, region, snapshotData.gameVersion)?.shortName || "Unknown"}</Badge>
               </div>
               <span className="text-xs text-muted-foreground">{t('dataBanner.dataSnapshot')} {snapshotData ? formatDate(snapshotData.fetchedAt) : ''}</span>
             </div>

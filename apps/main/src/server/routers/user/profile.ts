@@ -1,3 +1,4 @@
+import { gameIdSchema } from "@/lib/games/schema";
 import { db } from '@/lib/db';
 import { user } from '@/lib/db/schema-pg';
 import { protectedProcedure, publicProcedure, router } from '@/lib/trpc';
@@ -44,10 +45,11 @@ export const profileRouter = router({
 
   getPublicProfile: publicProcedure
     .input(z.object({
+      game: gameIdSchema,
       username: z.string(),
     }))
     .query(async ({ input }) => {
-      return await resolvePublicUserByUsername(input.username);
+      return await resolvePublicUserByUsername(input.username, input.game);
     }),
 
   getProfileSettings: protectedProcedure

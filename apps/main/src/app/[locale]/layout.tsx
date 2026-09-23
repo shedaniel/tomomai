@@ -20,6 +20,7 @@ import { PreMaintenanceBanner } from '@/components/pre-maintenance-banner';
 import { AuthDialogProvider } from '@/components/auth/auth-dialog-provider';
 import { GameProvider } from '@/components/providers/game-provider';
 import { getFrontendGame } from '@/lib/games/frontend-server';
+import { getGameBrand } from '@/lib/games/frontend';
 
 const TURNSTILE_SITE_KEY =
   process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && process.env.TURNSTILE_SECRET_KEY
@@ -48,8 +49,8 @@ const murecho = localFont({
 
 export const metadata: Metadata = {
   metadataBase: new URL(resolveBaseUrl()),
-  title: "tomomai ともマイ",
-  description: "Track and analyze maimai scores with friends.",
+  title: getGameBrand(getFrontendGame()).title,
+  description: `Track and analyze ${getFrontendGame().displayName} scores with friends.`,
   icons: {
     apple: "/icon.png",
   },
@@ -91,7 +92,7 @@ export default async function LocaleLayout({ children, params }: Props) {
         <script dangerouslySetInnerHTML={{ __html: themeNoFlashScript() }} />
         <link rel="preconnect" href="https://cdn.tomomai.lol" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://cdn.tomomai.lol" />
-        {siteJsonLd().map((entry, i) => (
+        {siteJsonLd(getFrontendGame()).map((entry, i) => (
           <script
             key={i}
             type="application/ld+json"

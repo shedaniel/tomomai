@@ -10,6 +10,7 @@ export function getFrontendGameDescriptor(game: CanonicalGameId): FrontendGame {
     displayName: registration.displayName,
     productName: registration.productName,
     enabled: registration.enabled,
+    fetchConfigured: registration.adapter.scores.configured,
     regions: getEnabledRegions(game),
     capabilities: [...registration.adapter.capabilities],
   };
