@@ -16,19 +16,15 @@ import { legalRouter } from './legal';
 import { miscRouter } from './misc';
 
 export const userRouter = router({
-  getSnapshotsForGame: snapshotsRouter.getSnapshotsForGame,
-  getSnapshotForGame: snapshotsRouter.getSnapshotForGame,
-  getRecentSongsForGame: recentsRouter.getRecentSongsForGame,
-  getUserAlbumsForGame: albumsRouter.getUserAlbumsForGame,
-  getCatalogForGame: songsRouter.getCatalogForGame,
-  getPlayerStatsForGame: statsRouter.getPlayerStatsForGame,
-  startFetchForGame: fetchRouter.startFetchForGame,
-  getFetchStatusForGame: fetchRouter.getFetchStatusForGame,
+  getSnapshots: snapshotsRouter.getSnapshots,
+  getSnapshotData: snapshotsRouter.getSnapshotData,
+  getRecentSongs: recentsRouter.getRecentSongs,
+  getUserAlbums: albumsRouter.getUserAlbums,
+  getCatalog: songsRouter.getCatalog,
+  getPlayerStats: statsRouter.getPlayerStats,
 
   // Snapshots
-  getSnapshots: snapshotsRouter.getSnapshots,
   getRatingHistory: snapshotsRouter.getRatingHistory,
-  getSnapshotData: snapshotsRouter.getSnapshotData,
   getPublicSnapshots: snapshotsRouter.getPublicSnapshots,
   getPublicSnapshotData: snapshotsRouter.getPublicSnapshotData,
   deleteSnapshot: snapshotsRouter.deleteSnapshot,
@@ -63,7 +59,6 @@ export const userRouter = router({
   validateInvite: invitesRouter.validateInvite,
 
   // Recents
-  getRecentSongs: recentsRouter.getRecentSongs,
   getPublicRecentSongs: recentsRouter.getPublicRecentSongs,
 
   // Daily plays
@@ -71,7 +66,6 @@ export const userRouter = router({
   getPublicDailyPlaysAvailableDays: dailyPlaysRouter.getPublicAvailableDays,
 
   // Stats
-  getPlayerStats: statsRouter.getPlayerStats,
   getPublicPlayerStats: statsRouter.getPublicPlayerStats,
 
   // Plates
@@ -79,7 +73,6 @@ export const userRouter = router({
   getPublicPlateSongs: platesRouter.getPublicPlateSongs,
 
   // Albums
-  getUserAlbums: albumsRouter.getUserAlbums,
   deleteAlbum: albumsRouter.deleteAlbum,
 
   // Songs

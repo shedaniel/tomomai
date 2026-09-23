@@ -1,6 +1,5 @@
-import { getGameBrand } from "@/lib/games/frontend";
+import { getGameBrand, isGameRegion } from "@/lib/games/frontend";
 import { getFrontendGame } from "@/lib/games/frontend-server";
-import type { Region } from "@/lib/types";
 import { fetchPublicGameProfile } from "@/server/queries/game-profile";
 import { TRPCError } from "@trpc/server";
 import { ProfilePage } from "@/components/profile-page";
@@ -36,7 +35,7 @@ export async function generateMetadata({ params }: RegionProfilePageProps): Prom
   ]);
 
   const game = getFrontendGame();
-  if (!game.enabled || !game.regions.includes(region as Region)) {
+  if (!game.enabled || !isGameRegion(game, region)) {
     return {
       title: tMeta("notFoundTitle"),
       description: tMeta("notFoundDescription"),
@@ -44,12 +43,12 @@ export async function generateMetadata({ params }: RegionProfilePageProps): Prom
   }
 
   try {
-    const { snapshotData } = await fetchPublicGameProfile(game.id, username, region as Region);
+    const { snapshotData } = await fetchPublicGameProfile(game.id, username, region);
     const snapshot = snapshotData?.snapshot;
     if (!snapshot) return { title: tMeta("title", { username }), alternates: await buildAlternates(`/profile/${encodeURIComponent(username)}/${region}`) };
 
-    const title = tMeta("gameTitle", { username, brand: getGameBrand(game).title });
-    const description = tMeta("gameDescription", {
+    const title = tMeta("title", { username, brand: getGameBrand(game).title });
+    const description = tMeta("descriptionRich", {
       game: game.displayName,
       brand: game.productName,
       username,
@@ -100,10 +99,10 @@ export default async function RegionProfilePage({ params }: RegionProfilePagePro
 
   // Validate region
   const game = getFrontendGame();
-  if (!game.enabled || !game.regions.includes(region as Region)) notFound();
+  if (!game.enabled || !isGameRegion(game, region)) notFound();
 
   try {
-    const { profile: profileData, snapshotData } = await fetchPublicGameProfile(game.id, safeDecodeURIComponent(username), region as Region);
+    const { profile: profileData, snapshotData } = await fetchPublicGameProfile(game.id, safeDecodeURIComponent(username), region);
 
     const session = await getServerSession();
     const isOwner = session?.user.id === profileData.id;
@@ -120,7 +119,7 @@ export default async function RegionProfilePage({ params }: RegionProfilePagePro
       getTranslations("profileMetadata"),
     ]);
 
-    const pageDescription = tMeta("gameDescription", {
+    const pageDescription = tMeta("descriptionRich", {
       game: game.displayName,
       brand: game.productName,
       displayName: snapshotData?.snapshot.displayName ?? decodedUsername,
@@ -165,7 +164,7 @@ export default async function RegionProfilePage({ params }: RegionProfilePagePro
           game={game}
           profileData={profileData}
           snapshotData={snapshotData}
-          region={region as Region}
+          region={region}
           username={decodedUsername}
           flags={flags}
           isOwner={isOwner}

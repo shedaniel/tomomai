@@ -2,7 +2,7 @@ import { type NextRequest } from "next/server";
 import { withGameApiKey as withApiKey } from "@/lib/api/game-protect";
 import { parseQuery } from "@/lib/api/parse-query";
 import { zodJson } from "@/lib/api/zod-response";
-import { fetchUserSnapshotsForGame } from "@/server/queries/snapshots";
+import { fetchUserSnapshots } from "@/server/queries/snapshots";
 import { spec } from "./spec";
 
 export const GET = withApiKey(["snapshot:all:metadata:read"], async (req: NextRequest, key) => {
@@ -10,7 +10,7 @@ export const GET = withApiKey(["snapshot:all:metadata:read"], async (req: NextRe
   if (parsed instanceof Response) return parsed;
   const { region } = parsed;
 
-  const snapshots = await fetchUserSnapshotsForGame(key.game, key.userId, region);
+  const snapshots = await fetchUserSnapshots(key.game, key.userId, region);
 
   return zodJson(spec.response, { game: key.game,
     snapshots: snapshots.map((s) => ({

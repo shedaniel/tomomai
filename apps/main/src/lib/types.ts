@@ -17,7 +17,7 @@ export interface Snapshot {
   fetchedAt: Date;
   rating: number;
   displayName: string;
-  gameVersion: VersionId;
+  gameVersion: number;
   courseRankUrl: string;
   classRankUrl: string;
   stars: number;

@@ -6,7 +6,7 @@ import { parentSong, songs, userAlbums } from "@/lib/db/schema-pg";
 import { and, desc, eq, sql } from "drizzle-orm";
 import type { Region } from "@/lib/types";
 
-export async function fetchUserAlbumsForGame(game: CanonicalGameId,
+export async function fetchUserAlbums(game: CanonicalGameId,
   userId: string,
   region: Region,
   limit: number,
@@ -70,7 +70,7 @@ export async function fetchUserAlbumsForGame(game: CanonicalGameId,
   };
 }
 
-export async function fetchAlbumStorageUsageForGame(game: CanonicalGameId, userId: string) {
+export async function fetchAlbumStorageUsage(game: CanonicalGameId, userId: string) {
   const [storageResult, intlStorageResult, jpStorageResult] = await Promise.all([
     db
       .select({
@@ -107,14 +107,4 @@ export async function fetchAlbumStorageUsageForGame(game: CanonicalGameId, userI
     intlUsed: Number(intlStorageResult[0]?.totalSize || 0),
     jpUsed: Number(jpStorageResult[0]?.totalSize || 0),
   };
-}
-
-
-export async function fetchUserAlbums(userId: string, region: Region, limit: number, offset: number) {
-  const result = await fetchUserAlbumsForGame("maimai", userId, region, limit, offset);
-  return { ...result, albums: result.albums.map(album => ({ ...album, difficulty: codeToDifficulty(album.difficultyCode), type: codeToChartType(album.typeCode) })) };
-}
-
-export function fetchAlbumStorageUsage(userId: string) {
-  return fetchAlbumStorageUsageForGame("maimai", userId);
 }

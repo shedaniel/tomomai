@@ -1,7 +1,7 @@
 import { getEnabledRegions } from '@/lib/enabled-regions';
 import { splitSongs } from '@/lib/rating-calculator';
 import type { Region, SongWithScore } from '@/lib/types';
-import { fetchLatestSnapshotData } from '@/server/queries/snapshots';
+import { fetchLatestMaimaiSnapshotData } from '@/server/queries/snapshots';
 import { getRatingComment } from './responses';
 import { t } from './i18n';
 
@@ -52,7 +52,7 @@ export interface ProfileSummary {
  * and old-charts (B35) rating totals alongside the stored summary fields.
  */
 export async function getProfileSummary(userId: string, region: Region): Promise<ProfileSummary | null> {
-  const data = await fetchLatestSnapshotData(userId, region);
+  const data = await fetchLatestMaimaiSnapshotData(userId, region);
   if (!data) return null;
 
   const { snapshot, songs } = data;

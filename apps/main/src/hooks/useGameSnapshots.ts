@@ -13,7 +13,7 @@ export function useGameSnapshots(region: Region, initialSnapshots: GameSnapshotS
   const [initialScope] = useState(scope);
   const sameInitialScope = initialScope === scope;
   const enabled = isAuthenticated && game.enabled && game.regions.includes(region) && game.capabilities.includes("scores");
-  const snapshotsQuery = trpc.user.getSnapshotsForGame.useQuery({ game: game.id, region }, {
+  const snapshotsQuery = trpc.user.getSnapshots.useQuery({ game: game.id, region }, {
     enabled,
     initialData: sameInitialScope ? initialSnapshots : undefined,
     staleTime: 5 * 60 * 1000,
@@ -21,7 +21,7 @@ export function useGameSnapshots(region: Region, initialSnapshots: GameSnapshotS
   });
   const snapshots = snapshotsQuery.data ?? [];
   const selectedSnapshot = getSnapshotSelection(snapshots, selection.scope === scope ? selection.id : null);
-  const snapshotQuery = trpc.user.getSnapshotForGame.useQuery({ game: game.id, region, snapshotId: selectedSnapshot ?? "" }, {
+  const snapshotQuery = trpc.user.getSnapshotData.useQuery({ game: game.id, region, snapshotId: selectedSnapshot ?? "" }, {
     enabled: enabled && selectedSnapshot !== null,
     staleTime: 10 * 60 * 1000,
     refetchOnWindowFocus: false,

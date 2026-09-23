@@ -6,7 +6,7 @@ import { Progress } from "@tomomai/ui";
 import { Button } from "@tomomai/ui";
 import { ACHIEVEMENTS, DIFFICULTY_COLORS } from "@/lib/difficulty";
 import { DIFFICULTY_ENUM, FC_ENUM, FS_ENUM } from "@/lib/db/types";
-import { getVersionInfo, VERSIONS } from "@/lib/metadata";
+import { getVersionInfo } from "@/lib/games/versions";
 import { Region, SnapshotWithSongs } from "@/lib/types";
 import { trpc } from "@/lib/trpc-client";
 import { ArrowLeft, Award, ChevronRight, Loader2 } from "lucide-react";
@@ -314,6 +314,7 @@ function PlatesGrid({ data, selectedVersion, region, snapshotId }: PlatesGridPro
 
 
 export function StatsCard({ region, selectedSnapshotData, snapshotId }: StatsCardProps) {
+  const game = useGameId();
   const t = useTranslations();
   const isDesktop = useMediaQuery("(min-width: 768px)", { initializeWithValue: false });
   const { data: ownData, isLoading: ownLoading } = trpc.user.getPlayerStats.useQuery(
@@ -425,7 +426,7 @@ export function StatsCard({ region, selectedSnapshotData, snapshotId }: StatsCar
   const availableVersions = useMemo(() => {
     if (!data) return [];
     return Object.keys(data.stats).map(versionId => {
-      const versionInfo = getVersionInfo(parseInt(versionId) as any);
+      const versionInfo = getVersionInfo(game, region, Number(versionId));
       return {
         id: versionId,
         name: versionInfo?.shortName || `Version ${versionId}`,

@@ -6,7 +6,7 @@ import { parentSong, songs, userRecentSongs, userRecentSongsDetailed } from "@/l
 import { and, count, desc, eq, lt } from "drizzle-orm";
 import type { Region } from "@/lib/types";
 
-export async function fetchRecentSongsForGame(game: CanonicalGameId,
+export async function fetchRecentSongs(game: CanonicalGameId,
   userId: string,
   region: Region,
   limit: number,
@@ -101,10 +101,4 @@ export async function fetchRecentSongsForGame(game: CanonicalGameId,
     totalCount,
     hasMore: offset + limit < totalCount,
   };
-}
-
-
-export async function fetchRecentSongs(userId: string, region: Region, limit: number, offset: number, beforeDate?: Date) {
-  const result = await fetchRecentSongsForGame("maimai", userId, region, limit, offset, beforeDate);
-  return { ...result, recentPlays: result.recentPlays.map(play => ({ ...play, difficulty: codeToDifficulty(play.difficultyCode), type: codeToChartType(play.typeCode), fc: codeToComboStatus(play.comboStatus), fs: codeToSyncStatus(play.syncStatus), maxDxScore: play.maxDxScore ?? 0, track: play.track ?? 0 })) };
 }

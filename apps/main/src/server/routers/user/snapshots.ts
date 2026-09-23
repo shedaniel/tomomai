@@ -1,47 +1,41 @@
 import { maimaiCompatibilityGameSchema } from "@/lib/games/schema";
 import { gameContextInput, validateGameInput } from "./game-input";
-import { fetchUserSnapshotsForGame, fetchSnapshotDataForGame } from "@/server/queries/snapshots";
+import { fetchUserSnapshots, fetchSnapshotData } from "@/server/queries/snapshots";
 import { codeToChartType, codeToComboStatus, codeToDifficulty, codeToSyncStatus, codeToTitleType } from "@/lib/maimai/codes";
 import { db } from '@/lib/db';
 import { parentSong, scoreData, snapshotRankings, snapshotScores, songs, user, userEvents, userSnapshots } from '@/lib/db/schema-pg';
 import { getEnabledRegions } from '@/lib/enabled-regions';
 import { logger } from '@/lib/logger';
 import { upsertScoreData } from '@/lib/maimai';
-import { deleteUserSnapshotForGame } from '@/server/queries/snapshots';
-import { getVersionInfo, VersionId, VERSIONS } from '@/lib/metadata';
+import { deleteUserSnapshot } from '@/server/queries/snapshots';
+import type { VersionId } from "@/lib/metadata";
+import { getVersionInfo, getAvailableVersions } from "@/lib/games/versions";
 import { addRatingsAndSort, RatingCalculationInput, splitSongs } from '@/lib/rating-calculator';
 import { protectedProcedure, publicProcedure, router } from '@/lib/trpc';
 import { Difficulty, SongWithScore } from '@/lib/types';
 import { resolvePublicUserByUsername } from '@/server/queries/public-access';
 import { getReservedPublicUser, getReservedSnapshotData, getReservedSnapshots } from '@/server/queries/reserved';
-import { fetchLatestSnapshotData, fetchSnapshotData, fetchUserSnapshots } from '@/server/queries/snapshots';
+import { fetchLatestMaimaiSnapshotData, fetchMaimaiSnapshotData, fetchMaimaiUserSnapshots } from '@/server/queries/snapshots';
 import { TRPCError } from '@trpc/server';
 import { and, count, desc, eq, inArray, sql } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
 import { z } from 'zod';
-import { revalidatePublicProfileForUserForGame } from '@/lib/profile-cache';
+import { revalidatePublicProfileForUser } from '@/lib/profile-cache';
 
 const regionSchema = z.enum(getEnabledRegions());
 
 export const snapshotsRouter = router({
-  getSnapshotsForGame: protectedProcedure
+  getSnapshots: protectedProcedure
     .input(z.object({ ...gameContextInput }))
     .query(({ ctx, input }) => {
       const { game, region } = validateGameInput(input, "scores");
-      return fetchUserSnapshotsForGame(game, ctx.session.user.id, region);
+      return fetchUserSnapshots(game, ctx.session.user.id, region);
     }),
-  getSnapshotForGame: protectedProcedure
+  getSnapshotData: protectedProcedure
     .input(z.object({ ...gameContextInput, snapshotId: z.string() }))
     .query(({ ctx, input }) => {
       const { game, region } = validateGameInput(input, "scores");
-      return fetchSnapshotDataForGame(game, ctx.session.user.id, input.snapshotId, region);
-    }),
-
-  getSnapshots: protectedProcedure
-    .input(z.object({ game: maimaiCompatibilityGameSchema, region: regionSchema }))
-    .query(async ({ ctx, input }) => {
-      const snapshots = await fetchUserSnapshots(ctx.session.user.id, input.region);
-      return { snapshots };
+      return fetchSnapshotData(game, ctx.session.user.id, input.snapshotId, region);
     }),
 
   getRatingHistory: protectedProcedure
@@ -246,35 +240,6 @@ export const snapshotsRouter = router({
       return { history: historyWithChanges };
     }),
 
-  getSnapshotData: protectedProcedure
-    .input(z.object({ game: maimaiCompatibilityGameSchema,
-      snapshotId: z.string(),
-      region: regionSchema
-    }))
-    .query(async ({ ctx, input }) => {
-      const result = await fetchSnapshotData(ctx.session.user.id, input.snapshotId, input.region);
-
-      if (!result) {
-        throw new TRPCError({
-          code: 'NOT_FOUND',
-          message: 'Snapshot not found or access denied',
-        });
-      }
-
-      return {
-        snapshot: {
-          ...result.snapshot,
-          publicId: undefined,
-          id: result.snapshot.publicId,
-          gameVersion: result.snapshot.gameVersion as VersionId,
-        },
-        songs: result.songs as (Omit<typeof result.songs[number], 'addedVersion'> & {
-          addedVersion: VersionId
-        })[],
-        events: result.events,
-      };
-    }),
-
   getPublicSnapshots: publicProcedure
     .input(z.object({ game: maimaiCompatibilityGameSchema,
       username: z.string(),
@@ -286,7 +251,7 @@ export const snapshotsRouter = router({
 
       const userData = await resolvePublicUserByUsername(input.username, input.game);
 
-      const snapshots = await fetchUserSnapshots(userData.id, input.region, { limit: 1 });
+      const snapshots = await fetchMaimaiUserSnapshots(userData.id, input.region, { limit: 1 });
 
       const filteredSnapshots = snapshots.map(snapshot => ({
         ...snapshot,
@@ -329,7 +294,7 @@ export const snapshotsRouter = router({
 
       const userData = await resolvePublicUserByUsername(input.username, input.game);
 
-      const result = await fetchLatestSnapshotData(userData.id, input.region);
+      const result = await fetchLatestMaimaiSnapshotData(userData.id, input.region);
 
       if (!result) {
         throw new TRPCError({
@@ -391,7 +356,7 @@ export const snapshotsRouter = router({
     .input(z.object({ ...gameContextInput, snapshotId: z.string() }))
     .mutation(async ({ ctx, input }) => {
       const { game } = validateGameInput(input, "scores");
-      const { deleted } = await deleteUserSnapshotForGame(
+      const { deleted } = await deleteUserSnapshot(
         game, ctx.session.user.id,
         input.snapshotId,
         input.region,
@@ -402,7 +367,7 @@ export const snapshotsRouter = router({
           message: 'Snapshot not found or access denied',
         });
       }
-      await revalidatePublicProfileForUserForGame(input.game, ctx.session.user.id, [input.region]);
+      await revalidatePublicProfileForUser(input.game, ctx.session.user.id, [input.region]);
       return { success: true };
     }),
 
@@ -459,7 +424,7 @@ export const snapshotsRouter = router({
           trophy: snapshot[0].title,
           region: snapshot[0].region,
           fetchedAt: snapshot[0].fetchedAt,
-          gameVersion: getVersionInfo(snapshot[0].gameVersion as VersionId)!.name,
+          gameVersion: getVersionInfo(input.game, snapshot[0].region, snapshot[0].gameVersion)!.name,
           rating: snapshot[0].rating,
           stars: snapshot[0].stars ?? 0,
           courseRankUrl: snapshot[0].courseRankUrl ?? "",
@@ -469,7 +434,7 @@ export const snapshotsRouter = router({
         },
         songs: addRatingsAndSort(songsWithScores, snapshot[0].gameVersion as VersionId).map(song => ({
           ...song,
-          gameVersion: getVersionInfo(song.gameVersion as VersionId)!.shortName,
+          gameVersion: getVersionInfo(input.game, snapshot[0].region, song.gameVersion)!.shortName,
         })),
         iconUrl: snapshot[0].iconUrl,
       };
@@ -481,7 +446,7 @@ export const snapshotsRouter = router({
       currentVersion: z.number(),
     }))
     .query(async ({ input }) => {
-      const availableVersions = VERSIONS;
+      const availableVersions = getAvailableVersions(input.game, input.region);
       const otherVersions = availableVersions.filter(v => v.id !== input.currentVersion);
 
       const versionsWithSongs = await db
@@ -711,7 +676,7 @@ export const snapshotsRouter = router({
         .set({ rating: newRating })
         .where(eq(userSnapshots.id, newSnapshotInternalId));
 
-      await revalidatePublicProfileForUserForGame(input.game, ctx.session.user.id, [input.region]);
+      await revalidatePublicProfileForUser(input.game, ctx.session.user.id, [input.region]);
       return {
         success: true,
         newSnapshotId: newSnapshotPublicId,

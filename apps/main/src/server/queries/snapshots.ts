@@ -9,7 +9,7 @@ import type { VersionId } from "@/lib/metadata";
 import { logger } from "@/lib/logger";
 import { deleteFromR2, isR2IconUrl, r2KeyFromIconUrl } from "@/lib/r2";
 
-export async function fetchUserSnapshotsForGame(game: CanonicalGameId, userId: string, region: Region, options?: { limit?: number }) {
+export async function fetchUserSnapshots(game: CanonicalGameId, userId: string, region: Region, options?: { limit?: number }) {
   let query = db
     .select({
       id: userSnapshots.publicId,
@@ -46,7 +46,7 @@ export async function fetchUserSnapshotsForGame(game: CanonicalGameId, userId: s
  * snapshot doesn't exist or doesn't belong to the user; callers translate
  * that into a 404.
  */
-export async function deleteUserSnapshotForGame(game: CanonicalGameId,
+export async function deleteUserSnapshot(game: CanonicalGameId,
   userId: string,
   snapshotPublicId: string,
   region: Region,
@@ -87,7 +87,7 @@ export async function deleteUserSnapshotForGame(game: CanonicalGameId,
   return { deleted: true };
 }
 
-export async function fetchSnapshotDataForGame(game: CanonicalGameId,
+export async function fetchSnapshotData(game: CanonicalGameId,
   userId: string,
   snapshotPublicId: string,
   region: Region
@@ -162,7 +162,7 @@ export async function fetchSnapshotDataForGame(game: CanonicalGameId,
  * Return the `fetchedAt` of the user's newest snapshot for a region, or null
  * if they have none. Cheap single-column query used for staleness checks.
  */
-export async function getLatestSnapshotFetchedAtForGame(game: CanonicalGameId,
+export async function getLatestSnapshotFetchedAt(game: CanonicalGameId,
   userId: string,
   region: Region,
 ): Promise<Date | null> {
@@ -180,7 +180,7 @@ export async function getLatestSnapshotFetchedAtForGame(game: CanonicalGameId,
   return row?.fetchedAt ?? null;
 }
 
-export async function fetchLatestSnapshotDataForGame(game: CanonicalGameId, userId: string, region: Region) {
+export async function fetchLatestSnapshotData(game: CanonicalGameId, userId: string, region: Region) {
   const snapshot = await db
     .select()
     .from(userSnapshots)
@@ -258,7 +258,7 @@ function toMaimaiSnapshot(snapshot: typeof userSnapshots.$inferSelect) {
 }
 
 
-function toMaimaiSnapshotResult(result: Awaited<ReturnType<typeof fetchSnapshotDataForGame>>) {
+function toMaimaiSnapshotResult(result: Awaited<ReturnType<typeof fetchSnapshotData>>) {
   if (!result) return null;
   return {
     snapshot: toMaimaiSnapshot(result.snapshot),
@@ -267,23 +267,23 @@ function toMaimaiSnapshotResult(result: Awaited<ReturnType<typeof fetchSnapshotD
   };
 }
 
-export async function fetchUserSnapshots(userId: string, region: Region, options?: { limit?: number }) {
-  const snapshots = await fetchUserSnapshotsForGame("maimai", userId, region, options);
+export async function fetchMaimaiUserSnapshots(userId: string, region: Region, options?: { limit?: number }) {
+  const snapshots = await fetchUserSnapshots("maimai", userId, region, options);
   return snapshots.map(s => ({ ...s, courseRankUrl: s.courseRankUrl ?? "", classRankUrl: s.classRankUrl ?? "", stars: s.stars ?? 0, gameVersion: s.gameVersion as VersionId }));
 }
 
-export function deleteUserSnapshot(userId: string, snapshotPublicId: string, region: Region) {
-  return deleteUserSnapshotForGame("maimai", userId, snapshotPublicId, region);
+export function deleteMaimaiUserSnapshot(userId: string, snapshotPublicId: string, region: Region) {
+  return deleteUserSnapshot("maimai", userId, snapshotPublicId, region);
 }
 
-export async function fetchSnapshotData(userId: string, snapshotPublicId: string, region: Region) {
-  return toMaimaiSnapshotResult(await fetchSnapshotDataForGame("maimai", userId, snapshotPublicId, region));
+export async function fetchMaimaiSnapshotData(userId: string, snapshotPublicId: string, region: Region) {
+  return toMaimaiSnapshotResult(await fetchSnapshotData("maimai", userId, snapshotPublicId, region));
 }
 
-export async function fetchLatestSnapshotData(userId: string, region: Region) {
-  return toMaimaiSnapshotResult(await fetchLatestSnapshotDataForGame("maimai", userId, region));
+export async function fetchLatestMaimaiSnapshotData(userId: string, region: Region) {
+  return toMaimaiSnapshotResult(await fetchLatestSnapshotData("maimai", userId, region));
 }
 
-export function getLatestSnapshotFetchedAt(userId: string, region: Region) {
-  return getLatestSnapshotFetchedAtForGame("maimai", userId, region);
+export function getLatestMaimaiSnapshotFetchedAt(userId: string, region: Region) {
+  return getLatestSnapshotFetchedAt("maimai", userId, region);
 }

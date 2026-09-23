@@ -1,5 +1,5 @@
 import type { CanonicalGameId } from "@/lib/games/types";
-import { GAME_CODE_MAPS, getGradeForGame } from "@/lib/games/codes";
+import { GAME_CODE_MAPS, getGrade } from "@/lib/games/codes";
 import { db } from "@/lib/db";
 import { parentSong, scoreData, snapshotScores, songs, userSnapshots } from "@/lib/db/schema-pg";
 import { and, desc, eq, sql } from "drizzle-orm";
@@ -15,7 +15,7 @@ export type StatsResult = {
   totalSongs: Record<string, Record<string, number>>;
 };
 
-export async function computeStatsForSnapshotForGame(
+export async function computeStatsForSnapshot(
   game: CanonicalGameId,
   snapshotInternalId: number,
   gameVersion: number,
@@ -69,7 +69,7 @@ export async function computeStatsForSnapshotForGame(
       stats[version][difficulty] = { grades: {}, fc: {}, fs: {}, total: 0 };
     }
 
-    const grade = getGradeForGame(game, score.achievement);
+    const grade = getGrade(game, score.achievement);
     stats[version][difficulty].grades[grade] = (stats[version][difficulty].grades[grade] ?? 0) + 1;
 
     if (score.fc !== "none") {
@@ -84,7 +84,7 @@ export async function computeStatsForSnapshotForGame(
   return { stats, totalSongs };
 }
 
-export async function fetchPlayerStatsForGame(game: CanonicalGameId, userId: string, region: Region): Promise<StatsResult> {
+export async function fetchPlayerStats(game: CanonicalGameId, userId: string, region: Region): Promise<StatsResult> {
   const snapshot = await db
     .select({ id: userSnapshots.id, gameVersion: userSnapshots.gameVersion })
     .from(userSnapshots)
@@ -101,13 +101,5 @@ export async function fetchPlayerStatsForGame(game: CanonicalGameId, userId: str
     return { stats: {}, totalSongs: {} };
   }
 
-  return computeStatsForSnapshotForGame(game, snapshot[0].id, snapshot[0].gameVersion, region);
-}
-
-export function fetchPlayerStats(userId: string, region: Region) {
-  return fetchPlayerStatsForGame("maimai", userId, region);
-}
-
-export function computeStatsForSnapshot(snapshotId: number, version: number, region: Region) {
-  return computeStatsForSnapshotForGame("maimai", snapshotId, version, region);
+  return computeStatsForSnapshot(game, snapshot[0].id, snapshot[0].gameVersion, region);
 }

@@ -2,7 +2,7 @@ import { type NextRequest } from "next/server";
 import { withGameApiKey as withApiKey } from "@/lib/api/game-protect";
 import { parseQuery } from "@/lib/api/parse-query";
 import { zodJson } from "@/lib/api/zod-response";
-import { fetchPlayerStatsForGame } from "@/server/queries/stats";
+import { fetchPlayerStats } from "@/server/queries/stats";
 import { spec } from "./spec";
 
 export const GET = withApiKey(["stats:read"], async (req: NextRequest, key) => {
@@ -10,6 +10,6 @@ export const GET = withApiKey(["stats:read"], async (req: NextRequest, key) => {
   if (parsed instanceof Response) return parsed;
   const { region } = parsed;
 
-  const { stats, totalSongs } = await fetchPlayerStatsForGame(key.game, key.userId, region);
+  const { stats, totalSongs } = await fetchPlayerStats(key.game, key.userId, region);
   return zodJson(spec.response, { game: key.game, stats, totalSongs });
 });

@@ -1,5 +1,6 @@
 "use client";
 
+import { toMaimaiRecentPlay } from "@/lib/games/player-view";
 import { useGameId } from "@/components/providers/game-provider";
 import { trpc } from "@/lib/trpc-client";
 import { Region } from "@/lib/types";
@@ -32,7 +33,7 @@ interface RecentSongsCardProps {
 }
 
 interface RecentSongRowProps {
-  play: inferRouterOutputs<AppRouter>['user']['getRecentSongs']['recentPlays'][number];
+  play: ReturnType<typeof toMaimaiRecentPlay>;
   index: number;
   isFirst: boolean;
   isLast: boolean;
@@ -545,7 +546,7 @@ function RecentSongRow({ play, index, isFirst, isLast, onToggleExpand, isExpande
 
 export function RecentSongsCard({ region, beforeDate, snapshotId }: RecentSongsCardProps) {
   const t = useTranslations('recentPlays');
-  const [allPlays, setAllPlays] = useState<inferRouterOutputs<AppRouter>['user']['getRecentSongs']['recentPlays']>([]);
+  const [allPlays, setAllPlays] = useState<ReturnType<typeof toMaimaiRecentPlay>[]>([]);
   const [offset, setOffset] = useState(0);
   const [hasMore, setHasMore] = useState(false);
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
@@ -562,7 +563,8 @@ export function RecentSongsCard({ region, beforeDate, snapshotId }: RecentSongsC
     { game: useGameId(), snapshotId: snapshotId!, region, limit, offset, beforeDate },
     { enabled: !!snapshotId }
   );
-  const data = snapshotId ? publicData : ownData;
+  const normalizedData = snapshotId ? publicData : ownData;
+  const data = useMemo(() => normalizedData ? { ...normalizedData, recentPlays: normalizedData.recentPlays.map(toMaimaiRecentPlay) } : undefined, [normalizedData]);
   const isLoading = snapshotId ? publicLoading : ownLoading;
   const isFetching = snapshotId ? publicFetching : ownFetching;
   const error = snapshotId ? publicError : ownError;

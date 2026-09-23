@@ -52,7 +52,10 @@
     "clipboardError": "Failed to copy to clipboard",
     "selectAnOption": "Select an option",
     "ok": "OK",
-    "email": "Email"
+    "email": "Email",
+    "retry": "Try again",
+    "previous": "Previous",
+    "next": "Next"
   },
   "security": {
     "reauth": {
@@ -186,7 +189,7 @@
   },
   "dashboard": {
     "title": "tomomai ともマイ",
-    "description": "Track and analyze your maimai scores with friends",
+    "description": "Track and analyze your {game} scores with friends",
     "timezoneUpdateSuccess": "Timezone updated successfully!",
     "timezoneUpdateError": "Failed to update timezone: {error}",
     "languageUpdateSuccess": "Language updated successfully!",
@@ -203,7 +206,8 @@
       },
       "fetch": {
         "title": "Fetch",
-        "description": "Token and data fetching settings."
+        "description": "Token and data fetching settings.",
+        "unavailable": "Player fetching for {game} is not available yet."
       },
       "privacy": {
         "title": "Privacy",
@@ -611,10 +615,10 @@
     "noDataInstructions": "No data found for this region. Click \"Fetch New Data\" to import your maimai scores. You'll need your maimai token for this process."
   },
   "profileMetadata": {
-    "title": "{username} | tomomai ともマイ",
+    "title": "{username} | {brand}",
     "description": "View {username}'s maimai profile for {region}. Track and analyze maimai scores with friends.",
-    "descriptionRich": "{displayName} ({username}) on {region} maimai — rating {rating}. View their B50, recent plays, and chart records on tomomai.",
-    "descriptionUnknownRegion": "View {username}'s maimai profile. Track and analyze maimai scores with friends.",
+    "descriptionRich": "{displayName} ({username}) on {region} {game}. View their scores and progress on {brand}.",
+    "descriptionUnknownRegion": "View {username}’s {game} profile on {brand}.",
     "notFoundTitle": "Profile Not Found | tomomai ともマイ",
     "notFoundDescription": "The profile you're looking for doesn't exist or is not publicly accessible.",
     "errorTitle": "Error | tomomai ともマイ",
@@ -668,7 +672,9 @@
       "achievement": "Achievement",
       "fc": "FC",
       "fs": "FS",
-      "rating": "Rating"
+      "rating": "Rating",
+      "rank": "Rank",
+      "status": "Status"
     },
     "statistics": {
       "sum": "Sum",
@@ -696,7 +702,11 @@
       "dayPlaceholder": "Select a day",
       "dayLoading": "Loading days...",
       "noPlays": "No daily plays available"
-    }
+    },
+    "scoreView": "Score view",
+    "bestScores": "Best scores",
+    "allScores": "All scores",
+    "loadError": "Unable to load your scores. Please try again."
   },
   "albums": {
     "title": "Photo Albums",
@@ -721,7 +731,8 @@
     "deleteFailed": "Failed to delete photo",
     "dontAskAgain": "Don't show this confirmation again today",
     "delete": "Delete",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "imageUnavailable": "Image unavailable"
   },
   "recommendations": {
     "peerAchieved": "Achieved by ≈{percent} peers",
@@ -1170,16 +1181,16 @@
     },
     "songs": {
       "metadata": {
-        "title": "Songs Database | maimai DX",
-        "description": "Browse and search all maimai DX songs. Filter by type, genre, and version. View song details, difficulty levels, and regional availability.",
-        "songTitle": "{songName} - {artist} | maimai DX",
+        "title": "Songs Database | {game}",
+        "description": "Browse and search all {game} songs. Filter by type, genre, and version. View song details, difficulty levels, and regional availability.",
+        "songTitle": "{songName} - {artist} | {game}",
         "songDescription": "View detailed information about \"{songName}\" by {artist}. {chartType} chart • {genre}",
         "songOgDescription": "View detailed information about \"{songName}\" by {artist}.",
-        "songFallbackTitle": "Song Details | maimai DX",
-        "songFallbackDescription": "View detailed information about this maimai DX song including difficulty levels and regional availability.",
+        "songFallbackTitle": "Song Details | {game}",
+        "songFallbackDescription": "View detailed information about this {game} song including difficulty levels and regional availability.",
         "chartTypeDx": "DX",
         "chartTypeStandard": "Standard",
-        "jsonLdChartDescription": "{chartType} chart from maimai DX"
+        "jsonLdChartDescription": "{chartType} chart from {game}"
       },
       "title": "Songs Database | maimai DX",
       "heading": "Songs Database",
@@ -1203,9 +1214,10 @@
         "youtube": "YouTube",
         "viewCharts": "View Charts",
         "viewDetails": "View Details on tomomai DB",
-        "summary": "{songName} is a maimai でらっくす {chartType} chart by {artist} in the {genre} genre, added in {versionName}. Difficulty ranges from {minLevel} to {maxLevel} across {chartCount, plural, =1 {# chart} other {# charts}}{bpmFragment}.",
+        "summary": "{songName} is a {game} {chartType} chart by {artist} in the {genre} genre, added in {versionName}. Difficulty ranges from {minLevel} to {maxLevel} across {chartCount, plural, =1 {# chart} other {# charts}}{bpmFragment}.",
         "summaryBpmFragment": " (BPM {bpm})",
-        "loadFailed": "Failed to load song details"
+        "loadFailed": "Failed to load song details",
+        "score": "Score"
       },
       "filter": {
         "type": "Type",
@@ -1530,44 +1542,6 @@
     "curveDescription": "Estimated share of players with similar Rating scoring at or below each achievement. {percent} scored at or below your {achievement}. Ties are included.",
     "clusterDescription": "Rating {ratingMin}–{ratingMax}; {achievementMin}–{achievementMax}: {count, plural, one {# sampled score} other {# sampled scores}}",
     "youDescription": "You: {rating} Rating, {achievement}"
-  },
-  "multiGame": {
-    "rank": "Rank",
-    "song": "Song",
-    "difficulty": "Difficulty",
-    "score": "Score",
-    "status": "Status",
-    "rating": "Rating",
-    "playCount": "Play count",
-    "scoreView": "Score view",
-    "rankings": "Best scores",
-    "allScores": "All scores",
-    "searchSongs": "Search songs or artists",
-    "noScores": "No scores to display.",
-    "fetchUnavailable": "Player fetching for {game} is not available yet.",
-    "snapshot": "Snapshot",
-    "loadError": "Unable to load your scores. Please try again.",
-    "retry": "Try again",
-    "loading": "Loading scores",
-    "noSnapshots": "No {game} snapshots have been imported yet.",
-    "sourceUnavailable": "The {game} catalog source is not available yet.",
-    "region": "Region",
-    "version": "Version",
-    "catalogError": "Unable to load the catalog. Please try again.",
-    "noCatalogCharts": "No charts are available for this selection.",
-    "recents": "Recent plays",
-    "albums": "Albums",
-    "events": "Events",
-    "noRecents": "No recent plays have been imported.",
-    "noAlbums": "No albums have been imported.",
-    "imageUnavailable": "Image unavailable",
-    "previous": "Previous",
-    "next": "Next",
-    "noEvents": "No events have been imported.",
-    "siteDescription": "Track and analyze {game} scores with friends.",
-    "profileDescription": "{displayName} ({username}) on {region} {game}. View their scores and progress on {brand}.",
-    "profileDescriptionUnknown": "View {username}’s {game} profile on {brand}.",
-    "profileTitle": "{username} | {brand}"
   },
   "landing": {
     "headline": "Track your maimai DX scores",

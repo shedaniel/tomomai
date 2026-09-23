@@ -1,5 +1,6 @@
 "use client";
 
+import { toMaimaiAlbum } from "@/lib/games/player-view";
 import { useGameId } from "@/components/providers/game-provider";
 import { trpc } from "@/lib/trpc-client";
 import { Region } from "@/lib/types";
@@ -36,7 +37,7 @@ export function AlbumCard({ region }: AlbumCardProps) {
   const game = useGameId();
   const regionsT = useTranslations('regions');
   const t = useTranslations('albums');
-  const [albums, setAlbums] = useState<inferRouterOutputs<AppRouter>['user']['getUserAlbums']['albums']>([]);
+  const [albums, setAlbums] = useState<ReturnType<typeof toMaimaiAlbum>[]>([]);
   const [offset, setOffset] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const limit = 20;
@@ -60,9 +61,9 @@ export function AlbumCard({ region }: AlbumCardProps) {
     if (data && !isFetching && !processedOffsetsRef.current.has(offset)) {
       processedOffsetsRef.current.add(offset);
       if (offset === 0) {
-        setAlbums(data.albums);
+        setAlbums(data.albums.map(toMaimaiAlbum));
       } else {
-        setAlbums(prev => [...prev, ...data.albums]);
+        setAlbums(prev => [...prev, ...data.albums.map(toMaimaiAlbum)]);
       }
       setHasMore(data.hasMore);
     }

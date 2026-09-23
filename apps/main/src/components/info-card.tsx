@@ -11,7 +11,7 @@ import { useMediaQuery } from "@/hooks/use-media-query";
 import { Link } from "@/i18n/navigation";
 import { SPRING_CONFIGS, STAGGER, getTransition } from "@/lib/animation-constants";
 import { resolveBaseUrl } from "@/lib/base-url";
-import { VersionId } from "@/lib/metadata";
+import { requireMaimaiVersion } from "@/lib/games/adapters/maimai/versions";
 import { getRatingImageUrl } from "@/lib/rating-calculator";
 import { trpc } from "@/lib/trpc-client";
 import type { ProfilePrivacySettings, ProfileSettings, SnapshotWithSongs } from "@/lib/types";
@@ -261,10 +261,10 @@ function useInfoCardOwnerSettings({
 
 type Snapshot = SnapshotWithSongs["snapshot"];
 
-function RatingImage({ rating, version }: { rating: number; version?: VersionId }) {
+function RatingImage({ rating, version }: { rating: number; version?: number }) {
   return (
     <Image
-      src={getRatingImageUrl(rating, version)}
+      src={getRatingImageUrl(rating, version === undefined ? undefined : requireMaimaiVersion(version))}
       alt={rating.toString()}
       width={120}
       height={35}

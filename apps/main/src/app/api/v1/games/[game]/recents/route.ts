@@ -2,7 +2,7 @@ import { type NextRequest } from "next/server";
 import { withGameApiKey as withApiKey, keyHasScope } from "@/lib/api/game-protect";
 import { parseQuery } from "@/lib/api/parse-query";
 import { zodJson } from "@/lib/api/zod-response";
-import { fetchRecentSongsForGame } from "@/server/queries/recents";
+import { fetchRecentSongs } from "@/server/queries/recents";
 import { spec } from "./spec";
 
 export const GET = withApiKey(["recent:read"], async (req: NextRequest, key) => {
@@ -11,7 +11,7 @@ export const GET = withApiKey(["recent:read"], async (req: NextRequest, key) => 
   const { region, limit = 50, offset = 0 } = parsed;
   const hasDetailed = keyHasScope(key, "recent:detailed:read");
 
-  const { recentPlays, totalCount, hasMore } = await fetchRecentSongsForGame(key.game, 
+  const { recentPlays, totalCount, hasMore } = await fetchRecentSongs(key.game,
     key.userId,
     region,
     limit,

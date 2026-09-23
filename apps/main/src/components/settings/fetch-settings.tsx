@@ -36,7 +36,7 @@ import { toast } from "sonner";
 export function FetchSettings() {
   const t = useTranslations();
   const game = useGame();
-  if (!game.fetchConfigured) return <SettingsHeader title={t("settings.pages.fetch.title")} description={t("multiGame.fetchUnavailable", { game: game.displayName })} />;
+  if (!game.fetchConfigured) return <SettingsHeader title={t("settings.pages.fetch.title")} description={t("settings.pages.fetch.unavailable", { game: game.displayName })} />;
   return (
     <SettingsForm>
       <SettingsHeader

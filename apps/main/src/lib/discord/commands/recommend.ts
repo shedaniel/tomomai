@@ -3,7 +3,7 @@ import { account, user } from '@/lib/db/schema-pg';
 import { renderLevelPrecise } from '@/lib/name-utils';
 import { addRatingsAndSort, SongWithRating } from '@/lib/rating-calculator';
 import { SongWithScore, Region } from '@/lib/types';
-import { fetchLatestSnapshotData } from '@/server/queries/snapshots';
+import { fetchLatestMaimaiSnapshotData } from '@/server/queries/snapshots';
 import { generateRecommendations, RecommendationData } from '@/server/queries/recommendations';
 import { getLogger } from '@/lib/request-logger';
 import { waitUntil } from '@vercel/functions';
@@ -49,7 +49,7 @@ export async function executeRecommendCommand({
 }: ExecuteRecommendOptions): Promise<void> {
   const regionName = regionDisplayName(region, locale);
   try {
-    const data = await fetchLatestSnapshotData(dbUserId, region);
+    const data = await fetchLatestMaimaiSnapshotData(dbUserId, region);
     if (!data) {
       await editDiscordMessage(applicationId, interactionToken, {
         embeds: [createNoDataResponse(regionName, locale).data!.embeds![0]],

@@ -5,7 +5,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { Button } from "@tomomai/ui";
 import type { FrontendGame } from "@/lib/games/frontend";
 import { getPlayerRankings, type GamePlayerScore, type GameSnapshotData } from "@/lib/games/player-view";
-import { formatGameRating, formatGameScore, getGameDifficultyLabel, getGameRankingBuckets, getGameStatusLabels } from "@/lib/games/presentation";
+import { formatGameRating, formatGameScore, getGameDifficultyLabel, getGameChartTypeLabel, getGameRankingBuckets, getGameStatusLabels } from "@/lib/games/presentation";
 
 export function GameSnapshotContent({ game, data, showAllScores = true, showScoreDetails = true, showPlayCounts = true, initialView = "rankings" }: {
   initialView?: "rankings" | "songs";
@@ -15,21 +15,21 @@ export function GameSnapshotContent({ game, data, showAllScores = true, showScor
   showScoreDetails?: boolean;
   showPlayCounts?: boolean;
 }) {
-  const t = useTranslations("multiGame");
+  const t = useTranslations();
   const locale = useLocale();
   const [view, setView] = useState<"rankings" | "songs">(initialView);
   const [search, setSearch] = useState("");
   const rankings = useMemo(() => getPlayerRankings(game.id, data), [game.id, data]);
   const hasRankings = game.capabilities.includes("rankings");
   const displayAll = showAllScores && (view === "songs" || !hasRankings);
-  const visibleSongs = data.songs.filter(song => `${song.songName} ${song.artist}`.toLocaleLowerCase(locale).includes(search.toLocaleLowerCase(locale)));
+  const visibleSongs = data.songs.filter(song => `${song.songName} ${song.artist} ${getGameDifficultyLabel(game.id, song.difficultyCode)} ${getGameChartTypeLabel(game.id, song.typeCode)}`.toLocaleLowerCase(locale).includes(search.toLocaleLowerCase(locale)));
 
   function scoreTable(scores: GamePlayerScore[], ranked = false) {
-    return scores.length === 0 ? <p className="py-6 text-sm text-muted-foreground">{t("noScores")}</p> : (
+    return scores.length === 0 ? <p className="py-6 text-sm text-muted-foreground">{t("playerStats.noSongsToDisplay")}</p> : (
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="border-b text-left text-muted-foreground">
-            <tr>{ranked && <th scope="col" className="p-2">{t("rank")}</th>}<th scope="col" className="p-2">{t("song")}</th><th scope="col" className="p-2">{t("difficulty")}</th><th scope="col" className="p-2 text-right">{t("score")}</th>{showScoreDetails && <th scope="col" className="p-2">{t("status")}</th>}</tr>
+            <tr>{ranked && <th scope="col" className="p-2">{t("dataContent.tableHeaders.rank")}</th>}<th scope="col" className="p-2">{t("dataContent.tableHeaders.song")}</th><th scope="col" className="p-2">{t("db.common.difficulty")}</th><th scope="col" className="p-2 text-right">{t("db.songs.detail.score")}</th>{showScoreDetails && <th scope="col" className="p-2">{t("dataContent.tableHeaders.status")}</th>}</tr>
           </thead>
           <tbody className="divide-y">
             {scores.map((song, index) => <tr key={song.songId}>
@@ -49,21 +49,21 @@ export function GameSnapshotContent({ game, data, showAllScores = true, showScor
     <div className="flex flex-wrap items-start justify-between gap-4 border-b pb-4">
       <div><h1 className="text-2xl font-semibold">{data.snapshot.displayName}</h1><p className="text-sm text-muted-foreground">{game.displayName} · {new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short", timeZone: "UTC" }).format(new Date(data.snapshot.fetchedAt))} UTC</p></div>
       <dl className="flex flex-wrap gap-6 text-sm">
-        {game.capabilities.includes("rating") && <div><dt className="text-muted-foreground">{t("rating")}</dt><dd className="font-semibold tabular-nums">{formatGameRating(game.id, data.snapshot.rating)}</dd></div>}
-        {showPlayCounts && data.snapshot.totalPlayCount != null && <div><dt className="text-muted-foreground">{t("playCount")}</dt><dd className="font-semibold tabular-nums">{data.snapshot.totalPlayCount.toLocaleString(locale)}</dd></div>}
+        {game.capabilities.includes("rating") && <div><dt className="text-muted-foreground">{t("common.rating")}</dt><dd className="font-semibold tabular-nums">{formatGameRating(game.id, data.snapshot.rating)}</dd></div>}
+        {showPlayCounts && data.snapshot.totalPlayCount != null && <div><dt className="text-muted-foreground">{t("common.plays")}</dt><dd className="font-semibold tabular-nums">{data.snapshot.totalPlayCount.toLocaleString(locale)}</dd></div>}
       </dl>
     </div>
-    {hasRankings && showAllScores && <div className="flex gap-2" role="group" aria-label={t("scoreView")}>
-      <Button variant={displayAll ? "outline" : "default"} onClick={() => setView("rankings")} aria-pressed={!displayAll}>{t("rankings")}</Button>
-      <Button variant={displayAll ? "default" : "outline"} onClick={() => setView("songs")} aria-pressed={displayAll}>{t("allScores")}</Button>
+    {hasRankings && showAllScores && <div className="flex gap-2" role="group" aria-label={t("dataContent.scoreView")}>
+      <Button variant={displayAll ? "outline" : "default"} onClick={() => setView("rankings")} aria-pressed={!displayAll}>{t("dataContent.bestScores")}</Button>
+      <Button variant={displayAll ? "default" : "outline"} onClick={() => setView("songs")} aria-pressed={displayAll}>{t("dataContent.allScores")}</Button>
     </div>}
     {displayAll ? <div className="space-y-4">
-      <label className="block text-sm"><span className="mb-1 block">{t("searchSongs")}</span><input value={search} onChange={event => setSearch(event.target.value)} className="w-full max-w-md rounded-md border bg-background px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" type="search" /></label>
+      <label className="block text-sm"><span className="mb-1 block">{t("dataContent.searchPlaceholder")}</span><input value={search} onChange={event => setSearch(event.target.value)} className="w-full max-w-md rounded-md border bg-background px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" type="search" /></label>
       {scoreTable(visibleSongs)}
     </div> : hasRankings ? getGameRankingBuckets(game.id).map(bucket => <section key={bucket.key} aria-labelledby={`ranking-${bucket.key}`}>
       <h2 id={`ranking-${bucket.key}`} className="mb-2 text-lg font-semibold">{bucket.label}</h2>
       {scoreTable(bucket.key === "new" ? rankings.newScores : rankings.oldScores, true)}
-    </section>) : <p className="text-sm text-muted-foreground">{t("noScores")}</p>}
-    {game.capabilities.includes("events") && data.events && <section><h2 className="mb-2 text-lg font-semibold">{t("events")}</h2>{data.events.length ? <ul className="space-y-2 text-sm">{data.events.map((event, index) => <li key={`${event.name}:${index}`}>{event.name}</li>)}</ul> : <p className="text-sm text-muted-foreground">{t("noEvents")}</p>}</section>}
+    </section>) : <p className="text-sm text-muted-foreground">{t("playerStats.noSongsToDisplay")}</p>}
+    {game.capabilities.includes("events") && data.events && <section><h2 className="mb-2 text-lg font-semibold">{t("events.title")}</h2>{data.events.length ? <ul className="space-y-2 text-sm">{data.events.map((event, index) => <li key={`${event.name}:${index}`}>{event.name}</li>)}</ul> : <p className="text-sm text-muted-foreground">{t("events.noEventsAvailable")}</p>}</section>}
   </section>;
 }

@@ -1,6 +1,5 @@
 import { maimaiCompatibilityGameSchema } from "@/lib/games/schema";
 import { gameContextInput, validateGameInput } from "./game-input";
-import { fetchUserAlbumsForGame } from "@/server/queries/albums";
 import { db } from '@/lib/db';
 import { deleteFromR2 } from '@/lib/r2';
 import { userAlbums } from '@/lib/db/schema-pg';
@@ -15,25 +14,18 @@ import { MAX_STORAGE_BYTES } from '@/lib/maimai/albums/persist';
 const regionSchema = z.enum(getEnabledRegions());
 
 export const albumsRouter = router({
-  getUserAlbumsForGame: protectedProcedure
-    .input(z.object({ ...gameContextInput, limit: z.number().int().min(1).max(100).default(20), offset: z.number().int().min(0).default(0) }))
-    .query(({ ctx, input }) => {
-      const { game, region } = validateGameInput(input, "albums");
-      return fetchUserAlbumsForGame(game, ctx.session.user.id, region, input.limit, input.offset);
-    }),
-
   getUserAlbums: protectedProcedure
-    .input(z.object({ game: maimaiCompatibilityGameSchema,
-      region: regionSchema,
+    .input(z.object({ ...gameContextInput,
       limit: z.number().min(1).max(100).default(20),
       offset: z.number().min(0).default(0),
     }))
     .query(async ({ ctx, input }) => {
       const userId = ctx.session.user.id;
-      const { region, limit, offset } = input;
+      const { game, region } = validateGameInput(input, "albums");
+      const { limit, offset } = input;
 
-      const { albums, hasMore } = await fetchUserAlbums(userId, region, limit, offset);
-      const storage = await fetchAlbumStorageUsage(userId);
+      const { albums, hasMore } = await fetchUserAlbums(game, userId, region, limit, offset);
+      const storage = await fetchAlbumStorageUsage(game, userId);
 
       const storageLimit = MAX_STORAGE_BYTES;
 

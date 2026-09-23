@@ -52,7 +52,10 @@
       "thu": "四",
       "fri": "五",
       "sat": "六"
-    }
+    },
+    "retry": "重试",
+    "previous": "上一页",
+    "next": "下一页"
   },
   "minigames": {
     "badge": "迷你游戏",
@@ -186,7 +189,7 @@
   },
   "dashboard": {
     "title": "tomomai ともマイ",
-    "description": "与好友一起分享 maimai 游玩成绩",
+    "description": "与好友一起分享 {game} 游玩成绩",
     "timezoneUpdateSuccess": "时区更新成功！",
     "timezoneUpdateError": "时区更新失败：{error}",
     "languageUpdateSuccess": "语言更新成功！",
@@ -203,7 +206,8 @@
       },
       "fetch": {
         "title": "同步",
-        "description": "凭证与数据获取设置。"
+        "description": "凭证与数据获取设置。",
+        "unavailable": "暂不支持获取 {game} 玩家数据。"
       },
       "privacy": {
         "title": "隐私",
@@ -611,10 +615,10 @@
     "noDataInstructions": "此区域没有任何数据。点击“导入新数据”来导入你的 maimai 成绩。"
   },
   "profileMetadata": {
-    "title": "{username} | tomomai ともマイ",
+    "title": "{username} | {brand}",
     "description": "查看 {username} 在 {region} 的 maimai 主页。和朋友一起追踪并分析 maimai 成绩。",
-    "descriptionRich": "{displayName}（{username}）在 {region} maimai —— Rating {rating}。在 tomomai 上查看其 B50、最近游玩和谱面记录。",
-    "descriptionUnknownRegion": "查看 {username} 的 maimai 主页。和朋友一起追踪并分析 maimai 成绩。",
+    "descriptionRich": "{region} 的 {game} 玩家 {displayName}（{username}）。在 {brand} 查看成绩和进步。",
+    "descriptionUnknownRegion": "在 {brand} 查看 {username} 的 {game} 个人资料。",
     "notFoundTitle": "主页未找到 | tomomai ともマイ",
     "notFoundDescription": "你查找的主页不存在或未公开。",
     "errorTitle": "错误 | tomomai ともマイ",
@@ -668,7 +672,9 @@
       "achievement": "达成率",
       "fc": "FC",
       "fs": "FS",
-      "rating": "R 值"
+      "rating": "R 值",
+      "rank": "排名",
+      "status": "状态"
     },
     "statistics": {
       "sum": "总和",
@@ -687,7 +693,11 @@
       "title": "开发者",
       "exportJson": "导出记录为 JSON",
       "exporting": "导出中..."
-    }
+    },
+    "scoreView": "分数视图",
+    "bestScores": "最佳成绩",
+    "allScores": "全部成绩",
+    "loadError": "无法加载成绩，请重试。"
   },
   "albums": {
     "title": "相册",
@@ -712,7 +722,8 @@
     "deleteFailed": "照片删除失败",
     "dontAskAgain": "今天不再询问",
     "delete": "删除",
-    "cancel": "取消"
+    "cancel": "取消",
+    "imageUnavailable": "图片不可用"
   },
   "recommendations": {
     "peerAchieved": "约 {percent} 同水平玩家达成",
@@ -1134,16 +1145,16 @@
     },
     "songs": {
       "metadata": {
-        "title": "歌曲数据库 | maimai DX",
-        "description": "浏览和搜索所有 maimai DX 歌曲。按类型、分类和版本筛选。查看歌曲详情、难度等级和区域开放情况。",
-        "songTitle": "{songName} - {artist} | maimai DX",
+        "title": "歌曲数据库 | {game}",
+        "description": "浏览和搜索所有 {game} 歌曲。按类型、分类和版本筛选。查看歌曲详情、难度等级和区域开放情况。",
+        "songTitle": "{songName} - {artist} | {game}",
         "songDescription": "查看《{songName}》（{artist}）的详细信息。{chartType} 谱面 · {genre}",
         "songOgDescription": "查看《{songName}》（{artist}）的详细信息。",
-        "songFallbackTitle": "歌曲详情 | maimai DX",
-        "songFallbackDescription": "查看此 maimai DX 歌曲的详细信息，包括难度等级和地区可用性。",
+        "songFallbackTitle": "歌曲详情 | {game}",
+        "songFallbackDescription": "查看此 {game} 歌曲的详细信息，包括难度等级和地区可用性。",
         "chartTypeDx": "DX",
         "chartTypeStandard": "标准",
-        "jsonLdChartDescription": "来自 maimai DX 的 {chartType} 谱面"
+        "jsonLdChartDescription": "来自 {game} 的 {chartType} 谱面"
       },
       "title": "歌曲数据库 | maimai DX",
       "heading": "歌曲数据库",
@@ -1167,9 +1178,10 @@
         "youtube": "YouTube 搜索",
         "viewCharts": "查看谱面",
         "viewDetails": "在 tomomai DB 查看详情",
-        "summary": "{songName} 是由 {artist} 制作的 maimai でらっくす {chartType} 谱面，属于 {genre} 类型，于 {versionName} 收录。难度范围为 {minLevel} 至 {maxLevel}，共 {chartCount, plural, =1 {# 张谱面} other {# 张谱面}}{bpmFragment}。",
+        "summary": "{songName} 是由 {artist} 制作的 {game} {chartType} 谱面，属于 {genre} 类型，于 {versionName} 收录。难度范围为 {minLevel} 至 {maxLevel}，共 {chartCount, plural, =1 {# 张谱面} other {# 张谱面}}{bpmFragment}。",
         "summaryBpmFragment": "（BPM {bpm}）",
-        "loadFailed": "加载歌曲详情失败"
+        "loadFailed": "加载歌曲详情失败",
+        "score": "分数"
       },
       "filter": {
         "type": "类型",
@@ -1521,44 +1533,6 @@
     "curveDescription": "估计相近 Rating 玩家中，达成率不高于各数值的比例。有 {percent} 的玩家达成率不高于你的 {achievement}，包含同分。",
     "clusterDescription": "Rating {ratingMin}–{ratingMax}；达成率 {achievementMin}–{achievementMax}：{count} 条样本",
     "youDescription": "你：Rating {rating}，达成率 {achievement}"
-  },
-  "multiGame": {
-    "rank": "排名",
-    "song": "歌曲",
-    "difficulty": "难度",
-    "score": "分数",
-    "status": "状态",
-    "rating": "Rating",
-    "playCount": "游玩次数",
-    "scoreView": "分数视图",
-    "rankings": "最佳成绩",
-    "allScores": "全部成绩",
-    "searchSongs": "搜索歌曲或艺术家",
-    "noScores": "没有可显示的成绩。",
-    "fetchUnavailable": "暂不支持获取 {game} 玩家数据。",
-    "snapshot": "快照",
-    "loadError": "无法加载成绩，请重试。",
-    "retry": "重试",
-    "loading": "正在加载成绩",
-    "noSnapshots": "尚未导入 {game} 快照。",
-    "sourceUnavailable": "{game} 歌曲数据源暂不可用。",
-    "region": "地区",
-    "version": "版本",
-    "catalogError": "无法加载歌曲目录，请重试。",
-    "noCatalogCharts": "当前条件下没有谱面。",
-    "recents": "最近游玩",
-    "albums": "相册",
-    "events": "活动",
-    "noRecents": "尚未导入最近游玩记录。",
-    "noAlbums": "尚未导入相册。",
-    "imageUnavailable": "图片不可用",
-    "previous": "上一页",
-    "next": "下一页",
-    "noEvents": "尚未导入活动。",
-    "siteDescription": "与好友一起记录和分析 {game} 成绩。",
-    "profileDescription": "{region} 的 {game} 玩家 {displayName}（{username}）。在 {brand} 查看成绩和进步。",
-    "profileDescriptionUnknown": "在 {brand} 查看 {username} 的 {game} 个人资料。",
-    "profileTitle": "{username} | {brand}"
   },
   "landing": {
     "headline": "记录你的 maimai DX 成绩",

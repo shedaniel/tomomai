@@ -8,8 +8,8 @@ import type { GameSnapshotData, GameSnapshotSummary } from "@/lib/games/player-v
 
 const calls = vi.hoisted(() => ({ list: vi.fn(), detail: vi.fn() }));
 vi.mock("@/lib/trpc-client", () => ({ trpc: { user: {
-  getSnapshotsForGame: { useQuery: (input: unknown, options: {initialData?: unknown}) => { calls.list(input); return { data: options.initialData, refetch: vi.fn(), isLoading: false }; } },
-  getSnapshotForGame: { useQuery: (input: unknown) => { calls.detail(input); return { data: undefined, refetch: vi.fn(), isLoading: false }; } },
+  getSnapshots: { useQuery: (input: unknown, options: {initialData?: unknown}) => { calls.list(input); return { data: options.initialData, refetch: vi.fn(), isLoading: false }; } },
+  getSnapshotData: { useQuery: (input: unknown) => { calls.detail(input); return { data: undefined, refetch: vi.fn(), isLoading: false }; } },
   deleteSnapshot: { useMutation: () => ({ mutateAsync: vi.fn() }) },
   copySnapshotToVersion: { useMutation: () => ({ mutateAsync: vi.fn(), isPending: false }) },
 } } }));

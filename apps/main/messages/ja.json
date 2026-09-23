@@ -52,7 +52,10 @@
       "thu": "木",
       "fri": "金",
       "sat": "土"
-    }
+    },
+    "retry": "再試行",
+    "previous": "前へ",
+    "next": "次へ"
   },
   "minigames": {
     "badge": "ミニゲーム",
@@ -186,7 +189,7 @@
   },
   "dashboard": {
     "title": "ともマイ",
-    "description": "フレンドと一緒にmaimaiのスコアを共有・分析しよう！",
+    "description": "フレンドと一緒に{game}のスコアを共有・分析しよう！",
     "timezoneUpdateSuccess": "タイムゾーンの更新に成功しました！",
     "timezoneUpdateError": "タイムゾーンの更新に失敗しました: {error}",
     "languageUpdateSuccess": "言語の更新に成功しました！",
@@ -203,7 +206,8 @@
       },
       "fetch": {
         "title": "データ取得",
-        "description": "トークンとデータ取得の設定。"
+        "description": "トークンとデータ取得の設定。",
+        "unavailable": "{game} のプレイヤーデータ取得はまだ利用できません。"
       },
       "privacy": {
         "title": "プライバシー",
@@ -611,10 +615,10 @@
     "noDataInstructions": "この地域のデータがまだありません。「新しいデータを取得」からmaimaiスコアを取り込みましょう（ログイン／トークンが必要です）。"
   },
   "profileMetadata": {
-    "title": "{username} | tomomai ともマイ",
+    "title": "{username} | {brand}",
     "description": "{region} の {username} さんの maimai プロフィールを表示します。フレンドと一緒に maimai のスコアを記録・分析しよう。",
-    "descriptionRich": "{region} の maimai プレイヤー {displayName}（{username}）さん — Rating {rating}。tomomai で B50、最近のプレイ、譜面記録を見る。",
-    "descriptionUnknownRegion": "{username} さんの maimai プロフィールを表示します。フレンドと一緒に maimai のスコアを記録・分析しよう。",
+    "descriptionRich": "{region} の {game} プレイヤー {displayName}（{username}）。{brand} でスコアと成長をチェック。",
+    "descriptionUnknownRegion": "{brand} で {username} の {game} プロフィールを表示。",
     "notFoundTitle": "プロフィールが見つかりません | tomomai ともマイ",
     "notFoundDescription": "お探しのプロフィールは存在しないか、公開されていません。",
     "errorTitle": "エラー | tomomai ともマイ",
@@ -668,7 +672,9 @@
       "achievement": "達成率",
       "fc": "FC",
       "fs": "FS",
-      "rating": "レート値"
+      "rating": "レート値",
+      "rank": "順位",
+      "status": "ステータス"
     },
     "statistics": {
       "sum": "合計",
@@ -687,7 +693,11 @@
       "title": "開発者",
       "exportJson": "スナップショットをJSONでエクスポート",
       "exporting": "エクスポート中..."
-    }
+    },
+    "scoreView": "スコア表示",
+    "bestScores": "ベストスコア",
+    "allScores": "全スコア",
+    "loadError": "スコアを読み込めませんでした。もう一度お試しください。"
   },
   "albums": {
     "title": "マイアルバム",
@@ -712,7 +722,8 @@
     "deleteFailed": "写真の削除に失敗しました",
     "dontAskAgain": "今日はもう確認しない",
     "delete": "削除",
-    "cancel": "キャンセル"
+    "cancel": "キャンセル",
+    "imageUnavailable": "画像を表示できません"
   },
   "recommendations": {
     "peerAchieved": "同Rating帯の約{percent}が達成",
@@ -1134,16 +1145,16 @@
     },
     "songs": {
       "metadata": {
-        "title": "楽曲データベース | maimai でらっくす",
-        "description": "maimai でらっくすの楽曲を検索・閲覧できます。タイプ、ジャンル、バージョンでフィルタリング可能。楽曲詳細、難易度、収録地域も確認できます。",
-        "songTitle": "{songName} - {artist} | maimai DX",
+        "title": "楽曲データベース | {game}",
+        "description": "{game}の楽曲を検索・閲覧できます。タイプ、ジャンル、バージョンでフィルタリング可能。楽曲詳細、難易度、収録地域も確認できます。",
+        "songTitle": "{songName} - {artist} | {game}",
         "songDescription": "{artist} の「{songName}」の詳細情報を表示します。{chartType} 譜面 • {genre}",
         "songOgDescription": "{artist} の「{songName}」の詳細情報を表示します。",
-        "songFallbackTitle": "楽曲詳細 | maimai DX",
-        "songFallbackDescription": "この maimai DX 楽曲の詳細情報（難易度や収録地域など）を表示します。",
+        "songFallbackTitle": "楽曲詳細 | {game}",
+        "songFallbackDescription": "この {game} 楽曲の詳細情報（難易度や収録地域など）を表示します。",
         "chartTypeDx": "DX",
         "chartTypeStandard": "スタンダード",
-        "jsonLdChartDescription": "maimai DX の {chartType} 譜面"
+        "jsonLdChartDescription": "{game} の {chartType} 譜面"
       },
       "title": "楽曲データベース | maimai でらっくす",
       "heading": "楽曲データベース",
@@ -1167,9 +1178,10 @@
         "youtube": "YouTubeで検索",
         "viewCharts": "譜面を見る",
         "viewDetails": "ともマイ DB で詳細を見る",
-        "summary": "{songName} は {versionName} で追加された、{artist} による {genre} ジャンルの maimai でらっくす {chartType} 譜面です。難易度は {chartCount, plural, =1 {# 譜面} other {# 譜面}} にわたり、{minLevel} から {maxLevel} までの範囲です{bpmFragment}。",
+        "summary": "{songName} は {versionName} で追加された、{artist} による {genre} ジャンルの {game} {chartType} 譜面です。難易度は {chartCount, plural, =1 {# 譜面} other {# 譜面}} にわたり、{minLevel} から {maxLevel} までの範囲です{bpmFragment}。",
         "summaryBpmFragment": "（BPM {bpm}）",
-        "loadFailed": "楽曲詳細の読み込みに失敗しました"
+        "loadFailed": "楽曲詳細の読み込みに失敗しました",
+        "score": "スコア"
       },
       "filter": {
         "type": "タイプ",
@@ -1521,44 +1533,6 @@
     "curveDescription": "近いRatingのプレイヤーのうち、各達成率以下の割合の推定値です。あなたの達成率{achievement}以下は{percent}です。同点を含みます。",
     "clusterDescription": "Rating {ratingMin}～{ratingMax}、達成率{achievementMin}～{achievementMax}：{count}件のサンプル",
     "youDescription": "あなた：Rating {rating}、達成率{achievement}"
-  },
-  "multiGame": {
-    "rank": "順位",
-    "song": "楽曲",
-    "difficulty": "難易度",
-    "score": "スコア",
-    "status": "ステータス",
-    "rating": "レーティング",
-    "playCount": "プレイ回数",
-    "scoreView": "スコア表示",
-    "rankings": "ベストスコア",
-    "allScores": "全スコア",
-    "searchSongs": "楽曲名・アーティストを検索",
-    "noScores": "表示できるスコアはありません。",
-    "fetchUnavailable": "{game} のプレイヤーデータ取得はまだ利用できません。",
-    "snapshot": "スナップショット",
-    "loadError": "スコアを読み込めませんでした。もう一度お試しください。",
-    "retry": "再試行",
-    "loading": "スコアを読み込み中",
-    "noSnapshots": "{game} のスナップショットはまだ取り込まれていません。",
-    "sourceUnavailable": "{game} の楽曲データ取得元はまだ利用できません。",
-    "region": "地域",
-    "version": "バージョン",
-    "catalogError": "楽曲一覧を読み込めませんでした。もう一度お試しください。",
-    "noCatalogCharts": "この条件に該当する譜面はありません。",
-    "recents": "最近のプレイ",
-    "albums": "アルバム",
-    "events": "イベント",
-    "noRecents": "最近のプレイはまだ取り込まれていません。",
-    "noAlbums": "アルバムはまだ取り込まれていません。",
-    "imageUnavailable": "画像を表示できません",
-    "previous": "前へ",
-    "next": "次へ",
-    "noEvents": "イベントはまだ取り込まれていません。",
-    "siteDescription": "友達と {game} のスコアを記録・分析しましょう。",
-    "profileDescription": "{region} の {game} プレイヤー {displayName}（{username}）。{brand} でスコアと成長をチェック。",
-    "profileDescriptionUnknown": "{brand} で {username} の {game} プロフィールを表示。",
-    "profileTitle": "{username} | {brand}"
   },
   "landing": {
     "headline": "maimai DX のスコアを記録しよう",

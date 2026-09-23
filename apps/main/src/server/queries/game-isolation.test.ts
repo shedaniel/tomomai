@@ -6,10 +6,10 @@ vi.mock("@/lib/db", () => ({ db: { select, delete: select } }));
 vi.mock("@/lib/r2", () => ({ deleteFromR2: vi.fn(), isR2IconUrl: () => false, r2KeyFromIconUrl: vi.fn() }));
 vi.mock("@/lib/logger", () => ({ logger: { info: vi.fn(), warn: vi.fn() } }));
 
-import { fetchUserSnapshotsForGame, fetchSnapshotDataForGame, deleteUserSnapshotForGame } from "./snapshots";
-import { fetchRecentSongsForGame } from "./recents";
-import { fetchUserAlbumsForGame } from "./albums";
-import { fetchPlayerStatsForGame } from "./stats";
+import { fetchUserSnapshots, fetchSnapshotData, deleteUserSnapshot } from "./snapshots";
+import { fetchRecentSongs } from "./recents";
+import { fetchUserAlbums } from "./albums";
+import { fetchPlayerStats } from "./stats";
 
 beforeEach(() => {
   statements.length = 0;
@@ -31,9 +31,9 @@ function filters() {
 }
 
 it.each(["maimai", "chunithm"] as const)("isolates %s snapshot reads and deletes with the same user and region", async game => {
-  await fetchUserSnapshotsForGame(game, "same-user", "jp");
-  await fetchSnapshotDataForGame(game, "same-user", "same-id", "jp");
-  await deleteUserSnapshotForGame(game, "same-user", "same-id", "jp");
+  await fetchUserSnapshots(game, "same-user", "jp");
+  await fetchSnapshotData(game, "same-user", "same-id", "jp");
+  await deleteUserSnapshot(game, "same-user", "same-id", "jp");
   for (const query of filters()) {
     expect(query.params).toContain(game);
     expect(query.params).toContain("same-user");
@@ -43,7 +43,7 @@ it.each(["maimai", "chunithm"] as const)("isolates %s snapshot reads and deletes
 
 it("keeps another game's raw chart and score codes without maimai decoding", async () => {
   results.push([{ id: 1, titleType: 7 }], [{ difficulty: 4, type: 1, comboStatus: 3, scoreValue: 1009000 }], []);
-  const result = await fetchSnapshotDataForGame("chunithm", "same-user", "same-id", "jp");
+  const result = await fetchSnapshotData("chunithm", "same-user", "same-id", "jp");
   expect(result?.snapshot.titleType).toBe(7);
   expect(result?.songs[0]).toMatchObject({ difficulty: 4, type: 1, comboStatus: 3, scoreValue: 1009000 });
   expect(filters().every(query => query.params.includes("chunithm"))).toBe(true);
@@ -51,13 +51,13 @@ it("keeps another game's raw chart and score codes without maimai decoding", asy
 
 it("scopes recent pagination counts and album reads by game", async () => {
   results.push([], [{ totalCount: 0 }], []);
-  await fetchRecentSongsForGame("chunithm", "same-user", "jp", 20, 0);
-  await fetchUserAlbumsForGame("chunithm", "same-user", "jp", 20, 0);
+  await fetchRecentSongs("chunithm", "same-user", "jp", 20, 0);
+  await fetchUserAlbums("chunithm", "same-user", "jp", 20, 0);
   expect(filters()).toHaveLength(3);
   expect(filters().every(query => query.params.includes("chunithm"))).toBe(true);
 });
 
 it("scopes stats snapshot lookup by game before aggregating", async () => {
-  await fetchPlayerStatsForGame("chunithm", "same-user", "jp");
+  await fetchPlayerStats("chunithm", "same-user", "jp");
   expect(filters()[0].params).toContain("chunithm");
 });

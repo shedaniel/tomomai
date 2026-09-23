@@ -2,7 +2,7 @@ import { type NextRequest } from "next/server";
 import { withGameApiKey as withApiKey, keyHasScope } from "@/lib/api/game-protect";
 import { parseQuery } from "@/lib/api/parse-query";
 import { zodJson } from "@/lib/api/zod-response";
-import { fetchUserAlbumsForGame } from "@/server/queries/albums";
+import { fetchUserAlbums } from "@/server/queries/albums";
 import { spec } from "./spec";
 
 export const GET = withApiKey(["album:read"], async (req: NextRequest, key) => {
@@ -13,7 +13,7 @@ export const GET = withApiKey(["album:read"], async (req: NextRequest, key) => {
   const hasImages = keyHasScope(key, "album:images:read");
   const r2BaseUrl = process.env.NEXT_PUBLIC_R2_URL;
 
-  const { albums, hasMore } = await fetchUserAlbumsForGame(key.game, key.userId, region, limit, offset);
+  const { albums, hasMore } = await fetchUserAlbums(key.game, key.userId, region, limit, offset);
 
   return zodJson(spec.response, { game: key.game,
     albums: albums.map((album) => ({

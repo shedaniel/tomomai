@@ -24,7 +24,7 @@ export async function generateMetadata(): Promise<Metadata> {
   ]);
   const game = getFrontendGame();
   const title = getGameBrand(game).title;
-  const description = t("gameDescription", { game: game.displayName });
+  const description = t("description", { game: game.displayName });
   return {
     title,
     description,

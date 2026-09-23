@@ -4,7 +4,7 @@ import { parseQuery } from "@/lib/api/parse-query";
 import { parseParams } from "@/lib/api/parse-params";
 import { zodJson } from "@/lib/api/zod-response";
 import { buildSnapshotPayload } from "@/lib/api/snapshot-response";
-import { deleteUserSnapshotForGame, fetchSnapshotDataForGame } from "@/server/queries/snapshots";
+import { deleteUserSnapshot, fetchSnapshotData } from "@/server/queries/snapshots";
 import { deleteSpec, spec } from "./spec";
 
 export const GET = withApiKey(
@@ -17,7 +17,7 @@ export const GET = withApiKey(
     const { region } = parsed;
     const { id } = params as { id: string };
 
-    const data = await fetchSnapshotDataForGame(key.game, key.userId, id, region);
+    const data = await fetchSnapshotData(key.game, key.userId, id, region);
     if (!data) {
       return Response.json({ error: "Snapshot not found" }, { status: 404 });
     }
@@ -35,7 +35,7 @@ export const DELETE = withApiKey(
     const { region } = parsed;
     const { id } = params as { id: string };
 
-    const { deleted } = await deleteUserSnapshotForGame(key.game, key.userId, id, region);
+    const { deleted } = await deleteUserSnapshot(key.game, key.userId, id, region);
     if (!deleted) {
       return Response.json({ error: "Snapshot not found" }, { status: 404 });
     }

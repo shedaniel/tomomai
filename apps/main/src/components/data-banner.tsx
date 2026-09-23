@@ -48,7 +48,7 @@ interface DataBannerProps {
   isFetching: boolean;
   currentSession: FetchSession | null;
   // Copy functionality
-  onCopySnapshot: (snapshotId: string, targetVersion: VersionId) => Promise<any>;
+  onCopySnapshot: (snapshotId: string, targetVersion: number) => Promise<any>;
   isCopying: boolean;
 }
 
@@ -175,7 +175,7 @@ function CopySnapshotButton({
   isCopying: boolean;
   region: Region;
   currentGameVersion: number | undefined;
-  onCopyToVersion: (targetVersion: VersionId) => void;
+  onCopyToVersion: (targetVersion: number) => void;
 }) {
   // Only load versions when dropdown is opened
   const {
@@ -342,7 +342,7 @@ export function DataBanner({
   const selectedSnapshotObj = snapshots.find(s => s.id === selectedSnapshot);
   const currentGameVersion = selectedSnapshotObj?.gameVersion;
 
-  const handleCopyToVersion = async (targetVersion: VersionId) => {
+  const handleCopyToVersion = async (targetVersion: number) => {
     if (!selectedSnapshot) return;
 
     try {
@@ -420,7 +420,7 @@ export function DataBanner({
               isFetching={isFetching}
               currentSession={currentSession}
               t={t}
-            /> : <p className="text-sm text-muted-foreground">{t("multiGame.fetchUnavailable", { game: game.displayName })}</p>}
+            /> : <p className="text-sm text-muted-foreground">{t("settings.pages.fetch.unavailable", { game: game.displayName })}</p>}
           </div>
         </div>
 

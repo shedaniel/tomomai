@@ -17,7 +17,7 @@ export const dailyPlaysRouter = router({
   getPublicAvailableDays: publicProcedure
     .input(z.object({ game: maimaiCompatibilityGameSchema, snapshotId: z.string(), region: regionSchema }))
     .query(async ({ input }) => {
-      const { userId } = await resolvePublicSnapshotUserId(input.snapshotId);
+      const { userId } = await resolvePublicSnapshotUserId(input.game, input.snapshotId);
       return await listDailyPlaysAvailableDays(userId, input.region);
     }),
 });

@@ -1,9 +1,9 @@
 import { type ApiKeyInfo, keyHasScope } from "@/lib/api/protect";
 import { type ScopeKey } from "@/lib/api/scopes";
 import { resolveGame } from "@/lib/games/registry";
-import type { fetchSnapshotDataForGame } from "@/server/queries/snapshots";
+import type { fetchSnapshotData } from "@/server/queries/snapshots";
 
-type SnapshotData = NonNullable<Awaited<ReturnType<typeof fetchSnapshotDataForGame>>>;
+type SnapshotData = NonNullable<Awaited<ReturnType<typeof fetchSnapshotData>>>;
 
 /**
  * Build the JSON response for a snapshot detail endpoint.

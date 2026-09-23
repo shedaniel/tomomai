@@ -278,7 +278,7 @@ export function DataContent({
             {!legacyPanels && normalizedSnapshotData && (selectedTab === "info" || selectedTab === "songs") && <GameSnapshotContent key={selectedTab} game={game} data={normalizedSnapshotData} initialView={selectedTab === "songs" ? "songs" : "rankings"} showAllScores={localPrivacySettings.profileShowAllScores} showScoreDetails={localPrivacySettings.profileShowScoreDetails} showPlayCounts={localPrivacySettings.profileShowPlayCounts} />}
             {!legacyPanels && normalizedSnapshotData && selectedTab === "recent" && visitedBySelf && <GameRecentPage key={`${game.id}:${region}`} region={region} beforeDate={new Date(normalizedSnapshotData.snapshot.fetchedAt)} />}
             {!legacyPanels && selectedTab === "albums" && visitedBySelf && <GameAlbumPage key={`${game.id}:${region}`} region={region} />}
-            {!legacyPanels && normalizedSnapshotData && selectedTab === "map" && <div>{normalizedSnapshotData.events?.length ? <ul className="space-y-2">{normalizedSnapshotData.events.map((event, index) => <li key={index}>{event.name}</li>)}</ul> : <p className="text-muted-foreground">{t("multiGame.noEvents")}</p>}</div>}
+            {!legacyPanels && normalizedSnapshotData && selectedTab === "map" && <div>{normalizedSnapshotData.events?.length ? <ul className="space-y-2">{normalizedSnapshotData.events.map((event, index) => <li key={index}>{event.name}</li>)}</ul> : <p className="text-muted-foreground">{t("events.noEventsAvailable")}</p>}</div>}
             {legacyPanels && selectedSnapshotData && selectedTab === "info" && (
               <InfoCard
                 selectedSnapshotData={selectedSnapshotData}

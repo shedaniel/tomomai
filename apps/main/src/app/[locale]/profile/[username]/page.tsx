@@ -35,8 +35,8 @@ export async function generateMetadata({ params }: ProfilePageProps): Promise<Me
   ]);
 
   const game = getFrontendGame();
-  const title = t("gameTitle", { username, brand: getGameBrand(game).title });
-  const description = t("gameDescriptionUnknownRegion", { username, game: game.displayName, brand: game.productName });
+  const title = t("title", { username, brand: getGameBrand(game).title });
+  const description = t("descriptionUnknownRegion", { username, game: game.displayName, brand: game.productName });
   const path = `/profile/${encodeURIComponent(username)}`;
 
   // Mirror the regional page's metadata so embed crawlers that don't follow

@@ -55,7 +55,7 @@ export const platesRouter = router({
       plateType: z.enum(["kiwami", "shou", "shin", "maimai"]),
     }))
     .query(async ({ input }) => {
-      const { snapshotInternalId, gameVersion } = await resolvePublicSnapshotUserId(input.snapshotId);
+      const { snapshotInternalId, gameVersion } = await resolvePublicSnapshotUserId(input.game, input.snapshotId);
 
       return await fetchPlateSongs(
         snapshotInternalId,

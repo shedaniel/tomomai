@@ -49,7 +49,10 @@
     "back": "뒤로",
     "selectAnOption": "옵션 선택",
     "ok": "확인",
-    "email": "이메일"
+    "email": "이메일",
+    "retry": "다시 시도",
+    "previous": "이전",
+    "next": "다음"
   },
   "minigames": {
     "badge": "미니게임",
@@ -183,7 +186,7 @@
   },
   "dashboard": {
     "title": "tomomai ともマイ",
-    "description": "친구들과 함께 maimai 성과를 공유하고 분석해보세요!",
+    "description": "친구들과 함께 {game} 성과를 공유하고 분석해보세요!",
     "timezoneUpdateSuccess": "시간대가 업데이트되었습니다!",
     "timezoneUpdateError": "시간대 업데이트 실패: {error}",
     "languageUpdateSuccess": "언어가 업데이트되었습니다!",
@@ -198,7 +201,8 @@
       },
       "fetch": {
         "title": "가져오기",
-        "description": "토큰 및 데이터 가져오기 설정."
+        "description": "토큰 및 데이터 가져오기 설정.",
+        "unavailable": "{game} 플레이어 데이터 가져오기는 아직 지원되지 않습니다."
       },
       "privacy": {
         "title": "개인 정보",
@@ -487,7 +491,9 @@
       "achievement": "달성률",
       "fc": "FC",
       "fs": "FS",
-      "rating": "레이팅"
+      "rating": "레이팅",
+      "rank": "순위",
+      "status": "상태"
     },
     "statistics": {
       "sum": "합계",
@@ -506,7 +512,11 @@
       "title": "Developer",
       "exportJson": "Export Snapshot as JSON",
       "exporting": "Exporting..."
-    }
+    },
+    "scoreView": "점수 보기",
+    "bestScores": "베스트 점수",
+    "allScores": "전체 점수",
+    "loadError": "점수를 불러오지 못했습니다. 다시 시도해 주세요."
   },
   "albums": {
     "title": "Photo Albums",
@@ -531,7 +541,8 @@
     "deleteFailed": "사진 삭제에 실패했습니다",
     "dontAskAgain": "오늘 다시 묻지 않기",
     "delete": "삭제",
-    "cancel": "취소"
+    "cancel": "취소",
+    "imageUnavailable": "이미지를 사용할 수 없습니다"
   },
   "recommendations": {
     "peerAchieved": "동급 플레이어 약 {percent} 달성",
@@ -822,8 +833,8 @@
     },
     "songs": {
       "metadata": {
-        "title": "악곡 데이터베이스 | maimai DX",
-        "description": "maimai DX의 모든 수록곡을 검색하고 열람하세요. 타입, 장르, 버전별 필터링을 지원합니다. 곡 상세 정보, 난이도, 수록 지역을 확인할 수 있습니다."
+        "title": "악곡 데이터베이스 | {game}",
+        "description": "{game}의 모든 수록곡을 검색하고 열람하세요. 타입, 장르, 버전별 필터링을 지원합니다. 곡 상세 정보, 난이도, 수록 지역을 확인할 수 있습니다."
       },
       "title": "악곡 데이터베이스 | maimai DX",
       "searchPlaceholder": "곡명, 아티스트, 장르 등으로 검색...",
@@ -845,7 +856,8 @@
         "youtube": "YouTube 검색",
         "viewCharts": "채보 보기",
         "viewDetails": "tomomai DB에서 상세 보기",
-        "loadFailed": "곡 상세 정보를 불러오지 못했습니다"
+        "loadFailed": "곡 상세 정보를 불러오지 못했습니다",
+        "score": "점수"
       },
       "filter": {
         "type": "타입",
@@ -1159,43 +1171,10 @@
     "clusterDescription": "Rating {ratingMin}–{ratingMax}, 달성률 {achievementMin}–{achievementMax}: 표본 {count}개",
     "youDescription": "나: Rating {rating}, 달성률 {achievement}"
   },
-  "multiGame": {
-    "rank": "순위",
-    "song": "곡",
-    "difficulty": "난이도",
-    "score": "점수",
-    "status": "상태",
-    "rating": "레이팅",
-    "playCount": "플레이 횟수",
-    "scoreView": "점수 보기",
-    "rankings": "베스트 점수",
-    "allScores": "전체 점수",
-    "searchSongs": "곡명 또는 아티스트 검색",
-    "noScores": "표시할 점수가 없습니다.",
-    "fetchUnavailable": "{game} 플레이어 데이터 가져오기는 아직 지원되지 않습니다.",
-    "snapshot": "스냅샷",
-    "loadError": "점수를 불러오지 못했습니다. 다시 시도해 주세요.",
-    "retry": "다시 시도",
-    "loading": "점수 불러오는 중",
-    "noSnapshots": "아직 가져온 {game} 스냅샷이 없습니다.",
-    "sourceUnavailable": "{game} 곡 데이터 소스는 아직 사용할 수 없습니다.",
-    "region": "지역",
-    "version": "버전",
-    "catalogError": "곡 목록을 불러오지 못했습니다. 다시 시도해 주세요.",
-    "noCatalogCharts": "선택한 조건에 해당하는 채보가 없습니다.",
-    "recents": "최근 플레이",
-    "albums": "앨범",
-    "events": "이벤트",
-    "noRecents": "가져온 최근 플레이가 없습니다.",
-    "noAlbums": "가져온 앨범이 없습니다.",
-    "imageUnavailable": "이미지를 사용할 수 없습니다",
-    "previous": "이전",
-    "next": "다음",
-    "noEvents": "가져온 이벤트가 없습니다.",
-    "siteDescription": "친구들과 {game} 점수를 기록하고 분석하세요.",
-    "profileDescription": "{region} {game} 플레이어 {displayName} ({username}). {brand}에서 점수와 성장을 확인하세요.",
-    "profileDescriptionUnknown": "{brand}에서 {username}의 {game} 프로필을 확인하세요.",
-    "profileTitle": "{username} | {brand}"
+  "profileMetadata": {
+    "title": "{username} | {brand}",
+    "descriptionRich": "{region} {game} 플레이어 {displayName} ({username}). {brand}에서 점수와 성장을 확인하세요.",
+    "descriptionUnknownRegion": "{brand}에서 {username}의 {game} 프로필을 확인하세요."
   },
   "landing": {
     "headline": "maimai DX 스코어를 기록하세요",
