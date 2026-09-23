@@ -750,7 +750,7 @@ export async function persistFetchResult(input: PersistFetchResultInput): Promis
   }
 
   const { revalidatePublicProfileForUser } = await import("@/lib/profile-cache");
-  await revalidatePublicProfileForUser(input.userId, [input.region]);
+  await revalidatePublicProfileForUser(input.game, input.userId, [input.region]);
 
   return { snapshotId };
 }

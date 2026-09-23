@@ -5,7 +5,7 @@ import { toPublicGameSnapshot } from "@/lib/games/public-player";
 import type { CanonicalGameId } from "@/lib/games/types";
 import type { Region } from "@/lib/types";
 import { resolvePublicUserByUsername } from "./public-access";
-import { fetchLatestSnapshotDataForGame } from "./snapshots";
+import { fetchLatestSnapshotData } from "./snapshots";
 import { loadReservedMaimaiSnapshot } from "@/lib/games/adapters/maimai/public-profile";
 import type { GameSnapshotData } from "@/lib/games/player-view";
 
@@ -17,7 +17,7 @@ export const fetchPublicGameProfile = cache(async (game: CanonicalGameId, userna
   resolveGameContext(game, region, "scores");
   const profile = await resolvePublicUserByUsername(username, game);
   const data = await RESERVED_SNAPSHOT_LOADERS[game]?.(username, region)
-    ?? await fetchLatestSnapshotDataForGame(game, profile.id, region);
+    ?? await fetchLatestSnapshotData(game, profile.id, region);
   return {
     profile,
     snapshotData: data ? toPublicGameSnapshot(game, data, profile) : null,

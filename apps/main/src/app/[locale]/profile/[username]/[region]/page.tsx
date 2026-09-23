@@ -29,9 +29,8 @@ export async function generateMetadata({ params }: RegionProfilePageProps): Prom
   await setStaticLocale(routeLocale);
   const username = safeDecodeURIComponent(rawUsername);
 
-  const [tMeta, tGame, tRegions, locale] = await Promise.all([
+  const [tMeta, tRegions, locale] = await Promise.all([
     getTranslations("profileMetadata"),
-    getTranslations("multiGame"),
     getTranslations("regions"),
     getLocale(),
   ]);
@@ -49,8 +48,8 @@ export async function generateMetadata({ params }: RegionProfilePageProps): Prom
     const snapshot = snapshotData?.snapshot;
     if (!snapshot) return { title: tMeta("title", { username }), alternates: await buildAlternates(`/profile/${encodeURIComponent(username)}/${region}`) };
 
-    const title = tGame("profileTitle", { username, brand: getGameBrand(game).title });
-    const description = tGame("profileDescription", {
+    const title = tMeta("gameTitle", { username, brand: getGameBrand(game).title });
+    const description = tMeta("gameDescription", {
       game: game.displayName,
       brand: game.productName,
       username,
@@ -116,13 +115,12 @@ export default async function RegionProfilePage({ params }: RegionProfilePagePro
     const locale = await getLocale();
     const profilePath = localizePath(`/profile/${encodeURIComponent(decodedUsername)}/${region}`, locale);
     const profileUrl = `${baseUrl}${profilePath}`;
-    const [tNav, tMeta, tGame] = await Promise.all([
+    const [tNav, tMeta] = await Promise.all([
       getTranslations("regions"),
       getTranslations("profileMetadata"),
-      getTranslations("multiGame"),
     ]);
 
-    const pageDescription = tGame("profileDescription", {
+    const pageDescription = tMeta("gameDescription", {
       game: game.displayName,
       brand: game.productName,
       displayName: snapshotData?.snapshot.displayName ?? decodedUsername,

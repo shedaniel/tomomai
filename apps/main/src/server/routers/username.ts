@@ -6,7 +6,7 @@ import { TRPCError } from '@trpc/server';
 import { eq } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
 import { z } from 'zod';
-import { revalidatePublicProfile } from '@/lib/profile-cache';
+import { revalidateCurrentSitePublicProfile } from '@/lib/profile-cache';
 
 // Username validation helper
 const isValidUsername = (username: string): boolean => {
@@ -122,7 +122,7 @@ export const usernameRouter = router({
         })
         .where(eq(user.id, ctx.session.user.id));
 
-      revalidatePublicProfile([currentUser.username, input.username]);
+      revalidateCurrentSitePublicProfile([currentUser.username, input.username]);
 
       return { success: true };
     }),

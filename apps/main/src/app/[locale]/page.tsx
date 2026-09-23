@@ -19,12 +19,12 @@ export const dynamic = 'force-dynamic';
 
 export async function generateMetadata(): Promise<Metadata> {
   const [t, locale] = await Promise.all([
-    getTranslations("multiGame"),
+    getTranslations("dashboard"),
     getLocale(),
   ]);
   const game = getFrontendGame();
   const title = getGameBrand(game).title;
-  const description = t("siteDescription", { game: game.displayName });
+  const description = t("gameDescription", { game: game.displayName });
   return {
     title,
     description,
@@ -74,9 +74,9 @@ export default async function Home() {
   const userRegion = getGameRegion(game, userData.region);
   if (!game.enabled || !userRegion) notFound();
 
-  const snapshots = await trpc.user.getSnapshotsForGame({ game: game.id, region: userRegion });
+  const snapshots = await trpc.user.getSnapshots({ game: game.id, region: userRegion });
   const initialSnapshotData = snapshots[0]
-    ? await trpc.user.getSnapshotForGame({ game: game.id, region: userRegion, snapshotId: snapshots[0].id })
+    ? await trpc.user.getSnapshotData({ game: game.id, region: userRegion, snapshotId: snapshots[0].id })
     : undefined;
 
   const locale = await getLocale();

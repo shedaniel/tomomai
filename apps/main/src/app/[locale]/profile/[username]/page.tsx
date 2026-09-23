@@ -30,13 +30,13 @@ export async function generateMetadata({ params }: ProfilePageProps): Promise<Me
   await setStaticLocale(routeLocale);
   const username = safeDecodeURIComponent(rawUsername);
   const [t, locale] = await Promise.all([
-    getTranslations("multiGame"),
+    getTranslations("profileMetadata"),
     getLocale(),
   ]);
 
   const game = getFrontendGame();
-  const title = t("profileTitle", { username, brand: getGameBrand(game).title });
-  const description = t("profileDescriptionUnknown", { username, game: game.displayName, brand: game.productName });
+  const title = t("gameTitle", { username, brand: getGameBrand(game).title });
+  const description = t("gameDescriptionUnknownRegion", { username, game: game.displayName, brand: game.productName });
   const path = `/profile/${encodeURIComponent(username)}`;
 
   // Mirror the regional page's metadata so embed crawlers that don't follow

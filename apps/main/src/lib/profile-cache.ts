@@ -1,18 +1,20 @@
 import { locales } from "@tomomai/i18n/locale";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-
-import { getEnabledRegions } from "@/lib/enabled-regions";
+import { getEnabledRegions } from "@/lib/games/regions";
+import { getFrontendGame } from "@/lib/games/frontend-server";
+import type { CanonicalGameId } from "@/lib/games/types";
 import { db } from "@/lib/db";
 import { user } from "@/lib/db/schema-pg";
 import type { Region } from "@/lib/types";
 
 export function revalidatePublicProfile(
+  game: CanonicalGameId,
   usernames: Array<string | null | undefined>,
-  regions: readonly Region[] = getEnabledRegions(),
+  regions: readonly Region[] = getEnabledRegions(game),
 ) {
+  if (game !== getFrontendGame().id) return;
   const uniqueUsernames = new Set(usernames.filter((username): username is string => Boolean(username)));
-
   for (const username of uniqueUsernames) {
     const encodedUsername = encodeURIComponent(username);
     for (const locale of locales) {
@@ -23,12 +25,19 @@ export function revalidatePublicProfile(
   }
 }
 
-export async function revalidatePublicProfileForUser(userId: string, regions?: readonly Region[]) {
+export async function revalidatePublicProfileForUser(game: CanonicalGameId, userId: string, regions?: readonly Region[]) {
   const [record] = await db
     .select({ username: user.username })
     .from(user)
     .where(eq(user.id, userId))
     .limit(1);
+  if (record?.username) revalidatePublicProfile(game, [record.username], regions);
+}
 
-  if (record?.username) revalidatePublicProfile([record.username], regions);
+export function revalidateCurrentSitePublicProfile(usernames: Array<string | null | undefined>, regions?: readonly Region[]) {
+  return revalidatePublicProfile(getFrontendGame().id, usernames, regions);
+}
+
+export function revalidateCurrentSitePublicProfileForUser(userId: string, regions?: readonly Region[]) {
+  return revalidatePublicProfileForUser(getFrontendGame().id, userId, regions);
 }

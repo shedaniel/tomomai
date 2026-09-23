@@ -9,7 +9,7 @@ import { z } from 'zod';
 import { getEnabledRegions, isCNExclusive } from '@/lib/enabled-regions';
 import { resolvePublicUserByUsername } from '@/server/queries/public-access';
 import { fetchProfileSettings } from '@/server/queries/profile';
-import { revalidatePublicProfile, revalidatePublicProfileForUser } from '@/lib/profile-cache';
+import { revalidateCurrentSitePublicProfile, revalidateCurrentSitePublicProfileForUser } from '@/lib/profile-cache';
 import { profileDescriptionInputSchema } from '@/lib/profile-description';
 
 const regionSchema = z.enum(getEnabledRegions());
@@ -75,7 +75,7 @@ export const profileRouter = router({
         })
         .where(eq(user.id, ctx.session.user.id));
 
-      await revalidatePublicProfileForUser(ctx.session.user.id);
+      await revalidateCurrentSitePublicProfileForUser(ctx.session.user.id);
       return { success: true };
     }),
 
@@ -103,7 +103,7 @@ export const profileRouter = router({
         })
         .where(eq(user.id, ctx.session.user.id));
 
-      revalidatePublicProfile([current.username]);
+      revalidateCurrentSitePublicProfile([current.username]);
       return { success: true };
     }),
 
@@ -146,7 +146,7 @@ export const profileRouter = router({
         })
         .where(eq(user.id, ctx.session.user.id));
 
-      revalidatePublicProfile([current.username]);
+      revalidateCurrentSitePublicProfile([current.username]);
       return { success: true };
     }),
 
@@ -188,7 +188,7 @@ export const profileRouter = router({
         })
         .where(eq(user.id, ctx.session.user.id));
 
-      revalidatePublicProfile([current.username]);
+      revalidateCurrentSitePublicProfile([current.username]);
       return { success: true };
     }),
 

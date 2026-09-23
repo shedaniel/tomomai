@@ -28,7 +28,12 @@ describe("public game snapshots", () => {
     expect(result).not.toHaveProperty("events");
     expect(result.snapshot.totalPlayCount).toBeNull();
     expect(result.songs[0]).not.toHaveProperty("dxScore");
+    expect(result.songs[0].chartRating).toBeGreaterThan(0);
     expect(result.songs[0]).toMatchObject({ secondaryScore: null, comboStatus: 0, syncStatus: 0, clearStatus: 0 });
+  });
+
+  it("rejects a snapshot from a different game", () => {
+    expect(() => toPublicGameSnapshot("maimai", data, { profileShowAllScores: true, profileShowScoreDetails: true, profileShowPlayCounts: true })).toThrow("Snapshot game does not match");
   });
 
   it("preserves opted-in scores, details and play counts", () => {

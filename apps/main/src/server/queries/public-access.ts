@@ -53,7 +53,7 @@ export async function resolvePublicUserByUsername(username: string, game: Canoni
   return userData;
 }
 
-export async function resolvePublicSnapshotUserIdForGame(game: CanonicalGameId, snapshotPublicId: string) {
+export async function resolvePublicSnapshotUserId(game: CanonicalGameId, snapshotPublicId: string) {
   const snapshotRecord = await db
     .select({
       userId: userSnapshots.userId,
@@ -81,6 +81,3 @@ export async function resolvePublicSnapshotUserIdForGame(game: CanonicalGameId, 
   return snapshotRecord[0];
 }
 
-export function resolvePublicSnapshotUserId(snapshotPublicId: string) {
-  return resolvePublicSnapshotUserIdForGame("maimai", snapshotPublicId);
-}
