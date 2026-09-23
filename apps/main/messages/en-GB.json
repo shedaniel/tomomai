@@ -612,7 +612,7 @@
     "fetchNewData": "Fetch New Data",
     "fetchingData": "Fetching data...",
     "lastUpdate": "Last updated",
-    "noDataInstructions": "No data found for this region. Click \"Fetch New Data\" to import your maimai scores. You'll need your maimai token for this process."
+    "noDataInstructions": "No data found for this region. Click \"Fetch New Data\" to import your {game} scores. You'll need your {game} token for this process."
   },
   "profileMetadata": {
     "title": "{username} | {brand}",
@@ -682,7 +682,7 @@
     },
     "switchToListForAllSongs": "Switch to List or Table view for all songs",
     "noDataAvailable": "No Data Available",
-    "getStartedInstructions": "Get started by fetching your maimai data using the fetch button above.",
+    "getStartedInstructions": "Get started by fetching your {game} data using the fetch button above.",
     "history": {
       "title": "Rating History",
       "ratingOverTime": "Rating Over Time",

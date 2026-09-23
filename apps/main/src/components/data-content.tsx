@@ -351,7 +351,7 @@ export function DataContent({
       <Database className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
       <h3 className="text-lg font-medium mb-2">{t('dataContent.noDataAvailable')}</h3>
       <p className="text-muted-foreground">
-        {t('dataContent.getStartedInstructions')}
+        {game.fetchConfigured ? t('dataContent.getStartedInstructions', { game: game.displayName }) : t('settings.pages.fetch.unavailable', { game: game.displayName })}
       </p>
     </div>
   );

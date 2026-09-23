@@ -34,6 +34,10 @@ export function useGameSnapshots(region: Region, initialSnapshots: GameSnapshotS
     data: selectedSnapshot ? snapshotQuery.data ?? initialData : null,
     isLoading: enabled && (snapshotsQuery.isLoading || (!!selectedSnapshot && !initialData && snapshotQuery.isLoading)),
     error: snapshotsQuery.error ?? snapshotQuery.error,
-    refresh: () => { void snapshotsQuery.refetch(); if (selectedSnapshot) void snapshotQuery.refetch(); },
+    refresh: () => {
+      setSelection({ scope, id: null });
+      void snapshotsQuery.refetch();
+      if (selectedSnapshot) void snapshotQuery.refetch();
+    },
   };
 }

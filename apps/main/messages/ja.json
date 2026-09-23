@@ -612,7 +612,7 @@
     "fetchNewData": "データ取得",
     "fetchingData": "データ取得中...",
     "lastUpdate": "最終更新",
-    "noDataInstructions": "この地域のデータがまだありません。「新しいデータを取得」からmaimaiスコアを取り込みましょう（ログイン／トークンが必要です）。"
+    "noDataInstructions": "この地域のデータがまだありません。「新しいデータを取得」から{game}スコアを取り込みましょう（ログイン／トークンが必要です）。"
   },
   "profileMetadata": {
     "title": "{username} | {brand}",
@@ -682,7 +682,7 @@
     },
     "switchToListForAllSongs": "すべての楽曲を見るには、リストまたは表表示に切り替えてください。",
     "noDataAvailable": "データがありません",
-    "getStartedInstructions": "上の取得ボタンからmaimaiデータを取得して使い始めましょう。",
+    "getStartedInstructions": "上の取得ボタンから{game}データを取得して使い始めましょう。",
     "history": {
       "title": "レート値の履歴",
       "ratingOverTime": "レート値の推移",

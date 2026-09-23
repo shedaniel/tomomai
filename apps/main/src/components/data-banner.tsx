@@ -303,6 +303,7 @@ function NoDataInstructions({
   region: Region;
   t: any;
 }) {
+  const game = useGame();
   if (hasSnapshots) return null;
 
   return (
@@ -313,7 +314,7 @@ function NoDataInstructions({
       transition={getTransition({ duration: 0.3 })}
     >
       <p className="text-sm text-muted-foreground">
-        {t('dataBanner.noDataInstructions')}
+        {t('dataBanner.noDataInstructions', { game: game.displayName })}
       </p>
     </motion.div>
   );

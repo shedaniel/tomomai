@@ -622,7 +622,7 @@
     "fetchNewData": "导入新数据",
     "fetchingData": "导入数据中...",
     "lastUpdate": "最后更新",
-    "noDataInstructions": "此区域没有任何数据。点击“导入新数据”来导入你的 maimai 成绩。"
+    "noDataInstructions": "此区域没有任何数据。点击“导入新数据”来导入你的 {game} 成绩。"
   },
   "profileVisibility": {
     "public": "公开主页",
@@ -682,7 +682,7 @@
     },
     "switchToListForAllSongs": "切换到列表或表格视图查看所有歌曲",
     "noDataAvailable": "无可用数据",
-    "getStartedInstructions": "点击上方的导入按钮来导入你的 maimai 数据。",
+    "getStartedInstructions": "点击上方的导入按钮来导入你的 {game} 数据。",
     "history": {
       "title": "R 值历史记录",
       "ratingOverTime": "R 值变化趋势",

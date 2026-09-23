@@ -53,6 +53,11 @@ describe("normalized player views", () => {
     expect(markup).not.toContain(">Status<");
     expect(markup).not.toContain("Play count");
   });
+  it("keeps historical selection until refresh clears it, then follows the newest snapshot", () => {
+    const snapshots = [{ id: "new-fetch" }, { id: "history" }];
+    expect(getSnapshotSelection(snapshots, "history")).toBe("history");
+    expect(getSnapshotSelection(snapshots, null)).toBe("new-fetch");
+  });
   it("drops a stale snapshot selection when its game or region list changes", () => {
     expect(getSnapshotSelection([], "old-game-id")).toBeNull();
     const snapshots = [{ id: "new-game-id" }];

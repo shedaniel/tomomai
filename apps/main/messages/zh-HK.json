@@ -612,7 +612,7 @@
     "fetchNewData": "匯入新資料",
     "fetchingData": "匯入資料中……",
     "lastUpdate": "最後更新",
-    "noDataInstructions": "此區域沒有任何資料。點擊「匯入新資料」以匯入你的 maimai 成績。"
+    "noDataInstructions": "此區域沒有任何資料。點擊「匯入新資料」以匯入你的 {game} 成績。"
   },
   "profileMetadata": {
     "title": "{username} | {brand}",
@@ -682,7 +682,7 @@
     },
     "switchToListForAllSongs": "切換至清單或表格檢視以查看所有歌曲",
     "noDataAvailable": "無可用資料",
-    "getStartedInstructions": "點擊上方的匯入按鈕以匯入你的 maimai 資料。",
+    "getStartedInstructions": "點擊上方的匯入按鈕以匯入你的 {game} 資料。",
     "history": {
       "title": "Rating 歷史紀錄",
       "ratingOverTime": "Rating 變化趨勢",
