@@ -1,3 +1,4 @@
+import { gameIdSchema } from "@/lib/games/schema";
 import { z } from "zod";
 
 /**
@@ -9,7 +10,7 @@ import { z } from "zod";
  * both the OpenAPI schema and the on-site param/response tables.
  */
 
-export const gameSchema = z.enum(["maimai", "chunithm"]);
+export const gameSchema = gameIdSchema;
 export const regionSchema = z.enum(["intl", "jp", "cn"]).describe("Game region to read data from.");
 
 export const querySchemas = {

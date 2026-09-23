@@ -1,3 +1,4 @@
+import { gameIdSchema } from "@/lib/games/schema";
 import { z } from "zod";
 import type { ScopeKey } from "./scopes";
 
@@ -70,7 +71,7 @@ export function defineRoute<
 }
 
 export function defineGameRoute<Q extends z.ZodTypeAny, R extends z.ZodTypeAny>(spec: RouteSpec<Q, R>) {
-  const game = z.enum(["maimai", "chunithm"]).describe("Canonical game ID; unavailable games return GAME_NOT_ENABLED.");
+  const game = gameIdSchema.describe("Canonical game ID; unavailable games return GAME_NOT_ENABLED.");
   return defineRoute({
     ...spec,
     params: spec.params instanceof z.ZodObject ? spec.params.extend({ game }) : z.object({ game }),

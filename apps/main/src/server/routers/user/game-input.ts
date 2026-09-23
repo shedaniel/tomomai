@@ -1,11 +1,12 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { resolveGameContext } from "@/lib/games/registry";
-import { CANONICAL_GAME_IDS, GameAdapterError, type GameCapability } from "@/lib/games/types";
+import { GameAdapterError, type GameCapability } from "@/lib/games/types";
+import { gameIdSchema } from "@/lib/games/schema";
 import type { Region } from "@/lib/types";
 
 export const gameContextInput = {
-  game: z.enum(CANONICAL_GAME_IDS),
+  game: gameIdSchema,
   region: z.enum(["intl", "jp", "cn"]),
 };
 
