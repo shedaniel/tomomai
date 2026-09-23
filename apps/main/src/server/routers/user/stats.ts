@@ -1,3 +1,4 @@
+import { maimaiCompatibilityGameSchema } from "@/lib/games/schema";
 import { gameContextInput, validateGameInput } from "./game-input";
 import { fetchPlayerStatsForGame } from "@/server/queries/stats";
 import { protectedProcedure, publicProcedure, router } from '@/lib/trpc';
@@ -17,7 +18,7 @@ export const statsRouter = router({
     }),
 
   getPlayerStats: protectedProcedure
-    .input(z.object({ game: z.literal("maimai").default("maimai"),
+    .input(z.object({ game: maimaiCompatibilityGameSchema,
       region: regionSchema,
     }))
     .query(async ({ ctx, input }) => {
@@ -25,7 +26,7 @@ export const statsRouter = router({
     }),
 
   getPublicPlayerStats: publicProcedure
-    .input(z.object({ game: z.literal("maimai").default("maimai"),
+    .input(z.object({ game: maimaiCompatibilityGameSchema,
       snapshotId: z.string(),
       region: regionSchema,
     }))

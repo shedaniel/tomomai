@@ -1,3 +1,4 @@
+import { useGameId } from "@/components/providers/game-provider";
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { trpc, trpcClient } from "@/lib/trpc-client";
 import { toast } from "sonner";
@@ -11,6 +12,7 @@ const FETCH_STATUS_INTERVAL_MS = 2000;
 const HIDDEN_TAB_RECHECK_INTERVAL_MS = 5000;
 
 export function useFetchSession(onFetchComplete?: () => void, onTokenError?: () => void, onUseAlbumError?: () => void, onCnCookiesExpired?: () => void) {
+  const game = useGameId();
   const [currentSession, setCurrentSession] = useState<FetchSession | null>(null);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [lastFetchTime, setLastFetchTime] = useState<Date | null>(null);
@@ -25,7 +27,7 @@ export function useFetchSession(onFetchComplete?: () => void, onTokenError?: () 
 
   // Poll for new fetch sessions (lightweight query)
   const { data: latestSessionData } = trpc.user.getLatestFetchSessionId.useQuery(
-    { region: sessionPollingRegion! },
+    { game, region: sessionPollingRegion! },
     {
       enabled: sessionPollingEnabled && sessionPollingRegion !== null,
       refetchInterval: SESSION_DETECTION_INTERVAL_MS,
@@ -67,7 +69,7 @@ export function useFetchSession(onFetchComplete?: () => void, onTokenError?: () 
       }
 
       try {
-        const result = await trpcClient.user.getFetchStatus.query({ region });
+        const result = await trpcClient.user.getFetchStatus.query({ game, region });
 
         if (generation !== fetchPollingGenerationRef.current) return;
 
@@ -129,7 +131,7 @@ export function useFetchSession(onFetchComplete?: () => void, onTokenError?: () 
     };
 
     void poll();
-  }, [onFetchComplete, onTokenError, onUseAlbumError]);
+  }, [game, onFetchComplete, onTokenError, onUseAlbumError]);
 
   // Detect new sessions
   useEffect(() => {
@@ -212,7 +214,7 @@ export function useFetchSession(onFetchComplete?: () => void, onTokenError?: () 
     setFetchError(null);
 
     // Let the mutation error bubble up to the caller
-    await startFetchMutation.mutateAsync({ region, token });
+    await startFetchMutation.mutateAsync({ game, region, token });
   };
 
   // Start automatic fetch using saved token

@@ -1,3 +1,4 @@
+import { maimaiCompatibilityGameSchema } from "@/lib/games/schema";
 import { protectedProcedure, publicProcedure, router } from '@/lib/trpc';
 import { z } from 'zod';
 import { getEnabledRegions } from '@/lib/enabled-regions';
@@ -8,13 +9,13 @@ const regionSchema = z.enum(getEnabledRegions());
 
 export const dailyPlaysRouter = router({
   getAvailableDays: protectedProcedure
-    .input(z.object({ game: z.literal("maimai").default("maimai"), region: regionSchema }))
+    .input(z.object({ game: maimaiCompatibilityGameSchema, region: regionSchema }))
     .query(async ({ ctx, input }) => {
       return await listDailyPlaysAvailableDays(ctx.session.user.id, input.region);
     }),
 
   getPublicAvailableDays: publicProcedure
-    .input(z.object({ game: z.literal("maimai").default("maimai"), snapshotId: z.string(), region: regionSchema }))
+    .input(z.object({ game: maimaiCompatibilityGameSchema, snapshotId: z.string(), region: regionSchema }))
     .query(async ({ input }) => {
       const { userId } = await resolvePublicSnapshotUserId(input.snapshotId);
       return await listDailyPlaysAvailableDays(userId, input.region);

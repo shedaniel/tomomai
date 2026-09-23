@@ -1,3 +1,4 @@
+import { maimaiCompatibilityGameSchema } from "@/lib/games/schema";
 import { gameContextInput, validateGameInput } from "./game-input";
 import { fetchRecentSongsForGame } from "@/server/queries/recents";
 import { protectedProcedure, publicProcedure, router } from '@/lib/trpc';
@@ -43,7 +44,7 @@ export const recentsRouter = router({
     }),
 
   getRecentSongs: protectedProcedure
-    .input(z.object({ game: z.literal("maimai").default("maimai"),
+    .input(z.object({ game: maimaiCompatibilityGameSchema,
       region: regionSchema,
       limit: z.number().min(1).max(100).default(50),
       offset: z.number().min(0).default(0),
@@ -60,7 +61,7 @@ export const recentsRouter = router({
     }),
 
   getPublicRecentSongs: publicProcedure
-    .input(z.object({ game: z.literal("maimai").default("maimai"),
+    .input(z.object({ game: maimaiCompatibilityGameSchema,
       snapshotId: z.string(),
       region: regionSchema,
       limit: z.number().min(1).max(100).default(50),

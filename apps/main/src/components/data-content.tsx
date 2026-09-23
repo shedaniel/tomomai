@@ -1,5 +1,9 @@
 "use client";
 
+import { useGame } from "@/components/providers/game-provider";
+import { getPlayerPresentation, type GameSnapshotData } from "@/lib/games/player-view";
+import { GameSnapshotContent } from "./game-snapshot-content";
+import { GameRecentPage, GameAlbumPage } from "./game-player-extras";
 import { ProfilePrivacySettings, Region, SnapshotWithSongs } from "@/lib/types";
 import { Sidebar, SidebarItem } from "@tomomai/ui";
 import { BarChart, Clock, Code, Database, Heart, Image as ImageIcon, Loader2, Map, Music, TrendingUp, User, Images } from "lucide-react";
@@ -51,6 +55,7 @@ const DEFAULT_PRIVACY_SETTINGS: ProfilePrivacySettings = {
 };
 
 interface DataContentProps {
+  normalizedSnapshotData?: GameSnapshotData | null;
   region: Region;
   selectedSnapshotData: SnapshotWithSongs | null;
   isLoading: boolean;
@@ -68,6 +73,7 @@ interface DataContentProps {
 
 export function DataContent({
   selectedSnapshotData,
+  normalizedSnapshotData,
   isLoading,
   privacySettings = DEFAULT_PRIVACY_SETTINGS,
   visitableProfileAt,
@@ -81,6 +87,8 @@ export function DataContent({
   region,
   flags,
 }: DataContentProps) {
+  const game = useGame();
+  const { legacyPanels } = getPlayerPresentation(game.id);
   const t = useTranslations();
   const searchParams = useSearchParams();
   const isDesktop = useMediaQuery("(min-width: 768px)", { initializeWithValue: false });
@@ -214,12 +222,18 @@ export function DataContent({
     }
   ];
 
-  const visibleTabs = allTabs.filter(tab => tab.show);
+  const genericTabs: Record<string, boolean> = {
+    info: true, songs: true,
+    recent: visitedBySelf && game.capabilities.includes("recents"),
+    albums: visitedBySelf && game.capabilities.includes("albums"),
+    map: game.capabilities.includes("events") && localPrivacySettings.profileShowEvents,
+  };
+  const visibleTabs = allTabs.filter(tab => tab.show && (legacyPanels || genericTabs[tab.value]));
   const validTabs = visibleTabs.map(tab => tab.value);
 
   // Ensure selected tab is valid/visible, fallback to info if not
   useEffect(() => {
-    if (selectedSnapshotData && !validTabs.includes(selectedTab)) {
+    if ((selectedSnapshotData || normalizedSnapshotData) && !validTabs.includes(selectedTab)) {
       setSelectedTab("info");
       updateTabUrl("info");
     }
@@ -234,7 +248,7 @@ export function DataContent({
     );
   }
 
-  if (selectedSnapshotData) {
+  if (selectedSnapshotData || normalizedSnapshotData) {
     return (
       <div className="flex flex-col md:flex-row md:items-start gap-x-6 lg:gap-x-8 gap-y-6">
         <div className="max-md:contents md:flex md:flex-col md:gap-4">
@@ -248,7 +262,7 @@ export function DataContent({
             ))}
           </Sidebar>
           <div className="max-md:hidden md:w-48 md:-ml-3">
-            <MinigameCards className="grid-cols-1" />
+            {legacyPanels && <MinigameCards className="grid-cols-1" />}
           </div>
         </div>
 
@@ -261,7 +275,11 @@ export function DataContent({
             transition={getTransition({ duration: 0.2, ease: [0.4, 0, 0.2, 1] })}
             className="flex-1 min-w-0 mx-1"
           >
-            {selectedTab === "info" && (
+            {!legacyPanels && normalizedSnapshotData && (selectedTab === "info" || selectedTab === "songs") && <GameSnapshotContent key={selectedTab} game={game} data={normalizedSnapshotData} initialView={selectedTab === "songs" ? "songs" : "rankings"} showAllScores={localPrivacySettings.profileShowAllScores} showScoreDetails={localPrivacySettings.profileShowScoreDetails} showPlayCounts={localPrivacySettings.profileShowPlayCounts} />}
+            {!legacyPanels && normalizedSnapshotData && selectedTab === "recent" && visitedBySelf && <GameRecentPage key={`${game.id}:${region}`} region={region} beforeDate={new Date(normalizedSnapshotData.snapshot.fetchedAt)} />}
+            {!legacyPanels && selectedTab === "albums" && visitedBySelf && <GameAlbumPage key={`${game.id}:${region}`} region={region} />}
+            {!legacyPanels && normalizedSnapshotData && selectedTab === "map" && <div>{normalizedSnapshotData.events?.length ? <ul className="space-y-2">{normalizedSnapshotData.events.map((event, index) => <li key={index}>{event.name}</li>)}</ul> : <p className="text-muted-foreground">{t("multiGame.noEvents")}</p>}</div>}
+            {legacyPanels && selectedSnapshotData && selectedTab === "info" && (
               <InfoCard
                 selectedSnapshotData={selectedSnapshotData}
                 showPlayCounts={localPrivacySettings.profileShowPlayCounts}
@@ -281,33 +299,33 @@ export function DataContent({
                 onPublishProfileChange={setLocalPublishProfile}
               />
             )}
-            {selectedTab === "stats" && (visitedBySelf || !!localPrivacySettings.profileShowAllScores) && (
+            {legacyPanels && selectedSnapshotData && selectedTab === "stats" && (visitedBySelf || !!localPrivacySettings.profileShowAllScores) && (
               <StatsCard
                 region={region}
                 selectedSnapshotData={selectedSnapshotData}
                 snapshotId={visitedBySelf ? undefined : selectedSnapshotData?.snapshot.id}
               />
             )}
-            {selectedTab === "songs" && (
+            {legacyPanels && selectedSnapshotData && selectedTab === "songs" && (
               <SongsCard selectedSnapshotData={selectedSnapshotData} flags={flags} />
             )}
-            {selectedTab === "recent" && (visitedBySelf || !!localPrivacySettings.profileShowScoreDetails) && (
+            {legacyPanels && selectedSnapshotData && selectedTab === "recent" && (visitedBySelf || !!localPrivacySettings.profileShowScoreDetails) && (
               <RecentSongsCard
                 region={region}
                 beforeDate={selectedSnapshotData?.snapshot.fetchedAt}
                 snapshotId={visitedBySelf ? undefined : selectedSnapshotData?.snapshot.id}
               />
             )}
-            {selectedTab === "recommendations" && (
+            {legacyPanels && selectedSnapshotData && selectedTab === "recommendations" && (
               <RecommendationCard selectedSnapshotData={selectedSnapshotData} flags={flags} region={region} />
             )}
-            {selectedTab === "history" && visitedBySelf && flags.historyCard && (
+            {legacyPanels && selectedSnapshotData && selectedTab === "history" && visitedBySelf && flags.historyCard && (
               <HistoryCard region={region} />
             )}
-            {selectedTab === "map" && localPrivacySettings.profileShowEvents && (
+            {legacyPanels && selectedSnapshotData && selectedTab === "map" && localPrivacySettings.profileShowEvents && (
               <EventsCard selectedSnapshotData={selectedSnapshotData} />
             )}
-            {selectedTab === "exportImage" && (
+            {legacyPanels && selectedSnapshotData && selectedTab === "exportImage" && (
               <ExportImageCard
                 selectedSnapshotData={selectedSnapshotData}
                 region={region}
@@ -316,10 +334,10 @@ export function DataContent({
                 publicSnapshotId={visitedBySelf ? undefined : selectedSnapshotData.snapshot.id}
               />
             )}
-            {selectedTab === "developer" && visitedBySelf && (
+            {legacyPanels && selectedSnapshotData && selectedTab === "developer" && visitedBySelf && (
               <DeveloperCard selectedSnapshotData={selectedSnapshotData} />
             )}
-            {selectedTab === "albums" && visitedBySelf && flags.albumsCard && (
+            {legacyPanels && selectedSnapshotData && selectedTab === "albums" && visitedBySelf && flags.albumsCard && (
               <AlbumCard region={region} />
             )}
           </motion.div>

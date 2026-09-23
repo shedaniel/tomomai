@@ -1,5 +1,6 @@
 "use client";
 
+import { useGameId } from "@/components/providers/game-provider";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@tomomai/ui";
 import { SongWithRating, splitSongs } from "@/lib/rating-calculator";
 import { MinimalSongForDisplay, SnapshotWithSongs } from "@/lib/types";
@@ -688,7 +689,7 @@ export function SongsCard({ selectedSnapshotData, flags }: { selectedSnapshotDat
   const b50Songs = useMemo(() => [...newSongsB15, ...oldSongsB35], [newSongsB15, oldSongsB35]);
 
   const { data: percentileData } = trpc.user.getChartPercentiles.useQuery(
-    {
+    { game: useGameId(),
       songs: b50Songs.map((s) => ({ publicSongId: s.songId, achievement: s.achievement })),
       userRating: snapshot.rating,
     },

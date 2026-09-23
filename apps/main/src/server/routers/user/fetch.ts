@@ -1,3 +1,4 @@
+import { maimaiCompatibilityGameSchema } from "@/lib/games/schema";
 import { gameContextInput, validateGameInput } from "./game-input";
 import { resolveFlagsForUser } from "@/lib/flags";
 import { startScoreFetch, getScoreFetchStatus } from "@/server/services/games/score-ingestion";
@@ -50,7 +51,7 @@ export const fetchRouter = router({
     }),
 
   startFetch: protectedProcedure
-    .input(z.object({ game: z.literal("maimai").default("maimai"),
+    .input(z.object({ game: maimaiCompatibilityGameSchema,
       region: regionSchema,
       token: z.string().optional(),
     }))
@@ -90,7 +91,7 @@ export const fetchRouter = router({
     }),
 
   getFetchStatus: protectedProcedure
-    .input(z.object({ game: z.literal("maimai").default("maimai"),
+    .input(z.object({ game: maimaiCompatibilityGameSchema,
       region: regionSchema,
     }))
     .query(async ({ ctx, input }) => {
@@ -98,7 +99,7 @@ export const fetchRouter = router({
     }),
 
   getLatestFetchSessionId: protectedProcedure
-    .input(z.object({ game: z.literal("maimai").default("maimai"),
+    .input(z.object({ game: maimaiCompatibilityGameSchema,
       region: regionSchema,
     }))
     .query(async ({ ctx, input }) => {
@@ -121,7 +122,7 @@ export const fetchRouter = router({
     }),
 
   deleteToken: protectedProcedure
-    .input(z.object({ game: z.literal("maimai").default("maimai"),
+    .input(z.object({ game: maimaiCompatibilityGameSchema,
       region: regionSchema,
     }))
     .mutation(async ({ ctx, input }) => {

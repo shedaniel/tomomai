@@ -1546,10 +1546,19 @@
     "version": "Version",
     "catalogError": "Unable to load the catalog. Please try again.",
     "noCatalogCharts": "No charts are available for this selection.",
-    "optionalViewsPending": "These views are not available yet: {features}.",
     "recents": "Recent plays",
     "albums": "Albums",
-    "events": "Events"
+    "events": "Events",
+    "noRecents": "No recent plays have been imported.",
+    "noAlbums": "No albums have been imported.",
+    "imageUnavailable": "Image unavailable",
+    "previous": "Previous",
+    "next": "Next",
+    "noEvents": "No events have been imported.",
+    "siteDescription": "Track and analyze {game} scores with friends.",
+    "profileDescription": "{displayName} ({username}) on {region} {game}. View their scores and progress on {brand}.",
+    "profileDescriptionUnknown": "View {username}’s {game} profile on {brand}.",
+    "profileTitle": "{username} | {brand}"
   },
   "landing": {
     "headline": "Track your maimai DX scores",

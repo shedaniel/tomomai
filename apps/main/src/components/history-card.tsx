@@ -1,5 +1,6 @@
 "use client";
 
+import { useGameId } from "@/components/providers/game-provider";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@tomomai/ui";
 import { Slider } from "@tomomai/ui";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@tomomai/ui";
@@ -31,7 +32,7 @@ export function HistoryCard({ region }: HistoryCardProps) {
   const [dateRange, setDateRange] = useState<[number, number]>([0, 100]);
 
   // Fetch rating history from tRPC
-  const { data, isLoading } = trpc.user.getRatingHistory.useQuery({ region });
+  const { data, isLoading } = trpc.user.getRatingHistory.useQuery({ game: useGameId(), region });
 
   // Format data for the chart (all data)
   const allChartData = useMemo(() => {

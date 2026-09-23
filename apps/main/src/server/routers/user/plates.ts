@@ -1,3 +1,4 @@
+import { maimaiCompatibilityGameSchema } from "@/lib/games/schema";
 import { db } from '@/lib/db';
 import { userSnapshots } from '@/lib/db/schema-pg';
 import { protectedProcedure, publicProcedure, router } from '@/lib/trpc';
@@ -12,7 +13,7 @@ const regionSchema = z.enum(getEnabledRegions());
 
 export const platesRouter = router({
   getPlateSongs: protectedProcedure
-    .input(z.object({ game: z.literal("maimai").default("maimai"),
+    .input(z.object({ game: maimaiCompatibilityGameSchema,
       region: regionSchema,
       version: z.string(),
       difficulty: z.enum(["basic", "advanced", "expert", "master"]),
@@ -46,7 +47,7 @@ export const platesRouter = router({
     }),
 
   getPublicPlateSongs: publicProcedure
-    .input(z.object({ game: z.literal("maimai").default("maimai"),
+    .input(z.object({ game: maimaiCompatibilityGameSchema,
       snapshotId: z.string(),
       region: regionSchema,
       version: z.string(),

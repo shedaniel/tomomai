@@ -1,5 +1,6 @@
 "use client";
 
+import { useGameId } from "@/components/providers/game-provider";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { SparklesIcon } from "lucide-react";
@@ -580,7 +581,7 @@ export function TomomaiAI({ snapshotData, region, aprilFools2026 }: TomomaiAIPro
 
   // Lazily fetch recent songs when dialog opens (may fail on public profile pages — that's fine)
   const { data: recentData } = trpc.user.getRecentSongs.useQuery(
-    { region, limit: 50, offset: 0 },
+    { game: useGameId(), region, limit: 50, offset: 0 },
     { enabled: open, retry: false },
   );
 

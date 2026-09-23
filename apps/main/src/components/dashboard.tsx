@@ -1,5 +1,8 @@
 "use client";
 
+import { useGame } from "@/components/providers/game-provider";
+import { getGameRegion } from "@/lib/games/frontend";
+import { getPlayerPresentation, type GameSnapshotData, type GameSnapshotSummary } from "@/lib/games/player-view";
 import { DataBanner } from "@/components/data-banner";
 import { DataContent } from "@/components/data-content";
 import { FetchToastContainer } from "@/components/fetch-toast";
@@ -33,13 +36,15 @@ type DialogType = null | "token" | "token-cn-proxy" | "onboarding" | "about" | "
 interface DashboardProps {
   user: User;
   initialUserData: UserData;
-  initialSnapshots: Snapshot[];
-  initialSnapshotData?: SnapshotWithSongs;
+  initialSnapshots: GameSnapshotSummary[];
+  initialSnapshotData?: GameSnapshotData;
   flags: Flags;
   latestPost: PostMeta | null;
 }
 
 export function Dashboard({ user, initialUserData, initialSnapshots, initialSnapshotData, flags, latestPost }: DashboardProps) {
+  const game = useGame();
+  const presentation = getPlayerPresentation(game.id);
   const [dialogType, setDialogType] = useState<DialogType>(null);
   const t = useTranslations("dashboard");
 
@@ -53,7 +58,7 @@ export function Dashboard({ user, initialUserData, initialSnapshots, initialSnap
   );
 
   // Use the stored region preference, fallback to "intl" or "cn" if not set
-  const selectedRegion: Region = (userData?.region as Region) || (isCNExclusive() ? "cn" : "intl");
+  const selectedRegion: Region = getGameRegion(game, userData?.region) ?? "intl";
 
   // Show onboarding dialog if user doesn't have username
   useEffect(() => {
@@ -66,6 +71,7 @@ export function Dashboard({ user, initialUserData, initialSnapshots, initialSnap
     snapshots,
     selectedSnapshot,
     selectedSnapshotData,
+    normalizedSnapshotData,
     setSelectedSnapshot,
     deleteSnapshot,
     copySnapshot,
@@ -242,9 +248,12 @@ export function Dashboard({ user, initialUserData, initialSnapshots, initialSnap
           currentSession={currentSession}
           onCopySnapshot={handleCopySnapshot}
           isCopying={isCopying}
+          supportsCopy={presentation.legacyPanels}
+          supportsFetch={!!game.fetchConfigured}
         />
 
         <DataContent
+          normalizedSnapshotData={normalizedSnapshotData}
           region={selectedRegion}
           selectedSnapshotData={selectedSnapshotData || null}
           isLoading={isLoadingSnapshots}
@@ -257,16 +266,16 @@ export function Dashboard({ user, initialUserData, initialSnapshots, initialSnap
         />
       </div>
 
-      <TokenDialog
+      {game.fetchConfigured && <TokenDialog
         region={selectedRegion}
         isOpen={dialogType === "token"}
         onOpenChange={open => setDialogType(open ? "token" : null)}
         onTokenUpdate={handleTokenUpdate}
         startSessionPolling={startSessionPolling}
         stopSessionPolling={stopSessionPolling}
-      />
+      />} 
 
-      {selectedRegion === "cn" ? (
+      {game.fetchConfigured && selectedRegion === "cn" ? (
         <HttpProxyAuthSubDialog
           isOpen={dialogType === "token-cn-proxy"}
           onOpenChange={open => setDialogType(open ? "token-cn-proxy" : null)}
@@ -291,21 +300,21 @@ export function Dashboard({ user, initialUserData, initialSnapshots, initialSnap
       <AdminDialog open={dialogType === "admin"} onOpenChange={open => setDialogType(open ? "admin" : null)} />
       <ExperimentsDialog open={dialogType === "experiments"} onOpenChange={open => setDialogType(open ? "experiments" : null)} />
 
-      <AlbumPrivacyDialog
+      {game.fetchConfigured && <AlbumPrivacyDialog
         open={dialogType === "albumPrivacy"}
         onOpenChange={open => setDialogType(open ? "albumPrivacy" : null)}
         onSelectPreference={(fetchUseAlbums) => {
           setAlbumPreferenceMutation.mutate({ fetchUseAlbums });
         }}
         isPending={setAlbumPreferenceMutation.isPending}
-      />
+      />}
 
       <ChangelogDialog latestPost={latestPost} />
 
       <ConsentGate />
 
       <FetchToastContainer state={fetchToastState} />
-      <TomomaiAI snapshotData={selectedSnapshotData || null} region={selectedRegion} aprilFools2026={flags.aprilFools2026} />
+      {presentation.legacyPanels && <TomomaiAI snapshotData={selectedSnapshotData || null} region={selectedRegion} aprilFools2026={flags.aprilFools2026} />}
     </div>
   );
 }

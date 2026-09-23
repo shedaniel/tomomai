@@ -36,7 +36,7 @@ import { toast } from "sonner";
 export function FetchSettings() {
   const t = useTranslations();
   const game = useGame();
-  if (game.id !== "maimai") return <SettingsHeader title={t("settings.pages.fetch.title")} description={t("multiGame.fetchUnavailable", { game: game.displayName })} />;
+  if (!game.fetchConfigured) return <SettingsHeader title={t("settings.pages.fetch.title")} description={t("multiGame.fetchUnavailable", { game: game.displayName })} />;
   return (
     <SettingsForm>
       <SettingsHeader
@@ -50,6 +50,7 @@ export function FetchSettings() {
 }
 
 function FetchFields() {
+  const game = useGame();
   const t = useTranslations();
   const [tokenDialogOpen, setTokenDialogOpen] = useState(false);
   const [selectedFetchUseAlbums, setSelectedFetchUseAlbums] = useState<boolean | null | undefined>(undefined);
@@ -91,7 +92,7 @@ function FetchFields() {
 
   const handleDeleteToken = async () => {
     try {
-      await deleteTokenMutation.mutateAsync({ region: selectedRegion });
+      await deleteTokenMutation.mutateAsync({ game: game.id, region: selectedRegion });
       toast.success(t("settings.account.deleteTokenSuccess"));
     } catch (error) {
       console.error("Failed to delete token:", error);

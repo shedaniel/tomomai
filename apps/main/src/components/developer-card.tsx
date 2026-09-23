@@ -1,5 +1,6 @@
 "use client";
 
+import { useGameId } from "@/components/providers/game-provider";
 import { Button } from "@tomomai/ui";
 import { trpc } from "@/lib/trpc-client";
 import { SnapshotWithSongs } from "@/lib/types";
@@ -53,7 +54,7 @@ export function DeveloperCard({ selectedSnapshotData }: DeveloperCardProps) {
   const [isSchemaExpanded, setIsSchemaExpanded] = useState(false);
 
   const { refetch } = trpc.user.exportSnapshotData.useQuery(
-    { snapshotId: selectedSnapshotData.snapshot.id },
+    { game: useGameId(), snapshotId: selectedSnapshotData.snapshot.id },
     { enabled: false }
   );
 

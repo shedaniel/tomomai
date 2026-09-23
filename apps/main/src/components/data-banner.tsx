@@ -1,6 +1,6 @@
 "use client";
 
-import { useGameId } from "@/components/providers/game-provider";
+import { useGame, useGameId } from "@/components/providers/game-provider";
 import { formatGameRating } from "@/lib/games/presentation";
 import {
   ResponsiveDialog,
@@ -25,7 +25,8 @@ import {
 } from "@tomomai/ui";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@tomomai/ui/select-friendly";
 import { calculateProgress, parseStatusStates } from "@/lib/fetch-states";
-import { getVersionInfo, VersionId } from "@/lib/metadata";
+import type { VersionId } from "@/lib/metadata";
+import { getVersionInfo } from "@/lib/games/versions";
 import { trpc } from "@/lib/trpc-client";
 import { FetchSession, Region, Snapshot } from "@/lib/types";
 import { Calendar, Copy, Download, MoreHorizontal, Trash2 } from "lucide-react";
@@ -36,6 +37,8 @@ import { motion, AnimatePresence } from "motion/react";
 import { getTransition } from "@/lib/animation-constants";
 
 interface DataBannerProps {
+  supportsCopy?: boolean;
+  supportsFetch?: boolean;
   region: Region;
   snapshots: Snapshot[];
   selectedSnapshot: string | null;
@@ -62,11 +65,13 @@ function formatDate(date: Date) {
 
 // Snapshot selector component
 function SnapshotSelector({
+  region,
   snapshots,
   selectedSnapshot,
   onSnapshotChange,
   t
 }: {
+  region: Region;
   snapshots: Snapshot[];
   selectedSnapshot: string | null;
   onSnapshotChange: (snapshotId: string) => void;
@@ -84,7 +89,7 @@ function SnapshotSelector({
               <div className="flex items-center gap-1.5 min-w-0">
                 <span className="truncate text-xs font-medium">{selectedSnapshotData.displayName}</span>
                 <Badge variant="tonal" className="shrink-0 px-1.5 py-0 text-2xs font-medium bg-primary-container/50">{formatGameRating(game, selectedSnapshotData.rating)} rating</Badge>
-                <Badge variant="secondary" className="shrink-0 px-1.5 py-0 text-2xs font-normal bg-secondary/50">{getVersionInfo(selectedSnapshotData.gameVersion)?.shortName || "Unknown"}</Badge>
+                <Badge variant="secondary" className="shrink-0 px-1.5 py-0 text-2xs font-normal bg-secondary/50">{getVersionInfo(game, region, selectedSnapshotData.gameVersion)?.shortName || "Unknown"}</Badge>
               </div>
               <span className="text-2xs text-muted-foreground">{formatDate(selectedSnapshotData.fetchedAt)}</span>
             </div>
@@ -100,7 +105,7 @@ function SnapshotSelector({
               <div className="flex items-center gap-1.5 min-w-0">
                 <span className="truncate text-xs font-medium">{snapshot.displayName}</span>
                 <Badge variant="tonal" className="shrink-0 px-1.5 py-0 text-2xs font-medium bg-primary-container/50">{formatGameRating(game, snapshot.rating)} rating</Badge>
-                <Badge variant="secondary" className="shrink-0 px-1.5 py-0 text-2xs font-normal bg-secondary/50">{getVersionInfo(snapshot.gameVersion)?.shortName || "Unknown"}</Badge>
+                <Badge variant="secondary" className="shrink-0 px-1.5 py-0 text-2xs font-normal bg-secondary/50">{getVersionInfo(game, region, snapshot.gameVersion)?.shortName || "Unknown"}</Badge>
               </div>
               <span className="text-2xs text-muted-foreground">{formatDate(snapshot.fetchedAt)}</span>
             </div>
@@ -177,7 +182,7 @@ function CopySnapshotButton({
     data: availableVersionsData,
     isLoading: isLoadingVersions,
   } = trpc.user.getAvailableVersionsForCopy.useQuery(
-    {
+    { game: useGameId(),
       region,
       currentVersion: currentGameVersion!,
     },
@@ -315,6 +320,8 @@ function NoDataInstructions({
 }
 
 export function DataBanner({
+  supportsCopy = true,
+  supportsFetch = true,
   region,
   snapshots,
   selectedSnapshot,
@@ -326,6 +333,7 @@ export function DataBanner({
   onCopySnapshot,
   isCopying,
 }: DataBannerProps) {
+  const game = useGame();
   const t = useTranslations();
   const hasSnapshots = snapshots.length > 0;
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -339,7 +347,7 @@ export function DataBanner({
 
     try {
       const result = await onCopySnapshot(selectedSnapshot, targetVersion);
-      const versionInfo = getVersionInfo(targetVersion);
+      const versionInfo = getVersionInfo(game.id, region, targetVersion);
 
       // Show rating change if available
       const ratingChangeText = result.originalRating !== undefined && result.newRating !== undefined
@@ -369,6 +377,7 @@ export function DataBanner({
 
             {hasSnapshots ? (
               <SnapshotSelector
+                region={region}
                 snapshots={snapshots}
                 selectedSnapshot={selectedSnapshot}
                 onSnapshotChange={onSnapshotChange}
@@ -396,31 +405,31 @@ export function DataBanner({
                   onDeleteSnapshot={onDeleteSnapshot}
                 />
 
-                <CopySnapshotButton
+                {supportsCopy && <CopySnapshotButton
                   isDropdownOpen={isDropdownOpen}
                   setIsDropdownOpen={setIsDropdownOpen}
                   isCopying={isCopying}
                   region={region}
                   currentGameVersion={currentGameVersion}
                   onCopyToVersion={handleCopyToVersion}
-                />
+                />}
               </div>
             )}
-            <FetchDataButton
+            {supportsFetch ? <FetchDataButton
               onFetchData={onFetchData}
               isFetching={isFetching}
               currentSession={currentSession}
               t={t}
-            />
+            /> : <p className="text-sm text-muted-foreground">{t("multiGame.fetchUnavailable", { game: game.displayName })}</p>}
           </div>
         </div>
 
         {/* Fetch instructions */}
-        <NoDataInstructions
+        {supportsFetch && <NoDataInstructions
           hasSnapshots={hasSnapshots}
           region={region}
           t={t}
-        />
+        />}
       </div>
     </div>
   );

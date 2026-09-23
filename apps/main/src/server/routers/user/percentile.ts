@@ -1,3 +1,4 @@
+import { maimaiCompatibilityGameSchema } from "@/lib/games/schema";
 import { db } from '@/lib/db';
 import { parentSong } from '@/lib/db/schema-pg';
 import { publicProcedure, router } from '@/lib/trpc';
@@ -11,7 +12,7 @@ import type { PercentileMap } from '@/lib/percentile-types';
 
 export const percentileRouter = router({
   getRecommendationPeers: publicProcedure
-    .input(z.object({ game: z.literal("maimai").default("maimai"),
+    .input(z.object({ game: maimaiCompatibilityGameSchema,
       publicSongIds: z.array(z.string()).max(2000),
       userRating: z.number().int().min(0).max(20000),
     }))
@@ -34,7 +35,7 @@ export const percentileRouter = router({
       return result;
     }),
   getChartPercentiles: publicProcedure
-    .input(z.object({ game: z.literal("maimai").default("maimai"),
+    .input(z.object({ game: maimaiCompatibilityGameSchema,
       songs: z.array(z.object({
         publicSongId: z.string(),
         achievement: z.number().int().min(0).max(1010000),

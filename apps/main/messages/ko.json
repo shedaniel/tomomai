@@ -1183,10 +1183,19 @@
     "version": "버전",
     "catalogError": "곡 목록을 불러오지 못했습니다. 다시 시도해 주세요.",
     "noCatalogCharts": "선택한 조건에 해당하는 채보가 없습니다.",
-    "optionalViewsPending": "아직 지원되지 않는 보기: {features}.",
     "recents": "최근 플레이",
     "albums": "앨범",
-    "events": "이벤트"
+    "events": "이벤트",
+    "noRecents": "가져온 최근 플레이가 없습니다.",
+    "noAlbums": "가져온 앨범이 없습니다.",
+    "imageUnavailable": "이미지를 사용할 수 없습니다",
+    "previous": "이전",
+    "next": "다음",
+    "noEvents": "가져온 이벤트가 없습니다.",
+    "siteDescription": "친구들과 {game} 점수를 기록하고 분석하세요.",
+    "profileDescription": "{region} {game} 플레이어 {displayName} ({username}). {brand}에서 점수와 성장을 확인하세요.",
+    "profileDescriptionUnknown": "{brand}에서 {username}의 {game} 프로필을 확인하세요.",
+    "profileTitle": "{username} | {brand}"
   },
   "landing": {
     "headline": "maimai DX 스코어를 기록하세요",

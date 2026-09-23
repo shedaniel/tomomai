@@ -6,13 +6,13 @@ import { trpc } from "@/lib/trpc-client";
 import { getSnapshotSelection, type GameSnapshotData, type GameSnapshotSummary } from "@/lib/games/player-view";
 import type { Region } from "@/lib/types";
 
-export function useGameSnapshots(region: Region, initialSnapshots: GameSnapshotSummary[], initialSnapshotData?: GameSnapshotData | null) {
+export function useGameSnapshots(region: Region, initialSnapshots: GameSnapshotSummary[], initialSnapshotData?: GameSnapshotData | null, isAuthenticated = true) {
   const game = useGame();
   const scope = `${game.id}:${region}`;
   const [selection, setSelection] = useState<{ scope: string; id: string | null }>({ scope, id: initialSnapshots[0]?.id ?? null });
   const [initialScope] = useState(scope);
   const sameInitialScope = initialScope === scope;
-  const enabled = game.enabled && game.regions.includes(region) && game.capabilities.includes("scores");
+  const enabled = isAuthenticated && game.enabled && game.regions.includes(region) && game.capabilities.includes("scores");
   const snapshotsQuery = trpc.user.getSnapshotsForGame.useQuery({ game: game.id, region }, {
     enabled,
     initialData: sameInitialScope ? initialSnapshots : undefined,

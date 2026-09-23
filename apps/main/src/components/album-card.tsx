@@ -1,5 +1,6 @@
 "use client";
 
+import { useGameId } from "@/components/providers/game-provider";
 import { trpc } from "@/lib/trpc-client";
 import { Region } from "@/lib/types";
 import { cn, createSafeMaimaiImageUrl, getTypeBadgeUrl } from "@/lib/utils";
@@ -32,6 +33,7 @@ interface AlbumCardProps {
 }
 
 export function AlbumCard({ region }: AlbumCardProps) {
+  const game = useGameId();
   const regionsT = useTranslations('regions');
   const t = useTranslations('albums');
   const [albums, setAlbums] = useState<inferRouterOutputs<AppRouter>['user']['getUserAlbums']['albums']>([]);
@@ -41,7 +43,7 @@ export function AlbumCard({ region }: AlbumCardProps) {
 
   const processedOffsetsRef = useRef<Set<number>>(new Set());
 
-  const { data, isLoading, isFetching, error } = trpc.user.getUserAlbums.useQuery({
+  const { data, isLoading, isFetching, error } = trpc.user.getUserAlbums.useQuery({ game: useGameId(),
     region,
     limit,
     offset,
@@ -97,7 +99,7 @@ export function AlbumCard({ region }: AlbumCardProps) {
     const skipDate = localStorage.getItem(skipConfirmKey);
     const today = new Date().toISOString().split('T')[0];
     if (skipDate === today) {
-      deleteAlbumMutation.mutate({ albumId });
+      deleteAlbumMutation.mutate({ game, albumId });
     } else {
       setAlbumToDelete(albumId);
       setDontAskAgain(false);
@@ -111,7 +113,7 @@ export function AlbumCard({ region }: AlbumCardProps) {
       localStorage.setItem(skipConfirmKey, today);
     }
     if (albumToDelete) {
-      deleteAlbumMutation.mutate({ albumId: albumToDelete });
+      deleteAlbumMutation.mutate({ game, albumId: albumToDelete });
     }
     setShowDialog(false);
     setAlbumToDelete(null);

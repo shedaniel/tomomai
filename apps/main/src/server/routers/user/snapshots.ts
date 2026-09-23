@@ -1,3 +1,4 @@
+import { maimaiCompatibilityGameSchema } from "@/lib/games/schema";
 import { gameContextInput, validateGameInput } from "./game-input";
 import { fetchUserSnapshotsForGame, fetchSnapshotDataForGame } from "@/server/queries/snapshots";
 import { codeToChartType, codeToComboStatus, codeToDifficulty, codeToSyncStatus, codeToTitleType } from "@/lib/maimai/codes";
@@ -6,7 +7,7 @@ import { parentSong, scoreData, snapshotRankings, snapshotScores, songs, user, u
 import { getEnabledRegions } from '@/lib/enabled-regions';
 import { logger } from '@/lib/logger';
 import { upsertScoreData } from '@/lib/maimai';
-import { deleteUserSnapshot } from '@/server/queries/snapshots';
+import { deleteUserSnapshotForGame } from '@/server/queries/snapshots';
 import { getVersionInfo, VersionId, VERSIONS } from '@/lib/metadata';
 import { addRatingsAndSort, RatingCalculationInput, splitSongs } from '@/lib/rating-calculator';
 import { protectedProcedure, publicProcedure, router } from '@/lib/trpc';
@@ -18,7 +19,7 @@ import { TRPCError } from '@trpc/server';
 import { and, count, desc, eq, inArray, sql } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
 import { z } from 'zod';
-import { revalidatePublicProfileForUser } from '@/lib/profile-cache';
+import { revalidatePublicProfileForUserForGame } from '@/lib/profile-cache';
 
 const regionSchema = z.enum(getEnabledRegions());
 
@@ -37,14 +38,14 @@ export const snapshotsRouter = router({
     }),
 
   getSnapshots: protectedProcedure
-    .input(z.object({ game: z.literal("maimai").default("maimai"), region: regionSchema }))
+    .input(z.object({ game: maimaiCompatibilityGameSchema, region: regionSchema }))
     .query(async ({ ctx, input }) => {
       const snapshots = await fetchUserSnapshots(ctx.session.user.id, input.region);
       return { snapshots };
     }),
 
   getRatingHistory: protectedProcedure
-    .input(z.object({ game: z.literal("maimai").default("maimai"), region: regionSchema }))
+    .input(z.object({ game: maimaiCompatibilityGameSchema, region: regionSchema }))
     .query(async ({ ctx, input }) => {
       const startTime = Date.now();
       logger.info(`Starting getRatingHistory for user ${ctx.session.user.id}, region ${input.region}`);
@@ -246,7 +247,7 @@ export const snapshotsRouter = router({
     }),
 
   getSnapshotData: protectedProcedure
-    .input(z.object({ game: z.literal("maimai").default("maimai"),
+    .input(z.object({ game: maimaiCompatibilityGameSchema,
       snapshotId: z.string(),
       region: regionSchema
     }))
@@ -275,7 +276,7 @@ export const snapshotsRouter = router({
     }),
 
   getPublicSnapshots: publicProcedure
-    .input(z.object({ game: z.literal("maimai").default("maimai"),
+    .input(z.object({ game: maimaiCompatibilityGameSchema,
       username: z.string(),
       region: regionSchema,
     }))
@@ -283,7 +284,7 @@ export const snapshotsRouter = router({
       const reservedSnapshots = await getReservedSnapshots(input.username, input.region);
       if (reservedSnapshots) return { snapshots: reservedSnapshots };
 
-      const userData = await resolvePublicUserByUsername(input.username);
+      const userData = await resolvePublicUserByUsername(input.username, input.game);
 
       const snapshots = await fetchUserSnapshots(userData.id, input.region, { limit: 1 });
 
@@ -297,7 +298,7 @@ export const snapshotsRouter = router({
     }),
 
   getPublicSnapshotData: publicProcedure
-    .input(z.object({ game: z.literal("maimai").default("maimai"),
+    .input(z.object({ game: maimaiCompatibilityGameSchema,
       username: z.string(),
       region: regionSchema,
     }))
@@ -326,7 +327,7 @@ export const snapshotsRouter = router({
         };
       }
 
-      const userData = await resolvePublicUserByUsername(input.username);
+      const userData = await resolvePublicUserByUsername(input.username, input.game);
 
       const result = await fetchLatestSnapshotData(userData.id, input.region);
 
@@ -387,13 +388,11 @@ export const snapshotsRouter = router({
     }),
 
   deleteSnapshot: protectedProcedure
-    .input(z.object({ game: z.literal("maimai").default("maimai"),
-      snapshotId: z.string(),
-      region: regionSchema
-    }))
+    .input(z.object({ ...gameContextInput, snapshotId: z.string() }))
     .mutation(async ({ ctx, input }) => {
-      const { deleted } = await deleteUserSnapshot(
-        ctx.session.user.id,
+      const { game } = validateGameInput(input, "scores");
+      const { deleted } = await deleteUserSnapshotForGame(
+        game, ctx.session.user.id,
         input.snapshotId,
         input.region,
       );
@@ -403,12 +402,12 @@ export const snapshotsRouter = router({
           message: 'Snapshot not found or access denied',
         });
       }
-      await revalidatePublicProfileForUser(ctx.session.user.id, [input.region]);
+      await revalidatePublicProfileForUserForGame(input.game, ctx.session.user.id, [input.region]);
       return { success: true };
     }),
 
   exportSnapshotData: protectedProcedure
-    .input(z.object({ game: z.literal("maimai").default("maimai"),
+    .input(z.object({ game: maimaiCompatibilityGameSchema,
       snapshotId: z.string(),
     }))
     .query(async ({ ctx, input }) => {
@@ -477,7 +476,7 @@ export const snapshotsRouter = router({
     }),
 
   getAvailableVersionsForCopy: protectedProcedure
-    .input(z.object({ game: z.literal("maimai").default("maimai"),
+    .input(z.object({ game: maimaiCompatibilityGameSchema,
       region: regionSchema,
       currentVersion: z.number(),
     }))
@@ -511,7 +510,7 @@ export const snapshotsRouter = router({
     }),
 
   copySnapshotToVersion: protectedProcedure
-    .input(z.object({ game: z.literal("maimai").default("maimai"),
+    .input(z.object({ game: maimaiCompatibilityGameSchema,
       snapshotId: z.string(),
       region: regionSchema,
       targetVersion: z.number(),
@@ -712,7 +711,7 @@ export const snapshotsRouter = router({
         .set({ rating: newRating })
         .where(eq(userSnapshots.id, newSnapshotInternalId));
 
-      await revalidatePublicProfileForUser(ctx.session.user.id, [input.region]);
+      await revalidatePublicProfileForUserForGame(input.game, ctx.session.user.id, [input.region]);
       return {
         success: true,
         newSnapshotId: newSnapshotPublicId,

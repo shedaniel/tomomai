@@ -1,5 +1,6 @@
 "use client";
 
+import { useGameId } from "@/components/providers/game-provider";
 import { trpc } from "@/lib/trpc-client";
 import { Region } from "@/lib/types";
 import { cn, createSafeMaimaiImageUrl, getTypeBadgeUrl } from "@/lib/utils";
@@ -15,7 +16,7 @@ import { Badge } from "@tomomai/ui";
 import { Button } from "@tomomai/ui";
 import { Separator } from "@tomomai/ui";
 import { AutoHeight } from "@/components/animate-ui/primitives/effects/auto-height";
-import { getVersionInfo } from "@/lib/metadata";
+import { getVersionInfo } from "@/lib/games/versions";
 import { inferRouterOutputs } from "@trpc/server";
 import { AppRouter } from "@/server/routers/_app";
 import { renderLevelPrecise } from "@/lib/name-utils";
@@ -554,11 +555,11 @@ export function RecentSongsCard({ region, beforeDate, snapshotId }: RecentSongsC
   const processedOffsetsRef = useRef<Set<number>>(new Set());
 
   const { data: ownData, isLoading: ownLoading, isFetching: ownFetching, error: ownError } = trpc.user.getRecentSongs.useQuery(
-    { region, limit, offset, beforeDate },
+    { game: useGameId(), region, limit, offset, beforeDate },
     { enabled: !snapshotId }
   );
   const { data: publicData, isLoading: publicLoading, isFetching: publicFetching, error: publicError } = trpc.user.getPublicRecentSongs.useQuery(
-    { snapshotId: snapshotId!, region, limit, offset, beforeDate },
+    { game: useGameId(), snapshotId: snapshotId!, region, limit, offset, beforeDate },
     { enabled: !!snapshotId }
   );
   const data = snapshotId ? publicData : ownData;
@@ -683,14 +684,15 @@ export function RecentSongsCard({ region, beforeDate, snapshotId }: RecentSongsC
 
 function ExpandedSongDetails({ publicId }: { publicId: string }) {
   const t = useTranslations();
+  const game = useGameId();
   const { data: songDetails, isLoading } = trpc.user.getSimpleSongDetails.useQuery(
-    { publicId },
+    { game, publicId },
     {
       staleTime: 1000 * 60 * 60, // 1 hour
     }
   );
 
-  const addedVersionInfo = songDetails ? getVersionInfo(songDetails.addedVersion) : null;
+  const addedVersionInfo = songDetails ? getVersionInfo(game, songDetails.region, songDetails.addedVersion) : null;
 
   return (
     <div className="mt-4 flex flex-col gap-3">

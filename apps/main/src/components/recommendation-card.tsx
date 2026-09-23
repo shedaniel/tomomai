@@ -1,5 +1,6 @@
 "use client";
 
+import { useGameId } from "@/components/providers/game-provider";
 import { addRatingsAndSort } from "@/lib/rating-calculator";
 import { generateRecommendations, RecommendationData } from "@/server/queries/recommendations";
 import { Region, SnapshotWithSongs } from "@/lib/types";
@@ -148,7 +149,7 @@ export function RecommendationCard({ selectedSnapshotData, flags, region }: { se
   const potentialEnabled = !!flags.scorePercentile;
   const potentialSongIds = useMemo(() => [...new Set(baseRecommendations.map(rec => rec.song.songId))].slice(0, 2000).sort(), [baseRecommendations]);
   const { data: potential, status: potentialStatus, fetchStatus: potentialFetchStatus, error: potentialError } = trpc.user.getRecommendationPeers.useQuery(
-    { publicSongIds: potentialSongIds, userRating: snapshot.rating },
+    { game: useGameId(), publicSongIds: potentialSongIds, userRating: snapshot.rating },
     { enabled: potentialEnabled && potentialSongIds.length > 0 && snapshot.rating > 0, staleTime: 5 * 60 * 1000, retry: false },
   );
   const recommendations = useMemo(() => {

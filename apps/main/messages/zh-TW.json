@@ -1546,10 +1546,19 @@
     "version": "版本",
     "catalogError": "無法載入歌曲目錄，請重試。",
     "noCatalogCharts": "目前條件下沒有譜面。",
-    "optionalViewsPending": "暫不支援以下檢視：{features}。",
     "recents": "最近遊玩",
     "albums": "相簿",
-    "events": "活動"
+    "events": "活動",
+    "noRecents": "尚未匯入最近遊玩紀錄。",
+    "noAlbums": "尚未匯入相簿。",
+    "imageUnavailable": "圖片無法顯示",
+    "previous": "上一頁",
+    "next": "下一頁",
+    "noEvents": "尚未匯入活動。",
+    "siteDescription": "與好友一起記錄和分析 {game} 成績。",
+    "profileDescription": "{region} 的 {game} 玩家 {displayName}（{username}）。在 {brand} 查看成績和進步。",
+    "profileDescriptionUnknown": "在 {brand} 查看 {username} 的 {game} 個人資料。",
+    "profileTitle": "{username} | {brand}"
   },
   "landing": {
     "headline": "記錄你的 maimai DX 成績",

@@ -7,7 +7,8 @@ import type { FrontendGame } from "@/lib/games/frontend";
 import { getPlayerRankings, type GamePlayerScore, type GameSnapshotData } from "@/lib/games/player-view";
 import { formatGameRating, formatGameScore, getGameDifficultyLabel, getGameRankingBuckets, getGameStatusLabels } from "@/lib/games/presentation";
 
-export function GameSnapshotContent({ game, data, showAllScores = true, showScoreDetails = true, showPlayCounts = true }: {
+export function GameSnapshotContent({ game, data, showAllScores = true, showScoreDetails = true, showPlayCounts = true, initialView = "rankings" }: {
+  initialView?: "rankings" | "songs";
   game: FrontendGame;
   data: GameSnapshotData;
   showAllScores?: boolean;
@@ -16,11 +17,10 @@ export function GameSnapshotContent({ game, data, showAllScores = true, showScor
 }) {
   const t = useTranslations("multiGame");
   const locale = useLocale();
-  const [view, setView] = useState<"rankings" | "songs">("rankings");
+  const [view, setView] = useState<"rankings" | "songs">(initialView);
   const [search, setSearch] = useState("");
   const rankings = useMemo(() => getPlayerRankings(game.id, data), [game.id, data]);
   const hasRankings = game.capabilities.includes("rankings");
-  const pendingViews = (["recents", "albums", "events"] as const).filter(capability => game.capabilities.includes(capability));
   const displayAll = showAllScores && (view === "songs" || !hasRankings);
   const visibleSongs = data.songs.filter(song => `${song.songName} ${song.artist}`.toLocaleLowerCase(locale).includes(search.toLocaleLowerCase(locale)));
 
@@ -64,6 +64,6 @@ export function GameSnapshotContent({ game, data, showAllScores = true, showScor
       <h2 id={`ranking-${bucket.key}`} className="mb-2 text-lg font-semibold">{bucket.label}</h2>
       {scoreTable(bucket.key === "new" ? rankings.newScores : rankings.oldScores, true)}
     </section>) : <p className="text-sm text-muted-foreground">{t("noScores")}</p>}
-    {pendingViews.length > 0 && <p className="text-sm text-muted-foreground">{t("optionalViewsPending", { features: pendingViews.map(feature => t(feature)).join(", ") })}</p>}
+    {game.capabilities.includes("events") && data.events && <section><h2 className="mb-2 text-lg font-semibold">{t("events")}</h2>{data.events.length ? <ul className="space-y-2 text-sm">{data.events.map((event, index) => <li key={`${event.name}:${index}`}>{event.name}</li>)}</ul> : <p className="text-sm text-muted-foreground">{t("noEvents")}</p>}</section>}
   </section>;
 }

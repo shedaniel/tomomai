@@ -1,5 +1,6 @@
 "use client";
 
+import { useGameId } from "@/components/providers/game-provider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@tomomai/ui/select-friendly";
 import { Progress } from "@tomomai/ui";
 import { Button } from "@tomomai/ui";
@@ -92,7 +93,7 @@ function PlatesGrid({ data, selectedVersion, region, snapshotId }: PlatesGridPro
 
   // Fetch songs for expanded cell
   const { data: ownPlateSongs, isLoading: ownSongsLoading } = trpc.user.getPlateSongs.useQuery(
-    {
+    { game: useGameId(),
       region,
       version: selectedVersion,
       difficulty: expandedCell?.difficulty as any,
@@ -103,7 +104,7 @@ function PlatesGrid({ data, selectedVersion, region, snapshotId }: PlatesGridPro
     }
   );
   const { data: publicPlateSongs, isLoading: publicSongsLoading } = trpc.user.getPublicPlateSongs.useQuery(
-    {
+    { game: useGameId(),
       snapshotId: snapshotId!,
       region,
       version: selectedVersion,
@@ -316,11 +317,11 @@ export function StatsCard({ region, selectedSnapshotData, snapshotId }: StatsCar
   const t = useTranslations();
   const isDesktop = useMediaQuery("(min-width: 768px)", { initializeWithValue: false });
   const { data: ownData, isLoading: ownLoading } = trpc.user.getPlayerStats.useQuery(
-    { region },
+    { game: useGameId(), region },
     { enabled: !snapshotId }
   );
   const { data: publicData, isLoading: publicLoading } = trpc.user.getPublicPlayerStats.useQuery(
-    { snapshotId: snapshotId!, region },
+    { game: useGameId(), snapshotId: snapshotId!, region },
     { enabled: !!snapshotId }
   );
   const data = snapshotId ? publicData : ownData;

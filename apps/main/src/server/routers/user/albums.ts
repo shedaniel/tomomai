@@ -1,3 +1,4 @@
+import { maimaiCompatibilityGameSchema } from "@/lib/games/schema";
 import { gameContextInput, validateGameInput } from "./game-input";
 import { fetchUserAlbumsForGame } from "@/server/queries/albums";
 import { db } from '@/lib/db';
@@ -22,7 +23,7 @@ export const albumsRouter = router({
     }),
 
   getUserAlbums: protectedProcedure
-    .input(z.object({ game: z.literal("maimai").default("maimai"),
+    .input(z.object({ game: maimaiCompatibilityGameSchema,
       region: regionSchema,
       limit: z.number().min(1).max(100).default(20),
       offset: z.number().min(0).default(0),
@@ -52,7 +53,7 @@ export const albumsRouter = router({
     }),
 
   deleteAlbum: protectedProcedure
-    .input(z.object({ game: z.literal("maimai").default("maimai"),
+    .input(z.object({ game: maimaiCompatibilityGameSchema,
       albumId: z.string(),
     }))
     .mutation(async ({ ctx, input }) => {

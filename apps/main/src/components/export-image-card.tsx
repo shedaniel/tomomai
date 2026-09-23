@@ -1,5 +1,6 @@
 "use client";
 
+import { useGameId } from "@/components/providers/game-provider";
 import { Button } from "@tomomai/ui";
 import { CANVAS_HEIGHT, CANVAS_WIDTH } from "@/lib/image-spec";
 import { Region, SnapshotWithSongs } from "@/lib/types";
@@ -205,11 +206,11 @@ export function ExportImageCard({ selectedSnapshotData, region, showLastCredit =
 
   const isPublic = !!publicSnapshotId;
   const ownDaysQuery = trpc.user.getDailyPlaysAvailableDays.useQuery(
-    { region },
+    { game: useGameId(), region },
     { enabled: !isPublic },
   );
   const publicDaysQuery = trpc.user.getPublicDailyPlaysAvailableDays.useQuery(
-    { snapshotId: publicSnapshotId!, region },
+    { game: useGameId(), snapshotId: publicSnapshotId!, region },
     { enabled: isPublic },
   );
   const availableDays = (isPublic ? publicDaysQuery.data : ownDaysQuery.data) ?? [];
