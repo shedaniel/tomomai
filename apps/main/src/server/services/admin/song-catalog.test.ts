@@ -4,16 +4,16 @@ const { readRows, putObject } = vi.hoisted(() => ({ readRows: vi.fn(), putObject
 vi.mock("@/lib/db", () => ({ db: {
   transaction: (fn: (tx: unknown) => Promise<unknown>) => fn({
     execute: vi.fn(),
-    select: () => ({ from: () => ({ leftJoin: () => ({ orderBy: readRows }) }) }),
+    select: () => ({ from: () => ({ leftJoin: () => ({ where: () => ({ orderBy: readRows }) }) }) }),
   }),
 } }));
 vi.mock("@/lib/r2", () => ({ putR2Object: putObject }));
 import { publishSongCatalog } from "./song-catalog";
-import { songCatalogKey, CATALOG_R2_PREFIX } from "@/lib/api/catalog-location";
+import { songCatalogKey, catalogPrefix } from "@/lib/api/catalog-location";
 
 const parent = {
   songId: "Ab3xK9pQ", songName: "Test", artist: "Artist", cover: null,
-  type: "dx", genre: "maimai", difficulty: "master", bpm: 180, disambiguator: 0,
+  type: 1, genre: "maimai", difficulty: 3, bpm: 180, disambiguator: 0,
 };
 const instance = {
   level: "13", levelPrecise: 133, region: "jp", gameVersion: 11, addedVersion: 10, noteDesigner: null,
@@ -26,27 +26,27 @@ beforeEach(() => {
 describe("publishSongCatalog", () => {
   it("deduplicates parents, emits composite IDs and overwrites empty slices", async () => {
     readRows.mockResolvedValue([{ parent, instance }, { parent, instance: { ...instance, gameVersion: 12 } }]);
-    const result = await publishSongCatalog();
+    const result = await publishSongCatalog("maimai");
     const objects = new Map(putObject.mock.calls.map(([object]) => [object.key, JSON.parse(object.body)]));
-    expect(objects.get(`${CATALOG_R2_PREFIX}/parents`)).toEqual({ parents: [parent] });
-    expect(objects.get(songCatalogKey("jp", 11)).songs[0].songId).toBe("Ab3xK9pQ:j11");
-    expect(objects.get(songCatalogKey("jp", -13))).toEqual({ songs: [] });
+    expect(objects.get(`${catalogPrefix("maimai")}/parents`)).toEqual({ game: "maimai", parents: [parent] });
+    expect(objects.get(songCatalogKey("maimai", "jp", 11)).songs[0].songId).toBe("Ab3xK9pQ:j11");
+    expect(objects.get(songCatalogKey("maimai", "jp", -13))).toEqual({ game: "maimai", songs: [] });
     expect(result.songCount).toBe(2);
     expect(result.bytes).toBeGreaterThan(0);
   });
 
   it("validates every slice before writing any objects", async () => {
     readRows.mockResolvedValue([{ parent, instance: { ...instance, levelPrecise: "invalid" } }]);
-    await expect(publishSongCatalog()).rejects.toThrow();
+    await expect(publishSongCatalog("maimai")).rejects.toThrow();
     expect(putObject).not.toHaveBeenCalled();
   });
 
   it("propagates publication failures and republishes all slices on retry", async () => {
     readRows.mockResolvedValue([{ parent, instance }]);
     putObject.mockRejectedValueOnce(new Error("R2 unavailable"));
-    await expect(publishSongCatalog()).rejects.toThrow("R2 unavailable");
+    await expect(publishSongCatalog("maimai")).rejects.toThrow("R2 unavailable");
     putObject.mockClear();
-    await expect(publishSongCatalog()).resolves.toMatchObject({ songCount: 1 });
-    expect(putObject.mock.calls.some(([object]) => object.key === songCatalogKey("jp", 11))).toBe(true);
+    await expect(publishSongCatalog("maimai")).resolves.toMatchObject({ songCount: 1 });
+    expect(putObject.mock.calls.some(([object]) => object.key === songCatalogKey("maimai", "jp", 11))).toBe(true);
   });
 });

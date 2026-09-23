@@ -69,6 +69,15 @@ export function defineRoute<
   return spec;
 }
 
+export function defineGameRoute<Q extends z.ZodTypeAny, R extends z.ZodTypeAny>(spec: RouteSpec<Q, R>) {
+  const game = z.enum(["maimai", "chunithm"]).describe("Canonical game ID; unavailable games return GAME_NOT_ENABLED.");
+  return defineRoute({
+    ...spec,
+    params: spec.params instanceof z.ZodObject ? spec.params.extend({ game }) : z.object({ game }),
+    response: spec.response instanceof z.ZodObject ? spec.response.extend({ game }) : spec.response,
+  });
+}
+
 /** Returns all registered route specs, sorted by tag then path.
  *  Internal routes (RouteSpec.internal === true) are excluded — they don't
  *  appear in the public developer reference or OpenAPI doc. Internal lookups
@@ -93,7 +102,7 @@ export function findRoute(method: string, path: string): RouteSpec | undefined {
  */
 export function findRouteByRequest(method: string, pathname: string): RouteSpec | undefined {
   const upperMethod = method.toUpperCase();
-  for (const spec of REGISTRY.values()) {
+  for (const spec of [...REGISTRY.values()].sort((a, b) => (a.path.match(/\{/g)?.length ?? 0) - (b.path.match(/\{/g)?.length ?? 0))) {
     if (spec.method !== upperMethod) continue;
     if (matchTemplate(spec.path, pathname)) return spec;
   }

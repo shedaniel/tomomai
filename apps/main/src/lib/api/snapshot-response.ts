@@ -22,40 +22,24 @@ export function buildSnapshotPayload(
   const hasEventsRead = keyHasScope(key, scope("events:read"));
   const hasIconRead = keyHasScope(key, scope("icon:read"));
 
-  type SongPayload = {
-    songId: string;
-    songName: string;
-    artist: string;
-    cover: string | null;
-    difficulty: string;
-    level: string;
-    levelPrecise: number;
-    type: string;
-    genre: string;
-    addedVersion: number;
-    achievement: number;
-    dxScore: number;
-    fc: string;
-    fs: string;
-    rating?: number;
-  };
-  let songsPayload: SongPayload[] | null = null;
+  let songsPayload: Record<string, unknown>[] | null = null;
   if (hasSongsRead) {
     songsPayload = songs.map((s) => ({
       songId: s.songId,
       songName: s.songName,
       artist: s.artist,
       cover: s.cover,
-      difficulty: s.difficulty,
+      difficulty: s.difficultyCode,
       level: s.level,
       levelPrecise: s.levelPrecise,
-      type: s.type,
+      type: s.typeCode,
       genre: s.genre,
       addedVersion: s.addedVersion,
-      achievement: s.achievement,
-      dxScore: s.dxScore,
-      fc: s.fc,
-      fs: s.fs,
+      scoreValue: s.scoreValue,
+      secondaryScore: s.secondaryScore,
+      comboStatus: s.comboStatus,
+      syncStatus: s.syncStatus,
+      clearStatus: s.clearStatus,
     }));
   } else if (hasSongsB50Read) {
     // splitSongs expects raw DB levelPrecise (×10 integer)
@@ -69,16 +53,17 @@ export function buildSnapshotPayload(
       songName: s.songName,
       artist: s.artist,
       cover: s.cover,
-      difficulty: s.difficulty,
+      difficulty: s.difficultyCode,
       level: s.level,
       levelPrecise: s.levelPrecise,
-      type: s.type,
+      type: s.typeCode,
       genre: s.genre,
       addedVersion: s.addedVersion,
-      achievement: s.achievement,
-      dxScore: s.dxScore,
-      fc: s.fc,
-      fs: s.fs,
+      scoreValue: s.scoreValue,
+      secondaryScore: s.secondaryScore,
+      comboStatus: s.comboStatus,
+      syncStatus: s.syncStatus,
+      clearStatus: s.clearStatus,
       rating: Math.floor(s.rating),
     }));
   }

@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { getEnabledRegions } from "@/lib/enabled-regions";
 
 /**
  * Shared Zod schemas used by `/api/v1/**` route specs. These are the
@@ -10,12 +9,8 @@ import { getEnabledRegions } from "@/lib/enabled-regions";
  * both the OpenAPI schema and the on-site param/response tables.
  */
 
-export const regionSchema = z
-  .enum(["intl", "jp", "cn"])
-  .describe("Game region to read data from.")
-  .refine((r) => getEnabledRegions().includes(r), {
-    message: `Region is not enabled on this deployment. Enabled regions: ${getEnabledRegions().join(", ")}`,
-  });
+export const gameSchema = z.enum(["maimai", "chunithm"]);
+export const regionSchema = z.enum(["intl", "jp", "cn"]).describe("Game region to read data from.");
 
 export const querySchemas = {
   regionRequired: z.object({
@@ -127,9 +122,9 @@ export const chartCatalogueEntry = z.object({
   songName: z.string(),
   artist: z.string(),
   cover: z.string().nullable().describe("Cover image URL, may be null."),
-  type: z.enum(["std", "dx", "utage"]).describe("Chart type."),
+  type: z.number().int().describe("Game-specific chart type code."),
   genre: z.string(),
-  difficulty: z.enum(["basic", "advanced", "expert", "master", "remaster", "utage"]),
+  difficulty: z.number().int().describe("Game-specific difficulty code."),
   bpm: z.number().nullable(),
   disambiguator: z
     .number()
@@ -142,9 +137,9 @@ export const songCatalogueEntry = z.object({
   songName: z.string(),
   artist: z.string(),
   cover: z.string().nullable().describe("Cover image URL, may be null."),
-  type: z.enum(["std", "dx", "utage"]).describe("Chart type."),
+  type: z.number().int().describe("Game-specific chart type code."),
   genre: z.string(),
-  difficulty: z.enum(["basic", "advanced", "expert", "master", "remaster", "utage"]),
+  difficulty: z.number().int().describe("Game-specific difficulty code."),
   level: z.string().describe("Displayed level, e.g. \"14+\"."),
   levelPrecise: levelPreciseField,
   region: z.enum(["intl", "jp", "cn"]),
@@ -182,16 +177,17 @@ const songScore = z.object({
   songName: z.string(),
   artist: z.string(),
   cover: z.string().nullable(),
-  difficulty: z.string(),
+  difficulty: z.number().int(),
   level: z.string(),
   levelPrecise: levelPreciseField,
-  type: z.string(),
+  type: z.number().int(),
   genre: z.string(),
   addedVersion: z.number().int(),
-  achievement: achievementField,
-  dxScore: z.number().int(),
-  fc: z.string(),
-  fs: z.string(),
+  scoreValue: z.number().int(),
+  secondaryScore: z.number().int(),
+  comboStatus: z.number().int(),
+  syncStatus: z.number().int(),
+  clearStatus: z.number().int(),
   rating: z.number().int().optional().describe("Only present on B50-restricted responses."),
 });
 
@@ -207,11 +203,11 @@ export const snapshotDetail = snapshotMetadata.extend({
   events: z
     .array(
       z.object({
-        eventType: z.string(),
+        eventType: z.string().nullable(),
         name: z.string(),
         currentDistance: z.number().int().nullable(),
         nextRewardDistance: z.number().int().nullable(),
-        state: z.string(),
+        state: z.string().nullable(),
         imageUrl: z.string().nullable(),
         eventPeriodStart: z.string().nullable(),
         eventPeriodEnd: z.string().nullable(),
@@ -231,21 +227,22 @@ const noteBreakdown = z.object({
 
 export const recentPlayBase = z.object({
   playedAt: z.string().describe("ISO 8601 timestamp."),
-  achievement: achievementField,
-  dxScore: z.number().int(),
-  maxDxScore: z.number().int(),
-  fc: z.string(),
-  fs: z.string(),
+  scoreValue: z.number().int(),
+  secondaryScore: z.number().int(),
+  maxDxScore: z.number().int().nullable(),
+  comboStatus: z.number().int(),
+  syncStatus: z.number().int(),
+  clearStatus: z.number().int(),
   track: z.number().int().nullable(),
   song: z.object({
     songId: z.string(),
     songName: z.string(),
     artist: z.string(),
     cover: z.string().nullable(),
-    difficulty: z.string(),
+    difficulty: z.number().int(),
     level: z.string(),
     levelPrecise: levelPreciseField,
-    type: z.string(),
+    type: z.number().int(),
     genre: z.string(),
   }),
 });
@@ -314,5 +311,5 @@ export const errorResponse = z
   .object({ error: z.string() })
   .describe("Returned on 4xx and 5xx responses.");
 
-export const songCatalogue = z.object({ songs: z.array(songCatalogueEntry) });
-export const parentCatalogue = z.object({ parents: z.array(chartCatalogueEntry) });
+export const songCatalogue = z.object({ game: gameSchema, songs: z.array(songCatalogueEntry) });
+export const parentCatalogue = z.object({ game: gameSchema, parents: z.array(chartCatalogueEntry) });

@@ -1,15 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("../../../../render/src/lib/request-logger", () => ({ getLogger: () => ({ info: vi.fn() }) }));
-vi.mock("undici", () => ({ Agent: class {} }));
+vi.mock("undici", () => ({ Agent: class {}, fetch: (...args: Parameters<typeof fetch>) => globalThis.fetch(...args) }));
 
 const fetchMock = vi.fn<typeof fetch>();
 const entry = (songId: string, songName = songId) => ({
-  songId, songName, artist: "Artist", cover: null, type: "dx", genre: "maimai",
-  difficulty: "master", level: "13", levelPrecise: 133, region: "jp", gameVersion: 14,
+  songId, songName, artist: "Artist", cover: null, type: 1, genre: "maimai",
+  difficulty: 3, level: "13", levelPrecise: 133, region: "jp", gameVersion: 14,
   addedVersion: 10, bpm: 180, noteDesigner: null,
 });
-const response = (...songs: ReturnType<typeof entry>[]) => Response.json({ songs });
+const response = (...songs: ReturnType<typeof entry>[]) => Response.json({ game: "maimai", songs });
 
 beforeEach(() => {
   vi.resetModules();
@@ -35,8 +35,8 @@ describe("render catalog slices", () => {
     });
     const catalog = await getCatalog(["Ab3xK9pQ:j14", "OtherId_:j14", "Ab3xK9pQ:i-1"]);
     expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([
-      "https://catalog.example.test/api/v1/songs?region=jp&gameVersion=14",
-      "https://catalog.example.test/api/v1/songs?region=intl&gameVersion=-1",
+      "https://catalog.example.test/api/v1/games/maimai/songs?region=jp&gameVersion=14",
+      "https://catalog.example.test/api/v1/games/maimai/songs?region=intl&gameVersion=-1",
     ]);
     expect([...catalog.keys()]).toEqual(["Ab3xK9pQ:j14", "Ab3xK9pQ:i-1"]);
     await getCatalog(["Ab3xK9pQ:i-1"]);

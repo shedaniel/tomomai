@@ -1,5 +1,5 @@
 /**
- * Process-level cache of the song catalogue from /api/v1/songs.
+ * Process-level cache of the song catalogue from /api/v1/games/maimai/songs.
  *
  * Replaces all DB access in the render service. The catalogue is public,
  * CDN-cached (s-maxage=3600), and contains every chart's static fields
@@ -49,7 +49,7 @@ const inflight = new Map<string, Promise<Map<string, CatalogEntry>>>();
 
 async function fetchCatalog(region: string, gameVersion: number): Promise<Map<string, CatalogEntry>> {
   const log = getLogger();
-  const url = `${CATALOG_URL.replace(/\/+$/, "")}/api/v1/songs?region=${region}&gameVersion=${gameVersion}`;
+  const url = `${CATALOG_URL.replace(/\/+$/, "")}/api/v1/games/maimai/songs?region=${region}&gameVersion=${gameVersion}`;
   log.info({ url }, "Fetching song catalogue");
   const startTime = Date.now();
 
@@ -61,10 +61,14 @@ async function fetchCatalog(region: string, gameVersion: number): Promise<Map<st
   if (!response.ok) {
     throw new Error(`Catalogue fetch failed: ${response.status} ${response.statusText}`);
   }
-  const body = (await response.json()) as { songs: CatalogEntry[] };
+  const body = (await response.json()) as { game: string; songs: (Omit<CatalogEntry, "type" | "difficulty"> & { type: number; difficulty: number })[] };
+  if (body.game !== "maimai") throw new Error("Unexpected catalog game");
+  const types = ["std", "dx", "utage"];
+  const difficulties = ["basic", "advanced", "expert", "master", "remaster", "utage"];
   const map = new Map<string, CatalogEntry>();
   for (const song of body.songs) {
-    map.set(song.songId, song);
+    if (!types[song.type] || !difficulties[song.difficulty]) throw new Error("Unknown maimai chart code");
+    map.set(song.songId, { ...song, type: types[song.type], difficulty: difficulties[song.difficulty] });
   }
   log.info(
     { count: map.size, durationMs: Date.now() - startTime },
@@ -74,7 +78,7 @@ async function fetchCatalog(region: string, gameVersion: number): Promise<Map<st
 }
 
 async function getSlice(region: string, gameVersion: number): Promise<Map<string, CatalogEntry>> {
-  const key = `${region}:${gameVersion}`;
+  const key = `maimai:${region}:${gameVersion}`;
   const cached = cache.get(key);
   if (cached && Date.now() - cached.fetchedAt < CATALOG_TTL_MS) return cached.map;
   const pending = inflight.get(key);

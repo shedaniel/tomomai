@@ -1,3 +1,6 @@
+import { resolveGame, requireConfiguredSource } from "@/lib/games/registry";
+import { GameAdapterError } from "@/lib/games/types";
+import { gameErrorResponse } from "@/lib/api/game-context";
 import { flushLogger } from "@/lib/logger";
 import { requestLogger } from "@/lib/request-logger";
 import { publishSongCatalog } from "@/server/services/admin/song-catalog";
@@ -24,13 +27,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid authorization token", requestId }, { status: 403 });
     }
 
-    const publication = await publishSongCatalog();
-    revalidateTag("all-unique-songs", { expire: 0 });
-    revalidateTag("reserved-songs", { expire: 0 });
-    revalidateTag("api-v1-songs", { expire: 0 });
-    log.info({ songCount: publication.songCount, size: publication.bytes }, "Published public song catalog to R2");
-    return NextResponse.json({ success: true, requestId, ...publication });
+    const input = request.nextUrl.searchParams.get("game");
+    if (input !== "maimai" && input !== "chunithm") return NextResponse.json({ error: "Canonical game is required", requestId }, { status: 400 });
+    const game = resolveGame(input).id;
+    requireConfiguredSource(game, "catalog");
+    const publication = await publishSongCatalog(game);
+    revalidateTag(`all-unique-songs:${game}`, { expire: 0 });
+    revalidateTag(`reserved-songs:${game}`, { expire: 0 });
+    revalidateTag(`api-v1-songs:${game}`, { expire: 0 });
+    log.info({ game, songCount: publication.songCount, size: publication.bytes }, "Published public song catalog to R2");
+    return NextResponse.json({ success: true, game, requestId, ...publication });
   } catch (err) {
+    if (err instanceof GameAdapterError) return gameErrorResponse(err);
     log.error({ err }, "Failed to publish public song catalog");
     return NextResponse.json({ error: "Failed to publish public song catalog", requestId }, { status: 500 });
   } finally {

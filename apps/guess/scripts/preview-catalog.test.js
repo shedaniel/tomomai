@@ -10,8 +10,8 @@ test("fetches the current JP slice from the configured API", async () => {
     return Response.json(requests.length === 1 ? { currentVersion: 14 } : { songs });
   });
   assert.deepEqual(requests, [
-    "https://example.test/api/v1/songs/versions?region=jp",
-    "https://example.test/api/v1/songs?region=jp&gameVersion=14",
+    "https://example.test/api/v1/games/maimai/songs/versions?region=jp",
+    "https://example.test/api/v1/games/maimai/songs?region=jp&gameVersion=14",
   ]);
   assert.deepEqual(result, songs);
 });

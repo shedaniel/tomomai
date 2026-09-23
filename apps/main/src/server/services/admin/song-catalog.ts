@@ -1,14 +1,19 @@
-import { eq, sql } from "drizzle-orm";
+import type { CanonicalGameId } from "@/lib/games/types";
+import { resolveGame, requireConfiguredSource } from "@/lib/games/registry";
+import { GameAdapterError } from "@/lib/games/types";
+import { and, eq, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { parentSong, songs } from "@/lib/db/schema-pg";
 import { parentCatalogue, songCatalogue } from "@/lib/api/schemas";
-import { CATALOG_R2_PREFIX, isCatalogVersion, songCatalogKey } from "@/lib/api/catalog-location";
+import { catalogPrefix, isCatalogVersion, songCatalogKey } from "@/lib/api/catalog-location";
 import { formatSongInstanceId } from "@/lib/catalog/song-instance-id";
-import { getAvailableVersions } from "@/lib/metadata";
+import { getAvailableVersions } from "@/lib/games/versions";
 import { putR2Object } from "@/lib/r2";
 import type { z } from "zod";
 
-export async function publishSongCatalog(): Promise<{ songCount: number; bytes: number }> {
+export async function publishSongCatalog(game: CanonicalGameId): Promise<{ songCount: number; bytes: number }> {
+  if (!resolveGame(game).enabled) throw new GameAdapterError("GAME_NOT_ENABLED", "Game is not enabled", game);
+  requireConfiguredSource(game, "catalog");
   return db.transaction(async (tx) => {
     await tx.execute(sql`select pg_advisory_xact_lock(73641932)`);
     // One statement keeps the dictionary and its instances on the same database snapshot.
@@ -32,25 +37,26 @@ export async function publishSongCatalog(): Promise<{ songCount: number; bytes: 
         addedVersion: songs.addedVersion,
         noteDesigner: songs.noteDesigner,
       },
-    }).from(parentSong).leftJoin(songs, eq(songs.parentId, parentSong.id))
+    }).from(parentSong).leftJoin(songs, and(eq(songs.parentId, parentSong.id), eq(songs.game, game)))
+      .where(eq(parentSong.game, game))
       .orderBy(parentSong.songName, parentSong.difficulty, parentSong.publicId, songs.region, songs.gameVersion);
 
     const parents = new Map<string, z.infer<typeof parentCatalogue>["parents"][number]>();
     const slices = new Map<string, z.infer<typeof songCatalogue>>();
     // Empty slices must also overwrite R2, otherwise removing their final song leaves stale data.
     for (const region of ["jp", "intl", "cn"] as const) {
-      for (const version of getAvailableVersions(region)) {
-        slices.set(songCatalogKey(region, version.id), { songs: [] });
+      for (const version of getAvailableVersions(game, region)) {
+        slices.set(songCatalogKey(game, region, version.id), { game, songs: [] });
       }
     }
     let songCount = 0;
     for (const { parent, instance } of rows) {
       parents.set(parent.songId, parent);
       if (!instance) continue;
-      if (!isCatalogVersion(instance.region, instance.gameVersion)) {
+      if (!isCatalogVersion(game, instance.region, instance.gameVersion)) {
         throw new Error(`Unknown catalog slice: ${instance.region}/${instance.gameVersion}`);
       }
-      slices.get(songCatalogKey(instance.region, instance.gameVersion))!.songs.push({
+      slices.get(songCatalogKey(game, instance.region, instance.gameVersion))!.songs.push({
         ...parent,
         ...instance,
         songId: formatSongInstanceId(parent.songId, instance.region, instance.gameVersion),
@@ -59,7 +65,7 @@ export async function publishSongCatalog(): Promise<{ songCount: number; bytes: 
     }
 
     const objects = [
-      { key: `${CATALOG_R2_PREFIX}/parents`, body: JSON.stringify(parentCatalogue.parse({ parents: [...parents.values()] })) },
+      { key: `${catalogPrefix(game)}/parents`, body: JSON.stringify(parentCatalogue.parse({ game, parents: [...parents.values()] })) },
       ...[...slices].map(([key, catalog]) => ({ key, body: JSON.stringify(songCatalogue.parse(catalog)) })),
     ];
     // Validate everything before the first write; a failed write rejects the update and a retry rebuilds every slice.

@@ -10,18 +10,26 @@ function apiBase(): string {
 }
 
 async function fetchCatalogue(): Promise<Chart[]> {
-  const metadata = await fetch(`${apiBase()}/api/v1/songs/versions?region=jp`, { cache: "no-store" });
+  const metadata = await fetch(`${apiBase()}/api/v1/games/maimai/songs/versions?region=jp`, { cache: "no-store" });
   if (!metadata.ok) throw new Error(`Failed to fetch song versions: ${metadata.status}`);
   const { currentVersion } = await metadata.json() as { currentVersion: number };
   if (!Number.isInteger(currentVersion)) throw new Error("Invalid current JP game version");
-  const url = `${apiBase()}/api/v1/songs?region=jp&gameVersion=${currentVersion}`;
+  const url = `${apiBase()}/api/v1/games/maimai/songs?region=jp&gameVersion=${currentVersion}`;
   // The daily module memo bounds transfers without relying on Next's data-cache size limit.
   const res = await fetch(url, { cache: "no-store" });
   if (!res.ok) {
     throw new Error(`Failed to fetch song catalogue: ${res.status} ${res.statusText}`);
   }
-  const body = (await res.json()) as { songs: Chart[] };
-  return body.songs;
+  const body = (await res.json()) as { game: string; songs: (Omit<Chart, "type" | "difficulty"> & { type: number; difficulty: number })[] };
+  if (body.game !== "maimai") throw new Error("Unexpected catalog game");
+  const types = ["std", "dx", "utage"] as const;
+  const difficulties = ["basic", "advanced", "expert", "master", "remaster", "utage"] as const;
+  return body.songs.map(song => {
+    const type = types[song.type];
+    const difficulty = difficulties[song.difficulty];
+    if (!type || !difficulty) throw new Error("Unknown maimai chart code");
+    return { ...song, type, difficulty };
+  });
 }
 
 /**

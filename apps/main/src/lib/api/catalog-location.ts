@@ -1,14 +1,17 @@
-import { getAvailableVersions } from "@/lib/metadata";
+import { getVersionInfo } from "@/lib/games/versions";
+import type { CanonicalGameId } from "@/lib/games/types";
 import type { Region } from "@/lib/types";
 
-export const CATALOG_R2_PREFIX = "api/v1/catalog-parent-v1";
-
-export function isCatalogVersion(region: Region, gameVersion: number): boolean {
-  return getAvailableVersions(region).some((version) => version.id === gameVersion);
+export function catalogPrefix(game: CanonicalGameId): string {
+  return `api/v1/games/${game}`;
 }
 
-export function songCatalogKey(region: Region, gameVersion: number): string {
-  return `${CATALOG_R2_PREFIX}/songs/${region}/${gameVersion}`;
+export function isCatalogVersion(game: CanonicalGameId, region: Region, gameVersion: number): boolean {
+  return getVersionInfo(game, region, gameVersion) !== null;
+}
+
+export function songCatalogKey(game: CanonicalGameId, region: Region, gameVersion: number): string {
+  return `${catalogPrefix(game)}/songs/${region}/${gameVersion}`;
 }
 
 export function catalogUrl(key: string): string {
