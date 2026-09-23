@@ -1,0 +1,80 @@
+# Multi-game backend cutover
+
+The integration starts from the current parent-song catalog. Parent IDs and
+instance IDs retain their existing format and meaning. Shared catalog and user
+records carry canonical `maimai` or `chunithm` identity, with composite foreign
+keys preventing links across games. CHUNITHM remains disabled until real source
+adapters and the deployment integration gate are ready.
+
+## Migration artifact
+
+`apps/main/drizzle-pg/0018_sweet_firelord.sql` is the single new migration after
+upstream `0017_windy_namorita`. Before generation, the migration directory was
+restored to upstream/main `4390db9d8e7d1451cb1e94a43bcc42274214266c` following the
+required notifications. No previous migration or snapshot was rewritten.
+
+The new SQL customizes the generated diff to preserve data:
+
+- Lock affected tables during the runner's transaction and reject duplicate
+  identities or unexpected maimai enum mappings before conversion.
+- Backfill `game = 'maimai'`, rename score/recent metrics in place, and convert
+  compact chart/status/title codes using verified enum order.
+- Keep every parent, song, snapshot and score ID; add matching-game foreign
+  keys after their referenced composite unique constraints exist.
+- Copy B50 ranks 0–14 into the new bucket and 15–49 into the old bucket with
+  bucket-relative ranks. Assert row counts and exact mappings before dropping
+  `snapshot_b50`.
+- Remove temporary game defaults, so new writes must explicitly choose game.
+- Drop the old percentile materialized view before its referenced columns
+  change; the existing authorized refresh job recreates it afterward.
+
+Generation and static artifact checks do not execute this migration. No
+schema-application command was run. Repository instructions prohibit applying
+migrations here, including against a disposable database.
+
+## Deployment
+
+1. Back up the database and prepare a coordinated write-maintenance window.
+   The migration locks large score/link tables and rebuilds indexes; estimate
+   duration and disk headroom against the real deployment dataset.
+2. Have the authorized deployment mechanism apply **0018 in one transaction**
+   after 0017. Any audit or backfill assertion failure must abort the cutover;
+   resolve the data issue rather than disabling the assertion.
+3. Deploy the matching app and first-party consumers. Publish the explicit
+   per-game catalog before reopening traffic. Verify parent dictionaries,
+   current/historical slices, maimai fetch, a profile image and last credit.
+4. Run the existing authorized percentile refresh job. The view remains
+   maimai-only; missing-view reads retain the existing empty-result fallback.
+5. Purge stale game-free API/catalog redirects and payloads at the CDN boundary.
+   Confirm CHUNITHM requests return the disabled-game response.
+
+The schema cutover removes legacy enum columns and B50 storage. Rolling back
+application code alone is unsupported; restore the database and matching old
+application together, or stay on the new application with CHUNITHM disabled.
+
+## Persistence and current boundaries
+
+Common score ingestion owns token/session isolation and atomic snapshot,
+score, ranking, recent and event writes. A fetch result arriving after the
+provider timeout cannot enter persistence. A persistence deadline failure
+rolls back its transaction. Parent-name collisions are left unresolved instead
+of assigning scores to an arbitrary chart.
+
+Generic optional records retain metadata without requiring maimai DX scores,
+map state or image-storage fields. Maimai recent-detail downloads and album
+image work run after the common transaction commits. These optional external
+operations are best effort and are not covered by database rollback. Provider
+requests already in flight may finish after a timeout, but cannot commit a late
+snapshot; maimai progress updates only affect pending maimai sessions.
+
+Plates, percentile/recommendation calculations, reserved accounts, existing
+UI presentation, credit/daily-play images and render tokens remain explicitly
+maimai-only. Profile settings remain global. Generic API/query/tRPC boundaries
+carry game; enabling a second scraper remains separate work.
+
+Focused mocked tests cover score normalization, parent ambiguity, generic
+optional persistence, transaction failure, deadline rejection and late fetch
+results. These checks do not establish execution time, locking behavior or
+backfill correctness against a production database. Static migration checks
+verify snapshot lineage, single-version journal advancement, generated
+constraint coverage, dependency ordering and preservation of upstream files.
