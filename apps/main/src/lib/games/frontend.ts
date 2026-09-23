@@ -23,3 +23,7 @@ export function supportsGameFeature(game: FrontendGame, capability: GameCapabili
 export function getGameRegion(game: FrontendGame, preferred?: string | null): Region | null {
   return game.regions.find(region => region === preferred) ?? game.regions[0] ?? null;
 }
+
+export function isGameRegion(game: FrontendGame, region: string): region is Region {
+  return game.regions.some(candidate => candidate === region);
+}

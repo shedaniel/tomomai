@@ -1,4 +1,5 @@
-import { Region } from "@/lib/types";
+import type { Region } from "@/lib/types";
+import type { VersionProvider } from "../../types";
 
 export const Versions = {
   MAIMAI: {
@@ -371,7 +372,7 @@ export function getCurrentVersion(region: Region): VersionId {
 /**
  * Get version info by version ID
  */
-export function getVersionInfo(versionId: VersionId): VersionInfo | null {
+export function getVersionInfo(versionId: number): VersionInfo | null {
   return VERSIONS.find(v => v.id === versionId) || null;
 }
 
@@ -439,12 +440,16 @@ export function getVersionByShortCode(shortCode: string): VersionInfo | undefine
   return best;
 }
 
-import type { VersionProvider } from "../../types";
+export function requireMaimaiVersion(version: number): VersionId {
+  const info = getVersionInfo(version);
+  if (!info) throw new Error(`Unknown maimai version: ${version}`);
+  return info.id;
+}
 
 export const maimaiVersionProvider: VersionProvider = {
   getCurrentVersion,
   getVersionInfo(region, version) {
-    const info = getVersionInfo(version as VersionId);
+    const info = getVersionInfo(version);
     if (!info) return null;
     const releaseDate = getRegionReleaseDate(info, region);
     return releaseDate ? { id: info.id, name: info.name, shortName: info.shortName, releaseDate } : null;
