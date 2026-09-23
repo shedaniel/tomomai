@@ -1,3 +1,6 @@
+import { getFrontendGame } from "@/lib/games/frontend-server";
+import { getGameRegion } from "@/lib/games/frontend";
+import { resolvePublicUserByUsername } from "@/server/queries/public-access";
 import { notFound } from "next/navigation";
 import { redirect } from "@/i18n/navigation";
 import { createServerSideTRPC } from "@/lib/trpc-server";
@@ -45,7 +48,7 @@ export async function generateMetadata({ params }: ProfilePageProps): Promise<Me
       title: t("title", { username }),
       description: t("descriptionUnknownRegion", { username }),
       url: localizePath(path, locale),
-      siteName: "tomomai ともマイ",
+      siteName: getFrontendGame().productName,
       type: "profile",
       ...openGraphLocales(locale),
     },
@@ -64,12 +67,16 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
   try {
     // Get the user's profile to find their main region
     const trpc = await createServerSideTRPC();
-    const profileData = await trpc.user.getPublicProfile({
-      username: safeDecodeURIComponent(username),
-    });
+    const game = getFrontendGame();
+    if (!game.enabled) notFound();
+    const profileData = game.id === "maimai"
+      ? await trpc.user.getPublicProfile({ username: safeDecodeURIComponent(username) })
+      : await resolvePublicUserByUsername(safeDecodeURIComponent(username), game.id);
+    const region = getGameRegion(game, profileData.profileMainRegion);
+    if (!region) notFound();
 
     // Redirect to the specific region page using the user's main region
-    redirect({ href: `/profile/${username}/${profileData.profileMainRegion}`, locale });
+    redirect({ href: `/profile/${username}/${region}`, locale });
   } catch (error) {
     if (error instanceof TRPCError && error.code === 'NOT_FOUND') {
       notFound();

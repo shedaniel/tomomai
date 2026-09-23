@@ -1,3 +1,5 @@
+import { getFrontendGame } from "@/lib/games/frontend-server";
+import { notFound } from "next/navigation";
 import { createProfileOGImage, OG_SIZE } from "@/lib/og";
 import { getTranslations } from "next-intl/server";
 import { isRegionEnabledStr } from "@/lib/enabled-regions";
@@ -25,6 +27,8 @@ export async function generateImageMetadata() {
 
 export default async function Image({ params, id }: Props & { id: Promise<string> }) {
   const [{ username: rawUsername, region }, locale] = await Promise.all([params, id]) as [{ username: string; region: string }, Locale];
+  const game = getFrontendGame();
+  if (game.id !== "maimai") notFound();
   const username = decodeURIComponent(rawUsername);
   const t = await getTranslations({ locale, namespace: "regions" });
 
@@ -66,7 +70,7 @@ export default async function Image({ params, id }: Props & { id: Promise<string
         iconUrl: userSnapshots.iconUrl,
       })
       .from(userSnapshots)
-      .where(and(eq(userSnapshots.userId, userData.id), eq(userSnapshots.region, region)))
+      .where(and(eq(userSnapshots.game, game.id), eq(userSnapshots.userId, userData.id), eq(userSnapshots.region, region)))
       .orderBy(desc(userSnapshots.fetchedAt))
       .limit(1);
 

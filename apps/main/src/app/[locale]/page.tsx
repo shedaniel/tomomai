@@ -1,3 +1,7 @@
+import { getFrontendGame } from "@/lib/games/frontend-server";
+import { getGameRegion } from "@/lib/games/frontend";
+import { GameDashboard } from "@/components/game-dashboard";
+import { notFound } from "next/navigation";
 import { Dashboard } from "@/components/dashboard";
 import { LandingPage } from "@/components/landing-page";
 import { getServerSession } from "@/lib/auth-server";
@@ -26,7 +30,7 @@ export async function generateMetadata(): Promise<Metadata> {
       title: t("title"),
       description: t("description"),
       url: localizePath("/", locale),
-      siteName: "tomomai ともマイ",
+      siteName: getFrontendGame().productName,
       type: "website",
       ...openGraphLocales(locale),
     },
@@ -39,6 +43,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function Home() {
+  const game = getFrontendGame();
   const session = await getServerSession();
   // eslint-disable-next-line react-hooks/rules-of-hooks
   let flags = await useFlags();
@@ -63,11 +68,20 @@ export default async function Home() {
     role: "user" as const,
   }));
 
-  const userRegion = userData.region || "intl";
+  const userRegion = getGameRegion(game, userData.region);
+  if (!game.enabled || !userRegion) notFound();
+
+  if (game.id !== "maimai") {
+    const snapshots = await trpc.user.getSnapshotsForGame({ game: game.id, region: userRegion });
+    const initialSnapshotData = snapshots[0]
+      ? await trpc.user.getSnapshotForGame({ game: game.id, region: userRegion, snapshotId: snapshots[0].id })
+      : null;
+    return <GameDashboard user={session.user} region={userRegion} initialSnapshots={snapshots} initialSnapshotData={initialSnapshotData} />;
+  }
 
   // Then fetch all other data in parallel using the correct region
   const [snapshotsData] = await Promise.all([
-    trpc.user.getSnapshots({ region: userRegion }).catch(() => ({ snapshots: [] })),
+    trpc.user.getSnapshots({ game: game.id, region: userRegion }).catch(() => ({ snapshots: [] })),
   ]);
 
   // Fetch the latest snapshot data if we have snapshots
@@ -75,6 +89,7 @@ export default async function Home() {
   const latestSnapshotId = snapshotsData.snapshots[0]?.id;
   const initialSnapshotData = latestSnapshotId
     ? await trpc.user.getSnapshotData({
+      game: game.id,
       snapshotId: latestSnapshotId,
       region: userRegion
     }).catch(() => undefined)
