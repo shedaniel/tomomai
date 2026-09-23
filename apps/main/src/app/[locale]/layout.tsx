@@ -18,6 +18,8 @@ import { siteJsonLd } from '@/lib/seo';
 import { SiteFooter } from '@/components/site-footer';
 import { PreMaintenanceBanner } from '@/components/pre-maintenance-banner';
 import { AuthDialogProvider } from '@/components/auth/auth-dialog-provider';
+import { GameProvider } from '@/components/providers/game-provider';
+import { getFrontendGame } from '@/lib/games/frontend-server';
 
 const TURNSTILE_SITE_KEY =
   process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && process.env.TURNSTILE_SECRET_KEY
@@ -102,6 +104,7 @@ export default async function LocaleLayout({ children, params }: Props) {
       >
         <NextIntlClientProvider messages={messages}>
           <LocaleProvider initialLocale={typedLocale}>
+            <GameProvider game={getFrontendGame()}>
             <ThemeProvider>
               <TRPCProvider>
                 <AuthDialogProvider>
@@ -114,6 +117,7 @@ export default async function LocaleLayout({ children, params }: Props) {
                 </AuthDialogProvider>
               </TRPCProvider>
             </ThemeProvider>
+            </GameProvider>
           </LocaleProvider>
         </NextIntlClientProvider>
       </body>
