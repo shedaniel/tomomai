@@ -1,9 +1,62 @@
 # Multi-game frontend plan
 
-Status: planning, 2026-09-24. This document records agreed product behavior and
-proposes an implementation sequence. It does not enable CHUNITHM or authorize a
-production rollout. Backend context is in [MULTI_GAME_BACKEND.md](MULTI_GAME_BACKEND.md)
+Status: frontend foundation implemented, 2026-09-24. This document records agreed
+product behavior, the current implementation, and the remaining rollout sequence.
+It does not enable CHUNITHM or authorize a production rollout. Backend context is in [MULTI_GAME_BACKEND.md](MULTI_GAME_BACKEND.md)
 and catalog identity context is in [PARENT_SONG.md](PARENT_SONG.md).
+
+## Current implementation
+
+The current phase deliberately excludes the two-domain/URL setup and cross-domain
+login. Existing maimai URLs remain unchanged. `getFrontendGame()` selects maimai
+at the server boundary and passes a serializable descriptor through `GameProvider`.
+There is no new public game route, hostname rewrite, game switcher, authentication
+flow, or CHUNITHM activation in this phase. Domain routing remains a later task.
+
+Implemented frontend support:
+
+- Dashboard, profile and catalog entry points use the same game-aware query
+  pipeline for every game, including maimai. Query inputs require the canonical
+  game schema; the current-site resolver is the default-game boundary. Canonical
+  function names do not need a `ForGame` variant or an implicit maimai fallback.
+  Shared layouts retain maimai's rich feature panels through presentation
+  adapters and capability checks. Snapshot selection and query keys include
+  game and region.
+- Generic player views format numeric score/rating/status values, select the
+  correct ranking buckets, and provide searchable score tables. CHUNITHM uses
+  integer scores and B20/B30; maimai retains percentage scores and B15/B35.
+- Public profiles resolve users within game context, load reserved accounts
+  through the maimai adapter, and whitelist serialized snapshot fields. Privacy
+  filtering removes non-public scores, score details and play counts on the
+  server before data reaches client components.
+- Catalog list/detail components use game-aware queries and numeric chart codes.
+  Detail links use canonical parent/instance identities rather than song-name
+  matching. Existing maimai slugs, filters and detail navigation are preserved.
+- Shared shell branding, region choices and metadata derive from game context.
+  Tomochu's Japanese name is **ともチュウ**. Copy belongs to its existing feature
+  namespace instead of a catch-all multi-game translation namespace.
+  Maimai profile image queries explicitly filter the game; maimai-only image and
+  database surfaces do not render another game's records using maimai semantics.
+- Version data lives with each game adapter. Shared version lookups require game
+  and region, and the old metadata module only re-exports maimai compatibility
+  data for specialized consumers. Public profile invalidation takes explicit game
+  context and does not invalidate the current site's pages for another game.
+
+CHUNITHM remains disabled and its providers are still unimplemented. Its frontend
+presentation is exercised with fixtures, not live CHUNITHM records or a publicly
+accessible preview. Enabling providers and selecting a non-maimai frontend game
+are separate launch tasks. Existing maimai login/session behavior is unchanged.
+
+Maimai's rich recommendations, percentiles, plates, render/export controls,
+reserved accounts and fetch settings remain specialized. Game-specific source
+availability and capability checks protect the generic surfaces; this phase does
+not promise a fully operational CHUNITHM fetching experience.
+
+Validation includes frontend typechecking, numeric presentation and ranking
+fixtures, catalog identity fixtures, public-profile privacy fixtures, and
+read-only smoke checks against the existing maimai development server. Domain
+isolation, cross-domain authentication and live CHUNITHM acceptance checks below
+remain outstanding.
 
 ## Confirmed decisions
 
