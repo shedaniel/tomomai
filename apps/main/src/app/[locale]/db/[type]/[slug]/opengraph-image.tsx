@@ -1,10 +1,12 @@
+import { getGameBrand } from "@/lib/games/frontend";
+import { getFrontendGame } from "@/lib/games/frontend-server";
 import { createSongOGImage, createHomeOGImage, DB_ACCENT, OG_SIZE } from "@/lib/og";
 import { getAllUniqueSongsCached } from "@/server/queries/songs-cache";
 import { getTranslations } from "next-intl/server";
 import { createSafeMaimaiImageUrl, isR2Url } from "@/lib/utils";
 import { resolveBaseUrlFromHeaders } from "@/lib/base-url";
 import { headers } from "next/headers";
-import { getVersionInfo } from "@/lib/metadata";
+import { getVersionInfo } from "@/lib/games/versions";
 import type { Locale } from "@/i18n/locale";
 import { getOGImageLocales } from "@/i18n/og-locale";
 
@@ -17,16 +19,19 @@ type Props = {
 
 export async function generateImageMetadata() {
   const locales = await getOGImageLocales();
-  return locales.map(locale => ({ id: locale, alt: "maimai song", size: OG_SIZE, contentType: "image/png" as const }));
+  return locales.map(locale => ({ id: locale, alt: `${getFrontendGame().displayName} song`, size: OG_SIZE, contentType: "image/png" as const }));
 }
 
 export default async function Image({ params, id }: Props & { id: Promise<string> }) {
   const [{ type, slug }, locale] = await Promise.all([params, id]) as [{ type: string; slug: string }, Locale];
 
+  const game = getFrontendGame();
+  if (!game.enabled || !game.capabilities.includes("catalog")) return new Response(null, { status: 404 });
+
   if (type !== "songs") {
     const t = await getTranslations({ locale, namespace: "db.songs.metadata" });
     return createHomeOGImage({
-      tagline: t("description"),
+      tagline: t("description", { game: getFrontendGame().displayName }),
       locale,
       logoFile: "icon-db-dark.webp",
       logoHeight: 220,
@@ -35,13 +40,13 @@ export default async function Image({ params, id }: Props & { id: Promise<string
   }
 
   const decodedSlug = decodeURIComponent(slug);
-  const songs = await getAllUniqueSongsCached();
+  const songs = await getAllUniqueSongsCached(game.id);
   const song = songs.find(s => s.slug === decodedSlug);
 
   if (!song) {
     const t = await getTranslations({ locale, namespace: "db.songs.metadata" });
     return createHomeOGImage({
-      tagline: t("description"),
+      tagline: t("description", { game: getFrontendGame().displayName }),
       locale,
       logoFile: "icon-db-dark.webp",
       logoHeight: 220,
@@ -58,9 +63,11 @@ export default async function Image({ params, id }: Props & { id: Promise<string
       ? `${baseUrl}${safeUrl}`
       : safeUrl;
 
-  const versionName = getVersionInfo(song.addedVersion)?.shortName;
+  const versionName = getVersionInfo(game.id, game.regions[0] ?? "jp", song.addedVersion)?.shortName;
 
   return createSongOGImage({
+    game: game.id,
+    brandName: getGameBrand(game).title,
     songName: song.songName,
     artist: song.artist,
     coverUrl,

@@ -43,7 +43,7 @@ async function revalidateSongsCache(
     return true;
   });
 
-  const withSlugs = await getSongSlugs(deduped);
+  const withSlugs = await getSongSlugs(deduped, game);
   const slugs = new Set(withSlugs.map((song) => song.slug));
 
   // Bulk uploads can touch hundreds of songs, so avoid thousands of calls.

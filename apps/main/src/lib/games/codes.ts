@@ -35,7 +35,7 @@ export const GAME_CODE_MAPS: Record<CanonicalGameId, GameCodeMaps> = {
   },
 };
 
-export function getGradeForGame(game: CanonicalGameId, scoreValue: number): string {
+export function getGrade(game: CanonicalGameId, scoreValue: number): string {
   if (game === "maimai") return getAchievementRate(scoreValue);
   const thresholds: readonly [number, string][] = [
     [1009000, "sss+"], [1007500, "sss"], [1005000, "ss+"], [1000000, "ss"],

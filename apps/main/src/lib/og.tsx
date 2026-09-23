@@ -5,8 +5,9 @@ import sharp from "sharp";
 import type { Locale } from "@/i18n/locale";
 import { getRatingImageUrl } from "@/lib/rating-calculator";
 import type { VersionId } from "@/lib/metadata";
-import { renderLevelPrecise } from "@/lib/name-utils";
-import type { Difficulty, Region } from "@/lib/types";
+import type { Region } from "@/lib/types";
+import type { CanonicalGameId } from "@/lib/games/types";
+import { formatGameLevel, getGameChartTypeLabel, getGameCode, getGameDifficultyHex, getGameDifficultyLabel } from "@/lib/games/presentation";
 
 export const OG_SIZE = { width: 1200, height: 630 };
 
@@ -793,40 +794,25 @@ export async function createProfileOGImage(options: ProfileOGImageOptions) {
   );
 }
 
-const DIFFICULTY_HEX: Record<string, string> = {
-  basic: "#10b981",
-  advanced: "#f59e0b",
-  expert: "#f43f5e",
-  master: "#8b5cf6",
-  remaster: "#d8b4fe",
-  utage: "#ec4899",
-};
-
-const DIFFICULTY_LABEL: Record<string, string> = {
-  basic: "BAS",
-  advanced: "ADV",
-  expert: "EXP",
-  master: "MAS",
-  remaster: "ReM",
-  utage: "宴",
-};
-
 export type SongOGImageOptions = {
+  game: CanonicalGameId;
+  brandName: string;
   songName: string;
   artist: string;
   /** Resolved cover URL — http(s) only; falls back to placeholder if null/blocked. */
   coverUrl: string;
-  /** "dx" | "std" | "utage" */
   songType: string;
   genre: string;
   /** Pretty version name e.g. "PRiSM PLUS" */
   versionName?: string;
-  difficulties: { difficulty: Difficulty; levelPrecise: number }[];
+  difficulties: { difficulty: string; levelPrecise: number }[];
   locale?: Locale;
 };
 
 export async function createSongOGImage(options: SongOGImageOptions) {
   const {
+    game,
+    brandName,
     songName,
     artist,
     coverUrl,
@@ -838,15 +824,13 @@ export async function createSongOGImage(options: SongOGImageOptions) {
   } = options;
 
   const orderedDiffs = [...difficulties].sort((a, b) => {
-    const order = ["basic", "advanced", "expert", "master", "remaster", "utage"];
-    return order.indexOf(a.difficulty) - order.indexOf(b.difficulty);
+    return getGameCode(game, "difficulty", a.difficulty) - getGameCode(game, "difficulty", b.difficulty);
   });
 
-  const [interFonts, monoFonts, localeFonts, brandIcon, cover, extracted] = await Promise.all([
+  const [interFonts, monoFonts, localeFonts, cover, extracted] = await Promise.all([
     loadInterFonts(),
     loadGeistMono(),
     loadLocaleFonts(locale),
-    loadLocalImage("icon-db-dark.webp", 48),
     loadRemoteImage(coverUrl, 460, 460),
     extractTwoColors(coverUrl),
   ]);
@@ -854,10 +838,10 @@ export async function createSongOGImage(options: SongOGImageOptions) {
   const fonts = [...interFonts, ...monoFonts, ...localeFonts];
   const fontFamily = getFontFamily(locale);
 
-  const isDx = songType === "dx";
-  const isUtage = songType === "utage";
+  const isDx = game === "maimai" && songType === "dx";
+  const isUtage = game === "maimai" && songType === "utage";
   const typeAccent = isUtage ? "#ec4899" : isDx ? "#f59e0b" : "#06b6d4";
-  const typeLabel = isUtage ? "宴会場" : isDx ? "でらっくす" : "スタンダード";
+  const typeLabel = getGameChartTypeLabel(game, songType);
 
   // Accent: two colors extracted from the cover (with DB defaults as fallback).
   const accent: Accent = extracted
@@ -909,7 +893,10 @@ export async function createSongOGImage(options: SongOGImageOptions) {
             position: "relative",
           }}
         >
-          <BrandChip section="songs" icon={brandIcon} />
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <span style={{ color: "#fafafa", fontSize: "20px", fontWeight: 700 }}>{brandName} · songs</span>
+            <span style={{ color: "#a1a1aa", fontSize: "20px", fontWeight: 600 }}>{game.toUpperCase()}</span>
+          </div>
 
           {/* Middle: cover + info */}
           <div style={{ display: "flex", alignItems: "center", gap: "56px" }}>
@@ -1045,7 +1032,7 @@ export async function createSongOGImage(options: SongOGImageOptions) {
               {orderedDiffs.length > 0 && (
                 <div style={{ display: "flex", alignItems: "center", gap: "10px", marginTop: "6px", flexWrap: "wrap" }}>
                   {orderedDiffs.map((d) => {
-                    const color = DIFFICULTY_HEX[d.difficulty] ?? "#71717a";
+                    const color = getGameDifficultyHex(game, d.difficulty);
                     return (
                       <div
                         key={d.difficulty}
@@ -1060,10 +1047,10 @@ export async function createSongOGImage(options: SongOGImageOptions) {
                         }}
                       >
                         <span style={{ color, fontSize: "18px", fontWeight: 700, letterSpacing: "0.04em" }}>
-                          {DIFFICULTY_LABEL[d.difficulty] ?? d.difficulty.toUpperCase()}
+                          {getGameDifficultyLabel(game, d.difficulty)}
                         </span>
                         <span style={{ color: "#fafafa", fontSize: "26px", fontWeight: 700, fontFamily: "Geist Mono" }}>
-                          {renderLevelPrecise(d.levelPrecise, d.difficulty)}
+                          {formatGameLevel(game, d.levelPrecise, d.difficulty)}
                         </span>
                       </div>
                     );

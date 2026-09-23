@@ -1,5 +1,5 @@
 import { SongsList } from "@/components/db/songs-list";
-import { getAllUniqueSongsCached } from "@/server/queries/songs-cache";
+
 import type { ReactNode } from "react";
 
 export default async function DbTypeLayout({

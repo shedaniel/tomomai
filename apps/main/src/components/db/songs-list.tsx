@@ -1,10 +1,11 @@
 "use client";
 
+import { useGame } from "@/components/providers/game-provider";
 import { FilterPanel, GenericFilter, getFilterKey } from "@/components/filter-panel";
 import { Button } from "@tomomai/ui";
 import { Input } from "@tomomai/ui";
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
-import { getVersionInfo } from "@/lib/metadata";
+import { getVersionInfo } from "@/lib/games/versions";
 import { trpc } from "@/lib/trpc-client";
 import { cn } from "@/lib/utils";
 import { LayoutGrid, LayoutList, Music, Search } from "lucide-react";
@@ -33,6 +34,7 @@ interface SongsListProps {
  * leak onto the detail route's ISR payload.
  */
 export function SongsList(_: SongsListProps = {}) {
+  const game = useGame();
   const t = useTranslations();
   const router = useRouter();
   const pathname = usePathname();
@@ -76,8 +78,8 @@ export function SongsList(_: SongsListProps = {}) {
   // Catalog is client-fetched via tRPC (1h cache, shared with the detail
   // route). Keeping it out of props is what lets this component live in the
   // shared layout without serializing the catalog into the ISR payload.
-  const { data: allSongs } = trpc.user.getAllUniqueSongs.useQuery(undefined, {
-    enabled: selectedSlug === null,
+  const { data: allSongs } = trpc.user.getAllUniqueSongs.useQuery({ game: game.id }, {
+    enabled: selectedSlug === null && game.enabled && game.capabilities.includes("catalog"),
     staleTime: 3600000, // 1 hour
     refetchOnWindowFocus: false,
   });
@@ -93,8 +95,8 @@ export function SongsList(_: SongsListProps = {}) {
   }, [allSongs]);
 
   const filterCategories = useMemo(() => {
-    return allSongs ? createUniqueSongFilterCategories(allSongs, tFilter) : null;
-  }, [allSongs, tFilter]);
+    return allSongs ? createUniqueSongFilterCategories(game.id, allSongs, tFilter, game.regions[0]) : null;
+  }, [allSongs, tFilter, game]);
 
   const handleAddFilter = useCallback((filter: GenericFilter) => {
     setFilters(prev => {
@@ -181,7 +183,7 @@ export function SongsList(_: SongsListProps = {}) {
       }
       case "version_asc":
       case "version_desc":
-        const version = getVersionInfo(song.addedVersion);
+        const version = getVersionInfo(game.id, game.regions[0] ?? "jp", song.addedVersion);
         return version?.name ?? `Ver. ${song.addedVersion}`;
       case "genre":
         return song.genre;
@@ -190,7 +192,7 @@ export function SongsList(_: SongsListProps = {}) {
       default:
         return null;
     }
-  }, [groupMode]);
+  }, [groupMode, game]);
 
   const renderGroupHeader = (key: string) => (
     <div className="col-span-full mt-4 pb-2 first:pt-0">
@@ -207,7 +209,7 @@ export function SongsList(_: SongsListProps = {}) {
       <header className="space-y-1">
         <h1 className="text-2xl font-semibold tracking-tight">{t("db.songs.heading")}</h1>
         <p className="text-sm text-muted-foreground max-w-3xl leading-relaxed">
-          {t("db.songs.metadata.description")}
+          {t("db.songs.metadata.description", { game: game.displayName })}
         </p>
       </header>
 

@@ -1,30 +1,32 @@
-import { chartTypeToCode, codeToChartType, codeToComboStatus, codeToDifficulty, codeToSyncStatus } from "@/lib/maimai/codes";
+import { parseSongId } from "@/lib/catalog/song-instance-id";
+import { getGameCode, getGameChartTypeKey, getGameDifficultyKey } from "@/lib/games/presentation";
+import type { CanonicalGameId } from "@/lib/games/types";
 import { songInstanceId } from "@/lib/db/song-instance-id";
 import { SongDetailChart, SongDetailHistoricalChart, SongDetails } from "@/components/db/songs/types";
 import { db } from "@/lib/db";
 import { parentSong, scoreData, snapshotScores, songs, userSnapshots } from "@/lib/db/schema-pg";
-import { VersionId } from "@/lib/metadata";
 import { getSongSlugs } from "@/lib/song-slug";
-import { Region, SongType } from "@/lib/types";
+import { Region } from "@/lib/types";
 import { maxBy } from "@/lib/utils";
 import { TRPCError } from "@trpc/server";
 import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import { unstable_cache } from "next/cache";
 import { Optional } from "utility-types";
-import { DIFFICULTY_ENUM } from "@/lib/db/types";
 import { UniqueSong, UniqueSongDifficulty } from "@/components/db/songs/types";
 
 export async function querySongScores(
+  game: CanonicalGameId,
   songName: string,
-  type: SongType,
+  type: string,
   userId: string,
-  artist?: string
+  artist?: string,
+  parentIds?: string[]
 ): Promise<SongDetails["userScores"]> {
   if (artist === undefined) {
     const artists = await db.selectDistinct({ artist: parentSong.artist })
       .from(parentSong)
       .innerJoin(songs, eq(songs.parentId, parentSong.id))
-      .where(and(and(eq(parentSong.game, "maimai"), eq(parentSong.songName, songName)), eq(parentSong.type, chartTypeToCode(type))))
+      .where(and(and(eq(parentSong.game, game), eq(parentSong.songName, songName)), eq(parentSong.type, getGameCode(game, "chartType", type)), parentIds ? inArray(parentSong.publicId, parentIds) : undefined))
       .limit(2);
     if (artists.length > 1) {
       throw new TRPCError({ code: "BAD_REQUEST", message: "Artist is required for songs with the same name" });
@@ -35,26 +37,28 @@ export async function querySongScores(
     .select({
       region: songs.region,
       artist: parentSong.artist,
-      difficulty: sql`${parentSong.difficulty}`.mapWith(codeToDifficulty).as("difficulty"),
-      achievement: scoreData.scoreValue,
-      fc: sql`${scoreData.comboStatus}`.mapWith(codeToComboStatus).as("fc"),
-      fs: sql`${scoreData.syncStatus}`.mapWith(codeToSyncStatus).as("fs"),
+      difficulty: sql`${parentSong.difficulty}`.mapWith(value => getGameDifficultyKey(game, Number(value))).as("difficulty"),
+      scoreValue: scoreData.scoreValue,
+      comboStatus: scoreData.comboStatus,
+      syncStatus: scoreData.syncStatus,
+      clearStatus: scoreData.clearStatus,
     })
     .from(snapshotScores)
     .innerJoin(scoreData, eq(snapshotScores.scoreId, scoreData.id))
     .innerJoin(songs, eq(scoreData.songId, songs.id))
-    .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
+    .innerJoin(parentSong, and(eq(songs.parentId, parentSong.id), eq(songs.game, parentSong.game)))
     .where(
       and(
-        and(eq(parentSong.game, "maimai"), eq(parentSong.songName, songName)),
-        eq(parentSong.type, chartTypeToCode(type)),
+        and(eq(parentSong.game, game), eq(parentSong.songName, songName)),
+        eq(parentSong.type, getGameCode(game, "chartType", type)),
         artist !== undefined ? eq(parentSong.artist, artist) : undefined,
+        parentIds ? inArray(parentSong.publicId, parentIds) : undefined,
         inArray(
           snapshotScores.snapshotId,
           db
             .selectDistinctOn([userSnapshots.region], { id: userSnapshots.id })
             .from(userSnapshots)
-            .where(and(eq(userSnapshots.game, "maimai"), eq(userSnapshots.userId, userId)))
+            .where(and(eq(userSnapshots.game, game), eq(userSnapshots.userId, userId)))
             .orderBy(userSnapshots.region, desc(userSnapshots.fetchedAt))
         )
       )
@@ -71,19 +75,22 @@ export async function querySongScores(
       userScores[score.region] = {};
     }
     userScores[score.region][score.difficulty] = {
-      achievement: score.achievement,
-      fc: score.fc,
-      fs: score.fs,
+      scoreValue: score.scoreValue,
+      comboStatus: score.comboStatus,
+      syncStatus: score.syncStatus,
+      clearStatus: score.clearStatus,
     };
   }
   return userScores;
 }
 
 export async function querySongDetails(
+  game: CanonicalGameId,
   songName: string,
-  type: SongType,
+  type: string,
   userId?: string | null,
-  artist?: string
+  artist?: string,
+  parentIds?: string[]
 ): Promise<SongDetails> {
   const chartsQuery = db
     .select({
@@ -91,10 +98,10 @@ export async function querySongDetails(
       songName: parentSong.songName,
       artist: parentSong.artist,
       cover: parentSong.cover,
-      difficulty: sql`${parentSong.difficulty}`.mapWith(codeToDifficulty).as("difficulty"),
+      difficulty: sql`${parentSong.difficulty}`.mapWith(value => getGameDifficultyKey(game, Number(value))).as("difficulty"),
       level: songs.level,
       levelPrecise: songs.levelPrecise,
-      type: sql`${parentSong.type}`.mapWith(codeToChartType).as("type"),
+      type: sql`${parentSong.type}`.mapWith(value => getGameChartTypeKey(game, Number(value))).as("type"),
       genre: parentSong.genre,
       region: songs.region,
       gameVersion: songs.gameVersion,
@@ -108,12 +115,12 @@ export async function querySongDetails(
       breakCount: songs.breakCount,
     })
     .from(songs)
-    .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
-    .where(and(and(eq(parentSong.game, "maimai"), eq(parentSong.songName, songName)), eq(parentSong.type, chartTypeToCode(type)), artist !== undefined ? eq(parentSong.artist, artist) : undefined))
+    .innerJoin(parentSong, and(eq(songs.parentId, parentSong.id), eq(songs.game, parentSong.game)))
+    .where(and(and(eq(parentSong.game, game), eq(parentSong.songName, songName)), eq(parentSong.type, getGameCode(game, "chartType", type)), artist !== undefined ? eq(parentSong.artist, artist) : undefined, parentIds ? inArray(parentSong.publicId, parentIds) : undefined))
     .orderBy(songs.region, desc(songs.gameVersion), parentSong.difficulty);
 
   const scoresQuery = userId
-    ? querySongScores(songName, type, userId, artist)
+    ? querySongScores(game, songName, type, userId, artist, parentIds)
     : Promise.resolve(undefined);
 
   const [charts, scores] = await Promise.all([chartsQuery, scoresQuery]);
@@ -130,12 +137,12 @@ export async function querySongDetails(
 
   type ChartType = (typeof charts)[number];
 
-  const byRegion = new Map<Region, Map<VersionId, ChartType[]>>();
+  const byRegion = new Map<Region, Map<number, ChartType[]>>();
   for (const chart of charts) {
     if (!byRegion.has(chart.region)) {
       byRegion.set(chart.region, new Map());
     }
-    const chartVersion = chart.gameVersion as VersionId;
+    const chartVersion = chart.gameVersion as number;
     const regionMap = byRegion.get(chart.region)!;
     if (!regionMap.has(chartVersion)) {
       regionMap.set(chartVersion, []);
@@ -154,7 +161,7 @@ export async function querySongDetails(
               difficulty: chart.difficulty,
               level: chart.level,
               levelPrecise: chart.levelPrecise,
-              addedVersion: chart.addedVersion as VersionId,
+              addedVersion: chart.addedVersion as number,
               noteDesigner: chart.noteDesigner,
               tapCount: chart.tapCount,
               holdCount: chart.holdCount,
@@ -177,30 +184,33 @@ export async function querySongDetails(
   const chartBpm = preferredChart.bpm || charts.find((c) => c.bpm !== null)?.bpm;
 
   return {
+    parentIds: [...new Set(charts.map(chart => chart.songId.split(":")[0]))],
     songName: preferredChart.songName,
     artist: preferredChart.artist,
     cover: preferredChart.cover,
     type: preferredChart.type,
     genre: preferredChart.genre,
     bpm: chartBpm ?? null,
-    addedVersion: preferredChart.addedVersion as VersionId,
+    addedVersion: preferredChart.addedVersion as number,
     userScores: userScoresMap,
     regions,
   } satisfies SongDetails;
 }
 
-export async function queryAllUniqueSongs() {
+export async function queryAllUniqueSongs(game: CanonicalGameId) {
   const getCachedUniqueSongs = unstable_cache(
     async () => {
       const allSongs = await db
         .select({
           id: songs.id,
+          parentId: parentSong.publicId,
+          disambiguator: parentSong.disambiguator,
           songName: parentSong.songName,
           artist: parentSong.artist,
           cover: parentSong.cover,
-          type: sql`${parentSong.type}`.mapWith(codeToChartType).as("type"),
+          type: sql`${parentSong.type}`.mapWith(value => getGameChartTypeKey(game, Number(value))).as("type"),
           genre: parentSong.genre,
-          difficulty: sql`${parentSong.difficulty}`.mapWith(codeToDifficulty).as("difficulty"),
+          difficulty: sql`${parentSong.difficulty}`.mapWith(value => getGameDifficultyKey(game, Number(value))).as("difficulty"),
           levelPrecise: songs.levelPrecise,
           noteDesigner: songs.noteDesigner,
           addedVersion: songs.addedVersion,
@@ -208,8 +218,8 @@ export async function queryAllUniqueSongs() {
           gameVersion: songs.gameVersion,
         })
         .from(songs)
-        .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
-        .where(eq(songs.game, "maimai"))
+        .innerJoin(parentSong, and(eq(songs.parentId, parentSong.id), eq(songs.game, parentSong.game)))
+        .where(eq(songs.game, game))
         .orderBy(parentSong.songName);
 
       const allSongsSortedById = [...allSongs].sort((a, b) => Number(a.id) - Number(b.id));
@@ -227,16 +237,18 @@ export async function queryAllUniqueSongs() {
       const uniqueSongs: Map<
         string,
         (typeof allSongsWithIndex)[0] & {
+          parentIds: string[];
           difficulties: (UniqueSongDifficulty & { region: Region; gameVersion: number })[];
         }
       > = new Map();
       for (const song of allSongsWithIndex) {
-        const key = JSON.stringify([song.songName, song.artist, song.type]);
+        const key = JSON.stringify([song.songName, song.artist, song.type, song.disambiguator]);
         if (!uniqueSongs.has(key)) {
-          uniqueSongs.set(key, { ...song, difficulties: [] });
+          uniqueSongs.set(key, { ...song, parentIds: [song.parentId], difficulties: [] });
         } else {
           uniqueSongs.set(key, {
             ...uniqueSongs.get(key)!,
+            parentIds: [...new Set([...uniqueSongs.get(key)!.parentIds, song.parentId])],
             difficulties: [...uniqueSongs.get(key)!.difficulties],
             ...song,
           });
@@ -269,15 +281,16 @@ export async function queryAllUniqueSongs() {
         });
       }
 
-      const songsWithSlugs = await getSongSlugs(Array.from(uniqueSongs.values()));
+      const songsWithSlugs = await getSongSlugs(Array.from(uniqueSongs.values()), game);
       const songsStripped: UniqueSong[] = songsWithSlugs.map((song) => ({
+        parentIds: song.parentIds,
         index: song.index,
         songName: song.songName,
         artist: song.artist,
         cover: song.cover,
         type: song.type,
         genre: song.genre,
-        addedVersion: song.addedVersion as VersionId,
+        addedVersion: song.addedVersion as number,
         difficulties: song.difficulties
           .map(
             (d) =>
@@ -289,21 +302,22 @@ export async function queryAllUniqueSongs() {
           )
           .toSorted(
             (a, b) =>
-              DIFFICULTY_ENUM.indexOf(a.difficulty) - DIFFICULTY_ENUM.indexOf(b.difficulty)
+              getGameCode(game, "difficulty", a.difficulty) - getGameCode(game, "difficulty", b.difficulty)
           ),
-        slug: song.slug,
+        slug: song.disambiguator ? `${song.slug}-${song.disambiguator}` : song.slug,
         aliases: song.aliases,
       }));
       return songsStripped;
     },
-    ["all-unique-songs:maimai", "parent-v1"],
-    { revalidate: 3600, tags: ["all-unique-songs:maimai"] }
+    ["all-unique-songs", game, "parent-v2"],
+    { revalidate: 3600, tags: [`all-unique-songs:${game}`] }
   );
 
   return getCachedUniqueSongs();
 }
 
-export function queryCatalogChartsForGame(game: import("@/lib/games/types").CanonicalGameId, region?: Region, gameVersion?: number) {
+export function queryCatalogCharts(game: CanonicalGameId, region?: Region, gameVersion?: number, publicId?: string) {
+  const parsed = publicId === undefined ? undefined : parseSongId(publicId);
   return db.select({
     id: songInstanceId,
     parentId: parentSong.publicId,
@@ -320,6 +334,12 @@ export function queryCatalogChartsForGame(game: import("@/lib/games/types").Cano
     levelPrecise: songs.levelPrecise,
   }).from(songs)
     .innerJoin(parentSong, and(eq(songs.parentId, parentSong.id), eq(songs.game, parentSong.game)))
-    .where(and(eq(songs.game, game), region ? eq(songs.region, region) : undefined, gameVersion !== undefined ? eq(songs.gameVersion, gameVersion) : undefined))
+    .where(and(
+      eq(songs.game, game),
+      region ? eq(songs.region, region) : undefined,
+      gameVersion !== undefined ? eq(songs.gameVersion, gameVersion) : undefined,
+      parsed === null ? sql`false` : parsed ? eq(parentSong.publicId, parsed.parentPublicId) : undefined,
+      parsed?.kind === "instance" ? and(eq(songs.region, parsed.region), eq(songs.gameVersion, parsed.gameVersion)) : undefined,
+    ))
     .orderBy(parentSong.songName, parentSong.difficulty);
 }

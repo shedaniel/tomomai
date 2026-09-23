@@ -1,5 +1,8 @@
 import { FilterCategory } from "@/components/filter-panel";
-import { getVersionInfo } from "@/lib/metadata";
+import { getVersionInfo } from "@/lib/games/versions";
+import type { CanonicalGameId } from "@/lib/games/types";
+import type { Region } from "@/lib/types";
+import { getGameChartTypeLabel } from "@/lib/games/presentation";
 import { Disc3, Folder, Calendar, ArrowUpDown, BarChart, Pencil } from "lucide-react";
 import { GroupMode, UniqueSong, UniqueSongDifficulty, UniqueSongFilter } from "./types";
 import { LEVEL_ENUM } from "@/lib/db/types";
@@ -22,8 +25,10 @@ export function hashString(str: string | null): number {
 
 // Create filter categories for unique songs
 export function createUniqueSongFilterCategories(
+  game: CanonicalGameId,
   songs: UniqueSong[],
-  t?: (key: string) => string
+  t?: (key: string) => string,
+  region: Region = "jp"
 ): FilterCategory[] {
   // Helper to get translation or fallback
   const getLabel = (key: string, fallback: string) => t?.(key) ?? fallback ?? key;
@@ -68,10 +73,7 @@ export function createUniqueSongFilterCategories(
       type: "type",
       label: getLabel("type", "Type"),
       icon: Disc3,
-      options: [
-        { value: "std", label: getLabel("std", "Standard") },
-        { value: "dx", label: getLabel("dx", "DX") },
-      ],
+      options: [...new Set(songs.map(song => song.type))].map(type => ({ value: type, label: type === "std" || type === "dx" ? getLabel(type, getGameChartTypeLabel(game, type)) : getGameChartTypeLabel(game, type) })),
     },
     {
       type: "genre",
@@ -84,7 +86,7 @@ export function createUniqueSongFilterCategories(
       label: getLabel("addedVersion", "Added Version"),
       icon: Calendar,
       options: addedVersions.map(v => {
-        const versionInfo = getVersionInfo(v);
+        const versionInfo = getVersionInfo(game, region, v);
         return { value: String(v), label: versionInfo?.name ?? `v${v}` };
       }),
     },

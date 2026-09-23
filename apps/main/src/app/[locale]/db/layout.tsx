@@ -1,6 +1,8 @@
 import { DbLayoutClient } from "@/components/db/db-layout-client";
 import { SongDetailDrawer } from "@/components/db/song-detail-drawer";
-import { DB_TYPES } from "@/lib/db/types";
+import { getGameCatalogSections } from "@/lib/games/presentation";
+import { getFrontendGame } from "@/lib/games/frontend-server";
+import { supportsGameFeature } from "@/lib/games/frontend";
 import type { ReactNode } from "react";
 export default async function DbLayout({
   children,
@@ -9,9 +11,11 @@ export default async function DbLayout({
   children: ReactNode;
   detail: ReactNode;
 }) {
+  const game = getFrontendGame();
+  const types = game.enabled && supportsGameFeature(game, "catalog") ? getGameCatalogSections(game.id) : [];
   return (
     <>
-      <DbLayoutClient types={DB_TYPES} user={null} customThemesEnabled={false}>
+      <DbLayoutClient types={types} user={null} customThemesEnabled={false}>
         {children}
       </DbLayoutClient>
       <SongDetailDrawer>{detail}</SongDetailDrawer>

@@ -1,3 +1,7 @@
+import { getGameBrand } from "@/lib/games/frontend";
+import { getGameChartTypeLabel } from "@/lib/games/presentation";
+import { getFrontendGame } from "@/lib/games/frontend-server";
+import { supportsGameFeature } from "@/lib/games/frontend";
 import { InlineNotFound } from "@/components/inline-not-found";
 import { getAllUniqueSongsCached } from "@/server/queries/songs-cache";
 import { Metadata } from "next";
@@ -36,7 +40,10 @@ export async function generateMetadata({ params }: DbSlugPageProps): Promise<Met
   }
 
   const decodedSlug = safeDecodeURIComponent(slug);
-  const songs = await getAllUniqueSongsCached();
+  const game = getFrontendGame();
+  if (!game.enabled || !supportsGameFeature(game, "catalog")) return { robots: { index: false, follow: false } };
+
+  const songs = await getAllUniqueSongsCached(game.id);
   const song = songs.find(s => s.slug === decodedSlug);
   const path = `/db/songs/${encodeURIComponent(decodedSlug)}`;
 
@@ -45,7 +52,7 @@ export async function generateMetadata({ params }: DbSlugPageProps): Promise<Met
   // the locale-resolution code that would otherwise read headers.
   if (!song) {
     return {
-      title: "Song not found | tomomai ともマイ",
+      title: `Song not found | ${getGameBrand(game).title}`,
       robots: { index: false, follow: false },
       alternates: {},
     };
@@ -56,8 +63,8 @@ export async function generateMetadata({ params }: DbSlugPageProps): Promise<Met
     getLocale(),
   ]);
 
-  const chartType = song.type === "dx" ? t("chartTypeDx") : t("chartTypeStandard");
-  const title = t("songTitle", { songName: song.songName, artist: song.artist });
+  const chartType = getGameChartTypeLabel(game.id, song.type);
+  const title = t("songTitle", { game: game.displayName, songName: song.songName, artist: song.artist });
   const description = t("songDescription", {
     songName: song.songName,
     artist: song.artist,
@@ -77,7 +84,7 @@ export async function generateMetadata({ params }: DbSlugPageProps): Promise<Met
       title,
       description: ogDescription,
       url: localizePath(path, locale),
-      siteName: "tomomai ともマイ",
+      siteName: getGameBrand(game).title,
       type: "article",
       images: [{ url: ogImageUrl(path, locale) }],
       ...openGraphLocales(locale),
@@ -101,7 +108,10 @@ export default async function DbSlugPage({ params }: DbSlugPageProps) {
   // isn't serialized into the ISR payload) plus per-song JSON-LD.
 
   const decodedSlug = safeDecodeURIComponent(slug);
-  const songs = await getAllUniqueSongsCached();
+  const game = getFrontendGame();
+  if (!game.enabled || !supportsGameFeature(game, "catalog")) return <InlineNotFound />;
+
+  const songs = await getAllUniqueSongsCached(game.id);
   const song = type === "songs" ? songs.find(s => s.slug === decodedSlug) : undefined;
 
   // Unknown slug: render a minimal, ISR-cacheable not-found UI inline.
@@ -133,12 +143,13 @@ export default async function DbSlugPage({ params }: DbSlugPageProps) {
     image: song.cover,
     url: `${baseUrl}${localizePath(`/db/songs/${encodeURIComponent(decodedSlug)}`, locale)}`,
     description: tMeta("jsonLdChartDescription", {
-      chartType: song.type === "dx" ? tMeta("chartTypeDx") : tMeta("chartTypeStandard"),
+      game: game.displayName,
+      chartType: getGameChartTypeLabel(game.id, song.type),
     }),
   };
 
   const breadcrumb = breadcrumbJsonLd([
-    { name: "tomomai", url: `${baseUrl}${localizePath("/", locale)}` },
+    { name: game.productName, url: `${baseUrl}${localizePath("/", locale)}` },
     { name: tNav("songs"), url: `${baseUrl}${localizePath("/db/songs", locale)}` },
     { name: song.songName, url: `${baseUrl}${localizePath(`/db/songs/${encodeURIComponent(decodedSlug)}`, locale)}` },
   ]);

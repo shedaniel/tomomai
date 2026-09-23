@@ -3,7 +3,8 @@
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/animate-ui/components/radix/hover-card";
 import { Button } from "@tomomai/ui";
 import { Separator } from "@tomomai/ui";
-import { getVersionInfo } from "@/lib/metadata";
+import { getVersionInfo } from "@/lib/games/versions";
+import { useGameId } from "@/components/providers/game-provider";
 import { trpc } from "@/lib/trpc-client";
 import { cn, createSafeMaimaiImageUrl, getTypeBadgeUrl } from "@/lib/utils";
 import { Activity, Calendar, ChevronRight, ListPlus, Loader2, Music } from "lucide-react";
@@ -38,10 +39,12 @@ function SongDetailDialog({ songName, artist, type, difficulty }: {
   difficulty: Difficulty;
 }) {
   const t = useTranslations();
+  const game = useGameId();
   const [open, setOpen] = useState(false);
 
   const { data: songDetails, isLoading } = trpc.user.getSongDetails.useQuery(
     {
+      game,
       songName,
       artist,
       type,
@@ -200,11 +203,13 @@ function SongCardContent({
 
 export function SongHoverCard({ children, song, percentile, side, className }: SongHoverCardProps) {
   const t = useTranslations();
+  const game = useGameId();
   const [isOpen, setIsOpen] = useState(false);
   const isDesktop = useMediaQuery("(min-width: 768px)", { initializeWithValue: false });
 
   const { data: songDetails, isLoading } = trpc.user.getSimpleSongDetails.useQuery(
     {
+      game,
       publicId: song.songId,
     },
     {
@@ -213,7 +218,7 @@ export function SongHoverCard({ children, song, percentile, side, className }: S
     }
   );
 
-  const addedVersionInfo = songDetails ? getVersionInfo(songDetails.addedVersion) : null;
+  const addedVersionInfo = songDetails ? getVersionInfo(game, songDetails.region, songDetails.addedVersion) : null;
 
   const content = (
     <SongCardContent

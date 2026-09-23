@@ -1,3 +1,5 @@
+import { getFrontendGame } from "@/lib/games/frontend-server";
+import { supportsGameFeature } from "@/lib/games/frontend";
 import { SongDetailContent } from "@/components/db/songs/song-detail-content";
 import { getAllUniqueSongsCached, getSongDetailsCached } from "@/server/queries/songs-cache";
 import { safeDecodeURIComponent } from "@/lib/utils";
@@ -25,14 +27,17 @@ export default async function DetailSlotPage({ params }: Props) {
   if (type !== "songs") return null;
 
   const decodedSlug = safeDecodeURIComponent(slug);
-  const songs = await getAllUniqueSongsCached();
+  const game = getFrontendGame();
+  if (!game.enabled || !supportsGameFeature(game, "catalog")) return null;
+
+  const songs = await getAllUniqueSongsCached(game.id);
   const song = songs.find((s) => s.slug === decodedSlug);
   if (!song) return null;
 
   // SSR the full static chart data (no userId → no scores) so the drawer
   // body is in the document for crawlers and no-JS clients. The client
   // component refetches on mount to layer in the signed-in user's scores.
-  const details = await getSongDetailsCached(song.songName, song.type, undefined, song.artist);
+  const details = await getSongDetailsCached(game.id, song.songName, song.type, undefined, song.artist, song.parentIds);
 
   const t = await getTranslations("db.songs.detail");
   // Fall back to artist when the song name is empty (some entries have
@@ -47,6 +52,7 @@ export default async function DetailSlotPage({ params }: Props) {
         artist={song.artist}
         slug={song.slug}
         type={song.type}
+        parentIds={song.parentIds}
         initialData={details}
       />
     </article>

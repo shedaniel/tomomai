@@ -1,6 +1,8 @@
-import { queryAllUniqueSongs, querySongDetails } from "@/server/queries/songs";
-import { SongType } from "@/lib/types";
+import { queryAllUniqueSongs, querySongDetails, queryCatalogCharts } from "@/server/queries/songs";
+import type { CanonicalGameId } from "@/lib/games/types";
 import { cache } from "react";
+import { unstable_cache } from "next/cache";
+import type { Region } from "@/lib/types";
 
 /**
  * Per-request memoized helpers for the public songs catalog.
@@ -15,21 +17,19 @@ import { cache } from "react";
  * Cross-request caching is handled inside the tRPC procedures (unstable_cache
  * + an in-process slug cache in lib/song-slug.ts).
  */
-export const getAllUniqueSongsCached = cache(async () => {
-  return queryAllUniqueSongs();
+export const getAllUniqueSongsCached = cache(async (game: CanonicalGameId) => {
+  return queryAllUniqueSongs(game);
 });
 
 export const getSongDetailsCached = cache(
-  async (songName: string, type: SongType, userId?: string | null, artist?: string) => {
-    return querySongDetails(songName, type, userId, artist);
+  async (game: CanonicalGameId, songName: string, type: string, userId?: string | null, artist?: string, parentIds?: string[]) => {
+    return querySongDetails(game, songName, type, userId, artist, parentIds);
   }
 );
 
-export const getCatalogChartsCachedForGame = cache(async (game: import("@/lib/games/types").CanonicalGameId, region?: import("@/lib/types").Region, version?: number) => {
-  const { unstable_cache } = await import("next/cache");
-  const { queryCatalogChartsForGame } = await import("./songs");
+export const getCatalogChartsCached = cache(async (game: CanonicalGameId, region?: Region, version?: number) => {
   return unstable_cache(
-    () => queryCatalogChartsForGame(game, region, version),
+    () => queryCatalogCharts(game, region, version),
     ["catalog-charts", game, region ?? "all", version?.toString() ?? "all"],
     { revalidate: 3600, tags: [`all-unique-songs:${game}`] },
   )();

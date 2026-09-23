@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatGameScore, formatGameRating, getGameDifficultyLabel, getGameChartTypeLabel, getGameStatusLabels, getGameRankingBuckets } from "./presentation";
+import { formatGameScore, formatGameRating, getGameDifficultyLabel, getGameChartTypeLabel, getGameStatusLabels, getGameRankingBuckets, getGameDifficultyHex, formatGameLevel } from "./presentation";
 
 describe("game presentation", () => {
   it("keeps maimai achievement precision and integer ratings", () => {
@@ -16,6 +16,15 @@ describe("game presentation", () => {
     expect(getGameChartTypeLabel("chunithm", 1)).toBe("WORLD'S END");
     expect(getGameStatusLabels("chunithm", { comboStatus: 2, syncStatus: 1, clearStatus: 2 })).toEqual(["AJ", "FULL CHAIN", "HARD"]);
     expect(getGameRankingBuckets("chunithm").map(b => [b.label, b.size])).toEqual([["B20", 20], ["B30", 30]]);
+  });
+
+  it("renders independent difficulty identities and levels for song previews", () => {
+    expect(getGameDifficultyHex("maimai", "remaster")).toBe("#d8b4fe");
+    expect(getGameDifficultyHex("chunithm", "ultima")).toBe("#b91c1c");
+    expect(getGameDifficultyLabel("chunithm", "ultima")).toBe("ULTIMA");
+    expect(getGameDifficultyLabel("chunithm", "worlds-end")).toBe("WORLD'S END");
+    expect(formatGameLevel("maimai", 147, "utage")).toBe("14.?");
+    expect(formatGameLevel("chunithm", 147, "ultima")).toBe("14.7");
   });
 
   it("distinguishes a missing score from an actual zero", () => {

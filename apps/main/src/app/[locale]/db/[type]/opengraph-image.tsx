@@ -1,3 +1,4 @@
+import { getFrontendGame } from "@/lib/games/frontend-server";
 import { createHomeOGImage, DB_ACCENT, OG_SIZE } from "@/lib/og";
 import { getTranslations } from "next-intl/server";
 import type { Locale } from "@/i18n/locale";
@@ -12,21 +13,22 @@ type Props = {
 
 export async function generateImageMetadata() {
   const locales = await getOGImageLocales();
-  return locales.map(locale => ({ id: locale, alt: "tomomai database", size: OG_SIZE, contentType: "image/png" as const }));
+  return locales.map(locale => ({ id: locale, alt: `${getFrontendGame().productName} database`, size: OG_SIZE, contentType: "image/png" as const }));
 }
 
 export default async function Image({ params, id }: Props & { id: Promise<string> }) {
+  if (!getFrontendGame().capabilities.includes("score-details")) return new Response(null, { status: 404 });
   const [{ type }, locale] = await Promise.all([params, id]) as [{ type: string }, Locale];
 
   let tagline: string;
   if (type === "songs") {
-    tagline = (await getTranslations({ locale, namespace: "db.songs.metadata" }))("description");
+    tagline = (await getTranslations({ locale, namespace: "db.songs.metadata" }))("description", { game: getFrontendGame().displayName });
   } else if (type === "stats") {
-    tagline = (await getTranslations({ locale, namespace: "db.stats" }))("description");
+    tagline = (await getTranslations({ locale, namespace: "db.stats" }))("description", { game: getFrontendGame().displayName });
   } else if (type === "events") {
-    tagline = (await getTranslations({ locale, namespace: "db.events" }))("description");
+    tagline = (await getTranslations({ locale, namespace: "db.events" }))("description", { game: getFrontendGame().displayName });
   } else {
-    tagline = (await getTranslations({ locale, namespace: "db.songs.metadata" }))("description");
+    tagline = (await getTranslations({ locale, namespace: "db.songs.metadata" }))("description", { game: getFrontendGame().displayName });
   }
 
   return createHomeOGImage({

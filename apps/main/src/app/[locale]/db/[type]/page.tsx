@@ -1,3 +1,8 @@
+import { getFrontendGame } from "@/lib/games/frontend-server";
+import { supportsGameFeature } from "@/lib/games/frontend";
+import { getGameCatalogSections } from "@/lib/games/presentation";
+import { getGameBrand } from "@/lib/games/frontend";
+import { InlineNotFound } from "@/components/inline-not-found";
 import { getAllUniqueSongsCached } from "@/server/queries/songs-cache";
 import { Metadata } from "next";
 import dynamic from "next/dynamic";
@@ -32,19 +37,20 @@ type DbTypePageProps = {
 
 export async function generateMetadata({ params }: DbTypePageProps): Promise<Metadata> {
   const { type } = await params;
+  const game = getFrontendGame();
   const locale = await getLocale();
 
   type Section = { title: string; description: string };
   let section: Section | null = null;
   if (type === "songs") {
     const t = await getTranslations("db.songs.metadata");
-    section = { title: t("title"), description: t("description") };
+    section = { title: t("title", { game: getFrontendGame().displayName }), description: t("description", { game: getFrontendGame().displayName }) };
   } else if (type === "stats") {
     const t = await getTranslations("db.stats");
-    section = { title: t("title"), description: t("description") };
+    section = { title: t("title", { game: getFrontendGame().displayName }), description: t("description", { game: getFrontendGame().displayName }) };
   } else if (type === "events") {
     const t = await getTranslations("db.events");
-    section = { title: t("title"), description: t("description") };
+    section = { title: t("title", { game: getFrontendGame().displayName }), description: t("description", { game: getFrontendGame().displayName }) };
   }
   if (!section) return {};
 
@@ -57,7 +63,7 @@ export async function generateMetadata({ params }: DbTypePageProps): Promise<Met
       title: section.title,
       description: section.description,
       url: localizePath(path, locale),
-      siteName: "tomomai ともマイ",
+      siteName: getGameBrand(game).title,
       type: "website",
       images: [{ url: ogImageUrl(path, locale) }],
       ...openGraphLocales(locale),
@@ -72,18 +78,21 @@ export async function generateMetadata({ params }: DbTypePageProps): Promise<Met
 
 export default async function DbTypePage({ params }: DbTypePageProps) {
   const { type } = await params;
+  const game = getFrontendGame();
+
+  if (!game.enabled || !getGameCatalogSections(game.id).includes(type) || (type === "songs" && !supportsGameFeature(game, "catalog"))) return <InlineNotFound />;
 
   if (type === "songs") {
     // The interactive SongsList is mounted by /db/[type]/layout so it
     // persists across list ↔ detail navigation.
-    const songs = await getAllUniqueSongsCached();
+    const songs = await getAllUniqueSongsCached(game.id);
     const t = await getTranslations("db.songs.metadata");
 
     const jsonLd = {
       "@context": "https://schema.org",
       "@type": "CollectionPage",
-      name: t("title"),
-      description: t("description"),
+      name: t("title", { game: getFrontendGame().displayName }),
+      description: t("description", { game: getFrontendGame().displayName }),
       numberOfItems: songs.length,
     };
 

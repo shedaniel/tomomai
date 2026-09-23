@@ -5,7 +5,8 @@ import { Link } from "@/i18n/navigation"
 import { cn } from "@/lib/utils";
 import { CoverImage } from "@/components/cover-image";
 import { UniqueSong } from "./types";
-import { renderLevelPrecise } from "@/lib/name-utils";
+import { useGameId } from "@/components/providers/game-provider";
+import { formatGameLevel, getGameDifficultyLabel, getGameDifficultyColors, getGameChartTypeLabel, getGameChartTypeBadge } from "@/lib/games/presentation";
 
 interface SongRowProps {
   song: UniqueSong;
@@ -17,6 +18,7 @@ interface SongRowProps {
 }
 
 export function SongRow({ song, index, isSelected, onSelect, disableInitialAnimation }: SongRowProps) {
+  const game = useGameId();
   const href = `/db/songs/${encodeURIComponent(song.slug)}`;
   const isSingleDifficulty = song.difficulties.length === 1;
   const singleDiff = isSingleDifficulty ? song.difficulties[0] : null;
@@ -57,6 +59,7 @@ export function SongRow({ song, index, isSelected, onSelect, disableInitialAnima
             singleDiff?.difficulty === "master" && "ring-purple-500",
             singleDiff?.difficulty === "remaster" && "ring-purple-200",
             singleDiff?.difficulty === "utage" && "ring-pink-400",
+            singleDiff && getGameDifficultyColors(game, singleDiff.difficulty).ring,
           )}
           width={40}
           height={40}
@@ -70,7 +73,7 @@ export function SongRow({ song, index, isSelected, onSelect, disableInitialAnima
               "text-[10px] px-1.5 py-0.5 rounded font-medium shrink-0",
               song.type === "dx" ? "bg-amber-100 text-amber-700" : "bg-slate-100 text-slate-600"
             )}>
-              {song.type.toUpperCase()}
+              {getGameChartTypeLabel(game, song.type)}
             </span>
             {singleDiff && (
               <span className={cn(
@@ -81,8 +84,9 @@ export function SongRow({ song, index, isSelected, onSelect, disableInitialAnima
                 singleDiff.difficulty === "master" && "bg-purple-100 text-purple-700",
                 singleDiff.difficulty === "remaster" && "bg-purple-50 text-purple-900",
                 singleDiff.difficulty === "utage" && "bg-pink-100 text-pink-700",
+                getGameDifficultyColors(game, singleDiff.difficulty).text,
               )}>
-                {singleDiff.difficulty.slice(0, 3).toUpperCase()} {renderLevelPrecise(singleDiff.levelPrecise, singleDiff.difficulty)}
+                {getGameDifficultyLabel(game, singleDiff.difficulty)} {formatGameLevel(game, singleDiff.levelPrecise, singleDiff.difficulty)}
               </span>
             )}
           </div>

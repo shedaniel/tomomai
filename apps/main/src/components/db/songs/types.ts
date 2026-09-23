@@ -1,40 +1,41 @@
 import { GenericFilter } from "@/components/filter-panel";
-import { VersionId } from "@/lib/metadata";
-import { Difficulty, Region, SongType } from "@/lib/types";
+import { Region } from "@/lib/types";
 
 export interface UniqueSong {
+  parentIds: string[];
   index: number;
   songName: string;
   artist: string;
   cover: string;
-  type: SongType;
+  type: string;
   genre: string;
-  addedVersion: VersionId;
+  addedVersion: number;
   slug: string;
   aliases: string[];
   difficulties: UniqueSongDifficulty[];
 }
 
 export interface UniqueSongDifficulty {
-  difficulty: Difficulty;
+  difficulty: string;
   levelPrecise: number;
   noteDesigner: string | null;
 }
 
 export interface UserScore {
-  achievement: number;
-  fc: string;
-  fs: string;
+  scoreValue: number;
+  comboStatus: number;
+  syncStatus: number;
+  clearStatus: number;
 }
 
 export interface SongDetailHistoricalChart {
-  difficulty: Difficulty;
+  difficulty: string;
   levelPrecise: number;
 }
 
 export interface SongDetailChart extends SongDetailHistoricalChart {
   level: string;
-  addedVersion: VersionId;
+  addedVersion: number;
   noteDesigner: string | null;
   tapCount: number | null;
   holdCount: number | null;
@@ -44,18 +45,19 @@ export interface SongDetailChart extends SongDetailHistoricalChart {
 }
 
 export interface SongDetails {
+  parentIds: string[];
   songName: string;
   artist: string;
   cover: string;
-  type: SongType;
+  type: string;
   genre: string;
   bpm: number | null;
-  addedVersion: VersionId;
+  addedVersion: number;
   userScores?: Record<string, Record<string, UserScore>>;
   regions: {
     region: Region;
     versions: {
-      gameVersion: VersionId;
+      gameVersion: number;
       charts: (SongDetailChart | SongDetailHistoricalChart)[];
     }[];
   }[];

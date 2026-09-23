@@ -3,10 +3,11 @@
 import { motion } from "motion/react";
 import { Link } from "@/i18n/navigation"
 
-import { cn, createSafeMaimaiImageUrl, getTypeBadgeUrl } from "@/lib/utils";
+import { cn, createSafeMaimaiImageUrl } from "@/lib/utils";
 import { CoverImage } from "@/components/cover-image";
 import { UniqueSong } from "./types";
-import { renderLevelPrecise } from "@/lib/name-utils";
+import { useGameId } from "@/components/providers/game-provider";
+import { formatGameLevel, getGameDifficultyLabel, getGameDifficultyColors, getGameChartTypeLabel, getGameChartTypeBadge } from "@/lib/games/presentation";
 
 interface SongCardProps {
   song: UniqueSong;
@@ -18,6 +19,7 @@ interface SongCardProps {
 }
 
 export function SongCard({ song, index, isSelected, onSelect, disableInitialAnimation }: SongCardProps) {
+  const game = useGameId();
   const href = `/db/songs/${encodeURIComponent(song.slug)}`;
 
   const handleClick = (e: React.MouseEvent) => {
@@ -89,6 +91,7 @@ export function SongCard({ song, index, isSelected, onSelect, disableInitialAnim
           singleDiff?.difficulty === "master" && "ring-purple-500 dark:ring-purple-600",
           singleDiff?.difficulty === "remaster" && "ring-purple-200 dark:ring-purple-400",
           singleDiff?.difficulty === "utage" && "ring-pink-400 dark:ring-pink-600",
+          singleDiff && getGameDifficultyColors(game, singleDiff.difficulty).ring,
           isSelected && "ring-4 ring-violet-500"
         )}
         style={{ aspectRatio: '1/1', transformStyle: 'preserve-3d', transform: 'perspective(1000px)' }}
@@ -109,14 +112,14 @@ export function SongCard({ song, index, isSelected, onSelect, disableInitialAnim
 
         {/* Type Badge */}
         <div className="absolute top-2 left-2 z-10">
-          <img
-            src={createSafeMaimaiImageUrl(getTypeBadgeUrl(song.type))}
-            alt={song.type.toUpperCase()}
+          {getGameChartTypeBadge(game, song.type) ? <img
+            src={createSafeMaimaiImageUrl(getGameChartTypeBadge(game, song.type)!)}
+            alt={getGameChartTypeLabel(game, song.type)}
             width={32}
             height={10}
             className="drop-shadow-md"
             loading="lazy"
-          />
+          /> : <span className="rounded bg-background/90 px-1 text-xs text-foreground">{getGameChartTypeLabel(game, song.type)}</span>}
         </div>
 
         {/* Difficulty Badge (only if single difficulty) */}
@@ -129,8 +132,9 @@ export function SongCard({ song, index, isSelected, onSelect, disableInitialAnim
             singleDiff.difficulty === "master" && "bg-purple-500 dark:bg-purple-600",
             singleDiff.difficulty === "remaster" && "bg-purple-200 text-purple-900 dark:bg-purple-400 dark:text-purple-900",
             singleDiff.difficulty === "utage" && "bg-pink-500 dark:bg-pink-600",
+            !["basic", "advanced", "expert", "master", "remaster", "utage"].includes(singleDiff.difficulty) && [getGameDifficultyColors(game, singleDiff.difficulty).bg, getGameDifficultyColors(game, singleDiff.difficulty).text],
           )}>
-            {renderLevelPrecise(singleDiff.levelPrecise, singleDiff.difficulty)}
+            {formatGameLevel(game, singleDiff.levelPrecise, singleDiff.difficulty)}
           </div>
         )}
 
