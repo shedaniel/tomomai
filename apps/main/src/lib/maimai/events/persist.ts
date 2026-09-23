@@ -15,6 +15,7 @@ export async function insertUserEvents(
   for (const event of areaEvents) {
     eventInserts.push({
       snapshotId: snapshotId,
+      game: "maimai",
       eventType: "area",
       name: event.name,
       currentDistance: event.currentDistance,
@@ -29,6 +30,7 @@ export async function insertUserEvents(
   for (const event of eventAreaEvents) {
     eventInserts.push({
       snapshotId: snapshotId,
+      game: "maimai",
       eventType: "eventArea",
       name: event.name,
       currentDistance: event.currentDistance,

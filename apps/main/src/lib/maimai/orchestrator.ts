@@ -1,3 +1,4 @@
+import { isMaimaiMaintenance } from "./maintenance";
 import { and, eq } from "drizzle-orm";
 import { db } from "../db";
 import { userTokens } from "../db/schema-pg";
@@ -5,10 +6,8 @@ import { FETCH_STATES } from "../fetch-states";
 import { appendFetchState } from "../fetch-states-server";
 import { fetchImageBuffer } from "../image-converter";
 import { logger } from "../logger";
-import { getCurrentVersion } from "../metadata";
-import { isMaimaiMaintenance } from "./maintenance";
+import { getLogger } from "../request-logger";
 import { decryptToken } from "../token-crypto";
-import { revalidatePublicProfileForUser } from "../profile-cache";
 import { Region } from "../types";
 import {
   getCookiesFromRedirect,
@@ -32,13 +31,11 @@ import { insertUserEvents } from "./events/persist";
 import { extractPlayerData, fetchPlayerData } from "./player/fetch";
 import { fetchLxnsPlayerData, LxnsAuthRevokedError } from "./player/lxns";
 import { deleteToken } from "@/server/services/maimai-login";
-import { createUserSnapshot } from "./player/persist";
 import { fetchAndInsertRecentSongsData } from "./recents/details";
 import { fetchRecentSongsData } from "./recents/fetch";
 import { insertUserRecentSongs } from "./recents/persist";
 import { fetchAllSongsData, fetchHiddenSongsData } from "./songs/fetch";
 import { fetchLxnsScoresData } from "./songs/lxns";
-import { buildSongLookupMaps, insertUserScores } from "./songs/persist";
 import type {
   AlbumData,
   EventAreaData,
@@ -48,6 +45,7 @@ import type {
   ScoreData,
 } from "./types";
 import type { Flags } from "../flags";
+import type { PersistedSnapshotContext } from "@/lib/games/types";
 
 // ---------------------------------------------------------------------------
 // Shared fetcher contract
@@ -84,7 +82,7 @@ async function validateRegionAccess(
   region: Region,
 ): Promise<{ validation: TokenValidationResult; rawToken: string }> {
   const tokenRecord = await db.query.userTokens.findFirst({
-    where: and(eq(userTokens.userId, userId), eq(userTokens.region, region)),
+    where: and(eq(userTokens.userId, userId), eq(userTokens.game, "maimai"), eq(userTokens.region, region)),
   });
 
   if (!tokenRecord) {
@@ -164,7 +162,7 @@ const scrapeFetcher: DataFetcher = async ({ userId: _userId, region, sessionId, 
         }
         logger.info(`Added ${hiddenSongs.length} hidden songs to songs data`);
       } catch (error) {
-        logger.error(error, "Failed to fetch hidden songs data, continuing without hidden songs");
+        logger.error({ err: error }, "Failed to fetch hidden songs data, continuing without hidden songs");
       }
     }
   } finally {
@@ -178,7 +176,7 @@ const scrapeFetcher: DataFetcher = async ({ userId: _userId, region, sessionId, 
       eventsData = await fetchEventsData(cookies, region, sessionId);
       logger.info("Events data fetched successfully");
     } catch (error) {
-      logger.error(error, "Failed to fetch events data, continuing without events");
+      logger.error({ err: error }, "Failed to fetch events data, continuing without events");
     }
   }
 
@@ -296,8 +294,26 @@ function pickFetcher(region: Region, rawToken: string): DataFetcher {
   throw new Error(`Unsupported token provider for region ${region}`);
 }
 
+export async function runMaimaiFetcher(ctx: {
+  userId: string;
+  region: Region;
+  sessionId: bigint;
+  flags: Flags;
+}): Promise<{ fetched: FetchedMaimaiData; validation: TokenValidationResult }> {
+  const { validation, rawToken } = await validateRegionAccess(ctx.userId, ctx.region);
+
+  try {
+    const fetcher = pickFetcher(ctx.region, rawToken);
+    const fetched = await fetcher({ ...ctx, validation });
+    return { fetched, validation };
+  } catch (error) {
+    getLogger().error({ err: error }, "Error during maimai data fetch");
+    throw error;
+  }
+}
+
 // ---------------------------------------------------------------------------
-// Step 3: persist (foreground writes + background scheduling)
+// Maimai-specific extras (common snapshot persistence happens elsewhere)
 // ---------------------------------------------------------------------------
 
 // Trivial composition: scrape image bytes and hand off to persistAlbumData.
@@ -312,47 +328,19 @@ async function fetchAndInsertAlbumData(
   );
 }
 
-async function persistFetchedData(
-  userId: string,
-  region: Region,
-  sessionId: bigint,
+export async function persistMaimaiExtra(
+  ctx: PersistedSnapshotContext,
   fetched: FetchedMaimaiData,
   shouldFetchAlbums: boolean,
   backgroundWorkRef?: { promise: Promise<void> },
 ): Promise<void> {
-  const snapshotId = await createUserSnapshot(userId, region, fetched.playerData);
-
-  const gameVersion = getCurrentVersion(region);
-  const { songLookup, fullSongMap } = await buildSongLookupMaps(region, gameVersion);
-
-  logger.info("Starting user scores insertion...");
-  await insertUserScores(snapshotId, region, sessionId, fetched.allSongsData, songLookup, fullSongMap);
-  logger.info("User scores insertion completed");
-
-  if (fetched.recentSongsData.length > 0) {
-    logger.info("Starting user recent songs insertion...");
-    await insertUserRecentSongs(userId, fetched.recentSongsData, songLookup);
-    logger.info("User recent songs insertion completed");
-  }
-
-  if (fetched.eventsData) {
-    logger.info("Starting user events insertion...");
-    await insertUserEvents(snapshotId, fetched.eventsData.areaEvents, fetched.eventsData.eventAreaEvents);
-    logger.info("User events insertion completed");
-  }
-
-  await revalidatePublicProfileForUser(userId, [region]);
-
-  logger.info("Player data processed and snapshot created successfully");
-  logger.info(`Session ID: ${sessionId}`);
-
   const backgroundTasks: Promise<void>[] = [];
 
   if (fetched.cookies && fetched.recentSongsData.length > 0) {
     logger.info("Starting detailed recent songs data fetch in background...");
     backgroundTasks.push(
-      fetchAndInsertRecentSongsData(userId, region, fetched.cookies, fetched.recentSongsData).catch((error) => {
-        logger.error(error, "Failed to fetch detailed recent songs data");
+      fetchAndInsertRecentSongsData(ctx.userId, ctx.region, fetched.cookies, fetched.recentSongsData).catch((error) => {
+        logger.error({ err: error }, "Failed to fetch detailed recent songs data");
       }),
     );
   }
@@ -360,8 +348,8 @@ async function persistFetchedData(
   if (fetched.cookies && shouldFetchAlbums && fetched.albumData.length > 0) {
     logger.info("Starting album data fetch in background...");
     backgroundTasks.push(
-      fetchAndInsertAlbumData(userId, region, fetched.cookies, fetched.albumData).catch((error) => {
-        logger.error(error, "Failed to fetch album data");
+      fetchAndInsertAlbumData(ctx.userId, ctx.region, fetched.cookies, fetched.albumData).catch((error) => {
+        logger.error({ err: error }, "Failed to fetch album data");
       }),
     );
   } else if (!shouldFetchAlbums && fetched.albumData.length > 0) {
@@ -371,29 +359,5 @@ async function persistFetchedData(
   const bgWork = Promise.allSettled(backgroundTasks).then(() => { });
   if (backgroundWorkRef) {
     backgroundWorkRef.promise = bgWork;
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Public entry point
-// ---------------------------------------------------------------------------
-
-export async function fetchMaimaiData(
-  userId: string,
-  region: Region,
-  sessionId: bigint,
-  flags: Flags,
-  shouldFetchAlbums: boolean = false,
-  backgroundWorkRef?: { promise: Promise<void> },
-): Promise<void> {
-  const { validation, rawToken } = await validateRegionAccess(userId, region);
-
-  try {
-    const fetcher = pickFetcher(region, rawToken);
-    const fetched = await fetcher({ userId, region, sessionId, flags, validation });
-    await persistFetchedData(userId, region, sessionId, fetched, shouldFetchAlbums, backgroundWorkRef);
-  } catch (error) {
-    logger.error(error, "Error during maimai data fetch");
-    throw error;
   }
 }

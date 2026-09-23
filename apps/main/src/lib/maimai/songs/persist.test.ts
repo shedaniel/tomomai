@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const { rows, query, warn } = vi.hoisted(() => ({
-  rows: [] as { id: bigint; songName: string; difficulty: string; type: string; artist: string }[],
+  rows: [] as { id: bigint; songName: string; difficulty: number; type: number; artist: string }[],
   query: vi.fn(),
   warn: vi.fn(),
 }));
@@ -24,10 +24,10 @@ describe("score catalog lookup", () => {
 
   it("omits an ambiguous name across every duplicate while preserving all instance rows", async () => {
     rows.push(
-      { id: BigInt(1), songName: "Shared", difficulty: "master", type: "dx", artist: "A" },
-      { id: BigInt(2), songName: "Shared", difficulty: "master", type: "dx", artist: "B" },
-      { id: BigInt(3), songName: "Shared", difficulty: "master", type: "dx", artist: "C" },
-      { id: BigInt(4), songName: "Shared", difficulty: "expert", type: "dx", artist: "A" },
+      { id: BigInt(1), songName: "Shared", difficulty: 3, type: 1, artist: "A" },
+      { id: BigInt(2), songName: "Shared", difficulty: 3, type: 1, artist: "B" },
+      { id: BigInt(3), songName: "Shared", difficulty: 3, type: 1, artist: "C" },
+      { id: BigInt(4), songName: "Shared", difficulty: 2, type: 1, artist: "A" },
     );
     const { songLookup, fullSongMap } = await buildSongLookupMaps("intl", 25);
     expect(songLookup.has("Shared|master|dx")).toBe(false);
@@ -38,8 +38,8 @@ describe("score catalog lookup", () => {
 
   it("resolves unambiguous charts regardless of row order", async () => {
     rows.push(
-      { id: BigInt(8), songName: "Second", difficulty: "master", type: "dx", artist: "B" },
-      { id: BigInt(7), songName: "First", difficulty: "master", type: "std", artist: "A" },
+      { id: BigInt(8), songName: "Second", difficulty: 3, type: 1, artist: "B" },
+      { id: BigInt(7), songName: "First", difficulty: 3, type: 0, artist: "A" },
     );
     const { songLookup } = await buildSongLookupMaps("jp", 26);
     expect(songLookup.get("First|master|std")).toBe(BigInt(7));

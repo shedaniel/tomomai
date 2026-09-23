@@ -273,6 +273,7 @@ export async function saveDivingFishToken(userId: string, formattedToken: string
   const encrypted = encryptToken(formattedToken);
   try {
     await db.insert(userTokens).values({
+      game: "maimai",
       userId,
       region: "cn",
       token: encrypted,
@@ -283,7 +284,7 @@ export async function saveDivingFishToken(userId: string, formattedToken: string
     await db
       .update(userTokens)
       .set({ token: encrypted, updatedAt: new Date() })
-      .where(and(eq(userTokens.userId, userId), eq(userTokens.region, "cn")));
+      .where(and(eq(userTokens.userId, userId), eq(userTokens.game, "maimai"), eq(userTokens.region, "cn")));
   }
 }
 
@@ -313,6 +314,7 @@ export async function saveLxnsToken(userId: string, formattedToken: string): Pro
   const encrypted = encryptToken(formattedToken);
   try {
     await db.insert(userTokens).values({
+      game: "maimai",
       userId,
       region: "cn",
       token: encrypted,
@@ -323,7 +325,7 @@ export async function saveLxnsToken(userId: string, formattedToken: string): Pro
     await db
       .update(userTokens)
       .set({ token: encrypted, updatedAt: new Date() })
-      .where(and(eq(userTokens.userId, userId), eq(userTokens.region, "cn")));
+      .where(and(eq(userTokens.userId, userId), eq(userTokens.game, "maimai"), eq(userTokens.region, "cn")));
   }
 }
 
@@ -441,6 +443,7 @@ export async function saveCnCookiesToken(userId: string, formattedToken: string)
   const encrypted = encryptToken(formattedToken);
   try {
     await db.insert(userTokens).values({
+      game: "maimai",
       userId,
       region: "cn",
       token: encrypted,
@@ -451,7 +454,7 @@ export async function saveCnCookiesToken(userId: string, formattedToken: string)
     await db
       .update(userTokens)
       .set({ token: encrypted, updatedAt: new Date() })
-      .where(and(eq(userTokens.userId, userId), eq(userTokens.region, "cn")));
+      .where(and(eq(userTokens.userId, userId), eq(userTokens.game, "maimai"), eq(userTokens.region, "cn")));
   }
 }
 
@@ -460,7 +463,7 @@ export async function deleteToken(userId: string, region: Region): Promise<void>
     .delete(userTokens)
     .where(
       and(
-        eq(userTokens.userId, userId),
+        eq(userTokens.userId, userId), eq(userTokens.game, "maimai"),
         eq(userTokens.region, region)
       )
     );
@@ -483,7 +486,7 @@ async function updateToken(
     })
     .where(
       and(
-        eq(userTokens.userId, userId),
+        eq(userTokens.userId, userId), eq(userTokens.game, "maimai"),
         eq(userTokens.region, region)
       )
     );
@@ -753,7 +756,7 @@ async function performInternationalAccountLogin(
               })
               .where(
                 and(
-                  eq(userTokens.userId, userId),
+                  eq(userTokens.userId, userId), eq(userTokens.game, "maimai"),
                   eq(userTokens.region, "intl")
                 )
               );

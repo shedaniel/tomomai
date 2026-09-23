@@ -73,6 +73,7 @@ Identifiers & domain:
 | `songId` / `masterSongId` | Numeric song row id(s).                                   | —                                          |
 | `songKey`        | Single `name@type@difficulty` key.                                | `song` (never log the whole object)        |
 | `songKeys`       | Array of song keys (array of strings = 1 field).                  | `songs` (never log the array of objects)   |
+| `game` | Canonical game ID (`maimai` or `chunithm`). | — |
 | `region`         | `"intl"` / `"jp"` / `"cn"`.                                        | `country`, `locale`                        |
 | `version` / `addedVersion` | Game / chart version (number).                          | —                                          |
 | `difficulty`     | Difficulty name or enum.                                          | `diff`                                     |

@@ -1,4 +1,3 @@
-export { fetchMaimaiData } from "./orchestrator";
 export { upsertScoreData } from "./songs/persist";
 export type {
   AlbumData,

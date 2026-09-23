@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { db } from "../../db";
 import { userAlbums } from "../../db/schema-pg";
 import { convertJpegToAvif } from "../../image-converter";
@@ -18,12 +18,12 @@ export const ALBUM_AVIF_QUALITY = 40;
 
 export async function enforceStorageLimit(userId: string): Promise<void> {
   const userAlbumsList = await db.query.userAlbums.findMany({
-    where: eq(userAlbums.userId, userId),
+    where: and(eq(userAlbums.userId, userId), eq(userAlbums.game, "maimai")),
     orderBy: [userAlbums.createdAt],
     columns: { id: true, imageKey: true, imageSize: true },
   });
 
-  let totalSize = userAlbumsList.reduce((sum, a) => sum + a.imageSize, 0);
+  let totalSize = userAlbumsList.reduce((sum, a) => sum + (a.imageSize ?? 0), 0);
 
   if (totalSize <= MAX_STORAGE_BYTES) {
     logger.debug(`User ${userId} storage: ${totalSize} bytes (within ${MAX_STORAGE_BYTES} byte limit)`);
@@ -38,14 +38,14 @@ export async function enforceStorageLimit(userId: string): Promise<void> {
     }
 
     try {
-      await deleteFromR2(album.imageKey);
+      if (album.imageKey) await deleteFromR2(album.imageKey);
       logger.debug(`Deleted R2 object: ${album.imageKey}`);
     } catch (error) {
-      logger.error(error, `Failed to delete R2 object: ${album.imageKey}`);
+      logger.error({ err: error }, `Failed to delete R2 object: ${album.imageKey}`);
     }
 
-    await db.delete(userAlbums).where(eq(userAlbums.id, album.id));
-    totalSize -= album.imageSize;
+    await db.delete(userAlbums).where(and(eq(userAlbums.id, album.id), eq(userAlbums.game, "maimai")));
+    totalSize -= album.imageSize ?? 0;
     logger.info(`Deleted album ${album.id}, freed ${album.imageSize} bytes`);
   }
 
@@ -71,7 +71,7 @@ export async function persistAlbumData(
   logger.info(`Persisting ${albumData.length} albums for user ${userId}`);
 
   const existingAlbums = await db.query.userAlbums.findMany({
-    where: eq(userAlbums.userId, userId),
+    where: and(eq(userAlbums.userId, userId), eq(userAlbums.game, "maimai")),
     columns: { takenAt: true },
   });
 
@@ -111,6 +111,7 @@ export async function persistAlbumData(
 
       albumInserts.push({
         userId,
+        game: "maimai",
         songId: album.songId,
         takenAt: album.takenAt,
         venue: album.venue,
@@ -120,7 +121,7 @@ export async function persistAlbumData(
 
       logger.debug(`Uploaded album: ${album.songName} -> ${key}`);
     } catch (error) {
-      logger.error(error, `Failed to process album: ${album.songName}`);
+      logger.error({ err: error }, `Failed to process album: ${album.songName}`);
     }
   }
 

@@ -28,6 +28,7 @@ export async function fetchAndInsertRecentSongsData(
     .innerJoin(userRecentSongs, eq(userRecentSongs.id, userRecentSongsDetailed.recentSongId))
     .where(and(
       eq(userRecentSongs.userId, userId),
+      eq(userRecentSongs.game, "maimai"),
       inArray(userRecentSongs.playedAt, recentSongsData.map(r => r.playedAt)),
       gt(userRecentSongsDetailed.maxCombo, 0),
     ));

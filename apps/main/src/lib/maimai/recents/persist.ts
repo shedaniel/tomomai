@@ -1,6 +1,7 @@
 import { db } from "../../db";
 import { userRecentSongs } from "../../db/schema-pg";
 import { logger } from "../../logger";
+import { comboStatusToCode, syncStatusToCode } from "../codes";
 import type { RecentSongData } from "../types";
 
 export async function insertUserRecentSongs(
@@ -31,13 +32,15 @@ export async function insertUserRecentSongs(
 
       recentSongInserts.push({
         userId: userId,
+        game: "maimai",
         songId: songId,
         playedAt: recentSong.playedAt,
-        archievement: recentSong.achievement, // Note: typo in schema "archievement"
-        dxScore: recentSong.dxScore,
+        scoreValue: recentSong.achievement, // Note: typo in schema "archievement"
+        secondaryScore: recentSong.dxScore,
         maxDxScore: recentSong.maxDxScore,
-        fc: recentSong.fc,
-        fs: recentSong.fs,
+        comboStatus: comboStatusToCode(recentSong.fc),
+        syncStatus: syncStatusToCode(recentSong.fs),
+        clearStatus: 0,
         track: recentSong.track,
       });
     } catch (error) {
@@ -52,7 +55,7 @@ export async function insertUserRecentSongs(
     return;
   }
 
-  // Unique constraint on (userId, songId, playedAt) handles dup detection
+  // Unique constraint on (userId, game, songId, playedAt) handles dup detection
   await db
     .insert(userRecentSongs)
     .values(recentSongInserts)

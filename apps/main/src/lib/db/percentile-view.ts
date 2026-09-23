@@ -9,11 +9,12 @@ export const CHART_PERCENTILE_VIEW = "chart_percentile_bands_all_regions";
 export const CREATE_CHART_PERCENTILE_VIEW_SQL = `
 CREATE MATERIALIZED VIEW IF NOT EXISTS chart_percentile_bands_all_regions AS
 WITH latest_regional_ratings AS (
-  SELECT DISTINCT ON ("userId", region)
+  SELECT DISTINCT ON ("userId", game, region)
     "userId",
     rating
   FROM user_snapshots
-  ORDER BY "userId", region, "fetchedAt" DESC, id DESC
+  WHERE game = 'maimai'
+  ORDER BY "userId", game, region, "fetchedAt" DESC, id DESC
 ),
 latest_ratings AS (
   SELECT "userId", MAX(rating) AS rating
@@ -25,14 +26,14 @@ best_scores AS (
     lr."userId",
     s."parentId" AS parent_id,
     lr.rating,
-    MAX(sd.achievement) AS best_achievement
+    MAX(sd."scoreValue") AS best_achievement
   FROM latest_ratings lr
   JOIN user_snapshots us  ON us."userId" = lr."userId"
   JOIN snapshot_scores ss ON ss."snapshotId" = us.id
   JOIN score_data sd      ON sd.id = ss."scoreId"
   JOIN songs s            ON s.id = sd."songId"
   JOIN parent_song p      ON p.id = s."parentId"
-  WHERE p.difficulty IN ('expert', 'master', 'remaster')
+  WHERE us.game = 'maimai' AND p.game = 'maimai' AND p.difficulty IN (2, 3, 4)
   GROUP BY lr."userId", s."parentId", lr.rating
 ),
 band_aggregates AS (
