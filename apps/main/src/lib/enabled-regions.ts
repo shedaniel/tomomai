@@ -1,4 +1,4 @@
-import { getEnabledRegions as getGameEnabledRegions } from "./games/registry";
+import { getEnabledRegions as getGameEnabledRegions } from "./games/regions";
 import type { Region } from "./types";
 
 export function getEnabledMaimaiRegions(): Region[] {

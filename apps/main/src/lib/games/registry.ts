@@ -1,4 +1,5 @@
 import type { Region } from "@/lib/types";
+import { getEnabledRegions } from "./regions";
 import { chunithmAdapter } from "./adapters/chunithm";
 import { maimaiAdapter } from "./adapters/maimai";
 import {
@@ -9,6 +10,8 @@ import {
   type GameCapability,
   type GameContext,
 } from "./types";
+
+export { getEnabledRegions } from "./regions";
 
 type GameRegistration = {
   id: CanonicalGameId;
@@ -38,18 +41,6 @@ export const GAME_REGISTRY: Record<CanonicalGameId, GameRegistration> = {
 export function normalizeGameId(input: string): CanonicalGameId | null {
   if (input === "maimaidx") return "maimai";
   return CANONICAL_GAME_IDS.find(game => game === input) ?? null;
-}
-
-export function getEnabledRegions(game: CanonicalGameId): Region[] {
-  const variable = game === "maimai"
-    ? (process.env.NEXT_PUBLIC_ENABLED_MAIMAI_REGIONS ?? process.env.NEXT_PUBLIC_ENABLED_REGIONS)
-    : process.env.NEXT_PUBLIC_ENABLED_CHUNITHM_REGIONS;
-  if (variable === undefined) return game === "maimai" ? ["intl", "jp"] : [];
-
-  return [...new Set(variable
-    .split(",")
-    .map(value => value.trim())
-    .filter((value): value is Region => GAME_REGISTRY[game].adapter.supportedRegions.has(value as Region)))];
 }
 
 export function resolveGame(input: string): GameRegistration {
