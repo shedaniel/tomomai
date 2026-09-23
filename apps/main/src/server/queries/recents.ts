@@ -1,10 +1,12 @@
+import type { CanonicalGameId } from "@/lib/games/types";
+import { codeToChartType, codeToComboStatus, codeToDifficulty, codeToSyncStatus } from "@/lib/maimai/codes";
 import { songInstanceId } from "@/lib/db/song-instance-id";
 import { db } from "@/lib/db";
 import { parentSong, songs, userRecentSongs, userRecentSongsDetailed } from "@/lib/db/schema-pg";
 import { and, count, desc, eq, lt } from "drizzle-orm";
 import type { Region } from "@/lib/types";
 
-export async function fetchRecentSongs(
+export async function fetchRecentSongsForGame(game: CanonicalGameId,
   userId: string,
   region: Region,
   limit: number,
@@ -12,8 +14,8 @@ export async function fetchRecentSongs(
   beforeDate?: Date
 ) {
   const whereClause = and(
-    eq(userRecentSongs.userId, userId),
-    eq(songs.region, region),
+    and(eq(userRecentSongs.game, game), eq(userRecentSongs.userId, userId)),
+    and(eq(songs.game, game), eq(songs.region, region)),
     beforeDate ? lt(userRecentSongs.playedAt, beforeDate) : undefined
   );
 
@@ -21,16 +23,23 @@ export async function fetchRecentSongs(
     .select({
       recentSongId: userRecentSongs.id,
       playedAt: userRecentSongs.playedAt,
-      achievement: userRecentSongs.archievement,
-      dxScore: userRecentSongs.dxScore,
+      scoreValue: userRecentSongs.scoreValue,
+      secondaryScore: userRecentSongs.secondaryScore,
+      comboStatus: userRecentSongs.comboStatus,
+      syncStatus: userRecentSongs.syncStatus,
+      clearStatus: userRecentSongs.clearStatus,
+      achievement: userRecentSongs.scoreValue,
+      dxScore: userRecentSongs.secondaryScore,
       maxDxScore: userRecentSongs.maxDxScore,
-      fc: userRecentSongs.fc,
-      fs: userRecentSongs.fs,
+      fc: userRecentSongs.comboStatus,
+      fs: userRecentSongs.syncStatus,
       track: userRecentSongs.track,
       songId: songInstanceId,
       songName: parentSong.songName,
       artist: parentSong.artist,
       cover: parentSong.cover,
+      difficultyCode: parentSong.difficulty,
+      typeCode: parentSong.type,
       difficulty: parentSong.difficulty,
       level: songs.level,
       levelPrecise: songs.levelPrecise,
@@ -88,8 +97,14 @@ export async function fetchRecentSongs(
     .where(whereClause);
 
   return {
-    recentPlays,
+    recentPlays: recentPlays.map(play => ({ ...play, maxDxScore: play.maxDxScore ?? 0, track: play.track ?? 0 })),
     totalCount,
     hasMore: offset + limit < totalCount,
   };
+}
+
+
+export async function fetchRecentSongs(userId: string, region: Region, limit: number, offset: number, beforeDate?: Date) {
+  const result = await fetchRecentSongsForGame("maimai", userId, region, limit, offset, beforeDate);
+  return { ...result, recentPlays: result.recentPlays.map(play => ({ ...play, difficulty: codeToDifficulty(play.difficultyCode), type: codeToChartType(play.typeCode), fc: codeToComboStatus(play.comboStatus), fs: codeToSyncStatus(play.syncStatus), maxDxScore: play.maxDxScore ?? 0, track: play.track ?? 0 })) };
 }

@@ -1,3 +1,4 @@
+import { codeToChartType, codeToDifficulty, difficultyToCode } from "@/lib/maimai/codes";
 import { songInstanceId } from "@/lib/db/song-instance-id";
 import { db } from "@/lib/db";
 import { parentSong, songs } from "@/lib/db/schema-pg";
@@ -6,7 +7,7 @@ import { getCurrentVersion } from "@/lib/metadata";
 import type { VersionId } from "@/lib/metadata";
 import { splitSongs } from "@/lib/rating-calculator";
 import type { Difficulty, Region } from "@/lib/types";
-import { and, desc, eq, inArray } from "drizzle-orm";
+import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import { unstable_cache } from "next/cache";
 
 export const RESERVED_USERNAMES = new Set(["admin", "max", "maxbas", "maxadv", "maxexp", "maxmas", "maxrem"]);
@@ -79,10 +80,10 @@ const songSelect = {
   songName: parentSong.songName,
   artist: parentSong.artist,
   cover: parentSong.cover,
-  difficulty: parentSong.difficulty,
+  difficulty: sql`${parentSong.difficulty}`.mapWith(codeToDifficulty).as("difficulty"),
   level: songs.level,
   levelPrecise: songs.levelPrecise,
-  type: parentSong.type,
+  type: sql`${parentSong.type}`.mapWith(codeToChartType).as("type"),
   genre: parentSong.genre,
   addedVersion: songs.addedVersion,
 } as const;
@@ -99,9 +100,9 @@ const fetchReservedSongs = unstable_cache(
         .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
         .where(
           and(
-            eq(songs.region, region),
+            and(eq(songs.game, "maimai"), eq(songs.region, region)),
             eq(songs.gameVersion, gameVersion),
-            inArray(parentSong.difficulty, difficulties)
+            inArray(parentSong.difficulty, difficulties.map(difficultyToCode))
           )
         )
         .orderBy(desc(songs.levelPrecise))
@@ -112,10 +113,10 @@ const fetchReservedSongs = unstable_cache(
         .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
         .where(
           and(
-            eq(songs.region, region),
+            and(eq(songs.game, "maimai"), eq(songs.region, region)),
             eq(songs.gameVersion, gameVersion),
             inArray(songs.addedVersion, [gameVersion, gameVersion - 1]),
-            inArray(parentSong.difficulty, difficulties)
+            inArray(parentSong.difficulty, difficulties.map(difficultyToCode))
           )
         ),
     ]);
@@ -152,8 +153,8 @@ const fetchReservedSongs = unstable_cache(
 
     return { songs: allSongs, gameVersion, rating };
   },
-  ["reserved-songs", "parent-v1"],
-  { revalidate: 3600, tags: ["reserved-songs"] }
+  ["reserved-songs:maimai", "parent-v1"],
+  { revalidate: 3600, tags: ["reserved-songs:maimai"] }
 );
 
 export function getReservedPublicUser(username: string) {

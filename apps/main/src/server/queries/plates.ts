@@ -1,7 +1,10 @@
+import type { CanonicalGameId } from "@/lib/games/types";
+import { requireMaimaiQuery } from "./game-scope";
+import { codeToChartType, codeToComboStatus, codeToDifficulty, codeToSyncStatus, difficultyToCode } from "@/lib/maimai/codes";
 import { songInstanceId } from "@/lib/db/song-instance-id";
 import { db } from "@/lib/db";
 import { parentSong, scoreData, snapshotScores, songs } from "@/lib/db/schema-pg";
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import type { Difficulty, Region, MinimalSongForDisplay } from "@/lib/types";
 
 export async function fetchPlateSongs(
@@ -15,14 +18,14 @@ export async function fetchPlateSongs(
   const snapshotScoresSub = db
     .select({
       songId: scoreData.songId,
-      achievement: scoreData.achievement,
-      fc: scoreData.fc,
-      fs: scoreData.fs,
-      dxScore: scoreData.dxScore,
+      achievement: scoreData.scoreValue,
+      fc: sql`${scoreData.comboStatus}`.mapWith(codeToComboStatus).as("fc"),
+      fs: sql`${scoreData.syncStatus}`.mapWith(codeToSyncStatus).as("fs"),
+      dxScore: scoreData.secondaryScore,
     })
     .from(snapshotScores)
     .innerJoin(scoreData, eq(snapshotScores.scoreId, scoreData.id))
-    .where(eq(snapshotScores.snapshotId, snapshotInternalId))
+    .where(and(eq(snapshotScores.game, "maimai"), eq(snapshotScores.snapshotId, snapshotInternalId)))
     .as("snapshot_scores_sub");
 
   const allSongs = await db
@@ -31,9 +34,9 @@ export async function fetchPlateSongs(
       songName: parentSong.songName,
       artist: parentSong.artist,
       cover: parentSong.cover,
-      difficulty: parentSong.difficulty,
+      difficulty: sql`${parentSong.difficulty}`.mapWith(codeToDifficulty).as("difficulty"),
       levelPrecise: songs.levelPrecise,
-      type: parentSong.type,
+      type: sql`${parentSong.type}`.mapWith(codeToChartType).as("type"),
       achievement: snapshotScoresSub.achievement,
       fc: snapshotScoresSub.fc,
       fs: snapshotScoresSub.fs,
@@ -48,8 +51,8 @@ export async function fetchPlateSongs(
     .where(
       and(
         eq(songs.addedVersion, parseInt(version)),
-        eq(parentSong.difficulty, difficulty),
-        eq(songs.region, region),
+        eq(parentSong.difficulty, difficultyToCode(difficulty)),
+        and(eq(songs.game, "maimai"), eq(songs.region, region)),
         eq(songs.gameVersion, gameVersion)
       )
     );
@@ -80,4 +83,9 @@ export async function fetchPlateSongs(
     fs: song.fs || "none",
     dxScore: song.dxScore || 0,
   } satisfies MinimalSongForDisplay));
+}
+
+export function fetchPlateSongsForGame(game: CanonicalGameId, ...args: Parameters<typeof fetchPlateSongs>) {
+  requireMaimaiQuery(game, args[2], "plates");
+  return fetchPlateSongs(...args);
 }

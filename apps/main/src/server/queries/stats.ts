@@ -1,7 +1,8 @@
+import type { CanonicalGameId } from "@/lib/games/types";
+import { GAME_CODE_MAPS, getGradeForGame } from "@/lib/games/codes";
 import { db } from "@/lib/db";
 import { parentSong, scoreData, snapshotScores, songs, userSnapshots } from "@/lib/db/schema-pg";
 import { and, desc, eq, sql } from "drizzle-orm";
-import { getAchievementRate } from "@/lib/difficulty";
 import type { Region } from "@/lib/types";
 
 export type StatsResult = {
@@ -14,36 +15,37 @@ export type StatsResult = {
   totalSongs: Record<string, Record<string, number>>;
 };
 
-export async function computeStatsForSnapshot(
+export async function computeStatsForSnapshotForGame(
+  game: CanonicalGameId,
   snapshotInternalId: number,
   gameVersion: number,
   region: Region
 ): Promise<StatsResult> {
   const scores = await db
     .select({
-      achievement: scoreData.achievement,
+      achievement: scoreData.scoreValue,
       addedVersion: songs.addedVersion,
-      difficulty: parentSong.difficulty,
-      fc: scoreData.fc,
-      fs: scoreData.fs,
+      difficulty: sql`${parentSong.difficulty}`.mapWith(code => GAME_CODE_MAPS[game].difficulty[Number(code)] ?? String(code)).as("difficulty"),
+      fc: sql`${scoreData.comboStatus}`.mapWith(code => GAME_CODE_MAPS[game].comboStatus[Number(code)] ?? String(code)).as("fc"),
+      fs: sql`${scoreData.syncStatus}`.mapWith(code => GAME_CODE_MAPS[game].syncStatus[Number(code)] ?? String(code)).as("fs"),
     })
     .from(snapshotScores)
     .innerJoin(scoreData, eq(snapshotScores.scoreId, scoreData.id))
     .innerJoin(songs, eq(scoreData.songId, songs.id))
     .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
-    .where(eq(snapshotScores.snapshotId, snapshotInternalId));
+    .where(and(eq(snapshotScores.game, game), eq(snapshotScores.snapshotId, snapshotInternalId)));
 
   const allSongs = await db
     .select({
       addedVersion: songs.addedVersion,
-      difficulty: parentSong.difficulty,
+      difficulty: sql`${parentSong.difficulty}`.mapWith(code => GAME_CODE_MAPS[game].difficulty[Number(code)] ?? String(code)).as("difficulty"),
       count: sql<number>`count(*)`.mapWith(Number),
     })
     .from(songs)
     .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
     .where(
       and(
-        eq(songs.region, region),
+        and(eq(songs.game, game), eq(songs.region, region)),
         eq(songs.gameVersion, gameVersion)
       )
     )
@@ -67,7 +69,7 @@ export async function computeStatsForSnapshot(
       stats[version][difficulty] = { grades: {}, fc: {}, fs: {}, total: 0 };
     }
 
-    const grade = getAchievementRate(score.achievement);
+    const grade = getGradeForGame(game, score.achievement);
     stats[version][difficulty].grades[grade] = (stats[version][difficulty].grades[grade] ?? 0) + 1;
 
     if (score.fc !== "none") {
@@ -82,14 +84,14 @@ export async function computeStatsForSnapshot(
   return { stats, totalSongs };
 }
 
-export async function fetchPlayerStats(userId: string, region: Region): Promise<StatsResult> {
+export async function fetchPlayerStatsForGame(game: CanonicalGameId, userId: string, region: Region): Promise<StatsResult> {
   const snapshot = await db
     .select({ id: userSnapshots.id, gameVersion: userSnapshots.gameVersion })
     .from(userSnapshots)
     .where(
       and(
-        eq(userSnapshots.userId, userId),
-        eq(userSnapshots.region, region)
+        and(eq(userSnapshots.game, game), eq(userSnapshots.userId, userId)),
+        and(eq(userSnapshots.game, game), eq(userSnapshots.region, region))
       )
     )
     .orderBy(desc(userSnapshots.fetchedAt))
@@ -99,5 +101,13 @@ export async function fetchPlayerStats(userId: string, region: Region): Promise<
     return { stats: {}, totalSongs: {} };
   }
 
-  return computeStatsForSnapshot(snapshot[0].id, snapshot[0].gameVersion, region);
+  return computeStatsForSnapshotForGame(game, snapshot[0].id, snapshot[0].gameVersion, region);
+}
+
+export function fetchPlayerStats(userId: string, region: Region) {
+  return fetchPlayerStatsForGame("maimai", userId, region);
+}
+
+export function computeStatsForSnapshot(snapshotId: number, version: number, region: Region) {
+  return computeStatsForSnapshotForGame("maimai", snapshotId, version, region);
 }

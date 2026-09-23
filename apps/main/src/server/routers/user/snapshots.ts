@@ -1,5 +1,8 @@
+import { gameContextInput, validateGameInput } from "./game-input";
+import { fetchUserSnapshotsForGame, fetchSnapshotDataForGame } from "@/server/queries/snapshots";
+import { codeToChartType, codeToComboStatus, codeToDifficulty, codeToSyncStatus, codeToTitleType } from "@/lib/maimai/codes";
 import { db } from '@/lib/db';
-import { parentSong, scoreData, snapshotB50, snapshotScores, songs, user, userEvents, userSnapshots } from '@/lib/db/schema-pg';
+import { parentSong, scoreData, snapshotRankings, snapshotScores, songs, user, userEvents, userSnapshots } from '@/lib/db/schema-pg';
 import { getEnabledRegions } from '@/lib/enabled-regions';
 import { logger } from '@/lib/logger';
 import { upsertScoreData } from '@/lib/maimai';
@@ -20,15 +23,28 @@ import { revalidatePublicProfileForUser } from '@/lib/profile-cache';
 const regionSchema = z.enum(getEnabledRegions());
 
 export const snapshotsRouter = router({
+  getSnapshotsForGame: protectedProcedure
+    .input(z.object({ ...gameContextInput }))
+    .query(({ ctx, input }) => {
+      const { game, region } = validateGameInput(input, "scores");
+      return fetchUserSnapshotsForGame(game, ctx.session.user.id, region);
+    }),
+  getSnapshotForGame: protectedProcedure
+    .input(z.object({ ...gameContextInput, snapshotId: z.string() }))
+    .query(({ ctx, input }) => {
+      const { game, region } = validateGameInput(input, "scores");
+      return fetchSnapshotDataForGame(game, ctx.session.user.id, input.snapshotId, region);
+    }),
+
   getSnapshots: protectedProcedure
-    .input(z.object({ region: regionSchema }))
+    .input(z.object({ game: z.literal("maimai").default("maimai"), region: regionSchema }))
     .query(async ({ ctx, input }) => {
       const snapshots = await fetchUserSnapshots(ctx.session.user.id, input.region);
       return { snapshots };
     }),
 
   getRatingHistory: protectedProcedure
-    .input(z.object({ region: regionSchema }))
+    .input(z.object({ game: z.literal("maimai").default("maimai"), region: regionSchema }))
     .query(async ({ ctx, input }) => {
       const startTime = Date.now();
       logger.info(`Starting getRatingHistory for user ${ctx.session.user.id}, region ${input.region}`);
@@ -45,7 +61,7 @@ export const snapshotsRouter = router({
         .where(
           and(
             eq(userSnapshots.userId, ctx.session.user.id),
-            eq(userSnapshots.region, input.region)
+            and(eq(userSnapshots.game, "maimai"), eq(userSnapshots.region, input.region))
           )
         )
         .orderBy(userSnapshots.fetchedAt);
@@ -101,24 +117,24 @@ export const snapshotsRouter = router({
       const relevantSnapshotIds = Array.from(snapshotsNeedingScores);
       const allScores = await db
         .select({
-          snapshotId: snapshotB50.snapshotId,
+          snapshotId: snapshotRankings.snapshotId,
           songId: parentSong.id,
           songName: parentSong.songName,
           cover: parentSong.cover,
-          difficulty: parentSong.difficulty,
+          difficulty: sql`${parentSong.difficulty}`.mapWith(codeToDifficulty).as("difficulty"),
           levelPrecise: songs.levelPrecise,
           addedVersion: songs.addedVersion,
-          achievement: scoreData.achievement,
-          fc: scoreData.fc,
+          achievement: scoreData.scoreValue,
+          fc: sql`${scoreData.comboStatus}`.mapWith(codeToComboStatus).as("fc"),
         })
-        .from(snapshotB50)
-        .innerJoin(scoreData, eq(snapshotB50.scoreId, scoreData.id))
+        .from(snapshotRankings)
+        .innerJoin(scoreData, eq(snapshotRankings.scoreId, scoreData.id))
         .innerJoin(songs, eq(scoreData.songId, songs.id))
         .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
         .where(
           and(
-            eq(songs.region, input.region),
-            inArray(snapshotB50.snapshotId, relevantSnapshotIds)
+            and(eq(songs.game, "maimai"), eq(songs.region, input.region)),
+            inArray(snapshotRankings.snapshotId, relevantSnapshotIds)
           )
         );
       logger.info(`Fetched ${allScores.length} B50 scores in ${Date.now() - scoresStart}ms`);
@@ -230,7 +246,7 @@ export const snapshotsRouter = router({
     }),
 
   getSnapshotData: protectedProcedure
-    .input(z.object({
+    .input(z.object({ game: z.literal("maimai").default("maimai"),
       snapshotId: z.string(),
       region: regionSchema
     }))
@@ -259,7 +275,7 @@ export const snapshotsRouter = router({
     }),
 
   getPublicSnapshots: publicProcedure
-    .input(z.object({
+    .input(z.object({ game: z.literal("maimai").default("maimai"),
       username: z.string(),
       region: regionSchema,
     }))
@@ -281,7 +297,7 @@ export const snapshotsRouter = router({
     }),
 
   getPublicSnapshotData: publicProcedure
-    .input(z.object({
+    .input(z.object({ game: z.literal("maimai").default("maimai"),
       username: z.string(),
       region: regionSchema,
     }))
@@ -371,7 +387,7 @@ export const snapshotsRouter = router({
     }),
 
   deleteSnapshot: protectedProcedure
-    .input(z.object({
+    .input(z.object({ game: z.literal("maimai").default("maimai"),
       snapshotId: z.string(),
       region: regionSchema
     }))
@@ -392,7 +408,7 @@ export const snapshotsRouter = router({
     }),
 
   exportSnapshotData: protectedProcedure
-    .input(z.object({
+    .input(z.object({ game: z.literal("maimai").default("maimai"),
       snapshotId: z.string(),
     }))
     .query(async ({ ctx, input }) => {
@@ -419,36 +435,36 @@ export const snapshotsRouter = router({
           songName: parentSong.songName,
           artist: parentSong.artist,
           cover: parentSong.cover,
-          difficulty: parentSong.difficulty,
+          difficulty: sql`${parentSong.difficulty}`.mapWith(codeToDifficulty).as("difficulty"),
           level: songs.level,
           levelPrecise: songs.levelPrecise,
-          type: parentSong.type,
+          type: sql`${parentSong.type}`.mapWith(codeToChartType).as("type"),
           gameVersion: songs.addedVersion,
-          achievement: scoreData.achievement,
-          dxScore: scoreData.dxScore,
-          fc: scoreData.fc,
-          fs: scoreData.fs,
+          achievement: scoreData.scoreValue,
+          dxScore: scoreData.secondaryScore,
+          fc: sql`${scoreData.comboStatus}`.mapWith(codeToComboStatus).as("fc"),
+          fs: sql`${scoreData.syncStatus}`.mapWith(codeToSyncStatus).as("fs"),
         })
         .from(snapshotScores)
         .innerJoin(scoreData, eq(snapshotScores.scoreId, scoreData.id))
         .innerJoin(songs, eq(scoreData.songId, songs.id))
         .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
-        .where(eq(snapshotScores.snapshotId, snapshot[0].id))
+        .where(and(eq(snapshotScores.game, "maimai"), eq(snapshotScores.snapshotId, snapshot[0].id)))
         .orderBy(parentSong.songName, parentSong.difficulty);
 
       return {
         metadata: {
           id: snapshot[0].publicId,
           displayName: snapshot[0].displayName,
-          trophyType: snapshot[0].titleType,
+          trophyType: codeToTitleType(snapshot[0].titleType),
           trophy: snapshot[0].title,
           region: snapshot[0].region,
           fetchedAt: snapshot[0].fetchedAt,
           gameVersion: getVersionInfo(snapshot[0].gameVersion as VersionId)!.name,
           rating: snapshot[0].rating,
-          stars: snapshot[0].stars,
-          courseRankUrl: snapshot[0].courseRankUrl,
-          classRankUrl: snapshot[0].classRankUrl,
+          stars: snapshot[0].stars ?? 0,
+          courseRankUrl: snapshot[0].courseRankUrl ?? "",
+          classRankUrl: snapshot[0].classRankUrl ?? "",
           totalPlayCount: snapshot[0].totalPlayCount,
           currentVersionPlayCount: snapshot[0].versionPlayCount,
         },
@@ -461,7 +477,7 @@ export const snapshotsRouter = router({
     }),
 
   getAvailableVersionsForCopy: protectedProcedure
-    .input(z.object({
+    .input(z.object({ game: z.literal("maimai").default("maimai"),
       region: regionSchema,
       currentVersion: z.number(),
     }))
@@ -476,7 +492,7 @@ export const snapshotsRouter = router({
         })
         .from(songs)
         .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
-        .where(eq(songs.region, input.region))
+        .where(and(eq(songs.game, "maimai"), eq(songs.region, input.region)))
         .groupBy(songs.gameVersion);
 
       const versionsWithSongsSet = new Set(
@@ -495,7 +511,7 @@ export const snapshotsRouter = router({
     }),
 
   copySnapshotToVersion: protectedProcedure
-    .input(z.object({
+    .input(z.object({ game: z.literal("maimai").default("maimai"),
       snapshotId: z.string(),
       region: regionSchema,
       targetVersion: z.number(),
@@ -508,7 +524,7 @@ export const snapshotsRouter = router({
           and(
             eq(userSnapshots.publicId, input.snapshotId),
             eq(userSnapshots.userId, ctx.session.user.id),
-            eq(userSnapshots.region, input.region)
+            and(eq(userSnapshots.game, "maimai"), eq(userSnapshots.region, input.region))
           )
         )
         .limit(1);
@@ -526,6 +542,7 @@ export const snapshotsRouter = router({
       const newFetchedAt = new Date(originalSnapshot.fetchedAt.getTime() + 1000);
 
       const [newSnapshot] = await db.insert(userSnapshots).values({
+        game: "maimai",
         publicId: newSnapshotPublicId,
         userId: ctx.session.user.id,
         region: input.region,
@@ -540,6 +557,7 @@ export const snapshotsRouter = router({
         iconUrl: originalSnapshot.iconUrl,
         displayName: originalSnapshot.displayName,
         title: originalSnapshot.title,
+        titleType: originalSnapshot.titleType,
       }).returning({ id: userSnapshots.id });
 
       const newSnapshotInternalId = newSnapshot.id;
@@ -547,16 +565,16 @@ export const snapshotsRouter = router({
       const originalScores = await db
         .select({
           parentId: songs.parentId,
-          achievement: scoreData.achievement,
-          dxScore: scoreData.dxScore,
-          fc: scoreData.fc,
-          fs: scoreData.fs,
+          achievement: scoreData.scoreValue,
+          dxScore: scoreData.secondaryScore,
+          fc: sql`${scoreData.comboStatus}`.mapWith(codeToComboStatus).as("fc"),
+          fs: sql`${scoreData.syncStatus}`.mapWith(codeToSyncStatus).as("fs"),
         })
         .from(snapshotScores)
         .innerJoin(scoreData, eq(snapshotScores.scoreId, scoreData.id))
         .innerJoin(songs, eq(scoreData.songId, songs.id))
         .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
-        .where(eq(snapshotScores.snapshotId, originalSnapshot.id));
+        .where(and(eq(snapshotScores.game, "maimai"), eq(snapshotScores.snapshotId, originalSnapshot.id)));
 
       const targetVersionSongs = await db
         .select({
@@ -567,7 +585,7 @@ export const snapshotsRouter = router({
         .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
         .where(
           and(
-            eq(songs.region, input.region),
+            and(eq(songs.game, "maimai"), eq(songs.region, input.region)),
             eq(songs.gameVersion, input.targetVersion)
           )
         );
@@ -579,7 +597,7 @@ export const snapshotsRouter = router({
       }
 
       // Build score data for target version songs
-      const newScoreData: { songId: bigint; achievement: number; dxScore: number; fc: string; fs: string }[] = [];
+      const newScoreData: { songId: bigint; achievement: number; dxScore: number; fc: SongWithScore["fc"]; fs: SongWithScore["fs"] }[] = [];
       for (const originalScore of originalScores) {
         const lookupKey = originalScore.parentId;
         const targetSongId = targetSongLookup.get(lookupKey);
@@ -602,12 +620,12 @@ export const snapshotsRouter = router({
         const scoreDataLookup = await upsertScoreData(newScoreData);
 
         // Step 2: Build and insert junction rows
-        const junctionRows: { snapshotId: number; scoreId: number }[] = [];
+        const junctionRows: { snapshotId: number; game: "maimai"; scoreId: number }[] = [];
         for (const score of newScoreData) {
           const key = `${score.songId}-${score.achievement}-${score.dxScore}-${score.fc}-${score.fs}`;
           const scoreDataId = scoreDataLookup.get(key);
           if (scoreDataId) {
-            junctionRows.push({ snapshotId: newSnapshotInternalId, scoreId: scoreDataId });
+            junctionRows.push({ game: "maimai", snapshotId: newSnapshotInternalId, scoreId: scoreDataId });
           }
         }
 
@@ -624,22 +642,22 @@ export const snapshotsRouter = router({
             songName: parentSong.songName,
             artist: parentSong.artist,
             cover: parentSong.cover,
-            difficulty: parentSong.difficulty,
+            difficulty: sql`${parentSong.difficulty}`.mapWith(codeToDifficulty).as("difficulty"),
             level: songs.level,
             levelPrecise: songs.levelPrecise,
-            type: parentSong.type,
+            type: sql`${parentSong.type}`.mapWith(codeToChartType).as("type"),
             genre: parentSong.genre,
             addedVersion: songs.addedVersion,
-            achievement: scoreData.achievement,
-            dxScore: scoreData.dxScore,
-            fc: scoreData.fc,
-            fs: scoreData.fs,
+            achievement: scoreData.scoreValue,
+            dxScore: scoreData.secondaryScore,
+            fc: sql`${scoreData.comboStatus}`.mapWith(codeToComboStatus).as("fc"),
+            fs: sql`${scoreData.syncStatus}`.mapWith(codeToSyncStatus).as("fs"),
           })
           .from(snapshotScores)
           .innerJoin(scoreData, eq(snapshotScores.scoreId, scoreData.id))
           .innerJoin(songs, eq(scoreData.songId, songs.id))
           .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
-          .where(eq(snapshotScores.snapshotId, newSnapshotInternalId));
+          .where(and(eq(snapshotScores.game, "maimai"), eq(snapshotScores.snapshotId, newSnapshotInternalId)));
 
         const songsForCalculation: (Omit<SongWithScore, 'songId'> & { songId: bigint })[] = scoresWithSongs.map(song => ({
           songId: song.songId,
@@ -664,14 +682,14 @@ export const snapshotsRouter = router({
         const ratingContributingSongs = [...newSongsB15, ...oldSongsB35];
         newRating = ratingContributingSongs.reduce((sum, song) => sum + song.rating, 0);
 
-        const b50Rows: { snapshotId: number; rank: number; scoreId: number }[] = [];
+        const b50Rows: { snapshotId: number; game: "maimai"; bucket: number; rank: number; scoreId: number }[] = [];
 
         for (let i = 0; i < newSongsB15.length; i++) {
           const song = newSongsB15[i];
           const key = `${song.songId}-${song.achievement}-${song.dxScore}-${song.fc}-${song.fs}`;
           const scoreDataId = scoreDataLookup.get(key);
           if (scoreDataId) {
-            b50Rows.push({ snapshotId: newSnapshotInternalId, rank: i, scoreId: scoreDataId });
+            b50Rows.push({ game: "maimai", bucket: 1, snapshotId: newSnapshotInternalId, rank: i, scoreId: scoreDataId });
           }
         }
 
@@ -680,12 +698,12 @@ export const snapshotsRouter = router({
           const key = `${song.songId}-${song.achievement}-${song.dxScore}-${song.fc}-${song.fs}`;
           const scoreDataId = scoreDataLookup.get(key);
           if (scoreDataId) {
-            b50Rows.push({ snapshotId: newSnapshotInternalId, rank: 15 + i, scoreId: scoreDataId });
+            b50Rows.push({ game: "maimai", bucket: 2, snapshotId: newSnapshotInternalId, rank: i, scoreId: scoreDataId });
           }
         }
 
         if (b50Rows.length > 0) {
-          await db.insert(snapshotB50).values(b50Rows).onConflictDoNothing();
+          await db.insert(snapshotRankings).values(b50Rows).onConflictDoNothing();
         }
       }
 

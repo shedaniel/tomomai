@@ -1,3 +1,5 @@
+import type { CanonicalGameId } from "@/lib/games/types";
+import { codeToChartType, codeToComboStatus, codeToDifficulty, codeToSyncStatus, codeToTitleType } from "@/lib/maimai/codes";
 import { songInstanceId } from "@/lib/db/song-instance-id";
 import { db } from "@/lib/db";
 import { parentSong, scoreData, snapshotScores, songs, userEvents, userSnapshots } from "@/lib/db/schema-pg";
@@ -7,7 +9,7 @@ import type { VersionId } from "@/lib/metadata";
 import { logger } from "@/lib/logger";
 import { deleteFromR2, isR2IconUrl, r2KeyFromIconUrl } from "@/lib/r2";
 
-export async function fetchUserSnapshots(userId: string, region: Region, options?: { limit?: number }) {
+export async function fetchUserSnapshotsForGame(game: CanonicalGameId, userId: string, region: Region, options?: { limit?: number }) {
   let query = db
     .select({
       id: userSnapshots.publicId,
@@ -24,8 +26,8 @@ export async function fetchUserSnapshots(userId: string, region: Region, options
     .from(userSnapshots)
     .where(
       and(
-        eq(userSnapshots.userId, userId),
-        eq(userSnapshots.region, region)
+        and(eq(userSnapshots.game, game), eq(userSnapshots.userId, userId)),
+        and(eq(userSnapshots.game, game), eq(userSnapshots.region, region))
       )
     )
     .orderBy(desc(userSnapshots.fetchedAt));
@@ -35,7 +37,7 @@ export async function fetchUserSnapshots(userId: string, region: Region, options
   }
 
   const snapshots = await query;
-  return snapshots.map((s) => ({ ...s, gameVersion: s.gameVersion as VersionId }));
+  return snapshots;
 }
 
 /**
@@ -44,7 +46,7 @@ export async function fetchUserSnapshots(userId: string, region: Region, options
  * snapshot doesn't exist or doesn't belong to the user; callers translate
  * that into a 404.
  */
-export async function deleteUserSnapshot(
+export async function deleteUserSnapshotForGame(game: CanonicalGameId,
   userId: string,
   snapshotPublicId: string,
   region: Region,
@@ -54,8 +56,8 @@ export async function deleteUserSnapshot(
     .where(
       and(
         eq(userSnapshots.publicId, snapshotPublicId),
-        eq(userSnapshots.userId, userId),
-        eq(userSnapshots.region, region),
+        and(eq(userSnapshots.game, game), eq(userSnapshots.userId, userId)),
+        and(eq(userSnapshots.game, game), eq(userSnapshots.region, region)),
       ),
     )
     .returning({ iconUrl: userSnapshots.iconUrl });
@@ -85,7 +87,7 @@ export async function deleteUserSnapshot(
   return { deleted: true };
 }
 
-export async function fetchSnapshotData(
+export async function fetchSnapshotDataForGame(game: CanonicalGameId,
   userId: string,
   snapshotPublicId: string,
   region: Region
@@ -96,8 +98,8 @@ export async function fetchSnapshotData(
     .where(
       and(
         eq(userSnapshots.publicId, snapshotPublicId),
-        eq(userSnapshots.userId, userId),
-        eq(userSnapshots.region, region)
+        and(eq(userSnapshots.game, game), eq(userSnapshots.userId, userId)),
+        and(eq(userSnapshots.game, game), eq(userSnapshots.region, region))
       )
     )
     .limit(1);
@@ -110,22 +112,29 @@ export async function fetchSnapshotData(
       songName: parentSong.songName,
       artist: parentSong.artist,
       cover: parentSong.cover,
+      difficultyCode: parentSong.difficulty,
+      typeCode: parentSong.type,
       difficulty: parentSong.difficulty,
       level: songs.level,
       levelPrecise: songs.levelPrecise,
       type: parentSong.type,
       genre: parentSong.genre,
       addedVersion: songs.addedVersion,
-      achievement: scoreData.achievement,
-      dxScore: scoreData.dxScore,
-      fc: scoreData.fc,
-      fs: scoreData.fs,
+      scoreValue: scoreData.scoreValue,
+      secondaryScore: scoreData.secondaryScore,
+      comboStatus: scoreData.comboStatus,
+      syncStatus: scoreData.syncStatus,
+      clearStatus: scoreData.clearStatus,
+      achievement: scoreData.scoreValue,
+      dxScore: scoreData.secondaryScore,
+      fc: scoreData.comboStatus,
+      fs: scoreData.syncStatus,
     })
     .from(snapshotScores)
     .innerJoin(scoreData, eq(snapshotScores.scoreId, scoreData.id))
     .innerJoin(songs, eq(scoreData.songId, songs.id))
     .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
-    .where(eq(snapshotScores.snapshotId, snapshot[0].id))
+    .where(and(eq(snapshotScores.game, game), eq(snapshotScores.snapshotId, snapshot[0].id)))
     .orderBy(parentSong.songName, parentSong.difficulty);
 
   const events = await db
@@ -140,7 +149,7 @@ export async function fetchSnapshotData(
       eventPeriodEnd: userEvents.eventPeriodEnd,
     })
     .from(userEvents)
-    .where(eq(userEvents.snapshotId, snapshot[0].id));
+    .where(and(eq(userEvents.game, game), eq(userEvents.snapshotId, snapshot[0].id)));
 
   return {
     snapshot: snapshot[0],
@@ -153,7 +162,7 @@ export async function fetchSnapshotData(
  * Return the `fetchedAt` of the user's newest snapshot for a region, or null
  * if they have none. Cheap single-column query used for staleness checks.
  */
-export async function getLatestSnapshotFetchedAt(
+export async function getLatestSnapshotFetchedAtForGame(game: CanonicalGameId,
   userId: string,
   region: Region,
 ): Promise<Date | null> {
@@ -162,8 +171,8 @@ export async function getLatestSnapshotFetchedAt(
     .from(userSnapshots)
     .where(
       and(
-        eq(userSnapshots.userId, userId),
-        eq(userSnapshots.region, region),
+        and(eq(userSnapshots.game, game), eq(userSnapshots.userId, userId)),
+        and(eq(userSnapshots.game, game), eq(userSnapshots.region, region)),
       ),
     )
     .orderBy(desc(userSnapshots.fetchedAt))
@@ -171,14 +180,14 @@ export async function getLatestSnapshotFetchedAt(
   return row?.fetchedAt ?? null;
 }
 
-export async function fetchLatestSnapshotData(userId: string, region: Region) {
+export async function fetchLatestSnapshotDataForGame(game: CanonicalGameId, userId: string, region: Region) {
   const snapshot = await db
     .select()
     .from(userSnapshots)
     .where(
       and(
-        eq(userSnapshots.userId, userId),
-        eq(userSnapshots.region, region)
+        and(eq(userSnapshots.game, game), eq(userSnapshots.userId, userId)),
+        and(eq(userSnapshots.game, game), eq(userSnapshots.region, region))
       )
     )
     .orderBy(desc(userSnapshots.fetchedAt))
@@ -192,22 +201,29 @@ export async function fetchLatestSnapshotData(userId: string, region: Region) {
       songName: parentSong.songName,
       artist: parentSong.artist,
       cover: parentSong.cover,
+      difficultyCode: parentSong.difficulty,
+      typeCode: parentSong.type,
       difficulty: parentSong.difficulty,
       level: songs.level,
       levelPrecise: songs.levelPrecise,
       type: parentSong.type,
       genre: parentSong.genre,
       addedVersion: songs.addedVersion,
-      achievement: scoreData.achievement,
-      dxScore: scoreData.dxScore,
-      fc: scoreData.fc,
-      fs: scoreData.fs,
+      scoreValue: scoreData.scoreValue,
+      secondaryScore: scoreData.secondaryScore,
+      comboStatus: scoreData.comboStatus,
+      syncStatus: scoreData.syncStatus,
+      clearStatus: scoreData.clearStatus,
+      achievement: scoreData.scoreValue,
+      dxScore: scoreData.secondaryScore,
+      fc: scoreData.comboStatus,
+      fs: scoreData.syncStatus,
     })
     .from(snapshotScores)
     .innerJoin(scoreData, eq(snapshotScores.scoreId, scoreData.id))
     .innerJoin(songs, eq(scoreData.songId, songs.id))
     .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
-    .where(eq(snapshotScores.snapshotId, snapshot[0].id))
+    .where(and(eq(snapshotScores.game, game), eq(snapshotScores.snapshotId, snapshot[0].id)))
     .orderBy(parentSong.songName, parentSong.difficulty);
 
   const events = await db
@@ -222,11 +238,52 @@ export async function fetchLatestSnapshotData(userId: string, region: Region) {
       eventPeriodEnd: userEvents.eventPeriodEnd,
     })
     .from(userEvents)
-    .where(eq(userEvents.snapshotId, snapshot[0].id));
+    .where(and(eq(userEvents.game, game), eq(userEvents.snapshotId, snapshot[0].id)));
 
   return {
     snapshot: snapshot[0],
     songs: songsWithScores,
     events,
   };
+}
+
+
+
+
+
+
+function toMaimaiSnapshot(snapshot: typeof userSnapshots.$inferSelect) {
+  return { ...snapshot, titleTypeCode: snapshot.titleType, titleType: codeToTitleType(snapshot.titleType),
+    courseRankUrl: snapshot.courseRankUrl ?? "", classRankUrl: snapshot.classRankUrl ?? "", stars: snapshot.stars ?? 0 };
+}
+
+
+function toMaimaiSnapshotResult(result: Awaited<ReturnType<typeof fetchSnapshotDataForGame>>) {
+  if (!result) return null;
+  return {
+    snapshot: toMaimaiSnapshot(result.snapshot),
+    songs: result.songs.map(song => ({ ...song, difficulty: codeToDifficulty(song.difficultyCode), type: codeToChartType(song.typeCode), fc: codeToComboStatus(song.comboStatus), fs: codeToSyncStatus(song.syncStatus) })),
+    events: result.events.map(event => ({ ...event, eventType: event.eventType ?? "eventArea" as const, currentDistance: event.currentDistance ?? 0, state: event.state ?? "not_started" as const, imageUrl: event.imageUrl ?? "" })),
+  };
+}
+
+export async function fetchUserSnapshots(userId: string, region: Region, options?: { limit?: number }) {
+  const snapshots = await fetchUserSnapshotsForGame("maimai", userId, region, options);
+  return snapshots.map(s => ({ ...s, courseRankUrl: s.courseRankUrl ?? "", classRankUrl: s.classRankUrl ?? "", stars: s.stars ?? 0, gameVersion: s.gameVersion as VersionId }));
+}
+
+export function deleteUserSnapshot(userId: string, snapshotPublicId: string, region: Region) {
+  return deleteUserSnapshotForGame("maimai", userId, snapshotPublicId, region);
+}
+
+export async function fetchSnapshotData(userId: string, snapshotPublicId: string, region: Region) {
+  return toMaimaiSnapshotResult(await fetchSnapshotDataForGame("maimai", userId, snapshotPublicId, region));
+}
+
+export async function fetchLatestSnapshotData(userId: string, region: Region) {
+  return toMaimaiSnapshotResult(await fetchLatestSnapshotDataForGame("maimai", userId, region));
+}
+
+export function getLatestSnapshotFetchedAt(userId: string, region: Region) {
+  return getLatestSnapshotFetchedAtForGame("maimai", userId, region);
 }

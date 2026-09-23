@@ -1,10 +1,12 @@
+import type { CanonicalGameId } from "@/lib/games/types";
+import { codeToChartType, codeToDifficulty } from "@/lib/maimai/codes";
 import { songInstanceId } from "@/lib/db/song-instance-id";
 import { db } from "@/lib/db";
 import { parentSong, songs, userAlbums } from "@/lib/db/schema-pg";
 import { and, desc, eq, sql } from "drizzle-orm";
 import type { Region } from "@/lib/types";
 
-export async function fetchUserAlbums(
+export async function fetchUserAlbumsForGame(game: CanonicalGameId,
   userId: string,
   region: Region,
   limit: number,
@@ -17,6 +19,8 @@ export async function fetchUserAlbums(
       songName: parentSong.songName,
       artist: parentSong.artist,
       cover: parentSong.cover,
+      difficultyCode: parentSong.difficulty,
+      typeCode: parentSong.type,
       difficulty: parentSong.difficulty,
       level: songs.level,
       levelPrecise: songs.levelPrecise,
@@ -32,8 +36,8 @@ export async function fetchUserAlbums(
     .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
     .where(
       and(
-        eq(userAlbums.userId, userId),
-        eq(songs.region, region)
+        and(eq(userAlbums.game, game), eq(userAlbums.userId, userId)),
+        and(eq(songs.game, game), eq(songs.region, region))
       )
     )
     .orderBy(desc(userAlbums.takenAt))
@@ -51,12 +55,14 @@ export async function fetchUserAlbums(
       artist: album.artist,
       cover: album.cover,
       difficulty: album.difficulty,
+      difficultyCode: album.difficultyCode,
+      typeCode: album.typeCode,
       level: album.level,
       levelPrecise: album.levelPrecise,
       type: album.type,
       takenAt: album.takenAt.toISOString(),
-      imageKey: album.imageKey,
-      imageSize: album.imageSize,
+      imageKey: album.imageKey ?? "",
+      imageSize: album.imageSize ?? 0,
       venue: album.venue,
       createdAt: album.createdAt.toISOString(),
     })),
@@ -64,14 +70,14 @@ export async function fetchUserAlbums(
   };
 }
 
-export async function fetchAlbumStorageUsage(userId: string) {
+export async function fetchAlbumStorageUsageForGame(game: CanonicalGameId, userId: string) {
   const [storageResult, intlStorageResult, jpStorageResult] = await Promise.all([
     db
       .select({
         totalSize: sql<number>`COALESCE(SUM(${userAlbums.imageSize}), 0)`,
       })
       .from(userAlbums)
-      .where(eq(userAlbums.userId, userId)),
+      .where(and(eq(userAlbums.game, game), eq(userAlbums.userId, userId))),
     db
       .select({
         totalSize: sql<number>`COALESCE(SUM(${userAlbums.imageSize}), 0)`,
@@ -80,8 +86,8 @@ export async function fetchAlbumStorageUsage(userId: string) {
       .innerJoin(songs, eq(userAlbums.songId, songs.id))
       .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
       .where(and(
-        eq(userAlbums.userId, userId),
-        eq(songs.region, 'intl')
+        and(eq(userAlbums.game, game), eq(userAlbums.userId, userId)),
+        and(eq(songs.game, game), eq(songs.region, 'intl'))
       )),
     db
       .select({
@@ -91,8 +97,8 @@ export async function fetchAlbumStorageUsage(userId: string) {
       .innerJoin(songs, eq(userAlbums.songId, songs.id))
       .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
       .where(and(
-        eq(userAlbums.userId, userId),
-        eq(songs.region, 'jp')
+        and(eq(userAlbums.game, game), eq(userAlbums.userId, userId)),
+        and(eq(songs.game, game), eq(songs.region, 'jp'))
       )),
   ]);
 
@@ -101,4 +107,14 @@ export async function fetchAlbumStorageUsage(userId: string) {
     intlUsed: Number(intlStorageResult[0]?.totalSize || 0),
     jpUsed: Number(jpStorageResult[0]?.totalSize || 0),
   };
+}
+
+
+export async function fetchUserAlbums(userId: string, region: Region, limit: number, offset: number) {
+  const result = await fetchUserAlbumsForGame("maimai", userId, region, limit, offset);
+  return { ...result, albums: result.albums.map(album => ({ ...album, difficulty: codeToDifficulty(album.difficultyCode), type: codeToChartType(album.typeCode) })) };
+}
+
+export function fetchAlbumStorageUsage(userId: string) {
+  return fetchAlbumStorageUsageForGame("maimai", userId);
 }

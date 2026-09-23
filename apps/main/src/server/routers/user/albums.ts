@@ -1,3 +1,5 @@
+import { gameContextInput, validateGameInput } from "./game-input";
+import { fetchUserAlbumsForGame } from "@/server/queries/albums";
 import { db } from '@/lib/db';
 import { deleteFromR2 } from '@/lib/r2';
 import { userAlbums } from '@/lib/db/schema-pg';
@@ -12,8 +14,15 @@ import { MAX_STORAGE_BYTES } from '@/lib/maimai/albums/persist';
 const regionSchema = z.enum(getEnabledRegions());
 
 export const albumsRouter = router({
+  getUserAlbumsForGame: protectedProcedure
+    .input(z.object({ ...gameContextInput, limit: z.number().int().min(1).max(100).default(20), offset: z.number().int().min(0).default(0) }))
+    .query(({ ctx, input }) => {
+      const { game, region } = validateGameInput(input, "albums");
+      return fetchUserAlbumsForGame(game, ctx.session.user.id, region, input.limit, input.offset);
+    }),
+
   getUserAlbums: protectedProcedure
-    .input(z.object({
+    .input(z.object({ game: z.literal("maimai").default("maimai"),
       region: regionSchema,
       limit: z.number().min(1).max(100).default(20),
       offset: z.number().min(0).default(0),
@@ -43,7 +52,7 @@ export const albumsRouter = router({
     }),
 
   deleteAlbum: protectedProcedure
-    .input(z.object({
+    .input(z.object({ game: z.literal("maimai").default("maimai"),
       albumId: z.string(),
     }))
     .mutation(async ({ ctx, input }) => {
@@ -53,7 +62,7 @@ export const albumsRouter = router({
         .where(
           and(
             eq(userAlbums.id, BigInt(input.albumId)),
-            eq(userAlbums.userId, ctx.session.user.id)
+            and(eq(userAlbums.game, "maimai"), eq(userAlbums.userId, ctx.session.user.id))
           )
         )
         .limit(1);
@@ -65,7 +74,7 @@ export const albumsRouter = router({
         });
       }
 
-      await deleteFromR2(album[0].imageKey);
+      if (album[0].imageKey) await deleteFromR2(album[0].imageKey);
       await db
         .delete(userAlbums)
         .where(eq(userAlbums.id, album[0].id));

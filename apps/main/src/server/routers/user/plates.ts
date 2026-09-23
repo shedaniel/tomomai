@@ -12,7 +12,7 @@ const regionSchema = z.enum(getEnabledRegions());
 
 export const platesRouter = router({
   getPlateSongs: protectedProcedure
-    .input(z.object({
+    .input(z.object({ game: z.literal("maimai").default("maimai"),
       region: regionSchema,
       version: z.string(),
       difficulty: z.enum(["basic", "advanced", "expert", "master"]),
@@ -25,7 +25,7 @@ export const platesRouter = router({
         .where(
           and(
             eq(userSnapshots.userId, ctx.session.user.id),
-            eq(userSnapshots.region, input.region)
+            and(eq(userSnapshots.game, "maimai"), eq(userSnapshots.region, input.region))
           )
         )
         .orderBy(desc(userSnapshots.fetchedAt))
@@ -46,7 +46,7 @@ export const platesRouter = router({
     }),
 
   getPublicPlateSongs: publicProcedure
-    .input(z.object({
+    .input(z.object({ game: z.literal("maimai").default("maimai"),
       snapshotId: z.string(),
       region: regionSchema,
       version: z.string(),

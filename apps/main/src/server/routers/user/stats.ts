@@ -1,3 +1,5 @@
+import { gameContextInput, validateGameInput } from "./game-input";
+import { fetchPlayerStatsForGame } from "@/server/queries/stats";
 import { protectedProcedure, publicProcedure, router } from '@/lib/trpc';
 import { z } from 'zod';
 import { getEnabledRegions } from '@/lib/enabled-regions';
@@ -7,8 +9,15 @@ import { resolvePublicSnapshotUserId } from '@/server/queries/public-access';
 const regionSchema = z.enum(getEnabledRegions());
 
 export const statsRouter = router({
+  getPlayerStatsForGame: protectedProcedure
+    .input(z.object({ ...gameContextInput }))
+    .query(({ ctx, input }) => {
+      const { game, region } = validateGameInput(input, "scores");
+      return fetchPlayerStatsForGame(game, ctx.session.user.id, region);
+    }),
+
   getPlayerStats: protectedProcedure
-    .input(z.object({
+    .input(z.object({ game: z.literal("maimai").default("maimai"),
       region: regionSchema,
     }))
     .query(async ({ ctx, input }) => {
@@ -16,7 +25,7 @@ export const statsRouter = router({
     }),
 
   getPublicPlayerStats: publicProcedure
-    .input(z.object({
+    .input(z.object({ game: z.literal("maimai").default("maimai"),
       snapshotId: z.string(),
       region: regionSchema,
     }))

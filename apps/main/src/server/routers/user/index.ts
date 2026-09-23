@@ -16,6 +16,15 @@ import { legalRouter } from './legal';
 import { miscRouter } from './misc';
 
 export const userRouter = router({
+  getSnapshotsForGame: snapshotsRouter.getSnapshotsForGame,
+  getSnapshotForGame: snapshotsRouter.getSnapshotForGame,
+  getRecentSongsForGame: recentsRouter.getRecentSongsForGame,
+  getUserAlbumsForGame: albumsRouter.getUserAlbumsForGame,
+  getCatalogForGame: songsRouter.getCatalogForGame,
+  getPlayerStatsForGame: statsRouter.getPlayerStatsForGame,
+  startFetchForGame: fetchRouter.startFetchForGame,
+  getFetchStatusForGame: fetchRouter.getFetchStatusForGame,
+
   // Snapshots
   getSnapshots: snapshotsRouter.getSnapshots,
   getRatingHistory: snapshotsRouter.getRatingHistory,

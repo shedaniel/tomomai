@@ -1,10 +1,11 @@
+import { codeToComboStatus, codeToSyncStatus, codeToTitleType } from "@/lib/maimai/codes";
 /**
  * Builds `RenderMessage` DTOs from DB data, then mints signed tokens.
  *
  * This is the mint side of the render-token contract (see
  * @tomomai/render-token + docs/render-token-v2.md). apps/main does ALL the DB
  * work here; apps/render receives the signed token and joins catalog fields
- * from /api/v1/songs — zero DB access on the render side.
+ * from /api/v1/games/maimai/songs — zero DB access on the render side.
  *
  * The token carries user scores + header metadata (HMAC-signed, tamper-proof);
  * catalog fields (songName, cover, level, etc.) never travel in the token.
@@ -14,13 +15,13 @@ import { db } from "@/lib/db";
 import {
   parentSong,
   scoreData,
-  snapshotB50,
+  snapshotRankings,
   songs,
   user,
   userSnapshots,
 } from "@/lib/db/schema-pg";
 import { formatSongInstanceId } from "@/lib/catalog/song-instance-id";
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import type { Region } from "@/lib/types";
 import type { VersionId } from "@/lib/metadata";
 import {
@@ -99,7 +100,7 @@ export async function buildExportImageMessage(opts: {
   const snapshot = await db
     .select()
     .from(userSnapshots)
-    .where(eq(userSnapshots.publicId, snapshotId))
+    .where(and(eq(userSnapshots.game, "maimai"), eq(userSnapshots.publicId, snapshotId)))
     .limit(1);
 
   if (snapshot.length === 0) {
@@ -117,15 +118,15 @@ export async function buildExportImageMessage(opts: {
         songId: parentSong.publicId,
         songRegion: songs.region,
         songVersion: songs.gameVersion,
-        achievement: scoreData.achievement,
-        fc: scoreData.fc,
-        fs: scoreData.fs,
+        achievement: scoreData.scoreValue,
+        fc: sql`${scoreData.comboStatus}`.mapWith(codeToComboStatus).as("fc"),
+        fs: sql`${scoreData.syncStatus}`.mapWith(codeToSyncStatus).as("fs"),
       })
-      .from(snapshotB50)
-      .innerJoin(scoreData, eq(snapshotB50.scoreId, scoreData.id))
+      .from(snapshotRankings)
+      .innerJoin(scoreData, eq(snapshotRankings.scoreId, scoreData.id))
       .innerJoin(songs, eq(scoreData.songId, songs.id))
       .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
-      .where(eq(snapshotB50.snapshotId, snapshot[0].id)),
+      .where(and(eq(snapshotRankings.game, "maimai"), eq(snapshotRankings.snapshotId, snapshot[0].id))),
   ]);
 
   if (userRow.length === 0) {
@@ -144,9 +145,9 @@ export async function buildExportImageMessage(opts: {
     displayName: snapshot[0].displayName,
     iconUrl: snapshot[0].iconUrl,
     title: snapshot[0].title,
-    titleType: snapshot[0].titleType,
-    classRankUrl: snapshot[0].classRankUrl,
-    courseRankUrl: snapshot[0].courseRankUrl,
+    titleType: codeToTitleType(snapshot[0].titleType),
+    classRankUrl: snapshot[0].classRankUrl ?? "",
+    courseRankUrl: snapshot[0].courseRankUrl ?? "",
   };
 
   const charts: ChartRecord[] = scoreRows.map((r) => ({

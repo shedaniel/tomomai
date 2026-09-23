@@ -1,7 +1,8 @@
+import { codeToChartType, codeToComboStatus, codeToDifficulty, codeToSyncStatus, codeToTitleType } from "@/lib/maimai/codes";
 import { songInstanceId } from "@/lib/db/song-instance-id";
 import { db } from '@/lib/db';
 import { parentSong, songs, user, userRecentSongs, userRecentSongsDetailed, userSnapshots } from '@/lib/db/schema-pg';
-import { and, desc, eq, lte } from 'drizzle-orm';
+import { and, desc, eq, lte, sql } from 'drizzle-orm';
 import { VersionId } from '@/lib/metadata';
 import { getLogger } from '@/lib/request-logger';
 import { FullCombo, FullSync, Region, TitleType } from '@/lib/types';
@@ -121,20 +122,20 @@ export async function prepareCreditData(
     .select({
       id: userRecentSongs.id,
       playedAt: userRecentSongs.playedAt,
-      achievement: userRecentSongs.archievement, // Note: typo in schema
-      dxScore: userRecentSongs.dxScore,
-      maxDxScore: userRecentSongs.maxDxScore,
-      fc: userRecentSongs.fc,
-      fs: userRecentSongs.fs,
-      track: userRecentSongs.track,
+      achievement: userRecentSongs.scoreValue,
+      dxScore: userRecentSongs.secondaryScore,
+      maxDxScore: sql<number>`coalesce(${userRecentSongs.maxDxScore}, 0)`.mapWith(Number).as("maxDxScore"),
+      fc: sql`${userRecentSongs.comboStatus}`.mapWith(codeToComboStatus).as("fc"),
+      fs: sql`${userRecentSongs.syncStatus}`.mapWith(codeToSyncStatus).as("fs"),
+      track: sql<number>`coalesce(${userRecentSongs.track}, 0)`.mapWith(Number).as("track"),
       songPublicId: songInstanceId,
       songName: parentSong.songName,
       artist: parentSong.artist,
       cover: parentSong.cover,
-      difficulty: parentSong.difficulty,
+      difficulty: sql`${parentSong.difficulty}`.mapWith(codeToDifficulty).as("difficulty"),
       level: songs.level,
       levelPrecise: songs.levelPrecise,
-      type: parentSong.type,
+      type: sql`${parentSong.type}`.mapWith(codeToChartType).as("type"),
       addedVersion: songs.addedVersion,
       // Detailed stats from separate table (may be null)
       fastCount: userRecentSongsDetailed.fastCount,
@@ -179,8 +180,8 @@ export async function prepareCreditData(
     .leftJoin(userRecentSongsDetailed, eq(userRecentSongs.id, userRecentSongsDetailed.recentSongId))
     .where(
       and(
-        eq(userRecentSongs.userId, userId),
-        eq(songs.region, region),
+        and(eq(userRecentSongs.game, "maimai"), eq(userRecentSongs.userId, userId)),
+        and(eq(songs.game, "maimai"), eq(songs.region, region)),
         beforeDate ? lte(userRecentSongs.playedAt, beforeDate) : undefined
       )
     )
@@ -258,15 +259,15 @@ export async function prepareCreditData(
         iconUrl: userSnapshots.iconUrl,
         displayName: userSnapshots.displayName,
         title: userSnapshots.title,
-        titleType: userSnapshots.titleType,
+        titleType: sql`${userSnapshots.titleType}`.mapWith(codeToTitleType).as("titleType"),
         courseRankUrl: userSnapshots.courseRankUrl,
         classRankUrl: userSnapshots.classRankUrl,
         stars: userSnapshots.stars,
       })
       .from(userSnapshots)
       .where(and(
-        eq(userSnapshots.userId, userId),
-        eq(userSnapshots.region, region),
+        and(eq(userSnapshots.game, "maimai"), eq(userSnapshots.userId, userId)),
+        and(eq(userSnapshots.game, "maimai"), eq(userSnapshots.region, region)),
         beforeDate ? lte(userSnapshots.fetchedAt, beforeDate) : undefined,
       ))
       .orderBy(desc(userSnapshots.fetchedAt))
@@ -400,9 +401,9 @@ export async function prepareCreditData(
     displayName: snapshot.displayName,
     title: snapshot.title,
     titleType: snapshot.titleType,
-    courseRankUrl: snapshot.courseRankUrl,
-    classRankUrl: snapshot.classRankUrl,
-    stars: snapshot.stars,
+    courseRankUrl: snapshot.courseRankUrl ?? "",
+    classRankUrl: snapshot.classRankUrl ?? "",
+    stars: snapshot.stars ?? 0,
   };
 
   return {

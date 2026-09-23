@@ -1,3 +1,6 @@
+import { gameContextInput, validateGameInput } from "./game-input";
+import { getCatalogChartsCachedForGame } from "@/server/queries/songs-cache";
+import { codeToChartType } from "@/lib/maimai/codes";
 import { parseSongId } from "@/lib/catalog/song-instance-id";
 import { db } from '@/lib/db';
 import { parentSong, songs } from '@/lib/db/schema-pg';
@@ -5,18 +8,25 @@ import { VersionId } from '@/lib/metadata';
 import { getSongSlug } from '@/lib/song-slug';
 import { protectedProcedure, publicProcedure, router } from '@/lib/trpc';
 import { TRPCError } from '@trpc/server';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { queryAllUniqueSongs, querySongDetails, querySongScores } from '@/server/queries/songs';
 
 export const songsRouter = router({
+  getCatalogForGame: publicProcedure
+    .input(z.object({ ...gameContextInput, version: z.number().int().optional() }))
+    .query(({ input }) => {
+      const { game, region } = validateGameInput(input, "catalog");
+      return getCatalogChartsCachedForGame(game, region, input.version);
+    }),
+
   getAllUniqueSongs: publicProcedure
     .query(async () => {
       return queryAllUniqueSongs();
     }),
 
   getSongDetails: publicProcedure
-    .input(z.object({
+    .input(z.object({ game: z.literal("maimai").default("maimai"),
       songName: z.string(),
       artist: z.string().optional(),
       type: z.enum(['std', 'dx']),
@@ -26,7 +36,7 @@ export const songsRouter = router({
     }),
 
   getSongScores: protectedProcedure
-    .input(z.object({
+    .input(z.object({ game: z.literal("maimai").default("maimai"),
       songName: z.string(),
       artist: z.string().optional(),
       type: z.enum(['std', 'dx']),
@@ -39,7 +49,7 @@ export const songsRouter = router({
     }),
 
   getSimpleSongDetails: publicProcedure
-    .input(z.object({
+    .input(z.object({ game: z.literal("maimai").default("maimai"),
       publicId: z.string(),
     }))
     .query(async ({ input }) => {
@@ -49,7 +59,7 @@ export const songsRouter = router({
         .select({
           songName: parentSong.songName,
           artist: parentSong.artist,
-          type: parentSong.type,
+          type: sql`${parentSong.type}`.mapWith(codeToChartType).as("type"),
           genre: parentSong.genre,
           bpm: parentSong.bpm,
           addedVersion: songs.addedVersion,
@@ -57,8 +67,9 @@ export const songsRouter = router({
         .from(songs)
         .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
         .where(and(
+          eq(parentSong.game, "maimai"),
           eq(parentSong.publicId, parsed.parentPublicId),
-          parsed.kind === "instance" ? eq(songs.region, parsed.region) : undefined,
+          parsed.kind === "instance" ? and(eq(songs.game, "maimai"), eq(songs.region, parsed.region)) : undefined,
           parsed.kind === "instance" ? eq(songs.gameVersion, parsed.gameVersion) : undefined,
         ));
 

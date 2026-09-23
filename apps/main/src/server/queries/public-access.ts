@@ -1,3 +1,4 @@
+import type { CanonicalGameId } from "@/lib/games/types";
 import { db } from "@/lib/db";
 import { user, userSnapshots } from "@/lib/db/schema-pg";
 import { and, desc, eq } from "drizzle-orm";
@@ -52,7 +53,7 @@ export async function resolvePublicUserByUsername(username: string) {
   return userData;
 }
 
-export async function resolvePublicSnapshotUserId(snapshotPublicId: string) {
+export async function resolvePublicSnapshotUserIdForGame(game: CanonicalGameId, snapshotPublicId: string) {
   const snapshotRecord = await db
     .select({
       userId: userSnapshots.userId,
@@ -63,6 +64,7 @@ export async function resolvePublicSnapshotUserId(snapshotPublicId: string) {
     .innerJoin(user, eq(userSnapshots.userId, user.id))
     .where(
       and(
+        eq(userSnapshots.game, game),
         eq(userSnapshots.publicId, snapshotPublicId),
         eq(user.publishProfile, true)
       )
@@ -77,4 +79,8 @@ export async function resolvePublicSnapshotUserId(snapshotPublicId: string) {
   }
 
   return snapshotRecord[0];
+}
+
+export function resolvePublicSnapshotUserId(snapshotPublicId: string) {
+  return resolvePublicSnapshotUserIdForGame("maimai", snapshotPublicId);
 }

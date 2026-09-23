@@ -1,7 +1,10 @@
+import { gameContextInput, validateGameInput } from "./game-input";
+import { resolveFlagsForUser } from "@/lib/flags";
+import { startScoreFetch, getScoreFetchStatus } from "@/server/services/games/score-ingestion";
 import { db } from '@/lib/db';
 import { generateUserOtp, getOtpExpiryTimestamp, createOpaqueUserId } from '@/lib/otp';
 import { resolveBaseUrl } from '@/lib/base-url';
-import { getFetchStatusServer, startFetchServer } from '@/lib/maimai-server-actions';
+import { getMaimaiFetchStatusServer, startMaimaiFetchServer } from '@/lib/maimai-server-actions';
 import { getLogger } from '@/lib/request-logger';
 import { protectedProcedure, router } from '@/lib/trpc';
 import { Region } from '@/lib/types';
@@ -14,6 +17,20 @@ import { getEnabledRegions } from '@/lib/enabled-regions';
 const regionSchema = z.enum(getEnabledRegions());
 
 export const fetchRouter = router({
+  startFetchForGame: protectedProcedure
+    .input(z.object({ ...gameContextInput, token: z.string().optional() }))
+    .mutation(async ({ ctx, input }) => {
+      const context = validateGameInput(input, "scores");
+      const userId = ctx.session.user.id;
+      return startScoreFetch({ ...context, userId, token: input.token, flags: await resolveFlagsForUser(userId) });
+    }),
+  getFetchStatusForGame: protectedProcedure
+    .input(z.object({ ...gameContextInput }))
+    .query(({ ctx, input }) => {
+      const context = validateGameInput(input, "scores");
+      return getScoreFetchStatus({ ...context, userId: ctx.session.user.id });
+    }),
+
   getLoginOtp: protectedProcedure
     .query(({ ctx }) => {
       const userId = ctx.session.user.id;
@@ -33,13 +50,13 @@ export const fetchRouter = router({
     }),
 
   startFetch: protectedProcedure
-    .input(z.object({
+    .input(z.object({ game: z.literal("maimai").default("maimai"),
       region: regionSchema,
       token: z.string().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       try {
-        return await startFetchServer(ctx.session.user.id, input.region as Region, input.token);
+        return await startMaimaiFetchServer(ctx.session.user.id, input.region as Region, input.token);
       } catch (error) {
         if (error instanceof Error) {
           if (isAlbumSettingsError(error.message)) {
@@ -73,15 +90,15 @@ export const fetchRouter = router({
     }),
 
   getFetchStatus: protectedProcedure
-    .input(z.object({
+    .input(z.object({ game: z.literal("maimai").default("maimai"),
       region: regionSchema,
     }))
     .query(async ({ ctx, input }) => {
-      return await getFetchStatusServer(ctx.session.user.id, input.region as Region);
+      return await getMaimaiFetchStatusServer(ctx.session.user.id, input.region as Region);
     }),
 
   getLatestFetchSessionId: protectedProcedure
-    .input(z.object({
+    .input(z.object({ game: z.literal("maimai").default("maimai"),
       region: regionSchema,
     }))
     .query(async ({ ctx, input }) => {
@@ -92,6 +109,7 @@ export const fetchRouter = router({
         .from(fs)
         .where(
           and(
+            eq(fs.game, "maimai"),
             eq(fs.userId, ctx.session.user.id),
             eq(fs.region, input.region)
           )
@@ -103,7 +121,7 @@ export const fetchRouter = router({
     }),
 
   deleteToken: protectedProcedure
-    .input(z.object({
+    .input(z.object({ game: z.literal("maimai").default("maimai"),
       region: regionSchema,
     }))
     .mutation(async ({ ctx, input }) => {

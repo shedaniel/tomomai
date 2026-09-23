@@ -24,3 +24,13 @@ export const getSongDetailsCached = cache(
     return querySongDetails(songName, type, userId, artist);
   }
 );
+
+export const getCatalogChartsCachedForGame = cache(async (game: import("@/lib/games/types").CanonicalGameId, region?: import("@/lib/types").Region, version?: number) => {
+  const { unstable_cache } = await import("next/cache");
+  const { queryCatalogChartsForGame } = await import("./songs");
+  return unstable_cache(
+    () => queryCatalogChartsForGame(game, region, version),
+    ["catalog-charts", game, region ?? "all", version?.toString() ?? "all"],
+    { revalidate: 3600, tags: [`all-unique-songs:${game}`] },
+  )();
+});

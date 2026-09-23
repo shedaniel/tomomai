@@ -2,7 +2,7 @@ import { db } from '@/lib/db';
 import { parentSong } from '@/lib/db/schema-pg';
 import { publicProcedure, router } from '@/lib/trpc';
 import { parentPublicIdOf } from '@/lib/catalog/song-instance-id';
-import { inArray } from 'drizzle-orm';
+import { and, eq, inArray } from 'drizzle-orm';
 import { z } from 'zod';
 import { getChartPercentiles } from '@/server/queries/percentile';
 import { recommendationPeers, type RecommendationPeers } from '@/lib/recommendation-potential';
@@ -11,7 +11,7 @@ import type { PercentileMap } from '@/lib/percentile-types';
 
 export const percentileRouter = router({
   getRecommendationPeers: publicProcedure
-    .input(z.object({
+    .input(z.object({ game: z.literal("maimai").default("maimai"),
       publicSongIds: z.array(z.string()).max(2000),
       userRating: z.number().int().min(0).max(20000),
     }))
@@ -19,7 +19,7 @@ export const percentileRouter = router({
       if (!input.publicSongIds.length) return {} as Record<string, RecommendationPeers>;
       const publicIds = [...new Set(input.publicSongIds.map(parentPublicIdOf))];
       const rows = await db.select({ id: parentSong.id, publicId: parentSong.publicId })
-        .from(parentSong).where(inArray(parentSong.publicId, publicIds));
+        .from(parentSong).where(and(eq(parentSong.game, "maimai"), inArray(parentSong.publicId, publicIds)));
       const idMap = new Map(rows.map((row) => [row.publicId, row.id]));
       const inputs = input.publicSongIds.flatMap((publicSongId) => {
         const parentId = idMap.get(parentPublicIdOf(publicSongId));
@@ -34,7 +34,7 @@ export const percentileRouter = router({
       return result;
     }),
   getChartPercentiles: publicProcedure
-    .input(z.object({
+    .input(z.object({ game: z.literal("maimai").default("maimai"),
       songs: z.array(z.object({
         publicSongId: z.string(),
         achievement: z.number().int().min(0).max(1010000),
@@ -46,7 +46,7 @@ export const percentileRouter = router({
       const rows = await db
         .select({ id: parentSong.id, publicId: parentSong.publicId })
         .from(parentSong)
-        .where(inArray(parentSong.publicId, publicIds));
+        .where(and(eq(parentSong.game, "maimai"), inArray(parentSong.publicId, publicIds)));
 
       const idMap = new Map(rows.map((r) => [r.publicId, r.id]));
       const inputs = input.songs

@@ -1,7 +1,8 @@
+import { codeToChartType, codeToComboStatus, codeToDifficulty, codeToSyncStatus, codeToTitleType } from "@/lib/maimai/codes";
 import { songInstanceId } from "@/lib/db/song-instance-id";
 import { db } from '@/lib/db';
 import { parentSong, songs, user, userRecentSongs, userSnapshots } from '@/lib/db/schema-pg';
-import { and, desc, eq, gte, lt, lte } from 'drizzle-orm';
+import { and, desc, eq, gte, lt, lte, sql } from 'drizzle-orm';
 import { VersionId } from '@/lib/metadata';
 import { Difficulty, FullCombo, FullSync, Region, SongType } from '@/lib/types';
 import { calculateSongRating } from '@/lib/rating-calculator';
@@ -94,7 +95,7 @@ export async function prepareDailyPlaysData(
       .from(userRecentSongs)
       .innerJoin(songs, eq(userRecentSongs.songId, songs.id))
       .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
-      .where(and(eq(userRecentSongs.userId, userId), eq(songs.region, region)))
+      .where(and(and(eq(userRecentSongs.game, "maimai"), eq(userRecentSongs.userId, userId)), and(eq(songs.game, "maimai"), eq(songs.region, region))))
       .orderBy(desc(userRecentSongs.playedAt))
       .limit(50);
 
@@ -113,23 +114,23 @@ export async function prepareDailyPlaysData(
     .select({
       id: userRecentSongs.id,
       playedAt: userRecentSongs.playedAt,
-      achievement: userRecentSongs.archievement,
-      fc: userRecentSongs.fc,
-      fs: userRecentSongs.fs,
+      achievement: userRecentSongs.scoreValue,
+      fc: sql`${userRecentSongs.comboStatus}`.mapWith(codeToComboStatus).as("fc"),
+      fs: sql`${userRecentSongs.syncStatus}`.mapWith(codeToSyncStatus).as("fs"),
       songPublicId: songInstanceId,
       songName: parentSong.songName,
       cover: parentSong.cover,
-      difficulty: parentSong.difficulty,
+      difficulty: sql`${parentSong.difficulty}`.mapWith(codeToDifficulty).as("difficulty"),
       levelPrecise: songs.levelPrecise,
-      type: parentSong.type,
+      type: sql`${parentSong.type}`.mapWith(codeToChartType).as("type"),
       addedVersion: songs.addedVersion,
     })
     .from(userRecentSongs)
     .innerJoin(songs, eq(userRecentSongs.songId, songs.id))
     .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
     .where(and(
-      eq(userRecentSongs.userId, userId),
-      eq(songs.region, region),
+      and(eq(userRecentSongs.game, "maimai"), eq(userRecentSongs.userId, userId)),
+      and(eq(songs.game, "maimai"), eq(songs.region, region)),
       gte(userRecentSongs.playedAt, start),
       lt(userRecentSongs.playedAt, end),
     ))
@@ -146,15 +147,15 @@ export async function prepareDailyPlaysData(
       iconUrl: userSnapshots.iconUrl,
       displayName: userSnapshots.displayName,
       title: userSnapshots.title,
-      titleType: userSnapshots.titleType,
+      titleType: sql`${userSnapshots.titleType}`.mapWith(codeToTitleType).as("titleType"),
       courseRankUrl: userSnapshots.courseRankUrl,
       classRankUrl: userSnapshots.classRankUrl,
       stars: userSnapshots.stars,
     })
     .from(userSnapshots)
     .where(and(
-      eq(userSnapshots.userId, userId),
-      eq(userSnapshots.region, region),
+      and(eq(userSnapshots.game, "maimai"), eq(userSnapshots.userId, userId)),
+      and(eq(userSnapshots.game, "maimai"), eq(userSnapshots.region, region)),
       lte(userSnapshots.fetchedAt, end),
     ))
     .orderBy(desc(userSnapshots.fetchedAt))
@@ -211,9 +212,9 @@ export async function prepareDailyPlaysData(
       displayName: snapshotRow.displayName,
       title: snapshotRow.title,
       titleType: snapshotRow.titleType,
-      courseRankUrl: snapshotRow.courseRankUrl,
-      classRankUrl: snapshotRow.classRankUrl,
-      stars: snapshotRow.stars,
+      courseRankUrl: snapshotRow.courseRankUrl ?? "",
+      classRankUrl: snapshotRow.classRankUrl ?? "",
+      stars: snapshotRow.stars ?? 0,
     },
     visitableProfileAt: userRow[0].publishProfile && userRow[0].username ? userRow[0].username : null,
   };
@@ -236,7 +237,7 @@ export async function listDailyPlaysAvailableDays(
     .from(userRecentSongs)
     .innerJoin(songs, eq(userRecentSongs.songId, songs.id))
     .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
-    .where(and(eq(userRecentSongs.userId, userId), eq(songs.region, region)))
+    .where(and(and(eq(userRecentSongs.game, "maimai"), eq(userRecentSongs.userId, userId)), and(eq(songs.game, "maimai"), eq(songs.region, region))))
     .orderBy(desc(userRecentSongs.playedAt));
 
   const counts = new Map<string, number>();
