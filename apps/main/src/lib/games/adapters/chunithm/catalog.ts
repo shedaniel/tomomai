@@ -67,15 +67,17 @@ function parseDate(value: string | undefined): Date | undefined {
   return date;
 }
 
-function versionAtDate(value: string | undefined, region: Region): number | undefined {
+function versionAtDate(value: string | undefined, region: Region, sourceVersion: number): { version: number; estimated: boolean } {
   const date = parseDate(value);
-  if (!date) return undefined;
+  if (!date) throw new Error(`Missing otoge-db CHUNITHM ${region} release date`);
   const released = chunithmVersionProvider.getAvailableVersions(region)
     .filter(version => date >= new Date(`${version.releaseDate.replaceAll("/", "-")}T07:00:00+09:00`))
     .sort((a, b) => b.releaseDate.localeCompare(a.releaseDate));
   const latestDate = released[0]?.releaseDate;
   const candidates = released.filter(version => version.releaseDate === latestDate);
-  return candidates.length === 1 ? candidates[0].id : undefined;
+  if (candidates.length === 1) return { version: candidates[0].id, estimated: false };
+  if (candidates.some(version => version.id === sourceVersion)) return { version: sourceVersion, estimated: true };
+  throw new Error(`Cannot resolve otoge-db CHUNITHM ${region} release version for ${value}`);
 }
 
 function parseConstant(value: string | undefined, sourceId: string, prefix: string): number | undefined {
@@ -115,7 +117,8 @@ export function normalizeOtogeDbCatalog(data: unknown, region: Region): PendingC
     ids.add(song.id);
     titles.add(song.title);
 
-    if (!sourceVersions.has(song.version)) {
+    const sourceVersion = sourceVersions.get(song.version);
+    if (sourceVersion === undefined) {
       throw new Error(`Unknown otoge-db CHUNITHM version: ${song.version}`);
     }
     for (const key of Object.keys(song)) {
@@ -132,9 +135,10 @@ export function normalizeOtogeDbCatalog(data: unknown, region: Region): PendingC
       if (!/^\d{1,2}\+?$/.test(level) || Number.parseInt(level) <= 0) {
         throw new Error(`Invalid otoge-db CHUNITHM level for ${song.id}/${prefix}: ${level}`);
       }
-      const addedDate = difficulty === 4
-        ? (region === "jp" ? song.date_updated : song.date_intl_updated)
-        : (region === "jp" ? song.date_added : song.date_intl_added);
+      const updateDate = region === "jp" ? song.date_updated : song.date_intl_updated;
+      const useUpdateDate = difficulty === 4 && parseDate(updateDate) !== undefined;
+      const addedDate = useUpdateDate ? updateDate : (region === "jp" ? song.date_added : song.date_intl_added);
+      const release = versionAtDate(addedDate, region, sourceVersion);
       const noteCounts = Object.fromEntries(["tap", "hold", "slide", "air", "flick"]
         .flatMap(kind => {
           const count = parseCount(song[`${prefix}_notes_${kind}`]);
@@ -150,11 +154,12 @@ export function normalizeOtogeDbCatalog(data: unknown, region: Region): PendingC
         genre: song.catname,
         level,
         levelPrecise: parseConstant(song[`${prefix}_i`], song.id, prefix),
-        addedVersion: versionAtDate(addedDate, region),
+        addedVersion: release.version,
         bpm: parseCount(song.bpm),
         noteDesigner: song[`${prefix}_designer`] || undefined,
         metadata: {
           levelPreciseEstimated: false,
+          addedVersionEstimated: release.estimated || (difficulty === 4 && !useUpdateDate),
           otogeDb: {
             id: song.id,
             url: source.url,
@@ -165,6 +170,7 @@ export function normalizeOtogeDbCatalog(data: unknown, region: Region): PendingC
             dateIntlAdded: song.date_intl_added,
             dateIntlUpdated: song.date_intl_updated,
             chartAddedDate: addedDate,
+            chartAddedDateSource: useUpdateDate ? "regional-update" : "regional-song",
             constant: song[`${prefix}_i`] || undefined,
             bpm: song.bpm,
             totalNotes: parseCount(song[`${prefix}_notes`]),

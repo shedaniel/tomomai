@@ -39,9 +39,29 @@ describe("CHUNITHM otoge-db normalization", () => {
     expect(charts.find(chart => chart.songName === "Melodiniq" && chart.difficulty === 3))
       .toMatchObject({ addedVersion: 8, metadata: { otogeDb: { version: "Mate", dateIntlAdded: "20260820" } } });
     expect(normalizeOtogeDbCatalog(jpFixture, "intl").some(chart => chart.songName === "ALIVE")).toBe(false);
-    expect(charts.find(chart => chart.songName === "ネ！コ！" && chart.difficulty === 4)?.addedVersion).toBeUndefined();
-    expect(charts.find(chart => chart.songName === "ネ！コ！" && chart.difficulty === 3)?.addedVersion).toBeUndefined();
-    expect(charts.find(chart => chart.songName === "Melodiniq" && chart.difficulty === 4)?.addedVersion).toBeUndefined();
+    expect(charts.find(chart => chart.songName === "ネ！コ！" && chart.difficulty === 4))
+      .toMatchObject({ addedVersion: -7, metadata: { addedVersionEstimated: true } });
+    expect(charts.find(chart => chart.songName === "ネ！コ！" && chart.difficulty === 3))
+      .toMatchObject({ addedVersion: -7, metadata: { addedVersionEstimated: true } });
+    expect(charts.find(chart => chart.songName === "Melodiniq" && chart.difficulty === 4))
+      .toMatchObject({ addedVersion: 8, metadata: { addedVersionEstimated: true, otogeDb: { chartAddedDate: "20260820", chartAddedDateSource: "regional-song" } } });
+  });
+
+  it("prefers ULTIMA's regional update date and falls back to the regional song release", () => {
+    const jp = normalizeOtogeDbCatalog(jpFixture, "jp");
+    expect(jp.find(chart => chart.songName === "ネ！コ！" && chart.difficulty === 4))
+      .toMatchObject({ addedVersion: 3, metadata: { addedVersionEstimated: false, otogeDb: { chartAddedDateSource: "regional-update" } } });
+    expect(jp.find(chart => chart.songName === "Melodiniq" && chart.difficulty === 4))
+      .toMatchObject({ addedVersion: 9, metadata: { addedVersionEstimated: true } });
+    const intl = normalizeOtogeDbCatalog([{ ...intlFixture[1], date_intl_updated: "20260416" }], "intl");
+    expect(intl.find(chart => chart.difficulty === 4))
+      .toMatchObject({ addedVersion: 8, metadata: { addedVersionEstimated: false } });
+  });
+
+  it("rejects missing release dates and source versions that cannot disambiguate the regional release", () => {
+    expect(() => normalizeOtogeDbCatalog([{ ...jpFixture[0], date_added: "" }], "jp")).toThrow("Missing");
+    expect(() => normalizeOtogeDbCatalog([{ ...jpFixture[0], date_added: "20100101" }], "jp")).toThrow("Cannot resolve");
+    expect(() => normalizeOtogeDbCatalog([{ ...intlFixture[0], version: "Mate", date_intl_added: "20210101" }], "intl")).toThrow("Cannot resolve");
   });
 
   it("does not coerce ambiguous BPM, missing note counts, or uncertain chart constants", () => {

@@ -26,12 +26,12 @@ beforeEach(() => {
 
 describe("publishSongCatalog", () => {
   it("publishes a configured catalog while the game's public frontend remains disabled", async () => {
-    const metadata = { levelPreciseEstimated: true, otogeDb: { id: "2490" } };
-    readRows.mockResolvedValue([{ parent: { ...parent, type: 0 }, instance: { ...instance, gameVersion: 9, addedVersion: null, metadata } }]);
+    const metadata = { levelPreciseEstimated: true, addedVersionEstimated: true, otogeDb: { id: "2490" } };
+    readRows.mockResolvedValue([{ parent: { ...parent, type: 0 }, instance: { ...instance, gameVersion: 9, addedVersion: 8, metadata } }]);
     expect(resolveGame("chunithm").enabled).toBe(false);
     const result = await publishSongCatalog("chunithm");
     const object = putObject.mock.calls.find(([object]) => object.key === songCatalogKey("chunithm", "jp", 9))?.[0];
-    expect(JSON.parse(object.body)).toMatchObject({ game: "chunithm", songs: [{ addedVersion: null, levelPrecise: 133, metadata }] });
+    expect(JSON.parse(object.body)).toMatchObject({ game: "chunithm", songs: [{ addedVersion: 8, levelPrecise: 133, metadata }] });
     expect(putObject.mock.calls.every(([object]) => object.key.startsWith(catalogPrefix("chunithm")))).toBe(true);
     expect(result.songCount).toBe(1);
   });

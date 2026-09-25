@@ -180,7 +180,6 @@ export function SongsList(_: SongsListProps = {}) {
       }
       case "version_asc":
       case "version_desc":
-        if (song.addedVersion === null) return "—";
         const version = getVersionInfo(game.id, game.regions[0] ?? "jp", song.addedVersion);
         return version?.name ?? `Ver. ${song.addedVersion}`;
       case "genre":

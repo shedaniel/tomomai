@@ -288,7 +288,7 @@ export function SongDetailContent({ songName, artist, slug, type, parentIds, ini
 
   // Pre-compute SEO summary inputs (visible prose paragraph below the header).
   const summary = useMemo(() => {
-    if (!data || data.addedVersion === null || allCharts.length === 0) return null;
+    if (!data || allCharts.length === 0) return null;
     const levels = allCharts.map((c) => c.levelPrecise).filter((l) => l > 0);
     if (levels.length === 0) return null;
     const minLevel = Math.min(...levels);
@@ -332,7 +332,7 @@ export function SongDetailContent({ songName, artist, slug, type, parentIds, ini
     return null;
   }
 
-  const addedVersionInfo = data.addedVersion === null ? null : getVersionInfo(game.id, data.regions[0]?.region ?? game.regions[0] ?? "jp", data.addedVersion);
+  const addedVersionInfo = getVersionInfo(game.id, data.regions[0]?.region ?? game.regions[0] ?? "jp", data.addedVersion);
 
   return (
     <div className="space-y-6">
@@ -393,7 +393,7 @@ export function SongDetailContent({ songName, artist, slug, type, parentIds, ini
           <div className="flex items-center gap-2">
             <Calendar className="w-4 h-4" />
             <h2 className="font-medium text-sm">{t('db.songs.detail.added')}</h2>
-            <span>{data.addedVersion === null ? "—" : addedVersionInfo?.name ?? `Ver. ${data.addedVersion}`}</span>
+            <span>{addedVersionInfo?.name ?? `Ver. ${data.addedVersion}`}</span>
           </div>
         </div>
 

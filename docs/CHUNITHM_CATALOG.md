@@ -44,10 +44,17 @@ a title with a regular chart. The deleted-song archive is not imported.
   `.6` / historical `.7` plus thresholds and mismatch correction. Completed
   catalog charts always have numeric precision; an unresolvable chart fails
   validation instead of being dropped.
-- BASIC–MASTER use the region's song-added date. ULTIMA uses the region's chart
-  update date where available. Missing ULTIMA dates remain unknown, rather than
-  inheriting the original song release. The local pre-NEW International version
-  table has overlapping release dates, so ambiguous dates remain unknown too.
+- `addedVersion` is resolved once at the provider boundary and is always numeric.
+  BASIC–MASTER use the regional song-added date. ULTIMA prefers the regional
+  chart-update date and falls back to the regional song-added date when absent.
+  Such fallbacks carry `metadata.addedVersionEstimated: true`, alongside the raw
+  source dates. This fallback can place a later ULTIMA chart in an earlier release
+  until a more precise regional update date becomes available.
+- The local pre-NEW International release table contains aliases sharing one date.
+  When that creates a tie, the recognized original JP version selects the matching
+  candidate and is marked estimated. Unambiguous regional dates take precedence:
+  a JP Mate song released internationally during X-VERSE-X remains version 8.
+  Missing dates or unresolved release mappings fail collection explicitly.
 - `metadata.levelPreciseEstimated` distinguishes estimates from source constants;
   the raw source constant remains in `metadata.otogeDb.constant`. Estimates
   participate in rating calculations as in maimai, and catalog displays prefix
@@ -103,9 +110,5 @@ Replace the token placeholder locally. The collection request reads the public
 source; `update_all` additionally writes the catalog and publishes its objects.
 No maimai or CHUNITHM account-session token belongs in this request.
 
-The backend remains one new migration version (`0018`) relative to
-`upstream/main`. Its regenerated definition keeps `levelPrecise` required and
-allows unknown `addedVersion`. A dev database that already applied an earlier
-`0018` will not receive edits to that same migration by rerunning the migrator.
-Use a database copy from before that migration or arrange a separately reviewed
-reconciliation before ingestion. This implementation does not apply migrations.
+Both `levelPrecise` and `addedVersion` retain their required numeric database and
+API contracts. The catalog provider needs no schema change or new migration.

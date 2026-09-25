@@ -100,8 +100,7 @@ export const songsRouter = router({
 
       const firstChart = charts[0];
       const chartWithBpm = charts.find(c => c.bpm !== null);
-      const knownAddedVersions = charts.flatMap(chart => chart.addedVersion === null ? [] : [chart.addedVersion]);
-      const earliestAddedVersion = knownAddedVersions.length ? Math.min(...knownAddedVersions) : null;
+      const earliestAddedVersion = Math.min(...charts.map(chart => chart.addedVersion));
 
       const slug = await getSongSlug({
         songName: firstChart.songName,

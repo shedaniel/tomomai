@@ -35,10 +35,10 @@ describe("common catalog view", () => {
     ]);
   });
 
-  it("preserves display levels, estimate provenance and unknown added versions", async () => {
-    readRows.mockResolvedValue([{ ...chart, level: "14+", levelPrecise: 145, addedVersion: null, metadata: { levelPreciseEstimated: true } }]);
+  it("preserves display levels and fallback provenance", async () => {
+    readRows.mockResolvedValue([{ ...chart, level: "14+", levelPrecise: 145, addedVersion: 8, metadata: { levelPreciseEstimated: true, addedVersionEstimated: true } }]);
     const [song] = await queryAllUniqueSongs("chunithm");
-    expect(song.addedVersion).toBeNull();
+    expect(song.addedVersion).toBe(8);
     expect(song.difficulties[0]).toMatchObject({ level: "14+", levelPrecise: 145, levelPreciseEstimated: true });
   });
 });
