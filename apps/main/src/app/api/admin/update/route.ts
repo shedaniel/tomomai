@@ -1,16 +1,15 @@
-import { resolveAdminGame } from "@/lib/api/admin-game";
+import { getAdminCatalogRegions, resolveAdminGame } from "@/lib/api/admin-game";
 import { GameAdapterError } from "@/lib/games/types";
 import { gameErrorResponse } from "@/lib/api/game-context";
 import { flushLogger } from "@/lib/logger";
 import { requestLogger } from "@/lib/request-logger";
 import { Region } from "@/lib/types";
-import { getEnabledRegions, isRegionEnabled } from "@/lib/enabled-regions";
 import { getCurrentVersion } from "@/lib/games/versions";
 import { awaitWrapper, sortKeys } from "@/lib/utils";
 import { sendDiscordNotice } from "@/server/services/admin/discord-webhooks";
 import { createNoticeSink } from "@/server/services/admin/fetcher-utils";
 import { collectCatalog } from "@/server/services/games/catalog-ingestion";
-import { loginAndGetCookies } from "@/server/services/maimai-login";
+import { authenticateCatalogSource } from "@/server/services/games/catalog-source-auth";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
@@ -52,48 +51,26 @@ export async function GET(request: NextRequest) {
     const game = resolveAdminGame(searchParams);
 
     // Get query parameters
-    const maimaiToken = searchParams.get('token');
+    const sourceToken = searchParams.get('token');
 
-    if (!region || !isRegionEnabled(region)) {
+    if (!region || !getAdminCatalogRegions(game).includes(region)) {
       return NextResponse.json(
-        { error: `Missing or invalid 'region' query parameter. Must be one of: ${getEnabledRegions().join(", ")}`, requestId },
+        { error: `Missing or invalid 'region' query parameter. Must be one of: ${getAdminCatalogRegions(game).join(", ")}`, requestId },
         { status: 400 }
       );
     }
 
-    // CN uses the public Lxns API and does not need a maimai session cookie.
-    let cookies = "";
-    if (region !== "cn") {
-      if (!maimaiToken) {
-        return NextResponse.json(
-          { error: "Missing 'token' query parameter", requestId },
-          { status: 400 }
-        );
-      }
-
-      log.info({ region }, "Admin update requested: scraping maimai data");
-
-      log.info("Validating maimai token...");
-      const [resolved, cookiesError] = await awaitWrapper(loginAndGetCookies(region, maimaiToken));
-
-      if (cookiesError) {
-        log.error({ err: cookiesError, region }, "Token validation failed");
-        return NextResponse.json(
-          { error: cookiesError.message, requestId },
-          { status: 400 }
-        );
-      }
-
-      log.info("Token validated. Fetching levels...");
-      cookies = resolved!;
-    } else {
-      log.info({ region }, "Admin update requested: fetching CN data from Lxns");
+    const [cookies, authError] = await awaitWrapper(authenticateCatalogSource(game, region, sourceToken));
+    if (authError) {
+      log.error({ err: authError, game, region }, "Catalog source authentication failed");
+      return NextResponse.json({ error: authError.message, requestId }, { status: 400 });
     }
+    log.info({ game, region }, "Admin catalog collection requested");
 
     const songs = await collectCatalog(game, {
       region,
       version: getCurrentVersion(game, region),
-      cookies,
+      cookies: cookies ?? "",
       log,
       notice: createNoticeSink(),
     });
@@ -102,7 +79,7 @@ export async function GET(request: NextRequest) {
     const newRecords = songs
       // sort keys
       .map(record => sortKeys(record))
-      .sort((a, b) => a.songName.localeCompare(b.songName) * 1000000 + a.difficulty.localeCompare(b.difficulty) * 1000 + a.type.localeCompare(b.type));
+      .sort((a, b) => a.songName.localeCompare(b.songName) * 1000000 + (a.difficulty - b.difficulty) * 1000 + (a.chartType - b.chartType));
 
     log.info({ count: newRecords.length }, "Update completed successfully");
 

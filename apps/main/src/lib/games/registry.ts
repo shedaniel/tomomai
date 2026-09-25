@@ -75,3 +75,12 @@ export function requireConfiguredSource(game: CanonicalGameId, source: "catalog"
     throw new GameAdapterError("SOURCE_NOT_CONFIGURED", reason ?? `${source} source is not configured for ${game}`, game, undefined, source);
   }
 }
+
+export function resolveCatalogContext(input: string, region: Region): GameContext {
+  const registration = resolveGame(input);
+  if (!registration.adapter.supportedRegions.has(region)) {
+    throw new GameAdapterError("UNSUPPORTED_REGION", `${region} is not supported for ${registration.displayName}`, registration.id, region);
+  }
+  requireConfiguredSource(registration.id, "catalog");
+  return { game: registration.id, region };
+}

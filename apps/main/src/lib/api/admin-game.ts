@@ -1,13 +1,23 @@
 import { GameAdapterError, type CanonicalGameId } from "@/lib/games/types";
-import { resolveGame, resolveGameContext, requireConfiguredSource } from "@/lib/games/registry";
+import { resolveGame, resolveCatalogContext, requireConfiguredSource, getEnabledRegions } from "@/lib/games/registry";
+import { gameIdSchema } from "@/lib/games/schema";
 import type { Region } from "@/lib/types";
 
+export function getAdminCatalogRegions(game: CanonicalGameId): Region[] {
+  return [...resolveGame(game).adapter.supportedRegions];
+}
+
 export function resolveAdminGame(params: URLSearchParams): CanonicalGameId {
-  const game = params.get("game");
-  if (game !== "maimai" && game !== "chunithm") throw new GameAdapterError("UNKNOWN_GAME", "Canonical game parameter is required");
-  if (!resolveGame(game).enabled) throw new GameAdapterError("GAME_NOT_ENABLED", "Game is not enabled", game);
+  const parsed = gameIdSchema.safeParse(params.get("game"));
+  if (!parsed.success) throw new GameAdapterError("UNKNOWN_GAME", "Canonical game parameter is required");
+  const game = parsed.data;
   requireConfiguredSource(game, "catalog");
   const region = params.get("region");
-  if (region !== null) resolveGameContext(game, region as Region, "catalog");
+  if (region !== null) resolveCatalogContext(game, region as Region);
   return game;
+}
+
+export function getDefaultAdminCatalogRegions(game: CanonicalGameId): Region[] {
+  const enabled = getEnabledRegions(game);
+  return enabled.length ? enabled : getAdminCatalogRegions(game);
 }

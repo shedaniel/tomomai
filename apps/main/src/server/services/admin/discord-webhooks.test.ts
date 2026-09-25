@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { Difficulty, SongType } from "@/lib/types";
 import type { AddedChange, ModifiedChange, FieldChange } from "@/app/api/admin/upload/route";
+import { chartTypeToCode, difficultyToCode } from "@/lib/maimai/codes";
 import { buildChangeDescription } from "./discord-webhooks";
 
 function added(
@@ -13,10 +14,10 @@ function added(
   return {
     songKey: `${songName}@${type}@${difficulty}`,
     songName,
-    difficulty,
-    type,
+    difficulty: difficultyToCode(difficulty),
+    chartType: chartTypeToCode(type),
     level,
-    levelPrecise,
+    levelPrecise: levelPrecise ?? null,
     artist: "artist",
   };
 }
@@ -30,8 +31,8 @@ function modifiedLevel(
   return {
     songKey: `${songName}@${type}@${difficulty}`,
     songName,
-    difficulty,
-    type,
+    difficulty: difficultyToCode(difficulty),
+    chartType: chartTypeToCode(type),
     fieldChanges,
     dbId: "id",
   };
@@ -49,9 +50,14 @@ function modifiedField(
 }
 
 describe("buildChangeDescription", () => {
+  it("uses CHUNITHM labels and preserves unknown chart constants", () => {
+    const description = buildChangeDescription("chunithm", [{ songKey: "chart", songName: "Test", artist: "Artist", chartType: 0, difficulty: 4, level: "14+", levelPrecise: null }], [], []);
+    expect(description).toContain("Test STANDARD: ULT 14+ (unknown)");
+    expect(description).not.toContain("REMASTER");
+  });
   it("groups added charts of one song onto a single difficulty-sorted line", () => {
     // Deliberately out of play order to prove sorting (BAS/ADV/EXP/MAS).
-    const description = buildChangeDescription(
+    const description = buildChangeDescription("maimai",
       [
         added("ECHO", "master", "13+", 137),
         added("ECHO", "basic", "4", 40),
@@ -69,7 +75,7 @@ describe("buildChangeDescription", () => {
   });
 
   it("keeps separate songs and chart types on their own lines, sorted by name", () => {
-    const description = buildChangeDescription(
+    const description = buildChangeDescription("maimai",
       [
         added("Sky Trails", "basic", "5", 50),
         added("ECHO", "basic", "4", 40),
@@ -89,7 +95,7 @@ describe("buildChangeDescription", () => {
   });
 
   it("renders unknown precise levels and counts charts (not lines) in the header", () => {
-    const description = buildChangeDescription(
+    const description = buildChangeDescription("maimai",
       [
         added("Slow Glow", "basic", "3", undefined),
         added("Slow Glow", "advanced", "7", 70),
@@ -103,7 +109,7 @@ describe("buildChangeDescription", () => {
   });
 
   it("groups level changes per song with one segment per difficulty", () => {
-    const description = buildChangeDescription(
+    const description = buildChangeDescription("maimai",
       [],
       [],
       [
@@ -124,7 +130,7 @@ describe("buildChangeDescription", () => {
   });
 
   it("collapses an other-field change shared by every difficulty into one markerless line", () => {
-    const description = buildChangeDescription(
+    const description = buildChangeDescription("maimai",
       [],
       [],
       [
@@ -140,7 +146,7 @@ describe("buildChangeDescription", () => {
   });
 
   it("sub-groups difficulties that share a change and lists the rest separately", () => {
-    const description = buildChangeDescription(
+    const description = buildChangeDescription("maimai",
       [],
       [],
       [
@@ -159,7 +165,7 @@ describe("buildChangeDescription", () => {
   });
 
   it("never folds an other-field change across std and dx", () => {
-    const description = buildChangeDescription(
+    const description = buildChangeDescription("maimai",
       [],
       [],
       [
@@ -177,7 +183,7 @@ describe("buildChangeDescription", () => {
   });
 
   it("ignores cover-only differences passed through in modified entries' other fields", () => {
-    const description = buildChangeDescription(
+    const description = buildChangeDescription("maimai",
       [],
       [],
       [

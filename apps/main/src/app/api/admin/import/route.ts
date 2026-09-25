@@ -4,7 +4,6 @@ import { gameErrorResponse } from "@/lib/api/game-context";
 import { parseCatalogVersion } from "@/lib/catalog/parse-version";
 import { db } from "@/lib/db";
 import { songs } from "@/lib/db/schema-pg";
-import { VersionId } from "@/lib/metadata";
 import { Region } from "@/lib/types";
 import { getEnabledRegions, isRegionEnabled } from "@/lib/enabled-regions";
 import { flushLogger } from "@/lib/logger";
@@ -26,7 +25,7 @@ function regionsHint(): string {
 // Helper function to parse the "from" parameter
 function parseFromParameter(game: CanonicalGameId, from: string): {
   region: Region;
-  gameVersion: VersionId;
+  gameVersion: number;
   versionFilter: "eq" | "lte" | "gte";
   versionValue: number;
 } {
@@ -56,7 +55,7 @@ function parseFromParameter(game: CanonicalGameId, from: string): {
 // Helper function to parse the "to" parameter
 function parseToParameter(game: CanonicalGameId, to: string): {
   region: Region;
-  gameVersion: VersionId;
+  gameVersion: number;
 } {
   // Expected format: "intl-11" or "jp-12"
   const match = to.match(TO_REGEX);

@@ -7,7 +7,7 @@ import { requestLogger } from "@/lib/request-logger";
 import { getEnabledRegions, isRegionEnabled } from "@/lib/enabled-regions";
 import { Region } from "@/lib/types";
 import { parseCatalogVersion } from "@/lib/catalog/parse-version";
-import { getCurrentVersion, type VersionId } from "@/lib/metadata";
+import { getCurrentVersion } from "@/lib/games/versions";
 import { normalizeName } from "@/lib/name-utils";
 import { songs, parentSong } from "@/lib/db/schema-pg";
 import { and, eq, inArray, sql } from "drizzle-orm";
@@ -93,9 +93,9 @@ async function normalize(game: CanonicalGameId, searchParams: URLSearchParams, l
   }
 
   const version = searchParams.get("version");
-  let currentVersion: VersionId;
+  let currentVersion: number;
   try {
-    currentVersion = version === null ? getCurrentVersion(region) : parseCatalogVersion(game, region, version);
+    currentVersion = version === null ? getCurrentVersion(game, region) : parseCatalogVersion(game, region, version);
   } catch {
     return NextResponse.json({ error: "Invalid version" }, { status: 400 });
   }

@@ -6,7 +6,9 @@ import { fetchImageBuffer } from "@/lib/image-converter";
 import { flushLogger } from "@/lib/logger";
 import { requestLogger } from "@/lib/request-logger";
 import { listCoverKeys, uploadCoverToR2 } from "@/lib/r2";
-import { UpdateSong } from "@/lib/types/update";
+import type { PendingChart } from "@/lib/games/catalog-types";
+import type { UpdateSong } from "@/lib/types/update";
+import { value } from "@/server/utils/admin/type";
 import { NextRequest, NextResponse } from "next/server";
 
 const MAIMAI_COVER_PATTERN = /^https?:\/\/(?:maimaidx\.jp|maimaidx(?:-eng)?\.com)\/maimai-mobile\/img\/Music\/(.+)$/;
@@ -77,7 +79,7 @@ export async function POST(request: NextRequest) {
 
     const game = resolveAdminGame(request.nextUrl.searchParams);
     const body = await request.json();
-    const songs: UpdateSong[] = body.songs;
+    const songs: (UpdateSong | PendingChart)[] = body.songs;
 
     if (!songs || !Array.isArray(songs)) {
       return NextResponse.json(
@@ -91,11 +93,13 @@ export async function POST(request: NextRequest) {
     // Collect unique filenames from cover URLs, preferring jp domain
     const filenameToUrl = new Map<string, string>();
     for (const song of songs) {
-      const filename = extractFilename(song.cover);
+      const cover = value(song.cover);
+      if (!cover) continue;
+      const filename = extractFilename(cover);
       if (!filename) continue;
       const existing = filenameToUrl.get(filename);
-      if (!existing || (!isJpDomain(existing) && isJpDomain(song.cover))) {
-        filenameToUrl.set(filename, song.cover);
+      if (!existing || (!isJpDomain(existing) && isJpDomain(cover))) {
+        filenameToUrl.set(filename, cover);
       }
     }
 
@@ -143,7 +147,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Cache static assets (DX/Standard type badges) if missing
-    for (const { url, basename } of STATIC_ASSETS) {
+    for (const { url, basename } of game === "maimai" ? STATIC_ASSETS : []) {
       const webpKey = `${basename}.webp`;
       if (!existingKeys.has(webpKey)) {
         log.info({ basename, url }, "Caching static asset to R2");
@@ -157,7 +161,8 @@ export async function POST(request: NextRequest) {
     // Replace cover URLs in songs
     let unchanged = 0;
     const updatedSongs = songs.map((song) => {
-      const filename = extractFilename(song.cover);
+      const cover = value(song.cover);
+      const filename = cover ? extractFilename(cover) : null;
       if (!filename) {
         unchanged++;
         return song;

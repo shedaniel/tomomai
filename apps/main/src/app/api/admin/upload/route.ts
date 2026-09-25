@@ -1,12 +1,11 @@
-import { resolveAdminGame } from "@/lib/api/admin-game";
+import { getAdminCatalogRegions, resolveAdminGame } from "@/lib/api/admin-game";
 import { GameAdapterError, type CanonicalGameId } from "@/lib/games/types";
 import { gameErrorResponse } from "@/lib/api/game-context";
 import { flushLogger } from "@/lib/logger";
 import { requestLogger } from "@/lib/request-logger";
-import { getEnabledRegions, isRegionEnabled } from "@/lib/enabled-regions";
-import { VersionId } from "@/lib/metadata";
-import { Region, SongType } from "@/lib/types";
-import { UpdateSong } from "@/lib/types/update";
+import type { Region } from "@/lib/types";
+import { getGameChartTypeKey } from "@/lib/games/presentation";
+import { parseCatalogUpload } from "@/lib/catalog/parse-upload";
 import { value } from "@/server/utils/admin/type";
 import { sendDiscordNotice, sendDiscordWebhook } from "@/server/services/admin/discord-webhooks";
 import { publishSongCatalog } from "@/server/services/admin/song-catalog";
@@ -14,11 +13,10 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import { getSongSlugs } from "@/lib/song-slug";
 import { locales } from "@tomomai/i18n/locale";
 import { parseCatalogVersion } from "@/lib/catalog/parse-version";
-import { findDuplicateUpload } from "@/lib/catalog/match-upload";
 import { NextRequest, NextResponse } from "next/server";
 
 import { ingestCatalog } from "@/server/services/games/catalog-ingestion";
-export type { FieldChange, AddedChange, ModifiedChange, DeletedChange } from "@/server/services/admin/maimai-catalog-ingestion";
+export type { FieldChange, AddedChange, ModifiedChange, DeletedChange } from "@/server/services/games/catalog-persistence";
 type UpdateMode = "noop" | "alter" | "destructive";
 /**
  * Push catalog edits to the ISR cache without waiting for the 14-day
@@ -27,7 +25,7 @@ type UpdateMode = "noop" | "alter" | "destructive";
  */
 async function revalidateSongsCache(
   game: CanonicalGameId,
-  affected: Array<{ songName: string; artist: string; type: SongType }>,
+  affected: Array<{ songName: string; artist: string; type: string }>,
   log: (obj: unknown, msg?: string) => void,
   forceBulk = false,
 ) {
@@ -106,9 +104,9 @@ export async function POST(request: NextRequest) {
       ? updateParam
       : "noop";
 
-    if (!region || !isRegionEnabled(region)) {
+    if (!region || !getAdminCatalogRegions(game).includes(region)) {
       return NextResponse.json(
-        { error: `Missing or invalid 'region' query parameter. Must be one of: ${getEnabledRegions().join(", ")}` },
+        { error: `Missing or invalid 'region' query parameter. Must be one of: ${getAdminCatalogRegions(game).join(", ")}` },
         { status: 400 }
       );
     }
@@ -120,7 +118,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    let version: VersionId;
+    let version: number;
     try {
       version = parseCatalogVersion(game, region, versionParam);
     } catch {
@@ -132,28 +130,11 @@ export async function POST(request: NextRequest) {
 
     // Parse request body
     const body = await request.json();
-    const uploadSongs: UpdateSong[] = body.songs;
-
-    if (!uploadSongs || !Array.isArray(uploadSongs)) {
-      return NextResponse.json(
-        { error: "Missing or invalid 'songs' array in request body" },
-        { status: 400 }
-      );
-    }
-
-    if (uploadSongs.length === 0) {
-      return NextResponse.json(
-        { error: "Empty 'songs' array in request body" },
-        { status: 400 }
-      );
-    }
-
-    const duplicateIndex = findDuplicateUpload(uploadSongs);
-    if (duplicateIndex !== undefined) {
-      return NextResponse.json(
-        { error: `Duplicate chart identity at songs[${duplicateIndex}]`, requestId },
-        { status: 400 }
-      );
+    let uploadSongs;
+    try {
+      uploadSongs = await parseCatalogUpload(game, body.songs);
+    } catch (error) {
+      return NextResponse.json({ error: error instanceof Error ? error.message : "Invalid catalog records", requestId }, { status: 400 });
     }
 
     // Enrich the request logger now that region/version are known
@@ -184,14 +165,14 @@ export async function POST(request: NextRequest) {
           return dbId && modifiedDbIds.has(String(dbId));
         })
         .flatMap(({ existing, result }) => [existing, result])
-        .map(song => ({ songName: song.songName, artist: value(song.artist) ?? "", type: song.type }));
+        .map(song => ({ songName: song.songName, artist: value(song.artist) ?? "", type: getGameChartTypeKey(game, song.chartType) }));
       const appliedDeletions = (updateMode === "destructive"
         ? changes.deleted
         : changes.deleted.filter(change => (change.playRecordCount ?? 0) === 0));
       const affectedSongs = [
-        ...addedSongs.map(song => ({ songName: song.songName, artist: value(song.artist) ?? "", type: song.type })),
+        ...addedSongs.map(song => ({ songName: song.songName, artist: value(song.artist) ?? "", type: getGameChartTypeKey(game, song.chartType) })),
         ...modifiedSongs,
-        ...appliedDeletions.map(change => ({ songName: change.songName, artist: change.artist, type: change.type })),
+        ...appliedDeletions.map(change => ({ songName: change.songName, artist: change.artist, type: getGameChartTypeKey(game, change.chartType) })),
       ];
       try {
         await revalidateSongsCache(game, affectedSongs, (obj, msg) => log.info(obj, msg ?? ""), appliedCount === 0);
@@ -203,7 +184,7 @@ export async function POST(request: NextRequest) {
     // Send Discord webhook if changes were applied
     if (updateMode !== "noop") {
       const actuallyDeleted = updateMode === "destructive" ? changes.deleted : changes.deleted.filter(d => d.playRecordCount === 0);
-      sendDiscordWebhook(region, changes.added, actuallyDeleted, changes.modified).catch(err => {
+      sendDiscordWebhook(game, region, changes.added, actuallyDeleted, changes.modified).catch(err => {
         log.error({ err }, "Failed to send Discord webhook");
       });
     }

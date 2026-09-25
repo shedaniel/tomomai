@@ -1,11 +1,11 @@
-import { resolveAdminGame } from "@/lib/api/admin-game";
+import { getAdminCatalogRegions, getDefaultAdminCatalogRegions, resolveAdminGame } from "@/lib/api/admin-game";
 import { GameAdapterError, type CanonicalGameId } from "@/lib/games/types";
 import { gameErrorResponse } from "@/lib/api/game-context";
 import { getCurrentVersion } from "@/lib/games/versions";
 import { flushLogger } from "@/lib/logger";
 import { requestLogger } from "@/lib/request-logger";
 import { Region } from "@/lib/types";
-import { getEnabledRegions, isRegionEnabled } from "@/lib/enabled-regions";
+import { catalogRequiresToken } from "@/server/services/games/catalog-source-auth";
 import { NextRequest, NextResponse } from "next/server";
 import type { Logger } from "pino";
 
@@ -13,7 +13,7 @@ async function updateRegion(
   game: CanonicalGameId,
   origin: string,
   region: Region,
-  maimaiToken: string | null,
+  sourceToken: string | null,
   adminToken: string,
   imageUpload: boolean,
   log: Logger,
@@ -25,9 +25,8 @@ async function updateRegion(
   const updateUrl = new URL(`${origin}/api/admin/update`);
   updateUrl.searchParams.set('game', game);
   updateUrl.searchParams.set('region', region);
-  // CN uses Lxns (public) and the update route does not require a maimai token.
-  if (region !== "cn" && maimaiToken) {
-    updateUrl.searchParams.set('token', maimaiToken);
+  if (catalogRequiresToken(game, region) && sourceToken) {
+    updateUrl.searchParams.set('token', sourceToken);
   }
 
   const updateResponse = await fetch(updateUrl.toString(), {
@@ -47,7 +46,7 @@ async function updateRegion(
     return { success: false, error: `${region.toUpperCase()} update response did not contain records`, status: 500 };
   }
 
-  log.info({ region, records: updateData.records.length }, `Fetched ${updateData.records.length} ${region.toUpperCase()} records`);
+  log.info({ region, recordCount: updateData.records.length }, `Fetched ${updateData.records.length} ${region.toUpperCase()} records`);
 
   // Step 2: Process cover images via /api/admin/image
   let songsForUpload = updateData.records;
@@ -139,12 +138,12 @@ export async function GET(request: NextRequest) {
     // Get query parameters
     const { searchParams } = new URL(request.url);
     const game = resolveAdminGame(searchParams);
-    const maimaiToken = searchParams.get('token');
+    const sourceToken = searchParams.get('token');
 
     const regionParam = searchParams.get('region') as Region | null;
-    if (regionParam && !isRegionEnabled(regionParam)) {
+    if (regionParam && !getAdminCatalogRegions(game).includes(regionParam)) {
       return NextResponse.json(
-        { error: `Invalid 'region' query parameter, must be one of: ${getEnabledRegions().join(", ")}` },
+        { error: `Invalid 'region' query parameter, must be one of: ${getAdminCatalogRegions(game).join(", ")}` },
         { status: 400 }
       );
     }
@@ -153,12 +152,11 @@ export async function GET(request: NextRequest) {
     const imageUpload = imageUploadParam !== "false";
 
     const origin = request.nextUrl.origin;
-    const regions: Region[] = regionParam ? [regionParam] : getEnabledRegions();
+    const regions: Region[] = regionParam ? [regionParam] : getDefaultAdminCatalogRegions(game);
 
-    // maimaiToken is only required if any non-CN region is being processed.
-    if (regions.some(r => r !== "cn") && !maimaiToken) {
+    if (regions.some(r => catalogRequiresToken(game, r)) && !sourceToken) {
       return NextResponse.json(
-        { error: "Missing 'token' query parameter (required for jp/intl)" },
+        { error: "Missing 'token' query parameter (required by catalog source)" },
         { status: 400 }
       );
     }
@@ -166,7 +164,7 @@ export async function GET(request: NextRequest) {
 
     const results: Record<string, any> = {};
     for (const r of regions) {
-      const result = await updateRegion(game, origin, r, maimaiToken, token, imageUpload, log);
+      const result = await updateRegion(game, origin, r, sourceToken, token, imageUpload, log);
       if (!result.success) {
         return NextResponse.json({ error: result.error }, { status: result.status ?? 500 });
       }

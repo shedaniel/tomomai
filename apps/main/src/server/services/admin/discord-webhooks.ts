@@ -2,8 +2,16 @@ import { after } from "next/server";
 import { resolveBaseUrl } from "@/lib/base-url";
 import { logger, flushLogger } from "@/lib/logger";
 import type { AddedChange, DeletedChange, ModifiedChange } from "@/app/api/admin/upload/route";
-import { Difficulty, Region, SongType } from "@/lib/types";
-import { DIFFICULTY_ENUM } from "@/lib/db/types";
+import type { Region } from "@/lib/types";
+import type { CanonicalGameId } from "@/lib/games/types";
+import { GAME_CODE_MAPS } from "@/lib/games/codes";
+import { getGameChartTypeKey, getGameDifficultyKey } from "@/lib/games/presentation";
+
+
+type Labeled<T> = Omit<T, "chartType" | "difficulty"> & { type: string; difficulty: string };
+function labelChange<T extends { chartType: number; difficulty: number }>(game: CanonicalGameId, change: T): Labeled<T> {
+  return { ...change, type: getGameChartTypeKey(game, change.chartType), difficulty: getGameDifficultyKey(game, change.difficulty) };
+}
 
 // Discord rejects an embed whose description exceeds 4096 chars with a 400.
 // Cut at a line boundary and mark the truncation so the message still posts.
@@ -38,14 +46,15 @@ function deliverInBackground(work: () => Promise<void>) {
   }
 }
 
-function formatPrecise(value: number): string {
+function formatPrecise(value: number | null): string {
+  if (value === null) return "unknown";
   return (value / 10).toFixed(1);
 }
 
 // Play order (BAS / ADV / EXP / MAS / ReMAS / 宴) derived from the canonical
 // difficulty enum, so grouped charts stay sorted if that list ever changes.
 const DIFFICULTY_ORDER: Record<string, number> =
-  Object.fromEntries(DIFFICULTY_ENUM.map((difficulty, index) => [difficulty, index]));
+  Object.fromEntries(Object.values(GAME_CODE_MAPS).flatMap(codes => Object.entries(codes.difficulty).map(([code, name]) => [name, Number(code)])));
 
 function difficultyShort(difficulty: string): string {
   return difficulty.slice(0, 3).toUpperCase();
@@ -54,7 +63,7 @@ function difficultyShort(difficulty: string): string {
 // Collapse every chart that shares a song (name + type) onto one compact line,
 // e.g. "- ECHO DX: BAS 4 (4.0) / ADV 7+ (7.9) / EXP 11 (11.2)", with the
 // difficulties listed in play order. `formatChart` renders one chart's segment.
-function groupChartLines<T extends { songName: string; type: SongType; difficulty: Difficulty }>(
+function groupChartLines<T extends { songName: string; type: string; difficulty: string }>(
   charts: T[],
   formatChart: (chart: T) => string,
 ): string[] {
@@ -76,7 +85,7 @@ function groupChartLines<T extends { songName: string; type: SongType; difficult
     });
 }
 
-type OtherEntry = { songName: string; type: SongType; difficulty: Difficulty; oldValue: any; newValue: any };
+type OtherEntry = { songName: string; type: string; difficulty: string; oldValue: any; newValue: any };
 
 // Render one "other field" change (genre, version, …) as the text after the
 // song label. Two charts whose changes produce the same string are treated as
@@ -149,14 +158,18 @@ function truncateLines(lines: string[], limit: number): string {
 // Build the embed description body for a song-data update. `modified` must
 // already have cover-only entries filtered out. Charts are grouped by song so
 // every difficulty for one song lands on a single compact line.
-export function buildChangeDescription(
-  added: AddedChange[],
-  deleted: DeletedChange[],
-  modified: ModifiedChange[],
+export function buildChangeDescription(game: CanonicalGameId, added: AddedChange[], deleted: DeletedChange[], modified: ModifiedChange[]): string {
+  return buildLabeledChangeDescription(added.map(change => labelChange(game, change)), deleted.map(change => labelChange(game, change)), modified.map(change => labelChange(game, change)));
+}
+
+function buildLabeledChangeDescription(
+  added: Labeled<AddedChange>[],
+  deleted: Labeled<DeletedChange>[],
+  modified: Labeled<ModifiedChange>[],
 ): string {
   let description = "";
 
-  const formatLevelSegment = (chart: { difficulty: Difficulty; level: string; levelPrecise: number | undefined }) =>
+  const formatLevelSegment = (chart: { difficulty: string; level: string; levelPrecise: number | null }) =>
     `${difficultyShort(chart.difficulty)} ${chart.level} (${chart.levelPrecise ? formatPrecise(chart.levelPrecise) : 'unknown'})`;
 
   // Added charts
@@ -177,8 +190,8 @@ export function buildChangeDescription(
   if (modified.length > 0) {
     type LevelEntry = {
       songName: string;
-      type: SongType;
-      difficulty: Difficulty;
+      type: string;
+      difficulty: string;
       oldValue?: any;
       newValue?: any;
       levelPreciseOld?: any;
@@ -249,6 +262,7 @@ export function buildChangeDescription(
 }
 
 export async function sendDiscordWebhook(
+  game: CanonicalGameId,
   region: Region,
   added: AddedChange[],
   deleted: DeletedChange[],
@@ -285,7 +299,7 @@ export async function sendDiscordWebhook(
   const dateStr = `${year}/${month}/${day}`;
   const regionName = region === "jp" ? "Japan" : region === "cn" ? "China" : "International";
 
-  const description = buildChangeDescription(added, deleted, filteredModified);
+  const description = buildChangeDescription(game, added, deleted, filteredModified);
 
   // Determine color based on changes
   const hasLevelChanges = filteredModified.some(m =>
