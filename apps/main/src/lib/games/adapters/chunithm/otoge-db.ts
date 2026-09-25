@@ -48,7 +48,7 @@ sourceVersions.set("無印", ChunithmVersions.CHUNITHM.id);
 sourceVersions.set("PARADISE×", ChunithmVersions.CHUNITHM_PARADISE_LOST.id);
 
 export function getOtogeDbSource(region: Region) {
-  if (region === "cn") {
+  if (region !== "jp" && region !== "intl") {
     throw new GameAdapterError("UNSUPPORTED_REGION", "otoge-db CHUNITHM catalog supports JP and International only", "chunithm", region, "catalog");
   }
   return SOURCES[region];
@@ -201,4 +201,3 @@ export async function fetchOtogeDbCatalog(ctx: CatalogFetchContext): Promise<Pen
   ctx.notice.addDetail(`${charts.length} regular CHUNITHM charts from ${ctx.region.toUpperCase()} otoge-db; WORLD'S END excluded`);
   return charts;
 }
-
