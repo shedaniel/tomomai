@@ -7,6 +7,20 @@ configuration does not select an ingestion provider. No CHUNITHM-NET session is
 needed. Configuring this catalog does not enable CHUNITHM player fetching or the
 public frontend.
 
+## Fetch pipeline
+
+Both games use the same step runner extracted from the existing maimai level
+fetcher. CHUNITHM configures `OtogeDB → Fill Missing → Sorter`; the maimai
+provider list and ordering stay intact. Source steps merge through the same
+fetcher adapter and force-mode handling, and every step receives the same
+previous/current step, index, logger and notice state. Source attribution,
+stage summaries, validation and final required-field checks belong to that
+shared runner.
+
+The CHUNITHM otoge-db source parses pending charts only. The shared Fill Missing
+step applies CHUNITHM's `.5` plus-level rule before the shared Sorter and
+finalization. The adapter's advertised stages come from this executable list.
+
 ## Sources and versions
 
 | Region | Dataset | Catalog version |
@@ -78,12 +92,13 @@ read on 2026-09-26; source Git blob IDs were
 `2dddbe4815bfc0abb22d485935fdb5bfd201602a` (JP) and
 `e78d65e5ec93851a34d6f2fc5b239412e94af8b7` (International).
 
-Full-snapshot normalization produced 6,843 regular JP charts (2,261 known
-constants) and 6,363 International charts (2,242 known constants). These are
+Full snapshots passed through the shared source, Fill Missing and Sorter stages:
+6,843 regular JP charts (2,261 known constants) and 6,363 International charts
+(2,242 known constants), all with numeric `levelPrecise` and `addedVersion`. These are
 source coverage observations, not minimum counts enforced against future
 releases. Focused tests cover source validation, regional availability, missing
-metadata, numeric codes, fallback thresholds, ULTIMA, WORLD'S END exclusion, HTTP failures and release
-rollover checks. No database ingestion is required to run them.
+metadata, numeric codes, fallback thresholds, ULTIMA, WORLD'S END exclusion,
+HTTP failures, release rollover, shared stage order and attribution notices. No database ingestion is required to run them.
 
 ## Admin requests
 

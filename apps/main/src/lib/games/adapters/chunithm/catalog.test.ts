@@ -1,8 +1,12 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { CatalogFetchContext, CatalogLogger } from "../../catalog-types";
-import { chunithmCatalogAdapter, fillChunithmCatalogLevels, normalizeOtogeDbCatalog, validateOtogeDbVersionMetadata } from "./catalog";
+import { chunithmCatalogAdapter } from "./catalog";
+import { normalizeOtogeDbCatalog, validateOtogeDbVersionMetadata } from "./otoge-db";
+import { sendDiscordNotice } from "@/server/services/admin/discord-webhooks";
 import jpFixture from "./fixtures/otoge-db-jp.json";
 import intlFixture from "./fixtures/otoge-db-intl.json";
+
+vi.mock("@/server/services/admin/discord-webhooks", () => ({ sendDiscordNotice: vi.fn(async () => undefined) }));
 
 const versionMetadata = 'CURRENT_JP_VER = "Mate"\nCURRENT_INTL_VER = "X-VERSE-X"\n';
 
@@ -14,7 +18,10 @@ function context(region: "jp" | "intl", version: number): CatalogFetchContext {
   return { region, version, log, notice: { addDetail: vi.fn(), details: [] } };
 }
 
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+  vi.unstubAllGlobals();
+  vi.clearAllMocks();
+});
 
 describe("CHUNITHM otoge-db normalization", () => {
   it("maps real JP BASIC–ULTIMA charts and preserves constants independently of display levels", () => {
@@ -94,13 +101,26 @@ describe("CHUNITHM otoge-db normalization", () => {
 });
 
 describe("CHUNITHM otoge-db collection", () => {
-  it("fills every missing constant and records the estimate separately from source data", () => {
-    const charts = fillChunithmCatalogLevels(normalizeOtogeDbCatalog(jpFixture, "jp"));
+  it("runs the source through shared filling and finalization with separate estimate provenance", async () => {
+    vi.stubGlobal("fetch", vi.fn(async (url: string) => url.endsWith("game.py")
+      ? new Response(versionMetadata)
+      : Response.json(jpFixture)));
+    const charts = await chunithmCatalogAdapter.collect!(context("jp", 9));
     const alive = charts.filter(chart => chart.songName === "ALIVE");
     expect(alive[0]).toMatchObject({ level: "3", levelPrecise: 30, metadata: { levelPreciseEstimated: true } });
     expect(alive[3]).toMatchObject({ level: "12+", levelPrecise: 126, metadata: { levelPreciseEstimated: false, otogeDb: { constant: "12.6" } } });
     expect(charts.every(chart => typeof chart.levelPrecise === "number")).toBe(true);
-    expect(() => fillChunithmCatalogLevels([{ game: "chunithm", songName: "Missing", chartType: 0, difficulty: 0 }])).toThrow("Missing CHUNITHM chart level");
+    expect(charts.every(chart => typeof chart.addedVersion === "number")).toBe(true);
+    expect(chunithmCatalogAdapter.getStages!("jp").names).toEqual(["OtogeDB", "Fill Missing", "Sorter"]);
+    expect(vi.mocked(sendDiscordNotice).mock.calls.map(call => call[1])).toEqual([
+      "CHUNITHM Stage 1/3: OtogeDB", "CHUNITHM Stage 2/3: Fill Missing",
+      "CHUNITHM Stage 3/3: Sorter", "CHUNITHM Fetch pipeline completed",
+    ]);
+    const missingConstants = normalizeOtogeDbCatalog(jpFixture, "jp").filter(chart => chart.levelPrecise === undefined).length;
+    expect(vi.mocked(sendDiscordNotice).mock.calls[0][2]).toContain(`+${charts.length} added, ~0 modified`);
+    expect(vi.mocked(sendDiscordNotice).mock.calls[1][2]).toContain(`+0 added, ~${missingConstants} modified`);
+    expect(vi.mocked(sendDiscordNotice).mock.calls[2][2]).toContain("+0 added, ~0 modified");
+    expect(charts.map(chart => chart.songName)).toEqual(charts.map(chart => chart.songName).toSorted((a, b) => a.localeCompare(b)));
   });
 
   it("collects from the requested regional source without cookies", async () => {
@@ -114,7 +134,7 @@ describe("CHUNITHM otoge-db collection", () => {
     expect(fetcher).toHaveBeenCalledWith("https://raw.githubusercontent.com/zvuc/otoge-db/main/chunithm/data/music-ex-intl.json", {
       signal: expect.any(AbortSignal), cache: "no-store",
     });
-    expect(ctx.notice.addDetail).toHaveBeenCalledWith(expect.stringContaining("WORLD'S END excluded"));
+    expect(sendDiscordNotice).toHaveBeenCalledWith("intl", "CHUNITHM Stage 1/3: OtogeDB", expect.stringContaining("WORLD'S END excluded"), expect.any(Number));
     expect(chunithmCatalogAdapter.requiresToken).toBeUndefined();
     expect(chunithmCatalogAdapter.authenticate).toBeUndefined();
     expect(chunithmCatalogAdapter.resolveVersion!("jp")).toBe(9);
