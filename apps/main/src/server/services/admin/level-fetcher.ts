@@ -1,6 +1,8 @@
+import { createSorterFetcher } from "../games/catalog-stages";
+import { runFetchers, requireCatalogValue, type FetchingContextExtended as SharedFetchingContextExtended } from "../games/catalog-fetcher";
+import type { CatalogLogger } from "@/lib/games/catalog-types";
 import { UpdateSong } from "@/lib/types/update";
 import { PendingSong, value } from "@/server/utils/admin/type";
-import { type Logger } from "pino";
 import { DxDataFetcher } from "./dxrating";
 import { FallbackFetcher } from "./fallback";
 import { MaimaiAfterFetcher } from "./maimai-after-fetch";
@@ -9,23 +11,16 @@ import { MaimaiScraperFetcher } from "./maimai-scraper";
 import { OtogeDbFetcher } from "./otoge-db";
 import { LxnsFetcher } from "./maimai-lxns";
 import { Region } from "@/lib/types";
-import deepEqual from "deep-equal";
 import { normalizeGenre, normalizeName } from "@/lib/name-utils";
 import { isNullOrUndefined } from "@/lib/utils";
 import { FillMissingFetcher } from "./fill-level";
-import { createNoticeSink, FetchingContext, key, SongFetcher, SongWithOrigin } from "./fetcher-utils";
+import { FetchingContext, key, SongFetcher } from "./fetcher-utils";
 import { sendDiscordNotice } from "./discord-webhooks";
 
-export type FetchingContextExtended = FetchingContext & {
-  previous: SongFetcher | null,
-  current: SongFetcher,
-  fetcherIndex: number,
-};
+export type FetchingContextExtended = SharedFetchingContextExtended<PendingSong, FetchingContext>;
 
-export const SorterFetcher: SongFetcher = async (context, songs) => {
-  context.log.debug("Sorting songs...");
-  return songs.sort((a, b) => a.songName.localeCompare(b.songName) * 10000000 + value(a.artist || "").localeCompare(value(b.artist || "")) * 100000 + a.difficulty.localeCompare(b.difficulty) * 1000 + a.type.localeCompare(b.type));
-}
+export const SorterFetcher: SongFetcher = createSorterFetcher<PendingSong, FetchingContext>((a, b) =>
+  a.songName.localeCompare(b.songName) * 10000000 + value(a.artist || "").localeCompare(value(b.artist || "")) * 100000 + a.difficulty.localeCompare(b.difficulty) * 1000 + a.type.localeCompare(b.type));
 
 export const FETCHERS: SongFetcher[] = [
   // Scrapes official maimaidx net for songs
@@ -74,7 +69,7 @@ export function getFetchersForRegion(region: Region): { fetchers: SongFetcher[];
   return { fetchers: FETCHERS, names: FETCHER_NAMES };
 }
 
-function validateSongs(songsInput: SongWithOrigin[], log: Logger): void {
+function validateSongs(songsInput: PendingSong[], log: CatalogLogger): void {
   for (const song of songsInput) {
     // validate non-null
     if (isNullOrUndefined(song.songName) || isNullOrUndefined(song.type) || isNullOrUndefined(song.difficulty)) {
@@ -116,139 +111,30 @@ function validateSongs(songsInput: SongWithOrigin[], log: Logger): void {
   }
 }
 
-function summarizeStage(songs: SongWithOrigin[], fetcherIndex: number, fetcherName: string, songsBefore: number, elapsed: number, notice: { details: string[] }): { summary: string; noticeBody: string } {
-  const addedSongs = songs.filter(s => s.addedFetcher === fetcherIndex);
-  const modifiedSongs = songs.filter(s => s.addedFetcher !== fetcherIndex && s.modifiedFetchers.includes(fetcherIndex));
-  const netChange = songs.length - songsBefore;
-
-  const header = `**${fetcherName}**: ${songs.length} songs (${netChange >= 0 ? "+" : ""}${netChange}) — ${elapsed}ms`;
-  const changeLine = `+${addedSongs.length} added, ~${modifiedSongs.length} modified`;
-
-  const lines: string[] = [changeLine];
-  if (addedSongs.length > 0 && addedSongs.length < 30) {
-    lines.push("Added: " + addedSongs.map(s => key(s)).join(", "));
-  }
-  if (modifiedSongs.length > 0 && modifiedSongs.length < 30) {
-    lines.push("Modified: " + modifiedSongs.map(s => key(s)).join(", "));
-  }
-  lines.push(...notice.details);
-
-  const detailBlock = lines.join("\n");
-  return {
-    summary: `${header}\n${changeLine}${notice.details.length > 0 ? "\n" + notice.details.join("\n") : ""}`,
-    noticeBody: `${header}\n${detailBlock}`,
-  };
-}
-
-function attributeSource(prevSongs: SongWithOrigin[], newSongs: PendingSong[], fetcherIndex: number): SongWithOrigin[] {
-  // Compare the songs, if new song entry, set addedFetcher, otherwise compare if modified, if yes, set modifiedFetcher
-  return newSongs.map(newSong => {
-    const existingSong = prevSongs.find(s => key(s) === key(newSong));
-    if (!existingSong) {
-      return { ...newSong, addedFetcher: fetcherIndex, modifiedFetchers: [fetcherIndex] } satisfies SongWithOrigin;
-    }
-    if (!deepEqual(existingSong, newSong)) {
-      return { ...newSong, addedFetcher: existingSong.addedFetcher, modifiedFetchers: [...existingSong.modifiedFetchers, fetcherIndex] } satisfies SongWithOrigin;
-    }
-    return existingSong;
-  });
-}
-
 export async function fetchLevels(context: FetchingContext): Promise<UpdateSong[]> {
-  context.log.info(
-    { region: context.region, version: context.version },
-    "Starting level fetch pipeline"
-  );
-
-  const { fetchers, names } = getFetchersForRegion(context.region);
-
-  let songs: SongWithOrigin[] = []
-  let previous: SongFetcher | null = null;
-  let index = 0;
-  const stageResults: string[] = [];
-  for (const fetcher of fetchers) {
-    const fetcherName = names[index] ?? `Fetcher ${index}`;
-    const logger = context.log.child({ fetcherIndex: index });
-    const notice = createNoticeSink();
-    const extendedContext = {
-      ...context,
-      log: logger,
-      notice,
-      previous: previous,
-      current: fetcher,
-      fetcherIndex: index,
-    };
-    extendedContext.log.info("Fetcher starting...");
-    const songsBefore = songs.length;
-    const startTime = Date.now();
-    const newSongs = await fetcher(extendedContext, songs);
-    const elapsed = Date.now() - startTime;
-    songs = attributeSource(songs, newSongs, index)
-    const stage = summarizeStage(songs, index, fetcherName, songsBefore, elapsed, notice);
-    stageResults.push(stage.summary);
-
-    sendDiscordNotice(
-      context.region,
-      `Stage ${index + 1}/${fetchers.length}: ${fetcherName}`,
-      stage.noticeBody,
-      0x5865F2,
-    ).catch(() => { });
-
-    previous = fetcher;
-    index++;
-    validateSongs(songs, extendedContext.log);
-  }
-
-  context.log.info(
-    { totalSongs: songs.length },
-    "Fetch pipeline completed successfully"
-  );
-
-  {
-    sendDiscordNotice(
-      context.region,
-      "Fetch pipeline completed",
-      `**Total songs: ${songs.length}** (${fetchers.length} stages)`,
-      0x00FF00,
-    ).catch(() => { });
-  }
-
-  function nonnull<T>(value: T | null | undefined, fieldName: string, song: PendingSong): T {
-    if (value === null || value === undefined) {
-      const errorMsg = `Value is null or undefined for ${fieldName}`;
-      context.log.error({ songKey: key(song) }, errorMsg);
-      throw new Error(errorMsg);
-    }
-    return value;
-  }
-
-  const updateSongs: UpdateSong[] = []
-  const errors: any[] = []
-  for (const song of songs) {
-    try {
-      const updatedSong = {
-        songName: value(song.songName),
-        artist: nonnull(value(song.artist), "artist", song),
-        difficulty: value(song.difficulty),
-        type: value(song.type),
+  const definition = getFetchersForRegion(context.region);
+  return runFetchers(context, {
+    ...definition,
+    key,
+    validate: validateSongs,
+    notify: (title, body, color) => sendDiscordNotice(context.region, title, body, color),
+    complete(song) {
+      const required = <T>(field: string, value: T | undefined) => requireCatalogValue(value, field, key(song), context.log);
+      return {
+        songName: song.songName,
+        artist: required("artist", value(song.artist)),
+        difficulty: song.difficulty,
+        type: song.type,
         level: value(song.level),
-        levelPrecise: nonnull(value(song.levelPrecise), "levelPrecise", song),
-        cover: nonnull(value(song.cover), "cover", song),
-        genre: nonnull(value(song.genre), "genre", song),
-        addedVersion: nonnull(value(song.addedVersion), "addedVersion", song),
+        levelPrecise: required("levelPrecise", value(song.levelPrecise)),
+        cover: required("cover", value(song.cover)),
+        genre: required("genre", value(song.genre)),
+        addedVersion: required("addedVersion", value(song.addedVersion)),
         bpm: value(song.bpm) || null,
         noteDesigner: value(song.noteDesigner) || null,
         noteCounts: value(song.noteCounts) || null,
         metadata: song.metadata,
-      } satisfies UpdateSong;
-      updateSongs.push(updatedSong);
-    } catch (error) {
-      errors.push(error);
-    }
-  }
-  if (errors.length > 0) {
-    context.log.error({ errorCount: errors.length, songCount: songs.length }, "Errors occurred during song update");
-    throw new Error("Errors occurred during song update");
-  }
-  return updateSongs;
+      };
+    },
+  });
 }
