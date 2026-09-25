@@ -12,7 +12,7 @@ export type FetcherDefinition<T, C extends CatalogFetchContext, R> = {
   fetchers: Fetcher<T, C>[];
   names: string[];
   key: (song: T) => string;
-  validate: (songs: T[], log: CatalogLogger) => void;
+  validate?: (songs: T[], log: CatalogLogger) => void;
   complete: (song: T, context: C) => R;
   notify?: (title: string, body: string, color: number) => Promise<void>;
 };
@@ -107,7 +107,7 @@ export async function runFetchers<T, C extends CatalogFetchContext, R>(context: 
 
     previous = fetcher;
     index++;
-    definition.validate(songs, extendedContext.log);
+    definition.validate?.(songs, extendedContext.log);
   }
 
   const completed: R[] = [];

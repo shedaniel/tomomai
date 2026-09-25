@@ -24,8 +24,8 @@ export function getAvailableVersions(game: CanonicalGameId, region: Region): Gam
   return VERSION_PROVIDERS[game].getAvailableVersions(region);
 }
 
-export function getVersionFromDate(game: CanonicalGameId, region: Region, date: Date): number {
-  return versionAtDate(getAvailableVersions(game, region), date, region);
+export function getVersionFromDate(game: CanonicalGameId, region: Region, date: Date, preferredVersion?: number): number {
+  return versionAtDate(getAvailableVersions(game, region), date, region, preferredVersion);
 }
 
 export function getVersionsSortedByDate(game: CanonicalGameId, region: Region, ascending = true): GameVersionInfo[] {

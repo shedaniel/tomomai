@@ -31,3 +31,18 @@ it("validates numeric versions before projecting maimai-specific data", () => {
   expect(requireMaimaiVersion(14)).toBe(14);
   expect(() => requireMaimaiVersion(999)).toThrow("Unknown maimai version");
 });
+
+it("uses a preferred version only within the latest regional release-date tie", () => {
+  const date = new Date("2020-11-25T07:00:00+09:00");
+  expect(getVersionFromDate("chunithm", "intl", date)).toBe(-1);
+  expect(getVersionFromDate("chunithm", "intl", date, -12)).toBe(-12);
+  expect(getVersionFromDate("chunithm", "intl", date, 9)).toBe(-1);
+  expect(getVersionFromDate("chunithm", "intl", date, 999)).toBe(-1);
+  expect(getVersionFromDate("chunithm", "intl", new Date("2026-04-16T07:00:00+09:00"), -12)).toBe(8);
+});
+
+it("keeps the existing earliest-version fallback and release instant with a hint", () => {
+  expect(getVersionFromDate("chunithm", "intl", new Date("2020-11-25T06:59:59+09:00"), -1)).toBe(-12);
+  expect(getVersionFromDate("chunithm", "jp", new Date("2026-07-02T06:59:59+09:00"), 9)).toBe(8);
+  expect(getVersionFromDate("chunithm", "jp", new Date("2026-07-02T07:00:00+09:00"), 8)).toBe(9);
+});
