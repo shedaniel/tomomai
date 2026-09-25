@@ -53,7 +53,7 @@ export async function computeStatsForSnapshot(
 
   const totalSongs: Record<string, Record<string, number>> = {};
   for (const song of allSongs) {
-    const version = song.addedVersion.toString();
+    const version = song.addedVersion?.toString() ?? "unknown";
     if (!totalSongs[version]) totalSongs[version] = {};
     totalSongs[version][song.difficulty] = song.count;
   }
@@ -61,7 +61,7 @@ export async function computeStatsForSnapshot(
   const stats: StatsResult["stats"] = {};
 
   for (const score of scores) {
-    const version = score.addedVersion.toString();
+    const version = score.addedVersion?.toString() ?? "unknown";
     const difficulty = score.difficulty;
 
     if (!stats[version]) stats[version] = {};
