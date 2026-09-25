@@ -13,6 +13,7 @@ export async function generateImageMetadata() {
 }
 
 export default async function Image({ id }: { id: Promise<string> }) {
+  // TODO: Provide CHUNITHM database branding for the shared Open Graph renderer.
   if (!getFrontendGame().capabilities.includes("score-details")) return new Response(null, { status: 404 });
   const locale = (await id) as Locale;
   const t = await getTranslations({ locale, namespace: "db.songs.metadata" });

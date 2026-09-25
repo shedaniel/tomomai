@@ -63,7 +63,7 @@ export default async function Image({ params, id }: Props & { id: Promise<string
       ? `${baseUrl}${safeUrl}`
       : safeUrl;
 
-  const versionName = getVersionInfo(game.id, game.regions[0] ?? "jp", song.addedVersion)?.shortName;
+  const versionName = song.addedVersion === null ? undefined : getVersionInfo(game.id, game.regions[0] ?? "jp", song.addedVersion)?.shortName;
 
   return createSongOGImage({
     game: game.id,
@@ -77,6 +77,7 @@ export default async function Image({ params, id }: Props & { id: Promise<string
     difficulties: song.difficulties.map(d => ({
       difficulty: d.difficulty,
       levelPrecise: d.levelPrecise,
+      levelPreciseEstimated: d.levelPreciseEstimated,
     })),
     locale,
   });

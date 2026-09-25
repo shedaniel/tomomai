@@ -17,6 +17,7 @@ export async function generateImageMetadata() {
 }
 
 export default async function Image({ params, id }: Props & { id: Promise<string> }) {
+  // TODO: Add CHUNITHM section images without relying on maimai score-detail support.
   if (!getFrontendGame().capabilities.includes("score-details")) return new Response(null, { status: 404 });
   const [{ type }, locale] = await Promise.all([params, id]) as [{ type: string }, Locale];
 

@@ -218,7 +218,7 @@ export function SongHoverCard({ children, song, percentile, side, className }: S
     }
   );
 
-  const addedVersionInfo = songDetails ? getVersionInfo(game, songDetails.region, songDetails.addedVersion) : null;
+  const addedVersionInfo = songDetails && songDetails.addedVersion !== null ? getVersionInfo(game, songDetails.region, songDetails.addedVersion) : null;
 
   const content = (
     <SongCardContent

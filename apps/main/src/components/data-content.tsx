@@ -222,6 +222,7 @@ export function DataContent({
     }
   ];
 
+  // TODO: Add CHUNITHM statistics, recommendations, rating history and exports before exposing these tabs.
   const genericTabs: Record<string, boolean> = {
     info: true, songs: true,
     recent: visitedBySelf && game.capabilities.includes("recents"),

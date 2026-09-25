@@ -28,6 +28,7 @@ export async function generateImageMetadata() {
 export default async function Image({ params, id }: Props & { id: Promise<string> }) {
   const [{ username: rawUsername, region }, locale] = await Promise.all([params, id]) as [{ username: string; region: string }, Locale];
   const game = getFrontendGame();
+  // TODO: Add CHUNITHM profile image rendering from normalized player data.
   if (game.id !== "maimai") notFound();
   const username = decodeURIComponent(rawUsername);
   const t = await getTranslations({ locale, namespace: "regions" });
