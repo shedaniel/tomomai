@@ -113,11 +113,12 @@ export type RankingSelection<T extends RankedScore> = {
 
 export interface CatalogAdapter {
   configured: boolean;
-  loadImplementation?: () => Promise<unknown>;
 }
 
 export interface CatalogSourceAdapter extends CatalogAdapter {
   notConfiguredReason?: string;
+  requiresToken?: (region: Region) => boolean;
+  authenticate?: (region: Region, token: string) => Promise<string>;
   getStages?: (region: Region) => { names: string[] };
   resolveVersion?: (region: Region) => number;
   collect?: (ctx: CatalogFetchContext) => Promise<PendingChart[]>;

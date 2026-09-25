@@ -33,5 +33,6 @@ export type PendingSong = {
   bpm?: Pending<number>;
   noteDesigner?: Pending<string>;
   noteCounts?: Pending<NoteCounts>;
+  metadata?: Record<string, unknown>;
   extras?: Record<string, string | number | boolean>;
 }

@@ -13,6 +13,7 @@ type Song = {
   bpm: number | null;
   noteDesigner: string | null;
   noteCounts: NoteCounts | null;
+  metadata?: Record<string, unknown>;
 }
 
 type ParsedSong = {

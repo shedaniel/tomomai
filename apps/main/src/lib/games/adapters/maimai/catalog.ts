@@ -22,6 +22,7 @@ export function toPendingChart(song: UpdateSong): PendingChart {
     bpm: song.bpm === null ? undefined : song.bpm,
     noteDesigner: song.noteDesigner === null ? undefined : song.noteDesigner,
     noteCounts: song.noteCounts === null ? undefined : song.noteCounts,
+    metadata: song.metadata,
   };
 }
 

@@ -239,6 +239,7 @@ export async function fetchLevels(context: FetchingContext): Promise<UpdateSong[
         bpm: value(song.bpm) || null,
         noteDesigner: value(song.noteDesigner) || null,
         noteCounts: value(song.noteCounts) || null,
+        metadata: song.metadata,
       } satisfies UpdateSong;
       updateSongs.push(updatedSong);
     } catch (error) {
