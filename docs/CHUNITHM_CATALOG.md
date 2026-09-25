@@ -21,6 +21,30 @@ The CHUNITHM otoge-db source parses pending charts only. The shared Fill Missing
 step applies CHUNITHM's `.5` plus-level rule before the shared Sorter and
 finalization. The adapter's advertised stages come from this executable list.
 
+## Code layout
+
+Catalog ingestion lives under `apps/main/src/server/services/catalog/`:
+
+- `ingestion/` owns the canonical collection/persistence entrypoints, shared step
+  runner, merge modes, Fill Missing and sorting stages, pending chart contracts,
+  normalization and parent identity matching.
+- `maimai/` owns its executable pipeline, legacy chart normalization, merge
+  configuration, pending-song shape and `sources/` implementations.
+- `chunithm/` owns its executable pipeline and otoge-db source under `sources/`,
+  with source fixtures and tests beside that implementation.
+- `images.ts` processes incoming covers; `image-cache.ts` caches stored catalog
+  covers. Maimai URL/static-asset rules live in `maimai/images.ts`.
+- `publication.ts` publishes game-scoped catalog objects; `notifications.ts`
+  formats and delivers the existing ingestion notices.
+
+Admin routes authenticate and dispatch an explicit game into these shared
+entrypoints. Source acquisition, source authentication and game-specific rules
+stay in their game directory. The registry binds these pipelines; it does not
+introduce a separate collection loop. Both games retain the existing order:
+source stages, Fill Missing, Sorter, required-field normalization, persistence,
+publication, then cache invalidation and notifications. No migration or URL
+changes are part of this layout refactor.
+
 ## Sources and versions
 
 | Region | Dataset | Catalog version |
@@ -87,7 +111,7 @@ a title with a regular chart. The deleted-song archive is not imported.
 ## Verification
 
 Small unmodified excerpts of both public datasets are stored alongside provider
-tests in `apps/main/src/lib/games/adapters/chunithm/fixtures`. The snapshots were
+tests in `apps/main/src/server/services/catalog/chunithm/fixtures`. The snapshots were
 read on 2026-09-26; source Git blob IDs were
 `2dddbe4815bfc0abb22d485935fdb5bfd201602a` (JP) and
 `e78d65e5ec93851a34d6f2fc5b239412e94af8b7` (International).

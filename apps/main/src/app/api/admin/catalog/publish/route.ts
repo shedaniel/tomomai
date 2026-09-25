@@ -3,7 +3,7 @@ import { GameAdapterError } from "@/lib/games/types";
 import { gameErrorResponse } from "@/lib/api/game-context";
 import { flushLogger } from "@/lib/logger";
 import { requestLogger } from "@/lib/request-logger";
-import { publishSongCatalog } from "@/server/services/admin/song-catalog";
+import { publishSongCatalog } from "@/server/services/catalog/publication";
 import { revalidateTag } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 

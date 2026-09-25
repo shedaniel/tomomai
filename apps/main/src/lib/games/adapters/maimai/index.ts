@@ -15,11 +15,11 @@ export const maimaiAdapter: GameAdapter = {
     resolveVersion: region => maimaiVersionProvider.getCurrentVersion(region),
     requiresToken: region => region !== "cn",
     async authenticate(region, token) {
-      const { maimaiCatalogAdapter } = await import("./catalog");
+      const { maimaiCatalogAdapter } = await import("@/server/services/catalog/maimai/pipeline");
       return maimaiCatalogAdapter.authenticate!(region, token);
     },
     async collect(context) {
-      const { maimaiCatalogAdapter } = await import("./catalog");
+      const { maimaiCatalogAdapter } = await import("@/server/services/catalog/maimai/pipeline");
       return maimaiCatalogAdapter.collect!(context);
     },
   },

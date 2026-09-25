@@ -1,6 +1,6 @@
 import type { Region } from "@/lib/types";
 import type { Flags } from "@/lib/flags";
-import type { CatalogFetchContext, PendingChart } from "./catalog-types";
+import type { CatalogFetchContext, PendingChart } from "@/server/services/catalog/ingestion/types";
 
 export const CANONICAL_GAME_IDS = ["maimai", "chunithm"] as const;
 export type CanonicalGameId = (typeof CANONICAL_GAME_IDS)[number];

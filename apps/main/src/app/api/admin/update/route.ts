@@ -6,10 +6,10 @@ import { requestLogger } from "@/lib/request-logger";
 import { Region } from "@/lib/types";
 import { getCurrentVersion } from "@/lib/games/versions";
 import { awaitWrapper, sortKeys } from "@/lib/utils";
-import { sendDiscordNotice } from "@/server/services/admin/discord-webhooks";
-import { createNoticeSink } from "@/server/services/admin/fetcher-utils";
-import { collectCatalog } from "@/server/services/games/catalog-ingestion";
-import { authenticateCatalogSource } from "@/server/services/games/catalog-source-auth";
+import { sendDiscordNotice } from "@/server/services/catalog/notifications";
+import { createNoticeSink } from "@/server/services/catalog/ingestion/runner";
+import { collectCatalog } from "@/server/services/catalog/ingestion";
+import { authenticateCatalogSource } from "@/server/services/catalog/ingestion/source-auth";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {

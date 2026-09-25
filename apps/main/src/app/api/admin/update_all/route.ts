@@ -5,7 +5,7 @@ import { getCurrentVersion } from "@/lib/games/versions";
 import { flushLogger } from "@/lib/logger";
 import { requestLogger } from "@/lib/request-logger";
 import { Region } from "@/lib/types";
-import { catalogRequiresToken } from "@/server/services/games/catalog-source-auth";
+import { catalogRequiresToken } from "@/server/services/catalog/ingestion/source-auth";
 import { NextRequest, NextResponse } from "next/server";
 import type { Logger } from "pino";
 

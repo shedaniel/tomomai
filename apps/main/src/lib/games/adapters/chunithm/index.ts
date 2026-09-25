@@ -3,7 +3,7 @@ import { GAME_CODE_MAPS } from "../../codes";
 import { calculateChunithmChartRating, selectChunithmRankings } from "../../rating";
 import type { GameAdapter } from "../../types";
 import { chunithmVersionProvider } from "../../versions";
-import { chunithmCatalogAdapter } from "./catalog";
+import { chunithmCatalogAdapter } from "@/server/services/catalog/chunithm/pipeline";
 
 export const chunithmAdapter: GameAdapter = {
   game: "chunithm",

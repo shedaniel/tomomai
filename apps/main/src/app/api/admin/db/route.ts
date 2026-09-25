@@ -12,7 +12,7 @@ import { normalizeName } from "@/lib/name-utils";
 import { songs, parentSong } from "@/lib/db/schema-pg";
 import { and, eq, inArray, sql } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
-import { publishSongCatalog } from "@/server/services/admin/song-catalog";
+import { publishSongCatalog } from "@/server/services/catalog/publication";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { locales } from "@tomomai/i18n/locale";
 import type { Logger } from "pino";

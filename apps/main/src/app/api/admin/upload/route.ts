@@ -6,17 +6,16 @@ import { requestLogger } from "@/lib/request-logger";
 import type { Region } from "@/lib/types";
 import { getGameChartTypeKey } from "@/lib/games/presentation";
 import { parseCatalogUpload } from "@/lib/catalog/parse-upload";
-import { value } from "@/server/utils/admin/type";
-import { sendDiscordNotice, sendDiscordWebhook } from "@/server/services/admin/discord-webhooks";
-import { publishSongCatalog } from "@/server/services/admin/song-catalog";
+import { value } from "@/server/services/catalog/ingestion/types";
+import { sendDiscordNotice, sendDiscordWebhook } from "@/server/services/catalog/notifications";
+import { publishSongCatalog } from "@/server/services/catalog/publication";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { getSongSlugs } from "@/lib/song-slug";
 import { locales } from "@tomomai/i18n/locale";
 import { parseCatalogVersion } from "@/lib/catalog/parse-version";
 import { NextRequest, NextResponse } from "next/server";
 
-import { ingestCatalog } from "@/server/services/games/catalog-ingestion";
-export type { FieldChange, AddedChange, ModifiedChange, DeletedChange } from "@/server/services/games/catalog-persistence";
+import { ingestCatalog } from "@/server/services/catalog/ingestion";
 type UpdateMode = "noop" | "alter" | "destructive";
 /**
  * Push catalog edits to the ISR cache without waiting for the 14-day

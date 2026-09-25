@@ -1,9 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
-import type { CatalogFetchContext, PendingChart } from "@/lib/games/catalog-types";
+import type { CatalogFetchContext, PendingChart } from "@/server/services/catalog/ingestion/types";
 import type { CanonicalGameId } from "@/lib/games/types";
-import { runFetchers, type Fetcher } from "@/server/services/games/catalog-fetcher";
-import { normalizeCatalogCharts } from "@/lib/catalog/normalize-charts";
+import { runFetchers, type Fetcher } from "@/server/services/catalog/ingestion/runner";
+import { normalizeCatalogCharts } from "@/server/services/catalog/ingestion/normalize-charts";
 
 const mocks = vi.hoisted(() => {
   const log = { child: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() };
@@ -19,10 +19,9 @@ vi.mock("@/lib/games/adapters/chunithm", () => ({ chunithmAdapter: {
 } }));
 vi.mock("@/lib/games/versions", () => ({ getCurrentVersion: () => 9, getVersionInfo: () => ({ id: 9 }) }));
 vi.mock("@/lib/games/frontend-server", () => ({ getFrontendGame: () => ({ id: "maimai" }) }));
-vi.mock("@/server/services/games/catalog-persistence", () => ({ persistCatalog: mocks.ingest }));
-vi.mock("@/server/services/admin/song-catalog", () => ({ publishSongCatalog: mocks.publish }));
-vi.mock("@/server/services/admin/discord-webhooks", () => ({ sendDiscordNotice: vi.fn().mockResolvedValue(undefined), sendDiscordWebhook: vi.fn().mockResolvedValue(undefined) }));
-vi.mock("@/server/services/admin/fetcher-utils", () => ({ createNoticeSink: () => ({ details: [], addDetail() {} }) }));
+vi.mock("@/server/services/catalog/ingestion/persistence", () => ({ persistCatalog: mocks.ingest }));
+vi.mock("@/server/services/catalog/publication", () => ({ publishSongCatalog: mocks.publish }));
+vi.mock("@/server/services/catalog/notifications", () => ({ sendDiscordNotice: vi.fn().mockResolvedValue(undefined), sendDiscordWebhook: vi.fn().mockResolvedValue(undefined) }));
 vi.mock("@/lib/logger", () => ({ flushLogger: mocks.flush }));
 vi.mock("@/lib/request-logger", () => ({ requestLogger: () => ({ log: mocks.log, requestId: "catalog-test" }) }));
 vi.mock("@/lib/song-slug", () => ({ getSongSlugs: vi.fn().mockResolvedValue([]) }));

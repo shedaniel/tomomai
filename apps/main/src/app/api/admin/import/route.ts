@@ -9,7 +9,7 @@ import { getEnabledRegions, isRegionEnabled } from "@/lib/enabled-regions";
 import { flushLogger } from "@/lib/logger";
 import { requestLogger } from "@/lib/request-logger";
 import { and, eq, gte, lte, sql } from "drizzle-orm";
-import { publishSongCatalog } from "@/server/services/admin/song-catalog";
+import { publishSongCatalog } from "@/server/services/catalog/publication";
 import { revalidateTag, revalidatePath } from "next/cache";
 import { locales } from "@tomomai/i18n/locale";
 import { NextRequest, NextResponse } from "next/server";

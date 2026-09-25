@@ -1,53 +1,12 @@
 import { resolveAdminGame } from "@/lib/api/admin-game";
 import { GameAdapterError } from "@/lib/games/types";
 import { gameErrorResponse } from "@/lib/api/game-context";
-import { convertToWebp } from "@/lib/image-converter";
-import { fetchImageBuffer } from "@/lib/image-converter";
 import { flushLogger } from "@/lib/logger";
 import { requestLogger } from "@/lib/request-logger";
-import { listCoverKeys, uploadCoverToR2 } from "@/lib/r2";
-import type { PendingChart } from "@/lib/games/catalog-types";
-import type { UpdateSong } from "@/lib/types/update";
-import { value } from "@/server/utils/admin/type";
+import type { PendingChart } from "@/server/services/catalog/ingestion/types";
+import type { UpdateSong } from "@/server/services/catalog/maimai/types";
+import { processCatalogImages } from "@/server/services/catalog/images";
 import { NextRequest, NextResponse } from "next/server";
-
-const MAIMAI_COVER_PATTERN = /^https?:\/\/(?:maimaidx\.jp|maimaidx(?:-eng)?\.com)\/maimai-mobile\/img\/Music\/(.+)$/;
-// Lxns CN jacket: https://assets2.lxns.net/maimai/jacket/{id}.png — namespace under
-// `lxns_{id}` to avoid collisions with the JP/INTL md5-style filenames.
-const LXNS_COVER_PATTERN = /^https?:\/\/assets2?\.lxns\.net\/maimai\/jacket\/(\d+)\.png$/;
-
-const STATIC_ASSETS: { url: string; basename: string }[] = [
-  { url: "https://maimaidx.jp/maimai-mobile/img/music_dx.png", basename: "music_dx" },
-  { url: "https://maimaidx.jp/maimai-mobile/img/music_standard.png", basename: "music_standard" },
-];
-
-// Returns a stable "filename" key for a cover URL (used for de-dup and R2 lookup).
-// Returns null for URLs we don't know how to cache.
-function extractFilename(url: string): string | null {
-  const maimai = url.match(MAIMAI_COVER_PATTERN);
-  if (maimai) return maimai[1];
-  const lxns = url.match(LXNS_COVER_PATTERN);
-  if (lxns) return `lxns_${lxns[1]}.png`;
-  return null;
-}
-
-function isJpDomain(url: string): boolean {
-  return url.includes("maimaidx.com/");
-}
-
-async function processBatch<T, R>(
-  items: T[],
-  batchSize: number,
-  fn: (item: T) => Promise<R>
-): Promise<R[]> {
-  const results: R[] = [];
-  for (let i = 0; i < items.length; i += batchSize) {
-    const batch = items.slice(i, i + batchSize);
-    const batchResults = await Promise.all(batch.map(fn));
-    results.push(...batchResults);
-  }
-  return results;
-}
 
 export async function POST(request: NextRequest) {
   const { log, requestId } = requestLogger(request, "admin/image");
@@ -88,101 +47,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    log.info({ songCount: songs.length }, "Image processing starting");
-
-    // Collect unique filenames from cover URLs, preferring jp domain
-    const filenameToUrl = new Map<string, string>();
-    for (const song of songs) {
-      const cover = value(song.cover);
-      if (!cover) continue;
-      const filename = extractFilename(cover);
-      if (!filename) continue;
-      const existing = filenameToUrl.get(filename);
-      if (!existing || (!isJpDomain(existing) && isJpDomain(cover))) {
-        filenameToUrl.set(filename, cover);
-      }
-    }
-
-    log.info({ uniqueCovers: filenameToUrl.size }, "Unique maimai cover URLs found");
-
-    // Get existing covers in R2
-    const existingKeys = await listCoverKeys();
-    log.info({ existingR2Covers: existingKeys.size }, "Existing covers in R2");
-
-    const r2BaseUrl = process.env.NEXT_PUBLIC_R2_URL;
-    // Build filename -> public URL map
-    const filenameToPublicUrl = new Map<string, string>();
-
-    let uploaded = 0;
-    let skipped = 0;
-
-    // Determine which filenames need downloading vs already exist
-    type CoverTask = { filename: string; basename: string; url: string };
-    const toDownload: CoverTask[] = [];
-
-    for (const [filename, url] of filenameToUrl) {
-      const basename = filename.replace(/\.[^.]+$/, "");
-      const webpKey = `${basename}.webp`;
-
-      if (existingKeys.has(webpKey)) {
-        filenameToPublicUrl.set(filename, `${r2BaseUrl}/covers/${webpKey}`);
-        skipped++;
-      } else {
-        toDownload.push({ filename, basename, url });
-      }
-    }
-
-    log.info({ toDownload: toDownload.length, skipped }, "Cover download plan");
-
-    // Download, convert, upload in batches of 10
-    await processBatch(toDownload, 10, async ({ filename, basename, url }) => {
-      log.debug({ filename, url }, "Downloading cover");
-      const buffer = await fetchImageBuffer(url, "");
-      const webpBuffer = await convertToWebp(buffer);
-      log.debug({ filename, originalSize: buffer.length, webpSize: webpBuffer.length }, "Converted to WebP");
-      await uploadCoverToR2(webpBuffer, basename);
-      filenameToPublicUrl.set(filename, `${r2BaseUrl}/covers/${basename}.webp`);
-      uploaded++;
-      log.debug({ filename, basename }, "Uploaded cover to R2");
-    });
-
-    // Cache static assets (DX/Standard type badges) if missing
-    for (const { url, basename } of game === "maimai" ? STATIC_ASSETS : []) {
-      const webpKey = `${basename}.webp`;
-      if (!existingKeys.has(webpKey)) {
-        log.info({ basename, url }, "Caching static asset to R2");
-        const buffer = await fetchImageBuffer(url, "");
-        const webpBuffer = await convertToWebp(buffer);
-        await uploadCoverToR2(webpBuffer, basename);
-        log.info({ basename }, "Static asset cached");
-      }
-    }
-
-    // Replace cover URLs in songs
-    let unchanged = 0;
-    const updatedSongs = songs.map((song) => {
-      const cover = value(song.cover);
-      const filename = cover ? extractFilename(cover) : null;
-      if (!filename) {
-        unchanged++;
-        return song;
-      }
-      const publicUrl = filenameToPublicUrl.get(filename);
-      if (!publicUrl) {
-        unchanged++;
-        return song;
-      }
-      return { ...song, cover: publicUrl };
-    });
-
-    const stats = { uploaded, skipped, unchanged };
-    log.info({ stats }, "Image processing complete");
-
-    return NextResponse.json({
-      songs: updatedSongs,
-      stats,
-      requestId,
-    });
+    const result = await processCatalogImages(game, songs, log);
+    return NextResponse.json({ ...result, requestId });
   } catch (error) {
     if (error instanceof GameAdapterError) return gameErrorResponse(error);
     log.error({ err: error }, "Error in admin image route");

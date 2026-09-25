@@ -7,7 +7,7 @@ const mocks = vi.hoisted(() => ({
   invalidate: vi.fn(),
   log: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }));
-vi.mock("@/server/services/admin/song-catalog", () => ({ publishSongCatalog: mocks.publish }));
+vi.mock("@/server/services/catalog/publication", () => ({ publishSongCatalog: mocks.publish }));
 vi.mock("@/lib/logger", () => ({ flushLogger: mocks.flush }));
 vi.mock("@/lib/request-logger", () => ({ requestLogger: () => ({ log: mocks.log, requestId: "publish-test" }) }));
 vi.mock("next/cache", () => ({ revalidateTag: mocks.invalidate }));
