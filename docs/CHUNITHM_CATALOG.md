@@ -47,6 +47,8 @@ changes are part of this layout refactor.
 
 ## Sources and versions
 
+Versions observed in the saved fixtures (2026-09-26):
+
 | Region | Dataset | Catalog version |
 | --- | --- | --- |
 | JP | `chunithm/data/music-ex.json` | Mate (9) |
@@ -54,16 +56,12 @@ changes are part of this layout refactor.
 
 Both files come from `https://raw.githubusercontent.com/zvuc/otoge-db/main/`.
 Cover images use the same repository's `chunithm/jacket/<image>` path.
-Collection also reads the explicit `CURRENT_JP_VER` and `CURRENT_INTL_VER` string
-declarations in `scripts/chunithm/game.py`; it never executes that Python code.
-Missing, unrecognized or changed release declarations fail collection so a new
-source release cannot silently overwrite an older catalog version. Changes to
-the provider's declaration format require updating this parser.
 
-This provider supports the current configured snapshots only. Historical-version
-requests fail before fetching. Updating to a new release requires checking its
-regional version metadata and updating the configured dataset version. The
-source's per-song `version` is the original **Japanese** release, so it cannot be
+This provider supports current snapshots only. The current version comes from
+the existing CHUNITHM version provider, including its regional release dates
+and 07:00 JST rollover. Historical-version requests fail before fetching.
+Adding a release only requires updating the canonical version metadata; the
+otoge-db source contains no per-release configuration. The source's per-song `version` is the original **Japanese** release, so it cannot be
 used as the International catalog version. International already includes some
 Japanese Mate songs released there during X-VERSE-X.
 
@@ -82,17 +80,19 @@ a title with a regular chart. The deleted-song archive is not imported.
   `.6` / historical `.7` plus thresholds and mismatch correction. Completed
   catalog charts always have numeric precision; an unresolvable chart fails
   validation instead of being dropped.
-- `addedVersion` is resolved once at the provider boundary and is always numeric.
+- `addedVersion` uses the existing shared date-to-version helper and is required
+  in completed charts.
   BASIC–MASTER use the regional song-added date. ULTIMA prefers the regional
   chart-update date and falls back to the regional song-added date when absent.
   Such fallbacks carry `metadata.addedVersionEstimated: true`, alongside the raw
   source dates. This fallback can place a later ULTIMA chart in an earlier release
   until a more precise regional update date becomes available.
 - The local pre-NEW International release table contains aliases sharing one date.
-  When that creates a tie, the recognized original JP version selects the matching
-  candidate and is marked estimated. Unambiguous regional dates take precedence:
-  a JP Mate song released internationally during X-VERSE-X remains version 8.
-  Missing dates or unresolved release mappings fail collection explicitly.
+  The shared date-to-version helper resolves ties using the recognized original
+  JP version only among matching candidates. Unambiguous regional dates take
+  precedence: a JP Mate song released internationally during X-VERSE-X remains
+  version 8. Source version labels and aliases belong to the canonical CHUNITHM
+  version metadata. Missing required dates fail the shared finalization step.
 - `metadata.levelPreciseEstimated` distinguishes estimates from source constants;
   the raw source constant remains in `metadata.otogeDb.constant`. Estimates
   participate in rating calculations as in maimai, and catalog displays prefix
@@ -103,10 +103,11 @@ a title with a regular chart. The deleted-song archive is not imported.
   `songs.metadata.otogeDb`. Air and flick counts are not coerced into maimai note
   types. Non-numeric BPM text remains in metadata without fabricating a numeric
   BPM.
-- Malformed source records, unknown difficulty prefixes or version names, and
-  duplicate regular-song IDs/titles fail the entire collection. Current shared
-  chart identity is still game/title/chart type/difficulty; the source ID is
-  retained as provenance, not yet used to reconcile future song renames.
+- The source maps typed upstream records into pending charts, following the
+  maimai provider. Shared finalization validates required fields and numeric
+  codes before persistence. Chart identity is still game/title/chart
+  type/difficulty; the source ID is retained as provenance, not yet used to
+  reconcile future song renames.
 
 ## Verification
 
@@ -120,7 +121,7 @@ Full snapshots passed through the shared source, Fill Missing and Sorter stages:
 6,843 regular JP charts (2,261 known constants) and 6,363 International charts
 (2,242 known constants), all with numeric `levelPrecise` and `addedVersion`. These are
 source coverage observations, not minimum counts enforced against future
-releases. Focused tests cover source validation, regional availability, missing
+releases. Focused tests cover regional availability, required-field finalization, missing
 metadata, numeric codes, fallback thresholds, ULTIMA, WORLD'S END exclusion,
 HTTP failures, release rollover, shared stage order and attribution notices. No database ingestion is required to run them.
 

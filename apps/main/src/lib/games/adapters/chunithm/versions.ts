@@ -5,12 +5,13 @@ import { versionAtDate } from "../../version-time";
 type ChunithmVersion = Omit<GameVersionInfo, "releaseDate"> & {
   jpReleaseDate: string;
   intlReleaseDate: string | null;
+  aliases?: readonly string[];
 };
 
 const PRE_SUPERSTAR_INTL_DATE = "2020/11/25";
 
 export const ChunithmVersions = {
-  CHUNITHM: { id: -12, name: "CHUNITHM", shortName: "CHUNITHM", jpReleaseDate: "2015/07/16", intlReleaseDate: PRE_SUPERSTAR_INTL_DATE },
+  CHUNITHM: { id: -12, name: "CHUNITHM", shortName: "CHUNITHM", aliases: ["無印"], jpReleaseDate: "2015/07/16", intlReleaseDate: PRE_SUPERSTAR_INTL_DATE },
   CHUNITHM_PLUS: { id: -11, name: "CHUNITHM PLUS", shortName: "PLUS", jpReleaseDate: "2016/02/04", intlReleaseDate: PRE_SUPERSTAR_INTL_DATE },
   CHUNITHM_AIR: { id: -10, name: "CHUNITHM AIR", shortName: "AIR", jpReleaseDate: "2016/08/25", intlReleaseDate: PRE_SUPERSTAR_INTL_DATE },
   CHUNITHM_AIR_PLUS: { id: -9, name: "CHUNITHM AIR PLUS", shortName: "AIR+", jpReleaseDate: "2017/02/09", intlReleaseDate: PRE_SUPERSTAR_INTL_DATE },
@@ -21,7 +22,7 @@ export const ChunithmVersions = {
   CHUNITHM_CRYSTAL: { id: -4, name: "CHUNITHM CRYSTAL", shortName: "CRYSTAL", jpReleaseDate: "2019/10/24", intlReleaseDate: PRE_SUPERSTAR_INTL_DATE },
   CHUNITHM_CRYSTAL_PLUS: { id: -3, name: "CHUNITHM CRYSTAL PLUS", shortName: "CRYSTAL+", jpReleaseDate: "2020/07/16", intlReleaseDate: PRE_SUPERSTAR_INTL_DATE },
   CHUNITHM_PARADISE: { id: -2, name: "CHUNITHM PARADISE", shortName: "PARADISE", jpReleaseDate: "2021/01/21", intlReleaseDate: PRE_SUPERSTAR_INTL_DATE },
-  CHUNITHM_PARADISE_LOST: { id: -1, name: "CHUNITHM PARADISE LOST", shortName: "PARADISE LOST", jpReleaseDate: "2021/05/13", intlReleaseDate: PRE_SUPERSTAR_INTL_DATE },
+  CHUNITHM_PARADISE_LOST: { id: -1, name: "CHUNITHM PARADISE LOST", shortName: "PARADISE LOST", aliases: ["PARADISE×"], jpReleaseDate: "2021/05/13", intlReleaseDate: PRE_SUPERSTAR_INTL_DATE },
   CHUNITHM_NEW: { id: 0, name: "CHUNITHM NEW", shortName: "NEW", jpReleaseDate: "2021/11/04", intlReleaseDate: "2022/03/03" },
   CHUNITHM_NEW_PLUS: { id: 1, name: "CHUNITHM NEW PLUS", shortName: "NEW+", jpReleaseDate: "2022/04/14", intlReleaseDate: "2022/08/18" },
   CHUNITHM_SUN: { id: 2, name: "CHUNITHM SUN", shortName: "SUN", jpReleaseDate: "2022/10/13", intlReleaseDate: "2023/03/02" },
@@ -60,3 +61,10 @@ export const chunithmVersionProvider: VersionProvider = {
     });
   },
 };
+
+export function getChunithmVersionByName(region: Region, name: string): GameVersionInfo | null {
+  const normalized = name.trim().toUpperCase();
+  const matches = CHUNITHM_VERSIONS.filter(version =>
+    [version.name, version.shortName, ...(version.aliases ?? [])].some(label => label.toUpperCase() === normalized));
+  return matches.length === 1 ? chunithmVersionProvider.getVersionInfo(region, matches[0].id) : null;
+}

@@ -1,14 +1,12 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { CatalogFetchContext, CatalogLogger } from "../ingestion/types";
 import { chunithmCatalogAdapter } from "./pipeline";
-import { normalizeOtogeDbCatalog, validateOtogeDbVersionMetadata } from "./sources/otoge-db";
+import { normalizeOtogeDbCatalog } from "./sources/otoge-db";
 import { sendDiscordNotice } from "@/server/services/catalog/notifications";
 import jpFixture from "./fixtures/otoge-db-jp.json";
 import intlFixture from "./fixtures/otoge-db-intl.json";
 
 vi.mock("@/server/services/catalog/notifications", () => ({ sendDiscordNotice: vi.fn(async () => undefined) }));
-
-const versionMetadata = 'CURRENT_JP_VER = "Mate"\nCURRENT_INTL_VER = "X-VERSE-X"\n';
 
 function context(region: "jp" | "intl", version: number): CatalogFetchContext {
   const log: CatalogLogger = {
@@ -18,7 +16,13 @@ function context(region: "jp" | "intl", version: number): CatalogFetchContext {
   return { region, version, log, notice: { addDetail: vi.fn(), details: [] } };
 }
 
+beforeEach(() => {
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(new Date("2026-09-26T00:00:00Z"));
+});
+
 afterEach(() => {
+  vi.useRealTimers();
   vi.unstubAllGlobals();
   vi.clearAllMocks();
 });
@@ -49,7 +53,7 @@ describe("CHUNITHM otoge-db normalization", () => {
     expect(charts.find(chart => chart.songName === "ネ！コ！" && chart.difficulty === 4))
       .toMatchObject({ addedVersion: -7, metadata: { addedVersionEstimated: true } });
     expect(charts.find(chart => chart.songName === "ネ！コ！" && chart.difficulty === 3))
-      .toMatchObject({ addedVersion: -7, metadata: { addedVersionEstimated: true } });
+      .toMatchObject({ addedVersion: -7, metadata: { addedVersionEstimated: false } });
     expect(charts.find(chart => chart.songName === "Melodiniq" && chart.difficulty === 4))
       .toMatchObject({ addedVersion: 8, metadata: { addedVersionEstimated: true, otogeDb: { chartAddedDate: "20260820", chartAddedDateSource: "regional-song" } } });
   });
@@ -65,13 +69,13 @@ describe("CHUNITHM otoge-db normalization", () => {
       .toMatchObject({ addedVersion: 8, metadata: { addedVersionEstimated: false } });
   });
 
-  it("rejects missing release dates and source versions that cannot disambiguate the regional release", () => {
-    expect(() => normalizeOtogeDbCatalog([{ ...jpFixture[0], date_added: "" }], "jp")).toThrow("Missing");
-    expect(() => normalizeOtogeDbCatalog([{ ...jpFixture[0], date_added: "20100101" }], "jp")).toThrow("Cannot resolve");
-    expect(() => normalizeOtogeDbCatalog([{ ...intlFixture[0], version: "Mate", date_intl_added: "20210101" }], "intl")).toThrow("Cannot resolve");
-  });
+  it.each([["無印", -12], ["PARADISE×", -1], ["CHUNITHM STAR PLUS", -7]] as const)
+    ("uses canonical source label %s to disambiguate tied regional dates", (version, expected) => {
+      const charts = normalizeOtogeDbCatalog([{ ...intlFixture[1], version }], "intl");
+      expect(charts.find(chart => chart.difficulty === 3)?.addedVersion).toBe(expected);
+    });
 
-  it("does not coerce ambiguous BPM, missing note counts, or uncertain chart constants", () => {
+  it("keeps ambiguous BPM and absent chart metadata optional", () => {
     const record = { ...jpFixture[0], bpm: "440(MASTER譜面のみ220)", lev_mas_i: "-", lev_mas_notes_air: "-" };
     const chart = normalizeOtogeDbCatalog([record], "jp")[3];
     expect(chart.bpm).toBeUndefined();
@@ -80,37 +84,22 @@ describe("CHUNITHM otoge-db normalization", () => {
     expect(chart.metadata).not.toMatchObject({ otogeDb: { noteCounts: { air: 0 } } });
   });
 
-  it.each([
-    { version: "UNKNOWN" },
-    { lev_mas_i: "14.2?" },
-    { lev_mas: "14?" },
-    { lev_new: "15" },
-    { date_added: "20260230" },
-    { id: 2490 },
-    { image: "../../other.jpg" },
-  ])("rejects malformed or unsupported source fields: %j", changes => {
-    expect(() => normalizeOtogeDbCatalog([{ ...jpFixture[0], ...changes }], "jp")).toThrow();
-  });
-
-  it("rejects duplicate identities, empty catalogs and unsupported regions", () => {
-    expect(() => normalizeOtogeDbCatalog([jpFixture[0], jpFixture[0]], "jp")).toThrow("Ambiguous");
-    expect(() => normalizeOtogeDbCatalog([jpFixture[0], { ...jpFixture[0], id: "9999" }], "jp")).toThrow("Ambiguous");
-    expect(() => normalizeOtogeDbCatalog([], "jp")).toThrow();
+  it("supports only JP and International", () => {
     expect(() => normalizeOtogeDbCatalog(jpFixture, "cn")).toThrow("JP and International only");
   });
 });
 
 describe("CHUNITHM otoge-db collection", () => {
   it("runs the source through shared filling and finalization with separate estimate provenance", async () => {
-    vi.stubGlobal("fetch", vi.fn(async (url: string) => url.endsWith("game.py")
-      ? new Response(versionMetadata)
-      : Response.json(jpFixture)));
+    const fetcher = vi.fn(async () => Response.json(jpFixture));
+    vi.stubGlobal("fetch", fetcher);
     const charts = await chunithmCatalogAdapter.collect!(context("jp", 9));
     const alive = charts.filter(chart => chart.songName === "ALIVE");
     expect(alive[0]).toMatchObject({ level: "3", levelPrecise: 30, metadata: { levelPreciseEstimated: true } });
     expect(alive[3]).toMatchObject({ level: "12+", levelPrecise: 126, metadata: { levelPreciseEstimated: false, otogeDb: { constant: "12.6" } } });
     expect(charts.every(chart => typeof chart.levelPrecise === "number")).toBe(true);
     expect(charts.every(chart => typeof chart.addedVersion === "number")).toBe(true);
+    expect(fetcher).toHaveBeenCalledTimes(1);
     expect(chunithmCatalogAdapter.getStages!("jp").names).toEqual(["OtogeDB", "Fill Missing", "Sorter"]);
     expect(vi.mocked(sendDiscordNotice).mock.calls.map(call => call[1])).toEqual([
       "CHUNITHM Stage 1/3: OtogeDB", "CHUNITHM Stage 2/3: Fill Missing",
@@ -124,12 +113,9 @@ describe("CHUNITHM otoge-db collection", () => {
   });
 
   it("collects from the requested regional source without cookies", async () => {
-    const fetcher = vi.fn(async (url: string) => url.endsWith("game.py")
-      ? new Response(versionMetadata)
-      : Response.json(intlFixture));
+    const fetcher = vi.fn(async () => Response.json(intlFixture));
     vi.stubGlobal("fetch", fetcher);
-    const ctx = context("intl", 8);
-    const charts = await chunithmCatalogAdapter.collect!(ctx);
+    const charts = await chunithmCatalogAdapter.collect!(context("intl", 8));
     expect(charts.length).toBeGreaterThan(0);
     expect(fetcher).toHaveBeenCalledWith("https://raw.githubusercontent.com/zvuc/otoge-db/main/chunithm/data/music-ex-intl.json", {
       signal: expect.any(AbortSignal), cache: "no-store",
@@ -141,10 +127,20 @@ describe("CHUNITHM otoge-db collection", () => {
     expect(chunithmCatalogAdapter.resolveVersion!("intl")).toBe(8);
   });
 
-  it("rejects historical catalog requests before fetching", async () => {
-    const fetcher = vi.fn();
+  it.each([
+    { region: "jp", boundary: "2026-07-02T07:00:00+09:00", previous: 8, next: 9, song: jpFixture[0] },
+    { region: "intl", boundary: "2026-04-16T07:00:00+09:00", previous: 7, next: 8, song: intlFixture[0] },
+  ] as const)("follows the canonical $region release rollover without source configuration changes", async ({ region, boundary, previous, next, song }) => {
+    const fetcher = vi.fn(async () => Response.json([song]));
     vi.stubGlobal("fetch", fetcher);
-    await expect(chunithmCatalogAdapter.collect!(context("jp", 8))).rejects.toThrow("only supports version 9");
+    vi.setSystemTime(new Date(new Date(boundary).getTime() - 1));
+    expect(chunithmCatalogAdapter.resolveVersion!(region)).toBe(previous);
+    expect(await chunithmCatalogAdapter.collect!(context(region, previous))).toHaveLength(4);
+    vi.setSystemTime(new Date(boundary));
+    expect(chunithmCatalogAdapter.resolveVersion!(region)).toBe(next);
+    expect(await chunithmCatalogAdapter.collect!(context(region, next))).toHaveLength(4);
+    fetcher.mockClear();
+    await expect(chunithmCatalogAdapter.collect!(context(region, previous))).rejects.toThrow(`only supports version ${next}`);
     expect(fetcher).not.toHaveBeenCalled();
   });
 
@@ -153,13 +149,14 @@ describe("CHUNITHM otoge-db collection", () => {
     await expect(chunithmCatalogAdapter.collect!(context("jp", 9))).rejects.toThrow("HTTP 503");
   });
 
-  it.each(["", 'CURRENT_JP_VER = "Future"', 'CURRENT_JP_VER = "X-VERSE-X"'])
-    ("rejects missing, unknown, or changed source release metadata: %s", metadata => {
-      expect(() => validateOtogeDbVersionMetadata(metadata, "jp", 9)).toThrow("does not match configured version");
-    });
+  it("rejects an empty provider result", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => Response.json([])));
+    await expect(chunithmCatalogAdapter.collect!(context("jp", 9))).rejects.toThrow("no regular CHUNITHM charts");
+  });
 
-  it("recognizes the provider's explicit regional release declarations", () => {
-    expect(() => validateOtogeDbVersionMetadata(versionMetadata, "jp", 9)).not.toThrow();
-    expect(() => validateOtogeDbVersionMetadata(versionMetadata, "intl", 8)).not.toThrow();
+  it("leaves required-field validation to shared finalization", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => Response.json([{ ...jpFixture[0], date_added: "" }])));
+    await expect(chunithmCatalogAdapter.collect!(context("jp", 9))).rejects.toThrow("Errors occurred during song update");
+    expect(sendDiscordNotice).not.toHaveBeenCalledWith("jp", "CHUNITHM Fetch pipeline completed", expect.any(String), expect.any(Number));
   });
 });
