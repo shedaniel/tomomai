@@ -1,6 +1,5 @@
 import { type ApiKeyInfo, keyHasScope } from "@/lib/api/protect";
 import { type ScopeKey } from "@/lib/api/scopes";
-import { hasRatingMetadata } from "@/lib/games/rating";
 import { resolveGame } from "@/lib/games/registry";
 import type { fetchSnapshotData } from "@/server/queries/snapshots";
 
@@ -43,7 +42,7 @@ export function buildSnapshotPayload(
     }));
   } else if (hasSongsB50Read) {
     const adapter = resolveGame(snapshot.game).adapter;
-    const rated = songs.filter(hasRatingMetadata).map(song => ({
+    const rated = songs.map(song => ({
       ...song,
       chartId: song.songId,
       rating: adapter.calculateChartRating(song, snapshot.gameVersion),

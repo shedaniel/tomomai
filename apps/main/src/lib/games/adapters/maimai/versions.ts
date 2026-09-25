@@ -440,8 +440,8 @@ export function getVersionByShortCode(shortCode: string): VersionInfo | undefine
   return best;
 }
 
-export function requireMaimaiVersion(version: number | null): VersionId {
-  const info = version === null ? null : getVersionInfo(version);
+export function requireMaimaiVersion(version: number): VersionId {
+  const info = getVersionInfo(version);
   if (!info) throw new Error(`Unknown maimai version: ${version}`);
   return info.id;
 }

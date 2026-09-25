@@ -1,4 +1,3 @@
-import { hasRatingMetadata } from "./rating";
 import type { fetchSnapshotData, fetchUserSnapshots } from "@/server/queries/snapshots";
 import type { Snapshot, SnapshotWithSongs, EventData } from "@/lib/types";
 import { requireMaimaiVersion } from "./adapters/maimai/versions";
@@ -27,7 +26,7 @@ export interface GameSnapshotData {
 export type GameSnapshotSummary = Awaited<ReturnType<typeof fetchUserSnapshots>>[number];
 
 export function getPlayerRankings(game: CanonicalGameId, data: GameSnapshotData) {
-  const rated = data.songs.filter(hasRatingMetadata).map(score => ({
+  const rated = data.songs.map(score => ({
     ...score,
     chartId: score.songId,
     rating: score.chartRating ?? (game === "maimai"

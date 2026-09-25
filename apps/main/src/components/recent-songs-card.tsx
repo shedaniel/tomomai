@@ -694,7 +694,7 @@ function ExpandedSongDetails({ publicId }: { publicId: string }) {
     }
   );
 
-  const addedVersionInfo = songDetails && songDetails.addedVersion !== null ? getVersionInfo(game, songDetails.region, songDetails.addedVersion) : null;
+  const addedVersionInfo = songDetails ? getVersionInfo(game, songDetails.region, songDetails.addedVersion) : null;
 
   return (
     <div className="mt-4 flex flex-col gap-3">

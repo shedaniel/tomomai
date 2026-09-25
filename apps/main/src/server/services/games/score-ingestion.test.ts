@@ -668,17 +668,6 @@ describe("score ingestion", () => {
     expect(testState.state.snapshotScores).toHaveLength(0);
   });
 
-  it.each(["addedVersion"])("preserves scores with unknown %s without inserting rankings", async field => {
-    const gameVersion = getCurrentVersion("maimai", "intl");
-    testState.state.songs = [{ ...createSong("maimai", gameVersion, 1, "Unknown"), [field]: null }];
-    await persistFetchResult({ game: "maimai", region: "intl", userId: "user-1", sessionId: BigInt(1), gameVersion,
-      fetched: createFetched([createScore("maimai", "intl", gameVersion, "Unknown")]),
-    });
-    expect(testState.state.scoreData).toHaveLength(1);
-    expect(testState.state.snapshotScores).toHaveLength(1);
-    expect(testState.state.snapshotRankings).toHaveLength(0);
-  });
-
   it("rolls back snapshot and score writes if ranking fails", async () => {
     const gameVersion = getCurrentVersion("maimai", "intl");
     testState.state.songs = [createSong("maimai", gameVersion, 1, "Hit")];

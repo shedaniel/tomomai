@@ -68,11 +68,11 @@ describe("configured catalog admin pipeline", () => {
     expect(mocks.collect).not.toHaveBeenCalled();
     expect(mocks.ingest).not.toHaveBeenCalled();
   });
-  it("preserves unknown catalog metadata without fabricating values", async () => {
-    const unknown = { ...chart, addedVersion: null };
+  it.each([null, undefined, "unknown"])("rejects unresolved introduction version %s before persistence", async addedVersion => {
+    const unknown = { ...chart, addedVersion };
     mocks.collect.mockResolvedValueOnce([unknown]);
-    expect((await GET(request("update_all?game=chunithm&region=jp&image_upload=false"))).status).toBe(200);
-    expect(mocks.ingest).toHaveBeenCalledWith(expect.objectContaining({ uploadSongs: [unknown] }));
+    expect((await GET(request("update_all?game=chunithm&region=jp&image_upload=false"))).status).toBe(400);
+    expect(mocks.ingest).not.toHaveBeenCalled();
   });
   it("rejects cross-game upload records before persistence", async () => {
     const req = new NextRequest("https://example.test/api/admin/upload?game=chunithm&region=jp&version=9", {

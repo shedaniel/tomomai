@@ -1,4 +1,3 @@
-import { requireMaimaiVersion } from "@/lib/games/adapters/maimai/versions";
 import { codeToChartType, codeToDifficulty, difficultyToCode } from "@/lib/maimai/codes";
 import { songInstanceId } from "@/lib/db/song-instance-id";
 import { db } from "@/lib/db";
@@ -143,7 +142,7 @@ const fetchReservedSongs = unstable_cache(
     const { newSongsB15, oldSongsB35 } = splitSongs(
       allSongs.map((s) => ({
         ...s,
-        addedVersion: requireMaimaiVersion(s.addedVersion),
+        addedVersion: s.addedVersion as VersionId,
       })),
       gameVersion
     );

@@ -24,19 +24,6 @@ function render(game: CanonicalGameId, options?: { showAllScores?: boolean; show
 }
 
 describe("normalized player views", () => {
-  it("keeps unknown-metadata charts in all scores but excludes them from ratings", () => {
-    const data = fixture("chunithm");
-    data.songs = data.songs.slice(0, 3);
-    data.songs[1].addedVersion = null;
-    const rankings = getPlayerRankings("chunithm", data);
-    expect(rankings.newScores.map(song => song.songId)).toEqual(["chart-0", "chart-2"]);
-    expect(data.songs).toHaveLength(3);
-    const descriptor: FrontendGame = { id: "chunithm", enabled: false, displayName: "CHUNITHM", productName: "tomochu", regions: ["jp"], capabilities: ["scores", "rating", "rankings"] };
-    const markup = renderToStaticMarkup(<NextIntlClientProvider locale="en" messages={messages} timeZone="UTC"><GameSnapshotContent game={descriptor} data={data} initialView="songs" /></NextIntlClientProvider>);
-    expect(markup).toContain("Song 0");
-    expect(markup).toContain("Song 1");
-    expect(markup).toContain("Song 2");
-  });
   it("selects each game's buckets without changing the source scores", () => {
     for (const [game, sizes] of [["maimai", [15, 35]], ["chunithm", [20, 30]]] as const) {
       const data = fixture(game);

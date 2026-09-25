@@ -1,4 +1,3 @@
-import { requireMaimaiVersion } from "@/lib/games/adapters/maimai/versions";
 import { maimaiCompatibilityGameSchema } from "@/lib/games/schema";
 import { gameContextInput, validateGameInput } from "./game-input";
 import { fetchUserSnapshots, fetchSnapshotData } from "@/server/queries/snapshots";
@@ -156,7 +155,7 @@ export const snapshotsRouter = router({
           cover: score.cover,
           difficulty: score.difficulty,
           levelPrecise: score.levelPrecise,
-          addedVersion: requireMaimaiVersion(score.addedVersion),
+          addedVersion: score.addedVersion as VersionId,
           achievement: score.achievement,
           fc: score.fc,
         });
@@ -316,7 +315,7 @@ export const snapshotsRouter = router({
         levelPrecise: song.levelPrecise,
         type: song.type,
         genre: song.genre,
-        addedVersion: requireMaimaiVersion(song.addedVersion),
+        addedVersion: song.addedVersion as VersionId,
         achievement: song.achievement,
         dxScore: song.dxScore,
         fc: song.fc,
@@ -435,7 +434,7 @@ export const snapshotsRouter = router({
         },
         songs: addRatingsAndSort(songsWithScores, snapshot[0].gameVersion as VersionId).map(song => ({
           ...song,
-          gameVersion: getVersionInfo(input.game, snapshot[0].region, requireMaimaiVersion(song.gameVersion))!.shortName,
+          gameVersion: getVersionInfo(input.game, snapshot[0].region, song.gameVersion)!.shortName,
         })),
         iconUrl: snapshot[0].iconUrl,
       };
@@ -634,7 +633,7 @@ export const snapshotsRouter = router({
           levelPrecise: song.levelPrecise,
           type: song.type,
           genre: song.genre,
-          addedVersion: requireMaimaiVersion(song.addedVersion),
+          addedVersion: song.addedVersion as VersionId,
           achievement: song.achievement,
           dxScore: song.dxScore,
           fc: song.fc,

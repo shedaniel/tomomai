@@ -11,7 +11,7 @@ const chart = z.object({
   game: gameIdSchema, songName: z.string(), chartType: count, difficulty: count,
   artist: pending(z.string()).optional(), cover: pending(z.string()).optional(),
   level: pending(z.string()).optional(), levelPrecise: pending(count).optional(),
-  genre: pending(z.string()).optional(), addedVersion: pending(z.number().int().nullable()).optional(),
+  genre: pending(z.string()).optional(), addedVersion: pending(z.number().int()).optional(),
   bpm: pending(count).optional(), noteDesigner: pending(z.string()).optional(),
   noteCounts: pending(notes).optional(), metadata: pending(z.record(z.string(), z.unknown())).optional(),
 });
