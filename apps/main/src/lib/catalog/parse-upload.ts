@@ -10,7 +10,7 @@ const pending = <T extends z.ZodType>(schema: T) => z.union([schema, z.object({ 
 const chart = z.object({
   game: gameIdSchema, songName: z.string(), chartType: count, difficulty: count,
   artist: pending(z.string()).optional(), cover: pending(z.string()).optional(),
-  level: pending(z.string()).optional(), levelPrecise: pending(count.nullable()).optional(),
+  level: pending(z.string()).optional(), levelPrecise: pending(count).optional(),
   genre: pending(z.string()).optional(), addedVersion: pending(z.number().int().nullable()).optional(),
   bpm: pending(count).optional(), noteDesigner: pending(z.string()).optional(),
   noteCounts: pending(notes).optional(), metadata: pending(z.record(z.string(), z.unknown())).optional(),
@@ -20,6 +20,7 @@ const legacyChart = z.object({
   artist: z.string(), cover: z.string(), level: z.enum(LEVEL_ENUM), levelPrecise: count,
   genre: z.string(), addedVersion: z.number().int(), bpm: count.nullable(),
   noteDesigner: z.string().nullable(), noteCounts: notes.nullable(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
 export async function parseCatalogUpload(game: CanonicalGameId, input: unknown) {

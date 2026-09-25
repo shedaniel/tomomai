@@ -1,5 +1,4 @@
 import { requireMaimaiVersion } from "@/lib/games/adapters/maimai/versions";
-import { requireMaimaiConstant } from "@/lib/games/adapters/maimai/chart";
 import { codeToChartType, codeToComboStatus, codeToDifficulty, codeToSyncStatus, codeToTitleType } from "@/lib/maimai/codes";
 import { songInstanceId } from "@/lib/db/song-instance-id";
 import { db } from '@/lib/db';
@@ -351,7 +350,7 @@ export async function prepareCreditData(
         cover: track.cover,
         difficulty: track.difficulty,
         level: track.level,
-        levelPrecise: requireMaimaiConstant(track.levelPrecise),
+        levelPrecise: track.levelPrecise,
         type: track.type,
         addedVersion: requireMaimaiVersion(track.addedVersion),
         details: hasDetails ? {

@@ -656,7 +656,7 @@ export async function persistFetchResult(input: PersistFetchResultInput): Promis
     const rankedScores: RankedResolvedScore[] = [];
     for (const resolved of resolvedScores) {
       const scoreId = scoreDataLookup.get(resolved.dataKey);
-      if (scoreId === undefined || resolved.song.levelPrecise === null || resolved.song.addedVersion === null) continue;
+      if (scoreId === undefined || resolved.song.addedVersion === null) continue;
       rankedScores.push({
         chartId: resolved.song.id.toString(),
         addedVersion: resolved.song.addedVersion,

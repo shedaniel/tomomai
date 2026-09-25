@@ -1,5 +1,4 @@
 import { requireMaimaiVersion } from "@/lib/games/adapters/maimai/versions";
-import { requireMaimaiConstant } from "@/lib/games/adapters/maimai/chart";
 import { maimaiCompatibilityGameSchema } from "@/lib/games/schema";
 import { gameContextInput, validateGameInput } from "./game-input";
 import { fetchUserSnapshots, fetchSnapshotData } from "@/server/queries/snapshots";
@@ -156,7 +155,7 @@ export const snapshotsRouter = router({
           songName: score.songName,
           cover: score.cover,
           difficulty: score.difficulty,
-          levelPrecise: requireMaimaiConstant(score.levelPrecise),
+          levelPrecise: score.levelPrecise,
           addedVersion: requireMaimaiVersion(score.addedVersion),
           achievement: score.achievement,
           fc: score.fc,
@@ -314,7 +313,7 @@ export const snapshotsRouter = router({
         cover: song.cover,
         difficulty: song.difficulty,
         level: song.level,
-        levelPrecise: requireMaimaiConstant(song.levelPrecise),
+        levelPrecise: song.levelPrecise,
         type: song.type,
         genre: song.genre,
         addedVersion: requireMaimaiVersion(song.addedVersion),
@@ -434,7 +433,7 @@ export const snapshotsRouter = router({
           totalPlayCount: snapshot[0].totalPlayCount,
           currentVersionPlayCount: snapshot[0].versionPlayCount,
         },
-        songs: addRatingsAndSort(songsWithScores.map(song => ({ ...song, levelPrecise: requireMaimaiConstant(song.levelPrecise) })), snapshot[0].gameVersion as VersionId).map(song => ({
+        songs: addRatingsAndSort(songsWithScores, snapshot[0].gameVersion as VersionId).map(song => ({
           ...song,
           gameVersion: getVersionInfo(input.game, snapshot[0].region, requireMaimaiVersion(song.gameVersion))!.shortName,
         })),
@@ -632,7 +631,7 @@ export const snapshotsRouter = router({
           cover: song.cover,
           difficulty: song.difficulty,
           level: song.level,
-          levelPrecise: requireMaimaiConstant(song.levelPrecise),
+          levelPrecise: song.levelPrecise,
           type: song.type,
           genre: song.genre,
           addedVersion: requireMaimaiVersion(song.addedVersion),

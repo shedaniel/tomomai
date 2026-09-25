@@ -1,4 +1,3 @@
-import { requireMaimaiConstant } from "@/lib/games/adapters/maimai/chart";
 import type { CanonicalGameId } from "@/lib/games/types";
 import { requireMaimaiQuery } from "./game-scope";
 import { codeToChartType, codeToComboStatus, codeToDifficulty, codeToSyncStatus, difficultyToCode } from "@/lib/maimai/codes";
@@ -79,7 +78,6 @@ export async function fetchPlateSongs(
 
   return filteredSongs.map((song) => ({
     ...song,
-    levelPrecise: requireMaimaiConstant(song.levelPrecise),
     achievement: song.achievement || 0,
     fc: song.fc || "none",
     fs: song.fs || "none",

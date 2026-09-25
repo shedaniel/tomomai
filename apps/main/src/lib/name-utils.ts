@@ -15,8 +15,7 @@ export function normalizeGenre(genre: string) {
   return genre;
 }
 
-export function renderLevelPrecise(levelPrecise: number | null, difficulty: Difficulty) {
-  if (levelPrecise === null) return "—";
+export function renderLevelPrecise(levelPrecise: number, difficulty: Difficulty) {
   if (difficulty === "utage") return Math.floor(levelPrecise / 10) + ".?";
   return (levelPrecise / 10).toFixed(1);
 }

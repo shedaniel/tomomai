@@ -1,5 +1,4 @@
 import { requireMaimaiVersion } from "@/lib/games/adapters/maimai/versions";
-import { requireMaimaiConstant } from "@/lib/games/adapters/maimai/chart";
 import { codeToChartType, codeToComboStatus, codeToDifficulty, codeToSyncStatus, codeToTitleType } from "@/lib/maimai/codes";
 import { songInstanceId } from "@/lib/db/song-instance-id";
 import { db } from '@/lib/db';
@@ -188,11 +187,11 @@ export async function prepareDailyPlaysData(
     songName: row.songName,
     cover: row.cover,
     difficulty: row.difficulty as Difficulty,
-    levelPrecise: requireMaimaiConstant(row.levelPrecise),
+    levelPrecise: row.levelPrecise,
     type: row.type as SongType,
     addedVersion: requireMaimaiVersion(row.addedVersion),
     rating: Math.floor(calculateSongRating(
-      { difficulty: row.difficulty as Difficulty, achievement: row.achievement, fc: row.fc as FullCombo, levelPrecise: requireMaimaiConstant(row.levelPrecise) },
+      { difficulty: row.difficulty as Difficulty, achievement: row.achievement, fc: row.fc as FullCombo, levelPrecise: row.levelPrecise },
       gameVersion,
     )),
   }));

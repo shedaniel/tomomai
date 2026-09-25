@@ -1,4 +1,3 @@
-import { requireMaimaiConstant } from "./adapters/maimai/chart";
 import { hasRatingMetadata } from "./rating";
 import type { fetchSnapshotData, fetchUserSnapshots } from "@/server/queries/snapshots";
 import type { Snapshot, SnapshotWithSongs, EventData } from "@/lib/types";
@@ -56,7 +55,7 @@ export function toMaimaiPlayerSnapshot(data: GameSnapshotData): SnapshotWithSong
       courseRankUrl: data.snapshot.courseRankUrl ?? "", classRankUrl: data.snapshot.classRankUrl ?? "", stars: data.snapshot.stars ?? 0,
       versionPlayCount: data.snapshot.versionPlayCount ?? 0, totalPlayCount: data.snapshot.totalPlayCount ?? 0,
     },
-    songs: data.songs.map(song => ({ ...song, levelPrecise: requireMaimaiConstant(song.levelPrecise), addedVersion: requireMaimaiVersion(song.addedVersion),
+    songs: data.songs.map(song => ({ ...song, addedVersion: requireMaimaiVersion(song.addedVersion),
       achievement: song.scoreValue, dxScore: song.secondaryScore ?? 0, difficulty: codeToDifficulty(song.difficultyCode), type: codeToChartType(song.typeCode), fc: codeToComboStatus(song.comboStatus), fs: codeToSyncStatus(song.syncStatus),
     })),
     events: data.events?.map(event => ({ ...event, eventType: event.eventType ?? "eventArea", currentDistance: event.currentDistance ?? 0, nextRewardDistance: event.nextRewardDistance ?? null, state: event.state ?? "not_started", imageUrl: event.imageUrl ?? "", eventPeriodStart: event.eventPeriodStart ?? null, eventPeriodEnd: event.eventPeriodEnd ?? null })),
@@ -65,6 +64,7 @@ export function toMaimaiPlayerSnapshot(data: GameSnapshotData): SnapshotWithSong
 
 const PLAYER_PRESENTATIONS = {
   maimai: { legacyPanels: true, legacySnapshot: toMaimaiPlayerSnapshot },
+  // TODO: Replace maimai-only rich panels with CHUNITHM presentations as their providers become available.
   chunithm: { legacyPanels: false, legacySnapshot: (_data: GameSnapshotData): SnapshotWithSongs | null => null },
 };
 

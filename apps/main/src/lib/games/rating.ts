@@ -61,6 +61,6 @@ export function selectMaimaiRankings<T extends RankedScore>(scores: T[], current
   return rank(scores, score => score.addedVersion >= newVersionFloor, 15, 35);
 }
 
-export function hasRatingMetadata<T extends { levelPrecise: number | null; addedVersion: number | null }>(score: T): score is T & { levelPrecise: number; addedVersion: number } {
-  return score.levelPrecise !== null && score.addedVersion !== null;
+export function hasRatingMetadata<T extends { addedVersion: number | null }>(score: T): score is T & { addedVersion: number } {
+  return score.addedVersion !== null;
 }

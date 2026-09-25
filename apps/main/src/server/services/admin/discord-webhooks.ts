@@ -46,8 +46,7 @@ function deliverInBackground(work: () => Promise<void>) {
   }
 }
 
-function formatPrecise(value: number | null): string {
-  if (value === null) return "unknown";
+function formatPrecise(value: number): string {
   return (value / 10).toFixed(1);
 }
 
@@ -169,7 +168,7 @@ function buildLabeledChangeDescription(
 ): string {
   let description = "";
 
-  const formatLevelSegment = (chart: { difficulty: string; level: string; levelPrecise: number | null }) =>
+  const formatLevelSegment = (chart: { difficulty: string; level: string; levelPrecise: number }) =>
     `${difficultyShort(chart.difficulty)} ${chart.level} (${chart.levelPrecise ? formatPrecise(chart.levelPrecise) : 'unknown'})`;
 
   // Added charts

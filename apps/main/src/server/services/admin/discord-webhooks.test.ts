@@ -8,7 +8,7 @@ function added(
   songName: string,
   difficulty: Difficulty,
   level: string,
-  levelPrecise: number | undefined,
+  levelPrecise: number,
   type: SongType = "dx",
 ): AddedChange {
   return {
@@ -17,7 +17,7 @@ function added(
     difficulty: difficultyToCode(difficulty),
     chartType: chartTypeToCode(type),
     level,
-    levelPrecise: levelPrecise ?? null,
+    levelPrecise,
     artist: "artist",
   };
 }
@@ -50,9 +50,9 @@ function modifiedField(
 }
 
 describe("buildChangeDescription", () => {
-  it("uses CHUNITHM labels and preserves unknown chart constants", () => {
-    const description = buildChangeDescription("chunithm", [{ songKey: "chart", songName: "Test", artist: "Artist", chartType: 0, difficulty: 4, level: "14+", levelPrecise: null }], [], []);
-    expect(description).toContain("Test STANDARD: ULT 14+ (unknown)");
+  it("uses CHUNITHM chart labels", () => {
+    const description = buildChangeDescription("chunithm", [{ songKey: "chart", songName: "Test", artist: "Artist", chartType: 0, difficulty: 4, level: "14+", levelPrecise: 145 }], [], []);
+    expect(description).toContain("Test STANDARD: ULT 14+ (14.5)");
     expect(description).not.toContain("REMASTER");
   });
   it("groups added charts of one song onto a single difficulty-sorted line", () => {
@@ -94,10 +94,10 @@ describe("buildChangeDescription", () => {
     ]);
   });
 
-  it("renders unknown precise levels and counts charts (not lines) in the header", () => {
+  it("renders precise levels and counts charts (not lines) in the header", () => {
     const description = buildChangeDescription("maimai",
       [
-        added("Slow Glow", "basic", "3", undefined),
+        added("Slow Glow", "basic", "3", 30),
         added("Slow Glow", "advanced", "7", 70),
       ],
       [],
@@ -105,7 +105,7 @@ describe("buildChangeDescription", () => {
     );
 
     expect(description).toContain("**2 Charts Added**");
-    expect(description).toContain("- Slow Glow DX: BAS 3 (unknown) / ADV 7 (7.0)");
+    expect(description).toContain("- Slow Glow DX: BAS 3 (3.0) / ADV 7 (7.0)");
   });
 
   it("groups level changes per song with one segment per difficulty", () => {

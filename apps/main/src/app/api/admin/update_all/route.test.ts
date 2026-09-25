@@ -69,7 +69,7 @@ describe("configured catalog admin pipeline", () => {
     expect(mocks.ingest).not.toHaveBeenCalled();
   });
   it("preserves unknown catalog metadata without fabricating values", async () => {
-    const unknown = { ...chart, levelPrecise: null, addedVersion: null };
+    const unknown = { ...chart, addedVersion: null };
     mocks.collect.mockResolvedValueOnce([unknown]);
     expect((await GET(request("update_all?game=chunithm&region=jp&image_upload=false"))).status).toBe(200);
     expect(mocks.ingest).toHaveBeenCalledWith(expect.objectContaining({ uploadSongs: [unknown] }));
