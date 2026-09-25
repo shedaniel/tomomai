@@ -1,11 +1,14 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { collectCatalog, ingestCatalog } from "./catalog-ingestion";
+import { runFetchers, type Fetcher } from "./catalog-fetcher";
 import { GAME_REGISTRY } from "@/lib/games/registry";
+import type { CatalogFetchContext, PendingChart } from "@/lib/games/catalog-types";
 import type { Logger } from "pino";
 
 vi.mock("./catalog-persistence", () => ({ persistCatalog: vi.fn().mockResolvedValue({ applied: { added: 1 } }) }));
 import { persistCatalog } from "./catalog-persistence";
 const log = { info: vi.fn(), error: vi.fn(), debug: vi.fn(), warn: vi.fn(), trace: vi.fn(), child: vi.fn() } as unknown as Logger;
+log.child = vi.fn(() => log);
 const context = { region: "jp" as const, version: 9, cookies: "", log, notice: { addDetail: vi.fn(), details: [] } };
 afterEach(() => { vi.restoreAllMocks(); vi.clearAllMocks(); });
 
@@ -22,17 +25,66 @@ describe("catalog adapter orchestration", () => {
     } finally { adapter.catalog = old; }
   });
 
-  it.each(["maimai", "chunithm"] as const)("collects %s through its adapter and uses shared persistence without public activation", async game => {
+  it.each(["maimai", "chunithm"] as const)("runs %s steps with cumulative state and attribution before shared persistence", async game => {
     const adapter = GAME_REGISTRY[game].adapter;
     const old = adapter.catalog;
-    const collect = vi.fn().mockResolvedValue([]);
-    adapter.catalog = { configured: true, collect };
+    const events: string[] = [];
+    const source: Fetcher<PendingChart, CatalogFetchContext> = vi.fn(async (ctx, songs) => {
+      events.push("source");
+      expect(ctx.previous).toBeNull();
+      expect(ctx.current).toBe(source);
+      expect(ctx.fetcherIndex).toBe(0);
+      expect(songs).toEqual([]);
+      ctx.notice.addDetail("source detail");
+      return [{ game, songName: "Example", chartType: 0, difficulty: 3, level: "14" }];
+    });
+    const fill: Fetcher<PendingChart, CatalogFetchContext> = vi.fn(async (ctx, songs) => {
+      events.push("fill");
+      expect(ctx.previous).toBe(source);
+      expect(ctx.current).toBe(fill);
+      expect(ctx.fetcherIndex).toBe(1);
+      expect(songs).toEqual([expect.objectContaining({ songName: "Example", level: "14" })]);
+      return songs.map(song => ({ ...song, levelPrecise: 140, addedVersion: 9 }));
+    });
+    const notify = vi.fn().mockResolvedValue(undefined);
+    const validate = vi.fn();
+    adapter.catalog = {
+      configured: true,
+      collect: ctx => runFetchers(ctx, {
+        fetchers: [source, fill], names: [game, "Fill Missing"],
+        key: song => `${song.game}:${song.songName}:${song.difficulty}`, validate,
+        complete: song => ({ game: song.game, songName: song.songName, chartType: song.chartType, difficulty: song.difficulty, level: song.level, levelPrecise: song.levelPrecise, addedVersion: song.addedVersion }),
+        notify,
+      }),
+    };
     try {
-      await expect(collectCatalog(game, context)).resolves.toEqual([]);
-      await expect(ingestCatalog({ game, region: "jp", version: 9, uploadSongs: [], updateMode: "noop", log })).resolves.toEqual({ applied: { added: 1 } });
-      expect(collect).toHaveBeenCalledWith(context);
-      expect(persistCatalog).toHaveBeenCalledWith(game, "jp", 9, [], "noop", log);
+      const records = await collectCatalog(game, context);
+      expect(events).toEqual(["source", "fill"]);
+      expect(records).toEqual([{ game, songName: "Example", chartType: 0, difficulty: 3, level: "14", levelPrecise: 140, addedVersion: 9 }]);
+      expect(validate).toHaveBeenCalledTimes(2);
+      expect(notify).toHaveBeenCalledWith(expect.stringContaining(game), expect.stringContaining("source detail"), expect.any(Number));
+      await expect(ingestCatalog({ game, region: "jp", version: 9, uploadSongs: records, updateMode: "noop", log })).resolves.toEqual({ applied: { added: 1 } });
+      expect(persistCatalog).toHaveBeenCalledWith(game, "jp", 9, records, "noop", log);
       expect(GAME_REGISTRY.chunithm.enabled).toBe(false);
+    } finally { adapter.catalog = old; }
+  });
+
+  it.each(["maimai", "chunithm"] as const)("stops the %s recipe at its failing source step", async game => {
+    const adapter = GAME_REGISTRY[game].adapter;
+    const old = adapter.catalog;
+    const failure = new Error("source failed");
+    const source: Fetcher<PendingChart, CatalogFetchContext> = vi.fn().mockRejectedValue(failure);
+    const fill: Fetcher<PendingChart, CatalogFetchContext> = vi.fn();
+    const complete = vi.fn();
+    adapter.catalog = { configured: true, collect: ctx => runFetchers(ctx, {
+      fetchers: [source, fill], names: [game, "Fill Missing"], key: song => song.songName,
+      validate: vi.fn(), complete,
+    }) };
+    try {
+      await expect(collectCatalog(game, context)).rejects.toBe(failure);
+      expect(fill).not.toHaveBeenCalled();
+      expect(complete).not.toHaveBeenCalled();
+      expect(persistCatalog).not.toHaveBeenCalled();
     } finally { adapter.catalog = old; }
   });
 });

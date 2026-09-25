@@ -1,21 +1,25 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
+import type { CatalogFetchContext, PendingChart } from "@/lib/games/catalog-types";
+import type { CanonicalGameId } from "@/lib/games/types";
+import { runFetchers, type Fetcher } from "@/server/services/games/catalog-fetcher";
+import { normalizeCatalogCharts } from "@/lib/catalog/normalize-charts";
 
 const mocks = vi.hoisted(() => {
   const log = { child: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() };
   log.child.mockReturnValue(log);
-  return { log, collect: vi.fn(), ingest: vi.fn(), publish: vi.fn(), login: vi.fn(), flush: vi.fn(), invalidate: vi.fn() };
+  return { log, source: vi.fn(), enrich: vi.fn(), ingest: vi.fn(), publish: vi.fn(), login: vi.fn(), flush: vi.fn(), invalidate: vi.fn() };
 });
 vi.mock("@/lib/games/adapters/maimai", () => ({ maimaiAdapter: {
   supportedRegions: new Set(["jp", "intl", "cn"]), capabilities: new Set(["catalog"]),
-  catalog: { configured: true, requiresToken: (region: string) => region !== "cn", authenticate: mocks.login },
+  catalog: { configured: true, requiresToken: (region: string) => region !== "cn", authenticate: mocks.login, collect: (ctx: CatalogFetchContext) => runRecipe("maimai", ctx) },
 } }));
 vi.mock("@/lib/games/adapters/chunithm", () => ({ chunithmAdapter: {
-  supportedRegions: new Set(["jp", "intl"]), capabilities: new Set(["rankings", "rating"]), catalog: { configured: true },
+  supportedRegions: new Set(["jp", "intl"]), capabilities: new Set(["rankings", "rating"]), catalog: { configured: true, collect: (ctx: CatalogFetchContext) => runRecipe("chunithm", ctx) },
 } }));
 vi.mock("@/lib/games/versions", () => ({ getCurrentVersion: () => 9, getVersionInfo: () => ({ id: 9 }) }));
 vi.mock("@/lib/games/frontend-server", () => ({ getFrontendGame: () => ({ id: "maimai" }) }));
-vi.mock("@/server/services/games/catalog-ingestion", () => ({ collectCatalog: mocks.collect, ingestCatalog: mocks.ingest }));
+vi.mock("@/server/services/games/catalog-persistence", () => ({ persistCatalog: mocks.ingest }));
 vi.mock("@/server/services/admin/song-catalog", () => ({ publishSongCatalog: mocks.publish }));
 vi.mock("@/server/services/admin/discord-webhooks", () => ({ sendDiscordNotice: vi.fn().mockResolvedValue(undefined), sendDiscordWebhook: vi.fn().mockResolvedValue(undefined) }));
 vi.mock("@/server/services/admin/fetcher-utils", () => ({ createNoticeSink: () => ({ details: [], addDetail() {} }) }));
@@ -30,6 +34,16 @@ import { GET as collect } from "../update/route";
 import { POST as upload } from "../upload/route";
 import { GAME_REGISTRY, resolveGameContext } from "@/lib/games/registry";
 
+async function runRecipe(game: CanonicalGameId, context: CatalogFetchContext) {
+  const source: Fetcher<PendingChart, CatalogFetchContext> = (ctx, songs) => mocks.source(game, ctx, songs);
+  const enrich: Fetcher<PendingChart, CatalogFetchContext> = (ctx, songs) => mocks.enrich(game, ctx, songs);
+  return runFetchers(context, {
+    fetchers: [source, enrich], names: [`${game} source`, `${game} metadata`],
+    key: song => `${song.songName}:${song.chartType}:${song.difficulty}`,
+    validate: () => {}, complete: song => normalizeCatalogCharts(game, [song])[0],
+  });
+}
+
 const chart = { game: "chunithm", songName: "Example", artist: "Artist", chartType: 0, difficulty: 4, level: "14+", levelPrecise: 145, addedVersion: 9, cover: "https://example.test/cover.jpg", genre: "Original" };
 function request(path: string, token: string | null = "admin-secret") {
   return new NextRequest(`https://example.test/api/admin/${path}`, { headers: token ? { authorization: `Bearer ${token}` } : {} });
@@ -38,7 +52,8 @@ beforeEach(() => {
   vi.clearAllMocks();
   vi.stubEnv("ADMIN_UPDATE_TOKEN", "admin-secret");
   vi.stubEnv("FRONTEND_GAME", "maimai");
-  mocks.collect.mockResolvedValue([chart]);
+  mocks.source.mockImplementation(async (game: CanonicalGameId) => [{ ...chart, game }]);
+  mocks.enrich.mockImplementation(async (_game: CanonicalGameId, _ctx: CatalogFetchContext, songs: PendingChart[]) => songs);
   mocks.ingest.mockResolvedValue({ dbSongs: [], mergedSongs: [chart], changes: { added: [], modified: [], deleted: [], unchanged: [] }, applied: { added: 1, modified: 0, deleted: 0 }, mergeEvents: [], addedSongs: [chart] });
   mocks.publish.mockResolvedValue({ songCount: 1 });
   mocks.login.mockResolvedValue("source-cookie");
@@ -57,21 +72,24 @@ describe("configured catalog admin pipeline", () => {
     const response = await GET(request("update_all?game=chunithm&region=jp&image_upload=false"));
     expect(response.status).toBe(200);
     expect(mocks.login).not.toHaveBeenCalled();
-    expect(mocks.collect).toHaveBeenCalledWith("chunithm", expect.objectContaining({ region: "jp", cookies: "" }));
-    expect(mocks.ingest).toHaveBeenCalledWith(expect.objectContaining({ game: "chunithm", region: "jp", uploadSongs: [chart], updateMode: "alter" }));
+    expect(mocks.source).toHaveBeenCalledWith("chunithm", expect.objectContaining({ region: "jp", cookies: "", fetcherIndex: 0, previous: null }), []);
+    expect(mocks.enrich).toHaveBeenCalledWith("chunithm", expect.objectContaining({ fetcherIndex: 1, previous: expect.any(Function) }), [expect.objectContaining(chart)]);
+    expect(mocks.ingest).toHaveBeenCalledWith("chunithm", "jp", 9, [chart], "alter", mocks.log);
     expect(mocks.publish).toHaveBeenCalledWith("chunithm");
     expect(mocks.invalidate).toHaveBeenCalledWith("all-unique-songs:chunithm", { expire: 3600 });
     expect(() => resolveGameContext("chunithm", "jp")).toThrow("not enabled");
   });
   it.each([[null, 401], ["wrong", 403]] as const)("rejects unauthorized requests before collection", async (token, status) => {
     expect((await GET(request("update_all?game=chunithm&region=jp", token))).status).toBe(status);
-    expect(mocks.collect).not.toHaveBeenCalled();
+    expect(mocks.source).not.toHaveBeenCalled();
     expect(mocks.ingest).not.toHaveBeenCalled();
   });
   it.each([null, undefined, "unknown"])("rejects unresolved introduction version %s before persistence", async addedVersion => {
-    const unknown = { ...chart, addedVersion };
-    mocks.collect.mockResolvedValueOnce([unknown]);
-    expect((await GET(request("update_all?game=chunithm&region=jp&image_upload=false"))).status).toBe(400);
+    const req = new NextRequest("https://example.test/api/admin/upload?game=chunithm&region=jp&version=9", {
+      method: "POST", headers: { authorization: "Bearer admin-secret", "content-type": "application/json" },
+      body: JSON.stringify({ songs: [{ ...chart, addedVersion }] }),
+    });
+    expect((await upload(req)).status).toBe(400);
     expect(mocks.ingest).not.toHaveBeenCalled();
   });
   it("rejects cross-game upload records before persistence", async () => {
@@ -84,22 +102,25 @@ describe("configured catalog admin pipeline", () => {
   });
   it("rejects an unsupported CHUNITHM region", async () => {
     expect((await GET(request("update_all?game=chunithm&region=cn"))).status).toBe(400);
-    expect(mocks.collect).not.toHaveBeenCalled();
+    expect(mocks.source).not.toHaveBeenCalled();
   });
   it("still requires maimai source authentication for JP", async () => {
     expect((await GET(request("update_all?game=maimai&region=jp"))).status).toBe(400);
-    expect(mocks.collect).not.toHaveBeenCalled();
+    expect(mocks.source).not.toHaveBeenCalled();
     const response = await collect(request("update?game=maimai&region=jp&token=player-token"));
     expect(response.status).toBe(200);
     expect(mocks.login).toHaveBeenCalledWith("jp", "player-token");
+    expect(mocks.source).toHaveBeenCalledWith("maimai", expect.objectContaining({ cookies: "source-cookie", fetcherIndex: 0 }), []);
+    expect(mocks.enrich).toHaveBeenCalledWith("maimai", expect.objectContaining({ fetcherIndex: 1 }), [expect.objectContaining({ ...chart, game: "maimai" })]);
   });
   it("keeps maimai CN source token-free", async () => {
     expect((await collect(request("update?game=maimai&region=cn"))).status).toBe(200);
     expect(mocks.login).not.toHaveBeenCalled();
   });
-  it("does not upload or publish if collection fails", async () => {
-    mocks.collect.mockRejectedValueOnce(new Error("source unavailable"));
-    expect((await GET(request("update_all?game=chunithm&region=jp&image_upload=false"))).status).toBe(500);
+  it.each(["maimai", "chunithm"] as const)("does not upload or publish when a %s source step fails", async game => {
+    mocks.source.mockRejectedValueOnce(new Error("source unavailable"));
+    expect((await GET(request(`update_all?game=${game}&region=jp&image_upload=false&token=player-token`))).status).toBe(500);
+    expect(mocks.enrich).not.toHaveBeenCalled();
     expect(mocks.ingest).not.toHaveBeenCalled();
     expect(mocks.publish).not.toHaveBeenCalled();
   });
