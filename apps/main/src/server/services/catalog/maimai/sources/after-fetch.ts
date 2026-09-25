@@ -5,8 +5,9 @@ import { normalizeGenre } from "@/lib/name-utils";
 import { type Logger } from "pino";
 import pLimit from "p-limit";
 import { levelToPrecise } from "@/server/utils/level";
-import { value } from "@/server/utils/admin/type";
-import { key, SongFetcher } from "./fetcher-utils";
+import { value } from "@/server/services/catalog/ingestion/types";
+import { key } from "../merge";
+import type { SongFetcher } from "../types";
 
 export const MaimaiAfterFetcher: SongFetcher = async (context, songs) => {
   const limit = pLimit(5);

@@ -1,23 +1,30 @@
-import { createSorterFetcher } from "../games/catalog-stages";
-import { runFetchers, requireCatalogValue, type FetchingContextExtended as SharedFetchingContextExtended } from "../games/catalog-fetcher";
-import type { CatalogLogger } from "@/lib/games/catalog-types";
-import { UpdateSong } from "@/lib/types/update";
-import { PendingSong, value } from "@/server/utils/admin/type";
-import { DxDataFetcher } from "./dxrating";
-import { FallbackFetcher } from "./fallback";
-import { MaimaiAfterFetcher } from "./maimai-after-fetch";
-import { MaimaiBaseFetcher } from "./maimai-base-songs";
-import { MaimaiScraperFetcher } from "./maimai-scraper";
-import { OtogeDbFetcher } from "./otoge-db";
-import { LxnsFetcher } from "./maimai-lxns";
+import type { VersionId } from "@/lib/metadata";
+import type { Logger } from "pino";
+import { getCurrentVersion } from "@/lib/games/versions";
+import type { CatalogFetchContext } from "../ingestion/types";
+import type { CatalogSourceAdapter } from "@/lib/games/types";
+import { toPendingChart } from "./normalize";
+import { createSorterFetcher } from "../ingestion/stages";
+import { runFetchers, requireCatalogValue } from "../ingestion/runner";
+import type { CatalogLogger } from "@/server/services/catalog/ingestion/types";
+import { UpdateSong } from "@/server/services/catalog/maimai/types";
+import type { PendingSong } from "@/server/services/catalog/maimai/types";
+import { value } from "@/server/services/catalog/ingestion/types";
+import { DxDataFetcher } from "./sources/dxrating";
+import { FallbackFetcher } from "./sources/fallback";
+import { MaimaiAfterFetcher } from "./sources/after-fetch";
+import { MaimaiBaseFetcher } from "./sources/base-songs";
+import { MaimaiScraperFetcher } from "./sources/scraper";
+import { OtogeDbFetcher } from "./sources/otoge-db";
+import { LxnsFetcher } from "./sources/lxns";
 import { Region } from "@/lib/types";
 import { normalizeGenre, normalizeName } from "@/lib/name-utils";
 import { isNullOrUndefined } from "@/lib/utils";
 import { FillMissingFetcher } from "./fill-level";
-import { FetchingContext, key, SongFetcher } from "./fetcher-utils";
-import { sendDiscordNotice } from "./discord-webhooks";
+import { key } from "./merge";
+import type { FetchingContext, SongFetcher } from "./types";
+import { sendDiscordNotice } from "../notifications";
 
-export type FetchingContextExtended = SharedFetchingContextExtended<PendingSong, FetchingContext>;
 
 export const SorterFetcher: SongFetcher = createSorterFetcher<PendingSong, FetchingContext>((a, b) =>
   a.songName.localeCompare(b.songName) * 10000000 + value(a.artist || "").localeCompare(value(b.artist || "")) * 100000 + a.difficulty.localeCompare(b.difficulty) * 1000 + a.type.localeCompare(b.type));
@@ -138,3 +145,30 @@ export async function fetchLevels(context: FetchingContext): Promise<UpdateSong[
     },
   });
 }
+
+export const maimaiCatalogAdapter: CatalogSourceAdapter = {
+  configured: true,
+  requiresToken: region => region !== "cn",
+  async authenticate(region, token) {
+    if (region === "cn") return "";
+    const { loginAndGetCookies } = await import("@/server/services/maimai-login");
+    return loginAndGetCookies(region, token);
+  },
+  getStages(region) {
+    return { names: [...getFetchersForRegion(region).names] };
+  },
+  resolveVersion(region) {
+    return getCurrentVersion("maimai", region);
+  },
+  async collect(ctx: CatalogFetchContext) {
+    const songs = await fetchLevels({
+      region: ctx.region,
+      version: ctx.version as VersionId,
+      cookies: ctx.cookies ?? "",
+      forceMode: ctx.forceMode,
+      log: ctx.log as unknown as Logger,
+      notice: ctx.notice,
+    });
+    return songs.map(toPendingChart);
+  },
+};

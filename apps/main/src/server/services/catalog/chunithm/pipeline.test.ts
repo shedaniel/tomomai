@@ -1,12 +1,12 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { CatalogFetchContext, CatalogLogger } from "../../catalog-types";
-import { chunithmCatalogAdapter } from "./catalog";
-import { normalizeOtogeDbCatalog, validateOtogeDbVersionMetadata } from "./otoge-db";
-import { sendDiscordNotice } from "@/server/services/admin/discord-webhooks";
+import type { CatalogFetchContext, CatalogLogger } from "../ingestion/types";
+import { chunithmCatalogAdapter } from "./pipeline";
+import { normalizeOtogeDbCatalog, validateOtogeDbVersionMetadata } from "./sources/otoge-db";
+import { sendDiscordNotice } from "@/server/services/catalog/notifications";
 import jpFixture from "./fixtures/otoge-db-jp.json";
 import intlFixture from "./fixtures/otoge-db-intl.json";
 
-vi.mock("@/server/services/admin/discord-webhooks", () => ({ sendDiscordNotice: vi.fn(async () => undefined) }));
+vi.mock("@/server/services/catalog/notifications", () => ({ sendDiscordNotice: vi.fn(async () => undefined) }));
 
 const versionMetadata = 'CURRENT_JP_VER = "Mate"\nCURRENT_INTL_VER = "X-VERSE-X"\n';
 

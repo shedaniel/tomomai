@@ -1,16 +1,20 @@
 import { describe, it, expect, beforeAll } from "vitest";
-import { PendingSong, value } from "@/server/utils/admin/type";
+import type { PendingSong } from "@/server/services/catalog/maimai/types";
+import { value } from "@/server/services/catalog/ingestion/types";
 import type { Logger } from "pino";
 import { getCurrentVersion, VersionId } from "@/lib/metadata";
 import { loginAndGetCookies } from "@/server/services/maimai-login";
-import { MaimaiBaseFetcher } from "./maimai-base-songs";
-import { DxDataFetcher } from "./dxrating";
-import { FETCHERS, FetchingContextExtended } from "./level-fetcher";
-import { asFetcher, FetchingContext, key, mergeSongs, SongFetcher } from "./fetcher-utils";
-import { fetchSongDataForDifficulty, parsedSongToPendingSong } from "./maimai-scraper";
+import { MaimaiBaseFetcher } from "./sources/base-songs";
+import { DxDataFetcher } from "./sources/dxrating";
+import { FETCHERS } from "./pipeline";
+import type { FetchingContextExtended } from "./types";
+import { asFetcher, key, mergeSongs } from "./merge";
+import type { FetchingContext, SongFetcher } from "./types";
+import { fetchSongDataForDifficulty, parsedSongToPendingSong } from "./sources/scraper";
 
 // Skip this test suite if TOKEN environment variable is not provided
 const TOKEN = process.env.TOKEN;
+const testLog = createTestLogger();
 const shouldSkip = !TOKEN;
 
 // Mock logger for testing
@@ -66,9 +70,9 @@ describe.skipIf(shouldSkip)("Integration: LevelFetcher", () => {
     const version = getCurrentVersion(region);
 
     // Login and get cookies
-    console.log("Logging in to get cookies...");
+    testLog.info("Logging in to get cookies...");
     cookies = await loginAndGetCookies(region, TOKEN);
-    console.log("Login successful, cookies obtained");
+    testLog.info("Login successful, cookies obtained");
 
     // Create base context
     context = {
@@ -82,7 +86,7 @@ describe.skipIf(shouldSkip)("Integration: LevelFetcher", () => {
 
   it("should fetch and merge songs from ScaledMaimaiScraperFetcher and MaimaiBaseFetcher", async () => {
     // Step 1: Run ScaledMaimaiScraperFetcher (only master, version 11)
-    console.log("Running ScaledMaimaiScraperFetcher (master difficulty, version 11)...");
+    testLog.info("Running ScaledMaimaiScraperFetcher (master difficulty, version 11)...");
     const scraperContext = {
       ...context,
       previous: null,
@@ -91,7 +95,7 @@ describe.skipIf(shouldSkip)("Integration: LevelFetcher", () => {
     };
 
     const scraperSongs = await ScaledMaimaiScraperFetcher(11)(scraperContext, []);
-    console.log(`ScaledMaimaiScraperFetcher returned ${scraperSongs.length} songs`);
+    testLog.info(`ScaledMaimaiScraperFetcher returned ${scraperSongs.length} songs`);
 
     // Validate scraper results
     expect(scraperSongs.length).toBeGreaterThan(0);
@@ -118,7 +122,7 @@ describe.skipIf(shouldSkip)("Integration: LevelFetcher", () => {
     expect(value(sampleScraperSong.genre)).toBeUndefined();
 
     // Step 2: Run MaimaiBaseFetcher with scraper results
-    console.log("Running MaimaiBaseFetcher...");
+    testLog.info("Running MaimaiBaseFetcher...");
     const baseContext = {
       ...context,
       previous: ScaledMaimaiScraperFetcher(11) as SongFetcher,
@@ -127,7 +131,7 @@ describe.skipIf(shouldSkip)("Integration: LevelFetcher", () => {
     };
 
     const mergedSongs = await MaimaiBaseFetcher(baseContext, scraperSongs);
-    console.log(`MaimaiBaseFetcher returned ${mergedSongs.length} songs`);
+    testLog.info(`MaimaiBaseFetcher returned ${mergedSongs.length} songs`);
 
     // Validate merged results
     expect(mergedSongs.length).toBeGreaterThan(0);
@@ -156,11 +160,11 @@ describe.skipIf(shouldSkip)("Integration: LevelFetcher", () => {
     const songsWithCover = mergedSongs.filter(s => value(s.cover)).length;
     const songsWithGenre = mergedSongs.filter(s => value(s.genre)).length;
 
-    console.log(`Songs with artist: ${songsWithArtist}/${mergedSongs.length}`);
-    console.log(`Songs with cover: ${songsWithCover}/${mergedSongs.length}`);
-    console.log(`Songs with genre: ${songsWithGenre}/${mergedSongs.length}`);
+    testLog.info(`Songs with artist: ${songsWithArtist}/${mergedSongs.length}`);
+    testLog.info(`Songs with cover: ${songsWithCover}/${mergedSongs.length}`);
+    testLog.info(`Songs with genre: ${songsWithGenre}/${mergedSongs.length}`);
 
-    console.log(`Songs without artist: ${mergedSongs.filter(s => !value(s.artist)).map(key).join(', ')}`)
+    testLog.info(`Songs without artist: ${mergedSongs.filter(s => !value(s.artist)).map(key).join(', ')}`)
 
     // Most songs should have been enriched (allowing for some missing data)
     expect(songsWithArtist).toBeGreaterThan(mergedSongs.length * 0.8);
@@ -277,7 +281,7 @@ describe.skipIf(shouldSkip)("Integration: LevelFetcher", () => {
 
   it("should fetch and merge through DxDataFetcher pipeline", async () => {
     // Step 1: Run ScaledMaimaiScraperFetcher
-    console.log("Running ScaledMaimaiScraperFetcher...");
+    testLog.info("Running ScaledMaimaiScraperFetcher...");
     const scraperContext = {
       ...context,
       previous: null,
@@ -285,11 +289,11 @@ describe.skipIf(shouldSkip)("Integration: LevelFetcher", () => {
       fetcherIndex: 0,
     };
     const scraperSongs = await ScaledMaimaiScraperFetcher(11)(scraperContext, []);
-    console.log(`ScaledMaimaiScraperFetcher returned ${scraperSongs.length} songs`);
+    testLog.info(`ScaledMaimaiScraperFetcher returned ${scraperSongs.length} songs`);
     expect(scraperSongs.length).toBeGreaterThan(0);
 
     // Step 2: Run MaimaiBaseFetcher
-    console.log("Running MaimaiBaseFetcher...");
+    testLog.info("Running MaimaiBaseFetcher...");
     const baseContext = {
       ...context,
       previous: ScaledMaimaiScraperFetcher(11) as SongFetcher,
@@ -297,11 +301,11 @@ describe.skipIf(shouldSkip)("Integration: LevelFetcher", () => {
       fetcherIndex: 1,
     };
     const baseSongs = await MaimaiBaseFetcher(baseContext, scraperSongs);
-    console.log(`MaimaiBaseFetcher returned ${baseSongs.length} songs`);
+    testLog.info(`MaimaiBaseFetcher returned ${baseSongs.length} songs`);
     expect(baseSongs.length).toBe(scraperSongs.length);
 
     // Step 3: Run DxDataFetcher
-    console.log("Running DxDataFetcher...");
+    testLog.info("Running DxDataFetcher...");
     const dxDataContext = {
       ...context,
       previous: MaimaiBaseFetcher as SongFetcher,
@@ -309,7 +313,7 @@ describe.skipIf(shouldSkip)("Integration: LevelFetcher", () => {
       fetcherIndex: 2,
     };
     const finalSongs = await DxDataFetcher(dxDataContext, baseSongs);
-    console.log(`DxDataFetcher returned ${finalSongs.length} songs`);
+    testLog.info(`DxDataFetcher returned ${finalSongs.length} songs`);
     expect(finalSongs.length).toBe(baseSongs.length);
 
     // Find a song that has been fully enriched with all three fetchers
@@ -349,11 +353,11 @@ describe.skipIf(shouldSkip)("Integration: LevelFetcher", () => {
     const songsWithNoteCounts = finalSongs.filter(s => value(s.noteCounts) !== undefined).length;
     const songsWithGenre = finalSongs.filter(s => value(s.genre) !== undefined).length;
 
-    console.log(`Songs with levelPrecise: ${songsWithLevelPrecise}/${finalSongs.length}`);
-    console.log(`Songs with bpm: ${songsWithBpm}/${finalSongs.length}`);
-    console.log(`Songs with noteDesigner: ${songsWithNoteDesigner}/${finalSongs.length}`);
-    console.log(`Songs with noteCounts: ${songsWithNoteCounts}/${finalSongs.length}`);
-    console.log(`Songs with genre: ${songsWithGenre}/${finalSongs.length}`);
+    testLog.info(`Songs with levelPrecise: ${songsWithLevelPrecise}/${finalSongs.length}`);
+    testLog.info(`Songs with bpm: ${songsWithBpm}/${finalSongs.length}`);
+    testLog.info(`Songs with noteDesigner: ${songsWithNoteDesigner}/${finalSongs.length}`);
+    testLog.info(`Songs with noteCounts: ${songsWithNoteCounts}/${finalSongs.length}`);
+    testLog.info(`Songs with genre: ${songsWithGenre}/${finalSongs.length}`);
 
     // Most songs should have been enriched with DxData (allowing for some missing data)
     expect(songsWithLevelPrecise).toBeGreaterThan(finalSongs.length * 0.7);
@@ -384,7 +388,7 @@ describe.skipIf(shouldSkip)("Integration: LevelFetcher", () => {
   }, 60000);
 
   it.only("should handle Link properly", async () => {
-    console.log("Running ScaledMaimaiScraperFetcher...");
+    testLog.info("Running ScaledMaimaiScraperFetcher...");
     const fetchers = [...FETCHERS]
     // remove first fetcher
     fetchers.splice(0, 1);
@@ -400,16 +404,16 @@ describe.skipIf(shouldSkip)("Integration: LevelFetcher", () => {
       ...await ScaledMaimaiScraperFetcher(-12)(scraperContext, []),
       ...await ScaledMaimaiScraperFetcher(-9)(scraperContext, []),
     ].filter(s => s.songName === "Link" && s.difficulty === "master")
-    console.log(`At base: ${songs.length} songs with ${songs.map(s => key(s) + "@" + value(s.artist) + "@" + value(s.addedVersion))}`);
+    testLog.info(`At base: ${songs.length} songs with ${songs.map(s => key(s) + "@" + value(s.artist) + "@" + value(s.addedVersion))}`);
 
     for (const fetcher of fetchers) {
       scraperContext.current = fetcher;
       scraperContext.forceMode = "default"
       const newSongs = (await fetcher(scraperContext, [])).filter(s => s.songName === "Link" && s.difficulty === "master");
-      console.log(`At #${scraperContext.fetcherIndex}: got ${newSongs.length} songs with ${newSongs.map(s => key(s) + "@" + value(s.artist) + "@" + value(s.addedVersion))}`);
+      testLog.info(`At #${scraperContext.fetcherIndex}: got ${newSongs.length} songs with ${newSongs.map(s => key(s) + "@" + value(s.artist) + "@" + value(s.addedVersion))}`);
       scraperContext.forceMode = undefined
       songs = (await fetcher(scraperContext, songs)).filter(s => s.songName === "Link" && s.difficulty === "master");
-      console.log(`Merged #${scraperContext.fetcherIndex}: got ${songs.length} songs with ${songs.map(s => key(s) + "@" + value(s.artist) + "@" + value(s.addedVersion))}`);
+      testLog.info(`Merged #${scraperContext.fetcherIndex}: got ${songs.length} songs with ${songs.map(s => key(s) + "@" + value(s.artist) + "@" + value(s.addedVersion))}`);
       scraperContext.previous = fetcher;
       scraperContext.fetcherIndex++;
     }

@@ -4,10 +4,12 @@ import { musicTypeFromIcon } from "@/lib/maimai/parse-utils";
 import { VersionId } from "@/lib/metadata";
 import { normalizeName } from "@/lib/name-utils";
 import { Difficulty, Level, Region, SongType } from "@/lib/types";
-import { ParsedSong } from "@/lib/types/update";
-import { important, PendingSong } from "@/server/utils/admin/type";
+import { ParsedSong } from "@/server/services/catalog/maimai/types";
+import type { PendingSong } from "@/server/services/catalog/maimai/types";
+import { important } from "@/server/services/catalog/ingestion/types";
 import { load } from "cheerio";
-import { asFetcher, NoticeSink } from "./fetcher-utils";
+import { asFetcher } from "../merge";
+import type { NoticeSink } from "../../ingestion/types";
 import { type Logger } from "pino";
 import { DIFFICULTY_ENUM } from "@/lib/db/types";
 

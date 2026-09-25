@@ -1,9 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { PendingSong, value, important, Pending } from "@/server/utils/admin/type";
+import type { PendingSong } from "@/server/services/catalog/maimai/types";
+import { value, important, Pending } from "@/server/services/catalog/ingestion/types";
 import type { Logger } from "pino";
 import { Difficulty, SongType } from "@/lib/types";
 import { VersionId } from "@/lib/metadata";
-import { merger, mergeSongs, taker } from "./fetcher-utils";
+import { merger, mergeSongs, taker } from "./merge";
 
 // Helper to create a basic song for testing
 function createSong(

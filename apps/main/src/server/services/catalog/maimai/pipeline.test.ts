@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import pino from "pino";
-import type { PendingSong } from "@/server/utils/admin/type";
-import { value } from "@/server/utils/admin/type";
+import type { PendingSong } from "@/server/services/catalog/maimai/types";
+import { value } from "@/server/services/catalog/ingestion/types";
 
 const state = vi.hoisted(() => ({ order: [] as string[], incomplete: false }));
 function fixtureStep(name: string) {
@@ -12,16 +12,16 @@ function fixtureStep(name: string) {
       artist: state.incomplete ? undefined : "Artist", cover: "image", genre: "Original", addedVersion: 8 }));
   };
 }
-vi.mock("./maimai-scraper", () => ({ MaimaiScraperFetcher: fixtureStep("scraper") }));
-vi.mock("./maimai-base-songs", () => ({ MaimaiBaseFetcher: fixtureStep("base") }));
-vi.mock("./dxrating", () => ({ DxDataFetcher: fixtureStep("dxdata") }));
-vi.mock("./fallback", () => ({ FallbackFetcher: fixtureStep("fallback") }));
-vi.mock("./otoge-db", () => ({ OtogeDbFetcher: fixtureStep("otoge") }));
-vi.mock("./maimai-after-fetch", () => ({ MaimaiAfterFetcher: fixtureStep("after") }));
-vi.mock("./maimai-lxns", () => ({ LxnsFetcher: fixtureStep("lxns") }));
-vi.mock("./discord-webhooks", () => ({ sendDiscordNotice: vi.fn().mockResolvedValue(undefined) }));
-import { fetchLevels, getFetchersForRegion } from "./level-fetcher";
-import { sendDiscordNotice } from "./discord-webhooks";
+vi.mock("./sources/scraper", () => ({ MaimaiScraperFetcher: fixtureStep("scraper") }));
+vi.mock("./sources/base-songs", () => ({ MaimaiBaseFetcher: fixtureStep("base") }));
+vi.mock("./sources/dxrating", () => ({ DxDataFetcher: fixtureStep("dxdata") }));
+vi.mock("./sources/fallback", () => ({ FallbackFetcher: fixtureStep("fallback") }));
+vi.mock("./sources/otoge-db", () => ({ OtogeDbFetcher: fixtureStep("otoge") }));
+vi.mock("./sources/after-fetch", () => ({ MaimaiAfterFetcher: fixtureStep("after") }));
+vi.mock("./sources/lxns", () => ({ LxnsFetcher: fixtureStep("lxns") }));
+vi.mock("../notifications", () => ({ sendDiscordNotice: vi.fn().mockResolvedValue(undefined) }));
+import { fetchLevels, getFetchersForRegion } from "./pipeline";
+import { sendDiscordNotice } from "../notifications";
 
 beforeEach(() => { state.order = []; state.incomplete = false; vi.clearAllMocks(); });
 const context = (region: "jp" | "intl" | "cn") => ({ region, version: 9 as const, cookies: "",

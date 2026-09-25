@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import pino from "pino";
-import type { FetchingContextExtended } from "./level-fetcher";
-import type { PendingSong } from "@/server/utils/admin/type";
+import type { FetchingContextExtended } from "./types";
+import type { PendingSong } from "@/server/services/catalog/maimai/types";
 import { FillMissingFetcher } from "./fill-level";
 
 function context(version: 8 | 9): FetchingContextExtended {

@@ -1,4 +1,4 @@
-import { Difficulty, NoteCounts, SongType } from "../types";
+import { Difficulty, NoteCounts, SongType } from "@/lib/types";
 
 type Response = {
   songs: Song[];

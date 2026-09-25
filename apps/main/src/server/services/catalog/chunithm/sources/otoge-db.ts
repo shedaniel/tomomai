@@ -1,8 +1,8 @@
 import { z } from "zod";
 import type { Region } from "@/lib/types";
-import type { CatalogFetchContext, PendingChart } from "../../catalog-types";
-import { GameAdapterError } from "../../types";
-import { CHUNITHM_VERSIONS, ChunithmVersions, chunithmVersionProvider } from "./versions";
+import type { CatalogFetchContext, PendingChart } from "../../ingestion/types";
+import { GameAdapterError } from "@/lib/games/types";
+import { CHUNITHM_VERSIONS, ChunithmVersions, chunithmVersionProvider } from "@/lib/games/adapters/chunithm/versions";
 
 const SOURCE_ROOT = "https://raw.githubusercontent.com/zvuc/otoge-db/main/chunithm";
 const VERSION_METADATA_URL = "https://raw.githubusercontent.com/zvuc/otoge-db/main/scripts/chunithm/game.py";

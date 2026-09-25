@@ -1,29 +1,9 @@
-import { VersionId } from "@/lib/metadata";
-import { Difficulty, Region, SongType } from "@/lib/types";
-import { isImportant, Pending, PendingSong, unwrapUndefined, value } from "@/server/utils/admin/type";
-import type { Logger as PinoLogger } from "pino";
-import type { CatalogLogger as Logger } from "@/lib/games/catalog-types";
-import { asFetcher as sourceFetcher, mergeSongs as mergeSourceSongs, choosePendingValue } from "../games/catalog-merge";
-import type { Fetcher, Attributed } from "../games/catalog-fetcher";
-import type { FetcherMode } from "../games/catalog-merge";
-import type { NoticeSink } from "@/lib/games/catalog-types";
-export { createNoticeSink } from "../games/catalog-fetcher";
-export type { FetcherMode } from "../games/catalog-merge";
-export type { NoticeSink } from "@/lib/games/catalog-types";
+import type { PendingSong, SongKey, FetchingContext, SongFetcher, SongWithMode } from "./types";
+import { isImportant, Pending, unwrapUndefined, value } from "@/server/services/catalog/ingestion/types";
+import type { CatalogLogger as Logger } from "@/server/services/catalog/ingestion/types";
+import { asFetcher as sourceFetcher, mergeSongs as mergeSourceSongs, choosePendingValue } from "../ingestion/merge";
+import type { FetcherMode } from "../ingestion/merge";
 import deepEqual from "deep-equal";
-
-export type SongKey = `${string}@${SongType}@${Difficulty}`;
-export type FetchingContext = {
-  region: Region;
-  version: VersionId;
-  cookies: string;
-  log: PinoLogger;
-  forceMode?: FetcherMode;
-  notice: NoticeSink;
-};
-export type SongFetcher = Fetcher<PendingSong, FetchingContext>;
-export type SongWithOrigin = Attributed<PendingSong>;
-export type SongWithMode = PendingSong & { mode: FetcherMode | undefined } | PendingSong
 
 type Taker<T> = (a: PendingSong, b: PendingSong, av: Pending<T>, bv: Pending<T>, fieldName: string) => Pending<T>;
 

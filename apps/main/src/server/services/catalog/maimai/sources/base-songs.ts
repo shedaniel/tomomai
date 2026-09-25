@@ -1,9 +1,10 @@
 import { Difficulty, Level, Region, SongType } from "@/lib/types";
-import { OfficialSong } from "@/lib/types/update";
-import { asFetcher } from "./fetcher-utils";
+import { OfficialSong } from "@/server/services/catalog/maimai/types";
+import { asFetcher } from "../merge";
 import { maimaiBaseUrl } from "@/lib/maimai/http";
 import { normalizeGenre, normalizeName } from "@/lib/name-utils";
-import { important, PendingSong } from "@/server/utils/admin/type";
+import type { PendingSong } from "@/server/services/catalog/maimai/types";
+import { important } from "@/server/services/catalog/ingestion/types";
 import { getVersionByShortCode } from "@/lib/metadata";
 
 const MAIMAI_SONGS_JSON_URL = "https://maimai.sega.jp/data/maimai_songs.json";

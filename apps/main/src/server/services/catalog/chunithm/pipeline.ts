@@ -1,12 +1,12 @@
 import type { NoteCounts } from "@/lib/types";
-import { catalogChartKey, normalizeCatalogCharts, type CatalogChart } from "@/lib/catalog/normalize-charts";
-import { sendDiscordNotice } from "@/server/services/admin/discord-webhooks";
-import { requireCatalogValue, runFetchers, type Fetcher, type FetcherDefinition } from "@/server/services/games/catalog-fetcher";
-import { asFetcher, choosePendingValue, pendingValue } from "@/server/services/games/catalog-merge";
-import { createFillMissingFetcher, createSorterFetcher } from "@/server/services/games/catalog-stages";
-import type { CatalogFetchContext, PendingChart } from "../../catalog-types";
-import type { CatalogSourceAdapter } from "../../types";
-import { fetchOtogeDbCatalog, getOtogeDbSource } from "./otoge-db";
+import { catalogChartKey, normalizeCatalogCharts, type CatalogChart } from "@/server/services/catalog/ingestion/normalize-charts";
+import { sendDiscordNotice } from "@/server/services/catalog/notifications";
+import { requireCatalogValue, runFetchers, type Fetcher, type FetcherDefinition } from "@/server/services/catalog/ingestion/runner";
+import { asFetcher, choosePendingValue } from "@/server/services/catalog/ingestion/merge";
+import { createFillMissingFetcher, createSorterFetcher } from "@/server/services/catalog/ingestion/stages";
+import { pendingValue, type CatalogFetchContext, type PendingChart } from "../ingestion/types";
+import type { CatalogSourceAdapter } from "@/lib/games/types";
+import { fetchOtogeDbCatalog, getOtogeDbSource } from "./sources/otoge-db";
 
 const stages: { name: string; fetcher: Fetcher<PendingChart, CatalogFetchContext> }[] = [
   {
