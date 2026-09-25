@@ -71,11 +71,14 @@ a game switcher.
 Run these commands in separate terminals from the repository root:
 
 ```sh
-FRONTEND_GAME=maimai PORT=3000 pnpm --filter @tomomai/site dev
-FRONTEND_GAME=chunithm PORT=3001 pnpm --filter @tomomai/site dev
+pnpm dev:mai
+pnpm dev:chu
 ```
 
-Use `PORT` rather than appending `--port` to the existing piped dev script.
+These aliases set `FRONTEND_GAME=maimai PORT=3000` and
+`FRONTEND_GAME=chunithm PORT=3001`, respectively, before running the main app dev
+script. For custom ports, use `PORT` rather than appending `--port` to the
+existing piped dev script.
 Maimai keeps `.next`; CHUNITHM uses `.next-chunithm` in development, isolating
 Next's locks, generated output and caches. Both generated type directories are
 included in the app tsconfig. The ignored `next-env.d.ts` may reference whichever
