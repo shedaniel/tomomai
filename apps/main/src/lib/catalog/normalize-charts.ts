@@ -15,7 +15,7 @@ const chartSchema = z.object({
   artist: z.string(),
   cover: z.string(),
   level: z.string().min(1),
-  levelPrecise: count.nullish().transform(value => value ?? null),
+  levelPrecise: count,
   genre: z.string(),
   addedVersion: smallint.nullish().transform(value => value ?? null),
   bpm: count.optional(),
@@ -58,14 +58,24 @@ export function normalizeCatalogCharts(game: CanonicalGameId, charts: PendingCha
 
 export function mergeCatalogChart(existing: CatalogChart, incoming: CatalogChart): CatalogChart {
   if (catalogChartKey(existing) !== catalogChartKey(incoming)) throw new Error("Cannot merge different catalog identities");
+  const preserveConstant = existing.level === incoming.level &&
+    incoming.metadata?.levelPreciseEstimated === true && existing.metadata?.levelPreciseEstimated !== true;
+  const metadata = incoming.metadata === undefined ? existing.metadata : { ...existing.metadata, ...incoming.metadata };
+  const mergedMetadata = metadata === undefined ? undefined : { ...metadata };
+  if (preserveConstant && mergedMetadata) {
+    if (existing.metadata?.levelPreciseEstimated === undefined) delete mergedMetadata.levelPreciseEstimated;
+    else mergedMetadata.levelPreciseEstimated = existing.metadata.levelPreciseEstimated;
+  } else if (incoming.metadata?.levelPreciseEstimated === undefined && mergedMetadata) {
+    delete mergedMetadata.levelPreciseEstimated;
+  }
   return {
     ...existing, ...incoming,
-    levelPrecise: incoming.levelPrecise ?? existing.levelPrecise,
+    levelPrecise: preserveConstant ? existing.levelPrecise : incoming.levelPrecise,
     addedVersion: incoming.addedVersion ?? existing.addedVersion,
     bpm: incoming.bpm ?? existing.bpm,
     noteDesigner: incoming.noteDesigner ?? existing.noteDesigner,
     noteCounts: incoming.noteCounts ?? existing.noteCounts,
-    metadata: incoming.metadata === undefined ? existing.metadata : { ...existing.metadata, ...incoming.metadata },
+    metadata: mergedMetadata,
     extras: existing.extras,
   };
 }

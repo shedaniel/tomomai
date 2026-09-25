@@ -26,7 +26,7 @@ vi.mock("@/lib/db", () => ({ db: { transaction: async (run: (tx: unknown) => Pro
 import { persistCatalog } from "./catalog-persistence";
 const log = { info: vi.fn(), trace: vi.fn() } as unknown as Logger;
 const chart: PendingChart = { game: "chunithm", songName: "Song", chartType: 0, difficulty: 4,
-  artist: "Artist", cover: "image", genre: "Original", level: "14+", metadata: { otogeDb: { id: "123" } } };
+  artist: "Artist", cover: "image", genre: "Original", level: "14+", levelPrecise: 145, metadata: { otogeDb: { id: "123" } } };
 beforeEach(() => { state.selections = []; state.writes = []; state.transactions = 0; });
 
 describe("shared catalog persistence", () => {
@@ -36,12 +36,12 @@ describe("shared catalog persistence", () => {
     expect(result.applied).toMatchObject({ added: 1, newParents: 1 });
     expect(state.writes[0]).toMatchObject({ table: "parent_song", rows: [{ game, type: row.chartType, difficulty: 4 }] });
     expect(state.writes[1]).toMatchObject({ table: "songs", rows: [{ game, parentId: BigInt(100),
-      levelPrecise: row.levelPrecise ?? null, addedVersion: row.addedVersion ?? null, metadata: chart.metadata }] });
+      levelPrecise: row.levelPrecise, addedVersion: row.addedVersion ?? null, metadata: chart.metadata }] });
   });
 
   it("preserves an existing instance and parent identity on an unchanged refresh", async () => {
     state.selections = [[{ id: BigInt(12), parentId: BigInt(5), game: "chunithm", songName: "Song", type: 0,
-      difficulty: 4, artist: "Artist", cover: "image", genre: "Original", level: "14+", levelPrecise: null,
+      difficulty: 4, artist: "Artist", cover: "image", genre: "Original", level: "14+", levelPrecise: 145,
       addedVersion: null, bpm: null, noteDesigner: null, tapCount: null, metadata: chart.metadata }], []];
     const result = await persistCatalog("chunithm", "jp", 9, [chart], "alter", log);
     expect(result.changes.unchanged).toHaveLength(1);
@@ -51,7 +51,7 @@ describe("shared catalog persistence", () => {
 
   it("rejects unresolved collisions before destructive changes", async () => {
     const base = { id: BigInt(12), parentId: BigInt(5), game: "chunithm", songName: "Song", type: 0,
-      difficulty: 4, cover: "image", genre: "Original", level: "14+", levelPrecise: null,
+      difficulty: 4, cover: "image", genre: "Original", level: "14+", levelPrecise: 145,
       addedVersion: null, bpm: null, noteDesigner: null, tapCount: null };
     state.selections = [[{ ...base, artist: "A" }, { ...base, id: BigInt(13), parentId: BigInt(6), artist: "B" }], []];
     await expect(persistCatalog("chunithm", "jp", 9, [chart], "destructive", log)).rejects.toThrow("Ambiguous catalog identity");

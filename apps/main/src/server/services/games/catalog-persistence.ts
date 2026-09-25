@@ -23,7 +23,7 @@ export type AddedChange = {
   difficulty: number;
   chartType: number;
   level: string;
-  levelPrecise: number | null;
+  levelPrecise: number;
   artist: string;
 };
 
@@ -42,7 +42,7 @@ export type DeletedChange = {
   difficulty: number;
   chartType: number;
   level: string;
-  levelPrecise: number | null;
+  levelPrecise: number;
   artist: string;
   dbId: string;
   playRecordCount?: number;

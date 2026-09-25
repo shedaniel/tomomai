@@ -38,16 +38,17 @@ migrations here, including against a disposable database.
 
 On 2026-09-26 the migration was regenerated from the same upstream 0017 baseline
 as one combined 0018, retaining the existing custom SQL and adding nullable
-`songs.levelPrecise` and `songs.addedVersion`. Otoge-db does not provide every
-chart constant or chart introduction version; unknown values must remain null.
+`songs.addedVersion`. Unknown chart introduction versions remain null. Chart
+constants stay required: shared fill-missing logic completes missing constants
+from display levels with estimate provenance before ingestion.
 Existing maimai data and values are preserved. The snapshot and journal describe
 this combined migration, not an additional migration after the earlier 0018.
 
 A development copy that already applied the earlier 0018 is not a valid baseline
 for replaying this regenerated artifact. Its schema and recorded migration
 history need deliberate alignment by the database operator before further
-migration work. Simply rerunning `db:migrate` does not establish that the two
-nullable changes were applied. This task generates and checks migration files
+migration work. Simply rerunning `db:migrate` does not establish that the nullable
+introduction-version change was applied. This task generates and checks migration files
 only; it does not apply SQL, alter migration history or repair the dev database.
 
 ## Deployment

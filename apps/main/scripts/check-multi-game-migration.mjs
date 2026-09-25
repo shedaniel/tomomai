@@ -30,9 +30,11 @@ test('the existing data-preserving difficulty conversion remains after cleanup',
   assert.ok(statements.includes('ALTER TABLE "parent_song" ALTER COLUMN "difficulty" TYPE smallint USING (array_position(enum_range(NULL::"difficulty"), "difficulty") - 1)::smallint;'));
 });
 
-test('preserves unknown chart constants and introduction versions in SQL and snapshot', () => {
+test('requires chart constants while preserving unknown introduction versions', () => {
   const snapshot = JSON.parse(readFileSync(new URL('../drizzle-pg/meta/0018_snapshot.json', import.meta.url), 'utf8'));
-  for (const column of ['levelPrecise', 'addedVersion']) {
+  assert.equal(snapshot.tables['public.songs'].columns.levelPrecise.notNull, true);
+  assert.ok(!statements.includes('ALTER TABLE "songs" ALTER COLUMN "levelPrecise" DROP NOT NULL;'));
+  for (const column of ['addedVersion']) {
     assert.ok(statements.includes(`ALTER TABLE "songs" ALTER COLUMN "${column}" DROP NOT NULL;`));
     assert.equal(snapshot.tables['public.songs'].columns[column].notNull, false);
   }

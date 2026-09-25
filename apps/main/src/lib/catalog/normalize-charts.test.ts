@@ -4,14 +4,14 @@ import type { PendingChart } from "@/lib/games/catalog-types";
 
 const chart: PendingChart = {
   game: "chunithm", songName: "Chart", chartType: 0, difficulty: 4,
-  artist: "Artist", cover: "cover.png", genre: "Original", level: "14+",
+  artist: "Artist", cover: "cover.png", genre: "Original", level: "14+", levelPrecise: 145,
   metadata: { otogeDb: { id: "1", air: 23 } },
 };
 
 describe("numeric catalog normalization", () => {
-  it("keeps display-only charts and provenance without fabricating constants or versions", () => {
+  it("keeps completed constants and provenance without fabricating introduction versions", () => {
     expect(normalizeCatalogCharts("chunithm", [chart])[0]).toMatchObject({
-      difficulty: 4, level: "14+", levelPrecise: null, addedVersion: null,
+      difficulty: 4, level: "14+", levelPrecise: 145, addedVersion: null,
       metadata: { otogeDb: { id: "1", air: 23 } },
     });
   });
@@ -30,6 +30,7 @@ describe("numeric catalog normalization", () => {
     expect(() => normalizeCatalogCharts("chunithm", [{ ...chart, difficulty: 42 }])).toThrow("Unknown chart codes");
     expect(() => normalizeCatalogCharts("chunithm", [{ ...chart, levelPrecise: NaN }])).toThrow();
     expect(() => normalizeCatalogCharts("chunithm", [{ ...chart, artist: undefined }])).toThrow();
+    expect(() => normalizeCatalogCharts("chunithm", [{ ...chart, levelPrecise: undefined }])).toThrow();
     expect(() => normalizeCatalogCharts("chunithm", [chart, chart])).toThrow("Duplicate catalog chart");
   });
 
@@ -38,7 +39,21 @@ describe("numeric catalog normalization", () => {
     const [incoming] = normalizeCatalogCharts("chunithm", [{ ...chart, extras: { dbId: "999", parentId: "888" } }]);
     const existing = { ...known, extras: { dbId: "1", parentId: "2" } };
     expect(incoming.extras).toBeUndefined();
-    expect(mergeCatalogChart(existing, incoming)).toMatchObject({ levelPrecise: 149, addedVersion: 8, extras: existing.extras });
+    expect(mergeCatalogChart(existing, incoming)).toMatchObject({ levelPrecise: 145, addedVersion: 8, extras: existing.extras });
     expect(() => mergeCatalogChart(existing, { ...incoming, game: "maimai" })).toThrow("different catalog identities");
   });
+});
+
+it("does not replace confirmed constants with same-level estimates, and keeps provenance aligned", () => {
+  const [known] = normalizeCatalogCharts("chunithm", [{ ...chart, levelPrecise: 149, metadata: { levelPreciseEstimated: false } }]);
+  const [estimate] = normalizeCatalogCharts("chunithm", [{ ...chart, levelPrecise: 145, metadata: { levelPreciseEstimated: true } }]);
+  expect(mergeCatalogChart(known, estimate)).toMatchObject({ levelPrecise: 149, metadata: { levelPreciseEstimated: false } });
+  expect(mergeCatalogChart(estimate, known)).toMatchObject({ levelPrecise: 149, metadata: { levelPreciseEstimated: false } });
+  expect(mergeCatalogChart(estimate, { ...known, metadata: undefined }).metadata).not.toHaveProperty("levelPreciseEstimated");
+});
+
+it("does not retain stale constants when the display level changes", () => {
+  const [known] = normalizeCatalogCharts("chunithm", [{ ...chart, levelPrecise: 149, metadata: { levelPreciseEstimated: false } }]);
+  const [changed] = normalizeCatalogCharts("chunithm", [{ ...chart, level: "15", levelPrecise: 150, metadata: { levelPreciseEstimated: true } }]);
+  expect(mergeCatalogChart(known, changed)).toMatchObject({ level: "15", levelPrecise: 150, metadata: { levelPreciseEstimated: true } });
 });
