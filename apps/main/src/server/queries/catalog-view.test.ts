@@ -12,7 +12,7 @@ beforeEach(() => {
   getSongSlugs.mockImplementation(async (songs: object[]) => songs.map(song => ({ ...song, slug: "same-title-artist-std", aliases: [] })));
 });
 
-const chart = { id: 1, parentId: "abcdefgh", disambiguator: 0, songName: "Same title", artist: "Artist", cover: "", type: "std", genre: "Original", difficulty: "master", levelPrecise: 130, noteDesigner: null, addedVersion: 1, region: "jp", gameVersion: 1 };
+const chart = { id: 1, parentId: "abcdefgh", disambiguator: 0, songName: "Same title", artist: "Artist", cover: "", type: "std", genre: "Original", difficulty: "master", level: "13", levelPrecise: 130, metadata: {}, noteDesigner: null, addedVersion: 1, region: "jp", gameVersion: 1 };
 
 describe("common catalog view", () => {
   it.each(["maimai", "chunithm"] as const)("scopes the same grouping and slug pipeline to %s", async game => {
@@ -33,5 +33,12 @@ describe("common catalog view", () => {
       ["same-title-artist-std", ["abcdefgh"]],
       ["same-title-artist-std-1", ["ijklmnop"]],
     ]);
+  });
+
+  it("preserves display levels, estimate provenance and unknown added versions", async () => {
+    readRows.mockResolvedValue([{ ...chart, level: "14+", levelPrecise: 145, addedVersion: null, metadata: { levelPreciseEstimated: true } }]);
+    const [song] = await queryAllUniqueSongs("chunithm");
+    expect(song.addedVersion).toBeNull();
+    expect(song.difficulties[0]).toMatchObject({ level: "14+", levelPrecise: 145, levelPreciseEstimated: true });
   });
 });

@@ -134,7 +134,7 @@ export function SongCard({ song, index, isSelected, onSelect, disableInitialAnim
             singleDiff.difficulty === "utage" && "bg-pink-500 dark:bg-pink-600",
             !["basic", "advanced", "expert", "master", "remaster", "utage"].includes(singleDiff.difficulty) && [getGameDifficultyColors(game, singleDiff.difficulty).bg, getGameDifficultyColors(game, singleDiff.difficulty).text],
           )}>
-            {formatGameLevel(game, singleDiff.levelPrecise, singleDiff.difficulty)}
+            {singleDiff.levelPreciseEstimated ? "≈" : ""}{formatGameLevel(game, singleDiff.levelPrecise, singleDiff.difficulty)}
           </div>
         )}
 

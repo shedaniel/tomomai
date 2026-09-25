@@ -9,7 +9,7 @@ export interface UniqueSong {
   cover: string;
   type: string;
   genre: string;
-  addedVersion: number;
+  addedVersion: number | null;
   slug: string;
   aliases: string[];
   difficulties: UniqueSongDifficulty[];
@@ -17,7 +17,9 @@ export interface UniqueSong {
 
 export interface UniqueSongDifficulty {
   difficulty: string;
+  level: string;
   levelPrecise: number;
+  levelPreciseEstimated?: boolean;
   noteDesigner: string | null;
 }
 
@@ -31,11 +33,12 @@ export interface UserScore {
 export interface SongDetailHistoricalChart {
   difficulty: string;
   levelPrecise: number;
+  levelPreciseEstimated?: boolean;
 }
 
 export interface SongDetailChart extends SongDetailHistoricalChart {
   level: string;
-  addedVersion: number;
+  addedVersion: number | null;
   noteDesigner: string | null;
   tapCount: number | null;
   holdCount: number | null;
@@ -52,7 +55,7 @@ export interface SongDetails {
   type: string;
   genre: string;
   bpm: number | null;
-  addedVersion: number;
+  addedVersion: number | null;
   userScores?: Record<string, Record<string, UserScore>>;
   regions: {
     region: Region;

@@ -14,7 +14,7 @@ export function SongChartDialogGrid({ chart, score }: { chart: SongExtendedIdent
   const t = useTranslations();
   const game = useGame();
   const benchmarks = getGameScoreBenchmarks(game.id);
-  const rating = (value: number, comboStatus = 0) => formatGameRating(game.id, getGameChartRating(game.id, value, chart.levelPrecise, chart.difficulty, comboStatus, chart.gameVersion));
+  const rating = (value: number, comboStatus = 0) => `${chart.levelPreciseEstimated ? "≈" : ""}${formatGameRating(game.id, getGameChartRating(game.id, value, chart.levelPrecise, chart.difficulty, comboStatus, chart.gameVersion))}`;
   return <div className="grid grid-cols-[minmax(100px,5fr)_minmax(100px,1fr)] rounded-md overflow-hidden border">
     <div className="contents text-xs bg-accent/50 font-medium text-muted-foreground">
       <div className="py-2 px-3 border-b border-r">{t(getGameScoreLabelKey(game.id))}</div>
@@ -46,7 +46,7 @@ export function SongChartDialogContent({ charts, scores }: { charts: SongExtende
   return <>
     <ResponsiveDialogTitle>
       <span className={cn("font-bold mr-2", getGameDifficultyColors(game.id, chart.difficulty).text)}>{getGameDifficultyLabel(game.id, chart.difficulty)}</span>
-      <span className="text-lg font-bold tabular-nums">{chart.level}</span>
+      <span className="text-lg font-bold tabular-nums">{chart.levelPreciseEstimated ? "≈" : ""}{chart.level}</span>
       <span className="text-xs">.{chart.difficulty === "utage" ? "?" : chart.levelPrecise % 10}</span>
     </ResponsiveDialogTitle>
     <Tabs value={region} onValueChange={value => setRegion(value as Region)}>

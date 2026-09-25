@@ -1,6 +1,5 @@
 import type { CanonicalGameId } from "@/lib/games/types";
-import { resolveGame, requireConfiguredSource } from "@/lib/games/registry";
-import { GameAdapterError } from "@/lib/games/types";
+import { requireConfiguredSource } from "@/lib/games/registry";
 import { and, eq, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { parentSong, songs } from "@/lib/db/schema-pg";
@@ -12,7 +11,6 @@ import { putR2Object } from "@/lib/r2";
 import type { z } from "zod";
 
 export async function publishSongCatalog(game: CanonicalGameId): Promise<{ songCount: number; bytes: number }> {
-  if (!resolveGame(game).enabled) throw new GameAdapterError("GAME_NOT_ENABLED", "Game is not enabled", game);
   requireConfiguredSource(game, "catalog");
   return db.transaction(async (tx) => {
     await tx.execute(sql`select pg_advisory_xact_lock(73641932)`);
@@ -36,6 +34,7 @@ export async function publishSongCatalog(game: CanonicalGameId): Promise<{ songC
         gameVersion: songs.gameVersion,
         addedVersion: songs.addedVersion,
         noteDesigner: songs.noteDesigner,
+        metadata: songs.metadata,
       },
     }).from(parentSong).leftJoin(songs, and(eq(songs.parentId, parentSong.id), eq(songs.game, game)))
       .where(eq(parentSong.game, game))

@@ -14,7 +14,7 @@ import { usePathname, useRouter } from "@/i18n/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@tomomai/ui/select-friendly";
-import { applyUniqueSongFilters, createUniqueSongFilterCategories, hashString } from "./songs/filter-utils";
+import { applyUniqueSongFilters, catalogDisplayLevel, createUniqueSongFilterCategories, hashString } from "./songs/filter-utils";
 import { SongCard } from "./songs/song-card";
 import { SongRow } from "./songs/song-row";
 import { GroupMode, UniqueSong, UniqueSongFilter, UniqueSongFilterType } from "./songs/types";
@@ -176,13 +176,11 @@ export function SongsList(_: SongsListProps = {}) {
         return song.difficulties[0]?.noteDesigner ?? "Unknown";
       case "level_asc":
       case "level_desc": {
-        const level = (song.difficulties[0]?.levelPrecise ?? 0) / 10;
-        const isPlus = level % 1 >= 0.6;
-        const baseLevel = Math.floor(level);
-        return isPlus ? `${baseLevel}+` : `${baseLevel}`;
+        return catalogDisplayLevel(song.difficulties[0]);
       }
       case "version_asc":
       case "version_desc":
+        if (song.addedVersion === null) return "—";
         const version = getVersionInfo(game.id, game.regions[0] ?? "jp", song.addedVersion);
         return version?.name ?? `Ver. ${song.addedVersion}`;
       case "genre":

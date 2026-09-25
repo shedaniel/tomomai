@@ -805,7 +805,7 @@ export type SongOGImageOptions = {
   genre: string;
   /** Pretty version name e.g. "PRiSM PLUS" */
   versionName?: string;
-  difficulties: { difficulty: string; levelPrecise: number }[];
+  difficulties: { difficulty: string; levelPrecise: number; levelPreciseEstimated?: boolean }[];
   locale?: Locale;
 };
 
@@ -1050,7 +1050,7 @@ export async function createSongOGImage(options: SongOGImageOptions) {
                           {getGameDifficultyLabel(game, d.difficulty)}
                         </span>
                         <span style={{ color: "#fafafa", fontSize: "26px", fontWeight: 700, fontFamily: "Geist Mono" }}>
-                          {formatGameLevel(game, d.levelPrecise, d.difficulty)}
+                          {d.levelPreciseEstimated ? "≈" : ""}{formatGameLevel(game, d.levelPrecise, d.difficulty)}
                         </span>
                       </div>
                     );

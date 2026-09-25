@@ -5,10 +5,25 @@ import type { Region } from "@/lib/types";
 import { getGameChartTypeLabel } from "@/lib/games/presentation";
 import { Disc3, Folder, Calendar, ArrowUpDown, BarChart, Pencil } from "lucide-react";
 import { GroupMode, UniqueSong, UniqueSongDifficulty, UniqueSongFilter } from "./types";
-import { LEVEL_ENUM } from "@/lib/db/types";
 
 export type UniqueSongFlattened = Omit<UniqueSong, "difficulties"> & {
   difficulties: (UniqueSongDifficulty & { noteDesignerNumber: number })[];
+}
+
+export function catalogDisplayLevel(chart: UniqueSongDifficulty | undefined): string {
+  if (!chart) return "—";
+  return chart.level;
+}
+
+function levelSortValue(chart: UniqueSongDifficulty | undefined): number | null {
+  if (!chart) return null;
+  return chart.levelPrecise;
+}
+
+function compareKnownNumbers(a: number | null | undefined, b: number | null | undefined, descending = false): number {
+  if (a == null) return b == null ? 0 : 1;
+  if (b == null) return -1;
+  return descending ? b - a : a - b;
 }
 
 export function hashString(str: string | null): number {
@@ -37,7 +52,7 @@ export function createUniqueSongFilterCategories(
   const genres = [...new Set(songs.map(s => s.genre))].sort();
 
   // Get unique addedVersions from songs
-  const addedVersions = [...new Set(songs.map(s => s.addedVersion))].sort((a, b) => b - a);
+  const addedVersions = [...new Set(songs.flatMap(s => s.addedVersion === null ? [] : [s.addedVersion]))].sort((a, b) => b - a);
 
   // Get unique note designers from songs, sorted by amount of songs using them
   const noteDesignersToAmount: Record<string, number> = {};
@@ -67,7 +82,7 @@ export function createUniqueSongFilterCategories(
       type: "level",
       label: getLabel("level", "Level"),
       icon: BarChart,
-      options: LEVEL_ENUM.map((l, i) => ({ value: l, label: l, i })).toSorted((a, b) => b.i - a.i),
+      options: [...new Set(songs.flatMap(song => song.difficulties.map(catalogDisplayLevel)))].filter(level => level !== "—").sort((a, b) => Number.parseFloat(b) - Number.parseFloat(a) || b.localeCompare(a)).map(level => ({ value: level, label: level })),
     },
     {
       type: "type",
@@ -112,7 +127,7 @@ export function applyUniqueSongFilters(allSongs: UniqueSong[], flattenedSongs: U
   const typeFilters = filters.filter(f => f.type === "type");
   const genreFilters = filters.filter(f => f.type === "genre");
   const versionFilters = filters.filter(f => f.type === "addedVersion");
-  const levelFilters = filters.filter(f => f.type === "level").map(f => ({ ...f, value: f.value.endsWith("+") ? Number(f.value.replace("+", "6")) : Number(f.value + "0") }));
+  const levelFilters = filters.filter(f => f.type === "level");
   const noteDesignerFilters = filters.filter(f => f.type === "noteDesigner").map(f => ({ ...f, value: Number(f.value) }));
 
   let processedSongs = allSongs;
@@ -151,11 +166,7 @@ export function applyUniqueSongFilters(allSongs: UniqueSong[], flattenedSongs: U
           // Check if any difficulty matches the level filter
           // If flattened, song.difficulties has only 1 item
           return song.difficulties.some(d => {
-            const level = d.levelPrecise / 10;
-            const isPlus = level % 1 >= 0.6;
-            const baseLevel = Math.floor(level);
-            const levelStr = isPlus ? baseLevel * 10 + 6 : baseLevel * 10;
-            return levelStr === f.value;
+            return catalogDisplayLevel(d) === f.value;
           });
         });
         if (!matchesLevel) return false;
@@ -190,22 +201,22 @@ export function applyUniqueSongFilters(allSongs: UniqueSong[], flattenedSongs: U
           if (a.difficulties[0]?.noteDesigner && !b.difficulties[0]?.noteDesigner) comparison = -1;
           break;
         case "level_asc": {
-          const levelA = a.difficulties[0]?.levelPrecise ?? 0;
-          const levelB = b.difficulties[0]?.levelPrecise ?? 0;
-          comparison = levelA - levelB;
+          const levelA = levelSortValue(a.difficulties[0]);
+          const levelB = levelSortValue(b.difficulties[0]);
+          comparison = compareKnownNumbers(levelA, levelB);
           break;
         }
         case "level_desc": {
-          const levelA = a.difficulties[0]?.levelPrecise ?? 0;
-          const levelB = b.difficulties[0]?.levelPrecise ?? 0;
-          comparison = levelB - levelA;
+          const levelA = levelSortValue(a.difficulties[0]);
+          const levelB = levelSortValue(b.difficulties[0]);
+          comparison = compareKnownNumbers(levelA, levelB, true);
           break;
         }
         case "version_asc":
-          comparison = a.addedVersion - b.addedVersion;
+          comparison = compareKnownNumbers(a.addedVersion, b.addedVersion);
           break;
         case "version_desc":
-          comparison = b.addedVersion - a.addedVersion;
+          comparison = compareKnownNumbers(a.addedVersion, b.addedVersion, true);
           break;
         case "genre":
           comparison = a.genre.localeCompare(b.genre);
@@ -222,23 +233,23 @@ export function applyUniqueSongFilters(allSongs: UniqueSong[], flattenedSongs: U
       if (sortFilter) {
         if (sortFilter.value === "version_desc") {
           if (a.addedVersion !== b.addedVersion) {
-            return b.addedVersion - a.addedVersion;
+            return compareKnownNumbers(a.addedVersion, b.addedVersion, true);
           }
           return b.index - a.index;
         } else if (sortFilter.value === "version_asc") {
           if (a.addedVersion !== b.addedVersion) {
-            return a.addedVersion - b.addedVersion;
+            return compareKnownNumbers(a.addedVersion, b.addedVersion);
           }
           return a.index - b.index;
         } else if (sortFilter.value === "level_asc") {
-          const levelA = a.difficulties[0]?.levelPrecise ?? 0;
-          const levelB = b.difficulties[0]?.levelPrecise ?? 0;
-          if (levelA !== levelB) return levelA - levelB;
+          const levelA = levelSortValue(a.difficulties[0]);
+          const levelB = levelSortValue(b.difficulties[0]);
+          if (levelA !== levelB) return compareKnownNumbers(levelA, levelB);
           return a.index - b.index;
         } else if (sortFilter.value === "level_desc") {
-          const levelA = a.difficulties[0]?.levelPrecise ?? 0;
-          const levelB = b.difficulties[0]?.levelPrecise ?? 0;
-          if (levelA !== levelB) return levelB - levelA;
+          const levelA = levelSortValue(a.difficulties[0]);
+          const levelB = levelSortValue(b.difficulties[0]);
+          if (levelA !== levelB) return compareKnownNumbers(levelA, levelB, true);
           return a.index - b.index;
         }
       }
@@ -251,26 +262,26 @@ export function applyUniqueSongFilters(allSongs: UniqueSong[], flattenedSongs: U
     result.sort((a, b) => {
       if (sortFilter.value === "version_desc") {
         if (a.addedVersion !== b.addedVersion) {
-          return b.addedVersion - a.addedVersion;
+          return compareKnownNumbers(a.addedVersion, b.addedVersion, true);
         }
         return b.index - a.index;
       } else if (sortFilter.value === "version_asc") {
         if (a.addedVersion !== b.addedVersion) {
-          return a.addedVersion - b.addedVersion;
+          return compareKnownNumbers(a.addedVersion, b.addedVersion);
         }
         return a.index - b.index;
       } else if (sortFilter.value === "level_asc") {
-        const levelA = a.difficulties[0]?.levelPrecise ?? 0;
-        const levelB = b.difficulties[0]?.levelPrecise ?? 0;
+        const levelA = levelSortValue(a.difficulties[0]);
+        const levelB = levelSortValue(b.difficulties[0]);
         if (levelA !== levelB) {
-          return levelA - levelB;
+          return compareKnownNumbers(levelA, levelB);
         }
         return a.index - b.index;
       } else if (sortFilter.value === "level_desc") {
-        const levelA = a.difficulties[0]?.levelPrecise ?? 0;
-        const levelB = b.difficulties[0]?.levelPrecise ?? 0;
+        const levelA = levelSortValue(a.difficulties[0]);
+        const levelB = levelSortValue(b.difficulties[0]);
         if (levelA !== levelB) {
-          return levelB - levelA;
+          return compareKnownNumbers(levelA, levelB, true);
         }
         return a.index - b.index;
       }

@@ -101,6 +101,7 @@ export async function querySongDetails(
       difficulty: sql`${parentSong.difficulty}`.mapWith(value => getGameDifficultyKey(game, Number(value))).as("difficulty"),
       level: songs.level,
       levelPrecise: songs.levelPrecise,
+      metadata: songs.metadata,
       type: sql`${parentSong.type}`.mapWith(value => getGameChartTypeKey(game, Number(value))).as("type"),
       genre: parentSong.genre,
       region: songs.region,
@@ -161,7 +162,8 @@ export async function querySongDetails(
               difficulty: chart.difficulty,
               level: chart.level,
               levelPrecise: chart.levelPrecise,
-              addedVersion: chart.addedVersion as number,
+              levelPreciseEstimated: chart.metadata?.levelPreciseEstimated === true,
+              addedVersion: chart.addedVersion,
               noteDesigner: chart.noteDesigner,
               tapCount: chart.tapCount,
               holdCount: chart.holdCount,
@@ -172,6 +174,7 @@ export async function querySongDetails(
           : versionCharts.map((chart): SongDetailHistoricalChart => ({
               difficulty: chart.difficulty,
               levelPrecise: chart.levelPrecise,
+              levelPreciseEstimated: chart.metadata?.levelPreciseEstimated === true,
             })),
       })),
     };
@@ -191,7 +194,7 @@ export async function querySongDetails(
     type: preferredChart.type,
     genre: preferredChart.genre,
     bpm: chartBpm ?? null,
-    addedVersion: preferredChart.addedVersion as number,
+    addedVersion: preferredChart.addedVersion,
     userScores: userScoresMap,
     regions,
   } satisfies SongDetails;
@@ -211,7 +214,9 @@ export async function queryAllUniqueSongs(game: CanonicalGameId) {
           type: sql`${parentSong.type}`.mapWith(value => getGameChartTypeKey(game, Number(value))).as("type"),
           genre: parentSong.genre,
           difficulty: sql`${parentSong.difficulty}`.mapWith(value => getGameDifficultyKey(game, Number(value))).as("difficulty"),
+          level: songs.level,
           levelPrecise: songs.levelPrecise,
+          metadata: songs.metadata,
           noteDesigner: songs.noteDesigner,
           addedVersion: songs.addedVersion,
           region: songs.region,
@@ -274,7 +279,9 @@ export async function queryAllUniqueSongs(game: CanonicalGameId) {
 
         uniqueSongs.get(key)!.difficulties.push({
           difficulty: song.difficulty,
+          level: song.level,
           levelPrecise: song.levelPrecise,
+          levelPreciseEstimated: song.metadata?.levelPreciseEstimated === true,
           region: song.region,
           gameVersion: song.gameVersion,
           noteDesigner: song.noteDesigner,
@@ -290,13 +297,15 @@ export async function queryAllUniqueSongs(game: CanonicalGameId) {
         cover: song.cover,
         type: song.type,
         genre: song.genre,
-        addedVersion: song.addedVersion as number,
+        addedVersion: song.addedVersion,
         difficulties: song.difficulties
           .map(
             (d) =>
               ({
                 difficulty: d.difficulty,
+                level: d.level,
                 levelPrecise: d.levelPrecise,
+                levelPreciseEstimated: d.levelPreciseEstimated,
                 noteDesigner: d.noteDesigner,
               }) satisfies UniqueSongDifficulty
           )
@@ -332,6 +341,7 @@ export function queryCatalogCharts(game: CanonicalGameId, region?: Region, gameV
     addedVersion: songs.addedVersion,
     level: songs.level,
     levelPrecise: songs.levelPrecise,
+    metadata: songs.metadata,
   }).from(songs)
     .innerJoin(parentSong, and(eq(songs.parentId, parentSong.id), eq(songs.game, parentSong.game)))
     .where(and(

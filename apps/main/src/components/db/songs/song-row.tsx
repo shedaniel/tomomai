@@ -86,7 +86,7 @@ export function SongRow({ song, index, isSelected, onSelect, disableInitialAnima
                 singleDiff.difficulty === "utage" && "bg-pink-100 text-pink-700",
                 getGameDifficultyColors(game, singleDiff.difficulty).text,
               )}>
-                {getGameDifficultyLabel(game, singleDiff.difficulty)} {formatGameLevel(game, singleDiff.levelPrecise, singleDiff.difficulty)}
+                {getGameDifficultyLabel(game, singleDiff.difficulty)} {singleDiff.levelPreciseEstimated ? "≈" : ""}{formatGameLevel(game, singleDiff.levelPrecise, singleDiff.difficulty)}
               </span>
             )}
           </div>

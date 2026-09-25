@@ -125,7 +125,7 @@ function ScoreGrid({
                 {score ? (
                   <>
                     <span className="text-sm font-bold tabular-nums text-primary">
-                      {formatGameRating(game.id, rating)}
+                      {chart.levelPreciseEstimated ? "≈" : ""}{formatGameRating(game.id, rating)}
                     </span>
                     <span className="text-xs text-muted-foreground font-medium">
                       ({getGameScoreGrade(game.id, score.scoreValue, chart.gameVersion, score.comboStatus)})
@@ -178,7 +178,7 @@ export function SongChartRow({ difficulty, charts, index, data, hasTouch }: {
           </div>
           {/* Level */}
           <div className={cn("py-2.5 px-3 flex items-baseline justify-center", dataBorderClass)}>
-            <span className="text-lg font-bold tabular-nums">{latestChart.level}</span>
+            <span className="text-lg font-bold tabular-nums">{latestChart.levelPreciseEstimated ? "≈" : ""}{latestChart.level}</span>
             <span className="text-xs">.{latestChart.difficulty === "utage" ? '?' : latestChart.levelPrecise % 10}</span>
           </div>
           {hasNoteDetails && <>
@@ -288,7 +288,7 @@ export function SongDetailContent({ songName, artist, slug, type, parentIds, ini
 
   // Pre-compute SEO summary inputs (visible prose paragraph below the header).
   const summary = useMemo(() => {
-    if (!data || allCharts.length === 0) return null;
+    if (!data || data.addedVersion === null || allCharts.length === 0) return null;
     const levels = allCharts.map((c) => c.levelPrecise).filter((l) => l > 0);
     if (levels.length === 0) return null;
     const minLevel = Math.min(...levels);
@@ -332,7 +332,7 @@ export function SongDetailContent({ songName, artist, slug, type, parentIds, ini
     return null;
   }
 
-  const addedVersionInfo = getVersionInfo(game.id, data.regions[0]?.region ?? game.regions[0] ?? "jp", data.addedVersion);
+  const addedVersionInfo = data.addedVersion === null ? null : getVersionInfo(game.id, data.regions[0]?.region ?? game.regions[0] ?? "jp", data.addedVersion);
 
   return (
     <div className="space-y-6">
@@ -393,7 +393,7 @@ export function SongDetailContent({ songName, artist, slug, type, parentIds, ini
           <div className="flex items-center gap-2">
             <Calendar className="w-4 h-4" />
             <h2 className="font-medium text-sm">{t('db.songs.detail.added')}</h2>
-            <span>{addedVersionInfo?.name ?? `Ver. ${data.addedVersion}`}</span>
+            <span>{data.addedVersion === null ? "—" : addedVersionInfo?.name ?? `Ver. ${data.addedVersion}`}</span>
           </div>
         </div>
 
@@ -522,7 +522,7 @@ export function SongDetailContent({ songName, artist, slug, type, parentIds, ini
                               colors.bg
                             )}
                           >
-                            {getGameDifficultyLabel(game.id, difficulty)} {formatGameLevel(game.id, chart.levelPrecise, difficulty)}
+                            {getGameDifficultyLabel(game.id, difficulty)} {chart.levelPreciseEstimated ? "≈" : ""}{formatGameLevel(game.id, chart.levelPrecise, difficulty)}
                           </div>
                         );
                       })}

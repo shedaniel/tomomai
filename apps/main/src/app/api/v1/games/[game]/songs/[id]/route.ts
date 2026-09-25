@@ -34,6 +34,7 @@ const getSongById = (game: CanonicalGameId, songId: string) => unstable_cache(as
       addedVersion: songs.addedVersion,
       bpm: parentSong.bpm,
       noteDesigner: songs.noteDesigner,
+      metadata: songs.metadata,
       tapCount: songs.tapCount,
       holdCount: songs.holdCount,
       slideCount: songs.slideCount,
@@ -78,6 +79,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
     level: first.level,
     levelPrecise: first.levelPrecise,
     noteDesigner: first.noteDesigner,
+    metadata: first.metadata,
     noteCounts: {
       tap: first.tapCount,
       hold: first.holdCount,

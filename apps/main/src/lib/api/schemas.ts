@@ -145,9 +145,10 @@ export const songCatalogueEntry = z.object({
   levelPrecise: levelPreciseField,
   region: z.enum(["intl", "jp", "cn"]),
   gameVersion: z.number().int(),
-  addedVersion: z.number().int(),
+  addedVersion: z.number().int().nullable(),
   bpm: z.number().nullable(),
   noteDesigner: z.string().nullable().describe("Chart designer name."),
+  metadata: z.record(z.string(), z.unknown()).nullish().describe("Catalog source provenance; levelPreciseEstimated identifies a display-level estimate."),
 });
 
 export const songDetail = songCatalogueEntry.extend({
@@ -183,7 +184,7 @@ const songScore = z.object({
   levelPrecise: levelPreciseField,
   type: z.number().int(),
   genre: z.string(),
-  addedVersion: z.number().int(),
+  addedVersion: z.number().int().nullable(),
   scoreValue: z.number().int(),
   secondaryScore: z.number().int(),
   comboStatus: z.number().int(),
