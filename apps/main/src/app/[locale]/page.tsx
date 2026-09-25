@@ -3,6 +3,7 @@ import { getFrontendGame } from "@/lib/games/frontend-server";
 import { getGameRegion } from "@/lib/games/frontend";
 import { notFound } from "next/navigation";
 import { Dashboard } from "@/components/dashboard";
+import { GameUnavailable } from "@/components/game-unavailable";
 import { LandingPage } from "@/components/landing-page";
 import { getServerSession } from "@/lib/auth-server";
 import { useFlags } from "@/lib/flags";
@@ -47,6 +48,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function Home() {
   const game = getFrontendGame();
+  if (!game.enabled || !game.regions.length) return <GameUnavailable />;
   const session = await getServerSession();
   // eslint-disable-next-line react-hooks/rules-of-hooks
   let flags = await useFlags();

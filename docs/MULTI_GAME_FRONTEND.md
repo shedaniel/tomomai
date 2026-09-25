@@ -1,6 +1,6 @@
 # Multi-game frontend plan
 
-Status: frontend foundation implemented, 2026-09-24. This document records agreed
+Status: frontend foundation and per-process game selection implemented, 2026-09-25. This document records agreed
 product behavior, the current implementation, and the remaining rollout sequence.
 It does not enable CHUNITHM or authorize a production rollout. Backend context is in [MULTI_GAME_BACKEND.md](MULTI_GAME_BACKEND.md)
 and catalog identity context is in [PARENT_SONG.md](PARENT_SONG.md).
@@ -8,8 +8,8 @@ and catalog identity context is in [PARENT_SONG.md](PARENT_SONG.md).
 ## Current implementation
 
 The current phase deliberately excludes the two-domain/URL setup and cross-domain
-login. Existing maimai URLs remain unchanged. `getFrontendGame()` selects maimai
-at the server boundary and passes a serializable descriptor through `GameProvider`.
+login. Existing maimai URLs remain unchanged. `getFrontendGame()` resolves the configured canonical game at the server boundary
+and passes a serializable descriptor through `GameProvider`.
 There is no new public game route, hostname rewrite, game switcher, authentication
 flow, or CHUNITHM activation in this phase. Domain routing remains a later task.
 
@@ -43,9 +43,10 @@ Implemented frontend support:
   context and does not invalidate the current site's pages for another game.
 
 CHUNITHM remains disabled and its providers are still unimplemented. Its frontend
-presentation is exercised with fixtures, not live CHUNITHM records or a publicly
-accessible preview. Enabling providers and selecting a non-maimai frontend game
-are separate launch tasks. Existing maimai login/session behavior is unchanged.
+presentation is exercised with fixtures, not live CHUNITHM records. The local
+CHUNITHM frontend renders a branded unavailable state before dashboard
+authentication or player-data loading. Selecting CHUNITHM does not enable its
+providers, regions or capabilities. Existing maimai login/session behavior is unchanged.
 
 Maimai's rich recommendations, percentiles, plates, render/export controls,
 reserved accounts and fetch settings remain specialized. Game-specific source
@@ -57,6 +58,38 @@ fixtures, catalog identity fixtures, public-profile privacy fixtures, and
 read-only smoke checks against the existing maimai development server. Domain
 isolation, cross-domain authentication and live CHUNITHM acceptance checks below
 remain outstanding.
+
+## Per-process development setup
+
+`FRONTEND_GAME` accepts exactly `maimai` or `chunithm`, using the canonical game
+schema. Omission defaults to maimai at the central configuration boundary;
+empty, misspelled or otherwise invalid values fail startup explicitly. Restart
+the process to change the selected game. This setting changes frontend context,
+branding and game-scoped data selection without changing public paths or adding
+a game switcher.
+
+Run these commands in separate terminals from the repository root:
+
+```sh
+FRONTEND_GAME=maimai PORT=3000 pnpm --filter @tomomai/site dev
+FRONTEND_GAME=chunithm PORT=3001 pnpm --filter @tomomai/site dev
+```
+
+Use `PORT` rather than appending `--port` to the existing piped dev script.
+Maimai keeps `.next`; CHUNITHM uses `.next-chunithm` in development, isolating
+Next's locks, generated output and caches. Both generated type directories are
+included in the app tsconfig. The ignored `next-env.d.ts` may reference whichever
+process started last; both processes generate the same route declarations.
+
+The game is fixed in Next configuration for each build. Set `FRONTEND_GAME` at
+build time and use the same value when starting that build. Production output
+remains `.next`; build each game's production artifact separately, not
+concurrently in one checkout.
+
+The two localhost ports are a frontend preview, not domain/session isolation:
+browser cookies are shared across localhost ports. Domain routing and secure
+cross-site login remain deferred. CHUNITHM still has no configured provider or
+regions; its unavailable page is intentional and no backend activation occurs.
 
 ## Confirmed decisions
 
@@ -326,7 +359,7 @@ Tomomai remains an open product/architecture question, not a requirement.
 Frontend domain routing alone should not require a schema migration. If the
 auth spike identifies one, follow AGENTS.md's notification/reset/generation
 rules in that later task. Never apply migrations from this workflow. No schema
-change, server restart, domain configuration or deployment is part of this plan.
+change, domain configuration or deployment is part of the current frontend phase.
 Roll out routing changes with maimai regression verification first. Keep a
 feature switch for cross-domain login/navigation so it can be disabled without
 undoing the working maimai pages; do not remove active session infrastructure

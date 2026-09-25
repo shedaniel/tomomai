@@ -6,9 +6,11 @@ import { execSync } from "node:child_process";
 import fs from "node:fs";
 import matter from "gray-matter";
 import path from 'path';
+import { resolveFrontendGame, getFrontendDistDir } from './src/lib/games/frontend-config';
 
 const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 const withAnalyzer = withBundleAnalyzer({ enabled: process.env.ANALYZE === 'true' });
+const frontendGame = resolveFrontendGame(process.env.FRONTEND_GAME);
 
 function configuredOrigin(value: string | undefined): string | null {
   if (!value) return null;
@@ -112,8 +114,9 @@ const APP_VERSION_MINOR = (() => {
 })();
 
 const nextConfig: NextConfig = {
+  distDir: getFrontendDistDir(frontendGame, process.env.NODE_ENV === "development"),
   transpilePackages: ["@tomomai/ui", "@tomomai/i18n", "@tomomai/markdown"],
-  env: { BUILD_STAMP, GIT_SHA, APP_VERSION_MINOR },
+  env: { BUILD_STAMP, GIT_SHA, APP_VERSION_MINOR, FRONTEND_GAME: frontendGame },
   async headers() {
     return [
       {

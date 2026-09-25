@@ -2,6 +2,7 @@ import "server-only";
 import { GAME_REGISTRY, getEnabledRegions } from "./registry";
 import type { FrontendGame } from "./frontend";
 import type { CanonicalGameId } from "./types";
+import { resolveFrontendGame } from "./frontend-config";
 
 export function getFrontendGameDescriptor(game: CanonicalGameId): FrontendGame {
   const registration = GAME_REGISTRY[game];
@@ -17,5 +18,5 @@ export function getFrontendGameDescriptor(game: CanonicalGameId): FrontendGame {
 }
 
 export function getFrontendGame(): FrontendGame {
-  return getFrontendGameDescriptor("maimai");
+  return getFrontendGameDescriptor(resolveFrontendGame(process.env.FRONTEND_GAME));
 }

@@ -14,6 +14,7 @@ apps/main/public/altcha/argon2id.js
 
 # next.js (any app)
 .next/
+.next-*/
 out/
 
 # production
