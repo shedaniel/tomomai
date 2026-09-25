@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { findDuplicateUpload, matchUpload } from "./match-upload";
+import { findDuplicateUpload, matchUpload } from "@/server/services/catalog/ingestion/match-upload";
 
 const chart = (artist: string, addedVersion: number) => ({ songName: "Link", artist, addedVersion, type: "std" as const, difficulty: "master" as const });
 

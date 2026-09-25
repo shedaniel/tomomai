@@ -1,11 +1,11 @@
 import { db } from "@/lib/db";
 import { scoreData, songs, parentSong, userRecentSongs, userAlbums } from "@/lib/db/schema-pg";
 import type { Region } from "@/lib/types";
-import { normalizeCatalogCharts, mergeCatalogChart, catalogChartKey as key, type CatalogChart } from "@/lib/catalog/normalize-charts";
-import type { PendingChart } from "@/lib/games/catalog-types";
+import { normalizeCatalogCharts, mergeCatalogChart, catalogChartKey as key, type CatalogChart } from "@/server/services/catalog/ingestion/normalize-charts";
+import type { PendingChart } from "@/server/services/catalog/ingestion/types";
 import { and, eq, inArray, count, sql, getTableColumns, notExists } from "drizzle-orm";
-import { matchUpload } from "@/lib/catalog/match-upload";
-import { resolveParents, type ParentState, type SongToParent } from "@/lib/catalog/resolve-parent";
+import { matchUpload } from "@/server/services/catalog/ingestion/match-upload";
+import { resolveParents, type ParentState, type SongToParent } from "@/server/services/catalog/ingestion/resolve-parent";
 import { PARENT_PUBLIC_ID_LENGTH } from "@/lib/catalog/song-instance-id";
 import { nanoid } from "nanoid";
 

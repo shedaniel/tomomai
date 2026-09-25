@@ -1,6 +1,6 @@
 import { GameAdapterError, type CanonicalGameId } from "@/lib/games/types";
 import { resolveCatalogContext, resolveGame } from "@/lib/games/registry";
-import type { CatalogFetchContext, PendingChart } from "@/lib/games/catalog-types";
+import type { CatalogFetchContext, PendingChart } from "@/server/services/catalog/ingestion/types";
 import type { Region } from "@/lib/types";
 import type { Logger } from "pino";
 
@@ -20,6 +20,7 @@ export async function ingestCatalog(input: {
   log: Logger;
 }) {
   resolveCatalogContext(input.game, input.region);
-  const { persistCatalog } = await import("./catalog-persistence");
+  // Collection must not initialize the database; load persistence only for an ingest request.
+  const { persistCatalog } = await import("@/server/services/catalog/ingestion/persistence");
   return persistCatalog(input.game, input.region, input.version, input.uploadSongs, input.updateMode, input.log);
 }

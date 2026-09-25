@@ -1,8 +1,8 @@
 import { describe, it, expect } from "vitest";
 import { Difficulty, SongType } from "@/lib/types";
-import type { AddedChange, ModifiedChange, FieldChange } from "@/app/api/admin/upload/route";
+import type { AddedChange, ModifiedChange, FieldChange } from "./ingestion/persistence";
 import { chartTypeToCode, difficultyToCode } from "@/lib/maimai/codes";
-import { buildChangeDescription } from "./discord-webhooks";
+import { buildChangeDescription } from "@/server/services/catalog/notifications";
 
 function added(
   songName: string,

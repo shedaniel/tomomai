@@ -1,9 +1,9 @@
 import { z } from "zod";
-import type { Pending, PendingChart } from "@/lib/games/catalog-types";
+import { pendingValue, type PendingChart } from "@/server/services/catalog/ingestion/types";
 import type { CanonicalGameId } from "@/lib/games/types";
 import { gameIdSchema } from "@/lib/games/schema";
 import { GAME_CODE_MAPS } from "@/lib/games/codes";
-import { findDuplicateUpload } from "./match-upload";
+import { findDuplicateUpload } from "@/server/services/catalog/ingestion/match-upload";
 
 const smallint = z.number().int().min(-32768).max(32767);
 const count = smallint.nonnegative();
@@ -26,11 +26,6 @@ const chartSchema = z.object({
 
 export type CatalogChart = z.infer<typeof chartSchema> & { extras?: Record<string, unknown> };
 
-function unwrap<T>(pending: Pending<T> | undefined): T | undefined {
-  return pending !== null && typeof pending === "object" && "important" in pending && "value" in pending
-    ? pending.value : pending;
-}
-
 export function catalogChartKey(chart: Pick<CatalogChart, "game" | "songName" | "chartType" | "difficulty">): string {
   return JSON.stringify([chart.game, chart.songName, chart.chartType, chart.difficulty]);
 }
@@ -39,10 +34,10 @@ export function normalizeCatalogCharts(game: CanonicalGameId, charts: PendingCha
   const normalized = charts.map(chart => {
     const parsed = chartSchema.parse({
       game: chart.game, songName: chart.songName, chartType: chart.chartType, difficulty: chart.difficulty,
-      artist: unwrap(chart.artist), cover: unwrap(chart.cover), level: unwrap(chart.level),
-      levelPrecise: unwrap(chart.levelPrecise), genre: unwrap(chart.genre), addedVersion: unwrap(chart.addedVersion),
-      bpm: unwrap(chart.bpm), noteDesigner: unwrap(chart.noteDesigner), noteCounts: unwrap(chart.noteCounts),
-      metadata: unwrap(chart.metadata),
+      artist: pendingValue(chart.artist), cover: pendingValue(chart.cover), level: pendingValue(chart.level),
+      levelPrecise: pendingValue(chart.levelPrecise), genre: pendingValue(chart.genre), addedVersion: pendingValue(chart.addedVersion),
+      bpm: pendingValue(chart.bpm), noteDesigner: pendingValue(chart.noteDesigner), noteCounts: pendingValue(chart.noteCounts),
+      metadata: pendingValue(chart.metadata),
     });
     if (parsed.game !== game) throw new Error("Catalog chart belongs to a different game");
     const codes = GAME_CODE_MAPS[game];

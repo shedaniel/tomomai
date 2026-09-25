@@ -8,7 +8,7 @@ vi.mock("@/lib/db", () => ({ db: {
   }),
 } }));
 vi.mock("@/lib/r2", () => ({ putR2Object: putObject }));
-import { publishSongCatalog } from "./song-catalog";
+import { publishSongCatalog } from "@/server/services/catalog/publication";
 import { songCatalogKey, catalogPrefix } from "@/lib/api/catalog-location";
 import { resolveGame } from "@/lib/games/registry";
 

@@ -1,7 +1,7 @@
-import type { CatalogFetchContext, Pending } from "@/lib/games/catalog-types";
-import { fillMissingCatalogLevel, type CatalogLevelPolicy } from "@/lib/games/catalog-levels";
-import type { Fetcher } from "./catalog-fetcher";
-import { pendingValue } from "./catalog-merge";
+import type { CatalogFetchContext, Pending } from "@/server/services/catalog/ingestion/types";
+import { fillMissingCatalogLevel, type CatalogLevelPolicy } from "@/server/services/catalog/ingestion/levels";
+import type { Fetcher } from "@/server/services/catalog/ingestion/runner";
+import { pendingValue } from "./types";
 
 type LevelChart = {
   level?: Pending<string>;

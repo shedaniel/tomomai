@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { PendingChart } from "@/lib/games/catalog-types";
+import type { PendingChart } from "@/server/services/catalog/ingestion/types";
 import type { Logger } from "pino";
 import { getTableName } from "drizzle-orm";
 
@@ -23,7 +23,7 @@ vi.mock("@/lib/db", () => ({ db: { transaction: async (run: (tx: unknown) => Pro
   } });
   return run({ select, insert, execute: vi.fn() });
 } } }));
-import { persistCatalog } from "./catalog-persistence";
+import { persistCatalog } from "@/server/services/catalog/ingestion/persistence";
 const log = { info: vi.fn(), trace: vi.fn() } as unknown as Logger;
 const chart: PendingChart = { game: "chunithm", songName: "Song", chartType: 0, difficulty: 4,
   artist: "Artist", cover: "image", genre: "Original", level: "14+", levelPrecise: 145, addedVersion: 8, metadata: { otogeDb: { id: "123" } } };

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { mergeCatalogChart, normalizeCatalogCharts } from "./normalize-charts";
-import type { PendingChart } from "@/lib/games/catalog-types";
+import { mergeCatalogChart, normalizeCatalogCharts } from "@/server/services/catalog/ingestion/normalize-charts";
+import type { PendingChart } from "@/server/services/catalog/ingestion/types";
 
 const chart: PendingChart = {
   game: "chunithm", songName: "Chart", chartType: 0, difficulty: 4,

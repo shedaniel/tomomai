@@ -1,7 +1,7 @@
 import { after } from "next/server";
 import { resolveBaseUrl } from "@/lib/base-url";
 import { logger, flushLogger } from "@/lib/logger";
-import type { AddedChange, DeletedChange, ModifiedChange } from "@/app/api/admin/upload/route";
+import type { AddedChange, DeletedChange, ModifiedChange } from "./ingestion/persistence";
 import type { Region } from "@/lib/types";
 import type { CanonicalGameId } from "@/lib/games/types";
 import { GAME_CODE_MAPS } from "@/lib/games/codes";

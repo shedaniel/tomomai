@@ -1,7 +1,32 @@
 import type { NoteCounts, Region } from "@/lib/types";
-import type { CanonicalGameId } from "./types";
+import type { CanonicalGameId } from "@/lib/games/types";
 
 export type Pending<T> = T | { important: boolean; value: T };
+
+export function important<T>(value: T): Pending<T> {
+  return { important: true, value };
+}
+
+export function value<T>(pending: Pending<T>): T {
+  return !pending ? pending : typeof pending === "object" && "important" in pending ? pending.value : pending;
+}
+
+export function isImportant<T>(pending: Pending<T>): boolean {
+  return !!pending && typeof pending === "object" && "important" in pending && pending.important;
+}
+
+export function unwrapUndefined<T>(pending: Pending<T> | undefined): Pending<NonNullable<T>> | undefined {
+  const unwrapped = value(pending);
+  if (unwrapped === null || unwrapped === undefined) return undefined;
+  if (pending && typeof pending === "object" && "important" in pending && typeof pending.important === "boolean") {
+    return { important: pending.important, value: unwrapped };
+  }
+  return unwrapped;
+}
+
+export function pendingValue<T>(pending: Pending<T> | undefined): T | undefined {
+  return value(pending);
+}
 
 export type NoticeSink = {
   addDetail(detail: string): void;

@@ -1,5 +1,6 @@
-import type { CatalogFetchContext, CatalogLogger, Pending } from "@/lib/games/catalog-types";
-import type { Fetcher } from "./catalog-fetcher";
+import { pendingValue } from "./types";
+import type { CatalogFetchContext, CatalogLogger, Pending } from "@/server/services/catalog/ingestion/types";
+import type { Fetcher } from "@/server/services/catalog/ingestion/runner";
 import { levenshtein } from "@/lib/utils";
 
 export type FetcherMode = "default" | "only-modify" | "only-fallback";
@@ -9,10 +10,6 @@ export type MergePolicy<T> = {
   addedVersion: (song: T) => number | undefined;
   merge: (existing: T, incoming: T, log: CatalogLogger) => T;
 };
-
-export function pendingValue<T>(pending: Pending<T> | undefined): T | undefined {
-  return pending !== null && typeof pending === "object" && "important" in pending && "value" in pending ? pending.value : pending;
-}
 
 export function choosePendingValue<T>(existing: Pending<T>, incoming: Pending<T>): Pending<T>;
 export function choosePendingValue<T>(existing: Pending<T> | undefined, incoming: Pending<T> | undefined): Pending<T> | undefined;

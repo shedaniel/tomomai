@@ -1,12 +1,12 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { collectCatalog, ingestCatalog } from "./catalog-ingestion";
-import { runFetchers, type Fetcher } from "./catalog-fetcher";
+import { collectCatalog, ingestCatalog } from "@/server/services/catalog/ingestion/index";
+import { runFetchers, type Fetcher } from "@/server/services/catalog/ingestion/runner";
 import { GAME_REGISTRY } from "@/lib/games/registry";
-import type { CatalogFetchContext, PendingChart } from "@/lib/games/catalog-types";
+import type { CatalogFetchContext, PendingChart } from "@/server/services/catalog/ingestion/types";
 import pino from "pino";
 
-vi.mock("./catalog-persistence", () => ({ persistCatalog: vi.fn().mockResolvedValue({ applied: { added: 1 } }) }));
-import { persistCatalog } from "./catalog-persistence";
+vi.mock("@/server/services/catalog/ingestion/persistence", () => ({ persistCatalog: vi.fn().mockResolvedValue({ applied: { added: 1 } }) }));
+import { persistCatalog } from "@/server/services/catalog/ingestion/persistence";
 const log = pino({ enabled: false });
 const context = { region: "jp" as const, version: 9, cookies: "", log, notice: { addDetail: vi.fn(), details: [] } };
 afterEach(() => { vi.restoreAllMocks(); vi.clearAllMocks(); });

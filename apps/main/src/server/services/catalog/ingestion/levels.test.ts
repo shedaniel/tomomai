@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { fillMissingCatalogLevel } from "./catalog-levels";
+import { fillMissingCatalogLevel } from "@/server/services/catalog/ingestion/levels";
 
 describe("shared catalog level fallback", () => {
   it("uses the game's plus threshold without replacing known source constants", () => {

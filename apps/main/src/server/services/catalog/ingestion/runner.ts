@@ -1,5 +1,5 @@
 import deepEqual from "deep-equal";
-import type { CatalogFetchContext, CatalogLogger } from "@/lib/games/catalog-types";
+import type { CatalogFetchContext, CatalogLogger } from "@/server/services/catalog/ingestion/types";
 
 export type FetchingContextExtended<T, C extends CatalogFetchContext> = C & {
   previous: Fetcher<T, C> | null;
