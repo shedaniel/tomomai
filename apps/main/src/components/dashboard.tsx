@@ -3,6 +3,7 @@
 import { useGame } from "@/components/providers/game-provider";
 import { getGameRegion } from "@/lib/games/frontend";
 import { getPlayerPresentation, type GameSnapshotData, type GameSnapshotSummary } from "@/lib/games/player-view";
+import { GameUnavailable } from "@/components/game-unavailable";
 import { DataBanner } from "@/components/data-banner";
 import { DataContent } from "@/components/data-content";
 import { FetchToastContainer } from "@/components/fetch-toast";
@@ -15,7 +16,7 @@ import { signOut } from "@/lib/auth-client";
 import { Flags } from "@/lib/flags";
 import { isTokenError, isCnCookiesSingleUseError } from "@/lib/token-errors";
 import { trpc } from "@/lib/trpc-client";
-import { Region, Snapshot, SnapshotWithSongs, User, UserData } from "@/lib/types";
+import type { Region, User, UserData } from "@/lib/types";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
@@ -24,7 +25,6 @@ import { AdminDialog } from "./dialogs/admin-dialog";
 import { ExperimentsDialog } from "./experiments-dialog";
 import { InvitesDialog } from "./invites-dialog";
 import { Header } from "./header";
-import { isCNExclusive } from "@/lib/enabled-regions";
 import { ChangelogDialog } from "./changelog-dialog";
 import { ConsentGate } from "./consent-gate";
 import { TomomaiAI } from "./tomomai-ai";
@@ -42,7 +42,14 @@ interface DashboardProps {
   latestPost: PostMeta | null;
 }
 
-export function Dashboard({ user, initialUserData, initialSnapshots, initialSnapshotData, flags, latestPost }: DashboardProps) {
+export function Dashboard(props: DashboardProps) {
+  const game = useGame();
+  const region = getGameRegion(game, props.initialUserData.region);
+  if (!game.enabled || !region) return <GameUnavailable />;
+  return <AvailableDashboard {...props} initialRegion={region} />;
+}
+
+function AvailableDashboard({ user, initialUserData, initialSnapshots, initialSnapshotData, flags, latestPost, initialRegion }: DashboardProps & { initialRegion: Region }) {
   const game = useGame();
   const presentation = getPlayerPresentation(game.id);
   const [dialogType, setDialogType] = useState<DialogType>(null);
@@ -57,8 +64,7 @@ export function Dashboard({ user, initialUserData, initialSnapshots, initialSnap
     }
   );
 
-  // Use the stored region preference, fallback to "intl" or "cn" if not set
-  const selectedRegion: Region = getGameRegion(game, userData?.region) ?? "intl";
+  const selectedRegion = getGameRegion(game, userData?.region) ?? initialRegion;
 
   // Show onboarding dialog if user doesn't have username
   useEffect(() => {
