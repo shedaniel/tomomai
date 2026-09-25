@@ -1,5 +1,5 @@
 {
-  "id": "2bc83f9e-b1a6-42f3-af0e-a732195b1052",
+  "id": "764c4eb5-231b-4986-8b1a-48f87c3c77cc",
   "prevId": "eeef5e25-1ee0-4ffb-aff5-30c0b8d7d54f",
   "version": "7",
   "dialect": "postgresql",
@@ -2347,7 +2347,7 @@
           "name": "addedVersion",
           "type": "smallint",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "noteDesigner": {
           "name": "noteDesigner",

@@ -4,7 +4,7 @@ type Chart = {
   type: string | number;
   difficulty: string | number;
   artist: string;
-  addedVersion: number | null | undefined;
+  addedVersion: number | undefined;
 };
 
 export function findDuplicateUpload(charts: Chart[]): number | undefined {
@@ -37,9 +37,9 @@ export function matchUpload(existing: Chart[], incoming: Chart[]): Map<number, n
 
   // Reserve strong matches first so drifting metadata cannot steal a sibling.
   for (const predicate of [
-    (a: Chart, b: Chart) => a.artist === b.artist && a.addedVersion != null && a.addedVersion === b.addedVersion,
+    (a: Chart, b: Chart) => a.artist === b.artist && a.addedVersion === b.addedVersion,
     (a: Chart, b: Chart) => a.artist === b.artist,
-    (a: Chart, b: Chart) => a.addedVersion != null && a.addedVersion === b.addedVersion,
+    (a: Chart, b: Chart) => a.addedVersion !== undefined && a.addedVersion === b.addedVersion,
   ]) {
     incoming.forEach((song, index) => {
       if (assignments.has(index)) return;

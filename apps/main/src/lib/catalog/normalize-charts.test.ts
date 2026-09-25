@@ -4,14 +4,14 @@ import type { PendingChart } from "@/lib/games/catalog-types";
 
 const chart: PendingChart = {
   game: "chunithm", songName: "Chart", chartType: 0, difficulty: 4,
-  artist: "Artist", cover: "cover.png", genre: "Original", level: "14+", levelPrecise: 145,
+  artist: "Artist", cover: "cover.png", genre: "Original", level: "14+", levelPrecise: 145, addedVersion: 8,
   metadata: { otogeDb: { id: "1", air: 23 } },
 };
 
 describe("numeric catalog normalization", () => {
-  it("keeps completed constants and provenance without fabricating introduction versions", () => {
+  it("keeps completed constants, introduction versions and provenance", () => {
     expect(normalizeCatalogCharts("chunithm", [chart])[0]).toMatchObject({
-      difficulty: 4, level: "14+", levelPrecise: 145, addedVersion: null,
+      difficulty: 4, level: "14+", levelPrecise: 145, addedVersion: 8,
       metadata: { otogeDb: { id: "1", air: 23 } },
     });
   });
@@ -31,10 +31,11 @@ describe("numeric catalog normalization", () => {
     expect(() => normalizeCatalogCharts("chunithm", [{ ...chart, levelPrecise: NaN }])).toThrow();
     expect(() => normalizeCatalogCharts("chunithm", [{ ...chart, artist: undefined }])).toThrow();
     expect(() => normalizeCatalogCharts("chunithm", [{ ...chart, levelPrecise: undefined }])).toThrow();
+    expect(() => normalizeCatalogCharts("chunithm", [{ ...chart, addedVersion: undefined }])).toThrow();
     expect(() => normalizeCatalogCharts("chunithm", [chart, chart])).toThrow("Duplicate catalog chart");
   });
 
-  it("preserves known enrichment on partial refresh and never trusts uploaded database identities", () => {
+  it("never trusts uploaded database identities", () => {
     const [known] = normalizeCatalogCharts("chunithm", [{ ...chart, levelPrecise: 149, addedVersion: 8 }]);
     const [incoming] = normalizeCatalogCharts("chunithm", [{ ...chart, extras: { dbId: "999", parentId: "888" } }]);
     const existing = { ...known, extras: { dbId: "1", parentId: "2" } };

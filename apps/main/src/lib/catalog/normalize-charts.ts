@@ -17,7 +17,7 @@ const chartSchema = z.object({
   level: z.string().min(1),
   levelPrecise: count,
   genre: z.string(),
-  addedVersion: smallint.nullish().transform(value => value ?? null),
+  addedVersion: smallint,
   bpm: count.optional(),
   noteDesigner: z.string().optional(),
   noteCounts: z.object({ tap: count, hold: count, slide: count, touch: count, break: count }).optional(),
@@ -71,7 +71,6 @@ export function mergeCatalogChart(existing: CatalogChart, incoming: CatalogChart
   return {
     ...existing, ...incoming,
     levelPrecise: preserveConstant ? existing.levelPrecise : incoming.levelPrecise,
-    addedVersion: incoming.addedVersion ?? existing.addedVersion,
     bpm: incoming.bpm ?? existing.bpm,
     noteDesigner: incoming.noteDesigner ?? existing.noteDesigner,
     noteCounts: incoming.noteCounts ?? existing.noteCounts,

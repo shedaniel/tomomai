@@ -261,7 +261,7 @@ async function resolveParentsForAddedRows(db: CatalogTransaction, game: Canonica
       genre: p.genre,
       cover: p.cover,
       bpm: p.bpm,
-      childAddedVersions: new Set(children.flatMap(c => c.addedVersion === null ? [] : [c.addedVersion])),
+      childAddedVersions: new Set(children.map(c => c.addedVersion)),
       childRegionVersions: new Set(children.map(c => `${c.region}:${c.gameVersion}`)),
     };
   });
