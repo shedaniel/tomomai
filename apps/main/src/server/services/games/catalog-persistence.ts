@@ -1,10 +1,8 @@
 import { db } from "@/lib/db";
 import { scoreData, songs, parentSong, userRecentSongs, userAlbums } from "@/lib/db/schema-pg";
-import { VersionId } from "@/lib/metadata";
-import { Difficulty, Region, SongType } from "@/lib/types";
-import { UpdateSong } from "@/lib/types/update";
-import { taker, merger, key } from "@/server/services/admin/fetcher-utils";
-import { important, PendingSong, value, Pending } from "@/server/utils/admin/type";
+import type { Region } from "@/lib/types";
+import { normalizeCatalogCharts, mergeCatalogChart, catalogChartKey as key, type CatalogChart } from "@/lib/catalog/normalize-charts";
+import type { PendingChart } from "@/lib/games/catalog-types";
 import { and, eq, inArray, count, sql, getTableColumns, notExists } from "drizzle-orm";
 import { matchUpload } from "@/lib/catalog/match-upload";
 import { resolveParents, type ParentState, type SongToParent } from "@/lib/catalog/resolve-parent";
@@ -13,28 +11,27 @@ import { nanoid } from "nanoid";
 
 import type { Logger } from "pino";
 import type { CanonicalGameId } from "@/lib/games/types";
-import { codeToChartType, codeToDifficulty, chartTypeToCode, difficultyToCode } from "@/lib/maimai/codes";
 export type FieldChange = {
   field: string;
-  oldValue: any;
-  newValue: any;
+  oldValue: unknown;
+  newValue: unknown;
 };
 
 export type AddedChange = {
   songKey: string;
   songName: string;
-  difficulty: Difficulty;
-  type: SongType;
+  difficulty: number;
+  chartType: number;
   level: string;
-  levelPrecise: number | undefined;
+  levelPrecise: number | null;
   artist: string;
 };
 
 export type ModifiedChange = {
   songKey: string;
   songName: string;
-  difficulty: Difficulty;
-  type: SongType;
+  difficulty: number;
+  chartType: number;
   fieldChanges: FieldChange[];
   dbId: string;
 };
@@ -42,10 +39,10 @@ export type ModifiedChange = {
 export type DeletedChange = {
   songKey: string;
   songName: string;
-  difficulty: Difficulty;
-  type: SongType;
+  difficulty: number;
+  chartType: number;
   level: string;
-  levelPrecise: number | undefined;
+  levelPrecise: number | null;
   artist: string;
   dbId: string;
   playRecordCount?: number;
@@ -62,46 +59,26 @@ type DBSongType = typeof songs.$inferSelect & typeof parentSong.$inferSelect;
 type CatalogTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
 type MergeEvent = {
-  existing: PendingSong;
-  incoming: PendingSong;
-  result: PendingSong;
+  existing: CatalogChart;
+  incoming: CatalogChart;
+  result: CatalogChart;
 };
 
 /**
- * Convert UpdateSong to PendingSong with all fields marked as important
+ * Restore catalog values while retaining database identities
  */
-function convertUpdateSongToPendingSong(song: UpdateSong): PendingSong {
+function convertDbSongToCatalogChart(dbSong: DBSongType): CatalogChart {
   return {
-    songName: song.songName,
-    type: song.type,
-    difficulty: song.difficulty,
-    artist: important(song.artist),
-    cover: important(song.cover),
-    level: important(song.level),
-    levelPrecise: important(song.levelPrecise),
-    genre: important(song.genre),
-    addedVersion: important(song.addedVersion as VersionId),
-    bpm: song.bpm !== null ? important(song.bpm) : undefined,
-    noteDesigner: song.noteDesigner !== null ? important(song.noteDesigner) : undefined,
-    noteCounts: song.noteCounts !== null ? important(song.noteCounts) : undefined,
-    extras: { source: "upload" }
-  };
-}
-
-/**
- * Convert DB Song to PendingSong without marking fields as important
- */
-function convertDbSongToPendingSong(dbSong: DBSongType): PendingSong {
-  return {
+    game: dbSong.game,
     songName: dbSong.songName,
-    type: codeToChartType(dbSong.type),
-    difficulty: codeToDifficulty(dbSong.difficulty),
+    chartType: dbSong.type,
+    difficulty: dbSong.difficulty,
     artist: dbSong.artist,
     cover: dbSong.cover,
-    level: dbSong.level as PendingSong["level"],
+    level: dbSong.level,
     levelPrecise: dbSong.levelPrecise,
     genre: dbSong.genre,
-    addedVersion: dbSong.addedVersion as VersionId,
+    addedVersion: dbSong.addedVersion,
     bpm: dbSong.bpm ?? undefined,
     noteDesigner: dbSong.noteDesigner ?? undefined,
     noteCounts: dbSong.tapCount !== null ? {
@@ -111,6 +88,7 @@ function convertDbSongToPendingSong(dbSong: DBSongType): PendingSong {
       touch: dbSong.touchCount!,
       break: dbSong.breakCount!
     } : undefined,
+    metadata: dbSong.metadata ?? undefined,
     extras: {
       dbId: dbSong.id.toString(),
       parentId: dbSong.parentId.toString(),
@@ -120,21 +98,21 @@ function convertDbSongToPendingSong(dbSong: DBSongType): PendingSong {
 }
 
 /**
- * Compare two PendingSong objects and return field changes
+ * Compare two CatalogChart objects and return field changes
  */
-function compareFields(dbSong: PendingSong, mergedSong: PendingSong): FieldChange[] {
+function compareFields(dbSong: CatalogChart, mergedSong: CatalogChart): FieldChange[] {
   const changes: FieldChange[] = [];
 
-  const fields: Array<keyof PendingSong> = [
+  const fields: Array<keyof CatalogChart> = [
     "artist", "cover", "level", "levelPrecise", "genre",
-    "addedVersion", "bpm", "noteDesigner", "noteCounts"
+    "addedVersion", "bpm", "noteDesigner", "noteCounts", "metadata"
   ];
 
   for (const field of fields) {
-    const dbValue = value(dbSong[field] as Pending<any>);
-    const mergedValue = value(mergedSong[field] as Pending<any>);
+    const dbValue = dbSong[field];
+    const mergedValue = mergedSong[field];
 
-    if (field === "noteCounts") {
+    if (field === "noteCounts" || field === "metadata") {
       if (JSON.stringify(dbValue) !== JSON.stringify(mergedValue)) {
         changes.push({ field, oldValue: dbValue, newValue: mergedValue });
       }
@@ -152,18 +130,18 @@ function compareFields(dbSong: PendingSong, mergedSong: PendingSong): FieldChang
  * Analyze changes using merge events collected via sink callbacks.
  */
 function analyzeChanges(
-  dbPendingSongs: PendingSong[],
+  dbCatalogCharts: CatalogChart[],
   mergeEvents: MergeEvent[],
-  addedSongs: PendingSong[]
+  addedSongs: CatalogChart[]
 ): ChangeAnalysis {
   const added: AddedChange[] = addedSongs.map(song => ({
     songKey: key(song),
     songName: song.songName,
     difficulty: song.difficulty,
-    type: song.type,
-    level: value(song.level),
-    levelPrecise: value(song.levelPrecise),
-    artist: value(song.artist) || ""
+    chartType: song.chartType,
+    level: song.level,
+    levelPrecise: song.levelPrecise,
+    artist: song.artist || ""
   }));
 
   const modified: ModifiedChange[] = [];
@@ -180,7 +158,7 @@ function analyzeChanges(
         songKey: key(result),
         songName: result.songName,
         difficulty: result.difficulty,
-        type: result.type,
+        chartType: result.chartType,
         fieldChanges,
         dbId: String(existing.extras?.dbId ?? "")
       });
@@ -190,7 +168,7 @@ function analyzeChanges(
   }
 
   const deleted: DeletedChange[] = [];
-  for (const dbSong of dbPendingSongs) {
+  for (const dbSong of dbCatalogCharts) {
     const dbId = dbSong.extras?.dbId;
     const dbIdStr = dbId ? String(dbId) : undefined;
     if (dbIdStr && !mergedDbIds.has(dbIdStr)) {
@@ -198,10 +176,10 @@ function analyzeChanges(
         songKey: key(dbSong),
         songName: dbSong.songName,
         difficulty: dbSong.difficulty,
-        type: dbSong.type,
-        level: value(dbSong.level),
-        levelPrecise: value(dbSong.levelPrecise),
-        artist: value(dbSong.artist) || "",
+        chartType: dbSong.chartType,
+        level: dbSong.level,
+        levelPrecise: dbSong.levelPrecise,
+        artist: dbSong.artist || "",
         dbId: dbIdStr
       });
     }
@@ -214,21 +192,22 @@ type UpdateMode = "noop" | "alter" | "destructive";
 
 /** A merged song that needs to be written, with its (eventually) resolved parent. */
 type WriteRow = {
-  song: PendingSong;
+  song: CatalogChart;
   parentId: bigint | null;
 };
 
-function pendingSongToChildValues(game: CanonicalGameId, row: WriteRow, region: Region, gameVersion: VersionId) {
-  const noteCounts = value(row.song.noteCounts as Pending<any>);
+function pendingSongToChildValues(game: CanonicalGameId, row: WriteRow, region: Region, gameVersion: number) {
+  const noteCounts = row.song.noteCounts;
   return {
     game,
     parentId: row.parentId!,
-    level: value(row.song.level as Pending<any>),
-    levelPrecise: value(row.song.levelPrecise as Pending<any>),
+    level: row.song.level,
+    levelPrecise: row.song.levelPrecise,
     region,
     gameVersion,
-    addedVersion: value(row.song.addedVersion as Pending<any>),
-    noteDesigner: value(row.song.noteDesigner as Pending<any>) ?? null,
+    addedVersion: row.song.addedVersion,
+    noteDesigner: row.song.noteDesigner ?? null,
+    metadata: row.song.metadata ?? null,
     tapCount: noteCounts?.tap ?? null,
     holdCount: noteCounts?.hold ?? null,
     slideCount: noteCounts?.slide ?? null,
@@ -241,7 +220,7 @@ function pendingSongToChildValues(game: CanonicalGameId, row: WriteRow, region: 
  * Resolve a parent for every row that doesn't have one yet (newly added
  * charts), creating new parent_song rows where necessary.
  */
-async function resolveParentsForAddedRows(db: CatalogTransaction, game: CanonicalGameId, addedRows: WriteRow[], region: Region, gameVersion: VersionId): Promise<number> {
+async function resolveParentsForAddedRows(db: CatalogTransaction, game: CanonicalGameId, addedRows: WriteRow[], region: Region, gameVersion: number): Promise<number> {
   if (addedRows.length === 0) return 0;
 
   const names = [...new Set(addedRows.map(r => r.song.songName))];
@@ -275,14 +254,14 @@ async function resolveParentsForAddedRows(db: CatalogTransaction, game: Canonica
     return {
       id: p.id,
       songName: p.songName,
-      type: codeToChartType(p.type),
-      difficulty: codeToDifficulty(p.difficulty),
+      type: p.type,
+      difficulty: p.difficulty,
       disambiguator: p.disambiguator,
       artist: p.artist,
       genre: p.genre,
       cover: p.cover,
       bpm: p.bpm,
-      childAddedVersions: new Set(children.map(c => c.addedVersion)),
+      childAddedVersions: new Set(children.flatMap(c => c.addedVersion === null ? [] : [c.addedVersion])),
       childRegionVersions: new Set(children.map(c => `${c.region}:${c.gameVersion}`)),
     };
   });
@@ -291,13 +270,13 @@ async function resolveParentsForAddedRows(db: CatalogTransaction, game: Canonica
   const songsToParent: SongToParent[] = addedRows.map((row, index) => ({
     id: BigInt(index),
     songName: row.song.songName,
-    type: row.song.type,
+    type: row.song.chartType,
     difficulty: row.song.difficulty,
-    artist: value(row.song.artist as Pending<any>) ?? "",
-    genre: value(row.song.genre as Pending<any>) ?? "",
-    cover: value(row.song.cover as Pending<any>) ?? "",
-    bpm: value(row.song.bpm as Pending<any>) ?? null,
-    addedVersion: value(row.song.addedVersion as Pending<any>) ?? 0,
+    artist: row.song.artist ?? "",
+    genre: row.song.genre ?? "",
+    cover: row.song.cover ?? "",
+    bpm: row.song.bpm ?? null,
+    addedVersion: row.song.addedVersion,
     region,
     gameVersion,
   }));
@@ -315,13 +294,13 @@ async function resolveParentsForAddedRows(db: CatalogTransaction, game: Canonica
         genre: p.genre,
         cover: p.cover,
         bpm: p.bpm,
-        type: chartTypeToCode(p.type),
-        difficulty: difficultyToCode(p.difficulty),
+        type: p.type,
+        difficulty: p.difficulty,
         disambiguator: p.disambiguator,
       })))
       .returning({ id: parentSong.id, songName: parentSong.songName, type: parentSong.type, difficulty: parentSong.difficulty, disambiguator: parentSong.disambiguator });
     for (const parent of newParents) {
-      const saved = inserted.find(row => row.songName === parent.songName && row.type === chartTypeToCode(parent.type) && row.difficulty === difficultyToCode(parent.difficulty) && row.disambiguator === parent.disambiguator);
+      const saved = inserted.find(row => row.songName === parent.songName && row.type === parent.type && row.difficulty === parent.difficulty && row.disambiguator === parent.disambiguator);
       if (!saved) throw new Error("Inserted parent missing from returned rows");
       parent.id = saved.id;
     }
@@ -348,8 +327,8 @@ const instanceScore = (region: Region, version: number) => version * 100 + (regi
  * tracking the latest-jp-preferred chart instance, matching how reads used to
  * pick attributes from the flat songs table.
  */
-async function updateParentAttributes(db: CatalogTransaction, allRows: WriteRow[], region: Region, gameVersion: VersionId): Promise<number> {
-  const mergedByParent = new Map<string, PendingSong>();
+async function updateParentAttributes(db: CatalogTransaction, allRows: WriteRow[], region: Region, gameVersion: number): Promise<number> {
+  const mergedByParent = new Map<string, CatalogChart>();
   for (const row of allRows) {
     if (row.parentId === null) continue;
     mergedByParent.set(row.parentId.toString(), row.song);
@@ -383,10 +362,10 @@ async function updateParentAttributes(db: CatalogTransaction, allRows: WriteRow[
     const maxScore = maxScoreByParent.get(k) ?? uploadScore;
     if (uploadScore < maxScore) continue;
 
-    const artist = value(merged.artist as Pending<any>) ?? parent.artist;
-    const cover = value(merged.cover as Pending<any>) ?? parent.cover;
-    const genre = value(merged.genre as Pending<any>) ?? parent.genre;
-    const bpm = value(merged.bpm as Pending<any>) ?? parent.bpm;
+    const artist = merged.artist ?? parent.artist;
+    const cover = merged.cover ?? parent.cover;
+    const genre = merged.genre ?? parent.genre;
+    const bpm = merged.bpm ?? parent.bpm;
 
     if (artist !== parent.artist || cover !== parent.cover || genre !== parent.genre || bpm !== parent.bpm) {
       await db
@@ -404,10 +383,10 @@ async function applyChanges(
   db: CatalogTransaction,
   game: CanonicalGameId,
   changes: ChangeAnalysis,
-  addedSongs: PendingSong[],
+  addedSongs: CatalogChart[],
   mergeEvents: MergeEvent[],
   region: Region,
-  version: VersionId,
+  version: number,
   mode: UpdateMode
 ): Promise<{ added: number; modified: number; deleted: number; newParents: number; parentUpdates: number }> {
   if (mode === "noop") return { added: 0, modified: 0, deleted: 0, newParents: 0, parentUpdates: 0 };
@@ -441,6 +420,7 @@ async function applyChanges(
           levelPrecise: sql`excluded."levelPrecise"`,
           addedVersion: sql`excluded."addedVersion"`,
           noteDesigner: sql`excluded."noteDesigner"`,
+          metadata: sql`excluded.metadata`,
           tapCount: sql`excluded."tapCount"`,
           holdCount: sql`excluded."holdCount"`,
           slideCount: sql`excluded."slideCount"`,
@@ -484,9 +464,8 @@ async function applyChanges(
 }
 
 
-export async function ingestMaimaiCatalog(game: CanonicalGameId, region: Region, version: VersionId, uploadSongs: UpdateSong[], updateMode: UpdateMode, log: Logger) {
-    // Convert upload songs to PendingSong format with important fields
-    const uploadPendingSongs: PendingSong[] = uploadSongs.map(convertUpdateSongToPendingSong);
+export async function persistCatalog(game: CanonicalGameId, region: Region, version: number, uploadSongs: PendingChart[], updateMode: UpdateMode, log: Logger) {
+    const uploadCatalogCharts: CatalogChart[] = normalizeCatalogCharts(game, uploadSongs);
 
     return db.transaction(async (tx) => {
       await tx.execute(sql`SELECT pg_advisory_xact_lock(73641932)`);
@@ -518,27 +497,32 @@ export async function ingestMaimaiCatalog(game: CanonicalGameId, region: Region,
         .filter(child => instanceScore(child.region, child.gameVersion) > uploadScore)
         .map(child => String(child.parentId)));
 
-      // Convert DB songs to PendingSong format
-      const dbPendingSongs: PendingSong[] = dbSongs.map(convertDbSongToPendingSong);
+      // Convert DB songs to CatalogChart format
+      const dbCatalogCharts: CatalogChart[] = dbSongs.map(convertDbSongToCatalogChart);
 
         log.info("Merging songs");
-      const take = taker(log);
-      const merge = merger(log, take);
+      const merge = mergeCatalogChart;
 
       const mergeEvents: MergeEvent[] = [];
-      const addedSongs: PendingSong[] = [];
-      const matchInput = (song: PendingSong) => ({
-        songName: song.songName, type: song.type, difficulty: song.difficulty,
-        artist: value(song.artist) ?? "", addedVersion: value(song.addedVersion),
+      const addedSongs: CatalogChart[] = [];
+      const matchInput = (song: CatalogChart) => ({
+        songName: song.songName, type: song.chartType, difficulty: song.difficulty,
+        artist: song.artist ?? "", addedVersion: song.addedVersion,
     });
-    const assignments = matchUpload(dbPendingSongs.map(matchInput), uploadPendingSongs.map(matchInput));
-    const mergedSongs = uploadPendingSongs.map((incoming, index) => {
+    const assignments = matchUpload(dbCatalogCharts.map(matchInput), uploadCatalogCharts.map(matchInput));
+    const matched = new Set(assignments.values());
+    for (const [index, incoming] of uploadCatalogCharts.entries()) {
+      if (!assignments.has(index) && dbCatalogCharts.some((existing, i) => !matched.has(i) && key(existing) === key(incoming))) {
+        throw new Error(`Ambiguous catalog identity: ${key(incoming)}`);
+      }
+    }
+    const mergedSongs = uploadCatalogCharts.map((incoming, index) => {
       const existingIndex = assignments.get(index);
       if (existingIndex === undefined) {
         addedSongs.push(incoming);
         return incoming;
       }
-      const existing = dbPendingSongs[existingIndex];
+      const existing = dbCatalogCharts[existingIndex];
       const result = merge(existing, incoming);
       if (nonPreferredParents.has(String(existing.extras!.parentId))) {
         Object.assign(result, {
@@ -553,7 +537,7 @@ export async function ingestMaimaiCatalog(game: CanonicalGameId, region: Region,
       songCount: mergedSongs.length
     }, "Merge completed");
 
-    const changes = analyzeChanges(dbPendingSongs, mergeEvents, addedSongs);
+    const changes = analyzeChanges(dbCatalogCharts, mergeEvents, addedSongs);
 
     for (let i = 0; i < changes.deleted.length; i += 1000) {
       const batch = changes.deleted.slice(i, i + 1000);

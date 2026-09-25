@@ -4,8 +4,8 @@ import { resolveParents, type ParentState, type SongToParent } from "@/lib/catal
 function song(overrides: Partial<SongToParent> & { id: bigint }): SongToParent {
   return {
     songName: "Tsunagite",
-    type: "dx",
-    difficulty: "master",
+    type: 1,
+    difficulty: 3,
     artist: "HIMEHINA",
     genre: "POPS＆アニメ",
     cover: "c1.webp",
@@ -21,8 +21,8 @@ function parent(overrides: Partial<ParentState>): ParentState {
   return {
     id: BigInt(1),
     songName: "Tsunagite",
-    type: "dx",
-    difficulty: "master",
+    type: 1,
+    difficulty: 3,
     disambiguator: 0,
     artist: "HIMEHINA",
     genre: "POPS＆アニメ",
@@ -70,7 +70,7 @@ describe("resolveParents", () => {
     // The first Link already exists; the second arrives in the same region+version
     const existing = parent({
       songName: "Link",
-      difficulty: "basic",
+      difficulty: 0,
       artist: "Circle of friends",
       childAddedVersions: new Set([-12]),
       childRegionVersions: new Set(["jp:13"]),
@@ -79,7 +79,7 @@ describe("resolveParents", () => {
       song({
         id: BigInt(9),
         songName: "Link",
-        difficulty: "basic",
+        difficulty: 0,
         artist: "Clean Tears feat. Youna",
         addedVersion: -11,
         region: "jp",
@@ -94,9 +94,9 @@ describe("resolveParents", () => {
 
   it("resolves both Links arriving in one batch into two parents", () => {
     const result = resolveParents([
-      song({ id: BigInt(1), songName: "Link", difficulty: "basic", artist: "Circle of friends", addedVersion: -12 }),
-      song({ id: BigInt(2), songName: "Link", difficulty: "basic", artist: "Clean Tears feat. Youna", addedVersion: -11 }),
-      song({ id: BigInt(3), songName: "Link", difficulty: "basic", artist: "Circle of friends", addedVersion: -12, gameVersion: 12 }),
+      song({ id: BigInt(1), songName: "Link", difficulty: 0, artist: "Circle of friends", addedVersion: -12 }),
+      song({ id: BigInt(2), songName: "Link", difficulty: 0, artist: "Clean Tears feat. Youna", addedVersion: -11 }),
+      song({ id: BigInt(3), songName: "Link", difficulty: 0, artist: "Circle of friends", addedVersion: -12, gameVersion: 12 }),
     ], []);
 
     expect(result.newParents).toHaveLength(2);
@@ -112,7 +112,7 @@ describe("resolveParents", () => {
     const linkA = parent({
       id: BigInt(1),
       songName: "Link",
-      difficulty: "master",
+      difficulty: 3,
       artist: "Circle of friends",
       childAddedVersions: new Set([-1]),
       childRegionVersions: new Set(["jp:11"]),
@@ -120,7 +120,7 @@ describe("resolveParents", () => {
     const linkB = parent({
       id: BigInt(2),
       songName: "Link",
-      difficulty: "master",
+      difficulty: 3,
       artist: "Clean Tears feat. Youna",
       disambiguator: 1,
       childAddedVersions: new Set([-12]),
@@ -130,7 +130,7 @@ describe("resolveParents", () => {
       song({
         id: BigInt(9),
         songName: "Link",
-        difficulty: "master",
+        difficulty: 3,
         artist: "Circle of friends",
         addedVersion: -9, // drifted from -1
         region: "jp",
@@ -146,7 +146,7 @@ describe("resolveParents", () => {
     const linkA = parent({
       id: BigInt(1),
       songName: "Link",
-      difficulty: "basic",
+      difficulty: 0,
       artist: "Circle of friends",
       childAddedVersions: new Set([-12]),
       childRegionVersions: new Set(["jp:13"]),
@@ -154,7 +154,7 @@ describe("resolveParents", () => {
     const linkB = parent({
       id: BigInt(2),
       songName: "Link",
-      difficulty: "basic",
+      difficulty: 0,
       artist: "Clean Tears feat. Youna",
       disambiguator: 1,
       childAddedVersions: new Set([-11]),
@@ -165,7 +165,7 @@ describe("resolveParents", () => {
       song({
         id: BigInt(9),
         songName: "Link",
-        difficulty: "basic",
+        difficulty: 0,
         artist: "Clean Tears feat. Youna",
         addedVersion: 2,
         region: "intl",

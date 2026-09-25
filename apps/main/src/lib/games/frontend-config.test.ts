@@ -23,7 +23,7 @@ describe("frontend process configuration", () => {
     expect(JSON.parse(JSON.stringify(game))).toEqual(game);
     expect(game).not.toHaveProperty("adapter");
     expect(game.capabilities).not.toContain("scores");
-    expect(game.capabilities).not.toContain("catalog");
+    expect(game.capabilities).toContain("catalog");
   });
 
   it("does not silently resolve an invalid process setting", () => {

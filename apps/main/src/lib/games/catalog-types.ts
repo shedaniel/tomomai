@@ -30,12 +30,13 @@ export type PendingChart = {
   artist?: Pending<string>;
   cover?: Pending<string>;
   level?: Pending<string>;
-  levelPrecise?: Pending<number>;
+  levelPrecise?: Pending<number | null>;
   genre?: Pending<string>;
-  addedVersion?: Pending<number>;
+  addedVersion?: Pending<number | null>;
   bpm?: Pending<number>;
   noteDesigner?: Pending<string>;
   noteCounts?: Pending<NoteCounts>;
+  metadata?: Pending<Record<string, unknown>>;
   extras?: Record<string, unknown>;
 };
 

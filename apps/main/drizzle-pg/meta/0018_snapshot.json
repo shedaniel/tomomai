@@ -1,5 +1,5 @@
 {
-  "id": "764c4eb5-231b-4986-8b1a-48f87c3c77cc",
+  "id": "6f17b2bb-70d2-4aa8-9bd4-49085592ad6e",
   "prevId": "eeef5e25-1ee0-4ffb-aff5-30c0b8d7d54f",
   "version": "7",
   "dialect": "postgresql",
@@ -2328,7 +2328,7 @@
           "name": "levelPrecise",
           "type": "smallint",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "region": {
           "name": "region",
@@ -2347,7 +2347,7 @@
           "name": "addedVersion",
           "type": "smallint",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "noteDesigner": {
           "name": "noteDesigner",

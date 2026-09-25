@@ -7,7 +7,7 @@ import { getCurrentVersion } from "../../versions";
 import type { CatalogFetchContext, PendingChart } from "../../catalog-types";
 import type { CatalogSourceAdapter } from "../../types";
 
-function toPendingChart(song: UpdateSong): PendingChart {
+export function toPendingChart(song: UpdateSong): PendingChart {
   return {
     game: "maimai",
     songName: song.songName,
@@ -27,7 +27,12 @@ function toPendingChart(song: UpdateSong): PendingChart {
 
 export const maimaiCatalogAdapter: CatalogSourceAdapter = {
   configured: true,
-  loadImplementation: async () => (await import("@/server/services/admin/level-fetcher")).fetchLevels,
+  requiresToken: region => region !== "cn",
+  async authenticate(region, token) {
+    if (region === "cn") return "";
+    const { loginAndGetCookies } = await import("@/server/services/maimai-login");
+    return loginAndGetCookies(region, token);
+  },
   getStages(region) {
     return { names: [...getFetchersForRegion(region).names] };
   },
@@ -44,15 +49,5 @@ export const maimaiCatalogAdapter: CatalogSourceAdapter = {
       notice: ctx.notice,
     });
     return songs.map(toPendingChart);
-  },
-};
-
-export const maimaiCatalogImplementation = {
-  async collect(ctx: CatalogFetchContext): Promise<UpdateSong[]> {
-    return fetchLevels({ ...ctx, version: ctx.version as VersionId, cookies: ctx.cookies ?? "", log: ctx.log as Logger });
-  },
-  async ingest(...args: Parameters<typeof import("@/server/services/admin/maimai-catalog-ingestion").ingestMaimaiCatalog>) {
-    const { ingestMaimaiCatalog } = await import("@/server/services/admin/maimai-catalog-ingestion");
-    return ingestMaimaiCatalog(...args);
   },
 };

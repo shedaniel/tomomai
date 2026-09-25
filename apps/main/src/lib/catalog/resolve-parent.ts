@@ -1,15 +1,14 @@
-import type { Difficulty, SongType } from "@/lib/types";
 
 export interface SongToParent {
   id: bigint;
   songName: string;
-  type: SongType;
-  difficulty: Difficulty;
+  type: number;
+  difficulty: number;
   artist: string;
   genre: string;
   cover: string;
   bpm: number | null;
-  addedVersion: number;
+  addedVersion: number | null;
   region: string;
   gameVersion: number;
 }
@@ -18,8 +17,8 @@ export interface ParentState {
   /** Database id; null for parents created by this resolution (not yet inserted). */
   id: bigint | null;
   songName: string;
-  type: SongType;
-  difficulty: Difficulty;
+  type: number;
+  difficulty: number;
   disambiguator: number;
   artist: string;
   genre: string;
@@ -38,7 +37,7 @@ export interface ResolveParentsResult {
   newParents: ParentState[];
 }
 
-function chartKey(s: { songName: string; type: string; difficulty: string }) {
+function chartKey(s: { songName: string; type: number; difficulty: number }) {
   return `${s.songName}\u0000${s.type}\u0000${s.difficulty}`;
 }
 
@@ -68,24 +67,24 @@ export function resolveParents(songsToParent: SongToParent[], existingParents: P
   // Deterministic order so batches always resolve the same way
   const sorted = [...songsToParent].sort((a, b) =>
     a.songName.localeCompare(b.songName)
-    || a.type.localeCompare(b.type)
-    || a.difficulty.localeCompare(b.difficulty)
-    || a.addedVersion - b.addedVersion
+    || a.type - b.type
+    || a.difficulty - b.difficulty
+    || (a.addedVersion ?? Infinity) - (b.addedVersion ?? Infinity)
     || a.artist.localeCompare(b.artist)
     || a.region.localeCompare(b.region)
     || a.gameVersion - b.gameVersion);
 
   const assign = (song: SongToParent, parent: ParentState) => {
-    parent.childAddedVersions.add(song.addedVersion);
+    if (song.addedVersion !== null) parent.childAddedVersions.add(song.addedVersion);
     parent.childRegionVersions.add(regionVersionKey(song));
     assignments.set(song.id, parent);
   };
 
   // Reserve stronger matches across the batch before metadata drift can claim a sibling.
   for (const matches of [
-    (song: SongToParent, parent: ParentState) => parent.artist === song.artist && parent.childAddedVersions.has(song.addedVersion),
+    (song: SongToParent, parent: ParentState) => parent.artist === song.artist && song.addedVersion !== null && parent.childAddedVersions.has(song.addedVersion),
     (song: SongToParent, parent: ParentState) => parent.artist === song.artist,
-    (song: SongToParent, parent: ParentState) => parent.childAddedVersions.has(song.addedVersion),
+    (song: SongToParent, parent: ParentState) => song.addedVersion !== null && parent.childAddedVersions.has(song.addedVersion),
   ]) {
     for (const song of sorted) {
       if (assignments.has(song.id)) continue;
@@ -113,7 +112,7 @@ export function resolveParents(songsToParent: SongToParent[], existingParents: P
     //    non-colliding charts gaining a new region/version instance).
     const artistMatches = nonConflicting.filter(c => c.artist === song.artist);
     const versionMatches = (artistMatches.length > 0 ? artistMatches : nonConflicting)
-      .filter(c => c.childAddedVersions.has(song.addedVersion));
+      .filter(c => song.addedVersion !== null && c.childAddedVersions.has(song.addedVersion));
     let parent = artistMatches.length === 1 ? artistMatches[0]
       : versionMatches.length === 1 ? versionMatches[0]
       : nonConflicting.length === 1 ? nonConflicting[0] : undefined;

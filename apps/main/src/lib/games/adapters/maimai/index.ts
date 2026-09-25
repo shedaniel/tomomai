@@ -12,8 +12,16 @@ export const maimaiAdapter: GameAdapter = {
   codes: GAME_CODE_MAPS.maimai,
   catalog: {
     configured: true,
-    loadImplementation: async () => (await import("./catalog")).maimaiCatalogImplementation,
     resolveVersion: region => maimaiVersionProvider.getCurrentVersion(region),
+    requiresToken: region => region !== "cn",
+    async authenticate(region, token) {
+      const { maimaiCatalogAdapter } = await import("./catalog");
+      return maimaiCatalogAdapter.authenticate!(region, token);
+    },
+    async collect(context) {
+      const { maimaiCatalogAdapter } = await import("./catalog");
+      return maimaiCatalogAdapter.collect!(context);
+    },
   },
   scores: { configured: true },
   calculateChartRating({ scoreValue, levelPrecise, difficulty, comboStatus = 0 }, version) {

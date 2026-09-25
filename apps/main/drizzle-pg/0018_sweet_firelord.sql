@@ -309,3 +309,8 @@ DROP TYPE "public"."fs";
 DROP TYPE "public"."level";
 --> statement-breakpoint
 DROP TYPE "public"."title_type";
+
+--> statement-breakpoint
+ALTER TABLE "songs" ALTER COLUMN "levelPrecise" DROP NOT NULL;
+--> statement-breakpoint
+ALTER TABLE "songs" ALTER COLUMN "addedVersion" DROP NOT NULL;

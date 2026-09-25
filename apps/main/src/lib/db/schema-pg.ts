@@ -240,10 +240,10 @@ export const songs = pgTable("songs", {
   game: gameEnum("game").notNull(),
   metadata: jsonb("metadata").$type<Record<string, unknown>>(),
   level: text("level").notNull(),
-  levelPrecise: smallint("levelPrecise").notNull(), // stored as 10x, e.g., 16.5 = 165
+  levelPrecise: smallint("levelPrecise"), // stored as 10x; null when the chart constant is unknown
   region: regionEnum("region").notNull(),
   gameVersion: smallint("gameVersion").notNull(), // ref @metadata.ts
-  addedVersion: smallint("addedVersion").notNull(), // ref @metadata.ts
+  addedVersion: smallint("addedVersion"), // null when the chart introduction version is unknown
   noteDesigner: text("noteDesigner"),
   tapCount: smallint("tapCount"),
   holdCount: smallint("holdCount"),

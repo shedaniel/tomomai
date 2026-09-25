@@ -17,6 +17,7 @@ export function getFrontendGameDescriptor(game: CanonicalGameId): FrontendGame {
   };
 }
 
+// Selects rendered pages only; admin/backend operations take explicit game on a shared instance.
 export function getFrontendGame(): FrontendGame {
   return getFrontendGameDescriptor(resolveFrontendGame(process.env.FRONTEND_GAME));
 }
