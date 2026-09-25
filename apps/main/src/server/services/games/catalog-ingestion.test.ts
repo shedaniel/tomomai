@@ -3,12 +3,11 @@ import { collectCatalog, ingestCatalog } from "./catalog-ingestion";
 import { runFetchers, type Fetcher } from "./catalog-fetcher";
 import { GAME_REGISTRY } from "@/lib/games/registry";
 import type { CatalogFetchContext, PendingChart } from "@/lib/games/catalog-types";
-import type { Logger } from "pino";
+import pino from "pino";
 
 vi.mock("./catalog-persistence", () => ({ persistCatalog: vi.fn().mockResolvedValue({ applied: { added: 1 } }) }));
 import { persistCatalog } from "./catalog-persistence";
-const log = { info: vi.fn(), error: vi.fn(), debug: vi.fn(), warn: vi.fn(), trace: vi.fn(), child: vi.fn() } as unknown as Logger;
-log.child = vi.fn(() => log);
+const log = pino({ enabled: false });
 const context = { region: "jp" as const, version: 9, cookies: "", log, notice: { addDetail: vi.fn(), details: [] } };
 afterEach(() => { vi.restoreAllMocks(); vi.clearAllMocks(); });
 
@@ -29,7 +28,7 @@ describe("catalog adapter orchestration", () => {
     const adapter = GAME_REGISTRY[game].adapter;
     const old = adapter.catalog;
     const events: string[] = [];
-    const source: Fetcher<PendingChart, CatalogFetchContext> = vi.fn(async (ctx, songs) => {
+    const source = vi.fn<Fetcher<PendingChart, CatalogFetchContext>>(async (ctx, songs) => {
       events.push("source");
       expect(ctx.previous).toBeNull();
       expect(ctx.current).toBe(source);
@@ -38,7 +37,7 @@ describe("catalog adapter orchestration", () => {
       ctx.notice.addDetail("source detail");
       return [{ game, songName: "Example", chartType: 0, difficulty: 3, level: "14" }];
     });
-    const fill: Fetcher<PendingChart, CatalogFetchContext> = vi.fn(async (ctx, songs) => {
+    const fill = vi.fn<Fetcher<PendingChart, CatalogFetchContext>>(async (ctx, songs) => {
       events.push("fill");
       expect(ctx.previous).toBe(source);
       expect(ctx.current).toBe(fill);
