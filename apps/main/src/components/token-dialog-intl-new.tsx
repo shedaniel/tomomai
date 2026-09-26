@@ -1,5 +1,6 @@
 "use client";
 
+import { useGameId } from "@/components/providers/game-provider";
 import { Badge } from "@tomomai/ui";
 import { Button } from "@tomomai/ui";
 import {
@@ -85,6 +86,7 @@ function StepBasedTokenDialog({
   onSubmit,
 }: TokenSubDialogProps) {
   const t = useTranslations();
+  const game = useGameId();
   const [currentStep, setCurrentStep] = useState<Step>(1);
   const [showManualInput, setShowManualInput] = useState(false);
   const [direction, setDirection] = useState<1 | -1>(1);
@@ -96,7 +98,7 @@ function StepBasedTokenDialog({
   const {
     data: loginOtpData,
     refetch: refetchLoginOtp,
-  } = trpc.user.getLoginOtp.useQuery(undefined, {
+  } = trpc.user.getLoginOtp.useQuery({ game }, {
     enabled: isOpen && !showManualInput,
     refetchInterval: 60_000,
     refetchOnWindowFocus: false,

@@ -1,5 +1,7 @@
 import { totp } from "otplib";
 import { createHmac, timingSafeEqual } from "crypto";
+import { gameIdSchema } from "./games/schema";
+import type { CanonicalGameId } from "./games/types";
 
 const OTP_PERIOD_SECONDS = 600;
 const OTP_DIGITS = 6;
@@ -21,29 +23,31 @@ function deriveUserKey(userId: string): string {
   return createHmac("sha256", getMasterSecret()).update(userId).digest("hex");
 }
 
-export function createOpaqueUserId(userId: string): string {
-  const payload = Buffer.from(userId, "utf8").toString("base64url");
+export function createLoginAuthorization(userId: string, game: CanonicalGameId): string {
+  const payload = Buffer.from(JSON.stringify({ userId, game }), "utf8").toString("base64url");
+  const signed = `v1.${payload}`;
   const signature = createHmac("sha256", getMasterSecret())
-    .update(userId)
+    .update(signed)
     .digest("base64url");
-  return `${payload}.${signature}`;
+  return `${signed}.${signature}`;
 }
 
-export function decodeOpaqueUserId(opaque: string): string | null {
-  const [payload, signature] = opaque.split(".");
-  if (!payload || !signature) {
-    return null;
-  }
+export function decodeLoginAuthorization(opaque: string): { userId: string; game: CanonicalGameId } | null {
+  const parts = opaque.split(".");
+  const versioned = parts.length === 3 && parts[0] === "v1";
+  if (!versioned && parts.length !== 2) return null;
+  const [payload, signature] = versioned ? parts.slice(1) : parts;
+  if (!payload || !signature) return null;
 
-  let userId: string;
+  let decoded: string;
   try {
-    userId = Buffer.from(payload, "base64url").toString("utf8");
+    decoded = Buffer.from(payload, "base64url").toString("utf8");
   } catch {
     return null;
   }
 
   const expectedSignature = createHmac("sha256", getMasterSecret())
-    .update(userId)
+    .update(versioned ? `v1.${payload}` : decoded)
     .digest("base64url");
 
   const provided = Buffer.from(signature, "base64url");
@@ -53,7 +57,16 @@ export function decodeOpaqueUserId(opaque: string): string | null {
     return null;
   }
 
-  return userId;
+  // Existing gateway links carry a signed user ID and authorize maimai only.
+  if (!versioned) return { userId: decoded, game: "maimai" };
+  try {
+    const authorization: unknown = JSON.parse(decoded);
+    if (!authorization || typeof authorization !== "object" || !("userId" in authorization) || typeof authorization.userId !== "string" || !("game" in authorization)) return null;
+    const game = gameIdSchema.safeParse(authorization.game);
+    return game.success ? { userId: authorization.userId, game: game.data } : null;
+  } catch {
+    return null;
+  }
 }
 
 export function generateUserOtp(userId: string): string {

@@ -2,16 +2,17 @@ import { load } from "cheerio";
 import { logger } from "../../logger";
 import { normalizeName } from "../../name-utils";
 import { Difficulty, Region, SongType } from "../../types";
-import { maimaiBaseUrl, maimaiGetHtml } from "../http";
+import { gameBaseUrl } from "@/lib/games/sites";
+import { getGameHtml } from "@/server/services/games/sega/http";
 import { musicTypeFromIcon } from "../parse-utils";
 import type { AlbumData } from "../types";
 
 export async function fetchAlbumData(cookies: string, region: Region): Promise<AlbumData[]> {
-  const baseUrl = maimaiBaseUrl(region);
+  const baseUrl = gameBaseUrl("maimai", region);
   const albumUrl = `${baseUrl}/maimai-mobile/playerData/photo/`;
   logger.info(`Fetching album data from: ${albumUrl}`);
 
-  const albumHtml = await maimaiGetHtml(albumUrl, cookies, `${baseUrl}/maimai-mobile/`);
+  const albumHtml = await getGameHtml("maimai", region, albumUrl, cookies, `${baseUrl}/maimai-mobile/`);
   logger.debug(`Album data fetched successfully, length: ${albumHtml.length} characters`);
 
   const $ = load(albumHtml);

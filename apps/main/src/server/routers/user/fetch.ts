@@ -1,31 +1,33 @@
-import { maimaiCompatibilityGameSchema } from "@/lib/games/schema";
-import { gameContextInput, validateGameInput } from "./game-input";
+import { gameIdSchema } from "@/lib/games/schema";
+import { gameContextInput, validateGameCapability, validateGameInput } from "./game-input";
 import { resolveFlagsForUser } from "@/lib/flags";
 import { startScoreFetch, getScoreFetchStatus } from "@/server/services/games/score-ingestion";
 import { db } from '@/lib/db';
-import { generateUserOtp, getOtpExpiryTimestamp, createOpaqueUserId } from '@/lib/otp';
+import { generateUserOtp, getOtpExpiryTimestamp, createLoginAuthorization } from '@/lib/otp';
+import { requireConfiguredSource } from "@/server/services/games/adapters";
+import { deleteToken } from "@/server/services/games/tokens";
 import { resolveBaseUrl } from '@/lib/base-url';
 import { getLogger } from '@/lib/request-logger';
 import { protectedProcedure, router } from '@/lib/trpc';
-import { Region } from '@/lib/types';
 import { TRPCError } from '@trpc/server';
 import { isTokenError, isAlbumSettingsError } from '@/lib/token-errors';
 import { and, desc, eq } from 'drizzle-orm';
 import { z } from 'zod';
-import { getEnabledRegions } from '@/lib/enabled-regions';
-
-const regionSchema = z.enum(getEnabledRegions());
 
 export const fetchRouter = router({
   getLoginOtp: protectedProcedure
-    .query(({ ctx }) => {
+    .input(z.object({ game: gameIdSchema }))
+    .query(({ ctx, input }) => {
+      const source = requireConfiguredSource(input.game, "scores");
+      validateGameCapability(input.game, "scores");
+      if (!source.cookieLoginUrl) throw new TRPCError({ code: "BAD_REQUEST", message: "Cookie login is not available for this game" });
       const userId = ctx.session.user.id;
       const otp = generateUserOtp(userId);
       const expiresAt = new Date(getOtpExpiryTimestamp()).toISOString();
       const baseUrl = resolveBaseUrl();
       const scriptUrl = `${baseUrl}/api/login.js`;
-      const opaqueUserId = createOpaqueUserId(userId);
-      const loginLink = `https://lng-tgk-aime-gw.am-all.net/common_auth/#otp=${otp}&user=${encodeURIComponent(opaqueUserId)}`;
+      const opaqueUserId = createLoginAuthorization(userId, input.game);
+      const loginLink = `${source.cookieLoginUrl}#otp=${otp}&user=${encodeURIComponent(opaqueUserId)}`;
 
       return {
         otp,
@@ -105,11 +107,9 @@ export const fetchRouter = router({
     }),
 
   deleteToken: protectedProcedure
-    .input(z.object({ game: maimaiCompatibilityGameSchema,
-      region: regionSchema,
-    }))
+    .input(z.object(gameContextInput))
     .mutation(async ({ ctx, input }) => {
-      const { deleteToken } = await import('@/server/services/maimai-login');
-      await deleteToken(ctx.session.user.id, input.region as Region);
+      const { game, region } = validateGameInput(input, "scores");
+      await deleteToken(game, ctx.session.user.id, region);
     }),
 });

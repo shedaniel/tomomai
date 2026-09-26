@@ -12,7 +12,7 @@ const mocks = vi.hoisted(() => {
 vi.mock("server-only", () => ({}));
 vi.mock("@/server/services/catalog/maimai/pipeline", () => ({ collectCatalog: (ctx: CatalogFetchContext) => mocks.source("maimai", ctx) }));
 vi.mock("@/server/services/catalog/chunithm/pipeline", () => ({ collectCatalog: (ctx: CatalogFetchContext) => mocks.source("chunithm", ctx) }));
-vi.mock("@/server/services/maimai-login", () => ({ loginAndGetCookies: mocks.login }));
+vi.mock("@/server/services/games/maimai/login", () => ({ loginAndGetCookies: mocks.login }));
 vi.mock("@/lib/games/versions", () => ({ getCurrentVersion: () => 9, getVersionInfo: () => ({ id: 9 }) }));
 vi.mock("@/lib/games/frontend-server", () => ({ getFrontendGame: () => ({ id: "maimai" }) }));
 vi.mock("@/server/services/catalog/ingestion/persistence", () => ({ persistCatalog: mocks.ingest }));

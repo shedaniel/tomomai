@@ -1,5 +1,6 @@
 import { Region } from "@/lib/types";
-import { maimaiBaseUrl, maimaiGetHtml } from "@/lib/maimai/http";
+import { gameBaseUrl } from "@/lib/games/sites";
+import { getGameHtml } from "@/server/services/games/sega/http";
 import { load } from "cheerio";
 import { normalizeGenre } from "@/lib/name-utils";
 import { type Logger } from "pino";
@@ -92,11 +93,11 @@ export const MaimaiAfterFetcher: SongFetcher = async (context, songs) => {
 async function fetchWebsite(region: Region, cookies: string, inputName: string, inputValue: string, log: Logger) {
   const params = new URLSearchParams();
   params.append(inputName, inputValue);
-  const baseUrl = maimaiBaseUrl(region);
+  const baseUrl = gameBaseUrl("maimai", region);
   const detailUrl = `${baseUrl}/maimai-mobile/record/musicDetail/?${params.toString()}`;
   log.debug(`Fetching song detail from: ${detailUrl}`);
 
-  const detailHtml = await maimaiGetHtml(detailUrl, cookies, `${baseUrl}/maimai-mobile/`);
+  const detailHtml = await getGameHtml("maimai", region, detailUrl, cookies, `${baseUrl}/maimai-mobile/`);
   log.debug(`Song detail fetched successfully, length: ${detailHtml.length} characters`);
 
   return detailHtml;
@@ -121,7 +122,7 @@ function parseSongDetail(html: string, region: Region, log: Logger): {
     log.error({ html }, "Cover image element found but src attribute is missing");
     throw new Error("Cover image element found but src attribute is missing");
   }
-  const coverUrl = coverSrc.startsWith('http') ? coverSrc : `${maimaiBaseUrl(region)}${coverSrc}`;
+  const coverUrl = coverSrc.startsWith('http') ? coverSrc : `${gameBaseUrl("maimai", region)}${coverSrc}`;
 
   // Extract genre
   const genreElement = $('.basic_block .blue');

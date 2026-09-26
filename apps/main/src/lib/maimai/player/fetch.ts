@@ -1,15 +1,15 @@
-import { agentFetch } from "../../http-agent";
 import { logger } from "../../logger";
 import { Region } from "../../types";
-import { maimaiBaseUrl, maimaiGetHtml } from "../http";
+import { gameBaseUrl } from "@/lib/games/sites";
+import { getGameHtml, requestGamePage } from "@/server/services/games/sega/http";
 import type { PlayerData } from "../types";
 import { parsePlayerData } from "./parse";
 
 export async function fetchPlayerData(region: Region, cookies: string, refererUrl: string): Promise<string> {
-  const playerDataUrl = `${maimaiBaseUrl(region)}/maimai-mobile/playerData/`;
+  const playerDataUrl = `${gameBaseUrl("maimai", region)}/maimai-mobile/playerData/`;
   logger.debug(`Fetching player data from: ${playerDataUrl}`);
 
-  const html = await maimaiGetHtml(playerDataUrl, cookies, refererUrl);
+  const html = await getGameHtml("maimai", region, playerDataUrl, cookies, refererUrl);
   logger.debug(`Player data HTML length: ${html.length} characters`);
 
   if (html.includes("ERROR CODE：100001") || html.includes("Please login again")) {
@@ -21,22 +21,18 @@ export async function fetchPlayerData(region: Region, cookies: string, refererUr
 
 export async function extractPlayerData(region: Region, html: string, cookies: string): Promise<PlayerData> {
   const { iconUpstreamUrl, ...parsed } = parsePlayerData(html, region);
-  const { buffer, contentType } = await fetchIconBytes(iconUpstreamUrl, cookies);
+  const { buffer, contentType } = await fetchIconBytes(region, iconUpstreamUrl, cookies);
   return { ...parsed, iconBytes: buffer, iconContentType: contentType };
 }
 
-export async function fetchIconBytes(
+async function fetchIconBytes(
+  region: Region,
   imageUrl: string,
   cookies: string,
 ): Promise<{ buffer: Buffer; contentType: string }> {
   logger.info(`Fetching icon bytes: ${imageUrl}`);
 
-  const response = await agentFetch(imageUrl, {
-    headers: {
-      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-      "Cookie": cookies || "",
-    },
-  });
+  const response = await requestGamePage("maimai", region, imageUrl, cookies, `${gameBaseUrl("maimai", region)}/maimai-mobile/`);
 
   if (!response.ok) {
     throw new Error(`Failed to fetch icon image: HTTP ${response.status}`);

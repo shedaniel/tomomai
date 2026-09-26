@@ -1,4 +1,6 @@
 import { requireConfiguredSource } from "./adapters";
+import { readToken, saveToken } from "./tokens";
+import { getGameMaintenance, getGameMaintenanceError } from "@/lib/games/maintenance";
 import { revalidatePublicProfileForUser } from "@/lib/profile-cache";
 import { buildChartResolution, chartKey, scoreDataKey, upsertScoreData, type DbSong } from "./score-storage";
 import type { Flags } from "@/lib/flags";
@@ -16,7 +18,6 @@ import {
   snapshotScores,
   user,
   userSnapshots,
-  userTokens,
 } from "@/lib/db/schema-pg";
 import { getAllStates } from "@/lib/fetch-states";
 import { appendFetchState } from "@/lib/fetch-states-server";
@@ -36,7 +37,6 @@ import {
   type ScoreFetchContext,
 } from "@/lib/games/types";
 import { flushLogger } from "@/lib/logger";
-import { decryptToken, encryptToken } from "@/lib/token-crypto";
 import type { Region } from "@/lib/types";
 import { getLogger } from "@/lib/request-logger";
 
@@ -197,32 +197,20 @@ export async function startScoreFetch(input: {
     return demoScoreFetch(input.userId, context.game, context.region);
   }
 
+  const maintenance = getGameMaintenance(context.game, context.region);
+  if (maintenance?.active) throw new Error(getGameMaintenanceError(maintenance));
+
   const gameVersion = getCurrentVersion(context.game, context.region);
   let tokenToUse = input.token;
   if (!tokenToUse) {
-    const savedToken = await db
-      .select({ token: userTokens.token })
-      .from(userTokens)
-      .where(and(
-        eq(userTokens.userId, input.userId),
-        eq(userTokens.game, context.game),
-        eq(userTokens.region, context.region),
-      ))
-      .limit(1);
-
-    if (savedToken.length === 0) {
+    tokenToUse = await readToken(context.game, input.userId, context.region) ?? undefined;
+    if (!tokenToUse) {
       throw new Error("NO_TOKEN_FOUND: No authentication token found. Please add your authentication token first.");
-    }
-
-    try {
-      tokenToUse = decryptToken(savedToken[0].token);
-    } catch (error) {
-      getLogger().error({ err: error, game: context.game, region: context.region }, "Failed to decrypt token");
-      throw new Error("Failed to decrypt stored token. Please re-add your authentication tokens.");
     }
   }
 
   await scoreAdapter.validateToken?.({
+    game: context.game,
     userId: input.userId,
     region: context.region,
     flags: input.flags,
@@ -231,19 +219,7 @@ export async function startScoreFetch(input: {
   });
 
   if (input.token) {
-    const encryptedToken = encryptToken(tokenToUse);
-    const updatedAt = new Date();
-    await db.insert(userTokens).values({
-      userId: input.userId,
-      game: context.game,
-      region: context.region,
-      token: encryptedToken,
-      createdAt: updatedAt,
-      updatedAt,
-    }).onConflictDoUpdate({
-      target: [userTokens.userId, userTokens.game, userTokens.region],
-      set: { token: encryptedToken, updatedAt },
-    });
+    await saveToken(context.game, input.userId, context.region, tokenToUse);
   }
 
   const albumsSupported = GAME_REGISTRY[context.game].adapter.capabilities.has("albums");
@@ -325,6 +301,7 @@ export async function startScoreFetch(input: {
   }).returning({ id: fetchSessions.id });
   const sessionId = insertedSession.id;
   const fetchContext = {
+    game: context.game,
     userId: input.userId,
     region: context.region,
     sessionId,
@@ -564,6 +541,7 @@ export async function persistFetchResult(input: PersistFetchResultInput): Promis
   });
   if (input.persistExtra) {
     await input.persistExtra({
+      game: input.game,
       userId: input.userId,
       region: input.region,
       sessionId: input.sessionId,

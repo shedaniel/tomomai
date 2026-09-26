@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "@/lib/auth-server";
 import { resolveBaseUrlFromHeaders } from "@/lib/base-url";
-import { exchangeLxnsCode, saveLxnsToken } from "@/server/services/maimai-login";
+import { exchangeLxnsCode } from "@/server/services/games/maimai/login";
+import { saveToken } from "@/server/services/games/tokens";
 import { requestLogger } from "@/lib/request-logger";
 
 const STATE_COOKIE = "lxns_oauth_state";
@@ -75,7 +76,7 @@ export async function GET(req: NextRequest) {
     return res;
   }
 
-  await saveLxnsToken(session.user.id, result.token);
+  await saveToken("maimai", session.user.id, "cn", result.token);
   log.info({ userId: session.user.id }, "callback: token persisted");
 
   const res = html({ ok: true });

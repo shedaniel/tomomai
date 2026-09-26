@@ -2,7 +2,7 @@ import { load } from "cheerio";
 import { logger } from "../../logger";
 import { Region, TitleType } from "../../types";
 import type { PlayerData } from "../types";
-import { maimaiBaseUrl } from "../http";
+import { gameBaseUrl } from "@/lib/games/sites";
 
 export type ParsedPlayerData = Omit<PlayerData, "iconBytes" | "iconContentType"> & {
   iconUpstreamUrl: string;
@@ -27,7 +27,7 @@ export function parsePlayerData(html: string, region: Region): ParsedPlayerData 
     throw new Error("User icon element found but src attribute is missing");
   }
 
-  const iconUrl = iconSrc.startsWith('http') ? iconSrc : `${maimaiBaseUrl(region)}${iconSrc}`;
+  const iconUrl = iconSrc.startsWith('http') ? iconSrc : `${gameBaseUrl("maimai", region)}${iconSrc}`;
   logger.debug(`Extracted icon URL: ${iconUrl}`);
 
   // Extract display name

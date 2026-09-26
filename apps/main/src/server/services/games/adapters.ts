@@ -9,7 +9,7 @@ export const GAME_SOURCES: Record<CanonicalGameId, { catalog: CatalogSourceAdapt
       configured: true,
       requiresToken: region => region !== "cn",
       async authenticate(region, token) {
-        const { loginAndGetCookies } = await import("@/server/services/maimai-login");
+        const { loginAndGetCookies } = await import("@/server/services/games/maimai/login");
         return loginAndGetCookies(region, token);
       },
       async collect(context) {
@@ -19,6 +19,7 @@ export const GAME_SOURCES: Record<CanonicalGameId, { catalog: CatalogSourceAdapt
     },
     scores: {
       configured: true,
+      cookieLoginUrl: "https://lng-tgk-aime-gw.am-all.net/common_auth/",
       async validateToken(context) {
         const { maimaiScoreAdapter } = await import("@/lib/games/adapters/maimai/score");
         return maimaiScoreAdapter.validateToken?.(context);

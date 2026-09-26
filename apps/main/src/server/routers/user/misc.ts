@@ -11,8 +11,8 @@ import {
 } from '@/lib/maimai/divingfish/client';
 import {
   formatDivingFishToken,
-  saveDivingFishToken,
-} from '@/server/services/maimai-login';
+} from '@/server/services/games/maimai/login';
+import { saveToken } from '@/server/services/games/tokens';
 import { generateUserOtp, getOtpExpiryTimestamp } from '@/lib/otp';
 import { logger } from '@/lib/logger';
 import { signCnProxyToken } from '@/lib/cn-proxy-token';
@@ -90,7 +90,7 @@ export const miscRouter = router({
           });
         }
         const formatted = formatDivingFishToken({ kind: 'username', value: username as string });
-        await saveDivingFishToken(ctx.session.user.id, formatted);
+        await saveToken("maimai", ctx.session.user.id, "cn", formatted);
         logger.info(`[divingfish] verified via import-token for user=${ctx.session.user.id}, df_username=${username}`);
         // The Import-Token is intentionally not persisted anywhere, used only to confirm ownership.
         return { ok: true, username };
@@ -131,7 +131,7 @@ export const miscRouter = router({
           });
         }
         const formatted = formatDivingFishToken(input);
-        await saveDivingFishToken(ctx.session.user.id, formatted);
+        await saveToken("maimai", ctx.session.user.id, "cn", formatted);
         logger.info(`[divingfish] verified via nickname challenge for user=${ctx.session.user.id}, kind=${input.kind}`);
         return { ok: true };
       } catch (error) {

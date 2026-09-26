@@ -118,6 +118,7 @@ describe("maimai score adapter normalization", () => {
   it("rejects a stored CN single-use token but accepts a newly supplied one", () => {
     const validateToken = maimaiScoreAdapter.validateToken!;
     const context = {
+      game: "maimai" as const,
       userId: "user-1",
       region: "cn" as const,
       flags: {} as Flags,

@@ -49,6 +49,8 @@ const start = { userId: "same-user", game: "maimai" as const, region: "jp" as co
 const persist = { userId: "same-user", game: "maimai" as const, region: "jp" as const, sessionId: BigInt(1), gameVersion: 14, fetched };
 
 beforeEach(() => {
+  vi.useFakeTimers();
+  vi.setSystemTime(new Date("2026-09-27T12:00:00+09:00"));
   vi.clearAllMocks();
   state.statements.length = 0;
   state.fetch.mockResolvedValue({ result: fetched });
@@ -58,12 +60,9 @@ beforeEach(() => {
 });
 afterEach(() => { vi.useRealTimers(); vi.unstubAllEnvs(); });
 
-it("scopes token and session SQL to the user, game and region, including the token conflict key", async () => {
+it("scopes session SQL to the user, game and region", async () => {
   const started = await startScoreFetch(start);
   await started.backgroundWork;
-  const tokenWrite = state.statements.find(query => query.sql.startsWith('insert into "user_tokens"'))!;
-  expect(tokenWrite.sql).toMatch(/on conflict \("userId","game","region"\) do update/);
-  expect(tokenWrite.params).toContain("encrypted:new-token");
   const sessionReads = state.statements.filter(query => query.sql.includes('from "fetch_sessions"'));
   expect(sessionReads).toHaveLength(2);
   for (const query of sessionReads) {
@@ -73,6 +72,14 @@ it("scopes token and session SQL to the user, game and region, including the tok
   const sessionWrite = state.statements.find(query => query.sql.startsWith('update "fetch_sessions"'))!;
   expect(sessionWrite.sql).toMatch(/"fetch_sessions"\."id" = \$\d+ and "fetch_sessions"\."game" = \$\d+/);
   expect(sessionWrite.params).toContain("maimai");
+});
+
+it("rejects maintenance before validating or storing tokens or creating sessions", async () => {
+  vi.setSystemTime(new Date("2026-09-27T04:00:00+09:00"));
+  await expect(startScoreFetch(start)).rejects.toThrow("maintenance window (04:00 - 07:00 JST)");
+  expect(state.statements).toEqual([]);
+  expect(state.validateToken).not.toHaveBeenCalled();
+  expect(state.fetch).not.toHaveBeenCalled();
 });
 
 it("rejects provider token validation before creating a fetch session", async () => {

@@ -1,9 +1,11 @@
-import { decodeOpaqueUserId, verifyUserOtp } from "@/lib/otp";
-import { startFetchServer } from "@/lib/maimai-server-actions";
+import { decodeLoginAuthorization, verifyUserOtp } from "@/lib/otp";
+import { resolveFlagsForUser } from "@/lib/flags";
+import { startScoreFetch } from "@/server/services/games/score-ingestion";
+import { GameAdapterError } from "@/lib/games/types";
 import { NextRequest, NextResponse } from "next/server";
 import { flushLogger } from "@/lib/logger";
 import { requestLogger } from "@/lib/request-logger";
-import { securityMiddleware, validateContentType, csrfProtection } from "@/lib/security/middleware";
+import { securityMiddleware, validateContentType } from "@/lib/security/middleware";
 import { Region } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -71,10 +73,11 @@ export async function POST(request: NextRequest) {
       return jsonResponse({ success: false, error: "Missing required form fields." }, { status: 400 });
     }
 
-    const userId = decodeOpaqueUserId(opaqueUserId);
-    if (!userId) {
+    const authorization = decodeLoginAuthorization(opaqueUserId);
+    if (!authorization) {
       return jsonResponse({ success: false, error: "Invalid user identifier." }, { status: 401 });
     }
+    const { userId, game } = authorization;
 
     if (!verifyUserOtp(userId, otp)) {
       return jsonResponse({ success: false, error: "Invalid or expired OTP." }, { status: 401 });
@@ -83,13 +86,17 @@ export async function POST(request: NextRequest) {
     const region = normalizeRegion(regionValue);
     const finalToken = normalizeToken(token);
 
-    const result = await startFetchServer(userId, region, finalToken);
+    const result = await startScoreFetch({ userId, game, region, token: finalToken, flags: await resolveFlagsForUser(userId) });
 
     return jsonResponse({ success: true, sessionId: result.sessionId, status: result.status });
   } catch (error) {
     log.error({ err: error }, "Login error");
     // Flush only on the error path — login is user-facing and low-volume.
     await flushLogger();
+
+    if (error instanceof GameAdapterError) {
+      return jsonResponse({ success: false, error: error.message, code: error.code, requestId }, { status: 422 });
+    }
 
     if (error instanceof Error) {
       if (error.message.includes("already in progress")) {

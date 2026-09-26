@@ -1,7 +1,7 @@
 import { Difficulty, Level, Region, SongType } from "@/lib/types";
 import { OfficialSong } from "@/server/services/catalog/maimai/types";
 import { asFetcher } from "../merge";
-import { maimaiBaseUrl } from "@/lib/maimai/http";
+import { gameBaseUrl } from "@/lib/games/sites";
 import { normalizeGenre, normalizeName } from "@/lib/name-utils";
 import type { PendingSong } from "@/server/services/catalog/maimai/types";
 import { important } from "@/server/services/catalog/ingestion/types";
@@ -29,7 +29,7 @@ export const MaimaiBaseFetcher = asFetcher(async ({ region, version, cookies, no
   notice.addDetail(`Fetched ${parsedSongs.length} songs from official JSON`);
   return parsedSongs.flatMap(song => {
     const cover = song?.image_url
-      ? `${maimaiBaseUrl(region)}/maimai-mobile/img/Music/${song.image_url}`
+      ? `${gameBaseUrl("maimai", region)}/maimai-mobile/img/Music/${song.image_url}`
       : "https://maimaidx.jp/maimai-mobile/img/Music/default.png";
     const genre = normalizeGenre(song?.catcode || "Unknown");
 

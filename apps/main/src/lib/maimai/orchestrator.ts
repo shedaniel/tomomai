@@ -1,21 +1,16 @@
-import { isMaimaiMaintenance } from "./maintenance";
-import { and, eq } from "drizzle-orm";
-import { db } from "../db";
-import { userTokens } from "../db/schema-pg";
 import { FETCH_STATES } from "../fetch-states";
 import { appendFetchState } from "../fetch-states-server";
 import { fetchImageBuffer } from "../image-converter";
 import { logger } from "../logger";
 import { getLogger } from "../request-logger";
-import { decryptToken } from "../token-crypto";
 import { Region } from "../types";
 import {
-  getCookiesFromRedirect,
   parseDivingFishToken,
   parseLxnsToken,
   processMaimaiToken,
-  TokenValidationResult,
-} from "@/server/services/maimai-login";
+} from "@/server/services/games/maimai/login";
+import type { TokenValidationResult } from "@/server/services/games/sega/login";
+import { getCookiesFromRedirect } from "@/server/services/games/sega/http";
 import {
   DivingFishAuthError,
   DivingFishPrivacyError,
@@ -29,7 +24,7 @@ import { fetchAlbumData } from "./albums/fetch";
 import { fetchEventsData } from "./events/fetch";
 import { extractPlayerData, fetchPlayerData } from "./player/fetch";
 import { fetchLxnsPlayerData, LxnsAuthRevokedError } from "./player/lxns";
-import { deleteToken } from "@/server/services/maimai-login";
+import { deleteToken } from "@/server/services/games/tokens";
 import { fetchAndInsertRecentSongsData } from "./recents/details";
 import { fetchRecentSongsData } from "./recents/fetch";
 import { fetchAllSongsData, fetchHiddenSongsData } from "./songs/fetch";
@@ -43,7 +38,7 @@ import type {
   ScoreData,
 } from "./types";
 import type { Flags } from "../flags";
-import type { PersistedSnapshotContext } from "@/lib/games/types";
+import type { PersistedSnapshotContext, ScoreFetchContext } from "@/lib/games/types";
 
 // ---------------------------------------------------------------------------
 // Shared fetcher contract
@@ -78,22 +73,8 @@ type DataFetcher = (ctx: FetcherContext) => Promise<FetchedMaimaiData>;
 async function validateRegionAccess(
   userId: string,
   region: Region,
+  rawToken: string,
 ): Promise<{ validation: TokenValidationResult; rawToken: string }> {
-  const tokenRecord = await db.query.userTokens.findFirst({
-    where: and(eq(userTokens.userId, userId), eq(userTokens.game, "maimai"), eq(userTokens.region, region)),
-  });
-
-  if (!tokenRecord) {
-    throw new Error("No token found for this region. Please add your maimai token first.");
-  }
-
-  if (isMaimaiMaintenance(region)) {
-    throw new Error(region === "intl"
-      ? "Cannot fetch data during maintenance window (1AM - 2AM JST; Wednesdays 1AM - 4AM JST)"
-      : "Cannot fetch data during maintenance window (4AM - 7AM JST)");
-  }
-
-  const rawToken = decryptToken(tokenRecord.token);
   const validation = await processMaimaiToken(userId, region, rawToken);
   if (!validation.isValid) {
     throw new Error(validation.error || "Token validation failed");
@@ -117,6 +98,7 @@ const scrapeFetcher: DataFetcher = async ({ userId: _userId, region, sessionId, 
   const cookies = validation.cookiesReady && validation.cookies
     ? validation.cookies
     : await getCookiesFromRedirect(
+      "maimai",
       region,
       validation.redirectUrl,
       validation.cookies || null,
@@ -208,7 +190,7 @@ const lxnsFetcher: DataFetcher = async ({ userId, region, sessionId, validation 
   } catch (error) {
     if (error instanceof LxnsAuthRevokedError) {
       logger.warn(`[lxns] auth revoked for user=${userId}, deleting token`);
-      await deleteToken(userId, region);
+      await deleteToken("maimai", userId, region);
       throw new Error("Session expired or invalid. Please provide a new token.");
     }
     throw error;
@@ -244,7 +226,7 @@ const divingfishFetcher: DataFetcher = async ({ userId, region, sessionId, valid
   } catch (error) {
     if (error instanceof DivingFishUserNotFoundError || error instanceof DivingFishPrivacyError) {
       logger.warn(`[divingfish] user inaccessible for user=${userId}, deleting token`);
-      await deleteToken(userId, region);
+      await deleteToken("maimai", userId, region);
       throw new Error("Session expired or invalid. Please provide a new token.");
     }
     if (error instanceof DivingFishAuthError) {
@@ -292,13 +274,8 @@ function pickFetcher(region: Region, rawToken: string): DataFetcher {
   throw new Error(`Unsupported token provider for region ${region}`);
 }
 
-export async function runMaimaiFetcher(ctx: {
-  userId: string;
-  region: Region;
-  sessionId: bigint;
-  flags: Flags;
-}): Promise<{ fetched: FetchedMaimaiData; validation: TokenValidationResult }> {
-  const { validation, rawToken } = await validateRegionAccess(ctx.userId, ctx.region);
+export async function runMaimaiFetcher(ctx: ScoreFetchContext): Promise<{ fetched: FetchedMaimaiData; validation: TokenValidationResult }> {
+  const { validation, rawToken } = await validateRegionAccess(ctx.userId, ctx.region, ctx.token);
 
   try {
     const fetcher = pickFetcher(ctx.region, rawToken);

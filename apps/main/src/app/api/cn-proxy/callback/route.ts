@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyCnProxyToken } from "@/lib/cn-proxy-token";
-import { deleteToken, formatCnCookiesToken, saveCnCookiesToken } from "@/server/services/maimai-login";
+import { formatCnCookiesToken } from "@/server/services/games/maimai/login";
+import { deleteToken, saveToken } from "@/server/services/games/tokens";
 import { startFetchServer } from "@/lib/maimai-server-actions";
 import { agentFetch } from "@/lib/http-agent";
 import { requestLogger } from "@/lib/request-logger";
@@ -107,12 +108,12 @@ export async function POST(req: NextRequest) {
       throw new Error("error in html");
     }
     const playerName = extractPlayerNameQuick(html);
-    await saveCnCookiesToken(userId, formatCnCookiesToken(cookies));
+    await saveToken("maimai", userId, "cn", formatCnCookiesToken(cookies));
     log.info({ userId, r: body.r, size: html.length, playerName: playerName ?? "?" }, "cookies saved");
   } catch (err) {
     const error = err instanceof Error ? err.message : String(err);
     log.warn({ userId, r: body.r, err }, "verification failed");
-    await deleteToken(userId, "cn").catch(() => {});
+    await deleteToken("maimai", userId, "cn").catch(() => {});
     return NextResponse.json({ ok: false, error }, { status: 502 });
   }
 

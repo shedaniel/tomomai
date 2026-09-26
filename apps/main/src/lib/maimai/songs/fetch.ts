@@ -4,17 +4,18 @@ import { getStateForDifficulty } from "../../fetch-states";
 import { logger } from "../../logger";
 import { normalizeName } from "../../name-utils";
 import { Difficulty, Region } from "../../types";
-import { maimaiBaseUrl, maimaiGetHtml } from "../http";
+import { gameBaseUrl } from "@/lib/games/sites";
+import { getGameHtml } from "@/server/services/games/sega/http";
 import { musicTypeFromIcon } from "../parse-utils";
 import type { ScoreData } from "../types";
 import { parseScoreData } from "./parse";
 
 export async function fetchSongsData(cookies: string, difficulty: number, region: Region): Promise<ScoreData[]> {
-  const baseUrl = maimaiBaseUrl(region);
+  const baseUrl = gameBaseUrl("maimai", region);
   const songsUrl = `${baseUrl}/maimai-mobile/record/musicGenre/search/?genre=99&diff=${difficulty}`;
   logger.info(`Fetching songs data for difficulty ${difficulty} from: ${songsUrl}`);
 
-  const songsHtml = await maimaiGetHtml(songsUrl, cookies, `${baseUrl}/maimai-mobile/`);
+  const songsHtml = await getGameHtml("maimai", region, songsUrl, cookies, `${baseUrl}/maimai-mobile/`);
   logger.debug(`Songs data for difficulty ${difficulty} fetched successfully, length: ${songsHtml.length} characters`);
 
   return parseScoreData(songsHtml, difficulty);
@@ -56,8 +57,8 @@ export async function fetchAllSongsData(cookies: string, region: Region, session
 export async function fetchHiddenSongsData(cookies: string, allSongsData: { [difficulty: number]: ScoreData[] }): Promise<ScoreData[]> {
   logger.info("Fetching hidden songs data from rating target music page...");
 
-  const baseUrl = "https://maimaidx-eng.com";
-  const html = await maimaiGetHtml(`${baseUrl}/maimai-mobile/home/ratingTargetMusic/`, cookies, `${baseUrl}/maimai-mobile/`);
+  const baseUrl = gameBaseUrl("maimai", "intl");
+  const html = await getGameHtml("maimai", "intl", `${baseUrl}/maimai-mobile/home/ratingTargetMusic/`, cookies, `${baseUrl}/maimai-mobile/`);
   logger.debug(`Hidden songs data fetched successfully, length: ${html.length} characters`);
 
   const $ = load(html);

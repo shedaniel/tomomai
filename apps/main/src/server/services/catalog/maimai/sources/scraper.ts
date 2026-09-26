@@ -1,5 +1,6 @@
 import { logger } from "@/lib/logger";
-import { maimaiBaseUrl, maimaiRequest } from "@/lib/maimai/http";
+import { gameBaseUrl } from "@/lib/games/sites";
+import { requestGamePage } from "@/server/services/games/sega/http";
 import { musicTypeFromIcon } from "@/lib/maimai/parse-utils";
 import { VersionId } from "@/lib/metadata";
 import { normalizeName } from "@/lib/name-utils";
@@ -105,12 +106,12 @@ export async function prepareMaimaiScraper(region: Region, version: VersionId, c
 
 // Helper function to fetch and parse song data for a specific difficulty and version
 export async function fetchSongDataForDifficulty(region: Region, cookies: string, difficultyName: Difficulty, difficulty: number, version: number, log: Logger): Promise<ParsedSong[]> {
-  const baseUrl = maimaiBaseUrl(region);
+  const baseUrl = gameBaseUrl("maimai", region);
   const songsUrl = `${baseUrl}/maimai-mobile/record/musicVersion/search/?version=${version}&diff=${difficulty}`;
   const childLog = log.child({ version, difficulty });
   childLog.debug(`Fetching songs data from: ${songsUrl}`);
 
-  const songsResponse = await maimaiRequest(songsUrl, cookies, `${baseUrl}/maimai-mobile/`);
+  const songsResponse = await requestGamePage("maimai", region, songsUrl, cookies, `${baseUrl}/maimai-mobile/`);
 
   childLog.debug({ status: songsResponse.status }, `Songs data response got`);
 

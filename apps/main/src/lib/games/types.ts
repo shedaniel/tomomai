@@ -127,6 +127,7 @@ export interface ConfiguredCatalogAdapter {
 export type CatalogSourceAdapter = ConfiguredCatalogAdapter | { configured: false; notConfiguredReason: string };
 
 export type ScoreTokenValidationContext = {
+  game: CanonicalGameId;
   userId: string;
   region: Region;
   flags: Flags;
@@ -135,6 +136,7 @@ export type ScoreTokenValidationContext = {
 };
 
 export type ScoreFetchContext = {
+  game: CanonicalGameId;
   userId: string;
   region: Region;
   sessionId: bigint;
@@ -147,6 +149,7 @@ export type ScoreFetchContext = {
 export type ChartResolutionMap = Map<string, bigint>;
 
 export type PersistedSnapshotContext = {
+  game: CanonicalGameId;
   userId: string;
   region: Region;
   sessionId: bigint;
@@ -157,6 +160,7 @@ export type PersistedSnapshotContext = {
 
 export interface ConfiguredScoreAdapter {
   configured: true;
+  cookieLoginUrl?: string;
   validateToken?: (ctx: ScoreTokenValidationContext) => void | Promise<void>;
   fetch: (ctx: ScoreFetchContext) => Promise<{
     result: GameFetchResult;
