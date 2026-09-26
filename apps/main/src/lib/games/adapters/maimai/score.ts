@@ -1,11 +1,10 @@
 import type {
   GameFetchResult,
-  NormalizedAlbum,
   NormalizedEvent,
   NormalizedRecent,
   NormalizedScore,
   PersistedSnapshotContext,
-  ScoreAdapter,
+  ConfiguredScoreAdapter,
   ScoreFetchContext,
 } from "@/lib/games/types";
 import {
@@ -68,33 +67,8 @@ function normalizeRecent(
       fs: recent.fs,
     }, ctx),
     playedAt: recent.playedAt,
-    details: {
-      level: recent.level,
-      maxDxScore: recent.maxDxScore,
-      track: recent.track,
-      idx: recent.idx,
-    },
-  };
-}
-
-function normalizeAlbum(
-  album: FetchedMaimaiData["albumData"][number],
-  ctx: MaimaiNormalizeContext,
-): NormalizedAlbum {
-  return {
-    chart: {
-      game: "maimai",
-      region: ctx.region,
-      version: ctx.version,
-      songName: album.songName,
-      chartType: chartTypeToCode(album.musicType),
-      difficulty: difficultyToCode(album.difficulty),
-    },
-    capturedAt: album.takenAt,
-    metadata: {
-      imageUrl: album.imageUrl,
-      venue: album.venue,
-    },
+    maxDxScore: recent.maxDxScore,
+    track: recent.track,
   };
 }
 
@@ -103,24 +77,21 @@ function normalizeEvents(fetched: FetchedMaimaiData): NormalizedEvent[] {
 
   const areaEvents = fetched.eventsData.areaEvents.map(event => ({
     name: event.name,
-    metadata: {
-      eventType: "area",
-      currentDistance: event.currentDistance,
-      nextRewardDistance: event.nextRewardDistance,
-      state: event.state,
-      imageUrl: event.imageUrl,
-    },
+    eventType: "area",
+    currentDistance: event.currentDistance,
+    nextRewardDistance: event.nextRewardDistance,
+    state: event.state,
+    imageUrl: event.imageUrl,
   } satisfies NormalizedEvent));
   const eventAreaEvents = fetched.eventsData.eventAreaEvents.map(event => ({
     name: event.name,
-    metadata: {
-      eventType: "eventArea",
-      currentDistance: event.currentDistance,
-      nextRewardDistance: event.nextRewardDistance,
-      state: event.state,
-      imageUrl: event.imageUrl,
-      eventPeriod: event.eventPeriod,
-    },
+    eventType: "eventArea",
+    currentDistance: event.currentDistance,
+    nextRewardDistance: event.nextRewardDistance,
+    state: event.state,
+    imageUrl: event.imageUrl,
+    eventPeriodStart: event.eventPeriod ? new Date(event.eventPeriod[0]) : null,
+    eventPeriodEnd: event.eventPeriod ? new Date(event.eventPeriod[1]) : null,
   } satisfies NormalizedEvent));
   return [...areaEvents, ...eventAreaEvents];
 }
@@ -148,13 +119,12 @@ export async function normalizeFetchedMaimaiData(
     },
     scores,
     recents: fetched.recentSongsData.map(recent => normalizeRecent(recent, ctx)),
-    albums: fetched.albumData.map(album => normalizeAlbum(album, ctx)),
     events: normalizeEvents(fetched),
     providerMetadata: { cookies: fetched.cookies },
   };
 }
 
-export const maimaiScoreAdapter: ScoreAdapter = {
+export const maimaiScoreAdapter: ConfiguredScoreAdapter = {
   configured: true,
   validateToken(ctx) {
     if (ctx.token.startsWith("cn-cookies://") && !ctx.tokenProvided) {
@@ -162,7 +132,7 @@ export const maimaiScoreAdapter: ScoreAdapter = {
     }
   },
   async fetch(ctx: ScoreFetchContext) {
-    const { runMaimaiFetcher } = await import("@/lib/maimai/orchestrator");
+    const { runMaimaiFetcher, persistMaimaiExtra } = await import("@/lib/maimai/orchestrator");
     const { fetched } = await runMaimaiFetcher(ctx);
     const result = await normalizeFetchedMaimaiData(fetched, {
       region: ctx.region,
@@ -172,11 +142,10 @@ export const maimaiScoreAdapter: ScoreAdapter = {
     return {
       result,
       persistExtra: async (persistCtx: PersistedSnapshotContext, backgroundWorkRef?: { promise: Promise<void> }) => {
-        const { persistMaimaiExtra } = await import("@/lib/maimai/orchestrator");
         return persistMaimaiExtra(
           persistCtx,
           fetched,
-          ctx.extra?.shouldFetchAlbums === true,
+          ctx.shouldFetchAlbums,
           backgroundWorkRef,
         );
       },

@@ -1,27 +1,21 @@
 import type { Region } from "@/lib/types";
-import type { CanonicalGameId, GameVersionInfo, VersionProvider } from "./types";
-import { maimaiVersionProvider } from "./adapters/maimai/versions";
-import { chunithmVersionProvider } from "./adapters/chunithm/versions";
+import type { CanonicalGameId, GameVersionInfo } from "./types";
+import { GAME_REGISTRY } from "./registry";
 import { versionAtDate } from "./version-time";
 
 export { maimaiVersionProvider } from "./adapters/maimai/versions";
 export { chunithmVersionProvider, ChunithmVersions, CHUNITHM_VERSIONS } from "./adapters/chunithm/versions";
 
-const VERSION_PROVIDERS: Record<CanonicalGameId, VersionProvider> = {
-  maimai: maimaiVersionProvider,
-  chunithm: chunithmVersionProvider,
-};
-
 export function getCurrentVersion(game: CanonicalGameId, region: Region): number {
-  return VERSION_PROVIDERS[game].getCurrentVersion(region);
+  return GAME_REGISTRY[game].adapter.versions.getCurrentVersion(region);
 }
 
 export function getVersionInfo(game: CanonicalGameId, region: Region, version: number): GameVersionInfo | null {
-  return VERSION_PROVIDERS[game].getVersionInfo(region, version);
+  return GAME_REGISTRY[game].adapter.versions.getVersionInfo(region, version);
 }
 
 export function getAvailableVersions(game: CanonicalGameId, region: Region): GameVersionInfo[] {
-  return VERSION_PROVIDERS[game].getAvailableVersions(region);
+  return GAME_REGISTRY[game].adapter.versions.getAvailableVersions(region);
 }
 
 export function getVersionFromDate(game: CanonicalGameId, region: Region, date: Date, preferredVersion?: number): number {

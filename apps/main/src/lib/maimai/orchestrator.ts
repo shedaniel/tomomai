@@ -27,13 +27,11 @@ import { parseDivingFishScoresData } from "./songs/divingfish-parse";
 import { persistAlbumData } from "./albums/persist";
 import { fetchAlbumData } from "./albums/fetch";
 import { fetchEventsData } from "./events/fetch";
-import { insertUserEvents } from "./events/persist";
 import { extractPlayerData, fetchPlayerData } from "./player/fetch";
 import { fetchLxnsPlayerData, LxnsAuthRevokedError } from "./player/lxns";
 import { deleteToken } from "@/server/services/maimai-login";
 import { fetchAndInsertRecentSongsData } from "./recents/details";
 import { fetchRecentSongsData } from "./recents/fetch";
-import { insertUserRecentSongs } from "./recents/persist";
 import { fetchAllSongsData, fetchHiddenSongsData } from "./songs/fetch";
 import { fetchLxnsScoresData } from "./songs/lxns";
 import type {
@@ -316,18 +314,6 @@ export async function runMaimaiFetcher(ctx: {
 // Maimai-specific extras (common snapshot persistence happens elsewhere)
 // ---------------------------------------------------------------------------
 
-// Trivial composition: scrape image bytes and hand off to persistAlbumData.
-async function fetchAndInsertAlbumData(
-  userId: string,
-  region: Region,
-  cookies: string,
-  albumData: AlbumData[],
-): Promise<void> {
-  await persistAlbumData(userId, region, albumData, (album) =>
-    fetchImageBuffer(album.imageUrl, cookies),
-  );
-}
-
 export async function persistMaimaiExtra(
   ctx: PersistedSnapshotContext,
   fetched: FetchedMaimaiData,
@@ -348,7 +334,7 @@ export async function persistMaimaiExtra(
   if (fetched.cookies && shouldFetchAlbums && fetched.albumData.length > 0) {
     logger.info("Starting album data fetch in background...");
     backgroundTasks.push(
-      fetchAndInsertAlbumData(ctx.userId, ctx.region, fetched.cookies, fetched.albumData).catch((error) => {
+      persistAlbumData(ctx.userId, ctx.chartResolution, fetched.albumData, album => fetchImageBuffer(album.imageUrl, fetched.cookies!)).catch((error) => {
         logger.error({ err: error }, "Failed to fetch album data");
       }),
     );

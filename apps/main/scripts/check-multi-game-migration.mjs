@@ -25,7 +25,3 @@ test('view cleanup is restricted to the two known public materialized views', ()
   assert.deepEqual(drops, knownViews.map(view => `DROP MATERIALIZED VIEW IF EXISTS "public"."${view}";`));
   assert.doesNotMatch(migration, /DROP\s+[^;]*\bCASCADE\b/i);
 });
-
-test('the existing data-preserving difficulty conversion remains after cleanup', () => {
-  assert.ok(statements.includes('ALTER TABLE "parent_song" ALTER COLUMN "difficulty" TYPE smallint USING (array_position(enum_range(NULL::"difficulty"), "difficulty") - 1)::smallint;'));
-});

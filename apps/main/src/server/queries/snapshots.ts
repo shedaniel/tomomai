@@ -5,8 +5,8 @@ import { db } from "@/lib/db";
 import { parentSong, scoreData, snapshotScores, songs, userEvents, userSnapshots } from "@/lib/db/schema-pg";
 import { and, desc, eq } from "drizzle-orm";
 import type { Region } from "@/lib/types";
-import type { VersionId } from "@/lib/metadata";
-import { logger } from "@/lib/logger";
+import { requireMaimaiVersion } from "@/lib/games/adapters/maimai/versions";
+import { getLogger } from "@/lib/request-logger";
 import { deleteFromR2, isR2IconUrl, r2KeyFromIconUrl } from "@/lib/r2";
 
 export async function fetchUserSnapshots(game: CanonicalGameId, userId: string, region: Region, options?: { limit?: number }) {
@@ -26,8 +26,9 @@ export async function fetchUserSnapshots(game: CanonicalGameId, userId: string, 
     .from(userSnapshots)
     .where(
       and(
-        and(eq(userSnapshots.game, game), eq(userSnapshots.userId, userId)),
-        and(eq(userSnapshots.game, game), eq(userSnapshots.region, region))
+        eq(userSnapshots.game, game),
+        eq(userSnapshots.userId, userId),
+        eq(userSnapshots.region, region)
       )
     )
     .orderBy(desc(userSnapshots.fetchedAt));
@@ -56,8 +57,9 @@ export async function deleteUserSnapshot(game: CanonicalGameId,
     .where(
       and(
         eq(userSnapshots.publicId, snapshotPublicId),
-        and(eq(userSnapshots.game, game), eq(userSnapshots.userId, userId)),
-        and(eq(userSnapshots.game, game), eq(userSnapshots.region, region)),
+        eq(userSnapshots.game, game),
+        eq(userSnapshots.userId, userId),
+        eq(userSnapshots.region, region),
       ),
     )
     .returning({ iconUrl: userSnapshots.iconUrl });
@@ -76,11 +78,11 @@ export async function deleteUserSnapshot(game: CanonicalGameId,
         const key = r2KeyFromIconUrl(iconUrl);
         if (key) {
           await deleteFromR2(key);
-          logger.info(`Deleted orphan icon from R2: ${key}`);
+          getLogger().info({ url: key }, "Deleted orphan icon from R2");
         }
       }
     } catch (err) {
-      logger.warn({ err, url: iconUrl }, "Failed to clean up orphan icon from R2");
+      getLogger().warn({ err, url: iconUrl }, "Failed to clean up orphan icon from R2");
     }
   }
 
@@ -98,14 +100,19 @@ export async function fetchSnapshotData(game: CanonicalGameId,
     .where(
       and(
         eq(userSnapshots.publicId, snapshotPublicId),
-        and(eq(userSnapshots.game, game), eq(userSnapshots.userId, userId)),
-        and(eq(userSnapshots.game, game), eq(userSnapshots.region, region))
+        eq(userSnapshots.game, game),
+        eq(userSnapshots.userId, userId),
+        eq(userSnapshots.region, region)
       )
     )
     .limit(1);
 
   if (snapshot.length === 0) return null;
 
+  return readSnapshotData(game, snapshot[0]);
+}
+
+async function readSnapshotData(game: CanonicalGameId, snapshot: typeof userSnapshots.$inferSelect) {
   const songsWithScores = await db
     .select({
       songId: songInstanceId,
@@ -114,10 +121,8 @@ export async function fetchSnapshotData(game: CanonicalGameId,
       cover: parentSong.cover,
       difficultyCode: parentSong.difficulty,
       typeCode: parentSong.type,
-      difficulty: parentSong.difficulty,
       level: songs.level,
       levelPrecise: songs.levelPrecise,
-      type: parentSong.type,
       genre: parentSong.genre,
       addedVersion: songs.addedVersion,
       scoreValue: scoreData.scoreValue,
@@ -125,20 +130,17 @@ export async function fetchSnapshotData(game: CanonicalGameId,
       comboStatus: scoreData.comboStatus,
       syncStatus: scoreData.syncStatus,
       clearStatus: scoreData.clearStatus,
-      achievement: scoreData.scoreValue,
-      dxScore: scoreData.secondaryScore,
-      fc: scoreData.comboStatus,
-      fs: scoreData.syncStatus,
     })
     .from(snapshotScores)
     .innerJoin(scoreData, eq(snapshotScores.scoreId, scoreData.id))
     .innerJoin(songs, eq(scoreData.songId, songs.id))
     .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
-    .where(and(eq(snapshotScores.game, game), eq(snapshotScores.snapshotId, snapshot[0].id)))
+    .where(and(eq(snapshotScores.game, game), eq(snapshotScores.snapshotId, snapshot.id)))
     .orderBy(parentSong.songName, parentSong.difficulty);
 
   const events = await db
     .select({
+      metadata: userEvents.metadata,
       eventType: userEvents.eventType,
       name: userEvents.name,
       currentDistance: userEvents.currentDistance,
@@ -149,10 +151,10 @@ export async function fetchSnapshotData(game: CanonicalGameId,
       eventPeriodEnd: userEvents.eventPeriodEnd,
     })
     .from(userEvents)
-    .where(and(eq(userEvents.game, game), eq(userEvents.snapshotId, snapshot[0].id)));
+    .where(and(eq(userEvents.game, game), eq(userEvents.snapshotId, snapshot.id)));
 
   return {
-    snapshot: snapshot[0],
+    snapshot,
     songs: songsWithScores,
     events,
   };
@@ -171,8 +173,9 @@ export async function getLatestSnapshotFetchedAt(game: CanonicalGameId,
     .from(userSnapshots)
     .where(
       and(
-        and(eq(userSnapshots.game, game), eq(userSnapshots.userId, userId)),
-        and(eq(userSnapshots.game, game), eq(userSnapshots.region, region)),
+        eq(userSnapshots.game, game),
+        eq(userSnapshots.userId, userId),
+        eq(userSnapshots.region, region),
       ),
     )
     .orderBy(desc(userSnapshots.fetchedAt))
@@ -186,8 +189,9 @@ export async function fetchLatestSnapshotData(game: CanonicalGameId, userId: str
     .from(userSnapshots)
     .where(
       and(
-        and(eq(userSnapshots.game, game), eq(userSnapshots.userId, userId)),
-        and(eq(userSnapshots.game, game), eq(userSnapshots.region, region))
+        eq(userSnapshots.game, game),
+        eq(userSnapshots.userId, userId),
+        eq(userSnapshots.region, region)
       )
     )
     .orderBy(desc(userSnapshots.fetchedAt))
@@ -195,62 +199,8 @@ export async function fetchLatestSnapshotData(game: CanonicalGameId, userId: str
 
   if (snapshot.length === 0) return null;
 
-  const songsWithScores = await db
-    .select({
-      songId: songInstanceId,
-      songName: parentSong.songName,
-      artist: parentSong.artist,
-      cover: parentSong.cover,
-      difficultyCode: parentSong.difficulty,
-      typeCode: parentSong.type,
-      difficulty: parentSong.difficulty,
-      level: songs.level,
-      levelPrecise: songs.levelPrecise,
-      type: parentSong.type,
-      genre: parentSong.genre,
-      addedVersion: songs.addedVersion,
-      scoreValue: scoreData.scoreValue,
-      secondaryScore: scoreData.secondaryScore,
-      comboStatus: scoreData.comboStatus,
-      syncStatus: scoreData.syncStatus,
-      clearStatus: scoreData.clearStatus,
-      achievement: scoreData.scoreValue,
-      dxScore: scoreData.secondaryScore,
-      fc: scoreData.comboStatus,
-      fs: scoreData.syncStatus,
-    })
-    .from(snapshotScores)
-    .innerJoin(scoreData, eq(snapshotScores.scoreId, scoreData.id))
-    .innerJoin(songs, eq(scoreData.songId, songs.id))
-    .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
-    .where(and(eq(snapshotScores.game, game), eq(snapshotScores.snapshotId, snapshot[0].id)))
-    .orderBy(parentSong.songName, parentSong.difficulty);
-
-  const events = await db
-    .select({
-      eventType: userEvents.eventType,
-      name: userEvents.name,
-      currentDistance: userEvents.currentDistance,
-      nextRewardDistance: userEvents.nextRewardDistance,
-      state: userEvents.state,
-      imageUrl: userEvents.imageUrl,
-      eventPeriodStart: userEvents.eventPeriodStart,
-      eventPeriodEnd: userEvents.eventPeriodEnd,
-    })
-    .from(userEvents)
-    .where(and(eq(userEvents.game, game), eq(userEvents.snapshotId, snapshot[0].id)));
-
-  return {
-    snapshot: snapshot[0],
-    songs: songsWithScores,
-    events,
-  };
+  return readSnapshotData(game, snapshot[0]);
 }
-
-
-
-
-
 
 function toMaimaiSnapshot(snapshot: typeof userSnapshots.$inferSelect) {
   return { ...snapshot, titleTypeCode: snapshot.titleType, titleType: codeToTitleType(snapshot.titleType),
@@ -262,22 +212,14 @@ function toMaimaiSnapshotResult(result: Awaited<ReturnType<typeof fetchSnapshotD
   if (!result) return null;
   return {
     snapshot: toMaimaiSnapshot(result.snapshot),
-    songs: result.songs.map(song => ({ ...song, difficulty: codeToDifficulty(song.difficultyCode), type: codeToChartType(song.typeCode), fc: codeToComboStatus(song.comboStatus), fs: codeToSyncStatus(song.syncStatus) })),
+    songs: result.songs.map(song => ({ ...song, achievement: song.scoreValue, dxScore: song.secondaryScore, difficulty: codeToDifficulty(song.difficultyCode), type: codeToChartType(song.typeCode), fc: codeToComboStatus(song.comboStatus), fs: codeToSyncStatus(song.syncStatus) })),
     events: result.events.map(event => ({ ...event, eventType: event.eventType ?? "eventArea" as const, currentDistance: event.currentDistance ?? 0, state: event.state ?? "not_started" as const, imageUrl: event.imageUrl ?? "" })),
   };
 }
 
 export async function fetchMaimaiUserSnapshots(userId: string, region: Region, options?: { limit?: number }) {
   const snapshots = await fetchUserSnapshots("maimai", userId, region, options);
-  return snapshots.map(s => ({ ...s, courseRankUrl: s.courseRankUrl ?? "", classRankUrl: s.classRankUrl ?? "", stars: s.stars ?? 0, gameVersion: s.gameVersion as VersionId }));
-}
-
-export function deleteMaimaiUserSnapshot(userId: string, snapshotPublicId: string, region: Region) {
-  return deleteUserSnapshot("maimai", userId, snapshotPublicId, region);
-}
-
-export async function fetchMaimaiSnapshotData(userId: string, snapshotPublicId: string, region: Region) {
-  return toMaimaiSnapshotResult(await fetchSnapshotData("maimai", userId, snapshotPublicId, region));
+  return snapshots.map(s => ({ ...s, courseRankUrl: s.courseRankUrl ?? "", classRankUrl: s.classRankUrl ?? "", stars: s.stars ?? 0, gameVersion: requireMaimaiVersion(s.gameVersion) }));
 }
 
 export async function fetchLatestMaimaiSnapshotData(userId: string, region: Region) {

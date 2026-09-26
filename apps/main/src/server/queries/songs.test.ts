@@ -43,11 +43,12 @@ describe("querySongScores", () => {
   });
 });
 
-it.each(["maimai", "chunithm"] as const)("uses the same scoped score query for %s", async game => {
-  readScores.mockResolvedValue([{ artist: "A", region: "jp", difficulty: "ultima", scoreValue: 1009000, comboStatus: 2, syncStatus: 1, clearStatus: 2 }]);
-  const result = await querySongScores(game, "Same title", "standard", "viewer", "A");
-  expect(result?.jp.ultima).toEqual({ scoreValue: 1009000, comboStatus: 2, syncStatus: 1, clearStatus: 2 });
+it.each([{ game: "maimai", difficulty: "remaster", type: "std" }, { game: "chunithm", difficulty: "ultima", type: "standard" }] as const)("scopes $game scores by game", async ({ game, difficulty, type }) => {
+  readScores.mockResolvedValue([{ artist: "A", region: "jp", difficulty, scoreValue: 1009000, comboStatus: 2, syncStatus: 1, clearStatus: 2 }]);
+  const result = await querySongScores(game, "Same title", type, "viewer", "A");
+  expect(result?.jp[difficulty]).toEqual({ scoreValue: 1009000, comboStatus: 2, syncStatus: 1, clearStatus: 2 });
   const query = new PgDialect().sqlToQuery(readScores.mock.calls[0][0]);
+  expect(query.sql).toContain('"parent_song"."game" = $');
   expect(query.params).toContain(game);
   expect(query.params).not.toContain(game === "maimai" ? "chunithm" : "maimai");
 });

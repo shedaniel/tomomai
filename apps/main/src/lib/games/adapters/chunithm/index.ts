@@ -2,7 +2,7 @@ import { GAME_SUPPORTED_REGIONS } from "../../regions";
 import { GAME_CODE_MAPS } from "../../codes";
 import { calculateChunithmChartRating, selectChunithmRankings } from "../../rating";
 import type { GameAdapter } from "../../types";
-import { chunithmVersionProvider } from "../../versions";
+import { chunithmVersionProvider } from "./versions";
 
 export const chunithmAdapter: GameAdapter = {
   game: "chunithm",
@@ -12,10 +12,9 @@ export const chunithmAdapter: GameAdapter = {
   codes: GAME_CODE_MAPS.chunithm,
   catalog: {
     configured: true,
-    resolveVersion: region => chunithmVersionProvider.getCurrentVersion(region),
     async collect(context) {
-      const { chunithmCatalogAdapter } = await import("@/server/services/catalog/chunithm/pipeline");
-      return chunithmCatalogAdapter.collect!(context);
+      const { collectCatalog } = await import("@/server/services/catalog/chunithm/pipeline");
+      return collectCatalog(context);
     },
   },
   scores: {

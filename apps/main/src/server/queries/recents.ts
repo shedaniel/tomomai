@@ -1,5 +1,4 @@
 import type { CanonicalGameId } from "@/lib/games/types";
-import { codeToChartType, codeToComboStatus, codeToDifficulty, codeToSyncStatus } from "@/lib/maimai/codes";
 import { songInstanceId } from "@/lib/db/song-instance-id";
 import { db } from "@/lib/db";
 import { parentSong, songs, userRecentSongs, userRecentSongsDetailed } from "@/lib/db/schema-pg";
@@ -28,22 +27,17 @@ export async function fetchRecentSongs(game: CanonicalGameId,
       comboStatus: userRecentSongs.comboStatus,
       syncStatus: userRecentSongs.syncStatus,
       clearStatus: userRecentSongs.clearStatus,
-      achievement: userRecentSongs.scoreValue,
-      dxScore: userRecentSongs.secondaryScore,
       maxDxScore: userRecentSongs.maxDxScore,
-      fc: userRecentSongs.comboStatus,
-      fs: userRecentSongs.syncStatus,
       track: userRecentSongs.track,
       songId: songInstanceId,
       songName: parentSong.songName,
       artist: parentSong.artist,
       cover: parentSong.cover,
+      metadata: userRecentSongs.metadata,
       difficultyCode: parentSong.difficulty,
       typeCode: parentSong.type,
-      difficulty: parentSong.difficulty,
       level: songs.level,
       levelPrecise: songs.levelPrecise,
-      type: parentSong.type,
       genre: parentSong.genre,
       fastCount: userRecentSongsDetailed.fastCount,
       lateCount: userRecentSongsDetailed.lateCount,

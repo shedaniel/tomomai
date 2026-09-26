@@ -1,3 +1,4 @@
+import { maimaiCompatibilityGameSchema } from "@/lib/games/schema";
 import { codeToChartType, codeToDifficulty } from "@/lib/maimai/codes";
 import { db } from '@/lib/db';
 import { scoreData, snapshotScores, songs, userRecentSongs, userSnapshots } from '@/lib/db/schema-pg';
@@ -12,7 +13,7 @@ const regionSchema = z.enum(getEnabledRegions());
 
 export const dbRouter = router({
   getEventStepsByNames: publicProcedure
-    .input(z.object({ game: z.literal("maimai").default("maimai"), names: z.array(z.string()).max(200) }))
+    .input(z.object({ game: maimaiCompatibilityGameSchema, names: z.array(z.string()).max(200) }))
     .query(async ({ input }) => {
       return fetchTourEventsByNames(input.names);
     }),
@@ -25,7 +26,7 @@ export const dbRouter = router({
     return getCachedEvents();
   }),
   getStats: publicProcedure
-    .input(z.object({ game: z.literal("maimai").default("maimai"),
+    .input(z.object({ game: maimaiCompatibilityGameSchema,
       region: regionSchema,
     }))
     .query(async ({ input }) => {
@@ -351,7 +352,7 @@ export const dbRouter = router({
       return getCachedStats(input.region);
     }),
   getTopSongs: publicProcedure
-    .input(z.object({ game: z.literal("maimai").default("maimai"),
+    .input(z.object({ game: maimaiCompatibilityGameSchema,
       region: regionSchema,
       window: z.enum(['all', '90d', '30d', '7d']).default('7d'),
     }))

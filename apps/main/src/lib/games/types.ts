@@ -1,4 +1,4 @@
-import type { Region } from "@/lib/types";
+import type { Region, EventData } from "@/lib/types";
 import type { Flags } from "@/lib/flags";
 import type { CatalogFetchContext } from "@/server/services/catalog/ingestion/types";
 import type { CatalogChart } from "@/server/services/catalog/ingestion/normalize-charts";
@@ -71,18 +71,23 @@ export type NormalizedScore = {
 
 export type NormalizedRecent = NormalizedScore & {
   playedAt: Date;
+  maxDxScore?: number;
+  track?: number;
 };
 
 export type NormalizedAlbum = {
   chart: ChartRef;
   capturedAt: Date;
+  imageKey?: string;
+  imageSize?: number;
+  venue?: string;
   metadata?: Record<string, unknown>;
 };
 
 export type NormalizedEvent = {
   name: string;
   metadata?: Record<string, unknown>;
-};
+} & Partial<Omit<EventData, "name">>;
 
 export type GameFetchResult = {
   player: NormalizedPlayer;
@@ -121,8 +126,6 @@ export interface CatalogSourceAdapter extends CatalogAdapter {
   notConfiguredReason?: string;
   requiresToken?: (region: Region) => boolean;
   authenticate?: (region: Region, token: string) => Promise<string>;
-  getStages?: (region: Region) => { names: string[] };
-  resolveVersion?: (region: Region) => number;
   collect?: (ctx: CatalogFetchContext) => Promise<CatalogChart[]>;
 }
 
@@ -141,7 +144,7 @@ export type ScoreFetchContext = {
   gameVersion: number;
   flags: Flags;
   token: string;
-  extra?: Record<string, unknown>;
+  shouldFetchAlbums: boolean;
 };
 
 export type ChartResolutionMap = Map<string, bigint>;
@@ -155,11 +158,10 @@ export type PersistedSnapshotContext = {
   chartResolution: ChartResolutionMap;
 };
 
-export interface ScoreAdapter {
-  configured: boolean;
-  notConfiguredReason?: string;
+export interface ConfiguredScoreAdapter {
+  configured: true;
   validateToken?: (ctx: ScoreTokenValidationContext) => void | Promise<void>;
-  fetch?: (ctx: ScoreFetchContext) => Promise<{
+  fetch: (ctx: ScoreFetchContext) => Promise<{
     result: GameFetchResult;
     persistExtra?: (
       ctx: PersistedSnapshotContext,
@@ -167,6 +169,8 @@ export interface ScoreAdapter {
     ) => Promise<void>;
   }>;
 }
+
+export type ScoreAdapter = ConfiguredScoreAdapter | { configured: false; notConfiguredReason: string };
 
 export type GameCodeMaps = {
   chartType: Readonly<Record<number, string>>;

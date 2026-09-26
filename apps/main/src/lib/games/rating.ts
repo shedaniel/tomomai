@@ -1,5 +1,10 @@
 import { calculateSongRating } from "@/lib/rating-calculator";
-import type { RankedScore, RankingSelection } from "./types";
+import type { CanonicalGameId, RankedScore, RankingSelection } from "./types";
+
+export const GAME_RANKING_SIZES = {
+  maimai: { new: 15, old: 35 },
+  chunithm: { new: 20, old: 30 },
+} as const satisfies Record<CanonicalGameId, { new: number; old: number }>;
 
 function interpolate(score: number, lowScore: number, highScore: number, lowValue: number, highValue: number): number {
   return lowValue + Math.floor(((score - lowScore) * (highValue - lowValue)) / (highScore - lowScore));
@@ -55,10 +60,10 @@ function rank<T extends RankedScore>(
 }
 
 export function selectChunithmRankings<T extends RankedScore>(scores: T[], currentVersion: number): RankingSelection<T> {
-  return rank(scores, score => score.addedVersion === currentVersion, 20, 30);
+  return rank(scores, score => score.addedVersion === currentVersion, GAME_RANKING_SIZES.chunithm.new, GAME_RANKING_SIZES.chunithm.old);
 }
 
 export function selectMaimaiRankings<T extends RankedScore>(scores: T[], currentVersion: number): RankingSelection<T> {
   const newVersionFloor = currentVersion >= 12 ? currentVersion - 1 : currentVersion;
-  return rank(scores, score => score.addedVersion >= newVersionFloor, 15, 35);
+  return rank(scores, score => score.addedVersion >= newVersionFloor, GAME_RANKING_SIZES.maimai.new, GAME_RANKING_SIZES.maimai.old);
 }

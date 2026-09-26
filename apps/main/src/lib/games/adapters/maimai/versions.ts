@@ -1,3 +1,4 @@
+import { versionAtDate } from "../../version-time";
 import type { Region } from "@/lib/types";
 import type { VersionProvider } from "../../types";
 
@@ -329,31 +330,7 @@ export function getLatestAvailableVersion(region: Region): VersionId {
 
 /** Get the version current at an instant; all releases start at 7 AM JST. */
 export function getVersionFromDate(date: Date, region: Region): VersionId {
-  const availableVersions = getAvailableVersions(region);
-
-  // Sort versions by release date for the given region (descending)
-  const sortedVersions = availableVersions.sort((a, b) => {
-    const dateA = parseDate(getRegionReleaseDate(a, region)!);
-    const dateB = parseDate(getRegionReleaseDate(b, region)!);
-    return dateB.getTime() - dateA.getTime();
-  });
-
-  // Find the latest version that was released on or before the given date
-  for (const version of sortedVersions) {
-    const releaseTime = getReleaseTime(getRegionReleaseDate(version, region)!);
-    if (date.getTime() >= releaseTime) {
-      return version.id;
-    }
-  }
-
-  // If no version was released before the given date, return the earliest available version
-  const earliestVersion = availableVersions.sort((a, b) => {
-    const dateA = parseDate(getRegionReleaseDate(a, region)!);
-    const dateB = parseDate(getRegionReleaseDate(b, region)!);
-    return dateA.getTime() - dateB.getTime();
-  })[0];
-
-  return earliestVersion.id;
+  return requireMaimaiVersion(versionAtDate(maimaiVersionProvider.getAvailableVersions(region), date, region));
 }
 
 /**

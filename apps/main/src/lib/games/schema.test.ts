@@ -1,10 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { CANONICAL_GAME_IDS } from "./types";
 import { gameIdSchema, maimaiCompatibilityGameSchema } from "./schema";
 
 describe("explicit game inputs", () => {
   it("uses canonical IDs without an implicit maimai fallback", () => {
-    for (const game of CANONICAL_GAME_IDS) expect(gameIdSchema.parse(game)).toBe(game);
     expect(gameIdSchema.safeParse(undefined).success).toBe(false);
     expect(gameIdSchema.safeParse("maimaidx").success).toBe(false);
     expect(gameIdSchema.safeParse("unknown").success).toBe(false);

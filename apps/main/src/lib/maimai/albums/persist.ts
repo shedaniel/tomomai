@@ -3,10 +3,10 @@ import { db } from "../../db";
 import { userAlbums } from "../../db/schema-pg";
 import { convertJpegToAvif } from "../../image-converter";
 import { logger } from "../../logger";
-import { getCurrentVersion } from "../../metadata";
 import { deleteFromR2, uploadToR2 } from "../../r2";
-import { Region } from "../../types";
-import { buildSongLookupMaps } from "../songs/persist";
+import { chartKey } from "@/server/services/games/score-storage";
+import type { ChartResolutionMap } from "@/lib/games/types";
+import { chartTypeToCode, difficultyToCode } from "../codes";
 import type { AlbumData } from "../types";
 
 export const MAX_STORAGE_BYTES = 8 * 1024 * 1024; // 8 MB
@@ -59,7 +59,7 @@ export async function enforceStorageLimit(userId: string): Promise<void> {
  */
 export async function persistAlbumData(
   userId: string,
-  region: Region,
+  chartResolution: ChartResolutionMap,
   albumData: AlbumData[],
   fetchImageBytes: (album: AlbumData) => Promise<Buffer>,
 ): Promise<void> {
@@ -77,9 +77,6 @@ export async function persistAlbumData(
 
   const existingTakenAt = new Set(existingAlbums.map(a => a.takenAt.getTime()));
 
-  const gameVersion = getCurrentVersion(region);
-  const { songLookup } = await buildSongLookupMaps(region, gameVersion);
-
   const albumsToUpload: Array<AlbumData & { songId: bigint }> = [];
 
   for (const album of albumData) {
@@ -88,8 +85,8 @@ export async function persistAlbumData(
       continue;
     }
 
-    const lookupKey = `${album.songName}|${album.difficulty}|${album.musicType}`;
-    const songId = songLookup.get(lookupKey);
+    const songId = chartResolution.get(chartKey({ songName: album.songName,
+      difficulty: difficultyToCode(album.difficulty), chartType: chartTypeToCode(album.musicType) }));
 
     if (!songId) {
       logger.warn(`Could not find song: ${album.songName} (${album.difficulty}, ${album.musicType})`);

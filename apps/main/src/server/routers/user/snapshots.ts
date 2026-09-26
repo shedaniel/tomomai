@@ -1,3 +1,6 @@
+import type { GameSnapshotData } from "@/lib/games/player-view";
+import { GAME_REGISTRY } from "@/lib/games/registry";
+import { RANKING_BUCKET } from "@/lib/games/types";
 import { maimaiCompatibilityGameSchema } from "@/lib/games/schema";
 import { gameContextInput, validateGameInput } from "./game-input";
 import { fetchUserSnapshots, fetchSnapshotData } from "@/server/queries/snapshots";
@@ -6,7 +9,7 @@ import { db } from '@/lib/db';
 import { parentSong, scoreData, snapshotRankings, snapshotScores, songs, user, userEvents, userSnapshots } from '@/lib/db/schema-pg';
 import { getEnabledRegions } from '@/lib/enabled-regions';
 import { logger } from '@/lib/logger';
-import { upsertScoreData } from '@/lib/maimai';
+import { buildChartResolution, upsertScoreData, scoreDataKey, type ScoreDataValues } from "@/server/services/games/score-storage";
 import { deleteUserSnapshot } from '@/server/queries/snapshots';
 import type { VersionId } from "@/lib/metadata";
 import { getVersionInfo, getAvailableVersions } from "@/lib/games/versions";
@@ -15,7 +18,7 @@ import { protectedProcedure, publicProcedure, router } from '@/lib/trpc';
 import { Difficulty, SongWithScore } from '@/lib/types';
 import { resolvePublicUserByUsername } from '@/server/queries/public-access';
 import { getReservedPublicUser, getReservedSnapshotData, getReservedSnapshots } from '@/server/queries/reserved';
-import { fetchLatestMaimaiSnapshotData, fetchMaimaiSnapshotData, fetchMaimaiUserSnapshots } from '@/server/queries/snapshots';
+import { fetchLatestMaimaiSnapshotData, fetchMaimaiUserSnapshots } from '@/server/queries/snapshots';
 import { TRPCError } from '@trpc/server';
 import { and, count, desc, eq, inArray, sql } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
@@ -33,7 +36,7 @@ export const snapshotsRouter = router({
     }),
   getSnapshotData: protectedProcedure
     .input(z.object({ ...gameContextInput, snapshotId: z.string() }))
-    .query(({ ctx, input }) => {
+    .query(async ({ ctx, input }): Promise<GameSnapshotData | null> => {
       const { game, region } = validateGameInput(input, "scores");
       return fetchSnapshotData(game, ctx.session.user.id, input.snapshotId, region);
     }),
@@ -382,6 +385,7 @@ export const snapshotsRouter = router({
         .where(
           and(
             eq(userSnapshots.publicId, input.snapshotId),
+            eq(userSnapshots.game, input.game),
             eq(userSnapshots.userId, ctx.session.user.id)
           )
         )
@@ -529,10 +533,11 @@ export const snapshotsRouter = router({
       const originalScores = await db
         .select({
           parentId: songs.parentId,
-          achievement: scoreData.scoreValue,
-          dxScore: scoreData.secondaryScore,
-          fc: sql`${scoreData.comboStatus}`.mapWith(codeToComboStatus).as("fc"),
-          fs: sql`${scoreData.syncStatus}`.mapWith(codeToSyncStatus).as("fs"),
+          scoreValue: scoreData.scoreValue,
+          secondaryScore: scoreData.secondaryScore,
+          comboStatus: scoreData.comboStatus,
+          syncStatus: scoreData.syncStatus,
+          clearStatus: scoreData.clearStatus,
         })
         .from(snapshotScores)
         .innerJoin(scoreData, eq(snapshotScores.scoreId, scoreData.id))
@@ -540,28 +545,11 @@ export const snapshotsRouter = router({
         .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
         .where(and(eq(snapshotScores.game, "maimai"), eq(snapshotScores.snapshotId, originalSnapshot.id)));
 
-      const targetVersionSongs = await db
-        .select({
-          id: songs.id,
-          parentId: songs.parentId,
-        })
-        .from(songs)
-        .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
-        .where(
-          and(
-            and(eq(songs.game, "maimai"), eq(songs.region, input.region)),
-            eq(songs.gameVersion, input.targetVersion)
-          )
-        );
-
-      const targetSongLookup = new Map<bigint, bigint>();
-      for (const song of targetVersionSongs) {
-        const key = song.parentId;
-        targetSongLookup.set(key, song.id);
-      }
+      const { songsById } = await buildChartResolution(db, input.game, input.region, input.targetVersion);
+      const targetSongLookup = new Map([...songsById.values()].map(song => [song.parentId, song.id]));
 
       // Build score data for target version songs
-      const newScoreData: { songId: bigint; achievement: number; dxScore: number; fc: SongWithScore["fc"]; fs: SongWithScore["fs"] }[] = [];
+      const newScoreData: ScoreDataValues[] = [];
       for (const originalScore of originalScores) {
         const lookupKey = originalScore.parentId;
         const targetSongId = targetSongLookup.get(lookupKey);
@@ -569,10 +557,11 @@ export const snapshotsRouter = router({
         if (targetSongId) {
           newScoreData.push({
             songId: targetSongId,
-            achievement: originalScore.achievement,
-            dxScore: originalScore.dxScore,
-            fc: originalScore.fc,
-            fs: originalScore.fs,
+            scoreValue: originalScore.scoreValue,
+            secondaryScore: originalScore.secondaryScore,
+            comboStatus: originalScore.comboStatus,
+            syncStatus: originalScore.syncStatus,
+            clearStatus: originalScore.clearStatus,
           });
         }
       }
@@ -581,12 +570,12 @@ export const snapshotsRouter = router({
 
       if (newScoreData.length > 0) {
         // Step 1: Upsert scoreData and get IDs
-        const scoreDataLookup = await upsertScoreData(newScoreData);
+        const scoreDataLookup = await upsertScoreData(db, input.game, newScoreData);
 
         // Step 2: Build and insert junction rows
         const junctionRows: { snapshotId: number; game: "maimai"; scoreId: number }[] = [];
         for (const score of newScoreData) {
-          const key = `${score.songId}-${score.achievement}-${score.dxScore}-${score.fc}-${score.fs}`;
+          const key = scoreDataKey(score);
           const scoreDataId = scoreDataLookup.get(key);
           if (scoreDataId) {
             junctionRows.push({ game: "maimai", snapshotId: newSnapshotInternalId, scoreId: scoreDataId });
@@ -599,76 +588,22 @@ export const snapshotsRouter = router({
           }
         }
 
-        // Step 3: Read back with full song data for B50 calculation
-        const scoresWithSongs = await db
-          .select({
-            songId: songs.id,
-            songName: parentSong.songName,
-            artist: parentSong.artist,
-            cover: parentSong.cover,
-            difficulty: sql`${parentSong.difficulty}`.mapWith(codeToDifficulty).as("difficulty"),
-            level: songs.level,
-            levelPrecise: songs.levelPrecise,
-            type: sql`${parentSong.type}`.mapWith(codeToChartType).as("type"),
-            genre: parentSong.genre,
-            addedVersion: songs.addedVersion,
-            achievement: scoreData.scoreValue,
-            dxScore: scoreData.secondaryScore,
-            fc: sql`${scoreData.comboStatus}`.mapWith(codeToComboStatus).as("fc"),
-            fs: sql`${scoreData.syncStatus}`.mapWith(codeToSyncStatus).as("fs"),
-          })
-          .from(snapshotScores)
-          .innerJoin(scoreData, eq(snapshotScores.scoreId, scoreData.id))
-          .innerJoin(songs, eq(scoreData.songId, songs.id))
-          .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
-          .where(and(eq(snapshotScores.game, "maimai"), eq(snapshotScores.snapshotId, newSnapshotInternalId)));
-
-        const songsForCalculation: (Omit<SongWithScore, 'songId'> & { songId: bigint })[] = scoresWithSongs.map(song => ({
-          songId: song.songId,
-          songName: song.songName,
-          artist: song.artist,
-          cover: song.cover,
-          difficulty: song.difficulty,
-          level: song.level,
-          levelPrecise: song.levelPrecise,
-          type: song.type,
-          genre: song.genre,
-          addedVersion: song.addedVersion as VersionId,
-          achievement: song.achievement,
-          dxScore: song.dxScore,
-          fc: song.fc,
-          fs: song.fs,
-        }));
-
-        // Step 4: Compute B50 and insert
-        const { newSongsB15, oldSongsB35 } = splitSongs(songsForCalculation, input.targetVersion);
-
-        const ratingContributingSongs = [...newSongsB15, ...oldSongsB35];
-        newRating = ratingContributingSongs.reduce((sum, song) => sum + song.rating, 0);
-
-        const b50Rows: { snapshotId: number; game: "maimai"; bucket: number; rank: number; scoreId: number }[] = [];
-
-        for (let i = 0; i < newSongsB15.length; i++) {
-          const song = newSongsB15[i];
-          const key = `${song.songId}-${song.achievement}-${song.dxScore}-${song.fc}-${song.fs}`;
-          const scoreDataId = scoreDataLookup.get(key);
-          if (scoreDataId) {
-            b50Rows.push({ game: "maimai", bucket: 1, snapshotId: newSnapshotInternalId, rank: i, scoreId: scoreDataId });
-          }
-        }
-
-        for (let i = 0; i < oldSongsB35.length; i++) {
-          const song = oldSongsB35[i];
-          const key = `${song.songId}-${song.achievement}-${song.dxScore}-${song.fc}-${song.fs}`;
-          const scoreDataId = scoreDataLookup.get(key);
-          if (scoreDataId) {
-            b50Rows.push({ game: "maimai", bucket: 2, snapshotId: newSnapshotInternalId, rank: i, scoreId: scoreDataId });
-          }
-        }
-
-        if (b50Rows.length > 0) {
-          await db.insert(snapshotRankings).values(b50Rows).onConflictDoNothing();
-        }
+        const adapter = GAME_REGISTRY[input.game].adapter;
+        const ranked = newScoreData.map(score => {
+          const song = songsById.get(score.songId)!;
+          return {
+            ...score, chartId: song.id.toString(), addedVersion: song.addedVersion,
+            rating: adapter.calculateChartRating({ ...score, difficulty: song.difficulty, levelPrecise: song.levelPrecise }, input.targetVersion),
+            scoreId: scoreDataLookup.get(scoreDataKey(score))!,
+          };
+        });
+        const selected = adapter.selectRankings(ranked, input.targetVersion);
+        newRating = [...selected.newScores, ...selected.oldScores].reduce((sum, score) => sum + score.rating, 0);
+        const rankingRows = [
+          ...selected.newScores.map((score, rank) => ({ game: input.game, snapshotId: newSnapshotInternalId, bucket: RANKING_BUCKET.new, rank, scoreId: score.scoreId })),
+          ...selected.oldScores.map((score, rank) => ({ game: input.game, snapshotId: newSnapshotInternalId, bucket: RANKING_BUCKET.old, rank, scoreId: score.scoreId })),
+        ];
+        if (rankingRows.length) await db.insert(snapshotRankings).values(rankingRows).onConflictDoNothing();
       }
 
       await db

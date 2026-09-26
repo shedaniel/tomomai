@@ -9,6 +9,8 @@ import {
   type GameAdapter,
   type GameCapability,
   type GameContext,
+  type ConfiguredScoreAdapter,
+  type CatalogSourceAdapter,
 } from "./types";
 
 export { getEnabledRegions } from "./regions";
@@ -68,12 +70,15 @@ export function requireCapability(game: CanonicalGameId, capability: GameCapabil
   }
 }
 
-export function requireConfiguredSource(game: CanonicalGameId, source: "catalog" | "scores"): void {
+export function requireConfiguredSource(game: CanonicalGameId, source: "scores"): ConfiguredScoreAdapter;
+export function requireConfiguredSource(game: CanonicalGameId, source: "catalog"): CatalogSourceAdapter;
+export function requireConfiguredSource(game: CanonicalGameId, source: "catalog" | "scores") {
   const adapter = GAME_REGISTRY[game].adapter[source];
   if (!adapter.configured) {
-    const reason = GAME_REGISTRY[game].adapter[source].notConfiguredReason;
+    const reason = adapter.notConfiguredReason;
     throw new GameAdapterError("SOURCE_NOT_CONFIGURED", reason ?? `${source} source is not configured for ${game}`, game, undefined, source);
   }
+  return adapter;
 }
 
 export function resolveCatalogContext(input: string, region: Region): GameContext {

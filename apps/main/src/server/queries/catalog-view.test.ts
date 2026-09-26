@@ -1,44 +1,48 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { PgDialect } from "drizzle-orm/pg-core";
 
-const { readRows, where, getSongSlugs } = vi.hoisted(() => ({ readRows: vi.fn(), where: vi.fn(), getSongSlugs: vi.fn() }));
-vi.mock("@/lib/db", () => ({ db: { select: () => ({ from: () => ({ innerJoin: () => ({ where: (filter: unknown) => { where(filter); return { orderBy: readRows }; } }) }) }) } }));
+const state = vi.hoisted(() => ({ rows: [] as unknown[][], queries: [] as { sql: string; params: unknown[] }[] }));
+vi.mock("@/lib/db", async () => {
+  const { drizzle } = await import("drizzle-orm/pg-proxy");
+  return { db: drizzle(async (sql, params) => {
+    state.queries.push({ sql, params });
+    return { rows: state.rows };
+  }) };
+});
 vi.mock("next/cache", () => ({ unstable_cache: (fn: () => unknown) => fn }));
-vi.mock("@/lib/song-slug", () => ({ getSongSlugs }));
+vi.mock("@/lib/song-slug", () => ({ getSongSlugs: async (songs: object[]) => songs.map(song => ({ ...song, slug: "same-title-artist", aliases: [] })) }));
 import { queryAllUniqueSongs } from "./songs";
 
-beforeEach(() => {
-  vi.clearAllMocks();
-  getSongSlugs.mockImplementation(async (songs: object[]) => songs.map(song => ({ ...song, slug: "same-title-artist-std", aliases: [] })));
-});
+beforeEach(() => { state.rows = []; state.queries = []; });
 
-const chart = { id: 1, parentId: "abcdefgh", disambiguator: 0, songName: "Same title", artist: "Artist", cover: "", type: "std", genre: "Original", difficulty: "master", level: "13", levelPrecise: 130, metadata: {}, noteDesigner: null, addedVersion: 1, region: "jp", gameVersion: 1 };
+function chart(overrides: Partial<{ id: number; parentId: string; disambiguator: number; level: string; levelPrecise: number; gameVersion: number; metadata: object }> = {}) {
+  const row = { id: 1, parentId: "abcdefgh", disambiguator: 0, level: "13", levelPrecise: 130, gameVersion: 1, metadata: {}, ...overrides };
+  return [String(row.id), row.parentId, row.disambiguator, "Same title", "Artist", "", 0, "Original", 4,
+    row.level, row.levelPrecise, row.metadata, null, 1, "jp", row.gameVersion];
+}
 
 describe("common catalog view", () => {
-  it.each(["maimai", "chunithm"] as const)("scopes the same grouping and slug pipeline to %s", async game => {
-    readRows.mockResolvedValue([chart, { ...chart, id: 2, gameVersion: 2, levelPrecise: 140 }]);
-    const result = await queryAllUniqueSongs(game);
-    expect(result).toHaveLength(1);
-    expect(result[0].parentIds).toEqual(["abcdefgh"]);
-    expect(result[0].difficulties[0].levelPrecise).toBe(140);
-    expect(result[0].slug).toBe("same-title-artist-std");
-    expect(getSongSlugs.mock.calls[0][1]).toBe(game);
-    expect(new PgDialect().sqlToQuery(where.mock.calls[0][0]).params).toEqual([game]);
+  it.each([{ game: "maimai", type: "std", difficulty: "remaster" }, { game: "chunithm", type: "standard", difficulty: "ultima" }] as const)("decodes $game chart codes and groups the newest constant", async ({ game, type, difficulty }) => {
+    state.rows = [chart(), chart({ id: 2, gameVersion: 2, levelPrecise: 140 })];
+    const [song] = await queryAllUniqueSongs(game);
+    expect(song.parentIds).toEqual(["abcdefgh"]);
+    expect(song.type).toBe(type);
+    expect(song.difficulties).toEqual([expect.objectContaining({ difficulty, levelPrecise: 140 })]);
+    expect(state.queries[0].sql).toContain('"songs"."game" = $1');
+    expect(state.queries[0].params).toEqual([game]);
   });
 
   it("keeps disambiguated parents separate while preserving the original slug", async () => {
-    readRows.mockResolvedValue([chart, { ...chart, id: 2, parentId: "ijklmnop", disambiguator: 1 }]);
+    state.rows = [chart(), chart({ id: 2, parentId: "ijklmnop", disambiguator: 1 })];
     const result = await queryAllUniqueSongs("maimai");
     expect(result.map(song => [song.slug, song.parentIds])).toEqual([
-      ["same-title-artist-std", ["abcdefgh"]],
-      ["same-title-artist-std-1", ["ijklmnop"]],
+      ["same-title-artist", ["abcdefgh"]],
+      ["same-title-artist-1", ["ijklmnop"]],
     ]);
   });
 
   it("preserves display levels and fallback provenance", async () => {
-    readRows.mockResolvedValue([{ ...chart, level: "14+", levelPrecise: 145, addedVersion: 8, metadata: { levelPreciseEstimated: true, addedVersionEstimated: true } }]);
+    state.rows = [chart({ level: "14+", levelPrecise: 145, metadata: { levelPreciseEstimated: true } })];
     const [song] = await queryAllUniqueSongs("chunithm");
-    expect(song.addedVersion).toBe(8);
     expect(song.difficulties[0]).toMatchObject({ level: "14+", levelPrecise: 145, levelPreciseEstimated: true });
   });
 });

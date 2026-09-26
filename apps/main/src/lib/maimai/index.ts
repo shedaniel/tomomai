@@ -1,4 +1,3 @@
-export { upsertScoreData } from "./songs/persist";
 export type {
   AlbumData,
   EventAreaData,

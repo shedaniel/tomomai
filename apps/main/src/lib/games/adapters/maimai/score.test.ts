@@ -4,7 +4,7 @@ import type { FetchedMaimaiData } from "@/lib/maimai/orchestrator";
 import { maimaiScoreAdapter, normalizeFetchedMaimaiData } from "./score";
 
 describe("maimai score adapter normalization", () => {
-  it("maps maimai player, score, recent, album, and event fields to common codes", async () => {
+  it("maps maimai player, score, recent, and event fields to common codes", async () => {
     const fetched: FetchedMaimaiData = {
       playerData: {
         iconBytes: null,
@@ -107,15 +107,11 @@ describe("maimai score adapter normalization", () => {
       comboStatus: 1,
       syncStatus: 1,
       clearStatus: 0,
-      details: { maxDxScore: 456, track: 1, idx: "detail-index" },
-    });
-    expect(result.albums?.[0]).toMatchObject({
-      chart: { chartType: 1, difficulty: 3 },
-      metadata: { imageUrl: "https://example.test/album.jpg", venue: "Test Arcade" },
+      maxDxScore: 456, track: 1,
     });
     expect(result.events).toEqual([
-      expect.objectContaining({ name: "Area event", metadata: expect.objectContaining({ eventType: "area" }) }),
-      expect.objectContaining({ name: "Event area", metadata: expect.objectContaining({ eventType: "eventArea", eventPeriod: [100, 200] }) }),
+      expect.objectContaining({ name: "Area event", eventType: "area" }),
+      expect.objectContaining({ name: "Event area", eventType: "eventArea", eventPeriodStart: new Date(100), eventPeriodEnd: new Date(200) }),
     ]);
     expect(result.providerMetadata).toEqual({ cookies: "clal=test" });
   });
