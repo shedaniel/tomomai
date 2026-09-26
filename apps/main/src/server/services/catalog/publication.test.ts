@@ -1,10 +1,11 @@
+import { PgDialect } from "drizzle-orm/pg-core";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { readRows, putObject } = vi.hoisted(() => ({ readRows: vi.fn(), putObject: vi.fn() }));
+const { readRows, putObject, filters } = vi.hoisted(() => ({ readRows: vi.fn(), putObject: vi.fn(), filters: vi.fn() }));
 vi.mock("@/lib/db", () => ({ db: {
   transaction: (fn: (tx: unknown) => Promise<unknown>) => fn({
     execute: vi.fn(),
-    select: () => ({ from: () => ({ leftJoin: () => ({ where: () => ({ orderBy: readRows }) }) }) }),
+    select: () => ({ from: () => ({ leftJoin: (_table: unknown, join: unknown) => ({ where: (where: unknown) => { filters(join, where); return { orderBy: readRows }; } }) }) }),
   }),
 } }));
 vi.mock("@/lib/r2", () => ({ putR2Object: putObject }));
@@ -19,7 +20,7 @@ const instance = {
 };
 
 beforeEach(() => {
-  readRows.mockReset(); putObject.mockReset(); putObject.mockResolvedValue(undefined);
+  readRows.mockReset(); filters.mockReset(); putObject.mockReset(); putObject.mockResolvedValue(undefined);
 });
 
 describe("publishSongCatalog", () => {
@@ -31,6 +32,12 @@ describe("publishSongCatalog", () => {
     expect(JSON.parse(object.body)).toMatchObject({ game: "chunithm", songs: [{ addedVersion: 8, levelPrecise: 133, metadata }] });
     expect(putObject.mock.calls.every(([object]) => object.key.startsWith("api/v1/games/chunithm/"))).toBe(true);
     expect(result.songCount).toBe(1);
+    const dialect = new PgDialect();
+    const [join, where] = filters.mock.calls[0].map(filter => dialect.sqlToQuery(filter));
+    expect(join.sql).toContain('"songs"."game" = $1');
+    expect(join.params).toEqual(["chunithm"]);
+    expect(where.sql).toBe('"parent_song"."game" = $1');
+    expect(where.params).toEqual(["chunithm"]);
   });
 
   it("deduplicates parents, emits composite IDs and overwrites empty slices", async () => {

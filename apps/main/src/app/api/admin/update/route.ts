@@ -1,5 +1,5 @@
 import { getAdminCatalogRegions, resolveAdminGame } from "@/lib/api/admin-game";
-import { GameAdapterError } from "@/lib/games/types";
+import { GameAdapterError, type CanonicalGameId } from "@/lib/games/types";
 import { gameErrorResponse } from "@/lib/api/game-context";
 import { flushLogger } from "@/lib/logger";
 import { requestLogger } from "@/lib/request-logger";
@@ -17,6 +17,7 @@ export async function GET(request: NextRequest) {
 
   const { searchParams } = new URL(request.url);
   const region = searchParams.get('region') as Region | null;
+  let game: CanonicalGameId | undefined;
 
   try {
     // Check for admin token authentication
@@ -48,7 +49,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const game = resolveAdminGame(searchParams);
+    game = resolveAdminGame(searchParams);
 
     // Get query parameters
     const sourceToken = searchParams.get('token');
@@ -92,8 +93,9 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     if (error instanceof GameAdapterError) return gameErrorResponse(error);
     log.error({ err: error }, "Critical error in admin update route");
-    sendDiscordNotice(
-      region ?? "intl",
+    if (game && region) sendDiscordNotice(
+      game,
+      region,
       "Fetch pipeline error",
       `**Error:** ${error instanceof Error ? error.message : String(error)}`,
       0xFF0000,

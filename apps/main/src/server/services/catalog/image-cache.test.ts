@@ -1,19 +1,23 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { PgDialect } from "drizzle-orm/pg-core";
 import pino from "pino";
-const mocks = vi.hoisted(() => ({ select: vi.fn(), cache: vi.fn() }));
+const mocks = vi.hoisted(() => ({ select: vi.fn(), cache: vi.fn(), where: vi.fn() }));
 vi.mock("@/lib/db", () => ({ db: { select: mocks.select } }));
 vi.mock("@/lib/image_cacher", () => ({ cacheImage: mocks.cache }));
 import { cacheCatalogImages } from "./image-cache";
 const log = pino({ enabled: false });
 beforeEach(() => vi.clearAllMocks());
 function covers(urls: string[]) {
-  mocks.select.mockReturnValue({ from: () => ({ where: () => ({ groupBy: () => Promise.resolve(urls.map(cover => ({ cover }))) }) }) });
+  mocks.select.mockReturnValue({ from: () => ({ where: (filter: unknown) => { mocks.where(filter); return { groupBy: () => Promise.resolve(urls.map(cover => ({ cover }))) }; } }) });
 }
 describe("stored catalog image cache", () => {
   it("filters empty/data covers and retains per-image errors across batches", async () => {
     covers(["data:image/png;base64,test", "", "https://example.test/a", "https://example.test/b"]);
     mocks.cache.mockImplementation(async url => { if (url.endsWith("/b")) throw new Error("unavailable"); });
     const result = await cacheCatalogImages("chunithm", 1, log);
+    const filter = new PgDialect().sqlToQuery(mocks.where.mock.calls[0][0]);
+    expect(filter.sql).toBe('"parent_song"."game" = $1');
+    expect(filter.params).toEqual(["chunithm"]);
     expect(mocks.cache.mock.calls).toEqual([["https://example.test/a"], ["https://example.test/b"]]);
     expect(result.statistics).toMatchObject({ totalUrls: 4, httpUrls: 2, cached: 1, errors: 1, batches: 2, batchSize: 1 });
     expect(result).toMatchObject({ errorSample: [{ url: "https://example.test/b", error: "unavailable" }] });

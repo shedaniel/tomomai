@@ -121,7 +121,7 @@ export async function fetchLevels(context: FetchingContext): Promise<UpdateSong[
     ...definition,
     key,
     validate: validateSongs,
-    notify: (title, body, color) => sendDiscordNotice(context.region, title, body, color),
+    notify: (title, body, color) => sendDiscordNotice("maimai", context.region, title, body, color),
     complete(song) {
       const required = <T>(field: string, value: T | undefined) => requireCatalogValue(value, field, key(song), context.log);
       return {

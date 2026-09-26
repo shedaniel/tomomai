@@ -333,6 +333,7 @@ export async function sendDiscordWebhook(
 }
 
 export async function sendDiscordNotice(
+  game: CanonicalGameId,
   region: Region,
   title: string,
   description: string,
@@ -343,13 +344,14 @@ export async function sendDiscordNotice(
 
   const baseUrl = resolveBaseUrl();
   const regionName = region === "jp" ? "Japan" : region === "cn" ? "China" : "International";
+  const registration = resolveGame(game);
 
   const payload = {
-    username: "ともマイ",
+    username: getGameBrand(registration).japaneseName,
     avatar_url: `${baseUrl}/icon.png`,
     embeds: [
       {
-        title: `[${regionName}] ${title}`,
+        title: `[${registration.displayName} / ${regionName}] ${title}`,
         description: truncateForDiscord(description.trim()) || undefined,
         color,
         timestamp: new Date().toISOString(),

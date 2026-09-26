@@ -615,7 +615,7 @@ export async function POST(request: NextRequest) {
 
     // Send Discord notification (confirm link at top)
     const discordDescription = `[Confirm](${confirmUrl}) | [Full description](${descriptionUrl})\n\n${changeDescription}`;
-    sendDiscordNotice("jp", "Tour Events Update", discordDescription, deltaColor(delta)).catch((err) => {
+    sendDiscordNotice("maimai", "jp", "Tour Events Update", discordDescription, deltaColor(delta)).catch((err) => {
       log.error(err, "Failed to send Discord notification");
     });
 

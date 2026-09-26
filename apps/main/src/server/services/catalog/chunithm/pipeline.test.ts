@@ -72,6 +72,6 @@ describe("CHUNITHM otoge-db collection", () => {
   it("rejects an empty result", async () => { await expect(collect([])).rejects.toThrow("no regular CHUNITHM charts"); });
   it("rejects incomplete charts at finalization without sending a completion notice", async () => {
     await expect(collect([{ ...jpFixture[0], date_added: "" }])).rejects.toThrow("Errors occurred during song update");
-    expect(sendDiscordNotice).not.toHaveBeenCalledWith("jp", "CHUNITHM Fetch pipeline completed", expect.any(String), expect.any(Number));
+    expect(sendDiscordNotice).not.toHaveBeenCalledWith("chunithm", "jp", "Fetch pipeline completed", expect.any(String), expect.any(Number));
   });
 });

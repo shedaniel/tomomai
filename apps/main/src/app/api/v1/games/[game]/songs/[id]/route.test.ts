@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
 import { PgDialect } from "drizzle-orm/pg-core";
-const { query, where } = vi.hoisted(() => ({ query: vi.fn(), where: vi.fn() }));
-vi.mock("next/cache", () => ({ unstable_cache: (fn: unknown) => fn }));
+const { query, where, cache } = vi.hoisted(() => ({ query: vi.fn(), where: vi.fn(), cache: vi.fn() }));
+vi.mock("next/cache", () => ({ unstable_cache: (fn: unknown, key: unknown, options: unknown) => { cache(key, options); return fn; } }));
 vi.mock("@/lib/db", () => ({ db: { select: () => ({ from: () => ({ innerJoin: () => ({
   where: (filter: unknown) => { where(filter); return { orderBy: () => ({ limit: query }) }; },
 }) }) }) } }));
@@ -17,7 +17,7 @@ const row = {
 function get(id: string) {
   return GET(new NextRequest("https://example.test/api/v1/games/maimai/songs/" + id), { params: Promise.resolve({ game: "maimai", id }) });
 }
-beforeEach(() => { query.mockReset(); where.mockReset(); });
+beforeEach(() => { query.mockReset(); where.mockReset(); cache.mockReset(); });
 
 describe("song details", () => {
   it("rejects malformed IDs before querying", async () => {
@@ -32,6 +32,10 @@ describe("song details", () => {
     expect(response.headers.get("Cache-Control")).toContain("max-age=3600");
     expect(new PgDialect().sqlToQuery(where.mock.calls[0][0]).params).toEqual(["maimai", "maimai", "Ab3xK9pQ"]);
     expect(query).toHaveBeenCalledWith(1);
+    expect(cache).toHaveBeenCalledWith(["api-v1-parent-song-by-id", "maimai", "Ab3xK9pQ"], expect.objectContaining({ tags: ["api-v1-songs:maimai"] }));
+    const filter = new PgDialect().sqlToQuery(where.mock.calls[0][0]).sql;
+    expect(filter).toContain('"songs"."game" = $1');
+    expect(filter).toContain('"parent_song"."game" = $2');
   });
   it("uses region and version predicates for exact instance IDs", async () => {
     query.mockResolvedValue([]);

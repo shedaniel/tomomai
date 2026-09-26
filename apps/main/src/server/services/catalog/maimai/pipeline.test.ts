@@ -39,6 +39,6 @@ describe("maimai catalog recipe", () => {
   it("rejects incomplete provider records without a completion notice", async () => {
     state.incomplete = true;
     await expect(fetchLevels(context("jp"))).rejects.toThrow("Errors occurred during song update");
-    expect(sendDiscordNotice).not.toHaveBeenCalledWith("jp", "Fetch pipeline completed", expect.any(String), expect.any(Number));
+    expect(sendDiscordNotice).not.toHaveBeenCalledWith("maimai", "jp", "Fetch pipeline completed", expect.any(String), expect.any(Number));
   });
 });

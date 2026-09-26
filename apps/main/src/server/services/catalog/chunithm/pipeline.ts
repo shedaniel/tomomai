@@ -31,6 +31,6 @@ export function collectCatalog(context: CatalogFetchContext): Promise<CatalogCha
     names: stages.map(stage => stage.name),
     key: catalogChartKey,
     complete: (chart, context) => completeCatalogChart(chart, context.log),
-    notify: (title, body, color) => sendDiscordNotice(context.region, `CHUNITHM ${title}`, body, color),
+    notify: (title, body, color) => sendDiscordNotice("chunithm", context.region, title, body, color),
   });
 }

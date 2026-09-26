@@ -62,6 +62,7 @@ async function revalidateSongsCache(
 export async function POST(request: NextRequest) {
   const { log: baseLog, requestId } = requestLogger(request, "admin/upload");
   let log = baseLog;
+  let noticeContext: { game: CanonicalGameId; region: Region } | undefined;
   try {
     // Check for admin token authentication
     const authHeader = request.headers.get("authorization");
@@ -115,6 +116,7 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+    noticeContext = { game, region };
 
     let version: number;
     try {
@@ -199,6 +201,7 @@ export async function POST(request: NextRequest) {
         if (skippedDeletions.length > 15) desc += `\n... and ${skippedDeletions.length - 15} more`;
       }
       sendDiscordNotice(
+        game,
         region,
         "Upload complete",
         desc,
@@ -231,8 +234,9 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     if (error instanceof GameAdapterError) return gameErrorResponse(error);
     log.error({ err: error }, "Error in admin upload route");
-    sendDiscordNotice(
-      "intl",
+    if (noticeContext) sendDiscordNotice(
+      noticeContext.game,
+      noticeContext.region,
       "Upload error",
       `**Error:** ${error instanceof Error ? error.message : String(error)}`,
       0xFF0000,

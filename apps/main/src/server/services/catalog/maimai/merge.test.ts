@@ -387,7 +387,7 @@ describe("mergeSongs", () => {
 
       // One should be merged with AC, the other should remain
       const artists = result.map(s => value(s.artist)).sort();
-      expect(artists.length).toBe(2);
+      expect(artists).toEqual(["AC", "AD"]);
     });
 
     it("should handle different song types (standard vs deluxe)", () => {
@@ -434,21 +434,14 @@ describe("mergeSongs", () => {
       expect(expert).toBeDefined();
     });
 
-    it("should handle songs with mode property set", () => {
-      const set1 = [
-        { ...createSong("Song A", "Artist A"), mode: "only-modify" as const },
-      ];
-      const set2 = [
-        createSong("Song A", "Artist A"),
-      ];
-
-      // Global mode is "default", but song has mode "only-modify"
+    it("honors only-modify on incoming charts without admitting unmatched songs", () => {
       const take = taker(logger);
-      const result = mergeSongs(set1, set2, "default", logger, merger(logger, take), take);
-
-      // Song should be merged according to its own mode
-      expect(result).toHaveLength(1);
-      expect(value(result[0].artist)).toBe("Artist A");
+      const result = mergeSongs([createSong("Existing", "Artist")], [
+        { ...createSong("Existing", "Updated Artist"), mode: "only-modify" as const },
+        { ...createSong("Unmatched", "Artist"), mode: "only-modify" as const },
+      ], "default", logger, merger(logger, take), take);
+      expect(result.map(song => song.songName)).toEqual(["Existing"]);
+      expect(value(result[0].artist)).toBe("Updated Artist");
     });
 
     it("should handle Pending values with important flag", () => {
@@ -466,8 +459,7 @@ describe("mergeSongs", () => {
       const result = mergeSongs(set1, set2, "default", logger, merger(logger, take), take);
 
       expect(result).toHaveLength(1);
-      // The result depends on the take function - our simple take prefers second value
-      // but in production, important values would be preferred
+      expect(result[0].artist).toEqual(important("Important Artist"));
     });
 
     it("should preserve extras from both songs", () => {
