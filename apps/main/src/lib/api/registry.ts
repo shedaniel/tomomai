@@ -71,7 +71,7 @@ export function defineRoute<
 }
 
 export function defineGameRoute<Q extends z.ZodTypeAny, R extends z.ZodTypeAny>(spec: RouteSpec<Q, R>) {
-  const game = gameIdSchema.describe("Canonical game ID; unavailable games return GAME_NOT_ENABLED.");
+  const game = gameIdSchema.describe("Canonical game ID; availability depends on the requested feature.");
   return defineRoute({
     ...spec,
     params: spec.params instanceof z.ZodObject ? spec.params.extend({ game }) : z.object({ game }),

@@ -2,7 +2,7 @@ import { gameIdSchema } from "@/lib/games/schema";
 import { regionSchema } from "./schemas";
 import type { NextRequest } from "next/server";
 import { GameAdapterError, type CanonicalGameId, type GameCapability } from "@/lib/games/types";
-import { requireCapability, resolveGame, resolveGameContext } from "@/lib/games/registry";
+import { requireCapability, resolveGameContext } from "@/lib/games/registry";
 import type { RouteContext } from "./protect";
 
 export function gameErrorResponse(error: unknown): Response {
@@ -18,8 +18,6 @@ export async function resolveApiGame(req: NextRequest, context: RouteContext, ca
     const parsed = gameIdSchema.safeParse(params.game);
     if (!parsed.success) throw new GameAdapterError("UNKNOWN_GAME", "A canonical game path is required");
     const game = parsed.data;
-    const registration = resolveGame(game);
-    if (!registration.enabled) throw new GameAdapterError("GAME_NOT_ENABLED", `${registration.displayName} is not enabled`, game);
     const region = req.nextUrl.searchParams.get("region");
     if (region !== null) {
       const parsedRegion = regionSchema.safeParse(region);
@@ -33,4 +31,3 @@ export async function resolveApiGame(req: NextRequest, context: RouteContext, ca
     return gameErrorResponse(error);
   }
 }
-

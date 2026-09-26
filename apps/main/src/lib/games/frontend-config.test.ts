@@ -31,7 +31,7 @@ describe("frontend process configuration", () => {
     vi.stubEnv("FRONTEND_GAME", "chunithm");
     vi.stubEnv("NEXT_PUBLIC_ENABLED_CHUNITHM_REGIONS", undefined);
     const game = getFrontendGame();
-    expect(game).toMatchObject({ id: "chunithm", productName: "tomochu", enabled: false, fetchConfigured: false, regions: [] });
+    expect(game).toMatchObject({ id: "chunithm", productName: "tomochu", enabled: false, fetchConfigured: false, regions: ["intl", "jp"] });
     expect(JSON.parse(JSON.stringify(game))).toEqual(game);
     expect(game).not.toHaveProperty("adapter");
   });

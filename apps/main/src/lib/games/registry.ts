@@ -17,7 +17,7 @@ type GameRegistration = {
   id: CanonicalGameId;
   displayName: string;
   productName: "tomomai" | "tomochu";
-  enabled: boolean;
+  enabled: boolean; // Player features may roll out after the catalog.
   adapter: GameAdapter;
 };
 
@@ -51,18 +51,21 @@ export function resolveGame(input: string): GameRegistration {
 
 export function resolveGameContext(input: string, region: Region, capability?: GameCapability): GameContext {
   const registration = resolveGame(input);
-  if (!registration.enabled) {
+  if (capability) requireCapability(registration.id, capability, region);
+  else if (!registration.enabled) {
     throw new GameAdapterError("GAME_NOT_ENABLED", `${registration.displayName} is not enabled`, registration.id, region);
   }
   if (!registration.adapter.supportedRegions.has(region) || !getEnabledRegions(registration.id).includes(region)) {
     throw new GameAdapterError("UNSUPPORTED_REGION", `${region} is not enabled for ${registration.displayName}`, registration.id, region);
   }
-  if (capability) requireCapability(registration.id, capability, region);
   return { game: registration.id, region };
 }
 
 export function requireCapability(game: CanonicalGameId, capability: GameCapability, region?: Region): void {
   const registration = GAME_REGISTRY[game];
+  if (capability !== "catalog" && !registration.enabled) {
+    throw new GameAdapterError("GAME_NOT_ENABLED", `${registration.displayName} is not enabled`, game, region, capability);
+  }
   if (!registration.adapter.capabilities.has(capability)) {
     throw new GameAdapterError("UNSUPPORTED_CAPABILITY", `${registration.displayName} does not support ${capability}`, game, region, capability);
   }

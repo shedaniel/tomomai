@@ -10,7 +10,7 @@ const context = (game: string) => ({ params: Promise.resolve({ game }) });
 afterEach(() => vi.unstubAllEnvs());
 
 describe("game API boundaries", () => {
-  it("requires canonical IDs and rejects disabled games before data access", async () => {
+  it("requires canonical IDs and keeps player API rollout gated", async () => {
     vi.stubEnv("NEXT_PUBLIC_ENABLED_MAIMAI_REGIONS", "intl,jp");
     expect(await resolveApiGame(request(), context("maimai"), "catalog")).toBe("maimai");
     for (const game of ["maimaidx", "unknown", ""]) {
@@ -18,10 +18,12 @@ describe("game API boundaries", () => {
       expect(result.status).toBe(400);
       expect((await result.json()).code).toBe("UNKNOWN_GAME");
     }
-    const disabled = await resolveApiGame(request(), context("chunithm"), "catalog") as Response;
-    expect(disabled.status).toBe(422);
-    expect((await disabled.json()).code).toBe("GAME_NOT_ENABLED");
-    const region = await resolveApiGame(request("cn"), context("maimai"), "catalog") as Response;
+    for (const req of [request(), new NextRequest("https://example.test/api/v1/games/chunithm/fetch")]) {
+      const disabled = await resolveApiGame(req, context("chunithm"), "scores") as Response;
+      expect(disabled.status).toBe(422);
+      expect((await disabled.json()).code).toBe("GAME_NOT_ENABLED");
+    }
+    const region = await resolveApiGame(request("cn"), context("maimai"), "scores") as Response;
     expect((await region.json()).code).toBe("UNSUPPORTED_REGION");
   });
 
