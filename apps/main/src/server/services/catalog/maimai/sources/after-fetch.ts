@@ -4,7 +4,7 @@ import { load } from "cheerio";
 import { normalizeGenre } from "@/lib/name-utils";
 import { type Logger } from "pino";
 import pLimit from "p-limit";
-import { levelToPrecise } from "@/server/utils/level";
+import { levelToPrecise } from "@/server/services/catalog/maimai/levels";
 import { value } from "@/server/services/catalog/ingestion/types";
 import { key } from "../merge";
 import type { SongFetcher } from "../types";

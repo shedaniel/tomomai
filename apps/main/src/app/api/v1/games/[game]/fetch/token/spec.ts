@@ -5,9 +5,9 @@ export const spec = defineRoute({
   method: "DELETE",
   path: "/api/v1/games/{game}/fetch/token",
   tag: "Fetch",
-  summary: "Delete the stored upstream maimai token",
+  summary: "Delete the stored upstream upstream token",
   description:
-    "Removes the caller's stored maimai authentication token for the " +
+    "Removes the caller's stored upstream authentication token for the " +
     "given region. After this, `POST /api/v1/games/{game}/fetch` will return `412` " +
     "until a new token is supplied via the in-app flow.",
   scope: "fetch:delete",

@@ -43,7 +43,7 @@ describe("catalog maintenance", () => {
 
   it("updates provenance with the copied constant when a target chart already exists", async () => {
     vi.stubEnv("NEXT_PUBLIC_ENABLED_MAIMAI_REGIONS", "jp,intl");
-    mocks.rows = [{ id: 1n, parentId: 2n, game: "chunithm", region: "jp", gameVersion: 8,
+    mocks.rows = [{ id: BigInt(1), parentId: BigInt(2), game: "chunithm", region: "jp", gameVersion: 8,
       levelPrecise: 145, addedVersion: 8, metadata: { levelPreciseEstimated: true } }];
     const response = await importSongs(request("import?game=chunithm&from=version%3E%3D0%40jp-8&to=intl-8&mode=only-upsert"));
     expect(response.status).toBe(200);

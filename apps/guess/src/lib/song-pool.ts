@@ -1,3 +1,4 @@
+import { codeToChartType, codeToDifficulty } from "@tomomai/utils/game-codes";
 import type { Chart } from "./types";
 import { uniqueSongs, type SongSummary } from "./fuzzy";
 import { hasAudioPreview, isHeardle } from "./heardle";
@@ -22,12 +23,9 @@ async function fetchCatalogue(): Promise<Chart[]> {
   }
   const body = (await res.json()) as { game: string; songs: (Omit<Chart, "type" | "difficulty"> & { type: number; difficulty: number })[] };
   if (body.game !== "maimai") throw new Error("Unexpected catalog game");
-  const types = ["std", "dx", "utage"] as const;
-  const difficulties = ["basic", "advanced", "expert", "master", "remaster", "utage"] as const;
   return body.songs.map(song => {
-    const type = types[song.type];
-    const difficulty = difficulties[song.difficulty];
-    if (!type || !difficulty) throw new Error("Unknown maimai chart code");
+    const type = codeToChartType(song.type);
+    const difficulty = codeToDifficulty(song.difficulty);
     return { ...song, type, difficulty };
   });
 }

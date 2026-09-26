@@ -1,9 +1,8 @@
-import { resolveCatalogContext, resolveGame } from "@/lib/games/registry";
+import { resolveGame } from "@/lib/games/registry";
 import type { CanonicalGameId } from "@/lib/games/types";
 import type { Region } from "@/lib/types";
 
 export function catalogRequiresToken(game: CanonicalGameId, region: Region): boolean {
-  resolveCatalogContext(game, region);
   return resolveGame(game).adapter.catalog.requiresToken?.(region) ?? false;
 }
 

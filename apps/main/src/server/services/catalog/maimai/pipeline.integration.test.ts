@@ -387,7 +387,7 @@ describe.skipIf(shouldSkip)("Integration: LevelFetcher", () => {
     }
   }, 60000);
 
-  it.only("should handle Link properly", async () => {
+  it("should handle Link properly", async () => {
     testLog.info("Running ScaledMaimaiScraperFetcher...");
     const fetchers = [...FETCHERS]
     // remove first fetcher

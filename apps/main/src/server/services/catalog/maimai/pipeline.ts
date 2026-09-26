@@ -1,8 +1,6 @@
 import type { VersionId } from "@/lib/metadata";
 import type { Logger } from "pino";
-import { getCurrentVersion } from "@/lib/games/versions";
 import type { CatalogFetchContext } from "../ingestion/types";
-import type { CatalogSourceAdapter } from "@/lib/games/types";
 import { toCatalogChart } from "./normalize";
 import { createSorterFetcher } from "../ingestion/stages";
 import { runFetchers, requireCatalogValue } from "../ingestion/runner";
@@ -70,7 +68,7 @@ export const CN_FETCHER_NAMES: string[] = [
   "Sorter",
 ]
 
-export function getFetchersForRegion(region: Region): { fetchers: SongFetcher[]; names: string[] } {
+function getFetchersForRegion(region: Region): { fetchers: SongFetcher[]; names: string[] } {
   if (region === "cn") return { fetchers: CN_FETCHERS, names: CN_FETCHER_NAMES };
   return { fetchers: FETCHERS, names: FETCHER_NAMES };
 }
@@ -145,29 +143,14 @@ export async function fetchLevels(context: FetchingContext): Promise<UpdateSong[
   });
 }
 
-export const maimaiCatalogAdapter: CatalogSourceAdapter = {
-  configured: true,
-  requiresToken: region => region !== "cn",
-  async authenticate(region, token) {
-    if (region === "cn") return "";
-    const { loginAndGetCookies } = await import("@/server/services/maimai-login");
-    return loginAndGetCookies(region, token);
-  },
-  getStages(region) {
-    return { names: [...getFetchersForRegion(region).names] };
-  },
-  resolveVersion(region) {
-    return getCurrentVersion("maimai", region);
-  },
-  async collect(ctx: CatalogFetchContext) {
-    const songs = await fetchLevels({
-      region: ctx.region,
-      version: ctx.version as VersionId,
-      cookies: ctx.cookies ?? "",
-      forceMode: ctx.forceMode,
-      log: ctx.log,
-      notice: ctx.notice,
-    });
-    return songs.map(toCatalogChart);
-  },
-};
+export async function collectCatalog(ctx: CatalogFetchContext) {
+  const songs = await fetchLevels({
+    region: ctx.region,
+    version: ctx.version as VersionId,
+    cookies: ctx.cookies ?? "",
+    forceMode: ctx.forceMode,
+    log: ctx.log,
+    notice: ctx.notice,
+  });
+  return songs.map(toCatalogChart);
+}

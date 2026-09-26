@@ -38,5 +38,12 @@ test("reports version and catalog HTTP failures", async () => {
 test("rejects malformed catalog responses", async () => {
   let calls = 0;
   await assert.rejects(fetchPreviewCatalog("https://example.test", async () => Response.json(++calls === 1
-    ? { currentVersion: 13 } : { songs: null })), /Invalid song catalog response/);
+    ? { currentVersion: 13 } : { game: "maimai", songs: null })), /Invalid song catalog response/);
+});
+
+
+test("rejects an unsupported chart type instead of treating it as utage", async () => {
+  let calls = 0;
+  await assert.rejects(fetchPreviewCatalog("https://example.test", async () => Response.json(++calls === 1
+    ? { currentVersion: 13 } : { game: "maimai", songs: [{ type: 2, difficulty: 5 }] })), /Unknown maimai chart type code/);
 });

@@ -1,5 +1,4 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { SONG_CATALOG_CACHE_HEADERS } from "./cache-headers";
 import { GET } from "./route";
 import { NextRequest } from "next/server";
 import { GET as getParents } from "../parents/route";
@@ -17,14 +16,6 @@ afterEach(async () => {
 });
 
 describe("SONG_CATALOG_CACHE_HEADERS", async () => {
-  it("pins the successful song catalog response cache policy for browser, CDN, and Vercel caches", async () => {
-    expect(SONG_CATALOG_CACHE_HEADERS).toEqual({
-      "Cache-Control": EXPECTED_SONG_CATALOG_CACHE_VALUE,
-      "CDN-Cache-Control": EXPECTED_SONG_CATALOG_CACHE_VALUE,
-      "Vercel-CDN-Cache-Control": EXPECTED_SONG_CATALOG_CACHE_VALUE,
-    });
-  });
-
   it("redirects the stable API path to the R2 catalog with the shared cache policy", async () => {
     process.env.NEXT_PUBLIC_R2_URL = "https://cdn.example.test/";
 
@@ -32,8 +23,8 @@ describe("SONG_CATALOG_CACHE_HEADERS", async () => {
 
     expect(response.status).toBe(302);
     expect(response.headers.get("location")).toBe("https://cdn.example.test/api/v1/games/maimai/songs/jp/11");
-    for (const [name, value] of Object.entries(SONG_CATALOG_CACHE_HEADERS)) {
-      expect(response.headers.get(name)).toBe(value);
+    for (const name of ["Cache-Control", "CDN-Cache-Control", "Vercel-CDN-Cache-Control"]) {
+      expect(response.headers.get(name)).toBe(EXPECTED_SONG_CATALOG_CACHE_VALUE);
     }
   });
   it("rejects missing, malformed, and unknown slice parameters", async () => {

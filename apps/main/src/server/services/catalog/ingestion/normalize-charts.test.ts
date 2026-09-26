@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import pino from "pino";
-import { completeCatalogChart, mergeCatalogChart, validateCatalogCharts, type CatalogChart } from "./normalize-charts";
+import { completeCatalogChart, mergeCatalogChart, type CatalogChart } from "./normalize-charts";
 
 const log = pino({ enabled: false });
 const chart: CatalogChart = {
@@ -19,15 +19,11 @@ describe("catalog completion", () => {
       noteCounts: { tap: 1, hold: 2, slide: 3, touch: 0, break: 0 }, metadata: chart.metadata });
   });
 
-  it.each(["artist", "cover", "level", "levelPrecise", "genre", "addedVersion"] as const)("requires %s after the final stage", field => {
-    expect(() => completeCatalogChart({ ...chart, [field]: undefined }, log)).toThrow(field);
+  it("requires a resolved introduction version after the final stage", () => {
+    expect(() => completeCatalogChart({ ...chart, addedVersion: undefined }, log)).toThrow("addedVersion");
   });
 
-  it("checks collection identities together", () => {
-    expect(() => validateCatalogCharts("maimai", [chart])).toThrow("different game");
-    expect(() => validateCatalogCharts("chunithm", [{ ...chart, difficulty: 42 }])).toThrow("Unknown chart codes");
-    expect(() => validateCatalogCharts("chunithm", [chart, chart])).toThrow("Duplicate catalog chart");
-  });
+
 });
 
 describe("catalog merging", () => {

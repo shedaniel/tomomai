@@ -1,3 +1,4 @@
+import { codeToChartType, codeToDifficulty } from "@tomomai/utils/game-codes";
 /**
  * Process-level cache of the song catalogue from /api/v1/games/maimai/songs.
  *
@@ -63,12 +64,9 @@ async function fetchCatalog(region: string, gameVersion: number): Promise<Map<st
   }
   const body = (await response.json()) as { game: string; songs: (Omit<CatalogEntry, "type" | "difficulty"> & { type: number; difficulty: number })[] };
   if (body.game !== "maimai") throw new Error("Unexpected catalog game");
-  const types = ["std", "dx", "utage"];
-  const difficulties = ["basic", "advanced", "expert", "master", "remaster", "utage"];
   const map = new Map<string, CatalogEntry>();
   for (const song of body.songs) {
-    if (!types[song.type] || !difficulties[song.difficulty]) throw new Error("Unknown maimai chart code");
-    map.set(song.songId, { ...song, type: types[song.type], difficulty: difficulties[song.difficulty] });
+    map.set(song.songId, { ...song, type: codeToChartType(song.type), difficulty: codeToDifficulty(song.difficulty) });
   }
   log.info(
     { count: map.size, durationMs: Date.now() - startTime },

@@ -49,7 +49,7 @@ describe("resolveParents", () => {
   it("matches an existing parent by sibling addedVersion", () => {
     const existing = parent({});
     const result = resolveParents([
-      song({ id: BigInt(5), region: "intl", gameVersion: 13, addedVersion: 8 }),
+      song({ id: BigInt(5), region: "intl", gameVersion: 13, addedVersion: 8, artist: "Renamed artist" }),
     ], [existing]);
 
     expect(result.newParents).toHaveLength(0);

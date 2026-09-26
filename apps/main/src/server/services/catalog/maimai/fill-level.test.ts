@@ -25,5 +25,6 @@ describe("maimai FillMissing stage", () => {
   it("retains the existing maimai mismatch repair policy", async () => {
     const [repaired] = await FillMissingFetcher(context(9), [{ ...chart, level: "14", levelPrecise: 149 }]);
     expect(repaired).toMatchObject({ levelPrecise: 140, metadata: { levelPreciseEstimated: true } });
+    expect((await FillMissingFetcher(context(9), [{ ...chart, level: "6", levelPrecise: 69 }]))[0].levelPrecise).toBe(69);
   });
 });

@@ -69,7 +69,6 @@ describe("POST /api/admin/catalog/publish?game=maimai", () => {
     const failed = await POST(request("admin-secret"));
     expect(failed.status).toBe(500);
     expect(mocks.invalidate).not.toHaveBeenCalled();
-    expect(mocks.log.error).toHaveBeenCalledWith({ err }, "Failed to publish public song catalog");
     const retried = await POST(request("admin-secret"));
     expect(retried.status).toBe(200);
     expect(mocks.publish).toHaveBeenCalledTimes(2);

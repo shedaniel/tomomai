@@ -38,7 +38,7 @@ type SongsJsonRecord = {
   bpm: string;
 } & Partial<Record<ChartPrefix | `${ChartPrefix}_${ChartField}`, string>>;
 
-export function getOtogeDbSource(region: Region) {
+function getOtogeDbSource(region: Region) {
   if (region !== "jp" && region !== "intl") {
     throw new GameAdapterError("UNSUPPORTED_REGION", "otoge-db CHUNITHM catalog supports JP and International only", "chunithm", region, "catalog");
   }
@@ -57,8 +57,7 @@ function parseCount(value: string | undefined): number | undefined {
   return value && /^\d+$/.test(value) ? Number(value) : undefined;
 }
 
-export function normalizeOtogeDbCatalog(songs: SongsJsonRecord[], region: Region): PendingChart[] {
-  const source = getOtogeDbSource(region);
+function normalizeOtogeDbCatalog(songs: SongsJsonRecord[], region: Region, sourceUrl: string): PendingChart[] {
   return songs.flatMap(song => {
     if (song.we_kanji || song.we_star) return [];
     if (region === "intl" ? song.intl === "0" : song.intl === "2") return [];
@@ -93,7 +92,7 @@ export function normalizeOtogeDbCatalog(songs: SongsJsonRecord[], region: Region
           addedVersionEstimated: difficulty === 4 && !useUpdateDate,
           otogeDb: {
             id: song.id,
-            url: source.url,
+            url: sourceUrl,
             version: song.version,
             reading: song.reading,
             dateAdded: song.date_added,
@@ -122,7 +121,7 @@ export const OtogeDbFetcher = asFetcher(async (ctx: CatalogFetchContext): Promis
   const response = await fetch(source.url, { signal: AbortSignal.timeout(30_000), cache: "no-store" });
   if (!response.ok) throw new Error(`otoge-db CHUNITHM catalog request failed: HTTP ${response.status}`);
   const songs: SongsJsonRecord[] = await response.json();
-  const charts = normalizeOtogeDbCatalog(songs, ctx.region);
+  const charts = normalizeOtogeDbCatalog(songs, ctx.region, source.url);
   if (!charts.length) throw new Error(`otoge-db returned no regular CHUNITHM charts for ${ctx.region}`);
   ctx.log.info({ game: "chunithm", region: ctx.region, recordCount: charts.length }, "Collected otoge-db catalog");
   ctx.notice.addDetail(`${charts.length} regular CHUNITHM charts from ${ctx.region.toUpperCase()} otoge-db; WORLD'S END excluded`);

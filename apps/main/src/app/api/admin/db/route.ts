@@ -1,4 +1,4 @@
-import { resolveAdminGame } from "@/lib/api/admin-game";
+import { getAdminCatalogRegions, resolveAdminGame } from "@/lib/api/admin-game";
 import { GameAdapterError, type CanonicalGameId } from "@/lib/games/types";
 import { gameErrorResponse } from "@/lib/api/game-context";
 import { db } from "@/lib/db";
@@ -84,9 +84,9 @@ export async function POST() {
 async function normalize(game: CanonicalGameId, searchParams: URLSearchParams, log: Logger) {
   const region = searchParams.get('region') as Region | null;
 
-  if (!region) {
+  if (!region || !getAdminCatalogRegions(game).includes(region)) {
     return NextResponse.json(
-      { error: "Missing 'region' query parameter" },
+      { error: `Missing or invalid 'region' query parameter. Must be one of: ${getAdminCatalogRegions(game).join(", ")}` },
       { status: 400 }
     );
   }

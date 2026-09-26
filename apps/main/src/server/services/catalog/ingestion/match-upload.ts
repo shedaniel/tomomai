@@ -1,8 +1,8 @@
 
 type Chart = {
   songName: string;
-  type: string | number;
-  difficulty: string | number;
+  type: number;
+  difficulty: number;
   artist: string;
   addedVersion: number | undefined;
 };

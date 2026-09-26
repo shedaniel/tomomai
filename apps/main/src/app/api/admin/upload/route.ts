@@ -14,7 +14,7 @@ import { locales } from "@tomomai/i18n/locale";
 import { parseCatalogVersion } from "@/lib/catalog/parse-version";
 import { NextRequest, NextResponse } from "next/server";
 
-import { ingestCatalog } from "@/server/services/catalog/ingestion";
+import { persistCatalog } from "@/server/services/catalog/ingestion/persistence";
 type UpdateMode = "noop" | "alter" | "destructive";
 /**
  * Push catalog edits to the ISR cache without waiting for the 14-day
@@ -142,7 +142,7 @@ export async function POST(request: NextRequest) {
       songCount: uploadSongs.length
     }, "Upload merge analysis starting");
 
-    const { dbSongs, mergedSongs, changes, applied, mergeEvents, addedSongs } = await ingestCatalog({ game, region, version, uploadSongs, updateMode, log });
+    const { dbSongs, mergedSongs, changes, applied, mergeEvents, addedSongs } = await persistCatalog(game, region, version, uploadSongs, updateMode, log);
 
     const appliedCount = applied.added + applied.modified + applied.deleted;
     if (updateMode !== "noop") {

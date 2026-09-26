@@ -489,6 +489,9 @@ importers:
       '@tomomai/render-token':
         specifier: workspace:*
         version: link:../../packages/render-token
+      '@tomomai/utils':
+        specifier: workspace:*
+        version: link:../../packages/utils
       hono:
         specifier: ^4.6.14
         version: 4.12.25

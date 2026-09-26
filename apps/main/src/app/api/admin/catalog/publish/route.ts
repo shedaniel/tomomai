@@ -1,4 +1,4 @@
-import { resolveGame, requireConfiguredSource } from "@/lib/games/registry";
+import { resolveAdminGame } from "@/lib/api/admin-game";
 import { GameAdapterError } from "@/lib/games/types";
 import { gameErrorResponse } from "@/lib/api/game-context";
 import { flushLogger } from "@/lib/logger";
@@ -27,10 +27,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid authorization token", requestId }, { status: 403 });
     }
 
-    const input = request.nextUrl.searchParams.get("game");
-    if (input !== "maimai" && input !== "chunithm") return NextResponse.json({ error: "Canonical game is required", requestId }, { status: 400 });
-    const game = resolveGame(input).id;
-    requireConfiguredSource(game, "catalog");
+    const game = resolveAdminGame(request.nextUrl.searchParams);
     const publication = await publishSongCatalog(game);
     revalidateTag(`all-unique-songs:${game}`, { expire: 0 });
     revalidateTag(`reserved-songs:${game}`, { expire: 0 });

@@ -1,6 +1,8 @@
 import { type ApiKeyInfo, keyHasScope } from "@/lib/api/protect";
 import { type ScopeKey } from "@/lib/api/scopes";
 import { resolveGame } from "@/lib/games/registry";
+import type { z } from "zod";
+import type { snapshotDetail } from "./schemas";
 import type { fetchSnapshotData } from "@/server/queries/snapshots";
 
 type SnapshotData = NonNullable<Awaited<ReturnType<typeof fetchSnapshotData>>>;
@@ -21,52 +23,37 @@ export function buildSnapshotPayload(
   const hasEventsRead = keyHasScope(key, scope("events:read"));
   const hasIconRead = keyHasScope(key, scope("icon:read"));
 
-  let songsPayload: Record<string, unknown>[] | null = null;
+  type SongPayload = NonNullable<z.infer<typeof snapshotDetail>["songs"]>[number];
+  const songPayload = (s: SnapshotData["songs"][number]): SongPayload => ({
+    songId: s.songId,
+    songName: s.songName,
+    artist: s.artist,
+    cover: s.cover,
+    difficulty: s.difficultyCode,
+    level: s.level,
+    levelPrecise: s.levelPrecise,
+    type: s.typeCode,
+    genre: s.genre,
+    addedVersion: s.addedVersion,
+    scoreValue: s.scoreValue,
+    secondaryScore: s.secondaryScore,
+    comboStatus: s.comboStatus,
+    syncStatus: s.syncStatus,
+    clearStatus: s.clearStatus,
+  });
+  let songsPayload: SongPayload[] | null = null;
   if (hasSongsRead) {
-    songsPayload = songs.map((s) => ({
-      songId: s.songId,
-      songName: s.songName,
-      artist: s.artist,
-      cover: s.cover,
-      difficulty: s.difficultyCode,
-      level: s.level,
-      levelPrecise: s.levelPrecise,
-      type: s.typeCode,
-      genre: s.genre,
-      addedVersion: s.addedVersion,
-      scoreValue: s.scoreValue,
-      secondaryScore: s.secondaryScore,
-      comboStatus: s.comboStatus,
-      syncStatus: s.syncStatus,
-      clearStatus: s.clearStatus,
-    }));
+    songsPayload = songs.map(songPayload);
   } else if (hasSongsB50Read) {
     const adapter = resolveGame(snapshot.game).adapter;
     const rated = songs.map(song => ({
       ...song,
       chartId: song.songId,
-      rating: adapter.calculateChartRating(song, snapshot.gameVersion),
+      rating: adapter.calculateChartRating({ ...song, difficulty: song.difficultyCode }, snapshot.gameVersion),
     }));
     const selection = adapter.selectRankings(rated, snapshot.gameVersion);
     const b50 = [...selection.newScores, ...selection.oldScores];
-    songsPayload = b50.map((s) => ({
-      songId: s.songId,
-      songName: s.songName,
-      artist: s.artist,
-      cover: s.cover,
-      difficulty: s.difficultyCode,
-      level: s.level,
-      levelPrecise: s.levelPrecise,
-      type: s.typeCode,
-      genre: s.genre,
-      addedVersion: s.addedVersion,
-      scoreValue: s.scoreValue,
-      secondaryScore: s.secondaryScore,
-      comboStatus: s.comboStatus,
-      syncStatus: s.syncStatus,
-      clearStatus: s.clearStatus,
-      rating: Math.floor(s.rating),
-    }));
+    songsPayload = b50.map(s => ({ ...songPayload(s), rating: Math.floor(s.rating) }));
   }
 
   return {

@@ -1,3 +1,4 @@
+import { codeToChartType, codeToDifficulty } from "@tomomai/utils/game-codes";
 export async function fetchPreviewCatalog(baseUrl, fetcher = fetch) {
   const base = baseUrl.replace(/\/+$/, "");
   const metadata = await fetcher(`${base}/api/v1/games/maimai/songs/versions?region=jp`);
@@ -10,12 +11,9 @@ export async function fetchPreviewCatalog(baseUrl, fetcher = fetch) {
   if (!response.ok) throw new Error(`Catalog fetch failed: ${response.status}`);
   const body = await response.json();
   if (body.game !== "maimai" || !Array.isArray(body.songs)) throw new Error("Invalid song catalog response");
-  const types = ["std", "dx", "utage"];
-  const difficulties = ["basic", "advanced", "expert", "master", "remaster", "utage"];
   return body.songs.map(song => {
-    const type = types[song.type];
-    const difficulty = difficulties[song.difficulty];
-    if (!type || !difficulty) throw new Error("Unknown maimai chart code");
+    const type = codeToChartType(song.type);
+    const difficulty = codeToDifficulty(song.difficulty);
     return { ...song, type, difficulty };
   });
 }
