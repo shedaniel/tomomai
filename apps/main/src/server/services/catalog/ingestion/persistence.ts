@@ -1,13 +1,13 @@
 import { db } from "@/lib/db";
 import { scoreData, songs, parentSong, userRecentSongs, userAlbums } from "@/lib/db/schema-pg";
 import type { Region } from "@/lib/types";
-import { normalizeCatalogCharts, mergeCatalogChart, catalogChartKey as key, type CatalogChart } from "@/server/services/catalog/ingestion/normalize-charts";
-import type { PendingChart } from "@/server/services/catalog/ingestion/types";
+import { validateCatalogCharts, mergeCatalogChart, catalogChartKey as key, type CatalogChart } from "@/server/services/catalog/ingestion/normalize-charts";
 import { and, eq, inArray, count, sql, getTableColumns, notExists } from "drizzle-orm";
 import { matchUpload } from "@/server/services/catalog/ingestion/match-upload";
 import { resolveParents, type ParentState, type SongToParent } from "@/server/services/catalog/ingestion/resolve-parent";
 import { PARENT_PUBLIC_ID_LENGTH } from "@/lib/catalog/song-instance-id";
 import { nanoid } from "nanoid";
+import { isDeepStrictEqual } from "node:util";
 
 import type { Logger } from "pino";
 import type { CanonicalGameId } from "@/lib/games/types";
@@ -97,9 +97,11 @@ function convertDbSongToCatalogChart(dbSong: DBSongType): CatalogChart {
   };
 }
 
-/**
- * Compare two CatalogChart objects and return field changes
- */
+function jsonValue(value: unknown): unknown {
+  // Match jsonb's omission of undefined fields before comparing object values.
+  return value === undefined ? undefined : JSON.parse(JSON.stringify(value));
+}
+
 function compareFields(dbSong: CatalogChart, mergedSong: CatalogChart): FieldChange[] {
   const changes: FieldChange[] = [];
 
@@ -113,7 +115,7 @@ function compareFields(dbSong: CatalogChart, mergedSong: CatalogChart): FieldCha
     const mergedValue = mergedSong[field];
 
     if (field === "noteCounts" || field === "metadata") {
-      if (JSON.stringify(dbValue) !== JSON.stringify(mergedValue)) {
+      if (!isDeepStrictEqual(jsonValue(dbValue), jsonValue(mergedValue))) {
         changes.push({ field, oldValue: dbValue, newValue: mergedValue });
       }
     } else {
@@ -464,8 +466,8 @@ async function applyChanges(
 }
 
 
-export async function persistCatalog(game: CanonicalGameId, region: Region, version: number, uploadSongs: PendingChart[], updateMode: UpdateMode, log: Logger) {
-    const uploadCatalogCharts: CatalogChart[] = normalizeCatalogCharts(game, uploadSongs);
+export async function persistCatalog(game: CanonicalGameId, region: Region, version: number, uploadSongs: CatalogChart[], updateMode: UpdateMode, log: Logger) {
+    validateCatalogCharts(game, uploadSongs);
 
     return db.transaction(async (tx) => {
       await tx.execute(sql`SELECT pg_advisory_xact_lock(73641932)`);
@@ -509,14 +511,14 @@ export async function persistCatalog(game: CanonicalGameId, region: Region, vers
         songName: song.songName, type: song.chartType, difficulty: song.difficulty,
         artist: song.artist ?? "", addedVersion: song.addedVersion,
     });
-    const assignments = matchUpload(dbCatalogCharts.map(matchInput), uploadCatalogCharts.map(matchInput));
+    const assignments = matchUpload(dbCatalogCharts.map(matchInput), uploadSongs.map(matchInput));
     const matched = new Set(assignments.values());
-    for (const [index, incoming] of uploadCatalogCharts.entries()) {
+    for (const [index, incoming] of uploadSongs.entries()) {
       if (!assignments.has(index) && dbCatalogCharts.some((existing, i) => !matched.has(i) && key(existing) === key(incoming))) {
         throw new Error(`Ambiguous catalog identity: ${key(incoming)}`);
       }
     }
-    const mergedSongs = uploadCatalogCharts.map((incoming, index) => {
+    const mergedSongs = uploadSongs.map((incoming, index) => {
       const existingIndex = assignments.get(index);
       if (existingIndex === undefined) {
         addedSongs.push(incoming);

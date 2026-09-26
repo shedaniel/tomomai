@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { PendingChart } from "@/server/services/catalog/ingestion/types";
+import type { CatalogChart } from "./normalize-charts";
 import type { Logger } from "pino";
 import { getTableName } from "drizzle-orm";
 
@@ -25,7 +25,7 @@ vi.mock("@/lib/db", () => ({ db: { transaction: async (run: (tx: unknown) => Pro
 } } }));
 import { persistCatalog } from "@/server/services/catalog/ingestion/persistence";
 const log = { info: vi.fn(), trace: vi.fn() } as unknown as Logger;
-const chart: PendingChart = { game: "chunithm", songName: "Song", chartType: 0, difficulty: 4,
+const chart: CatalogChart = { game: "chunithm", songName: "Song", chartType: 0, difficulty: 4,
   artist: "Artist", cover: "image", genre: "Original", level: "14+", levelPrecise: 145, addedVersion: 8, metadata: { otogeDb: { id: "123" } } };
 beforeEach(() => { state.selections = []; state.writes = []; state.transactions = 0; });
 
@@ -56,6 +56,23 @@ describe("shared catalog persistence", () => {
     state.selections = [[{ ...base, artist: "A" }, { ...base, id: BigInt(13), parentId: BigInt(6), artist: "B" }], []];
     await expect(persistCatalog("chunithm", "jp", 9, [chart], "destructive", log)).rejects.toThrow("Ambiguous catalog identity");
     expect(state.writes).toHaveLength(0);
+  });
+
+  it.each([
+    { label: "reordered nested object keys", incoming: { source: { title: "Song", id: "123" }, notes: [1, 2] }, changed: false },
+    { label: "omitted optional JSON values", incoming: { source: { title: "Song", id: "123", optional: undefined }, notes: [1, 2] }, changed: false },
+    { label: "changed nested value", incoming: { source: { title: "Changed", id: "123" }, notes: [1, 2] }, changed: true },
+    { label: "reordered array items", incoming: { source: { title: "Song", id: "123" }, notes: [2, 1] }, changed: true },
+  ])("compares metadata with $label", async ({ incoming, changed }) => {
+    state.selections = [[{ id: BigInt(12), parentId: BigInt(5), game: "chunithm", songName: "Song", type: 0,
+      difficulty: 4, artist: "Artist", cover: "image", genre: "Original", level: "14+", levelPrecise: 145,
+      addedVersion: 8, bpm: null, noteDesigner: null, tapCount: null,
+      metadata: { notes: [1, 2], source: { id: "123", title: "Song" } } }], []];
+    const result = await persistCatalog("chunithm", "jp", 9, [{ ...chart, metadata: incoming }], "alter", log);
+    expect(result.changes.modified).toHaveLength(changed ? 1 : 0);
+    expect(result.changes.unchanged).toHaveLength(changed ? 0 : 1);
+    expect(state.writes).toHaveLength(changed ? 1 : 0);
+    if (changed) expect(result.changes.modified[0].fieldChanges.map(change => change.field)).toEqual(["metadata"]);
   });
 
   it("validates game identity before opening a transaction", async () => {
