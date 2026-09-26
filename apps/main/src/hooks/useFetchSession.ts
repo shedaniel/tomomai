@@ -6,6 +6,7 @@ import { Region, FetchSession } from "@/lib/types";
 import { isTokenError, isAlbumSettingsError, isCnCookiesSingleUseError } from "@/lib/token-errors";
 import { parseStatusStates } from "@/lib/fetch-states";
 import { FetchToastState } from "@/components/fetch-toast";
+import { getGameMaintenance, getGameMaintenanceError } from "@/lib/games/maintenance";
 
 const SESSION_DETECTION_INTERVAL_MS = 3000;
 const FETCH_STATUS_INTERVAL_MS = 2000;
@@ -212,6 +213,13 @@ export function useFetchSession(onFetchComplete?: () => void, onTokenError?: () 
   // Start data fetch with optional token (if no token, uses saved token)
   const startDataFetch = async (region: Region, token?: string): Promise<void> => {
     setFetchError(null);
+
+    const maintenance = getGameMaintenance(game, region);
+    if (maintenance?.active) {
+      const message = getGameMaintenanceError(maintenance);
+      setFetchError(message);
+      throw new Error(message);
+    }
 
     // Let the mutation error bubble up to the caller
     await startFetchMutation.mutateAsync({ game, region, token });

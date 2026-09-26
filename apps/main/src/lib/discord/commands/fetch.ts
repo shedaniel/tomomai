@@ -20,7 +20,7 @@ import {
 } from '../responses';
 import { t } from '../i18n';
 import { Region } from '@/lib/types';
-import { isMaimaiMaintenance } from '@/lib/maimai/maintenance';
+import { getGameMaintenance } from '@/lib/games/maintenance';
 
 export interface FetchCommandOptions {
   discordUserId: string;
@@ -105,7 +105,7 @@ export async function handleFetchCommand({
     const region = resolveRegion(regionParam, dbUser.region);
     const regionName = regionDisplayName(region, locale);
 
-    if (isMaimaiMaintenance(region)) {
+    if (getGameMaintenance("maimai", region)?.active) {
       return createErrorResponse(t(locale, region === 'intl'
         ? 'fetch.maintenanceWindowIntl'
         : 'fetch.maintenanceWindow'), locale);
