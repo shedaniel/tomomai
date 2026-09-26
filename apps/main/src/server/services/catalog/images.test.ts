@@ -2,8 +2,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import pino from "pino";
 import type { PendingChart } from "./ingestion/types";
 
-const mocks = vi.hoisted(() => ({ list: vi.fn(), upload: vi.fn(), fetch: vi.fn(), convert: vi.fn() }));
-vi.mock("@/lib/r2", () => ({ listCoverKeys: mocks.list, uploadCoverToR2: mocks.upload }));
+const mocks = vi.hoisted(() => ({ loadStorage: vi.fn(), list: vi.fn(), upload: vi.fn(), fetch: vi.fn(), convert: vi.fn() }));
+vi.mock("@/lib/r2", () => {
+  mocks.loadStorage();
+  return { listCoverKeys: mocks.list, uploadCoverToR2: mocks.upload };
+});
 vi.mock("@/lib/image-converter", () => ({ fetchImageBuffer: mocks.fetch, convertToWebp: mocks.convert }));
 import { processCatalogImages } from "./images";
 const log = pino({ enabled: false });
@@ -18,6 +21,11 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllEnvs());
 
 describe("catalog image processing", () => {
+  it("does not initialize storage for a game with no image work", async () => {
+    await processCatalogImages("chunithm", [], log);
+    expect(mocks.loadStorage).not.toHaveBeenCalled();
+    expect(mocks.list).not.toHaveBeenCalled();
+  });
   it("deduplicates covers, preserves preferred source and rewrites every matching chart", async () => {
     const first = "https://maimaidx-eng.com/maimai-mobile/img/Music/shared.png";
     const preferred = "https://maimaidx.com/maimai-mobile/img/Music/shared.png";

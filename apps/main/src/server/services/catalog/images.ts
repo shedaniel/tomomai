@@ -1,7 +1,6 @@
 import type { Logger } from "pino";
 import type { CanonicalGameId } from "@/lib/games/types";
 import { convertToWebp, fetchImageBuffer } from "@/lib/image-converter";
-import { listCoverKeys, uploadCoverToR2 } from "@/lib/r2";
 import { value, type Pending } from "./ingestion/types";
 import { maimaiImagePolicy } from "./maimai/images";
 import { chunithmImagePolicy } from "./chunithm/images";
@@ -47,6 +46,8 @@ export async function processCatalogImages<T extends { cover?: Pending<string> }
     if (filenameToUrl.size === 0 && policy.staticAssets.length === 0) {
       return { songs, stats: { uploaded: 0, skipped: 0, unchanged: songs.length } };
     }
+
+    const { listCoverKeys, uploadCoverToR2 } = await import("@/lib/r2");
 
     // Get existing covers in R2
     const existingKeys = await listCoverKeys();
