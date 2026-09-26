@@ -1,21 +1,29 @@
+import { getLogger } from "@/lib/request-logger";
+
 export type CatalogLevelPolicy = {
-  plusOffset: number;
+  toPrecise: (level: string) => number;
   mismatchUpperOffset?: (minimum: number) => number;
 };
 
+export function parseDisplayLevel(level: string, plusOffset: number): number {
+  const trimmed = level.trim();
+  const plus = trimmed.endsWith("+");
+  const base = parseInt(plus ? trimmed.slice(0, -1) : trimmed, 10);
+  if (Number.isNaN(base)) {
+    getLogger().warn({ from: level }, "Invalid chart level; defaulting to 1.0");
+    return 10;
+  }
+  return base * 10 + (plus ? plusOffset : 0);
+}
+
 export function fillMissingCatalogLevel(
-  level: string | undefined,
-  levelPrecise: number | null | undefined,
+  level: string,
+  levelPrecise: number | undefined,
   policy: CatalogLevelPolicy,
-): { levelPrecise: number | null; estimated: boolean; reason: "missing" | "mismatched" | null } {
-  const match = level && /^(\d{1,2})(\+?)$/.exec(level.trim());
-  const minimum = match && Number(match[1]) > 0
-    ? Number(match[1]) * 10 + (match[2] ? policy.plusOffset : 0)
-    : null;
-  const current = levelPrecise != null && Number.isFinite(levelPrecise) ? levelPrecise : null;
-  if (minimum === null) return { levelPrecise: current, estimated: false, reason: null };
-  const mismatched = current !== null && policy.mismatchUpperOffset !== undefined
-    && (current < minimum || current > minimum + policy.mismatchUpperOffset(minimum));
-  if (current !== null && !mismatched) return { levelPrecise: current, estimated: false, reason: null };
+): { levelPrecise: number; estimated: boolean; reason?: "missing" | "mismatched" } {
+  const minimum = policy.toPrecise(level);
+  const mismatched = levelPrecise !== undefined && policy.mismatchUpperOffset !== undefined
+    && (levelPrecise < minimum || levelPrecise > minimum + policy.mismatchUpperOffset(minimum));
+  if (levelPrecise !== undefined && !mismatched) return { levelPrecise, estimated: false };
   return { levelPrecise: minimum, estimated: true, reason: mismatched ? "mismatched" : "missing" };
 }

@@ -1,7 +1,7 @@
 import type { CatalogFetchContext, Pending } from "@/server/services/catalog/ingestion/types";
 import { fillMissingCatalogLevel, type CatalogLevelPolicy } from "@/server/services/catalog/ingestion/levels";
-import type { Fetcher } from "@/server/services/catalog/ingestion/runner";
-import { pendingValue } from "./types";
+import { requireCatalogValue, type Fetcher } from "@/server/services/catalog/ingestion/runner";
+import { value } from "./types";
 
 type LevelChart = {
   level?: Pending<string>;
@@ -15,9 +15,11 @@ export function createFillMissingFetcher<T extends LevelChart, C extends Catalog
 ): Fetcher<T, C> {
   return async (context, songs) => {
     let missing = 0, mismatched = 0;
+    const levelPolicy = policy(context);
     const result = songs.map(song => {
       const songKey = key(song);
-      const filled = fillMissingCatalogLevel(pendingValue(song.level), pendingValue(song.levelPrecise), policy(context));
+      const level = requireCatalogValue(value(song.level), "level", songKey, context.log);
+      const filled = fillMissingCatalogLevel(level, value(song.levelPrecise), levelPolicy);
       if (filled.reason === "missing") {
         missing++;
         context.log.warn({ songKey }, "Level precise is missing");
@@ -26,10 +28,10 @@ export function createFillMissingFetcher<T extends LevelChart, C extends Catalog
         mismatched++;
         context.log.warn({ songKey }, "Level precise is mismatched");
       }
-      const metadata = pendingValue(song.metadata);
+      const metadata = value(song.metadata);
       return {
         ...song,
-        levelPrecise: filled.reason ? filled.levelPrecise ?? undefined : song.levelPrecise,
+        levelPrecise: filled.reason ? filled.levelPrecise : song.levelPrecise,
         metadata: { ...metadata, levelPreciseEstimated: filled.estimated || metadata?.levelPreciseEstimated === true },
       };
     });

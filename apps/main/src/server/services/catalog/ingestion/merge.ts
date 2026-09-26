@@ -1,23 +1,23 @@
-import { pendingValue } from "./types";
-import type { CatalogFetchContext, CatalogLogger, Pending } from "@/server/services/catalog/ingestion/types";
+import { isImportant, value } from "./types";
+import type { CatalogFetchContext, Pending } from "@/server/services/catalog/ingestion/types";
 import type { Fetcher } from "@/server/services/catalog/ingestion/runner";
 import { levenshtein } from "@/lib/utils";
+import type { Logger } from "pino";
 
 export type FetcherMode = "default" | "only-modify" | "only-fallback";
 export type MergePolicy<T> = {
   key: (song: T) => string;
   artist: (song: T) => string;
   addedVersion: (song: T) => number | undefined;
-  merge: (existing: T, incoming: T, log: CatalogLogger) => T;
+  merge: (existing: T, incoming: T, log: Logger) => T;
 };
 
 export function choosePendingValue<T>(existing: Pending<T>, incoming: Pending<T>): Pending<T>;
 export function choosePendingValue<T>(existing: Pending<T> | undefined, incoming: Pending<T> | undefined): Pending<T> | undefined;
 export function choosePendingValue<T>(existing: Pending<T> | undefined, incoming: Pending<T> | undefined): Pending<T> | undefined {
-  const important = (value: Pending<T> | undefined) => value !== null && typeof value === "object" && "important" in value && value.important;
-  if (important(incoming)) return incoming;
-  if (important(existing)) return existing;
-  return !pendingValue(incoming) ? existing : incoming;
+  if (isImportant(incoming)) return incoming;
+  if (isImportant(existing)) return existing;
+  return !value(incoming) ? existing : incoming;
 }
 
 export function asFetcher<T extends object, C extends CatalogFetchContext>(source: (context: C) => Promise<T[]>, policy: MergePolicy<T>, mode: FetcherMode = "default"): Fetcher<T, C> {
@@ -33,7 +33,7 @@ export function mergeSongs<T extends object>(
   firstSongs: T[],
   secondSongs: T[],
   mode: FetcherMode,
-  childLog: CatalogLogger,
+  childLog: Logger,
   policy: MergePolicy<T>,
   sink?: { onMerge?: (existing: T, incoming: T, result: T) => void; onAdd?: (song: T, isFirst: boolean) => void }
 ) {

@@ -1,5 +1,6 @@
 import type { NoteCounts, Region } from "@/lib/types";
 import type { CanonicalGameId } from "@/lib/games/types";
+import type { Logger } from "pino";
 
 export type Pending<T> = T | { important: boolean; value: T };
 
@@ -24,27 +25,9 @@ export function unwrapUndefined<T>(pending: Pending<T> | undefined): Pending<Non
   return unwrapped;
 }
 
-export function pendingValue<T>(pending: Pending<T> | undefined): T | undefined {
-  return value(pending);
-}
-
 export type NoticeSink = {
   addDetail(detail: string): void;
   details: string[];
-};
-
-export type CatalogLogger = {
-  child(bindings: Record<string, unknown>): CatalogLogger;
-  trace(message: string, ...args: unknown[]): void;
-  trace(fields: Record<string, unknown>, message?: string, ...args: unknown[]): void;
-  debug(message: string, ...args: unknown[]): void;
-  debug(fields: Record<string, unknown>, message?: string, ...args: unknown[]): void;
-  info(message: string, ...args: unknown[]): void;
-  info(fields: Record<string, unknown>, message?: string, ...args: unknown[]): void;
-  warn(message: string, ...args: unknown[]): void;
-  warn(fields: Record<string, unknown>, message?: string, ...args: unknown[]): void;
-  error(message: string, ...args: unknown[]): void;
-  error(fields: Record<string, unknown>, message?: string, ...args: unknown[]): void;
 };
 
 export type PendingChart = {
@@ -70,6 +53,6 @@ export type CatalogFetchContext = {
   version: number;
   cookies?: string;
   forceMode?: "default" | "only-modify" | "only-fallback";
-  log: CatalogLogger;
+  log: Logger;
   notice: NoticeSink;
 };

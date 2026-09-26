@@ -1,10 +1,11 @@
 import { GameAdapterError, type CanonicalGameId } from "@/lib/games/types";
 import { resolveCatalogContext, resolveGame } from "@/lib/games/registry";
-import type { CatalogFetchContext, PendingChart } from "@/server/services/catalog/ingestion/types";
+import type { CatalogFetchContext } from "@/server/services/catalog/ingestion/types";
+import type { CatalogChart } from "@/server/services/catalog/ingestion/normalize-charts";
 import type { Region } from "@/lib/types";
 import type { Logger } from "pino";
 
-export async function collectCatalog(game: CanonicalGameId, context: CatalogFetchContext): Promise<PendingChart[]> {
+export async function collectCatalog(game: CanonicalGameId, context: CatalogFetchContext): Promise<CatalogChart[]> {
   resolveCatalogContext(game, context.region);
   const collect = resolveGame(game).adapter.catalog.collect;
   if (!collect) throw new GameAdapterError("SOURCE_NOT_CONFIGURED", "Catalog collection is not configured", game, context.region);
@@ -15,7 +16,7 @@ export async function ingestCatalog(input: {
   game: CanonicalGameId;
   region: Region;
   version: number;
-  uploadSongs: PendingChart[];
+  uploadSongs: CatalogChart[];
   updateMode: "noop" | "alter" | "destructive";
   log: Logger;
 }) {

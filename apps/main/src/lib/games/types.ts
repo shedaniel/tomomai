@@ -1,6 +1,7 @@
 import type { Region } from "@/lib/types";
 import type { Flags } from "@/lib/flags";
-import type { CatalogFetchContext, PendingChart } from "@/server/services/catalog/ingestion/types";
+import type { CatalogFetchContext } from "@/server/services/catalog/ingestion/types";
+import type { CatalogChart } from "@/server/services/catalog/ingestion/normalize-charts";
 
 export const CANONICAL_GAME_IDS = ["maimai", "chunithm"] as const;
 export type CanonicalGameId = (typeof CANONICAL_GAME_IDS)[number];
@@ -121,7 +122,7 @@ export interface CatalogSourceAdapter extends CatalogAdapter {
   authenticate?: (region: Region, token: string) => Promise<string>;
   getStages?: (region: Region) => { names: string[] };
   resolveVersion?: (region: Region) => number;
-  collect?: (ctx: CatalogFetchContext) => Promise<PendingChart[]>;
+  collect?: (ctx: CatalogFetchContext) => Promise<CatalogChart[]>;
 }
 
 export type ScoreTokenValidationContext = {

@@ -1,5 +1,6 @@
 import deepEqual from "deep-equal";
-import type { CatalogFetchContext, CatalogLogger } from "@/server/services/catalog/ingestion/types";
+import type { CatalogFetchContext } from "@/server/services/catalog/ingestion/types";
+import type { Logger } from "pino";
 
 export type FetchingContextExtended<T, C extends CatalogFetchContext> = C & {
   previous: Fetcher<T, C> | null;
@@ -12,7 +13,7 @@ export type FetcherDefinition<T, C extends CatalogFetchContext, R> = {
   fetchers: Fetcher<T, C>[];
   names: string[];
   key: (song: T) => string;
-  validate?: (songs: T[], log: CatalogLogger) => void;
+  validate?: (songs: T[], log: Logger) => void;
   complete: (song: T, context: C) => R;
   notify?: (title: string, body: string, color: number) => Promise<void>;
 };
@@ -22,7 +23,7 @@ export function createNoticeSink() {
   return { details, addDetail(detail: string) { details.push(detail); } };
 }
 
-export function requireCatalogValue<T>(value: T | null | undefined, field: string, songKey: string, log: CatalogLogger): T {
+export function requireCatalogValue<T>(value: T | null | undefined, field: string, songKey: string, log: Logger): T {
   if (value === null || value === undefined) {
     log.error({ songKey }, `Value is null or undefined for ${field}`);
     throw new Error(`Value is null or undefined for ${field}`);

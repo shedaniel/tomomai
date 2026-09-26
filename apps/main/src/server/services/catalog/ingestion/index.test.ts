@@ -4,6 +4,7 @@ import { runFetchers, type Fetcher } from "@/server/services/catalog/ingestion/r
 import { GAME_REGISTRY } from "@/lib/games/registry";
 import type { CatalogFetchContext, PendingChart } from "@/server/services/catalog/ingestion/types";
 import pino from "pino";
+import { completeCatalogChart } from "./normalize-charts";
 
 vi.mock("@/server/services/catalog/ingestion/persistence", () => ({ persistCatalog: vi.fn().mockResolvedValue({ applied: { added: 1 } }) }));
 import { persistCatalog } from "@/server/services/catalog/ingestion/persistence";
@@ -35,7 +36,7 @@ describe("catalog adapter orchestration", () => {
       expect(ctx.fetcherIndex).toBe(0);
       expect(songs).toEqual([]);
       ctx.notice.addDetail("source detail");
-      return [{ game, songName: "Example", chartType: 0, difficulty: 3, level: "14" }];
+      return [{ game, songName: "Example", chartType: 0, difficulty: 3, level: "14", artist: "Artist", cover: "cover.png", genre: "Original" }];
     });
     const fill = vi.fn<Fetcher<PendingChart, CatalogFetchContext>>(async (ctx, songs) => {
       events.push("fill");
@@ -52,14 +53,14 @@ describe("catalog adapter orchestration", () => {
       collect: ctx => runFetchers(ctx, {
         fetchers: [source, fill], names: [game, "Fill Missing"],
         key: song => `${song.game}:${song.songName}:${song.difficulty}`, validate,
-        complete: song => ({ game: song.game, songName: song.songName, chartType: song.chartType, difficulty: song.difficulty, level: song.level, levelPrecise: song.levelPrecise, addedVersion: song.addedVersion }),
+        complete: song => completeCatalogChart(song, log),
         notify,
       }),
     };
     try {
       const records = await collectCatalog(game, context);
       expect(events).toEqual(["source", "fill"]);
-      expect(records).toEqual([{ game, songName: "Example", chartType: 0, difficulty: 3, level: "14", levelPrecise: 140, addedVersion: 9 }]);
+      expect(records).toEqual([{ game, songName: "Example", chartType: 0, difficulty: 3, level: "14", levelPrecise: 140, addedVersion: 9, artist: "Artist", cover: "cover.png", genre: "Original" }]);
       expect(validate).toHaveBeenCalledTimes(2);
       expect(notify).toHaveBeenCalledWith(expect.stringContaining(game), expect.stringContaining("source detail"), expect.any(Number));
       await expect(ingestCatalog({ game, region: "jp", version: 9, uploadSongs: records, updateMode: "noop", log })).resolves.toEqual({ applied: { added: 1 } });

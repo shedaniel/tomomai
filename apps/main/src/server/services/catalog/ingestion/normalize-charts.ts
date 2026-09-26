@@ -1,54 +1,63 @@
-import { z } from "zod";
-import { pendingValue, type PendingChart } from "@/server/services/catalog/ingestion/types";
+import { value, type PendingChart } from "@/server/services/catalog/ingestion/types";
 import type { CanonicalGameId } from "@/lib/games/types";
-import { gameIdSchema } from "@/lib/games/schema";
+import type { NoteCounts } from "@/lib/types";
+import type { Logger } from "pino";
 import { GAME_CODE_MAPS } from "@/lib/games/codes";
 import { findDuplicateUpload } from "@/server/services/catalog/ingestion/match-upload";
+import { requireCatalogValue } from "@/server/services/catalog/ingestion/runner";
 
-const smallint = z.number().int().min(-32768).max(32767);
-const count = smallint.nonnegative();
-const chartSchema = z.object({
-  game: gameIdSchema,
-  songName: z.string().min(1),
-  chartType: count,
-  difficulty: count,
-  artist: z.string(),
-  cover: z.string(),
-  level: z.string().min(1),
-  levelPrecise: count,
-  genre: z.string(),
-  addedVersion: smallint,
-  bpm: count.optional(),
-  noteDesigner: z.string().optional(),
-  noteCounts: z.object({ tap: count, hold: count, slide: count, touch: count, break: count }).optional(),
-  metadata: z.record(z.string(), z.unknown()).optional(),
-});
-
-export type CatalogChart = z.infer<typeof chartSchema> & { extras?: Record<string, unknown> };
+export type CatalogChart = {
+  game: CanonicalGameId;
+  songName: string;
+  chartType: number;
+  difficulty: number;
+  artist: string;
+  cover: string;
+  level: string;
+  levelPrecise: number;
+  genre: string;
+  addedVersion: number;
+  bpm?: number;
+  noteDesigner?: string;
+  noteCounts?: NoteCounts;
+  metadata?: Record<string, unknown>;
+  extras?: Record<string, unknown>;
+};
 
 export function catalogChartKey(chart: Pick<CatalogChart, "game" | "songName" | "chartType" | "difficulty">): string {
   return JSON.stringify([chart.game, chart.songName, chart.chartType, chart.difficulty]);
 }
 
-export function normalizeCatalogCharts(game: CanonicalGameId, charts: PendingChart[]): CatalogChart[] {
-  const normalized = charts.map(chart => {
-    const parsed = chartSchema.parse({
-      game: chart.game, songName: chart.songName, chartType: chart.chartType, difficulty: chart.difficulty,
-      artist: pendingValue(chart.artist), cover: pendingValue(chart.cover), level: pendingValue(chart.level),
-      levelPrecise: pendingValue(chart.levelPrecise), genre: pendingValue(chart.genre), addedVersion: pendingValue(chart.addedVersion),
-      bpm: pendingValue(chart.bpm), noteDesigner: pendingValue(chart.noteDesigner), noteCounts: pendingValue(chart.noteCounts),
-      metadata: pendingValue(chart.metadata),
-    });
-    if (parsed.game !== game) throw new Error("Catalog chart belongs to a different game");
-    const codes = GAME_CODE_MAPS[game];
-    if (!(parsed.chartType in codes.chartType) || !(parsed.difficulty in codes.difficulty)) {
+export function completeCatalogChart(chart: PendingChart, log: Logger): CatalogChart {
+  const required = <T>(field: string, value: T | undefined) => requireCatalogValue(value, field, catalogChartKey(chart), log);
+  return {
+    game: chart.game,
+    songName: chart.songName,
+    chartType: chart.chartType,
+    difficulty: chart.difficulty,
+    artist: required("artist", value(chart.artist)),
+    cover: required("cover", value(chart.cover)),
+    level: required("level", value(chart.level)),
+    levelPrecise: required("levelPrecise", value(chart.levelPrecise)),
+    genre: required("genre", value(chart.genre)),
+    addedVersion: required("addedVersion", value(chart.addedVersion)),
+    bpm: value(chart.bpm),
+    noteDesigner: value(chart.noteDesigner),
+    noteCounts: value(chart.noteCounts),
+    metadata: value(chart.metadata),
+  };
+}
+
+export function validateCatalogCharts(game: CanonicalGameId, charts: CatalogChart[]): void {
+  const codes = GAME_CODE_MAPS[game];
+  for (const chart of charts) {
+    if (chart.game !== game) throw new Error("Catalog chart belongs to a different game");
+    if (!(chart.chartType in codes.chartType) || !(chart.difficulty in codes.difficulty)) {
       throw new Error(`Unknown chart codes for ${game}`);
     }
-    return parsed;
-  });
-  const duplicate = findDuplicateUpload(normalized.map(chart => ({ ...chart, type: chart.chartType })));
-  if (duplicate !== undefined) throw new Error(`Duplicate catalog chart: ${catalogChartKey(normalized[duplicate])}`);
-  return normalized;
+  }
+  const duplicate = findDuplicateUpload(charts.map(chart => ({ ...chart, type: chart.chartType })));
+  if (duplicate !== undefined) throw new Error(`Duplicate catalog chart: ${catalogChartKey(charts[duplicate])}`);
 }
 
 export function mergeCatalogChart(existing: CatalogChart, incoming: CatalogChart): CatalogChart {
