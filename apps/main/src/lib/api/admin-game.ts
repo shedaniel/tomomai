@@ -1,5 +1,6 @@
 import { GameAdapterError, type CanonicalGameId } from "@/lib/games/types";
-import { resolveGame, requireConfiguredSource, getEnabledRegions } from "@/lib/games/registry";
+import { resolveGame, getEnabledRegions } from "@/lib/games/registry";
+import { requireConfiguredSource } from "@/server/services/games/adapters";
 import { gameIdSchema } from "@/lib/games/schema";
 import type { Region } from "@/lib/types";
 

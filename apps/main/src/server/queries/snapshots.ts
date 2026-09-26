@@ -203,7 +203,7 @@ export async function fetchLatestSnapshotData(game: CanonicalGameId, userId: str
 }
 
 function toMaimaiSnapshot(snapshot: typeof userSnapshots.$inferSelect) {
-  return { ...snapshot, titleTypeCode: snapshot.titleType, titleType: codeToTitleType(snapshot.titleType),
+  return { ...snapshot, gameVersion: requireMaimaiVersion(snapshot.gameVersion), titleTypeCode: snapshot.titleType, titleType: codeToTitleType(snapshot.titleType),
     courseRankUrl: snapshot.courseRankUrl ?? "", classRankUrl: snapshot.classRankUrl ?? "", stars: snapshot.stars ?? 0 };
 }
 
@@ -212,7 +212,7 @@ function toMaimaiSnapshotResult(result: Awaited<ReturnType<typeof fetchSnapshotD
   if (!result) return null;
   return {
     snapshot: toMaimaiSnapshot(result.snapshot),
-    songs: result.songs.map(song => ({ ...song, achievement: song.scoreValue, dxScore: song.secondaryScore, difficulty: codeToDifficulty(song.difficultyCode), type: codeToChartType(song.typeCode), fc: codeToComboStatus(song.comboStatus), fs: codeToSyncStatus(song.syncStatus) })),
+    songs: result.songs.map(song => ({ ...song, addedVersion: requireMaimaiVersion(song.addedVersion), achievement: song.scoreValue, dxScore: song.secondaryScore, difficulty: codeToDifficulty(song.difficultyCode), type: codeToChartType(song.typeCode), fc: codeToComboStatus(song.comboStatus), fs: codeToSyncStatus(song.syncStatus) })),
     events: result.events.map(event => ({ ...event, eventType: event.eventType ?? "eventArea" as const, currentDistance: event.currentDistance ?? 0, state: event.state ?? "not_started" as const, imageUrl: event.imageUrl ?? "" })),
   };
 }
@@ -224,8 +224,4 @@ export async function fetchMaimaiUserSnapshots(userId: string, region: Region, o
 
 export async function fetchLatestMaimaiSnapshotData(userId: string, region: Region) {
   return toMaimaiSnapshotResult(await fetchLatestSnapshotData("maimai", userId, region));
-}
-
-export function getLatestMaimaiSnapshotFetchedAt(userId: string, region: Region) {
-  return getLatestSnapshotFetchedAt("maimai", userId, region);
 }

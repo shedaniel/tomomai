@@ -1,6 +1,8 @@
 import { PgDialect } from "drizzle-orm/pg-core";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+vi.mock("server-only", () => ({}));
+
 const { readRows, putObject, filters } = vi.hoisted(() => ({ readRows: vi.fn(), putObject: vi.fn(), filters: vi.fn() }));
 vi.mock("@/lib/db", () => ({ db: {
   transaction: (fn: (tx: unknown) => Promise<unknown>) => fn({

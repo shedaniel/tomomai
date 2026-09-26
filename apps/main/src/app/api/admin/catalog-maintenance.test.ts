@@ -1,4 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+vi.mock("server-only", () => ({}));
 import { NextRequest } from "next/server";
 import { PgDialect } from "drizzle-orm/pg-core";
 

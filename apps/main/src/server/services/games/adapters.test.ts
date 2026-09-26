@@ -1,6 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 import pino from "pino";
-import { resolveGame } from "../../registry";
+import { requireConfiguredSource } from "./adapters";
+
+vi.mock("server-only", () => ({}));
 
 const pipeline = vi.hoisted(() => ({ loaded: vi.fn(), collect: vi.fn().mockResolvedValue([]) }));
 vi.mock("@/server/services/catalog/chunithm/pipeline", () => {
@@ -9,8 +11,8 @@ vi.mock("@/server/services/catalog/chunithm/pipeline", () => {
 });
 
 describe("CHUNITHM catalog loading", () => {
-  it("keeps game metadata independent of ingestion until collection", async () => {
-    const { adapter } = resolveGame("chunithm");
+  it("loads the catalog pipeline only when collection starts", async () => {
+    const adapter = requireConfiguredSource("chunithm", "catalog");
     expect(pipeline.loaded).not.toHaveBeenCalled();
 
     const context = {
@@ -19,7 +21,7 @@ describe("CHUNITHM catalog loading", () => {
       log: pino({ enabled: false }),
       notice: { details: [], addDetail: vi.fn() },
     };
-    await expect(adapter.catalog.collect!(context)).resolves.toEqual([]);
+    await expect(adapter.collect(context)).resolves.toEqual([]);
     expect(pipeline.loaded).toHaveBeenCalledOnce();
     expect(pipeline.collect).toHaveBeenCalledWith(context);
   });

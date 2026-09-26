@@ -10,6 +10,7 @@ const state = vi.hoisted(() => ({
   upsertScores: vi.fn(),
   revalidate: vi.fn(),
 }));
+vi.mock("server-only", () => ({}));
 vi.mock("@/lib/db", async () => {
   const { drizzle } = await import("drizzle-orm/pg-proxy");
   const connection = drizzle(async (sql, params) => {
@@ -125,4 +126,9 @@ it("cannot persist a provider result arriving after the fetch timeout", async ()
   await vi.advanceTimersByTimeAsync(1);
   expect(state.statements.some(query => query.sql.startsWith('insert into "user_snapshots"'))).toBe(false);
   expect(state.statements.find(query => query.sql.startsWith('update "fetch_sessions"'))?.params).toContain("failed");
+});
+
+it("rejects an unconfigured game provider before touching tokens or sessions", async () => {
+  await expect(startScoreFetch({ ...start, game: "chunithm" })).rejects.toMatchObject({ code: "SOURCE_NOT_CONFIGURED" });
+  expect(state.statements).toEqual([]);
 });

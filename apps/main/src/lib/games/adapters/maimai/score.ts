@@ -1,3 +1,4 @@
+import type { ScoreData } from "@/lib/maimai/types";
 import type {
   GameFetchResult,
   NormalizedEvent,
@@ -15,7 +16,7 @@ import {
   titleTypeToCode,
 } from "@/lib/maimai/codes";
 import { uploadPlayerIcon } from "@/lib/maimai/player/persist";
-import type { Difficulty, Region } from "@/lib/types";
+import type { Region } from "@/lib/types";
 import type { FetchedMaimaiData } from "@/lib/maimai/orchestrator";
 
 type MaimaiNormalizeContext = {
@@ -24,15 +25,7 @@ type MaimaiNormalizeContext = {
 };
 
 function normalizeScore(
-  score: {
-    songName: string;
-    musicType: "std" | "dx";
-    difficulty: Difficulty;
-    achievement: number;
-    dxScore: number;
-    fc: "none" | "fc" | "fc+" | "ap" | "ap+";
-    fs: "none" | "sync" | "fs" | "fs+" | "fdx" | "fdx+";
-  },
+  score: Pick<ScoreData, "songName" | "musicType" | "difficulty" | "achievement" | "dxScore" | "fc" | "fs">,
   ctx: MaimaiNormalizeContext,
 ): NormalizedScore {
   return {
@@ -57,15 +50,7 @@ function normalizeRecent(
   ctx: MaimaiNormalizeContext,
 ): NormalizedRecent {
   return {
-    ...normalizeScore({
-      songName: recent.songName,
-      musicType: recent.musicType,
-      difficulty: recent.difficulty as Difficulty,
-      achievement: recent.achievement,
-      dxScore: recent.dxScore,
-      fc: recent.fc,
-      fs: recent.fs,
-    }, ctx),
+    ...normalizeScore(recent, ctx),
     playedAt: recent.playedAt,
     maxDxScore: recent.maxDxScore,
     track: recent.track,
@@ -120,7 +105,6 @@ export async function normalizeFetchedMaimaiData(
     scores,
     recents: fetched.recentSongsData.map(recent => normalizeRecent(recent, ctx)),
     events: normalizeEvents(fetched),
-    providerMetadata: { cookies: fetched.cookies },
   };
 }
 

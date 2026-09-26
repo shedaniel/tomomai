@@ -30,7 +30,7 @@ export interface RecentSongData {
   songName: string;
   level: string;
   musicType: SongType;
-  difficulty: string;
+  difficulty: Difficulty;
   difficultyNumber: number;
   achievement: number; // stored as 10000x
   dxScore: number;

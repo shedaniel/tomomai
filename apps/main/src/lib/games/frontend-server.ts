@@ -1,4 +1,5 @@
 import "server-only";
+import { GAME_SOURCES } from "@/server/services/games/adapters";
 import { GAME_REGISTRY, getEnabledRegions } from "./registry";
 import type { FrontendGame } from "./frontend";
 import type { CanonicalGameId } from "./types";
@@ -11,7 +12,7 @@ export function getFrontendGameDescriptor(game: CanonicalGameId): FrontendGame {
     displayName: registration.displayName,
     productName: registration.productName,
     enabled: registration.enabled,
-    fetchConfigured: registration.adapter.scores.configured,
+    fetchConfigured: GAME_SOURCES[game].scores.configured,
     regions: getEnabledRegions(game),
     capabilities: [...registration.adapter.capabilities],
   };

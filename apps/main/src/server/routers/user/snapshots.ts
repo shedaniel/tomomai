@@ -11,7 +11,6 @@ import { getEnabledRegions } from '@/lib/enabled-regions';
 import { logger } from '@/lib/logger';
 import { buildChartResolution, upsertScoreData, scoreDataKey, type ScoreDataValues } from "@/server/services/games/score-storage";
 import { deleteUserSnapshot } from '@/server/queries/snapshots';
-import type { VersionId } from "@/lib/metadata";
 import { getVersionInfo, getAvailableVersions } from "@/lib/games/versions";
 import { addRatingsAndSort, RatingCalculationInput, splitSongs } from '@/lib/rating-calculator';
 import { protectedProcedure, publicProcedure, router } from '@/lib/trpc';
@@ -144,7 +143,7 @@ export const snapshotsRouter = router({
         cover: string;
         difficulty: Difficulty;
         levelPrecise: number;
-        addedVersion: VersionId;
+        addedVersion: number;
         achievement: number;
         fc: RatingCalculationInput["fc"];
       }>>();
@@ -158,7 +157,7 @@ export const snapshotsRouter = router({
           cover: score.cover,
           difficulty: score.difficulty,
           levelPrecise: score.levelPrecise,
-          addedVersion: score.addedVersion as VersionId,
+          addedVersion: score.addedVersion,
           achievement: score.achievement,
           fc: score.fc,
         });
@@ -279,11 +278,11 @@ export const snapshotsRouter = router({
             ...reservedData.snapshot,
             publicId: undefined,
             id: reservedData.snapshot.publicId,
-            gameVersion: reservedData.snapshot.gameVersion as VersionId,
+            gameVersion: reservedData.snapshot.gameVersion,
           },
           songs: reservedData.songs.map((s) => ({
             ...s,
-            addedVersion: s.addedVersion as VersionId,
+            addedVersion: s.addedVersion,
           })),
           privacySettings: {
             showPlayCounts: reservedUser.profileShowPlayCounts,
@@ -318,7 +317,7 @@ export const snapshotsRouter = router({
         levelPrecise: song.levelPrecise,
         type: song.type,
         genre: song.genre,
-        addedVersion: song.addedVersion as VersionId,
+        addedVersion: song.addedVersion,
         achievement: song.achievement,
         dxScore: song.dxScore,
         fc: song.fc,
@@ -341,9 +340,9 @@ export const snapshotsRouter = router({
           ...snapshot,
           publicId: undefined,
           id: snapshot.publicId,
-          gameVersion: snapshot.gameVersion as VersionId,
+          gameVersion: snapshot.gameVersion,
         },
-        songs: filteredSongs as (Omit<typeof filteredSongs[number], "addedVersion"> & { addedVersion: VersionId })[],
+        songs: filteredSongs,
         privacySettings: {
           showPlayCounts: userData.profileShowPlayCounts,
           showPlates: userData.profileShowPlates,
@@ -436,7 +435,7 @@ export const snapshotsRouter = router({
           totalPlayCount: snapshot[0].totalPlayCount,
           currentVersionPlayCount: snapshot[0].versionPlayCount,
         },
-        songs: addRatingsAndSort(songsWithScores, snapshot[0].gameVersion as VersionId).map(song => ({
+        songs: addRatingsAndSort(songsWithScores, snapshot[0].gameVersion).map(song => ({
           ...song,
           gameVersion: getVersionInfo(input.game, snapshot[0].region, song.gameVersion)!.shortName,
         })),

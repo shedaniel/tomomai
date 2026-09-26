@@ -10,17 +10,6 @@ export const chunithmAdapter: GameAdapter = {
   supportedRegions: GAME_SUPPORTED_REGIONS.chunithm,
   versions: chunithmVersionProvider,
   codes: GAME_CODE_MAPS.chunithm,
-  catalog: {
-    configured: true,
-    async collect(context) {
-      const { collectCatalog } = await import("@/server/services/catalog/chunithm/pipeline");
-      return collectCatalog(context);
-    },
-  },
-  scores: {
-    configured: false,
-    notConfiguredReason: "CHUNITHM score fetching is not implemented; no upstream provider is configured.",
-  },
   calculateChartRating({ scoreValue, levelPrecise }) {
     return calculateChunithmChartRating(scoreValue, levelPrecise);
   },

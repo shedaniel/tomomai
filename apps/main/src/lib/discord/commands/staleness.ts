@@ -23,7 +23,7 @@ import {
   isStale,
   type StaleCommand,
 } from '../staleness';
-import { getLatestMaimaiSnapshotFetchedAt } from '@/server/queries/snapshots';
+import { getLatestSnapshotFetchedAt } from '@/server/queries/snapshots';
 
 interface ResolvedUser {
   id: string;
@@ -112,7 +112,7 @@ export async function applyStalenessGate({
   }
 
   try {
-    const lastFetchedAt = await getLatestMaimaiSnapshotFetchedAt(dbUser.id, region);
+    const lastFetchedAt = await getLatestSnapshotFetchedAt("maimai", dbUser.id, region);
     if (lastFetchedAt && isStale(lastFetchedAt)) {
       const { regionDisplayName } = await import('../region');
       return getStalePromptResponse({

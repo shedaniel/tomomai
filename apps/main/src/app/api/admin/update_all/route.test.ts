@@ -8,13 +8,10 @@ const mocks = vi.hoisted(() => {
   log.child.mockReturnValue(log);
   return { log, source: vi.fn(), ingest: vi.fn(), publish: vi.fn(), login: vi.fn(), flush: vi.fn(), invalidate: vi.fn() };
 });
-vi.mock("@/lib/games/adapters/maimai", () => ({ maimaiAdapter: {
-  supportedRegions: new Set(["jp", "intl", "cn"]), capabilities: new Set(["catalog"]),
-  catalog: { configured: true, requiresToken: (region: string) => region !== "cn", authenticate: mocks.login, collect: (ctx: CatalogFetchContext) => mocks.source("maimai", ctx) },
-} }));
-vi.mock("@/lib/games/adapters/chunithm", () => ({ chunithmAdapter: {
-  supportedRegions: new Set(["jp", "intl"]), capabilities: new Set(["rankings", "rating"]), catalog: { configured: true, collect: (ctx: CatalogFetchContext) => mocks.source("chunithm", ctx) },
-} }));
+vi.mock("server-only", () => ({}));
+vi.mock("@/server/services/catalog/maimai/pipeline", () => ({ collectCatalog: (ctx: CatalogFetchContext) => mocks.source("maimai", ctx) }));
+vi.mock("@/server/services/catalog/chunithm/pipeline", () => ({ collectCatalog: (ctx: CatalogFetchContext) => mocks.source("chunithm", ctx) }));
+vi.mock("@/server/services/maimai-login", () => ({ loginAndGetCookies: mocks.login }));
 vi.mock("@/lib/games/versions", () => ({ getCurrentVersion: () => 9, getVersionInfo: () => ({ id: 9 }) }));
 vi.mock("@/lib/games/frontend-server", () => ({ getFrontendGame: () => ({ id: "maimai" }) }));
 vi.mock("@/server/services/catalog/ingestion/persistence", () => ({ persistCatalog: mocks.ingest }));

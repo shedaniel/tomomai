@@ -1,3 +1,4 @@
+import { requireConfiguredSource } from "./adapters";
 import { revalidatePublicProfileForUser } from "@/lib/profile-cache";
 import { buildChartResolution, chartKey, scoreDataKey, upsertScoreData, type DbSong } from "./score-storage";
 import type { Flags } from "@/lib/flags";
@@ -22,7 +23,6 @@ import { appendFetchState } from "@/lib/fetch-states-server";
 import { getCurrentVersion } from "@/lib/games/versions";
 import {
   GAME_REGISTRY,
-  requireConfiguredSource,
   resolveGameContext,
 } from "@/lib/games/registry";
 import {
@@ -409,7 +409,7 @@ export async function getScoreFetchStatus(input: {
   const session = fetchSession[0];
   return {
     id: session.id,
-    status: session.status as ScoreFetchStatusResult["status"],
+    status: session.status,
     startedAt: session.startedAt,
     completedAt: session.completedAt,
     errorMessage: session.errorMessage,

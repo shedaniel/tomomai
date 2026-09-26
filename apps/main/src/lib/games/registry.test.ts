@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { getEnabledRegions, normalizeGameId, requireConfiguredSource, resolveGameContext } from "./registry";
+import { getEnabledRegions, normalizeGameId, resolveGameContext } from "./registry";
 
 afterEach(() => vi.unstubAllEnvs());
 
@@ -22,6 +22,5 @@ describe("game boundaries", () => {
   it("does not enable CHUNITHM by configuring regions", () => {
     vi.stubEnv("NEXT_PUBLIC_ENABLED_CHUNITHM_REGIONS", "jp");
     expect(() => resolveGameContext("chunithm", "jp")).toThrow(expect.objectContaining({ code: "GAME_NOT_ENABLED" }));
-    expect(() => requireConfiguredSource("chunithm", "scores")).toThrow(expect.objectContaining({ code: "SOURCE_NOT_CONFIGURED" }));
   });
 });

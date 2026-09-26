@@ -95,7 +95,6 @@ export type GameFetchResult = {
   recents?: NormalizedRecent[];
   albums?: NormalizedAlbum[];
   events?: NormalizedEvent[];
-  providerMetadata?: Record<string, unknown>;
 };
 
 export const RANKING_BUCKET = {
@@ -118,16 +117,14 @@ export type RankingSelection<T extends RankedScore> = {
   oldRemaining: T[];
 };
 
-export interface CatalogAdapter {
-  configured: boolean;
-}
-
-export interface CatalogSourceAdapter extends CatalogAdapter {
-  notConfiguredReason?: string;
+export interface ConfiguredCatalogAdapter {
+  configured: true;
   requiresToken?: (region: Region) => boolean;
   authenticate?: (region: Region, token: string) => Promise<string>;
-  collect?: (ctx: CatalogFetchContext) => Promise<CatalogChart[]>;
+  collect: (ctx: CatalogFetchContext) => Promise<CatalogChart[]>;
 }
+
+export type CatalogSourceAdapter = ConfiguredCatalogAdapter | { configured: false; notConfiguredReason: string };
 
 export type ScoreTokenValidationContext = {
   userId: string;
@@ -188,8 +185,6 @@ export interface GameAdapter {
   supportedRegions: ReadonlySet<Region>;
   versions: VersionProvider;
   codes: GameCodeMaps;
-  catalog: CatalogSourceAdapter;
-  scores: ScoreAdapter;
   calculateChartRating(input: { scoreValue: number; levelPrecise: number; difficulty: number; comboStatus?: number }, version: number): number;
   selectRankings<T extends RankedScore>(scores: T[], currentVersion: number): RankingSelection<T>;
 }

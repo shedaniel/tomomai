@@ -113,7 +113,6 @@ describe("maimai score adapter normalization", () => {
       expect.objectContaining({ name: "Area event", eventType: "area" }),
       expect.objectContaining({ name: "Event area", eventType: "eventArea", eventPeriodStart: new Date(100), eventPeriodEnd: new Date(200) }),
     ]);
-    expect(result.providerMetadata).toEqual({ cookies: "clal=test" });
   });
 
   it("rejects a stored CN single-use token but accepts a newly supplied one", () => {
