@@ -1,4 +1,6 @@
 import { after } from "next/server";
+import { resolveGame } from "@/lib/games/registry";
+import { getGameBrand } from "@/lib/games/frontend";
 import { resolveBaseUrl } from "@/lib/base-url";
 import { logger, flushLogger } from "@/lib/logger";
 import type { AddedChange, DeletedChange, ModifiedChange } from "./ingestion/persistence";
@@ -298,12 +300,13 @@ export async function sendDiscordWebhook(
   }
 
   const baseUrl = resolveBaseUrl();
+  const registration = resolveGame(game);
   const payload = {
-    username: "ともマイ",
+    username: getGameBrand(registration).japaneseName,
     avatar_url: `${baseUrl}/icon.png`,
     embeds: [
       {
-        title: `Song data update - ${dateStr} - ${regionName}`,
+        title: `${registration.displayName} song data update - ${dateStr} - ${regionName}`,
         description: truncateForDiscord(description.trim() || "No changes detected"),
         color: color,
         timestamp: now.toISOString(),

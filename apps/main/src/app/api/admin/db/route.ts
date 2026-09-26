@@ -4,7 +4,6 @@ import { gameErrorResponse } from "@/lib/api/game-context";
 import { db } from "@/lib/db";
 import { flushLogger } from "@/lib/logger";
 import { requestLogger } from "@/lib/request-logger";
-import { getEnabledRegions, isRegionEnabled } from "@/lib/enabled-regions";
 import { Region } from "@/lib/types";
 import { parseCatalogVersion } from "@/lib/catalog/parse-version";
 import { getCurrentVersion } from "@/lib/games/versions";
@@ -85,9 +84,9 @@ export async function POST() {
 async function normalize(game: CanonicalGameId, searchParams: URLSearchParams, log: Logger) {
   const region = searchParams.get('region') as Region | null;
 
-  if (!region || !isRegionEnabled(region)) {
+  if (!region) {
     return NextResponse.json(
-      { error: `Missing or invalid 'region' query parameter. Must be one of: ${getEnabledRegions().join(", ")}` },
+      { error: "Missing 'region' query parameter" },
       { status: 400 }
     );
   }

@@ -1,8 +1,26 @@
-import { describe, it, expect } from "vitest";
+import { afterEach, describe, it, expect, vi } from "vitest";
 import { Difficulty, SongType } from "@/lib/types";
 import type { AddedChange, ModifiedChange, FieldChange } from "./ingestion/persistence";
 import { chartTypeToCode, difficultyToCode } from "@/lib/maimai/codes";
-import { buildChangeDescription } from "@/server/services/catalog/notifications";
+import { buildChangeDescription, sendDiscordWebhook } from "@/server/services/catalog/notifications";
+
+const background = vi.hoisted(() => [] as Promise<unknown>[]);
+vi.mock("next/server", () => ({ after: (task: Promise<unknown>) => background.push(task) }));
+vi.mock("@/lib/base-url", () => ({ resolveBaseUrl: () => "https://example.test" }));
+vi.mock("@/lib/logger", () => ({ logger: { info: vi.fn(), debug: vi.fn(), error: vi.fn() }, flushLogger: vi.fn(async () => {}) }));
+afterEach(() => { vi.unstubAllEnvs(); vi.unstubAllGlobals(); background.length = 0; });
+
+it("identifies CHUNITHM changes independently of the host's frontend game", async () => {
+  vi.stubEnv("FRONTEND_GAME", "maimai");
+  vi.stubEnv("DISCORD_UPDATE_WEBHOOK_JP", "https://example.test/webhook");
+  const fetch = vi.fn<typeof globalThis.fetch>(async () => new Response(null, { status: 204 }));
+  vi.stubGlobal("fetch", fetch);
+  await sendDiscordWebhook("chunithm", "jp", [{ songKey: "chart", songName: "Test", artist: "Artist", chartType: 0, difficulty: 4, level: "14+", levelPrecise: 145 }], [], []);
+  await Promise.all(background);
+  const payload = JSON.parse(String(fetch.mock.calls[0][1]?.body));
+  expect(payload.username).toBe("ともチュウ");
+  expect(payload.embeds[0].title).toContain("CHUNITHM");
+});
 
 function added(
   songName: string,

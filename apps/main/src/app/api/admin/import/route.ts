@@ -1,11 +1,11 @@
-import { resolveAdminGame } from "@/lib/api/admin-game";
+import { getAdminCatalogRegions, resolveAdminGame } from "@/lib/api/admin-game";
 import { GameAdapterError, type CanonicalGameId } from "@/lib/games/types";
 import { gameErrorResponse } from "@/lib/api/game-context";
 import { parseCatalogVersion } from "@/lib/catalog/parse-version";
 import { db } from "@/lib/db";
 import { songs } from "@/lib/db/schema-pg";
 import { Region } from "@/lib/types";
-import { getEnabledRegions, isRegionEnabled } from "@/lib/enabled-regions";
+import { resolveCatalogContext } from "@/lib/games/registry";
 import { flushLogger } from "@/lib/logger";
 import { requestLogger } from "@/lib/request-logger";
 import { and, eq, gte, lte, sql } from "drizzle-orm";
@@ -18,8 +18,8 @@ const REGION_PATTERN = "[a-z]+";
 const FROM_REGEX = new RegExp(`^version(<=|>=|=)(\\d+)@(${REGION_PATTERN})-(-?\\d+)$`);
 const TO_REGEX = new RegExp(`^(${REGION_PATTERN})-(-?\\d+)$`);
 
-function regionsHint(): string {
-  return `[${getEnabledRegions().join("|")}]`;
+function regionsHint(game: CanonicalGameId): string {
+  return `[${getAdminCatalogRegions(game).join("|")}]`;
 }
 
 // Helper function to parse the "from" parameter
@@ -33,14 +33,12 @@ function parseFromParameter(game: CanonicalGameId, from: string): {
   const match = from.match(FROM_REGEX);
 
   if (!match) {
-    throw new Error(`Invalid 'from' parameter format. Expected format: version[<=|>=|=]NUMBER@${regionsHint()}-NUMBER`);
+    throw new Error(`Invalid 'from' parameter format. Expected format: version[<=|>=|=]NUMBER@${regionsHint(game)}-NUMBER`);
   }
 
   const [, operator, versionValue, region, gameVersion] = match;
 
-  if (!isRegionEnabled(region as Region)) {
-    throw new Error(`Invalid region in 'from' parameter: ${region}. Must be one of: ${getEnabledRegions().join(", ")}`);
-  }
+  resolveCatalogContext(game, region as Region);
 
   const versionFilter = operator === "<=" ? "lte" : operator === ">=" ? "gte" : "eq";
 
@@ -61,14 +59,12 @@ function parseToParameter(game: CanonicalGameId, to: string): {
   const match = to.match(TO_REGEX);
 
   if (!match) {
-    throw new Error(`Invalid 'to' parameter format. Expected format: ${regionsHint()}-NUMBER`);
+    throw new Error(`Invalid 'to' parameter format. Expected format: ${regionsHint(game)}-NUMBER`);
   }
 
   const [, region, gameVersion] = match;
 
-  if (!isRegionEnabled(region as Region)) {
-    throw new Error(`Invalid region in 'to' parameter: ${region}. Must be one of: ${getEnabledRegions().join(", ")}`);
-  }
+  resolveCatalogContext(game, region as Region);
 
   return {
     region: region as Region,
@@ -131,14 +127,14 @@ export async function GET(request: NextRequest) {
 
     if (!fromParam) {
       return NextResponse.json(
-        { error: `Missing 'from' query parameter. Expected format: version[<=|>=|=]NUMBER@${regionsHint()}-NUMBER` },
+        { error: `Missing 'from' query parameter. Expected format: version[<=|>=|=]NUMBER@${regionsHint(game)}-NUMBER` },
         { status: 400 }
       );
     }
 
     if (!toParam) {
       return NextResponse.json(
-        { error: `Missing 'to' query parameter. Expected format: ${regionsHint()}-NUMBER` },
+        { error: `Missing 'to' query parameter. Expected format: ${regionsHint(game)}-NUMBER` },
         { status: 400 }
       );
     }
@@ -279,6 +275,7 @@ export async function GET(request: NextRequest) {
               target: [songs.parentId, songs.region, songs.gameVersion],
               set: {
                 addedVersion: sql`excluded."addedVersion"`,
+                metadata: sql`excluded.metadata`,
                 level: sql`excluded.level`,
                 levelPrecise: sql`excluded."levelPrecise"`,
                 noteDesigner: sql`excluded."noteDesigner"`,
