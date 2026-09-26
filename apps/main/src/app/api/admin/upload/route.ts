@@ -15,6 +15,7 @@ import { parseCatalogVersion } from "@/lib/catalog/parse-version";
 import { NextRequest, NextResponse } from "next/server";
 
 import { persistCatalog } from "@/server/services/catalog/ingestion/persistence";
+import { formatCatalogError } from "@/server/services/catalog/errors";
 type UpdateMode = "noop" | "alter" | "destructive";
 /**
  * Push catalog edits to the ISR cache without waiting for the 14-day
@@ -234,15 +235,16 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     if (error instanceof GameAdapterError) return gameErrorResponse(error);
     log.error({ err: error }, "Error in admin upload route");
+    const message = error instanceof Error ? formatCatalogError(error) : "Internal server error";
     if (noticeContext) sendDiscordNotice(
       noticeContext.game,
       noticeContext.region,
       "Upload error",
-      `**Error:** ${error instanceof Error ? error.message : String(error)}`,
+      `**Request:** ${requestId}\n**Error:** ${message}`,
       0xFF0000,
     ).catch(() => { });
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Internal server error", requestId },
+      { error: message, requestId },
       { status: 500 }
     );
   } finally {

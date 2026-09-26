@@ -10,6 +10,7 @@ import { sendDiscordNotice } from "@/server/services/catalog/notifications";
 import { createNoticeSink } from "@/server/services/catalog/ingestion/runner";
 import { collectCatalog } from "@/server/services/catalog/ingestion";
 import { authenticateCatalogSource } from "@/server/services/catalog/ingestion/source-auth";
+import { formatCatalogError } from "@/server/services/catalog/errors";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
@@ -97,7 +98,7 @@ export async function GET(request: NextRequest) {
       game,
       region,
       "Fetch pipeline error",
-      `**Error:** ${error instanceof Error ? error.message : String(error)}`,
+      `**Request:** ${requestId}\n**Error:** ${error instanceof Error ? formatCatalogError(error) : String(error)}`,
       0xFF0000,
     ).catch(() => { });
     return NextResponse.json({

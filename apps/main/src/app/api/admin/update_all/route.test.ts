@@ -2,11 +2,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
 import type { CatalogFetchContext } from "@/server/services/catalog/ingestion/types";
 import type { CanonicalGameId } from "@/lib/games/types";
+import { DrizzleQueryError } from "drizzle-orm";
 
 const mocks = vi.hoisted(() => {
   const log = { child: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() };
   log.child.mockReturnValue(log);
-  return { log, source: vi.fn(), ingest: vi.fn(), publish: vi.fn(), login: vi.fn(), flush: vi.fn(), invalidate: vi.fn() };
+  return { log, source: vi.fn(), ingest: vi.fn(), publish: vi.fn(), login: vi.fn(), notice: vi.fn().mockResolvedValue(undefined), flush: vi.fn(), invalidate: vi.fn() };
 });
 vi.mock("server-only", () => ({}));
 vi.mock("@/server/services/catalog/maimai/pipeline", () => ({ collectCatalog: (ctx: CatalogFetchContext) => mocks.source("maimai", ctx) }));
@@ -16,7 +17,7 @@ vi.mock("@/lib/games/versions", () => ({ getCurrentVersion: () => 9, getVersionI
 vi.mock("@/lib/games/frontend-server", () => ({ getFrontendGame: () => ({ id: "maimai" }) }));
 vi.mock("@/server/services/catalog/ingestion/persistence", () => ({ persistCatalog: mocks.ingest }));
 vi.mock("@/server/services/catalog/publication", () => ({ publishSongCatalog: mocks.publish }));
-vi.mock("@/server/services/catalog/notifications", () => ({ sendDiscordNotice: vi.fn().mockResolvedValue(undefined), sendDiscordWebhook: vi.fn().mockResolvedValue(undefined) }));
+vi.mock("@/server/services/catalog/notifications", () => ({ sendDiscordNotice: mocks.notice, sendDiscordWebhook: vi.fn().mockResolvedValue(undefined) }));
 vi.mock("@/lib/logger", () => ({ flushLogger: mocks.flush }));
 vi.mock("@/lib/request-logger", () => ({ requestLogger: () => ({ log: mocks.log, requestId: "catalog-test" }) }));
 vi.mock("@/lib/song-slug", () => ({ getSongSlugs: vi.fn().mockResolvedValue([]) }));
@@ -71,6 +72,39 @@ describe("configured catalog admin pipeline", () => {
     expect((await upload(req)).status).toBe(400);
     expect(mocks.ingest).not.toHaveBeenCalled();
     expect(mocks.publish).not.toHaveBeenCalled();
+  });
+  it.each([
+    { name: "driver parameter limit", cause: Object.assign(new Error("Max number of parameters exceeded"), { code: "MAX_PARAMETERS_EXCEEDED" }), expected: ["Max number of parameters exceeded", "MAX_PARAMETERS_EXCEEDED"] },
+    { name: "Postgres constraint", cause: Object.assign(new Error("duplicate key value violates unique constraint"), { code: "23505", constraint_name: "parent_song_publicId_unique", detail: "Key value: secret-detail" }), expected: ["duplicate key value violates unique constraint", "23505", "parent_song_publicId_unique"] },
+    { name: "absent database cause", cause: undefined, expected: ["Database query failed"] },
+  ])("reports the $name without burying it in SQL or parameters", async ({ cause, expected }) => {
+    const error = new DrizzleQueryError(`insert into parent_song ${"secret-sql ".repeat(1000)}`, ["secret-parameter"], cause);
+    mocks.ingest.mockRejectedValueOnce(error);
+    const req = new NextRequest("https://example.test/api/admin/upload?game=chunithm&region=jp&version=9&update=alter", {
+      method: "POST", headers: { authorization: "Bearer admin-secret", "content-type": "application/json" },
+      body: JSON.stringify({ songs: [chart] }),
+    });
+    const response = await upload(req);
+    expect(response.status).toBe(500);
+    const body = await response.json();
+    expect(body.requestId).toBe("catalog-test");
+    const description = mocks.notice.mock.calls[0][3];
+    for (const message of [body.error, description]) {
+      for (const text of expected) expect(message.includes(text), text).toBe(true);
+      expect(message).not.toContain("secret-");
+      expect(message.length).toBeLessThan(4096);
+    }
+    expect(description).toContain("catalog-test");
+    expect(mocks.log.error).toHaveBeenCalledWith({ err: error }, "Error in admin upload route");
+  });
+  it("preserves ordinary upload error messages", async () => {
+    mocks.ingest.mockRejectedValueOnce(new Error("Ambiguous catalog identity: Example"));
+    const response = await upload(new NextRequest("https://example.test/api/admin/upload?game=chunithm&region=jp&version=9&update=alter", {
+      method: "POST", headers: { authorization: "Bearer admin-secret", "content-type": "application/json" },
+      body: JSON.stringify({ songs: [chart] }),
+    }));
+    expect(response.status).toBe(500);
+    expect(await response.json()).toEqual({ error: "Ambiguous catalog identity: Example", requestId: "catalog-test" });
   });
   it("rejects an unsupported CHUNITHM region", async () => {
     expect((await GET(request("update_all?game=chunithm&region=cn"))).status).toBe(400);
