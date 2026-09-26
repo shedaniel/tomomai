@@ -3,7 +3,14 @@ import type { CanonicalGameId } from "@/lib/games/types";
 import { convertToWebp, fetchImageBuffer } from "@/lib/image-converter";
 import { listCoverKeys, uploadCoverToR2 } from "@/lib/r2";
 import { value, type Pending } from "./ingestion/types";
-import { extractFilename, isJpDomain, MAIMAI_STATIC_ASSETS } from "./maimai/images";
+import { maimaiImagePolicy } from "./maimai/images";
+import { chunithmImagePolicy } from "./chunithm/images";
+import type { CatalogImagePolicy } from "./image-policy";
+
+const imagePolicies: Record<CanonicalGameId, CatalogImagePolicy> = {
+  maimai: maimaiImagePolicy,
+  chunithm: chunithmImagePolicy,
+};
 
 async function processBatch<T, R>(
   items: T[],
@@ -20,22 +27,26 @@ async function processBatch<T, R>(
 }
 
 export async function processCatalogImages<T extends { cover?: Pending<string> }>(game: CanonicalGameId, songs: T[], log: Logger) {
+    const policy = imagePolicies[game];
     log.info({ songCount: songs.length }, "Image processing starting");
 
-    // Collect unique filenames from cover URLs, preferring jp domain
     const filenameToUrl = new Map<string, string>();
     for (const song of songs) {
       const cover = value(song.cover);
       if (!cover) continue;
-      const filename = extractFilename(cover);
+      const filename = policy.extractFilename(cover);
       if (!filename) continue;
       const existing = filenameToUrl.get(filename);
-      if (!existing || (!isJpDomain(existing) && isJpDomain(cover))) {
+      if (!existing || policy.preferUrl(cover, existing)) {
         filenameToUrl.set(filename, cover);
       }
     }
 
-    log.info({ uniqueCovers: filenameToUrl.size }, "Unique maimai cover URLs found");
+    log.info({ uniqueCovers: filenameToUrl.size }, "Unique catalog cover URLs found");
+
+    if (filenameToUrl.size === 0 && policy.staticAssets.length === 0) {
+      return { songs, stats: { uploaded: 0, skipped: 0, unchanged: songs.length } };
+    }
 
     // Get existing covers in R2
     const existingKeys = await listCoverKeys();
@@ -78,8 +89,7 @@ export async function processCatalogImages<T extends { cover?: Pending<string> }
       log.debug({ filename, basename }, "Uploaded cover to R2");
     });
 
-    // Cache static assets (DX/Standard type badges) if missing
-    for (const { url, basename } of game === "maimai" ? MAIMAI_STATIC_ASSETS : []) {
+    for (const { url, basename } of policy.staticAssets) {
       const webpKey = `${basename}.webp`;
       if (!existingKeys.has(webpKey)) {
         log.info({ basename, url }, "Caching static asset to R2");
@@ -94,7 +104,7 @@ export async function processCatalogImages<T extends { cover?: Pending<string> }
     let unchanged = 0;
     const updatedSongs = songs.map((song) => {
       const cover = value(song.cover);
-      const filename = cover ? extractFilename(cover) : null;
+      const filename = cover ? policy.extractFilename(cover) : null;
       if (!filename) {
         unchanged++;
         return song;
@@ -112,4 +122,3 @@ export async function processCatalogImages<T extends { cover?: Pending<string> }
 
     return { songs: updatedSongs, stats };
 }
-

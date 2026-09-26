@@ -1,3 +1,5 @@
+import type { CatalogImagePolicy } from "../image-policy";
+
 const MAIMAI_COVER_PATTERN = /^https?:\/\/(?:maimaidx\.jp|maimaidx(?:-eng)?\.com)\/maimai-mobile\/img\/Music\/(.+)$/;
 // Lxns CN jacket: https://assets2.lxns.net/maimai/jacket/{id}.png — namespace under
 // `lxns_{id}` to avoid collisions with the JP/INTL md5-style filenames.
@@ -22,3 +24,8 @@ export function isJpDomain(url: string): boolean {
   return url.includes("maimaidx.com/");
 }
 
+export const maimaiImagePolicy: CatalogImagePolicy = {
+  extractFilename,
+  preferUrl: (candidate, existing) => !isJpDomain(existing) && isJpDomain(candidate),
+  staticAssets: MAIMAI_STATIC_ASSETS,
+};

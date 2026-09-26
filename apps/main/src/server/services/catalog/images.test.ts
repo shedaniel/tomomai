@@ -33,7 +33,22 @@ describe("catalog image processing", () => {
     const result = await processCatalogImages("chunithm", [record], log);
     expect(result.songs).toEqual([record]);
     expect(result.stats).toEqual({ uploaded: 0, skipped: 0, unchanged: 1 });
+    expect(mocks.list).not.toHaveBeenCalled();
     expect(mocks.fetch).not.toHaveBeenCalled();
     expect(mocks.upload).not.toHaveBeenCalled();
+  });
+  it("does not apply maimai cover rules to CHUNITHM records", async () => {
+    const record = { ...chart("https://maimaidx.com/maimai-mobile/img/Music/shared.png"), game: "chunithm" as const };
+    const result = await processCatalogImages("chunithm", [record], log);
+    expect(result.songs).toEqual([record]);
+    expect(mocks.list).not.toHaveBeenCalled();
+    expect(mocks.fetch).not.toHaveBeenCalled();
+  });
+  it("still uploads missing maimai static assets when no covers need work", async () => {
+    mocks.list.mockResolvedValue(new Set());
+    const result = await processCatalogImages("maimai", [], log);
+    expect(mocks.list).toHaveBeenCalledOnce();
+    expect(mocks.upload.mock.calls.map(call => call[1])).toEqual(["music_dx", "music_standard"]);
+    expect(result.stats).toEqual({ uploaded: 0, skipped: 0, unchanged: 0 });
   });
 });

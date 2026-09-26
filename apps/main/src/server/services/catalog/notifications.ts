@@ -4,14 +4,8 @@ import { logger, flushLogger } from "@/lib/logger";
 import type { AddedChange, DeletedChange, ModifiedChange } from "./ingestion/persistence";
 import type { Region } from "@/lib/types";
 import type { CanonicalGameId } from "@/lib/games/types";
-import { GAME_CODE_MAPS } from "@/lib/games/codes";
 import { getGameChartTypeKey, getGameDifficultyKey } from "@/lib/games/presentation";
 
-
-type Labeled<T> = Omit<T, "chartType" | "difficulty"> & { type: string; difficulty: string };
-function labelChange<T extends { chartType: number; difficulty: number }>(game: CanonicalGameId, change: T): Labeled<T> {
-  return { ...change, type: getGameChartTypeKey(game, change.chartType), difficulty: getGameDifficultyKey(game, change.difficulty) };
-}
 
 // Discord rejects an embed whose description exceeds 4096 chars with a 400.
 // Cut at a line boundary and mark the truncation so the message still posts.
@@ -50,41 +44,37 @@ function formatPrecise(value: number): string {
   return (value / 10).toFixed(1);
 }
 
-// Play order (BAS / ADV / EXP / MAS / ReMAS / 宴) derived from the canonical
-// difficulty enum, so grouped charts stay sorted if that list ever changes.
-const DIFFICULTY_ORDER: Record<string, number> =
-  Object.fromEntries(Object.values(GAME_CODE_MAPS).flatMap(codes => Object.entries(codes.difficulty).map(([code, name]) => [name, Number(code)])));
-
-function difficultyShort(difficulty: string): string {
-  return difficulty.slice(0, 3).toUpperCase();
+function difficultyShort(game: CanonicalGameId, difficulty: number): string {
+  return getGameDifficultyKey(game, difficulty).slice(0, 3).toUpperCase();
 }
 
 // Collapse every chart that shares a song (name + type) onto one compact line,
 // e.g. "- ECHO DX: BAS 4 (4.0) / ADV 7+ (7.9) / EXP 11 (11.2)", with the
 // difficulties listed in play order. `formatChart` renders one chart's segment.
-function groupChartLines<T extends { songName: string; type: string; difficulty: string }>(
+function groupChartLines<T extends { songName: string; chartType: number; difficulty: number }>(
+  game: CanonicalGameId,
   charts: T[],
   formatChart: (chart: T) => string,
 ): string[] {
   const groups = new Map<string, T[]>();
   for (const chart of charts) {
-    const key = `${chart.songName} ${chart.type}`;
+    const key = `${chart.songName} ${chart.chartType}`;
     const bucket = groups.get(key);
     if (bucket) bucket.push(chart);
     else groups.set(key, [chart]);
   }
   return [...groups.values()]
-    .sort((a, b) => a[0].songName.localeCompare(b[0].songName) || a[0].type.localeCompare(b[0].type))
+    .sort((a, b) => a[0].songName.localeCompare(b[0].songName) || getGameChartTypeKey(game, a[0].chartType).localeCompare(getGameChartTypeKey(game, b[0].chartType)))
     .map(bucket => {
       const segments = bucket
-        .toSorted((a, b) => (DIFFICULTY_ORDER[a.difficulty] ?? 99) - (DIFFICULTY_ORDER[b.difficulty] ?? 99))
+        .toSorted((a, b) => a.difficulty - b.difficulty)
         .map(formatChart)
         .join(" / ");
-      return `- ${bucket[0].songName} ${bucket[0].type.toUpperCase()}: ${segments}`;
+      return `- ${bucket[0].songName} ${getGameChartTypeKey(game, bucket[0].chartType).toUpperCase()}: ${segments}`;
     });
 }
 
-type OtherEntry = { songName: string; type: string; difficulty: string; oldValue: any; newValue: any };
+type OtherEntry = { songName: string; chartType: number; difficulty: number; oldValue: any; newValue: any };
 
 // Render one "other field" change (genre, version, …) as the text after the
 // song label. Two charts whose changes produce the same string are treated as
@@ -109,19 +99,18 @@ function formatFieldDiff(oldValue: any, newValue: any): string {
 // When every changed difficulty of a song shares one change, emit a single
 // markerless line; when they diverge, emit one line per distinct change listing
 // the difficulties it covers in play order.
-function groupOtherFieldLines(entries: OtherEntry[]): string[] {
+function groupOtherFieldLines(game: CanonicalGameId, entries: OtherEntry[]): string[] {
   const songGroups = new Map<string, OtherEntry[]>();
   for (const entry of entries) {
-    const key = `${entry.songName} ${entry.type}`;
+    const key = `${entry.songName} ${entry.chartType}`;
     const bucket = songGroups.get(key);
     if (bucket) bucket.push(entry);
     else songGroups.set(key, [entry]);
   }
-  const difficultyRank = (e: OtherEntry) => DIFFICULTY_ORDER[e.difficulty] ?? 99;
   return [...songGroups.values()]
-    .sort((a, b) => a[0].songName.localeCompare(b[0].songName) || a[0].type.localeCompare(b[0].type))
+    .sort((a, b) => a[0].songName.localeCompare(b[0].songName) || getGameChartTypeKey(game, a[0].chartType).localeCompare(getGameChartTypeKey(game, b[0].chartType)))
     .flatMap(group => {
-      const label = `${group[0].songName} ${group[0].type.toUpperCase()}`;
+      const label = `${group[0].songName} ${getGameChartTypeKey(game, group[0].chartType).toUpperCase()}`;
       const byDiff = new Map<string, OtherEntry[]>();
       for (const entry of group) {
         const diff = formatFieldDiff(entry.oldValue, entry.newValue);
@@ -135,10 +124,10 @@ function groupOtherFieldLines(entries: OtherEntry[]): string[] {
         return [`- ${label}: ${diff}`];
       }
       return [...byDiff.entries()]
-        .sort((a, b) => Math.min(...a[1].map(difficultyRank)) - Math.min(...b[1].map(difficultyRank)))
+        .sort((a, b) => Math.min(...a[1].map(entry => entry.difficulty)) - Math.min(...b[1].map(entry => entry.difficulty)))
         .map(([diff, es]) => {
-          const diffs = es.toSorted((a, b) => difficultyRank(a) - difficultyRank(b))
-            .map(e => difficultyShort(e.difficulty))
+          const diffs = es.toSorted((a, b) => a.difficulty - b.difficulty)
+            .map(e => difficultyShort(game, e.difficulty))
             .join(" / ");
           return `- ${label} ${diffs}: ${diff}`;
         });
@@ -158,30 +147,22 @@ function truncateLines(lines: string[], limit: number): string {
 // already have cover-only entries filtered out. Charts are grouped by song so
 // every difficulty for one song lands on a single compact line.
 export function buildChangeDescription(game: CanonicalGameId, added: AddedChange[], deleted: DeletedChange[], modified: ModifiedChange[]): string {
-  return buildLabeledChangeDescription(added.map(change => labelChange(game, change)), deleted.map(change => labelChange(game, change)), modified.map(change => labelChange(game, change)));
-}
-
-function buildLabeledChangeDescription(
-  added: Labeled<AddedChange>[],
-  deleted: Labeled<DeletedChange>[],
-  modified: Labeled<ModifiedChange>[],
-): string {
   let description = "";
 
-  const formatLevelSegment = (chart: { difficulty: string; level: string; levelPrecise: number }) =>
-    `${difficultyShort(chart.difficulty)} ${chart.level} (${chart.levelPrecise ? formatPrecise(chart.levelPrecise) : 'unknown'})`;
+  const formatLevelSegment = (chart: { difficulty: number; level: string; levelPrecise: number }) =>
+    `${difficultyShort(game, chart.difficulty)} ${chart.level} (${chart.levelPrecise ? formatPrecise(chart.levelPrecise) : 'unknown'})`;
 
   // Added charts
   if (added.length > 0) {
     description += `**${added.length} Chart${added.length > 1 ? 's' : ''} Added**\n`;
-    const lines = groupChartLines(added, formatLevelSegment);
+    const lines = groupChartLines(game, added, formatLevelSegment);
     description += truncateLines(lines, LEVEL_TRUNCATE_LIMIT) + "\n\n";
   }
 
   // Deleted charts
   if (deleted.length > 0) {
     description += `**${deleted.length} Chart${deleted.length > 1 ? 's' : ''} Deleted**\n`;
-    const lines = groupChartLines(deleted, formatLevelSegment);
+    const lines = groupChartLines(game, deleted, formatLevelSegment);
     description += truncateLines(lines, LEVEL_TRUNCATE_LIMIT) + "\n\n";
   }
 
@@ -189,8 +170,8 @@ function buildLabeledChangeDescription(
   if (modified.length > 0) {
     type LevelEntry = {
       songName: string;
-      type: string;
-      difficulty: string;
+      chartType: number;
+      difficulty: number;
       oldValue?: any;
       newValue?: any;
       levelPreciseOld?: any;
@@ -206,7 +187,7 @@ function buildLabeledChangeDescription(
       if (levelChange || levelPreciseChange) {
         levelBucket.push({
           songName: song.songName,
-          type: song.type,
+          chartType: song.chartType,
           difficulty: song.difficulty,
           oldValue: levelChange?.oldValue,
           newValue: levelChange?.newValue,
@@ -220,7 +201,7 @@ function buildLabeledChangeDescription(
         if (!otherBuckets[change.field]) otherBuckets[change.field] = [];
         otherBuckets[change.field].push({
           songName: song.songName,
-          type: song.type,
+          chartType: song.chartType,
           difficulty: song.difficulty,
           oldValue: change.oldValue,
           newValue: change.newValue,
@@ -231,8 +212,8 @@ function buildLabeledChangeDescription(
     // Level section first, grouped by song with one segment per difficulty
     if (levelBucket.length > 0) {
       description += `**${levelBucket.length} Level Change${levelBucket.length > 1 ? 's' : ''}**\n`;
-      const lines = groupChartLines(levelBucket, change => {
-        const diff = difficultyShort(change.difficulty);
+      const lines = groupChartLines(game, levelBucket, change => {
+        const diff = difficultyShort(game, change.difficulty);
         const hasLevel = change.oldValue !== undefined || change.newValue !== undefined;
         const hasPrecise = change.levelPreciseOld !== undefined || change.levelPreciseNew !== undefined;
         const preciseOld = change.levelPreciseOld !== undefined ? formatPrecise(change.levelPreciseOld) : "?";
@@ -252,7 +233,7 @@ function buildLabeledChangeDescription(
       const entries = otherBuckets[field];
       const fieldLabel = field.charAt(0).toUpperCase() + field.slice(1);
       description += `**${entries.length} ${fieldLabel} Change${entries.length > 1 ? 's' : ''}**\n`;
-      const lines = groupOtherFieldLines(entries);
+      const lines = groupOtherFieldLines(game, entries);
       description += truncateLines(lines, OTHER_TRUNCATE_LIMIT) + "\n\n";
     }
   }
