@@ -7,11 +7,17 @@
     ".": {
       "import": "./src/index.ts",
       "types": "./src/index.ts"
+    },
+    "./game-codes": {
+      "types": "./src/game-codes.d.ts",
+      "import": "./src/game-codes.js"
     }
   },
   "main": "./src/index.ts",
   "types": "./src/index.ts",
-  "files": ["src"],
+  "files": [
+    "src"
+  ],
   "devDependencies": {
     "typescript": "^5.9.3"
   }

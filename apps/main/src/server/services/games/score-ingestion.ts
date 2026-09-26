@@ -95,6 +95,7 @@ type ResolvedScore = {
 
 type RankedResolvedScore = {
   chartId: string;
+  scoreValue: number;
   addedVersion: number;
   rating: number;
   scoreId: number;
@@ -659,6 +660,7 @@ export async function persistFetchResult(input: PersistFetchResultInput): Promis
       if (scoreId === undefined) continue;
       rankedScores.push({
         chartId: resolved.song.id.toString(),
+        scoreValue: resolved.score.scoreValue,
         addedVersion: resolved.song.addedVersion,
         rating: gameAdapter.calculateChartRating({
           scoreValue: resolved.score.scoreValue,

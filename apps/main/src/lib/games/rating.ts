@@ -32,7 +32,7 @@ export function calculateMaimaiChartRating(
 ): number {
   const combo = comboStatus === 3 ? "ap" : comboStatus === 4 ? "ap+" : "none";
   const difficultyName = difficulty === 5 ? "utage" : "master";
-  return Math.floor(calculateSongRating({ difficulty: difficultyName, achievement: scoreValue, fc: combo, levelPrecise }, version));
+  return calculateSongRating({ difficulty: difficultyName, achievement: scoreValue, fc: combo, levelPrecise }, version);
 }
 
 function rank<T extends RankedScore>(
@@ -41,7 +41,9 @@ function rank<T extends RankedScore>(
   newSize: number,
   oldSize: number,
 ): RankingSelection<T> {
-  const sorted = [...scores].sort((a, b) => b.rating - a.rating);
+  const sorted = [...scores]
+    .sort((a, b) => b.rating - a.rating || b.scoreValue - a.scoreValue)
+    .map(score => ({ ...score, rating: Math.floor(score.rating) }));
   const newScores = sorted.filter(isNew);
   const oldScores = sorted.filter(score => !isNew(score));
   return {

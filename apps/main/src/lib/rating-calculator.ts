@@ -8,6 +8,7 @@ export interface RatingCalculationInput {
   fc: FullCombo;
   levelPrecise: number;
   addedVersion: number;
+  chartRating?: number;
 }
 
 // Type alias for backward compatibility - SongWithScore with rating added
@@ -33,6 +34,7 @@ export function getRatingFactor(accuracy: number): number {
 
 // Calculate song rating using the formula: rating = floor(factor * accuracy * levelPrecise / 10)
 export function calculateSongRating<T extends Omit<RatingCalculationInput, "addedVersion">>(song: T, version: number): number {
+  if (song.chartRating !== undefined) return song.chartRating;
   if (song.difficulty === "utage") return 0;
   const accuracy = song.achievement / 10000;
   const factor = getRatingFactor(accuracy);

@@ -1,3 +1,4 @@
+export { codeToDifficulty, codeToChartType } from "@tomomai/utils/game-codes";
 import {
   CHART_TYPE_ENUM,
   DIFFICULTY_ENUM,
@@ -27,16 +28,8 @@ export function difficultyToCode(difficulty: Difficulty): number {
   return codeFor(DIFFICULTY_ENUM, difficulty, "difficulty");
 }
 
-export function codeToDifficulty(code: number): Difficulty {
-  return valueFor(DIFFICULTY_ENUM, code, "difficulty");
-}
-
 export function chartTypeToCode(type: SongType): number {
   return codeFor(CHART_TYPE_ENUM, type, "chart type");
-}
-
-export function codeToChartType(code: number): SongType {
-  return valueFor(CHART_TYPE_ENUM, code, "chart type");
 }
 
 export function comboStatusToCode(status: FullCombo): number {

@@ -101,6 +101,7 @@ export type RankingBucket = (typeof RANKING_BUCKET)[keyof typeof RANKING_BUCKET]
 
 export type RankedScore = {
   chartId: string;
+  scoreValue: number;
   addedVersion: number;
   rating: number;
 };

@@ -2,7 +2,7 @@ export const LANGUAGE_ENUM = ["en", "en-GB", "ja", "zh-TW", "zh-HK", "zh-CN", "z
 
 export const REGION_ENUM = ["intl", "jp", "cn"] as const;
 
-export const DIFFICULTY_ENUM = ["basic", "advanced", "expert", "master", "remaster", "utage"] as const;
+export { MAIMAI_DIFFICULTIES as DIFFICULTY_ENUM } from "@tomomai/utils/game-codes";
 
 export const LEVEL_ENUM = [
   "1", "1+", "2", "2+", "3", "3+", "4", "4+", "5", "5+", "6", "6+",
@@ -10,11 +10,11 @@ export const LEVEL_ENUM = [
   "13", "13+", "14", "14+", "15", "15+", "16", "16+"
 ] as const;
 
-export const CHART_TYPE_ENUM = ["std", "dx"] as const;
+export { MAIMAI_CHART_TYPES as CHART_TYPE_ENUM } from "@tomomai/utils/game-codes";
 
-export const FC_ENUM = ["none", "fc", "fc+", "ap", "ap+"] as const;
+export { MAIMAI_COMBO_STATUSES as FC_ENUM } from "@tomomai/utils/game-codes";
 
-export const FS_ENUM = ["none", "sync", "fs", "fs+", "fdx", "fdx+"] as const;
+export { MAIMAI_SYNC_STATUSES as FS_ENUM } from "@tomomai/utils/game-codes";
 
 export const FETCH_STATUS_ENUM = ["pending", "completed", "failed"] as const;
 
@@ -24,6 +24,6 @@ export const EVENT_STATE_ENUM = ["not_started", "in_progress", "completed"] as c
 
 export const STORE_STATUS_ENUM = ["closed", "open", "temporarily_closed"] as const;
 
-export const TITLE_TYPE_ENUM = ["normal", "bronze", "silver", "gold", "rainbow"] as const;
+export { MAIMAI_TITLE_TYPES as TITLE_TYPE_ENUM } from "@tomomai/utils/game-codes";
 
 export const DB_TYPES = ["songs", "stats", "events", "posts"] as const;
