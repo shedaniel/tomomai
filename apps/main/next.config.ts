@@ -187,14 +187,6 @@ const nextConfig: NextConfig = {
       }
     ],
     remotePatterns: [
-      // TODO: Remove after CHUNITHM jackets are served from our cover storage.
-      {
-        protocol: 'https',
-        hostname: 'raw.githubusercontent.com',
-        port: '',
-        pathname: '/zvuc/otoge-db/main/chunithm/jacket/**',
-        search: '',
-      },
       {
         protocol: 'https',
         hostname: 'cdn.discordapp.com',
