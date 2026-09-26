@@ -138,8 +138,8 @@ Implementation ownership:
 - [`otp.ts`](../apps/main/src/lib/otp.ts) binds game and user in the existing
   signed login authorization. The token dialog requests an OTP for its current
   game; a login link requires a configured source with a verified cookie-login
-  URL. Existing gateway fields remain unchanged, and legacy authorizations
-  resolve only to maimai.
+  URL. Existing gateway fields remain unchanged. Only versioned, game-bound
+  authorizations are accepted; pre-versioned codes must be replaced with a new OTP.
 
 After maintenance, verify CHUNITHM's actual login endpoints, parameters, cookies
 and authenticated page structure before adding its game-specific login

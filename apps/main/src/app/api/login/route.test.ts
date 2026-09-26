@@ -49,11 +49,10 @@ beforeEach(() => {
 });
 afterEach(() => { vi.useRealTimers(); vi.unstubAllEnvs(); });
 
-it("accepts existing maimai gateway links without allowing an unsigned game override", async () => {
-  const response = await callback("c2FtZS1vd25lcg.zTB2EfssA1i_lOxmLZKrZPpIWEmaiqDza9Dgq1k3iLM", "622184", { game: "chunithm" });
-  expect(response.status).toBe(200);
-  expect(await response.json()).toMatchObject({ success: true, sessionId: "fetch-session" });
-  expect(mocks.start).toHaveBeenCalledWith(expect.objectContaining({ game: "maimai", userId: "same-owner", region: "intl", token: "cookie://gateway-cookie" }));
+it("rejects pre-versioned authorization even with a valid OTP", async () => {
+  const response = await callback("c2FtZS1vd25lcg.zTB2EfssA1i_lOxmLZKrZPpIWEmaiqDza9Dgq1k3iLM", "622184");
+  expect(response.status).toBe(401);
+  expect(mocks.start).not.toHaveBeenCalled();
 });
 
 it("issues game-bound authorization through the unchanged gateway fields", async () => {
@@ -65,8 +64,8 @@ it("issues game-bound authorization through the unchanged gateway fields", async
   const fields = new URLSearchParams(link.hash.slice(1));
   expect([...fields.keys()]).toEqual(["otp", "user"]);
   const authorization = fields.get("user")!;
-  expect((await callback(authorization, fields.get("otp")!)).status).toBe(200);
-  expect(mocks.start).toHaveBeenCalledWith(expect.objectContaining({ game: "maimai", userId: "same-owner" }));
+  expect((await callback(authorization, fields.get("otp")!, { game: "chunithm" })).status).toBe(200);
+  expect(mocks.start).toHaveBeenCalledWith(expect.objectContaining({ game: "maimai", userId: "same-owner", region: "intl", token: "cookie://gateway-cookie" }));
 
   const [version, payload, signature] = authorization.split(".");
   const changedPayload = Buffer.from(JSON.stringify({ ...JSON.parse(Buffer.from(payload, "base64url").toString()), game: "chunithm" })).toString("base64url");

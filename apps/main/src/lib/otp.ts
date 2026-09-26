@@ -34,20 +34,12 @@ export function createLoginAuthorization(userId: string, game: CanonicalGameId):
 
 export function decodeLoginAuthorization(opaque: string): { userId: string; game: CanonicalGameId } | null {
   const parts = opaque.split(".");
-  const versioned = parts.length === 3 && parts[0] === "v1";
-  if (!versioned && parts.length !== 2) return null;
-  const [payload, signature] = versioned ? parts.slice(1) : parts;
+  if (parts.length !== 3 || parts[0] !== "v1") return null;
+  const [, payload, signature] = parts;
   if (!payload || !signature) return null;
 
-  let decoded: string;
-  try {
-    decoded = Buffer.from(payload, "base64url").toString("utf8");
-  } catch {
-    return null;
-  }
-
   const expectedSignature = createHmac("sha256", getMasterSecret())
-    .update(versioned ? `v1.${payload}` : decoded)
+    .update(`v1.${payload}`)
     .digest("base64url");
 
   const provided = Buffer.from(signature, "base64url");
@@ -57,10 +49,8 @@ export function decodeLoginAuthorization(opaque: string): { userId: string; game
     return null;
   }
 
-  // Existing gateway links carry a signed user ID and authorize maimai only.
-  if (!versioned) return { userId: decoded, game: "maimai" };
   try {
-    const authorization: unknown = JSON.parse(decoded);
+    const authorization: unknown = JSON.parse(Buffer.from(payload, "base64url").toString("utf8"));
     if (!authorization || typeof authorization !== "object" || !("userId" in authorization) || typeof authorization.userId !== "string" || !("game" in authorization)) return null;
     const game = gameIdSchema.safeParse(authorization.game);
     return game.success ? { userId: authorization.userId, game: game.data } : null;
