@@ -3,7 +3,6 @@ import { GAME_CODE_MAPS } from "../../codes";
 import { calculateChunithmChartRating, selectChunithmRankings } from "../../rating";
 import type { GameAdapter } from "../../types";
 import { chunithmVersionProvider } from "../../versions";
-import { chunithmCatalogAdapter } from "@/server/services/catalog/chunithm/pipeline";
 
 export const chunithmAdapter: GameAdapter = {
   game: "chunithm",
@@ -11,7 +10,14 @@ export const chunithmAdapter: GameAdapter = {
   supportedRegions: GAME_SUPPORTED_REGIONS.chunithm,
   versions: chunithmVersionProvider,
   codes: GAME_CODE_MAPS.chunithm,
-  catalog: chunithmCatalogAdapter,
+  catalog: {
+    configured: true,
+    resolveVersion: region => chunithmVersionProvider.getCurrentVersion(region),
+    async collect(context) {
+      const { chunithmCatalogAdapter } = await import("@/server/services/catalog/chunithm/pipeline");
+      return chunithmCatalogAdapter.collect!(context);
+    },
+  },
   scores: {
     configured: false,
     notConfiguredReason: "CHUNITHM score fetching is not implemented; no upstream provider is configured.",
