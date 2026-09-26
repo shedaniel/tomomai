@@ -12,7 +12,7 @@ import { processCatalogImages } from "./images";
 const log = pino({ enabled: false });
 const chart = (cover: string): PendingChart => ({ game: "maimai", songName: "Song", chartType: 0, difficulty: 3, cover });
 beforeEach(() => {
-  vi.clearAllMocks();
+  vi.resetAllMocks();
   vi.stubEnv("NEXT_PUBLIC_R2_URL", "https://catalog.example.test");
   mocks.list.mockResolvedValue(new Set(["music_dx.webp", "music_standard.webp"]));
   mocks.fetch.mockResolvedValue(Buffer.from("source"));
@@ -35,22 +35,48 @@ describe("catalog image processing", () => {
     expect(result.songs.map(song => song.cover)).toEqual(Array(2).fill("https://catalog.example.test/covers/shared.webp"));
     expect(result.stats).toEqual({ uploaded: 1, skipped: 0, unchanged: 0 });
   });
-  it("retains unmatched CHUNITHM covers without fetching maimai static assets", async () => {
-    mocks.list.mockResolvedValue(new Set());
-    const record = { ...chart("https://raw.githubusercontent.com/zvuc/otoge-db/main/chunithm/jacket/example.jpg"), game: "chunithm" as const };
+  it("deduplicates CHUNITHM covers under a game-specific key and preserves chart metadata", async () => {
+    const cover = "https://raw.githubusercontent.com/zvuc/otoge-db/main/chunithm/jacket/example.jpg";
+    const records: PendingChart[] = [3, 4].map(difficulty => ({
+      ...chart(cover), game: "chunithm", difficulty, metadata: { otogeDb: { id: "123" } },
+    }));
+    mocks.list.mockResolvedValue(new Set(["example.webp"]));
+    const result = await processCatalogImages("chunithm", records, log);
+    expect(mocks.fetch).toHaveBeenCalledExactlyOnceWith(cover, "");
+    expect(mocks.convert).toHaveBeenCalledExactlyOnceWith(Buffer.from("source"));
+    expect(mocks.upload).toHaveBeenCalledExactlyOnceWith(Buffer.from("webp"), "chunithm/example");
+    expect(result.songs).toEqual(records.map(record => ({ ...record, cover: "https://catalog.example.test/covers/chunithm/example.webp" })));
+    expect(result.stats).toEqual({ uploaded: 1, skipped: 0, unchanged: 0 });
+  });
+  it("reuses a CHUNITHM cover uploaded by a previous regional run", async () => {
+    const record: PendingChart = { ...chart("https://raw.githubusercontent.com/zvuc/otoge-db/main/chunithm/jacket/example.jpg"), game: "chunithm" };
+    mocks.list.mockResolvedValue(new Set(["chunithm/example.webp"]));
+    const result = await processCatalogImages("chunithm", [record], log);
+    expect(result.songs).toEqual([{ ...record, cover: "https://catalog.example.test/covers/chunithm/example.webp" }]);
+    expect(result.stats).toEqual({ uploaded: 0, skipped: 1, unchanged: 0 });
+    expect(mocks.fetch).not.toHaveBeenCalled();
+    expect(mocks.convert).not.toHaveBeenCalled();
+    expect(mocks.upload).not.toHaveBeenCalled();
+  });
+  it.each(["fetch", "convert", "upload"] as const)("rejects a CHUNITHM cover %s failure", async stage => {
+    const record: PendingChart = { ...chart("https://raw.githubusercontent.com/zvuc/otoge-db/main/chunithm/jacket/example.jpg"), game: "chunithm" };
+    const error = new Error(`${stage} failed`);
+    mocks[stage].mockRejectedValueOnce(error);
+    await expect(processCatalogImages("chunithm", [record], log)).rejects.toBe(error);
+  });
+  it.each([
+    "https://catalog.example.test/covers/chunithm/example.webp",
+    "https://maimaidx.com/maimai-mobile/img/Music/shared.png",
+    "https://example.test/chunithm/jacket/example.jpg",
+  ])("retains unmatched CHUNITHM covers without storage work: %s", async cover => {
+    const record: PendingChart = { ...chart(cover), game: "chunithm" };
     const result = await processCatalogImages("chunithm", [record], log);
     expect(result.songs).toEqual([record]);
     expect(result.stats).toEqual({ uploaded: 0, skipped: 0, unchanged: 1 });
     expect(mocks.list).not.toHaveBeenCalled();
     expect(mocks.fetch).not.toHaveBeenCalled();
+    expect(mocks.convert).not.toHaveBeenCalled();
     expect(mocks.upload).not.toHaveBeenCalled();
-  });
-  it("does not apply maimai cover rules to CHUNITHM records", async () => {
-    const record = { ...chart("https://maimaidx.com/maimai-mobile/img/Music/shared.png"), game: "chunithm" as const };
-    const result = await processCatalogImages("chunithm", [record], log);
-    expect(result.songs).toEqual([record]);
-    expect(mocks.list).not.toHaveBeenCalled();
-    expect(mocks.fetch).not.toHaveBeenCalled();
   });
   it("still uploads missing maimai static assets when no covers need work", async () => {
     mocks.list.mockResolvedValue(new Set());

@@ -33,7 +33,8 @@ Catalog ingestion lives under `apps/main/src/server/services/catalog/`:
 - `chunithm/` owns its executable pipeline and otoge-db source under `sources/`,
   with source fixtures and tests beside that implementation.
 - `images.ts` processes incoming covers; `image-cache.ts` caches stored catalog
-  covers. Maimai URL/static-asset rules live in `maimai/images.ts`.
+  covers. Game URL/static-asset rules live in `maimai/images.ts` and
+  `chunithm/images.ts`.
 - `publication.ts` publishes game-scoped catalog objects; `notifications.ts`
   formats and delivers the existing ingestion notices.
 
@@ -55,7 +56,13 @@ Versions observed in the saved fixtures (2026-09-26):
 | International | `chunithm/data/music-ex-intl.json` | X-VERSE-X (8) |
 
 Both files come from `https://raw.githubusercontent.com/zvuc/otoge-db/main/`.
-Cover images use the same repository's `chunithm/jacket/<image>` path.
+Cover images come from the same repository's `chunithm/jacket/<image>` path.
+The shared image stage converts them to WebP and stores them at
+`${NEXT_PUBLIC_R2_URL}/covers/chunithm/<source-basename>.webp`. The game directory
+avoids collisions with maimai, and both regions reuse the same stored jacket.
+Existing objects skip downloading, conversion and upload. Image failures abort
+that region's workflow before database persistence; raw source URLs are not used
+as a fallback.
 
 This provider supports current snapshots only. The current version comes from
 the existing CHUNITHM version provider, including its regional release dates
@@ -131,8 +138,17 @@ Invoke the admin API on the tomomai instance for either game, independently of
 `FRONTEND_GAME`:
 
 - `/api/admin/update?game=chunithm&region=jp` collects and returns the catalog.
-- `/api/admin/update_all?game=chunithm&region=jp&image_upload=false` runs the
-  catalog ingestion workflow. Use `region=intl` for International.
+- `/api/admin/update_all?game=chunithm&image_upload=true` runs catalog ingestion
+  for the configured regions (International then JP by default). Add `region=jp`
+  or `region=intl` to select one region explicitly.
+
+Image processing is enabled by default. Do not pass `image_upload=false` when
+publishing CHUNITHM: that bypasses cover hosting and can persist upstream URLs
+that the frontend does not allow. To replace covers in an existing imported
+catalog, rerun `region=jp` and `region=intl` with images enabled. International
+alone may leave JP-preferred parent covers unchanged; each region's publication
+rebuilds all of the game's catalog slices, so a JP update also republishes
+International.
 
 Existing admin authentication remains required. A game account token is not
 required for this public provider. Ingestion and publication still need the
