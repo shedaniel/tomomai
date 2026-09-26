@@ -1,5 +1,5 @@
 import { ACHIEVEMENTS } from "@/lib/difficulty";
-import { calculateMaimaiChartRating, calculateChunithmChartRating } from "./rating";
+import { GAME_RANKING_SIZES, calculateMaimaiChartRating, calculateChunithmChartRating } from "./rating";
 import { GAME_CODE_MAPS, getGrade } from "./codes";
 import type { CanonicalGameId } from "./types";
 
@@ -46,24 +46,25 @@ export function getGameStatusLabels(game: CanonicalGameId, status: {
 }
 
 export function getGameRankingBuckets(game: CanonicalGameId) {
+  const sizes = GAME_RANKING_SIZES[game];
   return [
-    { code: 1, key: "new", label: game === "maimai" ? "B15" : "B20", size: game === "maimai" ? 15 : 20 },
-    { code: 2, key: "old", label: game === "maimai" ? "B35" : "B30", size: game === "maimai" ? 35 : 30 },
+    { code: 1, key: "new", label: `B${sizes.new}`, size: sizes.new },
+    { code: 2, key: "old", label: `B${sizes.old}`, size: sizes.old },
   ] as const;
 }
 
-export function getGameDifficultyColors(game: CanonicalGameId, value: number | string): { text: string; bg: string; ring: string } {
+const difficultyStyles = [
+  { text: "text-green-700 dark:text-green-300", bg: "bg-green-100 dark:bg-green-950", ring: "ring-green-400 dark:ring-green-600", badge: "bg-green-500 dark:bg-green-600 text-white" },
+  { text: "text-yellow-700 dark:text-yellow-300", bg: "bg-yellow-100 dark:bg-yellow-950", ring: "ring-yellow-400 dark:ring-yellow-600", badge: "bg-yellow-500 dark:bg-yellow-600 text-white" },
+  { text: "text-red-700 dark:text-red-300", bg: "bg-red-100 dark:bg-red-950", ring: "ring-red-400 dark:ring-red-600", badge: "bg-red-500 dark:bg-red-600 text-white" },
+  { text: "text-purple-700 dark:text-purple-300", bg: "bg-purple-100 dark:bg-purple-950", ring: "ring-purple-500 dark:ring-purple-600", badge: "bg-purple-500 dark:bg-purple-600 text-white" },
+  { text: "text-purple-900 dark:text-purple-200", bg: "bg-purple-50 dark:bg-purple-950", ring: "ring-purple-200 dark:ring-purple-400", badge: "bg-purple-200 text-purple-900 dark:bg-purple-400 dark:text-purple-900" },
+  { text: "text-pink-700 dark:text-pink-300", bg: "bg-pink-100 dark:bg-pink-950", ring: "ring-pink-400 dark:ring-pink-600", badge: "bg-pink-500 dark:bg-pink-600 text-white" },
+];
+export function getGameDifficultyColors(game: CanonicalGameId, value: number | string) {
   const code = getGameCode(game, "difficulty", value);
-  if (game === "chunithm" && code === 4) return { text: "text-red-700 dark:text-red-300", bg: "bg-red-100 dark:bg-red-950", ring: "ring-red-700" };
-  const colors = [
-    { text: "text-green-700 dark:text-green-300", bg: "bg-green-100 dark:bg-green-950", ring: "ring-green-400" },
-    { text: "text-yellow-700 dark:text-yellow-300", bg: "bg-yellow-100 dark:bg-yellow-950", ring: "ring-yellow-400" },
-    { text: "text-red-700 dark:text-red-300", bg: "bg-red-100 dark:bg-red-950", ring: "ring-red-400" },
-    { text: "text-purple-700 dark:text-purple-300", bg: "bg-purple-100 dark:bg-purple-950", ring: "ring-purple-500" },
-    { text: "text-purple-900 dark:text-purple-200", bg: "bg-purple-50 dark:bg-purple-950", ring: "ring-purple-200" },
-    { text: "text-pink-700 dark:text-pink-300", bg: "bg-pink-100 dark:bg-pink-950", ring: "ring-pink-400" },
-  ];
-  return colors[code] ?? { text: "text-muted-foreground", bg: "bg-muted", ring: "ring-border" };
+  if (game === "chunithm" && code === 4) return { text: "text-red-700 dark:text-red-300", bg: "bg-red-100 dark:bg-red-950", ring: "ring-red-700 dark:ring-red-500", badge: "bg-red-800 text-white dark:bg-red-700" };
+  return difficultyStyles[code] ?? { text: "text-muted-foreground", bg: "bg-muted", ring: "ring-border", badge: "bg-muted text-muted-foreground" };
 }
 
 export function getGameDifficultyHex(game: CanonicalGameId, value: number | string): string {

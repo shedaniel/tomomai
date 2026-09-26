@@ -29,7 +29,7 @@ let client: QueryClient;
 const initial = fixture("maimai", "latest");
 function Probe({ region = "jp" }: { region?: Region }) {
   result = useSnapshots(region, true, { initialSnapshots: [initial.summary], initialSnapshotData: initial.data });
-  return <span>{result.normalizedSnapshotData?.snapshot.displayName}</span>;
+  return <span>{result.selectedSnapshotData?.snapshot.displayName}</span>;
 }
 async function render(game: "maimai" | "chunithm" = "maimai", region: Region = "jp") {
   const descriptor: FrontendGame = { id: game, displayName: game, productName: game === "maimai" ? "tomomai" : "tomochu", enabled: true, regions: ["jp", "intl"], capabilities: ["scores"] };
@@ -76,7 +76,7 @@ describe("snapshot query lifecycle", () => {
     await render(game, region); await settle(); await settle();
     expect(transport.list).toHaveBeenCalledWith({ game, region });
     expect(transport.detail).toHaveBeenCalledWith({ game, region, snapshotId: `${game}-fresh` });
-    expect(result.normalizedSnapshotData?.snapshot.game).toBe(game);
+    expect(result.selectedSnapshotData?.snapshot.game).toBe(game);
     expect(container.textContent).toBe(`${game}-fresh`);
   });
 });

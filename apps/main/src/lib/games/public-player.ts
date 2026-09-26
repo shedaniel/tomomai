@@ -1,4 +1,5 @@
 import { getPlayerRankings, type GameSnapshotData } from "./player-view";
+import { calculateMaimaiChartRating, calculateChunithmChartRating } from "./rating";
 import type { CanonicalGameId } from "./types";
 
 export interface PlayerPrivacy {
@@ -11,7 +12,9 @@ export interface PlayerPrivacy {
 export function toPublicGameSnapshot(game: CanonicalGameId, data: GameSnapshotData, privacy: PlayerPrivacy): GameSnapshotData {
   if (data.snapshot.game !== game) throw new Error("Snapshot game does not match the public profile");
   const rankings = getPlayerRankings(game, data);
-  const chartRatings = new Map([...rankings.newScores, ...rankings.oldScores, ...rankings.newRemaining, ...rankings.oldRemaining].map(score => [score.songId, score.rating]));
+  const chartRatings = new Map(data.songs.map(score => [score.songId, score.chartRating ?? (game === "maimai"
+    ? calculateMaimaiChartRating(score.scoreValue, score.levelPrecise, score.difficultyCode, score.comboStatus, data.snapshot.gameVersion)
+    : calculateChunithmChartRating(score.scoreValue, score.levelPrecise))]));
   const visibleIds = new Set([...rankings.newScores, ...rankings.oldScores].map(score => score.songId));
   return {
     snapshot: {

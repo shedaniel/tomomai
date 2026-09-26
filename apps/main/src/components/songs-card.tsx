@@ -2,8 +2,9 @@
 
 import { useGameId } from "@/components/providers/game-provider";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@tomomai/ui";
-import { SongWithRating, splitSongs } from "@/lib/rating-calculator";
-import { MinimalSongForDisplay, SnapshotWithSongs } from "@/lib/types";
+import { getPlayerRankings, type GamePlayerScore, type GameSnapshotData } from "@/lib/games/player-view";
+import { formatGameScore, formatGameRating, formatGameLevel, getGameDifficultyColors, getGameDifficultyLabel, getGameChartTypeLabel, getGameStatusLabels, getGameRankingBuckets, getGameScoreLabelKey } from "@/lib/games/presentation";
+import { codeToDifficulty, codeToChartType } from "@/lib/maimai/codes";
 import { cn, createSafeMaimaiImageUrl, getTypeBadgeUrl } from "@/lib/utils";
 import { LayoutGrid, LayoutList, Menu, Plus, Search, TrendingUp } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -15,12 +16,19 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@tomomai/ui";
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 import { SongHoverCard } from "@/components/song-hover-card";
-import { renderLevelPrecise } from "@/lib/name-utils";
 import { motion, AnimatePresence } from "motion/react";
 import { SPRING_CONFIGS, STAGGER, getTransition } from "@/lib/animation-constants";
 import { trpc } from "@/lib/trpc-client";
 import { Flags } from "@/lib/flags";
 import type { PercentileEntry, PercentileMap } from "@/lib/percentile-types";
+
+type DisplayScore = Pick<GamePlayerScore, "songId" | "songName" | "artist" | "cover" | "difficultyCode" | "typeCode" | "levelPrecise" | "scoreValue" | "secondaryScore" | "comboStatus" | "syncStatus" | "clearStatus">;
+type SongWithRating = GamePlayerScore & { rating: number };
+
+function ScoreHover({ song, children, ...props }: { song: DisplayScore; children: React.ReactNode; side?: "right"; percentile?: PercentileEntry & { userAchievement: number } }) {
+  const game = useGameId();
+  return game === "maimai" ? <SongHoverCard song={{ ...song, difficulty: codeToDifficulty(song.difficultyCode), type: codeToChartType(song.typeCode) }} {...props}>{children}</SongHoverCard> : <>{children}</>;
+}
 
 // Helper function to group songs by individual rating values and difficulty
 function groupSongsByRating(songs: SongWithRating[]) {
@@ -36,12 +44,12 @@ function groupSongsByRating(songs: SongWithRating[]) {
 
     // Group by difficulty within each rating
     const difficultyCounts = {
-      basic: songsAtRating.filter(s => s.difficulty === 'basic').length,
-      advanced: songsAtRating.filter(s => s.difficulty === 'advanced').length,
-      expert: songsAtRating.filter(s => s.difficulty === 'expert').length,
-      master: songsAtRating.filter(s => s.difficulty === 'master').length,
-      remaster: songsAtRating.filter(s => s.difficulty === 'remaster').length,
-      utage: songsAtRating.filter(s => s.difficulty === 'utage').length,
+      basic: songsAtRating.filter(s => s.difficultyCode === 0).length,
+      advanced: songsAtRating.filter(s => s.difficultyCode === 1).length,
+      expert: songsAtRating.filter(s => s.difficultyCode === 2).length,
+      master: songsAtRating.filter(s => s.difficultyCode === 3).length,
+      remaster: songsAtRating.filter(s => s.difficultyCode === 4).length,
+      utage: songsAtRating.filter(s => s.difficultyCode === 5).length,
     };
 
     grouped.push({
@@ -152,20 +160,16 @@ function RatingChart({ songs, title }: { songs: SongWithRating[]; title: string 
 
 // Component for rendering individual song rows
 const SongRow = forwardRef<HTMLDivElement, { song: SongWithRating; percentile?: PercentileEntry } & React.HTMLAttributes<HTMLDivElement>>(({ song, percentile, ...props }, ref) => {
+  const game = useGameId();
   return (
-    <SongHoverCard song={song} percentile={percentile ? { ...percentile, userAchievement: song.achievement } : undefined}>
+    <ScoreHover song={song} percentile={percentile ? { ...percentile, userAchievement: song.scoreValue } : undefined}>
       <div ref={ref} {...props} className={cn("group relative isolate flex justify-between items-center text-sm border-b border-dashed border-border pb-1.5 h-12 px-2 -mx-2 cursor-pointer", props.className)}>
         <div className="absolute inset-x-0 -top-1.5 bottom-0 rounded-md group-hover:bg-muted/50 transition-colors -z-10" />
         <CoverImage coverUrl={song.cover}
           alt={song.songName}
           className={cn(
             "w-8 h-8 ml-1 mr-3 rounded ring-2 ring-offset-2 ring-offset-background",
-            song.difficulty === "basic" && "ring-green-400",
-            song.difficulty === "advanced" && "ring-yellow-400",
-            song.difficulty === "expert" && "ring-red-400",
-            song.difficulty === "master" && "ring-purple-500",
-            song.difficulty === "remaster" && "ring-purple-200",
-            song.difficulty === "utage" && "ring-pink-400",
+            getGameDifficultyColors(game, song.difficultyCode).ring,
           )}
           width={36}
           height={36}
@@ -174,17 +178,17 @@ const SongRow = forwardRef<HTMLDivElement, { song: SongWithRating; percentile?: 
         />
         <div className="flex-1 min-w-0">
           <div className="truncate font-medium">{song.songName}&#8203;</div>
-          <div className="text-muted-foreground text-xs truncate">{song.type.toUpperCase()} • {song.difficulty.slice(0, 3).toUpperCase()} {renderLevelPrecise(song.levelPrecise, song.difficulty)} • {song.artist}</div>
+          <div className="text-muted-foreground text-xs truncate">{getGameChartTypeLabel(game, song.typeCode)} • {getGameDifficultyLabel(game, song.difficultyCode)} {formatGameLevel(game, song.levelPrecise, song.difficultyCode)} • {song.artist}</div>
         </div>
         <div className="text-right ml-2">
-          <div className="font-mono">{(song.achievement / 10000).toFixed(4)}%</div>
-          <div className="text-xs text-muted-foreground">{song.fc !== 'none' ? song.fc.toUpperCase() : ''} {song.fs !== 'none' ? song.fs.toUpperCase() : ''}&#8203;</div>
+          <div className="font-mono">{formatGameScore(game, song.scoreValue)}</div>
+          <div className="text-xs text-muted-foreground">{getGameStatusLabels(game, song).join(" ")}&#8203;</div>
         </div>
         <div className="text-right ml-4 mr-2">
-          <div className="font-mono text-md font-semibold">{song.rating}</div>
+          <div className="font-mono text-md font-semibold">{formatGameRating(game, song.rating)}</div>
         </div>
       </div>
-    </SongHoverCard>
+    </ScoreHover>
   );
 });
 SongRow.displayName = "SongRow";
@@ -200,6 +204,7 @@ function CompactSongSection({ title, songs, count, t, sum, average, visibleCount
   visibleCount: number;
   onLoadMore: () => void;
 }) {
+  const game = useGameId();
   const hasMore = visibleCount < songs.length;
   const loadMore = useCallback(() => {
     if (hasMore) onLoadMore();
@@ -220,14 +225,14 @@ function CompactSongSection({ title, songs, count, t, sum, average, visibleCount
               <div className="flex items-center gap-1 whitespace-nowrap">
                 <Plus className="h-3 w-3" />
                 <span>{t('dataContent.statistics.sum')}</span>
-                <span className="font-mono font-medium">{sum}</span>
+                <span className="font-mono font-medium">{formatGameRating(game, sum)}</span>
               </div>
             )}
             {average !== undefined && (
               <div className="flex items-center gap-1 whitespace-nowrap">
                 <TrendingUp className="h-3 w-3" />
                 <span>{t('dataContent.statistics.average')}</span>
-                <span className="font-mono font-medium">{average.toFixed(2)}</span>
+                <span className="font-mono font-medium">{game === "maimai" ? average.toFixed(2) : formatGameRating(game, average)}</span>
               </div>
             )}
           </div>
@@ -245,13 +250,13 @@ function CompactSongSection({ title, songs, count, t, sum, average, visibleCount
           {t('dataContent.tableHeaders.level')}
         </div>
         <div className="font-semibold text-muted-foreground border-b border-border pb-1 px-2 text-center whitespace-nowrap">
-          {t('dataContent.tableHeaders.achievement')}
+          {t(getGameScoreLabelKey(game))}
         </div>
         <div className="font-semibold text-muted-foreground border-b border-border pb-1 px-2 min-w-10 text-center whitespace-nowrap">
-          {t('dataContent.tableHeaders.fc')}
+          {game === "maimai" ? t("dataContent.tableHeaders.fc") : t("dataContent.tableHeaders.status")}
         </div>
         <div className="font-semibold text-muted-foreground border-b border-border pb-1 px-2 min-w-10 text-center whitespace-nowrap">
-          {t('dataContent.tableHeaders.fs')}
+          {game === "maimai" ? t("dataContent.tableHeaders.fs") : t("dataContent.tableHeaders.status")}
         </div>
         <div className="font-semibold text-muted-foreground border-b border-border pb-1 px-2 text-center whitespace-nowrap">
           {t('dataContent.tableHeaders.rating')}
@@ -259,7 +264,7 @@ function CompactSongSection({ title, songs, count, t, sum, average, visibleCount
 
         {/* Song Data */}
         {visibleSongs.map(song => (
-          <Fragment key={`${song.songId}-${song.difficulty}`}>
+          <Fragment key={`${song.songId}-${song.difficultyCode}`}>
             <div className="truncate font-medium py-1 px-2 border-b border-dashed border-border/90">
               {song.songName}
             </div>
@@ -267,26 +272,22 @@ function CompactSongSection({ title, songs, count, t, sum, average, visibleCount
               {song.artist}
             </div>
             <div className={cn("text-center border-b grid items-center font-medium border-dashed",
-              song.difficulty === "basic" && "bg-green-100 text-green-800 border-green-200 dark:bg-green-600/30 dark:text-green-400 dark:border-green-800",
-              song.difficulty === "advanced" && "bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-600/30 dark:text-yellow-400 dark:border-yellow-800",
-              song.difficulty === "expert" && "bg-red-100 text-red-800 border-red-200 dark:bg-red-600/30 dark:text-red-400 dark:border-red-800",
-              song.difficulty === "master" && "bg-purple-300 text-purple-900 border-purple-400 dark:bg-purple-600/30 dark:text-purple-400 dark:border-purple-800",
-              song.difficulty === "remaster" && "bg-purple-50 text-purple-800 border-purple-200 dark:bg-purple-50/80 dark:border-purple-300",
-              song.difficulty === "utage" && "bg-pink-100 text-pink-800 border-pink-200 dark:bg-pink-600/30 dark:text-pink-400 dark:border-pink-800",
+              getGameDifficultyColors(game, song.difficultyCode).bg,
+              getGameDifficultyColors(game, song.difficultyCode).text,
             )}>
-              {renderLevelPrecise(song.levelPrecise, song.difficulty)}
+              {formatGameLevel(game, song.levelPrecise, song.difficultyCode)}
             </div>
             <div className="text-right font-mono py-1 px-2 border-b border-dashed border-border/90">
-              {(song.achievement / 10000).toFixed(4)}%
+              {formatGameScore(game, song.scoreValue)}
             </div>
             <div className="text-center text-muted-foreground py-1 px-2 border-b border-dashed border-border/90">
-              {song.fc !== 'none' ? song.fc.toUpperCase() : ''}
+              {getGameStatusLabels(game, { comboStatus: song.comboStatus }).join(" ")}
             </div>
             <div className="text-center text-muted-foreground py-1 px-2 border-b border-dashed border-border/90">
-              {song.fs !== 'none' ? song.fs.toUpperCase() : ''}
+              {getGameStatusLabels(game, { syncStatus: song.syncStatus, clearStatus: song.clearStatus }).join(" ")}
             </div>
             <div className="text-right font-mono font-semibold py-1 px-2 border-b border-dashed border-border/90">
-              {song.rating}
+              {formatGameRating(game, song.rating)}
             </div>
           </Fragment>
         ))}
@@ -301,7 +302,8 @@ function CompactSongSection({ title, songs, count, t, sum, average, visibleCount
 }
 
 // Component for rendering individual song cards in grid view
-export const SongGridCard = forwardRef<HTMLDivElement, { song: MinimalSongForDisplay; percentile?: PercentileEntry } & React.HTMLAttributes<HTMLDivElement>>(({ song, percentile, ...props }, ref) => {
+export const SongGridCard = forwardRef<HTMLDivElement, { song: DisplayScore & { rating?: number }; percentile?: PercentileEntry } & React.HTMLAttributes<HTMLDivElement>>(({ song, percentile, ...props }, ref) => {
+  const game = useGameId();
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const card = e.currentTarget;
     const rect = card.getBoundingClientRect();
@@ -355,17 +357,12 @@ export const SongGridCard = forwardRef<HTMLDivElement, { song: MinimalSongForDis
   };
 
   return (
-    <SongHoverCard song={song} side="right" percentile={percentile ? { ...percentile, userAchievement: song.achievement } : undefined}>
+    <ScoreHover song={song} side="right" percentile={percentile ? { ...percentile, userAchievement: song.scoreValue } : undefined}>
       <div
         ref={ref}
         {...props}
         className={cn("relative bg-white rounded-[8px] shadow-md transition-all duration-300 ease-out cursor-pointer ring-2",
-          song.difficulty === "basic" && "ring-green-400",
-          song.difficulty === "advanced" && "ring-yellow-400",
-          song.difficulty === "expert" && "ring-red-400",
-          song.difficulty === "master" && "ring-purple-500",
-          song.difficulty === "remaster" && "ring-purple-200",
-          song.difficulty === "utage" && "ring-pink-400",
+          getGameDifficultyColors(game, song.difficultyCode).ring,
           props.className
         )}
         style={{ ...props.style, aspectRatio: '16/10', transformStyle: 'preserve-3d', transform: 'perspective(1000px)' }}
@@ -388,14 +385,9 @@ export const SongGridCard = forwardRef<HTMLDivElement, { song: MinimalSongForDis
         {/* Difficulty Badge */}
         <div className={cn(
           "absolute top-[-0.5px] right-[-0.5px] px-1.5 py-0.5 rounded-tr-[8px] rounded-bl-[8px] overflow-hidden text-[10px] font-semibold text-white",
-          song.difficulty === "basic" && "bg-green-500",
-          song.difficulty === "advanced" && "bg-yellow-500",
-          song.difficulty === "expert" && "bg-red-500",
-          song.difficulty === "master" && "bg-purple-500",
-          song.difficulty === "remaster" && "bg-purple-200 text-purple-900",
-          song.difficulty === "utage" && "bg-pink-500",
+          getGameDifficultyColors(game, song.difficultyCode).badge,
         )}>
-          {renderLevelPrecise(song.levelPrecise, song.difficulty)}
+          {formatGameLevel(game, song.levelPrecise, song.difficultyCode)}
         </div>
 
         {/* Glow Effect */}
@@ -405,14 +397,14 @@ export const SongGridCard = forwardRef<HTMLDivElement, { song: MinimalSongForDis
           style={{ transform: 'translateZ(30px)' }}>
           {/* Song Type Badge */}
           <div className="absolute top-2.5 left-2.5 2xs:max-xs:left-2 2xs:max-xs:top-2 2xs:max-xs:scale-75 origin-top-left z-30">
-            <img
-              src={createSafeMaimaiImageUrl(getTypeBadgeUrl(song.type))}
-              alt={song.type.toUpperCase()}
+            {game === "maimai" ? <img
+              src={createSafeMaimaiImageUrl(getTypeBadgeUrl(song.typeCode === 1 ? "dx" : "std"))}
+              alt={getGameChartTypeLabel(game, song.typeCode)}
               width={37}
               height={11}
               className="drop-shadow-md"
               loading="lazy"
-            />
+            /> : <span className="rounded bg-background/90 px-1 text-xs text-foreground">{getGameChartTypeLabel(game, song.typeCode)}</span>}
           </div>
 
           {/* Song Info */}
@@ -425,20 +417,20 @@ export const SongGridCard = forwardRef<HTMLDivElement, { song: MinimalSongForDis
             <div className="flex justify-between items-end">
               <div className="2xs:max-xs:text-2xs text-xs space-x-1 2xs:max-xs:space-x-0.5">
                 <span className="2xs:max-xs:text-[9px] font-mono font-medium drop-shadow-md">
-                  {(song.achievement / 10000).toFixed(4)}%
+                  {formatGameScore(game, song.scoreValue)}
                 </span>
                 <span className="2xs:max-xs:text-[7px] text-[10px] opacity-75 drop-shadow-md whitespace-nowrap">
-                  {song.fc !== 'none' ? song.fc.toUpperCase() : ''}{song.fc !== 'none' && song.fs !== 'none' ? ' ' : ''}{song.fs !== 'none' ? song.fs.toUpperCase() : ''}
+                  {getGameStatusLabels(game, song).join(" ")}
                 </span>
               </div>
               <span className="2xs:max-xs:text-sm text-right text-lg font-bold font-mono drop-shadow-md leading-none align-bottom">
-                {"rating" in song ? song.rating as number : ''}
+                {song.rating == null ? "" : formatGameRating(game, song.rating)}
               </span>
             </div>
           </div>
         </div>
       </div>
-    </SongHoverCard>
+    </ScoreHover>
   );
 });
 SongGridCard.displayName = "SongGridCard";
@@ -456,6 +448,7 @@ function SongSection({ title, songs, count, displayMode, t, sum, average, visibl
   onLoadMore: () => void;
   percentileMap?: PercentileMap;
 }) {
+  const game = useGameId();
   const hasMore = visibleCount < songs.length;
   const loadMore = useCallback(() => {
     if (hasMore) onLoadMore();
@@ -481,14 +474,14 @@ function SongSection({ title, songs, count, displayMode, t, sum, average, visibl
               <div className="flex items-center gap-1 whitespace-nowrap">
                 <Plus className="h-3 w-3" />
                 <span>{t('dataContent.statistics.sum')}</span>
-                <span className="font-mono font-medium">{sum}</span>
+                <span className="font-mono font-medium">{formatGameRating(game, sum)}</span>
               </div>
             )}
             {average !== undefined && (
               <div className="flex items-center gap-1 whitespace-nowrap">
                 <TrendingUp className="h-3 w-3" />
                 <span>{t('dataContent.statistics.average')}</span>
-                <span className="font-mono font-medium">{average.toFixed(2)}</span>
+                <span className="font-mono font-medium">{game === "maimai" ? average.toFixed(2) : formatGameRating(game, average)}</span>
               </div>
             )}
           </div>
@@ -496,7 +489,7 @@ function SongSection({ title, songs, count, displayMode, t, sum, average, visibl
       </div>
       <div className="space-y-2">
         {visibleSongs.map(song => (
-          <SongRow key={`${song.songId}-${song.difficulty}`} song={song} percentile={percentileMap?.[song.songId]} />
+          <SongRow key={`${song.songId}-${song.difficultyCode}`} song={song} percentile={percentileMap?.[song.songId]} />
         ))}
         {hasMore && (
           <div ref={sentinelRef} className="h-4" />
@@ -515,6 +508,7 @@ function SongGridSection({ title, songs, count, t, sum, average, percentileMap }
   average?: number;
   percentileMap?: PercentileMap;
 }) {
+  const game = useGameId();
   if (songs.length === 0) return null;
 
   return (
@@ -527,14 +521,14 @@ function SongGridSection({ title, songs, count, t, sum, average, percentileMap }
               <div className="flex items-center gap-1 whitespace-nowrap">
                 <Plus className="h-3 w-3" />
                 <span>{t('dataContent.statistics.sum')}</span>
-                <span className="font-mono font-medium">{sum}</span>
+                <span className="font-mono font-medium">{formatGameRating(game, sum)}</span>
               </div>
             )}
             {average !== undefined && (
               <div className="flex items-center gap-1 whitespace-nowrap">
                 <TrendingUp className="h-3 w-3" />
                 <span>{t('dataContent.statistics.average')}</span>
-                <span className="font-mono font-medium">{average.toFixed(2)}</span>
+                <span className="font-mono font-medium">{game === "maimai" ? average.toFixed(2) : formatGameRating(game, average)}</span>
               </div>
             )}
           </div>
@@ -543,7 +537,7 @@ function SongGridSection({ title, songs, count, t, sum, average, percentileMap }
       <div className="grid grid-cols-1 2xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
         {songs.map((song, index) => (
           <motion.div
-            key={`${song.songId}-${song.difficulty}`}
+            key={`${song.songId}-${song.difficultyCode}`}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{
@@ -575,6 +569,8 @@ function SongsList({ newSongsB15, oldSongsB35, remainingNewSongs, remainingOldSo
   b35Average?: number;
   percentileMap?: PercentileMap;
 }) {
+  const game = useGameId();
+  const buckets = getGameRankingBuckets(game);
   const [visibleB15, setVisibleB15] = useState(Math.min(50, newSongsB15.length));
   const [visibleB35, setVisibleB35] = useState(Math.min(50, oldSongsB35.length));
   const [visibleNewRemaining, setVisibleNewRemaining] = useState(Math.min(50, remainingNewSongs.length));
@@ -599,9 +595,9 @@ function SongsList({ newSongsB15, oldSongsB35, remainingNewSongs, remainingOldSo
   return (
     <div className="space-y-6">
       <SongSection
-        title={t('dataContent.newSongsB15')}
+        title={buckets[0].label}
         songs={newSongsB15}
-        count={`${newSongsB15.length}/15`}
+        count={`${newSongsB15.length}/${buckets[0].size}`}
         displayMode={displayMode}
         t={t}
         sum={b15Sum}
@@ -611,9 +607,9 @@ function SongsList({ newSongsB15, oldSongsB35, remainingNewSongs, remainingOldSo
         percentileMap={percentileMap}
       />
       <SongSection
-        title={t('dataContent.oldSongsB35')}
+        title={buckets[1].label}
         songs={oldSongsB35}
-        count={`${oldSongsB35.length}/35`}
+        count={`${oldSongsB35.length}/${buckets[1].size}`}
         displayMode={displayMode}
         t={t}
         sum={b35Sum}
@@ -647,21 +643,23 @@ function SongsList({ newSongsB15, oldSongsB35, remainingNewSongs, remainingOldSo
 }
 
 function SongsGrid({ newSongsB15, oldSongsB35, remainingNewSongs, remainingOldSongs, t, b15Sum, b15Average, b35Sum, b35Average, percentileMap }: { newSongsB15: SongWithRating[]; oldSongsB35: SongWithRating[]; remainingNewSongs: SongWithRating[]; remainingOldSongs: SongWithRating[]; t: any; b15Sum?: number; b15Average?: number; b35Sum?: number; b35Average?: number; percentileMap?: PercentileMap }) {
+  const game = useGameId();
+  const buckets = getGameRankingBuckets(game);
   return (
     <div className="space-y-6">
       <SongGridSection
-        title={t('dataContent.newSongsB15')}
+        title={buckets[0].label}
         songs={newSongsB15}
-        count={`${newSongsB15.length}/15`}
+        count={`${newSongsB15.length}/${buckets[0].size}`}
         t={t}
         sum={b15Sum}
         average={b15Average}
         percentileMap={percentileMap}
       />
       <SongGridSection
-        title={t('dataContent.oldSongsB35')}
+        title={buckets[1].label}
         songs={oldSongsB35}
-        count={`${oldSongsB35.length}/35`}
+        count={`${oldSongsB35.length}/${buckets[1].size}`}
         t={t}
         sum={b35Sum}
         average={b35Average}
@@ -676,25 +674,27 @@ function SongsGrid({ newSongsB15, oldSongsB35, remainingNewSongs, remainingOldSo
   );
 }
 
-export function SongsCard({ selectedSnapshotData, flags }: { selectedSnapshotData: SnapshotWithSongs; flags?: Flags }) {
+export function SongsCard({ selectedSnapshotData, flags }: { selectedSnapshotData: GameSnapshotData; flags?: Flags }) {
   const t = useTranslations();
   const [displayMode, setDisplayMode] = useState<"list" | "grid" | "compact">("grid");
   const [searchQuery, setSearchQuery] = useState("");
 
+  const game = useGameId();
+  const buckets = getGameRankingBuckets(game);
   const { songs, snapshot } = selectedSnapshotData;
 
   // Calculate ratings and sort by highest rating first
-  const { newSongsB15, oldSongsB35, newSongsRemaining, oldSongsRemaining } = splitSongs(songs, snapshot.gameVersion);
+  const { newScores: newSongsB15, oldScores: oldSongsB35, newRemaining: newSongsRemaining, oldRemaining: oldSongsRemaining } = getPlayerRankings(game, selectedSnapshotData);
 
   const b50Songs = useMemo(() => [...newSongsB15, ...oldSongsB35], [newSongsB15, oldSongsB35]);
 
   const { data: percentileData } = trpc.user.getChartPercentiles.useQuery(
     { game: useGameId(),
-      songs: b50Songs.map((s) => ({ publicSongId: s.songId, achievement: s.achievement })),
+      songs: b50Songs.map((s) => ({ publicSongId: s.songId, achievement: s.scoreValue })),
       userRating: snapshot.rating,
     },
     {
-      enabled: !!(flags?.scorePercentile && b50Songs.length > 0 && snapshot.rating > 0),
+      enabled: game === "maimai" && !!(flags?.scorePercentile && b50Songs.length > 0 && snapshot.rating > 0),
       staleTime: 1000 * 60 * 5,
     }
   );
@@ -711,9 +711,9 @@ export function SongsCard({ selectedSnapshotData, flags }: { selectedSnapshotDat
       songList.filter(song =>
         song.songName.toLowerCase().includes(query) ||
         song.artist.toLowerCase().includes(query) ||
-        song.difficulty.toLowerCase().includes(query) ||
+        getGameDifficultyLabel(game, song.difficultyCode).toLowerCase().includes(query) ||
         (song.levelPrecise / 10).toFixed(1).toLowerCase().includes(query) ||
-        song.type.toLowerCase().includes(query)
+        getGameChartTypeLabel(game, song.typeCode).toLowerCase().includes(query)
       );
 
     return {
@@ -762,10 +762,10 @@ export function SongsCard({ selectedSnapshotData, flags }: { selectedSnapshotDat
       </div>
       <div>
         <div className="space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <RatingChart songs={newSongsB15} title={t('dataContent.newSongsB15')} />
-            <RatingChart songs={oldSongsB35} title={t('dataContent.oldSongsB35')} />
-          </div>
+          {game === "maimai" && <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <RatingChart songs={newSongsB15} title={buckets[0].label} />
+            <RatingChart songs={oldSongsB35} title={buckets[1].label} />
+          </div>}
 
           {/* Search Field */}
           <div className="relative">

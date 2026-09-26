@@ -53,12 +53,6 @@ export function SongRow({ song, index, isSelected, onSelect, disableInitialAnima
           className={cn(
             "w-10 h-10 rounded ring-2 ring-offset-2 ring-offset-background",
             !singleDiff && (song.type === "dx" ? "ring-amber-400" : "ring-slate-300"),
-            singleDiff?.difficulty === "basic" && "ring-green-400",
-            singleDiff?.difficulty === "advanced" && "ring-yellow-400",
-            singleDiff?.difficulty === "expert" && "ring-red-400",
-            singleDiff?.difficulty === "master" && "ring-purple-500",
-            singleDiff?.difficulty === "remaster" && "ring-purple-200",
-            singleDiff?.difficulty === "utage" && "ring-pink-400",
             singleDiff && getGameDifficultyColors(game, singleDiff.difficulty).ring,
           )}
           width={40}
@@ -78,12 +72,7 @@ export function SongRow({ song, index, isSelected, onSelect, disableInitialAnima
             {singleDiff && (
               <span className={cn(
                 "text-[10px] px-1.5 py-0.5 rounded font-medium shrink-0",
-                singleDiff.difficulty === "basic" && "bg-green-100 text-green-700",
-                singleDiff.difficulty === "advanced" && "bg-yellow-100 text-yellow-700",
-                singleDiff.difficulty === "expert" && "bg-red-100 text-red-700",
-                singleDiff.difficulty === "master" && "bg-purple-100 text-purple-700",
-                singleDiff.difficulty === "remaster" && "bg-purple-50 text-purple-900",
-                singleDiff.difficulty === "utage" && "bg-pink-100 text-pink-700",
+                getGameDifficultyColors(game, singleDiff.difficulty).bg,
                 getGameDifficultyColors(game, singleDiff.difficulty).text,
               )}>
                 {getGameDifficultyLabel(game, singleDiff.difficulty)} {singleDiff.levelPreciseEstimated ? "≈" : ""}{formatGameLevel(game, singleDiff.levelPrecise, singleDiff.difficulty)}

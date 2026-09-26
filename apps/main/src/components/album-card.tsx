@@ -1,6 +1,8 @@
 "use client";
 
-import { toMaimaiAlbum } from "@/lib/games/player-view";
+import type { fetchUserAlbums } from "@/server/queries/albums";
+import { formatGameLevel, getGameDifficultyColors, getGameChartTypeLabel } from "@/lib/games/presentation";
+type Album = Awaited<ReturnType<typeof fetchUserAlbums>>["albums"][number];
 import { useGameId } from "@/components/providers/game-provider";
 import { trpc } from "@/lib/trpc-client";
 import { Region } from "@/lib/types";
@@ -37,7 +39,7 @@ export function AlbumCard({ region }: AlbumCardProps) {
   const game = useGameId();
   const regionsT = useTranslations('regions');
   const t = useTranslations('albums');
-  const [albums, setAlbums] = useState<ReturnType<typeof toMaimaiAlbum>[]>([]);
+  const [albums, setAlbums] = useState<Album[]>([]);
   const [offset, setOffset] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const limit = 20;
@@ -55,15 +57,15 @@ export function AlbumCard({ region }: AlbumCardProps) {
     setAlbums([]);
     setHasMore(true);
     processedOffsetsRef.current = new Set();
-  }, [region]);
+  }, [game, region]);
 
   useEffect(() => {
     if (data && !isFetching && !processedOffsetsRef.current.has(offset)) {
       processedOffsetsRef.current.add(offset);
       if (offset === 0) {
-        setAlbums(data.albums.map(toMaimaiAlbum));
+        setAlbums(data.albums);
       } else {
-        setAlbums(prev => [...prev, ...data.albums.map(toMaimaiAlbum)]);
+        setAlbums(prev => [...prev, ...data.albums]);
       }
       setHasMore(data.hasMore);
     }
@@ -268,11 +270,11 @@ export function AlbumCard({ region }: AlbumCardProps) {
               >
                 {/* Album Image - 16:9 aspect ratio */}
                 <div className="relative w-full aspect-video overflow-hidden bg-muted">
-                  <img
+                  {album.imageKey && process.env.NEXT_PUBLIC_R2_URL ? <img
                     src={`${process.env.NEXT_PUBLIC_R2_URL}/${album.imageKey}`}
                     alt={album.songName}
                     className="w-full h-full object-cover"
-                  />
+                  /> : <p>{t("imageUnavailable")}</p>}
                 </div>
 
                 {/* Album Info */}
@@ -284,11 +286,7 @@ export function AlbumCard({ region }: AlbumCardProps) {
                       alt={album.songName}
                       className={cn(
                         "w-14 h-14 rounded ring-2 ring-offset-2 ring-offset-background object-cover",
-                        album.difficulty === "basic" && "ring-green-400",
-                        album.difficulty === "advanced" && "ring-yellow-400",
-                        album.difficulty === "expert" && "ring-red-400",
-                        album.difficulty === "master" && "ring-purple-500",
-                        album.difficulty === "remaster" && "ring-purple-200",
+                        getGameDifficultyColors(game, album.difficultyCode).ring,
                       )}
                       width={56}
                       height={56}
@@ -297,14 +295,10 @@ export function AlbumCard({ region }: AlbumCardProps) {
                     <div
                       className={cn(
                         "absolute top-12 -right-1 px-1.5 py-0.5 rounded rounded-tr-none rounded-br-[8px] text-xs font-semibold text-white",
-                        album.difficulty === "basic" && "bg-green-400",
-                        album.difficulty === "advanced" && "bg-yellow-400",
-                        album.difficulty === "expert" && "bg-red-400",
-                        album.difficulty === "master" && "bg-purple-500",
-                        album.difficulty === "remaster" && "bg-purple-200 text-purple-900",
+                        getGameDifficultyColors(game, album.difficultyCode).badge,
                       )}
                     >
-                      {renderLevelPrecise(album.levelPrecise, album.difficulty)}
+                      {formatGameLevel(game, album.levelPrecise, album.difficultyCode)}
                     </div>
                   </div>
 
@@ -313,13 +307,13 @@ export function AlbumCard({ region }: AlbumCardProps) {
                     <h4 className="font-semibold truncate">{album.songName}</h4>
                     <p className="text-xs text-muted-foreground truncate">{album.artist}</p>
                     <div className="flex items-center gap-1.5 mt-1.5">
-                      <img
-                        src={createSafeMaimaiImageUrl(getTypeBadgeUrl(album.type))}
-                        alt={album.type.toUpperCase()}
+                      {game === "maimai" ? <img
+                        src={createSafeMaimaiImageUrl(getTypeBadgeUrl(album.typeCode === 1 ? "dx" : "std"))}
+                        alt={getGameChartTypeLabel(game, album.typeCode)}
                         width={32}
                         height={10}
                         className="h-2.5 w-auto"
-                      />
+                      /> : <span className="text-xs">{getGameChartTypeLabel(game, album.typeCode)}</span>}
                     </div>
                   </div>
                 </div>

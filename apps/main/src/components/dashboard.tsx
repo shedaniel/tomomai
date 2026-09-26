@@ -2,7 +2,7 @@
 
 import { useGame } from "@/components/providers/game-provider";
 import { getGameRegion } from "@/lib/games/frontend";
-import { getPlayerPresentation, type GameSnapshotData, type GameSnapshotSummary } from "@/lib/games/player-view";
+import { toMaimaiPlayerSnapshot, type GameSnapshotData, type GameSnapshotSummary } from "@/lib/games/player-view";
 import { GameUnavailable } from "@/components/game-unavailable";
 import { DataBanner } from "@/components/data-banner";
 import { DataContent } from "@/components/data-content";
@@ -51,7 +51,7 @@ export function Dashboard(props: DashboardProps) {
 
 function AvailableDashboard({ user, initialUserData, initialSnapshots, initialSnapshotData, flags, latestPost, initialRegion }: DashboardProps & { initialRegion: Region }) {
   const game = useGame();
-  const presentation = getPlayerPresentation(game.id);
+
   const [dialogType, setDialogType] = useState<DialogType>(null);
   const t = useTranslations("dashboard");
 
@@ -77,7 +77,6 @@ function AvailableDashboard({ user, initialUserData, initialSnapshots, initialSn
     snapshots,
     selectedSnapshot,
     selectedSnapshotData,
-    normalizedSnapshotData,
     setSelectedSnapshot,
     deleteSnapshot,
     copySnapshot,
@@ -254,12 +253,11 @@ function AvailableDashboard({ user, initialUserData, initialSnapshots, initialSn
           currentSession={currentSession}
           onCopySnapshot={handleCopySnapshot}
           isCopying={isCopying}
-          supportsCopy={presentation.legacyPanels}
+          supportsCopy={game.id === "maimai"}
           supportsFetch={!!game.fetchConfigured}
         />
 
         <DataContent
-          normalizedSnapshotData={normalizedSnapshotData}
           region={selectedRegion}
           selectedSnapshotData={selectedSnapshotData || null}
           isLoading={isLoadingSnapshots}
@@ -320,7 +318,7 @@ function AvailableDashboard({ user, initialUserData, initialSnapshots, initialSn
       <ConsentGate />
 
       <FetchToastContainer state={fetchToastState} />
-      {presentation.legacyPanels && <TomomaiAI snapshotData={selectedSnapshotData || null} region={selectedRegion} aprilFools2026={flags.aprilFools2026} />}
+      {game.id === "maimai" && <TomomaiAI snapshotData={selectedSnapshotData ? toMaimaiPlayerSnapshot(selectedSnapshotData) : null} region={selectedRegion} aprilFools2026={flags.aprilFools2026} />}
     </div>
   );
 }

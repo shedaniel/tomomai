@@ -1,8 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { AbstractIntlMessages } from "next-intl";
 
-const { fetchProfile, createHomeOGImage } = vi.hoisted(() => ({
+const { fetchProfile, createHomeOGImage, currentGame } = vi.hoisted(() => ({
   fetchProfile: vi.fn(),
+  currentGame: { id: "maimai" },
   createHomeOGImage: vi.fn((input: unknown) => input),
 }));
 
@@ -24,7 +25,7 @@ vi.mock("next-intl/server", async () => {
   };
 });
 vi.mock("@/lib/games/frontend-server", () => ({
-  getFrontendGame: () => ({ id: "maimai", displayName: "maimai DX", productName: "tomomai", enabled: true, regions: ["intl", "jp"], capabilities: ["scores", "plates"] }),
+  getFrontendGame: () => ({ id: currentGame.id, displayName: currentGame.id === "maimai" ? "maimai DX" : "CHUNITHM", productName: currentGame.id === "maimai" ? "tomomai" : "tomochu", enabled: true, regions: ["intl", "jp"], capabilities: ["scores", "plates"] }),
 }));
 vi.mock("@/server/queries/game-profile", () => ({ fetchPublicGameProfile: fetchProfile }));
 vi.mock("@/lib/auth-server", () => ({ getServerSession: async () => null }));
@@ -41,6 +42,7 @@ const params = Promise.resolve({ locale: "ja", username: "player", region: "intl
 
 beforeEach(() => {
   vi.clearAllMocks();
+  currentGame.id = "maimai";
   fetchProfile.mockResolvedValue({ profile: { id: "user" }, snapshotData: null });
 });
 
@@ -52,8 +54,19 @@ describe("parameterized page metadata", () => {
 
   it("formats the public profile JSON-LD with all required variables", async () => {
     const page = await RegionProfilePage({ params });
-    const jsonLd = page.props.children[0].props.dangerouslySetInnerHTML.__html;
+    const script = page.props.children.find((child: { type?: string; props?: { type?: string } }) => child?.type === "script" && child.props?.type === "application/ld+json");
+    const jsonLd = script.props.dangerouslySetInnerHTML.__html;
     expect(JSON.parse(jsonLd).name).toBe("player | tomomai ともマイ");
+  });
+
+  it("brands an active CHUNITHM profile with its game and player", async () => {
+    currentGame.id = "chunithm";
+    fetchProfile.mockResolvedValue({ profile: { id: "user" }, snapshotData: { snapshot: { displayName: "CHU Player", rating: 1650, game: "chunithm" }, songs: [] } });
+    const metadata = await generateMetadata({ params });
+    expect(metadata.title).toContain("tomochu ともチュウ");
+    expect(metadata.description).toContain("CHUNITHM");
+    expect(metadata.description).toContain("CHU Player");
+    expect(metadata.openGraph).not.toHaveProperty("images");
   });
 
   it("formats the home Open Graph description with the selected game", async () => {

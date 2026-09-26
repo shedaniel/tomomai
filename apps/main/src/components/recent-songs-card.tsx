@@ -1,6 +1,8 @@
 "use client";
 
-import { toMaimaiRecentPlay } from "@/lib/games/player-view";
+import type { fetchRecentSongs } from "@/server/queries/recents";
+import { formatGameScore, formatGameLevel, getGameDifficultyColors, getGameDifficultyHex, getGameChartTypeLabel, getGameStatusLabels } from "@/lib/games/presentation";
+type RecentPlay = Awaited<ReturnType<typeof fetchRecentSongs>>["recentPlays"][number];
 import { useGameId } from "@/components/providers/game-provider";
 import { trpc } from "@/lib/trpc-client";
 import { Region } from "@/lib/types";
@@ -33,7 +35,7 @@ interface RecentSongsCardProps {
 }
 
 interface RecentSongRowProps {
-  play: ReturnType<typeof toMaimaiRecentPlay>;
+  play: RecentPlay;
   index: number;
   isFirst: boolean;
   isLast: boolean;
@@ -42,10 +44,12 @@ interface RecentSongRowProps {
 }
 
 function RecentSongRow({ play, index, isFirst, isLast, onToggleExpand, isExpanded }: RecentSongRowProps) {
+  const game = useGameId();
+  const errorsT = useTranslations("dataContent");
   const t = useTranslations('recentPlays');
   const isDesktop = useMediaQuery("(min-width: 768px)", { initializeWithValue: false });
   const [isRowHovered, setIsRowHovered] = useState(false);
-  const isDetailed = play.rating !== null;
+  const isDetailed = game === "maimai" && play.rating !== null;
   const playDate = new Date(play.playedAt);
 
   return (
@@ -84,12 +88,7 @@ function RecentSongRow({ play, index, isFirst, isLast, onToggleExpand, isExpande
             alt={play.songName}
             className={cn(
               "w-14 h-14 rounded ring-2 ring-offset-2 ring-offset-background object-cover",
-              play.difficulty === "basic" && "ring-green-400",
-              play.difficulty === "advanced" && "ring-yellow-400",
-              play.difficulty === "expert" && "ring-red-400",
-              play.difficulty === "master" && "ring-purple-500",
-              play.difficulty === "remaster" && "ring-purple-200",
-              play.difficulty === "utage" && "ring-pink-400",
+              getGameDifficultyColors(game, play.difficultyCode).ring,
             )}
             width={56}
             height={56}
@@ -100,26 +99,15 @@ function RecentSongRow({ play, index, isFirst, isLast, onToggleExpand, isExpande
             style={{
               boxShadow: "0 8px 0 0 var(--difficulty-color)",
               // @ts-ignore
-              "--difficulty-color": play.difficulty === "basic" ? "var(--color-green-400)"
-                : play.difficulty === "advanced" ? "var(--color-yellow-400)"
-                  : play.difficulty === "expert" ? "var(--color-red-400)"
-                    : play.difficulty === "master" ? "var(--color-purple-500)"
-                      : play.difficulty === "remaster" ? "var(--color-purple-200)"
-                        : play.difficulty === "utage" ? "var(--color-pink-400)"
-                          : "var(--color-white)",
+              "--difficulty-color": getGameDifficultyHex(game, play.difficultyCode),
             }} />
           <div
             className={cn(
               "absolute top-12 -right-1 px-1.5 py-0.5 rounded rounded-tr-none rounded-br-[8px] text-xs font-semibold text-white",
-              play.difficulty === "basic" && "bg-green-400",
-              play.difficulty === "advanced" && "bg-yellow-400",
-              play.difficulty === "expert" && "bg-red-400",
-              play.difficulty === "master" && "bg-purple-500",
-              play.difficulty === "remaster" && "bg-purple-200 text-purple-900",
-              play.difficulty === "utage" && "bg-pink-400",
+              getGameDifficultyColors(game, play.difficultyCode).badge,
             )}
           >
-            {renderLevelPrecise(play.levelPrecise, play.difficulty)}
+            {formatGameLevel(game, play.levelPrecise, play.difficultyCode)}
           </div>
         </motion.div>
 
@@ -149,13 +137,13 @@ function RecentSongRow({ play, index, isFirst, isLast, onToggleExpand, isExpande
             {play.artist}
           </p>
           <div className="flex items-center gap-1.5 mt-1.5">
-            <img
-              src={createSafeMaimaiImageUrl(getTypeBadgeUrl(play.type))}
-              alt={play.type.toUpperCase()}
+            {game === "maimai" ? <img
+              src={createSafeMaimaiImageUrl(getTypeBadgeUrl(play.typeCode === 1 ? "dx" : "std"))}
+              alt={getGameChartTypeLabel(game, play.typeCode)}
               width={32}
               height={10}
               className="h-2.5 w-auto"
-            />
+            /> : <span className="text-xs">{getGameChartTypeLabel(game, play.typeCode)}</span>}
             {play.genre && (
               <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-secondary text-secondary-foreground font-medium truncate max-w-[120px]">
                 {play.genre}
@@ -181,7 +169,7 @@ function RecentSongRow({ play, index, isFirst, isLast, onToggleExpand, isExpande
             </motion.div>
           </div>
           {/* FC/FS badges */}
-          {play.fc !== 'none' || play.fs !== 'none' ? (
+          {getGameStatusLabels(game, play).length > 0 ? (
             <motion.div
               className="text-xs text-muted-foreground"
               animate={isRowHovered ? {
@@ -191,8 +179,7 @@ function RecentSongRow({ play, index, isFirst, isLast, onToggleExpand, isExpande
               }}
               transition={getTransition({ type: 'spring', stiffness: 500, damping: 20 })}
             >
-              {play.fc !== 'none' ? play.fc.toUpperCase() : ''}{' '}
-              {play.fs !== 'none' ? play.fs.toUpperCase() : ''}
+              {getGameStatusLabels(game, play).join(" ")}
             </motion.div>
           ) : null}
           {/* Achievement */}
@@ -207,19 +194,19 @@ function RecentSongRow({ play, index, isFirst, isLast, onToggleExpand, isExpande
             }}
             transition={getTransition({ type: 'spring', stiffness: 500, damping: 20 })}
           >
-            {(play.achievement / 10000).toFixed(4)}%
+            {formatGameScore(game, play.scoreValue)}
           </motion.div>
         </div>
       </div>
 
       {/* Expand hint */}
-      {!isExpanded && (
+      {game === "maimai" && !isExpanded && (
         <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground mt-4 md:mt-2">
           <ChevronDown className="h-3 w-3" />
           <span>{t('clickToExpand')}</span>
         </div>
       )}
-      {isExpanded && (
+      {game === "maimai" && isExpanded && (
         <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground mt-4 md:mt-2">
           <ChevronUp className="h-3 w-3" />
           <span>{t('clickToCollapse')}</span>
@@ -227,7 +214,7 @@ function RecentSongRow({ play, index, isFirst, isLast, onToggleExpand, isExpande
       )}
 
       {/* Animated expandable content */}
-      <AutoHeight deps={[isExpanded, isDetailed]}>
+      {game === "maimai" && <AutoHeight deps={[isExpanded, isDetailed]}>
         <div className={cn(!isExpanded && "max-h-0")}>
           {!isDetailed && (
             <>
@@ -258,14 +245,14 @@ function RecentSongRow({ play, index, isFirst, isLast, onToggleExpand, isExpande
                 <Badge variant="outline" className="flex items-center gap-1 font-medium text-foreground">
                   <Sparkle className="h-3 w-3" />
                   <span>{t('labels.dx')}</span>
-                  <span>{play.dxScore}</span>
+                  <span>{(play.secondaryScore ?? 0)}</span>
                   <Slash className="h-3 w-3 text-border" />
                   <span>{play.maxDxScore}</span>
                   <div className="h-3 w-px bg-border mx-1" />
-                  <span>{calculateDXStars(play.dxScore, play.maxDxScore)}</span>
-                  <Star className="h-3 w-3" fill={calculateDXStars(play.dxScore, play.maxDxScore) > 0 ? "currentColor" : "none"} />
+                  <span>{calculateDXStars((play.secondaryScore ?? 0), play.maxDxScore)}</span>
+                  <Star className="h-3 w-3" fill={calculateDXStars((play.secondaryScore ?? 0), play.maxDxScore) > 0 ? "currentColor" : "none"} />
                   <div className="h-3 w-px bg-border mx-1" />
-                  <span>{(play.dxScore / play.maxDxScore * 100).toFixed(2)}%</span>
+                  <span>{((play.secondaryScore ?? 0) / play.maxDxScore * 100).toFixed(2)}%</span>
                 </Badge>
 
                 {/* Rating */}
@@ -359,7 +346,7 @@ function RecentSongRow({ play, index, isFirst, isLast, onToggleExpand, isExpande
                   },
                 };
 
-                const actualAchievement = play.achievement / 10000;
+                const actualAchievement = play.scoreValue / 10000;
 
                 const breakDist = distributeBreaks(
                   notes,
@@ -535,18 +522,20 @@ function RecentSongRow({ play, index, isFirst, isLast, onToggleExpand, isExpande
                 );
               })()}
 
-              <ExpandedSongDetails publicId={play.songPublicId} />
+              <ExpandedSongDetails publicId={play.songId} />
             </>
           )}
         </div>
-      </AutoHeight>
+      </AutoHeight>}
     </motion.div>
   );
 }
 
 export function RecentSongsCard({ region, beforeDate, snapshotId }: RecentSongsCardProps) {
+  const game = useGameId();
+  const errorsT = useTranslations("dataContent");
   const t = useTranslations('recentPlays');
-  const [allPlays, setAllPlays] = useState<ReturnType<typeof toMaimaiRecentPlay>[]>([]);
+  const [allPlays, setAllPlays] = useState<RecentPlay[]>([]);
   const [offset, setOffset] = useState(0);
   const [hasMore, setHasMore] = useState(false);
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
@@ -563,8 +552,7 @@ export function RecentSongsCard({ region, beforeDate, snapshotId }: RecentSongsC
     { game: useGameId(), snapshotId: snapshotId!, region, limit, offset, beforeDate },
     { enabled: !!snapshotId }
   );
-  const normalizedData = snapshotId ? publicData : ownData;
-  const data = useMemo(() => normalizedData ? { ...normalizedData, recentPlays: normalizedData.recentPlays.map(toMaimaiRecentPlay) } : undefined, [normalizedData]);
+  const data = snapshotId ? publicData : ownData;
   const isLoading = snapshotId ? publicLoading : ownLoading;
   const isFetching = snapshotId ? publicFetching : ownFetching;
   const error = snapshotId ? publicError : ownError;
@@ -579,7 +567,7 @@ export function RecentSongsCard({ region, beforeDate, snapshotId }: RecentSongsC
     setAllPlays([]);
     setHasMore(false);
     processedOffsetsRef.current = new Set();
-  }, [region, beforeDateKey]);
+  }, [game, region, beforeDateKey]);
 
   // Update allPlays when new data arrives
   // Use isFetching (not isLoading) to prevent processing stale data during query transitions
@@ -629,7 +617,7 @@ export function RecentSongsCard({ region, beforeDate, snapshotId }: RecentSongsC
         </h2>
         <div className="flex items-center justify-center py-12 text-muted-foreground">
           <AlertCircle className="h-5 w-5 mr-2" />
-          <span>{t('noPlays')}</span>
+          <span role="alert">{errorsT("loadError")}</span>
         </div>
       </div>
     );

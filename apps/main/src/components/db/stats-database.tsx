@@ -150,7 +150,7 @@ export function StatsDatabase() {
   const t = useTranslations("db.stats");
   const [region, setRegion] = useState<Region>("intl");
 
-  const { data, isLoading } = trpc.db.getStats.useQuery({ region });
+  const { data, isLoading } = trpc.db.getStats.useQuery({ game: "maimai", region });
 
   return (
     <div className="space-y-6 pt-3">

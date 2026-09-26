@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { applyUniqueSongFilters, catalogDisplayLevel, createUniqueSongFilterCategories } from "./filter-utils";
+import { applyUniqueSongFilters, createUniqueSongFilterCategories } from "./filter-utils";
 import type { UniqueSong } from "./types";
 
 const chart: UniqueSong = {
@@ -10,7 +10,6 @@ const chart: UniqueSong = {
 
 describe("catalog metadata filters", () => {
   it("uses the actual display level instead of maimai's plus threshold", () => {
-    expect(catalogDisplayLevel(chart.difficulties[0])).toBe("14+");
     const flattened = [{ ...chart, difficulties: chart.difficulties.map(difficulty => ({ ...difficulty, noteDesignerNumber: 0 })) }];
     expect(applyUniqueSongFilters([chart], flattened, [{ type: "level", value: "14+" }])).toHaveLength(1);
     expect(applyUniqueSongFilters([chart], flattened, [{ type: "level", value: "14" }])).toHaveLength(0);

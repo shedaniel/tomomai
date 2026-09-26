@@ -4,7 +4,7 @@ import { Header } from "@/components/header";
 import { Flags } from "@/lib/flags";
 import { ProfileData, Region } from "@/lib/types";
 import { TomomaiAI } from "@/components/tomomai-ai";
-import { getPlayerPresentation, type GameSnapshotData } from "@/lib/games/player-view";
+import { toMaimaiPlayerSnapshot, type GameSnapshotData } from "@/lib/games/player-view";
 import type { FrontendGame } from "@/lib/games/frontend";
 import { Suspense } from "react";
 
@@ -30,7 +30,6 @@ export function ProfilePage({
   isOwner,
 }: ProfilePageProps) {
 
-  const snapshotWithSongs = snapshotData ? getPlayerPresentation(game.id).legacySnapshot(snapshotData) : null;
 
   return (
     <div className="container mx-auto max-w-[1300px] px-3 md:px-6 lg:px-12 py-8">
@@ -54,8 +53,7 @@ export function ProfilePage({
         <Suspense>
           <DataContent
             region={region}
-            selectedSnapshotData={snapshotWithSongs}
-            normalizedSnapshotData={snapshotData}
+            selectedSnapshotData={snapshotData}
             privacySettings={{
               profileShowAllScores: profileData.profileShowAllScores,
               profileShowScoreDetails: profileData.profileShowScoreDetails,
@@ -77,7 +75,7 @@ export function ProfilePage({
           />
         </Suspense>
       </div>
-      {snapshotWithSongs && <TomomaiAI snapshotData={snapshotWithSongs} region={region} aprilFools2026={flags.aprilFools2026} />}
+      {game.id === "maimai" && snapshotData && <TomomaiAI snapshotData={toMaimaiPlayerSnapshot(snapshotData)} region={region} aprilFools2026={flags.aprilFools2026} />}
     </div>
   );
 }

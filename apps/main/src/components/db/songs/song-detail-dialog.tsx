@@ -37,7 +37,7 @@ function SongChartDialogGrid({ chart, score }: { chart: SongExtendedIdentified; 
   </div>;
 }
 
-export function SongChartDialogContent({ charts, scores }: { charts: SongExtendedIdentified[]; scores: Record<Region, UserScore> }) {
+export function SongChartDialogContent({ charts, scores }: { charts: SongExtendedIdentified[]; scores: Partial<Record<Region, UserScore>> }) {
   const t = useTranslations();
   const game = useGame();
   const regionsWithScores = Object.keys(scores).filter(region => scores[region as Region] !== undefined);

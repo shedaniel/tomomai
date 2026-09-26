@@ -1,3 +1,4 @@
+import { getGameBrand, getGameRegion } from "./frontend";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { gameIdSchema } from "./schema";
 import { getFrontendDistDir, resolveFrontendGame } from "./frontend-config";
@@ -8,6 +9,17 @@ import { getFrontendGame } from "./frontend-server";
 afterEach(() => vi.unstubAllEnvs());
 
 describe("frontend process configuration", () => {
+  it("preserves the maimai brand while separating CHUNITHM metadata", () => {
+    expect(getGameBrand({ id: "maimai", productName: "tomomai" }).title).toBe("tomomai ともマイ");
+    expect(getGameBrand({ id: "chunithm", productName: "tomochu" }).title).toBe("tomochu ともチュウ");
+  });
+
+  it("selects a supported region without carrying maimai-only CN into CHUNITHM", () => {
+    const game = { id: "chunithm", displayName: "CHUNITHM", productName: "tomochu", enabled: false, regions: ["jp", "intl"], capabilities: [] } as const;
+    expect(getGameRegion(game, "cn")).toBe("jp");
+    expect(getGameRegion(game, "intl")).toBe("intl");
+    expect(getGameRegion({ ...game, regions: [] }, "jp")).toBeNull();
+  });
   it("defaults only an omitted setting and accepts canonical IDs", () => {
     expect(resolveFrontendGame(undefined)).toBe("maimai");
     for (const game of gameIdSchema.options) expect(resolveFrontendGame(game)).toBe(game);

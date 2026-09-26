@@ -1,14 +1,12 @@
 import type { fetchSnapshotData, fetchUserSnapshots } from "@/server/queries/snapshots";
 import type { Snapshot, SnapshotWithSongs, EventData } from "@/lib/types";
 import { requireMaimaiVersion } from "./adapters/maimai/versions";
-import type { fetchRecentSongs } from "@/server/queries/recents";
-import type { fetchUserAlbums } from "@/server/queries/albums";
 import { codeToChartType, codeToComboStatus, codeToDifficulty, codeToSyncStatus, codeToTitleType } from "@/lib/maimai/codes";
 import type { CanonicalGameId } from "./types";
 import { calculateChunithmChartRating, calculateMaimaiChartRating, selectChunithmRankings, selectMaimaiRankings } from "./rating";
 
 type StoredSnapshotData = NonNullable<Awaited<ReturnType<typeof fetchSnapshotData>>>;
-export type GamePlayerScore = Omit<StoredSnapshotData["songs"][number], "secondaryScore" | "achievement" | "dxScore" | "fc" | "fs" | "difficulty" | "type"> & { secondaryScore: number | null; chartRating?: number };
+export type GamePlayerScore = Omit<StoredSnapshotData["songs"][number], "secondaryScore"> & { secondaryScore: number | null; chartRating?: number };
 export interface GameSnapshotData {
   snapshot: Pick<StoredSnapshotData["snapshot"], "publicId" | "game" | "displayName" | "rating" | "gameVersion" | "fetchedAt"> & {
     title?: string;
@@ -54,27 +52,11 @@ export function toMaimaiPlayerSnapshot(data: GameSnapshotData): SnapshotWithSong
       courseRankUrl: data.snapshot.courseRankUrl ?? "", classRankUrl: data.snapshot.classRankUrl ?? "", stars: data.snapshot.stars ?? 0,
       versionPlayCount: data.snapshot.versionPlayCount ?? 0, totalPlayCount: data.snapshot.totalPlayCount ?? 0,
     },
-    songs: data.songs.map(song => ({ ...song, addedVersion: requireMaimaiVersion(song.addedVersion),
-      achievement: song.scoreValue, dxScore: song.secondaryScore ?? 0, difficulty: codeToDifficulty(song.difficultyCode), type: codeToChartType(song.typeCode), fc: codeToComboStatus(song.comboStatus), fs: codeToSyncStatus(song.syncStatus),
-    })),
+    songs: data.songs.map(toMaimaiPlayerScore),
     events: data.events?.map(event => ({ ...event, eventType: event.eventType ?? "eventArea", currentDistance: event.currentDistance ?? 0, nextRewardDistance: event.nextRewardDistance ?? null, state: event.state ?? "not_started", imageUrl: event.imageUrl ?? "", eventPeriodStart: event.eventPeriodStart ?? null, eventPeriodEnd: event.eventPeriodEnd ?? null })),
   };
 }
 
-const PLAYER_PRESENTATIONS = {
-  maimai: { legacyPanels: true, legacySnapshot: toMaimaiPlayerSnapshot },
-  // TODO: Replace maimai-only rich panels with CHUNITHM presentations as their providers become available.
-  chunithm: { legacyPanels: false, legacySnapshot: (_data: GameSnapshotData): SnapshotWithSongs | null => null },
-};
-
-export function getPlayerPresentation(game: CanonicalGameId) {
-  return PLAYER_PRESENTATIONS[game];
-}
-
-export function toMaimaiRecentPlay(play: Awaited<ReturnType<typeof fetchRecentSongs>>["recentPlays"][number]) {
-  return { ...play, songPublicId: play.songId, difficulty: codeToDifficulty(play.difficultyCode), type: codeToChartType(play.typeCode), fc: codeToComboStatus(play.comboStatus), fs: codeToSyncStatus(play.syncStatus) };
-}
-
-export function toMaimaiAlbum(album: Awaited<ReturnType<typeof fetchUserAlbums>>["albums"][number]) {
-  return { ...album, difficulty: codeToDifficulty(album.difficultyCode), type: codeToChartType(album.typeCode) };
+export function toMaimaiPlayerScore(song: GamePlayerScore) {
+  return { ...song, addedVersion: requireMaimaiVersion(song.addedVersion), achievement: song.scoreValue, dxScore: song.secondaryScore ?? 0, difficulty: codeToDifficulty(song.difficultyCode), type: codeToChartType(song.typeCode), fc: codeToComboStatus(song.comboStatus), fs: codeToSyncStatus(song.syncStatus) };
 }

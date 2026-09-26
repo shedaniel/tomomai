@@ -85,12 +85,6 @@ export function SongCard({ song, index, isSelected, onSelect, disableInitialAnim
         className={cn(
           "block relative rounded-md overflow-hidden cursor-pointer ring-2 transition-all duration-300 ease-out",
           !singleDiff && (song.type === "dx" ? "ring-amber-400 dark:ring-amber-300/75" : "ring-slate-300 dark:ring-slate-300/75"),
-          singleDiff?.difficulty === "basic" && "ring-green-400 dark:ring-green-600",
-          singleDiff?.difficulty === "advanced" && "ring-yellow-400 dark:ring-yellow-600",
-          singleDiff?.difficulty === "expert" && "ring-red-400 dark:ring-red-600",
-          singleDiff?.difficulty === "master" && "ring-purple-500 dark:ring-purple-600",
-          singleDiff?.difficulty === "remaster" && "ring-purple-200 dark:ring-purple-400",
-          singleDiff?.difficulty === "utage" && "ring-pink-400 dark:ring-pink-600",
           singleDiff && getGameDifficultyColors(game, singleDiff.difficulty).ring,
           isSelected && "ring-4 ring-violet-500"
         )}
@@ -126,13 +120,7 @@ export function SongCard({ song, index, isSelected, onSelect, disableInitialAnim
         {singleDiff && (
           <div className={cn(
             "absolute top-[-2px] right-[-2px] pl-1.75 pr-3 py-0.75 rounded-tr-md rounded-bl-[8px] overflow-hidden text-[10px] font-semibold text-white z-10",
-            singleDiff.difficulty === "basic" && "bg-green-500 dark:bg-green-600",
-            singleDiff.difficulty === "advanced" && "bg-yellow-500 dark:bg-yellow-600",
-            singleDiff.difficulty === "expert" && "bg-red-500 dark:bg-red-600",
-            singleDiff.difficulty === "master" && "bg-purple-500 dark:bg-purple-600",
-            singleDiff.difficulty === "remaster" && "bg-purple-200 text-purple-900 dark:bg-purple-400 dark:text-purple-900",
-            singleDiff.difficulty === "utage" && "bg-pink-500 dark:bg-pink-600",
-            !["basic", "advanced", "expert", "master", "remaster", "utage"].includes(singleDiff.difficulty) && [getGameDifficultyColors(game, singleDiff.difficulty).bg, getGameDifficultyColors(game, singleDiff.difficulty).text],
+            getGameDifficultyColors(game, singleDiff.difficulty).badge,
           )}>
             {singleDiff.levelPreciseEstimated ? "≈" : ""}{formatGameLevel(game, singleDiff.levelPrecise, singleDiff.difficulty)}
           </div>

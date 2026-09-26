@@ -1,4 +1,5 @@
 "use client";
+import { difficultyToCode, chartTypeToCode, comboStatusToCode, syncStatusToCode } from "@/lib/maimai/codes";
 
 import { useGameId } from "@/components/providers/game-provider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@tomomai/ui/select-friendly";
@@ -289,8 +290,8 @@ function PlatesGrid({ data, selectedVersion, region, snapshotId }: PlatesGridPro
                             </div>
                           ) : plateSongs && plateSongs.length > 0 ? (
                             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-3">
-                              {plateSongs.map((song: any, songIndex: number) => (
-                                <SongGridCard song={song} />
+                              {plateSongs.map((song) => (
+                                <SongGridCard key={song.songId} song={{ ...song, difficultyCode: difficultyToCode(song.difficulty), typeCode: chartTypeToCode(song.type), scoreValue: song.achievement, secondaryScore: song.dxScore, comboStatus: comboStatusToCode(song.fc), syncStatus: syncStatusToCode(song.fs), clearStatus: 0 }} />
                               ))}
                             </div>
                           ) : (

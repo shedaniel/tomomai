@@ -1,9 +1,7 @@
 "use client";
 
 import { useGame } from "@/components/providers/game-provider";
-import { getPlayerPresentation, type GameSnapshotData } from "@/lib/games/player-view";
-import { GameSnapshotContent } from "./game-snapshot-content";
-import { GameRecentPage, GameAlbumPage } from "./game-player-extras";
+import { toMaimaiPlayerSnapshot, type GameSnapshotData } from "@/lib/games/player-view";
 import { ProfilePrivacySettings, Region, SnapshotWithSongs } from "@/lib/types";
 import { Sidebar, SidebarItem } from "@tomomai/ui";
 import { BarChart, Clock, Code, Database, Heart, Image as ImageIcon, Loader2, Map, Music, TrendingUp, User, Images } from "lucide-react";
@@ -55,9 +53,8 @@ const DEFAULT_PRIVACY_SETTINGS: ProfilePrivacySettings = {
 };
 
 interface DataContentProps {
-  normalizedSnapshotData?: GameSnapshotData | null;
   region: Region;
-  selectedSnapshotData: SnapshotWithSongs | null;
+  selectedSnapshotData: GameSnapshotData | null;
   isLoading: boolean;
   privacySettings?: ProfilePrivacySettings;
   visitableProfileAt: string | null;
@@ -73,7 +70,6 @@ interface DataContentProps {
 
 export function DataContent({
   selectedSnapshotData,
-  normalizedSnapshotData,
   isLoading,
   privacySettings = DEFAULT_PRIVACY_SETTINGS,
   visitableProfileAt,
@@ -88,7 +84,7 @@ export function DataContent({
   flags,
 }: DataContentProps) {
   const game = useGame();
-  const { legacyPanels } = getPlayerPresentation(game.id);
+  const maimaiSnapshot = game.id === "maimai" && selectedSnapshotData ? toMaimaiPlayerSnapshot(selectedSnapshotData) : null;
   const t = useTranslations();
   const searchParams = useSearchParams();
   const isDesktop = useMediaQuery("(min-width: 768px)", { initializeWithValue: false });
@@ -222,19 +218,19 @@ export function DataContent({
     }
   ];
 
-  // TODO: Add CHUNITHM statistics, recommendations, rating history and exports before exposing these tabs.
-  const genericTabs: Record<string, boolean> = {
-    info: true, songs: true,
-    recent: visitedBySelf && game.capabilities.includes("recents"),
-    albums: visitedBySelf && game.capabilities.includes("albums"),
-    map: game.capabilities.includes("events") && localPrivacySettings.profileShowEvents,
-  };
-  const visibleTabs = allTabs.filter(tab => tab.show && (legacyPanels || genericTabs[tab.value]));
+  const requiredCapabilities = {
+    info: "scores", songs: "scores", recent: "recents", albums: "albums", map: "events",
+  } as const;
+  // TODO: Implement CHUNITHM statistics, recommendations, history and image export before exposing those extensions.
+  const visibleTabs = allTabs.filter(tab => tab.show && (tab.value in requiredCapabilities
+    ? game.capabilities.includes(requiredCapabilities[tab.value as keyof typeof requiredCapabilities])
+    : game.id === "maimai") && (tab.value !== "map" || game.id === "maimai"));
   const validTabs = visibleTabs.map(tab => tab.value);
+  const activeTab = validTabs.includes(selectedTab) ? selectedTab : "info";
 
   // Ensure selected tab is valid/visible, fallback to info if not
   useEffect(() => {
-    if ((selectedSnapshotData || normalizedSnapshotData) && !validTabs.includes(selectedTab)) {
+    if (selectedSnapshotData && !validTabs.includes(selectedTab)) {
       setSelectedTab("info");
       updateTabUrl("info");
     }
@@ -249,12 +245,12 @@ export function DataContent({
     );
   }
 
-  if (selectedSnapshotData || normalizedSnapshotData) {
+  if (selectedSnapshotData) {
     return (
       <div className="flex flex-col md:flex-row md:items-start gap-x-6 lg:gap-x-8 gap-y-6">
         <div className="max-md:contents md:flex md:flex-col md:gap-4">
           <Sidebar
-            value={selectedTab}
+            value={activeTab}
             onValueChange={handleTabChange}
             className="sm:flex-row sm:w-full md:flex-col md:w-48 md:overflow-x-visible md:-ml-3"
           >
@@ -263,24 +259,20 @@ export function DataContent({
             ))}
           </Sidebar>
           <div className="max-md:hidden md:w-48 md:-ml-3">
-            {legacyPanels && <MinigameCards className="grid-cols-1" />}
+            {game.id === "maimai" && <MinigameCards className="grid-cols-1" />}
           </div>
         </div>
 
         <AnimatePresence mode="wait">
           <motion.div
-            key={selectedTab}
+            key={activeTab}
             initial={{ opacity: 0, ...(isDesktop ? { y: 10 } : { x: 10 }) }}
             animate={{ opacity: 1, x: 0, y: 0 }}
             exit={{ opacity: 0, ...(isDesktop ? { y: -10 } : { x: -10 }) }}
             transition={getTransition({ duration: 0.2, ease: [0.4, 0, 0.2, 1] })}
             className="flex-1 min-w-0 mx-1"
           >
-            {!legacyPanels && normalizedSnapshotData && (selectedTab === "info" || selectedTab === "songs") && <GameSnapshotContent key={selectedTab} game={game} data={normalizedSnapshotData} initialView={selectedTab === "songs" ? "songs" : "rankings"} showAllScores={localPrivacySettings.profileShowAllScores} showScoreDetails={localPrivacySettings.profileShowScoreDetails} showPlayCounts={localPrivacySettings.profileShowPlayCounts} />}
-            {!legacyPanels && normalizedSnapshotData && selectedTab === "recent" && visitedBySelf && <GameRecentPage key={`${game.id}:${region}`} region={region} beforeDate={new Date(normalizedSnapshotData.snapshot.fetchedAt)} />}
-            {!legacyPanels && selectedTab === "albums" && visitedBySelf && <GameAlbumPage key={`${game.id}:${region}`} region={region} />}
-            {!legacyPanels && normalizedSnapshotData && selectedTab === "map" && <div>{normalizedSnapshotData.events?.length ? <ul className="space-y-2">{normalizedSnapshotData.events.map((event, index) => <li key={index}>{event.name}</li>)}</ul> : <p className="text-muted-foreground">{t("events.noEventsAvailable")}</p>}</div>}
-            {legacyPanels && selectedSnapshotData && selectedTab === "info" && (
+            {selectedSnapshotData && activeTab === "info" && (
               <InfoCard
                 selectedSnapshotData={selectedSnapshotData}
                 showPlayCounts={localPrivacySettings.profileShowPlayCounts}
@@ -300,45 +292,45 @@ export function DataContent({
                 onPublishProfileChange={setLocalPublishProfile}
               />
             )}
-            {legacyPanels && selectedSnapshotData && selectedTab === "stats" && (visitedBySelf || !!localPrivacySettings.profileShowAllScores) && (
+            {selectedSnapshotData && activeTab === "stats" && (visitedBySelf || !!localPrivacySettings.profileShowAllScores) && (
               <StatsCard
                 region={region}
-                selectedSnapshotData={selectedSnapshotData}
-                snapshotId={visitedBySelf ? undefined : selectedSnapshotData?.snapshot.id}
+                selectedSnapshotData={maimaiSnapshot!}
+                snapshotId={visitedBySelf ? undefined : selectedSnapshotData?.snapshot.publicId}
               />
             )}
-            {legacyPanels && selectedSnapshotData && selectedTab === "songs" && (
+            {selectedSnapshotData && activeTab === "songs" && (
               <SongsCard selectedSnapshotData={selectedSnapshotData} flags={flags} />
             )}
-            {legacyPanels && selectedSnapshotData && selectedTab === "recent" && (visitedBySelf || !!localPrivacySettings.profileShowScoreDetails) && (
+            {selectedSnapshotData && activeTab === "recent" && (visitedBySelf || !!localPrivacySettings.profileShowScoreDetails) && (
               <RecentSongsCard
                 region={region}
                 beforeDate={selectedSnapshotData?.snapshot.fetchedAt}
-                snapshotId={visitedBySelf ? undefined : selectedSnapshotData?.snapshot.id}
+                snapshotId={visitedBySelf ? undefined : selectedSnapshotData?.snapshot.publicId}
               />
             )}
-            {legacyPanels && selectedSnapshotData && selectedTab === "recommendations" && (
-              <RecommendationCard selectedSnapshotData={selectedSnapshotData} flags={flags} region={region} />
+            {selectedSnapshotData && activeTab === "recommendations" && (
+              <RecommendationCard selectedSnapshotData={maimaiSnapshot!} flags={flags} region={region} />
             )}
-            {legacyPanels && selectedSnapshotData && selectedTab === "history" && visitedBySelf && flags.historyCard && (
+            {selectedSnapshotData && activeTab === "history" && visitedBySelf && flags.historyCard && (
               <HistoryCard region={region} />
             )}
-            {legacyPanels && selectedSnapshotData && selectedTab === "map" && localPrivacySettings.profileShowEvents && (
-              <EventsCard selectedSnapshotData={selectedSnapshotData} />
+            {selectedSnapshotData && activeTab === "map" && localPrivacySettings.profileShowEvents && (
+              <EventsCard selectedSnapshotData={maimaiSnapshot!} />
             )}
-            {legacyPanels && selectedSnapshotData && selectedTab === "exportImage" && (
+            {selectedSnapshotData && activeTab === "exportImage" && (
               <ExportImageCard
-                selectedSnapshotData={selectedSnapshotData}
+                selectedSnapshotData={maimaiSnapshot!}
                 region={region}
                 showLastCredit={visitedBySelf || !!localPrivacySettings.profileShowScoreDetails}
                 username={effectiveVisitableProfileAt ?? undefined}
-                publicSnapshotId={visitedBySelf ? undefined : selectedSnapshotData.snapshot.id}
+                publicSnapshotId={visitedBySelf ? undefined : selectedSnapshotData.snapshot.publicId}
               />
             )}
-            {legacyPanels && selectedSnapshotData && selectedTab === "developer" && visitedBySelf && (
-              <DeveloperCard selectedSnapshotData={selectedSnapshotData} />
+            {selectedSnapshotData && activeTab === "developer" && visitedBySelf && (
+              <DeveloperCard selectedSnapshotData={maimaiSnapshot!} />
             )}
-            {legacyPanels && selectedSnapshotData && selectedTab === "albums" && visitedBySelf && flags.albumsCard && (
+            {selectedSnapshotData && activeTab === "albums" && visitedBySelf && flags.albumsCard && (
               <AlbumCard region={region} />
             )}
           </motion.div>

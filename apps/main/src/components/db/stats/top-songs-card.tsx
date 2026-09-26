@@ -19,7 +19,7 @@ export function TopSongsCard({ region }: TopSongsCardProps) {
   const t = useTranslations("db.stats");
   const [window, setWindow] = useState<Window>("7d");
 
-  const { data, isLoading } = trpc.db.getTopSongs.useQuery({ region, window });
+  const { data, isLoading } = trpc.db.getTopSongs.useQuery({ game: "maimai", region, window });
 
   return (
     <Card className="break-inside-avoid">

@@ -1,5 +1,7 @@
 "use client";
 
+import type { GameSnapshotData } from "@/lib/games/player-view";
+import { formatGameRating } from "@/lib/games/presentation";
 import { DescriptionDiscardDialog, ProfileAboutSection } from "@/components/profile-about-section";
 import { PROFILE_PRIVACY_FIELDS } from "@/components/profile-privacy-fields";
 import {
@@ -14,7 +16,7 @@ import { resolveBaseUrl } from "@/lib/base-url";
 import { requireMaimaiVersion } from "@/lib/games/adapters/maimai/versions";
 import { getRatingImageUrl } from "@/lib/rating-calculator";
 import { trpc } from "@/lib/trpc-client";
-import type { ProfilePrivacySettings, ProfileSettings, SnapshotWithSongs } from "@/lib/types";
+import type { ProfilePrivacySettings, ProfileSettings } from "@/lib/types";
 import { createSafeMaimaiImageUrl, isR2Url } from "@/lib/utils";
 import { Button } from "@tomomai/ui";
 import { Settings2 } from "lucide-react";
@@ -259,7 +261,7 @@ function useInfoCardOwnerSettings({
   };
 }
 
-type Snapshot = SnapshotWithSongs["snapshot"];
+type Snapshot = GameSnapshotData["snapshot"];
 
 function RatingImage({ rating, version }: { rating: number; version?: number }) {
   return (
@@ -337,9 +339,9 @@ function PlayerIdentitySummary({ snapshot }: { snapshot: Snapshot }) {
         transition={getTransition(SPRING_CONFIGS.default)}
       >
         <Image
-          src={createSafeMaimaiImageUrl(snapshot.iconUrl)}
-          unoptimized={isR2Url(snapshot.iconUrl)}
-          alt={snapshot.title}
+          src={createSafeMaimaiImageUrl(snapshot.iconUrl ?? "")}
+          unoptimized={isR2Url(snapshot.iconUrl ?? "")}
+          alt={snapshot.title ?? snapshot.displayName}
           width={80}
           height={80}
         />
@@ -353,9 +355,9 @@ function PlayerIdentitySummary({ snapshot }: { snapshot: Snapshot }) {
             {snapshot.displayName}
           </span>
           <div className="relative h-[35px] w-[120px] min-w-fit shrink-0 grow-0">
-            <RatingImage rating={snapshot.rating} version={snapshot.gameVersion} />
-            <span className="absolute top-[3px] left-[8px] box-border w-[106px] text-right font-mono text-[18px] font-normal tracking-[1.65px] text-white">
-              {snapshot.rating}
+            {snapshot.game === "maimai" && <RatingImage rating={snapshot.rating} version={snapshot.gameVersion} />}
+            <span className={snapshot.game === "maimai" ? "absolute top-[3px] left-[8px] box-border w-[106px] text-right font-mono text-[18px] font-normal tracking-[1.65px] text-white" : "font-mono text-lg font-semibold text-foreground"}>
+              {formatGameRating(snapshot.game, snapshot.rating)}
             </span>
           </div>
         </span>
@@ -382,14 +384,14 @@ function PlayerStatisticsBlock({ snapshot, showPlayCounts }: PlayerStatisticsBlo
           animate={{ opacity: 1, x: 0, y: 0 }}
           transition={getTransition({ delay: STAGGER.slow * 0 })}
         >
-          {t("dataContent.rating", { rating: snapshot.rating })}
+          {t("dataContent.rating", { rating: formatGameRating(snapshot.game, snapshot.rating) })}
         </motion.div>
         <motion.div
           initial={{ opacity: 0, ...(isDesktop ? { x: -10 } : { y: 10 }) }}
           animate={{ opacity: 1, x: 0, y: 0 }}
           transition={getTransition({ delay: STAGGER.slow * 1 })}
         >
-          {t("dataContent.stars", { stars: snapshot.stars })}
+          {snapshot.stars != null && t("dataContent.stars", { stars: snapshot.stars })}
         </motion.div>
         {showPlayCounts ? (
           <>
@@ -398,14 +400,14 @@ function PlayerStatisticsBlock({ snapshot, showPlayCounts }: PlayerStatisticsBlo
               animate={{ opacity: 1, x: 0, y: 0 }}
               transition={getTransition({ delay: STAGGER.slow * 2 })}
             >
-              {t("dataContent.versionPlays", { count: snapshot.versionPlayCount })}
+              {snapshot.versionPlayCount != null && t("dataContent.versionPlays", { count: snapshot.versionPlayCount })}
             </motion.div>
             <motion.div
               initial={{ opacity: 0, ...(isDesktop ? { x: -10 } : { y: 10 }) }}
               animate={{ opacity: 1, x: 0, y: 0 }}
               transition={getTransition({ delay: STAGGER.slow * 3 })}
             >
-              {t("dataContent.totalPlays", { count: snapshot.totalPlayCount })}
+              {snapshot.totalPlayCount != null && t("dataContent.totalPlays", { count: snapshot.totalPlayCount })}
             </motion.div>
           </>
         ) : null}
@@ -415,7 +417,7 @@ function PlayerStatisticsBlock({ snapshot, showPlayCounts }: PlayerStatisticsBlo
 }
 
 interface InfoCardProps {
-  selectedSnapshotData: SnapshotWithSongs;
+  selectedSnapshotData: GameSnapshotData;
   showPlayCounts?: boolean;
   visitableProfileAt: string | null;
   profileUsername?: string | null;

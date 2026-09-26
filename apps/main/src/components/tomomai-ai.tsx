@@ -634,9 +634,9 @@ export function TomomaiAI({ snapshotData, region, aprilFools2026 }: TomomaiAIPro
       const existing = songStats.get(play.songName);
       if (existing) {
         existing.count++;
-        existing.bestScore = Math.max(existing.bestScore, play.achievement);
+        existing.bestScore = Math.max(existing.bestScore, play.scoreValue);
       } else {
-        songStats.set(play.songName, { count: 1, bestScore: play.achievement });
+        songStats.set(play.songName, { count: 1, bestScore: play.scoreValue });
       }
     }
     let mostPlayedRecentName: string | null = null;
@@ -657,7 +657,7 @@ export function TomomaiAI({ snapshotData, region, aprilFools2026 }: TomomaiAIPro
 
       const ctx: RoastContext = {
         randomSongAchievement: randomSong.achievement,
-        randomRecentAchievement: randomRecentPlay?.achievement ?? 0,
+        randomRecentAchievement: randomRecentPlay?.scoreValue ?? 0,
         mostPlayedRecentAchievement: mostPlayedRecentStats.bestScore,
         mostPlayedRecentCount: mostPlayedRecentStats.count,
         topAchievement: topScore?.achievement ?? 0,
@@ -683,7 +683,7 @@ export function TomomaiAI({ snapshotData, region, aprilFools2026 }: TomomaiAIPro
         apCount,
         fcCount,
         randomRecentSong: randomRecentPlay?.songName ?? randomSong.songName,
-        randomRecentScore: randomRecentPlay ? fmtScore(randomRecentPlay.achievement) : "0",
+        randomRecentScore: randomRecentPlay ? fmtScore(randomRecentPlay.scoreValue) : "0",
         mostPlayedRecent: mostPlayedRecentName ?? randomSong.songName,
         mostPlayedRecentScore: mostPlayedRecentStats.count > 0 ? fmtScore(mostPlayedRecentStats.bestScore) : "0",
         mostPlayedRecentCount: String(mostPlayedRecentStats.count),

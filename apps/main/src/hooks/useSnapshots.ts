@@ -1,7 +1,8 @@
+"use client";
+import { useState } from "react";
 import { trpc } from "@/lib/trpc-client";
-import { useGameId } from "@/components/providers/game-provider";
-import { useGameSnapshots } from "@/hooks/useGameSnapshots";
-import { getPlayerPresentation, toPlayerSnapshotSummary, type GameSnapshotData, type GameSnapshotSummary } from "@/lib/games/player-view";
+import { useGame } from "@/components/providers/game-provider";
+import { getSnapshotSelection, toPlayerSnapshotSummary, type GameSnapshotData, type GameSnapshotSummary } from "@/lib/games/player-view";
 import type { Region } from "@/lib/types";
 
 interface UseSnapshotsOptions {
@@ -10,21 +11,45 @@ interface UseSnapshotsOptions {
 }
 
 export function useSnapshots(region: Region, isAuthenticated: boolean, options?: UseSnapshotsOptions) {
-  const game = useGameId();
-  const query = useGameSnapshots(region, options?.initialSnapshots ?? [], options?.initialSnapshotData, isAuthenticated);
-  const deleteMutation = trpc.user.deleteSnapshot.useMutation({ onSuccess: query.refresh });
-  const copyMutation = trpc.user.copySnapshotToVersion.useMutation({ onSuccess: query.refresh });
+  const { initialSnapshots = [], initialSnapshotData } = options ?? {};
+  const game = useGame();
+  const scope = `${game.id}:${region}`;
+  const [selection, setSelection] = useState<{ scope: string; id: string | null }>({ scope, id: initialSnapshots[0]?.id ?? null });
+  const [initialScope] = useState(scope);
+  const sameInitialScope = initialScope === scope;
+  const enabled = isAuthenticated && game.enabled && game.regions.includes(region) && game.capabilities.includes("scores");
+  const snapshotsQuery = trpc.user.getSnapshots.useQuery({ game: game.id, region }, {
+    enabled,
+    initialData: sameInitialScope ? initialSnapshots : undefined,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
+  const snapshots = snapshotsQuery.data ?? [];
+  const selectedSnapshot = getSnapshotSelection(snapshots, selection.scope === scope ? selection.id : null);
+  const initialData = sameInitialScope && initialSnapshotData?.snapshot.game === game.id && initialSnapshotData.snapshot.publicId === selectedSnapshot ? initialSnapshotData : null;
+  const snapshotQuery = trpc.user.getSnapshotData.useQuery({ game: game.id, region, snapshotId: selectedSnapshot ?? "" }, {
+    enabled: enabled && selectedSnapshot !== null,
+    initialData: initialData ?? undefined,
+    staleTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
+  const refresh = () => {
+    setSelection({ scope, id: null });
+    void snapshotsQuery.refetch();
+    if (selectedSnapshot) void snapshotQuery.refetch();
+  };
+  const deleteMutation = trpc.user.deleteSnapshot.useMutation({ onSuccess: refresh });
+  const copyMutation = trpc.user.copySnapshotToVersion.useMutation({ onSuccess: refresh });
   return {
-    snapshots: query.snapshots.map(toPlayerSnapshotSummary),
-    selectedSnapshot: query.selectedSnapshot,
-    selectedSnapshotData: query.data ? getPlayerPresentation(game).legacySnapshot(query.data) : null,
-    normalizedSnapshotData: query.data,
-    setSelectedSnapshot: (id: string | null) => { if (id) query.setSelectedSnapshot(id); },
-    deleteSnapshot: (snapshotId: string) => deleteMutation.mutateAsync({ game, snapshotId, region }),
-    copySnapshot: (snapshotId: string, targetVersion: number) => copyMutation.mutateAsync({ game, snapshotId, region, targetVersion }),
+    snapshots: snapshots.map(toPlayerSnapshotSummary),
+    selectedSnapshot,
+    selectedSnapshotData: selectedSnapshot ? snapshotQuery.data ?? initialData : null,
+    setSelectedSnapshot: (id: string | null) => setSelection({ scope, id }),
+    deleteSnapshot: (snapshotId: string) => deleteMutation.mutateAsync({ game: game.id, snapshotId, region }),
+    copySnapshot: (snapshotId: string, targetVersion: number) => copyMutation.mutateAsync({ game: game.id, snapshotId, region, targetVersion }),
     isCopying: copyMutation.isPending,
-    isLoading: query.isLoading,
-    error: query.error,
-    refreshSnapshots: query.refresh,
+    isLoading: enabled && (snapshotsQuery.isLoading || (!!selectedSnapshot && !initialData && snapshotQuery.isLoading)),
+    error: snapshotsQuery.error ?? snapshotQuery.error,
+    refreshSnapshots: refresh,
   };
 }

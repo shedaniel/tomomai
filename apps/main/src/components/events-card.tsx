@@ -256,7 +256,7 @@ export function EventsCard({
   const eventNames = useMemo(() => allEvents.map((e) => e.name), [allEvents]);
 
   const { data: tourSteps, isLoading: isStepsLoading } = trpc.db.getEventStepsByNames.useQuery(
-    { names: eventNames },
+    { game: "maimai", names: eventNames },
     { enabled: eventNames.length > 0 },
   );
 
