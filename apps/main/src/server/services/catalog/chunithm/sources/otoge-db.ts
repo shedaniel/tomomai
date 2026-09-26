@@ -3,6 +3,7 @@ import type { CatalogFetchContext, PendingChart } from "../../ingestion/types";
 import { GameAdapterError } from "@/lib/games/types";
 import { getVersionFromDate } from "@/lib/games/versions";
 import { getChunithmVersionByName, chunithmVersionProvider } from "@/lib/games/adapters/chunithm/versions";
+import { asFetcher } from "../merge";
 
 const SOURCE_ROOT = "https://raw.githubusercontent.com/zvuc/otoge-db/main/chunithm";
 const SOURCES = {
@@ -113,7 +114,7 @@ export function normalizeOtogeDbCatalog(songs: SongsJsonRecord[], region: Region
   });
 }
 
-export async function fetchOtogeDbCatalog(ctx: CatalogFetchContext): Promise<PendingChart[]> {
+export const OtogeDbFetcher = asFetcher(async (ctx: CatalogFetchContext): Promise<PendingChart[]> => {
   const source = getOtogeDbSource(ctx.region);
   if (ctx.version !== source.version) {
     throw new Error(`otoge-db CHUNITHM ${ctx.region} catalog only supports version ${source.version}; requested ${ctx.version}`);
@@ -126,4 +127,4 @@ export async function fetchOtogeDbCatalog(ctx: CatalogFetchContext): Promise<Pen
   ctx.log.info({ game: "chunithm", region: ctx.region, recordCount: charts.length }, "Collected otoge-db catalog");
   ctx.notice.addDetail(`${charts.length} regular CHUNITHM charts from ${ctx.region.toUpperCase()} otoge-db; WORLD'S END excluded`);
   return charts;
-}
+});

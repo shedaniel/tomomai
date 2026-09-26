@@ -1,43 +1,27 @@
-import type { NoteCounts } from "@/lib/types";
-import { catalogChartKey, normalizeCatalogCharts, type CatalogChart } from "@/server/services/catalog/ingestion/normalize-charts";
+import { catalogChartKey, completeCatalogChart, type CatalogChart } from "@/server/services/catalog/ingestion/normalize-charts";
 import { sendDiscordNotice } from "@/server/services/catalog/notifications";
 import { runFetchers, type Fetcher, type FetcherDefinition } from "@/server/services/catalog/ingestion/runner";
-import { asFetcher, choosePendingValue } from "@/server/services/catalog/ingestion/merge";
 import { createFillMissingFetcher, createSorterFetcher } from "@/server/services/catalog/ingestion/stages";
-import { pendingValue, type CatalogFetchContext, type PendingChart } from "../ingestion/types";
+import { parseDisplayLevel } from "../ingestion/levels";
+import { value, type CatalogFetchContext, type PendingChart } from "../ingestion/types";
 import type { CatalogSourceAdapter } from "@/lib/games/types";
-import { fetchOtogeDbCatalog, getOtogeDbSource } from "./sources/otoge-db";
+import { OtogeDbFetcher, getOtogeDbSource } from "./sources/otoge-db";
 
 const stages: { name: string; fetcher: Fetcher<PendingChart, CatalogFetchContext> }[] = [
   {
     name: "OtogeDB",
-    fetcher: asFetcher(fetchOtogeDbCatalog, {
-      key: catalogChartKey,
-      artist: chart => pendingValue(chart.artist) ?? "",
-      addedVersion: chart => pendingValue(chart.addedVersion),
-      merge: (existing, incoming) => ({
-        ...existing,
-        artist: choosePendingValue<string>(existing.artist, incoming.artist),
-        cover: choosePendingValue<string>(existing.cover, incoming.cover),
-        level: choosePendingValue<string>(existing.level, incoming.level),
-        levelPrecise: choosePendingValue<number>(existing.levelPrecise, incoming.levelPrecise),
-        genre: choosePendingValue<string>(existing.genre, incoming.genre),
-        addedVersion: choosePendingValue<number>(existing.addedVersion, incoming.addedVersion),
-        bpm: choosePendingValue<number>(existing.bpm, incoming.bpm),
-        noteDesigner: choosePendingValue<string>(existing.noteDesigner, incoming.noteDesigner),
-        noteCounts: choosePendingValue<NoteCounts>(existing.noteCounts, incoming.noteCounts),
-        metadata: choosePendingValue<Record<string, unknown>>(existing.metadata, incoming.metadata),
-      }),
-    }),
+    fetcher: OtogeDbFetcher,
   },
   {
     name: "Fill Missing",
-    fetcher: createFillMissingFetcher<PendingChart, CatalogFetchContext>(catalogChartKey, () => ({ plusOffset: 5 })),
+    fetcher: createFillMissingFetcher<PendingChart, CatalogFetchContext>(catalogChartKey, () => ({
+      toPrecise: level => parseDisplayLevel(level, 5),
+    })),
   },
   {
     name: "Sorter",
     fetcher: createSorterFetcher((a, b) => a.songName.localeCompare(b.songName)
-      || (pendingValue(a.artist) ?? "").localeCompare(pendingValue(b.artist) ?? "")
+      || (value(a.artist) ?? "").localeCompare(value(b.artist) ?? "")
       || a.chartType - b.chartType || a.difficulty - b.difficulty),
   },
 ];
@@ -48,7 +32,7 @@ export function getChunithmCatalogPipeline(context: CatalogFetchContext): Fetche
     fetchers: stages.map(stage => stage.fetcher),
     names: stages.map(stage => stage.name),
     key: catalogChartKey,
-    complete: chart => normalizeCatalogCharts("chunithm", [chart])[0],
+    complete: (chart, context) => completeCatalogChart(chart, context.log),
     notify: (title, body, color) => sendDiscordNotice(context.region, `CHUNITHM ${title}`, body, color),
   };
 }

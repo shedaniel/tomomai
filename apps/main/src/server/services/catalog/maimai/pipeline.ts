@@ -3,10 +3,9 @@ import type { Logger } from "pino";
 import { getCurrentVersion } from "@/lib/games/versions";
 import type { CatalogFetchContext } from "../ingestion/types";
 import type { CatalogSourceAdapter } from "@/lib/games/types";
-import { toPendingChart } from "./normalize";
+import { toCatalogChart } from "./normalize";
 import { createSorterFetcher } from "../ingestion/stages";
 import { runFetchers, requireCatalogValue } from "../ingestion/runner";
-import type { CatalogLogger } from "@/server/services/catalog/ingestion/types";
 import { UpdateSong } from "@/server/services/catalog/maimai/types";
 import type { PendingSong } from "@/server/services/catalog/maimai/types";
 import { value } from "@/server/services/catalog/ingestion/types";
@@ -76,7 +75,7 @@ export function getFetchersForRegion(region: Region): { fetchers: SongFetcher[];
   return { fetchers: FETCHERS, names: FETCHER_NAMES };
 }
 
-function validateSongs(songsInput: PendingSong[], log: CatalogLogger): void {
+function validateSongs(songsInput: PendingSong[], log: Logger): void {
   for (const song of songsInput) {
     // validate non-null
     if (isNullOrUndefined(song.songName) || isNullOrUndefined(song.type) || isNullOrUndefined(song.difficulty)) {
@@ -166,9 +165,9 @@ export const maimaiCatalogAdapter: CatalogSourceAdapter = {
       version: ctx.version as VersionId,
       cookies: ctx.cookies ?? "",
       forceMode: ctx.forceMode,
-      log: ctx.log as unknown as Logger,
+      log: ctx.log,
       notice: ctx.notice,
     });
-    return songs.map(toPendingChart);
+    return songs.map(toCatalogChart);
   },
 };

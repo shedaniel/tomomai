@@ -1,6 +1,6 @@
 import type { PendingSong, SongKey, FetchingContext, SongFetcher, SongWithMode } from "./types";
 import { isImportant, Pending, unwrapUndefined, value } from "@/server/services/catalog/ingestion/types";
-import type { CatalogLogger as Logger } from "@/server/services/catalog/ingestion/types";
+import type { Logger } from "pino";
 import { asFetcher as sourceFetcher, mergeSongs as mergeSourceSongs, choosePendingValue } from "../ingestion/merge";
 import type { FetcherMode } from "../ingestion/merge";
 import deepEqual from "deep-equal";

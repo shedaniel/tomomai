@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { CatalogFetchContext, CatalogLogger } from "../ingestion/types";
+import pino from "pino";
+import type { CatalogFetchContext } from "../ingestion/types";
 import { chunithmCatalogAdapter } from "./pipeline";
 import { normalizeOtogeDbCatalog } from "./sources/otoge-db";
 import { sendDiscordNotice } from "@/server/services/catalog/notifications";
@@ -9,10 +10,7 @@ import intlFixture from "./fixtures/otoge-db-intl.json";
 vi.mock("@/server/services/catalog/notifications", () => ({ sendDiscordNotice: vi.fn(async () => undefined) }));
 
 function context(region: "jp" | "intl", version: number): CatalogFetchContext {
-  const log: CatalogLogger = {
-    child: () => log,
-    trace: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(),
-  };
+  const log = pino({ enabled: false });
   return { region, version, log, notice: { addDetail: vi.fn(), details: [] } };
 }
 
