@@ -11,7 +11,8 @@ const state = vi.hoisted(() => ({
   deletes: [] as { sql: string; params: unknown[] }[],
   execute: vi.fn(),
   conflicts: vi.fn(),
-  writes: [] as { table: string; rows: Record<string, unknown>[] }[],
+  nextParentId: BigInt(100),
+  writes: [] as { table: string; rows: Record<string, unknown>[]; parameterCount: number }[],
 }));
 vi.mock("@/lib/db", async () => {
   const { drizzle } = await import("drizzle-orm/pg-proxy");
@@ -26,9 +27,10 @@ vi.mock("@/lib/db", async () => {
       } });
       return query;
     } });
-    const insert = (table: Parameters<typeof getTableName>[0]) => ({ values: (rows: Record<string, unknown>[]) => {
-      state.writes.push({ table: getTableName(table), rows });
-      return { returning: async () => rows.map((row, index) => ({ ...row, id: BigInt(index + 100) })), onConflictDoUpdate: state.conflicts };
+    const insert = (table: PgTable) => ({ values: (rows: Record<string, unknown>[]) => {
+      const parameterCount = queryBuilder.insert(table).values(rows).toSQL().params.length;
+      state.writes.push({ table: getTableName(table), rows, parameterCount });
+      return { returning: async () => rows.map(row => ({ ...row, id: state.nextParentId++ })), onConflictDoUpdate: state.conflicts };
     } });
     const remove = (table: Parameters<typeof queryBuilder.delete>[0]) => {
       const query = queryBuilder.delete(table);
@@ -45,9 +47,24 @@ import { persistCatalog } from "@/server/services/catalog/ingestion/persistence"
 const log = pino({ enabled: false });
 const chart: CatalogChart = { game: "chunithm", songName: "Song", chartType: 0, difficulty: 4,
   artist: "Artist", cover: "image", genre: "Original", level: "14+", levelPrecise: 145, addedVersion: 8, metadata: { otogeDb: { id: "123" } } };
-beforeEach(() => { state.selections = []; state.writes = []; state.reads = []; state.deletes = []; vi.clearAllMocks(); });
+beforeEach(() => { state.selections = []; state.writes = []; state.reads = []; state.deletes = []; state.nextParentId = BigInt(100); vi.clearAllMocks(); });
 
 describe("shared catalog persistence", () => {
+  it("inserts a full new catalog within the driver parameter limit without losing parent assignments", async () => {
+    const catalog = Array.from({ length: 7000 }, (_, index) => ({ ...chart, songName: `Song ${index}` }));
+    const result = await persistCatalog("chunithm", "jp", 9, catalog, "alter", log);
+    expect(result.applied).toMatchObject({ added: catalog.length, newParents: catalog.length });
+    for (const write of state.writes) expect(write.parameterCount).toBeLessThan(65_534);
+
+    const parents = state.writes.filter(write => write.table === "parent_song").flatMap(write => write.rows);
+    const children = state.writes.filter(write => write.table === "songs").flatMap(write => write.rows);
+    expect(parents).toHaveLength(catalog.length);
+    expect(children).toHaveLength(catalog.length);
+    const parentIdByName = new Map(parents.map((parent, index) => [parent.songName, BigInt(index + 100)]));
+    expect(children.map(child => child.parentId)).toEqual(catalog.map(song => parentIdByName.get(song.songName)));
+    expect(new Set(children.map(child => child.parentId)).size).toBe(catalog.length);
+  });
+
   it.each(["maimai", "chunithm"] as const)("binds the requested %s catalog slice and numeric fields to storage", async game => {
     const row = { ...chart, game, ...(game === "maimai" ? { chartType: 1, levelPrecise: 145, addedVersion: 8 } : {}) };
     const result = await persistCatalog(game, "jp", 9, [row], "alter", log);

@@ -285,10 +285,12 @@ async function resolveParentsForAddedRows(db: CatalogTransaction, game: Canonica
 
   const { assignments, newParents } = resolveParents(songsToParent, existingStates);
 
-  if (newParents.length > 0) {
+  const batchSize = 1000;
+  for (let i = 0; i < newParents.length; i += batchSize) {
+    const batch = newParents.slice(i, i + batchSize);
     const inserted = await db
       .insert(parentSong)
-      .values(newParents.map(p => ({
+      .values(batch.map(p => ({
         game,
         publicId: nanoid(PARENT_PUBLIC_ID_LENGTH),
         songName: p.songName,
@@ -301,7 +303,7 @@ async function resolveParentsForAddedRows(db: CatalogTransaction, game: Canonica
         disambiguator: p.disambiguator,
       })))
       .returning({ id: parentSong.id, songName: parentSong.songName, type: parentSong.type, difficulty: parentSong.difficulty, disambiguator: parentSong.disambiguator });
-    for (const parent of newParents) {
+    for (const parent of batch) {
       const saved = inserted.find(row => row.songName === parent.songName && row.type === parent.type && row.difficulty === parent.difficulty && row.disambiguator === parent.disambiguator);
       if (!saved) throw new Error("Inserted parent missing from returned rows");
       parent.id = saved.id;
