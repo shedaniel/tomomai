@@ -264,7 +264,7 @@ export function SongDetailContent({ songName, artist, slug, type, parentIds, ini
   );
   const { data: scoreData } = trpc.user.getSongScores.useQuery(
     { game: game.id, songName, artist: artist ?? initialData?.artist, type, parentIds: parentIds ?? initialData?.parentIds },
-    { enabled: hasInitialData && viewerId !== null }
+    { enabled: hasInitialData && viewerId !== null && game.enabled && game.capabilities.includes("scores") }
   );
   const data = useMemo(() => {
     if (!initialData) return fetchedData;

@@ -65,7 +65,7 @@ export async function generateMetadata({ params }: DbTypePageProps): Promise<Met
       url: localizePath(path, locale),
       siteName: getGameBrand(game).title,
       type: "website",
-      images: [{ url: ogImageUrl(path, locale) }],
+      ...(game.id === "maimai" ? { images: [{ url: ogImageUrl(path, locale) }] } : {}),
       ...openGraphLocales(locale),
     },
     twitter: {
@@ -80,7 +80,7 @@ export default async function DbTypePage({ params }: DbTypePageProps) {
   const { type } = await params;
   const game = getFrontendGame();
 
-  if (!game.enabled || !getGameCatalogSections(game.id).includes(type) || (type === "songs" && !supportsGameFeature(game, "catalog"))) return <InlineNotFound />;
+  if (!getGameCatalogSections(game.id).includes(type) || (type === "songs" ? !supportsGameFeature(game, "catalog") : !game.enabled)) return <InlineNotFound />;
 
   if (type === "songs") {
     // The interactive SongsList is mounted by /db/[type]/layout so it

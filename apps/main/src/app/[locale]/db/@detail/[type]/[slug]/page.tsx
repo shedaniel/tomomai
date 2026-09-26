@@ -28,7 +28,7 @@ export default async function DetailSlotPage({ params }: Props) {
 
   const decodedSlug = safeDecodeURIComponent(slug);
   const game = getFrontendGame();
-  if (!game.enabled || !supportsGameFeature(game, "catalog")) return null;
+  if (!supportsGameFeature(game, "catalog")) return null;
 
   const songs = await getAllUniqueSongsCached(game.id);
   const song = songs.find((s) => s.slug === decodedSlug);

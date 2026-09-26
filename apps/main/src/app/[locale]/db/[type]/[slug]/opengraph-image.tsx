@@ -1,4 +1,4 @@
-import { getGameBrand } from "@/lib/games/frontend";
+import { getGameBrand, supportsGameFeature } from "@/lib/games/frontend";
 import { getFrontendGame } from "@/lib/games/frontend-server";
 import { createSongOGImage, createHomeOGImage, DB_ACCENT, OG_SIZE } from "@/lib/og";
 import { getAllUniqueSongsCached } from "@/server/queries/songs-cache";
@@ -26,7 +26,7 @@ export default async function Image({ params, id }: Props & { id: Promise<string
   const [{ type, slug }, locale] = await Promise.all([params, id]) as [{ type: string; slug: string }, Locale];
 
   const game = getFrontendGame();
-  if (!game.enabled || !game.capabilities.includes("catalog")) return new Response(null, { status: 404 });
+  if (!supportsGameFeature(game, "catalog")) return new Response(null, { status: 404 });
 
   if (type !== "songs") {
     const t = await getTranslations({ locale, namespace: "db.songs.metadata" });

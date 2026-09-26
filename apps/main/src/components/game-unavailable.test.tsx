@@ -12,7 +12,7 @@ const hooks = vi.hoisted(() => ({ snapshots: vi.fn(), fetch: vi.fn() }));
 vi.mock("@/hooks/useSnapshots", () => ({ useSnapshots: hooks.snapshots }));
 vi.mock("@/hooks/useFetchSession", () => ({ useFetchSession: hooks.fetch }));
 vi.mock("@/i18n/navigation", () => ({
-  Link: ({ children }: { children: React.ReactNode }) => children,
+  Link: ({ children, href }: { children: React.ReactNode; href: string }) => <a href={href}>{children}</a>,
   useRouter: vi.fn(), usePathname: vi.fn(), redirect: vi.fn(), getPathname: vi.fn(),
 }));
 
@@ -26,7 +26,7 @@ const flags: Flags = {
 
 function renderUnavailable(game: FrontendGame) {
   return renderToStaticMarkup(
-    <NextIntlClientProvider locale="en" messages={{ settings: { pages: { fetch: messages.settings.pages.fetch } } }} timeZone="UTC">
+    <NextIntlClientProvider locale="en" messages={{ db: messages.db, settings: { pages: { fetch: messages.settings.pages.fetch } } }} timeZone="UTC">
       <GameProvider game={game}>
         <Dashboard user={{ id: "test-user" }} initialUserData={{ hasUsername: true, username: "player", email: "", publishProfile: false, region: "intl", role: "user" }} initialSnapshots={[]} flags={flags} latestPost={null} />
       </GameProvider>

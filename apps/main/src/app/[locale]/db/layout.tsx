@@ -12,7 +12,7 @@ export default async function DbLayout({
   detail: ReactNode;
 }) {
   const game = getFrontendGame();
-  const types = game.enabled && supportsGameFeature(game, "catalog") ? getGameCatalogSections(game.id) : [];
+  const types = supportsGameFeature(game, "catalog") ? getGameCatalogSections(game.id) : [];
   return (
     <>
       <DbLayoutClient types={types} user={null} customThemesEnabled={false}>
