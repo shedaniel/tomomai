@@ -10,23 +10,25 @@ vi.mock("@/lib/db", () => ({ db: {} }));
 
 import { revalidatePublicProfile, revalidateCurrentSitePublicProfile } from "./profile-cache";
 
-beforeEach(() => vi.clearAllMocks());
+beforeEach(() => { vi.clearAllMocks(); getFrontendGame.mockReturnValue({ id: "maimai" }); });
 
 describe("public profile invalidation", () => {
-  it("does not invalidate maimai pages for another game's ingestion", () => {
-    revalidatePublicProfile("chunithm", ["alice"], ["jp"]);
+  it.each(["maimai", "chunithm"])("does not invalidate %s pages for another game's ingestion", game => {
+    getFrontendGame.mockReturnValue({ id: game });
+    revalidatePublicProfile(game === "maimai" ? "chunithm" : "maimai", ["alice"], ["jp"]);
     expect(revalidatePath).not.toHaveBeenCalled();
   });
 
-  it("invalidates the current game's localized profile paths", () => {
-    revalidatePublicProfile("maimai", ["alice", "alice"], ["jp"]);
+  it.each(["maimai", "chunithm"] as const)("invalidates %s localized profile paths", game => {
+    getFrontendGame.mockReturnValue({ id: game });
+    revalidatePublicProfile(game, ["alice", "alice"], ["jp"]);
     expect(revalidatePath).toHaveBeenCalledWith("/ja/profile/alice/jp", "page");
     expect(revalidatePath.mock.calls.every(([path]) => String(path).endsWith("/profile/alice/jp"))).toBe(true);
   });
 
-  it("resolves account-wide settings through the named current-site boundary", () => {
+  it.each(["maimai", "chunithm"])("invalidates the %s site after account-wide settings change", game => {
+    getFrontendGame.mockReturnValue({ id: game });
     revalidateCurrentSitePublicProfile(["alice"], ["intl"]);
-    expect(getFrontendGame).toHaveBeenCalled();
     expect(revalidatePath).toHaveBeenCalledWith("/en/profile/alice/intl", "page");
   });
 });

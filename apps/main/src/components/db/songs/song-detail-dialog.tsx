@@ -10,7 +10,7 @@ import { formatGameScore, formatGameRating, getGameChartRating, getGameDifficult
 
 type SongExtendedIdentified = SongDetailChart & { region: Region; gameVersion: number };
 
-export function SongChartDialogGrid({ chart, score }: { chart: SongExtendedIdentified; score?: UserScore }) {
+function SongChartDialogGrid({ chart, score }: { chart: SongExtendedIdentified; score?: UserScore }) {
   const t = useTranslations();
   const game = useGame();
   const benchmarks = getGameScoreBenchmarks(game.id);

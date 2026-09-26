@@ -1,8 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 import { GameProvider } from "@/components/providers/game-provider";
-import { SongChartDialogGrid } from "./song-detail-dialog";
+import { SongChartDialogContent } from "./song-detail-dialog";
 import type { FrontendGame } from "@/lib/games/frontend";
+
+vi.mock("@tomomai/ui", () => ({ ResponsiveDialogTitle: ({ children }: { children: React.ReactNode }) => <h2>{children}</h2> }));
 
 vi.mock("next-intl", () => ({ useTranslations: () => (key: string) => key }));
 
@@ -12,23 +14,23 @@ const score = { scoreValue: 1009000, comboStatus: 2, syncStatus: 1, clearStatus:
 
 describe("shared catalog rating dialog", () => {
   it("renders CHUNITHM scores as integers and rating hundredths using the common component", () => {
-    const html = renderToStaticMarkup(<GameProvider game={descriptor}><SongChartDialogGrid chart={chart} score={score} /></GameProvider>);
+    const html = renderToStaticMarkup(<GameProvider game={descriptor}><SongChartDialogContent charts={[chart]} scores={{ jp: score }} /></GameProvider>);
     expect(html).toContain("1,009,000");
     expect(html).toContain("16.15");
     expect(html).toContain("db.songs.detail.score");
-    expect(html).not.toContain("%");
+    expect(html.replace(/<[^>]*>/g, "")).not.toContain("%");
     expect(html).not.toContain(">AP<");
   });
 
   it("preserves maimai achievement precision and the AP rating row through the same component", () => {
-    const html = renderToStaticMarkup(<GameProvider game={{ ...descriptor, id: "maimai", productName: "tomomai" }}><SongChartDialogGrid chart={{ ...chart, difficulty: "master" }} score={{ ...score, scoreValue: 1001423 }} /></GameProvider>);
+    const html = renderToStaticMarkup(<GameProvider game={{ ...descriptor, id: "maimai", productName: "tomomai" }}><SongChartDialogContent charts={[{ ...chart, difficulty: "master" }]} scores={{ jp: { ...score, scoreValue: 1001423 } }} /></GameProvider>);
     expect(html).toContain("100.1423%");
     expect(html).toContain(">AP<");
     expect(html).toContain("db.songs.detail.achievement");
   });
 
   it("marks ratings based on an estimated constant", () => {
-    const html = renderToStaticMarkup(<GameProvider game={descriptor}><SongChartDialogGrid chart={{ ...chart, levelPreciseEstimated: true }} score={score} /></GameProvider>);
+    const html = renderToStaticMarkup(<GameProvider game={descriptor}><SongChartDialogContent charts={[{ ...chart, levelPreciseEstimated: true }]} scores={{ jp: score }} /></GameProvider>);
     expect(html).toContain("≈16.15");
     expect(html).toContain("1,009,000");
   });

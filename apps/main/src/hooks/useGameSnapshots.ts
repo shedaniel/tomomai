@@ -21,12 +21,13 @@ export function useGameSnapshots(region: Region, initialSnapshots: GameSnapshotS
   });
   const snapshots = snapshotsQuery.data ?? [];
   const selectedSnapshot = getSnapshotSelection(snapshots, selection.scope === scope ? selection.id : null);
+  const initialData = sameInitialScope && initialSnapshotData?.snapshot.game === game.id && initialSnapshotData.snapshot.publicId === selectedSnapshot ? initialSnapshotData : null;
   const snapshotQuery = trpc.user.getSnapshotData.useQuery({ game: game.id, region, snapshotId: selectedSnapshot ?? "" }, {
     enabled: enabled && selectedSnapshot !== null,
+    initialData: initialData ?? undefined,
     staleTime: 10 * 60 * 1000,
     refetchOnWindowFocus: false,
   });
-  const initialData = sameInitialScope && initialSnapshotData?.snapshot.game === game.id && initialSnapshotData.snapshot.publicId === selectedSnapshot ? initialSnapshotData : null;
   return {
     snapshots,
     selectedSnapshot,

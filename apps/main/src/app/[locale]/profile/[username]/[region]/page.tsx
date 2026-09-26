@@ -68,7 +68,7 @@ export async function generateMetadata({ params }: RegionProfilePageProps): Prom
         url: localizePath(path, locale),
         siteName: getGameBrand(game).title,
         type: "profile",
-        ...(game.capabilities.includes("plates") ? { images: [{ url: ogImageUrl(path, locale) }] } : {}),
+        ...(game.id === "maimai" ? { images: [{ url: ogImageUrl(path, locale) }] } : {}),
         ...openGraphLocales(locale),
       },
       twitter: {
