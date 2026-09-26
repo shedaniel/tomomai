@@ -2,7 +2,7 @@
 
 Status: frontend foundation and per-process game selection implemented, 2026-09-25. This document records agreed
 product behavior, the current implementation, and the remaining rollout sequence.
-It does not enable CHUNITHM or authorize a production rollout. Backend context is in [MULTI_GAME_BACKEND.md](MULTI_GAME_BACKEND.md)
+CHUNITHM catalog support is available; player fetching and production rollout remain gated. Backend context is in [MULTI_GAME_BACKEND.md](MULTI_GAME_BACKEND.md)
 and catalog identity context is in [PARENT_SONG.md](PARENT_SONG.md).
 
 ## Current implementation
@@ -11,7 +11,7 @@ The current phase deliberately excludes the two-domain/URL setup and cross-domai
 login. Existing maimai URLs remain unchanged. `getFrontendGame()` resolves the configured canonical game at the server boundary
 and passes a serializable descriptor through `GameProvider`.
 There is no new public game route, hostname rewrite, game switcher, authentication
-flow, or CHUNITHM activation in this phase. Domain routing remains a later task.
+flow, or CHUNITHM player-fetch activation in this phase. Domain routing remains a later task.
 
 Implemented frontend support:
 
@@ -42,11 +42,12 @@ Implemented frontend support:
   data for specialized consumers. Public profile invalidation takes explicit game
   context and does not invalidate the current site's pages for another game.
 
-CHUNITHM remains disabled and its providers are still unimplemented. Its frontend
-presentation is exercised with fixtures, not live CHUNITHM records. The local
-CHUNITHM frontend renders a branded unavailable state before dashboard
-authentication or player-data loading. Selecting CHUNITHM does not enable its
-providers, regions or capabilities. Existing maimai login/session behavior is unchanged.
+CHUNITHM's catalog provider and catalog pages are available independently of
+player rollout; see [CHUNITHM_CATALOG.md](CHUNITHM_CATALOG.md). Its score provider
+remains unconfigured and player presentation is exercised with fixtures. The
+local CHUNITHM frontend renders a branded player-unavailable state with a catalog
+link before dashboard authentication or player-data loading. Selecting CHUNITHM
+does not activate player fetching. Existing maimai login/session behavior is unchanged.
 
 Maimai's rich recommendations, percentiles, plates, render/export controls,
 reserved accounts and fetch settings remain specialized. Game-specific source
@@ -91,8 +92,63 @@ concurrently in one checkout.
 
 The two localhost ports are a frontend preview, not domain/session isolation:
 browser cookies are shared across localhost ports. Domain routing and secure
-cross-site login remain deferred. CHUNITHM still has no configured provider or
-regions; its unavailable page is intentional and no backend activation occurs.
+cross-site login remain deferred. CHUNITHM defaults to International and JP
+catalog regions; its player-unavailable page is intentional while its score
+provider remains unconfigured. The catalog is at `/{locale}/db/songs`.
+
+## Player-fetch preparation
+
+The shared infrastructure is prepared while CHUNITHM's authenticated player
+pages and parsers remain unverified. CHUNITHM keeps `scores.configured: false`
+and player rollout disabled. Its existing unavailable message remains in place;
+knowing the maintenance window does not make player fetching available.
+
+Confirmed entry URLs and daily maintenance windows are stored together in
+[`sites.ts`](../apps/main/src/lib/games/sites.ts). Times are JST (UTC+09:00), with
+the start included and the end excluded.
+
+| Game | Region | Entry URL | Maintenance (JST) |
+| --- | --- | --- | --- |
+| maimai | International | `https://maimaidx-eng.com/maimai-mobile/` | 01:00–02:00; Wednesday 01:00–04:00 |
+| maimai | JP | `https://maimaidx.jp/maimai-mobile/` | 04:00–07:00 |
+| maimai | CN | `https://maimai.wahlap.com/maimai-mobile/` | 04:00–07:00 |
+| CHUNITHM | International | `https://chunithm-net-eng.com/mobile/` | 04:00–07:00 |
+| CHUNITHM | JP | `https://new.chunithm-net.com/` | 02:00–07:00 |
+
+CHUNITHM has no CN site configuration. Its International and JP accounts use
+SEGA ID and cookies; the entry URLs above do not establish login endpoint paths,
+authentication parameters, redirect behavior or player-page selectors.
+
+Implementation ownership:
+
+- [`maintenance.ts`](../apps/main/src/lib/games/maintenance.ts) computes the
+  current or next window from that metadata. Shared score ingestion, the frontend
+  fetch hook and the maimai Discord command use this policy. Existing maimai
+  Wednesday and CN schedules are preserved.
+- [`score-ingestion.ts`](../apps/main/src/server/services/games/score-ingestion.ts)
+  rejects unavailable sources and active maintenance before token changes,
+  provider work or session creation. It owns common session/persistence handling;
+  [`tokens.ts`](../apps/main/src/server/services/games/tokens.ts) scopes token
+  access by game, user and region.
+- Shared SEGA HTTP and login mechanics live in
+  [`games/sega/`](../apps/main/src/server/services/games/sega/), with verified
+  maimai login configuration in
+  [`games/maimai/`](../apps/main/src/server/services/games/maimai/).
+  Maimai's score parsers and CN authentication behavior remain specialized.
+- [`otp.ts`](../apps/main/src/lib/otp.ts) binds game and user in the existing
+  signed login authorization. The token dialog requests an OTP for its current
+  game; a login link requires a configured source with a verified cookie-login
+  URL. Existing gateway fields remain unchanged, and legacy authorizations
+  resolve only to maimai.
+
+After maintenance, verify CHUNITHM's actual login endpoints, parameters, cookies
+and authenticated page structure before adding its game-specific login
+configuration and score parser. Then map real player data into the existing
+shared score-ingestion contract and cover it with saved fixtures. Source
+configuration and rollout must stay disabled until that implementation and
+end-to-end acceptance are complete. No CHUNITHM login URL, selector or score
+payload is inferred from maimai. Domain routing and cross-site sign-in remain
+separate deferred work.
 
 ## Confirmed decisions
 
