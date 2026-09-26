@@ -3,7 +3,7 @@ import { NextRequest } from "next/server";
 import type { CatalogFetchContext, PendingChart } from "@/server/services/catalog/ingestion/types";
 import type { CanonicalGameId } from "@/lib/games/types";
 import { runFetchers, type Fetcher } from "@/server/services/catalog/ingestion/runner";
-import { normalizeCatalogCharts } from "@/server/services/catalog/ingestion/normalize-charts";
+import { completeCatalogChart } from "@/server/services/catalog/ingestion/normalize-charts";
 
 const mocks = vi.hoisted(() => {
   const log = { child: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() };
@@ -39,7 +39,7 @@ async function runRecipe(game: CanonicalGameId, context: CatalogFetchContext) {
   return runFetchers(context, {
     fetchers: [source, enrich], names: [`${game} source`, `${game} metadata`],
     key: song => `${song.songName}:${song.chartType}:${song.difficulty}`,
-    validate: () => {}, complete: song => normalizeCatalogCharts(game, [song])[0],
+    validate: () => {}, complete: song => completeCatalogChart(song, context.log),
   });
 }
 
@@ -91,10 +91,15 @@ describe("configured catalog admin pipeline", () => {
     expect((await upload(req)).status).toBe(400);
     expect(mocks.ingest).not.toHaveBeenCalled();
   });
-  it("rejects cross-game upload records before persistence", async () => {
+  it.each([
+    { label: "cross-game", songs: [{ ...chart, game: "maimai" }] },
+    { label: "unknown difficulty", songs: [{ ...chart, difficulty: 42 }] },
+    { label: "unknown chart type", songs: [{ ...chart, chartType: 42 }] },
+    { label: "duplicate", songs: [chart, chart] },
+  ])("rejects $label upload records before persistence", async ({ songs }) => {
     const req = new NextRequest("https://example.test/api/admin/upload?game=chunithm&region=jp&version=9", {
       method: "POST", headers: { authorization: "Bearer admin-secret", "content-type": "application/json" },
-      body: JSON.stringify({ songs: [{ ...chart, game: "maimai" }] }),
+      body: JSON.stringify({ songs }),
     });
     expect((await upload(req)).status).toBe(400);
     expect(mocks.ingest).not.toHaveBeenCalled();

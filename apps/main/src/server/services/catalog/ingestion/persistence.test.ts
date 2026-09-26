@@ -6,10 +6,8 @@ import { getTableName } from "drizzle-orm";
 const state = vi.hoisted(() => ({
   selections: [] as unknown[][],
   writes: [] as { table: string; rows: Record<string, unknown>[] }[],
-  transactions: 0,
 }));
 vi.mock("@/lib/db", () => ({ db: { transaction: async (run: (tx: unknown) => Promise<unknown>) => {
-  state.transactions++;
   const select = () => {
     const rows = state.selections.shift() ?? [];
     const builder = { from: () => builder, innerJoin: () => builder, where: () => builder,
@@ -27,7 +25,7 @@ import { persistCatalog } from "@/server/services/catalog/ingestion/persistence"
 const log = { info: vi.fn(), trace: vi.fn() } as unknown as Logger;
 const chart: CatalogChart = { game: "chunithm", songName: "Song", chartType: 0, difficulty: 4,
   artist: "Artist", cover: "image", genre: "Original", level: "14+", levelPrecise: 145, addedVersion: 8, metadata: { otogeDb: { id: "123" } } };
-beforeEach(() => { state.selections = []; state.writes = []; state.transactions = 0; });
+beforeEach(() => { state.selections = []; state.writes = []; });
 
 describe("shared catalog persistence", () => {
   it.each(["maimai", "chunithm"] as const)("writes %s through the same numeric parent/instance pipeline", async game => {
@@ -75,8 +73,4 @@ describe("shared catalog persistence", () => {
     if (changed) expect(result.changes.modified[0].fieldChanges.map(change => change.field)).toEqual(["metadata"]);
   });
 
-  it("validates game identity before opening a transaction", async () => {
-    await expect(persistCatalog("maimai", "jp", 9, [chart], "alter", log)).rejects.toThrow("different game");
-    expect(state.transactions).toBe(0);
-  });
 });

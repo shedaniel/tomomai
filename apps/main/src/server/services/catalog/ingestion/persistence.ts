@@ -1,7 +1,7 @@
 import { db } from "@/lib/db";
 import { scoreData, songs, parentSong, userRecentSongs, userAlbums } from "@/lib/db/schema-pg";
 import type { Region } from "@/lib/types";
-import { validateCatalogCharts, mergeCatalogChart, catalogChartKey as key, type CatalogChart } from "@/server/services/catalog/ingestion/normalize-charts";
+import { mergeCatalogChart, catalogChartKey as key, type CatalogChart } from "@/server/services/catalog/ingestion/normalize-charts";
 import { and, eq, inArray, count, sql, getTableColumns, notExists } from "drizzle-orm";
 import { matchUpload } from "@/server/services/catalog/ingestion/match-upload";
 import { resolveParents, type ParentState, type SongToParent } from "@/server/services/catalog/ingestion/resolve-parent";
@@ -467,8 +467,6 @@ async function applyChanges(
 
 
 export async function persistCatalog(game: CanonicalGameId, region: Region, version: number, uploadSongs: CatalogChart[], updateMode: UpdateMode, log: Logger) {
-    validateCatalogCharts(game, uploadSongs);
-
     return db.transaction(async (tx) => {
       await tx.execute(sql`SELECT pg_advisory_xact_lock(73641932)`);
       // Query database for existing songs

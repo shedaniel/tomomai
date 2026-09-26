@@ -6,7 +6,6 @@ import { requestLogger } from "@/lib/request-logger";
 import type { Region } from "@/lib/types";
 import { getGameChartTypeKey } from "@/lib/games/presentation";
 import { parseCatalogUpload } from "@/lib/catalog/parse-upload";
-import { value } from "@/server/services/catalog/ingestion/types";
 import { sendDiscordNotice, sendDiscordWebhook } from "@/server/services/catalog/notifications";
 import { publishSongCatalog } from "@/server/services/catalog/publication";
 import { revalidatePath, revalidateTag } from "next/cache";
@@ -131,7 +130,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     let uploadSongs;
     try {
-      uploadSongs = await parseCatalogUpload(game, body.songs);
+      uploadSongs = parseCatalogUpload(game, body.songs);
     } catch (error) {
       return NextResponse.json({ error: error instanceof Error ? error.message : "Invalid catalog records", requestId }, { status: 400 });
     }
@@ -164,12 +163,12 @@ export async function POST(request: NextRequest) {
           return dbId && modifiedDbIds.has(String(dbId));
         })
         .flatMap(({ existing, result }) => [existing, result])
-        .map(song => ({ songName: song.songName, artist: value(song.artist) ?? "", type: getGameChartTypeKey(game, song.chartType) }));
+        .map(song => ({ songName: song.songName, artist: song.artist, type: getGameChartTypeKey(game, song.chartType) }));
       const appliedDeletions = (updateMode === "destructive"
         ? changes.deleted
         : changes.deleted.filter(change => (change.playRecordCount ?? 0) === 0));
       const affectedSongs = [
-        ...addedSongs.map(song => ({ songName: song.songName, artist: value(song.artist) ?? "", type: getGameChartTypeKey(game, song.chartType) })),
+        ...addedSongs.map(song => ({ songName: song.songName, artist: song.artist, type: getGameChartTypeKey(game, song.chartType) })),
         ...modifiedSongs,
         ...appliedDeletions.map(change => ({ songName: change.songName, artist: change.artist, type: getGameChartTypeKey(game, change.chartType) })),
       ];
