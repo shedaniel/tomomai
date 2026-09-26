@@ -63,11 +63,13 @@ describe("catalog independent of player rollout", () => {
       expect(fixture.catalog).toHaveBeenCalledWith("chunithm");
       expect(container.textContent).toContain("CHU chart");
       expect(container.textContent).toContain("CHU detail");
+      expect(container.textContent).not.toContain("STANDARD");
       expect(fixture.scores).not.toHaveBeenCalled();
       expect(container.querySelector('a[href="/db/songs/chu-chart-standard"]')).not.toBeNull();
       await act(async () => root.render(<QueryClientProvider client={client}><NextIntlClientProvider locale="en" messages={messages} timeZone="UTC"><GameProvider game={{ ...fixture.game, id: "maimai", productName: "tomomai", enabled: true, regions: ["jp"], capabilities: ["catalog", "scores"] }}>{detail}</GameProvider></NextIntlClientProvider></QueryClientProvider>));
       await act(async () => { await new Promise(resolve => setTimeout(resolve, 30)); });
       expect(fixture.scores).toHaveBeenCalledWith("maimai");
+      expect(container.textContent).toContain("STD");
     } finally { await act(async () => root.unmount()); client.clear(); dom.window.close(); vi.unstubAllGlobals(); }
   });
   it("offers the catalog from the unavailable-player landing screen", () => {

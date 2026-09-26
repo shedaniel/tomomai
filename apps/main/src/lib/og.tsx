@@ -7,7 +7,7 @@ import { getRatingImageUrl } from "@/lib/rating-calculator";
 import type { VersionId } from "@/lib/metadata";
 import type { Region } from "@/lib/types";
 import type { CanonicalGameId } from "@/lib/games/types";
-import { formatGameLevel, getGameChartTypeLabel, getGameCode, getGameDifficultyHex, getGameDifficultyLabel } from "@/lib/games/presentation";
+import { formatGameLevel, getGameChartTypeBadgeLabel, getGameCode, getGameDifficultyHex, getGameDifficultyLabel } from "@/lib/games/presentation";
 
 export const OG_SIZE = { width: 1200, height: 630 };
 
@@ -841,7 +841,7 @@ export async function createSongOGImage(options: SongOGImageOptions) {
   const isDx = game === "maimai" && songType === "dx";
   const isUtage = game === "maimai" && songType === "utage";
   const typeAccent = isUtage ? "#ec4899" : isDx ? "#f59e0b" : "#06b6d4";
-  const typeLabel = getGameChartTypeLabel(game, songType);
+  const typeLabel = getGameChartTypeBadgeLabel(game, songType);
 
   // Accent: two colors extracted from the cover (with DB defaults as fallback).
   const accent: Accent = extracted
@@ -945,7 +945,7 @@ export async function createSongOGImage(options: SongOGImageOptions) {
             <div style={{ display: "flex", flexDirection: "column", gap: "16px", minWidth: 0, flex: 1 }}>
               {/* Type + version chips */}
               <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
-                <div
+                {typeLabel && <div
                   style={{
                     display: "flex",
                     alignItems: "center",
@@ -960,7 +960,7 @@ export async function createSongOGImage(options: SongOGImageOptions) {
                   }}
                 >
                   {typeLabel}
-                </div>
+                </div>}
                 <div
                   style={{
                     display: "flex",

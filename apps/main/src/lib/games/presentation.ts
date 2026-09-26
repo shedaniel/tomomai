@@ -32,6 +32,12 @@ export function getGameChartTypeLabel(game: CanonicalGameId, value: number | str
   return name?.toUpperCase() ?? `#${code}`;
 }
 
+export function getGameChartTypeBadgeLabel(game: CanonicalGameId, value: number | string): string | null {
+  const types = GAME_CODE_MAPS[game].chartType;
+  const type = types[getGameCode(game, "chartType", value)];
+  return type === "standard" && !Object.values(types).includes("dx") ? null : getGameChartTypeLabel(game, value);
+}
+
 export function getGameStatusLabels(game: CanonicalGameId, status: {
   comboStatus?: number | null;
   syncStatus?: number | null;

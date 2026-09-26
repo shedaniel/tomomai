@@ -54,7 +54,7 @@ export function createUniqueSongFilterCategories(
   }
   const noteDesigners = Object.entries(noteDesignersToAmount).sort((a, b) => b[1] - a[1]).map(([designer]) => designer);
 
-  return [
+  const categories: FilterCategory[] = [
     {
       type: "sort",
       label: getLabel("sort", "Sort"),
@@ -101,6 +101,7 @@ export function createUniqueSongFilterCategories(
       options: noteDesigners.map(d => ({ value: hashString(d).toString(), label: d })),
     },
   ];
+  return categories.filter(category => category.type !== "type" || category.options.length > 1);
 }
 
 // Apply filters to unique songs

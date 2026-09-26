@@ -7,7 +7,7 @@ import {
 } from "@tomomai/ui";
 import { useGame } from "@/components/providers/game-provider";
 import { GAME_CODE_MAPS } from "@/lib/games/codes";
-import { formatGameScore, formatGameRating, formatGameLevel, getGameDifficultyColors, getGameDifficultyLabel, getGameChartTypeLabel, getGameChartTypeBadge, getGameChartRating, getGameScoreLabelKey, getGameScoreGrade, getGameStatusLabels } from "@/lib/games/presentation";
+import { formatGameScore, formatGameRating, formatGameLevel, getGameDifficultyColors, getGameDifficultyLabel, getGameChartTypeLabel, getGameChartTypeBadgeLabel, getGameChartTypeBadge, getGameChartRating, getGameScoreLabelKey, getGameScoreGrade, getGameStatusLabels } from "@/lib/games/presentation";
 import { getVersionInfo } from "@/lib/games/versions";
 import { trpc } from "@/lib/trpc-client";
 import { useSession } from "@/lib/auth-client";
@@ -300,7 +300,7 @@ export function SongDetailContent({ songName, artist, slug, type, parentIds, ini
       chartCount: chartsByDifficulty.size,
       bpmFragment: data.bpm ? t('db.songs.detail.summaryBpmFragment', { bpm: data.bpm }) : '',
       versionName: getVersionInfo(game.id, data.regions[0]?.region ?? game.regions[0] ?? "jp", data.addedVersion)?.name ?? `Ver. ${data.addedVersion}`,
-      chartType: getGameChartTypeLabel(game.id, data.type),
+      chartType: getGameChartTypeBadgeLabel(game.id, data.type) ?? "",
     };
   }, [data, allCharts, chartsByDifficulty, t, game]);
 
@@ -351,13 +351,13 @@ export function SongDetailContent({ songName, artist, slug, type, parentIds, ini
           <h1 className="text-xl max-md:text-md font-bold truncate">{data.songName}</h1>
           <p className="text-muted-foreground max-md:text-sm truncate">{data.artist}</p>
           <div className="flex items-center gap-2 mt-2">
-            {getGameChartTypeBadge(game.id, data.type) ? <img
+            {getGameChartTypeBadgeLabel(game.id, data.type) && (getGameChartTypeBadge(game.id, data.type) ? <img
               src={getGameChartTypeBadge(game.id, data.type)!}
               alt={data.type.toUpperCase()}
               width={64}
               height={20}
               className="drop-shadow-sm"
-            /> : <span className="text-xs font-medium">{getGameChartTypeLabel(game.id, data.type)}</span>}
+            /> : <span className="text-xs font-medium">{getGameChartTypeLabel(game.id, data.type)}</span>)}
             <span className="text-xs text-muted-foreground truncate">{data.genre}</span>
           </div>
         </div>

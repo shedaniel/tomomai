@@ -7,7 +7,7 @@ import { cn, createSafeMaimaiImageUrl } from "@/lib/utils";
 import { CoverImage } from "@/components/cover-image";
 import { UniqueSong } from "./types";
 import { useGameId } from "@/components/providers/game-provider";
-import { formatGameLevel, getGameDifficultyLabel, getGameDifficultyColors, getGameChartTypeLabel, getGameChartTypeBadge } from "@/lib/games/presentation";
+import { formatGameLevel, getGameDifficultyLabel, getGameDifficultyColors, getGameChartTypeLabel, getGameChartTypeBadgeLabel, getGameChartTypeBadge } from "@/lib/games/presentation";
 
 interface SongCardProps {
   song: UniqueSong;
@@ -105,7 +105,7 @@ export function SongCard({ song, index, isSelected, onSelect, disableInitialAnim
         <div className="absolute inset-0 bg-linear-to-t from-black/90 via-black/40 to-transparent rounded-md overflow-hidden" />
 
         {/* Type Badge */}
-        <div className="absolute top-2 left-2 z-10">
+        {getGameChartTypeBadgeLabel(game, song.type) && <div className="absolute top-2 left-2 z-10">
           {getGameChartTypeBadge(game, song.type) ? <img
             src={createSafeMaimaiImageUrl(getGameChartTypeBadge(game, song.type)!)}
             alt={getGameChartTypeLabel(game, song.type)}
@@ -114,7 +114,7 @@ export function SongCard({ song, index, isSelected, onSelect, disableInitialAnim
             className="drop-shadow-md"
             loading="lazy"
           /> : <span className="rounded bg-background/90 px-1 text-xs text-foreground">{getGameChartTypeLabel(game, song.type)}</span>}
-        </div>
+        </div>}
 
         {/* Difficulty Badge (only if single difficulty) */}
         {singleDiff && (

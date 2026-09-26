@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { CoverImage } from "@/components/cover-image";
 import { UniqueSong } from "./types";
 import { useGameId } from "@/components/providers/game-provider";
-import { formatGameLevel, getGameDifficultyLabel, getGameDifficultyColors, getGameChartTypeLabel, getGameChartTypeBadge } from "@/lib/games/presentation";
+import { formatGameLevel, getGameDifficultyLabel, getGameDifficultyColors, getGameChartTypeLabel, getGameChartTypeBadgeLabel, getGameChartTypeBadge } from "@/lib/games/presentation";
 
 interface SongRowProps {
   song: UniqueSong;
@@ -63,12 +63,12 @@ export function SongRow({ song, index, isSelected, onSelect, disableInitialAnima
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <h2 className="font-medium truncate">{song.songName}</h2>
-            <span className={cn(
+            {getGameChartTypeBadgeLabel(game, song.type) && <span className={cn(
               "text-[10px] px-1.5 py-0.5 rounded font-medium shrink-0",
               song.type === "dx" ? "bg-amber-100 text-amber-700" : "bg-slate-100 text-slate-600"
             )}>
               {getGameChartTypeLabel(game, song.type)}
-            </span>
+            </span>}
             {singleDiff && (
               <span className={cn(
                 "text-[10px] px-1.5 py-0.5 rounded font-medium shrink-0",
