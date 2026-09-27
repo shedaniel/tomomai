@@ -1,6 +1,8 @@
 "use client";
 
 import { Button } from "@tomomai/ui";
+import { useGame } from "@/components/providers/game-provider";
+import { getGameBrand } from "@/lib/games/frontend";
 import {
   ResponsiveDialog,
   ResponsiveDialogContent,
@@ -41,6 +43,7 @@ function clearLegacyCookie() {
 
 export function ExperimentsDialog({ open, onOpenChange }: ExperimentsDialogProps) {
   const t = useTranslations();
+  const game = useGame();
   const { data: flagsData, isLoading } = trpc.user.getUserSelectableFlags.useQuery();
   const setOverrides = trpc.user.setFlagOverrides.useMutation();
 
@@ -96,7 +99,7 @@ export function ExperimentsDialog({ open, onOpenChange }: ExperimentsDialogProps
         <ResponsiveDialogHeader>
           <ResponsiveDialogTitle>{t('common.experiments')}</ResponsiveDialogTitle>
           <ResponsiveDialogDescription>
-            Welcome to the feature flags page for tomomai ともマイ.
+            Welcome to the feature flags page for {getGameBrand(game).title}.
             <br />
             <br />
             These features are not yet stable and may be changed or removed at any time.

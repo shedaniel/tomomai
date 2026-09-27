@@ -206,7 +206,7 @@
       },
       "fetch": {
         "title": "同步",
-        "description": "凭证与数据获取设置。",
+        "description": "{game} 凭证与数据同步设置。",
         "unavailable": "暂不支持获取 {game} 玩家数据。"
       },
       "privacy": {
@@ -249,7 +249,7 @@
       "deleteTokenDialogDescription": "确定要删除已保存的验证方式吗？你将需要重新验证才能再次导入数据。",
       "deleteTokenSuccess": "验证方式已成功删除。",
       "deleteTokenError": "删除验证方式失败。",
-      "description": "更新你的 maimai 验证方式以进行数据导入及同步玩家数据。"
+      "description": "更新你的 {game} 验证方式以同步玩家数据。"
     },
     "albumPrivacy": {
       "title": "相册照片隐私设置",
@@ -811,7 +811,7 @@
     }
   },
   "tokenDialog": {
-    "title": "更新 maimai 验证",
+    "title": "更新 {game} 验证",
     "intlDescription": "选择你的 maimai 登录验证方式。",
     "credentialsStored": "你的验证方式将被保存以供将来使用。",
     "username": "用户名",
@@ -822,7 +822,7 @@
     "tokenPlaceholder": "clal=在此输入你的 Cookies",
     "tokenValidationError": "Cookies 必须以 \"clal=\" 开头，后面跟着字母和数字",
     "authenticationNote": "验证：",
-    "segaCredentialsNote": "使用你的 SEGA 账户凭证来验证 maimai DX NET。",
+    "segaCredentialsNote": "使用你的 SEGA 账户凭证来验证 {game} NET。",
     "credentialsSecureNote": "你的验证方式将被保存以供将来使用。",
     "savingCredentials": "保存验证方式中...",
     "saveCredentials": "保存验证方式",

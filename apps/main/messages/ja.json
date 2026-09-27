@@ -206,7 +206,7 @@
       },
       "fetch": {
         "title": "データ取得",
-        "description": "トークンとデータ取得の設定。",
+        "description": "{game} の認証情報とデータ取得の設定。",
         "unavailable": "{game} のプレイヤーデータ取得はまだ利用できません。"
       },
       "privacy": {
@@ -249,7 +249,7 @@
       "deleteTokenDialogDescription": "保存された認証情報を削除してもよろしいですか？再度データを取得するには、再認証が必要です。",
       "deleteTokenSuccess": "認証情報を削除しました。",
       "deleteTokenError": "認証情報の削除に失敗しました。",
-      "description": "データ取得とプレイヤー同期のために、認証情報（トークン）を更新します。"
+      "description": "{game} のプレイヤーデータを同期するための認証情報を更新します。"
     },
     "albumPrivacy": {
       "title": "アルバム写真のプライバシー設定",
@@ -811,7 +811,7 @@
     }
   },
   "tokenDialog": {
-    "title": "maimai 認証情報を更新",
+    "title": "{game} 認証情報を更新",
     "intlDescription": "認証方法を選択してください。",
     "credentialsStored": "認証情報は今後の取得で使用されます。",
     "username": "ユーザー名",
@@ -822,7 +822,7 @@
     "tokenPlaceholder": "clal=ここにCookie値を入力",
     "tokenValidationError": "Cookieは「clal=」で始まり、英数字のみを含む必要があります。",
     "authenticationNote": "認証：",
-    "segaCredentialsNote": "SEGAアカウントのユーザー名とパスワードで直接認証します。",
+    "segaCredentialsNote": "SEGAアカウントのユーザー名とパスワードで {game} NET にログインします。",
     "credentialsSecureNote": "認証情報は保存され、今後の同期時に使用されます。",
     "savingCredentials": "認証情報保存中...",
     "saveCredentials": "認証情報を保存",

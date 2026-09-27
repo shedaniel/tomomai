@@ -206,7 +206,7 @@
       },
       "fetch": {
         "title": "Fetch",
-        "description": "Token and data fetching settings.",
+        "description": "Token and data fetching settings for {game}.",
         "unavailable": "Player fetching for {game} is not available yet."
       },
       "privacy": {
@@ -249,7 +249,7 @@
       "deleteTokenDialogDescription": "Are you sure you want to delete your saved token? You will need to re-authenticate to fetch data again.",
       "deleteTokenSuccess": "Token deleted successfully.",
       "deleteTokenError": "Failed to delete token.",
-      "description": "Update your maimai token for data fetching. This is required to sync your player data."
+      "description": "Update your {game} authentication to sync your player data."
     },
     "albumPrivacy": {
       "title": "Album Photo Privacy Settings",
@@ -820,7 +820,7 @@
     }
   },
   "tokenDialog": {
-    "title": "Update maimai authentication",
+    "title": "Update {game} authentication",
     "intlDescription": "Choose your authentication method for the International region.",
     "credentialsStored": "Your credentials will be saved for future use.",
     "username": "Username",
@@ -831,7 +831,7 @@
     "tokenPlaceholder": "clal=your_token_here",
     "tokenValidationError": "Token must start with \"clal=\" followed by letters and numbers only",
     "authenticationNote": "Authentication:",
-    "segaCredentialsNote": "Use your SEGA account credentials to authenticate with maimai DX NET.",
+    "segaCredentialsNote": "Use your SEGA account credentials to authenticate with {game} NET.",
     "credentialsSecureNote": "Your credentials will be stored for future fetches.",
     "savingCredentials": "Saving Credentials...",
     "saveCredentials": "Save Credentials",

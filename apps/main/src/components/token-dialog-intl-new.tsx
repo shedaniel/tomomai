@@ -2,7 +2,7 @@
 
 import { logger } from "@/lib/logger";
 import { TokenDialogSega } from "./token-dialog-sega";
-import { useGameId } from "@/components/providers/game-provider";
+import { useGame, useGameId } from "@/components/providers/game-provider";
 import { Badge } from "@tomomai/ui";
 import { Button } from "@tomomai/ui";
 import {
@@ -390,6 +390,7 @@ export function TokenDialogIntlNew({
   stopSessionPolling,
 }: TokenDialogIntlNewProps) {
   const t = useTranslations();
+  const game = useGame();
   const [isTokenDialogOpen, setIsTokenDialogOpen] = useState(false);
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
   const [token, setToken] = useState("");
@@ -463,7 +464,7 @@ export function TokenDialogIntlNew({
           <ResponsiveDialogHeader>
             <ResponsiveDialogTitle className="flex items-center space-x-2">
               <Key className="h-5 w-5" />
-              <span>{t('tokenDialog.title')}</span>
+              <span>{t('tokenDialog.title', { game: game.displayName })}</span>
             </ResponsiveDialogTitle>
             <ResponsiveDialogDescription>
               {t('tokenDialog.intlDescription')} {t('tokenDialog.credentialsStored')}

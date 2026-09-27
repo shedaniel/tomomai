@@ -25,9 +25,9 @@ import {
   useSettingsSave,
 } from "@/components/settings/primitives";
 import { useFetchSession } from "@/hooks/useFetchSession";
-import { isCNExclusive } from "@/lib/enabled-regions";
+import { getGameRegion, supportsGameFeature } from "@/lib/games/frontend";
+import { logger } from "@/lib/logger";
 import { trpc } from "@/lib/trpc-client";
-import { Region } from "@/lib/types";
 import { AlertCircle, Images, Key, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
@@ -36,12 +36,12 @@ import { toast } from "sonner";
 export function FetchSettings() {
   const t = useTranslations();
   const game = useGame();
-  if (!game.fetchConfigured) return <SettingsHeader title={t("settings.pages.fetch.title")} description={t("settings.pages.fetch.unavailable", { game: game.displayName })} />;
+  if (!game.fetchConfigured || game.regions.length === 0) return <SettingsHeader title={t("settings.pages.fetch.title")} description={t("settings.pages.fetch.unavailable", { game: game.displayName })} />;
   return (
     <SettingsForm>
       <SettingsHeader
         title={t("settings.pages.fetch.title")}
-        description={t("settings.pages.fetch.description")}
+        description={t("settings.pages.fetch.description", { game: game.displayName })}
       />
       <FetchFields />
       <SettingsFooter />
@@ -55,7 +55,7 @@ function FetchFields() {
   const [tokenDialogOpen, setTokenDialogOpen] = useState(false);
   const [selectedFetchUseAlbums, setSelectedFetchUseAlbums] = useState<boolean | null | undefined>(undefined);
 
-  const { data: userData } = trpc.user.getUserData.useQuery(undefined, {
+  const { data: userData, isLoading: userDataLoading } = trpc.user.getUserData.useQuery(undefined, {
     refetchOnWindowFocus: false,
   });
 
@@ -63,7 +63,8 @@ function FetchFields() {
     refetchOnWindowFocus: false,
   });
 
-  const selectedRegion: Region = (userData?.region as Region) || "intl";
+  const selectedRegion = getGameRegion(game, userData?.region);
+  const canFetchAlbums = supportsGameFeature(game, "albums") && selectedRegion !== "cn";
 
   const effectiveFetchUseAlbums = selectedFetchUseAlbums !== undefined
     ? selectedFetchUseAlbums
@@ -73,7 +74,7 @@ function FetchFields() {
   const updateAlbumPreference = trpc.user.setAlbumPreference.useMutation();
   const deleteTokenMutation = trpc.user.deleteToken.useMutation();
 
-  const albumsDirty = !!profileSettings && effectiveFetchUseAlbums !== null && effectiveFetchUseAlbums !== profileSettings.fetchUseAlbums;
+  const albumsDirty = canFetchAlbums && !!profileSettings && effectiveFetchUseAlbums !== null && effectiveFetchUseAlbums !== profileSettings.fetchUseAlbums;
 
   useDirtyFlag("fetch.albums", albumsDirty);
 
@@ -87,15 +88,17 @@ function FetchFields() {
   });
 
   const handleTokenUpdate = async (token: string) => {
+    if (!selectedRegion) return;
     await startDataFetch(selectedRegion, token);
   };
 
   const handleDeleteToken = async () => {
+    if (!selectedRegion) return;
     try {
       await deleteTokenMutation.mutateAsync({ game: game.id, region: selectedRegion });
       toast.success(t("settings.account.deleteTokenSuccess"));
     } catch (error) {
-      console.error("Failed to delete token:", error);
+      logger.error({ err: error }, "Failed to delete token");
       toast.error(t("settings.account.deleteTokenError"));
     }
   };
@@ -106,12 +109,13 @@ function FetchFields() {
         <SettingsField
           icon={Key}
           label={t("settings.account.label")}
-          description={t("settings.account.description")}
+          description={t("settings.account.description", { game: game.displayName })}
         >
           <div className="flex gap-2">
             <Button
               variant="outline"
               onClick={() => setTokenDialogOpen(true)}
+              disabled={userDataLoading || !selectedRegion}
               className="justify-start bg-background w-fit"
             >
               <Key className="h-4 w-4 mr-2" />
@@ -122,6 +126,7 @@ function FetchFields() {
                 <Button
                   variant="outline"
                   className="justify-start bg-background w-fit"
+                  disabled={userDataLoading || !selectedRegion}
                 >
                   <Trash2 className="h-4 w-4 mr-2" />
                   {t("settings.account.deleteToken")}
@@ -152,7 +157,7 @@ function FetchFields() {
           </div>
         </SettingsField>
 
-        {!isCNExclusive() && (
+        {canFetchAlbums && (
           <SettingsField
             layout="inline"
             icon={Images}
@@ -178,12 +183,12 @@ function FetchFields() {
         )}
       </div>
 
-      <TokenDialog
+      {selectedRegion && <TokenDialog
         region={selectedRegion}
         isOpen={tokenDialogOpen}
         onOpenChange={setTokenDialogOpen}
         onTokenUpdate={handleTokenUpdate}
-      />
+      />}
 
       <FetchToastContainer state={fetchToastState} />
     </>

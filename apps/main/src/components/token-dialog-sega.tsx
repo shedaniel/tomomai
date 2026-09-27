@@ -1,5 +1,6 @@
 "use client";
 
+import { useGame } from "./providers/game-provider";
 import { logger } from "@/lib/logger";
 import { useState } from "react";
 import { Button } from "@tomomai/ui";
@@ -29,6 +30,7 @@ export function TokenDialogSega({
   onTokenUpdate,
 }: TokenDialogSegaProps) {
   const t = useTranslations();
+  const game = useGame();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -63,7 +65,7 @@ export function TokenDialogSega({
         <ResponsiveDialogHeader>
           <ResponsiveDialogTitle className="flex items-center space-x-2">
             <Key className="h-5 w-5" />
-            <span>{t('tokenDialog.title')}</span>
+            <span>{t('tokenDialog.title', { game: game.displayName })}</span>
           </ResponsiveDialogTitle>
           <ResponsiveDialogDescription>
             {t('tokenDialog.segaAccountDescription')} {t('tokenDialog.credentialsStored')}
@@ -111,7 +113,7 @@ export function TokenDialogSega({
               <p className="font-medium mb-1">
                 {t('tokenDialog.authenticationNote')}
               </p>
-              <p>{t('tokenDialog.segaCredentialsNote')}</p>
+              <p>{t('tokenDialog.segaCredentialsNote', { game: game.displayName })}</p>
               <p>{t('tokenDialog.credentialsSecureNote')}</p>
             </div>
 

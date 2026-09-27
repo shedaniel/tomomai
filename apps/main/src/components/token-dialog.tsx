@@ -1,6 +1,7 @@
 "use client";
 
 import { useGame } from "./providers/game-provider";
+import { isGameRegion } from "@/lib/games/frontend";
 import { Region } from "@/lib/types";
 import { TokenDialogCn } from "./token-dialog-cn";
 import { TokenDialogIntlNew } from "./token-dialog-intl-new";
@@ -24,6 +25,7 @@ export function TokenDialog({
   stopSessionPolling,
 }: TokenDialogProps) {
   const game = useGame();
+  if (!isGameRegion(game, region)) return null;
   if (region === "jp" || (region === "intl" && !game.cookieLoginConfigured)) {
     return (
       <TokenDialogSega

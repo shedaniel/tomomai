@@ -201,7 +201,7 @@
       },
       "fetch": {
         "title": "가져오기",
-        "description": "토큰 및 데이터 가져오기 설정.",
+        "description": "{game} 인증 정보 및 데이터 가져오기 설정.",
         "unavailable": "{game} 플레이어 데이터 가져오기는 아직 지원되지 않습니다."
       },
       "privacy": {
@@ -239,7 +239,7 @@
     "account": {
       "label": "계정 인증",
       "updateToken": "인증 정보 갱신",
-      "description": "데이터 동기화를 위해 maimai 인증 토큰을 갱신합니다."
+      "description": "{game} 플레이어 데이터를 동기화하기 위한 인증 정보를 갱신합니다."
     },
     "albumPrivacy": {
       "title": "Album Photo Privacy Settings",
@@ -628,7 +628,7 @@
     }
   },
   "tokenDialog": {
-    "title": "maimai 인증 갱신",
+    "title": "{game} 인증 갱신",
     "intlDescription": "해외판: 인증 방식을 선택하세요.",
     "credentialsStored": "인증 정보는 나중을 위해 안전하게 저장됩니다.",
     "username": "사용자명",
@@ -639,7 +639,7 @@
     "tokenPlaceholder": "clal=여기에 쿠키 값 입력",
     "tokenValidationError": "쿠키는 \"clal=\"로 시작하고 영문과 숫자로만 구성되어야 합니다.",
     "authenticationNote": "인증:",
-    "segaCredentialsNote": "SEGA 계정 정보로 maimai DX NET에 인증합니다.",
+    "segaCredentialsNote": "SEGA 계정 정보로 {game} NET에 인증합니다.",
     "credentialsSecureNote": "인증 정보는 향후 데이터 갱신을 위해 저장됩니다.",
     "savingCredentials": "인증 정보 저장 중...",
     "saveCredentials": "인증 정보 저장",
