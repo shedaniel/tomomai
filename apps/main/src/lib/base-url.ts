@@ -36,7 +36,8 @@ export function resolveBaseUrl(): string {
     return normalize(withProtocol(process.env.VERCEL_PROJECT_PRODUCTION_URL));
   }
 
-  return normalize("http://localhost:3000");
+  const port = process.env.NODE_ENV === "development" ? process.env.PORT || "3000" : "3000";
+  return normalize(`http://localhost:${port}`);
 }
 
 /**

@@ -263,6 +263,9 @@ const trustedOrigins = (process.env.TRUSTED_ORIGINS ?? "")
   .split(",")
   .map((s) => s.trim())
   .filter(Boolean);
+if (process.env.NODE_ENV === "development") {
+  trustedOrigins.push("http://localhost:3000", "http://localhost:3001");
+}
 const authCookieDomain = process.env.AUTH_COOKIE_DOMAIN?.trim() || undefined;
 
 const authSecret = (() => {
