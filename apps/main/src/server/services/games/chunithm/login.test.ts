@@ -1,0 +1,64 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+const mocks = vi.hoisted(() => ({ fetch: vi.fn(), update: vi.fn(), remove: vi.fn() }));
+vi.mock("server-only", () => ({}));
+vi.mock("@/lib/http-agent", () => ({ agentFetch: vi.fn() }));
+vi.mock("@/lib/request-logger", () => ({ getLogger: () => ({ info: vi.fn(), error: vi.fn(), child() { return this; } }) }));
+vi.mock("../tokens", () => ({ updateToken: mocks.update, deleteToken: mocks.remove }));
+
+import { requestGamePage } from "../sega/http";
+import { loginAndGetCookies } from "./login";
+
+beforeEach(() => { vi.resetAllMocks(); vi.stubGlobal("fetch", mocks.fetch); });
+afterEach(() => vi.unstubAllGlobals());
+
+function redirect(location: string, cookie?: string) {
+  return new Response(null, { status: 302, headers: { Location: location, ...(cookie ? { "Set-Cookie": cookie } : {}) } });
+}
+
+describe("CHUNITHM authentication", () => {
+  it("submits the observed JP card form and carries response cookies across the full session", async () => {
+    mocks.fetch
+      .mockResolvedValueOnce(new Response('<input name="token" value="login-form">', { headers: { "Set-Cookie": "PHPSESSID=initial; Path=/" } }))
+      .mockResolvedValueOnce(redirect("/chuni-mobile/html/mobile/aimeList/", "PHPSESSID=authenticated; Path=/"))
+      .mockResolvedValueOnce(new Response('<form action="/chuni-mobile/html/mobile/aimeList/submit/"><input type="hidden" name="idx" value="3"><input type="hidden" name="token" value="card-form"></form>', { headers: { "Set-Cookie": "_t=card-cookie; Path=/" } }))
+      .mockResolvedValueOnce(redirect("/chuni-mobile/html/mobile/home/", "userId=selected; Path=/"))
+      .mockResolvedValueOnce(new Response("Home", { headers: { "Set-Cookie": "_t=home-cookie; Path=/" } }));
+    expect(await loginAndGetCookies("jp", "account://name:://p@ss", "internal-user")).toBe("PHPSESSID=authenticated; _t=home-cookie; userId=selected");
+    const [, login] = mocks.fetch.mock.calls[1];
+    expect(Object.fromEntries(new URLSearchParams(login.body))).toEqual({ segaId: "name", password: "p@ss", token: "login-form" });
+    const [cardUrl, card] = mocks.fetch.mock.calls[3];
+    expect(String(cardUrl)).toBe("https://new.chunithm-net.com/chuni-mobile/html/mobile/aimeList/submit/");
+    expect(card.method).toBe("POST");
+    expect(Object.fromEntries(new URLSearchParams(card.body))).toEqual({ idx: "3", token: "card-form" });
+    expect(new Headers(card.headers).get("Cookie")).toBe("PHPSESSID=authenticated; _t=card-cookie");
+    expect(mocks.fetch.mock.calls[4][1].body).toBeUndefined();
+    expect(mocks.remove).not.toHaveBeenCalled();
+  });
+
+  it("uses International form bodies and exchanges only game cookies while refreshing the stored account token", async () => {
+    mocks.fetch
+      .mockResolvedValueOnce(new Response('<input name="retention" value="1">', { headers: { "Set-Cookie": "JSESSIONID=gateway; Path=/" } }))
+      .mockResolvedValueOnce(redirect("https://chunithm-net-eng.com/mobile/?ssid=exchange", "clal=renewed; Path=/"))
+      .mockResolvedValueOnce(redirect("/mobile/home/", "userId=game-session; Path=/mobile/"))
+      .mockResolvedValueOnce(new Response("Home", { headers: { "Set-Cookie": "_t=game-token; Path=/mobile/" } }));
+    expect(await loginAndGetCookies("intl", "account://name:://p@ss", "internal-user")).toBe("userId=game-session; _t=game-token");
+    const [submitUrl, submit] = mocks.fetch.mock.calls[1];
+    expect(submitUrl).toBe("https://lng-tgk-aime-gw.am-all.net/common_auth/login/sid");
+    expect(Object.fromEntries(new URLSearchParams(submit.body))).toEqual({ retention: "1", sid: "name", password: "p@ss" });
+    expect(new Headers(mocks.fetch.mock.calls[2][1].headers).get("Cookie")).toBe("");
+    expect(mocks.update).toHaveBeenCalledExactlyOnceWith("chunithm", "internal-user", "intl", "account://renewed:://name:://p@ss");
+  });
+
+  it("retains rotated cookies on data responses and refuses cross-origin redirects before forwarding them", async () => {
+    const session = { cookies: "userId=one; _t=old" };
+    mocks.fetch
+      .mockResolvedValueOnce(new Response("Records", { headers: { "Set-Cookie": "_t=new; Path=/mobile/" } }))
+      .mockResolvedValueOnce(redirect("https://maimaidx-eng.com/maimai-mobile/", "userId=two; Path=/mobile/"));
+    await requestGamePage("chunithm", "intl", "https://chunithm-net-eng.com/mobile/record/playlog", session, "https://chunithm-net-eng.com/mobile/");
+    expect(session.cookies).toBe("userId=one; _t=new");
+    await expect(requestGamePage("chunithm", "intl", "https://chunithm-net-eng.com/mobile/record/playlog", session, "https://chunithm-net-eng.com/mobile/")).rejects.toThrow("Unexpected game site origin");
+    expect(mocks.fetch).toHaveBeenCalledTimes(2);
+    expect(new Headers(mocks.fetch.mock.calls[1][1].headers).get("Cookie")).toBe("userId=one; _t=new");
+  });
+});

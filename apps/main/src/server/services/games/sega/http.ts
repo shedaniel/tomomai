@@ -22,6 +22,17 @@ export function responseCookies(headers: Headers): string {
   return values.map(value => value.split(";")[0]).filter(Boolean).join("; ");
 }
 
+export function mergeCookies(current: string, incoming: string): string {
+  const cookies = new Map<string, string>();
+  for (const cookie of `${current}; ${incoming}`.split(";")) {
+    const separator = cookie.indexOf("=");
+    if (separator >= 0) cookies.set(cookie.slice(0, separator).trim(), cookie.slice(separator + 1));
+  }
+  return [...cookies].map(([name, value]) => `${name}=${value}`).join("; ");
+}
+
+export interface GameSiteSession { cookies: string }
+
 export function cookieValue(cookies: string, name: string): string | undefined {
   const prefix = `${name}=`;
   return cookies.split(";").map(value => value.trim()).find(value => value.startsWith(prefix))?.slice(prefix.length);
@@ -36,16 +47,24 @@ export function requestGameSite(game: CanonicalGameId, region: Region, path: str
   return fetchSite(url, { ...init, headers, redirect: "manual" });
 }
 
-export async function requestGamePage(game: CanonicalGameId, region: Region, url: string, cookies: string, referer: string): Promise<Response> {
+export async function requestGamePage(game: CanonicalGameId, region: Region, url: string, cookies: string | GameSiteSession, referer: string, init: RequestInit = {}): Promise<Response> {
+  url = gameSiteUrl(game, region, url).href;
+  const session = typeof cookies === "string" ? { cookies } : cookies;
+  let request = init;
   for (let redirects = 0; redirects <= 10; redirects++) {
-    const response = await requestGameSite(game, region, url, {
-      headers: { Cookie: cookies, Referer: referer },
-    });
+    const headers = new Headers(request.headers);
+    headers.set("Cookie", session.cookies);
+    headers.set("Referer", referer);
+    const response = await requestGameSite(game, region, url, { ...request, headers });
+    session.cookies = mergeCookies(session.cookies, responseCookies(response.headers));
     if (![301, 302, 303, 307, 308].includes(response.status)) return response;
     const location = response.headers.get("Location");
     if (!location) return response;
     await response.body?.cancel();
     url = new URL(location, url).href;
+    if (response.status === 303 || ((response.status === 301 || response.status === 302) && request.method === "POST")) {
+      request = { signal: init.signal };
+    }
   }
   throw new Error("Too many game site redirects");
 }
