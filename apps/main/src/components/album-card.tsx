@@ -1,7 +1,7 @@
 "use client";
 
 import type { fetchUserAlbums } from "@/server/queries/albums";
-import { formatGameLevel, getGameDifficultyColors, getGameChartTypeLabel } from "@/lib/games/presentation";
+import { formatGameLevel, getGameDifficultyColors, getGameChartTypeBadgeLabel, getGameChartTypeLabel } from "@/lib/games/presentation";
 type Album = Awaited<ReturnType<typeof fetchUserAlbums>>["albums"][number];
 import { useGameId } from "@/components/providers/game-provider";
 import { trpc } from "@/lib/trpc-client";
@@ -306,7 +306,7 @@ export function AlbumCard({ region }: AlbumCardProps) {
                   <div className="flex-1 min-w-0">
                     <h4 className="font-semibold truncate">{album.songName}</h4>
                     <p className="text-xs text-muted-foreground truncate">{album.artist}</p>
-                    <div className="flex items-center gap-1.5 mt-1.5">
+                    {getGameChartTypeBadgeLabel(game, album.typeCode) && <div className="flex items-center gap-1.5 mt-1.5">
                       {game === "maimai" ? <img
                         src={createSafeMaimaiImageUrl(getTypeBadgeUrl(album.typeCode === 1 ? "dx" : "std"))}
                         alt={getGameChartTypeLabel(game, album.typeCode)}
@@ -314,7 +314,7 @@ export function AlbumCard({ region }: AlbumCardProps) {
                         height={10}
                         className="h-2.5 w-auto"
                       /> : <span className="text-xs">{getGameChartTypeLabel(game, album.typeCode)}</span>}
-                    </div>
+                    </div>}
                   </div>
                 </div>
 

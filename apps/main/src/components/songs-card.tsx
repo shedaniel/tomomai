@@ -3,7 +3,7 @@
 import { useGameId } from "@/components/providers/game-provider";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@tomomai/ui";
 import { getPlayerRankings, type GamePlayerScore, type GameSnapshotData } from "@/lib/games/player-view";
-import { formatGameScore, formatGameRating, formatGameLevel, getGameDifficultyColors, getGameDifficultyLabel, getGameChartTypeLabel, getGameStatusLabels, getGameRankingBuckets, getGameScoreLabelKey } from "@/lib/games/presentation";
+import { formatGameScore, formatGameRating, formatGameLevel, getGameDifficultyColors, getGameDifficultyLabel, getGameChartTypeLabel, getGameChartTypeBadgeLabel, getGameStatusLabels, getGameRankingBuckets, getGameScoreLabelKey } from "@/lib/games/presentation";
 import { codeToDifficulty, codeToChartType } from "@/lib/maimai/codes";
 import { cn, createSafeMaimaiImageUrl, getTypeBadgeUrl } from "@/lib/utils";
 import { LayoutGrid, LayoutList, Menu, Plus, Search, TrendingUp } from "lucide-react";
@@ -178,7 +178,7 @@ const SongRow = forwardRef<HTMLDivElement, { song: SongWithRating; percentile?: 
         />
         <div className="flex-1 min-w-0">
           <div className="truncate font-medium">{song.songName}&#8203;</div>
-          <div className="text-muted-foreground text-xs truncate">{getGameChartTypeLabel(game, song.typeCode)} • {getGameDifficultyLabel(game, song.difficultyCode)} {formatGameLevel(game, song.levelPrecise, song.difficultyCode)} • {song.artist}</div>
+          <div className="text-muted-foreground text-xs truncate">{getGameChartTypeBadgeLabel(game, song.typeCode) && <>{getGameChartTypeBadgeLabel(game, song.typeCode)} • </>}{getGameDifficultyLabel(game, song.difficultyCode)} {formatGameLevel(game, song.levelPrecise, song.difficultyCode)} • {song.artist}</div>
         </div>
         <div className="text-right ml-2">
           <div className="font-mono">{formatGameScore(game, song.scoreValue)}</div>
@@ -396,7 +396,7 @@ export const SongGridCard = forwardRef<HTMLDivElement, { song: DisplayScore & { 
         <div className="song-card-content relative w-full h-full transition-transform duration-300"
           style={{ transform: 'translateZ(30px)' }}>
           {/* Song Type Badge */}
-          <div className="absolute top-2.5 left-2.5 2xs:max-xs:left-2 2xs:max-xs:top-2 2xs:max-xs:scale-75 origin-top-left z-30">
+          {getGameChartTypeBadgeLabel(game, song.typeCode) && <div className="absolute top-2.5 left-2.5 2xs:max-xs:left-2 2xs:max-xs:top-2 2xs:max-xs:scale-75 origin-top-left z-30">
             {game === "maimai" ? <img
               src={createSafeMaimaiImageUrl(getTypeBadgeUrl(song.typeCode === 1 ? "dx" : "std"))}
               alt={getGameChartTypeLabel(game, song.typeCode)}
@@ -405,7 +405,7 @@ export const SongGridCard = forwardRef<HTMLDivElement, { song: DisplayScore & { 
               className="drop-shadow-md"
               loading="lazy"
             /> : <span className="rounded bg-background/90 px-1 text-xs text-foreground">{getGameChartTypeLabel(game, song.typeCode)}</span>}
-          </div>
+          </div>}
 
           {/* Song Info */}
           <div className="absolute bottom-0 left-0 right-0 p-2.5 text-white z-30">

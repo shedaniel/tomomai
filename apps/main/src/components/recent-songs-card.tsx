@@ -1,7 +1,7 @@
 "use client";
 
 import type { fetchRecentSongs } from "@/server/queries/recents";
-import { formatGameScore, formatGameLevel, getGameDifficultyColors, getGameDifficultyHex, getGameChartTypeLabel, getGameStatusLabels } from "@/lib/games/presentation";
+import { formatGameScore, formatGameLevel, getGameDifficultyColors, getGameDifficultyHex, getGameChartTypeBadgeLabel, getGameChartTypeLabel, getGameStatusLabels } from "@/lib/games/presentation";
 type RecentPlay = Awaited<ReturnType<typeof fetchRecentSongs>>["recentPlays"][number];
 import { useGameId } from "@/components/providers/game-provider";
 import { trpc } from "@/lib/trpc-client";
@@ -137,13 +137,13 @@ function RecentSongRow({ play, index, isFirst, isLast, onToggleExpand, isExpande
             {play.artist}
           </p>
           <div className="flex items-center gap-1.5 mt-1.5">
-            {game === "maimai" ? <img
+            {getGameChartTypeBadgeLabel(game, play.typeCode) && (game === "maimai" ? <img
               src={createSafeMaimaiImageUrl(getTypeBadgeUrl(play.typeCode === 1 ? "dx" : "std"))}
               alt={getGameChartTypeLabel(game, play.typeCode)}
               width={32}
               height={10}
               className="h-2.5 w-auto"
-            /> : <span className="text-xs">{getGameChartTypeLabel(game, play.typeCode)}</span>}
+            /> : <span className="text-xs">{getGameChartTypeLabel(game, play.typeCode)}</span>)}
             {play.genre && (
               <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-secondary text-secondary-foreground font-medium truncate max-w-[120px]">
                 {play.genre}
