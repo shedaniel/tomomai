@@ -557,7 +557,7 @@ function ChunithmPlayDetails({ details }: { details: ChunithmRecentDetails }) {
   ];
 
   return (
-    <div className="mt-6 space-y-3">
+    <div className="space-y-3 pt-6">
       <Badge variant="outline" className="gap-1 font-medium text-foreground">
         <Grip className="h-3 w-3" />
         <span>{t("labels.maxCombo")}</span>
