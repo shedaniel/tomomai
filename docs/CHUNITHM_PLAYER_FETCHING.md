@@ -268,7 +268,7 @@ box class require verification.
 FC, AJ and chain icon variants were not observed. Their filenames must not be
 invented from the repository's canonical code names.
 
-## Observed JP login
+## Observed JP login and pre-subscription access
 
 | Step | Request | Observed result |
 | --- | --- | --- |
@@ -282,13 +282,14 @@ helper's GET selection with `idx=0` is not a verified CHUNITHM equivalent. A
 successful credential exchange does not establish subscription entitlement or
 access to player records.
 
-After card selection, the authenticated home and
-`/chuni-mobile/html/mobile/home/playerData` both returned HTTP 200. The observed
+Before subscription, the authenticated home page and
+`/chuni-mobile/html/mobile/home/playerData` both returned HTTP 200 after card
+selection. The observed
 rating-best link instead returned HTTP 302 to
 `/chuni-mobile/html/mobile/rightLimit/`, which returned HTTP 200. This proves the
 tested account was authenticated while that records surface was unavailable.
 
-Observed JP access differs by endpoint (paths below are relative to
+The pre-subscription JP observations differed by endpoint (paths are relative to
 `/chuni-mobile/html/mobile/`):
 
 | Route | Observed access for the unsubscribed account |
@@ -303,6 +304,150 @@ Observed JP access differs by endpoint (paths below are relative to
 The 18 rows are an observation, not a proven pagination limit. The record
 overview returning 200 does not establish access to the full score catalog.
 
+## Observed JP access with an active subscription
+
+After the user purchased the JP subscription, the same authenticated account
+could open the rating-best page with HTTP 200 instead of being redirected to
+`rightLimit/`. These observations supplement the historical unpaid evidence;
+they do not replace subscription-denial detection. The paid JP pass used one
+credential session and 26 requests, including five authentication requests;
+this was an exploratory sequence, not a production fetch budget. Paid-page HTML
+was inspected in memory and was not retained as fixtures.
+
+Unless stated otherwise, JP paths below are relative to
+`https://new.chunithm-net.com/chuni-mobile/html/mobile/`.
+
+### JP rating targets
+
+`GET home/playerData/ratingDetailBest/` exposes the same target-row structure as
+International: `.musiclist_box` with difficulty classes such as `bg_expert` and
+`bg_master`, `.music_title`, and `.play_musicdata_highscore > span.text_b`.
+Detail selection uses POST `record/musicGenre/sendMusicDetail/` with form fields
+`diff`, `genre`, `idx` and `token`.
+
+The title `.box01_title` is `レーティング対象曲(ベスト)`. The explanatory
+`.font_x-small.mb_10` text explicitly states:
+
+> 最新バージョンの楽曲を除くプレイ可能な楽曲の内、スコアによるレーティング値が高い順に30曲が表示されます。
+
+This establishes an older-version best-30 selection from playable songs; a
+particular account need not have 30 rows. Do not infer capacity from its row
+count.
+
+`GET home/playerData/ratingDetailRecent/` returned HTTP 200 and is titled
+`レーティング対象曲(新曲)` in `.box01_title`. Its `.font_x-small.mb_10` explains:
+
+> 最新バージョンの楽曲の内、スコアによるレーティング値が高い順に20曲が表示されます。
+
+The JP page therefore confirms current-version best 20 alongside older-version
+best 30. The `Recent` route segment means this new-song rating selection, not
+play history. This agrees with the repository's existing ranking buckets.
+
+### JP score lists and song details
+
+`GET record/musicGenre` returned HTTP 200 after subscription. The landing page
+contains navigation rather than score rows; that absence must not be classified
+as an empty account. Its search handler and buttons use the same five
+`sendBasic`, `sendAdvanced`, `sendExpert`, `sendMaster` and `sendUltima` POST
+actions as International, with `genre=99` and the page's hidden `token`.
+All five actions were submitted and returned HTTP 302 to the respective
+`record/musicGenre/basic`, `advanced`, `expert`, `master` and `ultima` routes,
+then HTTP 200. Each request used the current page's form token.
+
+| Navigation argument | List-row selector | Played-row verification |
+| --- | --- | --- |
+| `Basic` | `.musiclist_box.bg_basic` | Unplayed-row shape observed |
+| `Advanced` | `.musiclist_box.bg_advanced` | Unplayed-row shape observed |
+| `Expert` | `.musiclist_box.bg_expert` | Played and unplayed rows observed |
+| `Master` | `.musiclist_box.bg_master` | Played and unplayed rows observed |
+| `Ultima` | `.musiclist_box.bg_ultima` | Unplayed-row shape observed |
+
+Played Expert/Master rows expose `.play_musicdata_highscore > span.text_b` and
+`.play_musicdata_icon.clearfix img`. Unplayed rows retain titles and hidden
+detail-selection fields but lack the high-score element, matching the
+International skip rule. The ULTIMA navigation button uses `btn_ultimate` or
+`btn_ultimate_on`, despite `Ultima` in the action and `bg_ultima` on rows; do not
+derive all three from one spelling.
+
+No pager classes or pagination/page links were found in the returned list
+classes/links; Basic and ULTIMA also received explicit pagination-selector
+checks. These are observations of the inspected All-filter responses, not a
+guarantee about every future page or filter.
+
+Submitting an observed song row redirected with HTTP 302 to the shared
+`record/musicDetail/` URL, then returned HTTP 200. Scope detail values to
+`.music_box.bg_expert` (or the observed difficulty variant), pairing
+`.musicdata_score_title` with `.musicdata_score_num > .text_b`:
+
+| Field | JP label | International label |
+| --- | --- | --- |
+| High score | `HIGH SCORE：` | `HIGH SCORE：` |
+| Play count | `プレイ回数：` | `Play Count：` |
+
+The JP play-count value ends with `回`, unlike International's `times`.
+A proposed full-value extractor after trimming is `/^([\d,]+)回$/`; remove comma
+grouping from the capture before integer conversion. This unit belongs to the
+song-detail value, not the profile counts below.
+
+Reopening `record/musicDetail/` after visiting other pages returned the same
+previously selected song/difficulty. This reinforces that the shared detail URL
+retains session selection; keep each selection POST and its detail GET paired
+and sequential. The investigation did not deliberately create a concurrent
+selection race.
+
+### JP profile and recent plays
+
+`GET home/playerData` returned HTTP 200 with the same profile selectors as
+International: `.player_name_in`, `.player_rating_num_block`,
+`.player_honor_text` and `.player_chara`. Both
+`.user_data_play_count > .user_data_text` and
+`.user_data_current_play_count > .user_data_text` are present, so total and
+current-version counts can remain separate. Both profile values are plain
+numbers without `回`; use the integer extraction described for International,
+not the song-detail suffix regex. Rating images use the same filename pattern,
+with `orange` observed. No independent textual rating comparison was available,
+so the digit-to-rating interpretation remains a parsing proposal.
+
+`GET record/playlog` returned HTTP 200 with the same `.frame02.w400` rows and
+date, track, title, score and icon selectors listed in the International section.
+The inspected recent list contained `musiclevel_master.png`,
+`musiclevel_expert.png` and an actual played-record `icon_fullcombo.png`.
+The existing date/track/integer parsing proposals apply to those observed shapes;
+JST remains the intended interpretation rather than a timezone printed by the
+page.
+
+A representative POST to `record/playlog/sendPlaylogDetail/` using the row's
+`idx` and `token` returned HTTP 302 to `record/playlogDetail/`, then HTTP 200.
+The detail page uses the same `.play_data_detail_maxcombo_block.font_large`,
+`.play_data_detail_judge_text.text_critical`, `.text_justice`, `.text_attack`
+and `.text_miss` selectors. Scope each short class to
+`.play_data_detail_judge_text` when extracting counts.
+
+The five `.play_data_detail_notes_text` variants are also shared:
+`text_tap_red`, `text_hold_yellow`, `text_slide_blue`, `text_air_green` and
+`text_flick_skyblue`. Their values end with `%`; they are percentages, not note
+counts. This supports shared JP/International CHUNITHM record parsers with
+region-specific labels where necessary, separate from maimai's judgment schema.
+
+### JP icon vocabulary
+
+The paid score page's `.score_list` aggregate summary contains these asset
+basenames. This establishes that the assets exist in the page, not that every
+status was observed on an individual played-song row. `icon_fullcombo.png` was
+also observed in the recent-play list, as noted above.
+
+| Family | Observed basenames |
+| --- | --- |
+| Clear | `icon_clear.png`, `icon_hard.png`, `icon_brave.png`, `icon_absolute.png`, `icon_catastrophy.png` |
+| Combo | `icon_fullcombo.png`, `icon_alljustice.png`, `icon_alljusticecritical.png` |
+| Chain | `icon_fullchain.png`, `icon_fullchain2.png` |
+| Score rank | `icon_rank_8.png` through `icon_rank_13.png` |
+
+Preserve the upstream spelling `catastrophy` when matching the filename; the
+repository's canonical status is CATASTROPHY. The two chain images had no alt
+labels in the inspected summary. Their mapping to FULL CHAIN versus FULL CHAIN
+AJ remains unverified; do not assign meanings from their suffixes alone.
+
 ## Requests, pagination and unverified cases
 
 Observed detail navigation costs a selector POST followed by a redirected GET
@@ -315,14 +460,17 @@ bootstrap, five difficulty POSTs and one recent-list page: eight page/form
 requests after authentication, plus an optional icon request. The verified
 Expert POST redirects to a GET; if all five follow that pattern, the total is
 13 page/form requests. This is a planning estimate, not a measured complete-fetch
-total, since only Expert was submitted. Optional Best
-and Current target pages add two requests. Each selected recent-detail page adds
-two observed requests. Do not fetch every song detail unless required fields
+total. All five redirects were verified for paid JP; only Expert was submitted
+for International. Optional Best and Current target pages add two requests. Each
+selected recent-detail page adds two observed requests. Do not fetch every song detail unless required fields
 are absent from the eventually verified list.
 
-Other difficulty lists, their pagination/completeness, empty accounts, ULTIMA
-coverage, FC/AJ/AJC/chain and advanced clear-lamp variants remain unverified. Rating-target
-row counts do not establish limits for full scores or recents. No session was
+For International, difficulty POSTs other than Expert remain untested. For JP,
+all five standard difficulty POSTs were verified, but played Basic, Advanced or
+ULTIMA rows and a completely empty account were not observed. Pagination across
+other accounts remains unverified. JP aggregate summary icons establish additional
+asset names, but not every individual-row status or the chain-variant mapping.
+Rating-target row counts do not establish limits for full scores or recents. No session was
 deliberately expired and no maintenance response was observed during this
 investigation; actual auth-expiry and maintenance-page selectors/messages must
 be captured before implementing their response classifiers.
@@ -426,10 +574,10 @@ also occur in ordinary navigation. If presentation splits a clause across text
 nodes, compare a whitespace-stripped variant of that clause. This is a proposed
 classifier based on the observed response, not an implemented parser.
 
-Scope established: this unpaid JP account can reach home, profile, the record
-overview and recent-play list. Its rating-best and full-music-record routes are
-gated. Do not infer that all JP records are unavailable; equally, accessible
-recents cannot stand in for complete best scores. Other account types and
+Historical pre-subscription scope: the JP account could reach home, profile,
+the record overview and recent-play list. Its rating-best and full-music-record
+routes were gated. Do not infer that all JP records are unavailable; equally,
+accessible recents cannot stand in for complete best scores. Other account types and
 International records must be evaluated separately.
 
 A subscription denial means record access is unavailable, not that the account
