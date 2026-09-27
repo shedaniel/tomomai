@@ -55,8 +55,10 @@ it("rejects pre-versioned authorization even with a valid OTP", async () => {
   expect(mocks.start).not.toHaveBeenCalled();
 });
 
-it("issues game-bound authorization through the unchanged gateway fields", async () => {
-  const result = await caller.getLoginOtp({ game: "maimai" });
+it.each(["maimai", "chunithm"] as const)("issues game-bound %s authorization through the unchanged gateway fields", async game => {
+  const result = await caller.getLoginOtp({ game });
+  const otherGame = game === "maimai" ? "chunithm" : "maimai";
+  expect(result.loginPageUrl).toBe(game === "maimai" ? "https://maimaidx-eng.com/maimai-mobile/" : "https://chunithm-net-eng.com/mobile/");
   const link = new URL(result.loginLink);
   expect(`${link.origin}${link.pathname}`).toBe("https://lng-tgk-aime-gw.am-all.net/common_auth/");
   expect(result.scriptUrl).toBe("https://tomomai.test/api/login.js");
@@ -64,17 +66,12 @@ it("issues game-bound authorization through the unchanged gateway fields", async
   const fields = new URLSearchParams(link.hash.slice(1));
   expect([...fields.keys()]).toEqual(["otp", "user"]);
   const authorization = fields.get("user")!;
-  expect((await callback(authorization, fields.get("otp")!, { game: "chunithm" })).status).toBe(200);
-  expect(mocks.start).toHaveBeenCalledWith(expect.objectContaining({ game: "maimai", userId: "same-owner", region: "intl", token: "cookie://gateway-cookie" }));
+  expect((await callback(authorization, fields.get("otp")!, { game: otherGame })).status).toBe(200);
+  expect(mocks.start).toHaveBeenCalledWith(expect.objectContaining({ game, userId: "same-owner", region: "intl", token: "cookie://gateway-cookie" }));
 
   const [version, payload, signature] = authorization.split(".");
-  const changedPayload = Buffer.from(JSON.stringify({ ...JSON.parse(Buffer.from(payload, "base64url").toString()), game: "chunithm" })).toString("base64url");
+  const changedPayload = Buffer.from(JSON.stringify({ ...JSON.parse(Buffer.from(payload, "base64url").toString()), game: otherGame })).toString("base64url");
   mocks.start.mockClear();
   expect((await callback(`${version}.${changedPayload}.${signature}`, result.otp)).status).toBe(401);
-  expect(mocks.start).not.toHaveBeenCalled();
-});
-
-it("does not issue a working login link for an unimplemented game source", async () => {
-  await expect(caller.getLoginOtp({ game: "chunithm" })).rejects.toMatchObject({ cause: { code: "SOURCE_NOT_CONFIGURED" } });
   expect(mocks.start).not.toHaveBeenCalled();
 });

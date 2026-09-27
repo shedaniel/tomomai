@@ -17,6 +17,32 @@ function redirect(location: string, cookie?: string) {
 }
 
 describe("CHUNITHM authentication", () => {
+  it("exchanges an International gateway cookie without sending it to the game origin", async () => {
+    mocks.fetch
+      .mockResolvedValueOnce(redirect("https://chunithm-net-eng.com/mobile/?ssid=exchange"))
+      .mockResolvedValueOnce(redirect("/mobile/home/", "userId=game-session; Path=/mobile/"))
+      .mockResolvedValueOnce(new Response("Home", { headers: { "Set-Cookie": "_t=game-token; Path=/mobile/" } }));
+    expect(await loginAndGetCookies("intl", "cookie://clal=existing", "internal-user")).toBe("userId=game-session; _t=game-token");
+    const [gatewayUrl, gatewayRequest] = mocks.fetch.mock.calls[0];
+    expect(new URL(gatewayUrl).searchParams.get("site_id")).toBe("chuniex");
+    expect(new Headers(gatewayRequest.headers).get("Cookie")).toBe("clal=existing");
+    expect(new Headers(mocks.fetch.mock.calls[1][1].headers).get("Cookie")).toBe("");
+    expect(new Headers(mocks.fetch.mock.calls[2][1].headers).get("Cookie")).toBe("userId=game-session");
+    expect(mocks.update).not.toHaveBeenCalled();
+    expect(mocks.remove).not.toHaveBeenCalled();
+  });
+
+  it("expires only the CHUNITHM token and refuses another game's callback", async () => {
+    mocks.fetch.mockResolvedValueOnce(new Response("Login required"));
+    await expect(loginAndGetCookies("intl", "cookie://expired", "internal-user")).rejects.toThrow("Token has expired");
+    expect(mocks.remove).toHaveBeenCalledExactlyOnceWith("chunithm", "internal-user", "intl");
+    mocks.fetch.mockResolvedValueOnce(redirect("https://maimaidx-eng.com/maimai-mobile/"));
+    await expect(loginAndGetCookies("intl", "cookie://existing", "internal-user")).rejects.toThrow("Failed to validate token");
+    expect(mocks.fetch).toHaveBeenCalledTimes(2);
+    await expect(loginAndGetCookies("jp", "cookie://existing", "internal-user")).rejects.toThrow("Cookie format is not supported");
+    expect(mocks.fetch).toHaveBeenCalledTimes(2);
+  });
+
   it("submits the observed JP card form and carries response cookies across the full session", async () => {
     mocks.fetch
       .mockResolvedValueOnce(new Response('<input name="token" value="login-form">', { headers: { "Set-Cookie": "PHPSESSID=initial; Path=/" } }))

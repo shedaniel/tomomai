@@ -666,8 +666,8 @@ Authenticated profile images reuse the existing content-addressed hosting
 pipeline. A complete normalized result reaches shared game-scoped persistence
 only after the fetch succeeds.
 
-The shared SEGA credential dialog serves both CHUNITHM regions. No CHUNITHM
-cookie-login OTP gateway is configured or shown. The JP subscription check
+The shared SEGA credential dialog serves CHUNITHM JP; International also
+supports the shared gateway cookie wizard described below. The JP subscription check
 returns `SUBSCRIPTION_REQUIRED` and the fetch toast localizes recovery
 instructions under `fetchToast.errors.subscriptionRequired`. This condition does
 not trigger credential replacement or a successful snapshot refresh.
@@ -683,3 +683,26 @@ record with an unsupported difficulty, currently fails the whole fetch rather
 than silently omitting data. This includes WORLD'S END history until a reliable
 row identifier allows it to be excluded. Prior snapshots, recent history and
 stored authentication remain intact; no partial snapshot is saved.
+
+## International cookie login support
+
+The frontend now exposes the existing shared SEGA gateway cookie wizard for
+CHUNITHM International. Its first login link uses the configured CHUNITHM entry
+URL; its OTP/bookmarklet step uses the same neutral `/common_auth/` gateway
+landing as maimai. The signed authorization binds the tomomai user and game,
+and the server exchanges `clal` using CHUNITHM's `site_id=chuniex` configuration.
+JP continues to require account credentials.
+
+Manual `clal=` input and the existing `/maimai-cookie-extractor.user.js` download
+remain supported. That download is a shared SEGA gateway clipboard helper,
+independent of the experimental OAuth userscript package. It copies only after
+a user click and no longer writes cookie values to console logs or alerts.
+
+The credential login and resulting game session were observed during R&D;
+independent browser-cookie import, bookmarklet fragment retention and gateway
+cookie visibility have not yet been verified live for CHUNITHM. Offline tests
+cover the cookie exchange, game binding, expiry and cross-game redirect refusal.
+Both browser helpers use `document.cookie`: they require a JavaScript-readable
+`clal` on the gateway origin and cannot read HttpOnly cookies or gateway cookies
+from the CHUNITHM game origin. A copied cookie may expire; account credentials
+remain an alternative and the helpers do not promise indefinite sessions.

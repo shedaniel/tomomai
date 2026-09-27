@@ -3,6 +3,8 @@ import { resolveGame } from "@/lib/games/registry";
 import { GameAdapterError, type CanonicalGameId, type GameContext, type ConfiguredScoreAdapter, type ConfiguredCatalogAdapter, type CatalogSourceAdapter, type ScoreAdapter } from "@/lib/games/types";
 import type { Region } from "@/lib/types";
 
+const SEGA_COOKIE_LOGIN_URL = "https://lng-tgk-aime-gw.am-all.net/common_auth/";
+
 export const GAME_SOURCES: Record<CanonicalGameId, { catalog: CatalogSourceAdapter; scores: ScoreAdapter }> = {
   maimai: {
     catalog: {
@@ -19,7 +21,7 @@ export const GAME_SOURCES: Record<CanonicalGameId, { catalog: CatalogSourceAdapt
     },
     scores: {
       configured: true,
-      cookieLoginUrl: "https://lng-tgk-aime-gw.am-all.net/common_auth/",
+      cookieLoginUrl: SEGA_COOKIE_LOGIN_URL,
       async validateToken(context) {
         const { maimaiScoreAdapter } = await import("@/lib/games/adapters/maimai/score");
         return maimaiScoreAdapter.validateToken?.(context);
@@ -40,6 +42,7 @@ export const GAME_SOURCES: Record<CanonicalGameId, { catalog: CatalogSourceAdapt
     },
     scores: {
       configured: true,
+      cookieLoginUrl: SEGA_COOKIE_LOGIN_URL,
       async fetch(context) {
         const { fetchPlayer } = await import("./chunithm/pipeline");
         return { result: await fetchPlayer(context) };

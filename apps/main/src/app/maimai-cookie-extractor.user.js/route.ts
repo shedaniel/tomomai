@@ -2,10 +2,10 @@ import { NextResponse } from 'next/server';
 
 export async function GET() {
   const userscript = `// ==UserScript==
-// @name         maimai Cookie Extractor
+// @name         SEGA Cookie Extractor
 // @namespace    http://tampermonkey.net/
-// @version      1.0
-// @description  Extract clal cookie from maimai authentication page
+// @version      1.1
+// @description  Extract clal cookie from the SEGA authentication page for maimai and CHUNITHM
 // @author       shedaniel
 // @match        https://lng-tgk-aime-gw.am-all.net/common_auth*
 // @grant        none
@@ -17,7 +17,7 @@ export async function GET() {
     // Create the copy button
     function createCopyButton() {
         const button = document.createElement('button');
-        button.innerHTML = '📋 Copy maimai cookie';
+        button.innerHTML = '📋 Copy SEGA cookie';
         button.style.cssText = \`
             position: fixed;
             top: 20px;
@@ -71,7 +71,6 @@ export async function GET() {
                 navigator.clipboard.writeText(result).then(() => {
                     // Success notification
                     showNotification('✅ Cookie copied to clipboard!', '#4CAF50');
-                    console.log('Copied cookie:', result);
                 }).catch(err => {
                     // Fallback for older browsers
                     const textArea = document.createElement('textarea');
@@ -82,11 +81,8 @@ export async function GET() {
                     document.body.removeChild(textArea);
 
                     showNotification('✅ Cookie copied to clipboard!', '#4CAF50');
-                    console.log('Copied cookie (fallback):', result);
                 });
 
-                // Also show the cookie in alert for verification
-                alert(\`Cookie found and copied:\\n\\n\${result}\`);
             } else {
                 result = 'Cookie not found! Are you on the correct page? Have you logged in?';
                 showNotification('❌ ' + result, '#f44336');
@@ -96,7 +92,6 @@ export async function GET() {
             const errorMsg = 'Error extracting cookie: ' + error.message;
             showNotification('❌ ' + errorMsg, '#f44336');
             alert(errorMsg);
-            console.error('Cookie extraction error:', error);
         }
     }
 
@@ -144,7 +139,6 @@ export async function GET() {
         copyButton.addEventListener('click', extractAndCopyCookie);
         document.body.appendChild(copyButton);
 
-        console.log('maimai cookie extractor loaded successfully');
     }
 
     // Start the script

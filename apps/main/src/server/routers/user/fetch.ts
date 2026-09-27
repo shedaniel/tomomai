@@ -1,3 +1,4 @@
+import { getGameSite } from "@/lib/games/sites";
 import { gameIdSchema } from "@/lib/games/schema";
 import { gameContextInput, validateGameCapability, validateGameInput } from "./game-input";
 import { resolveFlagsForUser } from "@/lib/flags";
@@ -33,6 +34,7 @@ export const fetchRouter = router({
         otp,
         scriptUrl,
         loginLink,
+        loginPageUrl: getGameSite(input.game, "intl")!.entryUrl,
         expiresAt,
       };
     }),
