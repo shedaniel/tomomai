@@ -1,0 +1,496 @@
+# CHUNITHM player fetching reference
+
+Status: investigation and implementation reference. The CHUNITHM score source
+remains unconfigured and player rollout remains disabled. This document does
+not establish successful end-to-end fetching. Catalog ingestion is separate;
+see [CHUNITHM_CATALOG.md](CHUNITHM_CATALOG.md).
+
+## Evidence and scope
+
+Separate upstream observations from repository contracts and implementation
+recommendations. Do not treat a successful login or a player summary as proof
+that all score records are available. Account identifiers, cookie values,
+credentials, hidden form values and private raw HTML do not belong here.
+
+The user confirmed these entry URLs and maintenance windows; the canonical
+configuration is [sites.ts](../apps/main/src/lib/games/sites.ts).
+
+| Region | Entry URL | Daily maintenance, JST |
+| --- | --- | --- |
+| International | `https://chunithm-net-eng.com/mobile/` | 04:00–07:00 |
+| JP | `https://new.chunithm-net.com/` | 02:00–07:00 |
+
+The maintenance start is inclusive and its end exclusive. CHUNITHM has no CN
+configuration. SEGA ID authentication and session cookies are shared concepts
+with maimai; authentication endpoints and page parsing still require independent
+verification for each region.
+
+## Observed International navigation
+
+Authenticated International navigation was observed during this investigation.
+The following describes the actual route sequence; secret values are omitted.
+This was a credential-login flow followed by session-cookie use. Independently
+starting from a user-supplied `cookie://` token was not tested.
+
+| Step | Request | Observed result |
+| --- | --- | --- |
+| Entry | `GET https://chunithm-net-eng.com/mobile/` | HTTP 200 with a script redirect to the SEGA gateway |
+| Gateway | `GET https://lng-tgk-aime-gw.am-all.net/common_auth/login` | HTTP 200 login form; query parameter names `site_id`, `redirect_url`, `back_url` |
+| Credentials | Form `POST /common_auth/login/sid` on the gateway | Inputs `retention` (hidden), `sid` (text), `password` (password); accepted credentials produced HTTP 302 |
+| Game exchange | `GET /mobile/?ssid=<session-value>` on the game origin | HTTP 302 to `/mobile/home/` |
+| Home | `GET /mobile/home/` | HTTP 200 authenticated home page |
+
+Do not hardcode the session query value or hidden form values. Observe and
+follow the gateway form/redirect contract, retaining only the appropriate
+origin's cookies. The entry response's script navigation is not an HTTP redirect
+and therefore needs explicit interpretation. It is not evidence of a usable
+authenticated player page.
+
+Observed game cookie names are `_t`, `userId` and `friendCodeList`. Gateway
+cookies include `JSESSIONID`, `clal` and AWS load-balancer cookies. Names alone do
+not establish which cookies are required or their lifetimes. Cookie and session
+values must not appear in logs, fixtures or this document.
+Later home and music-list landing responses also contained `Set-Cookie` headers.
+Unchanged cookie names do not prove that values remain unchanged. The existing
+shared page helper does not merge subsequent response cookies; evaluate scoped
+cookie accumulation for CHUNITHM rather than assuming the first exchange's
+cookie string remains sufficient indefinitely.
+
+The unauthenticated redirect confirmed the public International gateway
+configuration: `site_id=chuniex`,
+`redirect_url=https://chunithm-net-eng.com/mobile/` and
+`back_url=https://chunithm.sega.com/`. These are site configuration, not account
+session values.
+Observed CHUNITHM credentials were submitted as POST form fields. The shared
+International login helper currently retains maimai's POST-with-query-parameters
+behavior. Reusing its architecture does not prove CHUNITHM login is a
+configuration-only change; preserve the observed body encoding or verify an
+alternative before adopting it.
+
+### International home
+
+| Selector | Observed purpose |
+| --- | --- |
+| `.player_name`, `.player_name_in` | Player name containers |
+| `.player_lv` | Player level |
+| `.player_rating_num_block` | Rating digit images |
+| `.player_overpower_text` | Overpower text |
+| `.player_lastplaydate_text` | Last-play text |
+| `.player_chara > img` | Character image, observed under game-host `/mobile/img/<asset>.png` |
+| `.player_honor_text` | Honor/title text |
+
+Observed navigation links include `/mobile/home/playerData` (without a trailing
+slash) and `/mobile/home/playerData/ratingDetailBest/`.
+Three `.player_honor_short` containers were present, with only the first
+populated through `.player_honor_text > span` in the inspected account. This
+proves one populated title, not how to combine multiple equipped titles.
+
+### International player details
+
+`/mobile/home/playerData` exposes `.user_data_play_count` and
+`.user_data_current_play_count`, providing distinct total and current-version
+play counts. These map directly to `totalPlayCount` and
+`currentVersionPlayCount`. The nested value selectors are
+`.user_data_play_count > .user_data_text` and
+`.user_data_current_play_count > .user_data_text`. Their content is numeric;
+trim whitespace, remove comma grouping and validate the entire remaining string
+as an integer. No English or Japanese label regex is necessary for these nodes.
+
+### Rating digits and target lists
+
+Rating image filenames observed in `.player_rating_num_block` follow
+`/mobile/images/rating/rating_<color>_<two-digit numeral>.png` and
+`rating_<color>_comma.png`. Read images in DOM order. A proposed filename
+extractor is `/rating_[a-z]+_(\d{2}|comma)\.png$/`; check it against every
+observed color before use. `orange` was observed; the full digit/color vocabulary
+was not enumerated. Interpreting the two-digit suffix as a digit and `comma` as
+the decimal separator is the proposed parsing rule, not independently checked
+against a textual rating. Once verified, scale the resulting decimal by 100 for
+storage. Do not parse an image URL as a floating-point string or remove the
+separator blindly.
+
+| Route | Observed contents |
+| --- | --- |
+| `/mobile/home/playerData/ratingDetailBest/` | 30 `.musiclist_box` rows in the inspected account |
+| `/mobile/home/playerData/ratingDetailRecent/` | Labeled **Current** by `.btn_new_on` and “Music for Rating(Current)” in `.box01_title .text_b.font_small`; one row in the inspected account |
+| `/mobile/home/playerData/ratingDetailNext/` | Linked; not yet established as a fetched parser source |
+
+The route name `ratingDetailRecent` does **not** imply recent plays or a
+recent-10 rating bucket. The current-list capacity is not proven by observing
+one row.
+
+Observed target-row selectors are `.music_title` and
+`.play_musicdata_highscore > span.text_b` (a comma-grouped integer score).
+Difficulty classes observed include `bg_advanced`, `bg_expert` and `bg_master`.
+Trim the title without Unicode normalization. For the score text, remove comma
+grouping and validate the full remaining integer string before converting.
+Rows contain a form with `method="POST"` and action
+`/mobile/record/musicGenre/sendMusicDetail/`; hidden field names are `diff`,
+`genre`, `idx` and `token`. Submitting an observed row produced HTTP 302 to
+`/mobile/record/musicDetail/`. Hidden values are per response and must not be
+invented or copied into this reference.
+
+Target pages alone are not established as a complete score source: they have a
+limited selection and their combo/chain/clear fields require separate evidence.
+
+Implementation inference: because the selector POST redirects to one shared
+detail URL without a record key, keep each selector POST and its resulting GET
+paired and sequential within a session until isolation is understood. Do not
+copy maimai's concurrent keyed-detail fetching into this flow. A race has not
+been experimentally demonstrated, and complete list pages may remove the need
+to fetch per-song details at all.
+
+### International score-list navigation
+
+The parent of `.difficulty_btn_record` has an `onclick` handler calling
+`search('Basic'|'Advanced'|'Expert'|'Master'|'Ultima', this)`. These exact strings
+are navigation arguments, distinct from numeric canonical difficulty codes.
+
+Observed genre values:
+
+| Value | Label |
+| --- | --- |
+| `99` | All |
+| `0` | POP |
+| `2` | niconico |
+| `3` | Touhou |
+| `6` | VARIETY |
+| `7` | Irodori |
+| `9` | Gekimai |
+| `5` | Original |
+
+Use the site's observed All filter for complete score collection rather than
+assuming genre IDs form a contiguous sequence.
+
+The live inline function was:
+
+```js
+function search(diff, obj) {
+  var form = $(obj).parents('form');
+  form.attr('action', 'https://chunithm-net-eng.com/mobile/record/musicGenre/send' + diff);
+  form.submit();
+}
+```
+
+This confirms a form POST to `/mobile/record/musicGenre/sendBasic`,
+`sendAdvanced`, `sendExpert`, `sendMaster` or `sendUltima`, preserving the
+original `genre` and hidden `token` fields. Select `genre=99` for All. There is no
+`diff` query parameter in this observed handler.
+
+The Expert action was subsequently verified live: POST
+`/mobile/record/musicGenre/sendExpert` with `genre=99` and the form's hidden
+`token` returned HTTP 302 to `/mobile/record/musicGenre/expert`, then HTTP 200.
+The other difficulty actions are confirmed by the inline handler but were not
+submitted during this investigation.
+
+| Selector within `.musiclist_box.bg_expert` | Observed meaning |
+| --- | --- |
+| `.music_title` | Public song title |
+| Hidden inputs `idx`, `genre`, `diff`, `token` | Existing detail-selection fields |
+| `.play_musicdata_highscore > span.text_b` | Comma-grouped integer score, present only on observed played rows |
+| `.play_musicdata_icon.clearfix img` | Played-row status/grade images |
+
+Unplayed rows have a title and hidden fields but **no high-score element**. Skip
+them when collecting played scores; do not turn a missing score into zero. None
+of the observed played rows displayed zero, so zero-score semantics remain
+unverified. Distinguish an absent score in a recognized row from an unexpected
+page with no recognized rows at all.
+Skip by element absence, not a falsy numeric check such as `!scoreValue`; an
+explicit numeric zero must not be mistaken for a missing element.
+
+Observed image basenames were `icon_clear.png` and `icon_rank_4.png` through
+`icon_rank_11.png`. `icon_clear.png` maps to the existing CLEAR code; rank images
+are grade indicators, not combo or chain lamps. FC/AJ/AJC/chain and advanced
+clear-lamp filenames were not observed and must not be guessed.
+
+The inspected All-genre Expert response had no pager/pagination elements or
+next/page anchors. This is evidence for that response only; it does not establish
+pagination or completeness for other difficulty/category combinations.
+
+### International recent-play list
+
+`GET /mobile/record/playlog` returned HTTP 200 with `.frame02.w400` record rows.
+The observed row count is not proof of page capacity or pagination behavior.
+
+| Selector within a row | Observed shape | Extraction |
+| --- | --- | --- |
+| `.play_datalist_date` | `YYYY/MM/DD HH:mm`, no printed timezone | Validate `/^(\d{4})\/(\d{2})\/(\d{2}) (\d{2}):(\d{2})$/`; construct a date with an explicit timezone |
+| `.play_track_text` | `TRACK <integer>` | `/^TRACK\s+(\d+)$/` after trimming |
+| `.play_track_result img` | Difficulty image; `musiclevel_expert.png` observed | Match the basename, then use an explicit difficulty dictionary |
+| `.play_musicdata_title` | Song title | Trim without blind Unicode normalization |
+| `.play_musicdata_score_text` | Comma-grouped integer | Remove grouping, validate `/^\d+$/`, then convert |
+| `.play_musicdata_icon img` | `icon_clear.png`, `icon_rank_5.png` observed | Distinguish clear lamp from score rank; full vocabulary remains unverified |
+| Score-new marker | `icon_new.png` observed | Presentation marker, not combo/clear status |
+
+The numeric/date regexes above are proposed full-string parsers for the observed
+formats, not existing implementation. The timestamp itself does not print a
+timezone: JST is the intended repository interpretation, not something proved
+by the markup. Avoid host-local `new Date(unqualifiedText)` parsing.
+
+Each row has a POST detail-selector form with field names `idx` and `token`.
+Its action is `/mobile/record/playlog/sendPlaylogDetail/`; following it produced
+HTTP 302 to `/mobile/record/playlogDetail/`, then HTTP 200. As with song
+details, keep selector submission and detail reading paired until session
+selection behavior is understood.
+
+### International recent details
+
+| Selector | Observed value |
+| --- | --- |
+| `.play_data_detail_maxcombo_block.font_large` | Integer max combo |
+| `.play_data_detail_judge_text.text_critical` | Comma-grouped critical count |
+| `.play_data_detail_judge_text.text_justice` | Comma-grouped justice count |
+| `.play_data_detail_judge_text.text_attack` | Comma-grouped attack count |
+| `.play_data_detail_judge_text.text_miss` | Comma-grouped miss count |
+| `.play_data_detail_notes_text.text_tap_red` | Tap percentage |
+| `.play_data_detail_notes_text.text_hold_yellow` | Hold percentage |
+| `.play_data_detail_notes_text.text_slide_blue` | Slide percentage |
+| `.play_data_detail_notes_text.text_air_green` | Air percentage |
+| `.play_data_detail_notes_text.text_flick_skyblue` | Flick percentage |
+
+The note-category figures are **percentages, not note counts**, and an observed
+percentage exceeded 100. Do not clamp to 100 or coerce these values into maimai
+note-count fields. A proposed percentage parser is `/^(\d+(?:\.\d+)?)%$/`
+after trimming; preserve them as optional CHUNITHM recent metadata. Judgment
+counts and max combo use integer parsing instead.
+
+### International song details
+
+`/mobile/record/musicDetail/` contains `.play_musicdata_title` and
+`.play_musicdata_artist`. Within `.music_box.bg_expert`,
+`.musicdata_score_num > .text_b` appears in multiple rows. Use the associated
+`.musicdata_score_title` label to distinguish `HIGH SCORE：` from `Play Count：`
+rather than taking the first numeric element. The observed play-count text
+appends `times`; a proposed extractor is `/^([\d,]+)\s*times$/`, followed by
+comma removal and integer validation. Difficulty variants beyond the observed
+box class require verification.
+
+FC, AJ and chain icon variants were not observed. Their filenames must not be
+invented from the repository's canonical code names.
+
+## Observed JP login
+
+| Step | Request | Observed result |
+| --- | --- | --- |
+| Entry | `GET https://new.chunithm-net.com/` | HTTP 200 login form |
+| Credentials | Form `POST /chuni-mobile/html/mobile/submit/` | Fields `segaId`, `password`, `save_cookie` (checkbox), `token` (hidden); successful submission produced HTTP 302 to the card list |
+| Card list | `GET /chuni-mobile/html/mobile/aimeList/` | HTTP 200 with card-selection form |
+| Card selection form | `POST /chuni-mobile/html/mobile/aimeList/submit/` | Hidden fields `idx`, `token`; this is the observed form contract, not maimai's GET selection URL |
+
+Use the displayed form and its current hidden values. The existing maimai JP
+helper's GET selection with `idx=0` is not a verified CHUNITHM equivalent. A
+successful credential exchange does not establish subscription entitlement or
+access to player records.
+
+After card selection, the authenticated home and
+`/chuni-mobile/html/mobile/home/playerData` both returned HTTP 200. The observed
+rating-best link instead returned HTTP 302 to
+`/chuni-mobile/html/mobile/rightLimit/`, which returned HTTP 200. This proves the
+tested account was authenticated while that records surface was unavailable.
+
+Observed JP access differs by endpoint (paths below are relative to
+`/chuni-mobile/html/mobile/`):
+
+| Route | Observed access for the unsubscribed account |
+| --- | --- |
+| `home/` | HTTP 200 authenticated home |
+| `home/playerData` | HTTP 200 profile |
+| `record/` | HTTP 200 map/progression overview |
+| `record/musicGenre` | HTTP 302 to `rightLimit/`; full music records gated |
+| `record/playlog` | HTTP 200 recent-play list, 18 `.frame02` rows in this observation, with normal detail forms |
+| `home/playerData/ratingDetailBest/` | HTTP 302 to `rightLimit/` |
+
+The 18 rows are an observation, not a proven pagination limit. The record
+overview returning 200 does not establish access to the full score catalog.
+
+## Requests, pagination and unverified cases
+
+Observed detail navigation costs a selector POST followed by a redirected GET
+per song or recent play. Read the resulting page before selecting another
+record on the same session. Authentication and its gateway redirects are
+separate from data-page request counts.
+
+A conditional collection estimate is one profile page, one score-list form
+bootstrap, five difficulty POSTs and one recent-list page: eight page/form
+requests after authentication, plus an optional icon request. The verified
+Expert POST redirects to a GET; if all five follow that pattern, the total is
+13 page/form requests. This is a planning estimate, not a measured complete-fetch
+total, since only Expert was submitted. Optional Best
+and Current target pages add two requests. Each selected recent-detail page adds
+two observed requests. Do not fetch every song detail unless required fields
+are absent from the eventually verified list.
+
+Other difficulty lists, their pagination/completeness, empty accounts, ULTIMA
+coverage, FC/AJ/AJC/chain and advanced clear-lamp variants remain unverified. Rating-target
+row counts do not establish limits for full scores or recents. No session was
+deliberately expired and no maintenance response was observed during this
+investigation; actual auth-expiry and maintenance-page selectors/messages must
+be captured before implementing their response classifiers.
+
+## Normalized data contract
+
+These are existing repository contracts, not statements about fields observed
+on the upstream pages. The provider returns
+[`GameFetchResult`](../apps/main/src/lib/games/types.ts).
+
+| Field | CHUNITHM representation |
+| --- | --- |
+| `player.displayName` | Upstream player name |
+| `player.rating` | Decimal rating multiplied by 100; presentation divides by 100 |
+| `player.title`, `titleType`, `iconUrl` | Required; only title type `0` (normal) is currently defined for CHUNITHM |
+| `player.totalPlayCount`, `currentVersionPlayCount` | Both required; do not substitute one for the other without evidence |
+| `player.metadata` | Optional game-specific fields without inventing maimai equivalents |
+| `score.chart` | Game `chunithm`, requested region, `ctx.gameVersion`, song name, chart type `0`, and canonical difficulty |
+| `score.scoreValue` | Raw integer score, not maimai's scaled achievement percentage |
+| `score.secondaryScore` | `0`; CHUNITHM has no DX score |
+| `recent.playedAt` | A `Date` interpreting the upstream local timestamp in JST |
+| `recent.track` | Optional if actually present |
+| `recent.maxDxScore` | Omitted |
+| `recent.details` | CHUNITHM judgments can use generic recent metadata |
+
+`NormalizedScore.details` is currently not persisted. Recent details are stored
+in `user_recent_songs.metadata`; the maimai detailed judgment table's
+tap/hold/slide/touch/break matrix is not a CHUNITHM schema. Missing required
+player fields remain an integration question, not permission to fabricate zeros
+or placeholder profile data.
+
+Canonical codes live in
+[`game-codes.js`](../packages/utils/src/game-codes.js). The following is the
+repository vocabulary; mapping upstream images to it requires observed icon
+filenames or page labels.
+
+| Kind | Codes |
+| --- | --- |
+| Difficulty | `0` BASIC, `1` ADVANCED, `2` EXPERT, `3` MASTER, `4` ULTIMA |
+| Combo | `0` none, `1` FC, `2` AJ, `3` AJC |
+| Sync | `0` none, `1` FULL CHAIN, `2` FULL CHAIN AJ |
+| Clear | `0` none, `1` CLEAR, `2` HARD, `3` BRAVE, `4` ABSOLUTE, `5` CATASTROPHY |
+
+WORLD'S END remains deferred; difficulty code `5` being reserved does not enable
+its ingestion. Numeric scaling and status mapping must remain game-specific.
+
+### Chart matching, versions and rankings
+
+[`score-storage.ts`](../apps/main/src/server/services/games/score-storage.ts)
+scopes charts by game, region and captured `ctx.gameVersion`, then matches exact
+`songName|difficulty|chartType`. Ambiguous matches are skipped. Upstream numeric
+IDs are not used for this matching, even though the catalog retains its source
+ID in `metadata.otogeDb.id`. The otoge-db catalog keeps the source title without
+NFKC normalization; do not copy maimai's name normalization without comparing
+actual titles from both CHUNITHM sources.
+
+Chart constants and `addedVersion` come from the catalog, not the player's
+displayed level. Capture the region's current version once for the fetch.
+Existing ranking logic selects the current-version best 20 and older best 30
+from resolved scores; the official profile supplies the player rating. A rating
+target page can provide consistency or hidden-chart evidence, but generic
+persistence does not require it. No recent-10 rating bucket currently exists.
+If upstream data contradicts this model, resolve that difference explicitly.
+
+Player names have a database limit of 16 characters. Recent deduplication uses
+`(userId, game, songId, playedAt)`, not an upstream recent-record ID. These limits
+need to be checked against real observations before enabling the provider.
+Recent `chart.version` must also equal captured `ctx.gameVersion` for current
+persistence. Keep `playedAt` as the actual JST timestamp; deriving the chart
+version from that timestamp would cause historical-version recents to be
+skipped. Cross-version recent history remains an explicit unresolved edge case.
+
+## Failure handling and preservation
+
+The following user-reported messages were also observed on the JP
+`/chuni-mobile/html/mobile/rightLimit/` response:
+
+- `利用権が必要です。`
+- `利用権が無いため、サービスをご利用いただけません。`
+- `ゲキチュウマイ-NET利用権を購入することで、サービスを利用できます。`
+
+Observed gate-page classes are `.riyouken_block00`, `.riyouken_attention`,
+`.riyouken_what` and `.btn_standard_charge`. The rating-best request redirected
+to this page after authenticated home/profile requests succeeded. No purchase
+link was visited.
+
+| Gate selector | Observed content |
+| --- | --- |
+| `.riyouken_block00 > .riyouken_attention` | `利用権が必要です。` |
+| `.riyouken_block00 .text_l p` (first paragraph) | `利用権が無いため、サービスをご利用いただけません。` |
+| `p.mb_30` | Purchase-explanation clause above, with a `<br>` separating text |
+| `.riyouken_what_img img` | Image source ending in `/images/unpaid_info.png` |
+
+Recommended detection: retain the final response URL and inspect normalized
+text inside the observed gate containers. Classify the known JP `rightLimit/`
+page with these subscription messages as `subscription required`; the classes
+and message pair provide stronger evidence than the URL alone. For whitespace
+normalization, `.text().replace(/\s+/g, " ").trim()` is a starting point;
+match the distinctive complete Japanese clauses, not merely `利用権`, which may
+also occur in ordinary navigation. If presentation splits a clause across text
+nodes, compare a whitespace-stripped variant of that clause. This is a proposed
+classifier based on the observed response, not an implemented parser.
+
+Scope established: this unpaid JP account can reach home, profile, the record
+overview and recent-play list. Its rating-best and full-music-record routes are
+gated. Do not infer that all JP records are unavailable; equally, accessible
+recents cannot stand in for complete best scores. Other account types and
+International records must be evaluated separately.
+
+A subscription denial means record access is unavailable, not that the account
+has zero scores. Detection must inspect the actual error content before looking
+for score rows. A status code, a route, missing rows, or a purchase link alone is
+insufficient to establish subscription denial. Conversely, do not classify all
+HTTP 200 pages as successfully fetched records.
+
+Recommended provider behavior is to fail the affected JP fetch before returning
+its normalized result. Preserve the saved account token and existing snapshots;
+do not return an empty successful result or send the user through credential
+replacement. A suitable message is: “Fetching complete CHUNITHM JP scores requires an active
+ゲキチュウマイ-NET subscription. Your existing data has not been changed.”
+This is an access condition, distinct from incorrect credentials, an expired
+session, maintenance, an unexpected page shape, or a verified empty-record page.
+It must not disable International fetching.
+
+Existing propagation boundaries:
+
+- [`score-ingestion.ts`](../apps/main/src/server/services/games/score-ingestion.ts)
+  persists the provider result only after fetching succeeds. An asynchronous
+  provider error marks the session failed and stores its message instead.
+- [`useFetchSession.ts`](../apps/main/src/hooks/useFetchSession.ts) invokes the
+  completion refresh only on success. Token-pattern errors can reopen login UI;
+  subscription errors must not match those patterns.
+- [`fetch-toast.tsx`](../apps/main/src/components/fetch-toast.tsx) already displays
+  the failed session's error message. No subscription-specific presentation
+  currently exists.
+- If subscription denial is detected before session creation, add an explicit
+  error mapping in both REST and tRPC. A plain unknown error currently becomes
+  a generic server error. A precondition response is preferable to a credential
+  error or a silent empty success.
+
+Scheduled maintenance uses the shared
+[`maintenance.ts`](../apps/main/src/lib/games/maintenance.ts) policy before token
+or provider work. An upstream maintenance page outside that schedule still
+needs its own observed response classifier. Do not infer expired authentication
+from subscription text or infer maintenance from missing record elements.
+
+## Implementation boundaries
+
+| Concern | Existing owner / intended use |
+| --- | --- |
+| Game and region entry URLs | [`lib/games/sites.ts`](../apps/main/src/lib/games/sites.ts) |
+| HTTP, cookies, redirects | [`games/sega/http.ts`](../apps/main/src/server/services/games/sega/http.ts) |
+| Shared SEGA token/login mechanics | [`games/sega/login.ts`](../apps/main/src/server/services/games/sega/login.ts) |
+| Verified maimai login configuration, reference only | [`games/maimai/login-config.ts`](../apps/main/src/server/services/games/maimai/login-config.ts) |
+| Game/user/region token storage | [`games/tokens.ts`](../apps/main/src/server/services/games/tokens.ts) |
+| Session lifecycle and persistence | [`games/score-ingestion.ts`](../apps/main/src/server/services/games/score-ingestion.ts) |
+| Future CHUNITHM response interpretation | Game-specific provider/parser; do not put CHUNITHM selectors into shared SEGA transport |
+
+Preserve maimai's specialized CN formats and existing schedules. Existing fetch
+progress uses maimai's fixed stages, including Re:MASTER and UTAGE; CHUNITHM
+cannot emit these labels unchanged or claim their fixed denominator represents
+its request count. Session-level pending/completed/failed behavior is reusable.
+
+The existing maimai split in
+[`player/`](../apps/main/src/lib/maimai/player/),
+[`songs/`](../apps/main/src/lib/maimai/songs/) and
+[`recents/`](../apps/main/src/lib/maimai/recents/) is a structural reference for
+small fetch/parse modules and a CHUNITHM orchestrator. Shared admission, rate
+limits, the provider deadline, captured game version and atomic persistence
+already exist. Do not introduce a parallel persistence pipeline or reuse
+maimai's album/events extras by default.
