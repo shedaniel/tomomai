@@ -838,13 +838,13 @@
     "tokenTab": "Token",
     "passwordTab": "Password",
     "tokenInstructions": {
-      "description": "Cookie value starting with \"clal=\" from maimai DX NET.",
+      "description": "Cookie value starting with \"clal=\" from {game} NET.",
       "expiration": "The token may get invalidated after a certain period of time, so you may need to update it in the future."
     },
     "passwordInstructions": "Use your SEGA account username and password directly",
     "secureStorage": "Your credentials will be stored for future fetches.",
     "steps": {
-      "step1Title": "Login to maimai DX NET",
+      "step1Title": "Login to {game} NET",
       "step2Title": "Go to Not Found page",
       "step3Title": "Execute Code"
     },
@@ -860,7 +860,7 @@
     "segaAccountDescription": "Enter your SEGA account credentials",
     "backToSteps": "Back to Steps",
     "step1": {
-      "description": "Login to maimai DX NET in an <strong>incognito / private window</strong>.",
+      "description": "Login to {game} NET in an <strong>incognito / private window</strong>.",
       "clickToCopy": "Click the link below to copy to clipboard:",
       "haveCookies": "Have your own cookies already?",
       "enterDirectly": "Enter it directly"
@@ -885,8 +885,8 @@
       "nextStep": "Next Step"
     },
     "recommended": "Recommended",
-    "tokenOptionDescription": "Login to your maimai DX NET account with your browser tokens. Token may expire from time to time. No password required and supports social logins.",
-    "passwordOptionDescription": "Login to your maimai DX NET account with your SEGA account credentials. Never expire. Not recommended.",
+    "tokenOptionDescription": "Login to your {game} NET account with your browser tokens. Token may expire from time to time. No password required and supports social logins.",
+    "passwordOptionDescription": "Login to your {game} NET account with your SEGA account credentials. Never expire. Not recommended.",
     "cnTitle": "Update maimai authentication",
     "cnDescription": "Choose your authentication method for the China region.",
     "cnExperimentalWarningTitle": "China region is experimental",

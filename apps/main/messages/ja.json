@@ -829,13 +829,13 @@
     "tokenTab": "トークン",
     "passwordTab": "パスワード",
     "tokenInstructions": {
-      "description": "maimai DX NETから取得した「clal=」で始まるクッキー値を入力してください。",
+      "description": "{game} NETから取得した「clal=」で始まるクッキー値を入力してください。",
       "expiration": "トークンは一定期間で無効になる場合がありますので、その際は再度更新してください。"
     },
     "passwordInstructions": "SEGAアカウントのユーザー名とパスワードで直接ログイン",
     "secureStorage": "認証情報は保存され、今後の同期時に使用されます。",
     "steps": {
-      "step1Title": "maimai DX NETにログイン",
+      "step1Title": "{game} NETにログイン",
       "step2Title": "「Not Found」ページに移動",
       "step3Title": "コードを実行"
     },
@@ -851,7 +851,7 @@
     "segaAccountDescription": "SEGAアカウントの認証情報を入力します",
     "backToSteps": "手順に戻る",
     "step1": {
-      "description": "<strong>シークレット / プライベートウィンドウ</strong>で maimai DX NET にログインします。",
+      "description": "<strong>シークレット / プライベートウィンドウ</strong>で {game} NET にログインします。",
       "clickToCopy": "下のリンクをクリックしてクリップボードにコピー：",
       "haveCookies": "すでに Cookie をお持ちですか？",
       "enterDirectly": "直接入力する"
@@ -876,8 +876,8 @@
       "nextStep": "次へ"
     },
     "recommended": "おすすめ楽曲",
-    "tokenOptionDescription": "ブラウザのトークンを使用して maimai DX NET アカウントにログインします。トークンは一定期間で無効になることがありますので、その際は再度更新してください。パスワードは不要で、ソーシャルログインもサポートしています。",
-    "passwordOptionDescription": "SEGA アカウントの認証情報を使用して maimai DX NET アカウントにログインします。期限切れはありません。非推奨です。",
+    "tokenOptionDescription": "ブラウザのトークンを使用して {game} NET アカウントにログインします。トークンは一定期間で無効になることがありますので、その際は再度更新してください。パスワードは不要で、ソーシャルログインもサポートしています。",
+    "passwordOptionDescription": "SEGA アカウントの認証情報を使用して {game} NET アカウントにログインします。期限切れはありません。非推奨です。",
     "cnTitle": "舞萌 DX の認証を更新",
     "cnDescription": "中国版舞萌 DX のログイン認証方式を選んでください。",
     "cnExperimentalWarningTitle": "中国版は実験的なリージョンです",

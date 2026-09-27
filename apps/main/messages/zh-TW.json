@@ -829,13 +829,13 @@
     "tokenTab": "權杖",
     "passwordTab": "密碼",
     "tokenInstructions": {
-      "description": "來自 maimai DX NET 的以 \"clal=\" 為首的 Cookies 值。",
+      "description": "來自 {game} NET 的以 \"clal=\" 為首的 Cookies 值。",
       "expiration": "Cookies 會在一段時間後失效，你或需要重新登入。"
     },
     "passwordInstructions": "直接使用你的 SEGA 帳戶使用者名稱和密碼",
     "secureStorage": "你的驗證方式將被儲存以供將來使用。",
     "steps": {
-      "step1Title": "登入 maimai DX NET",
+      "step1Title": "登入 {game} NET",
       "step2Title": "前往「Not Found」頁面",
       "step3Title": "執行代碼"
     },
@@ -851,7 +851,7 @@
     "segaAccountDescription": "輸入你的 SEGA 帳戶憑證",
     "backToSteps": "回到步驟",
     "step1": {
-      "description": "在<strong>無痕 / 私密視窗</strong>中登入 maimai DX NET。",
+      "description": "在<strong>無痕 / 私密視窗</strong>中登入 {game} NET。",
       "clickToCopy": "點擊下方的連結以複製到剪貼簿：",
       "haveCookies": "已經有自己的 Cookies 了嗎？",
       "enterDirectly": "直接輸入"
@@ -876,8 +876,8 @@
       "nextStep": "下一步"
     },
     "recommended": "推薦歌曲",
-    "tokenOptionDescription": "使用你的瀏覽器權杖登入你的 maimai DX NET 帳戶。權杖可能會不時過期。無需密碼，並支援社群帳號登入。",
-    "passwordOptionDescription": "使用你的 SEGA 帳戶憑證登入你的 maimai DX NET 帳戶。永久有效。不推薦。",
+    "tokenOptionDescription": "使用你的瀏覽器權杖登入你的 {game} NET 帳戶。權杖可能會不時過期。無需密碼，並支援社群帳號登入。",
+    "passwordOptionDescription": "使用你的 SEGA 帳戶憑證登入你的 {game} NET 帳戶。永久有效。不推薦。",
     "cnTitle": "更新舞萌 DX 驗證",
     "cnDescription": "選擇你的舞萌 DX 登入驗證方式。",
     "cnExperimentalWarningTitle": "大陸區為實驗性地區",

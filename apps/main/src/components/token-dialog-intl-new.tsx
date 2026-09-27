@@ -2,7 +2,7 @@
 
 import { logger } from "@/lib/logger";
 import { TokenDialogSega } from "./token-dialog-sega";
-import { useGame, useGameId } from "@/components/providers/game-provider";
+import { useGame } from "@/components/providers/game-provider";
 import { Badge } from "@tomomai/ui";
 import { Button } from "@tomomai/ui";
 import {
@@ -75,7 +75,7 @@ function StepBasedTokenDialog({
   onSubmit,
 }: TokenSubDialogProps) {
   const t = useTranslations();
-  const game = useGameId();
+  const game = useGame();
   const [currentStep, setCurrentStep] = useState<Step>(1);
   const [showManualInput, setShowManualInput] = useState(false);
   const [direction, setDirection] = useState<1 | -1>(1);
@@ -87,7 +87,7 @@ function StepBasedTokenDialog({
   const {
     data: loginOtpData,
     refetch: refetchLoginOtp,
-  } = trpc.user.getLoginOtp.useQuery({ game }, {
+  } = trpc.user.getLoginOtp.useQuery({ game: game.id }, {
     enabled: isOpen && !showManualInput,
     refetchInterval: 60_000,
     refetchOnWindowFocus: false,
@@ -196,7 +196,7 @@ function StepBasedTokenDialog({
               <p className="font-medium">
                 {t('tokenDialog.authenticationNote')}
               </p>
-              <p>{t('tokenDialog.tokenInstructions.description')}</p>
+              <p>{t('tokenDialog.tokenInstructions.description', { game: game.displayName })}</p>
               <p>{t('tokenDialog.tokenInstructions.expiration')}</p>
               <p className="pt-2">{t('tokenDialog.secureStorage')}</p>
             </div>
@@ -244,7 +244,7 @@ function StepBasedTokenDialog({
             <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground text-md font-bold">
               {currentStep}
             </div>
-            <span className="font-medium text-foreground tracking-tight">{t(`tokenDialog.steps.step${currentStep}Title`)}</span>
+            <span className="font-medium text-foreground tracking-tight">{t(`tokenDialog.steps.step${currentStep}Title`, { game: game.displayName })}</span>
           </ResponsiveDialogTitle>
         </ResponsiveDialogHeader>
 
@@ -267,10 +267,11 @@ function StepBasedTokenDialog({
               >
                 <div className="space-y-3">
                   <p className="text-sm text-foreground">{t.rich('tokenDialog.step1.description', {
+                    game: game.displayName,
                     strong: (chunks) => <strong className="font-semibold">{chunks}</strong>,
                   })}</p>
                   <p className="text-xs text-muted-foreground">{t('tokenDialog.step1.clickToCopy')}</p>
-                  <CopyableCodeBlock code="https://maimaidx-eng.com/" t={t} />
+                  <CopyableCodeBlock code={loginOtpData?.loginPageUrl ?? t('tokenDialog.loading.loginLink')} t={t} />
                 </div>
 
                 <div className="text-sm text-foreground mb-0">
@@ -489,7 +490,7 @@ export function TokenDialogIntlNew({
                     </Badge>
                   </div>
                   <p className="text-sm text-muted-foreground leading-relaxed">
-                    {t('tokenDialog.tokenOptionDescription')}
+                    {t('tokenDialog.tokenOptionDescription', { game: game.displayName })}
                   </p>
                 </div>
                 <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors mt-1" />
@@ -510,7 +511,7 @@ export function TokenDialogIntlNew({
                     <span className="font-semibold text-base">{t('tokenDialog.passwordTab')}</span>
                   </div>
                   <p className="text-sm text-muted-foreground leading-relaxed">
-                    {t('tokenDialog.passwordOptionDescription')}
+                    {t('tokenDialog.passwordOptionDescription', { game: game.displayName })}
                   </p>
                 </div>
                 <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors mt-1" />
