@@ -809,7 +809,6 @@
   },
   "tokenDialog": {
     "title": "maimai 認証情報を更新",
-    "japanDescription": "SEGAアカウントでログインします。",
     "intlDescription": "認証方法を選択してください。",
     "credentialsStored": "認証情報は今後の取得で使用されます。",
     "username": "ユーザー名",
@@ -1338,6 +1337,9 @@
     "title": "テーマ"
   },
   "fetchToast": {
+    "errors": {
+      "subscriptionRequired": "CHUNITHM日本版のスコア取得には、有効なゲキチュウマイ-NET利用権が必要です。購入・更新後に再試行してください。保存済みのログイン情報と既存データは保持されています。"
+    },
     "header": {
       "pending": "データ取得中...",
       "completed": "取得完了",
@@ -1349,6 +1351,7 @@
       "login": "ログインしました",
       "playerData": "プレイヤーデータを取得しました",
       "songDataBasic": "BASICスコアを取得しました",
+      "songDataUltima": "ULTIMAスコアを取得しました",
       "songDataAdvanced": "ADVANCEDスコアを取得しました",
       "songDataExpert": "EXPERTスコアを取得しました",
       "songDataMaster": "MASTERスコアを取得しました",

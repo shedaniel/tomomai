@@ -31,7 +31,7 @@ export async function fetchAllSongsData(cookies: string, region: Region, session
       if (sessionId) {
         const state = getStateForDifficulty(difficulty);
         if (state) {
-          appendFetchState(sessionId, state);
+          appendFetchState(sessionId, state, "maimai");
         }
       }
 

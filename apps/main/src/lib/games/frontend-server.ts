@@ -7,12 +7,14 @@ import { resolveFrontendGame } from "./frontend-config";
 
 export function getFrontendGameDescriptor(game: CanonicalGameId): FrontendGame {
   const registration = GAME_REGISTRY[game];
+  const scores = GAME_SOURCES[game].scores;
   return {
     id: registration.id,
     displayName: registration.displayName,
     productName: registration.productName,
     enabled: registration.enabled,
-    fetchConfigured: GAME_SOURCES[game].scores.configured,
+    fetchConfigured: scores.configured,
+    cookieLoginConfigured: scores.configured && Boolean(scores.cookieLoginUrl),
     regions: getEnabledRegions(game),
     capabilities: [...registration.adapter.capabilities],
   };

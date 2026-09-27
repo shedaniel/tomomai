@@ -1,5 +1,6 @@
 "use client";
 
+import { logger } from "@/lib/logger";
 import { useState } from "react";
 import { Button } from "@tomomai/ui";
 import { Input } from "@tomomai/ui";
@@ -14,17 +15,19 @@ import {
   ResponsiveDialogTitle,
 } from "@tomomai/ui";
 
-interface TokenDialogJapanProps {
+interface TokenDialogSegaProps {
   isOpen: boolean;
+  modal?: boolean;
   onOpenChange: (open: boolean) => void;
   onTokenUpdate: (token: string) => Promise<void>;
 }
 
-export function TokenDialogJapan({
+export function TokenDialogSega({
   isOpen,
+  modal = true,
   onOpenChange,
   onTokenUpdate,
-}: TokenDialogJapanProps) {
+}: TokenDialogSegaProps) {
   const t = useTranslations();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -46,7 +49,7 @@ export function TokenDialogJapan({
       setPassword("");
       onOpenChange(false);
     } catch (error) {
-      console.error("Token update error:", error);
+      logger.error({ err: error }, "Token update failed");
     } finally {
       setIsSubmitting(false);
     }
@@ -55,7 +58,7 @@ export function TokenDialogJapan({
   const canSubmit = username.trim().length > 0 && password.trim().length > 0 && !isSubmitting;
 
   return (
-    <ResponsiveDialog open={isOpen} onOpenChange={onOpenChange}>
+    <ResponsiveDialog open={isOpen} onOpenChange={onOpenChange} modal={modal}>
       <ResponsiveDialogContent className="sm:max-w-md">
         <ResponsiveDialogHeader>
           <ResponsiveDialogTitle className="flex items-center space-x-2">
@@ -63,7 +66,7 @@ export function TokenDialogJapan({
             <span>{t('tokenDialog.title')}</span>
           </ResponsiveDialogTitle>
           <ResponsiveDialogDescription>
-            {t('tokenDialog.japanDescription')} {t('tokenDialog.credentialsStored')}
+            {t('tokenDialog.segaAccountDescription')} {t('tokenDialog.credentialsStored')}
           </ResponsiveDialogDescription>
         </ResponsiveDialogHeader>
 

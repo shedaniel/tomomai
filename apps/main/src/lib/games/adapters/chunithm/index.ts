@@ -6,7 +6,7 @@ import { chunithmVersionProvider } from "./versions";
 
 export const chunithmAdapter: GameAdapter = {
   game: "chunithm",
-  capabilities: new Set(["catalog", "rankings", "rating"]),
+  capabilities: new Set(["catalog", "scores", "recents", "rankings", "rating", "profile-icon"]),
   supportedRegions: GAME_SUPPORTED_REGIONS.chunithm,
   versions: chunithmVersionProvider,
   codes: GAME_CODE_MAPS.chunithm,

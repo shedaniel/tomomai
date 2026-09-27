@@ -7,6 +7,7 @@ export interface FrontendGame {
   productName: "tomomai" | "tomochu";
   enabled: boolean;
   fetchConfigured?: boolean;
+  cookieLoginConfigured?: boolean;
   regions: readonly Region[];
   capabilities: readonly GameCapability[];
 }

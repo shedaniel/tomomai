@@ -1,8 +1,8 @@
 # Multi-game frontend plan
 
-Status: frontend foundation and per-process game selection implemented, 2026-09-25. This document records agreed
+Status: frontend foundation, per-process game selection and CHUNITHM player-fetch integration implemented, 2026-09-27. This document records agreed
 product behavior, the current implementation, and the remaining rollout sequence.
-CHUNITHM catalog support is available; player fetching and production rollout remain gated. Backend context is in [MULTI_GAME_BACKEND.md](MULTI_GAME_BACKEND.md)
+CHUNITHM catalog and JP/International player fetching are configured; live end-to-end acceptance remains outstanding. Backend context is in [MULTI_GAME_BACKEND.md](MULTI_GAME_BACKEND.md)
 and catalog identity context is in [PARENT_SONG.md](PARENT_SONG.md).
 
 ## Current implementation
@@ -11,7 +11,7 @@ The current phase deliberately excludes the two-domain/URL setup and cross-domai
 login. Existing maimai URLs remain unchanged. `getFrontendGame()` resolves the configured canonical game at the server boundary
 and passes a serializable descriptor through `GameProvider`.
 There is no new public game route, hostname rewrite, game switcher, authentication
-flow, or CHUNITHM player-fetch activation in this phase. Domain routing remains a later task.
+flow in this phase. Domain routing remains a later task.
 
 Implemented frontend support:
 
@@ -42,17 +42,19 @@ Implemented frontend support:
   data for specialized consumers. Public profile invalidation takes explicit game
   context and does not invalidate the current site's pages for another game.
 
-CHUNITHM's catalog provider and catalog pages are available independently of
-player rollout; see [CHUNITHM_CATALOG.md](CHUNITHM_CATALOG.md). Its score provider
-remains unconfigured and player presentation is exercised with fixtures. The
-local CHUNITHM frontend renders a branded player-unavailable state with a catalog
-link before dashboard authentication or player-data loading. Selecting CHUNITHM
-does not activate player fetching. Existing maimai login/session behavior is unchanged.
+CHUNITHM's JP and International score provider is configured and its player
+surfaces are enabled. The catalog remains available independently; see
+[CHUNITHM_CATALOG.md](CHUNITHM_CATALOG.md). Both CHUNITHM regions use the shared
+SEGA credential dialog. The International cookie/OTP wizard is only exposed when
+the source supplies a verified cookie-login URL; CHUNITHM has no such URL
+configured. Maimai retains its existing cookie/OTP option and uses the same SEGA
+credential form for password login.
 
 Maimai's rich recommendations, percentiles, plates, render/export controls,
-reserved accounts and fetch settings remain specialized. Game-specific source
-availability and capability checks protect the generic surfaces; this phase does
-not promise a fully operational CHUNITHM fetching experience.
+reserved accounts and fetch settings remain specialized. Capability checks
+protect unsupported surfaces; CHUNITHM does not expose maimai albums, events,
+plates or detailed-score presentation. Enabling the provider is an implementation
+change, not a claim that a live application fetch has been accepted.
 
 Validation includes frontend typechecking, numeric presentation and ranking
 fixtures, catalog identity fixtures, public-profile privacy fixtures, and
@@ -92,16 +94,18 @@ concurrently in one checkout.
 
 The two localhost ports are a frontend preview, not domain/session isolation:
 browser cookies are shared across localhost ports. Domain routing and secure
-cross-site login remain deferred. CHUNITHM defaults to International and JP
-catalog regions; its player-unavailable page is intentional while its score
-provider remains unconfigured. The catalog is at `/{locale}/db/songs`.
+cross-site login remain deferred. CHUNITHM supports International and JP,
+defaulting to International. The catalog is at `/{locale}/db/songs`.
 
-## Player-fetch preparation
+## Player fetching
 
-The shared infrastructure is prepared while CHUNITHM's authenticated player
-pages and parsers remain unverified. CHUNITHM keeps `scores.configured: false`
-and player rollout disabled. Its existing unavailable message remains in place;
-knowing the maintenance window does not make player fetching available.
+CHUNITHM JP and International use the shared session, token and persistence
+infrastructure. The region-specific SEGA login configuration and shared
+CHUNITHM page parsers follow the recorded upstream investigation in
+[CHUNITHM_PLAYER_FETCHING.md](CHUNITHM_PLAYER_FETCHING.md). JP complete records
+require an active ゲキチュウマイ-NET subscription; denial fails the fetch without
+replacing existing records or asking for new credentials. The fetch toast
+explains how to recover in the current locale.
 
 Confirmed entry URLs and daily maintenance windows are stored together in
 [`sites.ts`](../apps/main/src/lib/games/sites.ts). Times are JST (UTC+09:00), with
@@ -116,8 +120,9 @@ the start included and the end excluded.
 | CHUNITHM | JP | `https://new.chunithm-net.com/` | 02:00–07:00 |
 
 CHUNITHM has no CN site configuration. Its International and JP accounts use
-SEGA ID and cookies; the entry URLs above do not establish login endpoint paths,
-authentication parameters, redirect behavior or player-page selectors.
+SEGA ID authentication, retaining the authenticated game cookies during a fetch.
+The login and page contracts were investigated separately for each region;
+the source does not infer them from maimai endpoints.
 
 Implementation ownership:
 
@@ -132,8 +137,9 @@ Implementation ownership:
   access by game, user and region.
 - Shared SEGA HTTP and login mechanics live in
   [`games/sega/`](../apps/main/src/server/services/games/sega/), with verified
-  maimai login configuration in
-  [`games/maimai/`](../apps/main/src/server/services/games/maimai/).
+  game-specific login configuration in
+  [`games/maimai/`](../apps/main/src/server/services/games/maimai/) and
+  [`games/chunithm/`](../apps/main/src/server/services/games/chunithm/).
   Maimai's score parsers and CN authentication behavior remain specialized.
 - [`otp.ts`](../apps/main/src/lib/otp.ts) binds game and user in the existing
   signed login authorization. The token dialog requests an OTP for its current
@@ -141,14 +147,15 @@ Implementation ownership:
   URL. Existing gateway fields remain unchanged. Only versioned, game-bound
   authorizations are accepted; pre-versioned codes must be replaced with a new OTP.
 
-After maintenance, verify CHUNITHM's actual login endpoints, parameters, cookies
-and authenticated page structure before adding its game-specific login
-configuration and score parser. Then map real player data into the existing
-shared score-ingestion contract and cover it with saved fixtures. Source
-configuration and rollout must stay disabled until that implementation and
-end-to-end acceptance are complete. No CHUNITHM login URL, selector or score
-payload is inferred from maimai. Domain routing and cross-site sign-in remain
-separate deferred work.
+CHUNITHM's pipeline fetches the profile, all five ordinary difficulty lists and
+recent plays with their details before passing one complete result to shared
+persistence. Progress uses eight stages: login, profile, BASIC, ADVANCED, EXPERT,
+MASTER, ULTIMA and recents. Both progress displays use the selected game's stage
+set, so CHUNITHM does not inherit Re:MASTER, UTAGE, hidden-song or album stages.
+
+Live end-to-end application acceptance, empty-account behavior and real
+maintenance/session-expiry pages remain to be checked. WORLD'S END, domain
+routing and cross-site sign-in remain separate deferred work.
 
 ## Confirmed decisions
 

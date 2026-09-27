@@ -93,7 +93,7 @@ const scrapeFetcher: DataFetcher = async ({ userId: _userId, region, sessionId, 
     throw new Error("No redirect URL received from token validation");
   }
 
-  appendFetchState(sessionId, FETCH_STATES.LOGIN);
+  appendFetchState(sessionId, FETCH_STATES.LOGIN, "maimai");
 
   const cookies = validation.cookiesReady && validation.cookies
     ? validation.cookies
@@ -108,21 +108,21 @@ const scrapeFetcher: DataFetcher = async ({ userId: _userId, region, sessionId, 
   logger.info("Starting player data extraction and songs data fetch...");
   const [playerData, allSongsData, recentSongsData, albumData] = await Promise.all([
     extractPlayerData(region, playerDataHtml, cookies).then((data) => {
-      appendFetchState(sessionId, FETCH_STATES.PLAYER_DATA);
+      appendFetchState(sessionId, FETCH_STATES.PLAYER_DATA, "maimai");
       return data;
     }),
     fetchAllSongsData(cookies, region, sessionId),
     fetchRecentSongsData(cookies, region, sessionId).then((data) => {
-      appendFetchState(sessionId, FETCH_STATES.RECENT_SONGS);
+      appendFetchState(sessionId, FETCH_STATES.RECENT_SONGS, "maimai");
       return data;
     }),
     region === "cn"
       ? Promise.resolve([] as AlbumData[]).then((data) => {
-        appendFetchState(sessionId, FETCH_STATES.ALBUM_DATA);
+        appendFetchState(sessionId, FETCH_STATES.ALBUM_DATA, "maimai");
         return data;
       })
       : fetchAlbumData(cookies, region).then((data) => {
-        appendFetchState(sessionId, FETCH_STATES.ALBUM_DATA);
+        appendFetchState(sessionId, FETCH_STATES.ALBUM_DATA, "maimai");
         return data;
       }),
   ]);
@@ -146,7 +146,7 @@ const scrapeFetcher: DataFetcher = async ({ userId: _userId, region, sessionId, 
       }
     }
   } finally {
-    appendFetchState(sessionId, FETCH_STATES.HIDDEN_SONGS);
+    appendFetchState(sessionId, FETCH_STATES.HIDDEN_SONGS, "maimai");
   }
 
   let eventsData: FetchedMaimaiData["eventsData"] = null;
@@ -175,14 +175,14 @@ const lxnsFetcher: DataFetcher = async ({ userId, region, sessionId, validation 
     throw new Error("Failed to parse lxns token");
   }
 
-  appendFetchState(sessionId, FETCH_STATES.LOGIN);
+  appendFetchState(sessionId, FETCH_STATES.LOGIN, "maimai");
 
   let playerData;
   let allSongsData: { [difficulty: number]: ScoreData[] };
   try {
     [playerData, allSongsData] = await Promise.all([
       fetchLxnsPlayerData(parsed.accessToken).then((data) => {
-        appendFetchState(sessionId, FETCH_STATES.PLAYER_DATA);
+        appendFetchState(sessionId, FETCH_STATES.PLAYER_DATA, "maimai");
         return data;
       }),
       fetchLxnsScoresData(parsed.accessToken),
@@ -218,7 +218,7 @@ const divingfishFetcher: DataFetcher = async ({ userId, region, sessionId, valid
     throw new Error("Failed to parse divingfish token");
   }
 
-  appendFetchState(sessionId, FETCH_STATES.LOGIN);
+  appendFetchState(sessionId, FETCH_STATES.LOGIN, "maimai");
 
   let response;
   try {
@@ -237,7 +237,7 @@ const divingfishFetcher: DataFetcher = async ({ userId, region, sessionId, valid
   }
 
   const playerData = parseDivingFishPlayerData(response);
-  appendFetchState(sessionId, FETCH_STATES.PLAYER_DATA);
+  appendFetchState(sessionId, FETCH_STATES.PLAYER_DATA, "maimai");
   const allSongsData = parseDivingFishScoresData(response.records);
 
   return {

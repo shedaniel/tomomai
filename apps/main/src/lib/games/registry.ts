@@ -33,7 +33,7 @@ export const GAME_REGISTRY: Record<CanonicalGameId, GameRegistration> = {
     id: "chunithm",
     displayName: "CHUNITHM",
     productName: "tomochu",
-    enabled: false,
+    enabled: true,
     adapter: chunithmAdapter,
   },
 };

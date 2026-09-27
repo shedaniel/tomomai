@@ -1,3 +1,4 @@
+import type { CanonicalGameId } from "./games/types";
 import { db } from "./db";
 import { fetchSessions } from "./db/schema-pg";
 import { getLogger } from "./request-logger";
@@ -13,7 +14,7 @@ import {
 const sessionLocks = new Map<string, Promise<void>>();
 
 // Helper function to append a state to statusStates (non-blocking)
-export async function appendFetchState(sessionId: bigint, state: FetchState): Promise<void> {
+export async function appendFetchState(sessionId: bigint, state: FetchState, game: CanonicalGameId): Promise<void> {
   // Serialize updates per sessionId to prevent race conditions
   const lockKey = sessionId.toString();
   const lockPromise = sessionLocks.get(lockKey) || Promise.resolve();
@@ -24,7 +25,7 @@ export async function appendFetchState(sessionId: bigint, state: FetchState): Pr
       const currentSession = await db
         .select({ statusStates: fetchSessions.statusStates })
         .from(fetchSessions)
-        .where(and(eq(fetchSessions.id, sessionId), eq(fetchSessions.game, "maimai"), eq(fetchSessions.status, "pending")))
+        .where(and(eq(fetchSessions.id, sessionId), eq(fetchSessions.game, game), eq(fetchSessions.status, "pending")))
         .limit(1);
 
       if (currentSession.length === 0) {
@@ -42,9 +43,9 @@ export async function appendFetchState(sessionId: bigint, state: FetchState): Pr
         await db
           .update(fetchSessions)
           .set({ statusStates: newStatusStates })
-          .where(and(eq(fetchSessions.id, sessionId), eq(fetchSessions.game, "maimai"), eq(fetchSessions.status, "pending")));
+          .where(and(eq(fetchSessions.id, sessionId), eq(fetchSessions.game, game), eq(fetchSessions.status, "pending")));
 
-        getLogger().debug(`Appended state '${state}' to session ${sessionId}. Progress: ${calculateProgress(newStates)}%`);
+        getLogger().debug(`Appended state '${state}' to session ${sessionId}. Progress: ${calculateProgress(newStates, game)}%`);
       }
     } catch (error) {
       // Non-blocking - just log the error and continue

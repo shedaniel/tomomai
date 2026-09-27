@@ -19,19 +19,14 @@ describe("game boundaries", () => {
     vi.stubEnv("NEXT_PUBLIC_ENABLED_MAIMAI_REGIONS", "jp, invalid, jp,cn");
     expect(getEnabledRegions("maimai")).toEqual(["jp", "cn"]);
   });
-  it("does not enable CHUNITHM by configuring regions", () => {
-    vi.stubEnv("NEXT_PUBLIC_ENABLED_CHUNITHM_REGIONS", "jp");
-    expect(() => resolveGameContext("chunithm", "jp")).toThrow(expect.objectContaining({ code: "GAME_NOT_ENABLED" }));
-  });
-  it("allows CHUNITHM catalogs before player features roll out", () => {
+  it("enables CHUNITHM fetching only for configured supported regions", () => {
     vi.stubEnv("NEXT_PUBLIC_ENABLED_CHUNITHM_REGIONS", undefined);
     for (const region of ["intl", "jp"] as const) {
       expect(resolveGameContext("chunithm", region, "catalog")).toEqual({ game: "chunithm", region });
-      expect(() => resolveGameContext("chunithm", region, "scores")).toThrow(expect.objectContaining({ code: "GAME_NOT_ENABLED" }));
+      expect(resolveGameContext("chunithm", region, "scores")).toEqual({ game: "chunithm", region });
     }
-    expect(() => requireCapability("chunithm", "catalog")).not.toThrow();
-    expect(() => requireCapability("chunithm", "scores")).toThrow(expect.objectContaining({ code: "GAME_NOT_ENABLED" }));
-    expect(() => resolveGameContext("chunithm", "cn", "catalog")).toThrow(expect.objectContaining({ code: "UNSUPPORTED_REGION" }));
+    expect(() => requireCapability("chunithm", "albums")).toThrow(expect.objectContaining({ code: "UNSUPPORTED_CAPABILITY" }));
+    expect(() => resolveGameContext("chunithm", "cn", "scores")).toThrow(expect.objectContaining({ code: "UNSUPPORTED_REGION" }));
   });
   it("respects explicit CHUNITHM catalog regions, including none", () => {
     vi.stubEnv("NEXT_PUBLIC_ENABLED_CHUNITHM_REGIONS", "jp,cn,jp");

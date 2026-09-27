@@ -809,7 +809,6 @@
   },
   "tokenDialog": {
     "title": "更新 maimai 验证",
-    "japanDescription": "输入你的 SEGA 账户凭证。",
     "intlDescription": "选择你的 maimai 登入验证方式。",
     "credentialsStored": "你的验证方式将被保存以供将来使用。",
     "username": "用户名",
@@ -1338,6 +1337,9 @@
     "title": "主题"
   },
   "fetchToast": {
+    "errors": {
+      "subscriptionRequired": "获取 CHUNITHM 日版成绩需要有效的 ゲキチュウマイ-NET 服务订阅。请购买或续订后重试。已保存的登入信息和现有数据均已保留。"
+    },
     "header": {
       "pending": "导入数据中...",
       "completed": "导入完成",
@@ -1349,6 +1351,7 @@
       "login": "已登入",
       "playerData": "已导入玩家数据",
       "songDataBasic": "已导入 BASIC 成绩",
+      "songDataUltima": "已导入 ULTIMA 成绩",
       "songDataAdvanced": "已导入 ADVANCED 成绩",
       "songDataExpert": "已导入 EXPERT 成绩",
       "songDataMaster": "已导入 MASTER 成绩",

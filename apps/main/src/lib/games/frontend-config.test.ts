@@ -27,11 +27,11 @@ describe("frontend process configuration", () => {
       expect(() => resolveFrontendGame(value)).toThrow("Invalid FRONTEND_GAME");
   });
 
-  it("selects serializable provider metadata without activating CHUNITHM", () => {
+  it("selects serializable provider metadata without importing the fetch implementation", () => {
     vi.stubEnv("FRONTEND_GAME", "chunithm");
     vi.stubEnv("NEXT_PUBLIC_ENABLED_CHUNITHM_REGIONS", undefined);
     const game = getFrontendGame();
-    expect(game).toMatchObject({ id: "chunithm", productName: "tomochu", enabled: false, fetchConfigured: false, regions: ["intl", "jp"] });
+    expect(game).toMatchObject({ id: "chunithm", productName: "tomochu", enabled: true, fetchConfigured: true, cookieLoginConfigured: false, regions: ["intl", "jp"] });
     expect(JSON.parse(JSON.stringify(game))).toEqual(game);
     expect(game).not.toHaveProperty("adapter");
   });

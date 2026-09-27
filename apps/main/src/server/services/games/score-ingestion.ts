@@ -148,9 +148,9 @@ async function demoScoreFetch(
 
   void (async () => {
     try {
-      for (const state of getAllStates()) {
+      for (const state of getAllStates(game)) {
         await new Promise(resolve => setTimeout(resolve, 500));
-        if (game === "maimai") await appendFetchState(insertedSession.id, state);
+        await appendFetchState(insertedSession.id, state, game);
       }
 
       await db

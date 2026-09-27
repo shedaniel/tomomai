@@ -32,6 +32,7 @@ vi.mock("./score-storage", async importOriginal => ({
 vi.mock("@/lib/games/adapters/maimai/score", () => ({ maimaiScoreAdapter: {
   configured: true, fetch: state.fetch, validateToken: state.validateToken,
 } }));
+vi.mock("./chunithm/pipeline", () => ({ fetchPlayer: async (context: Parameters<ConfiguredScoreAdapter["fetch"]>[0]) => (await state.fetch(context)).result }));
 vi.mock("@/lib/profile-cache", () => ({ revalidatePublicProfileForUser: state.revalidate }));
 vi.mock("@/lib/logger", () => ({ flushLogger: vi.fn() }));
 vi.mock("@/lib/request-logger", () => ({ getLogger: () => ({ error: vi.fn() }) }));
@@ -135,7 +136,32 @@ it("cannot persist a provider result arriving after the fetch timeout", async ()
   expect(state.statements.find(query => query.sql.startsWith('update "fetch_sessions"'))?.params).toContain("failed");
 });
 
-it("rejects an unconfigured game provider before touching tokens or sessions", async () => {
-  await expect(startScoreFetch({ ...start, game: "chunithm" })).rejects.toMatchObject({ code: "SOURCE_NOT_CONFIGURED" });
-  expect(state.statements).toEqual([]);
+it("keeps CHUNITHM subscription failures scoped to the failed session without deleting credentials or writing a snapshot", async () => {
+  vi.stubEnv("NEXT_PUBLIC_ENABLED_CHUNITHM_REGIONS", "jp");
+  state.fetch.mockRejectedValueOnce(new Error("SUBSCRIPTION_REQUIRED: CHUNITHM-NET subscription required"));
+  const started = await startScoreFetch({ ...start, game: "chunithm", token: undefined });
+  await started.backgroundWork;
+  expect(state.fetch).toHaveBeenCalledWith(expect.objectContaining({ game: "chunithm", region: "jp", token: "stored-token" }));
+  expect(state.statements.some(query => query.sql.startsWith('insert into "user_snapshots"'))).toBe(false);
+  expect(state.statements.some(query => query.sql.startsWith("delete") || query.sql.startsWith('update "user_tokens"'))).toBe(false);
+  expect(state.statements.find(query => query.sql.startsWith('update "fetch_sessions"'))?.params).toEqual(expect.arrayContaining(["failed", "chunithm"]));
+  expect(state.revalidate).not.toHaveBeenCalled();
+});
+
+it("persists CHUNITHM charts only in their captured game, region and version", async () => {
+  const chart = { game: "chunithm" as const, region: "jp" as const, version: 9, songName: "Raw　Title", chartType: 0, difficulty: 3 };
+  const score = { chart, scoreValue: 1009000, secondaryScore: 0, comboStatus: 1, syncStatus: 0, clearStatus: 1 };
+  state.resolveCharts.mockResolvedValue({ chartResolution: new Map([["Raw　Title|3|0", BigInt(7)]]), songsById: new Map([[BigInt(7), { id: BigInt(7), addedVersion: 9, levelPrecise: 140, difficulty: 3 }]]) });
+  state.upsertScores.mockResolvedValue(new Map([["7-1009000-0-1-0-1", 8]]));
+  await persistFetchResult({ ...persist, game: "chunithm", gameVersion: 9, fetched: { ...fetched, scores: [
+    score,
+    { ...score, chart: { ...chart, game: "maimai" } },
+    { ...score, chart: { ...chart, region: "intl" } },
+    { ...score, chart: { ...chart, version: 8 } },
+  ] } });
+  expect(state.resolveCharts).toHaveBeenCalledWith(expect.anything(), "chunithm", "jp", 9);
+  expect(state.upsertScores).toHaveBeenCalledWith(expect.anything(), "chunithm", [expect.objectContaining({ songId: BigInt(7), scoreValue: 1009000 })]);
+  const snapshot = state.statements.find(query => query.sql.startsWith('insert into "user_snapshots"'))!;
+  expect(snapshot.params).toEqual(expect.arrayContaining(["chunithm", 9]));
+  expect(state.statements.find(query => query.sql.startsWith('insert into "snapshot_rankings"'))?.params).toEqual(expect.arrayContaining(["chunithm", 8]));
 });

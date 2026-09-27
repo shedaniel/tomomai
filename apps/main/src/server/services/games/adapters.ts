@@ -39,8 +39,11 @@ export const GAME_SOURCES: Record<CanonicalGameId, { catalog: CatalogSourceAdapt
       },
     },
     scores: {
-      configured: false,
-      notConfiguredReason: "CHUNITHM score fetching is not implemented; no upstream provider is configured.",
+      configured: true,
+      async fetch(context) {
+        const { fetchPlayer } = await import("./chunithm/pipeline");
+        return { result: await fetchPlayer(context) };
+      },
     },
   },
 };

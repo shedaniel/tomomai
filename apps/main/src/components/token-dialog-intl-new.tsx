@@ -1,5 +1,7 @@
 "use client";
 
+import { logger } from "@/lib/logger";
+import { TokenDialogSega } from "./token-dialog-sega";
 import { useGameId } from "@/components/providers/game-provider";
 import { Badge } from "@tomomai/ui";
 import { Button } from "@tomomai/ui";
@@ -15,7 +17,7 @@ import { Label } from "@tomomai/ui";
 import { trpc } from "@/lib/trpc-client";
 import type { Region } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import { ChevronRight, Cookie, Copy, Eye, EyeOff, Key, Lock, Monitor, Save, Smartphone } from "lucide-react";
+import { ChevronRight, Cookie, Copy, Key, Lock, Monitor, Save, Smartphone } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useTranslations } from "next-intl";
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
@@ -36,19 +38,6 @@ interface TokenSubDialogProps {
   token: string;
   onTokenChange: (token: string) => void;
   isValidToken: (token: string) => boolean;
-  isSubmitting: boolean;
-  onSubmit: (e: React.FormEvent) => void;
-}
-
-interface PasswordSubDialogProps {
-  isOpen: boolean;
-  onOpenChange: (open: boolean) => void;
-  username: string;
-  onUsernameChange: (username: string) => void;
-  password: string;
-  onPasswordChange: (password: string) => void;
-  showPassword: boolean;
-  onShowPasswordChange: (show: boolean) => void;
   isSubmitting: boolean;
   onSubmit: (e: React.FormEvent) => void;
 }
@@ -393,101 +382,6 @@ function StepBasedTokenDialog({
   );
 }
 
-function PasswordSubDialog({
-  isOpen,
-  onOpenChange,
-  username,
-  onUsernameChange,
-  password,
-  onPasswordChange,
-  showPassword,
-  onShowPasswordChange,
-  isSubmitting,
-  onSubmit,
-}: PasswordSubDialogProps) {
-  const t = useTranslations();
-  const canSubmit = username.trim().length > 0 && password.trim().length > 0 && !isSubmitting;
-
-  return (
-    <ResponsiveDialog open={isOpen} onOpenChange={onOpenChange} modal={false}>
-      <ResponsiveDialogContent className="sm:max-w-md shadow">
-        <ResponsiveDialogHeader>
-          <ResponsiveDialogTitle className="flex items-center space-x-2">
-            <Lock className="h-5 w-5" />
-            <span>{t('tokenDialog.passwordTab')}</span>
-          </ResponsiveDialogTitle>
-          <ResponsiveDialogDescription>
-            {t('tokenDialog.segaAccountDescription')}
-          </ResponsiveDialogDescription>
-        </ResponsiveDialogHeader>
-
-        <form onSubmit={onSubmit} className="space-y-4">
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="username">{t('tokenDialog.username')}</Label>
-              <Input
-                id="username"
-                type="text"
-                value={username}
-                onChange={(e) => onUsernameChange(e.target.value)}
-                placeholder={t('tokenDialog.usernamePlaceholder')}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">{t('tokenDialog.password')}</Label>
-              <div className="relative">
-                <Input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => onPasswordChange(e.target.value)}
-                  placeholder={t('tokenDialog.passwordPlaceholder')}
-                  className="pr-10"
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="absolute right-0 top-0 h-full px-3"
-                  onClick={() => onShowPasswordChange(!showPassword)}
-                >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </Button>
-              </div>
-            </div>
-          </div>
-
-          <div className="text-xs text-muted-foreground space-y-2">
-            <p className="font-medium">
-              {t('tokenDialog.authenticationNote')}
-            </p>
-            <p>{t('tokenDialog.passwordInstructions')}</p>
-            <p>{t('tokenDialog.secureStorage')}</p>
-          </div>
-
-          <Button
-            type="submit"
-            className="w-full"
-            disabled={!canSubmit}
-          >
-            {isSubmitting ? (
-              <>
-                <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-r-transparent mr-2" />
-                {t('tokenDialog.savingCredentials')}
-              </>
-            ) : (
-              <>
-                <Save className="h-4 w-4 mr-2" />
-                {t('tokenDialog.saveCredentials')}
-              </>
-            )}
-          </Button>
-        </form>
-      </ResponsiveDialogContent>
-    </ResponsiveDialog>
-  );
-}
-
 export function TokenDialogIntlNew({
   isOpen,
   onOpenChange,
@@ -499,9 +393,6 @@ export function TokenDialogIntlNew({
   const [isTokenDialogOpen, setIsTokenDialogOpen] = useState(false);
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
   const [token, setToken] = useState("");
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Validate token format: clal= followed by alphanumeric characters
@@ -512,9 +403,6 @@ export function TokenDialogIntlNew({
 
   const handleClose0 = () => {
     setToken("");
-    setUsername("");
-    setPassword("");
-    setShowPassword(false);
     setIsTokenDialogOpen(false);
     setIsPasswordDialogOpen(false);
     onOpenChange(false);
@@ -561,26 +449,7 @@ export function TokenDialogIntlNew({
       setToken("");
       handleClose0();
     } catch (error) {
-      console.error("Token update error:", error);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handlePasswordSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!username.trim() || !password.trim()) return;
-    const finalToken = `account://${username.trim()}:://${password.trim()}`;
-
-    setIsSubmitting(true);
-    try {
-      await onTokenUpdate(finalToken);
-      setUsername("");
-      setPassword("");
-      handleClose0();
-    } catch (error) {
-      console.error("Token update error:", error);
+      logger.error({ err: error }, "Token update failed");
     } finally {
       setIsSubmitting(false);
     }
@@ -662,17 +531,14 @@ export function TokenDialogIntlNew({
       />
 
       {/* Password Dialog - Nested */}
-      <PasswordSubDialog
+      <TokenDialogSega
         isOpen={isPasswordDialogOpen}
         onOpenChange={setIsPasswordDialogOpen}
-        username={username}
-        onUsernameChange={setUsername}
-        password={password}
-        onPasswordChange={setPassword}
-        showPassword={showPassword}
-        onShowPasswordChange={setShowPassword}
-        isSubmitting={isSubmitting}
-        onSubmit={handlePasswordSubmit}
+        modal={false}
+        onTokenUpdate={async credentials => {
+          await onTokenUpdate(credentials);
+          handleClose0();
+        }}
       />
     </>
   );

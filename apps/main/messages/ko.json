@@ -626,7 +626,6 @@
   },
   "tokenDialog": {
     "title": "maimai 인증 갱신",
-    "japanDescription": "일본판: SEGA 계정 정보를 입력하세요.",
     "intlDescription": "해외판: 인증 방식을 선택하세요.",
     "credentialsStored": "인증 정보는 나중을 위해 안전하게 저장됩니다.",
     "username": "사용자명",
@@ -977,6 +976,9 @@
     "title": "Theme"
   },
   "fetchToast": {
+    "errors": {
+      "subscriptionRequired": "CHUNITHM 일본판 점수를 가져오려면 유효한 ゲキチュウマイ-NET 이용권이 필요합니다. 구매 또는 갱신한 후 다시 시도하세요. 저장된 로그인 정보와 기존 데이터는 유지됩니다."
+    },
     "header": {
       "pending": "데이터 가져오는 중...",
       "completed": "Fetch complete",
@@ -988,6 +990,7 @@
       "login": "Logged in",
       "playerData": "Fetched player data",
       "songDataBasic": "Fetched BASIC scores",
+      "songDataUltima": "ULTIMA 점수를 가져왔습니다",
       "songDataAdvanced": "Fetched ADVANCED scores",
       "songDataExpert": "Fetched EXPERT scores",
       "songDataMaster": "Fetched MASTER scores",

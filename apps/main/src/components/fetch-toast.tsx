@@ -10,6 +10,8 @@ import {
   FETCH_STATES,
   calculateProgress,
 } from "@/lib/fetch-states";
+import { useGameId } from "./providers/game-provider";
+import type { CanonicalGameId } from "@/lib/games/types";
 import { useTranslations } from "next-intl";
 
 export type FetchToastStatus = "pending" | "completed" | "failed";
@@ -27,9 +29,9 @@ interface FetchToastProps {
   onDismiss?: () => void;
 }
 
-function getProgress(statusStates: FetchState[]): number {
+function getProgress(statusStates: FetchState[], game: CanonicalGameId): number {
   if (statusStates.length === 0) return 3; // Show a little progress at start
-  return calculateProgress(statusStates);
+  return calculateProgress(statusStates, game);
 }
 
 function getStatusLabelKey(state: FetchState): string {
@@ -38,6 +40,7 @@ function getStatusLabelKey(state: FetchState): string {
       return "states.login";
     case FETCH_STATES.PLAYER_DATA:
       return "states.playerData";
+    case FETCH_STATES.SONG_DATA_BASIC:
     case FETCH_STATES.SONG_DATA_EASY:
       return "states.songDataBasic";
     case FETCH_STATES.SONG_DATA_ADVANCED:
@@ -46,6 +49,8 @@ function getStatusLabelKey(state: FetchState): string {
       return "states.songDataExpert";
     case FETCH_STATES.SONG_DATA_MASTER:
       return "states.songDataMaster";
+    case FETCH_STATES.SONG_DATA_ULTIMA:
+      return "states.songDataUltima";
     case FETCH_STATES.SONG_DATA_REMASTER:
       return "states.songDataRemaster";
     case FETCH_STATES.SONG_DATA_UTAGE:
@@ -104,8 +109,9 @@ function StatusLine({
 
 export function FetchToast({ state, onDismiss }: FetchToastProps) {
   const t = useTranslations("fetchToast");
+  const game = useGameId();
   const { status, statusStates, startedAt, errorMessage } = state;
-  const progress = status === "completed" ? 100 : status === "failed" ? 0 : getProgress(statusStates);
+  const progress = status === "completed" ? 100 : status === "failed" ? 0 : getProgress(statusStates, game);
 
   // Track when each state was first seen (stores elapsed ms from startedAt)
   const stateTimestampsRef = React.useRef<Map<FetchState, number>>(new Map());
@@ -251,7 +257,9 @@ export function FetchToast({ state, onDismiss }: FetchToastProps) {
             >
               <XCircle className="h-3 w-3 text-destructive shrink-0 mt-0.5" />
               <span className="text-destructive">
-                {errorMessage}
+                {errorMessage.startsWith("SUBSCRIPTION_REQUIRED")
+                  ? t("errors.subscriptionRequired")
+                  : errorMessage}
               </span>
             </motion.div>
           )}

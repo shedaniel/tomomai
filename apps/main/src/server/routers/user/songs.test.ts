@@ -42,7 +42,7 @@ beforeEach(() => {
 });
 afterEach(() => vi.unstubAllEnvs());
 
-describe("catalog access before player rollout", () => {
+describe("catalog and player access", () => {
   it("serves the CHUNITHM list and regional catalog", async () => {
     expect(await caller.getAllUniqueSongs({ game: "chunithm" })).toEqual([song]);
     expect(queryAllUniqueSongs).toHaveBeenCalledWith("chunithm");
@@ -50,17 +50,18 @@ describe("catalog access before player rollout", () => {
     expect(getCatalogChartsCached).toHaveBeenCalledWith("chunithm", "jp", undefined);
   });
 
-  it("serves details without player enrichment while preserving maimai enrichment", async () => {
+  it("enriches each game catalog with the signed-in player", async () => {
     const input = { songName: song.songName, type: song.type, artist: song.artist };
     expect(await caller.getSongDetails({ game: "chunithm", ...input })).toEqual(details);
-    expect(querySongDetails).toHaveBeenLastCalledWith("chunithm", input.songName, input.type, undefined, input.artist, undefined);
+    expect(querySongDetails).toHaveBeenLastCalledWith("chunithm", input.songName, input.type, "viewer", input.artist, undefined);
     await caller.getSongDetails({ game: "maimai", ...input, type: "std" });
     expect(querySongDetails).toHaveBeenLastCalledWith("maimai", input.songName, "std", "viewer", input.artist, undefined);
   });
 
-  it("rejects player score reads before querying storage", async () => {
+  it("scopes player score reads to the selected game and signed-in user", async () => {
+    vi.mocked(querySongScores).mockResolvedValue({});
     await expect(caller.getSongScores({ game: "chunithm", songName: song.songName, type: song.type }))
-      .rejects.toMatchObject({ code: "BAD_REQUEST", cause: { code: "GAME_NOT_ENABLED" } });
-    expect(querySongScores).not.toHaveBeenCalled();
+      .resolves.toEqual({ viewerId: "viewer", userScores: {} });
+    expect(querySongScores).toHaveBeenCalledWith("chunithm", song.songName, song.type, "viewer", undefined, undefined);
   });
 });

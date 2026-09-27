@@ -1,8 +1,8 @@
 # CHUNITHM player fetching reference
 
-Status: investigation and implementation reference. The CHUNITHM score source
-remains unconfigured and player rollout remains disabled. This document does
-not establish successful end-to-end fetching. Catalog ingestion is separate;
+Status: investigation and implementation reference. The CHUNITHM JP/International
+score source is configured and player surfaces are enabled. Offline parser and
+flow checks do not establish successful live end-to-end application fetching. Catalog ingestion is separate;
 see [CHUNITHM_CATALOG.md](CHUNITHM_CATALOG.md).
 
 ## Evidence and scope
@@ -51,10 +51,9 @@ cookies include `JSESSIONID`, `clal` and AWS load-balancer cookies. Names alone 
 not establish which cookies are required or their lifetimes. Cookie and session
 values must not appear in logs, fixtures or this document.
 Later home and music-list landing responses also contained `Set-Cookie` headers.
-Unchanged cookie names do not prove that values remain unchanged. The existing
-shared page helper does not merge subsequent response cookies; evaluate scoped
-cookie accumulation for CHUNITHM rather than assuming the first exchange's
-cookie string remains sufficient indefinitely.
+Unchanged cookie names do not prove that values remain unchanged. The shared transport now merges response cookies into the CHUNITHM fetch
+session on each same-origin request and redirect; it does not assume the first
+exchange's cookie string remains sufficient indefinitely.
 
 The unauthenticated redirect confirmed the public International gateway
 configuration: `site_id=chuniex`,
@@ -62,10 +61,9 @@ configuration: `site_id=chuniex`,
 `back_url=https://chunithm.sega.com/`. These are site configuration, not account
 session values.
 Observed CHUNITHM credentials were submitted as POST form fields. The shared
-International login helper currently retains maimai's POST-with-query-parameters
-behavior. Reusing its architecture does not prove CHUNITHM login is a
-configuration-only change; preserve the observed body encoding or verify an
-alternative before adopting it.
+International login helper keeps maimai's existing query encoding while the
+CHUNITHM configuration selects form-body encoding. This follows the observed
+CHUNITHM submission without changing maimai's request contract.
 
 ### International home
 
@@ -445,8 +443,14 @@ also observed in the recent-play list, as noted above.
 
 Preserve the upstream spelling `catastrophy` when matching the filename; the
 repository's canonical status is CATASTROPHY. The two chain images had no alt
-labels in the inspected summary. Their mapping to FULL CHAIN versus FULL CHAIN
-AJ remains unverified; do not assign meanings from their suffixes alone.
+labels in the inspected summary. Subsequent public importer research establishes
+`icon_fullchain2.png` as the lower chain status and `icon_fullchain.png` as the
+higher status: [performai-api's parser](https://github.com/rezaa-cmV6YWE/performai-api/blob/main/src/lib/games/chunithm/parser/rating.ts)
+maps them to `fch` and `fch+`, while an
+[independent importer](https://github.com/leomotors/chunithm-net-scraper/blob/main/src/steps/vendor/qman.ts)
+maps them to `1` and `2`. The implementation uses canonical sync codes `1`
+(FULL CHAIN) and `2` (FULL CHAIN AJ), respectively. This is corroborated importer
+evidence, not an official label captured from the authenticated page.
 
 ## Requests, pagination and unverified cases
 
@@ -469,7 +473,9 @@ For International, difficulty POSTs other than Expert remain untested. For JP,
 all five standard difficulty POSTs were verified, but played Basic, Advanced or
 ULTIMA rows and a completely empty account were not observed. Pagination across
 other accounts remains unverified. JP aggregate summary icons establish additional
-asset names, but not every individual-row status or the chain-variant mapping.
+asset names, but not every individual-row status. Chain mapping is supported by
+the public importer evidence above, rather than an observed account with both
+variants.
 Rating-target row counts do not establish limits for full scores or recents. No session was
 deliberately expired and no maintenance response was observed during this
 investigation; actual auth-expiry and maintenance-page selectors/messages must
@@ -571,8 +577,9 @@ and message pair provide stronger evidence than the URL alone. For whitespace
 normalization, `.text().replace(/\s+/g, " ").trim()` is a starting point;
 match the distinctive complete Japanese clauses, not merely `利用権`, which may
 also occur in ordinary navigation. If presentation splits a clause across text
-nodes, compare a whitespace-stripped variant of that clause. This is a proposed
-classifier based on the observed response, not an implemented parser.
+nodes, compare a whitespace-stripped variant of that clause. The implemented classifier matches both complete clauses within
+`.riyouken_block00` after removing whitespace; the URL remains useful context
+rather than sufficient evidence by itself.
 
 Historical pre-subscription scope: the JP account could reach home, profile,
 the record overview and recent-play list. Its rating-best and full-music-record
@@ -586,10 +593,9 @@ for score rows. A status code, a route, missing rows, or a purchase link alone i
 insufficient to establish subscription denial. Conversely, do not classify all
 HTTP 200 pages as successfully fetched records.
 
-Recommended provider behavior is to fail the affected JP fetch before returning
-its normalized result. Preserve the saved account token and existing snapshots;
-do not return an empty successful result or send the user through credential
-replacement. A suitable message is: “Fetching complete CHUNITHM JP scores requires an active
+The provider fails the affected JP fetch before returning its normalized
+result. It preserves the saved account token and existing snapshots rather than
+returning an empty successful result or requesting credential replacement. A suitable message is: “Fetching complete CHUNITHM JP scores requires an active
 ゲキチュウマイ-NET subscription. Your existing data has not been changed.”
 This is an access condition, distinct from incorrect credentials, an expired
 session, maintenance, an unexpected page shape, or a verified empty-record page.
@@ -602,10 +608,10 @@ Existing propagation boundaries:
   provider error marks the session failed and stores its message instead.
 - [`useFetchSession.ts`](../apps/main/src/hooks/useFetchSession.ts) invokes the
   completion refresh only on success. Token-pattern errors can reopen login UI;
-  subscription errors must not match those patterns.
+  subscription errors do not match those patterns.
 - [`fetch-toast.tsx`](../apps/main/src/components/fetch-toast.tsx) already displays
-  the failed session's error message. No subscription-specific presentation
-  currently exists.
+  the failed session's error message and provides localized subscription recovery
+  instructions for `SUBSCRIPTION_REQUIRED`.
 - If subscription denial is detected before session creation, add an explicit
   error mapping in both REST and tRPC. A plain unknown error currently becomes
   a generic server error. A precondition response is preferable to a credential
@@ -629,10 +635,11 @@ from subscription text or infer maintenance from missing record elements.
 | Session lifecycle and persistence | [`games/score-ingestion.ts`](../apps/main/src/server/services/games/score-ingestion.ts) |
 | Future CHUNITHM response interpretation | Game-specific provider/parser; do not put CHUNITHM selectors into shared SEGA transport |
 
-Preserve maimai's specialized CN formats and existing schedules. Existing fetch
-progress uses maimai's fixed stages, including Re:MASTER and UTAGE; CHUNITHM
-cannot emit these labels unchanged or claim their fixed denominator represents
-its request count. Session-level pending/completed/failed behavior is reusable.
+Preserve maimai's specialized CN formats and existing schedules. Fetch
+progress now selects each game's stages; CHUNITHM uses BASIC through ULTIMA and
+recents without maimai-only album, hidden-song, Re:MASTER or UTAGE stages. The
+stages describe completed work, not the raw HTTP request count. Shared
+session-level pending/completed/failed behavior is retained.
 
 The existing maimai split in
 [`player/`](../apps/main/src/lib/maimai/player/),
@@ -642,3 +649,31 @@ small fetch/parse modules and a CHUNITHM orchestrator. Shared admission, rate
 limits, the provider deadline, captured game version and atomic persistence
 already exist. Do not introduce a parallel persistence pipeline or reuse
 maimai's album/events extras by default.
+
+### Current implementation
+
+The configured [CHUNITHM pipeline](../apps/main/src/server/services/games/chunithm/pipeline.ts)
+uses region-specific login configuration and
+[shared CHUNITHM parsers](../apps/main/src/server/services/games/chunithm/parsers.ts)
+for profile, the five standard difficulty lists, and recent plays/details.
+Authenticated profile images reuse the existing content-addressed hosting
+pipeline. A complete normalized result reaches shared game-scoped persistence
+only after the fetch succeeds.
+
+The shared SEGA credential dialog serves both CHUNITHM regions. No CHUNITHM
+cookie-login OTP gateway is configured or shown. The JP subscription check
+returns `SUBSCRIPTION_REQUIRED` and the fetch toast localizes recovery
+instructions under `fetchToast.errors.subscriptionRequired`. This condition does
+not trigger credential replacement or a successful snapshot refresh.
+
+No application fetch against a live account was run as part of implementation.
+The earlier authenticated investigation verified page shapes and navigation;
+the implementation's offline checks verify parsing and integration separately.
+WORLD'S END and maimai-specific albums/events remain outside this provider.
+
+A positively identified empty-history response and WORLD'S END recent-play
+markup have not been verified. A recent page with no recognized records, or a
+record with an unsupported difficulty, currently fails the whole fetch rather
+than silently omitting data. This includes WORLD'S END history until a reliable
+row identifier allows it to be excluded. Prior snapshots, recent history and
+stored authentication remain intact; no partial snapshot is saved.

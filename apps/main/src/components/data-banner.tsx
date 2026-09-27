@@ -256,9 +256,10 @@ function FetchDataButton({
   currentSession: FetchSession | null;
   t: any;
 }) {
+  const game = useGameId();
   // Calculate progress based on statusStates
   const progress = currentSession?.statusStates
-    ? calculateProgress(parseStatusStates(currentSession.statusStates))
+    ? calculateProgress(parseStatusStates(currentSession.statusStates), game)
     : 0;
 
   return (

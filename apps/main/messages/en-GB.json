@@ -809,7 +809,6 @@
   },
   "tokenDialog": {
     "title": "Update maimai authentication",
-    "japanDescription": "Enter your SEGA account credentials for the Japan region.",
     "intlDescription": "Choose your authentication method for the International region.",
     "credentialsStored": "Your credentials will be saved for future use.",
     "username": "Username",
@@ -1338,6 +1337,9 @@
     "title": "Theme"
   },
   "fetchToast": {
+    "errors": {
+      "subscriptionRequired": "Fetching CHUNITHM JP scores requires an active ゲキチュウマイ-NET subscription. Purchase or renew it, then retry. Your saved login and existing data have been kept."
+    },
     "header": {
       "pending": "Fetching data...",
       "completed": "Fetch complete",
@@ -1349,6 +1351,7 @@
       "login": "Logged in",
       "playerData": "Fetched player data",
       "songDataBasic": "Fetched BASIC scores",
+      "songDataUltima": "Fetched ULTIMA scores",
       "songDataAdvanced": "Fetched ADVANCED scores",
       "songDataExpert": "Fetched EXPERT scores",
       "songDataMaster": "Fetched MASTER scores",
