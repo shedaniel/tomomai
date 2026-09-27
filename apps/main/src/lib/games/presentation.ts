@@ -47,6 +47,7 @@ export function getGameStatusLabels(game: CanonicalGameId, status: {
     const code = status[kind];
     if (code == null || code === 0) return [];
     const label = GAME_CODE_MAPS[game][kind][code];
+    if (kind === "clearStatus" && label === "clear") return [];
     return [label ? label.replaceAll("-", " ").toUpperCase() : `${kind} #${code}`];
   });
 }
