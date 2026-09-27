@@ -10,6 +10,7 @@ const OG_LOCALE_MAP: Record<Locale, string> = {
   "zh-HK": "zh_HK",
   "zh-TW": "zh_TW",
   "zh-SG": "zh_SG",
+  "zh-MS": "zh_TW",
   "ko": "ko_KR",
 };
 

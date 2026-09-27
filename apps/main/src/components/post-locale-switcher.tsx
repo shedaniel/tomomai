@@ -17,6 +17,7 @@ const localeNames: Record<string, string> = {
   'zh-HK': '繁體中文 (香港)',
   'zh-CN': '简体中文 (中国大陆)',
   'zh-SG': '简体中文 (新加坡, 马来西亚)',
+  'zh-MS': '中文 (微軟)',
   'ko': '한국어',
 };
 
