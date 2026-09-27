@@ -300,6 +300,7 @@ export async function startScoreFetch(input: {
     startedAt: new Date(),
   }).returning({ id: fetchSessions.id });
   const sessionId = insertedSession.id;
+  const controller = new AbortController();
   const fetchContext = {
     game: context.game,
     userId: input.userId,
@@ -309,6 +310,7 @@ export async function startScoreFetch(input: {
     flags: input.flags,
     token: tokenToUse,
     shouldFetchAlbums,
+    signal: controller.signal,
   } satisfies ScoreFetchContext;
 
   const fetchWork = async () => {
@@ -319,7 +321,11 @@ export async function startScoreFetch(input: {
       const adapterResult = await Promise.race([
         scoreAdapter.fetch(fetchContext),
         new Promise<never>((_, reject) => {
-          timer = setTimeout(() => reject(new Error("Fetch operation timed out after 2 minutes")), 2 * 60 * 1000);
+          timer = setTimeout(() => {
+            const error = new Error("Fetch operation timed out after 2 minutes");
+            controller.abort(error);
+            reject(error);
+          }, 2 * 60 * 1000);
         }),
       ]).finally(() => clearTimeout(timer));
       await persistFetchResult({

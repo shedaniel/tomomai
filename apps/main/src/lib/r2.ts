@@ -107,9 +107,9 @@ export async function deleteFromR2(key: string): Promise<void> {
   await r2Client.send(command);
 }
 
-export async function r2ObjectExists(key: string): Promise<boolean> {
+export async function r2ObjectExists(key: string, abortSignal?: AbortSignal): Promise<boolean> {
   try {
-    await r2Client.send(new HeadObjectCommand({ Bucket: R2_BUCKET, Key: key }));
+    await r2Client.send(new HeadObjectCommand({ Bucket: R2_BUCKET, Key: key }), { abortSignal });
     return true;
   } catch (err) {
     const status = (err as { $metadata?: { httpStatusCode?: number } })?.$metadata?.httpStatusCode;
@@ -137,11 +137,12 @@ export function iconKeyForBuffer(buffer: Buffer, contentType: string): string {
 export async function uploadIconToR2(
   buffer: Buffer,
   contentType: string,
+  abortSignal?: AbortSignal,
 ): Promise<{ key: string; url: string }> {
   const key = iconKeyForBuffer(buffer, contentType);
   const url = iconPublicUrl(key);
 
-  if (await r2ObjectExists(key)) {
+  if (await r2ObjectExists(key, abortSignal)) {
     return { key, url };
   }
 
@@ -151,7 +152,7 @@ export async function uploadIconToR2(
     Body: buffer,
     ContentType: contentType,
     CacheControl: "public, max-age=31536000, immutable",
-  }));
+  }), { abortSignal });
 
   return { key, url };
 }

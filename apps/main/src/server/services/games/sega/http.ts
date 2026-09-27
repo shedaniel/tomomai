@@ -38,13 +38,18 @@ export function cookieValue(cookies: string, name: string): string | undefined {
   return cookies.split(";").map(value => value.trim()).find(value => value.startsWith(prefix))?.slice(prefix.length);
 }
 
+export function segaRequestSignal(signal?: AbortSignal | null): AbortSignal {
+  const timeout = AbortSignal.timeout(30_000);
+  return signal ? AbortSignal.any([signal, timeout]) : timeout;
+}
+
 export function requestGameSite(game: CanonicalGameId, region: Region, path: string, init: RequestInit = {}): Promise<Response> {
   const url = gameSiteUrl(game, region, path);
   const headers = new Headers(init.headers);
   headers.set("User-Agent", SEGA_USER_AGENT);
   // Keep maimai's existing TLS compatibility handling scoped to its own sites.
   const fetchSite = game === "maimai" ? agentFetch : fetch;
-  return fetchSite(url, { ...init, headers, redirect: "manual" });
+  return fetchSite(url, { ...init, signal: segaRequestSignal(init.signal), headers, redirect: "manual" });
 }
 
 export async function requestGamePage(game: CanonicalGameId, region: Region, url: string, cookies: string | GameSiteSession, referer: string, init: RequestInit = {}): Promise<Response> {

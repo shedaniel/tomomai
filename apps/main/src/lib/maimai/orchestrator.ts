@@ -74,8 +74,9 @@ async function validateRegionAccess(
   userId: string,
   region: Region,
   rawToken: string,
+  signal: AbortSignal,
 ): Promise<{ validation: TokenValidationResult; rawToken: string }> {
-  const validation = await processMaimaiToken(userId, region, rawToken);
+  const validation = await processMaimaiToken(userId, region, rawToken, signal);
   if (!validation.isValid) {
     throw new Error(validation.error || "Token validation failed");
   }
@@ -275,7 +276,8 @@ function pickFetcher(region: Region, rawToken: string): DataFetcher {
 }
 
 export async function runMaimaiFetcher(ctx: ScoreFetchContext): Promise<{ fetched: FetchedMaimaiData; validation: TokenValidationResult }> {
-  const { validation, rawToken } = await validateRegionAccess(ctx.userId, ctx.region, ctx.token);
+  const { validation, rawToken } = await validateRegionAccess(ctx.userId, ctx.region, ctx.token, ctx.signal);
+  ctx.signal.throwIfAborted();
 
   try {
     const fetcher = pickFetcher(ctx.region, rawToken);

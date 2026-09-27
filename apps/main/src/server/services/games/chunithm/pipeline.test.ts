@@ -7,7 +7,7 @@ vi.mock("./login", () => ({ loginAndGetCookies: mocks.login }));
 vi.mock("@/lib/http-agent", () => ({ agentFetch: vi.fn() }));
 vi.mock("@/lib/r2", () => ({ uploadIconToR2: mocks.upload }));
 vi.mock("@/lib/fetch-states-server", () => ({ appendFetchState: mocks.progress }));
-vi.mock("@/lib/request-logger", () => ({ getLogger: () => ({ warn: vi.fn() }) }));
+vi.mock("@/lib/request-logger", () => ({ getLogger: () => ({ warn: vi.fn(), info: vi.fn(), error: vi.fn(), child() { return this; } }) }));
 
 import { fetchPlayer } from "./pipeline";
 
@@ -29,7 +29,7 @@ const recents = (basePath: string) => [1, 2].map(index => `<form action="${baseP
 const detail = (maxCombo: number) => `<div class="play_data_detail_maxcombo_block">${maxCombo}</div>
   ${["critical", "justice", "attack", "miss"].map(name => `<div class="play_data_detail_judge_text text_${name}">1</div>`).join("")}
   ${["tap_red", "hold_yellow", "slide_blue", "air_green", "flick_skyblue"].map(name => `<div class="play_data_detail_notes_text text_${name}">101.25%</div>`).join("")}`;
-const context = { game: "chunithm" as const, userId: "user", region: "jp" as const, token: "account://test:://test", sessionId: BigInt(1), gameVersion: 9, flags: {} as Flags, shouldFetchAlbums: false };
+const context = { game: "chunithm" as const, userId: "user", region: "jp" as const, token: "account://test:://test", sessionId: BigInt(1), gameVersion: 9, flags: {} as Flags, shouldFetchAlbums: false, signal: new AbortController().signal };
 
 function response(url: string, body: string, init: ResponseInit = {}) {
   return Object.defineProperty(new Response(body, init), "url", { value: url });

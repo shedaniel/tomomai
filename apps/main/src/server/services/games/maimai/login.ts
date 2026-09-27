@@ -6,13 +6,13 @@ import { processSegaToken, type TokenValidationResult } from "../sega/login";
 import { getCookiesFromRedirect } from "../sega/http";
 import { maimaiSegaLogin } from "./login-config";
 
-export async function processMaimaiToken(userId: string | null, region: Region, token: string): Promise<TokenValidationResult> {
+export async function processMaimaiToken(userId: string | null, region: Region, token: string, signal?: AbortSignal): Promise<TokenValidationResult> {
   const sanitizedToken = token.trim();
   if (sanitizedToken.startsWith("cookie://") || sanitizedToken.startsWith("account://")) {
     if (region !== "intl" && region !== "jp") {
       return { isValid: false, error: "SEGA ID and cookie tokens are only supported for JP and International regions." };
     }
-    return processSegaToken(maimaiSegaLogin[region], userId, sanitizedToken);
+    return processSegaToken(maimaiSegaLogin[region], userId, sanitizedToken, signal);
   }
 
   // Handle lxns:// format

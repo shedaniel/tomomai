@@ -144,6 +144,7 @@ export type ScoreFetchContext = {
   flags: Flags;
   token: string;
   shouldFetchAlbums: boolean;
+  signal: AbortSignal;
 };
 
 export type ChartResolutionMap = Map<string, bigint>;

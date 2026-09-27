@@ -123,17 +123,24 @@ it("rejects an expired persistence deadline before writing", async () => {
   expect(state.statements).toEqual([]);
 });
 
-it("cannot persist a provider result arriving after the fetch timeout", async () => {
-  vi.useFakeTimers();
+it("aborts a timed-out provider and keeps its late result from overwriting failure", async () => {
   let finish!: (value: { result: GameFetchResult }) => void;
   state.fetch.mockReturnValueOnce(new Promise(resolve => { finish = resolve; }));
   const started = await startScoreFetch(start);
+  await vi.advanceTimersByTimeAsync(0);
+  const signal = state.fetch.mock.calls[0][0].signal;
+  expect(signal.aborted).toBe(false);
   await vi.advanceTimersByTimeAsync(120001);
   await started.backgroundWork;
+  expect(signal.aborted).toBe(true);
+  expect(signal.reason).toEqual(new Error("Fetch operation timed out after 2 minutes"));
+  const writesAtFailure = state.statements.length;
   finish({ result: fetched });
   await vi.advanceTimersByTimeAsync(1);
+  expect(state.statements).toHaveLength(writesAtFailure);
   expect(state.statements.some(query => query.sql.startsWith('insert into "user_snapshots"'))).toBe(false);
   expect(state.statements.find(query => query.sql.startsWith('update "fetch_sessions"'))?.params).toContain("failed");
+  expect(state.revalidate).not.toHaveBeenCalled();
 });
 
 it("keeps CHUNITHM subscription failures scoped to the failed session without deleting credentials or writing a snapshot", async () => {

@@ -1,16 +1,16 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const mocks = vi.hoisted(() => ({ fetch: vi.fn(), update: vi.fn(), remove: vi.fn() }));
+const mocks = vi.hoisted(() => ({ fetch: vi.fn(), update: vi.fn(), remove: vi.fn(), error: vi.fn() }));
 vi.mock("server-only", () => ({}));
 vi.mock("@/lib/http-agent", () => ({ agentFetch: vi.fn() }));
-vi.mock("@/lib/request-logger", () => ({ getLogger: () => ({ info: vi.fn(), error: vi.fn(), child() { return this; } }) }));
+vi.mock("@/lib/request-logger", () => ({ getLogger: () => ({ info: vi.fn(), error: mocks.error, child() { return this; } }) }));
 vi.mock("../tokens", () => ({ updateToken: mocks.update, deleteToken: mocks.remove }));
 
 import { requestGamePage } from "../sega/http";
 import { loginAndGetCookies } from "./login";
 
 beforeEach(() => { vi.resetAllMocks(); vi.stubGlobal("fetch", mocks.fetch); });
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); });
 
 function redirect(location: string, cookie?: string) {
   return new Response(null, { status: 302, headers: { Location: location, ...(cookie ? { "Set-Cookie": cookie } : {}) } });
@@ -61,4 +61,42 @@ describe("CHUNITHM authentication", () => {
     expect(mocks.fetch).toHaveBeenCalledTimes(2);
     expect(new Headers(mocks.fetch.mock.calls[1][1].headers).get("Cookie")).toBe("userId=one; _t=new");
   });
+});
+
+it("bounds a stalled login response body and preserves credentials with the failed phase", async () => {
+  const deadline = new AbortController();
+  vi.spyOn(AbortSignal, "timeout").mockReturnValue(deadline.signal);
+  mocks.fetch.mockImplementationOnce(async (_url, init: RequestInit) => new Response(new ReadableStream({
+    start(controller) {
+      init.signal!.addEventListener("abort", () => controller.error(init.signal!.reason), { once: true });
+    },
+  }), { headers: { "Set-Cookie": "PHPSESSID=test" } }));
+  const pending = loginAndGetCookies("jp", "account://name:://password", "internal-user");
+  await vi.waitFor(() => expect(mocks.fetch).toHaveBeenCalledOnce());
+  deadline.abort(new DOMException("Request deadline exceeded", "TimeoutError"));
+  await expect(pending).rejects.toThrow("SEGA service request timed out during entry");
+  expect(mocks.remove).not.toHaveBeenCalled();
+  expect(mocks.error).toHaveBeenCalledWith(expect.objectContaining({ stepType: "entry" }), "SEGA account login failed");
+});
+
+it("propagates the operation abort through a pending login request without deleting credentials", async () => {
+  const operation = new AbortController();
+  mocks.fetch.mockImplementationOnce((_url, init: RequestInit) => new Promise((_resolve, reject) => {
+    init.signal!.addEventListener("abort", () => reject(init.signal!.reason), { once: true });
+  }));
+  const pending = loginAndGetCookies("jp", "account://name:://password", "internal-user", operation.signal);
+  const timedOut = new Error("Fetch operation timed out after 2 minutes");
+  operation.abort(timedOut);
+  await expect(pending).rejects.toBe(timedOut);
+  expect(mocks.remove).not.toHaveBeenCalled();
+});
+
+it("retains an account token when credential submission fails in transport", async () => {
+  mocks.fetch
+    .mockResolvedValueOnce(new Response('<input name="token" value="form-token">', { headers: { "Set-Cookie": "PHPSESSID=test" } }))
+    .mockRejectedValueOnce(new TypeError("fetch failed"));
+  await expect(loginAndGetCookies("jp", "account://name:://password", "internal-user"))
+    .rejects.toThrow("SEGA service request failed during credentials");
+  expect(mocks.remove).not.toHaveBeenCalled();
+  expect(mocks.error).toHaveBeenCalledWith(expect.objectContaining({ stepType: "credentials" }), "SEGA account login failed");
 });
