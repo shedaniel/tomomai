@@ -1,7 +1,7 @@
 export const API_SCOPES = {
   ready: {
     name: "Ready",
-    description: "Basic access. Grants GET /api/v1/ok. Included by default.",
+    description: "Basic access. Included by default.",
     destructive: false,
     sensitive: false,
     default: true,
@@ -10,7 +10,7 @@ export const API_SCOPES = {
   // ── User ──────────────────────────────────────────────────────────────────
   "user:metadata:read": {
     name: "User Metadata (Read)",
-    description: "Read your username, region, profile visibility, and role. Grants GET /api/v1/me.",
+    description: "Read your username, region, profile visibility, and role.",
     destructive: false,
     sensitive: false,
     default: false,
@@ -19,7 +19,7 @@ export const API_SCOPES = {
   // ── Snapshot: latest ──────────────────────────────────────────────────────
   "snapshot:latest:metadata:read": {
     name: "Latest Snapshot Metadata (Read)",
-    description: "Read metadata (rating, display name, play counts, etc.) for your latest snapshot. Grants GET /api/v1/snapshots/latest.",
+    description: "Read metadata (rating, display name, play counts, etc.) for your latest snapshot.",
     destructive: false,
     sensitive: false,
     default: false,
@@ -47,7 +47,7 @@ export const API_SCOPES = {
   },
   "snapshot:latest:icon:read": {
     name: "Latest Snapshot Icon (Read)",
-    description: "Read your profile icon URL (Discord avatar) from your latest snapshot. This is sensitive as it may reveal your social identity.",
+    description: "Read your profile icon URL from your latest snapshot. This is sensitive as it may reveal your social identity.",
     destructive: false,
     sensitive: true,
     default: false,
@@ -56,7 +56,7 @@ export const API_SCOPES = {
   // ── Snapshot: all ─────────────────────────────────────────────────────────
   "snapshot:all:metadata:read": {
     name: "All Snapshots Metadata (Read)",
-    description: "List all your snapshots and read their metadata. Grants GET /api/v1/snapshots and GET /api/v1/snapshots/:id.",
+    description: "List all your snapshots and read their metadata.",
     destructive: false,
     sensitive: false,
     default: false,
@@ -84,7 +84,7 @@ export const API_SCOPES = {
   },
   "snapshot:all:icon:read": {
     name: "All Snapshots Icon (Read)",
-    description: "Read your profile icon URL (Discord avatar) from any snapshot. This is sensitive as it may reveal your social identity.",
+    description: "Read your profile icon URL from any snapshot. This is sensitive as it may reveal your social identity.",
     destructive: false,
     sensitive: true,
     default: false,
@@ -93,7 +93,7 @@ export const API_SCOPES = {
   // ── Recents ───────────────────────────────────────────────────────────────
   "recent:read": {
     name: "Recent Plays (Read)",
-    description: "Read your recent play history including song info, achievement, and combo/sync status. Grants GET /api/v1/recents.",
+    description: "Read your recent play history including song info, achievement, and combo/sync status.",
     destructive: false,
     sensitive: false,
     default: false,
@@ -109,7 +109,7 @@ export const API_SCOPES = {
   // ── Stats ─────────────────────────────────────────────────────────────────
   "stats:read": {
     name: "Stats (Read)",
-    description: "Read your grade/FC/FS distribution statistics. Grants GET /api/v1/stats.",
+    description: "Read your grade/FC/FS distribution statistics.",
     destructive: false,
     sensitive: false,
     default: false,
@@ -118,14 +118,14 @@ export const API_SCOPES = {
   // ── Albums ────────────────────────────────────────────────────────────────
   "album:read": {
     name: "Albums (Read)",
-    description: "Read your arcade photo album entries (metadata only, no image URLs). Grants GET /api/v1/albums.",
+    description: "Read your arcade photo album entries (metadata only, no image URLs).",
     destructive: false,
     sensitive: false,
     default: false,
   },
   "album:images:read": {
     name: "Album Images (Read)",
-    description: "Adds resolved image URLs to album responses. Sensitive — photos may contain images of people.",
+    description: "Adds resolved image URLs to album responses. Sensitive: photos may contain images of people.",
     destructive: false,
     sensitive: true,
     default: false,
@@ -134,7 +134,7 @@ export const API_SCOPES = {
   // ── Plates ────────────────────────────────────────────────────────────────
   "plate:read": {
     name: "Plates (Read)",
-    description: "Read your plate completion data (which songs still need to be cleared / FC'd / AP'd for each plate). Grants GET /api/v1/plates.",
+    description: "Read your plate completion data (which songs still need to be cleared / FC'd / AP'd for each plate).",
     destructive: false,
     sensitive: false,
     default: false,
@@ -143,7 +143,7 @@ export const API_SCOPES = {
   // ── User: settings ────────────────────────────────────────────────────────
   "user:settings:read": {
     name: "User Settings (Read)",
-    description: "Read your privacy and profile-display settings (publish profile, show scores, show plates, etc.). Grants GET /api/v1/me/settings.",
+    description: "Read your privacy and profile-display settings (publish profile, show scores, show plates, etc.).",
     destructive: false,
     sensitive: false,
     default: false,
@@ -152,7 +152,7 @@ export const API_SCOPES = {
   // ── Snapshot: destructive ─────────────────────────────────────────────────
   "snapshot:all:delete": {
     name: "Snapshots (Delete)",
-    description: "Delete any of your snapshots. Grants DELETE /api/v1/snapshots/:id. Destructive — must be requested explicitly and is never implied by encompassing scopes.",
+    description: "Delete any of your snapshots. Destructive: must be requested explicitly and is never implied by encompassing scopes.",
     destructive: true,
     sensitive: true,
     default: false,
@@ -161,13 +161,13 @@ export const API_SCOPES = {
   // ── Snapshot: submit (internal) ───────────────────────────────────────────
   // Reserved for first-party tooling (the userscript-server). Internal scopes
   // are stripped from the public OpenAPI document and may only be minted by
-  // admin-role users — see hooks.before in src/lib/auth.ts and the tRPC guard
+  // admin-role users; see hooks.before in src/lib/auth.ts and the tRPC guard
   // in src/server/routers/developer.ts. End users should never authorize a
   // client that holds this scope; the userscript reaches the submit endpoint
   // by talking to our own server, which uses a server-side credential.
   "snapshot:submit": {
     name: "Snapshots (Submit)",
-    description: "Submit a new snapshot. Internal — admin only.",
+    description: "Submit a new snapshot. Internal: admin only.",
     destructive: true,
     sensitive: true,
     default: false,
@@ -177,21 +177,21 @@ export const API_SCOPES = {
   // ── Fetch control ─────────────────────────────────────────────────────────
   "fetch:read": {
     name: "Fetch Status (Read)",
-    description: "Read the status of your in-progress or most-recent maimai data fetch. Grants GET /api/v1/fetch/status.",
+    description: "Read the status of your in-progress or most-recent maimai data fetch.",
     destructive: false,
     sensitive: false,
     default: false,
   },
   "fetch:start": {
     name: "Start Fetch",
-    description: "Trigger a new maimai data fetch using your stored upstream token. Grants POST /api/v1/fetch. Destructive — consumes upstream API budget and writes a new snapshot.",
+    description: "Trigger a new maimai data fetch using your stored upstream token. Destructive: consumes upstream API budget and writes a new snapshot.",
     destructive: true,
     sensitive: false,
     default: false,
   },
   "fetch:delete": {
     name: "Fetch Token (Delete)",
-    description: "Delete your stored upstream maimai authentication token. Grants DELETE /api/v1/fetch/token. Destructive and sensitive — breaks any in-app and API-driven fetch flow until you re-authenticate.",
+    description: "Delete your stored upstream maimai authentication token. Destructive and sensitive: breaks any in-app and API-driven fetch flow until you re-authenticate.",
     destructive: true,
     sensitive: true,
     default: false,
@@ -200,21 +200,21 @@ export const API_SCOPES = {
   // ── Encompassing scopes ───────────────────────────────────────────────────
   "snapshot:latest:read": {
     name: "Latest Snapshot (Read)",
-    description: "Grants metadata, song scores, and events for your latest snapshot only. Excludes icon (opt-in for privacy).",
+    description: "Read metadata, song scores, and events for your latest snapshot only. Excludes icon (opt-in for privacy).",
     destructive: false,
     sensitive: false,
     default: false,
   },
   "snapshot:all:read": {
     name: "All Snapshots (Read)",
-    description: "Grants metadata, song scores, and events for all your snapshots, including the latest. Excludes icon (opt-in for privacy).",
+    description: "Read metadata, song scores, and events for all your snapshots, including the latest. Excludes icon (opt-in for privacy).",
     destructive: false,
     sensitive: false,
     default: false,
   },
   "read": {
     name: "Read (All Non-Sensitive)",
-    description: "Broad read access: user metadata, all snapshots, recents, stats, and albums. Excludes icon and album image URLs — those must be granted explicitly. Sensitive due to broad personal data access.",
+    description: "Broad read access: user metadata, all snapshots, recents, stats, and albums. Excludes icon and album image URLs; those must be granted explicitly. Sensitive due to broad personal data access.",
     destructive: false,
     sensitive: true,
     default: false,
@@ -248,7 +248,7 @@ export const SCOPE_EXPANSIONS: Partial<Record<ScopeKey, ScopeKey[]>> = {
     "snapshot:all:songs:read",
     "snapshot:all:events:read",
   ],
-  // read: only lists snapshot:all:* — the snapshot:latest:* scopes are covered by
+  // read: only lists snapshot:all:*; the snapshot:latest:* scopes are covered by
   // SCOPE_IMPLIES (all:* ⊇ latest:*), so listing them here would be redundant.
   "read": [
     "user:metadata:read",

@@ -209,10 +209,10 @@ const registry = {
     decide: () => false,
   }),
   oauthAppCreation: defineFlag("oauthAppCreation", {
-    defaultValue: false,
+    defaultValue: true,
     userSelectable: false,
     category: "developer",
-    decide: () => false,
+    decide: () => true,
   }),
   userscriptFetch: defineFlag("userscriptFetch", {
     defaultValue: false,
