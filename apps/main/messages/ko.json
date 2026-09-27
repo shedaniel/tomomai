@@ -576,12 +576,15 @@
     "detailsNotFetched": "Detailed play data hasn't been fetched yet. Sync your data again to get detailed breakdown.",
     "detailsFetching": "Detailed play data is still being fetched. Please wait a moment and refresh the page.",
     "labels": {
+      "maxCombo": "최대 콤보",
+      "judgments": "판정 수",
       "dx": "DX",
       "combo": "콤보",
       "fast": "FAST",
       "late": "LATE"
     },
     "notesBreakdown": {
+      "percentages": "노트별 달성률",
       "type": "타입",
       "total": "합계",
       "totalLoss": "감점"

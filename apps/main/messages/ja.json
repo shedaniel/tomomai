@@ -757,12 +757,15 @@
     "detailsNotFetched": "プレイ詳細データがまだ取得されていません。詳細な内訳を見るには、データを再同期してください。",
     "detailsFetching": "詳細なプレイデータを取得中です。しばらく待ってからページを更新してください。",
     "labels": {
+      "maxCombo": "最大コンボ",
+      "judgments": "判定数",
       "dx": "DX",
       "combo": "コンボ",
       "fast": "FAST",
       "late": "LATE"
     },
     "notesBreakdown": {
+      "percentages": "ノーツ別達成率",
       "type": "タイプ",
       "total": "合計",
       "totalLoss": "ロス"

@@ -1,3 +1,4 @@
+import { decodeChunithmRecentDetails } from "@/lib/games/adapters/chunithm/recents";
 import type { CanonicalGameId } from "@/lib/games/types";
 import { songInstanceId } from "@/lib/db/song-instance-id";
 import { db } from "@/lib/db";
@@ -91,7 +92,12 @@ export async function fetchRecentSongs(game: CanonicalGameId,
     .where(whereClause);
 
   return {
-    recentPlays: recentPlays.map(play => ({ ...play, maxDxScore: play.maxDxScore ?? 0, track: play.track ?? 0 })),
+    recentPlays: recentPlays.map(play => ({
+      ...play,
+      maxDxScore: play.maxDxScore ?? 0,
+      track: play.track ?? 0,
+      chunithmDetails: game === "chunithm" ? decodeChunithmRecentDetails(play.metadata) : null,
+    })),
     totalCount,
     hasMore: offset + limit < totalCount,
   };

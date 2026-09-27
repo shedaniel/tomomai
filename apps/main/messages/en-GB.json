@@ -757,12 +757,15 @@
     "detailsNotFetched": "Detailed play data hasn't been fetched yet. Sync your data again to get detailed breakdown.",
     "detailsFetching": "Detailed play data is still being fetched. Please wait a moment and refresh the page.",
     "labels": {
+      "maxCombo": "Max combo",
+      "judgments": "Judgments",
       "dx": "DX",
       "combo": "Combo",
       "fast": "Fast",
       "late": "Late"
     },
     "notesBreakdown": {
+      "percentages": "Note percentages",
       "type": "Type",
       "total": "Total",
       "totalLoss": "Loss"

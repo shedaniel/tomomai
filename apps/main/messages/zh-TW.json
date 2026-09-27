@@ -757,12 +757,15 @@
     "detailsNotFetched": "尚未擷取詳細遊玩資料。請重新同步資料以取得詳細分析。",
     "detailsFetching": "正在讀取詳細遊玩資料，請稍候並重新整理頁面。",
     "labels": {
+      "maxCombo": "最大連擊",
+      "judgments": "判定數",
       "dx": "DX",
       "combo": "連擊",
       "fast": "FAST",
       "late": "LATE"
     },
     "notesBreakdown": {
+      "percentages": "各音符達成率",
       "type": "類型",
       "total": "總計",
       "totalLoss": "失分"

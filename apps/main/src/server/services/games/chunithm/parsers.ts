@@ -1,5 +1,6 @@
 import { load, type CheerioAPI } from "cheerio";
 import type { NormalizedPlayer, NormalizedRecent, NormalizedScore } from "@/lib/games/types";
+import type { ChunithmRecentDetails } from "@/lib/games/adapters/chunithm/recents";
 import type { Region } from "@/lib/types";
 
 export const CHUNITHM_DIFFICULTIES = [
@@ -145,7 +146,7 @@ export function parseRecents(html: string, context: ChartContext): { recent: Nor
   }).get();
 }
 
-export function parseRecentDetails(html: string) {
+export function parseRecentDetails(html: string): ChunithmRecentDetails {
   const $ = load(html);
   const percentage = (selector: string) => {
     const match = $(selector).text().trim().match(/^(\d+(?:\.\d+)?)%$/);

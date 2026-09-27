@@ -1,5 +1,6 @@
 "use client";
 
+import type { ChunithmRecentDetails } from "@/lib/games/adapters/chunithm/recents";
 import type { fetchRecentSongs } from "@/server/queries/recents";
 import { formatGameScore, formatGameLevel, getGameDifficultyColors, getGameDifficultyHex, getGameChartTypeBadgeLabel, getGameChartTypeLabel, getGameStatusLabels } from "@/lib/games/presentation";
 type RecentPlay = Awaited<ReturnType<typeof fetchRecentSongs>>["recentPlays"][number];
@@ -49,16 +50,18 @@ function RecentSongRow({ play, index, isFirst, isLast, onToggleExpand, isExpande
   const t = useTranslations('recentPlays');
   const isDesktop = useMediaQuery("(min-width: 768px)", { initializeWithValue: false });
   const [isRowHovered, setIsRowHovered] = useState(false);
-  const isDetailed = game === "maimai" && play.rating !== null;
+  const isDetailed = game === "maimai" ? play.rating !== null : play.chunithmDetails != null;
+  const canExpand = game === "maimai" || isDetailed;
   const playDate = new Date(play.playedAt);
 
   return (
     <motion.div
       key={play.recentSongId}
-      onClick={() => onToggleExpand(play.recentSongId.toString())}
+      onClick={canExpand ? () => onToggleExpand(play.recentSongId.toString()) : undefined}
       onHoverStart={() => setIsRowHovered(true)}
       onHoverEnd={() => setIsRowHovered(false)}
-      className={cn("flex flex-col transition-colors cursor-pointer group",
+      className={cn("flex flex-col transition-colors group",
+        canExpand && "cursor-pointer",
         isFirst ? "pb-4" : isLast ? "pt-4" : "py-4",
       )}
       initial={{ opacity: 0, scale: 0.95, ...(isDesktop ? { x: -20 } : { y: 20 }) }}
@@ -200,17 +203,23 @@ function RecentSongRow({ play, index, isFirst, isLast, onToggleExpand, isExpande
       </div>
 
       {/* Expand hint */}
-      {game === "maimai" && !isExpanded && (
-        <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground mt-4 md:mt-2">
+      {canExpand && !isExpanded && (
+        <button type="button" aria-expanded={false} className="flex w-full items-center justify-center gap-1 text-xs text-muted-foreground mt-4 md:mt-2">
           <ChevronDown className="h-3 w-3" />
           <span>{t('clickToExpand')}</span>
-        </div>
+        </button>
       )}
-      {game === "maimai" && isExpanded && (
-        <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground mt-4 md:mt-2">
+      {canExpand && isExpanded && (
+        <button type="button" aria-expanded={true} className="flex w-full items-center justify-center gap-1 text-xs text-muted-foreground mt-4 md:mt-2">
           <ChevronUp className="h-3 w-3" />
           <span>{t('clickToCollapse')}</span>
-        </div>
+        </button>
+      )}
+
+      {play.chunithmDetails && (
+        <AutoHeight deps={[isExpanded]}>
+          {isExpanded && <ChunithmPlayDetails details={play.chunithmDetails} />}
+        </AutoHeight>
       )}
 
       {/* Animated expandable content */}
@@ -528,6 +537,55 @@ function RecentSongRow({ play, index, isFirst, isLast, onToggleExpand, isExpande
         </div>
       </AutoHeight>}
     </motion.div>
+  );
+}
+
+function ChunithmPlayDetails({ details }: { details: ChunithmRecentDetails }) {
+  const t = useTranslations("recentPlays");
+  const judgments = [
+    { label: "Justice Critical", value: details.judgments.justiceCritical },
+    { label: "Justice", value: details.judgments.justice },
+    { label: "Attack", value: details.judgments.attack },
+    { label: "Miss", value: details.judgments.miss },
+  ];
+  const notes = [
+    { label: "Tap", value: details.notePercentages.tap },
+    { label: "Hold", value: details.notePercentages.hold },
+    { label: "Slide", value: details.notePercentages.slide },
+    { label: "Air", value: details.notePercentages.air },
+    { label: "Flick", value: details.notePercentages.flick },
+  ];
+
+  return (
+    <div className="mt-6 space-y-3">
+      <Badge variant="outline" className="gap-1 font-medium text-foreground">
+        <Grip className="h-3 w-3" />
+        <span>{t("labels.maxCombo")}</span>
+        <span className="font-mono">{details.maxCombo}</span>
+      </Badge>
+      <div>
+        <h5 className="mb-2 text-xs font-medium text-muted-foreground">{t("labels.judgments")}</h5>
+        <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-md border bg-border sm:grid-cols-4">
+          {judgments.map(({ label, value }) => (
+            <div key={label} className="bg-background px-2 py-2 text-center text-xs">
+              <dt className="text-muted-foreground">{label}</dt>
+              <dd className="mt-1 font-mono font-medium">{value}</dd>
+            </div>
+          ))}
+        </dl>
+      </div>
+      <div>
+        <h5 className="mb-2 text-xs font-medium text-muted-foreground">{t("notesBreakdown.percentages")}</h5>
+        <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-md border bg-border sm:grid-cols-5">
+          {notes.map(({ label, value }) => (
+            <div key={label} className="bg-background px-2 py-2 text-center text-xs">
+              <dt className="text-muted-foreground">{label}</dt>
+              <dd className="mt-1 font-mono font-medium">{value}%</dd>
+            </div>
+          ))}
+        </dl>
+      </div>
+    </div>
   );
 }
 
