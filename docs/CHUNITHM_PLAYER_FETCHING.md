@@ -175,6 +175,12 @@ This confirms a form POST to `/mobile/record/musicGenre/sendBasic`,
 original `genre` and hidden `token` fields. Select `genre=99` for All. There is no
 `diff` query parameter in this observed handler.
 
+A follow-up International check verified that both the genre landing page and
+the Basic result page use `form[method=post]` with `action=""`, a
+`select[name=genre]`, and a hidden `token`. The script supplies the action only
+when a difficulty is selected. Read the hidden fields from that genre form;
+do not require a nonempty action as detail-selector forms do.
+
 The Expert action was subsequently verified live: POST
 `/mobile/record/musicGenre/sendExpert` with `genre=99` and the form's hidden
 `token` returned HTTP 302 to `/mobile/record/musicGenre/expert`, then HTTP 200.

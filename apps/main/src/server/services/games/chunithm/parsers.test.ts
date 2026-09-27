@@ -1,9 +1,18 @@
 import { describe, expect, it } from "vitest";
-import { assertChunithmPage, parsePlayer, parseRecentDetails, parseRecents, parseScores } from "./parsers";
+import { assertChunithmPage, parseMusicGenreForm, parsePlayer, parseRecentDetails, parseRecents, parseScores } from "./parsers";
 
 const context = { region: "jp" as const, gameVersion: 23 };
 
 describe("CHUNITHM records", () => {
+  it("reads genre navigation fields before the site's JavaScript assigns the action", () => {
+    const html = `<form action="" method="post"><select name="genre"><option value="99">All</option></select>
+      <input type="hidden" name="token" value="genre-token"></form>
+      <form action="/record/musicGenre/sendMusicDetail/"><input type="hidden" name="token" value="detail-token"></form>`;
+    expect(Object.fromEntries(parseMusicGenreForm(html))).toEqual({ token: "genre-token" });
+    expect(() => parseMusicGenreForm('<form><input type="hidden" name="token" value="unrelated"></form>')).toThrow("Missing CHUNITHM navigation form");
+    expect(() => parseMusicGenreForm('<form action=""><select name="genre"></select></form>')).toThrow("Missing CHUNITHM navigation token");
+  });
+
   it("distinguishes played zero scores from unplayed charts and ignores aggregate status icons", () => {
     const html = `<div class="score_list"><img src="icon_fullchain.png"></div>
       <div class="musiclist_box bg_expert"><div class="music_title">Unplayed</div></div>
@@ -48,6 +57,7 @@ describe("CHUNITHM records", () => {
     expect(result.recent).toMatchObject({ playedAt: new Date("2026-09-27T07:05:00Z"), track: 2, scoreValue: 1002000, comboStatus: 1, chart: { difficulty: 3, version: 23 } });
     expect(result.form.action).toBe("/record/playlog/sendPlaylogDetail/");
     expect(Object.fromEntries(result.form.fields)).toEqual({ idx: "7", token: "fresh" });
+    expect(() => parseRecents(html.replace('action="/record/playlog/sendPlaylogDetail/"', 'action=""'), context)).toThrow("Missing CHUNITHM navigation form");
     const details = parseRecentDetails(`<div class="play_data_detail_maxcombo_block">1,234</div>
       <div class="play_data_detail_judge_text text_critical">1,200</div><div class="play_data_detail_judge_text text_justice">30</div>
       <div class="play_data_detail_judge_text text_attack">4</div><div class="play_data_detail_judge_text text_miss">0</div>

@@ -17,7 +17,7 @@ const profile = `<div class="player_name_in">Player</div>
   <div class="player_honor_text">Title</div>
   <div class="user_data_play_count"><div class="user_data_text">100</div></div>
   <div class="user_data_current_play_count"><div class="user_data_text">12</div></div>`;
-const navigation = (token: string) => `<form action="/unused"><select name="genre"><option value="99">All</option></select><input type="hidden" name="token" value="${token}"></form>`;
+const navigation = (token: string) => `<form action="" method="post"><select name="genre"><option value="99">All</option></select><input type="hidden" name="token" value="${token}"></form>`;
 const scoreList = (difficulty: string, token: string) => `${navigation(token)}
   <div class="musiclist_box bg_${difficulty}"><div class="music_title"> Raw　Title </div><div class="play_musicdata_highscore"><span class="text_b">1,009,000</span></div><div class="play_musicdata_icon"><img src="/icon_fullcombo.png"><img src="/icon_clear.png"></div></div>
   <div class="musiclist_box bg_${difficulty}"><div class="music_title">Unplayed</div></div>`;

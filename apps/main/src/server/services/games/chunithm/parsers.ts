@@ -30,20 +30,25 @@ export function assertChunithmPage(html: string, url: string): void {
   }
 }
 
-function form($: CheerioAPI, selector: string): ChunithmForm {
+function formFields($: CheerioAPI, selector: string): URLSearchParams {
   const element = $(selector).first();
-  const action = element.attr("action");
-  if (!action) throw new Error("Missing CHUNITHM navigation form");
+  if (!element.length) throw new Error("Missing CHUNITHM navigation form");
   const fields = new URLSearchParams();
   element.find("input[type=hidden][name]").each((_, input) => {
     fields.set($(input).attr("name")!, $(input).attr("value") ?? "");
   });
   if (!fields.get("token")) throw new Error("Missing CHUNITHM navigation token");
-  return { action, fields };
+  return fields;
 }
 
-export function parseMusicGenreForm(html: string): ChunithmForm {
-  return form(load(html), "form:has(select[name=genre])");
+function form($: CheerioAPI, selector: string): ChunithmForm {
+  const action = $(selector).first().attr("action");
+  if (!action) throw new Error("Missing CHUNITHM navigation form");
+  return { action, fields: formFields($, selector) };
+}
+
+export function parseMusicGenreForm(html: string): URLSearchParams {
+  return formFields(load(html), "form:has(select[name=genre])");
 }
 
 export function parsePlayer(html: string, pageUrl: string): NormalizedPlayer {

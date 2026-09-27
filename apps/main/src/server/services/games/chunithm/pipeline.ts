@@ -47,7 +47,7 @@ export async function fetchPlayer(ctx: ScoreFetchContext): Promise<GameFetchResu
   let musicHtml = await page("record/musicGenre");
   // The selected difficulty and form token belong to the session, so requests must stay sequential.
   for (const difficulty of CHUNITHM_DIFFICULTIES) {
-    const { fields } = parseMusicGenreForm(musicHtml);
+    const fields = parseMusicGenreForm(musicHtml);
     fields.set("genre", "99");
     musicHtml = await page(`record/musicGenre/send${difficulty.action}`, fields);
     scores.push(...parseScores(musicHtml, { region, gameVersion, difficulty: difficulty.id }));
