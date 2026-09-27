@@ -1,9 +1,9 @@
 import { db } from '@/lib/db';
 import { account, user } from '@/lib/db/schema-pg';
+import { codeToDifficulty } from '@/lib/maimai/codes';
 import { renderLevelPrecise } from '@/lib/name-utils';
-import { addRatingsAndSort, SongWithRating } from '@/lib/rating-calculator';
-import { SongWithScore, Region } from '@/lib/types';
-import { fetchLatestMaimaiSnapshotData } from '@/server/queries/snapshots';
+import { Region } from '@/lib/types';
+import { fetchLatestSnapshotData } from '@/server/queries/snapshots';
 import { generateRecommendations, RecommendationData } from '@/server/queries/recommendations';
 import { getLogger } from '@/lib/request-logger';
 import { waitUntil } from '@vercel/functions';
@@ -49,7 +49,7 @@ export async function executeRecommendCommand({
 }: ExecuteRecommendOptions): Promise<void> {
   const regionName = regionDisplayName(region, locale);
   try {
-    const data = await fetchLatestMaimaiSnapshotData(dbUserId, region);
+    const data = await fetchLatestSnapshotData("maimai", dbUserId, region);
     if (!data) {
       await editDiscordMessage(applicationId, interactionToken, {
         embeds: [createNoDataResponse(regionName, locale).data!.embeds![0]],
@@ -57,9 +57,7 @@ export async function executeRecommendCommand({
       return;
     }
 
-    const { snapshot, songs } = data;
-    const songsWithRating = addRatingsAndSort(songs as SongWithScore[], snapshot.gameVersion) as SongWithRating[];
-    const recommendations = generateRecommendations(songsWithRating, snapshot.gameVersion);
+    const recommendations = generateRecommendations(data);
 
     const deduped = recommendations.filter((rec, index, self) =>
       index === self.findIndex(r => r.song.songId === rec.song.songId && r.song.difficulty === rec.song.difficulty)
@@ -105,15 +103,15 @@ function formatAccuracy(accuracy: number): string {
 }
 
 function formatRow(rec: RecommendationData, rank: number): string {
-  const { song, currentAccuracy, targetAccuracy, currentRating, targetRating, ratingGain } = rec;
+  const { song, currentScore, targetScore, currentRating, targetRating, ratingGain } = rec;
   const tag = categoryTag(rec);
   const diff = difficultyShort(song.difficulty);
-  const lvl = renderLevelPrecise(song.levelPrecise, song.difficulty);
-  const target = targetAccuracy === 101.0 ? 'AP' : `${formatAccuracy(targetAccuracy)}%`;
+  const lvl = renderLevelPrecise(song.levelPrecise, codeToDifficulty(song.difficultyCode));
+  const target = targetScore === 1010000 ? 'AP' : `${formatAccuracy(targetScore / 10000)}%`;
   const rankStr = `#${rank}`.padEnd(3);
   return [
     `${rankStr} [${tag}] ${song.songName} (${diff} ${lvl})`,
-    `    ${formatAccuracy(currentAccuracy)}% → ${target}   rating ${currentRating} → ${targetRating}   (+${ratingGain})`,
+    `    ${formatAccuracy(currentScore / 10000)}% → ${target}   rating ${currentRating} → ${targetRating}   (+${ratingGain})`,
   ].join('\n');
 }
 

@@ -219,9 +219,9 @@ export function DataContent({
   ];
 
   const requiredCapabilities = {
-    info: "scores", songs: "scores", recent: "recents", albums: "albums", map: "events",
+    info: "scores", songs: "scores", recent: "recents", history: "rating", recommendations: "scores", albums: "albums", map: "events",
   } as const;
-  // TODO: Implement CHUNITHM statistics, recommendations, history and image export before exposing those extensions.
+  // TODO: Implement CHUNITHM statistics and image export before exposing those extensions.
   const visibleTabs = allTabs.filter(tab => tab.show && (tab.value in requiredCapabilities
     ? game.capabilities.includes(requiredCapabilities[tab.value as keyof typeof requiredCapabilities])
     : game.id === "maimai") && (tab.value !== "map" || game.id === "maimai"));
@@ -310,7 +310,7 @@ export function DataContent({
               />
             )}
             {selectedSnapshotData && activeTab === "recommendations" && (
-              <RecommendationCard selectedSnapshotData={maimaiSnapshot!} flags={flags} region={region} />
+              <RecommendationCard selectedSnapshotData={selectedSnapshotData} flags={flags} region={region} />
             )}
             {selectedSnapshotData && activeTab === "history" && visitedBySelf && flags.historyCard && (
               <HistoryCard region={region} />

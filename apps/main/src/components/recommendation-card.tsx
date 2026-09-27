@@ -1,9 +1,10 @@
 "use client";
 
 import { useGameId } from "@/components/providers/game-provider";
-import { addRatingsAndSort } from "@/lib/rating-calculator";
+import { type GameSnapshotData, toMaimaiPlayerScore } from "@/lib/games/player-view";
+import { formatGameScore, formatGameRating, formatGameLevel, getGameDifficultyColors, getGameDifficultyLabel, getGameChartTypeBadgeLabel, getGameRankingBuckets, getGameScoreLabelKey } from "@/lib/games/presentation";
 import { generateRecommendations, RecommendationData } from "@/server/queries/recommendations";
-import { Region, SnapshotWithSongs } from "@/lib/types";
+import { Region } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { Award, Calendar, Disc3, Filter, Hash, Heart, Layers, Target, Zap } from "lucide-react";
 import { useFormatter, useTranslations } from "next-intl";
@@ -22,7 +23,6 @@ import {
   applyRecommendationFilters,
 } from "@/components/filter-panel";
 import { SongHoverCard } from "@/components/song-hover-card";
-import { renderLevelPrecise } from "@/lib/name-utils";
 import { STAGGER, getTransition } from "@/lib/animation-constants";
 import { logger } from "@/lib/logger";
 import { trpc } from "@/lib/trpc-client";
@@ -36,9 +36,12 @@ function formatAccuracy(accuracy: number): string {
 function RecommendationRow({ recommendation }: { recommendation: RecommendationData }) {
   const t = useTranslations('recommendations');
   const format = useFormatter();
-  const { song, currentAccuracy, targetAccuracy, currentRating, targetRating, accuracyDiff, ratingGain, isInBest, category } = recommendation;
-  return (
-    <SongHoverCard song={song}>
+  const game = useGameId();
+  const { song, currentScore, targetScore, currentRating, targetRating, ratingGain, isInBest, category } = recommendation;
+  const isAp = game === "maimai" && targetScore === 1010000;
+  const scoreText = (value: number) => game === "maimai" ? `${formatAccuracy(value / 10000)}%` : formatGameScore(game, value);
+  const typeLabel = getGameChartTypeBadgeLabel(game, song.typeCode);
+  const content = (
       <motion.div
         className="flex xs:justify-between xs:items-center text-sm min-h-16 py-2 max-xs:min-h-30 max-xs:flex-col max-xs:justify-start max-xs:gap-y-2 px-2 -mx-2 rounded-md cursor-pointer group"
       >
@@ -48,12 +51,7 @@ function RecommendationRow({ recommendation }: { recommendation: RecommendationD
             alt={song.songName}
             className={cn(
               "w-8 h-8 shrink-0 ml-1 mr-3 rounded ring-2 ring-offset-2 ring-offset-background",
-              song.difficulty === "basic" && "ring-green-400",
-              song.difficulty === "advanced" && "ring-yellow-400",
-              song.difficulty === "expert" && "ring-red-400",
-              song.difficulty === "master" && "ring-purple-500",
-              song.difficulty === "remaster" && "ring-purple-200",
-              song.difficulty === "utage" && "ring-pink-400",
+              getGameDifficultyColors(game, song.difficultyCode).ring,
             )}
             width={36}
             height={36}
@@ -71,12 +69,12 @@ function RecommendationRow({ recommendation }: { recommendation: RecommendationD
               </div>
               {category === "new" && isInBest && (
                 <div className="px-1.5 py-0.5 rounded text-xs font-medium whitespace-nowrap bg-green-100 text-green-800 dark:bg-green-600/30 dark:text-green-400">
-                  B15
+                  {getGameRankingBuckets(game)[0].label}
                 </div>
               )}
               {category === "old" && isInBest && (
                 <div className="px-1.5 py-0.5 rounded text-xs font-medium whitespace-nowrap bg-red-100 text-red-800 dark:bg-red-600/30 dark:text-red-400">
-                  B35
+                  {getGameRankingBuckets(game)[1].label}
                 </div>
               )}
               {recommendation.hasPotential && recommendation.peerReach != null && (
@@ -86,7 +84,7 @@ function RecommendationRow({ recommendation }: { recommendation: RecommendationD
               )}
             </div>
             <div className="text-muted-foreground text-xs truncate">
-              {song.type.toUpperCase()} • {song.difficulty.slice(0, 3).toUpperCase()} {renderLevelPrecise(song.levelPrecise, song.difficulty)} • {song.artist}
+              {typeLabel && `${typeLabel} • `}{getGameDifficultyLabel(game, song.difficultyCode)} {formatGameLevel(game, song.levelPrecise, song.difficultyCode)} • {song.artist}
             </div>
           </div>
         </div>
@@ -95,67 +93,63 @@ function RecommendationRow({ recommendation }: { recommendation: RecommendationD
           <div className="xs:text-right xs:ml-2">
             <div className="text-xs text-muted-foreground">{t('currentToTarget')}</div>
             <div className="font-mono text-xs">
-              {formatAccuracy(currentAccuracy)}% → {targetAccuracy === 101.0 ? (
+              {scoreText(currentScore)} → {isAp ? (
                 <span className="text-green-600 dark:text-green-400">AP</span>
               ) : (
-                <span className="text-green-600 dark:text-green-400">{formatAccuracy(targetAccuracy)}%</span>
+                <span className="text-green-600 dark:text-green-400">{scoreText(targetScore)}</span>
               )}
             </div>
             <div className="font-mono text-xs">
-              {currentRating} → <span className="text-green-600 dark:text-green-400">{targetRating}</span>
+              {formatGameRating(game, currentRating)} → <span className="text-green-600 dark:text-green-400">{formatGameRating(game, targetRating)}</span>
             </div>
           </div>
 
           <div className="text-right ml-4 mr-2 space-y-0.5 w-16">
             <div className="text-xs text-muted-foreground flex items-center gap-1">
               <Target className="h-3 w-3 text-amber-500" />
-              {targetAccuracy === 101.0 ? (
+              {isAp ? (
                 <span className="text-orange-400 font-semibold">AP</span>
               ) : (
-                <span>+{(Math.floor(targetAccuracy * 100) / 100 - Math.floor(currentAccuracy * 100) / 100).toFixed(2)}%</span>
+                <span>+{scoreText(targetScore - currentScore)}</span>
               )}
             </div>
             <div className="text-xs flex items-center gap-1">
               <Zap className="h-3 w-3 text-green-500" />
-              <span className="font-mono font-semibold">+{ratingGain}</span>
+              <span className="font-mono font-semibold">+{formatGameRating(game, ratingGain)}</span>
             </div>
           </div>
         </div>
       </motion.div>
-    </SongHoverCard>
   );
+  return game === "maimai"
+    ? <SongHoverCard song={toMaimaiPlayerScore(song)}>{content}</SongHoverCard>
+    : content;
 }
 
-export function RecommendationCard({ selectedSnapshotData, flags, region }: { selectedSnapshotData: SnapshotWithSongs, flags: Flags, region: Region }) {
+export function RecommendationCard({ selectedSnapshotData, flags, region }: { selectedSnapshotData: GameSnapshotData, flags: Flags, region: Region }) {
   const t = useTranslations();
+  const game = useGameId();
   const isDesktop = useMediaQuery("(min-width: 768px)", { initializeWithValue: false });
   const [filterCategory, setFilterCategory] = useState<"all" | "new" | "old" | "best">("all");
   const [advancedFilters, setAdvancedFilters] = useState<GenericFilter[]>([]);
   const [showFilterPanel, setShowFilterPanel] = useState(false);
-  const hasMountedRef = useRef(false);
-
-  useEffect(() => {
-    hasMountedRef.current = true;
-  }, []);
-
-  const { songs, snapshot } = selectedSnapshotData;
-  const songsWithRating = useMemo(() => addRatingsAndSort(songs, snapshot.gameVersion), [songs, snapshot.gameVersion]);
+  const { snapshot } = selectedSnapshotData;
 
   const baseRecommendations = useMemo(
-    () => generateRecommendations(songsWithRating, snapshot.gameVersion),
-    [songsWithRating, snapshot.gameVersion]
+    () => generateRecommendations(selectedSnapshotData),
+    [selectedSnapshotData]
   );
 
-  const potentialEnabled = !!flags.scorePercentile;
+  const potentialEnabled = !!flags.scorePercentile && game === "maimai";
   const potentialSongIds = useMemo(() => [...new Set(baseRecommendations.map(rec => rec.song.songId))].slice(0, 2000).sort(), [baseRecommendations]);
   const { data: potential, status: potentialStatus, fetchStatus: potentialFetchStatus, error: potentialError } = trpc.user.getRecommendationPeers.useQuery(
-    { game: useGameId(), publicSongIds: potentialSongIds, userRating: snapshot.rating },
+    { game, publicSongIds: potentialSongIds, userRating: snapshot.rating },
     { enabled: potentialEnabled && potentialSongIds.length > 0 && snapshot.rating > 0, staleTime: 5 * 60 * 1000, retry: false },
   );
   const recommendations = useMemo(() => {
     const peers = potentialEnabled ? potential ?? {} : {};
-    return generateRecommendations(songsWithRating, snapshot.gameVersion, peers);
-  }, [songsWithRating, snapshot.gameVersion, potential, potentialEnabled]);
+    return generateRecommendations(selectedSnapshotData, peers);
+  }, [selectedSnapshotData, potential, potentialEnabled]);
 
   // Create filter categories for the FilterPanel
   const filterCategories = useMemo(() => {
@@ -166,7 +160,7 @@ export function RecommendationCard({ selectedSnapshotData, flags, region }: { se
         level: t('recommendations.filterCategories.level'),
         type: t('recommendations.filterCategories.type'),
         targetRating: t('recommendations.filterCategories.targetRating'),
-        achievement: t('recommendations.filterCategories.achievement'),
+        achievement: t(getGameScoreLabelKey(game)),
         version: t('recommendations.filterCategories.version'),
         new: t('recommendations.filters.new'),
         old: t('recommendations.filters.old'),
@@ -178,16 +172,17 @@ export function RecommendationCard({ selectedSnapshotData, flags, region }: { se
         target: Target,
         achievement: Award,
         version: Calendar,
-      }
+      },
+      game
     );
-  }, [recommendations, t]);
+  }, [recommendations, t, game]);
 
   const getFilterLabel = useCallback((filter: GenericFilter) => {
     return createRecommendationFilterLabel(filter, {
       new: t('recommendations.filters.new'),
       old: t('recommendations.filters.old'),
-    });
-  }, [t]);
+    }, game);
+  }, [t, game]);
 
   const applyFilters = useCallback((filters: GenericFilter[]) => {
     return applyRecommendationFilters(recommendations, filters);
@@ -248,10 +243,10 @@ export function RecommendationCard({ selectedSnapshotData, flags, region }: { se
       const peerCount = potential?.[rec.song.songId]?.peerCount;
       return [
         `${index + 1}. ${rec.song.songName}`,
-        `${rec.song.type.toUpperCase()} ${rec.song.difficulty} ${renderLevelPrecise(rec.song.levelPrecise, rec.song.difficulty)}`,
+        `${rec.song.type.toUpperCase()} ${rec.song.difficulty} ${formatGameLevel(game, rec.song.levelPrecise, rec.song.difficultyCode)}`,
         `id=${rec.song.songId}`,
-        `current=${rec.currentAccuracy.toFixed(4)}%`,
-        `target=${rec.targetAccuracy === 101 ? 'AP' : rec.targetAccuracy.toFixed(4) + '%'}`,
+        `current=${formatGameScore(game, rec.currentScore)}`,
+        `target=${formatGameScore(game, rec.targetScore)}`,
         `peerReach=${rec.peerReach == null ? 'missing' : (rec.peerReach * 100).toFixed(1) + '%'}`,
         `peerCount=${peerCount ?? 0}`,
         `chartRating=${rec.currentRating}->${rec.targetRating}`,
@@ -323,7 +318,7 @@ export function RecommendationCard({ selectedSnapshotData, flags, region }: { se
                     {t('recommendations.filters.all')}
                   </SelectItem>
                   <SelectItem value="best">
-                    {t('recommendations.filters.best')}
+                    {t('recommendations.filters.best', { new: getGameRankingBuckets(game)[0].label, old: getGameRankingBuckets(game)[1].label })}
                   </SelectItem>
                   <SelectItem value="new">
                     {t('recommendations.filters.new')}
@@ -337,7 +332,7 @@ export function RecommendationCard({ selectedSnapshotData, flags, region }: { se
           </div>
         </div>
         <div className="text-sm text-muted-foreground">
-          {t('recommendations.description')}
+          {t('recommendations.description', { new: getGameRankingBuckets(game)[0].label, old: getGameRankingBuckets(game)[1].label })}
         </div>
 
         {/* Advanced Filter Panel */}

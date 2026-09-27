@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { recommendationPeers, recommendationEfficiency } from './recommendation-potential';
 import { generateRecommendations, ACCURACY_VALUES } from '@/server/queries/recommendations';
+import type { GameSnapshotData } from './games/player-view';
 import type { PercentileEntry } from './percentile-types';
 
 const data: PercentileEntry = {
@@ -10,10 +11,12 @@ const data: PercentileEntry = {
 };
 const song = {
   songId: 'a', songName: 'Chart', difficulty: 'master' as const,
-  type: 'dx' as const, achievement: 996440, levelPrecise: 136, rating: 285,
-  addedVersion: 13 as const, fc: 'none' as const, fs: 'none' as const, dxScore: 0,
+  typeCode: 1, difficultyCode: 3, scoreValue: 996440, levelPrecise: 136,
+  addedVersion: 13, comboStatus: 0, syncStatus: 0, clearStatus: 0, secondaryScore: 0,
   artist: '', cover: '', level: '13+', genre: '',
 };
+
+const snapshot: GameSnapshotData["snapshot"] = { publicId: "snapshot", game: "maimai", displayName: "Player", gameVersion: 13, rating: 15000, fetchedAt: new Date() };
 
 describe('peer-aware recommendation efficiency', () => {
   it('retains reach shares for every grade, including ties and no AP inference', () => {
@@ -56,11 +59,11 @@ describe('peer-aware recommendation efficiency', () => {
       a: { peerCount: 100, reachShares: { 100: 0.1 } },
       b: { peerCount: 100, reachShares: { 100: 0.9 } },
     };
-    const result = generateRecommendations([song, { ...song, songId: 'b' }], 13, peers);
-    expect(result[0]).toMatchObject({ song: { songId: 'b' }, targetAccuracy: 100, hasPotential: true });
-    expect(result[1]).toMatchObject({ song: { songId: 'a' }, targetAccuracy: 100, hasPotential: false });
-    expect(result.every(rec => ACCURACY_VALUES.includes(rec.targetAccuracy))).toBe(true);
+    const result = generateRecommendations({ snapshot, songs: [song, { ...song, songId: 'b' }] }, peers);
+    expect(result[0]).toMatchObject({ song: { songId: 'b' }, targetScore: 1000000, hasPotential: true });
+    expect(result[1]).toMatchObject({ song: { songId: 'a' }, targetScore: 1000000, hasPotential: false });
+    expect(result.every(rec => ACCURACY_VALUES.includes(rec.targetScore / 10000))).toBe(true);
     expect(result[0].efficiencyScore).toBeGreaterThan(result[1].efficiencyScore);
-    expect(generateRecommendations([song], 13).every(rec => rec.efficiencyScore === rec.efficiency)).toBe(true);
+    expect(generateRecommendations({ snapshot, songs: [song] }).every(rec => rec.efficiencyScore === rec.efficiency)).toBe(true);
   });
 });

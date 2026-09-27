@@ -732,7 +732,7 @@
     "currentToTarget": "現在 → 目標",
     "noRecommendations": "おすすめがありません",
     "allOptimal": "レート値を伸ばせる曲はもうありません！",
-    "description": "現在のB15/B35スコアに基づき、レート値を伸ばしやすい楽曲をおすすめします。",
+    "description": "現在の{new}/{old}スコアに基づき、レート値を伸ばしやすい楽曲をおすすめします。",
     "filterButton": "フィルター",
     "filters": {
       "all": "すべて",

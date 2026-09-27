@@ -736,7 +736,7 @@
     "filterButton": "筛选",
     "filters": {
       "all": "全部",
-      "best": "B15/B35 内",
+      "best": "{new}/{old} 内",
       "new": "新曲",
       "old": "旧曲"
     },

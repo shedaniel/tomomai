@@ -1,13 +1,14 @@
 import { recommendationEfficiency, type RecommendationPeers } from "@/lib/recommendation-potential";
-import { getRatingFactor, SongWithRating, splitSongs } from "@/lib/rating-calculator";
+import { getPlayerRankings, type GameSnapshotData, type GamePlayerScore } from "@/lib/games/player-view";
+import { GAME_RANKING_SIZES } from "@/lib/games/rating";
+import { getGameChartRating, getGameChartTypeKey, getGameDifficultyKey, getGameScoreBenchmarks } from "@/lib/games/presentation";
 
 export interface RecommendationData {
-  song: SongWithRating;
-  currentAccuracy: number;
-  targetAccuracy: number;
+  song: GamePlayerScore & { difficulty: string; type: string };
+  currentScore: number;
+  targetScore: number;
   currentRating: number;
   targetRating: number;
-  accuracyDiff: number;
   ratingGain: number;
   isInBest: boolean;
   category: "new" | "old";
@@ -19,103 +20,52 @@ export interface RecommendationData {
   order: number;
 }
 
-export const ACCURACY_VALUES = [
-  94.0,
-  97.0,
-  98.0,
-  99.0,
-  99.5,
-  100.0,
-  100.5,
-  101.0,
-];
+export const ACCURACY_VALUES = [94, 97, 98, 99, 99.5, 100, 100.5, 101];
 
-export function generateRecommendations(songsWithRating: SongWithRating[], version: number, peers: Record<string, RecommendationPeers> = {}): RecommendationData[] {
-  const { newSongsB15, oldSongsB35, newSongsRemaining, oldSongsRemaining } = splitSongs(songsWithRating, version);
-
-  const minNewRating = newSongsB15.length > 0 ? Math.min(...newSongsB15.map(s => s.rating)) : 0;
-  const minOldRating = oldSongsB35.length > 0 ? Math.min(...oldSongsB35.map(s => s.rating)) : 0;
-
+export function generateRecommendations(data: GameSnapshotData, peers: Record<string, RecommendationPeers> = {}): RecommendationData[] {
+  const { game, gameVersion: version } = data.snapshot;
+  // Special charts do not contribute to either game's rating.
+  const rankings = getPlayerRankings(game, { ...data, songs: data.songs.filter(song => song.difficultyCode !== 5) });
+  const sizes = GAME_RANKING_SIZES[game];
+  const best = [...rankings.newScores, ...rankings.oldScores];
+  const currentSum = best.reduce((sum, song) => sum + song.rating, 0);
+  const targets = game === "maimai"
+    ? ACCURACY_VALUES.filter(value => version >= 12 || value !== 101).map(value => value * 10000)
+    : getGameScoreBenchmarks(game).map(target => target.scoreValue).sort((a, b) => a - b);
   const recommendations: RecommendationData[] = [];
 
-  const newSongsB15Tuple = newSongsB15.map(song => ({ song, isNew: true }));
-  const oldSongsB35Tuple = oldSongsB35.map(song => ({ song, isNew: false }));
-  const newSongsRemainingTuple = newSongsRemaining.map(song => ({ song, isNew: true }));
-  const oldSongsRemainingTuple = oldSongsRemaining.map(song => ({ song, isNew: false }));
-
-  [...newSongsB15Tuple, ...oldSongsB35Tuple, ...newSongsRemainingTuple, ...oldSongsRemainingTuple].forEach(({ song, isNew }) => {
-    // utage charts never contribute rating; recommending them would show a fake rating gain
-    if (song.difficulty === "utage") return;
-
-    const isInB15 = isNew && newSongsB15.some(s => s.songId === song.songId && s.difficulty === song.difficulty);
-    const isInB35 = !isNew && oldSongsB35.some(s => s.songId === song.songId && s.difficulty === song.difficulty);
-    const isInBest = isInB15 || isInB35;
-
-    const currentAccuracy = song.achievement / 10000;
-    const minRequiredRating = isNew ? minNewRating : minOldRating;
-
-    if (version >= 12) {
-      if (currentAccuracy >= 100.5 && (song.fc === "ap" || song.fc === "ap+")) return;
-    } else {
-      if (currentAccuracy >= 100.5) return;
+  for (const category of ["new", "old"] as const) {
+    const selected = category === "new" ? rankings.newScores : rankings.oldScores;
+    const remaining = category === "new" ? rankings.newRemaining : rankings.oldRemaining;
+    const minimum = selected.length === 0 || (game === "chunithm" && selected.length < sizes[category])
+      ? 0 : Math.min(...selected.map(song => song.rating));
+    const selectedIds = new Set(selected.map(song => song.songId));
+    for (const score of [...selected, ...remaining]) {
+      const isInBest = selectedIds.has(score.songId);
+      const currentScore = score.scoreValue;
+      if (game === "maimai" && currentScore >= 1005000 && (version < 12 || score.comboStatus >= 3)) continue;
+      let order = 0;
+      for (const targetScore of targets) {
+        if (targetScore <= currentScore) continue;
+        const isAp = game === "maimai" && targetScore === 1010000;
+        const targetRating = Math.floor(getGameChartRating(game, isAp ? 1005000 : targetScore, score.levelPrecise, score.difficultyCode, isAp ? 3 : 0, version));
+        if (targetRating <= minimum) continue;
+        const chartGain = targetRating - (isInBest ? score.rating : minimum);
+        const ratingGain = game === "chunithm"
+          ? Math.floor((currentSum + chartGain) / (sizes.new + sizes.old)) - Math.floor(currentSum / (sizes.new + sizes.old))
+          : chartGain;
+        if (ratingGain <= 0) continue;
+        const effort = (targetScore - currentScore) / 10000;
+        const efficiency = isAp ? 2 : chartGain / Math.max(effort, 0.1);
+        const peerScore = recommendationEfficiency(efficiency, chartGain, targetScore / 10000, peers[score.songId]);
+        recommendations.push({
+          song: { ...score, difficulty: getGameDifficultyKey(game, score.difficultyCode), type: getGameChartTypeKey(game, score.typeCode) },
+          currentScore, targetScore, currentRating: score.rating, targetRating, ratingGain, isInBest, category,
+          efficiency, ...peerScore, hasPotential: peerScore.peerWeight >= 1.1, order: order++,
+        });
+      }
     }
-
-    if (!isInBest) {
-      const extra = version >= 12 ? 1 : 0;
-      const maxPossibleRating = Math.floor(0.224 * 100.5 * song.levelPrecise / 10) + extra;
-      if (maxPossibleRating <= minRequiredRating) return;
-    }
-
-    let order = 0;
-
-    for (const accuracy of ACCURACY_VALUES) {
-      if (accuracy <= currentAccuracy) continue;
-      if (version < 12 && accuracy === 101.0) continue;
-
-      const factor = getRatingFactor(accuracy);
-      const extra = version >= 12 && accuracy === 101.0 ? 1 : 0;
-      const newRating = Math.floor(factor * Math.min(accuracy, 100.5) * song.levelPrecise / 10) + extra;
-
-      if (newRating <= minRequiredRating) continue;
-
-      const ratingGain = isInBest
-        ? newRating - song.rating
-        : newRating - minRequiredRating;
-
-      if (ratingGain <= 0) continue;
-
-      const efficiency = accuracy === 101.0
-        ? 2.0
-        : ratingGain / Math.max(accuracy - currentAccuracy, 0.1);
-
-      const peerScore = recommendationEfficiency(efficiency, ratingGain, accuracy, peers[song.songId]);
-      recommendations.push({
-        song,
-        currentAccuracy,
-        targetAccuracy: accuracy,
-        accuracyDiff: accuracy - currentAccuracy,
-        currentRating: song.rating,
-        targetRating: newRating,
-        ratingGain,
-        isInBest,
-        category: isNew ? "new" : "old",
-        efficiency,
-        ...peerScore,
-        hasPotential: peerScore.peerWeight >= 1.1,
-        order,
-      });
-
-      order++;
-    }
-  });
-
-  return recommendations.sort((a, b) => {
-    if (a.order !== b.order) {
-      return a.order - b.order;
-    }
-    if (Math.abs(a.efficiencyScore - b.efficiencyScore) < 0.1) {
-      return b.ratingGain - a.ratingGain;
-    }
-    return b.efficiencyScore - a.efficiencyScore;
-  });
+  }
+  return recommendations.sort((a, b) => a.order - b.order || (Math.abs(a.efficiencyScore - b.efficiencyScore) < 0.1
+    ? b.ratingGain - a.ratingGain : b.efficiencyScore - a.efficiencyScore));
 }

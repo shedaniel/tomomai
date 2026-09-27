@@ -7,6 +7,8 @@ import { X } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { CanonicalGameId } from "@/lib/games/types";
+import { formatGameRating, getGameDifficultyLabel, getGameScoreGrade } from "@/lib/games/presentation";
 
 // Generic filter type - value is always string for simplicity
 export interface GenericFilter {
@@ -340,22 +342,13 @@ export interface FilterableRecommendation {
   song: {
     difficulty: string;
     levelPrecise: number;
-    type: "std" | "dx";
+    level: string;
+    type: string;
   };
   targetRating: number;
-  targetAccuracy: number;
+  targetScore: number;
   category: "new" | "old";
 }
-
-const ACHIEVEMENT_OPTIONS = [
-  { value: "97.0", label: "S" },
-  { value: "98.0", label: "S+" },
-  { value: "99.0", label: "SS" },
-  { value: "99.5", label: "SS+" },
-  { value: "100.0", label: "SSS" },
-  { value: "100.5", label: "SSS+" },
-  { value: "101.0", label: "AP" }
-] as const;
 
 export function generateTargetOptions(recommendations: FilterableRecommendation[]): string[] {
   const targets = new Set<number>();
@@ -369,10 +362,7 @@ export function generateTargetOptions(recommendations: FilterableRecommendation[
 export function generateRecommendationLevelOptions(recommendations: FilterableRecommendation[]): string[] {
   const levels = new Set<string>();
   recommendations.forEach(rec => {
-    const level = rec.song.levelPrecise / 10;
-    const isPlus = level % 1 >= 0.6;
-    const baseLevel = Math.floor(level);
-    levels.add(isPlus ? `${baseLevel}+` : `${baseLevel}`);
+    levels.add(rec.song.level);
   });
   return Array.from(levels).sort((a, b) => {
     const aNum = parseFloat(a.replace('+', '.5'));
@@ -400,16 +390,9 @@ export function createRecommendationFilterCategories(
     target: LucideIcon;
     achievement: LucideIcon;
     version: LucideIcon;
-  }
+  },
+  game: CanonicalGameId
 ): FilterCategory[] {
-  const difficultyMap: Record<string, string> = {
-    basic: "Easy",
-    advanced: "Advanced",
-    expert: "Expert",
-    master: "Master",
-    remaster: "Re:Master"
-  };
-
   const availableLevels = generateRecommendationLevelOptions(recommendations);
   const availableTargets = generateTargetOptions(recommendations);
 
@@ -418,7 +401,7 @@ export function createRecommendationFilterCategories(
       type: "difficulty",
       label: translations.difficulty,
       icon: icons.difficulty,
-      options: DIFFICULTY_OPTIONS.map(opt => ({ value: opt, label: difficultyMap[opt] }))
+      options: [...new Set(recommendations.map(rec => rec.song.difficulty))].map(opt => ({ value: opt, label: getGameDifficultyLabel(game, opt) }))
     },
     {
       type: "level",
@@ -430,19 +413,19 @@ export function createRecommendationFilterCategories(
       type: "type",
       label: translations.type,
       icon: icons.type,
-      options: CHART_TYPE_OPTIONS.map(opt => ({ value: opt, label: opt.toUpperCase() }))
+      options: [...new Set(recommendations.map(rec => rec.song.type))].map(opt => ({ value: opt, label: opt.toUpperCase() }))
     },
     {
       type: "target",
       label: translations.targetRating,
       icon: icons.target,
-      options: availableTargets.map(opt => ({ value: opt, label: opt }))
+      options: availableTargets.map(opt => ({ value: opt, label: opt.split(' - ').map(value => formatGameRating(game, Number(value))).join(' - ') }))
     },
     {
       type: "achievement",
       label: translations.achievement,
       icon: icons.achievement,
-      options: ACHIEVEMENT_OPTIONS.map(opt => ({ value: opt.value, label: opt.label }))
+      options: [...new Set(recommendations.map(rec => rec.targetScore))].sort((a, b) => a - b).map(value => ({ value: String(value), label: game === "maimai" && value === 1010000 ? "AP" : getGameScoreGrade(game, value, 0, 0) }))
     },
     {
       type: "version",
@@ -458,28 +441,20 @@ export function createRecommendationFilterCategories(
 
 export function createRecommendationFilterLabel(
   filter: GenericFilter,
-  translations: { new: string; old: string }
+  translations: { new: string; old: string },
+  game: CanonicalGameId
 ): string {
-  const difficultyMap: Record<string, string> = {
-    basic: "Easy",
-    advanced: "Advanced",
-    expert: "Expert",
-    master: "Master",
-    remaster: "Re:Master"
-  };
-
   switch (filter.type) {
     case "difficulty":
-      return difficultyMap[filter.value] || filter.value;
+      return getGameDifficultyLabel(game, filter.value);
     case "level":
       return `Lv ${filter.value}`;
     case "type":
       return filter.value.toUpperCase();
     case "target":
-      return filter.value;
+      return filter.value.split(" - ").map(value => formatGameRating(game, Number(value))).join(" - ");
     case "achievement": {
-      const achievement = ACHIEVEMENT_OPTIONS.find(opt => opt.value === filter.value);
-      return achievement ? achievement.label : filter.value;
+      return game === "maimai" && Number(filter.value) === 1010000 ? "AP" : getGameScoreGrade(game, Number(filter.value), 0, 0);
     }
     case "version":
       return filter.value === "new" ? translations.new : translations.old;
@@ -507,11 +482,7 @@ export function applyRecommendationFilters<T extends FilterableRecommendation>(
           case "difficulty":
             return rec.song.difficulty === filter.value;
           case "level": {
-            const level = rec.song.levelPrecise;
-            const isPlus = level % 10 >= 6;
-            const baseLevel = Math.floor(level / 10);
-            const levelStr = isPlus ? `${baseLevel}+` : `${baseLevel}`;
-            return levelStr === filter.value;
+            return rec.song.level === filter.value;
           }
           case "type":
             return rec.song.type === filter.value;
@@ -520,7 +491,7 @@ export function applyRecommendationFilters<T extends FilterableRecommendation>(
             return rec.targetRating >= min && rec.targetRating <= max;
           }
           case "achievement":
-            return rec.targetAccuracy === parseFloat(filter.value);
+            return rec.targetScore === Number(filter.value);
           case "version":
             return rec.category === filter.value;
           default:
