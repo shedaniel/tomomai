@@ -1,5 +1,6 @@
 "use client";
 
+import { formatGameRating, getGameDifficultyColors, getGameDifficultyLabel } from "@/lib/games/presentation";
 import { useGameId } from "@/components/providers/game-provider";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@tomomai/ui";
 import { Slider } from "@tomomai/ui";
@@ -28,11 +29,14 @@ const chartConfig = {
 
 export function HistoryCard({ region }: HistoryCardProps) {
   const t = useTranslations();
+  const game = useGameId();
+  const formatRating = (value: number | undefined) => formatGameRating(game, value);
+  const axisStep = game === "maimai" ? 100 : 10;
   const [chartAreaBounds, setChartAreaBounds] = useState<{ left: number; width: number } | null>(null);
   const [dateRange, setDateRange] = useState<[number, number]>([0, 100]);
 
   // Fetch rating history from tRPC
-  const { data, isLoading } = trpc.user.getRatingHistory.useQuery({ game: useGameId(), region });
+  const { data, isLoading } = trpc.user.getRatingHistory.useQuery({ game, region });
 
   // Format data for the chart (all data)
   const allChartData = useMemo(() => {
@@ -84,19 +88,19 @@ export function HistoryCard({ region }: HistoryCardProps) {
     const max = Math.max(...ratings);
 
     // Add padding to make the chart more readable
-    const padding = Math.max(50, (max - min) * 0.1); // 10% padding or 500 if no variation
+    const padding = Math.max(axisStep / 2, (max - min) * 0.1);
 
     const timestamps = chartData.map((d) => d.timestamp);
     const minTime = Math.min(...timestamps);
     const maxTime = Math.max(...timestamps);
 
     return {
-      minRating: Math.max(0, Math.floor((min - padding) / 100) * 100),
-      maxRating: Math.ceil((max + padding) / 100) * 100,
+      minRating: Math.max(0, Math.floor((min - padding) / axisStep) * axisStep),
+      maxRating: Math.ceil((max + padding) / axisStep) * axisStep,
       minTime,
       maxTime,
     };
-  }, [chartData]);
+  }, [chartData, axisStep]);
 
   // Calculate chart area bounds after render
   useEffect(() => {
@@ -181,11 +185,13 @@ export function HistoryCard({ region }: HistoryCardProps) {
                     axisLine={false}
                     tickMargin={8}
                     domain={[minRating, maxRating]}
+                    tickFormatter={formatRating}
                     tick={{ fontSize: 12 }}
                   />
                   <ChartTooltip
                     content={
                       <ChartTooltipContent
+                        formatter={(value) => formatRating(Number(value))}
                         labelFormatter={(_, payload) => {
                           if (payload && payload.length > 0) {
                             return payload[0].payload.fullDate;
@@ -248,7 +254,7 @@ export function HistoryCard({ region }: HistoryCardProps) {
                                     <div key={i} className="text-xs">
                                       <div className="font-medium">{change.songName}</div>
                                       <div className="text-muted-foreground">
-                                        {change.difficulty.toUpperCase()} • {change.changeType === 'new' ? 'New in B50' : `${change.oldRating} → ${change.newRating}`}
+                                        {getGameDifficultyLabel(game, change.difficulty)} • {change.changeType === 'new' ? 'New in B50' : `${formatRating(change.oldRating)} → ${formatRating(change.newRating)}`}
                                       </div>
                                     </div>
                                   ))}
@@ -268,12 +274,7 @@ export function HistoryCard({ region }: HistoryCardProps) {
                                     <div
                                       className={cn(
                                         "w-5 h-5 rounded overflow-hidden cursor-pointer hover:scale-110 transition-transform shadow-md ring-2 ring-offset-1",
-                                        change.difficulty === "basic" && "ring-green-400",
-                                        change.difficulty === "advanced" && "ring-yellow-400",
-                                        change.difficulty === "expert" && "ring-red-400",
-                                        change.difficulty === "master" && "ring-purple-500",
-                                        change.difficulty === "remaster" && "ring-purple-200",
-                                        change.difficulty === "utage" && "ring-pink-400",
+                                        getGameDifficultyColors(game, change.difficulty).ring,
                                       )}
                                     >
                                       <CoverImage
@@ -292,12 +293,12 @@ export function HistoryCard({ region }: HistoryCardProps) {
                                       </div>
                                       <div className="font-semibold text-sm">{change.songName}</div>
                                       <div className="text-xs text-muted-foreground">
-                                        {change.difficulty.toUpperCase()}
+                                        {getGameDifficultyLabel(game, change.difficulty)}
                                       </div>
                                       <div className="text-xs">
                                         {change.changeType === 'new'
-                                          ? `New in B50: ${change.newRating}`
-                                          : `${change.oldRating} → ${change.newRating}`
+                                          ? `New in B50: ${formatRating(change.newRating)}`
+                                          : `${formatRating(change.oldRating)} → ${formatRating(change.newRating)}`
                                         }
                                       </div>
                                     </div>

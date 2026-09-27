@@ -8,18 +8,18 @@ import { codeToChartType, codeToComboStatus, codeToDifficulty, codeToSyncStatus,
 import { db } from '@/lib/db';
 import { parentSong, scoreData, snapshotRankings, snapshotScores, songs, user, userEvents, userSnapshots } from '@/lib/db/schema-pg';
 import { getEnabledRegions } from '@/lib/enabled-regions';
-import { logger } from '@/lib/logger';
+import { fetchRatingHistory } from "@/server/queries/rating-history";
 import { buildChartResolution, upsertScoreData, scoreDataKey, type ScoreDataValues } from "@/server/services/games/score-storage";
 import { deleteUserSnapshot } from '@/server/queries/snapshots';
 import { getVersionInfo, getAvailableVersions } from "@/lib/games/versions";
-import { addRatingsAndSort, RatingCalculationInput, splitSongs } from '@/lib/rating-calculator';
+import { addRatingsAndSort, splitSongs } from '@/lib/rating-calculator';
 import { protectedProcedure, publicProcedure, router } from '@/lib/trpc';
-import { Difficulty, SongWithScore } from '@/lib/types';
+import { SongWithScore } from '@/lib/types';
 import { resolvePublicUserByUsername } from '@/server/queries/public-access';
 import { getReservedPublicUser, getReservedSnapshotData, getReservedSnapshots } from '@/server/queries/reserved';
 import { fetchLatestMaimaiSnapshotData, fetchMaimaiUserSnapshots } from '@/server/queries/snapshots';
 import { TRPCError } from '@trpc/server';
-import { and, count, desc, eq, inArray, sql } from 'drizzle-orm';
+import { and, count, desc, eq, sql } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
 import { z } from 'zod';
 import { revalidatePublicProfileForUser } from '@/lib/profile-cache';
@@ -41,205 +41,10 @@ export const snapshotsRouter = router({
     }),
 
   getRatingHistory: protectedProcedure
-    .input(z.object({ game: maimaiCompatibilityGameSchema, region: regionSchema }))
-    .query(async ({ ctx, input }) => {
-      const startTime = Date.now();
-      logger.info(`Starting getRatingHistory for user ${ctx.session.user.id}, region ${input.region}`);
-
-      const snapshotsStart = Date.now();
-      const snapshots = await db
-        .select({
-          internalId: userSnapshots.id,
-          fetchedAt: userSnapshots.fetchedAt,
-          rating: userSnapshots.rating,
-          gameVersion: userSnapshots.gameVersion,
-        })
-        .from(userSnapshots)
-        .where(
-          and(
-            eq(userSnapshots.userId, ctx.session.user.id),
-            and(eq(userSnapshots.game, "maimai"), eq(userSnapshots.region, input.region))
-          )
-        )
-        .orderBy(userSnapshots.fetchedAt);
-      logger.info(`Fetched ${snapshots.length} snapshots in ${Date.now() - snapshotsStart}ms`);
-
-      if (snapshots.length < 2) {
-        logger.info(`Completed in ${Date.now() - startTime}ms (insufficient data)`);
-        return {
-          history: snapshots.map(s => ({
-            date: s.fetchedAt,
-            rating: s.rating,
-            changes: [],
-          }))
-        };
-      }
-
-      const dateGroupingStart = Date.now();
-      const snapshotsByDate = new Map<string, typeof snapshots>();
-      for (const snapshot of snapshots) {
-        const dateKey = snapshot.fetchedAt.toISOString().split('T')[0];
-        if (!snapshotsByDate.has(dateKey)) {
-          snapshotsByDate.set(dateKey, []);
-        }
-        snapshotsByDate.get(dateKey)!.push(snapshot);
-      }
-
-      const dateGroups = Array.from(snapshotsByDate.entries())
-        .sort(([dateA], [dateB]) => dateA.localeCompare(dateB))
-        .map(([date, snapshots]) => ({
-          date,
-          lastSnapshot: snapshots[snapshots.length - 1],
-          allSnapshots: snapshots,
-        }));
-      logger.info(`Grouped ${snapshots.length} snapshots into ${dateGroups.length} date groups in ${Date.now() - dateGroupingStart}ms`);
-
-      const snapshotsNeedingScores = new Set<number>();
-      for (let i = 0; i < dateGroups.length; i++) {
-        const currentGroup = dateGroups[i];
-
-        if (i === 0) {
-          snapshotsNeedingScores.add(currentGroup.lastSnapshot.internalId);
-        } else {
-          const prevGroup = dateGroups[i - 1];
-          if (currentGroup.lastSnapshot.rating > prevGroup.lastSnapshot.rating) {
-            snapshotsNeedingScores.add(currentGroup.lastSnapshot.internalId);
-            snapshotsNeedingScores.add(prevGroup.lastSnapshot.internalId);
-          }
-        }
-      }
-      logger.info(`Need scores for ${snapshotsNeedingScores.size} snapshots (out of ${snapshots.length} total)`);
-
-      const scoresStart = Date.now();
-      const relevantSnapshotIds = Array.from(snapshotsNeedingScores);
-      const allScores = await db
-        .select({
-          snapshotId: snapshotRankings.snapshotId,
-          songId: parentSong.id,
-          songName: parentSong.songName,
-          cover: parentSong.cover,
-          difficulty: sql`${parentSong.difficulty}`.mapWith(codeToDifficulty).as("difficulty"),
-          levelPrecise: songs.levelPrecise,
-          addedVersion: songs.addedVersion,
-          achievement: scoreData.scoreValue,
-          fc: sql`${scoreData.comboStatus}`.mapWith(codeToComboStatus).as("fc"),
-        })
-        .from(snapshotRankings)
-        .innerJoin(scoreData, eq(snapshotRankings.scoreId, scoreData.id))
-        .innerJoin(songs, eq(scoreData.songId, songs.id))
-        .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
-        .where(
-          and(
-            and(eq(songs.game, "maimai"), eq(songs.region, input.region)),
-            inArray(snapshotRankings.snapshotId, relevantSnapshotIds)
-          )
-        );
-      logger.info(`Fetched ${allScores.length} B50 scores in ${Date.now() - scoresStart}ms`);
-
-      const groupingStart = Date.now();
-      const scoresBySnapshot = new Map<number, Array<{
-        songId: bigint;
-        songName: string;
-        cover: string;
-        difficulty: Difficulty;
-        levelPrecise: number;
-        addedVersion: number;
-        achievement: number;
-        fc: RatingCalculationInput["fc"];
-      }>>();
-      for (const score of allScores) {
-        if (!scoresBySnapshot.has(score.snapshotId)) {
-          scoresBySnapshot.set(score.snapshotId, []);
-        }
-        scoresBySnapshot.get(score.snapshotId)!.push({
-          songId: score.songId,
-          songName: score.songName,
-          cover: score.cover,
-          difficulty: score.difficulty,
-          levelPrecise: score.levelPrecise,
-          addedVersion: score.addedVersion,
-          achievement: score.achievement,
-          fc: score.fc,
-        });
-      }
-      logger.info(`Grouped scores in ${Date.now() - groupingStart}ms`);
-
-      const comparisonStart = Date.now();
-      const historyWithChanges = [];
-      let comparisonsPerformed = 0;
-
-      for (let i = 0; i < snapshots.length; i++) {
-        const snapshot = snapshots[i];
-        const dateKey = snapshot.fetchedAt.toISOString().split('T')[0];
-        const dateGroupIndex = dateGroups.findIndex(g => g.date === dateKey);
-        const isLastOfGroup = dateGroups[dateGroupIndex]?.lastSnapshot.internalId === snapshot.internalId;
-
-        const changes: Array<{
-          songName: string;
-          cover: string;
-          difficulty: string;
-          oldRating?: number;
-          newRating: number;
-          changeType: 'new' | 'improved';
-        }> = [];
-
-        if (isLastOfGroup && dateGroupIndex > 0) {
-          const prevDateGroup = dateGroups[dateGroupIndex - 1];
-          const prevSnapshot = prevDateGroup.lastSnapshot;
-
-          if (snapshot.rating > prevSnapshot.rating) {
-            const currentSongs = scoresBySnapshot.get(snapshot.internalId) || [];
-            const prevSongs = scoresBySnapshot.get(prevSnapshot.internalId) || [];
-
-            if (currentSongs.length > 0 && prevSongs.length > 0) {
-              comparisonsPerformed++;
-              const currentTop50 = splitSongs(currentSongs, snapshot.gameVersion);
-              const prevTop50 = splitSongs(prevSongs, prevSnapshot.gameVersion);
-
-              const currentB50 = [...currentTop50.newSongsB15, ...currentTop50.oldSongsB35];
-              const prevB50 = [...prevTop50.newSongsB15, ...prevTop50.oldSongsB35];
-
-              const prevB50Map = new Map(
-                prevB50.map(song => [`${song.songId}-${song.difficulty}`, song.rating])
-              );
-
-              for (const song of currentB50) {
-                const key = `${song.songId}-${song.difficulty}`;
-                const prevRating = prevB50Map.get(key);
-
-                if (prevRating === undefined) {
-                  changes.push({
-                    songName: song.songName,
-                    cover: song.cover,
-                    difficulty: song.difficulty,
-                    newRating: song.rating,
-                    changeType: 'new',
-                  });
-                } else if (song.rating > prevRating) {
-                  changes.push({
-                    songName: song.songName,
-                    cover: song.cover,
-                    difficulty: song.difficulty,
-                    oldRating: prevRating,
-                    newRating: song.rating,
-                    changeType: 'improved',
-                  });
-                }
-              }
-            }
-          }
-        }
-
-        historyWithChanges.push({
-          date: snapshot.fetchedAt,
-          rating: snapshot.rating,
-          changes,
-        });
-      }
-      logger.info(`Performed ${comparisonsPerformed} comparisons in ${Date.now() - comparisonStart}ms`);
-      logger.info(`Total completed in ${Date.now() - startTime}ms`);
-
-      return { history: historyWithChanges };
+    .input(z.object(gameContextInput))
+    .query(({ ctx, input }) => {
+      const { game, region } = validateGameInput(input, "rating");
+      return fetchRatingHistory(game, ctx.session.user.id, region);
     }),
 
   getPublicSnapshots: publicProcedure
