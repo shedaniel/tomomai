@@ -724,6 +724,8 @@ export function SongsCard({ selectedSnapshotData, flags }: { selectedSnapshotDat
     };
   }, [searchQuery, newSongsB15, oldSongsB35, newSongsRemaining, oldSongsRemaining]);
 
+  const showRatingSum = game === "maimai";
+
   // Calculate sum and average for B15 and B35 (use filtered data)
   const b15Sum = filteredData.newSongsB15.reduce((sum, song) => sum + song.rating, 0);
   const b15Average = filteredData.newSongsB15.length > 0 ? b15Sum / filteredData.newSongsB15.length : 0;
@@ -794,9 +796,9 @@ export function SongsCard({ selectedSnapshotData, flags }: { selectedSnapshotDat
                   remainingNewSongs={filteredData.newSongsRemaining}
                   remainingOldSongs={filteredData.oldSongsRemaining}
                   t={t}
-                  b15Sum={b15Sum}
+                  b15Sum={showRatingSum ? b15Sum : undefined}
                   b15Average={b15Average}
-                  b35Sum={b35Sum}
+                  b35Sum={showRatingSum ? b35Sum : undefined}
                   b35Average={b35Average}
                   percentileMap={percentileMap}
                 />
@@ -816,9 +818,9 @@ export function SongsCard({ selectedSnapshotData, flags }: { selectedSnapshotDat
                   remainingOldSongs={filteredData.oldSongsRemaining}
                   t={t}
                   displayMode={displayMode}
-                  b15Sum={b15Sum}
+                  b15Sum={showRatingSum ? b15Sum : undefined}
                   b15Average={b15Average}
-                  b35Sum={b35Sum}
+                  b35Sum={showRatingSum ? b35Sum : undefined}
                   b35Average={b35Average}
                   percentileMap={percentileMap}
                 />
