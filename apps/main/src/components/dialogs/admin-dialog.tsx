@@ -232,25 +232,6 @@ export function AdminDialog({ open, onOpenChange }: AdminDialogProps) {
     });
   }
 
-  function handleCacheImages() {
-    appendConsoleLog("Caching images...");
-    fetch(`/api/admin/cache_images?game=maimai`, {
-      method: "GET",
-      headers: { "Authorization": "Bearer " + adminToken },
-    }).then(async data => {
-      appendConsoleLog(`Response ${data.status} ${data.statusText}:`);
-      const text = await data.text();
-      try {
-        const json = JSON.parse(text);
-        appendConsoleLog(JSON.stringify(json, null, 2));
-      } catch (_) {
-        appendConsoleLog(text);
-      }
-    }).catch(error => {
-      appendConsoleLog("Error: " + error.message);
-    });
-  }
-
   const handleAdminDialogChange = (newOpen: boolean) => {
     if (usersBrowserOpen || profileReportsOpen) return;
     onOpenChange(newOpen);
@@ -381,17 +362,6 @@ export function AdminDialog({ open, onOpenChange }: AdminDialogProps) {
                   Preview Japan (v{jpVersion})
                 </Button>
               </div>
-            </div>
-
-            <div className="grid gap-2">
-              <Label>Cache Images</Label>
-              <Button
-                id="cacheImages"
-                variant="outline"
-                onClick={() => handleCacheImages()}
-              >
-                Cache Images
-              </Button>
             </div>
 
             <div className="p-2 bg-gray-200/70 rounded-md text-sm font-mono text-muted-foreground break-all h-[200px] w-full whitespace-pre overflow-y-auto">

@@ -32,9 +32,8 @@ Catalog ingestion lives under `apps/main/src/server/services/catalog/`:
   configuration, pending-song shape and `sources/` implementations.
 - `chunithm/` owns its executable pipeline and otoge-db source under `sources/`,
   with source fixtures and tests beside that implementation.
-- `images.ts` processes incoming covers; `image-cache.ts` caches stored catalog
-  covers. Game URL/static-asset rules live in `maimai/images.ts` and
-  `chunithm/images.ts`.
+- `images.ts` processes incoming covers. Game URL/static-asset rules live in
+  `maimai/images.ts` and `chunithm/images.ts`.
 - `publication.ts` publishes game-scoped catalog objects; `notifications.ts`
   formats and delivers the existing ingestion notices.
 

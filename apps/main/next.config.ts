@@ -270,7 +270,6 @@ const nextConfig: NextConfig = {
   outputFileTracingRoot: path.resolve(process.cwd(), '..', '..'),
   outputFileTracingIncludes: {
     '/api/image-proxy': ['./public/res/**/*'],
-    '/api/admin/cache_images': ['./public/res/**/*'],
     '/**/*': ['../../node_modules/.pnpm/kuromoji@*/node_modules/kuromoji/dict/**/*'],
   },
   devIndicators: false,
