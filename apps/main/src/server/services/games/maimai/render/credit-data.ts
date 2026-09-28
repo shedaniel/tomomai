@@ -2,7 +2,7 @@ import "server-only";
 import { codeToChartType, codeToComboStatus, codeToDifficulty, codeToSyncStatus, codeToTitleType } from "@/lib/games/maimai/codes";
 import { songInstanceId } from "@/lib/db/song-instance-id";
 import { db } from '@/lib/db';
-import { parentSong, songs, user, userRecentSongs, userRecentSongsDetailed, userSnapshots } from '@/lib/db/schema-pg';
+import { parentSong, songs, user, userRecentSongs, maimaiRecentSongDetails, userSnapshots } from '@/lib/db/schema-pg';
 import { and, desc, eq, lte, sql } from 'drizzle-orm';
 import { VersionId } from '@/lib/metadata';
 import { getLogger } from '@/lib/request-logger';
@@ -140,46 +140,46 @@ export async function prepareCreditData(
       type: sql`${parentSong.type}`.mapWith(codeToChartType).as("type"),
       addedVersion: songs.addedVersion,
       // Detailed stats from separate table (may be null)
-      fastCount: userRecentSongsDetailed.fastCount,
-      lateCount: userRecentSongsDetailed.lateCount,
-      combo: userRecentSongsDetailed.combo,
-      maxCombo: userRecentSongsDetailed.maxCombo,
-      syncScore: userRecentSongsDetailed.syncScore,
-      maxSyncScore: userRecentSongsDetailed.maxSyncScore,
-      rating: userRecentSongsDetailed.rating,
-      ratingChange: userRecentSongsDetailed.ratingChange,
-      venue: userRecentSongsDetailed.venue,
+      fastCount: maimaiRecentSongDetails.fastCount,
+      lateCount: maimaiRecentSongDetails.lateCount,
+      combo: maimaiRecentSongDetails.combo,
+      maxCombo: maimaiRecentSongDetails.maxCombo,
+      syncScore: maimaiRecentSongDetails.syncScore,
+      maxSyncScore: maimaiRecentSongDetails.maxSyncScore,
+      rating: maimaiRecentSongDetails.rating,
+      ratingChange: maimaiRecentSongDetails.ratingChange,
+      venue: maimaiRecentSongDetails.venue,
       // Note judgments from separate table (may be null)
-      tapCPerfect: userRecentSongsDetailed.tapCPerfect,
-      tapPerfect: userRecentSongsDetailed.tapPerfect,
-      tapGreat: userRecentSongsDetailed.tapGreat,
-      tapGood: userRecentSongsDetailed.tapGood,
-      tapMiss: userRecentSongsDetailed.tapMiss,
-      holdCPerfect: userRecentSongsDetailed.holdCPerfect,
-      holdPerfect: userRecentSongsDetailed.holdPerfect,
-      holdGreat: userRecentSongsDetailed.holdGreat,
-      holdGood: userRecentSongsDetailed.holdGood,
-      holdMiss: userRecentSongsDetailed.holdMiss,
-      slideCPerfect: userRecentSongsDetailed.slideCPerfect,
-      slidePerfect: userRecentSongsDetailed.slidePerfect,
-      slideGreat: userRecentSongsDetailed.slideGreat,
-      slideGood: userRecentSongsDetailed.slideGood,
-      slideMiss: userRecentSongsDetailed.slideMiss,
-      touchCPerfect: userRecentSongsDetailed.touchCPerfect,
-      touchPerfect: userRecentSongsDetailed.touchPerfect,
-      touchGreat: userRecentSongsDetailed.touchGreat,
-      touchGood: userRecentSongsDetailed.touchGood,
-      touchMiss: userRecentSongsDetailed.touchMiss,
-      breakCPerfect: userRecentSongsDetailed.breakCPerfect,
-      breakPerfect: userRecentSongsDetailed.breakPerfect,
-      breakGreat: userRecentSongsDetailed.breakGreat,
-      breakGood: userRecentSongsDetailed.breakGood,
-      breakMiss: userRecentSongsDetailed.breakMiss,
+      tapCPerfect: maimaiRecentSongDetails.tapCPerfect,
+      tapPerfect: maimaiRecentSongDetails.tapPerfect,
+      tapGreat: maimaiRecentSongDetails.tapGreat,
+      tapGood: maimaiRecentSongDetails.tapGood,
+      tapMiss: maimaiRecentSongDetails.tapMiss,
+      holdCPerfect: maimaiRecentSongDetails.holdCPerfect,
+      holdPerfect: maimaiRecentSongDetails.holdPerfect,
+      holdGreat: maimaiRecentSongDetails.holdGreat,
+      holdGood: maimaiRecentSongDetails.holdGood,
+      holdMiss: maimaiRecentSongDetails.holdMiss,
+      slideCPerfect: maimaiRecentSongDetails.slideCPerfect,
+      slidePerfect: maimaiRecentSongDetails.slidePerfect,
+      slideGreat: maimaiRecentSongDetails.slideGreat,
+      slideGood: maimaiRecentSongDetails.slideGood,
+      slideMiss: maimaiRecentSongDetails.slideMiss,
+      touchCPerfect: maimaiRecentSongDetails.touchCPerfect,
+      touchPerfect: maimaiRecentSongDetails.touchPerfect,
+      touchGreat: maimaiRecentSongDetails.touchGreat,
+      touchGood: maimaiRecentSongDetails.touchGood,
+      touchMiss: maimaiRecentSongDetails.touchMiss,
+      breakCPerfect: maimaiRecentSongDetails.breakCPerfect,
+      breakPerfect: maimaiRecentSongDetails.breakPerfect,
+      breakGreat: maimaiRecentSongDetails.breakGreat,
+      breakGood: maimaiRecentSongDetails.breakGood,
+      breakMiss: maimaiRecentSongDetails.breakMiss,
     })
     .from(userRecentSongs)
     .innerJoin(songs, eq(userRecentSongs.songId, songs.id))
     .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
-    .leftJoin(userRecentSongsDetailed, eq(userRecentSongs.id, userRecentSongsDetailed.recentSongId))
+    .leftJoin(maimaiRecentSongDetails, eq(userRecentSongs.id, maimaiRecentSongDetails.recentSongId))
     .where(
       and(
         and(eq(userRecentSongs.game, "maimai"), eq(userRecentSongs.userId, userId)),

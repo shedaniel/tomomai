@@ -362,7 +362,7 @@ export const userRecentSongs = pgTable("user_recent_songs", {
   }).onDelete("cascade"),
 ]);
 
-export const userRecentSongsDetailed = pgTable("user_recent_songs_detailed", {
+export const maimaiRecentSongDetails = pgTable("user_recent_songs_detailed", {
   recentSongId: bigint("recentSongId", { mode: "bigint" }).primaryKey().references(() => userRecentSongs.id, { onDelete: "cascade" }),
   fastCount: smallint("fastCount").notNull(),
   lateCount: smallint("lateCount").notNull(),

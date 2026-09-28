@@ -2,7 +2,7 @@ import "server-only";
 import { load } from "cheerio";
 import { and, eq, gt, inArray, or, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { userRecentSongs, userRecentSongsDetailed } from "@/lib/db/schema-pg";
+import { userRecentSongs, maimaiRecentSongDetails } from "@/lib/db/schema-pg";
 import { logger } from "@/lib/logger";
 import { Region } from "@/lib/types";
 import { gameBaseUrl } from "@/lib/games/sites";
@@ -10,7 +10,7 @@ import { getGamePage } from "@/server/services/games/sega/http";
 import type { RecentSongData } from "../types";
 
 // Fetches per-play playlog detail pages and writes the enriched per-note
-// breakdown into userRecentSongsDetailed. Scrape-only.
+// breakdown into maimaiRecentSongDetails. Scrape-only.
 export async function fetchAndInsertRecentSongsData(
   userId: string,
   region: Region,
@@ -26,13 +26,13 @@ export async function fetchAndInsertRecentSongsData(
 
   const existingValid = await db
     .select({ playedAt: userRecentSongs.playedAt })
-    .from(userRecentSongsDetailed)
-    .innerJoin(userRecentSongs, eq(userRecentSongs.id, userRecentSongsDetailed.recentSongId))
+    .from(maimaiRecentSongDetails)
+    .innerJoin(userRecentSongs, eq(userRecentSongs.id, maimaiRecentSongDetails.recentSongId))
     .where(and(
       eq(userRecentSongs.userId, userId),
       eq(userRecentSongs.game, "maimai"),
       inArray(userRecentSongs.playedAt, recentSongsData.map(r => r.playedAt)),
-      gt(userRecentSongsDetailed.maxCombo, 0),
+      gt(maimaiRecentSongDetails.maxCombo, 0),
     ));
   const existingPlayedAts = new Set(existingValid.map(r => r.playedAt.getTime()));
   const toFetch = recentSongsData.filter(r => !existingPlayedAts.has(r.playedAt.getTime()));
@@ -180,7 +180,7 @@ export async function fetchAndInsertRecentSongsData(
       recentSongIdMap.set(record.playedAt.getTime(), record.id);
     }
 
-    const detailedInserts: typeof userRecentSongsDetailed.$inferInsert[] = [];
+    const detailedInserts: typeof maimaiRecentSongDetails.$inferInsert[] = [];
     for (const result of validResults) {
       const recentSongId = recentSongIdMap.get(result.recentSong.playedAt.getTime());
       if (!recentSongId) {
@@ -229,10 +229,10 @@ export async function fetchAndInsertRecentSongsData(
 
     if (detailedInserts.length > 0) {
       await db
-        .insert(userRecentSongsDetailed)
+        .insert(maimaiRecentSongDetails)
         .values(detailedInserts)
         .onConflictDoUpdate({
-          target: userRecentSongsDetailed.recentSongId,
+          target: maimaiRecentSongDetails.recentSongId,
           set: {
             fastCount: sql`excluded."fastCount"`,
             lateCount: sql`excluded."lateCount"`,
