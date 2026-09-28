@@ -2,7 +2,8 @@
 import { useState } from "react";
 import { trpc } from "@/lib/trpc-client";
 import { useGame } from "@/components/providers/game-provider";
-import { getSnapshotSelection, toPlayerSnapshotSummary, type GameSnapshotData, type GameSnapshotSummary } from "@/lib/games/player-view";
+import { getSnapshotSelection, type GameSnapshotData, type GameSnapshotSummary } from "@/lib/games/player-view";
+import { toPlayerSnapshotSummary } from "@/lib/games/maimai/legacy-view";
 import type { Region } from "@/lib/types";
 
 interface UseSnapshotsOptions {

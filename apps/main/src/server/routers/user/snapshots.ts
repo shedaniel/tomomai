@@ -4,7 +4,7 @@ import { RANKING_BUCKET_CODE } from "@/lib/games/codes";
 import { maimaiCompatibilityGameSchema } from "@/lib/games/schema";
 import { gameContextInput, validateGameInput } from "./game-input";
 import { deleteUserSnapshot, fetchSnapshotData, fetchUserSnapshots } from "@/server/queries/snapshots";
-import { codeToChartType, codeToComboStatus, codeToDifficulty, codeToSyncStatus, codeToTitleType } from "@/lib/maimai/codes";
+import { codeToChartType, codeToComboStatus, codeToDifficulty, codeToSyncStatus, codeToTitleType } from "@/lib/games/maimai/codes";
 import { db } from '@/lib/db';
 import { parentSong, scoreData, snapshotRankings, snapshotScores, songs, userSnapshots } from '@/lib/db/schema-pg';
 import { getEnabledRegions } from '@/lib/enabled-regions';

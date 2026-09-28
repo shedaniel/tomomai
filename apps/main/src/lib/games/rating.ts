@@ -1,4 +1,4 @@
-import { codeToComboStatus, codeToDifficulty } from "@/lib/maimai/codes";
+import { codeToComboStatus, codeToDifficulty } from "@/lib/games/maimai/codes";
 import { calculateSongRating } from "@/lib/rating-calculator";
 import type { CanonicalGameId, RankedScore, RankingSelection } from "./types";
 

@@ -1,4 +1,4 @@
-import { codeToComboStatus, codeToSyncStatus, codeToTitleType } from "@/lib/maimai/codes";
+import { codeToComboStatus, codeToSyncStatus, codeToTitleType } from "@/lib/games/maimai/codes";
 /**
  * Builds `RenderMessage` DTOs from DB data, then mints signed tokens.
  *

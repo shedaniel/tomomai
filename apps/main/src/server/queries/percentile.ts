@@ -6,7 +6,7 @@ import {
   ChartPercentileBandRow,
 } from "@/lib/db/percentile-view";
 import { sql } from "drizzle-orm";
-import type { PercentileEntry, PercentileBucket, RatingScoreBucket } from "@/lib/percentile-types";
+import type { PercentileEntry, PercentileBucket, RatingScoreBucket } from "@/lib/games/maimai/percentile/types";
 
 const CHART_PERCENTILE_TIMEOUT_MS = 5000;
 

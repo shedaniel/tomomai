@@ -4,7 +4,8 @@ import { Header } from "@/components/header";
 import { Flags } from "@/lib/flags";
 import { ProfileData, Region } from "@/lib/types";
 import { TomomaiAI } from "@/components/tomomai-ai";
-import { toMaimaiPlayerSnapshot, type GameSnapshotData } from "@/lib/games/player-view";
+import type { GameSnapshotData } from "@/lib/games/player-view";
+import { toMaimaiPlayerSnapshot } from "@/lib/games/maimai/legacy-view";
 import type { FrontendGame } from "@/lib/games/frontend";
 import { Suspense } from "react";
 

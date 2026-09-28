@@ -1,6 +1,6 @@
 import "server-only";
 import { getReservedSnapshotData } from "@/server/queries/reserved";
-import { chartTypeToCode, comboStatusToCode, difficultyToCode, syncStatusToCode, titleTypeToCode } from "@/lib/maimai/codes";
+import { chartTypeToCode, comboStatusToCode, difficultyToCode, syncStatusToCode, titleTypeToCode } from "@/lib/games/maimai/codes";
 import type { Region } from "@/lib/types";
 import type { GameSnapshotData } from "@/lib/games/player-view";
 

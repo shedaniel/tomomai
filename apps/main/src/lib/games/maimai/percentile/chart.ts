@@ -1,4 +1,4 @@
-import type { PercentileBucket, RatingScoreBucket } from './percentile-types';
+import type { PercentileBucket, RatingScoreBucket } from './types';
 
 export function achievementRange(scores: number[], userAchievement: number, fullRange: boolean) {
   const minimum = Math.min(userAchievement, ...scores);

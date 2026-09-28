@@ -1,6 +1,6 @@
 import { db } from '@/lib/db';
 import { account, user } from '@/lib/db/schema-pg';
-import { codeToDifficulty } from '@/lib/maimai/codes';
+import { codeToDifficulty } from '@/lib/games/maimai/codes';
 import { renderLevelPrecise } from '@/lib/name-utils';
 import { Region } from '@/lib/types';
 import { fetchLatestSnapshotData } from '@/server/queries/snapshots';

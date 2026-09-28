@@ -1,6 +1,6 @@
 import type { CanonicalGameId } from "@/lib/games/types";
 import { requireMaimaiQuery } from "./game-scope";
-import { codeToChartType, codeToComboStatus, codeToDifficulty, codeToSyncStatus, difficultyToCode } from "@/lib/maimai/codes";
+import { codeToChartType, codeToComboStatus, codeToDifficulty, codeToSyncStatus, difficultyToCode } from "@/lib/games/maimai/codes";
 import { songInstanceId } from "@/lib/db/song-instance-id";
 import { db } from "@/lib/db";
 import { parentSong, scoreData, snapshotScores, songs } from "@/lib/db/schema-pg";

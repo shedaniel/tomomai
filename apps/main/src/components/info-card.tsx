@@ -13,8 +13,7 @@ import { useMediaQuery } from "@/hooks/use-media-query";
 import { Link } from "@/i18n/navigation";
 import { SPRING_CONFIGS, STAGGER, getTransition } from "@/lib/animation-constants";
 import { resolveBaseUrl } from "@/lib/base-url";
-import { requireMaimaiVersion } from "@/lib/games/maimai/versions";
-import { getRatingImageUrl } from "@/lib/rating-calculator";
+import { getRatingImageUrl } from "@/lib/games/maimai/assets";
 import { trpc } from "@/lib/trpc-client";
 import type { ProfilePrivacySettings, ProfileSettings } from "@/lib/types";
 import { createSafeMaimaiImageUrl, isR2Url } from "@/lib/utils";
@@ -263,10 +262,10 @@ function useInfoCardOwnerSettings({
 
 type Snapshot = GameSnapshotData["snapshot"];
 
-function RatingImage({ rating, version }: { rating: number; version?: number }) {
+function RatingImage({ rating, version }: { rating: number; version: number }) {
   return (
     <Image
-      src={getRatingImageUrl(rating, version === undefined ? undefined : requireMaimaiVersion(version))}
+      src={getRatingImageUrl(rating, version)}
       alt={rating.toString()}
       width={120}
       height={35}

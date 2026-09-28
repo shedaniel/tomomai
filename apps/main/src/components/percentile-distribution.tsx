@@ -4,8 +4,8 @@ import { useId, useState } from "react";
 import { Separator, Tabs, TabsList, TabsTrigger, TabsContent } from "@tomomai/ui";
 import { useFormatter, useTranslations } from "next-intl";
 import { Popover } from "radix-ui";
-import type { PercentileDistributionData } from "@/lib/percentile-types";
-import { achievementRange, ratingClusterPosition, cumulativePoints, shareAtOrBelow, peerRank } from "@/lib/percentile-chart";
+import type { PercentileDistributionData } from "@/lib/games/maimai/percentile/types";
+import { achievementRange, ratingClusterPosition, cumulativePoints, shareAtOrBelow, peerRank } from "@/lib/games/maimai/percentile/chart";
 
 const PLOT = { left: 38, right: 308, top: 14, bottom: 151 };
 const GRADE_STOPS = [970000, 980000, 990000, 1000000, 1005000, 1010000];

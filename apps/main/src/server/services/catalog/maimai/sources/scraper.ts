@@ -13,7 +13,7 @@ import { load } from "cheerio";
 import { asFetcher } from "../merge";
 import type { NoticeSink } from "../../ingestion/types";
 import { type Logger } from "pino";
-import { MAIMAI_CODES } from "@/lib/maimai/codes";
+import { MAIMAI_CODES } from "@/lib/games/maimai/codes";
 
 // Convert ParsedSong to PendingSong
 export function parsedSongToPendingSong(song: ParsedSong): PendingSong {

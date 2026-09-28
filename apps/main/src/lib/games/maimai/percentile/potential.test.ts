@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { recommendationPeers, recommendationEfficiency } from './recommendation-potential';
+import { recommendationPeers, recommendationEfficiency } from './potential';
 import { generateRecommendations, ACCURACY_VALUES } from '@/server/queries/recommendations';
-import type { GameSnapshotData } from './games/player-view';
-import type { PercentileEntry } from './percentile-types';
+import type { GameSnapshotData } from '@/lib/games/player-view';
+import type { PercentileEntry } from './types';
 
 const data: PercentileEntry = {
   percentile: 0, peerCount: 100, userRating: 15000,

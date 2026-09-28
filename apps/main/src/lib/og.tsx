@@ -3,8 +3,7 @@ import path from "path";
 import { readFile } from "fs/promises";
 import sharp from "sharp";
 import type { Locale } from "@/i18n/locale";
-import { getRatingImageUrl } from "@/lib/rating-calculator";
-import type { VersionId } from "@/lib/metadata";
+import { getRatingImageUrl } from "@/lib/games/maimai/assets";
 import type { Region } from "@/lib/types";
 import type { CanonicalGameId } from "@/lib/games/types";
 import { formatGameLevel, getGameChartTypeBadgeLabel, getGameCode, getGameDifficultyHex, getGameDifficultyLabel } from "@/lib/games/presentation";
@@ -531,7 +530,7 @@ export type ProfileOGImageOptions = {
   /** raw region key, used to color the chip */
   region: Region;
   rating: number;
-  gameVersion?: VersionId;
+  gameVersion?: number;
   /** optional remote icon URL (http(s) only — data URLs are skipped) */
   iconUrl?: string | null;
   locale?: Locale;
@@ -551,7 +550,7 @@ export async function createProfileOGImage(options: ProfileOGImageOptions) {
   } = options;
 
   // Build absolute URL for the rating plate (sharp can read public/ directly)
-  const ratingPath = getRatingImageUrl(rating, gameVersion).replace(/^\//, "");
+  const ratingPath = getRatingImageUrl(rating, gameVersion ?? 0).replace(/^\//, "");
 
   const isHttpIcon = !!iconUrl && (iconUrl.startsWith("http://") || iconUrl.startsWith("https://"));
 

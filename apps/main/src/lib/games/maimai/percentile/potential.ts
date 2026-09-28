@@ -1,4 +1,4 @@
-import type { PercentileEntry } from './percentile-types';
+import type { PercentileEntry } from './types';
 
 export interface RecommendationPeers {
   peerCount: number;

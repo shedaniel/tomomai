@@ -4,7 +4,7 @@ import { useGameId } from "@/components/providers/game-provider";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@tomomai/ui";
 import { getPlayerRankings, type GamePlayerScore, type GameSnapshotData } from "@/lib/games/player-view";
 import { formatGameScore, formatGameRating, formatGameLevel, getGameDifficultyColors, getGameDifficultyLabel, getGameChartTypeLabel, getGameChartTypeBadgeLabel, getGameStatusLabels, getGameRankingBuckets, getGameScoreLabelKey } from "@/lib/games/presentation";
-import { codeToDifficulty, codeToChartType } from "@/lib/maimai/codes";
+import { codeToDifficulty, codeToChartType } from "@/lib/games/maimai/codes";
 import { cn, createSafeMaimaiImageUrl, getTypeBadgeUrl } from "@/lib/utils";
 import { LayoutGrid, LayoutList, Menu, Plus, Search, TrendingUp } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -20,7 +20,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { STAGGER, getTransition } from "@/lib/animation-constants";
 import { trpc } from "@/lib/trpc-client";
 import { Flags } from "@/lib/flags";
-import type { PercentileEntry, PercentileMap } from "@/lib/percentile-types";
+import type { PercentileEntry, PercentileMap } from "@/lib/games/maimai/percentile/types";
 
 type DisplayScore = Pick<GamePlayerScore, "songId" | "songName" | "artist" | "cover" | "difficultyCode" | "typeCode" | "levelPrecise" | "scoreValue" | "secondaryScore" | "comboStatus" | "syncStatus" | "clearStatus">;
 type SongWithRating = GamePlayerScore & { rating: number };

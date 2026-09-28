@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { tourEvents, tourEventSteps } from "@/lib/db/schema-pg";
+import { norm, normType } from "@/lib/games/maimai/events";
 
 export type ScrapedEvent = {
   name: string;
@@ -23,9 +24,6 @@ export type EventDelta = {
 function formatPeriod(p: { start: string | null; end: string | null }) {
   return `${p.start ?? "?"}~${p.end ?? "?"}`;
 }
-
-import { norm, normType } from "@/lib/event-types";
-export { norm, normType, TYPE_ALIASES } from "@/lib/event-types";
 
 export async function computeEventDelta(events: ScrapedEvent[]): Promise<EventDelta> {
   const existingEvents = await db.select().from(tourEvents);

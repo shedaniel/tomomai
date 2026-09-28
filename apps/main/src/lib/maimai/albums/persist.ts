@@ -6,7 +6,7 @@ import { logger } from "../../logger";
 import { deleteFromR2, uploadToR2 } from "../../r2";
 import { chartKey } from "@/server/services/games/score-storage";
 import type { ChartResolutionMap } from "@/lib/games/types";
-import { chartTypeToCode, difficultyToCode } from "../codes";
+import { chartTypeToCode, difficultyToCode } from "@/lib/games/maimai/codes";
 import type { AlbumData } from "../types";
 
 export const MAX_STORAGE_BYTES = 8 * 1024 * 1024; // 8 MB

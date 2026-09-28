@@ -9,8 +9,8 @@ import { redis } from "@/lib/redis";
 import { storePending } from "@/server/services/admin/pending-confirmation";
 import { sendDiscordNotice } from "@/server/services/catalog/notifications";
 import { resolveBaseUrl } from "@/lib/base-url";
-import { computeEventDelta, formatEventDescription, deltaColor, norm, normType } from "@/server/services/admin/event-diff";
-import { KNOWN_STEP_TYPES } from "@/lib/event-types";
+import { computeEventDelta, formatEventDescription, deltaColor } from "@/server/services/admin/event-diff";
+import { KNOWN_STEP_TYPES, norm, normType } from "@/lib/games/maimai/events";
 
 const StepSchema = z.object({
   distance: z.number(),

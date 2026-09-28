@@ -1,11 +1,11 @@
 "use client";
-import { MAIMAI_CODES, difficultyToCode, chartTypeToCode, comboStatusToCode, syncStatusToCode } from "@/lib/maimai/codes";
+import { MAIMAI_CODES, difficultyToCode, chartTypeToCode, comboStatusToCode, syncStatusToCode } from "@/lib/games/maimai/codes";
 
 import { useGameId } from "@/components/providers/game-provider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@tomomai/ui/select-friendly";
 import { Progress } from "@tomomai/ui";
 import { Button } from "@tomomai/ui";
-import { ACHIEVEMENTS, DIFFICULTY_COLORS } from "@/lib/difficulty";
+import { ACHIEVEMENTS, DIFFICULTY_COLORS } from "@/lib/games/maimai/grades";
 import { getVersionInfo } from "@/lib/games/versions";
 import { Region } from "@/lib/types";
 import { trpc } from "@/lib/trpc-client";

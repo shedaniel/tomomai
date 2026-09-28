@@ -1,4 +1,4 @@
-import { ACHIEVEMENTS } from "@/lib/difficulty";
+import { ACHIEVEMENTS } from "@/lib/games/maimai/grades";
 import { GAME_RANKING_SIZES, calculateMaimaiChartRating, calculateChunithmChartRating } from "./rating";
 import { GAME_CODES, RANKING_BUCKETS, getGrade, keyOf } from "./codes";
 import type { CanonicalGameId } from "./types";

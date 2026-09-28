@@ -2,7 +2,7 @@
 
 import { useGameId } from "@/components/providers/game-provider";
 import { Button } from "@tomomai/ui";
-import { CANVAS_HEIGHT, CANVAS_WIDTH } from "@/lib/image-spec";
+import { CANVAS_HEIGHT, CANVAS_WIDTH } from "@/lib/games/maimai/image-spec";
 import { Region, SnapshotWithSongs } from "@/lib/types";
 import { Download, RefreshCw } from "lucide-react";
 import { useTranslations } from "next-intl";

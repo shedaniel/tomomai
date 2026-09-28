@@ -4,7 +4,8 @@ import { db } from "@/lib/db";
 import { tourEvents, tourEventSteps } from "@/lib/db/schema-pg";
 import { inArray, sql } from "drizzle-orm";
 
-import { norm, normType, type EventsPendingPayload } from "@/server/services/admin/event-diff";
+import type { EventsPendingPayload } from "@/server/services/admin/event-diff";
+import { norm, normType } from "@/lib/games/maimai/events";
 
 export async function GET(
   _request: NextRequest,

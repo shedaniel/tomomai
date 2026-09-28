@@ -21,7 +21,7 @@ import { Button } from "@tomomai/ui";
 import { Separator } from "@tomomai/ui";
 import { AutoHeight } from "@/components/animate-ui/primitives/effects/auto-height";
 import { getVersionInfo } from "@/lib/games/versions";
-import { calculateDXStars, calculateNoteLosses, distributeBreaks } from "@/lib/score-details";
+import { calculateDXStars, calculateNoteLosses, distributeBreaks } from "@/lib/games/maimai/score-details";
 import { motion } from "motion/react";
 import { SPRING_CONFIGS, STAGGER, getTransition } from "@/lib/animation-constants";
 import { useMediaQuery } from "@/hooks/use-media-query";

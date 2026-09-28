@@ -10,7 +10,6 @@ import { resolvePublicUserByUsername } from "@/server/queries/public-access";
 import { getReservedSnapshotData } from "@/server/queries/reserved";
 import { TRPCError } from "@trpc/server";
 import type { Locale } from "@/i18n/locale";
-import type { VersionId } from "@/lib/metadata";
 import { getOGImageLocales } from "@/i18n/og-locale";
 
 export const runtime = "nodejs";
@@ -55,7 +54,7 @@ export default async function Image({ params, id }: Props & { id: Promise<string
         regionLabel: t(region),
         region,
         rating: snapshot.rating,
-        gameVersion: snapshot.gameVersion as VersionId,
+        gameVersion: snapshot.gameVersion,
         iconUrl: snapshot.iconUrl,
         locale,
       });
@@ -85,7 +84,7 @@ export default async function Image({ params, id }: Props & { id: Promise<string
       regionLabel: t(region),
       region,
       rating: snapshot.rating,
-      gameVersion: snapshot.gameVersion as VersionId,
+      gameVersion: snapshot.gameVersion,
       iconUrl: snapshot.iconUrl,
       locale,
     });

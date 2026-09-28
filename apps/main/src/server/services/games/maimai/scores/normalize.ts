@@ -14,7 +14,7 @@ import {
   difficultyToCode,
   syncStatusToCode,
   titleTypeToCode,
-} from "@/lib/maimai/codes";
+} from "@/lib/games/maimai/codes";
 import { uploadPlayerIcon } from "@/lib/maimai/player/persist";
 import type { Region } from "@/lib/types";
 import type { FetchedMaimaiData } from "@/lib/maimai/orchestrator";

@@ -22,7 +22,7 @@ import { UserScore } from "./db/songs/types";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { Drawer, DrawerContent, DrawerTrigger, DrawerHeader, DrawerTitle, DrawerDescription } from "@tomomai/ui";
 import { PercentileDistribution } from "@/components/percentile-distribution";
-import type { PercentileDistributionData } from "@/lib/percentile-types";
+import type { PercentileDistributionData } from "@/lib/games/maimai/percentile/types";
 
 interface SongHoverCardProps {
   children: React.ReactNode;

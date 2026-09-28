@@ -1,4 +1,4 @@
-import { MAIMAI_CODES } from "../codes";
+import { MAIMAI_CODES } from "@/lib/games/maimai/codes";
 import { logger } from "../../logger";
 import type { Difficulty, FullCombo, FullSync, SongType } from "../../types";
 import type { DivingFishRecord } from "../divingfish/client";

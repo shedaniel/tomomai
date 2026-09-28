@@ -1,4 +1,4 @@
-import { logger } from "./logger";
+import { logger } from "@/lib/logger";
 
 // Constants for achievement calculation
 const BASE_SCORE_PER_TYPE = {

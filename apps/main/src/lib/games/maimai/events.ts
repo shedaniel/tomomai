@@ -16,7 +16,7 @@ export const EVENT_STEP_TYPE_KEYS: Record<string, string> = {
 
 export const KNOWN_STEP_TYPES = new Set(Object.keys(EVENT_STEP_TYPE_KEYS));
 
-export const TYPE_ALIASES: Record<string, string> = {
+const TYPE_ALIASES: Record<string, string> = {
   "課題曲": "楽曲",
   "解禁楽曲": "楽曲",
   "譜面": "楽曲",

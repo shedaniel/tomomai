@@ -6,7 +6,7 @@ import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
 import { useRouter, usePathname } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
-import { EVENT_STEP_TYPE_KEYS, normType } from "@/lib/event-types";
+import { EVENT_STEP_TYPE_KEYS, normType } from "@/lib/games/maimai/events";
 import { Loader2, ArrowLeft, Search, Calendar } from "lucide-react";
 import { Button } from "@tomomai/ui";
 import { Input } from "@tomomai/ui";

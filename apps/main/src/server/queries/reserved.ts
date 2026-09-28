@@ -1,4 +1,4 @@
-import { codeToChartType, codeToDifficulty, difficultyToCode } from "@/lib/maimai/codes";
+import { codeToChartType, codeToDifficulty, difficultyToCode } from "@/lib/games/maimai/codes";
 import { songInstanceId } from "@/lib/db/song-instance-id";
 import { db } from "@/lib/db";
 import { parentSong, songs } from "@/lib/db/schema-pg";

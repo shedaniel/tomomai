@@ -2,7 +2,8 @@
 
 import { useGame } from "@/components/providers/game-provider";
 import { getGameRegion } from "@/lib/games/frontend";
-import { toMaimaiPlayerSnapshot, type GameSnapshotData, type GameSnapshotSummary } from "@/lib/games/player-view";
+import type { GameSnapshotData, GameSnapshotSummary } from "@/lib/games/player-view";
+import { toMaimaiPlayerSnapshot } from "@/lib/games/maimai/legacy-view";
 import { GameUnavailable } from "@/components/game-unavailable";
 import { DataBanner } from "@/components/data-banner";
 import { DataContent } from "@/components/data-content";

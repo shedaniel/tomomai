@@ -1,7 +1,7 @@
 import { db } from "@/lib/db";
 import { tourEvents, tourEventSteps } from "@/lib/db/schema-pg";
 import { asc, inArray } from "drizzle-orm";
-import { norm } from "@/server/services/admin/event-diff";
+import { norm } from "@/lib/games/maimai/events";
 
 export type TourEventWithSteps = {
   id: number;

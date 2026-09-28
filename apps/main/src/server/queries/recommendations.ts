@@ -1,4 +1,4 @@
-import { recommendationEfficiency, type RecommendationPeers } from "@/lib/recommendation-potential";
+import { recommendationEfficiency, type RecommendationPeers } from "@/lib/games/maimai/percentile/potential";
 import { getPlayerRankings, type GameSnapshotData, type GamePlayerScore } from "@/lib/games/player-view";
 import { GAME_RANKING_SIZES } from "@/lib/games/rating";
 import { getGameChartRating, getGameChartTypeKey, getGameDifficultyKey, getGameScoreBenchmarks } from "@/lib/games/presentation";

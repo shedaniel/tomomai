@@ -1,7 +1,8 @@
 "use client";
 
 import { useGameId } from "@/components/providers/game-provider";
-import { type GameSnapshotData, toMaimaiPlayerScore } from "@/lib/games/player-view";
+import type { GameSnapshotData } from "@/lib/games/player-view";
+import { toMaimaiPlayerScore } from "@/lib/games/maimai/legacy-view";
 import { formatGameScore, formatGameRating, formatGameLevel, getGameDifficultyColors, getGameDifficultyLabel, getGameChartTypeBadgeLabel, getGameRankingBuckets, getGameScoreLabelKey } from "@/lib/games/presentation";
 import { generateRecommendations, RecommendationData } from "@/server/queries/recommendations";
 import { Region } from "@/lib/types";

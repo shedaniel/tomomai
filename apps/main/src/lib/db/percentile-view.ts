@@ -2,7 +2,7 @@
 // The percentile cron job creates the view and refreshes it daily.
 // All reads go through raw SQL in src/server/queries/percentile.ts.
 
-import { difficultyToCode } from "@/lib/maimai/codes";
+import { difficultyToCode } from "@/lib/games/maimai/codes";
 
 export const CHART_PERCENTILE_VIEW = "chart_percentile_bands_all_regions";
 

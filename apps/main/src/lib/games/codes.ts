@@ -1,4 +1,4 @@
-import { getAchievementRate } from "@/lib/difficulty";
+import { getAchievementRate } from "@/lib/games/maimai/grades";
 import type { CanonicalGameId } from "./ids";
 
 export { GAME_CODES, RANKING_BUCKETS, RANKING_BUCKET_CODE, codeOf, keyOf, type CodeKey } from "@tomomai/games/codes";

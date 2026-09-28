@@ -6,9 +6,9 @@ import { parentPublicIdOf } from '@/lib/catalog/song-instance-id';
 import { and, eq, inArray } from 'drizzle-orm';
 import { z } from 'zod';
 import { getChartPercentiles } from '@/server/queries/percentile';
-import { recommendationPeers, type RecommendationPeers } from '@/lib/recommendation-potential';
+import { recommendationPeers, type RecommendationPeers } from '@/lib/games/maimai/percentile/potential';
 import { ACCURACY_VALUES } from '@/server/queries/recommendations';
-import type { PercentileMap } from '@/lib/percentile-types';
+import type { PercentileMap } from '@/lib/games/maimai/percentile/types';
 
 export const percentileRouter = router({
   getRecommendationPeers: publicProcedure

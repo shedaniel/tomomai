@@ -1,7 +1,8 @@
 "use client";
 
 import { useGame } from "@/components/providers/game-provider";
-import { toMaimaiPlayerSnapshot, type GameSnapshotData } from "@/lib/games/player-view";
+import type { GameSnapshotData } from "@/lib/games/player-view";
+import { toMaimaiPlayerSnapshot } from "@/lib/games/maimai/legacy-view";
 import { ProfilePrivacySettings, Region } from "@/lib/types";
 import { Sidebar, SidebarItem } from "@tomomai/ui";
 import { BarChart, Clock, Code, Database, Heart, Image as ImageIcon, Loader2, Map, Music, TrendingUp, User, Images } from "lucide-react";

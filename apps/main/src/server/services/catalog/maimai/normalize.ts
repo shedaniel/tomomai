@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { MAIMAI_CODES, chartTypeToCode, difficultyToCode } from "@/lib/maimai/codes";
+import { MAIMAI_CODES, chartTypeToCode, difficultyToCode } from "@/lib/games/maimai/codes";
 import type { UpdateSong } from "@/server/services/catalog/maimai/types";
 import type { CatalogChart } from "../ingestion/normalize-charts";
 import { MAIMAI_LEVELS } from "./levels";

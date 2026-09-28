@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { achievementRange, cumulativeLabel, ratingClusterPosition, cumulativePoints, shareAtOrBelow, peerRank } from './percentile-chart';
+import { achievementRange, cumulativeLabel, ratingClusterPosition, cumulativePoints, shareAtOrBelow, peerRank } from './chart';
 
 describe('score comparison geometry', () => {
   it('keeps a 99.5720% score on the achievement axis even beyond all peers', () => {
