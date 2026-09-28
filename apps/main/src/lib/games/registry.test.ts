@@ -1,5 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { getEnabledRegions, normalizeGameId, requireCapability, resolveGameContext } from "./registry";
+import { GAME_REGISTRY, getEnabledRegions, normalizeGameId, requireCapability, resolveGameContext } from "./registry";
+import { getGameSite } from "./sites";
+import { CANONICAL_GAME_IDS } from "./types";
 
 afterEach(() => vi.unstubAllEnvs());
 
@@ -34,5 +36,11 @@ describe("game boundaries", () => {
     expect(() => resolveGameContext("chunithm", "intl", "catalog")).toThrow(expect.objectContaining({ code: "UNSUPPORTED_REGION" }));
     vi.stubEnv("NEXT_PUBLIC_ENABLED_CHUNITHM_REGIONS", "");
     expect(() => resolveGameContext("chunithm", "jp", "catalog")).toThrow(expect.objectContaining({ code: "UNSUPPORTED_REGION" }));
+  });
+  it("points every cookie login at a site the game has", () => {
+    for (const game of CANONICAL_GAME_IDS) {
+      const { cookieLogin } = GAME_REGISTRY[game].adapter.fetch;
+      if (cookieLogin) expect(getGameSite(game, cookieLogin.region)).toBeDefined();
+    }
   });
 });

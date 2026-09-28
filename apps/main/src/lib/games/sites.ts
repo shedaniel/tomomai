@@ -1,6 +1,8 @@
 import type { Region } from "@/lib/types";
 import type { CanonicalGameId } from "./types";
 
+export const SEGA_COOKIE_LOGIN_URL = "https://lng-tgk-aime-gw.am-all.net/common_auth/";
+
 interface GameSite {
   entryUrl: string;
   maintenance: {

@@ -1,5 +1,4 @@
 import "server-only";
-import { GAME_SOURCES } from "@/server/services/games/adapters";
 import { GAME_REGISTRY, getEnabledRegions } from "./registry";
 import type { FrontendGame } from "./frontend";
 import type { CanonicalGameId } from "./types";
@@ -7,14 +6,14 @@ import { resolveFrontendGame } from "./frontend-config";
 
 export function getFrontendGameDescriptor(game: CanonicalGameId): FrontendGame {
   const registration = GAME_REGISTRY[game];
-  const scores = GAME_SOURCES[game].scores;
+  const fetchConfigured = registration.adapter.capabilities.has("scores");
   return {
     id: registration.id,
     displayName: registration.displayName,
     productName: registration.productName,
     enabled: registration.enabled,
-    fetchConfigured: scores.configured,
-    cookieLoginConfigured: scores.configured && Boolean(scores.cookieLoginUrl),
+    fetchConfigured,
+    cookieLoginConfigured: fetchConfigured && registration.adapter.fetch.cookieLogin !== null,
     regions: getEnabledRegions(game),
     capabilities: [...registration.adapter.capabilities],
   };

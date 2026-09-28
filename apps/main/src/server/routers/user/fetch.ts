@@ -1,4 +1,5 @@
 import { getGameSite } from "@/lib/games/sites";
+import { GAME_REGISTRY } from "@/lib/games/registry";
 import { gameIdSchema } from "@/lib/games/schema";
 import { gameContextInput, validateGameCapability, validateGameInput } from "./game-input";
 import { startScoreFetch, getScoreFetchStatus } from "@/server/services/games/score-ingestion";
@@ -18,22 +19,23 @@ export const fetchRouter = router({
   getLoginOtp: protectedProcedure
     .input(z.object({ game: gameIdSchema }))
     .query(({ ctx, input }) => {
-      const source = requireConfiguredSource(input.game, "scores");
+      requireConfiguredSource(input.game, "scores");
       validateGameCapability(input.game, "scores");
-      if (!source.cookieLoginUrl) throw new TRPCError({ code: "BAD_REQUEST", message: "Cookie login is not available for this game" });
+      const { cookieLogin } = GAME_REGISTRY[input.game].adapter.fetch;
+      if (!cookieLogin) throw new TRPCError({ code: "BAD_REQUEST", message: "Cookie login is not available for this game" });
       const userId = ctx.session.user.id;
       const otp = generateUserOtp(userId);
       const expiresAt = new Date(getOtpExpiryTimestamp()).toISOString();
       const baseUrl = resolveBaseUrl();
       const scriptUrl = `${baseUrl}/api/login.js`;
       const opaqueUserId = createLoginAuthorization(userId, input.game);
-      const loginLink = `${source.cookieLoginUrl}#otp=${otp}&user=${encodeURIComponent(opaqueUserId)}`;
+      const loginLink = `${cookieLogin.url}#otp=${otp}&user=${encodeURIComponent(opaqueUserId)}`;
 
       return {
         otp,
         scriptUrl,
         loginLink,
-        loginPageUrl: getGameSite(input.game, "intl")!.entryUrl,
+        loginPageUrl: getGameSite(input.game, cookieLogin.region)!.entryUrl,
         expiresAt,
       };
     }),

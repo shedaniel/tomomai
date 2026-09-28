@@ -53,6 +53,7 @@ export interface GameAdapter {
   capabilities: ReadonlySet<GameCapability>;
   supportedRegions: ReadonlySet<Region>;
   versions: VersionProvider;
+  fetch: { cookieLogin: { region: Region; url: string } | null };
   calculateChartRating(input: { scoreValue: number; levelPrecise: number; difficulty: number; comboStatus?: number }, version: number): number;
   selectRankings<T extends RankedScore>(scores: T[], currentVersion: number): RankingSelection<T>;
 }

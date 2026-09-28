@@ -4,8 +4,6 @@ import { GameAdapterError, type CanonicalGameId, type GameRegionContext } from "
 import type { CatalogSourceAdapter, ConfiguredCatalogAdapter, ConfiguredScoreAdapter, ScoreAdapter } from "./types";
 import type { Region } from "@/lib/types";
 
-const SEGA_COOKIE_LOGIN_URL = "https://lng-tgk-aime-gw.am-all.net/common_auth/";
-
 export const GAME_SOURCES: Record<CanonicalGameId, { catalog: CatalogSourceAdapter; scores: ScoreAdapter }> = {
   maimai: {
     catalog: {
@@ -22,7 +20,6 @@ export const GAME_SOURCES: Record<CanonicalGameId, { catalog: CatalogSourceAdapt
     },
     scores: {
       configured: true,
-      cookieLoginUrl: SEGA_COOKIE_LOGIN_URL,
       async validateToken(context) {
         const { maimaiScoreAdapter } = await import("@/server/services/games/maimai/scores/normalize");
         return maimaiScoreAdapter.validateToken?.(context);
@@ -43,7 +40,6 @@ export const GAME_SOURCES: Record<CanonicalGameId, { catalog: CatalogSourceAdapt
     },
     scores: {
       configured: true,
-      cookieLoginUrl: SEGA_COOKIE_LOGIN_URL,
       async fetch(context) {
         const { fetchPlayer } = await import("./chunithm/pipeline");
         return { result: await fetchPlayer(context) };

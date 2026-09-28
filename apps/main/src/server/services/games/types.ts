@@ -95,7 +95,6 @@ export type PersistedSnapshotContext = {
 
 export interface ConfiguredScoreAdapter {
   configured: true;
-  cookieLoginUrl?: string;
   validateToken?: (ctx: ScoreTokenValidationContext) => void | Promise<void>;
   fetch: (ctx: ScoreFetchContext) => Promise<{
     result: GameFetchResult;
