@@ -302,9 +302,11 @@ Resolve a serializable site/game descriptor on the server and provide it to
 client components. Keep source adapters and server-only registry dependencies
 out of client bundles. ESLint enforces this for `src/lib/games`,
 `src/components` and `src/hooks`, which may import only types from `@/server`.
-Per-game client-safe code lives in `src/lib/games/<game>/`, and server-only
-contracts live in `src/server/services/games/types.ts`. Client navigation must
-not mutate game identity without a domain change.
+Per-game client-safe code lives in `src/lib/games/<game>/`, per-game server
+code in `src/server/services/games/<game>/`, and server-only contracts in
+`src/server/services/games/types.ts`. ESLint also stops a game folder from
+importing another game's folders, so shared code goes through the registries.
+Client navigation must not mutate game identity without a domain change.
 
 Pass game explicitly through page loaders, tRPC calls, query keys, hydration,
 server caches, static generation and revalidation. Include region/version/user

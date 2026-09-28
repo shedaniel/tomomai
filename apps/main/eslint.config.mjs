@@ -1,4 +1,11 @@
 import nextConfig from "eslint-config-next";
+import { CANONICAL_GAME_IDS } from "./src/lib/games/ids.ts";
+
+const serverOnlyBoundary = {
+  group: ["@/server/*"],
+  allowTypeImports: true,
+  message: "Client-safe code may only import types from @/server. Move shared runtime logic under src/lib.",
+};
 
 export default [
   { ignores: ["**/dist/**", "**/.next/**", "**/.next-*/**"] },
@@ -43,13 +50,23 @@ export default [
   {
     files: ["src/lib/games/**/*.{ts,tsx}", "src/components/**/*.{ts,tsx}", "src/hooks/**/*.{ts,tsx}"],
     rules: {
-      "@typescript-eslint/no-restricted-imports": ["error", {
-        patterns: [{
-          group: ["@/server/*"],
-          allowTypeImports: true,
-          message: "Client-safe code may only import types from @/server. Move shared runtime logic under src/lib.",
-        }],
-      }],
+      "@typescript-eslint/no-restricted-imports": ["error", { patterns: [serverOnlyBoundary] }],
     },
   },
+  ...CANONICAL_GAME_IDS.flatMap(game => {
+    const otherGames = {
+      group: CANONICAL_GAME_IDS.filter(other => other !== game).flatMap(other => [`**/${other}`, `**/${other}/**`]),
+      message: "A game folder may not import another game's internals. Go through the generic registries.",
+    };
+    return [
+      {
+        files: [`src/lib/games/${game}/**/*.{ts,tsx}`],
+        rules: { "@typescript-eslint/no-restricted-imports": ["error", { patterns: [serverOnlyBoundary, otherGames] }] },
+      },
+      {
+        files: [`src/server/services/games/${game}/**/*.{ts,tsx}`],
+        rules: { "@typescript-eslint/no-restricted-imports": ["error", { patterns: [otherGames] }] },
+      },
+    ];
+  }),
 ];
