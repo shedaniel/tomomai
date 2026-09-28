@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import React, { act } from "react";
+import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { GameProvider } from "@/components/providers/game-provider";
@@ -24,9 +24,11 @@ vi.mock("@/lib/trpc-client", () => ({
 
 let result: ReturnType<typeof useFetchSession>;
 let root: Root;
+const capture = (session: ReturnType<typeof useFetchSession>) => { result = session; };
 function Probe() {
-  result = useFetchSession(callbacks.complete, callbacks.token);
-  return <span role="status">{result.fetchError}</span>;
+  const session = useFetchSession(callbacks.complete, callbacks.token);
+  capture(session);
+  return <span role="status">{session.fetchError}</span>;
 }
 
 beforeEach(() => {

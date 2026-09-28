@@ -44,4 +44,8 @@ describe("frontend process configuration", () => {
     expect(getFrontendDistDir("chunithm", true)).toBe(".next-chunithm");
     for (const game of gameIdSchema.options) expect(getFrontendDistDir(game, false)).toBe(".next");
   });
+
+  it("keeps every development output inside the build directories ESLint ignores", () => {
+    for (const game of gameIdSchema.options) expect(getFrontendDistDir(game, true)).toMatch(/^\.next(-[a-z]+)?$/);
+  });
 });

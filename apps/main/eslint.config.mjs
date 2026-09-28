@@ -1,7 +1,7 @@
 import nextConfig from "eslint-config-next";
 
 export default [
-  { ignores: ["**/dist/**", "**/.next/**"] },
+  { ignores: ["**/dist/**", "**/.next/**", "**/.next-*/**"] },
   ...nextConfig,
   {
     rules: {
@@ -26,6 +26,18 @@ export default [
       "react-hooks/static-components": "warn",
       "react-hooks/preserve-manual-memoization": "warn",
       "react-hooks/immutability": "warn",
+    },
+  },
+  {
+    files: ["**/*.ts", "**/*.tsx"],
+    rules: {
+      "@typescript-eslint/no-unused-vars": ["error", {
+        argsIgnorePattern: "^_",
+        varsIgnorePattern: "^_",
+        caughtErrorsIgnorePattern: "^_",
+        destructuredArrayIgnorePattern: "^_",
+        ignoreRestSiblings: true,
+      }],
     },
   },
 ];

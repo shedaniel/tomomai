@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import React, { act } from "react";
+import { act } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createRoot, type Root } from "react-dom/client";
 import { QueryClient, QueryClientProvider, useMutation, useQuery } from "@tanstack/react-query";
@@ -27,9 +27,11 @@ let root: Root;
 let container: HTMLDivElement;
 let client: QueryClient;
 const initial = fixture("maimai", "latest");
+const capture = (snapshots: ReturnType<typeof useSnapshots>) => { result = snapshots; };
 function Probe({ region = "jp" }: { region?: Region }) {
-  result = useSnapshots(region, true, { initialSnapshots: [initial.summary], initialSnapshotData: initial.data });
-  return <span>{result.selectedSnapshotData?.snapshot.displayName}</span>;
+  const snapshots = useSnapshots(region, true, { initialSnapshots: [initial.summary], initialSnapshotData: initial.data });
+  capture(snapshots);
+  return <span>{snapshots.selectedSnapshotData?.snapshot.displayName}</span>;
 }
 async function render(game: "maimai" | "chunithm" = "maimai", region: Region = "jp") {
   const descriptor: FrontendGame = { id: game, displayName: game, productName: game === "maimai" ? "tomomai" : "tomochu", enabled: true, regions: ["jp", "intl"], capabilities: ["scores"] };
