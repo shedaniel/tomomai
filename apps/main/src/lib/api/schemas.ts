@@ -1,4 +1,4 @@
-import { gameIdSchema } from "@/lib/games/schema";
+import { gameIdSchema, regionSchema as gameRegionSchema } from "@/lib/games/schema";
 import { z } from "zod";
 
 /**
@@ -10,7 +10,7 @@ import { z } from "zod";
  * both the OpenAPI schema and the on-site param/response tables.
  */
 
-export const regionSchema = z.enum(["intl", "jp", "cn"]).describe("Game region to read data from.");
+export const regionSchema = gameRegionSchema.describe("Game region to read data from.");
 
 export const querySchemas = {
   regionRequired: z.object({
@@ -142,7 +142,7 @@ export const songCatalogueEntry = z.object({
   difficulty: z.number().int().describe("Game-specific difficulty code."),
   level: z.string().describe("Displayed level, e.g. \"14+\"."),
   levelPrecise: levelPreciseField,
-  region: z.enum(["intl", "jp", "cn"]),
+  region: gameRegionSchema,
   gameVersion: z.number().int(),
   addedVersion: z.number().int(),
   bpm: z.number().nullable(),

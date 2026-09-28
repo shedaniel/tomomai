@@ -16,7 +16,7 @@ Examples:
 This means even items that "support cn today" via hardcoded paths must be revisited.
 
 ## Already Done
-- [x] **Types/enums**: `lib/types.ts` (`Region`), `lib/db/types.ts` (`REGION_ENUM`), `lib/db/schema-pg.ts` (region columns)
+- [x] **Types/enums**: `lib/games/ids.ts` (`REGIONS`, `Region`), `lib/db/schema-pg.ts` (region columns)
 - [x] **Region config**: `lib/enabled-regions.ts`
 - [x] **UI shells**: `components/region-switcher.tsx`, `components/token-dialog.tsx` → `token-dialog-cn.tsx`, `settings/fetch-settings.tsx`, `settings/account-settings.tsx` (`isCNExclusive`)
 - [x] **Most tRPC user routers** — already use `getEnabledRegions()`

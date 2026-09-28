@@ -1,10 +1,10 @@
-import type { Region, EventData } from "@/lib/types";
+import type { EventData } from "@/lib/types";
 import type { Flags } from "@/lib/flags";
 import type { CatalogFetchContext } from "@/server/services/catalog/ingestion/types";
 import type { CatalogChart } from "@/server/services/catalog/ingestion/normalize-charts";
+import type { CanonicalGameId, Region } from "./ids";
 
-export const CANONICAL_GAME_IDS = ["maimai", "chunithm"] as const;
-export type CanonicalGameId = (typeof CANONICAL_GAME_IDS)[number];
+export { CANONICAL_GAME_IDS, type CanonicalGameId } from "./ids";
 
 export type GameContext = {
   game: CanonicalGameId;

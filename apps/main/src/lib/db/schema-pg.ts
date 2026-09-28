@@ -2,17 +2,17 @@ import { pgTable, text, integer, smallint, bigint, boolean, timestamp, unique, u
 import { sql } from "drizzle-orm";
 import {
   LANGUAGE_ENUM,
-  REGION_ENUM,
   FETCH_STATUS_ENUM,
   EVENT_TYPE_ENUM,
   EVENT_STATE_ENUM,
   STORE_STATUS_ENUM,
 } from "./types";
+import { CANONICAL_GAME_IDS, REGIONS } from "../games/ids";
 
 // PostgreSQL enum types
 export const languageEnum = pgEnum("language", LANGUAGE_ENUM);
-export const gameEnum = pgEnum("game", ["maimai", "chunithm"]);
-export const regionEnum = pgEnum("region", REGION_ENUM);
+export const gameEnum = pgEnum("game", CANONICAL_GAME_IDS);
+export const regionEnum = pgEnum("region", REGIONS);
 export const roleEnum = pgEnum("role", ["user", "admin"]);
 export const fetchStatusEnum = pgEnum("fetch_status", FETCH_STATUS_ENUM);
 export const eventTypeEnum = pgEnum("event_type", EVENT_TYPE_ENUM);

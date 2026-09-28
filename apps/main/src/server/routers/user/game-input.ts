@@ -1,13 +1,12 @@
 import { TRPCError } from "@trpc/server";
-import { z } from "zod";
 import { requireCapability, resolveGameContext } from "@/lib/games/registry";
 import { GameAdapterError, type CanonicalGameId, type GameCapability } from "@/lib/games/types";
-import { gameIdSchema } from "@/lib/games/schema";
+import { gameIdSchema, regionSchema } from "@/lib/games/schema";
 import type { Region } from "@/lib/types";
 
 export const gameContextInput = {
   game: gameIdSchema,
-  region: z.enum(["intl", "jp", "cn"]),
+  region: regionSchema,
 };
 
 export function validateGameCapability(game: CanonicalGameId, capability: GameCapability) {

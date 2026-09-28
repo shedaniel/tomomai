@@ -1,9 +1,10 @@
 // Centralized type definitions for the maimai charts application
+import type { Region } from "./games/ids";
 import { VersionId } from "./metadata";
 
 // ===== CORE TYPES =====
 
-export type Region = "intl" | "jp" | "cn";
+export type { Region };
 
 export interface User {
   id: string;

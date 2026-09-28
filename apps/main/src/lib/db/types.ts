@@ -1,7 +1,5 @@
 export const LANGUAGE_ENUM = ["en", "en-GB", "ja", "zh-TW", "zh-HK", "zh-CN", "zh-SG", "ko"] as const;
 
-export const REGION_ENUM = ["intl", "jp", "cn"] as const;
-
 export { MAIMAI_DIFFICULTIES as DIFFICULTY_ENUM } from "@tomomai/utils/game-codes";
 
 export const LEVEL_ENUM = [
