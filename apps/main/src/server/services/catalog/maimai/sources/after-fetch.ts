@@ -2,7 +2,7 @@ import { Region } from "@/lib/types";
 import { gameBaseUrl } from "@/lib/games/sites";
 import { getGameHtml } from "@/server/services/games/sega/http";
 import { load } from "cheerio";
-import { normalizeGenre } from "@/lib/name-utils";
+import { normalizeGenre } from "../genres";
 import { type Logger } from "pino";
 import pLimit from "p-limit";
 import { levelToPrecise } from "@/server/services/catalog/maimai/levels";

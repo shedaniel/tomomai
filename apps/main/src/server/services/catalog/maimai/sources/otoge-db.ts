@@ -1,6 +1,7 @@
 import { gameBaseUrl } from "@/lib/games/sites";
 import { getVersionFromDate, VersionId, Versions } from "@/lib/metadata";
-import { normalizeGenre, normalizeName } from "@/lib/name-utils";
+import { normalizeName } from "@/lib/name-utils";
+import { normalizeGenre } from "../genres";
 import { Difficulty, NoteCounts, Region, SongType } from "@/lib/types";
 import type { PendingSong } from "@/server/services/catalog/maimai/types";
 import { asFetcher } from "../merge";

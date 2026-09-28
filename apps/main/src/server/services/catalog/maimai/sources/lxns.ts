@@ -1,5 +1,6 @@
 import { Difficulty, NoteCounts, SongType } from "@/lib/types";
-import { normalizeGenre, normalizeName } from "@/lib/name-utils";
+import { normalizeName } from "@/lib/name-utils";
+import { normalizeGenre } from "../genres";
 import { getVersionByShortCode } from "@/lib/metadata";
 import type { PendingSong } from "@/server/services/catalog/maimai/types";
 import { important } from "@/server/services/catalog/ingestion/types";
