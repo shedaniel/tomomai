@@ -1,4 +1,4 @@
-import { getAdminCatalogRegions, resolveAdminGame } from "@/lib/api/admin-game";
+import { getAdminCatalogRegions, resolveAdminGame } from "@/server/services/catalog/admin-game";
 import { GameAdapterError, type CanonicalGameId } from "@/lib/games/types";
 import { gameErrorResponse } from "@/lib/api/game-context";
 import { parseCatalogVersion } from "@/lib/catalog/parse-version";

@@ -1,11 +1,11 @@
-import { getAdminCatalogRegions, resolveAdminGame } from "@/lib/api/admin-game";
+import { getAdminCatalogRegions, resolveAdminGame } from "@/server/services/catalog/admin-game";
 import { GameAdapterError, type CanonicalGameId } from "@/lib/games/types";
 import { gameErrorResponse } from "@/lib/api/game-context";
 import { flushLogger } from "@/lib/logger";
 import { requestLogger } from "@/lib/request-logger";
 import type { Region } from "@/lib/types";
 import { getGameChartTypeKey } from "@/lib/games/presentation";
-import { parseCatalogUpload } from "@/lib/catalog/parse-upload";
+import { parseCatalogUpload } from "@/server/services/catalog/ingestion/parse-upload";
 import { sendDiscordNotice, sendDiscordWebhook } from "@/server/services/catalog/notifications";
 import { publishSongCatalog } from "@/server/services/catalog/publication";
 import { revalidatePath, revalidateTag } from "next/cache";

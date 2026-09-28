@@ -27,8 +27,9 @@ The shared catalog ingestion lives under `apps/main/src/server/services/catalog/
 
 - `ingestion/` owns the canonical collection (`collect.ts`, `collectGameCatalog`)
   and persistence entrypoints, shared step runner, merge modes, Fill Missing and
-  sorting stages, pending chart and cover-rule contracts, normalization and parent
-  identity matching.
+  sorting stages, pending chart and cover-rule contracts, admin upload parsing
+  (`parse-upload.ts`), normalization and parent identity matching.
+- `admin-game.ts` resolves the explicit game and its regions for admin routes.
 - `images.ts` processes incoming covers with each game's cover rules.
 - `publication.ts` publishes game-scoped catalog objects. `notifications.ts`
   formats and delivers the existing ingestion notices.

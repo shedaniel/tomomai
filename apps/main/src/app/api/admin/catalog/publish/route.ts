@@ -1,4 +1,4 @@
-import { resolveAdminGame } from "@/lib/api/admin-game";
+import { resolveAdminGame } from "@/server/services/catalog/admin-game";
 import { GameAdapterError } from "@/lib/games/types";
 import { gameErrorResponse } from "@/lib/api/game-context";
 import { flushLogger } from "@/lib/logger";
