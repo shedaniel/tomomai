@@ -46,8 +46,8 @@ CHUNITHM's JP and International score provider is configured and its player
 surfaces are enabled. The catalog remains available independently; see
 [CHUNITHM_CATALOG.md](CHUNITHM_CATALOG.md). Both CHUNITHM regions use the shared
 SEGA credential dialog. The International cookie/OTP wizard is only exposed when
-the source supplies a verified cookie-login URL; CHUNITHM has no such URL
-configured. Maimai retains its existing cookie/OTP option and uses the same SEGA
+the game definition declares a cookie login (`fetch.cookieLogin`). maimai and
+CHUNITHM both declare one for International, and maimai uses the same SEGA
 credential form for password login.
 
 Maimai's rich recommendations, percentiles, plates, render/export controls,
@@ -143,8 +143,8 @@ Implementation ownership:
   Maimai's score parsers and CN authentication behavior remain specialized.
 - [`otp.ts`](../apps/main/src/lib/otp.ts) binds game and user in the existing
   signed login authorization. The token dialog requests an OTP for its current
-  game; a login link requires a configured source with a verified cookie-login
-  URL. Existing gateway fields remain unchanged. Only versioned, game-bound
+  game, and a login link requires the game definition to declare a cookie
+  login. Existing gateway fields remain unchanged. Only versioned, game-bound
   authorizations are accepted; pre-versioned codes must be replaced with a new OTP.
 
 CHUNITHM's pipeline fetches the profile, all five ordinary difficulty lists and

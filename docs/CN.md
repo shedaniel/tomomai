@@ -21,7 +21,7 @@ This means even items that "support cn today" via hardcoded paths must be revisi
 - [x] **UI shells**: `components/region-switcher.tsx`, `components/token-dialog.tsx` → `token-dialog-cn.tsx`, `settings/fetch-settings.tsx`, `settings/account-settings.tsx` (`isCNExclusive`)
 - [x] **Most tRPC user routers** — already use `getEnabledRegions()`
 - [x] **CN catalog fetcher**: `server/services/catalog/maimai/sources/lxns.ts` (Lxns API, single-source pipeline)
-- [x] **Genre normalization for Lxns**: `lib/name-utils.ts` (POPSアニメ / niconicoボーカロイド / オンゲキCHUNITHM / ゲームバラエティ → canonical `＆` forms; region-agnostic)
+- [x] **Genre normalization for Lxns**: `server/services/catalog/maimai/genres.ts` (POPSアニメ / niconicoボーカロイド / オンゲキCHUNITHM / ゲームバラエティ → canonical `＆` forms; region-agnostic)
 - [x] **Admin region validation** (the four admin routes below) gate on `isRegionEnabled()` and default iteration to `getEnabledRegions()`:
   - `app/api/admin/update/route.ts`
   - `app/api/admin/db/route.ts` (normalize path; backfill still JP/INTL-only)
