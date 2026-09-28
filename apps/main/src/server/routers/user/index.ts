@@ -20,13 +20,10 @@ export const userRouter = router({
   getSnapshotData: snapshotsRouter.getSnapshotData,
   getRecentSongs: recentsRouter.getRecentSongs,
   getUserAlbums: albumsRouter.getUserAlbums,
-  getCatalog: songsRouter.getCatalog,
   getPlayerStats: statsRouter.getPlayerStats,
 
   // Snapshots
   getRatingHistory: snapshotsRouter.getRatingHistory,
-  getPublicSnapshots: snapshotsRouter.getPublicSnapshots,
-  getPublicSnapshotData: snapshotsRouter.getPublicSnapshotData,
   deleteSnapshot: snapshotsRouter.deleteSnapshot,
   exportSnapshotData: snapshotsRouter.exportSnapshotData,
   getAvailableVersionsForCopy: snapshotsRouter.getAvailableVersionsForCopy,
@@ -34,7 +31,6 @@ export const userRouter = router({
 
   // Profile
   getUserData: profileRouter.getUserData,
-  getPublicProfile: profileRouter.getPublicProfile,
   getProfileSettings: profileRouter.getProfileSettings,
   updateProfileDescription: profileRouter.updateProfileDescription,
   submitProfileReport: profileReportsRouter.submitProfileReport,

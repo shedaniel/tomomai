@@ -3,23 +3,18 @@ import { GAME_REGISTRY } from "@/lib/games/registry";
 import { RANKING_BUCKET } from "@/lib/games/types";
 import { maimaiCompatibilityGameSchema } from "@/lib/games/schema";
 import { gameContextInput, validateGameInput } from "./game-input";
-import { fetchUserSnapshots, fetchSnapshotData } from "@/server/queries/snapshots";
+import { deleteUserSnapshot, fetchSnapshotData, fetchUserSnapshots } from "@/server/queries/snapshots";
 import { codeToChartType, codeToComboStatus, codeToDifficulty, codeToSyncStatus, codeToTitleType } from "@/lib/maimai/codes";
 import { db } from '@/lib/db';
-import { parentSong, scoreData, snapshotRankings, snapshotScores, songs, user, userEvents, userSnapshots } from '@/lib/db/schema-pg';
+import { parentSong, scoreData, snapshotRankings, snapshotScores, songs, userSnapshots } from '@/lib/db/schema-pg';
 import { getEnabledRegions } from '@/lib/enabled-regions';
 import { fetchRatingHistory } from "@/server/queries/rating-history";
 import { buildChartResolution, upsertScoreData, scoreDataKey, type ScoreDataValues } from "@/server/services/games/score-storage";
-import { deleteUserSnapshot } from '@/server/queries/snapshots';
 import { getVersionInfo, getAvailableVersions } from "@/lib/games/versions";
-import { addRatingsAndSort, splitSongs } from '@/lib/rating-calculator';
-import { protectedProcedure, publicProcedure, router } from '@/lib/trpc';
-import { SongWithScore } from '@/lib/types';
-import { resolvePublicUserByUsername } from '@/server/queries/public-access';
-import { getReservedPublicUser, getReservedSnapshotData, getReservedSnapshots } from '@/server/queries/reserved';
-import { fetchLatestMaimaiSnapshotData, fetchMaimaiUserSnapshots } from '@/server/queries/snapshots';
+import { addRatingsAndSort } from '@/lib/rating-calculator';
+import { protectedProcedure, router } from '@/lib/trpc';
 import { TRPCError } from '@trpc/server';
-import { and, count, desc, eq, sql } from 'drizzle-orm';
+import { and, count, eq, sql } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
 import { z } from 'zod';
 import { revalidatePublicProfileForUser } from '@/lib/profile-cache';
@@ -45,118 +40,6 @@ export const snapshotsRouter = router({
     .query(({ ctx, input }) => {
       const { game, region } = validateGameInput(input, "rating");
       return fetchRatingHistory(game, ctx.session.user.id, region);
-    }),
-
-  getPublicSnapshots: publicProcedure
-    .input(z.object({ game: maimaiCompatibilityGameSchema,
-      username: z.string(),
-      region: regionSchema,
-    }))
-    .query(async ({ input }) => {
-      const reservedSnapshots = await getReservedSnapshots(input.username, input.region);
-      if (reservedSnapshots) return { snapshots: reservedSnapshots };
-
-      const userData = await resolvePublicUserByUsername(input.username, input.game);
-
-      const snapshots = await fetchMaimaiUserSnapshots(userData.id, input.region, { limit: 1 });
-
-      const filteredSnapshots = snapshots.map(snapshot => ({
-        ...snapshot,
-        versionPlayCount: userData.profileShowPlayCounts ? snapshot.versionPlayCount : 0,
-        totalPlayCount: userData.profileShowPlayCounts ? snapshot.totalPlayCount : 0,
-      }));
-
-      return { snapshots: filteredSnapshots };
-    }),
-
-  getPublicSnapshotData: publicProcedure
-    .input(z.object({ game: maimaiCompatibilityGameSchema,
-      username: z.string(),
-      region: regionSchema,
-    }))
-    .query(async ({ input }) => {
-      const reservedData = await getReservedSnapshotData(input.username, input.region);
-      if (reservedData) {
-        const reservedUser = getReservedPublicUser(input.username)!;
-        return {
-          snapshot: {
-            ...reservedData.snapshot,
-            publicId: undefined,
-            id: reservedData.snapshot.publicId,
-            gameVersion: reservedData.snapshot.gameVersion,
-          },
-          songs: reservedData.songs.map((s) => ({
-            ...s,
-            addedVersion: s.addedVersion,
-          })),
-          privacySettings: {
-            showPlayCounts: reservedUser.profileShowPlayCounts,
-            showPlates: reservedUser.profileShowPlates,
-            showEvents: reservedUser.profileShowEvents,
-            showAllScores: reservedUser.profileShowAllScores,
-            showScoreDetails: reservedUser.profileShowScoreDetails,
-          },
-        };
-      }
-
-      const userData = await resolvePublicUserByUsername(input.username, input.game);
-
-      const result = await fetchLatestMaimaiSnapshotData(userData.id, input.region);
-
-      if (!result) {
-        throw new TRPCError({
-          code: 'NOT_FOUND',
-          message: 'No data available for this region',
-        });
-      }
-
-      const { snapshot, songs: songsWithScores, events } = result;
-
-      const songsForCalculation: SongWithScore[] = songsWithScores.map(song => ({
-        songId: song.songId,
-        songName: song.songName,
-        artist: song.artist,
-        cover: song.cover,
-        difficulty: song.difficulty,
-        level: song.level,
-        levelPrecise: song.levelPrecise,
-        type: song.type,
-        genre: song.genre,
-        addedVersion: song.addedVersion,
-        achievement: song.achievement,
-        dxScore: song.dxScore,
-        fc: song.fc,
-        fs: song.fs,
-      }));
-
-      let filteredSongs = songsWithScores;
-
-      if (!userData.profileShowAllScores) {
-        const { newSongsB15, oldSongsB35 } = splitSongs(songsForCalculation, snapshot.gameVersion);
-        const bestSongs = [...newSongsB15, ...oldSongsB35];
-        const bestSongIds = new Set(bestSongs.map(song => song.songId));
-        filteredSongs = songsWithScores.filter(song => bestSongIds.has(song.songId));
-      }
-
-      const filteredEvents = userData.profileShowEvents ? events : undefined;
-
-      return {
-        snapshot: {
-          ...snapshot,
-          publicId: undefined,
-          id: snapshot.publicId,
-          gameVersion: snapshot.gameVersion,
-        },
-        songs: filteredSongs,
-        privacySettings: {
-          showPlayCounts: userData.profileShowPlayCounts,
-          showPlates: userData.profileShowPlates,
-          showEvents: userData.profileShowEvents,
-          showAllScores: userData.profileShowAllScores,
-          showScoreDetails: userData.profileShowScoreDetails,
-        },
-        ...(filteredEvents && { events: filteredEvents }),
-      };
     }),
 
   deleteSnapshot: protectedProcedure

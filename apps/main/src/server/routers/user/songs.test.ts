@@ -12,10 +12,8 @@ vi.mock("@/lib/trpc", async () => {
 vi.mock("@/server/queries/songs", () => ({
   queryAllUniqueSongs: vi.fn(), querySongDetails: vi.fn(), querySongScores: vi.fn(),
 }));
-vi.mock("@/server/queries/songs-cache", () => ({ getCatalogChartsCached: vi.fn() }));
 
 import { queryAllUniqueSongs, querySongDetails, querySongScores } from "@/server/queries/songs";
-import { getCatalogChartsCached } from "@/server/queries/songs-cache";
 import { songsRouter } from "./songs";
 
 const song: UniqueSong = {
@@ -38,16 +36,13 @@ beforeEach(() => {
   vi.stubEnv("NEXT_PUBLIC_ENABLED_CHUNITHM_REGIONS", undefined);
   vi.mocked(queryAllUniqueSongs).mockResolvedValue([song]);
   vi.mocked(querySongDetails).mockResolvedValue(details);
-  vi.mocked(getCatalogChartsCached).mockResolvedValue([]);
 });
 afterEach(() => vi.unstubAllEnvs());
 
 describe("catalog and player access", () => {
-  it("serves the CHUNITHM list and regional catalog", async () => {
+  it("serves the CHUNITHM song list", async () => {
     expect(await caller.getAllUniqueSongs({ game: "chunithm" })).toEqual([song]);
     expect(queryAllUniqueSongs).toHaveBeenCalledWith("chunithm");
-    expect(await caller.getCatalog({ game: "chunithm", region: "jp" })).toEqual([]);
-    expect(getCatalogChartsCached).toHaveBeenCalledWith("chunithm", "jp", undefined);
   });
 
   it("enriches each game catalog with the signed-in player", async () => {

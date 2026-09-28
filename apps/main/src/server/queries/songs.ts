@@ -1,4 +1,3 @@
-import { parseSongId } from "@/lib/catalog/song-instance-id";
 import { getGameCode, getGameChartTypeKey, getGameDifficultyKey } from "@/lib/games/presentation";
 import type { CanonicalGameId } from "@/lib/games/types";
 import { songInstanceId } from "@/lib/db/song-instance-id";
@@ -323,33 +322,4 @@ export async function queryAllUniqueSongs(game: CanonicalGameId) {
   );
 
   return getCachedUniqueSongs();
-}
-
-export function queryCatalogCharts(game: CanonicalGameId, region?: Region, gameVersion?: number, publicId?: string) {
-  const parsed = publicId === undefined ? undefined : parseSongId(publicId);
-  return db.select({
-    id: songInstanceId,
-    parentId: parentSong.publicId,
-    songName: parentSong.songName,
-    artist: parentSong.artist,
-    cover: parentSong.cover,
-    type: parentSong.type,
-    difficulty: parentSong.difficulty,
-    genre: parentSong.genre,
-    region: songs.region,
-    gameVersion: songs.gameVersion,
-    addedVersion: songs.addedVersion,
-    level: songs.level,
-    levelPrecise: songs.levelPrecise,
-    metadata: songs.metadata,
-  }).from(songs)
-    .innerJoin(parentSong, and(eq(songs.parentId, parentSong.id), eq(songs.game, parentSong.game)))
-    .where(and(
-      eq(songs.game, game),
-      region ? eq(songs.region, region) : undefined,
-      gameVersion !== undefined ? eq(songs.gameVersion, gameVersion) : undefined,
-      parsed === null ? sql`false` : parsed ? eq(parentSong.publicId, parsed.parentPublicId) : undefined,
-      parsed?.kind === "instance" ? and(eq(songs.region, parsed.region), eq(songs.gameVersion, parsed.gameVersion)) : undefined,
-    ))
-    .orderBy(parentSong.songName, parentSong.difficulty);
 }

@@ -1,13 +1,11 @@
-import { gameIdSchema } from "@/lib/games/schema";
 import { db } from '@/lib/db';
 import { user } from '@/lib/db/schema-pg';
-import { protectedProcedure, publicProcedure, router } from '@/lib/trpc';
+import { protectedProcedure, router } from '@/lib/trpc';
 import { Region, UserData } from '@/lib/types';
 import { TRPCError } from '@trpc/server';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { getEnabledRegions, isCNExclusive } from '@/lib/enabled-regions';
-import { resolvePublicUserByUsername } from '@/server/queries/public-access';
 import { fetchProfileSettings } from '@/server/queries/profile';
 import { revalidateCurrentSitePublicProfile, revalidateCurrentSitePublicProfileForUser } from '@/lib/profile-cache';
 import { profileDescriptionInputSchema } from '@/lib/profile-description';
@@ -41,15 +39,6 @@ export const profileRouter = router({
         region: (!isCNExclusive() ? userRecord[0].region! : 'cn') as Region,
         role: userRecord[0].role,
       } satisfies UserData;
-    }),
-
-  getPublicProfile: publicProcedure
-    .input(z.object({
-      game: gameIdSchema,
-      username: z.string(),
-    }))
-    .query(async ({ input }) => {
-      return await resolvePublicUserByUsername(input.username, input.game);
     }),
 
   getProfileSettings: protectedProcedure

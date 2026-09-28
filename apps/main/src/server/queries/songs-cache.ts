@@ -1,8 +1,6 @@
-import { queryAllUniqueSongs, querySongDetails, queryCatalogCharts } from "@/server/queries/songs";
+import { queryAllUniqueSongs, querySongDetails } from "@/server/queries/songs";
 import type { CanonicalGameId } from "@/lib/games/types";
 import { cache } from "react";
-import { unstable_cache } from "next/cache";
-import type { Region } from "@/lib/types";
 
 /**
  * Per-request memoized helpers for the public songs catalog.
@@ -26,11 +24,3 @@ export const getSongDetailsCached = cache(
     return querySongDetails(game, songName, type, userId, artist, parentIds);
   }
 );
-
-export const getCatalogChartsCached = cache(async (game: CanonicalGameId, region?: Region, version?: number) => {
-  return unstable_cache(
-    () => queryCatalogCharts(game, region, version),
-    ["catalog-charts", game, region ?? "all", version?.toString() ?? "all"],
-    { revalidate: 3600, tags: [`all-unique-songs:${game}`] },
-  )();
-});

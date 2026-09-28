@@ -1,7 +1,6 @@
 import { gameIdSchema } from "@/lib/games/schema";
 import { resolveGame } from "@/lib/games/registry";
-import { gameContextInput, validateGameCapability, validateGameInput } from "./game-input";
-import { getCatalogChartsCached } from "@/server/queries/songs-cache";
+import { validateGameCapability } from "./game-input";
 import { getGameChartTypeKey } from "@/lib/games/presentation";
 import { parseSongId } from "@/lib/catalog/song-instance-id";
 import { db } from '@/lib/db';
@@ -14,13 +13,6 @@ import { z } from 'zod';
 import { queryAllUniqueSongs, querySongDetails, querySongScores } from '@/server/queries/songs';
 
 export const songsRouter = router({
-  getCatalog: publicProcedure
-    .input(z.object({ ...gameContextInput, version: z.number().int().optional() }))
-    .query(({ input }) => {
-      const { game, region } = validateGameInput(input, "catalog");
-      return getCatalogChartsCached(game, region, input.version);
-    }),
-
   getAllUniqueSongs: publicProcedure
     .input(z.object({ game: gameIdSchema }))
     .query(async ({ input }) => {

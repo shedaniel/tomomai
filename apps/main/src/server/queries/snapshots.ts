@@ -203,10 +203,9 @@ export async function fetchLatestSnapshotData(game: CanonicalGameId, userId: str
 }
 
 function toMaimaiSnapshot(snapshot: typeof userSnapshots.$inferSelect) {
-  return { ...snapshot, gameVersion: requireMaimaiVersion(snapshot.gameVersion), titleTypeCode: snapshot.titleType, titleType: codeToTitleType(snapshot.titleType),
+  return { ...snapshot, gameVersion: requireMaimaiVersion(snapshot.gameVersion), titleType: codeToTitleType(snapshot.titleType),
     courseRankUrl: snapshot.courseRankUrl ?? "", classRankUrl: snapshot.classRankUrl ?? "", stars: snapshot.stars ?? 0 };
 }
-
 
 function toMaimaiSnapshotResult(result: Awaited<ReturnType<typeof fetchSnapshotData>>) {
   if (!result) return null;
@@ -215,11 +214,6 @@ function toMaimaiSnapshotResult(result: Awaited<ReturnType<typeof fetchSnapshotD
     songs: result.songs.map(song => ({ ...song, addedVersion: requireMaimaiVersion(song.addedVersion), achievement: song.scoreValue, dxScore: song.secondaryScore, difficulty: codeToDifficulty(song.difficultyCode), type: codeToChartType(song.typeCode), fc: codeToComboStatus(song.comboStatus), fs: codeToSyncStatus(song.syncStatus) })),
     events: result.events.map(event => ({ ...event, eventType: event.eventType ?? "eventArea" as const, currentDistance: event.currentDistance ?? 0, state: event.state ?? "not_started" as const, imageUrl: event.imageUrl ?? "" })),
   };
-}
-
-export async function fetchMaimaiUserSnapshots(userId: string, region: Region, options?: { limit?: number }) {
-  const snapshots = await fetchUserSnapshots("maimai", userId, region, options);
-  return snapshots.map(s => ({ ...s, courseRankUrl: s.courseRankUrl ?? "", classRankUrl: s.classRankUrl ?? "", stars: s.stars ?? 0, gameVersion: requireMaimaiVersion(s.gameVersion) }));
 }
 
 export async function fetchLatestMaimaiSnapshotData(userId: string, region: Region) {

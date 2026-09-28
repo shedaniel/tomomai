@@ -1,15 +1,12 @@
 import { getPlayerRankings, type GameSnapshotData } from "./player-view";
 import { calculateMaimaiChartRating, calculateChunithmChartRating } from "./rating";
 import type { CanonicalGameId } from "./types";
+import type { ProfilePrivacySettings } from "@/lib/types";
 
-export interface PlayerPrivacy {
-  profileShowAllScores: boolean;
-  profileShowScoreDetails: boolean;
-  profileShowPlayCounts: boolean;
-  profileShowEvents?: boolean;
-}
+type SnapshotPrivacy = Pick<ProfilePrivacySettings, "profileShowAllScores" | "profileShowScoreDetails" | "profileShowPlayCounts">
+  & Partial<Pick<ProfilePrivacySettings, "profileShowEvents">>;
 
-export function toPublicGameSnapshot(game: CanonicalGameId, data: GameSnapshotData, privacy: PlayerPrivacy): GameSnapshotData {
+export function toPublicGameSnapshot(game: CanonicalGameId, data: GameSnapshotData, privacy: SnapshotPrivacy): GameSnapshotData {
   if (data.snapshot.game !== game) throw new Error("Snapshot game does not match the public profile");
   const rankings = getPlayerRankings(game, data);
   const chartRatings = new Map(data.songs.map(score => [score.songId, score.chartRating ?? (game === "maimai"

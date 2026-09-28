@@ -20,7 +20,7 @@ describe("public game snapshots", () => {
     expect(result.snapshot).not.toHaveProperty("userId");
     expect(result.snapshot).not.toHaveProperty("id");
     expect(result).not.toHaveProperty("events");
-    expect(result.snapshot.totalPlayCount).toBeNull();
+    expect(result.snapshot).toMatchObject({ versionPlayCount: null, totalPlayCount: null });
     expect(result.songs[0]).not.toHaveProperty("dxScore");
     expect(result.songs[0].chartRating).toBeGreaterThan(0);
     expect(result.songs[0]).toMatchObject({ secondaryScore: null, comboStatus: 0, syncStatus: 0, clearStatus: 0 });
@@ -37,5 +37,19 @@ describe("public game snapshots", () => {
     expect(result.snapshot.totalPlayCount).toBe(100);
   });
 
-
+  it("keeps maimai score details, play counts and non-best scores private under restrictive settings", () => {
+    const maimai: GameSnapshotData = {
+      snapshot: { ...data.snapshot, game: "maimai", gameVersion: 20, versionPlayCount: 10 },
+      songs: Array.from({ length: 40 }, (_, index) => ({
+        ...data.songs[0], songId: `chart-${index}`, levelPrecise: 130, scoreValue: 1005000 - index * 100,
+        secondaryScore: 2000, comboStatus: 4, syncStatus: 5, clearStatus: 1,
+      })),
+      events: [{ name: "event" }],
+    };
+    const result = toPublicGameSnapshot("maimai", maimai, { profileShowAllScores: false, profileShowScoreDetails: false, profileShowPlayCounts: false, profileShowEvents: false });
+    expect(result.songs).toHaveLength(35);
+    expect(result.snapshot).toMatchObject({ versionPlayCount: null, totalPlayCount: null });
+    expect(result).not.toHaveProperty("events");
+    for (const song of result.songs) expect(song).toMatchObject({ secondaryScore: null, comboStatus: 0, syncStatus: 0, clearStatus: 0 });
+  });
 });

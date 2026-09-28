@@ -15,8 +15,6 @@ vi.mock("@/lib/logger", () => ({ logger: { info: vi.fn(), warn: vi.fn() } }));
 vi.mock("@/lib/request-logger", () => ({ getLogger: () => ({ info: vi.fn(), warn: vi.fn() }) }));
 vi.mock("@/lib/r2", () => ({ deleteFromR2: vi.fn(), isR2IconUrl: () => false, r2KeyFromIconUrl: vi.fn() }));
 vi.mock("@/lib/profile-cache", () => ({ revalidatePublicProfileForUser: vi.fn() }));
-vi.mock("@/server/queries/reserved", () => ({ getReservedPublicUser: vi.fn(), getReservedSnapshotData: vi.fn(), getReservedSnapshots: vi.fn() }));
-vi.mock("@/server/queries/public-access", () => ({ resolvePublicUserByUsername: vi.fn() }));
 
 import { snapshotsRouter } from "./snapshots";
 

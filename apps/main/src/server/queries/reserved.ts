@@ -176,28 +176,6 @@ export function getReservedPublicUser(username: string) {
   };
 }
 
-export async function getReservedSnapshots(username: string, region: Region) {
-  const profile = RESERVED_PROFILES[username.toLowerCase()];
-  if (!profile) return null;
-
-  const { gameVersion, rating } = await fetchReservedSongs(region, profile.maxDifficulty);
-
-  return [
-    {
-      id: "fixed",
-      fetchedAt: new Date(),
-      rating,
-      displayName: profile.displayName,
-      gameVersion: gameVersion as VersionId,
-      courseRankUrl: "",
-      classRankUrl: "",
-      stars: 0,
-      versionPlayCount: 0,
-      totalPlayCount: 0,
-    },
-  ];
-}
-
 export async function getReservedSnapshotData(
   username: string,
   region: Region
