@@ -25,9 +25,10 @@ finalization. The adapter's advertised stages come from this executable list.
 
 The shared catalog ingestion lives under `apps/main/src/server/services/catalog/`:
 
-- `ingestion/` owns the canonical collection/persistence entrypoints, shared step
-  runner, merge modes, Fill Missing and sorting stages, pending chart contracts,
-  normalization and parent identity matching.
+- `ingestion/` owns the canonical collection (`collect.ts`, `collectGameCatalog`)
+  and persistence entrypoints, shared step runner, merge modes, Fill Missing and
+  sorting stages, pending chart and cover-rule contracts, normalization and parent
+  identity matching.
 - `images.ts` processes incoming covers with each game's cover rules.
 - `publication.ts` publishes game-scoped catalog objects. `notifications.ts`
   formats and delivers the existing ingestion notices.
@@ -35,12 +36,13 @@ The shared catalog ingestion lives under `apps/main/src/server/services/catalog/
 Each game's catalog lives in its game root, under
 `apps/main/src/server/services/games/<game>/catalog/`:
 
-- `maimai/catalog/` owns its executable pipeline, legacy chart normalization,
-  merge configuration, pending-song shape, cover rules (`images.ts`) and
-  `sources/` implementations.
-- `chunithm/catalog/` owns its executable pipeline, cover rules (`images.ts`)
-  and otoge-db source under `sources/`, with source fixtures and tests beside
-  that implementation.
+- `maimai/catalog/` owns its executable pipeline (`collectMaimaiCatalog`),
+  legacy chart normalization, merge configuration, pending-song shape, cover
+  rules (`images.ts`) and `sources/` implementations.
+- `chunithm/catalog/` owns its executable pipeline (`collectChunithmCatalog`),
+  source fetcher adapter (`fetcher.ts`), cover rules (`images.ts`) and otoge-db
+  source under `sources/`, with source fixtures and tests beside that
+  implementation.
 
 Admin routes authenticate and dispatch an explicit game into these shared
 entrypoints. Source acquisition, source authentication and game-specific rules

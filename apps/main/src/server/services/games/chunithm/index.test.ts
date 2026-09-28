@@ -6,7 +6,7 @@ import type { GameFetchResult, ScoreFetchContext } from "../types";
 const catalog = vi.hoisted(() => ({ loaded: vi.fn(), collect: vi.fn() }));
 vi.mock("./catalog/pipeline", () => {
   catalog.loaded();
-  return { collectCatalog: catalog.collect };
+  return { collectChunithmCatalog: catalog.collect };
 });
 
 const scores = vi.hoisted(() => ({ loaded: vi.fn(), fetchPlayer: vi.fn() }));

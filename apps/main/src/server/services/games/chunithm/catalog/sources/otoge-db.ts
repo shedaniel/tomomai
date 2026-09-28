@@ -5,7 +5,7 @@ import { codeOf } from "@/lib/games/codes";
 import { GameAdapterError } from "@/lib/games/types";
 import { getVersionFromDate } from "@/lib/games/versions";
 import { getChunithmVersionByName, chunithmVersionProvider } from "@/lib/games/chunithm/versions";
-import { asFetcher } from "../merge";
+import { asFetcher } from "../fetcher";
 
 export const OTOGE_DB_CHUNITHM_ROOT = "https://raw.githubusercontent.com/zvuc/otoge-db/main/chunithm";
 const SOURCES = {

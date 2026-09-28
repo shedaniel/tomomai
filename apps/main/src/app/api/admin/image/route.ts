@@ -3,8 +3,7 @@ import { GameAdapterError } from "@/lib/games/types";
 import { gameErrorResponse } from "@/lib/api/game-context";
 import { flushLogger } from "@/lib/logger";
 import { requestLogger } from "@/lib/request-logger";
-import type { PendingChart } from "@/server/services/catalog/ingestion/types";
-import type { UpdateSong } from "@/server/services/games/maimai/catalog/types";
+import type { Pending } from "@/server/services/catalog/ingestion/types";
 import { processCatalogImages } from "@/server/services/catalog/images";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -37,10 +36,10 @@ export async function POST(request: NextRequest) {
     }
 
     const game = resolveAdminGame(request.nextUrl.searchParams);
-    const body = await request.json();
-    const songs: (UpdateSong | PendingChart)[] = body.songs;
+    const body: { songs: { cover?: Pending<string> }[] } = await request.json();
+    const songs = body.songs;
 
-    if (!songs || !Array.isArray(songs)) {
+    if (!Array.isArray(songs)) {
       return NextResponse.json(
         { error: "Missing or invalid 'songs' array in request body" },
         { status: 400 }

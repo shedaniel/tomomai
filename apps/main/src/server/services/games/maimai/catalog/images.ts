@@ -1,4 +1,4 @@
-import type { CatalogImagePolicy } from "@/server/services/catalog/image-policy";
+import type { CatalogImagePolicy } from "@/server/services/catalog/ingestion/types";
 
 const MAIMAI_COVER_PATTERN = /^https?:\/\/(?:maimaidx\.jp|maimaidx(?:-eng)?\.com)\/maimai-mobile\/img\/Music\/(.+)$/;
 // Lxns CN jacket: https://assets2.lxns.net/maimai/jacket/{id}.png — namespace under

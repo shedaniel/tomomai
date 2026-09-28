@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import pino from "pino";
 import type { Region } from "@/lib/types";
-import { collectCatalog } from "./pipeline";
+import { collectChunithmCatalog } from "./pipeline";
 import { sendDiscordNotice } from "@/server/services/catalog/notifications";
 import jpFixture from "./fixtures/otoge-db-jp.json";
 import intlFixture from "./fixtures/otoge-db-intl.json";
@@ -10,7 +10,7 @@ vi.mock("@/server/services/catalog/notifications", () => ({ sendDiscordNotice: v
 const context = (region: Region, version = region === "jp" ? 9 : 8) => ({ region, version, log: pino({ enabled: false }), notice: { addDetail: vi.fn(), details: [] } });
 async function collect(records: Record<string, unknown>[], region: Region = "jp", version?: number) {
   vi.stubGlobal("fetch", vi.fn(async () => Response.json(records)));
-  return collectCatalog(context(region, version));
+  return collectChunithmCatalog(context(region, version));
 }
 beforeEach(() => { vi.useFakeTimers({ toFake: ["Date"] }); vi.setSystemTime(new Date("2026-09-26T00:00:00Z")); });
 afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals(); vi.clearAllMocks(); });
@@ -57,17 +57,17 @@ describe("CHUNITHM otoge-db collection", () => {
     vi.setSystemTime(new Date("2026-07-02T07:00:00+09:00"));
     expect(await collect([jpFixture[0]], "jp", 9)).toHaveLength(4);
     vi.mocked(fetch).mockClear();
-    await expect(collectCatalog(context("jp", 8))).rejects.toThrow("only supports version 9");
+    await expect(collectChunithmCatalog(context("jp", 8))).rejects.toThrow("only supports version 9");
     expect(fetch).not.toHaveBeenCalled();
   });
   it("rejects unsupported regions before source work", async () => {
     vi.stubGlobal("fetch", vi.fn());
-    await expect(collectCatalog(context("cn"))).rejects.toThrow("JP and International only");
+    await expect(collectChunithmCatalog(context("cn"))).rejects.toThrow("JP and International only");
     expect(fetch).not.toHaveBeenCalled();
   });
   it("propagates provider HTTP failures", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => new Response("Unavailable", { status: 503 })));
-    await expect(collectCatalog(context("jp"))).rejects.toThrow("HTTP 503");
+    await expect(collectChunithmCatalog(context("jp"))).rejects.toThrow("HTTP 503");
   });
   it("rejects an empty result", async () => { await expect(collect([])).rejects.toThrow("no regular CHUNITHM charts"); });
   it("rejects incomplete charts at finalization without sending a completion notice", async () => {

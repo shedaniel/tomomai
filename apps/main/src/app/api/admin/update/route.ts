@@ -8,7 +8,7 @@ import { getCurrentVersion } from "@/lib/games/versions";
 import { awaitWrapper, sortKeys } from "@/lib/utils";
 import { sendDiscordNotice } from "@/server/services/catalog/notifications";
 import { createNoticeSink } from "@/server/services/catalog/ingestion/runner";
-import { collectCatalog } from "@/server/services/catalog/ingestion";
+import { collectGameCatalog } from "@/server/services/catalog/ingestion/collect";
 import { authenticateCatalogSource } from "@/server/services/catalog/ingestion/source-auth";
 import { formatCatalogError } from "@/server/services/catalog/errors";
 import { NextRequest, NextResponse } from "next/server";
@@ -69,7 +69,7 @@ export async function GET(request: NextRequest) {
     }
     log.info({ game, region }, "Admin catalog collection requested");
 
-    const songs = await collectCatalog(game, {
+    const songs = await collectGameCatalog(game, {
       region,
       version: getCurrentVersion(game, region),
       cookies: cookies ?? "",

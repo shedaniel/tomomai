@@ -142,7 +142,7 @@ export async function fetchLevels(context: FetchingContext): Promise<UpdateSong[
   });
 }
 
-export async function collectCatalog(ctx: CatalogFetchContext) {
+export async function collectMaimaiCatalog(ctx: CatalogFetchContext) {
   const songs = await fetchLevels({
     region: ctx.region,
     version: ctx.version as VersionId,

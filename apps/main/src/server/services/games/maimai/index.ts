@@ -10,8 +10,8 @@ export const maimaiServerModule: GameServerModule = {
       return loginAndGetCookies(region, token);
     },
     async collect(context) {
-      const { collectCatalog } = await import("./catalog/pipeline");
-      return collectCatalog(context);
+      const { collectMaimaiCatalog } = await import("./catalog/pipeline");
+      return collectMaimaiCatalog(context);
     },
   },
   scores: {

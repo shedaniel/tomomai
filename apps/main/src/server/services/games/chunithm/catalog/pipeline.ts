@@ -26,7 +26,7 @@ const stages: { name: string; fetcher: Fetcher<PendingChart, CatalogFetchContext
   },
 ];
 
-export function collectCatalog(context: CatalogFetchContext): Promise<CatalogChart[]> {
+export function collectChunithmCatalog(context: CatalogFetchContext): Promise<CatalogChart[]> {
   return runFetchers(context, {
     fetchers: stages.map(stage => stage.fetcher),
     names: stages.map(stage => stage.name),
