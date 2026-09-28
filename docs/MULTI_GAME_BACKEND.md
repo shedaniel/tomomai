@@ -62,9 +62,11 @@ provider timeout cannot enter persistence. A persistence deadline failure
 rolls back its transaction. Parent-name collisions are left unresolved instead
 of assigning scores to an arbitrary chart.
 
-Generic optional records retain metadata without requiring maimai DX scores,
-map state or image-storage fields. Maimai recent-detail downloads and album
-image work run after the common transaction commits. These optional external
+Recents carry optional game-specific `details`, stored in the recent row's
+metadata, without requiring maimai DX scores or map state. Albums are maimai
+enrichment gated by the `albums` capability. The maimai adapter's
+`persistExtra` step writes them, together with the recent-detail downloads,
+after the common transaction commits. These optional external
 operations are best effort and are not covered by database rollback. Provider
 requests already in flight may finish after a timeout, but cannot commit a late
 snapshot; maimai progress updates only affect pending maimai sessions.

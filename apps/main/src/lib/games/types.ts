@@ -56,7 +56,6 @@ export type NormalizedPlayer = {
   courseRankUrl?: string;
   classRankUrl?: string;
   stars?: number;
-  metadata?: Record<string, unknown>;
 };
 
 export type NormalizedScore = {
@@ -66,34 +65,23 @@ export type NormalizedScore = {
   comboStatus: number;
   syncStatus: number;
   clearStatus: number;
-  details?: Record<string, unknown>;
 };
 
 export type NormalizedRecent = NormalizedScore & {
   playedAt: Date;
   maxDxScore?: number;
   track?: number;
-};
-
-export type NormalizedAlbum = {
-  chart: ChartRef;
-  capturedAt: Date;
-  imageKey?: string;
-  imageSize?: number;
-  venue?: string;
-  metadata?: Record<string, unknown>;
+  details?: Record<string, unknown>;
 };
 
 export type NormalizedEvent = {
   name: string;
-  metadata?: Record<string, unknown>;
 } & Partial<Omit<EventData, "name">>;
 
 export type GameFetchResult = {
   player: NormalizedPlayer;
   scores: NormalizedScore[];
   recents?: NormalizedRecent[];
-  albums?: NormalizedAlbum[];
   events?: NormalizedEvent[];
 };
 

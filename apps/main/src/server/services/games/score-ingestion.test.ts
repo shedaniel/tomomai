@@ -117,17 +117,13 @@ it("persists the captured version and zero scores, then completes adapter extras
   expect(order).toEqual(["extras", "revalidate"]);
 });
 
-it("retains typed optional fields and arbitrary metadata in persistence", async () => {
+it("persists recent details as the recent row metadata", async () => {
   const chart = { game: "chunithm" as const, region: "jp" as const, version: 9, songName: "Song", chartType: 0, difficulty: 3 };
   state.resolveCharts.mockResolvedValue({ chartResolution: new Map([["Song|3|0", BigInt(7)]]), songsById: new Map() });
   await persistFetchResult({ ...persist, game: "chunithm", gameVersion: 9, fetched: { ...fetched,
     recents: [{ chart, scoreValue: 1009000, secondaryScore: 0, comboStatus: 2, syncStatus: 0, clearStatus: 1, playedAt: new Date(100), track: 2, details: { judgement: "complete" } }],
-    events: [{ name: "Progress", metadata: { steps: 10 } }],
-    albums: [{ chart, capturedAt: new Date(100), imageKey: "album.webp", metadata: { provider: "test" } }],
   } });
   expect(state.statements.find(query => query.sql.startsWith('insert into "user_recent_songs"'))?.params).toContain('{"judgement":"complete"}');
-  expect(state.statements.find(query => query.sql.startsWith('insert into "user_events"'))?.params).toContain('{"steps":10}');
-  expect(state.statements.find(query => query.sql.startsWith('insert into "user_albums"'))?.params).toContain("album.webp");
 });
 
 it("rejects an expired persistence deadline before writing", async () => {

@@ -499,7 +499,6 @@ on the upstream pages. The provider returns
 | `player.rating` | Decimal rating multiplied by 100; presentation divides by 100 |
 | `player.title`, `titleType`, `iconUrl` | Required; only title type `0` (normal) is currently defined for CHUNITHM |
 | `player.totalPlayCount`, `currentVersionPlayCount` | Both required; do not substitute one for the other without evidence |
-| `player.metadata` | Optional game-specific fields without inventing maimai equivalents |
 | `score.chart` | Game `chunithm`, requested region, `ctx.gameVersion`, song name, chart type `0`, and canonical difficulty |
 | `score.scoreValue` | Raw integer score, not maimai's scaled achievement percentage |
 | `score.secondaryScore` | `0`; CHUNITHM has no DX score |
@@ -508,8 +507,8 @@ on the upstream pages. The provider returns
 | `recent.maxDxScore` | Omitted |
 | `recent.details` | CHUNITHM judgments can use generic recent metadata |
 
-`NormalizedScore.details` is currently not persisted. Recent details are stored
-in `user_recent_songs.metadata`; the maimai detailed judgment table's
+Only `NormalizedRecent` carries `details`, stored in
+`user_recent_songs.metadata`. The maimai detailed judgment table's
 tap/hold/slide/touch/break matrix is not a CHUNITHM schema. Missing required
 player fields remain an integration question, not permission to fabricate zeros
 or placeholder profile data.

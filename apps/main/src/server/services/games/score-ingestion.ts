@@ -13,7 +13,6 @@ import {
   fetchSessions,
   userRecentSongs,
   userEvents,
-  userAlbums,
   snapshotRankings,
   snapshotScores,
   user,
@@ -30,7 +29,6 @@ import {
   GameAdapterError,
   RANKING_BUCKET,
   type CanonicalGameId,
-  type ChartResolutionMap,
   type GameFetchResult,
   type NormalizedScore,
   type PersistedSnapshotContext,
@@ -427,7 +425,6 @@ export async function persistFetchResult(input: PersistFetchResultInput): Promis
       displayName: player.displayName,
       title: player.title,
       titleType: player.titleType,
-      metadata: player.metadata ?? null,
     }).returning({ id: userSnapshots.id });
     const snapshotId = insertedSnapshot.id;
 
@@ -536,13 +533,6 @@ export async function persistFetchResult(input: PersistFetchResultInput): Promis
     if (recents.length) await tx.insert(userRecentSongs).values(recents).onConflictDoNothing();
     const events = (input.fetched.events ?? []).map(event => ({ ...event, game: input.game, snapshotId }));
     if (events.length) await tx.insert(userEvents).values(events);
-    const albums = (input.fetched.albums ?? []).flatMap(album => {
-      if (album.chart.game !== input.game || album.chart.region !== input.region || album.chart.version !== gameVersion) return [];
-      const songId = chartResolution.get(chartKey(album.chart));
-      return songId === undefined ? [] : [{ game: input.game, userId: input.userId, songId, takenAt: album.capturedAt,
-        imageKey: album.imageKey, imageSize: album.imageSize, venue: album.venue, metadata: album.metadata }];
-    });
-    if (albums.length) await tx.insert(userAlbums).values(albums);
     if (input.deadline && Date.now() >= input.deadline) throw new Error("Fetch operation timed out before persistence completed");
     return { snapshotId, gameVersion, chartResolution };
   });
