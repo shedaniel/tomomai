@@ -1,4 +1,5 @@
-import type { EventData, Snapshot, SnapshotWithSongs } from "@/lib/types";
+import type { EventData } from "@/lib/types";
+import type { Snapshot, SnapshotWithSongs } from "./types";
 import type { GameEvent, GamePlayerScore, GameSnapshot, GameSnapshotData, GameSnapshotSummary } from "@/lib/games/player-view";
 import { codeToChartType, codeToComboStatus, codeToDifficulty, codeToSyncStatus, codeToTitleType } from "./codes";
 import { requireMaimaiVersion } from "./versions";

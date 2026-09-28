@@ -1,7 +1,8 @@
 import { load } from "cheerio";
 import { logger } from "../../logger";
 import { normalizeName } from "../../name-utils";
-import { Difficulty, Region, SongType } from "../../types";
+import { Region } from "../../types";
+import type { Difficulty, SongType } from "@/lib/games/maimai/types";
 import { gameBaseUrl } from "@/lib/games/sites";
 import { getGameHtml } from "@/server/services/games/sega/http";
 import { musicTypeFromIcon } from "../parse-utils";

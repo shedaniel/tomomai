@@ -1,5 +1,5 @@
 import { afterEach, describe, it, expect, vi } from "vitest";
-import { Difficulty, SongType } from "@/lib/types";
+import type { Difficulty, SongType } from "@/lib/games/maimai/types";
 import type { AddedChange, ModifiedChange, FieldChange } from "./ingestion/persistence";
 import { chartTypeToCode, difficultyToCode } from "@/lib/games/maimai/codes";
 import { buildChangeDescription, sendDiscordNotice, sendDiscordWebhook } from "@/server/services/catalog/notifications";

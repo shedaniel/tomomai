@@ -1,4 +1,4 @@
-import { Difficulty } from "./types";
+import type { Difficulty } from "@/lib/games/maimai/types";
 
 export function normalizeName(text: string) {
   return text.normalize("NFKC").trim();

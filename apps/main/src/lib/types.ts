@@ -1,7 +1,4 @@
-// Centralized type definitions for the maimai charts application
-import type { CodeKey } from "@tomomai/games/codes";
 import type { Region } from "./games/ids";
-import { VersionId } from "./metadata";
 
 // ===== CORE TYPES =====
 
@@ -13,56 +10,6 @@ export interface User {
   email?: string | null;
   image?: string | null;
 }
-
-export interface Snapshot {
-  id: string;
-  fetchedAt: Date;
-  rating: number;
-  displayName: string;
-  gameVersion: number;
-  courseRankUrl: string;
-  classRankUrl: string;
-  stars: number;
-  versionPlayCount: number;
-  totalPlayCount: number;
-}
-
-// Song data with score information
-export type MinimalSong = {
-  songId: string;
-  songName: string;
-  artist: string;
-  cover: string;
-  type: SongType;
-  difficulty: Difficulty;
-}
-
-export type MinimalSongForDisplay = MinimalSong & {
-  levelPrecise: number;
-  achievement: number;
-  fc: FullCombo;
-  fs: FullSync;
-  dxScore: number;
-}
-
-export type SongBase = MinimalSong & {
-  level: string;
-  levelPrecise: number;
-  genre: string;
-  addedVersion: VersionId;
-}
-
-export type SongWithScore = SongBase & MinimalSongForDisplay
-
-export type SongExtended = SongBase & {
-  bpm: number | null;
-  noteDesigner: string | null;
-  tapCount: number | null;
-  holdCount: number | null;
-  slideCount: number | null;
-  touchCount: number | null;
-  breakCount: number | null;
-};
 
 export interface NoteCounts {
   tap: number;
@@ -84,17 +31,6 @@ export interface EventData {
   eventPeriodEnd: Date | null;
 }
 
-// Complete snapshot data including songs
-export interface SnapshotWithSongs<S = SongWithScore> {
-  snapshot: Snapshot & {
-    title: string;
-    titleType: TitleType;
-    iconUrl: string;
-  };
-  songs: S[];
-  events?: EventData[];
-}
-
 export interface FetchSession {
   id: string;
   status: "pending" | "completed" | "failed";
@@ -102,41 +38,6 @@ export interface FetchSession {
   completedAt?: Date;
   errorMessage?: string;
   statusStates?: string; // Comma-separated list of completed states
-}
-
-// ===== DATABASE TYPES =====
-
-export type CourseRank =
-  | "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" | "10"
-  | "R1" | "R2" | "R3" | "R4" | "R5" | "R6" | "R7" | "R8" | "R9" | "R10"
-  | "R" | "U";
-
-export type ClassRank =
-  | "B5" | "B4" | "B3" | "B2" | "B1"
-  | "A5" | "A4" | "A3" | "A2" | "A1"
-  | "S5" | "S4" | "S3" | "S2" | "S1"
-  | "SS5" | "SS4" | "SS3" | "SS2" | "SS1"
-  | "SSS5" | "SSS4" | "SSS3" | "SSS2" | "SSS1"
-  | "LEGEND";
-
-export type Difficulty = CodeKey<"maimai", "difficulty">;
-
-export type SongType = CodeKey<"maimai", "chartType">;
-
-export type FullCombo = CodeKey<"maimai", "comboStatus">;
-
-export type FullSync = CodeKey<"maimai", "syncStatus">;
-
-export type TitleType = CodeKey<"maimai", "titleType">;
-
-export type FetchSessionStatus = "pending" | "completed" | "failed";
-
-// ===== COMPONENT PROP TYPES =====
-
-export interface SnapshotData extends Snapshot {
-  // Additional fields that might be needed for UI components
-  title?: string;
-  iconUrl?: string;
 }
 
 // ===== USER & PROFILE TYPES =====

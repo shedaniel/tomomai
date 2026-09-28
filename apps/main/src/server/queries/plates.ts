@@ -5,7 +5,8 @@ import { songInstanceId } from "@/lib/db/song-instance-id";
 import { db } from "@/lib/db";
 import { parentSong, scoreData, snapshotScores, songs } from "@/lib/db/schema-pg";
 import { and, eq, sql } from "drizzle-orm";
-import type { Difficulty, Region, MinimalSongForDisplay } from "@/lib/types";
+import type { Region } from "@/lib/types";
+import type { Difficulty, MinimalSongForDisplay } from "@/lib/games/maimai/types";
 
 export async function fetchPlateSongs(
   snapshotInternalId: number,

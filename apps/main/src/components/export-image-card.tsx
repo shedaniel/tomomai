@@ -3,7 +3,8 @@
 import { useGameId } from "@/components/providers/game-provider";
 import { Button } from "@tomomai/ui";
 import { CANVAS_HEIGHT, CANVAS_WIDTH } from "@/lib/games/maimai/image-spec";
-import { Region, SnapshotWithSongs } from "@/lib/types";
+import { Region } from "@/lib/types";
+import type { SnapshotWithSongs } from "@/lib/games/maimai/types";
 import { Download, RefreshCw } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";

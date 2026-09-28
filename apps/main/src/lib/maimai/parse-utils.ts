@@ -1,4 +1,4 @@
-import { SongType } from "../types";
+import type { SongType } from "@/lib/games/maimai/types";
 
 // Detects "dx" / "std" from a maimai music_kind_icon `src` attribute.
 // Returns null if the icon is missing or unrecognized.

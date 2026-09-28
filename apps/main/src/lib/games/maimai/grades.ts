@@ -1,4 +1,4 @@
-import type { Difficulty } from "@/lib/types";
+import type { Difficulty } from "./types";
 
 const ACHIEVEMENTS = [
   { achievement: 1005000, rate: "SSS+" },

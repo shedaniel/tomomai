@@ -27,7 +27,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { calculateProgress, parseStatusStates } from "@/lib/fetch-states";
 import { getVersionInfo } from "@/lib/games/versions";
 import { trpc } from "@/lib/trpc-client";
-import { FetchSession, Region, Snapshot } from "@/lib/types";
+import { FetchSession, Region } from "@/lib/types";
+import type { Snapshot } from "@/lib/games/maimai/types";
 import { Calendar, Copy, Download, MoreHorizontal, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";

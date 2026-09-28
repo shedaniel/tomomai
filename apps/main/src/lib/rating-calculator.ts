@@ -1,4 +1,4 @@
-import { Difficulty, FullCombo, SongWithScore } from "./types";
+import type { Difficulty, FullCombo, SongWithScore } from "@/lib/games/maimai/types";
 
 // Minimal interface for rating calculation - only requires the fields actually used
 export interface RatingCalculationInput {

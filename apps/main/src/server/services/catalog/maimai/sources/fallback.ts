@@ -1,6 +1,7 @@
 import { VersionId } from "@/lib/metadata";
 import { getLogger } from "@/lib/request-logger";
-import { Difficulty, Region, SongType } from "@/lib/types";
+import { Region } from "@/lib/types";
+import type { Difficulty, SongType } from "@/lib/games/maimai/types";
 import type { Level } from "../levels";
 import type { PendingSong } from "@/server/services/catalog/maimai/types";
 import { promises as fs } from "fs";

@@ -1,6 +1,7 @@
 import { getEnabledRegions } from '@/lib/enabled-regions';
 import { splitSongs } from '@/lib/rating-calculator';
-import type { Region, SongWithScore } from '@/lib/types';
+import type { Region } from '@/lib/types';
+import type { SongWithScore } from '@/lib/games/maimai/types';
 import { fetchLatestMaimaiSnapshotData } from '@/server/queries/snapshots';
 import { getRatingComment } from './responses';
 import { t } from './i18n';

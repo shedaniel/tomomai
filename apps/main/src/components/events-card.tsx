@@ -1,6 +1,6 @@
 "use client";
 
-import { SnapshotWithSongs } from "@/lib/types";
+import type { SnapshotWithSongs } from "@/lib/games/maimai/types";
 import { cn, createSafeMaimaiImageUrl, isR2Url } from "@/lib/utils";
 import { Map, Calendar, Flag, CheckCircle2, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";

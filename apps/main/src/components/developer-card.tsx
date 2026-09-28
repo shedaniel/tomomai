@@ -3,7 +3,7 @@
 import { useGameId } from "@/components/providers/game-provider";
 import { Button } from "@tomomai/ui";
 import { trpc } from "@/lib/trpc-client";
-import { SnapshotWithSongs } from "@/lib/types";
+import type { SnapshotWithSongs } from "@/lib/games/maimai/types";
 import { ChevronDown, ChevronRight, Code, Download } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";

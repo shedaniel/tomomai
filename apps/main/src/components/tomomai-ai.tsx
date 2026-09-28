@@ -6,7 +6,8 @@ import { motion, AnimatePresence } from "motion/react";
 import { SparklesIcon } from "lucide-react";
 import { splitSongs } from "@/lib/rating-calculator";
 import { trpc } from "@/lib/trpc-client";
-import { Region, SnapshotWithSongs } from "@/lib/types";
+import { Region } from "@/lib/types";
+import type { SnapshotWithSongs } from "@/lib/games/maimai/types";
 import { getTransition } from "@/lib/animation-constants";
 import { AutoHeight } from "@/components/animate-ui/primitives/effects/auto-height";
 import {

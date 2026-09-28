@@ -6,7 +6,8 @@ import { getEnabledRegions } from "@/lib/enabled-regions";
 import { getCurrentVersion } from "@/lib/metadata";
 import type { VersionId } from "@/lib/metadata";
 import { splitSongs } from "@/lib/rating-calculator";
-import type { Difficulty, Region } from "@/lib/types";
+import type { Region } from "@/lib/types";
+import type { Difficulty } from "@/lib/games/maimai/types";
 import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import { unstable_cache } from "next/cache";
 

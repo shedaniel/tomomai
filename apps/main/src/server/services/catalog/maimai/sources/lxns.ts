@@ -1,4 +1,5 @@
-import { Difficulty, NoteCounts, SongType } from "@/lib/types";
+import { NoteCounts } from "@/lib/types";
+import type { Difficulty, SongType } from "@/lib/games/maimai/types";
 import { normalizeName } from "@/lib/name-utils";
 import { normalizeGenre } from "../genres";
 import { getVersionByShortCode } from "@/lib/metadata";

@@ -1,4 +1,4 @@
-import { Difficulty, FullCombo, FullSync, SongType, TitleType } from "../types";
+import type { Difficulty, FullCombo, FullSync, SongType, TitleType } from "@/lib/games/maimai/types";
 
 export interface PlayerData {
   iconBytes: Buffer | null;

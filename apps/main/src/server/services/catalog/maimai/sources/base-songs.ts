@@ -1,4 +1,5 @@
-import { Difficulty, Region, SongType } from "@/lib/types";
+import { Region } from "@/lib/types";
+import type { Difficulty, SongType } from "@/lib/games/maimai/types";
 import type { Level } from "../levels";
 import { OfficialSong } from "@/server/services/catalog/maimai/types";
 import { asFetcher } from "../merge";

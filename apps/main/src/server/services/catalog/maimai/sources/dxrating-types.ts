@@ -1,4 +1,4 @@
-import { Difficulty, SongType } from "@/lib/types";
+import type { Difficulty, SongType } from "@/lib/games/maimai/types";
 
 type Response = {
   songs: Song[];

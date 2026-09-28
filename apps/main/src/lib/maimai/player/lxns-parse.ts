@@ -1,6 +1,6 @@
 import { MAIMAI_CODES } from "@/lib/games/maimai/codes";
 import { logger } from "../../logger";
-import type { TitleType } from "../../types";
+import type { TitleType } from "@/lib/games/maimai/types";
 import type { PlayerData } from "../types";
 
 const LXNS_ICON_BASE = "https://assets2.lxns.net/maimai/icon";

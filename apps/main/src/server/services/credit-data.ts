@@ -5,7 +5,8 @@ import { parentSong, songs, user, userRecentSongs, userRecentSongsDetailed, user
 import { and, desc, eq, lte, sql } from 'drizzle-orm';
 import { VersionId } from '@/lib/metadata';
 import { getLogger } from '@/lib/request-logger';
-import { FullCombo, FullSync, Region, TitleType } from '@/lib/types';
+import { Region } from '@/lib/types';
+import type { FullCombo, FullSync, TitleType } from '@/lib/games/maimai/types';
 
 // Type for detailed song statistics
 export interface RecentSongDetails {
