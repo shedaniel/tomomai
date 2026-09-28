@@ -1,9 +1,8 @@
 import { describe, expect, it } from "vitest";
-import type { Flags } from "@/lib/flags";
 import type { FetchedMaimaiData } from "./types";
-import { maimaiScoreAdapter, normalizeFetchedMaimaiData } from "./normalize";
+import { normalizeFetchedMaimaiData } from "./normalize";
 
-describe("maimai score adapter normalization", () => {
+describe("maimai score normalization", () => {
   it("maps maimai player, score, recent, and event fields to common codes", async () => {
     const fetched: FetchedMaimaiData = {
       playerData: {
@@ -113,21 +112,5 @@ describe("maimai score adapter normalization", () => {
       expect.objectContaining({ name: "Area event", eventType: "area" }),
       expect.objectContaining({ name: "Event area", eventType: "eventArea", eventPeriodStart: new Date(100), eventPeriodEnd: new Date(200) }),
     ]);
-  });
-
-  it("rejects a stored CN single-use token but accepts a newly supplied one", () => {
-    const validateToken = maimaiScoreAdapter.validateToken!;
-    const context = {
-      game: "maimai" as const,
-      userId: "user-1",
-      region: "cn" as const,
-      flags: {} as Flags,
-      token: "cn-cookies://token",
-    };
-
-    expect(() => validateToken({ ...context, tokenProvided: false }))
-      .toThrow("CN_COOKIES_SINGLE_USE");
-    expect(() => validateToken({ ...context, tokenProvided: true }))
-      .not.toThrow();
   });
 });

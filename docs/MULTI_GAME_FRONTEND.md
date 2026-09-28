@@ -26,7 +26,8 @@ Implemented frontend support:
   correct ranking buckets, and provide searchable score tables. CHUNITHM uses
   integer scores and B20/B30; maimai retains percentage scores and B15/B35.
 - Public profiles resolve users within game context, load reserved accounts
-  through the maimai adapter, and whitelist serialized snapshot fields. Privacy
+  through the game server module's optional `reserved` provider (only maimai
+  declares one), and whitelist serialized snapshot fields. Privacy
   filtering removes non-public scores, score details and play counts on the
   server before data reaches client components.
 - Catalog list/detail components use game-aware queries and numeric chart codes.
@@ -136,10 +137,14 @@ Implementation ownership:
   [`tokens.ts`](../apps/main/src/server/services/games/tokens.ts) scopes token
   access by game, user and region.
 - Shared SEGA HTTP and login mechanics live in
-  [`games/sega/`](../apps/main/src/server/services/games/sega/), with verified
-  game-specific login configuration in
+  [`games/sega/`](../apps/main/src/server/services/games/sega/). Each game's
+  server-only code lives under its own root,
   [`games/maimai/`](../apps/main/src/server/services/games/maimai/) and
-  [`games/chunithm/`](../apps/main/src/server/services/games/chunithm/).
+  [`games/chunithm/`](../apps/main/src/server/services/games/chunithm/), with
+  login configuration beside a `scores/` folder for player fetching. Each root's
+  `index.ts` exports its catalog, score and optional reserved-profile sources,
+  and [`registry.ts`](../apps/main/src/server/services/games/registry.ts) lists
+  them in `GAME_SERVER_MODULES`. The sources load their implementations lazily.
   Maimai's score parsers and CN authentication behavior remain specialized.
 - [`otp.ts`](../apps/main/src/lib/otp.ts) binds game and user in the existing
   signed login authorization. The token dialog requests an OTP for its current

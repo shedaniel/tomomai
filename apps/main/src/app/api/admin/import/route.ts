@@ -5,7 +5,7 @@ import { parseCatalogVersion } from "@/lib/catalog/parse-version";
 import { db } from "@/lib/db";
 import { songs } from "@/lib/db/schema-pg";
 import { Region } from "@/lib/types";
-import { resolveCatalogContext } from "@/server/services/games/adapters";
+import { resolveCatalogContext } from "@/server/services/games/registry";
 import { flushLogger } from "@/lib/logger";
 import { requestLogger } from "@/lib/request-logger";
 import { and, eq, gte, lte, sql } from "drizzle-orm";

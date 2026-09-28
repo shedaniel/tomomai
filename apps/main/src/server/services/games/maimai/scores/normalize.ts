@@ -1,13 +1,10 @@
 import "server-only";
 import type { FetchedMaimaiData, ScoreData } from "./types";
 import type {
-  ConfiguredScoreAdapter,
   GameFetchResult,
   NormalizedEvent,
   NormalizedRecent,
   NormalizedScore,
-  PersistedSnapshotContext,
-  ScoreFetchContext,
 } from "@/server/services/games/types";
 import {
   chartTypeToCode,
@@ -107,32 +104,3 @@ export async function normalizeFetchedMaimaiData(
     events: normalizeEvents(fetched),
   };
 }
-
-export const maimaiScoreAdapter: ConfiguredScoreAdapter = {
-  configured: true,
-  validateToken(ctx) {
-    if (ctx.token.startsWith("cn-cookies://") && !ctx.tokenProvided) {
-      throw new Error("CN_COOKIES_SINGLE_USE: This session token is single-use and has already been consumed. Please re-authenticate via the HTTP Proxy flow.");
-    }
-  },
-  async fetch(ctx: ScoreFetchContext) {
-    const { runMaimaiFetcher, persistMaimaiExtra } = await import("./orchestrator");
-    const { fetched } = await runMaimaiFetcher(ctx);
-    const result = await normalizeFetchedMaimaiData(fetched, {
-      region: ctx.region,
-      version: ctx.gameVersion,
-    });
-
-    return {
-      result,
-      persistExtra: async (persistCtx: PersistedSnapshotContext, backgroundWorkRef?: { promise: Promise<void> }) => {
-        return persistMaimaiExtra(
-          persistCtx,
-          fetched,
-          ctx.shouldFetchAlbums,
-          backgroundWorkRef,
-        );
-      },
-    };
-  },
-};

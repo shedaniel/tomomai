@@ -1,7 +1,7 @@
 import { db } from '@/lib/db';
 import { user } from '@/lib/db/schema-pg';
 import { protectedProcedure, router } from '@/lib/trpc';
-import { RESERVED_USERNAMES } from '@/server/queries/reserved';
+import { RESERVED_USERNAMES } from '@/server/services/games/maimai/reserved';
 import { TRPCError } from '@trpc/server';
 import { eq } from 'drizzle-orm';
 import { nanoid } from 'nanoid';

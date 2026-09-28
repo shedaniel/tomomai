@@ -1,8 +1,9 @@
-import type { EventData, Region } from "@/lib/types";
+import type { EventData, ProfileData, Region } from "@/lib/types";
 import type { Flags } from "@/lib/flags";
 import type { CanonicalGameId, GameRegionContext } from "@/lib/games/types";
 import type { CatalogFetchContext } from "@/server/services/catalog/ingestion/types";
 import type { CatalogChart } from "@/server/services/catalog/ingestion/normalize-charts";
+import type { GameSnapshotData } from "@/lib/games/player-view";
 
 export type ChartRef = GameRegionContext & {
   version: number;
@@ -106,3 +107,14 @@ export interface ConfiguredScoreAdapter {
 }
 
 export type ScoreAdapter = ConfiguredScoreAdapter | { configured: false; notConfiguredReason: string };
+
+export interface ReservedProfileProvider {
+  user: (username: string) => Promise<ProfileData | null>;
+  snapshot: (username: string, region: Region) => Promise<GameSnapshotData | null>;
+}
+
+export interface GameServerModule {
+  catalog: CatalogSourceAdapter;
+  scores: ScoreAdapter;
+  reserved?: ReservedProfileProvider;
+}

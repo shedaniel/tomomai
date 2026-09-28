@@ -1,4 +1,13 @@
-import { codeToChartType, codeToDifficulty, difficultyToCode } from "@/lib/games/maimai/codes";
+import "server-only";
+import {
+  chartTypeToCode,
+  codeToChartType,
+  codeToDifficulty,
+  comboStatusToCode,
+  difficultyToCode,
+  syncStatusToCode,
+  titleTypeToCode,
+} from "@/lib/games/maimai/codes";
 import { songInstanceId } from "@/lib/db/song-instance-id";
 import { db } from "@/lib/db";
 import { parentSong, songs } from "@/lib/db/schema-pg";
@@ -6,8 +15,9 @@ import { getEnabledRegions } from "@/lib/enabled-regions";
 import { getCurrentVersion } from "@/lib/metadata";
 import type { VersionId } from "@/lib/metadata";
 import { splitSongs } from "@/lib/rating-calculator";
-import type { Region } from "@/lib/types";
+import type { ProfileData, Region } from "@/lib/types";
 import type { Difficulty } from "@/lib/games/maimai/types";
+import type { GameSnapshotData } from "@/lib/games/player-view";
 import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import { unstable_cache } from "next/cache";
 
@@ -158,7 +168,7 @@ const fetchReservedSongs = unstable_cache(
   { revalidate: 3600, tags: ["reserved-songs:maimai"] }
 );
 
-export function getReservedPublicUser(username: string) {
+export function getReservedPublicUser(username: string): ProfileData | null {
   const profile = RESERVED_PROFILES[username.toLowerCase()];
   if (!profile) return null;
 
@@ -208,5 +218,24 @@ export async function getReservedSnapshotData(
     },
     songs: reservedSongs,
     events: [] as never[],
+  };
+}
+
+export async function getReservedGameSnapshot(username: string, region: Region): Promise<GameSnapshotData | null> {
+  const data = await getReservedSnapshotData(username, region);
+  if (!data) return null;
+  return {
+    snapshot: { ...data.snapshot, game: "maimai", titleType: titleTypeToCode(data.snapshot.titleType) },
+    songs: data.songs.map(song => ({
+      ...song,
+      difficultyCode: difficultyToCode(song.difficulty),
+      typeCode: chartTypeToCode(song.type),
+      scoreValue: song.achievement,
+      secondaryScore: song.dxScore,
+      comboStatus: comboStatusToCode(song.fc),
+      syncStatus: syncStatusToCode(song.fs),
+      clearStatus: 0,
+    })),
+    events: [],
   };
 }

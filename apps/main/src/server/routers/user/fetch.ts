@@ -5,7 +5,7 @@ import { gameContextInput, validateGameCapability, validateGameInput } from "./g
 import { startScoreFetch, getScoreFetchStatus } from "@/server/services/games/score-ingestion";
 import { db } from '@/lib/db';
 import { generateUserOtp, getOtpExpiryTimestamp, createLoginAuthorization } from '@/lib/otp';
-import { requireConfiguredSource } from "@/server/services/games/adapters";
+import { requireConfiguredSource } from "@/server/services/games/registry";
 import { deleteToken } from "@/server/services/games/tokens";
 import { resolveBaseUrl } from '@/lib/base-url';
 import { getLogger } from '@/lib/request-logger';

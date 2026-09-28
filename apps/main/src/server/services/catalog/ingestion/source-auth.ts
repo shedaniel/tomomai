@@ -1,4 +1,4 @@
-import { requireConfiguredSource } from "@/server/services/games/adapters";
+import { requireConfiguredSource } from "@/server/services/games/registry";
 import type { CanonicalGameId } from "@/lib/games/types";
 import type { Region } from "@/lib/types";
 

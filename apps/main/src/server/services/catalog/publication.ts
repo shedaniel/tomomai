@@ -1,5 +1,5 @@
 import type { CanonicalGameId } from "@/lib/games/types";
-import { requireConfiguredSource } from "@/server/services/games/adapters";
+import { requireConfiguredSource } from "@/server/services/games/registry";
 import { and, eq, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { parentSong, songs } from "@/lib/db/schema-pg";

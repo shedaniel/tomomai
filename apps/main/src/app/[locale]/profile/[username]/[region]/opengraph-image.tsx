@@ -7,7 +7,7 @@ import { db } from "@/lib/db";
 import { userSnapshots } from "@/lib/db/schema-pg";
 import { and, desc, eq } from "drizzle-orm";
 import { resolvePublicUserByUsername } from "@/server/queries/public-access";
-import { getReservedSnapshotData } from "@/server/queries/reserved";
+import { GAME_SERVER_MODULES } from "@/server/services/games/registry";
 import { TRPCError } from "@trpc/server";
 import type { Locale } from "@/i18n/locale";
 import { getOGImageLocales } from "@/i18n/og-locale";
@@ -44,7 +44,7 @@ export default async function Image({ params, id }: Props & { id: Promise<string
   }
 
   try {
-    const reservedData = await getReservedSnapshotData(username, region);
+    const reservedData = await GAME_SERVER_MODULES[game.id].reserved?.snapshot(username, region);
     if (reservedData) {
       const { snapshot } = reservedData;
       return createProfileOGImage({

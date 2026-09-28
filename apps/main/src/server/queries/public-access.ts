@@ -3,10 +3,10 @@ import { db } from "@/lib/db";
 import { user, userSnapshots } from "@/lib/db/schema-pg";
 import { and, eq } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
-import { getReservedPublicUser } from "./reserved";
+import { GAME_SERVER_MODULES } from "@/server/services/games/registry";
 
 export async function resolvePublicUserByUsername(username: string, game: CanonicalGameId) {
-  const reserved = game === "maimai" ? getReservedPublicUser(username) : null;
+  const reserved = await GAME_SERVER_MODULES[game].reserved?.user(username);
   if (reserved) return reserved;
 
   const userRecord = await db

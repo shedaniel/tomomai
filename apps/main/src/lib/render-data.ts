@@ -27,7 +27,7 @@ import type { VersionId } from "@/lib/metadata";
 import {
   getReservedSnapshotData,
   RESERVED_USERNAMES,
-} from "@/server/queries/reserved";
+} from "@/server/services/games/maimai/reserved";
 import { prepareCreditData } from "@/server/services/credit-data";
 import { prepareDailyPlaysData } from "@/server/services/daily-plays-data";
 import type {

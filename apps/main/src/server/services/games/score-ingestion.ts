@@ -1,4 +1,4 @@
-import { requireConfiguredSource } from "./adapters";
+import { requireConfiguredSource } from "./registry";
 import { readToken, saveToken } from "./tokens";
 import { getGameMaintenance, getGameMaintenanceError } from "@/lib/games/maintenance";
 import { revalidatePublicProfileForUser } from "@/lib/profile-cache";

@@ -29,10 +29,12 @@ vi.mock("./score-storage", async importOriginal => ({
   buildChartResolution: state.resolveCharts,
   upsertScoreData: state.upsertScores,
 }));
-vi.mock("@/server/services/games/maimai/scores/normalize", () => ({ maimaiScoreAdapter: {
-  configured: true, fetch: state.fetch, validateToken: state.validateToken,
+vi.mock("./maimai", () => ({ maimaiServerModule: {
+  scores: { configured: true, fetch: state.fetch, validateToken: state.validateToken },
 } }));
-vi.mock("./chunithm/scores/pipeline", () => ({ fetchPlayer: async (context: Parameters<ConfiguredScoreAdapter["fetch"]>[0]) => (await state.fetch(context)).result }));
+vi.mock("./chunithm", () => ({ chunithmServerModule: {
+  scores: { configured: true, fetch: state.fetch },
+} }));
 vi.mock("@/lib/profile-cache", () => ({ revalidatePublicProfileForUser: state.revalidate }));
 vi.mock("@/lib/flags", () => ({ resolveFlagsForUser: state.resolveFlags }));
 vi.mock("@/lib/logger", () => ({ flushLogger: vi.fn() }));
