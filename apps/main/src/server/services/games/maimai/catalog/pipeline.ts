@@ -19,7 +19,7 @@ import { isNullOrUndefined } from "@/lib/utils";
 import { FillMissingFetcher } from "./fill-level";
 import { key } from "./merge";
 import type { FetchingContext, PendingSong, SongFetcher, UpdateSong } from "./types";
-import { sendDiscordNotice } from "@/server/services/catalog/notifications";
+import { sendDiscordNotice } from "@/server/services/discord/webhook";
 
 
 export const SorterFetcher: SongFetcher = createSorterFetcher<PendingSong, FetchingContext>((a, b) =>

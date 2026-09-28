@@ -7,7 +7,7 @@ import { flushLogger } from "@/lib/logger";
 import { requestLogger } from "@/lib/request-logger";
 import { redis } from "@/lib/redis";
 import { storePending } from "@/server/services/pending-confirmation";
-import { sendDiscordNotice } from "@/server/services/catalog/notifications";
+import { sendDiscordNotice } from "@/server/services/discord/webhook";
 import { resolveBaseUrl } from "@/lib/base-url";
 import { computeEventDelta, formatEventDescription, deltaColor } from "@/server/services/games/maimai/events/diff";
 import { KNOWN_STEP_TYPES, norm, normType } from "@/lib/games/maimai/events";

@@ -2,11 +2,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import pino from "pino";
 import type { Region } from "@/lib/types";
 import { collectChunithmCatalog } from "./pipeline";
-import { sendDiscordNotice } from "@/server/services/catalog/notifications";
+import { sendDiscordNotice } from "@/server/services/discord/webhook";
 import jpFixture from "./fixtures/otoge-db-jp.json";
 import intlFixture from "./fixtures/otoge-db-intl.json";
 
-vi.mock("@/server/services/catalog/notifications", () => ({ sendDiscordNotice: vi.fn(async () => {}) }));
+vi.mock("@/server/services/discord/webhook", () => ({ sendDiscordNotice: vi.fn(async () => {}) }));
 const context = (region: Region, version = region === "jp" ? 9 : 8) => ({ region, version, log: pino({ enabled: false }), notice: { addDetail: vi.fn(), details: [] } });
 async function collect(records: Record<string, unknown>[], region: Region = "jp", version?: number) {
   vi.stubGlobal("fetch", vi.fn(async () => Response.json(records)));

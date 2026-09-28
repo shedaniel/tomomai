@@ -32,7 +32,12 @@ The shared catalog ingestion lives under `apps/main/src/server/services/catalog/
 - `admin-game.ts` resolves the explicit game and its regions for admin routes.
 - `images.ts` processes incoming covers with each game's cover rules.
 - `publication.ts` publishes game-scoped catalog objects. `notifications.ts`
-  formats and delivers the existing ingestion notices.
+  formats the song data update embed.
+
+Discord delivery is generic and lives in
+`apps/main/src/server/services/discord/webhook.ts`. It posts embeds under the
+game's bot identity after the response is sent, truncates long descriptions and
+sends the stage, error and tour event notices.
 
 Each game's catalog lives in its game root, under
 `apps/main/src/server/services/games/<game>/catalog/`:

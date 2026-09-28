@@ -1,46 +1,10 @@
-import { after } from "next/server";
 import { resolveGame } from "@/lib/games/registry";
-import { getGameBrand } from "@/lib/games/frontend";
-import { resolveBaseUrl } from "@/lib/base-url";
-import { logger, flushLogger } from "@/lib/logger";
+import { logger } from "@/lib/logger";
+import { postDiscordEmbed } from "@/server/services/discord/webhook";
 import type { AddedChange, DeletedChange, ModifiedChange } from "./ingestion/persistence";
 import type { Region } from "@/lib/types";
 import type { CanonicalGameId } from "@/lib/games/types";
 import { getGameChartTypeKey, getGameDifficultyKey } from "@/lib/games/presentation";
-
-
-// Discord rejects an embed whose description exceeds 4096 chars with a 400.
-// Cut at a line boundary and mark the truncation so the message still posts.
-const DISCORD_DESC_LIMIT = 4096;
-function truncateForDiscord(description: string): string {
-  if (description.length <= DISCORD_DESC_LIMIT) return description;
-  const marker = "\n… (truncated)";
-  const budget = DISCORD_DESC_LIMIT - marker.length;
-  const cut = description.lastIndexOf("\n", budget);
-  return description.slice(0, cut > budget * 0.5 ? cut : budget).trimEnd() + marker;
-}
-
-// Vercel freezes the function as soon as the response is sent, killing any
-// in-flight fetch that wasn't registered with after(). Run webhook delivery
-// here so it survives the freeze, and flush logs afterwards so the outcome is
-// actually observable (a bare fire-and-forget loses both the request and its
-// logs). Falls back to best-effort when called outside a request scope.
-function deliverInBackground(work: () => Promise<void>) {
-  const task = (async () => {
-    try {
-      await work();
-    } catch (error) {
-      logger.error({ err: error }, "Discord delivery threw");
-    } finally {
-      await flushLogger().catch(() => { });
-    }
-  })();
-  try {
-    after(task);
-  } catch {
-    void task; // outside a request scope (scripts/tests) — best effort
-  }
-}
 
 function formatPrecise(value: number): string {
   return (value / 10).toFixed(1);
@@ -97,7 +61,7 @@ function formatFieldDiff(oldValue: any, newValue: any): string {
   return `${oldValue} → ${newValue}`;
 }
 
-// Fold an "other field" bucket by song (name + type, never across std/dx).
+// Fold an "other field" bucket by song (name + type, never across chart types).
 // When every changed difficulty of a song shares one change, emit a single
 // markerless line; when they diverge, emit one line per distinct change listing
 // the difficulties it covers in play order.
@@ -299,76 +263,10 @@ export async function sendDiscordWebhook(
     color = 0x808080; // Gray - no changes or non-level modifications
   }
 
-  const baseUrl = resolveBaseUrl();
-  const registration = resolveGame(game);
-  const payload = {
-    username: getGameBrand(registration).japaneseName,
-    avatar_url: `${baseUrl}/icon.png`,
-    embeds: [
-      {
-        title: `${registration.displayName} song data update - ${dateStr} - ${regionName}`,
-        description: truncateForDiscord(description.trim() || "No changes detected"),
-        color: color,
-        timestamp: now.toISOString(),
-      },
-    ],
-  };
-
-  deliverInBackground(async () => {
-    const response = await fetch(webhookUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      logger.error({ region, status: response.status, statusText: response.statusText, body: errorText }, "Discord webhook failed");
-    } else {
-      logger.info({ region }, "Discord webhook sent");
-    }
-  });
-}
-
-export async function sendDiscordNotice(
-  game: CanonicalGameId,
-  region: Region,
-  title: string,
-  description: string,
-  color: number = 0x5865F2,
-) {
-  const webhookUrl = process.env.DISCORD_UPDATE_WEBHOOK_NOTICE;
-  if (!webhookUrl) return;
-
-  const baseUrl = resolveBaseUrl();
-  const regionName = region === "jp" ? "Japan" : region === "cn" ? "China" : "International";
-  const registration = resolveGame(game);
-
-  const payload = {
-    username: getGameBrand(registration).japaneseName,
-    avatar_url: `${baseUrl}/icon.png`,
-    embeds: [
-      {
-        title: `[${registration.displayName} / ${regionName}] ${title}`,
-        description: truncateForDiscord(description.trim()) || undefined,
-        color,
-        timestamp: new Date().toISOString(),
-      },
-    ],
-  };
-
-  deliverInBackground(async () => {
-    const response = await fetch(webhookUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      logger.error({ region, status: response.status, statusText: response.statusText, body: errorText }, "Discord notice webhook failed");
-    }
+  postDiscordEmbed(webhookUrl, { game, region }, {
+    title: `${resolveGame(game).displayName} song data update - ${dateStr} - ${regionName}`,
+    description: description.trim() || "No changes detected",
+    color,
+    timestamp: now.toISOString(),
   });
 }

@@ -2,7 +2,7 @@ import { afterEach, describe, it, expect, vi } from "vitest";
 import type { Difficulty, SongType } from "@/lib/games/maimai/types";
 import type { AddedChange, ModifiedChange, FieldChange } from "./ingestion/persistence";
 import { chartTypeToCode, difficultyToCode } from "@/lib/games/maimai/codes";
-import { buildChangeDescription, sendDiscordNotice, sendDiscordWebhook } from "@/server/services/catalog/notifications";
+import { buildChangeDescription, sendDiscordWebhook } from "@/server/services/catalog/notifications";
 
 const background = vi.hoisted(() => [] as Promise<unknown>[]);
 vi.mock("next/server", () => ({ after: (task: Promise<unknown>) => background.push(task) }));
@@ -10,17 +10,12 @@ vi.mock("@/lib/base-url", () => ({ resolveBaseUrl: () => "https://example.test" 
 vi.mock("@/lib/logger", () => ({ logger: { info: vi.fn(), debug: vi.fn(), error: vi.fn() }, flushLogger: vi.fn(async () => {}) }));
 afterEach(() => { vi.unstubAllEnvs(); vi.unstubAllGlobals(); background.length = 0; });
 
-it.each(["changes", "notice"])("identifies CHUNITHM %s independently of the host's frontend game", async kind => {
+it("identifies CHUNITHM changes independently of the host's frontend game", async () => {
   vi.stubEnv("FRONTEND_GAME", "maimai");
   vi.stubEnv("DISCORD_UPDATE_WEBHOOK_JP", "https://example.test/webhook");
-  vi.stubEnv("DISCORD_UPDATE_WEBHOOK_NOTICE", "https://example.test/notice");
   const fetch = vi.fn<typeof globalThis.fetch>(async () => new Response(null, { status: 204 }));
   vi.stubGlobal("fetch", fetch);
-  if (kind === "changes") {
-    await sendDiscordWebhook("chunithm", "jp", [{ songKey: "chart", songName: "Test", artist: "Artist", chartType: 0, difficulty: 4, level: "14+", levelPrecise: 145 }], [], []);
-  } else {
-    await sendDiscordNotice("chunithm", "jp", "Fetch pipeline completed", "Complete");
-  }
+  await sendDiscordWebhook("chunithm", "jp", [{ songKey: "chart", songName: "Test", artist: "Artist", chartType: 0, difficulty: 4, level: "14+", levelPrecise: 145 }], [], []);
   await Promise.all(background);
   const payload = JSON.parse(String(fetch.mock.calls[0][1]?.body));
   expect(payload.username).toBe("ともチュウ");

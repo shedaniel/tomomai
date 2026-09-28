@@ -16,7 +16,8 @@ vi.mock("@/lib/games/versions", () => ({ getCurrentVersion: () => 9, getVersionI
 vi.mock("@/lib/games/frontend-server", () => ({ getFrontendGame: () => ({ id: "maimai" }) }));
 vi.mock("@/server/services/catalog/ingestion/persistence", () => ({ persistCatalog: mocks.ingest }));
 vi.mock("@/server/services/catalog/publication", () => ({ publishSongCatalog: mocks.publish }));
-vi.mock("@/server/services/catalog/notifications", () => ({ sendDiscordNotice: mocks.notice, sendDiscordWebhook: vi.fn().mockResolvedValue(undefined) }));
+vi.mock("@/server/services/catalog/notifications", () => ({ sendDiscordWebhook: vi.fn().mockResolvedValue(undefined) }));
+vi.mock("@/server/services/discord/webhook", () => ({ sendDiscordNotice: mocks.notice }));
 vi.mock("@/lib/logger", () => ({ flushLogger: mocks.flush }));
 vi.mock("@/lib/request-logger", () => ({ requestLogger: () => ({ log: mocks.log, requestId: "catalog-test" }) }));
 vi.mock("@/lib/song-slug", () => ({ getSongSlugs: vi.fn().mockResolvedValue([]) }));

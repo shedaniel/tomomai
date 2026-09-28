@@ -6,7 +6,7 @@ import { requestLogger } from "@/lib/request-logger";
 import { Region } from "@/lib/types";
 import { getCurrentVersion } from "@/lib/games/versions";
 import { awaitWrapper, sortKeys } from "@/lib/utils";
-import { sendDiscordNotice } from "@/server/services/catalog/notifications";
+import { sendDiscordNotice } from "@/server/services/discord/webhook";
 import { createNoticeSink } from "@/server/services/catalog/ingestion/runner";
 import { collectGameCatalog } from "@/server/services/catalog/ingestion/collect";
 import { authenticateCatalogSource } from "@/server/services/catalog/ingestion/source-auth";

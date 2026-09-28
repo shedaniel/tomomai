@@ -1,6 +1,6 @@
 import "server-only";
 import { catalogChartKey, completeCatalogChart, type CatalogChart } from "@/server/services/catalog/ingestion/normalize-charts";
-import { sendDiscordNotice } from "@/server/services/catalog/notifications";
+import { sendDiscordNotice } from "@/server/services/discord/webhook";
 import { runFetchers, type Fetcher } from "@/server/services/catalog/ingestion/runner";
 import { createFillMissingFetcher, createSorterFetcher } from "@/server/services/catalog/ingestion/stages";
 import { parseDisplayLevel } from "@/server/services/catalog/levels";
