@@ -4,7 +4,7 @@ import { GAME_SERVER_MODULES, requireConfiguredSource } from "../registry";
 import type { GameFetchResult, ScoreFetchContext } from "../types";
 
 const catalog = vi.hoisted(() => ({ loaded: vi.fn(), collect: vi.fn() }));
-vi.mock("@/server/services/catalog/chunithm/pipeline", () => {
+vi.mock("./catalog/pipeline", () => {
   catalog.loaded();
   return { collectCatalog: catalog.collect };
 });

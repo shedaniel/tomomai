@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { parseLegacyCatalogChart } from "@/server/services/catalog/maimai/normalize";
+import { parseLegacyCatalogChart } from "@/server/services/games/maimai/catalog/normalize";
 import { gameIdSchema } from "@/lib/games/schema";
 import type { CanonicalGameId } from "@/lib/games/types";
 import { validateCatalogCharts, type CatalogChart } from "@/server/services/catalog/ingestion/normalize-charts";

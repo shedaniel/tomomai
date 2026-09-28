@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import type { PendingSong } from "@/server/services/catalog/maimai/types";
+import type { PendingSong } from "./types";
 import { value, important, Pending } from "@/server/services/catalog/ingestion/types";
 import type { Logger } from "pino";
 import type { Difficulty, SongType } from "@/lib/games/maimai/types";

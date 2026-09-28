@@ -1,3 +1,4 @@
+import "server-only";
 import { Region } from "@/lib/types";
 import { gameBaseUrl } from "@/lib/games/sites";
 import { getGameHtml } from "@/server/services/games/sega/http";
@@ -5,7 +6,7 @@ import { load } from "cheerio";
 import { normalizeGenre } from "../genres";
 import { type Logger } from "pino";
 import pLimit from "p-limit";
-import { levelToPrecise } from "@/server/services/catalog/maimai/levels";
+import { levelToPrecise } from "../levels";
 import { value } from "@/server/services/catalog/ingestion/types";
 import { key } from "../merge";
 import type { SongFetcher } from "../types";

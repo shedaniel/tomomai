@@ -4,7 +4,7 @@ import { gameErrorResponse } from "@/lib/api/game-context";
 import { flushLogger } from "@/lib/logger";
 import { requestLogger } from "@/lib/request-logger";
 import type { PendingChart } from "@/server/services/catalog/ingestion/types";
-import type { UpdateSong } from "@/server/services/catalog/maimai/types";
+import type { UpdateSong } from "@/server/services/games/maimai/catalog/types";
 import { processCatalogImages } from "@/server/services/catalog/images";
 import { NextRequest, NextResponse } from "next/server";
 

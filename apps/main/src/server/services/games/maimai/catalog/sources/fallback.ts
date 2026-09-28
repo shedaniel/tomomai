@@ -1,9 +1,10 @@
+import "server-only";
 import { VersionId } from "@/lib/metadata";
 import { getLogger } from "@/lib/request-logger";
 import { Region } from "@/lib/types";
 import type { Difficulty, SongType } from "@/lib/games/maimai/types";
 import type { Level } from "../levels";
-import type { PendingSong } from "@/server/services/catalog/maimai/types";
+import type { PendingSong } from "../types";
 import { promises as fs } from "fs";
 import { join } from "path";
 import { asFetcher } from "../merge";

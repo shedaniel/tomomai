@@ -23,19 +23,24 @@ finalization. The adapter's advertised stages come from this executable list.
 
 ## Code layout
 
-Catalog ingestion lives under `apps/main/src/server/services/catalog/`:
+The shared catalog ingestion lives under `apps/main/src/server/services/catalog/`:
 
 - `ingestion/` owns the canonical collection/persistence entrypoints, shared step
   runner, merge modes, Fill Missing and sorting stages, pending chart contracts,
   normalization and parent identity matching.
-- `maimai/` owns its executable pipeline, legacy chart normalization, merge
-  configuration, pending-song shape and `sources/` implementations.
-- `chunithm/` owns its executable pipeline and otoge-db source under `sources/`,
-  with source fixtures and tests beside that implementation.
-- `images.ts` processes incoming covers. Game URL/static-asset rules live in
-  `maimai/images.ts` and `chunithm/images.ts`.
-- `publication.ts` publishes game-scoped catalog objects; `notifications.ts`
+- `images.ts` processes incoming covers with each game's cover rules.
+- `publication.ts` publishes game-scoped catalog objects. `notifications.ts`
   formats and delivers the existing ingestion notices.
+
+Each game's catalog lives in its game root, under
+`apps/main/src/server/services/games/<game>/catalog/`:
+
+- `maimai/catalog/` owns its executable pipeline, legacy chart normalization,
+  merge configuration, pending-song shape, cover rules (`images.ts`) and
+  `sources/` implementations.
+- `chunithm/catalog/` owns its executable pipeline, cover rules (`images.ts`)
+  and otoge-db source under `sources/`, with source fixtures and tests beside
+  that implementation.
 
 Admin routes authenticate and dispatch an explicit game into these shared
 entrypoints. Source acquisition, source authentication and game-specific rules
@@ -118,7 +123,7 @@ a title with a regular chart. The deleted-song archive is not imported.
 ## Verification
 
 Small unmodified excerpts of both public datasets are stored alongside provider
-tests in `apps/main/src/server/services/catalog/chunithm/fixtures`. The snapshots were
+tests in `apps/main/src/server/services/games/chunithm/catalog/fixtures`. The snapshots were
 read on 2026-09-26; source Git blob IDs were
 `2dddbe4815bfc0abb22d485935fdb5bfd201602a` (JP) and
 `e78d65e5ec93851a34d6f2fc5b239412e94af8b7` (International).

@@ -20,8 +20,8 @@ This means even items that "support cn today" via hardcoded paths must be revisi
 - [x] **Region config**: `lib/enabled-regions.ts`
 - [x] **UI shells**: `components/region-switcher.tsx`, `components/token-dialog.tsx` → `token-dialog-cn.tsx`, `settings/fetch-settings.tsx`, `settings/account-settings.tsx` (`isCNExclusive`)
 - [x] **Most tRPC user routers** — already use `getEnabledRegions()`
-- [x] **CN catalog fetcher**: `server/services/catalog/maimai/sources/lxns.ts` (Lxns API, single-source pipeline)
-- [x] **Genre normalization for Lxns**: `server/services/catalog/maimai/genres.ts` (POPSアニメ / niconicoボーカロイド / オンゲキCHUNITHM / ゲームバラエティ → canonical `＆` forms; region-agnostic)
+- [x] **CN catalog fetcher**: `server/services/games/maimai/catalog/sources/lxns.ts` (Lxns API, single-source pipeline)
+- [x] **Genre normalization for Lxns**: `server/services/games/maimai/catalog/genres.ts` (POPSアニメ / niconicoボーカロイド / オンゲキCHUNITHM / ゲームバラエティ → canonical `＆` forms; region-agnostic)
 - [x] **Admin region validation** (the four admin routes below) gate on `isRegionEnabled()` and default iteration to `getEnabledRegions()`:
   - `app/api/admin/update/route.ts`
   - `app/api/admin/db/route.ts` (normalize path; backfill still JP/INTL-only)
@@ -32,11 +32,11 @@ This means even items that "support cn today" via hardcoded paths must be revisi
 **Catalog ingestion (functional for CN via Lxns):** the JP/INTL multi-source merge (scraper + base + otoge-db + after-fetch) is replaced for CN by a single `LxnsFetcher` that covers title, artist, genre, cover, level, levelPrecise, bpm, noteDesigner, notes counts, and addedVersion. The JP/INTL-specific files below are skipped entirely for CN — they still need work only if we want CN player-score scraping.
 - [ ] `server/services/games/maimai/scores/{player,songs,recents}/fetch.ts` — `fetchPlayerData`, `fetchAllSongsData`, `fetchRecentSongsData`, baseUrl ternaries — score scraping is JP/INTL-only (CN has no scrapable mobile site; will need a different score source)
 - [ ] `server/services/maimai-login.ts` — `processMaimaiToken` (L21-40), cookie validation (L87), JP login URLs (L185-186, L295, L300) — CN does not use SEGA login
-- [~] `server/services/catalog/maimai/pipeline.ts` — pipeline branches on `region === "cn"`. **Not "done" by definition above.** Should derive the fetcher set from a region→fetcher-set table or per-region capability flag, gated by `isRegionEnabled` upstream. Functionality works today.
-- [~] ~~`server/services/catalog/maimai/sources/scraper.ts`~~ — currently bypassed for CN via the same hardcoded branch. Same caveat as `maimai/pipeline.ts`.
-- [~] ~~`server/services/catalog/maimai/sources/after-fetch.ts`~~ — same caveat.
-- [~] ~~`server/services/catalog/maimai/sources/base-songs.ts`~~ — same caveat.
-- [~] ~~`server/services/catalog/maimai/sources/otoge-db.ts`~~ — same caveat.
+- [~] `server/services/games/maimai/catalog/pipeline.ts` — pipeline branches on `region === "cn"`. **Not "done" by definition above.** Should derive the fetcher set from a region→fetcher-set table or per-region capability flag, gated by `isRegionEnabled` upstream. Functionality works today.
+- [~] ~~`server/services/games/maimai/catalog/sources/scraper.ts`~~ — currently bypassed for CN via the same hardcoded branch. Same caveat as `maimai/pipeline.ts`.
+- [~] ~~`server/services/games/maimai/catalog/sources/after-fetch.ts`~~ — same caveat.
+- [~] ~~`server/services/games/maimai/catalog/sources/base-songs.ts`~~ — same caveat.
+- [~] ~~`server/services/games/maimai/catalog/sources/otoge-db.ts`~~ — same caveat.
 - [ ] `server/utils/level.ts` — CN utage handling: `levelToPrecise` reused for utage; verify CN-specific quirks if any surface
 
 ## HTTP API Routes

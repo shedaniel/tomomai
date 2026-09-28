@@ -1,4 +1,4 @@
-import type { CatalogImagePolicy } from "../image-policy";
+import type { CatalogImagePolicy } from "@/server/services/catalog/image-policy";
 import { OTOGE_DB_CHUNITHM_ROOT } from "./sources/otoge-db";
 
 const COVER_PREFIX = `${OTOGE_DB_CHUNITHM_ROOT}/jacket/`;

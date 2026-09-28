@@ -1,9 +1,10 @@
+import "server-only";
 import { catalogChartKey, completeCatalogChart, type CatalogChart } from "@/server/services/catalog/ingestion/normalize-charts";
 import { sendDiscordNotice } from "@/server/services/catalog/notifications";
 import { runFetchers, type Fetcher } from "@/server/services/catalog/ingestion/runner";
 import { createFillMissingFetcher, createSorterFetcher } from "@/server/services/catalog/ingestion/stages";
-import { parseDisplayLevel } from "../levels";
-import { value, type CatalogFetchContext, type PendingChart } from "../ingestion/types";
+import { parseDisplayLevel } from "@/server/services/catalog/levels";
+import { value, type CatalogFetchContext, type PendingChart } from "@/server/services/catalog/ingestion/types";
 import { OtogeDbFetcher } from "./sources/otoge-db";
 
 const stages: { name: string; fetcher: Fetcher<PendingChart, CatalogFetchContext> }[] = [

@@ -1,12 +1,12 @@
+import "server-only";
 import { Region } from "@/lib/types";
 import type { Difficulty, SongType } from "@/lib/games/maimai/types";
 import type { Level } from "../levels";
-import { OfficialSong } from "@/server/services/catalog/maimai/types";
+import type { OfficialSong, PendingSong } from "../types";
 import { asFetcher } from "../merge";
 import { gameBaseUrl } from "@/lib/games/sites";
 import { normalizeName } from "@/lib/name-utils";
 import { normalizeGenre } from "../genres";
-import type { PendingSong } from "@/server/services/catalog/maimai/types";
 import { important } from "@/server/services/catalog/ingestion/types";
 import { getVersionByShortCode } from "@/lib/metadata";
 

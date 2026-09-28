@@ -1,12 +1,10 @@
+import "server-only";
 import type { VersionId } from "@/lib/metadata";
 import type { Logger } from "pino";
-import type { CatalogFetchContext } from "../ingestion/types";
+import { value, type CatalogFetchContext } from "@/server/services/catalog/ingestion/types";
 import { toCatalogChart } from "./normalize";
-import { createSorterFetcher } from "../ingestion/stages";
-import { runFetchers, requireCatalogValue } from "../ingestion/runner";
-import { UpdateSong } from "@/server/services/catalog/maimai/types";
-import type { PendingSong } from "@/server/services/catalog/maimai/types";
-import { value } from "@/server/services/catalog/ingestion/types";
+import { createSorterFetcher } from "@/server/services/catalog/ingestion/stages";
+import { runFetchers, requireCatalogValue } from "@/server/services/catalog/ingestion/runner";
 import { DxDataFetcher } from "./sources/dxrating";
 import { FallbackFetcher } from "./sources/fallback";
 import { MaimaiAfterFetcher } from "./sources/after-fetch";
@@ -20,8 +18,8 @@ import { normalizeGenre } from "./genres";
 import { isNullOrUndefined } from "@/lib/utils";
 import { FillMissingFetcher } from "./fill-level";
 import { key } from "./merge";
-import type { FetchingContext, SongFetcher } from "./types";
-import { sendDiscordNotice } from "../notifications";
+import type { FetchingContext, PendingSong, SongFetcher, UpdateSong } from "./types";
+import { sendDiscordNotice } from "@/server/services/catalog/notifications";
 
 
 export const SorterFetcher: SongFetcher = createSorterFetcher<PendingSong, FetchingContext>((a, b) =>

@@ -1,7 +1,7 @@
 import type { NoteCounts } from "@/lib/types";
-import { asFetcher as sourceFetcher, choosePendingValue, type FetcherMode } from "../ingestion/merge";
-import { catalogChartKey } from "../ingestion/normalize-charts";
-import { value, type CatalogFetchContext, type PendingChart } from "../ingestion/types";
+import { asFetcher as sourceFetcher, choosePendingValue, type FetcherMode } from "@/server/services/catalog/ingestion/merge";
+import { catalogChartKey } from "@/server/services/catalog/ingestion/normalize-charts";
+import { value, type CatalogFetchContext, type PendingChart } from "@/server/services/catalog/ingestion/types";
 
 export function asFetcher(source: (context: CatalogFetchContext) => Promise<PendingChart[]>, mode: FetcherMode = "default") {
   return sourceFetcher(source, {

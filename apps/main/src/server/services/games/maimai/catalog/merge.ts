@@ -1,8 +1,7 @@
 import type { PendingSong, SongKey, FetchingContext, SongFetcher, SongWithMode } from "./types";
 import { isImportant, Pending, unwrapUndefined, value } from "@/server/services/catalog/ingestion/types";
 import type { Logger } from "pino";
-import { asFetcher as sourceFetcher, mergeSongs as mergeSourceSongs, choosePendingValue } from "../ingestion/merge";
-import type { FetcherMode } from "../ingestion/merge";
+import { asFetcher as sourceFetcher, mergeSongs as mergeSourceSongs, choosePendingValue, type FetcherMode } from "@/server/services/catalog/ingestion/merge";
 import deepEqual from "deep-equal";
 
 type Taker<T> = (a: PendingSong, b: PendingSong, av: Pending<T>, bv: Pending<T>, fieldName: string) => Pending<T>;

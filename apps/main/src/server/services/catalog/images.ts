@@ -2,8 +2,8 @@ import type { Logger } from "pino";
 import type { CanonicalGameId } from "@/lib/games/types";
 import { convertToWebp, fetchImageBuffer } from "@/lib/image-converter";
 import { value, type Pending } from "./ingestion/types";
-import { maimaiImagePolicy } from "./maimai/images";
-import { chunithmImagePolicy } from "./chunithm/images";
+import { maimaiImagePolicy } from "@/server/services/games/maimai/catalog/images";
+import { chunithmImagePolicy } from "@/server/services/games/chunithm/catalog/images";
 import type { CatalogImagePolicy } from "./image-policy";
 
 const imagePolicies: Record<CanonicalGameId, CatalogImagePolicy> = {

@@ -141,7 +141,8 @@ Implementation ownership:
   server-only code lives under its own root,
   [`games/maimai/`](../apps/main/src/server/services/games/maimai/) and
   [`games/chunithm/`](../apps/main/src/server/services/games/chunithm/), with
-  login configuration beside a `scores/` folder for player fetching. Each root's
+  login configuration beside a `scores/` folder for player fetching and a
+  `catalog/` folder for song catalog ingestion. Each root's
   `index.ts` exports its catalog, score and optional reserved-profile sources,
   and [`registry.ts`](../apps/main/src/server/services/games/registry.ts) lists
   them in `GAME_SERVER_MODULES`. The sources load their implementations lazily.

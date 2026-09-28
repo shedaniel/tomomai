@@ -9,8 +9,8 @@ const mocks = vi.hoisted(() => {
   log.child.mockReturnValue(log);
   return { log, source: vi.fn(), ingest: vi.fn(), publish: vi.fn(), login: vi.fn(), notice: vi.fn().mockResolvedValue(undefined), flush: vi.fn(), invalidate: vi.fn() };
 });
-vi.mock("@/server/services/catalog/maimai/pipeline", () => ({ collectCatalog: (ctx: CatalogFetchContext) => mocks.source("maimai", ctx) }));
-vi.mock("@/server/services/catalog/chunithm/pipeline", () => ({ collectCatalog: (ctx: CatalogFetchContext) => mocks.source("chunithm", ctx) }));
+vi.mock("@/server/services/games/maimai/catalog/pipeline", () => ({ collectCatalog: (ctx: CatalogFetchContext) => mocks.source("maimai", ctx) }));
+vi.mock("@/server/services/games/chunithm/catalog/pipeline", () => ({ collectCatalog: (ctx: CatalogFetchContext) => mocks.source("chunithm", ctx) }));
 vi.mock("@/server/services/games/maimai/login", () => ({ loginAndGetCookies: mocks.login }));
 vi.mock("@/lib/games/versions", () => ({ getCurrentVersion: () => 9, getVersionInfo: () => ({ id: 9 }) }));
 vi.mock("@/lib/games/frontend-server", () => ({ getFrontendGame: () => ({ id: "maimai" }) }));

@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import pino from "pino";
 import type { PendingSong, SongFetcher } from "./types";
 import { asFetcher } from "./merge";
-import { important } from "../ingestion/types";
+import { important } from "@/server/services/catalog/ingestion/types";
 
 const state = vi.hoisted(() => ({ incomplete: false }));
 function fixtureStep(fields: Partial<PendingSong>): SongFetcher {
@@ -18,9 +18,9 @@ vi.mock("./sources/fallback", () => ({ FallbackFetcher: (...args: Parameters<Son
 vi.mock("./sources/otoge-db", () => ({ OtogeDbFetcher: (...args: Parameters<SongFetcher>) => fixtureStep({ artist: "Fallback artist", addedVersion: 7 })(...args) }));
 vi.mock("./sources/after-fetch", () => ({ MaimaiAfterFetcher: (...args: Parameters<SongFetcher>) => fixtureStep({ noteCounts: { tap: 100, hold: 1, slide: 2, touch: 3, break: 4 } })(...args) }));
 vi.mock("./sources/lxns", () => ({ LxnsFetcher: (...args: Parameters<SongFetcher>) => fixtureStep({ artist: "CN artist", genre: "maimai", cover: "cn.jpg", addedVersion: 8 })(...args) }));
-vi.mock("../notifications", () => ({ sendDiscordNotice: vi.fn(async () => {}) }));
+vi.mock("@/server/services/catalog/notifications", () => ({ sendDiscordNotice: vi.fn(async () => {}) }));
 import { fetchLevels } from "./pipeline";
-import { sendDiscordNotice } from "../notifications";
+import { sendDiscordNotice } from "@/server/services/catalog/notifications";
 
 beforeEach(() => { state.incomplete = false; vi.clearAllMocks(); });
 const context = (region: "jp" | "intl" | "cn") => ({ region, version: 9 as const, cookies: "", log: pino({ enabled: false }), notice: { details: [], addDetail: vi.fn() } });

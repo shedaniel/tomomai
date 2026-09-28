@@ -1,10 +1,11 @@
+import "server-only";
 import { getVersionByShortName, getVersionInfo, VersionId } from "@/lib/metadata";
 import { normalizeName } from "@/lib/name-utils";
 import { NoteCounts } from "@/lib/types";
 import type { Level } from "../levels";
 import { DxRatingResponse } from "./dxrating-types";
 import { getLogger } from "@/lib/request-logger";
-import type { PendingSong } from "@/server/services/catalog/maimai/types";
+import type { PendingSong } from "../types";
 import { asFetcher } from "../merge";
 
 const DXDATA_URL = "https://raw.githubusercontent.com/gekichumai/dxrating/refs/heads/main/packages/dxdata/dxdata.json";

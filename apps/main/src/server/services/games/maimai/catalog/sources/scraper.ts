@@ -1,18 +1,17 @@
+import "server-only";
 import { logger } from "@/lib/logger";
 import { gameBaseUrl } from "@/lib/games/sites";
 import { requestGamePage } from "@/server/services/games/sega/http";
-import { musicTypeFromIcon } from "@/server/services/games/maimai/scores/parse-utils";
+import { musicTypeFromIcon } from "../../scores/parse-utils";
 import { VersionId } from "@/lib/metadata";
 import { normalizeName } from "@/lib/name-utils";
 import { Region } from "@/lib/types";
 import type { Difficulty, SongType } from "@/lib/games/maimai/types";
 import type { Level } from "../levels";
-import { ParsedSong } from "@/server/services/catalog/maimai/types";
-import type { PendingSong } from "@/server/services/catalog/maimai/types";
-import { important } from "@/server/services/catalog/ingestion/types";
+import type { ParsedSong, PendingSong } from "../types";
+import { important, type NoticeSink } from "@/server/services/catalog/ingestion/types";
 import { load } from "cheerio";
 import { asFetcher } from "../merge";
-import type { NoticeSink } from "../../ingestion/types";
 import { type Logger } from "pino";
 import { MAIMAI_CODES } from "@/lib/games/maimai/codes";
 

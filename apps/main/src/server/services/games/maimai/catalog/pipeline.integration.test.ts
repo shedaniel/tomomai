@@ -1,15 +1,13 @@
 import { describe, it, expect, beforeAll } from "vitest";
-import type { PendingSong } from "@/server/services/catalog/maimai/types";
 import { value } from "@/server/services/catalog/ingestion/types";
 import pino from "pino";
 import { getCurrentVersion, VersionId } from "@/lib/metadata";
-import { loginAndGetCookies } from "@/server/services/games/maimai/login";
+import { loginAndGetCookies } from "../login";
 import { MaimaiBaseFetcher } from "./sources/base-songs";
 import { DxDataFetcher } from "./sources/dxrating";
 import { FETCHERS } from "./pipeline";
-import type { FetchingContextExtended } from "./types";
 import { asFetcher, key } from "./merge";
-import type { FetchingContext, SongFetcher } from "./types";
+import type { FetchingContext, FetchingContextExtended, PendingSong, SongFetcher } from "./types";
 import { fetchSongDataForDifficulty, parsedSongToPendingSong } from "./sources/scraper";
 
 const TOKEN = process.env.TOKEN;

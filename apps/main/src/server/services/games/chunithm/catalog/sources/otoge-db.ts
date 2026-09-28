@@ -1,5 +1,6 @@
+import "server-only";
 import type { Region } from "@/lib/types";
-import type { CatalogFetchContext, PendingChart } from "../../ingestion/types";
+import type { CatalogFetchContext, PendingChart } from "@/server/services/catalog/ingestion/types";
 import { codeOf } from "@/lib/games/codes";
 import { GameAdapterError } from "@/lib/games/types";
 import { getVersionFromDate } from "@/lib/games/versions";

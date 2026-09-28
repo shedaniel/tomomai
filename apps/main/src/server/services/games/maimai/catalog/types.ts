@@ -2,10 +2,10 @@ import type { VersionId } from "@/lib/metadata";
 import type { NoteCounts, Region } from "@/lib/types";
 import type { Difficulty, SongType } from "@/lib/games/maimai/types";
 import type { Level } from "./levels";
-import type { Pending, NoticeSink } from "../ingestion/types";
+import type { Pending, NoticeSink } from "@/server/services/catalog/ingestion/types";
 import type { Logger as PinoLogger } from "pino";
-import type { Fetcher, Attributed, FetchingContextExtended as SharedFetchingContextExtended } from "../ingestion/runner";
-import type { FetcherMode } from "../ingestion/merge";
+import type { Fetcher, Attributed, FetchingContextExtended as SharedFetchingContextExtended } from "@/server/services/catalog/ingestion/runner";
+import type { FetcherMode } from "@/server/services/catalog/ingestion/merge";
 
 export type PendingSong = {
   songName: string;

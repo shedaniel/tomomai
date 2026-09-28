@@ -5,7 +5,7 @@ export const chunithmServerModule: GameServerModule = {
   catalog: {
     configured: true,
     async collect(context) {
-      const { collectCatalog } = await import("@/server/services/catalog/chunithm/pipeline");
+      const { collectCatalog } = await import("./catalog/pipeline");
       return collectCatalog(context);
     },
   },

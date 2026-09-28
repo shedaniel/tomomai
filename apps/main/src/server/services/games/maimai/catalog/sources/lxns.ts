@@ -1,11 +1,12 @@
+import "server-only";
 import { NoteCounts } from "@/lib/types";
 import type { Difficulty, SongType } from "@/lib/games/maimai/types";
 import { normalizeName } from "@/lib/name-utils";
 import { normalizeGenre } from "../genres";
 import { getVersionByShortCode } from "@/lib/metadata";
-import type { PendingSong } from "@/server/services/catalog/maimai/types";
+import type { PendingSong } from "../types";
 import { important } from "@/server/services/catalog/ingestion/types";
-import { levelToPrecise, type Level } from "@/server/services/catalog/maimai/levels";
+import { levelToPrecise, type Level } from "../levels";
 import { asFetcher } from "../merge";
 
 const LXNS_SONG_LIST_URL = "https://maimai.lxns.net/api/v0/maimai/song/list?notes=true";

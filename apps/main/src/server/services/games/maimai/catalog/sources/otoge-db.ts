@@ -1,15 +1,14 @@
+import "server-only";
 import { gameBaseUrl } from "@/lib/games/sites";
 import { getVersionFromDate, VersionId, Versions } from "@/lib/metadata";
 import { normalizeName } from "@/lib/name-utils";
 import { normalizeGenre } from "../genres";
 import { NoteCounts, Region } from "@/lib/types";
 import type { Difficulty, SongType } from "@/lib/games/maimai/types";
-import type { PendingSong } from "@/server/services/catalog/maimai/types";
-import { asFetcher } from "../merge";
-import { key } from "../merge";
-import type { SongWithMode } from "../types";
+import type { PendingSong, SongWithMode } from "../types";
+import { asFetcher, key } from "../merge";
 import { Logger } from "pino";
-import { levelToPrecise, type Level } from "@/server/services/catalog/maimai/levels";
+import { levelToPrecise, type Level } from "../levels";
 
 const MAIMAI_SONGS_JSON_URL = "https://github.com/zvuc/otoge-db/raw/refs/heads/main/maimai/data/music-ex.json";
 const MAIMAI_SONGS_JSON_URL_INTL = "https://github.com/zvuc/otoge-db/raw/refs/heads/main/maimai/data/music-ex-intl.json";

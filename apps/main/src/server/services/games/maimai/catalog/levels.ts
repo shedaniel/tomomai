@@ -1,5 +1,5 @@
 import type { VersionId } from "@/lib/metadata";
-import { parseDisplayLevel } from "../levels";
+import { parseDisplayLevel } from "@/server/services/catalog/levels";
 
 export const MAIMAI_LEVELS = [
   "1", "1+", "2", "2+", "3", "3+", "4", "4+", "5", "5+", "6", "6+",
