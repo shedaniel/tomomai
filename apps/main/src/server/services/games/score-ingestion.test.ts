@@ -126,6 +126,12 @@ it("persists recent details as the recent row metadata", async () => {
   expect(state.statements.find(query => query.sql.startsWith('insert into "user_recent_songs"'))?.params).toContain('{"judgement":"complete"}');
 });
 
+it("persists events against the new snapshot and game", async () => {
+  await persistFetchResult({ ...persist, fetched: { ...fetched, events: [{ name: "Progress", currentDistance: 10 }] } });
+  const eventWrite = state.statements.find(query => query.sql.startsWith('insert into "user_events"'))!;
+  expect(eventWrite.params).toEqual(expect.arrayContaining(["Progress", 10, "maimai", 1]));
+});
+
 it("rejects an expired persistence deadline before writing", async () => {
   await expect(persistFetchResult({ ...persist, deadline: Date.now() - 1 })).rejects.toThrow("timed out");
   expect(state.statements).toEqual([]);
