@@ -3,14 +3,14 @@
 import { createContext, useContext, type ReactNode } from "react";
 import type { FrontendGame } from "@/lib/games/frontend";
 
-const GameContext = createContext<FrontendGame | null>(null);
+const FrontendGameContext = createContext<FrontendGame | null>(null);
 
 export function GameProvider({ game, children }: { game: FrontendGame; children: ReactNode }) {
-  return <GameContext.Provider value={game}>{children}</GameContext.Provider>;
+  return <FrontendGameContext.Provider value={game}>{children}</FrontendGameContext.Provider>;
 }
 
 export function useGame(): FrontendGame {
-  const game = useContext(GameContext);
+  const game = useContext(FrontendGameContext);
   if (!game) throw new Error("GameProvider is required for game-scoped UI");
   return game;
 }

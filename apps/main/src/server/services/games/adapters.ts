@@ -1,6 +1,6 @@
 import "server-only";
 import { resolveGame } from "@/lib/games/registry";
-import { GameAdapterError, type CanonicalGameId, type GameContext, type ConfiguredScoreAdapter, type ConfiguredCatalogAdapter, type CatalogSourceAdapter, type ScoreAdapter } from "@/lib/games/types";
+import { GameAdapterError, type CanonicalGameId, type GameRegionContext, type ConfiguredScoreAdapter, type ConfiguredCatalogAdapter, type CatalogSourceAdapter, type ScoreAdapter } from "@/lib/games/types";
 import type { Region } from "@/lib/types";
 
 const SEGA_COOKIE_LOGIN_URL = "https://lng-tgk-aime-gw.am-all.net/common_auth/";
@@ -61,7 +61,7 @@ export function requireConfiguredSource(game: CanonicalGameId, source: "catalog"
   return adapter;
 }
 
-export function resolveCatalogContext(input: string, region: Region): GameContext {
+export function resolveCatalogContext(input: string, region: Region): GameRegionContext {
   const registration = resolveGame(input);
   if (!registration.adapter.supportedRegions.has(region)) {
     throw new GameAdapterError("UNSUPPORTED_REGION", `${region} is not supported for ${registration.displayName}`, registration.id, region);

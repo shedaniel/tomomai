@@ -6,7 +6,7 @@ import type { CanonicalGameId, Region } from "./ids";
 
 export { CANONICAL_GAME_IDS, type CanonicalGameId } from "./ids";
 
-export type GameContext = {
+export type GameRegionContext = {
   game: CanonicalGameId;
   region: Region;
 };
@@ -38,7 +38,7 @@ export interface VersionProvider {
   getVersionInfo(region: Region, version: number): GameVersionInfo | null;
 }
 
-export type ChartRef = GameContext & {
+export type ChartRef = GameRegionContext & {
   version: number;
   songName: string;
   chartType: number;

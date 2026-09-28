@@ -8,7 +8,7 @@ import {
   type CanonicalGameId,
   type GameAdapter,
   type GameCapability,
-  type GameContext,
+  type GameRegionContext,
 } from "./types";
 
 export { getEnabledRegions } from "./regions";
@@ -49,7 +49,7 @@ export function resolveGame(input: string): GameRegistration {
   return GAME_REGISTRY[game];
 }
 
-export function resolveGameContext(input: string, region: Region, capability?: GameCapability): GameContext {
+export function resolveGameContext(input: string, region: Region, capability?: GameCapability): GameRegionContext {
   const registration = resolveGame(input);
   if (capability) requireCapability(registration.id, capability, region);
   else if (!registration.enabled) {
