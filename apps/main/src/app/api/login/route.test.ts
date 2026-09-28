@@ -3,7 +3,6 @@ import { NextRequest } from "next/server";
 
 const mocks = vi.hoisted(() => ({ start: vi.fn() }));
 vi.mock("@/lib/db", () => ({ db: {} }));
-vi.mock("@/lib/flags", () => ({ resolveFlagsForUser: async () => ({}) }));
 vi.mock("@/lib/base-url", () => ({ resolveBaseUrl: () => "https://tomomai.test" }));
 vi.mock("@/lib/logger", () => ({ flushLogger: vi.fn() }));
 vi.mock("@/lib/request-logger", () => ({

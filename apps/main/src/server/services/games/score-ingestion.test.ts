@@ -9,6 +9,7 @@ const state = vi.hoisted(() => ({
   resolveCharts: vi.fn(),
   upsertScores: vi.fn(),
   revalidate: vi.fn(),
+  resolveFlags: vi.fn(),
 }));
 vi.mock("@/lib/db", async () => {
   const { drizzle } = await import("drizzle-orm/pg-proxy");
@@ -33,6 +34,7 @@ vi.mock("@/lib/games/adapters/maimai/score", () => ({ maimaiScoreAdapter: {
 } }));
 vi.mock("./chunithm/pipeline", () => ({ fetchPlayer: async (context: Parameters<ConfiguredScoreAdapter["fetch"]>[0]) => (await state.fetch(context)).result }));
 vi.mock("@/lib/profile-cache", () => ({ revalidatePublicProfileForUser: state.revalidate }));
+vi.mock("@/lib/flags", () => ({ resolveFlagsForUser: state.resolveFlags }));
 vi.mock("@/lib/logger", () => ({ flushLogger: vi.fn() }));
 vi.mock("@/lib/request-logger", () => ({ getLogger: () => ({ error: vi.fn() }) }));
 vi.mock("@/lib/token-crypto", () => ({ encryptToken: (token: string) => `encrypted:${token}`, decryptToken: (token: string) => token.slice(10) }));
@@ -72,6 +74,17 @@ it("scopes session SQL to the user, game and region", async () => {
   const sessionWrite = state.statements.find(query => query.sql.startsWith('update "fetch_sessions"'))!;
   expect(sessionWrite.sql).toMatch(/"fetch_sessions"\."id" = \$\d+ and "fetch_sessions"\."game" = \$\d+/);
   expect(sessionWrite.params).toContain("maimai");
+});
+
+it("resolves the user's flags when the caller does not pass them", async () => {
+  const flags = { userscriptFetch: true } as Flags;
+  state.resolveFlags.mockResolvedValueOnce(flags);
+  const { flags: _omitted, ...withoutFlags } = start;
+  const started = await startScoreFetch(withoutFlags);
+  await started.backgroundWork;
+  expect(state.resolveFlags).toHaveBeenCalledWith("same-user");
+  expect(state.validateToken).toHaveBeenCalledWith(expect.objectContaining({ flags }));
+  expect(state.fetch).toHaveBeenCalledWith(expect.objectContaining({ flags }));
 });
 
 it("rejects maintenance before validating or storing tokens or creating sessions", async () => {

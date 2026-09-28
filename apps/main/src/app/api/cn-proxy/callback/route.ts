@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { verifyCnProxyToken } from "@/lib/cn-proxy-token";
 import { formatCnCookiesToken } from "@/server/services/games/maimai/login";
 import { deleteToken, saveToken } from "@/server/services/games/tokens";
-import { startFetchServer } from "@/lib/maimai-server-actions";
+import { startScoreFetch } from "@/server/services/games/score-ingestion";
 import { agentFetch } from "@/lib/http-agent";
 import { requestLogger } from "@/lib/request-logger";
 
@@ -120,7 +120,7 @@ export async function POST(req: NextRequest) {
   // Kick off the fetch on the user's behalf. The dashboard's session
   // polling will pick up the new session id and close the dialog.
   try {
-    const result = await startFetchServer(userId, "cn");
+    const result = await startScoreFetch({ userId, game: "maimai", region: "cn" });
     log.info({ userId, session: result.sessionId }, "started fetch session");
     return NextResponse.json({ ok: true, sessionId: result.sessionId });
   } catch (err) {

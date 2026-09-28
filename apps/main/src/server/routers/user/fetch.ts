@@ -1,7 +1,6 @@
 import { getGameSite } from "@/lib/games/sites";
 import { gameIdSchema } from "@/lib/games/schema";
 import { gameContextInput, validateGameCapability, validateGameInput } from "./game-input";
-import { resolveFlagsForUser } from "@/lib/flags";
 import { startScoreFetch, getScoreFetchStatus } from "@/server/services/games/score-ingestion";
 import { db } from '@/lib/db';
 import { generateUserOtp, getOtpExpiryTimestamp, createLoginAuthorization } from '@/lib/otp';
@@ -46,7 +45,7 @@ export const fetchRouter = router({
     .mutation(async ({ ctx, input }) => {
       try {
         const context = validateGameInput(input, "scores");
-        return await startScoreFetch({ ...context, userId: ctx.session.user.id, token: input.token, flags: await resolveFlagsForUser(ctx.session.user.id) });
+        return await startScoreFetch({ ...context, userId: ctx.session.user.id, token: input.token });
       } catch (error) {
         if (error instanceof Error) {
           if (isAlbumSettingsError(error.message)) {

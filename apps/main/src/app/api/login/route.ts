@@ -1,5 +1,4 @@
 import { decodeLoginAuthorization, verifyUserOtp } from "@/lib/otp";
-import { resolveFlagsForUser } from "@/lib/flags";
 import { startScoreFetch } from "@/server/services/games/score-ingestion";
 import { GameAdapterError } from "@/lib/games/types";
 import { NextRequest, NextResponse } from "next/server";
@@ -86,7 +85,7 @@ export async function POST(request: NextRequest) {
     const region = normalizeRegion(regionValue);
     const finalToken = normalizeToken(token);
 
-    const result = await startScoreFetch({ userId, game, region, token: finalToken, flags: await resolveFlagsForUser(userId) });
+    const result = await startScoreFetch({ userId, game, region, token: finalToken });
 
     return jsonResponse({ success: true, sessionId: result.sessionId, status: result.status });
   } catch (error) {
@@ -104,9 +103,6 @@ export async function POST(request: NextRequest) {
       }
       if (error.message.includes("Rate limited")) {
         return jsonResponse({ success: false, error: error.message }, { status: 429 });
-      }
-      if (error.message.includes("No user token found")) {
-        return jsonResponse({ success: false, error: error.message }, { status: 400 });
       }
     }
 

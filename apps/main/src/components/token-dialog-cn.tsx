@@ -774,7 +774,7 @@ export function TokenDialogCn({
 
   const handleSubAuthorized = async () => {
     // Token has been saved server-side; trigger a fetch by calling
-    // onTokenUpdate with an empty string so startFetchServer reads the
+    // onTokenUpdate with an empty string so startScoreFetch reads the
     // saved token from the DB.
     await onTokenUpdate("");
     onOpenChange(false);

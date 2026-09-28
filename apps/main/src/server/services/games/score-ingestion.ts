@@ -3,7 +3,7 @@ import { readToken, saveToken } from "./tokens";
 import { getGameMaintenance, getGameMaintenanceError } from "@/lib/games/maintenance";
 import { revalidatePublicProfileForUser } from "@/lib/profile-cache";
 import { buildChartResolution, chartKey, scoreDataKey, upsertScoreData, type DbSong } from "./score-storage";
-import type { Flags } from "@/lib/flags";
+import { resolveFlagsForUser, type Flags } from "@/lib/flags";
 import { and, desc, eq, sql } from "drizzle-orm";
 import { after } from "next/server";
 import { nanoid } from "nanoid";
@@ -178,7 +178,7 @@ export async function startScoreFetch(input: {
   game: CanonicalGameId;
   region: Region;
   token?: string;
-  flags: Flags;
+  flags?: Flags;
   options?: { skipAfter?: boolean };
 }): Promise<StartScoreFetchResult> {
   let context: ReturnType<typeof resolveGameContext>;
@@ -209,11 +209,12 @@ export async function startScoreFetch(input: {
     }
   }
 
+  const flags = input.flags ?? await resolveFlagsForUser(input.userId);
   await scoreAdapter.validateToken?.({
     game: context.game,
     userId: input.userId,
     region: context.region,
-    flags: input.flags,
+    flags,
     token: tokenToUse,
     tokenProvided: Boolean(input.token),
   });
@@ -307,7 +308,7 @@ export async function startScoreFetch(input: {
     region: context.region,
     sessionId,
     gameVersion,
-    flags: input.flags,
+    flags,
     token: tokenToUse,
     shouldFetchAlbums,
     signal: controller.signal,
@@ -561,6 +562,3 @@ export async function persistFetchResult(input: PersistFetchResultInput): Promis
 
   return { snapshotId };
 }
-
-export type StartFetchResult = StartScoreFetchResult;
-export type FetchStatusResult = ScoreFetchStatusResult;

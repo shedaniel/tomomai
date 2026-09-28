@@ -1,6 +1,6 @@
 import { db } from '@/lib/db';
 import { getAllStates, parseStatusStates } from '@/lib/fetch-states';
-import { getFetchStatusServer, startFetchServer } from '@/lib/maimai-server-actions';
+import { getScoreFetchStatus, startScoreFetch } from '@/server/services/games/score-ingestion';
 import { account, user } from '@/lib/db/schema-pg';
 import { getLogger } from '@/lib/request-logger';
 import { waitUntil } from '@vercel/functions';
@@ -155,7 +155,7 @@ export async function runFetchSession({
 }): Promise<boolean> {
   try {
     // Start the fetch
-    const startResult = await startFetchServer(userId, region, undefined, { skipAfter: true });
+    const startResult = await startScoreFetch({ userId, game: "maimai", region, options: { skipAfter: true } });
 
     // Send initial message
     await editDiscordMessage(applicationId, interactionToken, {
@@ -225,7 +225,7 @@ async function pollForUpdates(
 
   while (attempts < maxAttempts) {
     try {
-      const status = await getFetchStatusServer(userId, region);
+      const status = await getScoreFetchStatus({ userId, game: "maimai", region });
 
       if (status && status.id === sessionId) {
         if (status.status === "completed") {

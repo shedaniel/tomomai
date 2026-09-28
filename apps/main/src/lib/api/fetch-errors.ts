@@ -4,7 +4,7 @@ import { getLogger } from "@/lib/request-logger";
 import { isAlbumSettingsError, isTokenError } from "@/lib/token-errors";
 
 /**
- * Map errors thrown by `startFetchServer` to a JSON 4xx/5xx Response for
+ * Map errors thrown by `startScoreFetch` to a JSON 4xx/5xx Response for
  * REST callers. Mirrors the TRPCError-code mapping used by the tRPC
  * `startFetch` procedure so the two protocols stay in sync on which
  * upstream conditions return which class of error.

@@ -3,7 +3,6 @@ import { withGameApiKey as withApiKey } from "@/lib/api/game-protect";
 import { parseQuery } from "@/lib/api/parse-query";
 import { zodJson } from "@/lib/api/zod-response";
 import { startScoreFetch } from "@/server/services/games/score-ingestion";
-import { resolveFlagsForUser } from "@/lib/flags";
 import { mapFetchStartError } from "@/lib/api/fetch-errors";
 import { spec } from "./spec";
 
@@ -13,7 +12,7 @@ export const POST = withApiKey(["fetch:start"], async (req: NextRequest, key) =>
   const { region } = parsed;
 
   try {
-    const result = await startScoreFetch({ userId: key.userId, game: key.game, region, flags: await resolveFlagsForUser(key.userId) });
+    const result = await startScoreFetch({ userId: key.userId, game: key.game, region });
     return zodJson(spec.response, { game: key.game,
       sessionId: result.sessionId,
       status: result.status,
