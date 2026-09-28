@@ -4,7 +4,7 @@ import { codeToDifficulty } from '@/lib/games/maimai/codes';
 import { renderLevelPrecise } from '@/lib/name-utils';
 import { Region } from '@/lib/types';
 import { fetchLatestSnapshotData } from '@/server/queries/snapshots';
-import { generateRecommendations, RecommendationData } from '@/server/queries/recommendations';
+import { generateRecommendations, RecommendationData } from '@/lib/games/recommendations';
 import { getLogger } from '@/lib/request-logger';
 import { waitUntil } from '@vercel/functions';
 import { and, eq } from 'drizzle-orm';

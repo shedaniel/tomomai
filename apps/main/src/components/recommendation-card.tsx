@@ -4,7 +4,7 @@ import { useGameId } from "@/components/providers/game-provider";
 import type { GameSnapshotData } from "@/lib/games/player-view";
 import { toMaimaiPlayerScore } from "@/lib/games/maimai/legacy-view";
 import { formatGameScore, formatGameRating, formatGameLevel, getGameDifficultyColors, getGameDifficultyLabel, getGameChartTypeBadgeLabel, getGameRankingBuckets, getGameScoreLabelKey } from "@/lib/games/presentation";
-import { generateRecommendations, RecommendationData } from "@/server/queries/recommendations";
+import { generateRecommendations, RecommendationData } from "@/lib/games/recommendations";
 import { Region } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { Award, Calendar, Disc3, Filter, Hash, Heart, Layers, Target, Zap } from "lucide-react";

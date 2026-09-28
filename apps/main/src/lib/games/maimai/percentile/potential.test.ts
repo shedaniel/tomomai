@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { recommendationPeers, recommendationEfficiency } from './potential';
-import { generateRecommendations, ACCURACY_VALUES } from '@/server/queries/recommendations';
+import { generateRecommendations, ACCURACY_VALUES } from '@/lib/games/recommendations';
 import type { GameSnapshotData } from '@/lib/games/player-view';
 import type { PercentileEntry } from './types';
 

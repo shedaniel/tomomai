@@ -7,7 +7,7 @@ import { RecommendationCard } from "./recommendation-card";
 import { GameProvider } from "./providers/game-provider";
 import type { GameSnapshotData } from "@/lib/games/player-view";
 import type { Flags } from "@/lib/flags";
-import { generateRecommendations } from "@/server/queries/recommendations";
+import { generateRecommendations } from "@/lib/games/recommendations";
 import { applyRecommendationFilters, createRecommendationFilterLabel } from "./filter-panel";
 import messages from "../../messages/en.json";
 
