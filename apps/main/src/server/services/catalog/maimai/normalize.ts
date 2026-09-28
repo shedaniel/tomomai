@@ -2,6 +2,7 @@ import { z } from "zod";
 import { MAIMAI_CODES, chartTypeToCode, difficultyToCode } from "@/lib/maimai/codes";
 import type { UpdateSong } from "@/server/services/catalog/maimai/types";
 import type { CatalogChart } from "../ingestion/normalize-charts";
+import { MAIMAI_LEVELS } from "./levels";
 
 export function toCatalogChart(song: UpdateSong): CatalogChart {
   return {
@@ -21,12 +22,6 @@ export function toCatalogChart(song: UpdateSong): CatalogChart {
     metadata: song.metadata,
   };
 }
-
-const MAIMAI_LEVELS = [
-  "1", "1+", "2", "2+", "3", "3+", "4", "4+", "5", "5+", "6", "6+",
-  "7", "7+", "8", "8+", "9", "9+", "10", "10+", "11", "11+", "12", "12+",
-  "13", "13+", "14", "14+", "15", "15+", "16", "16+",
-] as const;
 
 const smallint = z.number().int().min(-32768).max(32767);
 const count = smallint.nonnegative();

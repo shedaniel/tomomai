@@ -1,5 +1,6 @@
 import type { VersionId } from "@/lib/metadata";
-import type { Difficulty, Level, NoteCounts, Region, SongType } from "@/lib/types";
+import type { Difficulty, NoteCounts, Region, SongType } from "@/lib/types";
+import type { Level } from "./levels";
 import type { Pending, NoticeSink } from "../ingestion/types";
 import type { Logger as PinoLogger } from "pino";
 import type { Fetcher, Attributed, FetchingContextExtended as SharedFetchingContextExtended } from "../ingestion/runner";

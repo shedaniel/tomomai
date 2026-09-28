@@ -1,6 +1,7 @@
 import { getVersionByShortName, getVersionInfo, VersionId } from "@/lib/metadata";
 import { normalizeName } from "@/lib/name-utils";
-import { Level, NoteCounts } from "@/lib/types";
+import { NoteCounts } from "@/lib/types";
+import type { Level } from "../levels";
 import { DxRatingResponse } from "./dxrating-types";
 import { getLogger } from "@/lib/request-logger";
 import type { PendingSong } from "@/server/services/catalog/maimai/types";

@@ -1,9 +1,9 @@
-import { Difficulty, Level, NoteCounts, SongType } from "@/lib/types";
+import { Difficulty, NoteCounts, SongType } from "@/lib/types";
 import { normalizeGenre, normalizeName } from "@/lib/name-utils";
 import { getVersionByShortCode } from "@/lib/metadata";
 import type { PendingSong } from "@/server/services/catalog/maimai/types";
 import { important } from "@/server/services/catalog/ingestion/types";
-import { levelToPrecise } from "@/server/services/catalog/maimai/levels";
+import { levelToPrecise, type Level } from "@/server/services/catalog/maimai/levels";
 import { asFetcher } from "../merge";
 
 const LXNS_SONG_LIST_URL = "https://maimai.lxns.net/api/v0/maimai/song/list?notes=true";
