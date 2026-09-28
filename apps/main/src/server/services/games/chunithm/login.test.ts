@@ -1,7 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({ fetch: vi.fn(), update: vi.fn(), remove: vi.fn(), error: vi.fn() }));
-vi.mock("server-only", () => ({}));
 vi.mock("@/lib/http-agent", () => ({ agentFetch: vi.fn() }));
 vi.mock("@/lib/request-logger", () => ({ getLogger: () => ({ info: vi.fn(), error: mocks.error, child() { return this; } }) }));
 vi.mock("../tokens", () => ({ updateToken: mocks.update, deleteToken: mocks.remove }));

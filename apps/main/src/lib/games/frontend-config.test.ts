@@ -2,8 +2,6 @@ import { getGameBrand, getGameRegion } from "./frontend";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { gameIdSchema } from "./schema";
 import { getFrontendDistDir, resolveFrontendGame } from "./frontend-config";
-
-vi.mock("server-only", () => ({}));
 import { getFrontendGame } from "./frontend-server";
 
 afterEach(() => vi.unstubAllEnvs());

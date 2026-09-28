@@ -10,7 +10,6 @@ const state = vi.hoisted(() => ({
   upsertScores: vi.fn(),
   revalidate: vi.fn(),
 }));
-vi.mock("server-only", () => ({}));
 vi.mock("@/lib/db", async () => {
   const { drizzle } = await import("drizzle-orm/pg-proxy");
   const connection = drizzle(async (sql, params) => {

@@ -1,7 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({ page: vi.fn(), gateway: vi.fn(), update: vi.fn(), remove: vi.fn(), save: vi.fn() }));
-vi.mock("server-only", () => ({}));
 vi.mock("@/lib/http-agent", () => ({ agentFetch: mocks.page }));
 vi.mock("@/lib/request-logger", () => ({ getLogger: () => ({
   info: vi.fn(), debug: vi.fn(), warn: vi.fn(), error: vi.fn(), child() { return this; },

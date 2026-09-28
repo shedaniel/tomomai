@@ -1,7 +1,6 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
 const state = vi.hoisted(() => ({ statements: [] as { sql: string; params: unknown[] }[], rows: [] as unknown[][] }));
-vi.mock("server-only", () => ({}));
 vi.mock("@/lib/db", async () => {
   const { drizzle } = await import("drizzle-orm/pg-proxy");
   return { db: drizzle(async (sql, params) => {

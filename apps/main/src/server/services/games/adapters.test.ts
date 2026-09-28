@@ -2,8 +2,6 @@ import { describe, expect, it, vi } from "vitest";
 import pino from "pino";
 import { requireConfiguredSource } from "./adapters";
 
-vi.mock("server-only", () => ({}));
-
 const pipeline = vi.hoisted(() => ({ loaded: vi.fn(), collect: vi.fn().mockResolvedValue([]) }));
 vi.mock("@/server/services/catalog/chunithm/pipeline", () => {
   pipeline.loaded();
