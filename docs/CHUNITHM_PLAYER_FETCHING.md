@@ -491,7 +491,7 @@ be captured before implementing their response classifiers.
 
 These are existing repository contracts, not statements about fields observed
 on the upstream pages. The provider returns
-[`GameFetchResult`](../apps/main/src/lib/games/types.ts).
+[`GameFetchResult`](../apps/main/src/server/services/games/types.ts).
 
 | Field | CHUNITHM representation |
 | --- | --- |

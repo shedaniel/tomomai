@@ -26,14 +26,8 @@ import {
   GAME_REGISTRY,
   resolveGameContext,
 } from "@/lib/games/registry";
-import {
-  GameAdapterError,
-  type CanonicalGameId,
-  type GameFetchResult,
-  type NormalizedScore,
-  type PersistedSnapshotContext,
-  type ScoreFetchContext,
-} from "@/lib/games/types";
+import { GameAdapterError, type CanonicalGameId } from "@/lib/games/types";
+import type { GameFetchResult, NormalizedScore, PersistedSnapshotContext, ScoreFetchContext } from "./types";
 import { flushLogger } from "@/lib/logger";
 import type { Region } from "@/lib/types";
 import { getLogger } from "@/lib/request-logger";

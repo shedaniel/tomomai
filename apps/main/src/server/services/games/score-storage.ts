@@ -1,7 +1,8 @@
 import { and, eq, getTableColumns, sql } from "drizzle-orm";
 import type { db } from "@/lib/db";
 import { parentSong, scoreData, songs } from "@/lib/db/schema-pg";
-import type { CanonicalGameId, ChartRef, ChartResolutionMap, NormalizedScore } from "@/lib/games/types";
+import type { CanonicalGameId } from "@/lib/games/types";
+import type { ChartRef, ChartResolutionMap, NormalizedScore } from "./types";
 import type { Region } from "@/lib/types";
 
 type ScoreConnection = Pick<typeof db, "select" | "insert">;

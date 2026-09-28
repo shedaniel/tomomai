@@ -1,6 +1,7 @@
 import "server-only";
 import { resolveGame } from "@/lib/games/registry";
-import { GameAdapterError, type CanonicalGameId, type GameRegionContext, type ConfiguredScoreAdapter, type ConfiguredCatalogAdapter, type CatalogSourceAdapter, type ScoreAdapter } from "@/lib/games/types";
+import { GameAdapterError, type CanonicalGameId, type GameRegionContext } from "@/lib/games/types";
+import type { CatalogSourceAdapter, ConfiguredCatalogAdapter, ConfiguredScoreAdapter, ScoreAdapter } from "./types";
 import type { Region } from "@/lib/types";
 
 const SEGA_COOKIE_LOGIN_URL = "https://lng-tgk-aime-gw.am-all.net/common_auth/";

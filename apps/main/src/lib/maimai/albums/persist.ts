@@ -5,7 +5,7 @@ import { convertJpegToAvif } from "../../image-converter";
 import { logger } from "../../logger";
 import { deleteFromR2, uploadToR2 } from "../../r2";
 import { chartKey } from "@/server/services/games/score-storage";
-import type { ChartResolutionMap } from "@/lib/games/types";
+import type { ChartResolutionMap } from "@/server/services/games/types";
 import { chartTypeToCode, difficultyToCode } from "@/lib/games/maimai/codes";
 import type { AlbumData } from "../types";
 

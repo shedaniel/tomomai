@@ -1,13 +1,13 @@
 import type { ScoreData } from "@/lib/maimai/types";
 import type {
+  ConfiguredScoreAdapter,
   GameFetchResult,
   NormalizedEvent,
   NormalizedRecent,
   NormalizedScore,
   PersistedSnapshotContext,
-  ConfiguredScoreAdapter,
   ScoreFetchContext,
-} from "@/lib/games/types";
+} from "@/server/services/games/types";
 import {
   chartTypeToCode,
   comboStatusToCode,

@@ -1,7 +1,8 @@
 import "server-only";
 import { FETCH_STATES, type FetchState } from "@/lib/fetch-states";
 import { appendFetchState } from "@/lib/fetch-states-server";
-import { GameAdapterError, type GameFetchResult, type NormalizedRecent, type NormalizedScore, type ScoreFetchContext } from "@/lib/games/types";
+import { GameAdapterError } from "@/lib/games/types";
+import type { GameFetchResult, NormalizedRecent, NormalizedScore, ScoreFetchContext } from "@/server/services/games/types";
 import { getLogger } from "@/lib/request-logger";
 import { uploadIconToR2 } from "@/lib/r2";
 import { gameSiteUrl, requestGamePage } from "../sega/http";

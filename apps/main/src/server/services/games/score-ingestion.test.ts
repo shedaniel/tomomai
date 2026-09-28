@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import type { Flags } from "@/lib/flags";
-import type { ConfiguredScoreAdapter, GameFetchResult } from "@/lib/games/types";
+import type { ConfiguredScoreAdapter, GameFetchResult } from "./types";
 
 const state = vi.hoisted(() => ({
   statements: [] as { sql: string; params: unknown[] }[],

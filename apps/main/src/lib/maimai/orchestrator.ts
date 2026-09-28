@@ -38,7 +38,7 @@ import type {
   ScoreData,
 } from "./types";
 import type { Flags } from "../flags";
-import type { PersistedSnapshotContext, ScoreFetchContext } from "@/lib/games/types";
+import type { PersistedSnapshotContext, ScoreFetchContext } from "@/server/services/games/types";
 
 // ---------------------------------------------------------------------------
 // Shared fetcher contract
