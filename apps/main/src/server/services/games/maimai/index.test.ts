@@ -1,15 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import pino from "pino";
 import type { Flags } from "@/lib/flags";
-import { GAME_SERVER_MODULES, requireConfiguredSource } from "./registry";
-import type { FetchedMaimaiData } from "./maimai/scores/types";
-import type { GameFetchResult, ScoreFetchContext } from "./types";
-
-const pipeline = vi.hoisted(() => ({ loaded: vi.fn(), collect: vi.fn().mockResolvedValue([]) }));
-vi.mock("@/server/services/catalog/chunithm/pipeline", () => {
-  pipeline.loaded();
-  return { collectCatalog: pipeline.collect };
-});
+import { GAME_SERVER_MODULES, requireConfiguredSource } from "../registry";
+import type { GameFetchResult, ScoreFetchContext } from "../types";
+import type { FetchedMaimaiData } from "./scores/types";
 
 const maimaiScores = vi.hoisted(() => ({
   loaded: vi.fn(),
@@ -17,32 +10,15 @@ const maimaiScores = vi.hoisted(() => ({
   persist: vi.fn(),
   normalize: vi.fn(),
 }));
-vi.mock("./maimai/scores/orchestrator", () => {
+vi.mock("./scores/orchestrator", () => {
   maimaiScores.loaded();
   return { runMaimaiFetcher: maimaiScores.run, persistMaimaiExtra: maimaiScores.persist };
 });
-vi.mock("./maimai/scores/normalize", () => ({ normalizeFetchedMaimaiData: maimaiScores.normalize }));
+vi.mock("./scores/normalize", () => ({ normalizeFetchedMaimaiData: maimaiScores.normalize }));
 vi.mock("@/lib/db", () => ({ db: {} }));
 
 beforeEach(() => {
   vi.clearAllMocks();
-});
-
-describe("CHUNITHM catalog loading", () => {
-  it("loads the catalog pipeline only when collection starts", async () => {
-    const adapter = requireConfiguredSource("chunithm", "catalog");
-    expect(pipeline.loaded).not.toHaveBeenCalled();
-
-    const context = {
-      region: "jp" as const,
-      version: 9,
-      log: pino({ enabled: false }),
-      notice: { details: [], addDetail: vi.fn() },
-    };
-    await expect(adapter.collect(context)).resolves.toEqual([]);
-    expect(pipeline.loaded).toHaveBeenCalledOnce();
-    expect(pipeline.collect).toHaveBeenCalledWith(context);
-  });
 });
 
 describe("maimai score source", () => {
@@ -83,10 +59,9 @@ describe("maimai score source", () => {
   });
 });
 
-describe("reserved profiles", () => {
-  it("are provided by maimai only", async () => {
+describe("maimai reserved profiles", () => {
+  it("resolve reserved usernames case-insensitively and nothing else", async () => {
     await expect(GAME_SERVER_MODULES.maimai.reserved?.user("MAX")).resolves.toMatchObject({ id: "reserved-max", publishProfile: true });
     await expect(GAME_SERVER_MODULES.maimai.reserved?.user("someone")).resolves.toBeNull();
-    expect(GAME_SERVER_MODULES.chunithm.reserved).toBeUndefined();
   });
 });
