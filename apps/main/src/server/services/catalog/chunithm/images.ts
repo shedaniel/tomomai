@@ -1,11 +1,13 @@
 import type { CatalogImagePolicy } from "../image-policy";
+import { OTOGE_DB_CHUNITHM_ROOT } from "./sources/otoge-db";
 
-const COVER_PATTERN = /^https:\/\/raw\.githubusercontent\.com\/zvuc\/otoge-db\/main\/chunithm\/jacket\/([^/?#]+)$/;
+const COVER_PREFIX = `${OTOGE_DB_CHUNITHM_ROOT}/jacket/`;
 
 export const chunithmImagePolicy: CatalogImagePolicy = {
   extractFilename: url => {
-    const match = url.match(COVER_PATTERN);
-    return match ? `chunithm/${match[1]}` : null;
+    if (!url.startsWith(COVER_PREFIX)) return null;
+    const filename = url.slice(COVER_PREFIX.length);
+    return /^[^/?#]+$/.test(filename) ? `chunithm/${filename}` : null;
   },
   preferUrl: () => false,
   staticAssets: [],

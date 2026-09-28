@@ -9,14 +9,6 @@ import { loginAndGetCookies } from "./login";
 import { chunithmMobilePaths } from "./login-config";
 import { assertChunithmPage, CHUNITHM_DIFFICULTIES, parseMusicGenreForm, parsePlayer, parseRecentDetails, parseRecents, parseScores } from "./parsers";
 
-const difficultyStates: Record<number, FetchState> = {
-  0: FETCH_STATES.SONG_DATA_BASIC,
-  1: FETCH_STATES.SONG_DATA_ADVANCED,
-  2: FETCH_STATES.SONG_DATA_EXPERT,
-  3: FETCH_STATES.SONG_DATA_MASTER,
-  4: FETCH_STATES.SONG_DATA_ULTIMA,
-};
-
 export async function fetchPlayer(ctx: ScoreFetchContext): Promise<GameFetchResult> {
   const { region, userId, token, sessionId, gameVersion, signal } = ctx;
   const log = getLogger().child({ game: "chunithm", region, userId, sessionId: sessionId.toString() });
@@ -74,7 +66,8 @@ export async function fetchPlayer(ctx: ScoreFetchContext): Promise<GameFetchResu
       fields.set("genre", "99");
       musicHtml = await page(`record/musicGenre/send${difficulty.action}`, fields);
       scores.push(...parseScores(musicHtml, { region, gameVersion, difficulty: difficulty.id }));
-      await appendFetchState(sessionId, difficultyStates[difficulty.id], "chunithm");
+      const state: FetchState = `song_data:${difficulty.name}`;
+      await appendFetchState(sessionId, state, "chunithm");
     }
     return scores;
   });

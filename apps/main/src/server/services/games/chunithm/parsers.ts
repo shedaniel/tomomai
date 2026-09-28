@@ -1,15 +1,32 @@
 import { load, type CheerioAPI } from "cheerio";
+import { GAME_CODES, codeOf, type CodeKey } from "@/lib/games/codes";
 import type { NormalizedPlayer, NormalizedRecent, NormalizedScore } from "@/lib/games/types";
 import type { ChunithmRecentDetails } from "@/lib/games/adapters/chunithm/recents";
 import type { Region } from "@/lib/types";
 
-export const CHUNITHM_DIFFICULTIES = [
-  { id: 0, name: "basic", action: "Basic" },
-  { id: 1, name: "advanced", action: "Advanced" },
-  { id: 2, name: "expert", action: "Expert" },
-  { id: 3, name: "master", action: "Master" },
-  { id: 4, name: "ultima", action: "Ultima" },
-] as const;
+const SITE_ACTIONS = {
+  basic: "Basic",
+  advanced: "Advanced",
+  expert: "Expert",
+  master: "Master",
+  ultima: "Ultima",
+} as const satisfies Partial<Record<CodeKey<"chunithm", "difficulty">, string>>;
+
+type SiteDifficulty = keyof typeof SITE_ACTIONS;
+
+export const CHUNITHM_DIFFICULTIES = GAME_CODES.chunithm.difficulty
+  .filter((name): name is SiteDifficulty => name in SITE_ACTIONS)
+  .map(name => ({ id: codeOf("chunithm", "difficulty", name), name, action: SITE_ACTIONS[name] }));
+
+const STANDARD_CHART_TYPE = codeOf("chunithm", "chartType", "standard");
+
+type StatusKind = "comboStatus" | "syncStatus" | "clearStatus";
+
+const STATUS_ICONS: { readonly [K in StatusKind]: Readonly<Record<string, CodeKey<"chunithm", K>>> } = {
+  comboStatus: { icon_fullcombo: "fc", icon_alljustice: "aj", icon_alljusticecritical: "ajc" },
+  syncStatus: { icon_fullchain2: "full-chain", icon_fullchain: "full-chain-aj" },
+  clearStatus: { icon_clear: "clear", icon_hard: "hard", icon_brave: "brave", icon_absolute: "absolute", icon_catastrophy: "catastrophy" },
+};
 
 type ChartContext = { region: Region; gameVersion: number };
 export type ChunithmForm = { action: string; fields: URLSearchParams };
@@ -77,20 +94,20 @@ export function parsePlayer(html: string, pageUrl: string): NormalizedPlayer {
   };
 }
 
-function statuses(icons: string[]): Pick<NormalizedScore, "comboStatus" | "syncStatus" | "clearStatus"> {
-  let comboStatus = 0;
-  let clearStatus = 0;
-  let syncStatus = 0;
-  const combos: Record<string, number> = { icon_fullcombo: 1, icon_alljustice: 2, icon_alljusticecritical: 3 };
-  const chains: Record<string, number> = { icon_fullchain2: 1, icon_fullchain: 2 };
-  const clears: Record<string, number> = { icon_clear: 1, icon_hard: 2, icon_brave: 3, icon_absolute: 4, icon_catastrophy: 5 };
+function statusCode<K extends StatusKind>(kind: K, icon: string): number {
+  const key = STATUS_ICONS[kind][icon];
+  return key === undefined ? 0 : codeOf("chunithm", kind, key);
+}
+
+function statuses(icons: string[]): Pick<NormalizedScore, StatusKind> {
+  const result = { comboStatus: 0, syncStatus: 0, clearStatus: 0 };
   for (const source of icons) {
     const icon = source.split("/").pop()?.replace(/\.png(?:\?.*)?$/, "") ?? "";
-    syncStatus = Math.max(syncStatus, chains[icon] ?? 0);
-    comboStatus = Math.max(comboStatus, combos[icon] ?? 0);
-    clearStatus = Math.max(clearStatus, clears[icon] ?? 0);
+    for (const kind of ["comboStatus", "syncStatus", "clearStatus"] as const) {
+      result[kind] = Math.max(result[kind], statusCode(kind, icon));
+    }
   }
-  return { comboStatus, syncStatus, clearStatus };
+  return result;
 }
 
 export function parseScores(html: string, context: ChartContext & { difficulty: number }): NormalizedScore[] {
@@ -107,7 +124,7 @@ export function parseScores(html: string, context: ChartContext & { difficulty: 
     const songName = row.find(".music_title").text().trim();
     if (!songName) throw new Error("Missing CHUNITHM score title");
     scores.push({
-      chart: { game: "chunithm", region: context.region, version: context.gameVersion, songName, chartType: 0, difficulty: difficulty.id },
+      chart: { game: "chunithm", region: context.region, version: context.gameVersion, songName, chartType: STANDARD_CHART_TYPE, difficulty: difficulty.id },
       scoreValue: integer(highScore.text()), secondaryScore: 0,
       ...statuses(row.find(".play_musicdata_icon img").map((_, image) => $(image).attr("src") ?? "").get()),
     });
@@ -134,7 +151,7 @@ export function parseRecents(html: string, context: ChartContext): { recent: Nor
     const songName = row.find(".play_musicdata_title").text().trim();
     if (!songName) throw new Error("Missing CHUNITHM recent title");
     const recent: NormalizedRecent = {
-      chart: { game: "chunithm", region: context.region, version: context.gameVersion, songName, chartType: 0, difficulty: difficulty.id },
+      chart: { game: "chunithm", region: context.region, version: context.gameVersion, songName, chartType: STANDARD_CHART_TYPE, difficulty: difficulty.id },
       scoreValue: integer(row.find(".play_musicdata_score_text").text()), secondaryScore: 0,
       ...statuses(row.find(".play_musicdata_icon img").map((_, image) => $(image).attr("src") ?? "").get()),
       playedAt, track: Number(track[1]),

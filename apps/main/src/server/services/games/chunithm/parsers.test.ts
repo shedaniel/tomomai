@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { assertChunithmPage, parseMusicGenreForm, parsePlayer, parseRecentDetails, parseRecents, parseScores } from "./parsers";
+import { codeOf } from "@/lib/games/codes";
+import { assertChunithmPage, CHUNITHM_DIFFICULTIES, parseMusicGenreForm, parsePlayer, parseRecentDetails, parseRecents, parseScores } from "./parsers";
 
 const context = { region: "jp" as const, gameVersion: 23 };
 
@@ -27,6 +28,35 @@ describe("CHUNITHM records", () => {
       { chart: { game: "chunithm", region: "jp", version: 23, songName: "AJC", chartType: 0, difficulty: 2 }, scoreValue: 1010000, secondaryScore: 0, comboStatus: 3, syncStatus: 2, clearStatus: 5 },
     ]);
     expect(() => parseScores("<html>Sign in</html>", { ...context, difficulty: 2 })).toThrow("Missing CHUNITHM score list");
+  });
+
+  it("encodes every status icon with the canonical CHUNITHM code", () => {
+    const icons = [
+      ["icon_fullcombo", "comboStatus", "fc"],
+      ["icon_alljustice", "comboStatus", "aj"],
+      ["icon_alljusticecritical", "comboStatus", "ajc"],
+      ["icon_fullchain2", "syncStatus", "full-chain"],
+      ["icon_fullchain", "syncStatus", "full-chain-aj"],
+      ["icon_clear", "clearStatus", "clear"],
+      ["icon_hard", "clearStatus", "hard"],
+      ["icon_brave", "clearStatus", "brave"],
+      ["icon_absolute", "clearStatus", "absolute"],
+      ["icon_catastrophy", "clearStatus", "catastrophy"],
+    ] as const;
+    for (const [icon, kind, key] of icons) {
+      const html = `<div class="musiclist_box bg_master"><div class="music_title">Song</div>
+        <div class="play_musicdata_highscore"><span class="text_b">1,000,000</span></div>
+        <div class="play_musicdata_icon"><img src="/images/${icon}.png?ver=1"></div></div>`;
+      const [score] = parseScores(html, { ...context, difficulty: codeOf("chunithm", "difficulty", "master") });
+      expect(score[kind]).toBe(codeOf("chunithm", kind, key));
+      expect(score.chart.chartType).toBe(codeOf("chunithm", "chartType", "standard"));
+    }
+  });
+
+  it("lists the site difficulties in code order with their canonical codes", () => {
+    expect(CHUNITHM_DIFFICULTIES.map(({ id, name }) => [id, name])).toEqual(
+      (["basic", "advanced", "expert", "master", "ultima"] as const).map(name => [codeOf("chunithm", "difficulty", name), name]),
+    );
   });
 
   it("recognizes the real subscription messages without matching ordinary subscription navigation", () => {

@@ -1,21 +1,24 @@
 import type { Region } from "@/lib/types";
 import type { CatalogFetchContext, PendingChart } from "../../ingestion/types";
+import { codeOf } from "@/lib/games/codes";
 import { GameAdapterError } from "@/lib/games/types";
 import { getVersionFromDate } from "@/lib/games/versions";
 import { getChunithmVersionByName, chunithmVersionProvider } from "@/lib/games/adapters/chunithm/versions";
 import { asFetcher } from "../merge";
 
-const SOURCE_ROOT = "https://raw.githubusercontent.com/zvuc/otoge-db/main/chunithm";
+export const OTOGE_DB_CHUNITHM_ROOT = "https://raw.githubusercontent.com/zvuc/otoge-db/main/chunithm";
 const SOURCES = {
-  jp: `${SOURCE_ROOT}/data/music-ex.json`,
-  intl: `${SOURCE_ROOT}/data/music-ex-intl.json`,
+  jp: `${OTOGE_DB_CHUNITHM_ROOT}/data/music-ex.json`,
+  intl: `${OTOGE_DB_CHUNITHM_ROOT}/data/music-ex-intl.json`,
 };
+const ULTIMA = codeOf("chunithm", "difficulty", "ultima");
+const STANDARD_CHART_TYPE = codeOf("chunithm", "chartType", "standard");
 const CHARTS = [
-  { prefix: "lev_bas", difficulty: 0 },
-  { prefix: "lev_adv", difficulty: 1 },
-  { prefix: "lev_exp", difficulty: 2 },
-  { prefix: "lev_mas", difficulty: 3 },
-  { prefix: "lev_ult", difficulty: 4 },
+  { prefix: "lev_bas", difficulty: codeOf("chunithm", "difficulty", "basic") },
+  { prefix: "lev_adv", difficulty: codeOf("chunithm", "difficulty", "advanced") },
+  { prefix: "lev_exp", difficulty: codeOf("chunithm", "difficulty", "expert") },
+  { prefix: "lev_mas", difficulty: codeOf("chunithm", "difficulty", "master") },
+  { prefix: "lev_ult", difficulty: ULTIMA },
 ] as const;
 
 type ChartPrefix = typeof CHARTS[number]["prefix"];
@@ -66,7 +69,7 @@ function normalizeOtogeDbCatalog(songs: SongsJsonRecord[], region: Region, sourc
       const level = song[prefix];
       if (!level) return [];
       const updateDate = region === "jp" ? song.date_updated : song.date_intl_updated;
-      const useUpdateDate = difficulty === 4 && parseDate(updateDate) !== undefined;
+      const useUpdateDate = difficulty === ULTIMA && parseDate(updateDate) !== undefined;
       const addedDateString = useUpdateDate ? updateDate : (region === "jp" ? song.date_added : song.date_intl_added);
       const addedDate = parseDate(addedDateString);
       const constant = song[`${prefix}_i`];
@@ -77,10 +80,10 @@ function normalizeOtogeDbCatalog(songs: SongsJsonRecord[], region: Region, sourc
       return [{
         game: "chunithm",
         songName: song.title,
-        chartType: 0,
+        chartType: STANDARD_CHART_TYPE,
         difficulty,
         artist: song.artist,
-        cover: `${SOURCE_ROOT}/jacket/${song.image}`,
+        cover: `${OTOGE_DB_CHUNITHM_ROOT}/jacket/${song.image}`,
         genre: song.catname,
         level,
         levelPrecise: constant && constant !== "-" ? Math.round(parseFloat(constant) * 10) : undefined,
@@ -89,7 +92,7 @@ function normalizeOtogeDbCatalog(songs: SongsJsonRecord[], region: Region, sourc
         noteDesigner: song[`${prefix}_designer`] || undefined,
         metadata: {
           levelPreciseEstimated: false,
-          addedVersionEstimated: difficulty === 4 && !useUpdateDate,
+          addedVersionEstimated: difficulty === ULTIMA && !useUpdateDate,
           otogeDb: {
             id: song.id,
             url: sourceUrl,
