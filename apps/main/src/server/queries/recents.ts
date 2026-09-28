@@ -1,4 +1,4 @@
-import { decodeChunithmRecentDetails } from "@/lib/games/adapters/chunithm/recents";
+import { decodeChunithmRecentDetails } from "@/lib/games/chunithm/recent-details";
 import type { CanonicalGameId } from "@/lib/games/types";
 import { songInstanceId } from "@/lib/db/song-instance-id";
 import { db } from "@/lib/db";

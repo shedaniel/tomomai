@@ -1,1 +1,1 @@
-export * from "./games/adapters/maimai/versions";
+export * from "./games/maimai/versions";

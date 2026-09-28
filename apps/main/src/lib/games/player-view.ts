@@ -1,6 +1,6 @@
 import type { fetchSnapshotData, fetchUserSnapshots } from "@/server/queries/snapshots";
 import type { Snapshot, SnapshotWithSongs, EventData } from "@/lib/types";
-import { requireMaimaiVersion } from "./adapters/maimai/versions";
+import { requireMaimaiVersion } from "./maimai/versions";
 import { codeToChartType, codeToComboStatus, codeToDifficulty, codeToSyncStatus, codeToTitleType } from "@/lib/maimai/codes";
 import type { CanonicalGameId } from "./types";
 import { calculateChunithmChartRating, calculateMaimaiChartRating, selectChunithmRankings, selectMaimaiRankings } from "./rating";

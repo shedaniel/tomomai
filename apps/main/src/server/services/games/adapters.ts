@@ -23,11 +23,11 @@ export const GAME_SOURCES: Record<CanonicalGameId, { catalog: CatalogSourceAdapt
       configured: true,
       cookieLoginUrl: SEGA_COOKIE_LOGIN_URL,
       async validateToken(context) {
-        const { maimaiScoreAdapter } = await import("@/lib/games/adapters/maimai/score");
+        const { maimaiScoreAdapter } = await import("@/server/services/games/maimai/scores/normalize");
         return maimaiScoreAdapter.validateToken?.(context);
       },
       async fetch(context) {
-        const { maimaiScoreAdapter } = await import("@/lib/games/adapters/maimai/score");
+        const { maimaiScoreAdapter } = await import("@/server/services/games/maimai/scores/normalize");
         return maimaiScoreAdapter.fetch(context);
       },
     },

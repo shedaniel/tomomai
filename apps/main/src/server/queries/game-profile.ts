@@ -6,7 +6,7 @@ import type { CanonicalGameId } from "@/lib/games/types";
 import type { Region } from "@/lib/types";
 import { resolvePublicUserByUsername } from "./public-access";
 import { fetchLatestSnapshotData } from "./snapshots";
-import { loadReservedMaimaiSnapshot } from "@/lib/games/adapters/maimai/public-profile";
+import { loadReservedMaimaiSnapshot } from "@/server/services/games/maimai/reserved-profile";
 import type { GameSnapshotData } from "@/lib/games/player-view";
 
 const RESERVED_SNAPSHOT_LOADERS: Partial<Record<CanonicalGameId, (username: string, region: Region) => Promise<GameSnapshotData | null>>> = {

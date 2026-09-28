@@ -1,7 +1,7 @@
 import { load, type CheerioAPI } from "cheerio";
 import { GAME_CODES, codeOf, type CodeKey } from "@/lib/games/codes";
 import type { NormalizedPlayer, NormalizedRecent, NormalizedScore } from "@/lib/games/types";
-import type { ChunithmRecentDetails } from "@/lib/games/adapters/chunithm/recents";
+import type { ChunithmRecentDetails } from "@/lib/games/chunithm/recent-details";
 import type { Region } from "@/lib/types";
 
 const SITE_ACTIONS = {

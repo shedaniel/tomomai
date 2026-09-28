@@ -29,7 +29,7 @@ vi.mock("./score-storage", async importOriginal => ({
   buildChartResolution: state.resolveCharts,
   upsertScoreData: state.upsertScores,
 }));
-vi.mock("@/lib/games/adapters/maimai/score", () => ({ maimaiScoreAdapter: {
+vi.mock("@/server/services/games/maimai/scores/normalize", () => ({ maimaiScoreAdapter: {
   configured: true, fetch: state.fetch, validateToken: state.validateToken,
 } }));
 vi.mock("./chunithm/pipeline", () => ({ fetchPlayer: async (context: Parameters<ConfiguredScoreAdapter["fetch"]>[0]) => (await state.fetch(context)).result }));

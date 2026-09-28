@@ -1,6 +1,6 @@
-import { versionAtDate } from "../../version-time";
+import { versionAtDate } from "../version-time";
 import type { Region } from "@/lib/types";
-import type { VersionProvider } from "../../types";
+import type { VersionProvider } from "../types";
 
 export const Versions = {
   MAIMAI: {

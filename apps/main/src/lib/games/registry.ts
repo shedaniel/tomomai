@@ -1,7 +1,7 @@
 import type { Region } from "@/lib/types";
 import { getEnabledRegions } from "./regions";
-import { chunithmAdapter } from "./adapters/chunithm";
-import { maimaiAdapter } from "./adapters/maimai";
+import { chunithmDefinition } from "./chunithm/definition";
+import { maimaiDefinition } from "./maimai/definition";
 import {
   CANONICAL_GAME_IDS,
   GameAdapterError,
@@ -27,14 +27,14 @@ export const GAME_REGISTRY: Record<CanonicalGameId, GameRegistration> = {
     displayName: "maimai DX",
     productName: "tomomai",
     enabled: true,
-    adapter: maimaiAdapter,
+    adapter: maimaiDefinition,
   },
   chunithm: {
     id: "chunithm",
     displayName: "CHUNITHM",
     productName: "tomochu",
     enabled: true,
-    adapter: chunithmAdapter,
+    adapter: chunithmDefinition,
   },
 };
 

@@ -1,6 +1,6 @@
 import type { Region } from "@/lib/types";
-import type { GameVersionInfo, VersionProvider } from "../../types";
-import { versionAtDate } from "../../version-time";
+import type { GameVersionInfo, VersionProvider } from "../types";
+import { versionAtDate } from "../version-time";
 
 type ChunithmVersion = Omit<GameVersionInfo, "releaseDate"> & {
   jpReleaseDate: string;

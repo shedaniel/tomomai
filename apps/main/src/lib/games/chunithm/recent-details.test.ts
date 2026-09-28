@@ -1,5 +1,5 @@
 import { expect, it } from "vitest";
-import { decodeChunithmRecentDetails, type ChunithmRecentDetails } from "./recents";
+import { decodeChunithmRecentDetails, type ChunithmRecentDetails } from "./recent-details";
 
 const details: ChunithmRecentDetails = {
   maxCombo: 0,

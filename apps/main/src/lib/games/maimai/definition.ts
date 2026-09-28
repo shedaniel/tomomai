@@ -1,9 +1,9 @@
-import { GAME_SUPPORTED_REGIONS } from "../../regions";
-import { calculateMaimaiChartRating, selectMaimaiRankings } from "../../rating";
-import type { GameAdapter } from "../../types";
+import { GAME_SUPPORTED_REGIONS } from "../regions";
+import { calculateMaimaiChartRating, selectMaimaiRankings } from "../rating";
+import type { GameAdapter } from "../types";
 import { maimaiVersionProvider } from "./versions";
 
-export const maimaiAdapter: GameAdapter = {
+export const maimaiDefinition: GameAdapter = {
   game: "maimai",
   capabilities: new Set(["catalog", "scores", "recents", "albums", "events", "rankings", "rating", "plates", "score-details", "profile-icon"]),
   supportedRegions: GAME_SUPPORTED_REGIONS.maimai,

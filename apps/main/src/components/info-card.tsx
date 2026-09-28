@@ -13,7 +13,7 @@ import { useMediaQuery } from "@/hooks/use-media-query";
 import { Link } from "@/i18n/navigation";
 import { SPRING_CONFIGS, STAGGER, getTransition } from "@/lib/animation-constants";
 import { resolveBaseUrl } from "@/lib/base-url";
-import { requireMaimaiVersion } from "@/lib/games/adapters/maimai/versions";
+import { requireMaimaiVersion } from "@/lib/games/maimai/versions";
 import { getRatingImageUrl } from "@/lib/rating-calculator";
 import { trpc } from "@/lib/trpc-client";
 import type { ProfilePrivacySettings, ProfileSettings } from "@/lib/types";

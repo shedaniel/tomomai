@@ -1,6 +1,6 @@
 "use client";
 
-import type { ChunithmRecentDetails } from "@/lib/games/adapters/chunithm/recents";
+import type { ChunithmRecentDetails } from "@/lib/games/chunithm/recent-details";
 import type { fetchRecentSongs } from "@/server/queries/recents";
 import { formatGameScore, formatGameLevel, getGameDifficultyColors, getGameDifficultyHex, getGameChartTypeBadgeLabel, getGameChartTypeLabel, getGameStatusLabels } from "@/lib/games/presentation";
 type RecentPlay = Awaited<ReturnType<typeof fetchRecentSongs>>["recentPlays"][number];

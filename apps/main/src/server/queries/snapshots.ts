@@ -5,7 +5,7 @@ import { db } from "@/lib/db";
 import { parentSong, scoreData, snapshotScores, songs, userEvents, userSnapshots } from "@/lib/db/schema-pg";
 import { and, desc, eq } from "drizzle-orm";
 import type { Region } from "@/lib/types";
-import { requireMaimaiVersion } from "@/lib/games/adapters/maimai/versions";
+import { requireMaimaiVersion } from "@/lib/games/maimai/versions";
 import { getLogger } from "@/lib/request-logger";
 import { deleteFromR2, isR2IconUrl, r2KeyFromIconUrl } from "@/lib/r2";
 

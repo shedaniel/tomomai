@@ -1,4 +1,4 @@
-import { requireMaimaiVersion } from "./adapters/maimai/versions";
+import { requireMaimaiVersion } from "./maimai/versions";
 import { afterEach, expect, it, vi } from "vitest";
 import { getAvailableVersions, getCurrentVersion, getVersionInfo, getVersionFromDate } from "./versions";
 

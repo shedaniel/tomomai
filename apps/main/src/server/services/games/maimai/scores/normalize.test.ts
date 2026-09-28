@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Flags } from "@/lib/flags";
 import type { FetchedMaimaiData } from "@/lib/maimai/orchestrator";
-import { maimaiScoreAdapter, normalizeFetchedMaimaiData } from "./score";
+import { maimaiScoreAdapter, normalizeFetchedMaimaiData } from "./normalize";
 
 describe("maimai score adapter normalization", () => {
   it("maps maimai player, score, recent, and event fields to common codes", async () => {
