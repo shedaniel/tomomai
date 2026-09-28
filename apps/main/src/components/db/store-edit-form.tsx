@@ -15,17 +15,15 @@ import {
 import {
   Drawer,
   DrawerContent,
-  DrawerHeader,
   DrawerTitle,
   DrawerDescription,
 } from "@tomomai/ui";
-import { Switch } from "@tomomai/ui";
-import { X, Plus, CheckCircle, XCircle, PauseCircle } from "lucide-react";
+import { X, CheckCircle, XCircle, PauseCircle } from "lucide-react";
 import { trpc } from "@/lib/trpc-client";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
-import { getAllGames, GAMES } from "@/lib/game-utils";
+import { getAllGames } from "@/lib/game-utils";
 
 interface Store {
   id: bigint;

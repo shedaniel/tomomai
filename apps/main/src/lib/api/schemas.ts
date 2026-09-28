@@ -10,7 +10,6 @@ import { z } from "zod";
  * both the OpenAPI schema and the on-site param/response tables.
  */
 
-export const gameSchema = gameIdSchema;
 export const regionSchema = z.enum(["intl", "jp", "cn"]).describe("Game region to read data from.");
 
 export const querySchemas = {
@@ -313,5 +312,5 @@ export const errorResponse = z
   .object({ error: z.string(), code: z.string().optional() })
   .describe("Returned on 4xx and 5xx responses.");
 
-export const songCatalogue = z.object({ game: gameSchema, songs: z.array(songCatalogueEntry) });
-export const parentCatalogue = z.object({ game: gameSchema, parents: z.array(chartCatalogueEntry) });
+export const songCatalogue = z.object({ game: gameIdSchema, songs: z.array(songCatalogueEntry) });
+export const parentCatalogue = z.object({ game: gameIdSchema, parents: z.array(chartCatalogueEntry) });

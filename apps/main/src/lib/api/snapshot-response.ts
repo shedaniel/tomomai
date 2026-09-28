@@ -53,7 +53,7 @@ export function buildSnapshotPayload(
     }));
     const selection = adapter.selectRankings(rated, snapshot.gameVersion);
     const b50 = [...selection.newScores, ...selection.oldScores];
-    songsPayload = b50.map(s => ({ ...songPayload(s), rating: Math.floor(s.rating) }));
+    songsPayload = b50.map(s => ({ ...songPayload(s), rating: s.rating }));
   }
 
   return {

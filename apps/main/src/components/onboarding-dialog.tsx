@@ -30,7 +30,7 @@ import {
 import { AnimatePresence, motion } from "motion/react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 interface OnboardingDialogProps {
@@ -39,7 +39,6 @@ interface OnboardingDialogProps {
   initialRegion: Region;
   initialUsername?: string | null;
   initialPublishProfile?: boolean;
-  testMode?: boolean;
 }
 
 type Step = 1 | 2 | 3;
@@ -90,7 +89,6 @@ export function OnboardingDialog({
   initialRegion,
   initialUsername,
   initialPublishProfile,
-  testMode = false,
 }: OnboardingDialogProps) {
   const t = useTranslations();
   const cnOnly = isCNExclusive();

@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { CoverImage } from "@/components/cover-image";
 import { UniqueSong } from "./types";
 import { useGameId } from "@/components/providers/game-provider";
-import { formatGameLevel, getGameDifficultyLabel, getGameDifficultyColors, getGameChartTypeLabel, getGameChartTypeBadgeLabel, getGameChartTypeBadge } from "@/lib/games/presentation";
+import { formatGameLevel, getGameDifficultyLabel, getGameDifficultyColors, getGameChartTypeLabel, getGameChartTypeBadgeLabel } from "@/lib/games/presentation";
 
 interface SongRowProps {
   song: UniqueSong;

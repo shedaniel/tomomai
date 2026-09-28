@@ -124,11 +124,11 @@ function AvailableDashboard({ user, initialUserData, initialSnapshots, initialSn
       // After setting preference, retry the fetch with current selectedRegion
       try {
         await startAutomaticFetch(selectedRegion);
-      } catch (error) {
+      } catch {
         // Error will be handled by useFetchSession
       }
     },
-    onError: (error) => {
+    onError: () => {
       toast.error("Failed to save album preference");
     }
   });
@@ -296,7 +296,6 @@ function AvailableDashboard({ user, initialUserData, initialSnapshots, initialSn
         initialRegion={selectedRegion}
         initialUsername={userData?.username}
         initialPublishProfile={userData?.publishProfile}
-        testMode={!!userData?.hasUsername}
       />
 
       <AboutDialog open={dialogType === "about"} onOpenChange={open => setDialogType(open ? "about" : null)} />

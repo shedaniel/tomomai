@@ -2,7 +2,7 @@
 
 import { useGame } from "@/components/providers/game-provider";
 import { toMaimaiPlayerSnapshot, type GameSnapshotData } from "@/lib/games/player-view";
-import { ProfilePrivacySettings, Region, SnapshotWithSongs } from "@/lib/types";
+import { ProfilePrivacySettings, Region } from "@/lib/types";
 import { Sidebar, SidebarItem } from "@tomomai/ui";
 import { BarChart, Clock, Code, Database, Heart, Image as ImageIcon, Loader2, Map, Music, TrendingUp, User, Images } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -281,7 +281,6 @@ export function DataContent({
                 profileDescription={localProfileDescription}
                 profileUserId={profileUserId}
                 isOwner={isOwner}
-                privacySettings={localPrivacySettings}
                 publishProfile={localPublishProfile}
                 descriptionDraft={descriptionDraft}
                 isDescriptionEditing={isDescriptionEditing}
@@ -295,7 +294,6 @@ export function DataContent({
             {selectedSnapshotData && activeTab === "stats" && (visitedBySelf || !!localPrivacySettings.profileShowAllScores) && (
               <StatsCard
                 region={region}
-                selectedSnapshotData={maimaiSnapshot!}
                 snapshotId={visitedBySelf ? undefined : selectedSnapshotData?.snapshot.publicId}
               />
             )}

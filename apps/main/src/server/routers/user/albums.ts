@@ -7,11 +7,8 @@ import { protectedProcedure, router } from '@/lib/trpc';
 import { TRPCError } from '@trpc/server';
 import { and, eq } from 'drizzle-orm';
 import { z } from 'zod';
-import { getEnabledRegions } from '@/lib/enabled-regions';
 import { fetchUserAlbums, fetchAlbumStorageUsage } from '@/server/queries/albums';
 import { MAX_STORAGE_BYTES } from '@/lib/maimai/albums/persist';
-
-const regionSchema = z.enum(getEnabledRegions());
 
 export const albumsRouter = router({
   getUserAlbums: protectedProcedure

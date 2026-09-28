@@ -10,7 +10,7 @@ import { getVersionByShortCode } from "@/lib/metadata";
 const MAIMAI_SONGS_JSON_URL = "https://maimai.sega.jp/data/maimai_songs.json";
 const MAIMAI_SONGS_JSON_URL_INTL = "https://maimai.sega.com/assets/data/maimai_songs.json";
 
-export const MaimaiBaseFetcher = asFetcher(async ({ region, version, cookies, notice }) => {
+export const MaimaiBaseFetcher = asFetcher(async ({ region, notice }) => {
   const map = [
     ["lev_bas", "basic", "std"],
     ["lev_adv", "advanced", "std"],

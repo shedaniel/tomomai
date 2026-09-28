@@ -79,7 +79,7 @@ export async function handleFetchCommand({
 }: FetchCommandOptions): Promise<DiscordResponse> {
   try {
     if (!discordUserId) {
-      return createErrorResponse(t(locale, 'common.error.unableToIdentify'), locale);
+      return createErrorResponse(t(locale, 'common.error.unableToIdentify'));
     }
 
     // Find user by Discord ID via account table
@@ -108,7 +108,7 @@ export async function handleFetchCommand({
     if (getGameMaintenance("maimai", region)?.active) {
       return createErrorResponse(t(locale, region === 'intl'
         ? 'fetch.maintenanceWindowIntl'
-        : 'fetch.maintenanceWindow'), locale);
+        : 'fetch.maintenanceWindow'));
     }
 
     // Defer the response since fetch can take a while
@@ -128,7 +128,7 @@ export async function handleFetchCommand({
     return deferredResponse;
   } catch (error) {
     getLogger().error({ err: error }, 'Error starting fetch');
-    return createErrorResponse(t(locale, 'fetch.startError'), locale);
+    return createErrorResponse(t(locale, 'fetch.startError'));
   }
 }
 

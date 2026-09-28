@@ -8,7 +8,7 @@ import { Button } from "@tomomai/ui";
 import { ACHIEVEMENTS, DIFFICULTY_COLORS } from "@/lib/difficulty";
 import { DIFFICULTY_ENUM, FC_ENUM, FS_ENUM } from "@/lib/db/types";
 import { getVersionInfo } from "@/lib/games/versions";
-import { Region, SnapshotWithSongs } from "@/lib/types";
+import { Region } from "@/lib/types";
 import { trpc } from "@/lib/trpc-client";
 import { ArrowLeft, Award, ChevronRight, Loader2 } from "lucide-react";
 import { StatsCardSkeleton } from "./stats-card.skeleton";
@@ -23,7 +23,6 @@ import { cn } from "@/lib/utils";
 
 interface StatsCardProps {
   region: Region;
-  selectedSnapshotData: SnapshotWithSongs | null;
   snapshotId?: string;
 }
 
@@ -214,7 +213,7 @@ function PlatesGrid({ data, selectedVersion, region, snapshotId }: PlatesGridPro
 
             <div className="space-y-2">
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                {mainDifficulties.map((difficulty, diffIndex) => {
+                {mainDifficulties.map((difficulty) => {
                   const count = progress[plateType][difficulty] || 0;
                   const total = totalSongs[difficulty] || 0;
                   const percentage = total > 0 ? (count / total) * 100 : 0;
@@ -314,7 +313,7 @@ function PlatesGrid({ data, selectedVersion, region, snapshotId }: PlatesGridPro
 }
 
 
-export function StatsCard({ region, selectedSnapshotData, snapshotId }: StatsCardProps) {
+export function StatsCard({ region, snapshotId }: StatsCardProps) {
   const game = useGameId();
   const t = useTranslations();
   const isDesktop = useMediaQuery("(min-width: 768px)", { initializeWithValue: false });
@@ -434,11 +433,6 @@ export function StatsCard({ region, selectedSnapshotData, snapshotId }: StatsCar
       };
     }).sort((a, b) => parseInt(a.id) - parseInt(b.id));
   }, [data]);
-
-  // Get all difficulties in proper order
-  const availableDifficulties = useMemo(() => {
-    return DIFFICULTY_ENUM;
-  }, []);
 
   // Sort grades by achievement threshold (highest to lowest)
   const sortedGrades = useMemo(() => {

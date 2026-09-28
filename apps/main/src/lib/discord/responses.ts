@@ -1,5 +1,4 @@
 import { InteractionResponseType, InteractionResponseFlags } from 'discord-interactions';
-import { FETCH_STATUS_ENUM } from '../db/types';
 import { FETCH_STATES } from '../fetch-states';
 import { resolveBaseUrl } from '../base-url';
 import { t } from './i18n';
@@ -199,7 +198,7 @@ export function createNoDataResponse(regionName: string, locale?: string): Disco
   };
 }
 
-export function createErrorResponse(message: string, locale?: string): DiscordResponse {
+export function createErrorResponse(message: string): DiscordResponse {
   return {
     type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
     data: {

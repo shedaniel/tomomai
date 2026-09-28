@@ -1,7 +1,7 @@
 import type { CanonicalGameId } from "@/lib/games/types";
 import { db } from "@/lib/db";
 import { user, userSnapshots } from "@/lib/db/schema-pg";
-import { and, desc, eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { getReservedPublicUser } from "./reserved";
 

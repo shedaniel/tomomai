@@ -25,7 +25,6 @@ import {
 } from "@tomomai/ui";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@tomomai/ui/select-friendly";
 import { calculateProgress, parseStatusStates } from "@/lib/fetch-states";
-import type { VersionId } from "@/lib/metadata";
 import { getVersionInfo } from "@/lib/games/versions";
 import { trpc } from "@/lib/trpc-client";
 import { FetchSession, Region, Snapshot } from "@/lib/types";
@@ -297,11 +296,9 @@ function FetchDataButton({
 // No data instructions component
 function NoDataInstructions({
   hasSnapshots,
-  region,
   t
 }: {
   hasSnapshots: boolean;
-  region: Region;
   t: any;
 }) {
   const game = useGame();
@@ -429,7 +426,6 @@ export function DataBanner({
         {/* Fetch instructions */}
         {supportsFetch && <NoDataInstructions
           hasSnapshots={hasSnapshots}
-          region={region}
           t={t}
         />}
       </div>

@@ -105,7 +105,7 @@ export async function handleProfileCommand({
 }: ProfileCommandOptions): Promise<DiscordResponse> {
   try {
     if (!discordUserId) {
-      return createErrorResponse(t(locale, 'common.error.unableToIdentify'), locale);
+      return createErrorResponse(t(locale, 'common.error.unableToIdentify'));
     }
 
     // Find user by Discord ID via account table
@@ -158,6 +158,6 @@ export async function handleProfileCommand({
     return deferredResponse;
   } catch (error) {
     getLogger().error({ err: error }, 'Error fetching user rating');
-    return createErrorResponse(t(locale, 'profile.error'), locale);
+    return createErrorResponse(t(locale, 'profile.error'));
   }
 }

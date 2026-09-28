@@ -7,16 +7,13 @@ import { useGameId } from "@/components/providers/game-provider";
 import { trpc } from "@/lib/trpc-client";
 import { Region } from "@/lib/types";
 import { cn, createSafeMaimaiImageUrl, getTypeBadgeUrl } from "@/lib/utils";
-import { Images, Loader2, AlertCircle, Calendar, MapPin, Music, HardDrive, Info, Trash2 } from "lucide-react";
+import { Images, Loader2, AlertCircle, Calendar, MapPin, HardDrive, Info, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { AlbumCardSkeleton } from "./album-card.skeleton";
 
 import { CoverImage } from "@/components/cover-image";
 import { useState, useEffect, useRef, useCallback } from "react";
-import { inferRouterOutputs } from "@trpc/server";
-import { AppRouter } from "@/server/routers/_app";
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
-import { renderLevelPrecise } from "@/lib/name-utils";
 import { Button } from "@tomomai/ui";
 import {
   ResponsiveDialog,

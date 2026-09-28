@@ -2,7 +2,6 @@ import { maimaiCompatibilityGameSchema } from "@/lib/games/schema";
 import { db } from '@/lib/db';
 import { userSnapshots } from '@/lib/db/schema-pg';
 import { protectedProcedure, publicProcedure, router } from '@/lib/trpc';
-import { TRPCError } from '@trpc/server';
 import { and, desc, eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { getEnabledRegions } from '@/lib/enabled-regions';

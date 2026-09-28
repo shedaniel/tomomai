@@ -89,7 +89,7 @@ async function validateRegionAccess(
 // Step 2: fetch (region-specific)
 // ---------------------------------------------------------------------------
 
-const scrapeFetcher: DataFetcher = async ({ userId: _userId, region, sessionId, flags, validation }) => {
+const scrapeFetcher: DataFetcher = async ({ region, sessionId, flags, validation }) => {
   if (!validation.redirectUrl) {
     throw new Error("No redirect URL received from token validation");
   }
@@ -154,7 +154,7 @@ const scrapeFetcher: DataFetcher = async ({ userId: _userId, region, sessionId, 
   if (flags.eventsCard) {
     try {
       logger.info("Fetching events data...");
-      eventsData = await fetchEventsData(cookies, region, sessionId);
+      eventsData = await fetchEventsData(cookies, region);
       logger.info("Events data fetched successfully");
     } catch (error) {
       logger.error({ err: error }, "Failed to fetch events data, continuing without events");

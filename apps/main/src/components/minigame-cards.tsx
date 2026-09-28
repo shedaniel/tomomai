@@ -7,7 +7,6 @@ import { getTransition } from "@/lib/animation-constants";
 
 interface MinigameCardProps {
   href: string;
-  domain: string;
   title: string;
   tagline: string;
   icon: React.ReactNode;
@@ -23,7 +22,7 @@ interface MinigameCardProps {
   };
 }
 
-function MinigameCard({ href, domain, title, tagline, icon, glyph, accent }: MinigameCardProps) {
+function MinigameCard({ href, title, tagline, icon, glyph, accent }: MinigameCardProps) {
   return (
     <motion.a
       href={href}
@@ -60,7 +59,6 @@ export function MinigameCards({ className = "grid-cols-2" }: { className?: strin
     <div className={`grid gap-3 ${className}`}>
       <MinigameCard
         href="https://guesser.tomomai.lol"
-        domain="guesser.tomomai.lol"
         title={t("guesser.title")}
         tagline={t("guesser.tagline")}
         glyph="?"
@@ -77,7 +75,6 @@ export function MinigameCards({ className = "grid-cols-2" }: { className?: strin
       />
       <MinigameCard
         href="https://heardle.tomomai.lol"
-        domain="heardle.tomomai.lol"
         title={t("heardle.title")}
         tagline={t("heardle.tagline")}
         glyph="♪"

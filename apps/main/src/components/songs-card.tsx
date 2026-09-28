@@ -17,7 +17,7 @@ import { Input } from "@tomomai/ui";
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 import { SongHoverCard } from "@/components/song-hover-card";
 import { motion, AnimatePresence } from "motion/react";
-import { SPRING_CONFIGS, STAGGER, getTransition } from "@/lib/animation-constants";
+import { STAGGER, getTransition } from "@/lib/animation-constants";
 import { trpc } from "@/lib/trpc-client";
 import { Flags } from "@/lib/flags";
 import type { PercentileEntry, PercentileMap } from "@/lib/percentile-types";

@@ -1,7 +1,7 @@
 import { maimaiCompatibilityGameSchema } from "@/lib/games/schema";
 import { codeToChartType, codeToDifficulty } from "@/lib/maimai/codes";
 import { db } from '@/lib/db';
-import { scoreData, snapshotScores, songs, userRecentSongs, userSnapshots } from '@/lib/db/schema-pg';
+import { scoreData, snapshotScores, songs, userSnapshots } from '@/lib/db/schema-pg';
 import { publicProcedure, router } from '@/lib/trpc';
 import { and, desc, eq, gt, gte, inArray, sql } from 'drizzle-orm';
 import { z } from 'zod';

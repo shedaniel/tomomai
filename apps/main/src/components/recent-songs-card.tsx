@@ -8,22 +8,19 @@ import { useGameId } from "@/components/providers/game-provider";
 import { trpc } from "@/lib/trpc-client";
 import { Region } from "@/lib/types";
 import { cn, createSafeMaimaiImageUrl, getTypeBadgeUrl } from "@/lib/utils";
-import { Activity, Calendar, ChevronDown, ChevronRight, ChevronUp, Clock, Loader2, AlertCircle, TrendingUp, TrendingDown, Trophy, FastForward, Rewind, ArrowBigUpDash, ArrowBigDownDash, Grip, Sparkle, MapPin, SeparatorVertical, Slash, Star, Music, CloudOff } from "lucide-react";
+import { Activity, Calendar, ChevronDown, ChevronRight, ChevronUp, Clock, Loader2, AlertCircle, TrendingUp, TrendingDown, Trophy, ArrowBigUpDash, ArrowBigDownDash, Grip, Sparkle, MapPin, Slash, Star, Music, CloudOff } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { RecentSongsCardSkeleton } from "./recent-songs-card.skeleton";
 
 import { CoverImage } from "@/components/cover-image";
 import { Link } from "@/i18n/navigation"
-import { useCallback, useState, useEffect, useRef, useMemo } from "react";
+import { useCallback, useState, useEffect, useRef } from "react";
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 import { Badge } from "@tomomai/ui";
 import { Button } from "@tomomai/ui";
 import { Separator } from "@tomomai/ui";
 import { AutoHeight } from "@/components/animate-ui/primitives/effects/auto-height";
 import { getVersionInfo } from "@/lib/games/versions";
-import { inferRouterOutputs } from "@trpc/server";
-import { AppRouter } from "@/server/routers/_app";
-import { renderLevelPrecise } from "@/lib/name-utils";
 import { calculateDXStars, calculateNoteLosses, distributeBreaks } from "@/lib/score-details";
 import { motion } from "motion/react";
 import { SPRING_CONFIGS, STAGGER, getTransition } from "@/lib/animation-constants";
@@ -46,7 +43,6 @@ interface RecentSongRowProps {
 
 function RecentSongRow({ play, index, isFirst, isLast, onToggleExpand, isExpanded }: RecentSongRowProps) {
   const game = useGameId();
-  const errorsT = useTranslations("dataContent");
   const t = useTranslations('recentPlays');
   const isDesktop = useMediaQuery("(min-width: 768px)", { initializeWithValue: false });
   const [isRowHovered, setIsRowHovered] = useState(false);

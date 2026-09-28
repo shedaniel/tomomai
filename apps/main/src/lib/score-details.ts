@@ -1,4 +1,3 @@
-import { Slabo_27px } from "next/font/google";
 import { logger } from "./logger";
 
 // Constants for achievement calculation
@@ -27,9 +26,6 @@ const BREAK_JUDGMENT_MULTIPLIERS = {
   miss: 0.0,
 } as const;
 
-const BREAK_BONUS_POINTS = 100;
-const MAX_BREAK_POINTS = 2600;
-
 const BREAK_BONUS_MULTIPLIER: Record<string, number> = {
   criticalPerfect: 1.0,
   perfect2550: 0.75,
@@ -40,17 +36,6 @@ const BREAK_BONUS_MULTIPLIER: Record<string, number> = {
   good: 0.3,
   miss: 0.0,
 };
-
-const BREAK_SCORES = {
-  cp: 2600,
-  perfect2550: 2550,
-  perfect2500: 2500,
-  great2000: 2000,
-  great1500: 1500,
-  great1250: 1250,
-  good: 1000,
-  miss: 0,
-} as const;
 
 interface NoteCount {
   criticalPerfect: number;

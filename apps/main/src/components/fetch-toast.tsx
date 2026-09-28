@@ -77,11 +77,9 @@ function formatTimestamp(elapsedMs: number): string {
 }
 
 function StatusLine({
-  state,
   elapsedMs,
   label,
 }: {
-  state: FetchState;
   elapsedMs: number;
   label: string;
 }) {
@@ -241,7 +239,6 @@ export function FetchToast({ state, onDismiss }: FetchToastProps) {
             {statusStates.map((s) => (
               <StatusLine
                 key={s}
-                state={s}
                 elapsedMs={getStateTimestampMs(s)}
                 label={t(getStatusLabelKey(s))}
               />

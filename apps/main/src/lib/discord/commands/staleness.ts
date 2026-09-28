@@ -235,12 +235,12 @@ export async function handleStalenessChoice({
   locale,
 }: HandleStalenessChoiceOptions): Promise<DiscordResponse> {
   if (!discordUserId) {
-    return createErrorResponse(t(locale, 'common.error.unableToIdentifyShort'), locale);
+    return createErrorResponse(t(locale, 'common.error.unableToIdentifyShort'));
   }
 
   const dbUser = await resolveDbUser(discordUserId);
   if (!dbUser) {
-    return createErrorResponse(t(locale, 'common.error.generic'), locale);
+    return createErrorResponse(t(locale, 'common.error.generic'));
   }
 
   const resolvedRegion = resolveRegion(region, dbUser.region);

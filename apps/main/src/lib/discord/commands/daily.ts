@@ -80,7 +80,7 @@ export async function handleDailyCommand({
 }: DailyCommandOptions): Promise<DiscordResponse> {
   try {
     if (!discordUserId) {
-      return createErrorResponse(t(locale, 'common.error.unableToIdentify'), locale);
+      return createErrorResponse(t(locale, 'common.error.unableToIdentify'));
     }
 
     const dbUser = await findDbUserByDiscordId(discordUserId);
@@ -119,7 +119,7 @@ export async function handleDailyCommand({
     return deferredResponse;
   } catch (error) {
     getLogger().error({ err: error }, 'Error handling daily command');
-    return createErrorResponse(t(locale, 'daily.errorGeneric'), locale);
+    return createErrorResponse(t(locale, 'daily.errorGeneric'));
   }
 }
 

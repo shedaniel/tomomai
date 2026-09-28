@@ -1,4 +1,4 @@
-import { getVersionByShortName, getVersionFromDate, getVersionInfo, parseDate, VersionId } from "@/lib/metadata";
+import { getVersionByShortName, getVersionInfo, VersionId } from "@/lib/metadata";
 import { normalizeName } from "@/lib/name-utils";
 import { Level, NoteCounts } from "@/lib/types";
 import { DxRatingResponse } from "./dxrating-types";

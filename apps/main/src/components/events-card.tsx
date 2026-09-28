@@ -21,7 +21,6 @@ function StepProgress({
   steps: StepData[];
   state: EventData["state"];
 }) {
-  const t = useTranslations();
   if (steps.length === 0) return null;
 
   const isNotStarted = state === "not_started";

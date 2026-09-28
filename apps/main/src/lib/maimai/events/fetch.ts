@@ -5,8 +5,7 @@ import { getGameHtml } from "@/server/services/games/sega/http";
 import type { EventAreaData, EventData } from "../types";
 import { parseAreaEvents, parseEventAreaEvents } from "./parse";
 
-export async function fetchEventsData(cookies: string, region: Region, sessionId: bigint): Promise<{ areaEvents: EventData[], eventAreaEvents: EventAreaData[] }> {
-  void sessionId;
+export async function fetchEventsData(cookies: string, region: Region): Promise<{ areaEvents: EventData[], eventAreaEvents: EventAreaData[] }> {
   const baseUrl = gameBaseUrl("maimai", region);
   const referer = `${baseUrl}/maimai-mobile/`;
 

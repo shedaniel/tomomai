@@ -7,7 +7,7 @@ import { cn, createSafeMaimaiImageUrl } from "@/lib/utils";
 import { CoverImage } from "@/components/cover-image";
 import { UniqueSong } from "./types";
 import { useGameId } from "@/components/providers/game-provider";
-import { formatGameLevel, getGameDifficultyLabel, getGameDifficultyColors, getGameChartTypeLabel, getGameChartTypeBadgeLabel, getGameChartTypeBadge } from "@/lib/games/presentation";
+import { formatGameLevel, getGameDifficultyColors, getGameChartTypeLabel, getGameChartTypeBadgeLabel, getGameChartTypeBadge } from "@/lib/games/presentation";
 
 interface SongCardProps {
   song: UniqueSong;

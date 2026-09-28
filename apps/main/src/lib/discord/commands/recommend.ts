@@ -152,7 +152,7 @@ export async function handleRecommendCommand({
 }: RecommendCommandOptions): Promise<DiscordResponse> {
   try {
     if (!discordUserId) {
-      return createErrorResponse(t(locale, 'common.error.unableToIdentify'), locale);
+      return createErrorResponse(t(locale, 'common.error.unableToIdentify'));
     }
 
     const [dbUser] = await db
@@ -203,6 +203,6 @@ export async function handleRecommendCommand({
     return deferredResponse;
   } catch (error) {
     getLogger().error({ err: error }, 'Error handling recommend command');
-    return createErrorResponse(t(locale, 'recommend.errorGeneric'), locale);
+    return createErrorResponse(t(locale, 'recommend.errorGeneric'));
   }
 }

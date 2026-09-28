@@ -218,25 +218,6 @@ function avgPixel(pixels: Pixel[]): Pixel {
   return [sum[0] / pixels.length, sum[1] / pixels.length, sum[2] / pixels.length] as Pixel;
 }
 
-/** Extract one dominant color from a remote image, or null if it can't be loaded. */
-async function extractDominantColor(url: string): Promise<string | null> {
-  const buf = await fetchImageBuffer(url);
-  if (!buf) return null;
-  try {
-    const usable = vibrantPixels(await pixelsFrom(buf, 24));
-    // Pick the most-saturated bright pixel — gives a punchier accent than mean.
-    let best: Pixel = usable[0];
-    let bestScore = -Infinity;
-    for (const p of usable) {
-      const score = saturationOf(p) * 1.5 + (luminanceOf(p) / 255) * 0.5;
-      if (score > bestScore) { bestScore = score; best = p; }
-    }
-    return rgb(boostVibrance(best));
-  } catch {
-    return null;
-  }
-}
-
 /** Extract two distinct colors from a remote image (k-means with k=2). */
 async function extractTwoColors(url: string): Promise<[string, string] | null> {
   const buf = await fetchImageBuffer(url);

@@ -15,7 +15,6 @@ interface ImagePanelProps {
   imageUrl: string;
   imageKey: number;
   isLoading: boolean;
-  isDownloading: boolean;
   fileName: string;
   onRefresh: () => void;
   onRefreshFast?: () => void;
@@ -27,7 +26,6 @@ function ImagePanel({
   imageUrl,
   imageKey,
   isLoading,
-  isDownloading,
   fileName,
   onRefresh,
   onRefreshFast,
@@ -285,7 +283,6 @@ export function ExportImageCard({ selectedSnapshotData, region, showLastCredit =
       imageUrl={exportImageUrl}
       imageKey={exportImageKey}
       isLoading={exportIsLoading}
-      isDownloading={false}
       fileName={`maimai-profile-${selectedSnapshotData.snapshot.displayName || 'export'}.png`}
       onRefresh={handleExportRefresh}
       onRefreshFast={handleExportRefreshFast}
@@ -326,7 +323,6 @@ export function ExportImageCard({ selectedSnapshotData, region, showLastCredit =
                 imageUrl={lastCreditImageUrl}
                 imageKey={lastCreditImageKey}
                 isLoading={lastCreditIsLoading}
-                isDownloading={false}
                 fileName={`maimai-last-credit-${selectedSnapshotData.snapshot.displayName || 'export'}.png`}
                 onRefresh={handleLastCreditRefresh}
                 onRefreshFast={handleLastCreditRefreshFast}
@@ -367,7 +363,6 @@ export function ExportImageCard({ selectedSnapshotData, region, showLastCredit =
                     imageUrl={dailyImageUrl}
                     imageKey={dailyImageKey}
                     isLoading={dailyIsLoading}
-                    isDownloading={false}
                     fileName={`maimai-daily-${selectedDay}-${selectedSnapshotData.snapshot.displayName || 'export'}.png`}
                     onRefresh={handleDailyRefresh}
                     onRefreshFast={handleDailyRefreshFast}

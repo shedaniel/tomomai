@@ -3,7 +3,6 @@ import type {
   FullSync,
   NoteCounts,
   Region,
-  Route,
   TitleType,
 } from "./types";
 

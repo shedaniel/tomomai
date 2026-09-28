@@ -15,7 +15,6 @@ import {
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
-  SidebarSeparator,
 } from "@tomomai/ui/shadcn-sidebar";
 import {
   ArrowLeft,
@@ -25,7 +24,6 @@ import {
   KeyRound,
   ShieldCheck,
 } from "lucide-react";
-import type { RouteSpec } from "@/lib/api/registry";
 import type { GuideMeta } from "@/lib/developer/guides";
 
 interface DeveloperSidebarProps {

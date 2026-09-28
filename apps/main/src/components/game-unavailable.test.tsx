@@ -17,7 +17,7 @@ vi.mock("@/i18n/navigation", () => ({
 }));
 
 const flags: Flags = {
-  historyCard: false, platesCard: false, eventsCard: false, albumsCard: false,
+  historyCard: false, eventsCard: false, albumsCard: false,
   recommendationFilters: false, scorePercentile: false, settingsApplications: false,
   settingsDeveloper: false, aprilFools2026: false, customThemes: false, passkey: false,
   twitterOauth: false, developerPortal: false, apiKeyCreation: false,

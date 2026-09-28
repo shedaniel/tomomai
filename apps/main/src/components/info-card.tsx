@@ -424,7 +424,6 @@ interface InfoCardProps {
   profileDescription?: string | null;
   profileUserId?: string | null;
   isOwner?: boolean;
-  privacySettings: ProfilePrivacySettings;
   publishProfile: boolean;
   descriptionDraft: string;
   isDescriptionEditing: boolean;
@@ -443,7 +442,6 @@ export function InfoCard({
   profileDescription,
   profileUserId,
   isOwner = false,
-  privacySettings,
   publishProfile,
   descriptionDraft,
   isDescriptionEditing,

@@ -87,9 +87,3 @@ export function calculateProgress(completedStates: FetchState[], game: Canonical
 export function getStateForDifficulty(difficulty: number): FetchState | null {
   return DIFFICULTY_STATE_MAP[difficulty] || null;
 }
-
-// Check if all states are completed
-export function isAllStatesCompleted(completedStates: FetchState[], game: CanonicalGameId = "maimai"): boolean {
-  const allStates = getAllStates(game);
-  return allStates.every(state => completedStates.includes(state));
-}

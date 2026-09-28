@@ -17,7 +17,7 @@ const testLog = pino({ enabled: false });
 const shouldSkip = !TOKEN;
 
 // Scaled-down scraper
-const ScaledMaimaiScraperFetcher = (versionToFetch: VersionId) => asFetcher(async ({ region, version, cookies, log }) => {
+const ScaledMaimaiScraperFetcher = (versionToFetch: VersionId) => asFetcher(async ({ region, cookies, log }) => {
   log.info("Fetching master difficulty songs only (scaled test)...");
 
   const difficulty = 3; // master

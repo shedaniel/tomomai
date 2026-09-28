@@ -18,7 +18,6 @@ import {
   TableHeader,
   TableRow,
 } from "@tomomai/ui";
-import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
 type EventStatus = "active" | "ended" | "upcoming";
 

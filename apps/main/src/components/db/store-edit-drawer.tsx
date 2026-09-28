@@ -167,13 +167,13 @@ export function StoreEditDrawer({ open, onOpenChange, store, isLoggedIn }: Store
   };
 
   // Fetch edits for this store
-  const { data: editsData, refetch: refetchEdits, isRefetching: isRefetchingEdits } = trpc.store.getStoreEdits.useQuery(
+  const { data: editsData, isRefetching: isRefetchingEdits } = trpc.store.getStoreEdits.useQuery(
     { storeId: store?.id || BigInt(0) },
     { enabled: open && !!store }
   );
 
   // Fetch user's votes (only if logged in)
-  const { data: votesData, refetch: refetchVotes, isRefetching: isRefetchingVotes } = trpc.store.getUserStoreEditVotes.useQuery(
+  const { data: votesData, isRefetching: isRefetchingVotes } = trpc.store.getUserStoreEditVotes.useQuery(
     { storeId: store?.id || BigInt(0) },
     { enabled: open && !!store && isLoggedIn }
   );

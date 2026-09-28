@@ -66,7 +66,7 @@ export async function handleRecentsCommand({
 }: RecentsCommandOptions): Promise<DiscordResponse> {
   try {
     if (!discordUserId) {
-      return createErrorResponse(t(locale, 'common.error.unableToIdentify'), locale);
+      return createErrorResponse(t(locale, 'common.error.unableToIdentify'));
     }
 
     // Find user by Discord ID via account table
@@ -124,6 +124,6 @@ export async function handleRecentsCommand({
 
   } catch (error) {
     getLogger().error({ err: error }, 'Error handling recents command');
-    return createErrorResponse(t(locale, 'recents.errorGeneric'), locale);
+    return createErrorResponse(t(locale, 'recents.errorGeneric'));
   }
 }

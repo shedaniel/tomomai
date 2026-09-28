@@ -1,18 +1,12 @@
-import { pgTable, text, integer, smallint, bigint, bigserial, boolean, timestamp, unique, uniqueIndex, index, pgEnum, jsonb, varchar, check, uuid, point, primaryKey, foreignKey } from "drizzle-orm/pg-core";
+import { pgTable, text, integer, smallint, bigint, boolean, timestamp, unique, uniqueIndex, index, pgEnum, jsonb, varchar, check, uuid, point, primaryKey, foreignKey } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import {
   LANGUAGE_ENUM,
   REGION_ENUM,
-  DIFFICULTY_ENUM,
-  LEVEL_ENUM,
-  CHART_TYPE_ENUM,
-  FC_ENUM,
-  FS_ENUM,
   FETCH_STATUS_ENUM,
   EVENT_TYPE_ENUM,
   EVENT_STATE_ENUM,
   STORE_STATUS_ENUM,
-  TITLE_TYPE_ENUM,
 } from "./types";
 
 // PostgreSQL enum types
@@ -404,8 +398,7 @@ export const userRecentSongsDetailed = pgTable("user_recent_songs_detailed", {
   venue: text("venue"),
   rating: smallint("rating").notNull(),
   ratingChange: smallint("ratingChange").notNull(),
-}, (table) => [
-]);
+});
 
 export const stores = pgTable("stores", {
   id: bigint("id", { mode: "bigint" }).primaryKey().generatedAlwaysAsIdentity(),

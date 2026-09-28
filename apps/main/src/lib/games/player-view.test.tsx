@@ -22,7 +22,7 @@ function fixture(game: CanonicalGameId): GameSnapshotData {
   };
 }
 
-function render(game: CanonicalGameId, options?: { showAllScores?: boolean; showScoreDetails?: boolean; showPlayCounts?: boolean }) {
+function render(game: CanonicalGameId) {
   const descriptor: FrontendGame = { id: game, enabled: false, displayName: game, productName: game === "maimai" ? "tomomai" : "tomochu", regions: ["jp"], capabilities: ["scores", "rating", "rankings"] };
   return renderToStaticMarkup(<NextIntlClientProvider locale="en" messages={messages} timeZone="UTC"><GameProvider game={descriptor}><SongsCard selectedSnapshotData={fixture(game)} /></GameProvider></NextIntlClientProvider>);
 }

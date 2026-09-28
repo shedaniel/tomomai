@@ -10,15 +10,11 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import {
   Drawer,
   DrawerContent,
-  DrawerHeader,
   DrawerTitle,
   DrawerDescription,
 } from "@tomomai/ui";
 import {
   Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
   CardContent,
 } from "@tomomai/ui";
 import { useMediaQuery } from "@/hooks/use-media-query";
@@ -314,7 +310,7 @@ export function ArcadesMap() {
   });
 
   // Fetch stores using tRPC
-  const { data: storesResponse, isLoading: isLoadingStores } = trpc.store.getStores.useQuery(undefined, {
+  const { data: storesResponse } = trpc.store.getStores.useQuery(undefined, {
     refetchOnWindowFocus: false,
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
