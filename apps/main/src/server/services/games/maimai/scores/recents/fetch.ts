@@ -1,7 +1,8 @@
+import "server-only";
 import { load } from "cheerio";
-import { logger } from "../../logger";
-import { normalizeName } from "../../name-utils";
-import { Region } from "../../types";
+import { logger } from "@/lib/logger";
+import { normalizeName } from "@/lib/name-utils";
+import { Region } from "@/lib/types";
 import type { Difficulty, FullCombo, FullSync, SongType } from "@/lib/games/maimai/types";
 import { gameBaseUrl } from "@/lib/games/sites";
 import { getGameHtml } from "@/server/services/games/sega/http";

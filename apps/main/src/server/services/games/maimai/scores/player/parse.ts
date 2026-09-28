@@ -1,6 +1,6 @@
 import { load } from "cheerio";
-import { logger } from "../../logger";
-import { Region } from "../../types";
+import { logger } from "@/lib/logger";
+import { Region } from "@/lib/types";
 import type { TitleType } from "@/lib/games/maimai/types";
 import type { PlayerData } from "../types";
 import { gameBaseUrl } from "@/lib/games/sites";

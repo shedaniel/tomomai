@@ -1,5 +1,5 @@
 import { MAIMAI_CODES } from "@/lib/games/maimai/codes";
-import { logger } from "../../logger";
+import { logger } from "@/lib/logger";
 import type { TitleType } from "@/lib/games/maimai/types";
 import type { PlayerData } from "../types";
 

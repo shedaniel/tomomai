@@ -1,7 +1,7 @@
 import { logger } from "@/lib/logger";
 import { gameBaseUrl } from "@/lib/games/sites";
 import { requestGamePage } from "@/server/services/games/sega/http";
-import { musicTypeFromIcon } from "@/lib/maimai/parse-utils";
+import { musicTypeFromIcon } from "@/server/services/games/maimai/scores/parse-utils";
 import { VersionId } from "@/lib/metadata";
 import { normalizeName } from "@/lib/name-utils";
 import { Region } from "@/lib/types";

@@ -30,7 +30,7 @@ This means even items that "support cn today" via hardcoded paths must be revisi
 
 ## Data Pipeline (core gap)
 **Catalog ingestion (functional for CN via Lxns):** the JP/INTL multi-source merge (scraper + base + otoge-db + after-fetch) is replaced for CN by a single `LxnsFetcher` that covers title, artist, genre, cover, level, levelPrecise, bpm, noteDesigner, notes counts, and addedVersion. The JP/INTL-specific files below are skipped entirely for CN — they still need work only if we want CN player-score scraping.
-- [ ] `lib/maimai/fetch.ts` — `fetchPlayerData`, `fetchSongsData`, `fetchRecentSongsData`, baseUrl ternaries — score scraping is JP/INTL-only (CN has no scrapable mobile site; will need a different score source)
+- [ ] `server/services/games/maimai/scores/{player,songs,recents}/fetch.ts` — `fetchPlayerData`, `fetchAllSongsData`, `fetchRecentSongsData`, baseUrl ternaries — score scraping is JP/INTL-only (CN has no scrapable mobile site; will need a different score source)
 - [ ] `server/services/maimai-login.ts` — `processMaimaiToken` (L21-40), cookie validation (L87), JP login URLs (L185-186, L295, L300) — CN does not use SEGA login
 - [~] `server/services/catalog/maimai/pipeline.ts` — pipeline branches on `region === "cn"`. **Not "done" by definition above.** Should derive the fetcher set from a region→fetcher-set table or per-region capability flag, gated by `isRegionEnabled` upstream. Functionality works today.
 - [~] ~~`server/services/catalog/maimai/sources/scraper.ts`~~ — currently bypassed for CN via the same hardcoded branch. Same caveat as `maimai/pipeline.ts`.

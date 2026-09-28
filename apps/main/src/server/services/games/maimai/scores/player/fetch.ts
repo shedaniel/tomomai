@@ -1,5 +1,6 @@
-import { logger } from "../../logger";
-import { Region } from "../../types";
+import "server-only";
+import { logger } from "@/lib/logger";
+import { Region } from "@/lib/types";
 import { gameBaseUrl } from "@/lib/games/sites";
 import { getGameHtml, requestGamePage } from "@/server/services/games/sega/http";
 import type { PlayerData } from "../types";

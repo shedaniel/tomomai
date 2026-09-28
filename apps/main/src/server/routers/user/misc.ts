@@ -8,7 +8,7 @@ import {
   DivingFishImportTokenError,
   DivingFishPrivacyError,
   DivingFishUserNotFoundError,
-} from '@/lib/maimai/divingfish/client';
+} from '@/server/services/games/maimai/scores/divingfish/client';
 import {
   formatDivingFishToken,
 } from '@/server/services/games/maimai/login';

@@ -1,6 +1,6 @@
 import { load } from "cheerio";
-import { logger } from "../../logger";
-import { Region } from "../../types";
+import { logger } from "@/lib/logger";
+import { Region } from "@/lib/types";
 import type { EventAreaData, EventData } from "../types";
 
 // Parse event period string and extract start/end timestamps

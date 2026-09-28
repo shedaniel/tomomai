@@ -8,7 +8,7 @@ import { TRPCError } from '@trpc/server';
 import { and, eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { fetchUserAlbums, fetchAlbumStorageUsage } from '@/server/queries/albums';
-import { MAX_STORAGE_BYTES } from '@/lib/maimai/albums/persist';
+import { MAX_STORAGE_BYTES } from '@/server/services/games/maimai/scores/albums/persist';
 
 export const albumsRouter = router({
   getUserAlbums: protectedProcedure

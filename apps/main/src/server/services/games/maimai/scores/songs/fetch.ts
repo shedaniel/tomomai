@@ -1,9 +1,10 @@
+import "server-only";
 import { load } from "cheerio";
-import { appendFetchState } from "../../fetch-states-server";
-import { getStateForDifficulty } from "../../fetch-states";
-import { logger } from "../../logger";
-import { normalizeName } from "../../name-utils";
-import { Region } from "../../types";
+import { appendFetchState } from "@/lib/fetch-states-server";
+import { getStateForDifficulty } from "@/lib/fetch-states";
+import { logger } from "@/lib/logger";
+import { normalizeName } from "@/lib/name-utils";
+import { Region } from "@/lib/types";
 import type { Difficulty } from "@/lib/games/maimai/types";
 import { gameBaseUrl } from "@/lib/games/sites";
 import { getGameHtml } from "@/server/services/games/sega/http";

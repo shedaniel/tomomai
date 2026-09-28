@@ -647,9 +647,9 @@ stages describe completed work, not the raw HTTP request count. Shared
 session-level pending/completed/failed behavior is retained.
 
 The existing maimai split in
-[`player/`](../apps/main/src/lib/maimai/player/),
-[`songs/`](../apps/main/src/lib/maimai/songs/) and
-[`recents/`](../apps/main/src/lib/maimai/recents/) is a structural reference for
+[`player/`](../apps/main/src/server/services/games/maimai/scores/player/),
+[`songs/`](../apps/main/src/server/services/games/maimai/scores/songs/) and
+[`recents/`](../apps/main/src/server/services/games/maimai/scores/recents/) is a structural reference for
 small fetch/parse modules and a CHUNITHM orchestrator. Shared admission, rate
 limits, the provider deadline, captured game version and atomic persistence
 already exist. Do not introduce a parallel persistence pipeline or reuse
@@ -657,9 +657,9 @@ maimai's album/events extras by default.
 
 ### Current implementation
 
-The configured [CHUNITHM pipeline](../apps/main/src/server/services/games/chunithm/pipeline.ts)
+The configured [CHUNITHM pipeline](../apps/main/src/server/services/games/chunithm/scores/pipeline.ts)
 uses region-specific login configuration and
-[shared CHUNITHM parsers](../apps/main/src/server/services/games/chunithm/parsers.ts)
+[shared CHUNITHM parsers](../apps/main/src/server/services/games/chunithm/scores/parsers.ts)
 for profile, the five standard difficulty lists, and recent plays/details.
 Authenticated profile images reuse the existing content-addressed hosting
 pipeline. A complete normalized result reaches shared game-scoped persistence

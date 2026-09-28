@@ -1,4 +1,5 @@
-import { logger } from "../../logger";
+import "server-only";
+import { logger } from "@/lib/logger";
 import { LxnsAuthRevokedError } from "../player/lxns";
 import type { ScoreData } from "../types";
 import { parseLxnsScoresData, unwrapLxnsScoresResponse } from "./lxns-parse";

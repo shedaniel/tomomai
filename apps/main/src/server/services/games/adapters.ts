@@ -41,7 +41,7 @@ export const GAME_SOURCES: Record<CanonicalGameId, { catalog: CatalogSourceAdapt
     scores: {
       configured: true,
       async fetch(context) {
-        const { fetchPlayer } = await import("./chunithm/pipeline");
+        const { fetchPlayer } = await import("./chunithm/scores/pipeline");
         return { result: await fetchPlayer(context) };
       },
     },

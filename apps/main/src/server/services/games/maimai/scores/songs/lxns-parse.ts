@@ -1,6 +1,6 @@
 import { normalizeName } from "@/lib/name-utils";
 import { MAIMAI_CODES } from "@/lib/games/maimai/codes";
-import { logger } from "../../logger";
+import { logger } from "@/lib/logger";
 import type { Difficulty, FullCombo, FullSync, SongType } from "@/lib/games/maimai/types";
 import type { ScoreData } from "../types";
 

@@ -1,4 +1,5 @@
-import { logger } from "../../logger";
+import "server-only";
+import { logger } from "@/lib/logger";
 
 const DIVING_FISH_BASE = "https://www.diving-fish.com/api/maimaidxprober";
 const DEV_RECORDS_URL = `${DIVING_FISH_BASE}/dev/player/records`;

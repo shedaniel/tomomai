@@ -62,3 +62,15 @@ export interface EventData {
 export interface EventAreaData extends EventData {
   eventPeriod: [number, number] | null; // [startTimestamp, endTimestamp]
 }
+
+export interface FetchedMaimaiData {
+  playerData: PlayerData;
+  allSongsData: { [difficulty: number]: ScoreData[] };
+  recentSongsData: RecentSongData[];
+  albumData: AlbumData[];
+  eventsData: { areaEvents: EventData[]; eventAreaEvents: EventAreaData[] } | null;
+  // Optional follow-up handles used by background tasks. Only populated by
+  // scrape-based fetchers (intl/jp) — the CN fetcher relies on REST APIs and
+  // doesn't need cookies for image follow-ups.
+  cookies?: string;
+}

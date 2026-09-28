@@ -1,4 +1,5 @@
-import type { ScoreData } from "@/lib/maimai/types";
+import "server-only";
+import type { FetchedMaimaiData, ScoreData } from "./types";
 import type {
   ConfiguredScoreAdapter,
   GameFetchResult,
@@ -15,9 +16,8 @@ import {
   syncStatusToCode,
   titleTypeToCode,
 } from "@/lib/games/maimai/codes";
-import { uploadPlayerIcon } from "@/lib/maimai/player/persist";
+import { uploadPlayerIcon } from "./player/persist";
 import type { Region } from "@/lib/types";
-import type { FetchedMaimaiData } from "@/lib/maimai/orchestrator";
 
 type MaimaiNormalizeContext = {
   region: Region;
@@ -116,7 +116,7 @@ export const maimaiScoreAdapter: ConfiguredScoreAdapter = {
     }
   },
   async fetch(ctx: ScoreFetchContext) {
-    const { runMaimaiFetcher, persistMaimaiExtra } = await import("@/lib/maimai/orchestrator");
+    const { runMaimaiFetcher, persistMaimaiExtra } = await import("./orchestrator");
     const { fetched } = await runMaimaiFetcher(ctx);
     const result = await normalizeFetchedMaimaiData(fetched, {
       region: ctx.region,

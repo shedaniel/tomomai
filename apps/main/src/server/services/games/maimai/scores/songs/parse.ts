@@ -1,7 +1,7 @@
 import { load } from "cheerio";
 import { MAIMAI_CODES } from "@/lib/games/maimai/codes";
-import { logger } from "../../logger";
-import { normalizeName } from "../../name-utils";
+import { logger } from "@/lib/logger";
+import { normalizeName } from "@/lib/name-utils";
 import type { FullCombo, FullSync, SongType } from "@/lib/games/maimai/types";
 import { musicTypeFromIcon } from "../parse-utils";
 import type { ScoreData } from "../types";

@@ -1,9 +1,10 @@
+import "server-only";
 import { load } from "cheerio";
 import { and, eq, gt, inArray, or, sql } from "drizzle-orm";
-import { db } from "../../db";
-import { userRecentSongs, userRecentSongsDetailed } from "../../db/schema-pg";
-import { logger } from "../../logger";
-import { Region } from "../../types";
+import { db } from "@/lib/db";
+import { userRecentSongs, userRecentSongsDetailed } from "@/lib/db/schema-pg";
+import { logger } from "@/lib/logger";
+import { Region } from "@/lib/types";
 import { gameBaseUrl } from "@/lib/games/sites";
 import { getGamePage } from "@/server/services/games/sega/http";
 import type { RecentSongData } from "../types";

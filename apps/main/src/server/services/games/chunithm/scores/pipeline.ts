@@ -5,9 +5,9 @@ import { GameAdapterError } from "@/lib/games/types";
 import type { GameFetchResult, NormalizedRecent, NormalizedScore, ScoreFetchContext } from "@/server/services/games/types";
 import { getLogger } from "@/lib/request-logger";
 import { uploadIconToR2 } from "@/lib/r2";
-import { gameSiteUrl, requestGamePage } from "../sega/http";
-import { loginAndGetCookies } from "./login";
-import { chunithmMobilePaths } from "./login-config";
+import { gameSiteUrl, requestGamePage } from "@/server/services/games/sega/http";
+import { loginAndGetCookies } from "../login";
+import { chunithmMobilePaths } from "../login-config";
 import { assertChunithmPage, CHUNITHM_DIFFICULTIES, parseMusicGenreForm, parsePlayer, parseRecentDetails, parseRecents, parseScores } from "./parsers";
 
 export async function fetchPlayer(ctx: ScoreFetchContext): Promise<GameFetchResult> {

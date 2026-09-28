@@ -1,4 +1,5 @@
-import { logger } from "../../logger";
+import "server-only";
+import { logger } from "@/lib/logger";
 import type { PlayerData } from "../types";
 import { parseLxnsPlayerData, unwrapLxnsPlayerResponse } from "./lxns-parse";
 

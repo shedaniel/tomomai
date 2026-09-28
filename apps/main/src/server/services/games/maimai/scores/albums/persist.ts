@@ -1,9 +1,10 @@
+import "server-only";
 import { and, eq } from "drizzle-orm";
-import { db } from "../../db";
-import { userAlbums } from "../../db/schema-pg";
-import { convertJpegToAvif } from "../../image-converter";
-import { logger } from "../../logger";
-import { deleteFromR2, uploadToR2 } from "../../r2";
+import { db } from "@/lib/db";
+import { userAlbums } from "@/lib/db/schema-pg";
+import { convertJpegToAvif } from "@/lib/image-converter";
+import { logger } from "@/lib/logger";
+import { deleteFromR2, uploadToR2 } from "@/lib/r2";
 import { chartKey } from "@/server/services/games/score-storage";
 import type { ChartResolutionMap } from "@/server/services/games/types";
 import { chartTypeToCode, difficultyToCode } from "@/lib/games/maimai/codes";

@@ -1,14 +1,15 @@
-import { FETCH_STATES } from "../fetch-states";
-import { appendFetchState } from "../fetch-states-server";
-import { fetchImageBuffer } from "../image-converter";
-import { logger } from "../logger";
-import { getLogger } from "../request-logger";
-import { Region } from "../types";
+import "server-only";
+import { FETCH_STATES } from "@/lib/fetch-states";
+import { appendFetchState } from "@/lib/fetch-states-server";
+import { fetchImageBuffer } from "@/lib/image-converter";
+import { logger } from "@/lib/logger";
+import { getLogger } from "@/lib/request-logger";
+import { Region } from "@/lib/types";
 import {
   parseDivingFishToken,
   parseLxnsToken,
   processMaimaiToken,
-} from "@/server/services/games/maimai/login";
+} from "../login";
 import type { TokenValidationResult } from "@/server/services/games/sega/login";
 import { getCookiesFromRedirect } from "@/server/services/games/sega/http";
 import {
@@ -29,32 +30,9 @@ import { fetchAndInsertRecentSongsData } from "./recents/details";
 import { fetchRecentSongsData } from "./recents/fetch";
 import { fetchAllSongsData, fetchHiddenSongsData } from "./songs/fetch";
 import { fetchLxnsScoresData } from "./songs/lxns";
-import type {
-  AlbumData,
-  EventAreaData,
-  EventData,
-  PlayerData,
-  RecentSongData,
-  ScoreData,
-} from "./types";
-import type { Flags } from "../flags";
+import type { AlbumData, FetchedMaimaiData, ScoreData } from "./types";
+import type { Flags } from "@/lib/flags";
 import type { PersistedSnapshotContext, ScoreFetchContext } from "@/server/services/games/types";
-
-// ---------------------------------------------------------------------------
-// Shared fetcher contract
-// ---------------------------------------------------------------------------
-
-export interface FetchedMaimaiData {
-  playerData: PlayerData;
-  allSongsData: { [difficulty: number]: ScoreData[] };
-  recentSongsData: RecentSongData[];
-  albumData: AlbumData[];
-  eventsData: { areaEvents: EventData[]; eventAreaEvents: EventAreaData[] } | null;
-  // Optional follow-up handles used by background tasks. Only populated by
-  // scrape-based fetchers (intl/jp) — the CN fetcher relies on REST APIs and
-  // doesn't need cookies for image follow-ups.
-  cookies?: string;
-}
 
 interface FetcherContext {
   userId: string;

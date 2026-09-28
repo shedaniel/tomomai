@@ -2,7 +2,7 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import type { Flags } from "@/lib/flags";
 
 const mocks = vi.hoisted(() => ({ login: vi.fn(), upload: vi.fn(), progress: vi.fn() }));
-vi.mock("./login", () => ({ loginAndGetCookies: mocks.login }));
+vi.mock("../login", () => ({ loginAndGetCookies: mocks.login }));
 vi.mock("@/lib/http-agent", () => ({ agentFetch: vi.fn() }));
 vi.mock("@/lib/r2", () => ({ uploadIconToR2: mocks.upload }));
 vi.mock("@/lib/fetch-states-server", () => ({ appendFetchState: mocks.progress }));
