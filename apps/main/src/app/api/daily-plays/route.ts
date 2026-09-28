@@ -4,7 +4,7 @@ import { db } from '@/lib/db';
 import { user, userSnapshots } from '@/lib/db/schema-pg';
 import { and, eq } from 'drizzle-orm';
 import { renderRedirectUrl } from '@/lib/render-token';
-import { buildDailyPlaysMessage } from '@/lib/render-data';
+import { buildDailyPlaysMessage } from '@/server/services/games/maimai/render/messages';
 import { requestLogger } from '@/lib/request-logger';
 import { getEnabledRegions } from '@/lib/enabled-regions';
 import { z } from 'zod';

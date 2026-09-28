@@ -1,5 +1,6 @@
+import "server-only";
 import { createHash } from 'crypto';
-import { isSafeMaimaiImageUrl, isServer, isServerless } from './utils';
+import { isSafeMaimaiImageUrl, isServer, isServerless } from '@/lib/utils';
 import { gzip, gunzip } from 'zlib';
 import { promisify } from 'util';
 import path from 'path';

@@ -1,4 +1,3 @@
-import { codeToComboStatus, codeToSyncStatus, codeToTitleType } from "@/lib/games/maimai/codes";
 /**
  * Builds `RenderMessage` DTOs from DB data, then mints signed tokens.
  *
@@ -11,6 +10,8 @@ import { codeToComboStatus, codeToSyncStatus, codeToTitleType } from "@/lib/game
  * catalog fields (songName, cover, level, etc.) never travel in the token.
  */
 
+import "server-only";
+import { codeToComboStatus, codeToSyncStatus, codeToTitleType } from "@/lib/games/maimai/codes";
 import { db } from "@/lib/db";
 import {
   parentSong,
@@ -27,9 +28,9 @@ import type { VersionId } from "@/lib/metadata";
 import {
   getReservedSnapshotData,
   RESERVED_USERNAMES,
-} from "@/server/services/games/maimai/reserved";
-import { prepareCreditData } from "@/server/services/credit-data";
-import { prepareDailyPlaysData } from "@/server/services/daily-plays-data";
+} from "../reserved";
+import { prepareCreditData } from "./credit-data";
+import { prepareDailyPlaysData } from "./daily-plays-data";
 import type {
   ChartRecord,
   FullCombo,

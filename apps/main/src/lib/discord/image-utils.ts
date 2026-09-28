@@ -1,11 +1,11 @@
 import { DISCORD_COLORS, editDiscordMessage } from './responses';
 import { formatProfileSummaryContent, regionDisplayName, type ProfileSummary } from './region';
 import type { Region } from '@/lib/types';
-import { prepareCreditData } from '@/server/services/credit-data';
-import { prepareDailyPlaysData } from '@/server/services/daily-plays-data';
+import { prepareCreditData } from '@/server/services/games/maimai/render/credit-data';
+import { prepareDailyPlaysData } from '@/server/services/games/maimai/render/daily-plays-data';
 import { getLogger } from '@/lib/request-logger';
 import { requestDiscordRender } from './render-client';
-import { buildExportImageMessage, buildLastCreditMessage, buildDailyPlaysMessage } from '@/lib/render-data';
+import { buildExportImageMessage, buildLastCreditMessage, buildDailyPlaysMessage } from '@/server/services/games/maimai/render/messages';
 import { t } from './i18n';
 
 // Image rendering lives in apps/render. These helpers stay the Discord-domain

@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const { execute, transaction } = vi.hoisted(() => ({ execute: vi.fn(), transaction: vi.fn() }));
 vi.mock("@/lib/db", () => ({ db: { transaction } }));
 
-import { getChartPercentiles } from "./percentile";
+import { getChartPercentiles } from "./queries";
 
 describe("parent chart percentiles", () => {
   beforeEach(() => {

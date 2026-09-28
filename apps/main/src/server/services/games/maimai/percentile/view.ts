@@ -1,16 +1,17 @@
 // Defines the chart_percentile_bands_all_regions materialized view — not tracked by Drizzle.
 // The percentile cron job creates the view and refreshes it daily.
-// All reads go through raw SQL in src/server/queries/percentile.ts.
+// All reads go through raw SQL in ./queries.ts.
 
+import "server-only";
 import { difficultyToCode } from "@/lib/games/maimai/codes";
 
-export const CHART_PERCENTILE_VIEW = "chart_percentile_bands_all_regions";
+export const MAIMAI_CHART_PERCENTILE_VIEW = "chart_percentile_bands_all_regions";
 
 const PERCENTILE_DIFFICULTY_CODES = (["expert", "master", "remaster"] as const).map(difficultyToCode);
 
 // Parent identity pools each player's best score across regions and versions.
 // Creates the view on first run only; subsequent runs use REFRESH below.
-export const CREATE_CHART_PERCENTILE_VIEW_SQL = `
+export const CREATE_MAIMAI_CHART_PERCENTILE_VIEW_SQL = `
 CREATE MATERIALIZED VIEW IF NOT EXISTS chart_percentile_bands_all_regions AS
 WITH latest_regional_ratings AS (
   SELECT DISTINCT ON ("userId", game, region)
@@ -69,14 +70,14 @@ FROM band_aggregates
 `;
 
 // Unique index required for REFRESH CONCURRENTLY; created once then reused.
-export const CREATE_CHART_PERCENTILE_INDEX_SQL = `
+export const CREATE_MAIMAI_CHART_PERCENTILE_INDEX_SQL = `
 CREATE UNIQUE INDEX IF NOT EXISTS chart_percentile_bands_all_regions_pkey
   ON chart_percentile_bands_all_regions (parent_id, band_lo)
 `;
 
 // Row type returned by raw SQL queries against the view.
 // Must extend Record<string, unknown> to satisfy the postgres.js Row constraint.
-export type ChartPercentileBandRow = {
+export type MaimaiChartPercentileBandRow = {
   parent_id: bigint;
   band_lo: number;
   achievements: number[];

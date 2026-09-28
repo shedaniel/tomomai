@@ -2,7 +2,7 @@ import { maimaiCompatibilityGameSchema } from "@/lib/games/schema";
 import { protectedProcedure, publicProcedure, router } from '@/lib/trpc';
 import { z } from 'zod';
 import { getEnabledRegions } from '@/lib/enabled-regions';
-import { listDailyPlaysAvailableDays } from '@/server/services/daily-plays-data';
+import { listDailyPlaysAvailableDays } from '@/server/services/games/maimai/render/daily-plays-data';
 import { resolvePublicSnapshotUserId } from '@/server/queries/public-access';
 
 const regionSchema = z.enum(getEnabledRegions());

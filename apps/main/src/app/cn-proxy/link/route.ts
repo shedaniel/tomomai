@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ProxyAgent, fetch as undiciFetch } from "undici";
-import { verifyCnProxyToken } from "@/lib/cn-proxy-token";
+import { verifyCnProxyToken } from "@/server/services/games/maimai/cn-proxy-token";
 import { resolveBaseUrl } from "@/lib/base-url";
 import { logger } from "@/lib/logger";
 

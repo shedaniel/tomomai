@@ -1,3 +1,4 @@
+import "server-only";
 import { db } from "@/lib/db";
 import { tourEvents, tourEventSteps } from "@/lib/db/schema-pg";
 import { norm, normType } from "@/lib/games/maimai/events";

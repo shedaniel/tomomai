@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifyCnProxyToken } from "@/lib/cn-proxy-token";
+import { verifyCnProxyToken } from "@/server/services/games/maimai/cn-proxy-token";
 import { formatCnCookiesToken } from "@/server/services/games/maimai/login";
 import { deleteToken, saveToken } from "@/server/services/games/tokens";
 import { startScoreFetch } from "@/server/services/games/score-ingestion";

@@ -5,7 +5,7 @@ import { publicProcedure, router } from '@/lib/trpc';
 import { parentPublicIdOf } from '@/lib/catalog/song-instance-id';
 import { and, eq, inArray } from 'drizzle-orm';
 import { z } from 'zod';
-import { getChartPercentiles } from '@/server/queries/percentile';
+import { getChartPercentiles } from '@/server/services/games/maimai/percentile/queries';
 import { recommendationPeers, type RecommendationPeers } from '@/lib/games/maimai/percentile/potential';
 import { ACCURACY_VALUES } from '@/lib/games/recommendations';
 import type { PercentileMap } from '@/lib/games/maimai/percentile/types';

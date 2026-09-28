@@ -12,7 +12,7 @@ import {
 } from '../responses';
 import { resolveRegion } from '../region';
 import { generateAndSendDailyPlaysImage } from '../image-utils';
-import { listDailyPlaysAvailableDays } from '@/server/services/daily-plays-data';
+import { listDailyPlaysAvailableDays } from '@/server/services/games/maimai/render/daily-plays-data';
 import { applyStalenessGate } from './staleness';
 import { t } from '../i18n';
 

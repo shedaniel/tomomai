@@ -1,3 +1,4 @@
+import "server-only";
 import { codeToChartType, codeToComboStatus, codeToDifficulty, codeToSyncStatus, codeToTitleType } from "@/lib/games/maimai/codes";
 import { songInstanceId } from "@/lib/db/song-instance-id";
 import { db } from '@/lib/db';

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Agent } from 'undici';
-import { getCachedImageBuffer, cacheImage } from '@/lib/image_cacher';
+import { getCachedImageBuffer, cacheImage } from '@/server/services/games/maimai/image-cache';
 import { flushLogger } from '@/lib/logger';
 import { requestLogger } from '@/lib/request-logger';
 import { isSafeMaimaiImageUrl } from '@/lib/utils';

@@ -1,4 +1,4 @@
-import { rebuildChartPercentileBands } from "@/server/queries/percentile";
+import { rebuildChartPercentileBands } from "@/server/services/games/maimai/percentile/queries";
 import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";

@@ -1,6 +1,6 @@
 // Shared percentile types used by the UI and tRPC layer.
 // Server-side internals (raw view rows, batch-query inputs) live in
-// src/server/queries/percentile.ts.
+// src/server/services/games/maimai/percentile/queries.ts.
 
 /** A sampled score with a weight representing players in its rating band. */
 export interface PercentileBucket {

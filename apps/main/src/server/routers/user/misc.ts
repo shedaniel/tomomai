@@ -15,7 +15,7 @@ import {
 import { saveToken } from '@/server/services/games/tokens';
 import { generateUserOtp, getOtpExpiryTimestamp } from '@/lib/otp';
 import { logger } from '@/lib/logger';
-import { signCnProxyToken } from '@/lib/cn-proxy-token';
+import { signCnProxyToken } from '@/server/services/games/maimai/cn-proxy-token';
 import { resolveBaseUrl } from '@/lib/base-url';
 
 const DIVING_FISH_DISABLED_ERROR = new TRPCError({

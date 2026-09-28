@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import type { Region } from '@/lib/types';
 import { renderRedirectUrl } from '@/lib/render-token';
-import { buildExportImageMessage } from '@/lib/render-data';
+import { buildExportImageMessage } from '@/server/services/games/maimai/render/messages';
 import { getEnabledRegions } from '@/lib/enabled-regions';
 import { z } from 'zod';
 

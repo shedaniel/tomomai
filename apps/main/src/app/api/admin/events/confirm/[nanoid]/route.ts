@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { consumePending } from "@/server/services/admin/pending-confirmation";
+import { consumePending } from "@/server/services/pending-confirmation";
 import { db } from "@/lib/db";
 import { tourEvents, tourEventSteps } from "@/lib/db/schema-pg";
 import { inArray, sql } from "drizzle-orm";
 
-import type { EventsPendingPayload } from "@/server/services/admin/event-diff";
+import type { EventsPendingPayload } from "@/server/services/games/maimai/events/diff";
 import { norm, normType } from "@/lib/games/maimai/events";
 
 export async function GET(

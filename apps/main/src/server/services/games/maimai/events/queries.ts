@@ -1,3 +1,4 @@
+import "server-only";
 import { db } from "@/lib/db";
 import { tourEvents, tourEventSteps } from "@/lib/db/schema-pg";
 import { asc, inArray } from "drizzle-orm";

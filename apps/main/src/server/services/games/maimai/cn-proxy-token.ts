@@ -1,3 +1,4 @@
+import "server-only";
 import crypto from "node:crypto";
 
 const TTL_SECONDS = 15 * 60;

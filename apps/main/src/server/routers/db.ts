@@ -7,7 +7,7 @@ import { and, desc, eq, gt, gte, inArray, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { unstable_cache } from 'next/cache';
 import { getEnabledRegions } from '@/lib/enabled-regions';
-import { fetchTourEvents, fetchTourEventsByNames } from '@/server/queries/events';
+import { fetchTourEvents, fetchTourEventsByNames } from '@/server/services/games/maimai/events/queries';
 
 const regionSchema = z.enum(getEnabledRegions());
 

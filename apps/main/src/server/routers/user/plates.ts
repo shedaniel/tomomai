@@ -5,7 +5,7 @@ import { protectedProcedure, publicProcedure, router } from '@/lib/trpc';
 import { and, desc, eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { getEnabledRegions } from '@/lib/enabled-regions';
-import { fetchPlateSongs } from '@/server/queries/plates';
+import { fetchPlateSongs } from '@/server/services/games/maimai/plates';
 import { resolvePublicSnapshotUserId } from '@/server/queries/public-access';
 
 const regionSchema = z.enum(getEnabledRegions());

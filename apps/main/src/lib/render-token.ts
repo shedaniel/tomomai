@@ -1,7 +1,7 @@
 /**
  * Thin wrapper around @tomomai/render-token for apps/main.
  *
- * apps/main does ALL data prep (see lib/render-data.ts), builds a
+ * apps/main does ALL data prep (see server/services/games/maimai/render/messages.ts), builds a
  * `RenderMessage`, then either:
  *   - 302s the client to  `${RENDER_PUBLIC_URL}/img?t=<token>`  (web download)
  *   - POSTs the token to  `${RENDER_INTERNAL_URL}/discord/render`  (Discord)

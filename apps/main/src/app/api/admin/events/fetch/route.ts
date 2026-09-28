@@ -6,10 +6,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { flushLogger } from "@/lib/logger";
 import { requestLogger } from "@/lib/request-logger";
 import { redis } from "@/lib/redis";
-import { storePending } from "@/server/services/admin/pending-confirmation";
+import { storePending } from "@/server/services/pending-confirmation";
 import { sendDiscordNotice } from "@/server/services/catalog/notifications";
 import { resolveBaseUrl } from "@/lib/base-url";
-import { computeEventDelta, formatEventDescription, deltaColor } from "@/server/services/admin/event-diff";
+import { computeEventDelta, formatEventDescription, deltaColor } from "@/server/services/games/maimai/events/diff";
 import { KNOWN_STEP_TYPES, norm, normType } from "@/lib/games/maimai/events";
 
 const StepSchema = z.object({

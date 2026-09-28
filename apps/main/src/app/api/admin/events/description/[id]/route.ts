@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getPending } from "@/server/services/admin/pending-confirmation";
-import type { EventsPendingPayload } from "@/server/services/admin/event-diff";
+import { getPending } from "@/server/services/pending-confirmation";
+import type { EventsPendingPayload } from "@/server/services/games/maimai/events/diff";
 
 export async function GET(
   _request: NextRequest,

@@ -5,7 +5,7 @@ import { userSnapshots } from "@/lib/db/schema-pg";
 import { withGameApiKey as withApiKey } from "@/lib/api/game-protect";
 import { parseQuery } from "@/lib/api/parse-query";
 import { zodJson } from "@/lib/api/zod-response";
-import { fetchPlateSongsForGame } from "@/server/queries/plates";
+import { fetchPlateSongsForGame } from "@/server/services/games/maimai/plates";
 import { spec } from "./spec";
 
 export const GET = withApiKey(["plate:read"], async (req: NextRequest, key) => {

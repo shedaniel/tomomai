@@ -1,10 +1,11 @@
+import "server-only";
 import { db } from "@/lib/db";
 import {
-  CHART_PERCENTILE_VIEW,
-  CREATE_CHART_PERCENTILE_INDEX_SQL,
-  CREATE_CHART_PERCENTILE_VIEW_SQL,
-  ChartPercentileBandRow,
-} from "@/lib/db/percentile-view";
+  MAIMAI_CHART_PERCENTILE_VIEW,
+  CREATE_MAIMAI_CHART_PERCENTILE_INDEX_SQL,
+  CREATE_MAIMAI_CHART_PERCENTILE_VIEW_SQL,
+  MaimaiChartPercentileBandRow,
+} from "./view";
 import { sql } from "drizzle-orm";
 import type { PercentileEntry, PercentileBucket, RatingScoreBucket } from "@/lib/games/maimai/percentile/types";
 
@@ -34,14 +35,14 @@ export type ChartPercentileResult = PercentileEntry;
 
 export async function rebuildChartPercentileBands(): Promise<{ rowsInserted: number }> {
   // First run: creates the view. Subsequent runs: no-op (IF NOT EXISTS).
-  await db.execute(sql.raw(CREATE_CHART_PERCENTILE_VIEW_SQL));
+  await db.execute(sql.raw(CREATE_MAIMAI_CHART_PERCENTILE_VIEW_SQL));
   // First run: creates the unique index needed for CONCURRENTLY. Subsequent: no-op.
-  await db.execute(sql.raw(CREATE_CHART_PERCENTILE_INDEX_SQL));
+  await db.execute(sql.raw(CREATE_MAIMAI_CHART_PERCENTILE_INDEX_SQL));
   // Refreshes without holding a read lock, so queries can still run during the rebuild.
-  await db.execute(sql.raw(`REFRESH MATERIALIZED VIEW CONCURRENTLY ${CHART_PERCENTILE_VIEW}`));
+  await db.execute(sql.raw(`REFRESH MATERIALIZED VIEW CONCURRENTLY ${MAIMAI_CHART_PERCENTILE_VIEW}`));
 
   const result = await db.execute<{ count: string; [key: string]: unknown }>(
-    sql.raw(`SELECT COUNT(*)::text AS count FROM ${CHART_PERCENTILE_VIEW}`)
+    sql.raw(`SELECT COUNT(*)::text AS count FROM ${MAIMAI_CHART_PERCENTILE_VIEW}`)
   );
   return { rowsInserted: parseInt(result[0].count, 10) };
 }
@@ -74,7 +75,7 @@ function rankBelow(sorted: number[], target: number): number {
   return lo;
 }
 
-function buildDistribution(bands: ChartPercentileBandRow[]): PercentileBucket[] {
+function buildDistribution(bands: MaimaiChartPercentileBandRow[]): PercentileBucket[] {
   const counts = new Map<number, number>();
   for (const band of bands) {
     // Each sampled score represents its share of the band's full player count.
@@ -86,7 +87,7 @@ function buildDistribution(bands: ChartPercentileBandRow[]): PercentileBucket[] 
   return [...counts].sort(([a], [b]) => a - b).map(([lo, count]) => ({ lo, count }));
 }
 
-function buildRatingDistribution(bands: ChartPercentileBandRow[]): RatingScoreBucket[] {
+function buildRatingDistribution(bands: MaimaiChartPercentileBandRow[]): RatingScoreBucket[] {
   return bands.flatMap((band) => {
     const counts = new Map<number, number>();
     for (const score of band.achievements) {
@@ -122,13 +123,13 @@ export async function getChartPercentiles(
 
   // All rating bands also feed the rating-versus-achievement plot.
   // statement_timeout bounds the read so a slow/contended matview can't hang the request.
-  let rows: ChartPercentileBandRow[];
+  let rows: MaimaiChartPercentileBandRow[];
   try {
     rows = await db.transaction(async (tx) => {
       await tx.execute(sql.raw(`SET LOCAL statement_timeout = ${CHART_PERCENTILE_TIMEOUT_MS}`));
-      return tx.execute<ChartPercentileBandRow>(sql`
+      return tx.execute<MaimaiChartPercentileBandRow>(sql`
         SELECT parent_id, band_lo, achievements, player_count
-        FROM ${sql.raw(CHART_PERCENTILE_VIEW)}
+        FROM ${sql.raw(MAIMAI_CHART_PERCENTILE_VIEW)}
         WHERE parent_id = ANY(${sql.raw(`ARRAY[${parentIds.map(String).join(",")}]::bigint[]`)})
           ${nearbyOnly ? sql`AND band_lo >= ${lo} AND band_lo < ${hi}` : sql``}
       `);
@@ -140,7 +141,7 @@ export async function getChartPercentiles(
   }
 
   // Group rows by parent_id
-  const byId = new Map<bigint, ChartPercentileBandRow[]>();
+  const byId = new Map<bigint, MaimaiChartPercentileBandRow[]>();
   for (const row of rows) {
     const id = BigInt(row.parent_id);
     if (!byId.has(id)) byId.set(id, []);
