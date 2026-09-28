@@ -31,6 +31,9 @@ importers:
       '@radix-ui/react-slot':
         specifier: ^1.2.4
         version: 1.2.4(@types/react@19.2.14)(react@19.2.6)
+      '@tomomai/games':
+        specifier: workspace:*
+        version: link:../../packages/games
       '@tomomai/i18n':
         specifier: workspace:*
         version: link:../../packages/i18n
@@ -209,6 +212,9 @@ importers:
       '@tanstack/react-query-devtools':
         specifier: ^5.91.3
         version: 5.91.3(@tanstack/react-query@5.90.21(react@19.2.6))(react@19.2.6)
+      '@tomomai/games':
+        specifier: workspace:*
+        version: link:../../packages/games
       '@tomomai/i18n':
         specifier: workspace:*
         version: link:../../packages/i18n
@@ -486,12 +492,12 @@ importers:
       '@hono/node-server':
         specifier: ^1.13.7
         version: 1.19.14(hono@4.12.25)
+      '@tomomai/games':
+        specifier: workspace:*
+        version: link:../../packages/games
       '@tomomai/render-token':
         specifier: workspace:*
         version: link:../../packages/render-token
-      '@tomomai/utils':
-        specifier: workspace:*
-        version: link:../../packages/utils
       hono:
         specifier: ^4.6.14
         version: 4.12.25
@@ -519,6 +525,15 @@ importers:
         version: 4.22.4
       typescript:
         specifier: ^5.7.2
+        version: 5.9.3
+
+  packages/games:
+    devDependencies:
+      '@types/node':
+        specifier: ^24.10.13
+        version: 24.10.13
+      typescript:
+        specifier: ^5.9.3
         version: 5.9.3
 
   packages/i18n:

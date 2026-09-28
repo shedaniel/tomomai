@@ -1,4 +1,4 @@
-import { codeToChartType, codeToDifficulty } from "@tomomai/utils/game-codes";
+import { codeToChartType, codeToDifficulty } from "@tomomai/games/codes";
 import type { Chart } from "./types";
 import { uniqueSongs, type SongSummary } from "./fuzzy";
 import { hasAudioPreview, isHeardle } from "./heardle";

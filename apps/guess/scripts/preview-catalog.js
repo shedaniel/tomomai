@@ -1,4 +1,4 @@
-import { codeToChartType, codeToDifficulty } from "@tomomai/utils/game-codes";
+import { codeToChartType, codeToDifficulty } from "@tomomai/games/codes";
 export async function fetchPreviewCatalog(baseUrl, fetcher = fetch) {
   const base = baseUrl.replace(/\/+$/, "");
   const metadata = await fetcher(`${base}/api/v1/games/maimai/songs/versions?region=jp`);

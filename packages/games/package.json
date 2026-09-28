@@ -1,0 +1,23 @@
+{
+  "name": "@tomomai/games",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./codes": {
+      "types": "./src/codes.ts",
+      "import": "./src/codes.ts"
+    }
+  },
+  "files": [
+    "src"
+  ],
+  "scripts": {
+    "test": "node --test",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.13",
+    "typescript": "^5.9.3"
+  }
+}

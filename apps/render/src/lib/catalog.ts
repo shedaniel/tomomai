@@ -1,4 +1,4 @@
-import { codeToChartType, codeToDifficulty } from "@tomomai/utils/game-codes";
+import { codeToChartType, codeToDifficulty } from "@tomomai/games/codes";
 /**
  * Process-level cache of the song catalogue from /api/v1/games/maimai/songs.
  *
