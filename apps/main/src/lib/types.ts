@@ -1,4 +1,5 @@
 // Centralized type definitions for the maimai charts application
+import type { CodeKey } from "@tomomai/games/codes";
 import type { Region } from "./games/ids";
 import { VersionId } from "./metadata";
 
@@ -118,7 +119,7 @@ export type ClassRank =
   | "SSS5" | "SSS4" | "SSS3" | "SSS2" | "SSS1"
   | "LEGEND";
 
-export type Difficulty = "basic" | "advanced" | "expert" | "master" | "remaster" | "utage";
+export type Difficulty = CodeKey<"maimai", "difficulty">;
 
 export type Level =
   | "1" | "1+" | "2" | "2+" | "3" | "3+" | "4" | "4+" | "5" | "5+"
@@ -126,13 +127,13 @@ export type Level =
   | "11" | "11+" | "12" | "12+" | "13" | "13+" | "14" | "14+" | "15" | "15+"
   | "16" | "16+";
 
-export type SongType = "std" | "dx";
+export type SongType = CodeKey<"maimai", "chartType">;
 
-export type FullCombo = "none" | "fc" | "fc+" | "ap" | "ap+";
+export type FullCombo = CodeKey<"maimai", "comboStatus">;
 
-export type FullSync = "none" | "sync" | "fs" | "fs+" | "fdx" | "fdx+";
+export type FullSync = CodeKey<"maimai", "syncStatus">;
 
-export type TitleType = "normal" | "bronze" | "silver" | "gold" | "rainbow";
+export type TitleType = CodeKey<"maimai", "titleType">;
 
 export type FetchSessionStatus = "pending" | "completed" | "failed";
 

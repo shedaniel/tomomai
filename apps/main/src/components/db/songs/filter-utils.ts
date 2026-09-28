@@ -77,7 +77,7 @@ export function createUniqueSongFilterCategories(
       type: "type",
       label: getLabel("type", "Type"),
       icon: Disc3,
-      options: [...new Set(songs.map(song => song.type))].map(type => ({ value: type, label: type === "std" || type === "dx" ? getLabel(type, getGameChartTypeLabel(game, type)) : getGameChartTypeLabel(game, type) })),
+      options: [...new Set(songs.map(song => song.type))].map(type => ({ value: type, label: getGameChartTypeLabel(game, type) })),
     },
     {
       type: "genre",

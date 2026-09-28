@@ -2,7 +2,11 @@
 // The percentile cron job creates the view and refreshes it daily.
 // All reads go through raw SQL in src/server/queries/percentile.ts.
 
+import { difficultyToCode } from "@/lib/maimai/codes";
+
 export const CHART_PERCENTILE_VIEW = "chart_percentile_bands_all_regions";
+
+const PERCENTILE_DIFFICULTY_CODES = (["expert", "master", "remaster"] as const).map(difficultyToCode);
 
 // Parent identity pools each player's best score across regions and versions.
 // Creates the view on first run only; subsequent runs use REFRESH below.
@@ -33,7 +37,7 @@ best_scores AS (
   JOIN score_data sd      ON sd.id = ss."scoreId"
   JOIN songs s            ON s.id = sd."songId"
   JOIN parent_song p      ON p.id = s."parentId"
-  WHERE us.game = 'maimai' AND p.game = 'maimai' AND p.difficulty IN (2, 3, 4)
+  WHERE us.game = 'maimai' AND p.game = 'maimai' AND p.difficulty IN (${PERCENTILE_DIFFICULTY_CODES.join(", ")})
   GROUP BY lr."userId", s."parentId", lr.rating
 ),
 band_aggregates AS (

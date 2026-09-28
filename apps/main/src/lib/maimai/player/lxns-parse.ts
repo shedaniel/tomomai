@@ -1,4 +1,4 @@
-import { TITLE_TYPE_ENUM } from "../../db/types";
+import { MAIMAI_CODES } from "../codes";
 import { logger } from "../../logger";
 import type { TitleType } from "../../types";
 import type { PlayerData } from "../types";
@@ -31,7 +31,7 @@ export async function parseLxnsPlayerData(player: LxnsPlayerResponse): Promise<P
   const classRankUrl = `${PROBER_ASSETS_BASE}/class_rank/${classRank}.webp`;
 
   const trophyColor = player.trophy?.color;
-  const titleType: TitleType = (TITLE_TYPE_ENUM as readonly string[]).includes(trophyColor ?? "")
+  const titleType: TitleType = (MAIMAI_CODES.titleType as readonly string[]).includes(trophyColor ?? "")
     ? (trophyColor as TitleType)
     : "normal";
 

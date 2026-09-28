@@ -865,8 +865,6 @@
         "type": "타입",
         "genre": "장르",
         "addedVersion": "추가 버전",
-        "std": "STD",
-        "dx": "DX",
         "sort": "Sort",
         "sortVersionDesc": "Version (Latest)",
         "sortVersionAsc": "Version (Oldest)",

@@ -1,3 +1,4 @@
+import { codeToComboStatus, codeToDifficulty } from "@/lib/maimai/codes";
 import { calculateSongRating } from "@/lib/rating-calculator";
 import type { CanonicalGameId, RankedScore, RankingSelection } from "./types";
 
@@ -35,9 +36,12 @@ export function calculateMaimaiChartRating(
   comboStatus: number,
   version: number,
 ): number {
-  const combo = comboStatus === 3 ? "ap" : comboStatus === 4 ? "ap+" : "none";
-  const difficultyName = difficulty === 5 ? "utage" : "master";
-  return calculateSongRating({ difficulty: difficultyName, achievement: scoreValue, fc: combo, levelPrecise }, version);
+  return calculateSongRating({
+    difficulty: codeToDifficulty(difficulty),
+    achievement: scoreValue,
+    fc: codeToComboStatus(comboStatus),
+    levelPrecise,
+  }, version);
 }
 
 function rank<T extends RankedScore>(

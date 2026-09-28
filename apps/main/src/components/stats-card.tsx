@@ -1,12 +1,11 @@
 "use client";
-import { difficultyToCode, chartTypeToCode, comboStatusToCode, syncStatusToCode } from "@/lib/maimai/codes";
+import { MAIMAI_CODES, difficultyToCode, chartTypeToCode, comboStatusToCode, syncStatusToCode } from "@/lib/maimai/codes";
 
 import { useGameId } from "@/components/providers/game-provider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@tomomai/ui/select-friendly";
 import { Progress } from "@tomomai/ui";
 import { Button } from "@tomomai/ui";
 import { ACHIEVEMENTS, DIFFICULTY_COLORS } from "@/lib/difficulty";
-import { DIFFICULTY_ENUM, FC_ENUM, FS_ENUM } from "@/lib/db/types";
 import { getVersionInfo } from "@/lib/games/versions";
 import { Region } from "@/lib/types";
 import { trpc } from "@/lib/trpc-client";
@@ -62,8 +61,8 @@ const FS_COLORS: Record<string, { bg: string; text: string }> = {
 };
 
 // FC and FS order (from best to worst, excluding "none")
-const FC_ORDER = FC_ENUM.filter(fc => fc !== "none").reverse();
-const FS_ORDER = FS_ENUM.filter(fs => fs !== "none").reverse();
+const FC_ORDER = MAIMAI_CODES.comboStatus.filter(fc => fc !== "none").reverse();
+const FS_ORDER = MAIMAI_CODES.syncStatus.filter(fs => fs !== "none").reverse();
 
 // FC and FS labels
 
@@ -483,7 +482,7 @@ export function StatsCard({ region, snapshotId }: StatsCardProps) {
               </SelectTrigger>
               <SelectContent label={t('playerStats.selectDifficulty')}>
                 <SelectItem value="all">{t('playerStats.allDifficulties')}</SelectItem>
-                {DIFFICULTY_ENUM.map(difficulty => (
+                {MAIMAI_CODES.difficulty.map(difficulty => (
                   <SelectItem key={difficulty} value={difficulty}>
                     {t(`common.difficulties.${difficulty}`)}
                   </SelectItem>

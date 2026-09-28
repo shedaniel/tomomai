@@ -1,9 +1,7 @@
 import { getAchievementRate } from "@/lib/difficulty";
-import type { CanonicalGameId, GameCodeMaps } from "./types";
+import type { CanonicalGameId } from "./ids";
 
-import { GAME_CODE_MAPS as codeMaps } from "@tomomai/utils/game-codes";
-
-export const GAME_CODE_MAPS: Record<CanonicalGameId, GameCodeMaps> = codeMaps;
+export { GAME_CODES, RANKING_BUCKETS, RANKING_BUCKET_CODE, codeOf, keyOf, type CodeKey } from "@tomomai/games/codes";
 
 export function getGrade(game: CanonicalGameId, scoreValue: number): string {
   if (game === "maimai") return getAchievementRate(scoreValue);

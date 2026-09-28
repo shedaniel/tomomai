@@ -1,5 +1,5 @@
 import { load } from "cheerio";
-import { DIFFICULTY_ENUM } from "../../db/types";
+import { MAIMAI_CODES } from "../codes";
 import { logger } from "../../logger";
 import { normalizeName } from "../../name-utils";
 import { FullCombo, FullSync, SongType } from "../../types";
@@ -146,7 +146,7 @@ export function parseScoreData(html: string, difficulty: number): ScoreData[] {
       }
 
       // Map difficulty number to difficulty name
-      const difficultyName = difficulty === 10 ? "utage" : DIFFICULTY_ENUM[difficulty] || "basic";
+      const difficultyName = difficulty === 10 ? "utage" : MAIMAI_CODES.difficulty[difficulty] || "basic";
 
       const scoreData: ScoreData = {
         songName,

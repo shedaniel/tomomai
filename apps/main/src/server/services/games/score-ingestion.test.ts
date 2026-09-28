@@ -126,6 +126,21 @@ it("persists recent details as the recent row metadata", async () => {
   expect(state.statements.find(query => query.sql.startsWith('insert into "user_recent_songs"'))?.params).toContain('{"judgement":"complete"}');
 });
 
+it.each([
+  { game: "maimai", difficulty: 3, expected: { difficulty: "master", musicType: "std" } },
+  { game: "chunithm", difficulty: 4, expected: { difficulty: "ultima", musicType: "standard" } },
+] as const)("reports unmatched $game charts with that game's own code keys", async ({ game, difficulty, expected }) => {
+  const chart = { game, region: "jp" as const, version: 9, songName: "Missing", chartType: 0, difficulty };
+  await persistFetchResult({ ...persist, game, gameVersion: 9, fetched: { ...fetched,
+    scores: [{ chart, scoreValue: 1, secondaryScore: 0, comboStatus: 0, syncStatus: 0, clearStatus: 0 }],
+  } });
+  const report = state.statements
+    .filter(query => query.sql.startsWith('update "fetch_sessions"'))
+    .flatMap(query => query.params)
+    .find((param): param is string => typeof param === "string" && param.includes("notFoundScores"));
+  expect(JSON.parse(JSON.parse(report!))).toEqual({ notFoundScores: [{ songName: "Missing", ...expected }] });
+});
+
 it("persists events against the new snapshot and game", async () => {
   await persistFetchResult({ ...persist, fetched: { ...fetched, events: [{ name: "Progress", currentDistance: 10 }] } });
   const eventWrite = state.statements.find(query => query.sql.startsWith('insert into "user_events"'))!;

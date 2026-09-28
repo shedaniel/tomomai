@@ -21,13 +21,13 @@ import {
 import { getAllStates } from "@/lib/fetch-states";
 import { appendFetchState } from "@/lib/fetch-states-server";
 import { getCurrentVersion } from "@/lib/games/versions";
+import { RANKING_BUCKET_CODE, keyOf } from "@/lib/games/codes";
 import {
   GAME_REGISTRY,
   resolveGameContext,
 } from "@/lib/games/registry";
 import {
   GameAdapterError,
-  RANKING_BUCKET,
   type CanonicalGameId,
   type GameFetchResult,
   type NormalizedScore,
@@ -94,21 +94,15 @@ type RankedResolvedScore = {
   scoreId: number;
 };
 
-function statusCodeName(
-  game: CanonicalGameId,
-  category: "difficulty" | "chartType",
-  code: number,
-): string {
-  const name = GAME_REGISTRY[game].adapter.codes[category][code];
-  if (category === "chartType" && name === "standard") return "std";
-  return name ?? String(code);
+function codeName(game: CanonicalGameId, kind: "difficulty" | "chartType", code: number): string {
+  return keyOf(game, kind, code) ?? String(code);
 }
 
 function notFoundScore(game: CanonicalGameId, score: NormalizedScore): NotFoundScore {
   return {
     songName: score.chart.songName,
-    difficulty: statusCodeName(game, "difficulty", score.chart.difficulty),
-    musicType: statusCodeName(game, "chartType", score.chart.chartType),
+    difficulty: codeName(game, "difficulty", score.chart.difficulty),
+    musicType: codeName(game, "chartType", score.chart.chartType),
   };
 }
 
@@ -494,14 +488,14 @@ export async function persistFetchResult(input: PersistFetchResultInput): Promis
         ...rankingSelection.newScores.map((score, rank) => ({
           game: input.game,
           snapshotId,
-          bucket: RANKING_BUCKET.new,
+          bucket: RANKING_BUCKET_CODE.new,
           rank,
           scoreId: score.scoreId,
         })),
         ...rankingSelection.oldScores.map((score, rank) => ({
           game: input.game,
           snapshotId,
-          bucket: RANKING_BUCKET.old,
+          bucket: RANKING_BUCKET_CODE.old,
           rank,
           scoreId: score.scoreId,
         })),

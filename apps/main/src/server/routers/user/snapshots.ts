@@ -1,6 +1,6 @@
 import type { GameSnapshotData } from "@/lib/games/player-view";
 import { GAME_REGISTRY } from "@/lib/games/registry";
-import { RANKING_BUCKET } from "@/lib/games/types";
+import { RANKING_BUCKET_CODE } from "@/lib/games/codes";
 import { maimaiCompatibilityGameSchema } from "@/lib/games/schema";
 import { gameContextInput, validateGameInput } from "./game-input";
 import { deleteUserSnapshot, fetchSnapshotData, fetchUserSnapshots } from "@/server/queries/snapshots";
@@ -287,8 +287,8 @@ export const snapshotsRouter = router({
         const selected = adapter.selectRankings(ranked, input.targetVersion);
         newRating = [...selected.newScores, ...selected.oldScores].reduce((sum, score) => sum + score.rating, 0);
         const rankingRows = [
-          ...selected.newScores.map((score, rank) => ({ game: input.game, snapshotId: newSnapshotInternalId, bucket: RANKING_BUCKET.new, rank, scoreId: score.scoreId })),
-          ...selected.oldScores.map((score, rank) => ({ game: input.game, snapshotId: newSnapshotInternalId, bucket: RANKING_BUCKET.old, rank, scoreId: score.scoreId })),
+          ...selected.newScores.map((score, rank) => ({ game: input.game, snapshotId: newSnapshotInternalId, bucket: RANKING_BUCKET_CODE.new, rank, scoreId: score.scoreId })),
+          ...selected.oldScores.map((score, rank) => ({ game: input.game, snapshotId: newSnapshotInternalId, bucket: RANKING_BUCKET_CODE.old, rank, scoreId: score.scoreId })),
         ];
         if (rankingRows.length) await db.insert(snapshotRankings).values(rankingRows).onConflictDoNothing();
       }

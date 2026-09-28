@@ -12,7 +12,7 @@ import { load } from "cheerio";
 import { asFetcher } from "../merge";
 import type { NoticeSink } from "../../ingestion/types";
 import { type Logger } from "pino";
-import { DIFFICULTY_ENUM } from "@/lib/db/types";
+import { MAIMAI_CODES } from "@/lib/maimai/codes";
 
 // Convert ParsedSong to PendingSong
 export function parsedSongToPendingSong(song: ParsedSong): PendingSong {
@@ -55,7 +55,7 @@ export async function prepareMaimaiScraper(region: Region, version: VersionId, c
       for (let difficulty of [0, 1, 2, 3, 4, 10]) {
         log.debug(`Fetching songs for version ${version}, difficulty ${difficulty}...`);
         try {
-          promises.push(fetchSongDataForDifficulty(region, cookies, difficulty === 10 ? "utage" : DIFFICULTY_ENUM[difficulty], difficulty, version, log));
+          promises.push(fetchSongDataForDifficulty(region, cookies, difficulty === 10 ? "utage" : MAIMAI_CODES.difficulty[difficulty], difficulty, version, log));
         } catch (error) {
           log.warn({ version, difficulty, err: error }, `Failed to fetch data`);
         }
@@ -68,7 +68,7 @@ export async function prepareMaimaiScraper(region: Region, version: VersionId, c
       const hasAnySongs = nonUtageResults.some(songs => songs.length > 0);
       if (hasAnySongs) {
         const emptyDifficulties = nonUtageResults
-          .map((songs, i) => ({ difficulty: DIFFICULTY_ENUM[i], count: songs.length }))
+          .map((songs, i) => ({ difficulty: MAIMAI_CODES.difficulty[i], count: songs.length }))
           .filter(d => d.count === 0);
         if (emptyDifficulties.length > 0) {
           const emptyNames = emptyDifficulties.map(d => d.difficulty).join(", ");

@@ -1,5 +1,5 @@
 import type { CanonicalGameId } from "@/lib/games/types";
-import { GAME_CODE_MAPS, getGrade } from "@/lib/games/codes";
+import { getGrade, keyOf } from "@/lib/games/codes";
 import { db } from "@/lib/db";
 import { parentSong, scoreData, snapshotScores, songs, userSnapshots } from "@/lib/db/schema-pg";
 import { and, desc, eq, sql } from "drizzle-orm";
@@ -25,9 +25,9 @@ export async function computeStatsForSnapshot(
     .select({
       achievement: scoreData.scoreValue,
       addedVersion: songs.addedVersion,
-      difficulty: sql`${parentSong.difficulty}`.mapWith(code => GAME_CODE_MAPS[game].difficulty[Number(code)] ?? String(code)).as("difficulty"),
-      fc: sql`${scoreData.comboStatus}`.mapWith(code => GAME_CODE_MAPS[game].comboStatus[Number(code)] ?? String(code)).as("fc"),
-      fs: sql`${scoreData.syncStatus}`.mapWith(code => GAME_CODE_MAPS[game].syncStatus[Number(code)] ?? String(code)).as("fs"),
+      difficulty: sql`${parentSong.difficulty}`.mapWith(code => keyOf(game, "difficulty", Number(code)) ?? String(code)).as("difficulty"),
+      fc: sql`${scoreData.comboStatus}`.mapWith(code => keyOf(game, "comboStatus", Number(code)) ?? String(code)).as("fc"),
+      fs: sql`${scoreData.syncStatus}`.mapWith(code => keyOf(game, "syncStatus", Number(code)) ?? String(code)).as("fs"),
     })
     .from(snapshotScores)
     .innerJoin(scoreData, eq(snapshotScores.scoreId, scoreData.id))
@@ -38,7 +38,7 @@ export async function computeStatsForSnapshot(
   const allSongs = await db
     .select({
       addedVersion: songs.addedVersion,
-      difficulty: sql`${parentSong.difficulty}`.mapWith(code => GAME_CODE_MAPS[game].difficulty[Number(code)] ?? String(code)).as("difficulty"),
+      difficulty: sql`${parentSong.difficulty}`.mapWith(code => keyOf(game, "difficulty", Number(code)) ?? String(code)).as("difficulty"),
       count: sql<number>`count(*)`.mapWith(Number),
     })
     .from(songs)

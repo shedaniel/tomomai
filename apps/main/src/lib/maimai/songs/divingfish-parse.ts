@@ -1,4 +1,4 @@
-import { DIFFICULTY_ENUM } from "../../db/types";
+import { MAIMAI_CODES } from "../codes";
 import { logger } from "../../logger";
 import type { Difficulty, FullCombo, FullSync, SongType } from "../../types";
 import type { DivingFishRecord } from "../divingfish/client";
@@ -29,7 +29,7 @@ function resolveDifficulty(
   levelIndex: number | undefined,
 ): { difficulty: Difficulty; difficultyNumber: number } | null {
   if (levelIndex === undefined || levelIndex < 0 || levelIndex > 4) return null;
-  const difficulty = DIFFICULTY_ENUM[levelIndex] as Difficulty | undefined;
+  const difficulty = MAIMAI_CODES.difficulty[levelIndex] as Difficulty | undefined;
   if (!difficulty || difficulty === "utage") return null;
   return { difficulty, difficultyNumber: levelIndex };
 }

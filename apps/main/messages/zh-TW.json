@@ -1189,8 +1189,6 @@
         "type": "類型",
         "genre": "分類",
         "addedVersion": "追加版本",
-        "std": "STD",
-        "dx": "DX",
         "sort": "排序",
         "sortVersionDesc": "版本（由新到舊）",
         "sortVersionAsc": "版本（由舊到新）",

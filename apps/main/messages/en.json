@@ -1225,8 +1225,6 @@
         "type": "Type",
         "genre": "Genre",
         "addedVersion": "Added Version",
-        "std": "STD",
-        "dx": "DX",
         "sort": "Sort",
         "sortVersionDesc": "Version (Latest)",
         "sortVersionAsc": "Version (Oldest)",

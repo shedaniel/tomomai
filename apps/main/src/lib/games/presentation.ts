@@ -1,6 +1,6 @@
 import { ACHIEVEMENTS } from "@/lib/difficulty";
 import { GAME_RANKING_SIZES, calculateMaimaiChartRating, calculateChunithmChartRating } from "./rating";
-import { GAME_CODE_MAPS, getGrade } from "./codes";
+import { GAME_CODES, RANKING_BUCKETS, getGrade, keyOf } from "./codes";
 import type { CanonicalGameId } from "./types";
 
 const missingValue = "—";
@@ -18,7 +18,7 @@ export function formatGameRating(game: CanonicalGameId, value: number | null | u
 
 export function getGameDifficultyLabel(game: CanonicalGameId, value: number | string): string {
   const code = getGameCode(game, "difficulty", value);
-  const name = GAME_CODE_MAPS[game].difficulty[code];
+  const name = keyOf(game, "difficulty", code);
   if (name === "remaster") return "Re:MASTER";
   if (name === "worlds-end") return "WORLD'S END";
   return name?.toUpperCase() ?? `#${code}`;
@@ -26,16 +26,11 @@ export function getGameDifficultyLabel(game: CanonicalGameId, value: number | st
 
 export function getGameChartTypeLabel(game: CanonicalGameId, value: number | string): string {
   const code = getGameCode(game, "chartType", value);
-  const name = GAME_CODE_MAPS[game].chartType[code];
-  if (name === "standard") return game === "maimai" ? "STD" : "STANDARD";
-  if (name === "worlds-end") return "WORLD'S END";
-  return name?.toUpperCase() ?? `#${code}`;
+  return keyOf(game, "chartType", code)?.toUpperCase() ?? `#${code}`;
 }
 
 export function getGameChartTypeBadgeLabel(game: CanonicalGameId, value: number | string): string | null {
-  const types = GAME_CODE_MAPS[game].chartType;
-  const type = types[getGameCode(game, "chartType", value)];
-  return type === "standard" && !Object.values(types).includes("dx") ? null : getGameChartTypeLabel(game, value);
+  return GAME_CODES[game].chartType.length > 1 ? getGameChartTypeLabel(game, value) : null;
 }
 
 export function getGameStatusLabels(game: CanonicalGameId, status: {
@@ -46,7 +41,7 @@ export function getGameStatusLabels(game: CanonicalGameId, status: {
   return (["comboStatus", "syncStatus", "clearStatus"] as const).flatMap(kind => {
     const code = status[kind];
     if (code == null || code === 0) return [];
-    const label = GAME_CODE_MAPS[game][kind][code];
+    const label = keyOf(game, kind, code);
     if (kind === "clearStatus" && label === "clear") return [];
     return [label ? label.replaceAll("-", " ").toUpperCase() : `${kind} #${code}`];
   });
@@ -54,10 +49,7 @@ export function getGameStatusLabels(game: CanonicalGameId, status: {
 
 export function getGameRankingBuckets(game: CanonicalGameId) {
   const sizes = GAME_RANKING_SIZES[game];
-  return [
-    { code: 1, key: "new", label: `B${sizes.new}`, size: sizes.new },
-    { code: 2, key: "old", label: `B${sizes.old}`, size: sizes.old },
-  ] as const;
+  return RANKING_BUCKETS.map(bucket => ({ ...bucket, label: `B${sizes[bucket.key]}`, size: sizes[bucket.key] }));
 }
 
 const difficultyStyles = [
@@ -91,17 +83,16 @@ export function formatGameLevel(game: CanonicalGameId, levelPrecise: number, dif
 
 export function getGameCode(game: CanonicalGameId, kind: "difficulty" | "chartType" | "comboStatus", value: number | string): number {
   if (typeof value === "number") return value;
-  const key = kind === "chartType" && value === "std" ? "standard" : value;
-  return Number(Object.entries(GAME_CODE_MAPS[game][kind]).find(([, name]) => name === key)?.[0] ?? -1);
+  const keys: readonly string[] = GAME_CODES[game][kind];
+  return keys.indexOf(value);
 }
 
 export function getGameChartTypeKey(game: CanonicalGameId, code: number): string {
-  const key = GAME_CODE_MAPS[game].chartType[code];
-  return game === "maimai" && key === "standard" ? "std" : key ?? String(code);
+  return keyOf(game, "chartType", code) ?? String(code);
 }
 
 export function getGameDifficultyKey(game: CanonicalGameId, code: number): string {
-  return GAME_CODE_MAPS[game].difficulty[code] ?? String(code);
+  return keyOf(game, "difficulty", code) ?? String(code);
 }
 
 export function getGameChartTypeBadge(game: CanonicalGameId, value: string): string | null {

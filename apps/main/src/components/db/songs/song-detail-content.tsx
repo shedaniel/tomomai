@@ -6,8 +6,7 @@ import {
   ResponsiveDialogTrigger,
 } from "@tomomai/ui";
 import { useGame } from "@/components/providers/game-provider";
-import { GAME_CODE_MAPS } from "@/lib/games/codes";
-import { formatGameScore, formatGameRating, formatGameLevel, getGameDifficultyColors, getGameDifficultyLabel, getGameChartTypeLabel, getGameChartTypeBadgeLabel, getGameChartTypeBadge, getGameChartRating, getGameScoreLabelKey, getGameScoreGrade, getGameStatusLabels } from "@/lib/games/presentation";
+import { formatGameScore, formatGameRating, formatGameLevel, getGameCode, getGameDifficultyColors, getGameDifficultyLabel, getGameChartTypeLabel, getGameChartTypeBadgeLabel, getGameChartTypeBadge, getGameChartRating, getGameScoreLabelKey, getGameScoreGrade, getGameStatusLabels } from "@/lib/games/presentation";
 import { getVersionInfo } from "@/lib/games/versions";
 import { trpc } from "@/lib/trpc-client";
 import { useSession } from "@/lib/auth-client";
@@ -273,7 +272,6 @@ export function SongDetailContent({ songName, artist, slug, type, parentIds, ini
       userScores: scoreData?.viewerId === viewerId ? scoreData.userScores : undefined,
     };
   }, [fetchedData, initialData, scoreData, viewerId]);
-  const difficultyOrder = Object.values(GAME_CODE_MAPS[game.id].difficulty);
 
   // Get the latest version's charts for display (prefer intl, then jp)
   const chartsByDifficulty: Map<string, SongExtendedIdentified[]> = useMemo(() => {
@@ -501,7 +499,7 @@ export function SongDetailContent({ songName, artist, slug, type, parentIds, ini
 
                 // Sort by difficulty order
                 const sortedDifficulties = Array.from(byDifficulty.entries()).sort((a, b) =>
-                  difficultyOrder.indexOf(a[0]) - difficultyOrder.indexOf(b[0])
+                  getGameCode(game.id, "difficulty", a[0]) - getGameCode(game.id, "difficulty", b[0])
                 );
 
                 return (

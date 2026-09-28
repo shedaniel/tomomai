@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatGameScore, formatGameRating, getGameDifficultyLabel, getGameChartTypeLabel, getGameStatusLabels, getGameDifficultyHex, formatGameLevel } from "./presentation";
+import { formatGameScore, formatGameRating, getGameDifficultyLabel, getGameChartTypeLabel, getGameChartTypeBadgeLabel, getGameChartTypeKey, getGameCode, getGameRankingBuckets, getGameStatusLabels, getGameDifficultyHex, formatGameLevel } from "./presentation";
 
 describe("game presentation", () => {
   it("keeps maimai achievement precision and integer ratings", () => {
@@ -13,7 +13,8 @@ describe("game presentation", () => {
     expect(formatGameScore("chunithm", 1_009_000)).toBe("1,009,000");
     expect(formatGameRating("chunithm", 1625)).toBe("16.25");
     expect(getGameDifficultyLabel("chunithm", 4)).toBe("ULTIMA");
-    expect(getGameChartTypeLabel("chunithm", 1)).toBe("WORLD'S END");
+    expect(getGameChartTypeLabel("chunithm", 0)).toBe("STANDARD");
+    expect(getGameChartTypeLabel("chunithm", 1)).toBe("#1");
     expect(getGameStatusLabels("chunithm", { comboStatus: 2, syncStatus: 1, clearStatus: 2 })).toEqual(["AJ", "FULL CHAIN", "HARD"]);
   });
 
@@ -24,6 +25,21 @@ describe("game presentation", () => {
     expect(getGameDifficultyLabel("chunithm", "worlds-end")).toBe("WORLD'S END");
     expect(formatGameLevel("maimai", 147, "utage")).toBe("14.?");
     expect(formatGameLevel("chunithm", 147, "ultima")).toBe("14.7");
+  });
+
+  it("keys maimai chart type 0 as std with no standard alias", () => {
+    expect(getGameChartTypeKey("maimai", 0)).toBe("std");
+    expect(getGameCode("maimai", "chartType", "std")).toBe(0);
+    expect(getGameCode("maimai", "chartType", "standard")).toBe(-1);
+    expect(getGameCode("chunithm", "chartType", "std")).toBe(-1);
+    expect(getGameChartTypeLabel("maimai", "std")).toBe("STD");
+    expect(getGameChartTypeBadgeLabel("maimai", 1)).toBe("DX");
+    expect(getGameChartTypeBadgeLabel("chunithm", "standard")).toBeNull();
+  });
+
+  it("sizes the shared ranking buckets per game", () => {
+    expect(getGameRankingBuckets("maimai").map(({ code, key, label }) => [code, key, label])).toEqual([[1, "new", "B15"], [2, "old", "B35"]]);
+    expect(getGameRankingBuckets("chunithm").map(({ code, size }) => [code, size])).toEqual([[1, 20], [2, 30]]);
   });
 
   it("distinguishes a missing score from an actual zero", () => {

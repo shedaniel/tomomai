@@ -514,7 +514,7 @@ player fields remain an integration question, not permission to fabricate zeros
 or placeholder profile data.
 
 Canonical codes live in
-[`game-codes.js`](../packages/utils/src/game-codes.js). The following is the
+[`codes.ts`](../packages/games/src/codes.ts). The following is the
 repository vocabulary; mapping upstream images to it requires observed icon
 filenames or page labels.
 

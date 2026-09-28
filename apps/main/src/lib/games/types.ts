@@ -85,12 +85,6 @@ export type GameFetchResult = {
   events?: NormalizedEvent[];
 };
 
-export const RANKING_BUCKET = {
-  new: 1,
-  old: 2,
-} as const;
-export type RankingBucket = (typeof RANKING_BUCKET)[keyof typeof RANKING_BUCKET];
-
 export type RankedScore = {
   chartId: string;
   scoreValue: number;
@@ -162,22 +156,11 @@ export interface ConfiguredScoreAdapter {
 
 export type ScoreAdapter = ConfiguredScoreAdapter | { configured: false; notConfiguredReason: string };
 
-export type GameCodeMaps = {
-  chartType: Readonly<Record<number, string>>;
-  difficulty: Readonly<Record<number, string>>;
-  comboStatus: Readonly<Record<number, string>>;
-  syncStatus: Readonly<Record<number, string>>;
-  clearStatus: Readonly<Record<number, string>>;
-  titleType: Readonly<Record<number, string>>;
-  rankingBucket: Readonly<Record<number, string>>;
-};
-
 export interface GameAdapter {
   game: CanonicalGameId;
   capabilities: ReadonlySet<GameCapability>;
   supportedRegions: ReadonlySet<Region>;
   versions: VersionProvider;
-  codes: GameCodeMaps;
   calculateChartRating(input: { scoreValue: number; levelPrecise: number; difficulty: number; comboStatus?: number }, version: number): number;
   selectRankings<T extends RankedScore>(scores: T[], currentVersion: number): RankingSelection<T>;
 }

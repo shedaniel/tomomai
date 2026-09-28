@@ -1,5 +1,5 @@
 import { normalizeName } from "@/lib/name-utils";
-import { DIFFICULTY_ENUM } from "../../db/types";
+import { MAIMAI_CODES } from "../codes";
 import { logger } from "../../logger";
 import type { Difficulty, FullCombo, FullSync, SongType } from "../../types";
 import type { ScoreData } from "../types";
@@ -53,16 +53,19 @@ function resolveDifficulty(
     return { difficulty: "utage", difficultyNumber: 10 };
   }
   if (levelIndex === undefined || levelIndex < 0 || levelIndex > 4) return null;
-  const difficulty = DIFFICULTY_ENUM[levelIndex] as Difficulty | undefined;
+  const difficulty = MAIMAI_CODES.difficulty[levelIndex] as Difficulty | undefined;
   if (!difficulty || difficulty === "utage") return null;
   return { difficulty, difficultyNumber: levelIndex };
 }
 
+const MUSIC_TYPE_MAP: Record<string, SongType> = {
+  standard: "std",
+  dx: "dx",
+  utage: "dx",
+};
+
 function resolveMusicType(type: string | undefined): SongType | null {
-  if (type === "standard") return "std";
-  if (type === "dx") return "dx";
-  if (type === "utage") return "dx";
-  return null;
+  return type && Object.hasOwn(MUSIC_TYPE_MAP, type) ? MUSIC_TYPE_MAP[type] : null;
 }
 
 export function parseLxnsScoresData(scores: LxnsScore[]): { [difficulty: number]: ScoreData[] } {

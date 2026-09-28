@@ -2,7 +2,7 @@ import { value, type PendingChart } from "@/server/services/catalog/ingestion/ty
 import type { CanonicalGameId } from "@/lib/games/types";
 import type { NoteCounts } from "@/lib/types";
 import type { Logger } from "pino";
-import { GAME_CODE_MAPS } from "@/lib/games/codes";
+import { keyOf } from "@/lib/games/codes";
 import { findDuplicateUpload } from "@/server/services/catalog/ingestion/match-upload";
 import { requireCatalogValue } from "@/server/services/catalog/ingestion/runner";
 
@@ -49,10 +49,9 @@ export function completeCatalogChart(chart: PendingChart, log: Logger): CatalogC
 }
 
 export function validateCatalogCharts(game: CanonicalGameId, charts: CatalogChart[]): void {
-  const codes = GAME_CODE_MAPS[game];
   for (const chart of charts) {
     if (chart.game !== game) throw new Error("Catalog chart belongs to a different game");
-    if (!(chart.chartType in codes.chartType) || !(chart.difficulty in codes.difficulty)) {
+    if (keyOf(game, "chartType", chart.chartType) === undefined || keyOf(game, "difficulty", chart.difficulty) === undefined) {
       throw new Error(`Unknown chart codes for ${game}`);
     }
   }

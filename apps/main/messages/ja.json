@@ -1189,8 +1189,6 @@
         "type": "タイプ",
         "genre": "ジャンル",
         "addedVersion": "追加バージョン",
-        "std": "STD",
-        "dx": "DX",
         "sort": "並び替え",
         "sortVersionDesc": "バージョン（新しい順）",
         "sortVersionAsc": "バージョン（古い順）",
