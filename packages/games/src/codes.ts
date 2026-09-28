@@ -1,6 +1,6 @@
 // A code is its key's index. Codes are persisted and published, so only ever append keys.
 
-export const CODE_KINDS = ["difficulty", "chartType", "comboStatus", "syncStatus", "clearStatus", "titleType"] as const;
+const CODE_KINDS = ["difficulty", "chartType", "comboStatus", "syncStatus", "clearStatus", "titleType"] as const;
 export type CodeKind = (typeof CODE_KINDS)[number];
 
 type CodeTable = { readonly [K in CodeKind]: readonly string[] };
@@ -15,7 +15,7 @@ export const MAIMAI_CODES = {
 } as const satisfies CodeTable;
 
 // WORLD'S END is a difficulty, so CHUNITHM charts have a single chart type.
-export const CHUNITHM_CODES = {
+const CHUNITHM_CODES = {
   difficulty: ["basic", "advanced", "expert", "master", "ultima", "worlds-end"],
   chartType: ["standard"],
   comboStatus: ["none", "fc", "aj", "ajc"],
@@ -41,14 +41,14 @@ const KIND_LABELS: { readonly [K in CodeKind]: string } = {
   titleType: "title type",
 };
 
-export type Codec<T extends string> = {
+type Codec<T extends string> = {
   readonly values: readonly T[];
   readonly fromCode: (code: number) => T;
   readonly toCode: (key: T) => number;
   readonly has: (code: number) => boolean;
 };
 
-export function createCodec<const T extends string>(values: readonly T[], label: string): Codec<T> {
+function createCodec<const T extends string>(values: readonly T[], label: string): Codec<T> {
   const has = (code: number) => Number.isInteger(code) && code >= 0 && code < values.length;
   return {
     values,
@@ -108,7 +108,6 @@ export const RANKING_BUCKETS = [
 ] as const;
 
 type RankingBucket = (typeof RANKING_BUCKETS)[number];
-export type RankingBucketKey = RankingBucket["key"];
 
 export const RANKING_BUCKET_CODE = Object.fromEntries(RANKING_BUCKETS.map(({ key, code }) => [key, code])) as {
   readonly [B in RankingBucket as B["key"]]: B["code"];

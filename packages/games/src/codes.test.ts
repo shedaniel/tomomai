@@ -1,9 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
-  CODE_KINDS,
   GAME_CODES,
-  RANKING_BUCKETS,
   RANKING_BUCKET_CODE,
   chartTypeToCode,
   codeOf,
@@ -13,11 +11,11 @@ import {
   codeToSyncStatus,
   codeToTitleType,
   comboStatusToCode,
-  createCodec,
   difficultyToCode,
   keyOf,
   syncStatusToCode,
   titleTypeToCode,
+  type CodeKind,
   type CodedGame,
 } from "./codes.ts";
 
@@ -26,7 +24,7 @@ const games = Object.keys(GAME_CODES) as CodedGame[];
 describe("game codes", () => {
   for (const game of games) {
     it(`round-trips every ${game} key through its code`, () => {
-      for (const kind of CODE_KINDS) {
+      for (const kind of Object.keys(GAME_CODES[game]) as CodeKind[]) {
         const keys: readonly string[] = GAME_CODES[game][kind];
         assert.equal(new Set(keys).size, keys.length);
         keys.forEach((key, code) => {
@@ -68,19 +66,10 @@ describe("game codes", () => {
     assert.throws(() => codeToChartType(2), { message: "Unknown maimai chart type code: 2" });
     assert.throws(() => difficultyToCode("ultima" as never), { message: "Unknown maimai difficulty: ultima" });
   });
-
-  it("builds a codec over any value list", () => {
-    const codec = createCodec(["a", "b"], "test letter");
-    assert.equal(codec.fromCode(1), "b");
-    assert.equal(codec.toCode("a"), 0);
-    assert.equal(codec.has(2), false);
-    assert.throws(() => codec.fromCode(2), { message: "Unknown test letter code: 2" });
-  });
 });
 
 describe("ranking buckets", () => {
-  it("derives the key to code map from the bucket list", () => {
+  it("keeps the persisted bucket codes", () => {
     assert.deepEqual(RANKING_BUCKET_CODE, { new: 1, old: 2 });
-    assert.deepEqual(RANKING_BUCKETS.map(bucket => RANKING_BUCKET_CODE[bucket.key]), [1, 2]);
   });
 });
