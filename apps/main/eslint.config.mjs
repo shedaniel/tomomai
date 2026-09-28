@@ -40,4 +40,16 @@ export default [
       }],
     },
   },
+  {
+    files: ["src/lib/games/**/*.{ts,tsx}", "src/components/**/*.{ts,tsx}", "src/hooks/**/*.{ts,tsx}"],
+    rules: {
+      "@typescript-eslint/no-restricted-imports": ["error", {
+        patterns: [{
+          group: ["@/server/*"],
+          allowTypeImports: true,
+          message: "Client-safe code may only import types from @/server. Move shared runtime logic under src/lib.",
+        }],
+      }],
+    },
+  },
 ];
