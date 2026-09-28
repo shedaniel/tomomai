@@ -25,6 +25,14 @@ describe("game API boundaries", () => {
     expect((await region.json()).code).toBe("UNSUPPORTED_REGION");
   });
 
+  it("rejects a game that lacks the route capability, with or without a region", async () => {
+    for (const req of [request(), new NextRequest("https://example.test/api/v1/games/chunithm/plates")]) {
+      const result = await resolveApiGame(req, context("chunithm"), "plates") as Response;
+      expect(result.status).toBe(422);
+      expect((await result.json()).code).toBe("UNSUPPORTED_CAPABILITY");
+    }
+  });
+
   it("matches static resources ahead of dynamic IDs", () => {
     const base = { method: "GET" as const, tag: "test", summary: "test", scope: "public" as const, cost: 1, response: z.object({}) };
     defineRoute({ ...base, path: "/api/v1/games/{game}/test/{id}" });

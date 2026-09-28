@@ -1,6 +1,4 @@
 import "server-only";
-import type { CanonicalGameId } from "@/lib/games/types";
-import { requireMaimaiQuery } from "@/server/queries/game-scope";
 import { codeToChartType, codeToComboStatus, codeToDifficulty, codeToSyncStatus, difficultyToCode } from "@/lib/games/maimai/codes";
 import { songInstanceId } from "@/lib/db/song-instance-id";
 import { db } from "@/lib/db";
@@ -85,9 +83,4 @@ export async function fetchPlateSongs(
     fs: song.fs || "none",
     dxScore: song.dxScore || 0,
   } satisfies MinimalSongForDisplay));
-}
-
-export function fetchPlateSongsForGame(game: CanonicalGameId, ...args: Parameters<typeof fetchPlateSongs>) {
-  requireMaimaiQuery(game, args[2], "plates");
-  return fetchPlateSongs(...args);
 }

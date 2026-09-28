@@ -5,7 +5,7 @@ import { userSnapshots } from "@/lib/db/schema-pg";
 import { withGameApiKey as withApiKey } from "@/lib/api/game-protect";
 import { parseQuery } from "@/lib/api/parse-query";
 import { zodJson } from "@/lib/api/zod-response";
-import { fetchPlateSongsForGame } from "@/server/services/games/maimai/plates";
+import { fetchPlateSongs } from "@/server/services/games/maimai/plates";
 import { spec } from "./spec";
 
 export const GET = withApiKey(["plate:read"], async (req: NextRequest, key) => {
@@ -30,7 +30,7 @@ export const GET = withApiKey(["plate:read"], async (req: NextRequest, key) => {
     return zodJson(spec.response, { game: key.game, songs: [] });
   }
 
-  const songs = await fetchPlateSongsForGame(key.game, 
+  const songs = await fetchPlateSongs(
     snapshot[0].id,
     snapshot[0].gameVersion,
     region,
