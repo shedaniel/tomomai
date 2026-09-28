@@ -1,4 +1,5 @@
 import type { CanonicalGameId } from "@/lib/games/types";
+import type { GameSnapshotData, GameSnapshotSummary } from "@/lib/games/player-view";
 import { codeToChartType, codeToComboStatus, codeToDifficulty, codeToSyncStatus, codeToTitleType } from "@/lib/games/maimai/codes";
 import { songInstanceId } from "@/lib/db/song-instance-id";
 import { db } from "@/lib/db";
@@ -9,7 +10,12 @@ import { requireMaimaiVersion } from "@/lib/games/maimai/versions";
 import { getLogger } from "@/lib/request-logger";
 import { deleteFromR2, isR2IconUrl, r2KeyFromIconUrl } from "@/lib/r2";
 
-export async function fetchUserSnapshots(game: CanonicalGameId, userId: string, region: Region, options?: { limit?: number }) {
+export async function fetchUserSnapshots(
+  game: CanonicalGameId,
+  userId: string,
+  region: Region,
+  options?: { limit?: number },
+): Promise<GameSnapshotSummary[]> {
   let query = db
     .select({
       id: userSnapshots.publicId,
@@ -157,7 +163,7 @@ async function readSnapshotData(game: CanonicalGameId, snapshot: typeof userSnap
     snapshot,
     songs: songsWithScores,
     events,
-  };
+  } satisfies GameSnapshotData;
 }
 
 /**

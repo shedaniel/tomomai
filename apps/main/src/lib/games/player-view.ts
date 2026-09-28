@@ -1,25 +1,72 @@
-import type { fetchSnapshotData, fetchUserSnapshots } from "@/server/queries/snapshots";
 import type { EventData } from "@/lib/types";
 import type { CanonicalGameId } from "./types";
 import { calculateChunithmChartRating, calculateMaimaiChartRating, selectChunithmRankings, selectMaimaiRankings } from "./rating";
 
-type StoredSnapshotData = NonNullable<Awaited<ReturnType<typeof fetchSnapshotData>>>;
-export type GamePlayerScore = Omit<StoredSnapshotData["songs"][number], "secondaryScore"> & { secondaryScore: number | null; chartRating?: number };
-export interface GameSnapshotData {
-  snapshot: Pick<StoredSnapshotData["snapshot"], "publicId" | "game" | "displayName" | "rating" | "gameVersion" | "fetchedAt"> & {
-    title?: string;
-    titleType?: number;
-    iconUrl?: string;
-    courseRankUrl?: string | null;
-    classRankUrl?: string | null;
-    stars?: number | null;
-    versionPlayCount?: number | null;
-    totalPlayCount?: number | null;
-  };
+export type GamePlayerScore = {
+  songId: string;
+  songName: string;
+  artist: string;
+  cover: string;
+  genre: string;
+  level: string;
+  levelPrecise: number;
+  addedVersion: number;
+  difficultyCode: number;
+  typeCode: number;
+  scoreValue: number;
+  secondaryScore: number | null;
+  comboStatus: number;
+  syncStatus: number;
+  clearStatus: number;
+  chartRating?: number;
+};
+
+export type GameSnapshot = {
+  publicId: string;
+  game: CanonicalGameId;
+  displayName: string;
+  rating: number;
+  gameVersion: number;
+  fetchedAt: Date;
+  title?: string;
+  titleType?: number;
+  iconUrl?: string;
+  courseRankUrl?: string | null;
+  classRankUrl?: string | null;
+  stars?: number | null;
+  versionPlayCount?: number | null;
+  totalPlayCount?: number | null;
+};
+
+export type GameEvent = {
+  name: string;
+  eventType?: EventData["eventType"] | null;
+  currentDistance?: number | null;
+  nextRewardDistance?: number | null;
+  state?: EventData["state"] | null;
+  imageUrl?: string | null;
+  eventPeriodStart?: Date | null;
+  eventPeriodEnd?: Date | null;
+};
+
+export type GameSnapshotData = {
+  snapshot: GameSnapshot;
   songs: GamePlayerScore[];
-  events?: ({ name: string } & Partial<{ [K in keyof EventData]: EventData[K] | null }>)[];
-}
-export type GameSnapshotSummary = Awaited<ReturnType<typeof fetchUserSnapshots>>[number];
+  events?: GameEvent[];
+};
+
+export type GameSnapshotSummary = {
+  id: string;
+  fetchedAt: Date;
+  rating: number;
+  displayName: string;
+  gameVersion: number;
+  courseRankUrl: string | null;
+  classRankUrl: string | null;
+  stars: number | null;
+  versionPlayCount: number;
+  totalPlayCount: number;
+};
 
 export function getPlayerRankings(game: CanonicalGameId, data: GameSnapshotData) {
   const rated = data.songs.map(score => ({
