@@ -22,7 +22,7 @@ import { trpc } from "@/lib/trpc-client";
 import { StoreEditDrawer } from "@/components/db/store-edit-drawer";
 
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
-import { getGameName } from "@/lib/game-utils";
+import { getArcadeGameName, type ArcadeGameId } from "@/lib/arcades/arcade-games";
 import { useTranslations } from "next-intl";
 
 const DEBUG = true;
@@ -271,7 +271,7 @@ function ArcadeDetailsContent({ store, onEditClick }: { store: Store | null; onE
               <div className="space-y-1 text-sm">
                 {Object.entries(store.chosenEdit.games).map(([game, data]: [string, any]) => (
                   <div key={game} className="flex justify-between">
-                    <span>{getGameName((k: string) => t.has(k) ? t(k) : k, game as any)}</span>
+                    <span>{getArcadeGameName((k: string) => t.has(k) ? t(k) : k, game as ArcadeGameId)}</span>
                     {data.amount && <span>{data.amount} cabs</span>}
                     {data.price && <span>{data.price}</span>}
                   </div>

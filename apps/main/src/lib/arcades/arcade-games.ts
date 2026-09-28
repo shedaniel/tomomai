@@ -1,8 +1,9 @@
 /**
- * Game configuration and utilities
+ * Cabinet titles a store listing can offer. This list is independent of the
+ * games the app tracks scores for (lib/games).
  */
 
-export const GAMES = [
+export const ARCADE_GAMES = [
   "maimai",
   "maimaidx",
   "chunithm",
@@ -28,7 +29,7 @@ const DEFAULT_NAMES = {
   "wacca": "WACCA",
 }
 
-export type GameId = typeof GAMES[number];
+export type ArcadeGameId = typeof ARCADE_GAMES[number];
 
 type TranslationFunction = (key: string) => string;
 
@@ -39,7 +40,7 @@ type TranslationFunction = (key: string) => string;
  * @param gameId - The game identifier
  * @returns Localized game name or game ID as fallback
  */
-export function getGameName(t: TranslationFunction, gameId: GameId): string {
+export function getArcadeGameName(t: TranslationFunction, gameId: ArcadeGameId): string {
   const key = `games.${gameId}`;
   const translated = t(key);
 
@@ -55,9 +56,9 @@ export function getGameName(t: TranslationFunction, gameId: GameId): string {
  * @param t - i18n translation function from useTranslations
  * @returns Array of games with their IDs and localized names
  */
-export function getAllGames(t: TranslationFunction): Array<{ id: GameId; name: string }> {
-  return GAMES.map(gameId => ({
+export function getAllArcadeGames(t: TranslationFunction): Array<{ id: ArcadeGameId; name: string }> {
+  return ARCADE_GAMES.map(gameId => ({
     id: gameId,
-    name: getGameName(t, gameId),
+    name: getArcadeGameName(t, gameId),
   }));
 }

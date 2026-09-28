@@ -24,7 +24,7 @@ import { useSession } from "@/lib/auth-client";
 import { useAuthDialog } from "@/components/auth/auth-dialog-provider";
 import { motion, AnimatePresence } from "motion/react";
 import { useTranslations } from "next-intl";
-import { getGameName, GameId } from "@/lib/game-utils";
+import { getArcadeGameName, type ArcadeGameId } from "@/lib/arcades/arcade-games";
 
 interface StoreEdit {
   id: bigint;
@@ -131,7 +131,7 @@ function StoreEditDetails({ edit, storeName, storeAddress }: StoreEditDetailsPro
           <div className="space-y-1 text-sm">
             {Object.entries(edit.games).map(([game, data]: [string, any]) => (
               <div key={game} className="flex justify-between">
-                <span>{getGameName((k: string) => t.has(k) ? t(k) : k, game as GameId)}</span>
+                <span>{getArcadeGameName((k: string) => t.has(k) ? t(k) : k, game as ArcadeGameId)}</span>
                 <span>
                   {data.amount && data.price && " • "}
                   {data.price}

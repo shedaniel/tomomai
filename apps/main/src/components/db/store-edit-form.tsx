@@ -23,7 +23,7 @@ import { trpc } from "@/lib/trpc-client";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
-import { getAllGames } from "@/lib/game-utils";
+import { getAllArcadeGames } from "@/lib/arcades/arcade-games";
 
 interface Store {
   id: bigint;
@@ -79,7 +79,7 @@ export function StoreEditForm({ open, onOpenChange, store, existingEdit }: Store
   const utils = trpc.useUtils();
 
   // Get localized game list
-  const localizedGames = getAllGames((k: string) => t.has(k) ? t(k) : k);
+  const localizedGames = getAllArcadeGames((k: string) => t.has(k) ? t(k) : k);
 
   // Auto-fill currency based on country
   useEffect(() => {
