@@ -572,7 +572,11 @@ function fillTemplate(template: string, data: RoastData): string {
     .replace(/%most_played_recent%/g, data.mostPlayedRecent);
 }
 
-export function TomomaiAI({ snapshotData, region, aprilFools2026 }: TomomaiAIProps) {
+export function TomomaiAI({ aprilFools2026, ...props }: TomomaiAIProps) {
+  return aprilFools2026 ? <TomomaiAIDialog {...props} /> : null;
+}
+
+function TomomaiAIDialog({ snapshotData, region }: Omit<TomomaiAIProps, "aprilFools2026">) {
   const [open, setOpen] = useState(false);
   const [phase, setPhase] = useState<"idle" | "thinking" | "done">("idle");
   const [thinkingIndex, setThinkingIndex] = useState(0);
@@ -586,15 +590,13 @@ export function TomomaiAI({ snapshotData, region, aprilFools2026 }: TomomaiAIPro
     { enabled: open, retry: false },
   );
 
-  if (!aprilFools2026) return null;
-
-  const clearTimeouts = () => {
+  const clearTimeouts = useCallback(() => {
     timeoutsRef.current.forEach(clearTimeout);
     timeoutsRef.current = [];
-  };
+  }, []);
 
   const generateRoast = useCallback(() => {
-    if (!snapshotData) return;
+    if (!snapshotData) return null;
 
     const songs = snapshotData.songs;
     const snapshot = snapshotData.snapshot;
@@ -731,7 +733,7 @@ export function TomomaiAI({ snapshotData, region, aprilFools2026 }: TomomaiAIPro
       setPhase("done");
     }, finishTime);
     timeoutsRef.current.push(t);
-  }, [generateRoast]);
+  }, [clearTimeouts, generateRoast]);
 
   // Typewriter effect for the roast
   useEffect(() => {
@@ -747,7 +749,7 @@ export function TomomaiAI({ snapshotData, region, aprilFools2026 }: TomomaiAIPro
   }, [phase, roastText]);
 
   // Clean up on unmount
-  useEffect(() => () => clearTimeouts(), []);
+  useEffect(() => () => clearTimeouts(), [clearTimeouts]);
 
   const handleOpenChange = (value: boolean) => {
     setOpen(value);
