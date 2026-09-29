@@ -124,7 +124,7 @@ function applyV1Headers(res: Response, state: RateState): Response {
 }
 
 type KeyedScope = Exclude<RouteScope, "public">;
-export type KeyedRouteSpec = RouteSpec & { scope: KeyedScope };
+type KeyedRouteSpec = RouteSpec & { scope: KeyedScope };
 
 export function withApiKey(
   spec: KeyedRouteSpec,

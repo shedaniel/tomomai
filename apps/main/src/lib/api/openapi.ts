@@ -165,13 +165,8 @@ function errorRef(description: string) {
   };
 }
 
-function paramEntries(schema: z.ZodTypeAny): [string, z.ZodTypeAny][] {
-  // We only ever pass ZodObjects for params/query. Other shapes fall through.
-  const obj = schema as unknown as { shape?: Record<string, z.ZodTypeAny> };
-  if (obj.shape) {
-    return Object.entries(obj.shape);
-  }
-  return [];
+function paramEntries(schema: z.ZodObject): [string, z.ZodTypeAny][] {
+  return Object.entries(schema.shape);
 }
 
 function isOptional(schema: z.ZodTypeAny): boolean {
