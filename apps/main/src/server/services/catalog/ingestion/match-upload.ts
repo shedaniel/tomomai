@@ -1,4 +1,5 @@
-import { catalogChartKey, type CatalogChart } from "./normalize-charts";
+import { catalogChartKey } from "./normalize-charts";
+import type { CatalogChart } from "./schema";
 
 type Chart = Pick<CatalogChart, "game" | "songName" | "chartType" | "difficulty" | "artist" | "addedVersion">;
 

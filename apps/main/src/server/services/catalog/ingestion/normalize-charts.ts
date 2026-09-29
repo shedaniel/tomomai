@@ -1,35 +1,15 @@
-import { value, type PendingChart } from "@/server/services/catalog/ingestion/types";
-import type { CanonicalGameId } from "@/lib/games/types";
-import type { NoteCounts } from "@/lib/types";
 import type { Logger } from "pino";
+import type { CanonicalGameId } from "@/lib/games/types";
 import { hasCode, keyOf } from "@/lib/games/codes";
+import type { CatalogChart, CatalogChartIdentity } from "./schema";
+import { value, type PendingChart } from "./types";
 
-export type CatalogChart = {
-  game: CanonicalGameId;
-  songName: string;
-  chartType: number;
-  difficulty: number;
-  artist: string;
-  cover: string;
-  level: string;
-  levelPrecise: number;
-  genre: string;
-  addedVersion: number;
-  bpm?: number;
-  noteDesigner?: string;
-  noteCounts?: NoteCounts;
-  metadata?: Record<string, unknown>;
-  extras?: Record<string, unknown>;
-};
-
-type ChartIdentity = Pick<CatalogChart, "game" | "songName" | "chartType" | "difficulty">;
-
-export function catalogChartKey(chart: ChartIdentity): string {
+export function catalogChartKey(chart: CatalogChartIdentity): string {
   return JSON.stringify([chart.game, chart.songName, chart.chartType, chart.difficulty]);
 }
 
 /** A readable `name@type@difficulty` name for stage notices. Identity comparisons use catalogChartKey. */
-export function catalogChartLabel(chart: ChartIdentity): string {
+export function catalogChartLabel(chart: CatalogChartIdentity): string {
   return `${chart.songName}@${keyOf(chart.game, "chartType", chart.chartType)}@${keyOf(chart.game, "difficulty", chart.difficulty)}`;
 }
 
@@ -99,6 +79,5 @@ export function mergeCatalogChart(existing: CatalogChart, incoming: CatalogChart
     noteDesigner: incoming.noteDesigner ?? existing.noteDesigner,
     noteCounts: incoming.noteCounts ?? existing.noteCounts,
     metadata: mergedMetadata,
-    extras: existing.extras,
   };
 }

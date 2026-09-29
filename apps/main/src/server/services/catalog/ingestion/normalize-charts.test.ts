@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import pino from "pino";
-import { compareCatalogCharts, completeCatalogChart, mergeCatalogChart, validateCatalogCharts, type CatalogChart } from "./normalize-charts";
+import { compareCatalogCharts, completeCatalogChart, mergeCatalogChart, validateCatalogCharts } from "./normalize-charts";
+import type { CatalogChart } from "./schema";
 
 const log = pino({ enabled: false });
 const chart: CatalogChart = {
@@ -50,11 +51,10 @@ describe("catalog order", () => {
 });
 
 describe("catalog merging", () => {
-  it("retains database identities and rejects different chart identities", () => {
-    const existing = { ...chart, levelPrecise: 149, extras: { dbId: "1", parentId: "2" } };
-    const incoming = { ...chart, extras: { dbId: "999", parentId: "888" } };
-    expect(mergeCatalogChart(existing, incoming)).toMatchObject({ levelPrecise: 145, addedVersion: 8, extras: existing.extras });
-    expect(() => mergeCatalogChart(existing, { ...incoming, game: "maimai" })).toThrow("different catalog identities");
+  it("takes the incoming values and rejects different chart identities", () => {
+    const existing = { ...chart, levelPrecise: 149 };
+    expect(mergeCatalogChart(existing, chart)).toEqual(chart);
+    expect(() => mergeCatalogChart(existing, { ...chart, game: "maimai" })).toThrow("different catalog identities");
   });
 
   it("preserves confirmed constants over same-level estimates with aligned provenance", () => {

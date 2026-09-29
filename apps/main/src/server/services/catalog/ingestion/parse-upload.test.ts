@@ -7,9 +7,9 @@ const chart = {
 };
 
 describe("catalog upload boundary", () => {
-  it("unwraps pending values and strips uploaded database identities", () => {
+  it("keeps zero constants and negative versions and strips uploaded database identities", () => {
     expect(parseCatalogUpload("chunithm", [{ ...chart,
-      levelPrecise: { important: true, value: 0 }, addedVersion: -12,
+      levelPrecise: 0, addedVersion: -12,
       extras: { dbId: "1", parentId: "2" }, metadata: { otogeDb: { id: "42" } },
     }])).toEqual([{ ...chart, levelPrecise: 0, addedVersion: -12, metadata: { otogeDb: { id: "42" } } }]);
   });
@@ -18,6 +18,10 @@ describe("catalog upload boundary", () => {
     const { game, chartType, ...fields } = chart;
     expect(parseCatalogUpload("maimai", [{ ...fields, type: "std", difficulty: "master", bpm: null, noteDesigner: null, noteCounts: null }]))
       .toEqual([{ ...fields, game: "maimai", chartType: 0, difficulty: 3, bpm: undefined, noteDesigner: undefined, noteCounts: undefined, metadata: undefined }]);
+  });
+
+  it("rejects values still wrapped the way collection marks them important", () => {
+    expect(() => parseCatalogUpload("chunithm", [{ ...chart, levelPrecise: { important: true, value: 145 } }])).toThrow();
   });
 
   it.each(["artist", "cover", "level", "levelPrecise", "genre", "addedVersion"] as const)("rejects missing %s", field => {

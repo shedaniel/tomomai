@@ -15,10 +15,10 @@ import { getSongSlugs } from "@/lib/song-slug";
 import { locales } from "@tomomai/i18n/locale";
 import { parseCatalogVersion } from "@/lib/catalog/parse-version";
 import { NextRequest, NextResponse } from "next/server";
-
-import { persistCatalog } from "@/server/services/catalog/ingestion/persistence";
+import { persistCatalog, type AffectedChart } from "@/server/services/catalog/ingestion/persistence";
+import { parseCatalogUpdateMode } from "@/server/services/catalog/ingestion/persistence/analyze";
 import { formatCatalogError } from "@/server/services/catalog/errors";
-type UpdateMode = "noop" | "alter" | "destructive";
+
 /**
  * Push catalog edits to the ISR cache without waiting for the 14-day
  * revalidate window. Busts the shared songs data cache, then regenerates
@@ -26,7 +26,7 @@ type UpdateMode = "noop" | "alter" | "destructive";
  */
 async function revalidateSongsCache(
   game: CanonicalGameId,
-  affected: Array<{ songName: string; artist: string; type: string }>,
+  affected: AffectedChart[],
   log: (obj: unknown, msg?: string) => void,
   forceBulk = false,
 ) {
@@ -35,12 +35,14 @@ async function revalidateSongsCache(
   revalidateTag(`api-v1-songs:${game}`, { expire: 0 });
 
   const seen = new Set<string>();
-  const deduped = affected.filter((song) => {
-    const key = `${song.songName}||${song.artist}||${song.type}`;
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
+  const deduped = affected
+    .map(chart => ({ songName: chart.songName, artist: chart.artist, type: keyOf(game, "chartType", chart.chartType) }))
+    .filter((song) => {
+      const key = `${song.songName}||${song.artist}||${song.type}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
 
   const withSlugs = await getSongSlugs(deduped, game);
   const slugs = new Set(withSlugs.map((song) => song.slug));
@@ -101,10 +103,7 @@ export async function POST(request: NextRequest) {
     const game = resolveAdminGame(searchParams);
     const region = searchParams.get('region') as Region;
     const versionParam = searchParams.get('version');
-    const updateParam = searchParams.get('update');
-    const updateMode: UpdateMode = (updateParam === "alter" || updateParam === "destructive" || updateParam === "noop")
-      ? updateParam
-      : "noop";
+    const updateMode = parseCatalogUpdateMode(searchParams.get('update'));
 
     if (!region || !getSupportedRegions(game).includes(region)) {
       return NextResponse.json(
@@ -147,7 +146,7 @@ export async function POST(request: NextRequest) {
       songCount: uploadSongs.length
     }, "Upload merge analysis starting");
 
-    const { dbSongs, mergedSongs, changes, applied, mergeEvents, addedSongs } = await persistCatalog(game, region, version, uploadSongs, updateMode, log);
+    const { statistics, changes, applied, appliedDeletions, skippedDeletions, affected } = await persistCatalog(game, region, version, uploadSongs, updateMode, log);
 
     const appliedCount = applied.added + applied.modified + applied.deleted;
     if (updateMode !== "noop") {
@@ -159,81 +158,32 @@ export async function POST(request: NextRequest) {
 
     log.info({ updateMode, applied: { added: applied.added, modified: applied.modified, deleted: applied.deleted } }, "DB update complete");
 
-    // Push only committed edits to ISR; preserve both slug inputs for renames.
     if (updateMode !== "noop") {
-      const modifiedDbIds = new Set(changes.modified.map(change => change.dbId));
-      const modifiedSongs = mergeEvents
-        .filter(({ existing }) => {
-          const dbId = existing.extras?.dbId;
-          return dbId && modifiedDbIds.has(String(dbId));
-        })
-        .flatMap(({ existing, result }) => [existing, result])
-        .map(song => ({ songName: song.songName, artist: song.artist, type: keyOf(game, "chartType", song.chartType) }));
-      const appliedDeletions = (updateMode === "destructive"
-        ? changes.deleted
-        : changes.deleted.filter(change => (change.playRecordCount ?? 0) === 0));
-      const affectedSongs = [
-        ...addedSongs.map(song => ({ songName: song.songName, artist: song.artist, type: keyOf(game, "chartType", song.chartType) })),
-        ...modifiedSongs,
-        ...appliedDeletions.map(change => ({ songName: change.songName, artist: change.artist, type: keyOf(game, "chartType", change.chartType) })),
-      ];
       try {
-        await revalidateSongsCache(game, affectedSongs, (obj, msg) => log.info(obj, msg ?? ""), appliedCount === 0);
+        await revalidateSongsCache(game, affected, (obj, msg) => log.info(obj, msg ?? ""), appliedCount === 0);
       } catch (err) {
         log.error({ err }, "Failed to revalidate songs ISR cache");
       }
-    }
-
-    // Send Discord webhook if changes were applied
-    if (updateMode !== "noop") {
-      const actuallyDeleted = updateMode === "destructive" ? changes.deleted : changes.deleted.filter(d => d.playRecordCount === 0);
-      sendDiscordWebhook(game, region, changes.added, actuallyDeleted, changes.modified).catch(err => {
+      sendDiscordWebhook(game, region, changes.added, appliedDeletions, changes.modified).catch(err => {
         log.error({ err }, "Failed to send Discord webhook");
       });
     }
 
-    // Send notice webhook with upload summary
-    {
-      const skippedDeletions = updateMode !== "destructive"
-        ? changes.deleted.filter(d => (d.playRecordCount ?? 0) > 0)
-        : [];
-      let desc = `**Mode:** ${updateMode}\n**Input:** ${uploadSongs.length} | **DB:** ${dbSongs.length} | **Merged:** ${mergedSongs.length}\n**Applied:** +${applied.added} ~${applied.modified} -${applied.deleted}`;
-      if (skippedDeletions.length > 0) {
-        desc += `\n\n**${skippedDeletions.length} deletion(s) skipped** (have saved user references):\n`;
-        desc += skippedDeletions.slice(0, 15).map(d => `- ${d.songKey} (${d.playRecordCount} references)`).join("\n");
-        if (skippedDeletions.length > 15) desc += `\n... and ${skippedDeletions.length - 15} more`;
-      }
-      sendDiscordNotice(
-        game,
-        region,
-        "Upload complete",
-        desc,
-        skippedDeletions.length > 0 ? 0xFFA500 : 0x00FF00,
-      ).catch(() => { });
+    let summary = `**Mode:** ${updateMode}\n**Input:** ${statistics.inputSongs} | **DB:** ${statistics.dbSongs} | **Merged:** ${statistics.mergedSongs}\n**Applied:** +${applied.added} ~${applied.modified} -${applied.deleted}`;
+    if (skippedDeletions.length > 0) {
+      summary += `\n\n**${skippedDeletions.length} deletion(s) skipped** (have saved user references):\n`;
+      summary += skippedDeletions.slice(0, 15).map(d => `- ${d.songKey} (${d.playRecordCount} references)`).join("\n");
+      if (skippedDeletions.length > 15) summary += `\n... and ${skippedDeletions.length - 15} more`;
     }
+    sendDiscordNotice(
+      game,
+      region,
+      "Upload complete",
+      summary,
+      skippedDeletions.length > 0 ? 0xFFA500 : 0x00FF00,
+    ).catch(() => { });
 
-    // Return response
-    return NextResponse.json({
-      success: true,
-      requestId,
-      updateMode,
-      applied,
-      statistics: {
-        inputSongs: uploadSongs.length,
-        dbSongs: dbSongs.length,
-        mergedSongs: mergedSongs.length,
-        added: changes.added.length,
-        modified: changes.modified.length,
-        deleted: changes.deleted.length,
-        unchanged: changes.unchanged.length
-      },
-      changes: {
-        added: changes.added,
-        modified: changes.modified,
-        deleted: changes.deleted,
-        unchanged: changes.unchanged
-      }
-    });
+    return NextResponse.json({ success: true, requestId, updateMode, applied, statistics, changes });
   } catch (error) {
     if (error instanceof GameAdapterError) return gameErrorResponse(error);
     log.error({ err: error }, "Error in admin upload route");

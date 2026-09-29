@@ -1,16 +1,20 @@
 import { PgDialect } from "drizzle-orm/pg-core";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { readRows, putObject, filters, execute } = vi.hoisted(() => ({ readRows: vi.fn(), putObject: vi.fn(), filters: vi.fn(), execute: vi.fn() }));
+const { readRows, putObject, filters, execute, selection } = vi.hoisted(() => ({ readRows: vi.fn(), putObject: vi.fn(), filters: vi.fn(), execute: vi.fn(), selection: vi.fn() }));
 vi.mock("@/lib/db", () => ({ db: {
   transaction: (fn: (tx: unknown) => Promise<unknown>) => fn({
     execute,
-    select: () => ({ from: () => ({ leftJoin: (_table: unknown, join: unknown) => ({ where: (where: unknown) => { filters(join, where); return { orderBy: readRows }; } }) }) }),
+    select: (fields: unknown) => {
+      selection(fields);
+      return { from: () => ({ leftJoin: (_table: unknown, join: unknown) => ({ where: (where: unknown) => { filters(join, where); return { orderBy: readRows }; } }) }) };
+    },
   }),
 } }));
 vi.mock("@/lib/r2", () => ({ putR2Object: putObject }));
 import { publishSongCatalog } from "@/server/services/catalog/publication";
 import { CATALOG_WRITE_LOCK_ID } from "@/server/services/catalog/ingestion/lock";
+import { CATALOG_INSTANCE_FIELDS } from "@/server/services/catalog/ingestion/schema";
 
 const parent = {
   songId: "Ab3xK9pQ", songName: "Test", artist: "Artist", cover: null,
@@ -21,7 +25,7 @@ const instance = {
 };
 
 beforeEach(() => {
-  readRows.mockReset(); filters.mockReset(); execute.mockReset(); putObject.mockReset(); putObject.mockResolvedValue(undefined);
+  readRows.mockReset(); filters.mockReset(); execute.mockReset(); selection.mockReset(); putObject.mockReset(); putObject.mockResolvedValue(undefined);
 });
 
 describe("publishSongCatalog", () => {
@@ -58,6 +62,13 @@ describe("publishSongCatalog", () => {
     expect(objects.get("api/v1/games/maimai/songs/jp/-13")).toEqual({ game: "maimai", songs: [] });
     expect(result.songCount).toBe(2);
     expect(result.bytes).toBeGreaterThan(0);
+  });
+
+  it("publishes every instance field except the note counts, which the per-game details carry", async () => {
+    readRows.mockResolvedValue([]);
+    await publishSongCatalog("maimai");
+    const { instance } = selection.mock.calls[0][0] as { instance: Record<string, unknown> };
+    for (const field of CATALOG_INSTANCE_FIELDS.filter(field => field !== "noteCounts")) expect(instance).toHaveProperty(field);
   });
 
   it("validates every slice before writing any objects", async () => {

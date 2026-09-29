@@ -1,6 +1,6 @@
 import { afterEach, describe, it, expect, vi } from "vitest";
 import type { Difficulty, SongType } from "@/lib/games/maimai/types";
-import type { AddedChange, ModifiedChange, FieldChange } from "./ingestion/persistence";
+import type { AddedChange, ModifiedChange, FieldChange } from "./ingestion/persistence/analyze";
 import { chartTypeToCode, difficultyToCode } from "@/lib/games/maimai/codes";
 import { buildChangeDescription, sendDiscordWebhook } from "@/server/services/catalog/notifications";
 
@@ -59,7 +59,7 @@ function modifiedLevel(
 function modifiedField(
   songName: string,
   difficulty: Difficulty,
-  field: string,
+  field: FieldChange["field"],
   oldValue: any,
   newValue: any,
   type: SongType = "dx",
@@ -75,9 +75,9 @@ describe("buildChangeDescription", () => {
   });
   it("sorts CHUNITHM difficulty codes for deleted charts and differing field changes", () => {
     const changes = [4, 0, 3].map(difficulty => ({ songKey: `chart-${difficulty}`, songName: "Test", artist: "Artist",
-      chartType: 0, difficulty, level: "14+", levelPrecise: 145, dbId: String(difficulty) }));
+      chartType: 0, difficulty, level: "14+", levelPrecise: 145, dbId: String(difficulty), playRecordCount: 0 }));
     const description = buildChangeDescription("chunithm", [], changes, changes.map(change => ({
-      ...change, fieldChanges: [{ field: "genre", oldValue: "Old", newValue: change.difficulty === 0 ? "Basic" : "Other" }],
+      ...change, fieldChanges: [{ field: "genre" as const, oldValue: "Old", newValue: change.difficulty === 0 ? "Basic" : "Other" }],
     })));
     expect(description).toContain("Test STANDARD: BAS 14+ (14.5) / MAS 14+ (14.5) / ULT 14+ (14.5)");
     expect(description).toContain("- Test STANDARD BAS: Old → Basic\n- Test STANDARD MAS / ULT: Old → Other");

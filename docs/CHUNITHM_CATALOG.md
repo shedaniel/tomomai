@@ -30,11 +30,21 @@ step applies CHUNITHM's `.5` plus-level rule before finalization.
 The shared catalog ingestion lives under `apps/main/src/server/services/catalog/`:
 
 - `ingestion/` owns collection (`collect.ts`: `collectCatalog` and source
-  authentication) and persistence, the stage runner (`runner.ts`), the merge
-  policy and modes (`merge.ts`), display levels and the Fill Missing stage
-  (`levels.ts`), the pending chart and cover-rule contracts (`types.ts`), admin
+  authentication), the stage runner (`runner.ts`), the merge policy and modes
+  (`merge.ts`), display levels and the Fill Missing stage (`levels.ts`), the
+  pending chart and cover-rule contracts (`types.ts`), the completed chart
+  schema and its identity, parent and instance fields (`schema.ts`), admin
   upload parsing (`parse-upload.ts`), chart identity, completion and ordering
-  (`normalize-charts.ts`) and parent identity matching.
+  (`normalize-charts.ts`) and parent identity matching. `lock.ts` holds the
+  advisory lock that serializes every catalog write with publication, and
+  `columns.ts` the instance columns an upsert replaces.
+- `ingestion/persistence/` writes an uploaded slice. `analyze.ts` is the pure
+  part: it matches the upload to the stored slice, merges each pair, describes
+  the changes and plans deletions for the update mode. `parents.ts` finds and
+  creates parents and keeps parent attributes on the preferred instance
+  (`CANONICAL_REGION_PREFERENCE` in `lib/games/regions.ts`). `index.ts`
+  (`persistCatalog`) runs both in one locked transaction and returns the
+  statistics, changes, applied and skipped deletions, and the affected charts.
 - `sources/otoge-db.ts` holds the otoge-db URLs and its date and constant parsing,
   shared by both games' otoge-db sources.
 - `admin-game.ts` resolves the explicit game and its regions for admin routes.

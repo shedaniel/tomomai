@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { MAIMAI_CODES, chartTypeToCode, difficultyToCode } from "@/lib/games/maimai/codes";
-import type { CatalogChart } from "@/server/services/catalog/ingestion/normalize-charts";
+import { count, noteCountsSchema, smallint, type CatalogChart } from "@/server/services/catalog/ingestion/schema";
 
 const MAIMAI_LEVELS = [
   "1", "1+", "2", "2+", "3", "3+", "4", "4+", "5", "5+", "6", "6+",
@@ -8,14 +8,12 @@ const MAIMAI_LEVELS = [
   "13", "13+", "14", "14+", "15", "15+", "16", "16+",
 ] as const;
 
-const smallint = z.number().int().min(-32768).max(32767);
-const count = smallint.nonnegative();
 const legacyChart = z.object({
   songName: z.string().min(1), type: z.enum(MAIMAI_CODES.chartType), difficulty: z.enum(MAIMAI_CODES.difficulty),
   artist: z.string(), cover: z.string(), level: z.enum(MAIMAI_LEVELS), levelPrecise: count,
   genre: z.string(), addedVersion: smallint, bpm: count.nullable(),
   noteDesigner: z.string().nullable(),
-  noteCounts: z.object({ tap: count, hold: count, slide: count, touch: count, break: count }).nullable(),
+  noteCounts: noteCountsSchema.nullable(),
   metadata: z.record(z.string(), z.unknown()).optional(),
 });
 

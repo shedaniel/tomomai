@@ -38,7 +38,7 @@ enough identifying data.
 - `GET /api/v1/games/maimai/songs/versions?region=jp` returns version metadata, including
   the current version used by the guess app.
 - `GET /api/v1/games/maimai/songs/Ab3xK9pQ:j14` resolves the exact instance; a bare parent
-  ID resolves a preferred child (latest version, then JP preference).
+  ID resolves a preferred child (latest version, then jp over intl over cn).
 
 These are breaking API changes. Old 21-character song IDs are not aliases for
 the new IDs. All first-party consumers change together. Render tokens use v2

@@ -1,8 +1,8 @@
-import type { NoteCounts, Region } from "@/lib/types";
-import type { CanonicalGameId } from "@/lib/games/types";
+import type { Region } from "@/lib/types";
 import type { Logger } from "pino";
 import type { GameSiteSession } from "@/server/services/games/sega/http";
 import type { FetcherMode } from "./merge";
+import type { CatalogChart, CatalogChartIdentity } from "./schema";
 
 export type Pending<T> = T | { important: boolean; value: T };
 
@@ -32,21 +32,10 @@ export type NoticeSink = {
   details: string[];
 };
 
-export type PendingChart = {
-  game: CanonicalGameId;
-  songName: string;
-  chartType: number;
-  difficulty: number;
-  artist?: Pending<string>;
-  cover?: Pending<string>;
-  level?: Pending<string>;
-  levelPrecise?: Pending<number>;
-  genre?: Pending<string>;
-  addedVersion?: Pending<number>;
-  bpm?: Pending<number>;
-  noteDesigner?: Pending<string>;
-  noteCounts?: Pending<NoteCounts>;
-  metadata?: Pending<Record<string, unknown>>;
+type CatalogChartData = Omit<CatalogChart, keyof CatalogChartIdentity>;
+
+/** A chart while sources collect it. Its identity is known, and each other field may be missing or marked important. */
+export type PendingChart = CatalogChartIdentity & { [K in keyof CatalogChartData]?: Pending<NonNullable<CatalogChartData[K]>> } & {
   extras?: Record<string, unknown>;
 };
 

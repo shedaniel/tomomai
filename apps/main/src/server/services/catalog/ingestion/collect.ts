@@ -5,8 +5,9 @@ import type { Region } from "@/lib/types";
 import { GAME_SERVER_MODULES } from "@/server/services/games/registry";
 import type { CatalogSource } from "@/server/services/games/types";
 import { fillMissingStage } from "./levels";
-import { catalogChartKey, compareCatalogCharts, type CatalogChart } from "./normalize-charts";
+import { catalogChartKey, compareCatalogCharts } from "./normalize-charts";
 import { runFetchers } from "./runner";
+import type { CatalogChart } from "./schema";
 import type { CatalogCollectContext, PendingChart } from "./types";
 
 export function catalogRequiresToken(game: CanonicalGameId, region: Region): boolean {

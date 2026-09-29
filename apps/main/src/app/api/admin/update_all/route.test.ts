@@ -38,7 +38,12 @@ beforeEach(() => {
   vi.stubEnv("ADMIN_UPDATE_TOKEN", "admin-secret");
   vi.stubEnv("FRONTEND_GAME", "maimai");
   mocks.source.mockImplementation(async (game: CanonicalGameId) => [{ ...chart, game }]);
-  mocks.ingest.mockResolvedValue({ dbSongs: [], mergedSongs: [chart], changes: { added: [], modified: [], deleted: [], unchanged: [] }, applied: { added: 1, modified: 0, deleted: 0 }, mergeEvents: [], addedSongs: [chart] });
+  mocks.ingest.mockResolvedValue({
+    statistics: { inputSongs: 1, dbSongs: 0, mergedSongs: 1, added: 1, modified: 0, deleted: 0, unchanged: 0 },
+    changes: { added: [], modified: [], deleted: [], unchanged: [] },
+    applied: { added: 1, modified: 0, deleted: 0, newParents: 1, parentUpdates: 0 },
+    appliedDeletions: [], skippedDeletions: [], affected: [chart],
+  });
   mocks.publish.mockResolvedValue({ songCount: 1 });
   mocks.login.mockResolvedValue("source-cookie");
   vi.stubGlobal("fetch", vi.fn(async (url: string, init: RequestInit) => {

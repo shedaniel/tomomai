@@ -2,7 +2,7 @@ import { regionDisplayName } from "@/lib/discord/i18n";
 import { getGame } from "@/lib/games/registry";
 import { getLogger } from "@/lib/request-logger";
 import { postDiscordEmbed } from "@/server/services/discord/webhook";
-import type { AddedChange, DeletedChange, ModifiedChange } from "./ingestion/persistence";
+import type { AddedChange, DeletedChange, ModifiedChange } from "./ingestion/persistence/analyze";
 import type { Region } from "@/lib/types";
 import type { CanonicalGameId } from "@/lib/games/types";
 import { keyOf } from "@/lib/games/codes";

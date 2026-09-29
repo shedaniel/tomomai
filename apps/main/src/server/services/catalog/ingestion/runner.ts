@@ -2,7 +2,8 @@ import deepEqual from "deep-equal";
 import type { Logger } from "pino";
 import type { CanonicalGameId } from "@/lib/games/types";
 import { sendDiscordNotice } from "@/server/services/discord/webhook";
-import { catalogChartKey, catalogChartLabel, completeCatalogChart, type CatalogChart } from "./normalize-charts";
+import { catalogChartKey, catalogChartLabel, completeCatalogChart } from "./normalize-charts";
+import type { CatalogChart } from "./schema";
 import type { CatalogCollectContext, CatalogFetchContext, NoticeSink, PendingChart, SourceChart } from "./types";
 
 export type CatalogStage = {
