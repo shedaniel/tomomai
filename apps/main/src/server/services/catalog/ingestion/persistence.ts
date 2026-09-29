@@ -255,8 +255,9 @@ async function resolveParentsForAddedRows(db: CatalogTransaction, game: Canonica
     const children = childrenByParent.get(p.id.toString()) ?? [];
     return {
       id: p.id,
+      game,
       songName: p.songName,
-      type: p.type,
+      chartType: p.type,
       difficulty: p.difficulty,
       disambiguator: p.disambiguator,
       artist: p.artist,
@@ -271,8 +272,9 @@ async function resolveParentsForAddedRows(db: CatalogTransaction, game: Canonica
   // Synthetic ids: index into addedRows
   const songsToParent: SongToParent[] = addedRows.map((row, index) => ({
     id: BigInt(index),
+    game,
     songName: row.song.songName,
-    type: row.song.chartType,
+    chartType: row.song.chartType,
     difficulty: row.song.difficulty,
     artist: row.song.artist ?? "",
     genre: row.song.genre ?? "",
@@ -298,13 +300,13 @@ async function resolveParentsForAddedRows(db: CatalogTransaction, game: Canonica
         genre: p.genre,
         cover: p.cover,
         bpm: p.bpm,
-        type: p.type,
+        type: p.chartType,
         difficulty: p.difficulty,
         disambiguator: p.disambiguator,
       })))
       .returning({ id: parentSong.id, songName: parentSong.songName, type: parentSong.type, difficulty: parentSong.difficulty, disambiguator: parentSong.disambiguator });
     for (const parent of batch) {
-      const saved = inserted.find(row => row.songName === parent.songName && row.type === parent.type && row.difficulty === parent.difficulty && row.disambiguator === parent.disambiguator);
+      const saved = inserted.find(row => row.songName === parent.songName && row.type === parent.chartType && row.difficulty === parent.difficulty && row.disambiguator === parent.disambiguator);
       if (!saved) throw new Error("Inserted parent missing from returned rows");
       parent.id = saved.id;
     }
@@ -507,11 +509,7 @@ export async function persistCatalog(game: CanonicalGameId, region: Region, vers
 
       const mergeEvents: MergeEvent[] = [];
       const addedSongs: CatalogChart[] = [];
-      const matchInput = (song: CatalogChart) => ({
-        songName: song.songName, type: song.chartType, difficulty: song.difficulty,
-        artist: song.artist ?? "", addedVersion: song.addedVersion,
-    });
-    const assignments = matchUpload(dbCatalogCharts.map(matchInput), uploadSongs.map(matchInput));
+    const assignments = matchUpload(dbCatalogCharts, uploadSongs);
     const matched = new Set(assignments.values());
     for (const [index, incoming] of uploadSongs.entries()) {
       if (!assignments.has(index) && dbCatalogCharts.some((existing, i) => !matched.has(i) && key(existing) === key(incoming))) {

@@ -3,7 +3,6 @@ import type { CanonicalGameId } from "@/lib/games/types";
 import type { NoteCounts } from "@/lib/types";
 import type { Logger } from "pino";
 import { hasCode } from "@/lib/games/codes";
-import { findDuplicateUpload } from "@/server/services/catalog/ingestion/match-upload";
 import { requireCatalogValue } from "@/server/services/catalog/ingestion/runner";
 
 export type CatalogChart = {
@@ -49,14 +48,17 @@ export function completeCatalogChart(chart: PendingChart, log: Logger): CatalogC
 }
 
 export function validateCatalogCharts(game: CanonicalGameId, charts: CatalogChart[]): void {
+  const seen = new Set<string>();
   for (const chart of charts) {
     if (chart.game !== game) throw new Error("Catalog chart belongs to a different game");
     if (!hasCode(game, "chartType", chart.chartType) || !hasCode(game, "difficulty", chart.difficulty)) {
       throw new Error(`Unknown chart codes for ${game}`);
     }
+    // Charts sharing a key are distinct songs when their artist or version differs, as with the two "Link" songs.
+    const identity = JSON.stringify([catalogChartKey(chart), chart.artist, chart.addedVersion]);
+    if (seen.has(identity)) throw new Error(`Duplicate catalog chart: ${catalogChartKey(chart)}`);
+    seen.add(identity);
   }
-  const duplicate = findDuplicateUpload(charts.map(chart => ({ ...chart, type: chart.chartType })));
-  if (duplicate !== undefined) throw new Error(`Duplicate catalog chart: ${catalogChartKey(charts[duplicate])}`);
 }
 
 export function mergeCatalogChart(existing: CatalogChart, incoming: CatalogChart): CatalogChart {

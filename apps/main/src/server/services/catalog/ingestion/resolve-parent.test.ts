@@ -3,8 +3,9 @@ import { resolveParents, type ParentState, type SongToParent } from "@/server/se
 
 function song(overrides: Partial<SongToParent> & { id: bigint }): SongToParent {
   return {
+    game: "maimai",
     songName: "Tsunagite",
-    type: 1,
+    chartType: 1,
     difficulty: 3,
     artist: "HIMEHINA",
     genre: "POPS＆アニメ",
@@ -20,8 +21,9 @@ function song(overrides: Partial<SongToParent> & { id: bigint }): SongToParent {
 function parent(overrides: Partial<ParentState>): ParentState {
   return {
     id: BigInt(1),
+    game: "maimai",
     songName: "Tsunagite",
-    type: 1,
+    chartType: 1,
     difficulty: 3,
     disambiguator: 0,
     artist: "HIMEHINA",
@@ -221,4 +223,12 @@ describe("resolveParents", () => {
     expect(result.assignments.get(BigInt(11))).toBe(result.newParents[0]);
   });
 
+  it("never reuses a parent of another chart type or difficulty", () => {
+    const existing = parent({});
+    const result = resolveParents([
+      song({ id: BigInt(1), region: "intl", chartType: 0 }),
+      song({ id: BigInt(2), region: "intl", difficulty: 2 }),
+    ], [existing]);
+    expect(result.newParents.map(p => [p.chartType, p.difficulty, p.disambiguator])).toEqual([[0, 3, 0], [1, 2, 0]]);
+  });
 });

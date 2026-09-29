@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import pino from "pino";
-import { completeCatalogChart, mergeCatalogChart, type CatalogChart } from "./normalize-charts";
+import { completeCatalogChart, mergeCatalogChart, validateCatalogCharts, type CatalogChart } from "./normalize-charts";
 
 const log = pino({ enabled: false });
 const chart: CatalogChart = {
@@ -22,8 +22,18 @@ describe("catalog completion", () => {
   it("requires a resolved introduction version after the final stage", () => {
     expect(() => completeCatalogChart({ ...chart, addedVersion: undefined }, log)).toThrow("addedVersion");
   });
+});
 
+describe("catalog validation", () => {
+  it("rejects a repeated identity even when other chart fields differ", () => {
+    expect(() => validateCatalogCharts("chunithm", [chart, { ...chart, levelPrecise: 141 }])).toThrow("Duplicate catalog chart");
+  });
 
+  it("accepts charts that share a key but differ in artist or version", () => {
+    expect(() => validateCatalogCharts("chunithm", [
+      chart, { ...chart, artist: "Another artist" }, { ...chart, addedVersion: 9 }, { ...chart, difficulty: 3 },
+    ])).not.toThrow();
+  });
 });
 
 describe("catalog merging", () => {

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { findDuplicateUpload, matchUpload } from "@/server/services/catalog/ingestion/match-upload";
+import { matchUpload } from "@/server/services/catalog/ingestion/match-upload";
 
-const chart = (artist: string, addedVersion: number) => ({ songName: "Link", artist, addedVersion, type: 0, difficulty: 3 });
+const chart = (artist: string, addedVersion: number) => ({ game: "maimai" as const, songName: "Link", artist, addedVersion, chartType: 0, difficulty: 3 });
 
 describe("matchUpload", () => {
   it("preserves artist identity when colliding charts exchange addedVersion values", () => {
@@ -29,23 +29,6 @@ describe("matchUpload", () => {
   });
 
   it("does not match across chart types or difficulties", () => {
-    expect(matchUpload([chart("A", 1)], [{ ...chart("A", 1), type: 1 }, { ...chart("A", 1), difficulty: 2 }]).size).toBe(0);
-  });
-});
-
-describe("findDuplicateUpload", () => {
-  it("rejects repeated identities even when chart metadata differs", () => {
-    const original = { ...chart("A", 1), levelPrecise: 140 };
-    expect(findDuplicateUpload([original, { ...original }])).toBe(1);
-    expect(findDuplicateUpload([original, chart("B", 2), { ...original, levelPrecise: 141 }])).toBe(2);
-  });
-
-  it("preserves distinct artists, versions, types and difficulties", () => {
-    expect(findDuplicateUpload([
-      chart("A", 1), chart("B", 1), chart("A", 2),
-      { ...chart("A", 1), type: 1 },
-      { ...chart("A", 1), difficulty: 2 },
-    ])).toBeUndefined();
-    expect(findDuplicateUpload([])).toBeUndefined();
+    expect(matchUpload([chart("A", 1)], [{ ...chart("A", 1), chartType: 1 }, { ...chart("A", 1), difficulty: 2 }]).size).toBe(0);
   });
 });

@@ -1,8 +1,12 @@
 
+import type { CanonicalGameId } from "@/lib/games/types";
+import { catalogChartKey } from "./normalize-charts";
+
 export interface SongToParent {
   id: bigint;
+  game: CanonicalGameId;
   songName: string;
-  type: number;
+  chartType: number;
   difficulty: number;
   artist: string;
   genre: string;
@@ -16,8 +20,9 @@ export interface SongToParent {
 export interface ParentState {
   /** Database id; null for parents created by this resolution (not yet inserted). */
   id: bigint | null;
+  game: CanonicalGameId;
   songName: string;
-  type: number;
+  chartType: number;
   difficulty: number;
   disambiguator: number;
   artist: string;
@@ -37,10 +42,6 @@ export interface ResolveParentsResult {
   newParents: ParentState[];
 }
 
-function chartKey(s: { songName: string; type: number; difficulty: number }) {
-  return `${s.songName}\u0000${s.type}\u0000${s.difficulty}`;
-}
-
 function regionVersionKey(s: { region: string; gameVersion: number }) {
   return `${s.region}:${s.gameVersion}`;
 }
@@ -55,7 +56,7 @@ function regionVersionKey(s: { region: string; gameVersion: number }) {
 export function resolveParents(songsToParent: SongToParent[], existingParents: ParentState[]): ResolveParentsResult {
   const parentsByKey = new Map<string, ParentState[]>();
   for (const parent of existingParents) {
-    const key = chartKey(parent);
+    const key = catalogChartKey(parent);
     const list = parentsByKey.get(key) ?? [];
     list.push(parent);
     parentsByKey.set(key, list);
@@ -67,7 +68,7 @@ export function resolveParents(songsToParent: SongToParent[], existingParents: P
   // Deterministic order so batches always resolve the same way
   const sorted = [...songsToParent].sort((a, b) =>
     a.songName.localeCompare(b.songName)
-    || a.type - b.type
+    || a.chartType - b.chartType
     || a.difficulty - b.difficulty
     || a.addedVersion - b.addedVersion
     || a.artist.localeCompare(b.artist)
@@ -88,7 +89,7 @@ export function resolveParents(songsToParent: SongToParent[], existingParents: P
   ]) {
     for (const song of sorted) {
       if (assignments.has(song.id)) continue;
-      const candidates = (parentsByKey.get(chartKey(song)) ?? []).filter(parent =>
+      const candidates = (parentsByKey.get(catalogChartKey(song)) ?? []).filter(parent =>
         !parent.childRegionVersions.has(regionVersionKey(song)) && matches(song, parent));
       if (candidates.length === 1) assign(song, candidates[0]);
     }
@@ -96,7 +97,7 @@ export function resolveParents(songsToParent: SongToParent[], existingParents: P
 
   for (const song of sorted) {
     if (assignments.has(song.id)) continue;
-    const key = chartKey(song);
+    const key = catalogChartKey(song);
     const candidates = parentsByKey.get(key) ?? [];
 
     // Only parents without a child in this (region, gameVersion) are valid;
@@ -122,8 +123,9 @@ export function resolveParents(songsToParent: SongToParent[], existingParents: P
       const disambiguator = candidates.length === 0 ? 0 : Math.max(...candidates.map(c => c.disambiguator)) + 1;
       parent = {
         id: null,
+        game: song.game,
         songName: song.songName,
-        type: song.type,
+        chartType: song.chartType,
         difficulty: song.difficulty,
         disambiguator,
         artist: song.artist,
