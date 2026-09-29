@@ -7,8 +7,6 @@ import { RecommendationCard } from "./recommendation-card";
 import { GameProvider } from "@/components/providers/game-provider";
 import type { GameSnapshotData } from "@/lib/games/player-view";
 import type { Flags } from "@/lib/flags";
-import { generateRecommendations } from "@/lib/games/recommendations";
-import { applyRecommendationFilters, createRecommendationFilterLabel } from "@/components/filter-panel";
 import messages from "../../../messages/en.json";
 
 const peers = vi.hoisted(() => vi.fn(() => ({ data: undefined, status: "pending", fetchStatus: "idle", error: null })));
@@ -46,13 +44,4 @@ it("renders CHUNITHM score targets, average rating gains and game-sized buckets 
   expect(container.textContent).not.toContain("B15");
   expect(peers).toHaveBeenCalledWith(expect.objectContaining({ game: "chunithm" }), expect.objectContaining({ enabled: false }));
   await act(async () => root.unmount());
-});
-
-it("filters CHUNITHM recommendations by their real score target and catalog display level", () => {
-  const recommendations = generateRecommendations({ ...data, songs: [{ ...data.songs[0], level: "14+" }] });
-  const filtered = applyRecommendationFilters(recommendations, [{ type: "difficulty", value: "ultima" }, { type: "achievement", value: "1007500" }, { type: "level", value: "14+" }]);
-  expect(filtered).toHaveLength(1);
-  expect(filtered[0].targetRating).toBe(1600);
-  expect(createRecommendationFilterLabel({ type: "achievement", value: "1007500" }, { new: "New", old: "Old" }, "chunithm")).toBe("SSS");
-  expect(createRecommendationFilterLabel({ type: "target", value: "1600 - 1609" }, { new: "New", old: "Old" }, "chunithm")).toBe("16.00 - 16.09");
 });

@@ -15,14 +15,8 @@ import { Select, SelectContent, SelectTrigger, SelectItem, SelectValue } from "@
 import { Flags } from "@/lib/flags";
 import { Button } from "@tomomai/ui";
 import { motion, AnimatePresence } from "motion/react";
-import {
-  FilterPanel,
-  GenericFilter,
-  getFilterKey,
-  createRecommendationFilterCategories,
-  createRecommendationFilterLabel,
-  applyRecommendationFilters,
-} from "@/components/filter-panel";
+import { FilterPanel, GenericFilter, getFilterKey } from "@/components/filter-panel";
+import { createRecommendationFilterCategories, createRecommendationFilterLabel, applyRecommendationFilters } from "./recommendation-filters";
 import { SongHoverCard } from "@/components/games/maimai/song-hover-card";
 import { STAGGER, getTransition } from "@/lib/animation-constants";
 import { logger } from "@/lib/logger";
