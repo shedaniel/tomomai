@@ -186,9 +186,12 @@ describe("SEGA Aime gateway", () => {
     expect(mocks.remove).not.toHaveBeenCalled();
   });
 
-  it("refuses a callback to another game's site before sending a request there", async () => {
-    mocks.fetch.mockResolvedValueOnce(redirect("https://maimaidx-eng.com/maimai-mobile/"));
-    await expect(openSegaSession(gateway, "player", "cookie://clal=existing")).rejects.toThrow("SEGA service request failed during gateway");
+  it.each([
+    [gateway, "https://maimaidx-eng.com/maimai-mobile/"],
+    [{ game: "maimai", region: "intl", kind: "aime-gateway" } as const, "https://maimaidx.jp/maimai-mobile/"],
+  ] as const)("refuses a callback to another game's or region's site before sending a request there: %#", async (config, callback) => {
+    mocks.fetch.mockResolvedValueOnce(redirect(callback));
+    await expect(openSegaSession(config, "player", "cookie://clal=existing")).rejects.toThrow("SEGA service request failed during gateway");
     expect(mocks.fetch).toHaveBeenCalledOnce();
     expect(mocks.agentFetch).not.toHaveBeenCalled();
     expect(mocks.remove).not.toHaveBeenCalled();
