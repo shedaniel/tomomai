@@ -203,7 +203,8 @@ so it's always safe to call.
 The ambient logger is bound automatically for:
 - any route that calls `requestLogger(request, route)`,
 - every tRPC procedure (middleware in `src/lib/trpc.ts`, `route: "trpc/<path>"`),
-- every v1 API handler (`withApiKey` in `src/lib/api/protect.ts`).
+- every v1 API handler (`runApiRequest` in `src/lib/api/route.ts`, which `withApiKey`,
+  `defineGameHandler` and `definePublicGameHandler` run through).
 
 Prefer explicit `log` threading when a helper is part of one request flow and
 already takes a context (e.g. the admin fetcher pipeline's `context.log`);

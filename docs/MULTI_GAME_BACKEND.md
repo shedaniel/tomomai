@@ -115,6 +115,18 @@ procedure throws them. Generic procedures take `{ game, region }` through
 `gameProcedure` or `{ game }` through `gameOnlyProcedure`
 (`server/routers/game-procedures.ts`).
 
+REST routes under `/api/v1/games/{game}` declare their capability on the spec
+with `defineGameRoute` (`lib/api/registry.ts`), which lists only the games that
+offer it in the docs and the OpenAPI document. A keyed route is served by
+`defineGameHandler` (`lib/api/protect.ts`), which authenticates and meters the
+key first, so an anonymous request is always a 401. A public route is served by
+`definePublicGameHandler` (`lib/api/route.ts`), which never loads the key and
+rate limit stack. Both then parse the game (400 `UNKNOWN_GAME`), the path and the
+query (400 `INVALID_PARAMETER`), resolve the game for the spec's capability in
+the queried region, and answer a returned body as the spec's response with
+`game` added. A public spec's `cacheSeconds` sets the CDN cache headers of its
+successful answers.
+
 A fetch refused before its session starts throws a `FetchStartError`
 (`server/services/games/fetch-errors.ts`) whose message is `CODE: detail`.
 `FETCH_START_ERROR_STATUS` in `lib/games/fetch-error-codes.ts` gives each code
