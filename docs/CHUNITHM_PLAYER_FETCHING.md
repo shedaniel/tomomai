@@ -676,12 +676,12 @@ The earlier authenticated investigation verified page shapes and navigation;
 the implementation's offline checks verify parsing and integration separately.
 WORLD'S END and maimai-specific albums/events remain outside this provider.
 
-A positively identified empty-history response and WORLD'S END recent-play
-markup have not been verified. A recent page with no recognized records, or a
-record with an unsupported difficulty, currently fails the whole fetch rather
-than silently omitting data. This includes WORLD'S END history until a reliable
-row identifier allows it to be excluded. Prior snapshots, recent history and
-stored authentication remain intact; no partial snapshot is saved.
+Recent plays are optional, so they never block best scores. A play whose
+difficulty image is not one of the five fetched difficulties, such as a
+WORLD'S END play, is skipped, and the recents stage logs how many it skipped.
+A playlog page with no play rows is read as an empty history, because the page
+request has already verified the session. Layout breakage still fails the
+score stages, which read every difficulty list.
 
 ## International cookie login support
 

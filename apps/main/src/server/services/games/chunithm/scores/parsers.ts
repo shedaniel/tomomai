@@ -132,16 +132,25 @@ export function parseScores(html: string, context: ChartContext & { difficulty: 
   return scores;
 }
 
-export function parseRecents(html: string, context: ChartContext): { recent: NormalizedRecent; form: ChunithmForm }[] {
+type ChunithmRecentRow = { recent: NormalizedRecent; form: ChunithmForm };
+
+/**
+ * Plays of charts outside the fetched difficulties, such as WORLD'S END, are
+ * skipped and counted. A page without play rows is an empty history, because
+ * the page request has already verified the session.
+ */
+export function parseRecents(html: string, context: ChartContext): { rows: ChunithmRecentRow[]; skipped: number } {
   const $ = load(html);
-  const rows = $(".frame02.w400:has(.play_datalist_date)");
-  if (!rows.length) throw new Error("Missing CHUNITHM recent records. An empty-history response has not been verified.");
-  return rows.map((_, element) => {
+  const rows: ChunithmRecentRow[] = [];
+  let skipped = 0;
+  $(".frame02.w400:has(.play_datalist_date)").each((_, element) => {
     const row = $(element);
     const image = row.find(".play_track_result img").attr("src") ?? "";
     const difficulty = CHUNITHM_DIFFICULTIES.find(item => image.includes(`/musiclevel_${item.name}.png`));
-    // TODO: support WORLD'S END charts once their catalog and result contracts are implemented.
-    if (!difficulty) throw new Error("Unsupported CHUNITHM recent difficulty");
+    if (!difficulty) {
+      skipped++;
+      return;
+    }
     const date = row.find(".play_datalist_date").text().trim();
     const match = date.match(/^(\d{4})\/(\d{2})\/(\d{2}) (\d{2}):(\d{2})$/);
     if (!match) throw new Error("Unexpected CHUNITHM play date");
@@ -159,8 +168,9 @@ export function parseRecents(html: string, context: ChartContext): { recent: Nor
     const rowForm = row.find("form").length ? row.find("form").first() : row.closest("form");
     const detail = form(load(rowForm.toString()), "form");
     if (!detail.fields.has("idx")) throw new Error("Missing CHUNITHM recent selector");
-    return { recent, form: detail };
-  }).get();
+    rows.push({ recent, form: detail });
+  });
+  return { rows, skipped };
 }
 
 export function parseRecentDetails(html: string): ChunithmRecentDetails {

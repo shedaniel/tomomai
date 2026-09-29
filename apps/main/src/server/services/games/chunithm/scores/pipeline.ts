@@ -73,10 +73,10 @@ export async function fetchPlayer(ctx: ScoreFetchContext): Promise<GameFetchResu
   // TODO: Add WORLD'S END when its chart identity and catalog representation are supported.
 
   const recents = await stage("recents", async () => {
-    const recentRows = parseRecents(await page("record/playlog"), { region, gameVersion });
+    const { rows, skipped } = parseRecents(await page("record/playlog"), { region, gameVersion });
     const recents: NormalizedRecent[] = [];
-    log.info({ recordCount: recentRows.length }, "Fetching CHUNITHM recent details");
-    for (const { recent, form } of recentRows) {
+    log.info({ recordCount: rows.length, skipped }, "Fetching CHUNITHM recent details");
+    for (const { recent, form } of rows) {
       const details = parseRecentDetails(await page(form.action, form.fields));
       recents.push({ ...recent, details: { ...recent.details, ...details } });
     }

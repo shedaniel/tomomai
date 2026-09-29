@@ -1,12 +1,15 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import type { Flags } from "@/lib/flags";
 
-const mocks = vi.hoisted(() => ({ login: vi.fn(), upload: vi.fn(), progress: vi.fn() }));
+const mocks = vi.hoisted(() => ({
+  login: vi.fn(), upload: vi.fn(), progress: vi.fn(),
+  log: { warn: vi.fn(), info: vi.fn(), error: vi.fn(), child() { return this; } },
+}));
 vi.mock("../login", () => ({ loginAndGetCookies: mocks.login }));
 vi.mock("@/lib/http-agent", () => ({ agentFetch: vi.fn() }));
 vi.mock("@/lib/r2", () => ({ uploadIconToR2: mocks.upload }));
 vi.mock("@/lib/fetch-states-server", () => ({ appendFetchState: mocks.progress }));
-vi.mock("@/lib/request-logger", () => ({ getLogger: () => ({ warn: vi.fn(), info: vi.fn(), error: vi.fn(), child() { return this; } }) }));
+vi.mock("@/lib/request-logger", () => ({ getLogger: () => mocks.log }));
 
 import { fetchPlayer } from "./pipeline";
 
@@ -20,11 +23,12 @@ const navigation = (token: string) => `<form action="" method="post"><select nam
 const scoreList = (difficulty: string, token: string) => `${navigation(token)}
   <div class="musiclist_box bg_${difficulty}"><div class="music_title"> Raw　Title </div><div class="play_musicdata_highscore"><span class="text_b">1,009,000</span></div><div class="play_musicdata_icon"><img src="/icon_fullcombo.png"><img src="/icon_clear.png"></div></div>
   <div class="musiclist_box bg_${difficulty}"><div class="music_title">Unplayed</div></div>`;
-const recents = (basePath: string) => [1, 2].map(index => `<form action="${basePath}record/playlog/sendPlaylogDetail/">
+const playRow = (basePath: string, index: number, level = "expert") => `<form action="${basePath}record/playlog/sendPlaylogDetail/">
   <input type="hidden" name="token" value="detail-token"><input type="hidden" name="idx" value="${index}">
   <div class="frame02 w400"><div class="play_datalist_date">2026/09/28 12:30</div><div class="play_track_text">TRACK ${index}</div>
-  <div class="play_track_result"><img src="/musiclevel_expert.png"></div><div class="play_musicdata_title">Raw　Title</div>
-  <div class="play_musicdata_score_text">1,000,000</div><div class="play_musicdata_icon"><img src="/icon_clear.png"></div></div></form>`).join("");
+  <div class="play_track_result"><img src="/musiclevel_${level}.png"></div><div class="play_musicdata_title">Raw　Title</div>
+  <div class="play_musicdata_score_text">1,000,000</div><div class="play_musicdata_icon"><img src="/icon_clear.png"></div></div></form>`;
+const recents = (basePath: string) => [1, 2].map(index => playRow(basePath, index)).join("");
 const detail = (maxCombo: number) => `<div class="play_data_detail_maxcombo_block">${maxCombo}</div>
   ${["critical", "justice", "attack", "miss"].map(name => `<div class="play_data_detail_judge_text text_${name}">1</div>`).join("")}
   ${["tap_red", "hold_yellow", "slide_blue", "air_green", "flick_skyblue"].map(name => `<div class="play_data_detail_notes_text text_${name}">101.25%</div>`).join("")}`;
@@ -41,10 +45,12 @@ beforeEach(() => {
 });
 afterEach(() => vi.unstubAllGlobals());
 
-it.each([
+const sites = [
   { region: "jp" as const, origin: "https://new.chunithm-net.com", basePath: "/chuni-mobile/html/mobile/" },
   { region: "intl" as const, origin: "https://chunithm-net-eng.com", basePath: "/mobile/" },
-])("collects $region charts and paired recent details through one renewing session", async ({ region, origin, basePath }) => {
+];
+
+function serveSite({ origin, basePath }: (typeof sites)[number], playlog = recents(basePath)): string[] {
   const requests: string[] = [];
   let selected = 0;
   let expectedToken = "initial";
@@ -72,7 +78,7 @@ it.each([
       expect(init.method).toBeUndefined();
       return response(url, scoreList(path.split("/").at(-1)!, expectedToken));
     }
-    if (path === "record/playlog") return response(url, recents(basePath));
+    if (path === "record/playlog") return response(url, playlog);
     if (path === "record/playlog/sendPlaylogDetail/") {
       selected = Number(new URLSearchParams(String(init.body)).get("idx"));
       return response(url, "", { status: 302, headers: { Location: `${basePath}record/playlogDetail/` } });
@@ -81,6 +87,12 @@ it.each([
     if (input.pathname === "/character.png") return response(url, "image", { headers: { "Content-Type": "image/png" } });
     throw new Error(`Unexpected fixture route ${path}`);
   }));
+  return requests;
+}
+
+it.each(sites)("collects $region charts and paired recent details through one renewing session", async site => {
+  const { region } = site;
+  const requests = serveSite(site);
   const result = await fetchPlayer({ ...context, region });
   expect(result.player).toMatchObject({ rating: 1530, totalPlayCount: 100, currentVersionPlayCount: 12, iconUrl: "https://images.test/icons/character.png" });
   expect(result.scores).toHaveLength(5);
@@ -91,6 +103,15 @@ it.each([
   expect(requests.filter(path => path.includes("playlogDetail") || path.includes("sendPlaylogDetail"))).toEqual([
     "POST record/playlog/sendPlaylogDetail/", "GET record/playlogDetail/", "POST record/playlog/sendPlaylogDetail/", "GET record/playlogDetail/",
   ]);
+});
+
+it("still ingests scores and the other recents when the history holds a WORLD'S END play", async () => {
+  const [site] = sites;
+  serveSite(site, playRow(site.basePath, 1, "worldsend") + playRow(site.basePath, 2));
+  const result = await fetchPlayer(context);
+  expect(result.scores).toHaveLength(5);
+  expect(result.recents?.map(play => [play.track, play.details?.maxCombo])).toEqual([[2, 200]]);
+  expect(mocks.log.info).toHaveBeenCalledWith({ recordCount: 1, skipped: 1 }, "Fetching CHUNITHM recent details");
 });
 
 it("rejects an authenticated subscription gate after its HTTP 200 redirect without returning partial data or uploading an icon", async () => {

@@ -83,7 +83,8 @@ describe("CHUNITHM records", () => {
       <div class="play_musicdata_title">Recent song</div><div class="play_musicdata_score_text">1,002,000</div>
       <div class="play_musicdata_icon"><img src="/images/icon_fullcombo.png"></div>
       <form action="/record/playlog/sendPlaylogDetail/"><input type="hidden" name="idx" value="7"><input type="hidden" name="token" value="fresh"></form></div>`;
-    const [result] = parseRecents(html, context);
+    const { rows: [result], skipped } = parseRecents(html, context);
+    expect(skipped).toBe(0);
     expect(result.recent).toMatchObject({ playedAt: new Date("2026-09-27T07:05:00Z"), track: 2, scoreValue: 1002000, comboStatus: 1, chart: { difficulty: 3, version: 23 } });
     expect(result.form.action).toBe("/record/playlog/sendPlaylogDetail/");
     expect(Object.fromEntries(result.form.fields)).toEqual({ idx: "7", token: "fresh" });
@@ -93,6 +94,21 @@ describe("CHUNITHM records", () => {
       <div class="play_data_detail_judge_text text_attack">4</div><div class="play_data_detail_judge_text text_miss">0</div>
       ${["tap_red", "hold_yellow", "slide_blue", "air_green", "flick_skyblue"].map(note => `<div class="play_data_detail_notes_text text_${note}">101.00%</div>`).join("")}`);
     expect(details).toEqual({ maxCombo: 1234, judgments: { justiceCritical: 1200, justice: 30, attack: 4, miss: 0 }, notePercentages: { tap: 101, hold: 101, slide: 101, air: 101, flick: 101 } });
-    expect(() => parseRecents("<html>Unknown page</html>", context)).toThrow("Missing CHUNITHM recent records");
+  });
+
+  it("skips and counts plays of charts outside the fetched difficulties, such as WORLD'S END", () => {
+    const row = (level: string, track: number) => `<div class="frame02 w400"><div class="play_datalist_date">2026/09/27 16:05</div>
+      <div class="play_track_text">TRACK ${track}</div><div class="play_track_result"><img src="/images/musiclevel_${level}.png"></div>
+      <div class="play_musicdata_title">Song ${track}</div><div class="play_musicdata_score_text">1,000,000</div>
+      <form action="/record/playlog/sendPlaylogDetail/"><input type="hidden" name="idx" value="${track}"><input type="hidden" name="token" value="fresh"></form></div>`;
+    const { rows, skipped } = parseRecents(row("worldsend", 1) + row("expert", 2), context);
+    expect(skipped).toBe(1);
+    expect(rows.map(({ recent }) => [recent.track, recent.chart.songName, recent.chart.difficulty])).toEqual([
+      [2, "Song 2", codeOf("chunithm", "difficulty", "expert")],
+    ]);
+  });
+
+  it("reads a playlog page without play rows as an empty history", () => {
+    expect(parseRecents('<div class="box01"><div class="frame01 w460"><div class="box05">No plays</div></div></div>', context)).toEqual({ rows: [], skipped: 0 });
   });
 });
