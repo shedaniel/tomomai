@@ -37,7 +37,7 @@ beforeEach(() => { state.queries = []; });
 it.each([
   ["by public id", () => fetchSnapshotData("chunithm", "owner", "snapshot", "jp")],
   ["latest", () => fetchLatestSnapshotData("chunithm", "owner", "jp")],
-])("reads the %s snapshot through its internal id without handing out the id, owner or raw metadata", async (_, read) => {
+])("reads the %s snapshot through its internal id within the game, without handing out the id, owner or raw metadata", async (_, read) => {
   const result = await read();
   expect(result?.snapshot).toStrictEqual({
     publicId: "snapshot", game: "chunithm", displayName: "Player", rating: 1700, gameVersion: 9, fetchedAt: new Date("2026-09-01T00:00:00Z"),
@@ -50,6 +50,8 @@ it.each([
   const [, scores, events] = state.queries;
   expect(scores.params).toContain(INTERNAL_ID);
   expect(events.params).toContain(INTERNAL_ID);
+  expect(state.queries).toHaveLength(3);
+  expect(state.queries.every(query => query.params.includes("chunithm"))).toBe(true);
 });
 
 it("reads stored rankings only through the owner's snapshot", async () => {
