@@ -30,8 +30,9 @@ describe("shared catalog rating dialog", () => {
     expect(html).toContain("db.songs.detail.achievement");
   });
 
-  it("marks ratings based on an estimated constant", () => {
+  it("marks the level and ratings of an estimated constant", () => {
     const html = renderToStaticMarkup(<GameProvider game={descriptor}><SongChartDialogContent charts={[{ ...chart, levelPreciseEstimated: true }]} scores={{ jp: score }} /></GameProvider>);
+    expect(html).toContain(">≈14</span><span class=\"text-xs\">.0</span>");
     expect(html).toContain("≈16.15");
     expect(html).toContain("1,009,000");
   });

@@ -1,18 +1,18 @@
 "use client";
 
 import type { fetchUserAlbums } from "@/server/queries/albums";
-import { formatGameLevel, getGameDifficulty, getGameChartType, getGameChartTypeBadge } from "@/lib/games/presentation";
+import { formatGameLevel, getGameDifficulty } from "@/lib/games/presentation";
 type Album = Awaited<ReturnType<typeof fetchUserAlbums>>["albums"][number];
 import { useGameId } from "@/components/providers/game-provider";
 import { trpc } from "@/lib/trpc-client";
 import { Region } from "@/lib/types";
-import { resolveImageUrl } from "@/lib/images";
 import { cn } from "@/lib/utils";
 import { Images, Loader2, AlertCircle, Calendar, MapPin, HardDrive, Info, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { AlbumCardSkeleton } from "./album-card.skeleton";
 
 import { CoverImage } from "@/components/cover-image";
+import { ChartTypeBadge } from "@/components/games/chart-type-badge";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 import { Button } from "@tomomai/ui";
@@ -261,8 +261,6 @@ export function AlbumCard({ region }: AlbumCardProps) {
           {albums.map((album) => {
             const takenAt = new Date(album.takenAt);
             const difficulty = getGameDifficulty(game, album.difficultyCode);
-            const chartType = getGameChartType(game, album.typeCode);
-            const typeBadge = getGameChartTypeBadge(game, album.typeCode);
 
             return (
               <div
@@ -307,15 +305,7 @@ export function AlbumCard({ region }: AlbumCardProps) {
                   <div className="flex-1 min-w-0">
                     <h4 className="font-semibold truncate">{album.songName}</h4>
                     <p className="text-xs text-muted-foreground truncate">{album.artist}</p>
-                    {!chartType.implicit && <div className="flex items-center gap-1.5 mt-1.5">
-                      {typeBadge ? <img
-                        src={resolveImageUrl(typeBadge)}
-                        alt={chartType.label}
-                        width={32}
-                        height={10}
-                        className="h-2.5 w-auto"
-                      /> : <span className="text-xs">{chartType.label}</span>}
-                    </div>}
+                    <ChartTypeBadge typeCode={album.typeCode} className="mt-1.5 block" />
                   </div>
                 </div>
 

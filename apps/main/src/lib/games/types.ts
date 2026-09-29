@@ -85,6 +85,8 @@ export type DifficultyPresentation = {
     cell: string;
     /** A solid fill under white text. */
     solidBg: string;
+    /** A small label chip in a catalog row. */
+    chip: string;
     border: string;
     ring: string;
     /** The level badge on recent plays and albums. */

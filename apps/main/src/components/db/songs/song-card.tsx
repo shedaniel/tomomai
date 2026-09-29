@@ -3,13 +3,14 @@
 import { motion } from "motion/react";
 import { Link } from "@/i18n/navigation"
 
-import { resolveImageUrl } from "@/lib/images";
 import { cn } from "@/lib/utils";
 import { CoverImage } from "@/components/cover-image";
+import { ChartLevel } from "@/components/games/chart-level";
+import { ChartTypeBadge } from "@/components/games/chart-type-badge";
 import { UniqueSong } from "./types";
 import { useGameId } from "@/components/providers/game-provider";
 import { codeOf } from "@/lib/games/codes";
-import { formatGameLevel, getGameDifficulty, getGameChartType, getGameChartTypeBadge } from "@/lib/games/presentation";
+import { getGameDifficulty, getGameChartType } from "@/lib/games/presentation";
 
 interface SongCardProps {
   song: UniqueSong;
@@ -71,7 +72,6 @@ export function SongCard({ song, index, isSelected, onSelect, disableInitialAnim
   const singleDiff = isSingleDifficulty ? song.difficulties[0] : null;
   const typeCode = codeOf(game, "chartType", song.type);
   const chartType = getGameChartType(game, typeCode);
-  const typeBadge = getGameChartTypeBadge(game, typeCode);
   const difficultyCode = singleDiff ? codeOf(game, "difficulty", singleDiff.difficulty) : null;
 
   return (
@@ -110,16 +110,9 @@ export function SongCard({ song, index, isSelected, onSelect, disableInitialAnim
         <div className="absolute inset-0 bg-linear-to-t from-black/90 via-black/40 to-transparent rounded-md overflow-hidden" />
 
         {/* Type Badge */}
-        {!chartType.implicit && <div className="absolute top-2 left-2 z-10">
-          {typeBadge ? <img
-            src={resolveImageUrl(typeBadge)}
-            alt={chartType.label}
-            width={32}
-            height={10}
-            className="drop-shadow-md"
-            loading="lazy"
-          /> : <span className="rounded bg-background/90 px-1 text-xs text-foreground">{chartType.label}</span>}
-        </div>}
+        <div className="absolute top-2 left-2 z-10">
+          <ChartTypeBadge typeCode={typeCode} size="xs" />
+        </div>
 
         {/* Difficulty Badge (only if single difficulty) */}
         {singleDiff && difficultyCode !== null && (
@@ -127,7 +120,7 @@ export function SongCard({ song, index, isSelected, onSelect, disableInitialAnim
             "absolute top-[-2px] right-[-2px] pl-1.75 pr-3 py-0.75 rounded-tr-md rounded-bl-[8px] overflow-hidden text-[10px] font-semibold text-white z-10",
             getGameDifficulty(game, difficultyCode).classes.cardBadge,
           )}>
-            {singleDiff.levelPreciseEstimated ? "≈" : ""}{formatGameLevel(game, singleDiff.levelPrecise, difficultyCode)}
+            <ChartLevel chart={singleDiff} />
           </div>
         )}
 

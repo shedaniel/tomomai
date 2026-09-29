@@ -10,11 +10,6 @@ export type UniqueSongFlattened = Omit<UniqueSong, "difficulties"> & {
   difficulties: (UniqueSongDifficulty & { noteDesignerNumber: number })[];
 }
 
-export function catalogDisplayLevel(chart: UniqueSongDifficulty | undefined): string {
-  if (!chart) return "—";
-  return chart.level;
-}
-
 export function hashString(str: string | null): number {
   if (!str) return 0;
   // Simple hash function for compacting filter strings
@@ -70,7 +65,7 @@ export function createUniqueSongFilterCategories(
       type: "level",
       label: getLabel("level", "Level"),
       icon: BarChart,
-      options: [...new Set(songs.flatMap(song => song.difficulties.map(catalogDisplayLevel)))].filter(level => level !== "—").sort((a, b) => Number.parseFloat(b) - Number.parseFloat(a) || b.localeCompare(a)).map(level => ({ value: level, label: level })),
+      options: [...new Set(songs.flatMap(song => song.difficulties.map(chart => chart.level)))].sort((a, b) => Number.parseFloat(b) - Number.parseFloat(a) || b.localeCompare(a)).map(level => ({ value: level, label: level })),
     },
     {
       type: "type",
@@ -151,9 +146,7 @@ export function applyUniqueSongFilters(allSongs: UniqueSong[], flattenedSongs: U
         const matchesLevel = levelFilters.some(f => {
           // Check if any difficulty matches the level filter
           // If flattened, song.difficulties has only 1 item
-          return song.difficulties.some(d => {
-            return catalogDisplayLevel(d) === f.value;
-          });
+          return song.difficulties.some(d => d.level === f.value);
         });
         if (!matchesLevel) return false;
       }

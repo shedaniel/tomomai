@@ -23,7 +23,7 @@ function unknownDifficulty(code: number): DifficultyPresentation {
     shortLabel: `#${code}`,
     hex: "#71717a",
     cssVar: "var(--color-zinc-500)",
-    classes: { text: "text-muted-foreground", cell: `${muted} border-border`, solidBg: "bg-zinc-500", border: "border-border", ring: "ring-border", badge: muted, cardBadge: muted },
+    classes: { text: "text-muted-foreground", cell: `${muted} border-border`, solidBg: "bg-zinc-500", chip: muted, border: "border-border", ring: "ring-border", badge: muted, cardBadge: muted },
   };
 }
 
@@ -42,6 +42,11 @@ export function formatGameRating(game: CanonicalGameId, value: number | null | u
   return scale === 1 && !average ? String(Math.floor(value)) : (value / scale).toFixed(2);
 }
 
+/** Marks a level, or a rating derived from it, whose chart constant is estimated. */
+export function formatEstimated(text: string, estimated: boolean | undefined): string {
+  return estimated ? `≈${text}` : text;
+}
+
 export function formatGameLevel(game: CanonicalGameId, levelPrecise: number, difficultyCode: number): string {
   if (!Number.isFinite(levelPrecise)) return missingValue;
   return getGameDifficulty(game, difficultyCode).unknownDecimal
@@ -58,16 +63,6 @@ export function getGameChartType(game: CanonicalGameId, code: number): ChartType
   const chartTypes: Partial<Record<string, ChartTypePresentation>> = presentationOf(game).chartTypes;
   return chartTypes[keyOf(game, "chartType", code)]
     ?? { label: `#${code}`, hex: "#71717a", classes: { ring: "ring-border", chip: "bg-muted text-muted-foreground" } };
-}
-
-export function getGameChartTypeBadgeLabel(game: CanonicalGameId, code: number): string | null {
-  const chartType = getGameChartType(game, code);
-  return chartType.implicit ? null : chartType.label;
-}
-
-export function getGameChartTypeBadge(game: CanonicalGameId, code: number): string | null {
-  const { badgePath } = getGameChartType(game, code);
-  return badgePath ? `${process.env.NEXT_PUBLIC_R2_URL}/${badgePath}` : null;
 }
 
 export function getGameStatusBadges(game: CanonicalGameId, status: Partial<Record<ScoreStatusKind, number | null>>): StatusStyle[] {

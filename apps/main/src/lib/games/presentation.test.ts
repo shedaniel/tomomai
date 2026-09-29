@@ -6,8 +6,6 @@ import {
   formatGameScore,
   formatGameScoreDelta,
   getGameChartType,
-  getGameChartTypeBadge,
-  getGameChartTypeBadgeLabel,
   getGameDifficulty,
   getGameRankingBuckets,
   getGameScoreBenchmarks,
@@ -75,12 +73,8 @@ describe("game presentation", () => {
     expect(difficulty("maimai", "utage").shortLabel).toBe("宴");
   });
 
-  it("badges maimai chart types and never shows the CHUNITHM standard type", () => {
-    expect(getGameChartTypeBadgeLabel("maimai", 1)).toBe("DX");
-    expect(getGameChartTypeBadge("maimai", codeOf("maimai", "chartType", "std"))).toMatch(/\/covers\/music_standard\.webp$/);
+  it("names maimai chart types in Japanese on OG images", () => {
     expect(getGameChartType("maimai", codeOf("maimai", "chartType", "dx")).ogLabel).toBe("でらっくす");
-    expect(getGameChartTypeBadgeLabel("chunithm", 0)).toBeNull();
-    expect(getGameChartTypeBadge("chunithm", 0)).toBeNull();
   });
 
   it("styles maimai status badges and hides the plain CHUNITHM clear lamp", () => {

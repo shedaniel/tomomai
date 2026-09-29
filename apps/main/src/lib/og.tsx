@@ -7,7 +7,7 @@ import { getRatingImageUrl } from "@/lib/games/maimai/assets";
 import type { Region } from "@/lib/types";
 import type { CanonicalGameId } from "@/lib/games/types";
 import { codeOf } from "@/lib/games/codes";
-import { formatGameLevel, getGameChartType, getGameDifficulty } from "@/lib/games/presentation";
+import { formatEstimated, formatGameLevel, getGameChartType, getGameDifficulty } from "@/lib/games/presentation";
 
 export const OG_SIZE = { width: 1200, height: 630 };
 
@@ -1031,7 +1031,7 @@ export async function createSongOGImage(options: SongOGImageOptions) {
                           {difficulty.shortLabel}
                         </span>
                         <span style={{ color: "#fafafa", fontSize: "26px", fontWeight: 700, fontFamily: "Geist Mono" }}>
-                          {d.levelPreciseEstimated ? "≈" : ""}{formatGameLevel(game, d.levelPrecise, d.code)}
+                          {formatEstimated(formatGameLevel(game, d.levelPrecise, d.code), d.levelPreciseEstimated)}
                         </span>
                       </div>
                     );

@@ -15,7 +15,7 @@ import { usePathname, useRouter } from "@/i18n/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@tomomai/ui/select-friendly";
-import { applyUniqueSongFilters, catalogDisplayLevel, createUniqueSongFilterCategories, hashString } from "./songs/filter-utils";
+import { applyUniqueSongFilters, createUniqueSongFilterCategories, hashString } from "./songs/filter-utils";
 import { SongCard } from "./songs/song-card";
 import { SongRow } from "./songs/song-row";
 import { GroupMode, UniqueSong, UniqueSongFilter, UniqueSongFilterType } from "./songs/types";
@@ -177,7 +177,7 @@ export function SongsList(_: SongsListProps = {}) {
         return song.difficulties[0]?.noteDesigner ?? "Unknown";
       case "level_asc":
       case "level_desc": {
-        return catalogDisplayLevel(song.difficulties[0]);
+        return song.difficulties[0]?.level ?? "—";
       }
       case "version_asc":
       case "version_desc":

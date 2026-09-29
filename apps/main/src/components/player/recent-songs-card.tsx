@@ -1,11 +1,10 @@
 "use client";
 
 import type { RecentPlay } from "@/server/queries/recents";
-import { formatGameScore, formatGameLevel, getGameDifficulty, getGameChartType, getGameChartTypeBadge, getGameStatusLabels } from "@/lib/games/presentation";
+import { formatGameScore, formatGameLevel, getGameDifficulty, getGameStatusLabels } from "@/lib/games/presentation";
 import { useGameId } from "@/components/providers/game-provider";
 import { trpc } from "@/lib/trpc-client";
 import { Region } from "@/lib/types";
-import { resolveImageUrl } from "@/lib/images";
 import { cn } from "@/lib/utils";
 import { ChevronDown, ChevronUp, Clock, Loader2, AlertCircle, CloudOff } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -16,6 +15,7 @@ import { useCallback, useState, useEffect, useRef } from "react";
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 import { Badge } from "@tomomai/ui";
 import { AutoHeight } from "@/components/animate-ui/primitives/effects/auto-height";
+import { ChartTypeBadge } from "@/components/games/chart-type-badge";
 import { ChunithmRecentPlayDetails } from "@/components/games/chunithm/recent-play-details";
 import { MaimaiRecentPlayDetails } from "@/components/games/maimai/recent-play-details";
 import { motion } from "motion/react";
@@ -46,8 +46,6 @@ function RecentSongRow({ play, index, isFirst, isLast, onToggleExpand, isExpande
   const canExpand = game === "maimai" || isDetailed;
   const playDate = new Date(play.playedAt);
   const difficulty = getGameDifficulty(game, play.difficultyCode);
-  const chartType = getGameChartType(game, play.typeCode);
-  const typeBadge = getGameChartTypeBadge(game, play.typeCode);
 
   return (
     <motion.div
@@ -135,13 +133,7 @@ function RecentSongRow({ play, index, isFirst, isLast, onToggleExpand, isExpande
             {play.artist}
           </p>
           <div className="flex items-center gap-1.5 mt-1.5">
-            {!chartType.implicit && (typeBadge ? <img
-              src={resolveImageUrl(typeBadge)}
-              alt={chartType.label}
-              width={32}
-              height={10}
-              className="h-2.5 w-auto"
-            /> : <span className="text-xs">{chartType.label}</span>)}
+            <ChartTypeBadge typeCode={play.typeCode} />
             {play.genre && (
               <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-secondary text-secondary-foreground font-medium truncate max-w-[120px]">
                 {play.genre}

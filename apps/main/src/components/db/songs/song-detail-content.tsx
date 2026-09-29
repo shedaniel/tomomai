@@ -7,7 +7,7 @@ import {
 } from "@tomomai/ui";
 import { useGame } from "@/components/providers/game-provider";
 import { codeOf } from "@/lib/games/codes";
-import { formatGameScore, formatGameRating, formatGameLevel, getGameDifficulty, getGameChartType, getGameChartTypeBadge, getGameScoreLabelKey, getGameScoreGrade, getGameStatusBadges } from "@/lib/games/presentation";
+import { formatEstimated, formatGameScore, formatGameRating, getGameDifficulty, getGameChartType, getGameScoreLabelKey, getGameScoreGrade, getGameStatusBadges } from "@/lib/games/presentation";
 import { isGameCnExclusive } from "@/lib/games/frontend";
 import { getGame } from "@/lib/games/registry";
 import { getVersion } from "@/lib/games/versions";
@@ -18,6 +18,8 @@ import { cn } from "@/lib/utils";
 import { Activity, Calendar, ChevronRight, Globe, Loader2, Music, Pencil, Share } from "lucide-react";
 
 import { CoverImage } from "@/components/cover-image";
+import { ChartLevel } from "@/components/games/chart-level";
+import { ChartTypeBadge } from "@/components/games/chart-type-badge";
 import { useEffect, useMemo, useRef } from "react";
 import { SongDetailChart, SongDetailHistoricalChart, SongDetails, UserScore } from "./types";
 
@@ -131,7 +133,7 @@ function ScoreGrid({
                 {score ? (
                   <>
                     <span className="text-sm font-bold tabular-nums text-primary">
-                      {chart.levelPreciseEstimated ? "≈" : ""}{formatGameRating(game.id, rating)}
+                      {formatEstimated(formatGameRating(game.id, rating), chart.levelPreciseEstimated)}
                     </span>
                     <span className="text-xs text-muted-foreground font-medium">
                       ({getGameScoreGrade(game.id, score.scoreValue, chart.gameVersion, score.comboStatus)})
@@ -184,8 +186,7 @@ export function SongChartRow({ difficulty, charts, index, data, hasTouch }: {
           </div>
           {/* Level */}
           <div className={cn("py-2.5 px-3 flex items-baseline justify-center", dataBorderClass)}>
-            <span className="text-lg font-bold tabular-nums">{latestChart.levelPreciseEstimated ? "≈" : ""}{latestChart.level}</span>
-            <span className="text-xs">.{difficultyPresentation.unknownDecimal ? '?' : latestChart.levelPrecise % 10}</span>
+            <ChartLevel chart={latestChart} variant="split" />
           </div>
           {hasNoteDetails && <>
           {/* Notes */}
@@ -339,9 +340,6 @@ export function SongDetailContent({ songName, artist, slug, type, parentIds, ini
   }
 
   const addedVersionInfo = getVersion(game.id, data.addedVersion);
-  const typeCode = codeOf(game.id, "chartType", data.type);
-  const chartType = getGameChartType(game.id, typeCode);
-  const typeBadge = getGameChartTypeBadge(game.id, typeCode);
 
   return (
     <div className="space-y-6">
@@ -360,13 +358,7 @@ export function SongDetailContent({ songName, artist, slug, type, parentIds, ini
           <h1 className="text-xl max-md:text-md font-bold truncate">{data.songName}</h1>
           <p className="text-muted-foreground max-md:text-sm truncate">{data.artist}</p>
           <div className="flex items-center gap-2 mt-2">
-            {!chartType.implicit && (typeBadge ? <img
-              src={typeBadge}
-              alt={chartType.label}
-              width={64}
-              height={20}
-              className="drop-shadow-sm"
-            /> : <span className="text-xs font-medium">{chartType.label}</span>)}
+            <ChartTypeBadge typeCode={codeOf(game.id, "chartType", data.type)} size="lg" />
             <span className="text-xs text-muted-foreground truncate">{data.genre}</span>
           </div>
         </div>
@@ -531,7 +523,7 @@ export function SongDetailContent({ songName, artist, slug, type, parentIds, ini
                               difficulty.classes.solidBg
                             )}
                           >
-                            {difficulty.label} {chart.levelPreciseEstimated ? "≈" : ""}{formatGameLevel(game.id, chart.levelPrecise, difficultyCode)}
+                            {difficulty.label} <ChartLevel chart={chart} />
                           </div>
                         );
                       })}

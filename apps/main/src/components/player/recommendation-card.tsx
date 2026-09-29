@@ -2,7 +2,7 @@
 
 import { useGameId } from "@/components/providers/game-provider";
 import type { GameSnapshotData } from "@/lib/games/player-view";
-import { formatGameScore, formatGameScoreDelta, formatGameRating, formatGameLevel, getGameDifficulty, getGameChartTypeBadgeLabel, getGameRankingBuckets, getGameScoreLabelKey } from "@/lib/games/presentation";
+import { formatGameScore, formatGameScoreDelta, formatGameRating, formatGameLevel, getGameDifficulty, getGameChartType, getGameRankingBuckets, getGameScoreLabelKey } from "@/lib/games/presentation";
 import { generateRecommendations, RecommendationData } from "@/lib/games/recommendations";
 import { Region } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -29,7 +29,7 @@ function RecommendationRow({ recommendation }: { recommendation: RecommendationD
   const { song, currentScore, targetScore, currentRating, targetRating, ratingGain, isInBest, category } = recommendation;
   const isAp = game === "maimai" && targetScore === 1010000;
   const scoreText = (value: number) => formatGameScore(game, value, { precision: "compact" });
-  const typeLabel = getGameChartTypeBadgeLabel(game, song.typeCode);
+  const chartType = getGameChartType(game, song.typeCode);
   const difficulty = getGameDifficulty(game, song.difficultyCode);
   const content = (
       <motion.div
@@ -74,7 +74,7 @@ function RecommendationRow({ recommendation }: { recommendation: RecommendationD
               )}
             </div>
             <div className="text-muted-foreground text-xs truncate">
-              {typeLabel && `${typeLabel} • `}{difficulty.label} {formatGameLevel(game, song.levelPrecise, song.difficultyCode)} • {song.artist}
+              {!chartType.implicit && `${chartType.label} • `}{difficulty.label} {formatGameLevel(game, song.levelPrecise, song.difficultyCode)} • {song.artist}
             </div>
           </div>
         </div>

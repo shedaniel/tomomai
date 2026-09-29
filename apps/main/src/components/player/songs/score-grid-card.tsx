@@ -3,9 +3,9 @@
 import { forwardRef } from "react";
 import { useGameId } from "@/components/providers/game-provider";
 import { CoverImage } from "@/components/cover-image";
-import { formatGameScore, formatGameRating, formatGameLevel, getGameDifficulty, getGameChartType, getGameChartTypeBadge, getGameStatusLabels } from "@/lib/games/presentation";
+import { ChartTypeBadge } from "@/components/games/chart-type-badge";
+import { formatGameScore, formatGameRating, formatGameLevel, getGameDifficulty, getGameStatusLabels } from "@/lib/games/presentation";
 import type { PercentileEntry } from "@/lib/games/maimai/percentile/types";
-import { resolveImageUrl } from "@/lib/images";
 import { cn } from "@/lib/utils";
 import { ScoreHover } from "./score-hover";
 import type { DisplayScore } from "./types";
@@ -14,8 +14,6 @@ import type { DisplayScore } from "./types";
 export const SongGridCard = forwardRef<HTMLDivElement, { song: DisplayScore & { rating?: number }; percentile?: PercentileEntry } & React.HTMLAttributes<HTMLDivElement>>(({ song, percentile, ...props }, ref) => {
   const game = useGameId();
   const difficulty = getGameDifficulty(game, song.difficultyCode);
-  const chartType = getGameChartType(game, song.typeCode);
-  const typeBadge = getGameChartTypeBadge(game, song.typeCode);
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const card = e.currentTarget;
     const rect = card.getBoundingClientRect();
@@ -108,16 +106,9 @@ export const SongGridCard = forwardRef<HTMLDivElement, { song: DisplayScore & { 
         <div className="song-card-content relative w-full h-full transition-transform duration-300"
           style={{ transform: 'translateZ(30px)' }}>
           {/* Song Type Badge */}
-          {!chartType.implicit && <div className="absolute top-2.5 left-2.5 2xs:max-xs:left-2 2xs:max-xs:top-2 2xs:max-xs:scale-75 origin-top-left z-30">
-            {typeBadge ? <img
-              src={resolveImageUrl(typeBadge)}
-              alt={chartType.label}
-              width={37}
-              height={11}
-              className="drop-shadow-md"
-              loading="lazy"
-            /> : <span className="rounded bg-background/90 px-1 text-xs text-foreground">{chartType.label}</span>}
-          </div>}
+          <div className="absolute top-2.5 left-2.5 2xs:max-xs:left-2 2xs:max-xs:top-2 2xs:max-xs:scale-75 origin-top-left z-30">
+            <ChartTypeBadge typeCode={song.typeCode} size="md" />
+          </div>
 
           {/* Song Info */}
           <div className="absolute bottom-0 left-0 right-0 p-2.5 text-white z-30">

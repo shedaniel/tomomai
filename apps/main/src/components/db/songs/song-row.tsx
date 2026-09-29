@@ -4,10 +4,12 @@ import { motion } from "motion/react";
 import { Link } from "@/i18n/navigation"
 import { cn } from "@/lib/utils";
 import { CoverImage } from "@/components/cover-image";
+import { ChartLevel } from "@/components/games/chart-level";
+import { ChartTypeBadge } from "@/components/games/chart-type-badge";
 import { UniqueSong } from "./types";
 import { useGameId } from "@/components/providers/game-provider";
 import { codeOf } from "@/lib/games/codes";
-import { formatGameLevel, getGameDifficulty, getGameChartType } from "@/lib/games/presentation";
+import { getGameDifficulty, getGameChartType } from "@/lib/games/presentation";
 
 interface SongRowProps {
   song: UniqueSong;
@@ -23,7 +25,7 @@ export function SongRow({ song, index, isSelected, onSelect, disableInitialAnima
   const href = `/db/songs/${encodeURIComponent(song.slug)}`;
   const isSingleDifficulty = song.difficulties.length === 1;
   const singleDiff = isSingleDifficulty ? song.difficulties[0] : null;
-  const chartType = getGameChartType(game, codeOf(game, "chartType", song.type));
+  const typeCode = codeOf(game, "chartType", song.type);
   const difficultyCode = singleDiff ? codeOf(game, "difficulty", singleDiff.difficulty) : null;
 
   const handleClick = (e: React.MouseEvent) => {
@@ -55,7 +57,7 @@ export function SongRow({ song, index, isSelected, onSelect, disableInitialAnima
           alt={song.songName}
           className={cn(
             "w-10 h-10 rounded ring-2 ring-offset-2 ring-offset-background",
-            difficultyCode === null ? chartType.classes.ring : getGameDifficulty(game, difficultyCode).classes.ring,
+            difficultyCode === null ? getGameChartType(game, typeCode).classes.ring : getGameDifficulty(game, difficultyCode).classes.ring,
           )}
           width={40}
           height={40}
@@ -65,18 +67,13 @@ export function SongRow({ song, index, isSelected, onSelect, disableInitialAnima
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <h2 className="font-medium truncate">{song.songName}</h2>
-            {!chartType.implicit && <span className={cn(
-              "text-[10px] px-1.5 py-0.5 rounded font-medium shrink-0",
-              chartType.classes.chip,
-            )}>
-              {chartType.label}
-            </span>}
+            <ChartTypeBadge typeCode={typeCode} variant="label" />
             {singleDiff && difficultyCode !== null && (
               <span className={cn(
                 "text-[10px] px-1.5 py-0.5 rounded font-medium shrink-0",
-                getGameDifficulty(game, difficultyCode).classes.cell,
+                getGameDifficulty(game, difficultyCode).classes.chip,
               )}>
-                {getGameDifficulty(game, difficultyCode).label} {singleDiff.levelPreciseEstimated ? "≈" : ""}{formatGameLevel(game, singleDiff.levelPrecise, difficultyCode)}
+                {getGameDifficulty(game, difficultyCode).shortLabel} <ChartLevel chart={singleDiff} />
               </span>
             )}
           </div>
