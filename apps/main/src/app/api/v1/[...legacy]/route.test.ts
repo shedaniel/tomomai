@@ -14,6 +14,7 @@ describe("paths from before the game namespace", () => {
   it.each([
     ["GET", "/api/v1/recents?region=jp&limit=10", "/api/v1/games/maimai/recents?region=jp&limit=10"],
     ["GET", "/api/v1/songs/versions?region=intl", "/api/v1/games/maimai/songs/versions?region=intl"],
+    ["GET", "/api/v1/songs/Ab3xK9pQ:j11", "/api/v1/games/maimai/songs/Ab3xK9pQ:j11"],
     ["GET", "/api/v1/snapshots/latest?region=jp", "/api/v1/games/maimai/snapshots/latest?region=jp"],
     ["DELETE", "/api/v1/snapshots/AbCd_123?region=jp", "/api/v1/games/maimai/snapshots/AbCd_123?region=jp"],
     ["POST", "/api/v1/fetch?region=intl", "/api/v1/games/maimai/fetch?region=intl"],
