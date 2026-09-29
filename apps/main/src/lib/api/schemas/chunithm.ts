@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { readChunithmNoteCounts } from "@/lib/games/chunithm/note-counts";
+import { chunithmRecentDetailsSchema } from "@/lib/games/chunithm/recent-details";
 import { PLAYLOG_DESCRIPTION, type GameApiDetails } from "./common";
 
 const noteCount = z.number().int().nullable();
@@ -11,20 +12,9 @@ export const chunithmSongDetails = z.object({
     .describe("Notes per kind. Null where the catalog has no count."),
 });
 
-const count = z.number().int();
-const percentage = z.number();
-
-const chunithmPlaylog = z.object({
-  maxCombo: count,
-  judgments: z.object({ justiceCritical: count, justice: count, attack: count, miss: count }),
-  notePercentages: z
-    .object({ tap: percentage, hold: percentage, slide: percentage, air: percentage, flick: percentage })
-    .describe("Accuracy per note kind, in percent."),
-});
-
 export const chunithmRecentDetails = z.object({
   game: z.literal("chunithm"),
-  playlog: chunithmPlaylog.nullable().describe(PLAYLOG_DESCRIPTION),
+  playlog: chunithmRecentDetailsSchema.nullable().describe(PLAYLOG_DESCRIPTION),
 });
 
 export const chunithmSnapshotDetails = z.object({
