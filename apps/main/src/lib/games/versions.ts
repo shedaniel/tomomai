@@ -6,7 +6,8 @@ export function getVersion(game: CanonicalGameId, id: number): VersionRow | null
   return getGame(game).versions.get(id);
 }
 
-export function getVersionInfo(game: CanonicalGameId, region: Region, id: number): RegionalVersion | null {
+/** For gating only. Labels use getVersion, because a version keeps its name in regions that never released it. */
+export function getRegionalVersion(game: CanonicalGameId, region: Region, id: number): RegionalVersion | null {
   return getGame(game).versions.regional(region, id);
 }
 

@@ -4,7 +4,7 @@ import { useGameId } from "@/components/providers/game-provider";
 import { formatGameRating } from "@/lib/games/presentation";
 import { RegionSwitcherClient } from "@/components/region-switcher";
 import { Badge } from "@tomomai/ui";
-import { getVersionInfo } from "@/lib/games/versions";
+import { getVersion } from "@/lib/games/versions";
 import { Region } from "@/lib/types";
 import { User } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -48,7 +48,7 @@ export function PublicDataBanner({
               <div className="flex items-center gap-2">
                 <h1 className="m-0 text-base font-medium">{snapshotData.displayName}</h1>
                 <Badge variant="tonal" className="font-medium bg-primary-container/50">{formatGameRating(game, snapshotData.rating)} rating</Badge>
-                <Badge variant="secondary" className="font-normal bg-secondary/50">{getVersionInfo(game, region, snapshotData.gameVersion)?.shortName || "Unknown"}</Badge>
+                <Badge variant="secondary" className="font-normal bg-secondary/50">{getVersion(game, snapshotData.gameVersion)?.shortName || "Unknown"}</Badge>
               </div>
               <span className="text-xs text-muted-foreground">{t('dataBanner.dataSnapshot')} {snapshotData ? formatDate(snapshotData.fetchedAt) : ''}</span>
             </div>

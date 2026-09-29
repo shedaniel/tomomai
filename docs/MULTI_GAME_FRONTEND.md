@@ -45,10 +45,17 @@ Implemented frontend support:
   namespace instead of a catch-all multi-game translation namespace.
   Maimai profile image queries explicitly filter the game; maimai-only image and
   database surfaces do not render another game's records using maimai semantics.
-- Version data lives with each game definition. Shared version lookups require game
-  and region, and the old metadata module only re-exports maimai compatibility
-  data for specialized consumers. Public profile invalidation takes explicit game
-  context and does not invalidate the current site's pages for another game.
+- Version data lives with each game definition as a table built by
+  `createVersionTable` in `lib/games/version-table.ts`. Each row keeps its release
+  date per region, and `versionReleaseInstant` is the only 07:00 JST rollover rule.
+  Labels use `getVersion(game, id)` from `lib/games/versions.ts`, which ignores
+  regions, because a version keeps its name where it was never released.
+  `getRegionalVersion`, `getAvailableVersions`, `getCurrentVersion` and
+  `getVersionFromDate` take a region and are for gating and release timing.
+  `lib/games/maimai/versions.ts` only adds maimai extras: `VersionId`, the
+  short-code and short-name lookups, `requireMaimaiVersion` and `maimaiVersionAt`.
+  Public profile invalidation takes explicit game context and does not invalidate
+  the current site's pages for another game.
 
 CHUNITHM's JP and International score provider is configured and its player
 surfaces are enabled. The catalog remains available independently; see

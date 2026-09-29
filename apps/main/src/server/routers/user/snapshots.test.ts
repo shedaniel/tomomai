@@ -1,10 +1,12 @@
-import { expect, it, vi } from "vitest";
+import { beforeEach, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
+import { getTableColumns } from "drizzle-orm";
+import { userSnapshots } from "@/lib/db/schema-pg";
 
-const statements = vi.hoisted(() => [] as { sql: string; params: unknown[] }[]);
+const db = vi.hoisted(() => ({ statements: [] as { sql: string; params: unknown[] }[], responses: [] as unknown[][][] }));
 vi.mock("@/lib/db", async () => {
   const { drizzle } = await import("drizzle-orm/pg-proxy");
-  return { db: drizzle(async (sql, params) => { statements.push({ sql, params }); return { rows: [] }; }) };
+  return { db: drizzle(async (sql, params) => { db.statements.push({ sql, params }); return { rows: db.responses.shift() ?? [] }; }) };
 });
 vi.mock("@/lib/trpc", async () => {
   const { initTRPC } = await import("@trpc/server");
@@ -18,19 +20,41 @@ vi.mock("@/lib/profile-cache", () => ({ revalidatePublicProfileForUser: vi.fn() 
 
 import { snapshotsRouter } from "./snapshots";
 
-it("scopes the export lookup to the requested game and owner before reading scores", async () => {
+beforeEach(() => { db.statements = []; db.responses = []; });
+
+function caller() {
   const now = new Date();
-  const caller = snapshotsRouter.createCaller({
+  return snapshotsRouter.createCaller({
     req: new NextRequest("http://localhost/api/trpc"),
     session: {
       user: { id: "same-owner", createdAt: now, updatedAt: now, email: "owner@example.test", emailVerified: true, name: "Owner", banned: false },
       session: { id: "session", userId: "same-owner", token: "test", createdAt: now, updatedAt: now, expiresAt: now },
     },
   });
-  await expect(caller.exportSnapshotData({ game: "maimai", snapshotId: "other-game-snapshot" })).rejects.toMatchObject({ code: "NOT_FOUND" });
-  expect(statements).toHaveLength(1);
-  const [query] = statements;
+}
+
+it("scopes the export lookup to the requested game and owner before reading scores", async () => {
+  await expect(caller().exportSnapshotData({ game: "maimai", snapshotId: "other-game-snapshot" })).rejects.toMatchObject({ code: "NOT_FOUND" });
+  expect(db.statements).toHaveLength(1);
+  const [query] = db.statements;
   expect(query.sql).toContain('"user_snapshots"."game" = $');
   expect(query.sql).toContain('"user_snapshots"."userId" = $');
   expect(query.params).toEqual(["other-game-snapshot", "maimai", "same-owner", 1]);
+});
+
+it.each([
+  { region: "cn", gameVersion: 11, addedVersions: [-9, 1], snapshotName: "maimai DX PRiSM PLUS", songNames: ["ORANGE", "DX PLUS"] },
+  { region: "intl", gameVersion: 13, addedVersions: [14], snapshotName: "maimai DX CiRCLE PLUS", songNames: ["MAGiCAL"] },
+])("labels $region export versions that were never released in the snapshot region", async ({ region, gameVersion, addedVersions, snapshotName, songNames }) => {
+  const snapshot: Partial<typeof userSnapshots.$inferSelect> = {
+    id: 1, publicId: "snapshot", userId: "same-owner", game: "maimai", region: region as "cn" | "intl", gameVersion, rating: 15000,
+    versionPlayCount: 0, totalPlayCount: 0, iconUrl: "", displayName: "Player", title: "Title", titleType: 0,
+  };
+  db.responses.push(
+    [Object.keys(getTableColumns(userSnapshots)).map(column => snapshot[column as keyof typeof snapshot] ?? null)],
+    addedVersions.map((addedVersion, index) => [`Song ${index}`, "Artist", "", 3, "13", 130, 0, addedVersion, 1000000 - index, 0, 0, 0]),
+  );
+  const exported = await caller().exportSnapshotData({ game: "maimai", snapshotId: "snapshot" });
+  expect(exported.metadata.gameVersion).toBe(snapshotName);
+  expect(exported.songs.map(song => song.gameVersion)).toEqual(songNames);
 });

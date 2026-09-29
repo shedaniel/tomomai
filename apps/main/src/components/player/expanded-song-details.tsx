@@ -7,7 +7,7 @@ import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { Button } from "@tomomai/ui";
 import { Separator } from "@tomomai/ui";
-import { getVersionInfo } from "@/lib/games/versions";
+import { getVersion } from "@/lib/games/versions";
 import { motion } from "motion/react";
 import { SPRING_CONFIGS, getTransition } from "@/lib/animation-constants";
 
@@ -21,7 +21,7 @@ export function ExpandedSongDetails({ publicId }: { publicId: string }) {
     }
   );
 
-  const addedVersionInfo = songDetails ? getVersionInfo(game, songDetails.region, songDetails.addedVersion) : null;
+  const addedVersionInfo = songDetails ? getVersion(game, songDetails.addedVersion) : null;
 
   return (
     <div className="mt-4 flex flex-col gap-3">

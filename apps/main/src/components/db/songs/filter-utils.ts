@@ -1,7 +1,6 @@
 import { FilterCategory } from "@/components/filter-panel";
-import { getVersionInfo } from "@/lib/games/versions";
+import { getVersion } from "@/lib/games/versions";
 import type { CanonicalGameId } from "@/lib/games/types";
-import type { Region } from "@/lib/types";
 import { getGameChartTypeLabel } from "@/lib/games/presentation";
 import { Disc3, Folder, Calendar, ArrowUpDown, BarChart, Pencil } from "lucide-react";
 import { GroupMode, UniqueSong, UniqueSongDifficulty, UniqueSongFilter } from "./types";
@@ -32,7 +31,6 @@ export function createUniqueSongFilterCategories(
   game: CanonicalGameId,
   songs: UniqueSong[],
   t?: (key: string) => string,
-  region: Region = "jp"
 ): FilterCategory[] {
   // Helper to get translation or fallback
   const getLabel = (key: string, fallback: string) => t?.(key) ?? fallback ?? key;
@@ -89,10 +87,7 @@ export function createUniqueSongFilterCategories(
       type: "addedVersion",
       label: getLabel("addedVersion", "Added Version"),
       icon: Calendar,
-      options: addedVersions.map(v => {
-        const versionInfo = getVersionInfo(game, region, v);
-        return { value: String(v), label: versionInfo?.name ?? `v${v}` };
-      }),
+      options: addedVersions.map(v => ({ value: String(v), label: getVersion(game, v)?.name ?? `v${v}` })),
     },
     {
       type: "noteDesigner",

@@ -9,7 +9,7 @@ import { db } from '@/lib/db';
 import { parentSong, scoreData, snapshotRankings, snapshotScores, songs, userSnapshots } from '@/lib/db/schema-pg';
 import { fetchRatingHistory } from "@/server/queries/rating-history";
 import { buildChartResolution, upsertScoreData, scoreDataKey, type ScoreDataValues } from "@/server/services/games/score-storage";
-import { getVersionInfo, getAvailableVersions } from "@/lib/games/versions";
+import { getVersion, getAvailableVersions } from "@/lib/games/versions";
 import { addRatingsAndSort } from '@/lib/rating-calculator';
 import { protectedProcedure, router } from '@/lib/trpc';
 import { TRPCError } from '@trpc/server';
@@ -112,7 +112,7 @@ export const snapshotsRouter = router({
           trophy: snapshot[0].title,
           region: snapshot[0].region,
           fetchedAt: snapshot[0].fetchedAt,
-          gameVersion: getVersionInfo(input.game, snapshot[0].region, snapshot[0].gameVersion)!.name,
+          gameVersion: getVersion(input.game, snapshot[0].gameVersion)?.name ?? String(snapshot[0].gameVersion),
           rating: snapshot[0].rating,
           stars: snapshot[0].stars ?? 0,
           courseRankUrl: snapshot[0].courseRankUrl ?? "",
@@ -122,7 +122,7 @@ export const snapshotsRouter = router({
         },
         songs: addRatingsAndSort(songsWithScores, snapshot[0].gameVersion).map(song => ({
           ...song,
-          gameVersion: getVersionInfo(input.game, snapshot[0].region, song.gameVersion)!.shortName,
+          gameVersion: getVersion(input.game, song.gameVersion)?.shortName ?? String(song.gameVersion),
         })),
         iconUrl: snapshot[0].iconUrl,
       };

@@ -6,7 +6,7 @@ import { FilterPanel, GenericFilter, getFilterKey } from "@/components/filter-pa
 import { Button } from "@tomomai/ui";
 import { Input } from "@tomomai/ui";
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
-import { getVersionInfo } from "@/lib/games/versions";
+import { getVersion } from "@/lib/games/versions";
 import { trpc } from "@/lib/trpc-client";
 import { cn } from "@/lib/utils";
 import { LayoutGrid, LayoutList, Music, Search } from "lucide-react";
@@ -96,7 +96,7 @@ export function SongsList(_: SongsListProps = {}) {
   }, [allSongs]);
 
   const filterCategories = useMemo(() => {
-    return allSongs ? createUniqueSongFilterCategories(game.id, allSongs, tFilter, game.regions[0]) : null;
+    return allSongs ? createUniqueSongFilterCategories(game.id, allSongs, tFilter) : null;
   }, [allSongs, tFilter, game]);
 
   const handleAddFilter = useCallback((filter: GenericFilter) => {
@@ -181,7 +181,7 @@ export function SongsList(_: SongsListProps = {}) {
       }
       case "version_asc":
       case "version_desc":
-        const version = getVersionInfo(game.id, game.regions[0] ?? "jp", song.addedVersion);
+        const version = getVersion(game.id, song.addedVersion);
         return version?.name ?? `Ver. ${song.addedVersion}`;
       case "genre":
         return song.genre;

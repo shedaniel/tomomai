@@ -3,7 +3,8 @@
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/animate-ui/components/radix/hover-card";
 import { Button } from "@tomomai/ui";
 import { Separator } from "@tomomai/ui";
-import { getVersionInfo } from "@/lib/games/versions";
+import { getVersion } from "@/lib/games/versions";
+import type { VersionRow } from "@/lib/games/version-table";
 import { useGameId } from "@/components/providers/game-provider";
 import { trpc } from "@/lib/trpc-client";
 import { cn, createSafeMaimaiImageUrl, getTypeBadgeUrl } from "@/lib/utils";
@@ -101,7 +102,7 @@ function SongCardContent({
   song: SongHoverCardProps['song'],
   songDetails: any,
   isLoading: boolean,
-  addedVersionInfo: any,
+  addedVersionInfo: VersionRow | null,
   t: any,
   percentile?: SongHoverCardProps['percentile'],
 }) {
@@ -219,7 +220,7 @@ export function SongHoverCard({ children, song, percentile, side, className }: S
     }
   );
 
-  const addedVersionInfo = songDetails ? getVersionInfo(game, songDetails.region, songDetails.addedVersion) : null;
+  const addedVersionInfo = songDetails ? getVersion(game, songDetails.addedVersion) : null;
 
   const content = (
     <SongCardContent

@@ -22,4 +22,12 @@ describe("catalog metadata filters", () => {
     expect(applyUniqueSongFilters([chart, known], [], [{ type: "sort", value: "version_asc" }]).map(song => song.songName)).toEqual(["CHUNITHM chart", "Known"]);
     expect(applyUniqueSongFilters([chart, known], [], [{ type: "sort", value: "version_desc" }]).map(song => song.songName)).toEqual(["Known", "CHUNITHM chart"]);
   });
+
+  it.each([
+    ["maimai", 14, "maimai DX MAGiCAL"],
+    ["chunithm", 9, "CHUNITHM Mate"],
+  ] as const)("labels a %s added version by name even where International skipped it", (game, addedVersion, label) => {
+    const categories = createUniqueSongFilterCategories(game, [{ ...chart, addedVersion }]);
+    expect(categories.find(category => category.type === "addedVersion")?.options).toEqual([{ value: String(addedVersion), label }]);
+  });
 });

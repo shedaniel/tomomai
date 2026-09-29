@@ -12,7 +12,7 @@ const mocks = vi.hoisted(() => {
 vi.mock("@/server/services/games/maimai/catalog/pipeline", () => ({ collectMaimaiCatalog: (ctx: CatalogFetchContext) => mocks.source("maimai", ctx) }));
 vi.mock("@/server/services/games/chunithm/catalog/pipeline", () => ({ collectChunithmCatalog: (ctx: CatalogFetchContext) => mocks.source("chunithm", ctx) }));
 vi.mock("@/server/services/games/maimai/login", () => ({ loginAndGetCookies: mocks.login }));
-vi.mock("@/lib/games/versions", () => ({ getCurrentVersion: () => 9, getVersionInfo: () => ({ id: 9 }) }));
+vi.mock("@/lib/games/versions", () => ({ getCurrentVersion: () => 9, getRegionalVersion: () => ({ id: 9 }) }));
 vi.mock("@/server/services/catalog/ingestion/persistence", () => ({ persistCatalog: mocks.ingest }));
 vi.mock("@/server/services/catalog/publication", () => ({ publishSongCatalog: mocks.publish }));
 vi.mock("@/server/services/catalog/notifications", () => ({ sendDiscordWebhook: vi.fn().mockResolvedValue(undefined) }));

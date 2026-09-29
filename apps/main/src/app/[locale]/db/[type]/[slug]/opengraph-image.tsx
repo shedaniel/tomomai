@@ -6,7 +6,7 @@ import { getTranslations } from "next-intl/server";
 import { createSafeMaimaiImageUrl, isR2Url } from "@/lib/utils";
 import { resolveBaseUrlFromHeaders } from "@/lib/base-url";
 import { headers } from "next/headers";
-import { getVersionInfo } from "@/lib/games/versions";
+import { getVersion } from "@/lib/games/versions";
 import type { Locale } from "@/i18n/locale";
 import { getOGImageLocales } from "@/i18n/og-locale";
 
@@ -63,7 +63,7 @@ export default async function Image({ params, id }: Props & { id: Promise<string
       ? `${baseUrl}${safeUrl}`
       : safeUrl;
 
-  const versionName = getVersionInfo(game.id, game.regions[0] ?? "jp", song.addedVersion)?.shortName;
+  const versionName = getVersion(game.id, song.addedVersion)?.shortName;
 
   return createSongOGImage({
     game: game.id,

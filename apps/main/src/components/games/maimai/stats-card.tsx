@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Progress } from "@tomomai/ui";
 import { Button } from "@tomomai/ui";
 import { ACHIEVEMENTS, DIFFICULTY_COLORS } from "@/lib/games/maimai/grades";
-import { getVersionInfo } from "@/lib/games/versions";
+import { getVersion } from "@/lib/games/versions";
 import { Region } from "@/lib/types";
 import { trpc } from "@/lib/trpc-client";
 import { ArrowLeft, Award, ChevronRight, Loader2 } from "lucide-react";
@@ -425,13 +425,13 @@ export function StatsCard({ region, snapshotId }: StatsCardProps) {
   const availableVersions = useMemo(() => {
     if (!data) return [];
     return Object.keys(data.stats).map(versionId => {
-      const versionInfo = getVersionInfo(game, region, Number(versionId));
+      const versionInfo = getVersion(game, Number(versionId));
       return {
         id: versionId,
         name: versionInfo?.shortName || `Version ${versionId}`,
       };
     }).sort((a, b) => parseInt(a.id) - parseInt(b.id));
-  }, [data]);
+  }, [data, game]);
 
   // Sort grades by achievement threshold (highest to lowest)
   const sortedGrades = useMemo(() => {

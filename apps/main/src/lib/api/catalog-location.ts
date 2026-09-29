@@ -1,4 +1,4 @@
-import { getVersionInfo } from "@/lib/games/versions";
+import { getRegionalVersion } from "@/lib/games/versions";
 import type { CanonicalGameId } from "@/lib/games/types";
 import type { Region } from "@/lib/types";
 
@@ -7,7 +7,7 @@ export function catalogPrefix(game: CanonicalGameId): string {
 }
 
 export function isCatalogVersion(game: CanonicalGameId, region: Region, gameVersion: number): boolean {
-  return getVersionInfo(game, region, gameVersion) !== null;
+  return getRegionalVersion(game, region, gameVersion) !== null;
 }
 
 export function songCatalogKey(game: CanonicalGameId, region: Region, gameVersion: number): string {

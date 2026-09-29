@@ -8,7 +8,7 @@ import {
 import { useGame } from "@/components/providers/game-provider";
 import { formatGameScore, formatGameRating, formatGameLevel, getGameCode, getGameDifficultyColors, getGameDifficultyLabel, getGameChartTypeLabel, getGameChartTypeBadgeLabel, getGameChartTypeBadge, getGameChartRating, getGameScoreLabelKey, getGameScoreGrade, getGameStatusLabels } from "@/lib/games/presentation";
 import { isGameCnExclusive } from "@/lib/games/frontend";
-import { getVersionInfo } from "@/lib/games/versions";
+import { getRegionalVersion, getVersion } from "@/lib/games/versions";
 import { trpc } from "@/lib/trpc-client";
 import { useSession } from "@/lib/auth-client";
 import { Region } from "@/lib/types";
@@ -297,7 +297,7 @@ export function SongDetailContent({ songName, artist, slug, type, parentIds, ini
       maxLevel: fmtLevel(maxLevel),
       chartCount: chartsByDifficulty.size,
       bpmFragment: data.bpm ? t('db.songs.detail.summaryBpmFragment', { bpm: data.bpm }) : '',
-      versionName: getVersionInfo(game.id, data.regions[0]?.region ?? game.regions[0] ?? "jp", data.addedVersion)?.name ?? `Ver. ${data.addedVersion}`,
+      versionName: getVersion(game.id, data.addedVersion)?.name ?? `Ver. ${data.addedVersion}`,
       chartType: getGameChartTypeBadgeLabel(game.id, data.type) ?? "",
     };
   }, [data, allCharts, chartsByDifficulty, t, game]);
@@ -330,7 +330,7 @@ export function SongDetailContent({ songName, artist, slug, type, parentIds, ini
     return null;
   }
 
-  const addedVersionInfo = getVersionInfo(game.id, data.regions[0]?.region ?? game.regions[0] ?? "jp", data.addedVersion);
+  const addedVersionInfo = getVersion(game.id, data.addedVersion);
 
   return (
     <div className="space-y-6">
@@ -486,7 +486,7 @@ export function SongDetailContent({ songName, artist, slug, type, parentIds, ini
 
             <div className="space-y-3 pl-4 border-l-2 border-muted">
               {versions.map(({ gameVersion, charts }) => {
-                const versionInfo = getVersionInfo(game.id, region, gameVersion);
+                const versionInfo = getRegionalVersion(game.id, region, gameVersion);
 
                 // Group charts by difficulty to show level changes
                 const byDifficulty = new Map<string, (SongDetailChart | SongDetailHistoricalChart)[]>();

@@ -59,7 +59,6 @@ export const songsRouter = router({
       if (!parsed) throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid song ID" });
       const charts = await db
         .select({
-          region: songs.region,
           disambiguator: parentSong.disambiguator,
           songName: parentSong.songName,
           artist: parentSong.artist,
@@ -95,7 +94,6 @@ export const songsRouter = router({
       });
 
       return {
-        region: firstChart.region,
         songName: firstChart.songName,
         artist: firstChart.artist,
         type: firstChart.type,

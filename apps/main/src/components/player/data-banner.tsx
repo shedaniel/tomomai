@@ -25,7 +25,7 @@ import {
 } from "@tomomai/ui";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@tomomai/ui/select-friendly";
 import { calculateProgress, parseStatusStates } from "@/lib/fetch-states";
-import { getVersionInfo } from "@/lib/games/versions";
+import { getVersion } from "@/lib/games/versions";
 import { trpc } from "@/lib/trpc-client";
 import { FetchSession, Region } from "@/lib/types";
 import type { Snapshot } from "@/lib/games/maimai/types";
@@ -65,13 +65,11 @@ function formatDate(date: Date) {
 
 // Snapshot selector component
 function SnapshotSelector({
-  region,
   snapshots,
   selectedSnapshot,
   onSnapshotChange,
   t
 }: {
-  region: Region;
   snapshots: Snapshot[];
   selectedSnapshot: string | null;
   onSnapshotChange: (snapshotId: string) => void;
@@ -89,7 +87,7 @@ function SnapshotSelector({
               <div className="flex items-center gap-1.5 min-w-0">
                 <span className="truncate text-xs font-medium">{selectedSnapshotData.displayName}</span>
                 <Badge variant="tonal" className="shrink-0 px-1.5 py-0 text-2xs font-medium bg-primary-container/50">{formatGameRating(game, selectedSnapshotData.rating)} rating</Badge>
-                <Badge variant="secondary" className="shrink-0 px-1.5 py-0 text-2xs font-normal bg-secondary/50">{getVersionInfo(game, region, selectedSnapshotData.gameVersion)?.shortName || "Unknown"}</Badge>
+                <Badge variant="secondary" className="shrink-0 px-1.5 py-0 text-2xs font-normal bg-secondary/50">{getVersion(game, selectedSnapshotData.gameVersion)?.shortName || "Unknown"}</Badge>
               </div>
               <span className="text-2xs text-muted-foreground">{formatDate(selectedSnapshotData.fetchedAt)}</span>
             </div>
@@ -105,7 +103,7 @@ function SnapshotSelector({
               <div className="flex items-center gap-1.5 min-w-0">
                 <span className="truncate text-xs font-medium">{snapshot.displayName}</span>
                 <Badge variant="tonal" className="shrink-0 px-1.5 py-0 text-2xs font-medium bg-primary-container/50">{formatGameRating(game, snapshot.rating)} rating</Badge>
-                <Badge variant="secondary" className="shrink-0 px-1.5 py-0 text-2xs font-normal bg-secondary/50">{getVersionInfo(game, region, snapshot.gameVersion)?.shortName || "Unknown"}</Badge>
+                <Badge variant="secondary" className="shrink-0 px-1.5 py-0 text-2xs font-normal bg-secondary/50">{getVersion(game, snapshot.gameVersion)?.shortName || "Unknown"}</Badge>
               </div>
               <span className="text-2xs text-muted-foreground">{formatDate(snapshot.fetchedAt)}</span>
             </div>
@@ -347,7 +345,7 @@ export function DataBanner({
 
     try {
       const result = await onCopySnapshot(selectedSnapshot, targetVersion);
-      const versionInfo = getVersionInfo(game.id, region, targetVersion);
+      const versionInfo = getVersion(game.id, targetVersion);
 
       // Show rating change if available
       const ratingChangeText = result.originalRating !== undefined && result.newRating !== undefined
@@ -377,7 +375,6 @@ export function DataBanner({
 
             {hasSnapshots ? (
               <SnapshotSelector
-                region={region}
                 snapshots={snapshots}
                 selectedSnapshot={selectedSnapshot}
                 onSnapshotChange={onSnapshotChange}
