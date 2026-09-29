@@ -57,7 +57,7 @@ function fetchScores(region: "jp" | "intl" = "jp") {
 
 // Plays of "Raw　Title" EXPERT resolve to song 7, as persistence resolved them.
 const persisted: PersistedSnapshotContext = {
-  game: "chunithm", userId: "user", region: "jp", sessionId: BigInt(1), snapshotId: 1, gameVersion: 9,
+  game: "chunithm", userId: "user", region: "jp", snapshotId: 1, gameVersion: 9,
   chartResolution: new Map([["Raw　Title|2|0", BigInt(7)]]),
 };
 

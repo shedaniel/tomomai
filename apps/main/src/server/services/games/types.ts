@@ -77,7 +77,6 @@ export type PersistedSnapshotContext = {
   game: CanonicalGameId;
   userId: string;
   region: Region;
-  sessionId: bigint;
   snapshotId: number;
   gameVersion: number;
   chartResolution: ChartResolutionMap;

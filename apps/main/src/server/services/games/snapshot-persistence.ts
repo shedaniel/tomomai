@@ -24,7 +24,6 @@ type PersistFetchResultInput = {
   game: CanonicalGameId;
   region: Region;
   userId: string;
-  sessionId: bigint;
   gameVersion: number;
   fetched: GameFetchResult;
   deadline?: number;
@@ -43,7 +42,7 @@ function notFoundScore(game: CanonicalGameId, score: NormalizedScore): NotFoundS
  * Only charts of the fetch's game, region and version are matched. The scores without a match are returned.
  */
 export async function persistFetchResult(input: PersistFetchResultInput): Promise<{ context: PersistedSnapshotContext; notFoundScores: NotFoundScore[] }> {
-  const { game, region, userId, sessionId, gameVersion, fetched, deadline } = input;
+  const { game, region, userId, gameVersion, fetched, deadline } = input;
   const inFetch = (chart: ChartRef) => chart.game === game && chart.region === region && chart.version === gameVersion;
 
   if (deadline && Date.now() >= deadline) throw new Error("Fetch operation timed out before persistence");
@@ -109,7 +108,7 @@ export async function persistFetchResult(input: PersistFetchResultInput): Promis
     );
   }
   return {
-    context: { game, userId, region, sessionId, snapshotId, gameVersion, chartResolution },
+    context: { game, userId, region, snapshotId, gameVersion, chartResolution },
     notFoundScores: unmatched.map(score => notFoundScore(game, score)),
   };
 }

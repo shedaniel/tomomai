@@ -58,7 +58,7 @@ const fetched: GameFetchResult = {
   scores: [],
 };
 const start = { userId: "same-user", game: "maimai" as const, region: "jp" as const, token: "new-token", flags: {} as Flags, options: { skipAfter: true } };
-const persisted: PersistedSnapshotContext = { game: "maimai", userId: "same-user", region: "jp", sessionId: BigInt(1), snapshotId: 1, gameVersion: 14, chartResolution: new Map() };
+const persisted: PersistedSnapshotContext = { game: "maimai", userId: "same-user", region: "jp", snapshotId: 1, gameVersion: 14, chartResolution: new Map() };
 const missing: NotFoundScore[] = [{ songName: "Missing", difficulty: "master", musicType: "std" }];
 
 function sessionUpdates() {
@@ -184,10 +184,12 @@ it("does not ask the score source about a newly supplied token", async () => {
 it("persists the fetched result for the session's game, region and version", async () => {
   const started = await startScoreFetch(start);
   await started.backgroundWork;
-  expect(state.persist).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({
-    game: "maimai", region: "jp", userId: "same-user", sessionId: BigInt(1), fetched, deadline: expect.any(Number),
-  }));
+  const { gameVersion } = state.fetch.mock.calls[0][0];
+  expect(state.persist).toHaveBeenCalledExactlyOnceWith({
+    game: "maimai", region: "jp", userId: "same-user", gameVersion, fetched, deadline: expect.any(Number),
+  });
   expect(sessionStatuses()).toEqual(["completed"]);
+  expect(sessionUpdates()[0].sql).not.toContain('"extraData"');
 });
 
 it("stores unmatched scores on the completed session as a JSON object", async () => {

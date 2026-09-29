@@ -30,7 +30,7 @@ const fetched: GameFetchResult = {
   player: { displayName: "Player", rating: 10000, title: "Title", titleType: 0, iconUrl: "", totalPlayCount: 1, currentVersionPlayCount: 1 },
   scores: [],
 };
-const persist = { userId: "same-user", game: "maimai" as const, region: "jp" as const, sessionId: BigInt(1), gameVersion: 14, fetched };
+const persist = { userId: "same-user", game: "maimai" as const, region: "jp" as const, gameVersion: 14, fetched };
 
 function score(chart: NormalizedScore["chart"], scoreValue = 0): NormalizedScore {
   return { chart, scoreValue, secondaryScore: 0, comboStatus: 0, syncStatus: 0, clearStatus: 0 };
@@ -55,7 +55,7 @@ it("persists the captured version and zero scores, and returns the snapshot's co
   const snapshotWrite = state.statements.find(query => query.sql.startsWith('insert into "user_snapshots"'))!;
   expect(snapshotWrite.params).toContain(14);
   expect(persisted).toEqual({
-    context: { game: "maimai", userId: "same-user", region: "jp", sessionId: BigInt(1), snapshotId: 1, gameVersion: 14, chartResolution },
+    context: { game: "maimai", userId: "same-user", region: "jp", snapshotId: 1, gameVersion: 14, chartResolution },
     notFoundScores: [],
   });
   expect(state.log.warn).not.toHaveBeenCalled();

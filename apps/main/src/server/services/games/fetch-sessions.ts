@@ -215,7 +215,7 @@ async function runScoreFetch(ctx: ScoreFetchContext, controller: AbortController
         }),
       ]).finally(() => clearTimeout(timer));
       const { context, notFoundScores } = await persistFetchResult({
-        game: ctx.game, region: ctx.region, userId: ctx.userId, sessionId: ctx.sessionId, gameVersion: ctx.gameVersion, fetched: result, deadline,
+        game: ctx.game, region: ctx.region, userId: ctx.userId, gameVersion: ctx.gameVersion, fetched: result, deadline,
       });
       await markSession(ctx.sessionId, { status: "completed", extraData: notFoundScores.length > 0 ? { notFoundScores } : undefined });
       saved = { context, enrich };
