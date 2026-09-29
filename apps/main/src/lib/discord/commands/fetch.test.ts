@@ -38,10 +38,19 @@ it("answers /fetch during maintenance with the scheduled window before deferring
 
 it("explains a maintenance refusal that raced the check with the localized window", async () => {
   mocks.start.mockRejectedValueOnce(new FetchStartError("MAINTENANCE", "Cannot fetch data during maintenance window (01:00 - 02:00 JST)", 1800));
-  await expect(runFetchSession(session)).resolves.toBe(false);
+  await expect(runFetchSession({ ...session, locale: "ja" })).resolves.toBe(false);
   const [, , message] = mocks.edit.mock.calls[0];
-  expect(message.embeds[0].description).toBe("<@discord-1> An error occurred while fetching your data: Cannot fetch data during maintenance window (01:00 - 02:00 JST)");
+  expect(message.embeds[0].description).toBe("<@discord-1> データの同期中にエラーが発生しました：現在メンテナンス時間中（日本時間 01:00〜02:00）のため、データ同期はできません。");
   expect(mocks.log.error).not.toHaveBeenCalled();
+});
+
+it("keeps the refusal's own window once that maintenance has ended", async () => {
+  vi.setSystemTime(new Date("2026-09-08T02:00:00+09:00"));
+  const refusal = new FetchStartError("MAINTENANCE", "Cannot fetch data during maintenance window (01:00 - 02:00 JST)", 1);
+  mocks.start.mockRejectedValueOnce(refusal);
+  await runFetchSession({ ...session, locale: "ja" });
+  const [, , message] = mocks.edit.mock.calls[0];
+  expect(message.embeds[0].description).toBe(`<@discord-1> データの同期中にエラーが発生しました：${refusal.message}`);
 });
 
 it("asks for the album preference when the fetch needs one", async () => {

@@ -39,7 +39,7 @@ function maintenanceMessage(maintenance: GameMaintenance, locale?: string): stri
 function describeFetchError(error: unknown, region: Region, locale?: string): string {
   if (error instanceof FetchStartError && error.code === 'MAINTENANCE') {
     const maintenance = getGameMaintenance(DISCORD_GAME, region);
-    if (maintenance) return maintenanceMessage(maintenance, locale);
+    if (maintenance?.active) return maintenanceMessage(maintenance, locale);
   }
   return error instanceof Error ? error.message : 'Unknown error';
 }
