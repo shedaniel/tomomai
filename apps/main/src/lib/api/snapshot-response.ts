@@ -1,7 +1,7 @@
 import { type ApiKeyInfo, keyHasScope } from "@/lib/api/protect";
 import { type ScopeKey } from "@/lib/api/scopes";
 import type { z } from "zod";
-import type { snapshotDetail } from "./schemas";
+import { GAME_API_DETAILS, type snapshotDetail } from "./schemas";
 import { fetchSnapshotRankings, type fetchSnapshotData } from "@/server/queries/snapshots";
 
 type SnapshotData = NonNullable<Awaited<ReturnType<typeof fetchSnapshotData>>>;
@@ -54,11 +54,9 @@ export async function buildSnapshotPayload(
     rating: snapshot.rating,
     displayName: snapshot.displayName,
     gameVersion: snapshot.gameVersion,
-    courseRankUrl: snapshot.courseRankUrl,
-    classRankUrl: snapshot.classRankUrl,
-    stars: snapshot.stars,
     versionPlayCount: snapshot.versionPlayCount,
     totalPlayCount: snapshot.totalPlayCount,
+    details: GAME_API_DETAILS[snapshot.game].snapshot(snapshot),
     iconUrl: hasIconRead ? snapshot.iconUrl : null,
     songs: songsPayload,
     events: hasEventsRead

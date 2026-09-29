@@ -6,15 +6,13 @@ import { parentSong, scoreData, snapshotScores, songs, userSnapshots } from "@/l
 import { and, desc, eq } from "drizzle-orm";
 import type { Region } from "@/lib/types";
 import type { CanonicalGameId } from "@/lib/games/types";
-import type { Difficulty } from "@/lib/games/maimai/types";
+import type { MaimaiPlateDifficulty, MaimaiPlateType } from "@/lib/games/maimai/plates";
 import type { GamePlayerScore } from "@/lib/games/player-view";
-
-type PlateType = "kiwami" | "shou" | "shin" | "maimai";
 
 export type PlateQuery = {
   version: string;
-  difficulty: Difficulty;
-  plateType: PlateType;
+  difficulty: MaimaiPlateDifficulty;
+  plateType: MaimaiPlateType;
 };
 
 const FULL_COMBO = new Set((["fc", "fc+", "ap", "ap+"] as const).map(comboStatusToCode));
@@ -22,7 +20,7 @@ const ALL_PERFECT = new Set((["ap", "ap+"] as const).map(comboStatusToCode));
 const FULL_SYNC_DX = new Set((["fdx", "fdx+"] as const).map(syncStatusToCode));
 const SSS = 1_000_000;
 
-const PLATE_CLEARED: Record<PlateType, (score: Pick<GamePlayerScore, "scoreValue" | "comboStatus" | "syncStatus">) => boolean> = {
+const PLATE_CLEARED: Record<MaimaiPlateType, (score: Pick<GamePlayerScore, "scoreValue" | "comboStatus" | "syncStatus">) => boolean> = {
   kiwami: score => FULL_COMBO.has(score.comboStatus),
   shou: score => score.scoreValue >= SSS,
   shin: score => ALL_PERFECT.has(score.comboStatus),

@@ -21,7 +21,7 @@ describe("OpenAPI document", () => {
       expect(gameParam(operation("get", path))).toEqual(["maimai"]);
       expect(operation("get", path).responses["200"].content?.["application/json"].schema.properties?.game.enum).toEqual(["maimai"]);
     }
-    for (const path of ["/api/v1/games/{game}/songs", "/api/v1/games/{game}/recents", "/api/v1/games/{game}/snapshots/{id}"]) {
+    for (const path of ["/api/v1/games/{game}/songs", "/api/v1/games/{game}/recents", "/api/v1/games/{game}/snapshots/{id}", "/api/v1/games/{game}/codes"]) {
       expect(gameParam(operation("get", path))).toEqual(["maimai", "chunithm"]);
     }
   });

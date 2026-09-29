@@ -1,4 +1,4 @@
-// Mirror of `songCatalogueEntry` from apps/main/src/lib/api/schemas.ts.
+// Mirror of `songCatalogueEntry` from apps/main/src/lib/api/schemas/common.ts.
 // We avoid taking a workspace dep on the main app — duplicating this tiny type
 // is much cheaper than coupling deployment graphs.
 export type Region = "intl" | "jp" | "cn";

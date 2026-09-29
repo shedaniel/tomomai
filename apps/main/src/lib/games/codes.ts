@@ -7,4 +7,5 @@ export {
   isCodeKey,
   keyOf,
   type CodeKey,
+  type CodeKind,
 } from "@tomomai/games/codes";

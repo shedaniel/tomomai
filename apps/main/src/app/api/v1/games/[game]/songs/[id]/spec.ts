@@ -10,7 +10,7 @@ export const spec = defineGameRoute({
   summary: "Get a single song by public ID",
   description:
     "Returns one chart difficulty for the preferred or specified region and game version, " +
-    "including note designer and per-note-type counts.",
+    "including its note designer and, in `details`, the game's note counts per kind.",
   scope: "public",
   capability: "catalog",
   cost: 1,

@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Region, FetchSession } from "@/lib/types";
 import { isTokenError } from "@/lib/token-errors";
 import { parseFetchErrorCode } from "@/lib/games/fetch-error-codes";
+import { getGameDifficulty } from "@/lib/games/presentation";
 import { parseStatusStates } from "@/lib/fetch-states";
 import { FetchToastState } from "@/components/fetch-toast";
 
@@ -90,7 +91,7 @@ export function useFetchSession(onFetchComplete?: () => void, onTokenError?: () 
             stopPolling();
             if (result.notFoundScores && result.notFoundScores.length > 0) {
               toast.warning(`${result.notFoundScores.length} songs not found in database`, {
-                description: result.notFoundScores.map(score => `${score.songName} (${score.difficulty})`).join(", "),
+                description: result.notFoundScores.map(score => `${score.songName} (${getGameDifficulty(game, score.difficulty).label})`).join(", "),
               });
             }
             onFetchComplete?.();

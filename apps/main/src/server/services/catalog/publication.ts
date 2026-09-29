@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { parentSong, songs } from "@/lib/db/schema-pg";
 import { parentCatalogue, songCatalogue } from "@/lib/api/schemas";
 import { catalogPrefix, isCatalogVersion, songCatalogKey } from "@/lib/api/catalog-location";
+import { chartEstimates } from "@/lib/catalog/chart-estimates";
 import { formatSongInstanceId } from "@/lib/catalog/song-instance-id";
 import { getSupportedRegions } from "@/lib/games/regions";
 import { getAvailableVersions } from "@/lib/games/versions";
@@ -54,9 +55,11 @@ export async function publishSongCatalog(game: CanonicalGameId): Promise<{ songC
       if (!isCatalogVersion(game, instance.region, instance.gameVersion)) {
         throw new Error(`Unknown catalog slice: ${instance.region}/${instance.gameVersion}`);
       }
+      const { metadata, ...fields } = instance;
       slices.get(songCatalogKey(game, instance.region, instance.gameVersion))!.songs.push({
         ...parent,
-        ...instance,
+        ...fields,
+        ...chartEstimates(metadata),
         songId: formatSongInstanceId(parent.songId, instance.region, instance.gameVersion),
       });
       songCount++;

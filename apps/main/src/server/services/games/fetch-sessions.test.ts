@@ -2,7 +2,7 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { getTableColumns } from "drizzle-orm";
 import { fetchSessions } from "@/lib/db/schema-pg";
 import type { Flags } from "@/lib/flags";
-import type { NotFoundScore } from "./snapshot-persistence";
+import type { NotFoundScore } from "@/lib/api/schemas";
 import type { GameFetchResult, PersistedSnapshotContext, ScoreSource } from "./types";
 
 const state = vi.hoisted(() => ({
@@ -59,7 +59,7 @@ const fetched: GameFetchResult = {
 };
 const start = { userId: "same-user", game: "maimai" as const, region: "jp" as const, token: "new-token", flags: {} as Flags, options: { skipAfter: true } };
 const persisted: PersistedSnapshotContext = { game: "maimai", userId: "same-user", region: "jp", snapshotId: 1, gameVersion: 14, chartResolution: new Map() };
-const missing: NotFoundScore[] = [{ songName: "Missing", difficulty: "master", musicType: "std" }];
+const missing: NotFoundScore[] = [{ songName: "Missing", difficulty: 3, type: 0 }];
 
 function sessionUpdates() {
   return state.statements.filter(query => query.sql.startsWith('update "fetch_sessions"'));
@@ -276,11 +276,8 @@ it("keeps CHUNITHM subscription failures scoped to the failed session without de
   expect(state.revalidate).not.toHaveBeenCalled();
 });
 
-it.each([
-  { row: "an object", extraData: { notFoundScores: missing } },
-  { row: "a legacy JSON string", extraData: JSON.stringify({ notFoundScores: missing }) },
-])("reads the unmatched scores a session stored as $row", async ({ extraData }) => {
-  state.latestSession = [["public", "completed", "2026-09-27 02:59:00", "2026-09-27 03:00:00", null, "login", extraData]];
+it("reads the unmatched scores a session stored", async () => {
+  state.latestSession = [["public", "completed", "2026-09-27 02:59:00", "2026-09-27 03:00:00", null, "login", { notFoundScores: missing }]];
   await expect(getScoreFetchStatus({ userId: "same-user", game: "maimai", region: "jp" })).resolves.toEqual({
     id: "public",
     status: "completed",
@@ -292,7 +289,10 @@ it.each([
   });
 });
 
-it("reads no unmatched scores from a session without a valid report", async () => {
-  state.latestSession = [["public", "failed", "2026-09-27 02:59:00", null, "Login failed", null, { notFoundScores: [{ songName: 1 }] }]];
+it.each([
+  { row: "an invalid report", extraData: { notFoundScores: [{ songName: 1 }] } },
+  { row: "a JSON string report of code keys from before the codes", extraData: JSON.stringify({ notFoundScores: [{ songName: "Missing", difficulty: "master", musicType: "std" }] }) },
+])("reads no unmatched scores from a session with $row", async ({ extraData }) => {
+  state.latestSession = [["public", "completed", "2026-09-27 02:59:00", "2026-09-27 03:00:00", null, "login", extraData]];
   await expect(getScoreFetchStatus({ userId: "same-user", game: "maimai", region: "jp" })).resolves.toMatchObject({ notFoundScores: null });
 });

@@ -1,9 +1,11 @@
 import type { CanonicalGameId } from "@/lib/games/types";
 import { db } from "@/lib/db";
 import { parentSong, songs } from "@/lib/db/schema-pg";
+import { chartEstimates } from "@/lib/catalog/chart-estimates";
 import { formatSongInstanceId, parseSongId } from "@/lib/catalog/song-instance-id";
 import { and, desc, eq, sql } from "drizzle-orm";
 import { definePublicGameHandler } from "@/lib/api/route";
+import { GAME_API_DETAILS } from "@/lib/api/schemas";
 import { spec } from "./spec";
 import { unstable_cache } from "next/cache";
 
@@ -69,13 +71,7 @@ export const GET = definePublicGameHandler(spec, async ({ game, params }) => {
     level: first.level,
     levelPrecise: first.levelPrecise,
     noteDesigner: first.noteDesigner,
-    metadata: first.metadata,
-    noteCounts: {
-      tap: first.tapCount,
-      hold: first.holdCount,
-      slide: first.slideCount,
-      touch: first.touchCount,
-      break: first.breakCount,
-    },
+    ...chartEstimates(first.metadata),
+    details: GAME_API_DETAILS[game].song(first),
   };
 });

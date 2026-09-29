@@ -62,12 +62,12 @@ it("persists the captured version and zero scores, and returns the snapshot's co
 });
 
 it.each([
-  { game: "maimai", difficulty: 3, expected: { difficulty: "master", musicType: "std" } },
-  { game: "chunithm", difficulty: 4, expected: { difficulty: "ultima", musicType: "standard" } },
-] as const)("returns unmatched $game charts with that game's own code keys and logs them once", async ({ game, difficulty, expected }) => {
-  const chart = { game, region: "jp" as const, version: 9, songName: "Missing", chartType: 0, difficulty };
+  { game: "maimai", difficulty: 3, chartType: 1 },
+  { game: "chunithm", difficulty: 4, chartType: 0 },
+] as const)("returns unmatched $game charts by their codes and logs them once", async ({ game, difficulty, chartType }) => {
+  const chart = { game, region: "jp" as const, version: 9, songName: "Missing", chartType, difficulty };
   const { notFoundScores } = await persistFetchResult({ ...persist, game, gameVersion: 9, fetched: { ...fetched, scores: [score(chart, 1)] } });
-  expect(notFoundScores).toEqual([{ songName: "Missing", ...expected }]);
+  expect(notFoundScores).toEqual([{ songName: "Missing", difficulty, type: chartType }]);
   expect(state.log.warn).toHaveBeenCalledExactlyOnceWith(
     { count: 1, songKeys: [chartKey(chart)], game, region: "jp", version: 9 },
     "Some scores have no unambiguous catalog match",

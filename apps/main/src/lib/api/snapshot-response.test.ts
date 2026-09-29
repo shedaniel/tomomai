@@ -12,7 +12,7 @@ import { buildSnapshotPayload } from "./snapshot-response";
 type SnapshotData = Parameters<typeof buildSnapshotPayload>[0];
 const snapshot: SnapshotData["snapshot"] = {
   publicId: "snapshot", game: "maimai", fetchedAt: new Date("2026-09-01T00:00:00Z"),
-  gameVersion: 13, rating: 15000, courseRankUrl: null, classRankUrl: null, stars: null, versionPlayCount: 1, totalPlayCount: 2,
+  gameVersion: 13, rating: 15000, courseRankUrl: "course.png", classRankUrl: null, stars: 2, versionPlayCount: 1, totalPlayCount: 2,
   iconUrl: "", displayName: "Player", title: "", titleType: 0,
 };
 type StoredScore = SnapshotData["songs"][number];
@@ -40,4 +40,10 @@ it("returns every score without reading rankings under the full songs scope", as
   expect(payload.songs?.map(song => song.songId)).toEqual(["unranked", "new", "old"]);
   expect(payload.songs?.[0]).not.toHaveProperty("rating");
   expect(queries.fetchSnapshotRankings).not.toHaveBeenCalled();
+});
+
+it("puts the maimai course, class and stars in the snapshot details", async () => {
+  const payload = await buildSnapshotPayload(data, key(), "latest");
+  expect(payload.details).toStrictEqual({ game: "maimai", courseRankUrl: "course.png", classRankUrl: null, stars: 2 });
+  expect(payload).not.toHaveProperty("stars");
 });

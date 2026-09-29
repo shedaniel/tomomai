@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { defineGameRoute } from "@/lib/api/registry";
-import { plateEntry, querySchemas } from "@/lib/api/schemas";
+import { plateEntry, plateQuery } from "@/lib/api/schemas/maimai";
 
 export const spec = defineGameRoute({
   method: "GET",
@@ -17,7 +17,7 @@ export const spec = defineGameRoute({
   scope: "plate:read",
   capability: "plates",
   cost: 2,
-  query: querySchemas.plates,
+  query: plateQuery,
   response: z.object({
     songs: z.array(plateEntry),
   }),

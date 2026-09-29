@@ -9,6 +9,7 @@
 import "@/app/api/v1/ok/spec";
 import "@/app/api/v1/me/spec";
 import "@/app/api/v1/me/scopes/spec";
+import "@/app/api/v1/games/[game]/codes/spec";
 import "@/app/api/v1/games/[game]/songs/spec";
 import "@/app/api/v1/games/[game]/parents/spec";
 import "@/app/api/v1/games/[game]/songs/versions/spec";

@@ -29,7 +29,9 @@ describe("publishSongCatalog", () => {
     readRows.mockResolvedValue([{ parent: { ...parent, type: 0 }, instance: { ...instance, gameVersion: 9, addedVersion: 8, metadata } }]);
     const result = await publishSongCatalog("chunithm");
     const object = putObject.mock.calls.find(([object]) => object.key === "api/v1/games/chunithm/songs/jp/9")?.[0];
-    expect(JSON.parse(object.body)).toMatchObject({ game: "chunithm", songs: [{ addedVersion: 8, levelPrecise: 133, metadata }] });
+    const body = JSON.parse(object.body);
+    expect(body).toMatchObject({ game: "chunithm", songs: [{ addedVersion: 8, levelPrecise: 133, levelPreciseEstimated: true, addedVersionEstimated: true }] });
+    expect(body.songs[0]).not.toHaveProperty("metadata");
     expect(putObject.mock.calls.every(([object]) => object.key.startsWith("api/v1/games/chunithm/"))).toBe(true);
     expect(result.songCount).toBe(1);
     const dialect = new PgDialect();
@@ -41,11 +43,16 @@ describe("publishSongCatalog", () => {
   });
 
   it("deduplicates parents, emits composite IDs and overwrites empty slices", async () => {
-    readRows.mockResolvedValue([{ parent, instance }, { parent, instance: { ...instance, gameVersion: 12 } }]);
+    const confirmed = { ...instance, metadata: { levelPreciseEstimated: false, addedVersionEstimated: false } };
+    readRows.mockResolvedValue([{ parent, instance: confirmed }, { parent, instance: { ...instance, gameVersion: 12 } }]);
     const result = await publishSongCatalog("maimai");
     const objects = new Map(putObject.mock.calls.map(([object]) => [object.key, JSON.parse(object.body)]));
     expect(objects.get("api/v1/games/maimai/parents")).toEqual({ game: "maimai", parents: [parent] });
-    expect(objects.get("api/v1/games/maimai/songs/jp/11").songs[0].songId).toBe("Ab3xK9pQ:j11");
+    const [song] = objects.get("api/v1/games/maimai/songs/jp/11").songs;
+    expect(song.songId).toBe("Ab3xK9pQ:j11");
+    expect(song).not.toHaveProperty("metadata");
+    expect(song).not.toHaveProperty("levelPreciseEstimated");
+    expect(song).not.toHaveProperty("addedVersionEstimated");
     expect(objects.get("api/v1/games/maimai/songs/jp/-13")).toEqual({ game: "maimai", songs: [] });
     expect(result.songCount).toBe(2);
     expect(result.bytes).toBeGreaterThan(0);

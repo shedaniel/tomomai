@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import pino from "pino";
 import type { Region } from "@/lib/types";
 import { collectChunithmCatalog } from "./pipeline";
+import { readChunithmNoteCounts } from "@/lib/games/chunithm/note-counts";
 import { sendDiscordNotice } from "@/server/services/discord/webhook";
 import jpFixture from "./fixtures/otoge-db-jp.json";
 import intlFixture from "./fixtures/otoge-db-intl.json";
@@ -24,6 +25,7 @@ describe("CHUNITHM otoge-db collection", () => {
     expect(alive[3]).toMatchObject({ difficulty: 3, level: "12+", levelPrecise: 126, bpm: 180, noteDesigner: "ヤナギ・リコイル",
       cover: "https://raw.githubusercontent.com/zvuc/otoge-db/main/chunithm/jacket/b7ec25d973052f3c.jpg",
       metadata: { levelPreciseEstimated: false, otogeDb: { id: "2490", constant: "12.6", totalNotes: 1425, noteCounts: { tap: 625, air: 331 } } } });
+    expect(readChunithmNoteCounts(alive[3].metadata)).toEqual({ tap: 625, hold: 174, slide: 206, air: 331, flick: 89 });
     expect(charts.find(chart => chart.songName === "ネ！コ！" && chart.difficulty === 4)).toMatchObject({ levelPrecise: 140, addedVersion: 3,
       metadata: { addedVersionEstimated: false, otogeDb: { chartAddedDateSource: "regional-update" } } });
     expect(charts.find(chart => chart.songName === "Melodiniq" && chart.difficulty === 4)).toMatchObject({ addedVersion: 9, metadata: { addedVersionEstimated: true } });
@@ -50,6 +52,7 @@ describe("CHUNITHM otoge-db collection", () => {
     expect(chart.bpm).toBeUndefined();
     expect(chart.metadata).toMatchObject({ levelPreciseEstimated: true, otogeDb: { noteCounts: { tap: 625 } } });
     expect(chart.metadata).not.toMatchObject({ otogeDb: { noteCounts: { air: 0 } } });
+    expect(readChunithmNoteCounts(chart.metadata)).toMatchObject({ tap: 625, air: null });
   });
   it("follows the canonical release rollover and rejects a stale requested version before fetching", async () => {
     vi.setSystemTime(new Date("2026-07-02T06:59:59+09:00"));

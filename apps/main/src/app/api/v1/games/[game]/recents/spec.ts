@@ -9,15 +9,15 @@ export const spec = defineGameRoute({
   summary: "List recent plays",
   description:
     "Returns the user's recent play history, newest first. Pagination via " +
-    "`limit` / `offset` (limit defaults to 50, max 100). Each play includes " +
-    "basic score data; with `recent:detailed:read`, the response also " +
-    "includes venue and per-note-type breakdowns.",
+    "`limit` / `offset` (limit defaults to 50, max 100). Each play has its " +
+    "score, its chart and the game's own `details`. With `recent:detailed:read`, " +
+    "`details.playlog` also carries the play's detail page, such as judgments and max combo.",
   scope: "recent:read",
   capability: "recents",
   optionalScopes: [
     {
       scope: "recent:detailed:read",
-      effect: "Adds `venue`, `combo`, `syncScore`, `rating`, and the `notes` per-note breakdown.",
+      effect: "Fills `details.playlog` with the play's detail page: judgments per note kind and max combo, plus venue and rating change for maimai.",
     },
   ],
   cost: 2,

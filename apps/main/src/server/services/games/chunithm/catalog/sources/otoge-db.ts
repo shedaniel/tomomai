@@ -2,6 +2,7 @@ import "server-only";
 import type { Region } from "@/lib/types";
 import type { CatalogFetchContext, PendingChart } from "@/server/services/catalog/ingestion/types";
 import { codeOf } from "@/lib/games/codes";
+import { CHUNITHM_NOTE_KINDS, type ChunithmNoteKind } from "@/lib/games/chunithm/note-counts";
 import { getGame, type GameSiteRegion } from "@/lib/games/registry";
 import { requireGameSite } from "@/lib/games/sites";
 import { versionReleaseInstant } from "@/lib/games/version-table";
@@ -24,7 +25,7 @@ const CHARTS = [
 ] as const;
 
 type ChartPrefix = typeof CHARTS[number]["prefix"];
-type ChartField = "i" | "notes" | "designer" | "chart_link" | `notes_${"tap" | "hold" | "slide" | "air" | "flick"}`;
+type ChartField = "i" | "notes" | "designer" | "chart_link" | `notes_${ChunithmNoteKind}`;
 type SongsJsonRecord = {
   id: string;
   title: string;
@@ -73,7 +74,7 @@ function normalizeOtogeDbCatalog(songs: SongsJsonRecord[], region: Region, sourc
       const addedDateString = useUpdateDate ? updateDate : (region === "jp" ? song.date_added : song.date_intl_added);
       const addedDate = parseDate(addedDateString);
       const constant = song[`${prefix}_i`];
-      const noteCounts = Object.fromEntries((["tap", "hold", "slide", "air", "flick"] as const).flatMap(kind => {
+      const noteCounts = Object.fromEntries(CHUNITHM_NOTE_KINDS.flatMap(kind => {
         const count = parseCount(song[`${prefix}_notes_${kind}`]);
         return count === undefined ? [] : [[kind, count]];
       }));

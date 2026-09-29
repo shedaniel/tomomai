@@ -4,6 +4,7 @@ import { nanoid } from "nanoid";
 import { after } from "next/server";
 import type { Logger } from "pino";
 import { z } from "zod";
+import { notFoundScore, type NotFoundScore } from "@/lib/api/schemas";
 import { db } from "@/lib/db";
 import { fetchSessions, user } from "@/lib/db/schema-pg";
 import { appendFetchState } from "@/lib/fetch-states-server";
@@ -21,7 +22,7 @@ import type { Region } from "@/lib/types";
 import { FetchStartError } from "./fetch-errors";
 import { createFetchRun, fetchFailure } from "./fetch-run";
 import { GAME_SERVER_MODULES } from "./registry";
-import { notFoundScoreSchema, persistFetchResult, type NotFoundScore } from "./snapshot-persistence";
+import { persistFetchResult } from "./snapshot-persistence";
 import { readToken, saveToken } from "./tokens";
 import type { Enrichment, PersistedSnapshotContext, ScoreFetchContext } from "./types";
 
@@ -46,7 +47,7 @@ type ScoreFetchStatusResult = {
   notFoundScores: NotFoundScore[] | null;
 };
 
-const sessionExtraDataSchema = z.object({ notFoundScores: z.array(notFoundScoreSchema) });
+const sessionExtraDataSchema = z.object({ notFoundScores: z.array(notFoundScore) });
 type SessionExtraData = z.infer<typeof sessionExtraDataSchema>;
 
 type SessionOutcome =
@@ -74,7 +75,7 @@ async function markSession(id: bigint, outcome: SessionOutcome): Promise<void> {
   await db.update(fetchSessions).set({ ...outcome, completedAt: new Date() }).where(eq(fetchSessions.id, id));
 }
 
-// Legacy rows stored the report as a JSON string, which Drizzle's jsonb mapping decodes on read.
+// Reports stored before difficulty and chart type became codes no longer parse, so they read as no report.
 function parseNotFoundScores(extraData: unknown): NotFoundScore[] | null {
   const parsed = sessionExtraDataSchema.safeParse(extraData);
   return parsed.success ? parsed.data.notFoundScores : null;

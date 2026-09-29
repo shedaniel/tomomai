@@ -1,24 +1,14 @@
 import "server-only";
 import { sql } from "drizzle-orm";
 import { nanoid } from "nanoid";
-import { z } from "zod";
 import { db } from "@/lib/db";
 import { userEvents, userRecentSongs, userSnapshots } from "@/lib/db/schema-pg";
-import { keyOf } from "@/lib/games/codes";
+import type { NotFoundScore } from "@/lib/api/schemas";
 import type { CanonicalGameId } from "@/lib/games/types";
 import { getLogger } from "@/lib/request-logger";
 import type { Region } from "@/lib/types";
 import { buildChartResolution, chartKey, writeSnapshotScores, type SnapshotScore } from "./score-storage";
 import type { ChartRef, GameFetchResult, NormalizedScore, PersistedSnapshotContext } from "./types";
-
-export const notFoundScoreSchema = z.object({
-  songName: z.string(),
-  difficulty: z.string(),
-  musicType: z.string(),
-});
-
-/** A fetched score with no unambiguous chart in the catalog, named by the game's own code keys. */
-export type NotFoundScore = z.infer<typeof notFoundScoreSchema>;
 
 type PersistFetchResultInput = {
   game: CanonicalGameId;
@@ -29,12 +19,8 @@ type PersistFetchResultInput = {
   deadline?: number;
 };
 
-function notFoundScore(game: CanonicalGameId, score: NormalizedScore): NotFoundScore {
-  return {
-    songName: score.chart.songName,
-    difficulty: keyOf(game, "difficulty", score.chart.difficulty),
-    musicType: keyOf(game, "chartType", score.chart.chartType),
-  };
+function notFoundScore({ chart }: NormalizedScore): NotFoundScore {
+  return { songName: chart.songName, difficulty: chart.difficulty, type: chart.chartType };
 }
 
 /**
@@ -109,6 +95,6 @@ export async function persistFetchResult(input: PersistFetchResultInput): Promis
   }
   return {
     context: { game, userId, region, snapshotId, gameVersion, chartResolution },
-    notFoundScores: unmatched.map(score => notFoundScore(game, score)),
+    notFoundScores: unmatched.map(notFoundScore),
   };
 }

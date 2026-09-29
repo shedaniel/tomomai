@@ -1,6 +1,7 @@
 import { codeOf, keyOf } from "@/lib/games/codes";
 import type { CanonicalGameId } from "@/lib/games/types";
 import { songInstanceId } from "@/lib/db/song-instance-id";
+import { chartEstimates } from "@/lib/catalog/chart-estimates";
 import { SongDetailChart, SongDetailHistoricalChart, SongDetails } from "@/components/db/songs/types";
 import { db } from "@/lib/db";
 import { parentSong, scoreData, snapshotScores, songs, userSnapshots } from "@/lib/db/schema-pg";
@@ -161,7 +162,7 @@ export async function querySongDetails(
               difficulty: chart.difficulty,
               level: chart.level,
               levelPrecise: chart.levelPrecise,
-              levelPreciseEstimated: chart.metadata?.levelPreciseEstimated === true,
+              levelPreciseEstimated: chartEstimates(chart.metadata).levelPreciseEstimated ?? false,
               addedVersion: chart.addedVersion,
               noteDesigner: chart.noteDesigner,
               tapCount: chart.tapCount,
@@ -173,7 +174,7 @@ export async function querySongDetails(
           : versionCharts.map((chart): SongDetailHistoricalChart => ({
               difficulty: chart.difficulty,
               levelPrecise: chart.levelPrecise,
-              levelPreciseEstimated: chart.metadata?.levelPreciseEstimated === true,
+              levelPreciseEstimated: chartEstimates(chart.metadata).levelPreciseEstimated ?? false,
             })),
       })),
     };
@@ -280,7 +281,7 @@ export async function queryAllUniqueSongs(game: CanonicalGameId) {
           difficultyCode: song.difficultyCode,
           level: song.level,
           levelPrecise: song.levelPrecise,
-          levelPreciseEstimated: song.metadata?.levelPreciseEstimated === true,
+          levelPreciseEstimated: chartEstimates(song.metadata).levelPreciseEstimated ?? false,
           region: song.region,
           gameVersion: song.gameVersion,
           noteDesigner: song.noteDesigner,
