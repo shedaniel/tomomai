@@ -1,7 +1,8 @@
+import { Target } from "lucide-react";
 import { expect, it } from "vitest";
 import type { GameSnapshotData } from "@/lib/games/player-view";
 import { generateRecommendations } from "@/lib/games/recommendations";
-import { applyRecommendationFilters, createRecommendationFilterLabel } from "./recommendation-filters";
+import { applyRecommendationFilters, createRecommendationFilterCategories, createRecommendationFilterLabel } from "./recommendation-filters";
 
 const data: GameSnapshotData = {
   snapshot: { publicId: "snapshot", game: "chunithm", gameVersion: 9, displayName: "Player", rating: 30, fetchedAt: new Date() },
@@ -15,5 +16,13 @@ it("filters CHUNITHM recommendations by their real score target and catalog disp
   expect(filtered).toHaveLength(1);
   expect(filtered[0].targetRating).toBe(1600);
   expect(createRecommendationFilterLabel({ type: "achievement", value: "1007500" }, { new: "New", old: "Old" }, "chunithm")).toBe("SSS");
-  expect(createRecommendationFilterLabel({ type: "target", value: "1600 - 1609" }, { new: "New", old: "Old" }, "chunithm")).toBe("16.00 - 16.09");
+  expect(createRecommendationFilterLabel({ type: "target", value: "1600 - 1649" }, { new: "New", old: "Old" }, "chunithm")).toBe("16.00 - 16.49");
+});
+
+it("buckets CHUNITHM target ratings by half a rating point", () => {
+  const labels = { difficulty: "", level: "", type: "", targetRating: "", achievement: "", version: "", new: "", old: "" };
+  const icons = { difficulty: Target, level: Target, type: Target, target: Target, achievement: Target, version: Target };
+  const categories = createRecommendationFilterCategories(generateRecommendations(data), labels, icons, "chunithm");
+  expect(categories.find(category => category.type === "target")?.options.map(option => option.label)).toContain("16.00 - 16.49");
+  expect(categories.find(category => category.type === "difficulty")?.options).toEqual([{ value: "ultima", label: "ULTIMA" }]);
 });

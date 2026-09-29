@@ -687,7 +687,9 @@
       "title": "Rating History",
       "ratingOverTime": "Rating Over Time",
       "noHistory": "No rating history available",
-      "needMoreData": "Fetch data at least twice to see your rating history"
+      "needMoreData": "Fetch data at least twice to see your rating history",
+      "newInBest": "New in B{size}",
+      "newInBestRating": "New in B{size}: {rating}"
     },
     "developer": {
       "title": "Developer",

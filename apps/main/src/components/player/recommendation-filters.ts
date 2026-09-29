@@ -2,6 +2,7 @@ import type { LucideIcon } from "lucide-react";
 import type { FilterCategory, GenericFilter } from "@/components/filter-panel";
 import type { CanonicalGameId } from "@/lib/games/types";
 import { codeOf } from "@/lib/games/codes";
+import { getGame } from "@/lib/games/registry";
 import { formatGameRating, getGameDifficulty, getGameScoreGrade } from "@/lib/games/presentation";
 
 interface FilterableRecommendation {
@@ -16,13 +17,13 @@ interface FilterableRecommendation {
   category: "new" | "old";
 }
 
-function generateTargetOptions(recommendations: FilterableRecommendation[]): string[] {
+function generateTargetOptions(recommendations: FilterableRecommendation[], width: number): string[] {
   const targets = new Set<number>();
   recommendations.forEach(rec => {
-    const rangeStart = Math.floor(rec.targetRating / 10) * 10;
+    const rangeStart = Math.floor(rec.targetRating / width) * width;
     targets.add(rangeStart);
   });
-  return Array.from(targets).sort((a, b) => a - b).map(t => `${t} - ${t + 9}`);
+  return Array.from(targets).sort((a, b) => a - b).map(t => `${t} - ${t + width - 1}`);
 }
 
 function difficultyLabel(game: CanonicalGameId, difficulty: string): string {
@@ -64,7 +65,7 @@ export function createRecommendationFilterCategories(
   game: CanonicalGameId
 ): FilterCategory[] {
   const availableLevels = generateRecommendationLevelOptions(recommendations);
-  const availableTargets = generateTargetOptions(recommendations);
+  const availableTargets = generateTargetOptions(recommendations, getGame(game).presentation.ratingRules.filterBucketWidth);
 
   return [
     {

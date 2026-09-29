@@ -1,6 +1,6 @@
 "use client";
 
-import { useGameId } from "@/components/providers/game-provider";
+import { useGameId, usePresentation } from "@/components/providers/game-provider";
 import { getPlayerRankings, type GameSnapshotData } from "@/lib/games/player-view";
 import { getGameDifficulty, getGameChartType, getGameRankingBuckets } from "@/lib/games/presentation";
 import { LayoutGrid, LayoutList, Menu, Search } from "lucide-react";
@@ -187,7 +187,7 @@ export function SongsCard({ selectedSnapshotData, flags }: { selectedSnapshotDat
     };
   }, [searchQuery, newSongsB15, oldSongsB35, newSongsRemaining, oldSongsRemaining]);
 
-  const showRatingSum = game === "maimai";
+  const showRatingSum = usePresentation().ratingRules.aggregation === "sum";
 
   // Calculate sum and average for B15 and B35 (use filtered data)
   const b15Sum = filteredData.newSongsB15.reduce((sum, song) => sum + song.rating, 0);

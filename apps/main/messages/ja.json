@@ -687,7 +687,9 @@
       "title": "レート値の履歴",
       "ratingOverTime": "レート値の推移",
       "noHistory": "レート値の履歴がありません",
-      "needMoreData": "履歴を表示するには、少なくとも2回データを取得してください"
+      "needMoreData": "履歴を表示するには、少なくとも2回データを取得してください",
+      "newInBest": "B{size}に新規ランクイン",
+      "newInBestRating": "B{size}に新規ランクイン：{rating}"
     },
     "developer": {
       "title": "開発者",

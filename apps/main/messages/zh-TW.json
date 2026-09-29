@@ -687,7 +687,9 @@
       "title": "R 值歷史紀錄",
       "ratingOverTime": "R 值變化趨勢",
       "noHistory": "暫無歷史紀錄",
-      "needMoreData": "至少匯入兩次資料才能檢視歷史紀錄"
+      "needMoreData": "至少匯入兩次資料才能檢視歷史紀錄",
+      "newInBest": "新進入 B{size}",
+      "newInBestRating": "新進入 B{size}：{rating}"
     },
     "developer": {
       "title": "開發者",

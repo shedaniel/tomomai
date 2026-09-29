@@ -1,7 +1,8 @@
 "use client";
 
 import { formatGameRating, getGameDifficulty } from "@/lib/games/presentation";
-import { useGameId } from "@/components/providers/game-provider";
+import { getGame } from "@/lib/games/registry";
+import { useGameId, usePresentation } from "@/components/providers/game-provider";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@tomomai/ui";
 import { Slider } from "@tomomai/ui";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@tomomai/ui";
@@ -31,7 +32,9 @@ export function HistoryCard({ region }: HistoryCardProps) {
   const t = useTranslations();
   const game = useGameId();
   const formatRating = (value: number | undefined) => formatGameRating(game, value);
-  const axisStep = game === "maimai" ? 100 : 10;
+  const { axisStep } = usePresentation().ratingRules;
+  const { bucketSizes } = getGame(game).rating;
+  const bestSize = bucketSizes.new + bucketSizes.old;
   const [chartAreaBounds, setChartAreaBounds] = useState<{ left: number; width: number } | null>(null);
   const [dateRange, setDateRange] = useState<[number, number]>([0, 100]);
 
@@ -254,7 +257,7 @@ export function HistoryCard({ region }: HistoryCardProps) {
                                     <div key={i} className="text-xs">
                                       <div className="font-medium">{change.songName}</div>
                                       <div className="text-muted-foreground">
-                                        {getGameDifficulty(game, change.difficultyCode).label} • {change.changeType === 'new' ? 'New in B50' : `${formatRating(change.oldRating)} → ${formatRating(change.newRating)}`}
+                                        {getGameDifficulty(game, change.difficultyCode).label} • {change.changeType === 'new' ? t('dataContent.history.newInBest', { size: bestSize }) : `${formatRating(change.oldRating)} → ${formatRating(change.newRating)}`}
                                       </div>
                                     </div>
                                   ))}
@@ -297,7 +300,7 @@ export function HistoryCard({ region }: HistoryCardProps) {
                                       </div>
                                       <div className="text-xs">
                                         {change.changeType === 'new'
-                                          ? `New in B50: ${formatRating(change.newRating)}`
+                                          ? t('dataContent.history.newInBestRating', { size: bestSize, rating: formatRating(change.newRating) })
                                           : `${formatRating(change.oldRating)} → ${formatRating(change.newRating)}`
                                         }
                                       </div>

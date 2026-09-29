@@ -506,7 +506,9 @@
       "title": "레이팅 변동 기록",
       "ratingOverTime": "레이팅 추이",
       "noHistory": "레이팅 기록이 없습니다",
-      "needMoreData": "기록을 보려면 데이터를 최소 2회 이상 가져와야 합니다"
+      "needMoreData": "기록을 보려면 데이터를 최소 2회 이상 가져와야 합니다",
+      "newInBest": "B{size} 신규 진입",
+      "newInBestRating": "B{size} 신규 진입: {rating}"
     },
     "developer": {
       "title": "Developer",
