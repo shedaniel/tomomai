@@ -7,7 +7,6 @@ export {
   deepMerge,
   isServerless,
   awaitWrapper,
-  isNullOrUndefined,
   maxBy,
 } from "@tomomai/utils";
 export { getLanguages } from "@tomomai/i18n/languages";

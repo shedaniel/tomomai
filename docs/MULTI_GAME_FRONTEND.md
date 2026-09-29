@@ -57,8 +57,8 @@ Implemented frontend support:
   regions, because a version keeps its name where it was never released.
   `getRegionalVersion`, `getAvailableVersions`, `getCurrentVersion` and
   `getVersionFromDate` take a region and are for gating and release timing.
-  `lib/games/maimai/versions.ts` only adds maimai extras: `VersionId`, the
-  short-code and short-name lookups, `requireMaimaiVersion` and `maimaiVersionAt`.
+  `lib/games/maimai/versions.ts` only adds maimai extras: the short-code and
+  short-name lookups.
   Public profile invalidation takes explicit game context and does not invalidate
   the current site's pages for another game.
 

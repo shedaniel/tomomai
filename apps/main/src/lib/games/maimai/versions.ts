@@ -1,4 +1,3 @@
-import type { Region } from "../ids";
 import { createVersionTable, type VersionRow } from "../version-table";
 
 export const Versions = {
@@ -32,8 +31,8 @@ export const Versions = {
   MAIMAI_DX_MAGICAL: { id: 14, name: "maimai DX MAGiCAL", shortName: "MAGiCAL", version: 270, releaseDates: { jp: "2026/09/17" } },
 } as const satisfies Record<string, VersionRow & { version: number }>;
 
-export type VersionId = typeof Versions[keyof typeof Versions]["id"];
-export type VersionInfo = VersionRow & { id: VersionId; version: number };
+type VersionId = typeof Versions[keyof typeof Versions]["id"];
+type VersionInfo = VersionRow & { id: VersionId; version: number };
 
 export const maimaiVersionTable = createVersionTable<VersionInfo>(Object.values(Versions));
 
@@ -54,14 +53,4 @@ export function getVersionByShortCode(shortCode: string): VersionInfo | undefine
     }
   }
   return best;
-}
-
-export function requireMaimaiVersion(version: number): VersionId {
-  const info = maimaiVersionTable.get(version);
-  if (!info) throw new Error(`Unknown maimai version: ${version}`);
-  return info.id;
-}
-
-export function maimaiVersionAt(region: Region, date: Date): VersionId {
-  return requireMaimaiVersion(maimaiVersionTable.atDate(region, date));
 }

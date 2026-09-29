@@ -67,10 +67,6 @@ export async function awaitWrapper<T>(
     .catch((error) => [null, error as Error] as [null, Error]);
 }
 
-export function isNullOrUndefined(value: unknown): value is null | undefined {
-  return value === null || value === undefined;
-}
-
 export function maxBy<T>(array: T[], iteratee: (item: T) => number): T | undefined {
   if (array.length === 0) return undefined;
   let maxItem = array[0]!;
