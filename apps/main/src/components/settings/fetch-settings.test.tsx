@@ -70,3 +70,9 @@ it("retains maimai International album settings and its configured cookie login"
   expect(container.querySelector("#fetch-albums")).not.toBeNull();
   expect(container.textContent).toContain("International cookie options");
 });
+
+it("hides the maimai album setting in China, where the definition withdraws albums", async () => {
+  await render(toFrontendGame(getGame("maimai"), ["intl", "jp", "cn"]));
+  expect(container.textContent).toContain("settings for maimai DX");
+  expect(container.querySelector("#fetch-albums")).toBeNull();
+});

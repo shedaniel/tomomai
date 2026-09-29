@@ -83,7 +83,7 @@ export function DataContent({
   const effectiveProfileUsername = profileUsername ?? visitableProfileAt;
   const effectiveVisitableProfileAt = localPublishProfile ? effectiveProfileUsername : null;
 
-  // SSR passes initialTab; a client navigation only has the search params.
+  // SSR passes initialTab, and a client navigation only has the search params.
   const getInitialTab = (): PlayerTabId => {
     if (isPlayerTabId(initialTab)) return initialTab;
     const tabParam = searchParams.get('tab');
