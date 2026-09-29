@@ -19,6 +19,7 @@ import {
 import { resolveRegion } from '../region';
 import { applyStalenessGate } from './staleness';
 import { regionDisplayName, t } from '../i18n';
+import { DISCORD_GAME } from '../game';
 
 export interface RecommendCommandOptions {
   discordUserId: string;
@@ -48,7 +49,7 @@ export async function executeRecommendCommand({
 }: ExecuteRecommendOptions): Promise<void> {
   const regionName = regionDisplayName(region, locale);
   try {
-    const data = await fetchLatestSnapshotData("maimai", dbUserId, region);
+    const data = await fetchLatestSnapshotData(DISCORD_GAME, dbUserId, region);
     if (!data) {
       await editDiscordMessage(applicationId, interactionToken, {
         embeds: [createNoDataResponse(regionName, locale).data!.embeds![0]],
@@ -100,12 +101,12 @@ function formatRow(rec: RecommendationData, rank: number): string {
   const { song, currentScore, targetScore, currentRating, targetRating, ratingGain } = rec;
   const tag = categoryTag(rec);
   const diff = difficultyShort(song.difficulty);
-  const lvl = formatGameLevel("maimai", song.levelPrecise, song.difficultyCode);
-  const target = targetScore === 1010000 ? 'AP' : formatGameScore("maimai", targetScore, { precision: "compact" });
+  const lvl = formatGameLevel(DISCORD_GAME, song.levelPrecise, song.difficultyCode);
+  const target = targetScore === 1010000 ? 'AP' : formatGameScore(DISCORD_GAME, targetScore, { precision: "compact" });
   const rankStr = `#${rank}`.padEnd(3);
   return [
     `${rankStr} [${tag}] ${song.songName} (${diff} ${lvl})`,
-    `    ${formatGameScore("maimai", currentScore, { precision: "compact" })} → ${target}   rating ${currentRating} → ${targetRating}   (+${ratingGain})`,
+    `    ${formatGameScore(DISCORD_GAME, currentScore, { precision: "compact" })} → ${target}   rating ${currentRating} → ${targetRating}   (+${ratingGain})`,
   ].join('\n');
 }
 

@@ -24,6 +24,7 @@ import {
   type StaleCommand,
 } from '../staleness';
 import { getLatestSnapshotFetchedAt } from '@/server/queries/snapshots';
+import { DISCORD_GAME } from '../game';
 
 interface ResolvedUser {
   id: string;
@@ -112,7 +113,7 @@ export async function applyStalenessGate({
   }
 
   try {
-    const lastFetchedAt = await getLatestSnapshotFetchedAt("maimai", dbUser.id, region);
+    const lastFetchedAt = await getLatestSnapshotFetchedAt(DISCORD_GAME, dbUser.id, region);
     if (lastFetchedAt && isStale(lastFetchedAt)) {
       return getStalePromptResponse({
         command,

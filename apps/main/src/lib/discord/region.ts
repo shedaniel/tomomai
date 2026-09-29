@@ -3,10 +3,11 @@ import type { Region } from '@/lib/types';
 import { fetchLatestSnapshotData, fetchSnapshotRankings } from '@/server/queries/snapshots';
 import { getRatingComment } from './responses';
 import { t } from './i18n';
+import { DISCORD_GAME } from './game';
 
 /**
- * Resolve which region a command should operate on, or null when maimai has
- * no enabled region.
+ * Resolve which region a command should operate on, or null when the bot's
+ * game has no enabled region.
  *
  * Priority: an explicit param (if it names an enabled region) > the user's
  * selected region from the DB (if enabled) > intl > the first enabled region.
@@ -15,7 +16,7 @@ export function resolveRegion(
   param: string | null | undefined,
   userRegion: Region | null | undefined
 ): Region | null {
-  const enabled = getEnabledRegions('maimai');
+  const enabled = getEnabledRegions(DISCORD_GAME);
   const requested = enabled.find(region => region === param);
   if (requested) return requested;
   if (userRegion && enabled.includes(userRegion)) return userRegion;
@@ -40,11 +41,11 @@ export interface ProfileSummary {
  * and old-charts (B35) ratings stored with it alongside the summary fields.
  */
 export async function getProfileSummary(userId: string, region: Region): Promise<ProfileSummary | null> {
-  const data = await fetchLatestSnapshotData('maimai', userId, region);
+  const data = await fetchLatestSnapshotData(DISCORD_GAME, userId, region);
   if (!data) return null;
 
   const { snapshot } = data;
-  const { newScores, oldScores } = await fetchSnapshotRankings('maimai', userId, snapshot);
+  const { newScores, oldScores } = await fetchSnapshotRankings(DISCORD_GAME, userId, snapshot);
   const newRating = newScores.reduce((sum, s) => sum + s.rating, 0);
   const oldRating = oldScores.reduce((sum, s) => sum + s.rating, 0);
 

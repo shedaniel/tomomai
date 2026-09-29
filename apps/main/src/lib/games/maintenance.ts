@@ -12,9 +12,15 @@ export interface GameMaintenance {
   endsAt: Date;
 }
 
-export function getGameMaintenanceError(window: GameMaintenance): string {
+/** The window's bounds as JST wall-clock times ("HH:mm"). */
+export function formatMaintenanceWindow(window: GameMaintenance): { start: string; end: string } {
   const time = (date: Date) => new Date(date.getTime() + JST_OFFSET_MS).toISOString().slice(11, 16);
-  return `Cannot fetch data during maintenance window (${time(window.startsAt)} - ${time(window.endsAt)} JST)`;
+  return { start: time(window.startsAt), end: time(window.endsAt) };
+}
+
+export function getGameMaintenanceError(window: GameMaintenance): string {
+  const { start, end } = formatMaintenanceWindow(window);
+  return `Cannot fetch data during maintenance window (${start} - ${end} JST)`;
 }
 
 export function getGameMaintenance(game: CanonicalGameId, region: Region, date: Date = new Date()): GameMaintenance | null {

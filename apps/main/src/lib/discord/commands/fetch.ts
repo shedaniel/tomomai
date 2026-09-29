@@ -20,8 +20,9 @@ import {
   getStateFriendlyName
 } from '../responses';
 import { regionDisplayName, t } from '../i18n';
+import { DISCORD_GAME } from '../game';
 import { Region } from '@/lib/types';
-import { getGameMaintenance } from '@/lib/games/maintenance';
+import { formatMaintenanceWindow, getGameMaintenance, type GameMaintenance } from '@/lib/games/maintenance';
 
 export interface FetchCommandOptions {
   discordUserId: string;
@@ -29,6 +30,18 @@ export interface FetchCommandOptions {
   applicationId: string;
   interactionToken: string;
   locale?: string;
+}
+
+function maintenanceMessage(maintenance: GameMaintenance, locale?: string): string {
+  return t(locale, 'fetch.maintenanceWindow', formatMaintenanceWindow(maintenance));
+}
+
+function describeFetchError(error: unknown, region: Region, locale?: string): string {
+  if (error instanceof FetchStartError && error.code === 'MAINTENANCE') {
+    const maintenance = getGameMaintenance(DISCORD_GAME, region);
+    if (maintenance) return maintenanceMessage(maintenance, locale);
+  }
+  return error instanceof Error ? error.message : 'Unknown error';
 }
 
 function createAlbumPreferenceMessage(discordUserId: string, region: Region, locale?: string) {
@@ -107,11 +120,8 @@ export async function handleFetchCommand({
     if (!region) return createErrorResponse(t(locale, 'common.error.noRegion'));
     const regionName = regionDisplayName(region, locale);
 
-    if (getGameMaintenance("maimai", region)?.active) {
-      return createErrorResponse(t(locale, region === 'intl'
-        ? 'fetch.maintenanceWindowIntl'
-        : 'fetch.maintenanceWindow'));
-    }
+    const maintenance = getGameMaintenance(DISCORD_GAME, region);
+    if (maintenance?.active) return createErrorResponse(maintenanceMessage(maintenance, locale));
 
     // Defer the response since fetch can take a while
     const deferredResponse = createDeferredResponse();
@@ -157,7 +167,7 @@ export async function runFetchSession({
 }): Promise<boolean> {
   try {
     // Start the fetch
-    const startResult = await startScoreFetch({ userId, game: "maimai", region, options: { skipAfter: true } });
+    const startResult = await startScoreFetch({ userId, game: DISCORD_GAME, region, options: { skipAfter: true } });
 
     // Send initial message
     await editDiscordMessage(applicationId, interactionToken, {
@@ -195,7 +205,6 @@ export async function runFetchSession({
     } else {
       getLogger().error({ err: error }, 'Error in fetch process');
     }
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
 
     if (error instanceof FetchStartError && error.code === 'NO_USE_ALBUMS_SETTINGS') {
       await editDiscordMessage(applicationId, interactionToken, createAlbumPreferenceMessage(discordUserId, region, locale));
@@ -203,7 +212,7 @@ export async function runFetchSession({
       await editDiscordMessage(applicationId, interactionToken, {
         embeds: [{
           title: t(locale, 'fetch.error.title'),
-          description: t(locale, 'fetch.error.description', { userId: discordUserId, message: errorMessage }),
+          description: t(locale, 'fetch.error.description', { userId: discordUserId, message: describeFetchError(error, region, locale) }),
           color: DISCORD_COLORS.RED,
           footer: {
             text: t(locale, 'common.footer'),
@@ -231,7 +240,7 @@ async function pollForUpdates(
 
   while (attempts < maxAttempts) {
     try {
-      const status = await getScoreFetchStatus({ userId, game: "maimai", region });
+      const status = await getScoreFetchStatus({ userId, game: DISCORD_GAME, region });
 
       if (status && status.id === sessionId) {
         if (status.status === "completed") {
@@ -333,7 +342,7 @@ async function updateFetchProgress(
   interactionToken: string,
   locale?: string,
 ): Promise<void> {
-  const allStates = getGame("maimai").fetchStages;
+  const allStates = getGame(DISCORD_GAME).fetchStages;
   const completedStates = parseStatusStates(statusStates);
 
   // Format all states with appropriate emojis
