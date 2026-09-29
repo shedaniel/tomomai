@@ -1,8 +1,8 @@
 import { getCurrentGame } from "@/lib/games/current";
+import { isGameRegion } from "@/lib/games/frontend";
 import { notFound } from "next/navigation";
 import { createProfileOGImage, OG_SIZE } from "@/lib/og";
 import { getTranslations } from "next-intl/server";
-import { isRegionEnabledStr } from "@/lib/enabled-regions";
 import { db } from "@/lib/db";
 import { userSnapshots } from "@/lib/db/schema-pg";
 import { and, desc, eq } from "drizzle-orm";
@@ -32,7 +32,7 @@ export default async function Image({ params, id }: Props & { id: Promise<string
   const username = decodeURIComponent(rawUsername);
   const t = await getTranslations({ locale, namespace: "regions" });
 
-  if (!isRegionEnabledStr(region)) {
+  if (!isGameRegion(game, region)) {
     return createProfileOGImage({
       displayName: username,
       username,

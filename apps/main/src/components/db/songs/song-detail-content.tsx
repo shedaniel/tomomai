@@ -7,6 +7,7 @@ import {
 } from "@tomomai/ui";
 import { useGame } from "@/components/providers/game-provider";
 import { formatGameScore, formatGameRating, formatGameLevel, getGameCode, getGameDifficultyColors, getGameDifficultyLabel, getGameChartTypeLabel, getGameChartTypeBadgeLabel, getGameChartTypeBadge, getGameChartRating, getGameScoreLabelKey, getGameScoreGrade, getGameStatusLabels } from "@/lib/games/presentation";
+import { isGameCnExclusive } from "@/lib/games/frontend";
 import { getVersionInfo } from "@/lib/games/versions";
 import { trpc } from "@/lib/trpc-client";
 import { useSession } from "@/lib/auth-client";
@@ -25,7 +26,6 @@ import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation"
 import { toast } from "sonner";
 import { SongChartDialogContent } from "./song-detail-dialog";
-import { isCNExclusive } from "@/lib/enabled-regions";
 
 type SongExtendedIdentified = SongDetailChart & { region: Region; gameVersion: number };
 
@@ -305,7 +305,7 @@ export function SongDetailContent({ songName, artist, slug, type, parentIds, ini
   const videoSearchURL = useMemo(() => {
     if (!data) return null;
     const searchQuery = encodeURIComponent(`${game.brand.displayName} ${data.songName} ${data.artist}`);
-    if (isCNExclusive()) {
+    if (isGameCnExclusive(game)) {
       return `https://search.bilibili.com/all?keyword=${searchQuery}`;
     } else {
       return `https://www.youtube.com/results?search_query=${searchQuery}`;
@@ -410,7 +410,7 @@ export function SongDetailContent({ songName, artist, slug, type, parentIds, ini
           </Link>
           <Link href={videoSearchURL ?? ""} target="_blank" aria-label={t('db.songs.detail.youtube')}>
             <Button variant="outline" className="bg-background">
-              {isCNExclusive() ? (<>
+              {isGameCnExclusive(game) ? (<>
                 <svg role="img" className="w-4 h-4" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
                   <g>
                     <path fill="none" d="M0 0h24v24H0z" />

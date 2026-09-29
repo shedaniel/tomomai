@@ -1,7 +1,8 @@
 import { db } from "@/lib/db";
 import { user } from "@/lib/db/schema-pg";
 import { eq } from "drizzle-orm";
-import { isCNExclusive } from "@/lib/enabled-regions";
+import { getCurrentGame } from "@/lib/games/current";
+import { isGameCnExclusive } from "@/lib/games/frontend";
 import type { Region } from "@/lib/types";
 
 export async function fetchProfileSettings(userId: string) {
@@ -27,12 +28,13 @@ export async function fetchProfileSettings(userId: string) {
 }
 
 export async function fetchUserData(userId: string) {
+  const cnOnly = isGameCnExclusive(getCurrentGame());
   const result = await db
     .select({
       username: user.username,
       publishProfile: user.publishProfile,
       role: user.role,
-      ...(!isCNExclusive() ? { region: user.region } : {}),
+      ...(!cnOnly ? { region: user.region } : {}),
     })
     .from(user)
     .where(eq(user.id, userId))
@@ -43,7 +45,7 @@ export async function fetchUserData(userId: string) {
   return {
     username: result[0].username,
     publishProfile: result[0].publishProfile,
-    region: (!isCNExclusive() ? result[0].region! : "cn") as Region,
+    region: (!cnOnly ? result[0].region! : "cn") as Region,
     role: result[0].role,
   };
 }

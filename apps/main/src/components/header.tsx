@@ -1,6 +1,6 @@
 "use client";
 
-import { brandTitle } from "@/lib/games/frontend";
+import { brandTitle, isGameCnExclusive } from "@/lib/games/frontend";
 import { signOut } from "@/lib/auth-client";
 import { useGame } from "@/components/providers/game-provider";
 import { AboutDialog } from "@/components/about-dialog";
@@ -27,7 +27,6 @@ import { AutoHeight } from "@/components/animate-ui/primitives/effects/auto-heig
 import { SPRING_CONFIGS, getTransition } from "@/lib/animation-constants";
 
 import { triggerHaptic } from "@tomomai/ui/haptics";
-import { isCNExclusive } from "@/lib/enabled-regions";
 import { Locale, setLocaleCookie } from "@/i18n/locale";
 import { cn, getLanguages, isR2Url } from "@/lib/utils";
 import { useLocale } from "./providers/locale-provider";
@@ -289,7 +288,7 @@ function UserIcon({ user, menu, onAbout, onTheme, onDiscordInvite, onSignIn }: P
               </div>
             )}
             <div className="flex flex-col overflow-y-auto flex-1 px-2">
-              {!isCNExclusive() && (
+              {!isGameCnExclusive(game) && (
                 <>
                   <DrawerLocaleSwitcher drawerItemClass={drawerItemClass} />
                   <Separator className="my-1" />
@@ -586,7 +585,7 @@ export function Header({ currentTab, showDiscordBanner = true, customThemesEnabl
         </div>
 
         <div className="flex items-center space-x-4">
-          {!isCNExclusive() && <div className="max-md:hidden"><LocaleSwitcher /></div>}
+          {!isGameCnExclusive(game) && <div className="max-md:hidden"><LocaleSwitcher /></div>}
           {user?.menu && game.regions.length > 1 && <div className="max-md:hidden"><RegionSwitcher header={true} value={user.menu.selectedRegion} onChange={user.menu.onRegionChange} /></div>}
           {user ? (
             <UserIcon user={user.user} menu={user.menu} onAbout={() => setAboutOpen(true)} onTheme={() => setThemeOpen(true)} onDiscordInvite={handleDiscordInvite} />

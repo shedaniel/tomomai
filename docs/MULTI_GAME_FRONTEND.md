@@ -36,6 +36,11 @@ Implemented frontend support:
   Detail links use canonical parent/instance identities rather than song-name
   matching. Existing maimai slugs, filters and detail navigation are preserved.
 - Shared shell branding, region choices and metadata derive from game context.
+  Client components read `useGame().regions` and server code reads
+  `getEnabledRegions(game)` from `lib/games/regions.ts`. The account region and
+  profile main region are offered from, and validated against, the served game's
+  regions. `isGameCnExclusive(game)` marks the China deployment, which pins the
+  locale and every region choice.
   Tomochu's Japanese name is **ともチュウ**. Copy belongs to its existing feature
   namespace instead of a catch-all multi-game translation namespace.
   Maimai profile image queries explicitly filter the game; maimai-only image and

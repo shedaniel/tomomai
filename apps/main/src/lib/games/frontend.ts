@@ -24,3 +24,8 @@ export function getGameRegion(game: FrontendGame, preferred?: string | null): Re
 export function isGameRegion(game: FrontendGame, region: string): region is Region {
   return game.regions.some(candidate => candidate === region);
 }
+
+// The China deployment enables its game only in CN, which pins the locale and every region choice.
+export function isGameCnExclusive(game: Pick<FrontendGame, "regions">): boolean {
+  return game.regions.length === 1 && game.regions[0] === "cn";
+}

@@ -1,24 +1,33 @@
 import { db } from '@/lib/db';
 import { user } from '@/lib/db/schema-pg';
+import { getCurrentGame } from '@/lib/games/current';
+import { isGameCnExclusive, isGameRegion } from '@/lib/games/frontend';
+import { regionSchema } from '@/lib/games/schema';
 import { protectedProcedure, router } from '@/lib/trpc';
 import { Region, UserData } from '@/lib/types';
 import { TRPCError } from '@trpc/server';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
-import { getEnabledRegions, isCNExclusive } from '@/lib/enabled-regions';
 import { fetchProfileSettings } from '@/server/queries/profile';
 import { revalidateCurrentSitePublicProfile, revalidateCurrentSitePublicProfileForUser } from '@/lib/profile-cache';
 import { profileDescriptionInputSchema } from '@/lib/profile-description';
 
-const regionSchema = z.enum(getEnabledRegions());
+// Region choices are offered from the served game's regions, so they are validated against the same list.
+function requireCurrentGameRegion(region: Region): void {
+  const game = getCurrentGame();
+  if (!isGameRegion(game, region)) {
+    throw new TRPCError({ code: 'BAD_REQUEST', message: `${region} is not enabled for ${game.brand.displayName}` });
+  }
+}
 
 export const profileRouter = router({
   getUserData: protectedProcedure
     .query(async ({ ctx }) => {
+      const cnOnly = isGameCnExclusive(getCurrentGame());
       const userRecord = await db
         .select({
           username: user.username, email: user.email, publishProfile: user.publishProfile, role: user.role,
-          ...(!isCNExclusive() ? { region: user.region } : {})
+          ...(!cnOnly ? { region: user.region } : {})
         })
         .from(user)
         .where(eq(user.id, ctx.session.user.id))
@@ -36,7 +45,7 @@ export const profileRouter = router({
         username: userRecord[0].username,
         email: userRecord[0].email,
         publishProfile: userRecord[0].publishProfile,
-        region: (!isCNExclusive() ? userRecord[0].region! : 'cn') as Region,
+        region: (!cnOnly ? userRecord[0].region! : 'cn') as Region,
         role: userRecord[0].role,
       } satisfies UserData;
     }),
@@ -101,6 +110,7 @@ export const profileRouter = router({
       region: regionSchema.nullable(),
     }))
     .mutation(async ({ ctx, input }) => {
+      if (input.region !== null) requireCurrentGameRegion(input.region);
       await db
         .update(user)
         .set({
@@ -117,7 +127,8 @@ export const profileRouter = router({
       profileMainRegion: regionSchema,
     }))
     .mutation(async ({ ctx, input }) => {
-      if (isCNExclusive()) throw new TRPCError({ code: 'BAD_REQUEST', message: 'Cannot update profile main region in China region' });
+      if (isGameCnExclusive(getCurrentGame())) throw new TRPCError({ code: 'BAD_REQUEST', message: 'Cannot update profile main region in China region' });
+      requireCurrentGameRegion(input.profileMainRegion);
       const [current] = await db
         .select({ username: user.username, profileMainRegion: user.profileMainRegion })
         .from(user)

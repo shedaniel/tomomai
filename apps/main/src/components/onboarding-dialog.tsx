@@ -10,8 +10,9 @@ import {
 import { Input } from "@tomomai/ui";
 import { Label } from "@tomomai/ui";
 import { Switch } from "@tomomai/ui";
+import { useGame } from "@/components/providers/game-provider";
 import { resolveBaseUrl } from "@/lib/base-url";
-import { getEnabledRegions, isCNExclusive } from "@/lib/enabled-regions";
+import { isGameCnExclusive } from "@/lib/games/frontend";
 import { trpc } from "@/lib/trpc-client";
 import type { Region } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -91,8 +92,9 @@ export function OnboardingDialog({
   initialPublishProfile,
 }: OnboardingDialogProps) {
   const t = useTranslations();
-  const cnOnly = isCNExclusive();
-  const enabledRegions = getEnabledRegions();
+  const game = useGame();
+  const cnOnly = isGameCnExclusive(game);
+  const enabledRegions = game.regions;
 
   const [step, setStep] = useState<Step>(1);
   const [direction, setDirection] = useState<1 | -1>(1);
@@ -538,7 +540,7 @@ export function OnboardingDialog({
                   className="space-y-5"
                 >
                   <p className="text-sm text-muted-foreground text-center max-w-md mx-auto leading-relaxed">
-                    {t("onboarding.step2.description")}
+                    {t("onboarding.step2.description", { game: game.brand.displayName })}
                   </p>
                   <div
                     className={cn(

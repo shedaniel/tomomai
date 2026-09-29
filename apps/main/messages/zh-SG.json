@@ -1023,7 +1023,7 @@
     },
     "step2": {
       "title": "选择你的地区",
-      "description": "选择你的 maimai 数据所在的地区。之后可以在选单中切换。"
+      "description": "选择你的 {game} 数据所在的地区。之后可以在选单中切换。"
     },
     "step3": {
       "title": "一切就绪！",

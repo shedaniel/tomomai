@@ -1032,7 +1032,7 @@
     },
     "step2": {
       "title": "Choose your region",
-      "description": "Pick where your maimai data lives. You can switch later from the menu."
+      "description": "Pick where your {game} data lives. You can switch later from the menu."
     },
     "step3": {
       "title": "You're all set!",

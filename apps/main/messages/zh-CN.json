@@ -1023,7 +1023,7 @@
     },
     "step2": {
       "title": "选择你的区服",
-      "description": "选择你的 maimai 数据所在的区服。之后可以在菜单中切换。"
+      "description": "选择你的 {game} 数据所在的区服。之后可以在菜单中切换。"
     },
     "step3": {
       "title": "全部完成！",

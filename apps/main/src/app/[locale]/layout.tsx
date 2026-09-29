@@ -104,22 +104,22 @@ export default async function LocaleLayout({ children, params }: Props) {
         className={`${inter.variable} ${geistMono.variable} ${murecho.variable} antialiased bg-background flex min-h-dvh flex-col`}
       >
         <NextIntlClientProvider messages={messages}>
-          <LocaleProvider initialLocale={typedLocale}>
-            <GameProvider game={getCurrentGame()}>
-            <ThemeProvider>
-              <TRPCProvider>
-                <AuthDialogProvider>
-                  {TURNSTILE_SITE_KEY && <TurnstilePreclearance siteKey={TURNSTILE_SITE_KEY} />}
-                  <PreMaintenanceBanner />
-                  {children}
-                  <SiteFooter />
-                  {shouldInjectToolbar && <VercelToolbar />}
-                  <Toaster />
-                </AuthDialogProvider>
-              </TRPCProvider>
-            </ThemeProvider>
-            </GameProvider>
-          </LocaleProvider>
+          <GameProvider game={getCurrentGame()}>
+            <LocaleProvider initialLocale={typedLocale}>
+              <ThemeProvider>
+                <TRPCProvider>
+                  <AuthDialogProvider>
+                    {TURNSTILE_SITE_KEY && <TurnstilePreclearance siteKey={TURNSTILE_SITE_KEY} />}
+                    <PreMaintenanceBanner />
+                    {children}
+                    <SiteFooter />
+                    {shouldInjectToolbar && <VercelToolbar />}
+                    <Toaster />
+                  </AuthDialogProvider>
+                </TRPCProvider>
+              </ThemeProvider>
+            </LocaleProvider>
+          </GameProvider>
         </NextIntlClientProvider>
       </body>
     </html>

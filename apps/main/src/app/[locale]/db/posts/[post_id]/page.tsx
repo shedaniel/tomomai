@@ -11,7 +11,8 @@ import { notFound } from "next/navigation";
 import { PostLocaleSwitcher } from "@/components/post-locale-switcher";
 import { getTranslations } from "next-intl/server";
 import { Bot } from "lucide-react";
-import { isCNExclusive } from "@/lib/enabled-regions";
+import { getCurrentGame } from "@/lib/games/current";
+import { isGameCnExclusive } from "@/lib/games/frontend";
 import { MdxImageComparison } from "@/components/mdx-image-comparison";
 import { MdxImageCarousel, MdxImageCarouselSlide } from "@/components/mdx-image-carousel";
 import remarkGfm from "remark-gfm";
@@ -146,7 +147,7 @@ export default async function PostPage({ params }: PostPageProps) {
         </Link>
 
         {/* Language switcher (only shows if multiple translations exist) */}
-        {!isCNExclusive() && <PostLocaleSwitcher
+        {!isGameCnExclusive(getCurrentGame()) && <PostLocaleSwitcher
           availableLocales={availableTranslations}
           currentLocale={post.locale}
         />}
