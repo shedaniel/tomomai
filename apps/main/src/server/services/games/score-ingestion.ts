@@ -1,4 +1,4 @@
-import { requireConfiguredSource } from "./registry";
+import { GAME_SERVER_MODULES } from "./registry";
 import { readToken, saveToken } from "./tokens";
 import { getGameMaintenance, getGameMaintenanceError } from "@/lib/games/maintenance";
 import { revalidatePublicProfileForUser } from "@/lib/profile-cache";
@@ -26,7 +26,7 @@ import {
   GAME_REGISTRY,
   resolveGameContext,
 } from "@/lib/games/registry";
-import { GameAdapterError, type CanonicalGameId } from "@/lib/games/types";
+import type { CanonicalGameId } from "@/lib/games/types";
 import type { GameFetchResult, NormalizedScore, PersistedSnapshotContext, ScoreFetchContext } from "./types";
 import { flushLogger } from "@/lib/logger";
 import type { Region } from "@/lib/types";
@@ -167,17 +167,8 @@ export async function startScoreFetch(input: {
   flags?: Flags;
   options?: { skipAfter?: boolean };
 }): Promise<StartScoreFetchResult> {
-  let context: ReturnType<typeof resolveGameContext>;
-  try {
-    context = resolveGameContext(input.game, input.region, "scores");
-  } catch (error) {
-    if (error instanceof GameAdapterError && error.code === "GAME_NOT_ENABLED") {
-      requireConfiguredSource(input.game, "scores");
-    }
-    throw error;
-  }
-
-  const scoreAdapter = requireConfiguredSource(context.game, "scores");
+  const context = resolveGameContext(input.game, input.region, "scores");
+  const scoreSource = GAME_SERVER_MODULES[context.game].scores;
 
   if (process.env.DEMO_FETCH === "true") {
     return demoScoreFetch(input.userId, context.game, context.region);
@@ -196,14 +187,7 @@ export async function startScoreFetch(input: {
   }
 
   const flags = input.flags ?? await resolveFlagsForUser(input.userId);
-  await scoreAdapter.validateToken?.({
-    game: context.game,
-    userId: input.userId,
-    region: context.region,
-    flags,
-    token: tokenToUse,
-    tokenProvided: Boolean(input.token),
-  });
+  await scoreSource.validateToken?.({ token: tokenToUse, tokenProvided: Boolean(input.token) });
 
   if (input.token) {
     await saveToken(context.game, input.userId, context.region, tokenToUse);
@@ -305,8 +289,8 @@ export async function startScoreFetch(input: {
     try {
       const deadline = Date.now() + 2 * 60 * 1000;
       let timer: ReturnType<typeof setTimeout> | undefined;
-      const adapterResult = await Promise.race([
-        scoreAdapter.fetch(fetchContext),
+      const sourceResult = await Promise.race([
+        scoreSource.fetch(fetchContext),
         new Promise<never>((_, reject) => {
           timer = setTimeout(() => {
             const error = new Error("Fetch operation timed out after 2 minutes");
@@ -317,8 +301,8 @@ export async function startScoreFetch(input: {
       ]).finally(() => clearTimeout(timer));
       await persistFetchResult({
         game: context.game, region: context.region, userId: input.userId,
-        sessionId, gameVersion, fetched: adapterResult.result,
-        backgroundWorkRef, persistExtra: adapterResult.persistExtra, deadline,
+        sessionId, gameVersion, fetched: sourceResult.result,
+        backgroundWorkRef, persistExtra: sourceResult.persistExtra, deadline,
       });
 
       await db

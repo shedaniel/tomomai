@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import pino from "pino";
-import { GAME_SERVER_MODULES, requireConfiguredSource } from "../registry";
+import { GAME_SERVER_MODULES } from "../registry";
 import type { GameFetchResult, ScoreFetchContext } from "../types";
 
 const catalog = vi.hoisted(() => ({ loaded: vi.fn(), collect: vi.fn() }));
@@ -22,7 +22,7 @@ beforeEach(() => {
 describe("CHUNITHM catalog source", () => {
   it("loads the catalog pipeline only when collection starts", async () => {
     catalog.collect.mockResolvedValue([]);
-    const source = requireConfiguredSource("chunithm", "catalog");
+    const source = GAME_SERVER_MODULES.chunithm.catalog;
     expect(catalog.loaded).not.toHaveBeenCalled();
 
     const context = {
@@ -43,7 +43,7 @@ describe("CHUNITHM score source", () => {
     scores.fetchPlayer.mockResolvedValue(result);
     const context = { game: "chunithm", region: "jp", gameVersion: 9 } as ScoreFetchContext;
 
-    const source = requireConfiguredSource("chunithm", "scores");
+    const source = GAME_SERVER_MODULES.chunithm.scores;
     expect(source.validateToken).toBeUndefined();
     expect(scores.loaded).not.toHaveBeenCalled();
 

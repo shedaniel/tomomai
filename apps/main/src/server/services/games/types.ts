@@ -52,20 +52,13 @@ export type GameFetchResult = {
   events?: NormalizedEvent[];
 };
 
-export interface ConfiguredCatalogAdapter {
-  configured: true;
+export interface CatalogSource {
   requiresToken?: (region: Region) => boolean;
   authenticate?: (region: Region, token: string) => Promise<string>;
   collect: (ctx: CatalogFetchContext) => Promise<CatalogChart[]>;
 }
 
-export type CatalogSourceAdapter = ConfiguredCatalogAdapter | { configured: false; notConfiguredReason: string };
-
 export type ScoreTokenValidationContext = {
-  game: CanonicalGameId;
-  userId: string;
-  region: Region;
-  flags: Flags;
   token: string;
   tokenProvided: boolean;
 };
@@ -94,8 +87,7 @@ export type PersistedSnapshotContext = {
   chartResolution: ChartResolutionMap;
 };
 
-export interface ConfiguredScoreAdapter {
-  configured: true;
+export interface ScoreSource {
   validateToken?: (ctx: ScoreTokenValidationContext) => void | Promise<void>;
   fetch: (ctx: ScoreFetchContext) => Promise<{
     result: GameFetchResult;
@@ -106,15 +98,13 @@ export interface ConfiguredScoreAdapter {
   }>;
 }
 
-export type ScoreAdapter = ConfiguredScoreAdapter | { configured: false; notConfiguredReason: string };
-
 export interface ReservedProfileProvider {
   user: (username: string) => Promise<ProfileData | null>;
   snapshot: (username: string, region: Region) => Promise<GameSnapshotData | null>;
 }
 
 export interface GameServerModule {
-  catalog: CatalogSourceAdapter;
-  scores: ScoreAdapter;
+  catalog: CatalogSource;
+  scores: ScoreSource;
   reserved?: ReservedProfileProvider;
 }

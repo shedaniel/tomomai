@@ -138,7 +138,7 @@ function buildOperation(route: RouteSpec) {
   }
   if (route.path.includes("/games/{game}/")) {
     responses["400"] = errorRef("Invalid game, region, path, or query parameter (UNKNOWN_GAME or UNSUPPORTED_REGION)");
-    responses["422"] = errorRef("Game or capability unavailable (GAME_NOT_ENABLED, UNSUPPORTED_CAPABILITY, SOURCE_NOT_CONFIGURED)");
+    responses["422"] = errorRef("Game or capability unavailable (GAME_NOT_ENABLED or UNSUPPORTED_CAPABILITY)");
   }
   if (route.path.endsWith("/songs") || route.path.endsWith("/parents")) {
     responses["302"] = { description: "Redirect to this game's published catalog object", headers: { Location: { schema: { type: "string", format: "uri" } } } };

@@ -62,8 +62,7 @@ export type GameAdapterErrorCode =
   | "UNKNOWN_GAME"
   | "GAME_NOT_ENABLED"
   | "UNSUPPORTED_REGION"
-  | "UNSUPPORTED_CAPABILITY"
-  | "SOURCE_NOT_CONFIGURED";
+  | "UNSUPPORTED_CAPABILITY";
 
 export class GameAdapterError extends Error {
   constructor(

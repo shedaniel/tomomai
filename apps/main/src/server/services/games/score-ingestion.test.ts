@@ -1,11 +1,11 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import type { Flags } from "@/lib/flags";
-import type { ConfiguredScoreAdapter, GameFetchResult } from "./types";
+import type { GameFetchResult, ScoreSource } from "./types";
 
 const state = vi.hoisted(() => ({
   statements: [] as { sql: string; params: unknown[] }[],
-  fetch: vi.fn<ConfiguredScoreAdapter["fetch"]>(),
-  validateToken: vi.fn<NonNullable<ConfiguredScoreAdapter["validateToken"]>>(),
+  fetch: vi.fn<ScoreSource["fetch"]>(),
+  validateToken: vi.fn<NonNullable<ScoreSource["validateToken"]>>(),
   resolveCharts: vi.fn(),
   upsertScores: vi.fn(),
   revalidate: vi.fn(),
@@ -30,10 +30,10 @@ vi.mock("./score-storage", async importOriginal => ({
   upsertScoreData: state.upsertScores,
 }));
 vi.mock("./maimai", () => ({ maimaiServerModule: {
-  scores: { configured: true, fetch: state.fetch, validateToken: state.validateToken },
+  scores: { fetch: state.fetch, validateToken: state.validateToken },
 } }));
 vi.mock("./chunithm", () => ({ chunithmServerModule: {
-  scores: { configured: true, fetch: state.fetch },
+  scores: { fetch: state.fetch },
 } }));
 vi.mock("@/lib/profile-cache", () => ({ revalidatePublicProfileForUser: state.revalidate }));
 vi.mock("@/lib/flags", () => ({ resolveFlagsForUser: state.resolveFlags }));
@@ -85,7 +85,6 @@ it("resolves the user's flags when the caller does not pass them", async () => {
   const started = await startScoreFetch(withoutFlags);
   await started.backgroundWork;
   expect(state.resolveFlags).toHaveBeenCalledWith("same-user");
-  expect(state.validateToken).toHaveBeenCalledWith(expect.objectContaining({ flags }));
   expect(state.fetch).toHaveBeenCalledWith(expect.objectContaining({ flags }));
 });
 

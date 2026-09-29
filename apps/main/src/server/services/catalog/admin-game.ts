@@ -1,6 +1,5 @@
 import { GameAdapterError, type CanonicalGameId } from "@/lib/games/types";
 import { resolveGame, getEnabledRegions } from "@/lib/games/registry";
-import { requireConfiguredSource } from "@/server/services/games/registry";
 import { gameIdSchema } from "@/lib/games/schema";
 import type { Region } from "@/lib/types";
 
@@ -11,9 +10,7 @@ export function getAdminCatalogRegions(game: CanonicalGameId): Region[] {
 export function resolveAdminGame(params: URLSearchParams): CanonicalGameId {
   const parsed = gameIdSchema.safeParse(params.get("game"));
   if (!parsed.success) throw new GameAdapterError("UNKNOWN_GAME", "Canonical game parameter is required");
-  const game = parsed.data;
-  requireConfiguredSource(game, "catalog");
-  return game;
+  return parsed.data;
 }
 
 export function getDefaultAdminCatalogRegions(game: CanonicalGameId): Region[] {

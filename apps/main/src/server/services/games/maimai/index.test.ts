@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { Flags } from "@/lib/flags";
-import { GAME_SERVER_MODULES, requireConfiguredSource } from "../registry";
+import { GAME_SERVER_MODULES } from "../registry";
 import type { GameFetchResult, ScoreFetchContext } from "../types";
 import type { FetchedMaimaiData } from "./scores/types";
 
@@ -23,18 +22,12 @@ beforeEach(() => {
 
 describe("maimai score source", () => {
   it("rejects a stored CN single-use token but accepts a newly supplied one", () => {
-    const validateToken = requireConfiguredSource("maimai", "scores").validateToken!;
-    const context = {
-      game: "maimai" as const,
-      userId: "user-1",
-      region: "cn" as const,
-      flags: {} as Flags,
-      token: "cn-cookies://token",
-    };
+    const validateToken = GAME_SERVER_MODULES.maimai.scores.validateToken!;
+    const token = "cn-cookies://token";
 
-    expect(() => validateToken({ ...context, tokenProvided: false }))
+    expect(() => validateToken({ token, tokenProvided: false }))
       .toThrow("CN_COOKIES_SINGLE_USE");
-    expect(() => validateToken({ ...context, tokenProvided: true }))
+    expect(() => validateToken({ token, tokenProvided: true }))
       .not.toThrow();
   });
 
@@ -46,7 +39,7 @@ describe("maimai score source", () => {
     const context = { game: "maimai", region: "jp", gameVersion: 14, shouldFetchAlbums: true } as ScoreFetchContext;
 
     expect(maimaiScores.loaded).not.toHaveBeenCalled();
-    const { result: normalized, persistExtra } = await requireConfiguredSource("maimai", "scores").fetch(context);
+    const { result: normalized, persistExtra } = await GAME_SERVER_MODULES.maimai.scores.fetch(context);
 
     expect(normalized).toBe(result);
     expect(maimaiScores.run).toHaveBeenCalledWith(context);

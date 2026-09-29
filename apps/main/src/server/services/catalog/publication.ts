@@ -1,5 +1,4 @@
 import type { CanonicalGameId } from "@/lib/games/types";
-import { requireConfiguredSource } from "@/server/services/games/registry";
 import { and, eq, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { parentSong, songs } from "@/lib/db/schema-pg";
@@ -11,7 +10,6 @@ import { putR2Object } from "@/lib/r2";
 import type { z } from "zod";
 
 export async function publishSongCatalog(game: CanonicalGameId): Promise<{ songCount: number; bytes: number }> {
-  requireConfiguredSource(game, "catalog");
   return db.transaction(async (tx) => {
     await tx.execute(sql`select pg_advisory_xact_lock(73641932)`);
     // One statement keeps the dictionary and its instances on the same database snapshot.

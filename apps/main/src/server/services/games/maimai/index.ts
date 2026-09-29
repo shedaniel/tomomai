@@ -3,7 +3,6 @@ import type { GameServerModule } from "../types";
 
 export const maimaiServerModule: GameServerModule = {
   catalog: {
-    configured: true,
     requiresToken: region => region !== "cn",
     async authenticate(region, token) {
       const { loginAndGetCookies } = await import("./login");
@@ -15,7 +14,6 @@ export const maimaiServerModule: GameServerModule = {
     },
   },
   scores: {
-    configured: true,
     validateToken(context) {
       if (context.token.startsWith("cn-cookies://") && !context.tokenProvided) {
         throw new Error("CN_COOKIES_SINGLE_USE: This session token is single-use and has already been consumed. Please re-authenticate via the HTTP Proxy flow.");
