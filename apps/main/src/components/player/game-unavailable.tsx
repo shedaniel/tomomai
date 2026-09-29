@@ -3,7 +3,7 @@
 import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { useGame } from "@/components/providers/game-provider";
-import { brandTitle, supportsGameFeature } from "@/lib/games/frontend";
+import { brandTitle } from "@/lib/games/frontend";
 
 export function GameUnavailable() {
   const game = useGame();
@@ -14,7 +14,7 @@ export function GameUnavailable() {
       <p className="max-w-prose text-muted-foreground" role="status">
         {t("settings.pages.fetch.unavailable", { game: game.brand.displayName })}
       </p>
-      {supportsGameFeature(game, "catalog") && <Link href="/db/songs" className="inline-flex rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted">{t("db.songs.heading")}</Link>}
+      <Link href="/db/songs" className="inline-flex rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted">{t("db.songs.heading")}</Link>
     </main>
   );
 }

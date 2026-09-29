@@ -1,6 +1,7 @@
 import { and, eq, getTableColumns, sql } from "drizzle-orm";
 import type { db } from "@/lib/db";
 import { parentSong, scoreData, snapshotRankings, snapshotScores, songs } from "@/lib/db/schema-pg";
+import { offersCapability } from "@/lib/games/capabilities";
 import { RANKING_BUCKETS } from "@/lib/games/codes";
 import { getGame } from "@/lib/games/registry";
 import { rankScores, type StoredRankings } from "@/lib/games/ranking";
@@ -135,7 +136,7 @@ export async function writeSnapshotScores(
     await connection.insert(snapshotScores).values(junctionRows.slice(index, index + 1000)).onConflictDoNothing();
   }
 
-  if (!getGame(input.game).capabilities.includes("rankings") || stored.size === 0) return null;
+  if (!offersCapability(getGame(input.game), "rankings") || stored.size === 0) return null;
   const ranking = rankScores(input.game, [...stored].map(([scoreId, { values, song }]) => ({
     scoreId,
     scoreValue: values.scoreValue,

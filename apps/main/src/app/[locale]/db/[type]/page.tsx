@@ -1,5 +1,5 @@
 import { getCurrentGame } from "@/lib/games/current";
-import { supportsGameFeature, brandTitle } from "@/lib/games/frontend";
+import { brandTitle } from "@/lib/games/frontend";
 import { getGame } from "@/lib/games/registry";
 import { InlineNotFound } from "@/components/inline-not-found";
 import { getAllUniqueSongsCached } from "@/server/queries/songs-cache";
@@ -79,7 +79,7 @@ export default async function DbTypePage({ params }: DbTypePageProps) {
   const { type } = await params;
   const game = getCurrentGame();
 
-  if (!getGame(game.id).catalogSections.some(section => section === type) || (type === "songs" ? !supportsGameFeature(game, "catalog") : game.regions.length === 0)) return <InlineNotFound />;
+  if (!getGame(game.id).catalogSections.some(section => section === type) || (type !== "songs" && game.regions.length === 0)) return <InlineNotFound />;
 
   if (type === "songs") {
     // The interactive SongsList is mounted by /db/[type]/layout so it

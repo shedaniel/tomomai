@@ -36,7 +36,7 @@ import { toast } from "sonner";
 export function FetchSettings() {
   const t = useTranslations();
   const game = useGame();
-  if (!supportsGameFeature(game, "scores") || game.regions.length === 0) return <SettingsHeader title={t("settings.pages.fetch.title")} description={t("settings.pages.fetch.unavailable", { game: game.brand.displayName })} />;
+  if (!supportsGameFeature(game, "scores")) return <SettingsHeader title={t("settings.pages.fetch.title")} description={t("settings.pages.fetch.unavailable", { game: game.brand.displayName })} />;
   return (
     <SettingsForm>
       <SettingsHeader
@@ -64,7 +64,7 @@ function FetchFields() {
   });
 
   const selectedRegion = getGameRegion(game, userData?.region);
-  const canFetchAlbums = supportsGameFeature(game, "albums") && selectedRegion !== "cn";
+  const canFetchAlbums = supportsGameFeature(game, "albums", selectedRegion);
 
   const effectiveFetchUseAlbums = selectedFetchUseAlbums !== undefined
     ? selectedFetchUseAlbums

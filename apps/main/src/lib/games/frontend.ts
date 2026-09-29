@@ -1,20 +1,34 @@
+import { offersCapability } from "./capabilities";
 import type { Region } from "./ids";
 import type { GameBrand, GameCapability, GameDefinition } from "./types";
 
-export type FrontendGame = Pick<GameDefinition, "id" | "brand" | "capabilities" | "fetch"> & {
+export type FrontendGame = Pick<GameDefinition, "id" | "brand" | "fetch"> & {
+  /** Only the catalog while no region is enabled, like the server's game resolver. */
+  capabilities: readonly GameCapability[];
+  regionCapabilityOverrides: NonNullable<GameDefinition["regionCapabilityOverrides"]>;
   regions: readonly Region[];
 };
 
 export function toFrontendGame(game: GameDefinition, regions: readonly Region[]): FrontendGame {
-  return { id: game.id, brand: game.brand, capabilities: game.capabilities, fetch: game.fetch, regions };
+  if (!offersCapability(game, "catalog")) throw new Error(`${game.brand.displayName} cannot be served without its catalog`);
+  return {
+    id: game.id,
+    brand: game.brand,
+    capabilities: regions.length > 0 ? game.capabilities : ["catalog"],
+    regionCapabilityOverrides: game.regionCapabilityOverrides ?? {},
+    fetch: game.fetch,
+    regions,
+  };
 }
 
 export function brandTitle(brand: GameBrand): string {
   return `${brand.productName} ${brand.japaneseName}`;
 }
 
-export function supportsGameFeature(game: FrontendGame, capability: GameCapability): boolean {
-  return game.capabilities.includes(capability);
+/** Whether the served game offers the feature, and in the region when one is given. A region the game does not enable offers nothing. */
+export function supportsGameFeature(game: FrontendGame, capability: GameCapability, region?: Region | null): boolean {
+  if (region == null) return offersCapability(game, capability);
+  return isGameRegion(game, region) && offersCapability(game, capability, region);
 }
 
 export function getGameRegion(game: FrontendGame, preferred?: string | null): Region | null {

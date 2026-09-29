@@ -1,3 +1,4 @@
+import { offersCapability } from "./capabilities";
 import { GameAdapterError } from "./errors";
 import type { CanonicalGameId, Region } from "./ids";
 import { getEnabledRegions, getSupportedRegions } from "./regions";
@@ -22,11 +23,12 @@ export function resolveGameContext(
   game: CanonicalGameId,
   { region, capability, regionPolicy = "enabled" }: GameAccess & { region?: Region },
 ): { game: CanonicalGameId; region?: Region } {
-  const { brand, capabilities, regionCapabilityOverrides } = getGame(game);
+  const definition = getGame(game);
+  const { brand } = definition;
   if (capability !== "catalog" && getEnabledRegions(game).length === 0) {
     throw new GameAdapterError("GAME_NOT_ENABLED", `${brand.displayName} is not enabled`, game, region, capability);
   }
-  if (!capabilities.includes(capability)) {
+  if (!offersCapability(definition, capability)) {
     throw new GameAdapterError("UNSUPPORTED_CAPABILITY", `${brand.displayName} does not support ${capability}`, game, region, capability);
   }
   if (region === undefined) return { game };
@@ -35,7 +37,7 @@ export function resolveGameContext(
   if (!regions.includes(region)) {
     throw new GameAdapterError("UNSUPPORTED_REGION", `${region} is not ${regionPolicy} for ${brand.displayName}`, game, region);
   }
-  if (regionCapabilityOverrides?.[region]?.includes(capability)) {
+  if (!offersCapability(definition, capability, region)) {
     throw new GameAdapterError("UNSUPPORTED_CAPABILITY", `${brand.displayName} does not support ${capability} in ${region}`, game, region, capability);
   }
   return { game, region };

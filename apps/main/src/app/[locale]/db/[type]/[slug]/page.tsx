@@ -1,4 +1,4 @@
-import { brandTitle, supportsGameFeature } from "@/lib/games/frontend";
+import { brandTitle } from "@/lib/games/frontend";
 import { codeOf } from "@/lib/games/codes";
 import { getGameChartType } from "@/lib/games/presentation";
 import { getCurrentGame } from "@/lib/games/current";
@@ -41,7 +41,6 @@ export async function generateMetadata({ params }: DbSlugPageProps): Promise<Met
 
   const decodedSlug = safeDecodeURIComponent(slug);
   const game = getCurrentGame();
-  if (!supportsGameFeature(game, "catalog")) return { robots: { index: false, follow: false } };
 
   const songs = await getAllUniqueSongsCached(game.id);
   const song = songs.find(s => s.slug === decodedSlug);
@@ -109,7 +108,6 @@ export default async function DbSlugPage({ params }: DbSlugPageProps) {
 
   const decodedSlug = safeDecodeURIComponent(slug);
   const game = getCurrentGame();
-  if (!supportsGameFeature(game, "catalog")) return <InlineNotFound />;
 
   const songs = await getAllUniqueSongsCached(game.id);
   const song = type === "songs" ? songs.find(s => s.slug === decodedSlug) : undefined;

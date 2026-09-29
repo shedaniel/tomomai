@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { trpc } from "@/lib/trpc-client";
 import { useGame } from "@/components/providers/game-provider";
+import { supportsGameFeature } from "@/lib/games/frontend";
 import { getSnapshotSelection, type GameSnapshotData, type GameSnapshotSummary } from "@/lib/games/player-view";
 import type { Region } from "@/lib/types";
 
@@ -17,7 +18,7 @@ export function useSnapshots(region: Region, isAuthenticated: boolean, options?:
   const [selection, setSelection] = useState<{ scope: string; id: string | null }>({ scope, id: initialSnapshots[0]?.publicId ?? null });
   const [initialScope] = useState(scope);
   const sameInitialScope = initialScope === scope;
-  const enabled = isAuthenticated && game.regions.includes(region) && game.capabilities.includes("scores");
+  const enabled = isAuthenticated && supportsGameFeature(game, "scores", region);
   const snapshotsQuery = trpc.user.getSnapshots.useQuery({ game: game.id, region }, {
     enabled,
     initialData: sameInitialScope ? initialSnapshots : undefined,

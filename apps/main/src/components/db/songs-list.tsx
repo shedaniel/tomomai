@@ -1,6 +1,5 @@
 "use client";
 
-import { supportsGameFeature } from "@/lib/games/frontend";
 import { useGame } from "@/components/providers/game-provider";
 import { FilterPanel, GenericFilter, getFilterKey } from "@/components/filter-panel";
 import { Button } from "@tomomai/ui";
@@ -80,7 +79,7 @@ export function SongsList(_: SongsListProps = {}) {
   // route). Keeping it out of props is what lets this component live in the
   // shared layout without serializing the catalog into the ISR payload.
   const { data: allSongs } = trpc.user.getAllUniqueSongs.useQuery({ game: game.id }, {
-    enabled: selectedSlug === null && supportsGameFeature(game, "catalog"),
+    enabled: selectedSlug === null,
     staleTime: 3600000, // 1 hour
     refetchOnWindowFocus: false,
   });

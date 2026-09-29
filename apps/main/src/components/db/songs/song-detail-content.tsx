@@ -8,7 +8,7 @@ import {
 import { useGame } from "@/components/providers/game-provider";
 import { codeOf } from "@/lib/games/codes";
 import { formatEstimated, formatGameScore, formatGameRating, getGameDifficulty, getGameChartType, getGameScoreLabelKey, getGameScoreGrade, getGameStatusBadges } from "@/lib/games/presentation";
-import { isGameCnExclusive } from "@/lib/games/frontend";
+import { isGameCnExclusive, supportsGameFeature } from "@/lib/games/frontend";
 import { getGame } from "@/lib/games/registry";
 import { getVersion } from "@/lib/games/versions";
 import { trpc } from "@/lib/trpc-client";
@@ -151,11 +151,12 @@ function ScoreGrid({
   );
 }
 
-export function SongChartRow({ difficulty, charts, index, data, hasTouch }: {
+export function SongChartRow({ difficulty, charts, index, data, hasNoteDetails, hasTouch }: {
   difficulty: string;
   charts: SongExtendedIdentified[];
   index: number;
   data: SongDetails;
+  hasNoteDetails: boolean;
   hasTouch: boolean;
 }) {
   const t = useTranslations();
@@ -163,7 +164,6 @@ export function SongChartRow({ difficulty, charts, index, data, hasTouch }: {
   const latestChart: SongExtendedIdentified = charts.find(c => c.gameVersion === Math.max(...charts.map(c => c.gameVersion)))!;
 
   const difficultyPresentation = getGameDifficulty(game.id, codeOf(game.id, "difficulty", difficulty));
-  const hasNoteDetails = game.capabilities.includes("score-details");
   const hasNoteData = latestChart.tapCount !== null;
   const totalNotes = hasNoteData
     ? (latestChart.tapCount ?? 0) + (latestChart.holdCount ?? 0) + (latestChart.slideCount ?? 0) + (latestChart.touchCount ?? 0) + (latestChart.breakCount ?? 0)
@@ -271,7 +271,7 @@ export function SongDetailContent({ songName, artist, slug, type, parentIds, ini
   );
   const { data: scoreData } = trpc.user.getSongScores.useQuery(
     { game: game.id, songName, artist: artist ?? initialData?.artist, type, parentIds: parentIds ?? initialData?.parentIds },
-    { enabled: hasInitialData && viewerId !== null && game.regions.length > 0 && game.capabilities.includes("scores") }
+    { enabled: hasInitialData && viewerId !== null && supportsGameFeature(game, "scores") }
   );
   const data = useMemo(() => {
     if (!initialData) return fetchedData;
@@ -289,7 +289,7 @@ export function SongDetailContent({ songName, artist, slug, type, parentIds, ini
   const allCharts = useMemo(() => {
     return Array.from(chartsByDifficulty.values()).flat();
   }, [chartsByDifficulty]);
-  const hasNoteDetails = game.capabilities.includes("score-details");
+  const hasNoteDetails = supportsGameFeature(game, "score-details");
   const hasTouch = allCharts.some(chart => chart.touchCount !== null);
 
   // Pre-compute SEO summary inputs (visible prose paragraph below the header).
@@ -465,6 +465,7 @@ export function SongDetailContent({ songName, artist, slug, type, parentIds, ini
                 charts={charts}
                 index={index}
                 data={data}
+                hasNoteDetails={hasNoteDetails}
                 hasTouch={hasTouch}
               />
             ))}
