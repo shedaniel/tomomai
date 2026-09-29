@@ -252,7 +252,13 @@ export const statsResponse = z.object({
 });
 
 export const errorResponse = z
-  .object({ error: z.string(), code: z.string().optional() })
+  .object({
+    error: z.string(),
+    code: z
+      .string()
+      .optional()
+      .describe("Stable error code for an invalid parameter, a game boundary or a fetch start refusal, when applicable."),
+  })
   .describe("Returned on 4xx and 5xx responses.");
 
 export const songCatalogue = z.object({ game: gameIdSchema, songs: z.array(songCatalogueEntry) });

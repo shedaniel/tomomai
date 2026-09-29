@@ -47,6 +47,10 @@ describe("OpenAPI document", () => {
     expect(fetch.responses["503"].headers?.["Retry-After"]).toBeDefined();
     expect(fetch.responses["412"].headers).toBeUndefined();
 
+    const error = document.components.schemas.Error as { required: string[]; properties: Record<string, { description?: string }> };
+    expect(error.required).toEqual(["error"]);
+    expect(error.properties.code.description).toContain("Stable error code");
+
     const me = operation("get", "/api/v1/me");
     expect(me.responses["400"]).toBeUndefined();
     expect(me.responses["422"]).toBeUndefined();

@@ -3,6 +3,7 @@ import { GAME_ERROR_STATUS } from "@/lib/games/errors";
 import { INVALID_PARAMETER } from "./parse-input";
 import { API_SCOPES, isInternalScope, type ScopeKey } from "./scopes";
 import { getRegistry, isGameRoute, requiredScopes, type RouteSpec } from "./registry";
+import { errorResponse } from "./schemas";
 import "./specs";
 
 /**
@@ -63,11 +64,7 @@ export function buildOpenApiDocument(baseUrl: string) {
     components: {
       securitySchemes,
       schemas: {
-        Error: {
-          type: "object",
-          required: ["error"],
-          properties: { error: { type: "string" }, code: { type: "string", description: "Stable error code for an invalid parameter, a game boundary or a fetch start refusal, when applicable." } },
-        },
+        Error: safeJsonSchema(errorResponse),
       },
     },
     paths,
