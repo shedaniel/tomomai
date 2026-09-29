@@ -1,7 +1,7 @@
 import "server-only";
 import { FETCH_STATES, type FetchState } from "@/lib/fetch-states";
 import { appendFetchState } from "@/lib/fetch-states-server";
-import { GameAdapterError } from "@/lib/games/types";
+import { requireGameSite } from "@/lib/games/sites";
 import type { GameFetchResult, NormalizedRecent, NormalizedScore, ScoreFetchContext } from "@/server/services/games/types";
 import { getLogger } from "@/lib/request-logger";
 import { uploadIconToR2 } from "@/lib/r2";
@@ -28,9 +28,7 @@ export async function fetchPlayer(ctx: ScoreFetchContext): Promise<GameFetchResu
       throw err;
     }
   }
-  if (region !== "jp" && region !== "intl") {
-    throw new GameAdapterError("UNSUPPORTED_REGION", "CHUNITHM player fetching supports JP and International only", "chunithm", region, "scores");
-  }
+  requireGameSite("chunithm", region);
   const baseUrl = gameSiteUrl("chunithm", region, chunithmMobilePaths[region]);
   const session = { cookies: await stage("login", () => loginAndGetCookies(region, token, userId, signal)) };
   await appendFetchState(sessionId, FETCH_STATES.LOGIN, "chunithm");

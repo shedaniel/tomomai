@@ -5,6 +5,7 @@ import { parentSong, songs } from "@/lib/db/schema-pg";
 import { parentCatalogue, songCatalogue } from "@/lib/api/schemas";
 import { catalogPrefix, isCatalogVersion, songCatalogKey } from "@/lib/api/catalog-location";
 import { formatSongInstanceId } from "@/lib/catalog/song-instance-id";
+import { getSupportedRegions } from "@/lib/games/regions";
 import { getAvailableVersions } from "@/lib/games/versions";
 import { putR2Object } from "@/lib/r2";
 import type { z } from "zod";
@@ -41,7 +42,7 @@ export async function publishSongCatalog(game: CanonicalGameId): Promise<{ songC
     const parents = new Map<string, z.infer<typeof parentCatalogue>["parents"][number]>();
     const slices = new Map<string, z.infer<typeof songCatalogue>>();
     // Empty slices must also overwrite R2, otherwise removing their final song leaves stale data.
-    for (const region of ["jp", "intl", "cn"] as const) {
+    for (const region of getSupportedRegions(game)) {
       for (const version of getAvailableVersions(game, region)) {
         slices.set(songCatalogKey(game, region, version.id), { game, songs: [] });
       }

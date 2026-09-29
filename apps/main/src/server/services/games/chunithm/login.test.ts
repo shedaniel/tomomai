@@ -16,6 +16,12 @@ function redirect(location: string, cookie?: string) {
 }
 
 describe("CHUNITHM authentication", () => {
+  it("rejects a region CHUNITHM has no site for before any request", async () => {
+    await expect(loginAndGetCookies("cn", "cookie://clal=existing", "internal-user"))
+      .rejects.toMatchObject({ code: "UNSUPPORTED_REGION", game: "chunithm", region: "cn" });
+    expect(mocks.fetch).not.toHaveBeenCalled();
+  });
+
   it("exchanges an International gateway cookie without sending it to the game origin", async () => {
     mocks.fetch
       .mockResolvedValueOnce(redirect("https://chunithm-net-eng.com/mobile/?ssid=exchange"))

@@ -1,7 +1,8 @@
 import "server-only";
+import type { GameSiteRegion } from "@/lib/games/registry";
 import type { SegaLoginConfig } from "../sega/login";
 
-export const chunithmMobilePaths = { jp: "/chuni-mobile/html/mobile/", intl: "/mobile/" } as const;
+export const chunithmMobilePaths = { jp: "/chuni-mobile/html/mobile/", intl: "/mobile/" } as const satisfies Record<GameSiteRegion<"chunithm">, string>;
 
 export const chunithmSegaLogin = {
   intl: {
@@ -19,4 +20,4 @@ export const chunithmSegaLogin = {
     selectAccountPath: "/chuni-mobile/html/mobile/aimeList/submit/",
     selectAccountMethod: "POST",
   },
-} satisfies Record<"intl" | "jp", SegaLoginConfig>;
+} satisfies Record<GameSiteRegion<"chunithm">, SegaLoginConfig>;

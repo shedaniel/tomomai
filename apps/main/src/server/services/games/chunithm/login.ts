@@ -1,11 +1,12 @@
 import "server-only";
+import { requireGameSite } from "@/lib/games/sites";
 import type { Region } from "@/lib/types";
 import { gameSiteUrl, requestGamePage } from "../sega/http";
 import { processSegaToken } from "../sega/login";
 import { chunithmSegaLogin } from "./login-config";
 
 export async function loginAndGetCookies(region: Region, token: string, userId: string | null = null, signal?: AbortSignal): Promise<string> {
-  if (region !== "jp" && region !== "intl") throw new Error("CHUNITHM player fetching supports JP and International only");
+  requireGameSite("chunithm", region);
   const result = await processSegaToken(chunithmSegaLogin[region], userId, token, signal);
   if (!result.isValid) throw new Error(result.error ?? "CHUNITHM login failed");
   if (result.cookiesReady && result.cookies) return result.cookies;

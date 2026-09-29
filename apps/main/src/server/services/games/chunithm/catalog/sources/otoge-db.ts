@@ -2,7 +2,8 @@ import "server-only";
 import type { Region } from "@/lib/types";
 import type { CatalogFetchContext, PendingChart } from "@/server/services/catalog/ingestion/types";
 import { codeOf } from "@/lib/games/codes";
-import { GameAdapterError } from "@/lib/games/types";
+import type { GameSiteRegion } from "@/lib/games/registry";
+import { requireGameSite } from "@/lib/games/sites";
 import { getVersionFromDate } from "@/lib/games/versions";
 import { getChunithmVersionByName, chunithmVersionProvider } from "@/lib/games/chunithm/versions";
 import { asFetcher } from "../fetcher";
@@ -11,7 +12,7 @@ export const OTOGE_DB_CHUNITHM_ROOT = "https://raw.githubusercontent.com/zvuc/ot
 const SOURCES = {
   jp: `${OTOGE_DB_CHUNITHM_ROOT}/data/music-ex.json`,
   intl: `${OTOGE_DB_CHUNITHM_ROOT}/data/music-ex-intl.json`,
-};
+} satisfies Record<GameSiteRegion<"chunithm">, string>;
 const ULTIMA = codeOf("chunithm", "difficulty", "ultima");
 const STANDARD_CHART_TYPE = codeOf("chunithm", "chartType", "standard");
 const CHARTS = [
@@ -43,9 +44,7 @@ type SongsJsonRecord = {
 } & Partial<Record<ChartPrefix | `${ChartPrefix}_${ChartField}`, string>>;
 
 function getOtogeDbSource(region: Region) {
-  if (region !== "jp" && region !== "intl") {
-    throw new GameAdapterError("UNSUPPORTED_REGION", "otoge-db CHUNITHM catalog supports JP and International only", "chunithm", region, "catalog");
-  }
+  requireGameSite("chunithm", region);
   return { url: SOURCES[region], version: chunithmVersionProvider.getCurrentVersion(region) };
 }
 

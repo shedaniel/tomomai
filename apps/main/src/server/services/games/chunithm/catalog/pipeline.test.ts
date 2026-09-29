@@ -62,7 +62,7 @@ describe("CHUNITHM otoge-db collection", () => {
   });
   it("rejects unsupported regions before source work", async () => {
     vi.stubGlobal("fetch", vi.fn());
-    await expect(collectChunithmCatalog(context("cn"))).rejects.toThrow("JP and International only");
+    await expect(collectChunithmCatalog(context("cn"))).rejects.toMatchObject({ code: "UNSUPPORTED_REGION", game: "chunithm", region: "cn" });
     expect(fetch).not.toHaveBeenCalled();
   });
   it("propagates provider HTTP failures", async () => {
