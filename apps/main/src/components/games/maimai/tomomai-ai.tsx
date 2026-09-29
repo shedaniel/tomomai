@@ -4,10 +4,10 @@ import { useGameId } from "@/components/providers/game-provider";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { SparklesIcon } from "lucide-react";
-import { splitSongs } from "@/lib/rating-calculator";
+import { codeToComboStatus, codeToDifficulty } from "@/lib/games/maimai/codes";
+import { getPlayerRankings, type GameSnapshotData } from "@/lib/games/player-view";
 import { trpc } from "@/lib/trpc-client";
 import { Region } from "@/lib/types";
-import type { SnapshotWithSongs } from "@/lib/games/maimai/types";
 import { getTransition } from "@/lib/animation-constants";
 import { AutoHeight } from "@/components/animate-ui/primitives/effects/auto-height";
 import {
@@ -524,7 +524,7 @@ const THINKING_MESSAGES = [
 ];
 
 interface TomomaiAIProps {
-  snapshotData: SnapshotWithSongs | null;
+  snapshotData: GameSnapshotData | null;
   region: Region;
   aprilFools2026: boolean;
 }
@@ -598,20 +598,21 @@ export function TomomaiAI({ snapshotData, region, aprilFools2026 }: TomomaiAIPro
 
     const songs = snapshotData.songs;
     const snapshot = snapshotData.snapshot;
-    const apCount = songs.filter(s => s.fc === "ap" || s.fc === "ap+").length;
-    const fcCount = songs.filter(s => s.fc === "fc" || s.fc === "fc+" || s.fc === "ap" || s.fc === "ap+").length;
+    const combos = songs.map(s => codeToComboStatus(s.comboStatus));
+    const apCount = combos.filter(fc => fc === "ap" || fc === "ap+").length;
+    const fcCount = combos.filter(fc => fc !== "none").length;
     const fmtScore = (achievement: number) => (achievement / 10000).toFixed(4);
     const pickRandom = <T,>(arr: T[]): T | null => arr.length > 0 ? arr[Math.floor(Math.random() * arr.length)] : null;
 
     // Use the actual B50 (best 15 new + best 35 old) sorted by rating contribution
-    const { newSongsB15, oldSongsB35 } = splitSongs(songs, snapshot.gameVersion);
-    const best50 = [...newSongsB15, ...oldSongsB35];
-    const topScore = best50.length > 0 ? best50.reduce((a, b) => a.achievement > b.achievement ? a : b) : null;
+    const { newScores, oldScores } = getPlayerRankings("maimai", snapshotData);
+    const best50 = [...newScores, ...oldScores];
+    const topScore = best50.length > 0 ? best50.reduce((a, b) => a.scoreValue > b.scoreValue ? a : b) : null;
 
     // Pick random songs from different score tiers for variety
-    const songsHigh = best50.filter(s => s.achievement >= SCORE_HIGH);
-    const songsMid = best50.filter(s => s.achievement >= SCORE_LOW && s.achievement < SCORE_HIGH);
-    const songsLow = best50.filter(s => s.achievement < SCORE_LOW);
+    const songsHigh = best50.filter(s => s.scoreValue >= SCORE_HIGH);
+    const songsMid = best50.filter(s => s.scoreValue >= SCORE_LOW && s.scoreValue < SCORE_HIGH);
+    const songsLow = best50.filter(s => s.scoreValue < SCORE_LOW);
     const pickTwo = <T,>(arr: T[]): (T | null)[] => {
       if (arr.length === 0) return [];
       const first = pickRandom(arr)!;
@@ -657,11 +658,11 @@ export function TomomaiAI({ snapshotData, region, aprilFools2026 }: TomomaiAIPro
     for (const randomSong of candidateSongs) {
 
       const ctx: RoastContext = {
-        randomSongAchievement: randomSong.achievement,
+        randomSongAchievement: randomSong.scoreValue,
         randomRecentAchievement: randomRecentPlay?.scoreValue ?? 0,
         mostPlayedRecentAchievement: mostPlayedRecentStats.bestScore,
         mostPlayedRecentCount: mostPlayedRecentStats.count,
-        topAchievement: topScore?.achievement ?? 0,
+        topAchievement: topScore?.scoreValue ?? 0,
         apCount,
         fcCount,
         songsNum: songs.length,
@@ -673,14 +674,14 @@ export function TomomaiAI({ snapshotData, region, aprilFools2026 }: TomomaiAIPro
         playerName: snapshot.displayName,
         songsNum: songs.length,
         randomSong: randomSong.songName,
-        randomSongScore: fmtScore(randomSong.achievement),
+        randomSongScore: fmtScore(randomSong.scoreValue),
         randomSongLevel: randomSong.level,
-        randomSongDifficulty: randomSong.difficulty,
+        randomSongDifficulty: codeToDifficulty(randomSong.difficultyCode),
         randomSongRating: String(randomSong.rating),
         randomSongArtist: randomSong.artist,
         rating: snapshot.rating,
-        playCount: snapshot.totalPlayCount,
-        topScore: topScore ? fmtScore(topScore.achievement) : "0",
+        playCount: snapshot.totalPlayCount ?? 0,
+        topScore: topScore ? fmtScore(topScore.scoreValue) : "0",
         apCount,
         fcCount,
         randomRecentSong: randomRecentPlay?.songName ?? randomSong.songName,

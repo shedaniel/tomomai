@@ -3,7 +3,6 @@
 import { useGame } from "@/components/providers/game-provider";
 import { getGameRegion, supportsGameFeature } from "@/lib/games/frontend";
 import type { GameSnapshotData, GameSnapshotSummary } from "@/lib/games/player-view";
-import { toMaimaiPlayerSnapshot } from "@/lib/games/maimai/legacy-view";
 import { GameUnavailable } from "@/components/player/game-unavailable";
 import { DataBanner } from "@/components/player/data-banner";
 import { DataContent } from "@/components/player/data-content";
@@ -319,7 +318,7 @@ function AvailableDashboard({ user, initialUserData, initialSnapshots, initialSn
       <ConsentGate />
 
       <FetchToastContainer state={fetchToastState} />
-      {game.id === "maimai" && <TomomaiAI snapshotData={selectedSnapshotData ? toMaimaiPlayerSnapshot(selectedSnapshotData) : null} region={selectedRegion} aprilFools2026={flags.aprilFools2026} />}
+      {game.id === "maimai" && <TomomaiAI snapshotData={selectedSnapshotData || null} region={selectedRegion} aprilFools2026={flags.aprilFools2026} />}
     </div>
   );
 }

@@ -1,7 +1,8 @@
 import { recommendationEfficiency, type RecommendationPeers } from "@/lib/games/maimai/percentile/potential";
 import { getPlayerRankings, type GameSnapshotData, type GamePlayerScore } from "@/lib/games/player-view";
 import { getGame } from "@/lib/games/registry";
-import { getGameChartRating, getGameChartTypeKey, getGameDifficultyKey, getGameScoreBenchmarks } from "@/lib/games/presentation";
+import { apBonusApplies } from "@/lib/games/maimai/rating";
+import { getGameChartTypeKey, getGameDifficultyKey, getGameScoreBenchmarks } from "@/lib/games/presentation";
 
 export interface RecommendationData {
   song: GamePlayerScore & { difficulty: string; type: string };
@@ -24,13 +25,13 @@ export const ACCURACY_VALUES = [94, 97, 98, 99, 99.5, 100, 100.5, 101];
 
 export function generateRecommendations(data: GameSnapshotData, peers: Record<string, RecommendationPeers> = {}): RecommendationData[] {
   const { game, gameVersion: version } = data.snapshot;
-  // Special charts do not contribute to either game's rating.
-  const rankings = getPlayerRankings(game, { ...data, songs: data.songs.filter(song => song.difficultyCode !== 5) });
-  const sizes = getGame(game).rating.bucketSizes;
-  const best = [...rankings.newScores, ...rankings.oldScores];
-  const currentSum = best.reduce((sum, song) => sum + song.rating, 0);
+  const { rating } = getGame(game);
+  const rankings = getPlayerRankings(game, { ...data, songs: data.songs.filter(song => rating.isRated(song.difficultyCode)) });
+  const sizes = rating.bucketSizes;
+  const bestRatings = [...rankings.newScores, ...rankings.oldScores].map(song => song.rating);
+  const currentPlayerRating = rating.playerRating(bestRatings);
   const targets = game === "maimai"
-    ? ACCURACY_VALUES.filter(value => version >= 12 || value !== 101).map(value => value * 10000)
+    ? ACCURACY_VALUES.filter(value => apBonusApplies(version) || value !== 101).map(value => value * 10000)
     : getGameScoreBenchmarks(game).map(target => target.scoreValue).sort((a, b) => a - b);
   const recommendations: RecommendationData[] = [];
 
@@ -43,17 +44,19 @@ export function generateRecommendations(data: GameSnapshotData, peers: Record<st
     for (const score of [...selected, ...remaining]) {
       const isInBest = selectedIds.has(score.songId);
       const currentScore = score.scoreValue;
-      if (game === "maimai" && currentScore >= 1005000 && (version < 12 || score.comboStatus >= 3)) continue;
+      if (game === "maimai" && currentScore >= 1005000 && (!apBonusApplies(version) || score.comboStatus >= 3)) continue;
       let order = 0;
       for (const targetScore of targets) {
         if (targetScore <= currentScore) continue;
         const isAp = game === "maimai" && targetScore === 1010000;
-        const targetRating = Math.floor(getGameChartRating(game, isAp ? 1005000 : targetScore, score.levelPrecise, score.difficultyCode, isAp ? 3 : 0, version));
+        const targetRating = Math.floor(rating.chartRating({
+          scoreValue: isAp ? 1005000 : targetScore, levelPrecise: score.levelPrecise,
+          difficultyCode: score.difficultyCode, comboStatus: isAp ? 3 : 0,
+        }, version));
         if (targetRating <= minimum) continue;
         const chartGain = targetRating - (isInBest ? score.rating : minimum);
-        const ratingGain = game === "chunithm"
-          ? Math.floor((currentSum + chartGain) / (sizes.new + sizes.old)) - Math.floor(currentSum / (sizes.new + sizes.old))
-          : chartGain;
+        // Improving a best chart or displacing the cutoff both move the best total by chartGain.
+        const ratingGain = rating.playerRating([...bestRatings, chartGain]) - currentPlayerRating;
         if (ratingGain <= 0) continue;
         const effort = (targetScore - currentScore) / 10000;
         const efficiency = isAp ? 2 : chartGain / Math.max(effort, 0.1);

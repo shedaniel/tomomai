@@ -5,7 +5,6 @@ import { Flags } from "@/lib/flags";
 import { ProfileData, Region } from "@/lib/types";
 import { TomomaiAI } from "@/components/games/maimai/tomomai-ai";
 import type { GameSnapshotData } from "@/lib/games/player-view";
-import { toMaimaiPlayerSnapshot } from "@/lib/games/maimai/legacy-view";
 import type { FrontendGame } from "@/lib/games/frontend";
 import { Suspense } from "react";
 
@@ -76,7 +75,7 @@ export function ProfilePage({
           />
         </Suspense>
       </div>
-      {game.id === "maimai" && snapshotData && <TomomaiAI snapshotData={toMaimaiPlayerSnapshot(snapshotData)} region={region} aprilFools2026={flags.aprilFools2026} />}
+      {game.id === "maimai" && snapshotData && <TomomaiAI snapshotData={snapshotData} region={region} aprilFools2026={flags.aprilFools2026} />}
     </div>
   );
 }

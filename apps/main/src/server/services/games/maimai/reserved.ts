@@ -1,23 +1,15 @@
 import "server-only";
-import {
-  chartTypeToCode,
-  codeToChartType,
-  codeToDifficulty,
-  comboStatusToCode,
-  difficultyToCode,
-  syncStatusToCode,
-  titleTypeToCode,
-} from "@/lib/games/maimai/codes";
+import { comboStatusToCode, difficultyToCode, syncStatusToCode, titleTypeToCode } from "@/lib/games/maimai/codes";
+import { maimaiPlayerRating } from "@/lib/games/maimai/rating";
 import { songInstanceId } from "@/lib/db/song-instance-id";
 import { db } from "@/lib/db";
 import { parentSong, songs } from "@/lib/db/schema-pg";
+import { rankScores } from "@/lib/games/ranking";
 import { getCurrentVersion } from "@/lib/games/versions";
-import type { VersionId } from "@/lib/games/maimai/versions";
-import { splitSongs } from "@/lib/rating-calculator";
 import type { ProfileData, Region } from "@/lib/types";
 import type { Difficulty } from "@/lib/games/maimai/types";
-import type { GameSnapshotData } from "@/lib/games/player-view";
-import { and, desc, eq, inArray, sql } from "drizzle-orm";
+import type { GamePlayerScore, GameSnapshotData } from "@/lib/games/player-view";
+import { and, desc, eq, inArray } from "drizzle-orm";
 import { unstable_cache } from "next/cache";
 
 export const RESERVED_USERNAMES = new Set(["admin", "max", "maxbas", "maxadv", "maxexp", "maxmas", "maxrem"]);
@@ -78,15 +70,23 @@ const RESERVED_PROFILES: Record<string, ReservedProfile> = {
   },
 };
 
+const MAX_SCORE = {
+  scoreValue: 1010000,
+  secondaryScore: 0,
+  comboStatus: comboStatusToCode("ap+"),
+  syncStatus: syncStatusToCode("fdx+"),
+  clearStatus: 0,
+};
+
 const songSelect = {
   songId: songInstanceId,
   songName: parentSong.songName,
   artist: parentSong.artist,
   cover: parentSong.cover,
-  difficulty: sql`${parentSong.difficulty}`.mapWith(codeToDifficulty).as("difficulty"),
+  difficultyCode: parentSong.difficulty,
   level: songs.level,
   levelPrecise: songs.levelPrecise,
-  type: sql`${parentSong.type}`.mapWith(codeToChartType).as("type"),
+  typeCode: parentSong.type,
   genre: parentSong.genre,
   addedVersion: songs.addedVersion,
 } as const;
@@ -94,7 +94,7 @@ const songSelect = {
 const fetchReservedSongs = unstable_cache(
   async (region: Region, maxDifficulty: Difficulty) => {
     const gameVersion = getCurrentVersion("maimai", region);
-    const difficulties = allowedDifficulties(maxDifficulty);
+    const difficulties = allowedDifficulties(maxDifficulty).map(difficultyToCode);
 
     const [top100, currentVersionSongs] = await Promise.all([
       db
@@ -105,7 +105,7 @@ const fetchReservedSongs = unstable_cache(
           and(
             and(eq(songs.game, "maimai"), eq(songs.region, region)),
             eq(songs.gameVersion, gameVersion),
-            inArray(parentSong.difficulty, difficulties.map(difficultyToCode))
+            inArray(parentSong.difficulty, difficulties)
           )
         )
         .orderBy(desc(songs.levelPrecise))
@@ -119,44 +119,27 @@ const fetchReservedSongs = unstable_cache(
             and(eq(songs.game, "maimai"), eq(songs.region, region)),
             eq(songs.gameVersion, gameVersion),
             inArray(songs.addedVersion, [gameVersion, gameVersion - 1]),
-            inArray(parentSong.difficulty, difficulties.map(difficultyToCode))
+            inArray(parentSong.difficulty, difficulties)
           )
         ),
     ]);
 
-    // Deduplicate by songId+difficulty
     const seen = new Set<string>();
-    const allSongs = [];
+    const scores: GamePlayerScore[] = [];
     for (const song of [...top100, ...currentVersionSongs]) {
-      const key = `${song.songId}-${song.difficulty}`;
+      const key = `${song.songId}-${song.difficultyCode}`;
       if (!seen.has(key)) {
         seen.add(key);
-        allSongs.push({
-          ...song,
-          achievement: 1010000,
-          dxScore: 0,
-          fc: "ap+" as const,
-          fs: "fdx+" as const,
-        });
+        scores.push({ ...song, ...MAX_SCORE });
       }
     }
 
-    // Compute B50 rating
-    const { newSongsB15, oldSongsB35 } = splitSongs(
-      allSongs.map((s) => ({
-        ...s,
-        addedVersion: s.addedVersion as VersionId,
-      })),
-      gameVersion
-    );
-    const rating = [...newSongsB15, ...oldSongsB35].reduce(
-      (sum, s) => sum + s.rating,
-      0
-    );
+    const { newScores, oldScores } = rankScores("maimai", scores, gameVersion);
+    const rating = maimaiPlayerRating([...newScores, ...oldScores].map(score => score.rating));
 
-    return { songs: allSongs, gameVersion, rating };
+    return { songs: scores, gameVersion, rating };
   },
-  ["reserved-songs:maimai", "parent-v1"],
+  ["reserved-songs:maimai", "codes-v1"],
   { revalidate: 3600, tags: ["reserved-songs:maimai"] }
 );
 
@@ -180,10 +163,7 @@ export function getReservedPublicUser(username: string): ProfileData | null {
   };
 }
 
-export async function getReservedSnapshotData(
-  username: string,
-  region: Region
-) {
+export async function getReservedGameSnapshot(username: string, region: Region): Promise<GameSnapshotData | null> {
   const profile = RESERVED_PROFILES[username.toLowerCase()];
   if (!profile) return null;
 
@@ -192,10 +172,8 @@ export async function getReservedSnapshotData(
 
   return {
     snapshot: {
-      id: 0,
       publicId: "fixed",
-      userId: profile.userId,
-      region,
+      game: "maimai",
       fetchedAt: new Date(),
       gameVersion,
       rating,
@@ -207,28 +185,9 @@ export async function getReservedSnapshotData(
       iconUrl: RESERVED_ICON,
       displayName: profile.displayName,
       title: "音ゲー界のカリスマ",
-      titleType: "rainbow" as const,
+      titleType: titleTypeToCode("rainbow"),
     },
     songs: reservedSongs,
-    events: [] as never[],
-  };
-}
-
-export async function getReservedGameSnapshot(username: string, region: Region): Promise<GameSnapshotData | null> {
-  const data = await getReservedSnapshotData(username, region);
-  if (!data) return null;
-  return {
-    snapshot: { ...data.snapshot, game: "maimai", titleType: titleTypeToCode(data.snapshot.titleType) },
-    songs: data.songs.map(song => ({
-      ...song,
-      difficultyCode: difficultyToCode(song.difficulty),
-      typeCode: chartTypeToCode(song.type),
-      scoreValue: song.achievement,
-      secondaryScore: song.dxScore,
-      comboStatus: comboStatusToCode(song.fc),
-      syncStatus: syncStatusToCode(song.fs),
-      clearStatus: 0,
-    })),
     events: [],
   };
 }

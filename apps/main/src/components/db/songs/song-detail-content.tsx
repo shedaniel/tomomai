@@ -6,8 +6,9 @@ import {
   ResponsiveDialogTrigger,
 } from "@tomomai/ui";
 import { useGame } from "@/components/providers/game-provider";
-import { formatGameScore, formatGameRating, formatGameLevel, getGameCode, getGameDifficultyColors, getGameDifficultyLabel, getGameChartTypeLabel, getGameChartTypeBadgeLabel, getGameChartTypeBadge, getGameChartRating, getGameScoreLabelKey, getGameScoreGrade, getGameStatusLabels } from "@/lib/games/presentation";
+import { formatGameScore, formatGameRating, formatGameLevel, getGameCode, getGameDifficultyColors, getGameDifficultyLabel, getGameChartTypeLabel, getGameChartTypeBadgeLabel, getGameChartTypeBadge, getGameScoreLabelKey, getGameScoreGrade, getGameStatusLabels } from "@/lib/games/presentation";
 import { isGameCnExclusive } from "@/lib/games/frontend";
+import { getGame } from "@/lib/games/registry";
 import { getVersion } from "@/lib/games/versions";
 import { trpc } from "@/lib/trpc-client";
 import { useSession } from "@/lib/auth-client";
@@ -92,7 +93,12 @@ function ScoreGrid({
     )}>
       {Object.entries(scores).map(([region, score]) => {
         const chart = charts.find(c => c.region === region)!;
-        const rating = score ? getGameChartRating(game.id, score.scoreValue, chart.levelPrecise, chart.difficulty, score.comboStatus, chart.gameVersion) : null;
+        const rating = score ? getGame(game.id).rating.chartRating({
+          scoreValue: score.scoreValue,
+          levelPrecise: chart.levelPrecise,
+          difficultyCode: getGameCode(game.id, "difficulty", chart.difficulty),
+          comboStatus: score.comboStatus,
+        }, chart.gameVersion) : null;
 
         const label = t(`regions.${region}`);
 

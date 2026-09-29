@@ -23,7 +23,6 @@ export const GAME_CAPABILITIES = [
 export type GameCapability = (typeof GAME_CAPABILITIES)[number];
 
 export type RankedScore = {
-  chartId: string;
   scoreValue: number;
   addedVersion: number;
   rating: number;
@@ -41,11 +40,21 @@ export type RankingBucketSizes = {
   old: number;
 };
 
-type ChartRatingInput = {
+export type ChartRatingInput = {
   scoreValue: number;
   levelPrecise: number;
-  difficulty: number;
-  comboStatus?: number;
+  difficultyCode: number;
+  comboStatus: number;
+};
+
+export type GameRating = {
+  bucketSizes: RankingBucketSizes;
+  /** The precise rating. Rankings order by it and count its integer part. */
+  chartRating(input: ChartRatingInput, version: number): number;
+  isNew(addedVersion: number, currentVersion: number): boolean;
+  isRated(difficultyCode: number): boolean;
+  /** The player rating from the integer ratings of the selected charts. */
+  playerRating(ratings: readonly number[]): number;
 };
 
 export type GameBrand = {
@@ -70,11 +79,7 @@ export interface GameDefinition {
   sites: Partial<Record<Region, GameSite>>;
   capabilities: readonly GameCapability[];
   versions: VersionTable;
-  rating: {
-    bucketSizes: RankingBucketSizes;
-    chartRating(input: ChartRatingInput, version: number): number;
-    selectRankings<T extends RankedScore>(scores: T[], currentVersion: number): RankingSelection<T>;
-  };
+  rating: GameRating;
   fetchStages: readonly FetchState[];
   fetch: { cookieLogin: { region: Region; url: string } | null };
 }

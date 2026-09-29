@@ -1,12 +1,10 @@
 import type { CanonicalGameId } from "@/lib/games/types";
 import type { GameSnapshotData, GameSnapshotSummary } from "@/lib/games/player-view";
-import { codeToChartType, codeToComboStatus, codeToDifficulty, codeToSyncStatus, codeToTitleType } from "@/lib/games/maimai/codes";
 import { songInstanceId } from "@/lib/db/song-instance-id";
 import { db } from "@/lib/db";
 import { parentSong, scoreData, snapshotScores, songs, userEvents, userSnapshots } from "@/lib/db/schema-pg";
 import { and, desc, eq } from "drizzle-orm";
 import type { Region } from "@/lib/types";
-import { requireMaimaiVersion } from "@/lib/games/maimai/versions";
 import { getLogger } from "@/lib/request-logger";
 import { deleteFromR2, isR2IconUrl, r2KeyFromIconUrl } from "@/lib/r2";
 
@@ -206,22 +204,4 @@ export async function fetchLatestSnapshotData(game: CanonicalGameId, userId: str
   if (snapshot.length === 0) return null;
 
   return readSnapshotData(game, snapshot[0]);
-}
-
-function toMaimaiSnapshot(snapshot: typeof userSnapshots.$inferSelect) {
-  return { ...snapshot, gameVersion: requireMaimaiVersion(snapshot.gameVersion), titleType: codeToTitleType(snapshot.titleType),
-    courseRankUrl: snapshot.courseRankUrl ?? "", classRankUrl: snapshot.classRankUrl ?? "", stars: snapshot.stars ?? 0 };
-}
-
-function toMaimaiSnapshotResult(result: Awaited<ReturnType<typeof fetchSnapshotData>>) {
-  if (!result) return null;
-  return {
-    snapshot: toMaimaiSnapshot(result.snapshot),
-    songs: result.songs.map(song => ({ ...song, addedVersion: requireMaimaiVersion(song.addedVersion), achievement: song.scoreValue, dxScore: song.secondaryScore, difficulty: codeToDifficulty(song.difficultyCode), type: codeToChartType(song.typeCode), fc: codeToComboStatus(song.comboStatus), fs: codeToSyncStatus(song.syncStatus) })),
-    events: result.events.map(event => ({ ...event, eventType: event.eventType ?? "eventArea" as const, currentDistance: event.currentDistance ?? 0, state: event.state ?? "not_started" as const, imageUrl: event.imageUrl ?? "" })),
-  };
-}
-
-export async function fetchLatestMaimaiSnapshotData(userId: string, region: Region) {
-  return toMaimaiSnapshotResult(await fetchLatestSnapshotData("maimai", userId, region));
 }

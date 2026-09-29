@@ -1,8 +1,7 @@
+import { getPlayerRankings } from '@/lib/games/player-view';
 import { getEnabledRegions } from '@/lib/games/regions';
-import { splitSongs } from '@/lib/rating-calculator';
 import type { Region } from '@/lib/types';
-import type { SongWithScore } from '@/lib/games/maimai/types';
-import { fetchLatestMaimaiSnapshotData } from '@/server/queries/snapshots';
+import { fetchLatestSnapshotData } from '@/server/queries/snapshots';
 import { getRatingComment } from './responses';
 import { t } from './i18n';
 
@@ -42,22 +41,22 @@ export interface ProfileSummary {
  * and old-charts (B35) rating totals alongside the stored summary fields.
  */
 export async function getProfileSummary(userId: string, region: Region): Promise<ProfileSummary | null> {
-  const data = await fetchLatestMaimaiSnapshotData(userId, region);
+  const data = await fetchLatestSnapshotData('maimai', userId, region);
   if (!data) return null;
 
-  const { snapshot, songs } = data;
-  const { newSongsB15, oldSongsB35 } = splitSongs(songs as SongWithScore[], snapshot.gameVersion);
-  const newRating = newSongsB15.reduce((sum, s) => sum + s.rating, 0);
-  const oldRating = oldSongsB35.reduce((sum, s) => sum + s.rating, 0);
+  const { snapshot } = data;
+  const { newScores, oldScores } = getPlayerRankings('maimai', data);
+  const newRating = newScores.reduce((sum, s) => sum + s.rating, 0);
+  const oldRating = oldScores.reduce((sum, s) => sum + s.rating, 0);
 
   return {
     publicId: snapshot.publicId,
     rating: snapshot.rating,
     newRating,
-    newCount: newSongsB15.length,
+    newCount: newScores.length,
     oldRating,
-    oldCount: oldSongsB35.length,
-    stars: snapshot.stars,
+    oldCount: oldScores.length,
+    stars: snapshot.stars ?? 0,
     totalPlayCount: snapshot.totalPlayCount,
     fetchedAt: snapshot.fetchedAt,
   };

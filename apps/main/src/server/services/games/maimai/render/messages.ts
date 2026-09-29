@@ -26,7 +26,7 @@ import { and, eq, sql } from "drizzle-orm";
 import type { Region } from "@/lib/types";
 import type { VersionId } from "@/lib/games/maimai/versions";
 import {
-  getReservedSnapshotData,
+  getReservedGameSnapshot,
   RESERVED_USERNAMES,
 } from "../reserved";
 import { prepareCreditData } from "./credit-data";
@@ -64,28 +64,29 @@ export async function buildExportImageMessage(opts: {
 
   // ---- reserved-profile path ----
   if (username && region && RESERVED_USERNAMES.has(username.toLowerCase())) {
-    const reserved = await getReservedSnapshotData(username.toLowerCase(), region);
+    const reserved = await getReservedGameSnapshot(username.toLowerCase(), region);
     if (!reserved) {
       return { ok: false, status: 404, error: "Reserved profile not found" };
     }
+    const { snapshot } = reserved;
     const header: RenderHeader = {
       scale,
       exp,
-      gameVersion: reserved.snapshot.gameVersion as number,
+      gameVersion: snapshot.gameVersion,
       region,
-      rating: reserved.snapshot.rating,
-      displayName: reserved.snapshot.displayName,
-      iconUrl: reserved.snapshot.iconUrl,
-      title: reserved.snapshot.title,
-      titleType: reserved.snapshot.titleType,
-      classRankUrl: reserved.snapshot.classRankUrl,
-      courseRankUrl: reserved.snapshot.courseRankUrl,
+      rating: snapshot.rating,
+      displayName: snapshot.displayName,
+      iconUrl: snapshot.iconUrl ?? "",
+      title: snapshot.title ?? "",
+      titleType: codeToTitleType(snapshot.titleType ?? 0),
+      classRankUrl: snapshot.classRankUrl ?? "",
+      courseRankUrl: snapshot.courseRankUrl ?? "",
     };
     const charts: ChartRecord[] = reserved.songs.map((s) => ({
       songId: s.songId,
-      achievement: s.achievement,
-      fc: s.fc as FullCombo,
-      fs: s.fs as FullSync,
+      achievement: s.scoreValue,
+      fc: codeToComboStatus(s.comboStatus),
+      fs: codeToSyncStatus(s.syncStatus),
     }));
     return {
       ok: true,

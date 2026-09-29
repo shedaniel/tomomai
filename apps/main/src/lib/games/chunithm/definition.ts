@@ -1,9 +1,7 @@
-import { calculateChunithmChartRating, rankIntoBuckets } from "../rating";
 import { SEGA_COOKIE_LOGIN_URL } from "../sega-gateway";
 import type { GameDefinition } from "../types";
+import { CHUNITHM_BUCKET_SIZES, chunithmChartRating, chunithmPlayerRating, isChunithmNewChart, isChunithmRatedChart } from "./rating";
 import { chunithmVersionTable } from "./versions";
-
-const bucketSizes = { new: 20, old: 30 };
 
 export const chunithmDefinition = {
   id: "chunithm",
@@ -26,13 +24,11 @@ export const chunithmDefinition = {
   capabilities: ["catalog", "scores", "recents", "rankings", "rating"],
   versions: chunithmVersionTable,
   rating: {
-    bucketSizes,
-    chartRating({ scoreValue, levelPrecise }) {
-      return calculateChunithmChartRating(scoreValue, levelPrecise);
-    },
-    selectRankings(scores, currentVersion) {
-      return rankIntoBuckets(scores, score => score.addedVersion === currentVersion, bucketSizes);
-    },
+    bucketSizes: CHUNITHM_BUCKET_SIZES,
+    chartRating: chunithmChartRating,
+    isNew: isChunithmNewChart,
+    isRated: isChunithmRatedChart,
+    playerRating: chunithmPlayerRating,
   },
   fetchStages: [
     "login",

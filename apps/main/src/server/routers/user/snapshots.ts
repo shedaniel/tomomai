@@ -1,6 +1,7 @@
 import type { GameSnapshotData } from "@/lib/games/player-view";
 import { getGame } from "@/lib/games/registry";
 import { RANKING_BUCKET_CODE } from "@/lib/games/codes";
+import { rankScores, rateScores, sortByRating } from "@/lib/games/ranking";
 import { maimaiCompatibilityGameSchema, regionSchema } from "@/lib/games/schema";
 import { gameContextInput, validateGameInput } from "./game-input";
 import { deleteUserSnapshot, fetchSnapshotData, fetchUserSnapshots } from "@/server/queries/snapshots";
@@ -10,10 +11,9 @@ import { parentSong, scoreData, snapshotRankings, snapshotScores, songs, userSna
 import { fetchRatingHistory } from "@/server/queries/rating-history";
 import { buildChartResolution, upsertScoreData, scoreDataKey, type ScoreDataValues } from "@/server/services/games/score-storage";
 import { getVersion, getAvailableVersions } from "@/lib/games/versions";
-import { addRatingsAndSort } from '@/lib/rating-calculator';
 import { protectedProcedure, router } from '@/lib/trpc';
 import { TRPCError } from '@trpc/server';
-import { and, count, eq, sql } from 'drizzle-orm';
+import { and, count, eq } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
 import { z } from 'zod';
 import { revalidatePublicProfileForUser } from '@/lib/profile-cache';
@@ -82,26 +82,26 @@ export const snapshotsRouter = router({
         });
       }
 
-      const songsWithScores = await db
+      const scores = await db
         .select({
           songName: parentSong.songName,
           artist: parentSong.artist,
           cover: parentSong.cover,
-          difficulty: sql`${parentSong.difficulty}`.mapWith(codeToDifficulty).as("difficulty"),
+          difficultyCode: parentSong.difficulty,
           level: songs.level,
           levelPrecise: songs.levelPrecise,
-          type: sql`${parentSong.type}`.mapWith(codeToChartType).as("type"),
-          gameVersion: songs.addedVersion,
-          achievement: scoreData.scoreValue,
-          dxScore: scoreData.secondaryScore,
-          fc: sql`${scoreData.comboStatus}`.mapWith(codeToComboStatus).as("fc"),
-          fs: sql`${scoreData.syncStatus}`.mapWith(codeToSyncStatus).as("fs"),
+          typeCode: parentSong.type,
+          addedVersion: songs.addedVersion,
+          scoreValue: scoreData.scoreValue,
+          secondaryScore: scoreData.secondaryScore,
+          comboStatus: scoreData.comboStatus,
+          syncStatus: scoreData.syncStatus,
         })
         .from(snapshotScores)
         .innerJoin(scoreData, eq(snapshotScores.scoreId, scoreData.id))
         .innerJoin(songs, eq(scoreData.songId, songs.id))
         .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
-        .where(and(eq(snapshotScores.game, "maimai"), eq(snapshotScores.snapshotId, snapshot[0].id)))
+        .where(and(eq(snapshotScores.game, input.game), eq(snapshotScores.snapshotId, snapshot[0].id)))
         .orderBy(parentSong.songName, parentSong.difficulty);
 
       return {
@@ -120,9 +120,20 @@ export const snapshotsRouter = router({
           totalPlayCount: snapshot[0].totalPlayCount,
           currentVersionPlayCount: snapshot[0].versionPlayCount,
         },
-        songs: addRatingsAndSort(songsWithScores, snapshot[0].gameVersion).map(song => ({
-          ...song,
-          gameVersion: getVersion(input.game, song.gameVersion)?.shortName ?? String(song.gameVersion),
+        songs: sortByRating(rateScores(input.game, scores, snapshot[0].gameVersion)).map(score => ({
+          songName: score.songName,
+          artist: score.artist,
+          cover: score.cover,
+          difficulty: codeToDifficulty(score.difficultyCode),
+          level: score.level,
+          levelPrecise: score.levelPrecise,
+          type: codeToChartType(score.typeCode),
+          gameVersion: getVersion(input.game, score.addedVersion)?.shortName ?? String(score.addedVersion),
+          achievement: score.scoreValue,
+          dxScore: score.secondaryScore,
+          fc: codeToComboStatus(score.comboStatus),
+          fs: codeToSyncStatus(score.syncStatus),
+          rating: score.rating,
         })),
         iconUrl: snapshot[0].iconUrl,
       };
@@ -145,7 +156,7 @@ export const snapshotsRouter = router({
         })
         .from(songs)
         .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
-        .where(and(eq(songs.game, "maimai"), eq(songs.region, input.region)))
+        .where(and(eq(songs.game, input.game), eq(songs.region, input.region)))
         .groupBy(songs.gameVersion);
 
       const versionsWithSongsSet = new Set(
@@ -274,17 +285,15 @@ export const snapshotsRouter = router({
           }
         }
 
-        const { rating } = getGame(input.game);
         const ranked = newScoreData.map(score => {
           const song = songsById.get(score.songId)!;
           return {
-            ...score, chartId: song.id.toString(), addedVersion: song.addedVersion,
-            rating: rating.chartRating({ ...score, difficulty: song.difficulty, levelPrecise: song.levelPrecise }, input.targetVersion),
+            ...score, addedVersion: song.addedVersion, difficultyCode: song.difficulty, levelPrecise: song.levelPrecise,
             scoreId: scoreDataLookup.get(scoreDataKey(score))!,
           };
         });
-        const selected = rating.selectRankings(ranked, input.targetVersion);
-        newRating = [...selected.newScores, ...selected.oldScores].reduce((sum, score) => sum + score.rating, 0);
+        const selected = rankScores(input.game, ranked, input.targetVersion);
+        newRating = getGame(input.game).rating.playerRating([...selected.newScores, ...selected.oldScores].map(score => score.rating));
         const rankingRows = [
           ...selected.newScores.map((score, rank) => ({ game: input.game, snapshotId: newSnapshotInternalId, bucket: RANKING_BUCKET_CODE.new, rank, scoreId: score.scoreId })),
           ...selected.oldScores.map((score, rank) => ({ game: input.game, snapshotId: newSnapshotInternalId, bucket: RANKING_BUCKET_CODE.old, rank, scoreId: score.scoreId })),

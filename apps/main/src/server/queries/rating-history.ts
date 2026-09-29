@@ -1,7 +1,7 @@
 import { and, eq, inArray } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { parentSong, scoreData, snapshotRankings, songs, userSnapshots } from "@/lib/db/schema-pg";
-import { getGame } from "@/lib/games/registry";
+import { rankScores } from "@/lib/games/ranking";
 import { getGameDifficultyKey } from "@/lib/games/presentation";
 import type { CanonicalGameId } from "@/lib/games/types";
 import type { Region } from "@/lib/types";
@@ -12,7 +12,7 @@ type HistoryScore = {
   parentId: bigint;
   songName: string;
   cover: string;
-  difficulty: number;
+  difficultyCode: number;
   levelPrecise: number;
   addedVersion: number;
   scoreValue: number;
@@ -34,7 +34,6 @@ function dailySnapshots(snapshots: HistorySnapshot[]) {
 }
 
 export function buildRatingHistory(game: CanonicalGameId, snapshots: HistorySnapshot[], scores: HistoryScore[]) {
-  const { rating } = getGame(game);
   const bySnapshot = new Map<number, HistoryScore[]>();
   for (const score of scores) {
     const entries = bySnapshot.get(score.snapshotId) ?? [];
@@ -43,12 +42,8 @@ export function buildRatingHistory(game: CanonicalGameId, snapshots: HistorySnap
   }
   const changesBySnapshot = new Map<number, RatingChange[]>();
   const rank = (snapshot: HistorySnapshot) => {
-    const selection = rating.selectRankings((bySnapshot.get(snapshot.id) ?? []).map(score => ({
-      ...score,
-      chartId: score.parentId.toString(),
-      rating: rating.chartRating(score, snapshot.gameVersion),
-    })), snapshot.gameVersion);
-    return [...selection.newScores, ...selection.oldScores];
+    const { newScores, oldScores } = rankScores(game, bySnapshot.get(snapshot.id) ?? [], snapshot.gameVersion);
+    return [...newScores, ...oldScores];
   };
   const days = dailySnapshots(snapshots);
   for (let index = 1; index < days.length; index++) {
@@ -58,15 +53,15 @@ export function buildRatingHistory(game: CanonicalGameId, snapshots: HistorySnap
     const currentScores = rank(current);
     const previousScores = rank(previous);
     if (!currentScores.length || !previousScores.length) continue;
-    const previousRatings = new Map(previousScores.map(score => [score.chartId, score.rating]));
+    const previousRatings = new Map(previousScores.map(score => [score.parentId, score.rating]));
     const changes: RatingChange[] = [];
     for (const score of currentScores) {
-      const oldRating = previousRatings.get(score.chartId);
+      const oldRating = previousRatings.get(score.parentId);
       if (oldRating !== undefined && score.rating <= oldRating) continue;
       changes.push({
         songName: score.songName,
         cover: score.cover,
-        difficulty: getGameDifficultyKey(game, score.difficulty),
+        difficulty: getGameDifficultyKey(game, score.difficultyCode),
         oldRating,
         newRating: score.rating,
         changeType: oldRating === undefined ? "new" : "improved",
@@ -104,7 +99,7 @@ export async function fetchRatingHistory(game: CanonicalGameId, userId: string, 
     parentId: parentSong.id,
     songName: parentSong.songName,
     cover: parentSong.cover,
-    difficulty: parentSong.difficulty,
+    difficultyCode: parentSong.difficulty,
     levelPrecise: songs.levelPrecise,
     addedVersion: songs.addedVersion,
     scoreValue: scoreData.scoreValue,

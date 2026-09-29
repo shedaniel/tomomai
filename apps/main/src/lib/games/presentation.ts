@@ -1,4 +1,5 @@
 import { ACHIEVEMENTS } from "@/lib/games/maimai/grades";
+import { apBonusApplies } from "@/lib/games/maimai/rating";
 import { GAME_CODES, RANKING_BUCKETS, getGrade, keyOf } from "./codes";
 import { getGame } from "./registry";
 import type { CanonicalGameId } from "./types";
@@ -102,16 +103,12 @@ export function getGameChartTypeBadge(game: CanonicalGameId, value: string): str
   return assets[game]?.[value] ?? null;
 }
 
-export function getGameChartRating(game: CanonicalGameId, scoreValue: number, levelPrecise: number, difficulty: string | number, comboStatus: number, version: number): number {
-  return getGame(game).rating.chartRating({ scoreValue, levelPrecise, difficulty: getGameCode(game, "difficulty", difficulty), comboStatus }, version);
-}
-
 export function getGameScoreLabelKey(game: CanonicalGameId): string {
   return { maimai: "db.songs.detail.achievement", chunithm: "db.songs.detail.score" }[game];
 }
 
 export function getGameScoreGrade(game: CanonicalGameId, scoreValue: number, version: number, comboStatus: number): string {
-  if (game === "maimai" && version >= 12 && comboStatus >= 3) return "SSS+ AP";
+  if (game === "maimai" && apBonusApplies(version) && comboStatus >= 3) return "SSS+ AP";
   return getGrade(game, scoreValue);
 }
 
@@ -124,7 +121,7 @@ export function getGameScoreBenchmarks(game: CanonicalGameId): readonly { scoreV
 }
 
 export function getGameRatingBonuses(game: CanonicalGameId, version: number): readonly { label: string; scoreValue: number; comboStatus: number }[] {
-  return game === "maimai" && version >= 12 ? [{ label: "AP", scoreValue: 1005000, comboStatus: 3 }] : [];
+  return game === "maimai" && apBonusApplies(version) ? [{ label: "AP", scoreValue: 1005000, comboStatus: 3 }] : [];
 }
 
 export function getGameCatalogSections(game: CanonicalGameId): readonly string[] {

@@ -58,3 +58,24 @@ it.each([
   expect(exported.metadata.gameVersion).toBe(snapshotName);
   expect(exported.songs.map(song => song.gameVersion)).toEqual(songNames);
 });
+
+it("exports scores in rating order with each chart's integer rating and legacy keys", async () => {
+  const snapshot: Partial<typeof userSnapshots.$inferSelect> = {
+    id: 1, publicId: "snapshot", userId: "same-owner", game: "maimai", region: "jp", gameVersion: 12, rating: 15000,
+    versionPlayCount: 0, totalPlayCount: 0, iconUrl: "", displayName: "Player", title: "Title", titleType: 0,
+  };
+  db.responses.push(
+    [Object.keys(getTableColumns(userSnapshots)).map(column => snapshot[column as keyof typeof snapshot] ?? null)],
+    [
+      ["C", "Artist", "", 3, "13", 131, 0, 12, 1000000, 0, 0, 0],
+      ["B", "Artist", "", 3, "13", 130, 1, 12, 1005000, 0, 0, 0],
+      ["A", "Artist", "", 3, "13", 130, 1, 12, 1005000, 0, 3, 5],
+    ],
+  );
+  const exported = await caller().exportSnapshotData({ game: "maimai", snapshotId: "snapshot" });
+  expect(exported.songs.map(song => [song.songName, song.rating, song.difficulty, song.type, song.fc, song.fs])).toEqual([
+    ["A", 293, "master", "dx", "ap", "fdx+"],
+    ["B", 292, "master", "dx", "none", "none"],
+    ["C", 282, "master", "std", "none", "none"],
+  ]);
+});

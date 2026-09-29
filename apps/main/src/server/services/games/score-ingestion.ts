@@ -21,6 +21,7 @@ import {
 import { appendFetchState } from "@/lib/fetch-states-server";
 import { getCurrentVersion } from "@/lib/games/versions";
 import { RANKING_BUCKET_CODE, keyOf } from "@/lib/games/codes";
+import { rankScores } from "@/lib/games/ranking";
 import { getGame, resolveGameContext } from "@/lib/games/registry";
 import type { CanonicalGameId } from "@/lib/games/types";
 import type { GameFetchResult, NormalizedScore, PersistedSnapshotContext, ScoreFetchContext } from "./types";
@@ -74,14 +75,6 @@ type ResolvedScore = {
   song: DbSong;
   songId: bigint;
   dataKey: string;
-};
-
-type RankedResolvedScore = {
-  chartId: string;
-  scoreValue: number;
-  addedVersion: number;
-  rating: number;
-  scoreId: number;
 };
 
 function codeName(game: CanonicalGameId, kind: "difficulty" | "chartType", code: number): string {
@@ -439,25 +432,21 @@ export async function persistFetchResult(input: PersistFetchResultInput): Promis
     }
 
     if (definition.capabilities.includes("rankings") && resolvedScores.length > 0) {
-      const rankedScores: RankedResolvedScore[] = [];
+      const rankedScores = [];
       for (const resolved of resolvedScores) {
         const scoreId = scoreDataLookup.get(resolved.dataKey);
         if (scoreId === undefined) continue;
         rankedScores.push({
-          chartId: resolved.song.id.toString(),
-          scoreValue: resolved.score.scoreValue,
-          addedVersion: resolved.song.addedVersion,
-          rating: definition.rating.chartRating({
-            scoreValue: resolved.score.scoreValue,
-            levelPrecise: resolved.song.levelPrecise,
-            difficulty: resolved.song.difficulty,
-            comboStatus: resolved.score.comboStatus,
-          }, gameVersion),
           scoreId,
+          scoreValue: resolved.score.scoreValue,
+          comboStatus: resolved.score.comboStatus,
+          levelPrecise: resolved.song.levelPrecise,
+          difficultyCode: resolved.song.difficulty,
+          addedVersion: resolved.song.addedVersion,
         });
       }
 
-      const rankingSelection = definition.rating.selectRankings(rankedScores, gameVersion);
+      const rankingSelection = rankScores(input.game, rankedScores, gameVersion);
       const rankingRows: (typeof snapshotRankings.$inferInsert)[] = [
         ...rankingSelection.newScores.map((score, rank) => ({
           game: input.game,

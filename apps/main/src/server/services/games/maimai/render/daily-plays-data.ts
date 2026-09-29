@@ -4,10 +4,10 @@ import { songInstanceId } from "@/lib/db/song-instance-id";
 import { db } from '@/lib/db';
 import { parentSong, songs, user, userRecentSongs, userSnapshots } from '@/lib/db/schema-pg';
 import { and, desc, eq, gte, lt, lte, sql } from 'drizzle-orm';
-import { VersionId } from '@/lib/games/maimai/versions';
+import type { VersionId } from '@/lib/games/maimai/versions';
 import { Region } from '@/lib/types';
 import type { Difficulty, FullCombo, FullSync, SongType } from '@/lib/games/maimai/types';
-import { calculateSongRating } from '@/lib/rating-calculator';
+import { maimaiChartRating } from '@/lib/games/maimai/rating';
 import type { SnapshotMetadata } from './credit-data';
 
 /**
@@ -70,7 +70,6 @@ export interface DailyPlay {
   levelPrecise: number;
   type: SongType;
   addedVersion: number;
-  /** Computed via calculateSongRating. */
   rating: number;
 }
 
@@ -116,15 +115,15 @@ export async function prepareDailyPlaysData(
     .select({
       id: userRecentSongs.id,
       playedAt: userRecentSongs.playedAt,
-      achievement: userRecentSongs.scoreValue,
-      fc: sql`${userRecentSongs.comboStatus}`.mapWith(codeToComboStatus).as("fc"),
-      fs: sql`${userRecentSongs.syncStatus}`.mapWith(codeToSyncStatus).as("fs"),
+      scoreValue: userRecentSongs.scoreValue,
+      comboStatus: userRecentSongs.comboStatus,
+      syncStatus: userRecentSongs.syncStatus,
       songPublicId: songInstanceId,
       songName: parentSong.songName,
       cover: parentSong.cover,
-      difficulty: sql`${parentSong.difficulty}`.mapWith(codeToDifficulty).as("difficulty"),
+      difficultyCode: parentSong.difficulty,
       levelPrecise: songs.levelPrecise,
-      type: sql`${parentSong.type}`.mapWith(codeToChartType).as("type"),
+      typeCode: parentSong.type,
       addedVersion: songs.addedVersion,
     })
     .from(userRecentSongs)
@@ -181,20 +180,17 @@ export async function prepareDailyPlaysData(
   const plays: DailyPlay[] = rows.map(row => ({
     id: row.id,
     playedAt: row.playedAt,
-    achievement: row.achievement,
-    fc: row.fc as FullCombo,
-    fs: row.fs as FullSync,
+    achievement: row.scoreValue,
+    fc: codeToComboStatus(row.comboStatus),
+    fs: codeToSyncStatus(row.syncStatus),
     songPublicId: row.songPublicId,
     songName: row.songName,
     cover: row.cover,
-    difficulty: row.difficulty as Difficulty,
+    difficulty: codeToDifficulty(row.difficultyCode),
     levelPrecise: row.levelPrecise,
-    type: row.type as SongType,
+    type: codeToChartType(row.typeCode),
     addedVersion: row.addedVersion,
-    rating: Math.floor(calculateSongRating(
-      { difficulty: row.difficulty as Difficulty, achievement: row.achievement, fc: row.fc as FullCombo, levelPrecise: row.levelPrecise },
-      gameVersion,
-    )),
+    rating: Math.floor(maimaiChartRating(row, gameVersion)),
   }));
 
   if (plays.length === 0) {

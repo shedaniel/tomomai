@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@/server/queries/snapshots", () => ({ fetchLatestMaimaiSnapshotData: vi.fn() }));
+vi.mock("@/server/queries/snapshots", () => ({ fetchLatestSnapshotData: vi.fn() }));
 
 import { resolveRegion } from "./region";
 

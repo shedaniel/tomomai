@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { GAME_CODES } from "./codes";
 import { getEnabledRegions } from "./regions";
 import { getGame, requireCapability, resolveGameContext } from "./registry";
 import { getGameSite } from "./sites";
@@ -21,6 +22,14 @@ describe("game definitions", () => {
     const { capabilities } = getGame(game);
     for (const capability of capabilities) expect(GAME_CAPABILITIES).toContain(capability);
     expect(capabilities).toContain("catalog");
+  });
+
+  it.each([
+    { game: "maimai", unrated: ["utage"] },
+    { game: "chunithm", unrated: ["worlds-end"] },
+  ] as const)("rates every $game difficulty except $unrated", ({ game, unrated }) => {
+    const { isRated } = getGame(game).rating;
+    expect(GAME_CODES[game].difficulty.filter((_, code) => !isRated(code))).toEqual(unrated);
   });
 
   it.each(CANONICAL_GAME_IDS)("points the %s cookie login at a site the game has", game => {

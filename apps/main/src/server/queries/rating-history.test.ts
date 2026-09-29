@@ -5,7 +5,7 @@ import { buildRatingHistory } from "./rating-history";
 const snapshot = (id: number, date: string, rating: number, gameVersion = 17) => ({ id, fetchedAt: new Date(date), rating, gameVersion });
 const score = (snapshotId: number, parentId: bigint, scoreValue: number, addedVersion = 17) => ({
   snapshotId, parentId, scoreValue, addedVersion, songName: `song ${parentId}`, cover: "cover.webp",
-  difficulty: 4, levelPrecise: 140, comboStatus: 0,
+  difficultyCode: 4, levelPrecise: 140, comboStatus: 0,
 });
 
 describe("rating history", () => {

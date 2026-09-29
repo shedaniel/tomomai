@@ -1,6 +1,7 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { toPublicGameSnapshot } from "./public-player";
 import type { GameSnapshotData } from "./player-view";
+import { getGame } from "./registry";
 
 const data: GameSnapshotData = {
   snapshot: { publicId: "snapshot", game: "chunithm", displayName: "Player", rating: 1600, gameVersion: 1, fetchedAt: new Date(), totalPlayCount: 100, versionPlayCount: 10 },
@@ -24,6 +25,17 @@ describe("public game snapshots", () => {
     expect(result.songs[0]).not.toHaveProperty("dxScore");
     expect(result.songs[0].chartRating).toBeGreaterThan(0);
     expect(result.songs[0]).toMatchObject({ secondaryScore: null, comboStatus: 0, syncStatus: 0, clearStatus: 0 });
+  });
+
+  it("rates each score once and publishes that rating", () => {
+    const chartRating = vi.spyOn(getGame("chunithm").rating, "chartRating");
+    try {
+      const result = toPublicGameSnapshot("chunithm", data, { profileShowAllScores: true, profileShowScoreDetails: false, profileShowPlayCounts: false });
+      expect(chartRating).toHaveBeenCalledTimes(data.songs.length);
+      expect(result.songs.map(song => song.chartRating)).toEqual(chartRating.mock.results.map(call => call.value));
+    } finally {
+      chartRating.mockRestore();
+    }
   });
 
   it("rejects a snapshot from a different game", () => {

@@ -1,6 +1,6 @@
 import type { EventData } from "@/lib/types";
 import type { CanonicalGameId } from "./types";
-import { getGame } from "./registry";
+import { rankScores } from "./ranking";
 
 export type GamePlayerScore = {
   songId: string;
@@ -68,15 +68,9 @@ export type GameSnapshotSummary = {
   totalPlayCount: number;
 };
 
+/** The snapshot's ranking selection, plus `rated`: every score with its precise rating. */
 export function getPlayerRankings(game: CanonicalGameId, data: GameSnapshotData) {
-  const { rating } = getGame(game);
-  const version = data.snapshot.gameVersion;
-  const rated = data.songs.map(score => ({
-    ...score,
-    chartId: score.songId,
-    rating: score.chartRating ?? rating.chartRating({ ...score, difficulty: score.difficultyCode }, version),
-  }));
-  return rating.selectRankings(rated, version);
+  return rankScores(game, data.songs, data.snapshot.gameVersion);
 }
 
 export function getSnapshotSelection(snapshots: readonly Pick<GameSnapshotSummary, "id">[], selected: string | null): string | null {

@@ -6,7 +6,8 @@ import { Fragment, useState } from "react";
 import { SongDetailChart, UserScore } from "./types";
 import { useTranslations } from "next-intl";
 import { useGame } from "@/components/providers/game-provider";
-import { formatGameScore, formatGameRating, getGameChartRating, getGameDifficultyColors, getGameDifficultyLabel, getGameScoreBenchmarks, getGameRatingBonuses, getGameScoreLabelKey } from "@/lib/games/presentation";
+import { getGame } from "@/lib/games/registry";
+import { formatGameScore, formatGameRating, getGameCode, getGameDifficultyColors, getGameDifficultyLabel, getGameScoreBenchmarks, getGameRatingBonuses, getGameScoreLabelKey } from "@/lib/games/presentation";
 
 type SongExtendedIdentified = SongDetailChart & { region: Region; gameVersion: number };
 
@@ -14,7 +15,8 @@ function SongChartDialogGrid({ chart, score }: { chart: SongExtendedIdentified; 
   const t = useTranslations();
   const game = useGame();
   const benchmarks = getGameScoreBenchmarks(game.id);
-  const rating = (value: number, comboStatus = 0) => `${chart.levelPreciseEstimated ? "≈" : ""}${formatGameRating(game.id, getGameChartRating(game.id, value, chart.levelPrecise, chart.difficulty, comboStatus, chart.gameVersion))}`;
+  const difficultyCode = getGameCode(game.id, "difficulty", chart.difficulty);
+  const rating = (scoreValue: number, comboStatus = 0) => `${chart.levelPreciseEstimated ? "≈" : ""}${formatGameRating(game.id, getGame(game.id).rating.chartRating({ scoreValue, levelPrecise: chart.levelPrecise, difficultyCode, comboStatus }, chart.gameVersion))}`;
   return <div className="grid grid-cols-[minmax(100px,5fr)_minmax(100px,1fr)] rounded-md overflow-hidden border">
     <div className="contents text-xs bg-accent/50 font-medium text-muted-foreground">
       <div className="py-2 px-3 border-b border-r">{t(getGameScoreLabelKey(game.id))}</div>
