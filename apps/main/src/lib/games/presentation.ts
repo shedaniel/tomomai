@@ -36,7 +36,6 @@ export function formatGameScoreDelta(game: CanonicalGameId, from: number, to: nu
   return presentationOf(game).formatScoreDelta(from, to);
 }
 
-/** Whole ratings show as integers. Scaled ratings and averages show two decimals. */
 export function formatGameRating(game: CanonicalGameId, value: number | null | undefined, { average = false } = {}): string {
   if (value == null || !Number.isFinite(value)) return missingValue;
   const { scale } = presentationOf(game).ratingRules;
@@ -61,7 +60,6 @@ export function getGameChartType(game: CanonicalGameId, code: number): ChartType
     ?? { label: `#${code}`, hex: "#71717a", classes: { ring: "ring-border", chip: "bg-muted text-muted-foreground" } };
 }
 
-/** The chart type label, or null when the game never shows its chart type. */
 export function getGameChartTypeBadgeLabel(game: CanonicalGameId, code: number): string | null {
   const chartType = getGameChartType(game, code);
   return chartType.implicit ? null : chartType.label;

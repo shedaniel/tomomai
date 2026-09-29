@@ -122,7 +122,6 @@ export type GradeRow = {
 export type RatingRules = {
   /** Stored ratings are the shown rating times this. */
   scale: 1 | 100;
-  /** How the best charts combine into the player rating. */
   aggregation: "sum" | "average";
   /** The rating history axis step, in stored units. */
   axisStep: number;
