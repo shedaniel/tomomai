@@ -2,7 +2,7 @@ import { type NextRequest } from "next/server";
 import { withGameApiKey as withApiKey } from "@/lib/api/game-protect";
 import { parseQuery } from "@/lib/api/parse-query";
 import { zodJson } from "@/lib/api/zod-response";
-import { startScoreFetch } from "@/server/services/games/score-ingestion";
+import { startScoreFetch } from "@/server/services/games/fetch-sessions";
 import { mapFetchStartError } from "@/lib/api/fetch-errors";
 import { spec } from "./spec";
 

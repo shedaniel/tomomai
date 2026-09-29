@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { verifyCnProxyToken } from "@/server/services/games/maimai/cn-proxy-token";
 import { formatCnCookies } from "@/lib/games/token-format";
 import { deleteToken } from "@/server/services/games/tokens";
-import { startScoreFetch } from "@/server/services/games/score-ingestion";
+import { startScoreFetch } from "@/server/services/games/fetch-sessions";
 import { fetchStartRejection } from "@/server/services/games/fetch-errors";
 import { siteRoot, siteUrl } from "@/lib/games/sites";
 import { requestGameSite, responseCookies } from "@/server/services/games/sega/http";

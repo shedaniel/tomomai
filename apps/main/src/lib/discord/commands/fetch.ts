@@ -1,7 +1,7 @@
 import { db } from '@/lib/db';
 import { parseStatusStates } from '@/lib/fetch-states';
 import { getGame } from '@/lib/games/registry';
-import { getScoreFetchStatus, startScoreFetch } from '@/server/services/games/score-ingestion';
+import { getScoreFetchStatus, startScoreFetch } from '@/server/services/games/fetch-sessions';
 import { account, user } from '@/lib/db/schema-pg';
 import { getLogger } from '@/lib/request-logger';
 import { waitUntil } from '@vercel/functions';

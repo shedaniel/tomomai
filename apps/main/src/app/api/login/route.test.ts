@@ -12,7 +12,7 @@ vi.mock("@/lib/request-logger", () => ({
 vi.mock("@/lib/security/middleware", () => ({
   securityMiddleware: async () => new Response(null), validateContentType: () => null,
 }));
-vi.mock("@/server/services/games/score-ingestion", () => ({ startScoreFetch: mocks.start, getScoreFetchStatus: vi.fn() }));
+vi.mock("@/server/services/games/fetch-sessions", () => ({ startScoreFetch: mocks.start, getScoreFetchStatus: vi.fn() }));
 vi.mock("@/lib/trpc", async () => {
   const { initTRPC } = await import("@trpc/server");
   const t = initTRPC.context<{ session: { user: { id: string } } }>().create();

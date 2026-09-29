@@ -9,7 +9,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock("@/lib/fetch-states-server", () => ({ appendFetchState: mocks.progress }));
 vi.mock("@/lib/request-logger", () => ({ getLogger: () => ({ child: mocks.child }) }));
 
-import { createFetchRun } from "./fetch-run";
+import { createFetchRun, fetchFailure, FetchStageError } from "./fetch-run";
 import type { ScoreFetchContext } from "./types";
 
 function context(signal = new AbortController().signal): ScoreFetchContext {
@@ -36,7 +36,7 @@ describe("fetch run", () => {
     const run = createFetchRun(context());
     await expect(run.stage("profile", async () => "player", "player_data")).resolves.toBe("player");
     expect(recorded).toBe(true);
-    expect(mocks.progress).toHaveBeenCalledExactlyOnceWith(BigInt(12), "player_data", "chunithm");
+    expect(mocks.progress).toHaveBeenCalledExactlyOnceWith(BigInt(12), "player_data");
     expect(mocks.log.info).toHaveBeenCalledWith({ stepType: "profile", durationMs: expect.any(Number) }, "Fetch stage completed");
   });
 
@@ -45,11 +45,19 @@ describe("fetch run", () => {
     expect(mocks.progress).not.toHaveBeenCalled();
   });
 
-  it("logs a failed stage once and rethrows it without recording progress", async () => {
+  it("rethrows a failed stage with its step and message for the fetch to log, recording no progress", async () => {
     const failure = new Error("page changed");
-    await expect(createFetchRun(context()).stage("scores", async () => { throw failure; }, "song_data:basic")).rejects.toBe(failure);
-    expect(mocks.log.warn).toHaveBeenCalledExactlyOnceWith({ err: failure, stepType: "scores", durationMs: expect.any(Number) }, "Fetch stage failed");
+    const error = await createFetchRun(context()).stage("scores", async () => { throw failure; }, "song_data:basic").catch((err: unknown) => err);
+    expect(error).toBeInstanceOf(FetchStageError);
+    expect(error).toMatchObject({ message: "page changed", stepType: "scores", cause: failure });
+    expect(fetchFailure(error)).toEqual({ err: failure, stepType: "scores", durationMs: expect.any(Number) });
+    expect(mocks.log.warn).not.toHaveBeenCalled();
     expect(mocks.progress).not.toHaveBeenCalled();
+  });
+
+  it("reports a failure outside any stage as it was thrown", () => {
+    const failure = new Error("timed out");
+    expect(fetchFailure(failure)).toEqual({ err: failure });
   });
 
   it("does not start a stage once the fetch is aborted", async () => {
@@ -67,5 +75,13 @@ describe("fetch run", () => {
     const run = createFetchRun(context(controller.signal));
     await expect(run.stage("profile", async () => { controller.abort(reason); return "late"; }, "player_data")).rejects.toBe(reason);
     expect(mocks.progress).not.toHaveBeenCalled();
+  });
+
+  it("does not blame a stage whose request failed because the fetch was aborted", async () => {
+    const controller = new AbortController();
+    const reason = new Error("timed out");
+    const run = createFetchRun(context(controller.signal));
+    const error = await run.stage("scores", async () => { controller.abort(reason); throw reason; }).catch((err: unknown) => err);
+    expect(error).toBe(reason);
   });
 });

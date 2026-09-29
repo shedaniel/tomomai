@@ -11,7 +11,7 @@ vi.mock("@/lib/db", () => ({ db: {} }));
 vi.mock("@/lib/http-agent", () => ({ agentFetch: mocks.agentFetch }));
 vi.mock("@/lib/request-logger", () => ({ requestLogger: () => ({ log: mocks.log, requestId: "cn-proxy-test" }), getLogger: () => mocks.log }));
 vi.mock("@/server/services/games/tokens", () => ({ deleteToken: mocks.deleteToken, saveToken: vi.fn() }));
-vi.mock("@/server/services/games/score-ingestion", () => ({ startScoreFetch: mocks.start }));
+vi.mock("@/server/services/games/fetch-sessions", () => ({ startScoreFetch: mocks.start }));
 
 import { signCnProxyToken } from "@/server/services/games/maimai/cn-proxy-token";
 import { FetchStartError } from "@/server/services/games/fetch-errors";

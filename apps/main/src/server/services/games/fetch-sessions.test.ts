@@ -1,48 +1,46 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import { getTableColumns } from "drizzle-orm";
+import { fetchSessions } from "@/lib/db/schema-pg";
 import type { Flags } from "@/lib/flags";
-import type { GameFetchResult, ScoreSource } from "./types";
+import type { NotFoundScore } from "./snapshot-persistence";
+import type { GameFetchResult, PersistedSnapshotContext, ScoreSource } from "./types";
 
 const state = vi.hoisted(() => ({
   statements: [] as { sql: string; params: unknown[] }[],
   fetch: vi.fn<ScoreSource["fetch"]>(),
   rejectStoredToken: vi.fn<NonNullable<ScoreSource["rejectStoredToken"]>>(),
   log: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), child() { return this; } },
-  resolveCharts: vi.fn(),
-  writeScores: vi.fn(),
+  persist: vi.fn(),
   revalidate: vi.fn(),
   resolveFlags: vi.fn(),
   albumPreference: false as boolean | null,
   storedToken: "stored-token" as string | null,
   pendingSessions: [] as unknown[][],
   recentSessions: [] as unknown[][],
+  latestSession: [] as unknown[][],
 }));
 vi.mock("@/lib/db", async () => {
   const { drizzle } = await import("drizzle-orm/pg-proxy");
-  const connection = drizzle(async (sql, params) => {
+  return { db: drizzle(async (sql, params) => {
     state.statements.push({ sql, params });
     if (sql.includes('from "user"')) return { rows: [[state.albumPreference]] };
     if (sql.includes('from "user_tokens"')) return { rows: state.storedToken === null ? [] : [[`encrypted:${state.storedToken}`]] };
-    if (sql.startsWith('select') && sql.includes('from "fetch_sessions"')) {
+    if (sql.startsWith('select "publicId"')) return { rows: state.latestSession };
+    if (sql.startsWith("select") && sql.includes('from "fetch_sessions"')) {
       return { rows: sql.includes('"fetch_sessions"."status" = $') ? state.pendingSessions : state.recentSessions };
     }
     if (sql.startsWith('insert into "fetch_sessions"')) return { rows: [["1"]] };
-    if (sql.startsWith('insert into "user_snapshots"')) return { rows: [[1]] };
     return { rows: [] };
-  });
-  // Driver responses are fixtures; these tests assert SQL and orchestration, not database transaction semantics.
-  return { db: Object.assign(connection, { transaction: (work: (tx: typeof connection) => Promise<unknown>) => work(connection) }) };
+  }) };
 });
-vi.mock("./score-storage", async importOriginal => ({
-  ...await importOriginal<typeof import("./score-storage")>(),
-  buildChartResolution: state.resolveCharts,
-  writeSnapshotScores: state.writeScores,
+vi.mock("./registry", () => ({ GAME_SERVER_MODULES: {
+  maimai: { scores: { fetch: state.fetch, rejectStoredToken: state.rejectStoredToken } },
+  chunithm: { scores: { fetch: state.fetch } },
+} }));
+vi.mock("./snapshot-persistence", async importOriginal => ({
+  ...await importOriginal<typeof import("./snapshot-persistence")>(),
+  persistFetchResult: state.persist,
 }));
-vi.mock("./maimai", () => ({ maimaiServerModule: {
-  scores: { fetch: state.fetch, rejectStoredToken: state.rejectStoredToken },
-} }));
-vi.mock("./chunithm", () => ({ chunithmServerModule: {
-  scores: { fetch: state.fetch },
-} }));
 vi.mock("@/lib/profile-cache", () => ({ revalidatePublicProfileForUser: state.revalidate }));
 vi.mock("@/lib/flags", () => ({ resolveFlagsForUser: state.resolveFlags }));
 vi.mock("@/lib/logger", () => ({ flushLogger: vi.fn() }));
@@ -51,25 +49,30 @@ vi.mock("@/lib/token-crypto", () => ({ encryptToken: (token: string) => `encrypt
 vi.mock("@/lib/fetch-states-server", () => ({ appendFetchState: vi.fn() }));
 vi.mock("next/server", () => ({ after: vi.fn() }));
 
+import { FetchStageError } from "./fetch-run";
 import { FetchStartError } from "./fetch-errors";
-import { persistFetchResult, startScoreFetch } from "./score-ingestion";
+import { getScoreFetchStatus, startScoreFetch } from "./fetch-sessions";
 
 const fetched: GameFetchResult = {
   player: { displayName: "Player", rating: 10000, title: "Title", titleType: 0, iconUrl: "", totalPlayCount: 1, currentVersionPlayCount: 1 },
   scores: [],
 };
 const start = { userId: "same-user", game: "maimai" as const, region: "jp" as const, token: "new-token", flags: {} as Flags, options: { skipAfter: true } };
-const persist = { userId: "same-user", game: "maimai" as const, region: "jp" as const, sessionId: BigInt(1), gameVersion: 14, fetched };
+const persisted: PersistedSnapshotContext = { game: "maimai", userId: "same-user", region: "jp", sessionId: BigInt(1), snapshotId: 1, gameVersion: 14, chartResolution: new Map() };
+const missing: NotFoundScore[] = [{ songName: "Missing", difficulty: "master", musicType: "std" }];
+
+function sessionUpdates() {
+  return state.statements.filter(query => query.sql.startsWith('update "fetch_sessions"'));
+}
 
 function sessionStatuses() {
-  return state.statements
-    .filter(query => query.sql.startsWith('update "fetch_sessions"'))
-    .flatMap(query => query.params.filter(param => param === "completed" || param === "failed"));
+  return sessionUpdates().flatMap(query => query.params.filter(param => param === "completed" || param === "failed"));
 }
 
 function sessionRow(startedSecondsAgo: number) {
   const startedAt = new Date(Date.now() - startedSecondsAgo * 1000).toISOString().replace("T", " ").slice(0, 19);
-  return ["1", "session", "same-user", "maimai", "jp", "pending", startedAt, null, null, null, null];
+  const values: Record<string, unknown> = { id: "9", publicId: "session", userId: "same-user", game: "maimai", region: "jp", status: "pending", startedAt };
+  return Object.keys(getTableColumns(fetchSessions)).map(column => values[column] ?? null);
 }
 
 async function refusal(input: Parameters<typeof startScoreFetch>[0]): Promise<FetchStartError> {
@@ -87,15 +90,15 @@ beforeEach(() => {
   state.storedToken = "stored-token";
   state.pendingSessions = [];
   state.recentSessions = [];
+  state.latestSession = [];
   state.fetch.mockResolvedValue({ result: fetched });
   state.rejectStoredToken.mockReturnValue(null);
-  state.resolveCharts.mockResolvedValue({ chartResolution: new Map(), songsById: new Map() });
-  state.writeScores.mockResolvedValue(null);
+  state.persist.mockResolvedValue({ context: persisted, notFoundScores: [] });
   vi.stubEnv("NEXT_PUBLIC_ENABLED_MAIMAI_REGIONS", "jp");
 });
 afterEach(() => { vi.useRealTimers(); vi.unstubAllEnvs(); });
 
-it("scopes session SQL to the user, game and region", async () => {
+it("scopes session reads to the user, game and region and updates a session by its id alone", async () => {
   const started = await startScoreFetch(start);
   await started.backgroundWork;
   const sessionReads = state.statements.filter(query => query.sql.includes('from "fetch_sessions"'));
@@ -104,9 +107,9 @@ it("scopes session SQL to the user, game and region", async () => {
     for (const column of ["userId", "game", "region"]) expect(query.sql).toContain(`"fetch_sessions"."${column}" = $`);
     expect(query.params.slice(0, 3)).toEqual(["same-user", "maimai", "jp"]);
   }
-  const sessionWrite = state.statements.find(query => query.sql.startsWith('update "fetch_sessions"'))!;
-  expect(sessionWrite.sql).toMatch(/"fetch_sessions"\."id" = \$\d+ and "fetch_sessions"\."game" = \$\d+/);
-  expect(sessionWrite.params).toContain("maimai");
+  const [completion] = sessionUpdates();
+  expect(completion.sql).toMatch(/where "fetch_sessions"\."id" = \$\d+$/);
+  expect(completion.params.at(-1)).toBe(BigInt(1));
 });
 
 it("resolves the user's flags when the caller does not pass them", async () => {
@@ -144,6 +147,15 @@ it.each([
   expect(state.statements.some(query => query.sql.startsWith('insert into "fetch_sessions"'))).toBe(false);
 });
 
+it("fails a session left pending past three minutes and admits the new fetch", async () => {
+  state.pendingSessions = [sessionRow(4 * 60)];
+  const started = await startScoreFetch(start);
+  await started.backgroundWork;
+  const [sweep] = sessionUpdates();
+  expect(sweep.params).toEqual(expect.arrayContaining(["failed", "Fetch timed out after 3 minutes", BigInt(9)]));
+  expect(state.statements.some(query => query.sql.startsWith('insert into "fetch_sessions"'))).toBe(true);
+});
+
 it("asks for an album preference only in regions where the game fetches albums", async () => {
   vi.stubEnv("NEXT_PUBLIC_ENABLED_MAIMAI_REGIONS", "jp,cn");
   state.albumPreference = null;
@@ -169,22 +181,22 @@ it("does not ask the score source about a newly supplied token", async () => {
   expect(state.fetch).toHaveBeenCalledWith(expect.objectContaining({ token: "new-token" }), expect.anything());
 });
 
-it("persists the captured version and zero scores, and returns the snapshot's context for enrichment", async () => {
-  const chart = { game: "maimai" as const, region: "jp" as const, version: 14, songName: "Zero", chartType: 0, difficulty: 3 };
-  const song = { id: BigInt(7), addedVersion: 14, levelPrecise: 140, difficulty: 3 };
-  const chartResolution = new Map([["Zero|3|0", BigInt(7)]]);
-  state.resolveCharts.mockResolvedValue({ chartResolution, songsById: new Map([[BigInt(7), song]]) });
-  const persisted = await persistFetchResult({ ...persist, fetched: { ...fetched, scores: [{ chart, scoreValue: 0, secondaryScore: 0, comboStatus: 0, syncStatus: 0, clearStatus: 0 }] } });
-  expect(state.writeScores).toHaveBeenCalledWith(expect.anything(), { game: "maimai", snapshotId: 1, gameVersion: 14, scores: [
-    { song, values: { songId: BigInt(7), scoreValue: 0, secondaryScore: 0, comboStatus: 0, syncStatus: 0, clearStatus: 0 } },
-  ] });
-  const snapshotWrite = state.statements.find(query => query.sql.startsWith('insert into "user_snapshots"'))!;
-  expect(snapshotWrite.params).toContain(14);
-  expect(persisted).toEqual({
-    snapshotId: 1,
-    context: { game: "maimai", userId: "same-user", region: "jp", sessionId: BigInt(1), snapshotId: 1, gameVersion: 14, chartResolution },
-  });
-  expect(state.revalidate).not.toHaveBeenCalled();
+it("persists the fetched result for the session's game, region and version", async () => {
+  const started = await startScoreFetch(start);
+  await started.backgroundWork;
+  expect(state.persist).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({
+    game: "maimai", region: "jp", userId: "same-user", sessionId: BigInt(1), fetched, deadline: expect.any(Number),
+  }));
+  expect(sessionStatuses()).toEqual(["completed"]);
+});
+
+it("stores unmatched scores on the completed session as a JSON object", async () => {
+  state.persist.mockResolvedValueOnce({ context: persisted, notFoundScores: missing });
+  const started = await startScoreFetch(start);
+  await started.backgroundWork;
+  const [completion] = sessionUpdates();
+  const report = completion.params.find((param): param is string => typeof param === "string" && param.includes("notFoundScores"));
+  expect(JSON.parse(report!)).toEqual({ notFoundScores: missing });
 });
 
 it("completes the session before enrichment runs, then keeps the fetch open until enrichment settles", async () => {
@@ -199,7 +211,7 @@ it("completes the session before enrichment runs, then keeps the fetch open unti
   let settled = false;
   void started.backgroundWork!.then(() => { settled = true; });
   await vi.waitFor(() => expect(enrich).toHaveBeenCalledOnce());
-  expect(enrich).toHaveBeenCalledWith(expect.objectContaining({ game: "maimai", userId: "same-user", region: "jp", snapshotId: 1 }));
+  expect(enrich).toHaveBeenCalledWith(persisted);
   expect(statusesWhenEnriching).toEqual(["completed"]);
   expect(state.revalidate).toHaveBeenCalledWith("maimai", "same-user", ["jp"]);
   await vi.advanceTimersByTimeAsync(0);
@@ -219,30 +231,14 @@ it("keeps a saved snapshot's session completed when enrichment or revalidation f
   expect(state.log.error).toHaveBeenCalledWith({ err: new Error("cache unavailable") }, "Failed to revalidate the public profile after a fetch");
 });
 
-it.each([
-  { game: "maimai", difficulty: 3, expected: { difficulty: "master", musicType: "std" } },
-  { game: "chunithm", difficulty: 4, expected: { difficulty: "ultima", musicType: "standard" } },
-] as const)("reports unmatched $game charts with that game's own code keys", async ({ game, difficulty, expected }) => {
-  const chart = { game, region: "jp" as const, version: 9, songName: "Missing", chartType: 0, difficulty };
-  await persistFetchResult({ ...persist, game, gameVersion: 9, fetched: { ...fetched,
-    scores: [{ chart, scoreValue: 1, secondaryScore: 0, comboStatus: 0, syncStatus: 0, clearStatus: 0 }],
-  } });
-  const report = state.statements
-    .filter(query => query.sql.startsWith('update "fetch_sessions"'))
-    .flatMap(query => query.params)
-    .find((param): param is string => typeof param === "string" && param.includes("notFoundScores"));
-  expect(JSON.parse(JSON.parse(report!))).toEqual({ notFoundScores: [{ songName: "Missing", ...expected }] });
-});
-
-it("persists events against the new snapshot and game", async () => {
-  await persistFetchResult({ ...persist, fetched: { ...fetched, events: [{ name: "Progress", currentDistance: 10 }] } });
-  const eventWrite = state.statements.find(query => query.sql.startsWith('insert into "user_events"'))!;
-  expect(eventWrite.params).toEqual(expect.arrayContaining(["Progress", 10, "maimai", 1]));
-});
-
-it("rejects an expired persistence deadline before writing", async () => {
-  await expect(persistFetchResult({ ...persist, deadline: Date.now() - 1 })).rejects.toThrow("timed out");
-  expect(state.statements).toEqual([]);
+it("logs a failed stage once with its step and stores the stage's own message", async () => {
+  const failure = new Error("SUBSCRIPTION_REQUIRED: CHUNITHM-NET subscription required");
+  state.fetch.mockRejectedValueOnce(new FetchStageError("song_data:master", 120, failure));
+  const started = await startScoreFetch(start);
+  await started.backgroundWork;
+  expect(state.log.error).toHaveBeenCalledExactlyOnceWith({ err: failure, stepType: "song_data:master", durationMs: 120 }, "Error during score fetch");
+  const [failed] = sessionUpdates();
+  expect(failed.params).toEqual(expect.arrayContaining(["failed", failure.message]));
 });
 
 it("aborts a timed-out provider and keeps its late result from overwriting failure", async () => {
@@ -260,8 +256,8 @@ it("aborts a timed-out provider and keeps its late result from overwriting failu
   finish({ result: fetched });
   await vi.advanceTimersByTimeAsync(1);
   expect(state.statements).toHaveLength(writesAtFailure);
-  expect(state.statements.some(query => query.sql.startsWith('insert into "user_snapshots"'))).toBe(false);
-  expect(state.statements.find(query => query.sql.startsWith('update "fetch_sessions"'))?.params).toContain("failed");
+  expect(state.persist).not.toHaveBeenCalled();
+  expect(sessionStatuses()).toEqual(["failed"]);
   expect(state.revalidate).not.toHaveBeenCalled();
 });
 
@@ -272,27 +268,29 @@ it("keeps CHUNITHM subscription failures scoped to the failed session without de
   await started.backgroundWork;
   expect(state.fetch).toHaveBeenCalledWith(expect.objectContaining({ game: "chunithm", region: "jp", token: "stored-token" }), expect.anything());
   expect(state.fetch.mock.calls[0][0].signal.aborted).toBe(true);
-  expect(state.statements.some(query => query.sql.startsWith('insert into "user_snapshots"'))).toBe(false);
+  expect(state.persist).not.toHaveBeenCalled();
   expect(state.statements.some(query => query.sql.startsWith("delete") || query.sql.startsWith('update "user_tokens"'))).toBe(false);
-  expect(state.statements.find(query => query.sql.startsWith('update "fetch_sessions"'))?.params).toEqual(expect.arrayContaining(["failed", "chunithm"]));
+  expect(sessionStatuses()).toEqual(["failed"]);
   expect(state.revalidate).not.toHaveBeenCalled();
 });
 
-it("persists CHUNITHM charts only in their captured game, region and version", async () => {
-  const chart = { game: "chunithm" as const, region: "jp" as const, version: 9, songName: "Raw　Title", chartType: 0, difficulty: 3 };
-  const score = { chart, scoreValue: 1009000, secondaryScore: 0, comboStatus: 1, syncStatus: 0, clearStatus: 1 };
-  const song = { id: BigInt(7), addedVersion: 9, levelPrecise: 140, difficulty: 3 };
-  state.resolveCharts.mockResolvedValue({ chartResolution: new Map([["Raw　Title|3|0", BigInt(7)]]), songsById: new Map([[BigInt(7), song]]) });
-  await persistFetchResult({ ...persist, game: "chunithm", gameVersion: 9, fetched: { ...fetched, scores: [
-    score,
-    { ...score, chart: { ...chart, game: "maimai" } },
-    { ...score, chart: { ...chart, region: "intl" } },
-    { ...score, chart: { ...chart, version: 8 } },
-  ] } });
-  expect(state.resolveCharts).toHaveBeenCalledWith(expect.anything(), "chunithm", "jp", 9);
-  expect(state.writeScores).toHaveBeenCalledWith(expect.anything(), { game: "chunithm", snapshotId: 1, gameVersion: 9, scores: [
-    { song, values: { songId: BigInt(7), scoreValue: 1009000, secondaryScore: 0, comboStatus: 1, syncStatus: 0, clearStatus: 1 } },
-  ] });
-  const snapshot = state.statements.find(query => query.sql.startsWith('insert into "user_snapshots"'))!;
-  expect(snapshot.params).toEqual(expect.arrayContaining(["chunithm", 9]));
+it.each([
+  { row: "an object", extraData: { notFoundScores: missing } },
+  { row: "a legacy JSON string", extraData: JSON.stringify({ notFoundScores: missing }) },
+])("reads the unmatched scores a session stored as $row", async ({ extraData }) => {
+  state.latestSession = [["public", "completed", "2026-09-27 02:59:00", "2026-09-27 03:00:00", null, "login", extraData]];
+  await expect(getScoreFetchStatus({ userId: "same-user", game: "maimai", region: "jp" })).resolves.toEqual({
+    id: "public",
+    status: "completed",
+    startedAt: new Date("2026-09-27T02:59:00Z"),
+    completedAt: new Date("2026-09-27T03:00:00Z"),
+    errorMessage: null,
+    statusStates: "login",
+    notFoundScores: missing,
+  });
+});
+
+it("reads no unmatched scores from a session without a valid report", async () => {
+  state.latestSession = [["public", "failed", "2026-09-27 02:59:00", null, "Login failed", null, { notFoundScores: [{ songName: 1 }] }]];
+  await expect(getScoreFetchStatus({ userId: "same-user", game: "maimai", region: "jp" })).resolves.toMatchObject({ notFoundScores: null });
 });

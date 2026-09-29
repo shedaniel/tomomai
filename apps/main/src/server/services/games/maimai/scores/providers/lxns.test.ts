@@ -46,8 +46,18 @@ it("reads the player and best scores with the current access token", async () =>
   expect(enrich).toBeUndefined();
 });
 
-it("deletes a token lxns no longer authorizes and asks for a new one", async () => {
+it("deletes a token lxns no longer authorizes and asks for a new one, naming the stage that found it", async () => {
   mocks.scores.mockRejectedValueOnce(new LxnsAuthRevokedError("lxns authorization revoked or expired (HTTP 401)."));
-  await expect(fetchFromLxns(ctx, token, createFetchRun(ctx))).rejects.toThrow("Session expired or invalid. Please provide a new token.");
+  const error = await fetchFromLxns(ctx, token, createFetchRun(ctx)).catch((err: unknown) => err);
+  expect(error).toMatchObject({ stepType: "scores", message: "Session expired or invalid. Please provide a new token." });
   expect(mocks.remove).toHaveBeenCalledExactlyOnceWith("maimai", "user", "cn");
+});
+
+it("refuses a revoked token once when both requests are refused", async () => {
+  const revoked = new LxnsAuthRevokedError("lxns authorization revoked or expired (HTTP 401).");
+  mocks.player.mockRejectedValueOnce(revoked);
+  mocks.scores.mockRejectedValueOnce(revoked);
+  await expect(fetchFromLxns(ctx, token, createFetchRun(ctx))).rejects.toThrow("Session expired or invalid. Please provide a new token.");
+  await vi.waitFor(() => expect(mocks.remove).toHaveBeenCalledOnce());
+  expect(mocks.log.warn).toHaveBeenCalledOnce();
 });

@@ -5,7 +5,7 @@ const mocks = vi.hoisted(() => ({ start: vi.fn(), log: { info: vi.fn(), warn: vi
 vi.mock("@/lib/auth", () => ({ auth: {} }));
 vi.mock("@/lib/logger", () => ({ logger: { child: () => mocks.log } }));
 vi.mock("@/lib/db", () => ({ db: {} }));
-vi.mock("@/server/services/games/score-ingestion", () => ({ startScoreFetch: mocks.start, getScoreFetchStatus: vi.fn() }));
+vi.mock("@/server/services/games/fetch-sessions", () => ({ startScoreFetch: mocks.start, getScoreFetchStatus: vi.fn() }));
 
 import { GameAdapterError } from "@/lib/games/errors";
 import { FetchStartError } from "@/server/services/games/fetch-errors";

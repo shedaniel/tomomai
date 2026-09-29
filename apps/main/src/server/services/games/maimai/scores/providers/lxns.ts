@@ -13,14 +13,16 @@ import { fetchLxnsScoresData } from "../songs/lxns";
 export async function fetchFromLxns(ctx: ScoreFetchContext, token: LxnsToken, run: FetchRun): Promise<ScoreFetchOutcome> {
   const { userId, region, signal } = ctx;
   const accessToken = await run.stage("login", () => lxnsAccessToken(userId, region, token, signal), FETCH_STATES.LOGIN);
-  try {
-    const [player, scores] = await Promise.all([
-      run.stage("profile", () => fetchLxnsPlayerData(accessToken, signal), FETCH_STATES.PLAYER_DATA),
-      run.stage("scores", () => fetchLxnsScoresData(accessToken, signal)),
-    ]);
-    return { result: { player: normalizePlayer(player), scores: scores.map(score => normalizeScore(score, ctx)), recents: [], events: [] } };
-  } catch (error) {
-    if (error instanceof LxnsAuthRevokedError) return refuseToken("maimai", userId, region, "Session expired or invalid. Please provide a new token.");
-    throw error;
-  }
+  // Both requests fail alike once lxns revokes the token, so it is refused once.
+  let refusal: Promise<never> | undefined;
+  const refuseRevoked = (error: unknown): Promise<never> => {
+    if (!(error instanceof LxnsAuthRevokedError)) throw error;
+    refusal ??= refuseToken("maimai", userId, region, "Session expired or invalid. Please provide a new token.");
+    return refusal;
+  };
+  const [player, scores] = await Promise.all([
+    run.stage("profile", () => fetchLxnsPlayerData(accessToken, signal).catch(refuseRevoked), FETCH_STATES.PLAYER_DATA),
+    run.stage("scores", () => fetchLxnsScoresData(accessToken, signal).catch(refuseRevoked)),
+  ]);
+  return { result: { player: normalizePlayer(player), scores: scores.map(score => normalizeScore(score, ctx)), recents: [], events: [] } };
 }

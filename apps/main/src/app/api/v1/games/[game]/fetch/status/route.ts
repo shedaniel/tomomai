@@ -2,7 +2,7 @@ import { type NextRequest } from "next/server";
 import { withGameApiKey as withApiKey } from "@/lib/api/game-protect";
 import { parseQuery } from "@/lib/api/parse-query";
 import { zodJson } from "@/lib/api/zod-response";
-import { getScoreFetchStatus } from "@/server/services/games/score-ingestion";
+import { getScoreFetchStatus } from "@/server/services/games/fetch-sessions";
 import { spec } from "./spec";
 
 export const GET = withApiKey(["fetch:read"], async (req: NextRequest, key) => {

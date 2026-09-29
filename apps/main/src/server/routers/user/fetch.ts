@@ -2,15 +2,13 @@ import { SEGA_AIME_GATEWAY, siteRoot } from "@/lib/games/sites";
 import { getGame } from "@/lib/games/registry";
 import { GameAdapterError } from "@/lib/games/errors";
 import { gameProcedure } from "../game-procedures";
-import { startScoreFetch, getScoreFetchStatus } from "@/server/services/games/score-ingestion";
+import { startScoreFetch, getScoreFetchStatus } from "@/server/services/games/fetch-sessions";
 import { FetchStartError, toTrpcFetchStartError } from "@/server/services/games/fetch-errors";
-import { db } from '@/lib/db';
 import { generateUserOtp, getOtpExpiryTimestamp, createLoginAuthorization } from '@/lib/otp';
 import { deleteToken } from "@/server/services/games/tokens";
 import { resolveBaseUrl } from '@/lib/base-url';
 import { protectedProcedure, router } from '@/lib/trpc';
 import { TRPCError } from '@trpc/server';
-import { and, desc, eq } from 'drizzle-orm';
 import { z } from 'zod';
 
 export const fetchRouter = router({
@@ -58,22 +56,8 @@ export const fetchRouter = router({
 
   getLatestFetchSessionId: gameProcedure(protectedProcedure, "scores")
     .query(async ({ ctx }) => {
-      const { fetchSessions: fs } = await import('@/lib/db/schema-pg');
-
-      const session = await db
-        .select({ publicId: fs.publicId, startedAt: fs.startedAt })
-        .from(fs)
-        .where(
-          and(
-            eq(fs.game, ctx.game),
-            eq(fs.userId, ctx.session.user.id),
-            eq(fs.region, ctx.region)
-          )
-        )
-        .orderBy(desc(fs.startedAt))
-        .limit(1);
-
-      return session.length > 0 ? { id: session[0].publicId, startedAt: session[0].startedAt } : null;
+      const status = await getScoreFetchStatus({ game: ctx.game, region: ctx.region, userId: ctx.session.user.id });
+      return status ? { id: status.id, startedAt: status.startedAt } : null;
     }),
 
   deleteToken: gameProcedure(protectedProcedure, "scores")

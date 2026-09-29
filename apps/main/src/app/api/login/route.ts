@@ -1,7 +1,7 @@
 import { decodeLoginAuthorization, verifyUserOtp } from "@/lib/otp";
 import { SEGA_AIME_GATEWAY } from "@/lib/games/sites";
 import { formatSegaCookie } from "@/lib/games/token-format";
-import { startScoreFetch } from "@/server/services/games/score-ingestion";
+import { startScoreFetch } from "@/server/services/games/fetch-sessions";
 import { fetchStartRejection } from "@/server/services/games/fetch-errors";
 import { NextRequest, NextResponse } from "next/server";
 import { flushLogger } from "@/lib/logger";

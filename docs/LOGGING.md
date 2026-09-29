@@ -113,8 +113,9 @@ Aggregate namespaces (intentional nested objects — **bounded, fixed keys**; do
 > `playerName`, `index`, `batchIndex`, `progress`, `from`, `to`, `profile`,
 > `addedDate`, `optional`, `modelId`, `uniqueCovers`, `existingR2Covers`,
 > `toDownload`, `skipped`, `duplicateIds`, `urls`, `totalDuplicatesMerged`,
-> `totalMasterNamesNormalized`, `originalName`, `ttlSec`, `scope`, `value`) are also registered — keep this
+> `totalMasterNamesNormalized`, `originalName`, `ttlSec`, `scope`, `value`, `state`) are also registered — keep this
 > list current when you add one. `value` is a raw configuration value, such as an environment variable.
+> `state` is a fetch progress state, such as `song_data:master`.
 
 Browser recommendation diagnostics (temporary, scalar fields):
 `userRating`, `percentileEnabled`, `potentialEnabled`, `fetchStatus`,
