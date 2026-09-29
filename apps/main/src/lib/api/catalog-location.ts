@@ -3,7 +3,7 @@ import type { CanonicalGameId } from "@/lib/games/types";
 import type { Region } from "@/lib/types";
 
 /** Bump when the published catalog JSON changes shape, so no CDN copy of the old shape is served under the new contract. */
-export const CATALOG_FORMAT_VERSION = 2;
+const CATALOG_FORMAT_VERSION = 2;
 
 function catalogPrefix(game: CanonicalGameId): string {
   return `catalog/v${CATALOG_FORMAT_VERSION}/${game}`;

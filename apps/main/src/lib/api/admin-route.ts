@@ -10,19 +10,19 @@ import { formatCatalogError } from "@/server/services/catalog/errors";
 
 type RouteParams = Record<string, string>;
 
-export type AdminRouteContext<P extends RouteParams> = {
+type AdminRouteContext<P extends RouteParams> = {
   request: NextRequest;
   log: Logger;
   requestId: string;
   params: P;
 };
 
-export type AdminGameRouteContext<P extends RouteParams> = AdminRouteContext<P> & { game: CanonicalGameId };
+type AdminGameRouteContext<P extends RouteParams> = AdminRouteContext<P> & { game: CanonicalGameId };
 
-export type AdminRouteHandler<P extends RouteParams> = (request: NextRequest, context?: { params: Promise<P> }) => Promise<Response>;
+type AdminRouteHandler<P extends RouteParams> = (request: NextRequest, context?: { params: Promise<P> }) => Promise<Response>;
 
 /** `read` accepts any game. `write` accepts only the game this deployment serves (WRONG_SITE otherwise). */
-export type AdminGameAccess = "read" | "write";
+type AdminGameAccess = "read" | "write";
 
 type AdminRouteOptions = {
   game?: AdminGameAccess;

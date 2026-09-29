@@ -24,7 +24,7 @@ export const catalogRevalidationBody = z.object({
   affected: z.array(catalogChartSchema.pick({ songName: true, artist: true, chartType: true })).optional(),
 });
 
-export type CatalogPageScope = "none" | "songs" | "bulk";
+type CatalogPageScope = "none" | "songs" | "bulk";
 
 /**
  * Invalidates this deployment's caches of a game's catalog. Every deployment serves the public API of
