@@ -2,7 +2,7 @@ import React from "react";
 import { describe, expect, it, vi } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 import { NextIntlClientProvider } from "next-intl";
-import { SongsCard } from "@/components/player/songs-card";
+import { SongsCard } from "@/components/player/songs/songs-card";
 import { GameProvider } from "@/components/providers/game-provider";
 import { toPublicGameSnapshot } from "./public-player";
 vi.mock("@/lib/trpc-client", () => ({ trpc: { user: { getChartPercentiles: { useQuery: () => ({ data: undefined }) } } } }));

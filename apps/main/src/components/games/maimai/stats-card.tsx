@@ -16,7 +16,7 @@ import { useMemo, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { STAGGER } from "@/lib/animation-constants";
 import { useMediaQuery } from "@/hooks/use-media-query";
-import { SongGridCard } from "@/components/player/songs-card";
+import { SongGridCard } from "@/components/player/songs/score-grid-card";
 import { AutoHeight } from "@/components/animate-ui/primitives/effects/auto-height";
 import { cn } from "@/lib/utils";
 

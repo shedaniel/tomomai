@@ -11,7 +11,7 @@ import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { InfoCard } from "./info-card";
 import { MinigameCards } from "@/components/games/maimai/minigame-cards";
-import { SongsCard } from "./songs-card";
+import { SongsCard } from "./songs/songs-card";
 import { StatsCardSkeleton } from "@/components/games/maimai/stats-card.skeleton";
 import { RecommendationCardSkeleton } from "./recommendation-card.skeleton";
 import { ExportImageCardSkeleton } from "@/components/games/maimai/export-image-card.skeleton";
