@@ -4,7 +4,7 @@ import { useGameId } from "@/components/providers/game-provider";
 import { Button } from "@tomomai/ui";
 import { CANVAS_HEIGHT, CANVAS_WIDTH } from "@/lib/games/maimai/image-spec";
 import { Region } from "@/lib/types";
-import type { SnapshotWithSongs } from "@/lib/games/maimai/types";
+import type { GameSnapshot } from "@/lib/games/player-view";
 import { Download, RefreshCw } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
@@ -141,7 +141,7 @@ function ImagePanel({
 }
 
 interface ExportImageCardProps {
-  selectedSnapshotData: SnapshotWithSongs;
+  snapshot: Pick<GameSnapshot, "publicId" | "fetchedAt" | "displayName">;
   region: Region;
   showLastCredit?: boolean;
   username?: string;
@@ -178,10 +178,10 @@ function formatDayLabel(day: string, count: number, locale: string) {
   return `${formatted} (${count})`;
 }
 
-export function ExportImageCard({ selectedSnapshotData, region, showLastCredit = true, username, publicSnapshotId }: ExportImageCardProps) {
+export function ExportImageCard({ snapshot, region, showLastCredit = true, username, publicSnapshotId }: ExportImageCardProps) {
   const t = useTranslations();
 
-  const snapshotId = selectedSnapshotData.snapshot.id;
+  const snapshotId = snapshot.publicId;
 
   // Export image state
   const [exportImageUrl, setExportImageUrl] = useState<string>(
@@ -192,7 +192,7 @@ export function ExportImageCard({ selectedSnapshotData, region, showLastCredit =
 
   // Last credit image state
   const [lastCreditImageUrl, setLastCreditImageUrl] = useState<string>(
-    `/api/last-credit?region=${region}&beforeDate=${selectedSnapshotData.snapshot.fetchedAt.toISOString()}&snapshotId=${snapshotId}`
+    `/api/last-credit?region=${region}&beforeDate=${snapshot.fetchedAt.toISOString()}&snapshotId=${snapshotId}`
   );
   const [lastCreditImageKey, setLastCreditImageKey] = useState(0);
   const [lastCreditIsLoading, setLastCreditIsLoading] = useState(true);
@@ -251,13 +251,13 @@ export function ExportImageCard({ selectedSnapshotData, region, showLastCredit =
   const handleLastCreditRefresh = () => {
     setLastCreditIsLoading(true);
     setLastCreditImageKey(prev => prev + 1);
-    setLastCreditImageUrl(`/api/last-credit?region=${region}&beforeDate=${selectedSnapshotData.snapshot.fetchedAt.toISOString()}&snapshotId=${snapshotId}&t=${Date.now()}`);
+    setLastCreditImageUrl(`/api/last-credit?region=${region}&beforeDate=${snapshot.fetchedAt.toISOString()}&snapshotId=${snapshotId}&t=${Date.now()}`);
   };
 
   const handleLastCreditRefreshFast = () => {
     setLastCreditIsLoading(true);
     setLastCreditImageKey(prev => prev + 1);
-    setLastCreditImageUrl(`/api/last-credit?region=${region}&beforeDate=${selectedSnapshotData.snapshot.fetchedAt.toISOString()}&snapshotId=${snapshotId}&scale=1&t=${Date.now()}`);
+    setLastCreditImageUrl(`/api/last-credit?region=${region}&beforeDate=${snapshot.fetchedAt.toISOString()}&snapshotId=${snapshotId}&scale=1&t=${Date.now()}`);
   };
 
   const handleDailyDayChange = (day: string) => {
@@ -284,7 +284,7 @@ export function ExportImageCard({ selectedSnapshotData, region, showLastCredit =
       imageUrl={exportImageUrl}
       imageKey={exportImageKey}
       isLoading={exportIsLoading}
-      fileName={`maimai-profile-${selectedSnapshotData.snapshot.displayName || 'export'}.png`}
+      fileName={`maimai-profile-${snapshot.displayName || 'export'}.png`}
       onRefresh={handleExportRefresh}
       onRefreshFast={handleExportRefreshFast}
       onRefreshProfile={handleExportRefreshProfile}
@@ -324,7 +324,7 @@ export function ExportImageCard({ selectedSnapshotData, region, showLastCredit =
                 imageUrl={lastCreditImageUrl}
                 imageKey={lastCreditImageKey}
                 isLoading={lastCreditIsLoading}
-                fileName={`maimai-last-credit-${selectedSnapshotData.snapshot.displayName || 'export'}.png`}
+                fileName={`maimai-last-credit-${snapshot.displayName || 'export'}.png`}
                 onRefresh={handleLastCreditRefresh}
                 onRefreshFast={handleLastCreditRefreshFast}
                 onLoad={() => setLastCreditIsLoading(false)}
@@ -364,7 +364,7 @@ export function ExportImageCard({ selectedSnapshotData, region, showLastCredit =
                     imageUrl={dailyImageUrl}
                     imageKey={dailyImageKey}
                     isLoading={dailyIsLoading}
-                    fileName={`maimai-daily-${selectedDay}-${selectedSnapshotData.snapshot.displayName || 'export'}.png`}
+                    fileName={`maimai-daily-${selectedDay}-${snapshot.displayName || 'export'}.png`}
                     onRefresh={handleDailyRefresh}
                     onRefreshFast={handleDailyRefreshFast}
                     onLoad={() => setDailyIsLoading(false)}

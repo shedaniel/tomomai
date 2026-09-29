@@ -3,7 +3,6 @@
 import { useGame } from "@/components/providers/game-provider";
 import { supportsGameFeature } from "@/lib/games/frontend";
 import type { GameSnapshotData } from "@/lib/games/player-view";
-import { toMaimaiSnapshot } from "@/lib/games/maimai/legacy-view";
 import { ProfilePrivacySettings, Region } from "@/lib/types";
 import { Sidebar, SidebarItem } from "@tomomai/ui";
 import { BarChart, Clock, Code, Database, Heart, Image as ImageIcon, Loader2, Map, Music, TrendingUp, User, Images } from "lucide-react";
@@ -86,7 +85,6 @@ export function DataContent({
   flags,
 }: DataContentProps) {
   const game = useGame();
-  const maimaiSnapshot = game.id === "maimai" && selectedSnapshotData ? toMaimaiSnapshot(selectedSnapshotData) : null;
   const t = useTranslations();
   const searchParams = useSearchParams();
   const isDesktop = useMediaQuery("(min-width: 768px)", { initializeWithValue: false });
@@ -316,11 +314,11 @@ export function DataContent({
               <HistoryCard region={region} />
             )}
             {selectedSnapshotData && activeTab === "map" && localPrivacySettings.profileShowEvents && (
-              <EventsCard selectedSnapshotData={maimaiSnapshot!} />
+              <EventsCard events={selectedSnapshotData.events} />
             )}
             {selectedSnapshotData && activeTab === "exportImage" && (
               <ExportImageCard
-                selectedSnapshotData={maimaiSnapshot!}
+                snapshot={selectedSnapshotData.snapshot}
                 region={region}
                 showLastCredit={visitedBySelf || !!localPrivacySettings.profileShowScoreDetails}
                 username={effectiveVisitableProfileAt ?? undefined}
@@ -328,7 +326,7 @@ export function DataContent({
               />
             )}
             {selectedSnapshotData && activeTab === "developer" && visitedBySelf && (
-              <DeveloperCard selectedSnapshotData={maimaiSnapshot!} />
+              <DeveloperCard snapshotId={selectedSnapshotData.snapshot.publicId} />
             )}
             {selectedSnapshotData && activeTab === "albums" && visitedBySelf && flags.albumsCard && (
               <AlbumCard region={region} />

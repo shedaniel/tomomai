@@ -1,16 +1,16 @@
 "use client";
 
-import type { SnapshotWithSongs } from "@/lib/games/maimai/types";
+import type { GameEvent, GameSnapshotData } from "@/lib/games/player-view";
 import { cn, createSafeMaimaiImageUrl, isR2Url } from "@/lib/utils";
 import { Map, Calendar, Flag, CheckCircle2, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { Tabs, TabsList, TabsContents, TabsTrigger, TabsContent } from "@/components/animate-ui/components/radix/tabs";
-import { EventData } from "@/lib/types";
 import { trpc } from "@/lib/trpc-client";
 import { useMemo } from "react";
 
 type StepData = { distance: number; type: string; reward: string };
+type EventState = NonNullable<GameEvent["state"]>;
 
 function StepProgress({
   currentDistance,
@@ -19,7 +19,7 @@ function StepProgress({
 }: {
   currentDistance: number;
   steps: StepData[];
-  state: EventData["state"];
+  state: EventState;
 }) {
   if (steps.length === 0) return null;
 
@@ -101,11 +101,14 @@ function EventCard({
   event,
   steps,
 }: {
-  event: EventData;
+  event: GameEvent;
   steps: StepData[] | undefined;
 }) {
   const t = useTranslations();
-  const isCompleted = event.state === "completed";
+  const state = event.state ?? "not_started";
+  const currentDistance = event.currentDistance ?? 0;
+  const imageUrl = event.imageUrl ?? "";
+  const isCompleted = state === "completed";
 
   const getStateLabel = (state: string) => {
     switch (state) {
@@ -125,14 +128,14 @@ function EventCard({
       {/* Header: Image + Name/Status */}
       <div className="flex items-center gap-3">
         <Image
-          src={createSafeMaimaiImageUrl(event.imageUrl)}
+          src={createSafeMaimaiImageUrl(imageUrl)}
           alt={event.name}
           className="w-16 h-16 xs:w-20 xs:h-20 rounded-lg object-contain aspect-square flex-shrink-0"
           width={80}
           height={80}
           loading="lazy"
           sizes="(min-width: 475px) 80px, 64px"
-          unoptimized={isR2Url(event.imageUrl)}
+          unoptimized={isR2Url(imageUrl)}
         />
 
         <div className="flex-1 min-w-0">
@@ -143,24 +146,24 @@ function EventCard({
             <span
               className={cn(
                 "px-1.5 py-0.5 rounded text-[10px] font-medium whitespace-nowrap",
-                event.state === "not_started" &&
+                state === "not_started" &&
                 "bg-muted text-muted-foreground",
-                event.state === "in_progress" &&
+                state === "in_progress" &&
                 "bg-primary/10 text-primary",
-                event.state === "completed" &&
+                state === "completed" &&
                 "bg-primary/10 text-primary",
               )}
             >
-              {getStateLabel(event.state)}
+              {getStateLabel(state)}
             </span>
           </div>
 
           <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
             <span className="flex items-center gap-1">
               {isCompleted && <CheckCircle2 className="h-3 w-3 text-primary" />}
-              {event.currentDistance.toLocaleString()} km
+              {currentDistance.toLocaleString()} km
             </span>
-            {event.nextRewardDistance !== null && event.state === "in_progress" && (
+            {event.nextRewardDistance != null && state === "in_progress" && (
               <span className="text-muted-foreground/70">
                 → {event.nextRewardDistance.toLocaleString()} km
               </span>
@@ -185,9 +188,9 @@ function EventCard({
       {/* Progress bar with steps */}
       {steps && steps.length > 0 && (
         <StepProgress
-          currentDistance={event.currentDistance}
+          currentDistance={currentDistance}
           steps={steps}
-          state={event.state}
+          state={state}
         />
       )}
     </div>
@@ -198,7 +201,7 @@ function EventsList({
   events,
   stepsMap,
 }: {
-  events: EventData[];
+  events: GameEvent[];
   stepsMap: Record<string, StepData[]>;
 }) {
   return (
@@ -241,14 +244,10 @@ function EventsList({
   );
 }
 
-export function EventsCard({
-  selectedSnapshotData,
-}: {
-  selectedSnapshotData: SnapshotWithSongs;
-}) {
+export function EventsCard({ events }: { events: GameSnapshotData["events"] }) {
   const t = useTranslations();
 
-  const allEvents = (selectedSnapshotData.events || []).filter((e) => e.name.trim() !== "");
+  const allEvents = useMemo(() => (events ?? []).filter((e) => e.name.trim() !== ""), [events]);
   const areaEvents = allEvents.filter((e) => e.eventType === "area");
   const eventAreaEvents = allEvents.filter((e) => e.eventType === "eventArea");
 

@@ -3,16 +3,11 @@
 import { useGameId } from "@/components/providers/game-provider";
 import { Button } from "@tomomai/ui";
 import { trpc } from "@/lib/trpc-client";
-import type { SnapshotWithSongs } from "@/lib/games/maimai/types";
 import { ChevronDown, ChevronRight, Code, Download } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { AutoHeight } from "@/components/animate-ui/primitives/effects/auto-height";
 import { cn } from "@/lib/utils";
-
-interface DeveloperCardProps {
-  selectedSnapshotData: SnapshotWithSongs;
-}
 
 const EXPORT_SNAPSHOTS_SCHEMA_DOCS = `{
   "metadata": {
@@ -48,13 +43,13 @@ const EXPORT_SNAPSHOTS_SCHEMA_DOCS = `{
   "iconUrl": string | null, // URL to player's icon image, usually provided as Base64 encoded string
 }`;
 
-export function DeveloperCard({ selectedSnapshotData }: DeveloperCardProps) {
+export function DeveloperCard({ snapshotId }: { snapshotId: string }) {
   const t = useTranslations();
   const [isExporting, setIsExporting] = useState(false);
   const [isSchemaExpanded, setIsSchemaExpanded] = useState(false);
 
   const { refetch } = trpc.user.exportSnapshotData.useQuery(
-    { game: useGameId(), snapshotId: selectedSnapshotData.snapshot.id },
+    { game: useGameId(), snapshotId },
     { enabled: false }
   );
 
@@ -70,7 +65,7 @@ export function DeveloperCard({ selectedSnapshotData }: DeveloperCardProps) {
         const url = window.URL.createObjectURL(blob);
         const link = document.createElement("a");
         link.href = url;
-        link.download = `snapshot-${selectedSnapshotData.snapshot.id}.json`;
+        link.download = `snapshot-${snapshotId}.json`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
