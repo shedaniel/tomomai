@@ -19,9 +19,10 @@ export default async function Image({ id }: { id: Promise<string> }) {
   const t = await getTranslations({ locale, namespace: "db.songs.metadata" });
 
   return createHomeOGImage({
+    brand: getCurrentGame().brand,
     tagline: t("description", { game: getCurrentGame().brand.displayName }),
     locale,
-    logoFile: "icon-db-dark.webp",
+    artwork: "dbLogo",
     logoHeight: 220,
     accent: DB_ACCENT,
   });

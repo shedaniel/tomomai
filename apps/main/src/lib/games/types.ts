@@ -171,11 +171,28 @@ export type GamePresentation<G extends CanonicalGameId = CanonicalGameId> = G ex
 
 export type CatalogSection = "songs" | "stats" | "events" | "posts";
 
+/** A site section with its own wordmark. */
+export type BrandSection = "dashboard" | "db";
+
+/** Artwork paths are site paths of files in public/. */
 export type GameBrand = {
   productName: "tomomai" | "tomochu";
   japaneseName: string;
+  /** The game's own name. */
   displayName: string;
+  /** The game's official player site. */
   netName: string;
+  domain: string;
+  /** The square icon for home screens and structured data. */
+  icon: string | null;
+  /** Light and dark wordmarks. Without them the brand title is set as text. */
+  logos: { width: number; height: number; sections: Record<BrandSection, { light: string; dark: string }> } | null;
+  /** Artwork drawn on OpenGraph images. Without it they set the brand as text. */
+  og: { logo: string; dbLogo: string } | null;
+  /** Profiles of the site elsewhere, for structured data. */
+  sameAs: readonly string[];
+  exampleProfile?: { username: string; region: Region };
+  communityInviteUrl?: string;
 };
 
 export type GameSite = {

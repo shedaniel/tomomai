@@ -47,14 +47,15 @@ const murecho = localFont({
   preload: false,
 });
 
-export const metadata: Metadata = {
-  metadataBase: new URL(resolveBaseUrl()),
-  title: brandTitle(getCurrentGame().brand),
-  description: `Track and analyze ${getCurrentGame().brand.displayName} scores with friends.`,
-  icons: {
-    apple: "/icon.png",
-  },
-};
+export function generateMetadata(): Metadata {
+  const { brand } = getCurrentGame();
+  return {
+    metadataBase: new URL(resolveBaseUrl()),
+    title: brandTitle(brand),
+    description: `Track and analyze ${brand.displayName} scores with friends.`,
+    icons: brand.icon ? { apple: brand.icon } : undefined,
+  };
+}
 
 // Pre-render every supported locale at build time so the [locale] subtree is
 // statically renderable / ISR-cacheable. Individual pages opt into further
@@ -78,6 +79,7 @@ export default async function LocaleLayout({ children, params }: Props) {
 
   const messages = await getMessages();
   const typedLocale = locale as Locale;
+  const game = getCurrentGame();
 
   // SSR the default theme; the user's saved theme is applied pre-paint by
   // the blocking no-flash script below (cookie read happens in the browser,
@@ -92,7 +94,7 @@ export default async function LocaleLayout({ children, params }: Props) {
         <script dangerouslySetInnerHTML={{ __html: themeNoFlashScript() }} />
         <link rel="preconnect" href="https://cdn.tomomai.lol" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://cdn.tomomai.lol" />
-        {siteJsonLd(getCurrentGame().brand).map((entry, i) => (
+        {siteJsonLd(game.brand).map((entry, i) => (
           <script
             key={i}
             type="application/ld+json"
@@ -104,7 +106,7 @@ export default async function LocaleLayout({ children, params }: Props) {
         className={`${inter.variable} ${geistMono.variable} ${murecho.variable} antialiased bg-background flex min-h-dvh flex-col`}
       >
         <NextIntlClientProvider messages={messages}>
-          <GameProvider game={getCurrentGame()}>
+          <GameProvider game={game}>
             <LocaleProvider initialLocale={typedLocale}>
               <ThemeProvider>
                 <TRPCProvider>

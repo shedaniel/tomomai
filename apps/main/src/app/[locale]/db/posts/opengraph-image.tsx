@@ -1,3 +1,4 @@
+import { getCurrentGame } from "@/lib/games/current";
 import { createOGImage, OG_SIZE } from "@/lib/og";
 import { getTranslations } from "next-intl/server";
 import type { Locale } from "@/i18n/locale";
@@ -16,6 +17,7 @@ export default async function Image({ id }: { id: Promise<string> }) {
   const t = await getTranslations({ locale, namespace: "db.posts.list" });
 
   return createOGImage({
+    brand: getCurrentGame().brand,
     section: t("title"),
     title: t("title"),
     summary: t("description"),

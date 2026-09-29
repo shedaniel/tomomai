@@ -1,4 +1,5 @@
 import { getCurrentGame } from "@/lib/games/current";
+import { brandTitle } from "@/lib/games/frontend";
 import { createHomeOGImage, OG_SIZE } from "@/lib/og";
 import { getTranslations } from "next-intl/server";
 import type { Locale } from "@/i18n/locale";
@@ -9,7 +10,7 @@ export const revalidate = false;
 
 export async function generateImageMetadata() {
   const locales = await getOGImageLocales();
-  return locales.map(locale => ({ id: locale, alt: "tomomai ともマイ", size: OG_SIZE, contentType: "image/png" as const }));
+  return locales.map(locale => ({ id: locale, alt: brandTitle(getCurrentGame().brand), size: OG_SIZE, contentType: "image/png" as const }));
 }
 
 export default async function Image({ id }: { id: Promise<string> }) {
@@ -17,6 +18,7 @@ export default async function Image({ id }: { id: Promise<string> }) {
   const t = await getTranslations({ locale, namespace: "dashboard" });
 
   return createHomeOGImage({
+    brand: getCurrentGame().brand,
     tagline: t("description", { game: getCurrentGame().brand.displayName }),
     locale,
   });

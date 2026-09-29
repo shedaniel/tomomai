@@ -11,6 +11,20 @@ export const maimaiDefinition = {
     japaneseName: "ともマイ",
     displayName: "maimai DX",
     netName: "maimai DX NET",
+    domain: "tomomai.lol",
+    icon: "/icon.png",
+    logos: {
+      width: 528,
+      height: 132,
+      sections: {
+        dashboard: { light: "/icon-small.webp", dark: "/icon-small-dark.webp" },
+        db: { light: "/icon-db-small.webp", dark: "/icon-db-small-dark.webp" },
+      },
+    },
+    og: { logo: "/icon-dark.webp", dbLogo: "/icon-db-dark.webp" },
+    sameAs: ["https://github.com/shedaniel/maimai-friends"],
+    exampleProfile: { username: "shedaniel", region: "intl" },
+    communityInviteUrl: "https://discord.gg/jZqQHr3UDq",
   },
   sites: {
     intl: {

@@ -27,6 +27,7 @@ describe("sendDiscordNotice", () => {
     await sendDiscordNotice("chunithm", "jp", "Fetch pipeline completed", "Complete");
     const payload = await delivered();
     expect(payload.username).toBe("ともチュウ");
+    expect(payload).not.toHaveProperty("avatar_url");
     expect(payload.embeds[0].title).toBe("[CHUNITHM / Japan] Fetch pipeline completed");
   });
 
@@ -49,6 +50,13 @@ describe("postDiscordEmbed", () => {
     expect(description).toMatch(/\n… \(truncated\)$/);
     const kept = description.slice(0, -"\n… (truncated)".length).split("\n");
     expect(kept).toEqual(lines.slice(0, kept.length));
+  });
+
+  it("posts as the game's bot with its brand icon", async () => {
+    postDiscordEmbed("https://example.test/webhook", { game: "maimai", region: "jp" }, embed);
+    const payload = await delivered();
+    expect(payload.username).toBe("ともマイ");
+    expect(payload.avatar_url).toBe("https://example.test/icon.png");
   });
 
   it("logs a rejected delivery with its game and region", async () => {

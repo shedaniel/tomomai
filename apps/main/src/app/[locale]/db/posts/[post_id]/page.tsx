@@ -12,7 +12,7 @@ import { PostLocaleSwitcher } from "@/components/post-locale-switcher";
 import { getTranslations } from "next-intl/server";
 import { Bot } from "lucide-react";
 import { getCurrentGame } from "@/lib/games/current";
-import { isGameCnExclusive } from "@/lib/games/frontend";
+import { brandTitle, isGameCnExclusive } from "@/lib/games/frontend";
 import { MdxImageComparison } from "@/components/mdx-image-comparison";
 import { MdxImageCarousel, MdxImageCarouselSlide } from "@/components/mdx-image-carousel";
 import remarkGfm from "remark-gfm";
@@ -38,6 +38,7 @@ export async function generateMetadata({ params }: PostPageProps): Promise<Metad
 
   const url = `/db/posts/${post.slug}`;
   const translations = getAvailableTranslations(post.canonicalSlug);
+  const { brand } = getCurrentGame();
 
   const languages: Record<string, string> = {};
   for (const lang of translations) {
@@ -46,21 +47,21 @@ export async function generateMetadata({ params }: PostPageProps): Promise<Metad
   languages["x-default"] = localizePath(url, defaultLocale);
 
   return {
-    title: `${post.title} | tomomai`,
+    title: `${post.title} | ${brand.productName}`,
     description: post.summary,
     openGraph: {
       title: post.title,
       description: post.summary,
       type: "article",
       url: localizePath(url, locale),
-      siteName: "tomomai ともマイ",
+      siteName: brandTitle(brand),
       publishedTime: post.date,
       images: [{ url: ogImageUrl(url, locale) }],
       ...openGraphLocales(locale),
     },
     twitter: {
       card: "summary_large_image",
-      title: `${post.title} | tomomai`,
+      title: `${post.title} | ${brand.productName}`,
       description: post.summary,
     },
     alternates: {
@@ -102,6 +103,7 @@ export default async function PostPage({ params }: PostPageProps) {
   const localizedPath = localizePath(`/db/posts/${post.slug}`, locale);
   const postUrl = `${baseUrl}${localizedPath}`;
   const tNav = await getTranslations("db.types");
+  const { brand } = getCurrentGame();
 
   const structuredData = {
     "@context": "https://schema.org",
@@ -112,17 +114,17 @@ export default async function PostPage({ params }: PostPageProps) {
     dateModified: post.date,
     inLanguage: post.locale,
     mainEntityOfPage: { "@type": "WebPage", "@id": postUrl },
-    author: { "@type": "Organization", name: "tomomai", url: baseUrl },
+    author: { "@type": "Organization", name: brand.productName, url: baseUrl },
     publisher: {
       "@type": "Organization",
-      name: "tomomai",
-      logo: { "@type": "ImageObject", url: `${baseUrl}/icon.png` },
+      name: brand.productName,
+      ...(brand.icon && { logo: { "@type": "ImageObject", url: `${baseUrl}${brand.icon}` } }),
     },
     image: `${postUrl}/opengraph-image`,
   };
 
   const breadcrumb = breadcrumbJsonLd([
-    { name: "tomomai", url: `${baseUrl}/` },
+    { name: brand.productName, url: `${baseUrl}/` },
     { name: tNav("posts"), url: `${baseUrl}${localizePath("/db/posts", locale)}` },
     { name: post.title, url: postUrl },
   ]);

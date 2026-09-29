@@ -1,4 +1,5 @@
 import { getPostBySlug } from "@/lib/posts";
+import { getCurrentGame } from "@/lib/games/current";
 import { createOGImage, OG_SIZE } from "@/lib/og";
 import { getTranslations } from "next-intl/server";
 import type { Locale } from "@/i18n/locale";
@@ -29,9 +30,12 @@ export default async function Image({ params, id }: Props & { id: Promise<string
     })
     : undefined;
 
+  const { brand } = getCurrentGame();
+
   return createOGImage({
+    brand,
     section: t("title"),
-    title: post?.title ?? "tomomai",
+    title: post?.title ?? brand.productName,
     summary: post?.summary,
     label: date,
     locale,

@@ -3,11 +3,13 @@ import { redirect } from '@/i18n/navigation';
 import { Wrench } from 'lucide-react';
 import { getThemeOrDefault, getThemeStyleProperties } from '@/lib/themes';
 import { MaintenanceThemeForcer } from './theme-forcer';
+import { getCurrentGame } from '@/lib/games/current';
+import { brandTitle } from '@/lib/games/frontend';
 
 export const dynamic = 'force-dynamic';
 
 export const metadata = {
-  title: 'Maintenance - tomomai ともマイ',
+  title: `Maintenance - ${brandTitle(getCurrentGame().brand)}`,
 };
 
 // gray-pink theme: hue=0, contrast=0.9, darkness=0.7, lightness=2.5, saturation=0.7, dark=true

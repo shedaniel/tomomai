@@ -1,6 +1,8 @@
 "use client";
 
-import { brandTitle, isGameCnExclusive, supportsGameFeature } from "@/lib/games/frontend";
+import { isGameCnExclusive, supportsGameFeature } from "@/lib/games/frontend";
+import type { BrandSection } from "@/lib/games/types";
+import { BrandLogo } from "@/components/brand-logo";
 import { signOut } from "@/lib/auth-client";
 import { useGame } from "@/components/providers/game-provider";
 import { AboutDialog } from "@/components/about-dialog";
@@ -53,7 +55,7 @@ function ThreadsIcon({ className }: { className?: string }) {
 const APPLICATION_ID = process.env.NEXT_PUBLIC_DISCORD_APPLICATION_ID;
 const SIGNUP_TYPE = process.env.NEXT_PUBLIC_ACCOUNT_SIGNUP_TYPE || 'disabled';
 
-type CurrentTab = "dashboard" | "db";
+type CurrentTab = BrandSection;
 const ALL_TABS: CurrentTab[] = ["dashboard", "db"];
 
 const TAB_ICONS: Record<CurrentTab, React.ReactNode> = {
@@ -64,16 +66,6 @@ const TAB_ICONS: Record<CurrentTab, React.ReactNode> = {
 const TAB_LINKS: Record<CurrentTab, string> = {
   dashboard: "/",
   db: "/db",
-};
-
-const TAB_ICONS_PATHS: Record<CurrentTab, string> = {
-  dashboard: "/icon-small.webp",
-  db: "/icon-db-small.webp",
-};
-
-const TAB_ICONS_PATHS_DARK: Record<CurrentTab, string> = {
-  dashboard: "/icon-small-dark.webp",
-  db: "/icon-db-small-dark.webp",
 };
 
 interface HeaderProps {
@@ -239,6 +231,7 @@ function UserIcon({ user, menu, onAbout, onTheme, onDiscordInvite, onSignIn }: P
   const t = useTranslations();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const game = useGame();
+  const { communityInviteUrl } = game.brand;
   const handleLogout = menu?.onLogout ?? (async () => {
     await signOut();
     window.location.reload();
@@ -275,11 +268,11 @@ function UserIcon({ user, menu, onAbout, onTheme, onDiscordInvite, onSignIn }: P
               </div>
             </DrawerHeader>
             <DrawerDescription className="sr-only">{user ? t('userHeader.memberLabel') : t('common.guest')}</DrawerDescription>
-            {user && (
+            {user && communityInviteUrl && (
               <div className="border-b px-4 py-3 mb-1">
                 <p className="text-sm text-muted-foreground text-balance">{t('userHeader.discordPrompt')}</p>
                 <a
-                  href="https://discord.gg/jZqQHr3UDq"
+                  href={communityInviteUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-sm font-medium leading-none text-primary hover:underline"
@@ -432,22 +425,24 @@ function UserIcon({ user, menu, onAbout, onTheme, onDiscordInvite, onSignIn }: P
                     </p>
                   </div>
                 </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuLabel className="font-normal">
-                  <div className="flex flex-col space-y-1">
-                    <p className="text-xs text-muted-foreground">
-                      {t('userHeader.discordPrompt')}
-                    </p>
-                    <a
-                      href="https://discord.gg/jZqQHr3UDq"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs font-medium leading-none text-primary hover:underline text-center px-1 py-3"
-                    >
-                      {t('userHeader.joinDiscord')}
-                    </a>
-                  </div>
-                </DropdownMenuLabel>
+                {communityInviteUrl && <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-xs text-muted-foreground">
+                        {t('userHeader.discordPrompt')}
+                      </p>
+                      <a
+                        href={communityInviteUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs font-medium leading-none text-primary hover:underline text-center px-1 py-3"
+                      >
+                        {t('userHeader.joinDiscord')}
+                      </a>
+                    </div>
+                  </DropdownMenuLabel>
+                </>}
               </>
             ) : (
               <>
@@ -582,8 +577,7 @@ export function Header({ currentTab, showDiscordBanner = true, customThemesEnabl
               whileHover={{ scale: 1.05 }}
               transition={getTransition(SPRING_CONFIGS.snappy)}
             >
-              {game.id === "maimai" ? <><Image src={TAB_ICONS_PATHS[currentTab]} alt="tomomai" width={528} height={132} sizes="176px" priority className="h-11 w-auto dark:hidden" style={{ aspectRatio: '4 / 1' }} />
-              <Image src={TAB_ICONS_PATHS_DARK[currentTab]} alt="tomomai" width={528} height={132} sizes="176px" priority className="h-11 w-auto hidden dark:block" style={{ aspectRatio: '4 / 1' }} /></> : <span className="text-2xl font-semibold">{brandTitle(game.brand)}</span>}
+              <BrandLogo section={currentTab} height={44} priority />
             </motion.div>
           </Link>
           <NavbarButtons currentTab={currentTab} />
@@ -601,7 +595,7 @@ export function Header({ currentTab, showDiscordBanner = true, customThemesEnabl
       </div>
 
       <AnimatePresence>
-        {supportsGameFeature(game, "community-banner") && showBanner && <DiscordBanner onDismiss={() => setShowBanner(false)} />}
+        {supportsGameFeature(game, "community-banner") && game.brand.communityInviteUrl && showBanner && <DiscordBanner inviteUrl={game.brand.communityInviteUrl} onDismiss={() => setShowBanner(false)} />}
       </AnimatePresence>
 
       <AboutDialog open={aboutOpen} onOpenChange={setAboutOpen} />

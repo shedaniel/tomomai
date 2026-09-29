@@ -1,4 +1,3 @@
-import { brandTitle } from "@/lib/games/frontend";
 import { getCurrentGame } from "@/lib/games/current";
 import { createSongOGImage, createHomeOGImage, DB_ACCENT, OG_SIZE } from "@/lib/og";
 import { getAllUniqueSongsCached } from "@/server/queries/songs-cache";
@@ -30,9 +29,10 @@ export default async function Image({ params, id }: Props & { id: Promise<string
   if (type !== "songs") {
     const t = await getTranslations({ locale, namespace: "db.songs.metadata" });
     return createHomeOGImage({
-      tagline: t("description", { game: getCurrentGame().brand.displayName }),
+      brand: game.brand,
+      tagline: t("description", { game: game.brand.displayName }),
       locale,
-      logoFile: "icon-db-dark.webp",
+      artwork: "dbLogo",
       logoHeight: 220,
       accent: DB_ACCENT,
     });
@@ -45,9 +45,10 @@ export default async function Image({ params, id }: Props & { id: Promise<string
   if (!song) {
     const t = await getTranslations({ locale, namespace: "db.songs.metadata" });
     return createHomeOGImage({
-      tagline: t("description", { game: getCurrentGame().brand.displayName }),
+      brand: game.brand,
+      tagline: t("description", { game: game.brand.displayName }),
       locale,
-      logoFile: "icon-db-dark.webp",
+      artwork: "dbLogo",
       logoHeight: 220,
       accent: DB_ACCENT,
     });
@@ -66,7 +67,7 @@ export default async function Image({ params, id }: Props & { id: Promise<string
 
   return createSongOGImage({
     game: game.id,
-    brandName: brandTitle(game.brand),
+    brand: game.brand,
     songName: song.songName,
     artist: song.artist,
     coverUrl,

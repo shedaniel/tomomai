@@ -11,6 +11,12 @@ export const chunithmDefinition = {
     japaneseName: "ともチュウ",
     displayName: "CHUNITHM",
     netName: "CHUNITHM-NET",
+    domain: "tomochu.app",
+    icon: null,
+    logos: null,
+    og: null,
+    sameAs: [],
+    communityInviteUrl: "https://discord.gg/jZqQHr3UDq",
   },
   sites: {
     intl: {

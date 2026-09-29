@@ -50,9 +50,10 @@ export type DiscordEmbed = {
 
 // Posts as the game's bot identity, whichever game the deployment serves.
 export function postDiscordEmbed(webhookUrl: string, { game, region }: GameRegionContext, embed: DiscordEmbed): void {
+  const { brand } = getGame(game);
   const payload = {
-    username: getGame(game).brand.japaneseName,
-    avatar_url: `${resolveBaseUrl()}/icon.png`,
+    username: brand.japaneseName,
+    ...(brand.icon && { avatar_url: `${resolveBaseUrl()}${brand.icon}` }),
     embeds: [{ ...embed, description: embed.description && truncateForDiscord(embed.description) }],
   };
 

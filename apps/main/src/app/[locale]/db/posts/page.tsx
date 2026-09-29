@@ -4,6 +4,8 @@ import { localizePath, buildAlternates, openGraphLocales } from "@/lib/seo";
 import { Metadata } from "next";
 import { Link } from "@/i18n/navigation"
 import { getTranslations } from "next-intl/server";
+import { getCurrentGame } from "@/lib/games/current";
+import { brandTitle } from "@/lib/games/frontend";
 
 type Props = {
   params: Promise<{ locale: string }>;
@@ -16,7 +18,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     getTranslations("db.posts.list"),
     getLocale(),
   ]);
-  const title = `${t("title")} | tomomai`;
+  const { brand } = getCurrentGame();
+  const title = `${t("title")} | ${brand.productName}`;
   const description = t("description");
 
   return {
@@ -28,7 +31,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       description,
       type: "website",
       url: localizePath("/db/posts", currentLocale),
-      siteName: "tomomai ともマイ",
+      siteName: brandTitle(brand),
       ...openGraphLocales(currentLocale),
     },
     twitter: {

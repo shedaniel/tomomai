@@ -40,15 +40,17 @@ export function SiteFooter() {
               <span className="text-xs font-normal text-muted-foreground">{brand.japaneseName}</span>
             </Link>
             <div className="mt-1.5 flex items-center gap-3">
-              <a
-                href="https://discord.gg/jZqQHr3UDq"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Discord"
-                className="text-muted-foreground/70 transition-colors hover:text-foreground"
-              >
-                <DiscordIcon className="size-3.5" />
-              </a>
+              {brand.communityInviteUrl && (
+                <a
+                  href={brand.communityInviteUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Discord"
+                  className="text-muted-foreground/70 transition-colors hover:text-foreground"
+                >
+                  <DiscordIcon className="size-3.5" />
+                </a>
+              )}
               <a
                 href="https://threads.com/shedaniel"
                 target="_blank"

@@ -6,7 +6,7 @@ import { motion } from "motion/react";
 import { useTranslations } from "next-intl";
 import { getTransition } from "@/lib/animation-constants";
 
-export function DiscordBanner({ onDismiss }: { onDismiss: () => void }) {
+export function DiscordBanner({ inviteUrl, onDismiss }: { inviteUrl: string; onDismiss: () => void }) {
   const t = useTranslations();
 
   return (
@@ -30,7 +30,7 @@ export function DiscordBanner({ onDismiss }: { onDismiss: () => void }) {
             {t('publicHeader.discordBanner')}
           </p>
           <a
-            href="https://discord.gg/jZqQHr3UDq"
+            href={inviteUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1 mt-2 text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:underline"

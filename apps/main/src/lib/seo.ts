@@ -98,10 +98,8 @@ export function siteJsonLd(brand: GameBrand): unknown[] {
       name: brand.productName,
       alternateName: brand.japaneseName,
       url: baseUrl,
-      logo: `${baseUrl}/icon.png`,
-      sameAs: [
-        "https://github.com/shedaniel/maimai-friends",
-      ],
+      ...(brand.icon && { logo: `${baseUrl}${brand.icon}` }),
+      sameAs: brand.sameAs,
     },
     {
       "@context": "https://schema.org",

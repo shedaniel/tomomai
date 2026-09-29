@@ -5,7 +5,8 @@ import sharp from "sharp";
 import type { Locale } from "@/i18n/locale";
 import { getRatingImageUrl } from "@/lib/games/maimai/assets";
 import type { Region } from "@/lib/types";
-import type { CanonicalGameId } from "@/lib/games/types";
+import { brandTitle } from "@/lib/games/frontend";
+import type { CanonicalGameId, GameBrand } from "@/lib/games/types";
 import { codeOf } from "@/lib/games/codes";
 import { formatEstimated, formatGameLevel, getGameChartType, getGameDifficulty } from "@/lib/games/presentation";
 
@@ -315,23 +316,28 @@ function GridBackground() {
   );
 }
 
-function BrandChip({ section, icon }: { section?: string; icon: LoadedImage }) {
+function loadBrandIcon(brand: GameBrand): Promise<LoadedImage | null> {
+  return brand.og ? loadLocalImage(brand.og.logo, 48) : Promise.resolve(null);
+}
+
+function BrandChip({ brand, section, icon }: { brand: GameBrand; section?: string; icon: LoadedImage | null }) {
   return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
       <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-        <span style={{ color: "#fafafa", fontSize: "20px", fontWeight: 700 }}>tomomai.lol</span>
+        <span style={{ color: "#fafafa", fontSize: "20px", fontWeight: 700 }}>{brand.domain}</span>
         {section && (
           <span style={{ color: "#a1a1aa", fontSize: "20px", fontWeight: 400 }}>· {section}</span>
         )}
       </div>
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={icon.dataUrl} width={icon.width} height={icon.height} alt="tomomai icon" />
+      {icon && <img src={icon.dataUrl} width={icon.width} height={icon.height} alt={brand.productName} />}
     </div>
   );
 }
 
 export type OGImageOptions = {
-  /** Subtitle shown next to "tomomai ·" in the top bar */
+  brand: GameBrand;
+  /** Shown after the domain in the top bar */
   section: string;
   title: string;
   summary?: string;
@@ -342,12 +348,12 @@ export type OGImageOptions = {
 };
 
 export async function createOGImage(options: OGImageOptions) {
-  const { section, title, summary, label, locale = "en", accent = DEFAULT_ACCENT } = options;
+  const { brand, section, title, summary, label, locale = "en", accent = DEFAULT_ACCENT } = options;
 
   const [interFonts, localeFonts, icon] = await Promise.all([
     loadInterFonts(),
     loadLocaleFonts(locale),
-    loadLocalImage("icon-dark.webp", 48),
+    loadBrandIcon(brand),
   ]);
 
   const fonts = [...interFonts, ...localeFonts];
@@ -380,7 +386,7 @@ export async function createOGImage(options: OGImageOptions) {
             position: "relative",
           }}
         >
-          <BrandChip section={section} icon={icon} />
+          <BrandChip brand={brand} section={section} icon={icon} />
 
           <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
             <div
@@ -431,10 +437,11 @@ export async function createOGImage(options: OGImageOptions) {
 }
 
 export type HomeOGImageOptions = {
+  brand: GameBrand;
   tagline: string;
   locale?: Locale;
-  /** public/-relative path to the logo image. Defaults to the tomomai mark. */
-  logoFile?: string;
+  /** Which of the brand's OpenGraph artworks to draw. */
+  artwork?: "logo" | "dbLogo";
   /** Logo render height in px. */
   logoHeight?: number;
   accent?: Accent;
@@ -442,9 +449,10 @@ export type HomeOGImageOptions = {
 
 export async function createHomeOGImage(options: HomeOGImageOptions) {
   const {
+    brand,
     tagline,
     locale = "en",
-    logoFile = "icon-dark.webp",
+    artwork = "logo",
     logoHeight = 240,
     accent = DEFAULT_ACCENT,
   } = options;
@@ -452,7 +460,7 @@ export async function createHomeOGImage(options: HomeOGImageOptions) {
   const [interFonts, localeFonts, logo] = await Promise.all([
     loadInterFonts(),
     loadLocaleFonts(locale),
-    loadLocalImage(logoFile, logoHeight),
+    brand.og ? loadLocalImage(brand.og[artwork], logoHeight) : Promise.resolve(null),
   ]);
 
   const fonts = [...interFonts, ...localeFonts];
@@ -487,8 +495,12 @@ export async function createHomeOGImage(options: HomeOGImageOptions) {
             position: "relative",
           }}
         >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={logo.dataUrl} width={logo.width} height={logo.height} alt="tomomai" />
+          {logo ? (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img src={logo.dataUrl} width={logo.width} height={logo.height} alt={brand.productName} />
+          ) : (
+            <div style={{ color: "#fafafa", fontSize: "96px", fontWeight: 700, lineHeight: 1.1 }}>{brandTitle(brand)}</div>
+          )}
 
           <div
             style={{
@@ -520,6 +532,7 @@ export async function createHomeOGImage(options: HomeOGImageOptions) {
 }
 
 export type ProfileOGImageOptions = {
+  brand: GameBrand;
   /** maimai display name shown in the rating plate area */
   displayName: string;
   /** account/handle title shown above the display name (small badge) */
@@ -539,6 +552,7 @@ export type ProfileOGImageOptions = {
 
 export async function createProfileOGImage(options: ProfileOGImageOptions) {
   const {
+    brand,
     displayName,
     title,
     username,
@@ -559,7 +573,7 @@ export async function createProfileOGImage(options: ProfileOGImageOptions) {
     loadInterFonts(),
     loadGeistMono(),
     loadLocaleFonts(locale),
-    loadLocalImage("icon-dark.webp", 48),
+    loadBrandIcon(brand),
     loadLocalImage(ratingPath, 90),
     isHttpIcon ? loadRemoteImage(iconUrl!, 220, 220) : Promise.resolve(null),
     isHttpIcon ? extractTwoColors(iconUrl!) : Promise.resolve(null),
@@ -602,7 +616,7 @@ export async function createProfileOGImage(options: ProfileOGImageOptions) {
             position: "relative",
           }}
         >
-          <BrandChip section="profile" icon={brandIcon} />
+          <BrandChip brand={brand} section="profile" icon={brandIcon} />
 
           {/* Middle: avatar + name stack + rating plate */}
           <div style={{ display: "flex", alignItems: "center", gap: "40px" }}>
@@ -765,7 +779,7 @@ export async function createProfileOGImage(options: ProfileOGImageOptions) {
               }}
             />
             <span style={{ color: "#a1a1aa", fontSize: "18px", fontWeight: 600 }}>
-              tomomai.lol/profile/{username}
+              {brand.domain}/profile/{username}
             </span>
           </div>
         </div>
@@ -777,7 +791,7 @@ export async function createProfileOGImage(options: ProfileOGImageOptions) {
 
 export type SongOGImageOptions = {
   game: CanonicalGameId;
-  brandName: string;
+  brand: GameBrand;
   songName: string;
   artist: string;
   /** Resolved cover URL — http(s) only; falls back to placeholder if null/blocked. */
@@ -793,7 +807,7 @@ export type SongOGImageOptions = {
 export async function createSongOGImage(options: SongOGImageOptions) {
   const {
     game,
-    brandName,
+    brand,
     songName,
     artist,
     coverUrl,
@@ -874,7 +888,7 @@ export async function createSongOGImage(options: SongOGImageOptions) {
           }}
         >
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <span style={{ color: "#fafafa", fontSize: "20px", fontWeight: 700 }}>{brandName} · songs</span>
+            <span style={{ color: "#fafafa", fontSize: "20px", fontWeight: 700 }}>{brandTitle(brand)} · songs</span>
             <span style={{ color: "#a1a1aa", fontSize: "20px", fontWeight: 600 }}>{game.toUpperCase()}</span>
           </div>
 
@@ -1053,7 +1067,7 @@ export async function createSongOGImage(options: SongOGImageOptions) {
               }}
             />
             <span style={{ color: "#a1a1aa", fontSize: "18px", fontWeight: 600 }}>
-              tomomai.lol/db/songs
+              {brand.domain}/db/songs
             </span>
           </div>
         </div>

@@ -33,9 +33,10 @@ export default async function Image({ params, id }: Props & { id: Promise<string
   }
 
   return createHomeOGImage({
+    brand: getCurrentGame().brand,
     tagline,
     locale,
-    logoFile: "icon-db-dark.webp",
+    artwork: "dbLogo",
     logoHeight: 220,
     accent: DB_ACCENT,
   });

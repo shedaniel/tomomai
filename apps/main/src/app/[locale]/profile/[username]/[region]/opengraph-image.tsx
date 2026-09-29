@@ -21,7 +21,7 @@ type Props = {
 
 export async function generateImageMetadata() {
   const locales = await getOGImageLocales();
-  return locales.map(locale => ({ id: locale, alt: "maimai profile", size: OG_SIZE, contentType: "image/png" as const }));
+  return locales.map(locale => ({ id: locale, alt: `${getCurrentGame().brand.displayName} profile`, size: OG_SIZE, contentType: "image/png" as const }));
 }
 
 export default async function Image({ params, id }: Props & { id: Promise<string> }) {
@@ -34,6 +34,7 @@ export default async function Image({ params, id }: Props & { id: Promise<string
 
   if (!isGameRegion(game, region)) {
     return createProfileOGImage({
+      brand: game.brand,
       displayName: username,
       username,
       regionLabel: region,
@@ -48,6 +49,7 @@ export default async function Image({ params, id }: Props & { id: Promise<string
     if (reservedData) {
       const { snapshot } = reservedData;
       return createProfileOGImage({
+        brand: game.brand,
         displayName: snapshot.displayName,
         title: snapshot.title,
         username,
@@ -78,6 +80,7 @@ export default async function Image({ params, id }: Props & { id: Promise<string
     const snapshot = rows[0];
 
     return createProfileOGImage({
+      brand: game.brand,
       displayName: snapshot.displayName,
       title: snapshot.title,
       username,
@@ -91,6 +94,7 @@ export default async function Image({ params, id }: Props & { id: Promise<string
   } catch (error) {
     if (!(error instanceof TRPCError)) throw error;
     return createProfileOGImage({
+      brand: game.brand,
       displayName: username,
       username,
       regionLabel: t(region),

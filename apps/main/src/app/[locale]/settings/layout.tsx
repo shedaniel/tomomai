@@ -1,7 +1,7 @@
 import { getServerSession } from "@/lib/auth-server";
 import { SettingsSidebar } from "@/components/settings/sidebar";
 import { Link, redirect } from "@/i18n/navigation"
-import Image from "next/image";
+import { BrandLogo } from "@/components/brand-logo";
 import { useFlags } from "@/lib/flags";
 
 export default async function SettingsLayout({
@@ -24,25 +24,7 @@ export default async function SettingsLayout({
     <div className="container mx-auto max-w-200 px-4 py-8 overflow-x-hidden">
       <div className="mb-8">
         <Link href="/">
-          <Image
-            src="/icon-small.webp"
-            alt="tomomai"
-            width={528}
-            height={132}
-            priority
-            sizes="176px"
-            className="h-11 w-auto dark:hidden"
-            style={{ aspectRatio: "4 / 1" }}
-          />
-          <Image
-            src="/icon-small-dark.webp"
-            alt="tomomai"
-            width={528}
-            height={132}
-            className="h-11 w-auto hidden dark:block"
-            sizes="176px"
-            style={{ aspectRatio: "4 / 1" }}
-          />
+          <BrandLogo section="dashboard" height={44} priority />
         </Link>
       </div>
 

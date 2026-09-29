@@ -2,6 +2,8 @@ import type { ReactNode } from "react";
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { SiteFooter } from "@/components/site-footer";
+import { getCurrentGame } from "@/lib/games/current";
+import { brandTitle } from "@/lib/games/frontend";
 import {
   DEFAULT_THEME_ID,
   getThemeOrDefault,
@@ -30,7 +32,7 @@ const murecho = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "tomomai ともマイ",
+  title: brandTitle(getCurrentGame().brand),
 };
 
 // Legal pages are locale-independent and served at a fixed /tos, /privacy URL.

@@ -25,8 +25,6 @@ const PENDING: Record<string, number> = {
   "app/[locale]/db/opengraph-image.tsx": 1,
   "app/[locale]/profile/[username]/[region]/opengraph-image.tsx": 1,
   "app/[locale]/profile/[username]/[region]/page.tsx": 1,
-  // The header logo moves onto the brand.
-  "components/header.tsx": 1,
   // Recent plays carry one per-game details field.
   "components/player/recent-songs-card.tsx": 2,
   "server/queries/recents.ts": 1,

@@ -24,6 +24,7 @@ import {
   KeyRound,
   ShieldCheck,
 } from "lucide-react";
+import { useGame } from "@/components/providers/game-provider";
 import type { GuideMeta } from "@/lib/developer/guides";
 
 interface DeveloperSidebarProps {
@@ -34,13 +35,14 @@ interface DeveloperSidebarProps {
 
 export function DeveloperSidebar({ guides, routeGroups }: DeveloperSidebarProps) {
   const pathname = usePathname();
+  const backLabel = `Back to ${useGame().brand.productName}`;
 
   return (
     <Sidebar variant="inset" collapsible="icon">
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild size="lg" tooltip="Back to tomomai">
+            <SidebarMenuButton asChild size="lg" tooltip={backLabel}>
               <Link href="/">
                 <div className="flex aspect-square size-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
                   <Code2 className="size-4" />
@@ -167,10 +169,10 @@ export function DeveloperSidebar({ guides, routeGroups }: DeveloperSidebarProps)
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Back to tomomai" size="sm">
+            <SidebarMenuButton asChild tooltip={backLabel} size="sm">
               <Link href="/">
                 <ArrowLeft className="size-4" />
-                <span>Back to tomomai</span>
+                <span>{backLabel}</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
