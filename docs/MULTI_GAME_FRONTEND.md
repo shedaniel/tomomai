@@ -389,7 +389,8 @@ checks it may render the owning game's component. Before a second game declares
 such a capability, move its component behind a `GAME_UI` slot.
 `src/test/game-branching.test.ts` fails when code outside the game folders
 compares a game id, apart from a shrinking list of comparisons that are waiting
-for their replacement.
+for their replacement. It also fails when a game other than the owner declares
+one of these single-game features (its `SINGLE_GAME_FEATURES` list).
 
 Plates, percentile/recommendation calculations, reserved accounts,
 credit/daily-play images and existing render-token flows remain maimai-only

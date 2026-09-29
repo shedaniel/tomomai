@@ -1,7 +1,10 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { CANONICAL_GAME_IDS } from "@/lib/games/ids";
+import { offersCapability } from "@/lib/games/capabilities";
+import { CANONICAL_GAME_IDS, type CanonicalGameId } from "@/lib/games/ids";
+import { getGame } from "@/lib/games/registry";
+import type { GameCapability } from "@/lib/games/types";
 
 const SRC = fileURLToPath(new URL("..", import.meta.url));
 const GAME_FOLDERS = CANONICAL_GAME_IDS.flatMap(game => [
@@ -37,6 +40,23 @@ const PENDING: Record<string, number> = {
   "server/services/games/sega/http.ts": 1,
 };
 
+// Shared hosts gate these features by capability but render the owner's component or call its trpc router,
+// so a second game would get the owner's UI. Give the host a GAME_UI slot before another game declares one.
+const SINGLE_GAME_FEATURES = {
+  "rating-plate": "maimai",
+  assistant: "maimai",
+  minigames: "maimai",
+  "community-banner": "maimai",
+  stats: "maimai",
+  "image-export": "maimai",
+  "developer-export": "maimai",
+  events: "maimai",
+  albums: "maimai",
+  percentiles: "maimai",
+  "snapshot-copy": "maimai",
+  "score-details": "maimai",
+} as const satisfies Partial<Record<GameCapability, CanonicalGameId>>;
+
 function sourceFiles(): string[] {
   return readdirSync(SRC, { recursive: true, encoding: "utf8" })
     .map(path => path.split("\\").join("/"))
@@ -51,5 +71,15 @@ describe("game branching", () => {
       return count > 0 ? [[path, count]] : [];
     }));
     expect(branches, "Check a capability with supportsGameFeature, read a definition field, or render a GAME_UI slot instead of comparing the game id").toEqual(PENDING);
+  });
+
+  it("lets only the owning game declare a feature whose shared host renders one game's UI", () => {
+    const features = Object.entries(SINGLE_GAME_FEATURES) as [GameCapability, CanonicalGameId][];
+    const declaredBy = Object.fromEntries(features.map(([capability]) => [
+      capability,
+      CANONICAL_GAME_IDS.filter(game => offersCapability(getGame(game), capability)),
+    ]));
+    expect(declaredBy, "Render a GAME_UI slot in the shared host, then drop the feature from SINGLE_GAME_FEATURES")
+      .toEqual(Object.fromEntries(features.map(([capability, owner]) => [capability, [owner]])));
   });
 });
