@@ -1,4 +1,4 @@
-import { beforeEach, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
 import { getTableColumns } from "drizzle-orm";
 import { userSnapshots } from "@/lib/db/schema-pg";
@@ -16,11 +16,19 @@ vi.mock("@/lib/trpc", async () => {
 vi.mock("@/lib/logger", () => ({ logger: { info: vi.fn(), warn: vi.fn() } }));
 vi.mock("@/lib/request-logger", () => ({ getLogger: () => ({ info: vi.fn(), warn: vi.fn() }) }));
 vi.mock("@/lib/r2", () => ({ deleteFromR2: vi.fn(), isR2IconUrl: () => false, r2KeyFromIconUrl: vi.fn() }));
-vi.mock("@/lib/profile-cache", () => ({ revalidatePublicProfileForUser: vi.fn() }));
+const services = vi.hoisted(() => ({ copy: vi.fn(), revalidate: vi.fn() }));
+vi.mock("@/lib/profile-cache", () => ({ revalidatePublicProfileForUser: services.revalidate }));
+vi.mock("@/server/services/games/snapshot-copy", () => ({ copySnapshotToVersion: services.copy }));
 
 import { snapshotsRouter } from "./snapshots";
 
-beforeEach(() => { db.statements = []; db.responses = []; });
+beforeEach(() => {
+  db.statements = [];
+  db.responses = [];
+  vi.clearAllMocks();
+  vi.stubEnv("NEXT_PUBLIC_ENABLED_MAIMAI_REGIONS", "jp");
+});
+afterEach(() => vi.unstubAllEnvs());
 
 function caller() {
   const now = new Date();
@@ -78,4 +86,20 @@ it("exports scores in rating order with each chart's integer rating and legacy k
     ["B", 292, "master", "dx", "none", "none"],
     ["C", 282, "master", "std", "none", "none"],
   ]);
+});
+
+it("answers NOT_FOUND for a snapshot the copy service cannot find, without revalidating", async () => {
+  services.copy.mockResolvedValueOnce(null);
+  await expect(caller().copySnapshotToVersion({ game: "maimai", snapshotId: "missing", region: "jp", targetVersion: 13 }))
+    .rejects.toMatchObject({ code: "NOT_FOUND" });
+  expect(services.copy).toHaveBeenCalledWith({ game: "maimai", userId: "same-owner", snapshotPublicId: "missing", region: "jp", targetVersion: 13 });
+  expect(services.revalidate).not.toHaveBeenCalled();
+});
+
+it("revalidates the public profile once the copy has committed", async () => {
+  const copied = { newSnapshotId: "copy", copiedScores: 1, totalOriginalScores: 2, originalRating: 12000, newRating: 12100 };
+  services.copy.mockResolvedValueOnce(copied);
+  await expect(caller().copySnapshotToVersion({ game: "maimai", snapshotId: "source", region: "jp", targetVersion: 13 }))
+    .resolves.toEqual({ success: true, ...copied });
+  expect(services.revalidate).toHaveBeenCalledWith("maimai", "same-owner", ["jp"]);
 });

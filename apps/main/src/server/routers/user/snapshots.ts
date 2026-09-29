@@ -1,20 +1,17 @@
 import type { GameSnapshotData } from "@/lib/games/player-view";
-import { getGame } from "@/lib/games/registry";
-import { RANKING_BUCKET_CODE } from "@/lib/games/codes";
-import { rankScores, rateScores, sortByRating } from "@/lib/games/ranking";
+import { rateScores, sortByRating } from "@/lib/games/ranking";
 import { maimaiCompatibilityGameSchema, regionSchema } from "@/lib/games/schema";
 import { gameContextInput, validateGameInput } from "./game-input";
 import { deleteUserSnapshot, fetchSnapshotData, fetchUserSnapshots } from "@/server/queries/snapshots";
 import { codeToChartType, codeToComboStatus, codeToDifficulty, codeToSyncStatus, codeToTitleType } from "@/lib/games/maimai/codes";
 import { db } from '@/lib/db';
-import { parentSong, scoreData, snapshotRankings, snapshotScores, songs, userSnapshots } from '@/lib/db/schema-pg';
+import { parentSong, scoreData, snapshotScores, songs, userSnapshots } from '@/lib/db/schema-pg';
 import { fetchRatingHistory } from "@/server/queries/rating-history";
-import { buildChartResolution, upsertScoreData, scoreDataKey, type ScoreDataValues } from "@/server/services/games/score-storage";
+import { copySnapshotToVersion } from "@/server/services/games/snapshot-copy";
 import { getVersion, getAvailableVersions } from "@/lib/games/versions";
 import { protectedProcedure, router } from '@/lib/trpc';
 import { TRPCError } from '@trpc/server';
 import { and, count, eq } from 'drizzle-orm';
-import { nanoid } from 'nanoid';
 import { z } from 'zod';
 import { revalidatePublicProfileForUser } from '@/lib/profile-cache';
 
@@ -181,139 +178,21 @@ export const snapshotsRouter = router({
       targetVersion: z.number(),
     }))
     .mutation(async ({ ctx, input }) => {
-      validateGameInput(input, "scores");
-      const sourceSnapshot = await db
-        .select()
-        .from(userSnapshots)
-        .where(
-          and(
-            eq(userSnapshots.publicId, input.snapshotId),
-            eq(userSnapshots.userId, ctx.session.user.id),
-            and(eq(userSnapshots.game, "maimai"), eq(userSnapshots.region, input.region))
-          )
-        )
-        .limit(1);
-
-      if (sourceSnapshot.length === 0) {
+      const { game, region } = validateGameInput(input, "scores");
+      const copied = await copySnapshotToVersion({
+        game,
+        userId: ctx.session.user.id,
+        snapshotPublicId: input.snapshotId,
+        region,
+        targetVersion: input.targetVersion,
+      });
+      if (!copied) {
         throw new TRPCError({
           code: 'NOT_FOUND',
           message: 'Snapshot not found or access denied',
         });
       }
-
-      const originalSnapshot = sourceSnapshot[0];
-
-      const newSnapshotPublicId = nanoid();
-      const newFetchedAt = new Date(originalSnapshot.fetchedAt.getTime() + 1000);
-
-      const [newSnapshot] = await db.insert(userSnapshots).values({
-        game: "maimai",
-        publicId: newSnapshotPublicId,
-        userId: ctx.session.user.id,
-        region: input.region,
-        fetchedAt: newFetchedAt,
-        gameVersion: input.targetVersion,
-        rating: originalSnapshot.rating,
-        courseRankUrl: originalSnapshot.courseRankUrl,
-        classRankUrl: originalSnapshot.classRankUrl,
-        stars: originalSnapshot.stars,
-        versionPlayCount: 0,
-        totalPlayCount: originalSnapshot.totalPlayCount,
-        iconUrl: originalSnapshot.iconUrl,
-        displayName: originalSnapshot.displayName,
-        title: originalSnapshot.title,
-        titleType: originalSnapshot.titleType,
-      }).returning({ id: userSnapshots.id });
-
-      const newSnapshotInternalId = newSnapshot.id;
-
-      const originalScores = await db
-        .select({
-          parentId: songs.parentId,
-          scoreValue: scoreData.scoreValue,
-          secondaryScore: scoreData.secondaryScore,
-          comboStatus: scoreData.comboStatus,
-          syncStatus: scoreData.syncStatus,
-          clearStatus: scoreData.clearStatus,
-        })
-        .from(snapshotScores)
-        .innerJoin(scoreData, eq(snapshotScores.scoreId, scoreData.id))
-        .innerJoin(songs, eq(scoreData.songId, songs.id))
-        .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
-        .where(and(eq(snapshotScores.game, "maimai"), eq(snapshotScores.snapshotId, originalSnapshot.id)));
-
-      const { songsById } = await buildChartResolution(db, input.game, input.region, input.targetVersion);
-      const targetSongLookup = new Map([...songsById.values()].map(song => [song.parentId, song.id]));
-
-      // Build score data for target version songs
-      const newScoreData: ScoreDataValues[] = [];
-      for (const originalScore of originalScores) {
-        const lookupKey = originalScore.parentId;
-        const targetSongId = targetSongLookup.get(lookupKey);
-
-        if (targetSongId) {
-          newScoreData.push({
-            songId: targetSongId,
-            scoreValue: originalScore.scoreValue,
-            secondaryScore: originalScore.secondaryScore,
-            comboStatus: originalScore.comboStatus,
-            syncStatus: originalScore.syncStatus,
-            clearStatus: originalScore.clearStatus,
-          });
-        }
-      }
-
-      let newRating = originalSnapshot.rating;
-
-      if (newScoreData.length > 0) {
-        // Step 1: Upsert scoreData and get IDs
-        const scoreDataLookup = await upsertScoreData(db, input.game, newScoreData);
-
-        // Step 2: Build and insert junction rows
-        const junctionRows: { snapshotId: number; game: "maimai"; scoreId: number }[] = [];
-        for (const score of newScoreData) {
-          const key = scoreDataKey(score);
-          const scoreDataId = scoreDataLookup.get(key);
-          if (scoreDataId) {
-            junctionRows.push({ game: "maimai", snapshotId: newSnapshotInternalId, scoreId: scoreDataId });
-          }
-        }
-
-        if (junctionRows.length > 0) {
-          for (let i = 0; i < junctionRows.length; i += 1000) {
-            await db.insert(snapshotScores).values(junctionRows.slice(i, i + 1000)).onConflictDoNothing();
-          }
-        }
-
-        const ranked = newScoreData.map(score => {
-          const song = songsById.get(score.songId)!;
-          return {
-            ...score, addedVersion: song.addedVersion, difficultyCode: song.difficulty, levelPrecise: song.levelPrecise,
-            scoreId: scoreDataLookup.get(scoreDataKey(score))!,
-          };
-        });
-        const selected = rankScores(input.game, ranked, input.targetVersion);
-        newRating = getGame(input.game).rating.playerRating([...selected.newScores, ...selected.oldScores].map(score => score.rating));
-        const rankingRows = [
-          ...selected.newScores.map((score, rank) => ({ game: input.game, snapshotId: newSnapshotInternalId, bucket: RANKING_BUCKET_CODE.new, rank, scoreId: score.scoreId })),
-          ...selected.oldScores.map((score, rank) => ({ game: input.game, snapshotId: newSnapshotInternalId, bucket: RANKING_BUCKET_CODE.old, rank, scoreId: score.scoreId })),
-        ];
-        if (rankingRows.length) await db.insert(snapshotRankings).values(rankingRows).onConflictDoNothing();
-      }
-
-      await db
-        .update(userSnapshots)
-        .set({ rating: newRating })
-        .where(eq(userSnapshots.id, newSnapshotInternalId));
-
-      await revalidatePublicProfileForUser(input.game, ctx.session.user.id, [input.region]);
-      return {
-        success: true,
-        newSnapshotId: newSnapshotPublicId,
-        copiedScores: newScoreData.length,
-        totalOriginalScores: originalScores.length,
-        originalRating: originalSnapshot.rating,
-        newRating: newRating,
-      };
+      await revalidatePublicProfileForUser(game, ctx.session.user.id, [region]);
+      return { success: true, ...copied };
     }),
 });

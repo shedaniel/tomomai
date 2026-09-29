@@ -2,7 +2,7 @@ import { GAME_SERVER_MODULES } from "./registry";
 import { readToken, saveToken } from "./tokens";
 import { getGameMaintenance, getGameMaintenanceError } from "@/lib/games/maintenance";
 import { revalidatePublicProfileForUser } from "@/lib/profile-cache";
-import { buildChartResolution, chartKey, scoreDataKey, upsertScoreData, type DbSong } from "./score-storage";
+import { buildChartResolution, chartKey, writeSnapshotScores, type SnapshotScore } from "./score-storage";
 import { resolveFlagsForUser, type Flags } from "@/lib/flags";
 import { and, desc, eq, sql } from "drizzle-orm";
 import { after } from "next/server";
@@ -13,15 +13,12 @@ import {
   fetchSessions,
   userRecentSongs,
   userEvents,
-  snapshotRankings,
-  snapshotScores,
   user,
   userSnapshots,
 } from "@/lib/db/schema-pg";
 import { appendFetchState } from "@/lib/fetch-states-server";
 import { getCurrentVersion } from "@/lib/games/versions";
-import { RANKING_BUCKET_CODE, keyOf } from "@/lib/games/codes";
-import { rankScores } from "@/lib/games/ranking";
+import { keyOf } from "@/lib/games/codes";
 import { getGame, resolveGameContext } from "@/lib/games/registry";
 import type { CanonicalGameId } from "@/lib/games/types";
 import type { GameFetchResult, NormalizedScore, PersistedSnapshotContext, ScoreFetchContext } from "./types";
@@ -68,13 +65,6 @@ export type PersistFetchResultInput = {
   backgroundWorkRef?: BackgroundWorkRef;
   persistExtra?: ScorePersistExtra;
   deadline?: number;
-};
-
-type ResolvedScore = {
-  score: NormalizedScore;
-  song: DbSong;
-  songId: bigint;
-  dataKey: string;
 };
 
 function codeName(game: CanonicalGameId, kind: "difficulty" | "chartType", code: number): string {
@@ -365,7 +355,6 @@ export async function persistFetchResult(input: PersistFetchResultInput): Promis
   if (input.deadline && Date.now() >= input.deadline) throw new Error("Fetch operation timed out before persistence");
   const { snapshotId, gameVersion, chartResolution } = await db.transaction(async tx => {
     if (input.deadline) await tx.execute(sql`SELECT set_config('statement_timeout', ${String(Math.max(1, input.deadline - Date.now()))}, true)`);
-    const definition = getGame(input.game);
     const gameVersion = input.gameVersion;
     const player = input.fetched.player;
     const publicId = nanoid();
@@ -390,9 +379,8 @@ export async function persistFetchResult(input: PersistFetchResultInput): Promis
     const snapshotId = insertedSnapshot.id;
 
     const { chartResolution, songsById } = await buildChartResolution(tx, input.game, input.region, gameVersion);
-    const resolvedScores: ResolvedScore[] = [];
+    const resolvedScores: SnapshotScore[] = [];
     const notFoundScores: NotFoundScore[] = [];
-    const seenScoreData = new Set<string>();
 
     for (const score of input.fetched.scores) {
       if (
@@ -411,62 +399,11 @@ export async function persistFetchResult(input: PersistFetchResultInput): Promis
         continue;
       }
 
-      const dataKey = scoreDataKey({ songId, ...score });
-      if (seenScoreData.has(dataKey)) continue;
-      seenScoreData.add(dataKey);
-      resolvedScores.push({ score, song, songId, dataKey });
+      const { scoreValue, secondaryScore, comboStatus, syncStatus, clearStatus } = score;
+      resolvedScores.push({ song, values: { songId, scoreValue, secondaryScore, comboStatus, syncStatus, clearStatus } });
     }
 
-    const scoreDataLookup = await upsertScoreData(tx, input.game, resolvedScores.map(({ songId, score }) => ({ songId, ...score })));
-    const junctionRows: (typeof snapshotScores.$inferInsert)[] = [];
-    const insertedScoreIds = new Set<number>();
-    for (const resolved of resolvedScores) {
-      const scoreId = scoreDataLookup.get(resolved.dataKey);
-      if (scoreId === undefined || insertedScoreIds.has(scoreId)) continue;
-      insertedScoreIds.add(scoreId);
-      junctionRows.push({ game: input.game, snapshotId, scoreId });
-    }
-
-    for (let index = 0; index < junctionRows.length; index += 1000) {
-      await tx.insert(snapshotScores).values(junctionRows.slice(index, index + 1000)).onConflictDoNothing();
-    }
-
-    if (definition.capabilities.includes("rankings") && resolvedScores.length > 0) {
-      const rankedScores = [];
-      for (const resolved of resolvedScores) {
-        const scoreId = scoreDataLookup.get(resolved.dataKey);
-        if (scoreId === undefined) continue;
-        rankedScores.push({
-          scoreId,
-          scoreValue: resolved.score.scoreValue,
-          comboStatus: resolved.score.comboStatus,
-          levelPrecise: resolved.song.levelPrecise,
-          difficultyCode: resolved.song.difficulty,
-          addedVersion: resolved.song.addedVersion,
-        });
-      }
-
-      const rankingSelection = rankScores(input.game, rankedScores, gameVersion);
-      const rankingRows: (typeof snapshotRankings.$inferInsert)[] = [
-        ...rankingSelection.newScores.map((score, rank) => ({
-          game: input.game,
-          snapshotId,
-          bucket: RANKING_BUCKET_CODE.new,
-          rank,
-          scoreId: score.scoreId,
-        })),
-        ...rankingSelection.oldScores.map((score, rank) => ({
-          game: input.game,
-          snapshotId,
-          bucket: RANKING_BUCKET_CODE.old,
-          rank,
-          scoreId: score.scoreId,
-        })),
-      ];
-      if (rankingRows.length > 0) {
-        await tx.insert(snapshotRankings).values(rankingRows).onConflictDoNothing();
-      }
-    }
+    await writeSnapshotScores(tx, { game: input.game, snapshotId, gameVersion, scores: resolvedScores });
 
     if (notFoundScores.length > 0) {
       await tx

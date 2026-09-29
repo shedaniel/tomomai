@@ -1,6 +1,9 @@
 import { and, eq, getTableColumns, sql } from "drizzle-orm";
 import type { db } from "@/lib/db";
-import { parentSong, scoreData, songs } from "@/lib/db/schema-pg";
+import { parentSong, scoreData, snapshotRankings, snapshotScores, songs } from "@/lib/db/schema-pg";
+import { RANKING_BUCKETS } from "@/lib/games/codes";
+import { getGame } from "@/lib/games/registry";
+import { rankScores, type StoredRankings } from "@/lib/games/ranking";
 import type { CanonicalGameId } from "@/lib/games/types";
 import type { ChartRef, ChartResolutionMap, NormalizedScore } from "./types";
 import type { Region } from "@/lib/types";
@@ -99,4 +102,49 @@ export async function upsertScoreData(
   }
 
   return scoreDataLookup;
+}
+
+export type SnapshotScore = { values: ScoreDataValues; song: DbSong };
+
+export function buildRankingRows(
+  game: CanonicalGameId,
+  snapshotId: number,
+  selection: StoredRankings<{ scoreId: number }>,
+): (typeof snapshotRankings.$inferInsert)[] {
+  return RANKING_BUCKETS.flatMap(bucket => ({ new: selection.newScores, old: selection.oldScores })[bucket.key]
+    .map((score, rank) => ({ game, snapshotId, bucket: bucket.code, rank, scoreId: score.scoreId })));
+}
+
+/**
+ * Stores a snapshot's scores and, for games with rankings, its rating selection.
+ * Returns that selection, or null when nothing was ranked.
+ */
+export async function writeSnapshotScores(
+  connection: ScoreConnection,
+  input: { game: CanonicalGameId; snapshotId: number; gameVersion: number; scores: readonly SnapshotScore[] },
+) {
+  const scoreIds = await upsertScoreData(connection, input.game, input.scores.map(score => score.values));
+  const stored = new Map<number, SnapshotScore>();
+  for (const score of input.scores) {
+    const scoreId = scoreIds.get(scoreDataKey(score.values));
+    if (scoreId !== undefined && !stored.has(scoreId)) stored.set(scoreId, score);
+  }
+
+  const junctionRows = [...stored.keys()].map(scoreId => ({ game: input.game, snapshotId: input.snapshotId, scoreId }));
+  for (let index = 0; index < junctionRows.length; index += 1000) {
+    await connection.insert(snapshotScores).values(junctionRows.slice(index, index + 1000)).onConflictDoNothing();
+  }
+
+  if (!getGame(input.game).capabilities.includes("rankings") || stored.size === 0) return null;
+  const ranking = rankScores(input.game, [...stored].map(([scoreId, { values, song }]) => ({
+    scoreId,
+    scoreValue: values.scoreValue,
+    comboStatus: values.comboStatus,
+    levelPrecise: song.levelPrecise,
+    difficultyCode: song.difficulty,
+    addedVersion: song.addedVersion,
+  })), input.gameVersion);
+  const rankingRows = buildRankingRows(input.game, input.snapshotId, ranking);
+  if (rankingRows.length > 0) await connection.insert(snapshotRankings).values(rankingRows).onConflictDoNothing();
+  return ranking;
 }

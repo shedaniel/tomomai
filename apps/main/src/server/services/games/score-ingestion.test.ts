@@ -7,7 +7,7 @@ const state = vi.hoisted(() => ({
   fetch: vi.fn<ScoreSource["fetch"]>(),
   validateToken: vi.fn<NonNullable<ScoreSource["validateToken"]>>(),
   resolveCharts: vi.fn(),
-  upsertScores: vi.fn(),
+  writeScores: vi.fn(),
   revalidate: vi.fn(),
   resolveFlags: vi.fn(),
 }));
@@ -27,7 +27,7 @@ vi.mock("@/lib/db", async () => {
 vi.mock("./score-storage", async importOriginal => ({
   ...await importOriginal<typeof import("./score-storage")>(),
   buildChartResolution: state.resolveCharts,
-  upsertScoreData: state.upsertScores,
+  writeSnapshotScores: state.writeScores,
 }));
 vi.mock("./maimai", () => ({ maimaiServerModule: {
   scores: { fetch: state.fetch, validateToken: state.validateToken },
@@ -59,7 +59,7 @@ beforeEach(() => {
   state.statements.length = 0;
   state.fetch.mockResolvedValue({ result: fetched });
   state.resolveCharts.mockResolvedValue({ chartResolution: new Map(), songsById: new Map() });
-  state.upsertScores.mockResolvedValue(new Map());
+  state.writeScores.mockResolvedValue(null);
   vi.stubEnv("NEXT_PUBLIC_ENABLED_MAIMAI_REGIONS", "jp");
 });
 afterEach(() => { vi.useRealTimers(); vi.unstubAllEnvs(); });
@@ -105,14 +105,16 @@ it("rejects provider token validation before creating a fetch session", async ()
 
 it("persists the captured version and zero scores, then completes score source extras before revalidation", async () => {
   const chart = { game: "maimai" as const, region: "jp" as const, version: 14, songName: "Zero", chartType: 0, difficulty: 3 };
-  state.resolveCharts.mockResolvedValue({ chartResolution: new Map([["Zero|3|0", BigInt(7)]]), songsById: new Map([[BigInt(7), { id: BigInt(7), addedVersion: 14, levelPrecise: 140, difficulty: 3 }]]) });
-  state.upsertScores.mockResolvedValue(new Map([["7-0-0-0-0-0", 8]]));
+  const song = { id: BigInt(7), addedVersion: 14, levelPrecise: 140, difficulty: 3 };
+  state.resolveCharts.mockResolvedValue({ chartResolution: new Map([["Zero|3|0", BigInt(7)]]), songsById: new Map([[BigInt(7), song]]) });
   const order: string[] = [];
   state.revalidate.mockImplementationOnce(async () => { order.push("revalidate"); });
   await persistFetchResult({ ...persist, fetched: { ...fetched, scores: [{ chart, scoreValue: 0, secondaryScore: 0, comboStatus: 0, syncStatus: 0, clearStatus: 0 }] },
     persistExtra: async () => { order.push("extras"); },
   });
-  expect(state.upsertScores.mock.calls[0][2]).toEqual([expect.objectContaining({ songId: BigInt(7), scoreValue: 0, secondaryScore: 0 })]);
+  expect(state.writeScores).toHaveBeenCalledWith(expect.anything(), { game: "maimai", snapshotId: 1, gameVersion: 14, scores: [
+    { song, values: { songId: BigInt(7), scoreValue: 0, secondaryScore: 0, comboStatus: 0, syncStatus: 0, clearStatus: 0 } },
+  ] });
   const snapshotWrite = state.statements.find(query => query.sql.startsWith('insert into "user_snapshots"'))!;
   expect(snapshotWrite.params).toContain(14);
   expect(order).toEqual(["extras", "revalidate"]);
@@ -188,8 +190,8 @@ it("keeps CHUNITHM subscription failures scoped to the failed session without de
 it("persists CHUNITHM charts only in their captured game, region and version", async () => {
   const chart = { game: "chunithm" as const, region: "jp" as const, version: 9, songName: "Raw　Title", chartType: 0, difficulty: 3 };
   const score = { chart, scoreValue: 1009000, secondaryScore: 0, comboStatus: 1, syncStatus: 0, clearStatus: 1 };
-  state.resolveCharts.mockResolvedValue({ chartResolution: new Map([["Raw　Title|3|0", BigInt(7)]]), songsById: new Map([[BigInt(7), { id: BigInt(7), addedVersion: 9, levelPrecise: 140, difficulty: 3 }]]) });
-  state.upsertScores.mockResolvedValue(new Map([["7-1009000-0-1-0-1", 8]]));
+  const song = { id: BigInt(7), addedVersion: 9, levelPrecise: 140, difficulty: 3 };
+  state.resolveCharts.mockResolvedValue({ chartResolution: new Map([["Raw　Title|3|0", BigInt(7)]]), songsById: new Map([[BigInt(7), song]]) });
   await persistFetchResult({ ...persist, game: "chunithm", gameVersion: 9, fetched: { ...fetched, scores: [
     score,
     { ...score, chart: { ...chart, game: "maimai" } },
@@ -197,8 +199,9 @@ it("persists CHUNITHM charts only in their captured game, region and version", a
     { ...score, chart: { ...chart, version: 8 } },
   ] } });
   expect(state.resolveCharts).toHaveBeenCalledWith(expect.anything(), "chunithm", "jp", 9);
-  expect(state.upsertScores).toHaveBeenCalledWith(expect.anything(), "chunithm", [expect.objectContaining({ songId: BigInt(7), scoreValue: 1009000 })]);
+  expect(state.writeScores).toHaveBeenCalledWith(expect.anything(), { game: "chunithm", snapshotId: 1, gameVersion: 9, scores: [
+    { song, values: { songId: BigInt(7), scoreValue: 1009000, secondaryScore: 0, comboStatus: 1, syncStatus: 0, clearStatus: 1 } },
+  ] });
   const snapshot = state.statements.find(query => query.sql.startsWith('insert into "user_snapshots"'))!;
   expect(snapshot.params).toEqual(expect.arrayContaining(["chunithm", 9]));
-  expect(state.statements.find(query => query.sql.startsWith('insert into "snapshot_rankings"'))?.params).toEqual(expect.arrayContaining(["chunithm", 8]));
 });
