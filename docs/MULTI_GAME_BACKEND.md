@@ -112,9 +112,9 @@ A fetch refused before its session starts throws a `FetchStartError`
 `FETCH_START_ERROR_STATUS` in `lib/games/fetch-error-codes.ts` gives each code
 its HTTP and tRPC status: 412 for a missing, unreadable or single-use token and
 a missing album preference, 409 while another fetch runs, 429 when rate limited
-and 503 during maintenance. `fetchStartRejection` answers the REST route and the
-bookmarklet login from that table, with `Retry-After` for maintenance and
-rate limits. The tRPC `startFetch` procedure maps the same
+and 503 during maintenance. `fetchStartRejection` answers the REST route, the
+bookmarklet login and the CN proxy callback from that table, with `Retry-After`
+for maintenance and rate limits. The tRPC `startFetch` procedure maps the same
 table and logs these refusals at warn. Clients read the code back with
 `parseFetchErrorCode`, which also recognizes `SUBSCRIPTION_REQUIRED` on a
 failed session. Login failures inside a running fetch are stored uncoded, and

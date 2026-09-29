@@ -506,7 +506,7 @@ function ClashImportRow({ t, onCopy }: { t: ReturnType<typeof useTranslations>; 
 interface HttpProxyAuthSubDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  onAuthorized: () => Promise<void>;
+  onAuthorized: () => void;
   startSessionPolling?: (region: Region, onSessionDetected?: () => void) => void;
   stopSessionPolling?: () => void;
   modal?: boolean;
@@ -525,18 +525,14 @@ export function HttpProxyAuthSubDialog({ isOpen, onOpenChange, onAuthorized, sta
   const generateLink = trpc.maimai.getCnProxyAuthLink.useMutation();
   const linkData = generateLink.data;
 
-  // Once a link is generated, watch for a new fetch session being created
-  // server-side (which the webhook will do once the OAuth handoff completes).
-  // Reuses the same session-polling infra the intl/jp flows use.
+  // Once a link is generated, watch for the fetch session the webhook starts
+  // once the OAuth handoff completes. Session polling then follows that fetch,
+  // so the parent only closes its dialogs.
   useEffect(() => {
     if (!isOpen || !linkData || !startSessionPolling || !stopSessionPolling) return;
     startSessionPolling("cn", () => {
       onOpenChange(false);
-      // Mirror the LXNS / DivingFish flows: notify the parent so it can
-      // trigger a fetch (onTokenUpdate("")) and close the outer dialog.
-      void onAuthorized().catch(() => {
-        // caller toasts the error
-      });
+      onAuthorized();
     });
     return () => stopSessionPolling();
   }, [isOpen, linkData, startSessionPolling, stopSessionPolling, onOpenChange, onAuthorized]);
@@ -867,7 +863,7 @@ export function CnTokenDialog({
       <HttpProxyAuthSubDialog
         isOpen={isHttpProxyDialogOpen}
         onOpenChange={setIsHttpProxyDialogOpen}
-        onAuthorized={handleSubAuthorized}
+        onAuthorized={() => onOpenChange(false)}
         startSessionPolling={startSessionPolling}
         stopSessionPolling={stopSessionPolling}
       />

@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyCnProxyToken } from "@/server/services/games/maimai/cn-proxy-token";
 import { formatCnCookiesToken } from "@/server/services/games/maimai/login";
-import { deleteToken, saveToken } from "@/server/services/games/tokens";
+import { deleteToken } from "@/server/services/games/tokens";
 import { startScoreFetch } from "@/server/services/games/score-ingestion";
+import { fetchStartRejection } from "@/server/services/games/fetch-errors";
 import { agentFetch } from "@/lib/http-agent";
 import { requestLogger } from "@/lib/request-logger";
 
@@ -97,9 +98,10 @@ export async function POST(req: NextRequest) {
 
   // Use the single-use t= token to obtain the longer-lived maimai-mobile
   // session cookies, then verify by hitting playerData. If everything works
-  // we save the cookies as a `cn-cookies://` token and immediately kick off
-  // a fetch session — the dashboard's existing session-polling will see the
-  // new session and close the dialog.
+  // we start a fetch with the cookies as a freshly supplied `cn-cookies://`
+  // token, which saves it. The dashboard's session polling sees the new
+  // session and closes the dialog.
+  let token: string;
   try {
     const { html, cookies } = await fetchPlayerHtml(body.maimaiToken);
     if (html.includes("登录失败")) {
@@ -108,8 +110,8 @@ export async function POST(req: NextRequest) {
       throw new Error("error in html");
     }
     const playerName = extractPlayerNameQuick(html);
-    await saveToken("maimai", userId, "cn", formatCnCookiesToken(cookies));
-    log.info({ userId, r: body.r, size: html.length, playerName: playerName ?? "?" }, "cookies saved");
+    token = formatCnCookiesToken(cookies);
+    log.info({ userId, r: body.r, size: html.length, playerName: playerName ?? "?" }, "cookies verified");
   } catch (err) {
     const error = err instanceof Error ? err.message : String(err);
     log.warn({ userId, r: body.r, err }, "verification failed");
@@ -117,15 +119,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, error }, { status: 502 });
   }
 
-  // Kick off the fetch on the user's behalf. The dashboard's session
-  // polling will pick up the new session id and close the dialog.
   try {
-    const result = await startScoreFetch({ userId, game: "maimai", region: "cn" });
-    log.info({ userId, session: result.sessionId }, "started fetch session");
+    const result = await startScoreFetch({ userId, game: "maimai", region: "cn", token });
+    log.info({ userId, sessionId: result.sessionId }, "started fetch session");
     return NextResponse.json({ ok: true, sessionId: result.sessionId });
   } catch (err) {
-    const error = err instanceof Error ? err.message : String(err);
+    const rejection = fetchStartRejection(err);
+    if (rejection) {
+      log.warn({ userId, err }, "fetch refused");
+      return NextResponse.json({ ok: false, error: rejection.message, code: rejection.code }, rejection.init);
+    }
     log.error({ userId, err }, "startFetch failed");
-    return NextResponse.json({ ok: false, error }, { status: 500 });
+    return NextResponse.json({ ok: false, error: err instanceof Error ? err.message : String(err) }, { status: 500 });
   }
 }

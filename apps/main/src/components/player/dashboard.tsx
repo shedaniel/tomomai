@@ -285,7 +285,7 @@ function AvailableDashboard({ user, initialUserData, initialSnapshots, initialSn
         <HttpProxyAuthSubDialog
           isOpen={dialogType === "token-cn-proxy"}
           onOpenChange={open => setDialogType(open ? "token-cn-proxy" : null)}
-          onAuthorized={async () => setDialogType(null)}
+          onAuthorized={() => setDialogType(null)}
           startSessionPolling={startSessionPolling}
           stopSessionPolling={stopSessionPolling}
           modal={true}
