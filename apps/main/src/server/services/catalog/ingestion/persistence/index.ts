@@ -112,8 +112,8 @@ export async function persistCatalog(
     };
     log.info({ statistics }, "Upload merge analysis complete");
     for (const change of changes.added) log.trace({ songKey: change.songKey }, "Catalog chart added");
-    for (const change of changes.modified) log.trace({ songKey: change.songKey, count: change.fieldChanges.length }, "Catalog chart modified");
-    for (const change of changes.deleted) log.trace({ songKey: change.songKey, songId: change.dbId, count: change.playRecordCount }, "Catalog chart removed");
+    for (const change of changes.modified) log.trace({ songKey: change.songKey, count: change.fieldChanges.length }, "Catalog chart modified (count = changed fields)");
+    for (const change of changes.deleted) log.trace({ songKey: change.songKey, songId: change.dbId, count: change.playRecordCount }, "Catalog chart removed (count = user references)");
 
     const deletions = planDeletions(changes.deleted, mode);
     if (mode === "noop") {

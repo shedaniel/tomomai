@@ -6,7 +6,7 @@ import { matchUpload } from "../match-upload";
 import { catalogChartKey, mergeCatalogChart } from "../normalize-charts";
 import { CATALOG_INSTANCE_FIELDS, CATALOG_PARENT_FIELDS, type CatalogChart } from "../schema";
 
-export const CATALOG_UPDATE_MODES = ["noop", "alter", "destructive"] as const;
+const CATALOG_UPDATE_MODES = ["noop", "alter", "destructive"] as const;
 
 /** noop previews, alter keeps charts that user data references, destructive deletes them too. */
 export type CatalogUpdateMode = (typeof CATALOG_UPDATE_MODES)[number];
@@ -127,7 +127,7 @@ function jsonValue(value: unknown): unknown {
   return value === undefined ? undefined : JSON.parse(JSON.stringify(value));
 }
 
-export function compareFields(before: CatalogChart, after: CatalogChart): FieldChange[] {
+function compareFields(before: CatalogChart, after: CatalogChart): FieldChange[] {
   return COMPARED_FIELDS.flatMap(field => {
     const oldValue = before[field];
     const newValue = after[field];
@@ -139,7 +139,7 @@ export function compareFields(before: CatalogChart, after: CatalogChart): FieldC
 }
 
 /** Pairs incoming charts with stored ones, refusing an incoming chart that could be more than one stored chart. */
-export function matchIncoming(stored: CatalogChart[], incoming: CatalogChart[]): Map<number, number> {
+function matchIncoming(stored: CatalogChart[], incoming: CatalogChart[]): Map<number, number> {
   const assignments = matchUpload(stored, incoming);
   const matched = new Set(assignments.values());
   incoming.forEach((chart, index) => {

@@ -1,3 +1,4 @@
+import { getTableColumns } from "drizzle-orm";
 import { PgDialect } from "drizzle-orm/pg-core";
 import { describe, expect, it } from "vitest";
 import { songs } from "@/lib/db/schema-pg";
@@ -15,9 +16,9 @@ describe("instance upsert columns", () => {
     });
   });
 
-  it("never rewrites an instance's identity", () => {
-    for (const column of ["id", "parentId", "game", "region", "gameVersion"]) {
-      expect(INSTANCE_UPDATE_COLUMNS).not.toContain(column);
-    }
+  it("replaces every songs column except the instance identity", () => {
+    const identity = ["id", "parentId", "game", "region", "gameVersion"];
+    expect([...INSTANCE_UPDATE_COLUMNS].toSorted())
+      .toEqual(Object.keys(getTableColumns(songs)).filter(column => !identity.includes(column)).toSorted());
   });
 });
