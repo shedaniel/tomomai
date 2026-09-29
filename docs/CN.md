@@ -49,7 +49,7 @@ This means even items that "support cn today" via hardcoded paths must be revisi
 - [x] `app/api/admin/update_all/route.ts` — gated by `getSupportedRegions`; default iteration uses the enabled regions
 - [x] `app/api/admin/upload/route.ts` — gated by `getSupportedRegions`
 - [x] `app/api/admin/import/route.ts` — `from` / `to` parsers accept any `getSupportedRegions(game)` value; error messages list that set
-- [x] `app/api/admin/image/route.ts` — `extractFilename` now matches Lxns jacket URLs (`assets2.lxns.net/maimai/jacket/{id}.png`) and namespaces them as `lxns_{id}` in R2; route is region-agnostic so no region gate needed
+- [x] `server/services/games/maimai/catalog/images.ts` — `extractFilename` now matches Lxns jacket URLs (`assets2.lxns.net/maimai/jacket/{id}.png`) and namespaces them as `lxns_{id}` in R2. Cover hosting runs inside `update_all` and is region-agnostic, so no region gate is needed
 
 ## Pages
 - [ ] `app/profile/[username]/[region]/page.tsx` — region name map (L40, L95). Should derive labels from a Region→i18n-key map, gated by `isGameRegion`.

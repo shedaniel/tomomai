@@ -51,7 +51,11 @@ The shared catalog ingestion lives under `apps/main/src/server/services/catalog/
   request and refuses a write for another site's game. Every admin route runs
   through `adminRoute` (`lib/api/admin-route.ts`), which checks the admin token
   and answers rejections and failures with the request id.
-- `images.ts` processes incoming covers with the game's cover rules.
+- `images.ts` hosts collected covers on R2 with the game's cover rules.
+- `apply.ts` is what the admin routes run: `collectCatalogRegion` (source login
+  and collection), `applyCatalogUpload` (persist, publish, revalidate and notify)
+  and `updateCatalogRegion`, which `update_all` calls in process for each region
+  to collect, host covers, validate against the upload contract and apply.
 - `publication.ts` publishes game-scoped catalog objects. `revalidation.ts`
   then invalidates the game's cache tags and, on the game's own site, its song
   pages, and asks every deployment in `CATALOG_PEER_ORIGINS` to drop its tags

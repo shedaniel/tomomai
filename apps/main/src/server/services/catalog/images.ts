@@ -2,7 +2,12 @@ import type { Logger } from "pino";
 import type { CanonicalGameId } from "@/lib/games/types";
 import { convertToWebp, fetchImageBuffer } from "@/lib/image-converter";
 import { GAME_SERVER_MODULES } from "@/server/services/games/registry";
-import { value, type Pending } from "./ingestion/types";
+import type { CatalogChart } from "./ingestion/schema";
+
+export type CatalogImageResult = {
+  charts: CatalogChart[];
+  stats: { uploaded: number; skipped: number; unchanged: number };
+};
 
 async function processBatch<T, R>(
   items: T[],
@@ -18,14 +23,13 @@ async function processBatch<T, R>(
   return results;
 }
 
-export async function processCatalogImages<T extends { cover?: Pending<string> }>(game: CanonicalGameId, songs: T[], log: Logger) {
+/** Hosts each chart's cover on R2 under the game's cover rules and points the chart at the hosted copy. */
+export async function processCatalogImages(game: CanonicalGameId, charts: CatalogChart[], log: Logger): Promise<CatalogImageResult> {
   const policy = GAME_SERVER_MODULES[game].catalog.images;
-  log.info({ songCount: songs.length }, "Image processing starting");
+  log.info({ songCount: charts.length }, "Image processing starting");
 
   const filenameToUrl = new Map<string, string>();
-  for (const song of songs) {
-    const cover = value(song.cover);
-    if (!cover) continue;
+  for (const { cover } of charts) {
     const filename = policy.extractFilename(cover);
     if (!filename) continue;
     const existing = filenameToUrl.get(filename);
@@ -37,7 +41,7 @@ export async function processCatalogImages<T extends { cover?: Pending<string> }
   log.info({ uniqueCovers: filenameToUrl.size }, "Unique catalog cover URLs found");
 
   if (filenameToUrl.size === 0 && policy.staticAssets.length === 0) {
-    return { songs, stats: { uploaded: 0, skipped: 0, unchanged: songs.length } };
+    return { charts, stats: { uploaded: 0, skipped: 0, unchanged: charts.length } };
   }
 
   const { listCoverKeys, uploadCoverToR2 } = await import("@/lib/r2");
@@ -91,23 +95,18 @@ export async function processCatalogImages<T extends { cover?: Pending<string> }
   }
 
   let unchanged = 0;
-  const updatedSongs = songs.map((song) => {
-    const cover = value(song.cover);
-    const filename = cover ? policy.extractFilename(cover) : null;
-    if (!filename) {
-      unchanged++;
-      return song;
-    }
-    const publicUrl = filenameToPublicUrl.get(filename);
+  const hosted = charts.map((chart) => {
+    const filename = policy.extractFilename(chart.cover);
+    const publicUrl = filename && filenameToPublicUrl.get(filename);
     if (!publicUrl) {
       unchanged++;
-      return song;
+      return chart;
     }
-    return { ...song, cover: publicUrl };
+    return { ...chart, cover: publicUrl };
   });
 
   const stats = { uploaded, skipped, unchanged };
   log.info({ stats }, "Image processing complete");
 
-  return { songs: updatedSongs, stats };
+  return { charts: hosted, stats };
 }
