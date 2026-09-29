@@ -24,12 +24,11 @@ const CHARTS = [
 ] as const;
 
 type ChartPrefix = typeof CHARTS[number]["prefix"];
-type ChartField = "i" | "notes" | "designer" | "chart_link" | `notes_${ChunithmNoteKind}`;
+type ChartField = "i" | "designer" | `notes_${ChunithmNoteKind}`;
 type SongsJsonRecord = {
   id: string;
   title: string;
   artist: string;
-  reading: string;
   catname: string;
   image: string;
   version: string;
@@ -52,7 +51,7 @@ function parseCount(value: string | undefined): number | undefined {
   return value && /^\d+$/.test(value) ? Number(value) : undefined;
 }
 
-function normalizeOtogeDbCatalog(songs: SongsJsonRecord[], region: Region, sourceUrl: string): PendingChart[] {
+function normalizeOtogeDbCatalog(songs: SongsJsonRecord[], region: Region): PendingChart[] {
   return songs.flatMap(song => {
     if (song.we_kanji || song.we_star) return [];
     if (region === "intl" ? song.intl === "0" : song.intl === "2") return [];
@@ -64,7 +63,6 @@ function normalizeOtogeDbCatalog(songs: SongsJsonRecord[], region: Region, sourc
       const useUpdateDate = difficulty === ULTIMA && parseOtogeDbDate(updateDate) !== undefined;
       const addedDateString = useUpdateDate ? updateDate : (region === "jp" ? song.date_added : song.date_intl_added);
       const addedDate = parseOtogeDbDate(addedDateString);
-      const constant = song[`${prefix}_i`];
       const noteCounts = Object.fromEntries(CHUNITHM_NOTE_KINDS.flatMap(kind => {
         const count = parseCount(song[`${prefix}_notes_${kind}`]);
         return count === undefined ? [] : [[kind, count]];
@@ -78,30 +76,14 @@ function normalizeOtogeDbCatalog(songs: SongsJsonRecord[], region: Region, sourc
         cover: otogeDbUrl(`chunithm/jacket/${song.image}`),
         genre: song.catname,
         level,
-        levelPrecise: parseOtogeDbConstant(constant),
+        levelPrecise: parseOtogeDbConstant(song[`${prefix}_i`]),
         addedVersion: addedDate ? getVersionFromDate("chunithm", region, addedDate, sourceVersion) : undefined,
         bpm: parseCount(song.bpm),
         noteDesigner: song[`${prefix}_designer`] || undefined,
         metadata: {
-          levelPreciseEstimated: false,
-          addedVersionEstimated: difficulty === ULTIMA && !useUpdateDate,
-          otogeDb: {
-            id: song.id,
-            url: sourceUrl,
-            version: song.version,
-            reading: song.reading,
-            dateAdded: song.date_added,
-            dateUpdated: song.date_updated,
-            dateIntlAdded: song.date_intl_added,
-            dateIntlUpdated: song.date_intl_updated,
-            chartAddedDate: addedDateString,
-            chartAddedDateSource: useUpdateDate ? "regional-update" : "regional-song",
-            constant: constant || undefined,
-            bpm: song.bpm,
-            totalNotes: parseCount(song[`${prefix}_notes`]),
-            noteCounts,
-            chartLink: song[`${prefix}_chart_link`] || undefined,
-          },
+          ...(difficulty === ULTIMA && !useUpdateDate && { addedVersionEstimated: true }),
+          source: { provider: "otoge-db", id: song.id },
+          ...(Object.keys(noteCounts).length > 0 && { noteCounts }),
         },
       }];
     });
@@ -116,7 +98,7 @@ export const OtogeDbFetcher = asCatalogFetcher(async ctx => {
   const response = await fetch(source.url, { signal: AbortSignal.timeout(30_000), cache: "no-store" });
   if (!response.ok) throw new Error(`otoge-db CHUNITHM catalog request failed: HTTP ${response.status}`);
   const songs: SongsJsonRecord[] = await response.json();
-  const charts = normalizeOtogeDbCatalog(songs, ctx.region, source.url);
+  const charts = normalizeOtogeDbCatalog(songs, ctx.region);
   if (!charts.length) throw new Error(`otoge-db returned no regular CHUNITHM charts for ${ctx.region}`);
   ctx.log.info({ game: "chunithm", region: ctx.region, recordCount: charts.length }, "Collected otoge-db catalog");
   ctx.notice.addDetail(`${charts.length} regular CHUNITHM charts from ${ctx.region.toUpperCase()} otoge-db; WORLD'S END excluded`);

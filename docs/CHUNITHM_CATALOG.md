@@ -130,26 +130,26 @@ a title with a regular chart. The deleted-song archive is not imported.
   in completed charts.
   BASIC–MASTER use the regional song-added date. ULTIMA prefers the regional
   chart-update date and falls back to the regional song-added date when absent.
-  Such fallbacks carry `metadata.addedVersionEstimated: true`, alongside the raw
-  source dates. This fallback can place a later ULTIMA chart in an earlier release
-  until a more precise regional update date becomes available.
+  Such fallbacks carry `metadata.addedVersionEstimated: true`. This fallback can
+  place a later ULTIMA chart in an earlier release until a more precise regional
+  update date becomes available.
 - The local pre-NEW International release table contains aliases sharing one date.
   The shared date-to-version helper resolves ties using the recognized original
   JP version only among matching candidates. Unambiguous regional dates take
   precedence: a JP Mate song released internationally during X-VERSE-X remains
   version 8. Source version labels and aliases belong to the canonical CHUNITHM
   version metadata. Missing required dates fail the shared finalization step.
-- `metadata.levelPreciseEstimated` distinguishes estimates from source constants;
-  the raw source constant remains in `metadata.otogeDb.constant`. Estimates
+- `metadata.levelPreciseEstimated: true` marks an estimated constant. Estimates
   participate in rating calculations as in maimai, and catalog displays prefix
   them with `≈`. Subsequent estimates cannot overwrite a known constant for an
-  unchanged display level; a later confirmed source constant replaces an estimate.
-- The source ID, source URL, original version label, reading, source dates,
-  original BPM text, chart link and CHUNITHM note counts are kept in
-  `songs.metadata.otogeDb`. Air and flick counts are not coerced into maimai note
-  types. Non-numeric BPM text remains in metadata without fabricating a numeric
-  BPM. The public API never publishes this metadata. It exposes the two estimate
-  flags and the note counts, which `readChunithmNoteCounts`
+  unchanged display level. A later confirmed source constant replaces an estimate.
+- `songs.metadata` follows `catalogMetadataSchema` (`lib/catalog/chart-metadata.ts`),
+  which rejects any other key. An estimate flag is written only when true. The
+  source ID is kept as `metadata.source` (`{ provider: "otoge-db", id }`), and the
+  CHUNITHM note counts per kind as `metadata.noteCounts`. Air and flick counts
+  are not coerced into maimai note types, and non-numeric BPM text leaves the BPM
+  unknown. The public API never publishes this metadata. It exposes the two
+  estimate flags and the note counts, which `readChunithmNoteCounts`
   (`lib/games/chunithm/note-counts.ts`) reads.
 - The source maps typed upstream records into pending charts, following the
   maimai provider. Shared finalization validates required fields and numeric

@@ -123,8 +123,11 @@ export function toInstanceValues(game: CanonicalGameId, chart: CatalogChart, par
 }
 
 // jsonb drops undefined members and does not keep key order, so object values compare as stored JSON.
+// An empty object records nothing, so it equals an absent value.
 function jsonValue(value: unknown): unknown {
-  return value === undefined ? undefined : JSON.parse(JSON.stringify(value));
+  if (value === undefined) return undefined;
+  const json: unknown = JSON.parse(JSON.stringify(value));
+  return json !== null && typeof json === "object" && !Array.isArray(json) && Object.keys(json).length === 0 ? undefined : json;
 }
 
 function compareFields(before: CatalogChart, after: CatalogChart): FieldChange[] {

@@ -41,7 +41,7 @@ describe("catalog image processing", () => {
   it("deduplicates CHUNITHM covers under a game-specific key and preserves chart metadata", async () => {
     const cover = "https://raw.githubusercontent.com/zvuc/otoge-db/main/chunithm/jacket/example.jpg";
     const records: CatalogChart[] = [3, 4].map(difficulty => ({
-      ...chart(cover), game: "chunithm", difficulty, metadata: { otogeDb: { id: "123" } },
+      ...chart(cover), game: "chunithm", difficulty, metadata: { source: { provider: "otoge-db", id: "123" } },
     }));
     mocks.list.mockResolvedValue(new Set(["example.webp"]));
     const result = await processCatalogImages("chunithm", records, log);

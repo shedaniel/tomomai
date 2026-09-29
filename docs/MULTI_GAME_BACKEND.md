@@ -137,7 +137,7 @@ game's `details` shapes and the builders that fill them, and `index.ts` joins
 them into discriminated unions on `game` for song detail, snapshots and recent
 plays. `GAME_API_DETAILS` requires a builder per game, so a new game cannot ship
 without its details. Catalog responses publish `levelPreciseEstimated` and
-`addedVersionEstimated` through `chartEstimates` (`lib/catalog/chart-estimates.ts`),
+`addedVersionEstimated` through `chartEstimates` (`lib/catalog/chart-metadata.ts`),
 never the raw `songs.metadata`. The pre-namespace paths (`/api/v1/songs`,
 `/api/v1/recents` and the others) are answered by `app/api/v1/[...legacy]` with
 a JSON 410 `MOVED` pointing at the maimai path. A spec's `errors` lists its

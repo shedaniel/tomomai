@@ -8,6 +8,7 @@ import {
   STORE_STATUS_ENUM,
 } from "./types";
 import { CANONICAL_GAME_IDS, REGIONS } from "../games/ids";
+import type { CatalogMetadata } from "../catalog/chart-metadata";
 
 // PostgreSQL enum types
 export const languageEnum = pgEnum("language", LANGUAGE_ENUM);
@@ -232,7 +233,7 @@ export const songs = pgTable("songs", {
   id: bigint("id", { mode: "bigint" }).primaryKey().generatedAlwaysAsIdentity(), // Internal auto-increment ID
   parentId: bigint("parentId", { mode: "bigint" }).notNull(),
   game: gameEnum("game").notNull(),
-  metadata: jsonb("metadata").$type<Record<string, unknown>>(),
+  metadata: jsonb("metadata").$type<CatalogMetadata>(),
   level: text("level").notNull(),
   levelPrecise: smallint("levelPrecise").notNull(), // stored as 10x, e.g., 16.5 = 165
   region: regionEnum("region").notNull(),

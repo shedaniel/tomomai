@@ -1,10 +1,8 @@
 import { expect, it } from "vitest";
 import { readChunithmNoteCounts } from "./note-counts";
 
-const unknown = { tap: null, hold: null, slide: null, air: null, flick: null };
-
-it("reads every kind as unknown from metadata without source counts", () => {
-  expect(readChunithmNoteCounts(null)).toEqual(unknown);
-  expect(readChunithmNoteCounts({ levelPreciseEstimated: true })).toEqual(unknown);
-  expect(readChunithmNoteCounts({ otogeDb: { noteCounts: { tap: "625" } } })).toEqual(unknown);
+it("reads every kind the metadata leaves out as unknown", () => {
+  expect(readChunithmNoteCounts(null)).toEqual({ tap: null, hold: null, slide: null, air: null, flick: null });
+  expect(readChunithmNoteCounts({ levelPreciseEstimated: true })).toEqual({ tap: null, hold: null, slide: null, air: null, flick: null });
+  expect(readChunithmNoteCounts({ noteCounts: { tap: 625, air: 0 } })).toEqual({ tap: 625, hold: null, slide: null, air: 0, flick: null });
 });

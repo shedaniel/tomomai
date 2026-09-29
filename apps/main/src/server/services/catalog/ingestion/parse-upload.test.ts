@@ -10,14 +10,22 @@ describe("catalog upload boundary", () => {
   it("keeps zero constants and negative versions and strips uploaded database identities", () => {
     expect(parseCatalogUpload("chunithm", [{ ...chart,
       levelPrecise: 0, addedVersion: -12,
-      extras: { dbId: "1", parentId: "2" }, metadata: { otogeDb: { id: "42" } },
-    }])).toEqual([{ ...chart, levelPrecise: 0, addedVersion: -12, metadata: { otogeDb: { id: "42" } } }]);
+      extras: { dbId: "1", parentId: "2" }, metadata: { source: { provider: "otoge-db", id: "42" } },
+    }])).toEqual([{ ...chart, levelPrecise: 0, addedVersion: -12, metadata: { source: { provider: "otoge-db", id: "42" } } }]);
   });
 
   it("accepts legacy maimai records through the same completed contract", () => {
     const { game, chartType, ...fields } = chart;
     expect(parseCatalogUpload("maimai", [{ ...fields, type: "std", difficulty: "master", bpm: null, noteDesigner: null, noteCounts: null }]))
       .toEqual([{ ...fields, game: "maimai", chartType: 0, difficulty: 3, bpm: undefined, noteDesigner: undefined, noteCounts: undefined, metadata: undefined }]);
+  });
+
+  it.each([
+    ["an unknown source record", { otogeDb: { id: "42" } }],
+    ["a false estimate flag", { levelPreciseEstimated: false }],
+    ["another provider", { source: { provider: "lxns", id: "42" } }],
+  ])("rejects metadata with %s", (_name, metadata) => {
+    expect(() => parseCatalogUpload("chunithm", [{ ...chart, metadata }])).toThrow();
   });
 
   it("rejects values still wrapped the way collection marks them important", () => {

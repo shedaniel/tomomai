@@ -55,7 +55,7 @@ import { persistCatalog } from ".";
 
 const log = pino({ enabled: false });
 const chart: CatalogChart = { game: "chunithm", songName: "Song", chartType: 0, difficulty: 4,
-  artist: "Artist", cover: "image", genre: "Original", level: "14+", levelPrecise: 145, addedVersion: 8, metadata: { otogeDb: { id: "123" } } };
+  artist: "Artist", cover: "image", genre: "Original", level: "14+", levelPrecise: 145, addedVersion: 8, metadata: { source: { provider: "otoge-db", id: "123" } } };
 const storedRow = { id: BigInt(12), parentId: BigInt(5), game: "chunithm", songName: "Song", type: 0,
   difficulty: 4, artist: "Artist", cover: "image", genre: "Original", level: "14+", levelPrecise: 145,
   addedVersion: 8, bpm: null, noteDesigner: null, tapCount: null, metadata: chart.metadata };

@@ -14,7 +14,7 @@ import {
 
 const chart: CatalogChart = {
   game: "chunithm", songName: "Song", chartType: 0, difficulty: 4, artist: "Artist", cover: "image",
-  genre: "Original", level: "14+", levelPrecise: 145, addedVersion: 8, metadata: { otogeDb: { id: "123" } },
+  genre: "Original", level: "14+", levelPrecise: 145, addedVersion: 8, metadata: { source: { provider: "otoge-db", id: "123" } },
 };
 const stored = (overrides: Partial<CatalogChart> = {}, id = 12, parentId = 5): StoredChart =>
   ({ id: BigInt(id), parentId: BigInt(parentId), chart: { ...chart, ...overrides } });
@@ -24,7 +24,7 @@ describe("stored chart rows", () => {
     const row = {
       id: BigInt(12), parentId: BigInt(5), publicId: "Ab3xK9pQ", game: "maimai", songName: "Song", type: 1, difficulty: 3,
       disambiguator: 0, artist: "Artist", cover: "image", genre: "maimai", bpm: 180, region: "jp", gameVersion: 11,
-      level: "13+", levelPrecise: 137, addedVersion: 10, noteDesigner: "Designer", metadata: { source: "a" },
+      level: "13+", levelPrecise: 137, addedVersion: 10, noteDesigner: "Designer", metadata: { levelPreciseEstimated: true },
       tapCount: 1, holdCount: 2, slideCount: 3, touchCount: 4, breakCount: 5,
     } satisfies StoredChartRow;
     const { id, parentId, chart: restored } = toStoredChart(row);
@@ -71,18 +71,21 @@ describe("change analysis", () => {
     expect(nonPreferred.fieldChanges).toEqual([{ field: "level", oldValue: "14+", newValue: "15" }]);
   });
 
-  it("treats stored null metadata as absent", () => {
-    const [entry] = analyzeChanges([stored({ metadata: undefined })], [{ ...chart, metadata: undefined }], new Set()).merged;
+  it.each([
+    ["stored null metadata", undefined, undefined],
+    ["stored null metadata", undefined, {}],
+    ["stored empty metadata", {}, undefined],
+  ])("treats %s as the same as incoming %j", (_name, storedMetadata, incomingMetadata) => {
+    const [entry] = analyzeChanges([stored({ metadata: storedMetadata })], [{ ...chart, metadata: incomingMetadata }], new Set()).merged;
     expect(entry.fieldChanges).toEqual([]);
   });
 
   it.each([
-    { label: "reordered nested object keys", incoming: { source: { title: "Song", id: "123" }, notes: [1, 2] }, changed: false },
-    { label: "omitted optional JSON values", incoming: { source: { title: "Song", id: "123", optional: undefined }, notes: [1, 2] }, changed: false },
-    { label: "changed nested value", incoming: { source: { title: "Changed", id: "123" }, notes: [1, 2] }, changed: true },
-    { label: "reordered array items", incoming: { source: { title: "Song", id: "123" }, notes: [2, 1] }, changed: true },
-  ])("compares metadata as stored JSON with $label", ({ incoming, changed }) => {
-    const existing = stored({ metadata: { notes: [1, 2], source: { id: "123", title: "Song" } } });
+    { label: "reordered nested object keys", incoming: { source: { provider: "otoge-db", id: "123" }, noteCounts: { air: 2, tap: 1 } }, changed: false },
+    { label: "omitted optional JSON values", incoming: { source: { provider: "otoge-db", id: "123" }, noteCounts: { tap: 1, air: 2 }, addedVersionEstimated: undefined }, changed: false },
+    { label: "changed nested value", incoming: { source: { provider: "otoge-db", id: "123" }, noteCounts: { tap: 3, air: 2 } }, changed: true },
+  ] as const)("compares metadata as stored JSON with $label", ({ incoming, changed }) => {
+    const existing = stored({ metadata: { noteCounts: { tap: 1, air: 2 }, source: { id: "123", provider: "otoge-db" } } });
     const [entry] = analyzeChanges([existing], [{ ...chart, metadata: incoming }], new Set()).merged;
     expect(entry.fieldChanges.map(change => change.field)).toEqual(changed ? ["metadata"] : []);
   });

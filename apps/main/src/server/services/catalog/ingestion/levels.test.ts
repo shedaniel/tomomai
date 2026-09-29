@@ -40,7 +40,7 @@ describe("fillMissingStage", () => {
     const ctx = context();
     const [estimated, confirmed] = await stage.run(ctx, [chart, { ...chart, levelPrecise: important(149) }]);
     expect(estimated).toMatchObject({ levelPrecise: 145, metadata: { levelPreciseEstimated: true } });
-    expect(confirmed).toMatchObject({ levelPrecise: important(149), metadata: { levelPreciseEstimated: false } });
+    expect(confirmed).toEqual({ ...chart, levelPrecise: important(149) });
     expect(ctx.notice.addDetail).toHaveBeenCalledWith("1 missing, 0 mismatched level precise values fixed");
   });
 

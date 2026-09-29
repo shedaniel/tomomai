@@ -52,11 +52,10 @@ export function fillMissingStage(policy: CatalogLevelPolicy): CatalogStage {
           mismatched++;
           context.log.warn({ songKey }, "Level precise is mismatched");
         }
-        const metadata = value(chart.metadata);
         return {
           ...chart,
           levelPrecise: filled.reason ? filled.levelPrecise : chart.levelPrecise,
-          metadata: { ...metadata, levelPreciseEstimated: filled.estimated || metadata?.levelPreciseEstimated === true },
+          metadata: filled.estimated ? { ...value(chart.metadata), levelPreciseEstimated: true as const } : chart.metadata,
         };
       });
       context.notice.addDetail(`${missing} missing, ${mismatched} mismatched level precise values fixed`);

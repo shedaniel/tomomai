@@ -539,7 +539,7 @@ its ingestion. Numeric scaling and status mapping must remain game-specific.
 scopes charts by game, region and captured `ctx.gameVersion`, then matches exact
 `songName|difficulty|chartType`. Ambiguous matches are skipped. Upstream numeric
 IDs are not used for this matching, even though the catalog retains its source
-ID in `metadata.otogeDb.id`. The otoge-db catalog keeps the source title without
+ID in `metadata.source.id`. The otoge-db catalog keeps the source title without
 NFKC normalization; do not copy maimai's name normalization without comparing
 actual titles from both CHUNITHM sources.
 

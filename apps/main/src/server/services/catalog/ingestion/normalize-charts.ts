@@ -1,4 +1,5 @@
 import type { Logger } from "pino";
+import type { CatalogMetadata } from "@/lib/catalog/chart-metadata";
 import type { CanonicalGameId } from "@/lib/games/types";
 import { hasCode, keyOf } from "@/lib/games/codes";
 import type { CatalogChart, CatalogChartIdentity } from "./schema";
@@ -60,24 +61,30 @@ export function validateCatalogCharts(game: CanonicalGameId, charts: CatalogChar
   }
 }
 
+/**
+ * Estimate flags describe the incoming values, except that a kept confirmed constant is not an estimate.
+ * Provenance and note counts the incoming chart lacks stay, like the optional columns.
+ */
+function mergeMetadata(existing: CatalogMetadata | undefined, incoming: CatalogMetadata | undefined, keepsConstant: boolean): CatalogMetadata | undefined {
+  const merged: { [K in keyof Required<CatalogMetadata>]: CatalogMetadata[K] } = {
+    levelPreciseEstimated: keepsConstant ? undefined : incoming?.levelPreciseEstimated,
+    addedVersionEstimated: incoming?.addedVersionEstimated,
+    source: incoming?.source ?? existing?.source,
+    noteCounts: incoming?.noteCounts ?? existing?.noteCounts,
+  };
+  return Object.values(merged).some(entry => entry !== undefined) ? merged : undefined;
+}
+
 export function mergeCatalogChart(existing: CatalogChart, incoming: CatalogChart): CatalogChart {
   if (catalogChartKey(existing) !== catalogChartKey(incoming)) throw new Error("Cannot merge different catalog identities");
-  const preserveConstant = existing.level === incoming.level &&
+  const keepsConstant = existing.level === incoming.level &&
     incoming.metadata?.levelPreciseEstimated === true && existing.metadata?.levelPreciseEstimated !== true;
-  const metadata = incoming.metadata === undefined ? existing.metadata : { ...existing.metadata, ...incoming.metadata };
-  const mergedMetadata = metadata === undefined ? undefined : { ...metadata };
-  if (preserveConstant && mergedMetadata) {
-    if (existing.metadata?.levelPreciseEstimated === undefined) delete mergedMetadata.levelPreciseEstimated;
-    else mergedMetadata.levelPreciseEstimated = existing.metadata.levelPreciseEstimated;
-  } else if (incoming.metadata?.levelPreciseEstimated === undefined && mergedMetadata) {
-    delete mergedMetadata.levelPreciseEstimated;
-  }
   return {
     ...existing, ...incoming,
-    levelPrecise: preserveConstant ? existing.levelPrecise : incoming.levelPrecise,
+    levelPrecise: keepsConstant ? existing.levelPrecise : incoming.levelPrecise,
     bpm: incoming.bpm ?? existing.bpm,
     noteDesigner: incoming.noteDesigner ?? existing.noteDesigner,
     noteCounts: incoming.noteCounts ?? existing.noteCounts,
-    metadata: mergedMetadata,
+    metadata: mergeMetadata(existing.metadata, incoming.metadata, keepsConstant),
   };
 }

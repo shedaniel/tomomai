@@ -39,15 +39,15 @@ describe("song details", () => {
     expect(filter).toContain('"parent_song"."game" = $2');
   });
   it("publishes each game's note counts as its details and only the estimates a source recorded", async () => {
-    query.mockResolvedValueOnce([{ ...row, metadata: { levelPreciseEstimated: true, addedVersionEstimated: false } }]);
+    query.mockResolvedValueOnce([{ ...row, metadata: { levelPreciseEstimated: true } }]);
     const maimai = await (await get("Ab3xK9pQ")).json();
     expect(maimai.details).toStrictEqual({ game: "maimai", noteCounts: { tap: 100, hold: 5, slide: 10, touch: 0, break: 4 } });
     expect(maimai.levelPreciseEstimated).toBe(true);
     expect(maimai).not.toHaveProperty("addedVersionEstimated");
     expect(maimai).not.toHaveProperty("metadata");
 
-    const otogeDb = { id: "2490", url: "https://example.test/music-ex.json", noteCounts: { tap: 625, hold: 174, air: 331 } };
-    query.mockResolvedValueOnce([{ ...row, type: 0, gameVersion: 9, tapCount: null, holdCount: null, slideCount: null, touchCount: null, breakCount: null, metadata: { otogeDb } }]);
+    const metadata = { source: { provider: "otoge-db", id: "2490" }, noteCounts: { tap: 625, hold: 174, air: 331 } };
+    query.mockResolvedValueOnce([{ ...row, type: 0, gameVersion: 9, tapCount: null, holdCount: null, slideCount: null, touchCount: null, breakCount: null, metadata }]);
     const chunithm = await (await get("Ab3xK9pQ", "chunithm")).json();
     expect(chunithm.details).toStrictEqual({ game: "chunithm", noteCounts: { tap: 625, hold: 174, slide: null, air: 331, flick: null } });
     expect(chunithm).not.toHaveProperty("levelPreciseEstimated");

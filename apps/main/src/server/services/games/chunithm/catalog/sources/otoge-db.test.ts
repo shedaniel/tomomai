@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import pino from "pino";
 import type { Region } from "@/lib/types";
 import { collectCatalog } from "@/server/services/catalog/ingestion/collect";
+import { parseCatalogUpload } from "@/server/services/catalog/ingestion/parse-upload";
 import { readChunithmNoteCounts } from "@/lib/games/chunithm/note-counts";
 import { sendDiscordNotice } from "@/server/services/discord/webhook";
 import jpFixture from "../fixtures/otoge-db-jp.json";
@@ -24,24 +25,30 @@ describe("CHUNITHM otoge-db collection", () => {
     expect(alive).toHaveLength(4);
     expect(alive[0]).toMatchObject({ game: "chunithm", chartType: 0, difficulty: 0, level: "3", levelPrecise: 30, addedVersion: 4, metadata: { levelPreciseEstimated: true } });
     expect(alive[3]).toMatchObject({ difficulty: 3, level: "12+", levelPrecise: 126, bpm: 180, noteDesigner: "ヤナギ・リコイル",
-      cover: "https://raw.githubusercontent.com/zvuc/otoge-db/main/chunithm/jacket/b7ec25d973052f3c.jpg",
-      metadata: { levelPreciseEstimated: false, otogeDb: { id: "2490", constant: "12.6", totalNotes: 1425, noteCounts: { tap: 625, air: 331 } } } });
+      cover: "https://raw.githubusercontent.com/zvuc/otoge-db/main/chunithm/jacket/b7ec25d973052f3c.jpg" });
+    expect(alive[3].metadata).toStrictEqual({ source: { provider: "otoge-db", id: "2490" }, noteCounts: { tap: 625, hold: 174, slide: 206, air: 331, flick: 89 } });
     expect(readChunithmNoteCounts(alive[3].metadata)).toEqual({ tap: 625, hold: 174, slide: 206, air: 331, flick: 89 });
-    expect(charts.find(chart => chart.songName === "ネ！コ！" && chart.difficulty === 4)).toMatchObject({ levelPrecise: 140, addedVersion: 3,
-      metadata: { addedVersionEstimated: false, otogeDb: { chartAddedDateSource: "regional-update" } } });
+    const ultima = charts.find(chart => chart.songName === "ネ！コ！" && chart.difficulty === 4);
+    expect(ultima).toMatchObject({ levelPrecise: 140, addedVersion: 3 });
+    expect(ultima?.metadata).not.toHaveProperty("addedVersionEstimated");
     expect(charts.find(chart => chart.songName === "Melodiniq" && chart.difficulty === 4)).toMatchObject({ addedVersion: 9, metadata: { addedVersionEstimated: true } });
     expect(charts.some(chart => chart.songName === "ETERNAL DRAIN")).toBe(false);
     expect(charts.map(chart => chart.songName)).toEqual(charts.map(chart => chart.songName).toSorted((a, b) => a.localeCompare(b)));
+    expect(parseCatalogUpload("chunithm", charts)).toEqual(charts);
   });
   it("uses regional availability and release dates without borrowing JP versions", async () => {
     const charts = await collect(intlFixture, "intl");
     expect(fetch).toHaveBeenCalledWith("https://raw.githubusercontent.com/zvuc/otoge-db/main/chunithm/data/music-ex-intl.json", { signal: expect.any(AbortSignal), cache: "no-store" });
     expect(charts.find(chart => chart.songName === "Melodiniq" && chart.difficulty === 3)).toMatchObject({ addedVersion: 8 });
     expect(charts.find(chart => chart.songName === "ネ！コ！" && chart.difficulty === 4)).toMatchObject({ addedVersion: -7, metadata: { addedVersionEstimated: true } });
-    expect(charts.find(chart => chart.songName === "ネ！コ！" && chart.difficulty === 3)).toMatchObject({ addedVersion: -7, metadata: { addedVersionEstimated: false } });
+    const master = charts.find(chart => chart.songName === "ネ！コ！" && chart.difficulty === 3);
+    expect(master).toMatchObject({ addedVersion: -7 });
+    expect(master?.metadata).not.toHaveProperty("addedVersionEstimated");
     expect((await collect(jpFixture, "intl")).some(chart => chart.songName === "ALIVE")).toBe(false);
     const updated = await collect([{ ...intlFixture[1], date_intl_updated: "20260416" }], "intl");
-    expect(updated.find(chart => chart.difficulty === 4)).toMatchObject({ addedVersion: 8, metadata: { addedVersionEstimated: false } });
+    const updatedUltima = updated.find(chart => chart.difficulty === 4);
+    expect(updatedUltima).toMatchObject({ addedVersion: 8 });
+    expect(updatedUltima?.metadata).not.toHaveProperty("addedVersionEstimated");
   });
   it("uses the source version label to disambiguate tied regional release dates", async () => {
     const charts = await collect([{ ...intlFixture[1], version: "CHUNITHM STAR PLUS" }], "intl");
@@ -51,8 +58,8 @@ describe("CHUNITHM otoge-db collection", () => {
     const charts = await collect([{ ...jpFixture[0], bpm: "440(MASTER譜面のみ220)", lev_mas_i: "-", lev_mas_notes_air: "-" }]);
     const chart = charts.find(chart => chart.difficulty === 3)!;
     expect(chart.bpm).toBeUndefined();
-    expect(chart.metadata).toMatchObject({ levelPreciseEstimated: true, otogeDb: { noteCounts: { tap: 625 } } });
-    expect(chart.metadata).not.toMatchObject({ otogeDb: { noteCounts: { air: 0 } } });
+    expect(chart.metadata).toMatchObject({ levelPreciseEstimated: true, noteCounts: { tap: 625 } });
+    expect(chart.metadata?.noteCounts).not.toHaveProperty("air");
     expect(readChunithmNoteCounts(chart.metadata)).toMatchObject({ tap: 625, air: null });
   });
   it("follows the canonical release rollover and rejects a stale requested version before fetching", async () => {

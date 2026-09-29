@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { catalogMetadataSchema } from "@/lib/catalog/chart-metadata";
 import { gameIdSchema } from "@/lib/games/schema";
 
 export const smallint = z.number().int().min(-32768).max(32767);
@@ -20,7 +21,7 @@ export const catalogChartSchema = z.object({
   bpm: count.optional(),
   noteDesigner: z.string().optional(),
   noteCounts: noteCountsSchema.optional(),
-  metadata: z.record(z.string(), z.unknown()).optional(),
+  metadata: catalogMetadataSchema.optional(),
 });
 
 export type CatalogChart = z.infer<typeof catalogChartSchema>;
