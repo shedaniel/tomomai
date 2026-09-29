@@ -1,6 +1,6 @@
 "use client";
 
-import { useGameId, usePresentation } from "@/components/providers/game-provider";
+import { useGameId } from "@/components/providers/game-provider";
 import { getPlayerRankings, type GameSnapshotData } from "@/lib/games/player-view";
 import { getGameDifficulty, getGameChartType, getGameRankingBuckets } from "@/lib/games/presentation";
 import { LayoutGrid, LayoutList, Menu, Search } from "lucide-react";
@@ -9,94 +9,88 @@ import { useTranslations } from "next-intl";
 import { useCallback, useMemo, useState } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@tomomai/ui/select-friendly";
 import { Input } from "@tomomai/ui";
-import { MaimaiRatingDistributionChart } from "@/components/games/maimai/rating-distribution-chart";
 import { motion, AnimatePresence } from "motion/react";
 import { getTransition } from "@/lib/animation-constants";
 import { trpc } from "@/lib/trpc-client";
 import { Flags } from "@/lib/flags";
 import type { PercentileMap } from "@/lib/games/maimai/percentile/types";
 import { SongGridSection, SongSection } from "./bucket-section";
+import { RatingDistributionChart } from "./rating-distribution-chart";
 import type { RatedScore } from "./types";
 
-// Component for rendering the songs list with four sections
-function SongsList({ newSongsB15, oldSongsB35, remainingNewSongs, remainingOldSongs, t, displayMode, b15Sum, b15Average, b35Sum, b35Average, percentileMap }: {
-  newSongsB15: RatedScore[];
-  oldSongsB35: RatedScore[];
-  remainingNewSongs: RatedScore[];
-  remainingOldSongs: RatedScore[];
-  t: any;
+type Rankings = {
+  newBest: RatedScore[];
+  oldBest: RatedScore[];
+  newRemaining: RatedScore[];
+  oldRemaining: RatedScore[];
+};
+
+const PAGE_SIZE = 50;
+
+function SongsList({ newBest, oldBest, newRemaining, oldRemaining, displayMode, percentileMap }: Rankings & {
   displayMode: "list" | "compact";
-  b15Sum?: number;
-  b15Average?: number;
-  b35Sum?: number;
-  b35Average?: number;
   percentileMap?: PercentileMap;
 }) {
+  const t = useTranslations();
   const game = useGameId();
   const buckets = getGameRankingBuckets(game);
-  const [visibleB15, setVisibleB15] = useState(Math.min(50, newSongsB15.length));
-  const [visibleB35, setVisibleB35] = useState(Math.min(50, oldSongsB35.length));
-  const [visibleNewRemaining, setVisibleNewRemaining] = useState(Math.min(50, remainingNewSongs.length));
-  const [visibleOldRemaining, setVisibleOldRemaining] = useState(Math.min(50, remainingOldSongs.length));
+  const [visibleNewBest, setVisibleNewBest] = useState(Math.min(PAGE_SIZE, newBest.length));
+  const [visibleOldBest, setVisibleOldBest] = useState(Math.min(PAGE_SIZE, oldBest.length));
+  const [visibleNewRemaining, setVisibleNewRemaining] = useState(Math.min(PAGE_SIZE, newRemaining.length));
+  const [visibleOldRemaining, setVisibleOldRemaining] = useState(Math.min(PAGE_SIZE, oldRemaining.length));
 
-  const loadMoreB15 = useCallback(() => {
-    setVisibleB15(prev => Math.min(prev + 50, newSongsB15.length));
-  }, [newSongsB15.length]);
+  const loadMoreNewBest = useCallback(() => {
+    setVisibleNewBest(prev => Math.min(prev + PAGE_SIZE, newBest.length));
+  }, [newBest.length]);
 
-  const loadMoreB35 = useCallback(() => {
-    setVisibleB35(prev => Math.min(prev + 50, oldSongsB35.length));
-  }, [oldSongsB35.length]);
+  const loadMoreOldBest = useCallback(() => {
+    setVisibleOldBest(prev => Math.min(prev + PAGE_SIZE, oldBest.length));
+  }, [oldBest.length]);
 
   const loadMoreNewRemaining = useCallback(() => {
-    setVisibleNewRemaining(prev => Math.min(prev + 50, remainingNewSongs.length));
-  }, [remainingNewSongs.length]);
+    setVisibleNewRemaining(prev => Math.min(prev + PAGE_SIZE, newRemaining.length));
+  }, [newRemaining.length]);
 
   const loadMoreOldRemaining = useCallback(() => {
-    setVisibleOldRemaining(prev => Math.min(prev + 50, remainingOldSongs.length));
-  }, [remainingOldSongs.length]);
+    setVisibleOldRemaining(prev => Math.min(prev + PAGE_SIZE, oldRemaining.length));
+  }, [oldRemaining.length]);
 
   return (
     <div className="space-y-6">
       <SongSection
         title={buckets[0].label}
-        songs={newSongsB15}
-        count={`${newSongsB15.length}/${buckets[0].size}`}
+        songs={newBest}
+        count={`${newBest.length}/${buckets[0].size}`}
+        ranked
         displayMode={displayMode}
-        t={t}
-        sum={b15Sum}
-        average={b15Average}
-        visibleCount={visibleB15}
-        onLoadMore={loadMoreB15}
+        visibleCount={visibleNewBest}
+        onLoadMore={loadMoreNewBest}
         percentileMap={percentileMap}
       />
       <SongSection
         title={buckets[1].label}
-        songs={oldSongsB35}
-        count={`${oldSongsB35.length}/${buckets[1].size}`}
+        songs={oldBest}
+        count={`${oldBest.length}/${buckets[1].size}`}
+        ranked
         displayMode={displayMode}
-        t={t}
-        sum={b35Sum}
-        average={b35Average}
-        visibleCount={visibleB35}
-        onLoadMore={loadMoreB35}
+        visibleCount={visibleOldBest}
+        onLoadMore={loadMoreOldBest}
         percentileMap={percentileMap}
       />
       <SongSection
         title={t('dataContent.newSongs')}
-        songs={remainingNewSongs}
-        count={remainingNewSongs.length > 0 ? `${remainingNewSongs.length}` : undefined}
+        songs={newRemaining}
+        count={newRemaining.length > 0 ? `${newRemaining.length}` : undefined}
         displayMode={displayMode}
-        t={t}
         visibleCount={visibleNewRemaining}
         onLoadMore={loadMoreNewRemaining}
         percentileMap={percentileMap}
       />
       <SongSection
         title={t('dataContent.oldSongs')}
-        songs={remainingOldSongs}
-        count={remainingOldSongs.length > 0 ? `${remainingOldSongs.length}` : undefined}
+        songs={oldRemaining}
+        count={oldRemaining.length > 0 ? `${oldRemaining.length}` : undefined}
         displayMode={displayMode}
-        t={t}
         visibleCount={visibleOldRemaining}
         onLoadMore={loadMoreOldRemaining}
         percentileMap={percentileMap}
@@ -105,30 +99,25 @@ function SongsList({ newSongsB15, oldSongsB35, remainingNewSongs, remainingOldSo
   );
 }
 
-function SongsGrid({ newSongsB15, oldSongsB35, remainingNewSongs, remainingOldSongs, t, b15Sum, b15Average, b35Sum, b35Average, percentileMap }: { newSongsB15: RatedScore[]; oldSongsB35: RatedScore[]; remainingNewSongs: RatedScore[]; remainingOldSongs: RatedScore[]; t: any; b15Sum?: number; b15Average?: number; b35Sum?: number; b35Average?: number; percentileMap?: PercentileMap }) {
+function SongsGrid({ newBest, oldBest, newRemaining, oldRemaining, percentileMap }: Rankings & { percentileMap?: PercentileMap }) {
+  const t = useTranslations();
   const game = useGameId();
   const buckets = getGameRankingBuckets(game);
   return (
     <div className="space-y-6">
       <SongGridSection
         title={buckets[0].label}
-        songs={newSongsB15}
-        count={`${newSongsB15.length}/${buckets[0].size}`}
-        t={t}
-        sum={b15Sum}
-        average={b15Average}
+        songs={newBest}
+        count={`${newBest.length}/${buckets[0].size}`}
         percentileMap={percentileMap}
       />
       <SongGridSection
         title={buckets[1].label}
-        songs={oldSongsB35}
-        count={`${oldSongsB35.length}/${buckets[1].size}`}
-        t={t}
-        sum={b35Sum}
-        average={b35Average}
+        songs={oldBest}
+        count={`${oldBest.length}/${buckets[1].size}`}
         percentileMap={percentileMap}
       />
-      {(remainingNewSongs.length > 0 || remainingOldSongs.length > 0) && (
+      {(newRemaining.length > 0 || oldRemaining.length > 0) && (
         <div className="text-center text-sm text-muted-foreground mt-10 mb-4">
           {t('dataContent.switchToListForAllSongs')}
         </div>
@@ -146,28 +135,29 @@ export function SongsCard({ selectedSnapshotData, flags }: { selectedSnapshotDat
   const buckets = getGameRankingBuckets(game);
   const { songs, snapshot } = selectedSnapshotData;
 
-  // Calculate ratings and sort by highest rating first
-  const { newScores: newSongsB15, oldScores: oldSongsB35, newRemaining: newSongsRemaining, oldRemaining: oldSongsRemaining } = getPlayerRankings(game, selectedSnapshotData);
+  const rankings: Rankings = useMemo(() => {
+    const { newScores, oldScores, newRemaining, oldRemaining } = getPlayerRankings(game, selectedSnapshotData);
+    return { newBest: newScores, oldBest: oldScores, newRemaining, oldRemaining };
+  }, [game, selectedSnapshotData]);
+  const { newBest, oldBest } = rankings;
 
-  const b50Songs = useMemo(() => [...newSongsB15, ...oldSongsB35], [newSongsB15, oldSongsB35]);
+  const bestScores = useMemo(() => [...newBest, ...oldBest], [newBest, oldBest]);
 
   const { data: percentileData } = trpc.user.getChartPercentiles.useQuery(
-    { game: useGameId(),
-      songs: b50Songs.map((s) => ({ publicSongId: s.songId, achievement: s.scoreValue })),
+    {
+      game,
+      songs: bestScores.map((s) => ({ publicSongId: s.songId, achievement: s.scoreValue })),
       userRating: snapshot.rating,
     },
     {
-      enabled: game === "maimai" && !!(flags?.scorePercentile && b50Songs.length > 0 && snapshot.rating > 0),
+      enabled: game === "maimai" && !!(flags?.scorePercentile && bestScores.length > 0 && snapshot.rating > 0),
       staleTime: 1000 * 60 * 5,
     }
   );
   const percentileMap: PercentileMap = percentileData?.percentiles ?? {};
 
-  // Filter songs based on search query
-  const filteredData = useMemo(() => {
-    if (!searchQuery.trim()) {
-      return { newSongsB15, oldSongsB35, newSongsRemaining, oldSongsRemaining };
-    }
+  const filteredRankings: Rankings = useMemo(() => {
+    if (!searchQuery.trim()) return rankings;
 
     const query = searchQuery.toLowerCase().trim();
     const filterSongs = (songList: RatedScore[]) =>
@@ -180,20 +170,12 @@ export function SongsCard({ selectedSnapshotData, flags }: { selectedSnapshotDat
       );
 
     return {
-      newSongsB15: filterSongs(newSongsB15),
-      oldSongsB35: filterSongs(oldSongsB35),
-      newSongsRemaining: filterSongs(newSongsRemaining),
-      oldSongsRemaining: filterSongs(oldSongsRemaining),
+      newBest: filterSongs(rankings.newBest),
+      oldBest: filterSongs(rankings.oldBest),
+      newRemaining: filterSongs(rankings.newRemaining),
+      oldRemaining: filterSongs(rankings.oldRemaining),
     };
-  }, [searchQuery, newSongsB15, oldSongsB35, newSongsRemaining, oldSongsRemaining]);
-
-  const showRatingSum = usePresentation().ratingRules.aggregation === "sum";
-
-  // Calculate sum and average for B15 and B35 (use filtered data)
-  const b15Sum = filteredData.newSongsB15.reduce((sum, song) => sum + song.rating, 0);
-  const b15Average = filteredData.newSongsB15.length > 0 ? b15Sum / filteredData.newSongsB15.length : 0;
-  const b35Sum = filteredData.oldSongsB35.reduce((sum, song) => sum + song.rating, 0);
-  const b35Average = filteredData.oldSongsB35.length > 0 ? b35Sum / filteredData.oldSongsB35.length : 0;
+  }, [game, searchQuery, rankings]);
 
   return (
     <div className="space-y-6">
@@ -227,10 +209,10 @@ export function SongsCard({ selectedSnapshotData, flags }: { selectedSnapshotDat
       </div>
       <div>
         <div className="space-y-6">
-          {game === "maimai" && <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <MaimaiRatingDistributionChart songs={newSongsB15} title={buckets[0].label} />
-            <MaimaiRatingDistributionChart songs={oldSongsB35} title={buckets[1].label} />
-          </div>}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <RatingDistributionChart scores={newBest} title={buckets[0].label} />
+            <RatingDistributionChart scores={oldBest} title={buckets[1].label} />
+          </div>
 
           {/* Search Field */}
           <div className="relative">
@@ -253,18 +235,7 @@ export function SongsCard({ selectedSnapshotData, flags }: { selectedSnapshotDat
                 exit={{ opacity: 0, x: -10 }}
                 transition={getTransition({ duration: 0.3, ease: [0.4, 0, 0.2, 1] })}
               >
-                <SongsGrid
-                  newSongsB15={filteredData.newSongsB15}
-                  oldSongsB35={filteredData.oldSongsB35}
-                  remainingNewSongs={filteredData.newSongsRemaining}
-                  remainingOldSongs={filteredData.oldSongsRemaining}
-                  t={t}
-                  b15Sum={showRatingSum ? b15Sum : undefined}
-                  b15Average={b15Average}
-                  b35Sum={showRatingSum ? b35Sum : undefined}
-                  b35Average={b35Average}
-                  percentileMap={percentileMap}
-                />
+                <SongsGrid {...filteredRankings} percentileMap={percentileMap} />
               </motion.div>
             ) : (
               <motion.div
@@ -274,19 +245,7 @@ export function SongsCard({ selectedSnapshotData, flags }: { selectedSnapshotDat
                 exit={{ opacity: 0, x: -10 }}
                 transition={getTransition({ duration: 0.3, ease: [0.4, 0, 0.2, 1] })}
               >
-                <SongsList
-                  newSongsB15={filteredData.newSongsB15}
-                  oldSongsB35={filteredData.oldSongsB35}
-                  remainingNewSongs={filteredData.newSongsRemaining}
-                  remainingOldSongs={filteredData.oldSongsRemaining}
-                  t={t}
-                  displayMode={displayMode}
-                  b15Sum={showRatingSum ? b15Sum : undefined}
-                  b15Average={b15Average}
-                  b35Sum={showRatingSum ? b35Sum : undefined}
-                  b35Average={b35Average}
-                  percentileMap={percentileMap}
-                />
+                <SongsList {...filteredRankings} displayMode={displayMode} percentileMap={percentileMap} />
               </motion.div>
             )}
           </AnimatePresence>

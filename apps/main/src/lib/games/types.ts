@@ -127,6 +127,8 @@ export type RatingRules = {
   aggregation: "sum" | "average";
   /** The rating history axis step, in stored units. */
   axisStep: number;
+  /** The chart rating distribution bar width, in stored units. */
+  distributionStep: number;
   /** The recommendation target rating filter bucket width, in stored units. */
   filterBucketWidth: number;
 };

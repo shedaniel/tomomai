@@ -1,29 +1,29 @@
 "use client";
 
 import { Fragment, useCallback } from "react";
-import { Plus, TrendingUp } from "lucide-react";
 import { motion } from "motion/react";
+import { useTranslations } from "next-intl";
 import { useGameId, usePresentation } from "@/components/providers/game-provider";
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 import { STAGGER, getTransition } from "@/lib/animation-constants";
 import { formatGameScore, formatGameRating, formatGameLevel, getGameDifficulty, getGameStatusLabels, getGameScoreLabelKey } from "@/lib/games/presentation";
 import type { PercentileMap } from "@/lib/games/maimai/percentile/types";
 import { cn } from "@/lib/utils";
+import { BucketHeader } from "./bucket-header";
 import { SongGridCard } from "./score-grid-card";
 import { SongRow } from "./score-row";
 import type { RatedScore } from "./types";
 
 // Component for rendering compact song section as a single grid
-function CompactSongSection({ title, songs, count, t, sum, average, visibleCount, onLoadMore }: {
+function CompactSongSection({ title, songs, count, ranked, visibleCount, onLoadMore }: {
   title: string;
   songs: RatedScore[];
   count?: string;
-  t: any;
-  sum?: number;
-  average?: number;
+  ranked?: boolean;
   visibleCount: number;
   onLoadMore: () => void;
 }) {
+  const t = useTranslations();
   const game = useGameId();
   const { statusColumns } = usePresentation();
   const hasMore = visibleCount < songs.length;
@@ -38,27 +38,7 @@ function CompactSongSection({ title, songs, count, t, sum, average, visibleCount
 
   return (
     <div className="space-y-2">
-      <div className="flex justify-between items-center mb-2 px-2">
-        <h5 className="font-semibold text-sm">{title} {count && `(${count})`}</h5>
-        {(sum !== undefined || average !== undefined) && (
-          <div className="flex gap-4 text-xs text-muted-foreground">
-            {sum !== undefined && (
-              <div className="flex items-center gap-1 whitespace-nowrap">
-                <Plus className="h-3 w-3" />
-                <span>{t('dataContent.statistics.sum')}</span>
-                <span className="font-mono font-medium">{formatGameRating(game, sum)}</span>
-              </div>
-            )}
-            {average !== undefined && (
-              <div className="flex items-center gap-1 whitespace-nowrap">
-                <TrendingUp className="h-3 w-3" />
-                <span>{t('dataContent.statistics.average')}</span>
-                <span className="font-mono font-medium">{formatGameRating(game, average, { average: true })}</span>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
+      <BucketHeader title={title} count={count} ratings={ranked ? songs.map(song => song.rating) : undefined} className="mb-2 px-2" />
       <div className="grid text-xs overflow-x-auto" style={{ gridTemplateColumns: `4fr 2fr repeat(${3 + statusColumns.length}, min-content)` }}>
         {/* Headers */}
         <div className="font-semibold text-muted-foreground border-b border-border pb-1 px-2 text-left whitespace-nowrap min-w-48">
@@ -120,19 +100,17 @@ function CompactSongSection({ title, songs, count, t, sum, average, visibleCount
 }
 
 // Component for rendering song sections
-export function SongSection({ title, songs, count, displayMode, t, sum, average, visibleCount, onLoadMore, percentileMap }: {
+export function SongSection({ title, songs, count, ranked, displayMode, visibleCount, onLoadMore, percentileMap }: {
   title: string;
   songs: RatedScore[];
   count?: string;
-  displayMode: "list" | "grid" | "compact";
-  t: any;
-  sum?: number;
-  average?: number;
+  /** A ranking bucket, whose header summarizes the ratings. */
+  ranked?: boolean;
+  displayMode: "list" | "compact";
   visibleCount: number;
   onLoadMore: () => void;
   percentileMap?: PercentileMap;
 }) {
-  const game = useGameId();
   const hasMore = visibleCount < songs.length;
   const loadMore = useCallback(() => {
     if (hasMore) onLoadMore();
@@ -145,32 +123,12 @@ export function SongSection({ title, songs, count, displayMode, t, sum, average,
 
   // Use dedicated compact section for compact mode
   if (displayMode === "compact") {
-    return <CompactSongSection title={title} songs={songs} count={count} t={t} sum={sum} average={average} visibleCount={visibleCount} onLoadMore={onLoadMore} />;
+    return <CompactSongSection title={title} songs={songs} count={count} ranked={ranked} visibleCount={visibleCount} onLoadMore={onLoadMore} />;
   }
 
   return (
     <div className="space-y-2">
-      <div className="flex justify-between items-center mb-2">
-        <h5 className="font-semibold text-sm">{title} {count && `(${count})`}</h5>
-        {(sum !== undefined || average !== undefined) && (
-          <div className="flex gap-4 text-xs text-muted-foreground">
-            {sum !== undefined && (
-              <div className="flex items-center gap-1 whitespace-nowrap">
-                <Plus className="h-3 w-3" />
-                <span>{t('dataContent.statistics.sum')}</span>
-                <span className="font-mono font-medium">{formatGameRating(game, sum)}</span>
-              </div>
-            )}
-            {average !== undefined && (
-              <div className="flex items-center gap-1 whitespace-nowrap">
-                <TrendingUp className="h-3 w-3" />
-                <span>{t('dataContent.statistics.average')}</span>
-                <span className="font-mono font-medium">{formatGameRating(game, average, { average: true })}</span>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
+      <BucketHeader title={title} count={count} ratings={ranked ? songs.map(song => song.rating) : undefined} className="mb-2" />
       <div className="space-y-2">
         {visibleSongs.map(song => (
           <SongRow key={`${song.songId}-${song.difficultyCode}`} song={song} percentile={percentileMap?.[song.songId]} />
@@ -183,41 +141,17 @@ export function SongSection({ title, songs, count, displayMode, t, sum, average,
   );
 }
 
-export function SongGridSection({ title, songs, count, t, sum, average, percentileMap }: {
+export function SongGridSection({ title, songs, count, percentileMap }: {
   title: string;
   songs: RatedScore[];
-  count?: string;
-  t: any;
-  sum?: number;
-  average?: number;
+  count: string;
   percentileMap?: PercentileMap;
 }) {
-  const game = useGameId();
   if (songs.length === 0) return null;
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h5 className="font-semibold text-sm">{title} {count && `(${count})`}</h5>
-        {(sum !== undefined || average !== undefined) && (
-          <div className="flex gap-4 text-xs text-muted-foreground">
-            {sum !== undefined && (
-              <div className="flex items-center gap-1 whitespace-nowrap">
-                <Plus className="h-3 w-3" />
-                <span>{t('dataContent.statistics.sum')}</span>
-                <span className="font-mono font-medium">{formatGameRating(game, sum)}</span>
-              </div>
-            )}
-            {average !== undefined && (
-              <div className="flex items-center gap-1 whitespace-nowrap">
-                <TrendingUp className="h-3 w-3" />
-                <span>{t('dataContent.statistics.average')}</span>
-                <span className="font-mono font-medium">{formatGameRating(game, average, { average: true })}</span>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
+      <BucketHeader title={title} count={count} ratings={songs.map(song => song.rating)} />
       <div className="grid grid-cols-1 2xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
         {songs.map((song, index) => (
           <motion.div

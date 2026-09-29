@@ -12,7 +12,7 @@ export const maimaiPresentation = {
     : `${(hundredths(value) / 100).toFixed(2)}%`,
   formatScoreDelta: (from, to) => `${((hundredths(to) - hundredths(from)) / 100).toFixed(2)}%`,
   scoreLabel: "achievement",
-  ratingRules: { scale: 1, aggregation: "sum", axisStep: 100, filterBucketWidth: 10 },
+  ratingRules: { scale: 1, aggregation: "sum", axisStep: 100, distributionStep: 1, filterBucketWidth: 10 },
   difficulties: {
     basic: {
       label: "BASIC",

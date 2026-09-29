@@ -7,7 +7,7 @@ export const chunithmPresentation = {
   formatScore: value => integer.format(value),
   formatScoreDelta: (from, to) => integer.format(to - from),
   scoreLabel: "score",
-  ratingRules: { scale: 100, aggregation: "average", axisStep: 10, filterBucketWidth: 50 },
+  ratingRules: { scale: 100, aggregation: "average", axisStep: 10, distributionStep: 10, filterBucketWidth: 50 },
   difficulties: {
     basic: {
       label: "BASIC",
