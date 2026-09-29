@@ -9,13 +9,14 @@ import { Button } from "@tomomai/ui";
 import { DiscordIcon } from "@tomomai/ui";
 import { user } from "@/lib/db/schema-pg";
 import { Region, User } from "@/lib/types";
-import { Beaker, Check, ChevronDown, Database, Flag, Home, Info, Languages, LogIn, LogOut, Menu, Palette, Ship, Sparkles, User as LucideUserIcon, Settings, Users, X } from "lucide-react";
+import { Beaker, Check, ChevronDown, Database, Flag, Home, Info, Languages, LogIn, LogOut, Menu, Palette, Ship, Sparkles, User as LucideUserIcon, Settings, Users } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { Link } from "@/i18n/navigation"
 import { Fragment, useCallback, useState } from "react";
 import { toast } from "sonner";
 import { LocaleSwitcher } from "./locale-switcher";
+import { DiscordBanner } from "@/components/games/maimai/discord-banner";
 import { MinigameCards } from "@/components/games/maimai/minigame-cards";
 import { RegionSwitcher } from "./region-switcher";
 import { Drawer, DrawerClose, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle, DrawerTrigger } from "@tomomai/ui";
@@ -122,46 +123,6 @@ function NavbarButtons({ currentTab }: { currentTab: CurrentTab }) {
       </Fragment>
     ))}
   </>)
-}
-
-function DiscordBanner({ onDismiss }: { onDismiss: () => void }) {
-  const t = useTranslations();
-
-  return (
-    <motion.div
-      className="mb-6 relative bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-3 sm:p-4"
-      initial={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: 20 }}
-      transition={getTransition({ duration: 0.3, ease: [0.4, 0, 0.2, 1] })}
-    >
-      <button
-        onClick={onDismiss}
-        className="absolute top-2 right-2 p-1 rounded-md hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
-        aria-label="Dismiss"
-      >
-        <X className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-      </button>
-      <div className="flex items-start gap-3 pr-8">
-        <DiscordIcon className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5 shrink-0" />
-        <div className="flex-1 min-w-0">
-          <p className="text-sm text-blue-900 dark:text-blue-100 leading-relaxed">
-            {t('publicHeader.discordBanner')}
-          </p>
-          <a
-            href="https://discord.gg/jZqQHr3UDq"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 mt-2 text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:underline"
-          >
-            <span>Discord</span>
-            <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-            </svg>
-          </a>
-        </div>
-      </div>
-    </motion.div>
-  )
 }
 
 function UserAvatar({ user }: { user: User }) {

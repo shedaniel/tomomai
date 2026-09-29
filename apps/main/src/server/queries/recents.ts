@@ -6,6 +6,8 @@ import { parentSong, songs, userRecentSongs, maimaiRecentSongDetails } from "@/l
 import { and, count, desc, eq, lt } from "drizzle-orm";
 import type { Region } from "@/lib/types";
 
+export type RecentPlay = Awaited<ReturnType<typeof fetchRecentSongs>>["recentPlays"][number];
+
 export async function fetchRecentSongs(game: CanonicalGameId,
   userId: string,
   region: Region,

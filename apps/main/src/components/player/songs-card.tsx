@@ -1,7 +1,6 @@
 "use client";
 
 import { useGameId } from "@/components/providers/game-provider";
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@tomomai/ui";
 import { getPlayerRankings, type GamePlayerScore, type GameSnapshotData } from "@/lib/games/player-view";
 import { formatGameScore, formatGameRating, formatGameLevel, getGameDifficultyColors, getGameDifficultyLabel, getGameChartTypeLabel, getGameChartTypeBadgeLabel, getGameStatusLabels, getGameRankingBuckets, getGameScoreLabelKey } from "@/lib/games/presentation";
 import { codeToDifficulty, codeToChartType } from "@/lib/games/maimai/codes";
@@ -11,11 +10,11 @@ import { useTranslations } from "next-intl";
 
 import { CoverImage } from "@/components/cover-image";
 import { Fragment, useCallback, useMemo, useState, forwardRef } from "react";
-import { Bar, BarChart, XAxis, YAxis } from "recharts";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@tomomai/ui/select-friendly";
 import { Input } from "@tomomai/ui";
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 import { SongHoverCard } from "@/components/games/maimai/song-hover-card";
+import { MaimaiRatingDistributionChart } from "@/components/games/maimai/rating-distribution-chart";
 import { motion, AnimatePresence } from "motion/react";
 import { STAGGER, getTransition } from "@/lib/animation-constants";
 import { trpc } from "@/lib/trpc-client";
@@ -28,134 +27,6 @@ type SongWithRating = GamePlayerScore & { rating: number };
 function ScoreHover({ song, children, ...props }: { song: DisplayScore; children: React.ReactNode; side?: "right"; percentile?: PercentileEntry & { userAchievement: number } }) {
   const game = useGameId();
   return game === "maimai" ? <SongHoverCard song={{ ...song, difficulty: codeToDifficulty(song.difficultyCode), type: codeToChartType(song.typeCode) }} {...props}>{children}</SongHoverCard> : <>{children}</>;
-}
-
-// Helper function to group songs by individual rating values and difficulty
-function groupSongsByRating(songs: SongWithRating[]) {
-  if (songs.length === 0) return [];
-
-  const ratings = songs.map(song => song.rating);
-  const minRating = Math.min(...ratings);
-  const maxRating = Math.max(...ratings);
-
-  const grouped = [];
-  for (let rating = minRating; rating <= maxRating; rating++) {
-    const songsAtRating = songs.filter(song => song.rating === rating);
-
-    // Group by difficulty within each rating
-    const difficultyCounts = {
-      basic: songsAtRating.filter(s => s.difficultyCode === 0).length,
-      advanced: songsAtRating.filter(s => s.difficultyCode === 1).length,
-      expert: songsAtRating.filter(s => s.difficultyCode === 2).length,
-      master: songsAtRating.filter(s => s.difficultyCode === 3).length,
-      remaster: songsAtRating.filter(s => s.difficultyCode === 4).length,
-      utage: songsAtRating.filter(s => s.difficultyCode === 5).length,
-    };
-
-    grouped.push({
-      rating: rating.toString(),
-      ...difficultyCounts,
-      total: songsAtRating.length,
-    });
-  }
-
-  return grouped;
-}
-
-// Chart configuration
-const chartConfig = {
-  basic: {
-    label: "Basic",
-    color: "hsl(142, 76%, 36%)", // green
-  },
-  advanced: {
-    label: "Advanced",
-    color: "hsl(45, 93%, 47%)", // yellow
-  },
-  expert: {
-    label: "Expert",
-    color: "hsl(0, 84%, 60%)", // red
-  },
-  master: {
-    label: "Master",
-    color: "hsl(271, 81%, 56%)", // purple
-  },
-  remaster: {
-    label: "Re:Master",
-    color: "hsl(270, 95%, 85%)", // light purple
-  },
-  utage: {
-    label: "Utage",
-    color: "hsl(330, 81%, 60%)", // pink
-  },
-};
-
-// Component for rating chart
-function RatingChart({ songs, title }: { songs: SongWithRating[]; title: string }) {
-  const chartData = groupSongsByRating(songs);
-
-  if (songs.length === 0) return null;
-
-  return (
-    <div className="space-y-2 flex flex-col border border-border py-4 rounded-md">
-      <span className="text-sm text-center font-semibold">{title}</span>
-      <ChartContainer config={chartConfig} className="h-[200px] w-full pr-10">
-        <BarChart data={chartData}>
-          <XAxis
-            dataKey="rating"
-            tickLine={false}
-            tickMargin={10}
-            axisLine={false}
-            tick={{ fontSize: 11 }}
-          />
-          <YAxis
-            tickLine={false}
-            axisLine={false}
-            tick={{ fontSize: 11 }}
-          />
-          <ChartTooltip
-            content={<ChartTooltipContent hideLabel />}
-          />
-          <Bar
-            dataKey="basic"
-            stackId="difficulty"
-            fill="var(--color-basic)"
-            radius={[0, 0, 0, 0]}
-          />
-          <Bar
-            dataKey="advanced"
-            stackId="difficulty"
-            fill="var(--color-advanced)"
-            radius={[0, 0, 0, 0]}
-          />
-          <Bar
-            dataKey="expert"
-            stackId="difficulty"
-            fill="var(--color-expert)"
-            radius={[0, 0, 0, 0]}
-          />
-          <Bar
-            dataKey="master"
-            stackId="difficulty"
-            fill="var(--color-master)"
-            radius={[0, 0, 0, 0]}
-          />
-          <Bar
-            dataKey="remaster"
-            stackId="difficulty"
-            fill="var(--color-remaster)"
-            radius={[0, 0, 0, 0]}
-          />
-          <Bar
-            dataKey="utage"
-            stackId="difficulty"
-            fill="var(--color-utage)"
-            radius={[2, 2, 0, 0]}
-          />
-        </BarChart>
-      </ChartContainer>
-    </div>
-  );
 }
 
 // Component for rendering individual song rows
@@ -765,8 +636,8 @@ export function SongsCard({ selectedSnapshotData, flags }: { selectedSnapshotDat
       <div>
         <div className="space-y-6">
           {game === "maimai" && <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <RatingChart songs={newSongsB15} title={buckets[0].label} />
-            <RatingChart songs={oldSongsB35} title={buckets[1].label} />
+            <MaimaiRatingDistributionChart songs={newSongsB15} title={buckets[0].label} />
+            <MaimaiRatingDistributionChart songs={oldSongsB35} title={buckets[1].label} />
           </div>}
 
           {/* Search Field */}
