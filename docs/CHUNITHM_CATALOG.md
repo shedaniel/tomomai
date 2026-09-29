@@ -121,7 +121,9 @@ a title with a regular chart. The deleted-song archive is not imported.
   original BPM text, chart link and CHUNITHM note counts are kept in
   `songs.metadata.otogeDb`. Air and flick counts are not coerced into maimai note
   types. Non-numeric BPM text remains in metadata without fabricating a numeric
-  BPM.
+  BPM. The public API never publishes this metadata. It exposes the two estimate
+  flags and the note counts, which `readChunithmNoteCounts`
+  (`lib/games/chunithm/note-counts.ts`) reads.
 - The source maps typed upstream records into pending charts, following the
   maimai provider. Shared finalization validates required fields and numeric
   codes before persistence. Chart identity is still game/title/chart

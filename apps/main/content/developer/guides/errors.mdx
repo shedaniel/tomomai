@@ -14,6 +14,7 @@ with a stable cause also carry a machine-readable `code`, such as
 | `401` | Missing API key — no `Authorization` / `x-api-key` header. | Add a token. |
 | `403` | Token is malformed, revoked, expired, or doesn't hold a required scope. | Re-auth (OAuth) or rotate the key (API key). |
 | `404` | Resource not found (e.g. snapshot ID doesn't belong to you). | Don't retry; double-check the path. |
+| `410` | The path moved under `/api/v1/games/{game}` (`MOVED`). The body's `location` is the new path. | Send the request to `location` and apply the [changelog](/developer/guides/changelog)'s field changes. |
 | `422` | The game is not enabled on this deployment (`GAME_NOT_ENABLED`) or does not offer this endpoint (`UNSUPPORTED_CAPABILITY`). | Don't retry. The endpoint reference lists the games each endpoint serves. |
 | `500` | Server error. | Retry with exponential backoff. If persistent, file an issue. |
 

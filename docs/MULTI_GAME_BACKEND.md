@@ -127,6 +127,21 @@ the queried region, and answer a returned body as the spec's response with
 `game` added. A public spec's `cacheSeconds` sets the CDN cache headers of its
 successful answers.
 
+Response schemas live in `lib/api/schemas/`. `common.ts` holds what every game
+shares: integer code fields (`codeField` points at the public
+`GET /api/v1/games/{game}/codes` dictionary, which serves `GAME_CODES`), the
+canonical score fields and the stats shape (status counts keyed by code, only
+for the status kinds the game records). `maimai.ts` and `chunithm.ts` hold each
+game's `details` shapes and the builders that fill them, and `index.ts` joins
+them into discriminated unions on `game` for song detail, snapshots and recent
+plays. `GAME_API_DETAILS` requires a builder per game, so a new game cannot ship
+without its details. Catalog responses publish `levelPreciseEstimated` and
+`addedVersionEstimated` through `chartEstimates` (`lib/catalog/chart-estimates.ts`),
+never the raw `songs.metadata`. The pre-namespace paths (`/api/v1/songs`,
+`/api/v1/recents` and the others) are answered by `app/api/v1/[...legacy]` with
+a JSON 410 `MOVED` pointing at the maimai path. A spec's `errors` lists its
+route-specific refusal codes for the reference page and the OpenAPI document.
+
 A fetch refused before its session starts throws a `FetchStartError`
 (`server/services/games/fetch-errors.ts`) whose message is `CODE: detail`.
 `FETCH_START_ERROR_STATUS` in `lib/games/fetch-error-codes.ts` gives each code

@@ -15,7 +15,10 @@ Catalog routes include `/games/{game}/parents`, `/games/{game}/songs/versions`,
 `/games/{game}/songs`, and `/games/{game}/songs/{id}`. The song catalog requires
 both `region` and `gameVersion`; use the versions endpoint to discover them.
 Catalog type/difficulty and score combo/sync/clear statuses are game-specific
-integer codes. Scores expose `scoreValue` and `secondaryScore`.
+integer codes, which [`/games/{game}/codes`](/developer/reference/get-games-game-codes)
+lists. Scores expose `scoreValue` and `secondaryScore`. The
+[changelog](/developer/guides/changelog) maps the fields of the earlier
+maimai-only API to these.
 
 Unknown games and unavailable regions return HTTP 400 with `UNKNOWN_GAME` or
 `UNSUPPORTED_REGION`. Disabled games and unsupported capabilities return

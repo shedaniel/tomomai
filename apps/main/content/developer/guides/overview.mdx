@@ -51,6 +51,11 @@ on the client side.
 - **`scoreValue`**: the score as an integer. For maimai it is the
   achievement scaled ×10000, so divide by 10000 for the percentage:
   `991234` → `99.1234%`, `1010000` → `101.0000%` (SSS+, the theoretical
-  maximum). Returned in this form by every endpoint that surfaces a score
+  maximum). For CHUNITHM it is the score as shown in-game, from `0` to
+  `1010000`. Returned in this form by every endpoint that surfaces a score
   (snapshots, recents, plates).
+- **Codes**: chart `difficulty` and `type` and the score statuses are
+  game-specific integer codes.
+  [`GET /api/v1/games/{game}/codes`](/developer/reference/get-games-game-codes)
+  lists the key of every code.
 
