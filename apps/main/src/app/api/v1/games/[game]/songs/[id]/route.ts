@@ -10,6 +10,7 @@ import { definePublicGameHandler } from "@/lib/api/route";
 import { GAME_API_DETAILS } from "@/lib/api/schemas";
 import { spec } from "./spec";
 import { unstable_cache } from "next/cache";
+import { catalogTags } from "@/lib/cache-tags";
 
 const getSongById = (game: CanonicalGameId, songId: string) => unstable_cache(async () => {
   const parsed = parseSongId(songId);
@@ -44,7 +45,7 @@ const getSongById = (game: CanonicalGameId, songId: string) => unstable_cache(as
     .from(songs)
     .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
     .where(and(eq(songs.game, game), eq(parentSong.game, game), eq(parentSong.publicId, parsed.parentPublicId), instanceFilter));
-}, ["api-v1-parent-song-by-id", game, songId], { revalidate: 3600, tags: [`api-v1-songs:${game}`] })();
+}, ["api-v1-parent-song-by-id", game, songId], { revalidate: 3600, tags: [catalogTags(game).apiSongs] })();
 
 export const GET = definePublicGameHandler(spec, async ({ game, params }) => {
   const instance = maxBy(await getSongById(game, params.id), instancePreference);

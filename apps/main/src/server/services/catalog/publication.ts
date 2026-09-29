@@ -3,7 +3,7 @@ import { and, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { parentSong, songs } from "@/lib/db/schema-pg";
 import { parentCatalogue, songCatalogue } from "@/lib/api/schemas";
-import { catalogPrefix, isCatalogVersion, songCatalogKey } from "@/lib/api/catalog-location";
+import { isCatalogVersion, parentCatalogKey, songCatalogKey } from "@/lib/api/catalog-location";
 import { chartEstimates } from "@/lib/catalog/chart-estimates";
 import { formatSongInstanceId } from "@/lib/catalog/song-instance-id";
 import { getSupportedRegions } from "@/lib/games/regions";
@@ -67,7 +67,7 @@ export async function publishSongCatalog(game: CanonicalGameId): Promise<{ songC
     }
 
     const objects = [
-      { key: `${catalogPrefix(game)}/parents`, body: JSON.stringify(parentCatalogue.parse({ game, parents: [...parents.values()] })) },
+      { key: parentCatalogKey(game), body: JSON.stringify(parentCatalogue.parse({ game, parents: [...parents.values()] })) },
       ...[...slices].map(([key, catalog]) => ({ key, body: JSON.stringify(songCatalogue.parse(catalog)) })),
     ];
     // Validate everything before the first write; a failed write rejects the update and a retry rebuilds every slice.

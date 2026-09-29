@@ -20,7 +20,7 @@ describe("catalog HTTP reads", () => {
     const response = await GET(new NextRequest(`https://example.test/api/v1/games/${game}/songs?region=jp&gameVersion=${version}`), { params: Promise.resolve({ game }) });
 
     expect(response.status).toBe(302);
-    expect(response.headers.get("location")).toBe(`https://cdn.example.test/api/v1/games/${game}/songs/jp/${version}`);
+    expect(response.headers.get("location")).toBe(`https://cdn.example.test/catalog/v2/${game}/songs/jp/${version}`);
     for (const name of ["Cache-Control", "CDN-Cache-Control", "Vercel-CDN-Cache-Control"]) {
       expect(response.headers.get(name)).toBe(EXPECTED_SONG_CATALOG_CACHE_VALUE);
     }
@@ -33,7 +33,7 @@ describe("catalog HTTP reads", () => {
 
   it.each(["maimai", "chunithm"])("redirects the %s parent dictionary to its R2 namespace", async game => {
     const response = await getParents(new NextRequest(`https://example.test/api/v1/games/${game}/parents`), { params: Promise.resolve({ game }) });
-    expect(response.headers.get("location")).toBe(`https://cdn.example.test/api/v1/games/${game}/parents`);
+    expect(response.headers.get("location")).toBe(`https://cdn.example.test/catalog/v2/${game}/parents`);
     expect(response.headers.get("Cache-Control")).toBe(EXPECTED_SONG_CATALOG_CACHE_VALUE);
   });
   it.each([["jp", 9], ["intl", 8]] as const)("exposes CHUNITHM %s versions before player rollout", async (region, currentVersion) => {

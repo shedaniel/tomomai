@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
 import { PgDialect } from "drizzle-orm/pg-core";
 import type { CanonicalGameId } from "@/lib/games/types";
+import { catalogTags } from "@/lib/cache-tags";
 const { query, where, cache } = vi.hoisted(() => ({ query: vi.fn(), where: vi.fn(), cache: vi.fn() }));
 vi.mock("next/cache", () => ({ unstable_cache: (fn: unknown, key: unknown, options: unknown) => { cache(key, options); return fn; } }));
 vi.mock("@/lib/db", () => ({ db: { select: () => ({ from: () => ({ innerJoin: () => ({
@@ -32,7 +33,7 @@ describe("song details", () => {
     expect(await response.json()).toMatchObject({ game, songId: `Ab3xK9pQ:j${gameVersion}`, type });
     expect(response.headers.get("Cache-Control")).toContain("max-age=3600");
     expect(new PgDialect().sqlToQuery(where.mock.calls[0][0]).params).toEqual([game, game, "Ab3xK9pQ"]);
-    expect(cache).toHaveBeenCalledWith(["api-v1-parent-song-by-id", game, "Ab3xK9pQ"], expect.objectContaining({ tags: [`api-v1-songs:${game}`] }));
+    expect(cache).toHaveBeenCalledWith(["api-v1-parent-song-by-id", game, "Ab3xK9pQ"], expect.objectContaining({ tags: [catalogTags(game).apiSongs] }));
     const filter = new PgDialect().sqlToQuery(where.mock.calls[0][0]).sql;
     expect(filter).toContain('"songs"."game" = $1');
     expect(filter).toContain('"parent_song"."game" = $2');

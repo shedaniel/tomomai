@@ -12,6 +12,7 @@ import { maxBy } from "@/lib/utils";
 import { TRPCError } from "@trpc/server";
 import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import { unstable_cache } from "next/cache";
+import { catalogTags } from "@/lib/cache-tags";
 import { Optional } from "utility-types";
 
 export async function querySongScores(
@@ -313,7 +314,7 @@ export async function queryAllUniqueSongs(game: CanonicalGameId) {
       return songsStripped;
     },
     ["all-unique-songs", game, "parent-v2"],
-    { revalidate: 3600, tags: [`all-unique-songs:${game}`] }
+    { revalidate: 3600, tags: [catalogTags(game).uniqueSongs] }
   );
 
   return getCachedUniqueSongs();

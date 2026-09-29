@@ -48,10 +48,12 @@ again. See [the wire format](render-token-v2.md).
 ## Publication and caching
 
 The public dictionary and song slices are validated and uploaded to the new
-`api/v1/games/{game}` R2 prefix. The API keeps redirecting catalog requests
-to R2, preserving CDN delivery instead of restoring per-request database reads.
-Every metadata-supported slice is published, including empty ones, to replace
-stale contents when the last song in a slice disappears. Unknown versions are
+`catalog/v2/{game}` R2 prefix. The `v2` segment is `CATALOG_FORMAT_VERSION` in
+`lib/api/catalog-location.ts`. Bump it whenever the published JSON changes shape.
+The API keeps redirecting catalog requests to R2, preserving CDN delivery
+instead of restoring per-request database reads. Every metadata-supported
+slice is published, including empty ones, to replace stale contents when the
+last song in a slice disappears. Unknown versions are
 rejected before catalog writes. Main's current version metadata remains the
 authority, including MAGiCAL and CiRCLE PLUS release dates.
 
@@ -137,12 +139,12 @@ and `/ok` remain global. Player resources of a game with no enabled regions retu
 (start/status/token deletion) all use the game namespace.
 
 Published JSON includes `game`; chart type/difficulty are numeric game codes.
-The parent dictionary lives at `api/v1/games/maimai/parents` and slices at
-`api/v1/games/maimai/songs/{region}/{gameVersion}`. Empty slices are published too,
+The parent dictionary lives at `catalog/v2/maimai/parents` and slices at
+`catalog/v2/maimai/songs/{region}/{gameVersion}`. Empty slices are published too,
 so removing a slice's final song cannot expose a stale object. Query/cache keys
-include game; publication invalidates `all-unique-songs:{game}`,
-`reserved-songs:{game}`, and `api-v1-songs:{game}`. Legacy website pages stay
-maimai-only while their data boundaries bind maimai explicitly.
+include game, and the cache tags come from `catalogTags(game)` in
+`lib/cache-tags.ts`. Legacy website pages stay maimai-only while their data
+boundaries bind maimai explicitly.
 
 During the schema/application cutover, publish the new maimai objects with
 `POST /api/admin/catalog/publish?game=maimai` using the existing admin bearer

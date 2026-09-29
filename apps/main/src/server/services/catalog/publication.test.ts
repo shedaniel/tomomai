@@ -15,6 +15,7 @@ vi.mock("@/lib/r2", () => ({ putR2Object: putObject }));
 import { publishSongCatalog } from "./publication";
 import { CATALOG_WRITE_LOCK_ID } from "./ingestion/lock";
 import { CATALOG_INSTANCE_FIELDS } from "./ingestion/schema";
+import { parentCatalogKey, songCatalogKey } from "@/lib/api/catalog-location";
 
 const parent = {
   songId: "Ab3xK9pQ", songName: "Test", artist: "Artist", cover: null,
@@ -33,11 +34,11 @@ describe("publishSongCatalog", () => {
     const metadata = { levelPreciseEstimated: true, addedVersionEstimated: true, otogeDb: { id: "2490" } };
     readRows.mockResolvedValue([{ parent: { ...parent, type: 0 }, instance: { ...instance, gameVersion: 9, addedVersion: 8, metadata } }]);
     const result = await publishSongCatalog("chunithm");
-    const object = putObject.mock.calls.find(([object]) => object.key === "api/v1/games/chunithm/songs/jp/9")?.[0];
+    const object = putObject.mock.calls.find(([object]) => object.key === songCatalogKey("chunithm", "jp", 9))?.[0];
     const body = JSON.parse(object.body);
     expect(body).toMatchObject({ game: "chunithm", songs: [{ addedVersion: 8, levelPrecise: 133, levelPreciseEstimated: true, addedVersionEstimated: true }] });
     expect(body.songs[0]).not.toHaveProperty("metadata");
-    expect(putObject.mock.calls.every(([object]) => object.key.startsWith("api/v1/games/chunithm/"))).toBe(true);
+    expect(putObject.mock.calls.every(([object]) => object.key.startsWith("catalog/v2/chunithm/"))).toBe(true);
     expect(result.songCount).toBe(1);
     const dialect = new PgDialect();
     const [join, where] = filters.mock.calls[0].map(filter => dialect.sqlToQuery(filter));
@@ -53,13 +54,13 @@ describe("publishSongCatalog", () => {
     readRows.mockResolvedValue([{ parent, instance: confirmed }, { parent, instance: { ...instance, gameVersion: 12 } }]);
     const result = await publishSongCatalog("maimai");
     const objects = new Map(putObject.mock.calls.map(([object]) => [object.key, JSON.parse(object.body)]));
-    expect(objects.get("api/v1/games/maimai/parents")).toEqual({ game: "maimai", parents: [parent] });
-    const [song] = objects.get("api/v1/games/maimai/songs/jp/11").songs;
+    expect(objects.get(parentCatalogKey("maimai"))).toEqual({ game: "maimai", parents: [parent] });
+    const [song] = objects.get(songCatalogKey("maimai", "jp", 11)).songs;
     expect(song.songId).toBe("Ab3xK9pQ:j11");
     expect(song).not.toHaveProperty("metadata");
     expect(song).not.toHaveProperty("levelPreciseEstimated");
     expect(song).not.toHaveProperty("addedVersionEstimated");
-    expect(objects.get("api/v1/games/maimai/songs/jp/-13")).toEqual({ game: "maimai", songs: [] });
+    expect(objects.get(songCatalogKey("maimai", "jp", -13))).toEqual({ game: "maimai", songs: [] });
     expect(result.songCount).toBe(2);
     expect(result.bytes).toBeGreaterThan(0);
   });

@@ -11,6 +11,7 @@ import type { Difficulty } from "@/lib/games/maimai/types";
 import type { GamePlayerScore, GameSnapshotData } from "@/lib/games/player-view";
 import { and, desc, eq, inArray } from "drizzle-orm";
 import { unstable_cache } from "next/cache";
+import { catalogTags } from "@/lib/cache-tags";
 
 export const RESERVED_USERNAMES = new Set(["admin", "max", "maxbas", "maxadv", "maxexp", "maxmas", "maxrem"]);
 
@@ -141,8 +142,8 @@ const fetchReservedSongs = unstable_cache(
 
     return { songs: scores, gameVersion, rating };
   },
-  ["reserved-songs:maimai", "codes-v1"],
-  { revalidate: 3600, tags: ["reserved-songs:maimai"] }
+  [catalogTags("maimai").reservedSongs, "codes-v1"],
+  { revalidate: 3600, tags: [catalogTags("maimai").reservedSongs] }
 );
 
 export function getReservedPublicUser(username: string): ProfileData | null {
