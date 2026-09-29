@@ -37,7 +37,7 @@ export async function generateMetadata({ params }: RegionProfilePageProps): Prom
   const game = getCurrentGame();
   if (!isGameRegion(game, region)) {
     return {
-      title: tMeta("notFoundTitle"),
+      title: tMeta("notFoundTitle", { brand: brandTitle(game.brand) }),
       description: tMeta("notFoundDescription"),
     };
   }
@@ -80,13 +80,13 @@ export async function generateMetadata({ params }: RegionProfilePageProps): Prom
   } catch (error) {
     if (error instanceof TRPCError && error.code === "NOT_FOUND") {
       return {
-        title: tMeta("notFoundTitle"),
+        title: tMeta("notFoundTitle", { brand: brandTitle(game.brand) }),
         description: tMeta("notFoundDescription"),
       };
     }
 
     return {
-      title: tMeta("errorTitle"),
+      title: tMeta("errorTitle", { brand: brandTitle(game.brand) }),
       description: tMeta("errorDescription"),
     };
   }

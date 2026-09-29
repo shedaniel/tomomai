@@ -49,7 +49,6 @@ const USERNAME_REGEX = /^[a-zA-Z0-9_-]{1,32}$/;
 type RegionTheme = {
   /** Public path to a Twemoji SVG (CC-BY 4.0, see /public/flags/). */
   flagSrc: string;
-  tagline: string;
   /** Chart token used as the region's selected accent (border + tint + check badge). */
   borderClass: string;
   bgClass: string;
@@ -59,21 +58,18 @@ type RegionTheme = {
 const REGION_THEMES: Record<Region, RegionTheme> = {
   intl: {
     flagSrc: "/flags/intl.svg",
-    tagline: "Asia / International",
     borderClass: "border-blue-700 dark:border-blue-200",
     bgClass: "bg-blue-300/20",
     textClass: "text-blue-700 dark:text-blue-200",
   },
   jp: {
     flagSrc: "/flags/jp.svg",
-    tagline: "maimai でらっくす",
     borderClass: "border-red-700 dark:border-red-200",
     bgClass: "bg-red-300/20",
     textClass: "text-red-700 dark:text-red-200",
   },
   cn: {
     flagSrc: "/flags/cn.svg",
-    tagline: "舞萌 DX",
     borderClass: "border-yellow-700 dark:border-yellow-200",
     bgClass: "bg-yellow-300/20",
     textClass: "text-yellow-700 dark:text-yellow-200",
@@ -629,7 +625,7 @@ export function OnboardingDialog({
                               "text-[10px] leading-tight text-muted-foreground",
                               isSelected && theme.textClass
                             )}>
-                              {theme.tagline}
+                              {t(`onboarding.regionTaglines.${region}`)}
                             </p>
                           </div>
                         </motion.button>

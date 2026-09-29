@@ -1,0 +1,27 @@
+{
+  "dashboard": {
+    "title": "tomomai ともマイ"
+  },
+  "userHeader": {
+    "memberLabel": "ともマイ 멤버",
+    "discordPrompt": "문제나 제안 사항이 있으신가요? tomomai ともマイ 디스코드에 참여하세요!"
+  },
+  "db": {
+    "callout": {
+      "description": "tomomai ともマイ DB는 maimai의 채보, 오락실 정보 등을 모은 공개 데이터베이스입니다."
+    },
+    "songs": {
+      "detail": {
+        "viewDetails": "tomomai DB에서 상세 보기"
+      }
+    }
+  },
+  "consent": {
+    "title": "Welcome to tomomai"
+  },
+  "acceptInvitation": {
+    "title": "tomomai ともマイ",
+    "subtitle": "tomomai ともマイ 커뮤니티에 초대되었습니다",
+    "invitedBy": "{name}님이 당신을 tomomai ともマイ에 초대했습니다"
+  }
+}

@@ -48,7 +48,7 @@ it("scopes CHUNITHM settings and credentials to a supported region without album
   const open = Array.from(container.querySelectorAll("button")).find(button => button.textContent === messages.settings.account.updateToken);
   await act(async () => open?.click());
   expect(document.body.textContent).toContain("Update CHUNITHM authentication");
-  expect(document.body.textContent).toContain("authenticate with CHUNITHM NET");
+  expect(document.body.textContent).toContain("authenticate with CHUNITHM-NET");
   expect(document.body.textContent).not.toContain("CN token options");
   expect(document.body.textContent).not.toContain("International cookie options");
   for (const [id, value] of [["username", "test-user"], ["password", "test-password"]]) {

@@ -50,7 +50,7 @@ it.each(games)("uses the $id cookie wizard, game-scoped OTP, and configured logi
   expect(cookieOption).toBeDefined();
   await act(async () => cookieOption?.click());
   expect(state.query).toHaveBeenCalledWith({ game: game.id, region: "intl" });
-  expect(document.body.textContent).toContain(`Login to ${game.brand.displayName} NET`);
+  expect(document.body.textContent).toContain(`Login to ${game.brand.netName}`);
   expect(document.body.textContent).toContain(state.loginPageUrl);
   const manual = Array.from(document.querySelectorAll("button")).find(button => button.textContent === messages.tokenDialog.step1.enterDirectly);
   await act(async () => manual?.click());

@@ -1,0 +1,38 @@
+{
+  "dashboard": {
+    "title": "ともチュウ"
+  },
+  "userHeader": {
+    "memberLabel": "ともチュウのメンバー",
+    "discordPrompt": "何かお困りのことはありますか？ともチュウへのご意見・アイデアをぜひお聞かせください！"
+  },
+  "db": {
+    "callout": {
+      "description": "ともチュウ DB は、CHUNITHMの楽曲と譜面情報を集めた公開データベースです"
+    },
+    "songs": {
+      "detail": {
+        "viewDetails": "ともチュウ DB で詳細を見る"
+      }
+    }
+  },
+  "consent": {
+    "title": "ともチュウへようこそ"
+  },
+  "onboarding": {
+    "title": "ともチュウ へようこそ！",
+    "step1": {
+      "description": "ユーザー名は ともチュウ でのあなたのハンドルです。公開を選ぶと、公開プロフィールのURLにも使われます。"
+    },
+    "regionTaglines": {
+      "intl": "Asia / International",
+      "jp": "チュウニズム",
+      "cn": "中二节奏"
+    }
+  },
+  "acceptInvitation": {
+    "title": "ともチュウ",
+    "subtitle": "ともチュウコミュニティに招待されました！",
+    "invitedBy": "{name}があなたをともチュウに招待しました"
+  }
+}

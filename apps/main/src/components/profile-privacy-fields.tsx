@@ -1,5 +1,6 @@
 "use client";
 
+import { useGame } from "@/components/providers/game-provider";
 import { SettingsField } from "@/components/settings/primitives";
 import type { ProfilePrivacySettings } from "@/lib/types";
 import { Switch } from "@tomomai/ui";
@@ -28,6 +29,7 @@ export function ProfilePrivacyFields({
   idPrefix = "profile-privacy",
 }: ProfilePrivacyFieldsProps) {
   const t = useTranslations();
+  const game = useGame();
 
   return (
     <div className="grid gap-3">
@@ -39,7 +41,7 @@ export function ProfilePrivacyFields({
             layout="inline"
             htmlFor={id}
             label={t(`settings.profile.privacy.${translationKey}.label`)}
-            description={t(`settings.profile.privacy.${translationKey}.description`)}
+            description={t(`settings.profile.privacy.${translationKey}.description`, { game: game.brand.displayName })}
             labelClassName="text-sm font-normal"
             action={
               <Switch

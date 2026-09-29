@@ -1,6 +1,5 @@
 {
   "common": {
-    "title": "ともマイ",
     "loading": "読み込み中...",
     "save": "保存",
     "cancel": "キャンセル",
@@ -26,7 +25,7 @@
     "theme": "テーマ",
     "invitations": "招待",
     "discord": "Discord",
-    "about": "ともマイについて",
+    "about": "このサイトについて",
     "experiments": "実験",
     "region": "地域",
     "comingSoon": "準備中...",
@@ -84,7 +83,7 @@
       "title": "主な機能：",
       "trackScores": "インターナショナル／日本どちらのスコアも追跡",
       "viewHistory": "過去のスナップショットの閲覧",
-      "importData": "maimai DX NETからデータ取り込み",
+      "importData": "{net}からデータ取り込み",
       "analyzeProgress": "プレイ進捗の分析"
     },
     "signInTitle": "tomomai にサインイン",
@@ -148,7 +147,6 @@
     "reauthRequired": "パスキーを管理する前にもう一度サインインしてください。"
   },
   "consent": {
-    "title": "ともマイへようこそ",
     "description": "アカウント作成にあたり、以下の規約およびポリシーをご確認の上、同意をお願いいたします。",
     "tldr": {
       "title": "本ポリシーの要点（法的効力を有しません）",
@@ -180,7 +178,6 @@
     }
   },
   "dashboard": {
-    "title": "ともマイ",
     "description": "フレンドと一緒に{game}のスコアを共有・分析しよう！",
     "timezoneUpdateSuccess": "タイムゾーンの更新に成功しました！",
     "timezoneUpdateError": "タイムゾーンの更新に失敗しました: {error}",
@@ -228,11 +225,6 @@
       "zh-SG": "简体中文 (新加坡, 马来西亚)",
       "ko": "한국어 (AI 번역)"
     },
-    "timezone": {
-      "label": "タイムゾーン",
-      "description": "サイト上の日付や時刻の表示に影響します。デフォルトはmaimaiサーバーと同じ日本時間です。",
-      "placeholder": "タイムゾーンを選択"
-    },
     "account": {
       "label": "アカウント認証",
       "updateToken": "認証情報を更新",
@@ -266,7 +258,7 @@
     },
     "profile": {
       "publishProfile": "プロフィールを公開",
-      "publishDescription": "maimaiプロフィールを公開して、他のプレイヤーにスコアや進捗を共有しよう。",
+      "publishDescription": "{game}プロフィールを公開して、他のプレイヤーにスコアや進捗を共有しよう。",
       "mainRegion": {
         "label": "メイン地域",
         "description": "公開するプロフィールの主要地域を選択してください。",
@@ -290,7 +282,7 @@
         },
         "showPlayCounts": {
           "label": "プレイ回数を表示",
-          "description": "maimaiのプレイ回数を表示します。"
+          "description": "{game}のプレイ回数を表示します。"
         },
         "showEvents": {
           "label": "ちほーを表示",
@@ -608,12 +600,11 @@
   },
   "profileMetadata": {
     "title": "{username} | {brand}",
-    "description": "{region} の {username} さんの maimai プロフィールを表示します。フレンドと一緒に maimai のスコアを記録・分析しよう。",
     "descriptionRich": "{region} の {game} プレイヤー {displayName}（{username}）。{brand} でスコアと成長をチェック。",
     "descriptionUnknownRegion": "{brand} で {username} の {game} プロフィールを表示。",
-    "notFoundTitle": "プロフィールが見つかりません | tomomai ともマイ",
+    "notFoundTitle": "プロフィールが見つかりません | {brand}",
     "notFoundDescription": "お探しのプロフィールは存在しないか、公開されていません。",
-    "errorTitle": "エラー | tomomai ともマイ",
+    "errorTitle": "エラー | {brand}",
     "errorDescription": "プロフィールの読み込み中にエラーが発生しました。"
   },
   "profileVisibility": {
@@ -816,20 +807,20 @@
     "tokenPlaceholder": "clal=ここにCookie値を入力",
     "tokenValidationError": "Cookieは「clal=」で始まり、英数字のみを含む必要があります。",
     "authenticationNote": "認証：",
-    "segaCredentialsNote": "SEGAアカウントのユーザー名とパスワードで {game} NET にログインします。",
+    "segaCredentialsNote": "SEGAアカウントのユーザー名とパスワードで {net} にログインします。",
     "credentialsSecureNote": "認証情報は保存され、今後の同期時に使用されます。",
     "savingCredentials": "認証情報保存中...",
     "saveCredentials": "認証情報を保存",
     "tokenTab": "トークン",
     "passwordTab": "パスワード",
     "tokenInstructions": {
-      "description": "{game} NETから取得した「clal=」で始まるクッキー値を入力してください。",
+      "description": "{net}から取得した「clal=」で始まるクッキー値を入力してください。",
       "expiration": "トークンは一定期間で無効になる場合がありますので、その際は再度更新してください。"
     },
     "passwordInstructions": "SEGAアカウントのユーザー名とパスワードで直接ログイン",
     "secureStorage": "認証情報は保存され、今後の同期時に使用されます。",
     "steps": {
-      "step1Title": "{game} NETにログイン",
+      "step1Title": "{net}にログイン",
       "step2Title": "「Not Found」ページに移動",
       "step3Title": "コードを実行"
     },
@@ -845,7 +836,7 @@
     "segaAccountDescription": "SEGAアカウントの認証情報を入力します",
     "backToSteps": "手順に戻る",
     "step1": {
-      "description": "<strong>シークレット / プライベートウィンドウ</strong>で {game} NET にログインします。",
+      "description": "<strong>シークレット / プライベートウィンドウ</strong>で {net} にログインします。",
       "clickToCopy": "下のリンクをクリックしてクリップボードにコピー：",
       "haveCookies": "すでに Cookie をお持ちですか？",
       "enterDirectly": "直接入力する"
@@ -870,8 +861,8 @@
       "nextStep": "次へ"
     },
     "recommended": "おすすめ楽曲",
-    "tokenOptionDescription": "ブラウザのトークンを使用して {game} NET アカウントにログインします。トークンは一定期間で無効になることがありますので、その際は再度更新してください。パスワードは不要で、ソーシャルログインもサポートしています。",
-    "passwordOptionDescription": "SEGA アカウントの認証情報を使用して {game} NET アカウントにログインします。期限切れはありません。非推奨です。",
+    "tokenOptionDescription": "ブラウザのトークンを使用して {net} アカウントにログインします。トークンは一定期間で無効になることがありますので、その際は再度更新してください。パスワードは不要で、ソーシャルログインもサポートしています。",
+    "passwordOptionDescription": "SEGA アカウントの認証情報を使用して {net} アカウントにログインします。期限切れはありません。非推奨です。",
     "cnTitle": "舞萌 DX の認証を更新",
     "cnDescription": "中国版舞萌 DX のログイン認証方式を選んでください。",
     "cnExperimentalWarningTitle": "中国版は実験的なリージョンです",
@@ -918,7 +909,7 @@
     },
     "divingFish": {
       "title": "水鱼查分器",
-      "description": "水鱼查分器のアカウントを ともマイ に連携します。連携後は水鱼查分器の開発者 API を通じて、あなたの舞萌 DX データを読み取ります。下記のいずれかの方法でアカウントの所有確認を行ってください。",
+      "description": "水鱼查分器のアカウントを本サイトに連携します。連携後は水鱼查分器の開発者 API を通じて、あなたの舞萌 DX データを読み取ります。下記のいずれかの方法でアカウントの所有確認を行ってください。",
       "notConfiguredTitle": "水鱼查分器が未設定です",
       "notConfiguredMessage": "サーバーの <code>DIVINGFISH_DEV_TOKEN</code> 環境変数を設定するよう、管理者にご連絡ください。",
       "importTokenTab": "Import-Token で認証",
@@ -967,7 +958,7 @@
       "step3OrCopy": "リンクを WeChat に送る",
       "step3OrCopyNote": "リンクをコピーし、任意の WeChat チャットに送信してからタップして開いてください。",
       "step3Copy": "リンクをコピー",
-      "step3CopyNote": "認可が完了すると WeChat が結果ページに遷移します。そのページを閉じて ともマイ に戻り、インポートの進捗をご確認ください。Wi-Fi 設定でプロキシをオフにすることもお忘れなく。",
+      "step3CopyNote": "認可が完了すると WeChat が結果ページに遷移します。そのページを閉じて本サイトに戻り、インポートの進捗をご確認ください。Wi-Fi 設定でプロキシをオフにすることもお忘れなく。",
       "copySuccess": "コピーしました",
       "copyFailed": "コピーに失敗しました。手動でコピーしてください",
       "clashConfigUrl": "Clash 設定 URL",
@@ -985,8 +976,6 @@
     }
   },
   "userHeader": {
-    "memberLabel": "ともマイのメンバー",
-    "discordPrompt": "何かお困りのことはありますか？ともマイへのご意見・アイデアをぜひお聞かせください！",
     "joinDiscord": "Discordコミュニティに参加する"
   },
   "publicHeader": {
@@ -1007,10 +996,8 @@
     "followTwitter": "Xでフォロー"
   },
   "onboarding": {
-    "title": "ともマイ へようこそ！",
     "step1": {
       "title": "ユーザー名を決める",
-      "description": "ユーザー名は ともマイ でのあなたのハンドルです。公開を選ぶと、公開プロフィールのURLにも使われます。",
       "publishToggleLabel": "プロフィールを友達に共有する",
       "publishToggleDescription": "他のユーザーが公開リンクであなたのスコアを見られるようになります。初期設定はオフです — いつでも変更できます。",
       "publicUrlHint": "あなたの公開プロフィール："
@@ -1106,12 +1093,9 @@
     }
   },
   "acceptInvitation": {
-    "title": "ともマイ",
-    "subtitle": "ともマイコミュニティに招待されました！",
     "validating": "招待を検証中...",
     "redirecting": "ホームページにリダイレクト中...",
     "invited": "招待されました！",
-    "invitedBy": "{name}があなたをともマイに招待しました",
     "expiresOn": "この招待は{date}まで有効です。",
     "acceptAndSignUp": "招待を受けてサインアップ",
     "backToHome": "ホームに戻る",
@@ -1173,7 +1157,6 @@
         "share": "共有",
         "youtube": "YouTubeで検索",
         "viewCharts": "譜面を見る",
-        "viewDetails": "ともマイ DB で詳細を見る",
         "summary": "{songName} は {versionName} で追加された、{artist} による {genre} ジャンルの {game} {chartType} 譜面です。難易度は {chartCount, plural, =1 {# 譜面} other {# 譜面}} にわたり、{minLevel} から {maxLevel} までの範囲です{bpmFragment}。",
         "summaryBpmFragment": "（BPM {bpm}）",
         "loadFailed": "楽曲詳細の読み込みに失敗しました",

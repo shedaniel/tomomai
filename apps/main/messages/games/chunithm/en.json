@@ -1,0 +1,38 @@
+{
+  "dashboard": {
+    "title": "tomochu ともチュウ"
+  },
+  "userHeader": {
+    "memberLabel": "ともチュウ member",
+    "discordPrompt": "Facing issues? Or have features or ideas to add to tomochu ともチュウ?"
+  },
+  "db": {
+    "callout": {
+      "description": "tomochu ともチュウ DB is a public database of CHUNITHM charts."
+    },
+    "songs": {
+      "detail": {
+        "viewDetails": "View Details on tomochu DB"
+      }
+    }
+  },
+  "consent": {
+    "title": "Welcome to tomochu"
+  },
+  "onboarding": {
+    "title": "Welcome to tomochu!",
+    "step1": {
+      "description": "Your username is your handle on tomochu. If you choose to share, it also becomes your public profile URL."
+    },
+    "regionTaglines": {
+      "intl": "Asia / International",
+      "jp": "チュウニズム",
+      "cn": "中二节奏"
+    }
+  },
+  "acceptInvitation": {
+    "title": "tomochu ともチュウ",
+    "subtitle": "You've been invited to join the tomochu ともチュウ community",
+    "invitedBy": "{name} has invited you to join tomochu ともチュウ"
+  }
+}

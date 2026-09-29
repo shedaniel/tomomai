@@ -92,7 +92,7 @@ export function ProfileVisibilityDialog({
               layout="inline"
               htmlFor="inline-publish-profile"
               label={t("settings.profile.publishProfile")}
-              description={t("settings.profile.publishDescription")}
+              description={t("settings.profile.publishDescription", { game: game.brand.displayName })}
               action={
                 <Switch
                   id="inline-publish-profile"

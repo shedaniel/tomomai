@@ -114,7 +114,7 @@ export function SegaCredentialsDialog({
               <p className="font-medium mb-1">
                 {t('tokenDialog.authenticationNote')}
               </p>
-              <p>{t('tokenDialog.segaCredentialsNote', { game: game.brand.displayName })}</p>
+              <p>{t('tokenDialog.segaCredentialsNote', { net: game.brand.netName })}</p>
               <p>{t('tokenDialog.credentialsSecureNote')}</p>
             </div>
 

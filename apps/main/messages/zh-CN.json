@@ -1,6 +1,5 @@
 {
   "common": {
-    "title": "tomomai ともマイ",
     "loading": "加载中...",
     "save": "保存",
     "cancel": "取消",
@@ -84,7 +83,7 @@
       "title": "功能：",
       "trackScores": "追踪国际服和日本服的成绩",
       "viewHistory": "查看你的历史游玩数据",
-      "importData": "从 maimai DX NET 导入数据",
+      "importData": "从 {net} 导入数据",
       "analyzeProgress": "分析你的游玩记录"
     },
     "signInTitle": "登录 tomomai",
@@ -148,7 +147,6 @@
     "reauthRequired": "管理通行密钥前请重新登录。"
   },
   "consent": {
-    "title": "欢迎来到 tomomai",
     "description": "在创建账户前，请先阅读并同意我们的政策。",
     "tldr": {
       "title": "摘要（非法律建议）",
@@ -180,7 +178,6 @@
     }
   },
   "dashboard": {
-    "title": "tomomai ともマイ",
     "description": "与好友一起分享 {game} 游玩成绩",
     "timezoneUpdateSuccess": "时区更新成功！",
     "timezoneUpdateError": "时区更新失败：{error}",
@@ -228,11 +225,6 @@
       "zh-SG": "简体中文 (新加坡, 马来西亚)",
       "ko": "한국어 (AI 번역)"
     },
-    "timezone": {
-      "label": "时区",
-      "description": "这会影响日期和时间的显示方式。默认设置为日本时区，与 maimai 服务器时间相符。",
-      "placeholder": "选择时区"
-    },
     "account": {
       "label": "账户验证",
       "updateToken": "更新验证方式",
@@ -266,7 +258,7 @@
     },
     "profile": {
       "publishProfile": "公开主页",
-      "publishDescription": "公开你的 maimai 主页，让他人可以查看你的分数和进度。",
+      "publishDescription": "公开你的 {game} 主页，让他人可以查看你的分数和进度。",
       "mainRegion": {
         "label": "主要地区",
         "description": "选择用于公开主页的主要地区。",
@@ -290,7 +282,7 @@
         },
         "showPlayCounts": {
           "label": "显示游玩次数",
-          "description": "显示你的 maimai 游玩次数。"
+          "description": "显示你的 {game} 游玩次数。"
         },
         "showEvents": {
           "label": "显示活动",
@@ -608,12 +600,11 @@
   },
   "profileMetadata": {
     "title": "{username} | {brand}",
-    "description": "查看 {username} 在 {region} 的 maimai 主页。和朋友一起追踪并分析 maimai 成绩。",
     "descriptionRich": "{region} 的 {game} 玩家 {displayName}（{username}）。在 {brand} 查看成绩和进步。",
     "descriptionUnknownRegion": "在 {brand} 查看 {username} 的 {game} 个人资料。",
-    "notFoundTitle": "主页未找到 | tomomai ともマイ",
+    "notFoundTitle": "主页未找到 | {brand}",
     "notFoundDescription": "你查找的主页不存在或未公开。",
-    "errorTitle": "错误 | tomomai ともマイ",
+    "errorTitle": "错误 | {brand}",
     "errorDescription": "加载此主页时发生错误。"
   },
   "profileVisibility": {
@@ -806,7 +797,7 @@
   },
   "tokenDialog": {
     "title": "更新 {game} 验证",
-    "intlDescription": "选择你的 maimai 登录验证方式。",
+    "intlDescription": "选择你的 {game} 登录验证方式。",
     "credentialsStored": "你的验证方式将被保存以供将来使用。",
     "username": "用户名",
     "usernamePlaceholder": "输入你的 SEGA 账户用户名",
@@ -816,20 +807,20 @@
     "tokenPlaceholder": "clal=在此输入你的 Cookies",
     "tokenValidationError": "Cookies 必须以 \"clal=\" 开头，后面跟着字母和数字",
     "authenticationNote": "验证：",
-    "segaCredentialsNote": "使用你的 SEGA 账户凭证来验证 {game} NET。",
+    "segaCredentialsNote": "使用你的 SEGA 账户凭证来验证 {net}。",
     "credentialsSecureNote": "你的验证方式将被保存以供将来使用。",
     "savingCredentials": "保存验证方式中...",
     "saveCredentials": "保存验证方式",
     "tokenTab": "令牌",
     "passwordTab": "密码",
     "tokenInstructions": {
-      "description": "来自 {game} NET 的以 \"clal=\" 开头的 Cookie 值。",
+      "description": "来自 {net} 的以 \"clal=\" 开头的 Cookie 值。",
       "expiration": "Cookies 可能会在一段时间后失效，你可能需要重新登录。"
     },
     "passwordInstructions": "直接使用你的 SEGA 账户用户名和密码",
     "secureStorage": "你的验证方式将被保存以供将来使用。",
     "steps": {
-      "step1Title": "登录 {game} NET",
+      "step1Title": "登录 {net}",
       "step2Title": "访问 \"Not Found\" 页面",
       "step3Title": "执行代码"
     },
@@ -845,7 +836,7 @@
     "segaAccountDescription": "输入您的 SEGA 账户凭证",
     "backToSteps": "返回步骤",
     "step1": {
-      "description": "在<strong>无痕 / 隐私窗口</strong>中登录 {game} NET。",
+      "description": "在<strong>无痕 / 隐私窗口</strong>中登录 {net}。",
       "clickToCopy": "点击下方的链接以复制到剪贴板：",
       "haveCookies": "已经有自己的 Cookies 了吗？",
       "enterDirectly": "直接输入"
@@ -870,8 +861,8 @@
       "nextStep": "下一步"
     },
     "recommended": "推荐歌曲",
-    "tokenOptionDescription": "使用您的浏览器令牌登录您的 {game} NET 账户。令牌可能会不时过期。无需密码，并支持社交登录。",
-    "passwordOptionDescription": "使用您的 SEGA 账户凭证登录您的 {game} NET 账户。永久有效。不推荐。",
+    "tokenOptionDescription": "使用您的浏览器令牌登录您的 {net} 账户。令牌可能会不时过期。无需密码，并支持社交登录。",
+    "passwordOptionDescription": "使用您的 SEGA 账户凭证登录您的 {net} 账户。永久有效。不推荐。",
     "cnTitle": "更新舞萌 DX 验证",
     "cnDescription": "选择您的舞萌 DX 登录验证方式。",
     "cnExperimentalWarningTitle": "国服为实验性地区",
@@ -967,7 +958,7 @@
       "step3OrCopy": "复制链接到微信",
       "step3OrCopyNote": "复制链接，发送到任意微信聊天，点击即可打开。",
       "step3Copy": "复制链接",
-      "step3CopyNote": "授权完成后微信会跳转到一个结果页面。届时请关闭该页面，回到 tomomai 查看导入进度，并记得在 Wi-Fi 设置中关闭代理。",
+      "step3CopyNote": "授权完成后微信会跳转到一个结果页面。届时请关闭该页面，回到本站查看导入进度，并记得在 Wi-Fi 设置中关闭代理。",
       "copySuccess": "已复制",
       "copyFailed": "复制失败，请手动复制",
       "clashConfigUrl": "Clash 配置 URL",
@@ -985,8 +976,6 @@
     }
   },
   "userHeader": {
-    "memberLabel": "ともマイ 成员",
-    "discordPrompt": "遇到问题了吗？或想对 tomomai ともマイ 提出功能或建议？",
     "joinDiscord": "加入我们的社群 Discord！"
   },
   "publicHeader": {
@@ -1007,10 +996,8 @@
     "followTwitter": "在 X 上关注"
   },
   "onboarding": {
-    "title": "欢迎来到 tomomai！",
     "step1": {
       "title": "设定用户名",
-      "description": "用户名是你在 tomomai 的称呼。如果你选择公开，它也会成为你的公开个人资料网址。",
       "publishToggleLabel": "和朋友分享我的资料",
       "publishToggleDescription": "让其他人通过公开链接查看你的成绩。默认关闭 — 你可以随时更改。",
       "publicUrlHint": "你的公开资料："
@@ -1106,12 +1093,9 @@
     }
   },
   "acceptInvitation": {
-    "title": "tomomai ともマイ",
-    "subtitle": "你已被邀请加入 tomomai ともマイ 社群",
     "validating": "验证邀请中...",
     "redirecting": "重新导向至首页...",
     "invited": "你已被邀请！",
-    "invitedBy": "{name} 邀请你加入 tomomai ともマイ",
     "expiresOn": "邀请于 {date} 过期",
     "acceptAndSignUp": "接受邀请并注册",
     "backToHome": "返回首页",
@@ -1173,7 +1157,6 @@
         "share": "分享",
         "youtube": "YouTube 搜索",
         "viewCharts": "查看谱面",
-        "viewDetails": "在 tomomai DB 查看详情",
         "summary": "{songName} 是由 {artist} 制作的 {game} {chartType} 谱面，属于 {genre} 类型，于 {versionName} 收录。难度范围为 {minLevel} 至 {maxLevel}，共 {chartCount, plural, =1 {# 张谱面} other {# 张谱面}}{bpmFragment}。",
         "summaryBpmFragment": "（BPM {bpm}）",
         "loadFailed": "加载歌曲详情失败",

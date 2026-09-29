@@ -6,8 +6,11 @@ import { NextIntlClientProvider } from "next-intl";
 import { GameProvider } from "@/components/providers/game-provider";
 import { toFrontendGame } from "@/lib/games/frontend";
 import { getGame } from "@/lib/games/registry";
+import { loadMessages } from "@/i18n/messages";
 import { SongHoverCard } from "./song-hover-card";
 import messages from "../../../../messages/en.json";
+
+const maimaiMessages = await loadMessages("maimai", "en");
 
 const songDetails = vi.hoisted(() => vi.fn(() => ({ data: undefined, isLoading: true })));
 vi.mock("@/lib/trpc-client", () => ({ trpc: { user: {
@@ -42,7 +45,7 @@ afterEach(async () => {
 it("opens the chart details of the hovered score's own parent song", async () => {
   const score = { songId: "AbCd_123:j13", songName: "Same Title", artist: "Artist", cover: "", difficultyCode: 3, typeCode: 1 };
   await act(async () => root.render(
-    <NextIntlClientProvider locale="en" messages={messages} timeZone="UTC">
+    <NextIntlClientProvider locale="en" messages={maimaiMessages} timeZone="UTC">
       <GameProvider game={toFrontendGame(getGame("maimai"), ["jp"])}>
         <SongHoverCard score={score}><button type="button">row</button></SongHoverCard>
       </GameProvider>

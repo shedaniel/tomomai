@@ -1,0 +1,38 @@
+{
+  "dashboard": {
+    "title": "tomomai ともマイ"
+  },
+  "userHeader": {
+    "memberLabel": "ともマイ 成員",
+    "discordPrompt": "遇到問題了嗎？抑或想對 tomomai ともマイ 提出建議？"
+  },
+  "db": {
+    "callout": {
+      "description": "tomomai ともマイ DB 是一個公開的 maimai 譜面、機舖及更多maimai資訊的資料庫"
+    },
+    "songs": {
+      "detail": {
+        "viewDetails": "在 tomomai DB 查看詳細資訊"
+      }
+    }
+  },
+  "consent": {
+    "title": "歡迎來到 tomomai"
+  },
+  "onboarding": {
+    "title": "歡迎來到 tomomai！",
+    "step1": {
+      "description": "用戶名稱是你在 tomomai 的稱號。如果你選擇公開，亦會成為你的公開個人檔案網址。"
+    },
+    "regionTaglines": {
+      "intl": "Asia / International",
+      "jp": "maimai でらっくす",
+      "cn": "舞萌 DX"
+    }
+  },
+  "acceptInvitation": {
+    "title": "tomomai ともマイ",
+    "subtitle": "你已被邀請加入 tomomai ともマイ 社群",
+    "invitedBy": "{name} 邀請你加入 tomomai ともマイ"
+  }
+}

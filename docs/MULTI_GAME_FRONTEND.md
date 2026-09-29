@@ -46,8 +46,18 @@ Implemented frontend support:
   profile main region are offered from, and validated against, the served game's
   regions. `isGameCnExclusive(game)` marks the China deployment, which pins the
   locale and every region choice.
-  Tomochu's Japanese name is **ともチュウ**. Copy belongs to its existing feature
-  namespace instead of a catch-all multi-game translation namespace.
+  Tomochu's Japanese name is **ともチュウ**. Brand facts (names, the NET's
+  official name, domain, icon, wordmarks, OpenGraph artwork, the example profile
+  and the community invite) live on the definition's `brand`. `BrandLogo` draws a
+  section's wordmark, or the brand title as text while a game has no artwork,
+  which is the case for CHUNITHM.
+  Copy belongs to its existing feature namespace instead of a catch-all
+  multi-game translation namespace. Copy whose wording differs per game, such as
+  the brand headings, the member label and the region taglines, lives in
+  `messages/games/<game>/<locale>.json`, which `loadMessages` in
+  `src/i18n/messages.ts` lays over the shared files. Every game defines the same
+  keys there. Shared copy names the game site with `{net}` (`brand.netName`),
+  never `{game} NET`.
   Maimai profile image queries explicitly filter the game; maimai-only image and
   database surfaces do not render another game's records using maimai semantics.
 - Version data lives with each game definition as a table built by

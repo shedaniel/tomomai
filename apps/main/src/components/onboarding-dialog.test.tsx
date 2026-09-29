@@ -7,7 +7,10 @@ import { OnboardingDialog } from "./onboarding-dialog";
 import { GameProvider } from "./providers/game-provider";
 import { toFrontendGame } from "@/lib/games/frontend";
 import { getGame } from "@/lib/games/registry";
+import { loadMessages } from "@/i18n/messages";
 import messages from "../../messages/en.json";
+
+const chunithmMessages = await loadMessages("chunithm", "en");
 
 const mutations = vi.hoisted(() => ({ updateRegion: vi.fn(), updateProfileMainRegion: vi.fn(), updatePublishProfile: vi.fn() }));
 vi.mock("@/lib/trpc-client", () => ({ trpc: {
@@ -47,15 +50,19 @@ function button(label: string) {
 
 it("offers only the served game's regions and saves the chosen one", async () => {
   await act(async () => root.render(
-    <NextIntlClientProvider locale="en" messages={messages} timeZone="UTC">
+    <NextIntlClientProvider locale="en" messages={chunithmMessages} timeZone="UTC">
       <GameProvider game={toFrontendGame(getGame("chunithm"), ["intl", "jp"])}>
         <OnboardingDialog open onComplete={vi.fn()} initialRegion="intl" initialUsername="player" initialPublishProfile={false} />
       </GameProvider>
     </NextIntlClientProvider>,
   ));
+  expect(document.body.textContent).toContain("Welcome to tomochu!");
+  expect(document.body.textContent).toContain("Your username is your handle on tomochu.");
   await act(async () => button(messages.onboarding.navigation.next)?.click());
 
   expect(document.body.textContent).toContain("Pick where your CHUNITHM data lives.");
+  expect(document.body.textContent).toContain("チュウニズム");
+  expect(document.body.textContent).not.toMatch(/tomomai|ともマイ|でらっくす/);
   expect(button(messages.regions.intl)).toBeDefined();
   expect(button(messages.regions.cn)).toBeUndefined();
 

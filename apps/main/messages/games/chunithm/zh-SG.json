@@ -1,0 +1,38 @@
+{
+  "dashboard": {
+    "title": "tomochu ともチュウ"
+  },
+  "userHeader": {
+    "memberLabel": "ともチュウ 成员",
+    "discordPrompt": "遇到问题了吗？或想对 tomochu ともチュウ 提出功能或建议？"
+  },
+  "db": {
+    "callout": {
+      "description": "tomochu ともチュウ DB 是一个公开的 CHUNITHM 谱面数据库"
+    },
+    "songs": {
+      "detail": {
+        "viewDetails": "在 tomochu DB 查看详情"
+      }
+    }
+  },
+  "consent": {
+    "title": "欢迎来到 tomochu"
+  },
+  "onboarding": {
+    "title": "欢迎来到 tomochu！",
+    "step1": {
+      "description": "用户名是你在 tomochu 的称呼。如果你选择公开，它也会成为你的公开个人资料网址。"
+    },
+    "regionTaglines": {
+      "intl": "Asia / International",
+      "jp": "チュウニズム",
+      "cn": "中二节奏"
+    }
+  },
+  "acceptInvitation": {
+    "title": "tomochu ともチュウ",
+    "subtitle": "你已被邀请加入 tomochu ともチュウ 社群",
+    "invitedBy": "{name} 邀请你加入 tomochu ともチュウ"
+  }
+}

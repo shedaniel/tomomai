@@ -1,6 +1,5 @@
 {
   "common": {
-    "title": "tomomai ともマイ",
     "loading": "Loading...",
     "save": "Save",
     "cancel": "Cancel",
@@ -84,7 +83,7 @@
       "title": "Features:",
       "trackScores": "Track scores across International and Japan regions",
       "viewHistory": "View historical data snapshots",
-      "importData": "Import data directly from maimai DX NET",
+      "importData": "Import data directly from {net}",
       "analyzeProgress": "Analyze your progress over time"
     },
     "signInTitle": "Sign in to tomomai",
@@ -148,7 +147,6 @@
     "reauthRequired": "Please sign in again before managing passkeys."
   },
   "consent": {
-    "title": "Welcome to tomomai",
     "description": "Before creating your account, please review and agree to our policies",
     "tldr": {
       "title": "TL;DR (Not Legal Advice)",
@@ -180,7 +178,6 @@
     }
   },
   "dashboard": {
-    "title": "tomomai ともマイ",
     "description": "Track and analyze your {game} scores with friends",
     "timezoneUpdateSuccess": "Timezone updated successfully!",
     "timezoneUpdateError": "Failed to update timezone: {error}",
@@ -228,11 +225,6 @@
       "zh-SG": "简体中文 (新加坡, 马来西亚)",
       "ko": "한국어 (AI 번역)"
     },
-    "timezone": {
-      "label": "Timezone",
-      "description": "This affects how dates and times are displayed throughout the app. Japan timezone is the default as it matches maimai's server time.",
-      "placeholder": "Select timezone"
-    },
     "account": {
       "label": "Account Authentication",
       "updateToken": "Update Token",
@@ -266,7 +258,7 @@
     },
     "profile": {
       "publishProfile": "Publish Profile",
-      "publishDescription": "Make your maimai profile publicly accessible for others to view your scores and progress.",
+      "publishDescription": "Make your {game} profile publicly accessible for others to view your scores and progress.",
       "mainRegion": {
         "label": "Main Region",
         "description": "Choose your primary region for the published profile.",
@@ -290,7 +282,7 @@
         },
         "showPlayCounts": {
           "label": "Show Play Counts",
-          "description": "Display your maimai play counts."
+          "description": "Display your {game} play counts."
         },
         "showEvents": {
           "label": "Show Events",
@@ -608,12 +600,11 @@
   },
   "profileMetadata": {
     "title": "{username} | {brand}",
-    "description": "View {username}'s maimai profile for {region}. Track and analyze maimai scores with friends.",
     "descriptionRich": "{displayName} ({username}) on {region} {game}. View their scores and progress on {brand}.",
     "descriptionUnknownRegion": "View {username}’s {game} profile on {brand}.",
-    "notFoundTitle": "Profile Not Found | tomomai ともマイ",
+    "notFoundTitle": "Profile Not Found | {brand}",
     "notFoundDescription": "The profile you're looking for doesn't exist or is not publicly accessible.",
-    "errorTitle": "Error | tomomai ともマイ",
+    "errorTitle": "Error | {brand}",
     "errorDescription": "An error occurred while loading this profile."
   },
   "profileVisibility": {
@@ -825,20 +816,20 @@
     "tokenPlaceholder": "clal=your_token_here",
     "tokenValidationError": "Token must start with \"clal=\" followed by letters and numbers only",
     "authenticationNote": "Authentication:",
-    "segaCredentialsNote": "Use your SEGA account credentials to authenticate with {game} NET.",
+    "segaCredentialsNote": "Use your SEGA account credentials to authenticate with {net}.",
     "credentialsSecureNote": "Your credentials will be stored for future fetches.",
     "savingCredentials": "Saving Credentials...",
     "saveCredentials": "Save Credentials",
     "tokenTab": "Token",
     "passwordTab": "Password",
     "tokenInstructions": {
-      "description": "Cookie value starting with \"clal=\" from {game} NET.",
+      "description": "Cookie value starting with \"clal=\" from {net}.",
       "expiration": "The token may get invalidated after a certain period of time, so you may need to update it in the future."
     },
     "passwordInstructions": "Use your SEGA account username and password directly",
     "secureStorage": "Your credentials will be stored for future fetches.",
     "steps": {
-      "step1Title": "Login to {game} NET",
+      "step1Title": "Login to {net}",
       "step2Title": "Go to Not Found page",
       "step3Title": "Execute Code"
     },
@@ -854,7 +845,7 @@
     "segaAccountDescription": "Enter your SEGA account credentials",
     "backToSteps": "Back to Steps",
     "step1": {
-      "description": "Login to {game} NET in an <strong>incognito / private window</strong>.",
+      "description": "Login to {net} in an <strong>incognito / private window</strong>.",
       "clickToCopy": "Click the link below to copy to clipboard:",
       "haveCookies": "Have your own cookies already?",
       "enterDirectly": "Enter it directly"
@@ -879,8 +870,8 @@
       "nextStep": "Next Step"
     },
     "recommended": "Recommended",
-    "tokenOptionDescription": "Login to your {game} NET account with your browser tokens. Token may expire from time to time. No password required and supports social logins.",
-    "passwordOptionDescription": "Login to your {game} NET account with your SEGA account credentials. Never expire. Not recommended.",
+    "tokenOptionDescription": "Login to your {net} account with your browser tokens. Token may expire from time to time. No password required and supports social logins.",
+    "passwordOptionDescription": "Login to your {net} account with your SEGA account credentials. Never expire. Not recommended.",
     "cnTitle": "Update maimai authentication",
     "cnDescription": "Choose your authentication method for the China region.",
     "cnExperimentalWarningTitle": "China region is experimental",
@@ -914,7 +905,7 @@
     },
     "lxns": {
       "title": "落雪咖啡屋查分器",
-      "description": "Authorize tomomai.lol to read your maimai DX data from your 落雪咖啡屋 account. You can revoke authorization anytime in your account settings.",
+      "description": "Authorize {host} to read your maimai DX data from your 落雪咖啡屋 account. You can revoke authorization anytime in your account settings.",
       "notConfiguredTitle": "落雪咖啡屋 OAuth Not Configured",
       "notConfiguredMessage": "Please ask an administrator to set the <code>LXNS_CLIENT_ID</code> and <code>LXNS_CLIENT_SECRET</code> environment variables on the server.",
       "instructionsLine1": "Click the button below to open the 落雪咖啡屋 authorization page in a new window. The window will close automatically after authorization.",
@@ -927,7 +918,7 @@
     },
     "divingFish": {
       "title": "水鱼查分器",
-      "description": "Bind your 水鱼查分器 account to tomomai. We will read your maimai DX data from 水鱼查分器 after binding. Choose one of the following methods to verify your account ownership.",
+      "description": "Bind your 水鱼查分器 account to this site. We will read your maimai DX data from 水鱼查分器 after binding. Choose one of the following methods to verify your account ownership.",
       "notConfiguredTitle": "水鱼查分器 Not Configured",
       "notConfiguredMessage": "Please ask an administrator to set the <code>DIVINGFISH_DEV_TOKEN</code> environment variable on the server.",
       "importTokenTab": "Import-Token Verification",
@@ -976,7 +967,7 @@
       "step3OrCopy": "Copy link to WeChat",
       "step3OrCopyNote": "Copy the link, send it to any WeChat chat, then tap to open.",
       "step3Copy": "Copy Link",
-      "step3CopyNote": "After authorization, WeChat will redirect to a result page. Please close that page, return to tomomai to check the import progress, and remember to turn off the proxy in your Wi-Fi settings.",
+      "step3CopyNote": "After authorization, WeChat will redirect to a result page. Please close that page, return to this site to check the import progress, and remember to turn off the proxy in your Wi-Fi settings.",
       "copySuccess": "Copied",
       "copyFailed": "Copy failed, please copy manually",
       "clashConfigUrl": "Clash Config URL",
@@ -994,8 +985,6 @@
     }
   },
   "userHeader": {
-    "memberLabel": "ともマイ member",
-    "discordPrompt": "Facing issues? Or have features or ideas to add to tomomai ともマイ?",
     "joinDiscord": "Join our Community Discord!"
   },
   "publicHeader": {
@@ -1016,10 +1005,8 @@
     }
   },
   "onboarding": {
-    "title": "Welcome to tomomai!",
     "step1": {
       "title": "Pick a username",
-      "description": "Your username is your handle on tomomai. If you choose to share, it also becomes your public profile URL.",
       "publishToggleLabel": "Share my profile with friends",
       "publishToggleDescription": "Let others view your scores at a public link. Off by default — you can change this anytime.",
       "publicUrlHint": "Your public profile:"
@@ -1115,12 +1102,9 @@
     }
   },
   "acceptInvitation": {
-    "title": "tomomai ともマイ",
-    "subtitle": "You've been invited to join the tomomai ともマイ community",
     "validating": "Validating invitation...",
     "redirecting": "Redirecting to home page...",
     "invited": "You've been invited!",
-    "invitedBy": "{name} has invited you to join tomomai ともマイ",
     "expiresOn": "Invitation expires on {date}",
     "acceptAndSignUp": "Accept Invitation & Sign Up",
     "backToHome": "Back to Home",
@@ -1209,7 +1193,6 @@
         "share": "Share Link",
         "youtube": "YouTube",
         "viewCharts": "View Charts",
-        "viewDetails": "View Details on tomomai DB",
         "summary": "{songName} is a {game} {chartType} chart by {artist} in the {genre} genre, added in {versionName}. Difficulty ranges from {minLevel} to {maxLevel} across {chartCount, plural, =1 {# chart} other {# charts}}{bpmFragment}.",
         "summaryBpmFragment": " (BPM {bpm})",
         "loadFailed": "Failed to load song details",
