@@ -9,7 +9,7 @@ and catalog identity context is in [PARENT_SONG.md](PARENT_SONG.md).
 
 The current phase deliberately excludes the two-domain/URL setup and cross-domain
 login. Existing maimai URLs remain unchanged. `getCurrentGame()` in [`current.ts`](../apps/main/src/lib/games/current.ts) resolves the configured canonical game at the server boundary
-and passes a serializable descriptor (id, brand, capabilities, enabled regions and fetch facts) through `GameProvider`.
+and passes a serializable descriptor (id, brand, effective capabilities and region overrides, enabled regions and fetch facts) through `GameProvider`.
 Each game has one `GameDefinition` under `lib/games/<game>/definition.ts`, listed in `GAMES` in
 [`registry.ts`](../apps/main/src/lib/games/registry.ts). A game with no enabled regions is disabled, and its catalog stays readable.
 There is no new public game route, hostname rewrite, game switcher, authentication
@@ -369,8 +369,29 @@ per `ratingRules.distributionStep` in each difficulty's `cssVar`, both under
 load through `/api/image-proxy` in `imageProxyHosts`, and `resolveImageUrl` in
 `src/lib/images.ts` is the one place that applies them.
 
-Capabilities govern navigation and components, while the backend continues to
-enforce them. Plates, percentile/recommendation calculations, reserved accounts,
+Capabilities decide every game feature, and the backend enforces the same list.
+The served game's descriptor carries its effective capabilities: only `catalog`
+while no region is enabled, and every declared capability otherwise, together
+with the definition's `regionCapabilityOverrides`. A game without `catalog`
+cannot be served at all. Components ask `supportsGameFeature(game, capability,
+region?)` from `src/lib/games/frontend.ts` and never read `game.capabilities`.
+Given a region, it also requires that region to be enabled and honours the
+region overrides, so the client offers exactly what `resolveGameContext`
+accepts. The dashboard tabs are the table in
+`src/components/player/player-tabs.tsx`: each tab names its capability and its
+privacy or flag rule, and `DataContent` renders the active tab's component.
+Pieces every game renders its own way are `GAME_UI` slots in
+`src/components/games/registry.tsx`, currently the score hover and the recent
+play details, so shared cards render the slot instead of branching. A feature
+only some games have, such as a maimai tab, the rating plate, TomomaiAI, the
+minigames or the community banner, is a capability, and the component that
+checks it may render the owning game's component. Before a second game declares
+such a capability, move its component behind a `GAME_UI` slot.
+`src/test/game-branching.test.ts` fails when code outside the game folders
+compares a game id, apart from a shrinking list of comparisons that are waiting
+for their replacement.
+
+Plates, percentile/recommendation calculations, reserved accounts,
 credit/daily-play images and existing render-token flows remain maimai-only
 until separately adapted. Reuse supported common views rather than displaying
 maimai labels on unsupported CHUNITHM data.
