@@ -158,10 +158,13 @@ Implementation ownership:
   maimai Discord command use this policy. The web client shows the server's
   `MAINTENANCE` refusal instead of checking its own clock. Existing maimai
   Wednesday and CN schedules are preserved.
-- [`score-ingestion.ts`](../apps/main/src/server/services/games/score-ingestion.ts)
+- [`fetch-sessions.ts`](../apps/main/src/server/services/games/fetch-sessions.ts)
   rejects disabled games and regions before token changes, and active
   maintenance after saving a newly supplied token, before provider work or
-  session creation. It owns common session/persistence handling;
+  session creation. It owns the fetch session's admission, lifecycle and
+  status, and
+  [`snapshot-persistence.ts`](../apps/main/src/server/services/games/snapshot-persistence.ts)
+  saves the fetched snapshot.
   [`tokens.ts`](../apps/main/src/server/services/games/tokens.ts) scopes token
   access by game, user and region.
 - Shared SEGA HTTP and login mechanics live in

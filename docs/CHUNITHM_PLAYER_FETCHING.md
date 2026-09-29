@@ -613,9 +613,12 @@ It must not disable International fetching.
 
 Existing propagation boundaries:
 
-- [`score-ingestion.ts`](../apps/main/src/server/services/games/score-ingestion.ts)
-  persists the provider result only after fetching succeeds. An asynchronous
-  provider error marks the session failed and stores its message instead.
+- [`fetch-sessions.ts`](../apps/main/src/server/services/games/fetch-sessions.ts)
+  persists the provider result through
+  [`snapshot-persistence.ts`](../apps/main/src/server/services/games/snapshot-persistence.ts)
+  only after fetching succeeds. An asynchronous provider error marks the
+  session failed and stores its message instead, and a failed stage is logged
+  once with the stage that threw it.
 - [`useFetchSession.ts`](../apps/main/src/hooks/useFetchSession.ts) invokes the
   completion refresh only on success. Token errors can reopen login UI, and
   [`token-errors.ts`](../apps/main/src/lib/token-errors.ts) never treats the
@@ -647,7 +650,8 @@ infer maintenance from missing record elements.
 | Shared SEGA login strategies and the session opener | [`games/sega/login.ts`](../apps/main/src/server/services/games/sega/login.ts) |
 | Per-game SEGA login configuration | [`games/chunithm/login.ts`](../apps/main/src/server/services/games/chunithm/login.ts), and maimai's verified [`games/maimai/login.ts`](../apps/main/src/server/services/games/maimai/login.ts) for reference |
 | Game/user/region token storage | [`games/tokens.ts`](../apps/main/src/server/services/games/tokens.ts) |
-| Session lifecycle and persistence | [`games/score-ingestion.ts`](../apps/main/src/server/services/games/score-ingestion.ts) |
+| Session admission, lifecycle and status | [`games/fetch-sessions.ts`](../apps/main/src/server/services/games/fetch-sessions.ts) |
+| Snapshot persistence and chart matching | [`games/snapshot-persistence.ts`](../apps/main/src/server/services/games/snapshot-persistence.ts) and [`games/score-storage.ts`](../apps/main/src/server/services/games/score-storage.ts) |
 | Future CHUNITHM response interpretation | Game-specific provider/parser; do not put CHUNITHM selectors into shared SEGA transport |
 
 Preserve maimai's specialized CN formats and existing schedules. Fetch

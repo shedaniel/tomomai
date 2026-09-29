@@ -96,7 +96,12 @@ region, and a fetch asks for the user's album preference only where albums are
 offered. Every fetch step runs through `createFetchRun` in
 `server/services/games/fetch-run.ts`, which checks the abort signal around each
 stage, logs its duration and records its progress state, so a timed-out fetch
-stops at its next stage and cannot commit a late snapshot.
+stops at its next stage and cannot commit a late snapshot. A failed stage is
+rethrown as a `FetchStageError` naming the stage, and the session runner in
+`server/services/games/fetch-sessions.ts` logs it once and stores the original
+message on the session. `snapshot-persistence.ts` saves the snapshot in one
+transaction and returns the scores without an unambiguous catalog match, which
+the runner stores on the completed session as a JSON object.
 
 Every game boundary goes through `resolveGameContext` in
 `lib/games/access.ts`. The game must offer the capability, and a given region
