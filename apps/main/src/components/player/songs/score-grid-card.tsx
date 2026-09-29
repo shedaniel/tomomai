@@ -7,13 +7,14 @@ import { ChartTypeBadge } from "@/components/games/chart-type-badge";
 import { formatGameScore, formatGameRating, formatGameLevel, getGameDifficulty, getGameStatusLabels } from "@/lib/games/presentation";
 import type { PercentileEntry } from "@/lib/games/maimai/percentile/types";
 import { cn } from "@/lib/utils";
-import { ScoreHover } from "./score-hover";
+import { GAME_UI } from "@/components/games/registry";
 import type { DisplayScore } from "./types";
 
 // Component for rendering individual song cards in grid view
 export const SongGridCard = forwardRef<HTMLDivElement, { song: DisplayScore & { rating?: number }; percentile?: PercentileEntry } & React.HTMLAttributes<HTMLDivElement>>(({ song, percentile, ...props }, ref) => {
   const game = useGameId();
   const difficulty = getGameDifficulty(game, song.difficultyCode);
+  const { ScoreHover } = GAME_UI[game];
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const card = e.currentTarget;
     const rect = card.getBoundingClientRect();
@@ -67,7 +68,7 @@ export const SongGridCard = forwardRef<HTMLDivElement, { song: DisplayScore & { 
   };
 
   return (
-    <ScoreHover song={song} side="right" percentile={percentile ? { ...percentile, userAchievement: song.scoreValue } : undefined}>
+    <ScoreHover score={song} side="right" percentile={percentile ? { ...percentile, userAchievement: song.scoreValue } : undefined}>
       <div
         ref={ref}
         {...props}

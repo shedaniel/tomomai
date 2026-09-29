@@ -1,11 +1,22 @@
 "use client";
 
 import type { ChunithmRecentDetails } from "@/lib/games/chunithm/recent-details";
+import type { RecentPlay } from "@/server/queries/recents";
+import { AutoHeight } from "@/components/animate-ui/primitives/effects/auto-height";
 import { Badge } from "@tomomai/ui";
 import { Grip } from "lucide-react";
 import { useTranslations } from "next-intl";
 
-export function ChunithmRecentPlayDetails({ details }: { details: ChunithmRecentDetails }) {
+export function ChunithmRecentPlayDetails({ play, isExpanded }: { play: RecentPlay; isExpanded: boolean }) {
+  if (!play.chunithmDetails) return null;
+  return (
+    <AutoHeight deps={[isExpanded]}>
+      {isExpanded && <DetailsPanel details={play.chunithmDetails} />}
+    </AutoHeight>
+  );
+}
+
+function DetailsPanel({ details }: { details: ChunithmRecentDetails }) {
   const t = useTranslations("recentPlays");
   const judgments = [
     { label: "Justice Critical", value: details.judgments.justiceCritical },

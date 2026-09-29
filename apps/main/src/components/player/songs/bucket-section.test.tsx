@@ -11,6 +11,7 @@ import { SongSection } from "./bucket-section";
 import type { RatedScore } from "./types";
 
 vi.mock("@/components/games/maimai/song-hover-card", () => ({ SongHoverCard: () => null }));
+vi.mock("@/i18n/navigation", () => ({ Link: () => null }));
 
 function score(game: CanonicalGameId, overrides: Partial<RatedScore>): RatedScore {
   return {

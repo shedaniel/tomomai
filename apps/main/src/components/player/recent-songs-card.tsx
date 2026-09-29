@@ -14,10 +14,8 @@ import { CoverImage } from "@/components/cover-image";
 import { useCallback, useState, useEffect, useRef } from "react";
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 import { Badge } from "@tomomai/ui";
-import { AutoHeight } from "@/components/animate-ui/primitives/effects/auto-height";
 import { ChartTypeBadge } from "@/components/games/chart-type-badge";
-import { ChunithmRecentPlayDetails } from "@/components/games/chunithm/recent-play-details";
-import { MaimaiRecentPlayDetails } from "@/components/games/maimai/recent-play-details";
+import { GAME_UI } from "@/components/games/registry";
 import { motion } from "motion/react";
 import { STAGGER, getTransition } from "@/lib/animation-constants";
 import { useMediaQuery } from "@/hooks/use-media-query";
@@ -46,6 +44,7 @@ function RecentSongRow({ play, index, isFirst, isLast, onToggleExpand, isExpande
   const canExpand = game === "maimai" || isDetailed;
   const playDate = new Date(play.playedAt);
   const difficulty = getGameDifficulty(game, play.difficultyCode);
+  const { RecentDetails } = GAME_UI[game];
 
   return (
     <motion.div
@@ -203,13 +202,7 @@ function RecentSongRow({ play, index, isFirst, isLast, onToggleExpand, isExpande
         </button>
       )}
 
-      {play.chunithmDetails && (
-        <AutoHeight deps={[isExpanded]}>
-          {isExpanded && <ChunithmRecentPlayDetails details={play.chunithmDetails} />}
-        </AutoHeight>
-      )}
-
-      {game === "maimai" && <MaimaiRecentPlayDetails play={play} isExpanded={isExpanded} isDetailed={isDetailed} />}
+      <RecentDetails play={play} isExpanded={isExpanded} isDetailed={isDetailed} />
     </motion.div>
   );
 }

@@ -6,7 +6,7 @@ import { CoverImage } from "@/components/cover-image";
 import { formatGameScore, formatGameRating, formatGameLevel, getGameDifficulty, getGameChartType, getGameStatusLabels } from "@/lib/games/presentation";
 import type { PercentileEntry } from "@/lib/games/maimai/percentile/types";
 import { cn } from "@/lib/utils";
-import { ScoreHover } from "./score-hover";
+import { GAME_UI } from "@/components/games/registry";
 import type { RatedScore } from "./types";
 
 // Component for rendering individual song rows
@@ -14,8 +14,9 @@ export const SongRow = forwardRef<HTMLDivElement, { song: RatedScore; percentile
   const game = useGameId();
   const difficulty = getGameDifficulty(game, song.difficultyCode);
   const chartType = getGameChartType(game, song.typeCode);
+  const { ScoreHover } = GAME_UI[game];
   return (
-    <ScoreHover song={song} percentile={percentile ? { ...percentile, userAchievement: song.scoreValue } : undefined}>
+    <ScoreHover score={song} percentile={percentile ? { ...percentile, userAchievement: song.scoreValue } : undefined}>
       <div ref={ref} {...props} className={cn("group relative isolate flex justify-between items-center text-sm border-b border-dashed border-border pb-1.5 h-12 px-2 -mx-2 cursor-pointer", props.className)}>
         <div className="absolute inset-x-0 -top-1.5 bottom-0 rounded-md group-hover:bg-muted/50 transition-colors -z-10" />
         <CoverImage coverUrl={song.cover}

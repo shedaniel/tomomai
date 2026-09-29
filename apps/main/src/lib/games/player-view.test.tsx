@@ -7,6 +7,7 @@ import { GameProvider } from "@/components/providers/game-provider";
 import { toPublicGameSnapshot } from "./public-player";
 vi.mock("@/lib/trpc-client", () => ({ trpc: { maimai: { getChartPercentiles: { useQuery: () => ({ data: undefined }) } } } }));
 vi.mock("@/components/games/maimai/song-hover-card", () => ({ SongHoverCard: ({ children }: { children: React.ReactNode }) => <>{children}</> }));
+vi.mock("@/i18n/navigation", () => ({ Link: () => null }));
 import messages from "../../../messages/en.json";
 import { type GameSnapshotData } from "./player-view";
 import type { CanonicalGameId } from "./types";
