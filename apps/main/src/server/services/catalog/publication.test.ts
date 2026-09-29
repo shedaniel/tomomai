@@ -31,7 +31,7 @@ beforeEach(() => {
 
 describe("publishSongCatalog", () => {
   it("publishes a configured catalog while the game's public frontend remains disabled", async () => {
-    const metadata = { levelPreciseEstimated: true, addedVersionEstimated: true, otogeDb: { id: "2490" } };
+    const metadata = { levelPreciseEstimated: true, addedVersionEstimated: true, source: { provider: "otoge-db", id: "2490" }, noteCounts: { air: 331 } };
     readRows.mockResolvedValue([{ parent: { ...parent, type: 0 }, instance: { ...instance, gameVersion: 9, addedVersion: 8, metadata } }]);
     const result = await publishSongCatalog("chunithm");
     const object = putObject.mock.calls.find(([object]) => object.key === songCatalogKey("chunithm", "jp", 9))?.[0];
