@@ -302,8 +302,8 @@ sitemap code: a single deployment-level origin is insufficient for two brands.
 ## Game context and presentation
 
 Resolve a serializable site/game descriptor on the server and provide it to
-client components. Keep source adapters and server-only registry dependencies
-out of client bundles. ESLint enforces this for `src/lib/games`,
+client components. Keep catalog and score sources and other server-only registry
+dependencies out of client bundles. ESLint enforces this for `src/lib/games`,
 `src/components` and `src/hooks`, which may import only types from `@/server`.
 Per-game client-safe code lives in `src/lib/games/<game>/`, per-game server
 code in `src/server/services/games/<game>/`, and server-only contracts in

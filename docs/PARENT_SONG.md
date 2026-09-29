@@ -131,8 +131,8 @@ instance metadata, deletion guards, and the shared publication advisory lock.
 
 Every catalog/admin operation now requires `game=maimai` explicitly. User-facing
 API resources require `/api/v1/games/{game}/...`; `/me`, `/me/settings`, `/me/scopes`
-and `/ok` remain global. A game with no enabled regions returns `GAME_NOT_ENABLED`
-before sources or writes are reached. `songs`, `parents`, `songs/versions`, `songs/{id}`, snapshots
+and `/ok` remain global. Player resources of a game with no enabled regions return
+`GAME_NOT_ENABLED` before sources or writes are reached. `songs`, `parents`, `songs/versions`, `songs/{id}`, snapshots
 (list/latest/detail/delete), recents, albums, stats, plates and fetch
 (start/status/token deletion) all use the game namespace.
 
