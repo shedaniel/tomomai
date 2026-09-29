@@ -10,9 +10,10 @@ import { parseCatalogVersion } from "@/lib/catalog/parse-version";
 import { getCurrentVersion } from "@/lib/games/versions";
 import { normalizeName } from "@/lib/name-utils";
 import { songs, parentSong } from "@/lib/db/schema-pg";
-import { and, eq, inArray, sql } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 import { publishSongCatalog } from "@/server/services/catalog/publication";
+import { lockCatalogWrites } from "@/server/services/catalog/ingestion/lock";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { locales } from "@tomomai/i18n/locale";
 import type { Logger } from "pino";
@@ -101,7 +102,7 @@ async function normalize(game: CanonicalGameId, searchParams: URLSearchParams, l
   }
 
   const totalMasterNamesNormalized = await db.transaction(async (tx) => {
-    await tx.execute(sql`SELECT pg_advisory_xact_lock(73641932)`);
+    await lockCatalogWrites(tx);
     const selected = await tx.selectDistinct({ parentId: songs.parentId }).from(songs)
       .where(and(eq(songs.game, game), eq(songs.region, region), eq(songs.gameVersion, currentVersion)));
     if (selected.length === 0) return 0;

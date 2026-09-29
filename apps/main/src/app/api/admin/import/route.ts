@@ -11,6 +11,7 @@ import { flushLogger } from "@/lib/logger";
 import { requestLogger } from "@/lib/request-logger";
 import { and, eq, gte, lte, sql } from "drizzle-orm";
 import { publishSongCatalog } from "@/server/services/catalog/publication";
+import { lockCatalogWrites } from "@/server/services/catalog/ingestion/lock";
 import { revalidateTag, revalidatePath } from "next/cache";
 import { locales } from "@tomomai/i18n/locale";
 import { NextRequest, NextResponse } from "next/server";
@@ -167,7 +168,7 @@ export async function GET(request: NextRequest) {
     const versionCondition = buildVersionFilter(sourceConfig.versionFilter, sourceConfig.versionValue);
 
     const result = await db.transaction(async (tx) => {
-      await tx.execute(sql`SELECT pg_advisory_xact_lock(73641932)`);
+      await lockCatalogWrites(tx);
       const sourceSongs = await tx
         .select()
         .from(songs)

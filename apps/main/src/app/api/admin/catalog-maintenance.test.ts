@@ -5,11 +5,11 @@ import { PgDialect } from "drizzle-orm/pg-core";
 
 const mocks = vi.hoisted(() => ({
   rows: [] as Record<string, unknown>[],
-  upsert: vi.fn(), publish: vi.fn(), where: vi.fn(),
+  upsert: vi.fn(), publish: vi.fn(), where: vi.fn(), execute: vi.fn(),
   log: { info: vi.fn(), debug: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }));
 vi.mock("@/lib/db", () => ({ db: { transaction: async (run: (tx: unknown) => unknown) => run({
-  execute: vi.fn(),
+  execute: mocks.execute,
   selectDistinct: () => ({ from: () => ({ where: () => [] }) }),
   select: () => ({ from: () => ({ where: (condition: unknown) => { mocks.where(condition); return mocks.rows; } }) }),
   insert: () => ({ values: () => ({ onConflictDoUpdate: mocks.upsert }) }),
@@ -21,6 +21,7 @@ vi.mock("next/cache", () => ({ revalidateTag: vi.fn(), revalidatePath: vi.fn() }
 
 import { GET as normalize } from "./db/route";
 import { GET as importSongs } from "./import/route";
+import { CATALOG_WRITE_LOCK_ID } from "@/server/services/catalog/ingestion/lock";
 
 const request = (path: string) => new NextRequest(`https://example.test/api/admin/${path}`, {
   headers: { authorization: "Bearer admin-secret" },
@@ -40,6 +41,7 @@ describe("catalog maintenance", () => {
   ] as const)("uses the requested game's supported regions independently of maimai enablement", async (handler, path) => {
     expect((await handler(request(path))).status).toBe(200);
     expect(mocks.publish).toHaveBeenCalledWith("chunithm");
+    expect(new PgDialect().sqlToQuery(mocks.execute.mock.calls[0][0]).sql).toBe(`select pg_advisory_xact_lock(${CATALOG_WRITE_LOCK_ID})`);
   });
 
   it("updates provenance with the copied constant when a target chart already exists", async () => {

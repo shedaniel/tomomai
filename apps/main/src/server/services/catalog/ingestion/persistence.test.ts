@@ -44,6 +44,7 @@ vi.mock("@/lib/db", async () => {
   } } };
 });
 import { persistCatalog } from "@/server/services/catalog/ingestion/persistence";
+import { CATALOG_WRITE_LOCK_ID } from "@/server/services/catalog/ingestion/lock";
 const log = pino({ enabled: false });
 const chart: CatalogChart = { game: "chunithm", songName: "Song", chartType: 0, difficulty: 4,
   artist: "Artist", cover: "image", genre: "Original", level: "14+", levelPrecise: 145, addedVersion: 8, metadata: { otogeDb: { id: "123" } } };
@@ -138,7 +139,7 @@ describe("shared catalog persistence", () => {
         expect(state.deletes[0].sql).toContain(`from "${table}"`);
       }
     }
-    expect(new PgDialect().sqlToQuery(state.execute.mock.calls[0][0] as SQL).sql).toContain("pg_advisory_xact_lock");
+    expect(new PgDialect().sqlToQuery(state.execute.mock.calls[0][0] as SQL).sql).toBe(`select pg_advisory_xact_lock(${CATALOG_WRITE_LOCK_ID})`);
   });
 
 });

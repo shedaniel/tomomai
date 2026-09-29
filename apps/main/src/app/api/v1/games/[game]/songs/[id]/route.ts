@@ -3,7 +3,9 @@ import { db } from "@/lib/db";
 import { parentSong, songs } from "@/lib/db/schema-pg";
 import { chartEstimates } from "@/lib/catalog/chart-estimates";
 import { formatSongInstanceId, parseSongId } from "@/lib/catalog/song-instance-id";
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
+import { instancePreference } from "@/lib/games/regions";
+import { maxBy } from "@/lib/utils";
 import { definePublicGameHandler } from "@/lib/api/route";
 import { GAME_API_DETAILS } from "@/lib/api/schemas";
 import { spec } from "./spec";
@@ -41,37 +43,29 @@ const getSongById = (game: CanonicalGameId, songId: string) => unstable_cache(as
     })
     .from(songs)
     .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
-    .where(and(eq(songs.game, game), eq(parentSong.game, game), eq(parentSong.publicId, parsed.parentPublicId), instanceFilter))
-    .orderBy(desc(songs.gameVersion), sql`case when ${songs.region} = 'jp' then 0 else 1 end`, songs.region)
-    .limit(1);
-
+    .where(and(eq(songs.game, game), eq(parentSong.game, game), eq(parentSong.publicId, parsed.parentPublicId), instanceFilter));
 }, ["api-v1-parent-song-by-id", game, songId], { revalidate: 3600, tags: [`api-v1-songs:${game}`] })();
 
 export const GET = definePublicGameHandler(spec, async ({ game, params }) => {
-  const charts = await getSongById(game, params.id);
-
-  if (charts.length === 0) {
-    return Response.json({ error: "Song not found" }, { status: 404 });
-  }
-
-  const first = charts[0];
+  const instance = maxBy(await getSongById(game, params.id), instancePreference);
+  if (!instance) return Response.json({ error: "Song not found" }, { status: 404 });
 
   return {
-    songId: formatSongInstanceId(first.songId, first.region, first.gameVersion),
-    songName: first.songName,
-    artist: first.artist,
-    cover: first.cover,
-    type: first.type,
-    genre: first.genre,
-    bpm: first.bpm,
-    region: first.region,
-    gameVersion: first.gameVersion,
-    addedVersion: first.addedVersion,
-    difficulty: first.difficulty,
-    level: first.level,
-    levelPrecise: first.levelPrecise,
-    noteDesigner: first.noteDesigner,
-    ...chartEstimates(first.metadata),
-    details: GAME_API_DETAILS[game].song(first),
+    songId: formatSongInstanceId(instance.songId, instance.region, instance.gameVersion),
+    songName: instance.songName,
+    artist: instance.artist,
+    cover: instance.cover,
+    type: instance.type,
+    genre: instance.genre,
+    bpm: instance.bpm,
+    region: instance.region,
+    gameVersion: instance.gameVersion,
+    addedVersion: instance.addedVersion,
+    difficulty: instance.difficulty,
+    level: instance.level,
+    levelPrecise: instance.levelPrecise,
+    noteDesigner: instance.noteDesigner,
+    ...chartEstimates(instance.metadata),
+    details: GAME_API_DETAILS[game].song(instance),
   };
 });

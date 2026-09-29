@@ -6,6 +6,7 @@ import { SongDetailChart, SongDetailHistoricalChart, SongDetails } from "@/compo
 import { db } from "@/lib/db";
 import { parentSong, scoreData, snapshotScores, songs, userSnapshots } from "@/lib/db/schema-pg";
 import { getSongSlugs } from "@/lib/song-slug";
+import { instancePreference } from "@/lib/games/regions";
 import { Region } from "@/lib/types";
 import { maxBy } from "@/lib/utils";
 import { TRPCError } from "@trpc/server";
@@ -180,10 +181,7 @@ export async function querySongDetails(
     };
   });
 
-  const preferredChart: ChartType = maxBy(
-    charts,
-    (chart) => chart.gameVersion * 100 + (chart.region === "jp" ? 1 : 0)
-  )!;
+  const preferredChart: ChartType = maxBy(charts, instancePreference)!;
   const chartBpm = preferredChart.bpm || charts.find((c) => c.bpm !== null)?.bpm;
 
   return {

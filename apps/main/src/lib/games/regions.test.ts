@@ -4,7 +4,7 @@ const { logError } = vi.hoisted(() => ({ logError: vi.fn() }));
 vi.mock("@/lib/logger", () => ({ logger: { error: logError } }));
 
 import { REGIONS } from "./ids";
-import { getEnabledRegions, getSupportedRegions } from "./regions";
+import { CANONICAL_REGION_PREFERENCE, getEnabledRegions, getSupportedRegions, instancePreference } from "./regions";
 import { requireGameSite } from "./sites";
 
 const ENV = {
@@ -32,6 +32,23 @@ describe("supported regions", () => {
   it("rejects a region the game has no site for", () => {
     expect(() => requireGameSite("maimai", "cn")).not.toThrow();
     expect(() => requireGameSite("chunithm", "cn")).toThrow(expect.objectContaining({ code: "UNSUPPORTED_REGION", game: "chunithm", region: "cn" }));
+  });
+});
+
+describe("instance preference", () => {
+  it("ranks every region", () => {
+    expect([...CANONICAL_REGION_PREFERENCE].sort()).toEqual([...REGIONS].sort());
+  });
+
+  it("prefers a later version, then jp over intl over cn", () => {
+    const ranked = [
+      { region: "cn", gameVersion: -13 }, { region: "intl", gameVersion: -13 }, { region: "jp", gameVersion: -13 },
+      { region: "cn", gameVersion: 11 }, { region: "intl", gameVersion: 11 }, { region: "jp", gameVersion: 11 },
+      { region: "cn", gameVersion: 12 },
+    ] as const;
+    const scores = ranked.map(instancePreference);
+    expect(scores).toEqual([...scores].sort((a, b) => a - b));
+    expect(new Set(scores).size).toBe(ranked.length);
   });
 });
 

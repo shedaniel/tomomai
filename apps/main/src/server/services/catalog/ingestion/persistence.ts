@@ -6,6 +6,8 @@ import { and, eq, inArray, count, sql, getTableColumns, notExists } from "drizzl
 import { matchUpload } from "@/server/services/catalog/ingestion/match-upload";
 import { resolveParents, type ParentState, type SongToParent } from "@/server/services/catalog/ingestion/resolve-parent";
 import { PARENT_PUBLIC_ID_LENGTH } from "@/lib/catalog/song-instance-id";
+import { instancePreference } from "@/lib/games/regions";
+import { lockCatalogWrites, type CatalogTransaction } from "./lock";
 import { nanoid } from "nanoid";
 import { isDeepStrictEqual } from "node:util";
 
@@ -56,7 +58,6 @@ type ChangeAnalysis = {
 };
 
 type DBSongType = typeof songs.$inferSelect & typeof parentSong.$inferSelect;
-type CatalogTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
 type MergeEvent = {
   existing: CatalogChart;
@@ -323,16 +324,7 @@ async function resolveParentsForAddedRows(db: CatalogTransaction, game: Canonica
   return newParents.length;
 }
 
-const instanceScore = (region: Region, version: number) => version * 100 + (region === "jp" ? 2 : region === "intl" ? 1 : 0);
-
-/**
- * Update chart-stable parent attributes (artist, cover, genre, bpm) from the
- * merged values — but only when this upload's (region, gameVersion) is the
- * parent's preferred instance. Preferred = max over the parent's children of
- * gameVersion * 100 + (region === "jp" ? 2 : region === "intl" ? 1 : 0); this keeps parent attributes
- * tracking the latest-jp-preferred chart instance, matching how reads used to
- * pick attributes from the flat songs table.
- */
+/** Only a parent's preferred instance (see instancePreference) may overwrite its chart-stable attributes. */
 async function updateParentAttributes(db: CatalogTransaction, allRows: WriteRow[], region: Region, gameVersion: number): Promise<number> {
   const mergedByParent = new Map<string, CatalogChart>();
   for (const row of allRows) {
@@ -349,12 +341,12 @@ async function updateParentAttributes(db: CatalogTransaction, allRows: WriteRow[
       .where(inArray(songs.parentId, parentIds)),
   ]);
 
-  const uploadScore = instanceScore(region, gameVersion);
+  const uploadScore = instancePreference({ region, gameVersion });
 
   const maxScoreByParent = new Map<string, number>();
   for (const child of children) {
     const k = child.parentId.toString();
-    const score = instanceScore(child.region, child.gameVersion);
+    const score = instancePreference(child);
     maxScoreByParent.set(k, Math.max(maxScoreByParent.get(k) ?? -Infinity, score));
   }
 
@@ -472,7 +464,7 @@ async function applyChanges(
 
 export async function persistCatalog(game: CanonicalGameId, region: Region, version: number, uploadSongs: CatalogChart[], updateMode: UpdateMode, log: Logger) {
     return db.transaction(async (tx) => {
-      await tx.execute(sql`SELECT pg_advisory_xact_lock(73641932)`);
+      await lockCatalogWrites(tx);
       // Query database for existing songs
       log.info("Querying database for existing songs");
       const dbSongs = await tx
@@ -496,9 +488,9 @@ export async function persistCatalog(game: CanonicalGameId, region: Region, vers
         .select({ parentId: songs.parentId, region: songs.region, gameVersion: songs.gameVersion })
         .from(songs)
         .where(inArray(songs.parentId, parentIds));
-      const uploadScore = instanceScore(region, version);
+      const uploadScore = instancePreference({ region, gameVersion: version });
       const nonPreferredParents = new Set(siblings
-        .filter(child => instanceScore(child.region, child.gameVersion) > uploadScore)
+        .filter(child => instancePreference(child) > uploadScore)
         .map(child => String(child.parentId)));
 
       // Convert DB songs to CatalogChart format

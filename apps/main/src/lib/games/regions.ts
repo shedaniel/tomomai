@@ -12,6 +12,14 @@ const ENABLED_REGIONS_ENV = {
 
 const reportedInvalidGames = new Set<CanonicalGameId>();
 
+/** Among a chart's instances in one version, the region listed first supplies the chart's canonical attributes. */
+export const CANONICAL_REGION_PREFERENCE = ["jp", "intl", "cn"] as const satisfies readonly Region[];
+
+/** Ranks a chart's instances: a later version wins, then the preferred region. */
+export function instancePreference(instance: { region: Region; gameVersion: number }): number {
+  return instance.gameVersion * 100 + CANONICAL_REGION_PREFERENCE.length - CANONICAL_REGION_PREFERENCE.indexOf(instance.region);
+}
+
 export function getSupportedRegions(game: CanonicalGameId): Region[] {
   const { sites } = getGame(game);
   return REGIONS.filter(region => sites[region] !== undefined);

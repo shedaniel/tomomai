@@ -5,7 +5,7 @@ import type { CanonicalGameId } from "@/lib/games/types";
 const { query, where, cache } = vi.hoisted(() => ({ query: vi.fn(), where: vi.fn(), cache: vi.fn() }));
 vi.mock("next/cache", () => ({ unstable_cache: (fn: unknown, key: unknown, options: unknown) => { cache(key, options); return fn; } }));
 vi.mock("@/lib/db", () => ({ db: { select: () => ({ from: () => ({ innerJoin: () => ({
-  where: (filter: unknown) => { where(filter); return { orderBy: () => ({ limit: query }) }; },
+  where: (filter: unknown) => { where(filter); return query(); },
 }) }) }) } }));
 import { GET } from "./route";
 
@@ -32,7 +32,6 @@ describe("song details", () => {
     expect(await response.json()).toMatchObject({ game, songId: `Ab3xK9pQ:j${gameVersion}`, type });
     expect(response.headers.get("Cache-Control")).toContain("max-age=3600");
     expect(new PgDialect().sqlToQuery(where.mock.calls[0][0]).params).toEqual([game, game, "Ab3xK9pQ"]);
-    expect(query).toHaveBeenCalledWith(1);
     expect(cache).toHaveBeenCalledWith(["api-v1-parent-song-by-id", game, "Ab3xK9pQ"], expect.objectContaining({ tags: [`api-v1-songs:${game}`] }));
     const filter = new PgDialect().sqlToQuery(where.mock.calls[0][0]).sql;
     expect(filter).toContain('"songs"."game" = $1');
@@ -52,6 +51,10 @@ describe("song details", () => {
     expect(chunithm.details).toStrictEqual({ game: "chunithm", noteCounts: { tap: 625, hold: 174, slide: null, air: 331, flick: null } });
     expect(chunithm).not.toHaveProperty("levelPreciseEstimated");
     expect(chunithm).not.toHaveProperty("metadata");
+  });
+  it("serves a bare parent ID from its latest version, preferring jp over intl", async () => {
+    query.mockResolvedValue([{ ...row, region: "intl", gameVersion: 12 }, { ...row, region: "jp", gameVersion: 11 }, { ...row, region: "jp", gameVersion: 12 }, { ...row, region: "cn", gameVersion: 12 }]);
+    expect(await (await get("Ab3xK9pQ")).json()).toMatchObject({ songId: "Ab3xK9pQ:j12", region: "jp", gameVersion: 12 });
   });
   it("uses region and version predicates for exact instance IDs", async () => {
     query.mockResolvedValue([]);

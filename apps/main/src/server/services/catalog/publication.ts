@@ -1,5 +1,5 @@
 import type { CanonicalGameId } from "@/lib/games/types";
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { parentSong, songs } from "@/lib/db/schema-pg";
 import { parentCatalogue, songCatalogue } from "@/lib/api/schemas";
@@ -9,11 +9,12 @@ import { formatSongInstanceId } from "@/lib/catalog/song-instance-id";
 import { getSupportedRegions } from "@/lib/games/regions";
 import { getAvailableVersions } from "@/lib/games/versions";
 import { putR2Object } from "@/lib/r2";
+import { lockCatalogWrites } from "./ingestion/lock";
 import type { z } from "zod";
 
 export async function publishSongCatalog(game: CanonicalGameId): Promise<{ songCount: number; bytes: number }> {
   return db.transaction(async (tx) => {
-    await tx.execute(sql`select pg_advisory_xact_lock(73641932)`);
+    await lockCatalogWrites(tx);
     // One statement keeps the dictionary and its instances on the same database snapshot.
     const rows = await tx.select({
       parent: {

@@ -1,15 +1,16 @@
 import { PgDialect } from "drizzle-orm/pg-core";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { readRows, putObject, filters } = vi.hoisted(() => ({ readRows: vi.fn(), putObject: vi.fn(), filters: vi.fn() }));
+const { readRows, putObject, filters, execute } = vi.hoisted(() => ({ readRows: vi.fn(), putObject: vi.fn(), filters: vi.fn(), execute: vi.fn() }));
 vi.mock("@/lib/db", () => ({ db: {
   transaction: (fn: (tx: unknown) => Promise<unknown>) => fn({
-    execute: vi.fn(),
+    execute,
     select: () => ({ from: () => ({ leftJoin: (_table: unknown, join: unknown) => ({ where: (where: unknown) => { filters(join, where); return { orderBy: readRows }; } }) }) }),
   }),
 } }));
 vi.mock("@/lib/r2", () => ({ putR2Object: putObject }));
 import { publishSongCatalog } from "@/server/services/catalog/publication";
+import { CATALOG_WRITE_LOCK_ID } from "@/server/services/catalog/ingestion/lock";
 
 const parent = {
   songId: "Ab3xK9pQ", songName: "Test", artist: "Artist", cover: null,
@@ -20,7 +21,7 @@ const instance = {
 };
 
 beforeEach(() => {
-  readRows.mockReset(); filters.mockReset(); putObject.mockReset(); putObject.mockResolvedValue(undefined);
+  readRows.mockReset(); filters.mockReset(); execute.mockReset(); putObject.mockReset(); putObject.mockResolvedValue(undefined);
 });
 
 describe("publishSongCatalog", () => {
@@ -40,6 +41,7 @@ describe("publishSongCatalog", () => {
     expect(join.params).toEqual(["chunithm"]);
     expect(where.sql).toBe('"parent_song"."game" = $1');
     expect(where.params).toEqual(["chunithm"]);
+    expect(dialect.sqlToQuery(execute.mock.calls[0][0]).sql).toBe(`select pg_advisory_xact_lock(${CATALOG_WRITE_LOCK_ID})`);
   });
 
   it("deduplicates parents, emits composite IDs and overwrites empty slices", async () => {
