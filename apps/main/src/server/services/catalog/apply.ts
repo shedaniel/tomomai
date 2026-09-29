@@ -111,7 +111,7 @@ function uploadSummary(mode: CatalogUpdateMode, { statistics, applied, skippedDe
   let summary = `**Mode:** ${mode}\n**Input:** ${statistics.inputSongs} | **DB:** ${statistics.dbSongs} | **Merged:** ${statistics.mergedSongs}\n**Applied:** +${applied.added} ~${applied.modified} -${applied.deleted}`;
   if (skippedDeletions.length > 0) {
     summary += `\n\n**${skippedDeletions.length} deletion(s) skipped** (have saved user references):\n`;
-    summary += skippedDeletions.slice(0, LISTED_SKIPPED_DELETIONS).map(d => `- ${d.songKey} (${d.playRecordCount} references)`).join("\n");
+    summary += skippedDeletions.slice(0, LISTED_SKIPPED_DELETIONS).map(d => `- ${d.label} (${d.playRecordCount} references)`).join("\n");
     if (skippedDeletions.length > LISTED_SKIPPED_DELETIONS) summary += `\n... and ${skippedDeletions.length - LISTED_SKIPPED_DELETIONS} more`;
   }
   return summary;

@@ -1,5 +1,6 @@
 import deepEqual from "deep-equal";
 import type { Logger } from "pino";
+import { formatChartLabel } from "@/lib/games/presentation";
 import { levenshtein } from "@/lib/utils";
 import { catalogChartKey } from "./normalize-charts";
 import { isImportant, value, type CatalogFetchContext, type Pending, type SourceChart } from "./types";
@@ -26,7 +27,7 @@ function mergeChart(existing: SourceChart, incoming: SourceChart, log: Logger): 
   const field = <T>(name: string, a: Pending<T> | undefined, b: Pending<T> | undefined) => {
     if (isImportant(a) && isImportant(b) && !deepEqual(value(a), value(b))) {
       log.warn(
-        { songKey: catalogChartKey(existing), from: JSON.stringify(value(a)), to: JSON.stringify(value(b)) },
+        { chartLabel: formatChartLabel(existing.game, existing), from: JSON.stringify(value(a)), to: JSON.stringify(value(b)) },
         `Data mismatch: important field '${name}' has conflicting values`,
       );
     }

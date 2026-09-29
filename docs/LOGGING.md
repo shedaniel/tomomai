@@ -71,8 +71,9 @@ Identifiers & domain:
 | `snapshotId`     | Public snapshot id.                                                | `snapshot`, `snap_id`                      |
 | `sessionId`      | Fetch session id.                                                  | `session`                                  |
 | `songId` / `masterSongId` | Numeric song row id(s).                                   | —                                          |
-| `songKey`        | Single chart key. Catalog code logs `catalogChartKey`.            | `song` (never log the whole object)        |
-| `songKeys`       | Array of song keys (array of strings = 1 field).                  | `songs` (never log the array of objects)   |
+| `songKey`        | Single chart key.                                                 | `song` (never log the whole object)        |
+| `songKeys`       | Array of song keys (array of strings = 1 field). Catalog code logs `catalogChartKey`. | `songs` (never log the array of objects)   |
+| `chartLabel`     | A chart's readable name from `formatChartLabel` (`Song DX MASTER`). Per-chart catalog lines log it. | a key when a person reads the line |
 | `game` | Canonical game ID (`maimai` or `chunithm`). | — |
 | `region`         | `"intl"` / `"jp"` / `"cn"`.                                        | `country`, `locale`                        |
 | `version` / `addedVersion` | Game / chart version (number).                          | —                                          |

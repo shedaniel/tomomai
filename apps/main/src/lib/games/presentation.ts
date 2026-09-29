@@ -65,6 +65,12 @@ export function getGameChartType(game: CanonicalGameId, code: number): ChartType
     ?? { label: `#${code}`, hex: "#71717a", classes: { ring: "ring-border", chip: "bg-muted text-muted-foreground" } };
 }
 
+/** A chart's readable name, such as "Song DX MASTER". A game's implicit chart type is left out. */
+export function formatChartLabel(game: CanonicalGameId, chart: { songName: string; chartType: number; difficulty: number }): string {
+  const chartType = getGameChartType(game, chart.chartType);
+  return [chart.songName, ...(chartType.implicit ? [] : [chartType.label]), getGameDifficulty(game, chart.difficulty).label].join(" ");
+}
+
 export function getGameStatusBadges(game: CanonicalGameId, status: Partial<Record<ScoreStatusKind, number | null>>): StatusStyle[] {
   const { statusStyles } = presentationOf(game);
   return SCORE_STATUS_KINDS.flatMap(kind => {

@@ -2,7 +2,8 @@ import deepEqual from "deep-equal";
 import type { Logger } from "pino";
 import type { CanonicalGameId } from "@/lib/games/types";
 import { sendDiscordNotice } from "@/server/services/discord/webhook";
-import { catalogChartKey, catalogChartLabel, completeCatalogChart } from "./normalize-charts";
+import { formatChartLabel } from "@/lib/games/presentation";
+import { catalogChartKey, completeCatalogChart } from "./normalize-charts";
 import type { CatalogChart } from "./schema";
 import type { CatalogCollectContext, CatalogFetchContext, NoticeSink, PendingChart, SourceChart } from "./types";
 
@@ -34,8 +35,9 @@ function summarizeStage(charts: Attributed[], index: number, name: string, chart
     `**${name}**: ${charts.length} songs (${netChange >= 0 ? "+" : ""}${netChange}) — ${elapsed}ms`,
     `+${added.length} added, ~${modified.length} modified`,
   ];
-  if (added.length > 0 && added.length < 30) lines.push("Added: " + added.map(catalogChartLabel).join(", "));
-  if (modified.length > 0 && modified.length < 30) lines.push("Modified: " + modified.map(catalogChartLabel).join(", "));
+  const labels = (list: Attributed[]) => list.map(chart => formatChartLabel(chart.game, chart)).join(", ");
+  if (added.length > 0 && added.length < 30) lines.push("Added: " + labels(added));
+  if (modified.length > 0 && modified.length < 30) lines.push("Modified: " + labels(modified));
   lines.push(...notice.details);
   return lines.join("\n");
 }

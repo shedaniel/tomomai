@@ -15,7 +15,7 @@ it("identifies CHUNITHM changes independently of the host's frontend game", asyn
   vi.stubEnv("DISCORD_UPDATE_WEBHOOK_JP", "https://example.test/webhook");
   const fetch = vi.fn<typeof globalThis.fetch>(async () => new Response(null, { status: 204 }));
   vi.stubGlobal("fetch", fetch);
-  await sendDiscordWebhook("chunithm", "jp", [{ songKey: "chart", songName: "Test", artist: "Artist", chartType: 0, difficulty: 4, level: "14+", levelPrecise: 145 }], [], []);
+  await sendDiscordWebhook("chunithm", "jp", [{ songKey: "chart", label: "Test ULTIMA", songName: "Test", artist: "Artist", chartType: 0, difficulty: 4, level: "14+", levelPrecise: 145 }], [], []);
   await Promise.all(background);
   const payload = JSON.parse(String(fetch.mock.calls[0][1]?.body));
   expect(payload.username).toBe("ともチュウ");
@@ -31,6 +31,7 @@ function added(
 ): AddedChange {
   return {
     songKey: `${songName}@${type}@${difficulty}`,
+    label: songName,
     songName,
     difficulty: difficultyToCode(difficulty),
     chartType: chartTypeToCode(type),
@@ -48,6 +49,7 @@ function modifiedLevel(
 ): ModifiedChange {
   return {
     songKey: `${songName}@${type}@${difficulty}`,
+    label: songName,
     songName,
     difficulty: difficultyToCode(difficulty),
     chartType: chartTypeToCode(type),
@@ -69,12 +71,12 @@ function modifiedField(
 
 describe("buildChangeDescription", () => {
   it("uses CHUNITHM chart labels", () => {
-    const description = buildChangeDescription("chunithm", [{ songKey: "chart", songName: "Test", artist: "Artist", chartType: 0, difficulty: 4, level: "14+", levelPrecise: 145 }], [], []);
+    const description = buildChangeDescription("chunithm", [{ songKey: "chart", label: "Test ULTIMA", songName: "Test", artist: "Artist", chartType: 0, difficulty: 4, level: "14+", levelPrecise: 145 }], [], []);
     expect(description).toContain("Test STANDARD: ULT 14+ (14.5)");
     expect(description).not.toContain("REMASTER");
   });
   it("sorts CHUNITHM difficulty codes for deleted charts and differing field changes", () => {
-    const changes = [4, 0, 3].map(difficulty => ({ songKey: `chart-${difficulty}`, songName: "Test", artist: "Artist",
+    const changes = [4, 0, 3].map(difficulty => ({ songKey: `chart-${difficulty}`, label: "Test", songName: "Test", artist: "Artist",
       chartType: 0, difficulty, level: "14+", levelPrecise: 145, dbId: String(difficulty), playRecordCount: 0 }));
     const description = buildChangeDescription("chunithm", [], changes, changes.map(change => ({
       ...change, fieldChanges: [{ field: "genre" as const, oldValue: "Old", newValue: change.difficulty === 0 ? "Basic" : "Other" }],

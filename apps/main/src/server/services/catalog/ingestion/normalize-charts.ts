@@ -1,7 +1,8 @@
 import type { Logger } from "pino";
 import type { CatalogMetadata } from "@/lib/catalog/chart-metadata";
 import type { CanonicalGameId } from "@/lib/games/types";
-import { hasCode, keyOf } from "@/lib/games/codes";
+import { hasCode } from "@/lib/games/codes";
+import { formatChartLabel } from "@/lib/games/presentation";
 import type { CatalogChart, CatalogChartIdentity } from "./schema";
 import { value, type PendingChart } from "./types";
 
@@ -9,26 +10,22 @@ export function catalogChartKey(chart: CatalogChartIdentity): string {
   return JSON.stringify([chart.game, chart.songName, chart.chartType, chart.difficulty]);
 }
 
-/** A readable `name@type@difficulty` name for stage notices. Identity comparisons use catalogChartKey. */
-export function catalogChartLabel(chart: CatalogChartIdentity): string {
-  return `${chart.songName}@${keyOf(chart.game, "chartType", chart.chartType)}@${keyOf(chart.game, "difficulty", chart.difficulty)}`;
-}
-
 export function compareCatalogCharts(a: CatalogChart, b: CatalogChart): number {
   return a.songName.localeCompare(b.songName) || a.artist.localeCompare(b.artist)
     || a.chartType - b.chartType || a.difficulty - b.difficulty;
 }
 
-export function requireCatalogValue<T>(value: T | null | undefined, field: string, songKey: string, log: Logger): T {
+export function requireCatalogValue<T>(value: T | null | undefined, field: string, chart: CatalogChartIdentity, log: Logger): T {
   if (value === null || value === undefined) {
-    log.error({ songKey }, `Value is null or undefined for ${field}`);
-    throw new Error(`Value is null or undefined for ${field}`);
+    const chartLabel = formatChartLabel(chart.game, chart);
+    log.error({ chartLabel }, `Value is null or undefined for ${field}`);
+    throw new Error(`Value is null or undefined for ${field}: ${chartLabel}`);
   }
   return value;
 }
 
 export function completeCatalogChart(chart: PendingChart, log: Logger): CatalogChart {
-  const required = <T>(field: string, value: T | undefined) => requireCatalogValue(value, field, catalogChartKey(chart), log);
+  const required = <T>(field: string, value: T | undefined) => requireCatalogValue(value, field, chart, log);
   return {
     game: chart.game,
     songName: chart.songName,
@@ -56,7 +53,7 @@ export function validateCatalogCharts(game: CanonicalGameId, charts: CatalogChar
     }
     // Charts sharing a key are distinct songs when their artist or version differs, as with the two "Link" songs.
     const identity = JSON.stringify([catalogChartKey(chart), chart.artist, chart.addedVersion]);
-    if (seen.has(identity)) throw new Error(`Duplicate catalog chart: ${catalogChartKey(chart)}`);
+    if (seen.has(identity)) throw new Error(`Duplicate catalog chart: ${formatChartLabel(game, chart)}`);
     seen.add(identity);
   }
 }

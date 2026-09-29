@@ -48,7 +48,7 @@ describe("stored chart rows", () => {
 describe("change analysis", () => {
   it("rejects an incoming chart that could be either of two stored charts", () => {
     expect(() => analyzeChanges([stored({ artist: "A" }), stored({ artist: "B" }, 13, 6)], [chart], new Set()))
-      .toThrow(`Ambiguous catalog identity: ${JSON.stringify(["chunithm", "Song", 0, 4])}`);
+      .toThrow("Ambiguous catalog identity: Song ULTIMA");
   });
 
   it("separates added, merged and removed charts", () => {
@@ -98,12 +98,12 @@ describe("change records", () => {
     const removed = stored({ songName: "Gone" }, 13, 6);
     const analysis = analyzeChanges([changed, unchanged, removed], [{ ...chart, level: "15" }, unchanged.chart, { ...chart, songName: "New" }], new Set());
     const changes = describeChanges(analysis, new Map([[BigInt(13), 2]]));
-    expect(changes.added).toEqual([{ songKey: JSON.stringify(["chunithm", "New", 0, 4]), songName: "New", difficulty: 4, chartType: 0,
+    expect(changes.added).toEqual([{ songKey: JSON.stringify(["chunithm", "New", 0, 4]), label: "New ULTIMA", songName: "New", difficulty: 4, chartType: 0,
       level: "14+", levelPrecise: 145, artist: "Artist" }]);
-    expect(changes.modified).toEqual([{ songKey: JSON.stringify(["chunithm", "Song", 0, 4]), songName: "Song", difficulty: 4, chartType: 0,
+    expect(changes.modified).toEqual([{ songKey: JSON.stringify(["chunithm", "Song", 0, 4]), label: "Song ULTIMA", songName: "Song", difficulty: 4, chartType: 0,
       fieldChanges: [{ field: "level", oldValue: "14+", newValue: "15" }], dbId: "12" }]);
     expect(changes.unchanged).toEqual([JSON.stringify(["chunithm", "Song", 0, 3])]);
-    expect(changes.deleted).toEqual([expect.objectContaining({ songName: "Gone", dbId: "13", playRecordCount: 2 })]);
+    expect(changes.deleted).toEqual([expect.objectContaining({ label: "Gone ULTIMA", songName: "Gone", dbId: "13", playRecordCount: 2 })]);
     expect(describeChanges(analysis, new Map()).deleted[0].playRecordCount).toBe(0);
   });
 });

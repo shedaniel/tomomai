@@ -28,7 +28,7 @@ describe("catalog completion", () => {
 
 describe("catalog validation", () => {
   it("rejects a repeated identity even when other chart fields differ", () => {
-    expect(() => validateCatalogCharts("chunithm", [chart, { ...chart, levelPrecise: 141 }])).toThrow("Duplicate catalog chart");
+    expect(() => validateCatalogCharts("chunithm", [chart, { ...chart, levelPrecise: 141 }])).toThrow("Duplicate catalog chart: Chart ULTIMA");
   });
 
   it("accepts charts that share a key but differ in artist or version, and charts with another key", () => {

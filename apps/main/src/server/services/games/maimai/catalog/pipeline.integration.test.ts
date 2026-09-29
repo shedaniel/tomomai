@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll } from "vitest";
 import { value, type CatalogFetchContext, type SourceChart } from "@/server/services/catalog/ingestion/types";
 import { asCatalogFetcher } from "@/server/services/catalog/ingestion/merge";
-import { catalogChartLabel } from "@/server/services/catalog/ingestion/normalize-charts";
+import { formatChartLabel } from "@/lib/games/presentation";
 import pino from "pino";
 import { getCurrentVersion } from "@/lib/games/versions";
 import { chartTypeToCode, difficultyToCode } from "@/lib/games/maimai/codes";
@@ -126,7 +126,7 @@ describe.skipIf(shouldSkip)("Integration: LevelFetcher", () => {
     testLog.info(`Songs with cover: ${songsWithCover}/${mergedSongs.length}`);
     testLog.info(`Songs with genre: ${songsWithGenre}/${mergedSongs.length}`);
 
-    testLog.info(`Songs without artist: ${mergedSongs.filter(s => !value(s.artist)).map(catalogChartLabel).join(', ')}`)
+    testLog.info(`Songs without artist: ${mergedSongs.filter(s => !value(s.artist)).map(s => formatChartLabel(s.game, s)).join(', ')}`)
 
     // Most songs should have been enriched (allowing for some missing data)
     expect(songsWithArtist).toBeGreaterThan(mergedSongs.length * 0.8);
@@ -259,7 +259,7 @@ describe.skipIf(shouldSkip)("Integration: LevelFetcher", () => {
   it("should handle Link properly", async () => {
     testLog.info("Running ScaledMaimaiScraperFetcher...");
     const isLinkMaster = (s: SourceChart) => s.songName === "Link" && s.difficulty === MASTER;
-    const describeCharts = (charts: SourceChart[]) => charts.map(s => catalogChartLabel(s) + "@" + value(s.artist) + "@" + value(s.addedVersion));
+    const describeCharts = (charts: SourceChart[]) => charts.map(s => formatChartLabel(s.game, s) + "@" + value(s.artist) + "@" + value(s.addedVersion));
     let songs = [
       ...await ScaledMaimaiScraperFetcher(-12)(context, []),
       ...await ScaledMaimaiScraperFetcher(-9)(context, []),

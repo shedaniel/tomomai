@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { GAME_CODES, codeOf } from "./codes";
 import {
+  formatChartLabel,
   formatGameLevel,
   formatGameRating,
   formatGameScore,
@@ -44,6 +45,14 @@ describe("game presentation", () => {
     expect(getGameChartType("chunithm", 0).label).toBe("STANDARD");
     expect(getGameChartType("chunithm", 1).label).toBe("#1");
     expect(getGameStatusLabels("chunithm", { comboStatus: 2, syncStatus: 1, clearStatus: 2 })).toEqual(["AJ", "FULL CHAIN", "HARD"]);
+  });
+
+  it("labels a chart by title, a chart type the game shows, and difficulty", () => {
+    const chart = (game: "maimai" | "chunithm", chartType: string, key: string) =>
+      ({ songName: "Song", chartType: codeOf(game, "chartType", chartType), difficulty: codeOf(game, "difficulty", key) });
+    expect(formatChartLabel("maimai", chart("maimai", "dx", "master"))).toBe("Song DX MASTER");
+    expect(formatChartLabel("maimai", chart("maimai", "std", "remaster"))).toBe("Song STD Re:MASTER");
+    expect(formatChartLabel("chunithm", chart("chunithm", "standard", "ultima"))).toBe("Song ULTIMA");
   });
 
   it("renders independent difficulty identities and levels for song previews", () => {

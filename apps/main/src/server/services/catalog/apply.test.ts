@@ -80,12 +80,12 @@ describe("applyCatalogUpload", () => {
   });
 
   it("lists referenced removals it kept in an orange notice", async () => {
-    const kept = { songKey: "Kept", playRecordCount: 3 };
+    const kept = { songKey: "[\"chunithm\",\"Kept\",0,4]", label: "Kept ULTIMA", playRecordCount: 3 };
     mocks.persist.mockResolvedValueOnce({ ...persisted(), skippedDeletions: Array(16).fill(kept) });
     await upload();
     const [, , , summary, color] = mocks.notice.mock.calls[0];
     expect(summary).toContain("**16 deletion(s) skipped**");
-    expect(summary).toContain("- Kept (3 references)");
+    expect(summary).toContain("- Kept ULTIMA (3 references)");
     expect(summary).toContain("... and 1 more");
     expect(color).toBe(0xFFA500);
   });

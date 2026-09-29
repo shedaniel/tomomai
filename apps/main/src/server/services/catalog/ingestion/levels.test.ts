@@ -47,6 +47,6 @@ describe("fillMissingStage", () => {
   it("keeps an earlier estimate flag and requires a display level", async () => {
     const [kept] = await stage.run(context(), [{ ...chart, levelPrecise: 146, metadata: { levelPreciseEstimated: true } }]);
     expect(kept).toMatchObject({ levelPrecise: 146, metadata: { levelPreciseEstimated: true } });
-    await expect(stage.run(context(), [{ ...chart, level: undefined }])).rejects.toThrow("Value is null or undefined for level");
+    await expect(stage.run(context(), [{ ...chart, level: undefined }])).rejects.toThrow("Value is null or undefined for level: Chart MASTER");
   });
 });

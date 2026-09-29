@@ -2,10 +2,10 @@ import { and, eq, inArray } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { PARENT_PUBLIC_ID_LENGTH } from "@/lib/catalog/song-instance-id";
 import { parentSong, songs } from "@/lib/db/schema-pg";
+import { formatChartLabel } from "@/lib/games/presentation";
 import { instancePreference } from "@/lib/games/regions";
 import type { CanonicalGameId } from "@/lib/games/types";
 import type { CatalogTransaction } from "../lock";
-import { catalogChartKey } from "../normalize-charts";
 import { resolveParents, type ParentState, type SongToParent } from "../resolve-parent";
 import { CATALOG_PARENT_FIELDS, type CatalogChart } from "../schema";
 import type { CatalogInstance } from "./analyze";
@@ -121,7 +121,7 @@ export async function resolveParentsForAddedCharts(
 
   const parentIds = charts.map((chart, index) => {
     const parentId = assignments.get(BigInt(index))?.id;
-    if (parentId === undefined || parentId === null) throw new Error(`Parent resolution failed for ${catalogChartKey(chart)}`);
+    if (parentId === undefined || parentId === null) throw new Error(`Parent resolution failed for ${formatChartLabel(chart.game, chart)}`);
     return parentId;
   });
   return { parentIds, newParents: newParents.length };

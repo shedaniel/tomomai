@@ -1,5 +1,6 @@
 import { getLogger } from "@/lib/request-logger";
-import { catalogChartKey, requireCatalogValue } from "./normalize-charts";
+import { formatChartLabel } from "@/lib/games/presentation";
+import { requireCatalogValue } from "./normalize-charts";
 import { value } from "./types";
 import type { CatalogStage } from "./runner";
 
@@ -41,16 +42,15 @@ export function fillMissingStage(policy: CatalogLevelPolicy): CatalogStage {
     async run(context, charts) {
       let missing = 0, mismatched = 0;
       const result = charts.map(chart => {
-        const songKey = catalogChartKey(chart);
-        const level = requireCatalogValue(value(chart.level), "level", songKey, context.log);
+        const level = requireCatalogValue(value(chart.level), "level", chart, context.log);
         const filled = fillMissingCatalogLevel(level, value(chart.levelPrecise), policy);
         if (filled.reason === "missing") {
           missing++;
-          context.log.warn({ songKey }, "Level precise is missing");
+          context.log.warn({ chartLabel: formatChartLabel(chart.game, chart) }, "Level precise is missing");
         }
         if (filled.reason === "mismatched") {
           mismatched++;
-          context.log.warn({ songKey }, "Level precise is mismatched");
+          context.log.warn({ chartLabel: formatChartLabel(chart.game, chart) }, "Level precise is mismatched");
         }
         return {
           ...chart,

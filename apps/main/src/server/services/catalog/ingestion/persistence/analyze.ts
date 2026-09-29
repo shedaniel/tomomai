@@ -1,5 +1,6 @@
 import { isDeepStrictEqual } from "node:util";
 import type { parentSong, songs } from "@/lib/db/schema-pg";
+import { formatChartLabel } from "@/lib/games/presentation";
 import type { CanonicalGameId } from "@/lib/games/types";
 import type { Region } from "@/lib/types";
 import { matchUpload } from "../match-upload";
@@ -31,7 +32,9 @@ export type FieldChange = {
 };
 
 type ChangeRecord = {
+  /** Identity only. People read `label`. */
   songKey: string;
+  label: string;
   songName: string;
   difficulty: number;
   chartType: number;
@@ -148,7 +151,7 @@ function matchIncoming(stored: CatalogChart[], incoming: CatalogChart[]): Map<nu
   incoming.forEach((chart, index) => {
     const key = catalogChartKey(chart);
     if (!assignments.has(index) && stored.some((existing, storedIndex) => !matched.has(storedIndex) && catalogChartKey(existing) === key)) {
-      throw new Error(`Ambiguous catalog identity: ${key}`);
+      throw new Error(`Ambiguous catalog identity: ${formatChartLabel(chart.game, chart)}`);
     }
   });
   return assignments;
@@ -179,7 +182,10 @@ export function analyzeChanges(stored: StoredChart[], incoming: CatalogChart[], 
 }
 
 function changeRecord(chart: CatalogChart): ChangeRecord {
-  return { songKey: catalogChartKey(chart), songName: chart.songName, difficulty: chart.difficulty, chartType: chart.chartType };
+  return {
+    songKey: catalogChartKey(chart), label: formatChartLabel(chart.game, chart),
+    songName: chart.songName, difficulty: chart.difficulty, chartType: chart.chartType,
+  };
 }
 
 export function describeChanges(analysis: CatalogAnalysis, referenceCounts: ReadonlyMap<bigint, number>): ChangeAnalysis {
