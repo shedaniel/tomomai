@@ -64,6 +64,17 @@ provider timeout cannot enter persistence. A persistence deadline failure
 rolls back its transaction. Parent-name collisions are left unresolved instead
 of assigning scores to an arbitrary chart.
 
+Each game's rating math lives in `lib/games/<game>/rating.ts`. Shared code
+reaches it through the definition's `rating` (bucket sizes, chart rating,
+new-chart rule, rated difficulties and player rating), and
+`lib/games/ranking.ts` holds the one ranking selector. Ingestion and the snapshot version copy
+(`server/services/games/snapshot-copy.ts`, one transaction) both store scores
+through `writeSnapshotScores` in `server/services/games/score-storage.ts`, which
+also stores the rating selection in `snapshot_rankings` for games with the
+`rankings` capability. Readers that must agree with the stored snapshot rating
+(the API B50 scope, the Discord profile summary and rating history) read that
+selection back and only recompute chart ratings.
+
 Recents carry optional game-specific `details`, stored in the recent row's
 metadata, without requiring maimai DX scores or map state. Albums are maimai
 enrichment gated by the `albums` capability. The maimai score source's
