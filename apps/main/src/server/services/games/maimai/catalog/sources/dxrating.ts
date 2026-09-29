@@ -1,5 +1,6 @@
 import "server-only";
-import { getVersionByShortName, getVersionInfo, VersionId } from "@/lib/games/maimai/versions";
+import { getVersionByShortName, VersionId } from "@/lib/games/maimai/versions";
+import { getVersion } from "@/lib/games/versions";
 import { normalizeName } from "@/lib/name-utils";
 import { NoteCounts } from "@/lib/types";
 import type { Level } from "../levels";
@@ -53,7 +54,7 @@ function getInternalLevelFromDxData(
   sheet: DxRatingResponse["songs"][number]["sheets"][number],
   version: VersionId,
 ): number | null {
-  const currentVersionInfo = getVersionInfo(version);
+  const currentVersionInfo = getVersion("maimai", version);
   if (!currentVersionInfo) {
     return null;
   }

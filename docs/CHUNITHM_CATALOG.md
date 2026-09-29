@@ -77,8 +77,8 @@ that region's workflow before database persistence; raw source URLs are not used
 as a fallback.
 
 This provider supports current snapshots only. The current version comes from
-the existing CHUNITHM version provider, including its regional release dates
-and 07:00 JST rollover. Historical-version requests fail before fetching.
+the CHUNITHM version table in `lib/games/chunithm/versions.ts`, including its
+regional release dates and the shared 07:00 JST rollover. Historical-version requests fail before fetching.
 Adding a release only requires updating the canonical version metadata; the
 otoge-db source contains no per-release configuration. The source's per-song `version` is the original **Japanese** release, so it cannot be
 used as the International catalog version. International already includes some

@@ -11,7 +11,7 @@ import {
 import { songInstanceId } from "@/lib/db/song-instance-id";
 import { db } from "@/lib/db";
 import { parentSong, songs } from "@/lib/db/schema-pg";
-import { getCurrentVersion } from "@/lib/games/maimai/versions";
+import { getCurrentVersion } from "@/lib/games/versions";
 import type { VersionId } from "@/lib/games/maimai/versions";
 import { splitSongs } from "@/lib/rating-calculator";
 import type { ProfileData, Region } from "@/lib/types";
@@ -93,7 +93,7 @@ const songSelect = {
 
 const fetchReservedSongs = unstable_cache(
   async (region: Region, maxDifficulty: Difficulty) => {
-    const gameVersion = getCurrentVersion(region);
+    const gameVersion = getCurrentVersion("maimai", region);
     const difficulties = allowedDifficulties(maxDifficulty);
 
     const [top100, currentVersionSongs] = await Promise.all([

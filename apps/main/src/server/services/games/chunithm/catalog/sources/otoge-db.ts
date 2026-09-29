@@ -2,10 +2,10 @@ import "server-only";
 import type { Region } from "@/lib/types";
 import type { CatalogFetchContext, PendingChart } from "@/server/services/catalog/ingestion/types";
 import { codeOf } from "@/lib/games/codes";
-import type { GameSiteRegion } from "@/lib/games/registry";
+import { getGame, type GameSiteRegion } from "@/lib/games/registry";
 import { requireGameSite } from "@/lib/games/sites";
-import { getVersionFromDate } from "@/lib/games/versions";
-import { getChunithmVersionByName, chunithmVersionProvider } from "@/lib/games/chunithm/versions";
+import { versionReleaseInstant } from "@/lib/games/version-table";
+import { getCurrentVersion, getVersionFromDate } from "@/lib/games/versions";
 import { asFetcher } from "../fetcher";
 
 export const OTOGE_DB_CHUNITHM_ROOT = "https://raw.githubusercontent.com/zvuc/otoge-db/main/chunithm";
@@ -45,14 +45,14 @@ type SongsJsonRecord = {
 
 function getOtogeDbSource(region: Region) {
   requireGameSite("chunithm", region);
-  return { url: SOURCES[region], version: chunithmVersionProvider.getCurrentVersion(region) };
+  return { url: SOURCES[region], version: getCurrentVersion("chunithm", region) };
 }
 
 function parseDate(value: string | undefined): Date | undefined {
   const match = value?.match(/^(\d{4})(\d{2})(\d{2})$/);
   if (!match) return undefined;
   const [, year, month, day] = match;
-  const date = new Date(`${year}-${month}-${day}T07:00:00+09:00`);
+  const date = versionReleaseInstant(`${year}/${month}/${day}`);
   return Number.isNaN(date.getTime()) ? undefined : date;
 }
 
@@ -64,7 +64,7 @@ function normalizeOtogeDbCatalog(songs: SongsJsonRecord[], region: Region, sourc
   return songs.flatMap(song => {
     if (song.we_kanji || song.we_star) return [];
     if (region === "intl" ? song.intl === "0" : song.intl === "2") return [];
-    const sourceVersion = getChunithmVersionByName("jp", song.version)?.id;
+    const sourceVersion = getGame("chunithm").versions.byName(song.version)?.id;
     return CHARTS.flatMap(({ prefix, difficulty }): PendingChart[] => {
       const level = song[prefix];
       if (!level) return [];

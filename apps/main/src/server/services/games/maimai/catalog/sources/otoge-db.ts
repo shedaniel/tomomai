@@ -1,6 +1,7 @@
 import "server-only";
 import { gameBaseUrl } from "@/lib/games/sites";
-import { getVersionFromDate, VersionId, Versions } from "@/lib/games/maimai/versions";
+import { maimaiVersionAt, VersionId, Versions } from "@/lib/games/maimai/versions";
+import { versionReleaseInstant } from "@/lib/games/version-table";
 import { normalizeName } from "@/lib/name-utils";
 import { normalizeGenre } from "../genres";
 import { NoteCounts, Region } from "@/lib/types";
@@ -128,14 +129,9 @@ async function fetchRecordsWithUrl(region: Region, version: VersionId, url: stri
   ];
   const noteTypes = ["tap", "hold", "slide", "touch", "break"];
   function parseDate(date: string): Date | null {
-    // format of YYYYMMDD
     const match = date.match(/(\d{4})(\d{2})(\d{2})/);
-    if (!match) {
-      return null;
-    }
-    const [, year, month, day] = match;
-    // Date-only additions belong to the version released that day, after the 7 AM rollover.
-    return new Date(`${year}-${month}-${day}T07:00:00+09:00`);
+    // A song added on a release day belongs to the version released that day.
+    return match ? versionReleaseInstant(`${match[1]}/${match[2]}/${match[3]}`) : null;
   }
   return data.flatMap((song: SongsJsonRecord) => {
     const records: SongWithMode[] = [];
@@ -146,7 +142,7 @@ async function fetchRecordsWithUrl(region: Region, version: VersionId, url: stri
       return [];
     }
     const addedDate = parseDate(addedDateString);
-    const addedVersion = addedDate ? getVersionFromDate(addedDate, region) : null;
+    const addedVersion = addedDate ? maimaiVersionAt(region, addedDate) : null;
     for (const [prefix, type, difficulty] of prefixes) {
       if (prefix in song) {
         // Check if all note types are present

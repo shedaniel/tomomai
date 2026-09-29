@@ -11,7 +11,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Input } from "@tomomai/ui";
 import { Label } from "@tomomai/ui";
 import { Button } from "@tomomai/ui";
-import { getCurrentVersion } from "@/lib/games/maimai/versions";
+import { getCurrentVersion } from "@/lib/games/versions";
 import { UsersBrowserDialog } from "./users-browser-dialog";
 import { ProfileReportsDialog } from "./profile-reports-dialog";
 import { cn } from "@/lib/utils";
@@ -31,8 +31,8 @@ export function AdminDialog({ open, onOpenChange }: AdminDialogProps) {
   const [profileReportsOpen, setProfileReportsOpen] = useState(false);
   const profileReportsT = useTranslations("Admin.profileReports");
 
-  const intlVersion = getCurrentVersion("intl");
-  const jpVersion = getCurrentVersion("jp");
+  const intlVersion = getCurrentVersion("maimai", "intl");
+  const jpVersion = getCurrentVersion("maimai", "jp");
 
   // Load tokens from localStorage on mount
   useEffect(() => {

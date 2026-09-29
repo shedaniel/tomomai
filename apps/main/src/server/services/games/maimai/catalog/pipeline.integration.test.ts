@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll } from "vitest";
 import { value } from "@/server/services/catalog/ingestion/types";
 import pino from "pino";
-import { getCurrentVersion, VersionId } from "@/lib/games/maimai/versions";
+import { maimaiVersionAt, VersionId } from "@/lib/games/maimai/versions";
 import { loginAndGetCookies } from "../login";
 import { MaimaiBaseFetcher } from "./sources/base-songs";
 import { DxDataFetcher } from "./sources/dxrating";
@@ -47,7 +47,7 @@ describe.skipIf(shouldSkip)("Integration: LevelFetcher", () => {
 
     // Force region to intl as requested
     const region = "intl";
-    const version = getCurrentVersion(region);
+    const version = maimaiVersionAt(region, new Date());
 
     // Login and get cookies
     testLog.info("Logging in to get cookies...");

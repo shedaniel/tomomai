@@ -1,7 +1,7 @@
 import { calculateMaimaiChartRating, rankIntoBuckets } from "../rating";
 import { SEGA_COOKIE_LOGIN_URL } from "../sega-gateway";
 import type { GameDefinition } from "../types";
-import { maimaiVersionProvider } from "./versions";
+import { maimaiVersionTable } from "./versions";
 
 const bucketSizes = { new: 15, old: 35 };
 
@@ -28,7 +28,7 @@ export const maimaiDefinition = {
     },
   },
   capabilities: ["catalog", "scores", "recents", "albums", "events", "rankings", "rating", "plates", "score-details"],
-  versions: maimaiVersionProvider,
+  versions: maimaiVersionTable,
   rating: {
     bucketSizes,
     chartRating({ scoreValue, levelPrecise, difficulty, comboStatus = 0 }, version) {

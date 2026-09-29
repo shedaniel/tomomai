@@ -1,5 +1,6 @@
 import type { FetchState } from "@/lib/fetch-states";
 import type { CanonicalGameId, Region } from "./ids";
+import type { VersionTable } from "./version-table";
 
 export { CANONICAL_GAME_IDS, type CanonicalGameId } from "./ids";
 
@@ -20,19 +21,6 @@ export const GAME_CAPABILITIES = [
   "score-details",
 ] as const;
 export type GameCapability = (typeof GAME_CAPABILITIES)[number];
-
-export type GameVersionInfo = {
-  id: number;
-  name: string;
-  shortName: string;
-  releaseDate: string;
-};
-
-export interface VersionProvider {
-  getAvailableVersions(region: Region): GameVersionInfo[];
-  getCurrentVersion(region: Region): number;
-  getVersionInfo(region: Region, version: number): GameVersionInfo | null;
-}
 
 export type RankedScore = {
   chartId: string;
@@ -81,7 +69,7 @@ export interface GameDefinition {
   brand: GameBrand;
   sites: Partial<Record<Region, GameSite>>;
   capabilities: readonly GameCapability[];
-  versions: VersionProvider;
+  versions: VersionTable;
   rating: {
     bucketSizes: RankingBucketSizes;
     chartRating(input: ChartRatingInput, version: number): number;
