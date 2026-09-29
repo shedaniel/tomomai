@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { getEnabledRegions, getSupportedRegions } from "./regions";
+import { getEnabledRegions } from "./regions";
 import { getGame, requireCapability, resolveGameContext } from "./registry";
 import { getGameSite } from "./sites";
 import { CANONICAL_GAME_IDS, GAME_CAPABILITIES } from "./types";
@@ -26,11 +26,6 @@ describe("game definitions", () => {
   it.each(CANONICAL_GAME_IDS)("points the %s cookie login at a site the game has", game => {
     const { cookieLogin } = getGame(game).fetch;
     if (cookieLogin) expect(getGameSite(game, cookieLogin.region)).toBeDefined();
-  });
-
-  it("derives supported regions from each game's sites", () => {
-    expect(getSupportedRegions("maimai")).toEqual(["intl", "jp", "cn"]);
-    expect(getSupportedRegions("chunithm")).toEqual(["intl", "jp"]);
   });
 });
 

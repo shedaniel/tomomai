@@ -1,6 +1,9 @@
 import { fetch } from 'undici';
 import { config } from 'dotenv';
 import pino from 'pino';
+import { resolveEnabledRegions } from '@tomomai/utils/regions';
+import { REGIONS } from '../src/lib/games/ids.ts';
+import discordMessages from '../messages/discord/en-US.json' with { type: 'json' };
 
 const log = pino(pino.destination({ sync: true })).child({ context: 'register-discord-commands' });
 
@@ -10,21 +13,12 @@ config({ path: ".env.local" });
 const APPLICATION_ID = process.env.NEXT_PUBLIC_DISCORD_APPLICATION_ID;
 const BOT_TOKEN = process.env.DISCORD_BOT_TOKEN;
 
-// Mirror of getEnabledRegions() from src/lib/enabled-regions.ts (this is a
-// plain Node script and cannot import the TS module).
-const REGION_LABELS = { intl: 'International', jp: 'Japan', cn: 'China' };
-
-function getEnabledRegions() {
-  const envValue = process.env.NEXT_PUBLIC_ENABLED_MAIMAI_REGIONS ?? process.env.NEXT_PUBLIC_ENABLED_REGIONS;
-  if (envValue === undefined) return ['intl', 'jp'];
-  const regions = envValue
-    .split(',')
-    .map(r => r.trim())
-    .filter(r => r === 'intl' || r === 'jp' || r === 'cn');
-  return [...new Set(regions)];
-}
-
-const enabledRegions = getEnabledRegions();
+// Reads the same variables as getEnabledRegions('maimai') in src/lib/games/regions.ts. The game
+// definitions are not loadable from plain Node, and maimai has a site in every region.
+const { regions: enabledRegions } = resolveEnabledRegions(
+  process.env.NEXT_PUBLIC_ENABLED_MAIMAI_REGIONS ?? (process.env.NEXT_PUBLIC_ENABLED_REGIONS || undefined),
+  REGIONS,
+);
 
 // Shared optional `region` option. Defaults to the user's selected region.
 const regionOption = {
@@ -32,7 +26,7 @@ const regionOption = {
   name: 'region',
   description: 'Region to use. Defaults to your selected region.',
   required: false,
-  choices: enabledRegions.map(r => ({ name: REGION_LABELS[r] ?? r, value: r })),
+  choices: enabledRegions.map(region => ({ name: discordMessages.regions[region], value: region })),
 };
 
 // Shared optional `fetch` option. When true, force a refetch before running.

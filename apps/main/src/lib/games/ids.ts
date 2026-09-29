@@ -1,4 +1,5 @@
-// drizzle-kit (through schema-pg.ts) and eslint.config.mjs load this directly, so it must stay free of imports.
+// drizzle-kit (through schema-pg.ts), eslint.config.mjs and scripts/register-discord-commands.js load this
+// directly, so it must stay free of imports.
 
 export const CANONICAL_GAME_IDS = ["maimai", "chunithm"] as const;
 export type CanonicalGameId = (typeof CANONICAL_GAME_IDS)[number];
