@@ -11,8 +11,8 @@ import { breadcrumbJsonLd, openGraphLocales, ogImageUrl, localizePath } from "@/
 import { resolveBaseUrl } from "@/lib/base-url";
 import { safeDecodeURIComponent } from "@/lib/utils";
 
-// On-demand ISR. Catalog edits are pushed live by /api/admin/upload via
-// revalidatePath per affected slug; 30d is the fallback freshness window.
+// On-demand ISR. Catalog writes refresh these pages through revalidateCatalog, and 30 days is the
+// fallback freshness window.
 export const revalidate = 2592000;
 
 export async function headers() {

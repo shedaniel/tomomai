@@ -5,7 +5,7 @@ import { PgDialect } from "drizzle-orm/pg-core";
 
 const mocks = vi.hoisted(() => ({
   rows: [] as Record<string, unknown>[],
-  upsert: vi.fn(), publish: vi.fn(), where: vi.fn(), execute: vi.fn(),
+  upsert: vi.fn(), publish: vi.fn(), revalidate: vi.fn(), where: vi.fn(), execute: vi.fn(),
   log: { child: () => mocks.log, info: vi.fn(), debug: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }));
 vi.mock("@/lib/db", () => ({ db: { transaction: async (run: (tx: unknown) => unknown) => run({
@@ -20,7 +20,7 @@ vi.mock("@/lib/request-logger", () => ({
   runWithLogger: (_log: unknown, run: () => unknown) => run(),
 }));
 vi.mock("@/server/services/catalog/publication", () => ({ publishSongCatalog: mocks.publish }));
-vi.mock("next/cache", () => ({ revalidateTag: vi.fn(), revalidatePath: vi.fn() }));
+vi.mock("@/server/services/catalog/revalidation", () => ({ revalidateCatalog: mocks.revalidate }));
 
 import { GET as normalize } from "./db/route";
 import { GET as importSongs } from "./import/route";
@@ -46,6 +46,7 @@ describe("catalog maintenance", () => {
   ] as const)("uses the requested game's supported regions independently of maimai enablement", async (handler, path) => {
     expect((await handler(request(path))).status).toBe(200);
     expect(mocks.publish).toHaveBeenCalledWith("chunithm");
+    expect(mocks.revalidate).toHaveBeenCalledWith("chunithm", { log: mocks.log });
     expect(new PgDialect().sqlToQuery(mocks.execute.mock.calls[0][0]).sql).toBe(`select pg_advisory_xact_lock(${CATALOG_WRITE_LOCK_ID})`);
   });
 

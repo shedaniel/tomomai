@@ -10,8 +10,7 @@ import { and, eq, gte, lte } from "drizzle-orm";
 import { publishSongCatalog } from "@/server/services/catalog/publication";
 import { lockCatalogWrites } from "@/server/services/catalog/ingestion/lock";
 import { excludedSet, INSTANCE_UPDATE_COLUMNS } from "@/server/services/catalog/ingestion/columns";
-import { revalidateTag, revalidatePath } from "next/cache";
-import { locales } from "@tomomai/i18n/locale";
+import { revalidateCatalog } from "@/server/services/catalog/revalidation";
 
 const REGION_PATTERN = "[a-z]+";
 const FROM_REGEX = new RegExp(`^version(<=|>=|=)(\\d+)@(${REGION_PATTERN})-(-?\\d+)$`);
@@ -248,13 +247,6 @@ export const GET = adminRoute("admin/import", async ({ request, game, log, reque
     });
   });
   await publishSongCatalog(game);
-  revalidateTag(`all-unique-songs:${game}`, { expire: 3600 });
-  revalidateTag(`reserved-songs:${game}`, { expire: 0 });
-  revalidateTag(`api-v1-songs:${game}`, { expire: 0 });
-  for (const locale of locales) {
-    revalidatePath(`/${locale}/db/songs/[slug]`, "page");
-    revalidatePath(`/${locale}/db/songs`, "page");
-  }
-  revalidatePath("/sitemap.xml", "page");
+  await revalidateCatalog(game, { log });
   return result;
 }, { game: "write" });

@@ -5,64 +5,16 @@ import type { CanonicalGameId } from "@/lib/games/types";
 import { flushLogger } from "@/lib/logger";
 import { requestLogger } from "@/lib/request-logger";
 import type { Region } from "@/lib/types";
-import { keyOf } from "@/lib/games/codes";
 import { parseCatalogUpload } from "@/server/services/catalog/ingestion/parse-upload";
 import { sendDiscordWebhook } from "@/server/services/catalog/notifications";
 import { sendDiscordNotice } from "@/server/services/discord/webhook";
 import { publishSongCatalog } from "@/server/services/catalog/publication";
-import { revalidatePath, revalidateTag } from "next/cache";
-import { getSongSlugs } from "@/lib/song-slug";
-import { locales } from "@tomomai/i18n/locale";
 import { parseCatalogVersion } from "@/lib/catalog/parse-version";
 import { NextRequest, NextResponse } from "next/server";
-import { persistCatalog, type AffectedChart } from "@/server/services/catalog/ingestion/persistence";
+import { persistCatalog } from "@/server/services/catalog/ingestion/persistence";
+import { revalidateCatalog } from "@/server/services/catalog/revalidation";
 import { parseCatalogUpdateMode } from "@/server/services/catalog/ingestion/persistence/analyze";
 import { formatCatalogError } from "@/server/services/catalog/errors";
-
-/**
- * Push catalog edits to the ISR cache without waiting for the 14-day
- * revalidate window. Busts the shared songs data cache, then regenerates
- * each affected song-detail page (per locale) plus the list pages.
- */
-async function revalidateSongsCache(
-  game: CanonicalGameId,
-  affected: AffectedChart[],
-  log: (obj: unknown, msg?: string) => void,
-  forceBulk = false,
-) {
-  revalidateTag(`all-unique-songs:${game}`, { expire: 3600 });
-  revalidateTag(`reserved-songs:${game}`, { expire: 0 });
-  revalidateTag(`api-v1-songs:${game}`, { expire: 0 });
-
-  const seen = new Set<string>();
-  const deduped = affected
-    .map(chart => ({ songName: chart.songName, artist: chart.artist, type: keyOf(game, "chartType", chart.chartType) }))
-    .filter((song) => {
-      const key = `${song.songName}||${song.artist}||${song.type}`;
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    });
-
-  const withSlugs = await getSongSlugs(deduped, game);
-  const slugs = new Set(withSlugs.map((song) => song.slug));
-
-  // Bulk uploads can touch hundreds of songs, so avoid thousands of calls.
-  const bulk = forceBulk || slugs.size > 200;
-  for (const locale of locales) {
-    if (bulk) {
-      revalidatePath(`/${locale}/db/songs/[slug]`, "page");
-    } else {
-      for (const slug of slugs) {
-        revalidatePath(`/${locale}/db/songs/${slug}`, "page");
-      }
-    }
-    revalidatePath(`/${locale}/db/songs`, "page");
-  }
-  revalidatePath("/sitemap.xml", "page");
-
-  log({ count: slugs.size, scope: bulk ? "bulk" : "songs" }, "ISR cache revalidated");
-}
 
 export async function POST(request: NextRequest) {
   const { log: baseLog, requestId } = requestLogger(request, "admin/upload");
@@ -154,11 +106,8 @@ export async function POST(request: NextRequest) {
     log.info({ updateMode, applied: { added: applied.added, modified: applied.modified, deleted: applied.deleted } }, "DB update complete");
 
     if (updateMode !== "noop") {
-      try {
-        await revalidateSongsCache(game, affected, (obj, msg) => log.info(obj, msg ?? ""), appliedCount === 0);
-      } catch (err) {
-        log.error({ err }, "Failed to revalidate songs ISR cache");
-      }
+      // An upload that changed no chart is a republish, so it refreshes every page.
+      await revalidateCatalog(game, { affected: appliedCount === 0 ? undefined : affected, log });
       sendDiscordWebhook(game, region, changes.added, appliedDeletions, changes.modified).catch(err => {
         log.error({ err }, "Failed to send Discord webhook");
       });

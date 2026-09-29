@@ -8,8 +8,7 @@ import { songs, parentSong } from "@/lib/db/schema-pg";
 import { and, eq, inArray } from "drizzle-orm";
 import { publishSongCatalog } from "@/server/services/catalog/publication";
 import { lockCatalogWrites } from "@/server/services/catalog/ingestion/lock";
-import { revalidatePath, revalidateTag } from "next/cache";
-import { locales } from "@tomomai/i18n/locale";
+import { revalidateCatalog } from "@/server/services/catalog/revalidation";
 import type { Logger } from "pino";
 
 export const GET = adminRoute("admin/db", async ({ request, game, log }) => {
@@ -48,14 +47,7 @@ async function normalize(game: CanonicalGameId, searchParams: URLSearchParams, l
   });
 
   await publishSongCatalog(game);
-  revalidateTag(`all-unique-songs:${game}`, { expire: 3600 });
-  revalidateTag(`reserved-songs:${game}`, { expire: 0 });
-  revalidateTag(`api-v1-songs:${game}`, { expire: 0 });
-  for (const locale of locales) {
-    revalidatePath(`/${locale}/db/songs/[slug]`, "page");
-    revalidatePath(`/${locale}/db/songs`, "page");
-  }
-  revalidatePath("/sitemap.xml", "page");
+  await revalidateCatalog(game, { log });
   log.info({ totalMasterNamesNormalized }, "Parent song names normalized");
   return Response.json({
     success: true,

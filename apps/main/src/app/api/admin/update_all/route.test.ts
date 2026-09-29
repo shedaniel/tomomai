@@ -3,6 +3,7 @@ import { NextRequest } from "next/server";
 import type { CatalogCollectContext } from "@/server/services/catalog/ingestion/types";
 import type { CanonicalGameId } from "@/lib/games/types";
 import { DrizzleQueryError } from "drizzle-orm";
+import { catalogTags } from "@/lib/cache-tags";
 
 const mocks = vi.hoisted(() => {
   const log = { child: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() };
@@ -66,7 +67,7 @@ describe("configured catalog admin pipeline", () => {
     expect(mocks.source).toHaveBeenCalledWith("chunithm", expect.objectContaining({ region: "jp", session: { cookies: "" } }));
     expect(mocks.ingest).toHaveBeenCalledWith("chunithm", "jp", 9, [chart], "alter", mocks.log);
     expect(mocks.publish).toHaveBeenCalledWith("chunithm");
-    expect(mocks.invalidate).toHaveBeenCalledWith("all-unique-songs:chunithm", { expire: 3600 });
+    expect(mocks.invalidate).toHaveBeenCalledWith(catalogTags("chunithm").uniqueSongs, { expire: 0 });
   });
   it.each([[null, 401], ["wrong", 403]] as const)("rejects unauthorized requests before collection", async (token, status) => {
     expect((await GET(request("update_all?game=chunithm&region=jp", token))).status).toBe(status);

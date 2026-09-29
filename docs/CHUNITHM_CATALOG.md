@@ -52,8 +52,11 @@ The shared catalog ingestion lives under `apps/main/src/server/services/catalog/
   through `adminRoute` (`lib/api/admin-route.ts`), which checks the admin token
   and answers rejections and failures with the request id.
 - `images.ts` processes incoming covers with the game's cover rules.
-- `publication.ts` publishes game-scoped catalog objects. `notifications.ts`
-  formats the song data update embed.
+- `publication.ts` publishes game-scoped catalog objects. `revalidation.ts`
+  then invalidates the game's cache tags and, on the game's own site, its song
+  pages, and asks every deployment in `CATALOG_PEER_ORIGINS` to drop its tags
+  through `POST /api/admin/catalog/revalidate`. `notifications.ts` formats the
+  song data update embed.
 
 Discord delivery is generic and lives in
 `apps/main/src/server/services/discord/webhook.ts`. It posts embeds under the
@@ -172,7 +175,10 @@ Every admin request names its game. Requests that write the catalog (`upload`,
 `update_all`, `db`, `import` and `catalog/publish`) must go to the game's own
 site, the deployment whose `FRONTEND_GAME` is that game, because only that
 deployment renders the game's pages and can refresh them. Any other deployment
-answers `409` with `WRONG_SITE`. Collection alone may run on any deployment:
+answers `409` with `WRONG_SITE`. Every deployment serves every game's public
+API, so the writing site then asks the deployments listed in
+`CATALOG_PEER_ORIGINS` to drop their cached copies. Collection alone may run on
+any deployment:
 
 - `/api/admin/update?game=chunithm&region=jp` collects and returns the catalog.
 - `/api/admin/update_all?game=chunithm&image_upload=true`, on the CHUNITHM site,

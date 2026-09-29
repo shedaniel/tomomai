@@ -67,7 +67,8 @@ When enabled, the widget must have [pre-clearance enabled](https://developers.cl
 
 | Variable | Required | Description |
 |---|---|---|
-| `ADMIN_UPDATE_TOKEN` | Yes | Bearer token for admin API routes. Generate with `openssl rand -base64 32` |
+| `ADMIN_UPDATE_TOKEN` | Yes | Bearer token for admin API routes. Generate with `openssl rand -base64 32`. Every game's deployment needs the same value when `CATALOG_PEER_ORIGINS` is set |
+| `CATALOG_PEER_ORIGINS` | No | Comma-separated origins of the other games' deployments, such as `https://chunithm.example.com`. After a catalog write, this site asks each peer to drop its cached copy of that game's public API data. Leave it unset for a single deployment |
 
 ### Crypto / Tokens
 
