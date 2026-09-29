@@ -1,29 +1,33 @@
 import { describe, it, expect, beforeAll } from "vitest";
-import { value } from "@/server/services/catalog/ingestion/types";
+import { value, type CatalogFetchContext, type SourceChart } from "@/server/services/catalog/ingestion/types";
+import { asCatalogFetcher } from "@/server/services/catalog/ingestion/merge";
+import { catalogChartLabel } from "@/server/services/catalog/ingestion/normalize-charts";
 import pino from "pino";
-import { maimaiVersionAt, VersionId } from "@/lib/games/maimai/versions";
+import { getCurrentVersion } from "@/lib/games/versions";
+import { chartTypeToCode, difficultyToCode } from "@/lib/games/maimai/codes";
 import { loginAndGetCookies } from "../login";
 import { MaimaiBaseFetcher } from "./sources/base-songs";
 import { DxDataFetcher } from "./sources/dxrating";
-import { FETCHERS } from "./pipeline";
-import { asFetcher, key } from "./merge";
-import type { FetchingContext, FetchingContextExtended, PendingSong, SongFetcher } from "./types";
-import { fetchSongDataForDifficulty, parsedSongToPendingSong } from "./sources/scraper";
+import { maimaiCatalogStages } from "./pipeline";
+import { maimaiLevelPolicy } from "./chart";
+import { fillMissingStage } from "@/server/services/catalog/ingestion/levels";
+import { fetchSongDataForDifficulty, toSourceChart } from "./sources/scraper";
 import { openGameSite } from "@/server/services/games/sega/http";
 import { assertMaimaiPage } from "../scores/parse-utils";
 
 const TOKEN = process.env.TOKEN;
 const testLog = pino({ enabled: false });
 const shouldSkip = !TOKEN;
+const MASTER = difficultyToCode("master");
 
 // Scaled-down scraper
-const ScaledMaimaiScraperFetcher = (versionToFetch: VersionId) => asFetcher(async ({ site, log }) => {
+const ScaledMaimaiScraperFetcher = (versionToFetch: number) => asCatalogFetcher(async ({ region, session, log }) => {
   log.info("Fetching master difficulty songs only (scaled test)...");
 
   const difficulty = 3; // master
 
   const parsedSongs = await fetchSongDataForDifficulty(
-    site,
+    openGameSite("maimai", region, session, { assertPage: assertMaimaiPage }),
     "master",
     difficulty,
     versionToFetch + 13,
@@ -32,13 +36,13 @@ const ScaledMaimaiScraperFetcher = (versionToFetch: VersionId) => asFetcher(asyn
 
   log.info(`Fetched ${parsedSongs.length} songs from scaled scraper`);
 
-  return parsedSongs.map(parsedSongToPendingSong);
+  return parsedSongs.map(toSourceChart);
 });
 
 describe.skipIf(shouldSkip)("Integration: LevelFetcher", () => {
-  let context: FetchingContext;
-  let scraperSongs: PendingSong[];
-  let mergedSongs: PendingSong[];
+  let context: CatalogFetchContext;
+  let scraperSongs: SourceChart[];
+  let mergedSongs: SourceChart[];
 
   beforeAll(async () => {
     if (!TOKEN) {
@@ -47,7 +51,7 @@ describe.skipIf(shouldSkip)("Integration: LevelFetcher", () => {
 
     // Force region to intl as requested
     const region = "intl";
-    const version = maimaiVersionAt(region, new Date());
+    const version = getCurrentVersion("maimai", region);
 
     // Login and get cookies
     testLog.info("Logging in to get cookies...");
@@ -58,15 +62,12 @@ describe.skipIf(shouldSkip)("Integration: LevelFetcher", () => {
     context = {
       region,
       version,
-      site: openGameSite("maimai", region, { cookies }, { assertPage: assertMaimaiPage }),
+      session: { cookies },
       log: testLog,
       notice: { addDetail() {}, details: [] },
     };
-    const scraper = ScaledMaimaiScraperFetcher(11);
-    scraperSongs = await scraper({ ...context, previous: null, current: scraper, fetcherIndex: 0 }, []);
-    mergedSongs = await MaimaiBaseFetcher({
-      ...context, previous: scraper, current: MaimaiBaseFetcher, fetcherIndex: 1,
-    }, scraperSongs);
+    scraperSongs = await ScaledMaimaiScraperFetcher(11)(context, []);
+    mergedSongs = await MaimaiBaseFetcher(context, scraperSongs);
   }, 60000); // 60 second timeout for login
 
   it("should fetch and merge songs from ScaledMaimaiScraperFetcher and MaimaiBaseFetcher", async () => {
@@ -75,14 +76,14 @@ describe.skipIf(shouldSkip)("Integration: LevelFetcher", () => {
 
     // All songs should be master difficulty
     for (const song of scraperSongs) {
-      expect(song.difficulty).toBe("master");
+      expect(song.difficulty).toBe(MASTER);
     }
 
     // Check a few songs have the expected fields from scraper
     const sampleScraperSong = scraperSongs[0];
     expect(sampleScraperSong.songName).toBeDefined();
-    expect(sampleScraperSong.type).toBeDefined();
-    expect(sampleScraperSong.difficulty).toBe("master");
+    expect(sampleScraperSong.chartType).toBeDefined();
+    expect(sampleScraperSong.difficulty).toBe(MASTER);
     expect(value(sampleScraperSong.level)).toBeDefined();
     expect(value(sampleScraperSong.addedVersion)).toBeDefined();
     expect(sampleScraperSong.extras).toBeDefined();
@@ -125,7 +126,7 @@ describe.skipIf(shouldSkip)("Integration: LevelFetcher", () => {
     testLog.info(`Songs with cover: ${songsWithCover}/${mergedSongs.length}`);
     testLog.info(`Songs with genre: ${songsWithGenre}/${mergedSongs.length}`);
 
-    testLog.info(`Songs without artist: ${mergedSongs.filter(s => !value(s.artist)).map(key).join(', ')}`)
+    testLog.info(`Songs without artist: ${mergedSongs.filter(s => !value(s.artist)).map(catalogChartLabel).join(', ')}`)
 
     // Most songs should have been enriched (allowing for some missing data)
     expect(songsWithArtist).toBeGreaterThan(mergedSongs.length * 0.8);
@@ -140,11 +141,10 @@ describe.skipIf(shouldSkip)("Integration: LevelFetcher", () => {
       expect(typeof song.songName).toBe("string");
       expect(song.songName.length).toBeGreaterThan(0);
 
-      // type should be 'std' or 'dx'
-      expect(["std", "dx"]).toContain(song.type);
+      expect([chartTypeToCode("std"), chartTypeToCode("dx")]).toContain(song.chartType);
 
       // difficulty should be master (since we only fetched master)
-      expect(song.difficulty).toBe("master");
+      expect(song.difficulty).toBe(MASTER);
 
       // level should be defined
       expect(value(song.level)).toBeDefined();
@@ -181,13 +181,7 @@ describe.skipIf(shouldSkip)("Integration: LevelFetcher", () => {
 
     // Step 3: Run DxDataFetcher
     testLog.info("Running DxDataFetcher...");
-    const dxDataContext = {
-      ...context,
-      previous: MaimaiBaseFetcher as SongFetcher,
-      current: DxDataFetcher as SongFetcher,
-      fetcherIndex: 2,
-    };
-    const finalSongs = await DxDataFetcher(dxDataContext, baseSongs);
+    const finalSongs = await DxDataFetcher(context, baseSongs);
     testLog.info(`DxDataFetcher returned ${finalSongs.length} songs`);
     expect(finalSongs.length).toBe(baseSongs.length);
 
@@ -206,7 +200,7 @@ describe.skipIf(shouldSkip)("Integration: LevelFetcher", () => {
 
     // Verify data from scraper
     expect(fullyEnrichedSong!.songName).toBeDefined();
-    expect(fullyEnrichedSong!.difficulty).toBe("master");
+    expect(fullyEnrichedSong!.difficulty).toBe(MASTER);
     expect(value(fullyEnrichedSong!.level)).toBeDefined();
     expect(value(fullyEnrichedSong!.addedVersion)).toBeDefined();
     expect(fullyEnrichedSong!.extras?.inputName).toBeDefined();
@@ -264,29 +258,17 @@ describe.skipIf(shouldSkip)("Integration: LevelFetcher", () => {
 
   it("should handle Link properly", async () => {
     testLog.info("Running ScaledMaimaiScraperFetcher...");
-    const fetchers = [...FETCHERS]
-    // remove first fetcher
-    fetchers.splice(0, 1);
+    const isLinkMaster = (s: SourceChart) => s.songName === "Link" && s.difficulty === MASTER;
+    const describeCharts = (charts: SourceChart[]) => charts.map(s => catalogChartLabel(s) + "@" + value(s.artist) + "@" + value(s.addedVersion));
+    let songs = [
+      ...await ScaledMaimaiScraperFetcher(-12)(context, []),
+      ...await ScaledMaimaiScraperFetcher(-9)(context, []),
+    ].filter(isLinkMaster);
+    testLog.info(`At base: ${songs.length} songs with ${describeCharts(songs)}`);
 
-    const scraperContext = {
-      ...context,
-      previous: null,
-      current: fetchers[0],
-      fetcherIndex: 0,
-    } as FetchingContextExtended;
-    let songs: PendingSong[] = [];
-    songs = [
-      ...await ScaledMaimaiScraperFetcher(-12)(scraperContext, []),
-      ...await ScaledMaimaiScraperFetcher(-9)(scraperContext, []),
-    ].filter(s => s.songName === "Link" && s.difficulty === "master")
-    testLog.info(`At base: ${songs.length} songs with ${songs.map(s => key(s) + "@" + value(s.artist) + "@" + value(s.addedVersion))}`);
-
-    for (const fetcher of fetchers) {
-      scraperContext.current = fetcher;
-      songs = (await fetcher(scraperContext, songs)).filter(s => s.songName === "Link" && s.difficulty === "master");
-      testLog.info(`Merged #${scraperContext.fetcherIndex}: got ${songs.length} songs with ${songs.map(s => key(s) + "@" + value(s.artist) + "@" + value(s.addedVersion))}`);
-      scraperContext.previous = fetcher;
-      scraperContext.fetcherIndex++;
+    for (const stage of [...maimaiCatalogStages("intl").slice(1), fillMissingStage(maimaiLevelPolicy(context.version))]) {
+      songs = (await stage.run(context, songs)).filter(isLinkMaster);
+      testLog.info(`Merged ${stage.name}: got ${songs.length} songs with ${describeCharts(songs)}`);
     }
 
     expect(songs.length).toBe(2);

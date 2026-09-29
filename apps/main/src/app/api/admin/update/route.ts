@@ -8,9 +8,7 @@ import { Region } from "@/lib/types";
 import { getCurrentVersion } from "@/lib/games/versions";
 import { awaitWrapper, sortKeys } from "@/lib/utils";
 import { sendDiscordNotice } from "@/server/services/discord/webhook";
-import { createNoticeSink } from "@/server/services/catalog/ingestion/runner";
-import { collectGameCatalog } from "@/server/services/catalog/ingestion/collect";
-import { authenticateCatalogSource } from "@/server/services/catalog/ingestion/source-auth";
+import { authenticateCatalogSource, collectCatalog } from "@/server/services/catalog/ingestion/collect";
 import { formatCatalogError } from "@/server/services/catalog/errors";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -70,19 +68,13 @@ export async function GET(request: NextRequest) {
     }
     log.info({ game, region }, "Admin catalog collection requested");
 
-    const songs = await collectGameCatalog(game, {
+    const songs = await collectCatalog(game, {
       region,
       version: getCurrentVersion(game, region),
-      cookies: cookies ?? "",
+      session: { cookies: cookies ?? "" },
       log,
-      notice: createNoticeSink(),
     });
-
-    // Convert to json
-    const newRecords = songs
-      // sort keys
-      .map(record => sortKeys(record))
-      .sort((a, b) => a.songName.localeCompare(b.songName) * 1000000 + (a.difficulty - b.difficulty) * 1000 + (a.chartType - b.chartType));
+    const newRecords = songs.map(record => sortKeys(record));
 
     log.info({ count: newRecords.length }, "Update completed successfully");
 

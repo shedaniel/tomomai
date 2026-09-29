@@ -1,12 +1,16 @@
 import "server-only";
+import { parseDisplayLevel } from "@/server/services/catalog/ingestion/levels";
+import { chunithmImagePolicy } from "./catalog/images";
 import type { GameServerModule } from "../types";
 
 export const chunithmServerModule: GameServerModule = {
   catalog: {
-    async collect(context) {
-      const { collectChunithmCatalog } = await import("./catalog/pipeline");
-      return collectChunithmCatalog(context);
+    async stages() {
+      const { OtogeDbFetcher } = await import("./catalog/sources/otoge-db");
+      return [{ name: "OtogeDB", run: OtogeDbFetcher }];
     },
+    levelPolicy: () => ({ toPrecise: level => parseDisplayLevel(level, 5) }),
+    images: chunithmImagePolicy,
   },
   scores: {
     async fetch(context, run) {

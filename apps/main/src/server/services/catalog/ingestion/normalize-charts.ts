@@ -2,8 +2,7 @@ import { value, type PendingChart } from "@/server/services/catalog/ingestion/ty
 import type { CanonicalGameId } from "@/lib/games/types";
 import type { NoteCounts } from "@/lib/types";
 import type { Logger } from "pino";
-import { hasCode } from "@/lib/games/codes";
-import { requireCatalogValue } from "@/server/services/catalog/ingestion/runner";
+import { hasCode, keyOf } from "@/lib/games/codes";
 
 export type CatalogChart = {
   game: CanonicalGameId;
@@ -23,8 +22,28 @@ export type CatalogChart = {
   extras?: Record<string, unknown>;
 };
 
-export function catalogChartKey(chart: Pick<CatalogChart, "game" | "songName" | "chartType" | "difficulty">): string {
+type ChartIdentity = Pick<CatalogChart, "game" | "songName" | "chartType" | "difficulty">;
+
+export function catalogChartKey(chart: ChartIdentity): string {
   return JSON.stringify([chart.game, chart.songName, chart.chartType, chart.difficulty]);
+}
+
+/** A readable `name@type@difficulty` name for stage notices. Identity comparisons use catalogChartKey. */
+export function catalogChartLabel(chart: ChartIdentity): string {
+  return `${chart.songName}@${keyOf(chart.game, "chartType", chart.chartType)}@${keyOf(chart.game, "difficulty", chart.difficulty)}`;
+}
+
+export function compareCatalogCharts(a: CatalogChart, b: CatalogChart): number {
+  return a.songName.localeCompare(b.songName) || a.artist.localeCompare(b.artist)
+    || a.chartType - b.chartType || a.difficulty - b.difficulty;
+}
+
+export function requireCatalogValue<T>(value: T | null | undefined, field: string, songKey: string, log: Logger): T {
+  if (value === null || value === undefined) {
+    log.error({ songKey }, `Value is null or undefined for ${field}`);
+    throw new Error(`Value is null or undefined for ${field}`);
+  }
+  return value;
 }
 
 export function completeCatalogChart(chart: PendingChart, log: Logger): CatalogChart {

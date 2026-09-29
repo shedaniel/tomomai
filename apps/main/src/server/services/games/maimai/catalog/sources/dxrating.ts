@@ -1,35 +1,40 @@
 import "server-only";
-import { getVersionByShortName, VersionId } from "@/lib/games/maimai/versions";
+import { getVersionByShortName } from "@/lib/games/maimai/versions";
 import { getVersion } from "@/lib/games/versions";
+import { isCodeKey } from "@/lib/games/codes";
 import { normalizeName } from "@/lib/name-utils";
-import { NoteCounts } from "@/lib/types";
-import type { Level } from "../levels";
-import { DxRatingResponse } from "./dxrating-types";
+import type { NoteCounts } from "@/lib/types";
+import type { DxRatingResponse } from "./dxrating-types";
 import { getLogger } from "@/lib/request-logger";
-import type { PendingSong } from "../types";
-import { asFetcher } from "../merge";
+import { asCatalogFetcher } from "@/server/services/catalog/ingestion/merge";
+import { maimaiChart } from "../chart";
 
 const DXDATA_URL = "https://raw.githubusercontent.com/gekichumai/dxrating/refs/heads/main/packages/dxdata/dxdata.json";
 
-export const DxDataFetcher = asFetcher(async ({ version, region, notice }) => {
+export const DxDataFetcher = asCatalogFetcher(async ({ version, region, notice }) => {
   const res = await fetchDxDataJson();
   const sheetsWithBpm = res.songs.filter(s => !!s.bpm).length;
   const sheetsWithDesigner = res.songs.flatMap(s => s.sheets).filter(s => !!s.noteDesigner && s.noteDesigner !== "-").length;
   const sheetsWithNotes = res.songs.flatMap(s => s.sheets).filter(s => !!s.noteCounts).length;
   notice.addDetail(`${res.songs.length} songs, ${sheetsWithBpm} with BPM, ${sheetsWithDesigner} with designer, ${sheetsWithNotes} with note counts`);
 
-  return res.songs.flatMap(song => song.sheets.map(sheet => ({
-    songName: normalizeName(song.title),
-    artist: song.artist,
-    level: sheet.level.replace("?", "") as Level,
-    levelPrecise: getInternalLevelFromDxData(sheet, version) ?? undefined,
-    type: sheet.type !== "utage" ? sheet.type : "dx",
-    difficulty: sheet.difficulty,
-    bpm: !!song.bpm ? song.bpm : undefined,
-    noteDesigner: !!sheet.noteDesigner && sheet.noteDesigner !== "-" ? sheet.noteDesigner : undefined,
-    noteCounts: hasValidNoteCounts(sheet.noteCounts) ? fromDxRatingCounts(sheet.noteCounts) : undefined,
-    addedVersion: !!sheet.version ? getVersionByShortName(region === "intl" && "intl" in (sheet.regionOverrides ?? {}) ? sheet.regionOverrides!["intl"].version ?? sheet.version : sheet.version)?.id : undefined
-  }) satisfies PendingSong));
+  return res.songs.flatMap(song => song.sheets.flatMap(sheet => {
+    const type = sheet.type !== "utage" ? sheet.type : "dx";
+    // A sheet kind without a maimai code could never match a collected chart in this only-modify source.
+    if (!isCodeKey("maimai", "chartType", type) || !isCodeKey("maimai", "difficulty", sheet.difficulty)) return [];
+    return [maimaiChart({
+      songName: normalizeName(song.title),
+      artist: song.artist,
+      level: sheet.level.replace("?", ""),
+      levelPrecise: getInternalLevelFromDxData(sheet, version) ?? undefined,
+      type,
+      difficulty: sheet.difficulty,
+      bpm: !!song.bpm ? song.bpm : undefined,
+      noteDesigner: !!sheet.noteDesigner && sheet.noteDesigner !== "-" ? sheet.noteDesigner : undefined,
+      noteCounts: hasValidNoteCounts(sheet.noteCounts) ? fromDxRatingCounts(sheet.noteCounts) : undefined,
+      addedVersion: !!sheet.version ? getVersionByShortName(region === "intl" && "intl" in (sheet.regionOverrides ?? {}) ? sheet.regionOverrides!["intl"].version ?? sheet.version : sheet.version)?.id : undefined
+    })];
+  }));
 }, "only-modify");
 
 // Helper function to fetch dxdata.json
@@ -52,7 +57,7 @@ export async function fetchDxDataJson(): Promise<DxRatingResponse> {
 
 function getInternalLevelFromDxData(
   sheet: DxRatingResponse["songs"][number]["sheets"][number],
-  version: VersionId,
+  version: number,
 ): number | null {
   const currentVersionInfo = getVersion("maimai", version);
   if (!currentVersionInfo) {

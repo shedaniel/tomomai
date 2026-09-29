@@ -9,28 +9,36 @@ public frontend.
 
 ## Fetch pipeline
 
-Both games use the same step runner extracted from the existing maimai level
-fetcher. CHUNITHM configures `OtogeDB → Fill Missing → Sorter`; the maimai
-provider list and ordering stay intact. Source steps merge through the same
-fetcher adapter and force-mode handling, and every step receives the same
-previous/current step, index, logger and notice state. Source attribution,
-stage summaries, validation and final required-field checks belong to that
-shared runner.
+Both games collect through one `collectCatalog(game, context)`. It takes the
+game's source stages for the region, appends the shared Fill Missing stage with
+the game's level policy, runs them, completes every chart and sorts the result
+by title, artist, chart type and difficulty. CHUNITHM's stages are `OtogeDB`.
+maimai's are its scraper, official songs, DxData, fallback, otoge-db and
+after-fetch stages, or Lxns alone for CN.
+
+Every source emits `PendingChart` records with numeric chart codes. Source
+stages merge into the charts collected so far through `asCatalogFetcher`, with
+one merge policy and one identity, `catalogChartKey`. Source attribution, stage
+notices, title validation and final required-field checks belong to the shared
+runner.
 
 The CHUNITHM otoge-db source parses pending charts only. The shared Fill Missing
-step applies CHUNITHM's `.5` plus-level rule before the shared Sorter and
-finalization. The adapter's advertised stages come from this executable list.
+step applies CHUNITHM's `.5` plus-level rule before finalization.
 
 ## Code layout
 
 The shared catalog ingestion lives under `apps/main/src/server/services/catalog/`:
 
-- `ingestion/` owns the canonical collection (`collect.ts`, `collectGameCatalog`)
-  and persistence entrypoints, shared step runner, merge modes, Fill Missing and
-  sorting stages, pending chart and cover-rule contracts, admin upload parsing
-  (`parse-upload.ts`), normalization and parent identity matching.
+- `ingestion/` owns collection (`collect.ts`: `collectCatalog` and source
+  authentication) and persistence, the stage runner (`runner.ts`), the merge
+  policy and modes (`merge.ts`), display levels and the Fill Missing stage
+  (`levels.ts`), the pending chart and cover-rule contracts (`types.ts`), admin
+  upload parsing (`parse-upload.ts`), chart identity, completion and ordering
+  (`normalize-charts.ts`) and parent identity matching.
+- `sources/otoge-db.ts` holds the otoge-db URLs and its date and constant parsing,
+  shared by both games' otoge-db sources.
 - `admin-game.ts` resolves the explicit game and its regions for admin routes.
-- `images.ts` processes incoming covers with each game's cover rules.
+- `images.ts` processes incoming covers with the game's cover rules.
 - `publication.ts` publishes game-scoped catalog objects. `notifications.ts`
   formats the song data update embed.
 
@@ -39,24 +47,23 @@ Discord delivery is generic and lives in
 game's bot identity after the response is sent, truncates long descriptions and
 sends the stage, error and tour event notices.
 
-Each game's catalog lives in its game root, under
-`apps/main/src/server/services/games/<game>/catalog/`:
+Each game describes its catalog once, as the `catalog` field of its server
+module (`server/services/games/<game>/index.ts`, typed `CatalogSource`): its
+source stages per region (loaded lazily), level policy, cover rules, title
+normalization, source login and, for maimai, the legacy upload decoder. The
+implementations live in `apps/main/src/server/services/games/<game>/catalog/`:
 
-- `maimai/catalog/` owns its executable pipeline (`collectMaimaiCatalog`),
-  legacy chart normalization, merge configuration, pending-song shape, cover
-  rules (`images.ts`) and `sources/` implementations.
-- `chunithm/catalog/` owns its executable pipeline (`collectChunithmCatalog`),
-  source fetcher adapter (`fetcher.ts`), cover rules (`images.ts`) and otoge-db
-  source under `sources/`, with source fixtures and tests beside that
-  implementation.
+- `maimai/catalog/` owns its stage list (`pipeline.ts`), the chart helper and
+  level policy (`chart.ts`), the legacy upload decoder (`legacy-upload.ts`),
+  genre normalization, cover rules (`images.ts`) and `sources/` implementations.
+- `chunithm/catalog/` owns its cover rules (`images.ts`) and the otoge-db source
+  under `sources/`, with source fixtures under `fixtures/` and its tests beside
+  the source.
 
 Admin routes authenticate and dispatch an explicit game into these shared
-entrypoints. Source acquisition, source authentication and game-specific rules
-stay in their game directory. The registry binds these pipelines; it does not
-introduce a separate collection loop. Both games retain the existing order:
-source stages, Fill Missing, Sorter, required-field normalization, persistence,
-publication, then cache invalidation and notifications. No migration or URL
-changes are part of this layout refactor.
+entrypoints. Both games run in the same order: source stages, Fill Missing,
+required-field completion, sorting, persistence, publication, then cache
+invalidation and notifications.
 
 ## Sources and versions
 
@@ -94,9 +101,9 @@ a title with a regular chart. The deleted-song archive is not imported.
 - Display levels are kept separately from the optional `lev_*_i` chart constant.
   A known `14.2` becomes `levelPrecise: 142`. The shared Fill Missing stage
   estimates absent constants from the displayed lower bound: `14` → `140`,
-  `14+` → `145` for CHUNITHM. Known source constants are not replaced. The same
-  pure helper powers maimai’s existing FillMissingFetcher, retaining its current
-  `.6` / historical `.7` plus thresholds and mismatch correction. Completed
+  `14+` → `145` for CHUNITHM. Known source constants are not replaced. maimai's
+  level policy keeps its `.6` / historical `.7` plus thresholds and mismatch
+  correction. Completed
   catalog charts always have numeric precision; an unresolvable chart fails
   validation instead of being dropped.
 - `addedVersion` uses the existing shared date-to-version helper and is required
@@ -138,7 +145,7 @@ read on 2026-09-26; source Git blob IDs were
 `2dddbe4815bfc0abb22d485935fdb5bfd201602a` (JP) and
 `e78d65e5ec93851a34d6f2fc5b239412e94af8b7` (International).
 
-Full snapshots passed through the shared source, Fill Missing and Sorter stages:
+Full snapshots passed through the shared source and Fill Missing stages:
 6,843 regular JP charts (2,261 known constants) and 6,363 International charts
 (2,242 known constants), all with numeric `levelPrecise` and `addedVersion`. These are
 source coverage observations, not minimum counts enforced against future

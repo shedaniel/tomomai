@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { parseLegacyCatalogChart } from "@/server/services/games/maimai/catalog/normalize";
 import { gameIdSchema } from "@/lib/games/schema";
+import { GAME_SERVER_MODULES } from "@/server/services/games/registry";
 import type { CanonicalGameId } from "@/lib/games/types";
 import { validateCatalogCharts, type CatalogChart } from "@/server/services/catalog/ingestion/normalize-charts";
 import { value } from "@/server/services/catalog/ingestion/types";
@@ -20,12 +20,8 @@ const chart = z.object({
 
 export function parseCatalogUpload(game: CanonicalGameId, input: unknown): CatalogChart[] {
   const records = z.array(z.unknown()).nonempty().parse(input);
-  const parsed = records.map(record => {
-    if (game === "maimai" && typeof record === "object" && record !== null && "type" in record && !("chartType" in record)) {
-      return parseLegacyCatalogChart(record);
-    }
-    return chart.parse(record);
-  });
+  const { parseLegacyRecord } = GAME_SERVER_MODULES[game].catalog;
+  const parsed = records.map(record => parseLegacyRecord?.(record) ?? chart.parse(record));
   validateCatalogCharts(game, parsed);
   return parsed;
 }

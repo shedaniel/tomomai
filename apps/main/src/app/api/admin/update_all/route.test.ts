@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
-import type { CatalogFetchContext } from "@/server/services/catalog/ingestion/types";
+import type { CatalogCollectContext } from "@/server/services/catalog/ingestion/types";
 import type { CanonicalGameId } from "@/lib/games/types";
 import { DrizzleQueryError } from "drizzle-orm";
 
@@ -9,8 +9,10 @@ const mocks = vi.hoisted(() => {
   log.child.mockReturnValue(log);
   return { log, source: vi.fn(), ingest: vi.fn(), publish: vi.fn(), login: vi.fn(), notice: vi.fn().mockResolvedValue(undefined), flush: vi.fn(), invalidate: vi.fn() };
 });
-vi.mock("@/server/services/games/maimai/catalog/pipeline", () => ({ collectMaimaiCatalog: (ctx: CatalogFetchContext) => mocks.source("maimai", ctx) }));
-vi.mock("@/server/services/games/chunithm/catalog/pipeline", () => ({ collectChunithmCatalog: (ctx: CatalogFetchContext) => mocks.source("chunithm", ctx) }));
+vi.mock("@/server/services/catalog/ingestion/collect", async importOriginal => ({
+  ...await importOriginal<typeof import("@/server/services/catalog/ingestion/collect")>(),
+  collectCatalog: (game: CanonicalGameId, ctx: CatalogCollectContext) => mocks.source(game, ctx),
+}));
 vi.mock("@/server/services/games/maimai/login", () => ({ loginAndGetCookies: mocks.login }));
 vi.mock("@/lib/games/versions", () => ({ getCurrentVersion: () => 9, getRegionalVersion: () => ({ id: 9 }) }));
 vi.mock("@/server/services/catalog/ingestion/persistence", () => ({ persistCatalog: mocks.ingest }));
@@ -53,7 +55,7 @@ describe("configured catalog admin pipeline", () => {
     const response = await GET(request("update_all?game=chunithm&region=jp&image_upload=false"));
     expect(response.status).toBe(200);
     expect(mocks.login).not.toHaveBeenCalled();
-    expect(mocks.source).toHaveBeenCalledWith("chunithm", expect.objectContaining({ region: "jp", cookies: "" }));
+    expect(mocks.source).toHaveBeenCalledWith("chunithm", expect.objectContaining({ region: "jp", session: { cookies: "" } }));
     expect(mocks.ingest).toHaveBeenCalledWith("chunithm", "jp", 9, [chart], "alter", mocks.log);
     expect(mocks.publish).toHaveBeenCalledWith("chunithm");
     expect(mocks.invalidate).toHaveBeenCalledWith("all-unique-songs:chunithm", { expire: 3600 });
@@ -115,7 +117,7 @@ describe("configured catalog admin pipeline", () => {
     const response = await collect(request("update?game=maimai&region=jp&token=player-token"));
     expect(response.status).toBe(200);
     expect(mocks.login).toHaveBeenCalledWith("jp", "player-token");
-    expect(mocks.source).toHaveBeenCalledWith("maimai", expect.objectContaining({ cookies: "source-cookie" }));
+    expect(mocks.source).toHaveBeenCalledWith("maimai", expect.objectContaining({ session: { cookies: "source-cookie" } }));
   });
   it("keeps maimai CN source token-free", async () => {
     expect((await collect(request("update?game=maimai&region=cn"))).status).toBe(200);

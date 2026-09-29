@@ -1,16 +1,16 @@
 import "server-only";
-import { VersionId } from "@/lib/games/maimai/versions";
 import { getLogger } from "@/lib/request-logger";
 import { Region } from "@/lib/types";
-import type { Difficulty, SongType } from "@/lib/games/maimai/types";
-import type { Level } from "../levels";
-import type { PendingSong } from "../types";
+import type { SongType } from "@/lib/games/maimai/types";
+import { asCatalogFetcher } from "@/server/services/catalog/ingestion/merge";
+import type { SourceChart } from "@/server/services/catalog/ingestion/types";
 import { promises as fs } from "fs";
 import { join } from "path";
-import { asFetcher } from "../merge";
+import { maimaiChart } from "../chart";
+import { normalizeGenre } from "../genres";
 
 type FallbackLevel = {
-  "level": Level,
+  "level": string,
   "levelPrecise": number
 }
 
@@ -19,7 +19,7 @@ type FallbackSong = {
   "artist": string,
   "genre": string,
   "type": SongType,
-  "addedVersion": VersionId,
+  "addedVersion": number,
   "cover": string,
   "levels": {
     "easy"?: FallbackLevel,
@@ -31,7 +31,7 @@ type FallbackSong = {
   }
 }
 
-export const FallbackFetcher = asFetcher(async (context) => {
+export const FallbackFetcher = asCatalogFetcher(async (context) => {
   const fallback = await loadFallbackJsonData(context.region, context.version)
   if (!fallback) {
     context.notice.addDetail("No fallback file found");
@@ -39,21 +39,21 @@ export const FallbackFetcher = asFetcher(async (context) => {
   }
   context.notice.addDetail(`Loaded ${fallback.length} fallback songs`);
   return fallback.flatMap(song => {
-    const levels: PendingSong[] = []
-    for (const diff of ["easy", "advanced", "expert", "master", "remaster", "utage"]) {
-      const level = song.levels[diff as keyof typeof song.levels] as FallbackLevel | undefined;
+    const levels: SourceChart[] = []
+    for (const diff of ["easy", "advanced", "expert", "master", "remaster", "utage"] as const) {
+      const level = song.levels[diff];
       if (level) {
-        levels.push({
+        levels.push(maimaiChart({
           songName: song.title,
           type: song.type,
-          difficulty: diff === "easy" ? "basic" : diff as Difficulty,
+          difficulty: diff === "easy" ? "basic" : diff,
           artist: song.artist,
           cover: song.cover,
           level: level.level,
           levelPrecise: level.levelPrecise,
-          genre: song.genre,
+          genre: normalizeGenre(song.genre),
           addedVersion: song.addedVersion,
-        });
+        }));
       }
     }
     return levels;

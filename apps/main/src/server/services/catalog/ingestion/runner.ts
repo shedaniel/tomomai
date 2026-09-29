@@ -1,138 +1,87 @@
 import deepEqual from "deep-equal";
-import type { CatalogFetchContext } from "@/server/services/catalog/ingestion/types";
 import type { Logger } from "pino";
+import type { CanonicalGameId } from "@/lib/games/types";
+import { sendDiscordNotice } from "@/server/services/discord/webhook";
+import { catalogChartKey, catalogChartLabel, completeCatalogChart, type CatalogChart } from "./normalize-charts";
+import type { CatalogCollectContext, CatalogFetchContext, NoticeSink, PendingChart, SourceChart } from "./types";
 
-export type FetchingContextExtended<T, C extends CatalogFetchContext> = C & {
-  previous: Fetcher<T, C> | null;
-  current: Fetcher<T, C>;
-  fetcherIndex: number;
-};
-export type Fetcher<T, C extends CatalogFetchContext> = (context: FetchingContextExtended<T, C>, songs: T[]) => Promise<T[]>;
-export type Attributed<T> = T & { addedFetcher: number; modifiedFetchers: number[] };
-export type FetcherDefinition<T, C extends CatalogFetchContext, R> = {
-  fetchers: Fetcher<T, C>[];
-  names: string[];
-  key: (song: T) => string;
-  validate?: (songs: T[], log: Logger) => void;
-  complete: (song: T, context: C) => R;
-  notify?: (title: string, body: string, color: number) => Promise<void>;
+export type CatalogStage = {
+  name: string;
+  run: (context: CatalogFetchContext, charts: SourceChart[]) => Promise<SourceChart[]>;
 };
 
-export function createNoticeSink() {
+export type FetcherDefinition = {
+  game: CanonicalGameId;
+  stages: CatalogStage[];
+  /** Runs after every stage, with that stage's logger. */
+  validate?: (charts: PendingChart[], log: Logger) => void;
+};
+
+type Attributed = SourceChart & { addedFetcher: number; modifiedFetchers: number[] };
+
+function createNoticeSink(): NoticeSink {
   const details: string[] = [];
   return { details, addDetail(detail: string) { details.push(detail); } };
 }
 
-export function requireCatalogValue<T>(value: T | null | undefined, field: string, songKey: string, log: Logger): T {
-  if (value === null || value === undefined) {
-    log.error({ songKey }, `Value is null or undefined for ${field}`);
-    throw new Error(`Value is null or undefined for ${field}`);
-  }
-  return value;
-}
+function summarizeStage(charts: Attributed[], index: number, name: string, chartsBefore: number, elapsed: number, notice: NoticeSink): string {
+  const added = charts.filter(chart => chart.addedFetcher === index);
+  const modified = charts.filter(chart => chart.addedFetcher !== index && chart.modifiedFetchers.includes(index));
+  const netChange = charts.length - chartsBefore;
 
-function summarizeStage<T>(songs: Attributed<T>[], fetcherIndex: number, fetcherName: string, songsBefore: number, elapsed: number, notice: { details: string[] }, key: (song: T) => string): { summary: string; noticeBody: string } {
-  const addedSongs = songs.filter(s => s.addedFetcher === fetcherIndex);
-  const modifiedSongs = songs.filter(s => s.addedFetcher !== fetcherIndex && s.modifiedFetchers.includes(fetcherIndex));
-  const netChange = songs.length - songsBefore;
-
-  const header = `**${fetcherName}**: ${songs.length} songs (${netChange >= 0 ? "+" : ""}${netChange}) — ${elapsed}ms`;
-  const changeLine = `+${addedSongs.length} added, ~${modifiedSongs.length} modified`;
-
-  const lines: string[] = [changeLine];
-  if (addedSongs.length > 0 && addedSongs.length < 30) {
-    lines.push("Added: " + addedSongs.map(s => key(s)).join(", "));
-  }
-  if (modifiedSongs.length > 0 && modifiedSongs.length < 30) {
-    lines.push("Modified: " + modifiedSongs.map(s => key(s)).join(", "));
-  }
+  const lines = [
+    `**${name}**: ${charts.length} songs (${netChange >= 0 ? "+" : ""}${netChange}) — ${elapsed}ms`,
+    `+${added.length} added, ~${modified.length} modified`,
+  ];
+  if (added.length > 0 && added.length < 30) lines.push("Added: " + added.map(catalogChartLabel).join(", "));
+  if (modified.length > 0 && modified.length < 30) lines.push("Modified: " + modified.map(catalogChartLabel).join(", "));
   lines.push(...notice.details);
-
-  const detailBlock = lines.join("\n");
-  return {
-    summary: `${header}\n${changeLine}${notice.details.length > 0 ? "\n" + notice.details.join("\n") : ""}`,
-    noticeBody: `${header}\n${detailBlock}`,
-  };
+  return lines.join("\n");
 }
 
-function attributeSource<T>(prevSongs: Attributed<T>[], newSongs: T[], fetcherIndex: number, key: (song: T) => string): Attributed<T>[] {
-  // Compare the songs, if new song entry, set addedFetcher, otherwise compare if modified, if yes, set modifiedFetcher
-  return newSongs.map(newSong => {
-    const existingSong = prevSongs.find(s => key(s) === key(newSong));
-    if (!existingSong) {
-      return { ...newSong, addedFetcher: fetcherIndex, modifiedFetchers: [fetcherIndex] };
+function attributeSource(previous: Attributed[], next: SourceChart[], index: number): Attributed[] {
+  return next.map(chart => {
+    const existing = previous.find(candidate => catalogChartKey(candidate) === catalogChartKey(chart));
+    if (!existing) {
+      return { ...chart, addedFetcher: index, modifiedFetchers: [index] };
     }
-    if (!deepEqual(existingSong, newSong)) {
-      return { ...newSong, addedFetcher: existingSong.addedFetcher, modifiedFetchers: [...existingSong.modifiedFetchers, fetcherIndex] };
+    if (!deepEqual(existing, chart)) {
+      return { ...chart, addedFetcher: existing.addedFetcher, modifiedFetchers: [...existing.modifiedFetchers, index] };
     }
-    return existingSong;
+    return existing;
   });
 }
 
-export async function runFetchers<T, C extends CatalogFetchContext, R>(context: C, definition: FetcherDefinition<T, C, R>): Promise<R[]> {
-  context.log.info(
-    { region: context.region, version: context.version },
-    "Starting level fetch pipeline"
-  );
+export async function runFetchers(context: CatalogCollectContext, { game, stages, validate }: FetcherDefinition): Promise<CatalogChart[]> {
+  const notify = (title: string, body: string, color: number) => {
+    sendDiscordNotice(game, context.region, title, body, color).catch(() => { });
+  };
+  context.log.info({ region: context.region, version: context.version }, "Starting level fetch pipeline");
 
-  const { fetchers, names, key } = definition;
-
-  let songs: Attributed<T>[] = []
-  let previous: Fetcher<T, C> | null = null;
-  let index = 0;
-  for (const fetcher of fetchers) {
-    const fetcherName = names[index] ?? `Fetcher ${index}`;
-    const logger = context.log.child({ index });
+  let charts: Attributed[] = [];
+  for (const [index, stage] of stages.entries()) {
+    const log = context.log.child({ index });
     const notice = createNoticeSink();
-    const extendedContext = {
-      ...context,
-      log: logger,
-      notice,
-      previous: previous,
-      current: fetcher,
-      fetcherIndex: index,
-    };
-    extendedContext.log.info("Fetcher starting...");
-    const songsBefore = songs.length;
+    log.info("Fetcher starting...");
+    const chartsBefore = charts.length;
     const startTime = Date.now();
-    const newSongs = await fetcher(extendedContext, songs);
-    const elapsed = Date.now() - startTime;
-    songs = attributeSource(songs, newSongs, index, key)
-    const stage = summarizeStage(songs, index, fetcherName, songsBefore, elapsed, notice, key);
-
-    definition.notify?.(
-      `Stage ${index + 1}/${fetchers.length}: ${fetcherName}`,
-      stage.noticeBody,
-      0x5865F2,
-    ).catch(() => { });
-
-    previous = fetcher;
-    index++;
-    definition.validate?.(songs, extendedContext.log);
+    const next = await stage.run({ ...context, log, notice }, charts);
+    charts = attributeSource(charts, next, index);
+    notify(`Stage ${index + 1}/${stages.length}: ${stage.name}`, summarizeStage(charts, index, stage.name, chartsBefore, Date.now() - startTime, notice), 0x5865F2);
+    validate?.(charts, log);
   }
 
-  const completed: R[] = [];
+  const completed: CatalogChart[] = [];
   const errors: unknown[] = [];
-  for (const song of songs) {
-    try { completed.push(definition.complete(song, context)); }
+  for (const chart of charts) {
+    try { completed.push(completeCatalogChart(chart, context.log)); }
     catch (err) { errors.push(err); }
   }
   if (errors.length) {
-    context.log.error({ errorCount: errors.length, songCount: songs.length }, "Errors occurred during song update");
+    context.log.error({ errorCount: errors.length, songCount: charts.length }, "Errors occurred during song update");
     throw new AggregateError(errors, "Errors occurred during song update");
   }
-  context.log.info(
-    { songCount: songs.length },
-    "Fetch pipeline completed successfully"
-  );
-
-  {
-    definition.notify?.(
-      "Fetch pipeline completed",
-      `**Total songs: ${songs.length}** (${fetchers.length} stages)`,
-      0x00FF00,
-    ).catch(() => { });
-  }
-
+  context.log.info({ songCount: charts.length }, "Fetch pipeline completed successfully");
+  notify("Fetch pipeline completed", `**Total songs: ${charts.length}** (${stages.length} stages)`, 0x00FF00);
   return completed;
 }

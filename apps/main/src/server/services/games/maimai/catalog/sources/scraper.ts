@@ -1,39 +1,48 @@
 import "server-only";
 import { logger } from "@/lib/logger";
-import type { GameSiteClient } from "@/server/services/games/sega/http";
-import { musicTypeFromIcon } from "../../scores/parse-utils";
-import { VersionId } from "@/lib/games/maimai/versions";
+import { openGameSite, type GameSiteClient } from "@/server/services/games/sega/http";
+import { assertMaimaiPage, musicTypeFromIcon } from "../../scores/parse-utils";
 import { normalizeName } from "@/lib/name-utils";
 import type { Difficulty, SongType } from "@/lib/games/maimai/types";
-import type { Level } from "../levels";
-import type { ParsedSong, PendingSong } from "../types";
-import { important, type NoticeSink } from "@/server/services/catalog/ingestion/types";
+import { asCatalogFetcher } from "@/server/services/catalog/ingestion/merge";
+import { important, type NoticeSink, type SourceChart } from "@/server/services/catalog/ingestion/types";
 import { load } from "cheerio";
-import { asFetcher } from "../merge";
 import { type Logger } from "pino";
 import { MAIMAI_CODES } from "@/lib/games/maimai/codes";
+import { maimaiChart } from "../chart";
 
-// Convert ParsedSong to PendingSong
-export function parsedSongToPendingSong(song: ParsedSong): PendingSong {
-  return {
+type ParsedSong = {
+  songName: string;
+  level: string;
+  musicType: SongType;
+  difficulty: Difficulty;
+  inputValue: string;
+  inputName: string;
+  version: number;
+  index: number;
+};
+
+export function toSourceChart(song: ParsedSong): SourceChart {
+  return maimaiChart({
     songName: song.songName,
     type: song.musicType,
-    difficulty: song.difficulty as Difficulty,
+    difficulty: song.difficulty,
     level: important(song.level),
-    addedVersion: important((song.version - 13) as VersionId),
+    addedVersion: important(song.version - 13),
     extras: {
       "inputName": song.inputName,
       "inputValue": song.inputValue,
     },
-  } satisfies PendingSong;
+  });
 }
 
-export const MaimaiScraperFetcher = asFetcher(async ({ version, site, log, notice }) => {
+export const MaimaiScraperFetcher = asCatalogFetcher(async ({ region, version, session, log, notice }) => {
+  const site = openGameSite("maimai", region, session, { assertPage: assertMaimaiPage });
   const parsedSongs = await prepareMaimaiScraper(site, version, log, notice);
-  return parsedSongs.map(parsedSongToPendingSong);
+  return parsedSongs.map(toSourceChart);
 });
 
-async function prepareMaimaiScraper(site: GameSiteClient, version: VersionId, log: Logger, notice: NoticeSink) {
+async function prepareMaimaiScraper(site: GameSiteClient, version: number, log: Logger, notice: NoticeSink) {
   log.info("Fetching and parsing song data for all difficulties and versions...");
   const allSongData: ParsedSong[] = [];
 
@@ -193,7 +202,7 @@ function parseSongData(html: string, difficultyName: Difficulty, difficulty: num
 
       const songData = {
         songName,
-        level: level as Level,
+        level,
         musicType,
         difficulty: difficultyName,
         inputValue,

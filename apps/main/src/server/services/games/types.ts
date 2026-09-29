@@ -1,8 +1,10 @@
 import type { EventData, ProfileData, Region } from "@/lib/types";
 import type { Flags } from "@/lib/flags";
 import type { CanonicalGameId, GameRegionContext } from "@/lib/games/types";
-import type { CatalogFetchContext } from "@/server/services/catalog/ingestion/types";
+import type { CatalogImagePolicy } from "@/server/services/catalog/ingestion/types";
 import type { CatalogChart } from "@/server/services/catalog/ingestion/normalize-charts";
+import type { CatalogLevelPolicy } from "@/server/services/catalog/ingestion/levels";
+import type { CatalogStage } from "@/server/services/catalog/ingestion/runner";
 import type { GameSnapshotData } from "@/lib/games/player-view";
 import type { FetchStartError } from "./fetch-errors";
 import type { FetchRun } from "./fetch-run";
@@ -53,10 +55,19 @@ export type GameFetchResult = {
   events?: NormalizedEvent[];
 };
 
+/** Everything the shared catalog pipeline needs to know about one game. */
 export interface CatalogSource {
+  /** The source stages of a region, in merge order. Fill Missing runs after them. */
+  stages: (region: Region) => Promise<CatalogStage[]>;
+  levelPolicy: (version: number) => CatalogLevelPolicy;
+  images: CatalogImagePolicy;
+  /** The canonical form of a song title. Every collected title must already be in it. */
+  normalizeTitle?: (title: string) => string;
   requiresToken?: (region: Region) => boolean;
+  /** Logs in with a player token and returns the session cookies the source stages read the game site with. */
   authenticate?: (region: Region, token: string) => Promise<string>;
-  collect: (ctx: CatalogFetchContext) => Promise<CatalogChart[]>;
+  /** Decodes an upload record in a retired format. Returns undefined for a record in the current format. */
+  parseLegacyRecord?: (input: unknown) => CatalogChart | undefined;
 }
 
 export type ScoreFetchContext = {

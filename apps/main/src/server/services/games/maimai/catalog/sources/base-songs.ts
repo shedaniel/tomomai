@@ -1,20 +1,42 @@
 import "server-only";
 import { Region } from "@/lib/types";
 import type { Difficulty, SongType } from "@/lib/games/maimai/types";
-import type { Level } from "../levels";
-import type { OfficialSong, PendingSong } from "../types";
-import { asFetcher } from "../merge";
+import { asCatalogFetcher } from "@/server/services/catalog/ingestion/merge";
 import { siteUrl } from "@/lib/games/sites";
 import { normalizeName } from "@/lib/name-utils";
 import { normalizeGenre } from "../genres";
-import { important } from "@/server/services/catalog/ingestion/types";
+import { important, type SourceChart } from "@/server/services/catalog/ingestion/types";
 import { getVersionByShortCode } from "@/lib/games/maimai/versions";
+import { maimaiChart } from "../chart";
+
+type OfficialSong = {
+  artist: string;
+  catcode: string;
+  image_url: string;
+  release: string;
+  lev_bas?: string;
+  lev_adv?: string;
+  lev_exp?: string;
+  lev_mas?: string;
+  lev_remas?: string;
+  lev_utage?: string;
+  dx_lev_bas?: string;
+  dx_lev_adv?: string;
+  dx_lev_exp?: string;
+  dx_lev_mas?: string;
+  dx_lev_remas?: string;
+  dx_lev_utage?: string;
+  sort: string;
+  title: string;
+  title_kana: string;
+  version: string;
+};
 
 const MAIMAI_SONGS_JSON_URL = "https://maimai.sega.jp/data/maimai_songs.json";
 const MAIMAI_SONGS_JSON_URL_INTL = "https://maimai.sega.com/assets/data/maimai_songs.json";
 
-export const MaimaiBaseFetcher = asFetcher(async ({ region, notice }) => {
-  const map = [
+export const MaimaiBaseFetcher = asCatalogFetcher(async ({ region, notice }) => {
+  const map: [keyof OfficialSong & `${string}lev_${string}`, Difficulty, SongType][] = [
     ["lev_bas", "basic", "std"],
     ["lev_adv", "advanced", "std"],
     ["lev_exp", "expert", "std"],
@@ -36,20 +58,20 @@ export const MaimaiBaseFetcher = asFetcher(async ({ region, notice }) => {
       : "https://maimaidx.jp/maimai-mobile/img/Music/default.png";
     const genre = normalizeGenre(song?.catcode || "Unknown");
 
-    const charts = [] as PendingSong[]
+    const charts: SourceChart[] = [];
     for (const [fieldName, difficulty, type] of map) {
-      if (!!(song as any)[fieldName]) {
-        charts.push({
+      const level = song[fieldName];
+      if (level) {
+        charts.push(maimaiChart({
           songName: normalizeName(song.title),
-          type: type as SongType,
-          difficulty: difficulty as Difficulty,
-          songKana: important(song.title_kana),
-          level: important(((song as any)[fieldName] as string).replace("?", "") as Level),
+          type,
+          difficulty,
+          level: important(level.replace("?", "")),
           cover,
           genre: important(genre),
           artist: important(song.artist),
           addedVersion: getVersionByShortCode(song.version)?.id,
-        } satisfies PendingSong);
+        }));
       }
     }
     return charts;

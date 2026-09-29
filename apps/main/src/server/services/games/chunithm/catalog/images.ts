@@ -1,7 +1,7 @@
 import type { CatalogImagePolicy } from "@/server/services/catalog/ingestion/types";
-import { OTOGE_DB_CHUNITHM_ROOT } from "./sources/otoge-db";
+import { otogeDbUrl } from "@/server/services/catalog/sources/otoge-db";
 
-const COVER_PREFIX = `${OTOGE_DB_CHUNITHM_ROOT}/jacket/`;
+const COVER_PREFIX = otogeDbUrl("chunithm/jacket/");
 
 export const chunithmImagePolicy: CatalogImagePolicy = {
   extractFilename: url => {

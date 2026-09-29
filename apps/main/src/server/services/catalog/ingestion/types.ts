@@ -1,6 +1,8 @@
 import type { NoteCounts, Region } from "@/lib/types";
 import type { CanonicalGameId } from "@/lib/games/types";
 import type { Logger } from "pino";
+import type { GameSiteSession } from "@/server/services/games/sega/http";
+import type { FetcherMode } from "./merge";
 
 export type Pending<T> = T | { important: boolean; value: T };
 
@@ -48,17 +50,23 @@ export type PendingChart = {
   extras?: Record<string, unknown>;
 };
 
+/** A chart as a source emits it. `mode` overrides the source's merge mode for this chart only. */
+export type SourceChart = PendingChart & { mode?: FetcherMode };
+
 export type CatalogImagePolicy = {
   extractFilename: (url: string) => string | null;
   preferUrl: (candidate: string, existing: string) => boolean;
   staticAssets: readonly { url: string; basename: string }[];
 };
 
-export type CatalogFetchContext = {
+export type CatalogCollectContext = {
   region: Region;
   version: number;
-  cookies?: string;
-  forceMode?: "default" | "only-modify" | "only-fallback";
+  /** The source login's session. Every stage that reads the game site shares it, so cookies it refreshes carry over. */
+  session: GameSiteSession;
   log: Logger;
+};
+
+export type CatalogFetchContext = CatalogCollectContext & {
   notice: NoticeSink;
 };

@@ -4,10 +4,9 @@ import type { Difficulty, SongType } from "@/lib/games/maimai/types";
 import { normalizeName } from "@/lib/name-utils";
 import { normalizeGenre } from "../genres";
 import { getVersionByShortCode } from "@/lib/games/maimai/versions";
-import type { PendingSong } from "../types";
-import { important } from "@/server/services/catalog/ingestion/types";
-import { levelToPrecise, type Level } from "../levels";
-import { asFetcher } from "../merge";
+import { asCatalogFetcher } from "@/server/services/catalog/ingestion/merge";
+import { important, type SourceChart } from "@/server/services/catalog/ingestion/types";
+import { maimaiChart, maimaiLevelPolicy } from "../chart";
 
 const LXNS_SONG_LIST_URL = "https://maimai.lxns.net/api/v0/maimai/song/list?notes=true";
 
@@ -60,7 +59,7 @@ interface LxnsResponse {
 
 const DIFFICULTY_BY_INDEX: Difficulty[] = ["basic", "advanced", "expert", "master", "remaster"];
 
-export const LxnsFetcher = asFetcher(async ({ notice }) => {
+export const LxnsFetcher = asCatalogFetcher(async ({ notice }) => {
   const response = await fetch(LXNS_SONG_LIST_URL, {
     headers: {
       "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
@@ -77,10 +76,10 @@ export const LxnsFetcher = asFetcher(async ({ notice }) => {
     const cover = `https://assets2.lxns.net/maimai/jacket/${baseId}.png`;
     const genre = normalizeGenre(song.genre);
 
-    const charts: PendingSong[] = [];
+    const charts: SourceChart[] = [];
 
     const pushChart = (chart: LxnsChart, type: SongType, difficulty: Difficulty) => {
-      const level = chart.level.replace("?", "") as Level;
+      const level = chart.level.replace("?", "");
       const addedVersion = getVersionByShortCode(String(chart.version))?.id;
       let noteCounts: NoteCounts | undefined = undefined;
       if (chart.notes) {
@@ -106,12 +105,12 @@ export const LxnsFetcher = asFetcher(async ({ notice }) => {
       }
       const levelPrecise =
         difficulty === "utage" || chart.level_value === 0
-          ? levelToPrecise(level, addedVersion ?? 0)
+          ? maimaiLevelPolicy(addedVersion ?? 0).toPrecise(level)
           : Math.round(chart.level_value * 10);
       const noteDesigner =
         chart.note_designer && chart.note_designer !== "-" ? chart.note_designer : undefined;
 
-      charts.push({
+      charts.push(maimaiChart({
         songName: normalizeName(song.title),
         type,
         difficulty,
@@ -124,7 +123,7 @@ export const LxnsFetcher = asFetcher(async ({ notice }) => {
         bpm: song.bpm || undefined,
         noteDesigner,
         noteCounts,
-      } satisfies PendingSong);
+      }));
     };
 
     for (const chart of song.difficulties.standard ?? []) {

@@ -1,25 +1,27 @@
 import "server-only";
 import { Region } from "@/lib/types";
 import { siteRoot } from "@/lib/games/sites";
-import type { GameSiteClient } from "@/server/services/games/sega/http";
+import { openGameSite, type GameSiteClient } from "@/server/services/games/sega/http";
 import { load } from "cheerio";
 import { normalizeGenre } from "../genres";
 import { type Logger } from "pino";
 import pLimit from "p-limit";
-import { levelToPrecise } from "../levels";
+import { catalogChartKey } from "@/server/services/catalog/ingestion/normalize-charts";
+import type { CatalogStage } from "@/server/services/catalog/ingestion/runner";
 import { value } from "@/server/services/catalog/ingestion/types";
-import { key } from "../merge";
-import type { SongFetcher } from "../types";
+import { assertMaimaiPage } from "../../scores/parse-utils";
+import { MAIMAI_UTAGE, maimaiLevelPolicy } from "../chart";
 
-export const MaimaiAfterFetcher: SongFetcher = async (context, songs) => {
+export const MaimaiAfterFetcher: CatalogStage["run"] = async (context, songs) => {
   const limit = pLimit(5);
   const detailCache: Record<string, Promise<ReturnType<typeof parseSongDetail>>> = {};
+  const site = openGameSite("maimai", context.region, context.session, { assertPage: assertMaimaiPage });
+  const { toPrecise } = maimaiLevelPolicy(context.version);
 
-  // Fill level precise for utage
-  songs = songs.map(song => ({
-    ...song,
-    levelPrecise: song.difficulty === "utage" ? levelToPrecise(value(song.level), context.version) : song.levelPrecise,
-  }));
+  songs = songs.map(song => {
+    const level = value(song.level);
+    return song.difficulty === MAIMAI_UTAGE && level !== undefined ? { ...song, levelPrecise: toPrecise(level) } : song;
+  });
 
   const getOrCreateDetail = (
     inputName: string,
@@ -30,7 +32,7 @@ export const MaimaiAfterFetcher: SongFetcher = async (context, songs) => {
     if (!detailCache[key]) {
       detailCache[key] = limit(async () => {
         const html = await fetchWebsite(
-          context.site,
+          site,
           inputName,
           inputValue,
           context.log,
@@ -51,7 +53,7 @@ export const MaimaiAfterFetcher: SongFetcher = async (context, songs) => {
   });
 
   context.log.info(
-    { songs: requiresFetch.map(s => key(s.song)) },
+    { songKeys: requiresFetch.map(s => catalogChartKey(s.song)) },
     `${requiresFetch.length} songs required fetching officially.`
   );
   context.notice.addDetail(`${requiresFetch.length} songs fetched from official site for missing cover/genre/artist`);

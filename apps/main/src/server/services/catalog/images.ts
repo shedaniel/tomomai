@@ -1,14 +1,8 @@
 import type { Logger } from "pino";
 import type { CanonicalGameId } from "@/lib/games/types";
 import { convertToWebp, fetchImageBuffer } from "@/lib/image-converter";
-import { value, type CatalogImagePolicy, type Pending } from "./ingestion/types";
-import { maimaiImagePolicy } from "@/server/services/games/maimai/catalog/images";
-import { chunithmImagePolicy } from "@/server/services/games/chunithm/catalog/images";
-
-const imagePolicies: Record<CanonicalGameId, CatalogImagePolicy> = {
-  maimai: maimaiImagePolicy,
-  chunithm: chunithmImagePolicy,
-};
+import { GAME_SERVER_MODULES } from "@/server/services/games/registry";
+import { value, type Pending } from "./ingestion/types";
 
 async function processBatch<T, R>(
   items: T[],
@@ -25,7 +19,7 @@ async function processBatch<T, R>(
 }
 
 export async function processCatalogImages<T extends { cover?: Pending<string> }>(game: CanonicalGameId, songs: T[], log: Logger) {
-    const policy = imagePolicies[game];
+    const policy = GAME_SERVER_MODULES[game].catalog.images;
     log.info({ songCount: songs.length }, "Image processing starting");
 
     const filenameToUrl = new Map<string, string>();

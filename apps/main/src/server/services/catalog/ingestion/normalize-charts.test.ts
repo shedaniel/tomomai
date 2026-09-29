@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import pino from "pino";
-import { completeCatalogChart, mergeCatalogChart, validateCatalogCharts, type CatalogChart } from "./normalize-charts";
+import { compareCatalogCharts, completeCatalogChart, mergeCatalogChart, validateCatalogCharts, type CatalogChart } from "./normalize-charts";
 
 const log = pino({ enabled: false });
 const chart: CatalogChart = {
@@ -33,6 +33,17 @@ describe("catalog validation", () => {
     expect(() => validateCatalogCharts("chunithm", [
       chart, { ...chart, artist: "Another artist" }, { ...chart, addedVersion: 9 }, { ...chart, difficulty: 3 },
     ])).not.toThrow();
+  });
+});
+
+describe("catalog order", () => {
+  it("sorts by title, artist, chart type and difficulty", () => {
+    const charts = [
+      { ...chart, difficulty: 3 }, { ...chart, songName: "B" }, { ...chart, artist: "Z" }, chart, { ...chart, songName: "A", difficulty: 5 },
+    ];
+    expect(charts.toSorted(compareCatalogCharts).map(c => [c.songName, c.artist, c.difficulty])).toEqual([
+      ["A", "Artist", 5], ["B", "Artist", 4], ["Chart", "Artist", 3], ["Chart", "Artist", 4], ["Chart", "Z", 4],
+    ]);
   });
 });
 

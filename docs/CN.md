@@ -37,7 +37,7 @@ This means even items that "support cn today" via hardcoded paths must be revisi
 - [~] ~~`server/services/games/maimai/catalog/sources/after-fetch.ts`~~ — same caveat.
 - [~] ~~`server/services/games/maimai/catalog/sources/base-songs.ts`~~ — same caveat.
 - [~] ~~`server/services/games/maimai/catalog/sources/otoge-db.ts`~~ — same caveat.
-- [ ] `server/utils/level.ts` — CN utage handling: `levelToPrecise` reused for utage; verify CN-specific quirks if any surface
+- [ ] `server/services/games/maimai/catalog/chart.ts`: CN utage constants come from `maimaiLevelPolicy` too. Verify CN-specific quirks if any surface.
 
 ## HTTP API Routes
 - [x] `app/api/login/route.ts`: the region comes from the signed login authorization

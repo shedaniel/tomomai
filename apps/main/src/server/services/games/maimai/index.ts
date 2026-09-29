@@ -1,19 +1,28 @@
 import "server-only";
+import { normalizeName } from "@/lib/name-utils";
 import { parseToken, TOKEN_PROVIDERS } from "@/lib/games/token-format";
 import { FetchStartError } from "../fetch-errors";
 import type { GameServerModule } from "../types";
+import { maimaiLevelPolicy } from "./catalog/chart";
+import { maimaiImagePolicy } from "./catalog/images";
+import { parseLegacyCatalogRecord } from "./catalog/legacy-upload";
 
 export const maimaiServerModule: GameServerModule = {
   catalog: {
+    async stages(region) {
+      const { maimaiCatalogStages } = await import("./catalog/pipeline");
+      return maimaiCatalogStages(region);
+    },
+    levelPolicy: maimaiLevelPolicy,
+    images: maimaiImagePolicy,
+    normalizeTitle: normalizeName,
+    // The CN catalog comes from Lxns, which needs no maimai NET login.
     requiresToken: region => region !== "cn",
     async authenticate(region, token) {
       const { loginAndGetCookies } = await import("./login");
       return loginAndGetCookies(region, token);
     },
-    async collect(context) {
-      const { collectMaimaiCatalog } = await import("./catalog/pipeline");
-      return collectMaimaiCatalog(context);
-    },
+    parseLegacyRecord: parseLegacyCatalogRecord,
   },
   scores: {
     rejectStoredToken(token) {

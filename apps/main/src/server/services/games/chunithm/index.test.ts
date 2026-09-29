@@ -1,13 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import pino from "pino";
 import { GAME_SERVER_MODULES } from "../registry";
 import type { FetchRun } from "../fetch-run";
 import type { ScoreFetchContext, ScoreFetchOutcome } from "../types";
 
-const catalog = vi.hoisted(() => ({ loaded: vi.fn(), collect: vi.fn() }));
-vi.mock("./catalog/pipeline", () => {
+const catalog = vi.hoisted(() => ({ loaded: vi.fn() }));
+vi.mock("./catalog/sources/otoge-db", () => {
   catalog.loaded();
-  return { collectChunithmCatalog: catalog.collect };
+  return { OtogeDbFetcher: vi.fn() };
 });
 
 const scores = vi.hoisted(() => ({ loaded: vi.fn(), fetch: vi.fn() }));
@@ -21,20 +20,19 @@ beforeEach(() => {
 });
 
 describe("CHUNITHM catalog source", () => {
-  it("loads the catalog pipeline only when collection starts", async () => {
-    catalog.collect.mockResolvedValue([]);
+  it("loads the otoge-db source only when its stages are requested", async () => {
     const source = GAME_SERVER_MODULES.chunithm.catalog;
     expect(catalog.loaded).not.toHaveBeenCalled();
-
-    const context = {
-      region: "jp" as const,
-      version: 9,
-      log: pino({ enabled: false }),
-      notice: { details: [], addDetail: vi.fn() },
-    };
-    await expect(source.collect(context)).resolves.toEqual([]);
+    expect((await source.stages("jp")).map(stage => stage.name)).toEqual(["OtogeDB"]);
     expect(catalog.loaded).toHaveBeenCalledOnce();
-    expect(catalog.collect).toHaveBeenCalledWith(context);
+  });
+
+  it("estimates a plus level at .5 and needs no source login", () => {
+    const source = GAME_SERVER_MODULES.chunithm.catalog;
+    expect(source.levelPolicy(9).toPrecise("14+")).toBe(145);
+    expect(source.levelPolicy(9).mismatchUpperOffset).toBeUndefined();
+    expect(source.requiresToken).toBeUndefined();
+    expect(source.parseLegacyRecord).toBeUndefined();
   });
 });
 

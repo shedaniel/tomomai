@@ -1,18 +1,17 @@
 import "server-only";
 import type { Region } from "@/lib/types";
-import type { CatalogFetchContext, PendingChart } from "@/server/services/catalog/ingestion/types";
+import type { PendingChart } from "@/server/services/catalog/ingestion/types";
+import { asCatalogFetcher } from "@/server/services/catalog/ingestion/merge";
+import { otogeDbUrl, parseOtogeDbConstant, parseOtogeDbDate } from "@/server/services/catalog/sources/otoge-db";
 import { codeOf } from "@/lib/games/codes";
 import { CHUNITHM_NOTE_KINDS, type ChunithmNoteKind } from "@/lib/games/chunithm/note-counts";
 import { getGame, type GameSiteRegion } from "@/lib/games/registry";
 import { requireGameSite } from "@/lib/games/sites";
-import { versionReleaseInstant } from "@/lib/games/version-table";
 import { getCurrentVersion, getVersionFromDate } from "@/lib/games/versions";
-import { asFetcher } from "../fetcher";
 
-export const OTOGE_DB_CHUNITHM_ROOT = "https://raw.githubusercontent.com/zvuc/otoge-db/main/chunithm";
 const SOURCES = {
-  jp: `${OTOGE_DB_CHUNITHM_ROOT}/data/music-ex.json`,
-  intl: `${OTOGE_DB_CHUNITHM_ROOT}/data/music-ex-intl.json`,
+  jp: otogeDbUrl("chunithm/data/music-ex.json"),
+  intl: otogeDbUrl("chunithm/data/music-ex-intl.json"),
 } satisfies Record<GameSiteRegion<"chunithm">, string>;
 const ULTIMA = codeOf("chunithm", "difficulty", "ultima");
 const STANDARD_CHART_TYPE = codeOf("chunithm", "chartType", "standard");
@@ -49,14 +48,6 @@ function getOtogeDbSource(region: Region) {
   return { url: SOURCES[region], version: getCurrentVersion("chunithm", region) };
 }
 
-function parseDate(value: string | undefined): Date | undefined {
-  const match = value?.match(/^(\d{4})(\d{2})(\d{2})$/);
-  if (!match) return undefined;
-  const [, year, month, day] = match;
-  const date = versionReleaseInstant(`${year}/${month}/${day}`);
-  return Number.isNaN(date.getTime()) ? undefined : date;
-}
-
 function parseCount(value: string | undefined): number | undefined {
   return value && /^\d+$/.test(value) ? Number(value) : undefined;
 }
@@ -70,9 +61,9 @@ function normalizeOtogeDbCatalog(songs: SongsJsonRecord[], region: Region, sourc
       const level = song[prefix];
       if (!level) return [];
       const updateDate = region === "jp" ? song.date_updated : song.date_intl_updated;
-      const useUpdateDate = difficulty === ULTIMA && parseDate(updateDate) !== undefined;
+      const useUpdateDate = difficulty === ULTIMA && parseOtogeDbDate(updateDate) !== undefined;
       const addedDateString = useUpdateDate ? updateDate : (region === "jp" ? song.date_added : song.date_intl_added);
-      const addedDate = parseDate(addedDateString);
+      const addedDate = parseOtogeDbDate(addedDateString);
       const constant = song[`${prefix}_i`];
       const noteCounts = Object.fromEntries(CHUNITHM_NOTE_KINDS.flatMap(kind => {
         const count = parseCount(song[`${prefix}_notes_${kind}`]);
@@ -84,10 +75,10 @@ function normalizeOtogeDbCatalog(songs: SongsJsonRecord[], region: Region, sourc
         chartType: STANDARD_CHART_TYPE,
         difficulty,
         artist: song.artist,
-        cover: `${OTOGE_DB_CHUNITHM_ROOT}/jacket/${song.image}`,
+        cover: otogeDbUrl(`chunithm/jacket/${song.image}`),
         genre: song.catname,
         level,
-        levelPrecise: constant && constant !== "-" ? Math.round(parseFloat(constant) * 10) : undefined,
+        levelPrecise: parseOtogeDbConstant(constant),
         addedVersion: addedDate ? getVersionFromDate("chunithm", region, addedDate, sourceVersion) : undefined,
         bpm: parseCount(song.bpm),
         noteDesigner: song[`${prefix}_designer`] || undefined,
@@ -117,7 +108,7 @@ function normalizeOtogeDbCatalog(songs: SongsJsonRecord[], region: Region, sourc
   });
 }
 
-export const OtogeDbFetcher = asFetcher(async (ctx: CatalogFetchContext): Promise<PendingChart[]> => {
+export const OtogeDbFetcher = asCatalogFetcher(async ctx => {
   const source = getOtogeDbSource(ctx.region);
   if (ctx.version !== source.version) {
     throw new Error(`otoge-db CHUNITHM ${ctx.region} catalog only supports version ${source.version}; requested ${ctx.version}`);
