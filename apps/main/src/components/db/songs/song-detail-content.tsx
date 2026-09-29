@@ -8,7 +8,7 @@ import {
 import { useGame } from "@/components/providers/game-provider";
 import { formatGameScore, formatGameRating, formatGameLevel, getGameCode, getGameDifficultyColors, getGameDifficultyLabel, getGameChartTypeLabel, getGameChartTypeBadgeLabel, getGameChartTypeBadge, getGameChartRating, getGameScoreLabelKey, getGameScoreGrade, getGameStatusLabels } from "@/lib/games/presentation";
 import { isGameCnExclusive } from "@/lib/games/frontend";
-import { getRegionalVersion, getVersion } from "@/lib/games/versions";
+import { getVersion } from "@/lib/games/versions";
 import { trpc } from "@/lib/trpc-client";
 import { useSession } from "@/lib/auth-client";
 import { Region } from "@/lib/types";
@@ -486,7 +486,7 @@ export function SongDetailContent({ songName, artist, slug, type, parentIds, ini
 
             <div className="space-y-3 pl-4 border-l-2 border-muted">
               {versions.map(({ gameVersion, charts }) => {
-                const versionInfo = getRegionalVersion(game.id, region, gameVersion);
+                const versionInfo = getVersion(game.id, gameVersion);
 
                 // Group charts by difficulty to show level changes
                 const byDifficulty = new Map<string, (SongDetailChart | SongDetailHistoricalChart)[]>();
