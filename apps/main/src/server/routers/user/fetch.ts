@@ -1,7 +1,6 @@
 import { getGameSite } from "@/lib/games/sites";
 import { getGame } from "@/lib/games/registry";
-import { gameIdSchema } from "@/lib/games/schema";
-import { gameContextInput, validateGameCapability, validateGameInput } from "./game-input";
+import { gameOnlyProcedure, gameProcedure } from "../game-procedures";
 import { startScoreFetch, getScoreFetchStatus } from "@/server/services/games/score-ingestion";
 import { db } from '@/lib/db';
 import { generateUserOtp, getOtpExpiryTimestamp, createLoginAuthorization } from '@/lib/otp';
@@ -15,37 +14,36 @@ import { and, desc, eq } from 'drizzle-orm';
 import { z } from 'zod';
 
 export const fetchRouter = router({
-  getLoginOtp: protectedProcedure
-    .input(z.object({ game: gameIdSchema }))
-    .query(({ ctx, input }) => {
-      validateGameCapability(input.game, "scores");
-      const { cookieLogin } = getGame(input.game).fetch;
-      if (!cookieLogin) throw new TRPCError({ code: "BAD_REQUEST", message: "Cookie login is not available for this game" });
+  getLoginOtp: gameOnlyProcedure(protectedProcedure, "scores")
+    .query(({ ctx }) => {
+      const { game } = ctx;
+      const { cookieLogin } = getGame(game).fetch;
+      const loginPage = cookieLogin && getGameSite(game, cookieLogin.region);
+      if (!cookieLogin || !loginPage) throw new TRPCError({ code: "BAD_REQUEST", message: "Cookie login is not available for this game" });
       const userId = ctx.session.user.id;
       const otp = generateUserOtp(userId);
       const expiresAt = new Date(getOtpExpiryTimestamp()).toISOString();
       const baseUrl = resolveBaseUrl();
       const scriptUrl = `${baseUrl}/api/login.js`;
-      const opaqueUserId = createLoginAuthorization(userId, input.game);
+      const opaqueUserId = createLoginAuthorization(userId, game);
       const loginLink = `${cookieLogin.url}#otp=${otp}&user=${encodeURIComponent(opaqueUserId)}`;
 
       return {
         otp,
         scriptUrl,
         loginLink,
-        loginPageUrl: getGameSite(input.game, cookieLogin.region)!.entryUrl,
+        loginPageUrl: loginPage.entryUrl,
         expiresAt,
       };
     }),
 
-  startFetch: protectedProcedure
-    .input(z.object({ ...gameContextInput,
+  startFetch: gameProcedure(protectedProcedure, "scores")
+    .input(z.object({
       token: z.string().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       try {
-        const context = validateGameInput(input, "scores");
-        return await startScoreFetch({ ...context, userId: ctx.session.user.id, token: input.token });
+        return await startScoreFetch({ game: ctx.game, region: ctx.region, userId: ctx.session.user.id, token: input.token });
       } catch (error) {
         if (error instanceof Error) {
           if (isAlbumSettingsError(error.message)) {
@@ -78,17 +76,13 @@ export const fetchRouter = router({
       }
     }),
 
-  getFetchStatus: protectedProcedure
-    .input(z.object(gameContextInput))
-    .query(({ ctx, input }) => {
-      const context = validateGameInput(input, "scores");
-      return getScoreFetchStatus({ ...context, userId: ctx.session.user.id });
+  getFetchStatus: gameProcedure(protectedProcedure, "scores")
+    .query(({ ctx }) => {
+      return getScoreFetchStatus({ game: ctx.game, region: ctx.region, userId: ctx.session.user.id });
     }),
 
-  getLatestFetchSessionId: protectedProcedure
-    .input(z.object(gameContextInput))
-    .query(async ({ ctx, input }) => {
-      validateGameInput(input, "scores");
+  getLatestFetchSessionId: gameProcedure(protectedProcedure, "scores")
+    .query(async ({ ctx }) => {
       const { fetchSessions: fs } = await import('@/lib/db/schema-pg');
 
       const session = await db
@@ -96,9 +90,9 @@ export const fetchRouter = router({
         .from(fs)
         .where(
           and(
-            eq(fs.game, input.game),
+            eq(fs.game, ctx.game),
             eq(fs.userId, ctx.session.user.id),
-            eq(fs.region, input.region)
+            eq(fs.region, ctx.region)
           )
         )
         .orderBy(desc(fs.startedAt))
@@ -107,10 +101,8 @@ export const fetchRouter = router({
       return session.length > 0 ? { id: session[0].publicId, startedAt: session[0].startedAt } : null;
     }),
 
-  deleteToken: protectedProcedure
-    .input(z.object(gameContextInput))
-    .mutation(async ({ ctx, input }) => {
-      const { game, region } = validateGameInput(input, "scores");
-      await deleteToken(game, ctx.session.user.id, region);
+  deleteToken: gameProcedure(protectedProcedure, "scores")
+    .mutation(async ({ ctx }) => {
+      await deleteToken(ctx.game, ctx.session.user.id, ctx.region);
     }),
 });

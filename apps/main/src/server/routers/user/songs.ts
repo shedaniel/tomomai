@@ -1,6 +1,6 @@
 import { gameIdSchema } from "@/lib/games/schema";
 import { getEnabledRegions } from "@/lib/games/regions";
-import { validateGameCapability } from "./game-input";
+import { gameOnlyProcedure } from "../game-procedures";
 import { isCodeKey, keyOf } from "@/lib/games/codes";
 import { parseSongId } from "@/lib/catalog/song-instance-id";
 import { db } from '@/lib/db';
@@ -12,6 +12,7 @@ import { and, eq, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { queryAllUniqueSongs, querySongDetails, querySongScores } from '@/server/queries/songs';
 
+// Declares the game again so the chart type can be checked against it.
 const songInputSchema = z.object({
   game: gameIdSchema,
   songName: z.string(),
@@ -21,38 +22,33 @@ const songInputSchema = z.object({
 }).refine(input => isCodeKey(input.game, "chartType", input.type), { message: "Unknown chart type", path: ["type"] });
 
 export const songsRouter = router({
-  getAllUniqueSongs: publicProcedure
-    .input(z.object({ game: gameIdSchema }))
-    .query(async ({ input }) => {
-      const game = input.game;
-      validateGameCapability(game, "catalog");
-      return queryAllUniqueSongs(game);
+  getAllUniqueSongs: gameOnlyProcedure(publicProcedure, "catalog")
+    .query(({ ctx }) => {
+      return queryAllUniqueSongs(ctx.game);
     }),
 
-  getSongDetails: publicProcedure
+  getSongDetails: gameOnlyProcedure(publicProcedure, "catalog")
     .input(songInputSchema)
-    .query(async ({ input, ctx }) => {
-      validateGameCapability(input.game, "catalog");
-      const userId = getEnabledRegions(input.game).length > 0 ? ctx.session?.user?.id : undefined;
-      return querySongDetails(input.game, input.songName, input.type, userId, input.artist, input.parentIds);
+    .query(({ input, ctx }) => {
+      const userId = getEnabledRegions(ctx.game).length > 0 ? ctx.session?.user?.id : undefined;
+      return querySongDetails(ctx.game, input.songName, input.type, userId, input.artist, input.parentIds);
     }),
 
-  getSongScores: protectedProcedure
+  getSongScores: gameOnlyProcedure(protectedProcedure, "scores")
     .input(songInputSchema)
     .query(async ({ input, ctx }) => {
-      validateGameCapability(input.game, "scores");
       return {
         viewerId: ctx.session.user.id,
-        userScores: await querySongScores(input.game, input.songName, input.type, ctx.session.user.id, input.artist, input.parentIds),
+        userScores: await querySongScores(ctx.game, input.songName, input.type, ctx.session.user.id, input.artist, input.parentIds),
       };
     }),
 
-  getSimpleSongDetails: publicProcedure
-    .input(z.object({ game: gameIdSchema,
+  getSimpleSongDetails: gameOnlyProcedure(publicProcedure, "catalog")
+    .input(z.object({
       publicId: z.string(),
     }))
-    .query(async ({ input }) => {
-      validateGameCapability(input.game, "catalog");
+    .query(async ({ ctx, input }) => {
+      const { game } = ctx;
       const parsed = parseSongId(input.publicId);
       if (!parsed) throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid song ID" });
       const charts = await db
@@ -60,7 +56,7 @@ export const songsRouter = router({
           disambiguator: parentSong.disambiguator,
           songName: parentSong.songName,
           artist: parentSong.artist,
-          type: sql`${parentSong.type}`.mapWith(value => keyOf(input.game, "chartType", Number(value))).as("type"),
+          type: sql`${parentSong.type}`.mapWith(value => keyOf(game, "chartType", Number(value))).as("type"),
           genre: parentSong.genre,
           bpm: parentSong.bpm,
           addedVersion: songs.addedVersion,
@@ -68,10 +64,9 @@ export const songsRouter = router({
         .from(songs)
         .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
         .where(and(
-          eq(parentSong.game, input.game),
+          eq(parentSong.game, game),
           eq(parentSong.publicId, parsed.parentPublicId),
-          parsed.kind === "instance" ? and(eq(songs.game, input.game), eq(songs.region, parsed.region)) : undefined,
-          parsed.kind === "instance" ? eq(songs.gameVersion, parsed.gameVersion) : undefined,
+          ...(parsed.kind === "instance" ? [eq(songs.game, game), eq(songs.region, parsed.region), eq(songs.gameVersion, parsed.gameVersion)] : []),
         ));
 
       if (charts.length === 0) {

@@ -94,10 +94,26 @@ operations are best effort and are not covered by database rollback. Provider
 requests already in flight may finish after a timeout, but cannot commit a late
 snapshot; maimai progress updates only affect pending maimai sessions.
 
-Plates, percentile/recommendation calculations, reserved accounts, existing
-UI presentation, credit/daily-play images and render tokens remain explicitly
-maimai-only. Profile settings remain global. Generic API/query/tRPC boundaries
-carry game; enabling a second scraper remains separate work.
+Every game boundary goes through `resolveGameContext` in
+`lib/games/access.ts`. The game must offer the capability, and a given region
+must be enabled for player requests or supported for catalog administration.
+`regionCapabilityOverrides` withdraws a capability in one region, such as
+maimai albums in China. A rejection is a `GameAdapterError`, and
+`GAME_ERROR_STATUS` in `lib/games/errors.ts` gives each code its HTTP and tRPC
+status: 400 for an unknown game or unsupported region, 422 for a disabled game
+or a missing capability. The tRPC base procedure maps these errors wherever a
+procedure throws them. Generic procedures take `{ game, region }` through
+`gameProcedure` or `{ game }` through `gameOnlyProcedure`
+(`server/routers/game-procedures.ts`).
+
+Plates, percentile/recommendation calculations, daily plays, catalog
+statistics, the snapshot JSON export and version copy, the CN score providers,
+reserved accounts, existing UI presentation, credit/daily-play images and
+render tokens remain explicitly maimai-only. Their tRPC procedures live under
+`trpc.maimai` (`server/routers/maimai`). They take no game input and check
+their own capability through `maimaiProcedure` or `maimaiRegionProcedure`.
+Profile settings remain global. Generic API/query/tRPC boundaries carry game,
+and enabling a second scraper remains separate work.
 
 Focused mocked tests cover score normalization, parent ambiguity, generic
 optional persistence, transaction failure, deadline rejection and late fetch
