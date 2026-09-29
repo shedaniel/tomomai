@@ -1,59 +1,64 @@
+import { GAME_CODES, codeOf, isCodeKey, type CodeKey } from "./games/codes";
 import { getGame } from "./games/registry";
-import type { CanonicalGameId } from "./games/types";
+import { CANONICAL_GAME_IDS, type CanonicalGameId } from "./games/types";
 
-// Define all possible fetch states
+/** Stages every game names the same way. Each game's score lists add a `song_data:<difficulty>` stage per difficulty. */
 export const FETCH_STATES = {
   LOGIN: "login",
   PLAYER_DATA: "player_data",
-  SONG_DATA_BASIC: "song_data:basic",
-  SONG_DATA_ULTIMA: "song_data:ultima",
-  SONG_DATA_EASY: "song_data:easy",
-  SONG_DATA_ADVANCED: "song_data:advanced",
-  SONG_DATA_EXPERT: "song_data:expert",
-  SONG_DATA_MASTER: "song_data:master",
-  SONG_DATA_REMASTER: "song_data:remaster",
-  SONG_DATA_UTAGE: "song_data:utage",
   RECENT_SONGS: "recent_songs",
   HIDDEN_SONGS: "hidden_songs",
   ALBUM_DATA: "album_data",
 } as const;
 
-export type FetchState = typeof FETCH_STATES[keyof typeof FETCH_STATES];
+type DifficultyKey = { [G in CanonicalGameId]: CodeKey<G, "difficulty"> }[CanonicalGameId];
 
-// Map difficulty numbers to state names
-export const DIFFICULTY_STATE_MAP: Record<number, FetchState> = {
-  0: FETCH_STATES.SONG_DATA_EASY,
-  1: FETCH_STATES.SONG_DATA_ADVANCED,
-  2: FETCH_STATES.SONG_DATA_EXPERT,
-  3: FETCH_STATES.SONG_DATA_MASTER,
-  4: FETCH_STATES.SONG_DATA_REMASTER,
-  10: FETCH_STATES.SONG_DATA_UTAGE,
-};
+export type SongDataState = `song_data:${DifficultyKey}`;
+export type BaseFetchState = (typeof FETCH_STATES)[keyof typeof FETCH_STATES];
+export type FetchState = BaseFetchState | SongDataState;
 
-// Helper function to parse statusStates string into array
-export function parseStatusStates(statusStates: string | null): FetchState[] {
-  if (!statusStates || statusStates.trim() === "") {
-    return [];
-  }
-  return statusStates.split(",").map(state => state.trim()).filter(
-    (state): state is FetchState => Object.values(FETCH_STATES).some(candidate => candidate === state),
-  );
+const SONG_DATA_PREFIX = "song_data:";
+
+// maimai sessions stored before its BASIC stage took the difficulty's key.
+const LEGACY_STATES: Readonly<Partial<Record<string, FetchState>>> = { "song_data:easy": "song_data:basic" };
+
+/** The stage that completes when a difficulty's score list has been read. */
+export function songDataState(game: CanonicalGameId, difficultyCode: number): SongDataState {
+  const keys: readonly DifficultyKey[] = GAME_CODES[game].difficulty;
+  const key = keys[difficultyCode];
+  if (key === undefined) throw new Error(`Unknown ${game} difficulty code: ${difficultyCode}`);
+  return `${SONG_DATA_PREFIX}${key}`;
 }
 
-// Helper function to serialize statusStates array into string
+export function isSongDataState(state: FetchState): state is SongDataState {
+  return state.startsWith(SONG_DATA_PREFIX);
+}
+
+/** The difficulty code of a song data stage in the game, or null when the game has no such difficulty. */
+export function songDataDifficulty(game: CanonicalGameId, state: SongDataState): number | null {
+  const key = state.slice(SONG_DATA_PREFIX.length);
+  return isCodeKey(game, "difficulty", key) ? codeOf(game, "difficulty", key) : null;
+}
+
+export function parseStatusStates(statusStates: string | null): FetchState[] {
+  if (!statusStates?.trim()) return [];
+  const known = CANONICAL_GAME_IDS.flatMap(game => getGame(game).fetchStages);
+  const states = new Set<FetchState>();
+  for (const stored of statusStates.split(",")) {
+    const name = LEGACY_STATES[stored.trim()] ?? stored.trim();
+    const state = known.find(candidate => candidate === name);
+    if (state) states.add(state);
+  }
+  return [...states];
+}
+
 export function serializeStatusStates(states: FetchState[]): string {
   return states.join(",");
 }
 
-// Calculate progress percentage based on completed states
-export function calculateProgress(completedStates: FetchState[], game: CanonicalGameId): number {
+/** The share of the game's stages that have completed, as a whole percentage. */
+export function calculateProgress(completedStates: readonly FetchState[], game: CanonicalGameId): number {
   const allStates = getGame(game).fetchStages;
   const completedCount = allStates.filter(state => completedStates.includes(state)).length;
-  const totalCount = allStates.length;
-  return Math.round((completedCount / totalCount) * 100);
-}
-
-// Helper function to get state for difficulty number
-export function getStateForDifficulty(difficulty: number): FetchState | null {
-  return DIFFICULTY_STATE_MAP[difficulty] || null;
+  return Math.round((completedCount / allStates.length) * 100);
 }

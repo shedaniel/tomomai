@@ -347,7 +347,7 @@ async function updateFetchProgress(
 
   // Format all states with appropriate emojis
   const formattedStates = allStates.map(state => {
-    const friendlyName = getStateFriendlyName(state);
+    const friendlyName = getStateFriendlyName(DISCORD_GAME, state);
     let emoji;
 
     if (completedStates.includes(state)) {

@@ -6,13 +6,16 @@ import { Progress } from "@tomomai/ui";
 import { cn } from "@/lib/utils";
 import { X, Loader2, CheckCircle2, XCircle } from "lucide-react";
 import {
-  FetchState,
-  FETCH_STATES,
   calculateProgress,
+  isSongDataState,
+  songDataDifficulty,
+  type BaseFetchState,
+  type FetchState,
 } from "@/lib/fetch-states";
 import { useGameId } from "./providers/game-provider";
 import type { CanonicalGameId } from "@/lib/games/types";
 import { parseFetchErrorCode } from "@/lib/games/fetch-error-codes";
+import { getGameDifficulty } from "@/lib/games/presentation";
 import { useTranslations } from "next-intl";
 
 export type FetchToastStatus = "pending" | "completed" | "failed";
@@ -35,36 +38,18 @@ function getProgress(statusStates: FetchState[], game: CanonicalGameId): number 
   return calculateProgress(statusStates, game);
 }
 
-function getStatusLabelKey(state: FetchState): string {
-  switch (state) {
-    case FETCH_STATES.LOGIN:
-      return "states.login";
-    case FETCH_STATES.PLAYER_DATA:
-      return "states.playerData";
-    case FETCH_STATES.SONG_DATA_BASIC:
-    case FETCH_STATES.SONG_DATA_EASY:
-      return "states.songDataBasic";
-    case FETCH_STATES.SONG_DATA_ADVANCED:
-      return "states.songDataAdvanced";
-    case FETCH_STATES.SONG_DATA_EXPERT:
-      return "states.songDataExpert";
-    case FETCH_STATES.SONG_DATA_MASTER:
-      return "states.songDataMaster";
-    case FETCH_STATES.SONG_DATA_ULTIMA:
-      return "states.songDataUltima";
-    case FETCH_STATES.SONG_DATA_REMASTER:
-      return "states.songDataRemaster";
-    case FETCH_STATES.SONG_DATA_UTAGE:
-      return "states.songDataUtage";
-    case FETCH_STATES.RECENT_SONGS:
-      return "states.recentSongs";
-    case FETCH_STATES.HIDDEN_SONGS:
-      return "states.hiddenSongs";
-    case FETCH_STATES.ALBUM_DATA:
-      return "states.albumData";
-    default:
-      return state;
-  }
+const STATE_LABEL_KEYS = {
+  login: "states.login",
+  player_data: "states.playerData",
+  recent_songs: "states.recentSongs",
+  hidden_songs: "states.hiddenSongs",
+  album_data: "states.albumData",
+} as const satisfies Record<BaseFetchState, string>;
+
+function stateLabel(t: ReturnType<typeof useTranslations>, game: CanonicalGameId, state: FetchState): string {
+  if (!isSongDataState(state)) return t(STATE_LABEL_KEYS[state]);
+  const difficulty = songDataDifficulty(game, state);
+  return difficulty === null ? state : t("states.songDataDifficulty", { difficulty: getGameDifficulty(game, difficulty).label });
 }
 
 function formatTimestamp(elapsedMs: number): string {
@@ -241,7 +226,7 @@ export function FetchToast({ state, onDismiss }: FetchToastProps) {
               <StatusLine
                 key={s}
                 elapsedMs={getStateTimestampMs(s)}
-                label={t(getStatusLabelKey(s))}
+                label={stateLabel(t, game, s)}
               />
             ))}
           </AnimatePresence>

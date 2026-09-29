@@ -1,4 +1,5 @@
 import type { GameDefinition } from "../types";
+import { MAIMAI_CODES } from "./codes";
 import { maimaiPresentation } from "./presentation";
 import { MAIMAI_BUCKET_SIZES, isMaimaiNewChart, isMaimaiRatedChart, maimaiChartRating, maimaiPlayerRating, maimaiRatingBonuses } from "./rating";
 import { maimaiVersionTable } from "./versions";
@@ -75,12 +76,7 @@ export const maimaiDefinition = {
   fetchStages: [
     "login",
     "player_data",
-    "song_data:easy",
-    "song_data:advanced",
-    "song_data:expert",
-    "song_data:master",
-    "song_data:remaster",
-    "song_data:utage",
+    ...MAIMAI_CODES.difficulty.map(difficulty => `song_data:${difficulty}` as const),
     "recent_songs",
     "hidden_songs",
     "album_data",

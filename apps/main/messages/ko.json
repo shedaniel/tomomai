@@ -984,12 +984,7 @@
       "connected": "Connected",
       "login": "Logged in",
       "playerData": "Fetched player data",
-      "songDataBasic": "Fetched BASIC scores",
-      "songDataUltima": "ULTIMA 점수를 가져왔습니다",
-      "songDataAdvanced": "Fetched ADVANCED scores",
-      "songDataExpert": "Fetched EXPERT scores",
-      "songDataMaster": "Fetched MASTER scores",
-      "songDataRemaster": "Fetched Re:MASTER scores",
+      "songDataDifficulty": "{difficulty} 점수를 가져왔습니다",
       "recentSongs": "Fetched recent songs",
       "hiddenSongs": "Fetched hidden songs"
     }

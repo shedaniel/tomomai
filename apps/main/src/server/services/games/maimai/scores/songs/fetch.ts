@@ -1,7 +1,8 @@
 import "server-only";
 import { load } from "cheerio";
 import { appendFetchState } from "@/lib/fetch-states-server";
-import { getStateForDifficulty } from "@/lib/fetch-states";
+import { songDataState } from "@/lib/fetch-states";
+import { MAIMAI_CODES } from "@/lib/games/maimai/codes";
 import { logger } from "@/lib/logger";
 import { normalizeName } from "@/lib/name-utils";
 import type { Difficulty } from "@/lib/games/maimai/types";
@@ -9,6 +10,9 @@ import type { GameSiteClient } from "@/server/services/games/sega/http";
 import { musicTypeFromIcon } from "../parse-utils";
 import type { ScoreData } from "../types";
 import { parseScoreData } from "./parse";
+
+// maimai DX NET's `diff` search parameter for each difficulty.
+const NET_DIFF_PARAMS: Readonly<Record<Difficulty, number>> = { basic: 0, advanced: 1, expert: 2, master: 3, remaster: 4, utage: 10 };
 
 async function fetchSongsData(site: GameSiteClient, difficulty: number): Promise<ScoreData[]> {
   logger.info(`Fetching songs data for difficulty ${difficulty}`);
@@ -22,15 +26,13 @@ async function fetchSongsData(site: GameSiteClient, difficulty: number): Promise
 export async function fetchAllSongsData(site: GameSiteClient, sessionId?: bigint): Promise<{ [difficulty: number]: ScoreData[] }> {
   logger.info(`Fetching songs data for all difficulties (0-4)${sessionId ? ' with tracking' : ''}`);
 
-  const difficultyPromises = [0, 1, 2, 3, 4, 10].map(difficulty => {
+  const difficultyPromises = MAIMAI_CODES.difficulty.map((key, code) => {
+    const difficulty = NET_DIFF_PARAMS[key];
     return fetchSongsData(site, difficulty).then((scoreData) => {
       logger.info(`Successfully fetched ${scoreData.length} scores for difficulty ${difficulty}`);
 
       if (sessionId) {
-        const state = getStateForDifficulty(difficulty);
-        if (state) {
-          appendFetchState(sessionId, state, "maimai");
-        }
+        appendFetchState(sessionId, songDataState("maimai", code), "maimai");
       }
 
       return { difficulty, scoreData };

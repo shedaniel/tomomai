@@ -1,3 +1,4 @@
+import { GAME_CODES } from "../codes";
 import type { GameDefinition } from "../types";
 import { chunithmPresentation } from "./presentation";
 import { CHUNITHM_BUCKET_SIZES, chunithmChartRating, chunithmPlayerRating, isChunithmNewChart, isChunithmRatedChart } from "./rating";
@@ -39,11 +40,8 @@ export const chunithmDefinition = {
   fetchStages: [
     "login",
     "player_data",
-    "song_data:basic",
-    "song_data:advanced",
-    "song_data:expert",
-    "song_data:master",
-    "song_data:ultima",
+    // WORLD'S END is not fetched until its charts have a catalog representation.
+    ...GAME_CODES.chunithm.difficulty.filter(difficulty => difficulty !== "worlds-end").map(difficulty => `song_data:${difficulty}` as const),
     "recent_songs",
   ],
   loginMethods: { intl: ["sega-cookie", "sega-account"], jp: ["sega-account"] },

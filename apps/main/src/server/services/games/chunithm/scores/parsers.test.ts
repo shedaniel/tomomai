@@ -1,10 +1,17 @@
 import { describe, expect, it } from "vitest";
+import { isSongDataState, songDataState } from "@/lib/fetch-states";
 import { codeOf } from "@/lib/games/codes";
+import { getGame } from "@/lib/games/registry";
 import { assertChunithmPage, CHUNITHM_DIFFICULTIES, parseMusicGenreForm, parsePlayer, parseRecentDetails, parseRecents, parseScores } from "./parsers";
 
 const context = { region: "jp" as const, gameVersion: 23 };
 
 describe("CHUNITHM records", () => {
+  it("reads exactly the difficulties CHUNITHM declares fetch stages for", () => {
+    expect(CHUNITHM_DIFFICULTIES.map(difficulty => songDataState("chunithm", difficulty.id)))
+      .toEqual(getGame("chunithm").fetchStages.filter(isSongDataState));
+  });
+
   it("reads genre navigation fields before the site's JavaScript assigns the action", () => {
     const html = `<form action="" method="post"><select name="genre"><option value="99">All</option></select>
       <input type="hidden" name="token" value="genre-token"></form>

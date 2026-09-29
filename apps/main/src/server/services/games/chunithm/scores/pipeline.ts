@@ -1,5 +1,5 @@
 import "server-only";
-import { FETCH_STATES, type FetchState } from "@/lib/fetch-states";
+import { FETCH_STATES, songDataState } from "@/lib/fetch-states";
 import { appendFetchState } from "@/lib/fetch-states-server";
 import type { GameFetchResult, NormalizedRecent, NormalizedScore, ScoreFetchContext } from "@/server/services/games/types";
 import { getLogger } from "@/lib/request-logger";
@@ -43,8 +43,7 @@ export async function fetchPlayer(ctx: ScoreFetchContext): Promise<GameFetchResu
       fields.set("genre", "99");
       musicHtml = await site.post(`record/musicGenre/send${difficulty.action}`, fields);
       scores.push(...parseScores(musicHtml, { region, gameVersion, difficulty: difficulty.id }));
-      const state: FetchState = `song_data:${difficulty.name}`;
-      await appendFetchState(sessionId, state, "chunithm");
+      await appendFetchState(sessionId, songDataState("chunithm", difficulty.id), "chunithm");
     }
     return scores;
   });
