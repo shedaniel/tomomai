@@ -23,6 +23,7 @@ import { getAcceptedPolicyVersions } from "@/lib/legal-acceptance";
 import { NEW_POLICY_REQUIRED_CODE } from "@/lib/security/policy-gate";
 import { getSignupRequirements } from "@/lib/signup";
 import { DEV_PORTS } from "@/lib/games/frontend-config";
+import { getCurrentGame } from "@/lib/games/current";
 
 async function mirrorAvatarForSignup(
   rawUrl: string | null | undefined,
@@ -357,7 +358,7 @@ export const auth = betterAuth({
     passkey({
       // Pinned to the registrable apex so credentials roam across subdomains.
       rpID: stripSubdomains(process.env.BETTER_AUTH_URL || resolveBaseUrl()),
-      rpName: "tomomai",
+      rpName: getCurrentGame().brand.productName,
     }),
     jwt(),
     oauthProvider({

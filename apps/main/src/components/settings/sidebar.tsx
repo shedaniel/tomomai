@@ -4,7 +4,7 @@ import { Link, usePathname, useRouter } from "@/i18n/navigation";
 import { Sidebar, SidebarItem } from "@tomomai/ui";
 import { User, Download, Lock, Code, ArrowLeft, AppWindow } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { Flags } from "@/lib/flags";
+import type { Flags } from "@/lib/flags";
 
 export function SettingsSidebar({ flags }: { flags: Flags }) {
   const pathname = usePathname();

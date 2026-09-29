@@ -13,7 +13,7 @@ import { AlbumPrivacyDialog } from "@/components/games/maimai/album-privacy-dial
 import { useFetchSession } from "@/hooks/useFetchSession";
 import { useSnapshots } from "@/hooks/useSnapshots";
 import { signOut } from "@/lib/auth-client";
-import { Flags } from "@/lib/flags";
+import type { Flags } from "@/lib/flags";
 import { isTokenError } from "@/lib/token-errors";
 import { parseFetchErrorCode } from "@/lib/games/fetch-error-codes";
 import { trpc } from "@/lib/trpc-client";

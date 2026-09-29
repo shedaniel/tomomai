@@ -13,7 +13,7 @@ import { useFormatter, useTranslations } from "next-intl";
 import { CoverImage } from "@/components/cover-image";
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Select, SelectContent, SelectTrigger, SelectItem, SelectValue } from "@tomomai/ui/select-friendly";
-import { Flags } from "@/lib/flags";
+import type { Flags } from "@/lib/flags";
 import { Button } from "@tomomai/ui";
 import { motion, AnimatePresence } from "motion/react";
 import { FilterPanel, GenericFilter, getFilterKey } from "@/components/filter-panel";

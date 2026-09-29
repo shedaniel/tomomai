@@ -13,7 +13,7 @@ import { Input } from "@tomomai/ui";
 import { motion, AnimatePresence } from "motion/react";
 import { getTransition } from "@/lib/animation-constants";
 import { trpc } from "@/lib/trpc-client";
-import { Flags } from "@/lib/flags";
+import type { Flags } from "@/lib/flags";
 import type { PercentileMap } from "@/lib/games/maimai/percentile/types";
 import { SongGridSection, SongSection } from "./bucket-section";
 import { RatingDistributionChart } from "./rating-distribution-chart";

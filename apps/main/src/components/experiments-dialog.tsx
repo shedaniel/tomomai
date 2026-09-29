@@ -12,7 +12,7 @@ import {
 } from "@tomomai/ui";
 import { Label } from "@tomomai/ui";
 import { Switch } from "@tomomai/ui";
-import { FlagCategory, Flags } from "@/lib/flags";
+import type { FlagCategory, Flags } from "@/lib/flags";
 import { trpc } from "@/lib/trpc-client";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
