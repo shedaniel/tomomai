@@ -16,7 +16,7 @@ import { user, userSnapshots } from "@/lib/db/schema-pg";
 import { and, eq } from "drizzle-orm";
 import type { Region } from "@/lib/types";
 import type { GamePlayerScore, GameSnapshot } from "@/lib/games/player-view";
-import { toMaimaiResult, toMaimaiSnapshotHeader } from "@/lib/games/maimai/legacy-view";
+import { toMaimaiResult, toMaimaiSnapshotHeader } from "../legacy-view";
 import { fetchSnapshotRankings, gameSnapshotColumns } from "@/server/queries/snapshots";
 import {
   getReservedGameSnapshot,

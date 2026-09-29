@@ -27,6 +27,11 @@ Implemented frontend support:
 - Generic player views format numeric score/rating/status values, select the
   correct ranking buckets, and provide searchable score tables. CHUNITHM uses
   integer scores and B20/B30; maimai retains percentage scores and B15/B35.
+  Every player panel, maimai-only ones included, reads `GameSnapshotData`,
+  `GamePlayerScore` and `GameSnapshotSummary` from `lib/games/player-view.ts`.
+  Snapshot summaries and details both name the public id `publicId`. A maimai
+  panel that needs a maimai key decodes the code with the maimai codecs, and no
+  client code converts a snapshot to the old maimai string model.
 - Public profiles resolve users within game context, load reserved accounts
   through the game server module's optional `reserved` provider (only maimai
   declares one), and whitelist serialized snapshot fields. Privacy

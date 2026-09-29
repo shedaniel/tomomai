@@ -81,9 +81,9 @@ keep the internal snapshot id inside the query module. `fetchSnapshotRankings`
 reaches a stored selection through the owner and the public snapshot id. The
 maimai string vocabulary (achievement, DX score, combo and sync keys,
 difficulty and chart type names, and the defaults for missing header fields)
-is produced only by `lib/games/maimai/legacy-view.ts`, for the maimai UI, the
-snapshot export and render tokens. Its `fromMaimaiScore` is the one reverse
-mapping, used when normalizing scraped scores.
+is produced only by `server/services/games/maimai/legacy-view.ts`, for the
+snapshot export, render tokens and the db top-songs list. Its `fromMaimaiScore`
+is the one reverse mapping, used when normalizing scraped scores.
 
 Recents carry optional game-specific `details`, stored in the recent row's
 metadata, without requiring maimai DX scores or map state. Albums are maimai

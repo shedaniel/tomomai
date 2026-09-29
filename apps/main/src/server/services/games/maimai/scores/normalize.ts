@@ -7,7 +7,7 @@ import type {
   NormalizedScore,
 } from "@/server/services/games/types";
 import { chartTypeToCode, difficultyToCode, titleTypeToCode } from "@/lib/games/maimai/codes";
-import { fromMaimaiScore } from "@/lib/games/maimai/legacy-view";
+import { fromMaimaiScore } from "../legacy-view";
 import { uploadPlayerIcon } from "./player/persist";
 import type { Region } from "@/lib/types";
 

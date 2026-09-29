@@ -3,7 +3,7 @@ import { rateScores, sortByRating } from "@/lib/games/ranking";
 import { maimaiCompatibilityGameSchema, regionSchema } from "@/lib/games/schema";
 import { gameContextInput, validateGameInput } from "./game-input";
 import { deleteUserSnapshot, fetchSnapshotData, fetchUserSnapshots, gameSnapshotColumns } from "@/server/queries/snapshots";
-import { toMaimaiChart, toMaimaiResult, toMaimaiSnapshotHeader } from "@/lib/games/maimai/legacy-view";
+import { toMaimaiChart, toMaimaiResult, toMaimaiSnapshotHeader } from "@/server/services/games/maimai/legacy-view";
 import { db } from '@/lib/db';
 import { parentSong, scoreData, snapshotScores, songs, userSnapshots } from '@/lib/db/schema-pg';
 import { fetchRatingHistory } from "@/server/queries/rating-history";
