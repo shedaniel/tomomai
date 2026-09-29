@@ -22,6 +22,7 @@ vi.mock("next/cache", () => ({ revalidateTag: vi.fn(), revalidatePath: vi.fn() }
 import { GET as normalize } from "./db/route";
 import { GET as importSongs } from "./import/route";
 import { CATALOG_WRITE_LOCK_ID } from "@/server/services/catalog/ingestion/lock";
+import { INSTANCE_UPDATE_COLUMNS } from "@/server/services/catalog/ingestion/columns";
 
 const request = (path: string) => new NextRequest(`https://example.test/api/admin/${path}`, {
   headers: { authorization: "Bearer admin-secret" },
@@ -51,9 +52,9 @@ describe("catalog maintenance", () => {
     const response = await importSongs(request("import?game=chunithm&from=version%3E%3D0%40jp-8&to=intl-8&mode=only-upsert"));
     expect(response.status).toBe(200);
     const update = mocks.upsert.mock.calls[0][0].set;
-    expect(update).toHaveProperty("metadata");
+    expect(Object.keys(update)).toEqual([...INSTANCE_UPDATE_COLUMNS]);
     const dialect = new PgDialect();
-    expect(dialect.sqlToQuery(update.metadata).sql).toBe("excluded.metadata");
+    expect(dialect.sqlToQuery(update.metadata).sql).toBe('excluded."metadata"');
     const sourceFilter = dialect.sqlToQuery(mocks.where.mock.calls[0][0]);
     expect(sourceFilter.sql).toContain('"songs"."game" =');
     expect(sourceFilter.params).toContain("chunithm");

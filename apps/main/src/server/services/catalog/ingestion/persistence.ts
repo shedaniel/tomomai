@@ -2,12 +2,13 @@ import { db } from "@/lib/db";
 import { scoreData, songs, parentSong, userRecentSongs, userAlbums } from "@/lib/db/schema-pg";
 import type { Region } from "@/lib/types";
 import { mergeCatalogChart, catalogChartKey as key, type CatalogChart } from "@/server/services/catalog/ingestion/normalize-charts";
-import { and, eq, inArray, count, sql, getTableColumns, notExists } from "drizzle-orm";
+import { and, eq, inArray, count, getTableColumns, notExists } from "drizzle-orm";
 import { matchUpload } from "@/server/services/catalog/ingestion/match-upload";
 import { resolveParents, type ParentState, type SongToParent } from "@/server/services/catalog/ingestion/resolve-parent";
 import { PARENT_PUBLIC_ID_LENGTH } from "@/lib/catalog/song-instance-id";
 import { instancePreference } from "@/lib/games/regions";
 import { lockCatalogWrites, type CatalogTransaction } from "./lock";
+import { excludedSet, INSTANCE_UPDATE_COLUMNS } from "./columns";
 import { nanoid } from "nanoid";
 import { isDeepStrictEqual } from "node:util";
 
@@ -413,18 +414,7 @@ async function applyChanges(
       const batch = rows.slice(i, i + batchSize).map(row => pendingSongToChildValues(game, row, region, version));
       await db.insert(songs).values(batch).onConflictDoUpdate({
         target: [songs.parentId, songs.region, songs.gameVersion],
-        set: {
-          level: sql`excluded.level`,
-          levelPrecise: sql`excluded."levelPrecise"`,
-          addedVersion: sql`excluded."addedVersion"`,
-          noteDesigner: sql`excluded."noteDesigner"`,
-          metadata: sql`excluded.metadata`,
-          tapCount: sql`excluded."tapCount"`,
-          holdCount: sql`excluded."holdCount"`,
-          slideCount: sql`excluded."slideCount"`,
-          touchCount: sql`excluded."touchCount"`,
-          breakCount: sql`excluded."breakCount"`,
-        },
+        set: excludedSet(songs, INSTANCE_UPDATE_COLUMNS),
       });
     }
   };

@@ -45,6 +45,7 @@ vi.mock("@/lib/db", async () => {
 });
 import { persistCatalog } from "@/server/services/catalog/ingestion/persistence";
 import { CATALOG_WRITE_LOCK_ID } from "@/server/services/catalog/ingestion/lock";
+import { INSTANCE_UPDATE_COLUMNS } from "@/server/services/catalog/ingestion/columns";
 const log = pino({ enabled: false });
 const chart: CatalogChart = { game: "chunithm", songName: "Song", chartType: 0, difficulty: 4,
   artist: "Artist", cover: "image", genre: "Original", level: "14+", levelPrecise: 145, addedVersion: 8, metadata: { otogeDb: { id: "123" } } };
@@ -75,7 +76,7 @@ describe("shared catalog persistence", () => {
     expect(state.reads[0].sql).toContain('"songs"."gameVersion" = $3');
     expect(state.reads[0].params).toEqual([game, "jp", 9]);
     const update = state.conflicts.mock.calls[0][0].set;
-    expect(new PgDialect().sqlToQuery(update.metadata).sql).toBe("excluded.metadata");
+    expect(Object.keys(update)).toEqual([...INSTANCE_UPDATE_COLUMNS]);
     expect(state.writes[0]).toMatchObject({ table: "parent_song", rows: [{ game, type: row.chartType, difficulty: 4 }] });
     expect(state.writes[1]).toMatchObject({ table: "songs", rows: [{ game, parentId: BigInt(100),
       levelPrecise: row.levelPrecise, addedVersion: row.addedVersion, metadata: chart.metadata }] });

@@ -9,9 +9,10 @@ import { Region } from "@/lib/types";
 import { resolveGameContext } from "@/lib/games/access";
 import { flushLogger } from "@/lib/logger";
 import { requestLogger } from "@/lib/request-logger";
-import { and, eq, gte, lte, sql } from "drizzle-orm";
+import { and, eq, gte, lte } from "drizzle-orm";
 import { publishSongCatalog } from "@/server/services/catalog/publication";
 import { lockCatalogWrites } from "@/server/services/catalog/ingestion/lock";
+import { excludedSet, INSTANCE_UPDATE_COLUMNS } from "@/server/services/catalog/ingestion/columns";
 import { revalidateTag, revalidatePath } from "next/cache";
 import { locales } from "@tomomai/i18n/locale";
 import { NextRequest, NextResponse } from "next/server";
@@ -275,18 +276,7 @@ export async function GET(request: NextRequest) {
 
             await tx.insert(songs).values(batch).onConflictDoUpdate({
               target: [songs.parentId, songs.region, songs.gameVersion],
-              set: {
-                addedVersion: sql`excluded."addedVersion"`,
-                metadata: sql`excluded.metadata`,
-                level: sql`excluded.level`,
-                levelPrecise: sql`excluded."levelPrecise"`,
-                noteDesigner: sql`excluded."noteDesigner"`,
-                tapCount: sql`excluded."tapCount"`,
-                holdCount: sql`excluded."holdCount"`,
-                slideCount: sql`excluded."slideCount"`,
-                touchCount: sql`excluded."touchCount"`,
-                breakCount: sql`excluded."breakCount"`,
-              },
+              set: excludedSet(songs, INSTANCE_UPDATE_COLUMNS),
             });
 
             totalProcessed += batch.length;
