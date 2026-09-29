@@ -38,7 +38,7 @@ function brandNames(game: CanonicalGameId): RegExp {
 describe("per-game messages", () => {
   it.each(locales)("keeps tomomai and a made-up NET name out of the CHUNITHM site in %s", async locale => {
     const leaks = strings(await loadMessages("chunithm", locale) as Messages)
-      .filter(([key, value]) => (brandNames("maimai").test(value) && !MAIMAI_BRAND_ON_EVERY_SITE.has(key)) || value.includes("CHUNITHM NET"));
+      .filter(([key, value]) => (brandNames("maimai").test(value) && !MAIMAI_BRAND_ON_EVERY_SITE.has(key)) || /CHUNITHM NET|\{game\}\s*NET/.test(value));
     expect(leaks).toEqual([]);
   });
 
