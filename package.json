@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "pnpm --filter @tomomai/site dev",
     "dev:mai": "FRONTEND_GAME=maimai PORT=3000 pnpm --filter @tomomai/site dev",
-    "dev:chu": "FRONTEND_GAME=chunithm PORT=3001 pnpm --filter @tomomai/site dev",
+    "dev:chu": "FRONTEND_GAME=chunithm PORT=3002 pnpm --filter @tomomai/site dev",
     "build": "pnpm --filter @tomomai/site build",
     "start": "pnpm --filter @tomomai/site start",
     "tunnel": "cloudflared tunnel run --url http://localhost:3000 tomomai",
