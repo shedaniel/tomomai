@@ -281,7 +281,7 @@ function AvailableDashboard({ user, initialUserData, initialSnapshots, initialSn
         stopSessionPolling={stopSessionPolling}
       />} 
 
-      {supportsFetch && selectedRegion === "cn" ? (
+      {supportsFetch && game.loginMethods[selectedRegion]?.includes("maimai-cn") ? (
         <HttpProxyAuthSubDialog
           isOpen={dialogType === "token-cn-proxy"}
           onOpenChange={open => setDialogType(open ? "token-cn-proxy" : null)}
