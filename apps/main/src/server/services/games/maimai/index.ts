@@ -25,7 +25,7 @@ export const maimaiServerModule: GameServerModule = {
         import("./scores/orchestrator"),
         import("./scores/normalize"),
       ]);
-      const { fetched } = await runMaimaiFetcher(context);
+      const fetched = await runMaimaiFetcher(context);
       return {
         result: normalizeFetchedMaimaiData(fetched, { region: context.region, version: context.gameVersion }),
         persistExtra: (persisted, backgroundWorkRef) =>

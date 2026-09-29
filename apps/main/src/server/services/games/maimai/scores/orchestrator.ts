@@ -4,18 +4,14 @@ import { appendFetchState } from "@/lib/fetch-states-server";
 import { logger } from "@/lib/logger";
 import { getLogger } from "@/lib/request-logger";
 import { Region } from "@/lib/types";
-import {
-  parseDivingFishToken,
-  parseLxnsToken,
-  processMaimaiToken,
-} from "../login";
-import type { TokenValidationResult } from "@/server/services/games/sega/login";
-import { getCookiesFromRedirect, openGameSite } from "@/server/services/games/sega/http";
+import { openMaimaiLogin } from "../login";
+import { openGameSite } from "@/server/services/games/sega/http";
 import {
   DivingFishAuthError,
   DivingFishPrivacyError,
   DivingFishUserNotFoundError,
   fetchDivingFishRecordsByDevToken,
+  type DivingFishIdentifier,
 } from "./divingfish/client";
 import { parseDivingFishPlayerData } from "./player/divingfish-parse";
 import { parseDivingFishScoresData } from "./songs/divingfish-parse";
@@ -39,50 +35,12 @@ interface FetcherContext {
   region: Region;
   sessionId: bigint;
   flags: Flags;
-  validation: TokenValidationResult;
   signal: AbortSignal;
 }
 
-type DataFetcher = (ctx: FetcherContext) => Promise<FetchedMaimaiData>;
-
-// ---------------------------------------------------------------------------
-// Step 1: validate
-// ---------------------------------------------------------------------------
-
-async function validateRegionAccess(
-  userId: string,
-  region: Region,
-  rawToken: string,
-  signal: AbortSignal,
-): Promise<{ validation: TokenValidationResult; rawToken: string }> {
-  const validation = await processMaimaiToken(userId, region, rawToken, signal);
-  if (!validation.isValid) {
-    throw new Error(validation.error || "Token validation failed");
-  }
-
-  logger.info("Token validation passed, proceeding with data fetch...");
-  return { validation, rawToken };
-}
-
-// ---------------------------------------------------------------------------
-// Step 2: fetch (region-specific)
-// ---------------------------------------------------------------------------
-
-const scrapeFetcher: DataFetcher = async ({ region, sessionId, flags, validation, signal }) => {
-  if (!validation.redirectUrl) {
-    throw new Error("No redirect URL received from token validation");
-  }
-
+async function scrapeFetcher({ region, sessionId, flags, signal }: FetcherContext, cookies: string): Promise<FetchedMaimaiData> {
   appendFetchState(sessionId, FETCH_STATES.LOGIN, "maimai");
 
-  const cookies = validation.cookiesReady && validation.cookies
-    ? validation.cookies
-    : await getCookiesFromRedirect(
-      "maimai",
-      region,
-      validation.redirectUrl,
-      validation.cookies || null,
-    );
   const site = openGameSite("maimai", region, { cookies }, { signal, assertPage: assertMaimaiPage });
   const playerDataHtml = await site.html("playerData/");
 
@@ -142,31 +100,20 @@ const scrapeFetcher: DataFetcher = async ({ region, sessionId, flags, validation
   }
 
   return { playerData, allSongsData, recentSongsData, albumData, eventsData, site };
-};
+}
 
-const lxnsFetcher: DataFetcher = async ({ userId, region, sessionId, validation, signal }) => {
-  if (region !== "cn") {
-    throw new Error(`lxns fetcher is only supported for CN region (got ${region})`);
-  }
-  if (!validation.token) {
-    throw new Error("lxns validation result is missing token");
-  }
-  const parsed = parseLxnsToken(validation.token);
-  if (!parsed) {
-    throw new Error("Failed to parse lxns token");
-  }
-
+async function lxnsFetcher({ userId, region, sessionId, signal }: FetcherContext, accessToken: string): Promise<FetchedMaimaiData> {
   appendFetchState(sessionId, FETCH_STATES.LOGIN, "maimai");
 
   let playerData;
   let allSongsData: { [difficulty: number]: ScoreData[] };
   try {
     [playerData, allSongsData] = await Promise.all([
-      fetchLxnsPlayerData(parsed.accessToken, signal).then((data) => {
+      fetchLxnsPlayerData(accessToken, signal).then((data) => {
         appendFetchState(sessionId, FETCH_STATES.PLAYER_DATA, "maimai");
         return data;
       }),
-      fetchLxnsScoresData(parsed.accessToken, signal),
+      fetchLxnsScoresData(accessToken, signal),
     ]);
   } catch (error) {
     if (error instanceof LxnsAuthRevokedError) {
@@ -185,25 +132,14 @@ const lxnsFetcher: DataFetcher = async ({ userId, region, sessionId, validation,
     albumData: [],
     eventsData: null,
   };
-};
+}
 
-const divingfishFetcher: DataFetcher = async ({ userId, region, sessionId, validation }) => {
-  if (region !== "cn") {
-    throw new Error(`divingfish fetcher is only supported for CN region (got ${region})`);
-  }
-  if (!validation.token) {
-    throw new Error("divingfish validation result is missing token");
-  }
-  const parsed = parseDivingFishToken(validation.token);
-  if (!parsed) {
-    throw new Error("Failed to parse divingfish token");
-  }
-
+async function divingfishFetcher({ userId, region, sessionId }: FetcherContext, account: DivingFishIdentifier): Promise<FetchedMaimaiData> {
   appendFetchState(sessionId, FETCH_STATES.LOGIN, "maimai");
 
   let response;
   try {
-    response = await fetchDivingFishRecordsByDevToken(parsed);
+    response = await fetchDivingFishRecordsByDevToken(account);
   } catch (error) {
     if (error instanceof DivingFishUserNotFoundError || error instanceof DivingFishPrivacyError) {
       logger.warn(`[divingfish] user inaccessible for user=${userId}, deleting token`);
@@ -228,41 +164,21 @@ const divingfishFetcher: DataFetcher = async ({ userId, region, sessionId, valid
     albumData: [],
     eventsData: null,
   };
-};
-
-function pickFetcher(region: Region, rawToken: string): DataFetcher {
-  if (rawToken.startsWith("cookie://") || rawToken.startsWith("account://")) {
-    return scrapeFetcher;
-  }
-  if (rawToken.startsWith("cn-cookies://")) {
-    if (region !== "cn") {
-      throw new Error(`cn-cookies:// token is only valid for CN region (got ${region})`);
-    }
-    return scrapeFetcher;
-  }
-  if (rawToken.startsWith("lxns://")) {
-    if (region !== "cn") {
-      throw new Error(`lxns:// token is only valid for CN region (got ${region})`);
-    }
-    return lxnsFetcher;
-  }
-  if (rawToken.startsWith("divingfish://")) {
-    if (region !== "cn") {
-      throw new Error(`divingfish:// token is only valid for CN region (got ${region})`);
-    }
-    return divingfishFetcher;
-  }
-  throw new Error(`Unsupported token provider for region ${region}`);
 }
 
-export async function runMaimaiFetcher(ctx: ScoreFetchContext): Promise<{ fetched: FetchedMaimaiData; validation: TokenValidationResult }> {
-  const { validation, rawToken } = await validateRegionAccess(ctx.userId, ctx.region, ctx.token, ctx.signal);
+export async function runMaimaiFetcher(ctx: ScoreFetchContext): Promise<FetchedMaimaiData> {
+  const login = await openMaimaiLogin(ctx.userId, ctx.region, ctx.token, ctx.signal);
   ctx.signal.throwIfAborted();
 
   try {
-    const fetcher = pickFetcher(ctx.region, rawToken);
-    const fetched = await fetcher({ ...ctx, validation });
-    return { fetched, validation };
+    switch (login.kind) {
+      case "site-session":
+        return await scrapeFetcher(ctx, login.cookies);
+      case "lxns":
+        return await lxnsFetcher(ctx, login.accessToken);
+      case "divingfish":
+        return await divingfishFetcher(ctx, login.account);
+    }
   } catch (error) {
     getLogger().error({ err: error }, "Error during maimai data fetch");
     throw error;

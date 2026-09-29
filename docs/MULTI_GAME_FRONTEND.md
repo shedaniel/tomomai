@@ -169,7 +169,10 @@ Implementation ownership:
   and `post` resolve against the mobile root, keep the session's cookies and
   referer, require HTTP 200 and run the game's page check, and `bytes`
   downloads through the session on the site's origin and without cookies
-  elsewhere. [`icons.ts`](../apps/main/src/server/services/games/icons.ts)
+  elsewhere. `openSegaSession` in `sega/login.ts` signs a SEGA token in through
+  the site's strategy, the Aime gateway or the SEGA ID sign-in form on the site,
+  and returns a ready game session. It deletes a token SEGA refuses and keeps
+  one that failed for a transient reason. [`icons.ts`](../apps/main/src/server/services/games/icons.ts)
   mirrors player icons to R2 for both games. Each game's
   server-only code lives under its own root,
   [`games/maimai/`](../apps/main/src/server/services/games/maimai/) and

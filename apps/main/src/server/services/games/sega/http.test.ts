@@ -1,10 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const mocks = vi.hoisted(() => ({ agentFetch: vi.fn(), fetch: vi.fn(), warn: vi.fn() }));
+const mocks = vi.hoisted(() => ({ agentFetch: vi.fn(), fetch: vi.fn() }));
 vi.mock("@/lib/http-agent", () => ({ agentFetch: mocks.agentFetch }));
-vi.mock("@/lib/request-logger", () => ({ getLogger: () => ({ warn: mocks.warn }) }));
 
-import { getCookiesFromRedirect, openGameSite, requestGameSite } from "./http";
+import { openGameSite, requestGameSite } from "./http";
 
 beforeEach(() => {
   vi.resetAllMocks();
@@ -91,6 +90,12 @@ describe("game site client", () => {
     expect(follow.body).toBeUndefined();
   });
 
+  it("sends the page a session continues from as its first referer", async () => {
+    mocks.fetch.mockResolvedValueOnce(new Response("Cards"));
+    await openGameSite("chunithm", "jp", { cookies: "" }, { pageUrl: "https://new.chunithm-net.com/" }).html("aimeList/");
+    expect(new Headers(mocks.fetch.mock.calls[0][1].headers).get("Referer")).toBe("https://new.chunithm-net.com/");
+  });
+
   it("rejects a page that is not a success or fails the game's page check", async () => {
     const assertPage = vi.fn((html: string) => {
       if (html.includes("login")) throw new Error("Session expired");
@@ -137,13 +142,5 @@ describe("game site client", () => {
     mocks.fetch.mockResolvedValueOnce(new Response(null, { status: 404 }));
     await expect(openGameSite("chunithm", "intl", { cookies: "" }).bytes("https://cdn.example.test/icon.png"))
       .rejects.toThrow("cdn.example.test/icon.png returned HTTP 404");
-  });
-});
-
-describe("login redirect exchange", () => {
-  it("rejects a maimai callback before sending CHUNITHM cookies", async () => {
-    await expect(getCookiesFromRedirect("chunithm", "intl", "https://maimaidx-eng.com/maimai-mobile/", "userId=chunithm-player")).rejects.toThrow("Unexpected game site origin");
-    expect(mocks.fetch).not.toHaveBeenCalled();
-    expect(mocks.agentFetch).not.toHaveBeenCalled();
   });
 });

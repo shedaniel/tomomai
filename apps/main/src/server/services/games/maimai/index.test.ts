@@ -35,7 +35,7 @@ describe("maimai score source", () => {
   it("normalizes the fetched data and hands the raw fetch to the maimai extras", async () => {
     const fetched = { albumData: [] } as unknown as FetchedMaimaiData;
     const result = { scores: [] } as unknown as GameFetchResult;
-    maimaiScores.run.mockResolvedValue({ fetched });
+    maimaiScores.run.mockResolvedValue(fetched);
     maimaiScores.normalize.mockReturnValue(result);
     const context = { game: "maimai", region: "jp", gameVersion: 14, shouldFetchAlbums: true } as ScoreFetchContext;
 

@@ -63,9 +63,10 @@ configuration: `site_id=chuniex`,
 `back_url=https://chunithm.sega.com/`. These are site configuration, not account
 session values.
 Observed CHUNITHM credentials were submitted as POST form fields. The shared
-International login helper keeps maimai's existing query encoding while the
-CHUNITHM configuration selects form-body encoding. This follows the observed
-CHUNITHM submission without changing maimai's request contract.
+gateway login form-encodes the credentials for both games and reads `retention`
+from the login form, so no password travels in a URL. maimai International used
+to send them in the query string, and its form-encoded login still needs a live
+check.
 
 ### International home
 
@@ -641,8 +642,8 @@ infer maintenance from missing record elements.
 | Site origins, mobile roots and the gateway login | `sites` in [`lib/games/chunithm/definition.ts`](../apps/main/src/lib/games/chunithm/definition.ts), read through [`lib/games/sites.ts`](../apps/main/src/lib/games/sites.ts) |
 | HTTP, cookies, redirects, the site client | [`games/sega/http.ts`](../apps/main/src/server/services/games/sega/http.ts) |
 | Player icon mirroring | [`games/icons.ts`](../apps/main/src/server/services/games/icons.ts) |
-| Shared SEGA token/login mechanics | [`games/sega/login.ts`](../apps/main/src/server/services/games/sega/login.ts) |
-| Verified maimai login configuration, reference only | [`games/maimai/login-config.ts`](../apps/main/src/server/services/games/maimai/login-config.ts) |
+| Shared SEGA login strategies and the session opener | [`games/sega/login.ts`](../apps/main/src/server/services/games/sega/login.ts) |
+| Per-game SEGA login configuration | [`games/chunithm/login.ts`](../apps/main/src/server/services/games/chunithm/login.ts), and maimai's verified [`games/maimai/login.ts`](../apps/main/src/server/services/games/maimai/login.ts) for reference |
 | Game/user/region token storage | [`games/tokens.ts`](../apps/main/src/server/services/games/tokens.ts) |
 | Session lifecycle and persistence | [`games/score-ingestion.ts`](../apps/main/src/server/services/games/score-ingestion.ts) |
 | Future CHUNITHM response interpretation | Game-specific provider/parser; do not put CHUNITHM selectors into shared SEGA transport |
@@ -671,6 +672,12 @@ for profile, the five standard difficulty lists, and recent plays/details.
 Authenticated profile images reuse the existing content-addressed hosting
 pipeline. A complete normalized result reaches shared game-scoped persistence
 only after the fetch succeeds.
+
+`openSegaSession` deletes a stored token when SEGA definitively refuses it and
+keeps it after a transient failure. A refusal is the gateway or the JP site
+answering with its sign-in form, or a JP submit that does not reach the card
+list. Network errors, timeouts, server errors and a failed card selection are
+transient.
 
 The shared SEGA credential dialog serves CHUNITHM JP; International also
 supports the shared gateway cookie wizard described below. The JP subscription check

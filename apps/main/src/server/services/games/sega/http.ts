@@ -4,7 +4,6 @@ import { getGame } from "@/lib/games/registry";
 import { getGameSite, siteOrigin, siteRoot, siteUrl } from "@/lib/games/sites";
 import type { CanonicalGameId } from "@/lib/games/types";
 import type { Region } from "@/lib/types";
-import { getLogger } from "@/lib/request-logger";
 
 export const SEGA_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36";
 
@@ -84,6 +83,8 @@ type GameSiteOptions = {
   signal?: AbortSignal;
   /** Rejects a 200 page that is not what was asked for, such as a sign-in page. */
   assertPage?: (html: string, url: string) => void;
+  /** The page the session continues from, sent as the first Referer. Defaults to the mobile root. */
+  pageUrl?: string;
 };
 
 async function readBytes(response: Response, url: URL): Promise<SiteBytes> {
@@ -105,10 +106,10 @@ export function openPublicAssets(signal?: AbortSignal): Pick<GameSiteClient, "by
 }
 
 /** A game site session that follows same-origin redirects and keeps the cookies each response sets. */
-export function openGameSite(game: CanonicalGameId, region: Region, session: GameSiteSession, { signal, assertPage }: GameSiteOptions = {}): GameSiteClient {
+export function openGameSite(game: CanonicalGameId, region: Region, session: GameSiteSession, { signal, assertPage, pageUrl: startUrl }: GameSiteOptions = {}): GameSiteClient {
   const root = siteRoot(game, region);
   const publicAssets = openPublicAssets(signal);
-  let pageUrl = root.href;
+  let pageUrl = startUrl ?? root.href;
 
   async function page(path: string, init: RequestInit): Promise<string> {
     const { response, url, offsite } = await followGameSite(game, region, siteUrl(game, region, path).href, session, pageUrl, { ...init, signal });
@@ -138,16 +139,4 @@ export function openGameSite(game: CanonicalGameId, region: Region, session: Gam
       return offsite ? publicAssets.bytes(offsite.href) : readBytes(response, target);
     },
   };
-}
-
-export async function getCookiesFromRedirect(game: CanonicalGameId, region: Region, redirectUrl: string, cookies: string | null): Promise<string> {
-  const response = await requestGameSite(game, region, redirectUrl, {
-    headers: cookies ? { Cookie: cookies } : undefined,
-  });
-  const sessionCookies = responseCookies(response.headers);
-  if (!sessionCookies) {
-    getLogger().warn({ game, region, status: response.status }, "No cookies received from login redirect");
-    throw new Error(`No cookies received from login redirect (status ${response.status})`);
-  }
-  return sessionCookies;
 }

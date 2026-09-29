@@ -69,9 +69,9 @@ export async function GET(req: NextRequest) {
     process.env.LXNS_REDIRECT_URI || `${baseUrl}/api/oauth/lxns/callback`;
 
   const result = await exchangeLxnsCode(code, redirectUri);
-  if (!result.isValid || !result.token) {
+  if (!result.ok) {
     log.warn({ userId: session.user.id }, `lxns code exchange failed: ${result.error}`);
-    const res = html({ ok: false, error: result.error ?? "exchange_failed" });
+    const res = html({ ok: false, error: result.error });
     res.cookies.delete(STATE_COOKIE);
     return res;
   }
