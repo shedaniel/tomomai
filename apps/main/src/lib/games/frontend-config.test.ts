@@ -1,7 +1,8 @@
+import { readFileSync } from "node:fs";
 import { brandTitle, getGameRegion, toFrontendGame } from "./frontend";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { gameIdSchema } from "./schema";
-import { getFrontendDistDir, resolveFrontendGame } from "./frontend-config";
+import { DEV_PORTS, getFrontendDistDir, resolveFrontendGame } from "./frontend-config";
 import { getCurrentGame } from "./current";
 import { getGame } from "./registry";
 
@@ -53,5 +54,15 @@ describe("frontend process configuration", () => {
 
   it("keeps every development output inside the build directories ESLint ignores", () => {
     for (const game of gameIdSchema.options) expect(getFrontendDistDir(game, true)).toMatch(/^\.next(-[a-z]+)?$/);
+  });
+
+  it("serves each game's development script on its own declared port", () => {
+    const { scripts } = JSON.parse(readFileSync(new URL("../../../../../package.json", import.meta.url), "utf8")) as { scripts: Record<string, string> };
+    const ports = Object.values(scripts).flatMap(script => {
+      const match = /FRONTEND_GAME=(\S+) PORT=(\d+)/.exec(script);
+      return match ? [[match[1], Number(match[2])] as const] : [];
+    });
+    expect(Object.fromEntries(ports)).toEqual(DEV_PORTS);
+    expect(new Set(Object.values(DEV_PORTS)).size).toBe(gameIdSchema.options.length);
   });
 });

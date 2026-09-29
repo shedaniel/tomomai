@@ -22,6 +22,7 @@ import { getCurrentLegalVersions } from "@/lib/legal";
 import { getAcceptedPolicyVersions } from "@/lib/legal-acceptance";
 import { NEW_POLICY_REQUIRED_CODE } from "@/lib/security/policy-gate";
 import { getSignupRequirements } from "@/lib/signup";
+import { DEV_PORTS } from "@/lib/games/frontend-config";
 
 async function mirrorAvatarForSignup(
   rawUrl: string | null | undefined,
@@ -264,7 +265,7 @@ const trustedOrigins = (process.env.TRUSTED_ORIGINS ?? "")
   .map((s) => s.trim())
   .filter(Boolean);
 if (process.env.NODE_ENV === "development") {
-  trustedOrigins.push("http://localhost:3000", "http://localhost:3001");
+  trustedOrigins.push(...Object.values(DEV_PORTS).map(port => `http://localhost:${port}`));
 }
 const authCookieDomain = process.env.AUTH_COOKIE_DOMAIN?.trim() || undefined;
 

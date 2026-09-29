@@ -1,6 +1,12 @@
 import { DEFAULT_FRONTEND_GAME, type CanonicalGameId } from "./ids";
 import { gameIdSchema } from "./schema";
 
+// Must match the PORT in the root package.json dev:<game> scripts.
+export const DEV_PORTS: Record<CanonicalGameId, number> = {
+  maimai: 3000,
+  chunithm: 3001,
+};
+
 export function resolveFrontendGame(value: string | undefined): CanonicalGameId {
   if (value === undefined) return DEFAULT_FRONTEND_GAME;
   const result = gameIdSchema.safeParse(value);
