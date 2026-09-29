@@ -1,7 +1,7 @@
 import { createRequire } from "node:module";
 const { JSDOM } = createRequire(import.meta.url)("jsdom") as { JSDOM: new (html: string, options: { url: string }) => { window: Window & typeof globalThis } };
 import React, { act } from "react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createRoot } from "react-dom/client";
 import { renderToStaticMarkup } from "react-dom/server";
 import { QueryClient, QueryClientProvider, useQuery } from "@tanstack/react-query";
@@ -10,11 +10,11 @@ import { GameProvider } from "@/components/providers/game-provider";
 import messages from "../../../messages/en.json";
 
 const fixture = vi.hoisted(() => ({
-  game: { id: "chunithm", displayName: "CHUNITHM", productName: "tomochu", enabled: false, regions: [], capabilities: ["catalog", "rankings", "rating"] },
+  game: undefined as unknown as FrontendGame,
   songs: [{ parentIds: ["abcdefgh"], index: 0, songName: "CHU chart", artist: "Artist", cover: "https://example.com/cover.webp", type: "standard", genre: "ORIGINAL", addedVersion: 4, slug: "chu-chart-standard", aliases: [], difficulties: [{ difficulty: "ultima", level: "14+", levelPrecise: 145, noteDesigner: null }] }],
   catalog: vi.fn(), details: vi.fn(), scores: vi.fn(),
 }));
-vi.mock("@/lib/games/frontend-server", () => ({ getFrontendGame: () => fixture.game }));
+vi.mock("@/lib/games/current", () => ({ getCurrentGame: () => fixture.game }));
 vi.mock("@/server/queries/songs-cache", () => ({ getAllUniqueSongsCached: (game: string) => { fixture.catalog(game); return Promise.resolve(fixture.songs); }, getSongDetailsCached: fixture.details }));
 vi.mock("next/dynamic", () => ({ default: () => () => null }));
 vi.mock("@/lib/seo", () => ({ breadcrumbJsonLd: () => ({}), openGraphLocales: () => ({}), localizePath: (value: string) => value, buildAlternates: async () => ({}), ogImageUrl: (value: string) => value }));
@@ -32,12 +32,16 @@ import DetailSlotPage from "@/app/[locale]/db/@detail/[type]/[slug]/page";
 import DbSlugPage from "@/app/[locale]/db/[type]/[slug]/page";
 import { SongsList } from "./songs-list";
 import { GameUnavailable } from "@/components/player/game-unavailable";
-import type { FrontendGame } from "@/lib/games/frontend";
+import { toFrontendGame, type FrontendGame } from "@/lib/games/frontend";
+import { getGame } from "@/lib/games/registry";
+import type { CanonicalGameId } from "@/lib/games/ids";
 
-afterEach(() => { vi.clearAllMocks(); fixture.game.id = "chunithm"; });
+const withoutPlayerRegions = (game: CanonicalGameId) => toFrontendGame(getGame(game), []);
+beforeEach(() => { fixture.game = withoutPlayerRegions("chunithm"); });
+afterEach(() => { vi.clearAllMocks(); });
 describe("catalog independent of player rollout", () => {
-  it.each(["maimai", "chunithm"])("renders %s catalog list and linked detail independently of player rollout", async game => {
-    fixture.game.id = game;
+  it.each(["maimai", "chunithm"] as const)("renders %s catalog list and linked detail independently of player rollout", async game => {
+    fixture.game = withoutPlayerRegions(game);
     fixture.details.mockResolvedValue({ songName: "CHU detail" });
     const list = renderToStaticMarkup(await DbTypePage({ params: Promise.resolve({ type: "songs" }) }));
     expect(list).toContain('"numberOfItems":1');
@@ -59,7 +63,7 @@ describe("catalog independent of player rollout", () => {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     const container = document.createElement("div"); const root = createRoot(container);
     try {
-      await act(async () => root.render(<QueryClientProvider client={client}><NextIntlClientProvider locale="en" messages={messages} timeZone="UTC"><GameProvider game={fixture.game as FrontendGame}><SongsList />{detail}</GameProvider></NextIntlClientProvider></QueryClientProvider>));
+      await act(async () => root.render(<QueryClientProvider client={client}><NextIntlClientProvider locale="en" messages={messages} timeZone="UTC"><GameProvider game={fixture.game}><SongsList />{detail}</GameProvider></NextIntlClientProvider></QueryClientProvider>));
       await act(async () => { await new Promise(resolve => setTimeout(resolve, 30)); });
       expect(fixture.catalog).toHaveBeenCalledWith("chunithm");
       expect(container.textContent).toContain("CHU chart");
@@ -67,14 +71,14 @@ describe("catalog independent of player rollout", () => {
       expect(container.textContent).not.toContain("STANDARD");
       expect(fixture.scores).not.toHaveBeenCalled();
       expect(container.querySelector('a[href="/db/songs/chu-chart-standard"]')).not.toBeNull();
-      await act(async () => root.render(<QueryClientProvider client={client}><NextIntlClientProvider locale="en" messages={messages} timeZone="UTC"><GameProvider game={{ ...fixture.game, id: "maimai", productName: "tomomai", enabled: true, regions: ["jp"], capabilities: ["catalog", "scores"] }}>{detailFor("std")}</GameProvider></NextIntlClientProvider></QueryClientProvider>));
+      await act(async () => root.render(<QueryClientProvider client={client}><NextIntlClientProvider locale="en" messages={messages} timeZone="UTC"><GameProvider game={toFrontendGame(getGame("maimai"), ["jp"])}>{detailFor("std")}</GameProvider></NextIntlClientProvider></QueryClientProvider>));
       await act(async () => { await new Promise(resolve => setTimeout(resolve, 30)); });
       expect(fixture.scores).toHaveBeenCalledWith("maimai");
       expect(container.querySelector('img[alt="STD"]')).not.toBeNull();
     } finally { await act(async () => root.unmount()); client.clear(); dom.window.close(); vi.unstubAllGlobals(); }
   });
   it("offers the catalog from the unavailable-player landing screen", () => {
-    const html = renderToStaticMarkup(<NextIntlClientProvider locale="en" messages={messages} timeZone="UTC"><GameProvider game={fixture.game as FrontendGame}><GameUnavailable /></GameProvider></NextIntlClientProvider>);
+    const html = renderToStaticMarkup(<NextIntlClientProvider locale="en" messages={messages} timeZone="UTC"><GameProvider game={fixture.game}><GameUnavailable /></GameProvider></NextIntlClientProvider>);
     expect(html).toContain('href="/db/songs"');
     expect(html).toContain("CHUNITHM");
   });

@@ -1,6 +1,6 @@
 "use client";
 
-import { getGameBrand } from "@/lib/games/frontend";
+import { brandTitle } from "@/lib/games/frontend";
 import { signOut } from "@/lib/auth-client";
 import { useGame } from "@/components/providers/game-provider";
 import { AboutDialog } from "@/components/about-dialog";
@@ -579,7 +579,7 @@ export function Header({ currentTab, showDiscordBanner = true, customThemesEnabl
               transition={getTransition(SPRING_CONFIGS.snappy)}
             >
               {game.id === "maimai" ? <><Image src={TAB_ICONS_PATHS[currentTab]} alt="tomomai" width={528} height={132} sizes="176px" priority className="h-11 w-auto dark:hidden" style={{ aspectRatio: '4 / 1' }} />
-              <Image src={TAB_ICONS_PATHS_DARK[currentTab]} alt="tomomai" width={528} height={132} sizes="176px" priority className="h-11 w-auto hidden dark:block" style={{ aspectRatio: '4 / 1' }} /></> : <span className="text-2xl font-semibold">{getGameBrand(game).title}</span>}
+              <Image src={TAB_ICONS_PATHS_DARK[currentTab]} alt="tomomai" width={528} height={132} sizes="176px" priority className="h-11 w-auto hidden dark:block" style={{ aspectRatio: '4 / 1' }} /></> : <span className="text-2xl font-semibold">{brandTitle(game.brand)}</span>}
             </motion.div>
           </Link>
           <NavbarButtons currentTab={currentTab} />

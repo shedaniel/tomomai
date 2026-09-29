@@ -1,7 +1,7 @@
 "use client";
 
 import { useGame } from "@/components/providers/game-provider";
-import { getGameRegion } from "@/lib/games/frontend";
+import { getGameRegion, supportsGameFeature } from "@/lib/games/frontend";
 import type { GameSnapshotData, GameSnapshotSummary } from "@/lib/games/player-view";
 import { toMaimaiPlayerSnapshot } from "@/lib/games/maimai/legacy-view";
 import { GameUnavailable } from "@/components/player/game-unavailable";
@@ -46,12 +46,13 @@ interface DashboardProps {
 export function Dashboard(props: DashboardProps) {
   const game = useGame();
   const region = getGameRegion(game, props.initialUserData.region);
-  if (!game.enabled || !region) return <GameUnavailable />;
+  if (!region) return <GameUnavailable />;
   return <AvailableDashboard {...props} initialRegion={region} />;
 }
 
 function AvailableDashboard({ user, initialUserData, initialSnapshots, initialSnapshotData, flags, latestPost, initialRegion }: DashboardProps & { initialRegion: Region }) {
   const game = useGame();
+  const supportsFetch = supportsGameFeature(game, "scores");
 
   const [dialogType, setDialogType] = useState<DialogType>(null);
   const t = useTranslations("dashboard");
@@ -255,7 +256,7 @@ function AvailableDashboard({ user, initialUserData, initialSnapshots, initialSn
           onCopySnapshot={handleCopySnapshot}
           isCopying={isCopying}
           supportsCopy={game.id === "maimai"}
-          supportsFetch={!!game.fetchConfigured}
+          supportsFetch={supportsFetch}
         />
 
         <DataContent
@@ -271,7 +272,7 @@ function AvailableDashboard({ user, initialUserData, initialSnapshots, initialSn
         />
       </div>
 
-      {game.fetchConfigured && <TokenDialog
+      {supportsFetch && <TokenDialog
         region={selectedRegion}
         isOpen={dialogType === "token"}
         onOpenChange={open => setDialogType(open ? "token" : null)}
@@ -280,7 +281,7 @@ function AvailableDashboard({ user, initialUserData, initialSnapshots, initialSn
         stopSessionPolling={stopSessionPolling}
       />} 
 
-      {game.fetchConfigured && selectedRegion === "cn" ? (
+      {supportsFetch && selectedRegion === "cn" ? (
         <HttpProxyAuthSubDialog
           isOpen={dialogType === "token-cn-proxy"}
           onOpenChange={open => setDialogType(open ? "token-cn-proxy" : null)}
@@ -304,7 +305,7 @@ function AvailableDashboard({ user, initialUserData, initialSnapshots, initialSn
       <AdminDialog open={dialogType === "admin"} onOpenChange={open => setDialogType(open ? "admin" : null)} />
       <ExperimentsDialog open={dialogType === "experiments"} onOpenChange={open => setDialogType(open ? "experiments" : null)} />
 
-      {game.fetchConfigured && <AlbumPrivacyDialog
+      {supportsFetch && <AlbumPrivacyDialog
         open={dialogType === "albumPrivacy"}
         onOpenChange={open => setDialogType(open ? "albumPrivacy" : null)}
         onSelectPreference={(fetchUseAlbums) => {

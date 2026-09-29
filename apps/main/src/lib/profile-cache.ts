@@ -2,7 +2,7 @@ import { locales } from "@tomomai/i18n/locale";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { getEnabledRegions } from "@/lib/games/regions";
-import { getFrontendGame } from "@/lib/games/frontend-server";
+import { getCurrentGame } from "@/lib/games/current";
 import type { CanonicalGameId } from "@/lib/games/types";
 import { db } from "@/lib/db";
 import { user } from "@/lib/db/schema-pg";
@@ -13,7 +13,7 @@ export function revalidatePublicProfile(
   usernames: Array<string | null | undefined>,
   regions: readonly Region[] = getEnabledRegions(game),
 ) {
-  if (game !== getFrontendGame().id) return;
+  if (game !== getCurrentGame().id) return;
   const uniqueUsernames = new Set(usernames.filter((username): username is string => Boolean(username)));
   for (const username of uniqueUsernames) {
     const encodedUsername = encodeURIComponent(username);
@@ -35,9 +35,9 @@ export async function revalidatePublicProfileForUser(game: CanonicalGameId, user
 }
 
 export function revalidateCurrentSitePublicProfile(usernames: Array<string | null | undefined>, regions?: readonly Region[]) {
-  return revalidatePublicProfile(getFrontendGame().id, usernames, regions);
+  return revalidatePublicProfile(getCurrentGame().id, usernames, regions);
 }
 
 export function revalidateCurrentSitePublicProfileForUser(userId: string, regions?: readonly Region[]) {
-  return revalidatePublicProfileForUser(getFrontendGame().id, userId, regions);
+  return revalidatePublicProfileForUser(getCurrentGame().id, userId, regions);
 }

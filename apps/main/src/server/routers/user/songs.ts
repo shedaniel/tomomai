@@ -1,5 +1,5 @@
 import { gameIdSchema } from "@/lib/games/schema";
-import { resolveGame } from "@/lib/games/registry";
+import { getEnabledRegions } from "@/lib/games/regions";
 import { validateGameCapability } from "./game-input";
 import { getGameChartTypeKey } from "@/lib/games/presentation";
 import { parseSongId } from "@/lib/catalog/song-instance-id";
@@ -30,7 +30,7 @@ export const songsRouter = router({
     }))
     .query(async ({ input, ctx }) => {
       validateGameCapability(input.game, "catalog");
-      const userId = resolveGame(input.game).enabled ? ctx.session?.user?.id : undefined;
+      const userId = getEnabledRegions(input.game).length > 0 ? ctx.session?.user?.id : undefined;
       return querySongDetails(input.game, input.songName, input.type, userId, input.artist, input.parentIds);
     }),
 

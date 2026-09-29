@@ -1,6 +1,6 @@
 import { ACHIEVEMENTS } from "@/lib/games/maimai/grades";
-import { GAME_RANKING_SIZES, calculateMaimaiChartRating, calculateChunithmChartRating } from "./rating";
 import { GAME_CODES, RANKING_BUCKETS, getGrade, keyOf } from "./codes";
+import { getGame } from "./registry";
 import type { CanonicalGameId } from "./types";
 
 const missingValue = "—";
@@ -48,7 +48,7 @@ export function getGameStatusLabels(game: CanonicalGameId, status: {
 }
 
 export function getGameRankingBuckets(game: CanonicalGameId) {
-  const sizes = GAME_RANKING_SIZES[game];
+  const sizes = getGame(game).rating.bucketSizes;
   return RANKING_BUCKETS.map(bucket => ({ ...bucket, label: `B${sizes[bucket.key]}`, size: sizes[bucket.key] }));
 }
 
@@ -103,8 +103,7 @@ export function getGameChartTypeBadge(game: CanonicalGameId, value: string): str
 }
 
 export function getGameChartRating(game: CanonicalGameId, scoreValue: number, levelPrecise: number, difficulty: string | number, comboStatus: number, version: number): number {
-  const calculators = { maimai: () => calculateMaimaiChartRating(scoreValue, levelPrecise, getGameCode(game, "difficulty", difficulty), comboStatus, version), chunithm: () => calculateChunithmChartRating(scoreValue, levelPrecise) };
-  return calculators[game]();
+  return getGame(game).rating.chartRating({ scoreValue, levelPrecise, difficulty: getGameCode(game, "difficulty", difficulty), comboStatus }, version);
 }
 
 export function getGameScoreLabelKey(game: CanonicalGameId): string {

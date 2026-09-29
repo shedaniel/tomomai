@@ -5,7 +5,8 @@ import { NextIntlClientProvider } from "next-intl";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { FetchSettings } from "./fetch-settings";
 import { GameProvider } from "../providers/game-provider";
-import type { FrontendGame } from "@/lib/games/frontend";
+import { toFrontendGame, type FrontendGame } from "@/lib/games/frontend";
+import { getGame } from "@/lib/games/registry";
 import messages from "../../../messages/en.json";
 
 const state = vi.hoisted(() => ({ start: vi.fn(), region: "cn" }));
@@ -41,7 +42,7 @@ async function render(game: FrontendGame) {
 }
 
 it("scopes CHUNITHM settings and credentials to a supported region without album or cookie options", async () => {
-  await render({ id: "chunithm", displayName: "CHUNITHM", productName: "tomochu", enabled: true, fetchConfigured: true, cookieLoginConfigured: false, regions: ["intl", "jp"], capabilities: ["scores"] });
+  await render({ ...toFrontendGame(getGame("chunithm"), ["intl", "jp"]), capabilities: ["scores"], fetch: { cookieLogin: null } });
   expect(container.textContent).toContain("settings for CHUNITHM");
   expect(container.querySelector("#fetch-albums")).toBeNull();
   const open = Array.from(container.querySelectorAll("button")).find(button => button.textContent === messages.settings.account.updateToken);
@@ -64,7 +65,7 @@ it("scopes CHUNITHM settings and credentials to a supported region without album
 
 it("retains maimai International album settings and its configured cookie login", async () => {
   state.region = "intl";
-  await render({ id: "maimai", displayName: "maimai DX", productName: "tomomai", enabled: true, fetchConfigured: true, cookieLoginConfigured: true, regions: ["intl", "jp", "cn"], capabilities: ["scores", "albums"] });
+  await render({ ...toFrontendGame(getGame("maimai"), ["intl", "jp", "cn"]), capabilities: ["scores", "albums"] });
   expect(container.textContent).toContain("settings for maimai DX");
   expect(container.querySelector("#fetch-albums")).not.toBeNull();
   expect(container.textContent).toContain("International cookie options");

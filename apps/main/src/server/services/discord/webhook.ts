@@ -1,7 +1,6 @@
 import "server-only";
 import { after } from "next/server";
-import { resolveGame } from "@/lib/games/registry";
-import { getGameBrand } from "@/lib/games/frontend";
+import { getGame } from "@/lib/games/registry";
 import { resolveBaseUrl } from "@/lib/base-url";
 import { flushLogger } from "@/lib/logger";
 import { getLogger } from "@/lib/request-logger";
@@ -51,7 +50,7 @@ export type DiscordEmbed = {
 // Posts as the game's bot identity, whichever game the deployment serves.
 export function postDiscordEmbed(webhookUrl: string, { game, region }: GameRegionContext, embed: DiscordEmbed): void {
   const payload = {
-    username: getGameBrand(resolveGame(game)).japaneseName,
+    username: getGame(game).brand.japaneseName,
     avatar_url: `${resolveBaseUrl()}/icon.png`,
     embeds: [{ ...embed, description: embed.description && truncateForDiscord(embed.description) }],
   };
@@ -85,7 +84,7 @@ export async function sendDiscordNotice(
 
   const regionName = region === "jp" ? "Japan" : region === "cn" ? "China" : "International";
   postDiscordEmbed(webhookUrl, { game, region }, {
-    title: `[${resolveGame(game).displayName} / ${regionName}] ${title}`,
+    title: `[${getGame(game).brand.displayName} / ${regionName}] ${title}`,
     description: description.trim() || undefined,
     color,
     timestamp: new Date().toISOString(),

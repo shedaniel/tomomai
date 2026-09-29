@@ -1,72 +1,33 @@
-import type { Region } from "@/lib/types";
-import { getEnabledRegions } from "./regions";
 import { chunithmDefinition } from "./chunithm/definition";
+import type { CanonicalGameId, Region } from "./ids";
 import { maimaiDefinition } from "./maimai/definition";
-import {
-  CANONICAL_GAME_IDS,
-  GameAdapterError,
-  type CanonicalGameId,
-  type GameAdapter,
-  type GameCapability,
-  type GameRegionContext,
-} from "./types";
+import { getEnabledRegions } from "./regions";
+import { GameAdapterError, type GameCapability, type GameDefinition, type GameRegionContext } from "./types";
 
-export { getEnabledRegions } from "./regions";
+const GAMES = {
+  maimai: maimaiDefinition,
+  chunithm: chunithmDefinition,
+} as const satisfies { [G in CanonicalGameId]: GameDefinition & { id: G } };
 
-type GameRegistration = {
-  id: CanonicalGameId;
-  displayName: string;
-  productName: "tomomai" | "tomochu";
-  enabled: boolean; // Player features may roll out after the catalog.
-  adapter: GameAdapter;
-};
-
-export const GAME_REGISTRY: Record<CanonicalGameId, GameRegistration> = {
-  maimai: {
-    id: "maimai",
-    displayName: "maimai DX",
-    productName: "tomomai",
-    enabled: true,
-    adapter: maimaiDefinition,
-  },
-  chunithm: {
-    id: "chunithm",
-    displayName: "CHUNITHM",
-    productName: "tomochu",
-    enabled: true,
-    adapter: chunithmDefinition,
-  },
-};
-
-export function normalizeGameId(input: string): CanonicalGameId | null {
-  if (input === "maimaidx") return "maimai";
-  return CANONICAL_GAME_IDS.find(game => game === input) ?? null;
+export function getGame(id: CanonicalGameId): GameDefinition {
+  return GAMES[id];
 }
 
-export function resolveGame(input: string): GameRegistration {
-  const game = normalizeGameId(input);
-  if (!game) throw new GameAdapterError("UNKNOWN_GAME", `Unknown game: ${input}`);
-  return GAME_REGISTRY[game];
-}
-
-export function resolveGameContext(input: string, region: Region, capability?: GameCapability): GameRegionContext {
-  const registration = resolveGame(input);
-  if (capability) requireCapability(registration.id, capability, region);
-  else if (!registration.enabled) {
-    throw new GameAdapterError("GAME_NOT_ENABLED", `${registration.displayName} is not enabled`, registration.id, region);
+export function resolveGameContext(game: CanonicalGameId, region: Region, capability: GameCapability): GameRegionContext {
+  requireCapability(game, capability, region);
+  if (!getEnabledRegions(game).includes(region)) {
+    throw new GameAdapterError("UNSUPPORTED_REGION", `${region} is not enabled for ${getGame(game).brand.displayName}`, game, region);
   }
-  if (!registration.adapter.supportedRegions.has(region) || !getEnabledRegions(registration.id).includes(region)) {
-    throw new GameAdapterError("UNSUPPORTED_REGION", `${region} is not enabled for ${registration.displayName}`, registration.id, region);
-  }
-  return { game: registration.id, region };
+  return { game, region };
 }
 
+// A game with no enabled regions is disabled, but its catalog stays readable.
 export function requireCapability(game: CanonicalGameId, capability: GameCapability, region?: Region): void {
-  const registration = GAME_REGISTRY[game];
-  if (capability !== "catalog" && !registration.enabled) {
-    throw new GameAdapterError("GAME_NOT_ENABLED", `${registration.displayName} is not enabled`, game, region, capability);
+  const { brand, capabilities } = getGame(game);
+  if (capability !== "catalog" && getEnabledRegions(game).length === 0) {
+    throw new GameAdapterError("GAME_NOT_ENABLED", `${brand.displayName} is not enabled`, game, region, capability);
   }
-  if (!registration.adapter.capabilities.has(capability)) {
-    throw new GameAdapterError("UNSUPPORTED_CAPABILITY", `${registration.displayName} does not support ${capability}`, game, region, capability);
+  if (!capabilities.includes(capability)) {
+    throw new GameAdapterError("UNSUPPORTED_CAPABILITY", `${brand.displayName} does not support ${capability}`, game, region, capability);
   }
 }

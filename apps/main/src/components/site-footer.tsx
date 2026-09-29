@@ -1,8 +1,7 @@
 import Link from "next/link";
 import { DiscordIcon, ThreadsIcon, XIcon } from "@tomomai/ui";
 import { getAppVersion } from "@/lib/version";
-import { getFrontendGame } from "@/lib/games/frontend-server";
-import { getGameBrand } from "@/lib/games/frontend";
+import { getCurrentGame } from "@/lib/games/current";
 
 const currentYear = new Date().getFullYear();
 const copyrightYears = currentYear > 2025 ? `2025-${currentYear}` : "2025";
@@ -26,7 +25,7 @@ function FooterLink({ href, children }: { href: string; children: React.ReactNod
 
 export function SiteFooter() {
   const { minor, stamp, sha } = getAppVersion();
-  const brand = getGameBrand(getFrontendGame());
+  const { brand } = getCurrentGame();
 
   return (
     <footer className="mt-auto border-t border-border/40 bg-muted/20">
@@ -37,7 +36,7 @@ export function SiteFooter() {
               href="/"
               className="inline-flex items-baseline gap-1.5 text-base font-semibold tracking-tight text-foreground transition-opacity hover:opacity-80"
             >
-              {brand.name}
+              {brand.productName}
               <span className="text-xs font-normal text-muted-foreground">{brand.japaneseName}</span>
             </Link>
             <div className="mt-1.5 flex items-center gap-3">

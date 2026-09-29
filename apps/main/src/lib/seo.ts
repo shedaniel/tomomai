@@ -1,7 +1,8 @@
 import { resolveBaseUrl } from "@/lib/base-url";
 import { defaultLocale, locales, type Locale } from "@/i18n/locale";
 import { getLocale } from "@/i18n/locale-server";
-import { getGameBrand, type FrontendGame } from "@/lib/games/frontend";
+import { brandTitle } from "@/lib/games/frontend";
+import type { GameBrand } from "@/lib/games/types";
 
 const OG_LOCALE_MAP: Record<Locale, string> = {
   "en": "en_US",
@@ -88,14 +89,13 @@ export function breadcrumbJsonLd(items: BreadcrumbItem[]) {
 }
 
 /** Site-level Organization + WebSite JSON-LD for the root layout. */
-export function siteJsonLd(game: Pick<FrontendGame, "id" | "productName">): unknown[] {
+export function siteJsonLd(brand: GameBrand): unknown[] {
   const baseUrl = resolveBaseUrl();
-  const brand = getGameBrand(game);
   return [
     {
       "@context": "https://schema.org",
       "@type": "Organization",
-      name: brand.name,
+      name: brand.productName,
       alternateName: brand.japaneseName,
       url: baseUrl,
       logo: `${baseUrl}/icon.png`,
@@ -106,7 +106,7 @@ export function siteJsonLd(game: Pick<FrontendGame, "id" | "productName">): unkn
     {
       "@context": "https://schema.org",
       "@type": "WebSite",
-      name: brand.title,
+      name: brandTitle(brand),
       url: baseUrl,
       potentialAction: {
         "@type": "SearchAction",

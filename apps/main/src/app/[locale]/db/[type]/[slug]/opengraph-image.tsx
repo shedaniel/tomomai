@@ -1,5 +1,5 @@
-import { getGameBrand, supportsGameFeature } from "@/lib/games/frontend";
-import { getFrontendGame } from "@/lib/games/frontend-server";
+import { brandTitle, supportsGameFeature } from "@/lib/games/frontend";
+import { getCurrentGame } from "@/lib/games/current";
 import { createSongOGImage, createHomeOGImage, DB_ACCENT, OG_SIZE } from "@/lib/og";
 import { getAllUniqueSongsCached } from "@/server/queries/songs-cache";
 import { getTranslations } from "next-intl/server";
@@ -19,19 +19,19 @@ type Props = {
 
 export async function generateImageMetadata() {
   const locales = await getOGImageLocales();
-  return locales.map(locale => ({ id: locale, alt: `${getFrontendGame().displayName} song`, size: OG_SIZE, contentType: "image/png" as const }));
+  return locales.map(locale => ({ id: locale, alt: `${getCurrentGame().brand.displayName} song`, size: OG_SIZE, contentType: "image/png" as const }));
 }
 
 export default async function Image({ params, id }: Props & { id: Promise<string> }) {
   const [{ type, slug }, locale] = await Promise.all([params, id]) as [{ type: string; slug: string }, Locale];
 
-  const game = getFrontendGame();
+  const game = getCurrentGame();
   if (!supportsGameFeature(game, "catalog")) return new Response(null, { status: 404 });
 
   if (type !== "songs") {
     const t = await getTranslations({ locale, namespace: "db.songs.metadata" });
     return createHomeOGImage({
-      tagline: t("description", { game: getFrontendGame().displayName }),
+      tagline: t("description", { game: getCurrentGame().brand.displayName }),
       locale,
       logoFile: "icon-db-dark.webp",
       logoHeight: 220,
@@ -46,7 +46,7 @@ export default async function Image({ params, id }: Props & { id: Promise<string
   if (!song) {
     const t = await getTranslations({ locale, namespace: "db.songs.metadata" });
     return createHomeOGImage({
-      tagline: t("description", { game: getFrontendGame().displayName }),
+      tagline: t("description", { game: getCurrentGame().brand.displayName }),
       locale,
       logoFile: "icon-db-dark.webp",
       logoHeight: 220,
@@ -67,7 +67,7 @@ export default async function Image({ params, id }: Props & { id: Promise<string
 
   return createSongOGImage({
     game: game.id,
-    brandName: getGameBrand(game).title,
+    brandName: brandTitle(game.brand),
     songName: song.songName,
     artist: song.artist,
     coverUrl,

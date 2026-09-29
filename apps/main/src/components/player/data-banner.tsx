@@ -313,7 +313,7 @@ function NoDataInstructions({
       transition={getTransition({ duration: 0.3 })}
     >
       <p className="text-sm text-muted-foreground">
-        {t('dataBanner.noDataInstructions', { game: game.displayName })}
+        {t('dataBanner.noDataInstructions', { game: game.brand.displayName })}
       </p>
     </motion.div>
   );
@@ -420,7 +420,7 @@ export function DataBanner({
               isFetching={isFetching}
               currentSession={currentSession}
               t={t}
-            /> : <p className="text-sm text-muted-foreground">{t("settings.pages.fetch.unavailable", { game: game.displayName })}</p>}
+            /> : <p className="text-sm text-muted-foreground">{t("settings.pages.fetch.unavailable", { game: game.brand.displayName })}</p>}
           </div>
         </div>
 

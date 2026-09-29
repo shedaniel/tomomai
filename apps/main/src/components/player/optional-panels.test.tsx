@@ -4,6 +4,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createRoot, type Root } from "react-dom/client";
 import { NextIntlClientProvider } from "next-intl";
 import { GameProvider } from "@/components/providers/game-provider";
+import { toFrontendGame } from "@/lib/games/frontend";
+import { getGame } from "@/lib/games/registry";
 import { RecentSongsCard } from "./recent-songs-card";
 import { AlbumCard } from "./album-card";
 import messages from "../../../messages/en.json";
@@ -38,7 +40,7 @@ beforeEach(() => {
 });
 afterEach(async () => { await act(async () => root.unmount()); vi.unstubAllGlobals(); });
 async function render(content: React.ReactNode) {
-  await act(async () => root.render(<NextIntlClientProvider locale="en" messages={messages} timeZone="UTC"><GameProvider game={{ id: "chunithm", productName: "tomochu", displayName: "CHUNITHM", enabled: true, regions: ["jp"], capabilities: ["recents", "albums"] }}>{content}</GameProvider></NextIntlClientProvider>));
+  await act(async () => root.render(<NextIntlClientProvider locale="en" messages={messages} timeZone="UTC"><GameProvider game={{ ...toFrontendGame(getGame("chunithm"), ["jp"]), capabilities: ["recents", "albums"] }}>{content}</GameProvider></NextIntlClientProvider>));
 }
 describe("shared optional player panels", () => {
   it("renders CHUNITHM recents through the production list and advances pagination", async () => {

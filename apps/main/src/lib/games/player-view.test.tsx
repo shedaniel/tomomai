@@ -10,7 +10,8 @@ vi.mock("@/components/games/maimai/song-hover-card", () => ({ SongHoverCard: ({ 
 import messages from "../../../messages/en.json";
 import { type GameSnapshotData } from "./player-view";
 import type { CanonicalGameId } from "./types";
-import type { FrontendGame } from "./frontend";
+import { toFrontendGame, type FrontendGame } from "./frontend";
+import { getGame } from "./registry";
 
 function fixture(game: CanonicalGameId): GameSnapshotData {
   return {
@@ -23,7 +24,7 @@ function fixture(game: CanonicalGameId): GameSnapshotData {
 }
 
 function render(game: CanonicalGameId) {
-  const descriptor: FrontendGame = { id: game, enabled: false, displayName: game, productName: game === "maimai" ? "tomomai" : "tomochu", regions: ["jp"], capabilities: ["scores", "rating", "rankings"] };
+  const descriptor: FrontendGame = { ...toFrontendGame(getGame(game), ["jp"]), capabilities: ["scores", "rating", "rankings"] };
   return renderToStaticMarkup(<NextIntlClientProvider locale="en" messages={messages} timeZone="UTC"><GameProvider game={descriptor}><SongsCard selectedSnapshotData={fixture(game)} /></GameProvider></NextIntlClientProvider>);
 }
 
@@ -48,7 +49,7 @@ describe("normalized player views", () => {
     data.snapshot.gameVersion = 14;
     data.songs = [{ ...data.songs[0], addedVersion: 14, comboStatus: 3 }];
     const redacted = toPublicGameSnapshot("maimai", data, { profileShowAllScores: false, profileShowScoreDetails: false, profileShowPlayCounts: false });
-    const game: FrontendGame = { id: "maimai", enabled: true, displayName: "maimai", productName: "tomomai", regions: ["jp"], capabilities: ["scores", "rankings"] };
+    const game: FrontendGame = { ...toFrontendGame(getGame("maimai"), ["jp"]), capabilities: ["scores", "rankings"] };
     const html = renderToStaticMarkup(<NextIntlClientProvider locale="en" messages={messages} timeZone="UTC"><GameProvider game={game}><SongsCard selectedSnapshotData={redacted} /></GameProvider></NextIntlClientProvider>);
     expect(redacted.songs[0].comboStatus).toBe(0);
     expect(redacted.songs[0].chartRating).toBeCloseTo(316.168);

@@ -263,7 +263,7 @@ export function SongDetailContent({ songName, artist, slug, type, parentIds, ini
   );
   const { data: scoreData } = trpc.user.getSongScores.useQuery(
     { game: game.id, songName, artist: artist ?? initialData?.artist, type, parentIds: parentIds ?? initialData?.parentIds },
-    { enabled: hasInitialData && viewerId !== null && game.enabled && game.capabilities.includes("scores") }
+    { enabled: hasInitialData && viewerId !== null && game.regions.length > 0 && game.capabilities.includes("scores") }
   );
   const data = useMemo(() => {
     if (!initialData) return fetchedData;
@@ -304,7 +304,7 @@ export function SongDetailContent({ songName, artist, slug, type, parentIds, ini
 
   const videoSearchURL = useMemo(() => {
     if (!data) return null;
-    const searchQuery = encodeURIComponent(`${game.displayName} ${data.songName} ${data.artist}`);
+    const searchQuery = encodeURIComponent(`${game.brand.displayName} ${data.songName} ${data.artist}`);
     if (isCNExclusive()) {
       return `https://search.bilibili.com/all?keyword=${searchQuery}`;
     } else {
@@ -364,7 +364,7 @@ export function SongDetailContent({ songName, artist, slug, type, parentIds, ini
       {summary && (
         <p className="text-sm text-muted-foreground leading-relaxed">
           {t('db.songs.detail.summary', {
-            game: game.displayName,
+            game: game.brand.displayName,
             songName: data.songName,
             artist: data.artist,
             genre: data.genre,

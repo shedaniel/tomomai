@@ -5,6 +5,8 @@ import { createRoot, type Root } from "react-dom/client";
 import { NextIntlClientProvider } from "next-intl";
 import type { RecentPlay } from "@/server/queries/recents";
 import { GameProvider } from "@/components/providers/game-provider";
+import { toFrontendGame } from "@/lib/games/frontend";
+import { getGame } from "@/lib/games/registry";
 import { MaimaiRecentPlayDetails } from "./recent-play-details";
 import messages from "../../../../messages/en.json";
 
@@ -37,7 +39,7 @@ afterEach(async () => { await act(async () => root.unmount()); vi.unstubAllGloba
 async function render(isDetailed: boolean) {
   await act(async () => root.render(
     <NextIntlClientProvider locale="en" messages={messages} timeZone="UTC">
-      <GameProvider game={{ id: "maimai", productName: "tomomai", displayName: "maimai DX", enabled: true, regions: ["intl"], capabilities: ["recents"] }}>
+      <GameProvider game={{ ...toFrontendGame(getGame("maimai"), ["intl"]), capabilities: ["recents"] }}>
         <MaimaiRecentPlayDetails play={play} isExpanded isDetailed={isDetailed} />
       </GameProvider>
     </NextIntlClientProvider>,

@@ -1,9 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { AbstractIntlMessages } from "next-intl";
+import type { CanonicalGameId } from "@/lib/games/ids";
 
 const { fetchProfile, createHomeOGImage, currentGame } = vi.hoisted(() => ({
   fetchProfile: vi.fn(),
-  currentGame: { id: "maimai" },
+  currentGame: { id: "maimai" as CanonicalGameId },
   createHomeOGImage: vi.fn((input: unknown) => input),
 }));
 
@@ -24,9 +25,11 @@ vi.mock("next-intl/server", async () => {
     }),
   };
 });
-vi.mock("@/lib/games/frontend-server", () => ({
-  getFrontendGame: () => ({ id: currentGame.id, displayName: currentGame.id === "maimai" ? "maimai DX" : "CHUNITHM", productName: currentGame.id === "maimai" ? "tomomai" : "tomochu", enabled: true, regions: ["intl", "jp"], capabilities: ["scores", "plates"] }),
-}));
+vi.mock("@/lib/games/current", async () => {
+  const { toFrontendGame } = await import("@/lib/games/frontend");
+  const { getGame } = await import("@/lib/games/registry");
+  return { getCurrentGame: () => ({ ...toFrontendGame(getGame(currentGame.id), ["intl", "jp"]), capabilities: ["scores", "plates"] }) };
+});
 vi.mock("@/server/queries/game-profile", () => ({ fetchPublicGameProfile: fetchProfile }));
 vi.mock("@/lib/auth-server", () => ({ getServerSession: async () => null }));
 vi.mock("@/lib/flags", () => ({ defaultFlags: {} }));

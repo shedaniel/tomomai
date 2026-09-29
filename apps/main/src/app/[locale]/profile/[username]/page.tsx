@@ -1,6 +1,5 @@
-import { getGameBrand } from "@/lib/games/frontend";
-import { getFrontendGame } from "@/lib/games/frontend-server";
-import { getGameRegion } from "@/lib/games/frontend";
+import { brandTitle, getGameRegion } from "@/lib/games/frontend";
+import { getCurrentGame } from "@/lib/games/current";
 import { resolvePublicUserByUsername } from "@/server/queries/public-access";
 import { notFound } from "next/navigation";
 import { redirect } from "@/i18n/navigation";
@@ -34,9 +33,9 @@ export async function generateMetadata({ params }: ProfilePageProps): Promise<Me
     getLocale(),
   ]);
 
-  const game = getFrontendGame();
-  const title = t("title", { username, brand: getGameBrand(game).title });
-  const description = t("descriptionUnknownRegion", { username, game: game.displayName, brand: game.productName });
+  const game = getCurrentGame();
+  const title = t("title", { username, brand: brandTitle(game.brand) });
+  const description = t("descriptionUnknownRegion", { username, game: game.brand.displayName, brand: game.brand.productName });
   const path = `/profile/${encodeURIComponent(username)}`;
 
   // Mirror the regional page's metadata so embed crawlers that don't follow
@@ -51,7 +50,7 @@ export async function generateMetadata({ params }: ProfilePageProps): Promise<Me
       title,
       description,
       url: localizePath(path, locale),
-      siteName: getGameBrand(getFrontendGame()).title,
+      siteName: brandTitle(getCurrentGame().brand),
       type: "profile",
       ...openGraphLocales(locale),
     },
@@ -69,8 +68,8 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
 
   try {
     // Get the user's profile to find their main region
-    const game = getFrontendGame();
-    if (!game.enabled) notFound();
+    const game = getCurrentGame();
+    if (game.regions.length === 0) notFound();
     const profileData = await resolvePublicUserByUsername(safeDecodeURIComponent(username), game.id);
     const region = getGameRegion(game, profileData.profileMainRegion);
     if (!region) notFound();

@@ -1,7 +1,6 @@
-import { getGameBrand } from "@/lib/games/frontend";
+import { brandTitle, supportsGameFeature } from "@/lib/games/frontend";
 import { getGameChartTypeLabel } from "@/lib/games/presentation";
-import { getFrontendGame } from "@/lib/games/frontend-server";
-import { supportsGameFeature } from "@/lib/games/frontend";
+import { getCurrentGame } from "@/lib/games/current";
 import { InlineNotFound } from "@/components/inline-not-found";
 import { getAllUniqueSongsCached } from "@/server/queries/songs-cache";
 import { Metadata } from "next";
@@ -40,7 +39,7 @@ export async function generateMetadata({ params }: DbSlugPageProps): Promise<Met
   }
 
   const decodedSlug = safeDecodeURIComponent(slug);
-  const game = getFrontendGame();
+  const game = getCurrentGame();
   if (!supportsGameFeature(game, "catalog")) return { robots: { index: false, follow: false } };
 
   const songs = await getAllUniqueSongsCached(game.id);
@@ -52,7 +51,7 @@ export async function generateMetadata({ params }: DbSlugPageProps): Promise<Met
   // the locale-resolution code that would otherwise read headers.
   if (!song) {
     return {
-      title: `Song not found | ${getGameBrand(game).title}`,
+      title: `Song not found | ${brandTitle(game.brand)}`,
       robots: { index: false, follow: false },
       alternates: {},
     };
@@ -64,7 +63,7 @@ export async function generateMetadata({ params }: DbSlugPageProps): Promise<Met
   ]);
 
   const chartType = getGameChartTypeLabel(game.id, song.type);
-  const title = t("songTitle", { game: game.displayName, songName: song.songName, artist: song.artist });
+  const title = t("songTitle", { game: game.brand.displayName, songName: song.songName, artist: song.artist });
   const description = t("songDescription", {
     songName: song.songName,
     artist: song.artist,
@@ -84,7 +83,7 @@ export async function generateMetadata({ params }: DbSlugPageProps): Promise<Met
       title,
       description: ogDescription,
       url: localizePath(path, locale),
-      siteName: getGameBrand(game).title,
+      siteName: brandTitle(game.brand),
       type: "article",
       images: [{ url: ogImageUrl(path, locale) }],
       ...openGraphLocales(locale),
@@ -108,7 +107,7 @@ export default async function DbSlugPage({ params }: DbSlugPageProps) {
   // isn't serialized into the ISR payload) plus per-song JSON-LD.
 
   const decodedSlug = safeDecodeURIComponent(slug);
-  const game = getFrontendGame();
+  const game = getCurrentGame();
   if (!supportsGameFeature(game, "catalog")) return <InlineNotFound />;
 
   const songs = await getAllUniqueSongsCached(game.id);
@@ -143,13 +142,13 @@ export default async function DbSlugPage({ params }: DbSlugPageProps) {
     image: song.cover,
     url: `${baseUrl}${localizePath(`/db/songs/${encodeURIComponent(decodedSlug)}`, locale)}`,
     description: tMeta("jsonLdChartDescription", {
-      game: game.displayName,
+      game: game.brand.displayName,
       chartType: getGameChartTypeLabel(game.id, song.type),
     }),
   };
 
   const breadcrumb = breadcrumbJsonLd([
-    { name: game.productName, url: `${baseUrl}${localizePath("/", locale)}` },
+    { name: game.brand.productName, url: `${baseUrl}${localizePath("/", locale)}` },
     { name: tNav("songs"), url: `${baseUrl}${localizePath("/db/songs", locale)}` },
     { name: song.songName, url: `${baseUrl}${localizePath(`/db/songs/${encodeURIComponent(decodedSlug)}`, locale)}` },
   ]);

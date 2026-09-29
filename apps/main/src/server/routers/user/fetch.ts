@@ -1,5 +1,5 @@
 import { getGameSite } from "@/lib/games/sites";
-import { GAME_REGISTRY } from "@/lib/games/registry";
+import { getGame } from "@/lib/games/registry";
 import { gameIdSchema } from "@/lib/games/schema";
 import { gameContextInput, validateGameCapability, validateGameInput } from "./game-input";
 import { startScoreFetch, getScoreFetchStatus } from "@/server/services/games/score-ingestion";
@@ -19,7 +19,7 @@ export const fetchRouter = router({
     .input(z.object({ game: gameIdSchema }))
     .query(({ ctx, input }) => {
       validateGameCapability(input.game, "scores");
-      const { cookieLogin } = GAME_REGISTRY[input.game].adapter.fetch;
+      const { cookieLogin } = getGame(input.game).fetch;
       if (!cookieLogin) throw new TRPCError({ code: "BAD_REQUEST", message: "Cookie login is not available for this game" });
       const userId = ctx.session.user.id;
       const otp = generateUserOtp(userId);

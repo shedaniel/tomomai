@@ -1,3 +1,4 @@
+import { getGame } from "./games/registry";
 import type { CanonicalGameId } from "./games/types";
 
 // Define all possible fetch states
@@ -44,40 +45,9 @@ export function serializeStatusStates(states: FetchState[]): string {
   return states.join(",");
 }
 
-// Get all possible states in order
-const GAME_FETCH_STATES: Record<CanonicalGameId, readonly FetchState[]> = {
-  maimai: [
-    FETCH_STATES.LOGIN,
-    FETCH_STATES.PLAYER_DATA,
-    FETCH_STATES.SONG_DATA_EASY,
-    FETCH_STATES.SONG_DATA_ADVANCED,
-    FETCH_STATES.SONG_DATA_EXPERT,
-    FETCH_STATES.SONG_DATA_MASTER,
-    FETCH_STATES.SONG_DATA_REMASTER,
-    FETCH_STATES.SONG_DATA_UTAGE,
-    FETCH_STATES.RECENT_SONGS,
-    FETCH_STATES.HIDDEN_SONGS,
-    FETCH_STATES.ALBUM_DATA,
-  ],
-  chunithm: [
-    FETCH_STATES.LOGIN,
-    FETCH_STATES.PLAYER_DATA,
-    FETCH_STATES.SONG_DATA_BASIC,
-    FETCH_STATES.SONG_DATA_ADVANCED,
-    FETCH_STATES.SONG_DATA_EXPERT,
-    FETCH_STATES.SONG_DATA_MASTER,
-    FETCH_STATES.SONG_DATA_ULTIMA,
-    FETCH_STATES.RECENT_SONGS,
-  ],
-};
-
-export function getAllStates(game: CanonicalGameId = "maimai"): readonly FetchState[] {
-  return GAME_FETCH_STATES[game];
-}
-
 // Calculate progress percentage based on completed states
-export function calculateProgress(completedStates: FetchState[], game: CanonicalGameId = "maimai"): number {
-  const allStates = getAllStates(game);
+export function calculateProgress(completedStates: FetchState[], game: CanonicalGameId): number {
+  const allStates = getGame(game).fetchStages;
   const completedCount = allStates.filter(state => completedStates.includes(state)).length;
   const totalCount = allStates.length;
   return Math.round((completedCount / totalCount) * 100);

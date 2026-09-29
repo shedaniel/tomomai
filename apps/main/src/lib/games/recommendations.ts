@@ -1,6 +1,6 @@
 import { recommendationEfficiency, type RecommendationPeers } from "@/lib/games/maimai/percentile/potential";
 import { getPlayerRankings, type GameSnapshotData, type GamePlayerScore } from "@/lib/games/player-view";
-import { GAME_RANKING_SIZES } from "@/lib/games/rating";
+import { getGame } from "@/lib/games/registry";
 import { getGameChartRating, getGameChartTypeKey, getGameDifficultyKey, getGameScoreBenchmarks } from "@/lib/games/presentation";
 
 export interface RecommendationData {
@@ -26,7 +26,7 @@ export function generateRecommendations(data: GameSnapshotData, peers: Record<st
   const { game, gameVersion: version } = data.snapshot;
   // Special charts do not contribute to either game's rating.
   const rankings = getPlayerRankings(game, { ...data, songs: data.songs.filter(song => song.difficultyCode !== 5) });
-  const sizes = GAME_RANKING_SIZES[game];
+  const sizes = getGame(game).rating.bucketSizes;
   const best = [...rankings.newScores, ...rankings.oldScores];
   const currentSum = best.reduce((sum, song) => sum + song.rating, 0);
   const targets = game === "maimai"

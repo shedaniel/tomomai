@@ -1,6 +1,5 @@
-import { getGameBrand } from "@/lib/games/frontend";
-import { getFrontendGame } from "@/lib/games/frontend-server";
-import { getGameRegion } from "@/lib/games/frontend";
+import { brandTitle, getGameRegion } from "@/lib/games/frontend";
+import { getCurrentGame } from "@/lib/games/current";
 import { notFound } from "next/navigation";
 import { Dashboard } from "@/components/player/dashboard";
 import { GameUnavailable } from "@/components/player/game-unavailable";
@@ -23,9 +22,9 @@ export async function generateMetadata(): Promise<Metadata> {
     getTranslations("dashboard"),
     getLocale(),
   ]);
-  const game = getFrontendGame();
-  const title = getGameBrand(game).title;
-  const description = t("description", { game: game.displayName });
+  const game = getCurrentGame();
+  const title = brandTitle(game.brand);
+  const description = t("description", { game: game.brand.displayName });
   return {
     title,
     description,
@@ -34,7 +33,7 @@ export async function generateMetadata(): Promise<Metadata> {
       title,
       description,
       url: localizePath("/", locale),
-      siteName: getGameBrand(getFrontendGame()).title,
+      siteName: brandTitle(getCurrentGame().brand),
       type: "website",
       ...openGraphLocales(locale),
     },
@@ -47,8 +46,8 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function Home() {
-  const game = getFrontendGame();
-  if (!game.enabled || !game.regions.length) return <GameUnavailable />;
+  const game = getCurrentGame();
+  if (game.regions.length === 0) return <GameUnavailable />;
   const session = await getServerSession();
   // eslint-disable-next-line react-hooks/rules-of-hooks
   let flags = await useFlags();
@@ -74,7 +73,7 @@ export default async function Home() {
   }));
 
   const userRegion = getGameRegion(game, userData.region);
-  if (!game.enabled || !userRegion) notFound();
+  if (!userRegion) notFound();
 
   const snapshots = await trpc.user.getSnapshots({ game: game.id, region: userRegion });
   const initialSnapshotData = snapshots[0]

@@ -26,7 +26,7 @@ export function TokenDialog({
 }: TokenDialogProps) {
   const game = useGame();
   if (!isGameRegion(game, region)) return null;
-  if (region === "jp" || (region === "intl" && !game.cookieLoginConfigured)) {
+  if (region === "jp" || (region === "intl" && !game.fetch.cookieLogin)) {
     return (
       <SegaCredentialsDialog
         isOpen={isOpen}

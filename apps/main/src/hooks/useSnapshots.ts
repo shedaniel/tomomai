@@ -18,7 +18,7 @@ export function useSnapshots(region: Region, isAuthenticated: boolean, options?:
   const [selection, setSelection] = useState<{ scope: string; id: string | null }>({ scope, id: initialSnapshots[0]?.id ?? null });
   const [initialScope] = useState(scope);
   const sameInitialScope = initialScope === scope;
-  const enabled = isAuthenticated && game.enabled && game.regions.includes(region) && game.capabilities.includes("scores");
+  const enabled = isAuthenticated && game.regions.includes(region) && game.capabilities.includes("scores");
   const snapshotsQuery = trpc.user.getSnapshots.useQuery({ game: game.id, region }, {
     enabled,
     initialData: sameInitialScope ? initialSnapshots : undefined,

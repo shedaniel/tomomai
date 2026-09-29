@@ -1,6 +1,6 @@
 import { type ApiKeyInfo, keyHasScope } from "@/lib/api/protect";
 import { type ScopeKey } from "@/lib/api/scopes";
-import { resolveGame } from "@/lib/games/registry";
+import { getGame } from "@/lib/games/registry";
 import type { z } from "zod";
 import type { snapshotDetail } from "./schemas";
 import type { fetchSnapshotData } from "@/server/queries/snapshots";
@@ -45,13 +45,13 @@ export function buildSnapshotPayload(
   if (hasSongsRead) {
     songsPayload = songs.map(songPayload);
   } else if (hasSongsB50Read) {
-    const adapter = resolveGame(snapshot.game).adapter;
+    const { rating } = getGame(snapshot.game);
     const rated = songs.map(song => ({
       ...song,
       chartId: song.songId,
-      rating: adapter.calculateChartRating({ ...song, difficulty: song.difficultyCode }, snapshot.gameVersion),
+      rating: rating.chartRating({ ...song, difficulty: song.difficultyCode }, snapshot.gameVersion),
     }));
-    const selection = adapter.selectRankings(rated, snapshot.gameVersion);
+    const selection = rating.selectRankings(rated, snapshot.gameVersion);
     const b50 = [...selection.newScores, ...selection.oldScores];
     songsPayload = b50.map(s => ({ ...songPayload(s), rating: s.rating }));
   }

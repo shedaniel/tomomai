@@ -1,5 +1,6 @@
 import { db } from '@/lib/db';
-import { getAllStates, parseStatusStates } from '@/lib/fetch-states';
+import { parseStatusStates } from '@/lib/fetch-states';
+import { getGame } from '@/lib/games/registry';
 import { getScoreFetchStatus, startScoreFetch } from '@/server/services/games/score-ingestion';
 import { account, user } from '@/lib/db/schema-pg';
 import { getLogger } from '@/lib/request-logger';
@@ -334,7 +335,7 @@ async function updateFetchProgress(
   interactionToken: string,
   locale?: string,
 ): Promise<void> {
-  const allStates = getAllStates();
+  const allStates = getGame("maimai").fetchStages;
   const completedStates = parseStatusStates(statusStates);
 
   // Format all states with appropriate emojis

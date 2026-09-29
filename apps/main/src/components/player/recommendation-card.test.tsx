@@ -5,6 +5,8 @@ import { createRoot } from "react-dom/client";
 import { NextIntlClientProvider } from "next-intl";
 import { RecommendationCard } from "./recommendation-card";
 import { GameProvider } from "@/components/providers/game-provider";
+import { toFrontendGame } from "@/lib/games/frontend";
+import { getGame } from "@/lib/games/registry";
 import type { GameSnapshotData } from "@/lib/games/player-view";
 import type { Flags } from "@/lib/flags";
 import messages from "../../../messages/en.json";
@@ -28,7 +30,7 @@ it("renders CHUNITHM score targets, average rating gains and game-sized buckets 
   const root = createRoot(container);
   await act(async () => root.render(
     <NextIntlClientProvider locale="en" messages={messages} timeZone="UTC">
-      <GameProvider game={{ id: "chunithm", productName: "tomochu", displayName: "CHUNITHM", enabled: true, regions: ["jp"], capabilities: ["scores", "rating"] }}>
+      <GameProvider game={{ ...toFrontendGame(getGame("chunithm"), ["jp"]), capabilities: ["scores", "rating"] }}>
         <RecommendationCard selectedSnapshotData={data} flags={{ scorePercentile: true } as Flags} region="jp" />
       </GameProvider>
     </NextIntlClientProvider>,

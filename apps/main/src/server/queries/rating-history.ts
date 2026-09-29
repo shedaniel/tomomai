@@ -1,7 +1,7 @@
 import { and, eq, inArray } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { parentSong, scoreData, snapshotRankings, songs, userSnapshots } from "@/lib/db/schema-pg";
-import { resolveGame } from "@/lib/games/registry";
+import { getGame } from "@/lib/games/registry";
 import { getGameDifficultyKey } from "@/lib/games/presentation";
 import type { CanonicalGameId } from "@/lib/games/types";
 import type { Region } from "@/lib/types";
@@ -34,7 +34,7 @@ function dailySnapshots(snapshots: HistorySnapshot[]) {
 }
 
 export function buildRatingHistory(game: CanonicalGameId, snapshots: HistorySnapshot[], scores: HistoryScore[]) {
-  const adapter = resolveGame(game).adapter;
+  const { rating } = getGame(game);
   const bySnapshot = new Map<number, HistoryScore[]>();
   for (const score of scores) {
     const entries = bySnapshot.get(score.snapshotId) ?? [];
@@ -43,10 +43,10 @@ export function buildRatingHistory(game: CanonicalGameId, snapshots: HistorySnap
   }
   const changesBySnapshot = new Map<number, RatingChange[]>();
   const rank = (snapshot: HistorySnapshot) => {
-    const selection = adapter.selectRankings((bySnapshot.get(snapshot.id) ?? []).map(score => ({
+    const selection = rating.selectRankings((bySnapshot.get(snapshot.id) ?? []).map(score => ({
       ...score,
       chartId: score.parentId.toString(),
-      rating: adapter.calculateChartRating(score, snapshot.gameVersion),
+      rating: rating.chartRating(score, snapshot.gameVersion),
     })), snapshot.gameVersion);
     return [...selection.newScores, ...selection.oldScores];
   };

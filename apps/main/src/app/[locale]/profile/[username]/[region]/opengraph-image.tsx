@@ -1,4 +1,4 @@
-import { getFrontendGame } from "@/lib/games/frontend-server";
+import { getCurrentGame } from "@/lib/games/current";
 import { notFound } from "next/navigation";
 import { createProfileOGImage, OG_SIZE } from "@/lib/og";
 import { getTranslations } from "next-intl/server";
@@ -26,7 +26,7 @@ export async function generateImageMetadata() {
 
 export default async function Image({ params, id }: Props & { id: Promise<string> }) {
   const [{ username: rawUsername, region }, locale] = await Promise.all([params, id]) as [{ username: string; region: string }, Locale];
-  const game = getFrontendGame();
+  const game = getCurrentGame();
   // TODO: Add CHUNITHM profile image rendering from normalized player data.
   if (game.id !== "maimai") notFound();
   const username = decodeURIComponent(rawUsername);

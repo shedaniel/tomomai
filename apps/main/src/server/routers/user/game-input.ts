@@ -1,8 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { requireCapability, resolveGameContext } from "@/lib/games/registry";
-import { GameAdapterError, type CanonicalGameId, type GameCapability } from "@/lib/games/types";
+import { GameAdapterError, type CanonicalGameId, type GameCapability, type GameRegionContext } from "@/lib/games/types";
 import { gameIdSchema, regionSchema } from "@/lib/games/schema";
-import type { Region } from "@/lib/types";
 
 export const gameContextInput = {
   game: gameIdSchema,
@@ -18,7 +17,7 @@ export function validateGameCapability(game: CanonicalGameId, capability: GameCa
   }
 }
 
-export function validateGameInput(input: { game: string; region: Region }, capability?: GameCapability) {
+export function validateGameInput(input: GameRegionContext, capability: GameCapability) {
   try {
     return resolveGameContext(input.game, input.region, capability);
   } catch (err) {

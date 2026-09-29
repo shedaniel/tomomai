@@ -196,7 +196,7 @@ function StepBasedTokenDialog({
               <p className="font-medium">
                 {t('tokenDialog.authenticationNote')}
               </p>
-              <p>{t('tokenDialog.tokenInstructions.description', { game: game.displayName })}</p>
+              <p>{t('tokenDialog.tokenInstructions.description', { game: game.brand.displayName })}</p>
               <p>{t('tokenDialog.tokenInstructions.expiration')}</p>
               <p className="pt-2">{t('tokenDialog.secureStorage')}</p>
             </div>
@@ -244,7 +244,7 @@ function StepBasedTokenDialog({
             <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground text-md font-bold">
               {currentStep}
             </div>
-            <span className="font-medium text-foreground tracking-tight">{t(`tokenDialog.steps.step${currentStep}Title`, { game: game.displayName })}</span>
+            <span className="font-medium text-foreground tracking-tight">{t(`tokenDialog.steps.step${currentStep}Title`, { game: game.brand.displayName })}</span>
           </ResponsiveDialogTitle>
         </ResponsiveDialogHeader>
 
@@ -267,7 +267,7 @@ function StepBasedTokenDialog({
               >
                 <div className="space-y-3">
                   <p className="text-sm text-foreground">{t.rich('tokenDialog.step1.description', {
-                    game: game.displayName,
+                    game: game.brand.displayName,
                     strong: (chunks) => <strong className="font-semibold">{chunks}</strong>,
                   })}</p>
                   <p className="text-xs text-muted-foreground">{t('tokenDialog.step1.clickToCopy')}</p>
@@ -465,7 +465,7 @@ export function SegaCookieWizardDialog({
           <ResponsiveDialogHeader>
             <ResponsiveDialogTitle className="flex items-center space-x-2">
               <Key className="h-5 w-5" />
-              <span>{t('tokenDialog.title', { game: game.displayName })}</span>
+              <span>{t('tokenDialog.title', { game: game.brand.displayName })}</span>
             </ResponsiveDialogTitle>
             <ResponsiveDialogDescription>
               {t('tokenDialog.intlDescription')} {t('tokenDialog.credentialsStored')}
@@ -490,7 +490,7 @@ export function SegaCookieWizardDialog({
                     </Badge>
                   </div>
                   <p className="text-sm text-muted-foreground leading-relaxed">
-                    {t('tokenDialog.tokenOptionDescription', { game: game.displayName })}
+                    {t('tokenDialog.tokenOptionDescription', { game: game.brand.displayName })}
                   </p>
                 </div>
                 <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors mt-1" />
@@ -511,7 +511,7 @@ export function SegaCookieWizardDialog({
                     <span className="font-semibold text-base">{t('tokenDialog.passwordTab')}</span>
                   </div>
                   <p className="text-sm text-muted-foreground leading-relaxed">
-                    {t('tokenDialog.passwordOptionDescription', { game: game.displayName })}
+                    {t('tokenDialog.passwordOptionDescription', { game: game.brand.displayName })}
                   </p>
                 </div>
                 <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors mt-1" />

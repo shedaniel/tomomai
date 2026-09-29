@@ -5,7 +5,8 @@ import { NextIntlClientProvider } from "next-intl";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { TokenDialog } from "@/components/token-dialog";
 import { GameProvider } from "@/components/providers/game-provider";
-import type { FrontendGame } from "@/lib/games/frontend";
+import { toFrontendGame, type FrontendGame } from "@/lib/games/frontend";
+import { getGame } from "@/lib/games/registry";
 import messages from "../../../messages/en.json";
 
 const state = vi.hoisted(() => ({ query: vi.fn(), submit: vi.fn(), loginPageUrl: "" }));
@@ -38,8 +39,8 @@ async function render(game: FrontendGame, region: "intl" | "jp" = "intl") {
 }
 
 const games: FrontendGame[] = [
-  { id: "maimai", displayName: "maimai DX", productName: "tomomai", enabled: true, fetchConfigured: true, cookieLoginConfigured: true, regions: ["intl", "jp"], capabilities: ["scores"] },
-  { id: "chunithm", displayName: "CHUNITHM", productName: "tomochu", enabled: true, fetchConfigured: true, cookieLoginConfigured: true, regions: ["intl", "jp"], capabilities: ["scores"] },
+  { ...toFrontendGame(getGame("maimai"), ["intl", "jp"]), capabilities: ["scores"] },
+  { ...toFrontendGame(getGame("chunithm"), ["intl", "jp"]), capabilities: ["scores"] },
 ];
 
 it.each(games)("uses the $id cookie wizard, game-scoped OTP, and configured login page", async game => {
@@ -49,7 +50,7 @@ it.each(games)("uses the $id cookie wizard, game-scoped OTP, and configured logi
   expect(cookieOption).toBeDefined();
   await act(async () => cookieOption?.click());
   expect(state.query).toHaveBeenCalledWith({ game: game.id });
-  expect(document.body.textContent).toContain(`Login to ${game.displayName} NET`);
+  expect(document.body.textContent).toContain(`Login to ${game.brand.displayName} NET`);
   expect(document.body.textContent).toContain(state.loginPageUrl);
   const manual = Array.from(document.querySelectorAll("button")).find(button => button.textContent === messages.tokenDialog.step1.enterDirectly);
   await act(async () => manual?.click());

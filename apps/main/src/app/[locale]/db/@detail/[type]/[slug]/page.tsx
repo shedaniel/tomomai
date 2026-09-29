@@ -1,4 +1,4 @@
-import { getFrontendGame } from "@/lib/games/frontend-server";
+import { getCurrentGame } from "@/lib/games/current";
 import { supportsGameFeature } from "@/lib/games/frontend";
 import { SongDetailContent } from "@/components/db/songs/song-detail-content";
 import { getAllUniqueSongsCached, getSongDetailsCached } from "@/server/queries/songs-cache";
@@ -27,7 +27,7 @@ export default async function DetailSlotPage({ params }: Props) {
   if (type !== "songs") return null;
 
   const decodedSlug = safeDecodeURIComponent(slug);
-  const game = getFrontendGame();
+  const game = getCurrentGame();
   if (!supportsGameFeature(game, "catalog")) return null;
 
   const songs = await getAllUniqueSongsCached(game.id);

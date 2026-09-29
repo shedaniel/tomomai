@@ -1,3 +1,4 @@
+import type { FetchState } from "@/lib/fetch-states";
 import type { CanonicalGameId, Region } from "./ids";
 
 export { CANONICAL_GAME_IDS, type CanonicalGameId } from "./ids";
@@ -17,7 +18,6 @@ export const GAME_CAPABILITIES = [
   "rating",
   "plates",
   "score-details",
-  "profile-icon",
 ] as const;
 export type GameCapability = (typeof GAME_CAPABILITIES)[number];
 
@@ -48,14 +48,47 @@ export type RankingSelection<T extends RankedScore> = {
   oldRemaining: T[];
 };
 
-export interface GameAdapter {
-  game: CanonicalGameId;
-  capabilities: ReadonlySet<GameCapability>;
-  supportedRegions: ReadonlySet<Region>;
+export type RankingBucketSizes = {
+  new: number;
+  old: number;
+};
+
+type ChartRatingInput = {
+  scoreValue: number;
+  levelPrecise: number;
+  difficulty: number;
+  comboStatus?: number;
+};
+
+export type GameBrand = {
+  productName: "tomomai" | "tomochu";
+  japaneseName: string;
+  displayName: string;
+  netName: string;
+};
+
+export type GameSite = {
+  entryUrl: string;
+  maintenance: {
+    startHour: number;
+    endHour: number;
+    weekdayEndHours?: Partial<Record<number, number>>;
+  };
+};
+
+export interface GameDefinition {
+  id: CanonicalGameId;
+  brand: GameBrand;
+  sites: Partial<Record<Region, GameSite>>;
+  capabilities: readonly GameCapability[];
   versions: VersionProvider;
+  rating: {
+    bucketSizes: RankingBucketSizes;
+    chartRating(input: ChartRatingInput, version: number): number;
+    selectRankings<T extends RankedScore>(scores: T[], currentVersion: number): RankingSelection<T>;
+  };
+  fetchStages: readonly FetchState[];
   fetch: { cookieLogin: { region: Region; url: string } | null };
-  calculateChartRating(input: { scoreValue: number; levelPrecise: number; difficulty: number; comboStatus?: number }, version: number): number;
-  selectRankings<T extends RankedScore>(scores: T[], currentVersion: number): RankingSelection<T>;
 }
 
 export type GameAdapterErrorCode =

@@ -36,12 +36,12 @@ import { toast } from "sonner";
 export function FetchSettings() {
   const t = useTranslations();
   const game = useGame();
-  if (!game.fetchConfigured || game.regions.length === 0) return <SettingsHeader title={t("settings.pages.fetch.title")} description={t("settings.pages.fetch.unavailable", { game: game.displayName })} />;
+  if (!supportsGameFeature(game, "scores") || game.regions.length === 0) return <SettingsHeader title={t("settings.pages.fetch.title")} description={t("settings.pages.fetch.unavailable", { game: game.brand.displayName })} />;
   return (
     <SettingsForm>
       <SettingsHeader
         title={t("settings.pages.fetch.title")}
-        description={t("settings.pages.fetch.description", { game: game.displayName })}
+        description={t("settings.pages.fetch.description", { game: game.brand.displayName })}
       />
       <FetchFields />
       <SettingsFooter />
@@ -109,7 +109,7 @@ function FetchFields() {
         <SettingsField
           icon={Key}
           label={t("settings.account.label")}
-          description={t("settings.account.description", { game: game.displayName })}
+          description={t("settings.account.description", { game: game.brand.displayName })}
         >
           <div className="flex gap-2">
             <Button

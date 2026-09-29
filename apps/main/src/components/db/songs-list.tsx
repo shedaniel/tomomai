@@ -207,7 +207,7 @@ export function SongsList(_: SongsListProps = {}) {
       <header className="space-y-1">
         <h1 className="text-2xl font-semibold tracking-tight">{t("db.songs.heading")}</h1>
         <p className="text-sm text-muted-foreground max-w-3xl leading-relaxed">
-          {t("db.songs.metadata.description", { game: game.displayName })}
+          {t("db.songs.metadata.description", { game: game.brand.displayName })}
         </p>
       </header>
 

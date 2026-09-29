@@ -1,4 +1,4 @@
-import { resolveGame } from "@/lib/games/registry";
+import { getGame } from "@/lib/games/registry";
 import { getLogger } from "@/lib/request-logger";
 import { postDiscordEmbed } from "@/server/services/discord/webhook";
 import type { AddedChange, DeletedChange, ModifiedChange } from "./ingestion/persistence";
@@ -264,7 +264,7 @@ export async function sendDiscordWebhook(
   }
 
   postDiscordEmbed(webhookUrl, { game, region }, {
-    title: `${resolveGame(game).displayName} song data update - ${dateStr} - ${regionName}`,
+    title: `${getGame(game).brand.displayName} song data update - ${dateStr} - ${regionName}`,
     description: description.trim() || "No changes detected",
     color,
     timestamp: now.toISOString(),

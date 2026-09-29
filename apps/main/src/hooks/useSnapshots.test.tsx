@@ -5,7 +5,8 @@ import { createRoot, type Root } from "react-dom/client";
 import { QueryClient, QueryClientProvider, useMutation, useQuery } from "@tanstack/react-query";
 import { GameProvider } from "@/components/providers/game-provider";
 import { useSnapshots } from "./useSnapshots";
-import type { FrontendGame } from "@/lib/games/frontend";
+import { toFrontendGame, type FrontendGame } from "@/lib/games/frontend";
+import { getGame } from "@/lib/games/registry";
 import type { GameSnapshotData, GameSnapshotSummary } from "@/lib/games/player-view";
 import type { Region } from "@/lib/types";
 
@@ -34,7 +35,7 @@ function Probe({ region = "jp" }: { region?: Region }) {
   return <span>{snapshots.selectedSnapshotData?.snapshot.displayName}</span>;
 }
 async function render(game: "maimai" | "chunithm" = "maimai", region: Region = "jp") {
-  const descriptor: FrontendGame = { id: game, displayName: game, productName: game === "maimai" ? "tomomai" : "tomochu", enabled: true, regions: ["jp", "intl"], capabilities: ["scores"] };
+  const descriptor: FrontendGame = { ...toFrontendGame(getGame(game), ["jp", "intl"]), capabilities: ["scores"] };
   await act(async () => { root.render(<QueryClientProvider client={client}><GameProvider game={descriptor}><Probe region={region} /></GameProvider></QueryClientProvider>); });
 }
 async function settle() { await act(async () => { await new Promise(resolve => setTimeout(resolve, 20)); }); }

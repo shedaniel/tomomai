@@ -18,14 +18,10 @@ import {
   user,
   userSnapshots,
 } from "@/lib/db/schema-pg";
-import { getAllStates } from "@/lib/fetch-states";
 import { appendFetchState } from "@/lib/fetch-states-server";
 import { getCurrentVersion } from "@/lib/games/versions";
 import { RANKING_BUCKET_CODE, keyOf } from "@/lib/games/codes";
-import {
-  GAME_REGISTRY,
-  resolveGameContext,
-} from "@/lib/games/registry";
+import { getGame, resolveGameContext } from "@/lib/games/registry";
 import type { CanonicalGameId } from "@/lib/games/types";
 import type { GameFetchResult, NormalizedScore, PersistedSnapshotContext, ScoreFetchContext } from "./types";
 import { flushLogger } from "@/lib/logger";
@@ -134,7 +130,7 @@ async function demoScoreFetch(
 
   void (async () => {
     try {
-      for (const state of getAllStates(game)) {
+      for (const state of getGame(game).fetchStages) {
         await new Promise(resolve => setTimeout(resolve, 500));
         await appendFetchState(insertedSession.id, state, game);
       }
@@ -193,7 +189,7 @@ export async function startScoreFetch(input: {
     await saveToken(context.game, input.userId, context.region, tokenToUse);
   }
 
-  const albumsSupported = GAME_REGISTRY[context.game].adapter.capabilities.has("albums");
+  const albumsSupported = getGame(context.game).capabilities.includes("albums");
   let shouldFetchAlbums = false;
   if (albumsSupported) {
     const userPreference = await db
@@ -376,7 +372,7 @@ export async function persistFetchResult(input: PersistFetchResultInput): Promis
   if (input.deadline && Date.now() >= input.deadline) throw new Error("Fetch operation timed out before persistence");
   const { snapshotId, gameVersion, chartResolution } = await db.transaction(async tx => {
     if (input.deadline) await tx.execute(sql`SELECT set_config('statement_timeout', ${String(Math.max(1, input.deadline - Date.now()))}, true)`);
-    const gameAdapter = GAME_REGISTRY[input.game].adapter;
+    const definition = getGame(input.game);
     const gameVersion = input.gameVersion;
     const player = input.fetched.player;
     const publicId = nanoid();
@@ -442,7 +438,7 @@ export async function persistFetchResult(input: PersistFetchResultInput): Promis
       await tx.insert(snapshotScores).values(junctionRows.slice(index, index + 1000)).onConflictDoNothing();
     }
 
-    if (gameAdapter.capabilities.has("rankings") && resolvedScores.length > 0) {
+    if (definition.capabilities.includes("rankings") && resolvedScores.length > 0) {
       const rankedScores: RankedResolvedScore[] = [];
       for (const resolved of resolvedScores) {
         const scoreId = scoreDataLookup.get(resolved.dataKey);
@@ -451,7 +447,7 @@ export async function persistFetchResult(input: PersistFetchResultInput): Promis
           chartId: resolved.song.id.toString(),
           scoreValue: resolved.score.scoreValue,
           addedVersion: resolved.song.addedVersion,
-          rating: gameAdapter.calculateChartRating({
+          rating: definition.rating.chartRating({
             scoreValue: resolved.score.scoreValue,
             levelPrecise: resolved.song.levelPrecise,
             difficulty: resolved.song.difficulty,
@@ -461,7 +457,7 @@ export async function persistFetchResult(input: PersistFetchResultInput): Promis
         });
       }
 
-      const rankingSelection = gameAdapter.selectRankings(rankedScores, gameVersion);
+      const rankingSelection = definition.rating.selectRankings(rankedScores, gameVersion);
       const rankingRows: (typeof snapshotRankings.$inferInsert)[] = [
         ...rankingSelection.newScores.map((score, rank) => ({
           game: input.game,

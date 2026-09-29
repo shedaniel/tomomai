@@ -1,5 +1,5 @@
 import type { GameSnapshotData } from "@/lib/games/player-view";
-import { GAME_REGISTRY } from "@/lib/games/registry";
+import { getGame } from "@/lib/games/registry";
 import { RANKING_BUCKET_CODE } from "@/lib/games/codes";
 import { maimaiCompatibilityGameSchema } from "@/lib/games/schema";
 import { gameContextInput, validateGameInput } from "./game-input";
@@ -275,16 +275,16 @@ export const snapshotsRouter = router({
           }
         }
 
-        const adapter = GAME_REGISTRY[input.game].adapter;
+        const { rating } = getGame(input.game);
         const ranked = newScoreData.map(score => {
           const song = songsById.get(score.songId)!;
           return {
             ...score, chartId: song.id.toString(), addedVersion: song.addedVersion,
-            rating: adapter.calculateChartRating({ ...score, difficulty: song.difficulty, levelPrecise: song.levelPrecise }, input.targetVersion),
+            rating: rating.chartRating({ ...score, difficulty: song.difficulty, levelPrecise: song.levelPrecise }, input.targetVersion),
             scoreId: scoreDataLookup.get(scoreDataKey(score))!,
           };
         });
-        const selected = adapter.selectRankings(ranked, input.targetVersion);
+        const selected = rating.selectRankings(ranked, input.targetVersion);
         newRating = [...selected.newScores, ...selected.oldScores].reduce((sum, score) => sum + score.rating, 0);
         const rankingRows = [
           ...selected.newScores.map((score, rank) => ({ game: input.game, snapshotId: newSnapshotInternalId, bucket: RANKING_BUCKET_CODE.new, rank, scoreId: score.scoreId })),

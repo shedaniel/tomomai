@@ -1,6 +1,7 @@
 "use client";
 
 import { useGame } from "@/components/providers/game-provider";
+import { supportsGameFeature } from "@/lib/games/frontend";
 import type { GameSnapshotData } from "@/lib/games/player-view";
 import { toMaimaiPlayerSnapshot } from "@/lib/games/maimai/legacy-view";
 import { ProfilePrivacySettings, Region } from "@/lib/types";
@@ -343,7 +344,7 @@ export function DataContent({
       <Database className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
       <h3 className="text-lg font-medium mb-2">{t('dataContent.noDataAvailable')}</h3>
       <p className="text-muted-foreground">
-        {game.fetchConfigured ? t('dataContent.getStartedInstructions', { game: game.displayName }) : t('settings.pages.fetch.unavailable', { game: game.displayName })}
+        {supportsGameFeature(game, "scores") ? t('dataContent.getStartedInstructions', { game: game.brand.displayName }) : t('settings.pages.fetch.unavailable', { game: game.brand.displayName })}
       </p>
     </div>
   );

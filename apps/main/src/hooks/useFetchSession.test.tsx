@@ -3,6 +3,8 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { GameProvider } from "@/components/providers/game-provider";
+import { toFrontendGame } from "@/lib/games/frontend";
+import { getGame } from "@/lib/games/registry";
 import { useFetchSession } from "./useFetchSession";
 
 const transport = vi.hoisted(() => ({ start: vi.fn(), status: vi.fn() }));
@@ -49,7 +51,7 @@ it("reports maintenance before submitting a token and allows retry after the win
   root = createRoot(container);
   vi.setSystemTime(new Date("2026-09-08T20:00:00Z"));
   await act(async () => root.render(
-    <GameProvider game={{ id: "chunithm", displayName: "CHUNITHM", productName: "tomochu", enabled: true, fetchConfigured: true, regions: ["intl"], capabilities: ["scores"] }}>
+    <GameProvider game={{ ...toFrontendGame(getGame("chunithm"), ["intl"]), capabilities: ["scores"] }}>
       <Probe />
     </GameProvider>,
   ));
@@ -74,7 +76,7 @@ it("keeps subscription failures out of credential recovery and completion refres
     id: "test-session", status: "failed", startedAt: new Date(), errorMessage,
   });
   await act(async () => root.render(
-    <GameProvider game={{ id: "chunithm", displayName: "CHUNITHM", productName: "tomochu", enabled: true, fetchConfigured: true, regions: ["jp"], capabilities: ["scores"] }}>
+    <GameProvider game={{ ...toFrontendGame(getGame("chunithm"), ["jp"]), capabilities: ["scores"] }}>
       <Probe />
     </GameProvider>,
   ));

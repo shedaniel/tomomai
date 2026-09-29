@@ -1,4 +1,5 @@
-import { getAdminCatalogRegions, resolveAdminGame } from "@/server/services/catalog/admin-game";
+import { resolveAdminGame } from "@/server/services/catalog/admin-game";
+import { getSupportedRegions } from "@/lib/games/regions";
 import { GameAdapterError, type CanonicalGameId } from "@/lib/games/types";
 import { gameErrorResponse } from "@/lib/api/game-context";
 import { flushLogger } from "@/lib/logger";
@@ -55,9 +56,9 @@ export async function GET(request: NextRequest) {
     // Get query parameters
     const sourceToken = searchParams.get('token');
 
-    if (!region || !getAdminCatalogRegions(game).includes(region)) {
+    if (!region || !getSupportedRegions(game).includes(region)) {
       return NextResponse.json(
-        { error: `Missing or invalid 'region' query parameter. Must be one of: ${getAdminCatalogRegions(game).join(", ")}`, requestId },
+        { error: `Missing or invalid 'region' query parameter. Must be one of: ${getSupportedRegions(game).join(", ")}`, requestId },
         { status: 400 }
       );
     }

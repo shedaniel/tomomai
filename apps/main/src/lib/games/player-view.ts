@@ -1,6 +1,6 @@
 import type { EventData } from "@/lib/types";
 import type { CanonicalGameId } from "./types";
-import { calculateChunithmChartRating, calculateMaimaiChartRating, selectChunithmRankings, selectMaimaiRankings } from "./rating";
+import { getGame } from "./registry";
 
 export type GamePlayerScore = {
   songId: string;
@@ -69,16 +69,14 @@ export type GameSnapshotSummary = {
 };
 
 export function getPlayerRankings(game: CanonicalGameId, data: GameSnapshotData) {
+  const { rating } = getGame(game);
+  const version = data.snapshot.gameVersion;
   const rated = data.songs.map(score => ({
     ...score,
     chartId: score.songId,
-    rating: score.chartRating ?? (game === "maimai"
-      ? calculateMaimaiChartRating(score.scoreValue, score.levelPrecise, score.difficultyCode, score.comboStatus, data.snapshot.gameVersion)
-      : calculateChunithmChartRating(score.scoreValue, score.levelPrecise)),
+    rating: score.chartRating ?? rating.chartRating({ ...score, difficulty: score.difficultyCode }, version),
   }));
-  return game === "maimai"
-    ? selectMaimaiRankings(rated, data.snapshot.gameVersion)
-    : selectChunithmRankings(rated, data.snapshot.gameVersion);
+  return rating.selectRankings(rated, version);
 }
 
 export function getSnapshotSelection(snapshots: readonly Pick<GameSnapshotSummary, "id">[], selected: string | null): string | null {

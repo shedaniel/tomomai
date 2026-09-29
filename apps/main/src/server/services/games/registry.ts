@@ -1,5 +1,6 @@
 import "server-only";
-import { resolveGame } from "@/lib/games/registry";
+import { getGame } from "@/lib/games/registry";
+import { getSupportedRegions } from "@/lib/games/regions";
 import { GameAdapterError, type CanonicalGameId, type GameRegionContext } from "@/lib/games/types";
 import type { GameServerModule } from "./types";
 import type { Region } from "@/lib/types";
@@ -11,10 +12,9 @@ export const GAME_SERVER_MODULES = {
   chunithm: chunithmServerModule,
 } satisfies Record<CanonicalGameId, GameServerModule>;
 
-export function resolveCatalogContext(input: string, region: Region): GameRegionContext {
-  const registration = resolveGame(input);
-  if (!registration.adapter.supportedRegions.has(region)) {
-    throw new GameAdapterError("UNSUPPORTED_REGION", `${region} is not supported for ${registration.displayName}`, registration.id, region);
+export function resolveCatalogContext(game: CanonicalGameId, region: Region): GameRegionContext {
+  if (!getSupportedRegions(game).includes(region)) {
+    throw new GameAdapterError("UNSUPPORTED_REGION", `${region} is not supported for ${getGame(game).brand.displayName}`, game, region);
   }
-  return { game: registration.id, region };
+  return { game, region };
 }

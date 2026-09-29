@@ -1,4 +1,5 @@
-import { getAdminCatalogRegions, resolveAdminGame } from "@/server/services/catalog/admin-game";
+import { resolveAdminGame } from "@/server/services/catalog/admin-game";
+import { getSupportedRegions } from "@/lib/games/regions";
 import { GameAdapterError, type CanonicalGameId } from "@/lib/games/types";
 import { gameErrorResponse } from "@/lib/api/game-context";
 import { parseCatalogVersion } from "@/lib/catalog/parse-version";
@@ -19,7 +20,7 @@ const FROM_REGEX = new RegExp(`^version(<=|>=|=)(\\d+)@(${REGION_PATTERN})-(-?\\
 const TO_REGEX = new RegExp(`^(${REGION_PATTERN})-(-?\\d+)$`);
 
 function regionsHint(game: CanonicalGameId): string {
-  return `[${getAdminCatalogRegions(game).join("|")}]`;
+  return `[${getSupportedRegions(game).join("|")}]`;
 }
 
 // Helper function to parse the "from" parameter

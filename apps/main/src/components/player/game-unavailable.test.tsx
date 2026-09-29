@@ -4,7 +4,8 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { NextIntlClientProvider } from "next-intl";
 import { Dashboard } from "./dashboard";
 import { GameProvider } from "@/components/providers/game-provider";
-import type { FrontendGame } from "@/lib/games/frontend";
+import { toFrontendGame, type FrontendGame } from "@/lib/games/frontend";
+import { getGame } from "@/lib/games/registry";
 import type { Flags } from "@/lib/flags";
 import messages from "../../../messages/en.json";
 
@@ -35,12 +36,8 @@ function renderUnavailable(game: FrontendGame) {
 }
 
 describe("unavailable game dashboard", () => {
-  it.each([
-    { enabled: false, regions: [] },
-    { enabled: true, regions: [] },
-    { enabled: false, regions: ["jp"] },
-  ] as const)("does not mount player hooks for an unavailable game: %o", state => {
-    const markup = renderUnavailable({ id: "chunithm", displayName: "CHUNITHM", productName: "tomochu", fetchConfigured: false, capabilities: ["scores"], ...state });
+  it("does not mount player hooks for a game with no enabled regions", () => {
+    const markup = renderUnavailable(toFrontendGame(getGame("chunithm"), []));
     expect(markup).toContain("tomochu ともチュウ");
     expect(markup).toContain("Player fetching for CHUNITHM is not available yet.");
     expect(markup).not.toContain("maimai");

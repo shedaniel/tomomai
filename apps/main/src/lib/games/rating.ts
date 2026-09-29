@@ -1,11 +1,6 @@
 import { codeToComboStatus, codeToDifficulty } from "@/lib/games/maimai/codes";
 import { calculateSongRating } from "@/lib/rating-calculator";
-import type { CanonicalGameId, RankedScore, RankingSelection } from "./types";
-
-export const GAME_RANKING_SIZES = {
-  maimai: { new: 15, old: 35 },
-  chunithm: { new: 20, old: 30 },
-} as const satisfies Record<CanonicalGameId, { new: number; old: number }>;
+import type { RankedScore, RankingBucketSizes, RankingSelection } from "./types";
 
 function interpolate(score: number, lowScore: number, highScore: number, lowValue: number, highValue: number): number {
   return lowValue + Math.floor(((score - lowScore) * (highValue - lowValue)) / (highScore - lowScore));
@@ -44,11 +39,10 @@ export function calculateMaimaiChartRating(
   }, version);
 }
 
-function rank<T extends RankedScore>(
+export function rankIntoBuckets<T extends RankedScore>(
   scores: T[],
   isNew: (score: T) => boolean,
-  newSize: number,
-  oldSize: number,
+  bucketSizes: RankingBucketSizes,
 ): RankingSelection<T> {
   const sorted = [...scores]
     .sort((a, b) => b.rating - a.rating || b.scoreValue - a.scoreValue)
@@ -56,18 +50,9 @@ function rank<T extends RankedScore>(
   const newScores = sorted.filter(isNew);
   const oldScores = sorted.filter(score => !isNew(score));
   return {
-    newScores: newScores.slice(0, newSize),
-    oldScores: oldScores.slice(0, oldSize),
-    newRemaining: newScores.slice(newSize),
-    oldRemaining: oldScores.slice(oldSize),
+    newScores: newScores.slice(0, bucketSizes.new),
+    oldScores: oldScores.slice(0, bucketSizes.old),
+    newRemaining: newScores.slice(bucketSizes.new),
+    oldRemaining: oldScores.slice(bucketSizes.old),
   };
-}
-
-export function selectChunithmRankings<T extends RankedScore>(scores: T[], currentVersion: number): RankingSelection<T> {
-  return rank(scores, score => score.addedVersion === currentVersion, GAME_RANKING_SIZES.chunithm.new, GAME_RANKING_SIZES.chunithm.old);
-}
-
-export function selectMaimaiRankings<T extends RankedScore>(scores: T[], currentVersion: number): RankingSelection<T> {
-  const newVersionFloor = currentVersion >= 12 ? currentVersion - 1 : currentVersion;
-  return rank(scores, score => score.addedVersion >= newVersionFloor, GAME_RANKING_SIZES.maimai.new, GAME_RANKING_SIZES.maimai.old);
 }

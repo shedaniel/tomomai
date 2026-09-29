@@ -1,7 +1,6 @@
-import { getFrontendGame } from "@/lib/games/frontend-server";
-import { supportsGameFeature } from "@/lib/games/frontend";
+import { getCurrentGame } from "@/lib/games/current";
+import { supportsGameFeature, brandTitle } from "@/lib/games/frontend";
 import { getGameCatalogSections } from "@/lib/games/presentation";
-import { getGameBrand } from "@/lib/games/frontend";
 import { InlineNotFound } from "@/components/inline-not-found";
 import { getAllUniqueSongsCached } from "@/server/queries/songs-cache";
 import { Metadata } from "next";
@@ -37,20 +36,20 @@ type DbTypePageProps = {
 
 export async function generateMetadata({ params }: DbTypePageProps): Promise<Metadata> {
   const { type } = await params;
-  const game = getFrontendGame();
+  const game = getCurrentGame();
   const locale = await getLocale();
 
   type Section = { title: string; description: string };
   let section: Section | null = null;
   if (type === "songs") {
     const t = await getTranslations("db.songs.metadata");
-    section = { title: t("title", { game: getFrontendGame().displayName }), description: t("description", { game: getFrontendGame().displayName }) };
+    section = { title: t("title", { game: getCurrentGame().brand.displayName }), description: t("description", { game: getCurrentGame().brand.displayName }) };
   } else if (type === "stats") {
     const t = await getTranslations("db.stats");
-    section = { title: t("title", { game: getFrontendGame().displayName }), description: t("description", { game: getFrontendGame().displayName }) };
+    section = { title: t("title", { game: getCurrentGame().brand.displayName }), description: t("description", { game: getCurrentGame().brand.displayName }) };
   } else if (type === "events") {
     const t = await getTranslations("db.events");
-    section = { title: t("title", { game: getFrontendGame().displayName }), description: t("description", { game: getFrontendGame().displayName }) };
+    section = { title: t("title", { game: getCurrentGame().brand.displayName }), description: t("description", { game: getCurrentGame().brand.displayName }) };
   }
   if (!section) return {};
 
@@ -63,7 +62,7 @@ export async function generateMetadata({ params }: DbTypePageProps): Promise<Met
       title: section.title,
       description: section.description,
       url: localizePath(path, locale),
-      siteName: getGameBrand(game).title,
+      siteName: brandTitle(game.brand),
       type: "website",
       ...(game.id === "maimai" ? { images: [{ url: ogImageUrl(path, locale) }] } : {}),
       ...openGraphLocales(locale),
@@ -78,9 +77,9 @@ export async function generateMetadata({ params }: DbTypePageProps): Promise<Met
 
 export default async function DbTypePage({ params }: DbTypePageProps) {
   const { type } = await params;
-  const game = getFrontendGame();
+  const game = getCurrentGame();
 
-  if (!getGameCatalogSections(game.id).includes(type) || (type === "songs" ? !supportsGameFeature(game, "catalog") : !game.enabled)) return <InlineNotFound />;
+  if (!getGameCatalogSections(game.id).includes(type) || (type === "songs" ? !supportsGameFeature(game, "catalog") : game.regions.length === 0)) return <InlineNotFound />;
 
   if (type === "songs") {
     // The interactive SongsList is mounted by /db/[type]/layout so it
@@ -91,8 +90,8 @@ export default async function DbTypePage({ params }: DbTypePageProps) {
     const jsonLd = {
       "@context": "https://schema.org",
       "@type": "CollectionPage",
-      name: t("title", { game: getFrontendGame().displayName }),
-      description: t("description", { game: getFrontendGame().displayName }),
+      name: t("title", { game: getCurrentGame().brand.displayName }),
+      description: t("description", { game: getCurrentGame().brand.displayName }),
       numberOfItems: songs.length,
     };
 

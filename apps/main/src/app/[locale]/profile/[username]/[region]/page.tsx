@@ -1,5 +1,5 @@
-import { getGameBrand, isGameRegion } from "@/lib/games/frontend";
-import { getFrontendGame } from "@/lib/games/frontend-server";
+import { brandTitle, isGameRegion } from "@/lib/games/frontend";
+import { getCurrentGame } from "@/lib/games/current";
 import { fetchPublicGameProfile } from "@/server/queries/game-profile";
 import { TRPCError } from "@trpc/server";
 import { ProfilePage } from "@/components/player/profile-page";
@@ -34,8 +34,8 @@ export async function generateMetadata({ params }: RegionProfilePageProps): Prom
     getLocale(),
   ]);
 
-  const game = getFrontendGame();
-  if (!game.enabled || !isGameRegion(game, region)) {
+  const game = getCurrentGame();
+  if (!isGameRegion(game, region)) {
     return {
       title: tMeta("notFoundTitle"),
       description: tMeta("notFoundDescription"),
@@ -45,12 +45,12 @@ export async function generateMetadata({ params }: RegionProfilePageProps): Prom
   try {
     const { snapshotData } = await fetchPublicGameProfile(game.id, username, region);
     const snapshot = snapshotData?.snapshot;
-    if (!snapshot) return { title: tMeta("title", { username, brand: getGameBrand(game).title }), alternates: await buildAlternates(`/profile/${encodeURIComponent(username)}/${region}`) };
+    if (!snapshot) return { title: tMeta("title", { username, brand: brandTitle(game.brand) }), alternates: await buildAlternates(`/profile/${encodeURIComponent(username)}/${region}`) };
 
-    const title = tMeta("title", { username, brand: getGameBrand(game).title });
+    const title = tMeta("title", { username, brand: brandTitle(game.brand) });
     const description = tMeta("descriptionRich", {
-      game: game.displayName,
-      brand: game.productName,
+      game: game.brand.displayName,
+      brand: game.brand.productName,
       username,
       region: tRegions(region),
       displayName: snapshot.displayName,
@@ -66,7 +66,7 @@ export async function generateMetadata({ params }: RegionProfilePageProps): Prom
         title,
         description,
         url: localizePath(path, locale),
-        siteName: getGameBrand(game).title,
+        siteName: brandTitle(game.brand),
         type: "profile",
         ...(game.id === "maimai" ? { images: [{ url: ogImageUrl(path, locale) }] } : {}),
         ...openGraphLocales(locale),
@@ -98,8 +98,8 @@ export default async function RegionProfilePage({ params }: RegionProfilePagePro
   await setStaticLocale(routeLocale);
 
   // Validate region
-  const game = getFrontendGame();
-  if (!game.enabled || !isGameRegion(game, region)) notFound();
+  const game = getCurrentGame();
+  if (!isGameRegion(game, region)) notFound();
 
   try {
     const { profile: profileData, snapshotData } = await fetchPublicGameProfile(game.id, safeDecodeURIComponent(username), region);
@@ -120,8 +120,8 @@ export default async function RegionProfilePage({ params }: RegionProfilePagePro
     ]);
 
     const pageDescription = tMeta("descriptionRich", {
-      game: game.displayName,
-      brand: game.productName,
+      game: game.brand.displayName,
+      brand: game.brand.productName,
       displayName: snapshotData?.snapshot.displayName ?? decodedUsername,
       username: decodedUsername,
       region: tNav(region),
@@ -130,7 +130,7 @@ export default async function RegionProfilePage({ params }: RegionProfilePagePro
     const profileJsonLd = {
       "@context": "https://schema.org",
       "@type": "ProfilePage",
-      name: tMeta("title", { username: decodedUsername, brand: getGameBrand(game).title }),
+      name: tMeta("title", { username: decodedUsername, brand: brandTitle(game.brand) }),
       description: pageDescription,
       mainEntity: {
         "@type": "Person",
@@ -145,7 +145,7 @@ export default async function RegionProfilePage({ params }: RegionProfilePagePro
     };
 
     const breadcrumb = breadcrumbJsonLd([
-      { name: game.productName, url: `${baseUrl}${localizePath("/", locale)}` },
+      { name: game.brand.productName, url: `${baseUrl}${localizePath("/", locale)}` },
       { name: tNav(region), url: profileUrl },
       { name: snapshotData?.snapshot.displayName ?? decodedUsername, url: profileUrl },
     ]);

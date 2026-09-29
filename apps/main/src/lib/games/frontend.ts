@@ -1,20 +1,16 @@
-import type { Region } from "@/lib/types";
-import type { CanonicalGameId, GameCapability } from "./types";
+import type { Region } from "./ids";
+import type { GameBrand, GameCapability, GameDefinition } from "./types";
 
-export interface FrontendGame {
-  id: CanonicalGameId;
-  displayName: string;
-  productName: "tomomai" | "tomochu";
-  enabled: boolean;
-  fetchConfigured?: boolean;
-  cookieLoginConfigured?: boolean;
+export type FrontendGame = Pick<GameDefinition, "id" | "brand" | "capabilities" | "fetch"> & {
   regions: readonly Region[];
-  capabilities: readonly GameCapability[];
+};
+
+export function toFrontendGame(game: GameDefinition, regions: readonly Region[]): FrontendGame {
+  return { id: game.id, brand: game.brand, capabilities: game.capabilities, fetch: game.fetch, regions };
 }
 
-export function getGameBrand(game: Pick<FrontendGame, "id" | "productName">) {
-  const japaneseName = game.id === "maimai" ? "ともマイ" : "ともチュウ";
-  return { name: game.productName, japaneseName, title: [game.productName, japaneseName].filter(Boolean).join(" ") };
+export function brandTitle(brand: GameBrand): string {
+  return `${brand.productName} ${brand.japaneseName}`;
 }
 
 export function supportsGameFeature(game: FrontendGame, capability: GameCapability): boolean {

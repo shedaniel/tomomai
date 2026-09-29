@@ -1,5 +1,9 @@
 import { expect, it } from "vitest";
-import { calculateChunithmChartRating, calculateMaimaiChartRating, selectMaimaiRankings, selectChunithmRankings } from "./rating";
+import { calculateChunithmChartRating, calculateMaimaiChartRating } from "./rating";
+import { getGame } from "./registry";
+
+const selectMaimaiRankings = getGame("maimai").rating.selectRankings;
+const selectChunithmRankings = getGame("chunithm").rating.selectRankings;
 
 it("preserves maimai rating caps and ignores utage", () => {
   expect(Math.floor(calculateMaimaiChartRating(1005000, 150, 3, 0, 14))).toBe(337);
