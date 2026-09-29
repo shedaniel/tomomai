@@ -155,10 +155,7 @@ function keepStoredParentFields(chart: CatalogChart, stored: CatalogChart): Cata
   return { ...chart, ...Object.fromEntries(CATALOG_PARENT_FIELDS.map(field => [field, stored[field]])) };
 }
 
-/**
- * Matches incoming charts to the stored slice and merges each pair. A parent whose preferred instance
- * lies elsewhere keeps its attributes, since this slice may not overwrite them.
- */
+/** A parent whose preferred instance lies elsewhere keeps its stored attributes, since only that instance may change them. */
 export function analyzeChanges(stored: StoredChart[], incoming: CatalogChart[], nonPreferredParents: ReadonlySet<bigint>): CatalogAnalysis {
   const assignments = matchIncoming(stored.map(entry => entry.chart), incoming);
   const added: CatalogChart[] = [];

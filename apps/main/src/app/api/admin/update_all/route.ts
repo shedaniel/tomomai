@@ -21,7 +21,6 @@ async function updateRegion(
 ): Promise<{ success: boolean; data?: any; error?: string; status?: number }> {
   const version = getCurrentVersion(game, region);
 
-  // Step 1: Fetch records from /api/admin/update
   log.info({ region, version }, `Fetching ${region.toUpperCase()} records from /api/admin/update...`);
   const updateUrl = new URL(`${origin}/api/admin/update`);
   updateUrl.searchParams.set('game', game);
@@ -49,7 +48,6 @@ async function updateRegion(
 
   log.info({ region, recordCount: updateData.records.length }, `Fetched ${updateData.records.length} ${region.toUpperCase()} records`);
 
-  // Step 2: Process cover images via /api/admin/image
   let songsForUpload = updateData.records;
   if (imageUpload) {
     log.info({ region }, `Processing ${region.toUpperCase()} cover images via /api/admin/image...`);
@@ -76,7 +74,6 @@ async function updateRegion(
     log.info({ region, stats: imageData.stats }, `${region.toUpperCase()} cover images processed`);
   }
 
-  // Step 3: Upload to /api/admin/upload with update=alter
   log.info({ region }, `Uploading ${region.toUpperCase()} records to /api/admin/upload...`);
   const uploadUrl = new URL(`${origin}/api/admin/upload`);
   uploadUrl.searchParams.set('game', game);
@@ -107,7 +104,6 @@ async function updateRegion(
 export async function GET(request: NextRequest) {
   const { log, requestId } = requestLogger(request, "admin/update_all");
   try {
-    // Check for admin token authentication
     const authHeader = request.headers.get("authorization");
     const token = authHeader?.replace("Bearer ", "");
 
@@ -118,7 +114,6 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Validate token against environment variable
     const adminToken = process.env.ADMIN_UPDATE_TOKEN;
     if (!adminToken) {
       log.error("ADMIN_UPDATE_TOKEN environment variable not set");
@@ -136,7 +131,6 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Get query parameters
     const { searchParams } = new URL(request.url);
     const game = resolveAdminGame(searchParams);
     const sourceToken = searchParams.get('token');
@@ -192,7 +186,6 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// Only allow GET requests
 export async function POST() {
   return NextResponse.json(
     { error: "Method not allowed" },

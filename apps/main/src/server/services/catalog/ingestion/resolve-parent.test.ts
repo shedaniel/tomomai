@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { resolveParents, type ParentState, type SongToParent } from "@/server/services/catalog/ingestion/resolve-parent";
+import { resolveParents, type ParentState, type SongToParent } from "./resolve-parent";
 
 function song(overrides: Partial<SongToParent> & { id: bigint }): SongToParent {
   return {

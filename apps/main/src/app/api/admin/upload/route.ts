@@ -69,7 +69,6 @@ export async function POST(request: NextRequest) {
   let log = baseLog;
   let noticeContext: { game: CanonicalGameId; region: Region } | undefined;
   try {
-    // Check for admin token authentication
     const authHeader = request.headers.get("authorization");
     const token = authHeader?.replace("Bearer ", "");
 
@@ -80,7 +79,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate token against environment variable
     const adminToken = process.env.ADMIN_UPDATE_TOKEN;
     if (!adminToken) {
       log.error("ADMIN_UPDATE_TOKEN environment variable not set");
@@ -98,7 +96,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get query parameters
     const { searchParams } = new URL(request.url);
     const game = resolveAdminGame(searchParams);
     const region = searchParams.get('region') as Region;
@@ -130,7 +127,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Parse request body
     const body = await request.json();
     let uploadSongs;
     try {
@@ -139,7 +135,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: error instanceof Error ? error.message : "Invalid catalog records", requestId }, { status: 400 });
     }
 
-    // Enrich the request logger now that region/version are known
     log = log.child({ game, region, version });
 
     log.info({
@@ -205,7 +200,6 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Only allow POST requests
 export async function GET() {
   return NextResponse.json(
     { error: "Method not allowed" },

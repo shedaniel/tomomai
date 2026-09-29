@@ -119,21 +119,18 @@ export function buildChangeDescription(game: CanonicalGameId, added: AddedChange
   const formatLevelSegment = (chart: { difficulty: number; level: string; levelPrecise: number }) =>
     `${difficultyShort(game, chart.difficulty)} ${chart.level} (${chart.levelPrecise ? formatPrecise(chart.levelPrecise) : 'unknown'})`;
 
-  // Added charts
   if (added.length > 0) {
     description += `**${added.length} Chart${added.length > 1 ? 's' : ''} Added**\n`;
     const lines = groupChartLines(game, added, formatLevelSegment);
     description += truncateLines(lines, LEVEL_TRUNCATE_LIMIT) + "\n\n";
   }
 
-  // Deleted charts
   if (deleted.length > 0) {
     description += `**${deleted.length} Chart${deleted.length > 1 ? 's' : ''} Deleted**\n`;
     const lines = groupChartLines(game, deleted, formatLevelSegment);
     description += truncateLines(lines, LEVEL_TRUNCATE_LIMIT) + "\n\n";
   }
 
-  // Modified charts grouped by field
   if (modified.length > 0) {
     type LevelEntry = {
       songName: string;
@@ -195,7 +192,6 @@ export function buildChangeDescription(game: CanonicalGameId, added: AddedChange
       description += truncateLines(lines, LEVEL_TRUNCATE_LIMIT) + "\n\n";
     }
 
-    // Other fields alphabetically
     for (const field of Object.keys(otherBuckets).sort()) {
       const entries = otherBuckets[field];
       const fieldLabel = field.charAt(0).toUpperCase() + field.slice(1);
@@ -234,7 +230,6 @@ export async function sendDiscordWebhook(
 
   const now = new Date();
 
-  // Format date in JST (Japan Standard Time)
   const jstDate = new Intl.DateTimeFormat('en-US', {
     timeZone: 'Asia/Tokyo',
     year: 'numeric',
@@ -247,7 +242,6 @@ export async function sendDiscordWebhook(
 
   const description = buildChangeDescription(game, added, deleted, filteredModified);
 
-  // Determine color based on changes
   const hasLevelChanges = filteredModified.some(m =>
     m.fieldChanges.some(c => c.field === "level" || c.field === "levelPrecise")
   );

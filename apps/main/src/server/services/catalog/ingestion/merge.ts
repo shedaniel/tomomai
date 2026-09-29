@@ -2,10 +2,19 @@ import deepEqual from "deep-equal";
 import type { Logger } from "pino";
 import { levenshtein } from "@/lib/utils";
 import { catalogChartKey } from "./normalize-charts";
-import { isImportant, unwrapUndefined, value, type CatalogFetchContext, type Pending, type SourceChart } from "./types";
+import { isImportant, value, type CatalogFetchContext, type Pending, type SourceChart } from "./types";
 import type { CatalogStage } from "./runner";
 
 export type FetcherMode = "default" | "only-modify" | "only-fallback";
+
+function unwrapUndefined<T>(pending: Pending<T> | undefined): Pending<NonNullable<T>> | undefined {
+  const unwrapped = value(pending);
+  if (unwrapped === null || unwrapped === undefined) return undefined;
+  if (pending && typeof pending === "object" && "important" in pending && typeof pending.important === "boolean") {
+    return { important: pending.important, value: unwrapped };
+  }
+  return unwrapped;
+}
 
 function choosePendingValue<T>(existing: Pending<T> | undefined, incoming: Pending<T> | undefined): Pending<T> | undefined {
   if (isImportant(incoming)) return incoming;

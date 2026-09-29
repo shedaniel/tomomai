@@ -18,15 +18,6 @@ export function isImportant<T>(pending: Pending<T>): boolean {
   return !!pending && typeof pending === "object" && "important" in pending && pending.important;
 }
 
-export function unwrapUndefined<T>(pending: Pending<T> | undefined): Pending<NonNullable<T>> | undefined {
-  const unwrapped = value(pending);
-  if (unwrapped === null || unwrapped === undefined) return undefined;
-  if (pending && typeof pending === "object" && "important" in pending && typeof pending.important === "boolean") {
-    return { important: pending.important, value: unwrapped };
-  }
-  return unwrapped;
-}
-
 export type NoticeSink = {
   addDetail(detail: string): void;
   details: string[];

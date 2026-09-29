@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { matchUpload } from "@/server/services/catalog/ingestion/match-upload";
+import { matchUpload } from "./match-upload";
 
 const chart = (artist: string, addedVersion: number) => ({ game: "maimai" as const, songName: "Link", artist, addedVersion, chartType: 0, difficulty: 3 });
 

@@ -48,6 +48,11 @@ export default [
     },
   },
   {
+    // Components still import @tomomai/ui once per symbol in many files. Widen this once they are merged.
+    files: ["src/lib/**/*.{ts,tsx}", "src/server/**/*.{ts,tsx}", "src/app/api/**/*.{ts,tsx}"],
+    rules: { "import/no-duplicates": "error" },
+  },
+  {
     files: ["src/lib/games/**/*.{ts,tsx}", "src/components/**/*.{ts,tsx}", "src/hooks/**/*.{ts,tsx}"],
     rules: {
       "@typescript-eslint/no-restricted-imports": ["error", { patterns: [serverOnlyBoundary] }],

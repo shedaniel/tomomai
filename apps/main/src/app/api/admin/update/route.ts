@@ -20,7 +20,6 @@ export async function GET(request: NextRequest) {
   let game: CanonicalGameId | undefined;
 
   try {
-    // Check for admin token authentication
     const authHeader = request.headers.get("authorization");
     const token = authHeader?.replace("Bearer ", "");
 
@@ -31,7 +30,6 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Validate token against environment variable
     const adminToken = process.env.ADMIN_UPDATE_TOKEN;
     if (!adminToken) {
       log.error("ADMIN_UPDATE_TOKEN environment variable not set");
@@ -51,7 +49,6 @@ export async function GET(request: NextRequest) {
 
     game = resolveAdminGame(searchParams);
 
-    // Get query parameters
     const sourceToken = searchParams.get('token');
 
     if (!region || !getSupportedRegions(game).includes(region)) {
@@ -103,7 +100,6 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// Only allow GET requests
 export async function POST() {
   return NextResponse.json(
     { error: "Method not allowed" },

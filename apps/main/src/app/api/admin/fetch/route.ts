@@ -12,7 +12,6 @@ import type { Logger } from "pino";
 export async function GET(request: NextRequest) {
   const { log, requestId } = requestLogger(request, "admin/fetch");
   try {
-    // Check for admin token authentication
     const authHeader = request.headers.get("authorization");
     const token = authHeader?.replace("Bearer ", "");
 
@@ -23,7 +22,6 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Validate token against environment variable
     const adminToken = process.env.ADMIN_UPDATE_TOKEN;
     if (!adminToken) {
       log.error("ADMIN_UPDATE_TOKEN environment variable not set");
@@ -53,7 +51,6 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// Only allow GET requests
 export async function POST() {
   return NextResponse.json(
     { error: "Method not allowed" },
@@ -80,7 +77,6 @@ async function fetchLocations(log: Logger, requestId: string) {
     log.info({ region }, "Admin fetch locations requested");
 
     try {
-      // Determine base URL based on region
       const gm = region === "intl" ? "98" : "96";
       const baseUrl = `https://location.am-all.net/alm/location?gm=${gm}`;
 
@@ -111,7 +107,6 @@ async function fetchLocations(log: Logger, requestId: string) {
 
         log.debug({ count: options.length }, "Found country options");
 
-        // Collect valid options
         const validOptions: Array<{ value: string; text: string }> = [];
         for (let i = 0; i < options.length; i++) {
           const option = options.eq(i);
@@ -130,7 +125,6 @@ async function fetchLocations(log: Logger, requestId: string) {
 
         log.debug({ count: validOptions.length }, "Processing valid countries in batches");
 
-        // Process in batches
         for (let i = 0; i < validOptions.length; i += BATCH_SIZE) {
           const batch = validOptions.slice(i, i + BATCH_SIZE);
           log.debug(`Processing batch ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(validOptions.length / BATCH_SIZE)} (${batch.length} countries)`);
@@ -154,7 +148,6 @@ async function fetchLocations(log: Logger, requestId: string) {
 
           const batchResults = await Promise.all(batchPromises);
 
-          // Add results to locationData
           for (const result of batchResults) {
             if (result) {
               locationData[result.text] = result.stores;
@@ -168,7 +161,6 @@ async function fetchLocations(log: Logger, requestId: string) {
 
         log.debug({ count: options.length }, "Found prefecture options");
 
-        // Collect valid options
         const validOptions: Array<{ value: string; text: string }> = [];
         for (let i = 0; i < options.length; i++) {
           const option = options.eq(i);
@@ -187,7 +179,6 @@ async function fetchLocations(log: Logger, requestId: string) {
 
         log.debug({ count: validOptions.length }, "Processing valid prefectures in batches");
 
-        // Process in batches
         for (let i = 0; i < validOptions.length; i += BATCH_SIZE) {
           const batch = validOptions.slice(i, i + BATCH_SIZE);
           log.debug(`Processing batch ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(validOptions.length / BATCH_SIZE)} (${batch.length} prefectures)`);
@@ -211,7 +202,6 @@ async function fetchLocations(log: Logger, requestId: string) {
 
           const batchResults = await Promise.all(batchPromises);
 
-          // Add results to locationData
           for (const result of batchResults) {
             if (result) {
               locationData[result.text] = result.stores;
@@ -249,7 +239,6 @@ async function fetchLocations(log: Logger, requestId: string) {
     }
   }
 
-  // Update database
   log.debug("Updating database with fetched stores");
   try {
     let upsertCount = 0;
@@ -264,7 +253,6 @@ async function fetchLocations(log: Logger, requestId: string) {
             ? null
             : { x: store.coords[0], y: store.coords[1] };
 
-          // Upsert store
           await db.insert(stores).values({
             country,
             area,
@@ -307,7 +295,6 @@ async function fetchStoresForLocation(
   at: string | undefined,
   log: Logger
 ): Promise<LocationEntry[]> {
-  // Build URL
   let url = `https://location.am-all.net/alm/location?gm=${gm}&ct=${ct}`;
   if (at) {
     url += `&at=${at}`;
@@ -326,7 +313,6 @@ async function fetchStoresForLocation(
   const html = await response.text();
   const $ = load(html);
 
-  // Parse store list
   const stores: LocationEntry[] = [];
   const storeElements = $(".store_list > li");
 
@@ -334,11 +320,9 @@ async function fetchStoresForLocation(
     try {
       const $store = $(element);
 
-      // Extract name
       const name = $store.find(".store_name").text().trim();
       if (!name) return;
 
-      // Extract address
       const address = $store.find(".store_address").text().trim();
 
       // Extract coordinates from onclick attribute

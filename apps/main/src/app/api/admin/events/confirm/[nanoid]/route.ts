@@ -32,7 +32,6 @@ export async function GET(
   await db.transaction(async (tx) => {
     const batchSize = 1000;
 
-    // Fetch existing events + steps
     const existingEvents = await tx.select().from(tourEvents);
     const existingSteps = await tx.select().from(tourEventSteps);
 
@@ -85,7 +84,6 @@ export async function GET(
       }
     }
 
-    // Batch upsert changed events
     const upsertedRows: { id: number; name: string }[] = [];
     for (let i = 0; i < changedEvents.length; i += batchSize) {
       const batch = changedEvents.slice(i, i + batchSize);
@@ -103,7 +101,6 @@ export async function GET(
       upsertedRows.push(...rows);
     }
 
-    // Build name → id map
     const nameToId = new Map(upsertedRows.map((r) => [r.name, r.id]));
 
     // Batch delete old steps only for changed events

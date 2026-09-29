@@ -1,4 +1,3 @@
-
 import type { CanonicalGameId } from "@/lib/games/types";
 import { catalogChartKey } from "./normalize-charts";
 

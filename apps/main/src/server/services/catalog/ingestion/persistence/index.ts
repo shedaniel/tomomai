@@ -79,10 +79,6 @@ async function deleteInstances(tx: CatalogTransaction, game: CanonicalGameId, de
   return deleted;
 }
 
-/**
- * Merges an uploaded catalog slice into the stored one inside the catalog write lock, and writes the result
- * unless the mode is noop.
- */
 export async function persistCatalog(
   game: CanonicalGameId,
   region: Region,

@@ -12,7 +12,6 @@ import type { CatalogInstance } from "./analyze";
 
 const BATCH_SIZE = 1000;
 
-/** A chart to write, with the parent it belongs to. */
 export type WriteRow = { chart: CatalogChart; parentId: bigint };
 
 /** Parents that have an instance preferred over this one. */

@@ -2,7 +2,7 @@ import { codeOf, keyOf } from "@/lib/games/codes";
 import type { CanonicalGameId } from "@/lib/games/types";
 import { songInstanceId } from "@/lib/db/song-instance-id";
 import { chartEstimates } from "@/lib/catalog/chart-estimates";
-import { SongDetailChart, SongDetailHistoricalChart, SongDetails } from "@/components/db/songs/types";
+import { SongDetailChart, SongDetailHistoricalChart, SongDetails, UniqueSong, UniqueSongDifficulty } from "@/components/db/songs/types";
 import { db } from "@/lib/db";
 import { parentSong, scoreData, snapshotScores, songs, userSnapshots } from "@/lib/db/schema-pg";
 import { getSongSlugs } from "@/lib/song-slug";
@@ -13,7 +13,6 @@ import { TRPCError } from "@trpc/server";
 import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import { unstable_cache } from "next/cache";
 import { Optional } from "utility-types";
-import { UniqueSong, UniqueSongDifficulty } from "@/components/db/songs/types";
 
 export async function querySongScores(
   game: CanonicalGameId,

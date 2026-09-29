@@ -12,9 +12,9 @@ vi.mock("@/lib/db", () => ({ db: {
   }),
 } }));
 vi.mock("@/lib/r2", () => ({ putR2Object: putObject }));
-import { publishSongCatalog } from "@/server/services/catalog/publication";
-import { CATALOG_WRITE_LOCK_ID } from "@/server/services/catalog/ingestion/lock";
-import { CATALOG_INSTANCE_FIELDS } from "@/server/services/catalog/ingestion/schema";
+import { publishSongCatalog } from "./publication";
+import { CATALOG_WRITE_LOCK_ID } from "./ingestion/lock";
+import { CATALOG_INSTANCE_FIELDS } from "./ingestion/schema";
 
 const parent = {
   songId: "Ab3xK9pQ", songName: "Test", artist: "Artist", cover: null,

@@ -25,7 +25,6 @@ function regionsHint(game: CanonicalGameId): string {
   return `[${getSupportedRegions(game).join("|")}]`;
 }
 
-// Helper function to parse the "from" parameter
 function parseFromParameter(game: CanonicalGameId, from: string): {
   region: Region;
   gameVersion: number;
@@ -53,7 +52,6 @@ function parseFromParameter(game: CanonicalGameId, from: string): {
   };
 }
 
-// Helper function to parse the "to" parameter
 function parseToParameter(game: CanonicalGameId, to: string): {
   region: Region;
   gameVersion: number;
@@ -75,7 +73,6 @@ function parseToParameter(game: CanonicalGameId, to: string): {
   };
 }
 
-// Helper function to build version filter condition
 function buildVersionFilter(versionFilter: "eq" | "lte" | "gte", versionValue: number) {
   switch (versionFilter) {
     case "eq":
@@ -92,7 +89,6 @@ function buildVersionFilter(versionFilter: "eq" | "lte" | "gte", versionValue: n
 export async function GET(request: NextRequest) {
   const { log, requestId } = requestLogger(request, "admin/import");
   try {
-    // Check for admin token authentication
     const authHeader = request.headers.get("authorization");
     const token = authHeader?.replace("Bearer ", "");
 
@@ -103,7 +99,6 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Validate token against environment variable
     const adminToken = process.env.ADMIN_UPDATE_TOKEN;
     if (!adminToken) {
       log.error("ADMIN_UPDATE_TOKEN environment variable not set");
@@ -121,7 +116,6 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Get query parameters
     const { searchParams } = new URL(request.url);
     const game = resolveAdminGame(searchParams);
     const fromParam = searchParams.get('from');
@@ -151,7 +145,6 @@ export async function GET(request: NextRequest) {
 
     log.info({ from: fromParam, to: toParam }, `Admin import requested (mode=${mode || 'insert+upsert'})`);
 
-    // Parse parameters
     let sourceConfig, targetConfig;
 
     try {
@@ -202,7 +195,6 @@ export async function GET(request: NextRequest) {
         });
       }
 
-      // Step 2: Check existing songs in target if mode is "only-upsert"
       let existingTargetSongs: (typeof songs.$inferSelect)[] = [];
 
       if (mode === "only-upsert") {
@@ -238,7 +230,6 @@ export async function GET(request: NextRequest) {
         const songKey = String(sourceSong.parentId);
 
         if (mode === "only-upsert") {
-          // Only include songs that already exist in target
           if (!existingTargetMap.has(songKey)) {
             log.debug({ songKey }, "Skipping new song in upsert mode");
             skippedCount++;
@@ -261,7 +252,6 @@ export async function GET(request: NextRequest) {
 
       log.info({ count: targetSongs.length }, "Prepared songs for import");
 
-      // Step 4: Perform batch upsert
       if (targetSongs.length > 0) {
         log.debug({ count: targetSongs.length }, "Performing batch upsert");
 
@@ -309,8 +299,7 @@ export async function GET(request: NextRequest) {
           targetConfig,
           timestamp: new Date().toISOString(),
         },
-    });
-
+      });
     });
     await publishSongCatalog(game);
     revalidateTag(`all-unique-songs:${game}`, { expire: 3600 });
@@ -322,7 +311,6 @@ export async function GET(request: NextRequest) {
     }
     revalidatePath("/sitemap.xml", "page");
     return result;
-
   } catch (error) {
     if (error instanceof GameAdapterError) return gameErrorResponse(error);
     log.error({ err: error }, "Error in admin import route");
@@ -335,7 +323,6 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// Only allow GET requests
 export async function POST() {
   return NextResponse.json(
     { error: "Method not allowed" },

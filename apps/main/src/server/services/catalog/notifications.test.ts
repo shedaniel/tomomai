@@ -2,7 +2,7 @@ import { afterEach, describe, it, expect, vi } from "vitest";
 import type { Difficulty, SongType } from "@/lib/games/maimai/types";
 import type { AddedChange, ModifiedChange, FieldChange } from "./ingestion/persistence/analyze";
 import { chartTypeToCode, difficultyToCode } from "@/lib/games/maimai/codes";
-import { buildChangeDescription, sendDiscordWebhook } from "@/server/services/catalog/notifications";
+import { buildChangeDescription, sendDiscordWebhook } from "./notifications";
 
 const background = vi.hoisted(() => [] as Promise<unknown>[]);
 vi.mock("next/server", () => ({ after: (task: Promise<unknown>) => background.push(task) }));

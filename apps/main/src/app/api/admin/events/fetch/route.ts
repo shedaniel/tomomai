@@ -346,7 +346,6 @@ export async function discoverLinks(
 export async function POST(request: NextRequest) {
   const { log, requestId } = requestLogger(request, "admin/fetch_events");
   try {
-    // Auth - same pattern as other admin routes
     const authHeader = request.headers.get("authorization");
     const token = authHeader?.replace("Bearer ", "");
 

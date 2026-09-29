@@ -1,5 +1,5 @@
 import { DISCORD_COLORS, editDiscordMessage } from './responses';
-import { regionDisplayName } from './i18n';
+import { regionDisplayName, t } from './i18n';
 import { formatProfileSummaryContent, type ProfileSummary } from './region';
 import type { Region } from '@/lib/types';
 import { prepareCreditData } from '@/server/services/games/maimai/render/credit-data';
@@ -7,7 +7,6 @@ import { prepareDailyPlaysData } from '@/server/services/games/maimai/render/dai
 import { getLogger } from '@/lib/request-logger';
 import { requestDiscordRender } from './render-client';
 import { buildExportImageMessage, buildLastCreditMessage, buildDailyPlaysMessage } from '@/server/services/games/maimai/render/messages';
-import { t } from './i18n';
 
 // Image rendering lives in apps/render. These helpers stay the Discord-domain
 // layer: they compose the message (content/components), resolve the metadata the
