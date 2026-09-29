@@ -357,6 +357,17 @@ a new code does not typecheck until it has a presentation. The rating bonuses
 shown in grades and chart tables come from `rating.bonuses(version)`.
 `src/lib/games/presentation.ts` only looks values up by code, and components
 read the descriptor through it or through `usePresentation()`.
+Shared components render the descriptor so call sites do not rebuild it.
+`ChartTypeBadge` (`src/components/games/chart-type-badge.tsx`) shows a chart
+type's badge image or label chip, and nothing for a type every chart has.
+`ChartLevel` (`src/components/games/chart-level.tsx`) owns the "≈" marker of an
+estimated chart constant, which `formatEstimated` applies outside React.
+`BucketHeader` shows a ranking bucket's rating sum only when
+`ratingRules.aggregation` is `sum`, and `RatingDistributionChart` draws one bar
+per `ratingRules.distributionStep` in each difficulty's `cssVar`, both under
+`src/components/player/songs/`. Each game lists the image hosts that browsers
+load through `/api/image-proxy` in `imageProxyHosts`, and `resolveImageUrl` in
+`src/lib/images.ts` is the one place that applies them.
 
 Capabilities govern navigation and components, while the backend continues to
 enforce them. Plates, percentile/recommendation calculations, reserved accounts,
