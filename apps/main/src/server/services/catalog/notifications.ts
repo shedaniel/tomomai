@@ -1,11 +1,18 @@
+import { isDeepStrictEqual } from "node:util";
 import { regionDisplayName } from "@/lib/discord/i18n";
+import { DEFAULT_FRONTEND_GAME } from "@/lib/games/ids";
 import { getGame } from "@/lib/games/registry";
 import { getLogger } from "@/lib/request-logger";
 import { postDiscordEmbed } from "@/server/services/discord/webhook";
-import type { AddedChange, DeletedChange, ModifiedChange } from "./ingestion/persistence/analyze";
+import type { AddedChange, DeletedChange, FieldChange, ModifiedChange } from "./ingestion/persistence/analyze";
 import type { Region } from "@/lib/types";
 import type { CanonicalGameId } from "@/lib/games/types";
 import { keyOf } from "@/lib/games/codes";
+
+/** The fields the public update channel reports. Covers and metadata are internal. */
+const PUBLIC_FIELDS: ReadonlySet<FieldChange["field"]> = new Set([
+  "artist", "level", "levelPrecise", "genre", "addedVersion", "bpm", "noteDesigner", "noteCounts",
+]);
 
 function formatPrecise(value: number): string {
   return (value / 10).toFixed(1);
@@ -41,24 +48,31 @@ function groupChartLines<T extends { songName: string; chartType: number; diffic
     });
 }
 
-type OtherEntry = { songName: string; chartType: number; difficulty: number; oldValue: any; newValue: any };
+type OtherEntry = { songName: string; chartType: number; difficulty: number; oldValue: unknown; newValue: unknown };
 
-// Render one "other field" change (genre, version, …) as the text after the
-// song label. Two charts whose changes produce the same string are treated as
-// identical and folded together.
-function formatFieldDiff(oldValue: any, newValue: any): string {
-  const oldObj = oldValue && typeof oldValue === "object" ? oldValue as Record<string, unknown> : null;
-  const newObj = newValue && typeof newValue === "object" ? newValue as Record<string, unknown> : null;
-  if (oldObj && newObj) {
-    return Object.keys({ ...oldObj, ...newObj })
-      .filter(k => oldObj[k] !== newObj[k])
-      .map(k => `${k} ${oldObj[k]}→${newObj[k]}`)
-      .join(", ");
-  } else if (!oldObj && newObj) {
-    return `(new) ${Object.entries(newObj).map(([k, v]) => `${k}:${v}`).join(" ")}`;
-  } else if (oldObj && !newObj) {
-    return `(removed) ${Object.entries(oldObj).map(([k, v]) => `${k}:${v}`).join(" ")}`;
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function formatLeaf(value: unknown): string {
+  return value === undefined ? "none" : JSON.stringify(value);
+}
+
+/** The changed leaves of an object field as `path old→new`, reading an absent side as an empty object. */
+function leafChanges(path: string, before: unknown, after: unknown): string[] {
+  const walkable = (value: unknown) => isRecord(value) || value === undefined || value === null;
+  if ((isRecord(before) || isRecord(after)) && walkable(before) && walkable(after)) {
+    const left = isRecord(before) ? before : {};
+    const right = isRecord(after) ? after : {};
+    return [...new Set([...Object.keys(left), ...Object.keys(right)])]
+      .flatMap(key => leafChanges(path ? `${path}.${key}` : key, left[key], right[key]));
   }
+  return isDeepStrictEqual(before, after) ? [] : [`${path} ${formatLeaf(before)}→${formatLeaf(after)}`];
+}
+
+// Two charts whose changes render the same string are folded together.
+function formatFieldDiff(oldValue: unknown, newValue: unknown): string {
+  if (isRecord(oldValue) || isRecord(newValue)) return leafChanges("", oldValue, newValue).join(", ");
   return `${oldValue} → ${newValue}`;
 }
 
@@ -110,9 +124,8 @@ function truncateLines(lines: string[], limit: number): string {
   return lines.slice(0, limit).join("\n") + `\n... and ${extra} more changes`;
 }
 
-// Build the embed description body for a song-data update. `modified` must
-// already have cover-only entries filtered out. Charts are grouped by song so
-// every difficulty for one song lands on a single compact line.
+// Build the public embed description for a song-data update. Charts are grouped by song so
+// every difficulty for one song lands on a single compact line. Non-public fields are left out.
 export function buildChangeDescription(game: CanonicalGameId, added: AddedChange[], deleted: DeletedChange[], modified: ModifiedChange[]): string {
   let description = "";
 
@@ -161,7 +174,7 @@ export function buildChangeDescription(game: CanonicalGameId, added: AddedChange
       }
 
       for (const change of song.fieldChanges) {
-        if (change.field === "level" || change.field === "levelPrecise" || change.field === "cover") continue;
+        if (change.field === "level" || change.field === "levelPrecise" || !PUBLIC_FIELDS.has(change.field)) continue;
         if (!otherBuckets[change.field]) otherBuckets[change.field] = [];
         otherBuckets[change.field].push({
           songName: song.songName,
@@ -204,6 +217,18 @@ export function buildChangeDescription(game: CanonicalGameId, added: AddedChange
   return description;
 }
 
+/**
+ * The public update channel for a game and region: `DISCORD_UPDATE_WEBHOOK_<GAME>_<REGION>`, then
+ * `DISCORD_UPDATE_WEBHOOK_<GAME>`. The region-only and unscoped variables predate per-game channels,
+ * so only the original game still reads them.
+ */
+export function resolveUpdateWebhook(game: CanonicalGameId, region: Region): string | undefined {
+  const scoped = process.env[`DISCORD_UPDATE_WEBHOOK_${game.toUpperCase()}_${region.toUpperCase()}`]
+    ?? process.env[`DISCORD_UPDATE_WEBHOOK_${game.toUpperCase()}`];
+  if (scoped || game !== DEFAULT_FRONTEND_GAME) return scoped;
+  return process.env[`DISCORD_UPDATE_WEBHOOK_${region.toUpperCase()}`] ?? process.env.DISCORD_UPDATE_WEBHOOK;
+}
+
 export async function sendDiscordWebhook(
   game: CanonicalGameId,
   region: Region,
@@ -211,17 +236,13 @@ export async function sendDiscordWebhook(
   deleted: DeletedChange[],
   modified: ModifiedChange[],
 ) {
-  const regionKey = `DISCORD_UPDATE_WEBHOOK_${region.toUpperCase()}`;
-  const webhookUrl = process.env[regionKey] ?? process.env.DISCORD_UPDATE_WEBHOOK;
+  const webhookUrl = resolveUpdateWebhook(game, region);
   if (!webhookUrl) {
-    getLogger().debug({ game, region }, "DISCORD_UPDATE_WEBHOOK not set, skipping webhook notification");
+    getLogger().debug({ game, region }, "No update webhook configured, skipping webhook notification");
     return;
   }
 
-  // Filter out songs whose only changes are cover (noisy, not useful)
-  const filteredModified = modified.filter(
-    m => m.fieldChanges.some(c => c.field !== "cover")
-  );
+  const filteredModified = modified.filter(m => m.fieldChanges.some(c => PUBLIC_FIELDS.has(c.field)));
 
   if (added.length === 0 && deleted.length === 0 && filteredModified.length === 0) {
     getLogger().debug({ game, region }, "No changes detected, skipping webhook notification");

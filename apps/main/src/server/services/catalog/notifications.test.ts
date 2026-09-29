@@ -1,25 +1,87 @@
-import { afterEach, describe, it, expect, vi } from "vitest";
+import { afterEach, beforeEach, describe, it, expect, vi } from "vitest";
 import type { Difficulty, SongType } from "@/lib/games/maimai/types";
 import type { AddedChange, ModifiedChange, FieldChange } from "./ingestion/persistence/analyze";
 import { chartTypeToCode, difficultyToCode } from "@/lib/games/maimai/codes";
-import { buildChangeDescription, sendDiscordWebhook } from "./notifications";
+import { buildChangeDescription, resolveUpdateWebhook, sendDiscordWebhook } from "./notifications";
 
 const background = vi.hoisted(() => [] as Promise<unknown>[]);
 vi.mock("next/server", () => ({ after: (task: Promise<unknown>) => background.push(task) }));
 vi.mock("@/lib/base-url", () => ({ resolveBaseUrl: () => "https://example.test" }));
 vi.mock("@/lib/logger", () => ({ logger: { info: vi.fn(), debug: vi.fn(), error: vi.fn() }, flushLogger: vi.fn(async () => {}) }));
+// vitest loads .env.local, so every channel starts unset.
+const WEBHOOK_VARIABLES = ["", "_JP", "_INTL", "_CN", "_MAIMAI", "_MAIMAI_JP", "_MAIMAI_INTL", "_CHUNITHM", "_CHUNITHM_JP", "_CHUNITHM_INTL"]
+  .map(suffix => `DISCORD_UPDATE_WEBHOOK${suffix}`);
+beforeEach(() => { for (const name of WEBHOOK_VARIABLES) vi.stubEnv(name, undefined); });
 afterEach(() => { vi.unstubAllEnvs(); vi.unstubAllGlobals(); background.length = 0; });
+
+const stubFetch = () => {
+  const fetch = vi.fn<typeof globalThis.fetch>(async () => new Response(null, { status: 204 }));
+  vi.stubGlobal("fetch", fetch);
+  return fetch;
+};
 
 it("identifies CHUNITHM changes independently of the host's frontend game", async () => {
   vi.stubEnv("FRONTEND_GAME", "maimai");
-  vi.stubEnv("DISCORD_UPDATE_WEBHOOK_JP", "https://example.test/webhook");
-  const fetch = vi.fn<typeof globalThis.fetch>(async () => new Response(null, { status: 204 }));
-  vi.stubGlobal("fetch", fetch);
+  vi.stubEnv("DISCORD_UPDATE_WEBHOOK_CHUNITHM_JP", "https://example.test/webhook");
+  const fetch = stubFetch();
   await sendDiscordWebhook("chunithm", "jp", [{ songKey: "chart", label: "Test ULTIMA", songName: "Test", artist: "Artist", chartType: 0, difficulty: 4, level: "14+", levelPrecise: 145 }], [], []);
   await Promise.all(background);
+  expect(fetch.mock.calls[0][0]).toBe("https://example.test/webhook");
   const payload = JSON.parse(String(fetch.mock.calls[0][1]?.body));
   expect(payload.username).toBe("ともチュウ");
   expect(payload.embeds[0].title).toContain("CHUNITHM");
+});
+
+describe("resolveUpdateWebhook", () => {
+  it("prefers the game and region channel, then the game channel", () => {
+    vi.stubEnv("DISCORD_UPDATE_WEBHOOK_CHUNITHM", "https://example.test/chunithm");
+    vi.stubEnv("DISCORD_UPDATE_WEBHOOK_CHUNITHM_INTL", "https://example.test/chunithm-intl");
+    expect(resolveUpdateWebhook("chunithm", "intl")).toBe("https://example.test/chunithm-intl");
+    expect(resolveUpdateWebhook("chunithm", "jp")).toBe("https://example.test/chunithm");
+  });
+
+  it("keeps the region and unscoped channels for maimai alone", () => {
+    vi.stubEnv("DISCORD_UPDATE_WEBHOOK_JP", "https://example.test/jp");
+    vi.stubEnv("DISCORD_UPDATE_WEBHOOK", "https://example.test/all");
+    expect(resolveUpdateWebhook("maimai", "jp")).toBe("https://example.test/jp");
+    expect(resolveUpdateWebhook("maimai", "intl")).toBe("https://example.test/all");
+    expect(resolveUpdateWebhook("chunithm", "jp")).toBeUndefined();
+    vi.stubEnv("DISCORD_UPDATE_WEBHOOK_MAIMAI", "https://example.test/maimai");
+    expect(resolveUpdateWebhook("maimai", "jp")).toBe("https://example.test/maimai");
+  });
+
+  it("posts no CHUNITHM JP update to the maimai JP channel", async () => {
+    vi.stubEnv("DISCORD_UPDATE_WEBHOOK_JP", "https://example.test/jp");
+    const fetch = stubFetch();
+    await sendDiscordWebhook("chunithm", "jp", [{ songKey: "chart", label: "Test ULTIMA", songName: "Test", artist: "Artist", chartType: 0, difficulty: 4, level: "14+", levelPrecise: 145 }], [], []);
+    await Promise.all(background);
+    expect(fetch).not.toHaveBeenCalled();
+  });
+});
+
+describe("sendDiscordWebhook", () => {
+  it("does not post charts whose only changes are internal", async () => {
+    vi.stubEnv("DISCORD_UPDATE_WEBHOOK_MAIMAI", "https://example.test/maimai");
+    const fetch = stubFetch();
+    await sendDiscordWebhook("maimai", "jp", [], [], [
+      modifiedField("ECHO", "master", "metadata", undefined, { levelPreciseEstimated: true }),
+      modifiedField("ECHO", "expert", "cover", "a.jpg", "b.jpg"),
+    ]);
+    await Promise.all(background);
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it("posts only the public fields of a chart that also changed internally", async () => {
+    vi.stubEnv("DISCORD_UPDATE_WEBHOOK_MAIMAI", "https://example.test/maimai");
+    const fetch = stubFetch();
+    await sendDiscordWebhook("maimai", "jp", [], [], [modifiedLevel("ECHO", "master", [
+      { field: "genre", oldValue: "POPS & ANIME", newValue: "maimai" },
+      { field: "metadata", oldValue: { source: { provider: "otoge-db", id: "1" } }, newValue: { source: { provider: "otoge-db", id: "2" } } },
+    ])]);
+    await Promise.all(background);
+    const { description } = JSON.parse(String(fetch.mock.calls[0][1]?.body)).embeds[0];
+    expect(description).toBe("**1 Genre Change**\n- ECHO DX: POPS & ANIME → maimai");
+  });
 });
 
 function added(
@@ -210,6 +272,30 @@ describe("buildChangeDescription", () => {
       "- ECHO DX: POPS & ANIME → maimai",
       "- ECHO STD: POPS & ANIME → maimai",
     ]);
+  });
+
+  it("renders object changes as changed leaf paths", () => {
+    const counts = { tap: 100, hold: 5, slide: 10, touch: 0, break: 4 };
+    const description = buildChangeDescription("maimai", [], [], [
+      modifiedField("ECHO", "master", "noteCounts", counts, { ...counts, tap: 101, break: 5 }),
+      modifiedField("Sky", "master", "noteCounts", undefined, { tap: 1 }),
+      modifiedField("Zeta", "master", "noteCounts", { tap: { head: 1 } }, { tap: { head: 2 } }),
+    ]);
+    expect(description.trim().split("\n")).toEqual([
+      "**3 NoteCounts Changes**",
+      "- ECHO DX: tap 100→101, break 4→5",
+      "- Sky DX: tap none→1",
+      "- Zeta DX: tap.head 1→2",
+    ]);
+    expect(description).not.toContain("[object Object]");
+  });
+
+  it("leaves internal fields out of the description", () => {
+    const description = buildChangeDescription("chunithm", [], [], [{
+      songKey: "chart", label: "Test ULTIMA", songName: "Test", chartType: 0, difficulty: 4, dbId: "1",
+      fieldChanges: [{ field: "metadata", oldValue: { source: { provider: "otoge-db", id: "1" } }, newValue: undefined }],
+    }]);
+    expect(description.trim()).toBe("");
   });
 
   it("ignores cover-only differences passed through in modified entries' other fields", () => {

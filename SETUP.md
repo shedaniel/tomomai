@@ -50,7 +50,10 @@ When enabled, the widget must have [pre-clearance enabled](https://developers.cl
 | `DISCORD_PUBLIC_KEY` | Yes | Discord application public key for interaction verification |
 | `NEXT_PUBLIC_DISCORD_APPLICATION_ID` | Yes | Discord application ID (public, used client-side) |
 | `DISCORD_BOT_TOKEN` | Scripts | Bot token for registering slash commands |
-| `DISCORD_UPDATE_WEBHOOK` | No | Webhook URL for posting update notifications |
+| `DISCORD_UPDATE_WEBHOOK_<GAME>_<REGION>` | No | Public catalog update channel for one game and region, such as `DISCORD_UPDATE_WEBHOOK_CHUNITHM_JP`. It takes precedence over every other update variable |
+| `DISCORD_UPDATE_WEBHOOK_<GAME>` | No | Public catalog update channel for every region of one game (`MAIMAI` or `CHUNITHM`) |
+| `DISCORD_UPDATE_WEBHOOK_<REGION>` | No | Legacy maimai update channel for one region (`JP`, `INTL` or `CN`). maimai reads it only when neither maimai variable is set, and CHUNITHM never reads it |
+| `DISCORD_UPDATE_WEBHOOK` | No | Legacy maimai update channel for every region, read last. CHUNITHM never reads it |
 | `DISCORD_UPDATE_WEBHOOK_NOTICE` | No | Webhook URL for posting update notices. The channel should never be publicly accessible as it contains admin confirmation buttons |
 
 ### Cloudflare R2
