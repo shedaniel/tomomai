@@ -28,5 +28,8 @@ export function gameProcedure<TContextOverrides extends object>(base: BaseProced
 export function gameOnlyProcedure<TContextOverrides extends object>(base: BaseProcedure<TContextOverrides>, capability: GameCapability) {
   return base
     .input(z.object({ game: gameIdSchema }))
-    .use(({ input, next }) => next({ ctx: resolveGameContext(input.game, { capability }) }));
+    .use(({ input, next }) => {
+      const { game } = resolveGameContext(input.game, { capability });
+      return next({ ctx: { game } });
+    });
 }
