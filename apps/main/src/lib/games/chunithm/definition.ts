@@ -45,4 +45,5 @@ export const chunithmDefinition = {
     "recent_songs",
   ],
   loginMethods: { intl: ["sega-cookie", "sega-account"], jp: ["sega-account"] },
+  catalogTokenRegions: [],
 } satisfies GameDefinition;

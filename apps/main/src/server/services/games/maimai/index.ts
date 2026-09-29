@@ -16,8 +16,6 @@ export const maimaiServerModule: GameServerModule = {
     levelPolicy: maimaiLevelPolicy,
     images: maimaiImagePolicy,
     normalizeTitle: normalizeName,
-    // The CN catalog comes from Lxns, which needs no maimai NET login.
-    requiresToken: region => region !== "cn",
     async authenticate(region, token) {
       const { loginAndGetCookies } = await import("./login");
       return loginAndGetCookies(region, token);

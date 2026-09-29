@@ -210,4 +210,6 @@ export interface GameDefinition {
   fetchStages: readonly FetchState[];
   /** How players sign in to fetch scores in each region. A `sega-cookie` region's site must sign in through the gateway. */
   loginMethods: Partial<Record<Region, readonly LoginMethod[]>>;
+  /** Regions whose catalog source reads the game site, so collecting their catalog needs a player token. */
+  catalogTokenRegions: readonly Region[];
 }

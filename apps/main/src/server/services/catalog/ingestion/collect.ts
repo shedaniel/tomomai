@@ -1,4 +1,5 @@
 import { resolveGameContext } from "@/lib/games/access";
+import { getGame } from "@/lib/games/registry";
 import type { CanonicalGameId } from "@/lib/games/types";
 import type { Region } from "@/lib/types";
 import { GAME_SERVER_MODULES } from "@/server/services/games/registry";
@@ -9,7 +10,7 @@ import type { CatalogChart } from "./schema";
 import type { CatalogCollectContext } from "./types";
 
 export function catalogRequiresToken(game: CanonicalGameId, region: Region): boolean {
-  return GAME_SERVER_MODULES[game].catalog.requiresToken?.(region) ?? false;
+  return getGame(game).catalogTokenRegions.includes(region);
 }
 
 /** Logs in to the game's catalog source when the region needs it, and returns the session cookies. */

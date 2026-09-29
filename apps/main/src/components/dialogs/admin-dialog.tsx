@@ -11,7 +11,9 @@ import { useCallback, useEffect, useState } from "react";
 import { Input } from "@tomomai/ui";
 import { Label } from "@tomomai/ui";
 import { Button } from "@tomomai/ui";
+import { useGame } from "@/components/providers/game-provider";
 import { getCurrentVersion } from "@/lib/games/versions";
+import type { Region } from "@/lib/types";
 import { UsersBrowserDialog } from "./users-browser-dialog";
 import { ProfileReportsDialog } from "./profile-reports-dialog";
 import { cn } from "@/lib/utils";
@@ -22,29 +24,35 @@ interface AdminDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
+const REGION_GRID_COLUMNS = ["grid-cols-1", "grid-cols-2", "grid-cols-3"];
+
 export function AdminDialog({ open, onOpenChange }: AdminDialogProps) {
+  const game = useGame();
   const [adminToken, setAdminToken] = useState("");
-  const [maimaiToken, setMaimaiToken] = useState("");
+  const [sourceToken, setSourceToken] = useState("");
   const [newSongs, setNewSongs] = useState<object[]>([]);
   const [consoleLog, setConsoleLog] = useState("Welcome to the admin panel!\n");
   const [usersBrowserOpen, setUsersBrowserOpen] = useState(false);
   const [profileReportsOpen, setProfileReportsOpen] = useState(false);
   const profileReportsT = useTranslations("Admin.profileReports");
+  const regionT = useTranslations("regions");
 
-  const intlVersion = getCurrentVersion("maimai", "intl");
-  const jpVersion = getCurrentVersion("maimai", "jp");
+  const sourceTokenKey = `catalogSourceToken:${game.id}`;
+  const regionGrid = REGION_GRID_COLUMNS[Math.min(game.regions.length, REGION_GRID_COLUMNS.length) - 1];
+  const needsSourceToken = game.regions.some(region => game.catalogTokenRegions.includes(region));
+  const regionButtonLabel = (region: Region) => `${regionT(region)} (v${getCurrentVersion(game.id, region)})`;
 
   // Load tokens from localStorage on mount
   useEffect(() => {
     const savedAdminToken = localStorage.getItem("adminToken");
-    const savedMaimaiToken = localStorage.getItem("maimaiToken");
+    const savedSourceToken = localStorage.getItem(sourceTokenKey);
     if (savedAdminToken) {
       setAdminToken(savedAdminToken);
     }
-    if (savedMaimaiToken) {
-      setMaimaiToken(savedMaimaiToken);
+    if (savedSourceToken) {
+      setSourceToken(savedSourceToken);
     }
-  }, []);
+  }, [sourceTokenKey]);
 
   // Save admin token to localStorage whenever it changes
   useEffect(() => {
@@ -53,20 +61,19 @@ export function AdminDialog({ open, onOpenChange }: AdminDialogProps) {
     }
   }, [adminToken]);
 
-  // Save maimai token to localStorage whenever it changes
   useEffect(() => {
-    if (maimaiToken) {
-      localStorage.setItem("maimaiToken", maimaiToken);
+    if (sourceToken) {
+      localStorage.setItem(sourceTokenKey, sourceToken);
     }
-  }, [maimaiToken]);
+  }, [sourceToken, sourceTokenKey]);
 
   const appendConsoleLog = useCallback((log: string) => {
     setConsoleLog(old => old + log + "\n");
   }, [setConsoleLog]);
 
-  function handleNormalizeDatabase(region: "intl" | "jp") {
+  function handleNormalizeDatabase(region: Region) {
     appendConsoleLog("Normalizing database for region " + region + "...");
-    fetch(`/api/admin/db?game=maimai&type=normalize&region=${region}`, {
+    fetch(`/api/admin/db?game=${game.id}&type=normalize&region=${region}`, {
       method: "GET",
       headers: { "Authorization": "Bearer " + adminToken }
     }).then(async data => {
@@ -83,10 +90,10 @@ export function AdminDialog({ open, onOpenChange }: AdminDialogProps) {
     });
   }
 
-  function handleFetchSongs(region: "intl" | "jp") {
+  function handleFetchSongs(region: Region) {
     appendConsoleLog("Fetching new songs for region " + region + "...");
-    const maimaiTokenEncoded = encodeURIComponent(maimaiToken);
-    fetch(`/api/admin/update?game=maimai&region=${region}&token=${maimaiTokenEncoded}`, {
+    const token = game.catalogTokenRegions.includes(region) ? `&token=${encodeURIComponent(sourceToken)}` : "";
+    fetch(`/api/admin/update?game=${game.id}&region=${region}${token}`, {
       method: "GET",
       headers: { "Authorization": "Bearer " + adminToken }
     }).then(async data => {
@@ -108,16 +115,16 @@ export function AdminDialog({ open, onOpenChange }: AdminDialogProps) {
     });
   }
 
-  function handlePreviewChanges(region: "intl" | "jp") {
+  function handlePreviewChanges(region: Region) {
     if (newSongs.length === 0) {
       appendConsoleLog("Error: No new songs loaded. Please fetch songs first.");
       return;
     }
 
-    const version = region === "intl" ? intlVersion : jpVersion;
+    const version = getCurrentVersion(game.id, region);
     appendConsoleLog(`Previewing changes for ${region} v${version} (${newSongs.length} songs)...`);
 
-    fetch(`/api/admin/upload?game=maimai&region=${region}&version=${version}&mode=noop`, {
+    fetch(`/api/admin/upload?game=${game.id}&region=${region}&version=${version}&update=noop`, {
       method: "POST",
       headers: {
         "Authorization": "Bearer " + adminToken,
@@ -144,20 +151,20 @@ export function AdminDialog({ open, onOpenChange }: AdminDialogProps) {
             appendConsoleLog(`\nDeleted songs (${json.changes.deleted.length}):`);
             json.changes.deleted.forEach((song: any) => {
               const playCount = song.playRecordCount != null ? ` | ${song.playRecordCount} plays` : "";
-              appendConsoleLog(`  - ${song.songKey} | ${song.level} | ${song.artist} (dbId: ${song.dbId})${playCount}`);
+              appendConsoleLog(`  - ${song.label} | ${song.level} | ${song.artist} (dbId: ${song.dbId})${playCount}`);
             });
           }
 
           if (json.changes.added.length > 0) {
             appendConsoleLog(`\nAdded songs (${json.changes.added.length}):`);
             json.changes.added.forEach((song: any) => {
-              appendConsoleLog(`  + ${song.songKey} | ${song.level} | ${song.artist}`);
+              appendConsoleLog(`  + ${song.label} | ${song.level} | ${song.artist}`);
             });
           }
 
           if (json.changes.modified.length > 0) {
             // Group changes by field type
-            const changesByField: Record<string, Array<{ songKey: string; oldValue: any; newValue: any; levelPreciseOld?: any; levelPreciseNew?: any }>> = {};
+            const changesByField: Record<string, Array<{ label: string; oldValue: any; newValue: any; levelPreciseOld?: any; levelPreciseNew?: any }>> = {};
 
             json.changes.modified.forEach((song: any) => {
               const levelChange = song.fieldChanges.find((c: any) => c.field === "level");
@@ -167,7 +174,7 @@ export function AdminDialog({ open, onOpenChange }: AdminDialogProps) {
               if (levelChange || levelPreciseChange) {
                 if (!changesByField["level"]) changesByField["level"] = [];
                 changesByField["level"].push({
-                  songKey: song.songKey,
+                  label: song.label,
                   oldValue: levelChange?.oldValue,
                   newValue: levelChange?.newValue,
                   levelPreciseOld: levelPreciseChange?.oldValue,
@@ -180,7 +187,7 @@ export function AdminDialog({ open, onOpenChange }: AdminDialogProps) {
                 if (change.field !== "level" && change.field !== "levelPrecise") {
                   if (!changesByField[change.field]) changesByField[change.field] = [];
                   changesByField[change.field].push({
-                    songKey: song.songKey,
+                    label: song.label,
                     oldValue: change.oldValue,
                     newValue: change.newValue
                   });
@@ -194,7 +201,7 @@ export function AdminDialog({ open, onOpenChange }: AdminDialogProps) {
             if (changesByField["level"]) {
               appendConsoleLog(`Level Changes (${changesByField["level"].length}):`);
               changesByField["level"].forEach((change: any) => {
-                let msg = `  ${change.songKey}`;
+                let msg = `  ${change.label}`;
                 if (change.oldValue !== undefined || change.newValue !== undefined) {
                   msg += ` | Level: ${change.oldValue || "?"} → ${change.newValue || "?"}`;
                 }
@@ -214,7 +221,7 @@ export function AdminDialog({ open, onOpenChange }: AdminDialogProps) {
               changes.forEach((change: any) => {
                 const oldVal = typeof change.oldValue === "object" ? JSON.stringify(change.oldValue) : change.oldValue;
                 const newVal = typeof change.newValue === "object" ? JSON.stringify(change.newValue) : change.newValue;
-                appendConsoleLog(`  ${change.songKey} | ${oldVal} → ${newVal}`);
+                appendConsoleLog(`  ${change.label} | ${oldVal} → ${newVal}`);
               });
               appendConsoleLog("");
             }
@@ -242,7 +249,7 @@ export function AdminDialog({ open, onOpenChange }: AdminDialogProps) {
       <ResponsiveDialog open={open} onOpenChange={handleAdminDialogChange}>
         <ResponsiveDialogContent className={cn("max-w-2xl max-h-[80vh] overflow-y-auto transition-[opacity,scale] duration-200", usersBrowserOpen || profileReportsOpen ? "opacity-70 scale-95" : "")}>
           <ResponsiveDialogHeader>
-            <ResponsiveDialogTitle>ともマイ Admin Panel</ResponsiveDialogTitle>
+            <ResponsiveDialogTitle>{game.brand.japaneseName} Admin Panel</ResponsiveDialogTitle>
             <ResponsiveDialogDescription>
               Modifying the database and other admin-only features.
             </ResponsiveDialogDescription>
@@ -282,60 +289,54 @@ export function AdminDialog({ open, onOpenChange }: AdminDialogProps) {
 
             <div className="grid gap-2">
               <Label>Normalize Database</Label>
-              <div className="grid gap-2 grid-cols-2">
-                <Button
-                  id="normalizeIntlDatabase"
-                  variant="outline"
-                  onClick={() => handleNormalizeDatabase("intl")}
-                >
-                  International (v{intlVersion})
-                </Button>
-                <Button
-                  id="normalizeJpDatabase"
-                  variant="outline"
-                  onClick={() => handleNormalizeDatabase("jp")}
-                >
-                  Japan (v{jpVersion})
-                </Button>
+              <div className={cn("grid gap-2", regionGrid)}>
+                {game.regions.map(region => (
+                  <Button
+                    key={region}
+                    id={`normalize-${region}-database`}
+                    variant="outline"
+                    onClick={() => handleNormalizeDatabase(region)}
+                  >
+                    {regionButtonLabel(region)}
+                  </Button>
+                ))}
               </div>
             </div>
 
-            <div className="grid gap-2">
-              <Label htmlFor="maimaiToken">Maimai Token</Label>
-              <span className="text-sm text-muted-foreground">
-                This is the token you use to fetch data from the maimai website.
-                <br />
-                This can be account://&lt;username&gt;:://&lt;password&gt; or cookie://&lt;token&gt;
-              </span>
-              <Input
-                id="maimaiToken"
-                value={maimaiToken}
-                onChange={(e) => setMaimaiToken(e.target.value)}
-              />
-            </div>
+            {needsSourceToken && (
+              <div className="grid gap-2">
+                <Label htmlFor="sourceToken">{game.brand.netName} Token</Label>
+                <span className="text-sm text-muted-foreground">
+                  This is the token you use to fetch data from {game.brand.netName}.
+                  <br />
+                  This can be account://&lt;username&gt;:://&lt;password&gt; or cookie://&lt;token&gt;
+                </span>
+                <Input
+                  id="sourceToken"
+                  value={sourceToken}
+                  onChange={(e) => setSourceToken(e.target.value)}
+                />
+              </div>
+            )}
 
             <div className="grid gap-2">
               <Label>Fetch New Songs</Label>
               <span className="text-sm text-muted-foreground">
-                This will fetch songs using the full pipeline (scraper, dxdata, etc.).
+                This will fetch songs using the full catalog pipeline.
                 <br />
                 Current new songs: {newSongs.length}
               </span>
-              <div className="grid gap-2 grid-cols-2">
-                <Button
-                  id="fetchIntlNewSongs"
-                  variant="outline"
-                  onClick={() => handleFetchSongs("intl")}
-                >
-                  Fetch International (v{intlVersion})
-                </Button>
-                <Button
-                  id="fetchJpNewSongs"
-                  variant="outline"
-                  onClick={() => handleFetchSongs("jp")}
-                >
-                  Fetch Japan (v{jpVersion})
-                </Button>
+              <div className={cn("grid gap-2", regionGrid)}>
+                {game.regions.map(region => (
+                  <Button
+                    key={region}
+                    id={`fetch-${region}-new-songs`}
+                    variant="outline"
+                    onClick={() => handleFetchSongs(region)}
+                  >
+                    Fetch {regionButtonLabel(region)}
+                  </Button>
+                ))}
               </div>
             </div>
 
@@ -344,23 +345,18 @@ export function AdminDialog({ open, onOpenChange }: AdminDialogProps) {
               <span className="text-sm text-muted-foreground">
                 Preview what changes would be made to the database without actually updating it.
               </span>
-              <div className="grid gap-2 grid-cols-2">
-                <Button
-                  id="previewIntlChanges"
-                  variant="outline"
-                  onClick={() => handlePreviewChanges("intl")}
-                  disabled={newSongs.length === 0}
-                >
-                  Preview International (v{intlVersion})
-                </Button>
-                <Button
-                  id="previewJpChanges"
-                  variant="outline"
-                  onClick={() => handlePreviewChanges("jp")}
-                  disabled={newSongs.length === 0}
-                >
-                  Preview Japan (v{jpVersion})
-                </Button>
+              <div className={cn("grid gap-2", regionGrid)}>
+                {game.regions.map(region => (
+                  <Button
+                    key={region}
+                    id={`preview-${region}-changes`}
+                    variant="outline"
+                    onClick={() => handlePreviewChanges(region)}
+                    disabled={newSongs.length === 0}
+                  >
+                    Preview {regionButtonLabel(region)}
+                  </Button>
+                ))}
               </div>
             </div>
 
@@ -370,7 +366,7 @@ export function AdminDialog({ open, onOpenChange }: AdminDialogProps) {
 
             <div className="pt-4 border-t">
               <p className="text-center text-sm text-muted-foreground">
-                Built with ❤️ for the maimai community
+                Built with ❤️ for the {game.brand.displayName} community
               </p>
             </div>
           </div>

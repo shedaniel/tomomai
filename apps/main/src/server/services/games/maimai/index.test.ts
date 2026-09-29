@@ -41,10 +41,7 @@ describe("maimai catalog source", () => {
     expect(fillMissingCatalogLevel("6", 69, source.levelPolicy(9))).toEqual({ levelPrecise: 69, estimated: false });
   });
 
-  it("logs in to maimai NET for every region but CN", () => {
-    expect(source.requiresToken?.("jp")).toBe(true);
-    expect(source.requiresToken?.("intl")).toBe(true);
-    expect(source.requiresToken?.("cn")).toBe(false);
+  it("normalizes titles to NFKC without surrounding spaces", () => {
     expect(source.normalizeTitle?.(" Ｌｉｎｋ ")).toBe("Link");
   });
 

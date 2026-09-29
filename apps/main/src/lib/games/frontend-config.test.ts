@@ -37,6 +37,7 @@ describe("frontend process configuration", () => {
       capabilities: getGame("chunithm").capabilities,
       regionCapabilityOverrides: {},
       loginMethods: { intl: ["sega-cookie", "sega-account"], jp: ["sega-account"] },
+      catalogTokenRegions: [],
       regions: ["intl", "jp"],
     });
     expect(JSON.parse(JSON.stringify(game))).toEqual(game);

@@ -82,4 +82,6 @@ export const maimaiDefinition = {
     "album_data",
   ],
   loginMethods: { intl: ["sega-cookie", "sega-account"], jp: ["sega-account"], cn: ["maimai-cn"] },
+  // The CN catalog comes from Lxns, which needs no maimai NET login.
+  catalogTokenRegions: ["intl", "jp"],
 } satisfies GameDefinition;

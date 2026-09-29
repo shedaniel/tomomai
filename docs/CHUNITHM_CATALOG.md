@@ -74,11 +74,14 @@ sends the stage, error and tour event notices.
 Each game describes its catalog once, as the `catalog` field of its server
 module (`server/services/games/<game>/index.ts`, typed `CatalogSource`): its
 source stages per region (loaded lazily), level policy, cover rules, title
-normalization, source login and, for maimai, the legacy upload decoder. Uploads
-must already use a game's title normalization, and `/api/admin/db?type=normalize`
-applies the same rule to stored parents. A game without one, such as CHUNITHM,
-keeps source titles, and the route answers `422` for it. The
-implementations live in `apps/main/src/server/services/games/<game>/catalog/`:
+normalization, source login and, for maimai, the legacy upload decoder. The
+regions whose collection needs a player token are data on the game definition
+(`catalogTokenRegions`), so the admin dialog shows the token field from the
+same list. Uploads must already use a game's title normalization, and
+`/api/admin/db?type=normalize` applies the same rule to stored parents. A game
+without one, such as CHUNITHM, keeps source titles, and the route answers `422`
+for it. The implementations live in
+`apps/main/src/server/services/games/<game>/catalog/`:
 
 - `maimai/catalog/` owns its stage list (`pipeline.ts`), the chart helper and
   level policy (`chart.ts`), the legacy upload decoder (`legacy-upload.ts`),
