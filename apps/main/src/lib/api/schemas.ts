@@ -1,5 +1,6 @@
 import { gameIdSchema, regionSchema as gameRegionSchema } from "@/lib/games/schema";
 import { z } from "zod";
+import type { ScoreStatusKind } from "@/lib/games/types";
 
 /**
  * Shared Zod schemas used by `/api/v1/**` route specs. These are the
@@ -282,20 +283,27 @@ export const albumEntry = z.object({
     .describe("Resolved R2 URL. Null unless `album:images:read` is granted."),
 });
 
+const statusCounts = z.record(z.string(), z.number().int()).describe("Scores per status code, leaving out the code for no status.");
+
 export const statsResponse = z.object({
   stats: z.record(
     z.string(),
     z.record(
       z.string(),
       z.object({
-        grades: z.record(z.string(), z.number().int()),
-        fc: z.record(z.string(), z.number().int()),
-        fs: z.record(z.string(), z.number().int()),
-        total: z.number().int(),
+        grades: z.record(z.string(), z.number().int()).describe("Scores per grade label, such as `SSS+`."),
+        statuses: z.object({
+          comboStatus: statusCounts.optional(),
+          syncStatus: statusCounts.optional(),
+          clearStatus: statusCounts.optional(),
+        } satisfies Record<ScoreStatusKind, z.ZodType>).describe("Present for each status kind the game records."),
+        total: z.number().int().describe("Scores in this bucket."),
       }),
-    ),
-  ),
-  totalSongs: z.record(z.string(), z.record(z.string(), z.number().int())),
+    ).describe("Buckets keyed by difficulty code."),
+  ).describe("Score distribution keyed by the charts' added version."),
+  totalSongs: z
+    .record(z.string(), z.record(z.string(), z.number().int()))
+    .describe("Catalog charts keyed by added version, then difficulty code."),
 });
 
 export const errorResponse = z

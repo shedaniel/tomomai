@@ -1,11 +1,13 @@
 "use client";
-import { MAIMAI_CODES, difficultyToCode } from "@/lib/games/maimai/codes";
+import { MAIMAI_CODES, codeToComboStatus, codeToSyncStatus, comboStatusToCode, difficultyToCode, syncStatusToCode } from "@/lib/games/maimai/codes";
 
 import { useGameId } from "@/components/providers/game-provider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@tomomai/ui/select-friendly";
 import { Progress } from "@tomomai/ui";
 import { Button } from "@tomomai/ui";
 import { MAIMAI_GRADES } from "@/lib/games/maimai/grades";
+import { MAIMAI_PLATE_DIFFICULTIES, MAIMAI_PLATE_TYPES, type MaimaiPlateDifficulty, type MaimaiPlateType } from "@/lib/games/maimai/plates";
+import type { FullCombo, FullSync } from "@/lib/games/maimai/types";
 import { getGameDifficulty } from "@/lib/games/presentation";
 import { getVersion } from "@/lib/games/versions";
 import { Region } from "@/lib/types";
@@ -20,6 +22,7 @@ import { useMediaQuery } from "@/hooks/use-media-query";
 import { SongGridCard } from "@/components/player/songs/score-grid-card";
 import { AutoHeight } from "@/components/animate-ui/primitives/effects/auto-height";
 import { cn } from "@/lib/utils";
+import type { StatsBucket, StatsResult } from "@/server/queries/stats";
 
 interface StatsCardProps {
   region: Region;
@@ -65,11 +68,15 @@ const FS_COLORS: Record<string, { bg: string; text: string }> = {
 const FC_ORDER = MAIMAI_CODES.comboStatus.filter(fc => fc !== "none").reverse();
 const FS_ORDER = MAIMAI_CODES.syncStatus.filter(fs => fs !== "none").reverse();
 
-// FC and FS labels
+function comboCount(bucket: StatsBucket, keys: readonly FullCombo[]): number {
+  return keys.reduce((sum, key) => sum + (bucket.statuses.comboStatus?.[comboStatusToCode(key)] ?? 0), 0);
+}
 
-// Plate types
-type PlateType = "kiwami" | "shou" | "shin" | "maimai";
-const PLATE_LABELS: Record<PlateType, string> = {
+function syncCount(bucket: StatsBucket, keys: readonly FullSync[]): number {
+  return keys.reduce((sum, key) => sum + (bucket.statuses.syncStatus?.[syncStatusToCode(key)] ?? 0), 0);
+}
+
+const PLATE_LABELS: Record<MaimaiPlateType, string> = {
   kiwami: "極",
   shou: "将",
   shin: "神",
@@ -78,7 +85,7 @@ const PLATE_LABELS: Record<PlateType, string> = {
 
 // Plates Grid Component
 interface PlatesGridProps {
-  data: any;
+  data: StatsResult;
   selectedVersion: string;
   region: Region;
   snapshotId?: string;
@@ -87,7 +94,7 @@ interface PlatesGridProps {
 function PlatesGrid({ data, selectedVersion, region, snapshotId }: PlatesGridProps) {
   const t = useTranslations();
   const isDesktop = useMediaQuery("(min-width: 768px)", { initializeWithValue: false });
-  const [expandedCell, setExpandedCell] = useState<{ plateType: PlateType; difficulty: string } | null>(null);
+  const [expandedCell, setExpandedCell] = useState<{ plateType: MaimaiPlateType; difficulty: MaimaiPlateDifficulty } | null>(null);
 
   const isExpanded = expandedCell !== null && selectedVersion !== "all";
 
@@ -125,10 +132,8 @@ function PlatesGrid({ data, selectedVersion, region, snapshotId }: PlatesGridPro
     const versionData = data.stats[selectedVersion];
     if (!versionData) return null;
 
-    // Difficulties to check (Basic to Master)
-    const mainDifficulties = ["basic", "advanced", "expert", "master"];
     const totalSongs: Record<string, number> = {};
-    const progress: Record<PlateType, Record<string, number>> = {
+    const progress: Record<MaimaiPlateType, Record<string, number>> = {
       kiwami: {},
       shou: {},
       shin: {},
@@ -136,8 +141,8 @@ function PlatesGrid({ data, selectedVersion, region, snapshotId }: PlatesGridPro
     };
 
     // Initialize counts
-    for (const difficulty of mainDifficulties) {
-      totalSongs[difficulty] = data.totalSongs[selectedVersion]?.[difficulty] || 0;
+    for (const difficulty of MAIMAI_PLATE_DIFFICULTIES) {
+      totalSongs[difficulty] = data.totalSongs[selectedVersion]?.[difficultyToCode(difficulty)] || 0;
       progress.kiwami[difficulty] = 0;
       progress.shou[difficulty] = 0;
       progress.shin[difficulty] = 0;
@@ -145,26 +150,22 @@ function PlatesGrid({ data, selectedVersion, region, snapshotId }: PlatesGridPro
     }
 
     // Calculate progress for each plate type
-    for (const difficulty of mainDifficulties) {
-      const diffData = versionData[difficulty];
+    for (const difficulty of MAIMAI_PLATE_DIFFICULTIES) {
+      const diffData = versionData[difficultyToCode(difficulty)];
       if (!diffData) continue;
 
       // 極 (kiwami): FC or above
-      const fcCount = (diffData.fc["fc"] || 0) + (diffData.fc["fc+"] || 0) +
-        (diffData.fc["ap"] || 0) + (diffData.fc["ap+"] || 0);
-      progress.kiwami[difficulty] = fcCount;
+      progress.kiwami[difficulty] = comboCount(diffData, ["fc", "fc+", "ap", "ap+"]);
 
       // 将 (Shou): SSS or above
       const sssCount = (diffData.grades["SSS"] || 0) + (diffData.grades["SSS+"] || 0);
       progress.shou[difficulty] = sssCount;
 
       // 神 (Shin): AP or above
-      const apCount = (diffData.fc["ap"] || 0) + (diffData.fc["ap+"] || 0);
-      progress.shin[difficulty] = apCount;
+      progress.shin[difficulty] = comboCount(diffData, ["ap", "ap+"]);
 
       // 舞舞 (Maimai): FDX or above
-      const fdxCount = (diffData.fs["fdx"] || 0) + (diffData.fs["fdx+"] || 0);
-      progress.maimai[difficulty] = fdxCount;
+      progress.maimai[difficulty] = syncCount(diffData, ["fdx", "fdx+"]);
     }
 
     return { progress, totalSongs };
@@ -179,11 +180,10 @@ function PlatesGrid({ data, selectedVersion, region, snapshotId }: PlatesGridPro
   }
 
   const { progress, totalSongs } = plateProgress;
-  const mainDifficulties = ["basic", "advanced", "expert", "master"] as const;
 
   return (
     <div className="space-y-6">
-      {(Object.keys(PLATE_LABELS) as PlateType[]).map((plateType, plateIndex) => {
+      {MAIMAI_PLATE_TYPES.map((plateType, plateIndex) => {
         const plateLabel = PLATE_LABELS[plateType];
         const plateDescription = t(`playerStats.plates.${plateType}`);
 
@@ -213,7 +213,7 @@ function PlatesGrid({ data, selectedVersion, region, snapshotId }: PlatesGridPro
 
             <div className="space-y-2">
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                {mainDifficulties.map((difficulty) => {
+                {MAIMAI_PLATE_DIFFICULTIES.map((difficulty) => {
                   const count = progress[plateType][difficulty] || 0;
                   const total = totalSongs[difficulty] || 0;
                   const percentage = total > 0 ? (count / total) * 100 : 0;
@@ -263,7 +263,7 @@ function PlatesGrid({ data, selectedVersion, region, snapshotId }: PlatesGridPro
 
               {/* Expanded Songs View */}
               <AnimatePresence>
-                {mainDifficulties.map((difficulty) => {
+                {MAIMAI_PLATE_DIFFICULTIES.map((difficulty) => {
                   const isExpanded = expandedCell?.plateType === plateType && expandedCell?.difficulty === difficulty;
                   if (!isExpanded) return null;
 
@@ -361,12 +361,14 @@ export function StatsCard({ region, snapshotId }: StatsCardProps) {
         }
 
         // Aggregate FC counts
-        for (const [fc, count] of Object.entries(stats.fc)) {
+        for (const [code, count] of Object.entries(stats.statuses.comboStatus ?? {})) {
+          const fc = codeToComboStatus(Number(code));
           aggregatedFC[fc] = (aggregatedFC[fc] || 0) + count;
         }
 
         // Aggregate FS counts
-        for (const [fs, count] of Object.entries(stats.fs)) {
+        for (const [code, count] of Object.entries(stats.statuses.syncStatus ?? {})) {
+          const fs = codeToSyncStatus(Number(code));
           aggregatedFS[fs] = (aggregatedFS[fs] || 0) + count;
         }
 
@@ -484,7 +486,7 @@ export function StatsCard({ region, snapshotId }: StatsCardProps) {
               <SelectContent label={t('playerStats.selectDifficulty')}>
                 <SelectItem value="all">{t('playerStats.allDifficulties')}</SelectItem>
                 {MAIMAI_CODES.difficulty.map(difficulty => (
-                  <SelectItem key={difficulty} value={difficulty}>
+                  <SelectItem key={difficulty} value={String(difficultyToCode(difficulty))}>
                     {getGameDifficulty("maimai", difficultyToCode(difficulty)).label}
                   </SelectItem>
                 ))}

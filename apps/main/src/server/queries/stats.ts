@@ -1,20 +1,38 @@
-import type { CanonicalGameId } from "@/lib/games/types";
-import { keyOf } from "@/lib/games/codes";
+import { SCORE_STATUS_KINDS, type CanonicalGameId, type ScoreStatusKind } from "@/lib/games/types";
+import { GAME_CODES, keyOf } from "@/lib/games/codes";
 import { getGrade } from "@/lib/games/presentation";
 import { db } from "@/lib/db";
 import { parentSong, scoreData, snapshotScores, songs, userSnapshots } from "@/lib/db/schema-pg";
 import { and, desc, eq, sql } from "drizzle-orm";
 import type { Region } from "@/lib/types";
 
+const NO_STATUS = "none";
+
+export type StatsBucket = {
+  grades: Record<string, number>;
+  /** Scores per status code, for each status kind the game records. The no-status code is not counted. */
+  statuses: Partial<Record<ScoreStatusKind, Record<string, number>>>;
+  total: number;
+};
+
+/** Buckets are keyed by the charts' added version, then by difficulty code. */
 export type StatsResult = {
-  stats: Record<string, Record<string, {
-    grades: Record<string, number>;
-    fc: Record<string, number>;
-    fs: Record<string, number>;
-    total: number;
-  }>>;
+  stats: Record<string, Record<string, StatsBucket>>;
   totalSongs: Record<string, Record<string, number>>;
 };
+
+function recordedStatusKinds(game: CanonicalGameId): ScoreStatusKind[] {
+  return SCORE_STATUS_KINDS.filter(kind => {
+    const keys: readonly string[] = GAME_CODES[game][kind];
+    return keys.some(key => key !== NO_STATUS);
+  });
+}
+
+function emptyBucket(statusKinds: readonly ScoreStatusKind[]): StatsBucket {
+  const statuses: StatsBucket["statuses"] = {};
+  for (const kind of statusKinds) statuses[kind] = {};
+  return { grades: {}, statuses, total: 0 };
+}
 
 export async function computeStatsForSnapshot(
   game: CanonicalGameId,
@@ -24,11 +42,12 @@ export async function computeStatsForSnapshot(
 ): Promise<StatsResult> {
   const scores = await db
     .select({
-      achievement: scoreData.scoreValue,
+      scoreValue: scoreData.scoreValue,
       addedVersion: songs.addedVersion,
-      difficulty: sql`${parentSong.difficulty}`.mapWith(code => keyOf(game, "difficulty", Number(code))).as("difficulty"),
-      fc: sql`${scoreData.comboStatus}`.mapWith(code => keyOf(game, "comboStatus", Number(code))).as("fc"),
-      fs: sql`${scoreData.syncStatus}`.mapWith(code => keyOf(game, "syncStatus", Number(code))).as("fs"),
+      difficulty: parentSong.difficulty,
+      comboStatus: scoreData.comboStatus,
+      syncStatus: scoreData.syncStatus,
+      clearStatus: scoreData.clearStatus,
     })
     .from(snapshotScores)
     .innerJoin(scoreData, eq(snapshotScores.scoreId, scoreData.id))
@@ -36,50 +55,36 @@ export async function computeStatsForSnapshot(
     .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
     .where(and(eq(snapshotScores.game, game), eq(snapshotScores.snapshotId, snapshotInternalId)));
 
-  const allSongs = await db
+  const catalogCharts = await db
     .select({
       addedVersion: songs.addedVersion,
-      difficulty: sql`${parentSong.difficulty}`.mapWith(code => keyOf(game, "difficulty", Number(code))).as("difficulty"),
+      difficulty: parentSong.difficulty,
       count: sql<number>`count(*)`.mapWith(Number),
     })
     .from(songs)
     .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
-    .where(
-      and(
-        and(eq(songs.game, game), eq(songs.region, region)),
-        eq(songs.gameVersion, gameVersion)
-      )
-    )
+    .where(and(eq(songs.game, game), eq(songs.region, region), eq(songs.gameVersion, gameVersion)))
     .groupBy(songs.addedVersion, parentSong.difficulty);
 
-  const totalSongs: Record<string, Record<string, number>> = {};
-  for (const song of allSongs) {
-    const version = song.addedVersion.toString();
-    if (!totalSongs[version]) totalSongs[version] = {};
-    totalSongs[version][song.difficulty] = song.count;
+  const totalSongs: StatsResult["totalSongs"] = {};
+  for (const { addedVersion, difficulty, count } of catalogCharts) {
+    (totalSongs[addedVersion] ??= {})[difficulty] = count;
   }
 
+  const statusKinds = recordedStatusKinds(game);
   const stats: StatsResult["stats"] = {};
-
   for (const score of scores) {
-    const version = score.addedVersion.toString();
-    const difficulty = score.difficulty;
+    const bucket = (stats[score.addedVersion] ??= {})[score.difficulty] ??= emptyBucket(statusKinds);
 
-    if (!stats[version]) stats[version] = {};
-    if (!stats[version][difficulty]) {
-      stats[version][difficulty] = { grades: {}, fc: {}, fs: {}, total: 0 };
+    const grade = getGrade(game, score.scoreValue);
+    bucket.grades[grade] = (bucket.grades[grade] ?? 0) + 1;
+    for (const kind of statusKinds) {
+      const code = score[kind];
+      if (keyOf(game, kind, code) === NO_STATUS) continue;
+      const counts = bucket.statuses[kind] ??= {};
+      counts[code] = (counts[code] ?? 0) + 1;
     }
-
-    const grade = getGrade(game, score.achievement);
-    stats[version][difficulty].grades[grade] = (stats[version][difficulty].grades[grade] ?? 0) + 1;
-
-    if (score.fc !== "none") {
-      stats[version][difficulty].fc[score.fc] = (stats[version][difficulty].fc[score.fc] ?? 0) + 1;
-    }
-    if (score.fs !== "none") {
-      stats[version][difficulty].fs[score.fs] = (stats[version][difficulty].fs[score.fs] ?? 0) + 1;
-    }
-    stats[version][difficulty].total++;
+    bucket.total++;
   }
 
   return { stats, totalSongs };

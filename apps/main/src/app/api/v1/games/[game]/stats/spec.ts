@@ -5,12 +5,12 @@ export const spec = defineGameRoute({
   method: "GET",
   path: "/api/v1/games/{game}/stats",
   tag: "Stats",
-  summary: "Get grade / FC / FS distribution",
+  summary: "Get grade and status distributions",
   description:
-    "Returns the user's grade, full-combo, and full-sync distributions for " +
-    "the given region, grouped by added-version then difficulty. Also " +
-    "returns `totalSongs`, the count of songs in the catalogue per version × " +
-    "difficulty so the client can render percentages.",
+    "Returns how the scores of the user's latest snapshot in the given region spread over grades " +
+    "and each score status the game records, grouped by the charts' added version and then by " +
+    "difficulty code. Status counts are keyed by status code. `totalSongs` counts the catalog " +
+    "charts per added version and difficulty code, so clients can render percentages.",
   scope: "stats:read",
   capability: "stats",
   cost: 2,
