@@ -692,10 +692,12 @@ landing as maimai. The signed authorization binds the tomomai user and game,
 and the server exchanges `clal` using CHUNITHM's `site_id=chuniex` configuration.
 JP continues to require account credentials.
 
-Manual `clal=` input and the existing `/maimai-cookie-extractor.user.js` download
-remain supported. That download is a shared SEGA gateway clipboard helper,
-independent of the experimental OAuth userscript package. It copies only after
-a user click and no longer writes cookie values to console logs or alerts.
+Manual `clal=` input and the `/sega-cookie-extractor.user.js` download
+remain supported. The old `/maimai-cookie-extractor.user.js` path serves the
+same script, whose update URL moves installed copies to the new path. That
+download is a shared SEGA gateway clipboard helper, independent of the
+experimental OAuth userscript package. It copies only after a user click and
+no longer writes cookie values to console logs or alerts.
 
 The credential login and resulting game session were observed during R&D;
 independent browser-cookie import, bookmarklet fragment retention and gateway
