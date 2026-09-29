@@ -5,6 +5,7 @@ import { findRouteBySlug, getRegistry, requiredScopes, routeSlug } from "@/lib/a
 import { resolveBaseUrl } from "@/lib/base-url";
 import { ScopeBadge } from "@/components/developer/scope-badge";
 import { ParamTable } from "@/components/developer/param-table";
+import { ErrorTable } from "@/components/developer/error-table";
 import { ResponseTree } from "@/components/developer/response-tree";
 import { ChevronRight, Terminal } from "lucide-react";
 import { Badge } from "@tomomai/ui";
@@ -159,6 +160,15 @@ export default async function ReferenceEndpointPage({
           </h2>
           <ResponseTree schema={spec.response} />
         </section>
+
+        {spec.errors?.length ? (
+          <section className="space-y-3">
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+              Errors
+            </h2>
+            <ErrorTable errors={spec.errors} />
+          </section>
+        ) : null}
 
         {spec.examples?.length ? (
           <section className="space-y-3">

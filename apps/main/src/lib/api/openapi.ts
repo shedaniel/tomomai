@@ -146,6 +146,15 @@ function buildOperation(route: RouteSpec) {
       responses["302"] = { description: "Redirect to this game's published catalog object", headers: { Location: { schema: { type: "string", format: "uri" } } } };
     }
   }
+  for (const [status, errors] of Map.groupBy(route.errors ?? [], error => error.status)) {
+    const shared = (responses[String(status)] as { description: string } | undefined)?.description;
+    responses[String(status)] = {
+      ...errorRef([shared, ...errors.map(error => `${error.code}: ${error.description}`)].filter(Boolean).join(" ")),
+      ...(errors.some(error => error.retryAfter) && {
+        headers: { "Retry-After": { description: "Seconds to wait before retrying.", schema: { type: "integer" } } },
+      }),
+    };
+  }
   responses["500"] = errorRef("Internal server error");
   operation.responses = responses;
 

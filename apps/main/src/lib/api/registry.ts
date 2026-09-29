@@ -8,6 +8,15 @@ import type { ScopeKey } from "./scopes";
 /** Required scope(s). `"public"` means no auth at all. Multiple scopes are AND-ed. */
 export type RouteScope = ScopeKey | ScopeKey[] | "public";
 
+/** A refusal the route answers with a stable error `code`, beyond the errors every route shares. */
+export interface RouteErrorResponse {
+  status: number;
+  code: string;
+  description: string;
+  /** The response carries `Retry-After` in seconds. */
+  retryAfter?: true;
+}
+
 /**
  * A single Developer Center route entry. Routes register themselves via
  * `defineRoute(...)` at module load. The registry is the single source of
@@ -47,6 +56,8 @@ export interface RouteSpec<
     query?: Record<string, string | number>;
     response: unknown;
   }[];
+  /** Route-specific refusals, documented in the docs and the OpenAPI document. */
+  errors?: readonly RouteErrorResponse[];
   /** If true, renders a `Deprecated` badge in the docs. */
   deprecated?: boolean;
   /** Successful responses of a public route carry CDN cache headers for this many seconds. */

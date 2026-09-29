@@ -1,9 +1,14 @@
 import { describe, expect, it } from "vitest";
+import { FETCH_START_ERROR_STATUS } from "@/lib/games/fetch-error-codes";
 import { buildOpenApiDocument } from "./openapi";
 
 type Operation = {
   parameters?: { name: string; in: string; schema: { enum?: string[] } }[];
-  responses: Record<string, { description: string; content?: { "application/json": { schema: { properties?: Record<string, { enum?: string[] }> } } } }>;
+  responses: Record<string, {
+    description: string;
+    headers?: Record<string, unknown>;
+    content?: { "application/json": { schema: { properties?: Record<string, { enum?: string[] }> } } };
+  }>;
 };
 
 const document = buildOpenApiDocument("https://example.test");
@@ -32,6 +37,15 @@ describe("OpenAPI document", () => {
     const albums = operation("get", "/api/v1/games/{game}/albums");
     expect(albums.responses["400"].description).toContain("INVALID_PARAMETER or UNKNOWN_GAME or UNSUPPORTED_REGION");
     expect(albums.responses["422"].description).toContain("GAME_NOT_ENABLED or UNSUPPORTED_CAPABILITY");
+
+    const fetch = operation("post", "/api/v1/games/{game}/fetch");
+    for (const [code, { http }] of Object.entries(FETCH_START_ERROR_STATUS)) {
+      expect(fetch.responses[String(http)].description).toContain(code);
+    }
+    expect(Object.keys(fetch.responses)).toEqual(expect.arrayContaining(["409", "412", "429", "503"]));
+    expect(fetch.responses["429"].headers?.["Retry-After"]).toBeDefined();
+    expect(fetch.responses["503"].headers?.["Retry-After"]).toBeDefined();
+    expect(fetch.responses["412"].headers).toBeUndefined();
 
     const me = operation("get", "/api/v1/me");
     expect(me.responses["400"]).toBeUndefined();
