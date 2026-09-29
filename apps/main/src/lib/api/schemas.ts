@@ -40,7 +40,7 @@ export const querySchemas = {
       .describe("Chart difficulty to evaluate plate completion against."),
     plateType: z
       .enum(["kiwami", "shou", "shin", "maimai"])
-      .describe("Which plate to evaluate: kiwami (clear), shou (SSS), shin (AP), maimai (FDX)."),
+      .describe("Which plate to evaluate: kiwami (FC), shou (SSS), shin (AP), maimai (FDX)."),
   }),
 };
 
@@ -55,31 +55,6 @@ export const levelPreciseField = z
   .describe(
     "Difficulty constant scaled ×10 (integer). Divide by 10 to get the displayed decimal — e.g. 147 → 14.7.",
   );
-
-/**
- * Score achievement scaled ×10000 — the raw DB representation. Divide by
- * 10000 to get the percentage. Range is 0 to 1010000 (101.0000%, SSS+).
- */
-export const achievementField = z
-  .number()
-  .int()
-  .describe(
-    "Score achievement scaled ×10000 (integer). Divide by 10000 to get the percentage — e.g. 991234 → 99.1234%. Range 0 to 1010000 (101.0000%, SSS+).",
-  );
-
-export const plateEntry = z.object({
-  songId: z.string(),
-  songName: z.string(),
-  artist: z.string(),
-  cover: z.string().nullable(),
-  difficulty: z.string(),
-  levelPrecise: levelPreciseField,
-  type: z.string(),
-  achievement: achievementField,
-  fc: z.string(),
-  fs: z.string(),
-  dxScore: z.number().int(),
-});
 
 export const profileSettings = z.object({
   publishProfile: z.boolean(),
@@ -190,6 +165,21 @@ const songScore = z.object({
   syncStatus: z.number().int(),
   clearStatus: z.number().int(),
   rating: z.number().int().optional().describe("Chart rating under the current chart constants. Only present on B50-restricted responses."),
+});
+
+export const plateEntry = songScore.pick({
+  songId: true,
+  songName: true,
+  artist: true,
+  cover: true,
+  difficulty: true,
+  levelPrecise: true,
+  type: true,
+  scoreValue: true,
+  secondaryScore: true,
+  comboStatus: true,
+  syncStatus: true,
+  clearStatus: true,
 });
 
 export const snapshotDetail = snapshotMetadata.extend({

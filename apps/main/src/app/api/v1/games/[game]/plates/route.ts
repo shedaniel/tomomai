@@ -30,7 +30,7 @@ export const GET = withApiKey(["plate:read"], async (req: NextRequest, key) => {
     return zodJson(spec.response, { game: key.game, songs: [] });
   }
 
-  const songs = await fetchPlateSongs(
+  const scores = await fetchPlateSongs(
     snapshot[0].id,
     snapshot[0].gameVersion,
     region,
@@ -38,6 +38,7 @@ export const GET = withApiKey(["plate:read"], async (req: NextRequest, key) => {
     difficulty,
     plateType,
   );
+  const songs = scores.map(({ difficultyCode, typeCode, ...score }) => ({ ...score, difficulty: difficultyCode, type: typeCode }));
 
   return zodJson(spec.response, { game: key.game, songs });
 });

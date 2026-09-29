@@ -23,8 +23,9 @@ export const platesRouter = router({
         .from(userSnapshots)
         .where(
           and(
+            eq(userSnapshots.game, "maimai"),
             eq(userSnapshots.userId, ctx.session.user.id),
-            and(eq(userSnapshots.game, "maimai"), eq(userSnapshots.region, input.region))
+            eq(userSnapshots.region, input.region),
           )
         )
         .orderBy(desc(userSnapshots.fetchedAt))
