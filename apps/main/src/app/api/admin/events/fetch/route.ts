@@ -2,9 +2,7 @@ import { generateText, tool, stepCountIs, hasToolCall } from "ai";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { load } from "cheerio";
 import { z } from "zod";
-import { NextRequest, NextResponse } from "next/server";
-import { flushLogger } from "@/lib/logger";
-import { requestLogger } from "@/lib/request-logger";
+import { adminRoute } from "@/lib/api/admin-route";
 import { redis } from "@/lib/redis";
 import { storePending } from "@/server/services/pending-confirmation";
 import { sendDiscordNotice } from "@/server/services/discord/webhook";
@@ -343,313 +341,267 @@ export async function discoverLinks(
   return { url, links, shouldScrape };
 }
 
-export async function POST(request: NextRequest) {
-  const { log, requestId } = requestLogger(request, "admin/fetch_events");
-  try {
-    const authHeader = request.headers.get("authorization");
-    const token = authHeader?.replace("Bearer ", "");
+export const POST = adminRoute("admin/fetch_events", async ({ log, requestId }) => {
+  log.info("Starting event scraping");
 
-    if (!token) {
-      return NextResponse.json(
-        { error: "Missing authorization token" },
-        { status: 401 },
+  const collectedEvents: Event[] = [];
+  const visited = new Set<string>();
+  const pageHtmlCache = new Map<string, string>();
+  let pagesToScrape: string[] = [];
+  let pagesVisited = 0;
+
+  const SCRAPE_CACHE_KEY = "admin:events:pagesToScrape";
+  const SCRAPE_CACHE_TTL = 12 * 60 * 60; // 12 hours
+
+  // Check Redis cache for previously discovered pages
+  const cached = await redis.get(SCRAPE_CACHE_KEY);
+  if (cached) {
+    pagesToScrape = JSON.parse(cached);
+    log.info({ pagesToScrape: pagesToScrape.length }, "Using cached pagesToScrape from Redis");
+  } else {
+    // Phase 1: BFS Link Discovery
+    const queue: string[] = [START_URL];
+
+    let bfsLevel = 0;
+    while (queue.length > 0 && bfsLevel < MAX_BFS_DEPTH) {
+      bfsLevel++;
+      log.debug({ bfsLevel, queueSize: queue.length, urls: queue }, "BFS wave start");
+
+      // Fetch all queued pages in parallel
+      const fetchResults = await Promise.all(
+        queue.map(async (url) => {
+          visited.add(url);
+          const result = await fetchPageHtml(url, visited, log);
+          if ("html" in result) {
+            pageHtmlCache.set(url, result.html);
+            pagesVisited++;
+            const content = extractAsMarkdown(result.html, url, visited);
+            return { url, content };
+          }
+          log.error({ url }, `Failed to fetch during discovery: ${result.error}`);
+          return null;
+        }),
       );
-    }
 
-    const adminToken = process.env.ADMIN_UPDATE_TOKEN;
-    if (!adminToken) {
-      log.error("ADMIN_UPDATE_TOKEN environment variable not set");
-      return NextResponse.json(
-        { error: "Server configuration error" },
-        { status: 500 },
+      const fetched = fetchResults.filter(
+        (r): r is { url: string; content: string } => r !== null,
       );
-    }
 
-    if (token !== adminToken) {
-      log.warn("Invalid admin token attempt");
-      return NextResponse.json(
-        { error: "Invalid authorization token" },
-        { status: 403 },
-      );
-    }
-
-    log.info("Starting event scraping");
-
-    const collectedEvents: Event[] = [];
-    const visited = new Set<string>();
-    const pageHtmlCache = new Map<string, string>();
-    let pagesToScrape: string[] = [];
-    let pagesVisited = 0;
-
-    const SCRAPE_CACHE_KEY = "admin:events:pagesToScrape";
-    const SCRAPE_CACHE_TTL = 12 * 60 * 60; // 12 hours
-
-    // Check Redis cache for previously discovered pages
-    const cached = await redis.get(SCRAPE_CACHE_KEY);
-    if (cached) {
-      pagesToScrape = JSON.parse(cached);
-      log.info({ pagesToScrape: pagesToScrape.length }, "Using cached pagesToScrape from Redis");
-    } else {
-      // Phase 1: BFS Link Discovery
-      const queue: string[] = [START_URL];
-
-      let bfsLevel = 0;
-      while (queue.length > 0 && bfsLevel < MAX_BFS_DEPTH) {
-        bfsLevel++;
-        log.debug({ bfsLevel, queueSize: queue.length, urls: queue }, "BFS wave start");
-
-        // Fetch all queued pages in parallel
-        const fetchResults = await Promise.all(
-          queue.map(async (url) => {
-            visited.add(url);
-            const result = await fetchPageHtml(url, visited, log);
-            if ("html" in result) {
-              pageHtmlCache.set(url, result.html);
-              pagesVisited++;
-              const content = extractAsMarkdown(result.html, url, visited);
-              return { url, content };
-            }
-            log.error({ url }, `Failed to fetch during discovery: ${result.error}`);
-            return null;
-          }),
+      // Run discovery agents in parallel (batched by DISCOVERY_CONCURRENCY)
+      const nextQueue: string[] = [];
+      for (let i = 0; i < fetched.length; i += DISCOVERY_CONCURRENCY) {
+        const batch = fetched.slice(i, i + DISCOVERY_CONCURRENCY);
+        const discoveries = await Promise.all(
+          batch.map(({ url, content }) => discoverLinks(content, url, visited, log)),
         );
-
-        const fetched = fetchResults.filter(
-          (r): r is { url: string; content: string } => r !== null,
-        );
-
-        // Run discovery agents in parallel (batched by DISCOVERY_CONCURRENCY)
-        const nextQueue: string[] = [];
-        for (let i = 0; i < fetched.length; i += DISCOVERY_CONCURRENCY) {
-          const batch = fetched.slice(i, i + DISCOVERY_CONCURRENCY);
-          const discoveries = await Promise.all(
-            batch.map(({ url, content }) => discoverLinks(content, url, visited, log)),
-          );
-          for (const disc of discoveries) {
-            if (disc.shouldScrape && !pagesToScrape.includes(disc.url)) {
-              pagesToScrape.push(disc.url);
-            }
-            // Only follow links from pages that contain event data
-            if (disc.shouldScrape) {
-              for (const link of disc.links) {
-                if (!visited.has(link) && !nextQueue.includes(link) && !queue.includes(link)) {
-                  nextQueue.push(link);
-                }
+        for (const disc of discoveries) {
+          if (disc.shouldScrape && !pagesToScrape.includes(disc.url)) {
+            pagesToScrape.push(disc.url);
+          }
+          // Only follow links from pages that contain event data
+          if (disc.shouldScrape) {
+            for (const link of disc.links) {
+              if (!visited.has(link) && !nextQueue.includes(link) && !queue.includes(link)) {
+                nextQueue.push(link);
               }
             }
           }
         }
-
-        log.info(
-          { bfsLevel, newLinks: nextQueue.length, pagesToScrape: pagesToScrape.length },
-          "BFS wave complete",
-        );
-
-        queue.length = 0;
-        queue.push(...nextQueue);
       }
 
-      // Cache discovered pages in Redis
-      await redis.set(SCRAPE_CACHE_KEY, JSON.stringify(pagesToScrape), "EX", SCRAPE_CACHE_TTL);
-      log.info({ pagesToScrape: pagesToScrape.length }, "Cached pagesToScrape in Redis (12h TTL)");
-    }
-
-    // Phase 2: Run scraper agents in parallel (batches of 5)
-    log.info({ pagesToScrape: pagesToScrape.length }, "Starting parallel scraping phase");
-
-    for (let i = 0; i < pagesToScrape.length; i += SCRAPE_CONCURRENCY) {
-      const batch = pagesToScrape.slice(i, i + SCRAPE_CONCURRENCY);
-      log.info({ batch, batchIndex: Math.floor(i / SCRAPE_CONCURRENCY) + 1 }, "Starting scrape batch");
-
-      const results = await Promise.all(
-        batch.map(async (url) => {
-          let html = pageHtmlCache.get(url);
-          if (!html) {
-            const result = await fetchPageHtml(url, visited, log);
-            if ("error" in result) {
-              log.error({ url }, `Failed to fetch page for scraping: ${result.error}`);
-              return [];
-            }
-            html = result.html;
-            pagesVisited++;
-          }
-          const content = extractAsMarkdown(html, url, visited, { includeLinks: false });
-          return scrapePageForEvents(content, url, log);
-        }),
+      log.info(
+        { bfsLevel, newLinks: nextQueue.length, pagesToScrape: pagesToScrape.length },
+        "BFS wave complete",
       );
 
-      for (const events of results) {
-        collectedEvents.push(...events);
-      }
+      queue.length = 0;
+      queue.push(...nextQueue);
     }
 
-    // Deduplicate events with the same name (after trimming),
-    // keeping the one with more steps and merging distinct periods
-    const eventMap = new Map<string, Event>();
-    for (const event of collectedEvents) {
-      const key = norm(event.name);
-      const existing = eventMap.get(key);
-      if (!existing) {
-        eventMap.set(key, { ...event, name: key });
-      } else {
-        const mergedPeriods = Array.from(new Set([...existing.periods, ...event.periods]));
-        const best = event.steps.length > existing.steps.length ? event : existing;
-        eventMap.set(key, { ...best, name: key, periods: mergedPeriods });
-      }
-    }
-    const deduplicatedEvents = Array.from(eventMap.values())
-      .filter((e) => !(e.steps.length === 1 && ["楽曲", "パーフェクトチャレンジ楽曲"].includes(normType(e.steps[0].type))))
-      .filter((e) => !e.steps.every((s) => s.distance === 0));
+    // Cache discovered pages in Redis
+    await redis.set(SCRAPE_CACHE_KEY, JSON.stringify(pagesToScrape), "EX", SCRAPE_CACHE_TTL);
+    log.info({ pagesToScrape: pagesToScrape.length }, "Cached pagesToScrape in Redis (12h TTL)");
+  }
 
-    // Parse periods into structured date ranges
-    const dateOrQ = `(?:\\d{4}\\/\\d{1,2}\\/\\d{1,2}|\\?+)`;
-    const periodRegex = new RegExp(`^(${dateOrQ})?\\s*[～~〜-]\\s*(${dateOrQ})?$`);
-    const fallbackRegex = new RegExp(`^(${dateOrQ})(まで|から)$`);
-    const normalizeDate = (d: string): string | null => {
-      if (/\?/.test(d)) return null;
-      return d.replace(/^(\d{4})\/(\d{1,2})\/(\d{1,2})$/, (_, y, m, d) =>
-        `${y}/${m.padStart(2, "0")}/${d.padStart(2, "0")}`);
-    };
-    const parsedEvents = deduplicatedEvents.map((event) => {
-      // Determine if this event's distances need *1000 (meters from AI)
-      const floatingSteps = event.steps.filter((s) => s.distance % 1.0 > 0.001).length;
-      const multiplyAll = floatingSteps >= 3 || floatingSteps >= event.steps.length / 2;
-      const periods = event.periods
-        .filter((p) => !p.endsWith("km"))
-        .filter((p) => !/^\?+$/.test(p.trim()));
-      const parsedPeriods: { start: string | null; end: string | null }[] = [];
-      for (const p of periods) {
-        const trimmed = p.trim();
-        const match = periodRegex.exec(trimmed);
-        if (match) {
-          parsedPeriods.push({
-            start: match[1] ? normalizeDate(match[1]) : null,
-            end: match[2] ? normalizeDate(match[2]) : null,
-          });
-          continue;
-        }
-        const fallback = fallbackRegex.exec(trimmed);
-        if (fallback) {
-          const date = normalizeDate(fallback[1]);
-          parsedPeriods.push({
-            start: fallback[2] === "から" ? date : null,
-            end: fallback[2] === "まで" ? date : null,
-          });
-          continue;
-        }
-        log.warn({ event: event.name, period: p }, "Period does not match expected format");
-      }
-      // Merge complementary partial periods (start-only + end-only) if end > start,
-      // then remove remaining partials subsumed by a more complete period
-      const merged = [...parsedPeriods];
-      const consumed = new Set<number>();
-      for (let i = 0; i < merged.length; i++) {
-        if (consumed.has(i)) continue;
-        const a = merged[i];
-        if (a.start !== null && a.end !== null) continue;
-        for (let j = i + 1; j < merged.length; j++) {
-          if (consumed.has(j)) continue;
-          const b = merged[j];
-          // One has start, other has end
-          const s = a.start ?? b.start;
-          const e = a.end ?? b.end;
-          if (s && e && ((a.start && !a.end && !b.start && b.end) || (!a.start && a.end && b.start && !b.end))) {
-            if (e >= s) {
-              merged[i] = { start: s, end: e };
-              consumed.add(j);
-              break;
-            }
+  // Phase 2: Run scraper agents in parallel (batches of 5)
+  log.info({ pagesToScrape: pagesToScrape.length }, "Starting parallel scraping phase");
+
+  for (let i = 0; i < pagesToScrape.length; i += SCRAPE_CONCURRENCY) {
+    const batch = pagesToScrape.slice(i, i + SCRAPE_CONCURRENCY);
+    log.info({ batch, batchIndex: Math.floor(i / SCRAPE_CONCURRENCY) + 1 }, "Starting scrape batch");
+
+    const results = await Promise.all(
+      batch.map(async (url) => {
+        let html = pageHtmlCache.get(url);
+        if (!html) {
+          const result = await fetchPageHtml(url, visited, log);
+          if ("error" in result) {
+            log.error({ url }, `Failed to fetch page for scraping: ${result.error}`);
+            return [];
           }
+          html = result.html;
+          pagesVisited++;
         }
-      }
-      const dedupedPeriods = merged.filter((p, i) => {
-        if (consumed.has(i)) return false;
-        if (p.start !== null && p.end !== null) return true;
-        return !merged.some((other, j) => {
-          if (i === j || consumed.has(j)) return false;
-          if (p.start === null && p.end !== null) {
-            return other.end === p.end && other.start !== null;
-          }
-          if (p.start !== null && p.end === null) {
-            return other.start === p.start && other.end !== null;
-          }
-          return false;
+        const content = extractAsMarkdown(html, url, visited, { includeLinks: false });
+        return scrapePageForEvents(content, url, log);
+      }),
+    );
+
+    for (const events of results) {
+      collectedEvents.push(...events);
+    }
+  }
+
+  // Deduplicate events with the same name (after trimming),
+  // keeping the one with more steps and merging distinct periods
+  const eventMap = new Map<string, Event>();
+  for (const event of collectedEvents) {
+    const key = norm(event.name);
+    const existing = eventMap.get(key);
+    if (!existing) {
+      eventMap.set(key, { ...event, name: key });
+    } else {
+      const mergedPeriods = Array.from(new Set([...existing.periods, ...event.periods]));
+      const best = event.steps.length > existing.steps.length ? event : existing;
+      eventMap.set(key, { ...best, name: key, periods: mergedPeriods });
+    }
+  }
+  const deduplicatedEvents = Array.from(eventMap.values())
+    .filter((e) => !(e.steps.length === 1 && ["楽曲", "パーフェクトチャレンジ楽曲"].includes(normType(e.steps[0].type))))
+    .filter((e) => !e.steps.every((s) => s.distance === 0));
+
+  // Parse periods into structured date ranges
+  const dateOrQ = `(?:\\d{4}\\/\\d{1,2}\\/\\d{1,2}|\\?+)`;
+  const periodRegex = new RegExp(`^(${dateOrQ})?\\s*[～~〜-]\\s*(${dateOrQ})?$`);
+  const fallbackRegex = new RegExp(`^(${dateOrQ})(まで|から)$`);
+  const normalizeDate = (d: string): string | null => {
+    if (/\?/.test(d)) return null;
+    return d.replace(/^(\d{4})\/(\d{1,2})\/(\d{1,2})$/, (_, y, m, d) =>
+      `${y}/${m.padStart(2, "0")}/${d.padStart(2, "0")}`);
+  };
+  const parsedEvents = deduplicatedEvents.map((event) => {
+    // Determine if this event's distances need *1000 (meters from AI)
+    const floatingSteps = event.steps.filter((s) => s.distance % 1.0 > 0.001).length;
+    const multiplyAll = floatingSteps >= 3 || floatingSteps >= event.steps.length / 2;
+    const periods = event.periods
+      .filter((p) => !p.endsWith("km"))
+      .filter((p) => !/^\?+$/.test(p.trim()));
+    const parsedPeriods: { start: string | null; end: string | null }[] = [];
+    for (const p of periods) {
+      const trimmed = p.trim();
+      const match = periodRegex.exec(trimmed);
+      if (match) {
+        parsedPeriods.push({
+          start: match[1] ? normalizeDate(match[1]) : null,
+          end: match[2] ? normalizeDate(match[2]) : null,
         });
-      });
-      return {
-        ...event,
-        periods: dedupedPeriods,
-        steps: event.steps.map((s) => {
-          const type = normType(s.type);
-          if (!KNOWN_STEP_TYPES.has(type)) {
-            log.warn({ event: event.name, stepType: type }, "Unknown step type");
+        continue;
+      }
+      const fallback = fallbackRegex.exec(trimmed);
+      if (fallback) {
+        const date = normalizeDate(fallback[1]);
+        parsedPeriods.push({
+          start: fallback[2] === "から" ? date : null,
+          end: fallback[2] === "まで" ? date : null,
+        });
+        continue;
+      }
+      log.warn({ event: event.name, period: p }, "Period does not match expected format");
+    }
+    // Merge complementary partial periods (start-only + end-only) if end > start,
+    // then remove remaining partials subsumed by a more complete period
+    const merged = [...parsedPeriods];
+    const consumed = new Set<number>();
+    for (let i = 0; i < merged.length; i++) {
+      if (consumed.has(i)) continue;
+      const a = merged[i];
+      if (a.start !== null && a.end !== null) continue;
+      for (let j = i + 1; j < merged.length; j++) {
+        if (consumed.has(j)) continue;
+        const b = merged[j];
+        // One has start, other has end
+        const s = a.start ?? b.start;
+        const e = a.end ?? b.end;
+        if (s && e && ((a.start && !a.end && !b.start && b.end) || (!a.start && a.end && b.start && !b.end))) {
+          if (e >= s) {
+            merged[i] = { start: s, end: e };
+            consumed.add(j);
+            break;
           }
-          const multiply = multiplyAll || s.distance % 1.0 > 0.001;
-          const distance = multiply ? Math.round(s.distance * 1000) : Math.round(s.distance);
-          return { ...s, distance, type, reward: norm(s.reward) };
-        }),
-      };
+        }
+      }
+    }
+    const dedupedPeriods = merged.filter((p, i) => {
+      if (consumed.has(i)) return false;
+      if (p.start !== null && p.end !== null) return true;
+      return !merged.some((other, j) => {
+        if (i === j || consumed.has(j)) return false;
+        if (p.start === null && p.end !== null) {
+          return other.end === p.end && other.start !== null;
+        }
+        if (p.start !== null && p.end === null) {
+          return other.start === p.start && other.end !== null;
+        }
+        return false;
+      });
     });
-    parsedEvents.sort((a, b) => a.name.localeCompare(b.name));
+    return {
+      ...event,
+      periods: dedupedPeriods,
+      steps: event.steps.map((s) => {
+        const type = normType(s.type);
+        if (!KNOWN_STEP_TYPES.has(type)) {
+          log.warn({ event: event.name, stepType: type }, "Unknown step type");
+        }
+        const multiply = multiplyAll || s.distance % 1.0 > 0.001;
+        const distance = multiply ? Math.round(s.distance * 1000) : Math.round(s.distance);
+        return { ...s, distance, type, reward: norm(s.reward) };
+      }),
+    };
+  });
+  parsedEvents.sort((a, b) => a.name.localeCompare(b.name));
 
-    log.info({
-      events: parsedEvents.length,
-      duplicatesRemoved: collectedEvents.length - deduplicatedEvents.length,
+  log.info({
+    events: parsedEvents.length,
+    duplicatesRemoved: collectedEvents.length - deduplicatedEvents.length,
+    pagesVisited,
+    pagesScraped: pagesToScrape.length,
+  }, "Event scraping complete");
+
+  // Compute delta against current DB
+  const delta = await computeEventDelta(parsedEvents);
+  const changeDescription = formatEventDescription(delta);
+
+  // Store events + description in Redis for pending confirmation
+  const pendingId = await storePending("events", {
+    events: parsedEvents,
+    description: changeDescription,
+  });
+  const baseUrl = resolveBaseUrl();
+  const confirmUrl = `${baseUrl}/api/admin/events/confirm/${pendingId}`;
+  const descriptionUrl = `${baseUrl}/api/admin/events/description/${pendingId}`;
+
+  // Send Discord notification (confirm link at top)
+  const discordDescription = `[Confirm](${confirmUrl}) | [Full description](${descriptionUrl})\n\n${changeDescription}`;
+  sendDiscordNotice("maimai", "jp", "Tour Events Update", discordDescription, deltaColor(delta)).catch((err) => {
+    log.error({ err }, "Failed to send Discord notification");
+  });
+
+  return Response.json({
+    success: true,
+    requestId,
+    pendingId,
+    confirmUrl,
+    descriptionUrl,
+    delta: {
+      added: delta.added.length,
+      removed: delta.removed.length,
+      modified: delta.modified.length,
+    },
+    events: parsedEvents,
+    metadata: {
       pagesVisited,
       pagesScraped: pagesToScrape.length,
-    }, "Event scraping complete");
-
-    // Compute delta against current DB
-    const delta = await computeEventDelta(parsedEvents);
-    const changeDescription = formatEventDescription(delta);
-
-    // Store events + description in Redis for pending confirmation
-    const pendingId = await storePending("events", {
-      events: parsedEvents,
-      description: changeDescription,
-    });
-    const baseUrl = resolveBaseUrl();
-    const confirmUrl = `${baseUrl}/api/admin/events/confirm/${pendingId}`;
-    const descriptionUrl = `${baseUrl}/api/admin/events/description/${pendingId}`;
-
-    // Send Discord notification (confirm link at top)
-    const discordDescription = `[Confirm](${confirmUrl}) | [Full description](${descriptionUrl})\n\n${changeDescription}`;
-    sendDiscordNotice("maimai", "jp", "Tour Events Update", discordDescription, deltaColor(delta)).catch((err) => {
-      log.error(err, "Failed to send Discord notification");
-    });
-
-    return NextResponse.json({
-      success: true,
-      requestId,
-      pendingId,
-      confirmUrl,
-      descriptionUrl,
-      delta: {
-        added: delta.added.length,
-        removed: delta.removed.length,
-        modified: delta.modified.length,
-      },
-      events: parsedEvents,
-      metadata: {
-        pagesVisited,
-        pagesScraped: pagesToScrape.length,
-      },
-    });
-  } catch (error) {
-    log.error({ err: error }, "Error in admin fetch_events route");
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Internal server error", requestId },
-      { status: 500 },
-    );
-  } finally {
-    // Serverless: ship buffered logs before the function is frozen/terminated.
-    await flushLogger();
-  }
-}
-
-export async function GET() {
-  return NextResponse.json(
-    { error: "Method not allowed" },
-    { status: 405 }
-  );
-}
+    },
+  });
+});

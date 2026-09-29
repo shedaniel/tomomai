@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const game = resolveAdminGame(request.nextUrl.searchParams);
+    const game = resolveAdminGame(request.nextUrl.searchParams, { write: true });
     const body: { songs: { cover?: Pending<string> }[] } = await request.json();
     const songs = body.songs;
 

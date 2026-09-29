@@ -6,7 +6,7 @@ import { PgDialect } from "drizzle-orm/pg-core";
 const mocks = vi.hoisted(() => ({
   rows: [] as Record<string, unknown>[],
   upsert: vi.fn(), publish: vi.fn(), where: vi.fn(), execute: vi.fn(),
-  log: { info: vi.fn(), debug: vi.fn(), warn: vi.fn(), error: vi.fn() },
+  log: { child: () => mocks.log, info: vi.fn(), debug: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }));
 vi.mock("@/lib/db", () => ({ db: { transaction: async (run: (tx: unknown) => unknown) => run({
   execute: mocks.execute,
@@ -15,7 +15,10 @@ vi.mock("@/lib/db", () => ({ db: { transaction: async (run: (tx: unknown) => unk
   insert: () => ({ values: () => ({ onConflictDoUpdate: mocks.upsert }) }),
 }) } }));
 vi.mock("@/lib/logger", () => ({ flushLogger: vi.fn() }));
-vi.mock("@/lib/request-logger", () => ({ requestLogger: () => ({ log: mocks.log, requestId: "maintenance" }) }));
+vi.mock("@/lib/request-logger", () => ({
+  requestLogger: () => ({ log: mocks.log, requestId: "maintenance" }),
+  runWithLogger: (_log: unknown, run: () => unknown) => run(),
+}));
 vi.mock("@/server/services/catalog/publication", () => ({ publishSongCatalog: mocks.publish }));
 vi.mock("next/cache", () => ({ revalidateTag: vi.fn(), revalidatePath: vi.fn() }));
 
@@ -31,6 +34,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   mocks.rows = [];
   vi.stubEnv("ADMIN_UPDATE_TOKEN", "admin-secret");
+  vi.stubEnv("FRONTEND_GAME", "chunithm");
   vi.stubEnv("NEXT_PUBLIC_ENABLED_MAIMAI_REGIONS", "cn");
 });
 afterEach(() => vi.unstubAllEnvs());

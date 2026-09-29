@@ -20,7 +20,10 @@ vi.mock("@/server/services/catalog/publication", () => ({ publishSongCatalog: mo
 vi.mock("@/server/services/catalog/notifications", () => ({ sendDiscordWebhook: vi.fn().mockResolvedValue(undefined) }));
 vi.mock("@/server/services/discord/webhook", () => ({ sendDiscordNotice: mocks.notice }));
 vi.mock("@/lib/logger", () => ({ flushLogger: mocks.flush }));
-vi.mock("@/lib/request-logger", () => ({ requestLogger: () => ({ log: mocks.log, requestId: "catalog-test" }) }));
+vi.mock("@/lib/request-logger", () => ({
+  requestLogger: () => ({ log: mocks.log, requestId: "catalog-test" }),
+  runWithLogger: (_log: unknown, run: () => unknown) => run(),
+}));
 vi.mock("@/lib/song-slug", () => ({ getSongSlugs: vi.fn().mockResolvedValue([]) }));
 vi.mock("@/lib/utils", () => ({ sortKeys: (value: unknown) => value, awaitWrapper: async (promise: Promise<unknown>) => { try { return [await promise, null]; } catch (error) { return [null, error]; } } }));
 vi.mock("next/cache", () => ({ revalidateTag: mocks.invalidate, revalidatePath: mocks.invalidate }));
@@ -36,7 +39,7 @@ function request(path: string, token: string | null = "admin-secret") {
 beforeEach(() => {
   vi.clearAllMocks();
   vi.stubEnv("ADMIN_UPDATE_TOKEN", "admin-secret");
-  vi.stubEnv("FRONTEND_GAME", "maimai");
+  vi.stubEnv("FRONTEND_GAME", "chunithm");
   mocks.source.mockImplementation(async (game: CanonicalGameId) => [{ ...chart, game }]);
   mocks.ingest.mockResolvedValue({
     statistics: { inputSongs: 1, dbSongs: 0, mergedSongs: 1, added: 1, modified: 0, deleted: 0, unchanged: 0 },
@@ -117,6 +120,7 @@ describe("configured catalog admin pipeline", () => {
     expect(mocks.source).not.toHaveBeenCalled();
   });
   it("still requires maimai source authentication for JP", async () => {
+    vi.stubEnv("FRONTEND_GAME", "maimai");
     expect((await GET(request("update_all?game=maimai&region=jp"))).status).toBe(400);
     expect(mocks.source).not.toHaveBeenCalled();
     const response = await collect(request("update?game=maimai&region=jp&token=player-token"));

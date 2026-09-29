@@ -97,7 +97,7 @@ export async function POST(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
-    const game = resolveAdminGame(searchParams);
+    const game = resolveAdminGame(searchParams, { write: true });
     const region = searchParams.get('region') as Region;
     const versionParam = searchParams.get('version');
     const updateMode = parseCatalogUpdateMode(searchParams.get('update'));

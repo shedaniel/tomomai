@@ -47,7 +47,10 @@ The shared catalog ingestion lives under `apps/main/src/server/services/catalog/
   statistics, changes, applied and skipped deletions, and the affected charts.
 - `sources/otoge-db.ts` holds the otoge-db URLs and its date and constant parsing,
   shared by both games' otoge-db sources.
-- `admin-game.ts` resolves the explicit game and its regions for admin routes.
+- `admin-game.ts` resolves the explicit game, region and version of an admin
+  request and refuses a write for another site's game. Every admin route runs
+  through `adminRoute` (`lib/api/admin-route.ts`), which checks the admin token
+  and answers rejections and failures with the request id.
 - `images.ts` processes incoming covers with the game's cover rules.
 - `publication.ts` publishes game-scoped catalog objects. `notifications.ts`
   formats the song data update embed.
@@ -165,13 +168,16 @@ HTTP failures, release rollover, shared stage order and attribution notices. No 
 
 ## Admin requests
 
-Invoke the admin API on the tomomai instance for either game, independently of
-`FRONTEND_GAME`:
+Every admin request names its game. Requests that write the catalog (`upload`,
+`update_all`, `db`, `import` and `catalog/publish`) must go to the game's own
+site, the deployment whose `FRONTEND_GAME` is that game, because only that
+deployment renders the game's pages and can refresh them. Any other deployment
+answers `409` with `WRONG_SITE`. Collection alone may run on any deployment:
 
 - `/api/admin/update?game=chunithm&region=jp` collects and returns the catalog.
-- `/api/admin/update_all?game=chunithm&image_upload=true` runs catalog ingestion
-  for the configured regions (International then JP by default). Add `region=jp`
-  or `region=intl` to select one region explicitly.
+- `/api/admin/update_all?game=chunithm&image_upload=true`, on the CHUNITHM site,
+  runs catalog ingestion for the configured regions (International then JP by
+  default). Add `region=jp` or `region=intl` to select one region explicitly.
 
 Image processing is enabled by default. Do not pass `image_upload=false` when
 publishing CHUNITHM: that bypasses cover hosting and can persist upstream URLs
@@ -185,7 +191,7 @@ Existing admin authentication remains required. A game account token is not
 required for this public provider. Ingestion and publication still need the
 existing database/R2 configuration; these commands are not run by the tests.
 
-For example, on the tomomai instance:
+For example, collecting on the maimai site:
 
 ```sh
 curl --fail-with-body \

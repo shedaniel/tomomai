@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
 import { consumePending } from "@/server/services/pending-confirmation";
+import { adminRoute } from "@/lib/api/admin-route";
 import { db } from "@/lib/db";
 import { tourEvents, tourEventSteps } from "@/lib/db/schema-pg";
 import { inArray, sql } from "drizzle-orm";
@@ -7,24 +7,13 @@ import { inArray, sql } from "drizzle-orm";
 import type { EventsPendingPayload } from "@/server/services/games/maimai/events/diff";
 import { norm, normType } from "@/lib/games/maimai/events";
 
-export async function GET(
-  _request: NextRequest,
-  { params }: { params: Promise<{ nanoid: string }> },
-) {
-  const { nanoid } = await params;
-
-  const pending = await consumePending<EventsPendingPayload>(nanoid);
+export const GET = adminRoute<{ nanoid: string }>("admin/events/confirm", async ({ params, requestId }) => {
+  const pending = await consumePending<EventsPendingPayload>(params.nanoid);
   if (!pending) {
-    return NextResponse.json(
-      { error: "Confirmation not found or expired" },
-      { status: 404 },
-    );
+    return Response.json({ error: "Confirmation not found or expired", requestId }, { status: 404 });
   }
   if (pending.type !== "events") {
-    return NextResponse.json(
-      { error: "Invalid confirmation type" },
-      { status: 400 },
-    );
+    return Response.json({ error: "Invalid confirmation type", requestId }, { status: 400 });
   }
 
   const events = pending.data.events;
@@ -127,8 +116,8 @@ export async function GET(
     }
   });
 
-  return NextResponse.json({
+  return Response.json({
     success: true,
     eventsUpserted: events.length,
   });
-}
+}, { auth: "none" });

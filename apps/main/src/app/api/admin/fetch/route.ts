@@ -1,62 +1,14 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { load } from "cheerio";
+import { adminRoute } from "@/lib/api/admin-route";
 import { isServerless } from "@/lib/utils";
-import { flushLogger } from "@/lib/logger";
-import { requestLogger } from "@/lib/request-logger";
 import path from "path";
 import fs from "fs/promises";
 import { db } from "@/lib/db";
 import { stores } from "@/lib/db/schema-pg";
 import type { Logger } from "pino";
 
-export async function GET(request: NextRequest) {
-  const { log, requestId } = requestLogger(request, "admin/fetch");
-  try {
-    const authHeader = request.headers.get("authorization");
-    const token = authHeader?.replace("Bearer ", "");
-
-    if (!token) {
-      return NextResponse.json(
-        { error: "Missing authorization token" },
-        { status: 401 }
-      );
-    }
-
-    const adminToken = process.env.ADMIN_UPDATE_TOKEN;
-    if (!adminToken) {
-      log.error("ADMIN_UPDATE_TOKEN environment variable not set");
-      return NextResponse.json(
-        { error: "Server configuration error" },
-        { status: 500 }
-      );
-    }
-
-    if (token !== adminToken) {
-      log.warn("Invalid admin token attempt");
-      return NextResponse.json(
-        { error: "Invalid authorization token" },
-        { status: 403 }
-      );
-    }
-
-    return await fetchLocations(log, requestId);
-  } catch (error) {
-    log.error({ err: error }, "Error in admin fetch route");
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Internal server error", requestId },
-      { status: 500 }
-    );
-  } finally {
-    await flushLogger();
-  }
-}
-
-export async function POST() {
-  return NextResponse.json(
-    { error: "Method not allowed" },
-    { status: 405 }
-  );
-}
+export const GET = adminRoute("admin/fetch", ({ log, requestId }) => fetchLocations(log, requestId));
 
 interface LocationEntry {
   name: string;

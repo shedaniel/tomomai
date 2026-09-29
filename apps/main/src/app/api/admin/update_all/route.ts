@@ -132,7 +132,7 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
-    const game = resolveAdminGame(searchParams);
+    const game = resolveAdminGame(searchParams, { write: true });
     const sourceToken = searchParams.get('token');
 
     const regionParam = searchParams.get('region') as Region | null;

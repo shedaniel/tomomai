@@ -5,11 +5,14 @@ const mocks = vi.hoisted(() => ({
   publish: vi.fn(),
   flush: vi.fn(),
   invalidate: vi.fn(),
-  log: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
+  log: { child: () => mocks.log, info: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }));
 vi.mock("@/server/services/catalog/publication", () => ({ publishSongCatalog: mocks.publish }));
 vi.mock("@/lib/logger", () => ({ flushLogger: mocks.flush }));
-vi.mock("@/lib/request-logger", () => ({ requestLogger: () => ({ log: mocks.log, requestId: "publish-test" }) }));
+vi.mock("@/lib/request-logger", () => ({
+  requestLogger: () => ({ log: mocks.log, requestId: "publish-test" }),
+  runWithLogger: (_log: unknown, run: () => unknown) => run(),
+}));
 vi.mock("next/cache", () => ({ revalidateTag: mocks.invalidate }));
 
 import { POST } from "./route";
@@ -24,6 +27,7 @@ function request(token?: string) {
 beforeEach(() => {
   vi.clearAllMocks();
   vi.stubEnv("ADMIN_UPDATE_TOKEN", "admin-secret");
+  vi.stubEnv("FRONTEND_GAME", "maimai");
   mocks.publish.mockResolvedValue({ songCount: 12, bytes: 345 });
   mocks.flush.mockResolvedValue(undefined);
 });
@@ -49,7 +53,7 @@ describe("POST /api/admin/catalog/publish?game=maimai", () => {
     let complete!: (value: { songCount: number; bytes: number }) => void;
     mocks.publish.mockReturnValueOnce(new Promise(resolve => { complete = resolve; }));
     const pending = POST(request("admin-secret"));
-    expect(mocks.publish).toHaveBeenCalledOnce();
+    await vi.waitFor(() => expect(mocks.publish).toHaveBeenCalledOnce());
     expect(mocks.invalidate).not.toHaveBeenCalled();
     complete({ songCount: 12, bytes: 345 });
     const response = await pending;

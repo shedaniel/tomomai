@@ -1,28 +1,17 @@
-import { NextRequest, NextResponse } from "next/server";
 import { getPending } from "@/server/services/pending-confirmation";
+import { adminRoute } from "@/lib/api/admin-route";
 import type { EventsPendingPayload } from "@/server/services/games/maimai/events/diff";
 
-export async function GET(
-  _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  const { id } = await params;
-
-  const pending = await getPending<EventsPendingPayload>(id);
+export const GET = adminRoute<{ id: string }>("admin/events/description", async ({ params, requestId }) => {
+  const pending = await getPending<EventsPendingPayload>(params.id);
   if (!pending) {
-    return NextResponse.json(
-      { error: "Not found or expired" },
-      { status: 404 },
-    );
+    return Response.json({ error: "Not found or expired", requestId }, { status: 404 });
   }
   if (pending.type !== "events") {
-    return NextResponse.json(
-      { error: "Invalid type" },
-      { status: 400 },
-    );
+    return Response.json({ error: "Invalid type", requestId }, { status: 400 });
   }
 
-  return new NextResponse(pending.data.description, {
+  return new Response(pending.data.description, {
     headers: { "Content-Type": "text/plain; charset=utf-8" },
   });
-}
+}, { auth: "none" });

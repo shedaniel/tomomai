@@ -8,6 +8,7 @@ const PUBLIC_STATUS: Record<GameAdapterErrorCode, number> = {
   UNSUPPORTED_REGION: 400,
   GAME_NOT_ENABLED: 422,
   UNSUPPORTED_CAPABILITY: 422,
+  WRONG_SITE: 409,
 };
 
 it.each(Object.entries(PUBLIC_STATUS) as [GameAdapterErrorCode, number][])("answers %s with %i over HTTP and through tRPC", async (code, status) => {
@@ -15,4 +16,9 @@ it.each(Object.entries(PUBLIC_STATUS) as [GameAdapterErrorCode, number][])("answ
   expect(response.status).toBe(status);
   expect(await response.json()).toEqual({ error: "Rejected", code });
   expect(getHTTPStatusCodeFromError(new TRPCError({ code: GAME_ERROR_STATUS[code].trpc }))).toBe(status);
+});
+
+it("adds the request id when a route passes one", async () => {
+  const response = gameErrorResponse(new GameAdapterError("WRONG_SITE", "Rejected"), "request-1");
+  expect(await response.json()).toEqual({ error: "Rejected", code: "WRONG_SITE", requestId: "request-1" });
 });

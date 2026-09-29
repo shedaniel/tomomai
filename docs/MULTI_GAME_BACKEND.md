@@ -110,10 +110,11 @@ must be enabled for player requests or supported for catalog administration.
 maimai albums in China. A rejection is a `GameAdapterError`, and
 `GAME_ERROR_STATUS` in `lib/games/errors.ts` gives each code its HTTP and tRPC
 status: 400 for an unknown game or unsupported region, 422 for a disabled game
-or a missing capability. The tRPC base procedure maps these errors wherever a
-procedure throws them. Generic procedures take `{ game, region }` through
-`gameProcedure` or `{ game }` through `gameOnlyProcedure`
-(`server/routers/game-procedures.ts`).
+or a missing capability, and 409 for a catalog write sent to another game's
+site (`WRONG_SITE`, admin routes only). The tRPC base procedure maps these
+errors wherever a procedure throws them. Generic procedures take
+`{ game, region }` through `gameProcedure` or `{ game }` through
+`gameOnlyProcedure` (`server/routers/game-procedures.ts`).
 
 REST routes under `/api/v1/games/{game}` declare their capability on the spec
 with `defineGameRoute` (`lib/api/registry.ts`), which lists only the games that

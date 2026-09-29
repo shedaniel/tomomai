@@ -175,8 +175,9 @@ export async function GET(request: NextRequest) {
 > Note: a cached/static response keeps the `x-request-id` of the request that
 > populated the cache — it's most meaningful on dynamic (API) responses.
 
-Reference implementations: `src/app/api/admin/update_all/route.ts`,
-`src/app/api/admin/upload/route.ts`, `src/app/api/admin/update/route.ts`.
+Admin routes get all of this from `adminRoute` in `src/lib/api/admin-route.ts`,
+which builds the request logger, adds `game` to it, answers failures with the
+`requestId` and flushes in `finally`.
 
 ### Why a child logger?
 
@@ -202,6 +203,7 @@ so it's always safe to call.
 
 The ambient logger is bound automatically for:
 - any route that calls `requestLogger(request, route)`,
+- every admin route (`adminRoute` in `src/lib/api/admin-route.ts`, with `game` bound once resolved),
 - every tRPC procedure (middleware in `src/lib/trpc.ts`, `route: "trpc/<path>"`),
 - every v1 API handler (`runApiRequest` in `src/lib/api/route.ts`, which `withApiKey`,
   `defineGameHandler` and `definePublicGameHandler` run through).
