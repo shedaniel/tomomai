@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const { logError } = vi.hoisted(() => ({ logError: vi.fn() }));
 vi.mock("@/lib/logger", () => ({ logger: { error: logError } }));
 
+import { REGIONS } from "./ids";
 import { getEnabledRegions, getSupportedRegions } from "./regions";
 import { requireGameSite } from "./sites";
 
@@ -21,8 +22,11 @@ afterEach(() => vi.unstubAllEnvs());
 
 describe("supported regions", () => {
   it("derives each game's regions from its sites", () => {
-    expect(getSupportedRegions("maimai")).toEqual(["intl", "jp", "cn"]);
     expect(getSupportedRegions("chunithm")).toEqual(["intl", "jp"]);
+  });
+
+  it("gives maimai every region, which the Discord registration script assumes", () => {
+    expect(getSupportedRegions("maimai")).toEqual(REGIONS);
   });
 
   it("rejects a region the game has no site for", () => {
