@@ -23,7 +23,8 @@
       "unableToIdentifyShort": "Discordユーザーを特定できません。",
       "generic": "エラーが発生しました。しばらくしてからもう一度お試しください。",
       "notAvailableToYou": "❌ このボタンはあなたには使用できません。",
-      "unknownCommand": "無効なコマンドです"
+      "unknownCommand": "無効なコマンドです",
+      "noRegion": "現在利用できる maimai DX の地域がありません。しばらくしてからもう一度お試しください。"
     },
     "loading": {
       "title": "⏳ 読み込み中…",

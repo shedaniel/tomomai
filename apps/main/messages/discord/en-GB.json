@@ -23,7 +23,8 @@
       "unableToIdentifyShort": "Unable to identify Discord user.",
       "generic": "An error occurred. Please try again later.",
       "notAvailableToYou": "❌ This button is not available to you.",
-      "unknownCommand": "Unknown command"
+      "unknownCommand": "Unknown command",
+      "noRegion": "No maimai DX region is available right now. Please try again later."
     },
     "loading": {
       "title": "⏳ Loading...",

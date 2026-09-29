@@ -2,6 +2,7 @@ import "server-only";
 import { after } from "next/server";
 import { getGame } from "@/lib/games/registry";
 import { resolveBaseUrl } from "@/lib/base-url";
+import { regionDisplayName } from "@/lib/discord/i18n";
 import { flushLogger } from "@/lib/logger";
 import { getLogger } from "@/lib/request-logger";
 import type { CanonicalGameId, GameRegionContext } from "@/lib/games/types";
@@ -82,9 +83,8 @@ export async function sendDiscordNotice(
   const webhookUrl = process.env.DISCORD_UPDATE_WEBHOOK_NOTICE;
   if (!webhookUrl) return;
 
-  const regionName = region === "jp" ? "Japan" : region === "cn" ? "China" : "International";
   postDiscordEmbed(webhookUrl, { game, region }, {
-    title: `[${getGame(game).brand.displayName} / ${regionName}] ${title}`,
+    title: `[${getGame(game).brand.displayName} / ${regionDisplayName(region)}] ${title}`,
     description: description.trim() || undefined,
     color,
     timestamp: new Date().toISOString(),

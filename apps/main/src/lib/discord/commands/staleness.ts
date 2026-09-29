@@ -12,7 +12,7 @@ import {
   editDiscordMessage,
 } from '../responses';
 import { resolveRegion } from '../region';
-import { t } from '../i18n';
+import { regionDisplayName, t } from '../i18n';
 import { runFetchSession } from './fetch';
 import { executeProfileCommand } from './profile';
 import { executeRecentsCommand } from './recents';
@@ -114,7 +114,6 @@ export async function applyStalenessGate({
   try {
     const lastFetchedAt = await getLatestSnapshotFetchedAt("maimai", dbUser.id, region);
     if (lastFetchedAt && isStale(lastFetchedAt)) {
-      const { regionDisplayName } = await import('../region');
       return getStalePromptResponse({
         command,
         discordUserId,
@@ -161,7 +160,6 @@ export function runRefetchThenCommand({
   const deferredResponse = createDeferredResponse();
 
   const backgroundTask = (async () => {
-    const { regionDisplayName } = await import('../region');
     const regionName = regionDisplayName(region, locale);
     try {
       await editDiscordMessage(applicationId, interactionToken, {
@@ -244,6 +242,7 @@ export async function handleStalenessChoice({
   }
 
   const resolvedRegion = resolveRegion(region, dbUser.region);
+  if (!resolvedRegion) return createErrorResponse(t(locale, 'common.error.noRegion'));
   const day = command === 'daily' && payload ? payload : undefined;
 
   if (refetch) {

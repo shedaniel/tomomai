@@ -5,11 +5,7 @@ import { waitUntil } from '@vercel/functions';
 import { and, eq } from 'drizzle-orm';
 import type { Region } from '@/lib/types';
 import { generateAndSendProfileImage } from '../image-utils';
-import {
-  getProfileSummary,
-  regionDisplayName,
-  resolveRegion,
-} from '../region';
+import { getProfileSummary, resolveRegion } from '../region';
 import {
   createDeferredResponse,
   createErrorResponse,
@@ -20,7 +16,7 @@ import {
   editDiscordMessage,
 } from '../responses';
 import { applyStalenessGate } from './staleness';
-import { t } from '../i18n';
+import { regionDisplayName, t } from '../i18n';
 
 export interface ProfileCommandOptions {
   discordUserId: string;
@@ -129,6 +125,7 @@ export async function handleProfileCommand({
     }
 
     const region = resolveRegion(regionParam, dbUser.region);
+    if (!region) return createErrorResponse(t(locale, 'common.error.noRegion'));
 
     const gate = await applyStalenessGate({
       command: 'profile',

@@ -23,7 +23,8 @@
       "unableToIdentifyShort": "無法驗證 Discord 使用者。",
       "generic": "出錯了，請稍後再試一次。",
       "notAvailableToYou": "❌ 這是專屬別人的按鈕，你無法操作。",
-      "unknownCommand": "未知的無效指令"
+      "unknownCommand": "未知的無效指令",
+      "noRegion": "目前沒有可用的 maimai DX 地區，請稍後再試。"
     },
     "loading": {
       "title": "⏳ 正在載入……",

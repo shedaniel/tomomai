@@ -90,6 +90,7 @@ export async function handleRecentsCommand({
     }
 
     const region = resolveRegion(regionParam, dbUser.region);
+    if (!region) return createErrorResponse(t(locale, 'common.error.noRegion'));
 
     // Staleness/force-fetch only apply on the initial invocation, not pagination.
     if (!skip) {

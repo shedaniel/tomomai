@@ -7,7 +7,7 @@ import { getLogger } from '@/lib/request-logger';
 import { waitUntil } from '@vercel/functions';
 import { and, eq } from 'drizzle-orm';
 import { generateAndSendProfileImage } from '../image-utils';
-import { getProfileSummary, regionDisplayName, resolveRegion } from '../region';
+import { getProfileSummary, resolveRegion } from '../region';
 import { isAlbumSettingsError } from '@/lib/token-errors';
 import { resolveBaseUrl } from '@/lib/base-url';
 import {
@@ -19,7 +19,7 @@ import {
   editDiscordMessage,
   getStateFriendlyName
 } from '../responses';
-import { t } from '../i18n';
+import { regionDisplayName, t } from '../i18n';
 import { Region } from '@/lib/types';
 import { getGameMaintenance } from '@/lib/games/maintenance';
 
@@ -104,6 +104,7 @@ export async function handleFetchCommand({
     }
 
     const region = resolveRegion(regionParam, dbUser.region);
+    if (!region) return createErrorResponse(t(locale, 'common.error.noRegion'));
     const regionName = regionDisplayName(region, locale);
 
     if (getGameMaintenance("maimai", region)?.active) {

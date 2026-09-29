@@ -1,3 +1,4 @@
+import { regionDisplayName } from "@/lib/discord/i18n";
 import { getGame } from "@/lib/games/registry";
 import { getLogger } from "@/lib/request-logger";
 import { postDiscordEmbed } from "@/server/services/discord/webhook";
@@ -243,7 +244,6 @@ export async function sendDiscordWebhook(
 
   const [month, day, year] = jstDate.split('/');
   const dateStr = `${year}/${month}/${day}`;
-  const regionName = region === "jp" ? "Japan" : region === "cn" ? "China" : "International";
 
   const description = buildChangeDescription(game, added, deleted, filteredModified);
 
@@ -264,7 +264,7 @@ export async function sendDiscordWebhook(
   }
 
   postDiscordEmbed(webhookUrl, { game, region }, {
-    title: `${getGame(game).brand.displayName} song data update - ${dateStr} - ${regionName}`,
+    title: `${getGame(game).brand.displayName} song data update - ${dateStr} - ${regionDisplayName(region)}`,
     description: description.trim() || "No changes detected",
     color,
     timestamp: now.toISOString(),

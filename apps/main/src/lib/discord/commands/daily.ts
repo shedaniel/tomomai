@@ -89,6 +89,7 @@ export async function handleDailyCommand({
     }
 
     const region = resolveRegion(regionParam, dbUser.region);
+    if (!region) return createErrorResponse(t(locale, 'common.error.noRegion'));
 
     const gate = await applyStalenessGate({
       command: 'daily',
@@ -152,6 +153,7 @@ export async function handleDailyAutocomplete({
     }
 
     const region = resolveRegion(regionParam, dbUser.region);
+    if (!region) return { type: 8, data: { choices: [] } };
     const days = await listDailyPlaysAvailableDays(dbUser.id, region);
     const filtered = focusedValue
       ? days.filter(d => d.day.includes(focusedValue))

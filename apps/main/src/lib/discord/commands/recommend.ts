@@ -17,9 +17,9 @@ import {
   DiscordResponse,
   editDiscordMessage,
 } from '../responses';
-import { regionDisplayName, resolveRegion } from '../region';
+import { resolveRegion } from '../region';
 import { applyStalenessGate } from './staleness';
-import { t } from '../i18n';
+import { regionDisplayName, t } from '../i18n';
 
 export interface RecommendCommandOptions {
   discordUserId: string;
@@ -175,6 +175,7 @@ export async function handleRecommendCommand({
     }
 
     const region = resolveRegion(regionParam, dbUser.region);
+    if (!region) return createErrorResponse(t(locale, 'common.error.noRegion'));
 
     const gate = await applyStalenessGate({
       command: 'recommend',

@@ -23,7 +23,8 @@
       "unableToIdentifyShort": "无法识别 Discord 用户。",
       "generic": "出错了，请稍后再试一次哦。",
       "notAvailableToYou": "❌ 你无权操作此按钮。",
-      "unknownCommand": "未知的无效指令"
+      "unknownCommand": "未知的无效指令",
+      "noRegion": "目前没有可用的 maimai DX 区服，请稍后再试。"
     },
     "loading": {
       "title": "⏳ 正在加载...",

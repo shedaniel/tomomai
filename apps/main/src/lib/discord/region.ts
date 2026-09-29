@@ -1,4 +1,4 @@
-import { getEnabledRegions } from '@/lib/enabled-regions';
+import { getEnabledRegions } from '@/lib/games/regions';
 import { splitSongs } from '@/lib/rating-calculator';
 import type { Region } from '@/lib/types';
 import type { SongWithScore } from '@/lib/games/maimai/types';
@@ -6,21 +6,9 @@ import { fetchLatestMaimaiSnapshotData } from '@/server/queries/snapshots';
 import { getRatingComment } from './responses';
 import { t } from './i18n';
 
-const REGION_NAMES: Record<Region, string> = {
-  intl: 'International',
-  jp: 'Japan',
-  cn: 'China',
-};
-
-export function regionDisplayName(region: Region, locale?: string): string {
-  if (locale) {
-    return t(locale, `regions.${region}`);
-  }
-  return REGION_NAMES[region] ?? region;
-}
-
 /**
- * Resolve which region a command should operate on.
+ * Resolve which region a command should operate on, or null when maimai has
+ * no enabled region.
  *
  * Priority: an explicit param (if it names an enabled region) > the user's
  * selected region from the DB (if enabled) > intl > the first enabled region.
@@ -28,12 +16,13 @@ export function regionDisplayName(region: Region, locale?: string): string {
 export function resolveRegion(
   param: string | null | undefined,
   userRegion: Region | null | undefined
-): Region {
-  const enabled = getEnabledRegions();
-  if (param && enabled.includes(param as Region)) return param as Region;
+): Region | null {
+  const enabled = getEnabledRegions('maimai');
+  const requested = enabled.find(region => region === param);
+  if (requested) return requested;
   if (userRegion && enabled.includes(userRegion)) return userRegion;
   if (enabled.includes('intl')) return 'intl';
-  return enabled[0];
+  return enabled[0] ?? null;
 }
 
 export interface ProfileSummary {
