@@ -1,3 +1,4 @@
+import { RANKING_BUCKET_CODE } from "./codes";
 import { getGame } from "./registry";
 import type { CanonicalGameId, ChartRatingInput, GameRating, RankedScore, RankingSelection } from "./types";
 
@@ -5,6 +6,8 @@ import type { CanonicalGameId, ChartRatingInput, GameRating, RankedScore, Rankin
 type RatableScore = ChartRatingInput & { chartRating?: number };
 
 type Rated<T> = T & { rating: number };
+
+export type StoredRankings<T> = { newScores: T[]; oldScores: T[] };
 
 export function rateScores<T extends RatableScore>(game: CanonicalGameId, scores: readonly T[], version: number): Rated<T>[] {
   const { rating } = getGame(game);
@@ -39,3 +42,15 @@ export function rankScores<T extends RatableScore & { addedVersion: number }>(ga
   return { rated, ...selectRankings(rated, version, getGame(game).rating) };
 }
 
+/** Rates persisted ranking rows, given in bucket and rank order, without selecting them again. */
+export function rateStoredRankings<T extends RatableScore & { bucket: number }>(
+  game: CanonicalGameId,
+  rows: readonly T[],
+  version: number,
+): StoredRankings<Rated<T>> {
+  const rated = rateScores(game, rows, version).map(row => ({ ...row, rating: Math.floor(row.rating) }));
+  return {
+    newScores: rated.filter(row => row.bucket === RANKING_BUCKET_CODE.new),
+    oldScores: rated.filter(row => row.bucket === RANKING_BUCKET_CODE.old),
+  };
+}

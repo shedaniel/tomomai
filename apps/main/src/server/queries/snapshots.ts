@@ -1,8 +1,9 @@
 import type { CanonicalGameId } from "@/lib/games/types";
 import type { GameSnapshotData, GameSnapshotSummary } from "@/lib/games/player-view";
+import { rateStoredRankings } from "@/lib/games/ranking";
 import { songInstanceId } from "@/lib/db/song-instance-id";
 import { db } from "@/lib/db";
-import { parentSong, scoreData, snapshotScores, songs, userEvents, userSnapshots } from "@/lib/db/schema-pg";
+import { parentSong, scoreData, snapshotRankings, snapshotScores, songs, userEvents, userSnapshots } from "@/lib/db/schema-pg";
 import { and, desc, eq } from "drizzle-orm";
 import type { Region } from "@/lib/types";
 import { getLogger } from "@/lib/request-logger";
@@ -116,25 +117,27 @@ export async function fetchSnapshotData(game: CanonicalGameId,
   return readSnapshotData(game, snapshot[0]);
 }
 
+const playerScoreColumns = {
+  songId: songInstanceId,
+  songName: parentSong.songName,
+  artist: parentSong.artist,
+  cover: parentSong.cover,
+  difficultyCode: parentSong.difficulty,
+  typeCode: parentSong.type,
+  level: songs.level,
+  levelPrecise: songs.levelPrecise,
+  genre: parentSong.genre,
+  addedVersion: songs.addedVersion,
+  scoreValue: scoreData.scoreValue,
+  secondaryScore: scoreData.secondaryScore,
+  comboStatus: scoreData.comboStatus,
+  syncStatus: scoreData.syncStatus,
+  clearStatus: scoreData.clearStatus,
+};
+
 async function readSnapshotData(game: CanonicalGameId, snapshot: typeof userSnapshots.$inferSelect) {
   const songsWithScores = await db
-    .select({
-      songId: songInstanceId,
-      songName: parentSong.songName,
-      artist: parentSong.artist,
-      cover: parentSong.cover,
-      difficultyCode: parentSong.difficulty,
-      typeCode: parentSong.type,
-      level: songs.level,
-      levelPrecise: songs.levelPrecise,
-      genre: parentSong.genre,
-      addedVersion: songs.addedVersion,
-      scoreValue: scoreData.scoreValue,
-      secondaryScore: scoreData.secondaryScore,
-      comboStatus: scoreData.comboStatus,
-      syncStatus: scoreData.syncStatus,
-      clearStatus: scoreData.clearStatus,
-    })
+    .select(playerScoreColumns)
     .from(snapshotScores)
     .innerJoin(scoreData, eq(snapshotScores.scoreId, scoreData.id))
     .innerJoin(songs, eq(scoreData.songId, songs.id))
@@ -204,4 +207,20 @@ export async function fetchLatestSnapshotData(game: CanonicalGameId, userId: str
   if (snapshot.length === 0) return null;
 
   return readSnapshotData(game, snapshot[0]);
+}
+
+/**
+ * The rating selection stored when the snapshot was written, rated with the current chart constants.
+ * Takes the internal snapshot row, so callers must already have checked its owner.
+ */
+export async function fetchSnapshotRankings(game: CanonicalGameId, snapshot: Pick<typeof userSnapshots.$inferSelect, "id" | "gameVersion">) {
+  const rows = await db
+    .select({ ...playerScoreColumns, bucket: snapshotRankings.bucket })
+    .from(snapshotRankings)
+    .innerJoin(scoreData, eq(snapshotRankings.scoreId, scoreData.id))
+    .innerJoin(songs, eq(scoreData.songId, songs.id))
+    .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
+    .where(and(eq(snapshotRankings.game, game), eq(snapshotRankings.snapshotId, snapshot.id)))
+    .orderBy(snapshotRankings.bucket, snapshotRankings.rank);
+  return rateStoredRankings(game, rows, snapshot.gameVersion);
 }

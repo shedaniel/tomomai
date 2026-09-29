@@ -1,7 +1,6 @@
-import { getPlayerRankings } from '@/lib/games/player-view';
 import { getEnabledRegions } from '@/lib/games/regions';
 import type { Region } from '@/lib/types';
-import { fetchLatestSnapshotData } from '@/server/queries/snapshots';
+import { fetchLatestSnapshotData, fetchSnapshotRankings } from '@/server/queries/snapshots';
 import { getRatingComment } from './responses';
 import { t } from './i18n';
 
@@ -37,15 +36,15 @@ export interface ProfileSummary {
 }
 
 /**
- * Load the latest snapshot for a user/region and compute the new-charts (B15)
- * and old-charts (B35) rating totals alongside the stored summary fields.
+ * Load the latest snapshot for a user/region and total the new-charts (B15)
+ * and old-charts (B35) ratings stored with it alongside the summary fields.
  */
 export async function getProfileSummary(userId: string, region: Region): Promise<ProfileSummary | null> {
   const data = await fetchLatestSnapshotData('maimai', userId, region);
   if (!data) return null;
 
   const { snapshot } = data;
-  const { newScores, oldScores } = getPlayerRankings('maimai', data);
+  const { newScores, oldScores } = await fetchSnapshotRankings('maimai', snapshot);
   const newRating = newScores.reduce((sum, s) => sum + s.rating, 0);
   const oldRating = oldScores.reduce((sum, s) => sum + s.rating, 0);
 

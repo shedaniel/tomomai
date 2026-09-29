@@ -1,9 +1,8 @@
 import { type ApiKeyInfo, keyHasScope } from "@/lib/api/protect";
 import { type ScopeKey } from "@/lib/api/scopes";
-import { rankScores } from "@/lib/games/ranking";
 import type { z } from "zod";
 import type { snapshotDetail } from "./schemas";
-import type { fetchSnapshotData } from "@/server/queries/snapshots";
+import { fetchSnapshotRankings, type fetchSnapshotData } from "@/server/queries/snapshots";
 
 type SnapshotData = NonNullable<Awaited<ReturnType<typeof fetchSnapshotData>>>;
 
@@ -11,7 +10,7 @@ type SnapshotData = NonNullable<Awaited<ReturnType<typeof fetchSnapshotData>>>;
  * Build the JSON response for a snapshot detail endpoint.
  * `scopePrefix` is either "latest" or "all", used to resolve the correct scope keys.
  */
-export function buildSnapshotPayload(
+export async function buildSnapshotPayload(
   { snapshot, songs, events }: SnapshotData,
   key: ApiKeyInfo,
   scopePrefix: "latest" | "all",
@@ -45,7 +44,7 @@ export function buildSnapshotPayload(
   if (hasSongsRead) {
     songsPayload = songs.map(songPayload);
   } else if (hasSongsB50Read) {
-    const { newScores, oldScores } = rankScores(snapshot.game, songs, snapshot.gameVersion);
+    const { newScores, oldScores } = await fetchSnapshotRankings(snapshot.game, snapshot);
     songsPayload = [...newScores, ...oldScores].map(s => ({ ...songPayload(s), rating: s.rating }));
   }
 

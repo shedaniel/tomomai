@@ -15,5 +15,5 @@ export const GET = withApiKey(["snapshot:latest:metadata:read"], async (req: Nex
   if (!data) {
     return Response.json({ error: "No snapshot found for this region" }, { status: 404 });
   }
-  return zodJson(spec.response, { game: key.game, ...buildSnapshotPayload(data, key, "latest") });
+  return zodJson(spec.response, { game: key.game, ...await buildSnapshotPayload(data, key, "latest") });
 });

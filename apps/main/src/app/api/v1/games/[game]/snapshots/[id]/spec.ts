@@ -16,7 +16,7 @@ export const spec = defineRoute({
     { scope: "snapshot:all:songs:read", effect: "Includes the full song-score array." },
     {
       scope: "snapshot:all:songs:b50:read",
-      effect: "Includes only the user's B50 song scores when the full-songs scope is absent.",
+      effect: "Includes only the B50 stored with the snapshot (new charts, then old, each in rank order) when the full-songs scope is absent.",
     },
     { scope: "snapshot:all:events:read", effect: "Includes the `events` array." },
     {

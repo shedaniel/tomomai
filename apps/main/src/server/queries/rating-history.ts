@@ -1,7 +1,7 @@
 import { and, eq, inArray } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { parentSong, scoreData, snapshotRankings, songs, userSnapshots } from "@/lib/db/schema-pg";
-import { rankScores } from "@/lib/games/ranking";
+import { rateStoredRankings } from "@/lib/games/ranking";
 import { getGameDifficultyKey } from "@/lib/games/presentation";
 import type { CanonicalGameId } from "@/lib/games/types";
 import type { Region } from "@/lib/types";
@@ -9,12 +9,12 @@ import type { Region } from "@/lib/types";
 type HistorySnapshot = Pick<typeof userSnapshots.$inferSelect, "id" | "fetchedAt" | "rating" | "gameVersion">;
 type HistoryScore = {
   snapshotId: number;
+  bucket: number;
   parentId: bigint;
   songName: string;
   cover: string;
   difficultyCode: number;
   levelPrecise: number;
-  addedVersion: number;
   scoreValue: number;
   comboStatus: number;
 };
@@ -33,6 +33,7 @@ function dailySnapshots(snapshots: HistorySnapshot[]) {
   return [...days.values()];
 }
 
+/** `scores` are each snapshot's stored ranking rows, in bucket and rank order. */
 export function buildRatingHistory(game: CanonicalGameId, snapshots: HistorySnapshot[], scores: HistoryScore[]) {
   const bySnapshot = new Map<number, HistoryScore[]>();
   for (const score of scores) {
@@ -41,8 +42,8 @@ export function buildRatingHistory(game: CanonicalGameId, snapshots: HistorySnap
     bySnapshot.set(score.snapshotId, entries);
   }
   const changesBySnapshot = new Map<number, RatingChange[]>();
-  const rank = (snapshot: HistorySnapshot) => {
-    const { newScores, oldScores } = rankScores(game, bySnapshot.get(snapshot.id) ?? [], snapshot.gameVersion);
+  const bestScores = (snapshot: HistorySnapshot) => {
+    const { newScores, oldScores } = rateStoredRankings(game, bySnapshot.get(snapshot.id) ?? [], snapshot.gameVersion);
     return [...newScores, ...oldScores];
   };
   const days = dailySnapshots(snapshots);
@@ -50,8 +51,8 @@ export function buildRatingHistory(game: CanonicalGameId, snapshots: HistorySnap
     const current = days[index];
     const previous = days[index - 1];
     if (current.rating <= previous.rating) continue;
-    const currentScores = rank(current);
-    const previousScores = rank(previous);
+    const currentScores = bestScores(current);
+    const previousScores = bestScores(previous);
     if (!currentScores.length || !previousScores.length) continue;
     const previousRatings = new Map(previousScores.map(score => [score.parentId, score.rating]));
     const changes: RatingChange[] = [];
@@ -96,18 +97,19 @@ export async function fetchRatingHistory(game: CanonicalGameId, userId: string, 
   if (!needed.size) return buildRatingHistory(game, snapshots, []);
   const scores = await db.select({
     snapshotId: snapshotRankings.snapshotId,
+    bucket: snapshotRankings.bucket,
     parentId: parentSong.id,
     songName: parentSong.songName,
     cover: parentSong.cover,
     difficultyCode: parentSong.difficulty,
     levelPrecise: songs.levelPrecise,
-    addedVersion: songs.addedVersion,
     scoreValue: scoreData.scoreValue,
     comboStatus: scoreData.comboStatus,
   }).from(snapshotRankings)
     .innerJoin(scoreData, eq(snapshotRankings.scoreId, scoreData.id))
     .innerJoin(songs, eq(scoreData.songId, songs.id))
     .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
-    .where(and(eq(snapshotRankings.game, game), eq(songs.region, region), inArray(snapshotRankings.snapshotId, [...needed])));
+    .where(and(eq(snapshotRankings.game, game), eq(songs.region, region), inArray(snapshotRankings.snapshotId, [...needed])))
+    .orderBy(snapshotRankings.snapshotId, snapshotRankings.bucket, snapshotRankings.rank);
   return buildRatingHistory(game, snapshots, scores);
 }

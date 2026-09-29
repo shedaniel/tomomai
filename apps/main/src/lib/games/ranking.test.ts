@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
+import { RANKING_BUCKET_CODE } from "./codes";
 import { getGame } from "./registry";
-import { rankScores, rateScores, selectRankings, sortByRating } from "./ranking";
+import { rankScores, rateScores, rateStoredRankings, selectRankings, sortByRating } from "./ranking";
 
 const rated = (id: string, scoreValue: number, addedVersion: number, rating: number) => ({ id, scoreValue, addedVersion, rating });
 const maimaiChart = (id: string, scoreValue: number, addedVersion = 14) =>
@@ -50,5 +51,15 @@ describe("chart rating", () => {
     const { rated: all, newScores } = rankScores("chunithm", [maimaiChart("a", 1009000, 9), maimaiChart("b", 1000000, 9)], 9);
     expect(all.map(score => [score.id, score.rating])).toEqual([["a", 1715], ["b", 1600]]);
     expect(newScores.map(score => score.id)).toEqual(["a", "b"]);
+  });
+
+  it("rates stored rows by their persisted bucket and order", () => {
+    const rows = [
+      { ...maimaiChart("stored-new", 1000000, 1), bucket: RANKING_BUCKET_CODE.new },
+      { ...maimaiChart("stored-old", 1005000, 14), bucket: RANKING_BUCKET_CODE.old },
+    ];
+    const { newScores, oldScores } = rateStoredRankings("maimai", rows, 14);
+    expect(newScores.map(score => [score.id, score.rating])).toEqual([["stored-new", 324]]);
+    expect(oldScores.map(score => [score.id, score.rating])).toEqual([["stored-old", 337]]);
   });
 });

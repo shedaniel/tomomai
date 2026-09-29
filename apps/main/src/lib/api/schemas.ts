@@ -189,7 +189,7 @@ const songScore = z.object({
   comboStatus: z.number().int(),
   syncStatus: z.number().int(),
   clearStatus: z.number().int(),
-  rating: z.number().int().optional().describe("Only present on B50-restricted responses."),
+  rating: z.number().int().optional().describe("Chart rating under the current chart constants. Only present on B50-restricted responses."),
 });
 
 export const snapshotDetail = snapshotMetadata.extend({

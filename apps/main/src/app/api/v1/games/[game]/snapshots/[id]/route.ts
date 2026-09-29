@@ -21,7 +21,7 @@ export const GET = withApiKey(
     if (!data) {
       return Response.json({ error: "Snapshot not found" }, { status: 404 });
     }
-    return zodJson(spec.response, { game: key.game, ...buildSnapshotPayload(data, key, "all") });
+    return zodJson(spec.response, { game: key.game, ...await buildSnapshotPayload(data, key, "all") });
   }
 );
 
