@@ -67,7 +67,7 @@ function parseSegaToken(token: string): CookieCredentials | AccountCredentials |
   const sanitized = token.trim();
   if (sanitized.startsWith("cookie://")) {
     const clal = sanitized.slice("cookie://".length).replace(/^clal=/, "").trim();
-    if (!clal) return { error: "Token cannot be empty." };
+    if (!clal) return { error: "Invalid token format. Token cannot be empty." };
     if (!/^[\x00-\x7F]*$/.test(clal)) return { error: "Invalid token format. Please ensure you copied the clal cookie correctly (ASCII characters only)." };
     return { kind: "cookie", clal };
   }
