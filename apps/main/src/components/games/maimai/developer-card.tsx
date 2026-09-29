@@ -7,7 +7,7 @@ import type { SnapshotWithSongs } from "@/lib/games/maimai/types";
 import { ChevronDown, ChevronRight, Code, Download } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
-import { AutoHeight } from "./animate-ui/primitives/effects/auto-height";
+import { AutoHeight } from "@/components/animate-ui/primitives/effects/auto-height";
 import { cn } from "@/lib/utils";
 
 interface DeveloperCardProps {

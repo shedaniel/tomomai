@@ -15,14 +15,14 @@ import { Link } from "@/i18n/navigation"
 import { useMemo, useState } from "react";
 import { DialogTrigger } from "@tomomai/ui";
 import { AnimatedDialog, AnimatedDialogContent } from "@tomomai/ui";
-import { SongChartDialogContent } from "./db/songs/song-detail-dialog";
+import { SongChartDialogContent } from "@/components/db/songs/song-detail-dialog";
 import { Region } from "@/lib/types";
 import type { Difficulty, MinimalSong, SongType } from "@/lib/games/maimai/types";
-import { getChartsByDifficulty, getChartScores } from "./db/songs/song-detail-content";
-import { UserScore } from "./db/songs/types";
+import { getChartsByDifficulty, getChartScores } from "@/components/db/songs/song-detail-content";
+import { UserScore } from "@/components/db/songs/types";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { Drawer, DrawerContent, DrawerTrigger, DrawerHeader, DrawerTitle, DrawerDescription } from "@tomomai/ui";
-import { PercentileDistribution } from "@/components/percentile-distribution";
+import { PercentileDistribution } from "@/components/games/maimai/percentile-distribution";
 import type { PercentileDistributionData } from "@/lib/games/maimai/percentile/types";
 
 interface SongHoverCardProps {

@@ -1,11 +1,11 @@
 "use client";
 
-import { useGame } from "./providers/game-provider";
+import { useGame } from "@/components/providers/game-provider";
 import { isGameRegion } from "@/lib/games/frontend";
 import { Region } from "@/lib/types";
-import { TokenDialogCn } from "./token-dialog-cn";
-import { TokenDialogIntlNew } from "./token-dialog-intl-new";
-import { TokenDialogSega } from "./token-dialog-sega";
+import { CnTokenDialog } from "@/components/games/maimai/cn-token-dialog";
+import { SegaCookieWizardDialog } from "./sega-cookie-wizard";
+import { SegaCredentialsDialog } from "./sega-credentials";
 
 interface TokenDialogProps {
   region: Region;
@@ -28,7 +28,7 @@ export function TokenDialog({
   if (!isGameRegion(game, region)) return null;
   if (region === "jp" || (region === "intl" && !game.cookieLoginConfigured)) {
     return (
-      <TokenDialogSega
+      <SegaCredentialsDialog
         isOpen={isOpen}
         onOpenChange={onOpenChange}
         onTokenUpdate={onTokenUpdate}
@@ -38,7 +38,7 @@ export function TokenDialog({
 
   if (region === "cn") {
     return (
-      <TokenDialogCn
+      <CnTokenDialog
         isOpen={isOpen}
         onOpenChange={onOpenChange}
         onTokenUpdate={onTokenUpdate}
@@ -49,7 +49,7 @@ export function TokenDialog({
   }
 
   return (
-    <TokenDialogIntlNew
+    <SegaCookieWizardDialog
       isOpen={isOpen}
       onOpenChange={onOpenChange}
       onTokenUpdate={onTokenUpdate}

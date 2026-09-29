@@ -4,19 +4,19 @@ import { afterEach, expect, it, vi } from "vitest";
 import { createRoot } from "react-dom/client";
 import { NextIntlClientProvider } from "next-intl";
 import { RecommendationCard } from "./recommendation-card";
-import { GameProvider } from "./providers/game-provider";
+import { GameProvider } from "@/components/providers/game-provider";
 import type { GameSnapshotData } from "@/lib/games/player-view";
 import type { Flags } from "@/lib/flags";
 import { generateRecommendations } from "@/lib/games/recommendations";
-import { applyRecommendationFilters, createRecommendationFilterLabel } from "./filter-panel";
-import messages from "../../messages/en.json";
+import { applyRecommendationFilters, createRecommendationFilterLabel } from "@/components/filter-panel";
+import messages from "../../../messages/en.json";
 
 const peers = vi.hoisted(() => vi.fn(() => ({ data: undefined, status: "pending", fetchStatus: "idle", error: null })));
 vi.mock("@/lib/trpc-client", () => ({ trpc: { user: { getRecommendationPeers: { useQuery: peers } } } }));
 vi.mock("@/lib/logger", () => ({ logger: { info: vi.fn() } }));
 vi.mock("@/hooks/use-media-query", () => ({ useMediaQuery: () => false }));
-vi.mock("./song-hover-card", () => ({ SongHoverCard: ({ children }: { children: React.ReactNode }) => <>{children}</> }));
-vi.mock("./cover-image", () => ({ CoverImage: () => null }));
+vi.mock("@/components/games/maimai/song-hover-card", () => ({ SongHoverCard: ({ children }: { children: React.ReactNode }) => <>{children}</> }));
+vi.mock("@/components/cover-image", () => ({ CoverImage: () => null }));
 const data: GameSnapshotData = {
   snapshot: { publicId: "snapshot", game: "chunithm", gameVersion: 9, displayName: "Player", rating: 30, fetchedAt: new Date() },
   songs: [{ songId: "chart", songName: "Song", artist: "Artist", cover: "", genre: "", level: "14", levelPrecise: 140,

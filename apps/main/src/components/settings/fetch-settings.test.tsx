@@ -16,8 +16,8 @@ vi.mock("@/lib/trpc-client", () => ({ trpc: { user: {
   setAlbumPreference: { useMutation: () => ({ mutateAsync: vi.fn() }) },
   deleteToken: { useMutation: () => ({ mutateAsync: vi.fn() }) },
 } } }));
-vi.mock("../token-dialog-intl-new", () => ({ TokenDialogIntlNew: () => <span>International cookie options</span> }));
-vi.mock("../token-dialog-cn", () => ({ TokenDialogCn: () => <span>CN token options</span> }));
+vi.mock("@/components/token-dialog/sega-cookie-wizard", () => ({ SegaCookieWizardDialog: () => <span>International cookie options</span> }));
+vi.mock("@/components/games/maimai/cn-token-dialog", () => ({ CnTokenDialog: () => <span>CN token options</span> }));
 
 let root: Root;
 let container: HTMLDivElement;

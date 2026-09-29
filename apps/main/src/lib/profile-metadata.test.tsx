@@ -30,7 +30,7 @@ vi.mock("@/lib/games/frontend-server", () => ({
 vi.mock("@/server/queries/game-profile", () => ({ fetchPublicGameProfile: fetchProfile }));
 vi.mock("@/lib/auth-server", () => ({ getServerSession: async () => null }));
 vi.mock("@/lib/flags", () => ({ defaultFlags: {} }));
-vi.mock("@/components/profile-page", () => ({ ProfilePage: () => null }));
+vi.mock("@/components/player/profile-page", () => ({ ProfilePage: () => null }));
 vi.mock("@/i18n/locale-server", () => ({ getLocale: async () => "ja", setStaticLocale: async () => undefined }));
 vi.mock("@/i18n/og-locale", () => ({ getOGImageLocales: async () => ["ja"] }));
 vi.mock("@/lib/og", () => ({ createHomeOGImage, OG_SIZE: { width: 1200, height: 630 } }));

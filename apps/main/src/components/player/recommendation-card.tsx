@@ -23,7 +23,7 @@ import {
   createRecommendationFilterLabel,
   applyRecommendationFilters,
 } from "@/components/filter-panel";
-import { SongHoverCard } from "@/components/song-hover-card";
+import { SongHoverCard } from "@/components/games/maimai/song-hover-card";
 import { STAGGER, getTransition } from "@/lib/animation-constants";
 import { logger } from "@/lib/logger";
 import { trpc } from "@/lib/trpc-client";

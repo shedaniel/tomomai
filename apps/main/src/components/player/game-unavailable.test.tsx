@@ -3,10 +3,10 @@ import { describe, expect, it, vi } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 import { NextIntlClientProvider } from "next-intl";
 import { Dashboard } from "./dashboard";
-import { GameProvider } from "./providers/game-provider";
+import { GameProvider } from "@/components/providers/game-provider";
 import type { FrontendGame } from "@/lib/games/frontend";
 import type { Flags } from "@/lib/flags";
-import messages from "../../messages/en.json";
+import messages from "../../../messages/en.json";
 
 const hooks = vi.hoisted(() => ({ snapshots: vi.fn(), fetch: vi.fn() }));
 vi.mock("@/hooks/useSnapshots", () => ({ useSnapshots: hooks.snapshots }));

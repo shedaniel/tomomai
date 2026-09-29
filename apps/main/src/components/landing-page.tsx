@@ -7,7 +7,7 @@ import { useTranslations } from "next-intl";
 import { ArrowUpRight, Database, UserRound } from "lucide-react";
 import { Button } from "@tomomai/ui";
 import { Header } from "@/components/header";
-import { MinigameCards } from "@/components/minigame-cards";
+import { MinigameCards } from "@/components/games/maimai/minigame-cards";
 import { useAuthDialog } from "@/components/auth/auth-dialog-provider";
 import { Link } from "@/i18n/navigation";
 import { getTransition } from "@/lib/animation-constants";

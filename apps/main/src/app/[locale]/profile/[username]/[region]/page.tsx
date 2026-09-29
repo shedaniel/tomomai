@@ -2,7 +2,7 @@ import { getGameBrand, isGameRegion } from "@/lib/games/frontend";
 import { getFrontendGame } from "@/lib/games/frontend-server";
 import { fetchPublicGameProfile } from "@/server/queries/game-profile";
 import { TRPCError } from "@trpc/server";
-import { ProfilePage } from "@/components/profile-page";
+import { ProfilePage } from "@/components/player/profile-page";
 import { notFound } from "next/navigation";
 import { Metadata } from "next";
 import { defaultFlags } from "@/lib/flags";

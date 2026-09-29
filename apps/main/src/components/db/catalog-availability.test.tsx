@@ -31,7 +31,7 @@ import DbTypePage from "@/app/[locale]/db/[type]/page";
 import DetailSlotPage from "@/app/[locale]/db/@detail/[type]/[slug]/page";
 import DbSlugPage from "@/app/[locale]/db/[type]/[slug]/page";
 import { SongsList } from "./songs-list";
-import { GameUnavailable } from "../game-unavailable";
+import { GameUnavailable } from "@/components/player/game-unavailable";
 import type { FrontendGame } from "@/lib/games/frontend";
 
 afterEach(() => { vi.clearAllMocks(); fixture.game.id = "chunithm"; });

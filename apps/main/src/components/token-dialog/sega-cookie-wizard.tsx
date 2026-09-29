@@ -1,7 +1,7 @@
 "use client";
 
 import { logger } from "@/lib/logger";
-import { TokenDialogSega } from "./token-dialog-sega";
+import { SegaCredentialsDialog } from "./sega-credentials";
 import { useGame } from "@/components/providers/game-provider";
 import { Badge } from "@tomomai/ui";
 import { Button } from "@tomomai/ui";
@@ -23,7 +23,7 @@ import { useTranslations } from "next-intl";
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
-interface TokenDialogIntlNewProps {
+interface SegaCookieWizardDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   onTokenUpdate: (token: string) => Promise<void>;
@@ -383,13 +383,13 @@ function StepBasedTokenDialog({
   );
 }
 
-export function TokenDialogIntlNew({
+export function SegaCookieWizardDialog({
   isOpen,
   onOpenChange,
   onTokenUpdate,
   startSessionPolling,
   stopSessionPolling,
-}: TokenDialogIntlNewProps) {
+}: SegaCookieWizardDialogProps) {
   const t = useTranslations();
   const game = useGame();
   const [isTokenDialogOpen, setIsTokenDialogOpen] = useState(false);
@@ -533,7 +533,7 @@ export function TokenDialogIntlNew({
       />
 
       {/* Password Dialog - Nested */}
-      <TokenDialogSega
+      <SegaCredentialsDialog
         isOpen={isPasswordDialogOpen}
         onOpenChange={setIsPasswordDialogOpen}
         modal={false}

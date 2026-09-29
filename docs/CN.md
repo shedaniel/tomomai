@@ -18,7 +18,7 @@ This means even items that "support cn today" via hardcoded paths must be revisi
 ## Already Done
 - [x] **Types/enums**: `lib/games/ids.ts` (`REGIONS`, `Region`), `lib/db/schema-pg.ts` (region columns)
 - [x] **Region config**: `lib/enabled-regions.ts`
-- [x] **UI shells**: `components/region-switcher.tsx`, `components/token-dialog.tsx` → `token-dialog-cn.tsx`, `settings/fetch-settings.tsx`, `settings/account-settings.tsx` (`isCNExclusive`)
+- [x] **UI shells**: `components/region-switcher.tsx`, `components/token-dialog/index.tsx` → `components/games/maimai/cn-token-dialog.tsx`, `settings/fetch-settings.tsx`, `settings/account-settings.tsx` (`isCNExclusive`)
 - [x] **Most tRPC user routers** — already use `getEnabledRegions()`
 - [x] **CN catalog fetcher**: `server/services/games/maimai/catalog/sources/lxns.ts` (Lxns API, single-source pipeline)
 - [x] **Genre normalization for Lxns**: `server/services/games/maimai/catalog/genres.ts` (POPSアニメ / niconicoボーカロイド / オンゲキCHUNITHM / ゲームバラエティ → canonical `＆` forms; region-agnostic)

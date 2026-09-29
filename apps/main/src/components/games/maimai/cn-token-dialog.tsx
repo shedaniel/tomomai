@@ -24,7 +24,7 @@ import { toast } from "sonner";
 
 import type { Region } from "@/lib/types";
 
-interface TokenDialogCnProps {
+interface CnTokenDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   onTokenUpdate: (token: string) => Promise<void>;
@@ -735,13 +735,13 @@ export function HttpProxyAuthSubDialog({ isOpen, onOpenChange, onAuthorized, sta
   );
 }
 
-export function TokenDialogCn({
+export function CnTokenDialog({
   isOpen,
   onOpenChange,
   onTokenUpdate,
   startSessionPolling,
   stopSessionPolling,
-}: TokenDialogCnProps) {
+}: CnTokenDialogProps) {
   const t = useTranslations();
   const [isLxnsDialogOpen, setIsLxnsDialogOpen] = useState(false);
   const [isDivingFishDialogOpen, setIsDivingFishDialogOpen] = useState(false);

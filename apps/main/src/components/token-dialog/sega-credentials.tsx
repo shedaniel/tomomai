@@ -1,6 +1,6 @@
 "use client";
 
-import { useGame } from "./providers/game-provider";
+import { useGame } from "@/components/providers/game-provider";
 import { logger } from "@/lib/logger";
 import { useState } from "react";
 import { Button } from "@tomomai/ui";
@@ -16,19 +16,19 @@ import {
   ResponsiveDialogTitle,
 } from "@tomomai/ui";
 
-interface TokenDialogSegaProps {
+interface SegaCredentialsDialogProps {
   isOpen: boolean;
   modal?: boolean;
   onOpenChange: (open: boolean) => void;
   onTokenUpdate: (token: string) => Promise<void>;
 }
 
-export function TokenDialogSega({
+export function SegaCredentialsDialog({
   isOpen,
   modal = true,
   onOpenChange,
   onTokenUpdate,
-}: TokenDialogSegaProps) {
+}: SegaCredentialsDialogProps) {
   const t = useTranslations();
   const game = useGame();
   const [username, setUsername] = useState("");

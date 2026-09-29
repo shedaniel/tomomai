@@ -16,7 +16,7 @@ import { DistributionAreaChart } from "./stats/distribution-area-chart";
 import { TimeSeriesLineChart } from "./stats/time-series-line-chart";
 import { RatingClimbChart } from "./stats/rating-climb-chart";
 import { HourWeekdayHeatmap } from "./stats/hour-weekday-heatmap";
-import { Tabs, TabsList, TabsTrigger } from "../animate-ui/components/radix/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/animate-ui/components/radix/tabs";
 
 type StatsData = inferRouterOutputs<AppRouter>["db"]["getStats"];
 type StatCard = {

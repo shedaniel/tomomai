@@ -15,7 +15,7 @@ import { Bar, BarChart, XAxis, YAxis } from "recharts";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@tomomai/ui/select-friendly";
 import { Input } from "@tomomai/ui";
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
-import { SongHoverCard } from "@/components/song-hover-card";
+import { SongHoverCard } from "@/components/games/maimai/song-hover-card";
 import { motion, AnimatePresence } from "motion/react";
 import { STAGGER, getTransition } from "@/lib/animation-constants";
 import { trpc } from "@/lib/trpc-client";

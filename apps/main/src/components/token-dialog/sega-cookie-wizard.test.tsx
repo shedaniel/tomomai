@@ -3,10 +3,10 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { NextIntlClientProvider } from "next-intl";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
-import { TokenDialog } from "./token-dialog";
-import { GameProvider } from "./providers/game-provider";
+import { TokenDialog } from "@/components/token-dialog";
+import { GameProvider } from "@/components/providers/game-provider";
 import type { FrontendGame } from "@/lib/games/frontend";
-import messages from "../../messages/en.json";
+import messages from "../../../messages/en.json";
 
 const state = vi.hoisted(() => ({ query: vi.fn(), submit: vi.fn(), loginPageUrl: "" }));
 vi.mock("@/lib/trpc-client", () => ({ trpc: { user: {

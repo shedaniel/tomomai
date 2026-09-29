@@ -1,9 +1,9 @@
-import { DataContent } from "@/components/data-content";
-import { PublicDataBanner } from "@/components/public-data-banner";
+import { DataContent } from "@/components/player/data-content";
+import { PublicDataBanner } from "@/components/player/public-data-banner";
 import { Header } from "@/components/header";
 import { Flags } from "@/lib/flags";
 import { ProfileData, Region } from "@/lib/types";
-import { TomomaiAI } from "@/components/tomomai-ai";
+import { TomomaiAI } from "@/components/games/maimai/tomomai-ai";
 import type { GameSnapshotData } from "@/lib/games/player-view";
 import { toMaimaiPlayerSnapshot } from "@/lib/games/maimai/legacy-view";
 import type { FrontendGame } from "@/lib/games/frontend";

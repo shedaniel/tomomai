@@ -19,7 +19,7 @@ import {
 } from "@tomomai/ui";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { trpc } from "@/lib/trpc-client";
-import { StoreEditDrawer } from "@/components/db/store-edit-drawer";
+import { StoreEditDrawer } from "@/components/games/maimai/db/store-edit-drawer";
 
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { getArcadeGameName, type ArcadeGameId } from "@/lib/arcades/arcade-games";

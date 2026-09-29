@@ -60,7 +60,7 @@ export default [
     };
     return [
       {
-        files: [`src/lib/games/${game}/**/*.{ts,tsx}`],
+        files: [`src/lib/games/${game}/**/*.{ts,tsx}`, `src/components/games/${game}/**/*.{ts,tsx}`],
         rules: { "@typescript-eslint/no-restricted-imports": ["error", { patterns: [serverOnlyBoundary, otherGames] }] },
       },
       {

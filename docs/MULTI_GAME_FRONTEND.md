@@ -305,8 +305,13 @@ out of client bundles. ESLint enforces this for `src/lib/games`,
 `src/components` and `src/hooks`, which may import only types from `@/server`.
 Per-game client-safe code lives in `src/lib/games/<game>/`, per-game server
 code in `src/server/services/games/<game>/`, and server-only contracts in
-`src/server/services/games/types.ts`. ESLint also stops a game folder from
-importing another game's folders, so shared code goes through the registries.
+`src/server/services/games/types.ts`. Components follow the same split:
+generic player panels live in `src/components/player/`, game-only UI in
+`src/components/games/<game>/`, and the token dialog with its SEGA credential
+and cookie wizard steps in `src/components/token-dialog/`. The maimai CN login
+dialog stays with the other maimai UI. ESLint also stops a game folder,
+including a component folder, from importing another game's folders, so shared
+code goes through the registries.
 Client navigation must not mutate game identity without a domain change.
 
 Pass game explicitly through page loaders, tRPC calls, query keys, hydration,

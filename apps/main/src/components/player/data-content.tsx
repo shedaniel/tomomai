@@ -10,15 +10,15 @@ import { useTranslations } from "next-intl";
 import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { InfoCard } from "./info-card";
-import { MinigameCards } from "./minigame-cards";
+import { MinigameCards } from "@/components/games/maimai/minigame-cards";
 import { SongsCard } from "./songs-card";
-import { StatsCardSkeleton } from "./stats-card.skeleton";
+import { StatsCardSkeleton } from "@/components/games/maimai/stats-card.skeleton";
 import { RecommendationCardSkeleton } from "./recommendation-card.skeleton";
-import { ExportImageCardSkeleton } from "./export-image-card.skeleton";
+import { ExportImageCardSkeleton } from "@/components/games/maimai/export-image-card.skeleton";
 import { HistoryCardSkeleton } from "./history-card.skeleton";
-import { EventsCardSkeleton } from "./events-card.skeleton";
+import { EventsCardSkeleton } from "@/components/games/maimai/events-card.skeleton";
 import { RecentSongsCardSkeleton } from "./recent-songs-card.skeleton";
-import { DeveloperCardSkeleton } from "./developer-card.skeleton";
+import { DeveloperCardSkeleton } from "@/components/games/maimai/developer-card.skeleton";
 import { AlbumCardSkeleton } from "./album-card.skeleton";
 import { Flags } from "@/lib/flags";
 import { AnimatePresence, motion } from "motion/react";
@@ -35,13 +35,13 @@ import dynamic from "next/dynamic";
 // DataContent (which rendered null and blanked the sidebar + content), and
 // (2) makes the chunk-load placeholder identical to the data-load placeholder
 // so the transition into real data is seamless.
-const StatsCard = dynamic(() => import("./stats-card").then(m => m.StatsCard), { loading: () => <StatsCardSkeleton /> });
+const StatsCard = dynamic(() => import("@/components/games/maimai/stats-card").then(m => m.StatsCard), { loading: () => <StatsCardSkeleton /> });
 const RecommendationCard = dynamic(() => import("./recommendation-card").then(m => m.RecommendationCard), { loading: () => <RecommendationCardSkeleton /> });
-const ExportImageCard = dynamic(() => import("./export-image-card").then(m => m.ExportImageCard), { loading: () => <ExportImageCardSkeleton /> });
+const ExportImageCard = dynamic(() => import("@/components/games/maimai/export-image-card").then(m => m.ExportImageCard), { loading: () => <ExportImageCardSkeleton /> });
 const HistoryCard = dynamic(() => import("./history-card").then(m => m.HistoryCard), { loading: () => <HistoryCardSkeleton /> });
-const EventsCard = dynamic(() => import("./events-card").then(m => m.EventsCard), { loading: () => <EventsCardSkeleton /> });
+const EventsCard = dynamic(() => import("@/components/games/maimai/events-card").then(m => m.EventsCard), { loading: () => <EventsCardSkeleton /> });
 const RecentSongsCard = dynamic(() => import("./recent-songs-card").then(m => m.RecentSongsCard), { loading: () => <RecentSongsCardSkeleton /> });
-const DeveloperCard = dynamic(() => import("./developer-card").then(m => m.DeveloperCard), { loading: () => <DeveloperCardSkeleton /> });
+const DeveloperCard = dynamic(() => import("@/components/games/maimai/developer-card").then(m => m.DeveloperCard), { loading: () => <DeveloperCardSkeleton /> });
 const AlbumCard = dynamic(() => import("./album-card").then(m => m.AlbumCard), { loading: () => <AlbumCardSkeleton /> });
 
 const DEFAULT_PRIVACY_SETTINGS: ProfilePrivacySettings = {

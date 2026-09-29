@@ -16,7 +16,7 @@ import { Link } from "@/i18n/navigation"
 import { Fragment, useCallback, useState } from "react";
 import { toast } from "sonner";
 import { LocaleSwitcher } from "./locale-switcher";
-import { MinigameCards } from "./minigame-cards";
+import { MinigameCards } from "@/components/games/maimai/minigame-cards";
 import { RegionSwitcher } from "./region-switcher";
 import { Drawer, DrawerClose, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle, DrawerTrigger } from "@tomomai/ui";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@tomomai/ui";

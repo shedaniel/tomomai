@@ -3,10 +3,10 @@ import React, { act } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createRoot, type Root } from "react-dom/client";
 import { NextIntlClientProvider } from "next-intl";
-import { GameProvider } from "./providers/game-provider";
+import { GameProvider } from "@/components/providers/game-provider";
 import { RecentSongsCard } from "./recent-songs-card";
 import { AlbumCard } from "./album-card";
-import messages from "../../messages/en.json";
+import messages from "../../../messages/en.json";
 
 const state = vi.hoisted(() => ({ recent: { data: undefined as unknown, error: null as unknown }, album: { data: undefined as unknown, error: null as unknown }, loadMore: undefined as undefined | (() => void), offsets: [] as number[] }));
 vi.mock("@/hooks/use-infinite-scroll", () => ({ useInfiniteScroll: (callback: () => void) => { state.loadMore = callback; return { current: null }; } }));

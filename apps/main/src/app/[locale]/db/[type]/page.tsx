@@ -25,9 +25,9 @@ export function generateStaticParams() {
   return [];
 }
 
-const ArcadesMap = dynamic(() => import("@/components/db/arcades").then(m => m.ArcadesMap));
-const EventsDatabase = dynamic(() => import("@/components/db/events-database").then(m => m.EventsDatabase));
-const StatsDatabase = dynamic(() => import("@/components/db/stats-database").then(m => m.StatsDatabase));
+const ArcadesMap = dynamic(() => import("@/components/games/maimai/db/arcades").then(m => m.ArcadesMap));
+const EventsDatabase = dynamic(() => import("@/components/games/maimai/db/events-database").then(m => m.EventsDatabase));
+const StatsDatabase = dynamic(() => import("@/components/games/maimai/db/stats-database").then(m => m.StatsDatabase));
 
 type DbTypePageProps = {
   params: Promise<{
