@@ -5,7 +5,7 @@ import { NextIntlClientProvider } from "next-intl";
 import { SongsCard } from "@/components/player/songs/songs-card";
 import { GameProvider } from "@/components/providers/game-provider";
 import { toPublicGameSnapshot } from "./public-player";
-vi.mock("@/lib/trpc-client", () => ({ trpc: { user: { getChartPercentiles: { useQuery: () => ({ data: undefined }) } } } }));
+vi.mock("@/lib/trpc-client", () => ({ trpc: { maimai: { getChartPercentiles: { useQuery: () => ({ data: undefined }) } } } }));
 vi.mock("@/components/games/maimai/song-hover-card", () => ({ SongHoverCard: ({ children }: { children: React.ReactNode }) => <>{children}</> }));
 import messages from "../../../messages/en.json";
 import { type GameSnapshotData } from "./player-view";

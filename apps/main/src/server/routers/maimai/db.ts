@@ -1,4 +1,4 @@
-import { maimaiCompatibilityGameSchema, regionSchema } from "@/lib/games/schema";
+import type { Region } from "@/lib/types";
 import { toMaimaiChart } from "@/server/services/games/maimai/legacy-view";
 import { db } from '@/lib/db';
 import { scoreData, snapshotScores, songs, userSnapshots } from '@/lib/db/schema-pg';
@@ -7,30 +7,27 @@ import { and, desc, eq, gt, gte, inArray, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { unstable_cache } from 'next/cache';
 import { fetchTourEvents, fetchTourEventsByNames } from '@/server/services/games/maimai/events/queries';
-import { validateGameInput } from './user/game-input';
+import { maimaiProcedure, maimaiRegionProcedure } from './procedures';
 
 export const dbRouter = router({
-  getEventStepsByNames: publicProcedure
-    .input(z.object({ game: maimaiCompatibilityGameSchema, names: z.array(z.string()).max(200) }))
+  getEventStepsByNames: maimaiProcedure(publicProcedure, "events")
+    .input(z.object({ names: z.array(z.string()).max(200) }))
     .query(async ({ input }) => {
       return fetchTourEventsByNames(input.names);
     }),
-  getEvents: publicProcedure.query(async () => {
+  getEvents: maimaiProcedure(publicProcedure, "events").query(async ({ ctx }) => {
     const getCachedEvents = unstable_cache(
       async () => fetchTourEvents(),
-      ['db-events:maimai'],
-      { revalidate: 3600, tags: ['db-events:maimai'] }
+      [`db-events:${ctx.game}`],
+      { revalidate: 3600, tags: [`db-events:${ctx.game}`] }
     );
     return getCachedEvents();
   }),
-  getStats: publicProcedure
-    .input(z.object({ game: maimaiCompatibilityGameSchema,
-      region: regionSchema,
-    }))
-    .query(async ({ input }) => {
-      validateGameInput(input, "catalog");
+  getCatalogStats: maimaiRegionProcedure(publicProcedure, "catalog-stats")
+    .query(async ({ ctx }) => {
+      const { game } = ctx;
       const getCachedStats = unstable_cache(
-        async (region: typeof input.region) => {
+        async (region: Region) => {
           // 1. Get latest snapshot for each user in the region
           // We use distinctOn to get the latest snapshot per user
           const latestSnapshots = db
@@ -41,7 +38,7 @@ export const dbRouter = router({
               title: userSnapshots.title,
             })
             .from(userSnapshots)
-            .where(and(eq(userSnapshots.game, "maimai"), eq(userSnapshots.region, region)))
+            .where(and(eq(userSnapshots.game, game), eq(userSnapshots.region, region)))
             .orderBy(userSnapshots.userId, desc(userSnapshots.fetchedAt))
             .as('latest_snapshots');
 
@@ -99,7 +96,7 @@ export const dbRouter = router({
           const latestSnapshotIds = db
             .selectDistinctOn([userSnapshots.userId], { id: userSnapshots.id })
             .from(userSnapshots)
-            .where(and(eq(userSnapshots.game, "maimai"), eq(userSnapshots.region, region)))
+            .where(and(eq(userSnapshots.game, game), eq(userSnapshots.region, region)))
             .orderBy(userSnapshots.userId, desc(userSnapshots.fetchedAt));
 
           // 5. Average Achievement by Level
@@ -160,12 +157,7 @@ export const dbRouter = router({
               lastAt: sql<Date>`MAX(${userSnapshots.fetchedAt})`.as("last_at"),
             })
             .from(userSnapshots)
-            .where(
-              and(
-                and(eq(userSnapshots.game, "maimai"), eq(userSnapshots.region, region)),
-                gte(userSnapshots.fetchedAt, windowStart)
-              )
-            )
+            .where(and(eq(userSnapshots.game, game), eq(userSnapshots.region, region), gte(userSnapshots.fetchedAt, windowStart)))
             .groupBy(userSnapshots.userId);
 
           const now = Date.now();
@@ -196,12 +188,7 @@ export const dbRouter = router({
               count: sql<number>`COUNT(DISTINCT ${userSnapshots.userId})`.mapWith(Number).as('count'),
             })
             .from(userSnapshots)
-            .where(
-              and(
-                and(eq(userSnapshots.game, "maimai"), eq(userSnapshots.region, region)),
-                gte(userSnapshots.fetchedAt, sixtyDaysAgo)
-              )
-            )
+            .where(and(eq(userSnapshots.game, game), eq(userSnapshots.region, region), gte(userSnapshots.fetchedAt, sixtyDaysAgo)))
             .groupBy(sql`DATE(${userSnapshots.fetchedAt})`)
             .orderBy(sql`DATE(${userSnapshots.fetchedAt})`);
 
@@ -228,7 +215,7 @@ export const dbRouter = router({
                 (array_agg("totalPlayCount" ORDER BY "fetchedAt" DESC))[1] AS last_p,
                 EXTRACT(EPOCH FROM (MAX("fetchedAt") - MIN("fetchedAt"))) / 86400 AS span_days
               FROM user_snapshots
-              WHERE game = 'maimai' AND region = ${region}
+              WHERE game = ${game} AND region = ${region}
               GROUP BY "userId"
             )
             SELECT
@@ -253,7 +240,7 @@ export const dbRouter = router({
             WITH first_snap AS (
               SELECT "userId", MIN("fetchedAt") AS f
               FROM user_snapshots
-              WHERE game = 'maimai' AND region = ${region}
+              WHERE game = ${game} AND region = ${region}
               GROUP BY "userId"
             )
             SELECT
@@ -276,7 +263,7 @@ export const dbRouter = router({
               EXTRACT(HOUR FROM ("startedAt" AT TIME ZONE 'UTC') AT TIME ZONE 'Asia/Tokyo')::int AS hour,
               COUNT(*)::int AS count
             FROM fetch_sessions
-            WHERE game = 'maimai' AND region = ${region}
+            WHERE game = ${game} AND region = ${region}
               AND status = 'completed'
               AND "startedAt" > NOW() - INTERVAL '90 days'
             GROUP BY 1, 2
@@ -297,7 +284,7 @@ export const dbRouter = router({
               COUNT(*)::int AS count
             FROM user_recent_songs urs
             JOIN songs s ON s.id = urs."songId"
-            WHERE s.game = 'maimai' AND urs.game = 'maimai' AND s.region = ${region}
+            WHERE s.game = ${game} AND urs.game = ${game} AND s.region = ${region}
               AND urs."playedAt" > NOW() - INTERVAL '90 days'
             GROUP BY 1, 2
             ORDER BY 1, 2
@@ -315,7 +302,7 @@ export const dbRouter = router({
               COUNT(*)::int AS count
             FROM user_recent_songs urs
             JOIN songs s ON s.id = urs."songId"
-            WHERE s.game = 'maimai' AND urs.game = 'maimai' AND s.region = ${region}
+            WHERE s.game = ${game} AND urs.game = ${game} AND s.region = ${region}
               AND urs."playedAt" > NOW() - INTERVAL '90 days'
             GROUP BY 1
             ORDER BY 1
@@ -341,24 +328,23 @@ export const dbRouter = router({
             totalUsers: 0, // Hide actual count
           };
         },
-        ['db-stats:maimai'],
+        [`db-stats:${game}`],
         {
           revalidate: 21600, // 6 hours
-          tags: ['db-stats:maimai']
+          tags: [`db-stats:${game}`]
         }
       );
 
-      return getCachedStats(input.region);
+      return getCachedStats(ctx.region);
     }),
-  getTopSongs: publicProcedure
-    .input(z.object({ game: maimaiCompatibilityGameSchema,
-      region: regionSchema,
+  getTopSongs: maimaiRegionProcedure(publicProcedure, "catalog-stats")
+    .input(z.object({
       window: z.enum(['all', '90d', '30d', '7d']).default('7d'),
     }))
-    .query(async ({ input }) => {
-      validateGameInput(input, "catalog");
+    .query(async ({ ctx, input }) => {
+      const { game } = ctx;
       const getCached = unstable_cache(
-        async (region: typeof input.region, window: typeof input.window) => {
+        async (region: Region, window: typeof input.window) => {
           const days = window === '90d' ? 90 : window === '30d' ? 30 : window === '7d' ? 7 : null;
           const timeFilter = days !== null
             ? sql`AND urs."playedAt" > NOW() - (${days} || ' days')::interval`
@@ -384,7 +370,7 @@ export const dbRouter = router({
             FROM user_recent_songs urs
             JOIN songs s ON s.id = urs."songId"
             JOIN parent_song p ON p.id = s."parentId"
-            WHERE s.game = 'maimai' AND urs.game = 'maimai' AND s.region = ${region}
+            WHERE s.game = ${game} AND urs.game = ${game} AND s.region = ${region}
               ${timeFilter}
             GROUP BY p.id
             ORDER BY COUNT(*) DESC
@@ -403,13 +389,13 @@ export const dbRouter = router({
             percentage: totalPlays > 0 ? Number(r.count) / totalPlays : 0,
           }));
         },
-        ['db-top-songs:maimai'],
+        [`db-top-songs:${game}`],
         {
           revalidate: 21600,
-          tags: ['db-top-songs:maimai'],
+          tags: [`db-top-songs:${game}`],
         }
       );
 
-      return getCached(input.region, input.window);
+      return getCached(ctx.region, input.window);
     }),
 });

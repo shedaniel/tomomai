@@ -1,6 +1,5 @@
 "use client";
 
-import { useGameId } from "@/components/providers/game-provider";
 import { Button } from "@tomomai/ui";
 import { trpc } from "@/lib/trpc-client";
 import { ChevronDown, ChevronRight, Code, Download } from "lucide-react";
@@ -48,8 +47,8 @@ export function DeveloperCard({ snapshotId }: { snapshotId: string }) {
   const [isExporting, setIsExporting] = useState(false);
   const [isSchemaExpanded, setIsSchemaExpanded] = useState(false);
 
-  const { refetch } = trpc.user.exportSnapshotData.useQuery(
-    { game: useGameId(), snapshotId },
+  const { refetch } = trpc.maimai.exportSnapshotData.useQuery(
+    { snapshotId },
     { enabled: false }
   );
 

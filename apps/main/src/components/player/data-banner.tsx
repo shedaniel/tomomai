@@ -179,8 +179,8 @@ function CopySnapshotButton({
   const {
     data: availableVersionsData,
     isLoading: isLoadingVersions,
-  } = trpc.user.getAvailableVersionsForCopy.useQuery(
-    { game: useGameId(),
+  } = trpc.maimai.getAvailableVersionsForCopy.useQuery(
+    {
       region,
       currentVersion: currentGameVersion!,
     },

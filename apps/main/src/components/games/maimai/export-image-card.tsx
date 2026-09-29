@@ -1,6 +1,5 @@
 "use client";
 
-import { useGameId } from "@/components/providers/game-provider";
 import { Button } from "@tomomai/ui";
 import { CANVAS_HEIGHT, CANVAS_WIDTH } from "@/lib/games/maimai/image-spec";
 import { Region } from "@/lib/types";
@@ -204,12 +203,12 @@ export function ExportImageCard({ snapshot, region, showLastCredit = true, usern
   const [dailyUrlExtra, setDailyUrlExtra] = useState<Record<string, string>>({});
 
   const isPublic = !!publicSnapshotId;
-  const ownDaysQuery = trpc.user.getDailyPlaysAvailableDays.useQuery(
-    { game: useGameId(), region },
+  const ownDaysQuery = trpc.maimai.getDailyPlaysAvailableDays.useQuery(
+    { region },
     { enabled: !isPublic },
   );
-  const publicDaysQuery = trpc.user.getPublicDailyPlaysAvailableDays.useQuery(
-    { game: useGameId(), snapshotId: publicSnapshotId!, region },
+  const publicDaysQuery = trpc.maimai.getPublicDailyPlaysAvailableDays.useQuery(
+    { snapshotId: publicSnapshotId!, region },
     { enabled: isPublic },
   );
   const availableDays = (isPublic ? publicDaysQuery.data : ownDaysQuery.data) ?? [];

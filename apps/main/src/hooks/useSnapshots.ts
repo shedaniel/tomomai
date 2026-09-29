@@ -39,14 +39,14 @@ export function useSnapshots(region: Region, isAuthenticated: boolean, options?:
     if (selectedSnapshot) void snapshotQuery.refetch();
   };
   const deleteMutation = trpc.user.deleteSnapshot.useMutation({ onSuccess: refresh });
-  const copyMutation = trpc.user.copySnapshotToVersion.useMutation({ onSuccess: refresh });
+  const copyMutation = trpc.maimai.copySnapshotToVersion.useMutation({ onSuccess: refresh });
   return {
     snapshots,
     selectedSnapshot,
     selectedSnapshotData: selectedSnapshot ? snapshotQuery.data ?? initialData : null,
     setSelectedSnapshot: (id: string | null) => setSelection({ scope, id }),
     deleteSnapshot: (snapshotId: string) => deleteMutation.mutateAsync({ game: game.id, snapshotId, region }),
-    copySnapshot: (snapshotId: string, targetVersion: number) => copyMutation.mutateAsync({ game: game.id, snapshotId, region, targetVersion }),
+    copySnapshot: (snapshotId: string, targetVersion: number) => copyMutation.mutateAsync({ snapshotId, region, targetVersion }),
     isCopying: copyMutation.isPending,
     isLoading: enabled && (snapshotsQuery.isLoading || (!!selectedSnapshot && !initialData && snapshotQuery.isLoading)),
     error: snapshotsQuery.error ?? snapshotQuery.error,

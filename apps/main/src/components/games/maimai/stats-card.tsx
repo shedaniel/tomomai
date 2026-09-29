@@ -92,8 +92,8 @@ function PlatesGrid({ data, selectedVersion, region, snapshotId }: PlatesGridPro
   const isExpanded = expandedCell !== null && selectedVersion !== "all";
 
   // Fetch songs for expanded cell
-  const { data: ownPlateSongs, isLoading: ownSongsLoading } = trpc.user.getPlateSongs.useQuery(
-    { game: useGameId(),
+  const { data: ownPlateSongs, isLoading: ownSongsLoading } = trpc.maimai.getPlateSongs.useQuery(
+    {
       region,
       version: selectedVersion,
       difficulty: expandedCell?.difficulty as any,
@@ -103,8 +103,8 @@ function PlatesGrid({ data, selectedVersion, region, snapshotId }: PlatesGridPro
       enabled: isExpanded && !snapshotId,
     }
   );
-  const { data: publicPlateSongs, isLoading: publicSongsLoading } = trpc.user.getPublicPlateSongs.useQuery(
-    { game: useGameId(),
+  const { data: publicPlateSongs, isLoading: publicSongsLoading } = trpc.maimai.getPublicPlateSongs.useQuery(
+    {
       snapshotId: snapshotId!,
       region,
       version: selectedVersion,

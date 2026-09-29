@@ -1,5 +1,6 @@
 import { initTRPC, TRPCError } from '@trpc/server';
 import { auth } from '@/lib/auth';
+import { GAME_ERROR_STATUS, GameAdapterError } from '@/lib/games/errors';
 import { logger } from '@/lib/logger';
 import { getRequestId, runWithLogger } from '@/lib/request-logger';
 import superjson from 'superjson';
@@ -59,9 +60,20 @@ const withRequestLogger = t.middleware(({ ctx, path, next }) => {
   });
 });
 
+function toTrpcGameError(error: GameAdapterError): TRPCError {
+  return new TRPCError({ code: GAME_ERROR_STATUS[error.code].trpc, message: error.message, cause: error });
+}
+
+// A game rejection thrown anywhere below, including deep in a service, answers with its own status instead of a 500.
+const withGameErrors = t.middleware(async ({ next }) => {
+  const result = await next();
+  if (!result.ok && result.error.cause instanceof GameAdapterError) throw toTrpcGameError(result.error.cause);
+  return result;
+});
+
 // Export reusable router and procedure helpers
 export const router = t.router;
-export const publicProcedure = t.procedure.use(withRequestLogger);
+export const publicProcedure = t.procedure.use(withRequestLogger).use(withGameErrors);
 export const middleware = t.middleware;
 
 // Protected procedure that requires authentication

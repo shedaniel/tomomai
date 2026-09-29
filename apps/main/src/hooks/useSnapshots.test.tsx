@@ -11,12 +11,16 @@ import type { GameSnapshotData, GameSnapshotSummary } from "@/lib/games/player-v
 import type { Region } from "@/lib/types";
 
 const transport = vi.hoisted(() => ({ list: vi.fn(), detail: vi.fn(), remove: vi.fn(), copy: vi.fn() }));
-vi.mock("@/lib/trpc-client", () => ({ trpc: { user: {
-  getSnapshots: { useQuery: (input: unknown, options: object) => useQuery({ queryKey: ["snapshots", input], queryFn: () => transport.list(input), ...options }) },
-  getSnapshotData: { useQuery: (input: unknown, options: object) => useQuery({ queryKey: ["detail", input], queryFn: () => transport.detail(input), ...options }) },
-  deleteSnapshot: { useMutation: (options: object) => useMutation({ mutationFn: transport.remove, ...options }) },
-  copySnapshotToVersion: { useMutation: (options: object) => useMutation({ mutationFn: transport.copy, ...options }) },
-} } }));
+vi.mock("@/lib/trpc-client", () => ({ trpc: {
+  user: {
+    getSnapshots: { useQuery: (input: unknown, options: object) => useQuery({ queryKey: ["snapshots", input], queryFn: () => transport.list(input), ...options }) },
+    getSnapshotData: { useQuery: (input: unknown, options: object) => useQuery({ queryKey: ["detail", input], queryFn: () => transport.detail(input), ...options }) },
+    deleteSnapshot: { useMutation: (options: object) => useMutation({ mutationFn: transport.remove, ...options }) },
+  },
+  maimai: {
+    copySnapshotToVersion: { useMutation: (options: object) => useMutation({ mutationFn: transport.copy, ...options }) },
+  },
+} }));
 
 function fixture(game: "maimai" | "chunithm", id: string) {
   const summary: GameSnapshotSummary = { publicId: id, fetchedAt: new Date("2026-09-01"), gameVersion: 10, rating: 0, displayName: id, courseRankUrl: null, classRankUrl: null, stars: null, versionPlayCount: 0, totalPlayCount: 0 };

@@ -12,14 +12,12 @@ import { DataContent } from "./data-content";
 import messages from "../../../messages/en.json";
 
 const queries = vi.hoisted(() => ({ eventSteps: vi.fn(), exportSnapshot: vi.fn() }));
-vi.mock("@/lib/trpc-client", () => ({ trpc: {
-  db: { getEventStepsByNames: { useQuery: (...args: unknown[]) => { queries.eventSteps(...args); return { data: undefined, isLoading: false }; } } },
-  user: {
-    getDailyPlaysAvailableDays: { useQuery: () => ({ data: [], isFetching: false }) },
-    getPublicDailyPlaysAvailableDays: { useQuery: () => ({ data: [], isFetching: false }) },
-    exportSnapshotData: { useQuery: (...args: unknown[]) => { queries.exportSnapshot(...args); return { refetch: vi.fn() }; } },
-  },
-} }));
+vi.mock("@/lib/trpc-client", () => ({ trpc: { maimai: {
+  getEventStepsByNames: { useQuery: (...args: unknown[]) => { queries.eventSteps(...args); return { data: undefined, isLoading: false }; } },
+  getDailyPlaysAvailableDays: { useQuery: () => ({ data: [], isFetching: false }) },
+  getPublicDailyPlaysAvailableDays: { useQuery: () => ({ data: [], isFetching: false }) },
+  exportSnapshotData: { useQuery: (...args: unknown[]) => { queries.exportSnapshot(...args); return { refetch: vi.fn() }; } },
+} } }));
 vi.mock("next/navigation", () => ({ useSearchParams: () => new URLSearchParams() }));
 vi.mock("@/i18n/navigation", () => ({ Link: ({ children }: { children: React.ReactNode }) => <span>{children}</span> }));
 
@@ -69,7 +67,7 @@ it("renders stored events with missing progress on the map tab", async () => {
   expect(container.textContent).toContain("Stored Area");
   expect(container.textContent).toContain("0 km");
   expect(container.textContent).toContain(messages.events.notStarted);
-  expect(queries.eventSteps).toHaveBeenCalledWith({ game: "maimai", names: ["Stored Area"] }, expect.anything());
+  expect(queries.eventSteps).toHaveBeenCalledWith({ names: ["Stored Area"] }, expect.anything());
 });
 
 it("builds the export images from the public snapshot id", async () => {
@@ -81,5 +79,5 @@ it("builds the export images from the public snapshot id", async () => {
 
 it("exports the JSON of the public snapshot id", async () => {
   await renderTab("developer");
-  expect(queries.exportSnapshot).toHaveBeenCalledWith({ game: "maimai", snapshotId: "public-snapshot" }, { enabled: false });
+  expect(queries.exportSnapshot).toHaveBeenCalledWith({ snapshotId: "public-snapshot" }, { enabled: false });
 });

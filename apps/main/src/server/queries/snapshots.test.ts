@@ -23,6 +23,7 @@ vi.mock("@/lib/db", async () => {
     if (table === "snapshot_scores") return { rows: [["song:j9", "Song", "Artist", "", 4, 0, "14+", 145, "Original", 9, 1009000, 0, 3, 0, 1]] };
     const record = table ? stored[table] : undefined;
     if (!record) return { rows: [] };
+    if (table === "user_snapshots" && !(params.includes(record.userId) && params.includes(record.game))) return { rows: [] };
     const columns = [...sql.slice(0, sql.indexOf(` from "${table}"`)).matchAll(/(?:"\w+"\.)?"(\w+)"/g)].map(([, column]) => column);
     return { rows: [columns.map(column => record[column])] };
   }) };
@@ -30,7 +31,7 @@ vi.mock("@/lib/db", async () => {
 vi.mock("@/lib/r2", () => ({ deleteFromR2: vi.fn(), isR2IconUrl: () => false, r2KeyFromIconUrl: vi.fn() }));
 vi.mock("@/lib/request-logger", () => ({ getLogger: () => ({ info: vi.fn(), warn: vi.fn() }) }));
 
-import { fetchLatestSnapshotData, fetchSnapshotData, fetchSnapshotRankings } from "./snapshots";
+import { fetchLatestSnapshotData, fetchSnapshotData, fetchSnapshotDataByPublicId, fetchSnapshotRankings } from "./snapshots";
 
 beforeEach(() => { state.queries = []; });
 
@@ -52,6 +53,15 @@ it.each([
   expect(events.params).toContain(INTERNAL_ID);
   expect(state.queries).toHaveLength(3);
   expect(state.queries.every(query => query.params.includes("chunithm"))).toBe(true);
+});
+
+it("reads the owner's snapshot by public id in whichever region it was fetched, and nothing of another owner or game", async () => {
+  const result = await fetchSnapshotDataByPublicId("chunithm", "owner", "snapshot");
+  expect(result).toMatchObject({ region: "jp", snapshot: { publicId: "snapshot", game: "chunithm" } });
+  expect(result?.songs).toHaveLength(1);
+  expect(result?.snapshot).not.toHaveProperty("region");
+  await expect(fetchSnapshotDataByPublicId("chunithm", "stranger", "snapshot")).resolves.toBeNull();
+  await expect(fetchSnapshotDataByPublicId("maimai", "owner", "snapshot")).resolves.toBeNull();
 });
 
 it("reads stored rankings only through the owner's snapshot", async () => {

@@ -18,7 +18,7 @@ import { RatingClimbChart } from "./stats/rating-climb-chart";
 import { HourWeekdayHeatmap } from "./stats/hour-weekday-heatmap";
 import { Tabs, TabsList, TabsTrigger } from "@/components/animate-ui/components/radix/tabs";
 
-type StatsData = inferRouterOutputs<AppRouter>["db"]["getStats"];
+type StatsData = inferRouterOutputs<AppRouter>["maimai"]["getCatalogStats"];
 type StatCard = {
   key: string;
   titleKey: string;
@@ -150,7 +150,7 @@ export function StatsDatabase() {
   const t = useTranslations("db.stats");
   const [region, setRegion] = useState<Region>("intl");
 
-  const { data, isLoading } = trpc.db.getStats.useQuery({ game: "maimai", region });
+  const { data, isLoading } = trpc.maimai.getCatalogStats.useQuery({ region });
 
   return (
     <div className="space-y-6 pt-3">

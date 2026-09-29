@@ -320,3 +320,12 @@ export async function queryAllUniqueSongs(game: CanonicalGameId) {
 
   return getCachedUniqueSongs();
 }
+
+/** The catalog versions of a region that hold at least one chart. */
+export async function listCatalogVersionsWithSongs(game: CanonicalGameId, region: Region): Promise<number[]> {
+  const rows = await db
+    .selectDistinct({ gameVersion: songs.gameVersion })
+    .from(songs)
+    .where(and(eq(songs.game, game), eq(songs.region, region)));
+  return rows.map(row => row.gameVersion);
+}

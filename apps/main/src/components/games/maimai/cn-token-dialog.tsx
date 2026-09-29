@@ -110,7 +110,7 @@ function LxnsAuthSubDialog({ isOpen, onOpenChange, onAuthorized }: LxnsAuthSubDi
       pollIntervalRef.current = null;
     }
   };
-  const { data: configData, isLoading: isLoadingConfig } = trpc.user.getLxnsOAuthConfigured.useQuery(
+  const { data: configData, isLoading: isLoadingConfig } = trpc.maimai.getLxnsOAuthConfigured.useQuery(
     undefined,
     { enabled: isOpen, refetchOnWindowFocus: false }
   );
@@ -251,19 +251,19 @@ function DivingFishAuthSubDialog({ isOpen, onOpenChange, onAuthorized }: DivingF
   const [activeTab, setActiveTab] = useState<"import-token" | "nickname">("import-token");
   const [nicknameTabVisited, setNicknameTabVisited] = useState(false);
 
-  const { data: configData, isLoading: isLoadingConfig } = trpc.user.getDivingFishConfigured.useQuery(
+  const { data: configData, isLoading: isLoadingConfig } = trpc.maimai.getDivingFishConfigured.useQuery(
     undefined,
     { enabled: isOpen, refetchOnWindowFocus: false }
   );
   const configured = configData?.configured ?? false;
 
-  const { data: challengeData, refetch: refetchChallenge } = trpc.user.getDivingFishNicknameChallenge.useQuery(
+  const { data: challengeData, refetch: refetchChallenge } = trpc.maimai.getDivingFishNicknameChallenge.useQuery(
     undefined,
     { enabled: isOpen && configured && nicknameTabVisited, refetchOnWindowFocus: false }
   );
 
-  const verifyImport = trpc.user.verifyDivingFishImportToken.useMutation();
-  const verifyNickname = trpc.user.verifyDivingFishNickname.useMutation();
+  const verifyImport = trpc.maimai.verifyDivingFishImportToken.useMutation();
+  const verifyNickname = trpc.maimai.verifyDivingFishNickname.useMutation();
 
   useEffect(() => {
     if (!isOpen) {
@@ -514,7 +514,7 @@ interface HttpProxyAuthSubDialogProps {
 
 export function HttpProxyAuthSubDialog({ isOpen, onOpenChange, onAuthorized, startSessionPolling, stopSessionPolling, modal = false }: HttpProxyAuthSubDialogProps) {
   const t = useTranslations();
-  const { data: configData, isLoading: isLoadingConfig } = trpc.user.getCnProxyConfigured.useQuery(
+  const { data: configData, isLoading: isLoadingConfig } = trpc.maimai.getCnProxyConfigured.useQuery(
     undefined,
     { enabled: isOpen, refetchOnWindowFocus: false }
   );
@@ -522,7 +522,7 @@ export function HttpProxyAuthSubDialog({ isOpen, onOpenChange, onAuthorized, sta
   const proxyHost = configData?.host ?? "";
   const proxyPort = configData?.port ?? "2560";
 
-  const generateLink = trpc.user.getCnProxyAuthLink.useMutation();
+  const generateLink = trpc.maimai.getCnProxyAuthLink.useMutation();
   const linkData = generateLink.data;
 
   // Once a link is generated, watch for a new fetch session being created

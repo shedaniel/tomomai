@@ -5,29 +5,18 @@ import { profileReportsRouter } from './profile-reports';
 import { fetchRouter } from './fetch';
 import { invitesRouter } from './invites';
 import { recentsRouter } from './recents';
-import { dailyPlaysRouter } from './daily-plays';
 import { statsRouter } from './stats';
-import { platesRouter } from './plates';
 import { albumsRouter } from './albums';
 import { songsRouter } from './songs';
-import { percentileRouter } from './percentile';
 import { flagsRouter } from './flags';
 import { legalRouter } from './legal';
-import { miscRouter } from './misc';
 
 export const userRouter = router({
+  // Snapshots
   getSnapshots: snapshotsRouter.getSnapshots,
   getSnapshotData: snapshotsRouter.getSnapshotData,
-  getRecentSongs: recentsRouter.getRecentSongs,
-  getUserAlbums: albumsRouter.getUserAlbums,
-  getPlayerStats: statsRouter.getPlayerStats,
-
-  // Snapshots
   getRatingHistory: snapshotsRouter.getRatingHistory,
   deleteSnapshot: snapshotsRouter.deleteSnapshot,
-  exportSnapshotData: snapshotsRouter.exportSnapshotData,
-  getAvailableVersionsForCopy: snapshotsRouter.getAvailableVersionsForCopy,
-  copySnapshotToVersion: snapshotsRouter.copySnapshotToVersion,
 
   // Profile
   getUserData: profileRouter.getUserData,
@@ -55,20 +44,15 @@ export const userRouter = router({
   validateInvite: invitesRouter.validateInvite,
 
   // Recents
+  getRecentSongs: recentsRouter.getRecentSongs,
   getPublicRecentSongs: recentsRouter.getPublicRecentSongs,
 
-  // Daily plays
-  getDailyPlaysAvailableDays: dailyPlaysRouter.getAvailableDays,
-  getPublicDailyPlaysAvailableDays: dailyPlaysRouter.getPublicAvailableDays,
-
   // Stats
+  getPlayerStats: statsRouter.getPlayerStats,
   getPublicPlayerStats: statsRouter.getPublicPlayerStats,
 
-  // Plates
-  getPlateSongs: platesRouter.getPlateSongs,
-  getPublicPlateSongs: platesRouter.getPublicPlateSongs,
-
   // Albums
+  getUserAlbums: albumsRouter.getUserAlbums,
   deleteAlbum: albumsRouter.deleteAlbum,
 
   // Songs
@@ -76,10 +60,6 @@ export const userRouter = router({
   getSongDetails: songsRouter.getSongDetails,
   getSongScores: songsRouter.getSongScores,
   getSimpleSongDetails: songsRouter.getSimpleSongDetails,
-
-  // Percentile
-  getChartPercentiles: percentileRouter.getChartPercentiles,
-  getRecommendationPeers: percentileRouter.getRecommendationPeers,
 
   // Flags
   getUserSelectableFlags: flagsRouter.getUserSelectableFlags,
@@ -89,13 +69,4 @@ export const userRouter = router({
   getPolicies: legalRouter.getPolicies,
   getPendingConsents: legalRouter.getPendingConsents,
   acceptPolicies: legalRouter.acceptPolicies,
-
-  // Misc
-  getLxnsOAuthConfigured: miscRouter.getLxnsOAuthConfigured,
-  getCnProxyConfigured: miscRouter.getCnProxyConfigured,
-  getCnProxyAuthLink: miscRouter.getCnProxyAuthLink,
-  getDivingFishConfigured: miscRouter.getDivingFishConfigured,
-  getDivingFishNicknameChallenge: miscRouter.getDivingFishNicknameChallenge,
-  verifyDivingFishImportToken: miscRouter.verifyDivingFishImportToken,
-  verifyDivingFishNickname: miscRouter.verifyDivingFishNickname,
 });

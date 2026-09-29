@@ -150,7 +150,7 @@ export function EventsDatabase() {
   const selectedEventName = searchParams.get("event");
   const [search, setSearch] = useState("");
 
-  const { data: events, isLoading } = trpc.db.getEvents.useQuery();
+  const { data: events, isLoading } = trpc.maimai.getEvents.useQuery();
 
   const eventsWithStatus = useMemo(() => {
     if (!events) return [];

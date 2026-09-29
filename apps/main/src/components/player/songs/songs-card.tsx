@@ -143,9 +143,8 @@ export function SongsCard({ selectedSnapshotData, flags }: { selectedSnapshotDat
 
   const bestScores = useMemo(() => [...newBest, ...oldBest], [newBest, oldBest]);
 
-  const { data: percentileData } = trpc.user.getChartPercentiles.useQuery(
+  const { data: percentileData } = trpc.maimai.getChartPercentiles.useQuery(
     {
-      game,
       songs: bestScores.map((s) => ({ publicSongId: s.songId, achievement: s.scoreValue })),
       userRating: snapshot.rating,
     },

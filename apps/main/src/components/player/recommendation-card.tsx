@@ -132,8 +132,8 @@ export function RecommendationCard({ selectedSnapshotData, flags, region }: { se
 
   const potentialEnabled = !!flags.scorePercentile && game === "maimai";
   const potentialSongIds = useMemo(() => [...new Set(baseRecommendations.map(rec => rec.song.songId))].slice(0, 2000).sort(), [baseRecommendations]);
-  const { data: potential, status: potentialStatus, fetchStatus: potentialFetchStatus, error: potentialError } = trpc.user.getRecommendationPeers.useQuery(
-    { game, publicSongIds: potentialSongIds, userRating: snapshot.rating },
+  const { data: potential, status: potentialStatus, fetchStatus: potentialFetchStatus, error: potentialError } = trpc.maimai.getRecommendationPeers.useQuery(
+    { publicSongIds: potentialSongIds, userRating: snapshot.rating },
     { enabled: potentialEnabled && potentialSongIds.length > 0 && snapshot.rating > 0, staleTime: 5 * 60 * 1000, retry: false },
   );
   const recommendations = useMemo(() => {

@@ -12,7 +12,7 @@ import type { Flags } from "@/lib/flags";
 import messages from "../../../messages/en.json";
 
 const peers = vi.hoisted(() => vi.fn(() => ({ data: undefined, status: "pending", fetchStatus: "idle", error: null })));
-vi.mock("@/lib/trpc-client", () => ({ trpc: { user: { getRecommendationPeers: { useQuery: peers } } } }));
+vi.mock("@/lib/trpc-client", () => ({ trpc: { maimai: { getRecommendationPeers: { useQuery: peers } } } }));
 vi.mock("@/lib/logger", () => ({ logger: { info: vi.fn() } }));
 vi.mock("@/hooks/use-media-query", () => ({ useMediaQuery: () => false }));
 vi.mock("@/components/games/maimai/song-hover-card", () => ({ SongHoverCard: ({ children }: { children: React.ReactNode }) => <>{children}</> }));
@@ -44,6 +44,6 @@ it("renders CHUNITHM score targets, average rating gains and game-sized buckets 
   expect(container.textContent).toContain("ULTIMA");
   expect(container.textContent).not.toContain("STANDARD");
   expect(container.textContent).not.toContain("B15");
-  expect(peers).toHaveBeenCalledWith(expect.objectContaining({ game: "chunithm" }), expect.objectContaining({ enabled: false }));
+  expect(peers).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ enabled: false }));
   await act(async () => root.unmount());
 });

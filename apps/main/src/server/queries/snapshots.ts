@@ -135,6 +135,23 @@ export async function fetchSnapshotData(game: CanonicalGameId,
   return row ? readSnapshotData(game, row) : null;
 }
 
+/** The owner's snapshot in whichever region it was fetched, with that region. */
+export async function fetchSnapshotDataByPublicId(game: CanonicalGameId, userId: string, snapshotPublicId: string) {
+  const [row] = await db
+    .select({ ...snapshotWithInternalId, region: userSnapshots.region })
+    .from(userSnapshots)
+    .where(
+      and(
+        eq(userSnapshots.publicId, snapshotPublicId),
+        eq(userSnapshots.game, game),
+        eq(userSnapshots.userId, userId),
+      )
+    )
+    .limit(1);
+
+  return row ? { region: row.region, ...await readSnapshotData(game, row) } : null;
+}
+
 const playerScoreColumns = {
   songId: songInstanceId,
   songName: parentSong.songName,

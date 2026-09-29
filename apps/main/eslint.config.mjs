@@ -64,7 +64,7 @@ export default [
         rules: { "@typescript-eslint/no-restricted-imports": ["error", { patterns: [serverOnlyBoundary, otherGames] }] },
       },
       {
-        files: [`src/server/services/games/${game}/**/*.{ts,tsx}`],
+        files: [`src/server/services/games/${game}/**/*.{ts,tsx}`, `src/server/routers/${game}/**/*.{ts,tsx}`],
         rules: { "@typescript-eslint/no-restricted-imports": ["error", { patterns: [otherGames] }] },
       },
     ];

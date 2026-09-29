@@ -1,5 +1,3 @@
-import { maimaiCompatibilityGameSchema } from "@/lib/games/schema";
-import { gameContextInput, validateGameInput } from "./game-input";
 import { db } from '@/lib/db';
 import { deleteFromR2 } from '@/lib/r2';
 import { userAlbums } from '@/lib/db/schema-pg';
@@ -9,16 +7,17 @@ import { and, eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { fetchUserAlbums, fetchAlbumStorageUsage } from '@/server/queries/albums';
 import { MAX_STORAGE_BYTES } from '@/server/services/games/maimai/scores/albums/persist';
+import { gameOnlyProcedure, gameProcedure } from '../game-procedures';
 
 export const albumsRouter = router({
-  getUserAlbums: protectedProcedure
-    .input(z.object({ ...gameContextInput,
+  getUserAlbums: gameProcedure(protectedProcedure, "albums")
+    .input(z.object({
       limit: z.number().min(1).max(100).default(20),
       offset: z.number().min(0).default(0),
     }))
     .query(async ({ ctx, input }) => {
+      const { game, region } = ctx;
       const userId = ctx.session.user.id;
-      const { game, region } = validateGameInput(input, "albums");
       const { limit, offset } = input;
 
       const { albums, hasMore } = await fetchUserAlbums(game, userId, region, limit, offset);
@@ -41,20 +40,19 @@ export const albumsRouter = router({
       };
     }),
 
-  deleteAlbum: protectedProcedure
-    .input(z.object({ game: maimaiCompatibilityGameSchema,
+  deleteAlbum: gameOnlyProcedure(protectedProcedure, "albums")
+    .input(z.object({
       albumId: z.string(),
     }))
     .mutation(async ({ ctx, input }) => {
       const album = await db
         .select({ id: userAlbums.id, imageKey: userAlbums.imageKey })
         .from(userAlbums)
-        .where(
-          and(
-            eq(userAlbums.id, BigInt(input.albumId)),
-            and(eq(userAlbums.game, "maimai"), eq(userAlbums.userId, ctx.session.user.id))
-          )
-        )
+        .where(and(
+          eq(userAlbums.id, BigInt(input.albumId)),
+          eq(userAlbums.game, ctx.game),
+          eq(userAlbums.userId, ctx.session.user.id),
+        ))
         .limit(1);
 
       if (album.length === 0) {
