@@ -36,7 +36,7 @@ describe("frontend process configuration", () => {
       brand: getGame("chunithm").brand,
       capabilities: getGame("chunithm").capabilities,
       regionCapabilityOverrides: {},
-      fetch: { cookieLogin: { region: "intl" } },
+      loginMethods: { intl: ["sega-cookie", "sega-account"], jp: ["sega-account"] },
       regions: ["intl", "jp"],
     });
     expect(JSON.parse(JSON.stringify(game))).toEqual(game);

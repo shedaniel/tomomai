@@ -193,6 +193,9 @@ export type GameSite = {
   };
 };
 
+/** A way a player signs in to fetch scores: SEGA ID credentials, a SEGA Aime gateway cookie, or the maimai China providers. */
+export type LoginMethod = "sega-account" | "sega-cookie" | "maimai-cn";
+
 export interface GameDefinition {
   id: CanonicalGameId;
   brand: GameBrand;
@@ -205,6 +208,6 @@ export interface GameDefinition {
   presentation: GamePresentation;
   catalogSections: readonly CatalogSection[];
   fetchStages: readonly FetchState[];
-  /** The region whose SEGA Aime gateway cookie can start a fetch. */
-  fetch: { cookieLogin: { region: Region } | null };
+  /** How players sign in to fetch scores in each region. A `sega-cookie` region's site must sign in through the gateway. */
+  loginMethods: Partial<Record<Region, readonly LoginMethod[]>>;
 }

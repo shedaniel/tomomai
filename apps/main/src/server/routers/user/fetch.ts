@@ -1,7 +1,7 @@
 import { SEGA_AIME_GATEWAY, siteRoot } from "@/lib/games/sites";
 import { getGame } from "@/lib/games/registry";
 import { GameAdapterError } from "@/lib/games/errors";
-import { gameOnlyProcedure, gameProcedure } from "../game-procedures";
+import { gameProcedure } from "../game-procedures";
 import { startScoreFetch, getScoreFetchStatus } from "@/server/services/games/score-ingestion";
 import { FetchStartError, toTrpcFetchStartError } from "@/server/services/games/fetch-errors";
 import { db } from '@/lib/db';
@@ -14,24 +14,25 @@ import { and, desc, eq } from 'drizzle-orm';
 import { z } from 'zod';
 
 export const fetchRouter = router({
-  getLoginOtp: gameOnlyProcedure(protectedProcedure, "scores")
+  getLoginOtp: gameProcedure(protectedProcedure, "scores")
     .query(({ ctx }) => {
-      const { game } = ctx;
-      const { cookieLogin } = getGame(game).fetch;
-      if (!cookieLogin) throw new TRPCError({ code: "BAD_REQUEST", message: "Cookie login is not available for this game" });
+      const { game, region } = ctx;
+      if (!getGame(game).loginMethods[region]?.includes("sega-cookie")) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Cookie login is not available for this game and region" });
+      }
       const userId = ctx.session.user.id;
       const otp = generateUserOtp(userId);
       const expiresAt = new Date(getOtpExpiryTimestamp()).toISOString();
       const baseUrl = resolveBaseUrl();
       const scriptUrl = `${baseUrl}/api/login.js`;
-      const authorization = createLoginAuthorization({ userId, game, region: cookieLogin.region });
+      const authorization = createLoginAuthorization({ userId, game, region });
       const loginLink = `${SEGA_AIME_GATEWAY.landingUrl}#otp=${otp}&user=${encodeURIComponent(authorization)}`;
 
       return {
         otp,
         scriptUrl,
         loginLink,
-        loginPageUrl: siteRoot(game, cookieLogin.region).href,
+        loginPageUrl: siteRoot(game, region).href,
         expiresAt,
       };
     }),

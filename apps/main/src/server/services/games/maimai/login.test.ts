@@ -7,6 +7,7 @@ vi.mock("@/lib/request-logger", () => ({ getLogger: () => ({
 }) }));
 vi.mock("../tokens", () => ({ updateToken: mocks.update, deleteToken: mocks.remove, saveToken: mocks.save }));
 
+import { getGame } from "@/lib/games/registry";
 import { getGameSite } from "@/lib/games/sites";
 import { loginAndGetCookies, maimaiSegaLogin, openMaimaiLogin } from "./login";
 
@@ -19,9 +20,15 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllGlobals());
 
 describe("maimai SEGA login", () => {
-  it("signs in through the gateway exactly where the site has one", () => {
+  it("configures a SEGA login for each region that offers one, through the gateway where the site has one", () => {
+    const { loginMethods } = getGame("maimai");
+    const segaRegions = Object.entries(loginMethods)
+      .filter(([, methods]) => methods.includes("sega-account") || methods.includes("sega-cookie"))
+      .map(([region]) => region);
+    expect(Object.keys(maimaiSegaLogin).sort()).toEqual(segaRegions.sort());
     for (const config of Object.values(maimaiSegaLogin)) {
       expect(config.kind === "aime-gateway").toBe(getGameSite("maimai", config.region)?.aime !== undefined);
+      if (loginMethods[config.region]?.includes("sega-cookie")) expect(config.kind).toBe("aime-gateway");
     }
   });
 

@@ -5,6 +5,7 @@ vi.mock("@/lib/http-agent", () => ({ agentFetch: vi.fn() }));
 vi.mock("@/lib/request-logger", () => ({ getLogger: () => ({ info: vi.fn(), warn: vi.fn(), child() { return this; } }) }));
 vi.mock("../tokens", () => ({ updateToken: mocks.update, deleteToken: mocks.remove }));
 
+import { getGame } from "@/lib/games/registry";
 import { getGameSite } from "@/lib/games/sites";
 import { chunithmSegaLogin, loginAndGetCookies } from "./login";
 
@@ -16,9 +17,15 @@ function redirect(location: string, cookie?: string) {
 }
 
 describe("CHUNITHM SEGA login", () => {
-  it("signs in through the gateway exactly where the site has one", () => {
+  it("configures a SEGA login for each region that offers one, through the gateway where the site has one", () => {
+    const { loginMethods } = getGame("chunithm");
+    const segaRegions = Object.entries(loginMethods)
+      .filter(([, methods]) => methods.includes("sega-account") || methods.includes("sega-cookie"))
+      .map(([region]) => region);
+    expect(Object.keys(chunithmSegaLogin).sort()).toEqual(segaRegions.sort());
     for (const config of Object.values(chunithmSegaLogin)) {
       expect(config.kind === "aime-gateway").toBe(getGameSite("chunithm", config.region)?.aime !== undefined);
+      if (loginMethods[config.region]?.includes("sega-cookie")) expect(config.kind).toBe("aime-gateway");
     }
   });
 

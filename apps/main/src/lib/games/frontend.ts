@@ -2,7 +2,7 @@ import { offersCapability } from "./capabilities";
 import type { Region } from "./ids";
 import type { GameBrand, GameCapability, GameDefinition } from "./types";
 
-export type FrontendGame = Pick<GameDefinition, "id" | "brand" | "fetch"> & {
+export type FrontendGame = Pick<GameDefinition, "id" | "brand" | "loginMethods"> & {
   /** Only the catalog while no region is enabled, like the server's game resolver. */
   capabilities: readonly GameCapability[];
   regionCapabilityOverrides: NonNullable<GameDefinition["regionCapabilityOverrides"]>;
@@ -16,7 +16,7 @@ export function toFrontendGame(game: GameDefinition, regions: readonly Region[])
     brand: game.brand,
     capabilities: regions.length > 0 ? game.capabilities : ["catalog"],
     regionCapabilityOverrides: game.regionCapabilityOverrides ?? {},
-    fetch: game.fetch,
+    loginMethods: game.loginMethods,
     regions,
   };
 }

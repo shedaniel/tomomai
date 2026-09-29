@@ -24,6 +24,9 @@ import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "re
 import { toast } from "sonner";
 
 interface SegaCookieWizardDialogProps {
+  region: Region;
+  /** Also offers signing in with SEGA ID credentials. */
+  offerCredentials: boolean;
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   onTokenUpdate: (token: string) => Promise<void>;
@@ -33,6 +36,7 @@ interface SegaCookieWizardDialogProps {
 }
 
 interface TokenSubDialogProps {
+  region: Region;
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   token: string;
@@ -66,6 +70,7 @@ function CopyableCodeBlock({ code, t }: { code: string; t: any }) {
 }
 
 function StepBasedTokenDialog({
+  region,
   isOpen,
   onOpenChange,
   token,
@@ -87,7 +92,7 @@ function StepBasedTokenDialog({
   const {
     data: loginOtpData,
     refetch: refetchLoginOtp,
-  } = trpc.user.getLoginOtp.useQuery({ game: game.id }, {
+  } = trpc.user.getLoginOtp.useQuery({ game: game.id, region }, {
     enabled: isOpen && !showManualInput,
     refetchInterval: 60_000,
     refetchOnWindowFocus: false,
@@ -384,6 +389,8 @@ function StepBasedTokenDialog({
 }
 
 export function SegaCookieWizardDialog({
+  region,
+  offerCredentials,
   isOpen,
   onOpenChange,
   onTokenUpdate,
@@ -422,8 +429,7 @@ export function SegaCookieWizardDialog({
   // Start/stop session polling when token dialog opens/closes
   useEffect(() => {
     if (isTokenDialogOpen && startSessionPolling && stopSessionPolling) {
-      // Start polling for new sessions (intl region)
-      startSessionPolling("intl", () => {
+      startSessionPolling(region, () => {
         // When new session detected, close all dialogs
         handleClose0();
       });
@@ -437,7 +443,7 @@ export function SegaCookieWizardDialog({
         stopSessionPolling();
       }
     };
-  }, [isTokenDialogOpen, startSessionPolling, stopSessionPolling]);
+  }, [isTokenDialogOpen, region, startSessionPolling, stopSessionPolling]);
 
   const handleTokenSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -497,32 +503,34 @@ export function SegaCookieWizardDialog({
               </div>
             </button>
 
-            {/* Password Option */}
-            <button
-              onClick={() => setIsPasswordDialogOpen(true)}
-              className="w-full p-4 border-2 rounded-lg hover:border-primary hover:bg-accent/50 transition-all text-left group"
-            >
-              <div className="flex items-start space-x-3">
-                <div className="mt-1 p-2 rounded-md bg-primary/10">
-                  <Lock className="h-5 w-5 text-primary" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center space-x-2 mb-1">
-                    <span className="font-semibold text-base">{t('tokenDialog.passwordTab')}</span>
+            {offerCredentials && (
+              <button
+                onClick={() => setIsPasswordDialogOpen(true)}
+                className="w-full p-4 border-2 rounded-lg hover:border-primary hover:bg-accent/50 transition-all text-left group"
+              >
+                <div className="flex items-start space-x-3">
+                  <div className="mt-1 p-2 rounded-md bg-primary/10">
+                    <Lock className="h-5 w-5 text-primary" />
                   </div>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    {t('tokenDialog.passwordOptionDescription', { game: game.brand.displayName })}
-                  </p>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center space-x-2 mb-1">
+                      <span className="font-semibold text-base">{t('tokenDialog.passwordTab')}</span>
+                    </div>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      {t('tokenDialog.passwordOptionDescription', { game: game.brand.displayName })}
+                    </p>
+                  </div>
+                  <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors mt-1" />
                 </div>
-                <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors mt-1" />
-              </div>
-            </button>
+              </button>
+            )}
           </div>
         </ResponsiveDialogContent>
       </ResponsiveDialog>
 
       {/* Token Dialog - Nested */}
       <StepBasedTokenDialog
+        region={region}
         isOpen={isTokenDialogOpen}
         onOpenChange={setIsTokenDialogOpen}
         token={token}
@@ -533,15 +541,17 @@ export function SegaCookieWizardDialog({
       />
 
       {/* Password Dialog - Nested */}
-      <SegaCredentialsDialog
-        isOpen={isPasswordDialogOpen}
-        onOpenChange={setIsPasswordDialogOpen}
-        modal={false}
-        onTokenUpdate={async credentials => {
-          await onTokenUpdate(credentials);
-          handleClose0();
-        }}
-      />
+      {offerCredentials && (
+        <SegaCredentialsDialog
+          isOpen={isPasswordDialogOpen}
+          onOpenChange={setIsPasswordDialogOpen}
+          modal={false}
+          onTokenUpdate={async credentials => {
+            await onTokenUpdate(credentials);
+            handleClose0();
+          }}
+        />
+      )}
     </>
   );
 }

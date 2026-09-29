@@ -64,11 +64,12 @@ Implemented frontend support:
 
 CHUNITHM's JP and International score provider is configured and its player
 surfaces are enabled. The catalog remains available independently; see
-[CHUNITHM_CATALOG.md](CHUNITHM_CATALOG.md). Both CHUNITHM regions use the shared
-SEGA credential dialog. The International cookie/OTP wizard is only exposed when
-the game definition declares a cookie login (`fetch.cookieLogin`). maimai and
-CHUNITHM both declare one for International, and maimai uses the same SEGA
-credential form for password login.
+[CHUNITHM_CATALOG.md](CHUNITHM_CATALOG.md). The token dialog renders from the
+game definition's `loginMethods` for the selected region: `sega-cookie` opens
+the gateway cookie/OTP wizard, which also offers `sega-account` when the region
+has it, `sega-account` alone opens the shared SEGA credential dialog, and
+`maimai-cn` opens the maimai CN dialog. maimai and CHUNITHM both offer the
+cookie wizard and credentials for International and credentials for JP.
 
 Maimai's rich recommendations, percentiles, plates, render/export controls,
 reserved accounts and fetch settings remain specialized. Capability checks
@@ -187,8 +188,8 @@ Implementation ownership:
   the signed login authorization, which expires with the OTP period.
   `/api/login` takes the region from it, so the bookmarklet sends only the OTP,
   the authorization and the gateway cookie. The token dialog requests an OTP
-  for its current game, and a login link requires the game definition to
-  declare a cookie login. Links issued in an earlier format must be replaced
+  for its current game and region, and a login link requires the region to
+  offer `sega-cookie`. Links issued in an earlier format must be replaced
   with a new OTP. The authorization and the CN proxy link token share
   [`signed-token.ts`](../apps/main/src/lib/signed-token.ts).
 

@@ -26,17 +26,9 @@ export function TokenDialog({
 }: TokenDialogProps) {
   const game = useGame();
   if (!isGameRegion(game, region)) return null;
-  if (region === "jp" || (region === "intl" && !game.fetch.cookieLogin)) {
-    return (
-      <SegaCredentialsDialog
-        isOpen={isOpen}
-        onOpenChange={onOpenChange}
-        onTokenUpdate={onTokenUpdate}
-      />
-    );
-  }
+  const methods = game.loginMethods[region] ?? [];
 
-  if (region === "cn") {
+  if (methods.includes("maimai-cn")) {
     return (
       <CnTokenDialog
         isOpen={isOpen}
@@ -48,13 +40,29 @@ export function TokenDialog({
     );
   }
 
-  return (
-    <SegaCookieWizardDialog
-      isOpen={isOpen}
-      onOpenChange={onOpenChange}
-      onTokenUpdate={onTokenUpdate}
-      startSessionPolling={startSessionPolling}
-      stopSessionPolling={stopSessionPolling}
-    />
-  );
+  if (methods.includes("sega-cookie")) {
+    return (
+      <SegaCookieWizardDialog
+        region={region}
+        offerCredentials={methods.includes("sega-account")}
+        isOpen={isOpen}
+        onOpenChange={onOpenChange}
+        onTokenUpdate={onTokenUpdate}
+        startSessionPolling={startSessionPolling}
+        stopSessionPolling={stopSessionPolling}
+      />
+    );
+  }
+
+  if (methods.includes("sega-account")) {
+    return (
+      <SegaCredentialsDialog
+        isOpen={isOpen}
+        onOpenChange={onOpenChange}
+        onTokenUpdate={onTokenUpdate}
+      />
+    );
+  }
+
+  return null;
 }

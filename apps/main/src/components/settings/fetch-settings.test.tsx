@@ -42,7 +42,7 @@ async function render(game: FrontendGame) {
 }
 
 it("scopes CHUNITHM settings and credentials to a supported region without album or cookie options", async () => {
-  await render({ ...toFrontendGame(getGame("chunithm"), ["intl", "jp"]), capabilities: ["scores"], fetch: { cookieLogin: null } });
+  await render({ ...toFrontendGame(getGame("chunithm"), ["intl", "jp"]), capabilities: ["scores"], loginMethods: { intl: ["sega-account"], jp: ["sega-account"] } });
   expect(container.textContent).toContain("settings for CHUNITHM");
   expect(container.querySelector("#fetch-albums")).toBeNull();
   const open = Array.from(container.querySelectorAll("button")).find(button => button.textContent === messages.settings.account.updateToken);

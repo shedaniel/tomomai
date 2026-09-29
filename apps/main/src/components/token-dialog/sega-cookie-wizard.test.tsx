@@ -49,7 +49,7 @@ it.each(games)("uses the $id cookie wizard, game-scoped OTP, and configured logi
   const cookieOption = Array.from(document.querySelectorAll("button")).find(button => button.textContent?.includes(messages.tokenDialog.tokenTab));
   expect(cookieOption).toBeDefined();
   await act(async () => cookieOption?.click());
-  expect(state.query).toHaveBeenCalledWith({ game: game.id });
+  expect(state.query).toHaveBeenCalledWith({ game: game.id, region: "intl" });
   expect(document.body.textContent).toContain(`Login to ${game.brand.displayName} NET`);
   expect(document.body.textContent).toContain(state.loginPageUrl);
   const manual = Array.from(document.querySelectorAll("button")).find(button => button.textContent === messages.tokenDialog.step1.enterDirectly);
@@ -69,4 +69,16 @@ it("keeps CHUNITHM JP on SEGA credentials even when Intl cookies are configured"
   expect(document.getElementById("username")).toBeInstanceOf(HTMLInputElement);
   expect(document.getElementById("password")).toBeInstanceOf(HTMLInputElement);
   expect(state.query).not.toHaveBeenCalled();
+});
+
+it("offers only the cookie wizard where a region has no SEGA credential login", async () => {
+  await render({ ...games[0], loginMethods: { intl: ["sega-cookie"] } });
+  const labels = Array.from(document.querySelectorAll("button")).map(button => button.textContent ?? "");
+  expect(labels.some(label => label.includes(messages.tokenDialog.tokenTab))).toBe(true);
+  expect(labels.some(label => label.includes(messages.tokenDialog.passwordTab))).toBe(false);
+});
+
+it("renders nothing for a region without a login method", async () => {
+  await render({ ...games[0], loginMethods: {} });
+  expect(document.body.querySelectorAll("button")).toHaveLength(0);
 });

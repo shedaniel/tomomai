@@ -46,5 +46,5 @@ export const chunithmDefinition = {
     "song_data:ultima",
     "recent_songs",
   ],
-  fetch: { cookieLogin: { region: "intl" } },
+  loginMethods: { intl: ["sega-cookie", "sega-account"], jp: ["sega-account"] },
 } satisfies GameDefinition;

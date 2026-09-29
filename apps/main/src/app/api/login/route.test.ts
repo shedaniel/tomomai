@@ -60,7 +60,7 @@ it("rejects authorizations in earlier formats even with a valid OTP", async () =
 });
 
 it.each(["maimai", "chunithm"] as const)("issues game-bound %s authorization through the unchanged gateway fields", async game => {
-  const result = await caller.getLoginOtp({ game });
+  const result = await caller.getLoginOtp({ game, region: "intl" });
   const otherGame = game === "maimai" ? "chunithm" : "maimai";
   expect(result.loginPageUrl).toBe(game === "maimai" ? "https://maimaidx-eng.com/maimai-mobile/" : "https://chunithm-net-eng.com/mobile/");
   const link = new URL(result.loginLink);
@@ -83,8 +83,12 @@ it.each(["maimai", "chunithm"] as const)("issues game-bound %s authorization thr
   expect(mocks.start).not.toHaveBeenCalled();
 });
 
+it.each(["maimai", "chunithm"] as const)("issues no %s cookie login link for a region that signs in with credentials", async game => {
+  await expect(caller.getLoginOtp({ game, region: "jp" })).rejects.toMatchObject({ code: "BAD_REQUEST" });
+});
+
 it("answers a fetch refused during maintenance with 503 and when to retry", async () => {
-  const { loginLink, otp } = await caller.getLoginOtp({ game: "maimai" });
+  const { loginLink, otp } = await caller.getLoginOtp({ game: "maimai", region: "intl" });
   const authorization = new URLSearchParams(new URL(loginLink).hash.slice(1)).get("user")!;
   mocks.start.mockRejectedValueOnce(new FetchStartError("MAINTENANCE", "Cannot fetch data during maintenance window (01:00 - 02:00 JST)", 1800));
 

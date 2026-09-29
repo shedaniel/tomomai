@@ -85,5 +85,5 @@ export const maimaiDefinition = {
     "hidden_songs",
     "album_data",
   ],
-  fetch: { cookieLogin: { region: "intl" } },
+  loginMethods: { intl: ["sega-cookie", "sega-account"], jp: ["sega-account"], cn: ["maimai-cn"] },
 } satisfies GameDefinition;

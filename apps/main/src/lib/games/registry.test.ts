@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { GAME_CODES } from "./codes";
+import type { Region } from "./ids";
 import { getSupportedRegions } from "./regions";
 import { getGame } from "./registry";
 import { getGameSite } from "./sites";
-import { CANONICAL_GAME_IDS, GAME_CAPABILITIES } from "./types";
+import { CANONICAL_GAME_IDS, GAME_CAPABILITIES, type LoginMethod } from "./types";
 
 describe("game definitions", () => {
   it.each(CANONICAL_GAME_IDS)("registers %s under its own id", game => {
@@ -38,8 +39,12 @@ describe("game definitions", () => {
     expect(GAME_CODES[game].difficulty.filter((_, code) => !isRated(code))).toEqual(unrated);
   });
 
-  it.each(CANONICAL_GAME_IDS)("points the %s cookie login at a site that signs in through the SEGA Aime gateway", game => {
-    const { cookieLogin } = getGame(game).fetch;
-    if (cookieLogin) expect(getGameSite(game, cookieLogin.region)?.aime).toBeDefined();
+  it.each(CANONICAL_GAME_IDS)("offers %s logins only on its sites, and gateway cookies only where the site signs in through the gateway", game => {
+    for (const [region, methods] of Object.entries(getGame(game).loginMethods) as [Region, readonly LoginMethod[]][]) {
+      const site = getGameSite(game, region);
+      expect(site).toBeDefined();
+      expect(methods.length).toBeGreaterThan(0);
+      if (methods.includes("sega-cookie")) expect(site?.aime).toBeDefined();
+    }
   });
 });
