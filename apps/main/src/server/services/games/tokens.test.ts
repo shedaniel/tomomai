@@ -42,6 +42,9 @@ it.each(["maimai", "chunithm"] as const)("isolates every %s token operation whil
 it("distinguishes a missing token from unreadable stored credentials", async () => {
   expect(await readToken("chunithm", "owner", "intl")).toBeNull();
   state.rows = [["invalid-ciphertext"]];
-  await expect(readToken("chunithm", "owner", "intl")).rejects.toThrow("Failed to decrypt stored token");
+  await expect(readToken("chunithm", "owner", "intl")).rejects.toMatchObject({
+    code: "TOKEN_UNREADABLE",
+    message: "TOKEN_UNREADABLE: Failed to decrypt stored token. Please re-add your authentication tokens.",
+  });
   expect(state.statements.every(query => query.sql.startsWith("select"))).toBe(true);
 });

@@ -612,21 +612,25 @@ Existing propagation boundaries:
   persists the provider result only after fetching succeeds. An asynchronous
   provider error marks the session failed and stores its message instead.
 - [`useFetchSession.ts`](../apps/main/src/hooks/useFetchSession.ts) invokes the
-  completion refresh only on success. Token-pattern errors can reopen login UI;
-  subscription errors do not match those patterns.
+  completion refresh only on success. Token errors can reopen login UI, and
+  [`token-errors.ts`](../apps/main/src/lib/token-errors.ts) never treats the
+  `SUBSCRIPTION_REQUIRED` code as one.
 - [`fetch-toast.tsx`](../apps/main/src/components/fetch-toast.tsx) already displays
   the failed session's error message and provides localized subscription recovery
   instructions for `SUBSCRIPTION_REQUIRED`.
-- If subscription denial is detected before session creation, add an explicit
-  error mapping in both REST and tRPC. A plain unknown error currently becomes
-  a generic server error. A precondition response is preferable to a credential
-  error or a silent empty success.
+- If subscription denial is detected before session creation, throw it as a
+  `FetchStartError` with a new code in
+  [`fetch-error-codes.ts`](../apps/main/src/lib/games/fetch-error-codes.ts).
+  Its status table answers REST, tRPC and the bookmarklet alike. A
+  precondition response is preferable to a credential error or a silent empty
+  success.
 
 Scheduled maintenance uses the shared
-[`maintenance.ts`](../apps/main/src/lib/games/maintenance.ts) policy before token
-or provider work. An upstream maintenance page outside that schedule still
-needs its own observed response classifier. Do not infer expired authentication
-from subscription text or infer maintenance from missing record elements.
+[`maintenance.ts`](../apps/main/src/lib/games/maintenance.ts) policy after a
+newly supplied token is saved and before provider work. An upstream
+maintenance page outside that schedule still needs its own observed response
+classifier. Do not infer expired authentication from subscription text or
+infer maintenance from missing record elements.
 
 ## Implementation boundaries
 

@@ -7,12 +7,14 @@ export const spec = defineRoute({
   tag: "Fetch",
   summary: "Trigger a game data fetch",
   description:
-    "Starts a new background fetch against the user's stored upstream " +
-    "upstream token. The token is taken from the server's stored copy — API " +
-    "callers cannot supply a new token; that flow lives in-app. Poll " +
-    "`GET /api/v1/games/{game}/fetch/status` for progress.\n\n" +
-    "Returns `412` if no token is stored; `409` if a fetch is already in " +
-    "progress; `429` if upstream is rate-limiting.",
+    "Starts a new background fetch with the user's stored upstream token. " +
+    "API callers cannot supply a new token, because that flow lives in-app. " +
+    "Poll `GET /api/v1/games/{game}/fetch/status` for progress.\n\n" +
+    "A refused fetch answers with an error `code`: `412` when the stored token " +
+    "is missing, unreadable or single-use, or no album preference is set, " +
+    "`409` when a fetch is already in progress, `429` after 5 fetches within " +
+    "5 minutes and `503` during the game's maintenance window. `429` and `503` " +
+    "carry `Retry-After`.",
   scope: "fetch:start",
   cost: 40,
   query: querySchemas.regionRequired,

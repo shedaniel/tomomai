@@ -107,6 +107,19 @@ procedure throws them. Generic procedures take `{ game, region }` through
 `gameProcedure` or `{ game }` through `gameOnlyProcedure`
 (`server/routers/game-procedures.ts`).
 
+A fetch refused before its session starts throws a `FetchStartError`
+(`server/services/games/fetch-errors.ts`) whose message is `CODE: detail`.
+`FETCH_START_ERROR_STATUS` in `lib/games/fetch-error-codes.ts` gives each code
+its HTTP and tRPC status: 412 for a missing, unreadable or single-use token and
+a missing album preference, 409 while another fetch runs, 429 when rate limited
+and 503 during maintenance. `fetchStartRejection` answers the REST route and the
+bookmarklet login from that table, with `Retry-After` for maintenance and
+rate limits. The tRPC `startFetch` procedure maps the same
+table and logs these refusals at warn. Clients read the code back with
+`parseFetchErrorCode`, which also recognizes `SUBSCRIPTION_REQUIRED` on a
+failed session. Login failures inside a running fetch are stored uncoded, and
+`lib/token-errors.ts` recognizes them by message.
+
 Plates, percentile/recommendation calculations, daily plays, catalog
 statistics, the snapshot JSON export and version copy, the CN score providers,
 reserved accounts, existing UI presentation, credit/daily-play images and

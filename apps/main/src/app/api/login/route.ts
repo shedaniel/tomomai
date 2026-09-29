@@ -1,6 +1,6 @@
 import { decodeLoginAuthorization, verifyUserOtp } from "@/lib/otp";
 import { startScoreFetch } from "@/server/services/games/score-ingestion";
-import { GameAdapterError } from "@/lib/games/errors";
+import { fetchStartRejection } from "@/server/services/games/fetch-errors";
 import { NextRequest, NextResponse } from "next/server";
 import { flushLogger } from "@/lib/logger";
 import { requestLogger } from "@/lib/request-logger";
@@ -89,23 +89,15 @@ export async function POST(request: NextRequest) {
 
     return jsonResponse({ success: true, sessionId: result.sessionId, status: result.status });
   } catch (error) {
-    log.error({ err: error }, "Login error");
+    const rejection = fetchStartRejection(error);
+    if (rejection) log.warn({ err: error }, "Login fetch refused");
+    else log.error({ err: error }, "Login error");
     // Flush only on the error path — login is user-facing and low-volume.
     await flushLogger();
 
-    if (error instanceof GameAdapterError) {
-      return jsonResponse({ success: false, error: error.message, code: error.code, requestId }, { status: 422 });
+    if (rejection) {
+      return jsonResponse({ success: false, error: rejection.message, code: rejection.code, requestId }, rejection.init);
     }
-
-    if (error instanceof Error) {
-      if (error.message.includes("already in progress")) {
-        return jsonResponse({ success: false, error: error.message }, { status: 409 });
-      }
-      if (error.message.includes("Rate limited")) {
-        return jsonResponse({ success: false, error: error.message }, { status: 429 });
-      }
-    }
-
     return jsonResponse({ success: false, error: "Unexpected error.", requestId }, { status: 500 });
   }
 }

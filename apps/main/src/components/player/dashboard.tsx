@@ -14,7 +14,8 @@ import { useFetchSession } from "@/hooks/useFetchSession";
 import { useSnapshots } from "@/hooks/useSnapshots";
 import { signOut } from "@/lib/auth-client";
 import { Flags } from "@/lib/flags";
-import { isTokenError, isCnCookiesSingleUseError } from "@/lib/token-errors";
+import { isTokenError } from "@/lib/token-errors";
+import { parseFetchErrorCode } from "@/lib/games/fetch-error-codes";
 import { trpc } from "@/lib/trpc-client";
 import type { Region, User, UserData } from "@/lib/types";
 import { useEffect, useState } from "react";
@@ -161,7 +162,7 @@ function AvailableDashboard({ user, initialUserData, initialSnapshots, initialSn
       console.error("Auto fetch failed:", error);
 
       if (error instanceof Error) {
-        if (isCnCookiesSingleUseError(error.message)) {
+        if (parseFetchErrorCode(error.message) === "CN_COOKIES_SINGLE_USE") {
           setDialogType("token-cn-proxy");
         } else if (isTokenError(error.message)) {
           toast.error(error.message);

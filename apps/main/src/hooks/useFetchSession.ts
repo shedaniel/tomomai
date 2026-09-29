@@ -3,10 +3,10 @@ import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { trpc, trpcClient } from "@/lib/trpc-client";
 import { toast } from "sonner";
 import { Region, FetchSession } from "@/lib/types";
-import { isTokenError, isAlbumSettingsError, isCnCookiesSingleUseError } from "@/lib/token-errors";
+import { isTokenError } from "@/lib/token-errors";
+import { parseFetchErrorCode } from "@/lib/games/fetch-error-codes";
 import { parseStatusStates } from "@/lib/fetch-states";
 import { FetchToastState } from "@/components/fetch-toast";
-import { getGameMaintenance, getGameMaintenanceError } from "@/lib/games/maintenance";
 
 const SESSION_DETECTION_INTERVAL_MS = 3000;
 const FETCH_STATUS_INTERVAL_MS = 2000;
@@ -105,9 +105,6 @@ export function useFetchSession(onFetchComplete?: () => void, onTokenError?: () 
             if (isTokenError(errorMessage)) {
               onTokenError?.();
             }
-            if (isAlbumSettingsError(errorMessage)) {
-              onUseAlbumError?.();
-            }
             return;
           }
         } else if (!result) {
@@ -132,7 +129,7 @@ export function useFetchSession(onFetchComplete?: () => void, onTokenError?: () 
     };
 
     void poll();
-  }, [game, onFetchComplete, onTokenError, onUseAlbumError]);
+  }, [game, onFetchComplete, onTokenError]);
 
   // Detect new sessions
   useEffect(() => {
@@ -199,13 +196,12 @@ export function useFetchSession(onFetchComplete?: () => void, onTokenError?: () 
       pollFetchStatus(data.sessionId, variables.region);
     },
     onError: (error) => {
-      if (isAlbumSettingsError(error.message) && !!onUseAlbumError) {
-        onUseAlbumError?.();
+      const code = parseFetchErrorCode(error.message);
+      if (code === "NO_USE_ALBUMS_SETTINGS" && onUseAlbumError) {
+        onUseAlbumError();
         return;
       }
-      if (isCnCookiesSingleUseError(error.message) && !!onCnCookiesExpired) {
-        onCnCookiesExpired();
-      }
+      if (code === "CN_COOKIES_SINGLE_USE") onCnCookiesExpired?.();
       setFetchError(error.message);
     },
   });
@@ -213,14 +209,6 @@ export function useFetchSession(onFetchComplete?: () => void, onTokenError?: () 
   // Start data fetch with optional token (if no token, uses saved token)
   const startDataFetch = async (region: Region, token?: string): Promise<void> => {
     setFetchError(null);
-
-    const maintenance = getGameMaintenance(game, region);
-    if (maintenance?.active) {
-      const message = getGameMaintenanceError(maintenance);
-      setFetchError(message);
-      throw new Error(message);
-    }
-
     // Let the mutation error bubble up to the caller
     await startFetchMutation.mutateAsync({ game, region, token });
   };

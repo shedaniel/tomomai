@@ -65,7 +65,7 @@ export function buildOpenApiDocument(baseUrl: string) {
         Error: {
           type: "object",
           required: ["error"],
-          properties: { error: { type: "string" }, code: { type: "string", description: "Stable game boundary error code, when applicable." } },
+          properties: { error: { type: "string" }, code: { type: "string", description: "Stable error code for a game boundary or fetch start refusal, when applicable." } },
         },
       },
     },

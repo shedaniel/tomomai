@@ -27,7 +27,7 @@ describe("maimai score source", () => {
     const token = "cn-cookies://token";
 
     expect(() => validateToken({ token, tokenProvided: false }))
-      .toThrow("CN_COOKIES_SINGLE_USE");
+      .toThrow(expect.objectContaining({ code: "CN_COOKIES_SINGLE_USE" }));
     expect(() => validateToken({ token, tokenProvided: true }))
       .not.toThrow();
   });

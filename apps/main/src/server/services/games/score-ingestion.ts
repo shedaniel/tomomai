@@ -1,5 +1,6 @@
 import { GAME_SERVER_MODULES } from "./registry";
 import { readToken, saveToken } from "./tokens";
+import { FetchStartError } from "./fetch-errors";
 import { getGameMaintenance, getGameMaintenanceError } from "@/lib/games/maintenance";
 import { revalidatePublicProfileForUser } from "@/lib/profile-cache";
 import { buildChartResolution, chartKey, writeSnapshotScores, type SnapshotScore } from "./score-storage";
@@ -151,24 +152,24 @@ export async function startScoreFetch(input: {
     return demoScoreFetch(input.userId, context.game, context.region);
   }
 
-  const maintenance = getGameMaintenance(context.game, context.region);
-  if (maintenance?.active) throw new Error(getGameMaintenanceError(maintenance));
-
-  const gameVersion = getCurrentVersion(context.game, context.region);
-  let tokenToUse = input.token;
+  const tokenToUse = input.token || await readToken(context.game, input.userId, context.region);
   if (!tokenToUse) {
-    tokenToUse = await readToken(context.game, input.userId, context.region) ?? undefined;
-    if (!tokenToUse) {
-      throw new Error("NO_TOKEN_FOUND: No authentication token found. Please add your authentication token first.");
-    }
+    throw new FetchStartError("NO_TOKEN_FOUND", "No authentication token found. Please add your authentication token first.");
   }
-
-  const flags = input.flags ?? await resolveFlagsForUser(input.userId);
   await scoreSource.validateToken?.({ token: tokenToUse, tokenProvided: Boolean(input.token) });
-
   if (input.token) {
     await saveToken(context.game, input.userId, context.region, tokenToUse);
   }
+
+  // After saving, so a token submitted during maintenance is kept for the next fetch.
+  const maintenance = getGameMaintenance(context.game, context.region);
+  if (maintenance?.active) {
+    const retryAfterSeconds = Math.ceil((maintenance.endsAt.getTime() - Date.now()) / 1000);
+    throw new FetchStartError("MAINTENANCE", getGameMaintenanceError(maintenance), retryAfterSeconds);
+  }
+
+  const gameVersion = getCurrentVersion(context.game, context.region);
+  const flags = input.flags ?? await resolveFlagsForUser(input.userId);
 
   let shouldFetchAlbums = false;
   if (offersCapability(getGame(context.game), "albums", context.region)) {
@@ -179,7 +180,7 @@ export async function startScoreFetch(input: {
       .limit(1);
 
     if (userPreference.length === 0 || userPreference[0].fetchUseAlbums === null) {
-      throw new Error("NO_USE_ALBUMS_SETTINGS: No fetch albums settings preference set. Please set this option on the website by fetching once first.");
+      throw new FetchStartError("NO_USE_ALBUMS_SETTINGS", "No fetch albums settings preference set. Please set this option on the website by fetching once first.");
     }
     shouldFetchAlbums = userPreference[0].fetchUseAlbums;
   }
@@ -212,7 +213,7 @@ export async function startScoreFetch(input: {
 
     const recentPendingFetches = existingFetch.filter(fetch => now - fetch.startedAt.getTime() <= threeMinutes);
     if (recentPendingFetches.length > 0) {
-      throw new Error("A fetch is already in progress for this region");
+      throw new FetchStartError("FETCH_IN_PROGRESS", "A fetch is already in progress for this region");
     }
   }
 
@@ -233,7 +234,7 @@ export async function startScoreFetch(input: {
     const fiveMinutes = 5 * 60 * 1000;
     if (timeSinceOldestInWindow < fiveMinutes) {
       const remainingTime = Math.ceil((fiveMinutes - timeSinceOldestInWindow) / 1000);
-      throw new Error(`Rate limited. You can make 5 requests per 5 minutes. Try again in ${remainingTime} seconds.`);
+      throw new FetchStartError("RATE_LIMITED", `You can make 5 requests per 5 minutes. Try again in ${remainingTime} seconds.`, remainingTime);
     }
   }
 

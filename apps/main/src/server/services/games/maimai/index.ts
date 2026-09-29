@@ -1,4 +1,5 @@
 import "server-only";
+import { FetchStartError } from "../fetch-errors";
 import type { GameServerModule } from "../types";
 
 export const maimaiServerModule: GameServerModule = {
@@ -16,7 +17,7 @@ export const maimaiServerModule: GameServerModule = {
   scores: {
     validateToken(context) {
       if (context.token.startsWith("cn-cookies://") && !context.tokenProvided) {
-        throw new Error("CN_COOKIES_SINGLE_USE: This session token is single-use and has already been consumed. Please re-authenticate via the HTTP Proxy flow.");
+        throw new FetchStartError("CN_COOKIES_SINGLE_USE", "This session token is single-use and has already been consumed. Please re-authenticate via the HTTP Proxy flow.");
       }
     },
     async fetch(context) {

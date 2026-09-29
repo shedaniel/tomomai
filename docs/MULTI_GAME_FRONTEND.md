@@ -147,12 +147,14 @@ the source does not infer them from maimai endpoints.
 Implementation ownership:
 
 - [`maintenance.ts`](../apps/main/src/lib/games/maintenance.ts) computes the
-  current or next window from that metadata. Shared score ingestion, the frontend
-  fetch hook and the maimai Discord command use this policy. Existing maimai
+  current or next window from that metadata. Shared score ingestion and the
+  maimai Discord command use this policy. The web client shows the server's
+  `MAINTENANCE` refusal instead of checking its own clock. Existing maimai
   Wednesday and CN schedules are preserved.
 - [`score-ingestion.ts`](../apps/main/src/server/services/games/score-ingestion.ts)
-  rejects disabled games and regions and active maintenance before token changes,
-  provider work or session creation. It owns common session/persistence handling;
+  rejects disabled games and regions before token changes, and active
+  maintenance after saving a newly supplied token, before provider work or
+  session creation. It owns common session/persistence handling;
   [`tokens.ts`](../apps/main/src/server/services/games/tokens.ts) scopes token
   access by game, user and region.
 - Shared SEGA HTTP and login mechanics live in

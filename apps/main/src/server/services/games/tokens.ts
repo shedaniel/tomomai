@@ -6,6 +6,7 @@ import type { CanonicalGameId } from "@/lib/games/types";
 import { getLogger } from "@/lib/request-logger";
 import { decryptToken, encryptToken } from "@/lib/token-crypto";
 import type { Region } from "@/lib/types";
+import { FetchStartError } from "./fetch-errors";
 
 function tokenScope(game: CanonicalGameId, userId: string, region: Region) {
   return and(eq(userTokens.userId, userId), eq(userTokens.game, game), eq(userTokens.region, region));
@@ -19,7 +20,7 @@ export async function readToken(game: CanonicalGameId, userId: string, region: R
     return decryptToken(record.token);
   } catch (err) {
     getLogger().error({ err, game, region }, "Failed to decrypt token");
-    throw new Error("Failed to decrypt stored token. Please re-add your authentication tokens.", { cause: err });
+    throw new FetchStartError("TOKEN_UNREADABLE", "Failed to decrypt stored token. Please re-add your authentication tokens.");
   }
 }
 

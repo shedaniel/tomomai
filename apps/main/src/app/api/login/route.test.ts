@@ -1,13 +1,13 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
 
-const mocks = vi.hoisted(() => ({ start: vi.fn() }));
+const mocks = vi.hoisted(() => ({ start: vi.fn(), log: { warn: vi.fn(), error: vi.fn() } }));
 vi.mock("@/lib/db", () => ({ db: {} }));
 vi.mock("@/lib/base-url", () => ({ resolveBaseUrl: () => "https://tomomai.test" }));
 vi.mock("@/lib/logger", () => ({ flushLogger: vi.fn() }));
 vi.mock("@/lib/request-logger", () => ({
-  requestLogger: () => ({ log: { error: vi.fn() }, requestId: "login-test" }),
-  getLogger: () => ({ error: vi.fn() }),
+  requestLogger: () => ({ log: mocks.log, requestId: "login-test" }),
+  getLogger: () => mocks.log,
 }));
 vi.mock("@/lib/security/middleware", () => ({
   securityMiddleware: async () => new Response(null), validateContentType: () => null,
@@ -20,6 +20,7 @@ vi.mock("@/lib/trpc", async () => {
 });
 
 import { fetchRouter } from "@/server/routers/user/fetch";
+import { FetchStartError } from "@/server/services/games/fetch-errors";
 import { POST } from "./route";
 
 const now = new Date("2026-09-27T12:00:00+09:00");
@@ -72,4 +73,22 @@ it.each(["maimai", "chunithm"] as const)("issues game-bound %s authorization thr
   mocks.start.mockClear();
   expect((await callback(`${version}.${changedPayload}.${signature}`, result.otp)).status).toBe(401);
   expect(mocks.start).not.toHaveBeenCalled();
+});
+
+it("answers a fetch refused during maintenance with 503 and when to retry", async () => {
+  const { loginLink, otp } = await caller.getLoginOtp({ game: "maimai" });
+  const authorization = new URLSearchParams(new URL(loginLink).hash.slice(1)).get("user")!;
+  mocks.start.mockRejectedValueOnce(new FetchStartError("MAINTENANCE", "Cannot fetch data during maintenance window (01:00 - 02:00 JST)", 1800));
+
+  const response = await callback(authorization, otp);
+  expect(response.status).toBe(503);
+  expect(response.headers.get("Retry-After")).toBe("1800");
+  expect(response.headers.get("Access-Control-Allow-Origin")).toBe("https://lng-tgk-aime-gw.am-all.net");
+  expect(await response.json()).toEqual({
+    success: false,
+    error: "MAINTENANCE: Cannot fetch data during maintenance window (01:00 - 02:00 JST)",
+    code: "MAINTENANCE",
+    requestId: "login-test",
+  });
+  expect(mocks.log.error).not.toHaveBeenCalled();
 });

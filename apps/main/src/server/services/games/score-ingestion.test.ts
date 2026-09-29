@@ -11,13 +11,19 @@ const state = vi.hoisted(() => ({
   revalidate: vi.fn(),
   resolveFlags: vi.fn(),
   albumPreference: false as boolean | null,
+  storedToken: "stored-token" as string | null,
+  pendingSessions: [] as unknown[][],
+  recentSessions: [] as unknown[][],
 }));
 vi.mock("@/lib/db", async () => {
   const { drizzle } = await import("drizzle-orm/pg-proxy");
   const connection = drizzle(async (sql, params) => {
     state.statements.push({ sql, params });
     if (sql.includes('from "user"')) return { rows: [[state.albumPreference]] };
-    if (sql.includes('from "user_tokens"')) return { rows: [["encrypted:stored-token"]] };
+    if (sql.includes('from "user_tokens"')) return { rows: state.storedToken === null ? [] : [[`encrypted:${state.storedToken}`]] };
+    if (sql.startsWith('select') && sql.includes('from "fetch_sessions"')) {
+      return { rows: sql.includes('"fetch_sessions"."status" = $') ? state.pendingSessions : state.recentSessions };
+    }
     if (sql.startsWith('insert into "fetch_sessions"')) return { rows: [["1"]] };
     if (sql.startsWith('insert into "user_snapshots"')) return { rows: [[1]] };
     return { rows: [] };
@@ -44,6 +50,7 @@ vi.mock("@/lib/token-crypto", () => ({ encryptToken: (token: string) => `encrypt
 vi.mock("@/lib/fetch-states-server", () => ({ appendFetchState: vi.fn() }));
 vi.mock("next/server", () => ({ after: vi.fn() }));
 
+import { FetchStartError } from "./fetch-errors";
 import { persistFetchResult, startScoreFetch } from "./score-ingestion";
 
 const fetched: GameFetchResult = {
@@ -53,12 +60,26 @@ const fetched: GameFetchResult = {
 const start = { userId: "same-user", game: "maimai" as const, region: "jp" as const, token: "new-token", flags: {} as Flags, options: { skipAfter: true } };
 const persist = { userId: "same-user", game: "maimai" as const, region: "jp" as const, sessionId: BigInt(1), gameVersion: 14, fetched };
 
+function sessionRow(startedSecondsAgo: number) {
+  const startedAt = new Date(Date.now() - startedSecondsAgo * 1000).toISOString().replace("T", " ").slice(0, 19);
+  return ["1", "session", "same-user", "maimai", "jp", "pending", startedAt, null, null, null, null];
+}
+
+async function refusal(input: Parameters<typeof startScoreFetch>[0]): Promise<FetchStartError> {
+  const error = await startScoreFetch(input).then(() => null, (error: unknown) => error);
+  if (!(error instanceof FetchStartError)) throw new Error(`Expected a FetchStartError, got ${String(error)}`);
+  return error;
+}
+
 beforeEach(() => {
   vi.useFakeTimers();
   vi.setSystemTime(new Date("2026-09-27T12:00:00+09:00"));
   vi.clearAllMocks();
   state.statements.length = 0;
   state.albumPreference = false;
+  state.storedToken = "stored-token";
+  state.pendingSessions = [];
+  state.recentSessions = [];
   state.fetch.mockResolvedValue({ result: fetched });
   state.resolveCharts.mockResolvedValue({ chartResolution: new Map(), songsById: new Map() });
   state.writeScores.mockResolvedValue(null);
@@ -90,18 +111,35 @@ it("resolves the user's flags when the caller does not pass them", async () => {
   expect(state.fetch).toHaveBeenCalledWith(expect.objectContaining({ flags }));
 });
 
-it("rejects maintenance before validating or storing tokens or creating sessions", async () => {
+it("saves a newly provided token before refusing a fetch during maintenance", async () => {
   vi.setSystemTime(new Date("2026-09-27T04:00:00+09:00"));
-  await expect(startScoreFetch(start)).rejects.toThrow("maintenance window (04:00 - 07:00 JST)");
-  expect(state.statements).toEqual([]);
-  expect(state.validateToken).not.toHaveBeenCalled();
+  const error = await refusal(start);
+  expect(error).toMatchObject({
+    code: "MAINTENANCE",
+    message: "MAINTENANCE: Cannot fetch data during maintenance window (04:00 - 07:00 JST)",
+    retryAfterSeconds: 3 * 60 * 60,
+  });
+  expect(state.statements.map(query => query.sql.slice(0, 25))).toEqual(['insert into "user_tokens"']);
   expect(state.fetch).not.toHaveBeenCalled();
+});
+
+it.each([
+  { code: "NO_TOKEN_FOUND", arrange: () => { state.storedToken = null; }, retryAfterSeconds: undefined },
+  { code: "FETCH_IN_PROGRESS", arrange: () => { state.pendingSessions = [sessionRow(60)]; }, retryAfterSeconds: undefined },
+  { code: "RATE_LIMITED", arrange: () => { state.recentSessions = Array.from({ length: 5 }, () => sessionRow(4 * 60)); }, retryAfterSeconds: 60 },
+])("refuses with $code before creating a session", async ({ code, arrange, retryAfterSeconds }) => {
+  arrange();
+  const error = await refusal({ ...start, token: undefined });
+  expect(error.code).toBe(code);
+  expect(error.message.startsWith(`${code}: `)).toBe(true);
+  expect(error.retryAfterSeconds).toBe(retryAfterSeconds);
+  expect(state.statements.some(query => query.sql.startsWith('insert into "fetch_sessions"'))).toBe(false);
 });
 
 it("asks for an album preference only in regions where the game fetches albums", async () => {
   vi.stubEnv("NEXT_PUBLIC_ENABLED_MAIMAI_REGIONS", "jp,cn");
   state.albumPreference = null;
-  await expect(startScoreFetch(start)).rejects.toThrow("NO_USE_ALBUMS_SETTINGS");
+  expect((await refusal(start)).code).toBe("NO_USE_ALBUMS_SETTINGS");
   const started = await startScoreFetch({ ...start, region: "cn" });
   await started.backgroundWork;
   expect(state.fetch).toHaveBeenCalledWith(expect.objectContaining({ region: "cn", shouldFetchAlbums: false }));

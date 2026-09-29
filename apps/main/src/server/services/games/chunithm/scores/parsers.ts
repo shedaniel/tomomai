@@ -1,5 +1,6 @@
 import { load, type CheerioAPI } from "cheerio";
 import { GAME_CODES, codeOf, type CodeKey } from "@/lib/games/codes";
+import { formatFetchError } from "@/lib/games/fetch-error-codes";
 import type { NormalizedPlayer, NormalizedRecent, NormalizedScore } from "@/server/services/games/types";
 import type { ChunithmRecentDetails } from "@/lib/games/chunithm/recent-details";
 import type { Region } from "@/lib/types";
@@ -41,7 +42,7 @@ export function assertChunithmPage(html: string, url: string): void {
   const $ = load(html);
   const gate = $(".riyouken_block00").text().replace(/\s+/g, "");
   if (gate.includes("利用権が必要です。") && gate.includes("利用権が無いため、サービスをご利用いただけません。")) {
-    throw new Error("SUBSCRIPTION_REQUIRED: Fetching complete CHUNITHM JP scores requires an active ゲキチュウマイ-NET subscription. Your existing data has not been changed.");
+    throw new Error(formatFetchError("SUBSCRIPTION_REQUIRED", "Fetching complete CHUNITHM JP scores requires an active ゲキチュウマイ-NET subscription. Your existing data has not been changed."));
   }
   if ($("input[name=segaId], input[name=sid]").length || new URL(url).pathname.endsWith("/aimeList/")) {
     throw new Error("CHUNITHM login session expired. Please sign in again.");

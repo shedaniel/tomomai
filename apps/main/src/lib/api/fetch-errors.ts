@@ -1,35 +1,10 @@
-import { GameAdapterError, gameErrorResponse } from "@/lib/games/errors";
 import { getLogger } from "@/lib/request-logger";
-import { isAlbumSettingsError, isTokenError } from "@/lib/token-errors";
+import { fetchStartRejection } from "@/server/services/games/fetch-errors";
 
-/**
- * Map errors thrown by `startScoreFetch` to a JSON 4xx/5xx Response for
- * REST callers. Mirrors the TRPCError-code mapping used by the tRPC
- * `startFetch` procedure so the two protocols stay in sync on which
- * upstream conditions return which class of error.
- *
- * - Missing/invalid token  → 412 Precondition Failed
- * - Album-settings problem → 412 Precondition Failed
- * - Fetch already running  → 409 Conflict
- * - Upstream rate-limited  → 429 Too Many Requests
- * - Anything else          → 500 Internal Server Error
- */
+/** Answers a failed `startScoreFetch` for REST callers with the shared status tables. */
 export function mapFetchStartError(error: unknown): Response {
-  if (error instanceof GameAdapterError) return gameErrorResponse(error);
-  if (error instanceof Error) {
-    if (isAlbumSettingsError(error.message)) {
-      return Response.json({ error: error.message }, { status: 412 });
-    }
-    if (isTokenError(error.message)) {
-      return Response.json({ error: error.message }, { status: 412 });
-    }
-    if (error.message.includes("already in progress")) {
-      return Response.json({ error: error.message }, { status: 409 });
-    }
-    if (error.message.includes("Rate limited")) {
-      return Response.json({ error: error.message }, { status: 429 });
-    }
-  }
+  const rejection = fetchStartRejection(error);
+  if (rejection) return Response.json({ error: rejection.message, code: rejection.code }, rejection.init);
   getLogger().error({ err: error }, "startFetch error");
   return Response.json({ error: "Failed to start fetch" }, { status: 500 });
 }

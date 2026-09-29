@@ -8,7 +8,7 @@ import { waitUntil } from '@vercel/functions';
 import { and, eq } from 'drizzle-orm';
 import { generateAndSendProfileImage } from '../image-utils';
 import { getProfileSummary, resolveRegion } from '../region';
-import { isAlbumSettingsError } from '@/lib/token-errors';
+import { FetchStartError } from '@/server/services/games/fetch-errors';
 import { resolveBaseUrl } from '@/lib/base-url';
 import {
   createDeferredResponse,
@@ -190,10 +190,14 @@ export async function runFetchSession({
     }
     return true;
   } catch (error) {
-    getLogger().error({ err: error }, 'Error in fetch process');
+    if (error instanceof FetchStartError) {
+      getLogger().warn({ err: error }, 'Fetch refused');
+    } else {
+      getLogger().error({ err: error }, 'Error in fetch process');
+    }
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
 
-    if (isAlbumSettingsError(errorMessage)) {
+    if (error instanceof FetchStartError && error.code === 'NO_USE_ALBUMS_SETTINGS') {
       await editDiscordMessage(applicationId, interactionToken, createAlbumPreferenceMessage(discordUserId, region, locale));
     } else {
       await editDiscordMessage(applicationId, interactionToken, {
@@ -233,24 +237,17 @@ async function pollForUpdates(
         if (status.status === "completed") {
           return true;
         } else if (status.status === "failed") {
-          const failureReason = status.errorMessage || 'Unknown error';
-
-          // Check if this is an album settings error
-          if (isAlbumSettingsError(failureReason)) {
-            await editDiscordMessage(applicationId, interactionToken, createAlbumPreferenceMessage(discordUserId, region, locale));
-          } else {
-            await editDiscordMessage(applicationId, interactionToken, {
-              embeds: [{
-                title: t(locale, 'fetch.failed.title'),
-                description: t(locale, 'fetch.failed.description', { userId: discordUserId, regionName, reason: failureReason }),
-                color: DISCORD_COLORS.RED,
-                footer: {
-                  text: t(locale, 'common.footer'),
-                },
-                timestamp: new Date().toISOString(),
-              }],
-            });
-          }
+          await editDiscordMessage(applicationId, interactionToken, {
+            embeds: [{
+              title: t(locale, 'fetch.failed.title'),
+              description: t(locale, 'fetch.failed.description', { userId: discordUserId, regionName, reason: status.errorMessage || 'Unknown error' }),
+              color: DISCORD_COLORS.RED,
+              footer: {
+                text: t(locale, 'common.footer'),
+              },
+              timestamp: new Date().toISOString(),
+            }],
+          });
           return false;
         } else {
           // Still pending, update with progress

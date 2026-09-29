@@ -12,6 +12,7 @@ import {
 } from "@/lib/fetch-states";
 import { useGameId } from "./providers/game-provider";
 import type { CanonicalGameId } from "@/lib/games/types";
+import { parseFetchErrorCode } from "@/lib/games/fetch-error-codes";
 import { useTranslations } from "next-intl";
 
 export type FetchToastStatus = "pending" | "completed" | "failed";
@@ -254,7 +255,7 @@ export function FetchToast({ state, onDismiss }: FetchToastProps) {
             >
               <XCircle className="h-3 w-3 text-destructive shrink-0 mt-0.5" />
               <span className="text-destructive">
-                {errorMessage.startsWith("SUBSCRIPTION_REQUIRED")
+                {parseFetchErrorCode(errorMessage) === "SUBSCRIPTION_REQUIRED"
                   ? t("errors.subscriptionRequired")
                   : errorMessage}
               </span>
