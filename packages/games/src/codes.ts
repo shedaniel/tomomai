@@ -41,29 +41,6 @@ const KIND_LABELS: { readonly [K in CodeKind]: string } = {
   titleType: "title type",
 };
 
-type Codec<T extends string> = {
-  readonly fromCode: (code: number) => T;
-  readonly toCode: (key: T) => number;
-};
-
-function isCodeOf(keys: readonly string[], code: number): boolean {
-  return Number.isInteger(code) && code >= 0 && code < keys.length;
-}
-
-function createCodec<const T extends string>(values: readonly T[], label: string): Codec<T> {
-  return {
-    fromCode: code => {
-      if (!isCodeOf(values, code)) throw new Error(`Unknown ${label} code: ${code}`);
-      return values[code];
-    },
-    toCode: key => {
-      const code = values.indexOf(key);
-      if (code < 0) throw new Error(`Unknown ${label}: ${key}`);
-      return code;
-    },
-  };
-}
-
 function keysOf(game: CodedGame, kind: CodeKind): readonly string[] {
   return GAME_CODES[game][kind];
 }
@@ -81,15 +58,27 @@ export function keyOf(game: CodedGame, kind: CodeKind, code: number): string {
 }
 
 export function hasCode(game: CodedGame, kind: CodeKind, code: number): boolean {
-  return isCodeOf(keysOf(game, kind), code);
+  return Number.isInteger(code) && code >= 0 && code < keysOf(game, kind).length;
 }
 
 export function isCodeKey(game: CodedGame, kind: CodeKind, key: string): boolean {
   return keysOf(game, kind).includes(key);
 }
 
+type Codec<T extends string> = {
+  readonly fromCode: (code: number) => T;
+  readonly toCode: (key: T) => number;
+};
+
 function maimaiCodec<K extends CodeKind>(kind: K): Codec<CodeKey<"maimai", K>> {
-  return createCodec(MAIMAI_CODES[kind], `maimai ${KIND_LABELS[kind]}`);
+  const keys: readonly CodeKey<"maimai", K>[] = MAIMAI_CODES[kind];
+  return {
+    fromCode: code => {
+      if (!hasCode("maimai", kind, code)) throw new Error(`Unknown maimai ${KIND_LABELS[kind]} code: ${code}`);
+      return keys[code];
+    },
+    toCode: key => codeOf("maimai", kind, key),
+  };
 }
 
 const maimai = {
