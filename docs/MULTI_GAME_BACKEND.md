@@ -3,8 +3,9 @@
 The integration starts from the current parent-song catalog. Parent IDs and
 instance IDs retain their existing format and meaning. Shared catalog and user
 records carry canonical `maimai` or `chunithm` identity, with composite foreign
-keys preventing links across games. CHUNITHM remains disabled until real source
-adapters and the deployment integration gate are ready.
+keys preventing links across games. `NEXT_PUBLIC_ENABLED_CHUNITHM_REGIONS` gates
+CHUNITHM player features. Unset means International and JP, and an empty value
+disables them while the catalog stays readable.
 
 ## Migration artifact
 
@@ -48,7 +49,8 @@ migrations here, including against a disposable database.
 4. Run the existing authorized percentile refresh job. The view remains
    maimai-only; missing-view reads retain the existing empty-result fallback.
 5. Purge stale game-free API/catalog redirects and payloads at the CDN boundary.
-   Confirm CHUNITHM requests return the disabled-game response.
+   On a deployment that sets `NEXT_PUBLIC_ENABLED_CHUNITHM_REGIONS` to an empty value,
+   confirm CHUNITHM player requests return `GAME_NOT_ENABLED`.
 
 The schema cutover removes legacy enum columns and B50 storage. Rolling back
 application code alone is unsupported; restore the database and matching old
@@ -64,7 +66,7 @@ of assigning scores to an arbitrary chart.
 
 Recents carry optional game-specific `details`, stored in the recent row's
 metadata, without requiring maimai DX scores or map state. Albums are maimai
-enrichment gated by the `albums` capability. The maimai adapter's
+enrichment gated by the `albums` capability. The maimai score source's
 `persistExtra` step writes them, together with the recent-detail downloads,
 after the common transaction commits. These optional external
 operations are best effort and are not covered by database rollback. Provider

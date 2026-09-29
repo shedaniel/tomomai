@@ -8,8 +8,10 @@ and catalog identity context is in [PARENT_SONG.md](PARENT_SONG.md).
 ## Current implementation
 
 The current phase deliberately excludes the two-domain/URL setup and cross-domain
-login. Existing maimai URLs remain unchanged. `getFrontendGame()` resolves the configured canonical game at the server boundary
-and passes a serializable descriptor through `GameProvider`.
+login. Existing maimai URLs remain unchanged. `getCurrentGame()` in [`current.ts`](../apps/main/src/lib/games/current.ts) resolves the configured canonical game at the server boundary
+and passes a serializable descriptor (id, brand, capabilities, enabled regions and fetch facts) through `GameProvider`.
+Each game has one `GameDefinition` under `lib/games/<game>/definition.ts`, listed in `GAMES` in
+[`registry.ts`](../apps/main/src/lib/games/registry.ts). A game with no enabled regions is disabled, and its catalog stays readable.
 There is no new public game route, hostname rewrite, game switcher, authentication
 flow in this phase. Domain routing remains a later task.
 
@@ -38,7 +40,7 @@ Implemented frontend support:
   namespace instead of a catch-all multi-game translation namespace.
   Maimai profile image queries explicitly filter the game; maimai-only image and
   database surfaces do not render another game's records using maimai semantics.
-- Version data lives with each game adapter. Shared version lookups require game
+- Version data lives with each game definition. Shared version lookups require game
   and region, and the old metadata module only re-exports maimai compatibility
   data for specialized consumers. Public profile invalidation takes explicit game
   context and does not invalidate the current site's pages for another game.
@@ -108,8 +110,8 @@ require an active ゲキチュウマイ-NET subscription; denial fails the fetch
 replacing existing records or asking for new credentials. The fetch toast
 explains how to recover in the current locale.
 
-Confirmed entry URLs and daily maintenance windows are stored together in
-[`sites.ts`](../apps/main/src/lib/games/sites.ts). Times are JST (UTC+09:00), with
+Confirmed entry URLs and daily maintenance windows are stored together in each
+game definition's `sites`, read through [`sites.ts`](../apps/main/src/lib/games/sites.ts). Times are JST (UTC+09:00), with
 the start included and the end excluded.
 
 | Game | Region | Entry URL | Maintenance (JST) |
@@ -132,7 +134,7 @@ Implementation ownership:
   fetch hook and the maimai Discord command use this policy. Existing maimai
   Wednesday and CN schedules are preserved.
 - [`score-ingestion.ts`](../apps/main/src/server/services/games/score-ingestion.ts)
-  rejects unavailable sources and active maintenance before token changes,
+  rejects disabled games and regions and active maintenance before token changes,
   provider work or session creation. It owns common session/persistence handling;
   [`tokens.ts`](../apps/main/src/server/services/games/tokens.ts) scopes token
   access by game, user and region.

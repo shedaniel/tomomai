@@ -13,7 +13,7 @@ that all score records are available. Account identifiers, cookie values,
 credentials, hidden form values and private raw HTML do not belong here.
 
 The user confirmed these entry URLs and maintenance windows; the canonical
-configuration is [sites.ts](../apps/main/src/lib/games/sites.ts).
+configuration is the `sites` entry of [the CHUNITHM definition](../apps/main/src/lib/games/chunithm/definition.ts).
 
 | Region | Entry URL | Daily maintenance, JST |
 | --- | --- | --- |
@@ -632,7 +632,7 @@ from subscription text or infer maintenance from missing record elements.
 
 | Concern | Existing owner / intended use |
 | --- | --- |
-| Game and region entry URLs | [`lib/games/sites.ts`](../apps/main/src/lib/games/sites.ts) |
+| Game and region entry URLs | `sites` in [`lib/games/chunithm/definition.ts`](../apps/main/src/lib/games/chunithm/definition.ts), read through [`lib/games/sites.ts`](../apps/main/src/lib/games/sites.ts) |
 | HTTP, cookies, redirects | [`games/sega/http.ts`](../apps/main/src/server/services/games/sega/http.ts) |
 | Shared SEGA token/login mechanics | [`games/sega/login.ts`](../apps/main/src/server/services/games/sega/login.ts) |
 | Verified maimai login configuration, reference only | [`games/maimai/login-config.ts`](../apps/main/src/server/services/games/maimai/login-config.ts) |
