@@ -1,7 +1,7 @@
 import "server-only";
 import { agentFetch } from "@/lib/http-agent";
 import { getGame } from "@/lib/games/registry";
-import { getGameSite, siteRoot, siteUrl } from "@/lib/games/sites";
+import { getGameSite, siteOrigin, siteRoot, siteUrl } from "@/lib/games/sites";
 import type { CanonicalGameId } from "@/lib/games/types";
 import type { Region } from "@/lib/types";
 import { getLogger } from "@/lib/request-logger";
@@ -43,7 +43,9 @@ export function requestGameSite(game: CanonicalGameId, region: Region, path: str
   return fetchSite(url, { ...init, signal: segaRequestSignal(init.signal), headers, redirect: "manual" });
 }
 
-async function followGameSite(game: CanonicalGameId, region: Region, url: string, session: GameSiteSession, referer: string, init: RequestInit): Promise<{ response: Response; url: string }> {
+/** Follows redirects on the site with the session. A redirect to another origin is returned as `offsite`, not followed. */
+async function followGameSite(game: CanonicalGameId, region: Region, url: string, session: GameSiteSession, referer: string, init: RequestInit): Promise<{ response: Response; url: string; offsite?: URL }> {
+  const origin = siteOrigin(game, region);
   let request = init;
   for (let redirects = 0; redirects <= 10; redirects++) {
     const headers = new Headers(request.headers);
@@ -55,7 +57,9 @@ async function followGameSite(game: CanonicalGameId, region: Region, url: string
     const location = response.headers.get("Location");
     if (!location) return { response, url };
     await response.body?.cancel();
-    url = new URL(location, url).href;
+    const next = new URL(location, url);
+    if (next.origin !== origin) return { response, url, offsite: next };
+    url = next.href;
     if (response.status === 303 || ((response.status === 301 || response.status === 302) && request.method === "POST")) {
       request = { signal: init.signal };
     }
@@ -107,7 +111,8 @@ export function openGameSite(game: CanonicalGameId, region: Region, session: Gam
   let pageUrl = root.href;
 
   async function page(path: string, init: RequestInit): Promise<string> {
-    const { response, url } = await followGameSite(game, region, siteUrl(game, region, path).href, session, pageUrl, { ...init, signal });
+    const { response, url, offsite } = await followGameSite(game, region, siteUrl(game, region, path).href, session, pageUrl, { ...init, signal });
+    if (offsite) throw new Error(`Unexpected game site origin for ${game}/${region}`);
     if (response.status !== 200) {
       await response.body?.cancel();
       throw new Error(`${getGame(game).brand.displayName} page ${new URL(url).pathname} returned HTTP ${response.status}`);
@@ -129,8 +134,8 @@ export function openGameSite(game: CanonicalGameId, region: Region, session: Gam
     async bytes(url) {
       const target = new URL(url, root);
       if (target.origin !== root.origin) return publicAssets.bytes(target.href);
-      const { response } = await followGameSite(game, region, target.href, session, pageUrl, { signal });
-      return readBytes(response, target);
+      const { response, offsite } = await followGameSite(game, region, target.href, session, pageUrl, { signal });
+      return offsite ? publicAssets.bytes(offsite.href) : readBytes(response, target);
     },
   };
 }

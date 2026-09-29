@@ -120,6 +120,19 @@ describe("game site client", () => {
     expect(new Headers(crossInit.headers).has("Referer")).toBe(false);
   });
 
+  it("follows a site file's redirect to another host without the session", async () => {
+    mocks.fetch
+      .mockResolvedValueOnce(redirect("https://cdn.example.test/photo.jpg", "_t=rotated; Path=/mobile/"))
+      .mockResolvedValueOnce(new Response("photo", { headers: { "Content-Type": "image/jpeg" } }));
+    const session = { cookies: "userId=player" };
+    expect(await openGameSite("chunithm", "intl", session).bytes("img/photo.jpg")).toEqual({ buffer: Buffer.from("photo"), contentType: "image/jpeg" });
+    expect(sentCookie(mocks.fetch.mock.calls[0])).toBe("userId=player");
+    const [crossOrigin, crossInit] = mocks.fetch.mock.calls[1];
+    expect(String(crossOrigin)).toBe("https://cdn.example.test/photo.jpg");
+    expect(new Headers(crossInit.headers).has("Cookie")).toBe(false);
+    expect(session.cookies).toBe("userId=player; _t=rotated");
+  });
+
   it("rejects a failed download", async () => {
     mocks.fetch.mockResolvedValueOnce(new Response(null, { status: 404 }));
     await expect(openGameSite("chunithm", "intl", { cookies: "" }).bytes("https://cdn.example.test/icon.png"))
