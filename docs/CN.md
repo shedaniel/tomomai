@@ -40,8 +40,8 @@ This means even items that "support cn today" via hardcoded paths must be revisi
 - [ ] `server/utils/level.ts` — CN utage handling: `levelToPrecise` reused for utage; verify CN-specific quirks if any surface
 
 ## HTTP API Routes
-- [?] `app/api/login/route.ts` — `DEFAULT_REGION` hardcoded `intl` (L11, L32). Skippable for now (intl-only login flow).
-- [?] `app/api/login.js/route.ts` — region default `intl` (L19). Skippable (intl-only).
+- [x] `app/api/login/route.ts`: the region comes from the signed login authorization
+- [x] `app/api/login.js/route.ts`: the bookmarklet no longer sends a region
 - [x] `app/api/last-credit/route.ts` — gated by `resolveGameContext` against the enabled regions; `prepareCreditData` accepts `Region` (CN will fail at data layer since no scrape source, acceptable region-property branch)
 - [x] `app/api/admin/update/route.ts` — gated by `getSupportedRegions`; CN skips token/cookie via region-property branch (acceptable)
 - [?] ~~`app/api/admin/fetch/route.ts`~~ — N/A; route handles store data which CN does not have.

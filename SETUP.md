@@ -74,7 +74,7 @@ When enabled, the widget must have [pre-clearance enabled](https://developers.cl
 | Variable | Required | Description |
 |---|---|---|
 | `TOKEN_SECRET` | Yes | Secret for encrypting/decrypting user tokens. Generate with `openssl rand -base64 32` |
-| `MAIMAI_TOTP_SECRET` | Yes | Secret for TOTP code generation. Generate with `openssl rand -hex 32` |
+| `LOGIN_TOKEN_SECRET` | Yes | Secret for the gateway login OTP codes and the signed login authorization. The former name `MAIMAI_TOTP_SECRET` is still read when this is unset. Generate with `openssl rand -hex 32` |
 | `FLAGS_SECRET` | Yes | Secret for feature flags. Generate with `node -e "console.log(crypto.randomBytes(32).toString('base64url'))"` |
 
 ### Render Service
@@ -147,7 +147,7 @@ Used by the WeChat OAuth → HTTP-proxy flow. The proxy itself lives in `proxy/`
 |---|---|---|
 | `CN_PROXY_HOST` (or `NEXT_PUBLIC_CN_PROXY_HOST`) | For HTTP proxy | Hostname/IP the user's phone should set as its HTTP proxy (displayed in the dialog) |
 | `CN_PROXY_PORT` (or `NEXT_PUBLIC_CN_PROXY_PORT`) | No | Proxy port displayed in the dialog (defaults to `2560`) |
-| `CN_PROXY_TOKEN_SECRET` | For HTTP proxy | HMAC secret for signing the JWT embedded in the WeChat OAuth link; the proxy forwards it back so the webhook can identify the user. Generate with `openssl rand -base64 32` |
+| `CN_PROXY_TOKEN_SECRET` | For HTTP proxy | HMAC secret for signing the expiring token embedded in the WeChat OAuth link. The proxy forwards it back so the webhook can identify the user. Generate with `openssl rand -base64 32` |
 | `DEBUG_CN_FETCH` | No | When set (any truthy value), the `/api/cn-proxy/callback` webhook skips the server-side cookie capture and just logs the `maimai-mobile/?t=…` link so you can open it manually in a browser to inspect CSS/HTML. No fetch session is started while this is on. |
 
 The proxy process itself reads its own env vars (`PROXY_PORT`, `WEBHOOK_URL`, `RESULT_URL`) — see `proxy/README.md`.

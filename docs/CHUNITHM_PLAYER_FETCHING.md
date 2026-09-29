@@ -702,8 +702,8 @@ score stages, which read every difficulty list.
 The frontend now exposes the existing shared SEGA gateway cookie wizard for
 CHUNITHM International. Its first login link uses the configured CHUNITHM entry
 URL; its OTP/bookmarklet step uses the same neutral `/common_auth/` gateway
-landing as maimai. The signed authorization binds the tomomai user and game,
-and the server exchanges `clal` using CHUNITHM's `site_id=chuniex` configuration.
+landing as maimai. The signed authorization binds the tomomai user, game and
+region, and the server exchanges `clal` using CHUNITHM's `site_id=chuniex` configuration.
 JP continues to require account credentials.
 
 Manual `clal=` input and the `/sega-cookie-extractor.user.js` download

@@ -24,8 +24,8 @@ export const fetchRouter = router({
       const expiresAt = new Date(getOtpExpiryTimestamp()).toISOString();
       const baseUrl = resolveBaseUrl();
       const scriptUrl = `${baseUrl}/api/login.js`;
-      const opaqueUserId = createLoginAuthorization(userId, game);
-      const loginLink = `${SEGA_AIME_GATEWAY.landingUrl}#otp=${otp}&user=${encodeURIComponent(opaqueUserId)}`;
+      const authorization = createLoginAuthorization({ userId, game, region: cookieLogin.region });
+      const loginLink = `${SEGA_AIME_GATEWAY.landingUrl}#otp=${otp}&user=${encodeURIComponent(authorization)}`;
 
       return {
         otp,

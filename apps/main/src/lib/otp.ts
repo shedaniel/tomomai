@@ -1,7 +1,9 @@
 import { totp } from "otplib";
-import { createHmac, timingSafeEqual } from "crypto";
-import { gameIdSchema } from "./games/schema";
-import type { CanonicalGameId } from "./games/types";
+import { createHmac } from "crypto";
+import { z } from "zod";
+import { gameIdSchema, regionSchema } from "./games/schema";
+import type { CanonicalGameId, Region } from "./games/ids";
+import { sign, verify } from "./signed-token";
 
 const OTP_PERIOD_SECONDS = 600;
 const OTP_DIGITS = 6;
@@ -12,9 +14,9 @@ const configuredTotp = totp.clone({
 });
 
 function getMasterSecret(): string {
-  const secret = process.env.MAIMAI_TOTP_SECRET;
+  const secret = process.env.LOGIN_TOKEN_SECRET || process.env.MAIMAI_TOTP_SECRET;
   if (!secret) {
-    throw new Error("MAIMAI_TOTP_SECRET environment variable is not set");
+    throw new Error("LOGIN_TOKEN_SECRET environment variable is not set");
   }
   return secret;
 }
@@ -23,40 +25,18 @@ function deriveUserKey(userId: string): string {
   return createHmac("sha256", getMasterSecret()).update(userId).digest("hex");
 }
 
-export function createLoginAuthorization(userId: string, game: CanonicalGameId): string {
-  const payload = Buffer.from(JSON.stringify({ userId, game }), "utf8").toString("base64url");
-  const signed = `v1.${payload}`;
-  const signature = createHmac("sha256", getMasterSecret())
-    .update(signed)
-    .digest("base64url");
-  return `${signed}.${signature}`;
+export type LoginAuthorization = { userId: string; game: CanonicalGameId; region: Region };
+
+const loginAuthorizationSchema = z.strictObject({ userId: z.string().min(1), game: gameIdSchema, region: regionSchema, exp: z.number() });
+
+/** Names who a gateway cookie login is for. It lives as long as an OTP period. */
+export function createLoginAuthorization(authorization: LoginAuthorization): string {
+  return sign(authorization, { secret: getMasterSecret(), ttlSeconds: OTP_PERIOD_SECONDS });
 }
 
-export function decodeLoginAuthorization(opaque: string): { userId: string; game: CanonicalGameId } | null {
-  const parts = opaque.split(".");
-  if (parts.length !== 3 || parts[0] !== "v1") return null;
-  const [, payload, signature] = parts;
-  if (!payload || !signature) return null;
-
-  const expectedSignature = createHmac("sha256", getMasterSecret())
-    .update(`v1.${payload}`)
-    .digest("base64url");
-
-  const provided = Buffer.from(signature, "base64url");
-  const expected = Buffer.from(expectedSignature, "base64url");
-
-  if (provided.length !== expected.length || !timingSafeEqual(provided, expected)) {
-    return null;
-  }
-
-  try {
-    const authorization: unknown = JSON.parse(Buffer.from(payload, "base64url").toString("utf8"));
-    if (!authorization || typeof authorization !== "object" || !("userId" in authorization) || typeof authorization.userId !== "string" || !("game" in authorization)) return null;
-    const game = gameIdSchema.safeParse(authorization.game);
-    return game.success ? { userId: authorization.userId, game: game.data } : null;
-  } catch {
-    return null;
-  }
+export function decodeLoginAuthorization(token: string): LoginAuthorization | null {
+  const claims = verify(token, loginAuthorizationSchema, { secret: getMasterSecret() });
+  return claims && { userId: claims.userId, game: claims.game, region: claims.region };
 }
 
 export function generateUserOtp(userId: string): string {

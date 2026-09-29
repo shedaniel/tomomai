@@ -183,11 +183,14 @@ Implementation ownership:
   and [`registry.ts`](../apps/main/src/server/services/games/registry.ts) lists
   them in `GAME_SERVER_MODULES`. The sources load their implementations lazily.
   Maimai's score parsers and CN authentication behavior remain specialized.
-- [`otp.ts`](../apps/main/src/lib/otp.ts) binds game and user in the existing
-  signed login authorization. The token dialog requests an OTP for its current
-  game, and a login link requires the game definition to declare a cookie
-  login. Existing gateway fields remain unchanged. Only versioned, game-bound
-  authorizations are accepted; pre-versioned codes must be replaced with a new OTP.
+- [`otp.ts`](../apps/main/src/lib/otp.ts) binds the user, game and region in
+  the signed login authorization, which expires with the OTP period.
+  `/api/login` takes the region from it, so the bookmarklet sends only the OTP,
+  the authorization and the gateway cookie. The token dialog requests an OTP
+  for its current game, and a login link requires the game definition to
+  declare a cookie login. Links issued in an earlier format must be replaced
+  with a new OTP. The authorization and the CN proxy link token share
+  [`signed-token.ts`](../apps/main/src/lib/signed-token.ts).
 
 CHUNITHM's pipeline fetches the profile, all five ordinary difficulty lists and
 recent plays with their details before passing one complete result to shared

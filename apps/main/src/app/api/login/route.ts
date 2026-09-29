@@ -6,11 +6,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { flushLogger } from "@/lib/logger";
 import { requestLogger } from "@/lib/request-logger";
 import { securityMiddleware, validateContentType } from "@/lib/security/middleware";
-import { Region } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
-
-const DEFAULT_REGION: Region = "intl";
 
 function withCors(response: NextResponse) {
   response.headers.set("Access-Control-Allow-Origin", SEGA_AIME_GATEWAY.origin);
@@ -25,13 +22,6 @@ function withCors(response: NextResponse) {
 function jsonResponse(body: unknown, init?: ResponseInit) {
   const res = NextResponse.json(body, init);
   return withCors(res);
-}
-
-function normalizeRegion(value: FormDataEntryValue | null): Region {
-  if (typeof value !== "string") {
-    return DEFAULT_REGION;
-  }
-  return value === "jp" ? "jp" : DEFAULT_REGION;
 }
 
 function normalizeToken(rawToken: string): string {
@@ -63,26 +53,24 @@ export async function POST(request: NextRequest) {
 
   try {
     const formData = await request.formData();
-    const opaqueUserId = formData.get("user");
+    const user = formData.get("user");
     const otp = formData.get("otp");
     const token = formData.get("token");
-    const regionValue = formData.get("region");
 
-    if (typeof opaqueUserId !== "string" || typeof otp !== "string" || typeof token !== "string") {
+    if (typeof user !== "string" || typeof otp !== "string" || typeof token !== "string") {
       return jsonResponse({ success: false, error: "Missing required form fields." }, { status: 400 });
     }
 
-    const authorization = decodeLoginAuthorization(opaqueUserId);
+    const authorization = decodeLoginAuthorization(user);
     if (!authorization) {
       return jsonResponse({ success: false, error: "Invalid user identifier." }, { status: 401 });
     }
-    const { userId, game } = authorization;
+    const { userId, game, region } = authorization;
 
     if (!verifyUserOtp(userId, otp)) {
       return jsonResponse({ success: false, error: "Invalid or expired OTP." }, { status: 401 });
     }
 
-    const region = normalizeRegion(regionValue);
     const finalToken = normalizeToken(token);
 
     const result = await startScoreFetch({ userId, game, region, token: finalToken });

@@ -78,13 +78,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, error: "missing maimaiToken" }, { status: 400 });
   }
 
-  let userId: string;
-  try {
-    ({ userId } = verifyCnProxyToken(body.token));
-  } catch (err) {
-    log.warn({ err }, "webhook rejected — bad token");
+  const verified = verifyCnProxyToken(body.token);
+  if (!verified) {
+    log.warn("Webhook rejected an invalid or expired token");
     return NextResponse.json({ ok: false, error: "invalid token" }, { status: 401 });
   }
+  const { userId } = verified;
 
   if (process.env.DEBUG_CN_FETCH) {
     const debugUrl = siteUrl("maimai", "cn", entryPath(body.maimaiToken)).href;

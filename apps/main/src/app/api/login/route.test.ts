@@ -19,6 +19,7 @@ vi.mock("@/lib/trpc", async () => {
   return { router: t.router, protectedProcedure: t.procedure };
 });
 
+import { createHmac } from "node:crypto";
 import { SEGA_AIME_GATEWAY } from "@/lib/games/sites";
 import { fetchRouter } from "@/server/routers/user/fetch";
 import { FetchStartError } from "@/server/services/games/fetch-errors";
@@ -44,14 +45,17 @@ beforeEach(() => {
   vi.clearAllMocks();
   vi.useFakeTimers();
   vi.setSystemTime(now);
-  vi.stubEnv("MAIMAI_TOTP_SECRET", "test-otp-secret");
+  vi.stubEnv("LOGIN_TOKEN_SECRET", "test-otp-secret");
   mocks.start.mockResolvedValue({ sessionId: "fetch-session", status: "pending" });
 });
 afterEach(() => { vi.useRealTimers(); vi.unstubAllEnvs(); });
 
-it("rejects pre-versioned authorization even with a valid OTP", async () => {
-  const response = await callback("c2FtZS1vd25lcg.zTB2EfssA1i_lOxmLZKrZPpIWEmaiqDza9Dgq1k3iLM", "622184");
-  expect(response.status).toBe(401);
+it("rejects authorizations in earlier formats even with a valid OTP", async () => {
+  const payload = `v1.${Buffer.from(JSON.stringify({ userId: "same-owner", game: "maimai" })).toString("base64url")}`;
+  const versioned = `${payload}.${createHmac("sha256", "test-otp-secret").update(payload).digest("base64url")}`;
+  for (const authorization of ["c2FtZS1vd25lcg.zTB2EfssA1i_lOxmLZKrZPpIWEmaiqDza9Dgq1k3iLM", versioned]) {
+    expect((await callback(authorization, "622184")).status).toBe(401);
+  }
   expect(mocks.start).not.toHaveBeenCalled();
 });
 
@@ -66,13 +70,16 @@ it.each(["maimai", "chunithm"] as const)("issues game-bound %s authorization thr
   const fields = new URLSearchParams(link.hash.slice(1));
   expect([...fields.keys()]).toEqual(["otp", "user"]);
   const authorization = fields.get("user")!;
-  expect((await callback(authorization, fields.get("otp")!, { game: otherGame })).status).toBe(200);
+  expect((await callback(authorization, fields.get("otp")!, { game: otherGame, region: "jp" })).status).toBe(200);
   expect(mocks.start).toHaveBeenCalledWith(expect.objectContaining({ game, userId: "same-owner", region: "intl", token: "cookie://gateway-cookie" }));
 
-  const [version, payload, signature] = authorization.split(".");
-  const changedPayload = Buffer.from(JSON.stringify({ ...JSON.parse(Buffer.from(payload, "base64url").toString()), game: otherGame })).toString("base64url");
+  const [payload, signature] = authorization.split(".");
+  const claims = JSON.parse(Buffer.from(payload, "base64url").toString());
   mocks.start.mockClear();
-  expect((await callback(`${version}.${changedPayload}.${signature}`, result.otp)).status).toBe(401);
+  for (const changed of [{ ...claims, game: otherGame }, { ...claims, region: "jp" }]) {
+    const changedPayload = Buffer.from(JSON.stringify(changed)).toString("base64url");
+    expect((await callback(`${changedPayload}.${signature}`, result.otp)).status).toBe(401);
+  }
   expect(mocks.start).not.toHaveBeenCalled();
 });
 
