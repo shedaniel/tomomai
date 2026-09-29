@@ -127,17 +127,23 @@ require an active ゲキチュウマイ-NET subscription; denial fails the fetch
 replacing existing records or asking for new credentials. The fetch toast
 explains how to recover in the current locale.
 
-Confirmed entry URLs and daily maintenance windows are stored together in each
-game definition's `sites`, read through [`sites.ts`](../apps/main/src/lib/games/sites.ts). Times are JST (UTC+09:00), with
-the start included and the end excluded.
+Each game definition's `sites` entry holds the site's origin, its mobile root,
+its daily maintenance window, the SEGA Aime gateway parameters (`aime`) where
+the site signs in through the gateway, and `legacyTls` where the host's
+certificate chain cannot be verified.
+[`sites.ts`](../apps/main/src/lib/games/sites.ts) reads them: `siteUrl`
+resolves a path against the mobile root and refuses other origins, and
+`SEGA_AIME_GATEWAY` holds the gateway origin and builds each site's gateway
+login URL. Times are JST (UTC+09:00), with the start included
+and the end excluded.
 
-| Game | Region | Entry URL | Maintenance (JST) |
+| Game | Region | Mobile root | Maintenance (JST) |
 | --- | --- | --- | --- |
 | maimai | International | `https://maimaidx-eng.com/maimai-mobile/` | 01:00–02:00; Wednesday 01:00–04:00 |
 | maimai | JP | `https://maimaidx.jp/maimai-mobile/` | 04:00–07:00 |
 | maimai | CN | `https://maimai.wahlap.com/maimai-mobile/` | 04:00–07:00 |
 | CHUNITHM | International | `https://chunithm-net-eng.com/mobile/` | 04:00–07:00 |
-| CHUNITHM | JP | `https://new.chunithm-net.com/` | 02:00–07:00 |
+| CHUNITHM | JP | `https://new.chunithm-net.com/chuni-mobile/html/mobile/` | 02:00–07:00 |
 
 CHUNITHM has no CN site configuration. Its International and JP accounts use
 SEGA ID authentication, retaining the authenticated game cookies during a fetch.
@@ -158,7 +164,13 @@ Implementation ownership:
   [`tokens.ts`](../apps/main/src/server/services/games/tokens.ts) scopes token
   access by game, user and region.
 - Shared SEGA HTTP and login mechanics live in
-  [`games/sega/`](../apps/main/src/server/services/games/sega/). Each game's
+  [`games/sega/`](../apps/main/src/server/services/games/sega/). Both games'
+  scrapers read their site through `openGameSite` in `sega/http.ts`: `html`
+  and `post` resolve against the mobile root, keep the session's cookies and
+  referer, require HTTP 200 and run the game's page check, and `bytes`
+  downloads through the session on the site's origin and without cookies
+  elsewhere. [`icons.ts`](../apps/main/src/server/services/games/icons.ts)
+  mirrors player icons to R2 for both games. Each game's
   server-only code lives under its own root,
   [`games/maimai/`](../apps/main/src/server/services/games/maimai/) and
   [`games/chunithm/`](../apps/main/src/server/services/games/chunithm/), with

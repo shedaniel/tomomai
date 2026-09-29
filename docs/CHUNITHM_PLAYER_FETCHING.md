@@ -13,12 +13,14 @@ that all score records are available. Account identifiers, cookie values,
 credentials, hidden form values and private raw HTML do not belong here.
 
 The user confirmed these entry URLs and maintenance windows; the canonical
-configuration is the `sites` entry of [the CHUNITHM definition](../apps/main/src/lib/games/chunithm/definition.ts).
+configuration is the `sites` entry of [the CHUNITHM definition](../apps/main/src/lib/games/chunithm/definition.ts),
+which stores each site's origin and mobile root. Site paths below resolve
+against the mobile root.
 
-| Region | Entry URL | Daily maintenance, JST |
-| --- | --- | --- |
-| International | `https://chunithm-net-eng.com/mobile/` | 04:00–07:00 |
-| JP | `https://new.chunithm-net.com/` | 02:00–07:00 |
+| Region | Entry URL | Mobile root | Daily maintenance, JST |
+| --- | --- | --- | --- |
+| International | `https://chunithm-net-eng.com/mobile/` | `/mobile/` | 04:00–07:00 |
+| JP | `https://new.chunithm-net.com/` | `/chuni-mobile/html/mobile/` | 02:00–07:00 |
 
 The maintenance start is inclusive and its end exclusive. CHUNITHM has no CN
 configuration. SEGA ID authentication and session cookies are shared concepts
@@ -636,8 +638,9 @@ infer maintenance from missing record elements.
 
 | Concern | Existing owner / intended use |
 | --- | --- |
-| Game and region entry URLs | `sites` in [`lib/games/chunithm/definition.ts`](../apps/main/src/lib/games/chunithm/definition.ts), read through [`lib/games/sites.ts`](../apps/main/src/lib/games/sites.ts) |
-| HTTP, cookies, redirects | [`games/sega/http.ts`](../apps/main/src/server/services/games/sega/http.ts) |
+| Site origins, mobile roots and the gateway login | `sites` in [`lib/games/chunithm/definition.ts`](../apps/main/src/lib/games/chunithm/definition.ts), read through [`lib/games/sites.ts`](../apps/main/src/lib/games/sites.ts) |
+| HTTP, cookies, redirects, the site client | [`games/sega/http.ts`](../apps/main/src/server/services/games/sega/http.ts) |
+| Player icon mirroring | [`games/icons.ts`](../apps/main/src/server/services/games/icons.ts) |
 | Shared SEGA token/login mechanics | [`games/sega/login.ts`](../apps/main/src/server/services/games/sega/login.ts) |
 | Verified maimai login configuration, reference only | [`games/maimai/login-config.ts`](../apps/main/src/server/services/games/maimai/login-config.ts) |
 | Game/user/region token storage | [`games/tokens.ts`](../apps/main/src/server/services/games/tokens.ts) |
