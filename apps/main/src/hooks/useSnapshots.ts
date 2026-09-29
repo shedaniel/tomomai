@@ -3,7 +3,7 @@ import { useState } from "react";
 import { trpc } from "@/lib/trpc-client";
 import { useGame } from "@/components/providers/game-provider";
 import { getSnapshotSelection, type GameSnapshotData, type GameSnapshotSummary } from "@/lib/games/player-view";
-import { toPlayerSnapshotSummary } from "@/lib/games/maimai/legacy-view";
+import { toMaimaiSnapshotSummary } from "@/lib/games/maimai/legacy-view";
 import type { Region } from "@/lib/types";
 
 interface UseSnapshotsOptions {
@@ -42,7 +42,7 @@ export function useSnapshots(region: Region, isAuthenticated: boolean, options?:
   const deleteMutation = trpc.user.deleteSnapshot.useMutation({ onSuccess: refresh });
   const copyMutation = trpc.user.copySnapshotToVersion.useMutation({ onSuccess: refresh });
   return {
-    snapshots: snapshots.map(toPlayerSnapshotSummary),
+    snapshots: snapshots.map(toMaimaiSnapshotSummary),
     selectedSnapshot,
     selectedSnapshotData: selectedSnapshot ? snapshotQuery.data ?? initialData : null,
     setSelectedSnapshot: (id: string | null) => setSelection({ scope, id }),

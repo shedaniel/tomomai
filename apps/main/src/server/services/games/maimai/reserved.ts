@@ -103,7 +103,8 @@ const fetchReservedSongs = unstable_cache(
         .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
         .where(
           and(
-            and(eq(songs.game, "maimai"), eq(songs.region, region)),
+            eq(songs.game, "maimai"),
+            eq(songs.region, region),
             eq(songs.gameVersion, gameVersion),
             inArray(parentSong.difficulty, difficulties)
           )
@@ -116,7 +117,8 @@ const fetchReservedSongs = unstable_cache(
         .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
         .where(
           and(
-            and(eq(songs.game, "maimai"), eq(songs.region, region)),
+            eq(songs.game, "maimai"),
+            eq(songs.region, region),
             eq(songs.gameVersion, gameVersion),
             inArray(songs.addedVersion, [gameVersion, gameVersion - 1]),
             inArray(parentSong.difficulty, difficulties)

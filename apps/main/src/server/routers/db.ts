@@ -1,5 +1,5 @@
 import { maimaiCompatibilityGameSchema, regionSchema } from "@/lib/games/schema";
-import { codeToChartType, codeToDifficulty } from "@/lib/games/maimai/codes";
+import { toMaimaiChart } from "@/lib/games/maimai/legacy-view";
 import { db } from '@/lib/db';
 import { scoreData, snapshotScores, songs, userSnapshots } from '@/lib/db/schema-pg';
 import { publicProcedure, router } from '@/lib/trpc';
@@ -395,8 +395,7 @@ export const dbRouter = router({
 
           return rows.map(r => ({
             songName: String(r.songName),
-            type: codeToChartType(Number(r.type)),
-            difficulty: codeToDifficulty(Number(r.difficulty)),
+            ...toMaimaiChart({ difficultyCode: Number(r.difficulty), typeCode: Number(r.type) }),
             cover: String(r.cover ?? ''),
             artist: String(r.artist ?? ''),
             count: Number(r.count),

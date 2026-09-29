@@ -1,56 +1,80 @@
 import type { EventData } from "@/lib/types";
-import type { Snapshot, SnapshotWithSongs } from "./types";
+import type { Snapshot, SnapshotWithSongs, SongWithScore } from "./types";
 import type { GameEvent, GamePlayerScore, GameSnapshot, GameSnapshotData, GameSnapshotSummary } from "@/lib/games/player-view";
-import { codeToChartType, codeToComboStatus, codeToDifficulty, codeToSyncStatus, codeToTitleType } from "./codes";
+import {
+  codeToChartType,
+  codeToComboStatus,
+  codeToDifficulty,
+  codeToSyncStatus,
+  codeToTitleType,
+  comboStatusToCode,
+  syncStatusToCode,
+} from "./codes";
 import { requireMaimaiVersion } from "./versions";
 
-export function toPlayerSnapshotSummary(snapshot: GameSnapshotSummary): Snapshot {
+type ScoreResult = Pick<GamePlayerScore, "scoreValue" | "secondaryScore" | "comboStatus" | "syncStatus">;
+type MaimaiResult = Pick<SongWithScore, "achievement" | "dxScore" | "fc" | "fs">;
+
+export function toMaimaiChart(chart: Pick<GamePlayerScore, "difficultyCode" | "typeCode">): Pick<SongWithScore, "difficulty" | "type"> {
   return {
-    ...snapshot,
-    courseRankUrl: snapshot.courseRankUrl ?? "",
-    classRankUrl: snapshot.classRankUrl ?? "",
-    stars: snapshot.stars ?? 0,
+    difficulty: codeToDifficulty(chart.difficultyCode),
+    type: codeToChartType(chart.typeCode),
   };
 }
 
-export function toMaimaiPlayerSnapshot(data: GameSnapshotData): SnapshotWithSongs {
+export function toMaimaiResult(score: ScoreResult): MaimaiResult {
+  return {
+    achievement: score.scoreValue,
+    dxScore: score.secondaryScore ?? 0,
+    fc: codeToComboStatus(score.comboStatus),
+    fs: codeToSyncStatus(score.syncStatus),
+  };
+}
+
+export function fromMaimaiScore(score: MaimaiResult): Record<keyof ScoreResult, number> {
+  return {
+    scoreValue: score.achievement,
+    secondaryScore: score.dxScore,
+    comboStatus: comboStatusToCode(score.fc),
+    syncStatus: syncStatusToCode(score.fs),
+  };
+}
+
+export function toMaimaiScore(score: GamePlayerScore) {
+  return {
+    ...score,
+    addedVersion: requireMaimaiVersion(score.addedVersion),
+    ...toMaimaiChart(score),
+    ...toMaimaiResult(score),
+  };
+}
+
+export function toMaimaiSnapshot(data: GameSnapshotData): SnapshotWithSongs {
   return {
     snapshot: toMaimaiSnapshotHeader(data.snapshot),
-    songs: data.songs.map(toMaimaiPlayerScore),
+    songs: data.songs.map(toMaimaiScore),
     events: data.events?.map(toMaimaiEvent),
   };
 }
 
-export function toMaimaiPlayerScore(song: GamePlayerScore) {
-  return {
-    ...song,
-    addedVersion: requireMaimaiVersion(song.addedVersion),
-    achievement: song.scoreValue,
-    dxScore: song.secondaryScore ?? 0,
-    difficulty: codeToDifficulty(song.difficultyCode),
-    type: codeToChartType(song.typeCode),
-    fc: codeToComboStatus(song.comboStatus),
-    fs: codeToSyncStatus(song.syncStatus),
-  };
-}
-
-function toMaimaiSnapshotHeader(snapshot: GameSnapshot): SnapshotWithSongs["snapshot"] {
+export function toMaimaiSnapshotHeader(snapshot: GameSnapshot): SnapshotWithSongs["snapshot"] {
   return {
     ...snapshot,
+    ...toMaimaiRanks(snapshot),
     id: snapshot.publicId,
-    gameVersion: requireMaimaiVersion(snapshot.gameVersion),
     title: snapshot.title ?? "",
     titleType: codeToTitleType(snapshot.titleType ?? 0),
     iconUrl: snapshot.iconUrl ?? "",
-    courseRankUrl: snapshot.courseRankUrl ?? "",
-    classRankUrl: snapshot.classRankUrl ?? "",
-    stars: snapshot.stars ?? 0,
     versionPlayCount: snapshot.versionPlayCount ?? 0,
     totalPlayCount: snapshot.totalPlayCount ?? 0,
   };
 }
 
-function toMaimaiEvent(event: GameEvent): EventData {
+export function toMaimaiSnapshotSummary(summary: GameSnapshotSummary): Snapshot {
+  return { ...summary, ...toMaimaiRanks(summary) };
+}
+
+export function toMaimaiEvent(event: GameEvent): EventData {
   return {
     ...event,
     eventType: event.eventType ?? "eventArea",
@@ -60,5 +84,13 @@ function toMaimaiEvent(event: GameEvent): EventData {
     imageUrl: event.imageUrl ?? "",
     eventPeriodStart: event.eventPeriodStart ?? null,
     eventPeriodEnd: event.eventPeriodEnd ?? null,
+  };
+}
+
+function toMaimaiRanks(snapshot: Pick<GameSnapshot, "courseRankUrl" | "classRankUrl" | "stars">) {
+  return {
+    courseRankUrl: snapshot.courseRankUrl ?? "",
+    classRankUrl: snapshot.classRankUrl ?? "",
+    stars: snapshot.stars ?? 0,
   };
 }

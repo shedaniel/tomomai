@@ -1,14 +1,11 @@
 import "server-only";
-import { codeToChartType, codeToComboStatus, codeToDifficulty, codeToSyncStatus, codeToTitleType } from "@/lib/games/maimai/codes";
-import { songInstanceId } from "@/lib/db/song-instance-id";
 import { db } from '@/lib/db';
 import { parentSong, songs, user, userRecentSongs, userSnapshots } from '@/lib/db/schema-pg';
-import { and, desc, eq, gte, lt, lte, sql } from 'drizzle-orm';
-import type { VersionId } from '@/lib/games/maimai/versions';
-import { Region } from '@/lib/types';
-import type { Difficulty, FullCombo, FullSync, SongType } from '@/lib/games/maimai/types';
-import { maimaiChartRating } from '@/lib/games/maimai/rating';
-import type { SnapshotMetadata } from './credit-data';
+import { and, desc, eq, gte, lt, lte } from 'drizzle-orm';
+import type { Region } from '@/lib/types';
+import type { GamePlayerScore, GameSnapshot } from '@/lib/games/player-view';
+import { gameSnapshotColumns } from '@/server/queries/snapshots';
+import { maimaiRecentPlayColumns } from '../columns';
 
 /**
  * A "play day" runs from 07:00 JST to the next day 04:00 JST. Plays between
@@ -57,28 +54,14 @@ export function dayBounds(day: string): { start: Date; end: Date } {
   return { start, end };
 }
 
-export interface DailyPlay {
-  id: bigint;
-  playedAt: Date;
-  achievement: number;
-  fc: FullCombo;
-  fs: FullSync;
-  songPublicId: string;
-  songName: string;
-  cover: string;
-  difficulty: Difficulty;
-  levelPrecise: number;
-  type: SongType;
-  addedVersion: number;
-  rating: number;
-}
+export type DailyPlay = Pick<GamePlayerScore, "songId" | "scoreValue" | "secondaryScore" | "comboStatus" | "syncStatus"> & { playedAt: Date };
 
 export type DailyPlaysPrepareResult =
   | {
     type: "success";
     day: string;
     plays: DailyPlay[];
-    snapshot: SnapshotMetadata;
+    snapshot: GameSnapshot;
     visitableProfileAt: string | null;
   }
   | { type: "error"; error: string };
@@ -96,7 +79,12 @@ export async function prepareDailyPlaysData(
       .from(userRecentSongs)
       .innerJoin(songs, eq(userRecentSongs.songId, songs.id))
       .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
-      .where(and(and(eq(userRecentSongs.game, "maimai"), eq(userRecentSongs.userId, userId)), and(eq(songs.game, "maimai"), eq(songs.region, region))))
+      .where(and(
+        eq(userRecentSongs.game, "maimai"),
+        eq(userRecentSongs.userId, userId),
+        eq(songs.game, "maimai"),
+        eq(songs.region, region),
+      ))
       .orderBy(desc(userRecentSongs.playedAt))
       .limit(50);
 
@@ -111,27 +99,16 @@ export async function prepareDailyPlaysData(
 
   const { start, end } = dayBounds(day);
 
-  const rows = await db
-    .select({
-      id: userRecentSongs.id,
-      playedAt: userRecentSongs.playedAt,
-      scoreValue: userRecentSongs.scoreValue,
-      comboStatus: userRecentSongs.comboStatus,
-      syncStatus: userRecentSongs.syncStatus,
-      songPublicId: songInstanceId,
-      songName: parentSong.songName,
-      cover: parentSong.cover,
-      difficultyCode: parentSong.difficulty,
-      levelPrecise: songs.levelPrecise,
-      typeCode: parentSong.type,
-      addedVersion: songs.addedVersion,
-    })
+  const plays: DailyPlay[] = await db
+    .select(maimaiRecentPlayColumns)
     .from(userRecentSongs)
     .innerJoin(songs, eq(userRecentSongs.songId, songs.id))
     .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
     .where(and(
-      and(eq(userRecentSongs.game, "maimai"), eq(userRecentSongs.userId, userId)),
-      and(eq(songs.game, "maimai"), eq(songs.region, region)),
+      eq(userRecentSongs.game, "maimai"),
+      eq(userRecentSongs.userId, userId),
+      eq(songs.game, "maimai"),
+      eq(songs.region, region),
       gte(userRecentSongs.playedAt, start),
       lt(userRecentSongs.playedAt, end),
     ))
@@ -139,33 +116,21 @@ export async function prepareDailyPlaysData(
     .limit(50);
 
   // Get the most recent snapshot at or before the day end — needed for header rendering.
-  const snapshotRows = await db
-    .select({
-      publicId: userSnapshots.publicId,
-      fetchedAt: userSnapshots.fetchedAt,
-      gameVersion: userSnapshots.gameVersion,
-      rating: userSnapshots.rating,
-      iconUrl: userSnapshots.iconUrl,
-      displayName: userSnapshots.displayName,
-      title: userSnapshots.title,
-      titleType: sql`${userSnapshots.titleType}`.mapWith(codeToTitleType).as("titleType"),
-      courseRankUrl: userSnapshots.courseRankUrl,
-      classRankUrl: userSnapshots.classRankUrl,
-      stars: userSnapshots.stars,
-    })
+  const [snapshot] = await db
+    .select(gameSnapshotColumns)
     .from(userSnapshots)
     .where(and(
-      and(eq(userSnapshots.game, "maimai"), eq(userSnapshots.userId, userId)),
-      and(eq(userSnapshots.game, "maimai"), eq(userSnapshots.region, region)),
+      eq(userSnapshots.game, "maimai"),
+      eq(userSnapshots.userId, userId),
+      eq(userSnapshots.region, region),
       lte(userSnapshots.fetchedAt, end),
     ))
     .orderBy(desc(userSnapshots.fetchedAt))
     .limit(1);
 
-  if (snapshotRows.length === 0) {
+  if (!snapshot) {
     return { type: "error", error: "No snapshot found for this day" };
   }
-  const snapshotRow = snapshotRows[0];
 
   const userRow = await db
     .select({ username: user.username, publishProfile: user.publishProfile })
@@ -176,23 +141,6 @@ export async function prepareDailyPlaysData(
     return { type: "error", error: "User not found" };
   }
 
-  const gameVersion = snapshotRow.gameVersion as VersionId;
-  const plays: DailyPlay[] = rows.map(row => ({
-    id: row.id,
-    playedAt: row.playedAt,
-    achievement: row.scoreValue,
-    fc: codeToComboStatus(row.comboStatus),
-    fs: codeToSyncStatus(row.syncStatus),
-    songPublicId: row.songPublicId,
-    songName: row.songName,
-    cover: row.cover,
-    difficulty: codeToDifficulty(row.difficultyCode),
-    levelPrecise: row.levelPrecise,
-    type: codeToChartType(row.typeCode),
-    addedVersion: row.addedVersion,
-    rating: Math.floor(maimaiChartRating(row, gameVersion)),
-  }));
-
   if (plays.length === 0) {
     return { type: "error", error: "No plays for this day" };
   }
@@ -201,19 +149,7 @@ export async function prepareDailyPlaysData(
     type: "success",
     day,
     plays,
-    snapshot: {
-      id: snapshotRow.publicId,
-      fetchedAt: snapshotRow.fetchedAt,
-      gameVersion,
-      rating: snapshotRow.rating,
-      iconUrl: snapshotRow.iconUrl,
-      displayName: snapshotRow.displayName,
-      title: snapshotRow.title,
-      titleType: snapshotRow.titleType,
-      courseRankUrl: snapshotRow.courseRankUrl ?? "",
-      classRankUrl: snapshotRow.classRankUrl ?? "",
-      stars: snapshotRow.stars ?? 0,
-    },
+    snapshot,
     visitableProfileAt: userRow[0].publishProfile && userRow[0].username ? userRow[0].username : null,
   };
 }
@@ -235,7 +171,12 @@ export async function listDailyPlaysAvailableDays(
     .from(userRecentSongs)
     .innerJoin(songs, eq(userRecentSongs.songId, songs.id))
     .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
-    .where(and(and(eq(userRecentSongs.game, "maimai"), eq(userRecentSongs.userId, userId)), and(eq(songs.game, "maimai"), eq(songs.region, region))))
+    .where(and(
+      eq(userRecentSongs.game, "maimai"),
+      eq(userRecentSongs.userId, userId),
+      eq(songs.game, "maimai"),
+      eq(songs.region, region),
+    ))
     .orderBy(desc(userRecentSongs.playedAt));
 
   const counts = new Map<string, number>();

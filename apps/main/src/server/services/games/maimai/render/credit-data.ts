@@ -1,13 +1,12 @@
 import "server-only";
-import { codeToChartType, codeToComboStatus, codeToDifficulty, codeToSyncStatus, codeToTitleType } from "@/lib/games/maimai/codes";
-import { songInstanceId } from "@/lib/db/song-instance-id";
 import { db } from '@/lib/db';
 import { parentSong, songs, user, userRecentSongs, maimaiRecentSongDetails, userSnapshots } from '@/lib/db/schema-pg';
 import { and, desc, eq, lte, sql } from 'drizzle-orm';
-import { VersionId } from '@/lib/games/maimai/versions';
 import { getLogger } from '@/lib/request-logger';
-import { Region } from '@/lib/types';
-import type { FullCombo, FullSync, TitleType } from '@/lib/games/maimai/types';
+import type { Region } from '@/lib/types';
+import type { GamePlayerScore, GameSnapshot } from '@/lib/games/player-view';
+import { gameSnapshotColumns } from '@/server/queries/snapshots';
+import { maimaiRecentPlayColumns } from '../columns';
 
 // Type for detailed song statistics
 export interface RecentSongDetails {
@@ -48,55 +47,25 @@ export interface RecentSongDetails {
   breakMiss: number;
 }
 
-// Type for a recent song with all needed data
-export interface RecentSongData {
-  id: bigint;
+export type CreditTrack = Pick<GamePlayerScore, "songId" | "scoreValue" | "secondaryScore" | "comboStatus" | "syncStatus"> & {
   playedAt: Date;
-  achievement: number;
-  dxScore: number;
   maxDxScore: number;
-  fc: FullCombo;
-  fs: FullSync;
   track: number;
-  songPublicId: string;
-  songName: string;
-  artist: string;
-  cover: string;
-  difficulty: string;
-  level: string;
-  levelPrecise: number;
-  type: string;
-  addedVersion: number;
   // Detailed stats (null if not available for this play)
   details: RecentSongDetails | null;
-}
+};
 
 // Type for a credit (a group of tracks played together)
 export interface CreditData {
   playedAt: Date;
-  tracks: RecentSongData[];
-}
-
-// Type for snapshot metadata
-export interface SnapshotMetadata {
-  id: string;
-  fetchedAt: Date;
-  gameVersion: VersionId;
-  rating: number;
-  iconUrl: string;
-  displayName: string;
-  title: string;
-  titleType: TitleType;
-  courseRankUrl: string;
-  classRankUrl: string;
-  stars: number;
+  tracks: CreditTrack[];
 }
 
 // Type for the prepared data result
 export type CreditPrepareResult = {
   type: "success";
   credit: CreditData;
-  snapshot: SnapshotMetadata;
+  snapshot: GameSnapshot;
   visitableProfileAt: string | null;
   hasNextCredit: boolean;
   hasPreviousCredit: boolean;
@@ -122,23 +91,9 @@ export async function prepareCreditData(
 
   const recentPlays = await db
     .select({
-      id: userRecentSongs.id,
-      playedAt: userRecentSongs.playedAt,
-      achievement: userRecentSongs.scoreValue,
-      dxScore: userRecentSongs.secondaryScore,
+      ...maimaiRecentPlayColumns,
       maxDxScore: sql<number>`coalesce(${userRecentSongs.maxDxScore}, 0)`.mapWith(Number).as("maxDxScore"),
-      fc: sql`${userRecentSongs.comboStatus}`.mapWith(codeToComboStatus).as("fc"),
-      fs: sql`${userRecentSongs.syncStatus}`.mapWith(codeToSyncStatus).as("fs"),
       track: sql<number>`coalesce(${userRecentSongs.track}, 0)`.mapWith(Number).as("track"),
-      songPublicId: songInstanceId,
-      songName: parentSong.songName,
-      artist: parentSong.artist,
-      cover: parentSong.cover,
-      difficulty: sql`${parentSong.difficulty}`.mapWith(codeToDifficulty).as("difficulty"),
-      level: songs.level,
-      levelPrecise: songs.levelPrecise,
-      type: sql`${parentSong.type}`.mapWith(codeToChartType).as("type"),
-      addedVersion: songs.addedVersion,
       // Detailed stats from separate table (may be null)
       fastCount: maimaiRecentSongDetails.fastCount,
       lateCount: maimaiRecentSongDetails.lateCount,
@@ -182,8 +137,10 @@ export async function prepareCreditData(
     .leftJoin(maimaiRecentSongDetails, eq(userRecentSongs.id, maimaiRecentSongDetails.recentSongId))
     .where(
       and(
-        and(eq(userRecentSongs.game, "maimai"), eq(userRecentSongs.userId, userId)),
-        and(eq(songs.game, "maimai"), eq(songs.region, region)),
+        eq(userRecentSongs.game, "maimai"),
+        eq(userRecentSongs.userId, userId),
+        eq(songs.game, "maimai"),
+        eq(songs.region, region),
         beforeDate ? lte(userRecentSongs.playedAt, beforeDate) : undefined
       )
     )
@@ -253,23 +210,12 @@ export async function prepareCreditData(
       .where(eq(user.id, userId))
       .limit(1),
     db
-      .select({
-        publicId: userSnapshots.publicId,
-        fetchedAt: userSnapshots.fetchedAt,
-        gameVersion: userSnapshots.gameVersion,
-        rating: userSnapshots.rating,
-        iconUrl: userSnapshots.iconUrl,
-        displayName: userSnapshots.displayName,
-        title: userSnapshots.title,
-        titleType: sql`${userSnapshots.titleType}`.mapWith(codeToTitleType).as("titleType"),
-        courseRankUrl: userSnapshots.courseRankUrl,
-        classRankUrl: userSnapshots.classRankUrl,
-        stars: userSnapshots.stars,
-      })
+      .select(gameSnapshotColumns)
       .from(userSnapshots)
       .where(and(
-        and(eq(userSnapshots.game, "maimai"), eq(userSnapshots.userId, userId)),
-        and(eq(userSnapshots.game, "maimai"), eq(userSnapshots.region, region)),
+        eq(userSnapshots.game, "maimai"),
+        eq(userSnapshots.userId, userId),
+        eq(userSnapshots.region, region),
         beforeDate ? lte(userSnapshots.fetchedAt, beforeDate) : undefined,
       ))
       .orderBy(desc(userSnapshots.fetchedAt))
@@ -337,23 +283,14 @@ export async function prepareCreditData(
         track.breakMiss !== null;
 
       return {
-        id: track.id,
+        songId: track.songId,
         playedAt: track.playedAt,
-        achievement: track.achievement,
-        dxScore: track.dxScore,
+        scoreValue: track.scoreValue,
+        secondaryScore: track.secondaryScore,
         maxDxScore: track.maxDxScore,
-        fc: track.fc,
-        fs: track.fs,
+        comboStatus: track.comboStatus,
+        syncStatus: track.syncStatus,
         track: track.track,
-        songPublicId: track.songPublicId,
-        songName: track.songName,
-        artist: track.artist,
-        cover: track.cover,
-        difficulty: track.difficulty,
-        level: track.level,
-        levelPrecise: track.levelPrecise,
-        type: track.type,
-        addedVersion: track.addedVersion,
         details: hasDetails ? {
           fastCount: track.fastCount!,
           lateCount: track.lateCount!,
@@ -394,24 +331,10 @@ export async function prepareCreditData(
     }),
   };
 
-  const snapshotMetadata: SnapshotMetadata = {
-    id: snapshot.publicId,
-    fetchedAt: snapshot.fetchedAt,
-    gameVersion: snapshot.gameVersion as VersionId,
-    rating: snapshot.rating,
-    iconUrl: snapshot.iconUrl,
-    displayName: snapshot.displayName,
-    title: snapshot.title,
-    titleType: snapshot.titleType,
-    courseRankUrl: snapshot.courseRankUrl ?? "",
-    classRankUrl: snapshot.classRankUrl ?? "",
-    stars: snapshot.stars ?? 0,
-  };
-
   return {
     type: "success",
     credit: creditData,
-    snapshot: snapshotMetadata,
+    snapshot,
     visitableProfileAt,
     hasNextCredit,
     hasPreviousCredit,

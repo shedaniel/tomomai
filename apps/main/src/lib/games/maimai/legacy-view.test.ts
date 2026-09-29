@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { GameSnapshotData } from "@/lib/games/player-view";
-import { toMaimaiPlayerSnapshot, toPlayerSnapshotSummary } from "./legacy-view";
+import { MAIMAI_CODES } from "./codes";
+import { fromMaimaiScore, toMaimaiResult, toMaimaiSnapshot, toMaimaiSnapshotSummary } from "./legacy-view";
 
 const data: GameSnapshotData = {
   snapshot: { publicId: "snap", game: "maimai", displayName: "Player", rating: 15000, gameVersion: 13, fetchedAt: new Date("2026-09-01T00:00:00Z"), titleType: 4 },
@@ -13,21 +14,32 @@ const data: GameSnapshotData = {
 
 describe("maimai legacy view", () => {
   it("decodes codes and fills the legacy defaults", () => {
-    const { snapshot, songs, events } = toMaimaiPlayerSnapshot(data);
+    const { snapshot, songs, events } = toMaimaiSnapshot(data);
     expect(snapshot).toMatchObject({ id: "snap", titleType: "rainbow", title: "", iconUrl: "", courseRankUrl: "", classRankUrl: "", stars: 0, versionPlayCount: 0, totalPlayCount: 0 });
     expect(songs[0]).toMatchObject({ achievement: 1005000, dxScore: 0, difficulty: "master", type: "dx", fc: "ap+", fs: "fs+" });
     expect(events).toEqual([{ name: "Event", eventType: "eventArea", currentDistance: 0, nextRewardDistance: null, state: "not_started", imageUrl: "", eventPeriodStart: null, eventPeriodEnd: null }]);
   });
 
   it("keeps events absent when the snapshot has none", () => {
-    expect(toMaimaiPlayerSnapshot({ ...data, events: undefined }).events).toBeUndefined();
+    expect(toMaimaiSnapshot({ ...data, events: undefined }).events).toBeUndefined();
   });
 
   it("fills the summary's nullable legacy fields", () => {
-    const summary = toPlayerSnapshotSummary({
+    const summary = toMaimaiSnapshotSummary({
       id: "snap", fetchedAt: new Date(), rating: 1, displayName: "Player", gameVersion: 13,
       courseRankUrl: null, classRankUrl: null, stars: null, versionPlayCount: 1, totalPlayCount: 2,
     });
     expect(summary).toMatchObject({ courseRankUrl: "", classRankUrl: "", stars: 0 });
+  });
+
+  it("maps every combo and sync status to the legacy keys and back", () => {
+    MAIMAI_CODES.comboStatus.forEach((fc, comboStatus) => {
+      MAIMAI_CODES.syncStatus.forEach((fs, syncStatus) => {
+        const codes = { scoreValue: 1005000, secondaryScore: 321, comboStatus, syncStatus };
+        const legacy = toMaimaiResult(codes);
+        expect(legacy).toEqual({ achievement: 1005000, dxScore: 321, fc, fs });
+        expect(fromMaimaiScore(legacy)).toEqual(codes);
+      });
+    });
   });
 });

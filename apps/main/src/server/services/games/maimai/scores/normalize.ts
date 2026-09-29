@@ -6,13 +6,8 @@ import type {
   NormalizedRecent,
   NormalizedScore,
 } from "@/server/services/games/types";
-import {
-  chartTypeToCode,
-  comboStatusToCode,
-  difficultyToCode,
-  syncStatusToCode,
-  titleTypeToCode,
-} from "@/lib/games/maimai/codes";
+import { chartTypeToCode, difficultyToCode, titleTypeToCode } from "@/lib/games/maimai/codes";
+import { fromMaimaiScore } from "@/lib/games/maimai/legacy-view";
 import { uploadPlayerIcon } from "./player/persist";
 import type { Region } from "@/lib/types";
 
@@ -34,10 +29,7 @@ function normalizeScore(
       chartType: chartTypeToCode(score.musicType),
       difficulty: difficultyToCode(score.difficulty),
     },
-    scoreValue: score.achievement,
-    secondaryScore: score.dxScore,
-    comboStatus: comboStatusToCode(score.fc),
-    syncStatus: syncStatusToCode(score.fs),
+    ...fromMaimaiScore(score),
     clearStatus: 0,
   };
 }

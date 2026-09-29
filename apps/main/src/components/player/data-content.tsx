@@ -3,7 +3,7 @@
 import { useGame } from "@/components/providers/game-provider";
 import { supportsGameFeature } from "@/lib/games/frontend";
 import type { GameSnapshotData } from "@/lib/games/player-view";
-import { toMaimaiPlayerSnapshot } from "@/lib/games/maimai/legacy-view";
+import { toMaimaiSnapshot } from "@/lib/games/maimai/legacy-view";
 import { ProfilePrivacySettings, Region } from "@/lib/types";
 import { Sidebar, SidebarItem } from "@tomomai/ui";
 import { BarChart, Clock, Code, Database, Heart, Image as ImageIcon, Loader2, Map, Music, TrendingUp, User, Images } from "lucide-react";
@@ -86,7 +86,7 @@ export function DataContent({
   flags,
 }: DataContentProps) {
   const game = useGame();
-  const maimaiSnapshot = game.id === "maimai" && selectedSnapshotData ? toMaimaiPlayerSnapshot(selectedSnapshotData) : null;
+  const maimaiSnapshot = game.id === "maimai" && selectedSnapshotData ? toMaimaiSnapshot(selectedSnapshotData) : null;
   const t = useTranslations();
   const searchParams = useSearchParams();
   const isDesktop = useMediaQuery("(min-width: 768px)", { initializeWithValue: false });

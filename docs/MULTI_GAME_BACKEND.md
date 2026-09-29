@@ -75,6 +75,16 @@ also stores the rating selection in `snapshot_rankings` for games with the
 (the API B50 scope, the Discord profile summary and rating history) read that
 selection back and only recompute chart ratings.
 
+Queries return canonical code rows. Snapshot reads select
+`gameSnapshotColumns` in `server/queries/snapshots.ts`, the public header, and
+keep the internal snapshot id inside the query module. `fetchSnapshotRankings`
+reaches a stored selection through the owner and the public snapshot id. The
+maimai string vocabulary (achievement, DX score, combo and sync keys,
+difficulty and chart type names, and the defaults for missing header fields)
+is produced only by `lib/games/maimai/legacy-view.ts`, for the maimai UI, the
+snapshot export and render tokens. Its `fromMaimaiScore` is the one reverse
+mapping, used when normalizing scraped scores.
+
 Recents carry optional game-specific `details`, stored in the recent row's
 metadata, without requiring maimai DX scores or map state. Albums are maimai
 enrichment gated by the `albums` capability. The maimai score source's

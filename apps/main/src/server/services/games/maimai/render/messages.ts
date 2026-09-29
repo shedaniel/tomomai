@@ -11,20 +11,13 @@
  */
 
 import "server-only";
-import { codeToComboStatus, codeToSyncStatus, codeToTitleType } from "@/lib/games/maimai/codes";
 import { db } from "@/lib/db";
-import {
-  parentSong,
-  scoreData,
-  snapshotRankings,
-  songs,
-  user,
-  userSnapshots,
-} from "@/lib/db/schema-pg";
-import { formatSongInstanceId } from "@/lib/catalog/song-instance-id";
-import { and, eq, sql } from "drizzle-orm";
+import { user, userSnapshots } from "@/lib/db/schema-pg";
+import { and, eq } from "drizzle-orm";
 import type { Region } from "@/lib/types";
-import type { VersionId } from "@/lib/games/maimai/versions";
+import type { GamePlayerScore, GameSnapshot } from "@/lib/games/player-view";
+import { toMaimaiResult, toMaimaiSnapshotHeader } from "@/lib/games/maimai/legacy-view";
+import { fetchSnapshotRankings, gameSnapshotColumns } from "@/server/queries/snapshots";
 import {
   getReservedGameSnapshot,
   RESERVED_USERNAMES,
@@ -33,8 +26,6 @@ import { prepareCreditData } from "./credit-data";
 import { prepareDailyPlaysData } from "./daily-plays-data";
 import type {
   ChartRecord,
-  FullCombo,
-  FullSync,
   RenderHeader,
   RenderMessage,
   TrackRecord,
@@ -44,6 +35,28 @@ const DEFAULT_TTL = 300;
 
 function expFromTtl(ttl: number): number {
   return Math.floor(Date.now() / 1000) + ttl;
+}
+
+function renderHeader(snapshot: GameSnapshot, region: Region, scale: 1 | 2, exp: number): RenderHeader {
+  const header = toMaimaiSnapshotHeader(snapshot);
+  return {
+    scale,
+    exp,
+    gameVersion: header.gameVersion,
+    region,
+    rating: header.rating,
+    displayName: header.displayName,
+    iconUrl: header.iconUrl,
+    title: header.title,
+    titleType: header.titleType,
+    classRankUrl: header.classRankUrl,
+    courseRankUrl: header.courseRankUrl,
+  };
+}
+
+function chartRecord(score: Pick<GamePlayerScore, "songId" | "scoreValue" | "secondaryScore" | "comboStatus" | "syncStatus">): ChartRecord {
+  const { achievement, fc, fs } = toMaimaiResult(score);
+  return { songId: score.songId, achievement, fc, fs };
 }
 
 // ---- Export image ----
@@ -68,67 +81,34 @@ export async function buildExportImageMessage(opts: {
     if (!reserved) {
       return { ok: false, status: 404, error: "Reserved profile not found" };
     }
-    const { snapshot } = reserved;
-    const header: RenderHeader = {
-      scale,
-      exp,
-      gameVersion: snapshot.gameVersion,
-      region,
-      rating: snapshot.rating,
-      displayName: snapshot.displayName,
-      iconUrl: snapshot.iconUrl ?? "",
-      title: snapshot.title ?? "",
-      titleType: codeToTitleType(snapshot.titleType ?? 0),
-      classRankUrl: snapshot.classRankUrl ?? "",
-      courseRankUrl: snapshot.courseRankUrl ?? "",
-    };
-    const charts: ChartRecord[] = reserved.songs.map((s) => ({
-      songId: s.songId,
-      achievement: s.scoreValue,
-      fc: codeToComboStatus(s.comboStatus),
-      fs: codeToSyncStatus(s.syncStatus),
-    }));
     return {
       ok: true,
       message: {
         route: "export-image",
-        header,
-        payload: { visitableProfileAt: username, charts },
+        header: renderHeader(reserved.snapshot, region, scale, exp),
+        payload: { visitableProfileAt: username, charts: reserved.songs.map(chartRecord) },
       },
     };
   }
 
   // ---- normal DB path ----
-  const snapshot = await db
-    .select()
+  const [row] = await db
+    .select({ userId: userSnapshots.userId, region: userSnapshots.region, snapshot: gameSnapshotColumns })
     .from(userSnapshots)
     .where(and(eq(userSnapshots.game, "maimai"), eq(userSnapshots.publicId, snapshotId)))
     .limit(1);
 
-  if (snapshot.length === 0) {
+  if (!row) {
     return { ok: false, status: 404, error: "Snapshot not found" };
   }
 
-  const [userRow, scoreRows] = await Promise.all([
+  const [userRow, rankings] = await Promise.all([
     db
       .select({ username: user.username, publishProfile: user.publishProfile })
       .from(user)
-      .where(eq(user.id, snapshot[0].userId))
+      .where(eq(user.id, row.userId))
       .limit(1),
-    db
-      .select({
-        songId: parentSong.publicId,
-        songRegion: songs.region,
-        songVersion: songs.gameVersion,
-        achievement: scoreData.scoreValue,
-        fc: sql`${scoreData.comboStatus}`.mapWith(codeToComboStatus).as("fc"),
-        fs: sql`${scoreData.syncStatus}`.mapWith(codeToSyncStatus).as("fs"),
-      })
-      .from(snapshotRankings)
-      .innerJoin(scoreData, eq(snapshotRankings.scoreId, scoreData.id))
-      .innerJoin(songs, eq(scoreData.songId, songs.id))
-      .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
-      .where(and(eq(snapshotRankings.game, "maimai"), eq(snapshotRankings.snapshotId, snapshot[0].id))),
+    fetchSnapshotRankings("maimai", row.userId, row.snapshot),
   ]);
 
   if (userRow.length === 0) {
@@ -138,33 +118,12 @@ export async function buildExportImageMessage(opts: {
   const visitableProfileAt =
     userRow[0].publishProfile && userRow[0].username ? userRow[0].username : null;
 
-  const header: RenderHeader = {
-    scale,
-    exp,
-    gameVersion: snapshot[0].gameVersion as VersionId,
-    region: snapshot[0].region,
-    rating: snapshot[0].rating,
-    displayName: snapshot[0].displayName,
-    iconUrl: snapshot[0].iconUrl,
-    title: snapshot[0].title,
-    titleType: codeToTitleType(snapshot[0].titleType),
-    classRankUrl: snapshot[0].classRankUrl ?? "",
-    courseRankUrl: snapshot[0].courseRankUrl ?? "",
-  };
-
-  const charts: ChartRecord[] = scoreRows.map((r) => ({
-    songId: formatSongInstanceId(r.songId, r.songRegion, r.songVersion),
-    achievement: r.achievement,
-    fc: r.fc as FullCombo,
-    fs: r.fs as FullSync,
-  }));
-
   return {
     ok: true,
     message: {
       route: "export-image",
-      header,
-      payload: { visitableProfileAt, charts },
+      header: renderHeader(row.snapshot, row.region, scale, exp),
+      payload: { visitableProfileAt, charts: [...rankings.newScores, ...rankings.oldScores].map(chartRecord) },
     },
   };
 }
@@ -190,75 +149,64 @@ export async function buildLastCreditMessage(opts: {
     return { ok: false, status: 404, error: result.error };
   }
 
-  const header: RenderHeader = {
-    scale,
-    exp,
-    gameVersion: result.snapshot.gameVersion as number,
-    region,
-    rating: result.snapshot.rating,
-    displayName: result.snapshot.displayName,
-    iconUrl: result.snapshot.iconUrl,
-    title: result.snapshot.title,
-    titleType: result.snapshot.titleType,
-    classRankUrl: result.snapshot.classRankUrl,
-    courseRankUrl: result.snapshot.courseRankUrl,
-  };
-
-  const tracks: TrackRecord[] = result.credit.tracks.map((t) => ({
-    songId: t.songPublicId,
-    achievement: t.achievement,
-    fc: t.fc,
-    fs: t.fs,
-    dxScore: t.dxScore,
-    maxDxScore: t.maxDxScore,
-    details: t.details
-      ? {
-          fastCount: t.details.fastCount,
-          lateCount: t.details.lateCount,
-          tap: {
-            criticalPerfect: t.details.tapCPerfect,
-            perfect: t.details.tapPerfect,
-            great: t.details.tapGreat,
-            good: t.details.tapGood,
-            miss: t.details.tapMiss,
-          },
-          hold: {
-            criticalPerfect: t.details.holdCPerfect,
-            perfect: t.details.holdPerfect,
-            great: t.details.holdGreat,
-            good: t.details.holdGood,
-            miss: t.details.holdMiss,
-          },
-          slide: {
-            criticalPerfect: t.details.slideCPerfect,
-            perfect: t.details.slidePerfect,
-            great: t.details.slideGreat,
-            good: t.details.slideGood,
-            miss: t.details.slideMiss,
-          },
-          touch: {
-            criticalPerfect: t.details.touchCPerfect,
-            perfect: t.details.touchPerfect,
-            great: t.details.touchGreat,
-            good: t.details.touchGood,
-            miss: t.details.touchMiss,
-          },
-          break: {
-            criticalPerfect: t.details.breakCPerfect,
-            perfect: t.details.breakPerfect,
-            great: t.details.breakGreat,
-            good: t.details.breakGood,
-            miss: t.details.breakMiss,
-          },
-        }
-      : null,
-  }));
+  const tracks: TrackRecord[] = result.credit.tracks.map((t) => {
+    const { achievement, dxScore, fc, fs } = toMaimaiResult(t);
+    return {
+      songId: t.songId,
+      achievement,
+      fc,
+      fs,
+      dxScore,
+      maxDxScore: t.maxDxScore,
+      details: t.details
+        ? {
+            fastCount: t.details.fastCount,
+            lateCount: t.details.lateCount,
+            tap: {
+              criticalPerfect: t.details.tapCPerfect,
+              perfect: t.details.tapPerfect,
+              great: t.details.tapGreat,
+              good: t.details.tapGood,
+              miss: t.details.tapMiss,
+            },
+            hold: {
+              criticalPerfect: t.details.holdCPerfect,
+              perfect: t.details.holdPerfect,
+              great: t.details.holdGreat,
+              good: t.details.holdGood,
+              miss: t.details.holdMiss,
+            },
+            slide: {
+              criticalPerfect: t.details.slideCPerfect,
+              perfect: t.details.slidePerfect,
+              great: t.details.slideGreat,
+              good: t.details.slideGood,
+              miss: t.details.slideMiss,
+            },
+            touch: {
+              criticalPerfect: t.details.touchCPerfect,
+              perfect: t.details.touchPerfect,
+              great: t.details.touchGreat,
+              good: t.details.touchGood,
+              miss: t.details.touchMiss,
+            },
+            break: {
+              criticalPerfect: t.details.breakCPerfect,
+              perfect: t.details.breakPerfect,
+              great: t.details.breakGreat,
+              good: t.details.breakGood,
+              miss: t.details.breakMiss,
+            },
+          }
+        : null,
+    };
+  });
 
   return {
     ok: true,
     message: {
       route: "last-credit",
-      header,
+      header: renderHeader(result.snapshot, region, scale, exp),
       payload: {
         playedAt: Math.floor(result.credit.playedAt.getTime() / 1000),
         tracks,
@@ -288,33 +236,12 @@ export async function buildDailyPlaysMessage(opts: {
     return { ok: false, status: 404, error: result.error };
   }
 
-  const header: RenderHeader = {
-    scale,
-    exp,
-    gameVersion: result.snapshot.gameVersion as number,
-    region,
-    rating: result.snapshot.rating,
-    displayName: result.snapshot.displayName,
-    iconUrl: result.snapshot.iconUrl,
-    title: result.snapshot.title,
-    titleType: result.snapshot.titleType,
-    classRankUrl: result.snapshot.classRankUrl,
-    courseRankUrl: result.snapshot.courseRankUrl,
-  };
-
-  const plays: ChartRecord[] = result.plays.map((p) => ({
-    songId: p.songPublicId,
-    achievement: p.achievement,
-    fc: p.fc,
-    fs: p.fs,
-  }));
-
   return {
     ok: true,
     message: {
       route: "daily-plays",
-      header,
-      payload: { day: result.day, plays },
+      header: renderHeader(result.snapshot, region, scale, exp),
+      payload: { day: result.day, plays: result.plays.map(chartRecord) },
     },
   };
 }

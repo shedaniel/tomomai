@@ -2,8 +2,8 @@ import type { GameSnapshotData } from "@/lib/games/player-view";
 import { rateScores, sortByRating } from "@/lib/games/ranking";
 import { maimaiCompatibilityGameSchema, regionSchema } from "@/lib/games/schema";
 import { gameContextInput, validateGameInput } from "./game-input";
-import { deleteUserSnapshot, fetchSnapshotData, fetchUserSnapshots } from "@/server/queries/snapshots";
-import { codeToChartType, codeToComboStatus, codeToDifficulty, codeToSyncStatus, codeToTitleType } from "@/lib/games/maimai/codes";
+import { deleteUserSnapshot, fetchSnapshotData, fetchUserSnapshots, gameSnapshotColumns } from "@/server/queries/snapshots";
+import { toMaimaiChart, toMaimaiResult, toMaimaiSnapshotHeader } from "@/lib/games/maimai/legacy-view";
 import { db } from '@/lib/db';
 import { parentSong, scoreData, snapshotScores, songs, userSnapshots } from '@/lib/db/schema-pg';
 import { fetchRatingHistory } from "@/server/queries/rating-history";
@@ -61,8 +61,8 @@ export const snapshotsRouter = router({
       snapshotId: z.string(),
     }))
     .query(async ({ ctx, input }) => {
-      const snapshot = await db
-        .select()
+      const [row] = await db
+        .select({ id: userSnapshots.id, region: userSnapshots.region, snapshot: gameSnapshotColumns })
         .from(userSnapshots)
         .where(
           and(
@@ -73,7 +73,7 @@ export const snapshotsRouter = router({
         )
         .limit(1);
 
-      if (snapshot.length === 0) {
+      if (!row) {
         throw new TRPCError({
           code: 'NOT_FOUND',
           message: 'Snapshot not found or access denied',
@@ -99,41 +99,46 @@ export const snapshotsRouter = router({
         .innerJoin(scoreData, eq(snapshotScores.scoreId, scoreData.id))
         .innerJoin(songs, eq(scoreData.songId, songs.id))
         .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
-        .where(and(eq(snapshotScores.game, input.game), eq(snapshotScores.snapshotId, snapshot[0].id)))
+        .where(and(eq(snapshotScores.game, input.game), eq(snapshotScores.snapshotId, row.id)))
         .orderBy(parentSong.songName, parentSong.difficulty);
 
+      const header = toMaimaiSnapshotHeader(row.snapshot);
       return {
         metadata: {
-          id: snapshot[0].publicId,
-          displayName: snapshot[0].displayName,
-          trophyType: codeToTitleType(snapshot[0].titleType),
-          trophy: snapshot[0].title,
-          region: snapshot[0].region,
-          fetchedAt: snapshot[0].fetchedAt,
-          gameVersion: getVersion(input.game, snapshot[0].gameVersion)?.name ?? String(snapshot[0].gameVersion),
-          rating: snapshot[0].rating,
-          stars: snapshot[0].stars ?? 0,
-          courseRankUrl: snapshot[0].courseRankUrl ?? "",
-          classRankUrl: snapshot[0].classRankUrl ?? "",
-          totalPlayCount: snapshot[0].totalPlayCount,
-          currentVersionPlayCount: snapshot[0].versionPlayCount,
+          id: header.id,
+          displayName: header.displayName,
+          trophyType: header.titleType,
+          trophy: header.title,
+          region: row.region,
+          fetchedAt: header.fetchedAt,
+          gameVersion: getVersion(input.game, header.gameVersion)?.name ?? String(header.gameVersion),
+          rating: header.rating,
+          stars: header.stars,
+          courseRankUrl: header.courseRankUrl,
+          classRankUrl: header.classRankUrl,
+          totalPlayCount: header.totalPlayCount,
+          currentVersionPlayCount: header.versionPlayCount,
         },
-        songs: sortByRating(rateScores(input.game, scores, snapshot[0].gameVersion)).map(score => ({
-          songName: score.songName,
-          artist: score.artist,
-          cover: score.cover,
-          difficulty: codeToDifficulty(score.difficultyCode),
-          level: score.level,
-          levelPrecise: score.levelPrecise,
-          type: codeToChartType(score.typeCode),
-          gameVersion: getVersion(input.game, score.addedVersion)?.shortName ?? String(score.addedVersion),
-          achievement: score.scoreValue,
-          dxScore: score.secondaryScore,
-          fc: codeToComboStatus(score.comboStatus),
-          fs: codeToSyncStatus(score.syncStatus),
-          rating: score.rating,
-        })),
-        iconUrl: snapshot[0].iconUrl,
+        songs: sortByRating(rateScores(input.game, scores, header.gameVersion)).map(score => {
+          const { difficulty, type } = toMaimaiChart(score);
+          const { achievement, dxScore, fc, fs } = toMaimaiResult(score);
+          return {
+            songName: score.songName,
+            artist: score.artist,
+            cover: score.cover,
+            difficulty,
+            level: score.level,
+            levelPrecise: score.levelPrecise,
+            type,
+            gameVersion: getVersion(input.game, score.addedVersion)?.shortName ?? String(score.addedVersion),
+            achievement,
+            dxScore,
+            fc,
+            fs,
+            rating: score.rating,
+          };
+        }),
+        iconUrl: header.iconUrl,
       };
     }),
 

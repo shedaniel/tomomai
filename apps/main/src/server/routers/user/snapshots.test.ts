@@ -1,7 +1,6 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
-import { getTableColumns } from "drizzle-orm";
-import { userSnapshots } from "@/lib/db/schema-pg";
+import type { userSnapshots } from "@/lib/db/schema-pg";
 
 const db = vi.hoisted(() => ({ statements: [] as { sql: string; params: unknown[] }[], responses: [] as unknown[][][] }));
 vi.mock("@/lib/db", async () => {
@@ -21,6 +20,10 @@ vi.mock("@/lib/profile-cache", () => ({ revalidatePublicProfileForUser: services
 vi.mock("@/server/services/games/snapshot-copy", () => ({ copySnapshotToVersion: services.copy }));
 
 import { snapshotsRouter } from "./snapshots";
+import { gameSnapshotColumns } from "@/server/queries/snapshots";
+
+const exportLookupRow = (snapshot: Partial<typeof userSnapshots.$inferSelect>) =>
+  [snapshot.id, snapshot.region, ...Object.keys(gameSnapshotColumns).map(column => snapshot[column as keyof typeof snapshot] ?? null)];
 
 beforeEach(() => {
   db.statements = [];
@@ -59,7 +62,7 @@ it.each([
     versionPlayCount: 0, totalPlayCount: 0, iconUrl: "", displayName: "Player", title: "Title", titleType: 0,
   };
   db.responses.push(
-    [Object.keys(getTableColumns(userSnapshots)).map(column => snapshot[column as keyof typeof snapshot] ?? null)],
+    [exportLookupRow(snapshot)],
     addedVersions.map((addedVersion, index) => [`Song ${index}`, "Artist", "", 3, "13", 130, 0, addedVersion, 1000000 - index, 0, 0, 0]),
   );
   const exported = await caller().exportSnapshotData({ game: "maimai", snapshotId: "snapshot" });
@@ -73,7 +76,7 @@ it("exports scores in rating order with each chart's integer rating and legacy k
     versionPlayCount: 0, totalPlayCount: 0, iconUrl: "", displayName: "Player", title: "Title", titleType: 0,
   };
   db.responses.push(
-    [Object.keys(getTableColumns(userSnapshots)).map(column => snapshot[column as keyof typeof snapshot] ?? null)],
+    [exportLookupRow(snapshot)],
     [
       ["C", "Artist", "", 3, "13", 131, 0, 12, 1000000, 0, 0, 0],
       ["B", "Artist", "", 3, "13", 130, 1, 12, 1005000, 0, 0, 0],
