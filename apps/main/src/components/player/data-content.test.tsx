@@ -61,7 +61,7 @@ async function renderTab(initialTab: string) {
       </GameProvider>
     </NextIntlClientProvider>,
   ));
-  await act(async () => { await new Promise(resolve => setTimeout(resolve, 50)); });
+  await act(() => vi.dynamicImportSettled());
 }
 
 it("renders stored events with missing progress on the map tab", async () => {
