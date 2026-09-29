@@ -30,14 +30,6 @@
     "experiments": "实验",
     "region": "地区",
     "comingSoon": "敬请期待...",
-    "difficulties": {
-      "basic": "Basic",
-      "advanced": "Advanced",
-      "expert": "Expert",
-      "master": "Master",
-      "remaster": "Re:Master",
-      "utage": "Utage"
-    },
     "back": "返回",
     "clipboardError": "复制到剪贴板失败",
     "selectAnOption": "选择选项",

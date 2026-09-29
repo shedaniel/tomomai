@@ -30,14 +30,6 @@
     "experiments": "実験",
     "region": "地域",
     "comingSoon": "準備中...",
-    "difficulties": {
-      "basic": "Basic",
-      "advanced": "Advanced",
-      "expert": "Expert",
-      "master": "Master",
-      "remaster": "Re:Master",
-      "utage": "Utage"
-    },
     "back": "戻る",
     "clipboardError": "クリップボードへのコピーに失敗しました",
     "selectAnOption": "オプションを選択",

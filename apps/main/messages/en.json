@@ -40,14 +40,6 @@
       "fri": "Fri",
       "sat": "Sat"
     },
-    "difficulties": {
-      "basic": "Basic",
-      "advanced": "Advanced",
-      "expert": "Expert",
-      "master": "Master",
-      "remaster": "Re:Master",
-      "utage": "Utage"
-    },
     "back": "Back",
     "clipboardError": "Failed to copy to clipboard",
     "selectAnOption": "Select an option",

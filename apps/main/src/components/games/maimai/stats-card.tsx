@@ -218,7 +218,7 @@ function PlatesGrid({ data, selectedVersion, region, snapshotId }: PlatesGridPro
                   const total = totalSongs[difficulty] || 0;
                   const percentage = total > 0 ? (count / total) * 100 : 0;
                   const isComplete = count === total && total > 0;
-                  const diffColor = getGameDifficulty("maimai", difficultyToCode(difficulty)).classes;
+                  const { classes: diffColor, label: difficultyLabel } = getGameDifficulty("maimai", difficultyToCode(difficulty));
                   const isExpanded = expandedCell?.plateType === plateType && expandedCell?.difficulty === difficulty;
                   const notMeetingCount = total - count;
 
@@ -242,7 +242,7 @@ function PlatesGrid({ data, selectedVersion, region, snapshotId }: PlatesGridPro
                     >
                       <div className="text-center space-y-1 sm:space-y-2">
                         <div className={`text-[10px] sm:text-xs font-bold uppercase ${diffColor.text}`}>
-                          {t(`common.difficulties.${difficulty}`)}
+                          {difficultyLabel}
                         </div>
                         <div className="text-xl sm:text-2xl font-bold">
                           {count}
@@ -485,7 +485,7 @@ export function StatsCard({ region, snapshotId }: StatsCardProps) {
                 <SelectItem value="all">{t('playerStats.allDifficulties')}</SelectItem>
                 {MAIMAI_CODES.difficulty.map(difficulty => (
                   <SelectItem key={difficulty} value={difficulty}>
-                    {t(`common.difficulties.${difficulty}`)}
+                    {getGameDifficulty("maimai", difficultyToCode(difficulty)).label}
                   </SelectItem>
                 ))}
               </SelectContent>

@@ -38,14 +38,6 @@
       "fri": "금",
       "sat": "토"
     },
-    "difficulties": {
-      "basic": "Basic",
-      "advanced": "Advanced",
-      "expert": "Expert",
-      "master": "Master",
-      "remaster": "Re:Master",
-      "utage": "Utage"
-    },
     "back": "뒤로",
     "selectAnOption": "옵션 선택",
     "ok": "확인",
