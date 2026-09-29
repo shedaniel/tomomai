@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import type { Region } from '@/lib/types';
 import { renderRedirectUrl } from '@/lib/render-token';
 import { buildExportImageMessage } from '@/server/services/games/maimai/render/messages';
-import { getEnabledRegions } from '@/lib/enabled-regions';
+import { gameErrorResponse } from '@/lib/api/game-context';
+import { resolveGameContext } from '@/lib/games/registry';
+import { regionSchema } from '@/lib/games/schema';
 import { z } from 'zod';
 
 export const dynamic = "force-dynamic";
@@ -10,7 +11,7 @@ export const dynamic = "force-dynamic";
 const searchParams = z.object({
   snapshotId: z.string().min(1),
   username: z.string().optional(),
-  region: z.enum(getEnabledRegions()).optional(),
+  region: regionSchema.optional(),
 });
 
 /**
@@ -31,11 +32,18 @@ export async function GET(request: NextRequest) {
     );
   }
   const { snapshotId, username, region } = parsed.data;
+  if (region) {
+    try {
+      resolveGameContext("maimai", region, "rating");
+    } catch (error) {
+      return gameErrorResponse(error);
+    }
+  }
 
   const result = await buildExportImageMessage({
     snapshotId,
     username,
-    region: region as Region | undefined,
+    region,
     scale: 2,
   });
   if (!result.ok) {

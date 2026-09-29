@@ -1,14 +1,12 @@
-import { maimaiCompatibilityGameSchema } from "@/lib/games/schema";
+import { maimaiCompatibilityGameSchema, regionSchema } from "@/lib/games/schema";
 import { db } from '@/lib/db';
 import { userSnapshots } from '@/lib/db/schema-pg';
 import { protectedProcedure, publicProcedure, router } from '@/lib/trpc';
 import { and, desc, eq } from 'drizzle-orm';
 import { z } from 'zod';
-import { getEnabledRegions } from '@/lib/enabled-regions';
 import { fetchPlateSongs } from '@/server/services/games/maimai/plates';
 import { resolvePublicSnapshotUserId } from '@/server/queries/public-access';
-
-const regionSchema = z.enum(getEnabledRegions());
+import { validateGameInput } from './game-input';
 
 export const platesRouter = router({
   getPlateSongs: protectedProcedure
@@ -19,6 +17,7 @@ export const platesRouter = router({
       plateType: z.enum(["kiwami", "shou", "shin", "maimai"]),
     }))
     .query(async ({ ctx, input }) => {
+      validateGameInput(input, "plates");
       const snapshot = await db
         .select({ id: userSnapshots.id, gameVersion: userSnapshots.gameVersion })
         .from(userSnapshots)
@@ -54,6 +53,7 @@ export const platesRouter = router({
       plateType: z.enum(["kiwami", "shou", "shin", "maimai"]),
     }))
     .query(async ({ input }) => {
+      validateGameInput(input, "plates");
       const { snapshotInternalId, gameVersion } = await resolvePublicSnapshotUserId(input.game, input.snapshotId);
 
       return await fetchPlateSongs(

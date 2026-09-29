@@ -6,13 +6,15 @@ import { and, eq } from 'drizzle-orm';
 import { renderRedirectUrl } from '@/lib/render-token';
 import { buildDailyPlaysMessage } from '@/server/services/games/maimai/render/messages';
 import { requestLogger } from '@/lib/request-logger';
-import { getEnabledRegions } from '@/lib/enabled-regions';
+import { gameErrorResponse } from '@/lib/api/game-context';
+import { resolveGameContext } from '@/lib/games/registry';
+import { regionSchema } from '@/lib/games/schema';
 import { z } from 'zod';
 
 export const dynamic = "force-dynamic";
 
 const searchParams = z.object({
-  region: z.enum(getEnabledRegions()),
+  region: regionSchema,
   snapshotId: z.string().min(1).optional(),
   day: z.iso.date().optional(),
 });
@@ -32,6 +34,11 @@ export async function GET(request: NextRequest) {
     );
   }
   const { region, snapshotId, day } = parsed.data;
+  try {
+    resolveGameContext("maimai", region, "recents");
+  } catch (error) {
+    return gameErrorResponse(error);
+  }
 
   let userId: string;
   if (snapshotId) {

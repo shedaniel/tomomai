@@ -1,4 +1,4 @@
-import { maimaiCompatibilityGameSchema } from "@/lib/games/schema";
+import { maimaiCompatibilityGameSchema, regionSchema } from "@/lib/games/schema";
 import { codeToChartType, codeToDifficulty } from "@/lib/games/maimai/codes";
 import { db } from '@/lib/db';
 import { scoreData, snapshotScores, songs, userSnapshots } from '@/lib/db/schema-pg';
@@ -6,10 +6,8 @@ import { publicProcedure, router } from '@/lib/trpc';
 import { and, desc, eq, gt, gte, inArray, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { unstable_cache } from 'next/cache';
-import { getEnabledRegions } from '@/lib/enabled-regions';
 import { fetchTourEvents, fetchTourEventsByNames } from '@/server/services/games/maimai/events/queries';
-
-const regionSchema = z.enum(getEnabledRegions());
+import { validateGameInput } from './user/game-input';
 
 export const dbRouter = router({
   getEventStepsByNames: publicProcedure
@@ -30,6 +28,7 @@ export const dbRouter = router({
       region: regionSchema,
     }))
     .query(async ({ input }) => {
+      validateGameInput(input, "catalog");
       const getCachedStats = unstable_cache(
         async (region: typeof input.region) => {
           // 1. Get latest snapshot for each user in the region
@@ -357,6 +356,7 @@ export const dbRouter = router({
       window: z.enum(['all', '90d', '30d', '7d']).default('7d'),
     }))
     .query(async ({ input }) => {
+      validateGameInput(input, "catalog");
       const getCached = unstable_cache(
         async (region: typeof input.region, window: typeof input.window) => {
           const days = window === '90d' ? 90 : window === '30d' ? 30 : window === '7d' ? 7 : null;

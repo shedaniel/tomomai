@@ -9,9 +9,10 @@ import { Button } from "@tomomai/ui";
 import { Header } from "@/components/header";
 import { MinigameCards } from "@/components/games/maimai/minigame-cards";
 import { useAuthDialog } from "@/components/auth/auth-dialog-provider";
+import { useGame } from "@/components/providers/game-provider";
 import { Link } from "@/i18n/navigation";
 import { getTransition } from "@/lib/animation-constants";
-import { isCNExclusive } from "@/lib/enabled-regions";
+import { isGameCnExclusive } from "@/lib/games/frontend";
 import type { SignupRequirements } from "@/lib/signup";
 import { trpc } from "@/lib/trpc-client";
 
@@ -46,7 +47,7 @@ export function LandingPage({ signInOptions }: LandingPageProps) {
   const t = useTranslations();
   const utils = trpc.useUtils();
   const { openAuthDialog } = useAuthDialog();
-  const cnMode = isCNExclusive();
+  const cnMode = isGameCnExclusive(useGame());
 
   useEffect(() => {
     utils.user.getSignInOptions.setData(undefined, signInOptions);

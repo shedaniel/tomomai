@@ -1,13 +1,12 @@
 import type { GameSnapshotData } from "@/lib/games/player-view";
 import { getGame } from "@/lib/games/registry";
 import { RANKING_BUCKET_CODE } from "@/lib/games/codes";
-import { maimaiCompatibilityGameSchema } from "@/lib/games/schema";
+import { maimaiCompatibilityGameSchema, regionSchema } from "@/lib/games/schema";
 import { gameContextInput, validateGameInput } from "./game-input";
 import { deleteUserSnapshot, fetchSnapshotData, fetchUserSnapshots } from "@/server/queries/snapshots";
 import { codeToChartType, codeToComboStatus, codeToDifficulty, codeToSyncStatus, codeToTitleType } from "@/lib/games/maimai/codes";
 import { db } from '@/lib/db';
 import { parentSong, scoreData, snapshotRankings, snapshotScores, songs, userSnapshots } from '@/lib/db/schema-pg';
-import { getEnabledRegions } from '@/lib/enabled-regions';
 import { fetchRatingHistory } from "@/server/queries/rating-history";
 import { buildChartResolution, upsertScoreData, scoreDataKey, type ScoreDataValues } from "@/server/services/games/score-storage";
 import { getVersionInfo, getAvailableVersions } from "@/lib/games/versions";
@@ -18,8 +17,6 @@ import { and, count, eq, sql } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
 import { z } from 'zod';
 import { revalidatePublicProfileForUser } from '@/lib/profile-cache';
-
-const regionSchema = z.enum(getEnabledRegions());
 
 export const snapshotsRouter = router({
   getSnapshots: protectedProcedure
@@ -137,6 +134,7 @@ export const snapshotsRouter = router({
       currentVersion: z.number(),
     }))
     .query(async ({ input }) => {
+      validateGameInput(input, "scores");
       const availableVersions = getAvailableVersions(input.game, input.region);
       const otherVersions = availableVersions.filter(v => v.id !== input.currentVersion);
 
@@ -172,6 +170,7 @@ export const snapshotsRouter = router({
       targetVersion: z.number(),
     }))
     .mutation(async ({ ctx, input }) => {
+      validateGameInput(input, "scores");
       const sourceSnapshot = await db
         .select()
         .from(userSnapshots)

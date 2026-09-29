@@ -20,7 +20,8 @@ import { PolicyDialog } from "@/components/policy-dialog";
 import { useLocale } from "@/components/providers/locale-provider";
 import { authClient, signIn } from "@/lib/auth-client";
 import { getTransition } from "@/lib/animation-constants";
-import { isCNExclusive, isRegionEnabled } from "@/lib/enabled-regions";
+import { useGame } from "@/components/providers/game-provider";
+import { isGameCnExclusive } from "@/lib/games/frontend";
 import { trpc } from "@/lib/trpc-client";
 import { cn } from "@/lib/utils";
 
@@ -152,7 +153,7 @@ function SignInPanel({
   const { data: options } = trpc.user.getSignInOptions.useQuery(undefined, { staleTime: Infinity });
   const { pending, start } = useSocialSignIn(callbackURL, onError);
   const [passkeyPending, setPasskeyPending] = useState(false);
-  const cnMode = isCNExclusive();
+  const cnMode = isGameCnExclusive(useGame());
   const busy = pending !== null || passkeyPending;
 
   const handlePasskey = async () => {
@@ -223,7 +224,8 @@ function SignUpPanel({
   const [privacyChecked, setPrivacyChecked] = useState(false);
   const [policyOpen, setPolicyOpen] = useState<"tos" | "privacy" | null>(null);
   const [hasInvite] = useState(hasPendingInviteCookie);
-  const cnMode = isCNExclusive();
+  const game = useGame();
+  const cnMode = isGameCnExclusive(game);
 
   const signup = options?.signup;
   const blockedByInvite = !!signup?.inviteRequired && !hasInvite;
@@ -265,7 +267,7 @@ function SignUpPanel({
               <Dot className="shrink-0 text-primary" size={16} strokeWidth={3} fill="true" />
               {cnMode ? (
                 <span>支持华立科技舞萌之覆盖地区<br />原则上仅限中国大陆地区访问</span>
-              ) : isRegionEnabled("cn") ? (
+              ) : game.regions.includes("cn") ? (
                 <span>支持 maimai 日本版及国际版、以及华立科技舞萌之覆盖地区<br /><span className="underline">本站为境外站点，中国大陆地区访问速度可能较慢且不稳定</span>，境内版 tomomai.cn 正在建设中</span>
               ) : (
                 <span>支持 maimai 日本版及国际版覆盖地区<br />原则上暂不支持中国大陆地区访问</span>

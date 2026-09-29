@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { GAME_SERVER_MODULES } from "../registry";
 import type { GameFetchResult, ScoreFetchContext } from "../types";
 import type { FetchedMaimaiData } from "./scores/types";
@@ -19,6 +19,7 @@ vi.mock("@/lib/db", () => ({ db: {} }));
 beforeEach(() => {
   vi.clearAllMocks();
 });
+afterEach(() => vi.unstubAllEnvs());
 
 describe("maimai score source", () => {
   it("rejects a stored CN single-use token but accepts a newly supplied one", () => {
@@ -56,5 +57,10 @@ describe("maimai reserved profiles", () => {
   it("resolve reserved usernames case-insensitively and nothing else", async () => {
     await expect(GAME_SERVER_MODULES.maimai.reserved?.user("MAX")).resolves.toMatchObject({ id: "reserved-max", publishProfile: true });
     await expect(GAME_SERVER_MODULES.maimai.reserved?.user("someone")).resolves.toBeNull();
+  });
+
+  it("keep a concrete main region when maimai has no enabled region", async () => {
+    vi.stubEnv("NEXT_PUBLIC_ENABLED_MAIMAI_REGIONS", "");
+    await expect(GAME_SERVER_MODULES.maimai.reserved?.user("maxbas")).resolves.toMatchObject({ profileMainRegion: "intl" });
   });
 });
