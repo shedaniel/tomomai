@@ -1,11 +1,11 @@
 "use client";
 
 import type { RecentPlay } from "@/server/queries/recents";
-import { formatGameScore, formatGameLevel, getGameDifficultyColors, getGameDifficultyHex, getGameChartTypeBadgeLabel, getGameChartTypeLabel, getGameStatusLabels } from "@/lib/games/presentation";
+import { formatGameScore, formatGameLevel, getGameDifficulty, getGameChartType, getGameChartTypeBadge, getGameStatusLabels } from "@/lib/games/presentation";
 import { useGameId } from "@/components/providers/game-provider";
 import { trpc } from "@/lib/trpc-client";
 import { Region } from "@/lib/types";
-import { cn, createSafeMaimaiImageUrl, getTypeBadgeUrl } from "@/lib/utils";
+import { cn, createSafeMaimaiImageUrl } from "@/lib/utils";
 import { ChevronDown, ChevronUp, Clock, Loader2, AlertCircle, CloudOff } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { RecentSongsCardSkeleton } from "./recent-songs-card.skeleton";
@@ -44,6 +44,9 @@ function RecentSongRow({ play, index, isFirst, isLast, onToggleExpand, isExpande
   const isDetailed = game === "maimai" ? play.rating !== null : play.chunithmDetails != null;
   const canExpand = game === "maimai" || isDetailed;
   const playDate = new Date(play.playedAt);
+  const difficulty = getGameDifficulty(game, play.difficultyCode);
+  const chartType = getGameChartType(game, play.typeCode);
+  const typeBadge = getGameChartTypeBadge(game, play.typeCode);
 
   return (
     <motion.div
@@ -82,7 +85,7 @@ function RecentSongRow({ play, index, isFirst, isLast, onToggleExpand, isExpande
             alt={play.songName}
             className={cn(
               "w-14 h-14 rounded ring-2 ring-offset-2 ring-offset-background object-cover",
-              getGameDifficultyColors(game, play.difficultyCode).ring,
+              difficulty.classes.ring,
             )}
             width={56}
             height={56}
@@ -93,12 +96,12 @@ function RecentSongRow({ play, index, isFirst, isLast, onToggleExpand, isExpande
             style={{
               boxShadow: "0 8px 0 0 var(--difficulty-color)",
               // @ts-ignore
-              "--difficulty-color": getGameDifficultyHex(game, play.difficultyCode),
+              "--difficulty-color": difficulty.cssVar,
             }} />
           <div
             className={cn(
               "absolute top-12 -right-1 px-1.5 py-0.5 rounded rounded-tr-none rounded-br-[8px] text-xs font-semibold text-white",
-              getGameDifficultyColors(game, play.difficultyCode).badge,
+              difficulty.classes.badge,
             )}
           >
             {formatGameLevel(game, play.levelPrecise, play.difficultyCode)}
@@ -131,13 +134,13 @@ function RecentSongRow({ play, index, isFirst, isLast, onToggleExpand, isExpande
             {play.artist}
           </p>
           <div className="flex items-center gap-1.5 mt-1.5">
-            {getGameChartTypeBadgeLabel(game, play.typeCode) && (game === "maimai" ? <img
-              src={createSafeMaimaiImageUrl(getTypeBadgeUrl(play.typeCode === 1 ? "dx" : "std"))}
-              alt={getGameChartTypeLabel(game, play.typeCode)}
+            {!chartType.implicit && (typeBadge ? <img
+              src={createSafeMaimaiImageUrl(typeBadge)}
+              alt={chartType.label}
               width={32}
               height={10}
               className="h-2.5 w-auto"
-            /> : <span className="text-xs">{getGameChartTypeLabel(game, play.typeCode)}</span>)}
+            /> : <span className="text-xs">{chartType.label}</span>)}
             {play.genre && (
               <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-secondary text-secondary-foreground font-medium truncate max-w-[120px]">
                 {play.genre}

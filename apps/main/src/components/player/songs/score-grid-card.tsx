@@ -3,15 +3,18 @@
 import { forwardRef } from "react";
 import { useGameId } from "@/components/providers/game-provider";
 import { CoverImage } from "@/components/cover-image";
-import { formatGameScore, formatGameRating, formatGameLevel, getGameDifficultyColors, getGameChartTypeLabel, getGameChartTypeBadgeLabel, getGameStatusLabels } from "@/lib/games/presentation";
+import { formatGameScore, formatGameRating, formatGameLevel, getGameDifficulty, getGameChartType, getGameChartTypeBadge, getGameStatusLabels } from "@/lib/games/presentation";
 import type { PercentileEntry } from "@/lib/games/maimai/percentile/types";
-import { cn, createSafeMaimaiImageUrl, getTypeBadgeUrl } from "@/lib/utils";
+import { cn, createSafeMaimaiImageUrl } from "@/lib/utils";
 import { ScoreHover } from "./score-hover";
 import type { DisplayScore } from "./types";
 
 // Component for rendering individual song cards in grid view
 export const SongGridCard = forwardRef<HTMLDivElement, { song: DisplayScore & { rating?: number }; percentile?: PercentileEntry } & React.HTMLAttributes<HTMLDivElement>>(({ song, percentile, ...props }, ref) => {
   const game = useGameId();
+  const difficulty = getGameDifficulty(game, song.difficultyCode);
+  const chartType = getGameChartType(game, song.typeCode);
+  const typeBadge = getGameChartTypeBadge(game, song.typeCode);
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const card = e.currentTarget;
     const rect = card.getBoundingClientRect();
@@ -70,7 +73,7 @@ export const SongGridCard = forwardRef<HTMLDivElement, { song: DisplayScore & { 
         ref={ref}
         {...props}
         className={cn("relative bg-white rounded-[8px] shadow-md transition-all duration-300 ease-out cursor-pointer ring-2",
-          getGameDifficultyColors(game, song.difficultyCode).ring,
+          difficulty.classes.ring,
           props.className
         )}
         style={{ ...props.style, aspectRatio: '16/10', transformStyle: 'preserve-3d', transform: 'perspective(1000px)' }}
@@ -93,7 +96,7 @@ export const SongGridCard = forwardRef<HTMLDivElement, { song: DisplayScore & { 
         {/* Difficulty Badge */}
         <div className={cn(
           "absolute top-[-0.5px] right-[-0.5px] px-1.5 py-0.5 rounded-tr-[8px] rounded-bl-[8px] overflow-hidden text-[10px] font-semibold text-white",
-          getGameDifficultyColors(game, song.difficultyCode).badge,
+          difficulty.classes.cardBadge,
         )}>
           {formatGameLevel(game, song.levelPrecise, song.difficultyCode)}
         </div>
@@ -104,15 +107,15 @@ export const SongGridCard = forwardRef<HTMLDivElement, { song: DisplayScore & { 
         <div className="song-card-content relative w-full h-full transition-transform duration-300"
           style={{ transform: 'translateZ(30px)' }}>
           {/* Song Type Badge */}
-          {getGameChartTypeBadgeLabel(game, song.typeCode) && <div className="absolute top-2.5 left-2.5 2xs:max-xs:left-2 2xs:max-xs:top-2 2xs:max-xs:scale-75 origin-top-left z-30">
-            {game === "maimai" ? <img
-              src={createSafeMaimaiImageUrl(getTypeBadgeUrl(song.typeCode === 1 ? "dx" : "std"))}
-              alt={getGameChartTypeLabel(game, song.typeCode)}
+          {!chartType.implicit && <div className="absolute top-2.5 left-2.5 2xs:max-xs:left-2 2xs:max-xs:top-2 2xs:max-xs:scale-75 origin-top-left z-30">
+            {typeBadge ? <img
+              src={createSafeMaimaiImageUrl(typeBadge)}
+              alt={chartType.label}
               width={37}
               height={11}
               className="drop-shadow-md"
               loading="lazy"
-            /> : <span className="rounded bg-background/90 px-1 text-xs text-foreground">{getGameChartTypeLabel(game, song.typeCode)}</span>}
+            /> : <span className="rounded bg-background/90 px-1 text-xs text-foreground">{chartType.label}</span>}
           </div>}
 
           {/* Song Info */}

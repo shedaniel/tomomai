@@ -2,7 +2,6 @@ import { and, eq, inArray } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { parentSong, scoreData, snapshotRankings, songs, userSnapshots } from "@/lib/db/schema-pg";
 import { rateStoredRankings } from "@/lib/games/ranking";
-import { getGameDifficultyKey } from "@/lib/games/presentation";
 import type { CanonicalGameId } from "@/lib/games/types";
 import type { Region } from "@/lib/types";
 
@@ -21,7 +20,7 @@ type HistoryScore = {
 type RatingChange = {
   songName: string;
   cover: string;
-  difficulty: string;
+  difficultyCode: number;
   oldRating?: number;
   newRating: number;
   changeType: "new" | "improved";
@@ -62,7 +61,7 @@ export function buildRatingHistory(game: CanonicalGameId, snapshots: HistorySnap
       changes.push({
         songName: score.songName,
         cover: score.cover,
-        difficulty: getGameDifficultyKey(game, score.difficultyCode),
+        difficultyCode: score.difficultyCode,
         oldRating,
         newRating: score.rating,
         changeType: oldRating === undefined ? "new" : "improved",

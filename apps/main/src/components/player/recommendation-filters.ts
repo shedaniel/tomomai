@@ -1,7 +1,8 @@
 import type { LucideIcon } from "lucide-react";
 import type { FilterCategory, GenericFilter } from "@/components/filter-panel";
 import type { CanonicalGameId } from "@/lib/games/types";
-import { formatGameRating, getGameDifficultyLabel, getGameScoreGrade } from "@/lib/games/presentation";
+import { codeOf } from "@/lib/games/codes";
+import { formatGameRating, getGameDifficulty, getGameScoreGrade } from "@/lib/games/presentation";
 
 interface FilterableRecommendation {
   song: {
@@ -22,6 +23,10 @@ function generateTargetOptions(recommendations: FilterableRecommendation[]): str
     targets.add(rangeStart);
   });
   return Array.from(targets).sort((a, b) => a - b).map(t => `${t} - ${t + 9}`);
+}
+
+function difficultyLabel(game: CanonicalGameId, difficulty: string): string {
+  return getGameDifficulty(game, codeOf(game, "difficulty", difficulty)).label;
 }
 
 function generateRecommendationLevelOptions(recommendations: FilterableRecommendation[]): string[] {
@@ -66,7 +71,7 @@ export function createRecommendationFilterCategories(
       type: "difficulty",
       label: translations.difficulty,
       icon: icons.difficulty,
-      options: [...new Set(recommendations.map(rec => rec.song.difficulty))].map(opt => ({ value: opt, label: getGameDifficultyLabel(game, opt) }))
+      options: [...new Set(recommendations.map(rec => rec.song.difficulty))].map(opt => ({ value: opt, label: difficultyLabel(game, opt) }))
     },
     {
       type: "level",
@@ -111,7 +116,7 @@ export function createRecommendationFilterLabel(
 ): string {
   switch (filter.type) {
     case "difficulty":
-      return getGameDifficultyLabel(game, filter.value);
+      return difficultyLabel(game, filter.value);
     case "level":
       return `Lv ${filter.value}`;
     case "type":

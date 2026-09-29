@@ -5,7 +5,7 @@ import { gameErrorResponse } from "@/lib/api/game-context";
 import { flushLogger } from "@/lib/logger";
 import { requestLogger } from "@/lib/request-logger";
 import type { Region } from "@/lib/types";
-import { getGameChartTypeKey } from "@/lib/games/presentation";
+import { keyOf } from "@/lib/games/codes";
 import { parseCatalogUpload } from "@/server/services/catalog/ingestion/parse-upload";
 import { sendDiscordWebhook } from "@/server/services/catalog/notifications";
 import { sendDiscordNotice } from "@/server/services/discord/webhook";
@@ -168,14 +168,14 @@ export async function POST(request: NextRequest) {
           return dbId && modifiedDbIds.has(String(dbId));
         })
         .flatMap(({ existing, result }) => [existing, result])
-        .map(song => ({ songName: song.songName, artist: song.artist, type: getGameChartTypeKey(game, song.chartType) }));
+        .map(song => ({ songName: song.songName, artist: song.artist, type: keyOf(game, "chartType", song.chartType) }));
       const appliedDeletions = (updateMode === "destructive"
         ? changes.deleted
         : changes.deleted.filter(change => (change.playRecordCount ?? 0) === 0));
       const affectedSongs = [
-        ...addedSongs.map(song => ({ songName: song.songName, artist: song.artist, type: getGameChartTypeKey(game, song.chartType) })),
+        ...addedSongs.map(song => ({ songName: song.songName, artist: song.artist, type: keyOf(game, "chartType", song.chartType) })),
         ...modifiedSongs,
-        ...appliedDeletions.map(change => ({ songName: change.songName, artist: change.artist, type: getGameChartTypeKey(game, change.chartType) })),
+        ...appliedDeletions.map(change => ({ songName: change.songName, artist: change.artist, type: keyOf(game, "chartType", change.chartType) })),
       ];
       try {
         await revalidateSongsCache(game, affectedSongs, (obj, msg) => log.info(obj, msg ?? ""), appliedCount === 0);

@@ -349,6 +349,14 @@ presentation contracts for score units/precision, secondary scores, rating,
 difficulty labels/colors, chart types, combo/sync/clear statuses and ranking
 bucket labels/sizes. Raw generic database fields are not player-facing copy.
 Do not assume B15/B35, achievement percentages or DX scores apply to CHUNITHM.
+These contracts are data on each definition's `presentation`
+(`src/lib/games/<game>/presentation.ts`): score and rating formats, rating
+rules, difficulty and chart type labels and colour classes, status badges and
+columns, and the grade table. Its tables are keyed by the game's code keys, so
+a new code does not typecheck until it has a presentation. The rating bonuses
+shown in grades and chart tables come from `rating.bonuses(version)`.
+`src/lib/games/presentation.ts` only looks values up by code, and components
+read the descriptor through it or through `usePresentation()`.
 
 Capabilities govern navigation and components, while the backend continues to
 enforce them. Plates, percentile/recommendation calculations, reserved accounts,

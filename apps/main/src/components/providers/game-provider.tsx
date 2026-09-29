@@ -2,6 +2,8 @@
 
 import { createContext, useContext, type ReactNode } from "react";
 import type { FrontendGame } from "@/lib/games/frontend";
+import { getGame } from "@/lib/games/registry";
+import type { GamePresentation } from "@/lib/games/types";
 
 const FrontendGameContext = createContext<FrontendGame | null>(null);
 
@@ -17,4 +19,8 @@ export function useGame(): FrontendGame {
 
 export function useGameId() {
   return useGame().id;
+}
+
+export function usePresentation(): GamePresentation {
+  return getGame(useGame().id).presentation;
 }

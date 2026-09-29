@@ -1,5 +1,6 @@
 import { brandTitle, supportsGameFeature } from "@/lib/games/frontend";
-import { getGameChartTypeLabel } from "@/lib/games/presentation";
+import { codeOf } from "@/lib/games/codes";
+import { getGameChartType } from "@/lib/games/presentation";
 import { getCurrentGame } from "@/lib/games/current";
 import { InlineNotFound } from "@/components/inline-not-found";
 import { getAllUniqueSongsCached } from "@/server/queries/songs-cache";
@@ -62,7 +63,7 @@ export async function generateMetadata({ params }: DbSlugPageProps): Promise<Met
     getLocale(),
   ]);
 
-  const chartType = getGameChartTypeLabel(game.id, song.type);
+  const chartType = getGameChartType(game.id, codeOf(game.id, "chartType", song.type)).label;
   const title = t("songTitle", { game: game.brand.displayName, songName: song.songName, artist: song.artist });
   const description = t("songDescription", {
     songName: song.songName,
@@ -143,7 +144,7 @@ export default async function DbSlugPage({ params }: DbSlugPageProps) {
     url: `${baseUrl}${localizePath(`/db/songs/${encodeURIComponent(decodedSlug)}`, locale)}`,
     description: tMeta("jsonLdChartDescription", {
       game: game.brand.displayName,
-      chartType: getGameChartTypeLabel(game.id, song.type),
+      chartType: getGameChartType(game.id, codeOf(game.id, "chartType", song.type)).label,
     }),
   };
 

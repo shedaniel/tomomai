@@ -7,7 +7,7 @@ import { getVersion } from "@/lib/games/versions";
 import type { VersionRow } from "@/lib/games/version-table";
 import { useGameId } from "@/components/providers/game-provider";
 import { trpc } from "@/lib/trpc-client";
-import { cn, createSafeMaimaiImageUrl, getTypeBadgeUrl } from "@/lib/utils";
+import { cn, createSafeMaimaiImageUrl } from "@/lib/utils";
 import { Activity, Calendar, ChevronRight, ListPlus, Loader2, Music } from "lucide-react";
 import { useTranslations } from "next-intl";
 
@@ -20,6 +20,7 @@ import { SongChartDialogContent } from "@/components/db/songs/song-detail-dialog
 import { Region } from "@/lib/types";
 import type { GamePlayerScore } from "@/lib/games/player-view";
 import { codeToChartType, codeToDifficulty } from "@/lib/games/maimai/codes";
+import { getGameChartType, getGameChartTypeBadge } from "@/lib/games/presentation";
 import { parseSongId } from "@/lib/catalog/song-instance-id";
 import { getChartsByDifficulty, getChartScores } from "@/components/db/songs/song-detail-content";
 import { UserScore } from "@/components/db/songs/types";
@@ -108,7 +109,8 @@ function SongCardContent({
   t: any,
   percentile?: SongHoverCardProps['percentile'],
 }) {
-  const type = codeToChartType(score.typeCode);
+  const chartType = getGameChartType("maimai", score.typeCode);
+  const typeBadge = getGameChartTypeBadge("maimai", score.typeCode);
   return (
     <div className="p-4 space-y-3">
       {/* Header */}
@@ -130,13 +132,13 @@ function SongCardContent({
             {score.artist}
           </p>
           <div className="flex items-center gap-1.5 mt-1.5 h-5">
-            <img
-              src={createSafeMaimaiImageUrl(getTypeBadgeUrl(type))}
-              alt={type.toUpperCase()}
+            {typeBadge && <img
+              src={createSafeMaimaiImageUrl(typeBadge)}
+              alt={chartType.label}
               width={32}
               height={10}
               className="h-2.5 w-auto"
-            />
+            />}
             {songDetails?.genre && (
               <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-secondary text-secondary-foreground font-medium truncate max-w-[120px]">
                 {songDetails.genre}

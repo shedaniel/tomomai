@@ -1,6 +1,6 @@
 "use client";
 
-import { formatGameRating, getGameDifficultyColors, getGameDifficultyLabel } from "@/lib/games/presentation";
+import { formatGameRating, getGameDifficulty } from "@/lib/games/presentation";
 import { useGameId } from "@/components/providers/game-provider";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@tomomai/ui";
 import { Slider } from "@tomomai/ui";
@@ -254,7 +254,7 @@ export function HistoryCard({ region }: HistoryCardProps) {
                                     <div key={i} className="text-xs">
                                       <div className="font-medium">{change.songName}</div>
                                       <div className="text-muted-foreground">
-                                        {getGameDifficultyLabel(game, change.difficulty)} • {change.changeType === 'new' ? 'New in B50' : `${formatRating(change.oldRating)} → ${formatRating(change.newRating)}`}
+                                        {getGameDifficulty(game, change.difficultyCode).label} • {change.changeType === 'new' ? 'New in B50' : `${formatRating(change.oldRating)} → ${formatRating(change.newRating)}`}
                                       </div>
                                     </div>
                                   ))}
@@ -274,7 +274,7 @@ export function HistoryCard({ region }: HistoryCardProps) {
                                     <div
                                       className={cn(
                                         "w-5 h-5 rounded overflow-hidden cursor-pointer hover:scale-110 transition-transform shadow-md ring-2 ring-offset-1",
-                                        getGameDifficultyColors(game, change.difficulty).ring,
+                                        getGameDifficulty(game, change.difficultyCode).classes.ring,
                                       )}
                                     >
                                       <CoverImage
@@ -293,7 +293,7 @@ export function HistoryCard({ region }: HistoryCardProps) {
                                       </div>
                                       <div className="font-semibold text-sm">{change.songName}</div>
                                       <div className="text-xs text-muted-foreground">
-                                        {getGameDifficultyLabel(game, change.difficulty)}
+                                        {getGameDifficulty(game, change.difficultyCode).label}
                                       </div>
                                       <div className="text-xs">
                                         {change.changeType === 'new'

@@ -1,4 +1,4 @@
-import type { CodeKey } from "@tomomai/games/codes";
+import type { CodeKey } from "../codes";
 
 export type Difficulty = CodeKey<"maimai", "difficulty">;
 

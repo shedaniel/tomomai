@@ -9,11 +9,15 @@ import { NextIntlClientProvider } from "next-intl";
 import { GameProvider } from "@/components/providers/game-provider";
 import messages from "../../../messages/en.json";
 
-const fixture = vi.hoisted(() => ({
-  game: undefined as unknown as FrontendGame,
-  songs: [{ parentIds: ["abcdefgh"], index: 0, songName: "CHU chart", artist: "Artist", cover: "https://example.com/cover.webp", type: "standard", genre: "ORIGINAL", addedVersion: 4, slug: "chu-chart-standard", aliases: [], difficulties: [{ difficulty: "ultima", level: "14+", levelPrecise: 145, noteDesigner: null }] }],
-  catalog: vi.fn(), details: vi.fn(), scores: vi.fn(),
-}));
+const fixture = vi.hoisted(() => {
+  const song = (type: string, difficulty: string) => ({ parentIds: ["abcdefgh"], index: 0, songName: "CHU chart", artist: "Artist", cover: "https://example.com/cover.webp", type, genre: "ORIGINAL", addedVersion: 4, slug: "chu-chart-standard", aliases: [], difficulties: [{ difficulty, level: "14+", levelPrecise: 145, noteDesigner: null }] });
+  return {
+    game: undefined as unknown as FrontendGame,
+    song,
+    songs: [song("standard", "ultima")],
+    catalog: vi.fn(), details: vi.fn(), scores: vi.fn(),
+  };
+});
 vi.mock("@/lib/games/current", () => ({ getCurrentGame: () => fixture.game }));
 vi.mock("@/server/queries/songs-cache", () => ({ getAllUniqueSongsCached: (game: string) => { fixture.catalog(game); return Promise.resolve(fixture.songs); }, getSongDetailsCached: fixture.details }));
 vi.mock("next/dynamic", () => ({ default: () => () => null }));
@@ -37,18 +41,25 @@ import { getGame } from "@/lib/games/registry";
 import type { CanonicalGameId } from "@/lib/games/ids";
 
 const withoutPlayerRegions = (game: CanonicalGameId) => toFrontendGame(getGame(game), []);
-beforeEach(() => { fixture.game = withoutPlayerRegions("chunithm"); });
+beforeEach(() => {
+  fixture.game = withoutPlayerRegions("chunithm");
+  fixture.songs = [fixture.song("standard", "ultima")];
+});
 afterEach(() => { vi.clearAllMocks(); });
 describe("catalog independent of player rollout", () => {
-  it.each(["maimai", "chunithm"] as const)("renders %s catalog list and linked detail independently of player rollout", async game => {
+  it.each([
+    { game: "maimai", type: "std", difficulty: "master" },
+    { game: "chunithm", type: "standard", difficulty: "ultima" },
+  ] as const)("renders $game catalog list and linked detail independently of player rollout", async ({ game, type, difficulty }) => {
     fixture.game = withoutPlayerRegions(game);
+    fixture.songs = [fixture.song(type, difficulty)];
     fixture.details.mockResolvedValue({ songName: "CHU detail" });
     const list = renderToStaticMarkup(await DbTypePage({ params: Promise.resolve({ type: "songs" }) }));
     expect(list).toContain('"numberOfItems":1');
     const params = Promise.resolve({ type: "songs", slug: "chu-chart-standard" });
     const detail = renderToStaticMarkup(await DetailSlotPage({ params }));
     expect(detail).toContain("CHU detail");
-    expect(fixture.details).toHaveBeenCalledWith(game, "CHU chart", "standard", undefined, "Artist", ["abcdefgh"]);
+    expect(fixture.details).toHaveBeenCalledWith(game, "CHU chart", type, undefined, "Artist", ["abcdefgh"]);
     expect(renderToStaticMarkup(await DbSlugPage({ params }))).toContain('"name":"CHU chart"');
     expect(fixture.catalog).toHaveBeenCalledWith(game);
   });

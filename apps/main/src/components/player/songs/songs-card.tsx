@@ -2,7 +2,7 @@
 
 import { useGameId } from "@/components/providers/game-provider";
 import { getPlayerRankings, type GameSnapshotData } from "@/lib/games/player-view";
-import { getGameDifficultyLabel, getGameChartTypeLabel, getGameRankingBuckets } from "@/lib/games/presentation";
+import { getGameDifficulty, getGameChartType, getGameRankingBuckets } from "@/lib/games/presentation";
 import { LayoutGrid, LayoutList, Menu, Search } from "lucide-react";
 import { useTranslations } from "next-intl";
 
@@ -174,9 +174,9 @@ export function SongsCard({ selectedSnapshotData, flags }: { selectedSnapshotDat
       songList.filter(song =>
         song.songName.toLowerCase().includes(query) ||
         song.artist.toLowerCase().includes(query) ||
-        getGameDifficultyLabel(game, song.difficultyCode).toLowerCase().includes(query) ||
+        getGameDifficulty(game, song.difficultyCode).label.toLowerCase().includes(query) ||
         (song.levelPrecise / 10).toFixed(1).toLowerCase().includes(query) ||
-        getGameChartTypeLabel(game, song.typeCode).toLowerCase().includes(query)
+        getGameChartType(game, song.typeCode).label.toLowerCase().includes(query)
       );
 
     return {

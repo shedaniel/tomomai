@@ -1,7 +1,7 @@
 import { gameIdSchema } from "@/lib/games/schema";
 import { getEnabledRegions } from "@/lib/games/regions";
 import { validateGameCapability } from "./game-input";
-import { getGameChartTypeKey } from "@/lib/games/presentation";
+import { isCodeKey, keyOf } from "@/lib/games/codes";
 import { parseSongId } from "@/lib/catalog/song-instance-id";
 import { db } from '@/lib/db';
 import { parentSong, songs } from '@/lib/db/schema-pg';
@@ -11,6 +11,14 @@ import { TRPCError } from '@trpc/server';
 import { and, eq, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { queryAllUniqueSongs, querySongDetails, querySongScores } from '@/server/queries/songs';
+
+const songInputSchema = z.object({
+  game: gameIdSchema,
+  songName: z.string(),
+  artist: z.string().optional(),
+  parentIds: z.array(z.string().regex(/^[A-Za-z0-9_-]{8}$/)).min(1).optional(),
+  type: z.string(),
+}).refine(input => isCodeKey(input.game, "chartType", input.type), { message: "Unknown chart type", path: ["type"] });
 
 export const songsRouter = router({
   getAllUniqueSongs: publicProcedure
@@ -22,12 +30,7 @@ export const songsRouter = router({
     }),
 
   getSongDetails: publicProcedure
-    .input(z.object({ game: gameIdSchema,
-      songName: z.string(),
-      artist: z.string().optional(),
-      parentIds: z.array(z.string().regex(/^[A-Za-z0-9_-]{8}$/)).min(1).optional(),
-      type: z.string().min(1),
-    }))
+    .input(songInputSchema)
     .query(async ({ input, ctx }) => {
       validateGameCapability(input.game, "catalog");
       const userId = getEnabledRegions(input.game).length > 0 ? ctx.session?.user?.id : undefined;
@@ -35,12 +38,7 @@ export const songsRouter = router({
     }),
 
   getSongScores: protectedProcedure
-    .input(z.object({ game: gameIdSchema,
-      songName: z.string(),
-      artist: z.string().optional(),
-      parentIds: z.array(z.string().regex(/^[A-Za-z0-9_-]{8}$/)).min(1).optional(),
-      type: z.string().min(1),
-    }))
+    .input(songInputSchema)
     .query(async ({ input, ctx }) => {
       validateGameCapability(input.game, "scores");
       return {
@@ -62,7 +60,7 @@ export const songsRouter = router({
           disambiguator: parentSong.disambiguator,
           songName: parentSong.songName,
           artist: parentSong.artist,
-          type: sql`${parentSong.type}`.mapWith(value => getGameChartTypeKey(input.game, Number(value))).as("type"),
+          type: sql`${parentSong.type}`.mapWith(value => keyOf(input.game, "chartType", Number(value))).as("type"),
           genre: parentSong.genre,
           bpm: parentSong.bpm,
           addedVersion: songs.addedVersion,

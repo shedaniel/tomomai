@@ -18,7 +18,7 @@ describe("rating history", () => {
     ], [score(1, BigInt(1), 1000000), score(2, BigInt(1), 1005000), score(3, BigInt(1), 1007500)]);
     expect(result.history.map(entry => entry.rating)).toEqual([1500, 1501, 1502]);
     expect(result.history[1].changes).toEqual([]);
-    expect(result.history[2].changes).toEqual([expect.objectContaining({ difficulty: "ultima", oldRating: 1500, newRating: 1600, changeType: "improved" })]);
+    expect(result.history[2].changes).toEqual([expect.objectContaining({ difficultyCode: 4, oldRating: 1500, newRating: 1600, changeType: "improved" })]);
   });
 
   it("compares stable chart identity across versions", () => {
@@ -40,7 +40,7 @@ describe("rating history", () => {
       snapshot(2, "2026-09-02T00:00:00Z", 14500, 12),
     ], [...stored(1, 1000000), ...stored(2, 1005000)]);
     expect(result.history[1].changes).toHaveLength(20);
-    expect(result.history[1].changes[0]).toMatchObject({ difficulty: "remaster", oldRating: 302, newRating: 315, changeType: "improved" });
+    expect(result.history[1].changes[0]).toMatchObject({ difficultyCode: 4, oldRating: 302, newRating: 315, changeType: "improved" });
   });
 
   it("does not invent change annotations for missing rankings or falling ratings", () => {

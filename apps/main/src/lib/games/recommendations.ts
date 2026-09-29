@@ -2,7 +2,8 @@ import { recommendationEfficiency, type RecommendationPeers } from "@/lib/games/
 import { getPlayerRankings, type GameSnapshotData, type GamePlayerScore } from "@/lib/games/player-view";
 import { getGame } from "@/lib/games/registry";
 import { apBonusApplies } from "@/lib/games/maimai/rating";
-import { getGameChartTypeKey, getGameDifficultyKey, getGameScoreBenchmarks } from "@/lib/games/presentation";
+import { keyOf } from "@/lib/games/codes";
+import { getGameScoreBenchmarks } from "@/lib/games/presentation";
 
 export interface RecommendationData {
   song: GamePlayerScore & { difficulty: string; type: string };
@@ -62,7 +63,7 @@ export function generateRecommendations(data: GameSnapshotData, peers: Record<st
         const efficiency = isAp ? 2 : chartGain / Math.max(effort, 0.1);
         const peerScore = recommendationEfficiency(efficiency, chartGain, targetScore / 10000, peers[score.songId]);
         recommendations.push({
-          song: { ...score, difficulty: getGameDifficultyKey(game, score.difficultyCode), type: getGameChartTypeKey(game, score.typeCode) },
+          song: { ...score, difficulty: keyOf(game, "difficulty", score.difficultyCode), type: keyOf(game, "chartType", score.typeCode) },
           currentScore, targetScore, currentRating: score.rating, targetRating, ratingGain, isInBest, category,
           efficiency, ...peerScore, hasPotential: peerScore.peerWeight >= 1.1, order: order++,
         });

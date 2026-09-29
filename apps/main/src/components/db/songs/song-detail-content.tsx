@@ -6,7 +6,8 @@ import {
   ResponsiveDialogTrigger,
 } from "@tomomai/ui";
 import { useGame } from "@/components/providers/game-provider";
-import { formatGameScore, formatGameRating, formatGameLevel, getGameCode, getGameDifficultyColors, getGameDifficultyLabel, getGameChartTypeLabel, getGameChartTypeBadgeLabel, getGameChartTypeBadge, getGameScoreLabelKey, getGameScoreGrade, getGameStatusLabels } from "@/lib/games/presentation";
+import { codeOf } from "@/lib/games/codes";
+import { formatGameScore, formatGameRating, formatGameLevel, getGameDifficulty, getGameChartType, getGameChartTypeBadge, getGameScoreLabelKey, getGameScoreGrade, getGameStatusBadges } from "@/lib/games/presentation";
 import { isGameCnExclusive } from "@/lib/games/frontend";
 import { getGame } from "@/lib/games/registry";
 import { getVersion } from "@/lib/games/versions";
@@ -73,7 +74,7 @@ export function getChartScores(charts: SongExtendedIdentified[], userScores: Son
 
 function SongBadges({ score }: { score: UserScore }) {
   const game = useGame();
-  return <div className="flex flex-wrap gap-1">{getGameStatusLabels(game.id, score).map(label => <span key={label} className="rounded-sm bg-primary/10 px-1 text-[9px] font-bold text-primary">{label}</span>)}</div>;
+  return <div className="flex flex-wrap gap-1">{getGameStatusBadges(game.id, score).map(badge => <span key={badge.label} className={cn("px-1 rounded-[2px] text-[9px] font-bold text-white uppercase flex items-center", badge.className)}>{badge.label}</span>)}</div>;
 }
 
 function ScoreGrid({
@@ -96,7 +97,7 @@ function ScoreGrid({
         const rating = score ? getGame(game.id).rating.chartRating({
           scoreValue: score.scoreValue,
           levelPrecise: chart.levelPrecise,
-          difficultyCode: getGameCode(game.id, "difficulty", chart.difficulty),
+          difficultyCode: codeOf(game.id, "difficulty", chart.difficulty),
           comboStatus: score.comboStatus,
         }, chart.gameVersion) : null;
 
@@ -159,7 +160,7 @@ export function SongChartRow({ difficulty, charts, index, data, hasTouch }: {
   const game = useGame();
   const latestChart: SongExtendedIdentified = charts.find(c => c.gameVersion === Math.max(...charts.map(c => c.gameVersion)))!;
 
-  const colors = getGameDifficultyColors(game.id, difficulty);
+  const difficultyPresentation = getGameDifficulty(game.id, codeOf(game.id, "difficulty", difficulty));
   const hasNoteDetails = game.capabilities.includes("score-details");
   const hasNoteData = latestChart.tapCount !== null;
   const totalNotes = hasNoteData
@@ -177,14 +178,14 @@ export function SongChartRow({ difficulty, charts, index, data, hasTouch }: {
         <div className="contents text-sm group *:group-hover:bg-accent *:transition-colors *:duration-200">
           {/* Difficulty */}
           <div className={cn("py-2.5 px-3 flex items-center gap-2", dataBorderClass)}>
-            <span className={cn("font-bold", colors.text)}>
-              {getGameDifficultyLabel(game.id, difficulty)}
+            <span className={cn("font-bold", difficultyPresentation.classes.text)}>
+              {difficultyPresentation.label}
             </span>
           </div>
           {/* Level */}
           <div className={cn("py-2.5 px-3 flex items-baseline justify-center", dataBorderClass)}>
             <span className="text-lg font-bold tabular-nums">{latestChart.levelPreciseEstimated ? "≈" : ""}{latestChart.level}</span>
-            <span className="text-xs">.{latestChart.difficulty === "utage" ? '?' : latestChart.levelPrecise % 10}</span>
+            <span className="text-xs">.{difficultyPresentation.unknownDecimal ? '?' : latestChart.levelPrecise % 10}</span>
           </div>
           {hasNoteDetails && <>
           {/* Notes */}
@@ -298,13 +299,14 @@ export function SongDetailContent({ songName, artist, slug, type, parentIds, ini
     const minLevel = Math.min(...levels);
     const maxLevel = Math.max(...levels);
     const fmtLevel = (l: number) => (l % 10 === 0 ? String(Math.floor(l / 10)) : (l / 10).toFixed(1));
+    const chartType = getGameChartType(game.id, codeOf(game.id, "chartType", data.type));
     return {
       minLevel: fmtLevel(minLevel),
       maxLevel: fmtLevel(maxLevel),
       chartCount: chartsByDifficulty.size,
       bpmFragment: data.bpm ? t('db.songs.detail.summaryBpmFragment', { bpm: data.bpm }) : '',
       versionName: getVersion(game.id, data.addedVersion)?.name ?? `Ver. ${data.addedVersion}`,
-      chartType: getGameChartTypeBadgeLabel(game.id, data.type) ?? "",
+      chartType: chartType.implicit ? "" : chartType.label,
     };
   }, [data, allCharts, chartsByDifficulty, t, game]);
 
@@ -337,6 +339,9 @@ export function SongDetailContent({ songName, artist, slug, type, parentIds, ini
   }
 
   const addedVersionInfo = getVersion(game.id, data.addedVersion);
+  const typeCode = codeOf(game.id, "chartType", data.type);
+  const chartType = getGameChartType(game.id, typeCode);
+  const typeBadge = getGameChartTypeBadge(game.id, typeCode);
 
   return (
     <div className="space-y-6">
@@ -355,13 +360,13 @@ export function SongDetailContent({ songName, artist, slug, type, parentIds, ini
           <h1 className="text-xl max-md:text-md font-bold truncate">{data.songName}</h1>
           <p className="text-muted-foreground max-md:text-sm truncate">{data.artist}</p>
           <div className="flex items-center gap-2 mt-2">
-            {getGameChartTypeBadgeLabel(game.id, data.type) && (getGameChartTypeBadge(game.id, data.type) ? <img
-              src={getGameChartTypeBadge(game.id, data.type)!}
-              alt={data.type.toUpperCase()}
+            {!chartType.implicit && (typeBadge ? <img
+              src={typeBadge}
+              alt={chartType.label}
               width={64}
               height={20}
               className="drop-shadow-sm"
-            /> : <span className="text-xs font-medium">{getGameChartTypeLabel(game.id, data.type)}</span>)}
+            /> : <span className="text-xs font-medium">{chartType.label}</span>)}
             <span className="text-xs text-muted-foreground truncate">{data.genre}</span>
           </div>
         </div>
@@ -504,9 +509,9 @@ export function SongDetailContent({ songName, artist, slug, type, parentIds, ini
                 });
 
                 // Sort by difficulty order
-                const sortedDifficulties = Array.from(byDifficulty.entries()).sort((a, b) =>
-                  getGameCode(game.id, "difficulty", a[0]) - getGameCode(game.id, "difficulty", b[0])
-                );
+                const sortedDifficulties = Array.from(byDifficulty.entries())
+                  .map(([difficulty, diffCharts]) => [codeOf(game.id, "difficulty", difficulty), diffCharts] as const)
+                  .sort((a, b) => a[0] - b[0]);
 
                 return (
                   <div key={gameVersion} className="space-y-1">
@@ -515,18 +520,18 @@ export function SongDetailContent({ songName, artist, slug, type, parentIds, ini
                       <span className="font-medium">{versionInfo?.name ?? `v${gameVersion}`}</span>
                     </div>
                     <div className="flex flex-wrap gap-1.5 pl-5">
-                      {sortedDifficulties.map(([difficulty, diffCharts]) => {
+                      {sortedDifficulties.map(([difficultyCode, diffCharts]) => {
                         const chart = diffCharts[0];
-                        const colors = getGameDifficultyColors(game.id, difficulty);
+                        const difficulty = getGameDifficulty(game.id, difficultyCode);
                         return (
                           <div
-                            key={difficulty}
+                            key={difficultyCode}
                             className={cn(
                               "px-2 py-0.5 rounded text-xs font-medium text-white",
-                              colors.bg
+                              difficulty.classes.solidBg
                             )}
                           >
-                            {getGameDifficultyLabel(game.id, difficulty)} {chart.levelPreciseEstimated ? "≈" : ""}{formatGameLevel(game.id, chart.levelPrecise, difficulty)}
+                            {difficulty.label} {chart.levelPreciseEstimated ? "≈" : ""}{formatGameLevel(game.id, chart.levelPrecise, difficultyCode)}
                           </div>
                         );
                       })}

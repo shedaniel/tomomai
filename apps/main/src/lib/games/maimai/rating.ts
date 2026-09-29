@@ -1,16 +1,21 @@
-import type { ChartRatingInput, RankingBucketSizes } from "../types";
+import type { ChartRatingInput, RankingBucketSizes, RatingBonus } from "../types";
 import { comboStatusToCode, difficultyToCode } from "./codes";
 import { Versions } from "./versions";
 
 // CiRCLE changed two rules: AP and AP+ add one rating, and the previous version's charts count as new.
 const CIRCLE = Versions.MAIMAI_DX_CIRCLE.id;
 const UTAGE = difficultyToCode("utage");
-const ALL_PERFECT = new Set([comboStatusToCode("ap"), comboStatusToCode("ap+")]);
+const ALL_PERFECT = [comboStatusToCode("ap"), comboStatusToCode("ap+")];
+const AP_BONUSES: readonly RatingBonus[] = [{ label: "AP", scoreValue: 1_005_000, comboStatuses: ALL_PERFECT }];
 
 export const MAIMAI_BUCKET_SIZES: RankingBucketSizes = { new: 15, old: 35 };
 
 export function apBonusApplies(version: number): boolean {
   return version >= CIRCLE;
+}
+
+export function maimaiRatingBonuses(version: number): readonly RatingBonus[] {
+  return apBonusApplies(version) ? AP_BONUSES : [];
 }
 
 export function isMaimaiNewChart(addedVersion: number, currentVersion: number): boolean {
@@ -41,7 +46,7 @@ function getRatingFactor(accuracy: number): number {
 export function maimaiChartRating({ scoreValue, levelPrecise, difficultyCode, comboStatus }: ChartRatingInput, version: number): number {
   if (!isMaimaiRatedChart(difficultyCode)) return 0;
   const accuracy = scoreValue / 10000;
-  const bonus = apBonusApplies(version) && ALL_PERFECT.has(comboStatus) ? 1 : 0;
+  const bonus = apBonusApplies(version) && ALL_PERFECT.includes(comboStatus) ? 1 : 0;
   return getRatingFactor(accuracy) * Math.min(accuracy, 100.5) * levelPrecise / 10 + bonus;
 }
 

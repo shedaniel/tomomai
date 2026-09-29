@@ -42,19 +42,18 @@ const KIND_LABELS: { readonly [K in CodeKind]: string } = {
 };
 
 type Codec<T extends string> = {
-  readonly values: readonly T[];
   readonly fromCode: (code: number) => T;
   readonly toCode: (key: T) => number;
-  readonly has: (code: number) => boolean;
 };
 
+function isCodeOf(keys: readonly string[], code: number): boolean {
+  return Number.isInteger(code) && code >= 0 && code < keys.length;
+}
+
 function createCodec<const T extends string>(values: readonly T[], label: string): Codec<T> {
-  const has = (code: number) => Number.isInteger(code) && code >= 0 && code < values.length;
   return {
-    values,
-    has,
     fromCode: code => {
-      if (!has(code)) throw new Error(`Unknown ${label} code: ${code}`);
+      if (!isCodeOf(values, code)) throw new Error(`Unknown ${label} code: ${code}`);
       return values[code];
     },
     toCode: key => {
@@ -65,32 +64,42 @@ function createCodec<const T extends string>(values: readonly T[], label: string
   };
 }
 
-type GameCodecs<G extends CodedGame> = { readonly [K in CodeKind]: Codec<CodeKey<G, K>> };
-
-function createGameCodecs<G extends CodedGame>(game: G): GameCodecs<G> {
-  const codecs = CODE_KINDS.map(kind => [kind, createCodec(GAME_CODES[game][kind], `${game} ${KIND_LABELS[kind]}`)]);
-  return Object.fromEntries(codecs) as GameCodecs<G>;
+function keysOf(game: CodedGame, kind: CodeKind): readonly string[] {
+  return GAME_CODES[game][kind];
 }
 
-const GAME_CODECS: { readonly [G in CodedGame]: GameCodecs<G> } = {
-  maimai: createGameCodecs("maimai"),
-  chunithm: createGameCodecs("chunithm"),
+/** The stored code of a key. Throws for a key the game does not define. */
+export function codeOf(game: CodedGame, kind: CodeKind, key: string): number {
+  const code = keysOf(game, kind).indexOf(key);
+  if (code < 0) throw new Error(`Unknown ${game} ${KIND_LABELS[kind]}: ${key}`);
+  return code;
+}
+
+/** The key of a stored code. A code this build does not define reads as its number. */
+export function keyOf(game: CodedGame, kind: CodeKind, code: number): string {
+  return hasCode(game, kind, code) ? keysOf(game, kind)[code] : String(code);
+}
+
+export function hasCode(game: CodedGame, kind: CodeKind, code: number): boolean {
+  return isCodeOf(keysOf(game, kind), code);
+}
+
+export function isCodeKey(game: CodedGame, kind: CodeKind, key: string): boolean {
+  return keysOf(game, kind).includes(key);
+}
+
+function maimaiCodec<K extends CodeKind>(kind: K): Codec<CodeKey<"maimai", K>> {
+  return createCodec(MAIMAI_CODES[kind], `maimai ${KIND_LABELS[kind]}`);
+}
+
+const maimai = {
+  difficulty: maimaiCodec("difficulty"),
+  chartType: maimaiCodec("chartType"),
+  comboStatus: maimaiCodec("comboStatus"),
+  syncStatus: maimaiCodec("syncStatus"),
+  titleType: maimaiCodec("titleType"),
 };
 
-function codecOf<G extends CodedGame, K extends CodeKind>(game: G, kind: K): Codec<CodeKey<G, K>> {
-  return GAME_CODECS[game][kind] as Codec<CodeKey<G, K>>;
-}
-
-export function codeOf<G extends CodedGame, K extends CodeKind>(game: G, kind: K, key: CodeKey<G, K>): number {
-  return codecOf(game, kind).toCode(key);
-}
-
-export function keyOf<G extends CodedGame, K extends CodeKind>(game: G, kind: K, code: number): CodeKey<G, K> | undefined {
-  const codec = codecOf(game, kind);
-  return codec.has(code) ? codec.fromCode(code) : undefined;
-}
-
-const maimai = GAME_CODECS.maimai;
 export const codeToDifficulty = maimai.difficulty.fromCode;
 export const difficultyToCode = maimai.difficulty.toCode;
 export const codeToChartType = maimai.chartType.fromCode;

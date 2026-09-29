@@ -1,5 +1,5 @@
 import { expect, it } from "vitest";
-import { codeOf } from "@tomomai/games/codes";
+import { codeOf } from "../codes";
 import { chunithmChartRating, chunithmPlayerRating, isChunithmNewChart } from "./rating";
 
 const master = codeOf("chunithm", "difficulty", "master");

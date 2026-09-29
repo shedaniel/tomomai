@@ -74,11 +74,6 @@ function maybeRewriteR2ForCN(url: string): string {
   return cnBase + url.slice(base.length);
 }
 
-export function getTypeBadgeUrl(type: "dx" | "std" | string): string {
-  const basename = type === "dx" ? "music_dx" : "music_standard";
-  return `${process.env.NEXT_PUBLIC_R2_URL}/covers/${basename}.webp`;
-}
-
 // Utility function to handle maimaidx image URLs with SSL issues
 // Sync version for client-side React components
 export function createSafeMaimaiImageUrl(originalUrl: string): string {

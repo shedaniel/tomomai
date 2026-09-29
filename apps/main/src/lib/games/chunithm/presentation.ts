@@ -1,0 +1,136 @@
+import type { GamePresentation } from "../types";
+import { CHUNITHM_GRADES } from "./grades";
+
+const integer = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
+
+export const chunithmPresentation = {
+  formatScore: value => integer.format(value),
+  formatScoreDelta: (from, to) => integer.format(to - from),
+  scoreLabel: "score",
+  ratingRules: { scale: 100, aggregation: "average", axisStep: 10, filterBucketWidth: 50 },
+  difficulties: {
+    basic: {
+      label: "BASIC",
+      shortLabel: "BAS",
+      hex: "#10b981",
+      cssVar: "var(--color-green-400)",
+      classes: {
+        text: "text-emerald-600",
+        cell: "bg-green-100 text-green-800 border-green-200 dark:bg-green-600/30 dark:text-green-400 dark:border-green-800",
+        solidBg: "bg-emerald-500",
+        border: "border-emerald-500",
+        ring: "ring-green-400 dark:ring-green-600",
+        badge: "bg-green-400 text-white",
+        cardBadge: "bg-green-500 dark:bg-green-600 text-white",
+      },
+    },
+    advanced: {
+      label: "ADVANCED",
+      shortLabel: "ADV",
+      hex: "#f97316",
+      cssVar: "var(--color-orange-400)",
+      classes: {
+        text: "text-orange-600",
+        cell: "bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-600/30 dark:text-orange-400 dark:border-orange-800",
+        solidBg: "bg-orange-500",
+        border: "border-orange-500",
+        ring: "ring-orange-400 dark:ring-orange-600",
+        badge: "bg-orange-400 text-white",
+        cardBadge: "bg-orange-500 dark:bg-orange-600 text-white",
+      },
+    },
+    expert: {
+      label: "EXPERT",
+      shortLabel: "EXP",
+      hex: "#ef4444",
+      cssVar: "var(--color-red-400)",
+      classes: {
+        text: "text-red-600",
+        cell: "bg-red-100 text-red-800 border-red-200 dark:bg-red-600/30 dark:text-red-400 dark:border-red-800",
+        solidBg: "bg-red-500",
+        border: "border-red-500",
+        ring: "ring-red-400 dark:ring-red-600",
+        badge: "bg-red-400 text-white",
+        cardBadge: "bg-red-500 dark:bg-red-600 text-white",
+      },
+    },
+    master: {
+      label: "MASTER",
+      shortLabel: "MAS",
+      hex: "#a855f7",
+      cssVar: "var(--color-purple-500)",
+      classes: {
+        text: "text-purple-600",
+        cell: "bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-600/30 dark:text-purple-400 dark:border-purple-800",
+        solidBg: "bg-purple-500",
+        border: "border-purple-500",
+        ring: "ring-purple-500 dark:ring-purple-600",
+        badge: "bg-purple-500 text-white",
+        cardBadge: "bg-purple-500 dark:bg-purple-600 text-white",
+      },
+    },
+    ultima: {
+      label: "ULTIMA",
+      shortLabel: "ULT",
+      hex: "#b91c1c",
+      cssVar: "var(--color-red-700)",
+      classes: {
+        text: "text-red-700 dark:text-red-400",
+        cell: "bg-red-200 text-red-900 border-red-300 dark:bg-red-900/40 dark:text-red-300 dark:border-red-800",
+        solidBg: "bg-red-700",
+        border: "border-red-700",
+        ring: "ring-red-700 dark:ring-red-500",
+        badge: "bg-red-700 text-white",
+        cardBadge: "bg-red-800 text-white dark:bg-red-700",
+      },
+    },
+    "worlds-end": {
+      label: "WORLD'S END",
+      shortLabel: "WE",
+      hex: "#0ea5e9",
+      cssVar: "var(--color-sky-500)",
+      classes: {
+        text: "text-sky-600 dark:text-sky-400",
+        cell: "bg-sky-100 text-sky-800 border-sky-200 dark:bg-sky-600/30 dark:text-sky-400 dark:border-sky-800",
+        solidBg: "bg-sky-500",
+        border: "border-sky-500",
+        ring: "ring-sky-400 dark:ring-sky-600",
+        badge: "bg-sky-500 text-white",
+        cardBadge: "bg-sky-500 dark:bg-sky-600 text-white",
+      },
+    },
+  },
+  chartTypes: {
+    standard: {
+      label: "STANDARD",
+      implicit: true,
+      hex: "#06b6d4",
+      classes: { ring: "ring-slate-300 dark:ring-slate-300/75", chip: "bg-slate-100 text-slate-600" },
+    },
+  },
+  statusStyles: {
+    comboStatus: {
+      none: null,
+      fc: { label: "FC", className: "bg-emerald-500" },
+      aj: { label: "AJ", className: "bg-amber-500" },
+      ajc: { label: "AJC", className: "bg-gradient-to-r from-amber-400 to-pink-500" },
+    },
+    syncStatus: {
+      none: null,
+      "full-chain": { label: "FULL CHAIN", className: "bg-yellow-500" },
+      "full-chain-aj": { label: "FULL CHAIN AJ", className: "bg-gradient-to-r from-sky-400 to-indigo-500" },
+    },
+    clearStatus: {
+      none: null,
+      clear: null,
+      hard: { label: "HARD", className: "bg-rose-500" },
+      brave: { label: "BRAVE", className: "bg-violet-500" },
+      absolute: { label: "ABSOLUTE", className: "bg-sky-600" },
+      catastrophy: { label: "CATASTROPHY", className: "bg-zinc-800" },
+    },
+  },
+  statusColumns: [
+    { labelKey: "status", kinds: ["comboStatus", "syncStatus", "clearStatus"] },
+  ],
+  grades: CHUNITHM_GRADES,
+} satisfies GamePresentation<"chunithm">;

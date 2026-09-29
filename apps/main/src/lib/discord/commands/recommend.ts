@@ -1,7 +1,6 @@
 import { db } from '@/lib/db';
 import { account, user } from '@/lib/db/schema-pg';
-import { codeToDifficulty } from '@/lib/games/maimai/codes';
-import { renderLevelPrecise } from '@/lib/name-utils';
+import { formatGameLevel, formatGameScore } from '@/lib/games/presentation';
 import { Region } from '@/lib/types';
 import { fetchLatestSnapshotData } from '@/server/queries/snapshots';
 import { generateRecommendations, RecommendationData } from '@/lib/games/recommendations';
@@ -97,21 +96,16 @@ function categoryTag(rec: RecommendationData): string {
   return rec.category === 'new' ? 'NEW' : 'OLD';
 }
 
-// Floor to 2 decimals so 99.9956% doesn't render as 100.00%
-function formatAccuracy(accuracy: number): string {
-  return (Math.floor(accuracy * 100) / 100).toFixed(2);
-}
-
 function formatRow(rec: RecommendationData, rank: number): string {
   const { song, currentScore, targetScore, currentRating, targetRating, ratingGain } = rec;
   const tag = categoryTag(rec);
   const diff = difficultyShort(song.difficulty);
-  const lvl = renderLevelPrecise(song.levelPrecise, codeToDifficulty(song.difficultyCode));
-  const target = targetScore === 1010000 ? 'AP' : `${formatAccuracy(targetScore / 10000)}%`;
+  const lvl = formatGameLevel("maimai", song.levelPrecise, song.difficultyCode);
+  const target = targetScore === 1010000 ? 'AP' : formatGameScore("maimai", targetScore, { precision: "compact" });
   const rankStr = `#${rank}`.padEnd(3);
   return [
     `${rankStr} [${tag}] ${song.songName} (${diff} ${lvl})`,
-    `    ${formatAccuracy(currentScore / 10000)}% → ${target}   rating ${currentRating} → ${targetRating}   (+${ratingGain})`,
+    `    ${formatGameScore("maimai", currentScore, { precision: "compact" })} → ${target}   rating ${currentRating} → ${targetRating}   (+${ratingGain})`,
   ].join('\n');
 }
 

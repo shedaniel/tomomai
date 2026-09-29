@@ -1,6 +1,7 @@
 import { SEGA_COOKIE_LOGIN_URL } from "../sega-gateway";
 import type { GameDefinition } from "../types";
-import { MAIMAI_BUCKET_SIZES, isMaimaiNewChart, isMaimaiRatedChart, maimaiChartRating, maimaiPlayerRating } from "./rating";
+import { maimaiPresentation } from "./presentation";
+import { MAIMAI_BUCKET_SIZES, isMaimaiNewChart, isMaimaiRatedChart, maimaiChartRating, maimaiPlayerRating, maimaiRatingBonuses } from "./rating";
 import { maimaiVersionTable } from "./versions";
 
 export const maimaiDefinition = {
@@ -33,7 +34,10 @@ export const maimaiDefinition = {
     isNew: isMaimaiNewChart,
     isRated: isMaimaiRatedChart,
     playerRating: maimaiPlayerRating,
+    bonuses: maimaiRatingBonuses,
   },
+  presentation: maimaiPresentation,
+  catalogSections: ["songs", "stats", "events", "posts"],
   fetchStages: [
     "login",
     "player_data",

@@ -53,6 +53,13 @@ describe("catalog and player access", () => {
     expect(querySongDetails).toHaveBeenLastCalledWith("maimai", input.songName, "std", "viewer", input.artist, undefined);
   });
 
+  it("rejects a chart type the game does not have before querying", async () => {
+    await expect(caller.getSongDetails({ game: "chunithm", songName: song.songName, type: "std" })).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    await expect(caller.getSongScores({ game: "maimai", songName: song.songName, type: "standard" })).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    expect(querySongDetails).not.toHaveBeenCalled();
+    expect(querySongScores).not.toHaveBeenCalled();
+  });
+
   it("scopes player score reads to the selected game and signed-in user", async () => {
     vi.mocked(querySongScores).mockResolvedValue({});
     await expect(caller.getSongScores({ game: "chunithm", songName: song.songName, type: song.type }))

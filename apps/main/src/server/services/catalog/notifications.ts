@@ -5,14 +5,14 @@ import { postDiscordEmbed } from "@/server/services/discord/webhook";
 import type { AddedChange, DeletedChange, ModifiedChange } from "./ingestion/persistence";
 import type { Region } from "@/lib/types";
 import type { CanonicalGameId } from "@/lib/games/types";
-import { getGameChartTypeKey, getGameDifficultyKey } from "@/lib/games/presentation";
+import { keyOf } from "@/lib/games/codes";
 
 function formatPrecise(value: number): string {
   return (value / 10).toFixed(1);
 }
 
 function difficultyShort(game: CanonicalGameId, difficulty: number): string {
-  return getGameDifficultyKey(game, difficulty).slice(0, 3).toUpperCase();
+  return keyOf(game, "difficulty", difficulty).slice(0, 3).toUpperCase();
 }
 
 // Collapse every chart that shares a song (name + type) onto one compact line,
@@ -31,13 +31,13 @@ function groupChartLines<T extends { songName: string; chartType: number; diffic
     else groups.set(key, [chart]);
   }
   return [...groups.values()]
-    .sort((a, b) => a[0].songName.localeCompare(b[0].songName) || getGameChartTypeKey(game, a[0].chartType).localeCompare(getGameChartTypeKey(game, b[0].chartType)))
+    .sort((a, b) => a[0].songName.localeCompare(b[0].songName) || keyOf(game, "chartType", a[0].chartType).localeCompare(keyOf(game, "chartType", b[0].chartType)))
     .map(bucket => {
       const segments = bucket
         .toSorted((a, b) => a.difficulty - b.difficulty)
         .map(formatChart)
         .join(" / ");
-      return `- ${bucket[0].songName} ${getGameChartTypeKey(game, bucket[0].chartType).toUpperCase()}: ${segments}`;
+      return `- ${bucket[0].songName} ${keyOf(game, "chartType", bucket[0].chartType).toUpperCase()}: ${segments}`;
     });
 }
 
@@ -75,9 +75,9 @@ function groupOtherFieldLines(game: CanonicalGameId, entries: OtherEntry[]): str
     else songGroups.set(key, [entry]);
   }
   return [...songGroups.values()]
-    .sort((a, b) => a[0].songName.localeCompare(b[0].songName) || getGameChartTypeKey(game, a[0].chartType).localeCompare(getGameChartTypeKey(game, b[0].chartType)))
+    .sort((a, b) => a[0].songName.localeCompare(b[0].songName) || keyOf(game, "chartType", a[0].chartType).localeCompare(keyOf(game, "chartType", b[0].chartType)))
     .flatMap(group => {
-      const label = `${group[0].songName} ${getGameChartTypeKey(game, group[0].chartType).toUpperCase()}`;
+      const label = `${group[0].songName} ${keyOf(game, "chartType", group[0].chartType).toUpperCase()}`;
       const byDiff = new Map<string, OtherEntry[]>();
       for (const entry of group) {
         const diff = formatFieldDiff(entry.oldValue, entry.newValue);

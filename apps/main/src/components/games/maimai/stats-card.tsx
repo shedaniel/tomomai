@@ -1,11 +1,12 @@
 "use client";
-import { MAIMAI_CODES } from "@/lib/games/maimai/codes";
+import { MAIMAI_CODES, difficultyToCode } from "@/lib/games/maimai/codes";
 
 import { useGameId } from "@/components/providers/game-provider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@tomomai/ui/select-friendly";
 import { Progress } from "@tomomai/ui";
 import { Button } from "@tomomai/ui";
-import { ACHIEVEMENTS, DIFFICULTY_COLORS } from "@/lib/games/maimai/grades";
+import { MAIMAI_GRADES } from "@/lib/games/maimai/grades";
+import { getGameDifficulty } from "@/lib/games/presentation";
 import { getVersion } from "@/lib/games/versions";
 import { Region } from "@/lib/types";
 import { trpc } from "@/lib/trpc-client";
@@ -178,7 +179,7 @@ function PlatesGrid({ data, selectedVersion, region, snapshotId }: PlatesGridPro
   }
 
   const { progress, totalSongs } = plateProgress;
-  const mainDifficulties = ["basic", "advanced", "expert", "master"];
+  const mainDifficulties = ["basic", "advanced", "expert", "master"] as const;
 
   return (
     <div className="space-y-6">
@@ -217,7 +218,7 @@ function PlatesGrid({ data, selectedVersion, region, snapshotId }: PlatesGridPro
                   const total = totalSongs[difficulty] || 0;
                   const percentage = total > 0 ? (count / total) * 100 : 0;
                   const isComplete = count === total && total > 0;
-                  const diffColor = DIFFICULTY_COLORS[difficulty as keyof typeof DIFFICULTY_COLORS];
+                  const diffColor = getGameDifficulty("maimai", difficultyToCode(difficulty)).classes;
                   const isExpanded = expandedCell?.plateType === plateType && expandedCell?.difficulty === difficulty;
                   const notMeetingCount = total - count;
 
@@ -391,7 +392,7 @@ export function StatsCard({ region, snapshotId }: StatsCardProps) {
     }
 
     // Make grades cumulative (each grade includes all better grades)
-    const gradeOrder = ACHIEVEMENTS.map(a => a.rate);
+    const gradeOrder = MAIMAI_GRADES.map(grade => grade.label);
     const cumulativeGrades: Record<string, number> = {};
     let gradRunningTotal = 0;
 
@@ -435,7 +436,7 @@ export function StatsCard({ region, snapshotId }: StatsCardProps) {
 
   // Sort grades by achievement threshold (highest to lowest)
   const sortedGrades = useMemo(() => {
-    const gradeOrder = ACHIEVEMENTS.map(a => a.rate);
+    const gradeOrder = MAIMAI_GRADES.map(grade => grade.label);
     return Object.entries(filteredStats.grades)
       .sort((a, b) => {
         const indexA = gradeOrder.indexOf(a[0]);

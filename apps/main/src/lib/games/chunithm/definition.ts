@@ -1,5 +1,6 @@
 import { SEGA_COOKIE_LOGIN_URL } from "../sega-gateway";
 import type { GameDefinition } from "../types";
+import { chunithmPresentation } from "./presentation";
 import { CHUNITHM_BUCKET_SIZES, chunithmChartRating, chunithmPlayerRating, isChunithmNewChart, isChunithmRatedChart } from "./rating";
 import { chunithmVersionTable } from "./versions";
 
@@ -29,7 +30,10 @@ export const chunithmDefinition = {
     isNew: isChunithmNewChart,
     isRated: isChunithmRatedChart,
     playerRating: chunithmPlayerRating,
+    bonuses: () => [],
   },
+  presentation: chunithmPresentation,
+  catalogSections: ["songs"],
   fetchStages: [
     "login",
     "player_data",

@@ -3,10 +3,10 @@
 import { Fragment, useCallback } from "react";
 import { Plus, TrendingUp } from "lucide-react";
 import { motion } from "motion/react";
-import { useGameId } from "@/components/providers/game-provider";
+import { useGameId, usePresentation } from "@/components/providers/game-provider";
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 import { STAGGER, getTransition } from "@/lib/animation-constants";
-import { formatGameScore, formatGameRating, formatGameLevel, getGameDifficultyColors, getGameStatusLabels, getGameScoreLabelKey } from "@/lib/games/presentation";
+import { formatGameScore, formatGameRating, formatGameLevel, getGameDifficulty, getGameStatusLabels, getGameScoreLabelKey } from "@/lib/games/presentation";
 import type { PercentileMap } from "@/lib/games/maimai/percentile/types";
 import { cn } from "@/lib/utils";
 import { SongGridCard } from "./score-grid-card";
@@ -25,6 +25,7 @@ function CompactSongSection({ title, songs, count, t, sum, average, visibleCount
   onLoadMore: () => void;
 }) {
   const game = useGameId();
+  const { statusColumns } = usePresentation();
   const hasMore = visibleCount < songs.length;
   const loadMore = useCallback(() => {
     if (hasMore) onLoadMore();
@@ -52,13 +53,13 @@ function CompactSongSection({ title, songs, count, t, sum, average, visibleCount
               <div className="flex items-center gap-1 whitespace-nowrap">
                 <TrendingUp className="h-3 w-3" />
                 <span>{t('dataContent.statistics.average')}</span>
-                <span className="font-mono font-medium">{game === "maimai" ? average.toFixed(2) : formatGameRating(game, average)}</span>
+                <span className="font-mono font-medium">{formatGameRating(game, average, { average: true })}</span>
               </div>
             )}
           </div>
         )}
       </div>
-      <div className="grid grid-cols-[4fr_2fr_min-content_min-content_min-content_min-content_min-content] text-xs overflow-x-auto">
+      <div className="grid text-xs overflow-x-auto" style={{ gridTemplateColumns: `4fr 2fr repeat(${3 + statusColumns.length}, min-content)` }}>
         {/* Headers */}
         <div className="font-semibold text-muted-foreground border-b border-border pb-1 px-2 text-left whitespace-nowrap min-w-48">
           {t('dataContent.tableHeaders.song')}
@@ -72,12 +73,11 @@ function CompactSongSection({ title, songs, count, t, sum, average, visibleCount
         <div className="font-semibold text-muted-foreground border-b border-border pb-1 px-2 text-center whitespace-nowrap">
           {t(getGameScoreLabelKey(game))}
         </div>
-        <div className="font-semibold text-muted-foreground border-b border-border pb-1 px-2 min-w-10 text-center whitespace-nowrap">
-          {game === "maimai" ? t("dataContent.tableHeaders.fc") : t("dataContent.tableHeaders.status")}
-        </div>
-        <div className="font-semibold text-muted-foreground border-b border-border pb-1 px-2 min-w-10 text-center whitespace-nowrap">
-          {game === "maimai" ? t("dataContent.tableHeaders.fs") : t("dataContent.tableHeaders.status")}
-        </div>
+        {statusColumns.map(column => (
+          <div key={column.labelKey} className="font-semibold text-muted-foreground border-b border-border pb-1 px-2 min-w-10 text-center whitespace-nowrap">
+            {t(`dataContent.tableHeaders.${column.labelKey}`)}
+          </div>
+        ))}
         <div className="font-semibold text-muted-foreground border-b border-border pb-1 px-2 text-center whitespace-nowrap">
           {t('dataContent.tableHeaders.rating')}
         </div>
@@ -92,20 +92,18 @@ function CompactSongSection({ title, songs, count, t, sum, average, visibleCount
               {song.artist}
             </div>
             <div className={cn("text-center border-b grid items-center font-medium border-dashed",
-              getGameDifficultyColors(game, song.difficultyCode).bg,
-              getGameDifficultyColors(game, song.difficultyCode).text,
+              getGameDifficulty(game, song.difficultyCode).classes.cell,
             )}>
               {formatGameLevel(game, song.levelPrecise, song.difficultyCode)}
             </div>
             <div className="text-right font-mono py-1 px-2 border-b border-dashed border-border/90">
               {formatGameScore(game, song.scoreValue)}
             </div>
-            <div className="text-center text-muted-foreground py-1 px-2 border-b border-dashed border-border/90">
-              {getGameStatusLabels(game, { comboStatus: song.comboStatus }).join(" ")}
-            </div>
-            <div className="text-center text-muted-foreground py-1 px-2 border-b border-dashed border-border/90">
-              {getGameStatusLabels(game, { syncStatus: song.syncStatus, clearStatus: song.clearStatus }).join(" ")}
-            </div>
+            {statusColumns.map(column => (
+              <div key={column.labelKey} className="text-center text-muted-foreground py-1 px-2 border-b border-dashed border-border/90">
+                {getGameStatusLabels(game, Object.fromEntries(column.kinds.map(kind => [kind, song[kind]]))).join(" ")}
+              </div>
+            ))}
             <div className="text-right font-mono font-semibold py-1 px-2 border-b border-dashed border-border/90">
               {formatGameRating(game, song.rating)}
             </div>
@@ -114,7 +112,7 @@ function CompactSongSection({ title, songs, count, t, sum, average, visibleCount
 
         {/* Sentinel for infinite scroll - spans all columns */}
         {hasMore && (
-          <div ref={sentinelRef} className="col-span-7 h-4" />
+          <div ref={sentinelRef} className="col-span-full h-4" />
         )}
       </div>
     </div>
@@ -167,7 +165,7 @@ export function SongSection({ title, songs, count, displayMode, t, sum, average,
               <div className="flex items-center gap-1 whitespace-nowrap">
                 <TrendingUp className="h-3 w-3" />
                 <span>{t('dataContent.statistics.average')}</span>
-                <span className="font-mono font-medium">{game === "maimai" ? average.toFixed(2) : formatGameRating(game, average)}</span>
+                <span className="font-mono font-medium">{formatGameRating(game, average, { average: true })}</span>
               </div>
             )}
           </div>
@@ -214,7 +212,7 @@ export function SongGridSection({ title, songs, count, t, sum, average, percenti
               <div className="flex items-center gap-1 whitespace-nowrap">
                 <TrendingUp className="h-3 w-3" />
                 <span>{t('dataContent.statistics.average')}</span>
-                <span className="font-mono font-medium">{game === "maimai" ? average.toFixed(2) : formatGameRating(game, average)}</span>
+                <span className="font-mono font-medium">{formatGameRating(game, average, { average: true })}</span>
               </div>
             )}
           </div>

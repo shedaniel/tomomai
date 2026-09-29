@@ -1,12 +1,12 @@
 "use client";
 
 import type { fetchUserAlbums } from "@/server/queries/albums";
-import { formatGameLevel, getGameDifficultyColors, getGameChartTypeBadgeLabel, getGameChartTypeLabel } from "@/lib/games/presentation";
+import { formatGameLevel, getGameDifficulty, getGameChartType, getGameChartTypeBadge } from "@/lib/games/presentation";
 type Album = Awaited<ReturnType<typeof fetchUserAlbums>>["albums"][number];
 import { useGameId } from "@/components/providers/game-provider";
 import { trpc } from "@/lib/trpc-client";
 import { Region } from "@/lib/types";
-import { cn, createSafeMaimaiImageUrl, getTypeBadgeUrl } from "@/lib/utils";
+import { cn, createSafeMaimaiImageUrl } from "@/lib/utils";
 import { Images, Loader2, AlertCircle, Calendar, MapPin, HardDrive, Info, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { AlbumCardSkeleton } from "./album-card.skeleton";
@@ -259,6 +259,9 @@ export function AlbumCard({ region }: AlbumCardProps) {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {albums.map((album) => {
             const takenAt = new Date(album.takenAt);
+            const difficulty = getGameDifficulty(game, album.difficultyCode);
+            const chartType = getGameChartType(game, album.typeCode);
+            const typeBadge = getGameChartTypeBadge(game, album.typeCode);
 
             return (
               <div
@@ -283,7 +286,7 @@ export function AlbumCard({ region }: AlbumCardProps) {
                       alt={album.songName}
                       className={cn(
                         "w-14 h-14 rounded ring-2 ring-offset-2 ring-offset-background object-cover",
-                        getGameDifficultyColors(game, album.difficultyCode).ring,
+                        difficulty.classes.ring,
                       )}
                       width={56}
                       height={56}
@@ -292,7 +295,7 @@ export function AlbumCard({ region }: AlbumCardProps) {
                     <div
                       className={cn(
                         "absolute top-12 -right-1 px-1.5 py-0.5 rounded rounded-tr-none rounded-br-[8px] text-xs font-semibold text-white",
-                        getGameDifficultyColors(game, album.difficultyCode).badge,
+                        difficulty.classes.badge,
                       )}
                     >
                       {formatGameLevel(game, album.levelPrecise, album.difficultyCode)}
@@ -303,14 +306,14 @@ export function AlbumCard({ region }: AlbumCardProps) {
                   <div className="flex-1 min-w-0">
                     <h4 className="font-semibold truncate">{album.songName}</h4>
                     <p className="text-xs text-muted-foreground truncate">{album.artist}</p>
-                    {getGameChartTypeBadgeLabel(game, album.typeCode) && <div className="flex items-center gap-1.5 mt-1.5">
-                      {game === "maimai" ? <img
-                        src={createSafeMaimaiImageUrl(getTypeBadgeUrl(album.typeCode === 1 ? "dx" : "std"))}
-                        alt={getGameChartTypeLabel(game, album.typeCode)}
+                    {!chartType.implicit && <div className="flex items-center gap-1.5 mt-1.5">
+                      {typeBadge ? <img
+                        src={createSafeMaimaiImageUrl(typeBadge)}
+                        alt={chartType.label}
                         width={32}
                         height={10}
                         className="h-2.5 w-auto"
-                      /> : <span className="text-xs">{getGameChartTypeLabel(game, album.typeCode)}</span>}
+                      /> : <span className="text-xs">{chartType.label}</span>}
                     </div>}
                   </div>
                 </div>

@@ -7,7 +7,8 @@ import { cn, createSafeMaimaiImageUrl } from "@/lib/utils";
 import { CoverImage } from "@/components/cover-image";
 import { UniqueSong } from "./types";
 import { useGameId } from "@/components/providers/game-provider";
-import { formatGameLevel, getGameDifficultyColors, getGameChartTypeLabel, getGameChartTypeBadgeLabel, getGameChartTypeBadge } from "@/lib/games/presentation";
+import { codeOf } from "@/lib/games/codes";
+import { formatGameLevel, getGameDifficulty, getGameChartType, getGameChartTypeBadge } from "@/lib/games/presentation";
 
 interface SongCardProps {
   song: UniqueSong;
@@ -67,6 +68,10 @@ export function SongCard({ song, index, isSelected, onSelect, disableInitialAnim
 
   const isSingleDifficulty = song.difficulties.length === 1;
   const singleDiff = isSingleDifficulty ? song.difficulties[0] : null;
+  const typeCode = codeOf(game, "chartType", song.type);
+  const chartType = getGameChartType(game, typeCode);
+  const typeBadge = getGameChartTypeBadge(game, typeCode);
+  const difficultyCode = singleDiff ? codeOf(game, "difficulty", singleDiff.difficulty) : null;
 
   return (
     <motion.div
@@ -84,8 +89,7 @@ export function SongCard({ song, index, isSelected, onSelect, disableInitialAnim
         onClick={handleClick}
         className={cn(
           "block relative rounded-md overflow-hidden cursor-pointer ring-2 transition-all duration-300 ease-out",
-          !singleDiff && (song.type === "dx" ? "ring-amber-400 dark:ring-amber-300/75" : "ring-slate-300 dark:ring-slate-300/75"),
-          singleDiff && getGameDifficultyColors(game, singleDiff.difficulty).ring,
+          difficultyCode === null ? chartType.classes.ring : getGameDifficulty(game, difficultyCode).classes.ring,
           isSelected && "ring-4 ring-violet-500"
         )}
         style={{ aspectRatio: '1/1', transformStyle: 'preserve-3d', transform: 'perspective(1000px)' }}
@@ -105,24 +109,24 @@ export function SongCard({ song, index, isSelected, onSelect, disableInitialAnim
         <div className="absolute inset-0 bg-linear-to-t from-black/90 via-black/40 to-transparent rounded-md overflow-hidden" />
 
         {/* Type Badge */}
-        {getGameChartTypeBadgeLabel(game, song.type) && <div className="absolute top-2 left-2 z-10">
-          {getGameChartTypeBadge(game, song.type) ? <img
-            src={createSafeMaimaiImageUrl(getGameChartTypeBadge(game, song.type)!)}
-            alt={getGameChartTypeLabel(game, song.type)}
+        {!chartType.implicit && <div className="absolute top-2 left-2 z-10">
+          {typeBadge ? <img
+            src={createSafeMaimaiImageUrl(typeBadge)}
+            alt={chartType.label}
             width={32}
             height={10}
             className="drop-shadow-md"
             loading="lazy"
-          /> : <span className="rounded bg-background/90 px-1 text-xs text-foreground">{getGameChartTypeLabel(game, song.type)}</span>}
+          /> : <span className="rounded bg-background/90 px-1 text-xs text-foreground">{chartType.label}</span>}
         </div>}
 
         {/* Difficulty Badge (only if single difficulty) */}
-        {singleDiff && (
+        {singleDiff && difficultyCode !== null && (
           <div className={cn(
             "absolute top-[-2px] right-[-2px] pl-1.75 pr-3 py-0.75 rounded-tr-md rounded-bl-[8px] overflow-hidden text-[10px] font-semibold text-white z-10",
-            getGameDifficultyColors(game, singleDiff.difficulty).badge,
+            getGameDifficulty(game, difficultyCode).classes.cardBadge,
           )}>
-            {singleDiff.levelPreciseEstimated ? "≈" : ""}{formatGameLevel(game, singleDiff.levelPrecise, singleDiff.difficulty)}
+            {singleDiff.levelPreciseEstimated ? "≈" : ""}{formatGameLevel(game, singleDiff.levelPrecise, difficultyCode)}
           </div>
         )}
 

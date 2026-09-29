@@ -67,15 +67,11 @@ export type PersistFetchResultInput = {
   deadline?: number;
 };
 
-function codeName(game: CanonicalGameId, kind: "difficulty" | "chartType", code: number): string {
-  return keyOf(game, kind, code) ?? String(code);
-}
-
 function notFoundScore(game: CanonicalGameId, score: NormalizedScore): NotFoundScore {
   return {
     songName: score.chart.songName,
-    difficulty: codeName(game, "difficulty", score.chart.difficulty),
-    musicType: codeName(game, "chartType", score.chart.chartType),
+    difficulty: keyOf(game, "difficulty", score.chart.difficulty),
+    musicType: keyOf(game, "chartType", score.chart.chartType),
   };
 }
 

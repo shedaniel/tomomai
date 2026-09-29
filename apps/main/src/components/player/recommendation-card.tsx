@@ -2,7 +2,7 @@
 
 import { useGameId } from "@/components/providers/game-provider";
 import type { GameSnapshotData } from "@/lib/games/player-view";
-import { formatGameScore, formatGameRating, formatGameLevel, getGameDifficultyColors, getGameDifficultyLabel, getGameChartTypeBadgeLabel, getGameRankingBuckets, getGameScoreLabelKey } from "@/lib/games/presentation";
+import { formatGameScore, formatGameScoreDelta, formatGameRating, formatGameLevel, getGameDifficulty, getGameChartTypeBadgeLabel, getGameRankingBuckets, getGameScoreLabelKey } from "@/lib/games/presentation";
 import { generateRecommendations, RecommendationData } from "@/lib/games/recommendations";
 import { Region } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -22,19 +22,15 @@ import { logger } from "@/lib/logger";
 import { trpc } from "@/lib/trpc-client";
 import { useMediaQuery } from "@/hooks/use-media-query";
 
-// Floor to 2 decimals so 99.9956% doesn't render as 100.00%
-function formatAccuracy(accuracy: number): string {
-  return (Math.floor(accuracy * 100) / 100).toFixed(2);
-}
-
 function RecommendationRow({ recommendation }: { recommendation: RecommendationData }) {
   const t = useTranslations('recommendations');
   const format = useFormatter();
   const game = useGameId();
   const { song, currentScore, targetScore, currentRating, targetRating, ratingGain, isInBest, category } = recommendation;
   const isAp = game === "maimai" && targetScore === 1010000;
-  const scoreText = (value: number) => game === "maimai" ? `${formatAccuracy(value / 10000)}%` : formatGameScore(game, value);
+  const scoreText = (value: number) => formatGameScore(game, value, { precision: "compact" });
   const typeLabel = getGameChartTypeBadgeLabel(game, song.typeCode);
+  const difficulty = getGameDifficulty(game, song.difficultyCode);
   const content = (
       <motion.div
         className="flex xs:justify-between xs:items-center text-sm min-h-16 py-2 max-xs:min-h-30 max-xs:flex-col max-xs:justify-start max-xs:gap-y-2 px-2 -mx-2 rounded-md cursor-pointer group"
@@ -45,7 +41,7 @@ function RecommendationRow({ recommendation }: { recommendation: RecommendationD
             alt={song.songName}
             className={cn(
               "w-8 h-8 shrink-0 ml-1 mr-3 rounded ring-2 ring-offset-2 ring-offset-background",
-              getGameDifficultyColors(game, song.difficultyCode).ring,
+              difficulty.classes.ring,
             )}
             width={36}
             height={36}
@@ -78,7 +74,7 @@ function RecommendationRow({ recommendation }: { recommendation: RecommendationD
               )}
             </div>
             <div className="text-muted-foreground text-xs truncate">
-              {typeLabel && `${typeLabel} • `}{getGameDifficultyLabel(game, song.difficultyCode)} {formatGameLevel(game, song.levelPrecise, song.difficultyCode)} • {song.artist}
+              {typeLabel && `${typeLabel} • `}{difficulty.label} {formatGameLevel(game, song.levelPrecise, song.difficultyCode)} • {song.artist}
             </div>
           </div>
         </div>
@@ -104,7 +100,7 @@ function RecommendationRow({ recommendation }: { recommendation: RecommendationD
               {isAp ? (
                 <span className="text-orange-400 font-semibold">AP</span>
               ) : (
-                <span>+{scoreText(targetScore - currentScore)}</span>
+                <span>+{formatGameScoreDelta(game, currentScore, targetScore)}</span>
               )}
             </div>
             <div className="text-xs flex items-center gap-1">

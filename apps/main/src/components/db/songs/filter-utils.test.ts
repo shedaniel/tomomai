@@ -24,10 +24,10 @@ describe("catalog metadata filters", () => {
   });
 
   it.each([
-    ["maimai", 14, "maimai DX MAGiCAL"],
-    ["chunithm", 9, "CHUNITHM Mate"],
-  ] as const)("labels a %s added version by name even where International skipped it", (game, addedVersion, label) => {
-    const categories = createUniqueSongFilterCategories(game, [{ ...chart, addedVersion }]);
+    ["maimai", "std", 14, "maimai DX MAGiCAL"],
+    ["chunithm", "standard", 9, "CHUNITHM Mate"],
+  ] as const)("labels a %s added version by name even where International skipped it", (game, type, addedVersion, label) => {
+    const categories = createUniqueSongFilterCategories(game, [{ ...chart, type, addedVersion }]);
     expect(categories.find(category => category.type === "addedVersion")?.options).toEqual([{ value: String(addedVersion), label }]);
   });
 });

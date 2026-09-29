@@ -1,4 +1,4 @@
-import { codeOf } from "@tomomai/games/codes";
+import { codeOf } from "../codes";
 import type { ChartRatingInput, RankingBucketSizes } from "../types";
 
 const WORLDS_END = codeOf("chunithm", "difficulty", "worlds-end");

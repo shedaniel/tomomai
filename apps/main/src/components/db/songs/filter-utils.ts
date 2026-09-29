@@ -1,7 +1,8 @@
 import { FilterCategory } from "@/components/filter-panel";
 import { getVersion } from "@/lib/games/versions";
 import type { CanonicalGameId } from "@/lib/games/types";
-import { getGameChartTypeLabel } from "@/lib/games/presentation";
+import { codeOf } from "@/lib/games/codes";
+import { getGameChartType } from "@/lib/games/presentation";
 import { Disc3, Folder, Calendar, ArrowUpDown, BarChart, Pencil } from "lucide-react";
 import { GroupMode, UniqueSong, UniqueSongDifficulty, UniqueSongFilter } from "./types";
 
@@ -75,7 +76,7 @@ export function createUniqueSongFilterCategories(
       type: "type",
       label: getLabel("type", "Type"),
       icon: Disc3,
-      options: [...new Set(songs.map(song => song.type))].map(type => ({ value: type, label: getGameChartTypeLabel(game, type) })),
+      options: [...new Set(songs.map(song => song.type))].map(type => ({ value: type, label: getGameChartType(game, codeOf(game, "chartType", type)).label })),
     },
     {
       type: "genre",
