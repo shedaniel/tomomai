@@ -1,5 +1,6 @@
 import "server-only";
 import { getLogger } from "@/lib/request-logger";
+import { normalizeName } from "@/lib/name-utils";
 import { Region } from "@/lib/types";
 import type { SongType } from "@/lib/games/maimai/types";
 import { asCatalogFetcher } from "@/server/services/catalog/ingestion/merge";
@@ -44,7 +45,7 @@ export const FallbackFetcher = asCatalogFetcher(async (context) => {
       const level = song.levels[diff];
       if (level) {
         levels.push(maimaiChart({
-          songName: song.title,
+          songName: normalizeName(song.title),
           type: song.type,
           difficulty: diff === "easy" ? "basic" : diff,
           artist: song.artist,
