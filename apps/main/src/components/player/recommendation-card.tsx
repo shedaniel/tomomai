@@ -2,7 +2,6 @@
 
 import { useGameId } from "@/components/providers/game-provider";
 import type { GameSnapshotData } from "@/lib/games/player-view";
-import { toMaimaiScore } from "@/lib/games/maimai/legacy-view";
 import { formatGameScore, formatGameRating, formatGameLevel, getGameDifficultyColors, getGameDifficultyLabel, getGameChartTypeBadgeLabel, getGameRankingBuckets, getGameScoreLabelKey } from "@/lib/games/presentation";
 import { generateRecommendations, RecommendationData } from "@/lib/games/recommendations";
 import { Region } from "@/lib/types";
@@ -117,7 +116,7 @@ function RecommendationRow({ recommendation }: { recommendation: RecommendationD
       </motion.div>
   );
   return game === "maimai"
-    ? <SongHoverCard song={toMaimaiScore(song)}>{content}</SongHoverCard>
+    ? <SongHoverCard score={song}>{content}</SongHoverCard>
     : content;
 }
 

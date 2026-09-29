@@ -18,7 +18,9 @@ import { DialogTrigger } from "@tomomai/ui";
 import { AnimatedDialog, AnimatedDialogContent } from "@tomomai/ui";
 import { SongChartDialogContent } from "@/components/db/songs/song-detail-dialog";
 import { Region } from "@/lib/types";
-import type { Difficulty, MinimalSong, SongType } from "@/lib/games/maimai/types";
+import type { GamePlayerScore } from "@/lib/games/player-view";
+import { codeToChartType, codeToDifficulty } from "@/lib/games/maimai/codes";
+import { parseSongId } from "@/lib/catalog/song-instance-id";
 import { getChartsByDifficulty, getChartScores } from "@/components/db/songs/song-detail-content";
 import { UserScore } from "@/components/db/songs/types";
 import { useMediaQuery } from "@/hooks/use-media-query";
@@ -26,30 +28,30 @@ import { Drawer, DrawerContent, DrawerTrigger, DrawerHeader, DrawerTitle, Drawer
 import { PercentileDistribution } from "@/components/games/maimai/percentile-distribution";
 import type { PercentileDistributionData } from "@/lib/games/maimai/percentile/types";
 
+type HoverScore = Pick<GamePlayerScore, "songId" | "songName" | "artist" | "cover" | "difficultyCode" | "typeCode">;
+
 interface SongHoverCardProps {
   children: React.ReactNode;
-  song: MinimalSong;
+  score: HoverScore;
   percentile?: PercentileDistributionData | null;
   side?: "top" | "bottom" | "left" | "right";
   className?: string;
 }
 
-function SongDetailDialog({ songName, artist, type, difficulty }: {
-  songName: string;
-  artist: string;
-  type: SongType;
-  difficulty: Difficulty;
-}) {
+function SongDetailDialog({ score }: { score: HoverScore }) {
   const t = useTranslations();
   const game = useGameId();
   const [open, setOpen] = useState(false);
+  const parsedId = parseSongId(score.songId);
+  const difficulty = codeToDifficulty(score.difficultyCode);
 
   const { data: songDetails, isLoading } = trpc.user.getSongDetails.useQuery(
     {
       game,
-      songName,
-      artist,
-      type,
+      songName: score.songName,
+      artist: score.artist,
+      type: codeToChartType(score.typeCode),
+      parentIds: parsedId ? [parsedId.parentPublicId] : undefined,
     },
     {
       enabled: open,
@@ -92,28 +94,29 @@ function SongDetailDialog({ songName, artist, type, difficulty }: {
 }
 
 function SongCardContent({
-  song,
+  score,
   songDetails,
   isLoading,
   addedVersionInfo,
   t,
   percentile,
 }: {
-  song: SongHoverCardProps['song'],
+  score: HoverScore,
   songDetails: any,
   isLoading: boolean,
   addedVersionInfo: VersionRow | null,
   t: any,
   percentile?: SongHoverCardProps['percentile'],
 }) {
+  const type = codeToChartType(score.typeCode);
   return (
     <div className="p-4 space-y-3">
       {/* Header */}
       <div className="flex gap-3">
         <div className="relative w-16 h-16 shrink-0 rounded-md overflow-hidden ring-1 ring-border">
           <CoverImage
-            coverUrl={song.cover}
-            alt={song.songName}
+            coverUrl={score.cover}
+            alt={score.songName}
             fill
             className="object-cover"
             sizes="64px"
@@ -121,15 +124,15 @@ function SongCardContent({
         </div>
         <div className="flex-1 min-w-0 py-0.5">
           <h4 className="font-bold text-sm leading-tight line-clamp-2 mb-1">
-            {song.songName}
+            {score.songName}
           </h4>
           <p className="text-xs text-muted-foreground truncate">
-            {song.artist}
+            {score.artist}
           </p>
           <div className="flex items-center gap-1.5 mt-1.5 h-5">
             <img
-              src={createSafeMaimaiImageUrl(getTypeBadgeUrl(song.type))}
-              alt={song.type.toUpperCase()}
+              src={createSafeMaimaiImageUrl(getTypeBadgeUrl(type))}
+              alt={type.toUpperCase()}
               width={32}
               height={10}
               className="h-2.5 w-auto"
@@ -176,7 +179,7 @@ function SongCardContent({
 
       {/* Action */}
       <div className="pt-1 flex items-center gap-2 flex-col">
-        <SongDetailDialog songName={song.songName} artist={song.artist} type={song.type} difficulty={song.difficulty} />
+        <SongDetailDialog score={score} />
         <Button
           className="w-full h-8 text-xs"
           variant="default"
@@ -203,7 +206,7 @@ function SongCardContent({
   );
 }
 
-export function SongHoverCard({ children, song, percentile, side, className }: SongHoverCardProps) {
+export function SongHoverCard({ children, score, percentile, side, className }: SongHoverCardProps) {
   const t = useTranslations();
   const game = useGameId();
   const [isOpen, setIsOpen] = useState(false);
@@ -212,7 +215,7 @@ export function SongHoverCard({ children, song, percentile, side, className }: S
   const { data: songDetails, isLoading } = trpc.user.getSimpleSongDetails.useQuery(
     {
       game,
-      publicId: song.songId,
+      publicId: score.songId,
     },
     {
       enabled: isOpen,
@@ -224,7 +227,7 @@ export function SongHoverCard({ children, song, percentile, side, className }: S
 
   const content = (
     <SongCardContent
-      song={song}
+      score={score}
       songDetails={songDetails}
       isLoading={isLoading}
       addedVersionInfo={addedVersionInfo}
@@ -255,7 +258,7 @@ export function SongHoverCard({ children, song, percentile, side, className }: S
         <DrawerHeader className="text-left pb-1">
           <DrawerTitle>{t('db.songs.detail.title')}</DrawerTitle>
           <DrawerDescription className="hidden">
-            {song.songName}
+            {score.songName}
           </DrawerDescription>
         </DrawerHeader>
         <div className="px-2 pb-8">
