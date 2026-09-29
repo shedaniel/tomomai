@@ -1,7 +1,8 @@
 "use client";
 
 import type { GameEvent, GameSnapshotData } from "@/lib/games/player-view";
-import { cn, createSafeMaimaiImageUrl, isR2Url } from "@/lib/utils";
+import { isR2Url, resolveImageUrl } from "@/lib/images";
+import { cn } from "@/lib/utils";
 import { Map, Calendar, Flag, CheckCircle2, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
@@ -128,7 +129,7 @@ function EventCard({
       {/* Header: Image + Name/Status */}
       <div className="flex items-center gap-3">
         <Image
-          src={createSafeMaimaiImageUrl(imageUrl)}
+          src={resolveImageUrl(imageUrl)}
           alt={event.name}
           className="w-16 h-16 xs:w-20 xs:h-20 rounded-lg object-contain aspect-square flex-shrink-0"
           width={80}

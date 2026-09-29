@@ -1,6 +1,7 @@
 import "server-only";
 import { createHash } from 'crypto';
-import { isSafeMaimaiImageUrl, isServer, isServerless } from '@/lib/utils';
+import { isProxiedImageUrl } from '@/lib/images';
+import { isServerless } from '@/lib/utils';
 import { gzip, gunzip } from 'zlib';
 import { promisify } from 'util';
 import path from 'path';
@@ -16,10 +17,8 @@ function generateUrlHash(url: string): string {
 }
 
 
-// Cache and return local path for maimaidx images
 export async function cacheImage(url: string): Promise<void> {
-  // Only cache on server and for maimaidx domains
-  if (!isServer() || !isSafeMaimaiImageUrl(url) || isServerless()) {
+  if (!isProxiedImageUrl(url) || isServerless()) {
     return;
   }
 
@@ -74,7 +73,7 @@ export async function cacheImage(url: string): Promise<void> {
 
 // Get cached image buffer for API routes
 export async function getCachedImageBuffer(url: string): Promise<{ buffer: Buffer; contentType: string } | null> {
-  if (!isServer() || !isSafeMaimaiImageUrl(url)) {
+  if (!isProxiedImageUrl(url)) {
     return null;
   }
 

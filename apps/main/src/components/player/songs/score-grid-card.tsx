@@ -5,7 +5,8 @@ import { useGameId } from "@/components/providers/game-provider";
 import { CoverImage } from "@/components/cover-image";
 import { formatGameScore, formatGameRating, formatGameLevel, getGameDifficulty, getGameChartType, getGameChartTypeBadge, getGameStatusLabels } from "@/lib/games/presentation";
 import type { PercentileEntry } from "@/lib/games/maimai/percentile/types";
-import { cn, createSafeMaimaiImageUrl } from "@/lib/utils";
+import { resolveImageUrl } from "@/lib/images";
+import { cn } from "@/lib/utils";
 import { ScoreHover } from "./score-hover";
 import type { DisplayScore } from "./types";
 
@@ -109,7 +110,7 @@ export const SongGridCard = forwardRef<HTMLDivElement, { song: DisplayScore & { 
           {/* Song Type Badge */}
           {!chartType.implicit && <div className="absolute top-2.5 left-2.5 2xs:max-xs:left-2 2xs:max-xs:top-2 2xs:max-xs:scale-75 origin-top-left z-30">
             {typeBadge ? <img
-              src={createSafeMaimaiImageUrl(typeBadge)}
+              src={resolveImageUrl(typeBadge)}
               alt={chartType.label}
               width={37}
               height={11}

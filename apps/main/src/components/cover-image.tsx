@@ -1,6 +1,6 @@
 "use client";
 
-import { createSafeMaimaiImageUrl, isR2Url } from "@/lib/utils";
+import { isR2Url, resolveImageUrl } from "@/lib/images";
 import Image, { ImageProps } from "next/image";
 
 type CoverImageProps = Omit<ImageProps, "src"> & {
@@ -8,6 +8,6 @@ type CoverImageProps = Omit<ImageProps, "src"> & {
 };
 
 export function CoverImage({ coverUrl, ...props }: CoverImageProps) {
-  const src = createSafeMaimaiImageUrl(coverUrl);
+  const src = resolveImageUrl(coverUrl);
   return <Image src={src} unoptimized={isR2Url(coverUrl)} {...props} />;
 }

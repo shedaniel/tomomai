@@ -145,4 +145,5 @@ export const maimaiPresentation = {
     { labelKey: "fs", kinds: ["syncStatus"] },
   ],
   grades: MAIMAI_GRADES,
+  imageProxyHosts: ["maimaidx.jp", "maimaidx-eng.com", "cdn.gamerch.com", "maimai.sega.jp"],
 } satisfies GamePresentation<"maimai">;

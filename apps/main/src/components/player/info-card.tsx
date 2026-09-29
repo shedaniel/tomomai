@@ -16,7 +16,7 @@ import { resolveBaseUrl } from "@/lib/base-url";
 import { getRatingImageUrl } from "@/lib/games/maimai/assets";
 import { trpc } from "@/lib/trpc-client";
 import type { ProfilePrivacySettings, ProfileSettings } from "@/lib/types";
-import { createSafeMaimaiImageUrl, isR2Url } from "@/lib/utils";
+import { isR2Url, resolveImageUrl } from "@/lib/images";
 import { Button } from "@tomomai/ui";
 import { Settings2 } from "lucide-react";
 import { motion } from "motion/react";
@@ -338,7 +338,7 @@ function PlayerIdentitySummary({ snapshot }: { snapshot: Snapshot }) {
         transition={getTransition(SPRING_CONFIGS.default)}
       >
         <Image
-          src={createSafeMaimaiImageUrl(snapshot.iconUrl ?? "")}
+          src={resolveImageUrl(snapshot.iconUrl ?? "")}
           unoptimized={isR2Url(snapshot.iconUrl ?? "")}
           alt={snapshot.title ?? snapshot.displayName}
           width={80}

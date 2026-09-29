@@ -7,7 +7,8 @@ import { getVersion } from "@/lib/games/versions";
 import type { VersionRow } from "@/lib/games/version-table";
 import { useGameId } from "@/components/providers/game-provider";
 import { trpc } from "@/lib/trpc-client";
-import { cn, createSafeMaimaiImageUrl } from "@/lib/utils";
+import { resolveImageUrl } from "@/lib/images";
+import { cn } from "@/lib/utils";
 import { Activity, Calendar, ChevronRight, ListPlus, Loader2, Music } from "lucide-react";
 import { useTranslations } from "next-intl";
 
@@ -133,7 +134,7 @@ function SongCardContent({
           </p>
           <div className="flex items-center gap-1.5 mt-1.5 h-5">
             {typeBadge && <img
-              src={createSafeMaimaiImageUrl(typeBadge)}
+              src={resolveImageUrl(typeBadge)}
               alt={chartType.label}
               width={32}
               height={10}

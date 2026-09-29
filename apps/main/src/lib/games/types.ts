@@ -142,6 +142,8 @@ type PresentationOf<G extends CanonicalGameId> = {
   statusColumns: readonly StatusColumn[];
   /** Highest first. The last row is the floor. */
   grades: readonly GradeRow[];
+  /** Hosts whose images browsers load through /api/image-proxy instead of directly. */
+  imageProxyHosts: readonly string[];
 };
 
 /** Keyed by code key, so a key added to a game's code table needs its presentation. */

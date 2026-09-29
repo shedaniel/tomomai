@@ -3,7 +3,7 @@ import { getCurrentGame } from "@/lib/games/current";
 import { createSongOGImage, createHomeOGImage, DB_ACCENT, OG_SIZE } from "@/lib/og";
 import { getAllUniqueSongsCached } from "@/server/queries/songs-cache";
 import { getTranslations } from "next-intl/server";
-import { createSafeMaimaiImageUrl, isR2Url } from "@/lib/utils";
+import { isR2Url, resolveImageUrl } from "@/lib/images";
 import { resolveBaseUrlFromHeaders } from "@/lib/base-url";
 import { headers } from "next/headers";
 import { getVersion } from "@/lib/games/versions";
@@ -55,7 +55,7 @@ export default async function Image({ params, id }: Props & { id: Promise<string
   }
 
   const baseUrl = resolveBaseUrlFromHeaders(await headers());
-  const safeUrl = createSafeMaimaiImageUrl(song.cover);
+  const safeUrl = resolveImageUrl(song.cover);
   // sharp/node can fetch R2 directly; maimaidx URLs go through the local image-proxy route.
   const coverUrl = isR2Url(safeUrl)
     ? safeUrl

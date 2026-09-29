@@ -133,4 +133,5 @@ export const chunithmPresentation = {
     { labelKey: "status", kinds: ["comboStatus", "syncStatus", "clearStatus"] },
   ],
   grades: CHUNITHM_GRADES,
+  imageProxyHosts: [],
 } satisfies GamePresentation<"chunithm">;

@@ -28,7 +28,8 @@ import { SPRING_CONFIGS, getTransition } from "@/lib/animation-constants";
 
 import { triggerHaptic } from "@tomomai/ui/haptics";
 import { Locale, setLocaleCookie } from "@/i18n/locale";
-import { cn, getLanguages, isR2Url } from "@/lib/utils";
+import { isR2Url } from "@/lib/images";
+import { cn, getLanguages } from "@/lib/utils";
 import { useLocale } from "./providers/locale-provider";
 import { useAuthDialog } from "@/components/auth/auth-dialog-provider";
 import { useSession } from "@/lib/auth-client";

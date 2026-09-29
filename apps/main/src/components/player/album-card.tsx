@@ -6,7 +6,8 @@ type Album = Awaited<ReturnType<typeof fetchUserAlbums>>["albums"][number];
 import { useGameId } from "@/components/providers/game-provider";
 import { trpc } from "@/lib/trpc-client";
 import { Region } from "@/lib/types";
-import { cn, createSafeMaimaiImageUrl } from "@/lib/utils";
+import { resolveImageUrl } from "@/lib/images";
+import { cn } from "@/lib/utils";
 import { Images, Loader2, AlertCircle, Calendar, MapPin, HardDrive, Info, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { AlbumCardSkeleton } from "./album-card.skeleton";
@@ -308,7 +309,7 @@ export function AlbumCard({ region }: AlbumCardProps) {
                     <p className="text-xs text-muted-foreground truncate">{album.artist}</p>
                     {!chartType.implicit && <div className="flex items-center gap-1.5 mt-1.5">
                       {typeBadge ? <img
-                        src={createSafeMaimaiImageUrl(typeBadge)}
+                        src={resolveImageUrl(typeBadge)}
                         alt={chartType.label}
                         width={32}
                         height={10}

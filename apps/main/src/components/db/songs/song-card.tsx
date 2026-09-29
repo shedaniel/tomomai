@@ -3,7 +3,8 @@
 import { motion } from "motion/react";
 import { Link } from "@/i18n/navigation"
 
-import { cn, createSafeMaimaiImageUrl } from "@/lib/utils";
+import { resolveImageUrl } from "@/lib/images";
+import { cn } from "@/lib/utils";
 import { CoverImage } from "@/components/cover-image";
 import { UniqueSong } from "./types";
 import { useGameId } from "@/components/providers/game-provider";
@@ -111,7 +112,7 @@ export function SongCard({ song, index, isSelected, onSelect, disableInitialAnim
         {/* Type Badge */}
         {!chartType.implicit && <div className="absolute top-2 left-2 z-10">
           {typeBadge ? <img
-            src={createSafeMaimaiImageUrl(typeBadge)}
+            src={resolveImageUrl(typeBadge)}
             alt={chartType.label}
             width={32}
             height={10}
