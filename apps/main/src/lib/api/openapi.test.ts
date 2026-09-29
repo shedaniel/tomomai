@@ -12,7 +12,7 @@ const gameParam = (op: Operation) => op.parameters?.find(p => p.name === "game" 
 
 describe("OpenAPI document", () => {
   it("lists only the games that offer each game route's capability", () => {
-    for (const path of ["/api/v1/games/{game}/albums", "/api/v1/games/{game}/plates"]) {
+    for (const path of ["/api/v1/games/{game}/albums", "/api/v1/games/{game}/plates", "/api/v1/games/{game}/stats"]) {
       expect(gameParam(operation("get", path))).toEqual(["maimai"]);
       expect(operation("get", path).responses["200"].content?.["application/json"].schema.properties?.game.enum).toEqual(["maimai"]);
     }

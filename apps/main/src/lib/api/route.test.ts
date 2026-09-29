@@ -15,6 +15,7 @@ const mocks = vi.hoisted(() => {
     refundMonthly: vi.fn(async () => undefined),
     log: { error: vi.fn(), warn: vi.fn(), info: vi.fn() },
     fetchUserAlbums: vi.fn(),
+    fetchPlayerStats: vi.fn(),
     fetchLatestPlateSongs: vi.fn(),
   };
 });
@@ -25,11 +26,13 @@ vi.mock("@/lib/security/redis-rate-limit", () => ({ apiKeyLimiter: mocks.keyLimi
 vi.mock("@/lib/api/quota", () => ({ consumeMonthly: mocks.consumeMonthly, peekMonthly: vi.fn(), refundMonthly: mocks.refundMonthly }));
 vi.mock("@/lib/request-logger", () => ({ requestLogger: () => ({ log: mocks.log, requestId: "route-test" }), getLogger: () => mocks.log }));
 vi.mock("@/server/queries/albums", () => ({ fetchUserAlbums: mocks.fetchUserAlbums }));
+vi.mock("@/server/queries/stats", () => ({ fetchPlayerStats: mocks.fetchPlayerStats }));
 vi.mock("@/server/services/games/maimai/plates", () => ({ fetchLatestPlateSongs: mocks.fetchLatestPlateSongs }));
 
 import { GameAdapterError } from "@/lib/games/errors";
 import { GET as getAlbums } from "@/app/api/v1/games/[game]/albums/route";
 import { GET as getPlates } from "@/app/api/v1/games/[game]/plates/route";
+import { GET as getStats } from "@/app/api/v1/games/[game]/stats/route";
 import { defineGameHandler } from "./protect";
 import { defineGameRoute, defineRoute } from "./registry";
 import { definePublicGameHandler } from "./route";
@@ -74,7 +77,7 @@ beforeEach(() => {
   vi.stubEnv("NEXT_PUBLIC_ENABLED_MAIMAI_REGIONS", "intl,jp");
   vi.stubEnv("NEXT_PUBLIC_ENABLED_CHUNITHM_REGIONS", "intl,jp");
   mocks.verifyApiKey.mockImplementation(async ({ body }: { body: { key: string } }) => body.key === KEY
-    ? { valid: true, key: { referenceId: "user-1", id: "key-1", permissions: { "album:read": ["access"], "plate:read": ["access"], "recent:read": ["access"] }, name: null, expiresAt: null } }
+    ? { valid: true, key: { referenceId: "user-1", id: "key-1", permissions: { "album:read": ["access"], "plate:read": ["access"], "stats:read": ["access"], "recent:read": ["access"] }, name: null, expiresAt: null } }
     : { valid: false, error: { message: "Invalid API key" } });
 });
 
@@ -106,6 +109,20 @@ describe("keyed game routes", () => {
 
     expect(mocks.fetchUserAlbums).not.toHaveBeenCalled();
     expect(mocks.fetchLatestPlateSongs).not.toHaveBeenCalled();
+  });
+
+  it("serves player stats only for games with the stats capability", async () => {
+    mocks.fetchPlayerStats.mockResolvedValue({ stats: {}, totalSongs: {} });
+
+    const chunithm = await getStats(request("chunithm/stats?region=jp", { key: KEY }), context({ game: "chunithm" }));
+    expect(chunithm.status).toBe(422);
+    expect((await chunithm.json()).code).toBe("UNSUPPORTED_CAPABILITY");
+
+    const maimai = await getStats(request("maimai/stats?region=jp", { key: KEY }), context({ game: "maimai" }));
+    expect(maimai.status).toBe(200);
+    expect(await maimai.json()).toEqual({ game: "maimai", stats: {}, totalSongs: {} });
+    expect(mocks.fetchPlayerStats).toHaveBeenCalledOnce();
+    expect(mocks.fetchPlayerStats).toHaveBeenCalledWith("maimai", "user-1", "jp");
   });
 
   it("answers every rejected parameter with an error and a code", async () => {
