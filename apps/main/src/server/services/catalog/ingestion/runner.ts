@@ -40,8 +40,13 @@ function summarizeStage(charts: Attributed[], index: number, name: string, chart
 }
 
 function attributeSource(previous: Attributed[], next: SourceChart[], index: number): Attributed[] {
+  const previousByKey = new Map<string, Attributed>();
+  for (const chart of previous) {
+    const key = catalogChartKey(chart);
+    if (!previousByKey.has(key)) previousByKey.set(key, chart);
+  }
   return next.map(chart => {
-    const existing = previous.find(candidate => catalogChartKey(candidate) === catalogChartKey(chart));
+    const existing = previousByKey.get(catalogChartKey(chart));
     if (!existing) {
       return { ...chart, addedFetcher: index, modifiedFetchers: [index] };
     }

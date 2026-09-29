@@ -42,6 +42,13 @@ describe("catalog stage runner", () => {
     ]);
   });
 
+  it("reports nothing for a stage that returns the charts unchanged", async () => {
+    const charts = [{ ...pending, ...complete }, { ...pending, ...complete, difficulty: 2 }];
+    await runFetchers(context, { game: "maimai", stages: [{ name: "Source", run: async () => charts }, { name: "Check", run: async (_ctx, collected) => collected }] });
+    expect(notices()[1].body).toContain("**Check**: 2 songs (+0)");
+    expect(notices()[1].body).toContain("+0 added, ~0 modified");
+  });
+
   it("stops later stages and completion when a stage fails", async () => {
     const failure = new Error("source failed");
     const fill = vi.fn();
