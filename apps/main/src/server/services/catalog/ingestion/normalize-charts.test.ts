@@ -29,10 +29,12 @@ describe("catalog validation", () => {
     expect(() => validateCatalogCharts("chunithm", [chart, { ...chart, levelPrecise: 141 }])).toThrow("Duplicate catalog chart");
   });
 
-  it("accepts charts that share a key but differ in artist or version", () => {
+  it("accepts charts that share a key but differ in artist or version, and charts with another key", () => {
     expect(() => validateCatalogCharts("chunithm", [
       chart, { ...chart, artist: "Another artist" }, { ...chart, addedVersion: 9 }, { ...chart, difficulty: 3 },
     ])).not.toThrow();
+    const maimai = { ...chart, game: "maimai" as const, difficulty: 3 };
+    expect(() => validateCatalogCharts("maimai", [maimai, { ...maimai, chartType: 1 }])).not.toThrow();
   });
 });
 

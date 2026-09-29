@@ -1,6 +1,6 @@
 import { versionReleaseInstant } from "@/lib/games/version-table";
 
-export const OTOGE_DB_RAW_ROOT = "https://raw.githubusercontent.com/zvuc/otoge-db/main";
+const OTOGE_DB_RAW_ROOT = "https://raw.githubusercontent.com/zvuc/otoge-db/main";
 
 export function otogeDbUrl(path: string): string {
   return `${OTOGE_DB_RAW_ROOT}/${path}`;
