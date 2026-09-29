@@ -6,7 +6,7 @@ import { scoreData, snapshotScores, songs, userSnapshots } from "@/lib/db/schema
 import { getGame } from "@/lib/games/registry";
 import type { CanonicalGameId } from "@/lib/games/types";
 import type { Region } from "@/lib/types";
-import { buildChartResolution, writeSnapshotScores, type SnapshotScore } from "./score-storage";
+import { catalogCharts, writeSnapshotScores, type SnapshotScore } from "./score-storage";
 
 export type CopySnapshotInput = {
   game: CanonicalGameId;
@@ -62,8 +62,8 @@ export async function copySnapshotToVersion(input: CopySnapshotInput) {
       .innerJoin(songs, eq(scoreData.songId, songs.id))
       .where(and(eq(snapshotScores.game, input.game), eq(snapshotScores.snapshotId, source.id)));
 
-    const { songsById } = await buildChartResolution(tx, input.game, input.region, input.targetVersion);
-    const targetByParent = new Map([...songsById.values()].map(song => [song.parentId, song]));
+    const targetCharts = await catalogCharts(tx, input.game, input.region, input.targetVersion);
+    const targetByParent = new Map(targetCharts.map(song => [song.parentId, song]));
     const scores = sourceScores.flatMap(({ parentId, ...values }): SnapshotScore[] => {
       const song = targetByParent.get(parentId);
       return song ? [{ song, values: { ...values, songId: song.id } }] : [];

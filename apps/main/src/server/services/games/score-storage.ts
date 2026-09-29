@@ -6,6 +6,7 @@ import { RANKING_BUCKETS } from "@/lib/games/codes";
 import { getGame } from "@/lib/games/registry";
 import { rankScores, type StoredRankings } from "@/lib/games/ranking";
 import type { CanonicalGameId } from "@/lib/games/types";
+import { getLogger } from "@/lib/request-logger";
 import type { ChartRef, ChartResolutionMap, NormalizedScore } from "./types";
 import type { Region } from "@/lib/types";
 
@@ -21,20 +22,23 @@ function scoreDataKey(score: ScoreDataValues): string {
   return `${score.songId}-${score.scoreValue}-${score.secondaryScore}-${score.comboStatus}-${score.syncStatus}-${score.clearStatus}`;
 }
 
+export function catalogCharts(connection: ScoreConnection, game: CanonicalGameId, region: Region, gameVersion: number): Promise<DbSong[]> {
+  return connection.select({ ...getTableColumns(songs), songName: parentSong.songName, difficulty: parentSong.difficulty, type: parentSong.type })
+    .from(songs).innerJoin(parentSong, and(eq(parentSong.id, songs.parentId), eq(parentSong.game, songs.game)))
+    .where(and(eq(songs.game, game), eq(songs.region, region), eq(songs.gameVersion, gameVersion)));
+}
+
+/** Maps each chart key to its catalog chart, leaving out keys that more than one chart shares. */
 export async function buildChartResolution(
   connection: ScoreConnection,
   game: CanonicalGameId,
   region: Region,
   gameVersion: number,
 ): Promise<{ chartResolution: ChartResolutionMap; songsById: Map<bigint, DbSong> }> {
-  const allSongs = await connection.select({ ...getTableColumns(songs), songName: parentSong.songName, difficulty: parentSong.difficulty, type: parentSong.type })
-    .from(songs).innerJoin(parentSong, and(eq(parentSong.id, songs.parentId), eq(parentSong.game, songs.game)))
-    .where(and(eq(songs.game, game), eq(songs.region, region), eq(songs.gameVersion, gameVersion)));
-
   const chartResolution: ChartResolutionMap = new Map();
   const songsById = new Map<bigint, DbSong>();
   const ambiguous = new Set<string>();
-  for (const song of allSongs) {
+  for (const song of await catalogCharts(connection, game, region, gameVersion)) {
     const key = chartKey({ songName: song.songName, difficulty: song.difficulty, chartType: song.type });
     if (chartResolution.has(key) || ambiguous.has(key)) {
       chartResolution.delete(key);
@@ -43,6 +47,9 @@ export async function buildChartResolution(
       chartResolution.set(key, song.id);
     }
     songsById.set(song.id, song);
+  }
+  if (ambiguous.size > 0) {
+    getLogger().warn({ songKeys: [...ambiguous], game, region, version: gameVersion }, "Ambiguous song names excluded from score lookup");
   }
 
   return { chartResolution, songsById };

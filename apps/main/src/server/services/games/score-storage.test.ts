@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const state = vi.hoisted(() => ({ rows: [] as unknown[][], statements: [] as { sql: string; params: unknown[] }[], withoutRankings: false }));
+const state = vi.hoisted(() => ({ rows: [] as unknown[][], statements: [] as { sql: string; params: unknown[] }[], withoutRankings: false, warn: vi.fn() }));
 vi.mock("@/lib/db", async () => {
   const { drizzle } = await import("drizzle-orm/pg-proxy");
   return { db: drizzle(async (sql, params) => {
@@ -8,6 +8,7 @@ vi.mock("@/lib/db", async () => {
     return { rows: state.rows };
   }) };
 });
+vi.mock("@/lib/request-logger", () => ({ getLogger: () => ({ warn: state.warn }) }));
 vi.mock("@/lib/games/registry", async importOriginal => {
   const actual = await importOriginal<typeof import("@/lib/games/registry")>();
   return { ...actual, getGame: (id: Parameters<typeof actual.getGame>[0]) => {
@@ -15,14 +16,22 @@ vi.mock("@/lib/games/registry", async importOriginal => {
     return state.withoutRankings ? { ...definition, capabilities: definition.capabilities.filter(capability => capability !== "rankings") } : definition;
   } };
 });
+import { getTableColumns } from "drizzle-orm";
 import { db } from "@/lib/db";
+import { songs } from "@/lib/db/schema-pg";
 import { RANKING_BUCKET_CODE } from "@/lib/games/codes";
 import { buildChartResolution, writeSnapshotScores, type DbSong } from "./score-storage";
 
-beforeEach(() => { state.rows = []; state.statements = []; state.withoutRankings = false; });
+beforeEach(() => { state.rows = []; state.statements = []; state.withoutRankings = false; state.warn.mockClear(); });
 
-function song(id: number, name: string, difficulty = 3) {
-  return [String(id), String(id), "maimai", null, "14", 140, "jp", 14, 14, null, null, null, null, null, null, name, difficulty, 0];
+const catalogColumns = Object.keys({ ...getTableColumns(songs), songName: null, difficulty: null, type: null });
+
+function song(id: number, songName: string, difficulty = 3) {
+  const values: Record<string, unknown> = {
+    id: String(id), parentId: String(id), game: "maimai", level: "14", levelPrecise: 140, region: "jp", gameVersion: 14, addedVersion: 14,
+    songName, difficulty, type: 0,
+  };
+  return catalogColumns.map(column => values[column] ?? null);
 }
 
 it("excludes every ambiguous chart while keeping distinct difficulties and the original rows", async () => {
@@ -31,6 +40,10 @@ it("excludes every ambiguous chart while keeping distinct difficulties and the o
   expect(chartResolution.has("Shared|3|0")).toBe(false);
   expect(chartResolution.get("Shared|2|0")).toBe(BigInt(4));
   expect(songsById.size).toBe(4);
+  expect(state.warn).toHaveBeenCalledExactlyOnceWith(
+    { songKeys: ["Shared|3|0"], game: "maimai", region: "jp", version: 14 },
+    "Ambiguous song names excluded from score lookup",
+  );
 });
 
 it.each(["maimai", "chunithm"] as const)("scopes chart lookup SQL to %s, region and captured version", async game => {
@@ -38,6 +51,7 @@ it.each(["maimai", "chunithm"] as const)("scopes chart lookup SQL to %s, region 
   const query = state.statements[0];
   expect(query.sql).toMatch(/"songs"\."game" = \$1 and "songs"\."region" = \$2 and "songs"\."gameVersion" = \$3/);
   expect(query.params).toEqual([game, "jp", 14]);
+  expect(state.warn).not.toHaveBeenCalled();
 });
 
 function insertedRows(table: string) {
