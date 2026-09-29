@@ -1,8 +1,8 @@
 import { z } from "zod";
-import { defineGameRoute as defineRoute } from "@/lib/api/registry";
+import { defineGameRoute } from "@/lib/api/registry";
 import { chartCatalogueEntry } from "@/lib/api/schemas";
 
-export const spec = defineRoute({
+export const spec = defineGameRoute({
   method: "GET",
   path: "/api/v1/games/{game}/parents",
   tag: "Songs",
@@ -12,6 +12,8 @@ export const spec = defineRoute({
     "independent of regions and game versions. Chart IDs here are the prefixes of the " +
     "composite instance IDs returned by /api/v1/games/{game}/songs.",
   scope: "public",
+  capability: "catalog",
+  redirect: true,
   cost: 1,
   cacheSeconds: 3600,
   response: z.object({

@@ -1,8 +1,8 @@
 import { z } from "zod";
-import { defineGameRoute as defineRoute } from "@/lib/api/registry";
+import { defineGameRoute } from "@/lib/api/registry";
 import { querySchemas, recentPlay } from "@/lib/api/schemas";
 
-export const spec = defineRoute({
+export const spec = defineGameRoute({
   method: "GET",
   path: "/api/v1/games/{game}/recents",
   tag: "Recents",
@@ -13,6 +13,7 @@ export const spec = defineRoute({
     "basic score data; with `recent:detailed:read`, the response also " +
     "includes venue and per-note-type breakdowns.",
   scope: "recent:read",
+  capability: "recents",
   optionalScopes: [
     {
       scope: "recent:detailed:read",

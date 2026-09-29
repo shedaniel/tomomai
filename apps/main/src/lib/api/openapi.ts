@@ -1,7 +1,8 @@
 import { z } from "zod";
 import { GAME_ERROR_STATUS } from "@/lib/games/errors";
+import { INVALID_PARAMETER } from "./parse-input";
 import { API_SCOPES, isInternalScope, type ScopeKey } from "./scopes";
-import { getRegistry, type RouteSpec } from "./registry";
+import { getRegistry, isGameRoute, requiredScopes, type RouteSpec } from "./registry";
 import "./specs";
 
 /**
@@ -65,7 +66,7 @@ export function buildOpenApiDocument(baseUrl: string) {
         Error: {
           type: "object",
           required: ["error"],
-          properties: { error: { type: "string" }, code: { type: "string", description: "Stable error code for a game boundary or fetch start refusal, when applicable." } },
+          properties: { error: { type: "string" }, code: { type: "string", description: "Stable error code for an invalid parameter, a game boundary or a fetch start refusal, when applicable." } },
         },
       },
     },
@@ -89,7 +90,7 @@ function buildOperation(route: RouteSpec) {
   if (route.scope === "public") {
     operation.security = [];
   } else {
-    const scopes = Array.isArray(route.scope) ? route.scope : [route.scope];
+    const scopes = requiredScopes(route);
     operation.security = [
       { BearerApiKey: scopes },
       { OAuth2: scopes },
@@ -123,9 +124,10 @@ function buildOperation(route: RouteSpec) {
   if (parameters.length) operation.parameters = parameters;
 
   // Responses
+  const redirect = isGameRoute(route) && route.redirect;
   const responses: Record<string, unknown> = {
     "200": {
-      description: "Successful response",
+      description: redirect ? "The published object the redirect points to" : "Successful response",
       content: {
         "application/json": {
           schema: safeJsonSchema(route.response),
@@ -137,12 +139,12 @@ function buildOperation(route: RouteSpec) {
     responses["401"] = errorRef("Missing API key");
     responses["403"] = errorRef("Invalid or expired token, or missing required scope");
   }
-  if (route.path.includes("/games/{game}/")) {
-    responses["400"] = errorRef(`Invalid game, region, path, or query parameter (${gameErrorCodes(400)})`);
-    responses["422"] = errorRef(`Game or capability unavailable (${gameErrorCodes(422)})`);
-  }
-  if (route.path.endsWith("/songs") || route.path.endsWith("/parents")) {
-    responses["302"] = { description: "Redirect to this game's published catalog object", headers: { Location: { schema: { type: "string", format: "uri" } } } };
+  if (isGameRoute(route)) {
+    responses["400"] = errorRef(`Invalid game, region, path, or query parameter (${[INVALID_PARAMETER, ...gameErrorCodes(400)].join(" or ")})`);
+    responses["422"] = errorRef(`Game or capability unavailable (${gameErrorCodes(422).join(" or ")})`);
+    if (redirect) {
+      responses["302"] = { description: "Redirect to this game's published catalog object", headers: { Location: { schema: { type: "string", format: "uri" } } } };
+    }
   }
   responses["500"] = errorRef("Internal server error");
   operation.responses = responses;
@@ -150,8 +152,8 @@ function buildOperation(route: RouteSpec) {
   return operation;
 }
 
-function gameErrorCodes(status: number): string {
-  return Object.entries(GAME_ERROR_STATUS).filter(([, mapping]) => mapping.http === status).map(([code]) => code).join(" or ");
+function gameErrorCodes(status: number): string[] {
+  return Object.entries(GAME_ERROR_STATUS).filter(([, mapping]) => mapping.http === status).map(([code]) => code);
 }
 
 function errorRef(description: string) {

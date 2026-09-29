@@ -1,18 +1,11 @@
-import { type NextRequest } from "next/server";
-import { withGameApiKey as withApiKey } from "@/lib/api/game-protect";
-import { parseQuery } from "@/lib/api/parse-query";
-import { zodJson } from "@/lib/api/zod-response";
+import { defineGameHandler } from "@/lib/api/protect";
 import { fetchUserSnapshots } from "@/server/queries/snapshots";
 import { spec } from "./spec";
 
-export const GET = withApiKey(["snapshot:all:metadata:read"], async (req: NextRequest, key) => {
-  const parsed = parseQuery(req.nextUrl.searchParams, spec.query!);
-  if (parsed instanceof Response) return parsed;
-  const { region } = parsed;
+export const GET = defineGameHandler(spec, async ({ game, key, query }) => {
+  const snapshots = await fetchUserSnapshots(game, key.userId, query.region);
 
-  const snapshots = await fetchUserSnapshots(key.game, key.userId, region);
-
-  return zodJson(spec.response, { game: key.game,
+  return {
     snapshots: snapshots.map((s) => ({
       id: s.publicId,
       fetchedAt: s.fetchedAt.toISOString(),
@@ -25,5 +18,5 @@ export const GET = withApiKey(["snapshot:all:metadata:read"], async (req: NextRe
       versionPlayCount: s.versionPlayCount,
       totalPlayCount: s.totalPlayCount,
     })),
-  });
+  };
 });

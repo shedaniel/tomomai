@@ -1,15 +1,8 @@
-import { type NextRequest } from "next/server";
-import { withGameApiKey as withApiKey } from "@/lib/api/game-protect";
-import { parseQuery } from "@/lib/api/parse-query";
-import { zodJson } from "@/lib/api/zod-response";
+import { defineGameHandler } from "@/lib/api/protect";
 import { deleteToken } from "@/server/services/games/tokens";
 import { spec } from "./spec";
 
-export const DELETE = withApiKey(["fetch:delete"], async (req: NextRequest, key) => {
-  const parsed = parseQuery(req.nextUrl.searchParams, spec.query!);
-  if (parsed instanceof Response) return parsed;
-  const { region } = parsed;
-
-  await deleteToken(key.game, key.userId, region);
-  return zodJson(spec.response, { game: key.game, success: true });
+export const DELETE = defineGameHandler(spec, async ({ game, key, query }) => {
+  await deleteToken(game, key.userId, query.region);
+  return { success: true } as const;
 });

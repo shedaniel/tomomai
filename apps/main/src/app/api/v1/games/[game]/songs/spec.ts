@@ -1,8 +1,8 @@
 import { z } from "zod";
-import { defineGameRoute as defineRoute } from "@/lib/api/registry";
+import { defineGameRoute } from "@/lib/api/registry";
 import { regionSchema, songCatalogueEntry } from "@/lib/api/schemas";
 
-export const spec = defineRoute({
+export const spec = defineGameRoute({
   method: "GET",
   path: "/api/v1/games/{game}/songs",
   tag: "Songs",
@@ -11,6 +11,8 @@ export const spec = defineRoute({
     "Returns every song & chart available in the given region at the given game version. " +
     "Both query parameters are required; one chart appears exactly once per difficulty.",
   scope: "public",
+  capability: "catalog",
+  redirect: true,
   cost: 1,
   cacheSeconds: 3600,
   query: z.object({

@@ -1,7 +1,7 @@
-import { defineGameRoute as defineRoute } from "@/lib/api/registry";
+import { defineGameRoute } from "@/lib/api/registry";
 import { querySchemas, snapshotDetail } from "@/lib/api/schemas";
 
-export const spec = defineRoute({
+export const spec = defineGameRoute({
   method: "GET",
   path: "/api/v1/games/{game}/snapshots/latest",
   tag: "Snapshots",
@@ -12,6 +12,7 @@ export const spec = defineRoute({
     "scopes for. Missing scopes yield `null` for that field rather than an " +
     "error so a single request can cover multiple grants.",
   scope: "snapshot:latest:metadata:read",
+  capability: "scores",
   optionalScopes: [
     { scope: "snapshot:latest:songs:read", effect: "Includes the full song-score array." },
     {

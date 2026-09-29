@@ -1,20 +1,13 @@
-import { type NextRequest } from "next/server";
-import { withGameApiKey as withApiKey } from "@/lib/api/game-protect";
-import { parseQuery } from "@/lib/api/parse-query";
-import { zodJson } from "@/lib/api/zod-response";
+import { defineGameHandler } from "@/lib/api/protect";
 import { getScoreFetchStatus } from "@/server/services/games/fetch-sessions";
 import { spec } from "./spec";
 
-export const GET = withApiKey(["fetch:read"], async (req: NextRequest, key) => {
-  const parsed = parseQuery(req.nextUrl.searchParams, spec.query!);
-  if (parsed instanceof Response) return parsed;
-  const { region } = parsed;
-
-  const status = await getScoreFetchStatus({ userId: key.userId, game: key.game, region });
+export const GET = defineGameHandler(spec, async ({ game, key, query }) => {
+  const status = await getScoreFetchStatus({ userId: key.userId, game, region: query.region });
   if (!status) {
     return Response.json({ error: "No fetch session found for this region" }, { status: 404 });
   }
-  return zodJson(spec.response, { game: key.game,
+  return {
     id: status.id,
     status: status.status,
     startedAt: status.startedAt.toISOString(),
@@ -22,5 +15,5 @@ export const GET = withApiKey(["fetch:read"], async (req: NextRequest, key) => {
     errorMessage: status.errorMessage,
     statusStates: status.statusStates,
     notFoundScores: status.notFoundScores,
-  });
+  };
 });

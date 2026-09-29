@@ -1,8 +1,8 @@
 import { z } from "zod";
-import { defineGameRoute as defineRoute } from "@/lib/api/registry";
+import { defineGameRoute } from "@/lib/api/registry";
 import { plateEntry, querySchemas } from "@/lib/api/schemas";
 
-export const spec = defineRoute({
+export const spec = defineGameRoute({
   method: "GET",
   path: "/api/v1/games/{game}/plates",
   tag: "Plates",
@@ -15,6 +15,7 @@ export const spec = defineRoute({
     "A chart the user never played has zero score and status codes. " +
     "Empty array if the user has no snapshot in this region.",
   scope: "plate:read",
+  capability: "plates",
   cost: 2,
   query: querySchemas.plates,
   response: z.object({

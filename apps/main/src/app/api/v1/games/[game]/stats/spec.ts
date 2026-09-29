@@ -1,7 +1,7 @@
-import { defineGameRoute as defineRoute } from "@/lib/api/registry";
+import { defineGameRoute } from "@/lib/api/registry";
 import { querySchemas, statsResponse } from "@/lib/api/schemas";
 
-export const spec = defineRoute({
+export const spec = defineGameRoute({
   method: "GET",
   path: "/api/v1/games/{game}/stats",
   tag: "Stats",
@@ -12,6 +12,7 @@ export const spec = defineRoute({
     "returns `totalSongs`, the count of songs in the catalogue per version × " +
     "difficulty so the client can render percentages.",
   scope: "stats:read",
+  capability: "scores",
   cost: 2,
   query: querySchemas.regionRequired,
   response: statsResponse,

@@ -1,7 +1,7 @@
-import { defineGameRoute as defineRoute } from "@/lib/api/registry";
+import { defineGameRoute } from "@/lib/api/registry";
 import { fetchStatus, querySchemas } from "@/lib/api/schemas";
 
-export const spec = defineRoute({
+export const spec = defineGameRoute({
   method: "GET",
   path: "/api/v1/games/{game}/fetch/status",
   tag: "Fetch",
@@ -11,6 +11,7 @@ export const spec = defineRoute({
     "— useful for polling after `POST /api/v1/games/{game}/fetch`. Returns `404` if no " +
     "fetch has ever been started for this region.",
   scope: "fetch:read",
+  capability: "scores",
   cost: 2,
   query: querySchemas.regionRequired,
   response: fetchStatus,

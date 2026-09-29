@@ -1,8 +1,8 @@
 import { z } from "zod";
-import { defineGameRoute as defineRoute } from "@/lib/api/registry";
+import { defineGameRoute } from "@/lib/api/registry";
 import { albumEntry, querySchemas } from "@/lib/api/schemas";
 
-export const spec = defineRoute({
+export const spec = defineGameRoute({
   method: "GET",
   path: "/api/v1/games/{game}/albums",
   tag: "Albums",
@@ -12,6 +12,7 @@ export const spec = defineRoute({
     "`album:images:read`, each entry's `imageUrl` is also populated. " +
     "Paginated via `limit` / `offset` (default limit 20, max 100).",
   scope: "album:read",
+  capability: "albums",
   optionalScopes: [
     {
       scope: "album:images:read",

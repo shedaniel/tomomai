@@ -1,8 +1,8 @@
 import { z } from "zod";
-import { defineGameRoute as defineRoute } from "@/lib/api/registry";
+import { defineGameRoute } from "@/lib/api/registry";
 import { querySchemas, snapshotDetail, successResponse } from "@/lib/api/schemas";
 
-export const spec = defineRoute({
+export const spec = defineGameRoute({
   method: "GET",
   path: "/api/v1/games/{game}/snapshots/{id}",
   tag: "Snapshots",
@@ -12,6 +12,7 @@ export const spec = defineRoute({
     "Returns `404` if the snapshot ID does not belong to the caller in the " +
     "given region.",
   scope: "snapshot:all:metadata:read",
+  capability: "scores",
   optionalScopes: [
     { scope: "snapshot:all:songs:read", effect: "Includes the full song-score array." },
     {
@@ -32,7 +33,7 @@ export const spec = defineRoute({
   response: snapshotDetail,
 });
 
-export const deleteSpec = defineRoute({
+export const deleteSpec = defineGameRoute({
   method: "DELETE",
   path: "/api/v1/games/{game}/snapshots/{id}",
   tag: "Snapshots",
@@ -42,6 +43,7 @@ export const deleteSpec = defineRoute({
     "`404` if the snapshot ID does not belong to the caller in the given " +
     "region.",
   scope: "snapshot:all:delete",
+  capability: "scores",
   cost: 10,
   params: z.object({
     id: z.string().describe("Public snapshot ID."),

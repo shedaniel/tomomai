@@ -1,7 +1,7 @@
-import { defineGameRoute as defineRoute } from "@/lib/api/registry";
+import { defineGameRoute } from "@/lib/api/registry";
 import { querySchemas, successResponse } from "@/lib/api/schemas";
 
-export const spec = defineRoute({
+export const spec = defineGameRoute({
   method: "DELETE",
   path: "/api/v1/games/{game}/fetch/token",
   tag: "Fetch",
@@ -11,6 +11,7 @@ export const spec = defineRoute({
     "given region. After this, `POST /api/v1/games/{game}/fetch` will return `412` " +
     "until a new token is supplied via the in-app flow.",
   scope: "fetch:delete",
+  capability: "scores",
   cost: 20,
   query: querySchemas.regionRequired,
   response: successResponse,
