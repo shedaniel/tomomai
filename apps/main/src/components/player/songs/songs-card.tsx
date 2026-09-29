@@ -1,6 +1,7 @@
 "use client";
 
-import { useGameId } from "@/components/providers/game-provider";
+import { useGame, useGameId } from "@/components/providers/game-provider";
+import { supportsGameFeature } from "@/lib/games/frontend";
 import { getPlayerRankings, type GameSnapshotData } from "@/lib/games/player-view";
 import { getGameDifficulty, getGameChartType, getGameRankingBuckets } from "@/lib/games/presentation";
 import { LayoutGrid, LayoutList, Menu, Search } from "lucide-react";
@@ -131,7 +132,8 @@ export function SongsCard({ selectedSnapshotData, flags }: { selectedSnapshotDat
   const [displayMode, setDisplayMode] = useState<"list" | "grid" | "compact">("grid");
   const [searchQuery, setSearchQuery] = useState("");
 
-  const game = useGameId();
+  const frontendGame = useGame();
+  const game = frontendGame.id;
   const buckets = getGameRankingBuckets(game);
   const { songs, snapshot } = selectedSnapshotData;
 
@@ -149,7 +151,7 @@ export function SongsCard({ selectedSnapshotData, flags }: { selectedSnapshotDat
       userRating: snapshot.rating,
     },
     {
-      enabled: game === "maimai" && !!(flags?.scorePercentile && bestScores.length > 0 && snapshot.rating > 0),
+      enabled: supportsGameFeature(frontendGame, "percentiles") && !!(flags?.scorePercentile && bestScores.length > 0 && snapshot.rating > 0),
       staleTime: 1000 * 60 * 5,
     }
   );
@@ -208,10 +210,12 @@ export function SongsCard({ selectedSnapshotData, flags }: { selectedSnapshotDat
       </div>
       <div>
         <div className="space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <RatingDistributionChart scores={newBest} title={buckets[0].label} />
-            <RatingDistributionChart scores={oldBest} title={buckets[1].label} />
-          </div>
+          {supportsGameFeature(frontendGame, "rating-distribution") && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <RatingDistributionChart scores={newBest} title={buckets[0].label} />
+              <RatingDistributionChart scores={oldBest} title={buckets[1].label} />
+            </div>
+          )}
 
           {/* Search Field */}
           <div className="relative">

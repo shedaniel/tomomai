@@ -3,46 +3,19 @@
 import { useGame } from "@/components/providers/game-provider";
 import { supportsGameFeature } from "@/lib/games/frontend";
 import type { GameSnapshotData } from "@/lib/games/player-view";
-import { ProfilePrivacySettings, Region } from "@/lib/types";
+import type { ProfilePrivacySettings, Region } from "@/lib/types";
 import { Sidebar, SidebarItem } from "@tomomai/ui";
-import { BarChart, Clock, Code, Database, Heart, Image as ImageIcon, Loader2, Map, Music, TrendingUp, User, Images } from "lucide-react";
+import { Database, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import { InfoCard } from "./info-card";
 import { MinigameCards } from "@/components/games/maimai/minigame-cards";
-import { SongsCard } from "./songs/songs-card";
-import { StatsCardSkeleton } from "@/components/games/maimai/stats-card.skeleton";
-import { RecommendationCardSkeleton } from "./recommendation-card.skeleton";
-import { ExportImageCardSkeleton } from "@/components/games/maimai/export-image-card.skeleton";
-import { HistoryCardSkeleton } from "./history-card.skeleton";
-import { EventsCardSkeleton } from "@/components/games/maimai/events-card.skeleton";
-import { RecentSongsCardSkeleton } from "./recent-songs-card.skeleton";
-import { DeveloperCardSkeleton } from "@/components/games/maimai/developer-card.skeleton";
-import { AlbumCardSkeleton } from "./album-card.skeleton";
-import { Flags } from "@/lib/flags";
+import type { Flags } from "@/lib/flags";
 import { AnimatePresence, motion } from "motion/react";
 import { getTransition } from "@/lib/animation-constants";
 import { useMediaQuery } from "@/hooks/use-media-query";
-import dynamic from "next/dynamic";
-
-// Tab cards lazy-loaded — only the selected tab's chunk is fetched.
-// SongsCard + InfoCard stay eager because Info is the default landing tab
-// and Songs remains a primary destination.
-// Each dynamic() shares the card's own skeleton as its `loading`. That does
-// two things: (1) gives Next 16's React.lazy a LOCAL Suspense boundary so the
-// suspension doesn't bubble to the fallback-less <Suspense> wrapping
-// DataContent (which rendered null and blanked the sidebar + content), and
-// (2) makes the chunk-load placeholder identical to the data-load placeholder
-// so the transition into real data is seamless.
-const StatsCard = dynamic(() => import("@/components/games/maimai/stats-card").then(m => m.StatsCard), { loading: () => <StatsCardSkeleton /> });
-const RecommendationCard = dynamic(() => import("./recommendation-card").then(m => m.RecommendationCard), { loading: () => <RecommendationCardSkeleton /> });
-const ExportImageCard = dynamic(() => import("@/components/games/maimai/export-image-card").then(m => m.ExportImageCard), { loading: () => <ExportImageCardSkeleton /> });
-const HistoryCard = dynamic(() => import("./history-card").then(m => m.HistoryCard), { loading: () => <HistoryCardSkeleton /> });
-const EventsCard = dynamic(() => import("@/components/games/maimai/events-card").then(m => m.EventsCard), { loading: () => <EventsCardSkeleton /> });
-const RecentSongsCard = dynamic(() => import("./recent-songs-card").then(m => m.RecentSongsCard), { loading: () => <RecentSongsCardSkeleton /> });
-const DeveloperCard = dynamic(() => import("@/components/games/maimai/developer-card").then(m => m.DeveloperCard), { loading: () => <DeveloperCardSkeleton /> });
-const AlbumCard = dynamic(() => import("./album-card").then(m => m.AlbumCard), { loading: () => <AlbumCardSkeleton /> });
+import type { PlayerProfile } from "./info-card";
+import { DEFAULT_PLAYER_TAB, getVisiblePlayerTabs, isPlayerTabId, type PlayerTabContext, type PlayerTabId } from "./player-tabs";
 
 const DEFAULT_PRIVACY_SETTINGS: ProfilePrivacySettings = {
   profileShowAllScores: true,
@@ -110,35 +83,22 @@ export function DataContent({
   const effectiveProfileUsername = profileUsername ?? visitableProfileAt;
   const effectiveVisitableProfileAt = localPublishProfile ? effectiveProfileUsername : null;
 
-  // Valid tab values
-  const allPossibleTabs = ["info", "stats", "songs", "recent", "recommendations", "map", "exportImage", "history", "developer", "albums"];
-
-  // Get initial tab from props (SSR) or search params (client)
-  const getInitialTab = () => {
-    // First priority: initialTab from SSR
-    if (initialTab && allPossibleTabs.includes(initialTab)) {
-      return initialTab;
-    }
-
-    // Second priority: search params (client-side)
+  // SSR passes initialTab; a client navigation only has the search params.
+  const getInitialTab = (): PlayerTabId => {
+    if (isPlayerTabId(initialTab)) return initialTab;
     const tabParam = searchParams.get('tab');
-    if (tabParam && allPossibleTabs.includes(tabParam)) {
-      return tabParam;
-    }
-
-    // Default fallback
-    return "info";
+    return isPlayerTabId(tabParam) ? tabParam : DEFAULT_PLAYER_TAB;
   };
 
-  const [selectedTab, setSelectedTab] = useState(getInitialTab);
+  const [selectedTab, setSelectedTab] = useState<PlayerTabId>(getInitialTab);
 
   // Update the URL via the native History API so Next.js doesn't re-fetch the
   // RSC payload and re-suspend the <Suspense> boundary that wraps DataContent
   // (which is what caused the tab+content to flash out on every tab switch).
-  const updateTabUrl = (value: string) => {
+  const updateTabUrl = (value: PlayerTabId) => {
     if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
-    if (value === "info") {
+    if (value === DEFAULT_PLAYER_TAB) {
       params.delete('tab');
     } else {
       params.set('tab', value);
@@ -148,93 +108,40 @@ export function DataContent({
     window.history.replaceState(null, "", next);
   };
 
-  // Update URL when tab changes
   const handleTabChange = (value: string) => {
+    if (!isPlayerTabId(value)) return;
     setSelectedTab(value);
     updateTabUrl(value);
   };
 
-  // Define visible tabs based on privacy settings
-  const allTabs = [
-    {
-      name: t('dataContent.tabs.playerInfo'),
-      value: "info",
-      icon: User,
-      show: true,
-    },
-    {
-      name: t('dataContent.tabs.stats'),
-      value: "stats",
-      icon: BarChart,
-      show: visitedBySelf || !!localPrivacySettings.profileShowAllScores,
-    },
-    {
-      name: t('dataContent.tabs.songs'),
-      value: "songs",
-      icon: Music,
-      show: true,
-    },
-    {
-      name: t('dataContent.tabs.recentPlays'),
-      value: "recent",
-      icon: Clock,
-      show: visitedBySelf || !!localPrivacySettings.profileShowScoreDetails,
-    },
-    {
-      name: t('dataContent.tabs.recommendations'),
-      value: "recommendations",
-      icon: Heart,
-      show: true,
-    },
-    {
-      name: t('dataContent.tabs.history'),
-      value: "history",
-      icon: TrendingUp,
-      show: visitedBySelf && flags.historyCard,
-    },
-    {
-      name: t('dataContent.tabs.albums'),
-      value: "albums",
-      icon: Images,
-      show: visitedBySelf && flags.albumsCard && region !== "cn",
-    },
-    {
-      name: t('dataContent.tabs.map'),
-      value: "map",
-      icon: Map,
-      show: localPrivacySettings.profileShowEvents && flags.eventsCard,
-    },
-    {
-      name: t('dataContent.tabs.exportImage'),
-      value: "exportImage",
-      icon: ImageIcon,
-      show: true,
-    },
-    {
-      name: t('dataContent.tabs.developer'),
-      value: "developer",
-      icon: Code,
-      show: visitedBySelf,
-    }
-  ];
+  const tabContext: PlayerTabContext = { visitedBySelf, privacy: localPrivacySettings, flags };
+  const visibleTabs = getVisiblePlayerTabs(game, region, tabContext);
+  const activeTab = visibleTabs.find(tab => tab.id === selectedTab) ?? visibleTabs[0];
+  const activeTabId = activeTab?.id;
 
-  const requiredCapabilities = {
-    info: "scores", songs: "scores", recent: "recents", history: "rating", recommendations: "scores", albums: "albums", map: "events",
-  } as const;
-  // TODO: Implement CHUNITHM statistics and image export before exposing those extensions.
-  const visibleTabs = allTabs.filter(tab => tab.show && (tab.value in requiredCapabilities
-    ? game.capabilities.includes(requiredCapabilities[tab.value as keyof typeof requiredCapabilities])
-    : game.id === "maimai") && (tab.value !== "map" || game.id === "maimai"));
-  const validTabs = visibleTabs.map(tab => tab.value);
-  const activeTab = validTabs.includes(selectedTab) ? selectedTab : "info";
-
-  // Ensure selected tab is valid/visible, fallback to info if not
+  // A tab the game, the privacy settings or the flags hide falls back to the first visible one.
   useEffect(() => {
-    if (selectedSnapshotData && !validTabs.includes(selectedTab)) {
-      setSelectedTab("info");
-      updateTabUrl("info");
+    if (selectedSnapshotData && activeTabId && activeTabId !== selectedTab) {
+      setSelectedTab(activeTabId);
+      updateTabUrl(activeTabId);
     }
-  }, [selectedTab, validTabs, selectedSnapshotData]);
+  }, [selectedTab, activeTabId, selectedSnapshotData]);
+
+  const profile: PlayerProfile = {
+    visitableProfileAt: effectiveVisitableProfileAt,
+    profileUsername: effectiveProfileUsername,
+    profileDescription: localProfileDescription,
+    profileUserId,
+    isOwner,
+    publishProfile: localPublishProfile,
+    descriptionDraft,
+    isDescriptionEditing,
+    onDescriptionDraftChange: setDescriptionDraft,
+    onDescriptionEditingChange: setIsDescriptionEditing,
+    onProfileDescriptionChange: setLocalProfileDescription,
+    onPrivacySettingsChange: setLocalPrivacySettings,
+    onPublishProfileChange: setLocalPublishProfile,
+  };
 
   if (isLoading) {
     return (
@@ -250,86 +157,36 @@ export function DataContent({
       <div className="flex flex-col md:flex-row md:items-start gap-x-6 lg:gap-x-8 gap-y-6">
         <div className="max-md:contents md:flex md:flex-col md:gap-4">
           <Sidebar
-            value={activeTab}
+            value={activeTabId}
             onValueChange={handleTabChange}
             className="sm:flex-row sm:w-full md:flex-col md:w-48 md:overflow-x-visible md:-ml-3"
           >
             {visibleTabs.map((tab) => (
-              <SidebarItem key={tab.value} value={tab.value} icon={tab.icon} text={tab.name} />
+              <SidebarItem key={tab.id} value={tab.id} icon={tab.icon} text={t(tab.labelKey)} />
             ))}
           </Sidebar>
           <div className="max-md:hidden md:w-48 md:-ml-3">
-            {game.id === "maimai" && <MinigameCards className="grid-cols-1" />}
+            {supportsGameFeature(game, "minigames") && <MinigameCards className="grid-cols-1" />}
           </div>
         </div>
 
         <AnimatePresence mode="wait">
           <motion.div
-            key={activeTab}
+            key={activeTabId}
             initial={{ opacity: 0, ...(isDesktop ? { y: 10 } : { x: 10 }) }}
             animate={{ opacity: 1, x: 0, y: 0 }}
             exit={{ opacity: 0, ...(isDesktop ? { y: -10 } : { x: -10 }) }}
             transition={getTransition({ duration: 0.2, ease: [0.4, 0, 0.2, 1] })}
             className="flex-1 min-w-0 mx-1"
           >
-            {selectedSnapshotData && activeTab === "info" && (
-              <InfoCard
-                selectedSnapshotData={selectedSnapshotData}
-                showPlayCounts={localPrivacySettings.profileShowPlayCounts}
-                visitableProfileAt={effectiveVisitableProfileAt}
-                profileUsername={effectiveProfileUsername}
-                profileDescription={localProfileDescription}
-                profileUserId={profileUserId}
-                isOwner={isOwner}
-                publishProfile={localPublishProfile}
-                descriptionDraft={descriptionDraft}
-                isDescriptionEditing={isDescriptionEditing}
-                onDescriptionDraftChange={setDescriptionDraft}
-                onDescriptionEditingChange={setIsDescriptionEditing}
-                onProfileDescriptionChange={setLocalProfileDescription}
-                onPrivacySettingsChange={setLocalPrivacySettings}
-                onPublishProfileChange={setLocalPublishProfile}
-              />
-            )}
-            {selectedSnapshotData && activeTab === "stats" && (visitedBySelf || !!localPrivacySettings.profileShowAllScores) && (
-              <StatsCard
+            {activeTab && (
+              <activeTab.Component
+                {...tabContext}
+                data={selectedSnapshotData}
                 region={region}
-                snapshotId={visitedBySelf ? undefined : selectedSnapshotData?.snapshot.publicId}
-              />
-            )}
-            {selectedSnapshotData && activeTab === "songs" && (
-              <SongsCard selectedSnapshotData={selectedSnapshotData} flags={flags} />
-            )}
-            {selectedSnapshotData && activeTab === "recent" && (visitedBySelf || !!localPrivacySettings.profileShowScoreDetails) && (
-              <RecentSongsCard
-                region={region}
-                beforeDate={selectedSnapshotData?.snapshot.fetchedAt}
-                snapshotId={visitedBySelf ? undefined : selectedSnapshotData?.snapshot.publicId}
-              />
-            )}
-            {selectedSnapshotData && activeTab === "recommendations" && (
-              <RecommendationCard selectedSnapshotData={selectedSnapshotData} flags={flags} region={region} />
-            )}
-            {selectedSnapshotData && activeTab === "history" && visitedBySelf && flags.historyCard && (
-              <HistoryCard region={region} />
-            )}
-            {selectedSnapshotData && activeTab === "map" && localPrivacySettings.profileShowEvents && (
-              <EventsCard events={selectedSnapshotData.events} />
-            )}
-            {selectedSnapshotData && activeTab === "exportImage" && (
-              <ExportImageCard
-                snapshot={selectedSnapshotData.snapshot}
-                region={region}
-                showLastCredit={visitedBySelf || !!localPrivacySettings.profileShowScoreDetails}
-                username={effectiveVisitableProfileAt ?? undefined}
+                profile={profile}
                 publicSnapshotId={visitedBySelf ? undefined : selectedSnapshotData.snapshot.publicId}
               />
-            )}
-            {selectedSnapshotData && activeTab === "developer" && visitedBySelf && (
-              <DeveloperCard snapshotId={selectedSnapshotData.snapshot.publicId} />
-            )}
-            {selectedSnapshotData && activeTab === "albums" && visitedBySelf && flags.albumsCard && (
-              <AlbumCard region={region} />
             )}
           </motion.div>
         </AnimatePresence>

@@ -16,6 +16,7 @@ vi.mock("@/lib/trpc-client", () => ({ trpc: { maimai: { getRecommendationPeers: 
 vi.mock("@/lib/logger", () => ({ logger: { info: vi.fn() } }));
 vi.mock("@/hooks/use-media-query", () => ({ useMediaQuery: () => false }));
 vi.mock("@/components/games/maimai/song-hover-card", () => ({ SongHoverCard: ({ children }: { children: React.ReactNode }) => <>{children}</> }));
+vi.mock("@/i18n/navigation", () => ({ Link: () => null }));
 vi.mock("@/components/cover-image", () => ({ CoverImage: () => null }));
 const data: GameSnapshotData = {
   snapshot: { publicId: "snapshot", game: "chunithm", gameVersion: 9, displayName: "Player", rating: 30, fetchedAt: new Date() },

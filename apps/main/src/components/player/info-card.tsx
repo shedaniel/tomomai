@@ -1,5 +1,8 @@
 "use client";
 
+import { MaimaiRatingPlate } from "@/components/games/maimai/rating-plate";
+import { useGame } from "@/components/providers/game-provider";
+import { supportsGameFeature } from "@/lib/games/frontend";
 import type { GameSnapshotData } from "@/lib/games/player-view";
 import { formatGameRating } from "@/lib/games/presentation";
 import { DescriptionDiscardDialog, ProfileAboutSection } from "@/components/profile-about-section";
@@ -13,7 +16,6 @@ import { useMediaQuery } from "@/hooks/use-media-query";
 import { Link } from "@/i18n/navigation";
 import { SPRING_CONFIGS, STAGGER, getTransition } from "@/lib/animation-constants";
 import { resolveBaseUrl } from "@/lib/base-url";
-import { getRatingImageUrl } from "@/lib/games/maimai/assets";
 import { trpc } from "@/lib/trpc-client";
 import type { ProfilePrivacySettings, ProfileSettings } from "@/lib/types";
 import { isR2Url, resolveImageUrl } from "@/lib/images";
@@ -262,18 +264,6 @@ function useInfoCardOwnerSettings({
 
 type Snapshot = GameSnapshotData["snapshot"];
 
-function RatingImage({ rating, version }: { rating: number; version: number }) {
-  return (
-    <Image
-      src={getRatingImageUrl(rating, version)}
-      alt={rating.toString()}
-      width={120}
-      height={35}
-      crossOrigin="anonymous"
-    />
-  );
-}
-
 interface ProfileVisibilityBannerProps {
   visitableProfileAt: string | null;
   isOwner: boolean;
@@ -330,6 +320,7 @@ function ProfileVisibilityBanner({
 }
 
 function PlayerIdentitySummary({ snapshot }: { snapshot: Snapshot }) {
+  const game = useGame();
   return (
     <div className="flex items-center gap-2">
       <motion.div
@@ -354,10 +345,13 @@ function PlayerIdentitySummary({ snapshot }: { snapshot: Snapshot }) {
             {snapshot.displayName}
           </span>
           <div className="relative h-[35px] w-[120px] min-w-fit shrink-0 grow-0">
-            {snapshot.game === "maimai" && <RatingImage rating={snapshot.rating} version={snapshot.gameVersion} />}
-            <span className={snapshot.game === "maimai" ? "absolute top-[3px] left-[8px] box-border w-[106px] text-right font-mono text-[18px] font-normal tracking-[1.65px] text-white" : "font-mono text-lg font-semibold text-foreground"}>
-              {formatGameRating(snapshot.game, snapshot.rating)}
-            </span>
+            {supportsGameFeature(game, "rating-plate") ? (
+              <MaimaiRatingPlate rating={snapshot.rating} version={snapshot.gameVersion} />
+            ) : (
+              <span className="font-mono text-lg font-semibold text-foreground">
+                {formatGameRating(snapshot.game, snapshot.rating)}
+              </span>
+            )}
           </div>
         </span>
       </div>
@@ -415,9 +409,8 @@ function PlayerStatisticsBlock({ snapshot, showPlayCounts }: PlayerStatisticsBlo
   );
 }
 
-interface InfoCardProps {
-  selectedSnapshotData: GameSnapshotData;
-  showPlayCounts?: boolean;
+/** The profile being viewed, and the owner's edits, which DataContent keeps while other tabs are shown. */
+export type PlayerProfile = {
   visitableProfileAt: string | null;
   profileUsername?: string | null;
   profileDescription?: string | null;
@@ -431,7 +424,12 @@ interface InfoCardProps {
   onProfileDescriptionChange(value: string | null): void;
   onPrivacySettingsChange(value: ProfilePrivacySettings): void;
   onPublishProfileChange(value: boolean): void;
-}
+};
+
+type InfoCardProps = PlayerProfile & {
+  selectedSnapshotData: GameSnapshotData;
+  showPlayCounts?: boolean;
+};
 
 export function InfoCard({
   selectedSnapshotData,

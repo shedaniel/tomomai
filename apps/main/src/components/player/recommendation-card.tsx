@@ -1,6 +1,8 @@
 "use client";
 
-import { useGameId } from "@/components/providers/game-provider";
+import { useGame, useGameId } from "@/components/providers/game-provider";
+import { GAME_UI } from "@/components/games/registry";
+import { supportsGameFeature } from "@/lib/games/frontend";
 import type { GameSnapshotData } from "@/lib/games/player-view";
 import { formatGameScore, formatGameScoreDelta, formatGameRating, formatGameLevel, getGameDifficulty, getGameChartType, getGameRankingBuckets, getGameScoreLabelKey } from "@/lib/games/presentation";
 import { generateRecommendations, RecommendationData } from "@/lib/games/recommendations";
@@ -16,7 +18,6 @@ import { Button } from "@tomomai/ui";
 import { motion, AnimatePresence } from "motion/react";
 import { FilterPanel, GenericFilter, getFilterKey } from "@/components/filter-panel";
 import { createRecommendationFilterCategories, createRecommendationFilterLabel, applyRecommendationFilters } from "./recommendation-filters";
-import { SongHoverCard } from "@/components/games/maimai/song-hover-card";
 import { STAGGER, getTransition } from "@/lib/animation-constants";
 import { logger } from "@/lib/logger";
 import { trpc } from "@/lib/trpc-client";
@@ -31,7 +32,9 @@ function RecommendationRow({ recommendation }: { recommendation: RecommendationD
   const scoreText = (value: number) => formatGameScore(game, value, { precision: "compact" });
   const chartType = getGameChartType(game, song.typeCode);
   const difficulty = getGameDifficulty(game, song.difficultyCode);
-  const content = (
+  const { ScoreHover } = GAME_UI[game];
+  return (
+    <ScoreHover score={song}>
       <motion.div
         className="flex xs:justify-between xs:items-center text-sm min-h-16 py-2 max-xs:min-h-30 max-xs:flex-col max-xs:justify-start max-xs:gap-y-2 px-2 -mx-2 rounded-md cursor-pointer group"
       >
@@ -110,15 +113,14 @@ function RecommendationRow({ recommendation }: { recommendation: RecommendationD
           </div>
         </div>
       </motion.div>
+    </ScoreHover>
   );
-  return game === "maimai"
-    ? <SongHoverCard score={song}>{content}</SongHoverCard>
-    : content;
 }
 
 export function RecommendationCard({ selectedSnapshotData, flags, region }: { selectedSnapshotData: GameSnapshotData, flags: Flags, region: Region }) {
   const t = useTranslations();
-  const game = useGameId();
+  const frontendGame = useGame();
+  const game = frontendGame.id;
   const isDesktop = useMediaQuery("(min-width: 768px)", { initializeWithValue: false });
   const [filterCategory, setFilterCategory] = useState<"all" | "new" | "old" | "best">("all");
   const [advancedFilters, setAdvancedFilters] = useState<GenericFilter[]>([]);
@@ -130,7 +132,7 @@ export function RecommendationCard({ selectedSnapshotData, flags, region }: { se
     [selectedSnapshotData]
   );
 
-  const potentialEnabled = !!flags.scorePercentile && game === "maimai";
+  const potentialEnabled = !!flags.scorePercentile && supportsGameFeature(frontendGame, "percentiles");
   const potentialSongIds = useMemo(() => [...new Set(baseRecommendations.map(rec => rec.song.songId))].slice(0, 2000).sort(), [baseRecommendations]);
   const { data: potential, status: potentialStatus, fetchStatus: potentialFetchStatus, error: potentialError } = trpc.maimai.getRecommendationPeers.useQuery(
     { publicSongIds: potentialSongIds, userRating: snapshot.rating },

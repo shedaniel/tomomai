@@ -254,7 +254,7 @@ function AvailableDashboard({ user, initialUserData, initialSnapshots, initialSn
           currentSession={currentSession}
           onCopySnapshot={handleCopySnapshot}
           isCopying={isCopying}
-          supportsCopy={game.id === "maimai"}
+          supportsCopy={supportsGameFeature(game, "snapshot-copy")}
           supportsFetch={supportsFetch}
         />
 
@@ -304,7 +304,7 @@ function AvailableDashboard({ user, initialUserData, initialSnapshots, initialSn
       <AdminDialog open={dialogType === "admin"} onOpenChange={open => setDialogType(open ? "admin" : null)} />
       <ExperimentsDialog open={dialogType === "experiments"} onOpenChange={open => setDialogType(open ? "experiments" : null)} />
 
-      {supportsFetch && <AlbumPrivacyDialog
+      {supportsGameFeature(game, "albums", selectedRegion) && <AlbumPrivacyDialog
         open={dialogType === "albumPrivacy"}
         onOpenChange={open => setDialogType(open ? "albumPrivacy" : null)}
         onSelectPreference={(fetchUseAlbums) => {
@@ -318,7 +318,7 @@ function AvailableDashboard({ user, initialUserData, initialSnapshots, initialSn
       <ConsentGate />
 
       <FetchToastContainer state={fetchToastState} />
-      {game.id === "maimai" && <TomomaiAI snapshotData={selectedSnapshotData || null} region={selectedRegion} aprilFools2026={flags.aprilFools2026} />}
+      {supportsGameFeature(game, "assistant") && <TomomaiAI snapshotData={selectedSnapshotData || null} region={selectedRegion} aprilFools2026={flags.aprilFools2026} />}
     </div>
   );
 }

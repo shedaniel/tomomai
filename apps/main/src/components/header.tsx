@@ -1,6 +1,6 @@
 "use client";
 
-import { brandTitle, isGameCnExclusive } from "@/lib/games/frontend";
+import { brandTitle, isGameCnExclusive, supportsGameFeature } from "@/lib/games/frontend";
 import { signOut } from "@/lib/auth-client";
 import { useGame } from "@/components/providers/game-provider";
 import { AboutDialog } from "@/components/about-dialog";
@@ -392,10 +392,14 @@ function UserIcon({ user, menu, onAbout, onTheme, onDiscordInvite, onSignIn }: P
               )}
               <div className="mt-auto" />
               <Separator className="my-1" />
-              <div className="px-2 py-2">
-                {game.id === "maimai" && <MinigameCards />}
-              </div>
-              <Separator className="my-1" />
+              {supportsGameFeature(game, "minigames") && (
+                <>
+                  <div className="px-2 py-2">
+                    <MinigameCards />
+                  </div>
+                  <Separator className="my-1" />
+                </>
+              )}
               <DrawerClose asChild>
                 <a href="https://x.com/shedaniel_sub" target="_blank" rel="noopener noreferrer" className={drawerItemClass}>
                   <XIcon className="size-4" />
@@ -597,7 +601,7 @@ export function Header({ currentTab, showDiscordBanner = true, customThemesEnabl
       </div>
 
       <AnimatePresence>
-        {game.id === "maimai" && showBanner && <DiscordBanner onDismiss={() => setShowBanner(false)} />}
+        {supportsGameFeature(game, "community-banner") && showBanner && <DiscordBanner onDismiss={() => setShowBanner(false)} />}
       </AnimatePresence>
 
       <AboutDialog open={aboutOpen} onOpenChange={setAboutOpen} />
