@@ -1,6 +1,5 @@
 import { resolveAdminGame } from "@/server/services/catalog/admin-game";
-import { GameAdapterError } from "@/lib/games/types";
-import { gameErrorResponse } from "@/lib/api/game-context";
+import { GameAdapterError, gameErrorResponse } from "@/lib/games/errors";
 import { flushLogger } from "@/lib/logger";
 import { requestLogger } from "@/lib/request-logger";
 import type { Pending } from "@/server/services/catalog/ingestion/types";

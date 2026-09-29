@@ -1,7 +1,7 @@
 import { getDefaultAdminCatalogRegions, resolveAdminGame } from "@/server/services/catalog/admin-game";
 import { getSupportedRegions } from "@/lib/games/regions";
-import { GameAdapterError, type CanonicalGameId } from "@/lib/games/types";
-import { gameErrorResponse } from "@/lib/api/game-context";
+import { GameAdapterError, gameErrorResponse } from "@/lib/games/errors";
+import type { CanonicalGameId } from "@/lib/games/types";
 import { getCurrentVersion } from "@/lib/games/versions";
 import { flushLogger } from "@/lib/logger";
 import { requestLogger } from "@/lib/request-logger";

@@ -1,7 +1,6 @@
 import { resolveEnabledRegions } from "@tomomai/utils/regions";
 import { logger } from "@/lib/logger";
 import { REGIONS, type CanonicalGameId, type Region } from "./ids";
-// registry.ts imports this module back, so getGame may only be called inside functions here.
 import { getGame } from "./registry";
 
 // Literal process.env reads let Next inline each variable into client bundles. A blank legacy

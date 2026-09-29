@@ -1,6 +1,6 @@
 import { decodeLoginAuthorization, verifyUserOtp } from "@/lib/otp";
 import { startScoreFetch } from "@/server/services/games/score-ingestion";
-import { GameAdapterError } from "@/lib/games/types";
+import { GameAdapterError } from "@/lib/games/errors";
 import { NextRequest, NextResponse } from "next/server";
 import { flushLogger } from "@/lib/logger";
 import { requestLogger } from "@/lib/request-logger";

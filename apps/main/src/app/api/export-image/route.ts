@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { renderRedirectUrl } from '@/lib/render-token';
 import { buildExportImageMessage } from '@/server/services/games/maimai/render/messages';
-import { gameErrorResponse } from '@/lib/api/game-context';
-import { resolveGameContext } from '@/lib/games/registry';
+import { resolveGameContext } from '@/lib/games/access';
+import { GameAdapterError, gameErrorResponse } from '@/lib/games/errors';
 import { regionSchema } from '@/lib/games/schema';
 import { z } from 'zod';
 
@@ -32,12 +32,11 @@ export async function GET(request: NextRequest) {
     );
   }
   const { snapshotId, username, region } = parsed.data;
-  if (region) {
-    try {
-      resolveGameContext("maimai", region, "rating");
-    } catch (error) {
-      return gameErrorResponse(error);
-    }
+  try {
+    resolveGameContext("maimai", { region, capability: "image-export" });
+  } catch (error) {
+    if (error instanceof GameAdapterError) return gameErrorResponse(error);
+    throw error;
   }
 
   const result = await buildExportImageMessage({

@@ -1,6 +1,7 @@
 import type { CanonicalGameId, Region } from "./ids";
+import { GameAdapterError } from "./errors";
 import { getGame, type GameSiteRegion } from "./registry";
-import { GameAdapterError, type GameSite } from "./types";
+import type { GameSite } from "./types";
 
 export function getGameSite(game: CanonicalGameId, region: Region): GameSite | undefined {
   return getGame(game).sites[region];

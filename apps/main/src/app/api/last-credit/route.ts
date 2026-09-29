@@ -6,8 +6,8 @@ import { and, eq } from 'drizzle-orm';
 import { renderRedirectUrl } from '@/lib/render-token';
 import { buildLastCreditMessage } from '@/server/services/games/maimai/render/messages';
 import { requestLogger } from '@/lib/request-logger';
-import { gameErrorResponse } from '@/lib/api/game-context';
-import { resolveGameContext } from '@/lib/games/registry';
+import { resolveGameContext } from '@/lib/games/access';
+import { GameAdapterError, gameErrorResponse } from '@/lib/games/errors';
 import { regionSchema } from '@/lib/games/schema';
 import { z } from 'zod';
 
@@ -35,9 +35,10 @@ export async function GET(request: NextRequest) {
   }
   const { region, snapshotId, beforeDate } = parsed.data;
   try {
-    resolveGameContext("maimai", region, "recents");
+    resolveGameContext("maimai", { region, capability: "image-export" });
   } catch (error) {
-    return gameErrorResponse(error);
+    if (error instanceof GameAdapterError) return gameErrorResponse(error);
+    throw error;
   }
 
   let userId: string;

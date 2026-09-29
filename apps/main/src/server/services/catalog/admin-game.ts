@@ -1,4 +1,5 @@
-import { GameAdapterError, type CanonicalGameId } from "@/lib/games/types";
+import { GameAdapterError } from "@/lib/games/errors";
+import type { CanonicalGameId } from "@/lib/games/types";
 import { getEnabledRegions, getSupportedRegions } from "@/lib/games/regions";
 import { gameIdSchema } from "@/lib/games/schema";
 import type { Region } from "@/lib/types";

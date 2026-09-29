@@ -12,14 +12,30 @@ export type GameRegionContext = {
 
 export const GAME_CAPABILITIES = [
   "catalog",
+  "catalog-stats",
+  "posts",
   "scores",
   "recents",
   "albums",
   "events",
   "rankings",
   "rating",
+  "rating-plate",
+  "rating-distribution",
   "plates",
   "score-details",
+  "stats",
+  "percentiles",
+  "daily-plays",
+  "snapshot-copy",
+  "snapshot-export",
+  "image-export",
+  "developer-export",
+  "assistant",
+  "minigames",
+  "og-images",
+  "community-banner",
+  "reserved-accounts",
 ] as const;
 export type GameCapability = (typeof GAME_CAPABILITIES)[number];
 
@@ -176,29 +192,12 @@ export interface GameDefinition {
   brand: GameBrand;
   sites: Partial<Record<Region, GameSite>>;
   capabilities: readonly GameCapability[];
+  /** Capabilities the game does not offer in a region, although it offers them elsewhere. */
+  regionCapabilityOverrides?: Partial<Record<Region, readonly GameCapability[]>>;
   versions: VersionTable;
   rating: GameRating;
   presentation: GamePresentation;
   catalogSections: readonly CatalogSection[];
   fetchStages: readonly FetchState[];
   fetch: { cookieLogin: { region: Region; url: string } | null };
-}
-
-export type GameAdapterErrorCode =
-  | "UNKNOWN_GAME"
-  | "GAME_NOT_ENABLED"
-  | "UNSUPPORTED_REGION"
-  | "UNSUPPORTED_CAPABILITY";
-
-export class GameAdapterError extends Error {
-  constructor(
-    public readonly code: GameAdapterErrorCode,
-    message: string,
-    public readonly game?: CanonicalGameId,
-    public readonly region?: Region,
-    public readonly capability?: GameCapability,
-  ) {
-    super(message);
-    this.name = "GameAdapterError";
-  }
 }

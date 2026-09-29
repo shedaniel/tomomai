@@ -1,12 +1,12 @@
 import { resolveAdminGame } from "@/server/services/catalog/admin-game";
 import { getSupportedRegions } from "@/lib/games/regions";
-import { GameAdapterError, type CanonicalGameId } from "@/lib/games/types";
-import { gameErrorResponse } from "@/lib/api/game-context";
+import { GameAdapterError, gameErrorResponse } from "@/lib/games/errors";
+import type { CanonicalGameId } from "@/lib/games/types";
 import { parseCatalogVersion } from "@/lib/catalog/parse-version";
 import { db } from "@/lib/db";
 import { songs } from "@/lib/db/schema-pg";
 import { Region } from "@/lib/types";
-import { resolveCatalogContext } from "@/server/services/games/registry";
+import { resolveGameContext } from "@/lib/games/access";
 import { flushLogger } from "@/lib/logger";
 import { requestLogger } from "@/lib/request-logger";
 import { and, eq, gte, lte, sql } from "drizzle-orm";
@@ -39,7 +39,7 @@ function parseFromParameter(game: CanonicalGameId, from: string): {
 
   const [, operator, versionValue, region, gameVersion] = match;
 
-  resolveCatalogContext(game, region as Region);
+  resolveGameContext(game, { region: region as Region, capability: "catalog", regionPolicy: "supported" });
 
   const versionFilter = operator === "<=" ? "lte" : operator === ">=" ? "gte" : "eq";
 
@@ -65,7 +65,7 @@ function parseToParameter(game: CanonicalGameId, to: string): {
 
   const [, region, gameVersion] = match;
 
-  resolveCatalogContext(game, region as Region);
+  resolveGameContext(game, { region: region as Region, capability: "catalog", regionPolicy: "supported" });
 
   return {
     region: region as Region,

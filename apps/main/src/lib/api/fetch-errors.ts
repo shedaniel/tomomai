@@ -1,5 +1,4 @@
-import { GameAdapterError } from "@/lib/games/types";
-import { gameErrorResponse } from "./game-context";
+import { GameAdapterError, gameErrorResponse } from "@/lib/games/errors";
 import { getLogger } from "@/lib/request-logger";
 import { isAlbumSettingsError, isTokenError } from "@/lib/token-errors";
 

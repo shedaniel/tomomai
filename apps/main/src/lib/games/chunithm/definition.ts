@@ -22,7 +22,7 @@ export const chunithmDefinition = {
       maintenance: { startHour: 2, endHour: 7 },
     },
   },
-  capabilities: ["catalog", "scores", "recents", "rankings", "rating"],
+  capabilities: ["catalog", "scores", "recents", "rankings", "rating", "rating-distribution"],
   versions: chunithmVersionTable,
   rating: {
     bucketSizes: CHUNITHM_BUCKET_SIZES,

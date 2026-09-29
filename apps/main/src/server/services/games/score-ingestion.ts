@@ -19,7 +19,8 @@ import {
 import { appendFetchState } from "@/lib/fetch-states-server";
 import { getCurrentVersion } from "@/lib/games/versions";
 import { keyOf } from "@/lib/games/codes";
-import { getGame, resolveGameContext } from "@/lib/games/registry";
+import { resolveGameContext } from "@/lib/games/access";
+import { getGame } from "@/lib/games/registry";
 import type { CanonicalGameId } from "@/lib/games/types";
 import type { GameFetchResult, NormalizedScore, PersistedSnapshotContext, ScoreFetchContext } from "./types";
 import { flushLogger } from "@/lib/logger";
@@ -142,7 +143,7 @@ export async function startScoreFetch(input: {
   flags?: Flags;
   options?: { skipAfter?: boolean };
 }): Promise<StartScoreFetchResult> {
-  const context = resolveGameContext(input.game, input.region, "scores");
+  const context = resolveGameContext(input.game, { region: input.region, capability: "scores" });
   const scoreSource = GAME_SERVER_MODULES[context.game].scores;
 
   if (process.env.DEMO_FETCH === "true") {

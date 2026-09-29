@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { GAME_ERROR_STATUS } from "@/lib/games/errors";
 import { API_SCOPES, isInternalScope, type ScopeKey } from "./scopes";
 import { getRegistry, type RouteSpec } from "./registry";
 import "./specs";
@@ -137,8 +138,8 @@ function buildOperation(route: RouteSpec) {
     responses["403"] = errorRef("Invalid or expired token, or missing required scope");
   }
   if (route.path.includes("/games/{game}/")) {
-    responses["400"] = errorRef("Invalid game, region, path, or query parameter (UNKNOWN_GAME or UNSUPPORTED_REGION)");
-    responses["422"] = errorRef("Game or capability unavailable (GAME_NOT_ENABLED or UNSUPPORTED_CAPABILITY)");
+    responses["400"] = errorRef(`Invalid game, region, path, or query parameter (${gameErrorCodes(400)})`);
+    responses["422"] = errorRef(`Game or capability unavailable (${gameErrorCodes(422)})`);
   }
   if (route.path.endsWith("/songs") || route.path.endsWith("/parents")) {
     responses["302"] = { description: "Redirect to this game's published catalog object", headers: { Location: { schema: { type: "string", format: "uri" } } } };
@@ -147,6 +148,10 @@ function buildOperation(route: RouteSpec) {
   operation.responses = responses;
 
   return operation;
+}
+
+function gameErrorCodes(status: number): string {
+  return Object.entries(GAME_ERROR_STATUS).filter(([, mapping]) => mapping.http === status).map(([code]) => code).join(" or ");
 }
 
 function errorRef(description: string) {
