@@ -16,7 +16,7 @@ export function chartKey(chart: Pick<ChartRef, "songName" | "difficulty" | "char
   return `${chart.songName}|${chart.difficulty}|${chart.chartType}`;
 }
 
-export function scoreDataKey(score: ScoreDataValues): string {
+function scoreDataKey(score: ScoreDataValues): string {
   return `${score.songId}-${score.scoreValue}-${score.secondaryScore}-${score.comboStatus}-${score.syncStatus}-${score.clearStatus}`;
 }
 
@@ -47,7 +47,7 @@ export async function buildChartResolution(
   return { chartResolution, songsById };
 }
 
-export async function upsertScoreData(
+async function upsertScoreData(
   connection: ScoreConnection,
   game: CanonicalGameId,
   scores: ScoreDataValues[],
@@ -106,7 +106,7 @@ export async function upsertScoreData(
 
 export type SnapshotScore = { values: ScoreDataValues; song: DbSong };
 
-export function buildRankingRows(
+function buildRankingRows(
   game: CanonicalGameId,
   snapshotId: number,
   selection: StoredRankings<{ scoreId: number }>,

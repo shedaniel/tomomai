@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { RANKING_BUCKET_CODE } from "./codes";
-import { getGame } from "./registry";
-import { rankScores, rateScores, rateStoredRankings, selectRankings, sortByRating } from "./ranking";
+import { rankScores, rateScores, rateStoredRankings, sortByRating } from "./ranking";
 
 const rated = (id: string, scoreValue: number, addedVersion: number, rating: number) => ({ id, scoreValue, addedVersion, rating });
 const maimaiChart = (id: string, scoreValue: number, addedVersion = 14) =>
@@ -9,11 +8,11 @@ const maimaiChart = (id: string, scoreValue: number, addedVersion = 14) =>
 
 describe("ranking selection", () => {
   it("uses each game's bucket sizes and new-chart rule without mutating inputs", () => {
-    const scores = Array.from({ length: 80 }, (_, i) => rated(String(i), 1000000, i < 40 ? 14 : 13, i));
+    const scores = Array.from({ length: 80 }, (_, i) => ({ ...maimaiChart(String(i), 1000000, i < 40 ? 14 : 13), chartRating: i }));
     const original = scores.map(score => ({ ...score }));
-    const maimai = selectRankings(scores, 14, getGame("maimai").rating);
+    const maimai = rankScores("maimai", scores, 14);
     expect([maimai.newScores.length, maimai.oldScores.length, maimai.newRemaining.length]).toEqual([15, 0, 65]);
-    const chunithm = selectRankings(scores, 14, getGame("chunithm").rating);
+    const chunithm = rankScores("chunithm", scores, 14);
     expect([chunithm.newScores.length, chunithm.oldScores.length]).toEqual([20, 30]);
     expect(scores).toEqual(original);
   });

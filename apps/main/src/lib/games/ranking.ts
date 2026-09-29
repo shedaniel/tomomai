@@ -21,7 +21,7 @@ export function sortByRating<T extends { scoreValue: number; rating: number }>(s
     .map(score => ({ ...score, rating: Math.floor(score.rating) }));
 }
 
-export function selectRankings<T extends RankedScore>(
+function selectRankings<T extends RankedScore>(
   scores: readonly T[],
   currentVersion: number,
   { bucketSizes, isNew }: Pick<GameRating, "bucketSizes" | "isNew">,
