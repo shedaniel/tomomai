@@ -82,7 +82,6 @@ async function fetchLocations(log: Logger, requestId: string) {
 
       log.debug({ url: baseUrl }, "Fetching initial page");
 
-      // Fetch the initial page to get the list of countries/prefectures
       const initialResponse = await fetch(baseUrl, {
         headers: {
           "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
@@ -96,12 +95,10 @@ async function fetchLocations(log: Logger, requestId: string) {
       const initialHtml = await initialResponse.text();
       const $ = load(initialHtml);
 
-      // Parse select options based on region
       const locationData: LocationData = {};
       const BATCH_SIZE = 8;
 
       if (region === "intl") {
-        // For intl: find .country > select and parse options
         const countrySelect = $(".country > select[name='ct']");
         const options = countrySelect.find("option");
 
@@ -155,7 +152,6 @@ async function fetchLocations(log: Logger, requestId: string) {
           }
         }
       } else {
-        // For jp: find .pref > select and parse options
         const prefSelect = $(".pref > select[name='at']");
         const options = prefSelect.find("option");
 
@@ -168,7 +164,6 @@ async function fetchLocations(log: Logger, requestId: string) {
           const text = option.text().trim();
           const isDisabled = option.attr("disabled") !== undefined;
 
-          // Skip disabled options
           if (isDisabled || !value) {
             log.debug(`Skipping disabled/invalid option: ${text}`);
             continue;
@@ -215,7 +210,6 @@ async function fetchLocations(log: Logger, requestId: string) {
 
       log.info({ region, count: Object.keys(locationData).length }, "Fetched locations for region");
 
-      // Save to JSON file if not in serverless environment
       if (!isServerless()) {
         try {
           const storesDir = path.join(process.cwd(), 'public', 'stores');
@@ -228,14 +222,12 @@ async function fetchLocations(log: Logger, requestId: string) {
           log.debug(`Saved location data to ${filePath}`);
         } catch (error) {
           log.warn({ err: error }, "Error saving location data to file");
-          // Don't fail the request if file save fails
         }
       } else {
         log.debug("Skipping file save in serverless environment");
       }
     } catch (error) {
       log.error({ err: error, region }, "Error fetching locations for region");
-      // Continue to next region even if one fails
     }
   }
 
@@ -325,7 +317,6 @@ async function fetchStoresForLocation(
 
       const address = $store.find(".store_address").text().trim();
 
-      // Extract coordinates from onclick attribute
       const onclickAttr = $store.find(".store_bt_google_map").attr("onclick");
       if (!onclickAttr) return;
 
