@@ -6,6 +6,7 @@ import type { Pending, NoticeSink } from "@/server/services/catalog/ingestion/ty
 import type { Logger as PinoLogger } from "pino";
 import type { Fetcher, Attributed, FetchingContextExtended as SharedFetchingContextExtended } from "@/server/services/catalog/ingestion/runner";
 import type { FetcherMode } from "@/server/services/catalog/ingestion/merge";
+import type { GameSiteClient } from "@/server/services/games/sega/http";
 
 export type PendingSong = {
   songName: string;
@@ -29,7 +30,8 @@ export type SongKey = `${string}@${SongType}@${Difficulty}`;
 export type FetchingContext = {
   region: Region;
   version: VersionId;
-  cookies: string;
+  /** The maimai NET session of the catalog's source account. */
+  site: GameSiteClient;
   log: PinoLogger;
   forceMode?: FetcherMode;
   notice: NoticeSink;

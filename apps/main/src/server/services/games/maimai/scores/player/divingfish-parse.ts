@@ -9,8 +9,7 @@ export function parseDivingFishPlayerData(resp: DivingFishRecordsResponse): Play
     additionalRating > 0 ? `${COURSE_RANK_BASE}/${additionalRating}.webp` : "";
 
   return {
-    iconBytes: null,
-    iconContentType: null,
+    iconUrl: "",
     displayName: resp.nickname ?? "",
     rating: resp.rating ?? 0,
     title: resp.plate ?? "",

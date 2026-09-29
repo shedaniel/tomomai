@@ -1,4 +1,5 @@
 import { decodeLoginAuthorization, verifyUserOtp } from "@/lib/otp";
+import { SEGA_AIME_GATEWAY } from "@/lib/games/sites";
 import { startScoreFetch } from "@/server/services/games/score-ingestion";
 import { fetchStartRejection } from "@/server/services/games/fetch-errors";
 import { NextRequest, NextResponse } from "next/server";
@@ -9,11 +10,10 @@ import { Region } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
-const ALLOWED_ORIGIN = "https://lng-tgk-aime-gw.am-all.net";
 const DEFAULT_REGION: Region = "intl";
 
 function withCors(response: NextResponse) {
-  response.headers.set("Access-Control-Allow-Origin", ALLOWED_ORIGIN);
+  response.headers.set("Access-Control-Allow-Origin", SEGA_AIME_GATEWAY.origin);
   response.headers.set("Access-Control-Allow-Methods", "POST, OPTIONS");
   response.headers.set("Access-Control-Allow-Headers", "Content-Type");
   response.headers.set("Access-Control-Allow-Credentials", "true");

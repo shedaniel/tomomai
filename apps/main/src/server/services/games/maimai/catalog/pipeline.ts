@@ -20,6 +20,8 @@ import { FillMissingFetcher } from "./fill-level";
 import { key } from "./merge";
 import type { FetchingContext, PendingSong, SongFetcher, UpdateSong } from "./types";
 import { sendDiscordNotice } from "@/server/services/discord/webhook";
+import { openGameSite } from "@/server/services/games/sega/http";
+import { assertMaimaiPage } from "../scores/parse-utils";
 
 
 export const SorterFetcher: SongFetcher = createSorterFetcher<PendingSong, FetchingContext>((a, b) =>
@@ -146,7 +148,7 @@ export async function collectMaimaiCatalog(ctx: CatalogFetchContext) {
   const songs = await fetchLevels({
     region: ctx.region,
     version: ctx.version as VersionId,
-    cookies: ctx.cookies ?? "",
+    site: openGameSite("maimai", ctx.region, { cookies: ctx.cookies ?? "" }, { assertPage: assertMaimaiPage }),
     forceMode: ctx.forceMode,
     log: ctx.log,
     notice: ctx.notice,

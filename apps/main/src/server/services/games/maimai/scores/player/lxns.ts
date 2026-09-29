@@ -1,5 +1,8 @@
 import "server-only";
 import { logger } from "@/lib/logger";
+import { getLogger } from "@/lib/request-logger";
+import { mirrorPlayerIcon } from "@/server/services/games/icons";
+import { openPublicAssets } from "@/server/services/games/sega/http";
 import type { PlayerData } from "../types";
 import { parseLxnsPlayerData, unwrapLxnsPlayerResponse } from "./lxns-parse";
 
@@ -12,11 +15,12 @@ export class LxnsAuthRevokedError extends Error {
   }
 }
 
-export async function fetchLxnsPlayerData(accessToken: string): Promise<PlayerData> {
+export async function fetchLxnsPlayerData(accessToken: string, signal: AbortSignal): Promise<PlayerData> {
   logger.info("[lxns] fetching player data");
 
   const resp = await fetch(LXNS_PLAYER_URL, {
     headers: { Authorization: `Bearer ${accessToken}` },
+    signal,
   });
 
   if (!resp.ok) {
@@ -30,6 +34,17 @@ export async function fetchLxnsPlayerData(accessToken: string): Promise<PlayerDa
   }
 
   const json = (await resp.json()) as Record<string, unknown>;
-  const player = unwrapLxnsPlayerResponse(json);
-  return parseLxnsPlayerData(player);
+  const { iconUpstreamUrl, ...player } = parseLxnsPlayerData(unwrapLxnsPlayerResponse(json));
+  return { ...player, iconUrl: iconUpstreamUrl ? await mirrorLxnsIcon(iconUpstreamUrl, signal) : "" };
+}
+
+// A missing icon should not fail the whole fetch.
+async function mirrorLxnsIcon(url: string, signal: AbortSignal): Promise<string> {
+  try {
+    return await mirrorPlayerIcon(openPublicAssets(signal), url, signal);
+  } catch (err) {
+    signal.throwIfAborted();
+    getLogger().warn({ err, providerId: "lxns" }, "Could not mirror the player icon");
+    return "";
+  }
 }

@@ -1,7 +1,7 @@
 import "server-only";
 import { Region } from "@/lib/types";
-import { gameBaseUrl } from "@/lib/games/sites";
-import { getGameHtml } from "@/server/services/games/sega/http";
+import { siteRoot } from "@/lib/games/sites";
+import type { GameSiteClient } from "@/server/services/games/sega/http";
 import { load } from "cheerio";
 import { normalizeGenre } from "../genres";
 import { type Logger } from "pino";
@@ -22,7 +22,6 @@ export const MaimaiAfterFetcher: SongFetcher = async (context, songs) => {
   }));
 
   const getOrCreateDetail = (
-    cookies: string,
     inputName: string,
     inputValue: string
   ): Promise<ReturnType<typeof parseSongDetail>> => {
@@ -31,8 +30,7 @@ export const MaimaiAfterFetcher: SongFetcher = async (context, songs) => {
     if (!detailCache[key]) {
       detailCache[key] = limit(async () => {
         const html = await fetchWebsite(
-          context.region,
-          cookies,
+          context.site,
           inputName,
           inputValue,
           context.log,
@@ -66,7 +64,7 @@ export const MaimaiAfterFetcher: SongFetcher = async (context, songs) => {
 
   const detailPromises = Array.from(groups.entries()).map(async ([mapKey, group]) => {
     const { inputName, inputValue } = group![0];
-    const details = await getOrCreateDetail(context.cookies, inputName, inputValue);
+    const details = await getOrCreateDetail(inputName, inputValue);
 
     return [mapKey, details] as const;
   });
@@ -91,14 +89,10 @@ export const MaimaiAfterFetcher: SongFetcher = async (context, songs) => {
   })
 }
 
-async function fetchWebsite(region: Region, cookies: string, inputName: string, inputValue: string, log: Logger) {
+async function fetchWebsite(site: GameSiteClient, inputName: string, inputValue: string, log: Logger) {
   const params = new URLSearchParams();
   params.append(inputName, inputValue);
-  const baseUrl = gameBaseUrl("maimai", region);
-  const detailUrl = `${baseUrl}/maimai-mobile/record/musicDetail/?${params.toString()}`;
-  log.debug(`Fetching song detail from: ${detailUrl}`);
-
-  const detailHtml = await getGameHtml("maimai", region, detailUrl, cookies, `${baseUrl}/maimai-mobile/`);
+  const detailHtml = await site.html(`record/musicDetail/?${params.toString()}`);
   log.debug(`Song detail fetched successfully, length: ${detailHtml.length} characters`);
 
   return detailHtml;
@@ -123,7 +117,7 @@ function parseSongDetail(html: string, region: Region, log: Logger): {
     log.error({ html }, "Cover image element found but src attribute is missing");
     throw new Error("Cover image element found but src attribute is missing");
   }
-  const coverUrl = coverSrc.startsWith('http') ? coverSrc : `${gameBaseUrl("maimai", region)}${coverSrc}`;
+  const coverUrl = new URL(coverSrc, siteRoot("maimai", region)).href;
 
   // Extract genre
   const genreElement = $('.basic_block .blue');

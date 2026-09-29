@@ -1,10 +1,7 @@
-// Origins where the tomomai userscript may run. Used both by the token
-// exchange CORS allowlist and by the OAuth callback page when posting the
-// authorization code back to the opener window — keeping the two in sync
-// is load-bearing for security (wildcard targetOrigin leaks the code).
-export const USERSCRIPT_ALLOWED_ORIGINS = [
-  "https://maimaidx.jp",
-  "https://maimaidx-eng.com",
-] as const;
+import { siteOrigin } from "@/lib/games/sites";
 
-export type UserscriptAllowedOrigin = (typeof USERSCRIPT_ALLOWED_ORIGINS)[number];
+// Origins where the tomomai userscript may run. The token exchange CORS
+// allowlist and the OAuth callback's postMessage target both read this list,
+// and keeping them in sync is load-bearing for security (a wildcard
+// targetOrigin leaks the code).
+export const USERSCRIPT_ALLOWED_ORIGINS: readonly string[] = (["jp", "intl"] as const).map(region => siteOrigin("maimai", region));

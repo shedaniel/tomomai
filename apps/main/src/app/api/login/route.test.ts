@@ -19,6 +19,7 @@ vi.mock("@/lib/trpc", async () => {
   return { router: t.router, protectedProcedure: t.procedure };
 });
 
+import { SEGA_AIME_GATEWAY } from "@/lib/games/sites";
 import { fetchRouter } from "@/server/routers/user/fetch";
 import { FetchStartError } from "@/server/services/games/fetch-errors";
 import { POST } from "./route";
@@ -35,7 +36,7 @@ const caller = fetchRouter.createCaller({
 function callback(user: string, otp: string, extra: Record<string, string> = {}) {
   return POST(new NextRequest("https://tomomai.test/api/login", {
     method: "POST", body: new URLSearchParams({ user, otp, token: "gateway-cookie", ...extra }),
-    headers: { "Content-Type": "application/x-www-form-urlencoded", Origin: "https://lng-tgk-aime-gw.am-all.net" },
+    headers: { "Content-Type": "application/x-www-form-urlencoded", Origin: SEGA_AIME_GATEWAY.origin },
   }));
 }
 
@@ -59,7 +60,7 @@ it.each(["maimai", "chunithm"] as const)("issues game-bound %s authorization thr
   const otherGame = game === "maimai" ? "chunithm" : "maimai";
   expect(result.loginPageUrl).toBe(game === "maimai" ? "https://maimaidx-eng.com/maimai-mobile/" : "https://chunithm-net-eng.com/mobile/");
   const link = new URL(result.loginLink);
-  expect(`${link.origin}${link.pathname}`).toBe("https://lng-tgk-aime-gw.am-all.net/common_auth/");
+  expect(`${link.origin}${link.pathname}`).toBe(SEGA_AIME_GATEWAY.landingUrl);
   expect(result.scriptUrl).toBe("https://tomomai.test/api/login.js");
   expect(result.otp).toBe("622184");
   const fields = new URLSearchParams(link.hash.slice(1));
@@ -83,7 +84,7 @@ it("answers a fetch refused during maintenance with 503 and when to retry", asyn
   const response = await callback(authorization, otp);
   expect(response.status).toBe(503);
   expect(response.headers.get("Retry-After")).toBe("1800");
-  expect(response.headers.get("Access-Control-Allow-Origin")).toBe("https://lng-tgk-aime-gw.am-all.net");
+  expect(response.headers.get("Access-Control-Allow-Origin")).toBe(SEGA_AIME_GATEWAY.origin);
   expect(await response.json()).toEqual({
     success: false,
     error: "MAINTENANCE: Cannot fetch data during maintenance window (01:00 - 02:00 JST)",

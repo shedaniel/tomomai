@@ -30,7 +30,7 @@ describe("catalog image processing", () => {
     const first = "https://maimaidx-eng.com/maimai-mobile/img/Music/shared.png";
     const preferred = "https://maimaidx.com/maimai-mobile/img/Music/shared.png";
     const result = await processCatalogImages("maimai", [chart(first), chart(preferred)], log);
-    expect(mocks.fetch).toHaveBeenCalledExactlyOnceWith(preferred, "");
+    expect(mocks.fetch).toHaveBeenCalledExactlyOnceWith(preferred);
     expect(mocks.upload).toHaveBeenCalledExactlyOnceWith(Buffer.from("webp"), "shared");
     expect(result.songs.map(song => song.cover)).toEqual(Array(2).fill("https://catalog.example.test/covers/shared.webp"));
     expect(result.stats).toEqual({ uploaded: 1, skipped: 0, unchanged: 0 });
@@ -42,7 +42,7 @@ describe("catalog image processing", () => {
     }));
     mocks.list.mockResolvedValue(new Set(["example.webp"]));
     const result = await processCatalogImages("chunithm", records, log);
-    expect(mocks.fetch).toHaveBeenCalledExactlyOnceWith(cover, "");
+    expect(mocks.fetch).toHaveBeenCalledExactlyOnceWith(cover);
     expect(mocks.convert).toHaveBeenCalledExactlyOnceWith(Buffer.from("source"));
     expect(mocks.upload).toHaveBeenCalledExactlyOnceWith(Buffer.from("webp"), "chunithm/example");
     expect(result.songs).toEqual(records.map(record => ({ ...record, cover: "https://catalog.example.test/covers/chunithm/example.webp" })));

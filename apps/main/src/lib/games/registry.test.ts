@@ -38,8 +38,8 @@ describe("game definitions", () => {
     expect(GAME_CODES[game].difficulty.filter((_, code) => !isRated(code))).toEqual(unrated);
   });
 
-  it.each(CANONICAL_GAME_IDS)("points the %s cookie login at a site the game has", game => {
+  it.each(CANONICAL_GAME_IDS)("points the %s cookie login at a site that signs in through the SEGA Aime gateway", game => {
     const { cookieLogin } = getGame(game).fetch;
-    if (cookieLogin) expect(getGameSite(game, cookieLogin.region)).toBeDefined();
+    if (cookieLogin) expect(getGameSite(game, cookieLogin.region)?.aime).toBeDefined();
   });
 });

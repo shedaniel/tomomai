@@ -25,7 +25,7 @@ function callback() {
 }
 
 function serveWahlap(playerHtml: string) {
-  mocks.agentFetch.mockImplementation(async (url: string) => url.includes("/playerData/")
+  mocks.agentFetch.mockImplementation(async (url: URL) => url.pathname === "/maimai-mobile/playerData/"
     ? new Response(playerHtml)
     : new Response(null, { status: 302, headers: { "Set-Cookie": "_t=session; Path=/" } }));
 }

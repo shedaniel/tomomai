@@ -5,8 +5,7 @@ import { db } from "@/lib/db";
 import { userRecentSongs, maimaiRecentSongDetails } from "@/lib/db/schema-pg";
 import { logger } from "@/lib/logger";
 import { Region } from "@/lib/types";
-import { gameBaseUrl } from "@/lib/games/sites";
-import { getGamePage } from "@/server/services/games/sega/http";
+import type { GameSiteClient } from "@/server/services/games/sega/http";
 import type { RecentSongData } from "../types";
 
 // Fetches per-play playlog detail pages and writes the enriched per-note
@@ -14,7 +13,7 @@ import type { RecentSongData } from "../types";
 export async function fetchAndInsertRecentSongsData(
   userId: string,
   region: Region,
-  cookies: string,
+  site: GameSiteClient,
   recentSongsData: RecentSongData[],
 ): Promise<void> {
   logger.info(`Starting detailed recent songs data fetch for user ${userId}, ${recentSongsData.length} records`);
@@ -45,9 +44,6 @@ export async function fetchAndInsertRecentSongsData(
     return;
   }
 
-  const baseUrl = gameBaseUrl("maimai", region);
-  const playlogDetailUrl = `${baseUrl}/maimai-mobile/record/playlogDetail/`;
-
   const BATCH_SIZE = 6;
   for (let batchStart = 0; batchStart < toFetch.length; batchStart += BATCH_SIZE) {
     const batch = toFetch.slice(batchStart, batchStart + BATCH_SIZE);
@@ -55,12 +51,9 @@ export async function fetchAndInsertRecentSongsData(
 
     const detailPromises = batch.map(async (recentSong) => {
       try {
-        const detailUrl = `${playlogDetailUrl}?idx=${encodeURIComponent(recentSong.idx)}`;
-
         let html: string;
         try {
-          const response = await getGamePage("maimai", region, detailUrl, cookies, `${baseUrl}/maimai-mobile/record/`);
-          html = await response.text();
+          html = await site.html(`record/playlogDetail/?idx=${encodeURIComponent(recentSong.idx)}`);
         } catch (err) {
           logger.warn(`Failed to fetch playlog detail for idx ${recentSong.idx}: ${err instanceof Error ? err.message : err}`);
           return null;

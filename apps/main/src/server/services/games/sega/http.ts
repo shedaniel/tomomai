@@ -1,21 +1,12 @@
 import "server-only";
 import { agentFetch } from "@/lib/http-agent";
-import { getGameSite } from "@/lib/games/sites";
+import { getGame } from "@/lib/games/registry";
+import { getGameSite, siteRoot, siteUrl } from "@/lib/games/sites";
 import type { CanonicalGameId } from "@/lib/games/types";
 import type { Region } from "@/lib/types";
 import { getLogger } from "@/lib/request-logger";
 
 export const SEGA_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36";
-
-export function gameSiteUrl(game: CanonicalGameId, region: Region, path: string): URL {
-  const site = getGameSite(game, region);
-  if (!site) throw new Error(`No game site configured for ${game}/${region}`);
-  const url = new URL(path, site.entryUrl);
-  if (url.origin !== new URL(site.entryUrl).origin) {
-    throw new Error(`Unexpected game site origin for ${game}/${region}`);
-  }
-  return url;
-}
 
 export function responseCookies(headers: Headers): string {
   const values = headers.getSetCookie ? headers.getSetCookie() : [headers.get("set-cookie") ?? ""];
@@ -43,18 +34,16 @@ export function segaRequestSignal(signal?: AbortSignal | null): AbortSignal {
   return signal ? AbortSignal.any([signal, timeout]) : timeout;
 }
 
+/** One request to a game site, without following redirects. A path resolves against the site's mobile root. */
 export function requestGameSite(game: CanonicalGameId, region: Region, path: string, init: RequestInit = {}): Promise<Response> {
-  const url = gameSiteUrl(game, region, path);
+  const url = siteUrl(game, region, path);
   const headers = new Headers(init.headers);
-  headers.set("User-Agent", SEGA_USER_AGENT);
-  // Keep maimai's existing TLS compatibility handling scoped to its own sites.
-  const fetchSite = game === "maimai" ? agentFetch : fetch;
+  if (!headers.has("User-Agent")) headers.set("User-Agent", SEGA_USER_AGENT);
+  const fetchSite = getGameSite(game, region)?.legacyTls ? agentFetch : fetch;
   return fetchSite(url, { ...init, signal: segaRequestSignal(init.signal), headers, redirect: "manual" });
 }
 
-export async function requestGamePage(game: CanonicalGameId, region: Region, url: string, cookies: string | GameSiteSession, referer: string, init: RequestInit = {}): Promise<Response> {
-  url = gameSiteUrl(game, region, url).href;
-  const session = typeof cookies === "string" ? { cookies } : cookies;
+async function followGameSite(game: CanonicalGameId, region: Region, url: string, session: GameSiteSession, referer: string, init: RequestInit): Promise<{ response: Response; url: string }> {
   let request = init;
   for (let redirects = 0; redirects <= 10; redirects++) {
     const headers = new Headers(request.headers);
@@ -62,9 +51,9 @@ export async function requestGamePage(game: CanonicalGameId, region: Region, url
     headers.set("Referer", referer);
     const response = await requestGameSite(game, region, url, { ...request, headers });
     session.cookies = mergeCookies(session.cookies, responseCookies(response.headers));
-    if (![301, 302, 303, 307, 308].includes(response.status)) return response;
+    if (![301, 302, 303, 307, 308].includes(response.status)) return { response, url };
     const location = response.headers.get("Location");
-    if (!location) return response;
+    if (!location) return { response, url };
     await response.body?.cancel();
     url = new URL(location, url).href;
     if (response.status === 303 || ((response.status === 301 || response.status === 302) && request.method === "POST")) {
@@ -74,14 +63,76 @@ export async function requestGamePage(game: CanonicalGameId, region: Region, url
   throw new Error("Too many game site redirects");
 }
 
-export async function getGamePage(game: CanonicalGameId, region: Region, url: string, cookies: string, referer: string): Promise<Response> {
-  const response = await requestGamePage(game, region, url, cookies, referer);
-  if (response.status !== 200) throw new Error(`HTTP ${response.status} for ${url}`);
-  return response;
+type SiteBytes = { buffer: Buffer; contentType: string };
+
+export interface GameSiteClient {
+  /** The last page read, sent as the Referer of the next request. */
+  readonly pageUrl: string;
+  /** GETs a page relative to the mobile root. */
+  html(path: string): Promise<string>;
+  /** POSTs a form to a path relative to the mobile root. */
+  post(path: string, fields: URLSearchParams): Promise<string>;
+  /** Downloads a file, through the session on the site's origin and without cookies elsewhere. */
+  bytes(url: string): Promise<SiteBytes>;
 }
 
-export async function getGameHtml(game: CanonicalGameId, region: Region, url: string, cookies: string, referer: string): Promise<string> {
-  return (await getGamePage(game, region, url, cookies, referer)).text();
+type GameSiteOptions = {
+  signal?: AbortSignal;
+  /** Rejects a 200 page that is not what was asked for, such as a sign-in page. */
+  assertPage?: (html: string, url: string) => void;
+};
+
+async function readBytes(response: Response, url: URL): Promise<SiteBytes> {
+  if (!response.ok) {
+    await response.body?.cancel();
+    throw new Error(`${url.host}${url.pathname} returned HTTP ${response.status}`);
+  }
+  return { buffer: Buffer.from(await response.arrayBuffer()), contentType: response.headers.get("content-type") ?? "image/png" };
+}
+
+/** Downloads files that need no game session, such as a provider's public assets. */
+export function openPublicAssets(signal?: AbortSignal): Pick<GameSiteClient, "bytes"> {
+  return {
+    async bytes(url) {
+      const target = new URL(url);
+      return readBytes(await fetch(target, { signal: segaRequestSignal(signal) }), target);
+    },
+  };
+}
+
+/** A game site session that follows same-origin redirects and keeps the cookies each response sets. */
+export function openGameSite(game: CanonicalGameId, region: Region, session: GameSiteSession, { signal, assertPage }: GameSiteOptions = {}): GameSiteClient {
+  const root = siteRoot(game, region);
+  const publicAssets = openPublicAssets(signal);
+  let pageUrl = root.href;
+
+  async function page(path: string, init: RequestInit): Promise<string> {
+    const { response, url } = await followGameSite(game, region, siteUrl(game, region, path).href, session, pageUrl, { ...init, signal });
+    if (response.status !== 200) {
+      await response.body?.cancel();
+      throw new Error(`${getGame(game).brand.displayName} page ${new URL(url).pathname} returned HTTP ${response.status}`);
+    }
+    const html = await response.text();
+    pageUrl = url;
+    assertPage?.(html, url);
+    return html;
+  }
+
+  return {
+    get pageUrl() { return pageUrl; },
+    html: path => page(path, {}),
+    post: (path, fields) => page(path, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: fields.toString(),
+    }),
+    async bytes(url) {
+      const target = new URL(url, root);
+      if (target.origin !== root.origin) return publicAssets.bytes(target.href);
+      const { response } = await followGameSite(game, region, target.href, session, pageUrl, { signal });
+      return readBytes(response, target);
+    },
+  };
 }
 
 export async function getCookiesFromRedirect(game: CanonicalGameId, region: Region, redirectUrl: string, cookies: string | null): Promise<string> {

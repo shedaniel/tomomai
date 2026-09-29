@@ -8,7 +8,6 @@ import type {
 } from "@/server/services/games/types";
 import { chartTypeToCode, difficultyToCode, titleTypeToCode } from "@/lib/games/maimai/codes";
 import { fromMaimaiScore } from "../legacy-view";
-import { uploadPlayerIcon } from "./player/persist";
 import type { Region } from "@/lib/types";
 
 type MaimaiNormalizeContext = {
@@ -70,12 +69,11 @@ function normalizeEvents(fetched: FetchedMaimaiData): NormalizedEvent[] {
   return [...areaEvents, ...eventAreaEvents];
 }
 
-export async function normalizeFetchedMaimaiData(
+export function normalizeFetchedMaimaiData(
   fetched: FetchedMaimaiData,
   ctx: MaimaiNormalizeContext,
-): Promise<GameFetchResult> {
+): GameFetchResult {
   const player = fetched.playerData;
-  const playerIconUrl = await uploadPlayerIcon(player);
   const scores = Object.values(fetched.allSongsData).flat().map(score => normalizeScore(score, ctx));
 
   return {
@@ -84,7 +82,7 @@ export async function normalizeFetchedMaimaiData(
       rating: player.rating,
       title: player.title,
       titleType: titleTypeToCode(player.titleType),
-      iconUrl: playerIconUrl,
+      iconUrl: player.iconUrl,
       totalPlayCount: player.totalPlayCount,
       currentVersionPlayCount: player.versionPlayCount,
       courseRankUrl: player.courseRankUrl,

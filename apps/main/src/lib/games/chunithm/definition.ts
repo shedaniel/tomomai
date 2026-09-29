@@ -1,4 +1,3 @@
-import { SEGA_COOKIE_LOGIN_URL } from "../sega-gateway";
 import type { GameDefinition } from "../types";
 import { chunithmPresentation } from "./presentation";
 import { CHUNITHM_BUCKET_SIZES, chunithmChartRating, chunithmPlayerRating, isChunithmNewChart, isChunithmRatedChart } from "./rating";
@@ -14,11 +13,14 @@ export const chunithmDefinition = {
   },
   sites: {
     intl: {
-      entryUrl: "https://chunithm-net-eng.com/mobile/",
+      origin: "https://chunithm-net-eng.com",
+      mobileRoot: "/mobile/",
+      aime: { siteId: "chuniex", backUrl: "https://chunithm.sega.com/" },
       maintenance: { startHour: 4, endHour: 7 },
     },
     jp: {
-      entryUrl: "https://new.chunithm-net.com/",
+      origin: "https://new.chunithm-net.com",
+      mobileRoot: "/chuni-mobile/html/mobile/",
       maintenance: { startHour: 2, endHour: 7 },
     },
   },
@@ -44,5 +46,5 @@ export const chunithmDefinition = {
     "song_data:ultima",
     "recent_songs",
   ],
-  fetch: { cookieLogin: { region: "intl", url: SEGA_COOKIE_LOGIN_URL } },
+  fetch: { cookieLogin: { region: "intl" } },
 } satisfies GameDefinition;

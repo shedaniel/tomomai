@@ -1,24 +1,20 @@
 import "server-only";
 import { logger } from "@/lib/logger";
-import { Region } from "@/lib/types";
-import { gameBaseUrl } from "@/lib/games/sites";
-import { getGameHtml } from "@/server/services/games/sega/http";
+import type { Region } from "@/lib/types";
+import type { GameSiteClient } from "@/server/services/games/sega/http";
 import type { EventAreaData, EventData } from "../types";
 import { parseAreaEvents, parseEventAreaEvents } from "./parse";
 
-export async function fetchEventsData(cookies: string, region: Region): Promise<{ areaEvents: EventData[], eventAreaEvents: EventAreaData[] }> {
-  const baseUrl = gameBaseUrl("maimai", region);
-  const referer = `${baseUrl}/maimai-mobile/`;
-
+export async function fetchEventsData(site: GameSiteClient, region: Region): Promise<{ areaEvents: EventData[], eventAreaEvents: EventAreaData[] }> {
   logger.info(`Starting events data fetch for ${region} region...`);
 
   try {
     const [areaHtml, eventAreaHtml] = await Promise.all([
-      getGameHtml("maimai", region, `${baseUrl}/maimai-mobile/map/`, cookies, referer),
-      getGameHtml("maimai", region, `${baseUrl}/maimai-mobile/map/eventMap/`, cookies, referer),
+      site.html("map/"),
+      site.html("map/eventMap/"),
     ]);
 
-    const areaEvents = parseAreaEvents(areaHtml);
+    const areaEvents = parseAreaEvents(areaHtml, region);
     logger.debug(`Parsed ${areaEvents.length} area events`);
 
     const eventAreaEvents = parseEventAreaEvents(eventAreaHtml, region);

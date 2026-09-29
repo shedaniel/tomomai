@@ -4,30 +4,26 @@ import { appendFetchState } from "@/lib/fetch-states-server";
 import { getStateForDifficulty } from "@/lib/fetch-states";
 import { logger } from "@/lib/logger";
 import { normalizeName } from "@/lib/name-utils";
-import { Region } from "@/lib/types";
 import type { Difficulty } from "@/lib/games/maimai/types";
-import { gameBaseUrl } from "@/lib/games/sites";
-import { getGameHtml } from "@/server/services/games/sega/http";
+import type { GameSiteClient } from "@/server/services/games/sega/http";
 import { musicTypeFromIcon } from "../parse-utils";
 import type { ScoreData } from "../types";
 import { parseScoreData } from "./parse";
 
-export async function fetchSongsData(cookies: string, difficulty: number, region: Region): Promise<ScoreData[]> {
-  const baseUrl = gameBaseUrl("maimai", region);
-  const songsUrl = `${baseUrl}/maimai-mobile/record/musicGenre/search/?genre=99&diff=${difficulty}`;
-  logger.info(`Fetching songs data for difficulty ${difficulty} from: ${songsUrl}`);
+async function fetchSongsData(site: GameSiteClient, difficulty: number): Promise<ScoreData[]> {
+  logger.info(`Fetching songs data for difficulty ${difficulty}`);
 
-  const songsHtml = await getGameHtml("maimai", region, songsUrl, cookies, `${baseUrl}/maimai-mobile/`);
+  const songsHtml = await site.html(`record/musicGenre/search/?genre=99&diff=${difficulty}`);
   logger.debug(`Songs data for difficulty ${difficulty} fetched successfully, length: ${songsHtml.length} characters`);
 
   return parseScoreData(songsHtml, difficulty);
 }
 
-export async function fetchAllSongsData(cookies: string, region: Region, sessionId?: bigint): Promise<{ [difficulty: number]: ScoreData[] }> {
+export async function fetchAllSongsData(site: GameSiteClient, sessionId?: bigint): Promise<{ [difficulty: number]: ScoreData[] }> {
   logger.info(`Fetching songs data for all difficulties (0-4)${sessionId ? ' with tracking' : ''}`);
 
   const difficultyPromises = [0, 1, 2, 3, 4, 10].map(difficulty => {
-    return fetchSongsData(cookies, difficulty, region).then((scoreData) => {
+    return fetchSongsData(site, difficulty).then((scoreData) => {
       logger.info(`Successfully fetched ${scoreData.length} scores for difficulty ${difficulty}`);
 
       if (sessionId) {
@@ -56,11 +52,10 @@ export async function fetchAllSongsData(cookies: string, region: Region, session
 }
 
 // Hidden songs from the rating-target page (intl only).
-export async function fetchHiddenSongsData(cookies: string, allSongsData: { [difficulty: number]: ScoreData[] }): Promise<ScoreData[]> {
+export async function fetchHiddenSongsData(site: GameSiteClient, allSongsData: { [difficulty: number]: ScoreData[] }): Promise<ScoreData[]> {
   logger.info("Fetching hidden songs data from rating target music page...");
 
-  const baseUrl = gameBaseUrl("maimai", "intl");
-  const html = await getGameHtml("maimai", "intl", `${baseUrl}/maimai-mobile/home/ratingTargetMusic/`, cookies, `${baseUrl}/maimai-mobile/`);
+  const html = await site.html("home/ratingTargetMusic/");
   logger.debug(`Hidden songs data fetched successfully, length: ${html.length} characters`);
 
   const $ = load(html);

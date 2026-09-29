@@ -1,13 +1,11 @@
 import "server-only";
 import { FETCH_STATES, type FetchState } from "@/lib/fetch-states";
 import { appendFetchState } from "@/lib/fetch-states-server";
-import { requireGameSite } from "@/lib/games/sites";
 import type { GameFetchResult, NormalizedRecent, NormalizedScore, ScoreFetchContext } from "@/server/services/games/types";
 import { getLogger } from "@/lib/request-logger";
-import { uploadIconToR2 } from "@/lib/r2";
-import { gameSiteUrl, requestGamePage } from "@/server/services/games/sega/http";
+import { mirrorPlayerIcon } from "@/server/services/games/icons";
+import { openGameSite } from "@/server/services/games/sega/http";
 import { loginAndGetCookies } from "../login";
-import { chunithmMobilePaths } from "../login-config";
 import { assertChunithmPage, CHUNITHM_DIFFICULTIES, parseMusicGenreForm, parsePlayer, parseRecentDetails, parseRecents, parseScores } from "./parsers";
 
 export async function fetchPlayer(ctx: ScoreFetchContext): Promise<GameFetchResult> {
@@ -28,42 +26,22 @@ export async function fetchPlayer(ctx: ScoreFetchContext): Promise<GameFetchResu
       throw err;
     }
   }
-  requireGameSite("chunithm", region);
-  const baseUrl = gameSiteUrl("chunithm", region, chunithmMobilePaths[region]);
-  const session = { cookies: await stage("login", () => loginAndGetCookies(region, token, userId, signal)) };
+
+  const cookies = await stage("login", () => loginAndGetCookies(region, token, userId, signal));
   await appendFetchState(sessionId, FETCH_STATES.LOGIN, "chunithm");
-  let referer = baseUrl.href;
+  const site = openGameSite("chunithm", region, { cookies }, { signal, assertPage: assertChunithmPage });
 
-  async function page(path: string, fields?: URLSearchParams) {
-    const url = new URL(path, baseUrl).href;
-    try {
-      const response = await requestGamePage("chunithm", region, url, session, referer, fields ? {
-        signal, method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: fields.toString(),
-      } : { signal });
-      if (response.status !== 200) throw new Error(`CHUNITHM page returned HTTP ${response.status}`);
-      const html = await response.text();
-      referer = response.url;
-      assertChunithmPage(html, response.url);
-      return html;
-    } catch (err) {
-      log.error({ err, path: new URL(url).pathname }, "CHUNITHM page request failed");
-      throw err;
-    }
-  }
-
-  const player = await stage("profile", async () => parsePlayer(await page("home/playerData"), referer));
+  const player = await stage("profile", async () => parsePlayer(await site.html("home/playerData"), site.pageUrl));
   await appendFetchState(sessionId, FETCH_STATES.PLAYER_DATA, "chunithm");
 
   const scores = await stage("scores", async () => {
     const scores: NormalizedScore[] = [];
-    let musicHtml = await page("record/musicGenre");
+    let musicHtml = await site.html("record/musicGenre");
     // The selected difficulty and form token belong to the session, so requests must stay sequential.
     for (const difficulty of CHUNITHM_DIFFICULTIES) {
       const fields = parseMusicGenreForm(musicHtml);
       fields.set("genre", "99");
-      musicHtml = await page(`record/musicGenre/send${difficulty.action}`, fields);
+      musicHtml = await site.post(`record/musicGenre/send${difficulty.action}`, fields);
       scores.push(...parseScores(musicHtml, { region, gameVersion, difficulty: difficulty.id }));
       const state: FetchState = `song_data:${difficulty.name}`;
       await appendFetchState(sessionId, state, "chunithm");
@@ -73,22 +51,17 @@ export async function fetchPlayer(ctx: ScoreFetchContext): Promise<GameFetchResu
   // TODO: Add WORLD'S END when its chart identity and catalog representation are supported.
 
   const recents = await stage("recents", async () => {
-    const { rows, skipped } = parseRecents(await page("record/playlog"), { region, gameVersion });
+    const { rows, skipped } = parseRecents(await site.html("record/playlog"), { region, gameVersion });
     const recents: NormalizedRecent[] = [];
     log.info({ recordCount: rows.length, skipped }, "Fetching CHUNITHM recent details");
     for (const { recent, form } of rows) {
-      const details = parseRecentDetails(await page(form.action, form.fields));
+      const details = parseRecentDetails(await site.post(form.action, form.fields));
       recents.push({ ...recent, details: { ...recent.details, ...details } });
     }
     return recents;
   });
   await appendFetchState(sessionId, FETCH_STATES.RECENT_SONGS, "chunithm");
 
-  const iconBytes = await stage("icon-download", async () => {
-    const response = await requestGamePage("chunithm", region, player.iconUrl, session, referer, { signal });
-    if (!response.ok) throw new Error(`CHUNITHM profile icon returned HTTP ${response.status}`);
-    return { buffer: Buffer.from(await response.arrayBuffer()), contentType: response.headers.get("content-type") ?? "image/png" };
-  });
-  const icon = await stage("icon-upload", () => uploadIconToR2(iconBytes.buffer, iconBytes.contentType, signal));
-  return { player: { ...player, iconUrl: icon.url }, scores, recents };
+  const iconUrl = await stage("icon", () => mirrorPlayerIcon(site, player.iconUrl, signal));
+  return { player: { ...player, iconUrl }, scores, recents };
 }

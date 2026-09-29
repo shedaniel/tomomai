@@ -4,44 +4,40 @@ import { formatCnCookiesToken } from "@/server/services/games/maimai/login";
 import { deleteToken } from "@/server/services/games/tokens";
 import { startScoreFetch } from "@/server/services/games/score-ingestion";
 import { fetchStartRejection } from "@/server/services/games/fetch-errors";
-import { agentFetch } from "@/lib/http-agent";
+import { siteRoot, siteUrl } from "@/lib/games/sites";
+import { requestGameSite, responseCookies } from "@/server/services/games/sega/http";
 import { requestLogger } from "@/lib/request-logger";
 
 export const dynamic = "force-dynamic";
 
-const CN_BASE = "https://maimai.wahlap.com";
+const WECHAT_USER_AGENT = "Mozilla/5.0 (Linux; Android 12; MicroMessenger/8.0)";
+
+function entryPath(maimaiToken: string): string {
+  return `?t=${encodeURIComponent(maimaiToken)}`;
+}
 
 async function fetchPlayerHtml(maimaiToken: string): Promise<{ html: string; cookies: string }> {
   // Step 1: hit the entry URL with ?t=<maimaiToken> to get the session cookies.
-  const entryUrl = `${CN_BASE}/maimai-mobile/?t=${encodeURIComponent(maimaiToken)}`;
-  const entryRes = await agentFetch(entryUrl, {
-    method: "GET",
+  const entryRes = await requestGameSite("maimai", "cn", entryPath(maimaiToken), {
     headers: {
-      "User-Agent": "Mozilla/5.0 (Linux; Android 12; MicroMessenger/8.0)",
+      "User-Agent": WECHAT_USER_AGENT,
       "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
     },
-    redirect: "manual",
   });
+  await entryRes.body?.cancel();
 
-  const setCookies =
-    typeof entryRes.headers.getSetCookie === "function"
-      ? entryRes.headers.getSetCookie()
-      : (entryRes.headers.get("set-cookie") ? [entryRes.headers.get("set-cookie")!] : []);
-
-  if (setCookies.length === 0) {
+  const cookies = responseCookies(entryRes.headers);
+  if (!cookies) {
     throw new Error(`no cookies set on entry (status=${entryRes.status})`);
   }
-  const cookies = setCookies.map((c) => c.split(";")[0]).join("; ");
 
   // Step 2: fetch playerData with the captured cookies + referer.
-  const playerRes = await agentFetch(`${CN_BASE}/maimai-mobile/playerData/`, {
-    method: "GET",
+  const playerRes = await requestGameSite("maimai", "cn", "playerData/", {
     headers: {
-      "User-Agent": "Mozilla/5.0 (Linux; Android 12; MicroMessenger/8.0)",
+      "User-Agent": WECHAT_USER_AGENT,
       "Cookie": cookies,
-      "Referer": `${CN_BASE}/maimai-mobile/`,
+      "Referer": siteRoot("maimai", "cn").href,
     },
-    redirect: "manual",
   });
   const html = await playerRes.text();
   if (playerRes.status !== 200) {
@@ -91,7 +87,7 @@ export async function POST(req: NextRequest) {
   }
 
   if (process.env.DEBUG_CN_FETCH) {
-    const debugUrl = `${CN_BASE}/maimai-mobile/?t=${encodeURIComponent(body.maimaiToken)}`;
+    const debugUrl = siteUrl("maimai", "cn", entryPath(body.maimaiToken)).href;
     log.info({ url: debugUrl }, "DEBUG_CN_FETCH — open in your browser to capture cookies manually");
     return NextResponse.json({ ok: true, debug: true, url: debugUrl });
   }

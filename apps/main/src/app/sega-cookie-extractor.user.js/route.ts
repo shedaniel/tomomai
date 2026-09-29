@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { resolveBaseUrlFromHeaders } from '@/lib/base-url';
+import { SEGA_AIME_GATEWAY } from '@/lib/games/sites';
 
 const FILENAME = 'sega-cookie-extractor.user.js';
 
@@ -12,7 +13,7 @@ export async function GET(request: Request) {
 // @version      1.2
 // @description  Extract clal cookie from the SEGA authentication page for maimai and CHUNITHM
 // @author       shedaniel
-// @match        https://lng-tgk-aime-gw.am-all.net/common_auth*
+// @match        ${SEGA_AIME_GATEWAY.origin}/common_auth*
 // @updateURL    ${scriptUrl}
 // @downloadURL  ${scriptUrl}
 // @grant        none

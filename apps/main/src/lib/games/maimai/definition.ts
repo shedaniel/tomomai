@@ -1,4 +1,3 @@
-import { SEGA_COOKIE_LOGIN_URL } from "../sega-gateway";
 import type { GameDefinition } from "../types";
 import { maimaiPresentation } from "./presentation";
 import { MAIMAI_BUCKET_SIZES, isMaimaiNewChart, isMaimaiRatedChart, maimaiChartRating, maimaiPlayerRating, maimaiRatingBonuses } from "./rating";
@@ -14,15 +13,23 @@ export const maimaiDefinition = {
   },
   sites: {
     intl: {
-      entryUrl: "https://maimaidx-eng.com/maimai-mobile/",
+      origin: "https://maimaidx-eng.com",
+      mobileRoot: "/maimai-mobile/",
+      aime: { siteId: "maimaidxex", backUrl: "https://maimai.sega.com/" },
       maintenance: { startHour: 1, endHour: 2, weekdayEndHours: { 3: 4 } },
     },
     jp: {
-      entryUrl: "https://maimaidx.jp/maimai-mobile/",
+      origin: "https://maimaidx.jp",
+      mobileRoot: "/maimai-mobile/",
+      // The host sends its leaf certificate without the GlobalSign intermediate.
+      legacyTls: true,
       maintenance: { startHour: 4, endHour: 7 },
     },
     cn: {
-      entryUrl: "https://maimai.wahlap.com/maimai-mobile/",
+      origin: "https://maimai.wahlap.com",
+      mobileRoot: "/maimai-mobile/",
+      // Unreachable from outside China, so its chain has not been verified.
+      legacyTls: true,
       maintenance: { startHour: 4, endHour: 7 },
     },
   },
@@ -78,5 +85,5 @@ export const maimaiDefinition = {
     "hidden_songs",
     "album_data",
   ],
-  fetch: { cookieLogin: { region: "intl", url: SEGA_COOKIE_LOGIN_URL } },
+  fetch: { cookieLogin: { region: "intl" } },
 } satisfies GameDefinition;

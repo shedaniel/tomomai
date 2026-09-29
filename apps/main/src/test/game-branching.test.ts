@@ -36,8 +36,6 @@ const PENDING: Record<string, number> = {
   "lib/games/recommendations.ts": 4,
   // The legacy catalog upload shape moves behind the game's catalog provider.
   "server/services/catalog/ingestion/parse-upload.ts": 1,
-  // The insecure TLS choice becomes a site property.
-  "server/services/games/sega/http.ts": 1,
 };
 
 // Shared hosts gate these features by capability but render the owner's component or call its trpc router,

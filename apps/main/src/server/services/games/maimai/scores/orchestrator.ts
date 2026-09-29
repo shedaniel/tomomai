@@ -1,7 +1,6 @@
 import "server-only";
 import { FETCH_STATES } from "@/lib/fetch-states";
 import { appendFetchState } from "@/lib/fetch-states-server";
-import { fetchImageBuffer } from "@/lib/image-converter";
 import { logger } from "@/lib/logger";
 import { getLogger } from "@/lib/request-logger";
 import { Region } from "@/lib/types";
@@ -11,7 +10,7 @@ import {
   processMaimaiToken,
 } from "../login";
 import type { TokenValidationResult } from "@/server/services/games/sega/login";
-import { getCookiesFromRedirect } from "@/server/services/games/sega/http";
+import { getCookiesFromRedirect, openGameSite } from "@/server/services/games/sega/http";
 import {
   DivingFishAuthError,
   DivingFishPrivacyError,
@@ -23,13 +22,14 @@ import { parseDivingFishScoresData } from "./songs/divingfish-parse";
 import { persistAlbumData } from "./albums/persist";
 import { fetchAlbumData } from "./albums/fetch";
 import { fetchEventsData } from "./events/fetch";
-import { extractPlayerData, fetchPlayerData } from "./player/fetch";
+import { extractPlayerData } from "./player/fetch";
 import { fetchLxnsPlayerData, LxnsAuthRevokedError } from "./player/lxns";
 import { deleteToken } from "@/server/services/games/tokens";
 import { fetchAndInsertRecentSongsData } from "./recents/details";
 import { fetchRecentSongsData } from "./recents/fetch";
 import { fetchAllSongsData, fetchHiddenSongsData } from "./songs/fetch";
 import { fetchLxnsScoresData } from "./songs/lxns";
+import { assertMaimaiPage } from "./parse-utils";
 import type { AlbumData, FetchedMaimaiData, ScoreData } from "./types";
 import type { Flags } from "@/lib/flags";
 import type { PersistedSnapshotContext, ScoreFetchContext } from "@/server/services/games/types";
@@ -40,6 +40,7 @@ interface FetcherContext {
   sessionId: bigint;
   flags: Flags;
   validation: TokenValidationResult;
+  signal: AbortSignal;
 }
 
 type DataFetcher = (ctx: FetcherContext) => Promise<FetchedMaimaiData>;
@@ -67,7 +68,7 @@ async function validateRegionAccess(
 // Step 2: fetch (region-specific)
 // ---------------------------------------------------------------------------
 
-const scrapeFetcher: DataFetcher = async ({ region, sessionId, flags, validation }) => {
+const scrapeFetcher: DataFetcher = async ({ region, sessionId, flags, validation, signal }) => {
   if (!validation.redirectUrl) {
     throw new Error("No redirect URL received from token validation");
   }
@@ -82,16 +83,17 @@ const scrapeFetcher: DataFetcher = async ({ region, sessionId, flags, validation
       validation.redirectUrl,
       validation.cookies || null,
     );
-  const playerDataHtml = await fetchPlayerData(region, cookies, validation.redirectUrl);
+  const site = openGameSite("maimai", region, { cookies }, { signal, assertPage: assertMaimaiPage });
+  const playerDataHtml = await site.html("playerData/");
 
   logger.info("Starting player data extraction and songs data fetch...");
   const [playerData, allSongsData, recentSongsData, albumData] = await Promise.all([
-    extractPlayerData(region, playerDataHtml, cookies).then((data) => {
+    extractPlayerData(site, region, playerDataHtml, signal).then((data) => {
       appendFetchState(sessionId, FETCH_STATES.PLAYER_DATA, "maimai");
       return data;
     }),
-    fetchAllSongsData(cookies, region, sessionId),
-    fetchRecentSongsData(cookies, region, sessionId).then((data) => {
+    fetchAllSongsData(site, sessionId),
+    fetchRecentSongsData(site).then((data) => {
       appendFetchState(sessionId, FETCH_STATES.RECENT_SONGS, "maimai");
       return data;
     }),
@@ -100,7 +102,7 @@ const scrapeFetcher: DataFetcher = async ({ region, sessionId, flags, validation
         appendFetchState(sessionId, FETCH_STATES.ALBUM_DATA, "maimai");
         return data;
       })
-      : fetchAlbumData(cookies, region).then((data) => {
+      : fetchAlbumData(site, region).then((data) => {
         appendFetchState(sessionId, FETCH_STATES.ALBUM_DATA, "maimai");
         return data;
       }),
@@ -111,7 +113,7 @@ const scrapeFetcher: DataFetcher = async ({ region, sessionId, flags, validation
     if (region === "intl") {
       try {
         logger.info("Fetching hidden songs data for intl region...");
-        const hiddenSongs = await fetchHiddenSongsData(cookies, allSongsData);
+        const hiddenSongs = await fetchHiddenSongsData(site, allSongsData);
         for (const hiddenSong of hiddenSongs) {
           const difficulty = hiddenSong.difficultyNumber;
           if (!allSongsData[difficulty]) {
@@ -132,17 +134,17 @@ const scrapeFetcher: DataFetcher = async ({ region, sessionId, flags, validation
   if (flags.eventsCard) {
     try {
       logger.info("Fetching events data...");
-      eventsData = await fetchEventsData(cookies, region);
+      eventsData = await fetchEventsData(site, region);
       logger.info("Events data fetched successfully");
     } catch (error) {
       logger.error({ err: error }, "Failed to fetch events data, continuing without events");
     }
   }
 
-  return { playerData, allSongsData, recentSongsData, albumData, eventsData, cookies };
+  return { playerData, allSongsData, recentSongsData, albumData, eventsData, site };
 };
 
-const lxnsFetcher: DataFetcher = async ({ userId, region, sessionId, validation }) => {
+const lxnsFetcher: DataFetcher = async ({ userId, region, sessionId, validation, signal }) => {
   if (region !== "cn") {
     throw new Error(`lxns fetcher is only supported for CN region (got ${region})`);
   }
@@ -160,11 +162,11 @@ const lxnsFetcher: DataFetcher = async ({ userId, region, sessionId, validation 
   let allSongsData: { [difficulty: number]: ScoreData[] };
   try {
     [playerData, allSongsData] = await Promise.all([
-      fetchLxnsPlayerData(parsed.accessToken).then((data) => {
+      fetchLxnsPlayerData(parsed.accessToken, signal).then((data) => {
         appendFetchState(sessionId, FETCH_STATES.PLAYER_DATA, "maimai");
         return data;
       }),
-      fetchLxnsScoresData(parsed.accessToken),
+      fetchLxnsScoresData(parsed.accessToken, signal),
     ]);
   } catch (error) {
     if (error instanceof LxnsAuthRevokedError) {
@@ -279,19 +281,20 @@ export async function persistMaimaiExtra(
 ): Promise<void> {
   const backgroundTasks: Promise<void>[] = [];
 
-  if (fetched.cookies && fetched.recentSongsData.length > 0) {
+  const { site } = fetched;
+  if (site && fetched.recentSongsData.length > 0) {
     logger.info("Starting detailed recent songs data fetch in background...");
     backgroundTasks.push(
-      fetchAndInsertRecentSongsData(ctx.userId, ctx.region, fetched.cookies, fetched.recentSongsData).catch((error) => {
+      fetchAndInsertRecentSongsData(ctx.userId, ctx.region, site, fetched.recentSongsData).catch((error) => {
         logger.error({ err: error }, "Failed to fetch detailed recent songs data");
       }),
     );
   }
 
-  if (fetched.cookies && shouldFetchAlbums && fetched.albumData.length > 0) {
+  if (site && shouldFetchAlbums && fetched.albumData.length > 0) {
     logger.info("Starting album data fetch in background...");
     backgroundTasks.push(
-      persistAlbumData(ctx.userId, ctx.chartResolution, fetched.albumData, album => fetchImageBuffer(album.imageUrl, fetched.cookies!)).catch((error) => {
+      persistAlbumData(ctx.userId, ctx.chartResolution, fetched.albumData, async album => (await site.bytes(album.imageUrl)).buffer).catch((error) => {
         logger.error({ err: error }, "Failed to fetch album data");
       }),
     );

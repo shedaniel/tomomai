@@ -1,8 +1,9 @@
 import type { Difficulty, FullCombo, FullSync, SongType, TitleType } from "@/lib/games/maimai/types";
+import type { GameSiteClient } from "@/server/services/games/sega/http";
 
 export interface PlayerData {
-  iconBytes: Buffer | null;
-  iconContentType: string | null;
+  /** The mirrored icon, or empty when the provider has none. */
+  iconUrl: string;
   displayName: string;
   rating: number;
   title: string;
@@ -13,6 +14,9 @@ export interface PlayerData {
   courseRankUrl: string;
   classRankUrl: string;
 }
+
+/** Player data before its icon is mirrored. */
+export type ParsedPlayerData = Omit<PlayerData, "iconUrl"> & { iconUpstreamUrl: string };
 
 export interface ScoreData {
   songName: string;
@@ -69,8 +73,6 @@ export interface FetchedMaimaiData {
   recentSongsData: RecentSongData[];
   albumData: AlbumData[];
   eventsData: { areaEvents: EventData[]; eventAreaEvents: EventAreaData[] } | null;
-  // Optional follow-up handles used by background tasks. Only populated by
-  // scrape-based fetchers (intl/jp) — the CN fetcher relies on REST APIs and
-  // doesn't need cookies for image follow-ups.
-  cookies?: string;
+  /** The scraped site session, kept for the background detail and album work. */
+  site?: GameSiteClient;
 }

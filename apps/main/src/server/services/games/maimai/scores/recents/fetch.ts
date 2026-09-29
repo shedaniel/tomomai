@@ -2,19 +2,15 @@ import "server-only";
 import { load } from "cheerio";
 import { logger } from "@/lib/logger";
 import { normalizeName } from "@/lib/name-utils";
-import { Region } from "@/lib/types";
 import type { Difficulty, FullCombo, FullSync, SongType } from "@/lib/games/maimai/types";
-import { gameBaseUrl } from "@/lib/games/sites";
-import { getGameHtml } from "@/server/services/games/sega/http";
+import type { GameSiteClient } from "@/server/services/games/sega/http";
 import { musicTypeFromIcon } from "../parse-utils";
 import type { RecentSongData } from "../types";
 
-export async function fetchRecentSongsData(cookies: string, region: Region, sessionId: bigint): Promise<RecentSongData[]> {
-  const baseUrl = gameBaseUrl("maimai", region);
-  const recentSongsUrl = `${baseUrl}/maimai-mobile/record/`;
-  logger.info(`Fetching recent songs data from: ${recentSongsUrl}`);
+export async function fetchRecentSongsData(site: GameSiteClient): Promise<RecentSongData[]> {
+  logger.info("Fetching recent songs data");
 
-  const recentSongsHtml = await getGameHtml("maimai", region, recentSongsUrl, cookies, `${baseUrl}/maimai-mobile/`);
+  const recentSongsHtml = await site.html("record/");
   logger.debug(`Recent songs data fetched successfully, length: ${recentSongsHtml.length} characters`);
 
   const $ = load(recentSongsHtml);
@@ -174,8 +170,6 @@ export async function fetchRecentSongsData(cookies: string, region: Region, sess
       logger.error(error, `Error processing recent play record ${index}`);
     }
   });
-
-  void sessionId;
 
   logger.info(`Successfully extracted ${recentSongs.length} recent plays`);
   return recentSongs;

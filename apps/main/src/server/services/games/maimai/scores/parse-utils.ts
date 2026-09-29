@@ -8,3 +8,10 @@ export function musicTypeFromIcon(iconSrc: string | undefined): SongType | null 
   if (iconSrc.includes("music_standard.png")) return "std";
   return null;
 }
+
+// maimai NET answers an expired session with HTTP 200 and its error page.
+export function assertMaimaiPage(html: string): void {
+  if (html.includes("ERROR CODE：100001") || html.includes("Please login again")) {
+    throw new Error("Session expired or invalid. Please provide a new token.");
+  }
+}

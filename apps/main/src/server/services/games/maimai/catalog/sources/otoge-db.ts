@@ -1,5 +1,5 @@
 import "server-only";
-import { gameBaseUrl } from "@/lib/games/sites";
+import { siteUrl } from "@/lib/games/sites";
 import { maimaiVersionAt, VersionId, Versions } from "@/lib/games/maimai/versions";
 import { versionReleaseInstant } from "@/lib/games/version-table";
 import { normalizeName } from "@/lib/name-utils";
@@ -162,7 +162,7 @@ async function fetchRecordsWithUrl(region: Region, version: VersionId, url: stri
         records.push({
           songName: normalizeName(song.title),
           artist: song.artist,
-          cover: `${gameBaseUrl("maimai", region)}/maimai-mobile/img/Music/${song.image_url}`,
+          cover: siteUrl("maimai", region, `img/Music/${song.image_url}`).href,
           difficulty: difficulty as Difficulty,
           songKana: song.title_kana,
           level,

@@ -21,9 +21,10 @@ vi.mock("./sources/lxns", () => ({ LxnsFetcher: (...args: Parameters<SongFetcher
 vi.mock("@/server/services/discord/webhook", () => ({ sendDiscordNotice: vi.fn(async () => {}) }));
 import { fetchLevels } from "./pipeline";
 import { sendDiscordNotice } from "@/server/services/discord/webhook";
+import { openGameSite } from "@/server/services/games/sega/http";
 
 beforeEach(() => { state.incomplete = false; vi.clearAllMocks(); });
-const context = (region: "jp" | "intl" | "cn") => ({ region, version: 9 as const, cookies: "", log: pino({ enabled: false }), notice: { details: [], addDetail: vi.fn() } });
+const context = (region: "jp" | "intl" | "cn") => ({ region, version: 9 as const, site: openGameSite("maimai", region, { cookies: "" }), log: pino({ enabled: false }), notice: { details: [], addDetail: vi.fn() } });
 
 describe("maimai catalog recipe", () => {
   it.each(["jp", "intl"] as const)("preserves %s source precedence, enrichment and final filling", async region => {

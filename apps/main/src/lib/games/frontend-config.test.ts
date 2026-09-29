@@ -36,7 +36,7 @@ describe("frontend process configuration", () => {
       brand: getGame("chunithm").brand,
       capabilities: getGame("chunithm").capabilities,
       regionCapabilityOverrides: {},
-      fetch: { cookieLogin: { region: "intl", url: "https://lng-tgk-aime-gw.am-all.net/common_auth/" } },
+      fetch: { cookieLogin: { region: "intl" } },
       regions: ["intl", "jp"],
     });
     expect(JSON.parse(JSON.stringify(game))).toEqual(game);

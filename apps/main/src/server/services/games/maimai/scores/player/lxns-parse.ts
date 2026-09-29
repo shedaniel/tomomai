@@ -1,7 +1,6 @@
 import { MAIMAI_CODES } from "@/lib/games/maimai/codes";
-import { logger } from "@/lib/logger";
 import type { TitleType } from "@/lib/games/maimai/types";
-import type { PlayerData } from "../types";
+import type { ParsedPlayerData } from "../types";
 
 const LXNS_ICON_BASE = "https://assets2.lxns.net/maimai/icon";
 const PROBER_ASSETS_BASE = "https://maimai.lxns.net/assets/maimai";
@@ -20,10 +19,8 @@ export function unwrapLxnsPlayerResponse(json: Record<string, unknown>): LxnsPla
   return ((json.data as LxnsPlayerResponse | undefined) ?? (json as LxnsPlayerResponse)) ?? {};
 }
 
-export async function parseLxnsPlayerData(player: LxnsPlayerResponse): Promise<PlayerData> {
+export function parseLxnsPlayerData(player: LxnsPlayerResponse): ParsedPlayerData {
   const iconId = player.icon?.id;
-  const iconUrl = iconId ? `${LXNS_ICON_BASE}/${iconId}.png` : "";
-  const fetched = iconUrl ? await fetchIconAsBytes(iconUrl) : null;
 
   const courseRank = player.course_rank ?? 0;
   const classRank = player.class_rank ?? 0;
@@ -36,8 +33,7 @@ export async function parseLxnsPlayerData(player: LxnsPlayerResponse): Promise<P
     : "normal";
 
   return {
-    iconBytes: fetched?.buffer ?? null,
-    iconContentType: fetched?.contentType ?? null,
+    iconUpstreamUrl: iconId ? `${LXNS_ICON_BASE}/${iconId}.png` : "",
     displayName: player.name ?? "",
     rating: player.rating ?? 0,
     title: player.trophy?.name ?? "",
@@ -48,17 +44,4 @@ export async function parseLxnsPlayerData(player: LxnsPlayerResponse): Promise<P
     courseRankUrl,
     classRankUrl,
   };
-}
-
-async function fetchIconAsBytes(
-  imageUrl: string,
-): Promise<{ buffer: Buffer; contentType: string } | null> {
-  const resp = await fetch(imageUrl);
-  if (!resp.ok) {
-    logger.warn(`[lxns] failed to fetch image ${imageUrl}: HTTP ${resp.status}`);
-    return null;
-  }
-  const buffer = Buffer.from(await resp.arrayBuffer());
-  const contentType = resp.headers.get("content-type") || "image/png";
-  return { buffer, contentType };
 }

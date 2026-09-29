@@ -179,7 +179,13 @@ export type GameBrand = {
 };
 
 export type GameSite = {
-  entryUrl: string;
+  origin: string;
+  /** Path of the NET's mobile pages. Site paths resolve against it. */
+  mobileRoot: string;
+  /** The site signs in through the SEGA Aime gateway with these parameters. */
+  aime?: { siteId: string; backUrl: string };
+  /** Skip certificate verification for a host whose chain Node cannot verify. */
+  legacyTls?: true;
   maintenance: {
     startHour: number;
     endHour: number;
@@ -199,5 +205,6 @@ export interface GameDefinition {
   presentation: GamePresentation;
   catalogSections: readonly CatalogSection[];
   fetchStages: readonly FetchState[];
-  fetch: { cookieLogin: { region: Region; url: string } | null };
+  /** The region whose SEGA Aime gateway cookie can start a fetch. */
+  fetch: { cookieLogin: { region: Region } | null };
 }

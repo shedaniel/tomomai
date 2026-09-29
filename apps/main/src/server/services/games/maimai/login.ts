@@ -1,4 +1,5 @@
 import "server-only";
+import { siteRoot } from "@/lib/games/sites";
 import type { Region } from "@/lib/types";
 import { getLogger } from "@/lib/request-logger";
 import { deleteToken, saveToken } from "../tokens";
@@ -88,7 +89,7 @@ export async function processMaimaiToken(userId: string | null, region: Region, 
     }
     return {
       isValid: true,
-      redirectUrl: "https://maimai.wahlap.com/maimai-mobile/",
+      redirectUrl: siteRoot("maimai", "cn").href,
       cookies: parsed.cookies,
       cookiesReady: true,
     };

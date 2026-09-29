@@ -1,7 +1,7 @@
 import "server-only";
 import { requireGameSite } from "@/lib/games/sites";
 import type { Region } from "@/lib/types";
-import { gameSiteUrl, requestGamePage } from "../sega/http";
+import { openGameSite } from "../sega/http";
 import { processSegaToken } from "../sega/login";
 import { chunithmSegaLogin } from "./login-config";
 
@@ -12,7 +12,7 @@ export async function loginAndGetCookies(region: Region, token: string, userId: 
   if (result.cookiesReady && result.cookies) return result.cookies;
   if (!result.redirectUrl) throw new Error("CHUNITHM login did not return a game session");
   const session = { cookies: result.cookies ?? "" };
-  const response = await requestGamePage("chunithm", region, result.redirectUrl, session, gameSiteUrl("chunithm", region, "").href, { signal });
-  if (response.status !== 200 || !session.cookies) throw new Error("CHUNITHM login did not return a game session");
+  await openGameSite("chunithm", region, session, { signal }).html(result.redirectUrl);
+  if (!session.cookies) throw new Error("CHUNITHM login did not return a game session");
   return session.cookies;
 }

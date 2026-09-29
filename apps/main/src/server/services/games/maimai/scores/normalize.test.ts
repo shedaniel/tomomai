@@ -3,11 +3,10 @@ import type { FetchedMaimaiData } from "./types";
 import { normalizeFetchedMaimaiData } from "./normalize";
 
 describe("maimai score normalization", () => {
-  it("maps maimai player, score, recent, and event fields to common codes", async () => {
+  it("maps maimai player, score, recent, and event fields to common codes", () => {
     const fetched: FetchedMaimaiData = {
       playerData: {
-        iconBytes: null,
-        iconContentType: null,
+        iconUrl: "https://images.test/icons/player.png",
         displayName: "Player",
         rating: 15000,
         title: "Title",
@@ -71,10 +70,9 @@ describe("maimai score normalization", () => {
           eventPeriod: [100, 200],
         }],
       },
-      cookies: "clal=test",
     };
 
-    const result = await normalizeFetchedMaimaiData(fetched, { region: "intl", version: 42 });
+    const result = normalizeFetchedMaimaiData(fetched, { region: "intl", version: 42 });
 
     expect(result.player).toMatchObject({
       displayName: "Player",
@@ -82,7 +80,7 @@ describe("maimai score normalization", () => {
       titleType: 4,
       totalPlayCount: 345,
       currentVersionPlayCount: 12,
-      iconUrl: "",
+      iconUrl: "https://images.test/icons/player.png",
     });
     expect(result.scores).toEqual([{
       chart: {

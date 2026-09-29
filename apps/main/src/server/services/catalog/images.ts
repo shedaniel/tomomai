@@ -80,7 +80,7 @@ export async function processCatalogImages<T extends { cover?: Pending<string> }
     // Download, convert, upload in batches of 10
     await processBatch(toDownload, 10, async ({ filename, basename, url }) => {
       log.debug({ filename, url }, "Downloading cover");
-      const buffer = await fetchImageBuffer(url, "");
+      const buffer = await fetchImageBuffer(url);
       const webpBuffer = await convertToWebp(buffer);
       log.debug({ filename, originalSize: buffer.length, webpSize: webpBuffer.length }, "Converted to WebP");
       await uploadCoverToR2(webpBuffer, basename);
@@ -93,7 +93,7 @@ export async function processCatalogImages<T extends { cover?: Pending<string> }
       const webpKey = `${basename}.webp`;
       if (!existingKeys.has(webpKey)) {
         log.info({ basename, url }, "Caching static asset to R2");
-        const buffer = await fetchImageBuffer(url, "");
+        const buffer = await fetchImageBuffer(url);
         const webpBuffer = await convertToWebp(buffer);
         await uploadCoverToR2(webpBuffer, basename);
         log.info({ basename }, "Static asset cached");

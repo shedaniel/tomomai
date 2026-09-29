@@ -9,20 +9,21 @@ import { FETCHERS } from "./pipeline";
 import { asFetcher, key } from "./merge";
 import type { FetchingContext, FetchingContextExtended, PendingSong, SongFetcher } from "./types";
 import { fetchSongDataForDifficulty, parsedSongToPendingSong } from "./sources/scraper";
+import { openGameSite } from "@/server/services/games/sega/http";
+import { assertMaimaiPage } from "../scores/parse-utils";
 
 const TOKEN = process.env.TOKEN;
 const testLog = pino({ enabled: false });
 const shouldSkip = !TOKEN;
 
 // Scaled-down scraper
-const ScaledMaimaiScraperFetcher = (versionToFetch: VersionId) => asFetcher(async ({ region, cookies, log }) => {
+const ScaledMaimaiScraperFetcher = (versionToFetch: VersionId) => asFetcher(async ({ site, log }) => {
   log.info("Fetching master difficulty songs only (scaled test)...");
 
   const difficulty = 3; // master
 
   const parsedSongs = await fetchSongDataForDifficulty(
-    region,
-    cookies,
+    site,
     "master",
     difficulty,
     versionToFetch + 13,
@@ -35,7 +36,6 @@ const ScaledMaimaiScraperFetcher = (versionToFetch: VersionId) => asFetcher(asyn
 });
 
 describe.skipIf(shouldSkip)("Integration: LevelFetcher", () => {
-  let cookies: string;
   let context: FetchingContext;
   let scraperSongs: PendingSong[];
   let mergedSongs: PendingSong[];
@@ -51,14 +51,14 @@ describe.skipIf(shouldSkip)("Integration: LevelFetcher", () => {
 
     // Login and get cookies
     testLog.info("Logging in to get cookies...");
-    cookies = await loginAndGetCookies(region, TOKEN);
+    const cookies = await loginAndGetCookies(region, TOKEN);
     testLog.info("Login successful, cookies obtained");
 
     // Create base context
     context = {
       region,
       version,
-      cookies,
+      site: openGameSite("maimai", region, { cookies }, { assertPage: assertMaimaiPage }),
       log: testLog,
       notice: { addDetail() {}, details: [] },
     };

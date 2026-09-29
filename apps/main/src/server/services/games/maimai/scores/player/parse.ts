@@ -2,15 +2,12 @@ import { load } from "cheerio";
 import { logger } from "@/lib/logger";
 import { Region } from "@/lib/types";
 import type { TitleType } from "@/lib/games/maimai/types";
-import type { PlayerData } from "../types";
-import { gameBaseUrl } from "@/lib/games/sites";
-
-export type ParsedPlayerData = Omit<PlayerData, "iconBytes" | "iconContentType"> & {
-  iconUpstreamUrl: string;
-};
+import type { ParsedPlayerData } from "../types";
+import { siteRoot } from "@/lib/games/sites";
 
 export function parsePlayerData(html: string, region: Region): ParsedPlayerData {
   const $ = load(html);
+  const root = siteRoot("maimai", region);
   const block = $('.see_through_block');
 
   if (block.length === 0) {
@@ -28,7 +25,7 @@ export function parsePlayerData(html: string, region: Region): ParsedPlayerData 
     throw new Error("User icon element found but src attribute is missing");
   }
 
-  const iconUrl = iconSrc.startsWith('http') ? iconSrc : `${gameBaseUrl("maimai", region)}${iconSrc}`;
+  const iconUrl = new URL(iconSrc, root).href;
   logger.debug(`Extracted icon URL: ${iconUrl}`);
 
   // Extract display name
@@ -134,7 +131,7 @@ export function parsePlayerData(html: string, region: Region): ParsedPlayerData 
   if (!courseRankSrc) {
     throw new Error("Course rank image src attribute is missing");
   }
-  const courseRankUrl = courseRankSrc.startsWith('http') ? courseRankSrc : `https://maimaidx-eng.com${courseRankSrc}`;
+  const courseRankUrl = new URL(courseRankSrc, root).href;
   logger.debug(`Extracted course rank URL: ${courseRankUrl}`);
 
   // Class rank (second element) - the element itself is an img
@@ -142,7 +139,7 @@ export function parsePlayerData(html: string, region: Region): ParsedPlayerData 
   if (!classRankSrc) {
     throw new Error("Class rank image src attribute is missing");
   }
-  const classRankUrl = classRankSrc.startsWith('http') ? classRankSrc : `https://maimaidx-eng.com${classRankSrc}`;
+  const classRankUrl = new URL(classRankSrc, root).href;
   logger.debug(`Extracted class rank URL: ${classRankUrl}`);
 
   return {

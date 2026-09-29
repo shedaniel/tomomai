@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { SEGA_AIME_GATEWAY } from "@/lib/games/sites";
 import { GET } from "./route";
 import { GET as legacyGET } from "../maimai-cookie-extractor.user.js/route";
 
@@ -10,6 +11,7 @@ describe("SEGA cookie extractor userscript", () => {
     expect(script).toContain("// @updateURL    https://tomomai.lol/sega-cookie-extractor.user.js\n");
     expect(script).toContain("// @downloadURL  https://tomomai.lol/sega-cookie-extractor.user.js\n");
     expect(script).toContain("// @version      1.2\n");
+    expect(script).toContain(`// @match        ${SEGA_AIME_GATEWAY.origin}/common_auth*\n`);
   });
 
   it("keeps serving the same script at the old maimai path for installed copies", () => {

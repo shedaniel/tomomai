@@ -2,10 +2,11 @@ import { describe, expect, it, vi } from "vitest";
 import pino from "pino";
 import type { FetchingContextExtended, PendingSong } from "./types";
 import { FillMissingFetcher } from "./fill-level";
+import { openGameSite } from "@/server/services/games/sega/http";
 
 function context(version: 8 | 9): FetchingContextExtended {
   return {
-    region: "jp", version, cookies: "", log: pino({ enabled: false }),
+    region: "jp", version, site: openGameSite("maimai", "jp", { cookies: "" }), log: pino({ enabled: false }),
     notice: { details: [], addDetail: vi.fn() }, previous: null,
     current: FillMissingFetcher, fetcherIndex: 0,
   };

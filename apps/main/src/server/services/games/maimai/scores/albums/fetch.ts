@@ -2,19 +2,18 @@ import "server-only";
 import { load } from "cheerio";
 import { logger } from "@/lib/logger";
 import { normalizeName } from "@/lib/name-utils";
-import { Region } from "@/lib/types";
 import type { Difficulty, SongType } from "@/lib/games/maimai/types";
-import { gameBaseUrl } from "@/lib/games/sites";
-import { getGameHtml } from "@/server/services/games/sega/http";
+import { siteRoot } from "@/lib/games/sites";
+import type { Region } from "@/lib/types";
+import type { GameSiteClient } from "@/server/services/games/sega/http";
 import { musicTypeFromIcon } from "../parse-utils";
 import type { AlbumData } from "../types";
 
-export async function fetchAlbumData(cookies: string, region: Region): Promise<AlbumData[]> {
-  const baseUrl = gameBaseUrl("maimai", region);
-  const albumUrl = `${baseUrl}/maimai-mobile/playerData/photo/`;
-  logger.info(`Fetching album data from: ${albumUrl}`);
+export async function fetchAlbumData(site: GameSiteClient, region: Region): Promise<AlbumData[]> {
+  logger.info("Fetching album data");
 
-  const albumHtml = await getGameHtml("maimai", region, albumUrl, cookies, `${baseUrl}/maimai-mobile/`);
+  const albumHtml = await site.html("playerData/photo/");
+  const root = siteRoot("maimai", region);
   logger.debug(`Album data fetched successfully, length: ${albumHtml.length} characters`);
 
   const $ = load(albumHtml);
@@ -76,7 +75,7 @@ export async function fetchAlbumData(cookies: string, region: Region): Promise<A
       if (imageElement.length > 0) {
         const imageSrc = imageElement.attr("src");
         if (imageSrc) {
-          imageUrl = imageSrc.startsWith("http") ? imageSrc : `${baseUrl}${imageSrc}`;
+          imageUrl = new URL(imageSrc, root).href;
         }
       }
       if (!imageUrl) {

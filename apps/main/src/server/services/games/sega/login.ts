@@ -1,13 +1,15 @@
 import "server-only";
 import { load } from "cheerio";
+import { SEGA_AIME_GATEWAY, siteUrl } from "@/lib/games/sites";
 import type { CanonicalGameId } from "@/lib/games/types";
 import { getLogger } from "@/lib/request-logger";
 import { deleteToken, updateToken } from "../tokens";
-import { cookieValue, gameSiteUrl, mergeCookies, requestGamePage, requestGameSite, responseCookies, segaRequestSignal, SEGA_USER_AGENT } from "./http";
+import { cookieValue, mergeCookies, openGameSite, requestGameSite, responseCookies, segaRequestSignal, SEGA_USER_AGENT } from "./http";
 
+/** Paths resolve against the site's mobile root. */
 export type SegaLoginConfig = { game: CanonicalGameId } & (
-  | { region: "intl"; loginUrl: string; submitUrl: string; submitEncoding?: "form" }
-  | { region: "jp"; submitPath: string; accountListPath: string; selectAccountPath: string; selectAccountMethod?: "POST" }
+  | { region: "intl"; submitEncoding?: "form" }
+  | { region: "jp"; entryPath: string; submitPath: string; accountListPath: string; selectAccountPath: string; selectAccountMethod?: "POST" }
 );
 
 export interface TokenValidationResult {
@@ -54,7 +56,7 @@ async function performAccountLogin(config: SegaLoginConfig, userId: string | nul
   log.info({ stepType }, "Attempting SEGA account login");
   try {
     if (config.region === "jp") {
-      const entryUrl = gameSiteUrl(config.game, config.region, "").href;
+      const entryUrl = siteUrl(config.game, config.region, config.entryPath).href;
       const entry = await requestGameSite(config.game, config.region, entryUrl, { signal });
       const cookies = responseCookies(entry.headers);
       if (!cookies) {
@@ -76,13 +78,13 @@ async function performAccountLogin(config: SegaLoginConfig, userId: string | nul
       });
       const redirect = response.headers.get("Location");
       if (response.status === 302 && redirect &&
-        gameSiteUrl(config.game, config.region, redirect).pathname === gameSiteUrl(config.game, config.region, config.accountListPath).pathname) {
+        siteUrl(config.game, config.region, redirect).pathname === siteUrl(config.game, config.region, config.accountListPath).pathname) {
         if (config.selectAccountMethod === "POST") {
           const session = { cookies: mergeCookies(cookies, responseCookies(response.headers)) };
+          const site = openGameSite(config.game, config.region, session, { signal });
           stepType = "card-list";
           log.info({ stepType }, "Reading SEGA account cards");
-          const accounts = await requestGamePage(config.game, config.region, redirect, session, entryUrl, { signal });
-          const $ = load(await accounts.text());
+          const $ = load(await site.html(redirect));
           const form = $("form").filter((_, element) => $(element).find("input[name=idx]").length > 0).first();
           const fields = new URLSearchParams();
           form.find("input[type=hidden][name]").each((_, element) => fields.set($(element).attr("name")!, $(element).attr("value") ?? ""));
@@ -90,17 +92,13 @@ async function performAccountLogin(config: SegaLoginConfig, userId: string | nul
           if (!action || !fields.has("idx") || !fields.get("token")) throw new Error("No selectable SEGA card found");
           stepType = "card-selection";
           log.info({ stepType }, "Selecting SEGA account card");
-          const selected = await requestGamePage(config.game, config.region, new URL(action, gameSiteUrl(config.game, config.region, redirect)).href, session, gameSiteUrl(config.game, config.region, redirect).href, {
-            signal, method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: fields.toString(),
-          });
-          if (selected.status !== 200) throw new Error("SEGA card selection failed");
-          await selected.body?.cancel();
+          await site.post(new URL(action, site.pageUrl).href, fields);
           return { isValid: true, cookies: session.cookies, cookiesReady: true };
         }
-        return { isValid: true, redirectUrl: gameSiteUrl(config.game, config.region, config.selectAccountPath).href, cookies };
+        return { isValid: true, redirectUrl: siteUrl(config.game, config.region, config.selectAccountPath).href, cookies };
       }
     } else {
-      const entry = await fetch(config.loginUrl, {
+      const entry = await fetch(SEGA_AIME_GATEWAY.loginUrl(config.game, config.region), {
         signal: segaRequestSignal(signal),
         headers: { "User-Agent": SEGA_USER_AGENT }, redirect: "manual",
       });
@@ -112,7 +110,7 @@ async function performAccountLogin(config: SegaLoginConfig, userId: string | nul
       const params = new URLSearchParams({ retention, sid: username, password });
       stepType = "credentials";
       log.info({ stepType }, "Submitting SEGA account login");
-      const response = await fetch(config.submitEncoding === "form" ? config.submitUrl : `${config.submitUrl}?${params}`, {
+      const response = await fetch(config.submitEncoding === "form" ? SEGA_AIME_GATEWAY.submitUrl : `${SEGA_AIME_GATEWAY.submitUrl}?${params}`, {
         signal: segaRequestSignal(signal),
         method: "POST", headers: { Cookie: cookies, "User-Agent": SEGA_USER_AGENT,
           ...(config.submitEncoding === "form" ? { "Content-Type": "application/x-www-form-urlencoded" } : {}),
@@ -125,7 +123,7 @@ async function performAccountLogin(config: SegaLoginConfig, userId: string | nul
         }
         const redirect = response.headers.get("Location");
         if (!redirect) return { isValid: false, error: "No redirect URL received from token validation" };
-        const redirectUrl = gameSiteUrl(config.game, config.region, redirect).href;
+        const redirectUrl = siteUrl(config.game, config.region, redirect).href;
         if (userId) await updateToken(config.game, userId, config.region, `account://${token}:://${username}:://${password}`);
         return { isValid: true, redirectUrl, token };
       }
@@ -149,14 +147,14 @@ async function validateSegaCookie(config: Extract<SegaLoginConfig, { region: "in
     };
   }
   try {
-    const response = await fetch(config.loginUrl, {
+    const response = await fetch(SEGA_AIME_GATEWAY.loginUrl(config.game, config.region), {
       signal: segaRequestSignal(signal),
       headers: { Cookie: `clal=${sanitized}`, "User-Agent": SEGA_USER_AGENT }, redirect: "manual",
     });
     if (response.status === 302) {
       const redirect = response.headers.get("Location");
       if (!redirect) return { isValid: false, error: "No redirect URL received from token validation" };
-      return { isValid: true, redirectUrl: gameSiteUrl(config.game, config.region, redirect).href };
+      return { isValid: true, redirectUrl: siteUrl(config.game, config.region, redirect).href };
     }
     if (response.status === 200) {
       if (deleteIfFailed && userId) await deleteToken(config.game, userId, config.region);

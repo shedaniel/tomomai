@@ -36,7 +36,7 @@ describe("maimai score source", () => {
     const fetched = { albumData: [] } as unknown as FetchedMaimaiData;
     const result = { scores: [] } as unknown as GameFetchResult;
     maimaiScores.run.mockResolvedValue({ fetched });
-    maimaiScores.normalize.mockResolvedValue(result);
+    maimaiScores.normalize.mockReturnValue(result);
     const context = { game: "maimai", region: "jp", gameVersion: 14, shouldFetchAlbums: true } as ScoreFetchContext;
 
     expect(maimaiScores.loaded).not.toHaveBeenCalled();

@@ -27,7 +27,7 @@ export const maimaiServerModule: GameServerModule = {
       ]);
       const { fetched } = await runMaimaiFetcher(context);
       return {
-        result: await normalizeFetchedMaimaiData(fetched, { region: context.region, version: context.gameVersion }),
+        result: normalizeFetchedMaimaiData(fetched, { region: context.region, version: context.gameVersion }),
         persistExtra: (persisted, backgroundWorkRef) =>
           persistMaimaiExtra(persisted, fetched, context.shouldFetchAlbums, backgroundWorkRef),
       };

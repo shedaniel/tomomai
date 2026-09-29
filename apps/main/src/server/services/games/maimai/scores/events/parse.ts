@@ -1,6 +1,7 @@
 import { load } from "cheerio";
 import { logger } from "@/lib/logger";
-import { Region } from "@/lib/types";
+import { siteRoot } from "@/lib/games/sites";
+import type { Region } from "@/lib/types";
 import type { EventAreaData, EventData } from "../types";
 
 // Parse event period string and extract start/end timestamps
@@ -32,9 +33,10 @@ export function parseEventPeriod(periodStr: string | null): [number, number] | n
   }
 }
 
-export function parseAreaEvents(html: string): EventData[] {
+export function parseAreaEvents(html: string, region: Region): EventData[] {
   const $ = load(html);
   const events: EventData[] = [];
+  const root = siteRoot("maimai", region);
 
   const elements = $(".m_10.m_t_0.f_0");
   logger.debug(`Found ${elements.length} area elements`);
@@ -55,7 +57,7 @@ export function parseAreaEvents(html: string): EventData[] {
       if (imageElement.length > 0) {
         const imageSrc = imageElement.attr("src");
         if (imageSrc) {
-          imageUrl = imageSrc.startsWith("http") ? imageSrc : `https://maimaidx-eng.com${imageSrc}`;
+          imageUrl = new URL(imageSrc, root).href;
         }
       }
 
@@ -95,10 +97,10 @@ export function parseAreaEvents(html: string): EventData[] {
   return events;
 }
 
-export function parseEventAreaEvents(html: string, region: Region = "intl"): EventAreaData[] {
+export function parseEventAreaEvents(html: string, region: Region): EventAreaData[] {
   const $ = load(html);
   const events: EventAreaData[] = [];
-  const baseUrl = region === "intl" ? "https://maimaidx-eng.com" : "https://maimaidx.jp";
+  const root = siteRoot("maimai", region);
 
   const elements = $(".eventmap_container");
   logger.debug(`Found ${elements.length} event area elements`);
@@ -122,7 +124,7 @@ export function parseEventAreaEvents(html: string, region: Region = "intl"): Eve
       if (imageElement.length > 0) {
         const imageSrc = imageElement.attr("src");
         if (imageSrc) {
-          imageUrl = imageSrc.startsWith("http") ? imageSrc : `${baseUrl}${imageSrc}`;
+          imageUrl = new URL(imageSrc, root).href;
         }
       }
 

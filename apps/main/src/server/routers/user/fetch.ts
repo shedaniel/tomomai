@@ -1,4 +1,4 @@
-import { getGameSite } from "@/lib/games/sites";
+import { SEGA_AIME_GATEWAY, siteRoot } from "@/lib/games/sites";
 import { getGame } from "@/lib/games/registry";
 import { GameAdapterError } from "@/lib/games/errors";
 import { gameOnlyProcedure, gameProcedure } from "../game-procedures";
@@ -18,21 +18,20 @@ export const fetchRouter = router({
     .query(({ ctx }) => {
       const { game } = ctx;
       const { cookieLogin } = getGame(game).fetch;
-      const loginPage = cookieLogin && getGameSite(game, cookieLogin.region);
-      if (!cookieLogin || !loginPage) throw new TRPCError({ code: "BAD_REQUEST", message: "Cookie login is not available for this game" });
+      if (!cookieLogin) throw new TRPCError({ code: "BAD_REQUEST", message: "Cookie login is not available for this game" });
       const userId = ctx.session.user.id;
       const otp = generateUserOtp(userId);
       const expiresAt = new Date(getOtpExpiryTimestamp()).toISOString();
       const baseUrl = resolveBaseUrl();
       const scriptUrl = `${baseUrl}/api/login.js`;
       const opaqueUserId = createLoginAuthorization(userId, game);
-      const loginLink = `${cookieLogin.url}#otp=${otp}&user=${encodeURIComponent(opaqueUserId)}`;
+      const loginLink = `${SEGA_AIME_GATEWAY.landingUrl}#otp=${otp}&user=${encodeURIComponent(opaqueUserId)}`;
 
       return {
         otp,
         scriptUrl,
         loginLink,
-        loginPageUrl: loginPage.entryUrl,
+        loginPageUrl: siteRoot(game, cookieLogin.region).href,
         expiresAt,
       };
     }),
