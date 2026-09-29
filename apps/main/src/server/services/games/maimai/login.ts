@@ -1,9 +1,11 @@
 import "server-only";
+import { formatLxns, type DivingFishIdentifier, type LxnsToken, type SegaToken } from "@/lib/games/token-format";
 import type { Region } from "@/lib/types";
 import { getLogger } from "@/lib/request-logger";
-import { deleteToken, saveToken } from "../tokens";
+import type { GameSiteSession } from "../sega/http";
 import { openSegaSession, type SegaLoginConfig } from "../sega/login";
-import type { DivingFishIdentifier } from "./scores/divingfish/client";
+import { acceptSegaToken, acceptToken, refuseToken } from "../token-policy";
+import { saveToken } from "../tokens";
 
 export const maimaiSegaLogin = {
   intl: { game: "maimai", region: "intl", kind: "aime-gateway" },
@@ -22,95 +24,51 @@ export type MaimaiLogin =
   | { kind: "lxns"; accessToken: string }
   | { kind: "divingfish"; account: DivingFishIdentifier };
 
-/** Signs in with the region's login: SEGA for International and JP, the CN providers for China. */
-export async function openMaimaiLogin(userId: string | null, region: Region, token: string, signal?: AbortSignal): Promise<MaimaiLogin> {
-  if (region === "cn") return openCnLogin(userId, token.trim(), signal);
-  const session = await openSegaSession(maimaiSegaLogin[region], userId, token, signal);
-  return { kind: "site-session", cookies: session.cookies };
+/** Signs in with any token the region accepts. */
+export async function openMaimaiLogin(userId: string, region: Region, token: string, signal?: AbortSignal): Promise<MaimaiLogin> {
+  const accepted = await acceptToken("maimai", userId, region, token);
+  switch (accepted.provider) {
+    case "sega-account":
+    case "sega-cookie":
+      return { kind: "site-session", cookies: (await openMaimaiSegaSession(userId, region, accepted, signal)).cookies };
+    case "cn-cookies":
+      return { kind: "site-session", cookies: accepted.cookies };
+    case "lxns":
+      return { kind: "lxns", accessToken: await lxnsAccessToken(userId, region, accepted, signal) };
+    case "divingfish":
+      return { kind: "divingfish", account: accepted.account };
+  }
 }
 
-/** A maimai DX NET session, for work that scrapes the site. */
+/** Opens a maimai DX NET session with a SEGA token. China signs in through its own providers instead. */
+export async function openMaimaiSegaSession(userId: string | null, region: Region, token: SegaToken, signal?: AbortSignal): Promise<GameSiteSession> {
+  if (region === "cn") throw new Error("maimai DX China does not sign in with SEGA tokens.");
+  return openSegaSession(maimaiSegaLogin[region], userId, token, signal);
+}
+
+/** A maimai DX NET session for the catalog, which signs in without a player. */
 export async function loginAndGetCookies(region: Region, token: string): Promise<string> {
-  const login = await openMaimaiLogin(null, region, token);
-  if (login.kind !== "site-session") throw new Error(`A ${login.kind} token cannot open a maimai DX NET session.`);
-  return login.cookies;
+  const accepted = await acceptSegaToken("maimai", null, region, token);
+  return (await openMaimaiSegaSession(null, region, accepted)).cookies;
 }
 
-async function rejectCnToken(userId: string | null, error: string): Promise<never> {
-  getLogger().info("Deleting a maimai CN token that cannot be used");
-  if (userId) await deleteToken("maimai", userId, "cn");
-  throw new Error(error);
-}
-
-async function openCnLogin(userId: string | null, token: string, signal?: AbortSignal): Promise<MaimaiLogin> {
-  if (token.startsWith("cn-cookies://")) {
-    const cookies = token.slice("cn-cookies://".length);
-    if (!cookies) return rejectCnToken(userId, "Invalid cn-cookies token format.");
-    return { kind: "site-session", cookies };
+/** The token's lxns access token, refreshed and saved when it is about to expire. */
+export async function lxnsAccessToken(userId: string, region: Region, token: LxnsToken, signal?: AbortSignal): Promise<string> {
+  if (Date.now() < token.expiresAtMs - 30_000) {
+    getLogger().debug({ userId, ttlSec: Math.round((token.expiresAtMs - Date.now()) / 1000) }, "lxns oauth: reusing cached access token");
+    return token.accessToken;
   }
-
-  if (token.startsWith("lxns://")) {
-    const parsed = parseLxnsToken(token);
-    if (!parsed) return rejectCnToken(userId, "Invalid lxns token format. Expected lxns://<access>:://<refresh>:://<expiresAtMs>:://<scope>");
-    if (Date.now() < parsed.expiresAtMs - 30_000) {
-      getLogger().debug({ userId, ttlSec: Math.round((parsed.expiresAtMs - Date.now()) / 1000) }, "lxns oauth: reusing cached access token");
-      return { kind: "lxns", accessToken: parsed.accessToken };
-    }
-    getLogger().debug({ userId }, "lxns oauth: access token expired or near expiry, refreshing");
-    const refreshed = await requestLxnsToken("refresh", { grant_type: "refresh_token", refresh_token: parsed.refreshToken }, parsed.refreshToken, signal);
-    if (!refreshed.ok) return rejectCnToken(userId, refreshed.error);
-    if (userId) {
-      await saveToken("maimai", userId, "cn", formatLxnsToken(refreshed.token));
-      getLogger().info({ userId }, "lxns oauth: refreshed token saved");
-    }
-    return { kind: "lxns", accessToken: refreshed.token.accessToken };
-  }
-
-  if (token.startsWith("divingfish://")) {
-    const account = parseDivingFishToken(token);
-    if (!account) return rejectCnToken(userId, "Invalid divingfish token format. Expected divingfish://<username|qq>:://<value>");
-    if (!process.env.DIVINGFISH_DEV_TOKEN) throw new Error("diving-fish is not configured on the server.");
-    return { kind: "divingfish", account };
-  }
-
-  return rejectCnToken(userId, "Invalid token format. Token must start with 'lxns://', 'divingfish://', or 'cn-cookies://'");
-}
-
-function parseDivingFishToken(token: string): DivingFishIdentifier | null {
-  const parts = token.slice("divingfish://".length).split(":://");
-  if (parts.length !== 2) return null;
-  const [kind, value] = parts;
-  if ((kind !== "username" && kind !== "qq") || !value) return null;
-  return { kind, value };
-}
-
-export function formatDivingFishToken(account: DivingFishIdentifier): string {
-  return `divingfish://${account.kind}:://${account.value}`;
-}
-
-interface LxnsToken {
-  accessToken: string;
-  refreshToken: string;
-  expiresAtMs: number;
-  scope: string;
-}
-
-function parseLxnsToken(token: string): LxnsToken | null {
-  const parts = token.slice("lxns://".length).split(":://");
-  if (parts.length !== 4) return null;
-  const [accessToken, refreshToken, expiresAtRaw, scope] = parts;
-  const expiresAtMs = Number(expiresAtRaw);
-  if (!accessToken || !refreshToken || !Number.isFinite(expiresAtMs)) return null;
-  return { accessToken, refreshToken, expiresAtMs, scope };
-}
-
-function formatLxnsToken(token: LxnsToken): string {
-  return `lxns://${token.accessToken}:://${token.refreshToken}:://${token.expiresAtMs}:://${token.scope}`;
+  getLogger().debug({ userId }, "lxns oauth: access token expired or near expiry, refreshing");
+  const refreshed = await requestLxnsToken("refresh", { grant_type: "refresh_token", refresh_token: token.refreshToken }, token.refreshToken, signal);
+  if (!refreshed.ok) return refuseToken("maimai", userId, region, refreshed.error);
+  await saveToken("maimai", userId, region, formatLxns(refreshed.token));
+  getLogger().info({ userId }, "lxns oauth: refreshed token saved");
+  return refreshed.token.accessToken;
 }
 
 const LXNS_TOKEN_URL = "https://maimai.lxns.net/api/v0/oauth/token";
 
-type LxnsTokenResult = { ok: true; token: LxnsToken } | { ok: false; error: string };
+type LxnsTokenResult = { ok: true; token: Omit<LxnsToken, "provider"> } | { ok: false; error: string };
 
 async function requestLxnsToken(grant: "refresh" | "code exchange", params: Record<string, string>, previousRefreshToken?: string, signal?: AbortSignal): Promise<LxnsTokenResult> {
   const clientId = process.env.LXNS_CLIENT_ID;
@@ -148,9 +106,5 @@ async function requestLxnsToken(grant: "refresh" | "code exchange", params: Reco
 /** Exchanges an lxns OAuth code for a stored `lxns://` token. */
 export async function exchangeLxnsCode(code: string, redirectUri: string): Promise<{ ok: true; token: string } | { ok: false; error: string }> {
   const result = await requestLxnsToken("code exchange", { grant_type: "authorization_code", code, redirect_uri: redirectUri });
-  return result.ok ? { ok: true, token: formatLxnsToken(result.token) } : result;
-}
-
-export function formatCnCookiesToken(cookies: string): string {
-  return `cn-cookies://${cookies}`;
+  return result.ok ? { ok: true, token: formatLxns(result.token) } : result;
 }

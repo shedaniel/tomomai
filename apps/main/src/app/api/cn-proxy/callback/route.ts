@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyCnProxyToken } from "@/server/services/games/maimai/cn-proxy-token";
-import { formatCnCookiesToken } from "@/server/services/games/maimai/login";
+import { formatCnCookies } from "@/lib/games/token-format";
 import { deleteToken } from "@/server/services/games/tokens";
 import { startScoreFetch } from "@/server/services/games/score-ingestion";
 import { fetchStartRejection } from "@/server/services/games/fetch-errors";
@@ -105,7 +105,7 @@ export async function POST(req: NextRequest) {
       throw new Error("error in html");
     }
     const playerName = extractPlayerNameQuick(html);
-    token = formatCnCookiesToken(cookies);
+    token = formatCnCookies(cookies);
     log.info({ userId, r: body.r, size: html.length, playerName: playerName ?? "?" }, "cookies verified");
   } catch (err) {
     const error = err instanceof Error ? err.message : String(err);

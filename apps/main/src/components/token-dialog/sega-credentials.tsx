@@ -1,6 +1,7 @@
 "use client";
 
 import { useGame } from "@/components/providers/game-provider";
+import { formatSegaAccount } from "@/lib/games/token-format";
 import { logger } from "@/lib/logger";
 import { useState } from "react";
 import { Button } from "@tomomai/ui";
@@ -41,7 +42,7 @@ export function SegaCredentialsDialog({
 
     if (!username.trim() || !password.trim()) return;
 
-    const finalToken = `account://${username.trim()}:://${password.trim()}`;
+    const finalToken = formatSegaAccount(username.trim(), password.trim());
 
     setIsSubmitting(true);
     try {

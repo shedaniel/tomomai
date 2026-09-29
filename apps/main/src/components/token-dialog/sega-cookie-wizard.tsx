@@ -1,5 +1,6 @@
 "use client";
 
+import { formatSegaCookie } from "@/lib/games/token-format";
 import { logger } from "@/lib/logger";
 import { SegaCredentialsDialog } from "./sega-credentials";
 import { useGame } from "@/components/providers/game-provider";
@@ -449,7 +450,7 @@ export function SegaCookieWizardDialog({
     e.preventDefault();
 
     if (!token.trim() || !isValidToken(token.trim())) return;
-    const finalToken = `cookie://${token.trim()}`;
+    const finalToken = formatSegaCookie(token);
 
     setIsSubmitting(true);
     try {

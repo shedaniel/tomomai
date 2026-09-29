@@ -1,5 +1,6 @@
 import { decodeLoginAuthorization, verifyUserOtp } from "@/lib/otp";
 import { SEGA_AIME_GATEWAY } from "@/lib/games/sites";
+import { formatSegaCookie } from "@/lib/games/token-format";
 import { startScoreFetch } from "@/server/services/games/score-ingestion";
 import { fetchStartRejection } from "@/server/services/games/fetch-errors";
 import { NextRequest, NextResponse } from "next/server";
@@ -22,14 +23,6 @@ function withCors(response: NextResponse) {
 function jsonResponse(body: unknown, init?: ResponseInit) {
   const res = NextResponse.json(body, init);
   return withCors(res);
-}
-
-function normalizeToken(rawToken: string): string {
-  const trimmed = rawToken.trim();
-  if (trimmed.startsWith("cookie://")) {
-    return trimmed;
-  }
-  return `cookie://${trimmed}`;
 }
 
 export async function OPTIONS() {
@@ -71,9 +64,7 @@ export async function POST(request: NextRequest) {
       return jsonResponse({ success: false, error: "Invalid or expired OTP." }, { status: 401 });
     }
 
-    const finalToken = normalizeToken(token);
-
-    const result = await startScoreFetch({ userId, game, region, token: finalToken });
+    const result = await startScoreFetch({ userId, game, region, token: formatSegaCookie(token) });
 
     return jsonResponse({ success: true, sessionId: result.sessionId, status: result.status });
   } catch (error) {

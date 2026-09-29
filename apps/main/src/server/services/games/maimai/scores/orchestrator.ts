@@ -13,8 +13,8 @@ import {
   DivingFishPrivacyError,
   DivingFishUserNotFoundError,
   fetchDivingFishRecordsByDevToken,
-  type DivingFishIdentifier,
 } from "./divingfish/client";
+import type { DivingFishIdentifier } from "@/lib/games/token-format";
 import { parseDivingFishPlayerData } from "./player/divingfish-parse";
 import { parseDivingFishScoresData } from "./songs/divingfish-parse";
 import { persistAlbumData } from "./albums/persist";

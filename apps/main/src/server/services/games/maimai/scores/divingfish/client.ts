@@ -1,4 +1,5 @@
 import "server-only";
+import type { DivingFishIdentifier } from "@/lib/games/token-format";
 import { logger } from "@/lib/logger";
 
 const DIVING_FISH_BASE = "https://www.diving-fish.com/api/maimaidxprober";
@@ -56,11 +57,6 @@ export interface DivingFishRecordsResponse {
   additional_rating?: number;
   plate?: string;
   records?: DivingFishRecord[];
-}
-
-export interface DivingFishIdentifier {
-  kind: "username" | "qq";
-  value: string;
 }
 
 function getDevToken(): string {

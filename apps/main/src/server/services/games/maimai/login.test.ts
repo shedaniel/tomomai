@@ -9,7 +9,8 @@ vi.mock("../tokens", () => ({ updateToken: mocks.update, deleteToken: mocks.remo
 
 import { getGame } from "@/lib/games/registry";
 import { getGameSite } from "@/lib/games/sites";
-import { loginAndGetCookies, maimaiSegaLogin, openMaimaiLogin } from "./login";
+import type { LxnsToken } from "@/lib/games/token-format";
+import { loginAndGetCookies, lxnsAccessToken, maimaiSegaLogin, openMaimaiSegaSession } from "./login";
 
 beforeEach(() => {
   vi.resetAllMocks();
@@ -37,7 +38,7 @@ describe("maimai SEGA login", () => {
       .mockResolvedValueOnce(new Response(null, { status: 302, headers: { Location: "https://maimaidx-eng.com/maimai-mobile/?sid=callback" } }))
       .mockResolvedValueOnce(new Response(null, { status: 302, headers: { Location: "/maimai-mobile/home/", "Set-Cookie": "userId=player; Path=/maimai-mobile/" } }))
       .mockResolvedValueOnce(new Response("Home", { headers: { "Set-Cookie": "_t=home; Path=/maimai-mobile/" } }));
-    expect(await openMaimaiLogin("player", "intl", "cookie://clal=existing")).toEqual({ kind: "site-session", cookies: "userId=player; _t=home" });
+    expect(await openMaimaiSegaSession("player", "intl", { provider: "sega-cookie", clal: "existing" })).toEqual({ cookies: "userId=player; _t=home" });
     const [loginUrl] = mocks.fetch.mock.calls[0];
     expect(Object.fromEntries(new URL(loginUrl).searchParams)).toEqual({
       site_id: "maimaidxex", redirect_url: "https://maimaidx-eng.com/maimai-mobile/", back_url: "https://maimai.sega.com/",
@@ -67,55 +68,44 @@ describe("maimai SEGA login", () => {
     expect(mocks.fetch).not.toHaveBeenCalled();
   });
 
-  it("deletes a CN provider token stored for a SEGA region without asking SEGA", async () => {
-    await expect(openMaimaiLogin("player", "intl", "lxns://access:://refresh:://0:://read")).rejects.toThrow("Invalid token format");
-    expect(mocks.remove).toHaveBeenCalledExactlyOnceWith("maimai", "player", "intl");
+  it("refuses a token for maimai DX China without deleting anything for the catalog", async () => {
+    await expect(loginAndGetCookies("cn", "cn-cookies://userId=cn-player")).rejects.toThrow("Invalid token format");
+    await expect(openMaimaiSegaSession("player", "cn", { provider: "sega-account", username: "name", password: "password" }))
+      .rejects.toThrow("does not sign in with SEGA tokens");
+    expect(mocks.remove).not.toHaveBeenCalled();
+    expect(mocks.legacyTls).not.toHaveBeenCalled();
     expect(mocks.fetch).not.toHaveBeenCalled();
   });
 });
 
-describe("maimai CN login", () => {
-  it("keeps a captured proxy session ready without a SEGA exchange", async () => {
-    expect(await loginAndGetCookies("cn", "cn-cookies://userId=cn-player; session=cn")).toBe("userId=cn-player; session=cn");
-    expect(mocks.legacyTls).not.toHaveBeenCalled();
-    expect(mocks.fetch).not.toHaveBeenCalled();
-  });
+describe("maimai lxns access", () => {
+  const token = (expiresAtMs: number): LxnsToken => ({ provider: "lxns", accessToken: "stale", refreshToken: "refresh", expiresAtMs, scope: "read" });
 
-  it("reuses an unexpired Lxns access token without a request", async () => {
-    const token = `lxns://access:://refresh:://${Date.now() + 60_000}:://read`;
-    expect(await openMaimaiLogin("player", "cn", token)).toEqual({ kind: "lxns", accessToken: "access" });
+  afterEach(() => vi.unstubAllEnvs());
+
+  it("reuses an unexpired access token without a request", async () => {
+    expect(await lxnsAccessToken("player", "cn", token(Date.now() + 60_000))).toBe("stale");
     expect(mocks.fetch).not.toHaveBeenCalled();
     expect(mocks.save).not.toHaveBeenCalled();
   });
 
-  it("refreshes an expired Lxns token and saves the new one", async () => {
+  it("refreshes an expired token and saves the new one", async () => {
     vi.stubEnv("LXNS_CLIENT_ID", "client");
     vi.stubEnv("LXNS_CLIENT_SECRET", "secret");
     mocks.fetch.mockResolvedValueOnce(Response.json({ data: { access_token: "fresh", expires_in: 900, scope: "read" } }));
-    try {
-      expect(await openMaimaiLogin("player", "cn", "lxns://stale:://refresh:://0:://read")).toEqual({ kind: "lxns", accessToken: "fresh" });
-    } finally {
-      vi.unstubAllEnvs();
-    }
+    expect(await lxnsAccessToken("player", "cn", token(0))).toBe("fresh");
     expect(Object.fromEntries(new URLSearchParams(mocks.fetch.mock.calls[0][1].body))).toEqual({
       grant_type: "refresh_token", refresh_token: "refresh", client_id: "client", client_secret: "secret",
     });
     expect(mocks.save).toHaveBeenCalledExactlyOnceWith("maimai", "player", "cn", expect.stringMatching(/^lxns:\/\/fresh::\/\/refresh::\/\/\d+::\/\/read$/));
   });
 
-  it("names the diving-fish account to fetch", async () => {
-    vi.stubEnv("DIVINGFISH_DEV_TOKEN", "developer");
-    try {
-      expect(await openMaimaiLogin("player", "cn", "divingfish://qq:://12345")).toEqual({ kind: "divingfish", account: { kind: "qq", value: "12345" } });
-    } finally {
-      vi.unstubAllEnvs();
-    }
-  });
-
-  it("deletes SEGA credentials stored for CN instead of submitting them to JP", async () => {
-    await expect(openMaimaiLogin("player", "cn", "account://name:://password")).rejects.toThrow("Invalid token format");
+  it("deletes a token lxns will not refresh", async () => {
+    vi.stubEnv("LXNS_CLIENT_ID", "client");
+    vi.stubEnv("LXNS_CLIENT_SECRET", "secret");
+    mocks.fetch.mockResolvedValueOnce(new Response("revoked", { status: 401 }));
+    await expect(lxnsAccessToken("player", "cn", token(0))).rejects.toThrow("lxns refresh failed (401)");
     expect(mocks.remove).toHaveBeenCalledExactlyOnceWith("maimai", "player", "cn");
-    expect(mocks.legacyTls).not.toHaveBeenCalled();
-    expect(mocks.fetch).not.toHaveBeenCalled();
+    expect(mocks.save).not.toHaveBeenCalled();
   });
 });

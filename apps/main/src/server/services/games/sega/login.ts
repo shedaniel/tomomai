@@ -3,10 +3,12 @@ import { load } from "cheerio";
 import type { Logger } from "pino";
 import { getGame } from "@/lib/games/registry";
 import { SEGA_AIME_GATEWAY, siteUrl } from "@/lib/games/sites";
+import { formatSegaAccount, type SegaAccountToken, type SegaToken } from "@/lib/games/token-format";
 import type { CanonicalGameId } from "@/lib/games/types";
 import type { Region } from "@/lib/types";
 import { getLogger } from "@/lib/request-logger";
-import { deleteToken, updateToken } from "../tokens";
+import { refuseToken } from "../token-policy";
+import { updateToken } from "../tokens";
 import { cookieValue, mergeCookies, openGameSite, requestGameSite, responseCookies, segaRequestSignal, SEGA_USER_AGENT, type GameSiteSession } from "./http";
 
 /** How a game site signs in a SEGA ID. Site paths resolve against the mobile root. */
@@ -25,9 +27,6 @@ export type SegaLoginConfig = { game: CanonicalGameId; region: Region } & (
 type GatewayConfig = Extract<SegaLoginConfig, { kind: "aime-gateway" }>;
 type IdSiteConfig = Extract<SegaLoginConfig, { kind: "sega-id-site" }>;
 
-type CookieCredentials = { kind: "cookie"; clal: string };
-type AccountCredentials = { kind: "account"; username: string; password: string; clal?: string };
-
 type LoginOutcome =
   | { kind: "ok"; session: GameSiteSession; refreshedToken?: string }
   | { kind: "rejected"; error: string }
@@ -39,45 +38,25 @@ const REJECTED_CREDENTIALS = "Login failed. Please check your username and passw
  * Signs in with a SEGA token and returns a ready session on the game site.
  * A token SEGA refuses is deleted, and one that failed for a transient reason is kept.
  */
-export async function openSegaSession(config: SegaLoginConfig, userId: string | null, token: string, signal?: AbortSignal): Promise<GameSiteSession> {
+export async function openSegaSession(config: SegaLoginConfig, userId: string | null, token: SegaToken, signal?: AbortSignal): Promise<GameSiteSession> {
   const log = getLogger().child({ game: config.game, region: config.region, userId });
-  const outcome = await signIn(config, parseSegaToken(token), log, signal);
+  const outcome = await signIn(config, token, log, signal);
   switch (outcome.kind) {
     case "ok":
       if (outcome.refreshedToken && userId) await updateToken(config.game, userId, config.region, outcome.refreshedToken);
       return outcome.session;
     case "rejected":
-      log.warn("SEGA refused the token");
-      if (userId) await deleteToken(config.game, userId, config.region);
-      throw new Error(outcome.error);
+      return refuseToken(config.game, userId, config.region, outcome.error);
     case "transient":
       log.warn({ err: outcome.err, stepType: outcome.stepType }, "SEGA login failed");
       throw new Error(outcome.error);
   }
 }
 
-function signIn(config: SegaLoginConfig, credentials: CookieCredentials | AccountCredentials | { error: string }, log: Logger, signal?: AbortSignal): Promise<LoginOutcome> | LoginOutcome {
-  if ("error" in credentials) return { kind: "rejected", error: credentials.error };
-  if (config.kind === "aime-gateway") return aimeGatewayLogin(config, credentials, log, signal);
-  if (credentials.kind === "cookie") return { kind: "rejected", error: "Invalid token format. Cookie tokens are not supported in this region." };
-  return segaIdSiteLogin(config, credentials, log, signal);
-}
-
-function parseSegaToken(token: string): CookieCredentials | AccountCredentials | { error: string } {
-  const sanitized = token.trim();
-  if (sanitized.startsWith("cookie://")) {
-    const clal = sanitized.slice("cookie://".length).replace(/^clal=/, "").trim();
-    if (!clal) return { error: "Invalid token format. Token cannot be empty." };
-    if (!/^[\x00-\x7F]*$/.test(clal)) return { error: "Invalid token format. Please ensure you copied the clal cookie correctly (ASCII characters only)." };
-    return { kind: "cookie", clal };
-  }
-  const parts = sanitized.slice("account://".length).split(":://");
-  if (!sanitized.startsWith("account://") || (parts.length !== 2 && parts.length !== 3)) {
-    return { error: "Invalid token format. Expected account://USERNAME:://PASSWORD or account://COOKIE:://USERNAME:://PASSWORD" };
-  }
-  const [clal, username, password] = parts.length === 3 ? parts : [undefined, ...parts];
-  if (!username || !password) return { error: "Invalid token format. Username and password cannot be empty." };
-  return { kind: "account", username, password, clal: clal || undefined };
+function signIn(config: SegaLoginConfig, token: SegaToken, log: Logger, signal?: AbortSignal): Promise<LoginOutcome> | LoginOutcome {
+  if (config.kind === "aime-gateway") return aimeGatewayLogin(config, token, log, signal);
+  if (token.provider === "sega-cookie") return { kind: "rejected", error: "Invalid token format. Cookie tokens are not supported in this region." };
+  return segaIdSiteLogin(config, token, log, signal);
 }
 
 function transientFailure(err: unknown, stepType: string, signal?: AbortSignal): LoginOutcome {
@@ -108,12 +87,12 @@ async function resumeGatewaySession(config: GatewayConfig, clal: string, signal?
   return response.status === 200 ? null : gatewayCallback(config, response);
 }
 
-async function aimeGatewayLogin(config: GatewayConfig, credentials: CookieCredentials | AccountCredentials, log: Logger, signal?: AbortSignal): Promise<LoginOutcome> {
+async function aimeGatewayLogin(config: GatewayConfig, credentials: SegaToken, log: Logger, signal?: AbortSignal): Promise<LoginOutcome> {
   let stepType = "gateway";
   try {
     let callback: URL;
     let refreshedToken: string | undefined;
-    if (credentials.kind === "cookie") {
+    if (credentials.provider === "sega-cookie") {
       const resumed = await resumeGatewaySession(config, credentials.clal, signal);
       if (resumed === null) return { kind: "rejected", error: "Token has expired. Please provide a new token." };
       if (typeof resumed === "string") return { kind: "transient", error: resumed, stepType };
@@ -154,7 +133,7 @@ async function aimeGatewayLogin(config: GatewayConfig, credentials: CookieCreden
           return { kind: "transient", error: "SEGA accepted your credentials but did not return a session cookie. Please try again in a few minutes or resubmit your token in Settings > Fetch.", stepType };
         }
         callback = submitted;
-        refreshedToken = `account://${clal}:://${credentials.username}:://${credentials.password}`;
+        refreshedToken = formatSegaAccount(credentials.username, credentials.password, clal);
       }
     }
 
@@ -176,7 +155,7 @@ async function readFormToken(config: IdSiteConfig, entry: Response, cookies: str
   return cookieValue(cookies, "_t");
 }
 
-async function segaIdSiteLogin(config: IdSiteConfig, credentials: AccountCredentials, log: Logger, signal?: AbortSignal): Promise<LoginOutcome> {
+async function segaIdSiteLogin(config: IdSiteConfig, credentials: SegaAccountToken, log: Logger, signal?: AbortSignal): Promise<LoginOutcome> {
   const { game, region } = config;
   let stepType = "entry";
   log.info({ stepType }, "Attempting SEGA account login");

@@ -10,9 +10,7 @@ import {
   DivingFishPrivacyError,
   DivingFishUserNotFoundError,
 } from '@/server/services/games/maimai/scores/divingfish/client';
-import {
-  formatDivingFishToken,
-} from '@/server/services/games/maimai/login';
+import { formatDivingFish } from '@/lib/games/token-format';
 import { saveToken } from '@/server/services/games/tokens';
 import { maimaiProcedure } from './procedures';
 import { generateUserOtp, getOtpExpiryTimestamp } from '@/lib/otp';
@@ -88,7 +86,7 @@ export const providersRouter = router({
             message: 'diving-fish response did not include a username.',
           });
         }
-        const formatted = formatDivingFishToken({ kind: 'username', value: username as string });
+        const formatted = formatDivingFish({ kind: 'username', value: username as string });
         await saveToken(ctx.game, ctx.session.user.id, "cn", formatted);
         getLogger().info({ userId: ctx.session.user.id }, "Verified a diving-fish account by import token");
         // The Import-Token is intentionally not persisted anywhere, used only to confirm ownership.
@@ -128,7 +126,7 @@ export const providersRouter = router({
             message: 'Nickname does not match the verification code yet. Save your diving-fish nickname change and retry.',
           });
         }
-        const formatted = formatDivingFishToken(input);
+        const formatted = formatDivingFish(input);
         await saveToken(ctx.game, ctx.session.user.id, "cn", formatted);
         getLogger().info({ userId: ctx.session.user.id }, "Verified a diving-fish account by nickname challenge");
         return { ok: true };

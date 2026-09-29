@@ -67,7 +67,7 @@ describe("CHUNITHM SEGA login", () => {
   });
 
   it("refuses International cookie tokens for JP and deletes them", async () => {
-    await expect(loginAndGetCookies("jp", "cookie://existing", "internal-user")).rejects.toThrow("Cookie tokens are not supported");
+    await expect(loginAndGetCookies("jp", "cookie://existing", "internal-user")).rejects.toThrow("not supported in this region");
     expect(mocks.fetch).not.toHaveBeenCalled();
     expect(mocks.remove).toHaveBeenCalledExactlyOnceWith("chunithm", "internal-user", "jp");
   });

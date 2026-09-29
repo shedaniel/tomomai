@@ -61,7 +61,7 @@ it.each(games)("uses the $id cookie wizard, game-scoped OTP, and configured logi
     input?.dispatchEvent(new Event("input", { bubbles: true }));
   });
   await act(async () => document.querySelector("form")?.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true })));
-  expect(state.submit).toHaveBeenCalledWith("cookie://clal=syntheticCookie");
+  expect(state.submit).toHaveBeenCalledWith("cookie://syntheticCookie");
 });
 
 it("keeps CHUNITHM JP on SEGA credentials even when Intl cookies are configured", async () => {
