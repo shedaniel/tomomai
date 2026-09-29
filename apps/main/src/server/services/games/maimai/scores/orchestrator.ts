@@ -1,5 +1,7 @@
 import "server-only";
 import { FETCH_STATES } from "@/lib/fetch-states";
+import { offersCapability } from "@/lib/games/capabilities";
+import { getGame } from "@/lib/games/registry";
 import { appendFetchState } from "@/lib/fetch-states-server";
 import { logger } from "@/lib/logger";
 import { getLogger } from "@/lib/request-logger";
@@ -55,15 +57,10 @@ async function scrapeFetcher({ region, sessionId, flags, signal }: FetcherContex
       appendFetchState(sessionId, FETCH_STATES.RECENT_SONGS, "maimai");
       return data;
     }),
-    region === "cn"
-      ? Promise.resolve([] as AlbumData[]).then((data) => {
-        appendFetchState(sessionId, FETCH_STATES.ALBUM_DATA, "maimai");
-        return data;
-      })
-      : fetchAlbumData(site, region).then((data) => {
-        appendFetchState(sessionId, FETCH_STATES.ALBUM_DATA, "maimai");
-        return data;
-      }),
+    (offersCapability(getGame("maimai"), "albums", region) ? fetchAlbumData(site, region) : Promise.resolve<AlbumData[]>([])).then((data) => {
+      appendFetchState(sessionId, FETCH_STATES.ALBUM_DATA, "maimai");
+      return data;
+    }),
   ]);
   logger.info("Player data extraction and songs data fetch completed");
 
