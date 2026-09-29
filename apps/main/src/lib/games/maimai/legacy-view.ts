@@ -74,7 +74,7 @@ export function toMaimaiSnapshotSummary(summary: GameSnapshotSummary): Snapshot 
   return { ...summary, ...toMaimaiRanks(summary) };
 }
 
-export function toMaimaiEvent(event: GameEvent): EventData {
+function toMaimaiEvent(event: GameEvent): EventData {
   return {
     ...event,
     eventType: event.eventType ?? "eventArea",
