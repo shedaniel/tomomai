@@ -19,7 +19,7 @@ import { trpc } from "@/lib/trpc-client";
 import { cn } from "@/lib/utils";
 import { AlertTriangle, Check, ChevronRight, Copy, Fish, Key, QrCode, Smartphone, Snowflake, Wifi, X } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import type { Region } from "@/lib/types";
@@ -525,17 +525,19 @@ export function HttpProxyAuthSubDialog({ isOpen, onOpenChange, onAuthorized, sta
   const generateLink = trpc.maimai.getCnProxyAuthLink.useMutation();
   const linkData = generateLink.data;
 
-  // Once a link is generated, watch for the fetch session the webhook starts
-  // once the OAuth handoff completes. Session polling then follows that fetch,
-  // so the parent only closes its dialogs.
+  const onSessionDetected = useEffectEvent(() => {
+    onOpenChange(false);
+    onAuthorized();
+  });
+
+  // Once a link is generated, watch for the fetch session the proxy callback
+  // starts. The callbacks stay out of the dependencies, because restarting
+  // polling resets its baseline session and misses the new one.
   useEffect(() => {
     if (!isOpen || !linkData || !startSessionPolling || !stopSessionPolling) return;
-    startSessionPolling("cn", () => {
-      onOpenChange(false);
-      onAuthorized();
-    });
+    startSessionPolling("cn", onSessionDetected);
     return () => stopSessionPolling();
-  }, [isOpen, linkData, startSessionPolling, stopSessionPolling, onOpenChange, onAuthorized]);
+  }, [isOpen, linkData, startSessionPolling, stopSessionPolling]);
 
   useEffect(() => {
     if (!isOpen) {
