@@ -11,7 +11,7 @@ export const plateSelection = z.object({
     .describe("Which plate to evaluate: kiwami (FC), shou (SSS), shin (AP), maimai (FDX)."),
 });
 
-export const plateQuery = plateSelection.extend({ region: regionSchema });
+export const plateQuery = z.object({ region: regionSchema }).extend(plateSelection.shape);
 
 export const plateEntry = songScore.pick({
   songId: true,
