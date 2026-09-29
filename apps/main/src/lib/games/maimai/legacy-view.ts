@@ -1,6 +1,6 @@
 import type { EventData } from "@/lib/types";
-import type { Snapshot, SnapshotWithSongs, SongWithScore } from "./types";
-import type { GameEvent, GamePlayerScore, GameSnapshot, GameSnapshotData, GameSnapshotSummary } from "@/lib/games/player-view";
+import type { SnapshotWithSongs, SongWithScore } from "./types";
+import type { GameEvent, GamePlayerScore, GameSnapshot, GameSnapshotData } from "@/lib/games/player-view";
 import {
   codeToChartType,
   codeToComboStatus,
@@ -68,10 +68,6 @@ export function toMaimaiSnapshotHeader(snapshot: GameSnapshot): SnapshotWithSong
     versionPlayCount: snapshot.versionPlayCount ?? 0,
     totalPlayCount: snapshot.totalPlayCount ?? 0,
   };
-}
-
-export function toMaimaiSnapshotSummary(summary: GameSnapshotSummary): Snapshot {
-  return { ...summary, ...toMaimaiRanks(summary) };
 }
 
 function toMaimaiEvent(event: GameEvent): EventData {

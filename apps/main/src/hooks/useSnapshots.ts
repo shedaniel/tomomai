@@ -3,7 +3,6 @@ import { useState } from "react";
 import { trpc } from "@/lib/trpc-client";
 import { useGame } from "@/components/providers/game-provider";
 import { getSnapshotSelection, type GameSnapshotData, type GameSnapshotSummary } from "@/lib/games/player-view";
-import { toMaimaiSnapshotSummary } from "@/lib/games/maimai/legacy-view";
 import type { Region } from "@/lib/types";
 
 interface UseSnapshotsOptions {
@@ -15,7 +14,7 @@ export function useSnapshots(region: Region, isAuthenticated: boolean, options?:
   const { initialSnapshots = [], initialSnapshotData } = options ?? {};
   const game = useGame();
   const scope = `${game.id}:${region}`;
-  const [selection, setSelection] = useState<{ scope: string; id: string | null }>({ scope, id: initialSnapshots[0]?.id ?? null });
+  const [selection, setSelection] = useState<{ scope: string; id: string | null }>({ scope, id: initialSnapshots[0]?.publicId ?? null });
   const [initialScope] = useState(scope);
   const sameInitialScope = initialScope === scope;
   const enabled = isAuthenticated && game.regions.includes(region) && game.capabilities.includes("scores");
@@ -42,7 +41,7 @@ export function useSnapshots(region: Region, isAuthenticated: boolean, options?:
   const deleteMutation = trpc.user.deleteSnapshot.useMutation({ onSuccess: refresh });
   const copyMutation = trpc.user.copySnapshotToVersion.useMutation({ onSuccess: refresh });
   return {
-    snapshots: snapshots.map(toMaimaiSnapshotSummary),
+    snapshots,
     selectedSnapshot,
     selectedSnapshotData: selectedSnapshot ? snapshotQuery.data ?? initialData : null,
     setSelectedSnapshot: (id: string | null) => setSelection({ scope, id }),

@@ -77,7 +77,7 @@ export default async function Home() {
 
   const snapshots = await trpc.user.getSnapshots({ game: game.id, region: userRegion });
   const initialSnapshotData = snapshots[0]
-    ? await trpc.user.getSnapshotData({ game: game.id, region: userRegion, snapshotId: snapshots[0].id })
+    ? await trpc.user.getSnapshotData({ game: game.id, region: userRegion, snapshotId: snapshots[0].publicId })
     : undefined;
 
   const locale = await getLocale();

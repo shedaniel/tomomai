@@ -56,7 +56,7 @@ export type GameSnapshotData = {
 };
 
 export type GameSnapshotSummary = {
-  id: string;
+  publicId: string;
   fetchedAt: Date;
   rating: number;
   displayName: string;
@@ -73,6 +73,6 @@ export function getPlayerRankings(game: CanonicalGameId, data: GameSnapshotData)
   return rankScores(game, data.songs, data.snapshot.gameVersion);
 }
 
-export function getSnapshotSelection(snapshots: readonly Pick<GameSnapshotSummary, "id">[], selected: string | null): string | null {
-  return snapshots.some(snapshot => snapshot.id === selected) ? selected : snapshots[0]?.id ?? null;
+export function getSnapshotSelection(snapshots: readonly Pick<GameSnapshotSummary, "publicId">[], selected: string | null): string | null {
+  return snapshots.some(snapshot => snapshot.publicId === selected) ? selected : snapshots[0]?.publicId ?? null;
 }

@@ -17,7 +17,7 @@ export async function fetchUserSnapshots(
 ): Promise<GameSnapshotSummary[]> {
   let query = db
     .select({
-      id: userSnapshots.publicId,
+      publicId: userSnapshots.publicId,
       fetchedAt: userSnapshots.fetchedAt,
       rating: userSnapshots.rating,
       displayName: userSnapshots.displayName,

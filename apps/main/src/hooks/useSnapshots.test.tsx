@@ -19,8 +19,8 @@ vi.mock("@/lib/trpc-client", () => ({ trpc: { user: {
 } } }));
 
 function fixture(game: "maimai" | "chunithm", id: string) {
-  const summary: GameSnapshotSummary = { id, fetchedAt: new Date("2026-09-01"), gameVersion: 10, rating: 0, displayName: id, courseRankUrl: null, classRankUrl: null, stars: null, versionPlayCount: 0, totalPlayCount: 0 };
-  const data: GameSnapshotData = { snapshot: { ...summary, publicId: id, game }, songs: [] };
+  const summary: GameSnapshotSummary = { publicId: id, fetchedAt: new Date("2026-09-01"), gameVersion: 10, rating: 0, displayName: id, courseRankUrl: null, classRankUrl: null, stars: null, versionPlayCount: 0, totalPlayCount: 0 };
+  const data: GameSnapshotData = { snapshot: { ...summary, game }, songs: [] };
   return { summary, data };
 }
 let result: ReturnType<typeof useSnapshots>;

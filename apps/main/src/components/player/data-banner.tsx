@@ -28,7 +28,7 @@ import { calculateProgress, parseStatusStates } from "@/lib/fetch-states";
 import { getVersion } from "@/lib/games/versions";
 import { trpc } from "@/lib/trpc-client";
 import { FetchSession, Region } from "@/lib/types";
-import type { Snapshot } from "@/lib/games/maimai/types";
+import type { GameSnapshotSummary } from "@/lib/games/player-view";
 import { Calendar, Copy, Download, MoreHorizontal, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
@@ -40,7 +40,7 @@ interface DataBannerProps {
   supportsCopy?: boolean;
   supportsFetch?: boolean;
   region: Region;
-  snapshots: Snapshot[];
+  snapshots: GameSnapshotSummary[];
   selectedSnapshot: string | null;
   onSnapshotChange: (snapshotId: string) => void;
   onDeleteSnapshot: (snapshotId: string) => void;
@@ -70,13 +70,13 @@ function SnapshotSelector({
   onSnapshotChange,
   t
 }: {
-  snapshots: Snapshot[];
+  snapshots: GameSnapshotSummary[];
   selectedSnapshot: string | null;
   onSnapshotChange: (snapshotId: string) => void;
   t: any;
 }) {
   const game = useGameId();
-  const selectedSnapshotData = snapshots.find(snapshot => snapshot.id === selectedSnapshot);
+  const selectedSnapshotData = snapshots.find(snapshot => snapshot.publicId === selectedSnapshot);
 
   return (
     <Select value={selectedSnapshot || undefined} onValueChange={onSnapshotChange}>
@@ -98,7 +98,7 @@ function SnapshotSelector({
       </SelectTrigger>
       <SelectContent>
         {snapshots.map((snapshot) => (
-          <SelectItem key={snapshot.id} value={snapshot.id}>
+          <SelectItem key={snapshot.publicId} value={snapshot.publicId}>
             <div className="flex flex-col items-start min-w-0 gap-0.5">
               <div className="flex items-center gap-1.5 min-w-0">
                 <span className="truncate text-xs font-medium">{snapshot.displayName}</span>
@@ -337,7 +337,7 @@ export function DataBanner({
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   // Get current game version from selected snapshot
-  const selectedSnapshotObj = snapshots.find(s => s.id === selectedSnapshot);
+  const selectedSnapshotObj = snapshots.find(s => s.publicId === selectedSnapshot);
   const currentGameVersion = selectedSnapshotObj?.gameVersion;
 
   const handleCopyToVersion = async (targetVersion: number) => {

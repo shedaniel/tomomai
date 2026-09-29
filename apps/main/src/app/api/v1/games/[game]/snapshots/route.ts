@@ -14,7 +14,7 @@ export const GET = withApiKey(["snapshot:all:metadata:read"], async (req: NextRe
 
   return zodJson(spec.response, { game: key.game,
     snapshots: snapshots.map((s) => ({
-      id: s.id,
+      id: s.publicId,
       fetchedAt: s.fetchedAt.toISOString(),
       rating: s.rating,
       displayName: s.displayName,

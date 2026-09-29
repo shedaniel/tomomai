@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { GameSnapshotData } from "@/lib/games/player-view";
 import { MAIMAI_CODES } from "./codes";
-import { fromMaimaiScore, toMaimaiResult, toMaimaiSnapshot, toMaimaiSnapshotSummary } from "./legacy-view";
+import { fromMaimaiScore, toMaimaiResult, toMaimaiSnapshot } from "./legacy-view";
 
 const data: GameSnapshotData = {
   snapshot: { publicId: "snap", game: "maimai", displayName: "Player", rating: 15000, gameVersion: 13, fetchedAt: new Date("2026-09-01T00:00:00Z"), titleType: 4 },
@@ -22,14 +22,6 @@ describe("maimai legacy view", () => {
 
   it("keeps events absent when the snapshot has none", () => {
     expect(toMaimaiSnapshot({ ...data, events: undefined }).events).toBeUndefined();
-  });
-
-  it("fills the summary's nullable legacy fields", () => {
-    const summary = toMaimaiSnapshotSummary({
-      id: "snap", fetchedAt: new Date(), rating: 1, displayName: "Player", gameVersion: 13,
-      courseRankUrl: null, classRankUrl: null, stars: null, versionPlayCount: 1, totalPlayCount: 2,
-    });
-    expect(summary).toMatchObject({ courseRankUrl: "", classRankUrl: "", stars: 0 });
   });
 
   it("maps every combo and sync status to the legacy keys and back", () => {
