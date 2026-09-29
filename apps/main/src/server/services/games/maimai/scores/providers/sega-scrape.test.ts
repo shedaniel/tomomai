@@ -11,11 +11,12 @@ vi.mock("@/lib/fetch-states-server", () => ({ appendFetchState: mocks.progress }
 vi.mock("@/lib/request-logger", () => ({ getLogger: () => mocks.log }));
 vi.mock("../recents/details", () => ({ fetchAndInsertRecentSongsData: mocks.details }));
 vi.mock("../albums/persist", () => ({ persistAlbumData: mocks.albums }));
+vi.mock("@/lib/http-agent", () => ({ agentFetch: (input: URL, init: RequestInit) => fetch(input, init) }));
 
 import { getGame } from "@/lib/games/registry";
 import { createFetchRun } from "@/server/services/games/fetch-run";
 import type { PersistedSnapshotContext, ScoreFetchContext } from "@/server/services/games/types";
-import { fetchWithSegaLogin } from "./sega-scrape";
+import { fetchWithCnCookies, fetchWithSegaLogin } from "./sega-scrape";
 
 const MOBILE_ROOT = "/maimai-mobile/";
 const token = { provider: "sega-account", username: "name", password: "password" } as const;
@@ -55,14 +56,14 @@ function context(overrides: Partial<ScoreFetchContext> = {}): ScoreFetchContext 
   };
 }
 
-function serveSite({ recents = "", hidden = hiddenScores, onPlayerData }: { recents?: string; hidden?: string | null; onPlayerData?: () => void } = {}): string[] {
+function serveSite({ player = profile, recents = "", hidden = hiddenScores, onPlayerData }: { player?: string; recents?: string; hidden?: string | null; onPlayerData?: () => void } = {}): string[] {
   const requests: string[] = [];
   vi.stubGlobal("fetch", vi.fn(async (input: URL) => {
     const path = input.pathname.replace(MOBILE_ROOT, "") + input.search;
     requests.push(path);
     if (path === "playerData/") {
       onPlayerData?.();
-      return new Response(profile);
+      return new Response(player);
     }
     if (path.startsWith("record/musicGenre/search/")) return new Response(input.searchParams.get("diff") === "3" ? masterScores : "");
     if (path === "record/") return new Response(recents);
@@ -115,6 +116,18 @@ describe("maimai DX NET scrape", () => {
     const { result } = await fetchScores(context());
     expect(result.scores.map(score => score.chart.songName)).toEqual(["Song"]);
     expect(mocks.log.warn).toHaveBeenCalledWith({ err: expect.any(Error) }, "Continuing without maimai hidden songs");
+  });
+
+  it("scrapes maimai DX China with the session the CN proxy captured, without a SEGA sign-in", async () => {
+    const requests = serveSite({ player: profile.replace("play count of current version：195 maimaiDX total play count：909", "当前版本的游玩次数：195 舞萌DX的累计游玩次数：909") });
+    const ctx = context({ region: "cn", token: "cn-cookies://userId=cn-player; _t=cn" });
+    const { result } = await fetchWithCnCookies(ctx, { provider: "cn-cookies", cookies: "userId=cn-player; _t=cn" }, createFetchRun(ctx));
+    expect(mocks.login).not.toHaveBeenCalled();
+    const [url, init] = vi.mocked(fetch).mock.calls[0] as [URL, RequestInit];
+    expect(url.origin).toBe(getGame("maimai").sites.cn?.origin);
+    expect(new Headers(init.headers).get("Cookie")).toBe("userId=cn-player; _t=cn");
+    expect(requests).not.toContain("home/ratingTargetMusic/");
+    expect(result.scores.map(score => score.chart)).toEqual([{ game: "maimai", region: "cn", version: 14, songName: "Song", chartType: 1, difficulty: 3 }]);
   });
 
   it("stops before the icon upload once the fetch is aborted", async () => {
