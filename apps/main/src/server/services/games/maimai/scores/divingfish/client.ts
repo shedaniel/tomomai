@@ -83,6 +83,7 @@ function parseMessage(body: string): string {
 
 export async function fetchDivingFishRecordsByDevToken(
   identifier: DivingFishIdentifier,
+  signal?: AbortSignal,
 ): Promise<DivingFishRecordsResponse> {
   const devToken = getDevToken();
   const params = new URLSearchParams({ [identifier.kind]: identifier.value });
@@ -92,6 +93,7 @@ export async function fetchDivingFishRecordsByDevToken(
 
   const resp = await fetch(url, {
     headers: { "Developer-Token": devToken },
+    signal,
   });
 
   if (resp.status === 400) {

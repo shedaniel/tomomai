@@ -1,31 +1,14 @@
 import { load } from "cheerio";
-import { MAIMAI_CODES } from "@/lib/games/maimai/codes";
 import { logger } from "@/lib/logger";
 import { normalizeName } from "@/lib/name-utils";
-import type { FullCombo, FullSync, SongType } from "@/lib/games/maimai/types";
+import type { Difficulty, FullCombo, FullSync, SongType } from "@/lib/games/maimai/types";
 import { musicTypeFromIcon } from "../parse-utils";
 import type { ScoreData } from "../types";
 
-// Parse score data from HTML for a specific difficulty
-export function parseScoreData(html: string, difficulty: number): ScoreData[] {
+/** Reads the played charts from one difficulty's score list page. */
+export function parseScoreData(html: string, difficulty: Difficulty): ScoreData[] {
   const $ = load(html);
-
-  // Use correct selector based on difficulty
-  const difficultySelectors: Record<number, string> = {
-    0: ".music_basic_score_back",
-    1: ".music_advanced_score_back",
-    2: ".music_expert_score_back",
-    3: ".music_master_score_back",
-    4: ".music_remaster_score_back",
-    10: ".music_utage_score_back"
-  };
-
-  const selector = difficultySelectors[difficulty];
-  if (!selector) {
-    logger.error(`Invalid difficulty: ${difficulty}`);
-    return [];
-  }
-
+  const selector = `.music_${difficulty}_score_back`;
   const blocks = $(selector);
   const scores: ScoreData[] = [];
 
@@ -45,7 +28,7 @@ export function parseScoreData(html: string, difficulty: number): ScoreData[] {
 
       // Extract music type (dx/std) from icon image
       let musicType: SongType;
-      if (difficulty === 10) {
+      if (difficulty === "utage") {
         musicType = "dx";
       } else {
         const iconElement = parent.find('img.music_kind_icon');
@@ -145,15 +128,11 @@ export function parseScoreData(html: string, difficulty: number): ScoreData[] {
         }
       }
 
-      // Map difficulty number to difficulty name
-      const difficultyName = difficulty === 10 ? "utage" : MAIMAI_CODES.difficulty[difficulty] || "basic";
-
       const scoreData: ScoreData = {
         songName,
         level,
         musicType,
-        difficulty: difficultyName,
-        difficultyNumber: difficulty,
+        difficulty,
         achievement,
         dxScore,
         fc,
@@ -162,7 +141,7 @@ export function parseScoreData(html: string, difficulty: number): ScoreData[] {
 
       scores.push(scoreData);
 
-      logger.debug(`Extracted score ${index}: ${songName} (${level}, ${musicType}, ${difficultyName}) - ${achievementFloat}%, ${dxScore} dx, ${fc}/${fs}`);
+      logger.debug(`Extracted score ${index}: ${songName} (${level}, ${musicType}, ${difficulty}) - ${achievementFloat}%, ${dxScore} dx, ${fc}/${fs}`);
     } catch (error) {
       logger.error(error, `Error processing score block ${index}`);
     }

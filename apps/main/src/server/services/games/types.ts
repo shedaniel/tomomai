@@ -4,6 +4,8 @@ import type { CanonicalGameId, GameRegionContext } from "@/lib/games/types";
 import type { CatalogFetchContext } from "@/server/services/catalog/ingestion/types";
 import type { CatalogChart } from "@/server/services/catalog/ingestion/normalize-charts";
 import type { GameSnapshotData } from "@/lib/games/player-view";
+import type { FetchStartError } from "./fetch-errors";
+import type { FetchRun } from "./fetch-run";
 
 export type ChartRef = GameRegionContext & {
   version: number;
@@ -38,7 +40,6 @@ export type NormalizedRecent = NormalizedScore & {
   playedAt: Date;
   maxDxScore?: number;
   track?: number;
-  details?: Record<string, unknown>;
 };
 
 export type NormalizedEvent = {
@@ -57,11 +58,6 @@ export interface CatalogSource {
   authenticate?: (region: Region, token: string) => Promise<string>;
   collect: (ctx: CatalogFetchContext) => Promise<CatalogChart[]>;
 }
-
-export type ScoreTokenValidationContext = {
-  token: string;
-  tokenProvided: boolean;
-};
 
 export type ScoreFetchContext = {
   game: CanonicalGameId;
@@ -87,15 +83,18 @@ export type PersistedSnapshotContext = {
   chartResolution: ChartResolutionMap;
 };
 
+/** Work that completes a saved snapshot, such as per-play details. It runs after the session completes, so its failure never fails the fetch. */
+export type Enrichment = (ctx: PersistedSnapshotContext) => Promise<void>;
+
+export type ScoreFetchOutcome = {
+  result: GameFetchResult;
+  enrich?: Enrichment;
+};
+
 export interface ScoreSource {
-  validateToken?: (ctx: ScoreTokenValidationContext) => void | Promise<void>;
-  fetch: (ctx: ScoreFetchContext) => Promise<{
-    result: GameFetchResult;
-    persistExtra?: (
-      ctx: PersistedSnapshotContext,
-      backgroundWorkRef?: { promise: Promise<void> },
-    ) => Promise<void>;
-  }>;
+  /** Refuses a stored token that cannot start a fetch, before its session exists. A newly supplied token is not checked. */
+  rejectStoredToken?: (token: string) => FetchStartError | null;
+  fetch: (ctx: ScoreFetchContext, run: FetchRun) => Promise<ScoreFetchOutcome>;
 }
 
 export interface ReservedProfileProvider {

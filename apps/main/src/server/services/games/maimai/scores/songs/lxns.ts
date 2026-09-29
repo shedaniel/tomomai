@@ -9,7 +9,7 @@ const LXNS_SCORES_URL = "https://maimai.lxns.net/api/v0/user/maimai/player/score
 export async function fetchLxnsScoresData(
   accessToken: string,
   signal: AbortSignal,
-): Promise<{ [difficulty: number]: ScoreData[] }> {
+): Promise<ScoreData[]> {
   logger.info("[lxns] fetching scores");
 
   const resp = await fetch(LXNS_SCORES_URL, {

@@ -1,8 +1,5 @@
 import "server-only";
 import { load } from "cheerio";
-import { appendFetchState } from "@/lib/fetch-states-server";
-import { songDataState } from "@/lib/fetch-states";
-import { MAIMAI_CODES } from "@/lib/games/maimai/codes";
 import { logger } from "@/lib/logger";
 import { normalizeName } from "@/lib/name-utils";
 import type { Difficulty } from "@/lib/games/maimai/types";
@@ -14,47 +11,14 @@ import { parseScoreData } from "./parse";
 // maimai DX NET's `diff` search parameter for each difficulty.
 const NET_DIFF_PARAMS: Readonly<Record<Difficulty, number>> = { basic: 0, advanced: 1, expert: 2, master: 3, remaster: 4, utage: 10 };
 
-async function fetchSongsData(site: GameSiteClient, difficulty: number): Promise<ScoreData[]> {
-  logger.info(`Fetching songs data for difficulty ${difficulty}`);
-
-  const songsHtml = await site.html(`record/musicGenre/search/?genre=99&diff=${difficulty}`);
+export async function fetchSongsData(site: GameSiteClient, difficulty: Difficulty): Promise<ScoreData[]> {
+  const songsHtml = await site.html(`record/musicGenre/search/?genre=99&diff=${NET_DIFF_PARAMS[difficulty]}`);
   logger.debug(`Songs data for difficulty ${difficulty} fetched successfully, length: ${songsHtml.length} characters`);
-
   return parseScoreData(songsHtml, difficulty);
 }
 
-export async function fetchAllSongsData(site: GameSiteClient, sessionId?: bigint): Promise<{ [difficulty: number]: ScoreData[] }> {
-  logger.info(`Fetching songs data for all difficulties (0-4)${sessionId ? ' with tracking' : ''}`);
-
-  const difficultyPromises = MAIMAI_CODES.difficulty.map((key, code) => {
-    const difficulty = NET_DIFF_PARAMS[key];
-    return fetchSongsData(site, difficulty).then((scoreData) => {
-      logger.info(`Successfully fetched ${scoreData.length} scores for difficulty ${difficulty}`);
-
-      if (sessionId) {
-        appendFetchState(sessionId, songDataState("maimai", code), "maimai");
-      }
-
-      return { difficulty, scoreData };
-    }).catch((error) => {
-      logger.error(error, `Failed to fetch songs for difficulty ${difficulty}`);
-      throw new Error(`Failed to fetch songs for difficulty ${difficulty}: ${error instanceof Error ? error.message : "Unknown error"}`);
-    });
-  });
-
-  const results = await Promise.all(difficultyPromises);
-
-  const songsData: { [difficulty: number]: ScoreData[] } = {};
-  for (const { difficulty, scoreData } of results) {
-    songsData[difficulty] = scoreData;
-  }
-
-  logger.info(`Successfully fetched songs data for all difficulties`);
-  return songsData;
-}
-
 // Hidden songs from the rating-target page (intl only).
-export async function fetchHiddenSongsData(site: GameSiteClient, allSongsData: { [difficulty: number]: ScoreData[] }): Promise<ScoreData[]> {
+export async function fetchHiddenSongsData(site: GameSiteClient, knownScores: readonly ScoreData[]): Promise<ScoreData[]> {
   logger.info("Fetching hidden songs data from rating target music page...");
 
   const html = await site.html("home/ratingTargetMusic/");
@@ -63,16 +27,10 @@ export async function fetchHiddenSongsData(site: GameSiteClient, allSongsData: {
   const $ = load(html);
   const hiddenSongs: ScoreData[] = [];
 
-  const difficultyInfo: { selector: string, difficulty: Difficulty, difficultyNumber: number }[] = [
-    { selector: ".music_basic_score_back", difficulty: "basic", difficultyNumber: 0 },
-    { selector: ".music_advanced_score_back", difficulty: "advanced", difficultyNumber: 1 },
-    { selector: ".music_expert_score_back", difficulty: "expert", difficultyNumber: 2 },
-    { selector: ".music_master_score_back", difficulty: "master", difficultyNumber: 3 },
-    { selector: ".music_remaster_score_back", difficulty: "remaster", difficultyNumber: 4 }
-  ];
+  const difficulties: readonly Difficulty[] = ["basic", "advanced", "expert", "master", "remaster"];
 
-  for (const { selector, difficulty, difficultyNumber } of difficultyInfo) {
-    const blocks = $(selector);
+  for (const difficulty of difficulties) {
+    const blocks = $(`.music_${difficulty}_score_back`);
     logger.debug(`Found ${blocks.length} score blocks for ${difficulty} difficulty`);
 
     blocks.each((index, element) => {
@@ -98,9 +56,8 @@ export async function fetchHiddenSongsData(site: GameSiteClient, allSongsData: {
           return;
         }
 
-        const existingSongs = allSongsData[difficultyNumber] || [];
-        const songExists = existingSongs.some(song =>
-          song.songName === songName && song.musicType === musicType
+        const songExists = knownScores.some(song =>
+          song.difficulty === difficulty && song.songName === songName && song.musicType === musicType
         );
 
         if (songExists) {
@@ -124,7 +81,6 @@ export async function fetchHiddenSongsData(site: GameSiteClient, allSongsData: {
           level: "0",
           musicType,
           difficulty,
-          difficultyNumber,
           achievement,
           dxScore: 0,
           fc: "none",

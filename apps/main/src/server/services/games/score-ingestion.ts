@@ -24,12 +24,12 @@ import { resolveGameContext } from "@/lib/games/access";
 import { offersCapability } from "@/lib/games/capabilities";
 import { getGame } from "@/lib/games/registry";
 import type { CanonicalGameId } from "@/lib/games/types";
-import type { GameFetchResult, NormalizedScore, PersistedSnapshotContext, ScoreFetchContext } from "./types";
+import type { Enrichment, GameFetchResult, NormalizedScore, PersistedSnapshotContext, ScoreFetchContext } from "./types";
+import { createFetchRun } from "./fetch-run";
 import { flushLogger } from "@/lib/logger";
 import type { Region } from "@/lib/types";
 import { getLogger } from "@/lib/request-logger";
-
-type BackgroundWorkRef = { promise: Promise<void> };
+import type { Logger } from "pino";
 
 export type StartScoreFetchResult = {
   sessionId: string;
@@ -53,11 +53,6 @@ export type ScoreFetchStatusResult = {
   notFoundScores: NotFoundScore[] | null;
 };
 
-export type ScorePersistExtra = (
-  ctx: PersistedSnapshotContext,
-  backgroundWorkRef?: BackgroundWorkRef,
-) => Promise<void>;
-
 export type PersistFetchResultInput = {
   game: CanonicalGameId;
   region: Region;
@@ -65,8 +60,6 @@ export type PersistFetchResultInput = {
   sessionId: bigint;
   gameVersion: number;
   fetched: GameFetchResult;
-  backgroundWorkRef?: BackgroundWorkRef;
-  persistExtra?: ScorePersistExtra;
   deadline?: number;
 };
 
@@ -156,9 +149,11 @@ export async function startScoreFetch(input: {
   if (!tokenToUse) {
     throw new FetchStartError("NO_TOKEN_FOUND", "No authentication token found. Please add your authentication token first.");
   }
-  await scoreSource.validateToken?.({ token: tokenToUse, tokenProvided: Boolean(input.token) });
   if (input.token) {
     await saveToken(context.game, input.userId, context.region, tokenToUse);
+  } else {
+    const refusal = scoreSource.rejectStoredToken?.(tokenToUse);
+    if (refusal) throw refusal;
   }
 
   // After saving, so a token submitted during maintenance is kept for the next fetch.
@@ -262,42 +257,56 @@ export async function startScoreFetch(input: {
   } satisfies ScoreFetchContext;
 
   const fetchWork = async () => {
-    const backgroundWorkRef: BackgroundWorkRef = { promise: Promise.resolve() };
+    const run = createFetchRun(fetchContext);
+    let enrichment: Promise<void> | undefined;
     try {
-      const deadline = Date.now() + 2 * 60 * 1000;
-      let timer: ReturnType<typeof setTimeout> | undefined;
-      const sourceResult = await Promise.race([
-        scoreSource.fetch(fetchContext),
-        new Promise<never>((_, reject) => {
-          timer = setTimeout(() => {
-            const error = new Error("Fetch operation timed out after 2 minutes");
-            controller.abort(error);
-            reject(error);
-          }, 2 * 60 * 1000);
-        }),
-      ]).finally(() => clearTimeout(timer));
-      await persistFetchResult({
-        game: context.game, region: context.region, userId: input.userId,
-        sessionId, gameVersion, fetched: sourceResult.result,
-        backgroundWorkRef, persistExtra: sourceResult.persistExtra, deadline,
-      });
+      let committed: { context: PersistedSnapshotContext; enrich?: Enrichment };
+      try {
+        const deadline = Date.now() + 2 * 60 * 1000;
+        let timer: ReturnType<typeof setTimeout> | undefined;
+        const { result, enrich } = await Promise.race([
+          scoreSource.fetch(fetchContext, run),
+          new Promise<never>((_, reject) => {
+            timer = setTimeout(() => {
+              const error = new Error("Fetch operation timed out after 2 minutes");
+              controller.abort(error);
+              reject(error);
+            }, 2 * 60 * 1000);
+          }),
+        ]).finally(() => clearTimeout(timer));
+        const { context: persisted } = await persistFetchResult({
+          game: context.game, region: context.region, userId: input.userId,
+          sessionId, gameVersion, fetched: result, deadline,
+        });
+        await db
+          .update(fetchSessions)
+          .set({ status: "completed", completedAt: new Date() })
+          .where(and(eq(fetchSessions.id, sessionId), eq(fetchSessions.game, context.game)));
+        committed = { context: persisted, enrich };
+      } catch (error) {
+        // Stops the stages still running beside the one that failed.
+        controller.abort(error);
+        run.log.error({ err: error }, "Error during score fetch");
+        await db
+          .update(fetchSessions)
+          .set({
+            status: "failed",
+            completedAt: new Date(),
+            errorMessage: error instanceof Error ? error.message : "Unknown error occurred",
+          })
+          .where(and(eq(fetchSessions.id, sessionId), eq(fetchSessions.game, context.game)));
+        return;
+      }
 
-      await db
-        .update(fetchSessions)
-        .set({ status: "completed", completedAt: new Date() })
-        .where(and(eq(fetchSessions.id, sessionId), eq(fetchSessions.game, context.game)));
-    } catch (error) {
-      getLogger().error({ err: error, game: context.game, region: context.region }, "Error during score fetch");
-      await db
-        .update(fetchSessions)
-        .set({
-          status: "failed",
-          completedAt: new Date(),
-          errorMessage: error instanceof Error ? error.message : "Unknown error occurred",
-        })
-        .where(and(eq(fetchSessions.id, sessionId), eq(fetchSessions.game, context.game)));
+      // The snapshot is saved and its session completed, so later failures are only logged.
+      try {
+        if (committed.enrich) enrichment = enrichSnapshot(committed.enrich, committed.context, run.log);
+        await revalidatePublicProfileForUser(context.game, input.userId, [context.region]);
+      } catch (err) {
+        run.log.error({ err }, "Failed to revalidate the public profile after a fetch");
+      }
     } finally {
-      await backgroundWorkRef.promise;
+      await enrichment;
       await flushLogger();
     }
   };
@@ -349,7 +358,15 @@ export async function getScoreFetchStatus(input: {
   };
 }
 
-export async function persistFetchResult(input: PersistFetchResultInput): Promise<{ snapshotId: number }> {
+async function enrichSnapshot(enrich: Enrichment, context: PersistedSnapshotContext, log: Logger): Promise<void> {
+  try {
+    await enrich(context);
+  } catch (err) {
+    log.error({ err, stepType: "enrich" }, "Score fetch enrichment failed");
+  }
+}
+
+export async function persistFetchResult(input: PersistFetchResultInput): Promise<{ snapshotId: number; context: PersistedSnapshotContext }> {
   if (input.deadline && Date.now() >= input.deadline) throw new Error("Fetch operation timed out before persistence");
   const { snapshotId, gameVersion, chartResolution } = await db.transaction(async tx => {
     if (input.deadline) await tx.execute(sql`SELECT set_config('statement_timeout', ${String(Math.max(1, input.deadline - Date.now()))}, true)`);
@@ -419,7 +436,6 @@ export async function persistFetchResult(input: PersistFetchResultInput): Promis
         comboStatus: recent.comboStatus, syncStatus: recent.syncStatus, clearStatus: recent.clearStatus,
         maxDxScore: recent.maxDxScore,
         track: recent.track,
-        metadata: recent.details,
       }];
     });
     if (recents.length) await tx.insert(userRecentSongs).values(recents).onConflictDoNothing();
@@ -428,19 +444,8 @@ export async function persistFetchResult(input: PersistFetchResultInput): Promis
     if (input.deadline && Date.now() >= input.deadline) throw new Error("Fetch operation timed out before persistence completed");
     return { snapshotId, gameVersion, chartResolution };
   });
-  if (input.persistExtra) {
-    await input.persistExtra({
-      game: input.game,
-      userId: input.userId,
-      region: input.region,
-      sessionId: input.sessionId,
-      snapshotId,
-      gameVersion,
-      chartResolution,
-    }, input.backgroundWorkRef);
-  }
-
-  await revalidatePublicProfileForUser(input.game, input.userId, [input.region]);
-
-  return { snapshotId };
+  return {
+    snapshotId,
+    context: { game: input.game, userId: input.userId, region: input.region, sessionId: input.sessionId, snapshotId, gameVersion, chartResolution },
+  };
 }

@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import pino from "pino";
 import { GAME_SERVER_MODULES } from "../registry";
-import type { GameFetchResult, ScoreFetchContext } from "../types";
+import type { FetchRun } from "../fetch-run";
+import type { ScoreFetchContext, ScoreFetchOutcome } from "../types";
 
 const catalog = vi.hoisted(() => ({ loaded: vi.fn(), collect: vi.fn() }));
 vi.mock("./catalog/pipeline", () => {
@@ -9,10 +10,10 @@ vi.mock("./catalog/pipeline", () => {
   return { collectChunithmCatalog: catalog.collect };
 });
 
-const scores = vi.hoisted(() => ({ loaded: vi.fn(), fetchPlayer: vi.fn() }));
+const scores = vi.hoisted(() => ({ loaded: vi.fn(), fetch: vi.fn() }));
 vi.mock("./scores/pipeline", () => {
   scores.loaded();
-  return { fetchPlayer: scores.fetchPlayer };
+  return { fetchChunithmScores: scores.fetch };
 });
 
 beforeEach(() => {
@@ -38,18 +39,19 @@ describe("CHUNITHM catalog source", () => {
 });
 
 describe("CHUNITHM score source", () => {
-  it("loads the player pipeline only when a fetch starts and returns its result without extras", async () => {
-    const result = { scores: [] } as unknown as GameFetchResult;
-    scores.fetchPlayer.mockResolvedValue(result);
+  it("loads the player pipeline only when a fetch starts and returns its outcome", async () => {
+    const outcome = { result: { scores: [] } } as unknown as ScoreFetchOutcome;
+    scores.fetch.mockResolvedValue(outcome);
     const context = { game: "chunithm", region: "jp", gameVersion: 9 } as ScoreFetchContext;
+    const run = {} as FetchRun;
 
     const source = GAME_SERVER_MODULES.chunithm.scores;
-    expect(source.validateToken).toBeUndefined();
+    expect(source.rejectStoredToken).toBeUndefined();
     expect(scores.loaded).not.toHaveBeenCalled();
 
-    await expect(source.fetch(context)).resolves.toEqual({ result });
+    await expect(source.fetch(context, run)).resolves.toBe(outcome);
     expect(scores.loaded).toHaveBeenCalledOnce();
-    expect(scores.fetchPlayer).toHaveBeenCalledWith(context);
+    expect(scores.fetch).toHaveBeenCalledWith(context, run);
   });
 });
 

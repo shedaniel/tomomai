@@ -2,10 +2,10 @@ import "server-only";
 import { logger } from "@/lib/logger";
 import type { Region } from "@/lib/types";
 import type { GameSiteClient } from "@/server/services/games/sega/http";
-import type { EventAreaData, EventData } from "../types";
+import type { EventsData } from "../types";
 import { parseAreaEvents, parseEventAreaEvents } from "./parse";
 
-export async function fetchEventsData(site: GameSiteClient, region: Region): Promise<{ areaEvents: EventData[], eventAreaEvents: EventAreaData[] }> {
+export async function fetchEventsData(site: GameSiteClient, region: Region): Promise<EventsData> {
   logger.info(`Starting events data fetch for ${region} region...`);
 
   try {

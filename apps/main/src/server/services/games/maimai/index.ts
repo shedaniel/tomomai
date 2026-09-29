@@ -16,23 +16,15 @@ export const maimaiServerModule: GameServerModule = {
     },
   },
   scores: {
-    validateToken(context) {
-      const token = parseToken(context.token);
-      if (token.provider !== null && TOKEN_PROVIDERS[token.provider].singleUse && !context.tokenProvided) {
-        throw new FetchStartError("CN_COOKIES_SINGLE_USE", "This session token is single-use and has already been consumed. Please re-authenticate via the HTTP Proxy flow.");
-      }
+    rejectStoredToken(token) {
+      const parsed = parseToken(token);
+      return parsed.provider !== null && TOKEN_PROVIDERS[parsed.provider].singleUse
+        ? new FetchStartError("CN_COOKIES_SINGLE_USE", "This session token is single-use and has already been consumed. Please re-authenticate via the HTTP Proxy flow.")
+        : null;
     },
-    async fetch(context) {
-      const [{ runMaimaiFetcher, persistMaimaiExtra }, { normalizeFetchedMaimaiData }] = await Promise.all([
-        import("./scores/orchestrator"),
-        import("./scores/normalize"),
-      ]);
-      const fetched = await runMaimaiFetcher(context);
-      return {
-        result: normalizeFetchedMaimaiData(fetched, { region: context.region, version: context.gameVersion }),
-        persistExtra: (persisted, backgroundWorkRef) =>
-          persistMaimaiExtra(persisted, fetched, context.shouldFetchAlbums, backgroundWorkRef),
-      };
+    async fetch(context, run) {
+      const { fetchMaimaiScores } = await import("./scores/score-source");
+      return fetchMaimaiScores(context, run);
     },
   },
   reserved: {

@@ -1,19 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { GAME_SERVER_MODULES } from "../registry";
-import type { GameFetchResult, ScoreFetchContext } from "../types";
-import type { FetchedMaimaiData } from "./scores/types";
+import type { FetchRun } from "../fetch-run";
+import type { ScoreFetchContext, ScoreFetchOutcome } from "../types";
 
-const maimaiScores = vi.hoisted(() => ({
-  loaded: vi.fn(),
-  run: vi.fn(),
-  persist: vi.fn(),
-  normalize: vi.fn(),
-}));
-vi.mock("./scores/orchestrator", () => {
+const maimaiScores = vi.hoisted(() => ({ loaded: vi.fn(), fetch: vi.fn() }));
+vi.mock("./scores/score-source", () => {
   maimaiScores.loaded();
-  return { runMaimaiFetcher: maimaiScores.run, persistMaimaiExtra: maimaiScores.persist };
+  return { fetchMaimaiScores: maimaiScores.fetch };
 });
-vi.mock("./scores/normalize", () => ({ normalizeFetchedMaimaiData: maimaiScores.normalize }));
 vi.mock("@/lib/db", () => ({ db: {} }));
 
 beforeEach(() => {
@@ -22,34 +16,24 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllEnvs());
 
 describe("maimai score source", () => {
-  it("rejects a stored CN single-use token but accepts a newly supplied one", () => {
-    const validateToken = GAME_SERVER_MODULES.maimai.scores.validateToken!;
-    const token = "cn-cookies://token";
-
-    expect(() => validateToken({ token, tokenProvided: false }))
-      .toThrow(expect.objectContaining({ code: "CN_COOKIES_SINGLE_USE" }));
-    expect(() => validateToken({ token, tokenProvided: true }))
-      .not.toThrow();
+  it("refuses a stored CN proxy session, which its first fetch consumed, and nothing else", () => {
+    const { rejectStoredToken } = GAME_SERVER_MODULES.maimai.scores;
+    expect(rejectStoredToken?.("cn-cookies://userId=1")).toMatchObject({ code: "CN_COOKIES_SINGLE_USE" });
+    expect(rejectStoredToken?.("lxns://a:://r:://0:://read")).toBeNull();
+    expect(rejectStoredToken?.("account://name:://pass")).toBeNull();
+    expect(rejectStoredToken?.("unreadable")).toBeNull();
   });
 
-  it("normalizes the fetched data and hands the raw fetch to the maimai extras", async () => {
-    const fetched = { albumData: [] } as unknown as FetchedMaimaiData;
-    const result = { scores: [] } as unknown as GameFetchResult;
-    maimaiScores.run.mockResolvedValue(fetched);
-    maimaiScores.normalize.mockReturnValue(result);
-    const context = { game: "maimai", region: "jp", gameVersion: 14, shouldFetchAlbums: true } as ScoreFetchContext;
+  it("loads the providers only when a fetch starts and returns their outcome", async () => {
+    const outcome = { result: { scores: [] } } as unknown as ScoreFetchOutcome;
+    maimaiScores.fetch.mockResolvedValue(outcome);
+    const context = { game: "maimai", region: "jp", gameVersion: 14 } as ScoreFetchContext;
+    const run = {} as FetchRun;
 
     expect(maimaiScores.loaded).not.toHaveBeenCalled();
-    const { result: normalized, persistExtra } = await GAME_SERVER_MODULES.maimai.scores.fetch(context);
-
-    expect(normalized).toBe(result);
-    expect(maimaiScores.run).toHaveBeenCalledWith(context);
-    expect(maimaiScores.normalize).toHaveBeenCalledWith(fetched, { region: "jp", version: 14 });
-
-    const persisted = { snapshotId: 1 } as Parameters<NonNullable<typeof persistExtra>>[0];
-    const backgroundWork = { promise: Promise.resolve() };
-    await persistExtra?.(persisted, backgroundWork);
-    expect(maimaiScores.persist).toHaveBeenCalledWith(persisted, fetched, true, backgroundWork);
+    await expect(GAME_SERVER_MODULES.maimai.scores.fetch(context, run)).resolves.toBe(outcome);
+    expect(maimaiScores.loaded).toHaveBeenCalledOnce();
+    expect(maimaiScores.fetch).toHaveBeenCalledWith(context, run);
   });
 });
 

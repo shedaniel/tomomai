@@ -44,27 +44,18 @@ export async function fetchRecentSongsData(site: GameSiteClient): Promise<Recent
 
       const diffImg = record.find("img.playlog_diff");
       const diffImgSrc = diffImg.attr("src") || "";
-      let difficultyNumber = 0;
       let difficulty: Difficulty = "basic";
 
       if (diffImgSrc.includes("utage")) {
-        difficultyNumber = 10;
         difficulty = "utage";
       } else if (diffImgSrc.includes("remaster")) {
-        difficultyNumber = 4;
         difficulty = "remaster";
       } else if (diffImgSrc.includes("master")) {
-        difficultyNumber = 3;
         difficulty = "master";
       } else if (diffImgSrc.includes("expert")) {
-        difficultyNumber = 2;
         difficulty = "expert";
       } else if (diffImgSrc.includes("advanced")) {
-        difficultyNumber = 1;
         difficulty = "advanced";
-      } else if (diffImgSrc.includes("basic")) {
-        difficultyNumber = 0;
-        difficulty = "basic";
       }
 
       const basicBlock = record.find(".basic_block");
@@ -152,7 +143,6 @@ export async function fetchRecentSongsData(site: GameSiteClient): Promise<Recent
         level,
         musicType,
         difficulty,
-        difficultyNumber,
         achievement,
         dxScore,
         maxDxScore,

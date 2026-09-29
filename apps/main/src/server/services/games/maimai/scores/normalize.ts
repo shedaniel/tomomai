@@ -1,29 +1,41 @@
 import "server-only";
-import type { FetchedMaimaiData, ScoreData } from "./types";
+import type { EventsData, PlayerData, RecentSongData, ScoreData } from "./types";
 import type {
-  GameFetchResult,
   NormalizedEvent,
+  NormalizedPlayer,
   NormalizedRecent,
   NormalizedScore,
+  ScoreFetchContext,
 } from "@/server/services/games/types";
 import { chartTypeToCode, difficultyToCode, titleTypeToCode } from "@/lib/games/maimai/codes";
 import { fromMaimaiScore } from "../legacy-view";
-import type { Region } from "@/lib/types";
 
-type MaimaiNormalizeContext = {
-  region: Region;
-  version: number;
-};
+type ChartContext = Pick<ScoreFetchContext, "region" | "gameVersion">;
 
-function normalizeScore(
+export function normalizePlayer(player: PlayerData): NormalizedPlayer {
+  return {
+    displayName: player.displayName,
+    rating: player.rating,
+    title: player.title,
+    titleType: titleTypeToCode(player.titleType),
+    iconUrl: player.iconUrl,
+    totalPlayCount: player.totalPlayCount,
+    currentVersionPlayCount: player.versionPlayCount,
+    courseRankUrl: player.courseRankUrl,
+    classRankUrl: player.classRankUrl,
+    stars: player.stars,
+  };
+}
+
+export function normalizeScore(
   score: Pick<ScoreData, "songName" | "musicType" | "difficulty" | "achievement" | "dxScore" | "fc" | "fs">,
-  ctx: MaimaiNormalizeContext,
+  ctx: ChartContext,
 ): NormalizedScore {
   return {
     chart: {
       game: "maimai",
       region: ctx.region,
-      version: ctx.version,
+      version: ctx.gameVersion,
       songName: score.songName,
       chartType: chartTypeToCode(score.musicType),
       difficulty: difficultyToCode(score.difficulty),
@@ -33,10 +45,7 @@ function normalizeScore(
   };
 }
 
-function normalizeRecent(
-  recent: FetchedMaimaiData["recentSongsData"][number],
-  ctx: MaimaiNormalizeContext,
-): NormalizedRecent {
+export function normalizeRecent(recent: RecentSongData, ctx: ChartContext): NormalizedRecent {
   return {
     ...normalizeScore(recent, ctx),
     playedAt: recent.playedAt,
@@ -45,10 +54,8 @@ function normalizeRecent(
   };
 }
 
-function normalizeEvents(fetched: FetchedMaimaiData): NormalizedEvent[] {
-  if (!fetched.eventsData) return [];
-
-  const areaEvents = fetched.eventsData.areaEvents.map(event => ({
+export function normalizeEvents(events: EventsData): NormalizedEvent[] {
+  const areaEvents = events.areaEvents.map(event => ({
     name: event.name,
     eventType: "area",
     currentDistance: event.currentDistance,
@@ -56,7 +63,7 @@ function normalizeEvents(fetched: FetchedMaimaiData): NormalizedEvent[] {
     state: event.state,
     imageUrl: event.imageUrl,
   } satisfies NormalizedEvent));
-  const eventAreaEvents = fetched.eventsData.eventAreaEvents.map(event => ({
+  const eventAreaEvents = events.eventAreaEvents.map(event => ({
     name: event.name,
     eventType: "eventArea",
     currentDistance: event.currentDistance,
@@ -67,30 +74,4 @@ function normalizeEvents(fetched: FetchedMaimaiData): NormalizedEvent[] {
     eventPeriodEnd: event.eventPeriod ? new Date(event.eventPeriod[1]) : null,
   } satisfies NormalizedEvent));
   return [...areaEvents, ...eventAreaEvents];
-}
-
-export function normalizeFetchedMaimaiData(
-  fetched: FetchedMaimaiData,
-  ctx: MaimaiNormalizeContext,
-): GameFetchResult {
-  const player = fetched.playerData;
-  const scores = Object.values(fetched.allSongsData).flat().map(score => normalizeScore(score, ctx));
-
-  return {
-    player: {
-      displayName: player.displayName,
-      rating: player.rating,
-      title: player.title,
-      titleType: titleTypeToCode(player.titleType),
-      iconUrl: player.iconUrl,
-      totalPlayCount: player.totalPlayCount,
-      currentVersionPlayCount: player.versionPlayCount,
-      courseRankUrl: player.courseRankUrl,
-      classRankUrl: player.classRankUrl,
-      stars: player.stars,
-    },
-    scores,
-    recents: fetched.recentSongsData.map(recent => normalizeRecent(recent, ctx)),
-    events: normalizeEvents(fetched),
-  };
 }

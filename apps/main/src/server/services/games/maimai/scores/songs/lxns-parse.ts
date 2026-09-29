@@ -42,20 +42,16 @@ const FS_MAP: Record<string, FullSync> = {
   sync: "sync",
 };
 
-// lxns level_index → our (Difficulty, difficultyNumber).
-// utage scores have type="utage" and level_index defaults to 0; keep our
-// scrape convention of difficultyNumber=10 for utage.
+// utage scores have type="utage" and a meaningless level_index of 0.
 function resolveDifficulty(
   type: string | undefined,
   levelIndex: number | undefined,
-): { difficulty: Difficulty; difficultyNumber: number } | null {
-  if (type === "utage") {
-    return { difficulty: "utage", difficultyNumber: 10 };
-  }
+): Difficulty | null {
+  if (type === "utage") return "utage";
   if (levelIndex === undefined || levelIndex < 0 || levelIndex > 4) return null;
   const difficulty = MAIMAI_CODES.difficulty[levelIndex] as Difficulty | undefined;
   if (!difficulty || difficulty === "utage") return null;
-  return { difficulty, difficultyNumber: levelIndex };
+  return difficulty;
 }
 
 const MUSIC_TYPE_MAP: Record<string, SongType> = {
@@ -68,8 +64,8 @@ function resolveMusicType(type: string | undefined): SongType | null {
   return type && Object.hasOwn(MUSIC_TYPE_MAP, type) ? MUSIC_TYPE_MAP[type] : null;
 }
 
-export function parseLxnsScoresData(scores: LxnsScore[]): { [difficulty: number]: ScoreData[] } {
-  const grouped: { [difficulty: number]: ScoreData[] } = {};
+export function parseLxnsScoresData(scores: LxnsScore[]): ScoreData[] {
+  const parsed: ScoreData[] = [];
 
   for (const score of scores) {
     const musicType = resolveMusicType(score.type);
@@ -78,8 +74,8 @@ export function parseLxnsScoresData(scores: LxnsScore[]): { [difficulty: number]
       continue;
     }
 
-    const diff = resolveDifficulty(score.type, score.level_index);
-    if (!diff) {
+    const difficulty = resolveDifficulty(score.type, score.level_index);
+    if (!difficulty) {
       logger.debug(`[lxns] skipping score with invalid level_index: ${score.level_index}`);
       continue;
     }
@@ -92,21 +88,17 @@ export function parseLxnsScoresData(scores: LxnsScore[]): { [difficulty: number]
     const fc: FullCombo = score.fc ? (FC_MAP[score.fc] ?? "none") : "none";
     const fs: FullSync = score.fs ? (FS_MAP[score.fs] ?? "none") : "none";
 
-    const entry: ScoreData = {
+    parsed.push({
       songName: normalizeName(score.song_name),
       level: score.level,
       musicType,
-      difficulty: diff.difficulty,
-      difficultyNumber: diff.difficultyNumber,
+      difficulty,
       achievement: Math.round((score.achievements ?? 0) * 10000),
       dxScore: score.dx_score ?? 0,
       fc,
       fs,
-    };
-
-    if (!grouped[diff.difficultyNumber]) grouped[diff.difficultyNumber] = [];
-    grouped[diff.difficultyNumber].push(entry);
+    });
   }
 
-  return grouped;
+  return parsed;
 }

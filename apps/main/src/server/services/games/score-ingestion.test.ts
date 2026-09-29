@@ -5,7 +5,8 @@ import type { GameFetchResult, ScoreSource } from "./types";
 const state = vi.hoisted(() => ({
   statements: [] as { sql: string; params: unknown[] }[],
   fetch: vi.fn<ScoreSource["fetch"]>(),
-  validateToken: vi.fn<NonNullable<ScoreSource["validateToken"]>>(),
+  rejectStoredToken: vi.fn<NonNullable<ScoreSource["rejectStoredToken"]>>(),
+  log: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), child() { return this; } },
   resolveCharts: vi.fn(),
   writeScores: vi.fn(),
   revalidate: vi.fn(),
@@ -37,7 +38,7 @@ vi.mock("./score-storage", async importOriginal => ({
   writeSnapshotScores: state.writeScores,
 }));
 vi.mock("./maimai", () => ({ maimaiServerModule: {
-  scores: { fetch: state.fetch, validateToken: state.validateToken },
+  scores: { fetch: state.fetch, rejectStoredToken: state.rejectStoredToken },
 } }));
 vi.mock("./chunithm", () => ({ chunithmServerModule: {
   scores: { fetch: state.fetch },
@@ -45,7 +46,7 @@ vi.mock("./chunithm", () => ({ chunithmServerModule: {
 vi.mock("@/lib/profile-cache", () => ({ revalidatePublicProfileForUser: state.revalidate }));
 vi.mock("@/lib/flags", () => ({ resolveFlagsForUser: state.resolveFlags }));
 vi.mock("@/lib/logger", () => ({ flushLogger: vi.fn() }));
-vi.mock("@/lib/request-logger", () => ({ getLogger: () => ({ error: vi.fn() }) }));
+vi.mock("@/lib/request-logger", () => ({ getLogger: () => state.log }));
 vi.mock("@/lib/token-crypto", () => ({ encryptToken: (token: string) => `encrypted:${token}`, decryptToken: (token: string) => token.slice(10) }));
 vi.mock("@/lib/fetch-states-server", () => ({ appendFetchState: vi.fn() }));
 vi.mock("next/server", () => ({ after: vi.fn() }));
@@ -59,6 +60,12 @@ const fetched: GameFetchResult = {
 };
 const start = { userId: "same-user", game: "maimai" as const, region: "jp" as const, token: "new-token", flags: {} as Flags, options: { skipAfter: true } };
 const persist = { userId: "same-user", game: "maimai" as const, region: "jp" as const, sessionId: BigInt(1), gameVersion: 14, fetched };
+
+function sessionStatuses() {
+  return state.statements
+    .filter(query => query.sql.startsWith('update "fetch_sessions"'))
+    .flatMap(query => query.params.filter(param => param === "completed" || param === "failed"));
+}
 
 function sessionRow(startedSecondsAgo: number) {
   const startedAt = new Date(Date.now() - startedSecondsAgo * 1000).toISOString().replace("T", " ").slice(0, 19);
@@ -81,6 +88,7 @@ beforeEach(() => {
   state.pendingSessions = [];
   state.recentSessions = [];
   state.fetch.mockResolvedValue({ result: fetched });
+  state.rejectStoredToken.mockReturnValue(null);
   state.resolveCharts.mockResolvedValue({ chartResolution: new Map(), songsById: new Map() });
   state.writeScores.mockResolvedValue(null);
   vi.stubEnv("NEXT_PUBLIC_ENABLED_MAIMAI_REGIONS", "jp");
@@ -108,7 +116,7 @@ it("resolves the user's flags when the caller does not pass them", async () => {
   const started = await startScoreFetch(withoutFlags);
   await started.backgroundWork;
   expect(state.resolveFlags).toHaveBeenCalledWith("same-user");
-  expect(state.fetch).toHaveBeenCalledWith(expect.objectContaining({ flags }));
+  expect(state.fetch).toHaveBeenCalledWith(expect.objectContaining({ flags }), expect.anything());
 });
 
 it("saves a newly provided token before refusing a fetch during maintenance", async () => {
@@ -142,40 +150,73 @@ it("asks for an album preference only in regions where the game fetches albums",
   expect((await refusal(start)).code).toBe("NO_USE_ALBUMS_SETTINGS");
   const started = await startScoreFetch({ ...start, region: "cn" });
   await started.backgroundWork;
-  expect(state.fetch).toHaveBeenCalledWith(expect.objectContaining({ region: "cn", shouldFetchAlbums: false }));
+  expect(state.fetch).toHaveBeenCalledWith(expect.objectContaining({ region: "cn", shouldFetchAlbums: false }), expect.anything());
 });
 
-it("rejects provider token validation before creating a fetch session", async () => {
-  state.validateToken.mockRejectedValueOnce(new Error("single use token"));
-  await expect(startScoreFetch({ ...start, token: undefined })).rejects.toThrow("single use token");
+it("refuses a stored token the score source rejects before creating a fetch session", async () => {
+  const refusal = new FetchStartError("CN_COOKIES_SINGLE_USE", "single use token");
+  state.rejectStoredToken.mockReturnValueOnce(refusal);
+  await expect(startScoreFetch({ ...start, token: undefined })).rejects.toBe(refusal);
+  expect(state.rejectStoredToken).toHaveBeenCalledWith("stored-token");
   expect(state.statements.some(query => query.sql.startsWith("insert"))).toBe(false);
   expect(state.fetch).not.toHaveBeenCalled();
 });
 
-it("persists the captured version and zero scores, then completes score source extras before revalidation", async () => {
+it("does not ask the score source about a newly supplied token", async () => {
+  const started = await startScoreFetch(start);
+  await started.backgroundWork;
+  expect(state.rejectStoredToken).not.toHaveBeenCalled();
+  expect(state.fetch).toHaveBeenCalledWith(expect.objectContaining({ token: "new-token" }), expect.anything());
+});
+
+it("persists the captured version and zero scores, and returns the snapshot's context for enrichment", async () => {
   const chart = { game: "maimai" as const, region: "jp" as const, version: 14, songName: "Zero", chartType: 0, difficulty: 3 };
   const song = { id: BigInt(7), addedVersion: 14, levelPrecise: 140, difficulty: 3 };
-  state.resolveCharts.mockResolvedValue({ chartResolution: new Map([["Zero|3|0", BigInt(7)]]), songsById: new Map([[BigInt(7), song]]) });
-  const order: string[] = [];
-  state.revalidate.mockImplementationOnce(async () => { order.push("revalidate"); });
-  await persistFetchResult({ ...persist, fetched: { ...fetched, scores: [{ chart, scoreValue: 0, secondaryScore: 0, comboStatus: 0, syncStatus: 0, clearStatus: 0 }] },
-    persistExtra: async () => { order.push("extras"); },
-  });
+  const chartResolution = new Map([["Zero|3|0", BigInt(7)]]);
+  state.resolveCharts.mockResolvedValue({ chartResolution, songsById: new Map([[BigInt(7), song]]) });
+  const persisted = await persistFetchResult({ ...persist, fetched: { ...fetched, scores: [{ chart, scoreValue: 0, secondaryScore: 0, comboStatus: 0, syncStatus: 0, clearStatus: 0 }] } });
   expect(state.writeScores).toHaveBeenCalledWith(expect.anything(), { game: "maimai", snapshotId: 1, gameVersion: 14, scores: [
     { song, values: { songId: BigInt(7), scoreValue: 0, secondaryScore: 0, comboStatus: 0, syncStatus: 0, clearStatus: 0 } },
   ] });
   const snapshotWrite = state.statements.find(query => query.sql.startsWith('insert into "user_snapshots"'))!;
   expect(snapshotWrite.params).toContain(14);
-  expect(order).toEqual(["extras", "revalidate"]);
+  expect(persisted).toEqual({
+    snapshotId: 1,
+    context: { game: "maimai", userId: "same-user", region: "jp", sessionId: BigInt(1), snapshotId: 1, gameVersion: 14, chartResolution },
+  });
+  expect(state.revalidate).not.toHaveBeenCalled();
 });
 
-it("persists recent details as the recent row metadata", async () => {
-  const chart = { game: "chunithm" as const, region: "jp" as const, version: 9, songName: "Song", chartType: 0, difficulty: 3 };
-  state.resolveCharts.mockResolvedValue({ chartResolution: new Map([["Song|3|0", BigInt(7)]]), songsById: new Map() });
-  await persistFetchResult({ ...persist, game: "chunithm", gameVersion: 9, fetched: { ...fetched,
-    recents: [{ chart, scoreValue: 1009000, secondaryScore: 0, comboStatus: 2, syncStatus: 0, clearStatus: 1, playedAt: new Date(100), track: 2, details: { judgement: "complete" } }],
-  } });
-  expect(state.statements.find(query => query.sql.startsWith('insert into "user_recent_songs"'))?.params).toContain('{"judgement":"complete"}');
+it("completes the session before enrichment runs, then keeps the fetch open until enrichment settles", async () => {
+  let release!: () => void;
+  let statusesWhenEnriching: unknown[] = [];
+  const enrich = vi.fn(async () => {
+    statusesWhenEnriching = sessionStatuses();
+    await new Promise<void>(resolve => { release = resolve; });
+  });
+  state.fetch.mockResolvedValueOnce({ result: fetched, enrich });
+  const started = await startScoreFetch(start);
+  let settled = false;
+  void started.backgroundWork!.then(() => { settled = true; });
+  await vi.waitFor(() => expect(enrich).toHaveBeenCalledOnce());
+  expect(enrich).toHaveBeenCalledWith(expect.objectContaining({ game: "maimai", userId: "same-user", region: "jp", snapshotId: 1 }));
+  expect(statusesWhenEnriching).toEqual(["completed"]);
+  expect(state.revalidate).toHaveBeenCalledWith("maimai", "same-user", ["jp"]);
+  await vi.advanceTimersByTimeAsync(0);
+  expect(settled).toBe(false);
+  release();
+  await started.backgroundWork;
+  expect(settled).toBe(true);
+});
+
+it("keeps a saved snapshot's session completed when enrichment or revalidation fails", async () => {
+  state.fetch.mockResolvedValueOnce({ result: fetched, enrich: async () => { throw new Error("detail page changed"); } });
+  state.revalidate.mockRejectedValueOnce(new Error("cache unavailable"));
+  const started = await startScoreFetch(start);
+  await started.backgroundWork;
+  expect(sessionStatuses()).toEqual(["completed"]);
+  expect(state.log.error).toHaveBeenCalledWith({ err: new Error("detail page changed"), stepType: "enrich" }, "Score fetch enrichment failed");
+  expect(state.log.error).toHaveBeenCalledWith({ err: new Error("cache unavailable") }, "Failed to revalidate the public profile after a fetch");
 });
 
 it.each([
@@ -229,7 +270,8 @@ it("keeps CHUNITHM subscription failures scoped to the failed session without de
   state.fetch.mockRejectedValueOnce(new Error("SUBSCRIPTION_REQUIRED: CHUNITHM-NET subscription required"));
   const started = await startScoreFetch({ ...start, game: "chunithm", token: undefined });
   await started.backgroundWork;
-  expect(state.fetch).toHaveBeenCalledWith(expect.objectContaining({ game: "chunithm", region: "jp", token: "stored-token" }));
+  expect(state.fetch).toHaveBeenCalledWith(expect.objectContaining({ game: "chunithm", region: "jp", token: "stored-token" }), expect.anything());
+  expect(state.fetch.mock.calls[0][0].signal.aborted).toBe(true);
   expect(state.statements.some(query => query.sql.startsWith('insert into "user_snapshots"'))).toBe(false);
   expect(state.statements.some(query => query.sql.startsWith("delete") || query.sql.startsWith('update "user_tokens"'))).toBe(false);
   expect(state.statements.find(query => query.sql.startsWith('update "fetch_sessions"'))?.params).toEqual(expect.arrayContaining(["failed", "chunithm"]));

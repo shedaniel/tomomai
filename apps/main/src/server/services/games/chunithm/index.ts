@@ -9,9 +9,9 @@ export const chunithmServerModule: GameServerModule = {
     },
   },
   scores: {
-    async fetch(context) {
-      const { fetchPlayer } = await import("./scores/pipeline");
-      return { result: await fetchPlayer(context) };
+    async fetch(context, run) {
+      const { fetchChunithmScores } = await import("./scores/pipeline");
+      return fetchChunithmScores(context, run);
     },
   },
 };

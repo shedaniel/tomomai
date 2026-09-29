@@ -133,7 +133,7 @@ export function parseScores(html: string, context: ChartContext & { difficulty: 
   return scores;
 }
 
-type ChunithmRecentRow = { recent: NormalizedRecent; form: ChunithmForm };
+export type ChunithmRecentRow = { recent: NormalizedRecent; form: ChunithmForm };
 
 /**
  * Plays of charts outside the fetched difficulties, such as WORLD'S END, are

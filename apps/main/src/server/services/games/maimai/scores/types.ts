@@ -1,5 +1,4 @@
 import type { Difficulty, FullCombo, FullSync, SongType, TitleType } from "@/lib/games/maimai/types";
-import type { GameSiteClient } from "@/server/services/games/sega/http";
 
 export interface PlayerData {
   /** The mirrored icon, or empty when the provider has none. */
@@ -23,7 +22,6 @@ export interface ScoreData {
   level: string;
   musicType: SongType;
   difficulty: Difficulty;
-  difficultyNumber: number;
   achievement: number; // stored as 10000x
   dxScore: number;
   fc: FullCombo;
@@ -35,7 +33,6 @@ export interface RecentSongData {
   level: string;
   musicType: SongType;
   difficulty: Difficulty;
-  difficultyNumber: number;
   achievement: number; // stored as 10000x
   dxScore: number;
   maxDxScore: number;
@@ -67,12 +64,7 @@ export interface EventAreaData extends EventData {
   eventPeriod: [number, number] | null; // [startTimestamp, endTimestamp]
 }
 
-export interface FetchedMaimaiData {
-  playerData: PlayerData;
-  allSongsData: { [difficulty: number]: ScoreData[] };
-  recentSongsData: RecentSongData[];
-  albumData: AlbumData[];
-  eventsData: { areaEvents: EventData[]; eventAreaEvents: EventAreaData[] } | null;
-  /** The scraped site session, kept for the background detail and album work. */
-  site?: GameSiteClient;
+export interface EventsData {
+  areaEvents: EventData[];
+  eventAreaEvents: EventAreaData[];
 }

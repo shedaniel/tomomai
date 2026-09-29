@@ -1,10 +1,10 @@
 import "server-only";
-import { formatLxns, type DivingFishIdentifier, type LxnsToken, type SegaToken } from "@/lib/games/token-format";
+import { formatLxns, type LxnsToken, type SegaToken } from "@/lib/games/token-format";
 import type { Region } from "@/lib/types";
 import { getLogger } from "@/lib/request-logger";
 import type { GameSiteSession } from "../sega/http";
 import { openSegaSession, type SegaLoginConfig } from "../sega/login";
-import { acceptSegaToken, acceptToken, refuseToken } from "../token-policy";
+import { acceptSegaToken, refuseToken } from "../token-policy";
 import { saveToken } from "../tokens";
 
 export const maimaiSegaLogin = {
@@ -18,27 +18,6 @@ export const maimaiSegaLogin = {
     cardSelection: { method: "GET", path: "aimeList/submit/?idx=0" },
   },
 } satisfies Record<Exclude<Region, "cn">, SegaLoginConfig>;
-
-export type MaimaiLogin =
-  | { kind: "site-session"; cookies: string }
-  | { kind: "lxns"; accessToken: string }
-  | { kind: "divingfish"; account: DivingFishIdentifier };
-
-/** Signs in with any token the region accepts. */
-export async function openMaimaiLogin(userId: string, region: Region, token: string, signal?: AbortSignal): Promise<MaimaiLogin> {
-  const accepted = await acceptToken("maimai", userId, region, token);
-  switch (accepted.provider) {
-    case "sega-account":
-    case "sega-cookie":
-      return { kind: "site-session", cookies: (await openMaimaiSegaSession(userId, region, accepted, signal)).cookies };
-    case "cn-cookies":
-      return { kind: "site-session", cookies: accepted.cookies };
-    case "lxns":
-      return { kind: "lxns", accessToken: await lxnsAccessToken(userId, region, accepted, signal) };
-    case "divingfish":
-      return { kind: "divingfish", account: accepted.account };
-  }
-}
 
 /** Opens a maimai DX NET session with a SEGA token. China signs in through its own providers instead. */
 export async function openMaimaiSegaSession(userId: string | null, region: Region, token: SegaToken, signal?: AbortSignal): Promise<GameSiteSession> {
