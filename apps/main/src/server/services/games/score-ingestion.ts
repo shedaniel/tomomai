@@ -20,6 +20,7 @@ import { appendFetchState } from "@/lib/fetch-states-server";
 import { getCurrentVersion } from "@/lib/games/versions";
 import { keyOf } from "@/lib/games/codes";
 import { resolveGameContext } from "@/lib/games/access";
+import { offersCapability } from "@/lib/games/capabilities";
 import { getGame } from "@/lib/games/registry";
 import type { CanonicalGameId } from "@/lib/games/types";
 import type { GameFetchResult, NormalizedScore, PersistedSnapshotContext, ScoreFetchContext } from "./types";
@@ -169,9 +170,8 @@ export async function startScoreFetch(input: {
     await saveToken(context.game, input.userId, context.region, tokenToUse);
   }
 
-  const albumsSupported = getGame(context.game).capabilities.includes("albums");
   let shouldFetchAlbums = false;
-  if (albumsSupported) {
+  if (offersCapability(getGame(context.game), "albums", context.region)) {
     const userPreference = await db
       .select({ fetchUseAlbums: user.fetchUseAlbums })
       .from(user)

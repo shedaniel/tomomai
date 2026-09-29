@@ -87,8 +87,9 @@ is the one reverse mapping, used when normalizing scraped scores.
 
 Recents carry optional game-specific `details`, stored in the recent row's
 metadata, without requiring maimai DX scores or map state. Albums are maimai
-enrichment gated by the `albums` capability. The maimai score source's
-`persistExtra` step writes them, together with the recent-detail downloads,
+enrichment gated by the `albums` capability in the fetched region, and a fetch
+asks for the user's album preference only where albums are offered. The maimai
+score source's `persistExtra` step writes them, together with the recent-detail downloads,
 after the common transaction commits. These optional external
 operations are best effort and are not covered by database rollback. Provider
 requests already in flight may finish after a timeout, but cannot commit a late

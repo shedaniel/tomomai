@@ -10,12 +10,13 @@ const state = vi.hoisted(() => ({
   writeScores: vi.fn(),
   revalidate: vi.fn(),
   resolveFlags: vi.fn(),
+  albumPreference: false as boolean | null,
 }));
 vi.mock("@/lib/db", async () => {
   const { drizzle } = await import("drizzle-orm/pg-proxy");
   const connection = drizzle(async (sql, params) => {
     state.statements.push({ sql, params });
-    if (sql.includes('from "user"')) return { rows: [[false]] };
+    if (sql.includes('from "user"')) return { rows: [[state.albumPreference]] };
     if (sql.includes('from "user_tokens"')) return { rows: [["encrypted:stored-token"]] };
     if (sql.startsWith('insert into "fetch_sessions"')) return { rows: [["1"]] };
     if (sql.startsWith('insert into "user_snapshots"')) return { rows: [[1]] };
@@ -57,6 +58,7 @@ beforeEach(() => {
   vi.setSystemTime(new Date("2026-09-27T12:00:00+09:00"));
   vi.clearAllMocks();
   state.statements.length = 0;
+  state.albumPreference = false;
   state.fetch.mockResolvedValue({ result: fetched });
   state.resolveCharts.mockResolvedValue({ chartResolution: new Map(), songsById: new Map() });
   state.writeScores.mockResolvedValue(null);
@@ -94,6 +96,15 @@ it("rejects maintenance before validating or storing tokens or creating sessions
   expect(state.statements).toEqual([]);
   expect(state.validateToken).not.toHaveBeenCalled();
   expect(state.fetch).not.toHaveBeenCalled();
+});
+
+it("asks for an album preference only in regions where the game fetches albums", async () => {
+  vi.stubEnv("NEXT_PUBLIC_ENABLED_MAIMAI_REGIONS", "jp,cn");
+  state.albumPreference = null;
+  await expect(startScoreFetch(start)).rejects.toThrow("NO_USE_ALBUMS_SETTINGS");
+  const started = await startScoreFetch({ ...start, region: "cn" });
+  await started.backgroundWork;
+  expect(state.fetch).toHaveBeenCalledWith(expect.objectContaining({ region: "cn", shouldFetchAlbums: false }));
 });
 
 it("rejects provider token validation before creating a fetch session", async () => {
