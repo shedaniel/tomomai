@@ -508,11 +508,13 @@ on the upstream pages. The provider returns
 | `recent.playedAt` | A `Date` interpreting the upstream local timestamp in JST |
 | `recent.track` | Optional if actually present |
 | `recent.maxDxScore` | Omitted |
-| `recent.details` | CHUNITHM judgments can use generic recent metadata |
+| Recent details | Written by the enrichment step into `user_recent_songs.metadata` |
 
-Only `NormalizedRecent` carries `details`, stored in
-`user_recent_songs.metadata`. The maimai detailed judgment table's
-tap/hold/slide/touch/break matrix is not a CHUNITHM schema. Missing required
+CHUNITHM judgments live in `user_recent_songs.metadata`. The maimai detailed
+judgment table's tap/hold/slide/touch/break matrix is not a CHUNITHM schema.
+Moving maimai details into the same metadata column, so one read path serves
+both games, is a separate decision: it needs a schema change and a data
+migration of `user_recent_songs_detailed`, and it is not planned. Missing required
 player fields remain an integration question, not permission to fabricate zeros
 or placeholder profile data.
 
@@ -658,9 +660,9 @@ The existing maimai split in
 [`player/`](../apps/main/src/server/services/games/maimai/scores/player/),
 [`songs/`](../apps/main/src/server/services/games/maimai/scores/songs/) and
 [`recents/`](../apps/main/src/server/services/games/maimai/scores/recents/) is a structural reference for
-small fetch/parse modules and a CHUNITHM orchestrator. Shared admission, rate
-limits, the provider deadline, captured game version and atomic persistence
-already exist. Do not introduce a parallel persistence pipeline or reuse
+small fetch/parse modules. Shared admission, rate limits, the provider
+deadline, the fetch run's stages, captured game version, atomic persistence
+and post-commit enrichment already exist. Do not introduce a parallel persistence pipeline or reuse
 maimai's album/events extras by default.
 
 ### Current implementation
@@ -668,10 +670,17 @@ maimai's album/events extras by default.
 The configured [CHUNITHM pipeline](../apps/main/src/server/services/games/chunithm/scores/pipeline.ts)
 uses region-specific login configuration and
 [shared CHUNITHM parsers](../apps/main/src/server/services/games/chunithm/scores/parsers.ts)
-for profile, the five standard difficulty lists, and recent plays/details.
+for profile, the five standard difficulty lists and recent plays.
 Authenticated profile images reuse the existing content-addressed hosting
 pipeline. A complete normalized result reaches shared game-scoped persistence
 only after the fetch succeeds.
+
+Recent play details are enrichment: they run after the snapshot is saved and
+its session is completed. The pipeline skips plays whose recent row already has
+metadata, reads each remaining play's selector POST and redirected detail page
+one at a time on the same session, and stores the details in that row's
+`metadata`, matched by user, game, song and play time. A detail page that fails
+is logged and skipped, so it never fails the fetch or delays best scores.
 
 `openSegaSession` deletes a stored token when SEGA definitively refuses it and
 keeps it after a transient failure. A refusal is the gateway or the JP site

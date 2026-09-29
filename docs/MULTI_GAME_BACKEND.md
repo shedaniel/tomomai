@@ -85,15 +85,18 @@ is produced only by `server/services/games/maimai/legacy-view.ts`, for the
 snapshot export, render tokens and the db top-songs list. Its `fromMaimaiScore`
 is the one reverse mapping, used when normalizing scraped scores.
 
-Recents carry optional game-specific `details`, stored in the recent row's
-metadata, without requiring maimai DX scores or map state. Albums are maimai
-enrichment gated by the `albums` capability in the fetched region, and a fetch
-asks for the user's album preference only where albums are offered. The maimai
-score source's `persistExtra` step writes them, together with the recent-detail downloads,
-after the common transaction commits. These optional external
-operations are best effort and are not covered by database rollback. Provider
-requests already in flight may finish after a timeout, but cannot commit a late
-snapshot; maimai progress updates only affect pending maimai sessions.
+A score source returns its normalized result and an optional `enrich` step
+(`server/services/games/types.ts`). Shared ingestion persists the result, marks
+the session completed, and only then runs the enrichment and the public profile
+revalidation, so their failures are logged and never fail a saved snapshot.
+maimai enriches with recent play details (the `user_recent_songs_detailed`
+table) and album photos, CHUNITHM with recent play details stored in the recent
+row's `metadata`. Albums are gated by the `albums` capability in the fetched
+region, and a fetch asks for the user's album preference only where albums are
+offered. Every fetch step runs through `createFetchRun` in
+`server/services/games/fetch-run.ts`, which checks the abort signal around each
+stage, logs its duration and records its progress state, so a timed-out fetch
+stops at its next stage and cannot commit a late snapshot.
 
 Every game boundary goes through `resolveGameContext` in
 `lib/games/access.ts`. The game must offer the capability, and a given region

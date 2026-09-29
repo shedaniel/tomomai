@@ -170,10 +170,15 @@ Implementation ownership:
   and `post` resolve against the mobile root, keep the session's cookies and
   referer, require HTTP 200 and run the game's page check, and `bytes`
   downloads through the session on the site's origin and without cookies
-  elsewhere. `openSegaSession` in `sega/login.ts` signs a SEGA token in through
-  the site's strategy, the Aime gateway or the SEGA ID sign-in form on the site,
-  and returns a ready game session. It deletes a token SEGA refuses and keeps
-  one that failed for a transient reason. [`icons.ts`](../apps/main/src/server/services/games/icons.ts)
+  elsewhere. Token formats live in the client-safe
+  [`token-format.ts`](../apps/main/src/lib/games/token-format.ts), which the
+  token dialogs, `/api/login` and the server all use, and
+  [`token-policy.ts`](../apps/main/src/server/services/games/token-policy.ts)
+  accepts a token only for one of the region's `loginMethods`, deleting any
+  other. `openSegaSession` in `sega/login.ts` signs a parsed SEGA token in
+  through the site's strategy, the Aime gateway or the SEGA ID sign-in form on
+  the site, and returns a ready game session. It deletes a token SEGA refuses
+  and keeps one that failed for a transient reason. [`icons.ts`](../apps/main/src/server/services/games/icons.ts)
   mirrors player icons to R2 for both games. Each game's
   server-only code lives under its own root,
   [`games/maimai/`](../apps/main/src/server/services/games/maimai/) and
@@ -194,10 +199,13 @@ Implementation ownership:
   [`signed-token.ts`](../apps/main/src/lib/signed-token.ts).
 
 CHUNITHM's pipeline fetches the profile, all five ordinary difficulty lists and
-recent plays with their details before passing one complete result to shared
-persistence. Progress uses eight stages: login, profile, BASIC, ADVANCED, EXPERT,
-MASTER, ULTIMA and recents. Both progress displays use the selected game's stage
-set, so CHUNITHM does not inherit Re:MASTER, UTAGE, hidden-song or album stages.
+recent plays before passing one complete result to shared persistence, and
+reads each new play's details afterwards as its enrichment. Each definition's
+`fetchStages` lists its progress stages, with a `song_data:<difficulty>` stage
+generated for each fetched difficulty code. CHUNITHM uses eight: login, profile,
+BASIC, ADVANCED, EXPERT, MASTER, ULTIMA and recents. The fetch toast and the
+Discord progress list label a difficulty stage with the game's difficulty label,
+so CHUNITHM does not inherit Re:MASTER, UTAGE, hidden-song or album stages.
 
 Live end-to-end application acceptance, empty-account behavior and real
 maintenance/session-expiry pages remain to be checked. WORLD'S END, domain
