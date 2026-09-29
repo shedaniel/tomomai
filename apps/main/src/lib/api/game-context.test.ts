@@ -25,6 +25,14 @@ describe("game API boundaries", () => {
     expect((await region.json()).code).toBe("UNSUPPORTED_REGION");
   });
 
+  it("answers 422 GAME_NOT_ENABLED for a game with no enabled regions and keeps its catalog readable", async () => {
+    vi.stubEnv("NEXT_PUBLIC_ENABLED_CHUNITHM_REGIONS", "");
+    const disabled = await resolveApiGame(new NextRequest("https://example.test/api/v1/games/chunithm/fetch"), context("chunithm"), "scores") as Response;
+    expect(disabled.status).toBe(422);
+    expect((await disabled.json()).code).toBe("GAME_NOT_ENABLED");
+    expect(await resolveApiGame(new NextRequest("https://example.test/api/v1/games/chunithm/parents"), context("chunithm"), "catalog")).toBe("chunithm");
+  });
+
   it("rejects a game that lacks the route capability, with or without a region", async () => {
     for (const req of [request(), new NextRequest("https://example.test/api/v1/games/chunithm/plates")]) {
       const result = await resolveApiGame(req, context("chunithm"), "plates") as Response;

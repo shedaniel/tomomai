@@ -27,7 +27,7 @@ describe("frontend process configuration", () => {
       expect(() => resolveFrontendGame(value)).toThrow("Invalid FRONTEND_GAME");
   });
 
-  it("selects serializable provider metadata without importing the fetch implementation", () => {
+  it("describes the configured game with serializable definition facts and its enabled regions", () => {
     vi.stubEnv("FRONTEND_GAME", "chunithm");
     vi.stubEnv("NEXT_PUBLIC_ENABLED_CHUNITHM_REGIONS", undefined);
     const game = getCurrentGame();

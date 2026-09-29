@@ -103,7 +103,7 @@ it("rejects provider token validation before creating a fetch session", async ()
   expect(state.fetch).not.toHaveBeenCalled();
 });
 
-it("persists the captured version and zero scores, then completes adapter extras before revalidation", async () => {
+it("persists the captured version and zero scores, then completes score source extras before revalidation", async () => {
   const chart = { game: "maimai" as const, region: "jp" as const, version: 14, songName: "Zero", chartType: 0, difficulty: 3 };
   state.resolveCharts.mockResolvedValue({ chartResolution: new Map([["Zero|3|0", BigInt(7)]]), songsById: new Map([[BigInt(7), { id: BigInt(7), addedVersion: 14, levelPrecise: 140, difficulty: 3 }]]) });
   state.upsertScores.mockResolvedValue(new Map([["7-0-0-0-0-0", 8]]));
