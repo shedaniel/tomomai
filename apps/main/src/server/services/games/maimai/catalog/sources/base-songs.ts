@@ -8,7 +8,7 @@ import { gameBaseUrl } from "@/lib/games/sites";
 import { normalizeName } from "@/lib/name-utils";
 import { normalizeGenre } from "../genres";
 import { important } from "@/server/services/catalog/ingestion/types";
-import { getVersionByShortCode } from "@/lib/metadata";
+import { getVersionByShortCode } from "@/lib/games/maimai/versions";
 
 const MAIMAI_SONGS_JSON_URL = "https://maimai.sega.jp/data/maimai_songs.json";
 const MAIMAI_SONGS_JSON_URL_INTL = "https://maimai.sega.com/assets/data/maimai_songs.json";

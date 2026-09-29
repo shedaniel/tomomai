@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll } from "vitest";
 import { value } from "@/server/services/catalog/ingestion/types";
 import pino from "pino";
-import { getCurrentVersion, VersionId } from "@/lib/metadata";
+import { getCurrentVersion, VersionId } from "@/lib/games/maimai/versions";
 import { loginAndGetCookies } from "../login";
 import { MaimaiBaseFetcher } from "./sources/base-songs";
 import { DxDataFetcher } from "./sources/dxrating";

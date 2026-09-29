@@ -11,8 +11,8 @@ import {
 import { songInstanceId } from "@/lib/db/song-instance-id";
 import { db } from "@/lib/db";
 import { parentSong, songs } from "@/lib/db/schema-pg";
-import { getCurrentVersion } from "@/lib/metadata";
-import type { VersionId } from "@/lib/metadata";
+import { getCurrentVersion } from "@/lib/games/maimai/versions";
+import type { VersionId } from "@/lib/games/maimai/versions";
 import { splitSongs } from "@/lib/rating-calculator";
 import type { ProfileData, Region } from "@/lib/types";
 import type { Difficulty } from "@/lib/games/maimai/types";

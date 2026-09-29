@@ -1,4 +1,4 @@
-import type { VersionId } from "@/lib/metadata";
+import type { VersionId } from "@/lib/games/maimai/versions";
 import { parseDisplayLevel } from "@/server/services/catalog/levels";
 
 export const MAIMAI_LEVELS = [

@@ -1,5 +1,5 @@
 import "server-only";
-import { VersionId } from "@/lib/metadata";
+import { VersionId } from "@/lib/games/maimai/versions";
 import { getLogger } from "@/lib/request-logger";
 import { Region } from "@/lib/types";
 import type { Difficulty, SongType } from "@/lib/games/maimai/types";

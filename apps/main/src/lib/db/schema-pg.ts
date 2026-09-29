@@ -236,8 +236,8 @@ export const songs = pgTable("songs", {
   level: text("level").notNull(),
   levelPrecise: smallint("levelPrecise").notNull(), // stored as 10x, e.g., 16.5 = 165
   region: regionEnum("region").notNull(),
-  gameVersion: smallint("gameVersion").notNull(), // ref @metadata.ts
-  addedVersion: smallint("addedVersion").notNull(), // ref @metadata.ts
+  gameVersion: smallint("gameVersion").notNull(),
+  addedVersion: smallint("addedVersion").notNull(),
   noteDesigner: text("noteDesigner"),
   tapCount: smallint("tapCount"),
   holdCount: smallint("holdCount"),

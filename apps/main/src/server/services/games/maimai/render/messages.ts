@@ -24,7 +24,7 @@ import {
 import { formatSongInstanceId } from "@/lib/catalog/song-instance-id";
 import { and, eq, sql } from "drizzle-orm";
 import type { Region } from "@/lib/types";
-import type { VersionId } from "@/lib/metadata";
+import type { VersionId } from "@/lib/games/maimai/versions";
 import {
   getReservedSnapshotData,
   RESERVED_USERNAMES,

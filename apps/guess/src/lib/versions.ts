@@ -1,7 +1,7 @@
 /**
  * Map of `songs.addedVersion` id → display short name.
  *
- * Duplicated from `apps/main/src/lib/metadata.ts`. Worth extracting into a
+ * Duplicated from `apps/main/src/lib/games/maimai/versions.ts`. Worth extracting into a
  * shared `@tomomai/maimai-meta` package eventually, but a tiny duplicate
  * beats the workspace plumbing for now. Keep in sync.
  */

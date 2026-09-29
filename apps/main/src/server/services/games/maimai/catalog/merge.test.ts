@@ -3,7 +3,7 @@ import type { PendingSong } from "./types";
 import { value, important, Pending } from "@/server/services/catalog/ingestion/types";
 import type { Logger } from "pino";
 import type { Difficulty, SongType } from "@/lib/games/maimai/types";
-import { VersionId } from "@/lib/metadata";
+import { VersionId } from "@/lib/games/maimai/versions";
 import { merger, mergeSongs, taker } from "./merge";
 
 // Helper to create a basic song for testing

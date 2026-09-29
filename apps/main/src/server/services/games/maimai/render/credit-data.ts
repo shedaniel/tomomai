@@ -4,7 +4,7 @@ import { songInstanceId } from "@/lib/db/song-instance-id";
 import { db } from '@/lib/db';
 import { parentSong, songs, user, userRecentSongs, maimaiRecentSongDetails, userSnapshots } from '@/lib/db/schema-pg';
 import { and, desc, eq, lte, sql } from 'drizzle-orm';
-import { VersionId } from '@/lib/metadata';
+import { VersionId } from '@/lib/games/maimai/versions';
 import { getLogger } from '@/lib/request-logger';
 import { Region } from '@/lib/types';
 import type { FullCombo, FullSync, TitleType } from '@/lib/games/maimai/types';

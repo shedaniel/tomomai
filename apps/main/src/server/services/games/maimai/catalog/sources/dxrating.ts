@@ -1,5 +1,5 @@
 import "server-only";
-import { getVersionByShortName, getVersionInfo, VersionId } from "@/lib/metadata";
+import { getVersionByShortName, getVersionInfo, VersionId } from "@/lib/games/maimai/versions";
 import { normalizeName } from "@/lib/name-utils";
 import { NoteCounts } from "@/lib/types";
 import type { Level } from "../levels";

@@ -3,7 +3,7 @@ import { NoteCounts } from "@/lib/types";
 import type { Difficulty, SongType } from "@/lib/games/maimai/types";
 import { normalizeName } from "@/lib/name-utils";
 import { normalizeGenre } from "../genres";
-import { getVersionByShortCode } from "@/lib/metadata";
+import { getVersionByShortCode } from "@/lib/games/maimai/versions";
 import type { PendingSong } from "../types";
 import { important } from "@/server/services/catalog/ingestion/types";
 import { levelToPrecise, type Level } from "../levels";

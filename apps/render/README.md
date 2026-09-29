@@ -48,7 +48,7 @@ requests (unlike Vercel lambdas).
 
 ## Notes / debt
 
-- Domain logic (`lib/metadata`, `lib/score-details`, `lib/rating-calculator`,
+- Domain logic (`lib/score-details`, `lib/rating-calculator`,
   `server/services/*`, …) is **copied** from `apps/main`, not shared — the
   upcoming catalogue PR extracts these into a shared package; reconcile then.
 - `apps/main` still owns the `/api/export-image`, `/api/last-credit`,

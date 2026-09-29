@@ -4,7 +4,7 @@ import { songInstanceId } from "@/lib/db/song-instance-id";
 import { db } from '@/lib/db';
 import { parentSong, songs, user, userRecentSongs, userSnapshots } from '@/lib/db/schema-pg';
 import { and, desc, eq, gte, lt, lte, sql } from 'drizzle-orm';
-import { VersionId } from '@/lib/metadata';
+import { VersionId } from '@/lib/games/maimai/versions';
 import { Region } from '@/lib/types';
 import type { Difficulty, FullCombo, FullSync, SongType } from '@/lib/games/maimai/types';
 import { calculateSongRating } from '@/lib/rating-calculator';

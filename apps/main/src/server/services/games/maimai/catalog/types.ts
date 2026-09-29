@@ -1,4 +1,4 @@
-import type { VersionId } from "@/lib/metadata";
+import type { VersionId } from "@/lib/games/maimai/versions";
 import type { NoteCounts, Region } from "@/lib/types";
 import type { Difficulty, SongType } from "@/lib/games/maimai/types";
 import type { Level } from "./levels";

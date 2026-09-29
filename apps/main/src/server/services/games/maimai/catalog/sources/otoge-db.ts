@@ -1,6 +1,6 @@
 import "server-only";
 import { gameBaseUrl } from "@/lib/games/sites";
-import { getVersionFromDate, VersionId, Versions } from "@/lib/metadata";
+import { getVersionFromDate, VersionId, Versions } from "@/lib/games/maimai/versions";
 import { normalizeName } from "@/lib/name-utils";
 import { normalizeGenre } from "../genres";
 import { NoteCounts, Region } from "@/lib/types";

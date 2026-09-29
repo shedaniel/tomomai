@@ -1,5 +1,5 @@
 import "server-only";
-import type { VersionId } from "@/lib/metadata";
+import type { VersionId } from "@/lib/games/maimai/versions";
 import type { Logger } from "pino";
 import { value, type CatalogFetchContext } from "@/server/services/catalog/ingestion/types";
 import { toCatalogChart } from "./normalize";

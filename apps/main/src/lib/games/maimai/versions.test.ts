@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { getCurrentVersion, getVersionFromDate, isVersionAvailable, parseDate } from "./metadata";
+import { getCurrentVersion, getVersionFromDate, isVersionAvailable, parseDate } from "./versions";
 
 afterEach(() => vi.useRealTimers());
 

@@ -3,7 +3,7 @@ import { logger } from "@/lib/logger";
 import { gameBaseUrl } from "@/lib/games/sites";
 import { requestGamePage } from "@/server/services/games/sega/http";
 import { musicTypeFromIcon } from "../../scores/parse-utils";
-import { VersionId } from "@/lib/metadata";
+import { VersionId } from "@/lib/games/maimai/versions";
 import { normalizeName } from "@/lib/name-utils";
 import { Region } from "@/lib/types";
 import type { Difficulty, SongType } from "@/lib/games/maimai/types";
