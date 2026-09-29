@@ -32,14 +32,14 @@ describe("getProfileSummary", () => {
   beforeEach(() => vi.clearAllMocks());
 
   it("totals the rankings stored with the latest maimai snapshot", async () => {
-    const snapshot = { id: 7, publicId: "latest", rating: 617, stars: null, totalPlayCount: 40, fetchedAt: new Date(0), gameVersion: 13 };
+    const snapshot = { publicId: "latest", rating: 617, stars: null, totalPlayCount: 40, fetchedAt: new Date(0), gameVersion: 13 };
     queries.fetchLatestSnapshotData.mockResolvedValueOnce({ snapshot, songs: [], events: [] });
     queries.fetchSnapshotRankings.mockResolvedValueOnce({ newScores: [{ rating: 315 }], oldScores: [{ rating: 200 }, { rating: 102 }] });
     await expect(getProfileSummary("user", "jp")).resolves.toEqual({
       publicId: "latest", rating: 617, newRating: 315, newCount: 1, oldRating: 302, oldCount: 2, stars: 0, totalPlayCount: 40, fetchedAt: new Date(0),
     });
     expect(queries.fetchLatestSnapshotData).toHaveBeenCalledWith("maimai", "user", "jp");
-    expect(queries.fetchSnapshotRankings).toHaveBeenCalledWith("maimai", snapshot);
+    expect(queries.fetchSnapshotRankings).toHaveBeenCalledWith("maimai", "user", snapshot);
   });
 
   it("returns null when the user has no snapshot", async () => {

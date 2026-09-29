@@ -44,7 +44,7 @@ export async function getProfileSummary(userId: string, region: Region): Promise
   if (!data) return null;
 
   const { snapshot } = data;
-  const { newScores, oldScores } = await fetchSnapshotRankings('maimai', snapshot);
+  const { newScores, oldScores } = await fetchSnapshotRankings('maimai', userId, snapshot);
   const newRating = newScores.reduce((sum, s) => sum + s.rating, 0);
   const oldRating = oldScores.reduce((sum, s) => sum + s.rating, 0);
 

@@ -1,5 +1,5 @@
 import type { CanonicalGameId } from "@/lib/games/types";
-import type { GameSnapshotData, GameSnapshotSummary } from "@/lib/games/player-view";
+import type { GameSnapshot, GameSnapshotData, GameSnapshotSummary } from "@/lib/games/player-view";
 import { rateStoredRankings } from "@/lib/games/ranking";
 import { songInstanceId } from "@/lib/db/song-instance-id";
 import { db } from "@/lib/db";
@@ -94,13 +94,33 @@ export async function deleteUserSnapshot(game: CanonicalGameId,
   return { deleted: true };
 }
 
+/** The public snapshot header. The internal id, owner and raw metadata never leave the server. */
+export const gameSnapshotColumns = {
+  publicId: userSnapshots.publicId,
+  game: userSnapshots.game,
+  displayName: userSnapshots.displayName,
+  rating: userSnapshots.rating,
+  gameVersion: userSnapshots.gameVersion,
+  fetchedAt: userSnapshots.fetchedAt,
+  title: userSnapshots.title,
+  titleType: userSnapshots.titleType,
+  iconUrl: userSnapshots.iconUrl,
+  courseRankUrl: userSnapshots.courseRankUrl,
+  classRankUrl: userSnapshots.classRankUrl,
+  stars: userSnapshots.stars,
+  versionPlayCount: userSnapshots.versionPlayCount,
+  totalPlayCount: userSnapshots.totalPlayCount,
+};
+
+const snapshotWithInternalId = { id: userSnapshots.id, snapshot: gameSnapshotColumns };
+
 export async function fetchSnapshotData(game: CanonicalGameId,
   userId: string,
   snapshotPublicId: string,
   region: Region
 ) {
-  const snapshot = await db
-    .select()
+  const [row] = await db
+    .select(snapshotWithInternalId)
     .from(userSnapshots)
     .where(
       and(
@@ -112,9 +132,7 @@ export async function fetchSnapshotData(game: CanonicalGameId,
     )
     .limit(1);
 
-  if (snapshot.length === 0) return null;
-
-  return readSnapshotData(game, snapshot[0]);
+  return row ? readSnapshotData(game, row) : null;
 }
 
 const playerScoreColumns = {
@@ -135,19 +153,18 @@ const playerScoreColumns = {
   clearStatus: scoreData.clearStatus,
 };
 
-async function readSnapshotData(game: CanonicalGameId, snapshot: typeof userSnapshots.$inferSelect) {
+async function readSnapshotData<S extends GameSnapshot>(game: CanonicalGameId, { id: snapshotId, snapshot }: { id: number; snapshot: S }) {
   const songsWithScores = await db
     .select(playerScoreColumns)
     .from(snapshotScores)
     .innerJoin(scoreData, eq(snapshotScores.scoreId, scoreData.id))
     .innerJoin(songs, eq(scoreData.songId, songs.id))
     .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
-    .where(and(eq(snapshotScores.game, game), eq(snapshotScores.snapshotId, snapshot.id)))
+    .where(and(eq(snapshotScores.game, game), eq(snapshotScores.snapshotId, snapshotId)))
     .orderBy(parentSong.songName, parentSong.difficulty);
 
   const events = await db
     .select({
-      metadata: userEvents.metadata,
       eventType: userEvents.eventType,
       name: userEvents.name,
       currentDistance: userEvents.currentDistance,
@@ -158,7 +175,7 @@ async function readSnapshotData(game: CanonicalGameId, snapshot: typeof userSnap
       eventPeriodEnd: userEvents.eventPeriodEnd,
     })
     .from(userEvents)
-    .where(and(eq(userEvents.game, game), eq(userEvents.snapshotId, snapshot.id)));
+    .where(and(eq(userEvents.game, game), eq(userEvents.snapshotId, snapshotId)));
 
   return {
     snapshot,
@@ -191,8 +208,8 @@ export async function getLatestSnapshotFetchedAt(game: CanonicalGameId,
 }
 
 export async function fetchLatestSnapshotData(game: CanonicalGameId, userId: string, region: Region) {
-  const snapshot = await db
-    .select()
+  const [row] = await db
+    .select(snapshotWithInternalId)
     .from(userSnapshots)
     .where(
       and(
@@ -204,23 +221,24 @@ export async function fetchLatestSnapshotData(game: CanonicalGameId, userId: str
     .orderBy(desc(userSnapshots.fetchedAt))
     .limit(1);
 
-  if (snapshot.length === 0) return null;
-
-  return readSnapshotData(game, snapshot[0]);
+  return row ? readSnapshotData(game, row) : null;
 }
 
-/**
- * The rating selection stored when the snapshot was written, rated with the current chart constants.
- * Takes the internal snapshot row, so callers must already have checked its owner.
- */
-export async function fetchSnapshotRankings(game: CanonicalGameId, snapshot: Pick<typeof userSnapshots.$inferSelect, "id" | "gameVersion">) {
+/** The rating selection stored when the owner's snapshot was written, rated with the current chart constants. */
+export async function fetchSnapshotRankings(game: CanonicalGameId, userId: string, snapshot: Pick<GameSnapshot, "publicId" | "gameVersion">) {
   const rows = await db
     .select({ ...playerScoreColumns, bucket: snapshotRankings.bucket })
     .from(snapshotRankings)
+    .innerJoin(userSnapshots, eq(snapshotRankings.snapshotId, userSnapshots.id))
     .innerJoin(scoreData, eq(snapshotRankings.scoreId, scoreData.id))
     .innerJoin(songs, eq(scoreData.songId, songs.id))
     .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
-    .where(and(eq(snapshotRankings.game, game), eq(snapshotRankings.snapshotId, snapshot.id)))
+    .where(and(
+      eq(userSnapshots.publicId, snapshot.publicId),
+      eq(userSnapshots.game, game),
+      eq(userSnapshots.userId, userId),
+      eq(snapshotRankings.game, game),
+    ))
     .orderBy(snapshotRankings.bucket, snapshotRankings.rank);
   return rateStoredRankings(game, rows, snapshot.gameVersion);
 }

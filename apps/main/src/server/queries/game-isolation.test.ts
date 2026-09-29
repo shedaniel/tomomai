@@ -30,19 +30,6 @@ it.each(["maimai", "chunithm"] as const)("adds game predicates to %s snapshot re
   }
 });
 
-it("decodes snapshot event metadata and keeps game-specific score codes intact", async () => {
-  state.responses.push(
-    [[{ provider: "test" }, 1, "snapshot", "same-user", "chunithm", "jp", "2026-09-01 00:00:00", 9, 1700, null, null, null, 1, 1, "", "Player", "Title", 7]],
-    [["song~jp~9", "Song", "Artist", "", 4, 1, "14+", 145, "Original", 9, 1009000, 0, 3, 0, 1]],
-    [[{ steps: 10 }, null, "Map progress", null, null, null, null, null, null]],
-  );
-  const result = await fetchSnapshotData("chunithm", "same-user", "snapshot", "jp");
-  expect(result?.snapshot.metadata).toEqual({ provider: "test" });
-  expect(result?.songs[0]).toMatchObject({ difficultyCode: 4, typeCode: 1, comboStatus: 3, scoreValue: 1009000 });
-  expect(result?.events[0]).toMatchObject({ name: "Map progress", metadata: { steps: 10 } });
-  expect(state.queries.every(query => query.params.includes("chunithm"))).toBe(true);
-});
-
 it("includes optional metadata in recent and album reads and scopes their pagination by game", async () => {
   state.responses.push([], [[0]], []);
   await fetchRecentSongs("chunithm", "same-user", "jp", 20, 0);

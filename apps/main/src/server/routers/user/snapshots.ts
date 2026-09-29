@@ -22,6 +22,7 @@ export const snapshotsRouter = router({
       const { game, region } = validateGameInput(input, "scores");
       return fetchUserSnapshots(game, ctx.session.user.id, region);
     }),
+  /** Null when the snapshot is missing or belongs to someone else. The dashboard and its server prefetch show that as no data, not an error. */
   getSnapshotData: protectedProcedure
     .input(z.object({ ...gameContextInput, snapshotId: z.string() }))
     .query(async ({ ctx, input }): Promise<GameSnapshotData | null> => {

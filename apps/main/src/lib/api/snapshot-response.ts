@@ -44,7 +44,7 @@ export async function buildSnapshotPayload(
   if (hasSongsRead) {
     songsPayload = songs.map(songPayload);
   } else if (hasSongsB50Read) {
-    const { newScores, oldScores } = await fetchSnapshotRankings(snapshot.game, snapshot);
+    const { newScores, oldScores } = await fetchSnapshotRankings(snapshot.game, key.userId, snapshot);
     songsPayload = [...newScores, ...oldScores].map(s => ({ ...songPayload(s), rating: s.rating }));
   }
 
