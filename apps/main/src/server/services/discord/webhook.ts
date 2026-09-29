@@ -49,9 +49,9 @@ export type DiscordEmbed = {
 };
 
 // Posts as the game's bot identity, whichever game the deployment serves.
-export function postDiscordEmbed(webhookUrl: string, context: GameRegionContext, embed: DiscordEmbed): void {
+export function postDiscordEmbed(webhookUrl: string, { game, region }: GameRegionContext, embed: DiscordEmbed): void {
   const payload = {
-    username: getGameBrand(resolveGame(context.game)).japaneseName,
+    username: getGameBrand(resolveGame(game)).japaneseName,
     avatar_url: `${resolveBaseUrl()}/icon.png`,
     embeds: [{ ...embed, description: embed.description && truncateForDiscord(embed.description) }],
   };
@@ -66,9 +66,9 @@ export function postDiscordEmbed(webhookUrl: string, context: GameRegionContext,
     const log = getLogger();
     if (!response.ok) {
       const body = await response.text();
-      log.error({ ...context, status: response.status, statusText: response.statusText, body }, "Discord webhook failed");
+      log.error({ game, region, status: response.status, statusText: response.statusText, body }, "Discord webhook failed");
     } else {
-      log.info(context, "Discord webhook sent");
+      log.info({ game, region }, "Discord webhook sent");
     }
   });
 }

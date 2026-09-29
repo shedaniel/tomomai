@@ -1,5 +1,5 @@
 import { resolveGame } from "@/lib/games/registry";
-import { logger } from "@/lib/logger";
+import { getLogger } from "@/lib/request-logger";
 import { postDiscordEmbed } from "@/server/services/discord/webhook";
 import type { AddedChange, DeletedChange, ModifiedChange } from "./ingestion/persistence";
 import type { Region } from "@/lib/types";
@@ -217,7 +217,7 @@ export async function sendDiscordWebhook(
   const regionKey = `DISCORD_UPDATE_WEBHOOK_${region.toUpperCase()}`;
   const webhookUrl = process.env[regionKey] ?? process.env.DISCORD_UPDATE_WEBHOOK;
   if (!webhookUrl) {
-    logger.debug({ region }, "DISCORD_UPDATE_WEBHOOK not set, skipping webhook notification");
+    getLogger().debug({ game, region }, "DISCORD_UPDATE_WEBHOOK not set, skipping webhook notification");
     return;
   }
 
@@ -227,7 +227,7 @@ export async function sendDiscordWebhook(
   );
 
   if (added.length === 0 && deleted.length === 0 && filteredModified.length === 0) {
-    logger.debug({ region }, "No changes detected, skipping webhook notification");
+    getLogger().debug({ game, region }, "No changes detected, skipping webhook notification");
     return;
   }
 
