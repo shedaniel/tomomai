@@ -1,7 +1,5 @@
 import type { Logger } from "pino";
 import type { CatalogMetadata } from "@/lib/catalog/chart-metadata";
-import type { CanonicalGameId } from "@/lib/games/types";
-import { hasCode } from "@/lib/games/codes";
 import { formatChartLabel } from "@/lib/games/presentation";
 import type { CatalogChart, CatalogChartIdentity } from "./schema";
 import { value, type PendingChart } from "./types";
@@ -42,20 +40,6 @@ export function completeCatalogChart(chart: PendingChart, log: Logger): CatalogC
     noteCounts: value(chart.noteCounts),
     metadata: value(chart.metadata),
   };
-}
-
-export function validateCatalogCharts(game: CanonicalGameId, charts: CatalogChart[]): void {
-  const seen = new Set<string>();
-  for (const chart of charts) {
-    if (chart.game !== game) throw new Error("Catalog chart belongs to a different game");
-    if (!hasCode(game, "chartType", chart.chartType) || !hasCode(game, "difficulty", chart.difficulty)) {
-      throw new Error(`Unknown chart codes for ${game}`);
-    }
-    // Charts sharing a key are distinct songs when their artist or version differs, as with the two "Link" songs.
-    const identity = JSON.stringify([catalogChartKey(chart), chart.artist, chart.addedVersion]);
-    if (seen.has(identity)) throw new Error(`Duplicate catalog chart: ${formatChartLabel(game, chart)}`);
-    seen.add(identity);
-  }
 }
 
 /**

@@ -30,11 +30,9 @@ describe("catalog stage runner", () => {
         return charts.map(chart => ({ ...chart, ...complete }));
       },
     };
-    const validate = vi.fn();
-    const charts = await runFetchers(context, { game: "maimai", stages: [source, fill], validate });
+    const charts = await runFetchers(context, { game: "maimai", stages: [source, fill] });
 
     expect(charts).toEqual([{ ...pending, ...complete }]);
-    expect(validate).toHaveBeenCalledTimes(2);
     expect(notices()).toEqual([
       { game: "maimai", region: "jp", title: "Stage 1/2: Source", body: expect.stringContaining("+1 added, ~0 modified\nAdded: Link DX MASTER\nFetched source chart") },
       { game: "maimai", region: "jp", title: "Stage 2/2: Fill", body: expect.stringContaining("+0 added, ~1 modified\nModified: Link DX MASTER") },

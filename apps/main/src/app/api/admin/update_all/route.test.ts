@@ -44,9 +44,10 @@ describe("GET /api/admin/update_all", () => {
     })));
   });
 
-  it("updates one explicit region and can skip image hosting", async () => {
-    expect((await get("game=chunithm&region=jp&image_upload=false")).status).toBe(200);
-    expect(mocks.update).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ region: "jp", hostImages: false }));
+  it("updates one explicit region and passes the image hosting choice on", async () => {
+    vi.stubEnv("FRONTEND_GAME", "maimai");
+    expect((await get("game=maimai&region=cn&image_upload=false")).status).toBe(200);
+    expect(mocks.update).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ game: "maimai", region: "cn", hostImages: false }));
   });
 
   it("refuses a CHUNITHM write on the maimai site before collecting", async () => {

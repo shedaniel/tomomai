@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import pino from "pino";
-import type { Logger } from "pino";
 import type { Region } from "@/lib/types";
 import { asCatalogFetcher } from "@/server/services/catalog/ingestion/merge";
 import { important, type CatalogFetchContext, type SourceChart } from "@/server/services/catalog/ingestion/types";
@@ -23,10 +22,11 @@ vi.mock("./sources/after-fetch", () => ({ MaimaiAfterFetcher: fixtureStep({ note
 vi.mock("./sources/lxns", () => ({ LxnsFetcher: fixtureStep({ artist: "CN artist", genre: "maimai", cover: "cn.jpg", addedVersion: 8 }) }));
 vi.mock("@/server/services/discord/webhook", () => ({ sendDiscordNotice: vi.fn(async () => {}) }));
 import { collectCatalog } from "@/server/services/catalog/ingestion/collect";
+import { parseCatalogUpload } from "@/server/services/catalog/ingestion/parse-upload";
 import { sendDiscordNotice } from "@/server/services/discord/webhook";
 
 beforeEach(() => { state.incomplete = false; state.titles = ["Z", "A"]; vi.clearAllMocks(); });
-const collect = (region: Region, log: Logger = pino({ enabled: false })) => collectCatalog("maimai", { region, version: 9, session: { cookies: "" }, log });
+const collect = (region: Region) => collectCatalog("maimai", { region, version: 9, session: { cookies: "" }, log: pino({ enabled: false }) });
 
 describe("maimai catalog recipe", () => {
   it.each(["jp", "intl"] as const)("preserves %s source precedence, enrichment and final filling", async region => {
@@ -43,11 +43,10 @@ describe("maimai catalog recipe", () => {
   it("uses the CN provider and the shared fill stage", async () => {
     expect((await collect("cn"))[0]).toMatchObject({ artist: "CN artist", cover: "cn.jpg", levelPrecise: 146 });
   });
-  it("reports titles that are not in their normalized form", async () => {
+  it("collects titles that are not in their normalized form, which the upload contract refuses", async () => {
     state.titles = ["Ｌｉｎｋ"];
-    const log = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), child: () => log };
-    await collect("cn", log as unknown as Logger);
-    expect(log.error).toHaveBeenCalledWith({ songKey: JSON.stringify(["maimai", "Ｌｉｎｋ", 1, 3]) }, "Song name does not match normalized name");
+    const charts = await collect("cn");
+    expect(() => parseCatalogUpload("maimai", charts)).toThrow("Song title is not normalized: Ｌｉｎｋ DX MASTER");
   });
   it("rejects incomplete provider records without a completion notice", async () => {
     state.incomplete = true;

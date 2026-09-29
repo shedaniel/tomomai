@@ -1,14 +1,12 @@
-import type { Logger } from "pino";
 import { resolveGameContext } from "@/lib/games/access";
 import type { CanonicalGameId } from "@/lib/games/types";
 import type { Region } from "@/lib/types";
 import { GAME_SERVER_MODULES } from "@/server/services/games/registry";
-import type { CatalogSource } from "@/server/services/games/types";
 import { fillMissingStage } from "./levels";
-import { catalogChartKey, compareCatalogCharts } from "./normalize-charts";
+import { compareCatalogCharts } from "./normalize-charts";
 import { runFetchers } from "./runner";
 import type { CatalogChart } from "./schema";
-import type { CatalogCollectContext, PendingChart } from "./types";
+import type { CatalogCollectContext } from "./types";
 
 export function catalogRequiresToken(game: CanonicalGameId, region: Region): boolean {
   return GAME_SERVER_MODULES[game].catalog.requiresToken?.(region) ?? false;
@@ -23,16 +21,6 @@ export async function authenticateCatalogSource(game: CanonicalGameId, region: R
   return authenticate(region, token);
 }
 
-function validateTitles(normalizeTitle: NonNullable<CatalogSource["normalizeTitle"]>) {
-  return (charts: PendingChart[], log: Logger) => {
-    for (const chart of charts) {
-      if (chart.songName !== normalizeTitle(chart.songName)) {
-        log.error({ songKey: catalogChartKey(chart) }, "Song name does not match normalized name");
-      }
-    }
-  };
-}
-
 /** Runs the game's source stages for a region, fills missing constants, and returns the completed charts in catalog order. */
 export async function collectCatalog(game: CanonicalGameId, context: CatalogCollectContext): Promise<CatalogChart[]> {
   resolveGameContext(game, { region: context.region, capability: "catalog", regionPolicy: "supported" });
@@ -40,7 +28,6 @@ export async function collectCatalog(game: CanonicalGameId, context: CatalogColl
   const charts = await runFetchers(context, {
     game,
     stages: [...await source.stages(context.region), fillMissingStage(source.levelPolicy(context.version))],
-    validate: source.normalizeTitle && validateTitles(source.normalizeTitle),
   });
   return charts.sort(compareCatalogCharts);
 }

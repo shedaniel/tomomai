@@ -8,7 +8,7 @@ vi.mock("@/lib/r2", () => {
   return { listCoverKeys: mocks.list, uploadCoverToR2: mocks.upload };
 });
 vi.mock("@/lib/image-converter", () => ({ fetchImageBuffer: mocks.fetch, convertToWebp: mocks.convert }));
-import { processCatalogImages } from "./images";
+import { assertCoverHostingEnabled, assertCoversHosted, processCatalogImages } from "./images";
 const log = pino({ enabled: false });
 const chart = (cover: string): CatalogChart => ({
   game: "maimai", songName: "Song", chartType: 0, difficulty: 3, cover,
@@ -87,5 +87,20 @@ describe("catalog image processing", () => {
     expect(mocks.list).toHaveBeenCalledOnce();
     expect(mocks.upload.mock.calls.map(call => call[1])).toEqual(["music_dx", "music_standard"]);
     expect(result.stats).toEqual({ uploaded: 0, skipped: 0, unchanged: 0 });
+  });
+});
+
+describe("catalog cover hosting", () => {
+  const otogeDb = "https://raw.githubusercontent.com/zvuc/otoge-db/main/chunithm/jacket/example.jpg";
+
+  it("refuses CHUNITHM charts that still point at an otoge-db cover", () => {
+    expect(() => assertCoversHosted("chunithm", [{ ...chart(otogeDb), game: "chunithm", difficulty: 4 }])).toThrow("Unhosted catalog cover: Song ULTIMA");
+    expect(() => assertCoversHosted("chunithm", [{ ...chart("https://catalog.example.test/covers/chunithm/example.webp"), game: "chunithm" }])).not.toThrow();
+    expect(() => assertCoverHostingEnabled("chunithm", false)).toThrow("CHUNITHM covers must be hosted");
+  });
+
+  it("lets maimai keep its source covers, which the site loads directly", () => {
+    expect(() => assertCoversHosted("maimai", [chart("https://maimaidx.jp/maimai-mobile/img/Music/shared.png")])).not.toThrow();
+    expect(() => assertCoverHostingEnabled("maimai", false)).not.toThrow();
   });
 });

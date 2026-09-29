@@ -60,6 +60,8 @@ describe("POST /api/admin/upload", () => {
     ["a body that is not JSON", "region=jp&version=9", "not json"],
     ["a body without songs", "region=jp&version=9", JSON.stringify({})],
     ["an invalid chart", "region=jp&version=9", JSON.stringify({ songs: [{ ...chart, addedVersion: null }] })],
+    ["an otoge-db cover", "region=jp&version=9&update=alter",
+      JSON.stringify({ songs: [{ ...chart, cover: "https://raw.githubusercontent.com/zvuc/otoge-db/main/chunithm/jacket/example.jpg" }] })],
   ])("rejects %s before persistence or publication", async (_name, query, body) => {
     const response = await upload(query, body);
     expect(response.status).toBe(400);

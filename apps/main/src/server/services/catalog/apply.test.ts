@@ -16,7 +16,10 @@ vi.mock("./ingestion/collect", async importOriginal => ({
   collectCatalog: (game: string, ctx: CatalogCollectContext) => mocks.collect(game, ctx),
 }));
 vi.mock("@/server/services/games/maimai/login", () => ({ loginAndGetCookies: mocks.login }));
-vi.mock("./images", () => ({ processCatalogImages: mocks.images }));
+vi.mock("./images", async importOriginal => ({
+  ...await importOriginal<typeof import("./images")>(),
+  processCatalogImages: mocks.images,
+}));
 vi.mock("./ingestion/persistence", () => ({ persistCatalog: mocks.persist }));
 vi.mock("./publication", () => ({ publishSongCatalog: mocks.publish }));
 vi.mock("./revalidation", () => ({ revalidateCatalog: mocks.revalidate }));
@@ -90,6 +93,24 @@ describe("applyCatalogUpload", () => {
     expect(color).toBe(0xFFA500);
   });
 
+  it("refuses to write CHUNITHM charts whose covers still point at otoge-db, and previews them", async () => {
+    const unhosted = { ...chart, cover: "https://raw.githubusercontent.com/zvuc/otoge-db/main/chunithm/jacket/example.jpg" };
+    const writing = applyCatalogUpload({ ...request, version: 9, charts: [unhosted], mode: "alter" });
+    await expect(writing).rejects.toBeInstanceOf(AdminRequestError);
+    await expect(writing).rejects.toThrow("Unhosted catalog cover: Example ULTIMA");
+    expect(mocks.persist).not.toHaveBeenCalled();
+    expect(mocks.notice).not.toHaveBeenCalled();
+
+    await applyCatalogUpload({ ...request, version: 9, charts: [unhosted], mode: "noop" });
+    expect(mocks.persist).toHaveBeenCalledOnce();
+  });
+
+  it("writes maimai charts with their source covers", async () => {
+    const maimai: CatalogChart = { ...chart, game: "maimai", chartType: 1, difficulty: 3, cover: "https://maimaidx.jp/maimai-mobile/img/Music/example.png" };
+    await applyCatalogUpload({ ...request, game: "maimai", version: 9, charts: [maimai], mode: "alter" });
+    expect(mocks.persist).toHaveBeenCalledWith("maimai", "jp", 9, [maimai], "alter", mocks.log);
+  });
+
   it("posts an error notice with the request id and rethrows when the write fails", async () => {
     const error = new Error("Ambiguous catalog identity: Example");
     mocks.persist.mockRejectedValueOnce(error);
@@ -130,10 +151,19 @@ describe("updateCatalogRegion", () => {
     expect(mocks.calls).toEqual(["persist", "publish", "revalidate", "webhook"]);
   });
 
-  it("keeps upstream covers when image hosting is off", async () => {
-    await updateCatalogRegion({ ...request, sourceToken: null, hostImages: false });
+  it("keeps maimai source covers when image hosting is off", async () => {
+    const maimai: CatalogChart = { ...chart, game: "maimai", chartType: 1, difficulty: 3, cover: "https://maimaidx.jp/maimai-mobile/img/Music/example.png" };
+    mocks.collect.mockResolvedValueOnce([maimai]);
+    await updateCatalogRegion({ ...request, game: "maimai", region: "cn", sourceToken: null, hostImages: false });
     expect(mocks.images).not.toHaveBeenCalled();
-    expect(mocks.persist).toHaveBeenCalledWith("chunithm", "jp", 9, [chart], "alter", mocks.log);
+    expect(mocks.persist).toHaveBeenCalledWith("maimai", "cn", 9, [maimai], "alter", mocks.log);
+  });
+
+  it("refuses to turn off CHUNITHM cover hosting as a bad request before collecting", async () => {
+    const updating = updateCatalogRegion({ ...request, sourceToken: null, hostImages: false });
+    await expect(updating).rejects.toBeInstanceOf(AdminRequestError);
+    await expect(updating).rejects.toThrow("CHUNITHM covers must be hosted, so image_upload cannot be false");
+    expect(mocks.collect).not.toHaveBeenCalled();
   });
 
   it.each([
@@ -141,7 +171,7 @@ describe("updateCatalogRegion", () => {
     ["duplicate charts", [chart, chart]],
   ])("refuses to write %s from a broken source", async (_name, charts) => {
     mocks.collect.mockResolvedValueOnce(charts);
-    await expect(updateCatalogRegion({ ...request, sourceToken: null, hostImages: false })).rejects.toThrow();
+    await expect(updateCatalogRegion({ ...request, sourceToken: null, hostImages: true })).rejects.toThrow();
     expect(mocks.persist).not.toHaveBeenCalled();
   });
 });

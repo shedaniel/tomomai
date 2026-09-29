@@ -28,4 +28,5 @@ export const maimaiImagePolicy: CatalogImagePolicy = {
   extractFilename,
   preferUrl: (candidate, existing) => !isJpDomain(existing) && isJpDomain(candidate),
   staticAssets: MAIMAI_STATIC_ASSETS,
+  requireHosting: false,
 };

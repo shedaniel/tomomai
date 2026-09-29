@@ -1,7 +1,10 @@
 import type { Logger } from "pino";
+import { formatChartLabel } from "@/lib/games/presentation";
+import { getGame } from "@/lib/games/registry";
 import type { CanonicalGameId } from "@/lib/games/types";
 import { convertToWebp, fetchImageBuffer } from "@/lib/image-converter";
 import { GAME_SERVER_MODULES } from "@/server/services/games/registry";
+import { AdminRequestError } from "./admin-game";
 import type { CatalogChart } from "./ingestion/schema";
 
 export type CatalogImageResult = {
@@ -21,6 +24,21 @@ async function processBatch<T, R>(
     results.push(...batchResults);
   }
   return results;
+}
+
+/** Refuses to collect a catalog without hosting its covers when the site cannot load the source covers. */
+export function assertCoverHostingEnabled(game: CanonicalGameId, hostImages: boolean): void {
+  if (!hostImages && GAME_SERVER_MODULES[game].catalog.images.requireHosting) {
+    throw new AdminRequestError(`${getGame(game).brand.displayName} covers must be hosted, so image_upload cannot be false`);
+  }
+}
+
+/** Refuses charts that still point at a source cover, for a game whose covers the site cannot load from the source. */
+export function assertCoversHosted(game: CanonicalGameId, charts: CatalogChart[]): void {
+  const policy = GAME_SERVER_MODULES[game].catalog.images;
+  if (!policy.requireHosting) return;
+  const unhosted = charts.find(chart => policy.extractFilename(chart.cover) !== null);
+  if (unhosted) throw new AdminRequestError(`Unhosted catalog cover: ${formatChartLabel(game, unhosted)}`);
 }
 
 /** Hosts each chart's cover on R2 under the game's cover rules and points the chart at the hosted copy. */

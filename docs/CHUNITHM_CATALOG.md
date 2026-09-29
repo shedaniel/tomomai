@@ -19,8 +19,9 @@ after-fetch stages, or Lxns alone for CN.
 Every source emits `PendingChart` records with numeric chart codes. Source
 stages merge into the charts collected so far through `asCatalogFetcher`, with
 one merge policy and one identity, `catalogChartKey`. Source attribution, stage
-notices, title validation and final required-field checks belong to the shared
-runner.
+notices and final required-field checks belong to the shared runner. Notices,
+logs and errors name a chart with `formatChartLabel` (`lib/games/presentation.ts`),
+such as `Song DX MASTER`, never with its key.
 
 The CHUNITHM otoge-db source parses pending charts only. The shared Fill Missing
 step applies CHUNITHM's `.5` plus-level rule before finalization.
@@ -33,8 +34,9 @@ The shared catalog ingestion lives under `apps/main/src/server/services/catalog/
   authentication), the stage runner (`runner.ts`), the merge policy and modes
   (`merge.ts`), display levels and the Fill Missing stage (`levels.ts`), the
   pending chart and cover-rule contracts (`types.ts`), the completed chart
-  schema and its identity, parent and instance fields (`schema.ts`), admin
-  upload parsing (`parse-upload.ts`), chart identity, completion and ordering
+  schema and its identity, parent and instance fields (`schema.ts`), the upload
+  contract (`parse-upload.ts`: the schema, known codes, the game's title
+  normalization and no duplicates), chart identity, completion and ordering
   (`normalize-charts.ts`) and parent identity matching. `lock.ts` holds the
   advisory lock that serializes every catalog write with publication, and
   `columns.ts` the instance columns an upsert replaces.
@@ -51,7 +53,8 @@ The shared catalog ingestion lives under `apps/main/src/server/services/catalog/
   request and refuses a write for another site's game. Every admin route runs
   through `adminRoute` (`lib/api/admin-route.ts`), which checks the admin token
   and answers rejections and failures with the request id.
-- `images.ts` hosts collected covers on R2 with the game's cover rules.
+- `images.ts` hosts collected covers on R2 with the game's cover rules, and
+  refuses a write whose covers the site cannot load (`requireHosting`).
 - `apply.ts` is what the admin routes run: `collectCatalogRegion` (source login
   and collection), `applyCatalogUpload` (persist, publish, revalidate and notify)
   and `updateCatalogRegion`, which `update_all` calls in process for each region
@@ -60,7 +63,8 @@ The shared catalog ingestion lives under `apps/main/src/server/services/catalog/
   then invalidates the game's cache tags and, on the game's own site, its song
   pages, and asks every deployment in `CATALOG_PEER_ORIGINS` to drop its tags
   through `POST /api/admin/catalog/revalidate`. `notifications.ts` formats the
-  song data update embed.
+  song data update embed, which lists only public fields, and picks its channel
+  per game and region (`resolveUpdateWebhook`).
 
 Discord delivery is generic and lives in
 `apps/main/src/server/services/discord/webhook.ts`. It posts embeds under the
@@ -70,7 +74,10 @@ sends the stage, error and tour event notices.
 Each game describes its catalog once, as the `catalog` field of its server
 module (`server/services/games/<game>/index.ts`, typed `CatalogSource`): its
 source stages per region (loaded lazily), level policy, cover rules, title
-normalization, source login and, for maimai, the legacy upload decoder. The
+normalization, source login and, for maimai, the legacy upload decoder. Uploads
+must already use a game's title normalization, and `/api/admin/db?type=normalize`
+applies the same rule to stored parents. A game without one, such as CHUNITHM,
+keeps source titles, and the route answers `422` for it. The
 implementations live in `apps/main/src/server/services/games/<game>/catalog/`:
 
 - `maimai/catalog/` owns its stage list (`pipeline.ts`), the chart helper and
@@ -189,11 +196,11 @@ any deployment:
   runs catalog ingestion for the configured regions (International then JP by
   default). Add `region=jp` or `region=intl` to select one region explicitly.
 
-Image processing is enabled by default. Do not pass `image_upload=false` when
-publishing CHUNITHM: that bypasses cover hosting and can persist upstream URLs
-that the frontend does not allow. To replace covers in an existing imported
-catalog, rerun `region=jp` and `region=intl` with images enabled. International
-alone may leave JP-preferred parent covers unchanged; each region's publication
+Image processing is enabled by default, and CHUNITHM enforces it because the
+frontend cannot load otoge-db covers: `image_upload=false` answers `400`, and a
+write whose covers still point at otoge-db is refused. To replace covers in an
+existing imported catalog, rerun `region=jp` and `region=intl`. International
+alone may leave JP-preferred parent covers unchanged. Each region's publication
 rebuilds all of the game's catalog slices, so a JP update also republishes
 International.
 

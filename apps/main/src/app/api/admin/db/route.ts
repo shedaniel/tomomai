@@ -2,9 +2,11 @@ import { adminRoute } from "@/lib/api/admin-route";
 import { AdminRequestError, requireAdminCatalogVersion, requireAdminRegion } from "@/server/services/catalog/admin-game";
 import type { CanonicalGameId } from "@/lib/games/types";
 import { db } from "@/lib/db";
+import { GameAdapterError } from "@/lib/games/errors";
+import { getGame } from "@/lib/games/registry";
 import { getCurrentVersion } from "@/lib/games/versions";
-import { normalizeName } from "@/lib/name-utils";
 import { songs, parentSong } from "@/lib/db/schema-pg";
+import { GAME_SERVER_MODULES } from "@/server/services/games/registry";
 import { and, eq, inArray } from "drizzle-orm";
 import { publishSongCatalog } from "@/server/services/catalog/publication";
 import { lockCatalogWrites } from "@/server/services/catalog/ingestion/lock";
@@ -18,6 +20,11 @@ export const GET = adminRoute("admin/db", async ({ request, game, log }) => {
 }, { game: "write" });
 
 async function normalize(game: CanonicalGameId, searchParams: URLSearchParams, log: Logger) {
+  // Ingestion keeps a game's source titles unless it has a rule, so renaming them here would orphan the parents.
+  const { normalizeTitle } = GAME_SERVER_MODULES[game].catalog;
+  if (!normalizeTitle) {
+    throw new GameAdapterError("UNSUPPORTED_CAPABILITY", `The ${getGame(game).brand.displayName} catalog keeps source titles and has no title normalization`, game);
+  }
   const region = requireAdminRegion(game, searchParams);
   const version = searchParams.get("version");
   const currentVersion = version === null ? getCurrentVersion(game, region) : requireAdminCatalogVersion(game, region, version);
@@ -32,7 +39,7 @@ async function normalize(game: CanonicalGameId, searchParams: URLSearchParams, l
       .orderBy(parentSong.id);
     let updated = 0;
     for (const parent of parents) {
-      const songName = normalizeName(parent.songName);
+      const songName = normalizeTitle(parent.songName);
       if (songName === parent.songName) continue;
       const collisions = await tx.select({ disambiguator: parentSong.disambiguator }).from(parentSong)
         .where(and(eq(parentSong.game, game), eq(parentSong.songName, songName), eq(parentSong.type, parent.type), eq(parentSong.difficulty, parent.difficulty)));

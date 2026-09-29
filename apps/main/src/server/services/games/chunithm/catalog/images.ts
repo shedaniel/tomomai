@@ -11,4 +11,5 @@ export const chunithmImagePolicy: CatalogImagePolicy = {
   },
   preferUrl: () => false,
   staticAssets: [],
+  requireHosting: true,
 };

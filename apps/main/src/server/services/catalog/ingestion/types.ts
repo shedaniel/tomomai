@@ -34,9 +34,12 @@ export type PendingChart = CatalogChartIdentity & { [K in keyof CatalogChartData
 export type SourceChart = PendingChart & { mode?: FetcherMode };
 
 export type CatalogImagePolicy = {
+  /** The storage name of a source cover URL, or null for a URL that is not a source cover. */
   extractFilename: (url: string) => string | null;
   preferUrl: (candidate: string, existing: string) => boolean;
   staticAssets: readonly { url: string; basename: string }[];
+  /** The site cannot load the source covers, so a catalog write must point at hosted copies. */
+  requireHosting: boolean;
 };
 
 export type CatalogCollectContext = {

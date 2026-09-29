@@ -43,7 +43,20 @@ describe("catalog upload boundary", () => {
   it("rejects cross-game, unsupported-code and duplicate records before ingestion", () => {
     expect(() => parseCatalogUpload("maimai", [chart])).toThrow("different game");
     expect(() => parseCatalogUpload("chunithm", [{ ...chart, difficulty: 42 }])).toThrow("Unknown chart codes");
-    expect(() => parseCatalogUpload("chunithm", [chart, chart])).toThrow("Duplicate catalog chart");
+    expect(() => parseCatalogUpload("chunithm", [chart, { ...chart, levelPrecise: 141 }])).toThrow("Duplicate catalog chart: Chart ULTIMA");
     expect(() => parseCatalogUpload("chunithm", [])).toThrow();
+  });
+
+  it("accepts charts that share a key but differ in artist or version, and charts that differ only in chart type", () => {
+    expect(parseCatalogUpload("chunithm", [chart, { ...chart, artist: "Another artist" }, { ...chart, addedVersion: 9 }, { ...chart, difficulty: 3 }]))
+      .toHaveLength(4);
+    const maimai = { ...chart, game: "maimai", difficulty: 3 };
+    expect(parseCatalogUpload("maimai", [maimai, { ...maimai, chartType: 1 }])).toHaveLength(2);
+  });
+
+  it("requires the game's normalized titles, and keeps source titles for a game without a rule", () => {
+    const maimai = { ...chart, game: "maimai", difficulty: 3 };
+    expect(() => parseCatalogUpload("maimai", [{ ...maimai, songName: "Ｌｉｎｋ" }])).toThrow("Song title is not normalized: Ｌｉｎｋ STD MASTER");
+    expect(parseCatalogUpload("chunithm", [{ ...chart, songName: "ネ！コ！" }])[0].songName).toBe("ネ！コ！");
   });
 });

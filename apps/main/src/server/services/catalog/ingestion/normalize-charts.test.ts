@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import pino from "pino";
-import { compareCatalogCharts, completeCatalogChart, mergeCatalogChart, validateCatalogCharts } from "./normalize-charts";
+import { compareCatalogCharts, completeCatalogChart, mergeCatalogChart } from "./normalize-charts";
 import type { CatalogChart } from "./schema";
 
 const log = pino({ enabled: false });
@@ -23,20 +23,6 @@ describe("catalog completion", () => {
 
   it("requires a resolved introduction version after the final stage", () => {
     expect(() => completeCatalogChart({ ...chart, addedVersion: undefined }, log)).toThrow("addedVersion");
-  });
-});
-
-describe("catalog validation", () => {
-  it("rejects a repeated identity even when other chart fields differ", () => {
-    expect(() => validateCatalogCharts("chunithm", [chart, { ...chart, levelPrecise: 141 }])).toThrow("Duplicate catalog chart: Chart ULTIMA");
-  });
-
-  it("accepts charts that share a key but differ in artist or version, and charts with another key", () => {
-    expect(() => validateCatalogCharts("chunithm", [
-      chart, { ...chart, artist: "Another artist" }, { ...chart, addedVersion: 9 }, { ...chart, difficulty: 3 },
-    ])).not.toThrow();
-    const maimai = { ...chart, game: "maimai" as const, difficulty: 3 };
-    expect(() => validateCatalogCharts("maimai", [maimai, { ...maimai, chartType: 1 }])).not.toThrow();
   });
 });
 

@@ -7,7 +7,7 @@ import { awaitWrapper } from "@/lib/utils";
 import { sendDiscordNotice } from "@/server/services/discord/webhook";
 import { AdminRequestError } from "./admin-game";
 import { formatCatalogError } from "./errors";
-import { processCatalogImages } from "./images";
+import { assertCoverHostingEnabled, assertCoversHosted, processCatalogImages } from "./images";
 import { authenticateCatalogSource, collectCatalog } from "./ingestion/collect";
 import { parseCatalogUpload } from "./ingestion/parse-upload";
 import { persistCatalog, type CatalogPersistResult } from "./ingestion/persistence";
@@ -56,6 +56,8 @@ export async function applyCatalogUpload({ game, region, version, charts, mode, 
   charts: CatalogChart[];
   mode: CatalogUpdateMode;
 }): Promise<CatalogUploadOutcome> {
+  // A noop preview writes nothing, so it may compare collected charts whose covers are not hosted yet.
+  if (mode !== "noop") assertCoversHosted(game, charts);
   const uploadLog = log.child({ region, version });
   try {
     uploadLog.info({ songCount: charts.length, updateMode: mode }, "Upload merge analysis starting");
@@ -99,6 +101,7 @@ export async function updateCatalogRegion({ game, region, sourceToken, hostImage
   sourceToken: string | null;
   hostImages: boolean;
 }): Promise<CatalogUploadOutcome> {
+  assertCoverHostingEnabled(game, hostImages);
   const version = getCurrentVersion(game, region);
   const collected = await collectCatalogRegion({ game, region, version, sourceToken, log, requestId });
   const hosted = hostImages ? (await processCatalogImages(game, collected, log.child({ region }))).charts : collected;

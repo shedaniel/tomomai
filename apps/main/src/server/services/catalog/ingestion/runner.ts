@@ -1,11 +1,10 @@
 import deepEqual from "deep-equal";
-import type { Logger } from "pino";
 import type { CanonicalGameId } from "@/lib/games/types";
 import { sendDiscordNotice } from "@/server/services/discord/webhook";
 import { formatChartLabel } from "@/lib/games/presentation";
 import { catalogChartKey, completeCatalogChart } from "./normalize-charts";
 import type { CatalogChart } from "./schema";
-import type { CatalogCollectContext, CatalogFetchContext, NoticeSink, PendingChart, SourceChart } from "./types";
+import type { CatalogCollectContext, CatalogFetchContext, NoticeSink, SourceChart } from "./types";
 
 export type CatalogStage = {
   name: string;
@@ -15,8 +14,6 @@ export type CatalogStage = {
 export type FetcherDefinition = {
   game: CanonicalGameId;
   stages: CatalogStage[];
-  /** Runs after every stage, with that stage's logger. */
-  validate?: (charts: PendingChart[], log: Logger) => void;
 };
 
 type Attributed = SourceChart & { addedFetcher: number; modifiedFetchers: number[] };
@@ -60,7 +57,7 @@ function attributeSource(previous: Attributed[], next: SourceChart[], index: num
   });
 }
 
-export async function runFetchers(context: CatalogCollectContext, { game, stages, validate }: FetcherDefinition): Promise<CatalogChart[]> {
+export async function runFetchers(context: CatalogCollectContext, { game, stages }: FetcherDefinition): Promise<CatalogChart[]> {
   const notify = (title: string, body: string, color: number) => {
     sendDiscordNotice(game, context.region, title, body, color).catch(() => { });
   };
@@ -76,7 +73,6 @@ export async function runFetchers(context: CatalogCollectContext, { game, stages
     const next = await stage.run({ ...context, log, notice }, charts);
     charts = attributeSource(charts, next, index);
     notify(`Stage ${index + 1}/${stages.length}: ${stage.name}`, summarizeStage(charts, index, stage.name, chartsBefore, Date.now() - startTime, notice), 0x5865F2);
-    validate?.(charts, log);
   }
 
   const completed: CatalogChart[] = [];
