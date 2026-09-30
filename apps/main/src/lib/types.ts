@@ -35,7 +35,8 @@ export interface UserData {
   username: string | null;
   email: string;
   publishProfile: boolean;
-  region: Region;
+  /** The dashboard region preference for the served game, null when none is set. */
+  region: Region | null;
   role: "user" | "admin";
 }
 

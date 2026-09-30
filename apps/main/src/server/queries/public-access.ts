@@ -6,6 +6,7 @@ import { user, userSnapshots } from "@/lib/db/schema-pg";
 import { and, eq } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { GAME_SERVER_MODULES } from "@/server/services/games/registry";
+import { gamePreference } from "./game-preferences";
 
 const privacyColumns = {
   profileShowAllScores: user.profileShowAllScores,
@@ -25,7 +26,7 @@ export async function resolvePublicUserByUsername(game: CanonicalGameId, usernam
       name: user.name,
       publishProfile: user.publishProfile,
       profileDescription: user.profileDescription,
-      profileMainRegion: user.profileMainRegion,
+      profileMainRegion: gamePreference(game, "profileMainRegion"),
       ...privacyColumns,
       profileShowInSearch: user.profileShowInSearch,
     })

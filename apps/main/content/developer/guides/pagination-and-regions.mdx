@@ -10,6 +10,9 @@ All game data lives under `/api/v1/games/{game}`. Use canonical `maimai` or
 `chunithm`. Aliases and omitted game IDs are invalid. Successful JSON responses include `game`.
 
 `/api/v1/me`, `/api/v1/me/settings`, `/api/v1/me/scopes`, and `/api/v1/ok` are global.
+Each game keeps its own region choices, so the `region` of `/me` and the
+`profileMainRegion` of `/me/settings` are the user's choices for the game of
+the site you call.
 
 Catalog routes include `/games/{game}/parents`, `/games/{game}/songs/versions`,
 `/games/{game}/songs`, and `/games/{game}/songs/{id}`. The song catalog requires

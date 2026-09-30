@@ -47,10 +47,10 @@ Implemented frontend support:
   matching. Existing maimai slugs, filters and detail navigation are preserved.
 - Shared shell branding, region choices and metadata derive from game context.
   Client components read `useGame().regions` and server code reads
-  `getEnabledRegions(game)` from `lib/games/regions.ts`. The account region and
-  profile main region are offered from, and validated against, the served game's
-  regions. `isGameCnExclusive(game)` marks the China deployment, which pins the
-  locale and every region choice.
+  `getEnabledRegions(game)` from `lib/games/regions.ts`. The dashboard region and
+  profile main region are stored per game, and are offered from, and validated
+  against, the served game's regions. `isGameCnExclusive(game)` marks the China
+  deployment, which pins the locale and every region choice.
   Tomochu's Japanese name is **ともチュウ**. Brand facts (names, the NET's
   official name, domain, icon, wordmarks, OpenGraph artwork, the example profile
   and the community invite) live on the definition's `brand`. `BrandLogo` draws a
@@ -279,7 +279,7 @@ behavior when migrating maimai.
 | Regional profile | `/{locale}/profile/{username}/{region}` | Explicit region retained, validated for the game |
 | Settings entry | `/{locale}/settings` | Currently redirects to `/settings/account`; final placement remains open |
 | Account settings | `/{locale}/settings/account` | Shared account data; central versus branded placement remains open |
-| Privacy settings | `/{locale}/settings/privacy` | Audit existing global settings before introducing game-specific overrides |
+| Privacy settings | `/{locale}/settings/privacy` | The main region is per game. Publishing and the privacy switches are account-wide |
 | Fetch settings | `/{locale}/settings/fetch` | Game-specific controls and supported fetch features |
 | Connected applications | `/{locale}/settings/applications` | Account-wide grants; placement remains open |
 | Developer settings | `/{locale}/settings/developer` | Account-wide keys/clients; placement remains open |

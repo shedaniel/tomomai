@@ -73,7 +73,9 @@ const secondaryScoreField = z.number().int().describe("The secondary score, such
 
 export const profileSettings = z.object({
   publishProfile: z.boolean(),
-  profileMainRegion: regionSchema,
+  profileMainRegion: regionSchema
+    .nullable()
+    .describe("The region the public profile shows first: the user's choice for this site's game, else the game's first enabled region. Null only while the game enables no region."),
   profileShowAllScores: z.boolean(),
   profileShowScoreDetails: z.boolean(),
   profileShowPlates: z.boolean(),

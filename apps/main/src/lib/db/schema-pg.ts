@@ -46,7 +46,9 @@ export const user = pgTable("user", {
   banned: boolean("banned").notNull().default(false),
   banReason: text("banReason"),
   banExpires: timestamp("banExpires", { precision: 0 }),
-  region: regionEnum("region"), // nullable, null = intl (default)
+  // region and profileMainRegion are per game in user_game_preferences. These account-wide copies are
+  // no longer written and only answer for a user who has not set the game's preference yet.
+  region: regionEnum("region"),
   // Profile publishing settings
   publishProfile: boolean("publishProfile").notNull().default(false),
   profileMainRegion: regionEnum("profileMainRegion").notNull().default("intl"),
@@ -164,6 +166,17 @@ export const userTokens = pgTable("user_tokens", {
   updatedAt: timestamp("updatedAt", { precision: 0 }).notNull(),
 }, (table) => [
   unique("user_tokens_userid_game_region_unique").on(table.userId, table.game, table.region),
+]);
+
+// A null column falls back to the user's account-wide column of the same name.
+export const userGamePreferences = pgTable("user_game_preferences", {
+  userId: text("userId").notNull().references(() => user.id, { onDelete: "cascade" }),
+  game: gameEnum("game").notNull(),
+  region: regionEnum("region"),
+  profileMainRegion: regionEnum("profileMainRegion"),
+  updatedAt: timestamp("updatedAt", { precision: 0 }).notNull().defaultNow(),
+}, (table) => [
+  primaryKey({ columns: [table.userId, table.game] }),
 ]);
 
 export const fetchSessions = pgTable("fetch_sessions", {

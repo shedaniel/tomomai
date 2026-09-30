@@ -86,12 +86,12 @@ snapshot export, render tokens and the db top-songs list. Its `fromMaimaiScore`
 is the one reverse mapping, used when normalizing scraped scores.
 
 Queries filter by game on root rows only: `user_snapshots`, `user_recent_songs`,
-`user_albums`, `user_tokens` and `fetch_sessions`, plus the catalog listings
-(`songs` or `parent_song`). A child row needs no game predicate, because its
-composite foreign key already keeps it in its parent's game. That covers
-`snapshot_scores`, `snapshot_rankings` and `user_events` reached through a
-snapshot, `songs` or `parent_song` joined from a user row or from each other,
-and the catalog reference checks, which find the `score_data`,
+`user_albums`, `user_tokens`, `fetch_sessions` and `user_game_preferences`, plus
+the catalog listings (`songs` or `parent_song`). A child row needs no game
+predicate, because its composite foreign key already keeps it in its parent's
+game. That covers `snapshot_scores`, `snapshot_rankings` and `user_events`
+reached through a snapshot, `songs` or `parent_song` joined from a user row or
+from each other, and the catalog reference checks, which find the `score_data`,
 `user_recent_songs` and `user_albums` rows of a chart by its id. Indexes on a
 child's foreign key lead with the parent id, so these lookups need no game. The
 newest snapshot of a user in a region is read through
@@ -193,8 +193,18 @@ reserved accounts, existing UI presentation, credit/daily-play images and
 render tokens remain explicitly maimai-only. Their tRPC procedures live under
 `trpc.maimai` (`server/routers/maimai`). They take no game input and check
 their own capability through `maimaiProcedure` or `maimaiRegionProcedure`.
-Profile settings remain global. Generic API/query/tRPC boundaries carry game,
-and enabling a second scraper remains separate work.
+The dashboard region and the profile main region are per game, in
+`user_game_preferences` (one row per user and game). The profile procedures and
+the admin user list read and write the row of the site's game
+(`getCurrentGame()`), `/api/v1/me` and `/api/v1/me/settings` answer it clamped
+to the game's enabled regions, and the Discord bot reads the maimai row. Readers
+select a preference through `gamePreference(game, key)` in
+`server/queries/game-preferences.ts`, which falls back to the account-wide
+`user.region` or `user.profileMainRegion` while the user has not set it for that
+game. Those two columns are no longer written and wait for a cleanup migration.
+Publishing, the privacy switches, the description and the album preference are
+account-wide. Generic API/query/tRPC boundaries carry game, and enabling a
+second scraper remains separate work.
 
 Focused mocked tests cover score normalization, parent ambiguity, generic
 optional persistence, transaction failure, deadline rejection and late fetch

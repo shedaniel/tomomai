@@ -126,6 +126,15 @@ Stats, albums and plates are only offered for maimai DX.
 `notFoundScores` entries are `{ songName, difficulty, type }` with codes. They
 replace the difficulty name and `musicType`.
 
+### Region choices per game
+
+Each game keeps its own region choices. `region` in `/api/v1/me` and
+`profileMainRegion` in `/api/v1/me/settings` are the user's choices for the
+game of the site that answers the request: maimai DX on tomomai.lol and
+CHUNITHM on tomochu.app. A choice the game does not enable, or no choice at
+all, answers the game's first enabled region. Both fields are `null` only
+while the game enables no region. The other settings are shared by both games.
+
 ### Errors
 
 Errors with a stable cause carry a `code` next to `error`:

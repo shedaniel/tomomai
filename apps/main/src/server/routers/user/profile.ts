@@ -1,19 +1,19 @@
 import { db } from '@/lib/db';
 import { user } from '@/lib/db/schema-pg';
 import { getCurrentGame } from '@/lib/games/current';
-import { isGameCnExclusive, isGameRegion } from '@/lib/games/frontend';
+import { isGameCnExclusive, isGameRegion, type FrontendGame } from '@/lib/games/frontend';
 import { regionSchema } from '@/lib/games/schema';
 import { protectedProcedure, router } from '@/lib/trpc';
 import { Region, UserData } from '@/lib/types';
 import { TRPCError } from '@trpc/server';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
-import { fetchProfileSettings } from '@/server/queries/profile';
+import { fetchProfileSettings, fetchUserData } from '@/server/queries/profile';
+import { saveGamePreference } from '@/server/queries/game-preferences';
 import { profileDescriptionInputSchema } from '@/lib/profile-description';
 
 // Region choices are offered from the served game's regions, so they are validated against the same list.
-function requireCurrentGameRegion(region: Region): void {
-  const game = getCurrentGame();
+function requireGameRegion(game: FrontendGame, region: Region): void {
   if (!isGameRegion(game, region)) {
     throw new TRPCError({ code: 'BAD_REQUEST', message: `${region} is not enabled for ${game.brand.displayName}` });
   }
@@ -22,36 +22,20 @@ function requireCurrentGameRegion(region: Region): void {
 export const profileRouter = router({
   getUserData: protectedProcedure
     .query(async ({ ctx }) => {
-      const cnOnly = isGameCnExclusive(getCurrentGame());
-      const userRecord = await db
-        .select({
-          username: user.username, email: user.email, publishProfile: user.publishProfile, role: user.role,
-          ...(!cnOnly ? { region: user.region } : {})
-        })
-        .from(user)
-        .where(eq(user.id, ctx.session.user.id))
-        .limit(1);
-
-      if (userRecord.length === 0) {
+      const userData = await fetchUserData(getCurrentGame().id, ctx.session.user.id);
+      if (!userData) {
         throw new TRPCError({
           code: 'NOT_FOUND',
           message: 'User not found',
         });
       }
 
-      return {
-        hasUsername: !!userRecord[0].username,
-        username: userRecord[0].username,
-        email: userRecord[0].email,
-        publishProfile: userRecord[0].publishProfile,
-        region: (!cnOnly ? userRecord[0].region! : 'cn') as Region,
-        role: userRecord[0].role,
-      } satisfies UserData;
+      return { hasUsername: !!userData.username, ...userData } satisfies UserData;
     }),
 
   getProfileSettings: protectedProcedure
     .query(async ({ ctx }) => {
-      const settings = await fetchProfileSettings(ctx.session.user.id);
+      const settings = await fetchProfileSettings(getCurrentGame().id, ctx.session.user.id);
       if (!settings) {
         throw new TRPCError({
           code: 'NOT_FOUND',
@@ -93,17 +77,12 @@ export const profileRouter = router({
 
   updateRegion: protectedProcedure
     .input(z.object({
-      region: regionSchema.nullable(),
+      region: regionSchema,
     }))
     .mutation(async ({ ctx, input }) => {
-      if (input.region !== null) requireCurrentGameRegion(input.region);
-      await db
-        .update(user)
-        .set({
-          region: input.region,
-          updatedAt: new Date(),
-        })
-        .where(eq(user.id, ctx.session.user.id));
+      const game = getCurrentGame();
+      requireGameRegion(game, input.region);
+      await saveGamePreference(game.id, ctx.session.user.id, { region: input.region });
 
       return { success: true };
     }),
@@ -113,15 +92,10 @@ export const profileRouter = router({
       profileMainRegion: regionSchema,
     }))
     .mutation(async ({ ctx, input }) => {
-      if (isGameCnExclusive(getCurrentGame())) throw new TRPCError({ code: 'BAD_REQUEST', message: 'Cannot update profile main region in China region' });
-      requireCurrentGameRegion(input.profileMainRegion);
-      await db
-        .update(user)
-        .set({
-          profileMainRegion: input.profileMainRegion,
-          updatedAt: new Date(),
-        })
-        .where(eq(user.id, ctx.session.user.id));
+      const game = getCurrentGame();
+      if (isGameCnExclusive(game)) throw new TRPCError({ code: 'BAD_REQUEST', message: 'Cannot update profile main region in China region' });
+      requireGameRegion(game, input.profileMainRegion);
+      await saveGamePreference(game.id, ctx.session.user.id, { profileMainRegion: input.profileMainRegion });
 
       return { success: true };
     }),
