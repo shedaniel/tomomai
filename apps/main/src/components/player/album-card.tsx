@@ -280,11 +280,11 @@ export function AlbumCard({ region }: AlbumCardProps) {
               >
                 {/* Album Image - 16:9 aspect ratio */}
                 <div className="relative w-full aspect-video overflow-hidden bg-muted">
-                  {album.imageKey && process.env.NEXT_PUBLIC_R2_URL ? <img
+                  <img
                     src={`${process.env.NEXT_PUBLIC_R2_URL}/${album.imageKey}`}
                     alt={album.songName}
                     className="w-full h-full object-cover"
-                  /> : <p>{t("imageUnavailable")}</p>}
+                  />
                 </div>
 
                 {/* Album Info */}

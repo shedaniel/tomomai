@@ -15,7 +15,7 @@ const chart: GamePlayerScore = {
 
 function recommend(game: CanonicalGameId, gameVersion: number, songs: GamePlayerScore[]) {
   return generateRecommendations({
-    snapshot: { publicId: "snapshot", game, gameVersion, displayName: "Player", rating: 0, fetchedAt: new Date() },
+    snapshot: { publicId: "snapshot", game, gameVersion, displayName: "Player", rating: 0, fetchedAt: new Date(), title: "", titleType: 0, iconUrl: "", courseRankUrl: null, classRankUrl: null, stars: null, versionPlayCount: 0, totalPlayCount: 0 },
     songs,
   });
 }

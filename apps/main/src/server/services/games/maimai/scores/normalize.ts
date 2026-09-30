@@ -1,7 +1,7 @@
 import "server-only";
 import type { EventsData, PlayerData, RecentSongData, ScoreData } from "./types";
+import type { GameEvent } from "@/lib/games/player-view";
 import type {
-  NormalizedEvent,
   NormalizedPlayer,
   NormalizedRecent,
   NormalizedScore,
@@ -54,7 +54,7 @@ export function normalizeRecent(recent: RecentSongData, ctx: ChartContext): Norm
   };
 }
 
-export function normalizeEvents(events: EventsData): NormalizedEvent[] {
+export function normalizeEvents(events: EventsData): GameEvent[] {
   const areaEvents = events.areaEvents.map(event => ({
     name: event.name,
     eventType: "area",
@@ -62,7 +62,9 @@ export function normalizeEvents(events: EventsData): NormalizedEvent[] {
     nextRewardDistance: event.nextRewardDistance,
     state: event.state,
     imageUrl: event.imageUrl,
-  } satisfies NormalizedEvent));
+    eventPeriodStart: null,
+    eventPeriodEnd: null,
+  } satisfies GameEvent));
   const eventAreaEvents = events.eventAreaEvents.map(event => ({
     name: event.name,
     eventType: "eventArea",
@@ -72,6 +74,6 @@ export function normalizeEvents(events: EventsData): NormalizedEvent[] {
     imageUrl: event.imageUrl,
     eventPeriodStart: event.eventPeriod ? new Date(event.eventPeriod[0]) : null,
     eventPeriodEnd: event.eventPeriod ? new Date(event.eventPeriod[1]) : null,
-  } satisfies NormalizedEvent));
+  } satisfies GameEvent));
   return [...areaEvents, ...eventAreaEvents];
 }

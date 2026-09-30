@@ -56,7 +56,7 @@ export async function prepareCreditData(
     .select({
       ...maimaiRecentPlayColumns,
       maxDxScore: sql<number>`coalesce(${userRecentSongs.maxSecondaryScore}, 0)`.mapWith(Number).as("maxDxScore"),
-      track: sql<number>`coalesce(${userRecentSongs.track}, 0)`.mapWith(Number).as("track"),
+      track: userRecentSongs.track,
       playlog: maimaiPlaylogColumns,
     })
     .from(userRecentSongs)

@@ -722,8 +722,7 @@
     "deleteFailed": "Failed to delete photo",
     "dontAskAgain": "Don't show this confirmation again today",
     "delete": "Delete",
-    "cancel": "Cancel",
-    "imageUnavailable": "Image unavailable"
+    "cancel": "Cancel"
   },
   "recommendations": {
     "peerAchieved": "Achieved by ≈{percent} peers",

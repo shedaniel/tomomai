@@ -16,7 +16,10 @@ import { getGame } from "./registry";
 
 function fixture(game: CanonicalGameId): GameSnapshotData {
   return {
-    snapshot: { publicId: "test", game, displayName: "Player", rating: game === "maimai" ? 15000 : 1650, fetchedAt: new Date("2026-09-01T00:00:00Z"), gameVersion: 10, totalPlayCount: 12 },
+    snapshot: {
+      publicId: "test", game, displayName: "Player", rating: game === "maimai" ? 15000 : 1650, fetchedAt: new Date("2026-09-01T00:00:00Z"), gameVersion: 10,
+      title: "", titleType: 0, iconUrl: "", courseRankUrl: null, classRankUrl: null, stars: null, versionPlayCount: 0, totalPlayCount: 12,
+    },
     songs: Array.from({ length: 80 }, (_, i) => ({
       songId: `chart-${i}`, songName: `Song ${i}`, artist: "Artist", cover: "https://example.com/cover.webp", difficultyCode: 3, typeCode: 0, level: "14", levelPrecise: 140, genre: "", addedVersion: i < 40 ? 10 : 9,
       scoreValue: game === "maimai" ? 1005000 : 1009000, secondaryScore: null, comboStatus: 0, syncStatus: 0, clearStatus: 0,

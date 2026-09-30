@@ -11,7 +11,7 @@ import { trpc } from "@/lib/trpc-client";
 import { useMemo } from "react";
 
 type StepData = { distance: number; type: string; reward: string };
-type EventState = NonNullable<GameEvent["state"]>;
+type EventState = GameEvent["state"];
 
 function StepProgress({
   currentDistance,
@@ -106,9 +106,7 @@ function EventCard({
   steps: StepData[] | undefined;
 }) {
   const t = useTranslations();
-  const state = event.state ?? "not_started";
-  const currentDistance = event.currentDistance ?? 0;
-  const imageUrl = event.imageUrl ?? "";
+  const { state, currentDistance, imageUrl } = event;
   const isCompleted = state === "completed";
 
   const getStateLabel = (state: string) => {
@@ -164,7 +162,7 @@ function EventCard({
               {isCompleted && <CheckCircle2 className="h-3 w-3 text-primary" />}
               {currentDistance.toLocaleString()} km
             </span>
-            {event.nextRewardDistance != null && state === "in_progress" && (
+            {event.nextRewardDistance !== null && state === "in_progress" && (
               <span className="text-muted-foreground/70">
                 → {event.nextRewardDistance.toLocaleString()} km
               </span>

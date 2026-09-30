@@ -24,7 +24,7 @@ export async function enforceStorageLimit(userId: string): Promise<void> {
     columns: { id: true, imageKey: true, imageSize: true },
   });
 
-  let totalSize = userAlbumsList.reduce((sum, a) => sum + (a.imageSize ?? 0), 0);
+  let totalSize = userAlbumsList.reduce((sum, a) => sum + a.imageSize, 0);
 
   if (totalSize <= MAX_STORAGE_BYTES) {
     logger.debug(`User ${userId} storage: ${totalSize} bytes (within ${MAX_STORAGE_BYTES} byte limit)`);
@@ -39,14 +39,14 @@ export async function enforceStorageLimit(userId: string): Promise<void> {
     }
 
     try {
-      if (album.imageKey) await deleteFromR2(album.imageKey);
+      await deleteFromR2(album.imageKey);
       logger.debug(`Deleted R2 object: ${album.imageKey}`);
     } catch (error) {
       logger.error({ err: error }, `Failed to delete R2 object: ${album.imageKey}`);
     }
 
     await db.delete(userAlbums).where(and(eq(userAlbums.id, album.id), eq(userAlbums.game, "maimai")));
-    totalSize -= album.imageSize ?? 0;
+    totalSize -= album.imageSize;
     logger.info(`Deleted album ${album.id}, freed ${album.imageSize} bytes`);
   }
 

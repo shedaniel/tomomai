@@ -30,15 +30,13 @@ it.each(["maimai", "chunithm"] as const)("adds game predicates to %s snapshot re
   }
 });
 
-it("includes optional metadata in recent and album reads and scopes their pagination by game", async () => {
+it("scopes recent and album pages and the recent count by game", async () => {
   state.responses.push([], [[0]], []);
   await fetchRecentSongs("chunithm", "same-user", "jp", 20, 0);
   await fetchUserAlbums("chunithm", "same-user", "jp", 20, 0);
   expect(state.queries).toHaveLength(3);
-  expect(state.queries[0].sql).toContain('"user_recent_songs"."metadata"');
   expect(state.queries[0].sql).toContain('"user_recent_songs"."game" = $');
   expect(state.queries[1].sql).toContain('"user_recent_songs"."game" = $');
-  expect(state.queries[2].sql).toContain('"user_albums"."metadata"');
   expect(state.queries[2].sql).toContain('"user_albums"."game" = $');
   expect(state.queries.every(query => query.params.includes("chunithm"))).toBe(true);
 });

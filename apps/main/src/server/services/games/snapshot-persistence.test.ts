@@ -76,9 +76,13 @@ it.each([
 });
 
 it("persists events against the new snapshot and game", async () => {
-  await persistFetchResult({ ...persist, fetched: { ...fetched, events: [{ name: "Progress", currentDistance: 10 }] } });
+  const event = {
+    name: "Progress", eventType: "area", currentDistance: 10, nextRewardDistance: null, state: "in_progress",
+    imageUrl: "https://example.com/area.png", eventPeriodStart: null, eventPeriodEnd: null,
+  } as const;
+  await persistFetchResult({ ...persist, fetched: { ...fetched, events: [event] } });
   const eventWrite = state.statements.find(query => query.sql.startsWith('insert into "user_events"'))!;
-  expect(eventWrite.params).toEqual(expect.arrayContaining(["Progress", 10, "maimai", 1]));
+  expect(eventWrite.params).toEqual(expect.arrayContaining(["Progress", "area", 10, "in_progress", "https://example.com/area.png", "maimai", 1]));
 });
 
 it("persists recent plays with their track and maximum secondary score", async () => {

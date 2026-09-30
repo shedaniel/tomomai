@@ -722,8 +722,7 @@
     "deleteFailed": "照片刪除失敗",
     "dontAskAgain": "今天不再詢問",
     "delete": "刪除",
-    "cancel": "取消",
-    "imageUnavailable": "圖片無法顯示"
+    "cancel": "取消"
   },
   "recommendations": {
     "peerAchieved": "約 {percent} 同程度玩家達成",

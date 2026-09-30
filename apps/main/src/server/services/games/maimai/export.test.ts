@@ -4,7 +4,7 @@ import { toMaimaiExport } from "./export";
 
 const header = (gameVersion: number): GameSnapshot => ({
   publicId: "snapshot", game: "maimai", displayName: "Player", rating: 15000, gameVersion, fetchedAt: new Date("2026-09-01T00:00:00Z"),
-  title: "Title", titleType: 0, iconUrl: "", versionPlayCount: 0, totalPlayCount: 0,
+  title: "Title", titleType: 0, iconUrl: "", courseRankUrl: "course.png", classRankUrl: "class.png", stars: 3, versionPlayCount: 0, totalPlayCount: 0,
 });
 
 const score = (songName: string, overrides: Partial<GamePlayerScore>): GamePlayerScore => ({

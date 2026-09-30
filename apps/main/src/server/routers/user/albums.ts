@@ -58,7 +58,7 @@ export const albumsRouter = router({
         });
       }
 
-      if (album[0].imageKey) await deleteFromR2(album[0].imageKey);
+      await deleteFromR2(album[0].imageKey);
       await db
         .delete(userAlbums)
         .where(eq(userAlbums.id, album[0].id));

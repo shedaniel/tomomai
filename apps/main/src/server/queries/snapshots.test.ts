@@ -3,13 +3,13 @@ import { beforeEach, expect, it, vi } from "vitest";
 const INTERNAL_ID = 41;
 const stored = vi.hoisted(() => ({
   user_snapshots: {
-    id: 41, publicId: "snapshot", userId: "owner", game: "chunithm", region: "jp", metadata: { provider: "test" }, fetchedAt: "2026-09-01 00:00:00",
+    id: 41, publicId: "snapshot", userId: "owner", game: "chunithm", region: "jp", fetchedAt: "2026-09-01 00:00:00",
     gameVersion: 9, rating: 1700, courseRankUrl: null, classRankUrl: null, stars: null, versionPlayCount: 1, totalPlayCount: 2,
     iconUrl: "", displayName: "Player", title: "Title", titleType: 0,
   },
   user_events: {
-    metadata: { steps: 10 }, eventType: null, name: "Map progress", currentDistance: 10, nextRewardDistance: null, state: null,
-    imageUrl: null, eventPeriodStart: null, eventPeriodEnd: null,
+    id: 5, snapshotId: 41, game: "chunithm", eventType: "area", name: "Map progress", currentDistance: 10, nextRewardDistance: null,
+    state: "in_progress", imageUrl: "https://example.com/map.png", eventPeriodStart: null, eventPeriodEnd: null,
   },
 } as Record<string, Record<string, unknown>>));
 const state = vi.hoisted(() => ({ queries: [] as { sql: string; params: unknown[] }[] }));
@@ -38,14 +38,15 @@ beforeEach(() => { state.queries = []; });
 it.each([
   ["by public id", () => fetchSnapshotData("chunithm", "owner", "snapshot", "jp")],
   ["latest", () => fetchLatestSnapshotData("chunithm", "owner", "jp")],
-])("reads the %s snapshot through its internal id within the game, without handing out the id, owner or raw metadata", async (_, read) => {
+])("reads the %s snapshot through its internal id within the game, without handing out the id or owner", async (_, read) => {
   const result = await read();
   expect(result?.snapshot).toStrictEqual({
     publicId: "snapshot", game: "chunithm", displayName: "Player", rating: 1700, gameVersion: 9, fetchedAt: new Date("2026-09-01T00:00:00Z"),
     title: "Title", titleType: 0, iconUrl: "", courseRankUrl: null, classRankUrl: null, stars: null, versionPlayCount: 1, totalPlayCount: 2,
   });
   expect(result?.events).toStrictEqual([{
-    eventType: null, name: "Map progress", currentDistance: 10, nextRewardDistance: null, state: null, imageUrl: null, eventPeriodStart: null, eventPeriodEnd: null,
+    eventType: "area", name: "Map progress", currentDistance: 10, nextRewardDistance: null, state: "in_progress",
+    imageUrl: "https://example.com/map.png", eventPeriodStart: null, eventPeriodEnd: null,
   }]);
   expect(result?.songs[0]).toMatchObject({ difficultyCode: 4, typeCode: 0, comboStatus: 3, scoreValue: 1009000 });
   const [header, scores, events] = state.queries;

@@ -175,11 +175,11 @@ export const songScore = z.object({
 });
 
 export const snapshotEvent = z.object({
-  eventType: z.string().nullable(),
+  eventType: z.string(),
   name: z.string(),
   currentDistance: z.number().int().nullable(),
   nextRewardDistance: z.number().int().nullable(),
-  state: z.string().nullable(),
+  state: z.string(),
   imageUrl: z.string().nullable(),
   eventPeriodStart: z.string().nullable(),
   eventPeriodEnd: z.string().nullable(),

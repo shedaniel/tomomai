@@ -44,7 +44,7 @@ async function renderText(game: FrontendGame, data: GameSnapshotData): Promise<s
 
 it("renders CHUNITHM score targets, average rating gains and game-sized buckets without a standard badge", async () => {
   const data: GameSnapshotData = {
-    snapshot: { publicId: "snapshot", game: "chunithm", gameVersion: 9, displayName: "Player", rating: 30, fetchedAt: new Date() },
+    snapshot: { publicId: "snapshot", game: "chunithm", gameVersion: 9, displayName: "Player", rating: 30, fetchedAt: new Date(), title: "", titleType: 0, iconUrl: "", courseRankUrl: null, classRankUrl: null, stars: null, versionPlayCount: 0, totalPlayCount: 0 },
     songs: [chart],
   };
   const text = await renderText({ ...toFrontendGame(getGame("chunithm"), ["jp"]), capabilities: ["scores", "rating"] }, data);
@@ -63,7 +63,10 @@ it("renders CHUNITHM score targets, average rating gains and game-sized buckets 
 it("renders maimai score targets at compact precision with the floored delta, and the AP target by its label", async () => {
   const master = codeOf("maimai", "difficulty", "master");
   const data: GameSnapshotData = {
-    snapshot: { publicId: "snapshot", game: "maimai", gameVersion: 13, displayName: "Player", rating: 0, fetchedAt: new Date() },
+    snapshot: {
+      publicId: "snapshot", game: "maimai", gameVersion: 13, displayName: "Player", rating: 0, fetchedAt: new Date(),
+      title: "", titleType: 0, iconUrl: "", courseRankUrl: "", classRankUrl: "", stars: 0, versionPlayCount: 0, totalPlayCount: 0,
+    },
     songs: [
       { ...chart, songId: "score", difficultyCode: master, levelPrecise: 131, addedVersion: 13, scoreValue: 994567 },
       { ...chart, songId: "combo", songName: "Other", difficultyCode: master, addedVersion: 13, scoreValue: 1005000 },

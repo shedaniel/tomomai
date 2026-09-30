@@ -329,9 +329,9 @@ function PlayerIdentitySummary({ snapshot }: { snapshot: Snapshot }) {
         transition={getTransition(SPRING_CONFIGS.default)}
       >
         <Image
-          src={resolveImageUrl(snapshot.iconUrl ?? "")}
-          unoptimized={isR2Url(snapshot.iconUrl ?? "")}
-          alt={snapshot.title ?? snapshot.displayName}
+          src={resolveImageUrl(snapshot.iconUrl)}
+          unoptimized={isR2Url(snapshot.iconUrl)}
+          alt={snapshot.title}
           width={80}
           height={80}
         />

@@ -533,8 +533,7 @@
     "deleteFailed": "사진 삭제에 실패했습니다",
     "dontAskAgain": "오늘 다시 묻지 않기",
     "delete": "삭제",
-    "cancel": "취소",
-    "imageUnavailable": "이미지를 사용할 수 없습니다"
+    "cancel": "취소"
   },
   "recommendations": {
     "peerAchieved": "동급 플레이어 약 {percent} 달성",

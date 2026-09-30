@@ -3,9 +3,12 @@ import { MAIMAI_CODES } from "@/lib/games/maimai/codes";
 import { fromMaimaiScore, toMaimaiChart, toMaimaiResult, toMaimaiSnapshotHeader } from "./legacy-view";
 
 describe("maimai legacy view", () => {
-  it("decodes the header codes and fills the legacy defaults", () => {
-    const header = toMaimaiSnapshotHeader({ publicId: "snap", game: "maimai", displayName: "Player", rating: 15000, gameVersion: 13, fetchedAt: new Date("2026-09-01T00:00:00Z"), titleType: 4 });
-    expect(header).toMatchObject({ id: "snap", titleType: "rainbow", title: "", iconUrl: "", courseRankUrl: "", classRankUrl: "", stars: 0, versionPlayCount: 0, totalPlayCount: 0 });
+  it("decodes the header codes and fills the legacy defaults for fields a snapshot may leave out", () => {
+    const header = toMaimaiSnapshotHeader({
+      publicId: "snap", game: "maimai", displayName: "Player", rating: 15000, gameVersion: 13, fetchedAt: new Date("2026-09-01T00:00:00Z"),
+      title: "Title", titleType: 4, iconUrl: "icon.png", courseRankUrl: null, classRankUrl: null, stars: null, versionPlayCount: null, totalPlayCount: null,
+    });
+    expect(header).toMatchObject({ id: "snap", titleType: "rainbow", title: "Title", iconUrl: "icon.png", courseRankUrl: "", classRankUrl: "", stars: 0, versionPlayCount: 0, totalPlayCount: 0 });
   });
 
   it("decodes chart codes and a missing DX score to the legacy values", () => {

@@ -58,9 +58,10 @@ beforeEach(() => {
   state.failOn = null;
   state.withoutRankings = false;
   state.responses = {
-    'select "metadata", "id"': [row(getTableColumns(userSnapshots), {
+    'select "id", "publicId"': [row(getTableColumns(userSnapshots), {
       id: 1, publicId: "source", userId: "owner", game: "maimai", region: "jp", fetchedAt: "2026-09-01T00:00:00",
-      gameVersion: 12, rating: 12000, versionPlayCount: 5, totalPlayCount: 50, iconUrl: "", displayName: "Player", title: "", titleType: 0,
+      gameVersion: 12, rating: 12000, courseRankUrl: "course.png", classRankUrl: "class.png", stars: 3,
+      versionPlayCount: 5, totalPlayCount: 50, iconUrl: "", displayName: "Player", title: "", titleType: 0,
     })],
     'insert into "user_snapshots"': [[2]],
     'select "songs"."parentId"': [["70", 1005000, 0, 0, 0, 0]],
@@ -72,7 +73,7 @@ beforeEach(() => {
 });
 
 it("returns null without writing when the snapshot is not the user's", async () => {
-  state.responses['select "metadata", "id"'] = [];
+  state.responses['select "id", "publicId"'] = [];
   await expect(copySnapshotToVersion({ ...input, userId: "someone-else" })).resolves.toBeNull();
   expect(state.statements).toHaveLength(1);
   expect(state.statements[0].params).toEqual(expect.arrayContaining(["source", "maimai", "someone-else", "jp"]));

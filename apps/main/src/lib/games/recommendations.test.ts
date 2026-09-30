@@ -11,6 +11,7 @@ const song: GamePlayerScore = {
 };
 const snapshot: GameSnapshotData["snapshot"] = {
   publicId: "snapshot", game: "chunithm", gameVersion: 9, displayName: "Player", rating: 30, fetchedAt: new Date(),
+  title: "", titleType: 0, iconUrl: "", courseRankUrl: null, classRankUrl: null, stars: null, versionPlayCount: 0, totalPlayCount: 0,
 };
 function recommend(songs: GamePlayerScore[], overrides: Partial<GameSnapshotData["snapshot"]> = {}, peers: Record<string, RecommendationPeers> = {}) {
   return generateRecommendations({ snapshot: { ...snapshot, ...overrides }, songs }, peers);

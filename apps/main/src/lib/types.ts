@@ -19,18 +19,6 @@ export interface NoteCounts {
   break: number;
 }
 
-// Event data for area and event area events
-export interface EventData {
-  eventType: "area" | "eventArea";
-  name: string;
-  currentDistance: number;
-  nextRewardDistance: number | null;
-  state: "not_started" | "in_progress" | "completed";
-  imageUrl: string;
-  eventPeriodStart: Date | null;
-  eventPeriodEnd: Date | null;
-}
-
 export interface FetchSession {
   id: string;
   status: "pending" | "completed" | "failed";

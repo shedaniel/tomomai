@@ -154,7 +154,6 @@ export const profileReports = pgTable("profile_reports", {
     .where(sql`${table.status} = 'pending'`),
 ]);
 
-// Maimai-specific tables
 export const userTokens = pgTable("user_tokens", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: text("userId").notNull().references(() => user.id, { onDelete: "cascade" }),
@@ -185,7 +184,6 @@ export const fetchSessions = pgTable("fetch_sessions", {
 ]);
 
 export const userSnapshots = pgTable("user_snapshots", {
-  metadata: jsonb("metadata").$type<Record<string, unknown>>(),
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(), // Internal auto-increment ID for efficient indexing
   publicId: varchar("publicId", { length: 21 }).notNull().unique(), // Public-facing nanoid
   userId: text("userId").notNull().references(() => user.id, { onDelete: "cascade" }),
@@ -207,13 +205,13 @@ export const userSnapshots = pgTable("user_snapshots", {
   index("user_snapshots_publicid_idx").on(table.publicId),
   unique("user_snapshots_id_game_unique").on(table.id, table.game),
   index("user_snapshots_userid_game_region_fetchedat_idx").on(table.userId, table.game, table.region, table.fetchedAt),
+  check("user_snapshots_maimai_fields", sql`${table.game} <> 'maimai' OR (${table.courseRankUrl} IS NOT NULL AND ${table.classRankUrl} IS NOT NULL AND ${table.stars} IS NOT NULL)`),
 ]);
 
 export const parentSong = pgTable("parent_song", {
   id: bigint("id", { mode: "bigint" }).primaryKey().generatedAlwaysAsIdentity(),
   publicId: varchar("publicId", { length: 8 }).notNull().unique(),
   game: gameEnum("game").notNull(),
-  metadata: jsonb("metadata").$type<Record<string, unknown>>(),
   songName: text("songName").notNull(),
   artist: text("artist").notNull(),
   genre: text("genre").notNull(),
@@ -310,16 +308,15 @@ export const snapshotRankings = pgTable("snapshot_rankings", {
 ]);
 
 export const userEvents = pgTable("user_events", {
-  metadata: jsonb("metadata").$type<Record<string, unknown>>(),
   id: bigint("id", { mode: "bigint" }).primaryKey().generatedAlwaysAsIdentity(), // Internal only, never exposed
   snapshotId: integer("snapshotId").notNull(),
   game: gameEnum("game").notNull(),
-  eventType: eventTypeEnum("eventType"), // area or eventArea
+  eventType: eventTypeEnum("eventType").notNull(), // area or eventArea
   name: text("name").notNull(),
-  currentDistance: integer("currentDistance"), // 4 bytes
+  currentDistance: integer("currentDistance").notNull(), // 4 bytes
   nextRewardDistance: integer("nextRewardDistance"), // nullable, 4 bytes
-  state: eventStateEnum("state"),
-  imageUrl: text("imageUrl"),
+  state: eventStateEnum("state").notNull(),
+  imageUrl: text("imageUrl").notNull(),
   eventPeriodStart: timestamp("eventPeriodStart", { precision: 0 }), // nullable for area events
   eventPeriodEnd: timestamp("eventPeriodEnd", { precision: 0 }), // nullable for area events
 }, (table) => [
@@ -332,19 +329,19 @@ export const userEvents = pgTable("user_events", {
 ]);
 
 export const userRecentSongs = pgTable("user_recent_songs", {
-  metadata: jsonb("metadata").$type<Record<string, unknown>>(),
   id: bigint("id", { mode: "bigint" }).primaryKey().generatedAlwaysAsIdentity(), // Internal only, never exposed
   userId: text("userId").notNull().references(() => user.id, { onDelete: "cascade" }),
   game: gameEnum("game").notNull(),
+  metadata: jsonb("metadata").$type<Record<string, unknown>>(),
   songId: bigint("songId", { mode: "bigint" }).notNull(),
   playedAt: timestamp("playedAt", { precision: 0 }).notNull(),
-  scoreValue: integer("scoreValue").notNull(), // stored as 10000x, e.g., 99.1234% = 991234 (max 1010000)
+  scoreValue: integer("scoreValue").notNull(),
   secondaryScore: smallint("secondaryScore").notNull(),
   maxSecondaryScore: smallint("maxSecondaryScore"),
   comboStatus: smallint("comboStatus").notNull(),
   syncStatus: smallint("syncStatus").notNull(),
   clearStatus: smallint("clearStatus").notNull().default(0),
-  track: smallint("track"),
+  track: smallint("track").notNull(),
 }, (table) => [
   // Prevents duplicate plays, and also serves a user's play history of one song
   unique("user_recent_songs_userid_game_songid_playedat_unique").on(table.userId, table.game, table.songId, table.playedAt),
@@ -494,15 +491,14 @@ export const tourEventSteps = pgTable("tour_event_steps", {
 ]);
 
 export const userAlbums = pgTable("user_albums", {
-  metadata: jsonb("metadata").$type<Record<string, unknown>>(),
   id: bigint("id", { mode: "bigint" }).primaryKey().generatedAlwaysAsIdentity(),
   userId: text("userId").notNull().references(() => user.id, { onDelete: "cascade" }),
   game: gameEnum("game").notNull(),
   songId: bigint("songId", { mode: "bigint" }).notNull(),
   takenAt: timestamp("takenAt", { precision: 0 }).notNull(),
   venue: text("venue"),
-  imageKey: text("imageKey"),
-  imageSize: integer("imageSize"),
+  imageKey: text("imageKey").notNull(),
+  imageSize: integer("imageSize").notNull(),
   createdAt: timestamp("createdAt", { precision: 0 }).notNull().defaultNow(),
 }, (table) => [
   index("user_albums_userid_game_takenat_idx").on(table.userId, table.game, table.takenAt.desc()),

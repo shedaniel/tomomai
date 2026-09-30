@@ -1,4 +1,4 @@
-import type { EventData } from "@/lib/types";
+import type { EVENT_STATE_ENUM, EVENT_TYPE_ENUM } from "@/lib/db/types";
 import type { CanonicalGameId } from "./types";
 import { rankScores } from "./ranking";
 
@@ -28,25 +28,26 @@ export type GameSnapshot = {
   rating: number;
   gameVersion: number;
   fetchedAt: Date;
-  title?: string;
-  titleType?: number;
-  iconUrl?: string;
-  courseRankUrl?: string | null;
-  classRankUrl?: string | null;
-  stars?: number | null;
-  versionPlayCount?: number | null;
-  totalPlayCount?: number | null;
+  title: string;
+  titleType: number;
+  iconUrl: string;
+  courseRankUrl: string | null;
+  classRankUrl: string | null;
+  stars: number | null;
+  versionPlayCount: number | null;
+  totalPlayCount: number | null;
 };
 
+/** A snapshot's event progress, as fetched and as stored. */
 export type GameEvent = {
   name: string;
-  eventType?: EventData["eventType"] | null;
-  currentDistance?: number | null;
-  nextRewardDistance?: number | null;
-  state?: EventData["state"] | null;
-  imageUrl?: string | null;
-  eventPeriodStart?: Date | null;
-  eventPeriodEnd?: Date | null;
+  eventType: (typeof EVENT_TYPE_ENUM)[number];
+  currentDistance: number;
+  nextRewardDistance: number | null;
+  state: (typeof EVENT_STATE_ENUM)[number];
+  imageUrl: string;
+  eventPeriodStart: Date | null;
+  eventPeriodEnd: Date | null;
 };
 
 export type GameSnapshotData = {

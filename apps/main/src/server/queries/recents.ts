@@ -63,7 +63,6 @@ export async function fetchRecentSongs(
   return {
     recentPlays: recentPlays.map(({ maxSecondaryScore, metadata, ...play }, index) => ({
       ...play,
-      track: play.track ?? 0,
       details: details[index],
     })),
     totalCount,

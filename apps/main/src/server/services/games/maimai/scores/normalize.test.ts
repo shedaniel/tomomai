@@ -77,7 +77,10 @@ describe("maimai score normalization", () => {
       areaEvents: [{ name: "Area event", currentDistance: 10, nextRewardDistance: 20, state: "in_progress", imageUrl: "https://example.test/area.png" }],
       eventAreaEvents: [{ name: "Event area", currentDistance: 30, nextRewardDistance: null, state: "completed", imageUrl: "https://example.test/event.png", eventPeriod: [100, 200] }],
     })).toEqual([
-      expect.objectContaining({ name: "Area event", eventType: "area" }),
+      {
+        name: "Area event", eventType: "area", currentDistance: 10, nextRewardDistance: 20, state: "in_progress",
+        imageUrl: "https://example.test/area.png", eventPeriodStart: null, eventPeriodEnd: null,
+      },
       expect.objectContaining({ name: "Event area", eventType: "eventArea", eventPeriodStart: new Date(100), eventPeriodEnd: new Date(200) }),
     ]);
   });

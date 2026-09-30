@@ -39,7 +39,7 @@ beforeEach(() => {
   state.offsets = []; state.recent.error = null; state.album.error = null;
   container = document.createElement("div"); root = createRoot(container);
   state.recent.data = { recentPlays: [recentPlay], hasMore: true };
-  state.album.data = { albums: [{ id: "1", songName: "Album song", artist: "Artist", cover: "https://example.com/cover.webp", difficultyCode: 4, typeCode: 0, levelPrecise: 150, level: "15", takenAt: "2026-09-01", imageKey: "" }], hasMore: false };
+  state.album.data = { albums: [{ id: "1", songName: "Album song", artist: "Artist", cover: "https://example.com/cover.webp", difficultyCode: 4, typeCode: 0, levelPrecise: 150, level: "15", takenAt: "2026-09-01", imageKey: "albums/1.avif" }], hasMore: false };
 });
 afterEach(async () => { await act(async () => root.unmount()); vi.unstubAllGlobals(); });
 async function render(content: React.ReactNode, game: CanonicalGameId = "chunithm") {
@@ -99,10 +99,10 @@ describe("shared optional player panels", () => {
     await act(async () => container.querySelector<HTMLButtonElement>('button[aria-expanded="true"]')?.click());
     expect(container.querySelector('button[aria-expanded="false"]')).not.toBeNull();
   });
-  it("distinguishes an unavailable album image from an empty album", async () => {
+  it("shows each album's photo instead of the empty state", async () => {
     await render(<AlbumCard region="jp" />);
     expect(container.textContent).toContain("Album song");
-    expect(container.textContent).toContain("Image unavailable");
+    expect(container.querySelector('img[alt="Album song"]')?.getAttribute("src")).toMatch(/\/albums\/1\.avif$/);
     expect(container.textContent).not.toContain("No albums");
   });
   it("shows a query error instead of pretending recents are empty", async () => {

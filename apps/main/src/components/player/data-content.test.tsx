@@ -37,12 +37,18 @@ vi.mock("@/i18n/navigation", () => ({ Link: ({ children }: { children: React.Rea
 
 // A chart from a version this build does not know yet must not break any maimai tab.
 const data: GameSnapshotData = {
-  snapshot: { publicId: "public-snapshot", game: "maimai", displayName: "Player", rating: 15000, gameVersion: 13, fetchedAt: new Date("2026-09-01T00:00:00Z") },
+  snapshot: {
+    publicId: "public-snapshot", game: "maimai", displayName: "Player", rating: 15000, gameVersion: 13, fetchedAt: new Date("2026-09-01T00:00:00Z"),
+    title: "", titleType: 0, iconUrl: "", courseRankUrl: "", classRankUrl: "", stars: 0, versionPlayCount: 0, totalPlayCount: 0,
+  },
   songs: [{
     songId: "AbCd_123:j999", songName: "Future Song", artist: "Artist", cover: "", genre: "", level: "14", levelPrecise: 140,
     addedVersion: 999, difficultyCode: 3, typeCode: 1, scoreValue: 1005000, secondaryScore: null, comboStatus: 0, syncStatus: 0, clearStatus: 0,
   }],
-  events: [{ name: "Stored Area", eventType: "area", currentDistance: null, state: null, imageUrl: "https://example.com/area.png" }],
+  events: [{
+    name: "Stored Area", eventType: "area", currentDistance: 12, nextRewardDistance: 20, state: "in_progress",
+    imageUrl: "https://example.com/area.png", eventPeriodStart: null, eventPeriodEnd: null,
+  }],
 };
 const flags = { eventsCard: true } as Flags;
 
@@ -88,11 +94,12 @@ function imageSources() {
   return Array.from(container.querySelectorAll("img"), image => image.getAttribute("src"));
 }
 
-it("renders stored events with missing progress on the map tab", async () => {
+it("renders stored event progress on the map tab", async () => {
   await renderTab("map");
   expect(container.textContent).toContain("Stored Area");
-  expect(container.textContent).toContain("0 km");
-  expect(container.textContent).toContain(messages.events.notStarted);
+  expect(container.textContent).toContain("12 km");
+  expect(container.textContent).toContain("→ 20 km");
+  expect(container.textContent).toContain(messages.events.inProgress);
   expect(queries.eventSteps).toHaveBeenCalledWith({ names: ["Stored Area"] }, expect.anything());
 });
 
