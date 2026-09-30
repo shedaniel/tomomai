@@ -1,5 +1,9 @@
 # Setup
 
+## Running Locally
+
+Each process serves one game. Run `pnpm dev:mai` for maimai on port 3000 or `pnpm dev:chu` for CHUNITHM on port 3002, or both at once. Both scripts set `FRONTEND_GAME` and `PORT` (see [App Configuration](#app-configuration)). [docs/MULTI_GAME_FRONTEND.md](docs/MULTI_GAME_FRONTEND.md#per-process-development-setup) explains the per-game build output and custom ports.
+
 ## Environment Variables
 
 ### Database
@@ -117,7 +121,9 @@ that service.
 
 | Variable | Required | Description |
 |---|---|---|
-| `NEXT_PUBLIC_APP_URL` | No | Public app URL (defaults to `http://localhost:3000`) |
+| `FRONTEND_GAME` | No | The game this process serves: `maimai` (the default) or `chunithm`. Any other value fails startup. Set it when building and use the same value when starting that build |
+| `PORT` | No | Port of the local server (defaults to `3000`). Without a deployment URL, local canonical links and the development auth origins use `http://localhost:<PORT>` |
+| `NEXT_PUBLIC_APP_URL` | No | Public app URL. Without it, invite links and the API reference use the site's base URL, and the CORS allowlist uses `http://localhost:3000` |
 | `NEXT_PUBLIC_ACCOUNT_SIGNUP_TYPE` | No | Signup mode: `disabled`, `invite-only`, or `enabled` (defaults to `disabled`). Set to `enabled` to allow account registration |
 | `NEXT_PUBLIC_ENABLED_MAIMAI_REGIONS` | No | Comma-separated maimai regions (`intl,jp` by default). An empty value disables maimai player features, and its catalog stays readable. A value that names no maimai region is logged as an error and disables them too |
 | `NEXT_PUBLIC_ENABLED_CHUNITHM_REGIONS` | No | Comma-separated CHUNITHM regions (`intl,jp` by default). An empty value disables CHUNITHM player features, and its catalog stays readable. A value that names no CHUNITHM region is logged as an error and disables them too |

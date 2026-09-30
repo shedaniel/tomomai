@@ -266,7 +266,8 @@ const trustedOrigins = (process.env.TRUSTED_ORIGINS ?? "")
   .map((s) => s.trim())
   .filter(Boolean);
 if (process.env.NODE_ENV === "development") {
-  trustedOrigins.push(...Object.values(DEV_PORTS).map(port => `http://localhost:${port}`));
+  const devOrigins = [...Object.values(DEV_PORTS).map(port => `http://localhost:${port}`), resolveBaseUrl()];
+  trustedOrigins.push(...new Set(devOrigins));
 }
 const authCookieDomain = process.env.AUTH_COOKIE_DOMAIN?.trim() || undefined;
 
