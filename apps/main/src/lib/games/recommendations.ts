@@ -1,16 +1,20 @@
-import { recommendationEfficiency, type RecommendationPeers } from "@/lib/games/maimai/percentile/potential";
-import { getPlayerRankings, type GameSnapshotData, type GamePlayerScore } from "@/lib/games/player-view";
-import { getGame } from "@/lib/games/registry";
-import { apBonusApplies } from "@/lib/games/maimai/rating";
-import { keyOf } from "@/lib/games/codes";
-import { getGameScoreBenchmarks } from "@/lib/games/presentation";
+import type { GamePlayerScore, GameSnapshotData } from "./player-view";
+import { formatGameScore } from "./presentation";
+import { rankScores } from "./ranking";
+import { getGame } from "./registry";
+import type { CanonicalGameId, RecommendationTarget } from "./types";
+
+/** How many of a chart's peers reached each score target, keyed by the target's score. */
+export interface RecommendationPeers {
+  peerCount: number;
+  reachShares: Record<string, number>;
+}
 
 export interface RecommendationData {
-  song: GamePlayerScore & { difficulty: string; type: string };
-  currentScore: number;
-  targetScore: number;
-  currentRating: number;
+  song: GamePlayerScore & { rating: number };
+  target: RecommendationTarget;
   targetRating: number;
+  /** How much the player rating rises when the chart reaches the target. */
   ratingGain: number;
   isInBest: boolean;
   category: "new" | "old";
@@ -22,54 +26,72 @@ export interface RecommendationData {
   order: number;
 }
 
-export const ACCURACY_VALUES = [94, 97, 98, 99, 99.5, 100, 100.5, 101];
+// Effort is the score distance in percent of 1,000,000, and a closer target still counts as 0.1.
+const SCORE_PER_EFFORT = 10_000;
+const MIN_EFFORT = 0.1;
+const MIN_PEERS = 30;
 
-export function generateRecommendations(data: GameSnapshotData, peers: Record<string, RecommendationPeers> = {}): RecommendationData[] {
+function weighByPeers(efficiency: number, chartGain: number, target: RecommendationTarget, peers: RecommendationPeers | undefined) {
+  // Peers report only their best scores, so a combo target has no reach share.
+  const share = target.kind === "score" ? peers?.reachShares[target.scoreValue] : undefined;
+  if (!peers || peers.peerCount < MIN_PEERS || share == null || !Number.isFinite(share)) {
+    return { efficiencyScore: efficiency, peerReach: null, peerWeight: 1 };
+  }
+  // Shrink sparse samples toward the original ranking. Peer bests are not success probabilities.
+  const confidence = peers.peerCount / (peers.peerCount + 50);
+  const weight = 16 ** (confidence * (2 * Math.max(0, Math.min(1, share)) - 1));
+  const peerWeight = chartGain < 3 ? Math.min(1, weight) : weight;
+  return { efficiencyScore: efficiency * peerWeight, peerReach: share, peerWeight };
+}
+
+export function generateRecommendations(data: GameSnapshotData, peers: Readonly<Record<string, RecommendationPeers>> = {}): RecommendationData[] {
   const { game, gameVersion: version } = data.snapshot;
-  const { rating } = getGame(game);
-  const rankings = getPlayerRankings(game, { ...data, songs: data.songs.filter(song => rating.isRated(song.difficultyCode)) });
-  const sizes = rating.bucketSizes;
-  const bestRatings = [...rankings.newScores, ...rankings.oldScores].map(song => song.rating);
-  const currentPlayerRating = rating.playerRating(bestRatings);
-  const targets = game === "maimai"
-    ? ACCURACY_VALUES.filter(value => apBonusApplies(version) || value !== 101).map(value => value * 10000)
-    : getGameScoreBenchmarks(game).map(target => target.scoreValue).sort((a, b) => a - b);
-  const recommendations: RecommendationData[] = [];
+  const { rating, recommendations } = getGame(game);
+  const ranked = rankScores(game, data.songs.filter(song => rating.isRated(song.difficultyCode)), version);
+  const bestRatings = [...ranked.newScores, ...ranked.oldScores].map(song => song.rating);
+  const playerRating = rating.playerRating(bestRatings);
+  const targets = recommendations.targets(version);
+  const buckets = [
+    { category: "new", selected: ranked.newScores, remaining: ranked.newRemaining, offset: 0 },
+    { category: "old", selected: ranked.oldScores, remaining: ranked.oldRemaining, offset: ranked.newScores.length },
+  ] as const;
+  const results: RecommendationData[] = [];
 
-  for (const category of ["new", "old"] as const) {
-    const selected = category === "new" ? rankings.newScores : rankings.oldScores;
-    const remaining = category === "new" ? rankings.newRemaining : rankings.oldRemaining;
-    const minimum = selected.length === 0 || (game === "chunithm" && selected.length < sizes[category])
-      ? 0 : Math.min(...selected.map(song => song.rating));
-    const selectedIds = new Set(selected.map(song => song.songId));
-    for (const score of [...selected, ...remaining]) {
-      const isInBest = selectedIds.has(score.songId);
-      const currentScore = score.scoreValue;
-      if (game === "maimai" && currentScore >= 1005000 && (!apBonusApplies(version) || score.comboStatus >= 3)) continue;
+  for (const { category, selected, remaining, offset } of buckets) {
+    // A selection is ordered by rating, so a chart entering a full bucket displaces its last chart.
+    const displaced = selected.length < rating.bucketSizes[category] ? null : offset + selected.length - 1;
+    [...selected, ...remaining].forEach((song, index) => {
+      const isInBest = index < selected.length;
+      const replaced = isInBest ? offset + index : displaced;
       let order = 0;
-      for (const targetScore of targets) {
-        if (targetScore <= currentScore) continue;
-        const isAp = game === "maimai" && targetScore === 1010000;
+      for (const target of targets) {
         const targetRating = Math.floor(rating.chartRating({
-          scoreValue: isAp ? 1005000 : targetScore, levelPrecise: score.levelPrecise,
-          difficultyCode: score.difficultyCode, comboStatus: isAp ? 3 : 0,
+          scoreValue: target.scoreValue, levelPrecise: song.levelPrecise,
+          difficultyCode: song.difficultyCode, comboStatus: target.comboStatus,
         }, version));
-        if (targetRating <= minimum) continue;
-        const chartGain = targetRating - (isInBest ? score.rating : minimum);
-        // Improving a best chart or displacing the cutoff both move the best total by chartGain.
-        const ratingGain = rating.playerRating([...bestRatings, chartGain]) - currentPlayerRating;
+        if (targetRating <= song.rating) continue;
+        const nextRatings = [...bestRatings];
+        if (replaced == null) nextRatings.push(targetRating);
+        else nextRatings[replaced] = targetRating;
+        const ratingGain = rating.playerRating(nextRatings) - playerRating;
         if (ratingGain <= 0) continue;
-        const effort = (targetScore - currentScore) / 10000;
-        const efficiency = isAp ? 2 : chartGain / Math.max(effort, 0.1);
-        const peerScore = recommendationEfficiency(efficiency, chartGain, targetScore / 10000, peers[score.songId]);
-        recommendations.push({
-          song: { ...score, difficulty: keyOf(game, "difficulty", score.difficultyCode), type: keyOf(game, "chartType", score.typeCode) },
-          currentScore, targetScore, currentRating: score.rating, targetRating, ratingGain, isInBest, category,
-          efficiency, ...peerScore, hasPotential: peerScore.peerWeight >= 1.1, order: order++,
+        const chartGain = targetRating - (replaced == null ? 0 : bestRatings[replaced]);
+        const efficiency = target.kind === "combo"
+          ? target.efficiency
+          : chartGain / Math.max((target.scoreValue - song.scoreValue) / SCORE_PER_EFFORT, MIN_EFFORT);
+        const weighted = weighByPeers(efficiency, chartGain, target, peers[song.songId]);
+        results.push({
+          song, target, targetRating, ratingGain, isInBest, category, efficiency, ...weighted,
+          hasPotential: weighted.peerWeight >= 1.1, order: order++,
         });
       }
-    }
+    });
   }
-  return recommendations.sort((a, b) => a.order - b.order || (Math.abs(a.efficiencyScore - b.efficiencyScore) < 0.1
+  return results.sort((a, b) => a.order - b.order || (Math.abs(a.efficiencyScore - b.efficiencyScore) < 0.1
     ? b.ratingGain - a.ratingGain : b.efficiencyScore - a.efficiencyScore));
+}
+
+/** A combo target reads as its label, and a score target as its score. */
+export function formatRecommendationTarget(game: CanonicalGameId, target: RecommendationTarget): string {
+  return target.kind === "combo" ? target.label : formatGameScore(game, target.scoreValue, { precision: "compact" });
 }

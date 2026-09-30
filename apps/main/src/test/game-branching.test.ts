@@ -22,10 +22,6 @@ const PENDING: Record<string, number> = {
   // Recent plays carry one per-game details field.
   "components/player/recent-songs-card.tsx": 2,
   "server/queries/recents.ts": 1,
-  // Recommendation targets move onto the definitions.
-  "components/player/recommendation-card.tsx": 1,
-  "components/player/recommendation-filters.ts": 2,
-  "lib/games/recommendations.ts": 4,
 };
 
 // Shared hosts gate these features by capability but render the owner's component or call its trpc router,

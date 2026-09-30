@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { GAME_CODES } from "./codes";
+import { GAME_CODES, codeOf } from "./codes";
 import type { Region } from "./ids";
 import { getSupportedRegions } from "./regions";
 import { getGame } from "./registry";
@@ -37,6 +37,19 @@ describe("game definitions", () => {
   ] as const)("rates every $game difficulty except $unrated", ({ game, unrated }) => {
     const { isRated } = getGame(game).rating;
     expect(GAME_CODES[game].difficulty.filter((_, code) => !isRated(code))).toEqual(unrated);
+  });
+
+  it.each(CANONICAL_GAME_IDS)("lists %s recommendation targets nearest first under unique labels", game => {
+    const { rating, recommendations } = getGame(game);
+    const master = codeOf(game, "difficulty", "master");
+    const versions = new Set(getSupportedRegions(game).flatMap(region => getGame(game).versions.available(region).map(version => version.id)));
+    for (const version of versions) {
+      const targets = recommendations.targets(version);
+      const ratings = targets.map(({ scoreValue, comboStatus }) => rating.chartRating({ scoreValue, comboStatus, levelPrecise: 130, difficultyCode: master }, version));
+      expect(ratings).toEqual([...ratings].sort((a, b) => a - b));
+      expect(new Set(ratings).size).toBe(ratings.length);
+      expect(new Set(targets.map(target => target.label)).size).toBe(targets.length);
+    }
   });
 
   it.each(CANONICAL_GAME_IDS)("offers %s logins only on its sites, and gateway cookies only where the site signs in through the gateway", game => {

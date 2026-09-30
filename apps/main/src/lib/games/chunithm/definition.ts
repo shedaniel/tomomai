@@ -2,6 +2,7 @@ import { GAME_CODES } from "../codes";
 import type { GameDefinition } from "../types";
 import { chunithmPresentation } from "./presentation";
 import { CHUNITHM_BUCKET_SIZES, chunithmChartRating, chunithmPlayerRating, isChunithmNewChart, isChunithmRatedChart } from "./rating";
+import { CHUNITHM_RECOMMENDATION_TARGETS } from "./recommendations";
 import { chunithmVersionTable } from "./versions";
 
 export const chunithmDefinition = {
@@ -41,6 +42,7 @@ export const chunithmDefinition = {
     playerRating: chunithmPlayerRating,
     bonuses: () => [],
   },
+  recommendations: { targets: () => CHUNITHM_RECOMMENDATION_TARGETS },
   presentation: chunithmPresentation,
   catalogSections: [{ id: "songs", requires: "catalog" }],
   fetchStages: [

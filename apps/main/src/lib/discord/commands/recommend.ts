@@ -1,9 +1,11 @@
 import { db } from '@/lib/db';
 import { account, user } from '@/lib/db/schema-pg';
+import { keyOf } from '@/lib/games/codes';
 import { formatGameLevel, formatGameScore } from '@/lib/games/presentation';
+import { getGame } from '@/lib/games/registry';
 import { Region } from '@/lib/types';
 import { fetchLatestSnapshotData } from '@/server/queries/snapshots';
-import { generateRecommendations, RecommendationData } from '@/lib/games/recommendations';
+import { formatRecommendationTarget, generateRecommendations, type RecommendationData } from '@/lib/games/recommendations';
 import { getLogger } from '@/lib/request-logger';
 import { waitUntil } from '@vercel/functions';
 import { and, eq } from 'drizzle-orm';
@@ -60,7 +62,7 @@ export async function executeRecommendCommand({
     const recommendations = generateRecommendations(data);
 
     const deduped = recommendations.filter((rec, index, self) =>
-      index === self.findIndex(r => r.song.songId === rec.song.songId && r.song.difficulty === rec.song.difficulty)
+      index === self.findIndex(r => r.song.songId === rec.song.songId && r.song.difficultyCode === rec.song.difficultyCode)
     );
 
     const embed = deduped.length === 0
@@ -93,20 +95,18 @@ function difficultyShort(difficulty: string): string {
 }
 
 function categoryTag(rec: RecommendationData): string {
-  if (rec.isInBest) return rec.category === 'new' ? 'B15' : 'B35';
-  return rec.category === 'new' ? 'NEW' : 'OLD';
+  return rec.isInBest ? `B${getGame(DISCORD_GAME).rating.bucketSizes[rec.category]}` : rec.category.toUpperCase();
 }
 
 function formatRow(rec: RecommendationData, rank: number): string {
-  const { song, currentScore, targetScore, currentRating, targetRating, ratingGain } = rec;
+  const { song, target, targetRating, ratingGain } = rec;
   const tag = categoryTag(rec);
-  const diff = difficultyShort(song.difficulty);
+  const diff = difficultyShort(keyOf(DISCORD_GAME, 'difficulty', song.difficultyCode));
   const lvl = formatGameLevel(DISCORD_GAME, song.levelPrecise, song.difficultyCode);
-  const target = targetScore === 1010000 ? 'AP' : formatGameScore(DISCORD_GAME, targetScore, { precision: "compact" });
   const rankStr = `#${rank}`.padEnd(3);
   return [
     `${rankStr} [${tag}] ${song.songName} (${diff} ${lvl})`,
-    `    ${formatGameScore(DISCORD_GAME, currentScore, { precision: "compact" })} → ${target}   rating ${currentRating} → ${targetRating}   (+${ratingGain})`,
+    `    ${formatGameScore(DISCORD_GAME, song.scoreValue, { precision: "compact" })} → ${formatRecommendationTarget(DISCORD_GAME, target)}   rating ${song.rating} → ${targetRating}   (+${ratingGain})`,
   ].join('\n');
 }
 

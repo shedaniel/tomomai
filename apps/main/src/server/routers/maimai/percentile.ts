@@ -6,8 +6,8 @@ import { and, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
 import type { CanonicalGameId } from "@/lib/games/types";
 import { getChartPercentiles } from "@/server/services/games/maimai/percentile/queries";
-import { recommendationPeers, type RecommendationPeers } from "@/lib/games/maimai/percentile/potential";
-import { ACCURACY_VALUES } from "@/lib/games/recommendations";
+import { recommendationPeers } from "@/lib/games/maimai/percentile/potential";
+import type { RecommendationPeers } from "@/lib/games/recommendations";
 import type { PercentileMap } from "@/lib/games/maimai/percentile/types";
 import { maimaiProcedure } from "./procedures";
 
@@ -36,7 +36,7 @@ export const percentileRouter = router({
       const percentiles = await getChartPercentiles(inputs, input.userRating, true);
       const result: Record<string, RecommendationPeers> = {};
       for (const [id, data] of percentiles) {
-        const peers = recommendationPeers(data, ACCURACY_VALUES);
+        const peers = recommendationPeers(data);
         if (peers != null) result[id] = peers;
       }
       return result;

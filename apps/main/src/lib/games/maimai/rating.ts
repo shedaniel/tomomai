@@ -10,7 +10,7 @@ const AP_BONUSES: readonly RatingBonus[] = [{ label: "AP", scoreValue: 1_005_000
 
 export const MAIMAI_BUCKET_SIZES: RankingBucketSizes = { new: 15, old: 35 };
 
-export function apBonusApplies(version: number): boolean {
+function apBonusApplies(version: number): boolean {
   return version >= CIRCLE;
 }
 

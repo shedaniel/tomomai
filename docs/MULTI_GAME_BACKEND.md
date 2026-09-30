@@ -156,7 +156,7 @@ table and logs these refusals at warn. Clients read the code back with
 failed session. Login failures inside a running fetch are stored uncoded, and
 `lib/token-errors.ts` recognizes them by message.
 
-Plates, percentile/recommendation calculations, daily plays, catalog
+Plates, percentile calculations, daily plays, catalog
 statistics, the snapshot JSON export and version copy, the CN score providers,
 reserved accounts, existing UI presentation, credit/daily-play images and
 render tokens remain explicitly maimai-only. Their tRPC procedures live under

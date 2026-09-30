@@ -4,8 +4,9 @@ import { useGame, useGameId, usePresentation } from "@/components/providers/game
 import { GAME_UI } from "@/components/games/registry";
 import { supportsGameFeature } from "@/lib/games/frontend";
 import type { GameSnapshotData } from "@/lib/games/player-view";
+import { keyOf } from "@/lib/games/codes";
 import { formatGameScore, formatGameScoreDelta, formatGameRating, formatGameLevel, getGameDifficulty, getGameChartType, getGameRankingBuckets } from "@/lib/games/presentation";
-import { generateRecommendations, RecommendationData } from "@/lib/games/recommendations";
+import { formatRecommendationTarget, generateRecommendations, type RecommendationData } from "@/lib/games/recommendations";
 import { Region } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { Award, Calendar, Disc3, Filter, Hash, Heart, Layers, Target, Zap } from "lucide-react";
@@ -29,9 +30,7 @@ function RecommendationRow({ recommendation }: { recommendation: RecommendationD
   const format = useFormatter();
   const game = useGameId();
   const [newBucket, oldBucket] = getGameRankingBuckets(game);
-  const { song, currentScore, targetScore, currentRating, targetRating, ratingGain, isInBest, category } = recommendation;
-  const isAp = game === "maimai" && targetScore === 1010000;
-  const scoreText = (value: number) => formatGameScore(game, value, { precision: "compact" });
+  const { song, target, targetRating, ratingGain, isInBest, category } = recommendation;
   const chartType = getGameChartType(game, song.typeCode);
   const difficulty = getGameDifficulty(game, song.difficultyCode);
   const { ScoreHover } = GAME_UI[game];
@@ -88,24 +87,20 @@ function RecommendationRow({ recommendation }: { recommendation: RecommendationD
           <div className="xs:text-right xs:ml-2">
             <div className="text-xs text-muted-foreground">{t('currentToTarget')}</div>
             <div className="font-mono text-xs">
-              {scoreText(currentScore)} → {isAp ? (
-                <span className="text-green-600 dark:text-green-400">AP</span>
-              ) : (
-                <span className="text-green-600 dark:text-green-400">{scoreText(targetScore)}</span>
-              )}
+              {formatGameScore(game, song.scoreValue, { precision: "compact" })} → <span className="text-green-600 dark:text-green-400">{formatRecommendationTarget(game, target)}</span>
             </div>
             <div className="font-mono text-xs">
-              {formatGameRating(game, currentRating)} → <span className="text-green-600 dark:text-green-400">{formatGameRating(game, targetRating)}</span>
+              {formatGameRating(game, song.rating)} → <span className="text-green-600 dark:text-green-400">{formatGameRating(game, targetRating)}</span>
             </div>
           </div>
 
           <div className="text-right ml-4 mr-2 space-y-0.5 w-16">
             <div className="text-xs text-muted-foreground flex items-center gap-1">
               <Target className="h-3 w-3 text-amber-500" />
-              {isAp ? (
-                <span className="text-orange-400 font-semibold">AP</span>
+              {target.kind === "combo" ? (
+                <span className="text-orange-400 font-semibold">{target.label}</span>
               ) : (
-                <span>+{formatGameScoreDelta(game, currentScore, targetScore)}</span>
+                <span>+{formatGameScoreDelta(game, song.scoreValue, target.scoreValue)}</span>
               )}
             </div>
             <div className="text-xs flex items-center gap-1">
@@ -214,7 +209,7 @@ export function RecommendationCard({ selectedSnapshotData, flags, region }: { se
 
   // Deduplicate recommendations by songId and difficulty
   filteredRecommendations = filteredRecommendations.filter((rec, index, self) =>
-    index === self.findIndex((t) => t.song.songId === rec.song.songId && t.song.difficulty === rec.song.difficulty)
+    index === self.findIndex((t) => t.song.songId === rec.song.songId && t.song.difficultyCode === rec.song.difficultyCode)
   );
 
   // Limit the number of recommendations to 200
@@ -239,13 +234,13 @@ export function RecommendationCard({ selectedSnapshotData, flags, region }: { se
       const peerCount = potential?.[rec.song.songId]?.peerCount;
       return [
         `${index + 1}. ${rec.song.songName}`,
-        `${rec.song.type.toUpperCase()} ${rec.song.difficulty} ${formatGameLevel(game, rec.song.levelPrecise, rec.song.difficultyCode)}`,
+        `${keyOf(game, "chartType", rec.song.typeCode).toUpperCase()} ${keyOf(game, "difficulty", rec.song.difficultyCode)} ${formatGameLevel(game, rec.song.levelPrecise, rec.song.difficultyCode)}`,
         `id=${rec.song.songId}`,
-        `current=${formatGameScore(game, rec.currentScore)}`,
-        `target=${formatGameScore(game, rec.targetScore)}`,
+        `current=${formatGameScore(game, rec.song.scoreValue)}`,
+        `target=${rec.target.label} ${formatGameScore(game, rec.target.scoreValue)}`,
         `peerReach=${rec.peerReach == null ? 'missing' : (rec.peerReach * 100).toFixed(1) + '%'}`,
         `peerCount=${peerCount ?? 0}`,
-        `chartRating=${rec.currentRating}->${rec.targetRating}`,
+        `chartRating=${rec.song.rating}->${rec.targetRating}`,
         `gain=+${rec.ratingGain}`,
         `potential=${rec.hasPotential}`,
         `peerWeight=${rec.peerWeight.toFixed(3)}`,
@@ -358,7 +353,7 @@ export function RecommendationCard({ selectedSnapshotData, flags, region }: { se
 
               return (
                 <motion.div
-                  key={`${rec.song.songId}-${rec.song.difficulty}`}
+                  key={`${rec.song.songId}-${rec.song.difficultyCode}`}
                   initial={{
                     opacity: 0,
                     ...(isDesktop

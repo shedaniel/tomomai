@@ -94,8 +94,9 @@ has it, `sega-account` alone opens the shared SEGA credential dialog, and
 `maimai-cn` opens the maimai CN dialog. maimai and CHUNITHM both offer the
 cookie wizard and credentials for International and credentials for JP.
 
-Maimai's rich recommendations, percentiles, plates, render/export controls,
-reserved accounts and fetch settings remain specialized. Capability checks
+Maimai's percentiles, including the peer evidence they add to recommendations,
+plates, render/export controls, reserved accounts and fetch settings remain
+specialized. Capability checks
 protect unsupported surfaces; CHUNITHM does not expose maimai albums, events,
 plates or detailed-score presentation. Enabling the provider is an implementation
 change, not a claim that a live application fetch has been accepted.
@@ -435,6 +436,16 @@ per `ratingRules.distributionStep` in each difficulty's `cssVar`, both under
 load through `/api/image-proxy` in `imageProxyHosts`, and `resolveImageUrl` in
 `src/lib/images.ts` is the one place that applies them.
 
+Recommendations come from one engine, `generateRecommendations` in
+`src/lib/games/recommendations.ts`. It ranks the rated charts with the
+definition's `rating`, tries each of the definition's
+`recommendations.targets(version)` in ascending order, and reports the player
+rating a target adds. A target is either a score, labelled with its grade, or a
+combo that earns a rating bonus, such as maimai's AP from CiRCLE, which reads as
+its label. The recommendation filters key targets by label and list
+difficulties and chart types in code order. Peer evidence from maimai's
+percentiles arrives as reach shares keyed by target score.
+
 Capabilities decide every game feature, and the backend enforces the same list.
 The served game's descriptor carries its effective capabilities: only `catalog`
 while no region is enabled, and every declared capability otherwise, together
@@ -459,7 +470,7 @@ for their replacement. It also fails when a game other than the owner declares
 one of these single-game features (its `SINGLE_GAME_FEATURES` list), or a `/db`
 section whose view or content is one game's (`SINGLE_GAME_SECTIONS`).
 
-Plates, percentile/recommendation calculations, reserved accounts,
+Plates, percentile calculations, reserved accounts,
 credit/daily-play images and existing render-token flows remain maimai-only
 until separately adapted. Reuse supported common views rather than displaying
 maimai labels on unsupported CHUNITHM data.

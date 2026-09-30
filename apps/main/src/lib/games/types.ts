@@ -83,6 +83,23 @@ export type GameRating = {
   bonuses(version: number): readonly RatingBonus[];
 };
 
+/** A score, or a combo that earns a rating bonus, that a recommendation asks a player to reach. */
+export type RecommendationTarget = {
+  /** The grade or bonus reached, such as "SS+" or "AP". Unique among a game's targets. */
+  label: string;
+  scoreValue: number;
+  comboStatus: number;
+} & (
+  | { kind: "score" }
+  /** No score distance measures a combo, so it reads as its label and ranks at a fixed efficiency. */
+  | { kind: "combo"; efficiency: number }
+);
+
+export type GameRecommendations = {
+  /** In ascending order, so the first target that raises a chart's rating is its nearest. */
+  targets(version: number): readonly RecommendationTarget[];
+};
+
 export const SCORE_STATUS_KINDS = ["comboStatus", "syncStatus", "clearStatus"] as const;
 export type ScoreStatusKind = (typeof SCORE_STATUS_KINDS)[number];
 
@@ -231,6 +248,7 @@ export interface GameDefinition {
   regionCapabilityOverrides?: Partial<Record<Region, readonly GameCapability[]>>;
   versions: VersionTable;
   rating: GameRating;
+  recommendations: GameRecommendations;
   presentation: GamePresentation;
   /** In navigation order. */
   catalogSections: readonly CatalogSection[];

@@ -2,6 +2,7 @@ import type { GameDefinition } from "../types";
 import { MAIMAI_CODES } from "./codes";
 import { maimaiPresentation } from "./presentation";
 import { MAIMAI_BUCKET_SIZES, isMaimaiNewChart, isMaimaiRatedChart, maimaiChartRating, maimaiPlayerRating, maimaiRatingBonuses } from "./rating";
+import { maimaiRecommendationTargets } from "./recommendations";
 import { maimaiVersionTable } from "./versions";
 
 export const maimaiDefinition = {
@@ -84,6 +85,7 @@ export const maimaiDefinition = {
     playerRating: maimaiPlayerRating,
     bonuses: maimaiRatingBonuses,
   },
+  recommendations: { targets: maimaiRecommendationTargets },
   presentation: maimaiPresentation,
   catalogSections: [
     { id: "songs", requires: "catalog" },
