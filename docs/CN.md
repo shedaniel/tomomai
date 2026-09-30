@@ -61,7 +61,7 @@ This means even items that "support cn today" through hardcoded paths must be re
 
 ## i18n (partial)
 - [x] `regions.cn` label exists in every locale
-- [x] `tokenDialog.cnDescription` gives the CN sign-in guidance next to `intlDescription` in `en.json`, `ja.json`, `zh-CN.json`, `zh-HK.json` and `zh-TW.json`
+- [x] `tokenDialog.cnDescription` gives the CN sign-in guidance next to `intlDescription` in every locale except `ko.json`, which falls back to the English text
 
 ## Env
 - [ ] A CN deployment must list `cn` in `NEXT_PUBLIC_ENABLED_MAIMAI_REGIONS` (the legacy `NEXT_PUBLIC_ENABLED_REGIONS` is used only when the game-specific variable is unset)

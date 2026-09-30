@@ -71,15 +71,15 @@ Each registry above is typed over every game id, so a missing step fails typeche
 
 Migration 0018 is the one migration after upstream 0017. Its generated diff is customised to keep every row:
 
-- It runs in one transaction. It locks the affected tables, rejects duplicate identities and unexpected maimai enum values before converting anything, and asserts row counts and exact mappings before dropping old storage. A failed assertion aborts the cutover, and the fix is the data, not the assertion.
+- It runs in one transaction and locks the affected tables. Before converting anything it checks that the legacy maimai enums keep the label order the code conversion relies on, and that every `snapshot_b50` rank lies in 0 to 49. A failed guard aborts the cutover, and the fix is the data, not the guard.
 - It sets `game = 'maimai'` on every existing row, renames the score and recent metric columns in place (for example the achievement column to `scoreValue`, `dxScore` to `secondaryScore` and `maxDxScore` to `maxSecondaryScore`), and converts chart, status and title strings to codes in the verified enum order. Temporary `game` defaults are removed, so every write names its game.
 - Every parent, song, snapshot and score id is kept. The game-matching composite foreign keys are added after the unique constraints they reference.
 - `snapshot_b50` ranks 0 to 14 become the new bucket and ranks 15 to 49 the old bucket of `snapshot_rankings`, with bucket-relative ranks.
-- Both known percentile materialized views are dropped, with restrictive drops, before any column type changes. [`apps/main/scripts/check-multi-game-migration.mjs`](../apps/main/scripts/check-multi-game-migration.mjs) checks that order.
+- Both known percentile materialized views are dropped, with restrictive drops, before any column type changes.
 - `user_snapshots_maimai_fields` and `user_recent_songs_maimai_fields` keep the columns maimai rows always filled non-null. Child foreign key indexes lead with the parent id. Only `songs` and `user_recent_songs` gain `metadata`.
 - `user_game_preferences` is created and filled with every user's region and main region as their maimai choice.
 
-The checked-in artifact is regenerated from the current schema before release, which adds the `maxSecondaryScore` rename, both check constraints, the reshaped indexes, the metadata columns left out of `parent_song`, `user_snapshots`, `user_events` and `user_albums`, and `user_game_preferences` with its backfill.
+The checked-in artifact predates the current schema and is regenerated before release. The new artifact renames `maxDxScore` to `maxSecondaryScore`, adds both check constraints, the reshaped indexes and `user_game_preferences` with its backfill, leaves `metadata` off `parent_song`, `user_snapshots`, `user_events` and `user_albums`, and drops the duplicate identity and post-backfill checks, which the unique constraints and foreign keys already guarantee. Until then [`apps/main/scripts/check-multi-game-migration.mjs`](../apps/main/scripts/check-multi-game-migration.mjs) checks the view drop order of the checked-in artifact.
 
 Cutover:
 
