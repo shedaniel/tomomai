@@ -4,7 +4,7 @@ export type CodeKind = "difficulty" | "chartType" | "comboStatus" | "syncStatus"
 
 type CodeTable = { readonly [K in CodeKind]: readonly string[] };
 
-export const MAIMAI_CODES = {
+const MAIMAI_CODES = {
   difficulty: ["basic", "advanced", "expert", "master", "remaster", "utage"],
   chartType: ["std", "dx"],
   comboStatus: ["none", "fc", "fc+", "ap", "ap+"],
@@ -73,37 +73,6 @@ export function hasCode(game: CodedGame, kind: CodeKind, code: number): boolean 
 export function isCodeKey<G extends CodedGame, K extends CodeKind>(game: G, kind: K, key: string): key is CodeKey<G, K> {
   return keysOf(game, kind).includes(key);
 }
-
-type Codec<T extends string> = {
-  readonly fromCode: (code: number) => T;
-  readonly toCode: (key: T) => number;
-};
-
-function maimaiCodec<K extends CodeKind>(kind: K): Codec<CodeKey<"maimai", K>> {
-  return {
-    fromCode: code => definedKeyOf("maimai", kind, code),
-    toCode: key => codeOf("maimai", kind, key),
-  };
-}
-
-const maimai = {
-  difficulty: maimaiCodec("difficulty"),
-  chartType: maimaiCodec("chartType"),
-  comboStatus: maimaiCodec("comboStatus"),
-  syncStatus: maimaiCodec("syncStatus"),
-  titleType: maimaiCodec("titleType"),
-};
-
-export const codeToDifficulty = maimai.difficulty.fromCode;
-export const difficultyToCode = maimai.difficulty.toCode;
-export const codeToChartType = maimai.chartType.fromCode;
-export const chartTypeToCode = maimai.chartType.toCode;
-export const codeToComboStatus = maimai.comboStatus.fromCode;
-export const comboStatusToCode = maimai.comboStatus.toCode;
-export const codeToSyncStatus = maimai.syncStatus.fromCode;
-export const syncStatusToCode = maimai.syncStatus.toCode;
-export const codeToTitleType = maimai.titleType.fromCode;
-export const titleTypeToCode = maimai.titleType.toCode;
 
 export const RANKING_BUCKETS = [
   { key: "new", code: 1 },

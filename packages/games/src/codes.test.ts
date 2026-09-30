@@ -3,21 +3,11 @@ import { describe, it } from "node:test";
 import {
   GAME_CODES,
   RANKING_BUCKET_CODE,
-  chartTypeToCode,
   codeOf,
-  codeToChartType,
-  codeToComboStatus,
-  codeToDifficulty,
-  codeToSyncStatus,
-  codeToTitleType,
-  comboStatusToCode,
   definedKeyOf,
-  difficultyToCode,
   hasCode,
   isCodeKey,
   keyOf,
-  syncStatusToCode,
-  titleTypeToCode,
   type CodeKind,
   type CodedGame,
 } from "./codes.ts";
@@ -59,24 +49,6 @@ describe("game codes", () => {
     assert.throws(() => codeOf("chunithm", "comboStatus", "ap"), { message: "Unknown chunithm combo status: ap" });
     const runtimeKey: string = "ap";
     assert.throws(() => codeOf("chunithm", "comboStatus", runtimeKey), { message: "Unknown chunithm combo status: ap" });
-  });
-
-  it("round-trips the typed maimai codecs", () => {
-    const codecs = [
-      [codeToDifficulty, difficultyToCode, GAME_CODES.maimai.difficulty],
-      [codeToChartType, chartTypeToCode, GAME_CODES.maimai.chartType],
-      [codeToComboStatus, comboStatusToCode, GAME_CODES.maimai.comboStatus],
-      [codeToSyncStatus, syncStatusToCode, GAME_CODES.maimai.syncStatus],
-      [codeToTitleType, titleTypeToCode, GAME_CODES.maimai.titleType],
-    ] as const;
-    for (const [decode, encode, keys] of codecs) {
-      keys.forEach((key, code) => {
-        assert.equal(decode(code), key);
-        assert.equal((encode as (value: string) => number)(key), code);
-      });
-    }
-    assert.throws(() => codeToChartType(2), { message: "Unknown maimai chart type code: 2" });
-    assert.throws(() => difficultyToCode("ultima" as never), { message: "Unknown maimai difficulty: ultima" });
   });
 });
 
