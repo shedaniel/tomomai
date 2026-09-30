@@ -95,9 +95,14 @@ export type RecommendationTarget = {
   | { kind: "combo"; efficiency: number }
 );
 
+/** Thresholds are in the game's stored rating units, which differ in scale between games. */
 export type GameRecommendations = {
   /** In ascending order, so the first target that raises a chart's rating is its nearest. */
   targets(version: number): readonly RecommendationTarget[];
+  /** Peers can demote a smaller chart rating gain than this but never promote it. */
+  minPromotedChartGain: number;
+  /** A player rating gain from this size is a high-value recommendation. */
+  highValueRatingGain: number;
 };
 
 export const SCORE_STATUS_KINDS = ["comboStatus", "syncStatus", "clearStatus"] as const;

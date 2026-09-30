@@ -42,7 +42,8 @@ export const chunithmDefinition = {
     playerRating: chunithmPlayerRating,
     bonuses: () => [],
   },
-  recommendations: { targets: () => CHUNITHM_RECOMMENDATION_TARGETS },
+  // Scaled from maimai's values: 1% of a chart rating, and a 15% chart gain spread over the 50-chart average.
+  recommendations: { targets: () => CHUNITHM_RECOMMENDATION_TARGETS, minPromotedChartGain: 15, highValueRatingGain: 5 },
   presentation: chunithmPresentation,
   catalogSections: [{ id: "songs", requires: "catalog" }],
   fetchStages: [

@@ -86,7 +86,7 @@ export const maimaiDefinition = {
     playerRating: maimaiPlayerRating,
     bonuses: maimaiRatingBonuses,
   },
-  recommendations: { targets: maimaiRecommendationTargets },
+  recommendations: { targets: maimaiRecommendationTargets, minPromotedChartGain: 3, highValueRatingGain: 50 },
   presentation: maimaiPresentation,
   catalogSections: [
     { id: "songs", requires: "catalog" },

@@ -347,8 +347,6 @@ export function RecommendationCard({ selectedSnapshotData, flags, region }: { se
         <div className="divide-y divide-dashed divide-border">
           <AnimatePresence mode="popLayout">
             {filteredRecommendations.map((rec, index) => {
-              // High-value recommendations get a more prominent animation
-              const isHighValue = rec.ratingGain >= 50;
               const delay = STAGGER.calculateDelay(index, 0.06, 0.4);
 
               return (
@@ -359,7 +357,7 @@ export function RecommendationCard({ selectedSnapshotData, flags, region }: { se
                     ...(isDesktop
                       ? { x: rec.category === "new" ? -20 : 20 }
                       : { y: rec.category === "new" ? -20 : 20 }),
-                    scale: isHighValue ? 0.9 : 0.95,
+                    scale: rec.isHighValue ? 0.9 : 0.95,
                   }}
                   animate={{
                     opacity: 1,
@@ -376,8 +374,8 @@ export function RecommendationCard({ selectedSnapshotData, flags, region }: { se
                   }}
                   transition={getTransition({
                     type: 'spring',
-                    stiffness: isHighValue ? 350 : 400,
-                    damping: isHighValue ? 20 : 28,
+                    stiffness: rec.isHighValue ? 350 : 400,
+                    damping: rec.isHighValue ? 20 : 28,
                     delay,
                   })}
                   layout

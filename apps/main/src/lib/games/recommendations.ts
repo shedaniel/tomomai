@@ -23,6 +23,7 @@ export interface RecommendationData {
   peerReach: number | null;
   peerWeight: number;
   hasPotential: boolean;
+  isHighValue: boolean;
   order: number;
 }
 
@@ -33,7 +34,7 @@ const MIN_EFFORT = 0.1;
 /** Fewer peers than this carry no evidence. */
 export const MIN_RECOMMENDATION_PEERS = 30;
 
-function weighByPeers(efficiency: number, chartGain: number, target: RecommendationTarget, peers: RecommendationPeers | undefined) {
+function weighByPeers(efficiency: number, promotable: boolean, target: RecommendationTarget, peers: RecommendationPeers | undefined) {
   // Peers report only their best scores, so a combo target has no reach share.
   const share = target.kind === "score" ? peers?.reachShares[target.scoreValue] : undefined;
   if (!peers || peers.peerCount < MIN_RECOMMENDATION_PEERS || share == null || !Number.isFinite(share)) {
@@ -42,7 +43,7 @@ function weighByPeers(efficiency: number, chartGain: number, target: Recommendat
   // Shrink sparse samples toward the original ranking. Peer bests are not success probabilities.
   const confidence = peers.peerCount / (peers.peerCount + 50);
   const weight = 16 ** (confidence * (2 * Math.max(0, Math.min(1, share)) - 1));
-  const peerWeight = chartGain < 3 ? Math.min(1, weight) : weight;
+  const peerWeight = promotable ? weight : Math.min(1, weight);
   return { efficiencyScore: efficiency * peerWeight, peerReach: share, peerWeight };
 }
 
@@ -81,10 +82,10 @@ export function generateRecommendations(data: GameSnapshotData, peers: Readonly<
         const efficiency = target.kind === "combo"
           ? target.efficiency
           : chartGain / Math.max((target.scoreValue - song.scoreValue) / SCORE_PER_EFFORT, MIN_EFFORT);
-        const weighted = weighByPeers(efficiency, chartGain, target, peers[song.songId]);
+        const weighted = weighByPeers(efficiency, chartGain >= recommendations.minPromotedChartGain, target, peers[song.songId]);
         results.push({
           song, target, targetRating, ratingGain, isInBest, category, efficiency, ...weighted,
-          hasPotential: weighted.peerWeight >= 1.1, order: order++,
+          hasPotential: weighted.peerWeight >= 1.1, isHighValue: ratingGain >= recommendations.highValueRatingGain, order: order++,
         });
       }
     });

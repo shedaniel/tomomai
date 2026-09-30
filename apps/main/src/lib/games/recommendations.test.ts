@@ -85,6 +85,18 @@ describe("maimai recommendations", () => {
   });
 });
 
+describe("high-value recommendations", () => {
+  it("measure the rating gain against each game's own threshold", () => {
+    const low = { ...song, scoreValue: 900_000 };
+    expect(recommend([song]).map(rec => rec.isHighValue)).toEqual([false, false, false]);
+    expect(recommend([low]).find(rec => rec.target.label === "SSS+")).toMatchObject({ ratingGain: 14, isHighValue: true });
+
+    const maimaiLow = { ...low, addedVersion: 13 };
+    expect(recommend([maimaiLow], maimai).find(rec => rec.target.label === "AAA")).toMatchObject({ ratingGain: 30, isHighValue: false });
+    expect(recommend([maimaiLow], maimai).find(rec => rec.target.label === "SSS+")).toMatchObject({ ratingGain: 124, isHighValue: true });
+  });
+});
+
 describe("peer evidence", () => {
   const chart = { ...song, songId: "a", typeCode: 1, scoreValue: 996440, levelPrecise: 136, addedVersion: 13 };
   function sss(peers: RecommendationPeers | undefined, songs = [chart]) {
