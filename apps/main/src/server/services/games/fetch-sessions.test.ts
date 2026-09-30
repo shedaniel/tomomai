@@ -29,7 +29,7 @@ vi.mock("@/lib/flags", () => ({ resolveFlagsForUser: state.resolveFlags }));
 vi.mock("@/lib/logger", () => ({ flushLogger: vi.fn() }));
 vi.mock("@/lib/request-logger", () => ({ getLogger: () => state.log }));
 vi.mock("@/lib/token-crypto", () => ({ encryptToken: (token: string) => `encrypted:${token}`, decryptToken: (token: string) => token.slice(10) }));
-vi.mock("@/lib/fetch-states-server", () => ({ appendFetchState: vi.fn() }));
+vi.mock("@/server/services/games/fetch-progress", () => ({ appendFetchState: vi.fn() }));
 vi.mock("next/server", () => ({ after: vi.fn() }));
 
 import { FetchStageError } from "./fetch-run";

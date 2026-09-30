@@ -7,7 +7,7 @@ const mocks = vi.hoisted(() => ({
 }));
 vi.mock("../../login", () => ({ openMaimaiSegaSession: mocks.login }));
 vi.mock("@/lib/r2", () => ({ uploadIconToR2: mocks.upload }));
-vi.mock("@/lib/fetch-states-server", () => ({ appendFetchState: mocks.progress }));
+vi.mock("@/server/services/games/fetch-progress", () => ({ appendFetchState: mocks.progress }));
 vi.mock("@/lib/request-logger", () => ({ getLogger: () => mocks.log }));
 vi.mock("../recents/details", () => ({ fetchAndInsertRecentSongsData: mocks.details }));
 vi.mock("../albums/persist", () => ({ persistAlbumData: mocks.albums }));

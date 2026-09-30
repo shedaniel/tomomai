@@ -7,7 +7,7 @@ import { z } from "zod";
 import { notFoundScore, type NotFoundScore } from "@/lib/api/schemas";
 import { db } from "@/lib/db";
 import { fetchSessions, user } from "@/lib/db/schema-pg";
-import { appendFetchState } from "@/lib/fetch-states-server";
+import { appendFetchState } from "./fetch-progress";
 import { resolveFlagsForUser, type Flags } from "@/lib/flags";
 import { resolveGameContext } from "@/lib/games/access";
 import { offersCapability } from "@/lib/games/capabilities";

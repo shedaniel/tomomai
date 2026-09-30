@@ -6,7 +6,7 @@ const mocks = vi.hoisted(() => ({
   child: vi.fn(),
   log: { info: vi.fn(), warn: vi.fn() },
 }));
-vi.mock("@/lib/fetch-states-server", () => ({ appendFetchState: mocks.progress }));
+vi.mock("@/server/services/games/fetch-progress", () => ({ appendFetchState: mocks.progress }));
 vi.mock("@/lib/request-logger", () => ({ getLogger: () => ({ child: mocks.child }) }));
 
 import { createFetchRun, fetchFailure, FetchStageError } from "./fetch-run";

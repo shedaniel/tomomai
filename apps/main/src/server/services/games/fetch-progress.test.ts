@@ -5,8 +5,8 @@ const log = vi.hoisted(() => ({ debug: vi.fn(), error: vi.fn(), warn: vi.fn() })
 vi.mock("@/lib/db", () => ({ db: proxy.db }));
 vi.mock("@/lib/request-logger", () => ({ getLogger: () => log }));
 
-import { appendFetchState } from "./fetch-states-server";
-import { calculateProgress, FETCH_STATES } from "./fetch-states";
+import { calculateProgress, FETCH_STATES } from "@/lib/fetch-states";
+import { appendFetchState } from "./fetch-progress";
 
 // A session answers only a read of its id that asks for it while pending.
 function storeSession(game: string) {

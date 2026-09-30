@@ -8,7 +8,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock("../../login", () => ({ lxnsAccessToken: mocks.access }));
 vi.mock("../player/lxns", async importOriginal => ({ ...await importOriginal<typeof import("../player/lxns")>(), fetchLxnsPlayerData: mocks.player }));
 vi.mock("../songs/lxns", () => ({ fetchLxnsScoresData: mocks.scores }));
-vi.mock("@/lib/fetch-states-server", () => ({ appendFetchState: mocks.progress }));
+vi.mock("@/server/services/games/fetch-progress", () => ({ appendFetchState: mocks.progress }));
 vi.mock("@/lib/request-logger", () => ({ getLogger: () => mocks.log }));
 vi.mock("@/server/services/games/tokens", () => ({ deleteToken: mocks.remove }));
 

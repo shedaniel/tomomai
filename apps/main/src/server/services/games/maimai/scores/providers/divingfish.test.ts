@@ -8,7 +8,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock("../divingfish/client", async importOriginal => ({
   ...await importOriginal<typeof import("../divingfish/client")>(), fetchDivingFishRecordsByDevToken: mocks.records,
 }));
-vi.mock("@/lib/fetch-states-server", () => ({ appendFetchState: mocks.progress }));
+vi.mock("@/server/services/games/fetch-progress", () => ({ appendFetchState: mocks.progress }));
 vi.mock("@/lib/request-logger", () => ({ getLogger: () => mocks.log }));
 vi.mock("@/server/services/games/tokens", () => ({ deleteToken: mocks.remove }));
 

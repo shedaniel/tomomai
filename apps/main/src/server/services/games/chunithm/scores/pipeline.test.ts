@@ -10,7 +10,7 @@ const proxy = await vi.hoisted(async () => (await import("@/test/pg-proxy")).cre
 vi.mock("../login", () => ({ loginAndGetCookies: mocks.login }));
 vi.mock("@/lib/http-agent", () => ({ agentFetch: vi.fn() }));
 vi.mock("@/lib/r2", () => ({ uploadIconToR2: mocks.upload }));
-vi.mock("@/lib/fetch-states-server", () => ({ appendFetchState: mocks.progress }));
+vi.mock("@/server/services/games/fetch-progress", () => ({ appendFetchState: mocks.progress }));
 vi.mock("@/lib/request-logger", () => ({ getLogger: () => mocks.log }));
 vi.mock("@/lib/db", () => ({ db: proxy.db }));
 

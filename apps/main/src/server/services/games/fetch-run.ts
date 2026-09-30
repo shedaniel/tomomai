@@ -1,7 +1,7 @@
 import "server-only";
 import type { Logger } from "pino";
 import type { FetchState } from "@/lib/fetch-states";
-import { appendFetchState } from "@/lib/fetch-states-server";
+import { appendFetchState } from "./fetch-progress";
 import { getLogger } from "@/lib/request-logger";
 import type { ScoreFetchContext } from "./types";
 
