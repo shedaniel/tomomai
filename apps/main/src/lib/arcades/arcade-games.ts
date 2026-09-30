@@ -3,7 +3,7 @@
  * games the app tracks scores for (lib/games).
  */
 
-export const ARCADE_GAMES = [
+const ARCADE_GAMES = [
   "maimai",
   "maimaidx",
   "chunithm",
