@@ -1,9 +1,9 @@
 import "server-only";
 import { load } from "cheerio";
-import { and, eq, gt, inArray, or, sql } from "drizzle-orm";
+import { and, eq, gt, inArray, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { userRecentSongs, maimaiRecentSongDetails } from "@/lib/db/schema-pg";
-import { logger } from "@/lib/logger";
+import { getLogger } from "@/lib/request-logger";
 import { Region } from "@/lib/types";
 import type { GameSiteClient } from "@/server/services/games/sega/http";
 import type { RecentSongData } from "../types";
@@ -16,12 +16,8 @@ export async function fetchAndInsertRecentSongsData(
   site: GameSiteClient,
   recentSongsData: RecentSongData[],
 ): Promise<void> {
-  logger.info(`Starting detailed recent songs data fetch for user ${userId}, ${recentSongsData.length} records`);
-
-  if (recentSongsData.length === 0) {
-    logger.debug("No recent songs to fetch details for");
-    return;
-  }
+  if (recentSongsData.length === 0) return;
+  const log = getLogger();
 
   const existingValid = await db
     .select({ playedAt: userRecentSongs.playedAt })
@@ -35,19 +31,12 @@ export async function fetchAndInsertRecentSongsData(
     ));
   const existingPlayedAts = new Set(existingValid.map(r => r.playedAt.getTime()));
   const toFetch = recentSongsData.filter(r => !existingPlayedAts.has(r.playedAt.getTime()));
-  const skipped = recentSongsData.length - toFetch.length;
-  if (skipped > 0) {
-    logger.info(`Skipping ${skipped} recent songs already having detailed rows; fetching ${toFetch.length}`);
-  }
-  if (toFetch.length === 0) {
-    logger.debug("All recent songs already have detailed rows; nothing to fetch");
-    return;
-  }
+  if (toFetch.length === 0) return;
+  let saved = 0;
 
   const BATCH_SIZE = 6;
   for (let batchStart = 0; batchStart < toFetch.length; batchStart += BATCH_SIZE) {
     const batch = toFetch.slice(batchStart, batchStart + BATCH_SIZE);
-    logger.debug(`Processing batch ${Math.floor(batchStart / BATCH_SIZE) + 1}: ${batch.length} records`);
 
     const detailPromises = batch.map(async (recentSong) => {
       try {
@@ -55,7 +44,7 @@ export async function fetchAndInsertRecentSongsData(
         try {
           html = await site.html(`record/playlogDetail/?idx=${encodeURIComponent(recentSong.idx)}`);
         } catch (err) {
-          logger.warn(`Failed to fetch playlog detail for idx ${recentSong.idx}: ${err instanceof Error ? err.message : err}`);
+          log.warn({ err, value: recentSong.idx }, "Could not fetch a maimai playlog detail page");
           return null;
         }
 
@@ -69,7 +58,7 @@ export async function fetchAndInsertRecentSongsData(
         const comboText = scoreBlocks.length > 1 ? scoreBlocks.eq(1).text().trim() : "";
         const comboMatch = comboText.match(/(\d+(?:,\d+)?)\s*\/\s*(\d+(?:,\d+)?)/);
         if (!comboMatch) {
-          logger.warn(`Playlog detail parse failed (no combo) for idx ${recentSong.idx}`);
+          log.warn({ value: recentSong.idx }, "maimai playlog detail has no combo");
           return null;
         }
         const combo = parseInt(comboMatch[1].replace(/,/g, ''), 10);
@@ -103,7 +92,7 @@ export async function fetchAndInsertRecentSongsData(
 
         const noteRows = $(".playlog_notes_detail > * tr:not(:first-child)");
         if (noteRows.length === 0) {
-          logger.warn(`Playlog detail parse failed (no note rows) for idx ${recentSong.idx}`);
+          log.warn({ value: recentSong.idx }, "maimai playlog detail has no note rows");
           return null;
         }
         const noteTypes = ['tap', 'hold', 'slide', 'touch', 'break'];
@@ -138,7 +127,7 @@ export async function fetchAndInsertRecentSongsData(
           noteData,
         };
       } catch (error) {
-        logger.error(error, `Error fetching playlog detail for idx ${recentSong.idx}`);
+        log.error({ err: error, value: recentSong.idx }, "Could not read a maimai playlog detail");
         return null;
       }
     });
@@ -146,27 +135,16 @@ export async function fetchAndInsertRecentSongsData(
     const detailResults = await Promise.all(detailPromises);
 
     const validResults = detailResults.filter(r => r !== null);
-    if (validResults.length === 0) {
-      logger.warn(`No valid detail results in batch ${Math.floor(batchStart / BATCH_SIZE) + 1}`);
-      continue;
-    }
+    if (validResults.length === 0) continue;
 
-    const recentSongRecords = await db.query.userRecentSongs.findMany({
-      where: and(
+    const recentSongRecords = await db
+      .select({ id: userRecentSongs.id, playedAt: userRecentSongs.playedAt })
+      .from(userRecentSongs)
+      .where(and(
         eq(userRecentSongs.userId, userId),
-        or(
-          ...validResults.map(r =>
-            and(
-              eq(userRecentSongs.playedAt, r!.recentSong.playedAt),
-            ),
-          ),
-        ),
-      ),
-      columns: {
-        id: true,
-        playedAt: true,
-      },
-    });
+        eq(userRecentSongs.game, "maimai"),
+        inArray(userRecentSongs.playedAt, validResults.map(result => result.recentSong.playedAt)),
+      ));
 
     const recentSongIdMap = new Map<number, bigint>();
     for (const record of recentSongRecords) {
@@ -177,7 +155,7 @@ export async function fetchAndInsertRecentSongsData(
     for (const result of validResults) {
       const recentSongId = recentSongIdMap.get(result.recentSong.playedAt.getTime());
       if (!recentSongId) {
-        logger.warn(`Could not find recentSongId for playedAt ${result.recentSong.playedAt.toISOString()}`);
+        log.warn({ value: result.recentSong.idx }, "maimai playlog detail has no stored recent play");
         continue;
       }
 
@@ -264,9 +242,9 @@ export async function fetchAndInsertRecentSongsData(
           },
         });
 
-      logger.debug(`Upserted ${detailedInserts.length} detailed records for batch ${Math.floor(batchStart / BATCH_SIZE) + 1}`);
+      saved += detailedInserts.length;
     }
   }
 
-  logger.info(`Completed detailed recent songs data fetch for user ${userId}`);
+  log.info({ userId, recordCount: saved, skipped: recentSongsData.length - toFetch.length }, "Saved maimai playlog details");
 }
