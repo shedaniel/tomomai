@@ -183,7 +183,7 @@ Pages and server components receive no `NextRequest`. Build their logger with
 bound as the ambient logger, because the components of one request render
 concurrently.
 
-Admin routes get all of this from `adminRoute` in `src/lib/api/admin-route.ts`,
+Admin routes get all of this from `adminRoute` in `src/app/api/admin/admin-route.ts`,
 which builds the request logger, adds `game` to it, answers failures with the
 `requestId` and flushes in `finally`.
 
@@ -211,7 +211,7 @@ so it's always safe to call.
 
 The ambient logger is bound automatically for:
 - any route that calls `requestLogger(request, route)`,
-- every admin route (`adminRoute` in `src/lib/api/admin-route.ts`, with `game` bound once resolved),
+- every admin route (`adminRoute` in `src/app/api/admin/admin-route.ts`, with `game` bound once resolved),
 - every tRPC procedure (middleware in `src/lib/trpc.ts`, `route: "trpc/<path>"`),
 - every v1 API handler (`runApiRequest` in `src/lib/api/route.ts`, which `withApiKey`,
   `defineGameHandler` and `definePublicGameHandler` run through).

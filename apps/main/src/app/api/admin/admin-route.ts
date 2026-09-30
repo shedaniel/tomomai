@@ -1,3 +1,4 @@
+import "server-only";
 import type { NextRequest } from "next/server";
 import type { Logger } from "pino";
 import { checkAdminToken, type AdminTokenCheck } from "@/lib/admin-token";

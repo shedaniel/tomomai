@@ -2,7 +2,7 @@ import { generateText, tool, stepCountIs, hasToolCall } from "ai";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { load } from "cheerio";
 import { z } from "zod";
-import { adminRoute } from "@/lib/api/admin-route";
+import { adminRoute } from "../../admin-route";
 import { redis } from "@/lib/redis";
 import { storePending } from "@/server/services/pending-confirmation";
 import { sendDiscordNotice } from "@/server/services/discord/webhook";

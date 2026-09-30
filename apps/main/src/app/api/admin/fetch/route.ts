@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { load } from "cheerio";
-import { adminRoute } from "@/lib/api/admin-route";
+import { adminRoute } from "../admin-route";
 import { isServerless } from "@/lib/utils";
 import path from "path";
 import fs from "fs/promises";

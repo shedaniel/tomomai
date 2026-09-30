@@ -1,5 +1,5 @@
 import { consumePending } from "@/server/services/pending-confirmation";
-import { adminRoute } from "@/lib/api/admin-route";
+import { adminRoute } from "../../../admin-route";
 import { db } from "@/lib/db";
 import { tourEvents, tourEventSteps } from "@/lib/db/schema-pg";
 import { inArray, sql } from "drizzle-orm";

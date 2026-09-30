@@ -1,4 +1,4 @@
-import { adminRoute } from "@/lib/api/admin-route";
+import { adminRoute } from "../admin-route";
 import { getCurrentVersion } from "@/lib/games/versions";
 import { sortKeys } from "@/lib/utils";
 import { requireAdminRegion } from "@/server/services/catalog/admin-game";

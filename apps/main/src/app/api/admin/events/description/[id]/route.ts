@@ -1,5 +1,5 @@
 import { getPending } from "@/server/services/pending-confirmation";
-import { adminRoute } from "@/lib/api/admin-route";
+import { adminRoute } from "../../../admin-route";
 import type { EventsPendingPayload } from "@/server/services/games/maimai/events/diff";
 
 export const GET = adminRoute<{ id: string }>("admin/events/description", async ({ params, requestId }) => {

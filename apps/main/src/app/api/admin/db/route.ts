@@ -1,4 +1,4 @@
-import { adminRoute } from "@/lib/api/admin-route";
+import { adminRoute } from "../admin-route";
 import { AdminRequestError, requireAdminCatalogVersion, requireAdminRegion } from "@/server/services/catalog/admin-game";
 import type { CanonicalGameId } from "@/lib/games/types";
 import { db } from "@/lib/db";

@@ -1,4 +1,4 @@
-import { adminRoute } from "@/lib/api/admin-route";
+import { adminRoute } from "../../admin-route";
 import { publishSongCatalog } from "@/server/services/catalog/publication";
 import { revalidateCatalog } from "@/server/services/catalog/revalidation";
 
