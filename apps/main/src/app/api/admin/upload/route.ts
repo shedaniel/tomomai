@@ -4,7 +4,7 @@ import { applyCatalogUpload } from "@/server/services/catalog/apply";
 import { parseCatalogUpload } from "@/server/services/catalog/ingestion/parse-upload";
 import { parseCatalogUpdateMode } from "@/server/services/catalog/ingestion/persistence/analyze";
 import type { CatalogChart } from "@/server/services/catalog/ingestion/schema";
-import type { CanonicalGameId } from "@/lib/games/types";
+import type { CanonicalGameId } from "@/lib/games/ids";
 
 export const POST = adminRoute("admin/upload", async ({ request, game, log, requestId }) => {
   const { searchParams } = request.nextUrl;

@@ -1,7 +1,7 @@
 import { db } from "@/lib/db";
 import { user } from "@/lib/db/schema-pg";
 import { eq } from "drizzle-orm";
-import type { CanonicalGameId } from "@/lib/games/types";
+import type { CanonicalGameId } from "@/lib/games/ids";
 import { gamePreference } from "./game-preferences";
 
 /** The profile main region is the one chosen for `game`. The other settings are account-wide. */

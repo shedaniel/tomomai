@@ -7,7 +7,7 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@tomomai/ui";
 import { Slider } from "@tomomai/ui";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@tomomai/ui";
 import { trpc } from "@/lib/trpc-client";
-import { Region } from "@/lib/types";
+import type { Region } from "@/lib/games/ids";
 import { cn } from "@/lib/utils";
 import { TrendingUp } from "lucide-react";
 import { useTranslations } from "next-intl";

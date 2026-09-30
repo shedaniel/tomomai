@@ -7,7 +7,7 @@ import { SparklesIcon } from "lucide-react";
 import { codeToComboStatus, codeToDifficulty } from "@/lib/games/maimai/codes";
 import { getPlayerRankings, type GameSnapshotData } from "@/lib/games/player-view";
 import { trpc } from "@/lib/trpc-client";
-import { Region } from "@/lib/types";
+import type { Region } from "@/lib/games/ids";
 import { getTransition } from "@/lib/animation-constants";
 import { AutoHeight } from "@/components/animate-ui/primitives/effects/auto-height";
 import {

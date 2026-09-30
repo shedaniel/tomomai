@@ -4,7 +4,7 @@ import { expect, it } from "vitest";
 import { FetchToast, type FetchToastState } from "./fetch-toast";
 import { GameProvider } from "./providers/game-provider";
 import { calculateProgress, parseStatusStates, type FetchState } from "@/lib/fetch-states";
-import type { CanonicalGameId } from "@/lib/games/types";
+import type { CanonicalGameId } from "@/lib/games/ids";
 import messages from "../../messages/en.json";
 import { testGame } from "@/test/games";
 

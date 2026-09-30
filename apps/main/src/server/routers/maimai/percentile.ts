@@ -4,7 +4,7 @@ import { publicProcedure, router } from "@/lib/trpc";
 import { parentPublicIdOf } from "@tomomai/games/song-ids";
 import { and, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
-import type { CanonicalGameId } from "@/lib/games/types";
+import type { CanonicalGameId } from "@/lib/games/ids";
 import { getChartPercentiles } from "@/server/services/games/maimai/percentile/queries";
 import { recommendationPeers } from "@/lib/games/maimai/percentile/potential";
 import type { RecommendationPeers } from "@/lib/games/recommendations";

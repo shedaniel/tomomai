@@ -1,10 +1,9 @@
 import { parseCatalogVersion } from "@/lib/catalog/parse-version";
 import { getCurrentGame } from "@/lib/games/current";
 import { GameError } from "@/lib/games/errors";
-import type { CanonicalGameId } from "@/lib/games/types";
+import type { CanonicalGameId, Region } from "@/lib/games/ids";
 import { getEnabledRegions, getSupportedRegions } from "@/lib/games/regions";
 import { gameIdSchema } from "@/lib/games/schema";
-import type { Region } from "@/lib/types";
 
 /** A malformed admin request. `adminRoute` answers it with a 400 and its message. */
 export class AdminRequestError extends Error {

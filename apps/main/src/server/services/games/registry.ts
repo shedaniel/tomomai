@@ -1,5 +1,5 @@
 import "server-only";
-import type { CanonicalGameId } from "@/lib/games/types";
+import type { CanonicalGameId } from "@/lib/games/ids";
 import type { GameServerModule } from "./types";
 import { maimaiServerModule } from "./maimai";
 import { chunithmServerModule } from "./chunithm";

@@ -3,7 +3,7 @@ import { FETCH_STATES, isSongDataState, songDataDifficulty, type FetchState } fr
 import { resolveBaseUrl } from '../base-url';
 import { getGameDifficulty } from '../games/presentation';
 import { getGame } from '../games/registry';
-import type { CanonicalGameId } from '../games/types';
+import type { CanonicalGameId } from '../games/ids';
 import { t } from './i18n';
 
 export interface DiscordEmbed {

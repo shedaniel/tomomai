@@ -1,7 +1,7 @@
 import "server-only";
 import { getLogger } from "@/lib/request-logger";
 import { normalizeName } from "@/lib/name-utils";
-import { Region } from "@/lib/types";
+import type { Region } from "@/lib/games/ids";
 import type { SongType } from "@/lib/games/maimai/types";
 import { asCatalogFetcher } from "@/server/services/catalog/ingestion/merge";
 import type { SourceChart } from "@/server/services/catalog/ingestion/types";

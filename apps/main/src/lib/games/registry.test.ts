@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { GAME_CODES, codeOf } from "./codes";
-import type { Region } from "./ids";
+import { type Region, CANONICAL_GAME_IDS } from "./ids";
 import { getSupportedRegions } from "./regions";
 import { getGame } from "./registry";
 import { getGameSite } from "./sites";
-import { CANONICAL_GAME_IDS, GAME_CAPABILITIES, type GameSite, type LoginMethod } from "./types";
+import { GAME_CAPABILITIES, type GameSite, type LoginMethod } from "./types";
 
 describe("game definitions", () => {
   it.each(CANONICAL_GAME_IDS)("registers %s under its own id", game => {

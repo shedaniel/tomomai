@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import pino from "pino";
-import type { Region } from "@/lib/types";
+import type { Region } from "@/lib/games/ids";
 import { collectCatalog } from "@/server/services/catalog/ingestion/collect";
 import { parseCatalogUpload } from "@/server/services/catalog/ingestion/parse-upload";
 import { readChunithmNoteCounts } from "@/lib/games/chunithm/note-counts";

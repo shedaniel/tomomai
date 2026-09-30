@@ -3,7 +3,7 @@ import type { FilterCategory, GenericFilter } from "@/components/filter-panel";
 import { formatGameRating, getGameChartType, getGameDifficulty } from "@/lib/games/presentation";
 import type { RecommendationData } from "@/lib/games/recommendations";
 import { getGame } from "@/lib/games/registry";
-import type { CanonicalGameId } from "@/lib/games/types";
+import type { CanonicalGameId } from "@/lib/games/ids";
 
 type VersionLabels = { new: string; old: string };
 

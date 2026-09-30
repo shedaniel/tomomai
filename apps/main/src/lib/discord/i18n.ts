@@ -5,7 +5,7 @@ import zhCN from '../../../messages/discord/zh-CN.json';
 import zhTW from '../../../messages/discord/zh-TW.json';
 import ko from '../../../messages/discord/ko.json';
 import { getLogger } from '@/lib/request-logger';
-import type { Region } from '@/lib/types';
+import type { Region } from '@/lib/games/ids';
 
 export type DiscordLocale = 'en-US' | 'en-GB' | 'ja' | 'zh-CN' | 'zh-TW' | 'ko';
 

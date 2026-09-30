@@ -1,5 +1,5 @@
 import { getPlayerRankings, type GameSnapshot, type GameSnapshotData } from "./player-view";
-import type { CanonicalGameId } from "./types";
+import type { CanonicalGameId } from "./ids";
 import type { ProfilePrivacySettings } from "@/lib/types";
 import type { StatsResult } from "@/server/queries/stats";
 

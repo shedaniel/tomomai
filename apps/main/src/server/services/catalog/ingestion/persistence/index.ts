@@ -2,8 +2,7 @@ import { and, count, eq, getTableColumns, inArray, notExists } from "drizzle-orm
 import type { Logger } from "pino";
 import { db } from "@/lib/db";
 import { parentSong, scoreData, songs, userAlbums, userRecentSongs } from "@/lib/db/schema-pg";
-import type { CanonicalGameId } from "@/lib/games/types";
-import type { Region } from "@/lib/types";
+import type { CanonicalGameId, Region } from "@/lib/games/ids";
 import { excludedSet, INSTANCE_UPDATE_COLUMNS } from "../columns";
 import { lockCatalogWrites, type CatalogTransaction } from "../lock";
 import type { CatalogChart } from "../schema";

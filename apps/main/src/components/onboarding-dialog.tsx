@@ -14,7 +14,7 @@ import { useGame } from "@/components/providers/game-provider";
 import { resolveBaseUrl } from "@/lib/base-url";
 import { isGameCnExclusive } from "@/lib/games/frontend";
 import { trpc } from "@/lib/trpc-client";
-import type { Region } from "@/lib/types";
+import type { Region } from "@/lib/games/ids";
 import { cn } from "@/lib/utils";
 import {
   AtSign,

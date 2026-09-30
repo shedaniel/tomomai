@@ -4,9 +4,8 @@ import { nanoid } from "nanoid";
 import { db } from "@/lib/db";
 import { userEvents, userRecentSongs, userSnapshots } from "@/lib/db/schema-pg";
 import type { NotFoundScore } from "@/lib/api/schemas";
-import type { CanonicalGameId } from "@/lib/games/types";
+import type { CanonicalGameId, Region } from "@/lib/games/ids";
 import { getLogger } from "@/lib/request-logger";
-import type { Region } from "@/lib/types";
 import { buildChartResolution, chartKey, writeSnapshotScores, type SnapshotScore } from "./score-storage";
 import type { ChartRef, GameFetchResult, NormalizedScore, PersistedSnapshotContext } from "./types";
 

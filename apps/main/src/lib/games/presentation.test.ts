@@ -16,7 +16,8 @@ import {
   getGrade,
 } from "./presentation";
 import { getGame } from "./registry";
-import { CANONICAL_GAME_IDS, SCORE_STATUS_KINDS } from "./types";
+import { SCORE_STATUS_KINDS } from "./types";
+import { CANONICAL_GAME_IDS } from "./ids";
 
 const difficulty = (game: "maimai" | "chunithm", key: string) => getGameDifficulty(game, codeOf(game, "difficulty", key));
 

@@ -1,5 +1,5 @@
 import "server-only";
-import { Region } from "@/lib/types";
+import type { Region } from "@/lib/games/ids";
 import type { Difficulty, SongType } from "@/lib/games/maimai/types";
 import { asCatalogFetcher } from "@/server/services/catalog/ingestion/merge";
 import { siteUrl } from "@/lib/games/sites";

@@ -1,7 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
-import { REGIONS } from "@/lib/games/ids";
-import type { CanonicalGameId } from "@/lib/games/types";
+import { REGIONS, type CanonicalGameId } from "@/lib/games/ids";
 import { catalogTags } from "@/lib/cache-tags";
 import type { ProxyRow } from "@/test/pg-proxy";
 

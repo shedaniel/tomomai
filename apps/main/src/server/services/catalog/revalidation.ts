@@ -6,7 +6,7 @@ import { locales } from "@tomomai/i18n/locale";
 import { catalogTags } from "@/lib/cache-tags";
 import { keyOf } from "@/lib/games/codes";
 import { getCurrentGame } from "@/lib/games/current";
-import type { CanonicalGameId } from "@/lib/games/types";
+import type { CanonicalGameId } from "@/lib/games/ids";
 import { getSongSlugs } from "@/lib/song-slug";
 import { GAME_SERVER_MODULES } from "@/server/services/games/registry";
 import type { AffectedChart } from "./ingestion/persistence";

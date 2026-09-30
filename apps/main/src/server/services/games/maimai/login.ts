@@ -1,6 +1,6 @@
 import "server-only";
 import { formatLxns, type LxnsToken } from "@/lib/games/token-format";
-import type { Region } from "@/lib/types";
+import type { Region } from "@/lib/games/ids";
 import { getLogger } from "@/lib/request-logger";
 import { openSegaSession } from "../sega/login";
 import { acceptSegaToken, refuseToken } from "../token-policy";

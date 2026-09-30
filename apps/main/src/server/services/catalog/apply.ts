@@ -1,8 +1,7 @@
 import "server-only";
 import type { Logger } from "pino";
-import type { CanonicalGameId } from "@/lib/games/types";
+import type { CanonicalGameId, Region } from "@/lib/games/ids";
 import { getCurrentVersion } from "@/lib/games/versions";
-import type { Region } from "@/lib/types";
 import { awaitWrapper } from "@/lib/utils";
 import { sendDiscordNotice } from "@/server/services/discord/webhook";
 import { AdminRequestError } from "./admin-game";

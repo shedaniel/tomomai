@@ -3,7 +3,7 @@ import { GAME_CODES, codeOf, type CodeKey } from "@/lib/games/codes";
 import { formatFetchError } from "@/lib/games/fetch-error-codes";
 import type { NormalizedPlayer, NormalizedRecent, NormalizedScore } from "@/server/services/games/types";
 import type { ChunithmPlaylog } from "@/lib/games/chunithm/recent-details";
-import type { Region } from "@/lib/types";
+import type { Region } from "@/lib/games/ids";
 
 const SITE_ACTIONS = {
   basic: "Basic",

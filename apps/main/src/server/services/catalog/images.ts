@@ -1,7 +1,7 @@
 import type { Logger } from "pino";
 import { formatChartLabel } from "@/lib/games/presentation";
 import { getGame } from "@/lib/games/registry";
-import type { CanonicalGameId } from "@/lib/games/types";
+import type { CanonicalGameId } from "@/lib/games/ids";
 import { convertToWebp, fetchImageBuffer } from "@/lib/image-converter";
 import { GAME_SERVER_MODULES } from "@/server/services/games/registry";
 import { AdminRequestError } from "./admin-game";

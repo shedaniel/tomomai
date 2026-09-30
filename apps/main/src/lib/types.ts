@@ -2,8 +2,6 @@ import type { Region } from "./games/ids";
 
 // ===== CORE TYPES =====
 
-export type { Region };
-
 export interface User {
   id: string;
   name?: string | null;

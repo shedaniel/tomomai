@@ -1,10 +1,10 @@
-import { SCORE_STATUS_KINDS, type CanonicalGameId, type ScoreStatusKind } from "@/lib/games/types";
+import { SCORE_STATUS_KINDS, type ScoreStatusKind } from "@/lib/games/types";
+import type { CanonicalGameId, Region } from "@/lib/games/ids";
 import { GAME_CODES, keyOf } from "@/lib/games/codes";
 import { getGrade } from "@/lib/games/presentation";
 import { db } from "@/lib/db";
 import { parentSong, scoreData, snapshotScores, songs, userSnapshots } from "@/lib/db/schema-pg";
 import { and, eq, sql } from "drizzle-orm";
-import type { Region } from "@/lib/types";
 import { latestSnapshot } from "./latest-snapshot";
 
 const NO_STATUS = "none";

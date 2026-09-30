@@ -5,8 +5,8 @@ import { resolveBaseUrl } from "@/lib/base-url";
 import { regionDisplayName } from "@/lib/discord/i18n";
 import { flushLogger } from "@/lib/logger";
 import { getLogger } from "@/lib/request-logger";
-import type { CanonicalGameId, GameRegionContext } from "@/lib/games/types";
-import type { Region } from "@/lib/types";
+import type { GameRegionContext } from "@/lib/games/types";
+import type { CanonicalGameId, Region } from "@/lib/games/ids";
 
 // Discord rejects an embed whose description exceeds 4096 chars with a 400.
 // Cut at a line boundary and mark the truncation so the message still posts.

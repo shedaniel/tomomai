@@ -1,6 +1,6 @@
 import "server-only";
 import { requireGameSite } from "@/lib/games/sites";
-import type { Region } from "@/lib/types";
+import type { Region } from "@/lib/games/ids";
 import { openSegaSession } from "../sega/login";
 import { acceptSegaToken } from "../token-policy";
 

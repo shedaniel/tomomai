@@ -1,6 +1,5 @@
 import { isCatalogVersion } from "@/lib/api/catalog-location";
-import type { CanonicalGameId } from "@/lib/games/types";
-import type { Region } from "@/lib/types";
+import type { CanonicalGameId, Region } from "@/lib/games/ids";
 
 export function parseCatalogVersion(game: CanonicalGameId, region: Region, input: string): number {
   const version = Number(input);

@@ -2,7 +2,7 @@
 
 import { useGame } from "@/components/providers/game-provider";
 import { isGameRegion } from "@/lib/games/frontend";
-import { Region } from "@/lib/types";
+import type { Region } from "@/lib/games/ids";
 import { CnTokenDialog } from "@/components/games/maimai/cn-token-dialog";
 import { SegaCookieWizardDialog } from "./sega-cookie-wizard";
 import { SegaCredentialsDialog } from "./sega-credentials";

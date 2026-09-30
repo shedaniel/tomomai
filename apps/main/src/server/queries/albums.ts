@@ -1,11 +1,10 @@
-import type { CanonicalGameId } from "@/lib/games/types";
+import type { CanonicalGameId, Region } from "@/lib/games/ids";
 import { hasCapability } from "@/lib/games/access";
 import { getSupportedRegions } from "@/lib/games/regions";
 import { songInstanceId } from "@/lib/db/song-instance-id";
 import { db } from "@/lib/db";
 import { parentSong, songs, userAlbums } from "@/lib/db/schema-pg";
 import { and, desc, eq, sql } from "drizzle-orm";
-import type { Region } from "@/lib/types";
 
 export async function fetchUserAlbums(
   game: CanonicalGameId,

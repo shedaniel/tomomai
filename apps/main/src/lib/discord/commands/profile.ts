@@ -1,6 +1,6 @@
 import { getLogger } from '@/lib/request-logger';
 import { waitUntil } from '@vercel/functions';
-import type { Region } from '@/lib/types';
+import type { Region } from '@/lib/games/ids';
 import { generateAndSendProfileImage } from '../image-utils';
 import { getProfileSummary, resolveRegion } from '../region';
 import { findDiscordUser, type DiscordUser } from '../user';

@@ -1,6 +1,6 @@
 import { FilterCategory } from "@/components/filter-panel";
 import { getVersion } from "@/lib/games/versions";
-import type { CanonicalGameId } from "@/lib/games/types";
+import type { CanonicalGameId } from "@/lib/games/ids";
 import { codeOf } from "@/lib/games/codes";
 import { getGameChartType } from "@/lib/games/presentation";
 import { Disc3, Folder, Calendar, ArrowUpDown, BarChart, Pencil } from "lucide-react";

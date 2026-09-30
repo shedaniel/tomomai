@@ -4,7 +4,7 @@ import { formatGameLevel, getGameDifficulty } from "@/lib/games/presentation";
 import type { UserAlbum } from "@/lib/trpc-types";
 import { useGame } from "@/components/providers/game-provider";
 import { trpc } from "@/lib/trpc-client";
-import { Region } from "@/lib/types";
+import type { Region } from "@/lib/games/ids";
 import { cn } from "@/lib/utils";
 import { Images, Loader2, AlertCircle, Calendar, MapPin, HardDrive, Info, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";

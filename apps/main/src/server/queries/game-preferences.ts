@@ -1,8 +1,7 @@
 import { sql, type SQL } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { user, userGamePreferences } from "@/lib/db/schema-pg";
-import type { CanonicalGameId } from "@/lib/games/types";
-import type { Region } from "@/lib/types";
+import type { CanonicalGameId, Region } from "@/lib/games/ids";
 
 type GamePreferences = { region: Region | null; profileMainRegion: Region };
 

@@ -2,8 +2,7 @@ import "server-only";
 import { agentFetch } from "@/lib/http-agent";
 import { getGame } from "@/lib/games/registry";
 import { getGameSite, siteOrigin, siteRoot, siteUrl } from "@/lib/games/sites";
-import type { CanonicalGameId } from "@/lib/games/types";
-import type { Region } from "@/lib/types";
+import type { CanonicalGameId, Region } from "@/lib/games/ids";
 
 export const SEGA_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36";
 

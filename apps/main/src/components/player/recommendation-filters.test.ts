@@ -3,7 +3,7 @@ import { expect, it } from "vitest";
 import { codeOf } from "@/lib/games/codes";
 import type { GamePlayerScore } from "@/lib/games/player-view";
 import { generateRecommendations } from "@/lib/games/recommendations";
-import type { CanonicalGameId } from "@/lib/games/types";
+import type { CanonicalGameId } from "@/lib/games/ids";
 import { applyRecommendationFilters, createRecommendationFilterCategories, createRecommendationFilterLabel } from "./recommendation-filters";
 
 const translations = { difficulty: "", level: "", type: "", targetRating: "", achievement: "", version: "", new: "New", old: "Old" };

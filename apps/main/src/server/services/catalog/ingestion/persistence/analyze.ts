@@ -1,8 +1,7 @@
 import { isDeepStrictEqual } from "node:util";
 import type { parentSong, songs } from "@/lib/db/schema-pg";
 import { formatChartLabel } from "@/lib/games/presentation";
-import type { CanonicalGameId } from "@/lib/games/types";
-import type { Region } from "@/lib/types";
+import type { CanonicalGameId, Region } from "@/lib/games/ids";
 import { matchUpload } from "../match-upload";
 import { catalogChartKey, mergeCatalogChart } from "../normalize-charts";
 import { CATALOG_INSTANCE_FIELDS, CATALOG_PARENT_FIELDS, type CatalogChart } from "../schema";

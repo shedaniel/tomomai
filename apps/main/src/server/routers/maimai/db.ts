@@ -1,4 +1,4 @@
-import type { Region } from "@/lib/types";
+import type { Region } from "@/lib/games/ids";
 import { toMaimaiChart } from "@/server/services/games/maimai/legacy-view";
 import { db } from '@/lib/db';
 import { scoreData, snapshotScores, songs, userSnapshots } from '@/lib/db/schema-pg';

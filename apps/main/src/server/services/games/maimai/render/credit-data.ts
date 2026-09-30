@@ -3,7 +3,7 @@ import { db } from '@/lib/db';
 import { parentSong, songs, user, userRecentSongs, maimaiRecentSongDetails } from '@/lib/db/schema-pg';
 import { and, desc, eq, lte, sql } from 'drizzle-orm';
 import { getLogger } from '@/lib/request-logger';
-import type { Region } from '@/lib/types';
+import type { Region } from '@/lib/games/ids';
 import type { GamePlayerScore, GameSnapshot } from '@/lib/games/player-view';
 import { latestSnapshot } from '@/server/queries/latest-snapshot';
 import { gameSnapshotColumns } from '@/server/queries/snapshots';

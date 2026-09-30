@@ -1,6 +1,6 @@
 import { Tabs, TabsList, TabsContent, TabsContents, TabsTrigger } from "@/components/animate-ui/components/radix/tabs";
 import { ResponsiveDialogTitle } from "@tomomai/ui";
-import { Region } from "@/lib/types";
+import type { Region } from "@/lib/games/ids";
 import { cn } from "@/lib/utils";
 import { Fragment, useState } from "react";
 import { SongExtendedIdentified, UserScore } from "./types";

@@ -13,7 +13,7 @@ import { Label } from "@tomomai/ui";
 import { Button } from "@tomomai/ui";
 import { useGame } from "@/components/providers/game-provider";
 import { getCurrentVersion } from "@/lib/games/versions";
-import type { Region } from "@/lib/types";
+import type { Region } from "@/lib/games/ids";
 import { UsersBrowserDialog } from "./users-browser-dialog";
 import { ProfileReportsDialog } from "./profile-reports-dialog";
 import { cn } from "@/lib/utils";

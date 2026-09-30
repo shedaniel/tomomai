@@ -1,7 +1,6 @@
 import { resolveGameContext } from "@/lib/games/access";
 import { getGame } from "@/lib/games/registry";
-import type { CanonicalGameId } from "@/lib/games/types";
-import type { Region } from "@/lib/types";
+import type { CanonicalGameId, Region } from "@/lib/games/ids";
 import { GAME_SERVER_MODULES } from "@/server/services/games/registry";
 import { fillMissingStage } from "./levels";
 import { compareCatalogCharts } from "./normalize-charts";

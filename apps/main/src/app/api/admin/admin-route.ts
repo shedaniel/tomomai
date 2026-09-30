@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server";
 import type { Logger } from "pino";
 import { checkAdminToken, type AdminTokenCheck } from "@/lib/admin-token";
 import { GameError, gameErrorResponse } from "@/lib/games/errors";
-import type { CanonicalGameId } from "@/lib/games/types";
+import type { CanonicalGameId } from "@/lib/games/ids";
 import { flushLogger } from "@/lib/logger";
 import { requestLogger, runWithLogger } from "@/lib/request-logger";
 import { AdminRequestError, resolveAdminGame } from "@/server/services/catalog/admin-game";

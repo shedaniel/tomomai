@@ -1,5 +1,5 @@
 import deepEqual from "deep-equal";
-import type { CanonicalGameId } from "@/lib/games/types";
+import type { CanonicalGameId } from "@/lib/games/ids";
 import { sendDiscordNotice } from "@/server/services/discord/webhook";
 import { formatChartLabel } from "@/lib/games/presentation";
 import { catalogChartKey, completeCatalogChart } from "./normalize-charts";

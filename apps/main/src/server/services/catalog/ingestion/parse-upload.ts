@@ -2,7 +2,7 @@ import { z } from "zod";
 import { hasCode } from "@/lib/games/codes";
 import { formatChartLabel } from "@/lib/games/presentation";
 import { getGame } from "@/lib/games/registry";
-import type { CanonicalGameId } from "@/lib/games/types";
+import type { CanonicalGameId } from "@/lib/games/ids";
 import { GAME_SERVER_MODULES } from "@/server/services/games/registry";
 import { catalogChartKey } from "./normalize-charts";
 import { catalogChartSchema, type CatalogChart } from "./schema";

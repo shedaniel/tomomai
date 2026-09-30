@@ -2,8 +2,7 @@ import { and, eq, inArray } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { parentSong, scoreData, snapshotRankings, songs, userSnapshots } from "@/lib/db/schema-pg";
 import { rateStoredRankings } from "@/lib/games/ranking";
-import type { CanonicalGameId } from "@/lib/games/types";
-import type { Region } from "@/lib/types";
+import type { CanonicalGameId, Region } from "@/lib/games/ids";
 
 type HistorySnapshot = Pick<typeof userSnapshots.$inferSelect, "id" | "fetchedAt" | "rating" | "gameVersion">;
 type HistoryScore = {

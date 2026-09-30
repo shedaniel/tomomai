@@ -5,7 +5,7 @@ import { NextIntlClientProvider } from "next-intl";
 import { GameProvider } from "@/components/providers/game-provider";
 import { loadMessages } from "@/i18n/messages";
 import type { GameSnapshotData } from "@/lib/games/player-view";
-import type { CanonicalGameId } from "@/lib/games/types";
+import type { CanonicalGameId } from "@/lib/games/ids";
 import { testGame } from "@/test/games";
 import { SongsCard } from "./songs-card";
 

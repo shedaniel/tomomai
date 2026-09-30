@@ -1,7 +1,7 @@
 import { and, eq } from 'drizzle-orm';
 import { db } from '@/lib/db';
 import { account, user } from '@/lib/db/schema-pg';
-import type { Region } from '@/lib/types';
+import type { Region } from '@/lib/games/ids';
 import { gamePreference } from '@/server/queries/game-preferences';
 import { DISCORD_GAME } from './game';
 

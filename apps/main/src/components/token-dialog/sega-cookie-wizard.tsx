@@ -16,7 +16,7 @@ import {
 import { Input } from "@tomomai/ui";
 import { Label } from "@tomomai/ui";
 import { trpc } from "@/lib/trpc-client";
-import type { Region } from "@/lib/types";
+import type { Region } from "@/lib/games/ids";
 import { cn } from "@/lib/utils";
 import { ChevronRight, Cookie, Copy, Key, Lock, Monitor, Save, Smartphone } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";

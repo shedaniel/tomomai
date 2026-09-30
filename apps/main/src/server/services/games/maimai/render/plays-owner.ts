@@ -7,7 +7,7 @@ import { resolveGameContext } from "@/lib/games/access";
 import { GameError, gameErrorResponse } from "@/lib/games/errors";
 import { regionSchema } from "@/lib/games/schema";
 import type { GameCapability } from "@/lib/games/types";
-import type { Region } from "@/lib/types";
+import type { Region } from "@/lib/games/ids";
 import { resolvePublicSnapshotAccess } from "@/server/queries/public-access";
 
 /** A visitor names a published snapshot, the signed-in owner names a region. */

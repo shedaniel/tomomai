@@ -1,6 +1,6 @@
 import { GAME_CODES, codeOf, isCodeKey, type CodeKey } from "./games/codes";
 import { getGame } from "./games/registry";
-import { CANONICAL_GAME_IDS, type CanonicalGameId } from "./games/types";
+import { CANONICAL_GAME_IDS, type CanonicalGameId } from "./games/ids";
 
 /** Stage names shared across games, of which a game runs the ones its `fetchStages` list. Each game's score lists add a `song_data:<difficulty>` stage per difficulty. */
 export const FETCH_STATES = {

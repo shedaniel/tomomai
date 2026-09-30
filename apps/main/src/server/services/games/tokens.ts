@@ -2,10 +2,9 @@ import "server-only";
 import { and, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { userTokens } from "@/lib/db/schema-pg";
-import type { CanonicalGameId } from "@/lib/games/types";
+import type { CanonicalGameId, Region } from "@/lib/games/ids";
 import { getLogger } from "@/lib/request-logger";
 import { decryptToken, encryptToken } from "@/lib/token-crypto";
-import type { Region } from "@/lib/types";
 import { FetchStartError } from "./fetch-errors";
 
 function tokenScope(game: CanonicalGameId, userId: string, region: Region) {

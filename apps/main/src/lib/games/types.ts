@@ -3,8 +3,6 @@ import type { CodeKey } from "./codes";
 import type { CanonicalGameId, Region } from "./ids";
 import type { VersionTable } from "./version-table";
 
-export { CANONICAL_GAME_IDS, type CanonicalGameId } from "./ids";
-
 export type GameRegionContext = {
   game: CanonicalGameId;
   region: Region;

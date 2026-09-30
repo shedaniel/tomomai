@@ -4,7 +4,7 @@ import { readFile } from "fs/promises";
 import sharp from "sharp";
 import type { Locale } from "@/i18n/locale";
 import { getRatingImageUrl } from "@/lib/games/maimai/assets";
-import type { Region } from "@/lib/types";
+import type { Region } from "@/lib/games/ids";
 import { brandTitle, supportsGameFeature, type FrontendGame } from "@/lib/games/frontend";
 import type { GameBrand } from "@/lib/games/types";
 import { codeOf } from "@/lib/games/codes";

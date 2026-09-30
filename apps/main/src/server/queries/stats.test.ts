@@ -1,5 +1,5 @@
 import { beforeEach, expect, it, vi } from "vitest";
-import type { CanonicalGameId } from "@/lib/games/types";
+import type { CanonicalGameId } from "@/lib/games/ids";
 import type { ProxyRow } from "@/test/pg-proxy";
 
 const proxy = await vi.hoisted(async () => (await import("@/test/pg-proxy")).createProxyDb());

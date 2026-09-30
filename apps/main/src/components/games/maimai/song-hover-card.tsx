@@ -17,7 +17,7 @@ import { useMemo, useState } from "react";
 import { DialogTrigger } from "@tomomai/ui";
 import { AnimatedDialog, AnimatedDialogContent } from "@tomomai/ui";
 import { SongChartDialogContent } from "@/components/db/songs/song-detail-dialog";
-import { Region } from "@/lib/types";
+import type { Region } from "@/lib/games/ids";
 import type { GamePlayerScore } from "@/lib/games/player-view";
 import { codeToChartType, codeToDifficulty } from "@/lib/games/maimai/codes";
 import { ChartTypeBadge } from "@/components/games/chart-type-badge";

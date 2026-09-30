@@ -2,7 +2,8 @@ import type { GamePlayerScore, GameSnapshotData } from "./player-view";
 import { formatGameScore } from "./presentation";
 import { rankScores } from "./ranking";
 import { getGame } from "./registry";
-import type { CanonicalGameId, RecommendationTarget } from "./types";
+import type { RecommendationTarget } from "./types";
+import type { CanonicalGameId } from "./ids";
 
 /** How many of a chart's peers reached each score target, keyed by the target's score. */
 export interface RecommendationPeers {

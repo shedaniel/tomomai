@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { calculateProgress, parseStatusStates, serializeStatusStates, songDataDifficulty, songDataState } from "./fetch-states";
 import { GAME_CODES } from "./games/codes";
 import { getGame } from "./games/registry";
-import type { CanonicalGameId } from "./games/types";
+import type { CanonicalGameId } from "./games/ids";
 
 describe("fetch states", () => {
   it("names a difficulty's stage after its code key", () => {

@@ -4,7 +4,7 @@ import { trpc } from "@/lib/trpc-client";
 import { useGame } from "@/components/providers/game-provider";
 import { supportsGameFeature } from "@/lib/games/frontend";
 import { getSnapshotSelection, type GameSnapshotData, type GameSnapshotSummary } from "@/lib/games/player-view";
-import type { Region } from "@/lib/types";
+import type { Region } from "@/lib/games/ids";
 
 interface UseSnapshotsOptions {
   initialSnapshots?: GameSnapshotSummary[];

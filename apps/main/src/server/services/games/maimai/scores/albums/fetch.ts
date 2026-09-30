@@ -4,7 +4,7 @@ import { normalizeName } from "@/lib/name-utils";
 import { getLogger } from "@/lib/request-logger";
 import type { Difficulty, SongType } from "@/lib/games/maimai/types";
 import { siteRoot } from "@/lib/games/sites";
-import type { Region } from "@/lib/types";
+import type { Region } from "@/lib/games/ids";
 import type { GameSiteClient } from "@/server/services/games/sega/http";
 import { musicTypeFromIcon } from "../parse-utils";
 import type { AlbumData } from "../types";

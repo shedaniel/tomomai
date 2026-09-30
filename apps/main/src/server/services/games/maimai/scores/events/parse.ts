@@ -2,7 +2,7 @@ import "server-only";
 import { load } from "cheerio";
 import { getLogger } from "@/lib/request-logger";
 import { siteRoot } from "@/lib/games/sites";
-import type { Region } from "@/lib/types";
+import type { Region } from "@/lib/games/ids";
 import type { EventAreaData, EventData } from "../types";
 
 // Parse event period string and extract start/end timestamps

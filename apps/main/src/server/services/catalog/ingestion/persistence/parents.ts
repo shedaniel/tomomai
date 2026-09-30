@@ -4,7 +4,7 @@ import { PARENT_PUBLIC_ID_LENGTH } from "@tomomai/games/song-ids";
 import { parentSong, songs } from "@/lib/db/schema-pg";
 import { formatChartLabel } from "@/lib/games/presentation";
 import { instancePreference } from "@/lib/games/regions";
-import type { CanonicalGameId } from "@/lib/games/types";
+import type { CanonicalGameId } from "@/lib/games/ids";
 import type { CatalogTransaction } from "../lock";
 import { resolveParents, type ParentState, type SongToParent } from "../resolve-parent";
 import { CATALOG_PARENT_FIELDS, type CatalogChart } from "../schema";

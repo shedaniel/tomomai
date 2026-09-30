@@ -6,7 +6,7 @@ import { QueryClient, QueryClientProvider, useMutation, useQuery } from "@tansta
 import { GameProvider } from "@/components/providers/game-provider";
 import { useSnapshots } from "./useSnapshots";
 import type { GameSnapshotData, GameSnapshotSummary } from "@/lib/games/player-view";
-import type { Region } from "@/lib/types";
+import type { Region } from "@/lib/games/ids";
 import { testGame } from "@/test/games";
 import { waitForRender } from "@/test/react";
 

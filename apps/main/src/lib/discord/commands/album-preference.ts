@@ -7,7 +7,7 @@ import { DiscordResponse, editDiscordMessage, DISCORD_COLORS, createDeferredResp
 import { t } from '../i18n';
 import { handleFetchCommand } from './fetch';
 import { findDiscordUser } from '../user';
-import type { Region } from '@/lib/types';
+import type { Region } from '@/lib/games/ids';
 
 export interface AlbumPreferenceOptions {
   discordUserId: string;

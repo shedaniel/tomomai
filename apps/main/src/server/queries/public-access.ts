@@ -1,4 +1,5 @@
-import type { CanonicalGameId, GameCapability } from "@/lib/games/types";
+import type { GameCapability } from "@/lib/games/types";
+import type { CanonicalGameId } from "@/lib/games/ids";
 import { resolveGameContext } from "@/lib/games/access";
 import { PUBLIC_VIEWS, type PublicView } from "@/lib/games/public-player";
 import { db } from "@/lib/db";

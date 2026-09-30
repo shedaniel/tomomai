@@ -22,7 +22,7 @@ import { useTranslations } from "next-intl";
 import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { toast } from "sonner";
 
-import type { Region } from "@/lib/types";
+import type { Region } from "@/lib/games/ids";
 
 interface CnTokenDialogProps {
   isOpen: boolean;

@@ -1,5 +1,5 @@
 import { adminRoute } from "../admin-route";
-import type { Region } from "@/lib/types";
+import type { Region } from "@/lib/games/ids";
 import { AdminRequestError, getDefaultAdminCatalogRegions, requireAdminRegion } from "@/server/services/catalog/admin-game";
 import { updateCatalogRegion, type CatalogUploadOutcome } from "@/server/services/catalog/apply";
 import { catalogRequiresToken } from "@/server/services/catalog/ingestion/collect";

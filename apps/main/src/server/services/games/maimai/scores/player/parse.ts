@@ -1,5 +1,5 @@
 import { load } from "cheerio";
-import { Region } from "@/lib/types";
+import type { Region } from "@/lib/games/ids";
 import type { TitleType } from "@/lib/games/maimai/types";
 import type { ParsedPlayerData } from "../types";
 import { siteRoot } from "@/lib/games/sites";

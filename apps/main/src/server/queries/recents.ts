@@ -1,10 +1,9 @@
-import type { CanonicalGameId } from "@/lib/games/types";
+import type { CanonicalGameId, Region } from "@/lib/games/ids";
 import { songInstanceId } from "@/lib/db/song-instance-id";
 import { db } from "@/lib/db";
 import { parentSong, songs, userRecentSongs } from "@/lib/db/schema-pg";
 import { GAME_SERVER_MODULES } from "@/server/services/games/registry";
 import { and, count, desc, eq, lt } from "drizzle-orm";
-import type { Region } from "@/lib/types";
 
 export async function fetchRecentSongs(
   game: CanonicalGameId,

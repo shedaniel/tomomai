@@ -1,6 +1,5 @@
 import { getRegionalVersion } from "@/lib/games/versions";
-import type { CanonicalGameId } from "@/lib/games/types";
-import type { Region } from "@/lib/types";
+import type { CanonicalGameId, Region } from "@/lib/games/ids";
 
 /** Bump when the published catalog JSON changes shape, so no CDN copy of the old shape is served under the new contract. */
 const CATALOG_FORMAT_VERSION = 2;

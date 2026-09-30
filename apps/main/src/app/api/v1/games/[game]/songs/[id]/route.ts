@@ -1,4 +1,4 @@
-import type { CanonicalGameId } from "@/lib/games/types";
+import type { CanonicalGameId } from "@/lib/games/ids";
 import { db } from "@/lib/db";
 import { parentSong, songs } from "@/lib/db/schema-pg";
 import { chartEstimates } from "@/lib/catalog/chart-metadata";

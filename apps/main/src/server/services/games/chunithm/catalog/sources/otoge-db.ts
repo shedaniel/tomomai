@@ -1,5 +1,5 @@
 import "server-only";
-import type { Region } from "@/lib/types";
+import type { Region } from "@/lib/games/ids";
 import type { PendingChart } from "@/server/services/catalog/ingestion/types";
 import { asCatalogFetcher } from "@/server/services/catalog/ingestion/merge";
 import { otogeDbUrl, parseOtogeDbConstant, parseOtogeDbDate } from "@/server/services/catalog/sources/otoge-db";

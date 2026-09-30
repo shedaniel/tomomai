@@ -1,12 +1,11 @@
 import { codeOf, definedKeyOf, keyOf } from "@/lib/games/codes";
-import type { CanonicalGameId } from "@/lib/games/types";
+import type { CanonicalGameId, Region } from "@/lib/games/ids";
 import { chartEstimates } from "@/lib/catalog/chart-metadata";
 import { SongDetailChart, SongDetailHistoricalChart, SongDetails, UniqueSong, UniqueSongDifficulty } from "@/components/db/songs/types";
 import { db } from "@/lib/db";
 import { parentSong, scoreData, snapshotScores, songs, userSnapshots } from "@/lib/db/schema-pg";
 import { formatSongSlug, getSongSlugs } from "@/lib/song-slug";
 import { instancePreference } from "@/lib/games/regions";
-import { Region } from "@/lib/types";
 import { maxBy } from "@/lib/utils";
 import { TRPCError } from "@trpc/server";
 import { and, desc, eq, inArray, sql } from "drizzle-orm";

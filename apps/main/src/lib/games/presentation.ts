@@ -2,13 +2,13 @@ import { RANKING_BUCKETS, keyOf } from "./codes";
 import { getGame } from "./registry";
 import {
   SCORE_STATUS_KINDS,
-  type CanonicalGameId,
   type ChartTypePresentation,
   type DifficultyPresentation,
   type GamePresentation,
   type ScoreStatusKind,
   type StatusStyle,
 } from "./types";
+import type { CanonicalGameId } from "./ids";
 
 const missingValue = "—";
 

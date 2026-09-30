@@ -3,7 +3,7 @@
 import type { RecentPlay } from "@/lib/trpc-types";
 import { useGame } from "@/components/providers/game-provider";
 import { trpc } from "@/lib/trpc-client";
-import { Region } from "@/lib/types";
+import type { Region } from "@/lib/games/ids";
 import { Clock, Loader2, AlertCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { RecentSongsCardSkeleton } from "./recent-songs-card.skeleton";

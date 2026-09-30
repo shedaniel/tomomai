@@ -4,7 +4,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { NextIntlClientProvider } from "next-intl";
 import { GameProvider } from "@/components/providers/game-provider";
 import { codeOf } from "@/lib/games/codes";
-import type { CanonicalGameId } from "@/lib/games/types";
+import type { CanonicalGameId } from "@/lib/games/ids";
 import messages from "../../../../messages/en.json";
 import { SongSection } from "./bucket-section";
 import type { RatedScore } from "./types";

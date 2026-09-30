@@ -5,10 +5,9 @@ import { offersCapability } from "@/lib/games/capabilities";
 import { RANKING_BUCKETS } from "@/lib/games/codes";
 import { getGame } from "@/lib/games/registry";
 import { rankScores, type StoredRankings } from "@/lib/games/ranking";
-import type { CanonicalGameId } from "@/lib/games/types";
+import type { CanonicalGameId, Region } from "@/lib/games/ids";
 import { getLogger } from "@/lib/request-logger";
 import type { ChartRef, ChartResolutionMap, NormalizedScore } from "./types";
-import type { Region } from "@/lib/types";
 
 type ScoreConnection = Pick<typeof db, "select" | "insert">;
 export type DbSong = typeof songs.$inferSelect & Pick<typeof parentSong.$inferSelect, "songName" | "difficulty" | "type">;

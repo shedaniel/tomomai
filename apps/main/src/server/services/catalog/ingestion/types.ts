@@ -1,4 +1,4 @@
-import type { Region } from "@/lib/types";
+import type { Region } from "@/lib/games/ids";
 import type { Logger } from "pino";
 import type { GameSiteSession } from "@/server/services/games/sega/http";
 import type { FetcherMode } from "./merge";

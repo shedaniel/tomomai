@@ -4,7 +4,8 @@ import { ProfilePrivacyFields } from "@/components/profile-privacy-fields";
 import { useGame } from "@/components/providers/game-provider";
 import { SettingsField } from "@/components/settings/primitives";
 import { getGameRegion, isGameRegion } from "@/lib/games/frontend";
-import type { ProfilePrivacySettings, ProfileSettings, Region } from "@/lib/types";
+import type { ProfilePrivacySettings, ProfileSettings } from "@/lib/types";
+import type { Region } from "@/lib/games/ids";
 import {
   AlertDialog,
   AlertDialogAction,

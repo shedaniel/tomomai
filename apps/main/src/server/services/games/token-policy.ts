@@ -1,9 +1,8 @@
 import "server-only";
 import { getGame } from "@/lib/games/registry";
 import { isSegaToken, parseToken, TOKEN_PROVIDERS, type ParsedToken, type SegaToken } from "@/lib/games/token-format";
-import type { CanonicalGameId } from "@/lib/games/types";
+import type { CanonicalGameId, Region } from "@/lib/games/ids";
 import { getLogger } from "@/lib/request-logger";
-import type { Region } from "@/lib/types";
 import { deleteToken } from "./tokens";
 
 const UNSUPPORTED_HERE = "Invalid token format. This kind of token is not supported in this region.";

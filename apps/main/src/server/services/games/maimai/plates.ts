@@ -4,7 +4,7 @@ import { songInstanceId } from "@/lib/db/song-instance-id";
 import { db } from "@/lib/db";
 import { parentSong, scoreData, snapshotScores, songs, userSnapshots } from "@/lib/db/schema-pg";
 import { and, eq } from "drizzle-orm";
-import type { Region } from "@/lib/types";
+import type { Region } from "@/lib/games/ids";
 import { meetsMaimaiPlate, type MaimaiPlateDifficulty, type MaimaiPlateType } from "@/lib/games/maimai/plates";
 import { latestSnapshot } from "@/server/queries/latest-snapshot";
 

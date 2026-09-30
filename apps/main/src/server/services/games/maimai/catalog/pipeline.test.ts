@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import pino from "pino";
-import type { Region } from "@/lib/types";
+import type { Region } from "@/lib/games/ids";
 import { asCatalogFetcher } from "@/server/services/catalog/ingestion/merge";
 import { important, type CatalogFetchContext, type SourceChart } from "@/server/services/catalog/ingestion/types";
 import { maimaiChart } from "./chart";

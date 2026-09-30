@@ -1,10 +1,9 @@
 import { adminRoute } from "../admin-route";
 import { AdminRequestError, requireAdminCatalogVersion } from "@/server/services/catalog/admin-game";
 import { getSupportedRegions } from "@/lib/games/regions";
-import type { CanonicalGameId } from "@/lib/games/types";
+import type { CanonicalGameId, Region } from "@/lib/games/ids";
 import { db } from "@/lib/db";
 import { songs } from "@/lib/db/schema-pg";
-import { Region } from "@/lib/types";
 import { resolveGameContext } from "@/lib/games/access";
 import { and, eq, gte, lte } from "drizzle-orm";
 import { publishSongCatalog } from "@/server/services/catalog/publication";

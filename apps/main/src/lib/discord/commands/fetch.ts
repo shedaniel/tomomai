@@ -20,7 +20,7 @@ import {
 import { regionDisplayName, t } from '../i18n';
 import { DISCORD_GAME } from '../game';
 import { findDiscordUser } from '../user';
-import { Region } from '@/lib/types';
+import type { Region } from '@/lib/games/ids';
 import { formatMaintenanceWindow, getGameMaintenance, type GameMaintenance } from '@/lib/games/maintenance';
 
 export interface FetchCommandOptions {

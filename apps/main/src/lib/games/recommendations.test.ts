@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { codeOf } from "./codes";
 import type { GamePlayerScore, GameSnapshotData } from "./player-view";
 import { generateRecommendations, type RecommendationPeers } from "./recommendations";
-import type { CanonicalGameId } from "./types";
+import type { CanonicalGameId } from "./ids";
 
 const song: GamePlayerScore = {
   songId: "chart", songName: "Song", artist: "Artist", cover: "", genre: "", level: "14", levelPrecise: 140,

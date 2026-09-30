@@ -1,7 +1,7 @@
 import type { GameSnapshotData } from "@/lib/games/player-view";
 import { rateScores, sortByRating } from "@/lib/games/ranking";
 import { getVersion } from "@/lib/games/versions";
-import type { Region } from "@/lib/types";
+import type { Region } from "@/lib/games/ids";
 import { toMaimaiChart, toMaimaiResult, toMaimaiSnapshotHeader } from "./legacy-view";
 
 type ExportedSnapshot = Pick<GameSnapshotData, "snapshot" | "songs"> & { region: Region };

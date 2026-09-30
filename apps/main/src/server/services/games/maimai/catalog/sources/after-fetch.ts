@@ -1,5 +1,5 @@
 import "server-only";
-import { Region } from "@/lib/types";
+import type { Region } from "@/lib/games/ids";
 import { siteRoot } from "@/lib/games/sites";
 import { openGameSite, type GameSiteClient } from "@/server/services/games/sega/http";
 import { load } from "cheerio";

@@ -10,7 +10,7 @@ vi.mock("./providers/divingfish", () => ({ fetchFromDivingFish: mocks.divingfish
 vi.mock("@/server/services/games/tokens", () => ({ deleteToken: mocks.remove }));
 vi.mock("@/lib/request-logger", () => ({ getLogger: () => ({ warn: vi.fn() }) }));
 
-import type { Region } from "@/lib/types";
+import type { Region } from "@/lib/games/ids";
 import type { FetchRun } from "@/server/services/games/fetch-run";
 import type { ScoreFetchContext } from "@/server/services/games/types";
 import { fetchMaimaiScores } from "./score-source";

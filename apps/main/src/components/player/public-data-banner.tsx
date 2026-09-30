@@ -3,7 +3,7 @@ import { formatGameRating } from "@/lib/games/presentation";
 import { RegionSwitcherClient } from "@/components/region-switcher";
 import { Badge } from "@tomomai/ui";
 import { getVersion } from "@/lib/games/versions";
-import { Region } from "@/lib/types";
+import type { Region } from "@/lib/games/ids";
 import { User } from "lucide-react";
 import { useTranslations } from "next-intl";
 

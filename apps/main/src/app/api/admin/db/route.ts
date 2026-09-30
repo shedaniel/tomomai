@@ -1,6 +1,6 @@
 import { adminRoute } from "../admin-route";
 import { AdminRequestError, requireAdminCatalogVersion, requireAdminRegion } from "@/server/services/catalog/admin-game";
-import type { CanonicalGameId } from "@/lib/games/types";
+import type { CanonicalGameId } from "@/lib/games/ids";
 import { db } from "@/lib/db";
 import { GameError } from "@/lib/games/errors";
 import { getGame } from "@/lib/games/registry";

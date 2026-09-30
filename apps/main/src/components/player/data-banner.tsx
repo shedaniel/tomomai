@@ -28,7 +28,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { calculateProgress, parseStatusStates } from "@/lib/fetch-states";
 import { getVersion } from "@/lib/games/versions";
 import { trpc } from "@/lib/trpc-client";
-import { FetchSession, Region } from "@/lib/types";
+import { FetchSession } from "@/lib/types";
+import type { Region } from "@/lib/games/ids";
 import type { GameSnapshotSummary } from "@/lib/games/player-view";
 import { Calendar, Copy, Download, MoreHorizontal, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";

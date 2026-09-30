@@ -1,5 +1,5 @@
 import "server-only";
-import type { Region } from "@/lib/types";
+import type { Region } from "@/lib/games/ids";
 import type { CatalogStage } from "@/server/services/catalog/ingestion/runner";
 import { DxDataFetcher } from "./sources/dxrating";
 import { FallbackFetcher } from "./sources/fallback";

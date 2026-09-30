@@ -9,7 +9,7 @@ import { MAIMAI_GRADES } from "@/lib/games/maimai/grades";
 import { MAIMAI_PLATE_DIFFICULTIES, MAIMAI_PLATE_REQUIREMENTS, MAIMAI_PLATE_TYPES, type MaimaiPlateDifficulty, type MaimaiPlateType } from "@/lib/games/maimai/plates";
 import { getGameDifficulty } from "@/lib/games/presentation";
 import { getVersion } from "@/lib/games/versions";
-import { Region } from "@/lib/types";
+import type { Region } from "@/lib/games/ids";
 import { trpc } from "@/lib/trpc-client";
 import { ArrowLeft, Award, ChevronRight, Loader2 } from "lucide-react";
 import { StatsCardSkeleton } from "./stats-card.skeleton";

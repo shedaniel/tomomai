@@ -1,5 +1,5 @@
 import { queryAllUniqueSongs } from "@/server/queries/songs";
-import type { CanonicalGameId } from "@/lib/games/types";
+import type { CanonicalGameId } from "@/lib/games/ids";
 import { cache } from "react";
 
 /**

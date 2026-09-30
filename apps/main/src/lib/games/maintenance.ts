@@ -1,5 +1,4 @@
-import type { Region } from "@/lib/types";
-import type { CanonicalGameId } from "./types";
+import type { Region, CanonicalGameId } from "@/lib/games/ids";
 import { getGameSite } from "./sites";
 
 const HOUR_MS = 60 * 60 * 1000;

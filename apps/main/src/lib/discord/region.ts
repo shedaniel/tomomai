@@ -1,5 +1,5 @@
 import { getEnabledRegions } from '@/lib/games/regions';
-import type { Region } from '@/lib/types';
+import type { Region } from '@/lib/games/ids';
 import { userSnapshots } from '@/lib/db/schema-pg';
 import { latestSnapshot } from '@/server/queries/latest-snapshot';
 import { fetchSnapshotRankings } from '@/server/queries/snapshots';

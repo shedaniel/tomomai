@@ -1,5 +1,5 @@
 import type { EVENT_STATE_ENUM, EVENT_TYPE_ENUM } from "@/lib/db/types";
-import type { CanonicalGameId } from "./types";
+import type { CanonicalGameId } from "./ids";
 import { rankScores } from "./ranking";
 
 export type GamePlayerScore = {

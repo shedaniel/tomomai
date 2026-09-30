@@ -4,7 +4,7 @@ import { Flag, Ship } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
 
-import { Region } from "@/lib/types";
+import type { Region } from "@/lib/games/ids";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@tomomai/ui/select-friendly";
 import { cn } from "@/lib/utils";
 import { useGame } from "@/components/providers/game-provider";

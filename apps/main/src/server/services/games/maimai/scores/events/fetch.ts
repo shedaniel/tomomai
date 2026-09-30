@@ -1,5 +1,5 @@
 import "server-only";
-import type { Region } from "@/lib/types";
+import type { Region } from "@/lib/games/ids";
 import type { GameSiteClient } from "@/server/services/games/sega/http";
 import type { EventsData } from "../types";
 import { parseAreaEvents, parseEventAreaEvents } from "./parse";

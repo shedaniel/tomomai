@@ -1,11 +1,10 @@
-import type { CanonicalGameId } from "@/lib/games/types";
+import type { CanonicalGameId, Region } from "@/lib/games/ids";
 import type { GameSnapshot, GameSnapshotData, GameSnapshotSummary } from "@/lib/games/player-view";
 import { rateStoredRankings } from "@/lib/games/ranking";
 import { songInstanceId } from "@/lib/db/song-instance-id";
 import { db } from "@/lib/db";
 import { parentSong, scoreData, snapshotRankings, snapshotScores, songs, userEvents, userSnapshots } from "@/lib/db/schema-pg";
 import { and, desc, eq } from "drizzle-orm";
-import type { Region } from "@/lib/types";
 import { getLogger } from "@/lib/request-logger";
 import { deleteFromR2, isR2IconUrl, r2KeyFromIconUrl } from "@/lib/r2";
 import { latestSnapshot } from "./latest-snapshot";

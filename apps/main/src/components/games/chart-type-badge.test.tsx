@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 import { GameProvider } from "@/components/providers/game-provider";
 import { codeOf } from "@/lib/games/codes";
-import type { CanonicalGameId } from "@/lib/games/types";
+import type { CanonicalGameId } from "@/lib/games/ids";
 import { ChartTypeBadge } from "./chart-type-badge";
 import { testGame } from "@/test/games";
 

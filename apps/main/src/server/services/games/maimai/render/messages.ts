@@ -14,7 +14,7 @@ import "server-only";
 import { db } from "@/lib/db";
 import { user, userSnapshots } from "@/lib/db/schema-pg";
 import { and, eq } from "drizzle-orm";
-import type { Region } from "@/lib/types";
+import type { Region } from "@/lib/games/ids";
 import type { GamePlayerScore, GameSnapshot } from "@/lib/games/player-view";
 import { playlogNoteCounts } from "@/lib/games/maimai/recent-details";
 import { toMaimaiResult, toMaimaiSnapshotHeader } from "../legacy-view";

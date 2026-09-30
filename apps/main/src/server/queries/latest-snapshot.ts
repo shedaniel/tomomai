@@ -3,8 +3,7 @@ import type { SelectedFields } from "drizzle-orm/pg-core";
 import type { SelectResultFields } from "drizzle-orm/query-builders/select.types";
 import { db } from "@/lib/db";
 import { userSnapshots } from "@/lib/db/schema-pg";
-import type { CanonicalGameId } from "@/lib/games/types";
-import type { Region } from "@/lib/types";
+import type { CanonicalGameId, Region } from "@/lib/games/ids";
 
 /**
  * The given columns of the user's newest snapshot in a region, or null when they have none.

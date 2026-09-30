@@ -3,7 +3,8 @@
 import { useGame } from "@/components/providers/game-provider";
 import { supportsGameFeature } from "@/lib/games/frontend";
 import type { GameSnapshotData } from "@/lib/games/player-view";
-import type { ProfilePrivacySettings, Region } from "@/lib/types";
+import type { ProfilePrivacySettings } from "@/lib/types";
+import type { Region } from "@/lib/games/ids";
 import { Sidebar, SidebarItem } from "@tomomai/ui";
 import { Database, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";

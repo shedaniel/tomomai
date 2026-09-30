@@ -1,6 +1,7 @@
 import { RANKING_BUCKET_CODE } from "./codes";
 import { getGame } from "./registry";
-import type { CanonicalGameId, ChartRatingInput, GameRating, RankedScore, RankingSelection } from "./types";
+import type { ChartRatingInput, GameRating, RankedScore, RankingSelection } from "./types";
+import type { CanonicalGameId } from "./ids";
 
 /** `chartRating` is a rating computed before the score's details were redacted. */
 type RatableScore = ChartRatingInput & { chartRating?: number };

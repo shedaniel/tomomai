@@ -1,7 +1,7 @@
 import { keyOf } from '@/lib/games/codes';
 import { formatGameLevel, formatGameScore } from '@/lib/games/presentation';
 import { getGame } from '@/lib/games/registry';
-import { Region } from '@/lib/types';
+import type { Region } from '@/lib/games/ids';
 import { fetchLatestSnapshotData } from '@/server/queries/snapshots';
 import { formatRecommendationTarget, generateRecommendations, type RecommendationData } from '@/lib/games/recommendations';
 import { getLogger } from '@/lib/request-logger';

@@ -1,4 +1,4 @@
-import type { CanonicalGameId } from "@/lib/games/types";
+import type { CanonicalGameId } from "@/lib/games/ids";
 import { catalogChartKey } from "./normalize-charts";
 
 export interface SongToParent {

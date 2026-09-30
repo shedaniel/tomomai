@@ -7,7 +7,7 @@ import type { GameSnapshotData } from "@/lib/games/player-view";
 import { keyOf } from "@/lib/games/codes";
 import { formatGameScore, formatGameScoreDelta, formatGameRating, formatGameLevel, getGameDifficulty, getGameChartType, getGameRankingBuckets } from "@/lib/games/presentation";
 import { formatRecommendationTarget, generateRecommendations, type RecommendationData } from "@/lib/games/recommendations";
-import { Region } from "@/lib/types";
+import type { Region } from "@/lib/games/ids";
 import { cn } from "@/lib/utils";
 import { Award, Calendar, Disc3, Filter, Hash, Heart, Layers, Target, Zap } from "lucide-react";
 import { useFormatter, useTranslations } from "next-intl";

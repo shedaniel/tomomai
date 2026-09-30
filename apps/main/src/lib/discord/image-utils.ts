@@ -1,7 +1,7 @@
 import { DISCORD_COLORS, editDiscordMessage } from './responses';
 import { regionDisplayName, t } from './i18n';
 import { formatProfileSummaryContent, type ProfileSummary } from './region';
-import type { Region } from '@/lib/types';
+import type { Region } from '@/lib/games/ids';
 import { prepareCreditData } from '@/server/services/games/maimai/render/credit-data';
 import { prepareDailyPlaysData } from '@/server/services/games/maimai/render/daily-plays-data';
 import { getLogger } from '@/lib/request-logger';

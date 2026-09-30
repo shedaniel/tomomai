@@ -1,7 +1,6 @@
 import { GenericFilter } from "@/components/filter-panel";
 import type { CodeKey } from "@/lib/games/codes";
-import type { CanonicalGameId } from "@/lib/games/ids";
-import { Region } from "@/lib/types";
+import type { CanonicalGameId, Region } from "@/lib/games/ids";
 
 export type ChartTypeKey = CodeKey<CanonicalGameId, "chartType">;
 export type DifficultyKey = CodeKey<CanonicalGameId, "difficulty">;

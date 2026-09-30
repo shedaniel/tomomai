@@ -4,8 +4,7 @@ import { nanoid } from "nanoid";
 import { db } from "@/lib/db";
 import { scoreData, snapshotScores, songs, userSnapshots } from "@/lib/db/schema-pg";
 import { getGame } from "@/lib/games/registry";
-import type { CanonicalGameId } from "@/lib/games/types";
-import type { Region } from "@/lib/types";
+import type { CanonicalGameId, Region } from "@/lib/games/ids";
 import { catalogCharts, writeSnapshotScores, type SnapshotScore } from "./score-storage";
 
 export type CopySnapshotInput = {

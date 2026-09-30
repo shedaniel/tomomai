@@ -4,7 +4,7 @@ import { and, eq, gt, inArray, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { userRecentSongs, maimaiRecentSongDetails } from "@/lib/db/schema-pg";
 import { getLogger } from "@/lib/request-logger";
-import { Region } from "@/lib/types";
+import type { Region } from "@/lib/games/ids";
 import type { GameSiteClient } from "@/server/services/games/sega/http";
 import type { RecentSongData } from "../types";
 

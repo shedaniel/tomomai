@@ -6,7 +6,7 @@ import type { RouterOutputs } from "@/lib/trpc-types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@tomomai/ui";
 import { useTranslations } from "next-intl";
 import { Loader2 } from "lucide-react";
-import { Region } from "@/lib/types";
+import type { Region } from "@/lib/games/ids";
 import { TitleRankingTable } from "./stats/title-ranking-table";
 import { TopSongsCard } from "./stats/top-songs-card";
 import { AverageAchievementChart } from "./stats/average-achievement-chart";

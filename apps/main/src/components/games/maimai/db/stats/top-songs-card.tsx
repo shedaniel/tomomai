@@ -6,7 +6,7 @@ import { Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@tomomai/ui";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@tomomai/ui/select-friendly";
 import { trpc } from "@/lib/trpc-client";
-import { Region } from "@/lib/types";
+import type { Region } from "@/lib/games/ids";
 import { SongRankingTable } from "./song-ranking-table";
 
 type Window = "all" | "90d" | "30d" | "7d";

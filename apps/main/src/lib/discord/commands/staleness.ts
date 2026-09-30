@@ -1,7 +1,7 @@
 import { userSnapshots } from '@/lib/db/schema-pg';
 import { getLogger } from '@/lib/request-logger';
 import { waitUntil } from '@vercel/functions';
-import type { Region } from '@/lib/types';
+import type { Region } from '@/lib/games/ids';
 import {
   createDeferredResponse,
   createErrorResponse,

@@ -1,6 +1,6 @@
 import { toEverything, toRomaji } from "./kuroshiro";
 import slug from "slug";
-import type { CanonicalGameId } from "./games/types";
+import type { CanonicalGameId } from "./games/ids";
 
 /**
  * Generate a URL-safe slug from a song name and artist

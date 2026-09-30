@@ -13,7 +13,7 @@ import {
   type FetchState,
 } from "@/lib/fetch-states";
 import { useGame } from "./providers/game-provider";
-import type { CanonicalGameId } from "@/lib/games/types";
+import type { CanonicalGameId } from "@/lib/games/ids";
 import { fetchErrorDetail, parseFetchErrorCode } from "@/lib/games/fetch-error-codes";
 import { getGameDifficulty } from "@/lib/games/presentation";
 import { useTranslations } from "next-intl";
