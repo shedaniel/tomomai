@@ -60,7 +60,7 @@ export interface CatalogSource {
   images: CatalogImagePolicy;
   /** Logs in with a player token for a region the definition's `catalogTokenRegions` lists, and returns the session cookies the source stages read the game site with. */
   authenticate?: (region: Region, token: string) => Promise<string>;
-  /** Decodes an upload record in a retired format. Returns undefined for a record in the current format. */
+  /** Decodes an upload record in a retired format, which the upload contract then validates like any other. Returns undefined for a record in the current format. */
   parseLegacyRecord?: (input: unknown) => CatalogChart | undefined;
 }
 

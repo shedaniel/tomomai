@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { catalogMetadataSchema } from "@/lib/catalog/chart-metadata";
 import { MAIMAI_CODES, chartTypeToCode, difficultyToCode } from "@/lib/games/maimai/codes";
 import { count, noteCountsSchema, smallint, type CatalogChart } from "@/server/services/catalog/ingestion/schema";
 
@@ -14,7 +15,7 @@ const legacyChart = z.object({
   genre: z.string(), addedVersion: smallint, bpm: count.nullable(),
   noteDesigner: z.string().nullable(),
   noteCounts: noteCountsSchema.nullable(),
-  metadata: z.record(z.string(), z.unknown()).optional(),
+  metadata: catalogMetadataSchema.optional(),
 });
 
 /** maimai uploads from before chart codes name the chart type `type` and use key strings. */

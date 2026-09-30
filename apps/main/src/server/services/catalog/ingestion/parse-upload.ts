@@ -30,7 +30,7 @@ function validateCatalogCharts(game: CanonicalGameId, charts: CatalogChart[]): v
 export function parseCatalogUpload(game: CanonicalGameId, input: unknown): CatalogChart[] {
   const records = z.array(z.unknown()).nonempty().parse(input);
   const { parseLegacyRecord } = GAME_SERVER_MODULES[game].catalog;
-  const charts = records.map(record => parseLegacyRecord?.(record) ?? catalogChartSchema.parse(record));
+  const charts = records.map(record => catalogChartSchema.parse(parseLegacyRecord?.(record) ?? record));
   validateCatalogCharts(game, charts);
   return charts;
 }

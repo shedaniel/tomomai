@@ -26,6 +26,8 @@ describe("catalog upload boundary", () => {
     ["another provider", { source: { provider: "lxns", id: "42" } }],
   ])("rejects metadata with %s", (_name, metadata) => {
     expect(() => parseCatalogUpload("chunithm", [{ ...chart, metadata }])).toThrow();
+    const { game, chartType, ...fields } = chart;
+    expect(() => parseCatalogUpload("maimai", [{ ...fields, type: "std", difficulty: "master", bpm: null, noteDesigner: null, noteCounts: null, metadata }])).toThrow();
   });
 
   it("rejects values still wrapped the way collection marks them important", () => {
