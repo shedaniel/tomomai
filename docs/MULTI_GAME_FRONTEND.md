@@ -10,6 +10,7 @@ and catalog identity context is in [PARENT_SONG.md](PARENT_SONG.md).
 The current phase deliberately excludes the two-domain/URL setup and cross-domain
 login. Existing maimai URLs remain unchanged. `getCurrentGame()` in [`current.ts`](../apps/main/src/lib/games/current.ts) resolves the configured canonical game at the server boundary
 and passes a serializable descriptor (id, brand, effective capabilities and region overrides, enabled regions and fetch facts) through `GameProvider`.
+Client components read it with `useGame()`, once per component, and server components call `getCurrentGame()` themselves instead of taking the game as a prop.
 Each game has one `GameDefinition` under `lib/games/<game>/definition.ts`, listed in `GAMES` in
 [`registry.ts`](../apps/main/src/lib/games/registry.ts). A game with no enabled regions is disabled, and its catalog stays readable.
 The dashboard and profile routes check `isPlayerAvailable(game)` once on the server, which also narrows
