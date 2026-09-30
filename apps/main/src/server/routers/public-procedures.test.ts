@@ -1,6 +1,7 @@
 import { expect, it, vi } from "vitest";
 
 vi.mock("@/lib/db", () => ({ db: {} }));
+vi.mock("@/lib/redis", () => ({ redis: {} }));
 vi.mock("@/lib/trpc", async () => {
   const { initTRPC } = await import("@trpc/server");
   const t = initTRPC.meta<{ access: "public" | "protected" }>().create();
