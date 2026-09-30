@@ -1,12 +1,10 @@
 import { defineGameHandler, keyHasScope } from "@/lib/api/protect";
-import { GAME_API_DETAILS } from "@/lib/api/schemas";
 import { fetchRecentSongs } from "@/server/queries/recents";
 import { spec } from "./spec";
 
 export const GET = defineGameHandler(spec, async ({ game, key, query }) => {
   const { region, limit = 50, offset = 0 } = query;
   const withPlaylog = keyHasScope(key, "recent:detailed:read");
-  const details = GAME_API_DETAILS[game];
 
   const { recentPlays, totalCount, hasMore } = await fetchRecentSongs(game, key.userId, region, limit, offset);
 
@@ -29,7 +27,7 @@ export const GET = defineGameHandler(spec, async ({ game, key, query }) => {
       type: p.typeCode,
       genre: p.genre,
     },
-    details: details.recent(p, withPlaylog),
+    details: withPlaylog ? p.details : { ...p.details, playlog: null },
   }));
 
   return { plays, totalCount, hasMore };

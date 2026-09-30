@@ -5,6 +5,8 @@ import { createRoot, type Root } from "react-dom/client";
 import { NextIntlClientProvider } from "next-intl";
 import { GameProvider } from "@/components/providers/game-provider";
 import { toFrontendGame } from "@/lib/games/frontend";
+import type { CanonicalGameId } from "@/lib/games/ids";
+import { loadMessages } from "@/i18n/messages";
 import { getGame } from "@/lib/games/registry";
 import { RecentSongsCard } from "./recent-songs-card";
 import { AlbumCard } from "./album-card";
@@ -17,12 +19,13 @@ vi.mock("@/lib/trpc-client", () => ({ trpc: {
   user: {
     getRecentSongs: { useQuery: (input: { offset: number }) => { state.offsets.push(input.offset); return { ...state.recent, isLoading: false, isFetching: false }; } },
     getPublicRecentSongs: { useQuery: () => ({}) },
+    getSimpleSongDetails: { useQuery: () => ({ data: { bpm: 222, addedVersion: 0, slug: "recent-song-artist-standard" }, isLoading: false }) },
     getUserAlbums: { useQuery: () => ({ ...state.album, isLoading: false, isFetching: false }) },
     deleteAlbum: { useMutation: () => ({ mutate: vi.fn(), isPending: false }) },
   },
 } }));
-vi.mock("@/i18n/navigation", () => ({ Link: ({ children }: { children: React.ReactNode }) => <span>{children}</span> }));
-const recentPlay = { recentSongId: BigInt(1), songId: "song", songName: "Recent song", artist: "Artist", cover: "https://example.com/cover.webp", difficultyCode: 3, typeCode: 0, levelPrecise: 140, level: "14", playedAt: new Date("2026-09-01"), scoreValue: 1009000, comboStatus: 2, syncStatus: 0, clearStatus: 0, rating: 1650, chunithmDetails: null };
+vi.mock("@/i18n/navigation", () => ({ Link: ({ children, href }: { children: React.ReactNode; href: string }) => <a href={href}>{children}</a> }));
+const recentPlay = { recentSongId: BigInt(1), songId: "song", songName: "Recent song", artist: "Artist", cover: "https://example.com/cover.webp", difficultyCode: 3, typeCode: 0, levelPrecise: 140, level: "14", playedAt: new Date("2026-09-01"), scoreValue: 1009000, comboStatus: 2, syncStatus: 0, clearStatus: 0, secondaryScore: 0, track: 1, details: { game: "chunithm", playlog: null } };
 
 let root: Root;
 let container: HTMLDivElement;
@@ -39,37 +42,47 @@ beforeEach(() => {
   state.album.data = { albums: [{ id: "1", songName: "Album song", artist: "Artist", cover: "https://example.com/cover.webp", difficultyCode: 4, typeCode: 0, levelPrecise: 150, level: "15", takenAt: "2026-09-01", imageKey: "" }], hasMore: false };
 });
 afterEach(async () => { await act(async () => root.unmount()); vi.unstubAllGlobals(); });
-async function render(content: React.ReactNode) {
-  await act(async () => root.render(<NextIntlClientProvider locale="en" messages={messages} timeZone="UTC"><GameProvider game={{ ...toFrontendGame(getGame("chunithm"), ["jp"]), capabilities: ["recents", "albums"] }}>{content}</GameProvider></NextIntlClientProvider>));
+async function render(content: React.ReactNode, game: CanonicalGameId = "chunithm") {
+  const gameMessages = await loadMessages(game, "en");
+  await act(async () => root.render(<NextIntlClientProvider locale="en" messages={gameMessages} timeZone="UTC"><GameProvider game={{ ...toFrontendGame(getGame(game), ["jp"]), capabilities: ["recents", "albums"] }}>{content}</GameProvider></NextIntlClientProvider>));
 }
+const expand = async () => act(async () => container.querySelector<HTMLButtonElement>('button[aria-expanded="false"]')?.click());
 describe("shared optional player panels", () => {
   it("renders CHUNITHM recents through the production list and advances pagination", async () => {
     await render(<RecentSongsCard region="jp" />);
     expect(container.textContent).toContain("Recent song");
     expect(container.textContent).toContain("1,009,000");
     expect(container.textContent).toContain("AJ");
-    expect(container.textContent).not.toContain("Click to expand");
     expect(container.textContent).toContain("Not fetched");
     state.recent.data = { recentPlays: [], hasMore: false };
     await act(async () => state.loadMore?.());
     expect(state.offsets.at(-1)).toBe(25);
   });
+  it.each(["chunithm", "maimai"] as const)("opens the song details of a %s play whose playlog was not fetched", async game => {
+    state.recent.data = { recentPlays: [{ ...recentPlay, details: game === "maimai" ? { game, maxDxScore: 0, playlog: null } : { game, playlog: null } }], hasMore: false };
+    await render(<RecentSongsCard region="jp" />, game);
+    expect(container.textContent).toContain("Not fetched");
+    await expand();
+    expect(container.querySelector('button[aria-expanded="true"]')).not.toBeNull();
+    expect(container.textContent).toContain(messages.recentPlays.detailsNotFetched);
+    expect(container.textContent).toContain("BPM222");
+    expect(container.querySelector('a[href="/db/songs/recent-song-artist-standard"]')).not.toBeNull();
+  });
   it("expands fetched CHUNITHM details with real zeros and percentages over 100", async () => {
     state.recent.data = { recentPlays: [{
       ...recentPlay,
-      rating: null,
-      chunithmDetails: {
-        maxCombo: 0,
-        judgments: { justiceCritical: 1200, justice: 0, attack: 0, miss: 0 },
-        notePercentages: { tap: 101.01, hold: 100, slide: 0, air: 99.5, flick: 100.5 },
+      details: {
+        game: "chunithm",
+        playlog: {
+          maxCombo: 0,
+          judgments: { justiceCritical: 1200, justice: 0, attack: 0, miss: 0 },
+          notePercentages: { tap: 101.01, hold: 100, slide: 0, air: 99.5, flick: 100.5 },
+        },
       },
     }], hasMore: false };
     await render(<RecentSongsCard region="jp" />);
     expect(container.textContent).not.toContain("Not fetched");
-    expect(container.textContent).not.toContain("Justice Critical");
-    const expand = container.querySelector<HTMLButtonElement>('button[aria-expanded="false"]');
-    expect(expand).not.toBeNull();
-    await act(async () => expand?.click());
+    await expand();
     const detailValue = (label: string) => Array.from(container.querySelectorAll("dt"))
       .find(element => element.textContent === label)?.nextElementSibling?.textContent;
     expect(container.textContent).toContain("Max combo0");
@@ -80,10 +93,11 @@ describe("shared optional player panels", () => {
     expect(detailValue("Tap")).toBe("101.01%");
     expect(detailValue("Slide")).toBe("0%");
     expect(detailValue("Flick")).toBe("100.5%");
-    expect(container.textContent).not.toContain("DX");
+    expect(container.textContent).not.toContain(messages.recentPlays.detailsNotFetched);
     expect(container.textContent).not.toContain("Critical Perfect");
+    expect(container.textContent).toContain("BPM222");
     await act(async () => container.querySelector<HTMLButtonElement>('button[aria-expanded="true"]')?.click());
-    expect(container.textContent).not.toContain("Justice Critical");
+    expect(container.querySelector('button[aria-expanded="false"]')).not.toBeNull();
   });
   it("distinguishes an unavailable album image from an empty album", async () => {
     await render(<AlbumCard region="jp" />);

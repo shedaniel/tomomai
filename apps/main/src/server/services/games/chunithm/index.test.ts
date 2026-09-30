@@ -60,3 +60,16 @@ describe("CHUNITHM reserved profiles", () => {
     expect(GAME_SERVER_MODULES.chunithm.reserved).toBeUndefined();
   });
 });
+
+describe("CHUNITHM recent play details", () => {
+  it("decodes each play's stored playlog and reads anything else as not fetched", async () => {
+    const playlog = { maxCombo: 1, judgments: { justiceCritical: 1, justice: 0, attack: 0, miss: 0 }, notePercentages: { tap: 101, hold: 101, slide: 101, air: 101, flick: 101 } };
+    const plays = [playlog, null, { maxCombo: "1" }].map((metadata, index) => ({ recentSongId: BigInt(index), maxDxScore: null, metadata }));
+
+    await expect(GAME_SERVER_MODULES.chunithm.recentDetails(plays)).resolves.toEqual([
+      { game: "chunithm", playlog },
+      { game: "chunithm", playlog: null },
+      { game: "chunithm", playlog: null },
+    ]);
+  });
+});

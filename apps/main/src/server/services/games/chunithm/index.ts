@@ -1,9 +1,10 @@
 import "server-only";
+import { decodeChunithmPlaylog } from "@/lib/games/chunithm/recent-details";
 import { parseDisplayLevel } from "@/server/services/catalog/ingestion/levels";
 import { chunithmImagePolicy } from "./catalog/images";
 import type { GameServerModule } from "../types";
 
-export const chunithmServerModule: GameServerModule = {
+export const chunithmServerModule: GameServerModule<"chunithm"> = {
   catalog: {
     async stages() {
       const { OtogeDbFetcher } = await import("./catalog/sources/otoge-db");
@@ -17,5 +18,8 @@ export const chunithmServerModule: GameServerModule = {
       const { fetchChunithmScores } = await import("./scores/pipeline");
       return fetchChunithmScores(context, run);
     },
+  },
+  async recentDetails(plays) {
+    return plays.map(play => ({ game: "chunithm", playlog: decodeChunithmPlaylog(play.metadata) }));
   },
 };

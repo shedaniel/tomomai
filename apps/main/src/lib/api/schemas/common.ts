@@ -5,7 +5,6 @@ import type { GameSnapshotSummary } from "@/lib/games/player-view";
 import { gameIdSchema, regionSchema as gameRegionSchema } from "@/lib/games/schema";
 import type { ScoreStatusKind } from "@/lib/games/types";
 import type { songs } from "@/lib/db/schema-pg";
-import type { RecentPlay } from "@/server/queries/recents";
 
 /**
  * The response parts every game shares. The OpenAPI document and the Developer Center render these schemas,
@@ -267,9 +266,8 @@ export const parentCatalogue = z.object({ game: gameIdSchema, parents: z.array(c
 type ApiSongRow = Pick<typeof songs.$inferSelect, "tapCount" | "holdCount" | "slideCount" | "touchCount" | "breakCount" | "metadata">;
 type ApiSnapshotRow = Pick<GameSnapshotSummary, "courseRankUrl" | "classRankUrl" | "stars">;
 
-/** Builds the `details` a game adds to song, recent play and snapshot responses. */
+/** Builds the `details` a game adds to song and snapshot responses. Recent plays already carry theirs. */
 export type GameApiDetails<G extends CanonicalGameId> = {
   song(chart: ApiSongRow): { game: G };
-  recent(play: RecentPlay, withPlaylog: boolean): { game: G };
   snapshot(snapshot: ApiSnapshotRow): { game: G };
 };

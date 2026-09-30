@@ -91,7 +91,10 @@ the session completed, and only then runs the enrichment and the public profile
 revalidation, so their failures are logged and never fail a saved snapshot.
 maimai enriches with recent play details (the `user_recent_songs_detailed`
 table) and album photos, CHUNITHM with recent play details stored in the recent
-row's `metadata`. Albums are gated by the `albums` capability in the fetched
+row's `metadata`. Reading them back is each game server module's
+`recentDetails`: the shared recents query hands it a page of stored plays and
+returns its decoded `details`, so neither the query nor the payload carries
+another game's columns. Albums are gated by the `albums` capability in the fetched
 region, and a fetch asks for the user's album preference only where albums are
 offered. Every fetch step runs through `createFetchRun` in
 `server/services/games/fetch-run.ts`, which checks the abort signal around each
@@ -135,8 +138,10 @@ canonical score fields and the stats shape (status counts keyed by code, only
 for the status kinds the game records). `maimai.ts` and `chunithm.ts` hold each
 game's `details` shapes and the builders that fill them, and `index.ts` joins
 them into discriminated unions on `game` for song detail, snapshots and recent
-plays. `GAME_API_DETAILS` requires a builder per game, so a new game cannot ship
-without its details. Catalog responses publish `levelPreciseEstimated` and
+plays. `GAME_API_DETAILS` requires a song and snapshot builder per game, so a
+new game cannot ship without its details. Recent plays publish the `details`
+the recents query already decoded, with the playlog schema each game declares
+in `lib/games/<game>/recent-details.ts`. Catalog responses publish `levelPreciseEstimated` and
 `addedVersionEstimated` through `chartEstimates` (`lib/catalog/chart-metadata.ts`),
 never the raw `songs.metadata`. The pre-namespace paths (`/api/v1/songs`,
 `/api/v1/recents` and the others) are answered by `app/api/v1/[...legacy]` with

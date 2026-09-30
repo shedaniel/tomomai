@@ -7,4 +7,4 @@ import { chunithmServerModule } from "./chunithm";
 export const GAME_SERVER_MODULES = {
   maimai: maimaiServerModule,
   chunithm: chunithmServerModule,
-} satisfies Record<CanonicalGameId, GameServerModule>;
+} satisfies { [G in CanonicalGameId]: GameServerModule<G> };

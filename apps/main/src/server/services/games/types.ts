@@ -6,6 +6,7 @@ import type { CatalogChart } from "@/server/services/catalog/ingestion/schema";
 import type { CatalogLevelPolicy } from "@/server/services/catalog/ingestion/levels";
 import type { CatalogStage } from "@/server/services/catalog/ingestion/runner";
 import type { GameSnapshotData } from "@/lib/games/player-view";
+import type { RecentPlayDetails } from "@/lib/games/recent-details";
 import type { FetchStartError } from "./fetch-errors";
 import type { FetchRun } from "./fetch-run";
 
@@ -111,8 +112,17 @@ export interface ReservedProfileProvider {
   snapshot: (username: string, region: Region) => Promise<GameSnapshotData | null>;
 }
 
-export interface GameServerModule {
+/** A stored recent play as the shared recents query reads it, before its game adds the details. */
+export type StoredRecentPlay = {
+  recentSongId: bigint;
+  maxDxScore: number | null;
+  metadata: unknown;
+};
+
+export interface GameServerModule<G extends CanonicalGameId = CanonicalGameId> {
   catalog: CatalogSource;
   scores: ScoreSource;
   reserved?: ReservedProfileProvider;
+  /** Reads what only this game records about each of a page of recent plays, in the same order. */
+  recentDetails: (plays: readonly StoredRecentPlay[]) => Promise<RecentPlayDetails<G>[]>;
 }

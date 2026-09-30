@@ -17,6 +17,7 @@ const mocks = vi.hoisted(() => {
     fetchUserAlbums: vi.fn(),
     fetchPlayerStats: vi.fn(),
     fetchLatestPlateSongs: vi.fn(),
+    fetchRecentSongs: vi.fn(),
   };
 });
 
@@ -28,10 +29,12 @@ vi.mock("@/lib/request-logger", () => ({ requestLogger: () => ({ log: mocks.log,
 vi.mock("@/server/queries/albums", () => ({ fetchUserAlbums: mocks.fetchUserAlbums }));
 vi.mock("@/server/queries/stats", () => ({ fetchPlayerStats: mocks.fetchPlayerStats }));
 vi.mock("@/server/services/games/maimai/plates", () => ({ fetchLatestPlateSongs: mocks.fetchLatestPlateSongs }));
+vi.mock("@/server/queries/recents", () => ({ fetchRecentSongs: mocks.fetchRecentSongs }));
 
 import { GameAdapterError } from "@/lib/games/errors";
 import { GET as getAlbums } from "@/app/api/v1/games/[game]/albums/route";
 import { GET as getPlates } from "@/app/api/v1/games/[game]/plates/route";
+import { GET as getRecents } from "@/app/api/v1/games/[game]/recents/route";
 import { GET as getStats } from "@/app/api/v1/games/[game]/stats/route";
 import { defineGameHandler } from "./protect";
 import { defineGameRoute, defineRoute } from "./registry";
@@ -123,6 +126,22 @@ describe("keyed game routes", () => {
     expect(await maimai.json()).toEqual({ game: "maimai", stats: {}, totalSongs: {} });
     expect(mocks.fetchPlayerStats).toHaveBeenCalledOnce();
     expect(mocks.fetchPlayerStats).toHaveBeenCalledWith("maimai", "user-1", "jp");
+  });
+
+  it("publishes a recent play's details and withholds its playlog without the detailed scope", async () => {
+    const playlog = { maxCombo: 10, judgments: { justiceCritical: 10, justice: 0, attack: 0, miss: 0 }, notePercentages: { tap: 101, hold: 101, slide: 101, air: 101, flick: 101 } };
+    mocks.fetchRecentSongs.mockResolvedValue({ totalCount: 1, hasMore: false, recentPlays: [{
+      recentSongId: BigInt(1), playedAt: new Date("2026-09-01T00:00:00Z"), scoreValue: 1010000, secondaryScore: 0, comboStatus: 3, syncStatus: 0, clearStatus: 0, track: 1,
+      songId: "Ab3xK9pQ:j23", songName: "Song", artist: "Artist", cover: null, difficultyCode: 3, typeCode: 0, level: "14", levelPrecise: 140, genre: "Genre",
+      details: { game: "chunithm", playlog },
+    }] });
+    const plays = async () => (await (await getRecents(request("chunithm/recents?region=jp", { key: KEY }), context({ game: "chunithm" }))).json()).plays;
+
+    expect((await plays())[0].details).toEqual({ game: "chunithm", playlog: null });
+
+    mocks.verifyApiKey.mockResolvedValueOnce({ valid: true, key: { referenceId: "user-1", id: "key-1", permissions: { "recent:read": ["access"], "recent:detailed:read": ["access"] }, name: null, expiresAt: null } });
+    expect((await plays())[0].details).toEqual({ game: "chunithm", playlog });
+    expect(mocks.fetchRecentSongs).toHaveBeenCalledWith("chunithm", "user-1", "jp", 50, 0);
   });
 
   it("answers every rejected parameter with an error and a code", async () => {

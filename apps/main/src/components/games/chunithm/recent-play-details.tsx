@@ -1,43 +1,32 @@
 "use client";
 
-import type { ChunithmRecentDetails } from "@/lib/games/chunithm/recent-details";
-import type { RecentPlay } from "@/lib/trpc-types";
-import { AutoHeight } from "@/components/animate-ui/primitives/effects/auto-height";
 import { Badge } from "@tomomai/ui";
 import { Grip } from "lucide-react";
 import { useTranslations } from "next-intl";
+import type { RecentDetailsProps } from "@/components/games/registry";
 
-export function ChunithmRecentPlayDetails({ play, isExpanded }: { play: RecentPlay; isExpanded: boolean }) {
-  if (!play.chunithmDetails) return null;
-  return (
-    <AutoHeight deps={[isExpanded]}>
-      {isExpanded && <DetailsPanel details={play.chunithmDetails} />}
-    </AutoHeight>
-  );
-}
-
-function DetailsPanel({ details }: { details: ChunithmRecentDetails }) {
+export function ChunithmRecentPlayDetails({ details: { playlog } }: RecentDetailsProps<"chunithm">) {
   const t = useTranslations("recentPlays");
   const judgments = [
-    { label: "Justice Critical", value: details.judgments.justiceCritical },
-    { label: "Justice", value: details.judgments.justice },
-    { label: "Attack", value: details.judgments.attack },
-    { label: "Miss", value: details.judgments.miss },
+    { label: "Justice Critical", value: playlog.judgments.justiceCritical },
+    { label: "Justice", value: playlog.judgments.justice },
+    { label: "Attack", value: playlog.judgments.attack },
+    { label: "Miss", value: playlog.judgments.miss },
   ];
   const notes = [
-    { label: "Tap", value: details.notePercentages.tap },
-    { label: "Hold", value: details.notePercentages.hold },
-    { label: "Slide", value: details.notePercentages.slide },
-    { label: "Air", value: details.notePercentages.air },
-    { label: "Flick", value: details.notePercentages.flick },
+    { label: "Tap", value: playlog.notePercentages.tap },
+    { label: "Hold", value: playlog.notePercentages.hold },
+    { label: "Slide", value: playlog.notePercentages.slide },
+    { label: "Air", value: playlog.notePercentages.air },
+    { label: "Flick", value: playlog.notePercentages.flick },
   ];
 
   return (
-    <div className="space-y-3 pt-6">
+    <div className="space-y-3">
       <Badge variant="outline" className="gap-1 font-medium text-foreground">
         <Grip className="h-3 w-3" />
         <span>{t("labels.maxCombo")}</span>
-        <span className="font-mono">{details.maxCombo}</span>
+        <span className="font-mono">{playlog.maxCombo}</span>
       </Badge>
       <div>
         <h5 className="mb-2 text-xs font-medium text-muted-foreground">{t("labels.judgments")}</h5>

@@ -7,7 +7,7 @@ import { maimaiLevelPolicy } from "./catalog/chart";
 import { maimaiImagePolicy } from "./catalog/images";
 import { parseLegacyCatalogRecord } from "./catalog/legacy-upload";
 
-export const maimaiServerModule: GameServerModule = {
+export const maimaiServerModule: GameServerModule<"maimai"> = {
   catalog: {
     async stages(region) {
       const { maimaiCatalogStages } = await import("./catalog/pipeline");
@@ -43,5 +43,9 @@ export const maimaiServerModule: GameServerModule = {
       const { getReservedGameSnapshot } = await import("./reserved");
       return getReservedGameSnapshot(username, region);
     },
+  },
+  async recentDetails(plays) {
+    const { loadMaimaiRecentDetails } = await import("./recent-details");
+    return loadMaimaiRecentDetails(plays);
   },
 };

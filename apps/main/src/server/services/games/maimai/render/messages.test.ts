@@ -52,7 +52,7 @@ it("mints a day's plays with the header of the snapshot before it", async () => 
 
 it("mints the latest credit's tracks in play order with their judgement details", async () => {
   const noDetails = Array(34).fill(null);
-  const details = [3, 4, 100, 120, null, null, 300, 5, null, ...Array.from({ length: 25 }, (_, index) => index + 1)];
+  const details = [3, 4, 100, 120, null, null, ...Array.from({ length: 25 }, (_, index) => index + 1), null, 300, 5];
   db.tables.user_recent_songs = [
     ["2026-09-01 01:10:00", "b:j13", 1005000, 2100, 3, 5, 2400, 2, ...noDetails],
     ["2026-09-01 01:05:00", "a:j13", 990000, 1500, 1, 2, 2000, 1, ...details],

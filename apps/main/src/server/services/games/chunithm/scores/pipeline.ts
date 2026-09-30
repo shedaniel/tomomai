@@ -10,7 +10,7 @@ import { chartKey } from "@/server/services/games/score-storage";
 import { openGameSite, type GameSiteClient } from "@/server/services/games/sega/http";
 import type { Enrichment, NormalizedScore, ScoreFetchContext, ScoreFetchOutcome } from "@/server/services/games/types";
 import { loginAndGetCookies } from "../login";
-import { assertChunithmPage, CHUNITHM_DIFFICULTIES, parseMusicGenreForm, parsePlayer, parseRecentDetails, parseRecents, parseScores, type ChunithmRecentRow } from "./parsers";
+import { assertChunithmPage, CHUNITHM_DIFFICULTIES, parseMusicGenreForm, parsePlayer, parsePlaylog, parseRecents, parseScores, type ChunithmRecentRow } from "./parsers";
 
 export async function fetchChunithmScores(ctx: ScoreFetchContext, run: FetchRun): Promise<ScoreFetchOutcome> {
   const { region, userId, token, gameVersion, signal } = ctx;
@@ -73,10 +73,10 @@ function recentDetails(site: GameSiteClient, plays: readonly ChunithmRecentRow[]
     let errorCount = 0;
     for (const { songId, playedAt, form } of pending) {
       try {
-        const details = parseRecentDetails(await site.post(form.action, form.fields));
+        const playlog = parsePlaylog(await site.post(form.action, form.fields));
         await db
           .update(userRecentSongs)
-          .set({ metadata: details })
+          .set({ metadata: playlog })
           .where(and(
             eq(userRecentSongs.userId, persisted.userId),
             eq(userRecentSongs.game, "chunithm"),

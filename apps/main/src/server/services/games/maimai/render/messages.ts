@@ -16,6 +16,7 @@ import { user, userSnapshots } from "@/lib/db/schema-pg";
 import { and, eq } from "drizzle-orm";
 import type { Region } from "@/lib/types";
 import type { GamePlayerScore, GameSnapshot } from "@/lib/games/player-view";
+import { playlogNoteCounts } from "@/lib/games/maimai/recent-details";
 import { toMaimaiResult, toMaimaiSnapshotHeader } from "../legacy-view";
 import { fetchSnapshotRankings, gameSnapshotColumns } from "@/server/queries/snapshots";
 import {
@@ -158,47 +159,7 @@ export async function buildLastCreditMessage(opts: {
       fs,
       dxScore,
       maxDxScore: t.maxDxScore,
-      details: t.details
-        ? {
-            fastCount: t.details.fastCount,
-            lateCount: t.details.lateCount,
-            tap: {
-              criticalPerfect: t.details.tapCPerfect,
-              perfect: t.details.tapPerfect,
-              great: t.details.tapGreat,
-              good: t.details.tapGood,
-              miss: t.details.tapMiss,
-            },
-            hold: {
-              criticalPerfect: t.details.holdCPerfect,
-              perfect: t.details.holdPerfect,
-              great: t.details.holdGreat,
-              good: t.details.holdGood,
-              miss: t.details.holdMiss,
-            },
-            slide: {
-              criticalPerfect: t.details.slideCPerfect,
-              perfect: t.details.slidePerfect,
-              great: t.details.slideGreat,
-              good: t.details.slideGood,
-              miss: t.details.slideMiss,
-            },
-            touch: {
-              criticalPerfect: t.details.touchCPerfect,
-              perfect: t.details.touchPerfect,
-              great: t.details.touchGreat,
-              good: t.details.touchGood,
-              miss: t.details.touchMiss,
-            },
-            break: {
-              criticalPerfect: t.details.breakCPerfect,
-              perfect: t.details.breakPerfect,
-              great: t.details.breakGreat,
-              good: t.details.breakGood,
-              miss: t.details.breakMiss,
-            },
-          }
-        : null,
+      details: t.playlog && { fastCount: t.playlog.fast, lateCount: t.playlog.late, ...playlogNoteCounts(t.playlog.notes) },
     };
   });
 

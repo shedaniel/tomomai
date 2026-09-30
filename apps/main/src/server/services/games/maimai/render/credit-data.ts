@@ -6,53 +6,15 @@ import { getLogger } from '@/lib/request-logger';
 import type { Region } from '@/lib/types';
 import type { GamePlayerScore, GameSnapshot } from '@/lib/games/player-view';
 import { gameSnapshotColumns } from '@/server/queries/snapshots';
+import type { MaimaiPlaylog } from '@/lib/games/maimai/recent-details';
 import { maimaiRecentPlayColumns } from '../columns';
-
-// Type for detailed song statistics
-export interface RecentSongDetails {
-  fastCount: number;
-  lateCount: number;
-  combo: number;
-  maxCombo: number;
-  syncScore: number | null;
-  maxSyncScore: number | null;
-  rating: number;
-  ratingChange: number;
-  venue: string | null;
-  // Note judgments
-  tapCPerfect: number;
-  tapPerfect: number;
-  tapGreat: number;
-  tapGood: number;
-  tapMiss: number;
-  holdCPerfect: number;
-  holdPerfect: number;
-  holdGreat: number;
-  holdGood: number;
-  holdMiss: number;
-  slideCPerfect: number;
-  slidePerfect: number;
-  slideGreat: number;
-  slideGood: number;
-  slideMiss: number;
-  touchCPerfect: number;
-  touchPerfect: number;
-  touchGreat: number;
-  touchGood: number;
-  touchMiss: number;
-  breakCPerfect: number;
-  breakPerfect: number;
-  breakGreat: number;
-  breakGood: number;
-  breakMiss: number;
-}
+import { maimaiPlaylogColumns, toMaimaiPlaylog } from '../recent-details';
 
 export type CreditTrack = Pick<GamePlayerScore, "songId" | "scoreValue" | "secondaryScore" | "comboStatus" | "syncStatus"> & {
   playedAt: Date;
   maxDxScore: number;
   track: number;
-  // Detailed stats (null if not available for this play)
-  details: RecentSongDetails | null;
+  playlog: MaimaiPlaylog | null;
 };
 
 // Type for a credit (a group of tracks played together)
@@ -94,42 +56,7 @@ export async function prepareCreditData(
       ...maimaiRecentPlayColumns,
       maxDxScore: sql<number>`coalesce(${userRecentSongs.maxDxScore}, 0)`.mapWith(Number).as("maxDxScore"),
       track: sql<number>`coalesce(${userRecentSongs.track}, 0)`.mapWith(Number).as("track"),
-      // Detailed stats from separate table (may be null)
-      fastCount: maimaiRecentSongDetails.fastCount,
-      lateCount: maimaiRecentSongDetails.lateCount,
-      combo: maimaiRecentSongDetails.combo,
-      maxCombo: maimaiRecentSongDetails.maxCombo,
-      syncScore: maimaiRecentSongDetails.syncScore,
-      maxSyncScore: maimaiRecentSongDetails.maxSyncScore,
-      rating: maimaiRecentSongDetails.rating,
-      ratingChange: maimaiRecentSongDetails.ratingChange,
-      venue: maimaiRecentSongDetails.venue,
-      // Note judgments from separate table (may be null)
-      tapCPerfect: maimaiRecentSongDetails.tapCPerfect,
-      tapPerfect: maimaiRecentSongDetails.tapPerfect,
-      tapGreat: maimaiRecentSongDetails.tapGreat,
-      tapGood: maimaiRecentSongDetails.tapGood,
-      tapMiss: maimaiRecentSongDetails.tapMiss,
-      holdCPerfect: maimaiRecentSongDetails.holdCPerfect,
-      holdPerfect: maimaiRecentSongDetails.holdPerfect,
-      holdGreat: maimaiRecentSongDetails.holdGreat,
-      holdGood: maimaiRecentSongDetails.holdGood,
-      holdMiss: maimaiRecentSongDetails.holdMiss,
-      slideCPerfect: maimaiRecentSongDetails.slideCPerfect,
-      slidePerfect: maimaiRecentSongDetails.slidePerfect,
-      slideGreat: maimaiRecentSongDetails.slideGreat,
-      slideGood: maimaiRecentSongDetails.slideGood,
-      slideMiss: maimaiRecentSongDetails.slideMiss,
-      touchCPerfect: maimaiRecentSongDetails.touchCPerfect,
-      touchPerfect: maimaiRecentSongDetails.touchPerfect,
-      touchGreat: maimaiRecentSongDetails.touchGreat,
-      touchGood: maimaiRecentSongDetails.touchGood,
-      touchMiss: maimaiRecentSongDetails.touchMiss,
-      breakCPerfect: maimaiRecentSongDetails.breakCPerfect,
-      breakPerfect: maimaiRecentSongDetails.breakPerfect,
-      breakGreat: maimaiRecentSongDetails.breakGreat,
-      breakGood: maimaiRecentSongDetails.breakGood,
-      breakMiss: maimaiRecentSongDetails.breakMiss,
+      playlog: maimaiPlaylogColumns,
     })
     .from(userRecentSongs)
     .innerJoin(songs, eq(userRecentSongs.songId, songs.id))
@@ -248,87 +175,17 @@ export async function prepareCreditData(
 
   const creditData: CreditData = {
     playedAt: creditPlayedAt,
-    tracks: sortedCredit.map(track => {
-      // Check if detailed stats are available (all required fields are non-null)
-      const hasDetails = track.fastCount !== null &&
-        track.lateCount !== null &&
-        track.combo !== null &&
-        track.maxCombo !== null &&
-        track.rating !== null &&
-        track.ratingChange !== null &&
-        track.tapCPerfect !== null &&
-        track.tapPerfect !== null &&
-        track.tapGreat !== null &&
-        track.tapGood !== null &&
-        track.tapMiss !== null &&
-        track.holdCPerfect !== null &&
-        track.holdPerfect !== null &&
-        track.holdGreat !== null &&
-        track.holdGood !== null &&
-        track.holdMiss !== null &&
-        track.slideCPerfect !== null &&
-        track.slidePerfect !== null &&
-        track.slideGreat !== null &&
-        track.slideGood !== null &&
-        track.slideMiss !== null &&
-        track.touchCPerfect !== null &&
-        track.touchPerfect !== null &&
-        track.touchGreat !== null &&
-        track.touchGood !== null &&
-        track.touchMiss !== null &&
-        track.breakCPerfect !== null &&
-        track.breakPerfect !== null &&
-        track.breakGreat !== null &&
-        track.breakGood !== null &&
-        track.breakMiss !== null;
-
-      return {
-        songId: track.songId,
-        playedAt: track.playedAt,
-        scoreValue: track.scoreValue,
-        secondaryScore: track.secondaryScore,
-        maxDxScore: track.maxDxScore,
-        comboStatus: track.comboStatus,
-        syncStatus: track.syncStatus,
-        track: track.track,
-        details: hasDetails ? {
-          fastCount: track.fastCount!,
-          lateCount: track.lateCount!,
-          combo: track.combo!,
-          maxCombo: track.maxCombo!,
-          syncScore: track.syncScore,
-          maxSyncScore: track.maxSyncScore,
-          rating: track.rating!,
-          ratingChange: track.ratingChange!,
-          venue: track.venue,
-          tapCPerfect: track.tapCPerfect!,
-          tapPerfect: track.tapPerfect!,
-          tapGreat: track.tapGreat!,
-          tapGood: track.tapGood!,
-          tapMiss: track.tapMiss!,
-          holdCPerfect: track.holdCPerfect!,
-          holdPerfect: track.holdPerfect!,
-          holdGreat: track.holdGreat!,
-          holdGood: track.holdGood!,
-          holdMiss: track.holdMiss!,
-          slideCPerfect: track.slideCPerfect!,
-          slidePerfect: track.slidePerfect!,
-          slideGreat: track.slideGreat!,
-          slideGood: track.slideGood!,
-          slideMiss: track.slideMiss!,
-          touchCPerfect: track.touchCPerfect!,
-          touchPerfect: track.touchPerfect!,
-          touchGreat: track.touchGreat!,
-          touchGood: track.touchGood!,
-          touchMiss: track.touchMiss!,
-          breakCPerfect: track.breakCPerfect!,
-          breakPerfect: track.breakPerfect!,
-          breakGreat: track.breakGreat!,
-          breakGood: track.breakGood!,
-          breakMiss: track.breakMiss!,
-        } : null,
-      };
-    }),
+    tracks: sortedCredit.map(track => ({
+      songId: track.songId,
+      playedAt: track.playedAt,
+      scoreValue: track.scoreValue,
+      secondaryScore: track.secondaryScore,
+      maxDxScore: track.maxDxScore,
+      comboStatus: track.comboStatus,
+      syncStatus: track.syncStatus,
+      track: track.track,
+      playlog: track.playlog && toMaimaiPlaylog(track.playlog),
+    })),
   };
 
   return {

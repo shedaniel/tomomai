@@ -464,14 +464,18 @@ accepts. The dashboard tabs are the table in
 privacy or flag rule, and `DataContent` renders the active tab's component.
 Pieces every game renders its own way are `GAME_UI` slots in
 `src/components/games/registry.tsx`, currently the score hover and the recent
-play details, so shared cards render the slot instead of branching. A feature
+play details, so shared cards render the slot instead of branching. A recent
+play carries one `details` field (`RecentPlayDetails` in
+`src/lib/games/recent-details.ts`) named by its `game`. Its `playlog` is null
+until the play's detail page is fetched, and the row shows the shared "not
+fetched" notice then, or the game's panel through `RecentPlaylog` otherwise.
+Every row opens to the song's catalog details. A feature
 only some games have, such as a maimai tab, the rating plate, TomomaiAI, the
 minigames or the community banner, is a capability, and the component that
 checks it may render the owning game's component. Before a second game declares
 such a capability, move its component behind a `GAME_UI` slot.
 `src/test/game-branching.test.ts` fails when code outside the game folders
-compares a game id, apart from a shrinking list of comparisons that are waiting
-for their replacement. It also fails when a game other than the owner declares
+compares a game id. It also fails when a game other than the owner declares
 one of these single-game features (its `SINGLE_GAME_FEATURES` list), or a `/db`
 section whose view or content is one game's (`SINGLE_GAME_SECTIONS`).
 

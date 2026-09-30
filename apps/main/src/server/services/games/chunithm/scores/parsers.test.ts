@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { isSongDataState, songDataState } from "@/lib/fetch-states";
 import { codeOf } from "@/lib/games/codes";
 import { getGame } from "@/lib/games/registry";
-import { assertChunithmPage, CHUNITHM_DIFFICULTIES, parseMusicGenreForm, parsePlayer, parseRecentDetails, parseRecents, parseScores } from "./parsers";
+import { assertChunithmPage, CHUNITHM_DIFFICULTIES, parseMusicGenreForm, parsePlayer, parsePlaylog, parseRecents, parseScores } from "./parsers";
 
 const context = { region: "jp" as const, gameVersion: 23 };
 
@@ -96,11 +96,11 @@ describe("CHUNITHM records", () => {
     expect(result.form.action).toBe("/record/playlog/sendPlaylogDetail/");
     expect(Object.fromEntries(result.form.fields)).toEqual({ idx: "7", token: "fresh" });
     expect(() => parseRecents(html.replace('action="/record/playlog/sendPlaylogDetail/"', 'action=""'), context)).toThrow("Missing CHUNITHM navigation form");
-    const details = parseRecentDetails(`<div class="play_data_detail_maxcombo_block">1,234</div>
+    const playlog = parsePlaylog(`<div class="play_data_detail_maxcombo_block">1,234</div>
       <div class="play_data_detail_judge_text text_critical">1,200</div><div class="play_data_detail_judge_text text_justice">30</div>
       <div class="play_data_detail_judge_text text_attack">4</div><div class="play_data_detail_judge_text text_miss">0</div>
       ${["tap_red", "hold_yellow", "slide_blue", "air_green", "flick_skyblue"].map(note => `<div class="play_data_detail_notes_text text_${note}">101.00%</div>`).join("")}`);
-    expect(details).toEqual({ maxCombo: 1234, judgments: { justiceCritical: 1200, justice: 30, attack: 4, miss: 0 }, notePercentages: { tap: 101, hold: 101, slide: 101, air: 101, flick: 101 } });
+    expect(playlog).toEqual({ maxCombo: 1234, judgments: { justiceCritical: 1200, justice: 30, attack: 4, miss: 0 }, notePercentages: { tap: 101, hold: 101, slide: 101, air: 101, flick: 101 } });
   });
 
   it("skips and counts plays of charts outside the fetched difficulties, such as WORLD'S END", () => {

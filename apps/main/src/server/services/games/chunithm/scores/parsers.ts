@@ -2,7 +2,7 @@ import { load, type CheerioAPI } from "cheerio";
 import { GAME_CODES, codeOf, type CodeKey } from "@/lib/games/codes";
 import { formatFetchError } from "@/lib/games/fetch-error-codes";
 import type { NormalizedPlayer, NormalizedRecent, NormalizedScore } from "@/server/services/games/types";
-import type { ChunithmRecentDetails } from "@/lib/games/chunithm/recent-details";
+import type { ChunithmPlaylog } from "@/lib/games/chunithm/recent-details";
 import type { Region } from "@/lib/types";
 
 const SITE_ACTIONS = {
@@ -174,7 +174,7 @@ export function parseRecents(html: string, context: ChartContext): { rows: Chuni
   return { rows, skipped };
 }
 
-export function parseRecentDetails(html: string): ChunithmRecentDetails {
+export function parsePlaylog(html: string): ChunithmPlaylog {
   const $ = load(html);
   const percentage = (selector: string) => {
     const match = $(selector).text().trim().match(/^(\d+(?:\.\d+)?)%$/);

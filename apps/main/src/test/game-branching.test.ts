@@ -16,14 +16,6 @@ const GAME_FOLDERS = CANONICAL_GAME_IDS.flatMap(game => [
 const GAME = `["'](?:${CANONICAL_GAME_IDS.join("|")})["']`;
 const BRANCH = new RegExp(`[!=]==\\s*${GAME}|${GAME}\\s*[!=]==|case\\s+${GAME}\\s*:`, "g");
 
-// Branches outside game folders that are still waiting for their replacement, with how many each file holds.
-// Delete an entry once its file no longer branches, and never add one.
-const PENDING: Record<string, number> = {
-  // Recent plays carry one per-game details field.
-  "components/player/recent-songs-card.tsx": 2,
-  "server/queries/recents.ts": 1,
-};
-
 // Shared hosts gate these features by capability but render the owner's component or call its trpc router,
 // so a second game would get the owner's UI. Give the host a GAME_UI slot before another game declares one.
 const SINGLE_GAME_FEATURES = {
@@ -63,7 +55,7 @@ describe("game branching", () => {
       const count = readFileSync(`${SRC}/${path}`, "utf8").match(BRANCH)?.length ?? 0;
       return count > 0 ? [[path, count]] : [];
     }));
-    expect(branches, "Check a capability with supportsGameFeature, read a definition field, or render a GAME_UI slot instead of comparing the game id").toEqual(PENDING);
+    expect(branches, "Check a capability with supportsGameFeature, read a definition field, or render a GAME_UI slot instead of comparing the game id").toEqual({});
   });
 
   it("lets only the owning game declare a feature whose shared host renders one game's UI", () => {
