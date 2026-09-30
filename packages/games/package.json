@@ -7,6 +7,10 @@
     "./codes": {
       "types": "./src/codes.ts",
       "import": "./src/codes.ts"
+    },
+    "./catalog-client": {
+      "types": "./src/catalog-client.ts",
+      "import": "./src/catalog-client.ts"
     }
   },
   "files": [
