@@ -1140,7 +1140,7 @@
     },
     "events": {
       "title": "Tour Events",
-      "description": "Browse all maimai tour events and their rewards",
+      "description": "Browse all {game} tour events and their rewards",
       "search": "Search events...",
       "noEvents": "No events found.",
       "selectEvent": "Select an event to view details",
@@ -1251,7 +1251,7 @@
     },
     "stats": {
       "title": "Global Statistics",
-      "description": "Explore aggregate maimai DX statistics across all tracked players: rating distributions, top titles, popular songs, and play activity over time.",
+      "description": "Explore aggregate {game} statistics across all tracked players: rating distributions, top titles, popular songs, and play activity over time.",
       "ratingDistribution": "Player Rating Distribution",
       "playCountDistribution": "Player Play Count Distribution",
       "topTitles": "Top Player Titles",

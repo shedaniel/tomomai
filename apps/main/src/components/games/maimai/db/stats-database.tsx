@@ -17,6 +17,7 @@ import { TimeSeriesLineChart } from "./stats/time-series-line-chart";
 import { RatingClimbChart } from "./stats/rating-climb-chart";
 import { HourWeekdayHeatmap } from "./stats/hour-weekday-heatmap";
 import { Tabs, TabsList, TabsTrigger } from "@/components/animate-ui/components/radix/tabs";
+import { useGame } from "@/components/providers/game-provider";
 
 type StatsData = inferRouterOutputs<AppRouter>["maimai"]["getCatalogStats"];
 type StatCard = {
@@ -148,6 +149,7 @@ const CARDS: StatCard[] = [
 
 export function StatsDatabase() {
   const t = useTranslations("db.stats");
+  const { brand } = useGame();
   const [region, setRegion] = useState<Region>("intl");
 
   const { data, isLoading } = trpc.maimai.getCatalogStats.useQuery({ region });
@@ -157,7 +159,7 @@ export function StatsDatabase() {
       <header className="space-y-1">
         <h1 className="text-2xl font-semibold tracking-tight">{t("title")}</h1>
         <p className="text-sm text-muted-foreground max-w-3xl leading-relaxed">
-          {t("description")}
+          {t("description", { game: brand.displayName })}
         </p>
       </header>
       <div className="flex justify-between items-center">

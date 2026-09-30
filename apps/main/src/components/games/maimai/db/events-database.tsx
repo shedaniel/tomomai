@@ -7,6 +7,7 @@ import { useSearchParams } from "next/navigation";
 import { useRouter, usePathname } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
 import { EVENT_STEP_TYPE_KEYS, normType } from "@/lib/games/maimai/events";
+import { useGame } from "@/components/providers/game-provider";
 import { Loader2, ArrowLeft, Search, Calendar } from "lucide-react";
 import { Button } from "@tomomai/ui";
 import { Input } from "@tomomai/ui";
@@ -144,6 +145,7 @@ const STATUS_ORDER: Record<EventStatus, number> = { active: 0, upcoming: 1, ende
 
 export function EventsDatabase() {
   const t = useTranslations("db.events");
+  const { brand } = useGame();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -205,7 +207,7 @@ export function EventsDatabase() {
     <header className="space-y-1">
       <h1 className="text-2xl font-semibold tracking-tight">{t("title")}</h1>
       <p className="text-sm text-muted-foreground max-w-3xl leading-relaxed">
-        {t("description")}
+        {t("description", { game: brand.displayName })}
       </p>
     </header>
   );

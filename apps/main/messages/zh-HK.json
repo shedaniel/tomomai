@@ -1224,7 +1224,7 @@
     },
     "stats": {
       "title": "整體統計",
-      "description": "探索所有追蹤玩家的 maimai DX 整體統計：Rating 分佈、熱門稱號、熱門歌曲，以及隨時間變化的遊玩活動。",
+      "description": "探索所有追蹤玩家的 {game} 整體統計：Rating 分佈、熱門稱號、熱門歌曲，以及隨時間變化的遊玩活動。",
       "ratingDistribution": "Rating 分佈",
       "playCountDistribution": "遊玩次數分佈",
       "topTitles": "熱門稱號",
@@ -1286,7 +1286,7 @@
     "events": {
       "active": "進行中",
       "back": "返回",
-      "description": "瀏覽所有 maimai 地區活動及其獎勵",
+      "description": "瀏覽所有 {game} 地區活動及其獎勵",
       "distance": "距離",
       "ended": "已結束",
       "noEvents": "找不到活動。",

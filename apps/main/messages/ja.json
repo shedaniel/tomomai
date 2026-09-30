@@ -1224,7 +1224,7 @@
     },
     "stats": {
       "title": "全体統計",
-      "description": "追跡中の全プレイヤーから集計した maimai DX の統計を見る：レート値の分布、人気の称号、人気楽曲、プレイアクティビティの推移など。",
+      "description": "追跡中の全プレイヤーから集計した {game} の統計を見る：レート値の分布、人気の称号、人気楽曲、プレイアクティビティの推移など。",
       "ratingDistribution": "レート分布",
       "playCountDistribution": "プレイ回数分布",
       "topTitles": "人気称号",
@@ -1286,7 +1286,7 @@
     "events": {
       "active": "開催中",
       "back": "戻る",
-      "description": "すべての maimai ちほーとその報酬を閲覧します",
+      "description": "すべての {game} ちほーとその報酬を閲覧します",
       "distance": "距離",
       "ended": "終了",
       "noEvents": "ちほーが見つかりません。",
