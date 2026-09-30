@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { resolveBaseUrl } from "@/lib/base-url";
 import { defaultLocale, locales, type Locale } from "@/i18n/locale";
 import { getLocale } from "@/i18n/locale-server";
+import { getOGImageLocales } from "@/i18n/og-locale";
 import { brandTitle } from "@/lib/games/frontend";
 import type { GameBrand } from "@/lib/games/types";
 
@@ -64,9 +65,17 @@ export async function buildAlternates(
   };
 }
 
-/** The absolute URL of the page's own opengraph-image in the given locale. */
-function ogImageUrl(path: string, locale: Locale): string {
-  return `${resolveBaseUrl()}${localizePath(path, locale)}/opengraph-image/${locale}`;
+export const OG_IMAGE_SIZE = { width: 1200, height: 630 };
+const OG_IMAGE_TYPE = "image/png";
+
+/** An opengraph-image route's images, one per locale with the current locale first. */
+export async function ogImageVariants(alt: string) {
+  return (await getOGImageLocales()).map(locale => ({ id: locale, alt, size: OG_IMAGE_SIZE, contentType: OG_IMAGE_TYPE }));
+}
+
+/** The page's own opengraph-image in the given locale. */
+function ogImage(path: string, locale: Locale, alt: string) {
+  return { url: `${resolveBaseUrl()}${localizePath(path, locale)}/opengraph-image/${locale}`, alt, ...OG_IMAGE_SIZE, type: OG_IMAGE_TYPE };
 }
 
 type PageMetadataInput = {
@@ -92,13 +101,14 @@ type PageMetadataInput = {
 
 export async function buildPageMetadata(input: PageMetadataInput): Promise<Metadata> {
   const { brand, locale, path, title, description, image } = input;
+  const ogTitle = input.ogTitle ?? title;
   const ogDescription = input.ogDescription ?? description;
   const openGraph = {
-    title: input.ogTitle ?? title,
+    title: ogTitle,
     description: ogDescription,
     url: localizePath(path, locale),
     siteName: brandTitle(brand),
-    images: image === "route" ? [{ url: ogImageUrl(path, locale) }] : [],
+    images: image === "route" ? [ogImage(path, locale, ogTitle)] : [],
     ...openGraphLocales(locale),
   };
   return {

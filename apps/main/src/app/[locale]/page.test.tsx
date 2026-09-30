@@ -104,7 +104,7 @@ describe("dashboard page", () => {
   it("links the home image for every game", async () => {
     for (const game of ["maimai", "chunithm"] as const) {
       current.game = game;
-      expect((await generateMetadata()).openGraph?.images).toEqual([{ url: "https://site.test/en/opengraph-image/en" }]);
+      expect((await generateMetadata()).openGraph?.images).toMatchObject([{ url: "https://site.test/en/opengraph-image/en" }]);
     }
   });
 });

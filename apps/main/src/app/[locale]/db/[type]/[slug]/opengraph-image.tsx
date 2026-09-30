@@ -1,5 +1,6 @@
 import { getCurrentGame } from "@/lib/games/current";
-import { createDbOGImage, createSongOGImage, OG_SIZE } from "@/lib/og";
+import { createDbOGImage, createSongOGImage } from "@/lib/og";
+import { ogImageVariants } from "@/lib/seo";
 import { getAllUniqueSongsCached } from "@/server/queries/songs-cache";
 import { isR2Url, resolveImageUrl } from "@/lib/images";
 import { resolveBaseUrlFromHeaders } from "@/lib/base-url";
@@ -7,7 +8,6 @@ import { headers } from "next/headers";
 import { getVersion } from "@/lib/games/versions";
 import { safeDecodeURIComponent } from "@/lib/utils";
 import type { Locale } from "@/i18n/locale";
-import { getOGImageLocales } from "@/i18n/og-locale";
 import { getDatabaseCopy } from "../../catalog-copy";
 
 export const runtime = "nodejs";
@@ -19,8 +19,7 @@ type Props = {
 
 export async function generateImageMetadata() {
   const { brand } = getCurrentGame();
-  const locales = await getOGImageLocales();
-  return locales.map(locale => ({ id: locale, alt: `${brand.displayName} song`, size: OG_SIZE, contentType: "image/png" as const }));
+  return ogImageVariants(`${brand.displayName} song`);
 }
 
 export default async function Image({ params, id }: Props & { id: Promise<string> }) {

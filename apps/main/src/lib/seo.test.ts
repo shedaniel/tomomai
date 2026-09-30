@@ -17,7 +17,9 @@ const page = {
 describe("page metadata", () => {
   it("links the page's own image in the current locale, or states that it has none", async () => {
     const withImage = await buildPageMetadata({ ...page, ogType: "website", image: "route" });
-    expect(withImage.openGraph?.images).toEqual([{ url: "https://site.test/ja/db/songs/opengraph-image/ja" }]);
+    expect(withImage.openGraph?.images).toEqual([
+      { url: "https://site.test/ja/db/songs/opengraph-image/ja", alt: "Songs | CHUNITHM", width: 1200, height: 630, type: "image/png" },
+    ]);
     const withoutImage = await buildPageMetadata({ ...page, ogType: "website", image: "none" });
     expect(withoutImage.openGraph?.images).toEqual([]);
   });

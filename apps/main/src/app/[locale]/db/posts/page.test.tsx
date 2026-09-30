@@ -26,7 +26,7 @@ vi.mock("next/navigation", () => ({ notFound: () => { throw new Error("NEXT_NOT_
 vi.mock("@/i18n/locale-server", () => ({ getLocale: async () => "en", setStaticLocale: async () => {} }));
 vi.mock("@/i18n/navigation", () => ({ Link: ({ children, href }: AnchorHTMLAttributes<HTMLAnchorElement>) => <a href={href}>{children}</a> }));
 vi.mock("@/lib/base-url", () => ({ resolveBaseUrl: () => "https://site.test" }));
-vi.mock("@/lib/og", () => ({ OG_SIZE: {}, createOGImage: () => new Response("image") }));
+vi.mock("@/lib/og", () => ({ createOGImage: () => new Response("image") }));
 vi.mock("@/lib/posts", () => ({
   getAllPostsMeta: () => [{ slug: "2026-09-01-update", canonicalSlug: "update", locale: "en", title: "September update", date: "2026-09-01", version: "N/A", summary: "What changed" }],
 }));

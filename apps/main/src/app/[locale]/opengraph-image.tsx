@@ -1,17 +1,16 @@
 import { getCurrentGame } from "@/lib/games/current";
 import { brandTitle } from "@/lib/games/frontend";
-import { createHomeOGImage, OG_SIZE } from "@/lib/og";
+import { createHomeOGImage } from "@/lib/og";
+import { ogImageVariants } from "@/lib/seo";
 import { getTranslations } from "next-intl/server";
 import type { Locale } from "@/i18n/locale";
-import { getOGImageLocales } from "@/i18n/og-locale";
 
 export const runtime = "nodejs";
 export const revalidate = false;
 
 export async function generateImageMetadata() {
   const { brand } = getCurrentGame();
-  const locales = await getOGImageLocales();
-  return locales.map(locale => ({ id: locale, alt: brandTitle(brand), size: OG_SIZE, contentType: "image/png" as const }));
+  return ogImageVariants(brandTitle(brand));
 }
 
 export default async function Image({ id }: { id: Promise<string> }) {

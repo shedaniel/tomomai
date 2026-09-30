@@ -67,7 +67,7 @@ describe("regional profile metadata", () => {
     expect(metadata.description).toContain("CHUNITHM");
     expect(metadata.description).toContain("CHU Player");
     expect(metadata.description).toContain("Rating 16.50");
-    expect(metadata.openGraph?.images).toEqual(profileImage);
+    expect(metadata.openGraph?.images).toMatchObject(profileImage);
   });
 
   it("describes a maimai profile with its rating in the metadata and the JSON-LD", async () => {
@@ -75,7 +75,7 @@ describe("regional profile metadata", () => {
     const expected = "インターナショナル の maimai DX プレイヤー MAI Player（player）、Rating 15432。tomomai でスコアと成長をチェック。";
     const metadata = await generateMetadata({ params });
     expect(metadata.description).toBe(expected);
-    expect(metadata.openGraph?.images).toEqual(profileImage);
+    expect(metadata.openGraph?.images).toMatchObject(profileImage);
     expect((await profileJsonLd()).description).toBe(expected);
   });
 });

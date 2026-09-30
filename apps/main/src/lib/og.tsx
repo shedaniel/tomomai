@@ -9,8 +9,8 @@ import { brandTitle, supportsGameFeature, type FrontendGame } from "@/lib/games/
 import type { GameBrand } from "@/lib/games/types";
 import { codeOf } from "@/lib/games/codes";
 import { formatEstimated, formatGameLevel, formatGameRating, getGameChartType, getGameDifficulty } from "@/lib/games/presentation";
+import { OG_IMAGE_SIZE } from "@/lib/seo";
 
-export const OG_SIZE = { width: 1200, height: 630 };
 
 // Pre-compute grid path: vertical + horizontal lines every 40px
 const gridPath = [
@@ -431,7 +431,7 @@ export async function createOGImage(options: OGImageOptions) {
         </div>
       </div>
     ),
-    { ...OG_SIZE, fonts },
+    { ...OG_IMAGE_SIZE, fonts },
   );
 }
 
@@ -530,7 +530,7 @@ async function createWordmarkOGImage(options: BrandOGImageOptions, { artwork, lo
         </div>
       </div>
     ),
-    { ...OG_SIZE, fonts },
+    { ...OG_IMAGE_SIZE, fonts },
   );
 }
 
@@ -810,7 +810,7 @@ export async function createProfileOGImage(options: ProfileOGImageOptions) {
         </div>
       </div>
     ),
-    { ...OG_SIZE, fonts },
+    { ...OG_IMAGE_SIZE, fonts },
   );
 }
 
@@ -1094,6 +1094,6 @@ export async function createSongOGImage(options: SongOGImageOptions) {
         </div>
       </div>
     ),
-    { ...OG_SIZE, fonts },
+    { ...OG_IMAGE_SIZE, fonts },
   );
 }

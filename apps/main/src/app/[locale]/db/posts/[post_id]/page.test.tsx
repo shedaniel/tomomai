@@ -25,7 +25,7 @@ vi.mock("next-mdx-remote/rsc", () => ({ MDXRemote: () => null }));
 vi.mock("@/i18n/locale-server", () => ({ getLocale: async () => "en", setStaticLocale: async () => {} }));
 vi.mock("@/i18n/navigation", () => ({ Link: () => null }));
 vi.mock("@/lib/base-url", () => ({ resolveBaseUrl: () => "https://site.test" }));
-vi.mock("@/lib/og", () => ({ OG_SIZE: {}, createOGImage: () => new Response("image") }));
+vi.mock("@/lib/og", () => ({ createOGImage: () => new Response("image") }));
 vi.mock("@/lib/posts", () => {
   const post = { slug: "2026-09-01-update", canonicalSlug: "update", locale: "en", title: "September update", date: "2026-09-01", version: "N/A", summary: "What changed", content: "" };
   return {

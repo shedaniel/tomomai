@@ -1,13 +1,13 @@
 import { getCurrentGame } from "@/lib/games/current";
 import { isGameRegion } from "@/lib/games/frontend";
 import { GameAdapterError } from "@/lib/games/errors";
-import { createProfileOGImage, OG_SIZE } from "@/lib/og";
+import { createProfileOGImage } from "@/lib/og";
+import { ogImageVariants } from "@/lib/seo";
 import { getTranslations } from "next-intl/server";
 import { fetchPublicGameProfileHeader } from "@/server/queries/game-profile";
 import { safeDecodeURIComponent } from "@/lib/utils";
 import { TRPCError } from "@trpc/server";
 import type { Locale } from "@/i18n/locale";
-import { getOGImageLocales } from "@/i18n/og-locale";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -18,8 +18,7 @@ type Props = {
 
 export async function generateImageMetadata() {
   const { brand } = getCurrentGame();
-  const locales = await getOGImageLocales();
-  return locales.map(locale => ({ id: locale, alt: `${brand.displayName} profile`, size: OG_SIZE, contentType: "image/png" as const }));
+  return ogImageVariants(`${brand.displayName} profile`);
 }
 
 export default async function Image({ params, id }: Props & { id: Promise<string> }) {

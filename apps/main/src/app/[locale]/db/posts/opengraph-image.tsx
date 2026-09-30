@@ -1,16 +1,15 @@
 import { getCurrentGame } from "@/lib/games/current";
 import { getCatalogSection } from "@/lib/games/frontend";
-import { createOGImage, OG_SIZE } from "@/lib/og";
+import { createOGImage } from "@/lib/og";
+import { ogImageVariants } from "@/lib/seo";
 import { getTranslations } from "next-intl/server";
 import type { Locale } from "@/i18n/locale";
-import { getOGImageLocales } from "@/i18n/og-locale";
 
 export const runtime = "nodejs";
 export const revalidate = false;
 
 export async function generateImageMetadata() {
-  const locales = await getOGImageLocales();
-  return locales.map(locale => ({ id: locale, alt: "Changelog", size: OG_SIZE, contentType: "image/png" as const }));
+  return ogImageVariants("Changelog");
 }
 
 export default async function Image({ id }: { id: Promise<string> }) {

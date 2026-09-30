@@ -21,7 +21,6 @@ vi.mock("@/lib/games/current", async () => {
 });
 vi.mock("@/i18n/og-locale", () => ({ getOGImageLocales: async () => ["en"] }));
 vi.mock("@/lib/og", () => ({
-  OG_SIZE: {},
   createDbOGImage: ({ tagline }: { tagline: string }) => {
     current.taglines.push(tagline);
     return new Response("image");
