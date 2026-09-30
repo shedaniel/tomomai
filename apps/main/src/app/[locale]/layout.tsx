@@ -6,7 +6,7 @@ import { TurnstilePreclearance } from "@tomomai/ui/turnstile";
 import { VercelToolbar } from "@vercel/toolbar/next";
 import type { Metadata } from "next";
 import { NextIntlClientProvider, hasLocale } from 'next-intl';
-import { getMessages } from 'next-intl/server';
+import { getMessages, getTranslations } from 'next-intl/server';
 import { setStaticLocale } from '@/i18n/locale-server';
 import { notFound } from 'next/navigation';
 import localFont from "next/font/local";
@@ -47,12 +47,14 @@ const murecho = localFont({
   preload: false,
 });
 
-export function generateMetadata(): Metadata {
+export async function generateMetadata({ params }: Pick<Props, "params">): Promise<Metadata> {
+  const { locale } = await params;
   const { brand } = getCurrentGame();
+  const t = await getTranslations({ locale: hasLocale(routing.locales, locale) ? locale : routing.defaultLocale, namespace: "dashboard" });
   return {
     metadataBase: new URL(resolveBaseUrl()),
     title: brandTitle(brand),
-    description: `Track and analyze ${brand.displayName} scores with friends.`,
+    description: t("description", { game: brand.displayName }),
     icons: brand.icon ? { apple: brand.icon } : undefined,
   };
 }

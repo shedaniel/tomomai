@@ -1,6 +1,8 @@
-import { brandTitle, isGameRegion } from "@/lib/games/frontend";
+import { brandTitle, isGameRegion, type FrontendGame } from "@/lib/games/frontend";
 import { formatGameRating } from "@/lib/games/presentation";
 import { getCurrentGame } from "@/lib/games/current";
+import type { GameSnapshot } from "@/lib/games/player-view";
+import type { Region } from "@/lib/games/ids";
 import { fetchPublicGameProfile } from "@/server/queries/game-profile";
 import { TRPCError } from "@trpc/server";
 import { ProfilePage } from "@/components/player/profile-page";
@@ -10,7 +12,7 @@ import { defaultFlags } from "@/lib/flags";
 import { resolveBaseUrl } from "@/lib/base-url";
 import { getTranslations } from "next-intl/server";
 import { getLocale, setStaticLocale } from "@/i18n/locale-server";
-import { buildAlternates, openGraphLocales, breadcrumbJsonLd, ogImageUrl, localizePath } from "@/lib/seo";
+import { breadcrumbJsonLd, buildPageMetadata, localizePath } from "@/lib/seo";
 import { safeDecodeURIComponent } from "@/lib/utils";
 import { getServerSession } from "@/lib/auth-server";
 
@@ -24,77 +26,71 @@ interface RegionProfilePageProps {
   }>;
 }
 
+type ProfileCopy = {
+  game: FrontendGame;
+  username: string;
+  region: Region;
+  snapshot: GameSnapshot | undefined;
+};
+
+/** The profile's title and description, shared by its metadata and its structured data. */
+async function describeProfile({ game, username, region, snapshot }: ProfileCopy): Promise<{ title: string; description: string }> {
+  const [tMeta, tRegions] = await Promise.all([getTranslations("profileMetadata"), getTranslations("regions")]);
+  const brandName = game.brand.productName;
+  return {
+    title: tMeta("title", { username, brand: brandTitle(game.brand) }),
+    description: snapshot
+      ? tMeta("descriptionRich", {
+        game: game.brand.displayName,
+        brandName,
+        username,
+        region: tRegions(region),
+        displayName: snapshot.displayName,
+        rating: formatGameRating(game.id, snapshot.rating),
+      })
+      : tMeta("description", { username, game: game.brand.displayName, brandName }),
+  };
+}
+
 export async function generateMetadata({ params }: RegionProfilePageProps): Promise<Metadata> {
   const { locale: routeLocale, username: rawUsername, region } = await params;
   await setStaticLocale(routeLocale);
   const username = safeDecodeURIComponent(rawUsername);
 
-  const [tMeta, tRegions, locale] = await Promise.all([
+  const [tMeta, locale] = await Promise.all([
     getTranslations("profileMetadata"),
-    getTranslations("regions"),
     getLocale(),
   ]);
 
   const game = getCurrentGame();
+  const brand = brandTitle(game.brand);
   if (!isGameRegion(game, region)) {
     return {
-      title: tMeta("notFoundTitle", { brand: brandTitle(game.brand) }),
+      title: tMeta("notFoundTitle", { brand }),
       description: tMeta("notFoundDescription"),
     };
   }
 
   try {
     const { snapshotData } = await fetchPublicGameProfile(game.id, username, region);
-    const snapshot = snapshotData?.snapshot;
-    const title = tMeta("title", { username, brand: brandTitle(game.brand) });
-    if (!snapshot) {
-      return {
-        title,
-        description: tMeta("description", { username, game: game.brand.displayName, brandName: game.brand.productName }),
-        alternates: await buildAlternates(`/profile/${encodeURIComponent(username)}/${region}`),
-      };
-    }
-
-    const description = tMeta("descriptionRich", {
-      game: game.brand.displayName,
-      brandName: game.brand.productName,
-      username,
-      region: tRegions(region),
-      displayName: snapshot.displayName,
-      rating: formatGameRating(game.id, snapshot.rating),
+    return buildPageMetadata({
+      brand: game.brand,
+      locale,
+      path: `/profile/${encodeURIComponent(username)}/${region}`,
+      ...await describeProfile({ game, username, region, snapshot: snapshotData?.snapshot }),
+      ogType: "profile",
+      image: "route",
     });
-
-    const path = `/profile/${encodeURIComponent(username)}/${region}`;
-
-    return {
-      title,
-      description,
-      alternates: await buildAlternates(path),
-      openGraph: {
-        title,
-        description,
-        url: localizePath(path, locale),
-        siteName: brandTitle(game.brand),
-        type: "profile",
-        ...(game.id === "maimai" ? { images: [{ url: ogImageUrl(path, locale) }] } : {}),
-        ...openGraphLocales(locale),
-      },
-      twitter: {
-        card: "summary_large_image",
-        title,
-        description,
-      },
-    };
   } catch (error) {
     if (error instanceof TRPCError && error.code === "NOT_FOUND") {
       return {
-        title: tMeta("notFoundTitle", { brand: brandTitle(game.brand) }),
+        title: tMeta("notFoundTitle", { brand }),
         description: tMeta("notFoundDescription"),
       };
     }
 
     return {
-      title: tMeta("errorTitle", { brand: brandTitle(game.brand) }),
+      title: tMeta("errorTitle", { brand }),
       description: tMeta("errorDescription"),
     };
   }
@@ -122,26 +118,16 @@ export default async function RegionProfilePage({ params }: RegionProfilePagePro
     const locale = await getLocale();
     const profilePath = localizePath(`/profile/${encodeURIComponent(decodedUsername)}/${region}`, locale);
     const profileUrl = `${baseUrl}${profilePath}`;
-    const [tNav, tMeta] = await Promise.all([
+    const [tNav, profileCopy] = await Promise.all([
       getTranslations("regions"),
-      getTranslations("profileMetadata"),
+      describeProfile({ game, username: decodedUsername, region, snapshot: snapshotData?.snapshot }),
     ]);
-
-    const pageDescription = snapshotData
-      ? tMeta("descriptionRich", {
-        game: game.brand.displayName,
-        brandName: game.brand.productName,
-        displayName: snapshotData.snapshot.displayName,
-        username: decodedUsername,
-        region: tNav(region),
-        rating: formatGameRating(game.id, snapshotData.snapshot.rating),
-      })
-      : tMeta("description", { username: decodedUsername, game: game.brand.displayName, brandName: game.brand.productName });
+    const pageDescription = profileCopy.description;
 
     const profileJsonLd = {
       "@context": "https://schema.org",
       "@type": "ProfilePage",
-      name: tMeta("title", { username: decodedUsername, brand: brandTitle(game.brand) }),
+      name: profileCopy.title,
       description: pageDescription,
       mainEntity: {
         "@type": "Person",

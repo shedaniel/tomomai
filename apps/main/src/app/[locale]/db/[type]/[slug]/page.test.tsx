@@ -29,6 +29,7 @@ vi.mock("@/i18n/locale-server", () => ({ getLocale: async () => current.locale }
 vi.mock("@/lib/base-url", () => ({ resolveBaseUrl: () => "https://site.test" }));
 
 import DbSlugPage, { generateMetadata } from "./page";
+import { MISSING_PAGE_METADATA } from "@/lib/seo";
 
 const params = Promise.resolve({ type: "songs", slug: "song" });
 
@@ -59,7 +60,7 @@ describe("song page SEO", () => {
 
   it("answers a detail path outside the songs section as a page that does not exist", async () => {
     const stats = { params: Promise.resolve({ type: "stats", slug: "song" }) };
-    expect(await generateMetadata(stats)).toEqual({ robots: { index: false, follow: false } });
+    expect(await generateMetadata(stats)).toEqual(MISSING_PAGE_METADATA);
     const html = renderToStaticMarkup(await DbSlugPage(stats));
     expect(html).toContain("Page not found");
     expect(html).not.toContain("Song not found");

@@ -71,7 +71,6 @@ export const maimaiDefinition = {
     "developer-export",
     "assistant",
     "minigames",
-    "og-images",
     "community-banner",
     "reserved-accounts",
   ],

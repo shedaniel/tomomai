@@ -9,10 +9,10 @@ vi.mock("next-intl/server", async () => {
   const { createTranslator } = await import("next-intl");
   const { loadMessages } = await import("@/i18n/messages");
   return {
-    getTranslations: async (namespace: string) => createTranslator({
+    getTranslations: async (input: string | { namespace: string }) => createTranslator({
       locale: "en",
       messages: await loadMessages(current.game, "en"),
-      namespace,
+      namespace: typeof input === "string" ? input : input.namespace,
       onError(error) { throw error; },
     }),
   };
@@ -39,10 +39,10 @@ vi.mock("@/components/games/maimai/db/events-database", () => ({ EventsDatabase:
 vi.mock("@/components/games/maimai/db/arcades", () => ({ ArcadesMap: () => <p>arcade map</p> }));
 
 import DbTypePage, { generateMetadata } from "./page";
+import { MISSING_PAGE_METADATA } from "@/lib/seo";
 
 const params = (type: string) => ({ params: Promise.resolve({ type }) });
 const render = async (type: string) => renderToStaticMarkup(await DbTypePage(params(type)));
-const noindex = { robots: { index: false, follow: false } };
 
 beforeAll(async () => { await Promise.all(current.loads); });
 beforeEach(() => { current.game = "maimai"; });
@@ -73,7 +73,7 @@ describe("catalog section pages", () => {
     const html = await render(type);
     expect(html).toContain("Page not found");
     expect(html).not.toContain("Song not found");
-    expect(await generateMetadata(params(type))).toEqual(noindex);
+    expect(await generateMetadata(params(type))).toEqual(MISSING_PAGE_METADATA);
   });
 
   it("indexes the sections the game offers with copy naming the game", async () => {
@@ -82,6 +82,9 @@ describe("catalog section pages", () => {
     expect(stats.description).toMatch(/^Explore aggregate maimai DX statistics/);
     expect((await generateMetadata(params("events"))).description).toBe("Browse all maimai DX tour events and their rewards");
     current.game = "chunithm";
-    expect((await generateMetadata(params("songs"))).robots).toBeUndefined();
+    const songs = await generateMetadata(params("songs"));
+    expect(songs.robots).toBeUndefined();
+    expect(songs.title).toBe("Songs Database | CHUNITHM");
+    expect(songs.openGraph).toMatchObject({ siteName: "tomochu ともチュウ", images: [{ url: "https://site.test/en/db/songs/opengraph-image/en" }] });
   });
 });

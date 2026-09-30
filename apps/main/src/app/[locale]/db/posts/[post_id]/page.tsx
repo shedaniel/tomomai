@@ -1,10 +1,9 @@
 import { getAllPostsMeta, getPostBySlug, getAvailableTranslations } from "@/lib/posts";
 import { getLocale, setStaticLocale } from "@/i18n/locale-server";
-import { defaultLocale } from "@tomomai/i18n/locale";
 import { ExternalMarkdownLink, markdownBaseComponents } from "@tomomai/markdown";
 import { MDXRemote } from "next-mdx-remote/rsc";
 import { Metadata } from "next";
-import { breadcrumbJsonLd, openGraphLocales, localizePath, ogImageUrl } from "@/lib/seo";
+import { breadcrumbJsonLd, buildPageMetadata, localizePath, MISSING_PAGE_METADATA } from "@/lib/seo";
 import { resolveBaseUrl } from "@/lib/base-url";
 import { Link } from "@/i18n/navigation"
 import { notFound } from "next/navigation";
@@ -12,7 +11,7 @@ import { PostLocaleSwitcher } from "@/components/post-locale-switcher";
 import { getTranslations } from "next-intl/server";
 import { Bot } from "lucide-react";
 import { getCurrentGame } from "@/lib/games/current";
-import { brandTitle, getCatalogSection, isGameCnExclusive } from "@/lib/games/frontend";
+import { getCatalogSection, isGameCnExclusive } from "@/lib/games/frontend";
 import { MdxImageComparison } from "@/components/mdx-image-comparison";
 import { MdxImageCarousel, MdxImageCarouselSlide } from "@/components/mdx-image-carousel";
 import remarkGfm from "remark-gfm";
@@ -32,46 +31,25 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: PostPageProps): Promise<Metadata> {
   const game = getCurrentGame();
-  if (!getCatalogSection(game, "posts")) return { robots: { index: false, follow: false } };
+  if (!getCatalogSection(game, "posts")) return MISSING_PAGE_METADATA;
   const { locale: localeParam, post_id } = await params;
   await setStaticLocale(localeParam);
   const locale = await getLocale();
   const post = getPostBySlug(post_id, locale);
   if (!post) return {};
 
-  const url = `/db/posts/${post.slug}`;
-  const translations = getAvailableTranslations(post.canonicalSlug);
-  const { brand } = game;
-
-  const languages: Record<string, string> = {};
-  for (const lang of translations) {
-    languages[lang] = localizePath(url, lang);
-  }
-  languages["x-default"] = localizePath(url, defaultLocale);
-
-  return {
-    title: `${post.title} | ${brand.productName}`,
+  return buildPageMetadata({
+    brand: game.brand,
+    locale,
+    path: `/db/posts/${post.slug}`,
+    locales: getAvailableTranslations(post.canonicalSlug),
+    title: `${post.title} | ${game.brand.productName}`,
+    ogTitle: post.title,
     description: post.summary,
-    openGraph: {
-      title: post.title,
-      description: post.summary,
-      type: "article",
-      url: localizePath(url, locale),
-      siteName: brandTitle(brand),
-      publishedTime: post.date,
-      images: [{ url: ogImageUrl(url, locale) }],
-      ...openGraphLocales(locale),
-    },
-    twitter: {
-      card: "summary_large_image",
-      title: `${post.title} | ${brand.productName}`,
-      description: post.summary,
-    },
-    alternates: {
-      canonical: localizePath(url, locale),
-      languages,
-    },
-  };
+    ogType: "article",
+    publishedTime: post.date,
+    image: "route",
+  });
 }
 
 const mdxComponents = {

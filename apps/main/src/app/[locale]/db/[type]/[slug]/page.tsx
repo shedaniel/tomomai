@@ -5,7 +5,7 @@ import { getAllUniqueSongsCached } from "@/server/queries/songs-cache";
 import { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { getLocale } from "@/i18n/locale-server";
-import { breadcrumbJsonLd, openGraphLocales, ogImageUrl, localizePath } from "@/lib/seo";
+import { breadcrumbJsonLd, buildPageMetadata, localizePath, MISSING_PAGE_METADATA } from "@/lib/seo";
 import { resolveBaseUrl } from "@/lib/base-url";
 import { safeDecodeURIComponent } from "@/lib/utils";
 
@@ -33,9 +33,7 @@ type DbSlugPageProps = {
 export async function generateMetadata({ params }: DbSlugPageProps): Promise<Metadata> {
   const { type, slug } = await params;
 
-  if (type !== "songs") {
-    return { robots: { index: false, follow: false } };
-  }
+  if (type !== "songs") return MISSING_PAGE_METADATA;
 
   const decodedSlug = safeDecodeURIComponent(slug);
   const game = getCurrentGame();
@@ -47,13 +45,7 @@ export async function generateMetadata({ params }: DbSlugPageProps): Promise<Met
   // Resolve locale/translations only when the song exists. For unknown slugs
   // bail with minimal metadata — this also keeps the invalid-slug path off
   // the locale-resolution code that would otherwise read headers.
-  if (!song) {
-    return {
-      title: `Song not found | ${brandTitle(game.brand)}`,
-      robots: { index: false, follow: false },
-      alternates: {},
-    };
-  }
+  if (!song) return { ...MISSING_PAGE_METADATA, title: `Song not found | ${brandTitle(game.brand)}` };
 
   const [t, tSongs, locale] = await Promise.all([
     getTranslations("db.songs.metadata"),
@@ -61,37 +53,22 @@ export async function generateMetadata({ params }: DbSlugPageProps): Promise<Met
     getLocale(),
   ]);
 
-  const title = t("songTitle", { game: game.brand.displayName, songName: song.songName, artist: song.artist });
-  const description = t("songDescription", {
-    songName: song.songName,
-    artist: song.artist,
-    chartLabel: tSongs("chartLabel", { type: song.type }),
-    genre: song.genre,
+  return buildPageMetadata({
+    brand: game.brand,
+    locale,
+    path,
+    title: t("songTitle", { game: game.brand.displayName, songName: song.songName, artist: song.artist }),
+    description: t("songDescription", {
+      songName: song.songName,
+      artist: song.artist,
+      chartLabel: tSongs("chartLabel", { type: song.type }),
+      genre: song.genre,
+    }),
+    ogDescription: t("songOgDescription", { songName: song.songName, artist: song.artist }),
+    ogType: "article",
+    image: "route",
+    noindex: true,
   });
-  const ogDescription = t("songOgDescription", {
-    songName: song.songName,
-    artist: song.artist,
-  });
-
-  return {
-    title,
-    description,
-    robots: { index: false, follow: false },
-    openGraph: {
-      title,
-      description: ogDescription,
-      url: localizePath(path, locale),
-      siteName: brandTitle(game.brand),
-      type: "article",
-      images: [{ url: ogImageUrl(path, locale) }],
-      ...openGraphLocales(locale),
-    },
-    twitter: {
-      card: "summary_large_image",
-      title,
-      description: ogDescription,
-    },
-  };
 }
 
 export default async function DbSlugPage({ params }: DbSlugPageProps) {

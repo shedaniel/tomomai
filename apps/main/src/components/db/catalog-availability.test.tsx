@@ -21,7 +21,7 @@ const fixture = vi.hoisted(() => {
 vi.mock("@/lib/games/current", () => ({ getCurrentGame: () => fixture.game }));
 vi.mock("@/server/queries/songs-cache", () => ({ getAllUniqueSongsCached: (game: string) => { fixture.catalog(game); return Promise.resolve(fixture.songs); }, getSongDetailsCached: fixture.details }));
 vi.mock("next/dynamic", () => ({ default: () => () => null }));
-vi.mock("@/lib/seo", () => ({ breadcrumbJsonLd: () => ({}), openGraphLocales: () => ({}), localizePath: (value: string) => value, buildAlternates: async () => ({}), ogImageUrl: (value: string) => value }));
+vi.mock("@/lib/seo", () => ({ breadcrumbJsonLd: () => ({}), localizePath: (value: string) => value, buildPageMetadata: async () => ({}), MISSING_PAGE_METADATA: {} }));
 vi.mock("next-intl/server", () => ({ getTranslations: async () => (key: string) => key }));
 vi.mock("@/i18n/locale-server", () => ({ getLocale: async () => "en" }));
 vi.mock("@/components/inline-not-found", () => ({ InlineNotFound: () => <p>Unavailable route</p> }));

@@ -33,7 +33,6 @@ export const GAME_CAPABILITIES = [
   "developer-export",
   "assistant",
   "minigames",
-  "og-images",
   "community-banner",
   "reserved-accounts",
 ] as const;

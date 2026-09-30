@@ -19,12 +19,6 @@ const BRANCH = new RegExp(`[!=]==\\s*${GAME}|${GAME}\\s*[!=]==|case\\s+${GAME}\\
 // Branches outside game folders that are still waiting for their replacement, with how many each file holds.
 // Delete an entry once its file no longer branches, and never add one.
 const PENDING: Record<string, number> = {
-  // OG images and page metadata become brand-aware for every game.
-  "app/[locale]/db/[type]/opengraph-image.tsx": 1,
-  "app/[locale]/db/[type]/page.tsx": 1,
-  "app/[locale]/db/opengraph-image.tsx": 1,
-  "app/[locale]/profile/[username]/[region]/opengraph-image.tsx": 1,
-  "app/[locale]/profile/[username]/[region]/page.tsx": 1,
   // Recent plays carry one per-game details field.
   "components/player/recent-songs-card.tsx": 2,
   "server/queries/recents.ts": 1,

@@ -1,9 +1,10 @@
 import dynamic from "next/dynamic";
 import { Suspense, type ReactNode } from "react";
-import { getTranslations } from "next-intl/server";
+import { getLocale } from "@/i18n/locale-server";
 import type { FrontendGame } from "@/lib/games/frontend";
 import type { CatalogSectionId } from "@/lib/games/types";
 import { getAllUniqueSongsCached } from "@/server/queries/songs-cache";
+import { getDatabaseCopy } from "../catalog-copy";
 
 const StatsDatabase = dynamic(() => import("@/components/games/maimai/db/stats-database").then(m => m.StatsDatabase));
 const EventsDatabase = dynamic(() => import("@/components/games/maimai/db/events-database").then(m => m.EventsDatabase));
@@ -13,12 +14,12 @@ type SectionView = (game: FrontendGame) => ReactNode | Promise<ReactNode>;
 
 // The interactive SongsList is mounted by /db/[type]/layout so it persists across list and detail navigation.
 const songs: SectionView = async game => {
-  const [catalog, t] = await Promise.all([getAllUniqueSongsCached(game.id), getTranslations("db.songs.metadata")]);
+  const [catalog, copy] = await Promise.all([getAllUniqueSongsCached(game.id), getLocale().then(locale => getDatabaseCopy(locale, game))]);
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
-    name: t("title", { game: game.brand.displayName }),
-    description: t("description", { game: game.brand.displayName }),
+    name: copy.title,
+    description: copy.description,
     numberOfItems: catalog.length,
   };
   return <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />;

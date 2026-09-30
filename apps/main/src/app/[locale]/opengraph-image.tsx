@@ -9,17 +9,14 @@ export const runtime = "nodejs";
 export const revalidate = false;
 
 export async function generateImageMetadata() {
+  const { brand } = getCurrentGame();
   const locales = await getOGImageLocales();
-  return locales.map(locale => ({ id: locale, alt: brandTitle(getCurrentGame().brand), size: OG_SIZE, contentType: "image/png" as const }));
+  return locales.map(locale => ({ id: locale, alt: brandTitle(brand), size: OG_SIZE, contentType: "image/png" as const }));
 }
 
 export default async function Image({ id }: { id: Promise<string> }) {
+  const { brand } = getCurrentGame();
   const locale = (await id) as Locale;
   const t = await getTranslations({ locale, namespace: "dashboard" });
-
-  return createHomeOGImage({
-    brand: getCurrentGame().brand,
-    tagline: t("description", { game: getCurrentGame().brand.displayName }),
-    locale,
-  });
+  return createHomeOGImage({ brand, tagline: t("description", { game: brand.displayName }), locale });
 }

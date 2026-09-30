@@ -5,10 +5,10 @@ import sharp from "sharp";
 import type { Locale } from "@/i18n/locale";
 import { getRatingImageUrl } from "@/lib/games/maimai/assets";
 import type { Region } from "@/lib/types";
-import { brandTitle } from "@/lib/games/frontend";
-import type { CanonicalGameId, GameBrand } from "@/lib/games/types";
+import { brandTitle, supportsGameFeature, type FrontendGame } from "@/lib/games/frontend";
+import type { GameBrand } from "@/lib/games/types";
 import { codeOf } from "@/lib/games/codes";
-import { formatEstimated, formatGameLevel, getGameChartType, getGameDifficulty } from "@/lib/games/presentation";
+import { formatEstimated, formatGameLevel, formatGameRating, getGameChartType, getGameDifficulty } from "@/lib/games/presentation";
 
 export const OG_SIZE = { width: 1200, height: 630 };
 
@@ -258,13 +258,13 @@ async function extractTwoColors(url: string): Promise<[string, string] | null> {
   }
 }
 
-export type Accent = { primary: string; secondary: string };
+type Accent = { primary: string; secondary: string };
 
 /** Default accent (the original purple/cyan brand pair). */
-export const DEFAULT_ACCENT: Accent = { primary: "#8b5cf6", secondary: "#06b6d4" };
+const DEFAULT_ACCENT: Accent = { primary: "#8b5cf6", secondary: "#06b6d4" };
 
 /** Aqua + warm orange — used by the database section. */
-export const DB_ACCENT: Accent = { primary: "#06b6d4", secondary: "#f97316" };
+const DB_ACCENT: Accent = { primary: "#06b6d4", secondary: "#f97316" };
 
 /** Dim a hex color to an `rgba(...)` string at a given alpha [0..1]. */
 function hexToRgba(hex: string, alpha: number): string {
@@ -344,11 +344,10 @@ export type OGImageOptions = {
   /** Optional bottom label (e.g. a date string) */
   label?: string;
   locale?: Locale;
-  accent?: Accent;
 };
 
 export async function createOGImage(options: OGImageOptions) {
-  const { brand, section, title, summary, label, locale = "en", accent = DEFAULT_ACCENT } = options;
+  const { brand, section, title, summary, label, locale = "en" } = options;
 
   const [interFonts, localeFonts, icon] = await Promise.all([
     loadInterFonts(),
@@ -373,8 +372,8 @@ export async function createOGImage(options: OGImageOptions) {
         }}
       >
         <GridBackground />
-        <PrimaryGlow color={accent.primary} />
-        <SecondaryGlow color={accent.secondary} />
+        <PrimaryGlow color={DEFAULT_ACCENT.primary} />
+        <SecondaryGlow color={DEFAULT_ACCENT.secondary} />
 
         <div
           style={{
@@ -436,26 +435,30 @@ export async function createOGImage(options: OGImageOptions) {
   );
 }
 
-export type HomeOGImageOptions = {
+export type BrandOGImageOptions = {
   brand: GameBrand;
   tagline: string;
   locale?: Locale;
-  /** Which of the brand's OpenGraph artworks to draw. */
-  artwork?: "logo" | "dbLogo";
-  /** Logo render height in px. */
-  logoHeight?: number;
-  accent?: Accent;
 };
 
-export async function createHomeOGImage(options: HomeOGImageOptions) {
-  const {
-    brand,
-    tagline,
-    locale = "en",
-    artwork = "logo",
-    logoHeight = 240,
-    accent = DEFAULT_ACCENT,
-  } = options;
+export function createHomeOGImage(options: BrandOGImageOptions) {
+  return createWordmarkOGImage(options, { artwork: "logo", logoHeight: 240, accent: DEFAULT_ACCENT });
+}
+
+/** The database's card, shared by every /db page that has no image of its own. */
+export function createDbOGImage(options: BrandOGImageOptions) {
+  return createWordmarkOGImage(options, { artwork: "dbLogo", logoHeight: 220, accent: DB_ACCENT });
+}
+
+type Wordmark = {
+  /** Which of the brand's OpenGraph artworks to draw. */
+  artwork: keyof NonNullable<GameBrand["og"]>;
+  logoHeight: number;
+  accent: Accent;
+};
+
+async function createWordmarkOGImage(options: BrandOGImageOptions, { artwork, logoHeight, accent }: Wordmark) {
+  const { brand, tagline, locale = "en" } = options;
 
   const [interFonts, localeFonts, logo] = await Promise.all([
     loadInterFonts(),
@@ -532,8 +535,8 @@ export async function createHomeOGImage(options: HomeOGImageOptions) {
 }
 
 export type ProfileOGImageOptions = {
-  brand: GameBrand;
-  /** maimai display name shown in the rating plate area */
+  game: FrontendGame;
+  /** The in-game player name. */
   displayName: string;
   /** account/handle title shown above the display name (small badge) */
   title?: string;
@@ -552,7 +555,7 @@ export type ProfileOGImageOptions = {
 
 export async function createProfileOGImage(options: ProfileOGImageOptions) {
   const {
-    brand,
+    game,
     displayName,
     title,
     username,
@@ -563,9 +566,7 @@ export async function createProfileOGImage(options: ProfileOGImageOptions) {
     iconUrl,
     locale = "en",
   } = options;
-
-  // Build absolute URL for the rating plate (sharp can read public/ directly)
-  const ratingPath = getRatingImageUrl(rating, gameVersion ?? 0).replace(/^\//, "");
+  const { brand } = game;
 
   const isHttpIcon = !!iconUrl && (iconUrl.startsWith("http://") || iconUrl.startsWith("https://"));
 
@@ -574,7 +575,9 @@ export async function createProfileOGImage(options: ProfileOGImageOptions) {
     loadGeistMono(),
     loadLocaleFonts(locale),
     loadBrandIcon(brand),
-    loadLocalImage(ratingPath, 90),
+    supportsGameFeature(game, "rating-plate")
+      ? loadLocalImage(getRatingImageUrl(rating, gameVersion ?? 0), 90)
+      : Promise.resolve(null),
     isHttpIcon ? loadRemoteImage(iconUrl!, 220, 220) : Promise.resolve(null),
     isHttpIcon ? extractTwoColors(iconUrl!) : Promise.resolve(null),
   ]);
@@ -726,44 +729,66 @@ export async function createProfileOGImage(options: ProfileOGImageOptions) {
                 {displayName}
               </div>
 
-              {/* Rating plate with overlaid number, mirroring InfoCard */}
-              <div
-                style={{
-                  position: "relative",
-                  width: ratingPlate.width,
-                  height: ratingPlate.height,
-                  display: "flex",
-                  marginTop: "4px",
-                }}
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={ratingPlate.dataUrl}
-                  width={ratingPlate.width}
-                  height={ratingPlate.height}
-                  alt={`rating ${rating}`}
-                />
+              {ratingPlate ? (
+                /* Rating plate with overlaid number, mirroring InfoCard */
                 <div
                   style={{
-                    position: "absolute",
-                    top: 19,
-                    left: 19,
-                    width: ratingPlate.width - 35,
-                    height: 54,
-                    color: "white",
+                    position: "relative",
+                    width: ratingPlate.width,
+                    height: ratingPlate.height,
+                    display: "flex",
+                    marginTop: "4px",
+                  }}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={ratingPlate.dataUrl}
+                    width={ratingPlate.width}
+                    height={ratingPlate.height}
+                    alt={`rating ${rating}`}
+                  />
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: 19,
+                      left: 19,
+                      width: ratingPlate.width - 35,
+                      height: 54,
+                      color: "white",
+                      fontSize: "46px",
+                      fontWeight: 400,
+                      fontFamily: "Geist Mono",
+                      letterSpacing: "4px",
+                      textAlign: "right",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "flex-end",
+                    }}
+                  >
+                    {rating}
+                  </div>
+                </div>
+              ) : (
+                <div
+                  style={{
+                    alignSelf: "flex-start",
+                    display: "flex",
+                    alignItems: "center",
+                    marginTop: "4px",
+                    padding: "10px 24px",
+                    borderRadius: "16px",
+                    background: "rgba(255,255,255,0.06)",
+                    border: "1px solid rgba(255,255,255,0.12)",
+                    color: "#fafafa",
                     fontSize: "46px",
                     fontWeight: 400,
                     fontFamily: "Geist Mono",
                     letterSpacing: "4px",
-                    textAlign: "right",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "flex-end",
                   }}
                 >
-                  {rating}
+                  {formatGameRating(game.id, rating)}
                 </div>
-              </div>
+              )}
             </div>
           </div>
 
@@ -790,8 +815,7 @@ export async function createProfileOGImage(options: ProfileOGImageOptions) {
 }
 
 export type SongOGImageOptions = {
-  game: CanonicalGameId;
-  brand: GameBrand;
+  game: Pick<FrontendGame, "id" | "brand">;
   songName: string;
   artist: string;
   /** Resolved cover URL — http(s) only; falls back to placeholder if null/blocked. */
@@ -806,8 +830,7 @@ export type SongOGImageOptions = {
 
 export async function createSongOGImage(options: SongOGImageOptions) {
   const {
-    game,
-    brand,
+    game: { id: game, brand },
     songName,
     artist,
     coverUrl,
@@ -822,10 +845,11 @@ export async function createSongOGImage(options: SongOGImageOptions) {
     .map(d => ({ ...d, code: codeOf(game, "difficulty", d.difficulty) }))
     .sort((a, b) => a.code - b.code);
 
-  const [interFonts, monoFonts, localeFonts, cover, extracted] = await Promise.all([
+  const [interFonts, monoFonts, localeFonts, brandIcon, cover, extracted] = await Promise.all([
     loadInterFonts(),
     loadGeistMono(),
     loadLocaleFonts(locale),
+    loadBrandIcon(brand),
     loadRemoteImage(coverUrl, 460, 460),
     extractTwoColors(coverUrl),
   ]);
@@ -887,10 +911,7 @@ export async function createSongOGImage(options: SongOGImageOptions) {
             position: "relative",
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <span style={{ color: "#fafafa", fontSize: "20px", fontWeight: 700 }}>{brandTitle(brand)} · songs</span>
-            <span style={{ color: "#a1a1aa", fontSize: "20px", fontWeight: 600 }}>{game.toUpperCase()}</span>
-          </div>
+          <BrandChip brand={brand} section="songs" icon={brandIcon} />
 
           {/* Middle: cover + info */}
           <div style={{ display: "flex", alignItems: "center", gap: "56px" }}>

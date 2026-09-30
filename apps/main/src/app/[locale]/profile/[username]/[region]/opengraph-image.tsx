@@ -1,13 +1,10 @@
 import { getCurrentGame } from "@/lib/games/current";
 import { isGameRegion } from "@/lib/games/frontend";
-import { notFound } from "next/navigation";
+import { GameAdapterError } from "@/lib/games/errors";
 import { createProfileOGImage, OG_SIZE } from "@/lib/og";
 import { getTranslations } from "next-intl/server";
-import { db } from "@/lib/db";
-import { userSnapshots } from "@/lib/db/schema-pg";
-import { and, desc, eq } from "drizzle-orm";
-import { resolvePublicUserByUsername } from "@/server/queries/public-access";
-import { GAME_SERVER_MODULES } from "@/server/services/games/registry";
+import { fetchPublicGameProfile } from "@/server/queries/game-profile";
+import { safeDecodeURIComponent } from "@/lib/utils";
 import { TRPCError } from "@trpc/server";
 import type { Locale } from "@/i18n/locale";
 import { getOGImageLocales } from "@/i18n/og-locale";
@@ -20,67 +17,27 @@ type Props = {
 };
 
 export async function generateImageMetadata() {
+  const { brand } = getCurrentGame();
   const locales = await getOGImageLocales();
-  return locales.map(locale => ({ id: locale, alt: `${getCurrentGame().brand.displayName} profile`, size: OG_SIZE, contentType: "image/png" as const }));
+  return locales.map(locale => ({ id: locale, alt: `${brand.displayName} profile`, size: OG_SIZE, contentType: "image/png" as const }));
 }
 
 export default async function Image({ params, id }: Props & { id: Promise<string> }) {
   const [{ username: rawUsername, region }, locale] = await Promise.all([params, id]) as [{ username: string; region: string }, Locale];
   const game = getCurrentGame();
-  // TODO: Add CHUNITHM profile image rendering from normalized player data.
-  if (game.id !== "maimai") notFound();
-  const username = decodeURIComponent(rawUsername);
+  const username = safeDecodeURIComponent(rawUsername);
   const t = await getTranslations({ locale, namespace: "regions" });
 
-  if (!isGameRegion(game, region)) {
-    return createProfileOGImage({
-      brand: game.brand,
-      displayName: username,
-      username,
-      regionLabel: region,
-      region: "intl",
-      rating: 0,
-      locale,
-    });
-  }
+  // A profile with nothing public to show still gets a card, so a shared link never previews as a broken image.
+  const placeholder = { game, displayName: username, username, rating: 0, locale };
+  if (!isGameRegion(game, region)) return createProfileOGImage({ ...placeholder, regionLabel: region, region: "intl" });
 
   try {
-    const reservedData = await GAME_SERVER_MODULES[game.id].reserved?.snapshot(username, region);
-    if (reservedData) {
-      const { snapshot } = reservedData;
-      return createProfileOGImage({
-        brand: game.brand,
-        displayName: snapshot.displayName,
-        title: snapshot.title,
-        username,
-        regionLabel: t(region),
-        region,
-        rating: snapshot.rating,
-        gameVersion: snapshot.gameVersion,
-        iconUrl: snapshot.iconUrl,
-        locale,
-      });
-    }
-
-    const userData = await resolvePublicUserByUsername(username, game.id);
-    const rows = await db
-      .select({
-        displayName: userSnapshots.displayName,
-        title: userSnapshots.title,
-        rating: userSnapshots.rating,
-        gameVersion: userSnapshots.gameVersion,
-        iconUrl: userSnapshots.iconUrl,
-      })
-      .from(userSnapshots)
-      .where(and(eq(userSnapshots.game, game.id), eq(userSnapshots.userId, userData.id), eq(userSnapshots.region, region)))
-      .orderBy(desc(userSnapshots.fetchedAt))
-      .limit(1);
-
-    if (rows.length === 0) throw new TRPCError({ code: "NOT_FOUND", message: "No snapshot" });
-    const snapshot = rows[0];
-
+    const { snapshotData } = await fetchPublicGameProfile(game.id, username, region);
+    const snapshot = snapshotData?.snapshot;
+    if (!snapshot) return createProfileOGImage({ ...placeholder, regionLabel: t(region), region });
     return createProfileOGImage({
-      brand: game.brand,
+      game,
       displayName: snapshot.displayName,
       title: snapshot.title,
       username,
@@ -92,15 +49,7 @@ export default async function Image({ params, id }: Props & { id: Promise<string
       locale,
     });
   } catch (error) {
-    if (!(error instanceof TRPCError)) throw error;
-    return createProfileOGImage({
-      brand: game.brand,
-      displayName: username,
-      username,
-      regionLabel: t(region),
-      region,
-      rating: 0,
-      locale,
-    });
+    if (!(error instanceof TRPCError || error instanceof GameAdapterError)) throw error;
+    return createProfileOGImage({ ...placeholder, regionLabel: t(region), region });
   }
 }

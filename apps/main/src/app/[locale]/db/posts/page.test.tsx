@@ -33,6 +33,7 @@ vi.mock("@/lib/posts", () => ({
 }));
 
 import PostsPage, { generateMetadata } from "./page";
+import { MISSING_PAGE_METADATA } from "@/lib/seo";
 import PostsImage from "./opengraph-image";
 
 const props = { params: Promise.resolve({ locale: "en" }) };
@@ -49,7 +50,7 @@ describe("changelog", () => {
   it("does not exist on the CHUNITHM site", async () => {
     current.game = "chunithm";
     await expect(PostsPage(props)).rejects.toThrow("NEXT_NOT_FOUND");
-    expect(await generateMetadata(props)).toEqual({ robots: { index: false, follow: false } });
+    expect(await generateMetadata(props)).toEqual(MISSING_PAGE_METADATA);
     expect((await PostsImage({ id: Promise.resolve("en") })).status).toBe(404);
   });
 });

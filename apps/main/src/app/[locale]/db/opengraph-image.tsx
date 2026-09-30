@@ -1,29 +1,21 @@
 import { getCurrentGame } from "@/lib/games/current";
-import { createHomeOGImage, DB_ACCENT, OG_SIZE } from "@/lib/og";
-import { getTranslations } from "next-intl/server";
+import { createDbOGImage, OG_SIZE } from "@/lib/og";
 import type { Locale } from "@/i18n/locale";
 import { getOGImageLocales } from "@/i18n/og-locale";
+import { getDatabaseCopy } from "./catalog-copy";
 
 export const runtime = "nodejs";
 export const revalidate = false;
 
 export async function generateImageMetadata() {
+  const { brand } = getCurrentGame();
   const locales = await getOGImageLocales();
-  return locales.map(locale => ({ id: locale, alt: `${getCurrentGame().brand.productName} database`, size: OG_SIZE, contentType: "image/png" as const }));
+  return locales.map(locale => ({ id: locale, alt: `${brand.productName} database`, size: OG_SIZE, contentType: "image/png" as const }));
 }
 
 export default async function Image({ id }: { id: Promise<string> }) {
-  // TODO: Provide CHUNITHM database branding for the shared Open Graph renderer.
-  if (getCurrentGame().id !== "maimai") return new Response(null, { status: 404 });
+  const game = getCurrentGame();
   const locale = (await id) as Locale;
-  const t = await getTranslations({ locale, namespace: "db.songs.metadata" });
-
-  return createHomeOGImage({
-    brand: getCurrentGame().brand,
-    tagline: t("description", { game: getCurrentGame().brand.displayName }),
-    locale,
-    artwork: "dbLogo",
-    logoHeight: 220,
-    accent: DB_ACCENT,
-  });
+  const { description } = await getDatabaseCopy(locale, game);
+  return createDbOGImage({ brand: game.brand, tagline: description, locale });
 }

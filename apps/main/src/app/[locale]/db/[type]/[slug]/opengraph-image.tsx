@@ -1,13 +1,14 @@
 import { getCurrentGame } from "@/lib/games/current";
-import { createSongOGImage, createHomeOGImage, DB_ACCENT, OG_SIZE } from "@/lib/og";
+import { createDbOGImage, createSongOGImage, OG_SIZE } from "@/lib/og";
 import { getAllUniqueSongsCached } from "@/server/queries/songs-cache";
-import { getTranslations } from "next-intl/server";
 import { isR2Url, resolveImageUrl } from "@/lib/images";
 import { resolveBaseUrlFromHeaders } from "@/lib/base-url";
 import { headers } from "next/headers";
 import { getVersion } from "@/lib/games/versions";
+import { safeDecodeURIComponent } from "@/lib/utils";
 import type { Locale } from "@/i18n/locale";
 import { getOGImageLocales } from "@/i18n/og-locale";
+import { getDatabaseCopy } from "../../catalog-copy";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -17,41 +18,21 @@ type Props = {
 };
 
 export async function generateImageMetadata() {
+  const { brand } = getCurrentGame();
   const locales = await getOGImageLocales();
-  return locales.map(locale => ({ id: locale, alt: `${getCurrentGame().brand.displayName} song`, size: OG_SIZE, contentType: "image/png" as const }));
+  return locales.map(locale => ({ id: locale, alt: `${brand.displayName} song`, size: OG_SIZE, contentType: "image/png" as const }));
 }
 
 export default async function Image({ params, id }: Props & { id: Promise<string> }) {
   const [{ type, slug }, locale] = await Promise.all([params, id]) as [{ type: string; slug: string }, Locale];
-
   const game = getCurrentGame();
-
-  if (type !== "songs") {
-    const t = await getTranslations({ locale, namespace: "db.songs.metadata" });
-    return createHomeOGImage({
-      brand: game.brand,
-      tagline: t("description", { game: game.brand.displayName }),
-      locale,
-      artwork: "dbLogo",
-      logoHeight: 220,
-      accent: DB_ACCENT,
-    });
-  }
-
-  const decodedSlug = decodeURIComponent(slug);
-  const songs = await getAllUniqueSongsCached(game.id);
-  const song = songs.find(s => s.slug === decodedSlug);
+  const song = type === "songs"
+    ? (await getAllUniqueSongsCached(game.id)).find(s => s.slug === safeDecodeURIComponent(slug))
+    : undefined;
 
   if (!song) {
-    const t = await getTranslations({ locale, namespace: "db.songs.metadata" });
-    return createHomeOGImage({
-      brand: game.brand,
-      tagline: t("description", { game: game.brand.displayName }),
-      locale,
-      artwork: "dbLogo",
-      logoHeight: 220,
-      accent: DB_ACCENT,
-    });
+    const { description } = await getDatabaseCopy(locale, game);
+    return createDbOGImage({ brand: game.brand, tagline: description, locale });
   }
 
   const baseUrl = resolveBaseUrlFromHeaders(await headers());
@@ -66,8 +47,7 @@ export default async function Image({ params, id }: Props & { id: Promise<string
   const versionName = getVersion(game.id, song.addedVersion)?.shortName;
 
   return createSongOGImage({
-    game: game.id,
-    brand: game.brand,
+    game,
     songName: song.songName,
     artist: song.artist,
     coverUrl,

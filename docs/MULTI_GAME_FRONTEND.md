@@ -51,6 +51,15 @@ Implemented frontend support:
   and the community invite) live on the definition's `brand`. `BrandLogo` draws a
   section's wordmark, or the brand title as text while a game has no artwork,
   which is the case for CHUNITHM.
+  Page metadata comes from `buildPageMetadata` in `src/lib/seo.ts`, which sets the
+  brand's site name, the alternates, the OpenGraph and Twitter blocks and the
+  page image. Every page states its image: `"route"` links the `opengraph-image`
+  beside it and `"none"` publishes an empty list, because Next only falls back
+  to a route's image file when `images` is absent. Not-found states return
+  `MISSING_PAGE_METADATA`. The renderers in `src/lib/og.tsx` draw every game from
+  its brand, with the brand title as text where it has no artwork, and the
+  profile card draws maimai's rating plate only under the `rating-plate`
+  capability.
   Copy belongs to its existing feature namespace instead of a catch-all
   multi-game translation namespace. Copy whose wording differs per game, such as
   the brand headings, the member label and the region taglines, lives in

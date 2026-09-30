@@ -23,8 +23,7 @@ vi.mock("@/lib/games/current", async () => {
 vi.mock("@/i18n/og-locale", () => ({ getOGImageLocales: async () => ["en"] }));
 vi.mock("@/lib/og", () => ({
   OG_SIZE: {},
-  DB_ACCENT: "",
-  createHomeOGImage: ({ tagline }: { tagline: string }) => {
+  createDbOGImage: ({ tagline }: { tagline: string }) => {
     current.taglines.push(tagline);
     return new Response("image");
   },
@@ -40,6 +39,13 @@ describe("catalog section image", () => {
   it("draws every section the maimai site offers, the hidden arcade map included", async () => {
     for (const type of ["songs", "stats", "events", "arcades"]) expect((await draw(type)).status).toBe(200);
     expect(current.taglines[1]).toMatch(/^Explore aggregate maimai DX statistics/);
+    expect(current.taglines[3]).toBe(current.taglines[0]);
+  });
+
+  it("draws the CHUNITHM songs section with its own copy", async () => {
+    current.game = "chunithm";
+    expect((await draw("songs")).status).toBe(200);
+    expect(current.taglines).toEqual([expect.stringMatching(/^Browse and search all CHUNITHM songs/)]);
   });
 
   it("answers 404 for a section the served game does not offer", async () => {
