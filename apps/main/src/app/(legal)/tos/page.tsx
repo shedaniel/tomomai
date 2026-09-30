@@ -5,9 +5,11 @@ import { LegalDocView } from "@/components/legal-doc-view";
 import { getCurrentGame } from "@/lib/games/current";
 import { brandTitle } from "@/lib/games/frontend";
 
+const { brand } = getCurrentGame();
+
 export const metadata: Metadata = {
-  title: `Terms of Service - ${brandTitle(getCurrentGame().brand)}`,
-  description: `The Terms of Service governing the use of ${getCurrentGame().brand.productName}.`,
+  title: `Terms of Service - ${brandTitle(brand)}`,
+  description: `The Terms of Service governing the use of ${brand.productName}.`,
 };
 
 export default function TosPage() {

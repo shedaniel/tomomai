@@ -5,9 +5,11 @@ import { LegalDocView } from "@/components/legal-doc-view";
 import { getCurrentGame } from "@/lib/games/current";
 import { brandTitle } from "@/lib/games/frontend";
 
+const { brand } = getCurrentGame();
+
 export const metadata: Metadata = {
-  title: `Privacy Policy - ${brandTitle(getCurrentGame().brand)}`,
-  description: `How ${getCurrentGame().brand.productName} handles your data.`,
+  title: `Privacy Policy - ${brandTitle(brand)}`,
+  description: `How ${brand.productName} handles your data.`,
 };
 
 export default function PrivacyPage() {

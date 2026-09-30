@@ -63,7 +63,9 @@ Implemented frontend support:
   `MISSING_PAGE_METADATA`. The renderers in `src/lib/og.tsx` draw every game from
   its brand, with the brand title as text where it has no artwork, and the
   profile card draws maimai's rating plate only under the `rating-plate`
-  capability.
+  capability. The profile image loads the player through
+  `fetchPublicGameProfile`, the profile page's own loader, so it shows the same
+  public snapshot.
   Copy belongs to its existing feature namespace instead of a catch-all
   multi-game translation namespace. Copy whose wording differs per game, such as
   the brand headings, the member label and the region taglines, lives in
@@ -71,8 +73,6 @@ Implemented frontend support:
   `src/i18n/messages.ts` lays over the shared files. Every game defines the same
   keys there. Shared copy names the game site with `{net}` (`brand.netName`),
   never `{game} NET`.
-  Maimai profile image queries explicitly filter the game; maimai-only image and
-  database surfaces do not render another game's records using maimai semantics.
 - Version data lives with each game definition as a table built by
   `createVersionTable` in `lib/games/version-table.ts`. Each row keeps its release
   date per region, and `versionReleaseInstant` is the only 07:00 JST rollover rule.
