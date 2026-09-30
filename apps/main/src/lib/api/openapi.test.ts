@@ -57,6 +57,18 @@ describe("OpenAPI document", () => {
     expect(me.parameters).toBeUndefined();
   });
 
+  it("documents the shared rate limits on every route", () => {
+    for (const [path, methods] of Object.entries(document.paths)) {
+      for (const [method, op] of Object.entries(methods as Record<string, Operation>)) {
+        expect(op.responses["429"]?.headers?.["Retry-After"], `${method} ${path}`).toBeDefined();
+      }
+    }
+    expect(operation("get", "/api/v1/games/{game}/songs").responses["429"].description).toBe("Too many requests from this address");
+    expect(operation("get", "/api/v1/me").responses["429"].description).toBe("Rate limit or monthly quota exceeded");
+    expect(operation("post", "/api/v1/games/{game}/fetch").responses["429"].description)
+      .toBe("Rate limit or monthly quota exceeded. RATE_LIMITED: Too many fetches were started recently.");
+  });
+
   it("describes each OAuth scope with the routes its specs require it for", () => {
     const scopes = (document.components.securitySchemes.OAuth2 as { flows: { authorizationCode: { scopes: Record<string, string> } } }).flows.authorizationCode.scopes;
     expect(scopes["fetch:delete"]).toMatch(/ Grants DELETE \/api\/v1\/games\/\{game\}\/fetch\/token\.$/);

@@ -143,13 +143,17 @@ function buildOperation(route: RouteSpec) {
       responses["302"] = { description: "Redirect to this game's published catalog object", headers: { Location: { schema: { type: "string", format: "uri" } } } };
     }
   }
+  // Every /api route is limited per address, and keyed routes also per key, per user and per month.
+  responses["429"] = {
+    ...errorRef(route.scope === "public" ? "Too many requests from this address" : "Rate limit or monthly quota exceeded"),
+    headers: RETRY_AFTER,
+  };
   for (const [status, errors] of Map.groupBy(route.errors ?? [], error => error.status)) {
-    const shared = (responses[String(status)] as { description: string } | undefined)?.description;
+    const shared = responses[String(status)] as { description: string; headers?: typeof RETRY_AFTER } | undefined;
+    const headers = shared?.headers ?? (errors.some(error => error.retryAfter) ? RETRY_AFTER : undefined);
     responses[String(status)] = {
-      ...errorRef([shared, ...errors.map(error => `${error.code}: ${error.description}`)].filter(Boolean).join(" ")),
-      ...(errors.some(error => error.retryAfter) && {
-        headers: { "Retry-After": { description: "Seconds to wait before retrying.", schema: { type: "integer" } } },
-      }),
+      ...errorRef([shared && `${shared.description}.`, ...errors.map(error => `${error.code}: ${error.description}`)].filter(Boolean).join(" ")),
+      ...(headers && { headers }),
     };
   }
   responses["500"] = errorRef("Internal server error");
@@ -157,6 +161,8 @@ function buildOperation(route: RouteSpec) {
 
   return operation;
 }
+
+const RETRY_AFTER = { "Retry-After": { description: "Seconds to wait before retrying.", schema: { type: "integer" } } };
 
 function apiErrorCodes(status: number): string[] {
   return API_ERROR_CODES.filter(error => error.status === status).map(error => error.code);
