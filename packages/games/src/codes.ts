@@ -1,7 +1,6 @@
 // A code is its key's index. Codes are persisted and published, so only ever append keys.
 
-const CODE_KINDS = ["difficulty", "chartType", "comboStatus", "syncStatus", "clearStatus", "titleType"] as const;
-export type CodeKind = (typeof CODE_KINDS)[number];
+export type CodeKind = "difficulty" | "chartType" | "comboStatus" | "syncStatus" | "clearStatus" | "titleType";
 
 type CodeTable = { readonly [K in CodeKind]: readonly string[] };
 
