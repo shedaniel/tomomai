@@ -1,6 +1,6 @@
 import { getCurrentGame } from "@/lib/games/current";
 import { isGameRegion } from "@/lib/games/frontend";
-import { GameAdapterError } from "@/lib/games/errors";
+import { GameError } from "@/lib/games/errors";
 import { createProfileOGImage } from "@/lib/og";
 import { ogImageVariants } from "@/lib/seo";
 import { getTranslations } from "next-intl/server";
@@ -47,7 +47,7 @@ export default async function Image({ params, id }: Props & { id: Promise<string
       locale,
     });
   } catch (error) {
-    if (!(error instanceof TRPCError || error instanceof GameAdapterError)) throw error;
+    if (!(error instanceof TRPCError || error instanceof GameError)) throw error;
     return createProfileOGImage({ ...placeholder, regionLabel: t(region), region });
   }
 }

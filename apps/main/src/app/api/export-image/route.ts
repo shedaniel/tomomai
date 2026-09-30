@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { renderRedirectUrl } from '@/lib/render-token';
 import { buildExportImageMessage } from '@/server/services/games/maimai/render/messages';
 import { resolveGameContext } from '@/lib/games/access';
-import { GameAdapterError, gameErrorResponse } from '@/lib/games/errors';
+import { GameError, gameErrorResponse } from '@/lib/games/errors';
 import { regionSchema } from '@/lib/games/schema';
 import { z } from 'zod';
 import { requireFrontendGame } from '@/lib/games/current';
@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
   try {
     resolveGameContext("maimai", { region, capability: "image-export" });
   } catch (error) {
-    if (error instanceof GameAdapterError) return gameErrorResponse(error);
+    if (error instanceof GameError) return gameErrorResponse(error);
     throw error;
   }
 

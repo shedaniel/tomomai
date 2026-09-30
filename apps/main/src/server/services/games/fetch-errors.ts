@@ -1,6 +1,6 @@
 import { TRPCError } from "@trpc/server";
 import { FETCH_START_ERROR_STATUS, formatFetchError, type FetchStartErrorCode } from "@/lib/games/fetch-error-codes";
-import { GAME_ERROR_STATUS, GameAdapterError, type GameAdapterErrorCode } from "@/lib/games/errors";
+import { GAME_ERROR_STATUS, GameError, type GameErrorCode } from "@/lib/games/errors";
 
 /** A fetch refused before its session started. The message is `CODE: detail`. */
 export class FetchStartError extends Error {
@@ -19,7 +19,7 @@ export function toTrpcFetchStartError(error: FetchStartError): TRPCError {
 }
 
 export type FetchStartRejection = {
-  code: FetchStartErrorCode | GameAdapterErrorCode;
+  code: FetchStartErrorCode | GameErrorCode;
   message: string;
   init: ResponseInit;
 };
@@ -33,7 +33,7 @@ export function fetchStartRejection(error: unknown): FetchStartRejection | null 
     const headers = error.retryAfterSeconds === undefined ? undefined : { "Retry-After": String(error.retryAfterSeconds) };
     return { code: error.code, message: error.message, init: { status: FETCH_START_ERROR_STATUS[error.code].http, headers } };
   }
-  if (error instanceof GameAdapterError) {
+  if (error instanceof GameError) {
     return { code: error.code, message: error.message, init: { status: GAME_ERROR_STATUS[error.code].http } };
   }
   return null;

@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server";
 import type { Logger } from "pino";
 import { checkAdminToken, type AdminTokenCheck } from "@/lib/admin-token";
-import { GameAdapterError, gameErrorResponse } from "@/lib/games/errors";
+import { GameError, gameErrorResponse } from "@/lib/games/errors";
 import type { CanonicalGameId } from "@/lib/games/types";
 import { flushLogger } from "@/lib/logger";
 import { requestLogger, runWithLogger } from "@/lib/request-logger";
@@ -86,7 +86,7 @@ export function adminRoute<P extends RouteParams>(
 }
 
 function errorResponse(error: unknown, log: Logger, requestId: string): Response {
-  if (error instanceof GameAdapterError) {
+  if (error instanceof GameError) {
     log.warn({ err: error }, "Admin request rejected");
     return gameErrorResponse(error, requestId);
   }

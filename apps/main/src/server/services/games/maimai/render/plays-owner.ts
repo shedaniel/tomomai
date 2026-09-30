@@ -4,7 +4,7 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { getServerSession } from "@/lib/auth-server";
 import { resolveGameContext } from "@/lib/games/access";
-import { GameAdapterError, gameErrorResponse } from "@/lib/games/errors";
+import { GameError, gameErrorResponse } from "@/lib/games/errors";
 import { regionSchema } from "@/lib/games/schema";
 import type { GameCapability } from "@/lib/games/types";
 import type { Region } from "@/lib/types";
@@ -34,7 +34,7 @@ export async function resolvePlaysOwner(
     if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     return { userId: session.user.id, region };
   } catch (error) {
-    if (error instanceof GameAdapterError) return gameErrorResponse(error);
+    if (error instanceof GameError) return gameErrorResponse(error);
     if (error instanceof TRPCError && error.code === "NOT_FOUND") {
       return NextResponse.json({ error: "Snapshot not found or not public" }, { status: 404 });
     }

@@ -5,7 +5,7 @@ const log = vi.hoisted(() => ({ info: vi.fn(), warn: vi.fn(), error: vi.fn() }))
 vi.mock("@/lib/auth", () => ({ auth: {} }));
 vi.mock("@/lib/logger", () => ({ logger: { child: () => log } }));
 
-import { GameAdapterError } from "@/lib/games/errors";
+import { GameError } from "@/lib/games/errors";
 import { publicProcedure, router } from "@/lib/trpc";
 import { gameOnlyProcedure, gameProcedure } from "./game-procedures";
 import { maimaiProcedure, maimaiRegionProcedure } from "./maimai/procedures";
@@ -17,7 +17,7 @@ const probe = router({
   maimaiPercentiles: maimaiProcedure(publicProcedure, "percentiles").query(({ ctx }) => ctx.game),
   maimaiAlbums: maimaiRegionProcedure(publicProcedure, "albums").query(({ ctx }) => ({ game: ctx.game, region: ctx.region })),
   deepRejection: publicProcedure.query(() => {
-    throw new GameAdapterError("UNSUPPORTED_REGION", "No such site", "chunithm", "cn");
+    throw new GameError("UNSUPPORTED_REGION", "No such site", "chunithm", "cn");
   }),
 });
 const caller = probe.createCaller({ session: null, req: new NextRequest("http://localhost/api/trpc") });

@@ -1,9 +1,9 @@
 import { TRPCError } from "@trpc/server";
 import { getHTTPStatusCodeFromError } from "@trpc/server/http";
 import { expect, it } from "vitest";
-import { GAME_ERROR_STATUS, GameAdapterError, gameErrorResponse, type GameAdapterErrorCode } from "./errors";
+import { GAME_ERROR_STATUS, GameError, gameErrorResponse, type GameErrorCode } from "./errors";
 
-const PUBLIC_STATUS: Record<GameAdapterErrorCode, number> = {
+const PUBLIC_STATUS: Record<GameErrorCode, number> = {
   UNKNOWN_GAME: 400,
   UNSUPPORTED_REGION: 400,
   GAME_NOT_ENABLED: 422,
@@ -11,14 +11,14 @@ const PUBLIC_STATUS: Record<GameAdapterErrorCode, number> = {
   WRONG_SITE: 409,
 };
 
-it.each(Object.entries(PUBLIC_STATUS) as [GameAdapterErrorCode, number][])("answers %s with %i over HTTP and through tRPC", async (code, status) => {
-  const response = gameErrorResponse(new GameAdapterError(code, "Rejected"));
+it.each(Object.entries(PUBLIC_STATUS) as [GameErrorCode, number][])("answers %s with %i over HTTP and through tRPC", async (code, status) => {
+  const response = gameErrorResponse(new GameError(code, "Rejected"));
   expect(response.status).toBe(status);
   expect(await response.json()).toEqual({ error: "Rejected", code });
   expect(getHTTPStatusCodeFromError(new TRPCError({ code: GAME_ERROR_STATUS[code].trpc }))).toBe(status);
 });
 
 it("adds the request id when a route passes one", async () => {
-  const response = gameErrorResponse(new GameAdapterError("WRONG_SITE", "Rejected"), "request-1");
+  const response = gameErrorResponse(new GameError("WRONG_SITE", "Rejected"), "request-1");
   expect(await response.json()).toEqual({ error: "Rejected", code: "WRONG_SITE", requestId: "request-1" });
 });

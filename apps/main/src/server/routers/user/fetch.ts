@@ -1,6 +1,6 @@
 import { SEGA_AIME_GATEWAY, siteRoot } from "@/lib/games/sites";
 import { getGame } from "@/lib/games/registry";
-import { GameAdapterError } from "@/lib/games/errors";
+import { GameError } from "@/lib/games/errors";
 import { gameProcedure } from "../game-procedures";
 import { startScoreFetch, getScoreFetchStatus } from "@/server/services/games/fetch-sessions";
 import { FetchStartError, toTrpcFetchStartError } from "@/server/services/games/fetch-errors";
@@ -44,7 +44,7 @@ export const fetchRouter = router({
         return await startScoreFetch({ game: ctx.game, region: ctx.region, userId: ctx.session.user.id, token: input.token });
       } catch (error) {
         if (error instanceof FetchStartError) throw toTrpcFetchStartError(error);
-        if (error instanceof TRPCError || error instanceof GameAdapterError) throw error;
+        if (error instanceof TRPCError || error instanceof GameError) throw error;
         throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to start fetch", cause: error });
       }
     }),

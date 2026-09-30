@@ -1,5 +1,5 @@
 import { offersCapability } from "./capabilities";
-import { GameAdapterError } from "./errors";
+import { GameError } from "./errors";
 import type { CanonicalGameId, Region } from "./ids";
 import { getEnabledRegions, getSupportedRegions } from "./regions";
 import { getGame } from "./registry";
@@ -33,23 +33,23 @@ export function hasCapability(game: CanonicalGameId, capability: GameCapability,
 function refuseAccess(
   game: CanonicalGameId,
   { region, capability, regionPolicy = "enabled" }: GameAccess & { region?: Region },
-): GameAdapterError | null {
+): GameError | null {
   const definition = getGame(game);
   const { brand } = definition;
   if (capability !== "catalog" && getEnabledRegions(game).length === 0) {
-    return new GameAdapterError("GAME_NOT_ENABLED", `${brand.displayName} is not enabled`, game, region, capability);
+    return new GameError("GAME_NOT_ENABLED", `${brand.displayName} is not enabled`, game, region, capability);
   }
   if (!offersCapability(definition, capability)) {
-    return new GameAdapterError("UNSUPPORTED_CAPABILITY", `${brand.displayName} does not support ${capability}`, game, region, capability);
+    return new GameError("UNSUPPORTED_CAPABILITY", `${brand.displayName} does not support ${capability}`, game, region, capability);
   }
   if (region === undefined) return null;
 
   const regions = regionPolicy === "enabled" ? getEnabledRegions(game) : getSupportedRegions(game);
   if (!regions.includes(region)) {
-    return new GameAdapterError("UNSUPPORTED_REGION", `${region} is not ${regionPolicy} for ${brand.displayName}`, game, region);
+    return new GameError("UNSUPPORTED_REGION", `${region} is not ${regionPolicy} for ${brand.displayName}`, game, region);
   }
   if (!offersCapability(definition, capability, region)) {
-    return new GameAdapterError("UNSUPPORTED_CAPABILITY", `${brand.displayName} does not support ${capability} in ${region}`, game, region, capability);
+    return new GameError("UNSUPPORTED_CAPABILITY", `${brand.displayName} does not support ${capability} in ${region}`, game, region, capability);
   }
   return null;
 }

@@ -1,5 +1,5 @@
 import type { CanonicalGameId, Region } from "./ids";
-import { GameAdapterError } from "./errors";
+import { GameError } from "./errors";
 import { getGame, type GameSiteRegion } from "./registry";
 import type { GameSite } from "./types";
 
@@ -25,7 +25,7 @@ export function getGameSite(game: CanonicalGameId, region: Region): GameSite | u
 
 function gameSite(game: CanonicalGameId, region: Region): GameSite {
   const site = getGameSite(game, region);
-  if (!site) throw new GameAdapterError("UNSUPPORTED_REGION", `${getGame(game).brand.displayName} has no ${region} site`, game, region);
+  if (!site) throw new GameError("UNSUPPORTED_REGION", `${getGame(game).brand.displayName} has no ${region} site`, game, region);
   return site;
 }
 

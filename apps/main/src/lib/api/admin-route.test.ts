@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
 import { DrizzleQueryError } from "drizzle-orm";
-import { GameAdapterError } from "@/lib/games/errors";
+import { GameError } from "@/lib/games/errors";
 
 const mocks = vi.hoisted(() => {
   const log = { child: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() };
@@ -86,7 +86,7 @@ describe("adminRoute", () => {
   });
 
   it("maps a game rejection thrown by the handler", async () => {
-    const error = new GameAdapterError("UNSUPPORTED_REGION", "No such region");
+    const error = new GameError("UNSUPPORTED_REGION", "No such region");
     const response = await adminRoute("admin/test", async () => { throw error; })(request("test"));
     expect(response.status).toBe(400);
     expect(await response.json()).toEqual({ error: "No such region", code: "UNSUPPORTED_REGION", requestId: "admin-test" });

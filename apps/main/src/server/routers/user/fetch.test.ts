@@ -7,7 +7,7 @@ vi.mock("@/lib/logger", () => ({ logger: { child: () => mocks.log } }));
 vi.mock("@/lib/db", () => ({ db: {} }));
 vi.mock("@/server/services/games/fetch-sessions", () => ({ startScoreFetch: mocks.start, getScoreFetchStatus: vi.fn() }));
 
-import { GameAdapterError } from "@/lib/games/errors";
+import { GameError } from "@/lib/games/errors";
 import { FetchStartError } from "@/server/services/games/fetch-errors";
 import { fetchRouter } from "./fetch";
 
@@ -48,7 +48,7 @@ describe("startFetch", () => {
   });
 
   it("keeps the status of a game rejection raised while starting", async () => {
-    mocks.start.mockRejectedValueOnce(new GameAdapterError("GAME_NOT_ENABLED", "CHUNITHM is not enabled", "chunithm"));
+    mocks.start.mockRejectedValueOnce(new GameError("GAME_NOT_ENABLED", "CHUNITHM is not enabled", "chunithm"));
     await expect(caller.startFetch({ game: "chunithm", region: "jp" })).rejects.toMatchObject({ code: "UNPROCESSABLE_CONTENT" });
     expect(mocks.log.error).not.toHaveBeenCalled();
   });

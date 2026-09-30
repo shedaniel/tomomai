@@ -1,4 +1,4 @@
-import { GAME_ERROR_STATUS, type GameAdapterErrorCode } from "@/lib/games/errors";
+import { GAME_ERROR_STATUS, type GameErrorCode } from "@/lib/games/errors";
 import { INVALID_PARAMETER } from "./parse-input";
 import type { RouteErrorResponse } from "./registry";
 
@@ -6,7 +6,7 @@ import type { RouteErrorResponse } from "./registry";
 export const MOVED = "MOVED";
 
 // WRONG_SITE only answers admin catalog writes, which are not part of the public API.
-const GAME_ERRORS: { readonly [C in Exclude<GameAdapterErrorCode, "WRONG_SITE">]: string } = {
+const GAME_ERRORS: { readonly [C in Exclude<GameErrorCode, "WRONG_SITE">]: string } = {
   UNKNOWN_GAME: "The path names no game the API serves.",
   UNSUPPORTED_REGION: "The game does not serve this region on this deployment.",
   GAME_NOT_ENABLED: "The game enables no region on this deployment, so only its catalog is served.",

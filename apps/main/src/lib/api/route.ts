@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server";
 import type { z } from "zod";
 import { resolveGameContext } from "@/lib/games/access";
-import { GameAdapterError, gameErrorResponse } from "@/lib/games/errors";
+import { GameError, gameErrorResponse } from "@/lib/games/errors";
 import type { CanonicalGameId, Region } from "@/lib/games/ids";
 import { gameIdSchema } from "@/lib/games/schema";
 import { requestLogger } from "@/lib/request-logger";
@@ -65,7 +65,7 @@ export function bindGameRoute<Q extends z.ZodObject | undefined, R extends z.Zod
   return async (req, context, extra) => {
     const raw = await context.params;
     const game = gameIdSchema.safeParse(raw.game);
-    if (!game.success) return gameErrorResponse(new GameAdapterError("UNKNOWN_GAME", "A canonical game path is required"));
+    if (!game.success) return gameErrorResponse(new GameError("UNKNOWN_GAME", "A canonical game path is required"));
     const params = parseParams(raw, ownParams);
     if (params instanceof Response) return params;
     const query = spec.query && parseQuery(req.nextUrl.searchParams, spec.query);
@@ -82,7 +82,7 @@ export function bindGameRoute<Q extends z.ZodObject | undefined, R extends z.Zod
       }
       return result;
     } catch (error) {
-      if (error instanceof GameAdapterError) return gameErrorResponse(error);
+      if (error instanceof GameError) return gameErrorResponse(error);
       throw error;
     }
   };

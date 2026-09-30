@@ -4,7 +4,7 @@ import { beforeEach, expect, it, vi } from "vitest";
 const log = vi.hoisted(() => ({ error: vi.fn() }));
 vi.mock("@/lib/request-logger", () => ({ getLogger: () => log }));
 
-import { GameAdapterError } from "@/lib/games/errors";
+import { GameError } from "@/lib/games/errors";
 import type { FetchStartErrorCode } from "@/lib/games/fetch-error-codes";
 import { FetchStartError, toTrpcFetchStartError } from "@/server/services/games/fetch-errors";
 import { mapFetchStartError } from "./fetch-errors";
@@ -39,7 +39,7 @@ it.each(["MAINTENANCE", "RATE_LIMITED"] as const)("tells REST callers when to re
 });
 
 it("answers game rejections with their own status and hides unexpected failures", async () => {
-  const rejected = mapFetchStartError(new GameAdapterError("UNSUPPORTED_REGION", "No CN site"));
+  const rejected = mapFetchStartError(new GameError("UNSUPPORTED_REGION", "No CN site"));
   expect(rejected.status).toBe(400);
   expect(await rejected.json()).toEqual({ error: "No CN site", code: "UNSUPPORTED_REGION" });
 

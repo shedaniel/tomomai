@@ -1,6 +1,6 @@
 import { parseCatalogVersion } from "@/lib/catalog/parse-version";
 import { getCurrentGame } from "@/lib/games/current";
-import { GameAdapterError } from "@/lib/games/errors";
+import { GameError } from "@/lib/games/errors";
 import type { CanonicalGameId } from "@/lib/games/types";
 import { getEnabledRegions, getSupportedRegions } from "@/lib/games/regions";
 import { gameIdSchema } from "@/lib/games/schema";
@@ -20,10 +20,10 @@ export class AdminRequestError extends Error {
  */
 export function resolveAdminGame(params: URLSearchParams, { write }: { write: boolean }): CanonicalGameId {
   const parsed = gameIdSchema.safeParse(params.get("game"));
-  if (!parsed.success) throw new GameAdapterError("UNKNOWN_GAME", "Canonical game parameter is required");
+  if (!parsed.success) throw new GameError("UNKNOWN_GAME", "Canonical game parameter is required");
   const site = getCurrentGame().id;
   if (write && parsed.data !== site) {
-    throw new GameAdapterError("WRONG_SITE", `The ${parsed.data} catalog is written on the ${parsed.data} site. This site serves ${site}.`, parsed.data);
+    throw new GameError("WRONG_SITE", `The ${parsed.data} catalog is written on the ${parsed.data} site. This site serves ${site}.`, parsed.data);
   }
   return parsed.data;
 }

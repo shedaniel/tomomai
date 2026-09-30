@@ -2,7 +2,7 @@ import { adminRoute } from "@/lib/api/admin-route";
 import { AdminRequestError, requireAdminCatalogVersion, requireAdminRegion } from "@/server/services/catalog/admin-game";
 import type { CanonicalGameId } from "@/lib/games/types";
 import { db } from "@/lib/db";
-import { GameAdapterError } from "@/lib/games/errors";
+import { GameError } from "@/lib/games/errors";
 import { getGame } from "@/lib/games/registry";
 import { getCurrentVersion } from "@/lib/games/versions";
 import { songs, parentSong } from "@/lib/db/schema-pg";
@@ -22,7 +22,7 @@ async function normalize(game: CanonicalGameId, searchParams: URLSearchParams, l
   // Ingestion keeps a game's source titles unless it has a rule, so renaming them here would orphan the parents.
   const { normalizeCatalogTitle } = getGame(game);
   if (!normalizeCatalogTitle) {
-    throw new GameAdapterError("UNSUPPORTED_CAPABILITY", `The ${getGame(game).brand.displayName} catalog keeps source titles and has no title normalization`, game);
+    throw new GameError("UNSUPPORTED_CAPABILITY", `The ${getGame(game).brand.displayName} catalog keeps source titles and has no title normalization`, game);
   }
   const region = requireAdminRegion(game, searchParams);
   const version = searchParams.get("version");

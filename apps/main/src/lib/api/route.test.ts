@@ -31,7 +31,7 @@ vi.mock("@/server/queries/stats", () => ({ fetchPlayerStats: mocks.fetchPlayerSt
 vi.mock("@/server/services/games/maimai/plates", () => ({ fetchLatestPlateSongs: mocks.fetchLatestPlateSongs }));
 vi.mock("@/server/queries/recents", () => ({ fetchRecentSongs: mocks.fetchRecentSongs }));
 
-import { GameAdapterError } from "@/lib/games/errors";
+import { GameError } from "@/lib/games/errors";
 import { GET as getAlbums } from "@/app/api/v1/games/[game]/albums/route";
 import { GET as getPlates } from "@/app/api/v1/games/[game]/plates/route";
 import { GET as getRecents } from "@/app/api/v1/games/[game]/recents/route";
@@ -191,7 +191,7 @@ describe("keyed game routes", () => {
 
   it("maps a game rejection thrown by the handler", async () => {
     const GET = defineGameHandler(keyedSpec, async ({ game }) => {
-      throw new GameAdapterError("UNSUPPORTED_CAPABILITY", "Not here", game);
+      throw new GameError("UNSUPPORTED_CAPABILITY", "Not here", game);
     });
 
     const response = await GET(request("maimai/route-test/1?region=jp", { key: KEY }), context({ game: "maimai", id: "1" }));
