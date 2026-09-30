@@ -354,6 +354,7 @@ export const userRecentSongs = pgTable("user_recent_songs", {
     foreignColumns: [songs.id, songs.game],
     name: "user_recent_songs_song_game_fk",
   }).onDelete("cascade"),
+  check("user_recent_songs_maimai_fields", sql`${table.game} <> 'maimai' OR ${table.maxSecondaryScore} IS NOT NULL`),
 ]);
 
 export const maimaiRecentSongDetails = pgTable("user_recent_songs_detailed", {
