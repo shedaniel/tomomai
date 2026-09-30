@@ -1,7 +1,18 @@
+import path from "node:path";
 import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 import type { CanonicalGameId } from "@/lib/games/ids";
 
-const fixture = vi.hoisted(() => ({ fetchProfile: vi.fn() }));
+const fixture = vi.hoisted(() => ({ fetchProfile: vi.fn(), sharpInputs: [] as unknown[] }));
+
+vi.mock("sharp", async importOriginal => {
+  const { default: sharp } = await importOriginal<{ default: (...args: unknown[]) => unknown }>();
+  return {
+    default: (...args: unknown[]) => {
+      fixture.sharpInputs.push(args[0]);
+      return sharp(...args);
+    },
+  };
+});
 
 vi.mock("next-intl/server", async () => {
   const { createTranslator } = await import("next-intl");
@@ -88,6 +99,21 @@ describe.each(["chunithm", "maimai"] as const)("%s page images", game => {
   it("loads only the profile's public snapshot header through the shared loader", async () => {
     await IMAGES.profile();
     expect(fixture.fetchProfile).toHaveBeenCalledWith(game, "player", "intl");
+  });
+});
+
+describe("brand chip artwork", () => {
+  const artwork = (file: string) => path.join(process.cwd(), "public", file);
+
+  it.each([
+    { image: "song", drawn: "icon-db-dark.webp", other: "icon-dark.webp" },
+    { image: "profile", drawn: "icon-dark.webp", other: "icon-db-dark.webp" },
+  ] as const)("draws the maimai $image chip with $drawn", async ({ image, drawn, other }) => {
+    serve("maimai");
+    fixture.sharpInputs.length = 0;
+    await IMAGES[image]();
+    expect(fixture.sharpInputs).toContain(artwork(drawn));
+    expect(fixture.sharpInputs).not.toContain(artwork(other));
   });
 });
 

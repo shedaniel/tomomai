@@ -315,8 +315,13 @@ function GridBackground() {
   );
 }
 
-function loadBrandIcon(brand: GameBrand): Promise<LoadedImage | null> {
-  return brand.og ? loadLocalImage(brand.og.logo, 48) : Promise.resolve(null);
+/** One of the brand's OpenGraph artworks. */
+type OgArtwork = keyof NonNullable<GameBrand["og"]>;
+
+const BRAND_CHIP_ICON_HEIGHT = 48;
+
+function loadBrandArtwork(brand: GameBrand, artwork: OgArtwork, height: number): Promise<LoadedImage | null> {
+  return brand.og ? loadLocalImage(brand.og[artwork], height) : Promise.resolve(null);
 }
 
 function BrandChip({ brand, section, icon }: { brand: GameBrand; section?: string; icon: LoadedImage | null }) {
@@ -351,7 +356,7 @@ export async function createOGImage(options: OGImageOptions) {
   const [interFonts, localeFonts, icon] = await Promise.all([
     loadInterFonts(),
     loadLocaleFonts(locale),
-    loadBrandIcon(brand),
+    loadBrandArtwork(brand, "logo", BRAND_CHIP_ICON_HEIGHT),
   ]);
 
   const fonts = [...interFonts, ...localeFonts];
@@ -450,8 +455,7 @@ export function createDbOGImage(options: BrandOGImageOptions) {
 }
 
 type Wordmark = {
-  /** Which of the brand's OpenGraph artworks to draw. */
-  artwork: keyof NonNullable<GameBrand["og"]>;
+  artwork: OgArtwork;
   logoHeight: number;
   accent: Accent;
 };
@@ -462,7 +466,7 @@ async function createWordmarkOGImage(options: BrandOGImageOptions, { artwork, lo
   const [interFonts, localeFonts, logo] = await Promise.all([
     loadInterFonts(),
     loadLocaleFonts(locale),
-    brand.og ? loadLocalImage(brand.og[artwork], logoHeight) : Promise.resolve(null),
+    loadBrandArtwork(brand, artwork, logoHeight),
   ]);
 
   const fonts = [...interFonts, ...localeFonts];
@@ -573,7 +577,7 @@ export async function createProfileOGImage(options: ProfileOGImageOptions) {
     loadInterFonts(),
     loadGeistMono(),
     loadLocaleFonts(locale),
-    loadBrandIcon(brand),
+    loadBrandArtwork(brand, "logo", BRAND_CHIP_ICON_HEIGHT),
     supportsGameFeature(game, "rating-plate")
       ? loadLocalImage(getRatingImageUrl(rating, gameVersion ?? 0), 90)
       : Promise.resolve(null),
@@ -848,7 +852,7 @@ export async function createSongOGImage(options: SongOGImageOptions) {
     loadInterFonts(),
     loadGeistMono(),
     loadLocaleFonts(locale),
-    loadBrandIcon(brand),
+    loadBrandArtwork(brand, "dbLogo", BRAND_CHIP_ICON_HEIGHT),
     loadRemoteImage(coverUrl, 460, 460),
     extractTwoColors(coverUrl),
   ]);
