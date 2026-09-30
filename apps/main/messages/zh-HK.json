@@ -688,6 +688,15 @@
       "exportJson": "匯出紀錄為 JSON",
       "exporting": "匯出中……"
     },
+    "exportImageCard": {
+      "profileImage": "個人檔案圖片",
+      "lastCredit": "最近一次遊玩",
+      "dailyPlays": "每日遊玩",
+      "dayLabel": "日期",
+      "dayPlaceholder": "選擇日期",
+      "dayLoading": "正在載入日期……",
+      "noPlays": "暫時未有每日遊玩紀錄"
+    },
     "loadError": "無法載入成績，請重試。"
   },
   "albums": {

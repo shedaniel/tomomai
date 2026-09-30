@@ -688,6 +688,15 @@
       "exportJson": "スナップショットをJSONでエクスポート",
       "exporting": "エクスポート中..."
     },
+    "exportImageCard": {
+      "profileImage": "プロフィール画像",
+      "lastCredit": "直近のクレジット",
+      "dailyPlays": "日別プレイ",
+      "dayLabel": "日付",
+      "dayPlaceholder": "日付を選択",
+      "dayLoading": "日付を読み込み中…",
+      "noPlays": "日別のプレイがありません"
+    },
     "loadError": "スコアを読み込めませんでした。もう一度お試しください。"
   },
   "albums": {

@@ -688,6 +688,15 @@
       "exportJson": "导出记录为 JSON",
       "exporting": "导出中..."
     },
+    "exportImageCard": {
+      "profileImage": "主页图片",
+      "lastCredit": "最近一次游玩",
+      "dailyPlays": "每日游玩",
+      "dayLabel": "日期",
+      "dayPlaceholder": "选择日期",
+      "dayLoading": "正在加载日期...",
+      "noPlays": "暂无每日游玩记录"
+    },
     "loadError": "无法加载成绩，请重试。"
   },
   "albums": {

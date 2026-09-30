@@ -64,6 +64,14 @@ describe("per-game messages", () => {
     expect(first.filter(key => shared.has(key))).toEqual([]);
   });
 
+  it.each(locales.filter(locale => locale !== "en"))("defines exactly the shared English keys in %s", locale => {
+    const english = new Set(keys(readMessages("en")));
+    const translated = new Set(keys(readMessages(locale)));
+    expect([...translated].filter(key => !english.has(key))).toEqual([]);
+    // ko is a partial machine translation that falls back to English.
+    if (locale !== "ko") expect([...english].filter(key => !translated.has(key))).toEqual([]);
+  });
+
   it("translates only keys that the game's English copy defines", () => {
     for (const game of CANONICAL_GAME_IDS) {
       const english = new Set(keys(readMessages(`games/${game}/en`)));
