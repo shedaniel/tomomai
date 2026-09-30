@@ -6,6 +6,7 @@ import { gameIdSchema, regionSchema as gameRegionSchema } from "@/lib/games/sche
 import type { ScoreStatusKind } from "@/lib/games/types";
 import type { songs } from "@/lib/db/schema-pg";
 import { parentPublicIdSchema, songInstanceIdSchema } from "@/lib/catalog/song-instance-id";
+import type { PublishedCatalogSong } from "@tomomai/games/catalog-client";
 
 /**
  * The response parts every game shares. The OpenAPI document and the Developer Center render these schemas,
@@ -145,7 +146,7 @@ export const songCatalogueEntry = z.object({
   noteDesigner: z.string().nullable().describe("Chart designer name."),
   levelPreciseEstimated: z.literal(true).optional().describe("Present when `levelPrecise` is an estimate rather than the published constant."),
   addedVersionEstimated: z.literal(true).optional().describe("Present when `addedVersion` is inferred rather than known."),
-});
+}) satisfies z.ZodType<PublishedCatalogSong>;
 
 export const snapshotCore = z.object({
   id: z.string().describe("Public snapshot ID."),

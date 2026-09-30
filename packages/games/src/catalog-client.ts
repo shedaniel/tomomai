@@ -20,7 +20,8 @@ export type CatalogSong<G extends CodedGame> = {
   addedVersionEstimated?: true;
 };
 
-type PublishedSong = Omit<CatalogSong<CodedGame>, "type" | "difficulty"> & { type: number; difficulty: number };
+/** A chart as the slice publishes it, before decoding. apps/main checks its response schema against this. */
+export type PublishedCatalogSong = Omit<CatalogSong<CodedGame>, "type" | "difficulty"> & { type: number; difficulty: number };
 
 // Structural, so undici's fetch (render passes its own dispatcher) fits as well as the platform fetch.
 export type CatalogResponse = { readonly ok: boolean; readonly status: number; json(): Promise<unknown> };
@@ -50,7 +51,7 @@ function isGameVersion(value: unknown): value is number {
 export function decodeCatalogSlice<G extends CodedGame>(body: unknown, game: G): CatalogSong<G>[] {
   if (!isRecord(body) || !Array.isArray(body.songs)) throw new Error("Invalid song catalog response");
   if (body.game !== game) throw new Error(`Expected a ${game} song catalog, got ${String(body.game)}`);
-  return body.songs.map((song: PublishedSong) => ({
+  return body.songs.map((song: PublishedCatalogSong) => ({
     ...song,
     type: definedKeyOf(game, "chartType", song.type),
     difficulty: definedKeyOf(game, "difficulty", song.difficulty),
