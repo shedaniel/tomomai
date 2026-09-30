@@ -25,6 +25,7 @@ describe("game presentation", () => {
     expect(formatGameScore("maimai", 1_001_423)).toBe("100.1423%");
     expect(formatGameRating("maimai", 14330)).toBe("14330");
     expect(formatGameRating("maimai", 300.456, { average: true })).toBe("300.46");
+    expect(formatGameRating("maimai", 15234.9, { grouped: true })).toBe("15,234");
     expect(difficulty("maimai", "remaster").label).toBe("Re:MASTER");
     expect(getGameStatusLabels("maimai", { comboStatus: 4, syncStatus: 5 })).toEqual(["AP+", "FDX+"]);
   });
@@ -41,6 +42,7 @@ describe("game presentation", () => {
     expect(formatGameScoreDelta("chunithm", 1_005_000, 1_007_500)).toBe("2,500");
     expect(formatGameRating("chunithm", 1625)).toBe("16.25");
     expect(formatGameRating("chunithm", 1625, { average: true })).toBe("16.25");
+    expect(formatGameRating("chunithm", 1625, { grouped: true })).toBe("16.25");
     expect(difficulty("chunithm", "ultima").label).toBe("ULTIMA");
     expect(getGameChartType("chunithm", 0).label).toBe("STANDARD");
     expect(getGameChartType("chunithm", 1).label).toBe("#1");

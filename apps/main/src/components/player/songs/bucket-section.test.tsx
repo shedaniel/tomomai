@@ -1,3 +1,4 @@
+import type React from "react";
 import { describe, expect, it, vi } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 import { NextIntlClientProvider } from "next-intl";
@@ -9,7 +10,7 @@ import { SongSection } from "./bucket-section";
 import type { RatedScore } from "./types";
 import { testGame } from "@/test/games";
 
-vi.mock("@/components/games/maimai/song-hover-card", () => ({ SongHoverCard: () => null }));
+vi.mock("@/components/games/maimai/song-hover-card", () => ({ SongHoverCard: ({ children }: { children: React.ReactNode }) => <>{children}</> }));
 vi.mock("@/i18n/navigation", () => ({ Link: () => null }));
 
 function score(game: CanonicalGameId, overrides: Partial<RatedScore>): RatedScore {
@@ -20,15 +21,17 @@ function score(game: CanonicalGameId, overrides: Partial<RatedScore>): RatedScor
   };
 }
 
-function renderCompact(game: CanonicalGameId, songs: RatedScore[]) {
+function renderSection(game: CanonicalGameId, songs: RatedScore[], displayMode: "list" | "compact") {
   return renderToStaticMarkup(
     <NextIntlClientProvider locale="en" messages={messages} timeZone="UTC">
       <GameProvider game={testGame(game, ["jp"])}>
-        <SongSection title="Best" songs={songs} count={`${songs.length}`} ranked displayMode="compact" visibleCount={songs.length} onLoadMore={() => {}} />
+        <SongSection title="Best" songs={songs} count={`${songs.length}`} ranked displayMode={displayMode} visibleCount={songs.length} onLoadMore={() => {}} />
       </GameProvider>
     </NextIntlClientProvider>,
   );
 }
+
+const renderCompact = (game: CanonicalGameId, songs: RatedScore[]) => renderSection(game, songs, "compact");
 
 const headers = (html: string) => [...html.matchAll(/<div class="font-semibold text-muted-foreground[^"]*">([^<]+)<\/div>/g)].map(match => match[1]);
 
@@ -53,5 +56,16 @@ describe("compact song section", () => {
     expect(html).toContain(">AJ HARD<");
     expect(html).not.toContain("Sum");
     expect(html).toContain("16.10");
+  });
+});
+
+describe("song list rows", () => {
+  it.each([
+    { game: "maimai", difficulty: "remaster", line: "STD • ReM 14.0 • Artist" },
+    { game: "maimai", difficulty: "master", line: "STD • MAS 14.0 • Artist" },
+    { game: "chunithm", difficulty: "ultima", line: ">ULT 14.0 • Artist" },
+  ] as const)("names the $game $difficulty chart by its short label", ({ game, difficulty, line }) => {
+    const html = renderSection(game, [score(game, { difficultyCode: codeOf(game, "difficulty", difficulty) })], "list").replaceAll("<!-- -->", "");
+    expect(html).toContain(line);
   });
 });

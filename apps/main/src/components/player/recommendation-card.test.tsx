@@ -54,7 +54,8 @@ it("renders CHUNITHM score targets, average rating gains and game-sized buckets 
   expect(text).toContain("15.00");
   expect(text).toContain("15.50");
   expect(text).toContain("+0.01");
-  expect(text).toContain("ULTIMA");
+  expect(text).toContain("ULT ");
+  expect(text).not.toContain("ULTIMA");
   expect(text).not.toContain("STANDARD");
   expect(text).not.toContain("B15");
   expect(peers).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ enabled: false }));
@@ -77,4 +78,6 @@ it("renders maimai score targets at compact precision with the floored delta, an
   expect(text).toContain("+0.05%");
   expect(text).toContain("100.50% → AP");
   expect(text).toContain("B15/B35");
+  expect(text).toContain("MAS 13.1");
+  expect(text).not.toContain("MASTER 13");
 });

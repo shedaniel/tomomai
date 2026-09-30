@@ -3,7 +3,7 @@
 import { useGame } from "@/components/providers/game-provider";
 import { supportsGameFeature } from "@/lib/games/frontend";
 import { getPlayerRankings, type GameSnapshotData } from "@/lib/games/player-view";
-import { getGameDifficulty, getGameChartType, getGameRankingBuckets } from "@/lib/games/presentation";
+import { getGameRankingBuckets } from "@/lib/games/presentation";
 import { LayoutGrid, LayoutList, Menu, Search } from "lucide-react";
 import { useTranslations } from "next-intl";
 
@@ -17,6 +17,7 @@ import type { Flags } from "@/lib/flags";
 import type { PercentileMap } from "@/lib/games/maimai/percentile/types";
 import { SongGridSection, SongSection } from "./bucket-section";
 import { RatingDistributionChart } from "./rating-distribution-chart";
+import { matchesScoreQuery } from "./score-query";
 import type { RatedScore } from "./types";
 
 type Rankings = {
@@ -165,14 +166,7 @@ export function SongsCard({ selectedSnapshotData, flags }: { selectedSnapshotDat
     if (!searchQuery.trim()) return rankings;
 
     const query = searchQuery.toLowerCase().trim();
-    const filterSongs = (songList: RatedScore[]) =>
-      songList.filter(song =>
-        song.songName.toLowerCase().includes(query) ||
-        song.artist.toLowerCase().includes(query) ||
-        getGameDifficulty(game, song.difficultyCode).label.toLowerCase().includes(query) ||
-        (song.levelPrecise / 10).toFixed(1).toLowerCase().includes(query) ||
-        getGameChartType(game, song.typeCode).label.toLowerCase().includes(query)
-      );
+    const filterSongs = (songList: RatedScore[]) => songList.filter(song => matchesScoreQuery(game, song, query));
 
     return {
       newBest: filterSongs(rankings.newBest),

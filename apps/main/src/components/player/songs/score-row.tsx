@@ -32,7 +32,7 @@ export const SongRow = forwardRef<HTMLDivElement, { song: RatedScore; percentile
         />
         <div className="flex-1 min-w-0">
           <div className="truncate font-medium">{song.songName}&#8203;</div>
-          <div className="text-muted-foreground text-xs truncate">{!chartType.implicit && <>{chartType.label} • </>}{difficulty.label} {formatGameLevel(game, song.levelPrecise, song.difficultyCode)} • {song.artist}</div>
+          <div className="text-muted-foreground text-xs truncate">{!chartType.implicit && <>{chartType.label} • </>}{difficulty.shortLabel} {formatGameLevel(game, song.levelPrecise, song.difficultyCode)} • {song.artist}</div>
         </div>
         <div className="text-right ml-2">
           <div className="font-mono">{formatGameScore(game, song.scoreValue)}</div>

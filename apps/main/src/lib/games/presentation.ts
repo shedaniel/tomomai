@@ -36,10 +36,15 @@ export function formatGameScoreDelta(game: CanonicalGameId, from: number, to: nu
   return presentationOf(game).formatScoreDelta(from, to);
 }
 
-export function formatGameRating(game: CanonicalGameId, value: number | null | undefined, { average = false } = {}): string {
+const groupedInteger = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
+
+/** `average` keeps hundredths of an unscaled rating. `grouped` separates the thousands of an integer rating. */
+export function formatGameRating(game: CanonicalGameId, value: number | null | undefined, { average = false, grouped = false } = {}): string {
   if (value == null || !Number.isFinite(value)) return missingValue;
   const { scale } = presentationOf(game).ratingRules;
-  return scale === 1 && !average ? String(Math.floor(value)) : (value / scale).toFixed(2);
+  if (scale !== 1 || average) return (value / scale).toFixed(2);
+  const rating = Math.floor(value);
+  return grouped ? groupedInteger.format(rating) : String(rating);
 }
 
 /** Marks a level, or a rating derived from it, whose chart constant is estimated. */

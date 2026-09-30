@@ -78,7 +78,7 @@ function RecommendationRow({ recommendation }: { recommendation: RecommendationD
               )}
             </div>
             <div className="text-muted-foreground text-xs truncate">
-              {!chartType.implicit && `${chartType.label} • `}{difficulty.label} {formatGameLevel(game, song.levelPrecise, song.difficultyCode)} • {song.artist}
+              {!chartType.implicit && `${chartType.label} • `}{difficulty.shortLabel} {formatGameLevel(game, song.levelPrecise, song.difficultyCode)} • {song.artist}
             </div>
           </div>
         </div>

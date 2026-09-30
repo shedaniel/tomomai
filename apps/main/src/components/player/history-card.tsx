@@ -28,6 +28,19 @@ const chartConfig = {
   },
 };
 
+/** The tooltip's default row, which a formatter replaces as a whole. */
+export function RatingTooltipRow({ color, label, value }: { color?: string; label: string; value: string }) {
+  return (
+    <>
+      <div className="h-2.5 w-2.5 shrink-0 rounded-[2px]" style={{ backgroundColor: color }} />
+      <div className="flex flex-1 items-center justify-between leading-none">
+        <span className="text-muted-foreground">{label}</span>
+        <span className="text-foreground font-mono font-medium tabular-nums">{value}</span>
+      </div>
+    </>
+  );
+}
+
 export function HistoryCard({ region }: HistoryCardProps) {
   const t = useTranslations();
   const game = useGame().id;
@@ -194,7 +207,13 @@ export function HistoryCard({ region }: HistoryCardProps) {
                   <ChartTooltip
                     content={
                       <ChartTooltipContent
-                        formatter={(value) => formatRating(Number(value))}
+                        formatter={(value, _name, item) => (
+                          <RatingTooltipRow
+                            color={item.color}
+                            label={chartConfig.rating.label}
+                            value={formatGameRating(game, Number(value), { grouped: true })}
+                          />
+                        )}
                         labelFormatter={(_, payload) => {
                           if (payload && payload.length > 0) {
                             return payload[0].payload.fullDate;
