@@ -63,7 +63,7 @@ export const maimaiDefinition = {
     "rating-plate",
     "rating-distribution",
     "plates",
-    "score-details",
+    "note-counts",
     "stats",
     "percentiles",
     "daily-plays",

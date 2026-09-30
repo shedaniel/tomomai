@@ -23,7 +23,7 @@ export const GAME_CAPABILITIES = [
   "rating-plate",
   "rating-distribution",
   "plates",
-  "score-details",
+  "note-counts",
   "stats",
   "percentiles",
   "daily-plays",

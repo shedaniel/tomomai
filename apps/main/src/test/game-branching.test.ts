@@ -32,7 +32,7 @@ const SINGLE_GAME_FEATURES = {
   albums: "maimai",
   percentiles: "maimai",
   "snapshot-copy": "maimai",
-  "score-details": "maimai",
+  "note-counts": "maimai",
 } as const satisfies Partial<Record<GameCapability, CanonicalGameId>>;
 
 // /db sections whose view (app/[locale]/db/[type]/sections.tsx) or content belongs to one game.

@@ -151,12 +151,12 @@ function ScoreGrid({
   );
 }
 
-export function SongChartRow({ difficulty, charts, index, data, hasNoteDetails, hasTouch }: {
+export function SongChartRow({ difficulty, charts, index, data, hasNoteCounts, hasTouch }: {
   difficulty: string;
   charts: SongExtendedIdentified[];
   index: number;
   data: SongDetails;
-  hasNoteDetails: boolean;
+  hasNoteCounts: boolean;
   hasTouch: boolean;
 }) {
   const t = useTranslations();
@@ -188,7 +188,7 @@ export function SongChartRow({ difficulty, charts, index, data, hasNoteDetails, 
           <div className={cn("py-2.5 px-3 flex items-baseline justify-center", dataBorderClass)}>
             <ChartLevel chart={latestChart} variant="split" />
           </div>
-          {hasNoteDetails && <>
+          {hasNoteCounts && <>
           {/* Notes */}
           <div className={cn("py-2.5 px-3 flex items-center justify-center tabular-nums", dataBorderClass)}>
             {hasNoteData ? totalNotes : "-"}
@@ -289,7 +289,7 @@ export function SongDetailContent({ songName, artist, slug, type, parentIds, ini
   const allCharts = useMemo(() => {
     return Array.from(chartsByDifficulty.values()).flat();
   }, [chartsByDifficulty]);
-  const hasNoteDetails = supportsGameFeature(game, "score-details");
+  const hasNoteCounts = supportsGameFeature(game, "note-counts");
   const hasTouch = allCharts.some(chart => chart.touchCount !== null);
 
   // Pre-compute SEO summary inputs (visible prose paragraph below the header).
@@ -439,12 +439,12 @@ export function SongDetailContent({ songName, artist, slug, type, parentIds, ini
 
           <div className={
             cn("border rounded-md overflow-x-auto grid",
-              !hasNoteDetails ? "grid-cols-[minmax(100px,1fr)_auto_auto]" : hasTouch ? "grid-cols-[minmax(100px,1fr)_auto_1fr_1fr_1fr_1fr_1fr_1fr_auto]" : "grid-cols-[minmax(100px,1fr)_auto_1fr_1fr_1fr_1fr_1fr_auto]")}>
+              !hasNoteCounts ? "grid-cols-[minmax(100px,1fr)_auto_auto]" : hasTouch ? "grid-cols-[minmax(100px,1fr)_auto_1fr_1fr_1fr_1fr_1fr_1fr_auto]" : "grid-cols-[minmax(100px,1fr)_auto_1fr_1fr_1fr_1fr_1fr_auto]")}>
             {/* Header Row */}
             <div className="contents text-xs bg-accent/50 font-medium text-muted-foreground">
               <div className="py-2 px-3 border-b">{t('db.common.difficulty')}</div>
               <div className="py-2 px-3 text-center border-b">{t('db.common.level')}</div>
-              {hasNoteDetails && <>
+              {hasNoteCounts && <>
               <div className="py-2 px-3 text-center border-b">{t('db.common.notes')}</div>
               <div className="py-2 px-3 text-center border-b">Tap</div>
               <div className="py-2 px-3 text-center border-b">Hold</div>
@@ -463,7 +463,7 @@ export function SongDetailContent({ songName, artist, slug, type, parentIds, ini
                 charts={charts}
                 index={index}
                 data={data}
-                hasNoteDetails={hasNoteDetails}
+                hasNoteCounts={hasNoteCounts}
                 hasTouch={hasTouch}
               />
             ))}
