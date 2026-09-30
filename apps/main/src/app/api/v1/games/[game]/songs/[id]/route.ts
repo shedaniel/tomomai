@@ -3,7 +3,8 @@ import { db } from "@/lib/db";
 import { parentSong, songs } from "@/lib/db/schema-pg";
 import { chartEstimates } from "@/lib/catalog/chart-metadata";
 import { formatSongInstanceId, parseSongId } from "@/lib/catalog/song-instance-id";
-import { and, eq } from "drizzle-orm";
+import { songIdFilter } from "@/lib/db/song-instance-id";
+import { eq } from "drizzle-orm";
 import { instancePreference } from "@/lib/games/regions";
 import { maxBy } from "@/lib/utils";
 import { definePublicGameHandler } from "@/lib/api/route";
@@ -15,9 +16,6 @@ import { catalogTags } from "@/lib/cache-tags";
 const getSongById = (game: CanonicalGameId, songId: string) => unstable_cache(async () => {
   const parsed = parseSongId(songId);
   if (!parsed) return [];
-  const instanceFilter = parsed.kind === "instance"
-    ? and(eq(songs.region, parsed.region), eq(songs.gameVersion, parsed.gameVersion))
-    : undefined;
 
   return db
     .select({
@@ -44,7 +42,7 @@ const getSongById = (game: CanonicalGameId, songId: string) => unstable_cache(as
     })
     .from(songs)
     .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
-    .where(and(eq(songs.game, game), eq(parentSong.game, game), eq(parentSong.publicId, parsed.parentPublicId), instanceFilter));
+    .where(songIdFilter(game, parsed));
 }, ["api-v1-parent-song-by-id", game, songId], { revalidate: 3600, tags: [catalogTags(game).apiSongs] })();
 
 export const GET = definePublicGameHandler(spec, async ({ game, params }) => {

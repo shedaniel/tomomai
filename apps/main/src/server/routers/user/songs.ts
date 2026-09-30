@@ -3,12 +3,13 @@ import { hasCapability } from "@/lib/games/access";
 import { gameOnlyProcedure } from "../game-procedures";
 import { isCodeKey, keyOf } from "@/lib/games/codes";
 import { parentPublicIdSchema, parseSongId } from "@/lib/catalog/song-instance-id";
+import { songIdFilter } from "@/lib/db/song-instance-id";
 import { db } from '@/lib/db';
 import { parentSong, songs } from '@/lib/db/schema-pg';
 import { formatSongSlug, getSongSlug } from '@/lib/song-slug';
 import { protectedProcedure, publicProcedure, router } from '@/lib/trpc';
 import { TRPCError } from '@trpc/server';
-import { and, eq, sql } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { queryAllUniqueSongs, querySongDetails, querySongScores } from '@/server/queries/songs';
 
@@ -63,11 +64,7 @@ export const songsRouter = router({
         })
         .from(songs)
         .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
-        .where(and(
-          eq(parentSong.game, game),
-          eq(parentSong.publicId, parsed.parentPublicId),
-          ...(parsed.kind === "instance" ? [eq(songs.game, game), eq(songs.region, parsed.region), eq(songs.gameVersion, parsed.gameVersion)] : []),
-        ));
+        .where(songIdFilter(game, parsed));
 
       if (charts.length === 0) {
         throw new TRPCError({

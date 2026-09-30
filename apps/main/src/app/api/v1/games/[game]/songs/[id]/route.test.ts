@@ -32,11 +32,9 @@ describe("song details", () => {
     expect(response.status).toBe(200);
     expect(await response.json()).toMatchObject({ game, songId: `Ab3xK9pQ:j${gameVersion}`, type });
     expect(response.headers.get("Cache-Control")).toContain("max-age=3600");
-    expect(new PgDialect().sqlToQuery(where.mock.calls[0][0]).params).toEqual([game, game, "Ab3xK9pQ"]);
+    expect(new PgDialect().sqlToQuery(where.mock.calls[0][0]).params).toEqual([game, "Ab3xK9pQ"]);
     expect(cache).toHaveBeenCalledWith(["api-v1-parent-song-by-id", game, "Ab3xK9pQ"], expect.objectContaining({ tags: [catalogTags(game).apiSongs] }));
-    const filter = new PgDialect().sqlToQuery(where.mock.calls[0][0]).sql;
-    expect(filter).toContain('"songs"."game" = $1');
-    expect(filter).toContain('"parent_song"."game" = $2');
+    expect(new PgDialect().sqlToQuery(where.mock.calls[0][0]).sql).toContain('"parent_song"."game" = $1');
   });
   it("publishes each game's note counts as its details and only the estimates a source recorded", async () => {
     query.mockResolvedValueOnce([{ ...row, metadata: { levelPreciseEstimated: true } }]);
@@ -60,6 +58,6 @@ describe("song details", () => {
   it("uses region and version predicates for exact instance IDs", async () => {
     query.mockResolvedValue([]);
     expect((await get("Ab3xK9pQ:i-1")).status).toBe(404);
-    expect(new PgDialect().sqlToQuery(where.mock.calls[0][0]).params).toEqual(["maimai", "maimai", "Ab3xK9pQ", "intl", -1]);
+    expect(new PgDialect().sqlToQuery(where.mock.calls[0][0]).params).toEqual(["maimai", "Ab3xK9pQ", "intl", -1]);
   });
 });
