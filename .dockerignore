@@ -41,6 +41,9 @@ LICENSE
 .vscode
 .idea
 
+# Tests never run in the image.
+**/*.test.ts
+
 # Misc generated/tooling files.
 pnpm-debug.log*
 *.log

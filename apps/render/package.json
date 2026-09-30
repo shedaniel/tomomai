@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "tsx watch --env-file-if-exists=.env.local src/server.ts",
     "start": "tsx --env-file-if-exists=.env.local src/server.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test 'src/**/*.test.ts'"
   },
   "dependencies": {
     "@hono/node-server": "^1.13.7",
