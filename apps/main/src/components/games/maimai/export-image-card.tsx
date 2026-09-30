@@ -219,7 +219,7 @@ export function ExportImageCard({ snapshot, region, showLastCredit = true, usern
   );
   const publicDaysQuery = trpc.maimai.getPublicDailyPlaysAvailableDays.useQuery(
     { snapshotId: publicSnapshotId! },
-    { enabled: isPublic },
+    { enabled: isPublic && showLastCredit },
   );
   const availableDays = (isPublic ? publicDaysQuery.data : ownDaysQuery.data) ?? [];
   const daysLoading = (isPublic ? publicDaysQuery.isFetching : ownDaysQuery.isFetching) && availableDays.length === 0;

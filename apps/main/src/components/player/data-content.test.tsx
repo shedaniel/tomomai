@@ -11,14 +11,17 @@ import type { Flags } from "@/lib/flags";
 import { DataContent } from "./data-content";
 import messages from "../../../messages/en.json";
 
-const queries = vi.hoisted(() => ({ eventSteps: vi.fn(), exportSnapshot: vi.fn(), publicStats: vi.fn() }));
+const queries = vi.hoisted(() => ({ eventSteps: vi.fn(), exportSnapshot: vi.fn(), publicStats: vi.fn(), publicDays: vi.fn() }));
 // One played maimai MASTER chart from version 13 with an AP and an FDX+.
 const stats = { stats: { 13: { 3: { grades: { "SSS+": 1 }, statuses: { comboStatus: { 3: 1 }, syncStatus: { 4: 1 } }, total: 1 } } }, totalSongs: { 13: { 3: 1 } } };
 vi.mock("@/lib/trpc-client", () => ({ trpc: {
   maimai: {
     getEventStepsByNames: { useQuery: (...args: unknown[]) => { queries.eventSteps(...args); return { data: undefined, isLoading: false }; } },
     getDailyPlaysAvailableDays: { useQuery: () => ({ data: [], isFetching: false }) },
-    getPublicDailyPlaysAvailableDays: { useQuery: () => ({ data: [], isFetching: false }) },
+    getPublicDailyPlaysAvailableDays: { useQuery: (input: unknown, options: { enabled: boolean }) => {
+      if (options.enabled) queries.publicDays(input);
+      return { data: [], isFetching: false };
+    } },
     exportSnapshotData: { useQuery: (...args: unknown[]) => { queries.exportSnapshot(...args); return { refetch: vi.fn() }; } },
   },
   user: {
@@ -113,6 +116,13 @@ it("asks for the owner's own plays by region and a visitor's through the publish
   await renderTab("exportImage", {});
   await openLastCredit();
   expect(imageSources()).toContain("/api/last-credit?snapshotId=public-snapshot&beforeDate=2026-09-01T00%3A00%3A00.000Z");
+  expect(queries.publicDays).toHaveBeenCalledWith({ snapshotId: "public-snapshot" });
+});
+
+it("asks nothing about a visitor's play days when the owner keeps recent plays private", async () => {
+  await renderTab("exportImage", { profileShowScoreDetails: false });
+  expect(container.textContent).not.toContain(messages.dataContent.exportImageCard.lastCredit);
+  expect(queries.publicDays).not.toHaveBeenCalled();
 });
 
 it("shows the owner every stats view", async () => {
