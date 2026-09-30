@@ -2,19 +2,21 @@ import { describe, expect, it, vi } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 import { NextIntlClientProvider } from "next-intl";
 import { GameProvider } from "@/components/providers/game-provider";
-import { toFrontendGame } from "@/lib/games/frontend";
-import { getGame } from "@/lib/games/registry";
-import type { CanonicalGameId } from "@/lib/games/ids";
+import type { CanonicalGameId, Region } from "@/lib/games/ids";
 import { loadMessages } from "@/i18n/messages";
 import { SongDetailContent } from "./song-detail-content";
 import type { ChartTypeKey, SongDetails } from "./types";
+import { testGame } from "@/test/games";
 
-const userScores = vi.hoisted(() => ({ jp: { master: { scoreValue: 1_005_000, comboStatus: 4, syncStatus: 5, clearStatus: 0 } } }));
+const { userScores, scoreQueries } = vi.hoisted(() => ({
+  userScores: { jp: { master: { scoreValue: 1_005_000, comboStatus: 4, syncStatus: 5, clearStatus: 0 } } },
+  scoreQueries: [] as { enabled: boolean }[],
+}));
 vi.mock("@/lib/trpc-client", () => ({ trpc: {
   useUtils: () => ({ user: { getSongScores: { reset: () => {} } } }),
   user: {
     getSongDetails: { useQuery: () => ({ data: undefined, isLoading: false, error: null }) },
-    getSongScores: { useQuery: () => ({ data: { viewerId: "viewer", userScores } }) },
+    getSongScores: { useQuery: (_input: unknown, options: { enabled: boolean }) => { scoreQueries.push(options); return { data: { viewerId: "viewer", userScores } }; } },
   },
 } }));
 vi.mock("@/lib/auth-client", () => ({ useSession: () => ({ data: { user: { id: "viewer" } } }) }));
@@ -27,10 +29,10 @@ const song: SongDetails = {
   regions: [{ region: "jp", versions: [{ gameVersion: 20, charts: [chart] }] }],
 };
 
-async function render(game: CanonicalGameId, type: ChartTypeKey) {
+async function render(game: CanonicalGameId, type: ChartTypeKey, regions: Region[] = ["jp"]) {
   return renderToStaticMarkup(
     <NextIntlClientProvider locale="en" messages={await loadMessages(game, "en")} timeZone="UTC">
-      <GameProvider game={toFrontendGame(getGame(game), ["jp"])}>
+      <GameProvider game={testGame(game, regions)}>
         <SongDetailContent songName="Song" slug="song" type={type} initialData={{ ...song, type }} />
       </GameProvider>
     </NextIntlClientProvider>,
@@ -51,5 +53,12 @@ describe("song detail", () => {
     const chunithm = await render("chunithm", "standard");
     expect(chunithm).toContain("Song is a CHUNITHM chart by Artist in the POPS genre");
     expect(chunithm).not.toContain("CHUNITHM  chart");
+  });
+
+  it("asks for the viewer's scores only while the game offers player features", async () => {
+    await render("chunithm", "standard");
+    expect(scoreQueries.at(-1)?.enabled).toBe(true);
+    await render("chunithm", "standard", []);
+    expect(scoreQueries.at(-1)?.enabled).toBe(false);
   });
 });

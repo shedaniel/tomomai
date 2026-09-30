@@ -1,9 +1,9 @@
 import type { ComponentType } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-import type { CanonicalGameId } from "@/lib/games/ids";
+import type { CanonicalGameId, Region } from "@/lib/games/ids";
 
-const current = vi.hoisted(() => ({ game: "maimai" as CanonicalGameId, loads: [] as Promise<void>[] }));
+const current = vi.hoisted(() => ({ game: "maimai" as CanonicalGameId, regions: ["intl", "jp"] as Region[], loads: [] as Promise<void>[] }));
 
 vi.mock("next-intl/server", async () => {
   const { createTranslator } = await import("next-intl");
@@ -18,9 +18,8 @@ vi.mock("next-intl/server", async () => {
   };
 });
 vi.mock("@/lib/games/current", async () => {
-  const { toFrontendGame } = await import("@/lib/games/frontend");
-  const { getGame } = await import("@/lib/games/registry");
-  return { getCurrentGame: () => toFrontendGame(getGame(current.game), ["intl", "jp"]) };
+  const { testGame } = await import("@/test/games");
+  return { getCurrentGame: () => testGame(current.game, current.regions) };
 });
 vi.mock("@/server/queries/songs-cache", () => ({ getAllUniqueSongsCached: async () => [{ slug: "song" }] }));
 vi.mock("@/i18n/locale-server", () => ({ getLocale: async () => "en" }));
@@ -45,7 +44,7 @@ const params = (type: string) => ({ params: Promise.resolve({ type }) });
 const render = async (type: string) => renderToStaticMarkup(await DbTypePage(params(type)));
 
 beforeAll(async () => { await Promise.all(current.loads); });
-beforeEach(() => { current.game = "maimai"; });
+beforeEach(() => { current.game = "maimai"; current.regions = ["intl", "jp"]; });
 
 describe("catalog section pages", () => {
   it.each([
@@ -56,11 +55,13 @@ describe("catalog section pages", () => {
     expect(await render(type)).toContain(content);
   });
 
-  it("renders the songs collection for every game", async () => {
-    for (const game of ["maimai", "chunithm"] as const) {
-      current.game = game;
-      expect(await render("songs")).toContain('"numberOfItems":1');
-    }
+  it.each([
+    { game: "maimai", regions: ["intl", "jp"] },
+    { game: "chunithm", regions: ["intl", "jp"] },
+    { game: "chunithm", regions: [] },
+  ] as const)("renders the $game songs collection with player regions $regions", async ({ game, regions }) => {
+    Object.assign(current, { game, regions });
+    expect(await render("songs")).toContain('"numberOfItems":1');
   });
 
   it.each([
