@@ -1,4 +1,6 @@
 import type { CanonicalGameId } from "@/lib/games/types";
+import { hasCapability } from "@/lib/games/access";
+import { getSupportedRegions } from "@/lib/games/regions";
 import { songInstanceId } from "@/lib/db/song-instance-id";
 import { db } from "@/lib/db";
 import { parentSong, songs, userAlbums } from "@/lib/db/schema-pg";
@@ -63,41 +65,23 @@ export async function fetchUserAlbums(
   };
 }
 
+/** Album storage used across the game, and per enabled region that offers albums. */
 export async function fetchAlbumStorageUsage(game: CanonicalGameId, userId: string) {
-  const [storageResult, intlStorageResult, jpStorageResult] = await Promise.all([
-    db
-      .select({
-        totalSize: sql<number>`COALESCE(SUM(${userAlbums.imageSize}), 0)`,
-      })
-      .from(userAlbums)
-      .where(and(eq(userAlbums.game, game), eq(userAlbums.userId, userId))),
-    db
-      .select({
-        totalSize: sql<number>`COALESCE(SUM(${userAlbums.imageSize}), 0)`,
-      })
-      .from(userAlbums)
-      .innerJoin(songs, eq(userAlbums.songId, songs.id))
-      .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
-      .where(and(
-        and(eq(userAlbums.game, game), eq(userAlbums.userId, userId)),
-        and(eq(songs.game, game), eq(songs.region, 'intl'))
-      )),
-    db
-      .select({
-        totalSize: sql<number>`COALESCE(SUM(${userAlbums.imageSize}), 0)`,
-      })
-      .from(userAlbums)
-      .innerJoin(songs, eq(userAlbums.songId, songs.id))
-      .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
-      .where(and(
-        and(eq(userAlbums.game, game), eq(userAlbums.userId, userId)),
-        and(eq(songs.game, game), eq(songs.region, 'jp'))
-      )),
-  ]);
+  const usage = await db
+    .select({
+      region: songs.region,
+      size: sql<number>`COALESCE(SUM(${userAlbums.imageSize}), 0)`.mapWith(Number),
+    })
+    .from(userAlbums)
+    .innerJoin(songs, eq(userAlbums.songId, songs.id))
+    .where(and(eq(userAlbums.game, game), eq(userAlbums.userId, userId)))
+    .groupBy(songs.region);
 
+  const sizeOf = (region: Region) => usage.find(row => row.region === region)?.size ?? 0;
   return {
-    totalUsed: Number(storageResult[0]?.totalSize || 0),
-    intlUsed: Number(intlStorageResult[0]?.totalSize || 0),
-    jpUsed: Number(jpStorageResult[0]?.totalSize || 0),
+    totalUsed: usage.reduce((total, row) => total + row.size, 0),
+    byRegion: getSupportedRegions(game)
+      .filter(region => hasCapability(game, "albums", region))
+      .map(region => ({ region, used: sizeOf(region) })),
   };
 }

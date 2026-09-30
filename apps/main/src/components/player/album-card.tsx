@@ -32,6 +32,23 @@ interface AlbumCardProps {
   region: Region;
 }
 
+const REGION_STORAGE_COLORS: Record<Region, string> = {
+  intl: "bg-blue-500",
+  jp: "bg-red-500",
+  cn: "bg-amber-500",
+};
+
+/** Lays each region's share of the storage limit end to end, clipped to the bar. */
+function storageSegments(regions: { region: Region; used: number }[], limit: number) {
+  let start = 0;
+  return regions.map(({ region, used }) => {
+    const width = Math.min((used / limit) * 100, 100 - start);
+    const segment = { region, used, start, width };
+    start += width;
+    return segment;
+  });
+}
+
 export function AlbumCard({ region }: AlbumCardProps) {
   const game = useGame().id;
   const regionsT = useTranslations('regions');
@@ -152,6 +169,8 @@ export function AlbumCard({ region }: AlbumCardProps) {
     );
   }
 
+  const storagePercentage = data?.storage ? (data.storage.used / data.storage.limit) * 100 : 0;
+
   const formatBytes = (bytes: number) => {
     if (bytes === 0) return '0 Bytes';
     const k = 1024;
@@ -195,40 +214,33 @@ export function AlbumCard({ region }: AlbumCardProps) {
 
                       {/* Custom Stacked Progress Bar */}
                       <div className="relative h-3 w-full overflow-hidden rounded-full bg-muted">
-                        <div
-                          className="absolute left-0 top-0 h-full bg-blue-500 transition-all"
-                          style={{ width: `${Math.min(data.storage.intlPercentage, 100)}%` }}
-                        />
-                        <div
-                          className="absolute top-0 h-full bg-red-500 transition-all"
-                          style={{
-                            left: `${Math.min(data.storage.intlPercentage, 100)}%`,
-                            width: `${Math.min(data.storage.jpPercentage, 100 - data.storage.intlPercentage)}%`
-                          }}
-                        />
+                        {storageSegments(data.storage.regions, data.storage.limit).map(segment => (
+                          <div
+                            key={segment.region}
+                            className={cn("absolute top-0 h-full transition-all", REGION_STORAGE_COLORS[segment.region])}
+                            style={{ left: `${segment.start}%`, width: `${segment.width}%` }}
+                          />
+                        ))}
                       </div>
 
                       {/* Legend */}
                       <div className="flex items-center justify-between text-xs">
                         <div className="flex items-center gap-3">
-                          <div className="flex items-center gap-1.5">
-                            <span className="w-3 h-3 rounded-full bg-blue-500"></span>
-                            <span className="text-muted-foreground">{regionsT('intl')}</span>
-                            <span className="font-medium">{formatBytes(data.storage.intlUsed)}</span>
-                          </div>
-                          <div className="flex items-center gap-1.5">
-                            <span className="w-3 h-3 rounded-full bg-red-500"></span>
-                            <span className="text-muted-foreground">{regionsT('jp')}</span>
-                            <span className="font-medium">{formatBytes(data.storage.jpUsed)}</span>
-                          </div>
+                          {data.storage.regions.map(({ region, used }) => (
+                            <div key={region} className="flex items-center gap-1.5">
+                              <span className={cn("w-3 h-3 rounded-full", REGION_STORAGE_COLORS[region])}></span>
+                              <span className="text-muted-foreground">{regionsT(region)}</span>
+                              <span className="font-medium">{formatBytes(used)}</span>
+                            </div>
+                          ))}
                         </div>
                         <span className="text-muted-foreground">
-                          {data.storage.percentage.toFixed(1)}%
+                          {storagePercentage.toFixed(1)}%
                         </span>
                       </div>
                     </div>
 
-                    {data.storage.percentage > 80 && (
+                    {storagePercentage > 80 && (
                       <div className="flex gap-2 p-3 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 rounded-md">
                         <AlertCircle className="h-4 w-4 text-red-600 dark:text-red-500 mt-0.5 shrink-0" />
                         <p className="text-sm text-red-800 dark:text-red-200">

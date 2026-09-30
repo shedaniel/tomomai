@@ -20,22 +20,18 @@ export const albumsRouter = router({
       const userId = ctx.session.user.id;
       const { limit, offset } = input;
 
-      const { albums, hasMore } = await fetchUserAlbums(game, userId, region, limit, offset);
-      const storage = await fetchAlbumStorageUsage(game, userId);
-
-      const storageLimit = MAX_STORAGE_BYTES;
+      const [{ albums, hasMore }, storage] = await Promise.all([
+        fetchUserAlbums(game, userId, region, limit, offset),
+        fetchAlbumStorageUsage(game, userId),
+      ]);
 
       return {
         albums,
         hasMore,
         storage: {
           used: storage.totalUsed,
-          intlUsed: storage.intlUsed,
-          jpUsed: storage.jpUsed,
-          limit: storageLimit,
-          percentage: (storage.totalUsed / storageLimit) * 100,
-          intlPercentage: (storage.intlUsed / storageLimit) * 100,
-          jpPercentage: (storage.jpUsed / storageLimit) * 100,
+          limit: MAX_STORAGE_BYTES,
+          regions: storage.byRegion,
         },
       };
     }),
