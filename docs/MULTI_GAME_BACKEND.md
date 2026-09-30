@@ -194,10 +194,10 @@ render tokens remain explicitly maimai-only. Their tRPC procedures live under
 `trpc.maimai` (`server/routers/maimai`). They take no game input and check
 their own capability through `maimaiProcedure` or `maimaiRegionProcedure`.
 The dashboard region and the profile main region are per game, in
-`user_game_preferences` (one row per user and game). The profile procedures and
-the admin user list read and write the row of the site's game
-(`getCurrentGame()`), `/api/v1/me` and `/api/v1/me/settings` answer it clamped
-to the game's enabled regions, and the Discord bot reads the maimai row. Readers
+`user_game_preferences` (one row per user and game). The profile procedures read
+and write the row of the site's game (`getCurrentGame()`), the admin user list
+shows it, `/api/v1/me` and `/api/v1/me/settings` answer it clamped to the
+game's enabled regions, and the Discord bot reads the maimai row. Readers
 select a preference through `gamePreference(game, key)` in
 `server/queries/game-preferences.ts`, which falls back to the account-wide
 `user.region` or `user.profileMainRegion` while the user has not set it for that
