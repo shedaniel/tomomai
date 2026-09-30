@@ -461,7 +461,7 @@
         },
         "recent:read": {
           "name": "最近游玩记录（只读）",
-          "description": "读取包含歌曲资讯、达成率和连击/同步状态的最近游玩历史。"
+          "description": "读取包含歌曲资讯、分数和状态的最近游玩历史。"
         },
         "recent:detailed:read": {
           "name": "最近游玩记录（详细·只读）",

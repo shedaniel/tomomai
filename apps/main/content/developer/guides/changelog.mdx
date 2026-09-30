@@ -137,14 +137,10 @@ while the game enables no region. The other settings are shared by both games.
 
 ### Errors
 
-Errors with a stable cause carry a `code` next to `error`:
-
-- `400` with `INVALID_PARAMETER` for a missing or invalid path or query
-  parameter, `UNKNOWN_GAME` or `UNSUPPORTED_REGION`.
-- `422` with `GAME_NOT_ENABLED` or `UNSUPPORTED_CAPABILITY` when the game is
-  disabled or does not offer the endpoint.
-- `410` with `MOVED` for a moved path.
-- A refused fetch answers `409`, `412`, `429` or `503` with the code the
-  [fetch reference](/developer/reference/post-games-game-fetch) lists.
-
-See [Errors](/developer/guides/errors) for how to react to each status.
+Errors with a stable cause carry a `code` next to `error`, and that code is
+what a client should branch on. An invalid parameter, an unknown game or a
+region the deployment does not serve answers `400`. A disabled game or an
+endpoint the game does not offer answers `422`. A moved path answers `410`,
+and a refused fetch answers `409`, `412`, `429` or `503`.
+[Errors](/developer/guides/errors) lists every code and how to react to each
+status.

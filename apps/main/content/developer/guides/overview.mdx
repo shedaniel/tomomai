@@ -4,16 +4,18 @@ description: What the tomomai API exposes and which auth mode to pick.
 order: 1
 ---
 
-The tomomai API exposes a user's maimai DX data — snapshots, recent plays,
-stats, albums — over HTTP under `/api/v1/*`. Every protected endpoint accepts
-a Bearer token via the `Authorization` header (or `x-api-key` as an alias).
+The tomomai API serves a user's maimai DX and CHUNITHM data over HTTP under
+`/api/v1`: snapshots, recent plays and, for the games that offer them, stats,
+albums and plates. Game data lives under `/api/v1/games/{game}`. The song
+catalog and the code lists are public. Every other endpoint needs a Bearer
+token in the `Authorization` header (or `x-api-key` as an alias).
 
 There are two ways to get a token:
 
-- **[Personal API keys](/developer/guides/api-keys)** — a single static key
+- **[Personal API keys](/developer/guides/api-keys)**: a single static key
   tied to one user, fastest to set up, great for scripts and one-off tools.
   **Don't share these.**
-- **[OAuth 2.1 apps](/developer/guides/oauth)** — a registered application
+- **[OAuth 2.1 apps](/developer/guides/oauth)**: a registered application
   that asks each user for permission. Use this any time another user (not
   you) is going to sign in.
 
@@ -24,9 +26,10 @@ There are two ways to get a token:
 | A bot, public website, or anything other users sign into | OAuth |
 | Anything that you can't safely keep a long-lived secret in | OAuth (public client + PKCE) |
 
-Both share the same [scope system](/developer/scopes) — a token holds a set
+Both share the same [scope system](/developer/scopes). A token holds a set
 of scopes, an endpoint declares the scopes it needs, and the request only
-succeeds if the token covers them.
+succeeds if the token covers them. Scopes are not tied to a game: a token that
+may read recent plays reads them for every game.
 
 ## Quick start
 
@@ -40,22 +43,23 @@ See the [API reference](/developer/reference) for the full endpoint list.
 
 ## Field encodings
 
-Several numeric fields are stored — and returned — as compact integers
-rather than the decimal a player would read in-game. Apply the transform
-on the client side.
+Several numeric fields are stored and returned as compact integers rather
+than the decimal a player reads in game. Apply the transform on the client
+side.
 
 - **`levelPrecise`**: the chart's difficulty constant scaled ×10 as an
   integer. Divide by 10 for the displayed decimal: `147` → `14.7`,
-  `150` → `15.0`. Returned in this form by every endpoint that surfaces a
-  chart's level (songs, snapshots, recents, albums, plates).
-- **`scoreValue`**: the score as an integer. For maimai it is the
+  `150` → `15.0`. Every endpoint that returns a chart's level uses this form.
+- **`scoreValue`**: the score as an integer. For maimai DX it is the
   achievement scaled ×10000, so divide by 10000 for the percentage:
   `991234` → `99.1234%`, `1010000` → `101.0000%` (SSS+, the theoretical
-  maximum). For CHUNITHM it is the score as shown in-game, from `0` to
-  `1010000`. Returned in this form by every endpoint that surfaces a score
-  (snapshots, recents, plates).
+  maximum). For CHUNITHM it is the score as shown in game, from `0` to
+  `1010000`. Every endpoint that returns a score uses this form.
+- **`secondaryScore`**: a game's second score. For maimai DX it is the DX
+  score. CHUNITHM has none, so it is always `0`.
+- **`rating`**: player and chart ratings as integers. maimai DX ratings are
+  whole numbers. CHUNITHM ratings are scaled ×100: `1650` → `16.50`.
 - **Codes**: chart `difficulty` and `type` and the score statuses are
   game-specific integer codes.
   [`GET /api/v1/games/{game}/codes`](/developer/reference/get-games-game-codes)
   lists the key of every code.
-

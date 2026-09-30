@@ -93,7 +93,7 @@ export const API_SCOPES = {
   // ── Recents ───────────────────────────────────────────────────────────────
   "recent:read": {
     name: "Recent Plays (Read)",
-    description: "Read your recent play history including song info, achievement, and combo/sync status.",
+    description: "Read your recent play history, including song info, scores and statuses.",
     destructive: false,
     sensitive: false,
     default: false,

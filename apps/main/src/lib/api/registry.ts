@@ -164,8 +164,7 @@ export function getRegistry(): RouteSpec[] {
 
 /**
  * Find a route by its slug as used in the docs URL.
- * Slug rules: lowercase, `:param` → `param`, `/` → `-`, strip leading `/api-v1-`.
- * Example: `GET /api/v1/snapshots/:id` → `snapshots-id`.
+ * Example: `GET /api/v1/games/{game}/snapshots/{id}` → `get-games-game-snapshots-id`.
  */
 export function findRouteBySlug(slug: string): RouteSpec | undefined {
   return getRegistry().find((r) => routeSlug(r) === slug);

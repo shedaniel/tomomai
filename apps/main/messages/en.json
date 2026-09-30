@@ -452,7 +452,7 @@
         },
         "recent:read": {
           "name": "Recent Plays (Read)",
-          "description": "Read your recent play history including song info, achievement, and combo/sync status."
+          "description": "Read your recent play history, including song info, scores and statuses."
         },
         "recent:detailed:read": {
           "name": "Recent Plays Detailed (Read)",

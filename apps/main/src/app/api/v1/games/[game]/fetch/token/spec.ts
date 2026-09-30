@@ -5,7 +5,7 @@ export const spec = defineGameRoute({
   method: "DELETE",
   path: "/api/v1/games/{game}/fetch/token",
   tag: "Fetch",
-  summary: "Delete the stored upstream upstream token",
+  summary: "Delete the stored upstream token",
   description:
     "Removes the caller's stored upstream authentication token for the " +
     "given region. After this, `POST /api/v1/games/{game}/fetch` will return `412` " +
