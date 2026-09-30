@@ -2,7 +2,7 @@
 
 import { Plus, TrendingUp } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useGameId, usePresentation } from "@/components/providers/game-provider";
+import { useGame, usePresentation } from "@/components/providers/game-provider";
 import { formatGameRating } from "@/lib/games/presentation";
 import { cn } from "@/lib/utils";
 
@@ -14,7 +14,7 @@ export function BucketHeader({ title, count, ratings, className }: {
   className?: string;
 }) {
   const t = useTranslations();
-  const game = useGameId();
+  const game = useGame().id;
   const { aggregation } = usePresentation().ratingRules;
   const sum = ratings?.reduce((total, rating) => total + rating, 0) ?? 0;
 

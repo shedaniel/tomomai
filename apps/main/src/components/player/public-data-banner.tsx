@@ -1,6 +1,4 @@
-"use client";
-
-import { useGameId } from "@/components/providers/game-provider";
+import { getCurrentGame } from "@/lib/games/current";
 import { formatGameRating } from "@/lib/games/presentation";
 import { RegionSwitcherClient } from "@/components/region-switcher";
 import { Badge } from "@tomomai/ui";
@@ -26,7 +24,7 @@ export function PublicDataBanner({
   profileUsername,
 }: PublicDataBannerProps) {
   const t = useTranslations();
-  const game = useGameId();
+  const game = getCurrentGame().id;
 
   const formatDate = (date: Date) => {
     return new Intl.DateTimeFormat("en-US", {

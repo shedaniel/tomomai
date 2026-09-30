@@ -5,13 +5,13 @@ import type { Flags } from "@/lib/flags";
 import { ProfileData, Region } from "@/lib/types";
 import { TomomaiAI } from "@/components/games/maimai/tomomai-ai";
 import type { GameSnapshotData } from "@/lib/games/player-view";
-import { supportsGameFeature, type FrontendGame } from "@/lib/games/frontend";
+import { supportsGameFeature } from "@/lib/games/frontend";
+import { getCurrentGame } from "@/lib/games/current";
 import { Suspense } from "react";
 
 interface ProfilePageProps {
   profileData: ProfileData;
   snapshotData: GameSnapshotData | null;
-  game: FrontendGame;
   region: Region;
   username: string;
   initialTab?: string;
@@ -21,7 +21,6 @@ interface ProfilePageProps {
 
 export function ProfilePage({
   profileData,
-  game,
   snapshotData,
   region,
   username,
@@ -29,7 +28,7 @@ export function ProfilePage({
   flags,
   isOwner,
 }: ProfilePageProps) {
-
+  const game = getCurrentGame();
 
   return (
     <div className="container mx-auto max-w-[1300px] px-3 md:px-6 lg:px-12 py-8">

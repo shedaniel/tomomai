@@ -158,7 +158,6 @@ export default async function RegionProfilePage({ params }: RegionProfilePagePro
           dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }}
         />
         <ProfilePage
-          game={game}
           profileData={profileData}
           snapshotData={snapshotData}
           region={region}

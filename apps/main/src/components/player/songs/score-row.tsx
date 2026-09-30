@@ -1,7 +1,7 @@
 "use client";
 
 import { forwardRef } from "react";
-import { useGameId } from "@/components/providers/game-provider";
+import { useGame } from "@/components/providers/game-provider";
 import { CoverImage } from "@/components/cover-image";
 import { formatGameScore, formatGameRating, formatGameLevel, getGameDifficulty, getGameChartType, getGameStatusLabels } from "@/lib/games/presentation";
 import type { PercentileEntry } from "@/lib/games/maimai/percentile/types";
@@ -11,7 +11,7 @@ import type { RatedScore } from "./types";
 
 // Component for rendering individual song rows
 export const SongRow = forwardRef<HTMLDivElement, { song: RatedScore; percentile?: PercentileEntry } & React.HTMLAttributes<HTMLDivElement>>(({ song, percentile, ...props }, ref) => {
-  const game = useGameId();
+  const game = useGame().id;
   const difficulty = getGameDifficulty(game, song.difficultyCode);
   const chartType = getGameChartType(game, song.typeCode);
   const { ScoreHover } = GAME_UI[game];

@@ -1,4 +1,4 @@
-import { useGameId } from "@/components/providers/game-provider";
+import { useGame } from "@/components/providers/game-provider";
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { trpc, trpcClient } from "@/lib/trpc-client";
 import { toast } from "sonner";
@@ -14,7 +14,7 @@ const FETCH_STATUS_INTERVAL_MS = 2000;
 const HIDDEN_TAB_RECHECK_INTERVAL_MS = 5000;
 
 export function useFetchSession(onFetchComplete?: () => void, onTokenError?: () => void, onUseAlbumError?: () => void, onCnCookiesExpired?: () => void) {
-  const game = useGameId();
+  const game = useGame().id;
   const [currentSession, setCurrentSession] = useState<FetchSession | null>(null);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [lastFetchTime, setLastFetchTime] = useState<Date | null>(null);

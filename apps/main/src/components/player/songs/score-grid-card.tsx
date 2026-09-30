@@ -1,7 +1,7 @@
 "use client";
 
 import { forwardRef } from "react";
-import { useGameId } from "@/components/providers/game-provider";
+import { useGame } from "@/components/providers/game-provider";
 import { CoverImage } from "@/components/cover-image";
 import { ChartTypeBadge } from "@/components/games/chart-type-badge";
 import { formatGameScore, formatGameRating, formatGameLevel, getGameDifficulty, getGameStatusLabels } from "@/lib/games/presentation";
@@ -12,7 +12,7 @@ import type { DisplayScore } from "./types";
 
 // Component for rendering individual song cards in grid view
 export const SongGridCard = forwardRef<HTMLDivElement, { song: DisplayScore & { rating?: number }; percentile?: PercentileEntry } & React.HTMLAttributes<HTMLDivElement>>(({ song, percentile, ...props }, ref) => {
-  const game = useGameId();
+  const game = useGame().id;
   const difficulty = getGameDifficulty(game, song.difficultyCode);
   const { ScoreHover } = GAME_UI[game];
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {

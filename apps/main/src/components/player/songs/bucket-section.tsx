@@ -3,7 +3,7 @@
 import { Fragment, useCallback } from "react";
 import { motion } from "motion/react";
 import { useTranslations } from "next-intl";
-import { useGameId, usePresentation } from "@/components/providers/game-provider";
+import { useGame, usePresentation } from "@/components/providers/game-provider";
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 import { STAGGER, getTransition } from "@/lib/animation-constants";
 import { formatGameScore, formatGameRating, formatGameLevel, getGameDifficulty, getGameStatusLabels } from "@/lib/games/presentation";
@@ -24,7 +24,7 @@ function CompactSongSection({ title, songs, count, ranked, visibleCount, onLoadM
   onLoadMore: () => void;
 }) {
   const t = useTranslations();
-  const game = useGameId();
+  const game = useGame().id;
   const { statusColumns, scoreLabel } = usePresentation();
   const hasMore = visibleCount < songs.length;
   const loadMore = useCallback(() => {

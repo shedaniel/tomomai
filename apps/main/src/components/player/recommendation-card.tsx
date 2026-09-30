@@ -1,6 +1,6 @@
 "use client";
 
-import { useGame, useGameId, usePresentation } from "@/components/providers/game-provider";
+import { useGame, usePresentation } from "@/components/providers/game-provider";
 import { GAME_UI } from "@/components/games/registry";
 import { supportsGameFeature } from "@/lib/games/frontend";
 import type { GameSnapshotData } from "@/lib/games/player-view";
@@ -28,7 +28,7 @@ function RecommendationRow({ recommendation }: { recommendation: RecommendationD
   const t = useTranslations('recommendations');
   const tBucket = useTranslations('dataContent.rankingBucket');
   const format = useFormatter();
-  const game = useGameId();
+  const game = useGame().id;
   const [newBucket, oldBucket] = getGameRankingBuckets(game);
   const { song, target, targetRating, ratingGain, isInBest, category } = recommendation;
   const chartType = getGameChartType(game, song.typeCode);

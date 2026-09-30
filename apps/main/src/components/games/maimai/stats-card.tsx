@@ -1,7 +1,7 @@
 "use client";
 import { MAIMAI_CODES, codeToComboStatus, codeToSyncStatus, comboStatusToCode, difficultyToCode, syncStatusToCode } from "@/lib/games/maimai/codes";
 
-import { useGameId } from "@/components/providers/game-provider";
+import { useGame } from "@/components/providers/game-provider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@tomomai/ui/select-friendly";
 import { Progress } from "@tomomai/ui";
 import { Button } from "@tomomai/ui";
@@ -317,15 +317,15 @@ function PlatesGrid({ data, selectedVersion, region, snapshotId }: PlatesGridPro
 
 
 export function StatsCard({ region, snapshotId }: StatsCardProps) {
-  const game = useGameId();
+  const game = useGame().id;
   const t = useTranslations();
   const isDesktop = useMediaQuery("(min-width: 768px)", { initializeWithValue: false });
   const { data: ownData, isLoading: ownLoading } = trpc.user.getPlayerStats.useQuery(
-    { game: useGameId(), region },
+    { game, region },
     { enabled: !snapshotId }
   );
   const { data: publicData, isLoading: publicLoading } = trpc.user.getPublicPlayerStats.useQuery(
-    { game: useGameId(), snapshotId: snapshotId!, region },
+    { game, snapshotId: snapshotId!, region },
     { enabled: !!snapshotId }
   );
   const data = snapshotId ? publicData : ownData;

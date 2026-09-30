@@ -1,6 +1,6 @@
 "use client";
 
-import { useGameId } from "@/components/providers/game-provider";
+import { useGame } from "@/components/providers/game-provider";
 import { codeOf } from "@/lib/games/codes";
 import { formatEstimated, formatGameLevel, getGameDifficulty } from "@/lib/games/presentation";
 
@@ -14,7 +14,7 @@ type CatalogChartLevel = {
 export function ChartLevel(props:
   | { chart: CatalogChartLevel; variant?: "compact" }
   | { chart: CatalogChartLevel & { level: string }; variant: "split" }) {
-  const game = useGameId();
+  const game = useGame().id;
   const { chart } = props;
   const difficultyCode = codeOf(game, "difficulty", chart.difficulty);
 

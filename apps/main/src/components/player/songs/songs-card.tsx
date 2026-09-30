@@ -1,6 +1,6 @@
 "use client";
 
-import { useGame, useGameId } from "@/components/providers/game-provider";
+import { useGame } from "@/components/providers/game-provider";
 import { supportsGameFeature } from "@/lib/games/frontend";
 import { getPlayerRankings, type GameSnapshotData } from "@/lib/games/player-view";
 import { getGameDifficulty, getGameChartType, getGameRankingBuckets } from "@/lib/games/presentation";
@@ -29,8 +29,9 @@ type Rankings = {
 const PAGE_SIZE = 50;
 
 function useRankingBuckets() {
+  const game = useGame().id;
   const t = useTranslations("dataContent.rankingBucket");
-  return getGameRankingBuckets(useGameId()).map(bucket => ({ ...bucket, title: t(bucket.key, { size: bucket.size }) }));
+  return getGameRankingBuckets(game).map(bucket => ({ ...bucket, title: t(bucket.key, { size: bucket.size }) }));
 }
 
 function SongsList({ newBest, oldBest, newRemaining, oldRemaining, displayMode, percentileMap }: Rankings & {

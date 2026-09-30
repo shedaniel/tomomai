@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { Bar, BarChart, XAxis, YAxis } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@tomomai/ui";
-import { useGameId, usePresentation } from "@/components/providers/game-provider";
+import { useGame, usePresentation } from "@/components/providers/game-provider";
 import { GAME_CODES } from "@/lib/games/codes";
 import { formatGameRating, getGameDifficulty } from "@/lib/games/presentation";
 import type { RatedScore } from "./types";
@@ -12,7 +12,7 @@ type DistributionScore = Pick<RatedScore, "difficultyCode" | "rating">;
 
 /** How many charts of each difficulty fall into each rating range, with empty ranges kept. */
 export function RatingDistributionChart({ scores, title }: { scores: readonly DistributionScore[]; title: string }) {
-  const game = useGameId();
+  const game = useGame().id;
   const step = usePresentation().ratingRules.distributionStep;
   const series = useMemo(
     () => GAME_CODES[game].difficulty.map((key, code) => ({ key, difficulty: getGameDifficulty(game, code) })),

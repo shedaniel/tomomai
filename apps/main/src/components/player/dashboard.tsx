@@ -11,7 +11,6 @@ import { OnboardingDialog } from "@/components/onboarding-dialog";
 import { AlbumPrivacyDialog } from "@/components/games/maimai/album-privacy-dialog";
 import { useFetchSession } from "@/hooks/useFetchSession";
 import { useSnapshots } from "@/hooks/useSnapshots";
-import { signOut } from "@/lib/auth-client";
 import type { Flags } from "@/lib/flags";
 import { isTokenError } from "@/lib/token-errors";
 import { fetchErrorDetail, parseFetchErrorCode } from "@/lib/games/fetch-error-codes";
@@ -129,15 +128,6 @@ export function Dashboard({ user, initialUserData, initialRegion, initialSnapsho
     }
   });
 
-  const handleLogout = async () => {
-    try {
-      await signOut();
-      window.location.reload();
-    } catch (error) {
-      console.error("Logout error:", error);
-    }
-  };
-
   const handleRegionChange = async (region: Region) => {
     try {
       await updateRegionMutation.mutateAsync({ region });
@@ -232,7 +222,6 @@ export function Dashboard({ user, initialUserData, initialRegion, initialSnapsho
             onAdmin: () => setDialogType("admin"),
             onTestOnboarding: () => setDialogType("onboarding"),
             onExperiments: () => setDialogType("experiments"),
-            onLogout: handleLogout,
           },
         }}
       />
@@ -249,8 +238,6 @@ export function Dashboard({ user, initialUserData, initialRegion, initialSnapsho
           currentSession={currentSession}
           onCopySnapshot={handleCopySnapshot}
           isCopying={isCopying}
-          supportsCopy={supportsGameFeature(game, "snapshot-copy")}
-          supportsFetch={supportsFetch}
         />
 
         <DataContent

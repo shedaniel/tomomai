@@ -2,7 +2,7 @@
 
 import { formatGameRating, getGameDifficulty } from "@/lib/games/presentation";
 import { getGame } from "@/lib/games/registry";
-import { useGameId, usePresentation } from "@/components/providers/game-provider";
+import { useGame, usePresentation } from "@/components/providers/game-provider";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@tomomai/ui";
 import { Slider } from "@tomomai/ui";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@tomomai/ui";
@@ -30,7 +30,7 @@ const chartConfig = {
 
 export function HistoryCard({ region }: HistoryCardProps) {
   const t = useTranslations();
-  const game = useGameId();
+  const game = useGame().id;
   const formatRating = (value: number | undefined) => formatGameRating(game, value);
   const { axisStep } = usePresentation().ratingRules;
   const { bucketSizes } = getGame(game).rating;

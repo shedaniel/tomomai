@@ -349,7 +349,7 @@ function PlayerIdentitySummary({ snapshot }: { snapshot: Snapshot }) {
               <MaimaiRatingPlate rating={snapshot.rating} version={snapshot.gameVersion} />
             ) : (
               <span className="font-mono text-lg font-semibold text-foreground">
-                {formatGameRating(snapshot.game, snapshot.rating)}
+                {formatGameRating(game.id, snapshot.rating)}
               </span>
             )}
           </div>
@@ -365,6 +365,7 @@ interface PlayerStatisticsBlockProps {
 }
 
 function PlayerStatisticsBlock({ snapshot, showPlayCounts }: PlayerStatisticsBlockProps) {
+  const game = useGame().id;
   const t = useTranslations();
   const isDesktop = useMediaQuery("(min-width: 768px)", { initializeWithValue: false });
 
@@ -377,7 +378,7 @@ function PlayerStatisticsBlock({ snapshot, showPlayCounts }: PlayerStatisticsBlo
           animate={{ opacity: 1, x: 0, y: 0 }}
           transition={getTransition({ delay: STAGGER.slow * 0 })}
         >
-          {t("dataContent.rating", { rating: formatGameRating(snapshot.game, snapshot.rating) })}
+          {t("dataContent.rating", { rating: formatGameRating(game, snapshot.rating) })}
         </motion.div>
         <motion.div
           initial={{ opacity: 0, ...(isDesktop ? { x: -10 } : { y: 10 }) }}

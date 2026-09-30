@@ -1,6 +1,7 @@
 "use client";
 
-import { useGame, useGameId } from "@/components/providers/game-provider";
+import { useGame } from "@/components/providers/game-provider";
+import { supportsGameFeature } from "@/lib/games/frontend";
 import { formatGameRating } from "@/lib/games/presentation";
 import {
   ResponsiveDialog,
@@ -37,8 +38,6 @@ import { motion, AnimatePresence } from "motion/react";
 import { getTransition } from "@/lib/animation-constants";
 
 interface DataBannerProps {
-  supportsCopy?: boolean;
-  supportsFetch?: boolean;
   region: Region;
   snapshots: GameSnapshotSummary[];
   selectedSnapshot: string | null;
@@ -75,7 +74,7 @@ function SnapshotSelector({
   onSnapshotChange: (snapshotId: string) => void;
   t: any;
 }) {
-  const game = useGameId();
+  const game = useGame().id;
   const selectedSnapshotData = snapshots.find(snapshot => snapshot.publicId === selectedSnapshot);
 
   return (
@@ -254,7 +253,7 @@ function FetchDataButton({
   currentSession: FetchSession | null;
   t: any;
 }) {
-  const game = useGameId();
+  const game = useGame().id;
   // Calculate progress based on statusStates
   const progress = currentSession?.statusStates
     ? calculateProgress(parseStatusStates(currentSession.statusStates), game)
@@ -318,8 +317,6 @@ function NoDataInstructions({
 }
 
 export function DataBanner({
-  supportsCopy = true,
-  supportsFetch = true,
   region,
   snapshots,
   selectedSnapshot,
@@ -332,6 +329,8 @@ export function DataBanner({
   isCopying,
 }: DataBannerProps) {
   const game = useGame();
+  const supportsCopy = supportsGameFeature(game, "snapshot-copy");
+  const supportsFetch = supportsGameFeature(game, "scores");
   const t = useTranslations();
   const hasSnapshots = snapshots.length > 0;
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);

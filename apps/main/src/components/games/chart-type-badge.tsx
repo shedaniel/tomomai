@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useGameId } from "@/components/providers/game-provider";
+import { useGame } from "@/components/providers/game-provider";
 import { resolveImageUrl } from "@/lib/images";
 import { getGameChartType } from "@/lib/games/presentation";
 import { cn } from "@/lib/utils";
@@ -25,7 +25,8 @@ export function ChartTypeBadge({ typeCode, size = "sm", variant = "badge", class
   variant?: "badge" | "label";
   className?: string;
 }) {
-  const chartType = getGameChartType(useGameId(), typeCode);
+  const game = useGame().id;
+  const chartType = getGameChartType(game, typeCode);
   if (chartType.implicit) return null;
 
   if (variant === "badge" && chartType.badgePath) {

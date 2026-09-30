@@ -8,7 +8,7 @@ import { CoverImage } from "@/components/cover-image";
 import { ChartLevel } from "@/components/games/chart-level";
 import { ChartTypeBadge } from "@/components/games/chart-type-badge";
 import { UniqueSong } from "./types";
-import { useGameId } from "@/components/providers/game-provider";
+import { useGame } from "@/components/providers/game-provider";
 import { codeOf } from "@/lib/games/codes";
 import { getGameDifficulty, getGameChartType } from "@/lib/games/presentation";
 
@@ -22,7 +22,7 @@ interface SongCardProps {
 }
 
 export function SongCard({ song, index, isSelected, onSelect, disableInitialAnimation }: SongCardProps) {
-  const game = useGameId();
+  const game = useGame().id;
   const href = `/db/songs/${encodeURIComponent(song.slug)}`;
 
   const handleClick = (e: React.MouseEvent) => {

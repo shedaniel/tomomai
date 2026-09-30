@@ -1,6 +1,6 @@
 "use client";
 
-import { useGameId } from "@/components/providers/game-provider";
+import { useGame } from "@/components/providers/game-provider";
 import { trpc } from "@/lib/trpc-client";
 import { Activity, Calendar, ChevronRight, Loader2, Music } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -13,7 +13,7 @@ import { SPRING_CONFIGS, getTransition } from "@/lib/animation-constants";
 
 export function ExpandedSongDetails({ publicId }: { publicId: string }) {
   const t = useTranslations();
-  const game = useGameId();
+  const game = useGame().id;
   const { data: songDetails, isLoading } = trpc.user.getSimpleSongDetails.useQuery(
     { game, publicId },
     {

@@ -5,7 +5,7 @@ import { Button } from "@tomomai/ui";
 import { Separator } from "@tomomai/ui";
 import { getVersion } from "@/lib/games/versions";
 import type { VersionRow } from "@/lib/games/version-table";
-import { useGameId } from "@/components/providers/game-provider";
+import { useGame } from "@/components/providers/game-provider";
 import { trpc } from "@/lib/trpc-client";
 import { cn } from "@/lib/utils";
 import { Activity, Calendar, ChevronRight, ListPlus, Loader2, Music } from "lucide-react";
@@ -41,7 +41,7 @@ interface SongHoverCardProps {
 
 function SongDetailDialog({ score }: { score: HoverScore }) {
   const t = useTranslations();
-  const game = useGameId();
+  const game = useGame().id;
   const [open, setOpen] = useState(false);
   const parsedId = parseSongId(score.songId);
   const difficulty = codeToDifficulty(score.difficultyCode);
@@ -202,7 +202,7 @@ function SongCardContent({
 
 export function SongHoverCard({ children, score, percentile, side, className }: SongHoverCardProps) {
   const t = useTranslations();
-  const game = useGameId();
+  const game = useGame().id;
   const [isOpen, setIsOpen] = useState(false);
   const isDesktop = useMediaQuery("(min-width: 768px)", { initializeWithValue: false });
 

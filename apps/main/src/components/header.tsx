@@ -82,7 +82,6 @@ interface HeaderProps {
       onAdmin: () => void;
       onTestOnboarding: () => void;
       onExperiments: () => void;
-      onLogout: () => void;
     } | null;
   }
 }
@@ -232,10 +231,10 @@ function UserIcon({ user, menu, onAbout, onTheme, onDiscordInvite, onSignIn }: P
   const [drawerOpen, setDrawerOpen] = useState(false);
   const game = useGame();
   const { communityInviteUrl } = game.brand;
-  const handleLogout = menu?.onLogout ?? (async () => {
+  const handleLogout = async () => {
     await signOut();
     window.location.reload();
-  });
+  };
 
   const avatarButton = (
     <Button variant="outline" className="relative bg-background h-10 md:h-8 rounded-full max-md:pl-3! pr-1! gap-3 md:gap-2 focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 focus:ring-offset-background data-[state=open]:ring-2 data-[state=open]:ring-gray-300 data-[state=open]:ring-offset-2 data-[state=open]:ring-offset-background">

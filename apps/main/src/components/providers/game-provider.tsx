@@ -17,10 +17,6 @@ export function useGame(): FrontendGame {
   return game;
 }
 
-export function useGameId() {
-  return useGame().id;
-}
-
 export function usePresentation(): GamePresentation {
   return getGame(useGame().id).presentation;
 }

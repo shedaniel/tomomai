@@ -2,7 +2,7 @@
 
 import { formatGameLevel, getGameDifficulty } from "@/lib/games/presentation";
 import type { UserAlbum } from "@/lib/trpc-types";
-import { useGameId } from "@/components/providers/game-provider";
+import { useGame } from "@/components/providers/game-provider";
 import { trpc } from "@/lib/trpc-client";
 import { Region } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -33,7 +33,7 @@ interface AlbumCardProps {
 }
 
 export function AlbumCard({ region }: AlbumCardProps) {
-  const game = useGameId();
+  const game = useGame().id;
   const regionsT = useTranslations('regions');
   const t = useTranslations('albums');
   const [albums, setAlbums] = useState<UserAlbum[]>([]);
@@ -43,7 +43,7 @@ export function AlbumCard({ region }: AlbumCardProps) {
 
   const processedOffsetsRef = useRef<Set<number>>(new Set());
 
-  const { data, isLoading, isFetching, error } = trpc.user.getUserAlbums.useQuery({ game: useGameId(),
+  const { data, isLoading, isFetching, error } = trpc.user.getUserAlbums.useQuery({ game,
     region,
     limit,
     offset,
