@@ -12,7 +12,7 @@ import { PostLocaleSwitcher } from "@/components/post-locale-switcher";
 import { getTranslations } from "next-intl/server";
 import { Bot } from "lucide-react";
 import { getCurrentGame } from "@/lib/games/current";
-import { brandTitle, isGameCnExclusive } from "@/lib/games/frontend";
+import { brandTitle, getCatalogSection, isGameCnExclusive } from "@/lib/games/frontend";
 import { MdxImageComparison } from "@/components/mdx-image-comparison";
 import { MdxImageCarousel, MdxImageCarouselSlide } from "@/components/mdx-image-carousel";
 import remarkGfm from "remark-gfm";
@@ -25,11 +25,14 @@ type PostPageProps = {
 };
 
 export async function generateStaticParams() {
+  if (!getCatalogSection(getCurrentGame(), "posts")) return [];
   const posts = getAllPostsMeta("en");
   return posts.map((post) => ({ post_id: post.slug }));
 }
 
 export async function generateMetadata({ params }: PostPageProps): Promise<Metadata> {
+  const game = getCurrentGame();
+  if (!getCatalogSection(game, "posts")) return { robots: { index: false, follow: false } };
   const { locale: localeParam, post_id } = await params;
   await setStaticLocale(localeParam);
   const locale = await getLocale();
@@ -38,7 +41,7 @@ export async function generateMetadata({ params }: PostPageProps): Promise<Metad
 
   const url = `/db/posts/${post.slug}`;
   const translations = getAvailableTranslations(post.canonicalSlug);
-  const { brand } = getCurrentGame();
+  const { brand } = game;
 
   const languages: Record<string, string> = {};
   for (const lang of translations) {
@@ -77,6 +80,8 @@ const mdxComponents = {
 };
 
 export default async function PostPage({ params }: PostPageProps) {
+  const game = getCurrentGame();
+  if (!getCatalogSection(game, "posts")) notFound();
   const { locale: localeParam, post_id } = await params;
   await setStaticLocale(localeParam);
   const locale = await getLocale();
@@ -103,7 +108,7 @@ export default async function PostPage({ params }: PostPageProps) {
   const localizedPath = localizePath(`/db/posts/${post.slug}`, locale);
   const postUrl = `${baseUrl}${localizedPath}`;
   const tNav = await getTranslations("db.types");
-  const { brand } = getCurrentGame();
+  const { brand } = game;
 
   const structuredData = {
     "@context": "https://schema.org",
@@ -149,7 +154,7 @@ export default async function PostPage({ params }: PostPageProps) {
         </Link>
 
         {/* Language switcher (only shows if multiple translations exist) */}
-        {!isGameCnExclusive(getCurrentGame()) && <PostLocaleSwitcher
+        {!isGameCnExclusive(game) && <PostLocaleSwitcher
           availableLocales={availableTranslations}
           currentLocale={post.locale}
         />}

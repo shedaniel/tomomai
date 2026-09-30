@@ -1,4 +1,4 @@
-import { brandTitle, getGameRegion } from "@/lib/games/frontend";
+import { brandTitle, getCatalogSection, getGameRegion } from "@/lib/games/frontend";
 import { getCurrentGame } from "@/lib/games/current";
 import { notFound } from "next/navigation";
 import { Dashboard } from "@/components/player/dashboard";
@@ -81,7 +81,7 @@ export default async function Home() {
     : undefined;
 
   const locale = await getLocale();
-  const latestPost = getLatestPost(locale);
+  const latestPost = getCatalogSection(game, "posts") ? getLatestPost(locale) : null;
 
   return (
     <Dashboard

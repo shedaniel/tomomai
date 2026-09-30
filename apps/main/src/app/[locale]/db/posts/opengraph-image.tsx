@@ -1,4 +1,5 @@
 import { getCurrentGame } from "@/lib/games/current";
+import { getCatalogSection } from "@/lib/games/frontend";
 import { createOGImage, OG_SIZE } from "@/lib/og";
 import { getTranslations } from "next-intl/server";
 import type { Locale } from "@/i18n/locale";
@@ -13,11 +14,13 @@ export async function generateImageMetadata() {
 }
 
 export default async function Image({ id }: { id: Promise<string> }) {
+  const game = getCurrentGame();
+  if (!getCatalogSection(game, "posts")) return new Response(null, { status: 404 });
   const locale = (await id) as Locale;
   const t = await getTranslations({ locale, namespace: "db.posts.list" });
 
   return createOGImage({
-    brand: getCurrentGame().brand,
+    brand: game.brand,
     section: t("title"),
     title: t("title"),
     summary: t("description"),

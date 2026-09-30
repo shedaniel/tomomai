@@ -3,22 +3,25 @@ import { getLocale, setStaticLocale } from "@/i18n/locale-server";
 import { localizePath, buildAlternates, openGraphLocales } from "@/lib/seo";
 import { Metadata } from "next";
 import { Link } from "@/i18n/navigation"
+import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { getCurrentGame } from "@/lib/games/current";
-import { brandTitle } from "@/lib/games/frontend";
+import { brandTitle, getCatalogSection } from "@/lib/games/frontend";
 
 type Props = {
   params: Promise<{ locale: string }>;
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const game = getCurrentGame();
+  if (!getCatalogSection(game, "posts")) return { robots: { index: false, follow: false } };
   const { locale } = await params;
   await setStaticLocale(locale);
   const [t, currentLocale] = await Promise.all([
     getTranslations("db.posts.list"),
     getLocale(),
   ]);
-  const { brand } = getCurrentGame();
+  const { brand } = game;
   const title = `${t("title")} | ${brand.productName}`;
   const description = t("description");
 
@@ -43,6 +46,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function PostsPage({ params }: Props) {
+  if (!getCatalogSection(getCurrentGame(), "posts")) notFound();
   const { locale } = await params;
   await setStaticLocale(locale);
   const currentLocale = await getLocale();
