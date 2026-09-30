@@ -214,7 +214,8 @@ Implementation ownership:
   [`games/chunithm/`](../apps/main/src/server/services/games/chunithm/), with
   login configuration beside a `scores/` folder for player fetching and a
   `catalog/` folder for song catalog ingestion. Each root's
-  `index.ts` exports its catalog, score and optional reserved-profile sources,
+  `index.ts` exports its catalog, score and optional reserved-profile sources
+  plus the `recentDetails` reader for its recent plays,
   and [`registry.ts`](../apps/main/src/server/services/games/registry.ts) lists
   them in `GAME_SERVER_MODULES`. The sources load their implementations lazily.
   Maimai's score parsers and CN authentication behavior remain specialized.
