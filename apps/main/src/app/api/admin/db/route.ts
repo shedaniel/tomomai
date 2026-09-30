@@ -6,7 +6,6 @@ import { GameAdapterError } from "@/lib/games/errors";
 import { getGame } from "@/lib/games/registry";
 import { getCurrentVersion } from "@/lib/games/versions";
 import { songs, parentSong } from "@/lib/db/schema-pg";
-import { GAME_SERVER_MODULES } from "@/server/services/games/registry";
 import { and, eq, inArray } from "drizzle-orm";
 import { publishSongCatalog } from "@/server/services/catalog/publication";
 import { lockCatalogWrites } from "@/server/services/catalog/ingestion/lock";
@@ -21,8 +20,8 @@ export const GET = adminRoute("admin/db", async ({ request, game, log }) => {
 
 async function normalize(game: CanonicalGameId, searchParams: URLSearchParams, log: Logger) {
   // Ingestion keeps a game's source titles unless it has a rule, so renaming them here would orphan the parents.
-  const { normalizeTitle } = GAME_SERVER_MODULES[game].catalog;
-  if (!normalizeTitle) {
+  const { normalizeCatalogTitle } = getGame(game);
+  if (!normalizeCatalogTitle) {
     throw new GameAdapterError("UNSUPPORTED_CAPABILITY", `The ${getGame(game).brand.displayName} catalog keeps source titles and has no title normalization`, game);
   }
   const region = requireAdminRegion(game, searchParams);
@@ -39,7 +38,7 @@ async function normalize(game: CanonicalGameId, searchParams: URLSearchParams, l
       .orderBy(parentSong.id);
     let updated = 0;
     for (const parent of parents) {
-      const songName = normalizeTitle(parent.songName);
+      const songName = normalizeCatalogTitle(parent.songName);
       if (songName === parent.songName) continue;
       const collisions = await tx.select({ disambiguator: parentSong.disambiguator }).from(parentSong)
         .where(and(eq(parentSong.game, game), eq(parentSong.songName, songName), eq(parentSong.type, parent.type), eq(parentSong.difficulty, parent.difficulty)));

@@ -17,6 +17,7 @@ describe("the served game", () => {
       catalogSections: [{ id: "songs", requires: "catalog" }],
       loginMethods: { intl: ["sega-cookie", "sega-account"], jp: ["sega-account"] },
       catalogTokenRegions: [],
+      normalizesCatalogTitles: false,
       regions: ["intl", "jp"],
     });
     expect(JSON.parse(JSON.stringify(game))).toEqual(game);

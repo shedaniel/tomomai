@@ -1,5 +1,4 @@
 import "server-only";
-import { normalizeName } from "@/lib/name-utils";
 import { parseToken, TOKEN_PROVIDERS } from "@/lib/games/token-format";
 import { FetchStartError } from "../fetch-errors";
 import type { GameServerModule } from "../types";
@@ -15,7 +14,6 @@ export const maimaiServerModule: GameServerModule<"maimai"> = {
     },
     levelPolicy: maimaiLevelPolicy,
     images: maimaiImagePolicy,
-    normalizeTitle: normalizeName,
     async authenticate(region, token) {
       const { loginAndGetCookies } = await import("./login");
       return loginAndGetCookies(region, token);

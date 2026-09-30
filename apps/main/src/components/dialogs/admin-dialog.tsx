@@ -287,21 +287,23 @@ export function AdminDialog({ open, onOpenChange }: AdminDialogProps) {
               </Button>
             </div>
 
-            <div className="grid gap-2">
-              <Label>Normalize Database</Label>
-              <div className={cn("grid gap-2", regionGrid)}>
-                {game.regions.map(region => (
-                  <Button
-                    key={region}
-                    id={`normalize-${region}-database`}
-                    variant="outline"
-                    onClick={() => handleNormalizeDatabase(region)}
-                  >
-                    {regionButtonLabel(region)}
-                  </Button>
-                ))}
+            {game.normalizesCatalogTitles && (
+              <div className="grid gap-2">
+                <Label>Normalize Database</Label>
+                <div className={cn("grid gap-2", regionGrid)}>
+                  {game.regions.map(region => (
+                    <Button
+                      key={region}
+                      id={`normalize-${region}-database`}
+                      variant="outline"
+                      onClick={() => handleNormalizeDatabase(region)}
+                    >
+                      {regionButtonLabel(region)}
+                    </Button>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
             {needsSourceToken && (
               <div className="grid gap-2">

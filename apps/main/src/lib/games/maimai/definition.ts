@@ -1,3 +1,4 @@
+import { normalizeName } from "@/lib/name-utils";
 import type { GameDefinition } from "../types";
 import { MAIMAI_CODES } from "./codes";
 import { maimaiPresentation } from "./presentation";
@@ -105,4 +106,5 @@ export const maimaiDefinition = {
   loginMethods: { intl: ["sega-cookie", "sega-account"], jp: ["sega-account"], cn: ["maimai-cn"] },
   // The CN catalog comes from Lxns, which needs no maimai NET login.
   catalogTokenRegions: ["intl", "jp"],
+  normalizeCatalogTitle: normalizeName,
 } satisfies GameDefinition;

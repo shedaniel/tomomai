@@ -41,10 +41,6 @@ describe("maimai catalog source", () => {
     expect(fillMissingCatalogLevel("6", 69, source.levelPolicy(9))).toEqual({ levelPrecise: 69, estimated: false });
   });
 
-  it("normalizes titles to NFKC without surrounding spaces", () => {
-    expect(source.normalizeTitle?.(" Ｌｉｎｋ ")).toBe("Link");
-  });
-
   it("decodes legacy upload records and leaves current ones to the shared schema", () => {
     const legacy = {
       songName: "Link", type: "std", difficulty: "master", artist: "Artist", cover: "cover.png", level: "13+", levelPrecise: 137,

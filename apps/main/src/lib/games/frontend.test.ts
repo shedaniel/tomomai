@@ -23,6 +23,12 @@ describe("game presentation", () => {
     expect(brandTitle(getGame("chunithm").brand)).toBe("tomochu ともチュウ");
   });
 
+  it("offers title normalization only for a game with a title rule", () => {
+    expect(getGame("maimai").normalizeCatalogTitle?.(" Ｌｉｎｋ ")).toBe("Link");
+    expect(toFrontendGame(getGame("maimai"), ["jp"]).normalizesCatalogTitles).toBe(true);
+    expect(toFrontendGame(getGame("chunithm"), ["jp"]).normalizesCatalogTitles).toBe(false);
+  });
+
   it("selects a supported region without carrying maimai-only CN into CHUNITHM", () => {
     const game = toFrontendGame(getGame("chunithm"), ["jp", "intl"]);
     expect(getGameRegion(game, "cn")).toBe("jp");

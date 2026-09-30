@@ -257,4 +257,6 @@ export interface GameDefinition {
   loginMethods: Partial<Record<Region, readonly LoginMethod[]>>;
   /** Regions whose catalog source reads the game site, so collecting their catalog needs a player token. */
   catalogTokenRegions: readonly Region[];
+  /** The canonical form of a catalog song title, which every collected title must already be in. Without one the source titles stay. */
+  normalizeCatalogTitle?: (title: string) => string;
 }

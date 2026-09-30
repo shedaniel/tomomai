@@ -49,12 +49,12 @@ it("runs every catalog action against the site's game and previews with update=n
   expect(document.body.textContent).toContain("ともチュウ Admin Panel");
   expect(document.getElementById("sourceToken")).toBeNull();
   expect(document.getElementById("fetch-cn-new-songs")).toBeNull();
+  // CHUNITHM keeps its source titles, so there is nothing to normalize.
+  expect(document.getElementById("normalize-intl-database")).toBeNull();
 
-  await click("normalize-intl-database");
   await click("fetch-jp-new-songs");
   await click("preview-jp-changes");
   expect(requested()).toEqual([
-    "/api/admin/db?game=chunithm&type=normalize&region=intl",
     "/api/admin/update?game=chunithm&region=jp",
     `/api/admin/upload?game=chunithm&region=jp&version=${getCurrentVersion("chunithm", "jp")}&update=noop`,
   ]);
@@ -68,8 +68,10 @@ it("asks for the maimai source token and sends it only where the catalog source 
 
   await click("fetch-jp-new-songs");
   await click("fetch-cn-new-songs");
+  await click("normalize-jp-database");
   expect(requested()).toEqual([
     `/api/admin/update?game=maimai&region=jp&token=${encodeURIComponent("cookie://saved")}`,
     "/api/admin/update?game=maimai&region=cn",
+    "/api/admin/db?game=maimai&type=normalize&region=jp",
   ]);
 });

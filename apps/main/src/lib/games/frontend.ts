@@ -8,6 +8,8 @@ export type FrontendGame = Pick<GameDefinition, "id" | "brand" | "loginMethods" 
   regionCapabilityOverrides: NonNullable<GameDefinition["regionCapabilityOverrides"]>;
   /** The sections these capabilities offer. */
   catalogSections: readonly CatalogSection[];
+  /** Whether the admin can rename stored titles to the game's canonical form. */
+  normalizesCatalogTitles: boolean;
   regions: readonly Region[];
 };
 
@@ -22,6 +24,7 @@ export function toFrontendGame(game: GameDefinition, regions: readonly Region[])
     catalogSections: game.catalogSections.filter(section => section.requires === undefined || offersCapability({ capabilities }, section.requires)),
     loginMethods: game.loginMethods,
     catalogTokenRegions: game.catalogTokenRegions,
+    normalizesCatalogTitles: game.normalizeCatalogTitle !== undefined,
     regions,
   };
 }

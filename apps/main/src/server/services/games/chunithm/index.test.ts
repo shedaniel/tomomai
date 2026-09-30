@@ -27,12 +27,11 @@ describe("CHUNITHM catalog source", () => {
     expect(catalog.loaded).toHaveBeenCalledOnce();
   });
 
-  it("estimates a plus level at .5 and keeps source titles and cover rules of its own", () => {
+  it("estimates a plus level at .5 and keeps cover rules of its own", () => {
     const source = GAME_SERVER_MODULES.chunithm.catalog;
     expect(source.levelPolicy(9).toPrecise("14+")).toBe(145);
     expect(source.levelPolicy(9).mismatchUpperOffset).toBeUndefined();
     expect(source.authenticate).toBeUndefined();
-    expect(source.normalizeTitle).toBeUndefined();
     expect(source.images.requireHosting).toBe(true);
     expect(source.parseLegacyRecord).toBeUndefined();
   });

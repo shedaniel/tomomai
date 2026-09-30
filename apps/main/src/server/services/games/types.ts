@@ -58,8 +58,6 @@ export interface CatalogSource {
   stages: (region: Region) => Promise<CatalogStage[]>;
   levelPolicy: (version: number) => CatalogLevelPolicy;
   images: CatalogImagePolicy;
-  /** The canonical form of a song title. Every collected title must already be in it. */
-  normalizeTitle?: (title: string) => string;
   /** Logs in with a player token for a region the definition's `catalogTokenRegions` lists, and returns the session cookies the source stages read the game site with. */
   authenticate?: (region: Region, token: string) => Promise<string>;
   /** Decodes an upload record in a retired format. Returns undefined for a record in the current format. */
