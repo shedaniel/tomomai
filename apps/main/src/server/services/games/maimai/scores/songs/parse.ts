@@ -1,18 +1,17 @@
+import "server-only";
 import { load } from "cheerio";
-import { logger } from "@/lib/logger";
 import { normalizeName } from "@/lib/name-utils";
+import { getLogger } from "@/lib/request-logger";
 import type { Difficulty, FullCombo, FullSync, SongType } from "@/lib/games/maimai/types";
 import { musicTypeFromIcon } from "../parse-utils";
 import type { ScoreData } from "../types";
 
 /** Reads the played charts from one difficulty's score list page. */
 export function parseScoreData(html: string, difficulty: Difficulty): ScoreData[] {
+  const log = getLogger();
   const $ = load(html);
-  const selector = `.music_${difficulty}_score_back`;
-  const blocks = $(selector);
+  const blocks = $(`.music_${difficulty}_score_back`);
   const scores: ScoreData[] = [];
-
-  logger.debug(`Found ${blocks.length} score blocks for difficulty ${difficulty} using selector ${selector}`);
 
   blocks.each((index, element) => {
     try {
@@ -33,14 +32,14 @@ export function parseScoreData(html: string, difficulty: Difficulty): ScoreData[
       } else {
         const iconElement = parent.find('img.music_kind_icon');
         if (iconElement.length === 0) {
-          logger.warn(`No music kind icon found for score block ${index}`);
+          log.warn({ difficulty, index }, "Score has no chart type icon");
           return;
         }
 
         const iconSrc = iconElement.attr('src');
         const detected = musicTypeFromIcon(iconSrc);
         if (!detected) {
-          logger.warn(`Unknown or missing music type icon in score block ${index}: ${iconSrc}`);
+          log.warn({ difficulty, index, value: iconSrc }, "Score has an unknown chart type icon");
           return;
         }
         musicType = detected;
@@ -49,7 +48,7 @@ export function parseScoreData(html: string, difficulty: Difficulty): ScoreData[
       // Extract song name
       const nameElement = block.find('.music_name_block');
       if (nameElement.length === 0) {
-        logger.warn(`No music name block found for score block ${index}`);
+        log.warn({ difficulty, index }, "Score has no name block");
         return;
       }
       const songName = normalizeName(nameElement.text().trim());
@@ -57,14 +56,14 @@ export function parseScoreData(html: string, difficulty: Difficulty): ScoreData[
       // Extract level
       const levelElement = block.find('.music_lv_block');
       if (levelElement.length === 0) {
-        logger.warn(`No music level block found for score block ${index}`);
+        log.warn({ difficulty, index }, "Score has no level block");
         return;
       }
       const level = levelElement.text().trim();
 
       // Extract achievement and dx score from the two .music_score_block elements
       if (scoreBlocks.length < 2) {
-        logger.warn(`Expected 2 score blocks, found ${scoreBlocks.length} for song ${songName}`);
+        log.warn({ difficulty, index, count: scoreBlocks.length }, "Score does not have two score blocks");
         return;
       }
 
@@ -72,7 +71,7 @@ export function parseScoreData(html: string, difficulty: Difficulty): ScoreData[
       const achievementText = scoreBlocks.eq(0).text().trim();
       const achievementMatch = achievementText.match(/(\d+\.?\d*)%/);
       if (!achievementMatch) {
-        logger.warn(`Could not parse achievement: ${achievementText} for song ${songName}`);
+        log.warn({ difficulty, index, value: achievementText }, "Could not parse a score achievement");
         return;
       }
       const achievementFloat = parseFloat(achievementMatch[1]);
@@ -82,7 +81,7 @@ export function parseScoreData(html: string, difficulty: Difficulty): ScoreData[
       const dxScoreText = scoreBlocks.eq(1).text().trim();
       const dxScoreMatch = dxScoreText.match(/(\d+)\s*\/\s*\d+/);
       if (!dxScoreMatch) {
-        logger.warn(`Could not parse dx score: ${dxScoreText} for song ${songName}`);
+        log.warn({ difficulty, index, value: dxScoreText }, "Could not parse a score DX score");
         return;
       }
       const dxScore = parseInt(dxScoreMatch[1], 10);
@@ -90,7 +89,7 @@ export function parseScoreData(html: string, difficulty: Difficulty): ScoreData[
       // Extract fs and fc from the three .h_30 elements
       const h30Elements = block.find('.h_30');
       if (h30Elements.length < 2) {
-        logger.warn(`Expected at least 2 h_30 elements, found ${h30Elements.length} for song ${songName}`);
+        log.warn({ difficulty, index, count: h30Elements.length }, "Score has fewer than two status icons");
         return;
       }
 
@@ -140,13 +139,10 @@ export function parseScoreData(html: string, difficulty: Difficulty): ScoreData[
       };
 
       scores.push(scoreData);
-
-      logger.debug(`Extracted score ${index}: ${songName} (${level}, ${musicType}, ${difficulty}) - ${achievementFloat}%, ${dxScore} dx, ${fc}/${fs}`);
     } catch (error) {
-      logger.error(error, `Error processing score block ${index}`);
+      log.error({ err: error, difficulty, index }, "Could not read a score");
     }
   });
 
-  logger.info(`Successfully extracted ${scores.length} scores for difficulty ${difficulty}`);
   return scores;
 }

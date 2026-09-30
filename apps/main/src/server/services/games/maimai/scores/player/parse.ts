@@ -1,5 +1,4 @@
 import { load } from "cheerio";
-import { logger } from "@/lib/logger";
 import { Region } from "@/lib/types";
 import type { TitleType } from "@/lib/games/maimai/types";
 import type { ParsedPlayerData } from "../types";
@@ -26,7 +25,6 @@ export function parsePlayerData(html: string, region: Region): ParsedPlayerData 
   }
 
   const iconUrl = new URL(iconSrc, root).href;
-  logger.debug(`Extracted icon URL: ${iconUrl}`);
 
   // Extract display name
   const nameElement = block.find('.name_block');
@@ -34,7 +32,6 @@ export function parsePlayerData(html: string, region: Region): ParsedPlayerData 
     throw new Error("Could not find .name_block in player data");
   }
   const displayName = nameElement.text().trim();
-  logger.debug(`Extracted display name: ${displayName}`);
 
   // Extract rating
   const ratingElement = block.find('.rating_block');
@@ -46,7 +43,6 @@ export function parsePlayerData(html: string, region: Region): ParsedPlayerData 
   if (isNaN(rating)) {
     throw new Error(`Invalid rating format: ${ratingText}`);
   }
-  logger.debug(`Extracted rating: ${rating}`);
 
   // Extract title and trophy type
   const titleElement = block.find('.trophy_block');
@@ -54,7 +50,6 @@ export function parsePlayerData(html: string, region: Region): ParsedPlayerData 
     throw new Error("Could not find .trophy_block in player data");
   }
   const title = titleElement.text().trim();
-  logger.debug(`Extracted title: ${title}`);
 
   // Extract trophy type from class (e.g., trophy_Gold -> gold)
   const titleElementClass = titleElement.attr('class') || '';
@@ -70,7 +65,6 @@ export function parsePlayerData(html: string, region: Region): ParsedPlayerData 
   } else if (titleElementClass.includes('trophy_Normal')) {
     titleType = "normal";
   }
-  logger.debug(`Extracted trophy type: ${titleType}`);
 
   // Extract stars
   const starsElement = block.find('.p_l_10.f_l.f_14');
@@ -84,7 +78,6 @@ export function parsePlayerData(html: string, region: Region): ParsedPlayerData 
     throw new Error(`Invalid stars format: ${starsText}`);
   }
   const stars = parseInt(starsMatch[1], 10);
-  logger.debug(`Extracted stars: ${stars} (from text: ${starsText})`);
 
   // Extract play counts
   const playCountElement = block.find('.t_r.f_12');
@@ -92,7 +85,6 @@ export function parsePlayerData(html: string, region: Region): ParsedPlayerData 
     throw new Error("Could not find play count element in player data");
   }
   const playCountText = playCountElement.text().trim();
-  logger.debug(`Play count text: ${playCountText}`);
 
   const playCountRegex =
     region === "jp" ? /現バージョンプレイ回数[：:]\s*([\d,]+)/
@@ -117,9 +109,6 @@ export function parsePlayerData(html: string, region: Region): ParsedPlayerData 
   }
   const totalPlayCount = parseInt(totalPlayCountMatch[1].replace(/,/g, ''), 10);
 
-  logger.debug(`Extracted version play count: ${versionPlayCount}`);
-  logger.debug(`Extracted total play count: ${totalPlayCount}`);
-
   // Extract course rank and class rank images
   const rankElements = block.find('.h_35.f_l');
   if (rankElements.length < 2) {
@@ -132,7 +121,6 @@ export function parsePlayerData(html: string, region: Region): ParsedPlayerData 
     throw new Error("Course rank image src attribute is missing");
   }
   const courseRankUrl = new URL(courseRankSrc, root).href;
-  logger.debug(`Extracted course rank URL: ${courseRankUrl}`);
 
   // Class rank (second element) - the element itself is an img
   const classRankSrc = rankElements.eq(1).attr('src');
@@ -140,7 +128,6 @@ export function parsePlayerData(html: string, region: Region): ParsedPlayerData 
     throw new Error("Class rank image src attribute is missing");
   }
   const classRankUrl = new URL(classRankSrc, root).href;
-  logger.debug(`Extracted class rank URL: ${classRankUrl}`);
 
   return {
     iconUpstreamUrl: iconUrl,

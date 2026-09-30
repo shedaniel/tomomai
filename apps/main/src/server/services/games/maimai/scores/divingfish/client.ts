@@ -1,6 +1,5 @@
 import "server-only";
 import type { DivingFishIdentifier } from "@/lib/games/token-format";
-import { logger } from "@/lib/logger";
 
 const DIVING_FISH_BASE = "https://www.diving-fish.com/api/maimaidxprober";
 const DEV_RECORDS_URL = `${DIVING_FISH_BASE}/dev/player/records`;
@@ -89,8 +88,6 @@ export async function fetchDivingFishRecordsByDevToken(
   const params = new URLSearchParams({ [identifier.kind]: identifier.value });
   const url = `${DEV_RECORDS_URL}?${params.toString()}`;
 
-  logger.info(`[divingfish] fetching records by dev token (kind=${identifier.kind})`);
-
   const resp = await fetch(url, {
     headers: { "Developer-Token": devToken },
     signal,
@@ -119,8 +116,6 @@ export async function fetchDivingFishRecordsByDevToken(
 export async function fetchDivingFishRecordsByImportToken(
   importToken: string,
 ): Promise<DivingFishRecordsResponse> {
-  logger.info("[divingfish] fetching records by import token");
-
   const resp = await fetch(PLAYER_RECORDS_URL, {
     headers: { "Import-Token": importToken },
   });

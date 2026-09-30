@@ -1,5 +1,4 @@
 import { MAIMAI_CODES } from "@/lib/games/maimai/codes";
-import { logger } from "@/lib/logger";
 import type { Difficulty, FullCombo, FullSync, SongType } from "@/lib/games/maimai/types";
 import type { DivingFishRecord } from "../divingfish/client";
 import type { ScoreData } from "../types";
@@ -38,21 +37,8 @@ export function parseDivingFishScoresData(records: DivingFishRecord[] | undefine
 
   for (const record of records) {
     const musicType = resolveMusicType(record.type);
-    if (!musicType) {
-      logger.debug(`[divingfish] skipping record with unknown type: ${record.type}`);
-      continue;
-    }
-
     const difficulty = resolveDifficulty(record.level_index);
-    if (!difficulty) {
-      logger.debug(`[divingfish] skipping record with invalid level_index: ${record.level_index}`);
-      continue;
-    }
-
-    if (!record.title || !record.level) {
-      logger.debug(`[divingfish] skipping record missing title or level (id=${record.song_id})`);
-      continue;
-    }
+    if (!musicType || !difficulty || !record.title || !record.level) continue;
 
     const fc: FullCombo = record.fc ? (FC_MAP[record.fc] ?? "none") : "none";
     const fs: FullSync = record.fs ? (FS_MAP[record.fs] ?? "none") : "none";

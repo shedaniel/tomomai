@@ -1,23 +1,20 @@
 import "server-only";
 import { load } from "cheerio";
-import { logger } from "@/lib/logger";
 import { normalizeName } from "@/lib/name-utils";
+import { getLogger } from "@/lib/request-logger";
 import type { Difficulty, FullCombo, FullSync, SongType } from "@/lib/games/maimai/types";
 import type { GameSiteClient } from "@/server/services/games/sega/http";
 import { musicTypeFromIcon } from "../parse-utils";
 import type { RecentSongData } from "../types";
 
 export async function fetchRecentSongsData(site: GameSiteClient): Promise<RecentSongData[]> {
-  logger.info("Fetching recent songs data");
-
+  const log = getLogger();
   const recentSongsHtml = await site.html("record/");
-  logger.debug(`Recent songs data fetched successfully, length: ${recentSongsHtml.length} characters`);
 
   const $ = load(recentSongsHtml);
   const recentSongs: RecentSongData[] = [];
 
   const records = $(".p_10.t_l.f_0.v_b");
-  logger.debug(`Found ${records.length} recent play records`);
 
   records.each((index, element) => {
     try {
@@ -26,7 +23,7 @@ export async function fetchRecentSongsData(site: GameSiteClient): Promise<Recent
       const trackText = record.find(".sub_title > .red").text().trim();
       const trackMatch = trackText.match(/(?:TRACK|曲目)\s*(\d+)/i);
       if (!trackMatch) {
-        logger.warn(`Could not parse track number from: ${trackText}`);
+        log.warn({ index, value: trackText }, "Could not parse a recent play track number");
         return;
       }
       const track = parseInt(trackMatch[1], 10);
@@ -34,7 +31,7 @@ export async function fetchRecentSongsData(site: GameSiteClient): Promise<Recent
       const playTimeText = record.find(".sub_title > .v_b:not(.red)").text().trim();
       const playTimeMatch = playTimeText.match(/(\d{4})\/(\d{2})\/(\d{2})\s+(\d{2}):(\d{2})/);
       if (!playTimeMatch) {
-        logger.warn(`Could not parse play time from: ${playTimeText}`);
+        log.warn({ index, value: playTimeText }, "Could not parse a recent play time");
         return;
       }
       const [, year, month, day, hour, minute] = playTimeMatch;
@@ -60,7 +57,7 @@ export async function fetchRecentSongsData(site: GameSiteClient): Promise<Recent
 
       const basicBlock = record.find(".basic_block");
       let songName = "";
-      basicBlock.contents().each((i, node) => {
+      basicBlock.contents().each((_, node) => {
         if (node.type === "text") {
           const text = $(node).text().trim();
           if (text) {
@@ -71,14 +68,14 @@ export async function fetchRecentSongsData(site: GameSiteClient): Promise<Recent
       songName = normalizeName(songName);
 
       if (!songName) {
-        logger.warn(`Could not extract song name for record ${index}`);
+        log.warn({ index }, "Recent play has no song name");
         return;
       }
 
       const achievementText = record.find(".playlog_achievement_txt").text().trim();
       const achievementMatch = achievementText.match(/(\d+\.?\d*)%/);
       if (!achievementMatch) {
-        logger.warn(`Could not parse achievement from: ${achievementText}`);
+        log.warn({ index, value: achievementText }, "Could not parse a recent play achievement");
         return;
       }
       const achievementFloat = parseFloat(achievementMatch[1]);
@@ -87,7 +84,7 @@ export async function fetchRecentSongsData(site: GameSiteClient): Promise<Recent
       const dxScoreText = record.find(".playlog_score_block > .f_15").text().trim();
       const dxScoreMatch = dxScoreText.match(/(\d+(?:,\d+)?)\s*\/\s*(\d+(?:,\d+)?)/);
       if (!dxScoreMatch) {
-        logger.warn(`Could not parse DX score from: ${dxScoreText}`);
+        log.warn({ index, value: dxScoreText }, "Could not parse a recent play DX score");
         return;
       }
       const dxScore = parseInt(dxScoreMatch[1].replace(/,/g, ''), 10);
@@ -134,7 +131,7 @@ export async function fetchRecentSongsData(site: GameSiteClient): Promise<Recent
       const idxInput = record.find("input[name='idx']");
       const idx = idxInput.attr("value") || "";
       if (!idx) {
-        logger.warn(`Could not extract idx value for record ${index}`);
+        log.warn({ index }, "Recent play has no detail idx");
         return;
       }
 
@@ -154,13 +151,11 @@ export async function fetchRecentSongsData(site: GameSiteClient): Promise<Recent
       };
 
       recentSongs.push(recentSong);
-      logger.debug(`Extracted recent play ${index}: ${songName} (Track ${track}, ${level}, ${difficulty}) - ${achievementFloat}%, ${dxScore}/${maxDxScore}`);
-
     } catch (error) {
-      logger.error(error, `Error processing recent play record ${index}`);
+      log.error({ err: error, index }, "Could not read a recent play");
     }
   });
 
-  logger.info(`Successfully extracted ${recentSongs.length} recent plays`);
+  log.info({ recordCount: recentSongs.length }, "Read maimai recent plays");
   return recentSongs;
 }

@@ -1,7 +1,7 @@
 import "server-only";
 import { load } from "cheerio";
-import { logger } from "@/lib/logger";
 import { normalizeName } from "@/lib/name-utils";
+import { getLogger } from "@/lib/request-logger";
 import type { Difficulty } from "@/lib/games/maimai/types";
 import type { GameSiteClient } from "@/server/services/games/sega/http";
 import { musicTypeFromIcon } from "../parse-utils";
@@ -12,17 +12,15 @@ import { parseScoreData } from "./parse";
 const NET_DIFF_PARAMS: Readonly<Record<Difficulty, number>> = { basic: 0, advanced: 1, expert: 2, master: 3, remaster: 4, utage: 10 };
 
 export async function fetchSongsData(site: GameSiteClient, difficulty: Difficulty): Promise<ScoreData[]> {
-  const songsHtml = await site.html(`record/musicGenre/search/?genre=99&diff=${NET_DIFF_PARAMS[difficulty]}`);
-  logger.debug(`Songs data for difficulty ${difficulty} fetched successfully, length: ${songsHtml.length} characters`);
-  return parseScoreData(songsHtml, difficulty);
+  const scores = parseScoreData(await site.html(`record/musicGenre/search/?genre=99&diff=${NET_DIFF_PARAMS[difficulty]}`), difficulty);
+  getLogger().info({ difficulty, recordCount: scores.length }, "Read maimai scores");
+  return scores;
 }
 
 // Hidden songs from the rating-target page (intl only).
 export async function fetchHiddenSongsData(site: GameSiteClient, knownScores: readonly ScoreData[]): Promise<ScoreData[]> {
-  logger.info("Fetching hidden songs data from rating target music page...");
-
+  const log = getLogger();
   const html = await site.html("home/ratingTargetMusic/");
-  logger.debug(`Hidden songs data fetched successfully, length: ${html.length} characters`);
 
   const $ = load(html);
   const hiddenSongs: ScoreData[] = [];
@@ -31,7 +29,6 @@ export async function fetchHiddenSongsData(site: GameSiteClient, knownScores: re
 
   for (const difficulty of difficulties) {
     const blocks = $(`.music_${difficulty}_score_back`);
-    logger.debug(`Found ${blocks.length} score blocks for ${difficulty} difficulty`);
 
     blocks.each((index, element) => {
       try {
@@ -39,20 +36,20 @@ export async function fetchHiddenSongsData(site: GameSiteClient, knownScores: re
 
         const nameElement = block.find('.music_name_block');
         if (nameElement.length === 0) {
-          logger.warn(`No music name block found for ${difficulty} score block ${index}`);
+          log.warn({ difficulty, index }, "Hidden song has no name block");
           return;
         }
         const songName = normalizeName(nameElement.text().trim());
 
         const iconElement = block.find('img.music_kind_icon');
         if (iconElement.length === 0) {
-          logger.warn(`No music kind icon found for ${difficulty} score block ${index}: ${songName}`);
+          log.warn({ difficulty, index }, "Hidden song has no chart type icon");
           return;
         }
 
         const musicType = musicTypeFromIcon(iconElement.attr('src'));
         if (!musicType) {
-          logger.warn(`Unknown or missing music type icon for ${difficulty} score block ${index}: ${songName}`);
+          log.warn({ difficulty, index, value: iconElement.attr("src") }, "Hidden song has an unknown chart type icon");
           return;
         }
 
@@ -88,14 +85,12 @@ export async function fetchHiddenSongsData(site: GameSiteClient, knownScores: re
         };
 
         hiddenSongs.push(hiddenSongData);
-        logger.debug(`Found hidden song: ${songName} (${musicType}, ${difficulty}) - ${achievement / 10000}%`);
-
       } catch (error) {
-        logger.error(error, `Error processing hidden song ${difficulty} score block ${index}`);
+        log.error({ err: error, difficulty, index }, "Could not read a hidden song");
       }
     });
   }
 
-  logger.info(`Successfully found ${hiddenSongs.length} hidden songs`);
+  log.info({ recordCount: hiddenSongs.length }, "Read maimai hidden songs");
   return hiddenSongs;
 }

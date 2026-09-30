@@ -23,10 +23,13 @@ export async function fetchFromDivingFish(ctx: ScoreFetchContext, token: DivingF
     }
   }, FETCH_STATES.LOGIN);
   const player = await run.stage("profile", async () => parseDivingFishPlayerData(records), FETCH_STATES.PLAYER_DATA);
+  const scores = parseDivingFishScoresData(records.records);
+  const recordCount = records.records?.length ?? 0;
+  run.log.info({ providerId: "divingfish", recordCount, skipped: recordCount - scores.length }, "Read diving-fish scores");
   return {
     result: {
       player: normalizePlayer(player),
-      scores: parseDivingFishScoresData(records.records).map(score => normalizeScore(score, ctx)),
+      scores: scores.map(score => normalizeScore(score, ctx)),
       recents: [],
       events: [],
     },

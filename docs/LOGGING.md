@@ -115,7 +115,8 @@ Aggregate namespaces (intentional nested objects — **bounded, fixed keys**; do
 > `addedDate`, `optional`, `modelId`, `uniqueCovers`, `existingR2Covers`,
 > `toDownload`, `skipped`, `duplicateIds`, `urls`, `totalDuplicatesMerged`,
 > `totalMasterNamesNormalized`, `originalName`, `ttlSec`, `scope`, `value`, `state`) are also registered — keep this
-> list current when you add one. `value` is a raw configuration value, such as an environment variable.
+> list current when you add one. `value` is a raw input value as it was given, such as an environment variable
+> or scraped page text that did not parse.
 > `state` is a fetch progress state, such as `song_data:master`.
 
 Browser recommendation diagnostics (temporary, scalar fields):

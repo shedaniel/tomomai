@@ -1,5 +1,4 @@
 import "server-only";
-import { logger } from "@/lib/logger";
 import { getLogger } from "@/lib/request-logger";
 import { mirrorPlayerIcon } from "@/server/services/games/icons";
 import { openPublicAssets } from "@/server/services/games/sega/http";
@@ -16,8 +15,6 @@ export class LxnsAuthRevokedError extends Error {
 }
 
 export async function fetchLxnsPlayerData(accessToken: string, signal: AbortSignal): Promise<PlayerData> {
-  logger.info("[lxns] fetching player data");
-
   const resp = await fetch(LXNS_PLAYER_URL, {
     headers: { Authorization: `Bearer ${accessToken}` },
     signal,

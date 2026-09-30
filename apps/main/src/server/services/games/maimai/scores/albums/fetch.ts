@@ -1,7 +1,7 @@
 import "server-only";
 import { load } from "cheerio";
-import { logger } from "@/lib/logger";
 import { normalizeName } from "@/lib/name-utils";
+import { getLogger } from "@/lib/request-logger";
 import type { Difficulty, SongType } from "@/lib/games/maimai/types";
 import { siteRoot } from "@/lib/games/sites";
 import type { Region } from "@/lib/types";
@@ -10,30 +10,26 @@ import { musicTypeFromIcon } from "../parse-utils";
 import type { AlbumData } from "../types";
 
 export async function fetchAlbumData(site: GameSiteClient, region: Region): Promise<AlbumData[]> {
-  logger.info("Fetching album data");
-
+  const log = getLogger();
   const albumHtml = await site.html("playerData/photo/");
   const root = siteRoot("maimai", region);
-  logger.debug(`Album data fetched successfully, length: ${albumHtml.length} characters`);
 
   const $ = load(albumHtml);
   const albums: AlbumData[] = [];
 
   const blocks = $(".m_10.p_5.f_0");
-  logger.debug(`Found ${blocks.length} album blocks`);
-
   blocks.each((index, element) => {
     try {
       const block = $(element);
 
       const songNameBlock = block.find(".black_block");
       if (songNameBlock.length === 0) {
-        logger.warn(`No song name block found for album ${index}`);
+        log.warn({ index }, "Album has no song name block");
         return;
       }
       const songName = normalizeName(songNameBlock.text().trim());
       if (!songName) {
-        logger.warn(`Could not extract song name for album ${index}`);
+        log.warn({ index }, "Album has an empty song name");
         return;
       }
 
@@ -64,7 +60,7 @@ export async function fetchAlbumData(site: GameSiteClient, region: Region): Prom
       const takenAtText = blockInfo.text().trim();
       const takenAtMatch = takenAtText.match(/(\d{4})\/(\d{2})\/(\d{2})\s+(\d{2}):(\d{2})/);
       if (!takenAtMatch) {
-        logger.warn(`Could not parse takenAt from: ${takenAtText} for album ${index}`);
+        log.warn({ index, value: takenAtText }, "Could not parse the album time");
         return;
       }
       const [, year, month, day, hour, minute] = takenAtMatch;
@@ -79,7 +75,7 @@ export async function fetchAlbumData(site: GameSiteClient, region: Region): Prom
         }
       }
       if (!imageUrl) {
-        logger.warn(`Could not extract image URL for album ${index}`);
+        log.warn({ index }, "Album has no image");
         return;
       }
 
@@ -94,13 +90,11 @@ export async function fetchAlbumData(site: GameSiteClient, region: Region): Prom
         imageUrl,
         venue,
       });
-
-      logger.debug(`Extracted album ${index}: ${songName} (${difficulty}, ${musicType}) at ${takenAt.toISOString()}`);
     } catch (error) {
-      logger.error(error, `Error processing album block ${index}`);
+      log.error({ err: error, index }, "Could not read an album");
     }
   });
 
-  logger.info(`Successfully extracted ${albums.length} albums`);
+  log.info({ count: albums.length }, "Read maimai albums");
   return albums;
 }

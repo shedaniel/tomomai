@@ -1,6 +1,5 @@
 import { normalizeName } from "@/lib/name-utils";
 import { MAIMAI_CODES } from "@/lib/games/maimai/codes";
-import { logger } from "@/lib/logger";
 import type { Difficulty, FullCombo, FullSync, SongType } from "@/lib/games/maimai/types";
 import type { ScoreData } from "../types";
 
@@ -69,21 +68,8 @@ export function parseLxnsScoresData(scores: LxnsScore[]): ScoreData[] {
 
   for (const score of scores) {
     const musicType = resolveMusicType(score.type);
-    if (!musicType) {
-      logger.debug(`[lxns] skipping score with unknown type: ${score.type}`);
-      continue;
-    }
-
     const difficulty = resolveDifficulty(score.type, score.level_index);
-    if (!difficulty) {
-      logger.debug(`[lxns] skipping score with invalid level_index: ${score.level_index}`);
-      continue;
-    }
-
-    if (!score.song_name || !score.level) {
-      logger.debug(`[lxns] skipping score missing song_name or level (id=${score.id})`);
-      continue;
-    }
+    if (!musicType || !difficulty || !score.song_name || !score.level) continue;
 
     const fc: FullCombo = score.fc ? (FC_MAP[score.fc] ?? "none") : "none";
     const fs: FullSync = score.fs ? (FS_MAP[score.fs] ?? "none") : "none";

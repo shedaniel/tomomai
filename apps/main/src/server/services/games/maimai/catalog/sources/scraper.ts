@@ -1,5 +1,4 @@
 import "server-only";
-import { logger } from "@/lib/logger";
 import { openGameSite, type GameSiteClient } from "@/server/services/games/sega/http";
 import { assertMaimaiPage, musicTypeFromIcon } from "../../scores/parse-utils";
 import { normalizeName } from "@/lib/name-utils";
@@ -43,29 +42,27 @@ export const MaimaiScraperFetcher = asCatalogFetcher(async ({ region, version, s
 });
 
 async function prepareMaimaiScraper(site: GameSiteClient, version: number, log: Logger, notice: NoticeSink) {
-  log.info("Fetching and parsing song data for all difficulties and versions...");
   const allSongData: ParsedSong[] = [];
 
   // Fetch data for legacy versions (0-12) and current versions (13 to 13 + versionsCount - 1)
   const versionRanges = [
-    { start: 0, end: 12, description: "legacy versions" },
-    { start: 13, end: 13 + version, description: "current versions" }
+    { start: 0, end: 12 },
+    { start: 13, end: 13 + version },
   ];
 
   const difficultyNames = ["bas", "adv", "exp", "mas", "remas", "utage"];
   const versionSummaries: string[] = [];
 
   for (const range of versionRanges) {
-    log.info(`Fetching ${range.description} (versions ${range.start}-${range.end})...`);
+    log.info({ from: range.start, to: range.end }, "Fetching maimai versions");
 
     for (let version = range.start; version <= range.end; version++) {
       const promises: Promise<ParsedSong[]>[] = [];
       for (let difficulty of [0, 1, 2, 3, 4, 10]) {
-        log.debug(`Fetching songs for version ${version}, difficulty ${difficulty}...`);
         try {
           promises.push(fetchSongDataForDifficulty(site, difficulty === 10 ? "utage" : MAIMAI_CODES.difficulty[difficulty], difficulty, version, log));
         } catch (error) {
-          log.warn({ version, difficulty, err: error }, `Failed to fetch data`);
+          log.warn({ version, difficulty, err: error }, "Failed to fetch data");
         }
       }
       const difficultyData = await Promise.all(promises);
@@ -107,7 +104,7 @@ async function prepareMaimaiScraper(site: GameSiteClient, version: number, log: 
     notice.addDetail(summary);
   }
 
-  log.info({ songCount: allSongData.length }, `Total songs fetched from all difficulties and versions: ${allSongData.length}`);
+  log.info({ songCount: allSongData.length }, "Fetched maimai charts of every version and difficulty");
 
   return allSongData;
 }
@@ -116,7 +113,6 @@ async function prepareMaimaiScraper(site: GameSiteClient, version: number, log: 
 export async function fetchSongDataForDifficulty(site: GameSiteClient, difficultyName: Difficulty, difficulty: number, version: number, log: Logger): Promise<ParsedSong[]> {
   const childLog = log.child({ version, difficulty });
   const songsHtml = await site.html(`record/musicVersion/search/?version=${version}&diff=${difficulty}`);
-  childLog.debug(`Songs data fetched successfully, length: ${songsHtml.length} characters`);
 
   return parseSongData(songsHtml, difficultyName, difficulty, version, childLog);
 }
@@ -145,7 +141,6 @@ function parseSongData(html: string, difficultyName: Difficulty, difficulty: num
   const blocks = $(selector);
   const songs: ParsedSong[] = [];
 
-  log.debug(`Found ${blocks.length} song blocks for difficulty ${difficultyName} using selector ${selector}`);
 
   blocks.each((index, element) => {
     try {
@@ -154,7 +149,7 @@ function parseSongData(html: string, difficultyName: Difficulty, difficulty: num
       // Extract music type (dx/std) from icon image
       const iconElement = block.find('img.music_kind_icon');
       if (iconElement.length === 0) {
-        log.warn(`No music kind icon found for block ${index}`);
+        log.warn({ index }, "Chart has no chart type icon");
         return; // Skip this block
       }
 
@@ -164,7 +159,7 @@ function parseSongData(html: string, difficultyName: Difficulty, difficulty: num
       } else {
         const detected = musicTypeFromIcon(iconElement.attr('src'));
         if (!detected) {
-          log.warn(`Unknown or missing music type icon for block ${index}: ${iconElement.attr('src')}`);
+          log.warn({ index, value: iconElement.attr("src") }, "Chart has an unknown chart type icon");
           return;
         }
         musicType = detected;
@@ -173,7 +168,7 @@ function parseSongData(html: string, difficultyName: Difficulty, difficulty: num
       // Extract song name
       const nameElement = block.find('.music_name_block');
       if (nameElement.length === 0) {
-        log.warn(`No music name block found for block ${index}`);
+        log.warn({ index }, "Chart has no name block");
         return; // Skip this block
       }
       const songName = normalizeName(nameElement.text().trim());
@@ -181,7 +176,7 @@ function parseSongData(html: string, difficultyName: Difficulty, difficulty: num
       // Extract level
       const levelElement = block.find('.music_lv_block');
       if (levelElement.length === 0) {
-        log.warn(`No music level block found for block ${index}`);
+        log.warn({ index }, "Chart has no level block");
         return; // Skip this block
       }
       const level = levelElement.text().trim();
@@ -189,14 +184,14 @@ function parseSongData(html: string, difficultyName: Difficulty, difficulty: num
       // Extract input value and name
       const inputElement = block.find('input');
       if (inputElement.length === 0) {
-        log.warn(`No input element found for block ${index}`);
+        log.warn({ index }, "Chart has no detail form input");
         return; // Skip this block
       }
       const inputValue = inputElement.attr('value');
       const inputName = inputElement.attr('name');
 
       if (!inputValue || !inputName) {
-        log.warn(`Input element missing value or name attribute in block ${index}`);
+        log.warn({ index }, "Chart detail form input has no value or name");
         return; // Skip this block
       }
 
@@ -212,13 +207,11 @@ function parseSongData(html: string, difficultyName: Difficulty, difficulty: num
       };
 
       songs.push(songData);
-
-      log.debug(`Extracted song ${index}: ${songName} (${level}, ${musicType}, ${difficultyName})`);
     } catch (error) {
-      logger.error({ err: error, index }, "Error processing song block");
+      log.error({ err: error, index }, "Could not read a chart");
     }
   });
 
-  log.debug(`Successfully extracted ${songs.length} songs for difficulty ${difficultyName}`);
+  log.debug({ songCount: songs.length }, "Read maimai charts");
   return songs;
 }

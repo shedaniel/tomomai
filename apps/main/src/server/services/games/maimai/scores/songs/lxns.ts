@@ -1,5 +1,5 @@
 import "server-only";
-import { logger } from "@/lib/logger";
+import { getLogger } from "@/lib/request-logger";
 import { LxnsAuthRevokedError } from "../player/lxns";
 import type { ScoreData } from "../types";
 import { parseLxnsScoresData, unwrapLxnsScoresResponse } from "./lxns-parse";
@@ -10,8 +10,6 @@ export async function fetchLxnsScoresData(
   accessToken: string,
   signal: AbortSignal,
 ): Promise<ScoreData[]> {
-  logger.info("[lxns] fetching scores");
-
   const resp = await fetch(LXNS_SCORES_URL, {
     headers: { Authorization: `Bearer ${accessToken}` },
     signal,
@@ -29,6 +27,7 @@ export async function fetchLxnsScoresData(
 
   const json = (await resp.json()) as Record<string, unknown>;
   const scores = unwrapLxnsScoresResponse(json);
-  logger.info(`[lxns] received ${scores.length} scores`);
-  return parseLxnsScoresData(scores);
+  const parsed = parseLxnsScoresData(scores);
+  getLogger().info({ providerId: "lxns", recordCount: scores.length, skipped: scores.length - parsed.length }, "Read lxns scores");
+  return parsed;
 }

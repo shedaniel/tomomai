@@ -1,18 +1,19 @@
+import "server-only";
 import { load } from "cheerio";
-import { logger } from "@/lib/logger";
+import { getLogger } from "@/lib/request-logger";
 import { siteRoot } from "@/lib/games/sites";
 import type { Region } from "@/lib/types";
 import type { EventAreaData, EventData } from "../types";
 
 // Parse event period string and extract start/end timestamps
-export function parseEventPeriod(periodStr: string | null): [number, number] | null {
+function parseEventPeriod(periodStr: string | null): [number, number] | null {
   if (!periodStr) return null;
 
   // Match pattern: "Event period：YYYY/MM/DD HH:mm～YYYY/MM/DD HH:mm"
   const match = periodStr.match(/Event period：(\d{4})\/(\d{2})\/(\d{2})\s+(\d{2}):(\d{2})～(\d{4})\/(\d{2})\/(\d{2})\s+(\d{2}):(\d{2})/);
 
   if (!match) {
-    logger.warn(`Could not parse event period: ${periodStr}`);
+    getLogger().warn({ value: periodStr }, "Could not parse a maimai event period");
     return null;
   }
 
@@ -28,7 +29,7 @@ export function parseEventPeriod(periodStr: string | null): [number, number] | n
 
     return [startDate.getTime(), endDate.getTime()];
   } catch (error) {
-    logger.warn(`Failed to parse event period dates: ${error}`);
+    getLogger().warn({ err: error, value: periodStr }, "Could not parse maimai event period dates");
     return null;
   }
 }
@@ -39,7 +40,6 @@ export function parseAreaEvents(html: string, region: Region): EventData[] {
   const root = siteRoot("maimai", region);
 
   const elements = $(".m_10.m_t_0.f_0");
-  logger.debug(`Found ${elements.length} area elements`);
 
   elements.each((index, element) => {
     try {
@@ -90,7 +90,7 @@ export function parseAreaEvents(html: string, region: Region): EventData[] {
         imageUrl
       });
     } catch (error) {
-      logger.error(error, `Error parsing area event ${index}`);
+      getLogger().error({ err: error, index }, "Could not read a maimai area event");
     }
   });
 
@@ -103,7 +103,6 @@ export function parseEventAreaEvents(html: string, region: Region): EventAreaDat
   const root = siteRoot("maimai", region);
 
   const elements = $(".eventmap_container");
-  logger.debug(`Found ${elements.length} event area elements`);
 
   elements.each((index, element) => {
     try {
@@ -158,7 +157,7 @@ export function parseEventAreaEvents(html: string, region: Region): EventAreaDat
         eventPeriod: parseEventPeriod(eventPeriod),
       });
     } catch (error) {
-      logger.error(error, `Error parsing event area event ${index}`);
+      getLogger().error({ err: error, index }, "Could not read a maimai event area event");
     }
   });
 

@@ -3,8 +3,9 @@ import { and, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { userAlbums } from "@/lib/db/schema-pg";
 import { convertJpegToAvif } from "@/lib/image-converter";
-import { logger } from "@/lib/logger";
 import { deleteFromR2, uploadToR2 } from "@/lib/r2";
+import { getLogger } from "@/lib/request-logger";
+import { formatChartLabel } from "@/lib/games/presentation";
 import { chartKey } from "@/server/services/games/score-storage";
 import type { ChartResolutionMap } from "@/server/services/games/types";
 import { chartTypeToCode, difficultyToCode } from "@/lib/games/maimai/codes";
@@ -15,9 +16,9 @@ export const MAX_STORAGE_BYTES = 8 * 1024 * 1024; // 8 MB
 // AVIF quality for album images. q40 is ~0.35x the size of q80 with no
 // perceptible quality loss on these 1056x594 result-screen photos, keeping
 // ~177 albums within the 8 MB cap.
-export const ALBUM_AVIF_QUALITY = 40;
+const ALBUM_AVIF_QUALITY = 40;
 
-export async function enforceStorageLimit(userId: string): Promise<void> {
+async function enforceStorageLimit(userId: string): Promise<void> {
   const userAlbumsList = await db.query.userAlbums.findMany({
     where: and(eq(userAlbums.userId, userId), eq(userAlbums.game, "maimai")),
     orderBy: [userAlbums.createdAt],
@@ -25,14 +26,10 @@ export async function enforceStorageLimit(userId: string): Promise<void> {
   });
 
   let totalSize = userAlbumsList.reduce((sum, a) => sum + a.imageSize, 0);
+  if (totalSize <= MAX_STORAGE_BYTES) return;
 
-  if (totalSize <= MAX_STORAGE_BYTES) {
-    logger.debug(`User ${userId} storage: ${totalSize} bytes (within ${MAX_STORAGE_BYTES} byte limit)`);
-    return;
-  }
-
-  logger.info(`User ${userId} storage: ${totalSize} bytes (exceeds ${MAX_STORAGE_BYTES} byte limit), cleaning up...`);
-
+  const log = getLogger();
+  let deleted = 0;
   for (const album of userAlbumsList) {
     if (totalSize <= MAX_STORAGE_BYTES) {
       break;
@@ -40,17 +37,16 @@ export async function enforceStorageLimit(userId: string): Promise<void> {
 
     try {
       await deleteFromR2(album.imageKey);
-      logger.debug(`Deleted R2 object: ${album.imageKey}`);
     } catch (error) {
-      logger.error({ err: error }, `Failed to delete R2 object: ${album.imageKey}`);
+      log.error({ err: error, userId, filename: album.imageKey }, "Could not delete an album image from R2");
     }
 
     await db.delete(userAlbums).where(and(eq(userAlbums.id, album.id), eq(userAlbums.game, "maimai")));
     totalSize -= album.imageSize;
-    logger.info(`Deleted album ${album.id}, freed ${album.imageSize} bytes`);
+    deleted++;
   }
 
-  logger.info(`User ${userId} storage cleanup complete: ${totalSize} bytes remaining`);
+  log.info({ userId, count: deleted, size: totalSize }, "Deleted the oldest albums over the storage limit");
 }
 
 /**
@@ -64,13 +60,9 @@ export async function persistAlbumData(
   albumData: AlbumData[],
   fetchImageBytes: (album: AlbumData) => Promise<Buffer>,
 ): Promise<void> {
-  if (albumData.length === 0) {
-    logger.debug("No album data to persist");
-    return;
-  }
+  if (albumData.length === 0) return;
 
-  logger.info(`Persisting ${albumData.length} albums for user ${userId}`);
-
+  const log = getLogger();
   const existingAlbums = await db.query.userAlbums.findMany({
     where: and(eq(userAlbums.userId, userId), eq(userAlbums.game, "maimai")),
     columns: { takenAt: true },
@@ -81,23 +73,17 @@ export async function persistAlbumData(
   const albumsToUpload: Array<AlbumData & { songId: bigint }> = [];
 
   for (const album of albumData) {
-    if (existingTakenAt.has(album.takenAt.getTime())) {
-      logger.debug(`Skipping duplicate album: ${album.songName} at ${album.takenAt.toISOString()}`);
-      continue;
-    }
+    if (existingTakenAt.has(album.takenAt.getTime())) continue;
 
-    const songId = chartResolution.get(chartKey({ songName: album.songName,
-      difficulty: difficultyToCode(album.difficulty), chartType: chartTypeToCode(album.musicType) }));
-
+    const chart = { songName: album.songName, difficulty: difficultyToCode(album.difficulty), chartType: chartTypeToCode(album.musicType) };
+    const songId = chartResolution.get(chartKey(chart));
     if (!songId) {
-      logger.warn(`Could not find song: ${album.songName} (${album.difficulty}, ${album.musicType})`);
+      log.warn({ chartLabel: formatChartLabel("maimai", chart) }, "Album chart is not in the catalog");
       continue;
     }
 
     albumsToUpload.push({ ...album, songId });
   }
-
-  logger.info(`${albumsToUpload.length} new albums to upload`);
 
   const albumInserts: typeof userAlbums.$inferInsert[] = [];
 
@@ -116,16 +102,14 @@ export async function persistAlbumData(
         imageKey: key,
         imageSize: size,
       });
-
-      logger.debug(`Uploaded album: ${album.songName} -> ${key}`);
     } catch (error) {
-      logger.error({ err: error }, `Failed to process album: ${album.songName}`);
+      log.error({ err: error, userId }, "Could not store an album image");
     }
   }
 
   if (albumInserts.length > 0) {
     await db.insert(userAlbums).values(albumInserts);
-    logger.info(`Inserted ${albumInserts.length} album records`);
+    log.info({ userId, count: albumInserts.length }, "Stored new albums");
   }
 
   await enforceStorageLimit(userId);
