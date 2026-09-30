@@ -29,12 +29,14 @@ export interface RecommendationData {
 // Effort is the score distance in percent of 1,000,000, and a closer target still counts as 0.1.
 const SCORE_PER_EFFORT = 10_000;
 const MIN_EFFORT = 0.1;
-const MIN_PEERS = 30;
+
+/** Fewer peers than this carry no evidence. */
+export const MIN_RECOMMENDATION_PEERS = 30;
 
 function weighByPeers(efficiency: number, chartGain: number, target: RecommendationTarget, peers: RecommendationPeers | undefined) {
   // Peers report only their best scores, so a combo target has no reach share.
   const share = target.kind === "score" ? peers?.reachShares[target.scoreValue] : undefined;
-  if (!peers || peers.peerCount < MIN_PEERS || share == null || !Number.isFinite(share)) {
+  if (!peers || peers.peerCount < MIN_RECOMMENDATION_PEERS || share == null || !Number.isFinite(share)) {
     return { efficiencyScore: efficiency, peerReach: null, peerWeight: 1 };
   }
   // Shrink sparse samples toward the original ranking. Peer bests are not success probabilities.
