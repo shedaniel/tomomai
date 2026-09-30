@@ -40,7 +40,7 @@ function privacySettingsFromProfile(settings: ProfileSettings): ProfilePrivacySe
 }
 
 function privacySettingsEqual(left: ProfilePrivacySettings, right: ProfilePrivacySettings) {
-  return PROFILE_PRIVACY_FIELDS.every(([key]) => left[key] === right[key]);
+  return PROFILE_PRIVACY_FIELDS.every(({ key }) => left[key] === right[key]);
 }
 
 interface UseInfoCardOwnerSettingsOptions {
@@ -163,7 +163,7 @@ function useInfoCardOwnerSettings({
     const previousPrivacy = privacySettingsFromProfile(profileSettings);
     const privacyChanged = !privacySettingsEqual(visibilityDraft.privacySettings, previousPrivacy);
     const revealsHiddenData = PROFILE_PRIVACY_FIELDS.some(
-      ([key]) => !previousPrivacy[key] && visibilityDraft.privacySettings[key],
+      ({ key }) => !previousPrivacy[key] && visibilityDraft.privacySettings[key],
     );
 
     setVisibilityError(undefined);
