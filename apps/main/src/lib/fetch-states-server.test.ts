@@ -23,10 +23,7 @@ beforeEach(() => {
 
 it("appends progress only while the session is pending, keyed by its id alone", async () => {
   await appendFetchState(BigInt(17), FETCH_STATES.PLAYER_DATA);
-  expect(proxy.queries.map(({ table, params }) => [table, params])).toEqual([
-    ["fetch_sessions", [BigInt(17), "pending", 1]],
-    ["fetch_sessions", ["login,player_data", BigInt(17), "pending"]],
-  ]);
+  expect(proxy.updated("fetch_sessions")).toEqual([{ values: { statusStates: "login,player_data" }, where: [BigInt(17), "pending"] }]);
   expect(log.debug).toHaveBeenCalledWith({ sessionId: "17", state: "player_data", progress: expect.any(Number) }, "Appended fetch state");
 });
 

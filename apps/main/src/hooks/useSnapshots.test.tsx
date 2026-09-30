@@ -38,9 +38,8 @@ function Probe({ region = "jp" }: { region?: Region }) {
   capture(snapshots);
   return <span>{snapshots.selectedSnapshotData?.snapshot.displayName}</span>;
 }
-async function render(game: "maimai" | "chunithm" = "maimai", region: Region = "jp") {
-  const descriptor = testGame(game, ["jp", "intl"]);
-  await act(async () => { root.render(<QueryClientProvider client={client}><GameProvider game={descriptor}><Probe region={region} /></GameProvider></QueryClientProvider>); });
+async function render(region: Region = "jp") {
+  await act(async () => { root.render(<QueryClientProvider client={client}><GameProvider game={testGame("maimai", ["jp", "intl"])}><Probe region={region} /></GameProvider></QueryClientProvider>); });
 }
 const shows = (text: string) => waitForRender(() => expect(container.textContent).toBe(text));
 beforeEach(() => {
@@ -89,7 +88,7 @@ describe("snapshot query lifecycle", () => {
   });
   it("does not seed another region with the first region's SSR data", async () => {
     await render();
-    await render("maimai", "intl");
+    await render("intl");
     await shows("maimai-fresh");
     expect(transport.list).toHaveBeenCalledWith({ game: "maimai", region: "intl" });
     expect(transport.detail).toHaveBeenCalledWith({ game: "maimai", region: "intl", snapshotId: "maimai-fresh" });

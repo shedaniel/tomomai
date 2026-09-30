@@ -56,7 +56,7 @@ it("copies scores onto the target charts and rates the copy with the game's play
   expect(proxy.queries.every(query => query.inTransaction)).toBe(true);
   expect(proxy.inserted("user_snapshots")).toEqual([expect.objectContaining({ game: "maimai", userId: "owner", region: "jp", gameVersion: 13, rating: 12000 })]);
   expect(proxy.inserted("snapshot_rankings")).toEqual([expect.objectContaining({ snapshotId: 2, game: "maimai", scoreId: 8 })]);
-  expect(proxy.queries.find(query => query.sql.startsWith('update "user_snapshots"'))?.params).toEqual([315, 2]);
+  expect(proxy.updated("user_snapshots")).toEqual([{ values: { rating: 315 }, where: [2] }]);
 });
 
 it("rolls the whole copy back when a write fails", async () => {
@@ -72,5 +72,5 @@ it("keeps the source rating and writes no rankings for a game without rankings",
   await expect(copySnapshotToVersion(input)).resolves.toMatchObject({ copiedScores: 1, newRating: 12000 });
   expect(proxy.inserted("snapshot_scores")).toHaveLength(1);
   expect(proxy.inserted("snapshot_rankings")).toEqual([]);
-  expect(proxy.queries.some(query => query.sql.startsWith('update "user_snapshots"'))).toBe(false);
+  expect(proxy.updated("user_snapshots")).toEqual([]);
 });
