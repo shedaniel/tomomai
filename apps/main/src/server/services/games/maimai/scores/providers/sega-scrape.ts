@@ -5,8 +5,8 @@ import type { CnCookiesToken, SegaToken } from "@/lib/games/token-format";
 import type { FetchRun } from "@/server/services/games/fetch-run";
 import { mirrorPlayerIcon } from "@/server/services/games/icons";
 import { openGameSite, type GameSiteClient } from "@/server/services/games/sega/http";
+import { openSegaSession } from "@/server/services/games/sega/login";
 import type { Enrichment, ScoreFetchContext, ScoreFetchOutcome } from "@/server/services/games/types";
-import { openMaimaiSegaSession } from "../../login";
 import { fetchAlbumData } from "../albums/fetch";
 import { persistAlbumData } from "../albums/persist";
 import { fetchEventsData } from "../events/fetch";
@@ -20,7 +20,7 @@ import type { AlbumData, RecentSongData } from "../types";
 
 /** Scrapes maimai DX NET after signing in with SEGA. */
 export function fetchWithSegaLogin(ctx: ScoreFetchContext, token: SegaToken, run: FetchRun): Promise<ScoreFetchOutcome> {
-  return scrapeMaimaiNet(ctx, run, async () => (await openMaimaiSegaSession(ctx.userId, ctx.region, token, ctx.signal)).cookies);
+  return scrapeMaimaiNet(ctx, run, async () => (await openSegaSession("maimai", ctx.region, ctx.userId, token, ctx.signal)).cookies);
 }
 
 /** Scrapes maimai DX China with the session the CN proxy captured. */

@@ -29,6 +29,8 @@ export const chunithmDefinition = {
     jp: {
       origin: "https://new.chunithm-net.com",
       mobileRoot: "/chuni-mobile/html/mobile/",
+      // The JP sign-in form is on the site root, outside the mobile pages.
+      segaId: { entryPath: "/", formToken: "input:token", cardSelection: { method: "POST" } },
       maintenance: { startHour: 2, endHour: 7 },
     },
   },

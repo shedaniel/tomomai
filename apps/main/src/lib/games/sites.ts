@@ -23,7 +23,8 @@ export function getGameSite(game: CanonicalGameId, region: Region): GameSite | u
   return getGame(game).sites[region];
 }
 
-function gameSite(game: CanonicalGameId, region: Region): GameSite {
+/** The game's site in the region, refusing a region the game has no site for. */
+export function gameSite(game: CanonicalGameId, region: Region): GameSite {
   const site = getGameSite(game, region);
   if (!site) throw new GameError("UNSUPPORTED_REGION", `${getGame(game).brand.displayName} has no ${region} site`, game, region);
   return site;

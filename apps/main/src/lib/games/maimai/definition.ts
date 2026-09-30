@@ -38,6 +38,7 @@ export const maimaiDefinition = {
     jp: {
       origin: "https://maimaidx.jp",
       mobileRoot: "/maimai-mobile/",
+      segaId: { entryPath: "", formToken: "cookie:_t", cardSelection: { method: "GET", path: "aimeList/submit/?idx=0" } },
       // The host sends its leaf certificate without the GlobalSign intermediate.
       legacyTls: true,
       maintenance: { startHour: 4, endHour: 7 },

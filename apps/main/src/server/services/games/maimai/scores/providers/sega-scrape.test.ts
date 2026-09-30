@@ -5,7 +5,7 @@ const mocks = vi.hoisted(() => ({
   login: vi.fn(), upload: vi.fn(), progress: vi.fn(), details: vi.fn(), albums: vi.fn(),
   log: { warn: vi.fn(), info: vi.fn(), error: vi.fn(), debug: vi.fn(), child() { return this; } },
 }));
-vi.mock("../../login", () => ({ openMaimaiSegaSession: mocks.login }));
+vi.mock("@/server/services/games/sega/login", () => ({ openSegaSession: mocks.login }));
 vi.mock("@/lib/r2", () => ({ uploadIconToR2: mocks.upload }));
 vi.mock("@/server/services/games/fetch-progress", () => ({ appendFetchState: mocks.progress }));
 vi.mock("@/lib/request-logger", () => ({ getLogger: () => mocks.log }));
@@ -90,7 +90,7 @@ describe("maimai DX NET scrape", () => {
   it("reads every maimai stage and returns the normalized result", async () => {
     const requests = serveSite();
     const { result, enrich } = await fetchScores(context());
-    expect(mocks.login).toHaveBeenCalledWith("user", "intl", token, expect.any(AbortSignal));
+    expect(mocks.login).toHaveBeenCalledWith("maimai", "intl", "user", token, expect.any(AbortSignal));
     expect(requests.filter(path => path.startsWith("record/musicGenre/search/")).map(path => new URLSearchParams(path.split("?")[1]).get("diff")).sort())
       .toEqual(["0", "1", "10", "2", "3", "4"]);
     expect(mocks.progress.mock.calls.map(([, state]) => state).sort()).toEqual([...getGame("maimai").fetchStages].sort());

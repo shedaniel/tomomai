@@ -2,30 +2,17 @@ import "server-only";
 import { load } from "cheerio";
 import type { Logger } from "pino";
 import { getGame } from "@/lib/games/registry";
-import { SEGA_AIME_GATEWAY, siteUrl } from "@/lib/games/sites";
+import { SEGA_AIME_GATEWAY, gameSite, siteUrl } from "@/lib/games/sites";
 import { formatSegaAccount, type SegaAccountToken, type SegaToken } from "@/lib/games/token-format";
-import type { CanonicalGameId } from "@/lib/games/types";
+import type { CanonicalGameId, SegaIdSiteForm } from "@/lib/games/types";
 import type { Region } from "@/lib/types";
 import { getLogger } from "@/lib/request-logger";
 import { refuseToken } from "../token-policy";
 import { updateToken } from "../tokens";
 import { cookieValue, mergeCookies, openGameSite, requestGameSite, responseCookies, segaRequestSignal, SEGA_USER_AGENT, type GameSiteSession } from "./http";
 
-/** How a game site signs in a SEGA ID. Site paths resolve against the mobile root. */
-export type SegaLoginConfig = { game: CanonicalGameId; region: Region } & (
-  | { kind: "aime-gateway" }
-  | {
-    kind: "sega-id-site";
-    entryPath: string;
-    /** Where the sign-in form keeps its CSRF token. */
-    formToken: "cookie:_t" | "input:token";
-    /** GET opens a fixed card path. POST submits the card list's own form. */
-    cardSelection: { method: "GET"; path: string } | { method: "POST" };
-  }
-);
-
-type GatewayConfig = Extract<SegaLoginConfig, { kind: "aime-gateway" }>;
-type IdSiteConfig = Extract<SegaLoginConfig, { kind: "sega-id-site" }>;
+type SiteRef = { game: CanonicalGameId; region: Region };
+type IdSiteConfig = SiteRef & SegaIdSiteForm;
 
 type LoginOutcome =
   | { kind: "ok"; session: GameSiteSession; refreshedToken?: string }
@@ -35,28 +22,30 @@ type LoginOutcome =
 const REJECTED_CREDENTIALS = "Login failed. Please check your username and password.";
 
 /**
- * Signs in with a SEGA token and returns a ready session on the game site.
+ * Signs in with a SEGA token and returns a ready session on the game site, the way the site's definition says.
  * A token SEGA refuses is deleted, and one that failed for a transient reason is kept.
  */
-export async function openSegaSession(config: SegaLoginConfig, userId: string | null, token: SegaToken, signal?: AbortSignal): Promise<GameSiteSession> {
-  const log = getLogger().child({ game: config.game, region: config.region, userId });
-  const outcome = await signIn(config, token, log, signal);
+export async function openSegaSession(game: CanonicalGameId, region: Region, userId: string | null, token: SegaToken, signal?: AbortSignal): Promise<GameSiteSession> {
+  const log = getLogger().child({ game, region, userId });
+  const outcome = await signIn({ game, region }, token, log, signal);
   switch (outcome.kind) {
     case "ok":
-      if (outcome.refreshedToken && userId) await updateToken(config.game, userId, config.region, outcome.refreshedToken);
+      if (outcome.refreshedToken && userId) await updateToken(game, userId, region, outcome.refreshedToken);
       return outcome.session;
     case "rejected":
-      return refuseToken(config.game, userId, config.region, outcome.error);
+      return refuseToken(game, userId, region, outcome.error);
     case "transient":
       log.warn({ err: outcome.err, stepType: outcome.stepType }, "SEGA login failed");
       throw new Error(outcome.error);
   }
 }
 
-function signIn(config: SegaLoginConfig, token: SegaToken, log: Logger, signal?: AbortSignal): Promise<LoginOutcome> | LoginOutcome {
-  if (config.kind === "aime-gateway") return aimeGatewayLogin(config, token, log, signal);
+function signIn(site: SiteRef, token: SegaToken, log: Logger, signal?: AbortSignal): Promise<LoginOutcome> | LoginOutcome {
+  const { aime, segaId } = gameSite(site.game, site.region);
+  if (aime) return aimeGatewayLogin(site, token, log, signal);
+  if (!segaId) throw new Error(`${getGame(site.game).brand.displayName} ${site.region} does not sign in with SEGA tokens.`);
   if (token.provider === "sega-cookie") return { kind: "rejected", error: "Invalid token format. Cookie tokens are not supported in this region." };
-  return segaIdSiteLogin(config, token, log, signal);
+  return segaIdSiteLogin({ ...site, ...segaId }, token, log, signal);
 }
 
 function transientFailure(err: unknown, stepType: string, signal?: AbortSignal): LoginOutcome {
@@ -72,7 +61,7 @@ function gatewayRequest(url: string, init: RequestInit, signal?: AbortSignal): P
 }
 
 /** The game site callback the gateway redirected to, or why there is none. It must stay on this game's site. */
-function gatewayCallback(config: GatewayConfig, response: Response): URL | string {
+function gatewayCallback(config: SiteRef, response: Response): URL | string {
   if (response.status !== 302) return `Unexpected response from SEGA servers (${response.status})`;
   const location = response.headers.get("Location");
   if (!location) return "No redirect URL received from token validation";
@@ -80,14 +69,14 @@ function gatewayCallback(config: GatewayConfig, response: Response): URL | strin
 }
 
 /** The callback for a gateway session cookie, null when the session has expired, or why the gateway gave neither. */
-async function resumeGatewaySession(config: GatewayConfig, clal: string, signal?: AbortSignal): Promise<URL | string | null> {
+async function resumeGatewaySession(config: SiteRef, clal: string, signal?: AbortSignal): Promise<URL | string | null> {
   const response = await gatewayRequest(SEGA_AIME_GATEWAY.loginUrl(config.game, config.region), { headers: { Cookie: `clal=${clal}` } }, signal);
   await response.body?.cancel();
   // An expired session gets the login form again.
   return response.status === 200 ? null : gatewayCallback(config, response);
 }
 
-async function aimeGatewayLogin(config: GatewayConfig, credentials: SegaToken, log: Logger, signal?: AbortSignal): Promise<LoginOutcome> {
+async function aimeGatewayLogin(config: SiteRef, credentials: SegaToken, log: Logger, signal?: AbortSignal): Promise<LoginOutcome> {
   let stepType = "gateway";
   try {
     let callback: URL;

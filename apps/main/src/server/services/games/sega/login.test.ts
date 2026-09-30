@@ -7,15 +7,12 @@ vi.mock("../tokens", () => ({ updateToken: mocks.update, deleteToken: mocks.remo
 
 import { SEGA_AIME_GATEWAY } from "@/lib/games/sites";
 import { isSegaToken, parseToken, type SegaToken } from "@/lib/games/token-format";
-import { openSegaSession, type SegaLoginConfig } from "./login";
+import { openSegaSession } from "./login";
 
-const gateway = { game: "chunithm", region: "intl", kind: "aime-gateway" } as const satisfies SegaLoginConfig;
-const cardPath = {
-  game: "maimai", region: "jp", kind: "sega-id-site", entryPath: "", formToken: "cookie:_t", cardSelection: { method: "GET", path: "aimeList/submit/?idx=0" },
-} as const satisfies SegaLoginConfig;
-const cardForm = {
-  game: "chunithm", region: "jp", kind: "sega-id-site", entryPath: "/", formToken: "input:token", cardSelection: { method: "POST" },
-} as const satisfies SegaLoginConfig;
+// Each site signs in the way its definition says: the gateway, a SEGA ID form with a card path, or one with a card form.
+const gateway = ["chunithm", "intl"] as const;
+const cardPath = ["maimai", "jp"] as const;
+const cardForm = ["chunithm", "jp"] as const;
 
 beforeEach(() => {
   vi.resetAllMocks();
@@ -50,13 +47,13 @@ function sent(call: unknown[], header: string) {
 describe("credential policy", () => {
   it("deletes a gateway cookie the gateway asks to sign in again", async () => {
     mocks.fetch.mockResolvedValueOnce(page("<form>Login</form>"));
-    await expect(openSegaSession(gateway, "player", sega("cookie://clal=expired"))).rejects.toThrow("Token has expired");
+    await expect(openSegaSession(...gateway, "player", sega("cookie://clal=expired"))).rejects.toThrow("Token has expired");
     expect(mocks.remove).toHaveBeenCalledExactlyOnceWith("chunithm", "player", "intl");
   });
 
   it("keeps a token when the request fails in transport", async () => {
     mocks.fetch.mockRejectedValueOnce(new TypeError("fetch failed"));
-    await expect(openSegaSession(gateway, "player", sega("cookie://clal=saved"))).rejects.toThrow("SEGA service request failed during gateway");
+    await expect(openSegaSession(...gateway, "player", sega("cookie://clal=saved"))).rejects.toThrow("SEGA service request failed during gateway");
     expect(mocks.remove).not.toHaveBeenCalled();
     expect(mocks.warn).toHaveBeenCalledWith(expect.objectContaining({ stepType: "gateway", err: expect.any(TypeError) }), "SEGA login failed");
   });
@@ -65,7 +62,7 @@ describe("credential policy", () => {
     mocks.fetch
       .mockResolvedValueOnce(page("<form>Login</form>", "JSESSIONID=gateway; Path=/"))
       .mockResolvedValueOnce(page("<form>Wrong password</form>"));
-    await expect(openSegaSession(gateway, "player", sega("account://name:://wrong"))).rejects.toThrow("Login failed. Please check your username and password.");
+    await expect(openSegaSession(...gateway, "player", sega("account://name:://wrong"))).rejects.toThrow("Login failed. Please check your username and password.");
     expect(mocks.remove).toHaveBeenCalledExactlyOnceWith("chunithm", "player", "intl");
     expect(mocks.update).not.toHaveBeenCalled();
   });
@@ -74,7 +71,7 @@ describe("credential policy", () => {
     mocks.fetch
       .mockResolvedValueOnce(page("<form>Login</form>", "JSESSIONID=gateway; Path=/"))
       .mockResolvedValueOnce(new Response("Unavailable", { status: 503 }));
-    await expect(openSegaSession(gateway, "player", sega("account://name:://password"))).rejects.toThrow("Unexpected response from SEGA servers (503)");
+    await expect(openSegaSession(...gateway, "player", sega("account://name:://password"))).rejects.toThrow("Unexpected response from SEGA servers (503)");
     expect(mocks.remove).not.toHaveBeenCalled();
   });
 
@@ -82,7 +79,7 @@ describe("credential policy", () => {
     mocks.fetch
       .mockResolvedValueOnce(page('<input name="token" value="login-form">', "PHPSESSID=initial; Path=/"))
       .mockResolvedValueOnce(redirect("https://new.chunithm-net.com/"));
-    await expect(openSegaSession(cardForm, "player", sega("account://name:://wrong"))).rejects.toThrow("Login failed");
+    await expect(openSegaSession(...cardForm, "player", sega("account://name:://wrong"))).rejects.toThrow("Login failed");
     expect(mocks.remove).toHaveBeenCalledExactlyOnceWith("chunithm", "player", "jp");
   });
 
@@ -90,19 +87,29 @@ describe("credential policy", () => {
     mocks.fetch
       .mockResolvedValueOnce(page('<input name="token" value="login-form">', "PHPSESSID=initial; Path=/"))
       .mockResolvedValueOnce(new Response("Maintenance", { status: 503 }));
-    await expect(openSegaSession(cardForm, "player", sega("account://name:://password"))).rejects.toThrow("Unexpected response from SEGA servers (503)");
+    await expect(openSegaSession(...cardForm, "player", sega("account://name:://password"))).rejects.toThrow("Unexpected response from SEGA servers (503)");
     expect(mocks.remove).not.toHaveBeenCalled();
   });
 
   it("deletes a gateway cookie given to a SEGA ID sign-in form without asking SEGA", async () => {
-    await expect(openSegaSession(cardForm, "player", sega("cookie://clal=existing"))).rejects.toThrow("Cookie tokens are not supported in this region");
-    expect(mocks.remove).toHaveBeenCalledExactlyOnceWith(cardForm.game, "player", cardForm.region);
+    await expect(openSegaSession(...cardForm, "player", sega("cookie://clal=existing"))).rejects.toThrow("Cookie tokens are not supported in this region");
+    expect(mocks.remove).toHaveBeenCalledExactlyOnceWith("chunithm", "player", "jp");
     expect(mocks.fetch).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    { game: "chunithm", region: "cn", error: { code: "UNSUPPORTED_REGION" } },
+    { game: "maimai", region: "cn", error: { message: "maimai DX cn does not sign in with SEGA tokens." } },
+  ] as const)("refuses $game $region, which takes no SEGA token, without asking SEGA or deleting it", async ({ game, region, error }) => {
+    await expect(openSegaSession(game, region, "player", sega("account://name:://password"))).rejects.toMatchObject(error);
+    expect(mocks.remove).not.toHaveBeenCalled();
+    expect(mocks.fetch).not.toHaveBeenCalled();
+    expect(mocks.agentFetch).not.toHaveBeenCalled();
   });
 
   it("does not delete anything without a user", async () => {
     mocks.fetch.mockResolvedValueOnce(page("<form>Login</form>"));
-    await expect(openSegaSession(gateway, null, sega("cookie://clal=expired"))).rejects.toThrow("Token has expired");
+    await expect(openSegaSession(...gateway, null, sega("cookie://clal=expired"))).rejects.toThrow("Token has expired");
     expect(mocks.remove).not.toHaveBeenCalled();
   });
 
@@ -114,7 +121,7 @@ describe("credential policy", () => {
         init.signal!.addEventListener("abort", () => controller.error(init.signal!.reason), { once: true });
       },
     }), { headers: { "Set-Cookie": "PHPSESSID=test" } }));
-    const pending = openSegaSession(cardForm, "player", sega("account://name:://password"));
+    const pending = openSegaSession(...cardForm, "player", sega("account://name:://password"));
     await vi.waitFor(() => expect(mocks.fetch).toHaveBeenCalledOnce());
     deadline.abort(new DOMException("Request deadline exceeded", "TimeoutError"));
     await expect(pending).rejects.toThrow("SEGA service request timed out during entry");
@@ -127,7 +134,7 @@ describe("credential policy", () => {
     mocks.fetch.mockImplementationOnce((_url, init: RequestInit) => new Promise((_resolve, reject) => {
       init.signal!.addEventListener("abort", () => reject(init.signal!.reason), { once: true });
     }));
-    const pending = openSegaSession(cardForm, "player", sega("account://name:://password"), operation.signal);
+    const pending = openSegaSession(...cardForm, "player", sega("account://name:://password"), operation.signal);
     const timedOut = new Error("Fetch operation timed out after 2 minutes");
     operation.abort(timedOut);
     await expect(pending).rejects.toBe(timedOut);
@@ -142,7 +149,7 @@ describe("SEGA Aime gateway", () => {
       .mockResolvedValueOnce(redirect("https://chunithm-net-eng.com/mobile/?ssid=exchange", "clal=renewed; Path=/"))
       .mockResolvedValueOnce(redirect("/mobile/home/", "userId=game-session; Path=/mobile/"))
       .mockResolvedValueOnce(page("Home", "_t=game-token; Path=/mobile/"));
-    expect(await openSegaSession(gateway, "player", sega("account://name:://p@ss"))).toEqual({ cookies: "userId=game-session; _t=game-token" });
+    expect(await openSegaSession(...gateway, "player", sega("account://name:://p@ss"))).toEqual({ cookies: "userId=game-session; _t=game-token" });
 
     const [loginUrl, entry] = mocks.fetch.mock.calls[0];
     expect(loginUrl).toBe(SEGA_AIME_GATEWAY.loginUrl("chunithm", "intl"));
@@ -164,7 +171,7 @@ describe("SEGA Aime gateway", () => {
       .mockResolvedValueOnce(page("<form></form>", "JSESSIONID=gateway; Path=/"))
       .mockResolvedValueOnce(redirect("https://chunithm-net-eng.com/mobile/?ssid=exchange", "clal=renewed; Path=/"))
       .mockResolvedValueOnce(page("Home", "userId=game-session; Path=/mobile/"));
-    await openSegaSession(gateway, "player", sega("account://name:://password"));
+    await openSegaSession(...gateway, "player", sega("account://name:://password"));
     expect(new URLSearchParams(mocks.fetch.mock.calls[1][1].body).get("retention")).toBe("1");
   });
 
@@ -172,7 +179,7 @@ describe("SEGA Aime gateway", () => {
     mocks.fetch
       .mockResolvedValueOnce(redirect("https://chunithm-net-eng.com/mobile/?ssid=exchange"))
       .mockResolvedValueOnce(page("Home", "userId=game-session; Path=/mobile/"));
-    expect(await openSegaSession(gateway, "player", sega("account://saved:://name:://password"))).toEqual({ cookies: "userId=game-session" });
+    expect(await openSegaSession(...gateway, "player", sega("account://saved:://name:://password"))).toEqual({ cookies: "userId=game-session" });
     expect(sent(mocks.fetch.mock.calls[0], "Cookie")).toBe("clal=saved");
     expect(mocks.fetch).toHaveBeenCalledTimes(2);
     expect(mocks.update).not.toHaveBeenCalled();
@@ -184,17 +191,17 @@ describe("SEGA Aime gateway", () => {
       .mockResolvedValueOnce(page("<form></form>", "JSESSIONID=gateway; Path=/"))
       .mockResolvedValueOnce(redirect("https://chunithm-net-eng.com/mobile/?ssid=exchange", "clal=renewed; Path=/"))
       .mockResolvedValueOnce(page("Home", "userId=game-session; Path=/mobile/"));
-    await openSegaSession(gateway, "player", sega("account://expired:://name:://password"));
+    await openSegaSession(...gateway, "player", sega("account://expired:://name:://password"));
     expect(mocks.update).toHaveBeenCalledExactlyOnceWith("chunithm", "player", "intl", "account://renewed:://name:://password");
     expect(mocks.remove).not.toHaveBeenCalled();
   });
 
   it.each([
-    [gateway, "https://maimaidx-eng.com/maimai-mobile/"],
-    [{ game: "maimai", region: "intl", kind: "aime-gateway" } as const, "https://maimaidx.jp/maimai-mobile/"],
-  ] as const)("refuses a callback to another game's or region's site before sending a request there: %#", async (config, callback) => {
+    { game: "chunithm", region: "intl", callback: "https://maimaidx-eng.com/maimai-mobile/" },
+    { game: "maimai", region: "intl", callback: "https://maimaidx.jp/maimai-mobile/" },
+  ] as const)("refuses a $game $region callback to $callback before sending a request there", async ({ game, region, callback }) => {
     mocks.fetch.mockResolvedValueOnce(redirect(callback));
-    await expect(openSegaSession(config, "player", sega("cookie://clal=existing"))).rejects.toThrow("SEGA service request failed during gateway");
+    await expect(openSegaSession(game, region, "player", sega("cookie://clal=existing"))).rejects.toThrow("SEGA service request failed during gateway");
     expect(mocks.fetch).toHaveBeenCalledOnce();
     expect(mocks.agentFetch).not.toHaveBeenCalled();
     expect(mocks.remove).not.toHaveBeenCalled();
@@ -208,7 +215,7 @@ describe("SEGA ID site", () => {
       .mockResolvedValueOnce(redirect("https://maimaidx.jp/maimai-mobile/aimeList/", "session=signed-in; Path=/maimai-mobile/"))
       .mockResolvedValueOnce(redirect("/maimai-mobile/home/", "userId=selected; Path=/maimai-mobile/"))
       .mockResolvedValueOnce(page("Home"));
-    expect(await openSegaSession(cardPath, "player", sega("account://name:://password"))).toEqual({ cookies: "_t=form-token; session=signed-in; userId=selected" });
+    expect(await openSegaSession(...cardPath, "player", sega("account://name:://password"))).toEqual({ cookies: "_t=form-token; session=signed-in; userId=selected" });
     expect(mocks.agentFetch.mock.calls.map(([url]) => String(url))).toEqual([
       "https://maimaidx.jp/maimai-mobile/",
       "https://maimaidx.jp/maimai-mobile/submit/",
@@ -229,7 +236,7 @@ describe("SEGA ID site", () => {
       .mockResolvedValueOnce(page('<form action="/chuni-mobile/html/mobile/aimeList/submit/"><input type="hidden" name="idx" value="3"><input type="hidden" name="token" value="card-form"></form>', "_t=card-cookie; Path=/"))
       .mockResolvedValueOnce(redirect("/chuni-mobile/html/mobile/home/", "userId=selected; Path=/"))
       .mockResolvedValueOnce(page("Home", "_t=home-cookie; Path=/"));
-    expect(await openSegaSession(cardForm, "player", sega("account://name:://p@ss"))).toEqual({ cookies: "PHPSESSID=authenticated; _t=home-cookie; userId=selected" });
+    expect(await openSegaSession(...cardForm, "player", sega("account://name:://p@ss"))).toEqual({ cookies: "PHPSESSID=authenticated; _t=home-cookie; userId=selected" });
     expect(mocks.fetch.mock.calls.map(([url]) => String(url))).toEqual([
       "https://new.chunithm-net.com/",
       "https://new.chunithm-net.com/chuni-mobile/html/mobile/submit/",
@@ -254,7 +261,7 @@ describe("SEGA ID site", () => {
       .mockResolvedValueOnce(page('<input name="token" value="login-form">', "PHPSESSID=initial; Path=/"))
       .mockResolvedValueOnce(redirect("/chuni-mobile/html/mobile/aimeList/", "PHPSESSID=authenticated; Path=/"))
       .mockResolvedValueOnce(page("<p>No cards</p>"));
-    await expect(openSegaSession(cardForm, "player", sega("account://name:://password"))).rejects.toThrow("SEGA service request failed during card-list");
+    await expect(openSegaSession(...cardForm, "player", sega("account://name:://password"))).rejects.toThrow("SEGA service request failed during card-list");
     expect(mocks.remove).not.toHaveBeenCalled();
   });
 });

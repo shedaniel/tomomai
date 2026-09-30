@@ -1,34 +1,15 @@
 import "server-only";
-import { formatLxns, type LxnsToken, type SegaToken } from "@/lib/games/token-format";
+import { formatLxns, type LxnsToken } from "@/lib/games/token-format";
 import type { Region } from "@/lib/types";
 import { getLogger } from "@/lib/request-logger";
-import type { GameSiteSession } from "../sega/http";
-import { openSegaSession, type SegaLoginConfig } from "../sega/login";
+import { openSegaSession } from "../sega/login";
 import { acceptSegaToken, refuseToken } from "../token-policy";
 import { saveToken } from "../tokens";
-
-export const maimaiSegaLogin = {
-  intl: { game: "maimai", region: "intl", kind: "aime-gateway" },
-  jp: {
-    game: "maimai",
-    region: "jp",
-    kind: "sega-id-site",
-    entryPath: "",
-    formToken: "cookie:_t",
-    cardSelection: { method: "GET", path: "aimeList/submit/?idx=0" },
-  },
-} satisfies Record<Exclude<Region, "cn">, SegaLoginConfig>;
-
-/** Opens a maimai DX NET session with a SEGA token. China signs in through its own providers instead. */
-export async function openMaimaiSegaSession(userId: string | null, region: Region, token: SegaToken, signal?: AbortSignal): Promise<GameSiteSession> {
-  if (region === "cn") throw new Error("maimai DX China does not sign in with SEGA tokens.");
-  return openSegaSession(maimaiSegaLogin[region], userId, token, signal);
-}
 
 /** A maimai DX NET session for the catalog, which signs in without a player. */
 export async function loginAndGetCookies(region: Region, token: string): Promise<string> {
   const accepted = await acceptSegaToken("maimai", null, region, token);
-  return (await openMaimaiSegaSession(null, region, accepted)).cookies;
+  return (await openSegaSession("maimai", region, null, accepted)).cookies;
 }
 
 /** The token's lxns access token, refreshed and saved when it is about to expire. */

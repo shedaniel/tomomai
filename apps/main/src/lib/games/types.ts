@@ -225,12 +225,24 @@ export type GameBrand = {
   communityInviteUrl?: string;
 };
 
+/** How a site's own form signs in SEGA ID credentials. Paths resolve against the mobile root. */
+export type SegaIdSiteForm = {
+  entryPath: string;
+  /** Where the sign-in form keeps its CSRF token. */
+  formToken: "cookie:_t" | "input:token";
+  /** GET opens a fixed card path. POST submits the card list's own form. */
+  cardSelection: { method: "GET"; path: string } | { method: "POST" };
+};
+
+/** A site that takes SEGA tokens signs in through the gateway (`aime`) or through its own form (`segaId`). */
 export type GameSite = {
   origin: string;
   /** Path of the NET's mobile pages. Site paths resolve against it. */
   mobileRoot: string;
   /** The site signs in through the SEGA Aime gateway with these parameters. */
   aime?: { siteId: string; backUrl: string };
+  /** The site signs in SEGA ID credentials on its own form. */
+  segaId?: SegaIdSiteForm;
   /** Skip certificate verification for a host whose chain Node cannot verify. */
   legacyTls?: true;
   maintenance: {

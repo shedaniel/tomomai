@@ -7,10 +7,9 @@ vi.mock("@/lib/request-logger", () => ({ getLogger: () => ({
 }) }));
 vi.mock("../tokens", () => ({ updateToken: mocks.update, deleteToken: mocks.remove, saveToken: mocks.save }));
 
-import { getGame } from "@/lib/games/registry";
-import { getGameSite } from "@/lib/games/sites";
 import type { LxnsToken } from "@/lib/games/token-format";
-import { loginAndGetCookies, lxnsAccessToken, maimaiSegaLogin, openMaimaiSegaSession } from "./login";
+import { openSegaSession } from "../sega/login";
+import { loginAndGetCookies, lxnsAccessToken } from "./login";
 
 beforeEach(() => {
   vi.resetAllMocks();
@@ -21,24 +20,12 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllGlobals());
 
 describe("maimai SEGA login", () => {
-  it("configures a SEGA login for each region that offers one, through the gateway where the site has one", () => {
-    const { loginMethods } = getGame("maimai");
-    const segaRegions = Object.entries(loginMethods)
-      .filter(([, methods]) => methods.includes("sega-account") || methods.includes("sega-cookie"))
-      .map(([region]) => region);
-    expect(Object.keys(maimaiSegaLogin).sort()).toEqual(segaRegions.sort());
-    for (const config of Object.values(maimaiSegaLogin)) {
-      expect(config.kind === "aime-gateway").toBe(getGameSite("maimai", config.region)?.aime !== undefined);
-      if (loginMethods[config.region]?.includes("sega-cookie")) expect(config.kind).toBe("aime-gateway");
-    }
-  });
-
   it("signs International players in through the maimai gateway site and follows the game callback", async () => {
     mocks.fetch
       .mockResolvedValueOnce(new Response(null, { status: 302, headers: { Location: "https://maimaidx-eng.com/maimai-mobile/?sid=callback" } }))
       .mockResolvedValueOnce(new Response(null, { status: 302, headers: { Location: "/maimai-mobile/home/", "Set-Cookie": "userId=player; Path=/maimai-mobile/" } }))
       .mockResolvedValueOnce(new Response("Home", { headers: { "Set-Cookie": "_t=home; Path=/maimai-mobile/" } }));
-    expect(await openMaimaiSegaSession("player", "intl", { provider: "sega-cookie", clal: "existing" })).toEqual({ cookies: "userId=player; _t=home" });
+    expect(await openSegaSession("maimai", "intl", "player", { provider: "sega-cookie", clal: "existing" })).toEqual({ cookies: "userId=player; _t=home" });
     const [loginUrl] = mocks.fetch.mock.calls[0];
     expect(Object.fromEntries(new URL(loginUrl).searchParams)).toEqual({
       site_id: "maimaidxex", redirect_url: "https://maimaidx-eng.com/maimai-mobile/", back_url: "https://maimai.sega.com/",
@@ -70,8 +57,8 @@ describe("maimai SEGA login", () => {
 
   it("refuses a token for maimai DX China without deleting anything for the catalog", async () => {
     await expect(loginAndGetCookies("cn", "cn-cookies://userId=cn-player")).rejects.toThrow("Invalid token format");
-    await expect(openMaimaiSegaSession("player", "cn", { provider: "sega-account", username: "name", password: "password" }))
-      .rejects.toThrow("does not sign in with SEGA tokens");
+    await expect(openSegaSession("maimai", "cn", "player", { provider: "sega-account", username: "name", password: "password" }))
+      .rejects.toThrow("maimai DX cn does not sign in with SEGA tokens");
     expect(mocks.remove).not.toHaveBeenCalled();
     expect(mocks.legacyTls).not.toHaveBeenCalled();
     expect(mocks.fetch).not.toHaveBeenCalled();

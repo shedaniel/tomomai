@@ -4,7 +4,7 @@ import type { Region } from "./ids";
 import { getSupportedRegions } from "./regions";
 import { getGame } from "./registry";
 import { getGameSite } from "./sites";
-import { CANONICAL_GAME_IDS, GAME_CAPABILITIES, type LoginMethod } from "./types";
+import { CANONICAL_GAME_IDS, GAME_CAPABILITIES, type GameSite, type LoginMethod } from "./types";
 
 describe("game definitions", () => {
   it.each(CANONICAL_GAME_IDS)("registers %s under its own id", game => {
@@ -58,6 +58,15 @@ describe("game definitions", () => {
       expect(site).toBeDefined();
       expect(methods.length).toBeGreaterThan(0);
       if (methods.includes("sega-cookie")) expect(site?.aime).toBeDefined();
+    }
+  });
+
+  it.each(CANONICAL_GAME_IDS)("gives each %s site that takes SEGA tokens exactly one way to sign them in", game => {
+    const { loginMethods, sites } = getGame(game);
+    for (const [region, site] of Object.entries(sites) as [Region, GameSite][]) {
+      const methods = loginMethods[region] ?? [];
+      const takesSegaTokens = methods.includes("sega-account") || methods.includes("sega-cookie");
+      expect([site.aime, site.segaId].filter(Boolean).length, `${game} ${region}`).toBe(takesSegaTokens ? 1 : 0);
     }
   });
 });
