@@ -1,15 +1,17 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const proxy = await vi.hoisted(async () => (await import("@/test/pg-proxy")).createProxyDb());
+const { cache } = vi.hoisted(() => ({ cache: vi.fn() }));
 vi.mock("@/lib/db", () => ({ db: proxy.db }));
-vi.mock("next/cache", () => ({ unstable_cache: (fn: () => unknown) => fn }));
+vi.mock("next/cache", () => ({ unstable_cache: (fn: () => unknown, key: unknown, options: unknown) => { cache(key, options); return fn; } }));
 vi.mock("@/lib/song-slug", async importOriginal => ({
   ...await importOriginal<typeof import("@/lib/song-slug")>(),
   getSongSlugs: async (songs: object[]) => songs.map(song => ({ ...song, slug: "same-title-artist", aliases: [] })),
 }));
+import { catalogTags } from "@/lib/cache-tags";
 import { queryAllUniqueSongs } from "./songs";
 
-beforeEach(() => proxy.reset());
+beforeEach(() => { proxy.reset(); cache.mockReset(); });
 
 function chart(overrides: Record<string, unknown> = {}) {
   return {
@@ -28,10 +30,13 @@ describe("common catalog view", () => {
     expect(song.difficulties).toEqual([expect.objectContaining({ difficulty, levelPrecise: 140 })]);
   });
 
-  it("lists only the requested game's charts", async () => {
+  it("lists only the requested game's charts, cached under that game's key and catalog tag", async () => {
     proxy.answer(({ params }) => params.includes("chunithm") ? [chart()] : []);
     await expect(queryAllUniqueSongs("chunithm")).resolves.toHaveLength(1);
     await expect(queryAllUniqueSongs("maimai")).resolves.toEqual([]);
+    expect(cache.mock.calls).toEqual((["chunithm", "maimai"] as const).map(game => [
+      expect.arrayContaining([game]), expect.objectContaining({ tags: [catalogTags(game).uniqueSongs] }),
+    ]));
   });
 
   it("keeps disambiguated parents separate while preserving the original slug", async () => {
