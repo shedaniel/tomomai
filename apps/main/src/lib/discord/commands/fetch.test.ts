@@ -6,10 +6,7 @@ const mocks = vi.hoisted(() => ({
   deferred: vi.fn(),
   log: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }));
-vi.mock("@/lib/db", async () => {
-  const { drizzle } = await import("drizzle-orm/pg-proxy");
-  return { db: drizzle(async () => ({ rows: [["user-1", "Player", "player", "intl"]] })) };
-});
+vi.mock("../user", () => ({ findDiscordUser: async () => ({ id: "user-1", name: "Player", username: "player", region: "intl" }) }));
 vi.mock("@vercel/functions", () => ({ waitUntil: mocks.deferred }));
 vi.mock("@/lib/request-logger", () => ({ getLogger: () => mocks.log }));
 vi.mock("@/server/services/games/fetch-sessions", () => ({ startScoreFetch: mocks.start, getScoreFetchStatus: vi.fn() }));

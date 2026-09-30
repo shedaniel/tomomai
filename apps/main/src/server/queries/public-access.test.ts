@@ -1,23 +1,25 @@
 import { beforeEach, expect, it, vi } from "vitest";
 
-const db = vi.hoisted(() => ({ statements: [] as { sql: string; params: unknown[] }[], rows: [] as unknown[][] }));
-vi.mock("@/lib/db", async () => {
-  const { drizzle } = await import("drizzle-orm/pg-proxy");
-  return { db: drizzle(async (sql, params) => { db.statements.push({ sql, params }); return { rows: db.rows }; }) };
-});
+const proxy = await vi.hoisted(async () => (await import("@/test/pg-proxy")).createProxyDb());
+vi.mock("@/lib/db", () => ({ db: proxy.db }));
 vi.mock("@/server/services/games/registry", () => ({ GAME_SERVER_MODULES: { maimai: {}, chunithm: {} } }));
 
 import { resolvePublicUserByUsername } from "./public-access";
 
-beforeEach(() => {
-  db.statements = [];
-  db.rows = [];
-});
+const published = {
+  id: "owner", name: "Owner", publishProfile: true, profileDescription: null, profileMainRegion: "jp", profileShowAllScores: true,
+  profileShowScoreDetails: true, profileShowPlates: true, profileShowPlayCounts: true, profileShowEvents: true, profileShowInSearch: true,
+};
+
+beforeEach(() => proxy.reset());
 
 it("resolves a published profile with its main region for the requested game", async () => {
-  db.rows = [["owner", "Owner", true, null, "jp", true, true, true, true, true, true]];
+  proxy.answer(({ params }) => params.includes("owner") && params.includes("chunithm") ? [published] : []);
   await expect(resolvePublicUserByUsername("chunithm", "owner")).resolves.toMatchObject({ id: "owner", profileMainRegion: "jp" });
-  const [{ sql, params }] = db.statements;
-  expect(sql).toContain('coalesce((select "user_game_preferences"."profileMainRegion" from "user_game_preferences" where "user_game_preferences"."userId" = "user"."id" and "user_game_preferences"."game" = $1), "profileMainRegion")');
-  expect(params).toEqual(["chunithm", "owner", 1]);
+  await expect(resolvePublicUserByUsername("chunithm", "stranger")).rejects.toMatchObject({ code: "NOT_FOUND" });
+});
+
+it.each(["publishProfile", "profileShowInSearch"])("hides a profile without %s", async flag => {
+  proxy.respond([{ ...published, [flag]: false }]);
+  await expect(resolvePublicUserByUsername("chunithm", "owner")).rejects.toMatchObject({ code: "NOT_FOUND" });
 });

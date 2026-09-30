@@ -1,21 +1,13 @@
 import { beforeEach, expect, it, vi } from "vitest";
 import type { GameFetchResult, NormalizedScore } from "./types";
 
+const proxy = await vi.hoisted(async () => (await import("@/test/pg-proxy")).createProxyDb());
 const state = vi.hoisted(() => ({
-  statements: [] as { sql: string; params: unknown[] }[],
   resolveCharts: vi.fn(),
   writeScores: vi.fn(),
   log: { warn: vi.fn() },
 }));
-vi.mock("@/lib/db", async () => {
-  const { drizzle } = await import("drizzle-orm/pg-proxy");
-  const connection = drizzle(async (sql, params) => {
-    state.statements.push({ sql, params });
-    return { rows: sql.startsWith('insert into "user_snapshots"') ? [[1]] : [] };
-  });
-  // Driver responses are fixtures; these tests assert the writes, not database transaction semantics.
-  return { db: Object.assign(connection, { transaction: (work: (tx: typeof connection) => Promise<unknown>) => work(connection) }) };
-});
+vi.mock("@/lib/db", () => ({ db: proxy.db }));
 vi.mock("./score-storage", async importOriginal => ({
   ...await importOriginal<typeof import("./score-storage")>(),
   buildChartResolution: state.resolveCharts,
@@ -38,7 +30,8 @@ function score(chart: NormalizedScore["chart"], scoreValue = 0): NormalizedScore
 
 beforeEach(() => {
   vi.clearAllMocks();
-  state.statements.length = 0;
+  proxy.reset();
+  proxy.answer(({ sql }) => sql.startsWith('insert into "user_snapshots"') ? [{ id: 1 }] : undefined);
   state.resolveCharts.mockResolvedValue({ chartResolution: new Map(), songsById: new Map() });
   state.writeScores.mockResolvedValue(null);
 });
@@ -52,8 +45,7 @@ it("persists the captured version and zero scores, and returns the snapshot's co
   expect(state.writeScores).toHaveBeenCalledWith(expect.anything(), { game: "maimai", snapshotId: 1, gameVersion: 14, scores: [
     { song, values: { songId: BigInt(7), scoreValue: 0, secondaryScore: 0, comboStatus: 0, syncStatus: 0, clearStatus: 0 } },
   ] });
-  const snapshotWrite = state.statements.find(query => query.sql.startsWith('insert into "user_snapshots"'))!;
-  expect(snapshotWrite.params).toContain(14);
+  expect(proxy.inserted("user_snapshots")).toEqual([expect.objectContaining({ game: "maimai", gameVersion: 14 })]);
   expect(persisted).toEqual({
     context: { game: "maimai", userId: "same-user", region: "jp", snapshotId: 1, gameVersion: 14, chartResolution },
     notFoundScores: [],
@@ -72,7 +64,7 @@ it.each([
     { count: 1, songKeys: [chartKey(chart)], game, region: "jp", version: 9 },
     "Some scores have no unambiguous catalog match",
   );
-  expect(state.statements.some(query => query.sql.includes('"fetch_sessions"'))).toBe(false);
+  expect(proxy.queries.some(query => query.table === "fetch_sessions")).toBe(false);
 });
 
 it("persists events against the new snapshot and game", async () => {
@@ -81,8 +73,7 @@ it("persists events against the new snapshot and game", async () => {
     imageUrl: "https://example.com/area.png", eventPeriodStart: null, eventPeriodEnd: null,
   } as const;
   await persistFetchResult({ ...persist, fetched: { ...fetched, events: [event] } });
-  const eventWrite = state.statements.find(query => query.sql.startsWith('insert into "user_events"'))!;
-  expect(eventWrite.params).toEqual(expect.arrayContaining(["Progress", "area", 10, "in_progress", "https://example.com/area.png", "maimai", 1]));
+  expect(proxy.inserted("user_events")).toEqual([{ ...event, snapshotId: 1, game: "maimai" }]);
 });
 
 it("persists recent plays with their track and maximum secondary score", async () => {
@@ -90,14 +81,14 @@ it("persists recent plays with their track and maximum secondary score", async (
   state.resolveCharts.mockResolvedValue({ chartResolution: new Map([[chartKey(chart), BigInt(7)]]), songsById: new Map() });
   const recent = { ...score(chart, 1005000), secondaryScore: 2100, playedAt: new Date("2026-09-01T00:00:00Z"), track: 3, maxSecondaryScore: 2400 };
   await persistFetchResult({ ...persist, fetched: { ...fetched, recents: [recent] } });
-  const recentWrite = state.statements.find(query => query.sql.startsWith('insert into "user_recent_songs"'))!;
-  expect(recentWrite.sql).toContain('"maxSecondaryScore"');
-  expect(recentWrite.params).toEqual(expect.arrayContaining([BigInt(7), 1005000, 2100, 2400, 3]));
+  expect(proxy.inserted("user_recent_songs")).toEqual([expect.objectContaining({
+    game: "maimai", userId: "same-user", songId: BigInt(7), scoreValue: 1005000, secondaryScore: 2100, maxSecondaryScore: 2400, track: 3,
+  })]);
 });
 
 it("rejects an expired persistence deadline before writing", async () => {
   await expect(persistFetchResult({ ...persist, deadline: Date.now() - 1 })).rejects.toThrow("timed out");
-  expect(state.statements).toEqual([]);
+  expect(proxy.queries).toEqual([]);
 });
 
 it("persists CHUNITHM charts only in their captured game, region and version", async () => {
@@ -116,6 +107,5 @@ it("persists CHUNITHM charts only in their captured game, region and version", a
     { song, values: { songId: BigInt(7), scoreValue: 1009000, secondaryScore: 0, comboStatus: 1, syncStatus: 0, clearStatus: 1 } },
   ] });
   expect(notFoundScores).toHaveLength(3);
-  const snapshot = state.statements.find(query => query.sql.startsWith('insert into "user_snapshots"'))!;
-  expect(snapshot.params).toEqual(expect.arrayContaining(["chunithm", 9]));
+  expect(proxy.inserted("user_snapshots")).toEqual([expect.objectContaining({ game: "chunithm", region: "jp", gameVersion: 9 })]);
 });

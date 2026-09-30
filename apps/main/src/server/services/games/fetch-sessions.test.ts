@@ -1,12 +1,11 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
-import { getTableColumns } from "drizzle-orm";
-import { fetchSessions } from "@/lib/db/schema-pg";
 import type { Flags } from "@/lib/flags";
+import type { ProxyQuery, ProxyRow } from "@/test/pg-proxy";
 import type { NotFoundScore } from "@/lib/api/schemas";
 import type { GameFetchResult, PersistedSnapshotContext, ScoreSource } from "./types";
 
+const proxy = await vi.hoisted(async () => (await import("@/test/pg-proxy")).createProxyDb());
 const state = vi.hoisted(() => ({
-  statements: [] as { sql: string; params: unknown[] }[],
   fetch: vi.fn<ScoreSource["fetch"]>(),
   rejectStoredToken: vi.fn<NonNullable<ScoreSource["rejectStoredToken"]>>(),
   log: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), child() { return this; } },
@@ -14,24 +13,10 @@ const state = vi.hoisted(() => ({
   resolveFlags: vi.fn(),
   albumPreference: false as boolean | null,
   storedToken: "stored-token" as string | null,
-  pendingSessions: [] as unknown[][],
-  recentSessions: [] as unknown[][],
-  latestSession: [] as unknown[][],
+  pendingSessions: [] as ProxyRow[],
+  sessions: [] as ProxyRow[],
 }));
-vi.mock("@/lib/db", async () => {
-  const { drizzle } = await import("drizzle-orm/pg-proxy");
-  return { db: drizzle(async (sql, params) => {
-    state.statements.push({ sql, params });
-    if (sql.includes('from "user"')) return { rows: [[state.albumPreference]] };
-    if (sql.includes('from "user_tokens"')) return { rows: state.storedToken === null ? [] : [[`encrypted:${state.storedToken}`]] };
-    if (sql.startsWith('select "publicId"')) return { rows: state.latestSession };
-    if (sql.startsWith("select") && sql.includes('from "fetch_sessions"')) {
-      return { rows: sql.includes('"fetch_sessions"."status" = $') ? state.pendingSessions : state.recentSessions };
-    }
-    if (sql.startsWith('insert into "fetch_sessions"')) return { rows: [["1"]] };
-    return { rows: [] };
-  }) };
-});
+vi.mock("@/lib/db", () => ({ db: proxy.db }));
 vi.mock("./registry", () => ({ GAME_SERVER_MODULES: {
   maimai: { scores: { fetch: state.fetch, rejectStoredToken: state.rejectStoredToken } },
   chunithm: { scores: { fetch: state.fetch } },
@@ -59,18 +44,23 @@ const start = { userId: "same-user", game: "maimai" as const, region: "jp" as co
 const persisted: PersistedSnapshotContext = { game: "maimai", userId: "same-user", region: "jp", snapshotId: 1, gameVersion: 14, chartResolution: new Map() };
 const missing: NotFoundScore[] = [{ songName: "Missing", difficulty: 3, type: 0 }];
 
-function sessionUpdates() {
-  return state.statements.filter(query => query.sql.startsWith('update "fetch_sessions"'));
-}
-
 function sessionStatuses() {
-  return sessionUpdates().flatMap(query => query.params.filter(param => param === "completed" || param === "failed"));
+  return proxy.updated("fetch_sessions").map(update => update.values.status);
 }
 
 function sessionRow(startedSecondsAgo: number) {
   const startedAt = new Date(Date.now() - startedSecondsAgo * 1000).toISOString().replace("T", " ").slice(0, 19);
-  const values: Record<string, unknown> = { id: "9", publicId: "session", userId: "same-user", game: "maimai", region: "jp", status: "pending", startedAt };
-  return Object.keys(getTableColumns(fetchSessions)).map(column => values[column] ?? null);
+  return { id: "9", publicId: "session", userId: "same-user", game: "maimai", region: "jp", status: "pending", startedAt };
+}
+
+// The stored account, token and sessions. A read of pending sessions sees only those, any other session read the user's sessions.
+function answerStored({ sql, table, params }: ProxyQuery) {
+  const reading = sql.startsWith("select");
+  if (table === "user") return [{ fetchUseAlbums: state.albumPreference }];
+  if (table === "user_tokens" && reading) return state.storedToken === null ? [] : [{ token: `encrypted:${state.storedToken}` }];
+  if (table !== "fetch_sessions") return undefined;
+  if (sql.startsWith("insert")) return [{ id: "1" }];
+  if (reading) return params.includes("pending") ? state.pendingSessions : state.sessions;
 }
 
 async function refusal(input: Parameters<typeof startScoreFetch>[0]): Promise<FetchStartError> {
@@ -83,12 +73,12 @@ beforeEach(() => {
   vi.useFakeTimers();
   vi.setSystemTime(new Date("2026-09-27T12:00:00+09:00"));
   vi.clearAllMocks();
-  state.statements.length = 0;
+  proxy.reset();
+  proxy.answer(answerStored);
   state.albumPreference = false;
   state.storedToken = "stored-token";
   state.pendingSessions = [];
-  state.recentSessions = [];
-  state.latestSession = [];
+  state.sessions = [];
   state.fetch.mockResolvedValue({ result: fetched });
   state.rejectStoredToken.mockReturnValue(null);
   state.persist.mockResolvedValue({ context: persisted, notFoundScores: [] });
@@ -99,15 +89,9 @@ afterEach(() => { vi.useRealTimers(); vi.unstubAllEnvs(); });
 it("scopes session reads to the user, game and region and updates a session by its id alone", async () => {
   const started = await startScoreFetch(start);
   await started.backgroundWork;
-  const sessionReads = state.statements.filter(query => query.sql.includes('from "fetch_sessions"'));
-  expect(sessionReads).toHaveLength(2);
-  for (const query of sessionReads) {
-    for (const column of ["userId", "game", "region"]) expect(query.sql).toContain(`"fetch_sessions"."${column}" = $`);
-    expect(query.params.slice(0, 3)).toEqual(["same-user", "maimai", "jp"]);
-  }
-  const [completion] = sessionUpdates();
-  expect(completion.sql).toMatch(/where "fetch_sessions"\."id" = \$\d+$/);
-  expect(completion.params.at(-1)).toBe(BigInt(1));
+  const sessionReads = proxy.queries.filter(query => query.table === "fetch_sessions" && query.sql.startsWith("select"));
+  expect(sessionReads.map(query => query.params.slice(0, 3))).toEqual([["same-user", "maimai", "jp"], ["same-user", "maimai", "jp"]]);
+  expect(proxy.updated("fetch_sessions").map(update => update.where)).toEqual([[BigInt(1)]]);
 });
 
 it("resolves the user's flags when the caller does not pass them", async () => {
@@ -128,30 +112,31 @@ it("saves a newly provided token before refusing a fetch during maintenance", as
     message: "MAINTENANCE: Cannot fetch data during maintenance window (04:00 - 07:00 JST)",
     retryAfterSeconds: 3 * 60 * 60,
   });
-  expect(state.statements.map(query => query.sql.slice(0, 25))).toEqual(['insert into "user_tokens"']);
+  expect(proxy.queries.map(query => query.table)).toEqual(["user_tokens"]);
+  expect(proxy.inserted("user_tokens")).toEqual([expect.objectContaining({ userId: "same-user", game: "maimai", region: "jp", token: "encrypted:new-token" })]);
   expect(state.fetch).not.toHaveBeenCalled();
 });
 
 it.each([
   { code: "NO_TOKEN_FOUND", arrange: () => { state.storedToken = null; }, retryAfterSeconds: undefined },
   { code: "FETCH_IN_PROGRESS", arrange: () => { state.pendingSessions = [sessionRow(60)]; }, retryAfterSeconds: undefined },
-  { code: "RATE_LIMITED", arrange: () => { state.recentSessions = Array.from({ length: 5 }, () => sessionRow(4 * 60)); }, retryAfterSeconds: 60 },
+  { code: "RATE_LIMITED", arrange: () => { state.sessions = Array.from({ length: 5 }, () => sessionRow(4 * 60)); }, retryAfterSeconds: 60 },
 ])("refuses with $code before creating a session", async ({ code, arrange, retryAfterSeconds }) => {
   arrange();
   const error = await refusal({ ...start, token: undefined });
   expect(error.code).toBe(code);
   expect(error.message.startsWith(`${code}: `)).toBe(true);
   expect(error.retryAfterSeconds).toBe(retryAfterSeconds);
-  expect(state.statements.some(query => query.sql.startsWith('insert into "fetch_sessions"'))).toBe(false);
+  expect(proxy.inserted("fetch_sessions")).toEqual([]);
 });
 
 it("fails a session left pending past three minutes and admits the new fetch", async () => {
   state.pendingSessions = [sessionRow(4 * 60)];
   const started = await startScoreFetch(start);
   await started.backgroundWork;
-  const [sweep] = sessionUpdates();
-  expect(sweep.params).toEqual(expect.arrayContaining(["failed", "Fetch timed out after 3 minutes", BigInt(9)]));
-  expect(state.statements.some(query => query.sql.startsWith('insert into "fetch_sessions"'))).toBe(true);
+  const [sweep] = proxy.updated("fetch_sessions");
+  expect(sweep).toMatchObject({ values: { status: "failed", errorMessage: "Fetch timed out after 3 minutes" }, where: [BigInt(9)] });
+  expect(proxy.inserted("fetch_sessions")).toHaveLength(1);
 });
 
 it("asks for an album preference only in regions where the game fetches albums", async () => {
@@ -168,7 +153,7 @@ it("refuses a stored token the score source rejects before creating a fetch sess
   state.rejectStoredToken.mockReturnValueOnce(refusal);
   await expect(startScoreFetch({ ...start, token: undefined })).rejects.toBe(refusal);
   expect(state.rejectStoredToken).toHaveBeenCalledWith("stored-token");
-  expect(state.statements.some(query => query.sql.startsWith("insert"))).toBe(false);
+  expect(proxy.queries.every(query => query.sql.startsWith("select"))).toBe(true);
   expect(state.fetch).not.toHaveBeenCalled();
 });
 
@@ -186,17 +171,15 @@ it("persists the fetched result for the session's game, region and version", asy
   expect(state.persist).toHaveBeenCalledExactlyOnceWith({
     game: "maimai", region: "jp", userId: "same-user", gameVersion, fetched, deadline: expect.any(Number),
   });
-  expect(sessionStatuses()).toEqual(["completed"]);
-  expect(sessionUpdates()[0].sql).not.toContain('"extraData"');
+  expect(proxy.updated("fetch_sessions").map(update => update.values)).toEqual([{ status: "completed", completedAt: expect.any(String) }]);
 });
 
 it("stores unmatched scores on the completed session as a JSON object", async () => {
   state.persist.mockResolvedValueOnce({ context: persisted, notFoundScores: missing });
   const started = await startScoreFetch(start);
   await started.backgroundWork;
-  const [completion] = sessionUpdates();
-  const report = completion.params.find((param): param is string => typeof param === "string" && param.includes("notFoundScores"));
-  expect(JSON.parse(report!)).toEqual({ notFoundScores: missing });
+  const [completion] = proxy.updated("fetch_sessions");
+  expect(JSON.parse(String(completion.values.extraData))).toEqual({ notFoundScores: missing });
 });
 
 it("completes the session before enrichment runs, then keeps the fetch open until enrichment settles", async () => {
@@ -234,8 +217,7 @@ it("logs a failed stage once with its step and stores the stage's own message", 
   const started = await startScoreFetch(start);
   await started.backgroundWork;
   expect(state.log.error).toHaveBeenCalledExactlyOnceWith({ err: failure, stepType: "song_data:master", durationMs: 120 }, "Error during score fetch");
-  const [failed] = sessionUpdates();
-  expect(failed.params).toEqual(expect.arrayContaining(["failed", failure.message]));
+  expect(proxy.updated("fetch_sessions").map(update => update.values)).toEqual([expect.objectContaining({ status: "failed", errorMessage: failure.message })]);
 });
 
 it("aborts a timed-out provider and keeps its late result from overwriting failure", async () => {
@@ -249,10 +231,10 @@ it("aborts a timed-out provider and keeps its late result from overwriting failu
   await started.backgroundWork;
   expect(signal.aborted).toBe(true);
   expect(signal.reason).toEqual(new Error("Fetch operation timed out after 2 minutes"));
-  const writesAtFailure = state.statements.length;
+  const writesAtFailure = proxy.queries.length;
   finish({ result: fetched });
   await vi.advanceTimersByTimeAsync(1);
-  expect(state.statements).toHaveLength(writesAtFailure);
+  expect(proxy.queries).toHaveLength(writesAtFailure);
   expect(state.persist).not.toHaveBeenCalled();
   expect(sessionStatuses()).toEqual(["failed"]);
 });
@@ -265,12 +247,12 @@ it("keeps CHUNITHM subscription failures scoped to the failed session without de
   expect(state.fetch).toHaveBeenCalledWith(expect.objectContaining({ game: "chunithm", region: "jp", token: "stored-token" }), expect.anything());
   expect(state.fetch.mock.calls[0][0].signal.aborted).toBe(true);
   expect(state.persist).not.toHaveBeenCalled();
-  expect(state.statements.some(query => query.sql.startsWith("delete") || query.sql.startsWith('update "user_tokens"'))).toBe(false);
+  expect(proxy.queries.some(query => query.table === "user_tokens" && !query.sql.startsWith("select"))).toBe(false);
   expect(sessionStatuses()).toEqual(["failed"]);
 });
 
 it("reads the unmatched scores a session stored", async () => {
-  state.latestSession = [["public", "completed", "2026-09-27 02:59:00", "2026-09-27 03:00:00", null, "login", { notFoundScores: missing }]];
+  state.sessions = [{ id: "public", status: "completed", startedAt: "2026-09-27 02:59:00", completedAt: "2026-09-27 03:00:00", errorMessage: null, statusStates: "login", extraData: { notFoundScores: missing } }];
   await expect(getScoreFetchStatus({ userId: "same-user", game: "maimai", region: "jp" })).resolves.toEqual({
     id: "public",
     status: "completed",
@@ -286,6 +268,6 @@ it.each([
   { row: "an invalid report", extraData: { notFoundScores: [{ songName: 1 }] } },
   { row: "a JSON string report of code keys from before the codes", extraData: JSON.stringify({ notFoundScores: [{ songName: "Missing", difficulty: "master", musicType: "std" }] }) },
 ])("reads no unmatched scores from a session with $row", async ({ extraData }) => {
-  state.latestSession = [["public", "completed", "2026-09-27 02:59:00", "2026-09-27 03:00:00", null, "login", extraData]];
+  state.sessions = [{ id: "public", status: "completed", startedAt: "2026-09-27 02:59:00", completedAt: "2026-09-27 03:00:00", errorMessage: null, statusStates: "login", extraData }];
   await expect(getScoreFetchStatus({ userId: "same-user", game: "maimai", region: "jp" })).resolves.toMatchObject({ notFoundScores: null });
 });

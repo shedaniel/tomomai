@@ -1,41 +1,9 @@
 import { beforeEach, expect, it, vi } from "vitest";
-import { getTableColumns } from "drizzle-orm";
-import { songs, userSnapshots } from "@/lib/db/schema-pg";
+import type { ProxyQuery } from "@/test/pg-proxy";
 
-type Statement = { sql: string; params: unknown[]; inTransaction: boolean };
-const state = vi.hoisted(() => ({
-  statements: [] as Statement[],
-  transactions: [] as string[],
-  inTransaction: false,
-  responses: {} as Record<string, unknown[][]>,
-  failOn: null as string | null,
-  withoutRankings: false,
-}));
-vi.mock("@/lib/db", async () => {
-  const { drizzle } = await import("drizzle-orm/pg-proxy");
-  const connection = drizzle(async (sql, params) => {
-    state.statements.push({ sql, params, inTransaction: state.inTransaction });
-    if (state.failOn && sql.startsWith(state.failOn)) throw new Error("insert failed");
-    const key = Object.keys(state.responses).find(prefix => sql.startsWith(prefix));
-    return { rows: key ? state.responses[key] : [] };
-  });
-  // pg-proxy has no transactions, so this records the boundary the service must stay inside.
-  const transaction = async <T,>(work: (tx: typeof connection) => Promise<T>) => {
-    state.transactions.push("begin");
-    state.inTransaction = true;
-    try {
-      const result = await work(connection);
-      state.transactions.push("commit");
-      return result;
-    } catch (err) {
-      state.transactions.push("rollback");
-      throw err;
-    } finally {
-      state.inTransaction = false;
-    }
-  };
-  return { db: Object.assign(connection, { transaction }) };
-});
+const proxy = await vi.hoisted(async () => (await import("@/test/pg-proxy")).createProxyDb());
+const state = vi.hoisted(() => ({ failOn: null as string | null, withoutRankings: false }));
+vi.mock("@/lib/db", () => ({ db: proxy.db }));
 vi.mock("@/lib/games/registry", async importOriginal => {
   const actual = await importOriginal<typeof import("@/lib/games/registry")>();
   return { ...actual, getGame: (id: Parameters<typeof actual.getGame>[0]) => {
@@ -48,61 +16,61 @@ import { copySnapshotToVersion } from "./snapshot-copy";
 
 const input = { game: "maimai" as const, userId: "owner", snapshotPublicId: "source", region: "jp" as const, targetVersion: 13 };
 
-function row<T extends Record<string, unknown>>(columns: T, values: Partial<Record<keyof T, unknown>>) {
-  return Object.keys(columns).map(column => values[column] ?? null);
+const source = {
+  id: 1, publicId: "source", userId: "owner", game: "maimai", region: "jp", fetchedAt: "2026-09-01 00:00:00",
+  gameVersion: 12, rating: 12000, courseRankUrl: "course.png", classRankUrl: "class.png", stars: 3,
+  versionPlayCount: 5, totalPlayCount: 50, iconUrl: "", displayName: "Player", title: "", titleType: 0,
+};
+const score = { scoreValue: 1005000, secondaryScore: 0, comboStatus: 0, syncStatus: 0, clearStatus: 0 };
+
+// The source snapshot answers only its owner, and each later statement answers what the stored rows would.
+function answer({ sql, table, params }: ProxyQuery) {
+  if (state.failOn && sql.startsWith(state.failOn)) throw new Error("insert failed");
+  const writing = !sql.startsWith("select");
+  if (table === "user_snapshots") return writing ? [{ id: 2 }] : params.includes(source.userId) ? [source] : [];
+  if (table === "snapshot_scores" && !writing) return [{ parentId: "70", ...score }];
+  if (table === "songs") {
+    return [{ id: "7", parentId: "70", game: "maimai", level: "14", levelPrecise: 140, region: "jp", gameVersion: 13, addedVersion: 13, songName: "Song", difficulty: 3, type: 0 }];
+  }
+  if (table === "score_data") return [{ id: 8, songId: "7", ...score }];
 }
 
 beforeEach(() => {
-  state.statements = [];
-  state.transactions = [];
+  proxy.reset();
+  proxy.answer(answer);
   state.failOn = null;
   state.withoutRankings = false;
-  state.responses = {
-    'select "id", "publicId"': [row(getTableColumns(userSnapshots), {
-      id: 1, publicId: "source", userId: "owner", game: "maimai", region: "jp", fetchedAt: "2026-09-01T00:00:00",
-      gameVersion: 12, rating: 12000, courseRankUrl: "course.png", classRankUrl: "class.png", stars: 3,
-      versionPlayCount: 5, totalPlayCount: 50, iconUrl: "", displayName: "Player", title: "", titleType: 0,
-    })],
-    'insert into "user_snapshots"': [[2]],
-    'select "songs"."parentId"': [["70", 1005000, 0, 0, 0, 0]],
-    'select "songs"."id"': [[...row(getTableColumns(songs), {
-      id: "7", parentId: "70", game: "maimai", level: "14", levelPrecise: 140, region: "jp", gameVersion: 13, addedVersion: 13,
-    }), "Song", 3, 0]],
-    'insert into "score_data"': [[8, "7", 1005000, 0, 0, 0, 0]],
-  };
 });
 
 it("returns null without writing when the snapshot is not the user's", async () => {
-  state.responses['select "id", "publicId"'] = [];
   await expect(copySnapshotToVersion({ ...input, userId: "someone-else" })).resolves.toBeNull();
-  expect(state.statements).toHaveLength(1);
-  expect(state.statements[0].params).toEqual(expect.arrayContaining(["source", "maimai", "someone-else", "jp"]));
-  expect(state.statements.some(query => !query.sql.startsWith("select"))).toBe(false);
+  expect(proxy.queries).toHaveLength(1);
+  expect(proxy.queries[0].params).toEqual(expect.arrayContaining(["source", "maimai", "someone-else", "jp"]));
 });
 
 it("copies scores onto the target charts and rates the copy with the game's player rating", async () => {
   await expect(copySnapshotToVersion(input)).resolves.toEqual({
     newSnapshotId: expect.any(String), copiedScores: 1, totalOriginalScores: 1, originalRating: 12000, newRating: 315,
   });
-  expect(state.transactions).toEqual(["begin", "commit"]);
-  expect(state.statements.every(query => query.inTransaction)).toBe(true);
-  expect(state.statements.find(query => query.sql.startsWith('insert into "user_snapshots"'))?.params).toEqual(expect.arrayContaining(["maimai", 13]));
-  expect(state.statements.find(query => query.sql.startsWith('insert into "snapshot_rankings"'))?.params).toEqual(expect.arrayContaining([2, "maimai", 8]));
-  expect(state.statements.find(query => query.sql.startsWith('update "user_snapshots"'))?.params).toEqual([315, 2]);
+  expect(proxy.transactions).toEqual(["begin", "commit"]);
+  expect(proxy.queries.every(query => query.inTransaction)).toBe(true);
+  expect(proxy.inserted("user_snapshots")).toEqual([expect.objectContaining({ game: "maimai", userId: "owner", region: "jp", gameVersion: 13, rating: 12000 })]);
+  expect(proxy.inserted("snapshot_rankings")).toEqual([expect.objectContaining({ snapshotId: 2, game: "maimai", scoreId: 8 })]);
+  expect(proxy.queries.find(query => query.sql.startsWith('update "user_snapshots"'))?.params).toEqual([315, 2]);
 });
 
 it("rolls the whole copy back when a write fails", async () => {
   state.failOn = 'insert into "snapshot_scores"';
   await expect(copySnapshotToVersion(input)).rejects.toThrow('Failed query: insert into "snapshot_scores"');
-  expect(state.transactions).toEqual(["begin", "rollback"]);
-  expect(state.statements.every(query => query.inTransaction)).toBe(true);
-  expect(state.statements.some(query => query.sql.startsWith('insert into "user_snapshots"'))).toBe(true);
+  expect(proxy.transactions).toEqual(["begin", "rollback"]);
+  expect(proxy.queries.every(query => query.inTransaction)).toBe(true);
+  expect(proxy.inserted("user_snapshots")).toHaveLength(1);
 });
 
 it("keeps the source rating and writes no rankings for a game without rankings", async () => {
   state.withoutRankings = true;
   await expect(copySnapshotToVersion(input)).resolves.toMatchObject({ copiedScores: 1, newRating: 12000 });
-  expect(state.statements.some(query => query.sql.startsWith('insert into "snapshot_scores"'))).toBe(true);
-  expect(state.statements.some(query => query.sql.startsWith('insert into "snapshot_rankings"'))).toBe(false);
-  expect(state.statements.some(query => query.sql.startsWith('update "user_snapshots"'))).toBe(false);
+  expect(proxy.inserted("snapshot_scores")).toHaveLength(1);
+  expect(proxy.inserted("snapshot_rankings")).toEqual([]);
+  expect(proxy.queries.some(query => query.sql.startsWith('update "user_snapshots"'))).toBe(false);
 });

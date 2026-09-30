@@ -1,31 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
 import type { ProfilePrivacySettings } from "@/lib/types";
+import type { ProxyRow } from "@/test/pg-proxy";
 
 type Privacy = Pick<ProfilePrivacySettings, "profileShowAllScores" | "profileShowScoreDetails" | "profileShowPlates" | "profileShowPlayCounts" | "profileShowEvents">;
 const SHARED: Privacy = { profileShowAllScores: true, profileShowScoreDetails: true, profileShowPlates: true, profileShowPlayCounts: true, profileShowEvents: true };
 
-const db = vi.hoisted(() => ({
-  queries: [] as { table: string | undefined; sql: string; params: unknown[] }[],
-  snapshot: null as null | { region: string; privacy: Privacy },
-  scores: [] as unknown[][],
-}));
+const proxy = await vi.hoisted(async () => (await import("@/test/pg-proxy")).createProxyDb());
 vi.mock("@/lib/auth", () => ({ auth: {} }));
 vi.mock("@/lib/logger", () => ({ logger: { child: () => ({ info: vi.fn(), warn: vi.fn(), error: vi.fn() }), error: vi.fn() } }));
-vi.mock("@/lib/db", async () => {
-  const { drizzle } = await import("drizzle-orm/pg-proxy");
-  return { db: drizzle(async (sql, params) => {
-    const table = /^select .*? from "(\w+)"/.exec(sql)?.[1];
-    db.queries.push({ table, sql, params });
-    if (table === "user_snapshots") {
-      if (!db.snapshot) return { rows: [] };
-      return { rows: [["owner", 41, 13, db.snapshot.region, ...Object.values(db.snapshot.privacy)]] };
-    }
-    if (sql.startsWith("select count(*)")) return { rows: [[0]] };
-    if (table === "snapshot_scores") return { rows: db.scores };
-    return { rows: [] };
-  }) };
-});
+vi.mock("@/lib/db", () => ({ db: proxy.db }));
 
 import { router } from "@/lib/trpc";
 import { statsRouter } from "./user/stats";
@@ -40,29 +24,37 @@ const caller = router({
   days: dailyPlaysRouter.getPublicAvailableDays,
 }).createCaller({ session: null, req: new NextRequest("http://localhost/api/trpc") });
 
+const stored = { snapshot: null as ProxyRow | null, scores: [] as ProxyRow[] };
+
 function publish(privacy: Partial<Privacy> = {}, region = "jp") {
-  db.snapshot = { region, privacy: { ...SHARED, ...privacy } };
+  stored.snapshot = { userId: "owner", snapshotInternalId: 41, gameVersion: 13, region, privacy: { ...SHARED, ...privacy } };
 }
 
 /** The queries after the access check, which is always the first one. */
 function dataQueries() {
-  return db.queries.slice(1);
+  return proxy.queries.slice(1);
 }
 
 beforeEach(() => {
-  db.queries = [];
-  db.snapshot = null;
-  db.scores = [];
+  proxy.reset();
+  stored.snapshot = null;
+  stored.scores = [];
+  proxy.answer(({ sql, table }) => {
+    if (table === "user_snapshots") return stored.snapshot ? [stored.snapshot] : [];
+    if (sql.startsWith("select count(")) return [{ totalCount: 0 }];
+    if (table === "snapshot_scores") return stored.scores;
+  });
   vi.stubEnv("NEXT_PUBLIC_ENABLED_MAIMAI_REGIONS", "intl,jp");
   vi.stubEnv("NEXT_PUBLIC_ENABLED_REGIONS", undefined);
 });
 afterEach(() => vi.unstubAllEnvs());
 
 describe("public snapshot access", () => {
+  // A fake cannot evaluate the owner's profile flags, so the access query itself is the contract.
   it("reads only a snapshot of the game whose owner publishes a listed profile", async () => {
     publish();
     await caller.days({ snapshotId: "snapshot" });
-    const [access] = db.queries;
+    const [access] = proxy.queries;
     expect(access.sql).toContain('"user_snapshots"."game" = $1');
     expect(access.sql).toContain('"user"."publishProfile" = $3');
     expect(access.sql).toContain('"user"."profileShowInSearch" = $4');
@@ -91,7 +83,7 @@ describe("getPublicPlayerStats", () => {
 
   it("counts the snapshot's scores against its own region's catalog", async () => {
     publish({}, "intl");
-    db.scores = [[1005000, 13, 3, 3, 4, 0]];
+    stored.scores = [{ scoreValue: 1005000, addedVersion: 13, difficulty: 3, comboStatus: 3, syncStatus: 4, clearStatus: 0 }];
     const result = await caller.stats({ game: "maimai", snapshotId: "snapshot" });
     expect(result.stats[13][3].statuses).toEqual({ comboStatus: { 3: 1 }, syncStatus: { 4: 1 } });
     const [scores, catalog] = dataQueries();
@@ -101,7 +93,7 @@ describe("getPublicPlayerStats", () => {
 
   it("leaves out combo and sync counts unless the owner shares score details", async () => {
     publish({ profileShowScoreDetails: false });
-    db.scores = [[1005000, 13, 3, 3, 4, 0]];
+    stored.scores = [{ scoreValue: 1005000, addedVersion: 13, difficulty: 3, comboStatus: 3, syncStatus: 4, clearStatus: 0 }];
     const result = await caller.stats({ game: "maimai", snapshotId: "snapshot" });
     expect(result.stats[13][3]).toEqual({ grades: { "SSS+": 1 }, statuses: {}, total: 1 });
   });

@@ -4,21 +4,15 @@ import type { Flags } from "@/lib/flags";
 const mocks = vi.hoisted(() => ({
   login: vi.fn(), upload: vi.fn(), progress: vi.fn(),
   log: { warn: vi.fn(), info: vi.fn(), error: vi.fn(), child() { return this; } },
-  queries: [] as { sql: string; params: unknown[] }[],
-  detailedRows: [] as unknown[][],
+  detailedRows: [] as { songId: string; playedAt: string }[],
 }));
+const proxy = await vi.hoisted(async () => (await import("@/test/pg-proxy")).createProxyDb());
 vi.mock("../login", () => ({ loginAndGetCookies: mocks.login }));
 vi.mock("@/lib/http-agent", () => ({ agentFetch: vi.fn() }));
 vi.mock("@/lib/r2", () => ({ uploadIconToR2: mocks.upload }));
 vi.mock("@/lib/fetch-states-server", () => ({ appendFetchState: mocks.progress }));
 vi.mock("@/lib/request-logger", () => ({ getLogger: () => mocks.log }));
-vi.mock("@/lib/db", async () => {
-  const { drizzle } = await import("drizzle-orm/pg-proxy");
-  return { db: drizzle(async (sql, params) => {
-    mocks.queries.push({ sql, params });
-    return { rows: sql.startsWith("select") ? mocks.detailedRows : [] };
-  }) };
-});
+vi.mock("@/lib/db", () => ({ db: proxy.db }));
 
 import { getGame } from "@/lib/games/registry";
 import { createFetchRun } from "@/server/services/games/fetch-run";
@@ -62,15 +56,16 @@ const persisted: PersistedSnapshotContext = {
 };
 
 function detailUpdates() {
-  return mocks.queries.filter(query => query.sql.startsWith('update "user_recent_songs"')).map(query => ({
-    metadata: JSON.parse(String(query.params[0])) as { maxCombo: number },
-    where: query.params.slice(1),
+  return proxy.updated("user_recent_songs").map(({ values, where }) => ({
+    metadata: JSON.parse(String(values.metadata)) as { maxCombo: number },
+    where,
   }));
 }
 
 beforeEach(() => {
   vi.clearAllMocks();
-  mocks.queries.length = 0;
+  proxy.reset();
+  proxy.answer(({ sql }) => sql.startsWith("select") ? mocks.detailedRows : undefined);
   mocks.detailedRows = [];
   mocks.login.mockResolvedValue("session=start");
   mocks.upload.mockResolvedValue({ url: "https://images.test/icons/character.png" });
@@ -151,13 +146,13 @@ it.each(sites)("reads each $region play's details after the snapshot is saved, o
 it("skips plays whose details are already stored", async () => {
   const [site] = sites;
   const requests = serveSite(site);
-  mocks.detailedRows = [["7", "2026-09-28 03:31:00"]];
+  mocks.detailedRows = [{ songId: "7", playedAt: "2026-09-28 03:31:00" }];
   const { enrich } = await fetchScores();
   await enrich!(persisted);
   expect(requests.filter(path => path.startsWith("POST record/playlog"))).toHaveLength(1);
   expect(detailUpdates().map(update => update.metadata.maxCombo)).toEqual([200]);
-  const detailedQuery = mocks.queries.find(query => query.sql.startsWith("select"))!;
-  expect(detailedQuery.sql).toContain('"metadata" is not null');
+  // Only a stored playlog makes a play detailed, and a fake cannot evaluate that filter.
+  expect(proxy.queries.find(query => query.sql.startsWith("select"))?.sql).toContain('"metadata" is not null');
 });
 
 it("keeps reading the other plays when one detail page cannot be read", async () => {
