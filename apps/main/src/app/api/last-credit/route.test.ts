@@ -15,6 +15,7 @@ function request(region: string) {
 }
 
 beforeEach(() => {
+  vi.stubEnv("FRONTEND_GAME", "maimai");
   vi.stubEnv("NEXT_PUBLIC_ENABLED_REGIONS", undefined);
   mocks.session.mockReset().mockResolvedValue({ user: { id: "player" } });
   mocks.build.mockReset().mockResolvedValue({ ok: true, message: {} });

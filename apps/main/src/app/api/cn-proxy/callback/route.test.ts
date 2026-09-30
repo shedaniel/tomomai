@@ -32,6 +32,7 @@ function serveWahlap(playerHtml: string) {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  vi.stubEnv("FRONTEND_GAME", "maimai");
   vi.stubEnv("CN_PROXY_TOKEN_SECRET", "test-secret");
   vi.stubEnv("DEBUG_CN_FETCH", undefined);
   mocks.start.mockResolvedValue({ sessionId: "fetch-session", status: "pending" });

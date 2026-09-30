@@ -14,6 +14,8 @@ Each game has one `GameDefinition` under `lib/games/<game>/definition.ts`, liste
 [`registry.ts`](../apps/main/src/lib/games/registry.ts). A game with no enabled regions is disabled, and its catalog stays readable.
 The dashboard and profile routes check `isPlayerAvailable(game)` once on the server, which also narrows
 `getGameRegion` to a region that exists. The dashboard shows `GameUnavailable` and profiles answer 404 otherwise.
+Route handlers that only serve maimai (the render endpoints, the China proxy, lxns sign-in and the
+userscript) call `requireFrontendGame("maimai")` first, so they answer 404 on another game's site.
 There is no new public game route, hostname rewrite, game switcher, authentication
 flow in this phase. Domain routing remains a later task.
 
@@ -307,7 +309,7 @@ Truly global surfaces need their own policy, outside the game page rewrite:
   and product wording require confirmation.
 - Recommend keeping developer documentation at `tomomai.lol/{locale}/developer`
   because it describes the shared API. Existing userscript and CN proxy routes
-  keep their compatibility behavior until separately designed.
+  keep their compatibility behavior on the maimai site until separately designed.
 - Maintenance, errors, robots, sitemap and metadata must resolve the correct
   site even though they are not ordinary game-content pages.
 

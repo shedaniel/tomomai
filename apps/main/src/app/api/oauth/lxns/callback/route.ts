@@ -4,6 +4,7 @@ import { resolveBaseUrlFromHeaders } from "@/lib/base-url";
 import { exchangeLxnsCode } from "@/server/services/games/maimai/login";
 import { saveToken } from "@/server/services/games/tokens";
 import { requestLogger } from "@/lib/request-logger";
+import { requireFrontendGame } from "@/lib/games/current";
 
 const STATE_COOKIE = "lxns_oauth_state";
 
@@ -18,6 +19,7 @@ function html(body: { ok: boolean; error?: string }): NextResponse {
 }
 
 export async function GET(req: NextRequest) {
+  requireFrontendGame("maimai");
   const { log } = requestLogger(req, "oauth/lxns/callback");
   const clientId = process.env.LXNS_CLIENT_ID;
   const clientSecret = process.env.LXNS_CLIENT_SECRET;

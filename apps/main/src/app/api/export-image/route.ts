@@ -5,6 +5,7 @@ import { resolveGameContext } from '@/lib/games/access';
 import { GameAdapterError, gameErrorResponse } from '@/lib/games/errors';
 import { regionSchema } from '@/lib/games/schema';
 import { z } from 'zod';
+import { requireFrontendGame } from '@/lib/games/current';
 
 export const dynamic = "force-dynamic";
 
@@ -24,6 +25,7 @@ const searchParams = z.object({
  * names, covers, levels) are joined from /api/v1/games/maimai/songs on the render side.
  */
 export async function GET(request: NextRequest) {
+  requireFrontendGame("maimai");
   const parsed = searchParams.safeParse(Object.fromEntries(request.nextUrl.searchParams));
   if (!parsed.success) {
     return NextResponse.json(

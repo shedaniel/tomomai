@@ -7,6 +7,7 @@ import { fetchStartRejection } from "@/server/services/games/fetch-errors";
 import { siteRoot, siteUrl } from "@/lib/games/sites";
 import { requestGameSite, responseCookies } from "@/server/services/games/sega/http";
 import { requestLogger } from "@/lib/request-logger";
+import { requireFrontendGame } from "@/lib/games/current";
 
 export const dynamic = "force-dynamic";
 
@@ -63,6 +64,7 @@ interface WebhookPayload {
 }
 
 export async function POST(req: NextRequest) {
+  requireFrontendGame("maimai");
   const { log } = requestLogger(req, "cn-proxy/callback");
   let body: WebhookPayload;
   try {

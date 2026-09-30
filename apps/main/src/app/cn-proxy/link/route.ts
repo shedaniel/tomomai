@@ -3,6 +3,7 @@ import { ProxyAgent, fetch as undiciFetch } from "undici";
 import { verifyCnProxyToken } from "@/server/services/games/maimai/cn-proxy-token";
 import { resolveBaseUrl } from "@/lib/base-url";
 import { requestLogger } from "@/lib/request-logger";
+import { requireFrontendGame } from "@/lib/games/current";
 
 export const dynamic = "force-dynamic";
 
@@ -15,6 +16,7 @@ const proxyAgent =
     : undefined;
 
 export async function GET(req: NextRequest) {
+  requireFrontendGame("maimai");
   const { log } = requestLogger(req, "cn-proxy/link");
   const token = req.nextUrl.searchParams.get("token");
   if (!token) {

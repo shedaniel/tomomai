@@ -10,6 +10,7 @@ import { resolveGameContext } from '@/lib/games/access';
 import { GameAdapterError, gameErrorResponse } from '@/lib/games/errors';
 import { regionSchema } from '@/lib/games/schema';
 import { z } from 'zod';
+import { requireFrontendGame } from '@/lib/games/current';
 
 export const dynamic = "force-dynamic";
 
@@ -25,6 +26,7 @@ const searchParams = z.object({
  * mints a signed token carrying the day's plays + header. 302s to render.
  */
 export async function GET(request: NextRequest) {
+  requireFrontendGame("maimai");
   const { log } = requestLogger(request, "daily-plays");
   const parsed = searchParams.safeParse(Object.fromEntries(request.nextUrl.searchParams));
   if (!parsed.success) {
