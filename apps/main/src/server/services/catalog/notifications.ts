@@ -8,6 +8,7 @@ import type { AddedChange, DeletedChange, FieldChange, ModifiedChange } from "./
 import type { Region } from "@/lib/types";
 import type { CanonicalGameId } from "@/lib/games/types";
 import { keyOf } from "@/lib/games/codes";
+import { getGameChartType } from "@/lib/games/presentation";
 
 /** The fields the public update channel reports. Covers and metadata are internal. */
 const PUBLIC_FIELDS: ReadonlySet<FieldChange["field"]> = new Set([
@@ -20,6 +21,12 @@ function formatPrecise(value: number): string {
 
 function difficultyShort(game: CanonicalGameId, difficulty: number): string {
   return keyOf(game, "difficulty", difficulty).slice(0, 3).toUpperCase();
+}
+
+/** A song by name and chart type, leaving out a chart type the game never shows. */
+function songLabel(game: CanonicalGameId, songName: string, chartType: number): string {
+  const type = getGameChartType(game, chartType);
+  return type.implicit ? songName : `${songName} ${type.label}`;
 }
 
 // Collapse every chart that shares a song (name + type) onto one compact line,
@@ -44,7 +51,7 @@ function groupChartLines<T extends { songName: string; chartType: number; diffic
         .toSorted((a, b) => a.difficulty - b.difficulty)
         .map(formatChart)
         .join(" / ");
-      return `- ${bucket[0].songName} ${keyOf(game, "chartType", bucket[0].chartType).toUpperCase()}: ${segments}`;
+      return `- ${songLabel(game, bucket[0].songName, bucket[0].chartType)}: ${segments}`;
     });
 }
 
@@ -91,7 +98,7 @@ function groupOtherFieldLines(game: CanonicalGameId, entries: OtherEntry[]): str
   return [...songGroups.values()]
     .sort((a, b) => a[0].songName.localeCompare(b[0].songName) || keyOf(game, "chartType", a[0].chartType).localeCompare(keyOf(game, "chartType", b[0].chartType)))
     .flatMap(group => {
-      const label = `${group[0].songName} ${keyOf(game, "chartType", group[0].chartType).toUpperCase()}`;
+      const label = songLabel(game, group[0].songName, group[0].chartType);
       const byDiff = new Map<string, OtherEntry[]>();
       for (const entry of group) {
         const diff = formatFieldDiff(entry.oldValue, entry.newValue);

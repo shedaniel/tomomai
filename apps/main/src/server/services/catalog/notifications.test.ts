@@ -134,7 +134,8 @@ function modifiedField(
 describe("buildChangeDescription", () => {
   it("uses CHUNITHM chart labels", () => {
     const description = buildChangeDescription("chunithm", [{ songKey: "chart", label: "Test ULTIMA", songName: "Test", artist: "Artist", chartType: 0, difficulty: 4, level: "14+", levelPrecise: 145 }], [], []);
-    expect(description).toContain("Test STANDARD: ULT 14+ (14.5)");
+    expect(description).toContain("- Test: ULT 14+ (14.5)");
+    expect(description).not.toContain("STANDARD");
     expect(description).not.toContain("REMASTER");
   });
   it("sorts CHUNITHM difficulty codes for deleted charts and differing field changes", () => {
@@ -143,8 +144,9 @@ describe("buildChangeDescription", () => {
     const description = buildChangeDescription("chunithm", [], changes, changes.map(change => ({
       ...change, fieldChanges: [{ field: "genre" as const, oldValue: "Old", newValue: change.difficulty === 0 ? "Basic" : "Other" }],
     })));
-    expect(description).toContain("Test STANDARD: BAS 14+ (14.5) / MAS 14+ (14.5) / ULT 14+ (14.5)");
-    expect(description).toContain("- Test STANDARD BAS: Old → Basic\n- Test STANDARD MAS / ULT: Old → Other");
+    expect(description).toContain("Test: BAS 14+ (14.5) / MAS 14+ (14.5) / ULT 14+ (14.5)");
+    expect(description).toContain("- Test BAS: Old → Basic\n- Test MAS / ULT: Old → Other");
+    expect(description).not.toContain("STANDARD");
     expect(changes.map(change => change.difficulty)).toEqual([4, 0, 3]);
   });
   it("groups added charts of one song onto a single difficulty-sorted line", () => {
@@ -164,6 +166,11 @@ describe("buildChangeDescription", () => {
     expect(description).toContain(
       "- ECHO DX: BAS 4 (4.0) / ADV 7+ (7.9) / EXP 11 (11.2) / MAS 13+ (13.7)",
     );
+  });
+
+  it("keeps maimai's REM and UTA abbreviations", () => {
+    const description = buildChangeDescription("maimai", [added("ECHO", "remaster", "14", 140), added("ECHO", "utage", "13?", 130)], [], []);
+    expect(description).toContain("- ECHO DX: REM 14 (14.0) / UTA 13? (13.0)");
   });
 
   it("keeps separate songs and chart types on their own lines, sorted by name", () => {
