@@ -2,7 +2,7 @@
 
 ## Running Locally
 
-Each process serves one game. Run `pnpm dev:mai` for maimai on port 3000 or `pnpm dev:chu` for CHUNITHM on port 3002, or both at once. Both scripts set `FRONTEND_GAME` and `PORT` (see [App Configuration](#app-configuration)). [docs/MULTI_GAME_FRONTEND.md](docs/MULTI_GAME_FRONTEND.md#per-process-development-setup) explains the per-game build output and custom ports.
+Each process serves one game. Run `pnpm dev:mai` for maimai on port 3000 or `pnpm dev:chu` for CHUNITHM on port 3001, or both at once. Both scripts set `FRONTEND_GAME` and `PORT` (see [App Configuration](#app-configuration)). [docs/MULTI_GAME_FRONTEND.md](docs/MULTI_GAME_FRONTEND.md#per-process-development-setup) explains the per-game build output and custom ports.
 
 ## Environment Variables
 

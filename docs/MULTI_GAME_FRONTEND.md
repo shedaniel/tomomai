@@ -126,10 +126,9 @@ pnpm dev:chu
 ```
 
 These aliases set `FRONTEND_GAME=maimai PORT=3000` and
-`FRONTEND_GAME=chunithm PORT=3002`, respectively, before running the main app dev
-script. CHUNITHM skips 3001 because the guess app serves there. For custom
-ports, use `PORT` rather than appending `--port` to the existing piped dev
-script.
+`FRONTEND_GAME=chunithm PORT=3001`, respectively, before running the main app dev
+script. The guess app serves on 3002. For custom ports, use `PORT` rather than
+appending `--port` to the existing piped dev script.
 Maimai keeps `.next`; CHUNITHM uses `.next-chunithm` in development, isolating
 Next's locks, generated output and caches. Both generated type directories are
 included in the app tsconfig. The ignored `next-env.d.ts` may reference whichever

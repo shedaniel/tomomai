@@ -4,7 +4,7 @@ import { gameIdSchema } from "./schema";
 // Must match the PORT in the root package.json dev:<game> scripts.
 export const DEV_PORTS: Record<CanonicalGameId, number> = {
   maimai: 3000,
-  chunithm: 3002,
+  chunithm: 3001,
 };
 
 export function resolveFrontendGame(value: string | undefined): CanonicalGameId {
