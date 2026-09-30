@@ -96,10 +96,10 @@ cookie wizard and credentials for International and credentials for JP.
 
 Maimai's percentiles, including the peer evidence they add to recommendations,
 plates, render/export controls, reserved accounts and fetch settings remain
-specialized. Capability checks
-protect unsupported surfaces; CHUNITHM does not expose maimai albums, events,
-plates or detailed-score presentation. Enabling the provider is an implementation
-change, not a claim that a live application fetch has been accepted.
+specialized. Capability checks protect unsupported surfaces. CHUNITHM does not
+expose maimai albums, events, plates or detailed-score presentation. Enabling
+the provider is an implementation change, not a claim that a live application
+fetch has been accepted.
 
 Validation includes frontend typechecking, numeric presentation and ranking
 fixtures, catalog identity fixtures, public-profile privacy fixtures, and
@@ -406,6 +406,11 @@ where the existing data contract requires them. Ensure that requesting the same
 public path on two domains cannot reuse the other game's HTML, RSC payload or
 cached metadata. CDN origin separation alone does not isolate application caches.
 Map publication invalidation to internal game-specific pages and data tags.
+
+Client components type tRPC payloads with `RouterOutputs` and its aliases in
+`src/lib/trpc-types.ts`, which describe what the client receives after the
+superjson transformer, and never with the types of a `src/server/queries`
+module.
 
 Use the current parent-song dictionary and region/version instances with
 per-game catalog slices. Preserve parent/instance IDs and ambiguity protection.
