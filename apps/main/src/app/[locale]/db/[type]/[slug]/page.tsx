@@ -34,7 +34,7 @@ export async function generateMetadata({ params }: DbSlugPageProps): Promise<Met
   const { type, slug } = await params;
 
   if (type !== "songs") {
-    return {};
+    return { robots: { index: false, follow: false } };
   }
 
   const decodedSlug = safeDecodeURIComponent(slug);
@@ -96,9 +96,8 @@ export async function generateMetadata({ params }: DbSlugPageProps): Promise<Met
 
 export default async function DbSlugPage({ params }: DbSlugPageProps) {
   const { type, slug } = await params;
+  if (type !== "songs") return <InlineNotFound kind="page" />;
 
-  // Non-songs types have no detail page — render the inline not-found UI
-  // (see note on InlineNotFound below).
   // The song-detail content is rendered by the @detail parallel slot at
   // /db/@detail/[type]/[slug]. This page renders the songs list (hydrated
   // client-side behind the drawer — no `initialSongs` prop, so the catalog
@@ -108,7 +107,7 @@ export default async function DbSlugPage({ params }: DbSlugPageProps) {
   const game = getCurrentGame();
 
   const songs = await getAllUniqueSongsCached(game.id);
-  const song = type === "songs" ? songs.find(s => s.slug === decodedSlug) : undefined;
+  const song = songs.find(s => s.slug === decodedSlug);
 
   // Unknown slug: render a minimal, ISR-cacheable not-found UI inline.
   // We deliberately avoid next/navigation's notFound() here — in this

@@ -1,3 +1,4 @@
+import { renderToStaticMarkup } from "react-dom/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { CanonicalGameId } from "@/lib/games/ids";
 import type { Locale } from "@/i18n/locale";
@@ -54,5 +55,13 @@ describe("song page SEO", () => {
     const { description, jsonLd } = await describeSong("chunithm", "en", "standard");
     expect(description).toBe("View detailed information about \"Song\" by Artist. CHUNITHM chart • POPS");
     expect(jsonLd).toBe("CHUNITHM chart");
+  });
+
+  it("answers a detail path outside the songs section as a page that does not exist", async () => {
+    const stats = { params: Promise.resolve({ type: "stats", slug: "song" }) };
+    expect(await generateMetadata(stats)).toEqual({ robots: { index: false, follow: false } });
+    const html = renderToStaticMarkup(await DbSlugPage(stats));
+    expect(html).toContain("Page not found");
+    expect(html).not.toContain("Song not found");
   });
 });
