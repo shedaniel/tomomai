@@ -85,6 +85,20 @@ is produced only by `server/services/games/maimai/legacy-view.ts`, for the
 snapshot export, render tokens and the db top-songs list. Its `fromMaimaiScore`
 is the one reverse mapping, used when normalizing scraped scores.
 
+Queries filter by game on root rows only: `user_snapshots`, `user_recent_songs`,
+`user_albums`, `user_tokens` and `fetch_sessions`, plus the catalog listings
+(`songs` or `parent_song`). A child row needs no game predicate, because its
+composite foreign key already keeps it in its parent's game. That covers
+`snapshot_scores` and `snapshot_rankings` reached through a snapshot, and
+`songs` or `parent_song` joined from a user row or from each other.
+`user_events` keeps its game predicate, since its index leads with game.
+Catalog reference checks name the game on `score_data`, `user_recent_songs`
+and `user_albums`, so each lookup can use the index that includes it. The
+newest snapshot of a user in a region is read through
+`latestSnapshot(game, userId, region, columns)` in
+`server/queries/latest-snapshot.ts`, with `asOf` for the newest one at or
+before a given time.
+
 A score source returns its normalized result and an optional `enrich` step
 (`server/services/games/types.ts`). Shared ingestion persists the result, marks
 the session completed, and only then runs the enrichment and the public profile

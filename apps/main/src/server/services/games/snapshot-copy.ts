@@ -60,7 +60,7 @@ export async function copySnapshotToVersion(input: CopySnapshotInput) {
     }).from(snapshotScores)
       .innerJoin(scoreData, eq(snapshotScores.scoreId, scoreData.id))
       .innerJoin(songs, eq(scoreData.songId, songs.id))
-      .where(and(eq(snapshotScores.game, input.game), eq(snapshotScores.snapshotId, source.id)));
+      .where(eq(snapshotScores.snapshotId, source.id));
 
     const targetCharts = await catalogCharts(tx, input.game, input.region, input.targetVersion);
     const targetByParent = new Map(targetCharts.map(song => [song.parentId, song]));

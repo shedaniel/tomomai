@@ -42,8 +42,7 @@ describe("publishSongCatalog", () => {
     expect(result.songCount).toBe(1);
     const dialect = new PgDialect();
     const [join, where] = filters.mock.calls[0].map(filter => dialect.sqlToQuery(filter));
-    expect(join.sql).toContain('"songs"."game" = $1');
-    expect(join.params).toEqual(["chunithm"]);
+    expect(join.sql).toBe('"songs"."parentId" = "parent_song"."id"');
     expect(where.sql).toBe('"parent_song"."game" = $1');
     expect(where.params).toEqual(["chunithm"]);
     expect(dialect.sqlToQuery(execute.mock.calls[0][0]).sql).toBe(`select pg_advisory_xact_lock(${CATALOG_WRITE_LOCK_ID})`);

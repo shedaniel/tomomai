@@ -1,5 +1,5 @@
 import type { CanonicalGameId } from "@/lib/games/types";
-import { and, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { parentSong, songs } from "@/lib/db/schema-pg";
 import { parentCatalogue, songCatalogue } from "@/lib/api/schemas";
@@ -37,7 +37,7 @@ export async function publishSongCatalog(game: CanonicalGameId): Promise<{ songC
         noteDesigner: songs.noteDesigner,
         metadata: songs.metadata,
       },
-    }).from(parentSong).leftJoin(songs, and(eq(songs.parentId, parentSong.id), eq(songs.game, game)))
+    }).from(parentSong).leftJoin(songs, eq(songs.parentId, parentSong.id))
       .where(eq(parentSong.game, game))
       .orderBy(parentSong.songName, parentSong.difficulty, parentSong.publicId, songs.region, songs.gameVersion);
 

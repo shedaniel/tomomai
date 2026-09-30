@@ -24,7 +24,7 @@ function scoreDataKey(score: ScoreDataValues): string {
 
 export function catalogCharts(connection: ScoreConnection, game: CanonicalGameId, region: Region, gameVersion: number): Promise<DbSong[]> {
   return connection.select({ ...getTableColumns(songs), songName: parentSong.songName, difficulty: parentSong.difficulty, type: parentSong.type })
-    .from(songs).innerJoin(parentSong, and(eq(parentSong.id, songs.parentId), eq(parentSong.game, songs.game)))
+    .from(songs).innerJoin(parentSong, eq(parentSong.id, songs.parentId))
     .where(and(eq(songs.game, game), eq(songs.region, region), eq(songs.gameVersion, gameVersion)));
 }
 

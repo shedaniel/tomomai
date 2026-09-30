@@ -5,11 +5,12 @@ import { parentSong, songs, userAlbums } from "@/lib/db/schema-pg";
 import { and, desc, eq, sql } from "drizzle-orm";
 import type { Region } from "@/lib/types";
 
-export async function fetchUserAlbums(game: CanonicalGameId,
+export async function fetchUserAlbums(
+  game: CanonicalGameId,
   userId: string,
   region: Region,
   limit: number,
-  offset: number
+  offset: number,
 ) {
   const userAlbumsList = await db
     .select({
@@ -32,12 +33,7 @@ export async function fetchUserAlbums(game: CanonicalGameId,
     .from(userAlbums)
     .innerJoin(songs, eq(userAlbums.songId, songs.id))
     .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
-    .where(
-      and(
-        and(eq(userAlbums.game, game), eq(userAlbums.userId, userId)),
-        and(eq(songs.game, game), eq(songs.region, region))
-      )
-    )
+    .where(and(eq(userAlbums.game, game), eq(userAlbums.userId, userId), eq(songs.region, region)))
     .orderBy(desc(userAlbums.takenAt))
     .limit(limit + 1)
     .offset(offset);

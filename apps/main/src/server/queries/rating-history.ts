@@ -108,7 +108,7 @@ export async function fetchRatingHistory(game: CanonicalGameId, userId: string, 
     .innerJoin(scoreData, eq(snapshotRankings.scoreId, scoreData.id))
     .innerJoin(songs, eq(scoreData.songId, songs.id))
     .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
-    .where(and(eq(snapshotRankings.game, game), eq(songs.region, region), inArray(snapshotRankings.snapshotId, [...needed])))
+    .where(and(eq(songs.region, region), inArray(snapshotRankings.snapshotId, [...needed])))
     .orderBy(snapshotRankings.snapshotId, snapshotRankings.bucket, snapshotRankings.rank);
   return buildRatingHistory(game, snapshots, scores);
 }

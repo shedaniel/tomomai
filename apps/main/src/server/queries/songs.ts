@@ -1,6 +1,5 @@
 import { codeOf, definedKeyOf, keyOf } from "@/lib/games/codes";
 import type { CanonicalGameId } from "@/lib/games/types";
-import { songInstanceId } from "@/lib/db/song-instance-id";
 import { chartEstimates } from "@/lib/catalog/chart-metadata";
 import { SongDetailChart, SongDetailHistoricalChart, SongDetails, UniqueSong, UniqueSongDifficulty } from "@/components/db/songs/types";
 import { db } from "@/lib/db";
@@ -29,7 +28,12 @@ export async function querySongScores({ game, songName, type, artist, parentIds,
     const artists = await db.selectDistinct({ artist: parentSong.artist })
       .from(parentSong)
       .innerJoin(songs, eq(songs.parentId, parentSong.id))
-      .where(and(and(eq(parentSong.game, game), eq(parentSong.songName, songName)), eq(parentSong.type, codeOf(game, "chartType", type)), parentIds ? inArray(parentSong.publicId, parentIds) : undefined))
+      .where(and(
+        eq(parentSong.game, game),
+        eq(parentSong.songName, songName),
+        eq(parentSong.type, codeOf(game, "chartType", type)),
+        parentIds ? inArray(parentSong.publicId, parentIds) : undefined,
+      ))
       .limit(2);
     if (artists.length > 1) {
       throw new TRPCError({ code: "BAD_REQUEST", message: "Artist is required for songs with the same name" });
@@ -49,10 +53,11 @@ export async function querySongScores({ game, songName, type, artist, parentIds,
     .from(snapshotScores)
     .innerJoin(scoreData, eq(snapshotScores.scoreId, scoreData.id))
     .innerJoin(songs, eq(scoreData.songId, songs.id))
-    .innerJoin(parentSong, and(eq(songs.parentId, parentSong.id), eq(songs.game, parentSong.game)))
+    .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
     .where(
       and(
-        and(eq(parentSong.game, game), eq(parentSong.songName, songName)),
+        eq(parentSong.game, game),
+        eq(parentSong.songName, songName),
         eq(parentSong.type, codeOf(game, "chartType", type)),
         artist !== undefined ? eq(parentSong.artist, artist) : undefined,
         parentIds ? inArray(parentSong.publicId, parentIds) : undefined,
@@ -91,7 +96,7 @@ export async function querySongDetails({ userId, ...song }: SongQuery & { userId
   const { game, songName, type, artist, parentIds } = song;
   const chartsQuery = db
     .select({
-      songId: songInstanceId,
+      parentId: parentSong.publicId,
       songName: parentSong.songName,
       artist: parentSong.artist,
       cover: parentSong.cover,
@@ -113,8 +118,14 @@ export async function querySongDetails({ userId, ...song }: SongQuery & { userId
       breakCount: songs.breakCount,
     })
     .from(songs)
-    .innerJoin(parentSong, and(eq(songs.parentId, parentSong.id), eq(songs.game, parentSong.game)))
-    .where(and(and(eq(parentSong.game, game), eq(parentSong.songName, songName)), eq(parentSong.type, codeOf(game, "chartType", type)), artist !== undefined ? eq(parentSong.artist, artist) : undefined, parentIds ? inArray(parentSong.publicId, parentIds) : undefined))
+    .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
+    .where(and(
+      eq(parentSong.game, game),
+      eq(parentSong.songName, songName),
+      eq(parentSong.type, codeOf(game, "chartType", type)),
+      artist !== undefined ? eq(parentSong.artist, artist) : undefined,
+      parentIds ? inArray(parentSong.publicId, parentIds) : undefined,
+    ))
     .orderBy(songs.region, desc(songs.gameVersion), parentSong.difficulty);
 
   const scoresQuery = userId
@@ -181,7 +192,7 @@ export async function querySongDetails({ userId, ...song }: SongQuery & { userId
   const chartBpm = preferredChart.bpm || charts.find((c) => c.bpm !== null)?.bpm;
 
   return {
-    parentIds: [...new Set(charts.map(chart => chart.songId.split(":")[0]))],
+    parentIds: [...new Set(charts.map(chart => chart.parentId))],
     songName: preferredChart.songName,
     artist: preferredChart.artist,
     cover: preferredChart.cover,
@@ -217,7 +228,7 @@ export async function queryAllUniqueSongs(game: CanonicalGameId) {
           gameVersion: songs.gameVersion,
         })
         .from(songs)
-        .innerJoin(parentSong, and(eq(songs.parentId, parentSong.id), eq(songs.game, parentSong.game)))
+        .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
         .where(eq(songs.game, game))
         .orderBy(parentSong.songName);
 
