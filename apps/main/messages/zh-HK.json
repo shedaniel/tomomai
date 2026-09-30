@@ -1321,7 +1321,7 @@
   },
   "fetchToast": {
     "errors": {
-      "subscriptionRequired": "取得 CHUNITHM 日版成績需要有效的 ゲキチュウマイ-NET 服務訂閱。請購買或續訂後重試。已儲存的登入資訊和現有資料均已保留。"
+      "subscriptionRequired": "取得 {game} 日版成績需要有效的 ゲキチュウマイ-NET 服務訂閱。請購買或續訂後重試。已儲存的登入資訊和現有資料均已保留。"
     },
     "header": {
       "pending": "匯入資料中……",

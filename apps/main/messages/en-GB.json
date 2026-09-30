@@ -1321,7 +1321,7 @@
   },
   "fetchToast": {
     "errors": {
-      "subscriptionRequired": "Fetching CHUNITHM JP scores requires an active ゲキチュウマイ-NET subscription. Purchase or renew it, then retry. Your saved login and existing data have been kept."
+      "subscriptionRequired": "Fetching {game} JP scores requires an active ゲキチュウマイ-NET subscription. Purchase or renew it, then retry. Your saved login and existing data have been kept."
     },
     "header": {
       "pending": "Fetching data...",

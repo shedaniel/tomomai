@@ -50,7 +50,7 @@ it("keeps the refusal's own window once that maintenance has ended", async () =>
   mocks.start.mockRejectedValueOnce(refusal);
   await runFetchSession({ ...session, locale: "ja" });
   const [, , message] = mocks.edit.mock.calls[0];
-  expect(message.embeds[0].description).toBe(`<@discord-1> データの同期中にエラーが発生しました：${refusal.message}`);
+  expect(message.embeds[0].description).toBe("<@discord-1> データの同期中にエラーが発生しました：Cannot fetch data during maintenance window (01:00 - 02:00 JST)");
 });
 
 it("asks for the album preference when the fetch needs one", async () => {

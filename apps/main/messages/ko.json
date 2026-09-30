@@ -963,7 +963,7 @@
   },
   "fetchToast": {
     "errors": {
-      "subscriptionRequired": "CHUNITHM 일본판 점수를 가져오려면 유효한 ゲキチュウマイ-NET 이용권이 필요합니다. 구매 또는 갱신한 후 다시 시도하세요. 저장된 로그인 정보와 기존 데이터는 유지됩니다."
+      "subscriptionRequired": "{game} 일본판 점수를 가져오려면 유효한 ゲキチュウマイ-NET 이용권이 필요합니다. 구매 또는 갱신한 후 다시 시도하세요. 저장된 로그인 정보와 기존 데이터는 유지됩니다."
     },
     "header": {
       "pending": "데이터 가져오는 중...",

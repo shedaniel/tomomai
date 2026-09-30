@@ -45,6 +45,7 @@ it("shows subscription recovery instructions instead of an internal error prefix
     id: "session", status: "failed", startedAt: new Date(), statusStates: [],
     errorMessage: "SUBSCRIPTION_REQUIRED: unavailable records",
   });
+  expect(markup).toContain("Fetching CHUNITHM JP scores requires an active ゲキチュウマイ-NET subscription.");
   expect(markup).toContain("Purchase or renew it, then retry.");
   expect(markup).toContain("Your saved login and existing data have been kept.");
   expect(markup).not.toContain("SUBSCRIPTION_REQUIRED");

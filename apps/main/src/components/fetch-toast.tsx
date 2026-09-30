@@ -12,9 +12,9 @@ import {
   type BaseFetchState,
   type FetchState,
 } from "@/lib/fetch-states";
-import { useGameId } from "./providers/game-provider";
+import { useGame } from "./providers/game-provider";
 import type { CanonicalGameId } from "@/lib/games/types";
-import { parseFetchErrorCode } from "@/lib/games/fetch-error-codes";
+import { fetchErrorDetail, parseFetchErrorCode } from "@/lib/games/fetch-error-codes";
 import { getGameDifficulty } from "@/lib/games/presentation";
 import { useTranslations } from "next-intl";
 
@@ -93,7 +93,7 @@ function StatusLine({
 
 export function FetchToast({ state, onDismiss }: FetchToastProps) {
   const t = useTranslations("fetchToast");
-  const game = useGameId();
+  const { id: game, brand } = useGame();
   const { status, statusStates, startedAt, errorMessage } = state;
   const progress = status === "completed" ? 100 : status === "failed" ? 0 : getProgress(statusStates, game);
 
@@ -241,8 +241,8 @@ export function FetchToast({ state, onDismiss }: FetchToastProps) {
               <XCircle className="h-3 w-3 text-destructive shrink-0 mt-0.5" />
               <span className="text-destructive">
                 {parseFetchErrorCode(errorMessage) === "SUBSCRIPTION_REQUIRED"
-                  ? t("errors.subscriptionRequired")
-                  : errorMessage}
+                  ? t("errors.subscriptionRequired", { game: brand.displayName })
+                  : fetchErrorDetail(errorMessage)}
               </span>
             </motion.div>
           )}

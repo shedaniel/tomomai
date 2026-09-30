@@ -29,3 +29,9 @@ export function parseFetchErrorCode(message: string): FetchErrorCode | null {
   if (code in FETCH_START_ERROR_STATUS) return code as FetchStartErrorCode;
   return SESSION_FAILURE_CODES.find(known => known === code) ?? null;
 }
+
+/** The message people read, without the code prefix that clients branch on. */
+export function fetchErrorDetail(message: string): string {
+  const code = parseFetchErrorCode(message);
+  return code === null ? message : message.slice(code.length + 2);
+}

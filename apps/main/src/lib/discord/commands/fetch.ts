@@ -9,6 +9,7 @@ import { and, eq } from 'drizzle-orm';
 import { generateAndSendProfileImage } from '../image-utils';
 import { getProfileSummary, resolveRegion } from '../region';
 import { FetchStartError } from '@/server/services/games/fetch-errors';
+import { fetchErrorDetail } from '@/lib/games/fetch-error-codes';
 import { resolveBaseUrl } from '@/lib/base-url';
 import {
   createDeferredResponse,
@@ -41,7 +42,7 @@ function describeFetchError(error: unknown, region: Region, locale?: string): st
     const maintenance = getGameMaintenance(DISCORD_GAME, region);
     if (maintenance?.active) return maintenanceMessage(maintenance, locale);
   }
-  return error instanceof Error ? error.message : 'Unknown error';
+  return error instanceof Error ? fetchErrorDetail(error.message) : 'Unknown error';
 }
 
 function createAlbumPreferenceMessage(discordUserId: string, region: Region, locale?: string) {
@@ -249,7 +250,7 @@ async function pollForUpdates(
           await editDiscordMessage(applicationId, interactionToken, {
             embeds: [{
               title: t(locale, 'fetch.failed.title'),
-              description: t(locale, 'fetch.failed.description', { userId: discordUserId, regionName, reason: status.errorMessage || 'Unknown error' }),
+              description: t(locale, 'fetch.failed.description', { userId: discordUserId, regionName, reason: status.errorMessage ? fetchErrorDetail(status.errorMessage) : 'Unknown error' }),
               color: DISCORD_COLORS.RED,
               footer: {
                 text: t(locale, 'common.footer'),

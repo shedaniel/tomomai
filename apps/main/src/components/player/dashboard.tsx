@@ -15,7 +15,7 @@ import { useSnapshots } from "@/hooks/useSnapshots";
 import { signOut } from "@/lib/auth-client";
 import type { Flags } from "@/lib/flags";
 import { isTokenError } from "@/lib/token-errors";
-import { parseFetchErrorCode } from "@/lib/games/fetch-error-codes";
+import { fetchErrorDetail, parseFetchErrorCode } from "@/lib/games/fetch-error-codes";
 import { trpc } from "@/lib/trpc-client";
 import type { Region, User, UserData } from "@/lib/types";
 import { useEffect, useState } from "react";
@@ -165,10 +165,10 @@ function AvailableDashboard({ user, initialUserData, initialSnapshots, initialSn
         if (parseFetchErrorCode(error.message) === "CN_COOKIES_SINGLE_USE") {
           setDialogType("token-cn-proxy");
         } else if (isTokenError(error.message)) {
-          toast.error(error.message);
+          toast.error(fetchErrorDetail(error.message));
           setDialogType("token");
         } else {
-          toast.error(error.message);
+          toast.error(fetchErrorDetail(error.message));
         }
       } else {
         toast.error("Failed to start data fetch");
@@ -184,7 +184,7 @@ function AvailableDashboard({ user, initialUserData, initialSnapshots, initialSn
       toast.success("Token saved successfully!");
     } catch (error) {
       if (error instanceof Error) {
-        toast.error(error.message);
+        toast.error(fetchErrorDetail(error.message));
       } else {
         toast.error("Failed to save token");
       }
