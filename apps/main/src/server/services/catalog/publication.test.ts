@@ -1,20 +1,13 @@
-import { PgDialect } from "drizzle-orm/pg-core";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { CanonicalGameId } from "@/lib/games/types";
+import type { ProxyRow } from "@/test/pg-proxy";
 
-const { readRows, putObject, filters, execute, selection } = vi.hoisted(() => ({ readRows: vi.fn(), putObject: vi.fn(), filters: vi.fn(), execute: vi.fn(), selection: vi.fn() }));
-vi.mock("@/lib/db", () => ({ db: {
-  transaction: (fn: (tx: unknown) => Promise<unknown>) => fn({
-    execute,
-    select: (fields: unknown) => {
-      selection(fields);
-      return { from: () => ({ leftJoin: (_table: unknown, join: unknown) => ({ where: (where: unknown) => { filters(join, where); return { orderBy: readRows }; } }) }) };
-    },
-  }),
-} }));
+const proxy = await vi.hoisted(async () => (await import("@/test/pg-proxy")).createProxyDb());
+const { putObject } = vi.hoisted(() => ({ putObject: vi.fn() }));
+vi.mock("@/lib/db", () => ({ db: proxy.db }));
 vi.mock("@/lib/r2", () => ({ putR2Object: putObject }));
 import { publishSongCatalog } from "./publication";
 import { CATALOG_WRITE_LOCK_ID } from "./ingestion/lock";
-import { CATALOG_INSTANCE_FIELDS } from "./ingestion/schema";
 import { parentCatalogKey, songCatalogKey } from "@/lib/api/catalog-location";
 
 const parent = {
@@ -25,14 +18,25 @@ const instance = {
   level: "13", levelPrecise: 133, region: "jp", gameVersion: 11, addedVersion: 10, noteDesigner: null,
 };
 
+// A game's stored charts answer only a read of that game's catalog.
+function store(game: CanonicalGameId, rows: ProxyRow[]) {
+  proxy.answer(({ table, params }) => table === "parent_song" && params.includes(game) ? rows : undefined);
+}
+
+function published() {
+  return new Map(putObject.mock.calls.map(([object]) => [object.key, JSON.parse(object.body)]));
+}
+
 beforeEach(() => {
-  readRows.mockReset(); filters.mockReset(); execute.mockReset(); selection.mockReset(); putObject.mockReset(); putObject.mockResolvedValue(undefined);
+  proxy.reset();
+  putObject.mockReset();
+  putObject.mockResolvedValue(undefined);
 });
 
 describe("publishSongCatalog", () => {
-  it("publishes a configured catalog while the game's public frontend remains disabled", async () => {
+  it("publishes the game's charts with the estimates their sources recorded, under the catalog lock", async () => {
     const metadata = { levelPreciseEstimated: true, addedVersionEstimated: true, source: { provider: "otoge-db", id: "2490" }, noteCounts: { air: 331 } };
-    readRows.mockResolvedValue([{ parent: { ...parent, type: 0 }, instance: { ...instance, gameVersion: 9, addedVersion: 8, metadata } }]);
+    store("chunithm", [{ parent: { ...parent, type: 0 }, instance: { ...instance, gameVersion: 9, addedVersion: 8, metadata } }]);
     const result = await publishSongCatalog("chunithm");
     const object = putObject.mock.calls.find(([object]) => object.key === songCatalogKey("chunithm", "jp", 9))?.[0];
     const body = JSON.parse(object.body);
@@ -40,19 +44,21 @@ describe("publishSongCatalog", () => {
     expect(body.songs[0]).not.toHaveProperty("metadata");
     expect(putObject.mock.calls.every(([object]) => object.key.startsWith("catalog/v2/chunithm/"))).toBe(true);
     expect(result.songCount).toBe(1);
-    const dialect = new PgDialect();
-    const [join, where] = filters.mock.calls[0].map(filter => dialect.sqlToQuery(filter));
-    expect(join.sql).toBe('"songs"."parentId" = "parent_song"."id"');
-    expect(where.sql).toBe('"parent_song"."game" = $1');
-    expect(where.params).toEqual(["chunithm"]);
-    expect(dialect.sqlToQuery(execute.mock.calls[0][0]).sql).toBe(`select pg_advisory_xact_lock(${CATALOG_WRITE_LOCK_ID})`);
+    expect(proxy.transactions).toEqual(["begin", "commit"]);
+    expect(proxy.queries[0].sql).toBe(`select pg_advisory_xact_lock(${CATALOG_WRITE_LOCK_ID})`);
+  });
+
+  it("publishes no chart of another game", async () => {
+    store("chunithm", [{ parent: { ...parent, type: 0 }, instance: { ...instance, gameVersion: 9 } }]);
+    await expect(publishSongCatalog("maimai")).resolves.toMatchObject({ songCount: 0 });
+    expect(published().get(parentCatalogKey("maimai"))).toEqual({ game: "maimai", parents: [] });
   });
 
   it("deduplicates parents, emits composite IDs and overwrites empty slices", async () => {
     const confirmed = { ...instance, metadata: { levelPreciseEstimated: false, addedVersionEstimated: false } };
-    readRows.mockResolvedValue([{ parent, instance: confirmed }, { parent, instance: { ...instance, gameVersion: 12 } }]);
+    store("maimai", [{ parent, instance: confirmed }, { parent, instance: { ...instance, gameVersion: 12 } }]);
     const result = await publishSongCatalog("maimai");
-    const objects = new Map(putObject.mock.calls.map(([object]) => [object.key, JSON.parse(object.body)]));
+    const objects = published();
     expect(objects.get(parentCatalogKey("maimai"))).toEqual({ game: "maimai", parents: [parent] });
     const [song] = objects.get(songCatalogKey("maimai", "jp", 11)).songs;
     expect(song.songId).toBe("Ab3xK9pQ:j11");
@@ -65,20 +71,23 @@ describe("publishSongCatalog", () => {
   });
 
   it("publishes every instance field except the note counts, which the per-game details carry", async () => {
-    readRows.mockResolvedValue([]);
+    store("maimai", [{ parent, instance: { ...instance, noteDesigner: "Designer", metadata: { levelPreciseEstimated: true, noteCounts: { tap: 100 } } } }]);
     await publishSongCatalog("maimai");
-    const { instance } = selection.mock.calls[0][0] as { instance: Record<string, unknown> };
-    for (const field of CATALOG_INSTANCE_FIELDS.filter(field => field !== "noteCounts")) expect(instance).toHaveProperty(field);
+    const { disambiguator: _disambiguator, ...parentFields } = parent;
+    expect(published().get(songCatalogKey("maimai", "jp", 11)).songs).toEqual([{
+      ...parentFields, songId: "Ab3xK9pQ:j11", level: "13", levelPrecise: 133, region: "jp", gameVersion: 11, addedVersion: 10,
+      noteDesigner: "Designer", levelPreciseEstimated: true,
+    }]);
   });
 
   it("validates every slice before writing any objects", async () => {
-    readRows.mockResolvedValue([{ parent, instance: { ...instance, levelPrecise: "invalid" } }]);
+    store("maimai", [{ parent, instance: { ...instance, levelPrecise: "invalid" } }]);
     await expect(publishSongCatalog("maimai")).rejects.toThrow();
     expect(putObject).not.toHaveBeenCalled();
   });
 
   it("rebuilds every catalog object after a publication failure", async () => {
-    readRows.mockResolvedValue([{ parent, instance }]);
+    store("maimai", [{ parent, instance }]);
     await publishSongCatalog("maimai");
     const expectedKeys = putObject.mock.calls.map(([object]) => object.key).sort();
     putObject.mockClear();

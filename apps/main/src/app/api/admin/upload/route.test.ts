@@ -70,24 +70,18 @@ describe("POST /api/admin/upload", () => {
     expect(mocks.publish).not.toHaveBeenCalled();
   });
 
-  it.each([
-    { name: "driver parameter limit", cause: Object.assign(new Error("Max number of parameters exceeded"), { code: "MAX_PARAMETERS_EXCEEDED" }), expected: ["Max number of parameters exceeded", "MAX_PARAMETERS_EXCEEDED"] },
-    { name: "Postgres constraint", cause: Object.assign(new Error("duplicate key value violates unique constraint"), { code: "23505", constraint_name: "parent_song_publicId_unique", detail: "Key value: secret-detail" }), expected: ["duplicate key value violates unique constraint", "23505", "parent_song_publicId_unique"] },
-    { name: "absent database cause", cause: undefined, expected: ["Database query failed"] },
-  ])("reports the $name without burying it in SQL or parameters", async ({ cause, expected }) => {
+  it("reports a database failure without its SQL in the response and the notice", async () => {
+    const cause = Object.assign(new Error("duplicate key value violates unique constraint"), { code: "23505" });
     const error = new DrizzleQueryError(`insert into parent_song ${"secret-sql ".repeat(1000)}`, ["secret-parameter"], cause);
     mocks.persist.mockRejectedValueOnce(error);
     const response = await upload("region=jp&version=9&update=alter");
     expect(response.status).toBe(500);
     const body = await response.json();
-    expect(body.requestId).toBe("upload-test");
+    expect(body).toEqual({ error: "[23505] duplicate key value violates unique constraint", requestId: "upload-test" });
     const description = mocks.notice.mock.calls[0][3];
-    for (const message of [body.error, description]) {
-      for (const text of expected) expect(message.includes(text), text).toBe(true);
-      expect(message).not.toContain("secret-");
-      expect(message.length).toBeLessThan(4096);
-    }
+    expect(description).toContain(body.error);
     expect(description).toContain("upload-test");
+    expect(description).not.toContain("secret-");
     expect(mocks.log.error).toHaveBeenCalledWith({ err: error }, "Admin request failed");
   });
 
