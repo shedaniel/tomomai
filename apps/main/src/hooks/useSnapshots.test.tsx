@@ -34,7 +34,7 @@ let client: QueryClient;
 const initial = fixture("maimai", "latest");
 const capture = (snapshots: ReturnType<typeof useSnapshots>) => { result = snapshots; };
 function Probe({ region = "jp" }: { region?: Region }) {
-  const snapshots = useSnapshots(region, true, { initialSnapshots: [initial.summary], initialSnapshotData: initial.data });
+  const snapshots = useSnapshots(region, { initialSnapshots: [initial.summary], initialSnapshotData: initial.data });
   capture(snapshots);
   return <span>{snapshots.selectedSnapshotData?.snapshot.displayName}</span>;
 }
@@ -78,12 +78,19 @@ describe("snapshot query lifecycle", () => {
     expect(transport.remove.mock.calls[0][0]).toEqual({ game: "maimai", region: "jp", snapshotId: "latest" });
     expect(container.textContent).toBe("maimai-fresh");
   });
-  it.each([["chunithm", "jp"], ["maimai", "intl"]] as const)("does not seed another scope (%s/%s) with the first scope's SSR data", async (game, region) => {
+  it("does not refetch a deleted snapshot", async () => {
+    client.setQueryData(["snapshots", { game: "maimai", region: "jp" }], [initial.summary, fixture("maimai", "historical").summary]);
     await render();
-    await render(game, region); await settle(); await settle();
-    expect(transport.list).toHaveBeenCalledWith({ game, region });
-    expect(transport.detail).toHaveBeenCalledWith({ game, region, snapshotId: `${game}-fresh` });
-    expect(result.selectedSnapshotData?.snapshot.game).toBe(game);
-    expect(container.textContent).toBe(`${game}-fresh`);
+    await act(async () => result.setSelectedSnapshot("historical")); await settle();
+    await act(async () => { await result.deleteSnapshot("historical"); }); await settle(); await settle();
+    expect(transport.detail.mock.calls.filter(([input]) => input.snapshotId === "historical")).toHaveLength(1);
+    expect(container.textContent).toBe("maimai-fresh");
+  });
+  it("does not seed another region with the first region's SSR data", async () => {
+    await render();
+    await render("maimai", "intl"); await settle(); await settle();
+    expect(transport.list).toHaveBeenCalledWith({ game: "maimai", region: "intl" });
+    expect(transport.detail).toHaveBeenCalledWith({ game: "maimai", region: "intl", snapshotId: "maimai-fresh" });
+    expect(container.textContent).toBe("maimai-fresh");
   });
 });

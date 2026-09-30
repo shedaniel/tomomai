@@ -79,7 +79,7 @@ export function Dashboard({ user, initialUserData, initialRegion, initialSnapsho
     isCopying,
     isLoading: isLoadingSnapshots,
     refreshSnapshots,
-  } = useSnapshots(selectedRegion, true, {
+  } = useSnapshots(selectedRegion, {
     initialSnapshots,
     initialSnapshotData,
   });
