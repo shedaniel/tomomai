@@ -1,5 +1,5 @@
 {
-  "id": "764c4eb5-231b-4986-8b1a-48f87c3c77cc",
+  "id": "fafc4653-06b9-470f-9f35-4effa991106f",
   "prevId": "eeef5e25-1ee0-4ffb-aff5-30c0b8d7d54f",
   "version": "7",
   "dialect": "postgresql",
@@ -616,6 +616,243 @@
       },
       "indexes": {},
       "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.user_recent_songs_detailed": {
+      "name": "user_recent_songs_detailed",
+      "schema": "",
+      "columns": {
+        "recentSongId": {
+          "name": "recentSongId",
+          "type": "bigint",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "fastCount": {
+          "name": "fastCount",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "lateCount": {
+          "name": "lateCount",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "combo": {
+          "name": "combo",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "maxCombo": {
+          "name": "maxCombo",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "syncScore": {
+          "name": "syncScore",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "maxSyncScore": {
+          "name": "maxSyncScore",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "tapCPerfect": {
+          "name": "tapCPerfect",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tapPerfect": {
+          "name": "tapPerfect",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tapGreat": {
+          "name": "tapGreat",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tapGood": {
+          "name": "tapGood",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tapMiss": {
+          "name": "tapMiss",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "holdCPerfect": {
+          "name": "holdCPerfect",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "holdPerfect": {
+          "name": "holdPerfect",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "holdGreat": {
+          "name": "holdGreat",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "holdGood": {
+          "name": "holdGood",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "holdMiss": {
+          "name": "holdMiss",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "slideCPerfect": {
+          "name": "slideCPerfect",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "slidePerfect": {
+          "name": "slidePerfect",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "slideGreat": {
+          "name": "slideGreat",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "slideGood": {
+          "name": "slideGood",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "slideMiss": {
+          "name": "slideMiss",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "touchCPerfect": {
+          "name": "touchCPerfect",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "touchPerfect": {
+          "name": "touchPerfect",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "touchGreat": {
+          "name": "touchGreat",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "touchGood": {
+          "name": "touchGood",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "touchMiss": {
+          "name": "touchMiss",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "breakCPerfect": {
+          "name": "breakCPerfect",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "breakPerfect": {
+          "name": "breakPerfect",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "breakGreat": {
+          "name": "breakGreat",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "breakGood": {
+          "name": "breakGood",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "breakMiss": {
+          "name": "breakMiss",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "venue": {
+          "name": "venue",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "rating": {
+          "name": "rating",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ratingChange": {
+          "name": "ratingChange",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "user_recent_songs_detailed_recentSongId_user_recent_songs_id_fk": {
+          "name": "user_recent_songs_detailed_recentSongId_user_recent_songs_id_fk",
+          "tableFrom": "user_recent_songs_detailed",
+          "tableTo": "user_recent_songs",
+          "columnsFrom": [
+            "recentSongId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
@@ -1369,12 +1606,6 @@
           "primaryKey": false,
           "notNull": true
         },
-        "metadata": {
-          "name": "metadata",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false
-        },
         "songName": {
           "name": "songName",
           "type": "text",
@@ -1967,29 +2198,7 @@
           "default": 0
         }
       },
-      "indexes": {
-        "score_data_game_songid_idx": {
-          "name": "score_data_game_songid_idx",
-          "columns": [
-            {
-              "expression": "game",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "songId",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
+      "indexes": {},
       "foreignKeys": {
         "score_data_song_game_fk": {
           "name": "score_data_song_game_fk",
@@ -3235,12 +3444,6 @@
       "name": "user_albums",
       "schema": "",
       "columns": {
-        "metadata": {
-          "name": "metadata",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false
-        },
         "id": {
           "name": "id",
           "type": "bigint",
@@ -3293,13 +3496,13 @@
           "name": "imageKey",
           "type": "text",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "imageSize": {
           "name": "imageSize",
           "type": "integer",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "createdAt": {
           "name": "createdAt",
@@ -3337,17 +3540,17 @@
           "method": "btree",
           "with": {}
         },
-        "user_albums_game_songid_idx": {
-          "name": "user_albums_game_songid_idx",
+        "user_albums_songid_game_idx": {
+          "name": "user_albums_songid_game_idx",
           "columns": [
             {
-              "expression": "game",
+              "expression": "songId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
             },
             {
-              "expression": "songId",
+              "expression": "game",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -3399,12 +3602,6 @@
       "name": "user_events",
       "schema": "",
       "columns": {
-        "metadata": {
-          "name": "metadata",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false
-        },
         "id": {
           "name": "id",
           "type": "bigint",
@@ -3440,7 +3637,7 @@
           "type": "event_type",
           "typeSchema": "public",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "name": {
           "name": "name",
@@ -3452,7 +3649,7 @@
           "name": "currentDistance",
           "type": "integer",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "nextRewardDistance": {
           "name": "nextRewardDistance",
@@ -3465,13 +3662,13 @@
           "type": "event_state",
           "typeSchema": "public",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "imageUrl": {
           "name": "imageUrl",
           "type": "text",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "eventPeriodStart": {
           "name": "eventPeriodStart",
@@ -3487,17 +3684,17 @@
         }
       },
       "indexes": {
-        "user_events_game_snapshotid_idx": {
-          "name": "user_events_game_snapshotid_idx",
+        "user_events_snapshotid_game_idx": {
+          "name": "user_events_snapshotid_game_idx",
           "columns": [
             {
-              "expression": "game",
+              "expression": "snapshotId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
             },
             {
-              "expression": "snapshotId",
+              "expression": "game",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -3532,16 +3729,79 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+    "public.user_game_preferences": {
+      "name": "user_game_preferences",
+      "schema": "",
+      "columns": {
+        "userId": {
+          "name": "userId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "game": {
+          "name": "game",
+          "type": "game",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "region": {
+          "name": "region",
+          "type": "region",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "profileMainRegion": {
+          "name": "profileMainRegion",
+          "type": "region",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp (0)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "user_game_preferences_userId_user_id_fk": {
+          "name": "user_game_preferences_userId_user_id_fk",
+          "tableFrom": "user_game_preferences",
+          "tableTo": "user",
+          "columnsFrom": [
+            "userId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "user_game_preferences_userId_game_pk": {
+          "name": "user_game_preferences_userId_game_pk",
+          "columns": [
+            "userId",
+            "game"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "public.user_recent_songs": {
       "name": "user_recent_songs",
       "schema": "",
       "columns": {
-        "metadata": {
-          "name": "metadata",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false
-        },
         "id": {
           "name": "id",
           "type": "bigint",
@@ -3572,6 +3832,12 @@
           "primaryKey": false,
           "notNull": true
         },
+        "metadata": {
+          "name": "metadata",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
         "songId": {
           "name": "songId",
           "type": "bigint",
@@ -3596,8 +3862,8 @@
           "primaryKey": false,
           "notNull": true
         },
-        "maxDxScore": {
-          "name": "maxDxScore",
+        "maxSecondaryScore": {
+          "name": "maxSecondaryScore",
           "type": "smallint",
           "primaryKey": false,
           "notNull": false
@@ -3625,7 +3891,7 @@
           "name": "track",
           "type": "smallint",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         }
       },
       "indexes": {
@@ -3656,44 +3922,17 @@
           "method": "btree",
           "with": {}
         },
-        "user_recent_songs_userid_game_songid_idx": {
-          "name": "user_recent_songs_userid_game_songid_idx",
+        "user_recent_songs_songid_game_idx": {
+          "name": "user_recent_songs_songid_game_idx",
           "columns": [
             {
-              "expression": "userId",
+              "expression": "songId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
             },
             {
               "expression": "game",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "songId",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "user_recent_songs_game_songid_idx": {
-          "name": "user_recent_songs_game_songid_idx",
-          "columns": [
-            {
-              "expression": "game",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "songId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -3749,256 +3988,18 @@
         }
       },
       "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.user_recent_songs_detailed": {
-      "name": "user_recent_songs_detailed",
-      "schema": "",
-      "columns": {
-        "recentSongId": {
-          "name": "recentSongId",
-          "type": "bigint",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "fastCount": {
-          "name": "fastCount",
-          "type": "smallint",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "lateCount": {
-          "name": "lateCount",
-          "type": "smallint",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "combo": {
-          "name": "combo",
-          "type": "smallint",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "maxCombo": {
-          "name": "maxCombo",
-          "type": "smallint",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "syncScore": {
-          "name": "syncScore",
-          "type": "smallint",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "maxSyncScore": {
-          "name": "maxSyncScore",
-          "type": "smallint",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "tapCPerfect": {
-          "name": "tapCPerfect",
-          "type": "smallint",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "tapPerfect": {
-          "name": "tapPerfect",
-          "type": "smallint",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "tapGreat": {
-          "name": "tapGreat",
-          "type": "smallint",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "tapGood": {
-          "name": "tapGood",
-          "type": "smallint",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "tapMiss": {
-          "name": "tapMiss",
-          "type": "smallint",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "holdCPerfect": {
-          "name": "holdCPerfect",
-          "type": "smallint",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "holdPerfect": {
-          "name": "holdPerfect",
-          "type": "smallint",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "holdGreat": {
-          "name": "holdGreat",
-          "type": "smallint",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "holdGood": {
-          "name": "holdGood",
-          "type": "smallint",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "holdMiss": {
-          "name": "holdMiss",
-          "type": "smallint",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "slideCPerfect": {
-          "name": "slideCPerfect",
-          "type": "smallint",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "slidePerfect": {
-          "name": "slidePerfect",
-          "type": "smallint",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "slideGreat": {
-          "name": "slideGreat",
-          "type": "smallint",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "slideGood": {
-          "name": "slideGood",
-          "type": "smallint",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "slideMiss": {
-          "name": "slideMiss",
-          "type": "smallint",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "touchCPerfect": {
-          "name": "touchCPerfect",
-          "type": "smallint",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "touchPerfect": {
-          "name": "touchPerfect",
-          "type": "smallint",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "touchGreat": {
-          "name": "touchGreat",
-          "type": "smallint",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "touchGood": {
-          "name": "touchGood",
-          "type": "smallint",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "touchMiss": {
-          "name": "touchMiss",
-          "type": "smallint",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "breakCPerfect": {
-          "name": "breakCPerfect",
-          "type": "smallint",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "breakPerfect": {
-          "name": "breakPerfect",
-          "type": "smallint",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "breakGreat": {
-          "name": "breakGreat",
-          "type": "smallint",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "breakGood": {
-          "name": "breakGood",
-          "type": "smallint",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "breakMiss": {
-          "name": "breakMiss",
-          "type": "smallint",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "venue": {
-          "name": "venue",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "rating": {
-          "name": "rating",
-          "type": "smallint",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "ratingChange": {
-          "name": "ratingChange",
-          "type": "smallint",
-          "primaryKey": false,
-          "notNull": true
+      "checkConstraints": {
+        "user_recent_songs_maimai_fields": {
+          "name": "user_recent_songs_maimai_fields",
+          "value": "\"user_recent_songs\".\"game\" <> 'maimai' OR \"user_recent_songs\".\"maxSecondaryScore\" IS NOT NULL"
         }
       },
-      "indexes": {},
-      "foreignKeys": {
-        "user_recent_songs_detailed_recentSongId_user_recent_songs_id_fk": {
-          "name": "user_recent_songs_detailed_recentSongId_user_recent_songs_id_fk",
-          "tableFrom": "user_recent_songs_detailed",
-          "tableTo": "user_recent_songs",
-          "columnsFrom": [
-            "recentSongId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
       "isRLSEnabled": false
     },
     "public.user_snapshots": {
       "name": "user_snapshots",
       "schema": "",
       "columns": {
-        "metadata": {
-          "name": "metadata",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false
-        },
         "id": {
           "name": "id",
           "type": "integer",
@@ -4132,33 +4133,6 @@
           "method": "btree",
           "with": {}
         },
-        "user_snapshots_userid_game_region_idx": {
-          "name": "user_snapshots_userid_game_region_idx",
-          "columns": [
-            {
-              "expression": "userId",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "game",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "region",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
         "user_snapshots_userid_game_region_fetchedat_idx": {
           "name": "user_snapshots_userid_game_region_fetchedat_idx",
           "columns": [
@@ -4227,7 +4201,12 @@
         }
       },
       "policies": {},
-      "checkConstraints": {},
+      "checkConstraints": {
+        "user_snapshots_maimai_fields": {
+          "name": "user_snapshots_maimai_fields",
+          "value": "\"user_snapshots\".\"game\" <> 'maimai' OR (\"user_snapshots\".\"courseRankUrl\" IS NOT NULL AND \"user_snapshots\".\"classRankUrl\" IS NOT NULL AND \"user_snapshots\".\"stars\" IS NOT NULL)"
+        }
+      },
       "isRLSEnabled": false
     },
     "public.user_tokens": {
