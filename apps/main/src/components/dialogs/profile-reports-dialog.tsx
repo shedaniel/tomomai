@@ -2,7 +2,7 @@
 
 import type { AppRouter } from "@/server/routers/_app";
 import { createTRPCClient, httpBatchLink } from "@trpc/client";
-import type { inferRouterOutputs } from "@trpc/server";
+import type { RouterOutputs } from "@/lib/trpc-types";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -45,8 +45,7 @@ interface ProfileReportsDialogProps {
 }
 
 type ReportStatus = "pending" | "dismissed" | "removed";
-type ProfileReport =
-  inferRouterOutputs<AppRouter>["admin"]["profileReports"]["list"]["reports"][number];
+type ProfileReport = RouterOutputs["admin"]["profileReports"]["list"]["reports"][number];
 
 type VisibleError = {
   title: string;

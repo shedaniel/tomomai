@@ -1,6 +1,6 @@
 "use client";
 
-import type { RecentPlay } from "@/server/queries/recents";
+import type { RecentPlay } from "@/lib/trpc-types";
 import { cn } from "@/lib/utils";
 import { ArrowBigDownDash, ArrowBigUpDash, CloudOff, Grip, MapPin, Slash, Sparkle, Star, TrendingDown, TrendingUp, Trophy } from "lucide-react";
 import { useTranslations } from "next-intl";

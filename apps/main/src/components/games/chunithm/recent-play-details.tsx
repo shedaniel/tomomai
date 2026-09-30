@@ -1,7 +1,7 @@
 "use client";
 
 import type { ChunithmRecentDetails } from "@/lib/games/chunithm/recent-details";
-import type { RecentPlay } from "@/server/queries/recents";
+import type { RecentPlay } from "@/lib/trpc-types";
 import { AutoHeight } from "@/components/animate-ui/primitives/effects/auto-height";
 import { Badge } from "@tomomai/ui";
 import { Grip } from "lucide-react";

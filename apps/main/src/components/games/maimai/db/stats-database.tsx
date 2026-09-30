@@ -1,12 +1,11 @@
 "use client";
 
 import { Fragment, useState, type ReactNode } from "react";
-import type { inferRouterOutputs } from "@trpc/server";
 import { trpc } from "@/lib/trpc-client";
+import type { RouterOutputs } from "@/lib/trpc-types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@tomomai/ui";
 import { useTranslations } from "next-intl";
 import { Loader2 } from "lucide-react";
-import type { AppRouter } from "@/server/routers/_app";
 import { Region } from "@/lib/types";
 import { TitleRankingTable } from "./stats/title-ranking-table";
 import { TopSongsCard } from "./stats/top-songs-card";
@@ -19,7 +18,7 @@ import { HourWeekdayHeatmap } from "./stats/hour-weekday-heatmap";
 import { Tabs, TabsList, TabsTrigger } from "@/components/animate-ui/components/radix/tabs";
 import { useGame } from "@/components/providers/game-provider";
 
-type StatsData = inferRouterOutputs<AppRouter>["maimai"]["getCatalogStats"];
+type StatsData = RouterOutputs["maimai"]["getCatalogStats"];
 type StatCard = {
   key: string;
   titleKey: string;

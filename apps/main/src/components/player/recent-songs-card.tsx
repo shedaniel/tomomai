@@ -1,6 +1,6 @@
 "use client";
 
-import type { RecentPlay } from "@/server/queries/recents";
+import type { RecentPlay } from "@/lib/trpc-types";
 import { formatGameScore, formatGameLevel, getGameDifficulty, getGameStatusLabels } from "@/lib/games/presentation";
 import { useGameId } from "@/components/providers/game-provider";
 import { trpc } from "@/lib/trpc-client";

@@ -3,7 +3,7 @@ import React, { act } from "react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { createRoot, type Root } from "react-dom/client";
 import { NextIntlClientProvider } from "next-intl";
-import type { RecentPlay } from "@/server/queries/recents";
+import type { RecentPlay } from "@/lib/trpc-types";
 import { GameProvider } from "@/components/providers/game-provider";
 import { toFrontendGame } from "@/lib/games/frontend";
 import { getGame } from "@/lib/games/registry";

@@ -1,8 +1,7 @@
 "use client";
 
-import type { fetchUserAlbums } from "@/server/queries/albums";
 import { formatGameLevel, getGameDifficulty } from "@/lib/games/presentation";
-type Album = Awaited<ReturnType<typeof fetchUserAlbums>>["albums"][number];
+import type { UserAlbum } from "@/lib/trpc-types";
 import { useGameId } from "@/components/providers/game-provider";
 import { trpc } from "@/lib/trpc-client";
 import { Region } from "@/lib/types";
@@ -37,7 +36,7 @@ export function AlbumCard({ region }: AlbumCardProps) {
   const game = useGameId();
   const regionsT = useTranslations('regions');
   const t = useTranslations('albums');
-  const [albums, setAlbums] = useState<Album[]>([]);
+  const [albums, setAlbums] = useState<UserAlbum[]>([]);
   const [offset, setOffset] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const limit = 20;

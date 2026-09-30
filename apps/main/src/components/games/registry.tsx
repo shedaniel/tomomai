@@ -2,7 +2,7 @@ import type { ComponentType, ReactNode } from "react";
 import type { CanonicalGameId } from "@/lib/games/ids";
 import type { PercentileDistributionData } from "@/lib/games/maimai/percentile/types";
 import type { GamePlayerScore } from "@/lib/games/player-view";
-import type { RecentPlay } from "@/server/queries/recents";
+import type { RecentPlay } from "@/lib/trpc-types";
 import { ChunithmRecentPlayDetails } from "./chunithm/recent-play-details";
 import { MaimaiRecentPlayDetails } from "./maimai/recent-play-details";
 import { SongHoverCard } from "./maimai/song-hover-card";
