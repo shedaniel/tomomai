@@ -400,18 +400,19 @@
         "createButton": "建立 API 金鑰",
         "createError": "建立 API 金鑰失敗"
       },
+      "scopeRoutes": "授予 {routes}。",
       "scopes": {
         "ready": {
           "name": "Ready",
-          "description": "基礎存取權限。授予 GET /api/v1/ok。預設包含。"
+          "description": "基礎存取權限。預設包含。"
         },
         "user:metadata:read": {
           "name": "使用者元資料（唯讀）",
-          "description": "讀取你的使用者名稱、地區、個人檔案可見性和角色。授予 GET /api/v1/me。"
+          "description": "讀取你的使用者名稱、地區、個人檔案可見性和角色。"
         },
         "snapshot:latest:metadata:read": {
           "name": "最新快照元資料（唯讀）",
-          "description": "讀取最新快照的元資料（Rating、顯示名稱、遊玩次數等）。授予 GET /api/v1/games/maimai/snapshots/latest。"
+          "description": "讀取最新快照的元資料（Rating、顯示名稱、遊玩次數等）。"
         },
         "snapshot:latest:songs:b50:read": {
           "name": "最新快照 B50 歌曲（唯讀）",
@@ -427,11 +428,11 @@
         },
         "snapshot:latest:icon:read": {
           "name": "最新快照圖示（唯讀）",
-          "description": "讀取最新快照的頭像 URL（Discord 頭像）。敏感——可能洩露社群身份。"
+          "description": "讀取最新快照的頭像 URL（Discord 頭像）。敏感：可能洩露社群身份。"
         },
         "snapshot:all:metadata:read": {
           "name": "全部快照元資料（唯讀）",
-          "description": "列出所有快照並讀取其元資料。授予 GET /api/v1/games/maimai/snapshots 和 GET /api/v1/games/maimai/snapshots/:id。"
+          "description": "列出所有快照並讀取其元資料。"
         },
         "snapshot:all:songs:b50:read": {
           "name": "全部快照 B50 歌曲（唯讀）",
@@ -447,11 +448,11 @@
         },
         "snapshot:all:icon:read": {
           "name": "全部快照圖示（唯讀）",
-          "description": "讀取任意快照的頭像 URL（Discord 頭像）。敏感——可能洩露社群身份。"
+          "description": "讀取任意快照的頭像 URL（Discord 頭像）。敏感：可能洩露社群身份。"
         },
         "recent:read": {
           "name": "最近遊玩記錄（唯讀）",
-          "description": "讀取包含歌曲資訊、達成率和連擊/同步狀態的最近遊玩歷史。授予 GET /api/v1/games/maimai/recents。"
+          "description": "讀取包含歌曲資訊、達成率和連擊/同步狀態的最近遊玩歷史。"
         },
         "recent:detailed:read": {
           "name": "最近遊玩記錄（詳細·唯讀）",
@@ -459,43 +460,43 @@
         },
         "stats:read": {
           "name": "統計資料（唯讀）",
-          "description": "讀取評級/FC/FS 分布統計。授予 GET /api/v1/games/maimai/stats。"
+          "description": "讀取評級/FC/FS 分布統計。"
         },
         "album:read": {
           "name": "相簿（唯讀）",
-          "description": "讀取街機照片相簿條目（僅元資料，不含圖片 URL）。授予 GET /api/v1/games/maimai/albums。"
+          "description": "讀取街機照片相簿條目（僅元資料，不含圖片 URL）。"
         },
         "album:images:read": {
           "name": "相簿圖片（唯讀）",
-          "description": "在相簿回應中新增圖片 URL。敏感——照片可能包含人物圖像。"
+          "description": "在相簿回應中新增圖片 URL。敏感：照片可能包含人物圖像。"
         },
         "plate:read": {
           "name": "稱號（唯讀）",
-          "description": "讀取你的稱號完成資料（每個稱號尚需哪些歌曲達成 Clear / FC / AP）。授予 GET /api/v1/games/maimai/plates。"
+          "description": "讀取你的稱號完成資料（每個稱號尚需哪些歌曲達成 Clear / FC / AP）。"
         },
         "user:settings:read": {
           "name": "使用者設定（唯讀）",
-          "description": "讀取你的隱私和個人資料顯示設定（是否公開資料、是否顯示分數、是否顯示牌子等）。授予 GET /api/v1/me/settings。"
+          "description": "讀取你的隱私和個人資料顯示設定（是否公開資料、是否顯示分數、是否顯示牌子等）。"
         },
         "snapshot:all:delete": {
           "name": "快照（刪除）",
-          "description": "刪除你的任何快照。授予 DELETE /api/v1/games/maimai/snapshots/:id。破壞性——必須明確申請，絕不會被任何包含性範圍隱含授予。"
+          "description": "刪除你的任何快照。破壞性：必須明確申請，絕不會被任何包含性範圍隱含授予。"
         },
         "snapshot:submit": {
           "name": "快照（提交）",
-          "description": "提交新快照。內部使用 — 僅限管理員。"
+          "description": "提交新快照。內部使用：僅限管理員。"
         },
         "fetch:read": {
           "name": "同步狀態（唯讀）",
-          "description": "讀取你進行中或最近一次 maimai 資料同步的狀態。授予 GET /api/v1/games/maimai/fetch/status。"
+          "description": "讀取你進行中或最近一次遊戲資料同步的狀態。"
         },
         "fetch:start": {
           "name": "開始同步",
-          "description": "使用已儲存的上游權杖觸發一次新的 maimai 資料同步。授予 POST /api/v1/games/maimai/fetch。破壞性——消耗上游 API 配額並寫入新快照。"
+          "description": "使用已儲存的上游權杖觸發一次新的遊戲資料同步。破壞性：消耗上游 API 配額並寫入新快照。"
         },
         "fetch:delete": {
           "name": "同步權杖（刪除）",
-          "description": "刪除你已儲存的上游 maimai 認證權杖。授予 DELETE /api/v1/games/maimai/fetch/token。破壞性且敏感——重新認證前會中斷站內和 API 觸發的同步流程。"
+          "description": "刪除你已儲存的上游認證權杖。破壞性且敏感：重新認證前會中斷站內和 API 觸發的同步流程。"
         },
         "snapshot:latest:read": {
           "name": "最新快照（唯讀）",

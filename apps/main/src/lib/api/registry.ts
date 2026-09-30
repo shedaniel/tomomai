@@ -141,6 +141,15 @@ export function requiredScopes(spec: RouteSpec): ScopeKey[] {
   return Array.isArray(spec.scope) ? spec.scope : [spec.scope];
 }
 
+/** Every documented route as "METHOD /path", under each scope it requires. */
+export function routesByScope(): Partial<Record<ScopeKey, string[]>> {
+  const routes: Partial<Record<ScopeKey, string[]>> = {};
+  for (const route of getRegistry()) {
+    for (const scope of requiredScopes(route)) (routes[scope] ??= []).push(`${route.method} ${route.path}`);
+  }
+  return routes;
+}
+
 /** Returns all registered route specs, sorted by tag then path.
  *  Internal routes (RouteSpec.internal === true) are excluded — they don't
  *  appear in the public developer reference or OpenAPI doc. */

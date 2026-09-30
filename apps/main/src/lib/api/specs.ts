@@ -26,5 +26,5 @@ import "@/app/api/v1/games/[game]/fetch/spec";
 import "@/app/api/v1/games/[game]/fetch/status/spec";
 import "@/app/api/v1/games/[game]/fetch/token/spec";
 
-export { getRegistry, findRouteBySlug, requiredScopes, routeSlug } from "./registry";
+export { getRegistry, findRouteBySlug, requiredScopes, routeSlug, routesByScope } from "./registry";
 export type { RouteSpec } from "./registry";

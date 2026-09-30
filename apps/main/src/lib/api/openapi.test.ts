@@ -56,4 +56,11 @@ describe("OpenAPI document", () => {
     expect(me.responses["422"]).toBeUndefined();
     expect(me.parameters).toBeUndefined();
   });
+
+  it("describes each OAuth scope with the routes its specs require it for", () => {
+    const scopes = (document.components.securitySchemes.OAuth2 as { flows: { authorizationCode: { scopes: Record<string, string> } } }).flows.authorizationCode.scopes;
+    expect(scopes["fetch:delete"]).toMatch(/ Grants DELETE \/api\/v1\/games\/\{game\}\/fetch\/token\.$/);
+    expect(scopes["snapshot:all:metadata:read"]).toContain("Grants GET /api/v1/games/{game}/snapshots and GET /api/v1/games/{game}/snapshots/{id}.");
+    expect(scopes.read).not.toContain("Grants GET");
+  });
 });

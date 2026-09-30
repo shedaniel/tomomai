@@ -2,7 +2,7 @@ import { z } from "zod";
 import { GAME_ERROR_STATUS } from "@/lib/games/errors";
 import { INVALID_PARAMETER } from "./parse-input";
 import { API_SCOPES, isInternalScope, type ScopeKey } from "./scopes";
-import { getRegistry, isGameRoute, requiredScopes, type RouteSpec } from "./registry";
+import { getRegistry, isGameRoute, requiredScopes, routesByScope, type RouteSpec } from "./registry";
 import { errorResponse } from "./schemas";
 import "./specs";
 
@@ -14,6 +14,7 @@ import "./specs";
  */
 export function buildOpenApiDocument(baseUrl: string) {
   const routes = getRegistry().filter((r) => !r.internal);
+  const scopeRoutes = routesByScope();
 
   const securitySchemes = {
     BearerApiKey: {
@@ -35,7 +36,7 @@ export function buildOpenApiDocument(baseUrl: string) {
           scopes: Object.fromEntries(
             (Object.keys(API_SCOPES) as ScopeKey[])
               .filter((s) => !isInternalScope(s))
-              .map((s) => [s, API_SCOPES[s].description]),
+              .map((s) => [s, describeScope(s, scopeRoutes[s])]),
           ),
         },
       },
@@ -160,6 +161,11 @@ function buildOperation(route: RouteSpec) {
 
 function gameErrorCodes(status: number): string[] {
   return Object.entries(GAME_ERROR_STATUS).filter(([, mapping]) => mapping.http === status).map(([code]) => code);
+}
+
+function describeScope(scope: ScopeKey, routes: string[] = []): string {
+  const { description } = API_SCOPES[scope];
+  return routes.length ? `${description} Grants ${new Intl.ListFormat("en").format(routes)}.` : description;
 }
 
 function errorRef(description: string) {

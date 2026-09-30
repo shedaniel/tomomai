@@ -400,18 +400,19 @@
         "createButton": "Create API Key",
         "createError": "Failed to create API key"
       },
+      "scopeRoutes": "Grants {routes}.",
       "scopes": {
         "ready": {
           "name": "Ready",
-          "description": "Basic access. Grants GET /api/v1/ok. Included by default."
+          "description": "Basic access. Included by default."
         },
         "user:metadata:read": {
           "name": "User Metadata (Read)",
-          "description": "Read your username, region, profile visibility, and role. Grants GET /api/v1/me."
+          "description": "Read your username, region, profile visibility, and role."
         },
         "snapshot:latest:metadata:read": {
           "name": "Latest Snapshot Metadata (Read)",
-          "description": "Read metadata (rating, display name, play counts, etc.) for your latest snapshot. Grants GET /api/v1/games/maimai/snapshots/latest."
+          "description": "Read metadata (rating, display name, play counts, etc.) for your latest snapshot."
         },
         "snapshot:latest:songs:b50:read": {
           "name": "Latest Snapshot B50 Songs (Read)",
@@ -427,11 +428,11 @@
         },
         "snapshot:latest:icon:read": {
           "name": "Latest Snapshot Icon (Read)",
-          "description": "Read your profile icon URL (Discord avatar) from your latest snapshot. Sensitive — may reveal your social identity."
+          "description": "Read your profile icon URL (Discord avatar) from your latest snapshot. This is sensitive as it may reveal your social identity."
         },
         "snapshot:all:metadata:read": {
           "name": "All Snapshots Metadata (Read)",
-          "description": "List all your snapshots and read their metadata. Grants GET /api/v1/games/maimai/snapshots and GET /api/v1/games/maimai/snapshots/:id."
+          "description": "List all your snapshots and read their metadata."
         },
         "snapshot:all:songs:b50:read": {
           "name": "All Snapshots B50 Songs (Read)",
@@ -447,11 +448,11 @@
         },
         "snapshot:all:icon:read": {
           "name": "All Snapshots Icon (Read)",
-          "description": "Read your profile icon URL (Discord avatar) from any snapshot. Sensitive — may reveal your social identity."
+          "description": "Read your profile icon URL (Discord avatar) from any snapshot. This is sensitive as it may reveal your social identity."
         },
         "recent:read": {
           "name": "Recent Plays (Read)",
-          "description": "Read your recent play history including song info, achievement, and combo/sync status. Grants GET /api/v1/games/maimai/recents."
+          "description": "Read your recent play history including song info, achievement, and combo/sync status."
         },
         "recent:detailed:read": {
           "name": "Recent Plays Detailed (Read)",
@@ -459,43 +460,43 @@
         },
         "stats:read": {
           "name": "Stats (Read)",
-          "description": "Read your grade/FC/FS distribution statistics. Grants GET /api/v1/games/maimai/stats."
+          "description": "Read your grade/FC/FS distribution statistics."
         },
         "album:read": {
           "name": "Albums (Read)",
-          "description": "Read your arcade photo album entries (metadata only, no image URLs). Grants GET /api/v1/games/maimai/albums."
+          "description": "Read your arcade photo album entries (metadata only, no image URLs)."
         },
         "album:images:read": {
           "name": "Album Images (Read)",
-          "description": "Adds resolved image URLs to album responses. Sensitive — photos may contain images of people."
+          "description": "Adds resolved image URLs to album responses. This is sensitive as photos may contain images of people."
         },
         "plate:read": {
           "name": "Plates (Read)",
-          "description": "Read your plate completion data (which songs still need to be cleared / FC'd / AP'd for each plate). Grants GET /api/v1/games/maimai/plates."
+          "description": "Read your plate completion data (which songs still need to be cleared / FC'd / AP'd for each plate)."
         },
         "user:settings:read": {
           "name": "User Settings (Read)",
-          "description": "Read your privacy and profile-display settings (publish profile, show scores, show plates, etc.). Grants GET /api/v1/me/settings."
+          "description": "Read your privacy and profile-display settings (publish profile, show scores, show plates, etc.)."
         },
         "snapshot:all:delete": {
           "name": "Snapshots (Delete)",
-          "description": "Delete any of your snapshots. Grants DELETE /api/v1/games/maimai/snapshots/:id. Destructive — must be requested explicitly and is never implied by encompassing scopes."
+          "description": "Delete any of your snapshots. This is destructive, so it must be requested explicitly and is never implied by encompassing scopes."
         },
         "snapshot:submit": {
           "name": "Snapshots (Submit)",
-          "description": "Submit a new snapshot. Internal — admin only."
+          "description": "Submit a new snapshot. Internal and admin only."
         },
         "fetch:read": {
           "name": "Fetch Status (Read)",
-          "description": "Read the status of your in-progress or most-recent maimai data fetch. Grants GET /api/v1/games/maimai/fetch/status."
+          "description": "Read the status of your in-progress or most-recent game data fetch."
         },
         "fetch:start": {
           "name": "Start Fetch",
-          "description": "Trigger a new maimai data fetch using your stored upstream token. Grants POST /api/v1/games/maimai/fetch. Destructive — consumes upstream API budget and writes a new snapshot."
+          "description": "Trigger a new game data fetch using your stored upstream token. This is destructive as it consumes upstream API budget and writes a new snapshot."
         },
         "fetch:delete": {
           "name": "Fetch Token (Delete)",
-          "description": "Delete your stored upstream maimai authentication token. Grants DELETE /api/v1/games/maimai/fetch/token. Destructive and sensitive — breaks any in-app and API-driven fetch flow until you re-authenticate."
+          "description": "Delete your stored upstream authentication token. This is destructive and sensitive as in-app and API-driven fetches stop until you re-authenticate."
         },
         "snapshot:latest:read": {
           "name": "Latest Snapshot (Read)",
@@ -507,7 +508,7 @@
         },
         "read": {
           "name": "Read (All Non-Sensitive)",
-          "description": "Broad read access: user metadata, all snapshots, recents, stats, and albums. Excludes icon and album image URLs. Sensitive due to broad personal data access."
+          "description": "Broad read access: user metadata, all snapshots, recents, stats, and albums. Excludes icon and album image URLs, which must be granted explicitly. Sensitive due to broad personal data access."
         }
       },
       "oauthApps": {
