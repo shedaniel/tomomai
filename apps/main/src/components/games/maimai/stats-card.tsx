@@ -6,8 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Progress } from "@tomomai/ui";
 import { Button } from "@tomomai/ui";
 import { MAIMAI_GRADES } from "@/lib/games/maimai/grades";
-import { MAIMAI_PLATE_DIFFICULTIES, MAIMAI_PLATE_TYPES, type MaimaiPlateDifficulty, type MaimaiPlateType } from "@/lib/games/maimai/plates";
-import type { FullCombo, FullSync } from "@/lib/games/maimai/types";
+import { MAIMAI_PLATE_DIFFICULTIES, MAIMAI_PLATE_REQUIREMENTS, MAIMAI_PLATE_TYPES, type MaimaiPlateDifficulty, type MaimaiPlateType } from "@/lib/games/maimai/plates";
 import { getGameDifficulty } from "@/lib/games/presentation";
 import { getVersion } from "@/lib/games/versions";
 import { Region } from "@/lib/types";
@@ -74,12 +73,15 @@ const FS_COLORS: Record<string, { bg: string; text: string }> = {
 const FC_ORDER = MAIMAI_CODES.comboStatus.filter(fc => fc !== "none").reverse();
 const FS_ORDER = MAIMAI_CODES.syncStatus.filter(fs => fs !== "none").reverse();
 
-function comboCount(bucket: StatsBucket, keys: readonly FullCombo[]): number {
-  return keys.reduce((sum, key) => sum + (bucket.statuses.comboStatus?.[comboStatusToCode(key)] ?? 0), 0);
-}
-
-function syncCount(bucket: StatsBucket, keys: readonly FullSync[]): number {
-  return keys.reduce((sum, key) => sum + (bucket.statuses.syncStatus?.[syncStatusToCode(key)] ?? 0), 0);
+function plateCount(bucket: StatsBucket, plate: MaimaiPlateType): number {
+  const requirement = MAIMAI_PLATE_REQUIREMENTS[plate];
+  if ("comboStatus" in requirement) {
+    return requirement.comboStatus.reduce((sum, key) => sum + (bucket.statuses.comboStatus?.[comboStatusToCode(key)] ?? 0), 0);
+  }
+  if ("syncStatus" in requirement) {
+    return requirement.syncStatus.reduce((sum, key) => sum + (bucket.statuses.syncStatus?.[syncStatusToCode(key)] ?? 0), 0);
+  }
+  return MAIMAI_GRADES.filter(grade => grade.min >= requirement.minScore).reduce((sum, grade) => sum + (bucket.grades[grade.label] ?? 0), 0);
 }
 
 const PLATE_LABELS: Record<MaimaiPlateType, string> = {
@@ -154,23 +156,10 @@ function PlatesGrid({ data, selectedVersion, region, snapshotId }: PlatesGridPro
       progress.maimai[difficulty] = 0;
     }
 
-    // Calculate progress for each plate type
     for (const difficulty of MAIMAI_PLATE_DIFFICULTIES) {
       const diffData = versionData[difficultyToCode(difficulty)];
       if (!diffData) continue;
-
-      // 極 (kiwami): FC or above
-      progress.kiwami[difficulty] = comboCount(diffData, ["fc", "fc+", "ap", "ap+"]);
-
-      // 将 (Shou): SSS or above
-      const sssCount = (diffData.grades["SSS"] || 0) + (diffData.grades["SSS+"] || 0);
-      progress.shou[difficulty] = sssCount;
-
-      // 神 (Shin): AP or above
-      progress.shin[difficulty] = comboCount(diffData, ["ap", "ap+"]);
-
-      // 舞舞 (Maimai): FDX or above
-      progress.maimai[difficulty] = syncCount(diffData, ["fdx", "fdx+"]);
+      for (const plate of MAIMAI_PLATE_TYPES) progress[plate][difficulty] = plateCount(diffData, plate);
     }
 
     return { progress, totalSongs };
@@ -443,7 +432,7 @@ export function StatsCard({ region, snapshotId, showScoreDetails, showPlates }: 
 
   // Sort grades by achievement threshold (highest to lowest)
   const sortedGrades = useMemo(() => {
-    const gradeOrder = MAIMAI_GRADES.map(grade => grade.label);
+    const gradeOrder: readonly string[] = MAIMAI_GRADES.map(grade => grade.label);
     return Object.entries(filteredStats.grades)
       .sort((a, b) => {
         const indexA = gradeOrder.indexOf(a[0]);

@@ -1,31 +1,18 @@
 import "server-only";
-import { comboStatusToCode, difficultyToCode, syncStatusToCode } from "@/lib/games/maimai/codes";
+import { difficultyToCode } from "@/lib/games/maimai/codes";
 import { songInstanceId } from "@/lib/db/song-instance-id";
 import { db } from "@/lib/db";
 import { parentSong, scoreData, snapshotScores, songs, userSnapshots } from "@/lib/db/schema-pg";
 import { and, eq } from "drizzle-orm";
 import type { Region } from "@/lib/types";
 import type { CanonicalGameId } from "@/lib/games/types";
-import type { MaimaiPlateDifficulty, MaimaiPlateType } from "@/lib/games/maimai/plates";
-import type { GamePlayerScore } from "@/lib/games/player-view";
+import { meetsMaimaiPlate, type MaimaiPlateDifficulty, type MaimaiPlateType } from "@/lib/games/maimai/plates";
 import { latestSnapshot } from "@/server/queries/latest-snapshot";
 
 export type PlateQuery = {
   version: string;
   difficulty: MaimaiPlateDifficulty;
   plateType: MaimaiPlateType;
-};
-
-const FULL_COMBO = new Set((["fc", "fc+", "ap", "ap+"] as const).map(comboStatusToCode));
-const ALL_PERFECT = new Set((["ap", "ap+"] as const).map(comboStatusToCode));
-const FULL_SYNC_DX = new Set((["fdx", "fdx+"] as const).map(syncStatusToCode));
-const SSS = 1_000_000;
-
-const PLATE_CLEARED: Record<MaimaiPlateType, (score: Pick<GamePlayerScore, "scoreValue" | "comboStatus" | "syncStatus">) => boolean> = {
-  kiwami: score => FULL_COMBO.has(score.comboStatus),
-  shou: score => score.scoreValue >= SSS,
-  shin: score => ALL_PERFECT.has(score.comboStatus),
-  maimai: score => FULL_SYNC_DX.has(score.syncStatus),
 };
 
 /** The charts of one version and difficulty that the snapshot has not yet cleared for the plate. Unplayed charts read as zero scores. */
@@ -84,7 +71,7 @@ export async function fetchPlateSongs(
       syncStatus: row.syncStatus ?? 0,
       clearStatus: row.clearStatus ?? 0,
     }))
-    .filter(score => !PLATE_CLEARED[plateType](score));
+    .filter(score => !meetsMaimaiPlate(plateType, score));
 }
 
 /** fetchPlateSongs against the user's latest snapshot in the region, or nothing when they have none. */

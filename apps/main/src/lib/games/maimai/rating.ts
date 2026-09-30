@@ -1,11 +1,13 @@
 import type { ChartRatingInput, RankingBucketSizes, RatingBonus } from "../types";
 import { comboStatusToCode, difficultyToCode } from "./codes";
+import type { FullCombo } from "./types";
 import { Versions } from "./versions";
 
 // CiRCLE changed two rules: AP and AP+ add one rating, and the previous version's charts count as new.
 const CIRCLE = Versions.MAIMAI_DX_CIRCLE.id;
 const UTAGE = difficultyToCode("utage");
-const ALL_PERFECT = [comboStatusToCode("ap"), comboStatusToCode("ap+")];
+export const MAIMAI_ALL_PERFECT: readonly FullCombo[] = ["ap", "ap+"];
+const ALL_PERFECT = MAIMAI_ALL_PERFECT.map(comboStatusToCode);
 const AP_BONUSES: readonly RatingBonus[] = [{ label: "AP", scoreValue: 1_005_000, comboStatuses: ALL_PERFECT }];
 
 export const MAIMAI_BUCKET_SIZES: RankingBucketSizes = { new: 15, old: 35 };

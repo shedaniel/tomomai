@@ -1,6 +1,6 @@
 import type { GradeRow } from "../types";
 
-export const MAIMAI_GRADES: readonly GradeRow[] = [
+export const MAIMAI_GRADES = [
   { min: 1_005_000, label: "SSS+", benchmark: true },
   { min: 1_000_000, label: "SSS", benchmark: true },
   { min: 995_000, label: "SS+", benchmark: true },
@@ -15,4 +15,4 @@ export const MAIMAI_GRADES: readonly GradeRow[] = [
   { min: 600_000, label: "B", benchmark: true },
   { min: 500_000, label: "C", benchmark: true },
   { min: 0, label: "D", benchmark: true },
-];
+] as const satisfies readonly GradeRow[];
