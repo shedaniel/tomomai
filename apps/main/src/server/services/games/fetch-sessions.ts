@@ -16,7 +16,6 @@ import { getGame } from "@/lib/games/registry";
 import type { CanonicalGameId } from "@/lib/games/types";
 import { getCurrentVersion } from "@/lib/games/versions";
 import { flushLogger } from "@/lib/logger";
-import { revalidatePublicProfileForUser } from "@/lib/profile-cache";
 import { getLogger } from "@/lib/request-logger";
 import type { Region } from "@/lib/types";
 import { FetchStartError } from "./fetch-errors";
@@ -229,13 +228,8 @@ async function runScoreFetch(ctx: ScoreFetchContext, controller: AbortController
       return;
     }
 
-    // The snapshot is saved and its session completed, so later failures are only logged.
-    try {
-      if (saved.enrich) enrichment = enrichSnapshot(saved.enrich, saved.context, run.log);
-      await revalidatePublicProfileForUser(ctx.game, ctx.userId, [ctx.region]);
-    } catch (err) {
-      run.log.error({ err }, "Failed to revalidate the public profile after a fetch");
-    }
+    // The snapshot is saved and its session completed, so enrichment failures are only logged.
+    if (saved.enrich) enrichment = enrichSnapshot(saved.enrich, saved.context, run.log);
   } finally {
     await enrichment;
     await flushLogger();

@@ -1,6 +1,5 @@
 import { getAvailableVersions } from "@/lib/games/versions";
 import { protectedProcedure, router } from "@/lib/trpc";
-import { revalidatePublicProfileForUser } from "@/lib/profile-cache";
 import { fetchSnapshotDataByPublicId } from "@/server/queries/snapshots";
 import { listCatalogVersionsWithSongs } from "@/server/queries/songs";
 import { toMaimaiExport } from "@/server/services/games/maimai/export";
@@ -54,7 +53,6 @@ export const snapshotToolsRouter = router({
           message: "Snapshot not found or access denied",
         });
       }
-      await revalidatePublicProfileForUser(game, userId, [region]);
       return { success: true, ...copied };
     }),
 });

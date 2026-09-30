@@ -11,7 +11,6 @@ vi.mock("@/lib/trpc", async () => {
   const t = initTRPC.context<{ session: { user: { id: string } } }>().create();
   return { router: t.router, protectedProcedure: t.procedure };
 });
-vi.mock("@/lib/profile-cache", () => ({ revalidateCurrentSitePublicProfile: vi.fn(), revalidateCurrentSitePublicProfileForUser: vi.fn() }));
 
 import { profileRouter } from "./profile";
 

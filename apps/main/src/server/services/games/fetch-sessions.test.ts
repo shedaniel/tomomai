@@ -11,7 +11,6 @@ const state = vi.hoisted(() => ({
   rejectStoredToken: vi.fn<NonNullable<ScoreSource["rejectStoredToken"]>>(),
   log: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), child() { return this; } },
   persist: vi.fn(),
-  revalidate: vi.fn(),
   resolveFlags: vi.fn(),
   albumPreference: false as boolean | null,
   storedToken: "stored-token" as string | null,
@@ -41,7 +40,6 @@ vi.mock("./snapshot-persistence", async importOriginal => ({
   ...await importOriginal<typeof import("./snapshot-persistence")>(),
   persistFetchResult: state.persist,
 }));
-vi.mock("@/lib/profile-cache", () => ({ revalidatePublicProfileForUser: state.revalidate }));
 vi.mock("@/lib/flags", () => ({ resolveFlagsForUser: state.resolveFlags }));
 vi.mock("@/lib/logger", () => ({ flushLogger: vi.fn() }));
 vi.mock("@/lib/request-logger", () => ({ getLogger: () => state.log }));
@@ -215,7 +213,6 @@ it("completes the session before enrichment runs, then keeps the fetch open unti
   await vi.waitFor(() => expect(enrich).toHaveBeenCalledOnce());
   expect(enrich).toHaveBeenCalledWith(persisted);
   expect(statusesWhenEnriching).toEqual(["completed"]);
-  expect(state.revalidate).toHaveBeenCalledWith("maimai", "same-user", ["jp"]);
   await vi.advanceTimersByTimeAsync(0);
   expect(settled).toBe(false);
   release();
@@ -223,14 +220,12 @@ it("completes the session before enrichment runs, then keeps the fetch open unti
   expect(settled).toBe(true);
 });
 
-it("keeps a saved snapshot's session completed when enrichment or revalidation fails", async () => {
+it("keeps a saved snapshot's session completed when enrichment fails", async () => {
   state.fetch.mockResolvedValueOnce({ result: fetched, enrich: async () => { throw new Error("detail page changed"); } });
-  state.revalidate.mockRejectedValueOnce(new Error("cache unavailable"));
   const started = await startScoreFetch(start);
   await started.backgroundWork;
   expect(sessionStatuses()).toEqual(["completed"]);
-  expect(state.log.error).toHaveBeenCalledWith({ err: new Error("detail page changed"), stepType: "enrich" }, "Score fetch enrichment failed");
-  expect(state.log.error).toHaveBeenCalledWith({ err: new Error("cache unavailable") }, "Failed to revalidate the public profile after a fetch");
+  expect(state.log.error).toHaveBeenCalledExactlyOnceWith({ err: new Error("detail page changed"), stepType: "enrich" }, "Score fetch enrichment failed");
 });
 
 it("logs a failed stage once with its step and stores the stage's own message", async () => {
@@ -260,7 +255,6 @@ it("aborts a timed-out provider and keeps its late result from overwriting failu
   expect(state.statements).toHaveLength(writesAtFailure);
   expect(state.persist).not.toHaveBeenCalled();
   expect(sessionStatuses()).toEqual(["failed"]);
-  expect(state.revalidate).not.toHaveBeenCalled();
 });
 
 it("keeps CHUNITHM subscription failures scoped to the failed session without deleting credentials or writing a snapshot", async () => {
@@ -273,7 +267,6 @@ it("keeps CHUNITHM subscription failures scoped to the failed session without de
   expect(state.persist).not.toHaveBeenCalled();
   expect(state.statements.some(query => query.sql.startsWith("delete") || query.sql.startsWith('update "user_tokens"'))).toBe(false);
   expect(sessionStatuses()).toEqual(["failed"]);
-  expect(state.revalidate).not.toHaveBeenCalled();
 });
 
 it("reads the unmatched scores a session stored", async () => {

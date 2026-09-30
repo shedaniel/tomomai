@@ -4,7 +4,6 @@ import { fetchRatingHistory } from "@/server/queries/rating-history";
 import { protectedProcedure, router } from '@/lib/trpc';
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
-import { revalidatePublicProfileForUser } from '@/lib/profile-cache';
 import { gameProcedure } from "../game-procedures";
 
 export const snapshotsRouter = router({
@@ -37,7 +36,6 @@ export const snapshotsRouter = router({
           message: 'Snapshot not found or access denied',
         });
       }
-      await revalidatePublicProfileForUser(game, userId, [region]);
       return { success: true };
     }),
 });

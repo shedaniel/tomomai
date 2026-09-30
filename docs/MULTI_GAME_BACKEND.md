@@ -101,8 +101,8 @@ before a given time.
 
 A score source returns its normalized result and an optional `enrich` step
 (`server/services/games/types.ts`). Shared ingestion persists the result, marks
-the session completed, and only then runs the enrichment and the public profile
-revalidation, so their failures are logged and never fail a saved snapshot.
+the session completed, and only then runs the enrichment, so its failures are
+logged and never fail a saved snapshot.
 maimai enriches with recent play details (the `user_recent_songs_detailed`
 table) and album photos, CHUNITHM with recent play details stored in the recent
 row's `metadata`. Reading them back is each game server module's

@@ -6,7 +6,6 @@ import { TRPCError } from '@trpc/server';
 import { eq } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
 import { z } from 'zod';
-import { revalidateCurrentSitePublicProfile } from '@/lib/profile-cache';
 
 // Username validation helper
 const isValidUsername = (username: string): boolean => {
@@ -91,7 +90,7 @@ export const usernameRouter = router({
 
       // Check if already taken (but allow current user's username)
       const existingUser = await db
-        .select({ id: user.id, username: user.username })
+        .select({ id: user.id })
         .from(user)
         .where(eq(user.username, input.username))
         .limit(1);
@@ -103,16 +102,6 @@ export const usernameRouter = router({
         });
       }
 
-      const [currentUser] = await db
-        .select({ username: user.username })
-        .from(user)
-        .where(eq(user.id, ctx.session.user.id))
-        .limit(1);
-      if (!currentUser) {
-        throw new TRPCError({ code: 'NOT_FOUND', message: 'User not found' });
-      }
-      if (currentUser.username === input.username) return { success: true };
-
       // Update username
       await db
         .update(user)
@@ -121,8 +110,6 @@ export const usernameRouter = router({
           updatedAt: new Date(),
         })
         .where(eq(user.id, ctx.session.user.id));
-
-      revalidateCurrentSitePublicProfile([currentUser.username, input.username]);
 
       return { success: true };
     }),
