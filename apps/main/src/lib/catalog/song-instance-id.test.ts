@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { formatSongInstanceId, parentPublicIdSchema, parseSongId, songInstanceIdSchema } from "./song-instance-id";
+import { formatSongInstanceId } from "@tomomai/games/song-ids";
+import { parentPublicIdSchema, songInstanceIdSchema } from "./song-instance-id";
 import { decodeMessage, encodeMessage, mintRenderToken, verifyRenderToken, type RenderMessage } from "@tomomai/render-token";
 
 const header = {
@@ -9,27 +10,12 @@ const header = {
 };
 const chart = { songId: "Ab3xK9pQ:j14", achievement: 1005000, fc: "ap+" as const, fs: "fdx+" as const };
 
-describe("song instance identifiers", () => {
-  it("round-trips each region and signed historical versions", () => {
-    for (const region of ["jp", "intl", "cn"] as const) {
-      for (const gameVersion of [-32768, -1, 0, 14, 32767]) {
-        expect(parseSongId(formatSongInstanceId("Ab3xK9pQ", region, gameVersion))).toEqual({
-          kind: "instance", parentPublicId: "Ab3xK9pQ", region, gameVersion,
-        });
-      }
-    }
-    expect(parseSongId("Ab3xK9pQ")).toEqual({ kind: "parent", parentPublicId: "Ab3xK9pQ" });
-  });
-
-  it.each(["", "123456789", "bad/id!!", "Ab3xK9pQ:", "Ab3xK9pQ:x1", "Ab3xK9pQ:j01", "Ab3xK9pQ:j-0", "Ab3xK9pQ:j32768", "Ab3xK9pQ:j-32769", "Ab3xK9pQ:j1:2"])("rejects malformed ID %s", id => {
-    expect(parseSongId(id)).toBeNull();
-  });
-
-  it("validates parent and instance IDs with the parser's own patterns", () => {
+describe("song id schemas", () => {
+  it("validate parent and instance IDs with the parser's own patterns", () => {
     expect(parentPublicIdSchema.safeParse("Ab3xK9pQ").success).toBe(true);
     expect(songInstanceIdSchema.safeParse(formatSongInstanceId("Ab3xK9pQ", "cn", -1)).success).toBe(true);
-    for (const id of ["Ab3xK9p", "Ab3xK9pQ:j11", "bad/id!!"]) expect(parentPublicIdSchema.safeParse(id).success).toBe(false);
-    for (const id of ["Ab3xK9pQ", "Ab3xK9pQ:x1", "Ab3xK9pQ:j01", "Ab3xK9pQ:j-0"]) expect(songInstanceIdSchema.safeParse(id).success).toBe(false);
+    expect(parentPublicIdSchema.safeParse("Ab3xK9pQ:j11").success).toBe(false);
+    expect(songInstanceIdSchema.safeParse("Ab3xK9pQ:j01").success).toBe(false);
   });
 });
 

@@ -1,6 +1,6 @@
 import { and, eq, inArray } from "drizzle-orm";
 import { nanoid } from "nanoid";
-import { PARENT_PUBLIC_ID_LENGTH } from "@/lib/catalog/song-instance-id";
+import { PARENT_PUBLIC_ID_LENGTH } from "@tomomai/games/song-ids";
 import { parentSong, songs } from "@/lib/db/schema-pg";
 import { formatChartLabel } from "@/lib/games/presentation";
 import { instancePreference } from "@/lib/games/regions";

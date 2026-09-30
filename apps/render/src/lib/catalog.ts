@@ -12,6 +12,7 @@
  */
 
 import { fetchCatalogSlice, type CatalogSong } from "@tomomai/games/catalog-client";
+import { parseSongId } from "@tomomai/games/song-ids";
 import { Agent, fetch } from "undici";
 import { getLogger } from "./request-logger";
 
@@ -68,14 +69,9 @@ async function getSlice(region: string, gameVersion: number): Promise<Catalog> {
 export async function getCatalog(songIds: readonly string[]): Promise<Catalog> {
   const slices = new Map<string, { region: string; gameVersion: number }>();
   for (const id of songIds) {
-    const match = /^[A-Za-z0-9_-]{8}:([jic])(0|-?[1-9]\d*)$/.exec(id);
-    if (!match) throw new Error(`Invalid song instance id: ${id}`);
-    const region = { j: "jp", i: "intl", c: "cn" }[match[1]]!;
-    const gameVersion = Number(match[2]);
-    if (!Number.isInteger(gameVersion) || gameVersion < -32768 || gameVersion > 32767) {
-      throw new Error(`Invalid song version: ${id}`);
-    }
-    slices.set(`${region}:${gameVersion}`, { region, gameVersion });
+    const parsed = parseSongId(id);
+    if (parsed?.kind !== "instance") throw new Error(`Invalid song instance id: ${id}`);
+    slices.set(`${parsed.region}:${parsed.gameVersion}`, parsed);
   }
   const result: Catalog = new Map();
   const maps = await Promise.all([...slices.values()].map(({ region, gameVersion }) => getSlice(region, gameVersion)));

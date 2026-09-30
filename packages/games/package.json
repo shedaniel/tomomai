@@ -11,6 +11,10 @@
     "./catalog-client": {
       "types": "./src/catalog-client.ts",
       "import": "./src/catalog-client.ts"
+    },
+    "./song-ids": {
+      "types": "./src/song-ids.ts",
+      "import": "./src/song-ids.ts"
     }
   },
   "files": [

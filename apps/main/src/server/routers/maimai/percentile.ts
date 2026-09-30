@@ -1,7 +1,7 @@
 import { db } from "@/lib/db";
 import { parentSong } from "@/lib/db/schema-pg";
 import { publicProcedure, router } from "@/lib/trpc";
-import { parentPublicIdOf } from "@/lib/catalog/song-instance-id";
+import { parentPublicIdOf } from "@tomomai/games/song-ids";
 import { and, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
 import type { CanonicalGameId } from "@/lib/games/types";

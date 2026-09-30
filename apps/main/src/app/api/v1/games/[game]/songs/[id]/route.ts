@@ -2,7 +2,7 @@ import type { CanonicalGameId } from "@/lib/games/types";
 import { db } from "@/lib/db";
 import { parentSong, songs } from "@/lib/db/schema-pg";
 import { chartEstimates } from "@/lib/catalog/chart-metadata";
-import { formatSongInstanceId, parseSongId } from "@/lib/catalog/song-instance-id";
+import { formatSongInstanceId, parseSongId } from "@tomomai/games/song-ids";
 import { songIdFilter } from "@/lib/db/song-instance-id";
 import { eq } from "drizzle-orm";
 import { instancePreference } from "@/lib/games/regions";

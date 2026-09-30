@@ -21,7 +21,7 @@ import { Region } from "@/lib/types";
 import type { GamePlayerScore } from "@/lib/games/player-view";
 import { codeToChartType, codeToDifficulty } from "@/lib/games/maimai/codes";
 import { ChartTypeBadge } from "@/components/games/chart-type-badge";
-import { parseSongId } from "@/lib/catalog/song-instance-id";
+import { parseSongId } from "@tomomai/games/song-ids";
 import { getChartsByDifficulty, getChartScores } from "@/components/db/songs/song-detail-content";
 import { UserScore } from "@/components/db/songs/types";
 import { useMediaQuery } from "@/hooks/use-media-query";

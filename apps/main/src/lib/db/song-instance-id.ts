@@ -1,5 +1,5 @@
 import { and, eq, sql } from "drizzle-orm";
-import type { ParsedSongId } from "@/lib/catalog/song-instance-id";
+import type { ParsedSongId } from "@tomomai/games/song-ids";
 import type { CanonicalGameId } from "@/lib/games/types";
 import { parentSong, songs } from "./schema-pg";
 

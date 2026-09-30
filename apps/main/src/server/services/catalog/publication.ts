@@ -5,7 +5,7 @@ import { parentSong, songs } from "@/lib/db/schema-pg";
 import { parentCatalogue, songCatalogue } from "@/lib/api/schemas";
 import { isCatalogVersion, parentCatalogKey, songCatalogKey } from "@/lib/api/catalog-location";
 import { chartEstimates } from "@/lib/catalog/chart-metadata";
-import { formatSongInstanceId } from "@/lib/catalog/song-instance-id";
+import { formatSongInstanceId } from "@tomomai/games/song-ids";
 import { getSupportedRegions } from "@/lib/games/regions";
 import { getAvailableVersions } from "@/lib/games/versions";
 import { putR2Object } from "@/lib/r2";

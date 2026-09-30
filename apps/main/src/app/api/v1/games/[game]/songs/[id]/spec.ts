@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { defineGameRoute } from "@/lib/api/registry";
 import { songDetail } from "@/lib/api/schemas";
-import { parseSongId } from "@/lib/catalog/song-instance-id";
+import { parseSongId } from "@tomomai/games/song-ids";
 
 export const spec = defineGameRoute({
   method: "GET",
