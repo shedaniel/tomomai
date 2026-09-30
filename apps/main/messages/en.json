@@ -1175,7 +1175,6 @@
         "songFallbackDescription": "View detailed information about this {game} song including difficulty levels and regional availability.",
         "jsonLdChartDescription": "{chartLabel} chart"
       },
-      "title": "Songs Database | maimai DX",
       "heading": "Songs Database",
       "searchPlaceholder": "Search songs, artists, genres...",
       "noSongsFound": "No songs found",

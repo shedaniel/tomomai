@@ -824,7 +824,6 @@
         "title": "악곡 데이터베이스 | {game}",
         "description": "{game}의 모든 수록곡을 검색하고 열람하세요. 타입, 장르, 버전별 필터링을 지원합니다. 곡 상세 정보, 난이도, 수록 지역을 확인할 수 있습니다."
       },
-      "title": "악곡 데이터베이스 | maimai DX",
       "searchPlaceholder": "곡명, 아티스트, 장르 등으로 검색...",
       "noSongsFound": "곡을 찾을 수 없습니다",
       "tryAdjustingSearch": "검색 조건을 변경해 보세요",

@@ -1149,7 +1149,6 @@
         "jsonLdChartDescription": "{chartLabel} 谱面"
       },
       "heading": "歌曲资料库",
-      "title": "歌曲数据库 | maimai DX",
       "searchPlaceholder": "搜索歌曲、艺术家、分类...",
       "noSongsFound": "未找到歌曲",
       "tryAdjustingSearch": "尝试调整搜索条件",

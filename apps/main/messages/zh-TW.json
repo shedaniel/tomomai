@@ -1148,7 +1148,6 @@
         "songFallbackDescription": "查看此 {game} 歌曲的詳細資訊，包括難度等級與地區可用性。",
         "jsonLdChartDescription": "{chartLabel} 譜面"
       },
-      "title": "歌曲資料庫 | maimai DX",
       "heading": "歌曲資料庫",
       "searchPlaceholder": "搜尋歌曲、藝人、分類...",
       "noSongsFound": "找不到歌曲",

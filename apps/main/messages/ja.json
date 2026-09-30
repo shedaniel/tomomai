@@ -1148,7 +1148,6 @@
         "songFallbackDescription": "この {game} 楽曲の詳細情報（難易度や収録地域など）を表示します。",
         "jsonLdChartDescription": "{chartLabel} 譜面"
       },
-      "title": "楽曲データベース | maimai でらっくす",
       "heading": "楽曲データベース",
       "searchPlaceholder": "楽曲名、アーティスト、ジャンルなどで検索...",
       "noSongsFound": "楽曲が見つかりません",

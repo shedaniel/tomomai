@@ -11,6 +11,7 @@
       "description": "tomomai ともマイ DB is a public database of maimai charts, arcades, and more."
     },
     "songs": {
+      "gameName": "maimai DX",
       "chartLabel": "maimai でらっくす {type, select, dx {DX} other {Standard}}",
       "detail": {
         "viewDetails": "View Details on tomomai DB"
