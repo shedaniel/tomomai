@@ -76,6 +76,7 @@ export type ScoreFetchContext = {
   signal: AbortSignal;
 };
 
+/** Catalog song ids by chartKey, for one game, region and version. */
 export type ChartResolutionMap = Map<string, bigint>;
 
 export type PersistedSnapshotContext = {

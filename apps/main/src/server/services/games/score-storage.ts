@@ -14,6 +14,7 @@ type ScoreConnection = Pick<typeof db, "select" | "insert">;
 export type DbSong = typeof songs.$inferSelect & Pick<typeof parentSong.$inferSelect, "songName" | "difficulty" | "type">;
 export type ScoreDataValues = { songId: bigint } & Pick<NormalizedScore, "scoreValue" | "secondaryScore" | "comboStatus" | "syncStatus" | "clearStatus">;
 
+/** A chart's key in a ChartResolutionMap. The map holds one game's slice, so unlike catalogChartKey the key leaves the game out. */
 export function chartKey(chart: Pick<ChartRef, "songName" | "difficulty" | "chartType">): string {
   return `${chart.songName}|${chart.difficulty}|${chart.chartType}`;
 }
