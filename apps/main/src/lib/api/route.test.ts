@@ -179,6 +179,16 @@ describe("keyed game routes", () => {
     expect(response.headers.get("Cache-Control")).toBeNull();
   });
 
+  it("answers 500 and logs each issue when the handler's body breaks the response schema", async () => {
+    const GET = defineGameHandler(keyedSpec, async ({ params }) => ({ id: params.id, region: 7 as unknown as string }));
+
+    const response = await GET(request("maimai/route-test/1?region=jp", { key: KEY }), context({ game: "maimai", id: "1" }));
+
+    expect(response.status).toBe(500);
+    expect(await response.json()).toEqual({ error: "Internal server error" });
+    expect(mocks.log.error).toHaveBeenCalledWith({ issues: ["region: Invalid input: expected string, received number"] }, "Response does not match its schema");
+  });
+
   it("maps a game rejection thrown by the handler", async () => {
     const GET = defineGameHandler(keyedSpec, async ({ game }) => {
       throw new GameAdapterError("UNSUPPORTED_CAPABILITY", "Not here", game);
