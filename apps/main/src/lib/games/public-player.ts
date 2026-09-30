@@ -1,9 +1,27 @@
 import { getPlayerRankings, type GameSnapshot, type GameSnapshotData } from "./player-view";
 import type { CanonicalGameId } from "./types";
 import type { ProfilePrivacySettings } from "@/lib/types";
+import type { StatsResult } from "@/server/queries/stats";
 
 type SnapshotPrivacy = Pick<ProfilePrivacySettings, "profileShowAllScores" | "profileShowScoreDetails" | "profileShowPlayCounts">
   & Partial<Pick<ProfilePrivacySettings, "profileShowEvents">>;
+
+type ViewPrivacy = Pick<ProfilePrivacySettings, "profileShowAllScores" | "profileShowScoreDetails" | "profileShowPlates">;
+
+/**
+ * The views of a published snapshot a visitor may open, each with the privacy settings it needs.
+ * The player tabs hide a view and the public procedures refuse it by the same rule.
+ */
+export const PUBLIC_VIEWS = {
+  /** Grade and status counts over every score. */
+  stats: privacy => privacy.profileShowAllScores,
+  /** Recent plays, last credit and daily plays. */
+  recentPlays: privacy => privacy.profileShowScoreDetails,
+  /** Plate progress and the charts each plate still needs, which read every score's statuses. */
+  plates: privacy => privacy.profileShowAllScores && privacy.profileShowScoreDetails && privacy.profileShowPlates,
+} as const satisfies Record<string, (privacy: ViewPrivacy) => boolean>;
+
+export type PublicView = keyof typeof PUBLIC_VIEWS;
 
 export function toPublicSnapshotHeader(snapshot: GameSnapshot, privacy: Pick<ProfilePrivacySettings, "profileShowPlayCounts">): GameSnapshot {
   return {
@@ -21,6 +39,18 @@ export function toPublicSnapshotHeader(snapshot: GameSnapshot, privacy: Pick<Pro
     stars: snapshot.stars,
     versionPlayCount: privacy.profileShowPlayCounts ? snapshot.versionPlayCount : null,
     totalPlayCount: privacy.profileShowPlayCounts ? snapshot.totalPlayCount : null,
+  };
+}
+
+/** Status counts are score details, so a visitor without them sees grades only. */
+export function toPublicStats(stats: StatsResult, privacy: Pick<ProfilePrivacySettings, "profileShowScoreDetails">): StatsResult {
+  if (privacy.profileShowScoreDetails) return stats;
+  return {
+    totalSongs: stats.totalSongs,
+    stats: Object.fromEntries(Object.entries(stats.stats).map(([version, difficulties]) => [
+      version,
+      Object.fromEntries(Object.entries(difficulties).map(([difficulty, bucket]) => [difficulty, { ...bucket, statuses: {} }])),
+    ])),
   };
 }
 

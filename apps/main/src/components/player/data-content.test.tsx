@@ -11,13 +11,24 @@ import type { Flags } from "@/lib/flags";
 import { DataContent } from "./data-content";
 import messages from "../../../messages/en.json";
 
-const queries = vi.hoisted(() => ({ eventSteps: vi.fn(), exportSnapshot: vi.fn() }));
-vi.mock("@/lib/trpc-client", () => ({ trpc: { maimai: {
-  getEventStepsByNames: { useQuery: (...args: unknown[]) => { queries.eventSteps(...args); return { data: undefined, isLoading: false }; } },
-  getDailyPlaysAvailableDays: { useQuery: () => ({ data: [], isFetching: false }) },
-  getPublicDailyPlaysAvailableDays: { useQuery: () => ({ data: [], isFetching: false }) },
-  exportSnapshotData: { useQuery: (...args: unknown[]) => { queries.exportSnapshot(...args); return { refetch: vi.fn() }; } },
-} } }));
+const queries = vi.hoisted(() => ({ eventSteps: vi.fn(), exportSnapshot: vi.fn(), publicStats: vi.fn() }));
+// One played maimai MASTER chart from version 13 with an AP and an FDX+.
+const stats = { stats: { 13: { 3: { grades: { "SSS+": 1 }, statuses: { comboStatus: { 3: 1 }, syncStatus: { 4: 1 } }, total: 1 } } }, totalSongs: { 13: { 3: 1 } } };
+vi.mock("@/lib/trpc-client", () => ({ trpc: {
+  maimai: {
+    getEventStepsByNames: { useQuery: (...args: unknown[]) => { queries.eventSteps(...args); return { data: undefined, isLoading: false }; } },
+    getDailyPlaysAvailableDays: { useQuery: () => ({ data: [], isFetching: false }) },
+    getPublicDailyPlaysAvailableDays: { useQuery: () => ({ data: [], isFetching: false }) },
+    exportSnapshotData: { useQuery: (...args: unknown[]) => { queries.exportSnapshot(...args); return { refetch: vi.fn() }; } },
+  },
+  user: {
+    getPlayerStats: { useQuery: (_: unknown, options: { enabled: boolean }) => ({ data: options.enabled ? stats : undefined, isLoading: false }) },
+    getPublicPlayerStats: { useQuery: (input: unknown, options: { enabled: boolean }) => {
+      if (options.enabled) queries.publicStats(input);
+      return { data: options.enabled ? stats : undefined, isLoading: false };
+    } },
+  },
+} }));
 vi.mock("next/navigation", () => ({ useSearchParams: () => new URLSearchParams() }));
 vi.mock("@/i18n/navigation", () => ({ Link: ({ children }: { children: React.ReactNode }) => <span>{children}</span> }));
 
@@ -51,15 +62,27 @@ afterEach(async () => {
   vi.clearAllMocks();
 });
 
-async function renderTab(initialTab: string) {
+const SHARED = {
+  profileShowAllScores: true, profileShowScoreDetails: true, profileShowPlates: true,
+  profileShowPlayCounts: true, profileShowEvents: true, profileShowInSearch: true,
+};
+
+async function renderTab(initialTab: string, visitor?: Partial<typeof SHARED>) {
   await act(async () => root.render(
     <NextIntlClientProvider locale="en" messages={messages} timeZone="UTC">
       <GameProvider game={toFrontendGame(getGame("maimai"), ["jp"])}>
-        <DataContent region="jp" selectedSnapshotData={data} isLoading={false} visitableProfileAt={null} initialTab={initialTab} visitedBySelf flags={flags} />
+        <DataContent
+          region="jp" selectedSnapshotData={data} isLoading={false} visitableProfileAt={null} initialTab={initialTab} flags={flags}
+          visitedBySelf={!visitor} privacySettings={{ ...SHARED, ...visitor }}
+        />
       </GameProvider>
     </NextIntlClientProvider>,
   ));
   await act(() => vi.dynamicImportSettled());
+}
+
+function imageSources() {
+  return Array.from(container.querySelectorAll("img"), image => image.getAttribute("src"));
 }
 
 it("renders stored events with missing progress on the map tab", async () => {
@@ -72,9 +95,47 @@ it("renders stored events with missing progress on the map tab", async () => {
 
 it("builds the export images from the public snapshot id", async () => {
   await renderTab("exportImage");
-  const sources = Array.from(container.querySelectorAll("img"), image => image.getAttribute("src"));
-  expect(sources).toContain("/api/export-image?snapshotId=public-snapshot");
+  expect(imageSources()).toContain("/api/export-image?snapshotId=public-snapshot");
   expect(container.querySelector('img[alt="maimai-profile-Player.png"]')).not.toBeNull();
+});
+
+async function openLastCredit() {
+  const trigger = Array.from(container.querySelectorAll("button")).find(button => button.textContent === messages.dataContent.exportImageCard.lastCredit);
+  await act(async () => { trigger!.dispatchEvent(new MouseEvent("mousedown", { bubbles: true, button: 0 })); });
+}
+
+it("asks for the owner's own plays by region and a visitor's through the published snapshot", async () => {
+  await renderTab("exportImage");
+  await openLastCredit();
+  expect(imageSources()).toContain("/api/last-credit?region=jp&beforeDate=2026-09-01T00%3A00%3A00.000Z");
+  await act(async () => root.unmount());
+  root = createRoot(container);
+  await renderTab("exportImage", {});
+  await openLastCredit();
+  expect(imageSources()).toContain("/api/last-credit?snapshotId=public-snapshot&beforeDate=2026-09-01T00%3A00%3A00.000Z");
+});
+
+it("shows the owner every stats view", async () => {
+  await renderTab("stats");
+  expect(container.textContent).toContain(messages.playerStats.fullCombo);
+  expect(container.textContent).toContain(messages.playerStats.viewPlatesProgress);
+  expect(queries.publicStats).not.toHaveBeenCalled();
+});
+
+it("shows a visitor the stats of the published snapshot without the views its owner hides", async () => {
+  await renderTab("stats", {});
+  expect(queries.publicStats).toHaveBeenCalledWith({ game: "maimai", snapshotId: "public-snapshot" });
+  expect(container.textContent).toContain(messages.playerStats.fullCombo);
+  expect(container.textContent).toContain(messages.playerStats.viewPlatesProgress);
+
+  await renderTab("stats", { profileShowPlates: false });
+  expect(container.textContent).toContain(messages.playerStats.fullCombo);
+  expect(container.textContent).not.toContain(messages.playerStats.viewPlatesProgress);
+
+  await renderTab("stats", { profileShowScoreDetails: false });
+  expect(container.textContent).toContain(messages.playerStats.achievementGrades);
+  expect(container.textContent).not.toContain(messages.playerStats.fullCombo);
+  expect(container.textContent).not.toContain(messages.playerStats.viewPlatesProgress);
 });
 
 it("exports the JSON of the public snapshot id", async () => {

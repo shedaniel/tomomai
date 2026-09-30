@@ -1,17 +1,22 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
 
-const mocks = vi.hoisted(() => ({ session: vi.fn(), build: vi.fn() }));
+const mocks = vi.hoisted(() => ({ session: vi.fn(), build: vi.fn(), access: vi.fn() }));
 vi.mock("@/lib/auth-server", () => ({ getServerSession: mocks.session }));
 vi.mock("@/lib/db", () => ({ db: {} }));
 vi.mock("@/lib/request-logger", () => ({ requestLogger: () => ({ log: { info: vi.fn() } }) }));
 vi.mock("@/lib/render-token", () => ({ renderRedirectUrl: () => "https://render.example.test/last-credit" }));
 vi.mock("@/server/services/games/maimai/render/messages", () => ({ buildLastCreditMessage: mocks.build }));
+vi.mock("@/server/queries/public-access", () => ({ resolvePublicSnapshotAccess: mocks.access }));
 
 import { GET } from "./route";
 
 function request(region: string) {
   return GET(new NextRequest(`https://example.test/api/last-credit?region=${region}`));
+}
+
+function visit(snapshotId: string) {
+  return GET(new NextRequest(`https://example.test/api/last-credit?snapshotId=${snapshotId}&beforeDate=2026-09-01T00:00:00.000Z`));
 }
 
 beforeEach(() => {
@@ -39,4 +44,13 @@ it("reports a disabled game instead of rejecting every region as malformed", asy
   expect(response.status).toBe(422);
   expect(await response.json()).toMatchObject({ code: "GAME_NOT_ENABLED" });
   expect(mocks.build).not.toHaveBeenCalled();
+});
+
+it("renders a visitor the published snapshot owner's credit in the snapshot's region", async () => {
+  vi.stubEnv("NEXT_PUBLIC_ENABLED_MAIMAI_REGIONS", "jp,intl");
+  mocks.access.mockResolvedValueOnce({ userId: "owner", region: "intl" });
+  expect((await visit("snapshot")).status).toBe(302);
+  expect(mocks.access).toHaveBeenCalledWith("maimai", "snapshot", { capability: "image-export", view: "recentPlays" });
+  expect(mocks.build).toHaveBeenCalledWith(expect.objectContaining({ userId: "owner", region: "intl", beforeDate: new Date("2026-09-01T00:00:00Z") }));
+  expect(mocks.session).not.toHaveBeenCalled();
 });

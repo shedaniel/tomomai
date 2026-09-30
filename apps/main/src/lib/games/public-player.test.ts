@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { toPublicGameSnapshot } from "./public-player";
+import { PUBLIC_VIEWS, toPublicGameSnapshot } from "./public-player";
 import type { GameSnapshotData } from "./player-view";
 import { getGame } from "./registry";
 
@@ -63,5 +63,20 @@ describe("public game snapshots", () => {
     expect(result.snapshot).toMatchObject({ versionPlayCount: null, totalPlayCount: null });
     expect(result).not.toHaveProperty("events");
     for (const song of result.songs) expect(song).toMatchObject({ secondaryScore: null, comboStatus: 0, syncStatus: 0, clearStatus: 0 });
+  });
+});
+
+describe("public views", () => {
+  const shared = { profileShowAllScores: true, profileShowScoreDetails: true, profileShowPlates: true };
+
+  it.each([
+    ["stats", ["profileShowAllScores"]],
+    ["recentPlays", ["profileShowScoreDetails"]],
+    ["plates", ["profileShowAllScores", "profileShowScoreDetails", "profileShowPlates"]],
+  ] as const)("opens %s only with %j shared", (view, needed) => {
+    expect(PUBLIC_VIEWS[view](shared)).toBe(true);
+    for (const flag of Object.keys(shared) as (keyof typeof shared)[]) {
+      expect(PUBLIC_VIEWS[view]({ ...shared, [flag]: false })).toBe(!(needed as readonly string[]).includes(flag));
+    }
   });
 });

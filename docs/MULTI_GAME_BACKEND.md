@@ -99,6 +99,18 @@ newest snapshot of a user in a region is read through
 `server/queries/latest-snapshot.ts`, with `asOf` for the newest one at or
 before a given time.
 
+A visitor reads a published snapshot through `publicSnapshotProcedure`
+(`{ game, snapshotId }`, `server/routers/game-procedures.ts`) or
+`maimaiPublicSnapshotProcedure` (`{ snapshotId }`). Both resolve it with
+`resolvePublicSnapshotAccess` in `server/queries/public-access.ts`, which
+requires a published and listed profile, the privacy settings the view needs
+and the capability in the snapshot's own region. The procedure then reads that
+region and never takes one from the request. The views and the settings they
+need are `PUBLIC_VIEWS` in `lib/games/public-player.ts`, which the player tabs
+use to hide the same views. A hidden view answers NOT_FOUND, like a missing
+snapshot. The credit and daily-play image routes resolve a visitor the same
+way, and the signed-in owner by region.
+
 A score source returns its normalized result and an optional `enrich` step
 (`server/services/games/types.ts`). Shared ingestion persists the result, marks
 the session completed, and only then runs the enrichment, so its failures are

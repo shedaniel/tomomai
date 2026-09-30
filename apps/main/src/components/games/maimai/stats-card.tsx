@@ -30,6 +30,9 @@ type StatsBucket = StatsResult["stats"][string][string];
 interface StatsCardProps {
   region: Region;
   snapshotId?: string;
+  /** Combo and sync counts, which a visitor sees only when the owner shares score details. */
+  showScoreDetails: boolean;
+  showPlates: boolean;
 }
 
 // Grade colors for display
@@ -116,7 +119,6 @@ function PlatesGrid({ data, selectedVersion, region, snapshotId }: PlatesGridPro
   const { data: publicPlateSongs, isLoading: publicSongsLoading } = trpc.maimai.getPublicPlateSongs.useQuery(
     {
       snapshotId: snapshotId!,
-      region,
       version: selectedVersion,
       difficulty: expandedCell?.difficulty as any,
       plateType: expandedCell?.plateType as any,
@@ -316,7 +318,7 @@ function PlatesGrid({ data, selectedVersion, region, snapshotId }: PlatesGridPro
 }
 
 
-export function StatsCard({ region, snapshotId }: StatsCardProps) {
+export function StatsCard({ region, snapshotId, showScoreDetails, showPlates }: StatsCardProps) {
   const game = useGame().id;
   const t = useTranslations();
   const isDesktop = useMediaQuery("(min-width: 768px)", { initializeWithValue: false });
@@ -325,7 +327,7 @@ export function StatsCard({ region, snapshotId }: StatsCardProps) {
     { enabled: !snapshotId }
   );
   const { data: publicData, isLoading: publicLoading } = trpc.user.getPublicPlayerStats.useQuery(
-    { game, snapshotId: snapshotId!, region },
+    { game, snapshotId: snapshotId! },
     { enabled: !!snapshotId }
   );
   const data = snapshotId ? publicData : ownData;
@@ -499,28 +501,30 @@ export function StatsCard({ region, snapshotId }: StatsCardProps) {
 
           <div className="flex-1" />
 
-          <Button
-            variant={viewMode === "plates" ? "outline" : "default"}
-            size="sm"
-            onClick={() => setViewMode(viewMode === "stats" ? "plates" : "stats")}
-            className="w-full sm:w-auto"
-          >
-            {viewMode === "plates" ? (
-              <>
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                {t('playerStats.backToStats')}
-              </>
-            ) : (
-              <>
-                <Award className="h-4 w-4 mr-2" />
-                {t('playerStats.viewPlatesProgress')}
-              </>
-            )}
-          </Button>
+          {showPlates && (
+            <Button
+              variant={viewMode === "plates" ? "outline" : "default"}
+              size="sm"
+              onClick={() => setViewMode(viewMode === "stats" ? "plates" : "stats")}
+              className="w-full sm:w-auto"
+            >
+              {viewMode === "plates" ? (
+                <>
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  {t('playerStats.backToStats')}
+                </>
+              ) : (
+                <>
+                  <Award className="h-4 w-4 mr-2" />
+                  {t('playerStats.viewPlatesProgress')}
+                </>
+              )}
+            </Button>
+          )}
         </div>
       </div>
       <div className="space-y-8">
-        {viewMode === "plates" ? (
+        {showPlates && viewMode === "plates" ? (
           <PlatesGrid data={data} selectedVersion={selectedVersion} region={region} snapshotId={snapshotId} />
         ) : (
           <>
@@ -569,85 +573,89 @@ export function StatsCard({ region, snapshotId }: StatsCardProps) {
               )}
             </div>
 
-            {/* Full Combo Section */}
-            <div className="space-y-4">
-              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">{t('playerStats.fullCombo')}</h3>
-              {FC_ORDER.map((fc, index) => {
-                const count = filteredStats.fc[fc] || 0;
-                const percentage = filteredStats.dbTotal > 0 ? (count / filteredStats.dbTotal) * 100 : 0;
-                const fcColor = FC_COLORS[fc];
+            {showScoreDetails && (
+              <>
+                {/* Full Combo Section */}
+                <div className="space-y-4">
+                  <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">{t('playerStats.fullCombo')}</h3>
+                  {FC_ORDER.map((fc, index) => {
+                    const count = filteredStats.fc[fc] || 0;
+                    const percentage = filteredStats.dbTotal > 0 ? (count / filteredStats.dbTotal) * 100 : 0;
+                    const fcColor = FC_COLORS[fc];
 
-                return (
-                  <motion.div
-                    key={fc}
-                    initial={{ opacity: 0, ...(isDesktop ? { x: -10 } : { y: 10 }) }}
-                    animate={{ opacity: 1, x: 0, y: 0 }}
-                    transition={{
-                      duration: 0.2,
-                      delay: STAGGER.calculateDelay(index, 0.03),
-                    }}
-                    className="space-y-2"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span
-                          className={`inline-flex items-center justify-center w-12 h-6 text-xs font-bold text-white rounded ${fcColor.bg}`}
-                        >
-                          {fc.toUpperCase()}
-                        </span>
-                        <span className="text-sm font-medium">
-                          {count.toLocaleString()} / {filteredStats.dbTotal.toLocaleString()}
-                        </span>
-                      </div>
-                      <span className="text-sm text-muted-foreground">
-                        {percentage.toFixed(1)}%
-                      </span>
-                    </div>
-                    <Progress value={percentage} className="h-2" />
-                  </motion.div>
-                );
-              })}
-            </div>
+                    return (
+                      <motion.div
+                        key={fc}
+                        initial={{ opacity: 0, ...(isDesktop ? { x: -10 } : { y: 10 }) }}
+                        animate={{ opacity: 1, x: 0, y: 0 }}
+                        transition={{
+                          duration: 0.2,
+                          delay: STAGGER.calculateDelay(index, 0.03),
+                        }}
+                        className="space-y-2"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span
+                              className={`inline-flex items-center justify-center w-12 h-6 text-xs font-bold text-white rounded ${fcColor.bg}`}
+                            >
+                              {fc.toUpperCase()}
+                            </span>
+                            <span className="text-sm font-medium">
+                              {count.toLocaleString()} / {filteredStats.dbTotal.toLocaleString()}
+                            </span>
+                          </div>
+                          <span className="text-sm text-muted-foreground">
+                            {percentage.toFixed(1)}%
+                          </span>
+                        </div>
+                        <Progress value={percentage} className="h-2" />
+                      </motion.div>
+                    );
+                  })}
+                </div>
 
-            {/* Full Sync Section */}
-            <div className="space-y-4">
-              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">{t('playerStats.fullSync')}</h3>
-              {FS_ORDER.map((fs, index) => {
-                const count = filteredStats.fs[fs] || 0;
-                const percentage = filteredStats.dbTotal > 0 ? (count / filteredStats.dbTotal) * 100 : 0;
-                const fsColor = FS_COLORS[fs];
+                {/* Full Sync Section */}
+                <div className="space-y-4">
+                  <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">{t('playerStats.fullSync')}</h3>
+                  {FS_ORDER.map((fs, index) => {
+                    const count = filteredStats.fs[fs] || 0;
+                    const percentage = filteredStats.dbTotal > 0 ? (count / filteredStats.dbTotal) * 100 : 0;
+                    const fsColor = FS_COLORS[fs];
 
-                return (
-                  <motion.div
-                    key={fs}
-                    initial={{ opacity: 0, ...(isDesktop ? { x: -10 } : { y: 10 }) }}
-                    animate={{ opacity: 1, x: 0, y: 0 }}
-                    transition={{
-                      duration: 0.2,
-                      delay: STAGGER.calculateDelay(index, 0.03),
-                    }}
-                    className="space-y-2"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span
-                          className={`inline-flex items-center justify-center w-12 h-6 text-xs font-bold text-white rounded ${fsColor.bg}`}
-                        >
-                          {fs.toUpperCase()}
-                        </span>
-                        <span className="text-sm font-medium">
-                          {count.toLocaleString()} / {filteredStats.dbTotal.toLocaleString()}
-                        </span>
-                      </div>
-                      <span className="text-sm text-muted-foreground">
-                        {percentage.toFixed(1)}%
-                      </span>
-                    </div>
-                    <Progress value={percentage} className="h-2" />
-                  </motion.div>
-                );
-              })}
-            </div>
+                    return (
+                      <motion.div
+                        key={fs}
+                        initial={{ opacity: 0, ...(isDesktop ? { x: -10 } : { y: 10 }) }}
+                        animate={{ opacity: 1, x: 0, y: 0 }}
+                        transition={{
+                          duration: 0.2,
+                          delay: STAGGER.calculateDelay(index, 0.03),
+                        }}
+                        className="space-y-2"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span
+                              className={`inline-flex items-center justify-center w-12 h-6 text-xs font-bold text-white rounded ${fsColor.bg}`}
+                            >
+                              {fs.toUpperCase()}
+                            </span>
+                            <span className="text-sm font-medium">
+                              {count.toLocaleString()} / {filteredStats.dbTotal.toLocaleString()}
+                            </span>
+                          </div>
+                          <span className="text-sm text-muted-foreground">
+                            {percentage.toFixed(1)}%
+                          </span>
+                        </div>
+                        <Progress value={percentage} className="h-2" />
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              </>
+            )}
           </>
         )}
       </div>

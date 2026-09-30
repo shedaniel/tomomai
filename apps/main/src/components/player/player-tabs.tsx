@@ -6,6 +6,7 @@ import { BarChart, Clock, Code, Heart, Image as ImageIcon, Images, Map, Music, T
 import type { Flags } from "@/lib/flags";
 import { supportsGameFeature, type FrontendGame } from "@/lib/games/frontend";
 import type { GameSnapshotData } from "@/lib/games/player-view";
+import { PUBLIC_VIEWS } from "@/lib/games/public-player";
 import type { GameCapability } from "@/lib/games/types";
 import type { ProfilePrivacySettings, Region } from "@/lib/types";
 import { DeveloperCardSkeleton } from "@/components/games/maimai/developer-card.skeleton";
@@ -59,8 +60,15 @@ function InfoTab({ data, privacy, profile }: PlayerTabProps) {
   return <InfoCard selectedSnapshotData={data} showPlayCounts={privacy.profileShowPlayCounts} {...profile} />;
 }
 
-function StatsTab({ region, publicSnapshotId }: PlayerTabProps) {
-  return <StatsCard region={region} snapshotId={publicSnapshotId} />;
+function StatsTab({ region, visitedBySelf, privacy, publicSnapshotId }: PlayerTabProps) {
+  return (
+    <StatsCard
+      region={region}
+      snapshotId={publicSnapshotId}
+      showScoreDetails={visitedBySelf || privacy.profileShowScoreDetails}
+      showPlates={visitedBySelf || PUBLIC_VIEWS.plates(privacy)}
+    />
+  );
 }
 
 function SongsTab({ data, flags }: PlayerTabProps) {
@@ -92,7 +100,7 @@ function ExportImageTab({ data, region, visitedBySelf, privacy, profile, publicS
     <ExportImageCard
       snapshot={data.snapshot}
       region={region}
-      showLastCredit={visitedBySelf || privacy.profileShowScoreDetails}
+      showLastCredit={visitedBySelf || PUBLIC_VIEWS.recentPlays(privacy)}
       username={profile.visitableProfileAt ?? undefined}
       publicSnapshotId={publicSnapshotId}
     />
@@ -105,9 +113,9 @@ function DeveloperTab({ data }: PlayerTabProps) {
 
 const PLAYER_TABS = [
   { id: "info", icon: User, labelKey: "dataContent.tabs.playerInfo", capability: "scores", visible: () => true, Component: InfoTab },
-  { id: "stats", icon: BarChart, labelKey: "dataContent.tabs.stats", capability: "stats", visible: ({ visitedBySelf, privacy }) => visitedBySelf || privacy.profileShowAllScores, Component: StatsTab },
+  { id: "stats", icon: BarChart, labelKey: "dataContent.tabs.stats", capability: "stats", visible: ({ visitedBySelf, privacy }) => visitedBySelf || PUBLIC_VIEWS.stats(privacy), Component: StatsTab },
   { id: "songs", icon: Music, labelKey: "dataContent.tabs.songs", capability: "scores", visible: () => true, Component: SongsTab },
-  { id: "recent", icon: Clock, labelKey: "dataContent.tabs.recentPlays", capability: "recents", visible: ({ visitedBySelf, privacy }) => visitedBySelf || privacy.profileShowScoreDetails, Component: RecentTab },
+  { id: "recent", icon: Clock, labelKey: "dataContent.tabs.recentPlays", capability: "recents", visible: ({ visitedBySelf, privacy }) => visitedBySelf || PUBLIC_VIEWS.recentPlays(privacy), Component: RecentTab },
   { id: "recommendations", icon: Heart, labelKey: "dataContent.tabs.recommendations", capability: "scores", visible: () => true, Component: RecommendationsTab },
   { id: "history", icon: TrendingUp, labelKey: "dataContent.tabs.history", capability: "rating", visible: ({ visitedBySelf, flags }) => visitedBySelf && flags.historyCard, Component: HistoryTab },
   { id: "albums", icon: Images, labelKey: "dataContent.tabs.albums", capability: "albums", visible: ({ visitedBySelf, flags }) => visitedBySelf && flags.albumsCard, Component: AlbumsTab },

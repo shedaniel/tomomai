@@ -160,8 +160,17 @@ function buildExportImageUrl(snapshotId: string, region: Region, username?: stri
   return `/api/export-image?${params.toString()}`;
 }
 
-function buildDailyPlaysUrl(snapshotId: string, region: Region, day: string | undefined, extra?: Record<string, string>) {
-  const params = new URLSearchParams({ snapshotId, region });
+/** A visitor's play images name the published snapshot, the owner's name the region. */
+function playsOwnerParams(region: Region, publicSnapshotId: string | undefined): Record<string, string> {
+  return publicSnapshotId ? { snapshotId: publicSnapshotId } : { region };
+}
+
+function buildLastCreditUrl(owner: Record<string, string>, beforeDate: Date, extra?: Record<string, string>) {
+  return `/api/last-credit?${new URLSearchParams({ ...owner, beforeDate: beforeDate.toISOString(), ...extra }).toString()}`;
+}
+
+function buildDailyPlaysUrl(owner: Record<string, string>, day: string | undefined, extra?: Record<string, string>) {
+  const params = new URLSearchParams(owner);
   if (day) params.set('day', day);
   if (extra) {
     for (const [k, v] of Object.entries(extra)) params.set(k, v);
@@ -181,6 +190,7 @@ export function ExportImageCard({ snapshot, region, showLastCredit = true, usern
   const t = useTranslations();
 
   const snapshotId = snapshot.publicId;
+  const playsOwner = useMemo(() => playsOwnerParams(region, publicSnapshotId), [region, publicSnapshotId]);
 
   // Export image state
   const [exportImageUrl, setExportImageUrl] = useState<string>(
@@ -191,7 +201,7 @@ export function ExportImageCard({ snapshot, region, showLastCredit = true, usern
 
   // Last credit image state
   const [lastCreditImageUrl, setLastCreditImageUrl] = useState<string>(
-    `/api/last-credit?region=${region}&beforeDate=${snapshot.fetchedAt.toISOString()}&snapshotId=${snapshotId}`
+    buildLastCreditUrl(playsOwner, snapshot.fetchedAt)
   );
   const [lastCreditImageKey, setLastCreditImageKey] = useState(0);
   const [lastCreditIsLoading, setLastCreditIsLoading] = useState(true);
@@ -208,7 +218,7 @@ export function ExportImageCard({ snapshot, region, showLastCredit = true, usern
     { enabled: !isPublic },
   );
   const publicDaysQuery = trpc.maimai.getPublicDailyPlaysAvailableDays.useQuery(
-    { snapshotId: publicSnapshotId!, region },
+    { snapshotId: publicSnapshotId! },
     { enabled: isPublic },
   );
   const availableDays = (isPublic ? publicDaysQuery.data : ownDaysQuery.data) ?? [];
@@ -225,8 +235,8 @@ export function ExportImageCard({ snapshot, region, showLastCredit = true, usern
   }, [availableDays, selectedDay]);
 
   const dailyImageUrl = useMemo(
-    () => buildDailyPlaysUrl(snapshotId, region, selectedDay, dailyUrlExtra),
-    [snapshotId, region, selectedDay, dailyUrlExtra],
+    () => buildDailyPlaysUrl(playsOwner, selectedDay, dailyUrlExtra),
+    [playsOwner, selectedDay, dailyUrlExtra],
   );
 
   const handleExportRefresh = () => {
@@ -250,13 +260,13 @@ export function ExportImageCard({ snapshot, region, showLastCredit = true, usern
   const handleLastCreditRefresh = () => {
     setLastCreditIsLoading(true);
     setLastCreditImageKey(prev => prev + 1);
-    setLastCreditImageUrl(`/api/last-credit?region=${region}&beforeDate=${snapshot.fetchedAt.toISOString()}&snapshotId=${snapshotId}&t=${Date.now()}`);
+    setLastCreditImageUrl(buildLastCreditUrl(playsOwner, snapshot.fetchedAt, { t: Date.now().toString() }));
   };
 
   const handleLastCreditRefreshFast = () => {
     setLastCreditIsLoading(true);
     setLastCreditImageKey(prev => prev + 1);
-    setLastCreditImageUrl(`/api/last-credit?region=${region}&beforeDate=${snapshot.fetchedAt.toISOString()}&snapshotId=${snapshotId}&scale=1&t=${Date.now()}`);
+    setLastCreditImageUrl(buildLastCreditUrl(playsOwner, snapshot.fetchedAt, { scale: '1', t: Date.now().toString() }));
   };
 
   const handleDailyDayChange = (day: string) => {

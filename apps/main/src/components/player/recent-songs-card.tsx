@@ -35,7 +35,7 @@ export function RecentSongsCard({ region, beforeDate, snapshotId }: RecentSongsC
     { enabled: !snapshotId }
   );
   const { data: publicData, isLoading: publicLoading, isFetching: publicFetching, error: publicError } = trpc.user.getPublicRecentSongs.useQuery(
-    { game, snapshotId: snapshotId!, region, limit, offset, beforeDate },
+    { game, snapshotId: snapshotId!, limit, offset, beforeDate },
     { enabled: !!snapshotId }
   );
   const data = snapshotId ? publicData : ownData;
