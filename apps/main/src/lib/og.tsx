@@ -11,7 +11,6 @@ import { codeOf } from "@/lib/games/codes";
 import { formatEstimated, formatGameLevel, formatGameRating, getGameChartType, getGameDifficulty } from "@/lib/games/presentation";
 import { OG_IMAGE_SIZE } from "@/lib/seo";
 
-
 // Pre-compute grid path: vertical + horizontal lines every 40px
 const gridPath = [
   ...Array.from({ length: 31 }, (_, i) => `M ${i * 40} 0 L ${i * 40} 630`),

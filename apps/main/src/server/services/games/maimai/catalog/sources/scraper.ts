@@ -141,7 +141,6 @@ function parseSongData(html: string, difficultyName: Difficulty, difficulty: num
   const blocks = $(selector);
   const songs: ParsedSong[] = [];
 
-
   blocks.each((index, element) => {
     try {
       const block = $(element);
