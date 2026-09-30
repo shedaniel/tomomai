@@ -1,7 +1,7 @@
 import { DEFAULT_FRONTEND_GAME, type CanonicalGameId } from "./ids";
 import { gameIdSchema } from "./schema";
 
-// Must match the PORT in the root package.json dev:<game> scripts.
+// Must match the PORT of the root package.json dev scripts (dev:mai, dev:chu).
 export const DEV_PORTS: Record<CanonicalGameId, number> = {
   maimai: 3000,
   chunithm: 3001,
