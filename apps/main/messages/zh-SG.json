@@ -639,8 +639,11 @@
     "totalPlays": "总游玩次数：{count}",
     "songs": "歌曲（共 {count} 首）",
     "searchPlaceholder": "以歌曲名称、艺术家、难度或类型搜索歌曲...",
-    "newSongsB15": "新曲 B15",
-    "oldSongsB35": "旧曲 B35",
+    "rankingBucket": {
+      "new": "新曲 B{size}",
+      "old": "旧曲 B{size}",
+      "short": "B{size}"
+    },
     "newSongs": "新曲",
     "oldSongs": "旧曲",
     "displayModes": {
@@ -653,10 +656,10 @@
       "artist": "艺术家",
       "level": "等级",
       "achievement": "达成率",
+      "score": "分数",
       "fc": "FC",
       "fs": "FS",
       "rating": "R 值",
-      "rank": "排名",
       "status": "状态"
     },
     "statistics": {
@@ -679,9 +682,6 @@
       "exportJson": "导出记录为 JSON",
       "exporting": "导出中..."
     },
-    "scoreView": "分数视图",
-    "bestScores": "最佳成绩",
-    "allScores": "全部成绩",
     "loadError": "无法加载成绩，请重试。"
   },
   "albums": {
@@ -731,6 +731,7 @@
       "type": "类型",
       "targetRating": "目标分数",
       "achievement": "达成率",
+      "score": "分数",
       "version": "版本"
     }
   },
@@ -817,7 +818,6 @@
       "description": "来自 {net} 的以 \"clal=\" 开头的 Cookie 值。",
       "expiration": "Cookies 可能会在一段时间后失效，你可能需要重新登入。"
     },
-    "passwordInstructions": "直接使用你的 SEGA 账户用户名和密码",
     "secureStorage": "你的验证方式将被保存以供将来使用。",
     "steps": {
       "step1Title": "登入 {net}",

@@ -5,9 +5,9 @@ import {
   ResponsiveDialogContent,
   ResponsiveDialogTrigger,
 } from "@tomomai/ui";
-import { useGame } from "@/components/providers/game-provider";
+import { useGame, usePresentation } from "@/components/providers/game-provider";
 import { codeOf } from "@/lib/games/codes";
-import { formatEstimated, formatGameScore, formatGameRating, getGameDifficulty, getGameChartType, getGameScoreLabelKey, getGameScoreGrade, getGameStatusBadges } from "@/lib/games/presentation";
+import { formatEstimated, formatGameScore, formatGameRating, getGameDifficulty, getGameChartType, getGameScoreGrade, getGameStatusBadges } from "@/lib/games/presentation";
 import { isGameCnExclusive, supportsGameFeature } from "@/lib/games/frontend";
 import { getGame } from "@/lib/games/registry";
 import { getVersion } from "@/lib/games/versions";
@@ -88,6 +88,7 @@ function ScoreGrid({
 }) {
   const t = useTranslations();
   const game = useGame();
+  const { scoreLabel } = usePresentation();
 
   return (
     <div className={cn(
@@ -109,7 +110,7 @@ function ScoreGrid({
           <div key={region} className="contents">
             <div className="flex flex-col min-w-0">
               <div className="text-[10px] text-muted-foreground font-semibold uppercase mb-0.5 truncate">
-                {`${label} ${t(getGameScoreLabelKey(game.id))}`}
+                {`${label} ${t(`db.songs.detail.${scoreLabel}`)}`}
               </div>
               <div className="flex items-start gap-y-0.5 flex-col">
                 {score ? (

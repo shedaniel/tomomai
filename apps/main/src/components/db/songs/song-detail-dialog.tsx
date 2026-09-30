@@ -5,24 +5,25 @@ import { cn } from "@/lib/utils";
 import { Fragment, useState } from "react";
 import { SongDetailChart, UserScore } from "./types";
 import { useTranslations } from "next-intl";
-import { useGame } from "@/components/providers/game-provider";
+import { useGame, usePresentation } from "@/components/providers/game-provider";
 import { getGame } from "@/lib/games/registry";
 import { codeOf } from "@/lib/games/codes";
 import { ChartLevel } from "@/components/games/chart-level";
-import { formatEstimated, formatGameScore, formatGameRating, getGameDifficulty, getGameScoreBenchmarks, getGameScoreLabelKey } from "@/lib/games/presentation";
+import { formatEstimated, formatGameScore, formatGameRating, getGameDifficulty, getGameScoreBenchmarks } from "@/lib/games/presentation";
 
 type SongExtendedIdentified = SongDetailChart & { region: Region; gameVersion: number };
 
 function SongChartDialogGrid({ chart, score }: { chart: SongExtendedIdentified; score?: UserScore }) {
   const t = useTranslations();
   const game = useGame();
+  const { scoreLabel } = usePresentation();
   const benchmarks = getGameScoreBenchmarks(game.id);
   const { rating: gameRating } = getGame(game.id);
   const difficultyCode = codeOf(game.id, "difficulty", chart.difficulty);
   const rating = (scoreValue: number, comboStatus = 0) => formatEstimated(formatGameRating(game.id, gameRating.chartRating({ scoreValue, levelPrecise: chart.levelPrecise, difficultyCode, comboStatus }, chart.gameVersion)), chart.levelPreciseEstimated);
   return <div className="grid grid-cols-[minmax(100px,5fr)_minmax(100px,1fr)] rounded-md overflow-hidden border">
     <div className="contents text-xs bg-accent/50 font-medium text-muted-foreground">
-      <div className="py-2 px-3 border-b border-r">{t(getGameScoreLabelKey(game.id))}</div>
+      <div className="py-2 px-3 border-b border-r">{t(`db.songs.detail.${scoreLabel}`)}</div>
       <div className="py-2 px-3 border-b">{t("db.songs.detail.rating")}</div>
     </div>
     {gameRating.bonuses(chart.gameVersion).map(bonus => <div key={bonus.label} className="contents">

@@ -89,11 +89,7 @@ export function getGameStatusLabels(game: CanonicalGameId, status: Partial<Recor
 
 export function getGameRankingBuckets(game: CanonicalGameId) {
   const sizes = getGame(game).rating.bucketSizes;
-  return RANKING_BUCKETS.map(bucket => ({ ...bucket, label: `B${sizes[bucket.key]}`, size: sizes[bucket.key] }));
-}
-
-export function getGameScoreLabelKey(game: CanonicalGameId): string {
-  return `db.songs.detail.${presentationOf(game).scoreLabel}`;
+  return RANKING_BUCKETS.map(bucket => ({ ...bucket, size: sizes[bucket.key] }));
 }
 
 export function getGrade(game: CanonicalGameId, scoreValue: number): string {

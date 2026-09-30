@@ -639,8 +639,11 @@
     "totalPlays": "總遊玩次數：{count}",
     "songs": "歌曲（共 {count} 首）",
     "searchPlaceholder": "以歌曲名稱、藝人、難度或類型搜尋歌曲……",
-    "newSongsB15": "新曲 B15",
-    "oldSongsB35": "舊曲 B35",
+    "rankingBucket": {
+      "new": "新曲 B{size}",
+      "old": "舊曲 B{size}",
+      "short": "B{size}"
+    },
     "newSongs": "新曲",
     "oldSongs": "舊曲",
     "displayModes": {
@@ -653,10 +656,10 @@
       "artist": "藝人",
       "level": "等級",
       "achievement": "達成率",
+      "score": "分數",
       "fc": "FC",
       "fs": "FS",
       "rating": "Rating",
-      "rank": "排名",
       "status": "狀態"
     },
     "statistics": {
@@ -679,9 +682,6 @@
       "exportJson": "匯出紀錄為 JSON",
       "exporting": "匯出中……"
     },
-    "scoreView": "分數檢視",
-    "bestScores": "最佳成績",
-    "allScores": "全部成績",
     "loadError": "無法載入成績，請重試。"
   },
   "albums": {
@@ -731,6 +731,7 @@
       "type": "類型",
       "targetRating": "目標分數",
       "achievement": "達成率",
+      "score": "分數",
       "version": "版本"
     }
   },
@@ -817,7 +818,6 @@
       "description": "來自 {net} 的以 \"clal=\" 為首的 Cookies 值。",
       "expiration": "Cookies 會在一段時間後失效，你或需要重新登入。"
     },
-    "passwordInstructions": "直接使用你的 SEGA 帳戶用戶名稱和密碼",
     "secureStorage": "你的憑證將被儲存，以供將來使用。",
     "steps": {
       "step1Title": "登入 {net}",

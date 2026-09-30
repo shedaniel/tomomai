@@ -1,10 +1,10 @@
 "use client";
 
-import { useGame, useGameId } from "@/components/providers/game-provider";
+import { useGame, useGameId, usePresentation } from "@/components/providers/game-provider";
 import { GAME_UI } from "@/components/games/registry";
 import { supportsGameFeature } from "@/lib/games/frontend";
 import type { GameSnapshotData } from "@/lib/games/player-view";
-import { formatGameScore, formatGameScoreDelta, formatGameRating, formatGameLevel, getGameDifficulty, getGameChartType, getGameRankingBuckets, getGameScoreLabelKey } from "@/lib/games/presentation";
+import { formatGameScore, formatGameScoreDelta, formatGameRating, formatGameLevel, getGameDifficulty, getGameChartType, getGameRankingBuckets } from "@/lib/games/presentation";
 import { generateRecommendations, RecommendationData } from "@/lib/games/recommendations";
 import { Region } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -25,8 +25,10 @@ import { useMediaQuery } from "@/hooks/use-media-query";
 
 function RecommendationRow({ recommendation }: { recommendation: RecommendationData }) {
   const t = useTranslations('recommendations');
+  const tBucket = useTranslations('dataContent.rankingBucket');
   const format = useFormatter();
   const game = useGameId();
+  const [newBucket, oldBucket] = getGameRankingBuckets(game);
   const { song, currentScore, targetScore, currentRating, targetRating, ratingGain, isInBest, category } = recommendation;
   const isAp = game === "maimai" && targetScore === 1010000;
   const scoreText = (value: number) => formatGameScore(game, value, { precision: "compact" });
@@ -62,12 +64,12 @@ function RecommendationRow({ recommendation }: { recommendation: RecommendationD
               </div>
               {category === "new" && isInBest && (
                 <div className="px-1.5 py-0.5 rounded text-xs font-medium whitespace-nowrap bg-green-100 text-green-800 dark:bg-green-600/30 dark:text-green-400">
-                  {getGameRankingBuckets(game)[0].label}
+                  {tBucket('short', { size: newBucket.size })}
                 </div>
               )}
               {category === "old" && isInBest && (
                 <div className="px-1.5 py-0.5 rounded text-xs font-medium whitespace-nowrap bg-red-100 text-red-800 dark:bg-red-600/30 dark:text-red-400">
-                  {getGameRankingBuckets(game)[1].label}
+                  {tBucket('short', { size: oldBucket.size })}
                 </div>
               )}
               {recommendation.hasPotential && recommendation.peerReach != null && (
@@ -121,6 +123,8 @@ export function RecommendationCard({ selectedSnapshotData, flags, region }: { se
   const t = useTranslations();
   const frontendGame = useGame();
   const game = frontendGame.id;
+  const { scoreLabel } = usePresentation();
+  const bestBuckets = Object.fromEntries(getGameRankingBuckets(game).map(bucket => [bucket.key, t('dataContent.rankingBucket.short', { size: bucket.size })]));
   const isDesktop = useMediaQuery("(min-width: 768px)", { initializeWithValue: false });
   const [filterCategory, setFilterCategory] = useState<"all" | "new" | "old" | "best">("all");
   const [advancedFilters, setAdvancedFilters] = useState<GenericFilter[]>([]);
@@ -152,7 +156,7 @@ export function RecommendationCard({ selectedSnapshotData, flags, region }: { se
         level: t('recommendations.filterCategories.level'),
         type: t('recommendations.filterCategories.type'),
         targetRating: t('recommendations.filterCategories.targetRating'),
-        achievement: t(getGameScoreLabelKey(game)),
+        achievement: t(`recommendations.filterCategories.${scoreLabel}`),
         version: t('recommendations.filterCategories.version'),
         new: t('recommendations.filters.new'),
         old: t('recommendations.filters.old'),
@@ -167,7 +171,7 @@ export function RecommendationCard({ selectedSnapshotData, flags, region }: { se
       },
       game
     );
-  }, [recommendations, t, game]);
+  }, [recommendations, t, game, scoreLabel]);
 
   const getFilterLabel = useCallback((filter: GenericFilter) => {
     return createRecommendationFilterLabel(filter, {
@@ -310,7 +314,7 @@ export function RecommendationCard({ selectedSnapshotData, flags, region }: { se
                     {t('recommendations.filters.all')}
                   </SelectItem>
                   <SelectItem value="best">
-                    {t('recommendations.filters.best', { new: getGameRankingBuckets(game)[0].label, old: getGameRankingBuckets(game)[1].label })}
+                    {t('recommendations.filters.best', bestBuckets)}
                   </SelectItem>
                   <SelectItem value="new">
                     {t('recommendations.filters.new')}
@@ -324,7 +328,7 @@ export function RecommendationCard({ selectedSnapshotData, flags, region }: { se
           </div>
         </div>
         <div className="text-sm text-muted-foreground">
-          {t('recommendations.description', { new: getGameRankingBuckets(game)[0].label, old: getGameRankingBuckets(game)[1].label })}
+          {t('recommendations.description', bestBuckets)}
         </div>
 
         {/* Advanced Filter Panel */}

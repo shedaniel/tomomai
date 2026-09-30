@@ -28,13 +28,17 @@ type Rankings = {
 
 const PAGE_SIZE = 50;
 
+function useRankingBuckets() {
+  const t = useTranslations("dataContent.rankingBucket");
+  return getGameRankingBuckets(useGameId()).map(bucket => ({ ...bucket, title: t(bucket.key, { size: bucket.size }) }));
+}
+
 function SongsList({ newBest, oldBest, newRemaining, oldRemaining, displayMode, percentileMap }: Rankings & {
   displayMode: "list" | "compact";
   percentileMap?: PercentileMap;
 }) {
   const t = useTranslations();
-  const game = useGameId();
-  const buckets = getGameRankingBuckets(game);
+  const buckets = useRankingBuckets();
   const [visibleNewBest, setVisibleNewBest] = useState(Math.min(PAGE_SIZE, newBest.length));
   const [visibleOldBest, setVisibleOldBest] = useState(Math.min(PAGE_SIZE, oldBest.length));
   const [visibleNewRemaining, setVisibleNewRemaining] = useState(Math.min(PAGE_SIZE, newRemaining.length));
@@ -59,7 +63,7 @@ function SongsList({ newBest, oldBest, newRemaining, oldRemaining, displayMode, 
   return (
     <div className="space-y-6">
       <SongSection
-        title={buckets[0].label}
+        title={buckets[0].title}
         songs={newBest}
         count={`${newBest.length}/${buckets[0].size}`}
         ranked
@@ -69,7 +73,7 @@ function SongsList({ newBest, oldBest, newRemaining, oldRemaining, displayMode, 
         percentileMap={percentileMap}
       />
       <SongSection
-        title={buckets[1].label}
+        title={buckets[1].title}
         songs={oldBest}
         count={`${oldBest.length}/${buckets[1].size}`}
         ranked
@@ -102,18 +106,17 @@ function SongsList({ newBest, oldBest, newRemaining, oldRemaining, displayMode, 
 
 function SongsGrid({ newBest, oldBest, newRemaining, oldRemaining, percentileMap }: Rankings & { percentileMap?: PercentileMap }) {
   const t = useTranslations();
-  const game = useGameId();
-  const buckets = getGameRankingBuckets(game);
+  const buckets = useRankingBuckets();
   return (
     <div className="space-y-6">
       <SongGridSection
-        title={buckets[0].label}
+        title={buckets[0].title}
         songs={newBest}
         count={`${newBest.length}/${buckets[0].size}`}
         percentileMap={percentileMap}
       />
       <SongGridSection
-        title={buckets[1].label}
+        title={buckets[1].title}
         songs={oldBest}
         count={`${oldBest.length}/${buckets[1].size}`}
         percentileMap={percentileMap}
@@ -134,7 +137,7 @@ export function SongsCard({ selectedSnapshotData, flags }: { selectedSnapshotDat
 
   const frontendGame = useGame();
   const game = frontendGame.id;
-  const buckets = getGameRankingBuckets(game);
+  const buckets = useRankingBuckets();
   const { songs, snapshot } = selectedSnapshotData;
 
   const rankings: Rankings = useMemo(() => {
@@ -212,8 +215,8 @@ export function SongsCard({ selectedSnapshotData, flags }: { selectedSnapshotDat
         <div className="space-y-6">
           {supportsGameFeature(frontendGame, "rating-distribution") && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <RatingDistributionChart scores={newBest} title={buckets[0].label} />
-              <RatingDistributionChart scores={oldBest} title={buckets[1].label} />
+              <RatingDistributionChart scores={newBest} title={buckets[0].title} />
+              <RatingDistributionChart scores={oldBest} title={buckets[1].title} />
             </div>
           )}
 

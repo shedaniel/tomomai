@@ -153,6 +153,7 @@ type PresentationOf<G extends CanonicalGameId> = {
   formatScore(value: number, precision: "full" | "compact"): string;
   /** The difference between two scores as shown at compact precision. */
   formatScoreDelta(from: number, to: number): string;
+  /** The score's name, a key in each message namespace that labels scores. */
   scoreLabel: "achievement" | "score";
   ratingRules: RatingRules;
   difficulties: { readonly [K in CodeKey<G, "difficulty">]: DifficultyPresentation };

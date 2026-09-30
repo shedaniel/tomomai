@@ -34,16 +34,16 @@ describe("normalized player views", () => {
     const markup = render("chunithm");
     expect(markup).toContain("1,009,000");
     expect(markup).toContain("16.15");
-    expect(markup).toContain("B20");
-    expect(markup).toContain("B30");
+    expect(markup).toContain("New Songs B20");
+    expect(markup).toContain("Old Songs B30");
     expect(markup).not.toContain("100.5000%");
     expect(markup).not.toContain("B15");
   });
   it("preserves maimai percentage precision and ranking labels", () => {
     const markup = render("maimai");
     expect(markup).toContain("100.5000%");
-    expect(markup).toContain("B15");
-    expect(markup).toContain("B35");
+    expect(markup).toContain("New Songs B15");
+    expect(markup).toContain("Old Songs B35");
   });
   it("preserves the private maimai AP bonus at the production score-card boundary", () => {
     const data = fixture("maimai");

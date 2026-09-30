@@ -6,7 +6,7 @@ import { useTranslations } from "next-intl";
 import { useGameId, usePresentation } from "@/components/providers/game-provider";
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 import { STAGGER, getTransition } from "@/lib/animation-constants";
-import { formatGameScore, formatGameRating, formatGameLevel, getGameDifficulty, getGameStatusLabels, getGameScoreLabelKey } from "@/lib/games/presentation";
+import { formatGameScore, formatGameRating, formatGameLevel, getGameDifficulty, getGameStatusLabels } from "@/lib/games/presentation";
 import type { PercentileMap } from "@/lib/games/maimai/percentile/types";
 import { cn } from "@/lib/utils";
 import { BucketHeader } from "./bucket-header";
@@ -25,7 +25,7 @@ function CompactSongSection({ title, songs, count, ranked, visibleCount, onLoadM
 }) {
   const t = useTranslations();
   const game = useGameId();
-  const { statusColumns } = usePresentation();
+  const { statusColumns, scoreLabel } = usePresentation();
   const hasMore = visibleCount < songs.length;
   const loadMore = useCallback(() => {
     if (hasMore) onLoadMore();
@@ -51,7 +51,7 @@ function CompactSongSection({ title, songs, count, ranked, visibleCount, onLoadM
           {t('dataContent.tableHeaders.level')}
         </div>
         <div className="font-semibold text-muted-foreground border-b border-border pb-1 px-2 text-center whitespace-nowrap">
-          {t(getGameScoreLabelKey(game))}
+          {t(`dataContent.tableHeaders.${scoreLabel}`)}
         </div>
         {statusColumns.map(column => (
           <div key={column.labelKey} className="font-semibold text-muted-foreground border-b border-border pb-1 px-2 min-w-10 text-center whitespace-nowrap">

@@ -639,8 +639,11 @@
     "totalPlays": "累計プレイ回数：{count}",
     "songs": "楽曲（合計 {count} 曲）",
     "searchPlaceholder": "楽曲名、アーティスト、難易度、タイプなどで検索...",
-    "newSongsB15": "新規曲 B15",
-    "oldSongsB35": "過去曲 B35",
+    "rankingBucket": {
+      "new": "新規曲 B{size}",
+      "old": "過去曲 B{size}",
+      "short": "B{size}"
+    },
     "newSongs": "新規曲",
     "oldSongs": "過去曲",
     "displayModes": {
@@ -653,10 +656,10 @@
       "artist": "アーティスト",
       "level": "レベル",
       "achievement": "達成率",
+      "score": "スコア",
       "fc": "FC",
       "fs": "FS",
       "rating": "レート値",
-      "rank": "順位",
       "status": "ステータス"
     },
     "statistics": {
@@ -679,9 +682,6 @@
       "exportJson": "スナップショットをJSONでエクスポート",
       "exporting": "エクスポート中..."
     },
-    "scoreView": "スコア表示",
-    "bestScores": "ベストスコア",
-    "allScores": "全スコア",
     "loadError": "スコアを読み込めませんでした。もう一度お試しください。"
   },
   "albums": {
@@ -731,6 +731,7 @@
       "type": "タイプ",
       "targetRating": "目標レート",
       "achievement": "達成率",
+      "score": "スコア",
       "version": "バージョン"
     }
   },
@@ -817,7 +818,6 @@
       "description": "{net}から取得した「clal=」で始まるクッキー値を入力してください。",
       "expiration": "トークンは一定期間で無効になる場合がありますので、その際は再度更新してください。"
     },
-    "passwordInstructions": "SEGAアカウントのユーザー名とパスワードで直接ログイン",
     "secureStorage": "認証情報は保存され、今後の同期時に使用されます。",
     "steps": {
       "step1Title": "{net}にログイン",

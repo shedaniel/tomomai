@@ -103,7 +103,7 @@ describe("game presentation", () => {
   });
 
   it("sizes the shared ranking buckets per game", () => {
-    expect(getGameRankingBuckets("maimai").map(({ code, key, label }) => [code, key, label])).toEqual([[1, "new", "B15"], [2, "old", "B35"]]);
+    expect(getGameRankingBuckets("maimai").map(({ code, key, size }) => [code, key, size])).toEqual([[1, "new", 15], [2, "old", 35]]);
     expect(getGameRankingBuckets("chunithm").map(({ code, size }) => [code, size])).toEqual([[1, 20], [2, 30]]);
   });
 
