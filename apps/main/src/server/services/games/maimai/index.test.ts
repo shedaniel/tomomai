@@ -81,6 +81,12 @@ describe("maimai reserved profiles", () => {
     await expect(GAME_SERVER_MODULES.maimai.reserved?.user("someone")).resolves.toBeNull();
   });
 
+  it("list every demo profile's username for the account name check", async () => {
+    const usernames = [...GAME_SERVER_MODULES.maimai.reserved?.usernames ?? []];
+    expect(usernames).toContain("max");
+    for (const username of usernames) await expect(GAME_SERVER_MODULES.maimai.reserved?.user(username)).resolves.not.toBeNull();
+  });
+
   it("keep a concrete main region when maimai has no enabled region", async () => {
     vi.stubEnv("NEXT_PUBLIC_ENABLED_MAIMAI_REGIONS", "");
     await expect(GAME_SERVER_MODULES.maimai.reserved?.user("maxbas")).resolves.toMatchObject({ profileMainRegion: "intl" });

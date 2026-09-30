@@ -5,6 +5,7 @@ import type { GameServerModule } from "../types";
 import { maimaiLevelPolicy } from "./catalog/chart";
 import { maimaiImagePolicy } from "./catalog/images";
 import { parseLegacyCatalogRecord } from "./catalog/legacy-upload";
+import { MAIMAI_RESERVED_USERNAMES } from "./reserved-profiles";
 
 export const maimaiServerModule: GameServerModule<"maimai"> = {
   catalog: {
@@ -33,6 +34,7 @@ export const maimaiServerModule: GameServerModule<"maimai"> = {
     },
   },
   reserved: {
+    usernames: MAIMAI_RESERVED_USERNAMES,
     async user(username) {
       const { getReservedPublicUser } = await import("./reserved");
       return getReservedPublicUser(username);

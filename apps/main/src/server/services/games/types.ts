@@ -102,6 +102,8 @@ export interface ScoreSource {
 }
 
 export interface ReservedProfileProvider {
+  /** Lowercase usernames of the game's demo profiles, which no account may take. */
+  usernames: ReadonlySet<string>;
   user: (username: string) => Promise<ProfileData | null>;
   snapshot: (username: string, region: Region) => Promise<GameSnapshotData | null>;
 }

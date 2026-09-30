@@ -1,7 +1,8 @@
 import { db } from '@/lib/db';
 import { user } from '@/lib/db/schema-pg';
+import { CANONICAL_GAME_IDS } from '@/lib/games/ids';
 import { protectedProcedure, router } from '@/lib/trpc';
-import { RESERVED_USERNAMES } from '@/server/services/games/maimai/reserved';
+import { GAME_SERVER_MODULES } from '@/server/services/games/registry';
 import { TRPCError } from '@trpc/server';
 import { eq } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
@@ -18,6 +19,13 @@ const isValidUsername = (username: string): boolean => {
   const validPattern = /^[a-zA-Z0-9_-]+$/;
   return validPattern.test(username);
 };
+
+const RESERVED_ACCOUNT_NAMES: ReadonlySet<string> = new Set(["admin"]);
+
+function isReservedUsername(username: string): boolean {
+  const name = username.toLowerCase();
+  return RESERVED_ACCOUNT_NAMES.has(name) || CANONICAL_GAME_IDS.some(game => GAME_SERVER_MODULES[game].reserved?.usernames.has(name));
+}
 
 // Generate default username from display name
 const generateDefaultUsername = (displayName: string): string => {
@@ -43,7 +51,7 @@ export const usernameRouter = router({
         };
       }
 
-      if (RESERVED_USERNAMES.has(input.username.toLowerCase())) {
+      if (isReservedUsername(input.username)) {
         return {
           available: false,
           error: 'This username is reserved',
@@ -81,7 +89,7 @@ export const usernameRouter = router({
         });
       }
 
-      if (RESERVED_USERNAMES.has(input.username.toLowerCase())) {
+      if (isReservedUsername(input.username)) {
         throw new TRPCError({
           code: 'CONFLICT',
           message: 'This username is reserved',

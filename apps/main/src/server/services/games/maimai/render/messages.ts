@@ -19,10 +19,8 @@ import type { GamePlayerScore, GameSnapshot } from "@/lib/games/player-view";
 import { playlogNoteCounts } from "@/lib/games/maimai/recent-details";
 import { toMaimaiResult, toMaimaiSnapshotHeader } from "../legacy-view";
 import { fetchSnapshotRankings, gameSnapshotColumns } from "@/server/queries/snapshots";
-import {
-  getReservedGameSnapshot,
-  RESERVED_USERNAMES,
-} from "../reserved";
+import { getReservedGameSnapshot } from "../reserved";
+import { MAIMAI_RESERVED_USERNAMES } from "../reserved-profiles";
 import { prepareCreditData } from "./credit-data";
 import { prepareDailyPlaysData } from "./daily-plays-data";
 import type {
@@ -77,7 +75,7 @@ export async function buildExportImageMessage(opts: {
   const exp = expFromTtl(opts.ttlSeconds ?? DEFAULT_TTL);
 
   // ---- reserved-profile path ----
-  if (username && region && RESERVED_USERNAMES.has(username.toLowerCase())) {
+  if (username && region && MAIMAI_RESERVED_USERNAMES.has(username.toLowerCase())) {
     const reserved = await getReservedGameSnapshot(username.toLowerCase(), region);
     if (!reserved) {
       return { ok: false, status: 404, error: "Reserved profile not found" };
