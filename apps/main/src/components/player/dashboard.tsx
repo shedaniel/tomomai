@@ -3,7 +3,6 @@
 import { useGame } from "@/components/providers/game-provider";
 import { getGameRegion, supportsGameFeature } from "@/lib/games/frontend";
 import type { GameSnapshotData, GameSnapshotSummary } from "@/lib/games/player-view";
-import { GameUnavailable } from "@/components/player/game-unavailable";
 import { DataBanner } from "@/components/player/data-banner";
 import { DataContent } from "@/components/player/data-content";
 import { FetchToastContainer } from "@/components/fetch-toast";
@@ -37,20 +36,15 @@ type DialogType = null | "token" | "token-cn-proxy" | "onboarding" | "about" | "
 interface DashboardProps {
   user: User;
   initialUserData: UserData;
+  /** The served game's region for the user, resolved by the page after it checked the game is available. */
+  initialRegion: Region;
   initialSnapshots: GameSnapshotSummary[];
   initialSnapshotData?: GameSnapshotData;
   flags: Flags;
   latestPost: PostMeta | null;
 }
 
-export function Dashboard(props: DashboardProps) {
-  const game = useGame();
-  const region = getGameRegion(game, props.initialUserData.region);
-  if (!region) return <GameUnavailable />;
-  return <AvailableDashboard {...props} initialRegion={region} />;
-}
-
-function AvailableDashboard({ user, initialUserData, initialSnapshots, initialSnapshotData, flags, latestPost, initialRegion }: DashboardProps & { initialRegion: Region }) {
+export function Dashboard({ user, initialUserData, initialRegion, initialSnapshots, initialSnapshotData, flags, latestPost }: DashboardProps) {
   const game = useGame();
   const supportsFetch = supportsGameFeature(game, "scores");
 

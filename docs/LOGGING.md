@@ -176,6 +176,11 @@ export async function GET(request: NextRequest) {
 > Note: a cached/static response keeps the `x-request-id` of the request that
 > populated the cache — it's most meaningful on dynamic (API) responses.
 
+Pages and server components receive no `NextRequest`. Build their logger with
+`await pageLogger("home")`, which reads the same `x-request-id` header. It is not
+bound as the ambient logger, because the components of one request render
+concurrently.
+
 Admin routes get all of this from `adminRoute` in `src/lib/api/admin-route.ts`,
 which builds the request logger, adds `game` to it, answers failures with the
 `requestId` and flushes in `finally`.

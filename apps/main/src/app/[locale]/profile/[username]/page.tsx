@@ -1,4 +1,4 @@
-import { brandTitle, getGameRegion } from "@/lib/games/frontend";
+import { brandTitle, getGameRegion, isPlayerAvailable } from "@/lib/games/frontend";
 import { getCurrentGame } from "@/lib/games/current";
 import { resolvePublicUserByUsername } from "@/server/queries/public-access";
 import { notFound } from "next/navigation";
@@ -7,7 +7,7 @@ import { TRPCError } from "@trpc/server";
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { getLocale, setStaticLocale } from "@/i18n/locale-server";
-import { buildAlternates, openGraphLocales, localizePath } from "@/lib/seo";
+import { buildPageMetadata } from "@/lib/seo";
 import { safeDecodeURIComponent } from "@/lib/utils";
 
 // This route looks up the user's main region from the DB and redirects to
@@ -33,33 +33,18 @@ export async function generateMetadata({ params }: ProfilePageProps): Promise<Me
     getLocale(),
   ]);
 
-  const game = getCurrentGame();
-  const title = t("title", { username, brand: brandTitle(game.brand) });
-  const description = t("description", { username, game: game.brand.displayName, brandName: game.brand.productName });
-  const path = `/profile/${encodeURIComponent(username)}`;
-
-  // Mirror the regional page's metadata so embed crawlers that don't follow
-  // the redirect still get a useful preview. The og:image is provided by the
-  // regional page's opengraph-image.tsx — crawlers that follow the redirect
-  // will pick that up; ones that don't get the title/description here.
-  return {
-    title,
-    description,
-    alternates: await buildAlternates(path),
-    openGraph: {
-      title,
-      description,
-      url: localizePath(path, locale),
-      siteName: brandTitle(getCurrentGame().brand),
-      type: "profile",
-      ...openGraphLocales(locale),
-    },
-    twitter: {
-      card: "summary_large_image",
-      title,
-      description,
-    },
-  };
+  const { brand } = getCurrentGame();
+  // Crawlers that do not follow the redirect still get the profile's title and description. The image belongs
+  // to the regional page, whose region this route only learns from the database.
+  return buildPageMetadata({
+    brand,
+    locale,
+    path: `/profile/${encodeURIComponent(username)}`,
+    title: t("title", { username, brand: brandTitle(brand) }),
+    description: t("description", { username, game: brand.displayName, brandName: brand.productName }),
+    ogType: "profile",
+    image: "none",
+  });
 }
 
 export default async function ProfilePage({ params }: ProfilePageProps) {
@@ -69,10 +54,9 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
   try {
     // Get the user's profile to find their main region
     const game = getCurrentGame();
-    if (game.regions.length === 0) notFound();
+    if (!isPlayerAvailable(game)) notFound();
     const profileData = await resolvePublicUserByUsername(safeDecodeURIComponent(username), game.id);
     const region = getGameRegion(game, profileData.profileMainRegion);
-    if (!region) notFound();
 
     // Redirect to the specific region page using the user's main region
     redirect({ href: `/profile/${username}/${region}`, locale });

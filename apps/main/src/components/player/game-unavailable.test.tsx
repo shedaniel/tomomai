@@ -2,46 +2,28 @@ import React from "react";
 import { describe, expect, it, vi } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 import { NextIntlClientProvider } from "next-intl";
-import { Dashboard } from "./dashboard";
+import { GameUnavailable } from "./game-unavailable";
 import { GameProvider } from "@/components/providers/game-provider";
-import { toFrontendGame, type FrontendGame } from "@/lib/games/frontend";
+import { toFrontendGame } from "@/lib/games/frontend";
 import { getGame } from "@/lib/games/registry";
-import type { Flags } from "@/lib/flags";
-import messages from "../../../messages/en.json";
+import { loadMessages } from "@/i18n/messages";
 
-const hooks = vi.hoisted(() => ({ snapshots: vi.fn(), fetch: vi.fn() }));
-vi.mock("@/hooks/useSnapshots", () => ({ useSnapshots: hooks.snapshots }));
-vi.mock("@/hooks/useFetchSession", () => ({ useFetchSession: hooks.fetch }));
 vi.mock("@/i18n/navigation", () => ({
   Link: ({ children, href }: { children: React.ReactNode; href: string }) => <a href={href}>{children}</a>,
-  useRouter: vi.fn(), usePathname: vi.fn(), redirect: vi.fn(), getPathname: vi.fn(),
 }));
 
-const flags: Flags = {
-  historyCard: false, eventsCard: false, albumsCard: false,
-  recommendationFilters: false, scorePercentile: false, settingsApplications: false,
-  settingsDeveloper: false, aprilFools2026: false, customThemes: false, passkey: false,
-  twitterOauth: false, developerPortal: false, apiKeyCreation: false,
-  oauthAppCreation: false, userscriptFetch: false,
-};
-
-function renderUnavailable(game: FrontendGame) {
-  return renderToStaticMarkup(
-    <NextIntlClientProvider locale="en" messages={{ db: messages.db, game: messages.game }} timeZone="UTC">
-      <GameProvider game={game}>
-        <Dashboard user={{ id: "test-user" }} initialUserData={{ hasUsername: true, username: "player", email: "", publishProfile: false, region: "intl", role: "user" }} initialSnapshots={[]} flags={flags} latestPost={null} />
-      </GameProvider>
-    </NextIntlClientProvider>,
-  );
-}
-
-describe("unavailable game dashboard", () => {
-  it("does not mount player hooks for a game with no enabled regions", () => {
-    const markup = renderUnavailable(toFrontendGame(getGame("chunithm"), []));
+describe("unavailable game screen", () => {
+  it("names the served game and offers its catalog", async () => {
+    const markup = renderToStaticMarkup(
+      <NextIntlClientProvider locale="en" messages={await loadMessages("chunithm", "en")} timeZone="UTC">
+        <GameProvider game={toFrontendGame(getGame("chunithm"), [])}>
+          <GameUnavailable />
+        </GameProvider>
+      </NextIntlClientProvider>,
+    );
     expect(markup).toContain("tomochu ともチュウ");
     expect(markup).toContain("Player features for CHUNITHM are not available yet.");
+    expect(markup).toContain('href="/db/songs"');
     expect(markup).not.toContain("maimai");
-    expect(hooks.snapshots).not.toHaveBeenCalled();
-    expect(hooks.fetch).not.toHaveBeenCalled();
   });
 });

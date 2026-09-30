@@ -46,6 +46,16 @@ export function supportsGameFeature(game: FrontendGame, capability: GameCapabili
   return isGameRegion(game, region) && offersCapability(game, capability, region);
 }
 
+/** A served game that enables at least one region, so its player features exist. */
+export type AvailableGame = FrontendGame & { regions: readonly [Region, ...Region[]] };
+
+export function isPlayerAvailable(game: FrontendGame): game is AvailableGame {
+  return game.regions.length > 0;
+}
+
+/** The preferred region when the game enables it, else the game's first region. */
+export function getGameRegion(game: AvailableGame, preferred?: string | null): Region;
+export function getGameRegion(game: FrontendGame, preferred?: string | null): Region | null;
 export function getGameRegion(game: FrontendGame, preferred?: string | null): Region | null {
   return game.regions.find(region => region === preferred) ?? game.regions[0] ?? null;
 }

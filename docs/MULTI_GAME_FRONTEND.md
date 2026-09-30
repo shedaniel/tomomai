@@ -12,6 +12,8 @@ login. Existing maimai URLs remain unchanged. `getCurrentGame()` in [`current.ts
 and passes a serializable descriptor (id, brand, effective capabilities and region overrides, enabled regions and fetch facts) through `GameProvider`.
 Each game has one `GameDefinition` under `lib/games/<game>/definition.ts`, listed in `GAMES` in
 [`registry.ts`](../apps/main/src/lib/games/registry.ts). A game with no enabled regions is disabled, and its catalog stays readable.
+The dashboard and profile routes check `isPlayerAvailable(game)` once on the server, which also narrows
+`getGameRegion` to a region that exists. The dashboard shows `GameUnavailable` and profiles answer 404 otherwise.
 There is no new public game route, hostname rewrite, game switcher, authentication
 flow in this phase. Domain routing remains a later task.
 

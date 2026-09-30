@@ -1,5 +1,6 @@
 import { logger } from "@/lib/logger";
 import { nanoid } from "nanoid";
+import { headers } from "next/headers";
 import type { NextRequest } from "next/server";
 import type { Logger } from "pino";
 import { AsyncLocalStorage } from "node:async_hooks";
@@ -18,7 +19,7 @@ const loggerStorage = new AsyncLocalStorage<Logger>();
  * Falls back to a fresh `nanoid(10)` when there's no middleware (e.g. tests,
  * or routes excluded from the middleware matcher).
  */
-export function getRequestId(request: NextRequest): string {
+export function getRequestId(request: Pick<NextRequest, "headers">): string {
   return request.headers.get("x-request-id") ?? nanoid(10);
 }
 
@@ -39,6 +40,15 @@ export function requestLogger(
   // Bind as the ambient logger for the rest of this request's async chain.
   loggerStorage.enterWith(log);
   return { log, requestId };
+}
+
+/**
+ * The per-request logger for a page or server component, which reads the
+ * request's headers instead of receiving a NextRequest. It is not bound as the
+ * ambient logger, because components of one request render concurrently.
+ */
+export async function pageLogger(route: string): Promise<Logger> {
+  return logger.child({ route, requestId: getRequestId({ headers: await headers() }) });
 }
 
 /**

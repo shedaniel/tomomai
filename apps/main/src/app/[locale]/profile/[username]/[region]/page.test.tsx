@@ -24,13 +24,16 @@ vi.mock("@/lib/games/current", async () => {
   return { getCurrentGame: () => toFrontendGame(getGame(currentGame.id), ["intl", "jp"]) };
 });
 vi.mock("@/server/queries/game-profile", () => ({ fetchPublicGameProfile: fetchProfile }));
+vi.mock("@/server/queries/public-access", () => ({ resolvePublicUserByUsername: vi.fn() }));
 vi.mock("@/lib/auth-server", () => ({ getServerSession: async () => null }));
 vi.mock("@/lib/flags", () => ({ defaultFlags: {} }));
 vi.mock("@/components/player/profile-page", () => ({ ProfilePage: () => null }));
 vi.mock("@/i18n/locale-server", () => ({ getLocale: async () => "ja", setStaticLocale: async () => undefined }));
+vi.mock("@/i18n/navigation", () => ({ redirect: vi.fn() }));
 vi.mock("@/lib/base-url", () => ({ resolveBaseUrl: () => "https://site.test" }));
 
 import RegionProfilePage, { generateMetadata } from "./page";
+import { generateMetadata as generateRedirectMetadata } from "../page";
 
 const params = Promise.resolve({ locale: "ja", username: "player", region: "intl" });
 const profileImage = [{ url: "https://site.test/ja/profile/player/intl/opengraph-image/ja" }];
@@ -78,3 +81,12 @@ describe("regional profile metadata", () => {
   });
 });
 
+describe("profile redirect metadata", () => {
+  it("publishes no image of its own, since the region it redirects to is only known from the database", async () => {
+    for (const game of ["maimai", "chunithm"] as const) {
+      currentGame.id = game;
+      const metadata = await generateRedirectMetadata({ params: Promise.resolve({ locale: "ja", username: "player" }) });
+      expect(metadata.openGraph).toMatchObject({ url: "/ja/profile/player", type: "profile", images: [] });
+    }
+  });
+});
