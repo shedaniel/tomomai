@@ -3,7 +3,7 @@ import { isGameRegion } from "@/lib/games/frontend";
 import { GameAdapterError } from "@/lib/games/errors";
 import { createProfileOGImage, OG_SIZE } from "@/lib/og";
 import { getTranslations } from "next-intl/server";
-import { fetchPublicGameProfile } from "@/server/queries/game-profile";
+import { fetchPublicGameProfileHeader } from "@/server/queries/game-profile";
 import { safeDecodeURIComponent } from "@/lib/utils";
 import { TRPCError } from "@trpc/server";
 import type { Locale } from "@/i18n/locale";
@@ -33,8 +33,7 @@ export default async function Image({ params, id }: Props & { id: Promise<string
   if (!isGameRegion(game, region)) return createProfileOGImage({ ...placeholder, regionLabel: region, region: "intl" });
 
   try {
-    const { snapshotData } = await fetchPublicGameProfile(game.id, username, region);
-    const snapshot = snapshotData?.snapshot;
+    const { snapshot } = await fetchPublicGameProfileHeader(game.id, username, region);
     if (!snapshot) return createProfileOGImage({ ...placeholder, regionLabel: t(region), region });
     return createProfileOGImage({
       game,

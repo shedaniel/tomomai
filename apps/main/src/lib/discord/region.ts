@@ -1,6 +1,8 @@
 import { getEnabledRegions } from '@/lib/games/regions';
 import type { Region } from '@/lib/types';
-import { fetchLatestSnapshotData, fetchSnapshotRankings } from '@/server/queries/snapshots';
+import { userSnapshots } from '@/lib/db/schema-pg';
+import { latestSnapshot } from '@/server/queries/latest-snapshot';
+import { fetchSnapshotRankings } from '@/server/queries/snapshots';
 import { getRatingComment } from './responses';
 import { t } from './i18n';
 import { DISCORD_GAME } from './game';
@@ -41,10 +43,16 @@ export interface ProfileSummary {
  * and old-charts (B35) ratings stored with it alongside the summary fields.
  */
 export async function getProfileSummary(userId: string, region: Region): Promise<ProfileSummary | null> {
-  const data = await fetchLatestSnapshotData(DISCORD_GAME, userId, region);
-  if (!data) return null;
+  const snapshot = await latestSnapshot(DISCORD_GAME, userId, region, {
+    publicId: userSnapshots.publicId,
+    rating: userSnapshots.rating,
+    gameVersion: userSnapshots.gameVersion,
+    stars: userSnapshots.stars,
+    totalPlayCount: userSnapshots.totalPlayCount,
+    fetchedAt: userSnapshots.fetchedAt,
+  });
+  if (!snapshot) return null;
 
-  const { snapshot } = data;
   const { newScores, oldScores } = await fetchSnapshotRankings(DISCORD_GAME, userId, snapshot);
   const newRating = newScores.reduce((sum, s) => sum + s.rating, 0);
   const oldRating = oldScores.reduce((sum, s) => sum + s.rating, 0);

@@ -3,11 +3,12 @@ import { comboStatusToCode, difficultyToCode, syncStatusToCode } from "@/lib/gam
 import { songInstanceId } from "@/lib/db/song-instance-id";
 import { db } from "@/lib/db";
 import { parentSong, scoreData, snapshotScores, songs, userSnapshots } from "@/lib/db/schema-pg";
-import { and, desc, eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import type { Region } from "@/lib/types";
 import type { CanonicalGameId } from "@/lib/games/types";
 import type { MaimaiPlateDifficulty, MaimaiPlateType } from "@/lib/games/maimai/plates";
 import type { GamePlayerScore } from "@/lib/games/player-view";
+import { latestSnapshot } from "@/server/queries/latest-snapshot";
 
 export type PlateQuery = {
   version: string;
@@ -45,7 +46,7 @@ export async function fetchPlateSongs(
     })
     .from(snapshotScores)
     .innerJoin(scoreData, eq(snapshotScores.scoreId, scoreData.id))
-    .where(and(eq(snapshotScores.game, game), eq(snapshotScores.snapshotId, snapshot.id)))
+    .where(eq(snapshotScores.snapshotId, snapshot.id))
     .as("snapshot_scores_sub");
 
   const rows = await db
@@ -88,11 +89,6 @@ export async function fetchPlateSongs(
 
 /** fetchPlateSongs against the user's latest snapshot in the region, or nothing when they have none. */
 export async function fetchLatestPlateSongs(game: CanonicalGameId, userId: string, region: Region, query: PlateQuery) {
-  const [snapshot] = await db
-    .select({ id: userSnapshots.id, gameVersion: userSnapshots.gameVersion })
-    .from(userSnapshots)
-    .where(and(eq(userSnapshots.game, game), eq(userSnapshots.userId, userId), eq(userSnapshots.region, region)))
-    .orderBy(desc(userSnapshots.fetchedAt))
-    .limit(1);
+  const snapshot = await latestSnapshot(game, userId, region, { id: userSnapshots.id, gameVersion: userSnapshots.gameVersion });
   return snapshot ? fetchPlateSongs(game, snapshot, region, query) : [];
 }

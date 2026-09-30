@@ -1,9 +1,28 @@
-import { getPlayerRankings, type GameSnapshotData } from "./player-view";
+import { getPlayerRankings, type GameSnapshot, type GameSnapshotData } from "./player-view";
 import type { CanonicalGameId } from "./types";
 import type { ProfilePrivacySettings } from "@/lib/types";
 
 type SnapshotPrivacy = Pick<ProfilePrivacySettings, "profileShowAllScores" | "profileShowScoreDetails" | "profileShowPlayCounts">
   & Partial<Pick<ProfilePrivacySettings, "profileShowEvents">>;
+
+export function toPublicSnapshotHeader(snapshot: GameSnapshot, privacy: Pick<ProfilePrivacySettings, "profileShowPlayCounts">): GameSnapshot {
+  return {
+    publicId: snapshot.publicId,
+    game: snapshot.game,
+    displayName: snapshot.displayName,
+    rating: snapshot.rating,
+    gameVersion: snapshot.gameVersion,
+    fetchedAt: snapshot.fetchedAt,
+    title: snapshot.title,
+    titleType: snapshot.titleType,
+    iconUrl: snapshot.iconUrl,
+    courseRankUrl: snapshot.courseRankUrl,
+    classRankUrl: snapshot.classRankUrl,
+    stars: snapshot.stars,
+    versionPlayCount: privacy.profileShowPlayCounts ? snapshot.versionPlayCount : null,
+    totalPlayCount: privacy.profileShowPlayCounts ? snapshot.totalPlayCount : null,
+  };
+}
 
 export function toPublicGameSnapshot(game: CanonicalGameId, data: GameSnapshotData, privacy: SnapshotPrivacy): GameSnapshotData {
   if (data.snapshot.game !== game) throw new Error("Snapshot game does not match the public profile");
@@ -11,22 +30,7 @@ export function toPublicGameSnapshot(game: CanonicalGameId, data: GameSnapshotDa
   const chartRatings = new Map(rated.map(score => [score.songId, score.rating]));
   const visibleIds = new Set([...newScores, ...oldScores].map(score => score.songId));
   return {
-    snapshot: {
-      publicId: data.snapshot.publicId,
-      game: data.snapshot.game,
-      displayName: data.snapshot.displayName,
-      rating: data.snapshot.rating,
-      gameVersion: data.snapshot.gameVersion,
-      fetchedAt: data.snapshot.fetchedAt,
-      title: data.snapshot.title,
-      titleType: data.snapshot.titleType,
-      iconUrl: data.snapshot.iconUrl,
-      courseRankUrl: data.snapshot.courseRankUrl,
-      classRankUrl: data.snapshot.classRankUrl,
-      stars: data.snapshot.stars,
-      versionPlayCount: privacy.profileShowPlayCounts ? data.snapshot.versionPlayCount : null,
-      totalPlayCount: privacy.profileShowPlayCounts ? data.snapshot.totalPlayCount : null,
-    },
+    snapshot: toPublicSnapshotHeader(data.snapshot, privacy),
     ...(privacy.profileShowEvents && data.events ? { events: data.events.map(event => ({
       name: event.name, eventType: event.eventType, currentDistance: event.currentDistance,
       nextRewardDistance: event.nextRewardDistance, state: event.state, imageUrl: event.imageUrl,

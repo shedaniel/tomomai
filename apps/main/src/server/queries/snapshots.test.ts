@@ -48,11 +48,13 @@ it.each([
     eventType: null, name: "Map progress", currentDistance: 10, nextRewardDistance: null, state: null, imageUrl: null, eventPeriodStart: null, eventPeriodEnd: null,
   }]);
   expect(result?.songs[0]).toMatchObject({ difficultyCode: 4, typeCode: 0, comboStatus: 3, scoreValue: 1009000 });
-  const [, scores, events] = state.queries;
-  expect(scores.params).toContain(INTERNAL_ID);
-  expect(events.params).toContain(INTERNAL_ID);
+  const [header, scores, events] = state.queries;
   expect(state.queries).toHaveLength(3);
-  expect(state.queries.every(query => query.params.includes("chunithm"))).toBe(true);
+  expect(header.params).toContain("chunithm");
+  // Children are reached through the game-checked snapshot, and the composite keys keep them in its game.
+  expect(scores.params).toEqual([INTERNAL_ID]);
+  // The events index leads with game, so the game predicate stays.
+  expect(events.params).toEqual(["chunithm", INTERNAL_ID]);
 });
 
 it("reads the owner's snapshot by public id in whichever region it was fetched, and nothing of another owner or game", async () => {

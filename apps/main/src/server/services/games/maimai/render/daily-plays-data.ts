@@ -1,9 +1,10 @@
 import "server-only";
 import { db } from '@/lib/db';
-import { parentSong, songs, user, userRecentSongs, userSnapshots } from '@/lib/db/schema-pg';
-import { and, desc, eq, gte, lt, lte } from 'drizzle-orm';
+import { parentSong, songs, user, userRecentSongs } from '@/lib/db/schema-pg';
+import { and, desc, eq, gte, lt } from 'drizzle-orm';
 import type { Region } from '@/lib/types';
 import type { GamePlayerScore, GameSnapshot } from '@/lib/games/player-view';
+import { latestSnapshot } from '@/server/queries/latest-snapshot';
 import { gameSnapshotColumns } from '@/server/queries/snapshots';
 import { maimaiRecentPlayColumns } from '../columns';
 
@@ -78,11 +79,9 @@ export async function prepareDailyPlaysData(
       .select({ playedAt: userRecentSongs.playedAt })
       .from(userRecentSongs)
       .innerJoin(songs, eq(userRecentSongs.songId, songs.id))
-      .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
       .where(and(
         eq(userRecentSongs.game, "maimai"),
         eq(userRecentSongs.userId, userId),
-        eq(songs.game, "maimai"),
         eq(songs.region, region),
       ))
       .orderBy(desc(userRecentSongs.playedAt))
@@ -107,7 +106,6 @@ export async function prepareDailyPlaysData(
     .where(and(
       eq(userRecentSongs.game, "maimai"),
       eq(userRecentSongs.userId, userId),
-      eq(songs.game, "maimai"),
       eq(songs.region, region),
       gte(userRecentSongs.playedAt, start),
       lt(userRecentSongs.playedAt, end),
@@ -115,18 +113,8 @@ export async function prepareDailyPlaysData(
     .orderBy(desc(userRecentSongs.playedAt))
     .limit(50);
 
-  // Get the most recent snapshot at or before the day end — needed for header rendering.
-  const [snapshot] = await db
-    .select(gameSnapshotColumns)
-    .from(userSnapshots)
-    .where(and(
-      eq(userSnapshots.game, "maimai"),
-      eq(userSnapshots.userId, userId),
-      eq(userSnapshots.region, region),
-      lte(userSnapshots.fetchedAt, end),
-    ))
-    .orderBy(desc(userSnapshots.fetchedAt))
-    .limit(1);
+  // The header shows the player as of the end of that day.
+  const snapshot = await latestSnapshot("maimai", userId, region, gameSnapshotColumns, { asOf: end });
 
   if (!snapshot) {
     return { type: "error", error: "No snapshot found for this day" };
@@ -170,11 +158,9 @@ export async function listDailyPlaysAvailableDays(
     .select({ playedAt: userRecentSongs.playedAt })
     .from(userRecentSongs)
     .innerJoin(songs, eq(userRecentSongs.songId, songs.id))
-    .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
     .where(and(
       eq(userRecentSongs.game, "maimai"),
       eq(userRecentSongs.userId, userId),
-      eq(songs.game, "maimai"),
       eq(songs.region, region),
     ))
     .orderBy(desc(userRecentSongs.playedAt));

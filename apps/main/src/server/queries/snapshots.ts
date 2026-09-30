@@ -8,6 +8,7 @@ import { and, desc, eq } from "drizzle-orm";
 import type { Region } from "@/lib/types";
 import { getLogger } from "@/lib/request-logger";
 import { deleteFromR2, isR2IconUrl, r2KeyFromIconUrl } from "@/lib/r2";
+import { latestSnapshot } from "./latest-snapshot";
 
 export async function fetchUserSnapshots(
   game: CanonicalGameId,
@@ -52,7 +53,8 @@ export async function fetchUserSnapshots(
  * snapshot doesn't exist or doesn't belong to the user; callers translate
  * that into a 404.
  */
-export async function deleteUserSnapshot(game: CanonicalGameId,
+export async function deleteUserSnapshot(
+  game: CanonicalGameId,
   userId: string,
   snapshotPublicId: string,
   region: Region,
@@ -114,10 +116,11 @@ export const gameSnapshotColumns = {
 
 const snapshotWithInternalId = { id: userSnapshots.id, snapshot: gameSnapshotColumns };
 
-export async function fetchSnapshotData(game: CanonicalGameId,
+export async function fetchSnapshotData(
+  game: CanonicalGameId,
   userId: string,
   snapshotPublicId: string,
-  region: Region
+  region: Region,
 ) {
   const [row] = await db
     .select(snapshotWithInternalId)
@@ -177,7 +180,7 @@ async function readSnapshotData<S extends GameSnapshot>(game: CanonicalGameId, {
     .innerJoin(scoreData, eq(snapshotScores.scoreId, scoreData.id))
     .innerJoin(songs, eq(scoreData.songId, songs.id))
     .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
-    .where(and(eq(snapshotScores.game, game), eq(snapshotScores.snapshotId, snapshotId)))
+    .where(eq(snapshotScores.snapshotId, snapshotId))
     .orderBy(parentSong.songName, parentSong.difficulty);
 
   const events = await db
@@ -192,6 +195,7 @@ async function readSnapshotData<S extends GameSnapshot>(game: CanonicalGameId, {
       eventPeriodEnd: userEvents.eventPeriodEnd,
     })
     .from(userEvents)
+    // Unlike the other snapshot children, the events index leads with game.
     .where(and(eq(userEvents.game, game), eq(userEvents.snapshotId, snapshotId)));
 
   return {
@@ -201,43 +205,8 @@ async function readSnapshotData<S extends GameSnapshot>(game: CanonicalGameId, {
   } satisfies GameSnapshotData;
 }
 
-/**
- * Return the `fetchedAt` of the user's newest snapshot for a region, or null
- * if they have none. Cheap single-column query used for staleness checks.
- */
-export async function getLatestSnapshotFetchedAt(game: CanonicalGameId,
-  userId: string,
-  region: Region,
-): Promise<Date | null> {
-  const [row] = await db
-    .select({ fetchedAt: userSnapshots.fetchedAt })
-    .from(userSnapshots)
-    .where(
-      and(
-        eq(userSnapshots.game, game),
-        eq(userSnapshots.userId, userId),
-        eq(userSnapshots.region, region),
-      ),
-    )
-    .orderBy(desc(userSnapshots.fetchedAt))
-    .limit(1);
-  return row?.fetchedAt ?? null;
-}
-
 export async function fetchLatestSnapshotData(game: CanonicalGameId, userId: string, region: Region) {
-  const [row] = await db
-    .select(snapshotWithInternalId)
-    .from(userSnapshots)
-    .where(
-      and(
-        eq(userSnapshots.game, game),
-        eq(userSnapshots.userId, userId),
-        eq(userSnapshots.region, region)
-      )
-    )
-    .orderBy(desc(userSnapshots.fetchedAt))
-    .limit(1);
-
+  const row = await latestSnapshot(game, userId, region, snapshotWithInternalId);
   return row ? readSnapshotData(game, row) : null;
 }
 
@@ -254,7 +223,6 @@ export async function fetchSnapshotRankings(game: CanonicalGameId, userId: strin
       eq(userSnapshots.publicId, snapshot.publicId),
       eq(userSnapshots.game, game),
       eq(userSnapshots.userId, userId),
-      eq(snapshotRankings.game, game),
     ))
     .orderBy(snapshotRankings.bucket, snapshotRankings.rank);
   return rateStoredRankings(game, rows, snapshot.gameVersion);

@@ -55,7 +55,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
     // Get the user's profile to find their main region
     const game = getCurrentGame();
     if (!isPlayerAvailable(game)) notFound();
-    const profileData = await resolvePublicUserByUsername(safeDecodeURIComponent(username), game.id);
+    const profileData = await resolvePublicUserByUsername(game.id, safeDecodeURIComponent(username));
     const region = getGameRegion(game, profileData.profileMainRegion);
 
     // Redirect to the specific region page using the user's main region

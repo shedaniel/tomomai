@@ -31,7 +31,7 @@ vi.mock("@/server/queries/songs-cache", () => ({
       : { type: "standard", difficulties: [{ difficulty: "master", levelPrecise: 139 }, { difficulty: "ultima", levelPrecise: 148, levelPreciseEstimated: true }] }),
   }],
 }));
-vi.mock("@/server/queries/game-profile", () => ({ fetchPublicGameProfile: fixture.fetchProfile }));
+vi.mock("@/server/queries/game-profile", () => ({ fetchPublicGameProfileHeader: fixture.fetchProfile }));
 vi.mock("@/lib/og", async importOriginal => {
   const og = await importOriginal<typeof import("@/lib/og")>();
   return { ...og, createHomeOGImage: vi.fn(og.createHomeOGImage), createDbOGImage: vi.fn(og.createDbOGImage) };
@@ -64,7 +64,7 @@ function serve(game: CanonicalGameId) {
   vi.stubEnv(`NEXT_PUBLIC_ENABLED_${game.toUpperCase()}_REGIONS`, "intl,jp");
   fixture.fetchProfile.mockResolvedValue({
     profile: { id: "user" },
-    snapshotData: { snapshot: { game, displayName: "Player", title: "Title", rating: game === "maimai" ? 15432 : 1650, gameVersion: 1, iconUrl: "https://icons.test/player.png" }, songs: [] },
+    snapshot: { game, displayName: "Player", title: "Title", rating: game === "maimai" ? 15432 : 1650, gameVersion: 1, iconUrl: "https://icons.test/player.png" },
   });
 }
 
@@ -85,7 +85,7 @@ describe.each(["chunithm", "maimai"] as const)("%s page images", game => {
     expect([...new Uint8Array(await response.arrayBuffer()).slice(0, 4)]).toEqual(PNG_SIGNATURE);
   });
 
-  it("loads the profile through the shared public profile loader", async () => {
+  it("loads only the profile's public snapshot header through the shared loader", async () => {
     await IMAGES.profile();
     expect(fixture.fetchProfile).toHaveBeenCalledWith(game, "player", "intl");
   });

@@ -1,5 +1,5 @@
 import { db } from '@/lib/db';
-import { account, user } from '@/lib/db/schema-pg';
+import { account, user, userSnapshots } from '@/lib/db/schema-pg';
 import { getLogger } from '@/lib/request-logger';
 import { waitUntil } from '@vercel/functions';
 import { and, eq } from 'drizzle-orm';
@@ -23,7 +23,7 @@ import {
   isStale,
   type StaleCommand,
 } from '../staleness';
-import { getLatestSnapshotFetchedAt } from '@/server/queries/snapshots';
+import { latestSnapshot } from '@/server/queries/latest-snapshot';
 import { DISCORD_GAME } from '../game';
 
 interface ResolvedUser {
@@ -113,7 +113,7 @@ export async function applyStalenessGate({
   }
 
   try {
-    const lastFetchedAt = await getLatestSnapshotFetchedAt(DISCORD_GAME, dbUser.id, region);
+    const lastFetchedAt = (await latestSnapshot(DISCORD_GAME, dbUser.id, region, { fetchedAt: userSnapshots.fetchedAt }))?.fetchedAt;
     if (lastFetchedAt && isStale(lastFetchedAt)) {
       return getStalePromptResponse({
         command,

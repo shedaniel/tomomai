@@ -28,7 +28,9 @@ it("buckets maimai scores by difficulty code and counts combo and sync statuses 
     },
     totalSongs: { 13: { 3: 10 }, 12: { 2: 5 } },
   });
-  expect(state.queries.every(query => query.params.includes("maimai"))).toBe(true);
+  const [scores, catalog] = state.queries;
+  expect(scores.params).toEqual([41]);
+  expect(catalog.params).toEqual(["maimai", "jp", 13]);
 });
 
 it("counts CHUNITHM clear lamps beside its combo and chain statuses", async () => {

@@ -5,7 +5,7 @@ import { and, eq } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { GAME_SERVER_MODULES } from "@/server/services/games/registry";
 
-export async function resolvePublicUserByUsername(username: string, game: CanonicalGameId) {
+export async function resolvePublicUserByUsername(game: CanonicalGameId, username: string) {
   const reserved = await GAME_SERVER_MODULES[game].reserved?.user(username);
   if (reserved) return reserved;
 

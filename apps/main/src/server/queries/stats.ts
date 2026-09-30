@@ -3,8 +3,9 @@ import { GAME_CODES, keyOf } from "@/lib/games/codes";
 import { getGrade } from "@/lib/games/presentation";
 import { db } from "@/lib/db";
 import { parentSong, scoreData, snapshotScores, songs, userSnapshots } from "@/lib/db/schema-pg";
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import type { Region } from "@/lib/types";
+import { latestSnapshot } from "./latest-snapshot";
 
 const NO_STATUS = "none";
 
@@ -53,7 +54,7 @@ export async function computeStatsForSnapshot(
     .innerJoin(scoreData, eq(snapshotScores.scoreId, scoreData.id))
     .innerJoin(songs, eq(scoreData.songId, songs.id))
     .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
-    .where(and(eq(snapshotScores.game, game), eq(snapshotScores.snapshotId, snapshotInternalId)));
+    .where(eq(snapshotScores.snapshotId, snapshotInternalId));
 
   const catalogCharts = await db
     .select({
@@ -91,21 +92,7 @@ export async function computeStatsForSnapshot(
 }
 
 export async function fetchPlayerStats(game: CanonicalGameId, userId: string, region: Region): Promise<StatsResult> {
-  const snapshot = await db
-    .select({ id: userSnapshots.id, gameVersion: userSnapshots.gameVersion })
-    .from(userSnapshots)
-    .where(
-      and(
-        and(eq(userSnapshots.game, game), eq(userSnapshots.userId, userId)),
-        and(eq(userSnapshots.game, game), eq(userSnapshots.region, region))
-      )
-    )
-    .orderBy(desc(userSnapshots.fetchedAt))
-    .limit(1);
-
-  if (snapshot.length === 0) {
-    return { stats: {}, totalSongs: {} };
-  }
-
-  return computeStatsForSnapshot(game, snapshot[0].id, snapshot[0].gameVersion, region);
+  const snapshot = await latestSnapshot(game, userId, region, { id: userSnapshots.id, gameVersion: userSnapshots.gameVersion });
+  if (!snapshot) return { stats: {}, totalSongs: {} };
+  return computeStatsForSnapshot(game, snapshot.id, snapshot.gameVersion, region);
 }

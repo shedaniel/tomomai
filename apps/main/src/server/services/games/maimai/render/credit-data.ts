@@ -1,10 +1,11 @@
 import "server-only";
 import { db } from '@/lib/db';
-import { parentSong, songs, user, userRecentSongs, maimaiRecentSongDetails, userSnapshots } from '@/lib/db/schema-pg';
+import { parentSong, songs, user, userRecentSongs, maimaiRecentSongDetails } from '@/lib/db/schema-pg';
 import { and, desc, eq, lte, sql } from 'drizzle-orm';
 import { getLogger } from '@/lib/request-logger';
 import type { Region } from '@/lib/types';
 import type { GamePlayerScore, GameSnapshot } from '@/lib/games/player-view';
+import { latestSnapshot } from '@/server/queries/latest-snapshot';
 import { gameSnapshotColumns } from '@/server/queries/snapshots';
 import type { MaimaiPlaylog } from '@/lib/games/maimai/recent-details';
 import { maimaiRecentPlayColumns } from '../columns';
@@ -66,7 +67,6 @@ export async function prepareCreditData(
       and(
         eq(userRecentSongs.game, "maimai"),
         eq(userRecentSongs.userId, userId),
-        eq(songs.game, "maimai"),
         eq(songs.region, region),
         beforeDate ? lte(userRecentSongs.playedAt, beforeDate) : undefined
       )
@@ -130,23 +130,13 @@ export async function prepareCreditData(
   log.debug('Fetching user privacy settings and snapshot...');
   startTime = Date.now();
 
-  const [userRecord, snapshotRecord] = await Promise.all([
+  const [userRecord, snapshot] = await Promise.all([
     db
       .select({ username: user.username, publishProfile: user.publishProfile })
       .from(user)
       .where(eq(user.id, userId))
       .limit(1),
-    db
-      .select(gameSnapshotColumns)
-      .from(userSnapshots)
-      .where(and(
-        eq(userSnapshots.game, "maimai"),
-        eq(userSnapshots.userId, userId),
-        eq(userSnapshots.region, region),
-        beforeDate ? lte(userSnapshots.fetchedAt, beforeDate) : undefined,
-      ))
-      .orderBy(desc(userSnapshots.fetchedAt))
-      .limit(1),
+    latestSnapshot("maimai", userId, region, gameSnapshotColumns, { asOf: beforeDate }),
   ]);
 
   if (userRecord.length === 0) {
@@ -157,7 +147,7 @@ export async function prepareCreditData(
     };
   }
 
-  if (snapshotRecord.length === 0) {
+  if (!snapshot) {
     log.warn('No snapshot found for this credit date');
     return {
       type: "error",
@@ -165,7 +155,6 @@ export async function prepareCreditData(
     };
   }
 
-  const snapshot = snapshotRecord[0];
   log.debug({ durationMs: Date.now() - startTime }, 'User privacy settings and snapshot fetched');
 
   // Determine visitable profile URL
