@@ -56,10 +56,10 @@ it("shows the game's main region and saves only a region the user picks", async 
   ));
   expect(container.textContent).toContain("Choose the primary region of your published CHUNITHM profile.");
   expect(container.querySelector("#main-region")?.textContent).toContain("International");
-  expect(button(messages.settings.saveChanges)?.disabled).toBe(true);
+  expect(button("Save Changes")?.disabled).toBe(true);
 
   await act(async () => button("Japan")?.click());
-  await act(async () => button(messages.settings.saveChanges)?.click());
+  await act(async () => button("Save Changes")?.click());
   expect(state.mutations.updateProfileMainRegion).toHaveBeenCalledWith({ profileMainRegion: "jp" });
   expect(state.mutations.updatePublishProfile).not.toHaveBeenCalled();
   expect(state.mutations.updateProfilePrivacySettings).not.toHaveBeenCalled();
