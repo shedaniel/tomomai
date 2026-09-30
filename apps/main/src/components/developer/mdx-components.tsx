@@ -1,9 +1,15 @@
 import { Link } from "@/i18n/navigation"
 import { ExternalMarkdownLink, markdownBaseComponents } from "@tomomai/markdown";
-import type { ComponentProps, ReactNode } from "react";
+import { Fragment, type ComponentProps, type ReactNode } from "react";
 import { AlertTriangle, Info, CheckCircle2, AlertCircle } from "lucide-react";
+import { ErrorTable } from "./error-table";
 import { ScopeBadge } from "./scope-badge";
+import { API_ERROR_CODES } from "@/lib/api/error-codes";
 import type { ScopeKey } from "@/lib/api/scopes";
+import { getRegistry, routeSlug } from "@/lib/api/specs";
+import { CANONICAL_GAME_IDS } from "@/lib/games/ids";
+import { getSupportedRegions } from "@/lib/games/regions";
+import { getGame } from "@/lib/games/registry";
 
 type CalloutType = "info" | "warning" | "danger" | "success";
 
@@ -61,6 +67,48 @@ function Callout({
   );
 }
 
+function InlineCode(props: ComponentProps<"code">) {
+  return (
+    <code
+      {...props}
+      className="rounded-sm bg-muted px-2 py-0.5 font-mono text-[0.9em] before:content-none after:content-none"
+    />
+  );
+}
+
+function RouteErrorCodes() {
+  return getRegistry()
+    .filter((route) => !route.internal && route.errors?.length)
+    .map((route) => (
+      <Fragment key={routeSlug(route)}>
+        <h3>
+          <Link href={`/developer/reference/${routeSlug(route)}`}>
+            {route.method} {route.path}
+          </Link>
+        </h3>
+        <ErrorTable errors={route.errors ?? []} />
+      </Fragment>
+    ));
+}
+
+function GameRegions() {
+  return (
+    <ul>
+      {CANONICAL_GAME_IDS.map((game) => (
+        <li key={game}>
+          {getGame(game).brand.displayName}:{" "}
+          {getSupportedRegions(game).map((region, index) => (
+            <Fragment key={region}>
+              {index > 0 ? ", " : null}
+              <InlineCode>{region}</InlineCode>
+            </Fragment>
+          ))}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 /**
  * Components made available to MDX guides. Authors can write
  * `<ScopeBadge scope="recent:read" />` inline and we wire it here.
@@ -94,15 +142,11 @@ export const mdxComponents = {
     if (hasLanguageClass || hasNewline) {
       return <code {...props} className={className}>{children}</code>;
     }
-    return (
-      <code
-        {...props}
-        className="rounded-sm bg-muted px-2 py-0.5 font-mono text-[0.9em] before:content-none after:content-none"
-      >
-        {children}
-      </code>
-    );
+    return <InlineCode {...props}>{children}</InlineCode>;
   },
   ScopeBadge: ({ scope }: { scope: ScopeKey | "public" }) => <ScopeBadge scope={scope} />,
   Callout,
+  ErrorCodes: () => <ErrorTable errors={API_ERROR_CODES} />,
+  RouteErrorCodes,
+  GameRegions,
 } as const;

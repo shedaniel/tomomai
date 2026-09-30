@@ -1,6 +1,5 @@
 import { z } from "zod";
-import { GAME_ERROR_STATUS } from "@/lib/games/errors";
-import { INVALID_PARAMETER } from "./parse-input";
+import { API_ERROR_CODES } from "./error-codes";
 import { API_SCOPES, isInternalScope, type ScopeKey } from "./scopes";
 import { getRegistry, isGameRoute, requiredScopes, routesByScope, type RouteSpec } from "./registry";
 import { errorResponse } from "./schemas";
@@ -138,8 +137,8 @@ function buildOperation(route: RouteSpec) {
     responses["403"] = errorRef("Invalid or expired token, or missing required scope");
   }
   if (isGameRoute(route)) {
-    responses["400"] = errorRef(`Invalid game, region, path, or query parameter (${[INVALID_PARAMETER, ...gameErrorCodes(400)].join(" or ")})`);
-    responses["422"] = errorRef(`Game or capability unavailable (${gameErrorCodes(422).join(" or ")})`);
+    responses["400"] = errorRef(`Invalid game, region, path, or query parameter (${apiErrorCodes(400).join(" or ")})`);
+    responses["422"] = errorRef(`Game or capability unavailable (${apiErrorCodes(422).join(" or ")})`);
     if (redirect) {
       responses["302"] = { description: "Redirect to this game's published catalog object", headers: { Location: { schema: { type: "string", format: "uri" } } } };
     }
@@ -159,8 +158,8 @@ function buildOperation(route: RouteSpec) {
   return operation;
 }
 
-function gameErrorCodes(status: number): string[] {
-  return Object.entries(GAME_ERROR_STATUS).filter(([, mapping]) => mapping.http === status).map(([code]) => code);
+function apiErrorCodes(status: number): string[] {
+  return API_ERROR_CODES.filter(error => error.status === status).map(error => error.code);
 }
 
 function describeScope(scope: ScopeKey, routes: string[] = []): string {

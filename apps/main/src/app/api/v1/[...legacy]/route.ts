@@ -1,4 +1,5 @@
 import type { NextRequest } from "next/server";
+import { MOVED } from "@/lib/api/error-codes";
 import type { CanonicalGameId } from "@/lib/games/ids";
 
 const API_ROOT = "/api/v1";
@@ -13,7 +14,7 @@ async function answer(req: NextRequest, { params }: LegacyContext): Promise<Resp
   const { legacy } = await params;
   if (!MOVED_ROOTS.has(legacy[0])) return Response.json({ error: "Not found" }, { status: 404 });
   const location = `${API_ROOT}/games/${LEGACY_GAME}${req.nextUrl.pathname.slice(API_ROOT.length)}${req.nextUrl.search}`;
-  return Response.json({ error: `This endpoint moved to ${location}`, code: "MOVED", location }, { status: 410 });
+  return Response.json({ error: `This endpoint moved to ${location}`, code: MOVED, location }, { status: 410 });
 }
 
 export const GET = answer;
