@@ -34,7 +34,6 @@ export const GAME_CAPABILITIES = [
   "assistant",
   "minigames",
   "community-banner",
-  "reserved-accounts",
 ] as const;
 export type GameCapability = (typeof GAME_CAPABILITIES)[number];
 

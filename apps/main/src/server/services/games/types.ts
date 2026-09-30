@@ -119,6 +119,7 @@ export type StoredRecentPlay = {
 export interface GameServerModule<G extends CanonicalGameId = CanonicalGameId> {
   catalog: CatalogSource;
   scores: ScoreSource;
+  /** The game's demo profiles. Having a provider is what turns reserved accounts on. */
   reserved?: ReservedProfileProvider;
   /** Reads what only this game records about each of a page of recent plays, in the same order. */
   recentDetails: (plays: readonly StoredRecentPlay[]) => Promise<RecentPlayDetails<G>[]>;

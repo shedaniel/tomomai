@@ -74,7 +74,6 @@ export const maimaiDefinition = {
     "assistant",
     "minigames",
     "community-banner",
-    "reserved-accounts",
   ],
   regionCapabilityOverrides: { cn: ["albums"] },
   versions: maimaiVersionTable,
