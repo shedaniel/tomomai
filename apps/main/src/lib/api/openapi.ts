@@ -94,30 +94,7 @@ function buildOperation(route: RouteSpec) {
     ];
   }
 
-  // Parameters
-  const parameters: unknown[] = [];
-  if (route.params) {
-    for (const [name, schema] of paramEntries(route.params)) {
-      parameters.push({
-        name,
-        in: "path",
-        required: true,
-        description: extractDescription(schema),
-        schema: safeJsonSchema(schema),
-      });
-    }
-  }
-  if (route.query) {
-    for (const [name, schema] of paramEntries(route.query)) {
-      parameters.push({
-        name,
-        in: "query",
-        required: !isOptional(schema),
-        description: extractDescription(schema),
-        schema: safeJsonSchema(schema),
-      });
-    }
-  }
+  const parameters = [...parameterDocs(route.params, "path"), ...parameterDocs(route.query, "query")];
   if (parameters.length) operation.parameters = parameters;
 
   // Responses
@@ -182,19 +159,26 @@ function errorRef(description: string) {
   };
 }
 
-function paramEntries(schema: z.ZodObject): [string, z.ZodTypeAny][] {
-  return Object.entries(schema.shape);
+export type ParameterDoc = {
+  name: string;
+  in: "path" | "query";
+  required: boolean;
+  description: string | undefined;
+  schema: Record<string, unknown>;
+};
+
+/** A route's path or query parameters as OpenAPI parameter objects. The reference pages render the same objects. */
+export function parameterDocs(schema: z.ZodObject | undefined, location: ParameterDoc["in"]): ParameterDoc[] {
+  return Object.entries(schema?.shape ?? {}).map(([name, param]) => ({
+    name,
+    in: location,
+    required: location === "path" || !param.safeParse(undefined).success,
+    description: param.description,
+    schema: safeJsonSchema(param),
+  }));
 }
 
-function isOptional(schema: z.ZodTypeAny): boolean {
-  return schema.safeParse(undefined).success;
-}
-
-function extractDescription(schema: z.ZodTypeAny): string | undefined {
-  return (schema as unknown as { description?: string }).description;
-}
-
-function safeJsonSchema(schema: z.ZodTypeAny): unknown {
+function safeJsonSchema(schema: z.ZodType): Record<string, unknown> {
   try {
     return z.toJSONSchema(schema, { target: "draft-2020-12" });
   } catch {
