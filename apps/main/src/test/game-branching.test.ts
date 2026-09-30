@@ -16,9 +16,11 @@ const GAME_FOLDERS = CANONICAL_GAME_IDS.flatMap(game => [
 const GAME = `["'](?:${CANONICAL_GAME_IDS.join("|")})["']`;
 const BRANCH = new RegExp(`[!=]==\\s*${GAME}|${GAME}\\s*[!=]==|case\\s+${GAME}\\s*:`, "g");
 
-// Shared hosts gate these features by capability but render the owner's component or call its trpc router,
-// so a second game would get the owner's UI. Give the host a GAME_UI slot before another game declares one.
+// Shared hosts gate these features by capability but render the owner's component, call its trpc router or
+// call its server service, so a second game would get the owner's behaviour. Give the host a GAME_UI slot or
+// a per-game server hook before another game declares one.
 const SINGLE_GAME_FEATURES = {
+  plates: "maimai",
   "rating-plate": "maimai",
   assistant: "maimai",
   minigames: "maimai",
@@ -58,13 +60,13 @@ describe("game branching", () => {
     expect(branches, "Check a capability with supportsGameFeature, read a definition field, or render a GAME_UI slot instead of comparing the game id").toEqual({});
   });
 
-  it("lets only the owning game declare a feature whose shared host renders one game's UI", () => {
+  it("lets only the owning game declare a feature whose shared host serves one game's implementation", () => {
     const features = Object.entries(SINGLE_GAME_FEATURES) as [GameCapability, CanonicalGameId][];
     const declaredBy = Object.fromEntries(features.map(([capability]) => [
       capability,
       CANONICAL_GAME_IDS.filter(game => offersCapability(getGame(game), capability)),
     ]));
-    expect(declaredBy, "Render a GAME_UI slot in the shared host, then drop the feature from SINGLE_GAME_FEATURES")
+    expect(declaredBy, "Render a GAME_UI slot or call a per-game server hook in the shared host, then drop the feature from SINGLE_GAME_FEATURES")
       .toEqual(Object.fromEntries(features.map(([capability, owner]) => [capability, [owner]])));
   });
 

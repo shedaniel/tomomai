@@ -26,12 +26,12 @@ it.each([
   ["shin", ["fc", "unplayed", "fdx"]],
   ["maimai", ["fc", "ap", "unplayed"]],
 ] as const)("lists the charts still missing the %s plate", async (plateType, missing) => {
-  const songs = await fetchPlateSongs("maimai", snapshot, "jp", { version: "12", difficulty: "master", plateType });
+  const songs = await fetchPlateSongs(snapshot, "jp", { version: "12", difficulty: "master", plateType });
   expect(songs.map(song => song.songId)).toEqual(missing);
 });
 
 it("returns score codes and reads an unplayed chart as zeros", async () => {
-  const songs = await fetchPlateSongs("maimai", snapshot, "jp", { version: "12", difficulty: "master", plateType: "kiwami" });
+  const songs = await fetchPlateSongs(snapshot, "jp", { version: "12", difficulty: "master", plateType: "kiwami" });
   expect(songs[0]).toEqual({
     songId: "unplayed", songName: "unplayed", artist: "Artist", cover: "cover", difficultyCode: 3, typeCode: 1, levelPrecise: 130,
     scoreValue: 0, secondaryScore: 0, comboStatus: 0, syncStatus: 0, clearStatus: 0,
@@ -43,11 +43,11 @@ it("returns score codes and reads an unplayed chart as zeros", async () => {
 const kiwami = { version: "12", difficulty: "master", plateType: "kiwami" } as const;
 
 it("evaluates the plate against the user's newest snapshot in the region", async () => {
-  expect((await fetchLatestPlateSongs("maimai", "owner", "jp", kiwami)).map(song => song.songId)).toEqual(["unplayed", "fdx"]);
+  expect((await fetchLatestPlateSongs("owner", "jp", kiwami)).map(song => song.songId)).toEqual(["unplayed", "fdx"]);
   expect(proxy.queries[1].params).toEqual(expect.arrayContaining([41, 13]));
 });
 
 it("lists nothing for a user without a snapshot", async () => {
-  expect(await fetchLatestPlateSongs("maimai", "stranger", "jp", kiwami)).toEqual([]);
+  expect(await fetchLatestPlateSongs("stranger", "jp", kiwami)).toEqual([]);
   expect(proxy.queries).toHaveLength(1);
 });

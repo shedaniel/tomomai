@@ -7,13 +7,13 @@ export const platesRouter = router({
   getPlateSongs: maimaiRegionProcedure(protectedProcedure, "plates")
     .input(plateSelection)
     .query(({ ctx, input }) => {
-      return fetchLatestPlateSongs(ctx.game, ctx.session.user.id, ctx.region, input);
+      return fetchLatestPlateSongs(ctx.session.user.id, ctx.region, input);
     }),
 
   getPublicPlateSongs: maimaiPublicSnapshotProcedure(publicProcedure, "plates", "plates")
     .input(plateSelection)
     .query(({ ctx, input }) => {
       const { snapshotInternalId, gameVersion } = ctx.snapshot;
-      return fetchPlateSongs(ctx.game, { id: snapshotInternalId, gameVersion }, ctx.region, input);
+      return fetchPlateSongs({ id: snapshotInternalId, gameVersion }, ctx.region, input);
     }),
 });

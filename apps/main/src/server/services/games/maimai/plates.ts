@@ -5,7 +5,6 @@ import { db } from "@/lib/db";
 import { parentSong, scoreData, snapshotScores, songs, userSnapshots } from "@/lib/db/schema-pg";
 import { and, eq } from "drizzle-orm";
 import type { Region } from "@/lib/types";
-import type { CanonicalGameId } from "@/lib/games/types";
 import { meetsMaimaiPlate, type MaimaiPlateDifficulty, type MaimaiPlateType } from "@/lib/games/maimai/plates";
 import { latestSnapshot } from "@/server/queries/latest-snapshot";
 
@@ -17,7 +16,6 @@ export type PlateQuery = {
 
 /** The charts of one version and difficulty that the snapshot has not yet cleared for the plate. Unplayed charts read as zero scores. */
 export async function fetchPlateSongs(
-  game: CanonicalGameId,
   snapshot: { id: number; gameVersion: number },
   region: Region,
   { version, difficulty, plateType }: PlateQuery,
@@ -55,7 +53,7 @@ export async function fetchPlateSongs(
     .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
     .leftJoin(snapshotScoresSub, eq(snapshotScoresSub.songId, songs.id))
     .where(and(
-      eq(songs.game, game),
+      eq(songs.game, "maimai"),
       eq(songs.region, region),
       eq(songs.gameVersion, snapshot.gameVersion),
       eq(songs.addedVersion, parseInt(version)),
@@ -75,7 +73,7 @@ export async function fetchPlateSongs(
 }
 
 /** fetchPlateSongs against the user's latest snapshot in the region, or nothing when they have none. */
-export async function fetchLatestPlateSongs(game: CanonicalGameId, userId: string, region: Region, query: PlateQuery) {
-  const snapshot = await latestSnapshot(game, userId, region, { id: userSnapshots.id, gameVersion: userSnapshots.gameVersion });
-  return snapshot ? fetchPlateSongs(game, snapshot, region, query) : [];
+export async function fetchLatestPlateSongs(userId: string, region: Region, query: PlateQuery) {
+  const snapshot = await latestSnapshot("maimai", userId, region, { id: userSnapshots.id, gameVersion: userSnapshots.gameVersion });
+  return snapshot ? fetchPlateSongs(snapshot, region, query) : [];
 }
