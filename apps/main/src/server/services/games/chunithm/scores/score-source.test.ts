@@ -17,7 +17,7 @@ vi.mock("@/lib/db", () => ({ db: proxy.db }));
 import { getGame } from "@/lib/games/registry";
 import { createFetchRun } from "@/server/services/games/fetch-run";
 import type { PersistedSnapshotContext } from "@/server/services/games/types";
-import { fetchChunithmScores } from "./pipeline";
+import { fetchChunithmScores } from "./score-source";
 
 const profile = `<div class="player_name_in">Player</div>
   <div class="player_chara"><img src="/character.png"></div>

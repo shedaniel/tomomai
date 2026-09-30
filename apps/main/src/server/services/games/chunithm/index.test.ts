@@ -10,7 +10,7 @@ vi.mock("./catalog/sources/otoge-db", () => {
 });
 
 const scores = vi.hoisted(() => ({ loaded: vi.fn(), fetch: vi.fn() }));
-vi.mock("./scores/pipeline", () => {
+vi.mock("./scores/score-source", () => {
   scores.loaded();
   return { fetchChunithmScores: scores.fetch };
 });
@@ -39,7 +39,7 @@ describe("CHUNITHM catalog source", () => {
 });
 
 describe("CHUNITHM score source", () => {
-  it("loads the player pipeline only when a fetch starts and returns its outcome", async () => {
+  it("loads the score source only when a fetch starts and returns its outcome", async () => {
     const outcome = { result: { scores: [] } } as unknown as ScoreFetchOutcome;
     scores.fetch.mockResolvedValue(outcome);
     const context = { game: "chunithm", region: "jp", gameVersion: 9 } as ScoreFetchContext;

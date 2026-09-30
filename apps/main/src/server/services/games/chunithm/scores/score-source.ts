@@ -33,7 +33,6 @@ export async function fetchChunithmScores(ctx: ScoreFetchContext, run: FetchRun)
       return html;
     }, state);
   }
-  // TODO: Add WORLD'S END when its chart identity and catalog representation are supported.
 
   const plays = await run.stage("recents", async () => {
     const { rows, skipped } = parseRecents(await site.html("record/playlog"), { region, gameVersion });
