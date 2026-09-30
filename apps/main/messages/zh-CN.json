@@ -187,6 +187,9 @@
     "regionUpdateError": "地区更新失败：{error}",
     "tokenUpdateSuccess": "验证方式保存成功！"
   },
+  "game": {
+    "unavailable": "{game} 玩家功能暂未开放。"
+  },
   "settings": {
     "pages": {
       "account": {
@@ -669,6 +672,8 @@
     "switchToListForAllSongs": "切换到列表或表格视图查看所有歌曲",
     "noDataAvailable": "无可用数据",
     "getStartedInstructions": "点击上方的导入按钮来导入你的 {game} 数据。",
+    "fetchUnavailable": "暂不支持获取 {game} 玩家数据。",
+    "noPublicRecords": "{username} 暂无 {game} 记录。",
     "history": {
       "title": "R 值历史记录",
       "ratingOverTime": "R 值变化趋势",

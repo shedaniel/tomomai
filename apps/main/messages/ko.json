@@ -182,6 +182,9 @@
     "languageUpdateError": "언어 업데이트 실패: {error}",
     "tokenUpdateSuccess": "인증 정보가 저장되었습니다!"
   },
+  "game": {
+    "unavailable": "{game} 플레이어 기능은 아직 지원되지 않습니다."
+  },
   "settings": {
     "pages": {
       "account": {
@@ -489,6 +492,8 @@
     "switchToListForAllSongs": "모든 곡을 보려면 목록 또는 테이블 뷰로 전환하세요.",
     "noDataAvailable": "데이터가 없습니다",
     "getStartedInstructions": "상단의 가져오기 버튼을 눌러 {game} 데이터를 불러오세요.",
+    "fetchUnavailable": "{game} 플레이어 데이터 가져오기는 아직 지원되지 않습니다.",
+    "noPublicRecords": "{username} 님의 {game} 기록이 아직 없습니다.",
     "history": {
       "title": "레이팅 변동 기록",
       "ratingOverTime": "레이팅 추이",

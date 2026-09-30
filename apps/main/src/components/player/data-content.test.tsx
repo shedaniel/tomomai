@@ -4,7 +4,7 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { createRoot, type Root } from "react-dom/client";
 import { NextIntlClientProvider } from "next-intl";
 import { GameProvider } from "@/components/providers/game-provider";
-import { toFrontendGame } from "@/lib/games/frontend";
+import { toFrontendGame, type FrontendGame } from "@/lib/games/frontend";
 import { getGame } from "@/lib/games/registry";
 import type { GameSnapshotData } from "@/lib/games/player-view";
 import type { Flags } from "@/lib/flags";
@@ -80,4 +80,27 @@ it("builds the export images from the public snapshot id", async () => {
 it("exports the JSON of the public snapshot id", async () => {
   await renderTab("developer");
   expect(queries.exportSnapshot).toHaveBeenCalledWith({ snapshotId: "public-snapshot" }, { enabled: false });
+});
+
+async function renderEmpty(game: FrontendGame, visitedBySelf: boolean) {
+  await act(async () => root.render(
+    <NextIntlClientProvider locale="en" messages={messages} timeZone="UTC">
+      <GameProvider game={game}>
+        <DataContent region="jp" selectedSnapshotData={null} isLoading={false} visitableProfileAt="alice" profileUsername="alice" visitedBySelf={visitedBySelf} flags={flags} />
+      </GameProvider>
+    </NextIntlClientProvider>,
+  ));
+}
+
+it("tells a visitor that the player has no records instead of showing the owner's fetch steps", async () => {
+  await renderEmpty(toFrontendGame(getGame("chunithm"), ["jp"]), false);
+  expect(container.textContent).toContain("alice has no CHUNITHM records yet.");
+  expect(container.textContent).not.toContain("fetch button");
+});
+
+it("shows the owner how to fetch, or that fetching is not offered", async () => {
+  await renderEmpty(toFrontendGame(getGame("chunithm"), ["jp"]), true);
+  expect(container.textContent).toContain("Get started by fetching your CHUNITHM data using the fetch button above.");
+  await renderEmpty({ ...toFrontendGame(getGame("chunithm"), ["jp"]), capabilities: ["catalog"] }, true);
+  expect(container.textContent).toContain("Player fetching for CHUNITHM is not available yet.");
 });

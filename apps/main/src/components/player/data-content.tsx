@@ -194,13 +194,18 @@ export function DataContent({
     )
   }
 
+  const gameName = game.brand.displayName;
+  const emptyMessage = !visitedBySelf
+    ? t('dataContent.noPublicRecords', { username: effectiveProfileUsername ?? "", game: gameName })
+    : supportsGameFeature(game, "scores")
+      ? t('dataContent.getStartedInstructions', { game: gameName })
+      : t('dataContent.fetchUnavailable', { game: gameName });
+
   return (
     <div className="p-8 text-center w-full h-[calc(100vh-20rem)] flex flex-col items-center justify-center">
       <Database className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
       <h3 className="text-lg font-medium mb-2">{t('dataContent.noDataAvailable')}</h3>
-      <p className="text-muted-foreground">
-        {supportsGameFeature(game, "scores") ? t('dataContent.getStartedInstructions', { game: game.brand.displayName }) : t('settings.pages.fetch.unavailable', { game: game.brand.displayName })}
-      </p>
+      <p className="text-muted-foreground">{emptyMessage}</p>
     </div>
   );
 }

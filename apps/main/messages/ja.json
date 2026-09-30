@@ -187,6 +187,9 @@
     "regionUpdateError": "地域の更新に失敗しました: {error}",
     "tokenUpdateSuccess": "認証情報を保存しました！"
   },
+  "game": {
+    "unavailable": "{game} のプレイヤー機能はまだ利用できません。"
+  },
   "settings": {
     "pages": {
       "account": {
@@ -669,6 +672,8 @@
     "switchToListForAllSongs": "すべての楽曲を見るには、リストまたは表表示に切り替えてください。",
     "noDataAvailable": "データがありません",
     "getStartedInstructions": "上の取得ボタンから{game}データを取得して使い始めましょう。",
+    "fetchUnavailable": "{game} のプレイヤーデータ取得はまだ利用できません。",
+    "noPublicRecords": "{username} さんの {game} の記録はまだありません。",
     "history": {
       "title": "レート値の履歴",
       "ratingOverTime": "レート値の推移",

@@ -187,6 +187,9 @@
     "regionUpdateError": "Failed to update region: {error}",
     "tokenUpdateSuccess": "Token saved successfully!"
   },
+  "game": {
+    "unavailable": "Player features for {game} are not available yet."
+  },
   "settings": {
     "pages": {
       "account": {
@@ -669,6 +672,8 @@
     "switchToListForAllSongs": "Switch to List or Table view for all songs",
     "noDataAvailable": "No Data Available",
     "getStartedInstructions": "Get started by fetching your {game} data using the fetch button above.",
+    "fetchUnavailable": "Player fetching for {game} is not available yet.",
+    "noPublicRecords": "{username} has no {game} records yet.",
     "history": {
       "title": "Rating History",
       "ratingOverTime": "Rating Over Time",

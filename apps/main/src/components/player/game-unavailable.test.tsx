@@ -27,7 +27,7 @@ const flags: Flags = {
 
 function renderUnavailable(game: FrontendGame) {
   return renderToStaticMarkup(
-    <NextIntlClientProvider locale="en" messages={{ db: messages.db, settings: { pages: { fetch: messages.settings.pages.fetch } } }} timeZone="UTC">
+    <NextIntlClientProvider locale="en" messages={{ db: messages.db, game: messages.game }} timeZone="UTC">
       <GameProvider game={game}>
         <Dashboard user={{ id: "test-user" }} initialUserData={{ hasUsername: true, username: "player", email: "", publishProfile: false, region: "intl", role: "user" }} initialSnapshots={[]} flags={flags} latestPost={null} />
       </GameProvider>
@@ -39,7 +39,7 @@ describe("unavailable game dashboard", () => {
   it("does not mount player hooks for a game with no enabled regions", () => {
     const markup = renderUnavailable(toFrontendGame(getGame("chunithm"), []));
     expect(markup).toContain("tomochu ともチュウ");
-    expect(markup).toContain("Player fetching for CHUNITHM is not available yet.");
+    expect(markup).toContain("Player features for CHUNITHM are not available yet.");
     expect(markup).not.toContain("maimai");
     expect(hooks.snapshots).not.toHaveBeenCalled();
     expect(hooks.fetch).not.toHaveBeenCalled();

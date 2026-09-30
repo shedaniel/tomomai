@@ -187,6 +187,9 @@
     "regionUpdateError": "地區更新失敗：{error}",
     "tokenUpdateSuccess": "驗證方式儲存成功！"
   },
+  "game": {
+    "unavailable": "{game} 玩家功能暫未開放。"
+  },
   "settings": {
     "pages": {
       "account": {
@@ -669,6 +672,8 @@
     "switchToListForAllSongs": "切換至清單或表格檢視以查看所有歌曲",
     "noDataAvailable": "無可用資料",
     "getStartedInstructions": "點擊上方的匯入按鈕來匯入你的 {game} 資料。",
+    "fetchUnavailable": "暫不支援取得 {game} 玩家資料。",
+    "noPublicRecords": "{username} 目前沒有 {game} 紀錄。",
     "history": {
       "title": "R 值歷史紀錄",
       "ratingOverTime": "R 值變化趨勢",

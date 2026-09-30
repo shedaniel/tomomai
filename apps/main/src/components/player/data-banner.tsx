@@ -417,7 +417,7 @@ export function DataBanner({
               isFetching={isFetching}
               currentSession={currentSession}
               t={t}
-            /> : <p className="text-sm text-muted-foreground">{t("settings.pages.fetch.unavailable", { game: game.brand.displayName })}</p>}
+            /> : <p className="text-sm text-muted-foreground">{t("dataContent.fetchUnavailable", { game: game.brand.displayName })}</p>}
           </div>
         </div>
 
