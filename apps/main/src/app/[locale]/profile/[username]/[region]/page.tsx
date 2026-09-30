@@ -1,4 +1,5 @@
 import { brandTitle, isGameRegion } from "@/lib/games/frontend";
+import { formatGameRating } from "@/lib/games/presentation";
 import { getCurrentGame } from "@/lib/games/current";
 import { fetchPublicGameProfile } from "@/server/queries/game-profile";
 import { TRPCError } from "@trpc/server";
@@ -45,15 +46,22 @@ export async function generateMetadata({ params }: RegionProfilePageProps): Prom
   try {
     const { snapshotData } = await fetchPublicGameProfile(game.id, username, region);
     const snapshot = snapshotData?.snapshot;
-    if (!snapshot) return { title: tMeta("title", { username, brand: brandTitle(game.brand) }), alternates: await buildAlternates(`/profile/${encodeURIComponent(username)}/${region}`) };
-
     const title = tMeta("title", { username, brand: brandTitle(game.brand) });
+    if (!snapshot) {
+      return {
+        title,
+        description: tMeta("description", { username, game: game.brand.displayName, brandName: game.brand.productName }),
+        alternates: await buildAlternates(`/profile/${encodeURIComponent(username)}/${region}`),
+      };
+    }
+
     const description = tMeta("descriptionRich", {
       game: game.brand.displayName,
-      brand: game.brand.productName,
+      brandName: game.brand.productName,
       username,
       region: tRegions(region),
       displayName: snapshot.displayName,
+      rating: formatGameRating(game.id, snapshot.rating),
     });
 
     const path = `/profile/${encodeURIComponent(username)}/${region}`;
@@ -119,13 +127,16 @@ export default async function RegionProfilePage({ params }: RegionProfilePagePro
       getTranslations("profileMetadata"),
     ]);
 
-    const pageDescription = tMeta("descriptionRich", {
-      game: game.brand.displayName,
-      brand: game.brand.productName,
-      displayName: snapshotData?.snapshot.displayName ?? decodedUsername,
-      username: decodedUsername,
-      region: tNav(region),
-    });
+    const pageDescription = snapshotData
+      ? tMeta("descriptionRich", {
+        game: game.brand.displayName,
+        brandName: game.brand.productName,
+        displayName: snapshotData.snapshot.displayName,
+        username: decodedUsername,
+        region: tNav(region),
+        rating: formatGameRating(game.id, snapshotData.snapshot.rating),
+      })
+      : tMeta("description", { username: decodedUsername, game: game.brand.displayName, brandName: game.brand.productName });
 
     const profileJsonLd = {
       "@context": "https://schema.org",

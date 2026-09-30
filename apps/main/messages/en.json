@@ -603,8 +603,8 @@
   },
   "profileMetadata": {
     "title": "{username} | {brand}",
-    "descriptionRich": "{displayName} ({username}) on {region} {game}. View their scores and progress on {brand}.",
-    "descriptionUnknownRegion": "View {username}’s {game} profile on {brand}.",
+    "descriptionRich": "{displayName} ({username}) on {region} {game} with a rating of {rating}. View their scores and progress on {brandName}.",
+    "description": "View {username}’s {game} profile on {brandName}.",
     "notFoundTitle": "Profile Not Found | {brand}",
     "notFoundDescription": "The profile you're looking for doesn't exist or is not publicly accessible.",
     "errorTitle": "Error | {brand}",
@@ -1169,13 +1169,11 @@
         "title": "Songs Database | {game}",
         "description": "Browse and search all {game} songs. Filter by type, genre, and version. View song details, difficulty levels, and regional availability.",
         "songTitle": "{songName} - {artist} | {game}",
-        "songDescription": "View detailed information about \"{songName}\" by {artist}. {chartType} chart • {genre}",
+        "songDescription": "View detailed information about \"{songName}\" by {artist}. {chartLabel} chart • {genre}",
         "songOgDescription": "View detailed information about \"{songName}\" by {artist}.",
         "songFallbackTitle": "Song Details | {game}",
         "songFallbackDescription": "View detailed information about this {game} song including difficulty levels and regional availability.",
-        "chartTypeDx": "DX",
-        "chartTypeStandard": "Standard",
-        "jsonLdChartDescription": "{chartType} chart from {game}"
+        "jsonLdChartDescription": "{chartLabel} chart"
       },
       "title": "Songs Database | maimai DX",
       "heading": "Songs Database",
@@ -1198,7 +1196,7 @@
         "share": "Share Link",
         "youtube": "YouTube",
         "viewCharts": "View Charts",
-        "summary": "{songName} is a {game} {chartType} chart by {artist} in the {genre} genre, added in {versionName}. Difficulty ranges from {minLevel} to {maxLevel} across {chartCount, plural, =1 {# chart} other {# charts}}{bpmFragment}.",
+        "summary": "{songName} is a {chartLabel} chart by {artist} in the {genre} genre, added in {versionName}. Difficulty ranges from {minLevel} to {maxLevel} across {chartCount, plural, =1 {# chart} other {# charts}}{bpmFragment}.",
         "summaryBpmFragment": " (BPM {bpm})",
         "loadFailed": "Failed to load song details",
         "score": "Score"

@@ -1,6 +1,4 @@
 import { brandTitle } from "@/lib/games/frontend";
-import { codeOf } from "@/lib/games/codes";
-import { getGameChartType } from "@/lib/games/presentation";
 import { getCurrentGame } from "@/lib/games/current";
 import { InlineNotFound } from "@/components/inline-not-found";
 import { getAllUniqueSongsCached } from "@/server/queries/songs-cache";
@@ -57,17 +55,17 @@ export async function generateMetadata({ params }: DbSlugPageProps): Promise<Met
     };
   }
 
-  const [t, locale] = await Promise.all([
+  const [t, tSongs, locale] = await Promise.all([
     getTranslations("db.songs.metadata"),
+    getTranslations("db.songs"),
     getLocale(),
   ]);
 
-  const chartType = getGameChartType(game.id, codeOf(game.id, "chartType", song.type)).label;
   const title = t("songTitle", { game: game.brand.displayName, songName: song.songName, artist: song.artist });
   const description = t("songDescription", {
     songName: song.songName,
     artist: song.artist,
-    chartType,
+    chartLabel: tSongs("chartLabel", { type: song.type }),
     genre: song.genre,
   });
   const ogDescription = t("songOgDescription", {
@@ -122,8 +120,8 @@ export default async function DbSlugPage({ params }: DbSlugPageProps) {
     return <InlineNotFound />;
   }
 
-  const [tMeta, tNav] = await Promise.all([
-    getTranslations("db.songs.metadata"),
+  const [tSongs, tNav] = await Promise.all([
+    getTranslations("db.songs"),
     getTranslations("db.types"),
   ]);
   const baseUrl = resolveBaseUrl();
@@ -140,10 +138,7 @@ export default async function DbSlugPage({ params }: DbSlugPageProps) {
     genre: song.genre,
     image: song.cover,
     url: `${baseUrl}${localizePath(`/db/songs/${encodeURIComponent(decodedSlug)}`, locale)}`,
-    description: tMeta("jsonLdChartDescription", {
-      game: game.brand.displayName,
-      chartType: getGameChartType(game.id, codeOf(game.id, "chartType", song.type)).label,
-    }),
+    description: tSongs("metadata.jsonLdChartDescription", { chartLabel: tSongs("chartLabel", { type: song.type }) }),
   };
 
   const breadcrumb = breadcrumbJsonLd([

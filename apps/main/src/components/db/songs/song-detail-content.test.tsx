@@ -4,7 +4,8 @@ import { NextIntlClientProvider } from "next-intl";
 import { GameProvider } from "@/components/providers/game-provider";
 import { toFrontendGame } from "@/lib/games/frontend";
 import { getGame } from "@/lib/games/registry";
-import messages from "../../../../messages/en.json";
+import type { CanonicalGameId } from "@/lib/games/ids";
+import { loadMessages } from "@/i18n/messages";
 import { SongDetailContent } from "./song-detail-content";
 import type { SongDetails } from "./types";
 
@@ -26,17 +27,29 @@ const song: SongDetails = {
   regions: [{ region: "jp", versions: [{ gameVersion: 20, charts: [chart] }] }],
 };
 
+async function render(game: CanonicalGameId, type: string) {
+  return renderToStaticMarkup(
+    <NextIntlClientProvider locale="en" messages={await loadMessages(game, "en")} timeZone="UTC">
+      <GameProvider game={toFrontendGame(getGame(game), ["jp"])}>
+        <SongDetailContent songName="Song" slug="song" type={type} initialData={{ ...song, type }} />
+      </GameProvider>
+    </NextIntlClientProvider>,
+  );
+}
+
 describe("song detail", () => {
-  it("fills the availability chips and colours the maimai status badges", () => {
-    const html = renderToStaticMarkup(
-      <NextIntlClientProvider locale="en" messages={messages} timeZone="UTC">
-        <GameProvider game={toFrontendGame(getGame("maimai"), ["jp"])}>
-          <SongDetailContent songName="Song" slug="song" type="dx" initialData={song} />
-        </GameProvider>
-      </NextIntlClientProvider>,
-    );
+  it("fills the availability chips and colours the maimai status badges", async () => {
+    const html = await render("maimai", "dx");
     expect(html).toMatch(/<div class="[^"]*text-white bg-violet-500">MASTER 14\.7<\/div>/);
     expect(html).toMatch(/<span class="[^"]*bg-gradient-to-r[^"]*">AP\+<\/span>/);
     expect(html).toMatch(/<span class="[^"]*bg-gradient-to-r[^"]*">FDX\+<\/span>/);
+  });
+
+  it("names the chart in the summary once per game", async () => {
+    expect(await render("maimai", "dx")).toContain("Song is a maimai でらっくす DX chart by Artist in the POPS genre");
+    expect(await render("maimai", "std")).toContain("Song is a maimai でらっくす Standard chart by Artist");
+    const chunithm = await render("chunithm", "standard");
+    expect(chunithm).toContain("Song is a CHUNITHM chart by Artist in the POPS genre");
+    expect(chunithm).not.toContain("CHUNITHM  chart");
   });
 });

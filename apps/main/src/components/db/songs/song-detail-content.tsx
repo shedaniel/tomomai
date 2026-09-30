@@ -7,7 +7,7 @@ import {
 } from "@tomomai/ui";
 import { useGame, usePresentation } from "@/components/providers/game-provider";
 import { codeOf } from "@/lib/games/codes";
-import { formatEstimated, formatGameScore, formatGameRating, getGameDifficulty, getGameChartType, getGameScoreGrade, getGameStatusBadges } from "@/lib/games/presentation";
+import { formatEstimated, formatGameScore, formatGameRating, getGameDifficulty, getGameScoreGrade, getGameStatusBadges } from "@/lib/games/presentation";
 import { isGameCnExclusive, supportsGameFeature } from "@/lib/games/frontend";
 import { getGame } from "@/lib/games/registry";
 import { getVersion } from "@/lib/games/versions";
@@ -301,14 +301,13 @@ export function SongDetailContent({ songName, artist, slug, type, parentIds, ini
     const minLevel = Math.min(...levels);
     const maxLevel = Math.max(...levels);
     const fmtLevel = (l: number) => (l % 10 === 0 ? String(Math.floor(l / 10)) : (l / 10).toFixed(1));
-    const chartType = getGameChartType(game.id, codeOf(game.id, "chartType", data.type));
     return {
       minLevel: fmtLevel(minLevel),
       maxLevel: fmtLevel(maxLevel),
       chartCount: chartsByDifficulty.size,
       bpmFragment: data.bpm ? t('db.songs.detail.summaryBpmFragment', { bpm: data.bpm }) : '',
       versionName: getVersion(game.id, data.addedVersion)?.name ?? `Ver. ${data.addedVersion}`,
-      chartType: chartType.implicit ? "" : chartType.label,
+      chartLabel: t('db.songs.chartLabel', { type: data.type }),
     };
   }, [data, allCharts, chartsByDifficulty, t, game]);
 
@@ -368,11 +367,10 @@ export function SongDetailContent({ songName, artist, slug, type, parentIds, ini
       {summary && (
         <p className="text-sm text-muted-foreground leading-relaxed">
           {t('db.songs.detail.summary', {
-            game: game.brand.displayName,
             songName: data.songName,
             artist: data.artist,
             genre: data.genre,
-            chartType: summary.chartType,
+            chartLabel: summary.chartLabel,
             versionName: summary.versionName,
             minLevel: summary.minLevel,
             maxLevel: summary.maxLevel,

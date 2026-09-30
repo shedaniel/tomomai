@@ -11,6 +11,7 @@
       "description": "tomomai ともマイ DB 是一个公开的 maimai 谱面、机厅及更多maimai信息的数据库"
     },
     "songs": {
+      "chartLabel": "maimai でらっくす {type, select, dx {DX} other {标准}}",
       "detail": {
         "viewDetails": "在 tomomai DB 查看详情"
       }

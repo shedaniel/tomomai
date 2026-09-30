@@ -11,6 +11,7 @@
       "description": "tomochu ともチュウ DB is a public database of CHUNITHM charts."
     },
     "songs": {
+      "chartLabel": "CHUNITHM",
       "detail": {
         "viewDetails": "View Details on tomochu DB"
       }

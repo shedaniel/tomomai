@@ -1,6 +1,8 @@
 import { readFileSync } from "node:fs";
+import { createTranslator } from "next-intl";
 import { describe, expect, it } from "vitest";
 import { locales } from "@/i18n/locale";
+import { GAME_CODES } from "@/lib/games/codes";
 import { CANONICAL_GAME_IDS, type CanonicalGameId } from "@/lib/games/ids";
 import { getGame } from "@/lib/games/registry";
 import { loadMessages } from "./messages";
@@ -68,6 +70,16 @@ describe("per-game messages", () => {
       for (const locale of locales) {
         expect(keys(readMessages(`games/${game}/${locale}`)).filter(key => !english.has(key)), `${game} ${locale}`).toEqual([]);
       }
+    }
+  });
+
+  it.each(locales)("names each shown chart type of a game apart in %s", async locale => {
+    for (const game of CANONICAL_GAME_IDS) {
+      // Merged messages are untyped, so the translator is too.
+      const t = createTranslator({ locale, messages: await loadMessages(game, locale), onError(error) { throw error; } }) as unknown as (key: string, values: Record<string, string>) => string;
+      const chartTypes: Partial<Record<string, { implicit?: true }>> = getGame(game).presentation.chartTypes;
+      const labels = GAME_CODES[game].chartType.filter(type => !chartTypes[type]?.implicit).map(type => t("db.songs.chartLabel", { type }));
+      expect(new Set(labels).size, game).toBe(labels.length);
     }
   });
 

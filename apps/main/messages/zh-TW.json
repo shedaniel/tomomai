@@ -603,8 +603,8 @@
   },
   "profileMetadata": {
     "title": "{username} | {brand}",
-    "descriptionRich": "{region} 的 {game} 玩家 {displayName}（{username}）。在 {brand} 查看成績和進步。",
-    "descriptionUnknownRegion": "在 {brand} 查看 {username} 的 {game} 個人資料。",
+    "descriptionRich": "{region} 的 {game} 玩家 {displayName}（{username}），Rating {rating}。在 {brandName} 查看成績和進步。",
+    "description": "在 {brandName} 查看 {username} 的 {game} 個人資料。",
     "notFoundTitle": "找不到個人主頁 | {brand}",
     "notFoundDescription": "你尋找的個人主頁不存在或尚未公開。",
     "errorTitle": "錯誤 | {brand}",
@@ -1133,13 +1133,11 @@
         "title": "歌曲資料庫 | {game}",
         "description": "瀏覽和搜尋所有 {game} 歌曲。依類型、分類和版本篩選。查看歌曲詳情、難度等級和區域開放情形。",
         "songTitle": "{songName} - {artist} | {game}",
-        "songDescription": "查看《{songName}》（{artist}）的詳細資訊。{chartType} 譜面 · {genre}",
+        "songDescription": "查看《{songName}》（{artist}）的詳細資訊。{chartLabel} 譜面 · {genre}",
         "songOgDescription": "查看《{songName}》（{artist}）的詳細資訊。",
         "songFallbackTitle": "歌曲詳情 | {game}",
         "songFallbackDescription": "查看此 {game} 歌曲的詳細資訊，包括難度等級與地區可用性。",
-        "chartTypeDx": "DX",
-        "chartTypeStandard": "標準",
-        "jsonLdChartDescription": "來自 {game} 的 {chartType} 譜面"
+        "jsonLdChartDescription": "{chartLabel} 譜面"
       },
       "title": "歌曲資料庫 | maimai DX",
       "heading": "歌曲資料庫",
@@ -1162,7 +1160,7 @@
         "share": "分享",
         "youtube": "YouTube 搜尋",
         "viewCharts": "查看譜面",
-        "summary": "{songName} 是由 {artist} 製作的 {game} {chartType} 譜面，屬於 {genre} 類型，於 {versionName} 收錄。難度範圍為 {minLevel} 至 {maxLevel}，共 {chartCount, plural, =1 {# 張譜面} other {# 張譜面}}{bpmFragment}。",
+        "summary": "{songName} 是由 {artist} 製作的 {chartLabel} 譜面，屬於 {genre} 類型，於 {versionName} 收錄。難度範圍為 {minLevel} 至 {maxLevel}，共 {chartCount, plural, =1 {# 張譜面} other {# 張譜面}}{bpmFragment}。",
         "summaryBpmFragment": "（BPM {bpm}）",
         "loadFailed": "載入歌曲詳情失敗",
         "score": "分數"

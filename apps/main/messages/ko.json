@@ -1157,8 +1157,8 @@
   },
   "profileMetadata": {
     "title": "{username} | {brand}",
-    "descriptionRich": "{region} {game} 플레이어 {displayName} ({username}). {brand}에서 점수와 성장을 확인하세요.",
-    "descriptionUnknownRegion": "{brand}에서 {username}의 {game} 프로필을 확인하세요."
+    "descriptionRich": "{region} {game} 플레이어 {displayName} ({username}), 레이팅 {rating}. {brandName}에서 점수와 성장을 확인하세요.",
+    "description": "{brandName}에서 {username}의 {game} 프로필을 확인하세요."
   },
   "landing": {
     "headline": "maimai DX 스코어를 기록하세요",

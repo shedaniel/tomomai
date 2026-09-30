@@ -53,6 +53,7 @@ describe("parameterized page metadata", () => {
   it("formats empty profile metadata with the same branded title", async () => {
     const metadata = await generateMetadata({ params });
     expect(metadata.title).toBe("player | tomomai ともマイ");
+    expect(metadata.description).toBe("tomomai で player の maimai DX プロフィールを表示。");
   });
 
   it("formats the public profile JSON-LD with all required variables", async () => {
@@ -69,7 +70,17 @@ describe("parameterized page metadata", () => {
     expect(metadata.title).toContain("tomochu ともチュウ");
     expect(metadata.description).toContain("CHUNITHM");
     expect(metadata.description).toContain("CHU Player");
+    expect(metadata.description).toContain("Rating 16.50");
     expect(metadata.openGraph).not.toHaveProperty("images");
+  });
+
+  it("describes a maimai profile with its rating in the metadata and the JSON-LD", async () => {
+    fetchProfile.mockResolvedValue({ profile: { id: "user" }, snapshotData: { snapshot: { displayName: "MAI Player", rating: 15432, game: "maimai" }, songs: [] } });
+    const expected = "インターナショナル の maimai DX プレイヤー MAI Player（player）、Rating 15432。tomomai でスコアと成長をチェック。";
+    expect((await generateMetadata({ params })).description).toBe(expected);
+    const page = await RegionProfilePage({ params });
+    const script = page.props.children.find((child: { type?: string; props?: { type?: string } }) => child?.type === "script" && child.props?.type === "application/ld+json");
+    expect(JSON.parse(script.props.dangerouslySetInnerHTML.__html).description).toBe(expected);
   });
 
   it("formats the home Open Graph description with the selected game", async () => {

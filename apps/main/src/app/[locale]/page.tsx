@@ -23,7 +23,7 @@ export async function generateMetadata(): Promise<Metadata> {
     getLocale(),
   ]);
   const game = getCurrentGame();
-  const title = brandTitle(game.brand);
+  const title = t("title");
   const description = t("description", { game: game.brand.displayName });
   return {
     title,
@@ -33,7 +33,7 @@ export async function generateMetadata(): Promise<Metadata> {
       title,
       description,
       url: localizePath("/", locale),
-      siteName: brandTitle(getCurrentGame().brand),
+      siteName: brandTitle(game.brand),
       type: "website",
       ...openGraphLocales(locale),
     },

@@ -603,8 +603,8 @@
   },
   "profileMetadata": {
     "title": "{username} | {brand}",
-    "descriptionRich": "{region} の {game} プレイヤー {displayName}（{username}）。{brand} でスコアと成長をチェック。",
-    "descriptionUnknownRegion": "{brand} で {username} の {game} プロフィールを表示。",
+    "descriptionRich": "{region} の {game} プレイヤー {displayName}（{username}）、Rating {rating}。{brandName} でスコアと成長をチェック。",
+    "description": "{brandName} で {username} の {game} プロフィールを表示。",
     "notFoundTitle": "プロフィールが見つかりません | {brand}",
     "notFoundDescription": "お探しのプロフィールは存在しないか、公開されていません。",
     "errorTitle": "エラー | {brand}",
@@ -1133,13 +1133,11 @@
         "title": "楽曲データベース | {game}",
         "description": "{game}の楽曲を検索・閲覧できます。タイプ、ジャンル、バージョンでフィルタリング可能。楽曲詳細、難易度、収録地域も確認できます。",
         "songTitle": "{songName} - {artist} | {game}",
-        "songDescription": "{artist} の「{songName}」の詳細情報を表示します。{chartType} 譜面 • {genre}",
+        "songDescription": "{artist} の「{songName}」の詳細情報を表示します。{chartLabel} 譜面 • {genre}",
         "songOgDescription": "{artist} の「{songName}」の詳細情報を表示します。",
         "songFallbackTitle": "楽曲詳細 | {game}",
         "songFallbackDescription": "この {game} 楽曲の詳細情報（難易度や収録地域など）を表示します。",
-        "chartTypeDx": "DX",
-        "chartTypeStandard": "スタンダード",
-        "jsonLdChartDescription": "{game} の {chartType} 譜面"
+        "jsonLdChartDescription": "{chartLabel} 譜面"
       },
       "title": "楽曲データベース | maimai でらっくす",
       "heading": "楽曲データベース",
@@ -1162,7 +1160,7 @@
         "share": "共有",
         "youtube": "YouTubeで検索",
         "viewCharts": "譜面を見る",
-        "summary": "{songName} は {versionName} で追加された、{artist} による {genre} ジャンルの {game} {chartType} 譜面です。難易度は {chartCount, plural, =1 {# 譜面} other {# 譜面}} にわたり、{minLevel} から {maxLevel} までの範囲です{bpmFragment}。",
+        "summary": "{songName} は {versionName} で追加された、{artist} による {genre} ジャンルの {chartLabel} 譜面です。難易度は {chartCount, plural, =1 {# 譜面} other {# 譜面}} にわたり、{minLevel} から {maxLevel} までの範囲です{bpmFragment}。",
         "summaryBpmFragment": "（BPM {bpm}）",
         "loadFailed": "楽曲詳細の読み込みに失敗しました",
         "score": "スコア"
