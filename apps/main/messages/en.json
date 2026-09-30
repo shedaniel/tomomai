@@ -264,7 +264,7 @@
       "publishDescription": "Make your {game} profile publicly accessible for others to view your scores and progress.",
       "mainRegion": {
         "label": "Main Region",
-        "description": "Choose your primary region for the published profile.",
+        "description": "Choose the primary region of your published {game} profile.",
         "intl": "International",
         "jp": "Japan",
         "cn": "China"

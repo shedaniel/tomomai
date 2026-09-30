@@ -264,7 +264,7 @@
       "publishDescription": "公开你的 {game} 主页，让他人可以查看你的分数和进度。",
       "mainRegion": {
         "label": "主要地区",
-        "description": "选择用于公开主页的主要地区。",
+        "description": "选择用于公开 {game} 主页的主要地区。",
         "intl": "国际服",
         "jp": "日本服",
         "cn": "国服"

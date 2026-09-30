@@ -264,7 +264,7 @@
       "publishDescription": "公開你的 {game} 個人檔案，讓其他玩家可以查看你的分數和進度。",
       "mainRegion": {
         "label": "主要地區",
-        "description": "選擇用於公開個人檔案的主要地區。",
+        "description": "選擇用於公開 {game} 個人檔案的主要地區。",
         "intl": "國際區",
         "jp": "日本區",
         "cn": "內地區"

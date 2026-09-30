@@ -254,7 +254,7 @@
       "publishDescription": "다른 플레이어가 내 성과와 진행 상황을 볼 수 있도록 프로필을 공개합니다.",
       "mainRegion": {
         "label": "메인 지역",
-        "description": "공개 프로필에 표시할 주 지역을 선택하세요.",
+        "description": "공개 {game} 프로필에 표시할 주 지역을 선택하세요.",
         "intl": "인터내셔널",
         "jp": "일본",
         "cn": "중국"

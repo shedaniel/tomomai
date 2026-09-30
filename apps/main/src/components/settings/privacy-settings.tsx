@@ -150,7 +150,7 @@ function PrivacyFields() {
           {game.regions.length > 1 && (
             <SettingsField
               label={t("settings.profile.mainRegion.label")}
-              description={t("settings.profile.mainRegion.description")}
+              description={t("settings.profile.mainRegion.description", { game: game.brand.displayName })}
               htmlFor="main-region"
             >
               <Select
