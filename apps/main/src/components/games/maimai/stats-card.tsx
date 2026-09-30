@@ -22,7 +22,10 @@ import { useMediaQuery } from "@/hooks/use-media-query";
 import { SongGridCard } from "@/components/player/songs/score-grid-card";
 import { AutoHeight } from "@/components/animate-ui/primitives/effects/auto-height";
 import { cn } from "@/lib/utils";
-import type { StatsBucket, StatsResult } from "@/server/queries/stats";
+import type { RouterOutputs } from "@/lib/trpc-types";
+
+type StatsResult = RouterOutputs["user"]["getPlayerStats"];
+type StatsBucket = StatsResult["stats"][string][string];
 
 interface StatsCardProps {
   region: Region;
