@@ -55,8 +55,10 @@ describe("game codes", () => {
       assert.throws(() => definedKeyOf("maimai", "difficulty", code), { message: `Unknown maimai difficulty code: ${code}` });
     }
     assert.equal(isCodeKey("maimai", "chartType", "standard"), false);
-    const maimaiKey: string = "ap";
-    assert.throws(() => codeOf("chunithm", "comboStatus", maimaiKey), { message: "Unknown chunithm combo status: ap" });
+    // @ts-expect-error A literal key the game does not define fails typecheck.
+    assert.throws(() => codeOf("chunithm", "comboStatus", "ap"), { message: "Unknown chunithm combo status: ap" });
+    const runtimeKey: string = "ap";
+    assert.throws(() => codeOf("chunithm", "comboStatus", runtimeKey), { message: "Unknown chunithm combo status: ap" });
   });
 
   it("round-trips the typed maimai codecs", () => {
