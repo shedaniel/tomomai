@@ -24,7 +24,7 @@ const caller = router({
   days: dailyPlaysRouter.getPublicAvailableDays,
 }).createCaller({ session: null, req: new NextRequest("http://localhost/api/trpc") });
 
-const stored = { snapshot: null as ProxyRow | null, scores: [] as ProxyRow[] };
+const stored = { snapshot: null as ProxyRow | null, scores: [] as ProxyRow[], catalog: [] as ProxyRow[] };
 
 function publish(privacy: Partial<Privacy> = {}, region = "jp") {
   stored.snapshot = { userId: "owner", snapshotInternalId: 41, gameVersion: 13, region, privacy: { ...SHARED, ...privacy } };
@@ -37,12 +37,14 @@ function dataQueries() {
 
 beforeEach(() => {
   proxy.reset();
-  stored.snapshot = null;
-  stored.scores = [];
-  proxy.answer(({ sql, table }) => {
+  Object.assign(stored, { snapshot: null, scores: [], catalog: [] });
+  // The snapshot's scores answer only a read of its id, and the catalog only a read of the game's catalog in its region and version.
+  proxy.answer(({ sql, table, params }) => {
     if (table === "user_snapshots") return stored.snapshot ? [stored.snapshot] : [];
     if (sql.startsWith("select count(")) return [{ totalCount: 0 }];
-    if (table === "snapshot_scores") return stored.scores;
+    if (table === "snapshot_scores") return params.includes(41) ? stored.scores : [];
+    const snapshot = stored.snapshot;
+    if (table === "songs" && snapshot) return ["maimai", snapshot.region, snapshot.gameVersion].every(value => params.includes(value)) ? stored.catalog : [];
   });
   vi.stubEnv("NEXT_PUBLIC_ENABLED_MAIMAI_REGIONS", "intl,jp");
   vi.stubEnv("NEXT_PUBLIC_ENABLED_REGIONS", undefined);
@@ -84,11 +86,10 @@ describe("getPublicPlayerStats", () => {
   it("counts the snapshot's scores against its own region's catalog", async () => {
     publish({}, "intl");
     stored.scores = [{ scoreValue: 1005000, addedVersion: 13, difficulty: 3, comboStatus: 3, syncStatus: 4, clearStatus: 0 }];
+    stored.catalog = [{ addedVersion: 13, difficulty: 3, count: 10 }];
     const result = await caller.stats({ game: "maimai", snapshotId: "snapshot" });
     expect(result.stats[13][3].statuses).toEqual({ comboStatus: { 3: 1 }, syncStatus: { 4: 1 } });
-    const [scores, catalog] = dataQueries();
-    expect(scores.params).toEqual([41]);
-    expect(catalog.params).toEqual(["maimai", "intl", 13]);
+    expect(result.totalSongs).toEqual({ 13: { 3: 10 } });
   });
 
   it("leaves out combo and sync counts unless the owner shares score details", async () => {
