@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { PUBLIC_VIEWS, toPublicGameSnapshot } from "./public-player";
-import type { GameEvent, GameSnapshotData } from "./player-view";
+import { getPlayerRankings, type GameEvent, type GameSnapshotData } from "./player-view";
+import { codeOf } from "./codes";
 import { getGame } from "./registry";
 
 const event: GameEvent = {
@@ -71,6 +72,19 @@ describe("public game snapshots", () => {
     expect(result.snapshot).toMatchObject({ versionPlayCount: null, totalPlayCount: null });
     expect(result).not.toHaveProperty("events");
     for (const song of result.songs) expect(song).toMatchObject({ secondaryScore: null, comboStatus: 0, syncStatus: 0, clearStatus: 0 });
+  });
+});
+
+describe("public maimai ratings", () => {
+  it("keeps a hidden AP's rating bonus in the published rating the rankings use", () => {
+    const maimai: GameSnapshotData = {
+      snapshot: { ...data.snapshot, game: "maimai", gameVersion: 14 },
+      songs: [{ ...data.songs[0], addedVersion: 14, scoreValue: 1005000, comboStatus: codeOf("maimai", "comboStatus", "ap") }],
+    };
+    const redacted = toPublicGameSnapshot("maimai", maimai, { profileShowAllScores: false, profileShowScoreDetails: false, profileShowPlayCounts: false });
+    expect(redacted.songs[0].comboStatus).toBe(0);
+    expect(redacted.songs[0].chartRating).toBeCloseTo(316.168);
+    expect(getPlayerRankings("maimai", redacted).newScores.map(score => score.rating)).toEqual([316]);
   });
 });
 

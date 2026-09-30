@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { resolveGameContext } from "./access";
-import { getCatalogSection, supportsGameFeature, toFrontendGame } from "./frontend";
+import { brandTitle, getCatalogSection, getGameRegion, supportsGameFeature, toFrontendGame } from "./frontend";
 import { REGIONS, type CanonicalGameId, type Region } from "./ids";
 import { getEnabledRegions } from "./regions";
 import { getGame } from "./registry";
@@ -16,6 +16,20 @@ function serverAccepts(game: CanonicalGameId, capability: GameCapability, region
     return false;
   }
 }
+
+describe("game presentation", () => {
+  it("preserves the maimai brand while separating CHUNITHM metadata", () => {
+    expect(brandTitle(getGame("maimai").brand)).toBe("tomomai ともマイ");
+    expect(brandTitle(getGame("chunithm").brand)).toBe("tomochu ともチュウ");
+  });
+
+  it("selects a supported region without carrying maimai-only CN into CHUNITHM", () => {
+    const game = toFrontendGame(getGame("chunithm"), ["jp", "intl"]);
+    expect(getGameRegion(game, "cn")).toBe("jp");
+    expect(getGameRegion(game, "intl")).toBe("intl");
+    expect(getGameRegion({ ...game, regions: [] }, "jp")).toBeNull();
+  });
+});
 
 describe("client capability gating", () => {
   it.each([

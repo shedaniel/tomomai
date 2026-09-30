@@ -4,24 +4,19 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createRoot, type Root } from "react-dom/client";
 import { NextIntlClientProvider } from "next-intl";
 import { GameProvider } from "@/components/providers/game-provider";
-import { toFrontendGame } from "@/lib/games/frontend";
 import type { CanonicalGameId } from "@/lib/games/ids";
 import { loadMessages } from "@/i18n/messages";
-import { getGame } from "@/lib/games/registry";
+import { testGame } from "@/test/games";
 import { RecentSongsCard } from "./recent-songs-card";
-import { AlbumCard } from "./album-card";
 import messages from "../../../messages/en.json";
 
-const state = vi.hoisted(() => ({ recent: { data: undefined as unknown, error: null as unknown }, album: { data: undefined as unknown, error: null as unknown }, loadMore: undefined as undefined | (() => void), offsets: [] as number[] }));
+const state = vi.hoisted(() => ({ recent: { data: undefined as unknown, error: null as unknown }, loadMore: undefined as undefined | (() => void), offsets: [] as number[] }));
 vi.mock("@/hooks/use-infinite-scroll", () => ({ useInfiniteScroll: (callback: () => void) => { state.loadMore = callback; return { current: null }; } }));
 vi.mock("@/lib/trpc-client", () => ({ trpc: {
-  useUtils: () => ({ user: { getUserAlbums: { invalidate: vi.fn() } } }),
   user: {
     getRecentSongs: { useQuery: (input: { offset: number }) => { state.offsets.push(input.offset); return { ...state.recent, isLoading: false, isFetching: false }; } },
     getPublicRecentSongs: { useQuery: () => ({}) },
     getSimpleSongDetails: { useQuery: () => ({ data: { bpm: 222, addedVersion: 0, slug: "recent-song-artist-standard" }, isLoading: false }) },
-    getUserAlbums: { useQuery: () => ({ ...state.album, isLoading: false, isFetching: false }) },
-    deleteAlbum: { useMutation: () => ({ mutate: vi.fn(), isPending: false }) },
   },
 } }));
 vi.mock("@/i18n/navigation", () => ({ Link: ({ children, href }: { children: React.ReactNode; href: string }) => <a href={href}>{children}</a> }));
@@ -36,18 +31,17 @@ beforeEach(() => {
     disconnect() {}
   });
   window.matchMedia = vi.fn().mockReturnValue({ matches: false, addEventListener: vi.fn(), removeEventListener: vi.fn(), addListener: vi.fn(), removeListener: vi.fn() });
-  state.offsets = []; state.recent.error = null; state.album.error = null;
+  state.offsets = []; state.recent.error = null;
   container = document.createElement("div"); root = createRoot(container);
   state.recent.data = { recentPlays: [recentPlay], hasMore: true };
-  state.album.data = { albums: [{ id: "1", songName: "Album song", artist: "Artist", cover: "https://example.com/cover.webp", difficultyCode: 4, typeCode: 0, levelPrecise: 150, level: "15", takenAt: "2026-09-01", imageKey: "albums/1.avif" }], hasMore: false };
 });
 afterEach(async () => { await act(async () => root.unmount()); vi.unstubAllGlobals(); });
 async function render(content: React.ReactNode, game: CanonicalGameId = "chunithm") {
   const gameMessages = await loadMessages(game, "en");
-  await act(async () => root.render(<NextIntlClientProvider locale="en" messages={gameMessages} timeZone="UTC"><GameProvider game={{ ...toFrontendGame(getGame(game), ["jp"]), capabilities: ["recents", "albums"] }}>{content}</GameProvider></NextIntlClientProvider>));
+  await act(async () => root.render(<NextIntlClientProvider locale="en" messages={gameMessages} timeZone="UTC"><GameProvider game={testGame(game, ["jp"])}>{content}</GameProvider></NextIntlClientProvider>));
 }
 const expand = async () => act(async () => container.querySelector<HTMLButtonElement>('button[aria-expanded="false"]')?.click());
-describe("shared optional player panels", () => {
+describe("RecentSongsCard", () => {
   it("renders CHUNITHM recents through the production list and advances pagination", async () => {
     await render(<RecentSongsCard region="jp" />);
     expect(container.textContent).toContain("Recent song");
@@ -98,12 +92,6 @@ describe("shared optional player panels", () => {
     expect(container.textContent).toContain("BPM222");
     await act(async () => container.querySelector<HTMLButtonElement>('button[aria-expanded="true"]')?.click());
     expect(container.querySelector('button[aria-expanded="false"]')).not.toBeNull();
-  });
-  it("shows each album's photo instead of the empty state", async () => {
-    await render(<AlbumCard region="jp" />);
-    expect(container.textContent).toContain("Album song");
-    expect(container.querySelector('img[alt="Album song"]')?.getAttribute("src")).toMatch(/\/albums\/1\.avif$/);
-    expect(container.textContent).not.toContain("No albums");
   });
   it("shows a query error instead of pretending recents are empty", async () => {
     state.recent.error = new Error("Unavailable");
