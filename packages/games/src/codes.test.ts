@@ -55,7 +55,8 @@ describe("game codes", () => {
       assert.throws(() => definedKeyOf("maimai", "difficulty", code), { message: `Unknown maimai difficulty code: ${code}` });
     }
     assert.equal(isCodeKey("maimai", "chartType", "standard"), false);
-    assert.throws(() => codeOf("chunithm", "comboStatus", "ap"), { message: "Unknown chunithm combo status: ap" });
+    const maimaiKey: string = "ap";
+    assert.throws(() => codeOf("chunithm", "comboStatus", maimaiKey), { message: "Unknown chunithm combo status: ap" });
   });
 
   it("round-trips the typed maimai codecs", () => {

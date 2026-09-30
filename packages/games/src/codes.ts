@@ -45,8 +45,11 @@ function keysOf(game: CodedGame, kind: CodeKind): readonly string[] {
   return GAME_CODES[game][kind];
 }
 
+/** A literal key must be one the game defines, so a typo fails typecheck. A runtime string is checked by the call. */
+type KeyArgument<G extends CodedGame, K extends CodeKind, S extends string> = string extends S ? string : CodeKey<G, K>;
+
 /** The stored code of a key. Throws for a key the game does not define. */
-export function codeOf(game: CodedGame, kind: CodeKind, key: string): number {
+export function codeOf<G extends CodedGame, K extends CodeKind, S extends string>(game: G, kind: K, key: S & KeyArgument<G, K, S>): number {
   const code = keysOf(game, kind).indexOf(key);
   if (code < 0) throw new Error(`Unknown ${game} ${KIND_LABELS[kind]}: ${key}`);
   return code;
@@ -68,7 +71,7 @@ export function hasCode(game: CodedGame, kind: CodeKind, code: number): boolean 
   return Number.isInteger(code) && code >= 0 && code < keysOf(game, kind).length;
 }
 
-export function isCodeKey(game: CodedGame, kind: CodeKind, key: string): boolean {
+export function isCodeKey<G extends CodedGame, K extends CodeKind>(game: G, kind: K, key: string): key is CodeKey<G, K> {
   return keysOf(game, kind).includes(key);
 }
 
