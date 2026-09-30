@@ -42,7 +42,7 @@ export const chunithmDefinition = {
     bonuses: () => [],
   },
   presentation: chunithmPresentation,
-  catalogSections: ["songs"],
+  catalogSections: [{ id: "songs", requires: "catalog" }],
   fetchStages: [
     "login",
     "player_data",

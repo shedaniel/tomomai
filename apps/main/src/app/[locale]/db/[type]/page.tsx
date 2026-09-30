@@ -1,14 +1,11 @@
 import { getCurrentGame } from "@/lib/games/current";
-import { brandTitle } from "@/lib/games/frontend";
-import { getGame } from "@/lib/games/registry";
+import { brandTitle, getCatalogSection } from "@/lib/games/frontend";
 import { InlineNotFound } from "@/components/inline-not-found";
-import { getAllUniqueSongsCached } from "@/server/queries/songs-cache";
 import { Metadata } from "next";
-import dynamic from "next/dynamic";
-import { Suspense } from "react";
 import { getTranslations } from "next-intl/server";
 import { getLocale } from "@/i18n/locale-server";
 import { buildAlternates, openGraphLocales, ogImageUrl, localizePath } from "@/lib/seo";
+import { CATALOG_SECTION_VIEWS } from "./sections";
 
 // On-demand ISR.
 export const revalidate = 10800;
@@ -24,10 +21,6 @@ export function generateStaticParams() {
   return [];
 }
 
-const ArcadesMap = dynamic(() => import("@/components/games/maimai/db/arcades").then(m => m.ArcadesMap));
-const EventsDatabase = dynamic(() => import("@/components/games/maimai/db/events-database").then(m => m.EventsDatabase));
-const StatsDatabase = dynamic(() => import("@/components/games/maimai/db/stats-database").then(m => m.StatsDatabase));
-
 type DbTypePageProps = {
   params: Promise<{
     type: string;
@@ -37,30 +30,32 @@ type DbTypePageProps = {
 export async function generateMetadata({ params }: DbTypePageProps): Promise<Metadata> {
   const { type } = await params;
   const game = getCurrentGame();
+  const section = getCatalogSection(game, type);
+  if (!section) return { robots: { index: false, follow: false } };
   const locale = await getLocale();
+  const gameName = game.brand.displayName;
 
-  type Section = { title: string; description: string };
-  let section: Section | null = null;
-  if (type === "songs") {
+  let copy: { title: string; description: string } | null = null;
+  if (section.id === "songs") {
     const t = await getTranslations("db.songs.metadata");
-    section = { title: t("title", { game: getCurrentGame().brand.displayName }), description: t("description", { game: getCurrentGame().brand.displayName }) };
-  } else if (type === "stats") {
+    copy = { title: t("title", { game: gameName }), description: t("description", { game: gameName }) };
+  } else if (section.id === "stats") {
     const t = await getTranslations("db.stats");
-    section = { title: t("title", { game: getCurrentGame().brand.displayName }), description: t("description", { game: getCurrentGame().brand.displayName }) };
-  } else if (type === "events") {
+    copy = { title: t("title"), description: t("description", { game: gameName }) };
+  } else if (section.id === "events") {
     const t = await getTranslations("db.events");
-    section = { title: t("title", { game: getCurrentGame().brand.displayName }), description: t("description", { game: getCurrentGame().brand.displayName }) };
+    copy = { title: t("title"), description: t("description", { game: gameName }) };
   }
-  if (!section) return {};
+  if (!copy) return {};
 
   const path = `/db/${type}`;
   return {
-    title: section.title,
-    description: section.description,
+    title: copy.title,
+    description: copy.description,
     alternates: await buildAlternates(path),
     openGraph: {
-      title: section.title,
-      description: section.description,
+      title: copy.title,
+      description: copy.description,
       url: localizePath(path, locale),
       siteName: brandTitle(game.brand),
       type: "website",
@@ -69,8 +64,8 @@ export async function generateMetadata({ params }: DbTypePageProps): Promise<Met
     },
     twitter: {
       card: "summary_large_image",
-      title: section.title,
-      description: section.description,
+      title: copy.title,
+      description: copy.description,
     },
   };
 }
@@ -78,58 +73,8 @@ export async function generateMetadata({ params }: DbTypePageProps): Promise<Met
 export default async function DbTypePage({ params }: DbTypePageProps) {
   const { type } = await params;
   const game = getCurrentGame();
-
-  if (!getGame(game.id).catalogSections.some(section => section === type) || (type !== "songs" && game.regions.length === 0)) return <InlineNotFound />;
-
-  if (type === "songs") {
-    // The interactive SongsList is mounted by /db/[type]/layout so it
-    // persists across list ↔ detail navigation.
-    const songs = await getAllUniqueSongsCached(game.id);
-    const t = await getTranslations("db.songs.metadata");
-
-    const jsonLd = {
-      "@context": "https://schema.org",
-      "@type": "CollectionPage",
-      name: t("title", { game: getCurrentGame().brand.displayName }),
-      description: t("description", { game: getCurrentGame().brand.displayName }),
-      numberOfItems: songs.length,
-    };
-
-    return (
-      <>
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-        />
-      </>
-    );
-  }
-
-  if (type === "stats") {
-    return (<Suspense><StatsDatabase /></Suspense>);
-  }
-
-  if (type === "events") {
-    return (<Suspense><EventsDatabase /></Suspense>);
-  }
-
-  return (
-    <>
-      {type === "arcades" && (
-        <div className="mt-4">
-          <Suspense><ArcadesMap /></Suspense>
-        </div>
-      )}
-
-      {!["home", "arcades", "songs", "stats"].includes(type) && (
-        <div className="mt-8">
-          <div className="bg-muted/50 rounded-lg p-8 text-center">
-            <p className="text-muted-foreground">
-              Content for database type &quot;{type}&quot; coming soon...
-            </p>
-          </div>
-        </div>
-      )}
-    </>
-  );
+  const section = getCatalogSection(game, type);
+  const view = section && CATALOG_SECTION_VIEWS[section.id];
+  if (!view) return <InlineNotFound kind="page" />;
+  return view(game);
 }

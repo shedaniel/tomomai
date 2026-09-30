@@ -170,7 +170,16 @@ type PresentationOf<G extends CanonicalGameId> = {
 /** Keyed by code key, so a key added to a game's code table needs its presentation. */
 export type GamePresentation<G extends CanonicalGameId = CanonicalGameId> = G extends CanonicalGameId ? PresentationOf<G> : never;
 
-export type CatalogSection = "songs" | "stats" | "events" | "posts";
+export type CatalogSectionId = "songs" | "stats" | "events" | "posts" | "arcades";
+
+/** A page under /db. */
+export type CatalogSection = {
+  id: CatalogSectionId;
+  /** The section exists only while the served game offers this capability. */
+  requires?: GameCapability;
+  /** Reachable by its URL but left out of the navigation and the sitemap. */
+  hidden?: true;
+};
 
 /** A site section with its own wordmark. */
 export type BrandSection = "dashboard" | "db";
@@ -224,6 +233,7 @@ export interface GameDefinition {
   versions: VersionTable;
   rating: GameRating;
   presentation: GamePresentation;
+  /** In navigation order. */
   catalogSections: readonly CatalogSection[];
   fetchStages: readonly FetchState[];
   /** How players sign in to fetch scores in each region. A `sega-cookie` region's site must sign in through the gateway. */

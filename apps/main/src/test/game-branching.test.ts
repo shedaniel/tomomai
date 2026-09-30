@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { offersCapability } from "@/lib/games/capabilities";
 import { CANONICAL_GAME_IDS, type CanonicalGameId } from "@/lib/games/ids";
 import { getGame } from "@/lib/games/registry";
-import type { GameCapability } from "@/lib/games/types";
+import type { CatalogSectionId, GameCapability } from "@/lib/games/types";
 
 const SRC = fileURLToPath(new URL("..", import.meta.url));
 const GAME_FOLDERS = CANONICAL_GAME_IDS.flatMap(game => [
@@ -51,6 +51,15 @@ const SINGLE_GAME_FEATURES = {
   "score-details": "maimai",
 } as const satisfies Partial<Record<GameCapability, CanonicalGameId>>;
 
+// /db sections whose view (app/[locale]/db/[type]/sections.tsx) or content belongs to one game.
+const SINGLE_GAME_SECTIONS = {
+  stats: "maimai",
+  events: "maimai",
+  arcades: "maimai",
+  // The changelog is tomomai's.
+  posts: "maimai",
+} as const satisfies Partial<Record<CatalogSectionId, CanonicalGameId>>;
+
 function sourceFiles(): string[] {
   return readdirSync(SRC, { recursive: true, encoding: "utf8" })
     .map(path => path.split("\\").join("/"))
@@ -75,5 +84,15 @@ describe("game branching", () => {
     ]));
     expect(declaredBy, "Render a GAME_UI slot in the shared host, then drop the feature from SINGLE_GAME_FEATURES")
       .toEqual(Object.fromEntries(features.map(([capability, owner]) => [capability, [owner]])));
+  });
+
+  it("lets only the owning game declare a /db section that shows one game's content", () => {
+    const sections = Object.entries(SINGLE_GAME_SECTIONS) as [CatalogSectionId, CanonicalGameId][];
+    const declaredBy = Object.fromEntries(sections.map(([section]) => [
+      section,
+      CANONICAL_GAME_IDS.filter(game => getGame(game).catalogSections.some(({ id }) => id === section)),
+    ]));
+    expect(declaredBy, "Give the section a view per game, then drop it from SINGLE_GAME_SECTIONS")
+      .toEqual(Object.fromEntries(sections.map(([section, owner]) => [section, [owner]])));
   });
 });

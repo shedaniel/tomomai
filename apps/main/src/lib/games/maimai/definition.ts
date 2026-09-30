@@ -86,7 +86,13 @@ export const maimaiDefinition = {
     bonuses: maimaiRatingBonuses,
   },
   presentation: maimaiPresentation,
-  catalogSections: ["songs", "stats", "events", "posts"],
+  catalogSections: [
+    { id: "songs", requires: "catalog" },
+    { id: "stats", requires: "catalog-stats" },
+    { id: "events", requires: "events" },
+    { id: "posts", requires: "posts" },
+    { id: "arcades", hidden: true },
+  ],
   fetchStages: [
     "login",
     "player_data",

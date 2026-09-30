@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { resolveGameContext } from "./access";
-import { supportsGameFeature, toFrontendGame } from "./frontend";
+import { getCatalogSection, supportsGameFeature, toFrontendGame } from "./frontend";
 import { REGIONS, type CanonicalGameId, type Region } from "./ids";
 import { getEnabledRegions } from "./regions";
 import { getGame } from "./registry";
@@ -48,5 +48,22 @@ describe("client capability gating", () => {
     const definition = getGame("chunithm");
     expect(() => toFrontendGame({ ...definition, capabilities: definition.capabilities.filter(capability => capability !== "catalog") }, ["jp"]))
       .toThrow("CHUNITHM cannot be served without its catalog");
+  });
+});
+
+describe("catalog sections", () => {
+  it("offers a section only while the game offers what it requires", () => {
+    const maimai = toFrontendGame(getGame("maimai"), ["intl"]);
+    expect(getCatalogSection(maimai, "posts")).toEqual({ id: "posts", requires: "posts" });
+    expect(getCatalogSection(toFrontendGame(getGame("maimai"), []), "posts")).toBeNull();
+    expect(getCatalogSection(toFrontendGame(getGame("chunithm"), ["intl"]), "stats")).toBeNull();
+  });
+
+  it("keeps a hidden section reachable by its path", () => {
+    expect(getCatalogSection(toFrontendGame(getGame("maimai"), []), "arcades")).toEqual({ id: "arcades", hidden: true });
+  });
+
+  it("offers nothing at a path no section declares", () => {
+    expect(getCatalogSection(toFrontendGame(getGame("maimai"), ["intl"]), "home")).toBeNull();
   });
 });

@@ -117,7 +117,7 @@ export default async function DbSlugPage({ params }: DbSlugPageProps) {
   // inline UI keeps the route static/cheap; `robots: noindex` (set in
   // generateMetadata above) keeps these out of the index.
   if (!song) {
-    return <InlineNotFound />;
+    return <InlineNotFound kind="song" />;
   }
 
   const [tSongs, tNav] = await Promise.all([

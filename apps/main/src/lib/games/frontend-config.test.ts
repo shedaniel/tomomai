@@ -36,6 +36,7 @@ describe("frontend process configuration", () => {
       brand: getGame("chunithm").brand,
       capabilities: getGame("chunithm").capabilities,
       regionCapabilityOverrides: {},
+      catalogSections: [{ id: "songs", requires: "catalog" }],
       loginMethods: { intl: ["sega-cookie", "sega-account"], jp: ["sega-account"] },
       catalogTokenRegions: [],
       regions: ["intl", "jp"],
