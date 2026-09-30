@@ -9,7 +9,10 @@ vi.mock("@/lib/db", async () => {
   }) };
 });
 vi.mock("next/cache", () => ({ unstable_cache: (fn: () => unknown) => fn }));
-vi.mock("@/lib/song-slug", () => ({ getSongSlugs: async (songs: object[]) => songs.map(song => ({ ...song, slug: "same-title-artist", aliases: [] })) }));
+vi.mock("@/lib/song-slug", async importOriginal => ({
+  ...await importOriginal<typeof import("@/lib/song-slug")>(),
+  getSongSlugs: async (songs: object[]) => songs.map(song => ({ ...song, slug: "same-title-artist", aliases: [] })),
+}));
 import { queryAllUniqueSongs } from "./songs";
 
 beforeEach(() => { state.rows = []; state.queries = []; });

@@ -10,7 +10,7 @@ vi.mock("@tomomai/ui", () => ({ ResponsiveDialogTitle: ({ children }: { children
 vi.mock("next-intl", () => ({ useTranslations: () => (key: string) => key }));
 
 const descriptor: FrontendGame = { ...toFrontendGame(getGame("chunithm"), ["jp"]), capabilities: ["rating"] };
-const chart = { difficulty: "ultima", region: "jp" as const, gameVersion: 14, level: "14", levelPrecise: 140, addedVersion: 14, noteDesigner: null, tapCount: null, holdCount: null, slideCount: null, touchCount: null, breakCount: null };
+const chart = { difficulty: "ultima" as const, region: "jp" as const, gameVersion: 14, level: "14", levelPrecise: 140, addedVersion: 14, noteDesigner: null, tapCount: null, holdCount: null, slideCount: null, touchCount: null, breakCount: null };
 const score = { scoreValue: 1009000, comboStatus: 2, syncStatus: 1, clearStatus: 2 };
 
 describe("shared catalog rating dialog", () => {

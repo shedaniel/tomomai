@@ -1,11 +1,11 @@
 import { gameIdSchema } from "@/lib/games/schema";
-import { getEnabledRegions } from "@/lib/games/regions";
+import { hasCapability } from "@/lib/games/access";
 import { gameOnlyProcedure } from "../game-procedures";
 import { isCodeKey, keyOf } from "@/lib/games/codes";
-import { parseSongId } from "@/lib/catalog/song-instance-id";
+import { parentPublicIdSchema, parseSongId } from "@/lib/catalog/song-instance-id";
 import { db } from '@/lib/db';
 import { parentSong, songs } from '@/lib/db/schema-pg';
-import { getSongSlug } from '@/lib/song-slug';
+import { formatSongSlug, getSongSlug } from '@/lib/song-slug';
 import { protectedProcedure, publicProcedure, router } from '@/lib/trpc';
 import { TRPCError } from '@trpc/server';
 import { and, eq, sql } from 'drizzle-orm';
@@ -17,7 +17,7 @@ const songInputSchema = z.object({
   game: gameIdSchema,
   songName: z.string(),
   artist: z.string().optional(),
-  parentIds: z.array(z.string().regex(/^[A-Za-z0-9_-]{8}$/)).min(1).optional(),
+  parentIds: z.array(parentPublicIdSchema).min(1).optional(),
   type: z.string(),
 }).refine(input => isCodeKey(input.game, "chartType", input.type), { message: "Unknown chart type", path: ["type"] });
 
@@ -30,8 +30,8 @@ export const songsRouter = router({
   getSongDetails: gameOnlyProcedure(publicProcedure, "catalog")
     .input(songInputSchema)
     .query(({ input, ctx }) => {
-      const userId = getEnabledRegions(ctx.game).length > 0 ? ctx.session?.user?.id : undefined;
-      return querySongDetails(ctx.game, input.songName, input.type, userId, input.artist, input.parentIds);
+      const userId = hasCapability(ctx.game, "scores") ? ctx.session?.user?.id : undefined;
+      return querySongDetails({ ...input, game: ctx.game, userId });
     }),
 
   getSongScores: gameOnlyProcedure(protectedProcedure, "scores")
@@ -39,7 +39,7 @@ export const songsRouter = router({
     .query(async ({ input, ctx }) => {
       return {
         viewerId: ctx.session.user.id,
-        userScores: await querySongScores(ctx.game, input.songName, input.type, ctx.session.user.id, input.artist, input.parentIds),
+        userScores: await querySongScores({ ...input, game: ctx.game, userId: ctx.session.user.id }),
       };
     }),
 
@@ -93,7 +93,7 @@ export const songsRouter = router({
         genre: firstChart.genre,
         bpm: chartWithBpm?.bpm ?? null,
         addedVersion: earliestAddedVersion,
-        slug: firstChart.disambiguator ? `${slug}-${firstChart.disambiguator}` : slug,
+        slug: formatSongSlug(slug, firstChart.disambiguator),
       };
     }),
 });

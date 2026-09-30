@@ -19,7 +19,8 @@ const fixture = vi.hoisted(() => {
   };
 });
 vi.mock("@/lib/games/current", () => ({ getCurrentGame: () => fixture.game }));
-vi.mock("@/server/queries/songs-cache", () => ({ getAllUniqueSongsCached: (game: string) => { fixture.catalog(game); return Promise.resolve(fixture.songs); }, getSongDetailsCached: fixture.details }));
+vi.mock("@/server/queries/songs-cache", () => ({ getAllUniqueSongsCached: (game: string) => { fixture.catalog(game); return Promise.resolve(fixture.songs); } }));
+vi.mock("@/server/queries/songs", () => ({ querySongDetails: fixture.details }));
 vi.mock("next/dynamic", () => ({ default: () => () => null }));
 vi.mock("@/lib/seo", () => ({ breadcrumbJsonLd: () => ({}), localizePath: (value: string) => value, buildPageMetadata: async () => ({}), MISSING_PAGE_METADATA: {} }));
 vi.mock("next-intl/server", () => ({ getTranslations: async () => (key: string) => key }));
@@ -39,6 +40,7 @@ import { GameUnavailable } from "@/components/player/game-unavailable";
 import { toFrontendGame, type FrontendGame } from "@/lib/games/frontend";
 import { getGame } from "@/lib/games/registry";
 import type { CanonicalGameId } from "@/lib/games/ids";
+import type { ChartTypeKey } from "./songs/types";
 
 const withoutPlayerRegions = (game: CanonicalGameId) => toFrontendGame(getGame(game), []);
 beforeEach(() => {
@@ -59,7 +61,7 @@ describe("catalog independent of player rollout", () => {
     const params = Promise.resolve({ type: "songs", slug: "chu-chart-standard" });
     const detail = renderToStaticMarkup(await DetailSlotPage({ params }));
     expect(detail).toContain("CHU detail");
-    expect(fixture.details).toHaveBeenCalledWith(game, "CHU chart", type, undefined, "Artist", ["abcdefgh"]);
+    expect(fixture.details).toHaveBeenCalledWith({ game, songName: "CHU chart", type, artist: "Artist", parentIds: ["abcdefgh"] });
     expect(renderToStaticMarkup(await DbSlugPage({ params }))).toContain('"name":"CHU chart"');
     expect(fixture.catalog).toHaveBeenCalledWith(game);
   });
@@ -69,7 +71,7 @@ describe("catalog independent of player rollout", () => {
     Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
     window.matchMedia = vi.fn().mockReturnValue({ matches: false, addEventListener: vi.fn(), removeEventListener: vi.fn(), addListener: vi.fn(), removeListener: vi.fn() });
     const { SongDetailContent } = await vi.importActual<typeof import("./songs/song-detail-content")>("./songs/song-detail-content");
-    const detailFor = (type: string) => <SongDetailContent songName="CHU chart" slug={`chu-chart-${type}`} type={type} initialData={{ parentIds: ["abcdefgh"], songName: "CHU detail", artist: "Artist", cover: "https://example.com/cover.webp", type, genre: "ORIGINAL", bpm: null, addedVersion: 4, regions: [] }} />;
+    const detailFor = (type: ChartTypeKey) => <SongDetailContent songName="CHU chart" slug={`chu-chart-${type}`} type={type} initialData={{ parentIds: ["abcdefgh"], songName: "CHU detail", artist: "Artist", cover: "https://example.com/cover.webp", type, genre: "ORIGINAL", bpm: null, addedVersion: 4, regions: [] }} />;
     const detail = detailFor("standard");
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     const container = document.createElement("div"); const root = createRoot(container);

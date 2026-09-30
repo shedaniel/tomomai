@@ -1,5 +1,10 @@
 import { GenericFilter } from "@/components/filter-panel";
+import type { CodeKey } from "@/lib/games/codes";
+import type { CanonicalGameId } from "@/lib/games/ids";
 import { Region } from "@/lib/types";
+
+export type ChartTypeKey = CodeKey<CanonicalGameId, "chartType">;
+export type DifficultyKey = CodeKey<CanonicalGameId, "difficulty">;
 
 export interface UniqueSong {
   parentIds: string[];
@@ -7,7 +12,7 @@ export interface UniqueSong {
   songName: string;
   artist: string;
   cover: string;
-  type: string;
+  type: ChartTypeKey;
   genre: string;
   addedVersion: number;
   slug: string;
@@ -16,7 +21,7 @@ export interface UniqueSong {
 }
 
 export interface UniqueSongDifficulty {
-  difficulty: string;
+  difficulty: DifficultyKey;
   level: string;
   levelPrecise: number;
   levelPreciseEstimated?: boolean;
@@ -31,7 +36,7 @@ export interface UserScore {
 }
 
 export interface SongDetailHistoricalChart {
-  difficulty: string;
+  difficulty: DifficultyKey;
   levelPrecise: number;
   levelPreciseEstimated?: boolean;
 }
@@ -47,12 +52,14 @@ export interface SongDetailChart extends SongDetailHistoricalChart {
   breakCount: number | null;
 }
 
+export type SongExtendedIdentified = SongDetailChart & { region: Region; gameVersion: number };
+
 export interface SongDetails {
   parentIds: string[];
   songName: string;
   artist: string;
   cover: string;
-  type: string;
+  type: ChartTypeKey;
   genre: string;
   bpm: number | null;
   addedVersion: number;

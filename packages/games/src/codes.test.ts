@@ -11,6 +11,7 @@ import {
   codeToSyncStatus,
   codeToTitleType,
   comboStatusToCode,
+  definedKeyOf,
   difficultyToCode,
   hasCode,
   isCodeKey,
@@ -32,6 +33,7 @@ describe("game codes", () => {
         keys.forEach((key, code) => {
           assert.equal(codeOf(game, kind, key), code);
           assert.equal(keyOf(game, kind, code), key);
+          assert.equal(definedKeyOf(game, kind, code), key);
           assert.ok(hasCode(game, kind, code));
           assert.ok(isCodeKey(game, kind, key));
         });
@@ -46,10 +48,11 @@ describe("game codes", () => {
     assert.equal(codeOf("chunithm", "difficulty", "worlds-end"), 5);
   });
 
-  it("reads unknown codes as their number and throws for unknown keys", () => {
+  it("reads unknown codes as their number, or throws where the key must be defined, and throws for unknown keys", () => {
     for (const code of [-1, 1.5, 99, Number.NaN]) {
       assert.equal(hasCode("maimai", "difficulty", code), false);
       assert.equal(keyOf("maimai", "difficulty", code), String(code));
+      assert.throws(() => definedKeyOf("maimai", "difficulty", code), { message: `Unknown maimai difficulty code: ${code}` });
     }
     assert.equal(isCodeKey("maimai", "chartType", "standard"), false);
     assert.throws(() => codeOf("chunithm", "comboStatus", "ap"), { message: "Unknown chunithm combo status: ap" });

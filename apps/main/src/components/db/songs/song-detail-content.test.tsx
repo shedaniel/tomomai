@@ -7,7 +7,7 @@ import { getGame } from "@/lib/games/registry";
 import type { CanonicalGameId } from "@/lib/games/ids";
 import { loadMessages } from "@/i18n/messages";
 import { SongDetailContent } from "./song-detail-content";
-import type { SongDetails } from "./types";
+import type { ChartTypeKey, SongDetails } from "./types";
 
 const userScores = vi.hoisted(() => ({ jp: { master: { scoreValue: 1_005_000, comboStatus: 4, syncStatus: 5, clearStatus: 0 } } }));
 vi.mock("@/lib/trpc-client", () => ({ trpc: {
@@ -21,13 +21,13 @@ vi.mock("@/lib/auth-client", () => ({ useSession: () => ({ data: { user: { id: "
 vi.mock("@/i18n/navigation", () => ({ Link: ({ children }: { children: React.ReactNode }) => <span>{children}</span> }));
 vi.mock("@/components/cover-image", () => ({ CoverImage: () => null }));
 
-const chart = { difficulty: "master", level: "14", levelPrecise: 147, addedVersion: 20, noteDesigner: null, tapCount: null, holdCount: null, slideCount: null, touchCount: null, breakCount: null };
+const chart = { difficulty: "master" as const, level: "14", levelPrecise: 147, addedVersion: 20, noteDesigner: null, tapCount: null, holdCount: null, slideCount: null, touchCount: null, breakCount: null };
 const song: SongDetails = {
   parentIds: ["parent"], songName: "Song", artist: "Artist", cover: "", type: "dx", genre: "POPS", bpm: 150, addedVersion: 20,
   regions: [{ region: "jp", versions: [{ gameVersion: 20, charts: [chart] }] }],
 };
 
-async function render(game: CanonicalGameId, type: string) {
+async function render(game: CanonicalGameId, type: ChartTypeKey) {
   return renderToStaticMarkup(
     <NextIntlClientProvider locale="en" messages={await loadMessages(game, "en")} timeZone="UTC">
       <GameProvider game={toFrontendGame(getGame(game), ["jp"])}>

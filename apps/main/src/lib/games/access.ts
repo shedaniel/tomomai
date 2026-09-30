@@ -19,26 +19,37 @@ type GameAccess = {
  */
 export function resolveGameContext(game: CanonicalGameId, access: GameAccess & { region: Region }): GameRegionContext;
 export function resolveGameContext(game: CanonicalGameId, access: GameAccess & { region?: Region }): { game: CanonicalGameId; region?: Region };
-export function resolveGameContext(
+export function resolveGameContext(game: CanonicalGameId, access: GameAccess & { region?: Region }): { game: CanonicalGameId; region?: Region } {
+  const refusal = refuseAccess(game, access);
+  if (refusal) throw refusal;
+  return access.region === undefined ? { game } : { game, region: access.region };
+}
+
+/** Whether resolveGameContext accepts the capability, for callers that leave a feature out instead of refusing. */
+export function hasCapability(game: CanonicalGameId, capability: GameCapability, region?: Region): boolean {
+  return refuseAccess(game, { capability, region }) === null;
+}
+
+function refuseAccess(
   game: CanonicalGameId,
   { region, capability, regionPolicy = "enabled" }: GameAccess & { region?: Region },
-): { game: CanonicalGameId; region?: Region } {
+): GameAdapterError | null {
   const definition = getGame(game);
   const { brand } = definition;
   if (capability !== "catalog" && getEnabledRegions(game).length === 0) {
-    throw new GameAdapterError("GAME_NOT_ENABLED", `${brand.displayName} is not enabled`, game, region, capability);
+    return new GameAdapterError("GAME_NOT_ENABLED", `${brand.displayName} is not enabled`, game, region, capability);
   }
   if (!offersCapability(definition, capability)) {
-    throw new GameAdapterError("UNSUPPORTED_CAPABILITY", `${brand.displayName} does not support ${capability}`, game, region, capability);
+    return new GameAdapterError("UNSUPPORTED_CAPABILITY", `${brand.displayName} does not support ${capability}`, game, region, capability);
   }
-  if (region === undefined) return { game };
+  if (region === undefined) return null;
 
   const regions = regionPolicy === "enabled" ? getEnabledRegions(game) : getSupportedRegions(game);
   if (!regions.includes(region)) {
-    throw new GameAdapterError("UNSUPPORTED_REGION", `${region} is not ${regionPolicy} for ${brand.displayName}`, game, region);
+    return new GameAdapterError("UNSUPPORTED_REGION", `${region} is not ${regionPolicy} for ${brand.displayName}`, game, region);
   }
   if (!offersCapability(definition, capability, region)) {
-    throw new GameAdapterError("UNSUPPORTED_CAPABILITY", `${brand.displayName} does not support ${capability} in ${region}`, game, region, capability);
+    return new GameAdapterError("UNSUPPORTED_CAPABILITY", `${brand.displayName} does not support ${capability} in ${region}`, game, region, capability);
   }
-  return { game, region };
+  return null;
 }

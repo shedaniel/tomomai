@@ -1,6 +1,7 @@
 import { getCurrentGame } from "@/lib/games/current";
 import { SongDetailContent } from "@/components/db/songs/song-detail-content";
-import { getAllUniqueSongsCached, getSongDetailsCached } from "@/server/queries/songs-cache";
+import { getAllUniqueSongsCached } from "@/server/queries/songs-cache";
+import { querySongDetails } from "@/server/queries/songs";
 import { safeDecodeURIComponent } from "@/lib/utils";
 import { getTranslations } from "next-intl/server";
 
@@ -35,7 +36,7 @@ export default async function DetailSlotPage({ params }: Props) {
   // SSR the full static chart data (no userId → no scores) so the drawer
   // body is in the document for crawlers and no-JS clients. The client
   // component refetches on mount to layer in the signed-in user's scores.
-  const details = await getSongDetailsCached(game.id, song.songName, song.type, undefined, song.artist, song.parentIds);
+  const details = await querySongDetails({ game: game.id, songName: song.songName, type: song.type, artist: song.artist, parentIds: song.parentIds });
 
   const t = await getTranslations("db.songs.detail");
   // Fall back to artist when the song name is empty (some entries have

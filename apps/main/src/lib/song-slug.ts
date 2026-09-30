@@ -83,6 +83,11 @@ export async function getSongSlug(song: SongForSlug): Promise<string> {
   return `${baseSlug}-${song.type}`;
 }
 
+/** Appends the disambiguator that tells apart distinct charts sharing a name, type and difficulty. */
+export function formatSongSlug(slug: string, disambiguator: number): string {
+  return disambiguator ? `${slug}-${disambiguator}` : slug;
+}
+
 /**
  * Module-level memo keyed by (songName, artist, type). Slug + aliases are
  * pure deterministic functions of those three fields, and computing them

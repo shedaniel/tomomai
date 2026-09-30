@@ -21,7 +21,7 @@ import { CoverImage } from "@/components/cover-image";
 import { ChartLevel } from "@/components/games/chart-level";
 import { ChartTypeBadge } from "@/components/games/chart-type-badge";
 import { useEffect, useMemo, useRef } from "react";
-import { SongDetailChart, SongDetailHistoricalChart, SongDetails, UserScore } from "./types";
+import { ChartTypeKey, SongDetailChart, SongDetailHistoricalChart, SongDetails, SongExtendedIdentified, UserScore } from "./types";
 
 import { Button } from "@tomomai/ui";
 import { Separator } from "@tomomai/ui";
@@ -31,7 +31,6 @@ import { Link } from "@/i18n/navigation"
 import { toast } from "sonner";
 import { SongChartDialogContent } from "./song-detail-dialog";
 
-type SongExtendedIdentified = SongDetailChart & { region: Region; gameVersion: number };
 
 function isSongDetailChart(
   chart: SongDetailChart | SongDetailHistoricalChart,
@@ -43,7 +42,7 @@ interface SongDetailContentProps {
   songName: string;
   artist?: string;
   slug: string;
-  type: string;
+  type: ChartTypeKey;
   parentIds?: string[];
   initialData?: SongDetails | null;
 }

@@ -25,18 +25,18 @@ describe("querySongScores", () => {
     "rejects an ambiguous catalog name regardless of the user's scores (%j)", async ({ scores }) => {
       readArtists.mockResolvedValue([{ artist: "A" }, { artist: "B" }]);
       readScores.mockResolvedValue(scores);
-      await expect(querySongScores("maimai", "Link", "std", "user")).rejects.toMatchObject({ code: "BAD_REQUEST" });
+      await expect(querySongScores({ game: "maimai", songName: "Link", type: "std", userId: "user" })).rejects.toMatchObject({ code: "BAD_REQUEST" });
       expect(select).not.toHaveBeenCalled();
     },
   );
 
   it("returns no scores for an unambiguous unplayed chart", async () => {
-    await expect(querySongScores("maimai", "Song", "std", "user")).resolves.toBeUndefined();
+    await expect(querySongScores({ game: "maimai", songName: "Song", type: "std", userId: "user" })).resolves.toBeUndefined();
   });
 
   it("accepts an explicit artist and preserves the score map", async () => {
     readScores.mockResolvedValue([{ artist: "A", region: "jp", difficulty: "master", scoreValue: 100, comboStatus: 0, syncStatus: 0, clearStatus: 0 }]);
-    await expect(querySongScores("maimai", "Link", "std", "user", "A")).resolves.toEqual({
+    await expect(querySongScores({ game: "maimai", songName: "Link", type: "std", userId: "user", artist: "A" })).resolves.toEqual({
       jp: { master: { scoreValue: 100, comboStatus: 0, syncStatus: 0, clearStatus: 0 } },
     });
     expect(readArtists).not.toHaveBeenCalled();
@@ -45,7 +45,7 @@ describe("querySongScores", () => {
 
 it.each([{ game: "maimai", difficulty: "remaster", type: "std" }, { game: "chunithm", difficulty: "ultima", type: "standard" }] as const)("scopes $game scores by game", async ({ game, difficulty, type }) => {
   readScores.mockResolvedValue([{ artist: "A", region: "jp", difficulty, scoreValue: 1009000, comboStatus: 2, syncStatus: 1, clearStatus: 2 }]);
-  const result = await querySongScores(game, "Same title", type, "viewer", "A");
+  const result = await querySongScores({ game, songName: "Same title", type, userId: "viewer", artist: "A" });
   expect(result?.jp[difficulty]).toEqual({ scoreValue: 1009000, comboStatus: 2, syncStatus: 1, clearStatus: 2 });
   const query = new PgDialect().sqlToQuery(readScores.mock.calls[0][0]);
   expect(query.sql).toContain('"parent_song"."game" = $');
@@ -54,7 +54,7 @@ it.each([{ game: "maimai", difficulty: "remaster", type: "std" }, { game: "chuni
 });
 
 it("restricts user scores to the resolved parent identities", async () => {
-  await querySongScores("maimai", "Same title", "std", "viewer", "A", ["abcdefgh"]);
+  await querySongScores({ game: "maimai", songName: "Same title", type: "std", userId: "viewer", artist: "A", parentIds: ["abcdefgh"] });
   const query = new PgDialect().sqlToQuery(readScores.mock.calls[0][0]);
   expect(query.params).toContain("abcdefgh");
 });

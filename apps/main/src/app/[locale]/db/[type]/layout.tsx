@@ -1,5 +1,4 @@
 import { SongsList } from "@/components/db/songs-list";
-
 import type { ReactNode } from "react";
 
 export default async function DbTypeLayout({

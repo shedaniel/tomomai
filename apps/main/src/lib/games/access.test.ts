@@ -1,6 +1,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { resolveGameContext } from "./access";
+import { hasCapability, resolveGameContext } from "./access";
+import { CANONICAL_GAME_IDS, REGIONS } from "./ids";
 import { getEnabledRegions } from "./regions";
+import { GAME_CAPABILITIES } from "./types";
 
 afterEach(() => vi.unstubAllEnvs());
 
@@ -56,5 +58,24 @@ describe("game access", () => {
     expect(resolveGameContext("maimai", { region: "cn", capability: "scores" })).toEqual({ game: "maimai", region: "cn" });
     expect(resolveGameContext("maimai", { region: "intl", capability: "albums" })).toEqual({ game: "maimai", region: "intl" });
     expect(resolveGameContext("maimai", { capability: "albums" })).toEqual({ game: "maimai" });
+  });
+
+  it.each(["", "intl,jp,cn"])("answers hasCapability exactly when resolveGameContext accepts (regions %j)", regions => {
+    vi.stubEnv("NEXT_PUBLIC_ENABLED_MAIMAI_REGIONS", regions);
+    vi.stubEnv("NEXT_PUBLIC_ENABLED_CHUNITHM_REGIONS", regions);
+    for (const game of CANONICAL_GAME_IDS) {
+      for (const capability of GAME_CAPABILITIES) {
+        for (const region of [undefined, ...REGIONS]) {
+          let accepted = true;
+          try {
+            resolveGameContext(game, { region, capability });
+          } catch {
+            accepted = false;
+          }
+          expect(hasCapability(game, capability, region), `${game} ${capability} ${region}`).toBe(accepted);
+        }
+      }
+    }
+    expect(hasCapability("maimai", "scores")).toBe(regions !== "");
   });
 });

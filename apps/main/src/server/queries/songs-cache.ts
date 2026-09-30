@@ -1,4 +1,4 @@
-import { queryAllUniqueSongs, querySongDetails } from "@/server/queries/songs";
+import { queryAllUniqueSongs } from "@/server/queries/songs";
 import type { CanonicalGameId } from "@/lib/games/types";
 import { cache } from "react";
 
@@ -18,9 +18,3 @@ import { cache } from "react";
 export const getAllUniqueSongsCached = cache(async (game: CanonicalGameId) => {
   return queryAllUniqueSongs(game);
 });
-
-export const getSongDetailsCached = cache(
-  async (game: CanonicalGameId, songName: string, type: string, userId?: string | null, artist?: string, parentIds?: string[]) => {
-    return querySongDetails(game, songName, type, userId, artist, parentIds);
-  }
-);

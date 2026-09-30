@@ -5,6 +5,7 @@ import type { GameSnapshotSummary } from "@/lib/games/player-view";
 import { gameIdSchema, regionSchema as gameRegionSchema } from "@/lib/games/schema";
 import type { ScoreStatusKind } from "@/lib/games/types";
 import type { songs } from "@/lib/db/schema-pg";
+import { parentPublicIdSchema, songInstanceIdSchema } from "@/lib/catalog/song-instance-id";
 
 /**
  * The response parts every game shares. The OpenAPI document and the Developer Center render these schemas,
@@ -111,7 +112,7 @@ export const fetchStartResult = z.object({
 export const successResponse = z.object({ success: z.literal(true) });
 
 export const chartCatalogueEntry = z.object({
-  songId: z.string().regex(/^[A-Za-z0-9_-]{8}$/).describe("Chart ID (8-char nanoid), the prefix of every composite instance ID."),
+  songId: parentPublicIdSchema.describe("Chart ID (8-char nanoid), the prefix of every composite instance ID."),
   songName: z.string(),
   artist: z.string(),
   cover: z.string().nullable().describe("Cover image URL, may be null."),
@@ -126,7 +127,7 @@ export const chartCatalogueEntry = z.object({
 });
 
 export const songCatalogueEntry = z.object({
-  songId: z.string().regex(/^[A-Za-z0-9_-]{8}:[jic]-?(0|[1-9]\d*)$/).describe("Composite instance ID <chartId>:<regionLetter><gameVersion>, e.g. Ab3xK9pQ:j11 for jp at version 11. The chart ID is an 8-char nanoid, regions are j, i and c, and versions may be negative. Truncate at ':' for the chart-level ID."),
+  songId: songInstanceIdSchema.describe("Composite instance ID <chartId>:<regionLetter><gameVersion>, e.g. Ab3xK9pQ:j11 for jp at version 11. The chart ID is an 8-char nanoid, regions are j, i and c, and versions may be negative. Truncate at ':' for the chart-level ID."),
   songName: z.string(),
   artist: z.string(),
   cover: z.string().nullable().describe("Cover image URL, may be null."),

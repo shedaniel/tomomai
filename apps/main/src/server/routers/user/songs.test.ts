@@ -48,9 +48,15 @@ describe("catalog and player access", () => {
   it("enriches each game catalog with the signed-in player", async () => {
     const input = { songName: song.songName, type: song.type, artist: song.artist };
     expect(await caller.getSongDetails({ game: "chunithm", ...input })).toEqual(details);
-    expect(querySongDetails).toHaveBeenLastCalledWith("chunithm", input.songName, input.type, "viewer", input.artist, undefined);
+    expect(querySongDetails).toHaveBeenLastCalledWith({ game: "chunithm", ...input, userId: "viewer" });
     await caller.getSongDetails({ game: "maimai", ...input, type: "std" });
-    expect(querySongDetails).toHaveBeenLastCalledWith("maimai", input.songName, "std", "viewer", input.artist, undefined);
+    expect(querySongDetails).toHaveBeenLastCalledWith({ game: "maimai", ...input, type: "std", userId: "viewer" });
+  });
+
+  it("leaves the viewer's scores out of a game whose player features are off", async () => {
+    vi.stubEnv("NEXT_PUBLIC_ENABLED_CHUNITHM_REGIONS", "");
+    await caller.getSongDetails({ game: "chunithm", songName: song.songName, type: song.type });
+    expect(querySongDetails).toHaveBeenLastCalledWith({ game: "chunithm", songName: song.songName, type: song.type, userId: undefined });
   });
 
   it("rejects a chart type the game does not have before querying", async () => {
@@ -64,6 +70,6 @@ describe("catalog and player access", () => {
     vi.mocked(querySongScores).mockResolvedValue({});
     await expect(caller.getSongScores({ game: "chunithm", songName: song.songName, type: song.type }))
       .resolves.toEqual({ viewerId: "viewer", userScores: {} });
-    expect(querySongScores).toHaveBeenCalledWith("chunithm", song.songName, song.type, "viewer", undefined, undefined);
+    expect(querySongScores).toHaveBeenCalledWith({ game: "chunithm", songName: song.songName, type: song.type, userId: "viewer" });
   });
 });

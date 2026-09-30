@@ -3,7 +3,7 @@ import { ResponsiveDialogTitle } from "@tomomai/ui";
 import { Region } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { Fragment, useState } from "react";
-import { SongDetailChart, UserScore } from "./types";
+import { SongExtendedIdentified, UserScore } from "./types";
 import { useTranslations } from "next-intl";
 import { useGame, usePresentation } from "@/components/providers/game-provider";
 import { getGame } from "@/lib/games/registry";
@@ -11,7 +11,6 @@ import { codeOf } from "@/lib/games/codes";
 import { ChartLevel } from "@/components/games/chart-level";
 import { formatEstimated, formatGameScore, formatGameRating, getGameDifficulty, getGameScoreBenchmarks } from "@/lib/games/presentation";
 
-type SongExtendedIdentified = SongDetailChart & { region: Region; gameVersion: number };
 
 function SongChartDialogGrid({ chart, score }: { chart: SongExtendedIdentified; score?: UserScore }) {
   const t = useTranslations();

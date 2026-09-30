@@ -57,6 +57,13 @@ export function keyOf(game: CodedGame, kind: CodeKind, code: number): string {
   return hasCode(game, kind, code) ? keysOf(game, kind)[code] : String(code);
 }
 
+/** The key of a stored code the game defines. Throws for any other code, as codeOf does for keys. */
+export function definedKeyOf<G extends CodedGame, K extends CodeKind>(game: G, kind: K, code: number): CodeKey<G, K> {
+  if (!hasCode(game, kind, code)) throw new Error(`Unknown ${game} ${KIND_LABELS[kind]} code: ${code}`);
+  const keys: readonly CodeKey<G, K>[] = GAME_CODES[game][kind];
+  return keys[code];
+}
+
 export function hasCode(game: CodedGame, kind: CodeKind, code: number): boolean {
   return Number.isInteger(code) && code >= 0 && code < keysOf(game, kind).length;
 }
@@ -71,12 +78,8 @@ type Codec<T extends string> = {
 };
 
 function maimaiCodec<K extends CodeKind>(kind: K): Codec<CodeKey<"maimai", K>> {
-  const keys: readonly CodeKey<"maimai", K>[] = MAIMAI_CODES[kind];
   return {
-    fromCode: code => {
-      if (!hasCode("maimai", kind, code)) throw new Error(`Unknown maimai ${KIND_LABELS[kind]} code: ${code}`);
-      return keys[code];
-    },
+    fromCode: code => definedKeyOf("maimai", kind, code),
     toCode: key => codeOf("maimai", kind, key),
   };
 }

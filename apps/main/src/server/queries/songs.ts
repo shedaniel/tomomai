@@ -1,11 +1,11 @@
-import { codeOf, keyOf } from "@/lib/games/codes";
+import { codeOf, definedKeyOf, keyOf } from "@/lib/games/codes";
 import type { CanonicalGameId } from "@/lib/games/types";
 import { songInstanceId } from "@/lib/db/song-instance-id";
 import { chartEstimates } from "@/lib/catalog/chart-metadata";
 import { SongDetailChart, SongDetailHistoricalChart, SongDetails, UniqueSong, UniqueSongDifficulty } from "@/components/db/songs/types";
 import { db } from "@/lib/db";
 import { parentSong, scoreData, snapshotScores, songs, userSnapshots } from "@/lib/db/schema-pg";
-import { getSongSlugs } from "@/lib/song-slug";
+import { formatSongSlug, getSongSlugs } from "@/lib/song-slug";
 import { instancePreference } from "@/lib/games/regions";
 import { Region } from "@/lib/types";
 import { maxBy } from "@/lib/utils";
@@ -15,14 +15,16 @@ import { unstable_cache } from "next/cache";
 import { catalogTags } from "@/lib/cache-tags";
 import { Optional } from "utility-types";
 
-export async function querySongScores(
-  game: CanonicalGameId,
-  songName: string,
-  type: string,
-  userId: string,
-  artist?: string,
-  parentIds?: string[]
-): Promise<SongDetails["userScores"]> {
+/** One song of a game: its title and chart type, narrowed by artist or chart IDs where titles collide. */
+export type SongQuery = {
+  game: CanonicalGameId;
+  songName: string;
+  type: string;
+  artist?: string;
+  parentIds?: string[];
+};
+
+export async function querySongScores({ game, songName, type, artist, parentIds, userId }: SongQuery & { userId: string }): Promise<SongDetails["userScores"]> {
   if (artist === undefined) {
     const artists = await db.selectDistinct({ artist: parentSong.artist })
       .from(parentSong)
@@ -85,25 +87,19 @@ export async function querySongScores(
   return userScores;
 }
 
-export async function querySongDetails(
-  game: CanonicalGameId,
-  songName: string,
-  type: string,
-  userId?: string | null,
-  artist?: string,
-  parentIds?: string[]
-): Promise<SongDetails> {
+export async function querySongDetails({ userId, ...song }: SongQuery & { userId?: string }): Promise<SongDetails> {
+  const { game, songName, type, artist, parentIds } = song;
   const chartsQuery = db
     .select({
       songId: songInstanceId,
       songName: parentSong.songName,
       artist: parentSong.artist,
       cover: parentSong.cover,
-      difficulty: sql`${parentSong.difficulty}`.mapWith(value => keyOf(game, "difficulty", Number(value))).as("difficulty"),
+      difficulty: sql`${parentSong.difficulty}`.mapWith(value => definedKeyOf(game, "difficulty", Number(value))).as("difficulty"),
       level: songs.level,
       levelPrecise: songs.levelPrecise,
       metadata: songs.metadata,
-      type: sql`${parentSong.type}`.mapWith(value => keyOf(game, "chartType", Number(value))).as("type"),
+      type: sql`${parentSong.type}`.mapWith(value => definedKeyOf(game, "chartType", Number(value))).as("type"),
       genre: parentSong.genre,
       region: songs.region,
       gameVersion: songs.gameVersion,
@@ -122,7 +118,7 @@ export async function querySongDetails(
     .orderBy(songs.region, desc(songs.gameVersion), parentSong.difficulty);
 
   const scoresQuery = userId
-    ? querySongScores(game, songName, type, userId, artist, parentIds)
+    ? querySongScores({ ...song, userId })
     : Promise.resolve(undefined);
 
   const [charts, scores] = await Promise.all([chartsQuery, scoresQuery]);
@@ -209,7 +205,7 @@ export async function queryAllUniqueSongs(game: CanonicalGameId) {
           songName: parentSong.songName,
           artist: parentSong.artist,
           cover: parentSong.cover,
-          type: sql`${parentSong.type}`.mapWith(value => keyOf(game, "chartType", Number(value))).as("type"),
+          type: sql`${parentSong.type}`.mapWith(value => definedKeyOf(game, "chartType", Number(value))).as("type"),
           genre: parentSong.genre,
           difficultyCode: parentSong.difficulty,
           level: songs.level,
@@ -301,14 +297,14 @@ export async function queryAllUniqueSongs(game: CanonicalGameId) {
           .map(
             (d) =>
               ({
-                difficulty: keyOf(game, "difficulty", d.difficultyCode),
+                difficulty: definedKeyOf(game, "difficulty", d.difficultyCode),
                 level: d.level,
                 levelPrecise: d.levelPrecise,
                 levelPreciseEstimated: d.levelPreciseEstimated,
                 noteDesigner: d.noteDesigner,
               }) satisfies UniqueSongDifficulty
           ),
-        slug: song.disambiguator ? `${song.slug}-${song.disambiguator}` : song.slug,
+        slug: formatSongSlug(song.slug, song.disambiguator),
         aliases: song.aliases,
       }));
       return songsStripped;

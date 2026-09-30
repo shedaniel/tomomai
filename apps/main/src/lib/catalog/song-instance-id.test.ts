@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatSongInstanceId, parseSongId } from "./song-instance-id";
+import { formatSongInstanceId, parentPublicIdSchema, parseSongId, songInstanceIdSchema } from "./song-instance-id";
 import { decodeMessage, encodeMessage, mintRenderToken, verifyRenderToken, type RenderMessage } from "@tomomai/render-token";
 
 const header = {
@@ -23,6 +23,13 @@ describe("song instance identifiers", () => {
 
   it.each(["", "123456789", "bad/id!!", "Ab3xK9pQ:", "Ab3xK9pQ:x1", "Ab3xK9pQ:j01", "Ab3xK9pQ:j-0", "Ab3xK9pQ:j32768", "Ab3xK9pQ:j-32769", "Ab3xK9pQ:j1:2"])("rejects malformed ID %s", id => {
     expect(parseSongId(id)).toBeNull();
+  });
+
+  it("validates parent and instance IDs with the parser's own patterns", () => {
+    expect(parentPublicIdSchema.safeParse("Ab3xK9pQ").success).toBe(true);
+    expect(songInstanceIdSchema.safeParse(formatSongInstanceId("Ab3xK9pQ", "cn", -1)).success).toBe(true);
+    for (const id of ["Ab3xK9p", "Ab3xK9pQ:j11", "bad/id!!"]) expect(parentPublicIdSchema.safeParse(id).success).toBe(false);
+    for (const id of ["Ab3xK9pQ", "Ab3xK9pQ:x1", "Ab3xK9pQ:j01", "Ab3xK9pQ:j-0"]) expect(songInstanceIdSchema.safeParse(id).success).toBe(false);
   });
 });
 
