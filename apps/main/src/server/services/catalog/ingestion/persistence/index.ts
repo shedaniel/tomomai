@@ -37,7 +37,7 @@ export type CatalogPersistResult = {
   affected: AffectedChart[];
 };
 
-// The game predicates on the referencing tables let each lookup use its (game, songId) index.
+// Naming the game lets each lookup use the referencing table's index on game and songId.
 async function countReferences(tx: CatalogTransaction, game: CanonicalGameId, songIds: bigint[]): Promise<Map<bigint, number>> {
   const counts = new Map<bigint, number>();
   for (let start = 0; start < songIds.length; start += BATCH_SIZE) {

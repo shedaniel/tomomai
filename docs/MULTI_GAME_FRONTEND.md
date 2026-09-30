@@ -65,8 +65,9 @@ Implemented frontend support:
   its brand, with the brand title as text where it has no artwork, and the
   profile card draws maimai's rating plate only under the `rating-plate`
   capability. The profile image loads the player through
-  `fetchPublicGameProfile`, the profile page's own loader, so it shows the same
-  public snapshot.
+  `fetchPublicGameProfileHeader`, which applies the same access checks as the
+  profile page's `fetchPublicGameProfile` and reads only the public header of
+  the same snapshot.
   Copy belongs to its existing feature namespace instead of a catch-all
   multi-game translation namespace. Copy whose wording differs per game, such as
   the brand headings, the member label and the region taglines, lives in
