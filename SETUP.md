@@ -2,7 +2,17 @@
 
 ## Running Locally
 
-Each process serves one game. Run `pnpm dev:mai` for maimai on port 3000 or `pnpm dev:chu` for CHUNITHM on port 3001, or both at once. Both scripts set `FRONTEND_GAME` and `PORT` (see [App Configuration](#app-configuration)). [docs/MULTI_GAME_FRONTEND.md](docs/MULTI_GAME_FRONTEND.md#per-process-development-setup) explains the per-game build output and custom ports.
+Each process serves one game, chosen by `FRONTEND_GAME` (see [App Configuration](#app-configuration)). Run these from the repository root, in separate terminals to run them together:
+
+| Command | Serves | Port |
+|---|---|---|
+| `pnpm dev:mai` | maimai DX | 3000 |
+| `pnpm dev:chu` | CHUNITHM | 3001 |
+| `pnpm guess:dev` | The guess app | 3002 |
+
+`pnpm dev:mai` and `pnpm dev:chu` set `FRONTEND_GAME` and `PORT`. For another port, set `PORT` rather than appending `--port` to the dev script. In development CHUNITHM builds into `.next-chunithm` instead of `.next`, so the two servers share no locks, output or caches. Browser cookies are shared across localhost ports, so both local sites see the same session.
+
+The game is fixed per build. Set `FRONTEND_GAME` when building, start the build with the same value, and build each game's production output separately rather than concurrently in one checkout. [docs/MULTI_GAME.md](docs/MULTI_GAME.md) explains how the app keeps the games apart.
 
 ## Environment Variables
 

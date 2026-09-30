@@ -1,227 +1,38 @@
 # CHUNITHM catalog
 
-The initial provider is [otoge-db](https://github.com/zvuc/otoge-db). It collects
-regular BASIC, ADVANCED, EXPERT, MASTER and ULTIMA charts into the common catalog
-pipeline. Catalog requests select the game explicitly; the frontend game's
-configuration does not select an ingestion provider. No CHUNITHM-NET session is
-needed. Configuring this catalog does not enable CHUNITHM player fetching or the
-public frontend.
+The CHUNITHM catalog comes from [otoge-db](https://github.com/zvuc/otoge-db) and needs no CHUNITHM-NET session. It runs through the shared catalog pipeline ([MULTI_GAME.md](MULTI_GAME.md#where-things-live)): the source stage for the region, then the shared Fill Missing stage with CHUNITHM's level policy, completion, persistence, publication and cache invalidation. The source is [`server/services/games/chunithm/catalog/sources/otoge-db.ts`](../apps/main/src/server/services/games/chunithm/catalog/sources/otoge-db.ts), with excerpts of both datasets as test fixtures beside it.
 
-## Fetch pipeline
+## Source selection
 
-Both games collect through one `collectCatalog(game, context)`. It takes the
-game's source stages for the region, appends the shared Fill Missing stage with
-the game's level policy, runs them, completes every chart and sorts the result
-by title, artist, chart type and difficulty. CHUNITHM's stages are `OtogeDB`.
-maimai's are its scraper, official songs, DxData, fallback, otoge-db and
-after-fetch stages, or Lxns alone for CN.
-
-Every source emits `PendingChart` records with numeric chart codes. Source
-stages merge into the charts collected so far through `asCatalogFetcher`, with
-one merge policy and one identity, `catalogChartKey`. Source attribution, stage
-notices and final required-field checks belong to the shared runner. Notices,
-logs and errors name a chart with `formatChartLabel` (`lib/games/presentation.ts`),
-such as `Song DX MASTER`, never with its key.
-
-The CHUNITHM otoge-db source parses pending charts only. The shared Fill Missing
-step applies CHUNITHM's `.5` plus-level rule before finalization.
-
-## Code layout
-
-The shared catalog ingestion lives under `apps/main/src/server/services/catalog/`:
-
-- `ingestion/` owns collection (`collect.ts`: `collectCatalog` and source
-  authentication), the stage runner (`runner.ts`), the merge policy and modes
-  (`merge.ts`), display levels and the Fill Missing stage (`levels.ts`), the
-  pending chart and cover-rule contracts (`types.ts`), the completed chart
-  schema and its identity, parent and instance fields (`schema.ts`), the upload
-  contract (`parse-upload.ts`: the schema, known codes, the game's title
-  normalization and no duplicates), chart identity, completion and ordering
-  (`normalize-charts.ts`) and parent identity matching. `lock.ts` holds the
-  advisory lock that serializes every catalog write with publication, and
-  `columns.ts` the instance columns an upsert replaces.
-- `ingestion/persistence/` writes an uploaded slice. `analyze.ts` is the pure
-  part: it matches the upload to the stored slice, merges each pair, describes
-  the changes and plans deletions for the update mode. `parents.ts` finds and
-  creates parents and keeps parent attributes on the preferred instance
-  (`CANONICAL_REGION_PREFERENCE` in `lib/games/regions.ts`). `index.ts`
-  (`persistCatalog`) runs both in one locked transaction and returns the
-  statistics, changes, applied and skipped deletions, and the affected charts.
-- `sources/otoge-db.ts` holds the otoge-db URLs and its date and constant parsing,
-  shared by both games' otoge-db sources.
-- `admin-game.ts` resolves the explicit game, region and version of an admin
-  request and refuses a write for another site's game. Every admin route runs
-  through `adminRoute` (`lib/api/admin-route.ts`), which checks the admin token
-  and answers rejections and failures with the request id.
-- `images.ts` hosts collected covers on R2 with the game's cover rules, and
-  refuses a write whose covers the site cannot load (`requireHosting`).
-- `apply.ts` is what the admin routes run: `collectCatalogRegion` (source login
-  and collection), `applyCatalogUpload` (persist, publish, revalidate and notify)
-  and `updateCatalogRegion`, which `update_all` calls in process for each region
-  to collect, host covers, validate against the upload contract and apply.
-- `publication.ts` publishes game-scoped catalog objects. `revalidation.ts`
-  then invalidates the game's cache tags and, on the game's own site, its song
-  pages, and asks every deployment in `CATALOG_PEER_ORIGINS` to drop its tags
-  through `POST /api/admin/catalog/revalidate`. `notifications.ts` formats the
-  song data update embed, which lists only public fields, and picks its channel
-  per game and region (`resolveUpdateWebhook`).
-
-Discord delivery is generic and lives in
-`apps/main/src/server/services/discord/webhook.ts`. It posts embeds under the
-game's bot identity after the response is sent, truncates long descriptions and
-sends the stage, error and tour event notices.
-
-Each game describes its catalog once, as the `catalog` field of its server
-module (`server/services/games/<game>/index.ts`, typed `CatalogSource`): its
-source stages per region (loaded lazily), level policy, cover rules, title
-normalization, source login and, for maimai, the legacy upload decoder. The
-regions whose collection needs a player token are data on the game definition
-(`catalogTokenRegions`), so the admin dialog shows the token field from the
-same list. Uploads must already use a game's title normalization, and
-`/api/admin/db?type=normalize` applies the same rule to stored parents. A game
-without one, such as CHUNITHM, keeps source titles, and the route answers `422`
-for it. The implementations live in
-`apps/main/src/server/services/games/<game>/catalog/`:
-
-- `maimai/catalog/` owns its stage list (`pipeline.ts`), the chart helper and
-  level policy (`chart.ts`), the legacy upload decoder (`legacy-upload.ts`),
-  genre normalization, cover rules (`images.ts`) and `sources/` implementations.
-- `chunithm/catalog/` owns its cover rules (`images.ts`) and the otoge-db source
-  under `sources/`, with source fixtures under `fixtures/` and its tests beside
-  the source.
-
-Admin routes authenticate and dispatch an explicit game into these shared
-entrypoints. Both games run in the same order: source stages, Fill Missing,
-required-field completion, sorting, persistence, publication, then cache
-invalidation and notifications.
-
-## Sources and versions
-
-Versions observed in the saved fixtures (2026-09-26):
-
-| Region | Dataset | Catalog version |
-| --- | --- | --- |
-| JP | `chunithm/data/music-ex.json` | Mate (9) |
-| International | `chunithm/data/music-ex-intl.json` | X-VERSE-X (8) |
-
-Both files come from `https://raw.githubusercontent.com/zvuc/otoge-db/main/`.
-Cover images come from the same repository's `chunithm/jacket/<image>` path.
-The shared image stage converts them to WebP and stores them at
-`${NEXT_PUBLIC_R2_URL}/covers/chunithm/<source-basename>.webp`. The game directory
-avoids collisions with maimai, and both regions reuse the same stored jacket.
-Existing objects skip downloading, conversion and upload. Image failures abort
-that region's workflow before database persistence; raw source URLs are not used
-as a fallback.
-
-This provider supports current snapshots only. The current version comes from
-the CHUNITHM version table in `lib/games/chunithm/versions.ts`, including its
-regional release dates and the shared 07:00 JST rollover. Historical-version requests fail before fetching.
-Adding a release only requires updating the canonical version metadata; the
-otoge-db source contains no per-release configuration. The source's per-song `version` is the original **Japanese** release, so it cannot be
-used as the International catalog version. International already includes some
-Japanese Mate songs released there during X-VERSE-X.
-
-The International file contains unavailable records: entries with `intl: "0"`
-are excluded. JP excludes `intl: "2"` (International-only). WORLD'S END entries
-have `we_kanji` / `we_star` fields and are excluded, including variants that share
-a title with a regular chart. The deleted-song archive is not imported.
+- JP reads `chunithm/data/music-ex.json` and International `chunithm/data/music-ex-intl.json`, both from `https://raw.githubusercontent.com/zvuc/otoge-db/main/`.
+- International drops entries with `intl: "0"` (not available there), and JP drops entries with `intl: "2"` (International only).
+- WORLD'S END entries (those with `we_kanji` or `we_star`) are dropped, including variants that share a title with a regular chart. The deleted-song archive is not imported. The remaining charts are BASIC, ADVANCED, EXPERT, MASTER and ULTIMA.
+- Only the current version is collected. It comes from the CHUNITHM version table (`lib/games/chunithm/versions.ts`) and its regional release dates, so a new release needs only a new row there. Requests for a historical version fail before fetching.
 
 ## Normalization
 
-- Display levels are kept separately from the optional `lev_*_i` chart constant.
-  A known `14.2` becomes `levelPrecise: 142`. The shared Fill Missing stage
-  estimates absent constants from the displayed lower bound: `14` → `140`,
-  `14+` → `145` for CHUNITHM. Known source constants are not replaced. maimai's
-  level policy keeps its `.6` / historical `.7` plus thresholds and mismatch
-  correction. Completed
-  catalog charts always have numeric precision; an unresolvable chart fails
-  validation instead of being dropped.
-- `addedVersion` uses the existing shared date-to-version helper and is required
-  in completed charts.
-  BASIC–MASTER use the regional song-added date. ULTIMA prefers the regional
-  chart-update date and falls back to the regional song-added date when absent.
-  Such fallbacks carry `metadata.addedVersionEstimated: true`. This fallback can
-  place a later ULTIMA chart in an earlier release until a more precise regional
-  update date becomes available.
-- The local pre-NEW International release table contains aliases sharing one date.
-  The shared date-to-version helper resolves ties using the recognized original
-  JP version only among matching candidates. Unambiguous regional dates take
-  precedence: a JP Mate song released internationally during X-VERSE-X remains
-  version 8. Source version labels and aliases belong to the canonical CHUNITHM
-  version metadata. Missing required dates fail the shared finalization step.
-- `metadata.levelPreciseEstimated: true` marks an estimated constant. Estimates
-  participate in rating calculations as in maimai, and catalog displays prefix
-  them with `≈`. Subsequent estimates cannot overwrite a known constant for an
-  unchanged display level. A later confirmed source constant replaces an estimate.
-- `songs.metadata` follows `catalogMetadataSchema` (`lib/catalog/chart-metadata.ts`),
-  which rejects any other key. An estimate flag is written only when true. The
-  source ID is kept as `metadata.source` (`{ provider: "otoge-db", id }`), and the
-  CHUNITHM note counts per kind as `metadata.noteCounts`. Air and flick counts
-  are not coerced into maimai note types, and non-numeric BPM text leaves the BPM
-  unknown. The public API never publishes this metadata. It exposes the two
-  estimate flags and the note counts, which `readChunithmNoteCounts`
-  (`lib/games/chunithm/note-counts.ts`) reads.
-- The source maps typed upstream records into pending charts, following the
-  maimai provider. Shared finalization validates required fields and numeric
-  codes before persistence. Chart identity is still game/title/chart
-  type/difficulty; the source ID is retained as provenance, not yet used to
-  reconcile future song renames.
+- The displayed level and the optional `lev_*_i` chart constant are kept apart. A known `14.2` becomes `levelPrecise: 142`. Fill Missing estimates an absent constant from the displayed level (`14` becomes `140`, `14+` becomes `145`) and never replaces a known one. A later confirmed constant replaces an estimate, and an estimate never overwrites a known constant for an unchanged display level. A chart whose constant cannot be resolved fails validation instead of being dropped.
+- `addedVersion` comes from the regional release date. BASIC to MASTER use the regional song-added date. ULTIMA prefers the regional chart-update date and falls back to the song-added date, which can place a later ULTIMA chart in an earlier release, so that fallback is marked estimated.
+- The source's per-song `version` is the original JP release and is not used as the International version. It only breaks ties between International releases that share a date, and an unambiguous regional date always wins, so a JP Mate song released internationally during X-VERSE-X stays version 8.
+- `songs.metadata` follows `catalogMetadataSchema` ([`lib/catalog/chart-metadata.ts`](../apps/main/src/lib/catalog/chart-metadata.ts)), which rejects any other key. It holds `levelPreciseEstimated` and `addedVersionEstimated`, written only when true, the source id as `source: { provider: "otoge-db", id }`, and the note counts per kind as `noteCounts`. Air and flick counts are not coerced into maimai note kinds, and non-numeric BPM text leaves the BPM unknown. The public API publishes the two estimate flags and the note counts (read through `readChunithmNoteCounts`), never the raw metadata.
+- Titles are kept as the source spells them. CHUNITHM has no title normalization, so `/api/admin/db?type=normalize&game=chunithm` answers 422. Chart identity is game, title, chart type and difficulty, and the source id is provenance only.
 
-## Verification
+## Covers
 
-Small unmodified excerpts of both public datasets are stored alongside provider
-tests in `apps/main/src/server/services/games/chunithm/catalog/fixtures`. The snapshots were
-read on 2026-09-26; source Git blob IDs were
-`2dddbe4815bfc0abb22d485935fdb5bfd201602a` (JP) and
-`e78d65e5ec93851a34d6f2fc5b239412e94af8b7` (International).
-
-Full snapshots passed through the shared source and Fill Missing stages:
-6,843 regular JP charts (2,261 known constants) and 6,363 International charts
-(2,242 known constants), all with numeric `levelPrecise` and `addedVersion`. These are
-source coverage observations, not minimum counts enforced against future
-releases. Focused tests cover regional availability, required-field finalization, missing
-metadata, numeric codes, fallback thresholds, ULTIMA, WORLD'S END exclusion,
-HTTP failures, release rollover, shared stage order and attribution notices. No database ingestion is required to run them.
+The site cannot load otoge-db covers, so CHUNITHM requires hosted covers. Each jacket from `chunithm/jacket/<image>` is converted to WebP and stored at `${NEXT_PUBLIC_R2_URL}/covers/chunithm/<source-basename>.webp`, shared by both regions. Existing objects are not downloaded again. `update_all` with `image_upload=false` answers 400, and a write whose covers still point at otoge-db is refused. An image failure aborts that region before anything is stored.
 
 ## Admin requests
 
-Every admin request names its game. Requests that write the catalog (`upload`,
-`update_all`, `db`, `import` and `catalog/publish`) must go to the game's own
-site, the deployment whose `FRONTEND_GAME` is that game, because only that
-deployment renders the game's pages and can refresh them. Any other deployment
-answers `409` with `WRONG_SITE`. Every deployment serves every game's public
-API, so the writing site then asks the deployments listed in
-`CATALOG_PEER_ORIGINS` to drop their cached copies. Collection alone may run on
-any deployment:
+Every admin request names its game and needs the `ADMIN_UPDATE_TOKEN` bearer token. No game account token is involved.
 
-- `/api/admin/update?game=chunithm&region=jp` collects and returns the catalog.
-- `/api/admin/update_all?game=chunithm&image_upload=true`, on the CHUNITHM site,
-  runs catalog ingestion for the configured regions (International then JP by
-  default). Add `region=jp` or `region=intl` to select one region explicitly.
+- `GET /api/admin/update?game=chunithm&region=jp` collects a region and returns the charts without writing. It may run on any deployment.
+- `GET /api/admin/update_all?game=chunithm` collects, hosts covers, stores and publishes every enabled region (International, then JP), or every region while none is enabled. Add `region=jp` or `region=intl` for one region.
+- Writes (`update_all`, `upload`, `import`, `db` and `catalog/publish`) must run on the CHUNITHM deployment, whose `FRONTEND_GAME` is `chunithm`, because only it renders CHUNITHM's pages. Any other deployment answers 409. After a write, the CHUNITHM deployment asks every origin in `CATALOG_PEER_ORIGINS` to drop its cached copy of the CHUNITHM API, so each deployment lists the others there and all share one `ADMIN_UPDATE_TOKEN`.
 
-Image processing is enabled by default, and CHUNITHM enforces it because the
-frontend cannot load otoge-db covers: `image_upload=false` answers `400`, and a
-write whose covers still point at otoge-db is refused. To replace covers in an
-existing imported catalog, rerun `region=jp` and `region=intl`. International
-alone may leave JP-preferred parent covers unchanged. Each region's publication
-rebuilds all of the game's catalog slices, so a JP update also republishes
-International.
-
-Existing admin authentication remains required. A game account token is not
-required for this public provider. Ingestion and publication still need the
-existing database/R2 configuration; these commands are not run by the tests.
-
-For example, collecting on the maimai site:
+A region's publication rebuilds all of CHUNITHM's catalog objects, so a JP update also republishes International. To replace covers in an existing catalog, run both regions, because International alone may leave covers of JP-preferred parents unchanged.
 
 ```sh
 curl --fail-with-body \
   -H 'Authorization: Bearer <ADMIN_UPDATE_TOKEN>' \
-  'https://tomomai.lol/api/admin/update?game=chunithm&region=jp'
+  'https://tomochu.app/api/admin/update_all?game=chunithm'
 ```
-
-Replace the token placeholder locally. The collection request reads the public
-source; `update_all` additionally writes the catalog and publishes its objects.
-No maimai or CHUNITHM account-session token belongs in this request.
-
-Both `levelPrecise` and `addedVersion` retain their required numeric database and
-API contracts. The catalog provider needs no schema change or new migration.
