@@ -1,8 +1,6 @@
-import { db } from '@/lib/db';
-import { account, user, userSnapshots } from '@/lib/db/schema-pg';
+import { userSnapshots } from '@/lib/db/schema-pg';
 import { getLogger } from '@/lib/request-logger';
 import { waitUntil } from '@vercel/functions';
-import { and, eq } from 'drizzle-orm';
 import type { Region } from '@/lib/types';
 import {
   createDeferredResponse,
@@ -25,27 +23,11 @@ import {
 } from '../staleness';
 import { latestSnapshot } from '@/server/queries/latest-snapshot';
 import { DISCORD_GAME } from '../game';
-
-interface ResolvedUser {
-  id: string;
-  name: string;
-  username: string | null;
-  region: Region | null;
-}
-
-async function resolveDbUser(discordUserId: string): Promise<ResolvedUser | null> {
-  const [dbUser] = await db
-    .select({ id: user.id, name: user.name, username: user.username, region: user.region })
-    .from(user)
-    .innerJoin(account, eq(account.userId, user.id))
-    .where(and(eq(account.accountId, discordUserId), eq(account.providerId, 'discord')))
-    .limit(1);
-  return dbUser ?? null;
-}
+import { findDiscordUser, type DiscordUser } from '../user';
 
 async function runCommand(
   command: StaleCommand,
-  dbUser: ResolvedUser,
+  dbUser: DiscordUser,
   region: Region,
   discordUserId: string,
   applicationId: string,
@@ -71,7 +53,7 @@ async function runCommand(
 
 export interface ApplyStalenessGateOptions {
   command: StaleCommand;
-  dbUser: ResolvedUser;
+  dbUser: DiscordUser;
   region: Region;
   discordUserId: string;
   forceFetch?: boolean;
@@ -134,7 +116,7 @@ export async function applyStalenessGate({
 
 export interface RunRefetchThenCommandOptions {
   command: StaleCommand;
-  dbUser: ResolvedUser;
+  dbUser: DiscordUser;
   region: Region;
   discordUserId: string;
   applicationId: string;
@@ -237,7 +219,7 @@ export async function handleStalenessChoice({
     return createErrorResponse(t(locale, 'common.error.unableToIdentifyShort'));
   }
 
-  const dbUser = await resolveDbUser(discordUserId);
+  const dbUser = await findDiscordUser(discordUserId);
   if (!dbUser) {
     return createErrorResponse(t(locale, 'common.error.generic'));
   }

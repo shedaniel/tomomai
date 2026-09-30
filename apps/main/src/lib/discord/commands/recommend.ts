@@ -1,5 +1,3 @@
-import { db } from '@/lib/db';
-import { account, user } from '@/lib/db/schema-pg';
 import { keyOf } from '@/lib/games/codes';
 import { formatGameLevel, formatGameScore } from '@/lib/games/presentation';
 import { getGame } from '@/lib/games/registry';
@@ -8,7 +6,6 @@ import { fetchLatestSnapshotData } from '@/server/queries/snapshots';
 import { formatRecommendationTarget, generateRecommendations, type RecommendationData } from '@/lib/games/recommendations';
 import { getLogger } from '@/lib/request-logger';
 import { waitUntil } from '@vercel/functions';
-import { and, eq } from 'drizzle-orm';
 import {
   createDeferredResponse,
   createErrorResponse,
@@ -22,6 +19,7 @@ import { resolveRegion } from '../region';
 import { applyStalenessGate } from './staleness';
 import { regionDisplayName, t } from '../i18n';
 import { DISCORD_GAME } from '../game';
+import { findDiscordUser } from '../user';
 
 export interface RecommendCommandOptions {
   discordUserId: string;
@@ -150,20 +148,7 @@ export async function handleRecommendCommand({
       return createErrorResponse(t(locale, 'common.error.unableToIdentify'));
     }
 
-    const [dbUser] = await db
-      .select({
-        id: user.id,
-        name: user.name,
-        username: user.username,
-        region: user.region,
-      })
-      .from(user)
-      .innerJoin(account, eq(account.userId, user.id))
-      .where(and(
-        eq(account.accountId, discordUserId),
-        eq(account.providerId, 'discord')
-      ))
-      .limit(1);
+    const dbUser = await findDiscordUser(discordUserId);
 
     if (!dbUser) {
       return createNotRegisteredResponse(locale);
@@ -174,7 +159,7 @@ export async function handleRecommendCommand({
 
     const gate = await applyStalenessGate({
       command: 'recommend',
-      dbUser: { id: dbUser.id, name: dbUser.name, username: dbUser.username, region: dbUser.region },
+      dbUser,
       region,
       discordUserId,
       forceFetch,

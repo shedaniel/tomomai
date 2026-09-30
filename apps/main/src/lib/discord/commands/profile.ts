@@ -1,11 +1,9 @@
-import { db } from '@/lib/db';
-import { account, user } from '@/lib/db/schema-pg';
 import { getLogger } from '@/lib/request-logger';
 import { waitUntil } from '@vercel/functions';
-import { and, eq } from 'drizzle-orm';
 import type { Region } from '@/lib/types';
 import { generateAndSendProfileImage } from '../image-utils';
 import { getProfileSummary, resolveRegion } from '../region';
+import { findDiscordUser, type DiscordUser } from '../user';
 import {
   createDeferredResponse,
   createErrorResponse,
@@ -28,7 +26,7 @@ export interface ProfileCommandOptions {
 }
 
 export interface ExecuteProfileOptions {
-  dbUser: { id: string; name: string; username: string | null; region: Region | null };
+  dbUser: DiscordUser;
   region: Region;
   discordUserId: string;
   applicationId: string;
@@ -104,21 +102,7 @@ export async function handleProfileCommand({
       return createErrorResponse(t(locale, 'common.error.unableToIdentify'));
     }
 
-    // Find user by Discord ID via account table
-    const [dbUser] = await db
-      .select({
-        id: user.id,
-        name: user.name,
-        username: user.username,
-        region: user.region,
-      })
-      .from(user)
-      .innerJoin(account, eq(account.userId, user.id))
-      .where(and(
-        eq(account.accountId, discordUserId),
-        eq(account.providerId, 'discord')
-      ))
-      .limit(1);
+    const dbUser = await findDiscordUser(discordUserId);
 
     if (!dbUser) {
       return createNotRegisteredResponse(locale);
@@ -129,7 +113,7 @@ export async function handleProfileCommand({
 
     const gate = await applyStalenessGate({
       command: 'profile',
-      dbUser: { id: dbUser.id, name: dbUser.name, username: dbUser.username, region: dbUser.region },
+      dbUser,
       region,
       discordUserId,
       forceFetch,

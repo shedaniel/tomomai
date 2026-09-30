@@ -1,11 +1,12 @@
 import { db } from '@/lib/db';
-import { account, user } from '@/lib/db/schema-pg';
+import { user } from '@/lib/db/schema-pg';
 import { getLogger } from '@/lib/request-logger';
-import { and, eq } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { waitUntil } from '@vercel/functions';
 import { DiscordResponse, editDiscordMessage, DISCORD_COLORS, createDeferredResponse } from '../responses';
 import { t } from '../i18n';
 import { handleFetchCommand } from './fetch';
+import { findDiscordUser } from '../user';
 import type { Region } from '@/lib/types';
 
 export interface AlbumPreferenceOptions {
@@ -31,18 +32,7 @@ export async function handleAlbumPreferenceSelection({
   // Do the heavy work in the background
   const backgroundTask = (async () => {
     try {
-      // Get the user by Discord ID
-      const [dbUser] = await db
-        .select({ id: user.id })
-        .from(user)
-        .innerJoin(account, eq(account.userId, user.id))
-        .where(
-          and(
-            eq(account.accountId, discordUserId),
-            eq(account.providerId, 'discord')
-          )
-        )
-        .limit(1);
+      const dbUser = await findDiscordUser(discordUserId);
 
       if (!dbUser) {
         await editDiscordMessage(applicationId, interactionToken, {

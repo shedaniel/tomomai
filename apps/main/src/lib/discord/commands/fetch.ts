@@ -1,11 +1,8 @@
-import { db } from '@/lib/db';
 import { parseStatusStates } from '@/lib/fetch-states';
 import { getGame } from '@/lib/games/registry';
 import { getScoreFetchStatus, startScoreFetch } from '@/server/services/games/fetch-sessions';
-import { account, user } from '@/lib/db/schema-pg';
 import { getLogger } from '@/lib/request-logger';
 import { waitUntil } from '@vercel/functions';
-import { and, eq } from 'drizzle-orm';
 import { generateAndSendProfileImage } from '../image-utils';
 import { getProfileSummary, resolveRegion } from '../region';
 import { FetchStartError } from '@/server/services/games/fetch-errors';
@@ -22,6 +19,7 @@ import {
 } from '../responses';
 import { regionDisplayName, t } from '../i18n';
 import { DISCORD_GAME } from '../game';
+import { findDiscordUser } from '../user';
 import { Region } from '@/lib/types';
 import { formatMaintenanceWindow, getGameMaintenance, type GameMaintenance } from '@/lib/games/maintenance';
 
@@ -97,21 +95,7 @@ export async function handleFetchCommand({
       return createErrorResponse(t(locale, 'common.error.unableToIdentify'));
     }
 
-    // Find user by Discord ID via account table
-    const [dbUser] = await db
-      .select({
-        id: user.id,
-        name: user.name,
-        username: user.username,
-        region: user.region,
-      })
-      .from(user)
-      .innerJoin(account, eq(account.userId, user.id))
-      .where(and(
-        eq(account.accountId, discordUserId),
-        eq(account.providerId, 'discord')
-      ))
-      .limit(1);
+    const dbUser = await findDiscordUser(discordUserId);
 
     if (!dbUser) {
       return createNotRegisteredResponse(locale);

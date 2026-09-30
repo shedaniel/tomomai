@@ -1,8 +1,5 @@
-import { db } from '@/lib/db';
-import { account, user } from '@/lib/db/schema-pg';
 import { getLogger } from '@/lib/request-logger';
 import { waitUntil } from '@vercel/functions';
-import { and, eq } from 'drizzle-orm';
 import type { Region } from '@/lib/types';
 import {
   createDeferredResponse,
@@ -11,23 +8,11 @@ import {
   DiscordResponse,
 } from '../responses';
 import { resolveRegion } from '../region';
+import { findDiscordUser } from '../user';
 import { generateAndSendDailyPlaysImage } from '../image-utils';
 import { listDailyPlaysAvailableDays } from '@/server/services/games/maimai/render/daily-plays-data';
 import { applyStalenessGate } from './staleness';
 import { t } from '../i18n';
-
-async function findDbUserByDiscordId(discordUserId: string) {
-  const [dbUser] = await db
-    .select({ id: user.id, name: user.name, username: user.username, region: user.region })
-    .from(user)
-    .innerJoin(account, eq(account.userId, user.id))
-    .where(and(
-      eq(account.accountId, discordUserId),
-      eq(account.providerId, 'discord')
-    ))
-    .limit(1);
-  return dbUser;
-}
 
 export interface DailyCommandOptions {
   discordUserId: string;
@@ -83,7 +68,7 @@ export async function handleDailyCommand({
       return createErrorResponse(t(locale, 'common.error.unableToIdentify'));
     }
 
-    const dbUser = await findDbUserByDiscordId(discordUserId);
+    const dbUser = await findDiscordUser(discordUserId);
     if (!dbUser) {
       return createNotRegisteredResponse(locale);
     }
@@ -93,7 +78,7 @@ export async function handleDailyCommand({
 
     const gate = await applyStalenessGate({
       command: 'daily',
-      dbUser: { id: dbUser.id, name: dbUser.name, username: dbUser.username, region: dbUser.region },
+      dbUser,
       region,
       discordUserId,
       forceFetch,
@@ -147,7 +132,7 @@ export async function handleDailyAutocomplete({
   }
 
   try {
-    const dbUser = await findDbUserByDiscordId(discordUserId);
+    const dbUser = await findDiscordUser(discordUserId);
     if (!dbUser) {
       return { type: 8, data: { choices: [] } };
     }
