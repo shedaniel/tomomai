@@ -37,8 +37,7 @@ export type CatalogPersistResult = {
   affected: AffectedChart[];
 };
 
-// Naming the game lets each lookup use the referencing table's index on game and songId.
-async function countReferences(tx: CatalogTransaction, game: CanonicalGameId, songIds: bigint[]): Promise<Map<bigint, number>> {
+async function countReferences(tx: CatalogTransaction, songIds: bigint[]): Promise<Map<bigint, number>> {
   const counts = new Map<bigint, number>();
   for (let start = 0; start < songIds.length; start += BATCH_SIZE) {
     const ids = songIds.slice(start, start + BATCH_SIZE);
@@ -46,11 +45,11 @@ async function countReferences(tx: CatalogTransaction, game: CanonicalGameId, so
     await tx.select({ id: songs.id }).from(songs).where(inArray(songs.id, ids)).for("update");
     const references = await Promise.all([
       tx.select({ songId: scoreData.songId, count: count() }).from(scoreData)
-        .where(and(eq(scoreData.game, game), inArray(scoreData.songId, ids))).groupBy(scoreData.songId),
+        .where(inArray(scoreData.songId, ids)).groupBy(scoreData.songId),
       tx.select({ songId: userRecentSongs.songId, count: count() }).from(userRecentSongs)
-        .where(and(eq(userRecentSongs.game, game), inArray(userRecentSongs.songId, ids))).groupBy(userRecentSongs.songId),
+        .where(inArray(userRecentSongs.songId, ids)).groupBy(userRecentSongs.songId),
       tx.select({ songId: userAlbums.songId, count: count() }).from(userAlbums)
-        .where(and(eq(userAlbums.game, game), inArray(userAlbums.songId, ids))).groupBy(userAlbums.songId),
+        .where(inArray(userAlbums.songId, ids)).groupBy(userAlbums.songId),
     ]);
     for (const row of references.flat()) counts.set(row.songId, (counts.get(row.songId) ?? 0) + row.count);
   }
@@ -73,9 +72,9 @@ async function deleteInstances(tx: CatalogTransaction, game: CanonicalGameId, de
       eq(songs.game, game),
       inArray(songs.id, ids),
       ...(mode === "destructive" ? [] : [
-        notExists(tx.select().from(scoreData).where(and(eq(scoreData.game, game), eq(scoreData.songId, songs.id)))),
-        notExists(tx.select().from(userRecentSongs).where(and(eq(userRecentSongs.game, game), eq(userRecentSongs.songId, songs.id)))),
-        notExists(tx.select().from(userAlbums).where(and(eq(userAlbums.game, game), eq(userAlbums.songId, songs.id)))),
+        notExists(tx.select().from(scoreData).where(eq(scoreData.songId, songs.id))),
+        notExists(tx.select().from(userRecentSongs).where(eq(userRecentSongs.songId, songs.id))),
+        notExists(tx.select().from(userAlbums).where(eq(userAlbums.songId, songs.id))),
       ]),
     )).returning({ id: songs.id });
     for (const row of rows) deleted.add(String(row.id));
@@ -104,7 +103,7 @@ export async function persistCatalog(
 
     const nonPreferredParents = await findNonPreferredParents(tx, stored.map(entry => entry.parentId), instance);
     const analysis = analyzeChanges(stored, charts, nonPreferredParents);
-    const changes = describeChanges(analysis, await countReferences(tx, game, analysis.removed.map(entry => entry.id)));
+    const changes = describeChanges(analysis, await countReferences(tx, analysis.removed.map(entry => entry.id)));
     const statistics = {
       inputSongs: charts.length,
       dbSongs: stored.length,

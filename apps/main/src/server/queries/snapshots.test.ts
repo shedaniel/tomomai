@@ -53,8 +53,7 @@ it.each([
   expect(header.params).toContain("chunithm");
   // Children are reached through the game-checked snapshot, and the composite keys keep them in its game.
   expect(scores.params).toEqual([INTERNAL_ID]);
-  // The events index leads with game, so the game predicate stays.
-  expect(events.params).toEqual(["chunithm", INTERNAL_ID]);
+  expect(events.params).toEqual([INTERNAL_ID]);
 });
 
 it("reads the owner's snapshot by public id in whichever region it was fetched, and nothing of another owner or game", async () => {

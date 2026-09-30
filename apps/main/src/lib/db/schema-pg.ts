@@ -206,7 +206,6 @@ export const userSnapshots = pgTable("user_snapshots", {
 }, (table) => [
   index("user_snapshots_publicid_idx").on(table.publicId),
   unique("user_snapshots_id_game_unique").on(table.id, table.game),
-  index("user_snapshots_userid_game_region_idx").on(table.userId, table.game, table.region),
   index("user_snapshots_userid_game_region_fetchedat_idx").on(table.userId, table.game, table.region, table.fetchedAt),
 ]);
 
@@ -270,7 +269,6 @@ export const scoreData = pgTable("score_data", {
     foreignColumns: [songs.id, songs.game],
     name: "score_data_song_game_fk",
   }).onDelete("cascade"),
-  index("score_data_game_songid_idx").on(table.game, table.songId),
 ]);
 
 export const snapshotScores = pgTable("snapshot_scores", {
@@ -330,7 +328,7 @@ export const userEvents = pgTable("user_events", {
     foreignColumns: [userSnapshots.id, userSnapshots.game],
     name: "user_events_snapshot_game_fk",
   }).onDelete("cascade"),
-  index("user_events_game_snapshotid_idx").on(table.game, table.snapshotId),
+  index("user_events_snapshotid_game_idx").on(table.snapshotId, table.game),
 ]);
 
 export const userRecentSongs = pgTable("user_recent_songs", {
@@ -348,14 +346,12 @@ export const userRecentSongs = pgTable("user_recent_songs", {
   clearStatus: smallint("clearStatus").notNull().default(0),
   track: smallint("track"),
 }, (table) => [
-  // Unique constraint to prevent duplicate entries at DB level
+  // Prevents duplicate plays, and also serves a user's play history of one song
   unique("user_recent_songs_userid_game_songid_playedat_unique").on(table.userId, table.game, table.songId, table.playedAt),
   // Primary query pattern: get recent plays for a user (ordered by playedAt DESC)
   index("user_recent_songs_userid_game_playedat_idx").on(table.userId, table.game, table.playedAt.desc()),
-  // For duplicate checking and getting play history of a specific song for a user
-  index("user_recent_songs_userid_game_songid_idx").on(table.userId, table.game, table.songId),
   // For queries related to specific songs across all users (analytics/admin)
-  index("user_recent_songs_game_songid_idx").on(table.game, table.songId),
+  index("user_recent_songs_songid_game_idx").on(table.songId, table.game),
   foreignKey({
     columns: [table.songId, table.game],
     foreignColumns: [songs.id, songs.game],
@@ -510,7 +506,7 @@ export const userAlbums = pgTable("user_albums", {
   createdAt: timestamp("createdAt", { precision: 0 }).notNull().defaultNow(),
 }, (table) => [
   index("user_albums_userid_game_takenat_idx").on(table.userId, table.game, table.takenAt.desc()),
-  index("user_albums_game_songid_idx").on(table.game, table.songId),
+  index("user_albums_songid_game_idx").on(table.songId, table.game),
   foreignKey({
     columns: [table.songId, table.game],
     foreignColumns: [songs.id, songs.game],

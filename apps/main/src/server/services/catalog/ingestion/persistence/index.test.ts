@@ -154,16 +154,16 @@ describe("catalog persistence", () => {
     expect(state.reads.some(query => query.sql.includes("for update"))).toBe(true);
     for (const table of REFERENCING_TABLES) {
       const count = state.reads.find(query => query.sql.includes(`from "${table}"`));
-      expect(count?.sql).toContain(`"${table}"."game" = $1`);
-      expect(count?.params).toEqual(["chunithm", BigInt(12)]);
+      expect(count?.sql).toContain(`where "${table}"."songId" in ($1)`);
+      expect(count?.params).toEqual([BigInt(12)]);
     }
     expect(state.deletes).toHaveLength(deleted ? 1 : 0);
     if (deleted) {
       expect(state.deletes[0].sql).toContain('"songs"."game" = $1');
       expect(state.deletes[0].sql.includes("not exists")).toBe(mode === "alter");
-      expect(state.deletes[0].params).toEqual(mode === "alter" ? ["chunithm", BigInt(12), "chunithm", "chunithm", "chunithm"] : ["chunithm", BigInt(12)]);
+      expect(state.deletes[0].params).toEqual(["chunithm", BigInt(12)]);
       if (mode === "alter") for (const table of REFERENCING_TABLES) {
-        expect(state.deletes[0].sql).toContain(`from "${table}" where ("${table}"."game" = $`);
+        expect(state.deletes[0].sql).toContain(`from "${table}" where "${table}"."songId" = "songs"."id"`);
       }
     }
   });

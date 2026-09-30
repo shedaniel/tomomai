@@ -135,7 +135,7 @@ export async function fetchSnapshotData(
     )
     .limit(1);
 
-  return row ? readSnapshotData(game, row) : null;
+  return row ? readSnapshotData(row) : null;
 }
 
 /** The owner's snapshot in whichever region it was fetched, with that region. */
@@ -152,7 +152,7 @@ export async function fetchSnapshotDataByPublicId(game: CanonicalGameId, userId:
     )
     .limit(1);
 
-  return row ? { region: row.region, ...await readSnapshotData(game, row) } : null;
+  return row ? { region: row.region, ...await readSnapshotData(row) } : null;
 }
 
 const playerScoreColumns = {
@@ -173,7 +173,7 @@ const playerScoreColumns = {
   clearStatus: scoreData.clearStatus,
 };
 
-async function readSnapshotData<S extends GameSnapshot>(game: CanonicalGameId, { id: snapshotId, snapshot }: { id: number; snapshot: S }) {
+async function readSnapshotData<S extends GameSnapshot>({ id: snapshotId, snapshot }: { id: number; snapshot: S }) {
   const songsWithScores = await db
     .select(playerScoreColumns)
     .from(snapshotScores)
@@ -195,8 +195,7 @@ async function readSnapshotData<S extends GameSnapshot>(game: CanonicalGameId, {
       eventPeriodEnd: userEvents.eventPeriodEnd,
     })
     .from(userEvents)
-    // Unlike the other snapshot children, the events index leads with game.
-    .where(and(eq(userEvents.game, game), eq(userEvents.snapshotId, snapshotId)));
+    .where(eq(userEvents.snapshotId, snapshotId));
 
   return {
     snapshot,
@@ -207,7 +206,7 @@ async function readSnapshotData<S extends GameSnapshot>(game: CanonicalGameId, {
 
 export async function fetchLatestSnapshotData(game: CanonicalGameId, userId: string, region: Region) {
   const row = await latestSnapshot(game, userId, region, snapshotWithInternalId);
-  return row ? readSnapshotData(game, row) : null;
+  return row ? readSnapshotData(row) : null;
 }
 
 /** The rating selection stored when the owner's snapshot was written, rated with the current chart constants. */
