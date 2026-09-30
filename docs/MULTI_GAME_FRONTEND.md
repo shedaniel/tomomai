@@ -464,6 +464,9 @@ region overrides, so the client offers exactly what `resolveGameContext`
 accepts. The dashboard tabs are the table in
 `src/components/player/player-tabs.tsx`: each tab names its capability and its
 privacy or flag rule, and `DataContent` renders the active tab's component.
+A visitor's privacy rules come from `PUBLIC_VIEWS` in
+`src/lib/games/public-player.ts`, which the public snapshot procedures enforce
+on the server.
 Pieces every game renders its own way are `GAME_UI` slots in
 `src/components/games/registry.tsx`, currently the score hover and the recent
 play details, so shared cards render the slot instead of branching. A recent
