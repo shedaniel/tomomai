@@ -25,9 +25,8 @@ vi.mock("next-intl/server", async () => {
   };
 });
 vi.mock("@/lib/games/current", async () => {
-  const { toFrontendGame } = await import("@/lib/games/frontend");
-  const { getGame } = await import("@/lib/games/registry");
-  return { getCurrentGame: () => toFrontendGame(getGame(current.game), current.regions) };
+  const { testGame } = await import("@/test/games");
+  return { getCurrentGame: () => testGame(current.game, current.regions) };
 });
 vi.mock("@/lib/auth-server", () => ({ getServerSession: current.session }));
 vi.mock("@/lib/flags", () => ({ useFlags: async () => ({}) }));

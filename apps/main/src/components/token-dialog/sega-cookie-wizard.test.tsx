@@ -5,9 +5,9 @@ import { NextIntlClientProvider } from "next-intl";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { TokenDialog } from "@/components/token-dialog";
 import { GameProvider } from "@/components/providers/game-provider";
-import { toFrontendGame, type FrontendGame } from "@/lib/games/frontend";
-import { getGame } from "@/lib/games/registry";
+import type { FrontendGame } from "@/lib/games/frontend";
 import messages from "../../../messages/en.json";
+import { testGame } from "@/test/games";
 
 const state = vi.hoisted(() => ({ query: vi.fn(), submit: vi.fn(), loginPageUrl: "" }));
 vi.mock("@/lib/trpc-client", () => ({ trpc: { user: {
@@ -39,8 +39,8 @@ async function render(game: FrontendGame, region: "intl" | "jp" = "intl") {
 }
 
 const games: FrontendGame[] = [
-  { ...toFrontendGame(getGame("maimai"), ["intl", "jp"]), capabilities: ["scores"] },
-  { ...toFrontendGame(getGame("chunithm"), ["intl", "jp"]), capabilities: ["scores"] },
+  testGame("maimai", ["intl", "jp"]),
+  testGame("chunithm", ["intl", "jp"]),
 ];
 
 it.each(games)("uses the $id cookie wizard, game-scoped OTP, and configured login page", async game => {

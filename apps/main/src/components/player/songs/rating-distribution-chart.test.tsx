@@ -2,10 +2,9 @@ import { describe, expect, it, vi } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 import { GameProvider } from "@/components/providers/game-provider";
 import { codeOf } from "@/lib/games/codes";
-import { toFrontendGame } from "@/lib/games/frontend";
-import { getGame } from "@/lib/games/registry";
 import type { CanonicalGameId } from "@/lib/games/types";
 import { RatingDistributionChart } from "./rating-distribution-chart";
+import { testGame } from "@/test/games";
 
 // Server rendering has no layout to measure, so the chart gets a fixed size.
 vi.mock("recharts", async importOriginal => {
@@ -19,7 +18,7 @@ vi.mock("recharts", async importOriginal => {
 
 function render(game: CanonicalGameId, scores: { difficulty: string; rating: number }[]) {
   const html = renderToStaticMarkup(
-    <GameProvider game={toFrontendGame(getGame(game), ["jp"])}>
+    <GameProvider game={testGame(game, ["jp"])}>
       <RatingDistributionChart title="Best" scores={scores.map(({ difficulty, rating }) => ({ difficultyCode: codeOf(game, "difficulty", difficulty), rating }))} />
     </GameProvider>,
   );

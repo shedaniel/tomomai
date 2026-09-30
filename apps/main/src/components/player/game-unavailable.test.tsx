@@ -4,9 +4,8 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { NextIntlClientProvider } from "next-intl";
 import { GameUnavailable } from "./game-unavailable";
 import { GameProvider } from "@/components/providers/game-provider";
-import { toFrontendGame } from "@/lib/games/frontend";
-import { getGame } from "@/lib/games/registry";
 import { loadMessages } from "@/i18n/messages";
+import { testGame } from "@/test/games";
 
 vi.mock("@/i18n/navigation", () => ({
   Link: ({ children, href }: { children: React.ReactNode; href: string }) => <a href={href}>{children}</a>,
@@ -16,7 +15,7 @@ describe("unavailable game screen", () => {
   it("names the served game and offers its catalog", async () => {
     const markup = renderToStaticMarkup(
       <NextIntlClientProvider locale="en" messages={await loadMessages("chunithm", "en")} timeZone="UTC">
-        <GameProvider game={toFrontendGame(getGame("chunithm"), [])}>
+        <GameProvider game={testGame("chunithm", [])}>
           <GameUnavailable />
         </GameProvider>
       </NextIntlClientProvider>,

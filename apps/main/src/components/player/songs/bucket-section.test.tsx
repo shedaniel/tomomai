@@ -3,12 +3,11 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { NextIntlClientProvider } from "next-intl";
 import { GameProvider } from "@/components/providers/game-provider";
 import { codeOf } from "@/lib/games/codes";
-import { toFrontendGame } from "@/lib/games/frontend";
-import { getGame } from "@/lib/games/registry";
 import type { CanonicalGameId } from "@/lib/games/types";
 import messages from "../../../../messages/en.json";
 import { SongSection } from "./bucket-section";
 import type { RatedScore } from "./types";
+import { testGame } from "@/test/games";
 
 vi.mock("@/components/games/maimai/song-hover-card", () => ({ SongHoverCard: () => null }));
 vi.mock("@/i18n/navigation", () => ({ Link: () => null }));
@@ -24,7 +23,7 @@ function score(game: CanonicalGameId, overrides: Partial<RatedScore>): RatedScor
 function renderCompact(game: CanonicalGameId, songs: RatedScore[]) {
   return renderToStaticMarkup(
     <NextIntlClientProvider locale="en" messages={messages} timeZone="UTC">
-      <GameProvider game={toFrontendGame(getGame(game), ["jp"])}>
+      <GameProvider game={testGame(game, ["jp"])}>
         <SongSection title="Best" songs={songs} count={`${songs.length}`} ranked displayMode="compact" visibleCount={songs.length} onLoadMore={() => {}} />
       </GameProvider>
     </NextIntlClientProvider>,

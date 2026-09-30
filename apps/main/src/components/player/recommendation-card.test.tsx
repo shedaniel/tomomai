@@ -6,11 +6,11 @@ import { NextIntlClientProvider } from "next-intl";
 import { RecommendationCard } from "./recommendation-card";
 import { GameProvider } from "@/components/providers/game-provider";
 import { codeOf } from "@/lib/games/codes";
-import { toFrontendGame, type FrontendGame } from "@/lib/games/frontend";
-import { getGame } from "@/lib/games/registry";
+import type { FrontendGame } from "@/lib/games/frontend";
 import type { GameSnapshotData } from "@/lib/games/player-view";
 import type { Flags } from "@/lib/flags";
 import messages from "../../../messages/en.json";
+import { testGame } from "@/test/games";
 
 const peers = vi.hoisted(() => vi.fn(() => ({ data: undefined, status: "pending", fetchStatus: "idle", error: null })));
 vi.mock("@/lib/trpc-client", () => ({ trpc: { maimai: { getRecommendationPeers: { useQuery: peers } } } }));
@@ -47,7 +47,7 @@ it("renders CHUNITHM score targets, average rating gains and game-sized buckets 
     snapshot: { publicId: "snapshot", game: "chunithm", gameVersion: 9, displayName: "Player", rating: 30, fetchedAt: new Date(), title: "", titleType: 0, iconUrl: "", courseRankUrl: null, classRankUrl: null, stars: null, versionPlayCount: 0, totalPlayCount: 0 },
     songs: [chart],
   };
-  const text = await renderText({ ...toFrontendGame(getGame("chunithm"), ["jp"]), capabilities: ["scores", "rating"] }, data);
+  const text = await renderText(testGame("chunithm", ["jp"]), data);
   expect(text).toContain("B20/B30");
   expect(text).toContain("1,000,000");
   expect(text).toContain("1,005,000");
@@ -72,7 +72,7 @@ it("renders maimai score targets at compact precision with the floored delta, an
       { ...chart, songId: "combo", songName: "Other", difficultyCode: master, addedVersion: 13, scoreValue: 1005000 },
     ],
   };
-  const text = await renderText(toFrontendGame(getGame("maimai"), ["jp"]), data);
+  const text = await renderText(testGame("maimai", ["jp"]), data);
   expect(text).toContain("99.45% → 99.50%");
   expect(text).toContain("+0.05%");
   expect(text).toContain("100.50% → AP");

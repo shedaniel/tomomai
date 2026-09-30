@@ -4,11 +4,12 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { createRoot, type Root } from "react-dom/client";
 import { NextIntlClientProvider } from "next-intl";
 import { GameProvider } from "@/components/providers/game-provider";
-import { toFrontendGame, type FrontendGame } from "@/lib/games/frontend";
+import type { FrontendGame } from "@/lib/games/frontend";
 import { getGame } from "@/lib/games/registry";
 import type { GameSnapshotSummary } from "@/lib/games/player-view";
 import { DataBanner } from "./data-banner";
 import messages from "../../../messages/en.json";
+import { testGame } from "@/test/games";
 
 vi.mock("@/lib/trpc-client", () => ({ trpc: { maimai: { getAvailableVersionsForCopy: { useQuery: () => ({ data: undefined, isLoading: false }) } } } }));
 
@@ -36,17 +37,17 @@ async function render(game: FrontendGame) {
 }
 
 it("offers the snapshot copy only to a game with the capability", async () => {
-  await render(toFrontendGame(getGame("maimai"), ["jp"]));
+  await render(testGame("maimai", ["jp"]));
   expect(container.querySelector('button[title="More options"]')).not.toBeNull();
   expect(container.textContent).toContain(messages.dataBanner.fetchNewData);
 
-  await render(toFrontendGame(getGame("chunithm"), ["jp"]));
+  await render(testGame("chunithm", ["jp"]));
   expect(container.querySelector('button[title="More options"]')).toBeNull();
   expect(container.textContent).toContain(messages.dataBanner.fetchNewData);
 });
 
 it("explains that a game without score fetching cannot fetch", async () => {
-  await render(toFrontendGame(getGame("chunithm"), []));
+  await render(testGame("chunithm", []));
   expect(container.querySelector('button[title="More options"]')).toBeNull();
   expect(container.textContent).not.toContain(messages.dataBanner.fetchNewData);
   expect(container.textContent).toContain(messages.dataContent.fetchUnavailable.replace("{game}", getGame("chunithm").brand.displayName));

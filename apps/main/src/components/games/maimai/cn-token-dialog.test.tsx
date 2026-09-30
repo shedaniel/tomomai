@@ -5,10 +5,9 @@ import { NextIntlClientProvider } from "next-intl";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { GameProvider } from "@/components/providers/game-provider";
 import { useFetchSession } from "@/hooks/useFetchSession";
-import { toFrontendGame } from "@/lib/games/frontend";
-import { getGame } from "@/lib/games/registry";
 import messages from "../../../../messages/en.json";
 import { HttpProxyAuthSubDialog } from "./cn-token-dialog";
+import { testGame } from "@/test/games";
 
 const EARLIER_SESSION = { id: "earlier-session", startedAt: "2026-09-29T00:00:00Z" };
 const state = vi.hoisted(() => ({
@@ -50,7 +49,7 @@ function Dashboard() {
 let root: Root;
 const render = () => act(async () => root.render(
   <NextIntlClientProvider locale="en" messages={messages} timeZone="UTC">
-    <GameProvider game={toFrontendGame(getGame("maimai"), ["cn"])}><Dashboard /></GameProvider>
+    <GameProvider game={testGame("maimai", ["cn"])}><Dashboard /></GameProvider>
   </NextIntlClientProvider>,
 ));
 

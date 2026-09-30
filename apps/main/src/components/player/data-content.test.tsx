@@ -4,12 +4,12 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { createRoot, type Root } from "react-dom/client";
 import { NextIntlClientProvider } from "next-intl";
 import { GameProvider } from "@/components/providers/game-provider";
-import { toFrontendGame, type FrontendGame } from "@/lib/games/frontend";
-import { getGame } from "@/lib/games/registry";
+import type { FrontendGame } from "@/lib/games/frontend";
 import type { GameSnapshotData } from "@/lib/games/player-view";
 import type { Flags } from "@/lib/flags";
 import { DataContent } from "./data-content";
 import messages from "../../../messages/en.json";
+import { testGame } from "@/test/games";
 
 const queries = vi.hoisted(() => ({ eventSteps: vi.fn(), exportSnapshot: vi.fn(), publicStats: vi.fn(), publicDays: vi.fn() }));
 // One played maimai MASTER chart from version 13 with an AP and an FDX+.
@@ -79,7 +79,7 @@ const SHARED = {
 async function renderTab(initialTab: string, visitor?: Partial<typeof SHARED>) {
   await act(async () => root.render(
     <NextIntlClientProvider locale="en" messages={messages} timeZone="UTC">
-      <GameProvider game={toFrontendGame(getGame("maimai"), ["jp"])}>
+      <GameProvider game={testGame("maimai", ["jp"])}>
         <DataContent
           region="jp" selectedSnapshotData={data} isLoading={false} visitableProfileAt={null} initialTab={initialTab} flags={flags}
           visitedBySelf={!visitor} privacySettings={{ ...SHARED, ...visitor }}
@@ -171,14 +171,14 @@ async function renderEmpty(game: FrontendGame, visitedBySelf: boolean) {
 }
 
 it("tells a visitor that the player has no records instead of showing the owner's fetch steps", async () => {
-  await renderEmpty(toFrontendGame(getGame("chunithm"), ["jp"]), false);
+  await renderEmpty(testGame("chunithm", ["jp"]), false);
   expect(container.textContent).toContain("alice has no CHUNITHM records yet.");
   expect(container.textContent).not.toContain("fetch button");
 });
 
 it("shows the owner how to fetch, or that fetching is not offered", async () => {
-  await renderEmpty(toFrontendGame(getGame("chunithm"), ["jp"]), true);
+  await renderEmpty(testGame("chunithm", ["jp"]), true);
   expect(container.textContent).toContain("Get started by fetching your CHUNITHM data using the fetch button above.");
-  await renderEmpty({ ...toFrontendGame(getGame("chunithm"), ["jp"]), capabilities: ["catalog"] }, true);
+  await renderEmpty(testGame("chunithm", []), true);
   expect(container.textContent).toContain("Player fetching for CHUNITHM is not available yet.");
 });

@@ -4,12 +4,11 @@ import { createRoot, type Root } from "react-dom/client";
 import { NextIntlClientProvider } from "next-intl";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { GameProvider } from "@/components/providers/game-provider";
-import { toFrontendGame } from "@/lib/games/frontend";
-import { getGame } from "@/lib/games/registry";
 import type { CanonicalGameId, Region } from "@/lib/games/ids";
 import { getCurrentVersion } from "@/lib/games/versions";
 import messages from "../../../messages/en.json";
 import { AdminDialog } from "./admin-dialog";
+import { testGame } from "@/test/games";
 
 vi.mock("./users-browser-dialog", () => ({ UsersBrowserDialog: () => null }));
 vi.mock("./profile-reports-dialog", () => ({ ProfileReportsDialog: () => null }));
@@ -24,7 +23,7 @@ const localStorage = {
 };
 const render = (game: CanonicalGameId, regions: Region[]) => act(async () => root.render(
   <NextIntlClientProvider locale="en" messages={messages} timeZone="UTC">
-    <GameProvider game={toFrontendGame(getGame(game), regions)}><AdminDialog open onOpenChange={() => {}} /></GameProvider>
+    <GameProvider game={testGame(game, regions)}><AdminDialog open onOpenChange={() => {}} /></GameProvider>
   </NextIntlClientProvider>,
 ));
 const click = (id: string) => act(async () => document.getElementById(id)!.click());

@@ -2,13 +2,12 @@ import { describe, expect, it } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 import { GameProvider } from "@/components/providers/game-provider";
 import { codeOf } from "@/lib/games/codes";
-import { toFrontendGame } from "@/lib/games/frontend";
-import { getGame } from "@/lib/games/registry";
 import type { CanonicalGameId } from "@/lib/games/types";
 import { ChartTypeBadge } from "./chart-type-badge";
+import { testGame } from "@/test/games";
 
 function render(game: CanonicalGameId, badge: React.ReactElement) {
-  return renderToStaticMarkup(<GameProvider game={toFrontendGame(getGame(game), ["jp"])}>{badge}</GameProvider>);
+  return renderToStaticMarkup(<GameProvider game={testGame(game, ["jp"])}>{badge}</GameProvider>);
 }
 
 describe("ChartTypeBadge", () => {

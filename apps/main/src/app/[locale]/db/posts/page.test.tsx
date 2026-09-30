@@ -19,9 +19,8 @@ vi.mock("next-intl/server", async () => {
   };
 });
 vi.mock("@/lib/games/current", async () => {
-  const { toFrontendGame } = await import("@/lib/games/frontend");
-  const { getGame } = await import("@/lib/games/registry");
-  return { getCurrentGame: () => toFrontendGame(getGame(current.game), ["intl", "jp"]) };
+  const { testGame } = await import("@/test/games");
+  return { getCurrentGame: () => testGame(current.game, ["intl", "jp"]) };
 });
 vi.mock("next/navigation", () => ({ notFound: () => { throw new Error("NEXT_NOT_FOUND"); } }));
 vi.mock("@/i18n/locale-server", () => ({ getLocale: async () => "en", setStaticLocale: async () => {} }));

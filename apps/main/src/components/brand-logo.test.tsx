@@ -1,15 +1,14 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { expect, it } from "vitest";
 import { GameProvider } from "@/components/providers/game-provider";
-import { toFrontendGame } from "@/lib/games/frontend";
 import type { CanonicalGameId } from "@/lib/games/ids";
-import { getGame } from "@/lib/games/registry";
 import type { BrandSection } from "@/lib/games/types";
 import { BrandLogo } from "./brand-logo";
+import { testGame } from "@/test/games";
 
 function render(game: CanonicalGameId, section: BrandSection) {
   return renderToStaticMarkup(
-    <GameProvider game={toFrontendGame(getGame(game), ["intl"])}>
+    <GameProvider game={testGame(game, ["intl"])}>
       <BrandLogo section={section} height={44} />
     </GameProvider>,
   );

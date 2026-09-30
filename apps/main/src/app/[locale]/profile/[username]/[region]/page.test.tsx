@@ -19,9 +19,8 @@ vi.mock("next-intl/server", async () => {
   };
 });
 vi.mock("@/lib/games/current", async () => {
-  const { toFrontendGame } = await import("@/lib/games/frontend");
-  const { getGame } = await import("@/lib/games/registry");
-  return { getCurrentGame: () => toFrontendGame(getGame(currentGame.id), ["intl", "jp"]) };
+  const { testGame } = await import("@/test/games");
+  return { getCurrentGame: () => testGame(currentGame.id, ["intl", "jp"]) };
 });
 vi.mock("@/server/queries/game-profile", () => ({ fetchPublicGameProfile: fetchProfile }));
 vi.mock("@/server/queries/public-access", () => ({ resolvePublicUserByUsername: vi.fn() }));

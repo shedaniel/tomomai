@@ -2,12 +2,11 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { NextIntlClientProvider } from "next-intl";
 import { describe, expect, it } from "vitest";
 import { GameProvider } from "@/components/providers/game-provider";
-import { toFrontendGame } from "@/lib/games/frontend";
 import type { CanonicalGameId } from "@/lib/games/ids";
-import { getGame } from "@/lib/games/registry";
 import type { ProfilePrivacySettings } from "@/lib/types";
 import { ProfilePrivacyFields } from "./profile-privacy-fields";
 import messages from "../../messages/en.json";
+import { testGame } from "@/test/games";
 
 const allShown: ProfilePrivacySettings = {
   profileShowAllScores: true,
@@ -21,7 +20,7 @@ const allShown: ProfilePrivacySettings = {
 function render(game: CanonicalGameId) {
   return renderToStaticMarkup(
     <NextIntlClientProvider locale="en" messages={messages} timeZone="UTC">
-      <GameProvider game={toFrontendGame(getGame(game), ["jp"])}>
+      <GameProvider game={testGame(game, ["jp"])}>
         <ProfilePrivacyFields value={allShown} onChange={() => {}} />
       </GameProvider>
     </NextIntlClientProvider>,

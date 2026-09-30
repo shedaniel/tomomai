@@ -18,9 +18,8 @@ vi.mock("next-intl/server", async () => {
   };
 });
 vi.mock("@/lib/games/current", async () => {
-  const { toFrontendGame } = await import("@/lib/games/frontend");
-  const { getGame } = await import("@/lib/games/registry");
-  return { getCurrentGame: () => toFrontendGame(getGame(current.game), ["jp"]) };
+  const { testGame } = await import("@/test/games");
+  return { getCurrentGame: () => testGame(current.game, ["jp"]) };
 });
 vi.mock("@/server/queries/songs-cache", () => ({
   getAllUniqueSongsCached: async () => [{ slug: "song", songName: "Song", artist: "Artist", genre: "POPS", type: current.type, cover: "cover.webp" }],

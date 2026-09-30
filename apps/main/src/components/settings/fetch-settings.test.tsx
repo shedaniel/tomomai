@@ -5,9 +5,9 @@ import { NextIntlClientProvider } from "next-intl";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { FetchSettings } from "./fetch-settings";
 import { GameProvider } from "../providers/game-provider";
-import { toFrontendGame, type FrontendGame } from "@/lib/games/frontend";
-import { getGame } from "@/lib/games/registry";
+import type { FrontendGame } from "@/lib/games/frontend";
 import messages from "../../../messages/en.json";
+import { testGame } from "@/test/games";
 
 const state = vi.hoisted(() => ({ start: vi.fn(), region: "cn" }));
 vi.mock("@/hooks/useFetchSession", () => ({ useFetchSession: () => ({ startDataFetch: state.start, fetchToastState: null }) }));
@@ -41,8 +41,9 @@ async function render(game: FrontendGame) {
   ));
 }
 
-it("scopes CHUNITHM settings and credentials to a supported region without album or cookie options", async () => {
-  await render({ ...toFrontendGame(getGame("chunithm"), ["intl", "jp"]), capabilities: ["scores"], loginMethods: { intl: ["sega-account"], jp: ["sega-account"] } });
+it("signs CHUNITHM Japan in with a SEGA account, without album, cookie or CN options", async () => {
+  state.region = "jp";
+  await render(testGame("chunithm", ["intl", "jp"]));
   expect(container.textContent).toContain("settings for CHUNITHM");
   expect(container.querySelector("#fetch-albums")).toBeNull();
   const open = Array.from(container.querySelectorAll("button")).find(button => button.textContent === messages.settings.account.updateToken);
@@ -60,19 +61,19 @@ it("scopes CHUNITHM settings and credentials to a supported region without album
     });
   }
   await act(async () => document.querySelector("form")?.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true })));
-  expect(state.start).toHaveBeenCalledWith("intl", "account://test-user:://test-password");
+  expect(state.start).toHaveBeenCalledWith("jp", "account://test-user:://test-password");
 });
 
 it("retains maimai International album settings and its configured cookie login", async () => {
   state.region = "intl";
-  await render({ ...toFrontendGame(getGame("maimai"), ["intl", "jp", "cn"]), capabilities: ["scores", "albums"] });
+  await render(testGame("maimai", ["intl", "jp", "cn"]));
   expect(container.textContent).toContain("settings for maimai DX");
   expect(container.querySelector("#fetch-albums")).not.toBeNull();
   expect(container.textContent).toContain("International cookie options");
 });
 
 it("hides the maimai album setting in China, where the definition withdraws albums", async () => {
-  await render(toFrontendGame(getGame("maimai"), ["intl", "jp", "cn"]));
+  await render(testGame("maimai", ["intl", "jp", "cn"]));
   expect(container.textContent).toContain("settings for maimai DX");
   expect(container.querySelector("#fetch-albums")).toBeNull();
 });

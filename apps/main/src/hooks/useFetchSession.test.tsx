@@ -3,9 +3,8 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { GameProvider } from "@/components/providers/game-provider";
-import { toFrontendGame } from "@/lib/games/frontend";
-import { getGame } from "@/lib/games/registry";
 import { useFetchSession } from "./useFetchSession";
+import { testGame } from "@/test/games";
 
 const transport = vi.hoisted(() => ({ start: vi.fn(), status: vi.fn() }));
 const callbacks = { complete: vi.fn(), token: vi.fn(), album: vi.fn(), cnCookies: vi.fn() };
@@ -58,7 +57,7 @@ async function renderProbe(region: "intl" | "jp") {
   const container = document.createElement("div");
   root = createRoot(container);
   await act(async () => root.render(
-    <GameProvider game={{ ...toFrontendGame(getGame("chunithm"), [region]), capabilities: ["scores"] }}>
+    <GameProvider game={testGame("chunithm", [region])}>
       <Probe />
     </GameProvider>,
   ));

@@ -5,9 +5,8 @@ import type { CanonicalGameId, Region } from "@/lib/games/ids";
 const current = vi.hoisted(() => ({ game: "maimai" as CanonicalGameId, regions: [] as Region[] }));
 
 vi.mock("@/lib/games/current", async () => {
-  const { toFrontendGame } = await import("@/lib/games/frontend");
-  const { getGame } = await import("@/lib/games/registry");
-  return { getCurrentGame: () => toFrontendGame(getGame(current.game), current.regions) };
+  const { testGame } = await import("@/test/games");
+  return { getCurrentGame: () => testGame(current.game, current.regions) };
 });
 vi.mock("@/components/db/db-layout-client", () => ({ DbLayoutClient: () => null }));
 vi.mock("@/components/db/song-detail-drawer", () => ({ SongDetailDrawer: () => null }));

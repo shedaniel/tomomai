@@ -5,13 +5,12 @@ import { NextIntlClientProvider } from "next-intl";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { GameProvider } from "@/components/providers/game-provider";
 import { loadMessages } from "@/i18n/messages";
-import { toFrontendGame } from "@/lib/games/frontend";
-import { getGame } from "@/lib/games/registry";
 import type { CanonicalGameId } from "@/lib/games/ids";
 import type { Locale } from "@/i18n/locale";
 import { LoginScreen } from "./login-screen";
 import messages from "../../messages/en.json";
 import zhCN from "../../messages/zh-CN.json";
+import { testGame } from "@/test/games";
 
 vi.mock("@/lib/trpc-client", () => ({ trpc: { user: {
   getPolicies: { useQuery: () => ({ data: { tos: { content: "Terms" }, privacy: { content: "Privacy" } } }) },
@@ -44,7 +43,7 @@ afterEach(async () => {
 async function render(game: CanonicalGameId) {
   await act(async () => root.render(
     <NextIntlClientProvider locale={locale.current} messages={await loadMessages(game, locale.current)} timeZone="UTC">
-      <GameProvider game={toFrontendGame(getGame(game), ["intl", "jp"])}>
+      <GameProvider game={testGame(game, ["intl", "jp"])}>
         <LoginScreen signupRequirements={{ signupEnabled: true, inviteRequired: false, reason: "open" }} flags={{ passkey: false, twitterOauth: false }} />
       </GameProvider>
     </NextIntlClientProvider>,

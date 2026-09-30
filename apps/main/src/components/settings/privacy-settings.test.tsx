@@ -5,10 +5,9 @@ import { NextIntlClientProvider } from "next-intl";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { PrivacySettings } from "./privacy-settings";
 import { GameProvider } from "../providers/game-provider";
-import { toFrontendGame } from "@/lib/games/frontend";
-import { getGame } from "@/lib/games/registry";
 import { loadMessages } from "@/i18n/messages";
 import type { ProfileSettings } from "@/lib/types";
+import { testGame } from "@/test/games";
 
 const messages = await loadMessages("chunithm", "en");
 
@@ -51,7 +50,7 @@ function button(label: string) {
 it("shows the game's main region and saves only a region the user picks", async () => {
   await act(async () => root.render(
     <NextIntlClientProvider locale="en" messages={messages} timeZone="UTC">
-      <GameProvider game={toFrontendGame(getGame("chunithm"), ["intl", "jp"])}><PrivacySettings /></GameProvider>
+      <GameProvider game={testGame("chunithm", ["intl", "jp"])}><PrivacySettings /></GameProvider>
     </NextIntlClientProvider>,
   ));
   expect(container.textContent).toContain("Choose the primary region of your published CHUNITHM profile.");

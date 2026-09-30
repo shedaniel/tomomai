@@ -5,10 +5,9 @@ import { NextIntlClientProvider } from "next-intl";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { OnboardingDialog } from "./onboarding-dialog";
 import { GameProvider } from "./providers/game-provider";
-import { toFrontendGame } from "@/lib/games/frontend";
-import { getGame } from "@/lib/games/registry";
 import { loadMessages } from "@/i18n/messages";
 import messages from "../../messages/en.json";
+import { testGame } from "@/test/games";
 
 const chunithmMessages = await loadMessages("chunithm", "en");
 
@@ -51,7 +50,7 @@ function button(label: string) {
 it("offers only the served game's regions and saves the chosen one", async () => {
   await act(async () => root.render(
     <NextIntlClientProvider locale="en" messages={chunithmMessages} timeZone="UTC">
-      <GameProvider game={toFrontendGame(getGame("chunithm"), ["intl", "jp"])}>
+      <GameProvider game={testGame("chunithm", ["intl", "jp"])}>
         <OnboardingDialog open onComplete={vi.fn()} initialRegion="intl" initialUsername="player" initialPublishProfile={false} />
       </GameProvider>
     </NextIntlClientProvider>,

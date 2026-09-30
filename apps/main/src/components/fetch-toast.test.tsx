@@ -4,15 +4,14 @@ import { expect, it } from "vitest";
 import { FetchToast, type FetchToastState } from "./fetch-toast";
 import { GameProvider } from "./providers/game-provider";
 import { calculateProgress, parseStatusStates, type FetchState } from "@/lib/fetch-states";
-import { toFrontendGame } from "@/lib/games/frontend";
-import { getGame } from "@/lib/games/registry";
 import type { CanonicalGameId } from "@/lib/games/types";
 import messages from "../../messages/en.json";
+import { testGame } from "@/test/games";
 
 function renderToast(state: FetchToastState, game: CanonicalGameId = "chunithm") {
   return renderToStaticMarkup(
     <NextIntlClientProvider locale="en" messages={{ fetchToast: messages.fetchToast }} timeZone="UTC">
-      <GameProvider game={{ ...toFrontendGame(getGame(game), ["jp"]), capabilities: ["scores"] }}>
+      <GameProvider game={testGame(game, ["jp"])}>
         <FetchToast state={state} />
       </GameProvider>
     </NextIntlClientProvider>,
