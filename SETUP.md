@@ -2,6 +2,8 @@
 
 ## Running Locally
 
+Use Node.js 22.18 or later. `apps/main/eslint.config.mjs`, `apps/main/scripts/register-discord-commands.js` and the `@tomomai/games` tests load TypeScript files through Node's built-in type stripping, which older versions do not have.
+
 Each process serves one game, chosen by `FRONTEND_GAME` (see [App Configuration](#app-configuration)). Run these from the repository root, in separate terminals to run them together:
 
 | Command | Serves | Port |

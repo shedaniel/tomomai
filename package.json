@@ -13,7 +13,7 @@
     "tunnel": "cloudflared tunnel run --url http://localhost:3000 tomomai",
     "lint": "pnpm -r lint",
     "typecheck": "pnpm -r typecheck",
-    "test": "pnpm --filter @tomomai/site test",
+    "test": "pnpm -r test",
     "db:generate": "pnpm --filter @tomomai/site db:generate",
     "db:migrate": "pnpm --filter @tomomai/site db:migrate",
     "db:push": "pnpm --filter @tomomai/site db:push",
