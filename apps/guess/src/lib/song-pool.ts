@@ -1,4 +1,4 @@
-import { codeToChartType, codeToDifficulty } from "@tomomai/games/codes";
+import { fetchCurrentCatalogSlice } from "@tomomai/games/catalog-client";
 import type { Chart } from "./types";
 import { uniqueSongs, type SongSummary } from "./fuzzy";
 import { hasAudioPreview, isHeardle } from "./heardle";
@@ -6,28 +6,10 @@ import { hasAudioPreview, isHeardle } from "./heardle";
 const DEFAULT_API = "https://www.tomomai.lol";
 const TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
 
-function apiBase(): string {
-  return process.env.TOMOMAI_API_URL?.replace(/\/$/, "") ?? DEFAULT_API;
-}
-
-async function fetchCatalogue(): Promise<Chart[]> {
-  const metadata = await fetch(`${apiBase()}/api/v1/games/maimai/songs/versions?region=jp`, { cache: "no-store" });
-  if (!metadata.ok) throw new Error(`Failed to fetch song versions: ${metadata.status}`);
-  const { currentVersion } = await metadata.json() as { currentVersion: number };
-  if (!Number.isInteger(currentVersion)) throw new Error("Invalid current JP game version");
-  const url = `${apiBase()}/api/v1/games/maimai/songs?region=jp&gameVersion=${currentVersion}`;
+function fetchCatalogue(): Promise<Chart[]> {
+  const base = process.env.TOMOMAI_API_URL ?? DEFAULT_API;
   // The daily module memo bounds transfers without relying on Next's data-cache size limit.
-  const res = await fetch(url, { cache: "no-store" });
-  if (!res.ok) {
-    throw new Error(`Failed to fetch song catalogue: ${res.status} ${res.statusText}`);
-  }
-  const body = (await res.json()) as { game: string; songs: (Omit<Chart, "type" | "difficulty"> & { type: number; difficulty: number })[] };
-  if (body.game !== "maimai") throw new Error("Unexpected catalog game");
-  return body.songs.map(song => {
-    const type = codeToChartType(song.type);
-    const difficulty = codeToDifficulty(song.difficulty);
-    return { ...song, type, difficulty };
-  });
+  return fetchCurrentCatalogSlice(base, "maimai", "jp", url => fetch(url, { cache: "no-store" }));
 }
 
 /**
@@ -41,7 +23,6 @@ function filterPool(all: readonly Chart[]): Chart[] {
   return all.filter((c) => {
     if (c.region !== "jp") return false;
     if (c.cover == null) return false;
-    if (c.type !== "std" && c.type !== "dx") return false;
     if (c.difficulty === "expert") {
       if (c.levelPrecise < 11.0) return false;
     } else if (c.difficulty === "master" || c.difficulty === "remaster") {
